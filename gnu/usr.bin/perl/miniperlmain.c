@@ -6,45 +6,44 @@
 #pragma runopts(HEAP(1M,32K,ANYWHERE,KEEP,8K,4K))
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "EXTERN.h"
 #include "perl.h"
 
-#ifdef __cplusplus
-}
-#  define EXTERN_C extern "C"
-#else
-#  define EXTERN_C extern
-#endif
-
 static void xs_init _((void));
 static PerlInterpreter *my_perl;
 
-int
-#ifdef CAN_PROTOTYPE
-main(int argc, char **argv, char **env)
-#else
-main(argc, argv, env)
-int argc;
-char **argv;
-char **env;
+#if defined (__MINT__) || defined (atarist)
+/* The Atari operating system doesn't have a dynamic stack.  The
+   stack size is determined from this value.  */
+long _stksize = 64 * 1024;
 #endif
+
+int
+main(int argc, char **argv, char **env)
 {
     int exitstatus;
+
+#ifdef PERL_GLOBAL_STRUCT
+#define PERLVAR(var,type) /**/
+#define PERLVARI(var,type,init) PL_Vars.var = init;
+#define PERLVARIC(var,type,init) PL_Vars.var = init;
+#include "perlvars.h"
+#undef PERLVAR
+#undef PERLVARI
+#undef PERLVARIC
+#endif
 
     PERL_SYS_INIT(&argc,&argv);
 
     perl_init_i18nl10n(1);
 
-    if (!do_undump) {
+    if (!PL_do_undump) {
 	my_perl = perl_alloc();
 	if (!my_perl)
 	    exit(1);
 	perl_construct( my_perl );
-	perl_destruct_level = 0;
+	PL_perl_destruct_level = 0;
     }
 
     exitstatus = perl_parse( my_perl, xs_init, argc, argv, (char **) NULL );
@@ -58,6 +57,7 @@ char **env;
     PERL_SYS_TERM();
 
     exit( exitstatus );
+    return exitstatus;
 }
 
 /* Register any extra external extensions */
@@ -65,7 +65,7 @@ char **env;
 /* Do not delete this line--writemain depends on it */
 
 static void
-xs_init()
+xs_init(void)
 {
   dXSUB_SYS;
 }

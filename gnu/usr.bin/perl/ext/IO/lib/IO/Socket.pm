@@ -186,7 +186,7 @@ sub socketpair {
     my $fh1 = $class->new();
     my $fh2 = $class->new();
 
-    socketpair($fh1,$fh1,$domain,$type,$protocol) or
+    socketpair($fh1,$fh2,$domain,$type,$protocol) or
     	return ();
 
     ${*$fh1}{'io_socket_type'}  = ${*$fh2}{'io_socket_type'}  = $type;
@@ -664,7 +664,7 @@ Returns the pathname to the fifo at the local end
 
 =item peerpath()
 
-Returns the pathanme to the fifo at the peer end
+Returns the pathname to the fifo at the peer end
 
 =back
 

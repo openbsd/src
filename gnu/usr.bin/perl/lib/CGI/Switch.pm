@@ -2,7 +2,7 @@ package CGI::Switch;
 use Carp;
 use strict;
 use vars qw($VERSION @Pref);
-$VERSION = '0.05';
+$VERSION = '0.06';
 @Pref = qw(CGI::Apache CGI); #default
 
 sub import {
@@ -32,13 +32,6 @@ sub new {
     }
     Carp::croak "Couldn't load+construct any of @Pref\n";
 }
-
-# there's a trick in Lincoln's package that determines the calling
-# package.  The reason is to have a filehandle with the same name as
-# the filename.  To tell this trick that we are not the calling
-# package we have to follow this dirty convention. It's a questionable
-# trick imho, but for now I want to have something working
-sub isaCGI { 1 }
 
 1;
 __END__
@@ -73,6 +66,6 @@ perl(1), Apache(3), CGI(3), CGI::XA(3)
 
 =head1 AUTHOR
 
-Andreas König E<lt>a.koenig@mind.deE<gt>
+Andreas KE<ouml>nig E<lt>a.koenig@mind.deE<gt>
 
 =cut

@@ -1,91 +1,23 @@
 #ifndef WIN32IOP_H
 #define WIN32IOP_H
 
+#ifndef START_EXTERN_C
+#ifdef __cplusplus
+#  define START_EXTERN_C extern "C" {
+#  define END_EXTERN_C }
+#  define EXTERN_C extern "C"
+#else
+#  define START_EXTERN_C 
+#  define END_EXTERN_C 
+#  define EXTERN_C
+#endif
+#endif
 
-/*
- * Make this as close to original stdio as possible.
- */
-
-/*
- * function prototypes for our own win32io layer
- */
-EXT int * 	win32_errno(void);
-EXT char *** 	win32_environ(void);
-EXT FILE*	win32_stdin(void);
-EXT FILE*	win32_stdout(void);
-EXT FILE*	win32_stderr(void);
-EXT int		win32_ferror(FILE *fp);
-EXT int		win32_feof(FILE *fp);
-EXT char*	win32_strerror(int e);
-
-EXT int		win32_fprintf(FILE *pf, const char *format, ...);
-EXT int		win32_printf(const char *format, ...);
-EXT int		win32_vfprintf(FILE *pf, const char *format, va_list arg);
-EXT int		win32_vprintf(const char *format, va_list arg);
-EXT size_t	win32_fread(void *buf, size_t size, size_t count, FILE *pf);
-EXT size_t	win32_fwrite(const void *buf, size_t size, size_t count, FILE *pf);
-EXT FILE*	win32_fopen(const char *path, const char *mode);
-EXT FILE*	win32_fdopen(int fh, const char *mode);
-EXT FILE*	win32_freopen(const char *path, const char *mode, FILE *pf);
-EXT int		win32_fclose(FILE *pf);
-EXT int		win32_fputs(const char *s,FILE *pf);
-EXT int		win32_fputc(int c,FILE *pf);
-EXT int		win32_ungetc(int c,FILE *pf);
-EXT int		win32_getc(FILE *pf);
-EXT int		win32_fileno(FILE *pf);
-EXT void	win32_clearerr(FILE *pf);
-EXT int		win32_fflush(FILE *pf);
-EXT long	win32_ftell(FILE *pf);
-EXT int		win32_fseek(FILE *pf,long offset,int origin);
-EXT int		win32_fgetpos(FILE *pf,fpos_t *p);
-EXT int		win32_fsetpos(FILE *pf,const fpos_t *p);
-EXT void	win32_rewind(FILE *pf);
-EXT FILE*	win32_tmpfile(void);
-EXT void	win32_abort(void);
-EXT int  	win32_fstat(int fd,struct stat *bufptr);
-EXT int  	win32_stat(const char *name,struct stat *bufptr);
-EXT int		win32_pipe( int *phandles, unsigned int psize, int textmode );
-EXT FILE*	win32_popen( const char *command, const char *mode );
-EXT int		win32_pclose( FILE *pf);
-EXT int		win32_setmode( int fd, int mode);
-EXT long	win32_lseek( int fd, long offset, int origin);
-EXT long	win32_tell( int fd);
-EXT int		win32_dup( int fd);
-EXT int		win32_dup2(int h1, int h2);
-EXT int		win32_open(const char *path, int oflag,...);
-EXT int		win32_close(int fd);
-EXT int		win32_eof(int fd);
-EXT int		win32_read(int fd, void *buf, unsigned int cnt);
-EXT int		win32_write(int fd, const void *buf, unsigned int cnt);
-EXT int		win32_spawnvp(int mode, const char *cmdname,
-			      const char *const *argv);
-EXT int		win32_mkdir(const char *dir, int mode);
-EXT int		win32_rmdir(const char *dir);
-EXT int		win32_chdir(const char *dir);
-EXT int		win32_flock(int fd, int oper);
-EXT int		win32_execvp(const char *cmdname, const char *const *argv);
-EXT void	win32_perror(const char *str);
-EXT void	win32_setbuf(FILE *pf, char *buf);
-EXT int		win32_setvbuf(FILE *pf, char *buf, int type, size_t size);
-EXT int		win32_flushall(void);
-EXT int		win32_fcloseall(void);
-EXT char*	win32_fgets(char *s, int n, FILE *pf);
-EXT char*	win32_gets(char *s);
-EXT int		win32_fgetc(FILE *pf);
-EXT int		win32_putc(int c, FILE *pf);
-EXT int		win32_puts(const char *s);
-EXT int		win32_getchar(void);
-EXT int		win32_putchar(int c);
-EXT void*	win32_malloc(size_t size);
-EXT void*	win32_calloc(size_t numitems, size_t size);
-EXT void*	win32_realloc(void *block, size_t size);
-EXT void	win32_free(void *block);
-
-/*
- * these two are win32 specific but still io related
- */
-int		stolen_open_osfhandle(long handle, int flags);
-long		stolen_get_osfhandle(int fd);
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#  include <sys/utime.h>
+#else
+#  include <utime.h>
+#endif
 
 /*
  * defines for flock emulation
@@ -95,10 +27,112 @@ long		stolen_get_osfhandle(int fd);
 #define LOCK_NB 4
 #define LOCK_UN 8
 
-#include <win32io.h>	/* pull in the io sub system structure */
+/*
+ * Make this as close to original stdio as possible.
+ */
 
-EXT PWIN32_IOSUBSYSTEM	SetIOSubSystem(void	*piosubsystem);
-EXT PWIN32_IOSUBSYSTEM	GetIOSubSystem(void);
+/*
+ * function prototypes for our own win32io layer
+ */
+START_EXTERN_C
+
+DllExport  int * 	win32_errno(void);
+DllExport  char *** 	win32_environ(void);
+DllExport  FILE*	win32_stdin(void);
+DllExport  FILE*	win32_stdout(void);
+DllExport  FILE*	win32_stderr(void);
+DllExport  int		win32_ferror(FILE *fp);
+DllExport  int		win32_feof(FILE *fp);
+DllExport  char*	win32_strerror(int e);
+
+DllExport  int		win32_fprintf(FILE *pf, const char *format, ...);
+DllExport  int		win32_printf(const char *format, ...);
+DllExport  int		win32_vfprintf(FILE *pf, const char *format, va_list arg);
+DllExport  int		win32_vprintf(const char *format, va_list arg);
+DllExport  size_t	win32_fread(void *buf, size_t size, size_t count, FILE *pf);
+DllExport  size_t	win32_fwrite(const void *buf, size_t size, size_t count, FILE *pf);
+DllExport  FILE*	win32_fopen(const char *path, const char *mode);
+DllExport  FILE*	win32_fdopen(int fh, const char *mode);
+DllExport  FILE*	win32_freopen(const char *path, const char *mode, FILE *pf);
+DllExport  int		win32_fclose(FILE *pf);
+DllExport  int		win32_fputs(const char *s,FILE *pf);
+DllExport  int		win32_fputc(int c,FILE *pf);
+DllExport  int		win32_ungetc(int c,FILE *pf);
+DllExport  int		win32_getc(FILE *pf);
+DllExport  int		win32_fileno(FILE *pf);
+DllExport  void		win32_clearerr(FILE *pf);
+DllExport  int		win32_fflush(FILE *pf);
+DllExport  long		win32_ftell(FILE *pf);
+DllExport  int		win32_fseek(FILE *pf,long offset,int origin);
+DllExport  int		win32_fgetpos(FILE *pf,fpos_t *p);
+DllExport  int		win32_fsetpos(FILE *pf,const fpos_t *p);
+DllExport  void		win32_rewind(FILE *pf);
+DllExport  FILE*	win32_tmpfile(void);
+DllExport  void		win32_abort(void);
+DllExport  int  	win32_fstat(int fd,struct stat *sbufptr);
+DllExport  int  	win32_stat(const char *name,struct stat *sbufptr);
+DllExport  int		win32_pipe( int *phandles, unsigned int psize, int textmode );
+DllExport  FILE*	win32_popen( const char *command, const char *mode );
+DllExport  int		win32_pclose( FILE *pf);
+DllExport  int		win32_rename( const char *oname, const char *newname);
+DllExport  int		win32_setmode( int fd, int mode);
+DllExport  long		win32_lseek( int fd, long offset, int origin);
+DllExport  long		win32_tell( int fd);
+DllExport  int		win32_dup( int fd);
+DllExport  int		win32_dup2(int h1, int h2);
+DllExport  int		win32_open(const char *path, int oflag,...);
+DllExport  int		win32_close(int fd);
+DllExport  int		win32_eof(int fd);
+DllExport  int		win32_read(int fd, void *buf, unsigned int cnt);
+DllExport  int		win32_write(int fd, const void *buf, unsigned int cnt);
+DllExport  int		win32_spawnvp(int mode, const char *cmdname,
+			      const char *const *argv);
+DllExport  int		win32_mkdir(const char *dir, int mode);
+DllExport  int		win32_rmdir(const char *dir);
+DllExport  int		win32_chdir(const char *dir);
+DllExport  int		win32_flock(int fd, int oper);
+DllExport  int		win32_execv(const char *cmdname, const char *const *argv);
+DllExport  int		win32_execvp(const char *cmdname, const char *const *argv);
+DllExport  void		win32_perror(const char *str);
+DllExport  void		win32_setbuf(FILE *pf, char *buf);
+DllExport  int		win32_setvbuf(FILE *pf, char *buf, int type, size_t size);
+DllExport  int		win32_flushall(void);
+DllExport  int		win32_fcloseall(void);
+DllExport  char*	win32_fgets(char *s, int n, FILE *pf);
+DllExport  char*	win32_gets(char *s);
+DllExport  int		win32_fgetc(FILE *pf);
+DllExport  int		win32_putc(int c, FILE *pf);
+DllExport  int		win32_puts(const char *s);
+DllExport  int		win32_getchar(void);
+DllExport  int		win32_putchar(int c);
+DllExport  void*	win32_malloc(size_t size);
+DllExport  void*	win32_calloc(size_t numitems, size_t size);
+DllExport  void*	win32_realloc(void *block, size_t size);
+DllExport  void		win32_free(void *block);
+
+DllExport  int		win32_open_osfhandle(long handle, int flags);
+DllExport  long		win32_get_osfhandle(int fd);
+
+#ifndef USE_WIN32_RTL_ENV
+DllExport  char*	win32_getenv(const char *name);
+DllExport  int		win32_putenv(const char *name);
+#endif
+
+DllExport  unsigned 	win32_sleep(unsigned int);
+DllExport  int		win32_times(struct tms *timebuf);
+DllExport  unsigned 	win32_alarm(unsigned int sec);
+DllExport  int		win32_stat(const char *path, struct stat *buf);
+DllExport  int		win32_ioctl(int i, unsigned int u, char *data);
+DllExport  int		win32_utime(const char *f, struct utimbuf *t);
+DllExport  int		win32_wait(int *status);
+DllExport  int		win32_waitpid(int pid, int *status, int flags);
+DllExport  int		win32_kill(int pid, int sig);
+
+#if defined(HAVE_DES_FCRYPT) || defined(PERL_OBJECT)
+DllExport char *	win32_crypt(const char *txt, const char *salt);
+#endif
+
+END_EXTERN_C
 
 /*
  * the following six(6) is #define in stdio.h
@@ -111,6 +145,15 @@ EXT PWIN32_IOSUBSYSTEM	GetIOSubSystem(void);
 #undef stdout
 #undef ferror
 #undef feof
+#undef fclose
+#undef pipe
+#undef pause
+#undef sleep
+#undef times
+#undef alarm
+#undef ioctl
+#undef utime
+#undef wait
 
 #ifdef __BORLANDC__
 #undef ungetc
@@ -133,6 +176,7 @@ EXT PWIN32_IOSUBSYSTEM	GetIOSubSystem(void);
 /*
  * redirect to our own version
  */
+#undef fprintf
 #define	fprintf			win32_fprintf
 #define	vfprintf		win32_vfprintf
 #define	printf			win32_printf
@@ -140,12 +184,14 @@ EXT PWIN32_IOSUBSYSTEM	GetIOSubSystem(void);
 #define fread(buf,size,count,f)	win32_fread(buf,size,count,f)
 #define fwrite(buf,size,count,f)	win32_fwrite(buf,size,count,f)
 #define fopen			win32_fopen
+#undef fdopen
 #define fdopen			win32_fdopen
 #define freopen			win32_freopen
 #define	fclose(f)		win32_fclose(f)
 #define fputs(s,f)		win32_fputs(s,f)
 #define fputc(c,f)		win32_fputc(c,f)
 #define ungetc(c,f)		win32_ungetc(c,f)
+#undef getc
 #define getc(f)			win32_getc(f)
 #define fileno(f)		win32_fileno(f)
 #define clearerr(f)		win32_clearerr(f)
@@ -159,6 +205,7 @@ EXT PWIN32_IOSUBSYSTEM	GetIOSubSystem(void);
 #define abort()			win32_abort()
 #define fstat(fd,bufptr)   	win32_fstat(fd,bufptr)
 #define stat(pth,bufptr)   	win32_stat(pth,bufptr)
+#define rename(old,new)		win32_rename(old,new)
 #define setmode(fd,mode)	win32_setmode(fd,mode)
 #define lseek(fd,offset,orig)	win32_lseek(fd,offset,orig)
 #define tell(fd)		win32_tell(fd)
@@ -169,32 +216,74 @@ EXT PWIN32_IOSUBSYSTEM	GetIOSubSystem(void);
 #define eof(fd)			win32_eof(fd)
 #define read(fd,b,s)		win32_read(fd,b,s)
 #define write(fd,b,s)		win32_write(fd,b,s)
-#define _open_osfhandle		stolen_open_osfhandle
-#define _get_osfhandle		stolen_get_osfhandle
+#define _open_osfhandle		win32_open_osfhandle
+#define _get_osfhandle		win32_get_osfhandle
 #define spawnvp			win32_spawnvp
 #define mkdir			win32_mkdir
 #define rmdir			win32_rmdir
 #define chdir			win32_chdir
 #define flock(fd,o)		win32_flock(fd,o)
+#define execv			win32_execv
 #define execvp			win32_execvp
 #define perror			win32_perror
 #define setbuf			win32_setbuf
 #define setvbuf			win32_setvbuf
+#undef flushall
 #define flushall		win32_flushall
+#undef fcloseall
 #define fcloseall		win32_fcloseall
 #define fgets			win32_fgets
 #define gets			win32_gets
 #define fgetc			win32_fgetc
+#undef putc
 #define putc			win32_putc
 #define puts			win32_puts
+#undef getchar
 #define getchar			win32_getchar
+#undef putchar
 #define putchar			win32_putchar
-#define fscanf			(GetIOSubSystem()->pfnfscanf)
-#define scanf			(GetIOSubSystem()->pfnscanf)
+
+#if !defined(MYMALLOC) || !defined(PERL_CORE)
+#undef malloc
+#undef calloc
+#undef realloc
+#undef free
 #define malloc			win32_malloc
 #define calloc			win32_calloc
 #define realloc			win32_realloc
 #define free			win32_free
-#endif /* WIN32IO_IS_STDIO */
+#endif
 
+#define pipe(fd)		win32_pipe((fd), 512, O_BINARY)
+#define pause()			win32_sleep((32767L << 16) + 32767)
+#define sleep			win32_sleep
+#define times			win32_times
+#define alarm			win32_alarm
+#define ioctl			win32_ioctl
+#define utime			win32_utime
+#define wait			win32_wait
+#define waitpid			win32_waitpid
+#define kill			win32_kill
+
+#define opendir			win32_opendir
+#define readdir			win32_readdir
+#define telldir			win32_telldir
+#define seekdir			win32_seekdir
+#define rewinddir		win32_rewinddir
+#define closedir		win32_closedir
+
+#ifdef HAVE_DES_FCRYPT
+#undef crypt
+#define crypt			win32_crypt
+#endif
+
+#ifndef USE_WIN32_RTL_ENV
+#undef getenv
+#define getenv win32_getenv
+#undef putenv
+#define putenv win32_putenv
+#endif
+
+#endif /* WIN32IO_IS_STDIO */
 #endif /* WIN32IOP_H */
+

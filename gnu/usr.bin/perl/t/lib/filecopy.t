@@ -13,6 +13,7 @@ use File::Copy;
 
 # First we create a file
 open(F, ">file-$$") or die;
+binmode F; # for DOSISH platforms, because test 3 copies to stdout
 print F "ok 3\n";
 close F;
 
@@ -28,6 +29,7 @@ print "ok 1\n";
 print "not " unless $foo eq "ok 3\n";
 print "ok 2\n";
 
+binmode STDOUT unless $^O eq 'VMS';			# Copy::copy works in binary mode
 copy "copy-$$", \*STDOUT;
 unlink "copy-$$" or die "unlink: $!";
 

@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq7 - Perl Language Issues ($Revision: 1.18 $, $Date: 1997/04/24 22:44:14 $)
+perlfaq7 - Perl Language Issues ($Revision: 1.24 $, $Date: 1999/01/08 05:32:11 $)
 
 =head1 DESCRIPTION
 
@@ -9,9 +9,14 @@ clearly fit into any of the other sections.
 
 =head2 Can I get a BNF/yacc/RE for the Perl language?
 
-No, in the words of Chaim Frenkel: "Perl's grammar can not be reduced
-to BNF.  The work of parsing perl is distributed between yacc, the
-lexer, smoke and mirrors."
+There is no BNF, but you can paw your way through the yacc grammar in
+perly.y in the source distribution if you're particularly brave.  The
+grammar relies on very smart tokenizing code, so be prepared to
+venture into toke.c as well.
+
+In the words of Chaim Frenkel: "Perl's grammar can not be reduced to BNF.
+The work of parsing perl is distributed between yacc, the lexer, smoke
+and mirrors."
 
 =head2 What are all these $@%* punctuation signs, and how do I know when to use them?
 
@@ -133,6 +138,12 @@ binds more tightly even than unary minus, making C<-2**2> product a
 negative not a positive four.  It is also right-associating, meaning
 that C<2**3**2> is two raised to the ninth power, not eight squared.
 
+Although it has the same precedence as in C, Perl's C<?:> operator
+produces an lvalue.  This assigns $x to either $a or $b, depending
+on the trueness of $maybe:
+
+    ($maybe ? $a : $b) = $x;
+
 =head2 How do I declare/create a structure?
 
 In general, you don't "declare" a structure.  Just use a (probably
@@ -169,7 +180,7 @@ own module.  Make sure to change the names appropriately.
 
 	# if using RCS/CVS, this next line may be preferred,
 	# but beware two-digit versions.
-	$VERSION = do{my@r=q$Revision: 1.18 $=~/\d+/g;sprintf '%d.'.'%02d'x$#r,@r};
+	$VERSION = do{my@r=q$Revision: 1.24 $=~/\d+/g;sprintf '%d.'.'%02d'x$#r,@r};
 
 	@ISA         = qw(Exporter);
 	@EXPORT      = qw(&func1 &func2 &func3);
@@ -218,6 +229,10 @@ own module.  Make sure to change the names appropriately.
 
     1;            # modules must return true
 
+The h2xs program will create stubs for all the important stuff for you:
+
+  % h2xs -XA -n My::Module
+
 =head2 How do I create a class?
 
 See L<perltoot> for an introduction to classes and objects, as well as
@@ -262,7 +277,7 @@ Here's a classic function-generating function:
     }
 
     $add_sub = add_function_generator();
-    $sum = &$add_sub(4,5);                # $sum is 9 now.
+    $sum = $add_sub->(4,5);                # $sum is 9 now.
 
 The closure works as a I<function template> with some customization
 slots left out to be filled later.  The anonymous subroutine returned
@@ -302,7 +317,7 @@ caller's scope.
 
 Variable suicide is when you (temporarily or permanently) lose the
 value of a variable.  It is caused by scoping through my() and local()
-interacting with either closures or aliased foreach() interator
+interacting with either closures or aliased foreach() iterator
 variables and subroutine arguments.  It used to be easy to
 inadvertently lose a variable's value this way, but now it's much
 harder.  Take this code:
@@ -333,7 +348,7 @@ reference to an existing or anonymous variable or function:
 
     func( \$some_scalar );
 
-    func( \$some_array );
+    func( \@some_array  );
     func( [ 1 .. 10 ]   );
 
     func( \%some_hash   );
@@ -344,23 +359,44 @@ reference to an existing or anonymous variable or function:
 
 =item Passing Filehandles
 
-To create filehandles you can pass to subroutines, you can use C<*FH>
-or C<\*FH> notation ("typeglobs" - see L<perldata> for more information),
-or create filehandles dynamically using the old FileHandle or the new
-IO::File modules, both part of the standard Perl distribution.
+To pass filehandles to subroutines, use the C<*FH> or C<\*FH> notations.
+These are "typeglobs" - see L<perldata/"Typeglobs and Filehandles">
+and especially L<perlsub/"Pass by Reference"> for more information.
 
-    use Fcntl;
-    use IO::File;
-    my $fh = new IO::File $filename, O_WRONLY|O_APPEND;
-		or die "Can't append to $filename: $!";
-    func($fh);
+Here's an excerpt:
+
+If you're passing around filehandles, you could usually just use the bare
+typeglob, like *STDOUT, but typeglobs references would be better because
+they'll still work properly under C<use strict 'refs'>.  For example:
+
+    splutter(\*STDOUT);
+    sub splutter {
+        my $fh = shift;
+        print $fh "her um well a hmmm\n";
+    }
+
+    $rec = get_rec(\*STDIN);
+    sub get_rec {
+        my $fh = shift;
+        return scalar <$fh>;
+    }
+
+If you're planning on generating new filehandles, you could do this:
+
+    sub openit {
+        my $name = shift;
+        local *FH;
+        return open (FH, $path) ? *FH : undef;
+    }
+    $fh = openit('< /etc/motd');
+    print <$fh>;
 
 =item Passing Regexps
 
 To pass regexps around, you'll need to either use one of the highly
 experimental regular expression modules from CPAN (Nick Ing-Simmons's
 Regexp or Ilya Zakharevich's Devel::Regexp), pass around strings
-and use an exception-trapping eval, or else be be very, very clever.
+and use an exception-trapping eval, or else be very, very clever.
 Here's an example of how to pass in a string to be regexp compared:
 
     sub compare($$) {
@@ -400,7 +436,7 @@ To pass an object method into a subroutine, you can do this:
         }
     }
 
-or you can use a closure to bundle up the object and its method call
+Or you can use a closure to bundle up the object and its method call
 and arguments:
 
     my $whatnot =  sub { $some_obj->obfuscate(@args) };
@@ -452,6 +488,8 @@ could conceivably have several packages in that same file all
 accessing the same private variable, but another file with the same
 package couldn't get to it.
 
+See L<perlsub/"Persistent Private Variables"> for details.
+
 =head2 What's the difference between dynamic and lexical (static) scoping?  Between local() and my()?
 
 C<local($x)> saves away the old value of the global variable C<$x>,
@@ -495,7 +533,8 @@ In summary, local() doesn't make what you think of as private, local
 variables.  It gives a global variable a temporary value.  my() is
 what you're looking for if you want private variables.
 
-See also L<perlsub>, which explains this all in more detail.
+See L<perlsub/"Private Variables via my()"> and L<perlsub/"Temporary
+Values via local()"> for excruciating details.
 
 =head2 How can I access a dynamic variable while a similarly named lexical is in scope?
 
@@ -528,16 +567,16 @@ However, dynamic variables (aka global, local, or package variables)
 are effectively shallowly bound.  Consider this just one more reason
 not to use them.  See the answer to L<"What's a closure?">.
 
-=head2 Why doesn't "local($foo) = <FILE>;" work right?
+=head2 Why doesn't "my($foo) = E<lt>FILEE<gt>;" work right?
 
-C<local()> gives list context to the right hand side of C<=>.  The
-E<lt>FHE<gt> read operation, like so many of Perl's functions and
-operators, can tell which context it was called in and behaves
-appropriately.  In general, the scalar() function can help.  This
-function does nothing to the data itself (contrary to popular myth)
-but rather tells its argument to behave in whatever its scalar fashion
-is.  If that function doesn't have a defined scalar behavior, this of
-course doesn't help you (such as with sort()).
+C<my()> and C<local()> give list context to the right hand side
+of C<=>.  The E<lt>FHE<gt> read operation, like so many of Perl's
+functions and operators, can tell which context it was called in and
+behaves appropriately.  In general, the scalar() function can help.
+This function does nothing to the data itself (contrary to popular myth)
+but rather tells its argument to behave in whatever its scalar fashion is.
+If that function doesn't have a defined scalar behavior, this of course
+doesn't help you (such as with sort()).
 
 To enforce scalar context in this particular case, however, you need
 merely omit the parentheses:
@@ -576,7 +615,7 @@ the function doesn't get an empty @_, it gets yours!  While not
 strictly speaking a bug (it's documented that way in L<perlsub>), it
 would be hard to consider this a feature in most cases.
 
-When you call your function as C<&foo()>, then you do get a new @_,
+When you call your function as C<&foo()>, then you I<do> get a new @_,
 but prototyping is still circumvented.
 
 Normally, you want to call a function using C<foo()>.  You may only
@@ -595,12 +634,21 @@ regexp matching, overloaded comparisons, ...).  Larry couldn't decide
 how best to do this, so he left it out, even though it's been on the
 wish list since perl1.
 
-Here's a simple example of a switch based on pattern matching.  We'll
-do a multi-way conditional based on the type of reference stored in
-$whatchamacallit:
+The general answer is to write a construct like this:
 
-    SWITCH:
-      for (ref $whatchamacallit) {
+    for ($variable_to_test) {
+	if    (/pat1/)  { }     # do something
+	elsif (/pat2/)  { }     # do something else
+	elsif (/pat3/)  { }     # do something else
+	else            { }     # default
+    } 
+
+Here's a simple example of a switch based on pattern matching, this
+time lined up in a way to make it look more like a switch statement.
+We'll do a multi-way conditional based on the type of reference stored
+in $whatchamacallit:
+
+    SWITCH: for (ref $whatchamacallit) {
 
 	/^$/		&& die "not a reference";
 
@@ -630,6 +678,41 @@ $whatchamacallit:
 
     }
 
+See C<perlsyn/"Basic BLOCKs and Switch Statements"> for many other 
+examples in this style.
+
+Sometimes you should change the positions of the constant and the variable.
+For example, let's say you wanted to test which of many answers you were
+given, but in a case-insensitive way that also allows abbreviations.
+You can use the following technique if the strings all start with
+different characters, or if you want to arrange the matches so that
+one takes precedence over another, as C<"SEND"> has precedence over
+C<"STOP"> here:
+
+    chomp($answer = <>);
+    if    ("SEND"  =~ /^\Q$answer/i) { print "Action is send\n"  }
+    elsif ("STOP"  =~ /^\Q$answer/i) { print "Action is stop\n"  }
+    elsif ("ABORT" =~ /^\Q$answer/i) { print "Action is abort\n" }
+    elsif ("LIST"  =~ /^\Q$answer/i) { print "Action is list\n"  }
+    elsif ("EDIT"  =~ /^\Q$answer/i) { print "Action is edit\n"  }
+
+A totally different approach is to create a hash of function references.  
+
+    my %commands = (
+        "happy" => \&joy,
+        "sad",  => \&sullen,
+        "done"  => sub { die "See ya!" },
+        "mad"   => \&angry,
+    );
+
+    print "How are you? ";
+    chomp($string = <STDIN>);
+    if ($commands{$string}) {
+        $commands{$string}->();
+    } else {
+        print "No such command: $string\n";
+    } 
+
 =head2 How can I catch accesses to undefined variables/functions/methods?
 
 The AUTOLOAD method, discussed in L<perlsub/"Autoloading"> and
@@ -642,7 +725,7 @@ C<__WARN__> like this:
 
     $SIG{__WARN__} = sub {
 
-	for ( $_[0] ) {
+	for ( $_[0] ) {		# voici un switch statement 
 
 	    /Use of uninitialized value/  && do {
 		# promote warning to a fatal
@@ -669,22 +752,25 @@ before Perl has seen that such a package exists.  It's wisest to make
 sure your packages are all defined before you start using them, which
 will be taken care of if you use the C<use> statement instead of
 C<require>.  If not, make sure to use arrow notation (eg,
-C<Guru->find("Samy")>) instead.  Object notation is explained in
+C<Guru-E<gt>find("Samy")>) instead.  Object notation is explained in
 L<perlobj>.
+
+Make sure to read about creating modules in L<perlmod> and
+the perils of indirect objects in L<perlobj/"WARNING">.
 
 =head2 How can I find out my current package?
 
 If you're just a random program, you can do this to find
 out what the currently compiled package is:
 
-    my $packname = ref bless [];
+    my $packname = __PACKAGE__;
 
 But if you're a method and you want to print an error message
 that includes the kind of object you were called on (which is
 not necessarily the same as the one in which you were compiled):
 
     sub amethod {
-	my $self = shift;
+	my $self  = shift;
 	my $class = ref($self) || $self;
 	warn "called me from a $class object";
     }
@@ -711,7 +797,50 @@ Use embedded POD to discard it:
 
     =cut
 
+This can't go just anywhere.  You have to put a pod directive where
+the parser is expecting a new statement, not just in the middle
+of an expression or some other arbitrary yacc grammar production.
+
+=head2 How do I clear a package?
+
+Use this code, provided by Mark-Jason Dominus:
+
+    sub scrub_package {
+	no strict 'refs';
+	my $pack = shift;
+	die "Shouldn't delete main package" 
+	    if $pack eq "" || $pack eq "main";
+	my $stash = *{$pack . '::'}{HASH};
+	my $name;
+	foreach $name (keys %$stash) {
+	    my $fullname = $pack . '::' . $name;
+	    # Get rid of everything with that name.
+	    undef $$fullname;
+	    undef @$fullname;
+	    undef %$fullname;
+	    undef &$fullname;
+	    undef *$fullname;
+	}
+    }
+
+Or, if you're using a recent release of Perl, you can 
+just use the Symbol::delete_package() function instead.
+
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997 Tom Christiansen and Nathan Torkington.
-All rights reserved.  See L<perlfaq> for distribution information.
+Copyright (c) 1997-1999 Tom Christiansen and Nathan Torkington.
+All rights reserved.
+
+When included as part of the Standard Version of Perl, or as part of
+its complete documentation whether printed or otherwise, this work
+may be distributed only under the terms of Perl's Artistic Licence.
+Any distribution of this file or derivatives thereof I<outside>
+of that package require that special arrangements be made with
+copyright holder.
+
+Irrespective of its distribution, all code examples in this file
+are hereby placed into the public domain.  You are permitted and
+encouraged to use this code in your own programs for fun
+or for profit as you see fit.  A simple comment in the code giving
+credit would be courteous but is not required.
+

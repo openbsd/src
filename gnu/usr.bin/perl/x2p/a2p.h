@@ -9,6 +9,11 @@
  */
 
 #define VOIDUSED 1
+
+#ifdef WIN32
+#define _INC_WIN32_PERL5	/* kludge around win32 stdio layer */
+#endif
+
 #ifdef VMS
 #  include "config.h"
 #else
@@ -17,6 +22,26 @@
 
 #if defined(__STDC__) || defined(vax11c) || defined(_AIX) || defined(__stdc__) || defined(__cplusplus)
 # define STANDARD_C 1
+#endif
+
+#ifdef WIN32
+#undef USE_STDIO_PTR		/* XXX fast gets won't work, must investigate */
+#  ifndef STANDARD_C
+#    define STANDARD_C
+#  endif
+#  if defined(__BORLANDC__)
+#    pragma warn -ccc
+#    pragma warn -rch
+#    pragma warn -sig
+#    pragma warn -pia
+#    pragma warn -par
+#    pragma warn -aus
+#    pragma warn -use
+#    pragma warn -csu
+#    pragma warn -pro
+#  elif defined(_MSC_VER)
+#  elif defined(__MINGW32__)
+#  endif
 #endif
 
 /* Use all the "standard" definitions? */
@@ -63,10 +88,10 @@
 #   include <strings.h>
 #endif
 
-#ifndef HAS_BCOPY
+#if !defined(HAS_BCOPY) || defined(__cplusplus)
 #   define bcopy(s1,s2,l) memcpy(s2,s1,l)
 #endif
-#ifndef HAS_BZERO
+#if !defined(HAS_BZERO) || defined(__cplusplus)
 #   define bzero(s,l) memset(s,0,l)
 #endif
 
@@ -387,6 +412,10 @@ EXT int debug INIT(0);
 EXT int dlevel INIT(0);
 #define YYDEBUG 1
 extern int yydebug;
+#else
+# ifndef YYDEBUG
+#  define YYDEBUG 0
+# endif
 #endif
 
 EXT STR *freestrroot INIT(Nullstr);

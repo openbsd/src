@@ -1,12 +1,12 @@
 #!./perl
 #
-# $Id: soundex.t,v 1.2 1997/11/30 08:05:07 millert Exp $
+# $Id: soundex.t,v 1.3 1999/04/29 22:52:33 millert Exp $
 #
 # test module for soundex.pl
 #
 # $Log: soundex.t,v $
-# Revision 1.2  1997/11/30 08:05:07  millert
-# perl 5.004_04
+# Revision 1.3  1999/04/29 22:52:33  millert
+# perl5.005_03 (stock)
 #
 # Revision 1.2  1994/03/24  00:30:27  mike
 # Subtle bug (any excuse :-) spotted by Rich Pinder <rpinder@hsc.usc.edu>

@@ -21,16 +21,16 @@
 #define HAS_UTIME		/**/
 
 /* HAS_GROUP
- *	This symbol, if defined, indicates that the getgrnam(),
- *	getgrgid(), and getgrent() routines are available to 
- *	get group entries.
+ *	This symbol, if defined, indicates that the getgrnam() and
+ *	getgrgid() routines are available to get group entries.
+ *	The getgrent() has a separate definition, HAS_GETGRENT.
  */
 /*#define HAS_GROUP		/**/
 
 /* HAS_PASSWD
- *	This symbol, if defined, indicates that the getpwnam(),
- *	getpwuid(), and getpwent() routines are available to 
- *	get password entries.
+ *	This symbol, if defined, indicates that the getpwnam() and
+ *	getpwuid() routines are available to get password entries.
+ *	The getpwent() has a separate definition, HAS_GETPWENT.
  */
 /*#define HAS_PASSWD		/**/
 
@@ -59,6 +59,14 @@
  *	of bytes occurs on read or write operations.
  */
 #undef USEMYBINMODE
+
+/* Stat_t:
+ *	This symbol holds the type used to declare buffers for information
+ *	returned by stat().  It's usually just struct stat.  It may be necessary
+ *	to include <sys/stat.h> and <sys/types.h> to get any typedef'ed
+ *	information.
+ */
+#define Stat_t struct stat
 
 /* USE_STAT_RDEV:
 *	This symbol is defined if this system has a stat structure declaring
@@ -98,9 +106,9 @@
 #define ABORT() kill(getpid(),SIGABRT);
 
 #define BIT_BUCKET "/dev/null"
-#define PERL_SYS_INIT(c,v)
+#define PERL_SYS_INIT(c,v)	MALLOC_INIT
 #define dXSUB_SYS
-#define PERL_SYS_TERM()
+#define PERL_SYS_TERM()		MALLOC_TERM
 
 /*
  * fwrite1() should be a routine with the same calling sequence as fwrite(),

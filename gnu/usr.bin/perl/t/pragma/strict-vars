@@ -40,7 +40,7 @@ EXPECT
 use strict ;
 $fred ;
 EXPECT
-Global symbol "fred" requires explicit package name at - line 4.
+Global symbol "$fred" requires explicit package name at - line 4.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -48,7 +48,7 @@ Execution of - aborted due to compilation errors.
 use strict 'vars' ;
 $fred ;
 EXPECT
-Global symbol "fred" requires explicit package name at - line 4.
+Global symbol "$fred" requires explicit package name at - line 4.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -56,7 +56,7 @@ Execution of - aborted due to compilation errors.
 use strict 'vars' ;
 local $fred ;
 EXPECT
-Global symbol "fred" requires explicit package name at - line 4.
+Global symbol "$fred" requires explicit package name at - line 4.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -69,7 +69,7 @@ use strict 'vars' ;
 $joe = 1 ;
 EXPECT
 Variable "$joe" is not imported at - line 8.
-Global symbol "joe" requires explicit package name at - line 8.
+Global symbol "$joe" requires explicit package name at - line 8.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -81,7 +81,7 @@ no strict;
 }
 $joe = 1 ;
 EXPECT
-Global symbol "joe" requires explicit package name at - line 6.
+Global symbol "$joe" requires explicit package name at - line 6.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -114,7 +114,7 @@ $joe = 1 ;
 require "./abc";
 EXPECT
 Variable "$joe" is not imported at ./abc line 2.
-Global symbol "joe" requires explicit package name at ./abc line 2.
+Global symbol "$joe" requires explicit package name at ./abc line 2.
 Compilation failed in require at - line 2.
 ########
 
@@ -127,7 +127,7 @@ $joe = 1 ;
 use abc;
 EXPECT
 Variable "$joe" is not imported at abc.pm line 2.
-Global symbol "joe" requires explicit package name at abc.pm line 2.
+Global symbol "$joe" requires explicit package name at abc.pm line 2.
 Compilation failed in require at - line 2.
 BEGIN failed--compilation aborted at - line 2.
 ########
@@ -152,7 +152,7 @@ eval {
 print STDERR $@;
 $joe = 1 ;
 EXPECT
-Global symbol "joe" requires explicit package name at - line 6.
+Global symbol "$joe" requires explicit package name at - line 6.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -164,7 +164,7 @@ eval {
 print STDERR $@;
 $joe = 1 ;
 EXPECT
-Global symbol "joe" requires explicit package name at - line 5.
+Global symbol "$joe" requires explicit package name at - line 5.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -178,7 +178,7 @@ print STDERR $@;
 $joe = 1 ;
 EXPECT
 Variable "$joe" is not imported at - line 9.
-Global symbol "joe" requires explicit package name at - line 9.
+Global symbol "$joe" requires explicit package name at - line 9.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -199,7 +199,7 @@ eval q[
     $joe = 1 ;
 ]; print STDERR $@;
 EXPECT
-Global symbol "joe" requires explicit package name at (eval 1) line 3.
+Global symbol "$joe" requires explicit package name at (eval 1) line 3.
 ########
 
 # Check scope of pragma with eval
@@ -208,7 +208,7 @@ eval '
     $joe = 1 ;
 '; print STDERR $@ ;
 EXPECT
-Global symbol "joe" requires explicit package name at (eval 1) line 2.
+Global symbol "$joe" requires explicit package name at (eval 1) line 2.
 ########
 
 # Check scope of pragma with eval
@@ -219,5 +219,5 @@ eval '
 '; print STDERR $@;
 $joe = 1 ;
 EXPECT
-Global symbol "joe" requires explicit package name at - line 8.
+Global symbol "$joe" requires explicit package name at - line 8.
 Execution of - aborted due to compilation errors.

@@ -10,11 +10,13 @@ BEGIN {
     }
 }
 
-use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read write);
+use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read strftime write);
 use strict subs;
 
 $| = 1;
-print "1..17\n";
+print "1..18\n";
+
+$Is_W32 = $^O eq 'MSWin32';
 
 $testfd = open("TEST", O_RDONLY, 0) and print "ok 1\n";
 read($testfd, $buffer, 9) if $testfd > 2;
@@ -31,6 +33,12 @@ close $writer;
 print <$reader>;
 close $reader;
 
+if ($Is_W32) {
+    for (6..11) {
+	print "ok $_ # skipped, no sigaction support on win32\n";
+    }
+}
+else {
 $sigset = new POSIX::SigSet 1,3;
 delset $sigset 1;
 if (!ismember $sigset 1) { print "ok 6\n" }
@@ -52,6 +60,7 @@ sub SigHUP {
 
 sub SigINT {
     print "ok 10\n";
+}
 }
 
 print &_POSIX_OPEN_MAX > $fds[1] ? "ok 12\n" : "not ok 12\n";
@@ -80,6 +89,13 @@ if ($Config{d_strtoul}) {
 # Pick up whether we're really able to dynamically load everything.
 print &POSIX::acos(1.0) == 0.0 ? "ok 17\n" : "not ok 17\n";
 
+# This can coredump if struct tm has a timezone field and we
+# didn't detect it.  If this fails, try adding
+# -DSTRUCT_TM_HASZONE to your cflags when compiling ext/POSIX/POSIX.c.
+# See ext/POSIX/hints/sunos_4.pl and ext/POSIX/hints/linux.pl 
+print POSIX::strftime("ok 18 # %H:%M, on %D\n", localtime());
+
 $| = 0;
-print '@#!*$@(!@#$';
+# The following line assumes buffered output, which may be not true with EMX:
+print '@#!*$@(!@#$' unless ($^O eq 'os2' || $^O eq 'uwin' || $^O eq 'os390');
 _exit(0);

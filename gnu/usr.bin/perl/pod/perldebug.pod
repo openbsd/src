@@ -63,7 +63,7 @@ it prints out the description for just that command.  The special
 argument of C<h h> produces a more compact help listing, designed to fit
 together on one screen.
 
-If the output the C<h> command (or any command, for that matter) scrolls
+If the output of the C<h> command (or any command, for that matter) scrolls
 past your screen, either precede the command with a leading pipe symbol so
 it's run through your pager, as in
 
@@ -281,7 +281,7 @@ The sequence of steps taken by the debugger is
   4. prompt user if at a breakpoint or in single-step
   5. evaluate line
 
-For example, this will print out C<$foo> every time line
+For example, this will print out $foo every time line
 53 is passed:
 
     a 53 print "DB FOUND $foo\n"
@@ -289,6 +289,14 @@ For example, this will print out C<$foo> every time line
 =item A
 
 Delete all installed actions.
+
+=item W [expr]
+
+Add a global watch-expression.
+
+=item W
+
+Delete all watch-expressions.
 
 =item O [opt[=val]] [opt"val"] [opt?]...
 
@@ -391,6 +399,10 @@ Dump arrays holding debugged files.
 =item C<DumpPackages>
 
 Dump symbol tables of packages.
+
+=item C<DumpReused>
+
+Dump contents of "reused" addresses.
 
 =item C<quote>, C<HighBit>, C<undefPrint>
 
@@ -655,8 +667,8 @@ C<main::pests> was called in a scalar context, also from I<camel_flea>,
 but from line 4.
 
 Note that if you execute C<T> command from inside an active C<use>
-statement, the backtrace will contain both C<L<perlfunc/require>>
-frame and an C<L<perlfunc/eval EXPR>>) frame.
+statement, the backtrace will contain both C<require>
+frame and an C<eval>) frame.
 
 =item Listing
 
@@ -856,7 +868,7 @@ compile subname> for the same purpose.
 
 =head2 Debugger Customization
 
-Most probably you not want to modify the debugger, it contains enough
+Most probably you do not want to modify the debugger, it contains enough
 hooks to satisfy most needs.  You may change the behaviour of debugger
 from the debugger itself, using C<O>ptions, from the command line via
 C<PERLDB_OPTS> environment variable, and from I<customization files>.
@@ -954,14 +966,14 @@ application.
 
 =item *
 
-The array C<@{"_<$filename"}> is the line-by-line contents of
+The array C<@{"_E<lt>$filename"}> is the line-by-line contents of
 $filename for all the compiled files.  Same for C<eval>ed strings which
 contain subroutines, or which are currently executed.  The C<$filename>
 for C<eval>ed strings looks like C<(eval 34)>.
 
 =item *
 
-The hash C<%{"_<$filename"}> contains breakpoints and action (it is
+The hash C<%{"_E<lt>$filename"}> contains breakpoints and action (it is
 keyed by line number), and individual entries are settable (as opposed
 to the whole hash).  Only true/false is important to Perl, though the
 values used by F<perl5db.pl> have the form
@@ -969,22 +981,22 @@ C<"$break_condition\0$action">.  Values are magical in numeric context:
 they are zeros if the line is not breakable.
 
 Same for evaluated strings which contain subroutines, or which are
-currently executed.  The C<$filename> for C<eval>ed strings looks like
+currently executed.  The $filename for C<eval>ed strings looks like
 C<(eval 34)>.
 
 =item *
 
-The scalar C<${"_<$filename"}> contains C<"_<$filename">.  Same for
+The scalar C<${"_E<lt>$filename"}> contains C<"_E<lt>$filename">.  Same for
 evaluated strings which contain subroutines, or which are currently
-executed.  The C<$filename> for C<eval>ed strings looks like C<(eval
+executed.  The $filename for C<eval>ed strings looks like C<(eval
 34)>.
 
 =item *
 
 After each C<require>d file is compiled, but before it is executed,
-C<DB::postponed(*{"_<$filename"})> is called (if subroutine
+C<DB::postponed(*{"_E<lt>$filename"})> is called (if subroutine
 C<DB::postponed> exists).  Here the $filename is the expanded name of
-the C<require>d file (as found in values of C<%INC>).
+the C<require>d file (as found in values of %INC).
 
 =item *
 
@@ -1071,7 +1083,7 @@ file.
 Some functions are provided to simplify customization.  See L<"Debugger
 Customization"> for description of C<DB::parse_options(string)>.  The
 function C<DB::dump_trace(skip[, count])> skips the specified number
-of frames, and returns an array containing info about the caller
+of frames, and returns a list containing info about the caller
 frames (all if C<count> is missing).  Each entry is a hash with keys
 C<context> (C<$> or C<@>), C<sub> (subroutine name, or info about
 eval), C<args> (C<undef> or a reference to an array), C<file>, and
@@ -1085,10 +1097,565 @@ convenient as arguments to C<E<lt>>, C<E<lt>E<lt>> commands.
 
 You did try the B<-w> switch, didn't you?
 
-=head1 BUGS
+=head2 BUGS
 
 You cannot get the stack frame information or otherwise debug functions
 that were not compiled by Perl, such as C or C++ extensions.
 
 If you alter your @_ arguments in a subroutine (such as with B<shift>
 or B<pop>, the stack backtrace will not show the original values.
+
+=head1 Debugging Perl memory usage
+
+Perl is I<very> frivolous with memory.  There is a saying that to
+estimate memory usage of Perl, assume a reasonable algorithm of
+allocation, and multiply your estimates by 10.  This is not absolutely
+true, but may give you a good grasp of what happens.
+
+Say, an integer cannot take less than 20 bytes of memory, a float
+cannot take less than 24 bytes, a string cannot take less than 32
+bytes (all these examples assume 32-bit architectures, the result are
+much worse on 64-bit architectures).  If a variable is accessed in two
+of three different ways (which require an integer, a float, or a
+string), the memory footprint may increase by another 20 bytes.  A
+sloppy malloc() implementation will make these numbers yet more.
+
+On the opposite end of the scale, a declaration like
+
+  sub foo;
+
+may take (on some versions of perl) up to 500 bytes of memory.
+
+Off-the-cuff anecdotal estimates of a code bloat give a factor around
+8.  This means that the compiled form of reasonable (commented
+indented etc.)  code will take approximately 8 times more than the
+disk space the code takes.
+
+There are two Perl-specific ways to analyze the memory usage:
+$ENV{PERL_DEBUG_MSTATS} and B<-DL> switch.  First one is available
+only if perl is compiled with Perl's malloc(), the second one only if
+Perl compiled with C<-DDEBUGGING> (as with giving C<-D optimise=-g>
+option to F<Configure>).
+
+=head2 Using C<$ENV{PERL_DEBUG_MSTATS}>
+
+If your perl is using Perl's malloc(), and compiled with correct
+switches (this is the default), then it will print memory usage
+statistics after compiling your code (if C<$ENV{PERL_DEBUG_MSTATS}> >
+1), and before termination of the script (if
+C<$ENV{PERL_DEBUG_MSTATS}> >= 1).  The report format is similar to one
+in the following example:
+
+  env PERL_DEBUG_MSTATS=2 perl -e "require Carp"
+  Memory allocation statistics after compilation: (buckets 4(4)..8188(8192)
+     14216 free:   130   117    28     7     9   0   2     2   1 0 0
+		437    61    36     0     5
+     60924 used:   125   137   161    55     7   8   6    16   2 0 1
+		 74   109   304    84    20
+  Total sbrk(): 77824/21:119. Odd ends: pad+heads+chain+tail: 0+636+0+2048.
+  Memory allocation statistics after execution:   (buckets 4(4)..8188(8192)
+     30888 free:   245    78    85    13     6   2   1     3   2 0 1
+		315   162    39    42    11
+    175816 used:   265   176  1112   111    26  22  11    27   2 1 1
+		196   178  1066   798    39
+  Total sbrk(): 215040/47:145. Odd ends: pad+heads+chain+tail: 0+2192+0+6144.
+
+It is possible to ask for such a statistic at arbitrary moment by
+using Devel::Peek::mstats() (module Devel::Peek is available on CPAN).
+
+Here is the explanation of different parts of the format:
+
+=over
+
+=item C<buckets SMALLEST(APPROX)..GREATEST(APPROX)>
+
+Perl's malloc() uses bucketed allocations.  Every request is rounded
+up to the closest bucket size available, and a bucket of these size is
+taken from the pool of the buckets of this size.
+
+The above line describes limits of buckets currently in use.  Each
+bucket has two sizes: memory footprint, and the maximal size of user
+data which may be put into this bucket.  Say, in the above example the
+smallest bucket is both sizes 4.  The biggest bucket has usable size
+8188, and the memory footprint 8192.  
+
+With debugging Perl some buckets may have negative usable size.  This
+means that these buckets cannot (and will not) be used.  For greater
+buckets the memory footprint may be one page greater than a power of
+2.  In such a case the corresponding power of two is printed instead
+in the C<APPROX> field above.
+
+=item Free/Used
+
+The following 1 or 2 rows of numbers correspond to the number of
+buckets of each size between C<SMALLEST> and C<GREATEST>.  In the
+first row the sizes (memory footprints) of buckets are powers of two
+(or possibly one page greater).  In the second row (if present) the
+memory footprints of the buckets are between memory footprints of two
+buckets "above".  
+
+Say, with the above example the memory footprints are (with current
+algorithm)
+
+     free:    8     16    32    64    128  256 512 1024 2048 4096 8192
+	   4     12    24    48    80
+
+With non-C<DEBUGGING> perl the buckets starting from C<128>-long ones
+have 4-byte overhead, thus 8192-long bucket may take up to
+8188-byte-long allocations.
+
+=item C<Total sbrk(): SBRKed/SBRKs:CONTINUOUS>
+
+The first two fields give the total amount of memory perl sbrk()ed,
+and number of sbrk()s used.  The third number is what perl thinks
+about continuity of returned chunks.  As far as this number is
+positive, malloc() will assume that it is probable that sbrk() will
+provide continuous memory.
+
+The amounts sbrk()ed by external libraries is not counted.
+
+=item C<pad: 0>
+
+The amount of sbrk()ed memory needed to keep buckets aligned.
+
+=item C<heads: 2192>
+
+While memory overhead of bigger buckets is kept inside the bucket, for
+smaller buckets it is kept in separate areas.  This field gives the
+total size of these areas.
+
+=item C<chain: 0>
+
+malloc() may want to subdivide a bigger bucket into smaller buckets.
+If only a part of the deceased-bucket is left non-subdivided, the rest
+is kept as an element of a linked list.  This field gives the total
+size of these chunks.
+
+=item C<tail: 6144>
+
+To minimize amount of sbrk()s malloc() asks for more memory.  This
+field gives the size of the yet-unused part, which is sbrk()ed, but
+never touched.
+
+=back
+
+=head2 Example of using B<-DL> switch
+
+Below we show how to analyse memory usage by 
+
+  do 'lib/auto/POSIX/autosplit.ix';
+
+The file in question contains a header and 146 lines similar to
+
+  sub getcwd ;
+
+B<Note:> I<the discussion below supposes 32-bit architecture.  In the
+newer versions of perl the memory usage of the constructs discussed
+here is much improved, but the story discussed below is a real-life
+story.  This story is very terse, and assumes more than cursory
+knowledge of Perl internals.>
+
+Here is the itemized list of Perl allocations performed during parsing
+of this file:
+
+ !!! "after" at test.pl line 3.
+    Id  subtot   4   8  12  16  20  24  28  32  36  40  48  56  64  72  80 80+
+  0 02   13752   .   .   .   . 294   .   .   .   .   .   .   .   .   .   .   4
+  0 54    5545   .   .   8 124  16   .   .   .   1   1   .   .   .   .   .   3
+  5 05      32   .   .   .   .   .   .   .   1   .   .   .   .   .   .   .   .
+  6 02    7152   .   .   .   .   .   .   .   .   .   . 149   .   .   .   .   .
+  7 02    3600   .   .   .   .   . 150   .   .   .   .   .   .   .   .   .   .
+  7 03      64   .  -1   .   1   .   .   2   .   .   .   .   .   .   .   .   .
+  7 04    7056   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   7
+  7 17   38404   .   .   .   .   .   .   .   1   .   . 442 149   .   . 147   .
+  9 03    2078  17 249  32   .   .   .   .   2   .   .   .   .   .   .   .   .
+
+
+To see this list insert two C<warn('!...')> statements around the call:
+
+  warn('!');
+  do 'lib/auto/POSIX/autosplit.ix';
+  warn('!!! "after"');
+
+and run it with B<-DL> option.  The first warn() will print memory
+allocation info before the parsing of the file, and will memorize the
+statistics at this point (we ignore what it prints). The second warn()
+will print increments w.r.t. this memorized statistics.  This is the
+above printout.
+
+Different I<Id>s on the left correspond to different subsystems of
+perl interpreter, they are just first argument given to perl memory
+allocation API New().  To find what C<9 03> means C<grep> the perl
+source for C<903>.  You will see that it is F<util.c>, function
+savepvn().  This function is used to store a copy of existing chunk of
+memory.  Using C debugger, one can see that it is called either
+directly from gv_init(), or via sv_magic(), and gv_init() is called
+from gv_fetchpv() - which is called from newSUB().
+
+B<Note:> to reach this place in debugger and skip all the calls to
+savepvn during the compilation of the main script, set a C breakpoint
+in Perl_warn(), C<continue> this point is reached, I<then> set
+breakpoint in Perl_savepvn().  Note that you may need to skip a
+handful of Perl_savepvn() which do not correspond to mass production
+of CVs (there are more C<903> allocations than 146 similar lines of
+F<lib/auto/POSIX/autosplit.ix>).  Note also that C<Perl_> prefixes are
+added by macroization code in perl header files to avoid conflicts
+with external libraries.
+
+Anyway, we see that C<903> ids correspond to creation of globs, twice
+per glob - for glob name, and glob stringification magic.
+
+Here are explanations for other I<Id>s above: 
+
+=over
+
+=item C<717> 
+
+is for creation of bigger C<XPV*> structures.  In the above case it
+creates 3 C<AV> per subroutine, one for a list of lexical variable
+names, one for a scratchpad (which contains lexical variables and
+C<targets>), and one for the array of scratchpads needed for
+recursion.  
+
+It also creates a C<GV> and a C<CV> per subroutine (all called from
+start_subparse()).
+
+=item C<002>
+
+Creates C array corresponding to the C<AV> of scratchpads, and the
+scratchpad itself (the first fake entry of this scratchpad is created
+though the subroutine itself is not defined yet).
+
+It also creates C arrays to keep data for the stash (this is one HV,
+but it grows, thus there are 4 big allocations: the big chunks are not
+freed, but are kept as additional arenas for C<SV> allocations).
+
+=item C<054>
+
+creates a C<HEK> for the name of the glob for the subroutine (this
+name is a key in a I<stash>).
+
+Big allocations with this I<Id> correspond to allocations of new
+arenas to keep C<HE>.
+
+=item C<602>
+
+creates a C<GP> for the glob for the subroutine.
+
+=item C<702>
+
+creates the C<MAGIC> for the glob for the subroutine.
+
+=item C<704>
+
+creates I<arenas> which keep SVs.
+
+=back
+
+=head2 B<-DL> details
+
+If Perl is run with B<-DL> option, then warn()s which start with `!'
+behave specially.  They print a list of I<categories> of memory
+allocations, and statistics of allocations of different sizes for
+these categories.
+
+If warn() string starts with
+
+=over
+
+=item C<!!!> 
+
+print changed categories only, print the differences in counts of allocations;
+
+=item C<!!> 
+
+print grown categories only; print the absolute values of counts, and totals;
+
+=item C<!>
+
+print nonempty categories, print the absolute values of counts and totals.
+
+=back
+
+=head2 Limitations of B<-DL> statistic
+
+If an extension or an external library does not use Perl API to
+allocate memory, these allocations are not counted.
+
+=head1 Debugging regular expressions
+
+There are two ways to enable debugging output for regular expressions.
+
+If your perl is compiled with C<-DDEBUGGING>, you may use the
+B<-Dr> flag on the command line.
+
+Otherwise, one can C<use re 'debug'>, which has effects both at
+compile time, and at run time (and is I<not> lexically scoped).
+
+=head2 Compile-time output
+
+The debugging output for the compile time looks like this:
+
+  compiling RE `[bc]d(ef*g)+h[ij]k$'
+  size 43 first at 1
+     1: ANYOF(11)
+    11: EXACT <d>(13)
+    13: CURLYX {1,32767}(27)
+    15:   OPEN1(17)
+    17:     EXACT <e>(19)
+    19:     STAR(22)
+    20:       EXACT <f>(0)
+    22:     EXACT <g>(24)
+    24:   CLOSE1(26)
+    26:   WHILEM(0)
+    27: NOTHING(28)
+    28: EXACT <h>(30)
+    30: ANYOF(40)
+    40: EXACT <k>(42)
+    42: EOL(43)
+    43: END(0)
+  anchored `de' at 1 floating `gh' at 3..2147483647 (checking floating)
+				    stclass `ANYOF' minlen 7
+
+The first line shows the pre-compiled form of the regexp, and the
+second shows the size of the compiled form (in arbitrary units,
+usually 4-byte words) and the label I<id> of the first node which
+does a match.
+
+The last line (split into two lines in the above) contains the optimizer
+info.  In the example shown, the optimizer found that the match 
+should contain a substring C<de> at the offset 1, and substring C<gh>
+at some offset between 3 and infinity.  Moreover, when checking for
+these substrings (to abandon impossible matches quickly) it will check
+for the substring C<gh> before checking for the substring C<de>.  The
+optimizer may also use the knowledge that the match starts (at the
+C<first> I<id>) with a character class, and the match cannot be
+shorter than 7 chars.
+
+The fields of interest which may appear in the last line are
+
+=over
+
+=item C<anchored> I<STRING> C<at> I<POS>
+
+=item C<floating> I<STRING> C<at> I<POS1..POS2>
+
+see above;
+
+=item C<matching floating/anchored>
+
+which substring to check first;
+
+=item C<minlen>
+
+the minimal length of the match;
+
+=item C<stclass> I<TYPE>
+
+The type of the first matching node.
+
+=item C<noscan>
+
+which advises to not scan for the found substrings;
+
+=item C<isall>
+
+which says that the optimizer info is in fact all that the regular
+expression contains (thus one does not need to enter the RE engine at
+all);
+
+=item C<GPOS>
+
+if the pattern contains C<\G>;
+
+=item C<plus> 
+
+if the pattern starts with a repeated char (as in C<x+y>);
+
+=item C<implicit>
+
+if the pattern starts with C<.*>;
+
+=item C<with eval> 
+
+if the pattern contain eval-groups (see L<perlre/(?{ code })>);
+
+=item C<anchored(TYPE)>
+
+if the pattern may
+match only at a handful of places  (with C<TYPE> being
+C<BOL>, C<MBOL>, or C<GPOS>, see the table below).
+
+=back
+
+If a substring is known to match at end-of-line only, it may be
+followed by C<$>, as in C<floating `k'$>.
+
+The optimizer-specific info is used to avoid entering (a slow) RE
+engine on strings which will definitely not match.  If C<isall> flag
+is set, a call to the RE engine may be avoided even when optimizer
+found an appropriate place for the match.
+
+The rest of the output contains the list of I<nodes> of the compiled
+form of the RE.  Each line has format 
+
+C<   >I<id>: I<TYPE> I<OPTIONAL-INFO> (I<next-id>)
+
+=head2 Types of nodes
+
+Here is the list of possible types with short descriptions:
+
+    # TYPE arg-description [num-args] [longjump-len] DESCRIPTION
+
+    # Exit points
+    END		no	End of program.
+    SUCCEED	no	Return from a subroutine, basically.
+
+    # Anchors:
+    BOL		no	Match "" at beginning of line.
+    MBOL	no	Same, assuming multiline.
+    SBOL	no	Same, assuming singleline.
+    EOS		no	Match "" at end of string.
+    EOL		no	Match "" at end of line.
+    MEOL	no	Same, assuming multiline.
+    SEOL	no	Same, assuming singleline.
+    BOUND	no	Match "" at any word boundary
+    BOUNDL	no	Match "" at any word boundary
+    NBOUND	no	Match "" at any word non-boundary
+    NBOUNDL	no	Match "" at any word non-boundary
+    GPOS	no	Matches where last m//g left off.
+
+    # [Special] alternatives
+    ANY		no	Match any one character (except newline).
+    SANY	no	Match any one character.
+    ANYOF	sv	Match character in (or not in) this class.
+    ALNUM	no	Match any alphanumeric character
+    ALNUML	no	Match any alphanumeric char in locale
+    NALNUM	no	Match any non-alphanumeric character
+    NALNUML	no	Match any non-alphanumeric char in locale
+    SPACE	no	Match any whitespace character
+    SPACEL	no	Match any whitespace char in locale
+    NSPACE	no	Match any non-whitespace character
+    NSPACEL	no	Match any non-whitespace char in locale
+    DIGIT	no	Match any numeric character
+    NDIGIT	no	Match any non-numeric character
+
+    # BRANCH	The set of branches constituting a single choice are hooked
+    #		together with their "next" pointers, since precedence prevents
+    #		anything being concatenated to any individual branch.  The
+    #		"next" pointer of the last BRANCH in a choice points to the
+    #		thing following the whole choice.  This is also where the
+    #		final "next" pointer of each individual branch points; each
+    #		branch starts with the operand node of a BRANCH node.
+    #
+    BRANCH	node	Match this alternative, or the next...
+
+    # BACK	Normal "next" pointers all implicitly point forward; BACK
+    #		exists to make loop structures possible.
+    # not used
+    BACK	no	Match "", "next" ptr points backward.
+
+    # Literals
+    EXACT	sv	Match this string (preceded by length).
+    EXACTF	sv	Match this string, folded (prec. by length).
+    EXACTFL	sv	Match this string, folded in locale (w/len).
+
+    # Do nothing
+    NOTHING	no	Match empty string.
+    # A variant of above which delimits a group, thus stops optimizations
+    TAIL	no	Match empty string. Can jump here from outside.
+
+    # STAR,PLUS	'?', and complex '*' and '+', are implemented as circular
+    #		BRANCH structures using BACK.  Simple cases (one character
+    #		per match) are implemented with STAR and PLUS for speed
+    #		and to minimize recursive plunges.
+    #
+    STAR	node	Match this (simple) thing 0 or more times.
+    PLUS	node	Match this (simple) thing 1 or more times.
+
+    CURLY	sv 2	Match this simple thing {n,m} times.
+    CURLYN	no 2	Match next-after-this simple thing 
+    #			{n,m} times, set parenths.
+    CURLYM	no 2	Match this medium-complex thing {n,m} times.
+    CURLYX	sv 2	Match this complex thing {n,m} times.
+
+    # This terminator creates a loop structure for CURLYX
+    WHILEM	no	Do curly processing and see if rest matches.
+
+    # OPEN,CLOSE,GROUPP	...are numbered at compile time.
+    OPEN	num 1	Mark this point in input as start of #n.
+    CLOSE	num 1	Analogous to OPEN.
+
+    REF		num 1	Match some already matched string
+    REFF	num 1	Match already matched string, folded
+    REFFL	num 1	Match already matched string, folded in loc.
+
+    # grouping assertions
+    IFMATCH	off 1 2	Succeeds if the following matches.
+    UNLESSM	off 1 2	Fails if the following matches.
+    SUSPEND	off 1 1	"Independent" sub-RE.
+    IFTHEN	off 1 1	Switch, should be preceeded by switcher .
+    GROUPP	num 1	Whether the group matched.
+
+    # Support for long RE
+    LONGJMP	off 1 1	Jump far away.
+    BRANCHJ	off 1 1	BRANCH with long offset.
+
+    # The heavy worker
+    EVAL	evl 1	Execute some Perl code.
+
+    # Modifiers
+    MINMOD	no	Next operator is not greedy.
+    LOGICAL	no	Next opcode should set the flag only.
+
+    # This is not used yet
+    RENUM	off 1 1	Group with independently numbered parens.
+
+    # This is not really a node, but an optimized away piece of a "long" node.
+    # To simplify debugging output, we mark it as if it were a node
+    OPTIMIZED	off	Placeholder for dump.
+
+=head2 Run-time output
+
+First of all, when doing a match, one may get no run-time output even
+if debugging is enabled.  this means that the RE engine was never
+entered, all of the job was done by the optimizer.
+
+If RE engine was entered, the output may look like this:
+
+  Matching `[bc]d(ef*g)+h[ij]k$' against `abcdefg__gh__'
+    Setting an EVAL scope, savestack=3
+     2 <ab> <cdefg__gh_>    |  1: ANYOF
+     3 <abc> <defg__gh_>    | 11: EXACT <d>
+     4 <abcd> <efg__gh_>    | 13: CURLYX {1,32767}
+     4 <abcd> <efg__gh_>    | 26:   WHILEM
+				0 out of 1..32767  cc=effff31c
+     4 <abcd> <efg__gh_>    | 15:     OPEN1
+     4 <abcd> <efg__gh_>    | 17:     EXACT <e>
+     5 <abcde> <fg__gh_>    | 19:     STAR
+			     EXACT <f> can match 1 times out of 32767...
+    Setting an EVAL scope, savestack=3
+     6 <bcdef> <g__gh__>    | 22:       EXACT <g>
+     7 <bcdefg> <__gh__>    | 24:       CLOSE1
+     7 <bcdefg> <__gh__>    | 26:       WHILEM
+				    1 out of 1..32767  cc=effff31c
+    Setting an EVAL scope, savestack=12
+     7 <bcdefg> <__gh__>    | 15:         OPEN1
+     7 <bcdefg> <__gh__>    | 17:         EXACT <e>
+       restoring \1 to 4(4)..7
+				    failed, try continuation...
+     7 <bcdefg> <__gh__>    | 27:         NOTHING
+     7 <bcdefg> <__gh__>    | 28:         EXACT <h>
+				    failed...
+				failed...
+
+The most significant information in the output is about the particular I<node>
+of the compiled RE which is currently being tested against the target string.
+The format of these lines is
+
+C<    >I<STRING-OFFSET> <I<PRE-STRING>> <I<POST-STRING>>   |I<ID>:  I<TYPE>
+
+The I<TYPE> info is indented with respect to the backtracking level.
+Other incidental information appears interspersed within.
+
+=cut

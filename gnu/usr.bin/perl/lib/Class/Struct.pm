@@ -40,6 +40,11 @@ sub printem {
         $self->[$index];
     }
 
+    sub FETCHSIZE {
+        my $self = shift;
+        return scalar(@$self);
+    }
+
     sub DESTROY { }
 }
 
@@ -180,7 +185,7 @@ sub struct {
             }
             elsif( defined $classes{$name} ){
                 if ( $CHECK_CLASS_MEMBERSHIP ) {
-                    $out .= "    croak '$name argument is wrong class' if \@_ && ! UNIVERSAL::isa(\$_[0], '$type');\n";
+                    $out .= "    croak '$name argument is wrong class' if \@_ && ! UNIVERSAL::isa(\$_[0], '$classes{$name}');\n";
                 }
             }
             $out .= "    croak 'Too many args to $name' if \@_ > 1;\n";

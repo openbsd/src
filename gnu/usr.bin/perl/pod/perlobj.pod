@@ -44,12 +44,28 @@ constructor:
     package Critter;
     sub new { bless {} }
 
-The C<{}> constructs a reference to an anonymous hash containing no
-key/value pairs.  The bless() takes that reference and tells the object
-it references that it's now a Critter, and returns the reference.
-This is for convenience, because the referenced object itself knows that
-it has been blessed, and the reference to it could have been returned
-directly, like this:
+That word C<new> isn't special.  You could have written
+a construct this way, too:
+
+    package Critter;
+    sub spawn { bless {} }
+
+In fact, this might even be preferable, because the C++ programmers won't
+be tricked into thinking that C<new> works in Perl as it does in C++.
+It doesn't.  We recommend that you name your constructors whatever
+makes sense in the context of the problem you're solving.  For example,
+constructors in the Tk extension to Perl are named after the widgets
+they create.
+
+One thing that's different about Perl constructors compared with those in
+C++ is that in Perl, they have to allocate their own memory.  (The other
+things is that they don't automatically call overridden base-class
+constructors.)  The C<{}> allocates an anonymous hash containing no
+key/value pairs, and returns it  The bless() takes that reference and
+tells the object it references that it's now a Critter, and returns
+the reference.  This is for convenience, because the referenced object
+itself knows that it has been blessed, and the reference to it could
+have been returned directly, like this:
 
     sub new {
 	my $self = {};
@@ -61,21 +77,21 @@ In fact, you often see such a thing in more complicated constructors
 that wish to call methods in the class as part of the construction:
 
     sub new {
-	my $self = {}
+	my $self = {};
 	bless $self;
 	$self->initialize();
 	return $self;
     }
 
 If you care about inheritance (and you should; see
-L<perlmod/"Modules: Creation, Use, and Abuse">),
+L<perlmodlib/"Modules: Creation, Use, and Abuse">),
 then you want to use the two-arg form of bless
 so that your constructors may be inherited:
 
     sub new {
 	my $class = shift;
 	my $self = {};
-	bless $self, $class
+	bless $self, $class;
 	$self->initialize();
 	return $self;
     }
@@ -89,7 +105,7 @@ object into:
 	my $this = shift;
 	my $class = ref($this) || $this;
 	my $self = {};
-	bless $self, $class
+	bless $self, $class;
 	$self->initialize();
 	return $self;
     }
@@ -103,7 +119,8 @@ A constructor may re-bless a referenced object currently belonging to
 another class, but then the new class is responsible for all cleanup
 later.  The previous blessing is forgotten, as an object may belong
 to only one class at a time.  (Although of course it's free to
-inherit methods from many classes.)
+inherit methods from many classes.)  If you find yourself having to 
+do this, the parent class is probably misbehaving, though.
 
 A clarification:  Perl objects are blessed.  References are not.  Objects
 know which package they belong to.  References do not.  The bless()
@@ -124,7 +141,7 @@ Unlike say C++, Perl doesn't provide any special syntax for class
 definitions.  You use a package as a class by putting method
 definitions into the class.
 
-There is a special array within each package called @ISA which says
+There is a special array within each package called @ISA, which says
 where else to look for a method if you can't find it in the current
 package.  This is how Perl implements inheritance.  Each element of the
 @ISA array is just the name of another package that happens to be a
@@ -132,33 +149,44 @@ class package.  The classes are searched (depth first) for missing
 methods in the order that they occur in @ISA.  The classes accessible
 through @ISA are known as base classes of the current class.
 
+All classes implicitly inherit from class C<UNIVERSAL> as their
+last base class.  Several commonly used methods are automatically
+supplied in the UNIVERSAL class; see L<"Default UNIVERSAL methods"> for
+more details.
+
 If a missing method is found in one of the base classes, it is cached
 in the current class for efficiency.  Changing @ISA or defining new
 subroutines invalidates the cache and causes Perl to do the lookup again.
 
-If a method isn't found, but an AUTOLOAD routine is found, then
-that is called on behalf of the missing method.
+If neither the current class, its named base classes, nor the UNIVERSAL
+class contains the requested method, these three places are searched
+all over again, this time looking for a method named AUTOLOAD().  If an
+AUTOLOAD is found, this method is called on behalf of the missing method,
+setting the package global $AUTOLOAD to be the fully qualified name of
+the method that was intended to be called.
 
-If neither a method nor an AUTOLOAD routine is found in @ISA, then one
-last try is made for the method (or an AUTOLOAD routine) in a class
-called UNIVERSAL.  (Several commonly used methods are automatically
-supplied in the UNIVERSAL class; see L<"Default UNIVERSAL methods"> for
-more details.)  If that doesn't work, Perl finally gives up and
-complains.
+If none of that works, Perl finally gives up and complains.
 
-Perl classes do only method inheritance.  Data inheritance is left
-up to the class itself.  By and large, this is not a problem in Perl,
-because most classes model the attributes of their object using
-an anonymous hash, which serves as its own little namespace to be
-carved up by the various classes that might want to do something
-with the object.
+Perl classes do method inheritance only.  Data inheritance is left up
+to the class itself.  By and large, this is not a problem in Perl,
+because most classes model the attributes of their object using an
+anonymous hash, which serves as its own little namespace to be carved up
+by the various classes that might want to do something with the object.
+The only problem with this is that you can't sure that you aren't using
+a piece of the hash that isn't already used.  A reasonable workaround
+is to prepend your fieldname in the hash with the package name.
+
+    sub bump {
+	my $self = shift;
+	$self->{ __PACKAGE__ . ".count"}++;
+    } 
 
 =head2 A Method is Simply a Subroutine
 
 Unlike say C++, Perl doesn't provide any special syntax for method
 definition.  (It does provide a little syntax for method invocation
 though.  More on that later.)  A method expects its first argument
-to be the object or package it is being invoked on.  There are just two
+to be the object (reference) or package (string) it is being invoked on.  There are just two
 types of methods, which we'll call class and instance.
 (Sometimes you'll hear these called static and virtual, in honor of
 the two C++ method types they most closely resemble.)
@@ -223,7 +251,7 @@ or in one statement,
 There are times when one syntax is more readable, and times when the
 other syntax is more readable.  The indirect object syntax is less
 cluttered, but it has the same ambiguity as ordinary list operators.
-Indirect object method calls are parsed using the same rule as list
+Indirect object method calls are usually parsed using the same rule as list
 operators: "If it looks like a function, it is a function".  (Presuming
 for the moment that you think two words in a row can look like a
 function name.  C++ programmers seem to think so with some regularity,
@@ -240,7 +268,20 @@ would be equivalent to
 
     Critter->new('Bam' x 2), 1.4, 45
 
-which is unlikely to do what you want.
+which is unlikely to do what you want.  Confusingly, however, this
+rule applies only when the indirect object is a bareword package name,
+not when it's a scalar, a BLOCK, or a C<Package::> qualified package name.
+In those cases, the arguments are parsed in the same way as an
+indirect object list operator like print, so
+
+    new Critter:: ('Bam' x 2), 1.4, 45
+
+is the same as
+
+   Critter::->new(('Bam' x 2), 1.4, 45)
+
+For more reasons why the indirect object syntax is ambiguous, see
+L<"WARNING"> below.
 
 There are times when you wish to specify which class's method to use.
 In this case, you can call your method as an ordinary subroutine
@@ -291,7 +332,7 @@ allows the ability to check what a reference points to. Example
     use UNIVERSAL qw(isa);
 
     if(isa($ref, 'ARRAY')) {
-    	...
+    	#...
     }
 
 =item can(METHOD)
@@ -331,29 +372,68 @@ automatically destroyed.  (This may even be after you exit, if you've
 stored references in global variables.)  If you want to capture control
 just before the object is freed, you may define a DESTROY method in
 your class.  It will automatically be called at the appropriate moment,
-and you can do any extra cleanup you need to do.
+and you can do any extra cleanup you need to do.  Perl passes a reference
+to the object under destruction as the first (and only) argument.  Beware
+that the reference is a read-only value, and cannot be modified by
+manipulating C<$_[0]> within the destructor.  The object itself (i.e.
+the thingy the reference points to, namely C<${$_[0]}>, C<@{$_[0]}>, 
+C<%{$_[0]}> etc.) is not similarly constrained.
 
-Perl doesn't do nested destruction for you.  If your constructor
-re-blessed a reference from one of your base classes, your DESTROY may
-need to call DESTROY for any base classes that need it.  But this applies
-to only re-blessed objects--an object reference that is merely
-I<CONTAINED> in the current object will be freed and destroyed
-automatically when the current object is freed.
+If you arrange to re-bless the reference before the destructor returns,
+perl will again call the DESTROY method for the re-blessed object after
+the current one returns.  This can be used for clean delegation of
+object destruction, or for ensuring that destructors in the base classes
+of your choosing get called.  Explicitly calling DESTROY is also possible,
+but is usually never needed.
+
+Do not confuse the foregoing with how objects I<CONTAINED> in the current
+one are destroyed.  Such objects will be freed and destroyed automatically
+when the current object is freed, provided no other references to them exist
+elsewhere.
 
 =head2 WARNING
 
-An indirect object is limited to a name, a scalar variable, or a block,
-because it would have to do too much lookahead otherwise, just like any
-other postfix dereference in the language.  The left side of -E<gt> is not so
-limited, because it's an infix operator, not a postfix operator.
+While indirect object syntax may well be appealing to English speakers and
+to C++ programmers, be not seduced!  It suffers from two grave problems.
 
-That means that in the following, A and B are equivalent to each other, and
-C and D are equivalent, but A/B and C/D are different:
+The first problem is that an indirect object is limited to a name,
+a scalar variable, or a block, because it would have to do too much
+lookahead otherwise, just like any other postfix dereference in the
+language.  (These are the same quirky rules as are used for the filehandle
+slot in functions like C<print> and C<printf>.)  This can lead to horribly
+confusing precedence problems, as in these next two lines:
 
-    A: method $obref->{"fieldname"}
-    B: (method $obref)->{"fieldname"}
-    C: $obref->{"fieldname"}->method()
-    D: method {$obref->{"fieldname"}}
+    move $obj->{FIELD};                 # probably wrong!
+    move $ary[$i];                      # probably wrong!
+
+Those actually parse as the very surprising:
+
+    $obj->move->{FIELD};                # Well, lookee here
+    $ary->move->[$i];                   # Didn't expect this one, eh?
+
+Rather than what you might have expected:
+
+    $obj->{FIELD}->move();              # You should be so lucky.
+    $ary[$i]->move;                     # Yeah, sure.
+
+The left side of ``-E<gt>'' is not so limited, because it's an infix operator,
+not a postfix operator.  
+
+As if that weren't bad enough, think about this: Perl must guess I<at
+compile time> whether C<name> and C<move> above are functions or methods.
+Usually Perl gets it right, but when it doesn't it, you get a function
+call compiled as a method, or vice versa.  This can introduce subtle
+bugs that are hard to unravel.  For example, calling a method C<new>
+in indirect notation--as C++ programmers are so wont to do--can
+be miscompiled into a subroutine call if there's already a C<new>
+function in scope.  You'd end up calling the current package's C<new>
+as a subroutine, rather than the desired class's method.  The compiler
+tries to cheat by remembering bareword C<require>s, but the grief if it
+messes up just isn't worth the years of debugging it would likely take
+you to to track such subtle bugs down.
+
+The infix arrow notation using ``C<-E<gt>>'' doesn't suffer from either
+of these disturbing ambiguities, so we recommend you use it exclusively.
 
 =head2 Summary
 
@@ -459,6 +539,11 @@ C<-DDEBUGGING> was enabled during perl build time.
 
 A more complete garbage collection strategy will be implemented
 at a future date.
+
+In the meantime, the best solution is to create a non-recursive container
+class that holds a pointer to the self-referential data structure.
+Define a DESTROY method for the containing object's class that manually
+breaks the circularities in the self-referential structure.
 
 =head1 SEE ALSO
 

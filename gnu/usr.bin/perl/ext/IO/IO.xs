@@ -7,7 +7,14 @@
 #  include <unistd.h>
 #endif
 #ifdef I_FCNTL
+#if defined(__GNUC__) && defined(__cplusplus) && defined(WIN32)
+#define _NO_OLDNAMES
+#endif 
 #  include <fcntl.h>
+#if defined(__GNUC__) && defined(__cplusplus) && defined(WIN32)
+#undef _NO_OLDNAMES
+#endif 
+
 #endif
 
 #ifdef PerlIO
@@ -22,17 +29,14 @@ typedef FILE * OutputStream;
 #endif
 
 static int
-not_here(s)
-char *s;
+not_here(char *s)
 {
     croak("%s not implemented on this architecture", s);
     return -1;
 }
 
 static bool
-constant(name, pval)
-char *name;
-IV *pval;
+constant(char *name, IV *pval)
 {
     switch (*name) {
     case '_':
@@ -97,7 +101,7 @@ fgetpos(handle)
 	    ST(0) = sv_2mortal(newSVpv((char*)&pos, sizeof(Fpos_t)));
 	}
 	else {
-	    ST(0) = &sv_undef;
+	    ST(0) = &PL_sv_undef;
 	    errno = EINVAL;
 	}
 
@@ -107,7 +111,8 @@ fsetpos(handle, pos)
 	SV *		pos
     CODE:
 	char *p;
-	if (handle && (p = SvPVx(pos, na)) && na == sizeof(Fpos_t))
+	STRLEN n_a;
+	if (handle && (p = SvPVx(pos, n_a)) && n_a == sizeof(Fpos_t))
 #ifdef PerlIO
 	    RETVAL = PerlIO_setpos(handle, (Fpos_t*)p);
 #else
@@ -142,7 +147,7 @@ new_tmpfile(packname = "IO::File")
 	    SvREFCNT_dec(gv);	/* undo increment in newRV() */
 	}
 	else {
-	    ST(0) = &sv_undef;
+	    ST(0) = &PL_sv_undef;
 	    SvREFCNT_dec(gv);
 	}
 
@@ -156,7 +161,7 @@ constant(name)
 	if (constant(name, &i))
 	    ST(0) = sv_2mortal(newSViv(i));
 	else
-	    ST(0) = &sv_undef;
+	    ST(0) = &PL_sv_undef;
 
 int
 ungetc(handle, c)

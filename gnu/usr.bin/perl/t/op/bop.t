@@ -42,14 +42,23 @@ print ((($cusp >> 1) == ($cusp / 2) &&
 	do { use integer; $cusp >> 1 } == -($cusp / 2))
        ? "ok 12\n" : "not ok 12\n");
 
+$Aaz = chr(ord("A") & ord("z"));
+$Aoz = chr(ord("A") | ord("z"));
+$Axz = chr(ord("A") ^ ord("z"));
+
 # short strings
-print (("AAAAA" & "zzzzz") eq '@@@@@' ? "ok 13\n" : "not ok 13\n");
-print (("AAAAA" | "zzzzz") eq '{{{{{' ? "ok 14\n" : "not ok 14\n");
-print (("AAAAA" ^ "zzzzz") eq ';;;;;' ? "ok 15\n" : "not ok 15\n");
+print (("AAAAA" & "zzzzz") eq ($Aaz x 5) ? "ok 13\n" : "not ok 13\n");
+print (("AAAAA" | "zzzzz") eq ($Aoz x 5) ? "ok 14\n" : "not ok 14\n");
+print (("AAAAA" ^ "zzzzz") eq ($Axz x 5) ? "ok 15\n" : "not ok 15\n");
 
 # long strings
 $foo = "A" x 150;
 $bar = "z" x 75;
-print (($foo & $bar) eq ('@'x75 ) ? "ok 16\n" : "not ok 16\n");
-print (($foo | $bar) eq ('{'x75 . 'A'x75) ? "ok 17\n" : "not ok 17\n");
-print (($foo ^ $bar) eq (';'x75 . 'A'x75) ? "ok 18\n" : "not ok 18\n");
+$zap = "A" x 75;
+# & truncates
+print (($foo & $bar) eq ($Aaz x 75 ) ? "ok 16\n" : "not ok 16\n");
+# | does not truncate
+print (($foo | $bar) eq ($Aoz x 75 . $zap) ? "ok 17\n" : "not ok 17\n");
+# ^ does not truncate
+print (($foo ^ $bar) eq ($Axz x 75 . $zap) ? "ok 18\n" : "not ok 18\n");
+

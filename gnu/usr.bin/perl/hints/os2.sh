@@ -23,6 +23,14 @@ if test -f $sh.exe; then sh=$sh.exe; fi
 startsh="#!$sh"
 cc='gcc'
 
+# Make denser object files and DLL
+case "X$optimize" in
+  X)
+	optimize="-O2 -fomit-frame-pointer -malign-loops=2 -malign-jumps=2 -malign-functions=2 -s"
+	ld_dll_optimize="-s"
+	;;
+esac
+
 # Get some standard things (indented to avoid putting in config.sh):
  oifs="$IFS"
  IFS=" ;"
@@ -33,25 +41,25 @@ cc='gcc'
  set $C_INCLUDE_PATH
  usrinc="$@"
  IFS="$oifs"
- tryman="`../UU/loc . /man $tryman`"
+ tryman="`./UU/loc . /man $tryman`"
  tryman="`echo $tryman | tr '\\\' '/'`"
  
  # indented to avoid having it *two* times at start
- libemx="`../UU/loc os2.a /emx/lib $libemx`"
+ libemx="`./UU/loc os2.a /emx/lib $libemx`"
 
-usrinc="`../UU/loc stdlib.h /emx/include $usrinc`"
+usrinc="`./UU/loc stdlib.h /emx/include $usrinc`"
 usrinc="`dirname $usrinc | tr '\\\' '/'`"
 libemx="`dirname $libemx | tr '\\\' '/'`"
 
 if test -d $tryman/man1; then
   sysman="$tryman/man1"
 else
-  sysman="`../UU/loc . /man/man1 c:/man/man1 c:/usr/man/man1 d:/man/man1 d:/usr/man/man1 e:/man/man1 e:/usr/man/man1 f:/man/man1 f:/usr/man/man1 g:/man/man1 g:/usr/man/man1 /usr/man/man1`"
+  sysman="`./UU/loc . /man/man1 c:/man/man1 c:/usr/man/man1 d:/man/man1 d:/usr/man/man1 e:/man/man1 e:/usr/man/man1 f:/man/man1 f:/usr/man/man1 g:/man/man1 g:/usr/man/man1 /usr/man/man1`"
 fi
 
 emxpath="`dirname $libemx`"
 if test ! -d "$emxpath"; then 
-  emxpath="`../UU/loc . /emx c:/emx d:/emx e:/emx f:/emx g:/emx h:/emx /emx`"
+  emxpath="`./UU/loc . /emx c:/emx d:/emx e:/emx f:/emx g:/emx h:/emx /emx`"
 fi
 
 if test ! -d "$libemx"; then 
@@ -61,7 +69,7 @@ if test ! -d "$libemx"; then
   if test -d "$LIBRARY_PATH"; then
     libemx="$LIBRARY_PATH"
   else
-    libemx="`../UU/loc . X c:/emx/lib d:/emx/lib e:/emx/lib f:/emx/lib g:/emx/lib h:/emx/lib /emx/lib`"
+    libemx="`./UU/loc . X c:/emx/lib d:/emx/lib e:/emx/lib f:/emx/lib g:/emx/lib h:/emx/lib /emx/lib`"
   fi
 fi
 
@@ -72,12 +80,12 @@ if test ! -d "$usrinc"; then
     if test -d "$C_INCLUDE_PATH"; then
       usrinc="$C_INCLUDE_PATH"
     else
-      usrinc="`../UU/loc . X c:/emx/include d:/emx/include e:/emx/include f:/emx/include g:/emx/include h:/emx/include /emx/include`"
+      usrinc="`./UU/loc . X c:/emx/include d:/emx/include e:/emx/include f:/emx/include g:/emx/include h:/emx/include /emx/include`"
     fi
   fi
 fi
 
-rsx="`../UU/loc rsx.exe undef $pth`"
+rsx="`./UU/loc rsx.exe undef $pth`"
 
 if test "$libemx" = "X"; then echo "Cannot find C library!" >&2; fi
 
@@ -104,19 +112,20 @@ aout_obj_ext='.o'
 aout_lib_ext='.a'
 aout_ar='ar'
 aout_plibext='.a'
-aout_lddlflags='-Zdll'
+aout_lddlflags="-Zdll $ld_dll_optimize"
+# Cannot have 32000K stack: get SYS0170  ?!
 if [ $emxcrtrev -ge 50 ]; then 
-    aout_ldflags='-Zexe -Zsmall-conv'
+    aout_ldflags='-Zexe -Zsmall-conv -Zstack 16000'
 else
-    aout_ldflags='-Zexe'
+    aout_ldflags='-Zexe -Zstack 16000'
 fi
 
 # To get into config.sh:
 aout_ldflags="$aout_ldflags"
 
 aout_d_fork='define'
-aout_ccflags='-DPERL_CORE -DDOSISH -DPERL_IS_AOUT -DOS2=2 -DEMBED -I. -DPACK_MALLOC -DTWO_POT_OPTIMIZE -DPERL_EMERGENCY_SBRK'
-aout_cppflags='-DPERL_CORE -DDOSISH -DPERL_IS_AOUT -DOS2=2 -DEMBED -I. -DPACK_MALLOC -DTWO_POT_OPTIMIZE -DPERL_EMERGENCY_SBRK'
+aout_ccflags='-DPERL_CORE -DDOSISH -DPERL_IS_AOUT -DOS2=2 -DEMBED -I.'
+aout_cppflags='-DPERL_CORE -DDOSISH -DPERL_IS_AOUT -DOS2=2 -DEMBED -I.'
 aout_use_clib='c'
 aout_usedl='undef'
 aout_archobjs="os2.o dl_os2.o"
@@ -152,17 +161,20 @@ else
     else
 	d_fork='undef'
     fi
-    lddlflags='-Zdll -Zomf -Zmt -Zcrtdll'
+    lddlflags="-Zdll -Zomf -Zmt -Zcrtdll $ld_dll_optimize"
     # Recursive regmatch may eat 2.5M of stack alone.
     ldflags='-Zexe -Zomf -Zmt -Zcrtdll -Zstack 32000'
     if [ $emxcrtrev -ge 50 ]; then 
-	ccflags='-Zomf -Zmt -DDOSISH -DOS2=2 -DEMBED -I. -DPACK_MALLOC -DDEBUGGING_MSTATS -DTWO_POT_OPTIMIZE -DPERL_EMERGENCY_SBRK'
+	ccflags='-Zomf -Zmt -DDOSISH -DOS2=2 -DEMBED -I.'
     else
-	ccflags='-Zomf -Zmt -DDOSISH -DOS2=2 -DEMBED -I. -DPACK_MALLOC -DDEBUGGING_MSTATS -DEMX_BAD_SBRK'
+	ccflags='-Zomf -Zmt -DDOSISH -DOS2=2 -DEMBED -I. -DEMX_BAD_SBRK'
     fi
     use_clib='c_import'
     usedl='define'
 fi
+
+# indented to miss config.sh
+  _ar="$ar"
 
 # To get into config.sh (should start at the beginning of line)
 # or you can put it into config.over.
@@ -238,13 +250,6 @@ nm_opt='-p'
 d_getprior='define'
 d_setprior='define'
 
-# Make denser object files and DLL
-case "X$optimize" in
-  X)
-	optimize="-O2 -fomit-frame-pointer -malign-loops=2 -malign-jumps=2 -malign-functions=2 -s"
-	;;
-esac
-
 # The next two are commented. pdksh handles #!, extproc gives no path part.
 # sharpbang='extproc '
 # shsharp='false'
@@ -254,11 +259,26 @@ esac
 
 # Copy pod:
 
-cp ../README.os2 ../pod/perlos2.pod
+cp ./README.os2 ./pod/perlos2.pod
+
+# This script UU/usethreads.cbu will get 'called-back' by Configure 
+# after it has prompted the user for whether to use threads.
+cat > UU/usethreads.cbu <<'EOCBU'
+case "$usethreads" in
+$define|true|[yY]*)
+	ccflags="-Zmt $ccflags"
+        cppflags="-Zmt $cppflags"  # Do we really need to set this?
+        aout_ccflags="-DUSE_THREADS $aout_ccflags"
+        aout_cppflags="-DUSE_THREADS $aout_cppflags"
+        aout_lddlflags="-Zmt $aout_lddlflags"
+        aout_ldflags="-Zmt $aout_ldflags"
+	;;
+esac
+EOCBU
 
 # Now install the external modules. We are in the ./hints directory.
 
-cd ../os2/OS2
+cd ./os2/OS2
 
 if ! test -d ../../ext/OS2 ; then
    mkdir ../../ext/OS2
@@ -286,4 +306,4 @@ done
 
 
 # Now go back
-cd ../../hints
+cd ../..

@@ -5,10 +5,10 @@
 # based on original version by Alan R. Martello <al@ee.pitt.edu>
 # And by A.Macpherson@bnr.co.uk for multi-homed hosts
 #
-# $Header: /home/cvs/src/gnu/usr.bin/perl/lib/Attic/ftp.pl,v 1.2 1997/11/30 07:56:58 millert Exp $
+# $Header: /home/cvs/src/gnu/usr.bin/perl/lib/Attic/ftp.pl,v 1.3 1999/04/29 22:51:46 millert Exp $
 # $Log: ftp.pl,v $
-# Revision 1.2  1997/11/30 07:56:58  millert
-# perl 5.004_04
+# Revision 1.3  1999/04/29 22:51:46  millert
+# perl5.005_03 (stock)
 #
 # Revision 1.17  1993/04/21  10:06:54  lmjm
 # Send all status reports to STDERR not to STDOUT (to allow use by ftpcat).

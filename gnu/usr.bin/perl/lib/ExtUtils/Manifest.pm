@@ -10,7 +10,7 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT_OK
 	    $Is_VMS $Debug $Verbose $Quiet $MANIFEST $found);
 
-$VERSION = substr(q$Revision: 1.2 $, 10);
+$VERSION = substr(q$Revision: 1.3 $, 10);
 @ISA=('Exporter');
 @EXPORT_OK = ('mkmanifest', 'manicheck', 'fullcheck', 'filecheck', 
 	      'skipcheck', 'maniread', 'manicopy');
@@ -87,10 +87,16 @@ sub _manicheck {
     my $read = maniread();
     my $found = manifind();
     my $file;
+    my $dosnames=(defined(&Dos::UseLFN) && Dos::UseLFN()==0);
     my(@missfile,@missentry);
     if ($arg & 1){
 	foreach $file (sort keys %$read){
 	    warn "Debug: manicheck checking from $MANIFEST $file\n" if $Debug;
+            if ($dosnames){
+                $file = lc $file;
+                $file =~ s=(\.(\w|-)+)=substr ($1,0,4)=ge;
+                $file =~ s=((\w|-)+)=substr ($1,0,8)=ge;
+            }
 	    unless ( exists $found->{$file} ) {
 		warn "No such file: $file\n" unless $Quiet;
 		push @missfile, $file;
@@ -236,7 +242,11 @@ sub ln {
     link($srcFile, $dstFile);
     local($_) = $dstFile; # chmod a+r,go-w+X (except "X" only applies to u=x)
     my $mode= 0444 | (stat)[2] & 0700;
-    chmod(  $mode | ( $mode & 0100 ? 0111 : 0 ),  $_  );
+    if (! chmod(  $mode | ( $mode & 0100 ? 0111 : 0 ),  $_  )) {
+       unlink $dstFile;
+       return;
+    }
+    1;
 }
 
 sub best {
@@ -288,7 +298,7 @@ but in doing so checks each line in an existing C<MANIFEST> file and
 includes any comments that are found in the existing C<MANIFEST> file
 in the new one. Anything between white space and an end of line within
 a C<MANIFEST> file is considered to be a comment. Filenames and
-comments are seperated by one or more TAB characters in the
+comments are separated by one or more TAB characters in the
 output. All files that match any regular expression in a file
 C<MANIFEST.SKIP> (if such a file exists) are ignored.
 
@@ -307,7 +317,7 @@ Fullcheck() does both a manicheck() and a filecheck().
 Skipcheck() lists all the files that are skipped due to your
 C<MANIFEST.SKIP> file.
 
-Manifind() retruns a hash reference. The keys of the hash are the
+Manifind() returns a hash reference. The keys of the hash are the
 files found below the current directory.
 
 Maniread($file) reads a named C<MANIFEST> file (defaults to

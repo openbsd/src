@@ -16,12 +16,11 @@
 #include <stsdef.h>  /* bitmasks for exit status testing */
 
 /* Suppress compiler warnings from DECC for VMS-specific extensions:
- * GLOBALEXT, NOSHAREEXT, READONLYEXT: global[dr]ef declarations
  * ADDRCONSTEXT,NEEDCONSTEXT: initialization of data with non-constant values
  *                            (e.g. pointer fields of descriptors)
  */
 #ifdef __DECC
-#  pragma message disable (GLOBALEXT,NOSHAREEXT,READONLYEXT,ADDRCONSTEXT,NEEDCONSTEXT)
+#  pragma message disable (ADDRCONSTEXT,NEEDCONSTEXT)
 #endif
 
 /* DEC's C compilers and gcc use incompatible definitions of _to(upp|low)er() */
@@ -56,6 +55,11 @@
 #  include <unistd.h> /* DECC has this; VAXC and gcc don't */
 #endif
 
+/* VAXC doesn't have a unary plus operator, so we need to get there indirectly */
+#if defined(VAXC) && !defined(__DECC)
+#  define NO_UNARY_PLUS
+#endif
+
 #ifdef NO_PERL_TYPEDEFS /* a2p; we don't want Perl's special routines */
 #  define DONT_MASK_RTL_CALLS
 #endif
@@ -70,12 +74,13 @@
 
 /* DECC introduces this routine in the RTL as of VMS 7.0; for now,
  * we'll use ours, since it gives us the full VMS exit status. */
-#ifdef __PID_T
-#  define Pid_t pid_t
-#else
-#  define Pid_t unsigned int
-#endif
 #define waitpid my_waitpid
+
+/* Don't redeclare standard RTL routines in Perl's header files;
+ * VMS history or extensions makes some of the formal protoypes
+ * differ from the common Unix forms.
+ */
+#define DONT_DECLARE_STD 1
 
 /* Our own contribution to PerlShr's global symbols . . . */
 #ifdef EMBED
@@ -111,11 +116,15 @@
 #  define seekdir		Perl_seekdir
 #  define closedir		Perl_closedir
 #  define vmsreaddirversions	Perl_vmsreaddirversions
-#if __VMS_VER < 70000000 || __DECC_VER < 50200000
 #  define my_gmtime		Perl_my_gmtime
 #  define my_localtime		Perl_my_localtime
 #  define my_time		Perl_my_time
-#endif
+#  define my_sigemptyset        Perl_my_sigemptyset
+#  define my_sigfillset         Perl_my_sigfillset
+#  define my_sigaddset          Perl_my_sigaddset
+#  define my_sigdelset          Perl_my_sigdelset
+#  define my_sigismember        Perl_my_sigismember
+#  define my_sigprocmask        Perl_my_sigprocmask
 #  define cando_by_name		Perl_cando_by_name
 #  define flex_fstat		Perl_flex_fstat
 #  define flex_stat		Perl_flex_stat
@@ -157,12 +166,6 @@
  */
 #define BIG_TIME
 
-/* USE_STAT_RDEV:
- *	This symbol is defined if this system has a stat structure declaring
- *	st_rdev
- */
-#define USE_STAT_RDEV 	/**/
-
 /* ACME_MESS:
  *	This symbol, if defined, indicates that error messages should be 
  *	should be generated in a format that allows the use of the Acme
@@ -200,9 +203,9 @@
 #define HINT_M_VMSISH_STATUS	0x01000000 /* system, $? return VMS status */
 #define HINT_M_VMSISH_EXIT	0x02000000 /* exit(1) ==> SS$_NORMAL */
 #define HINT_M_VMSISH_TIME	0x04000000 /* times are local, not UTC */
-#define NATIVE_HINTS		(hints >> HINT_V_VMSISH)  /* used in op.c */
+#define NATIVE_HINTS		(PL_hints >> HINT_V_VMSISH)  /* used in op.c */
 
-#define TEST_VMSISH(h)	(curcop->op_private & ((h) >> HINT_V_VMSISH))
+#define TEST_VMSISH(h)	(PL_curcop->op_private & ((h) >> HINT_V_VMSISH))
 #define VMSISH_STATUS	TEST_VMSISH(HINT_M_VMSISH_STATUS)
 #define VMSISH_EXIT	TEST_VMSISH(HINT_M_VMSISH_EXIT)
 #define VMSISH_TIME	TEST_VMSISH(HINT_M_VMSISH_TIME)
@@ -227,8 +230,8 @@
 #endif
 
 #define BIT_BUCKET "_NLA0:"
-#define PERL_SYS_INIT(c,v)  vms_image_init((c),(v))
-#define PERL_SYS_TERM()
+#define PERL_SYS_INIT(c,v)	vms_image_init((c),(v)); MALLOC_INIT
+#define PERL_SYS_TERM()		MALLOC_TERM
 #define dXSUB_SYS
 #define HAS_KILL
 #define HAS_WAIT
@@ -254,16 +257,16 @@
 #define HAS_UTIME		/**/
 
 /* HAS_GROUP
- *	This symbol, if defined, indicates that the getgrnam(),
- *	getgrgid(), and getgrent() routines are available to 
- *	get group entries.
+ *	This symbol, if defined, indicates that the getgrnam() and
+ *	getgrgid() routines are available to get group entries.
+ *	The getgrent() has a separate definition, HAS_GETGRENT.
  */
 #undef HAS_GROUP		/**/
 
 /* HAS_PASSWD
- *	This symbol, if defined, indicates that the getpwnam(),
- *	getpwuid(), and getpwent() routines are available to 
- *	get password entries.
+ *	This symbol, if defined, indicates that the getpwnam() and
+ *	getpwuid() routines are available to get password entries.
+ *	The getpwent() has a separate definition, HAS_GETPWENT.
  */
 #define HAS_PASSWD		/**/
 
@@ -277,6 +280,30 @@
  *	of bytes occurs on read or write operations.
  */
 #define USEMYBINMODE
+
+/* Stat_t:
+ *	This symbol holds the type used to declare buffers for information
+ *	returned by stat().  It's usually just struct stat.  It may be necessary
+ *	to include <sys/stat.h> and <sys/types.h> to get any typedef'ed
+ *	information.
+ */
+/* VMS:
+ * We need this typedef to point to the new type even if DONT_MASK_RTL_CALLS
+ * is in effect, since Perl's thread.h embeds one of these structs in its
+ * thread data struct, and our struct mystat is a different size from the
+ * regular struct stat (cf. note above about having to pad struct to work
+ * around bug in compiler.)
+ * It's OK to pass one of these to the RTL's stat(), though, since the
+ * fields it fills are the same in each struct.
+ */
+#define Stat_t struct mystat
+
+/* USE_STAT_RDEV:
+*	This symbol is defined if this system has a stat structure declaring
+*	st_rdev
+*	VMS: Field exists in POSIXish version of struct stat(), but is not used.
+*/
+#undef USE_STAT_RDEV		/**/
 
 /*
  * fwrite1() should be a routine with the same calling sequence as fwrite(),
@@ -326,16 +353,46 @@ struct utimbuf {
 #  define tbuffer_t struct tms
 #endif
 
-/* Prior to VMS 7.0, the CRTL gmtime() routine was a stub which always
- * returned NULL.  Substitute our own routine, which uses the logical
- * SYS$TIMEZONE_DIFFERENTIAL, whcih the native UTC support routines
- * in VMS 6.0 or later use.  We also add shims for time() and localtime()
- * so we can run on UTC by default.
+/* Substitute our own routines for gmtime(), localtime(), and time(),
+ * which allow us to implement the vmsish 'time' pragma, and work
+ * around absence of system-level UTC support on old versions of VMS.
  */
-#if __VMS_VER < 70000000 || __DECC_VER < 50200000
 #define gmtime(t) my_gmtime(t)
 #define localtime(t) my_localtime(t)
 #define time(t) my_time(t)
+
+/* If we're using an older version of VMS whose Unix signal emulation
+ * isn't very POSIXish, then roll our own.
+ */
+#if __VMS_VER < 70000000 || __DECC_VER < 50200000
+#  define HOMEGROWN_POSIX_SIGNALS
+#endif
+#ifdef HOMEGROWN_POSIX_SIGNALS
+#  define sigemptyset(t) my_sigemptyset(t)
+#  define sigfillset(t) my_sigfillset(t)
+#  define sigaddset(t, u) my_sigaddset(t, u)
+#  define sigdelset(t, u) my_sigdelset(t, u)
+#  define sigismember(t, u) my_sigismember(t, u)
+#  define sigprocmask(t, u, v) my_sigprocmask(t, u, v)
+#  ifndef _SIGSET_T
+   typedef int sigset_t;
+#  endif
+   /* The tools for sigprocmask() are there, just not the routine itself */
+#  ifndef SIG_UNBLOCK
+#    define SIG_UNBLOCK 1
+#  endif
+#  ifndef SIG_BLOCK
+#    define SIG_BLOCK 2
+#  endif
+#  ifndef SIG_SETMASK
+#    define SIG_SETMASK 3
+#  endif
+#  define sigaction sigvec
+#  define sa_flags sv_onstack
+#  define sa_handler sv_handler
+#  define sa_mask sv_mask
+#  define sigsuspend(set) sigpause(*set)
+#  define sigpending(a) (not_here("sigpending"),0)
 #endif
 
 /* VMS doesn't use a real sys_nerr, but we need this when scanning for error
@@ -451,6 +508,13 @@ struct mystat
         char	st_fab_rat;	/* record attributes */
         char	st_fab_fsz;	/* fixed header size */
         unsigned st_dev;	/* encoded device name */
+        /* Pad struct out to integral number of longwords, since DECC 5.6/VAX
+         * has a bug in dealing with offsets in structs in which are embedded
+         * other structs whose size is an odd number of bytes.  (An even
+         * number of bytes is enough to make it happy, but we go for natural
+         * alignment anyhow.)
+         */
+        char	st_fill1[sizeof(void *) - (3*sizeof(unsigned short) + 3*sizeof(char))%sizeof(void *)];
 };
 typedef unsigned mydev_t;
 typedef unsigned myino_t;
@@ -536,19 +600,25 @@ long	telldir _((DIR *));
 void	seekdir _((DIR *, long));
 void	closedir _((DIR *));
 void	vmsreaddirversions _((DIR *, int));
-#ifdef my_gmtime
 struct tm *	my_gmtime _((const time_t *));
 struct tm *	my_localtime _((const time_t *));
 time_t	my_time _((time_t *));
-#endif /* We're assuming these three come as a package */
+#ifdef HOMEGROWN_POSIX_SIGNALS
+int     my_sigemptyset _((sigset_t *));
+int     my_sigfillset  _((sigset_t *));
+int     my_sigaddset   _((sigset_t *, int));
+int     my_sigdelset   _((sigset_t *, int));
+int     my_sigismember _((sigset_t *, int));
+int     my_sigprocmask _((int, sigset_t *, sigset_t *));
+#endif
 I32	cando_by_name _((I32, I32, char *));
-int	flex_fstat _((int, struct mystat *));
-int	flex_stat _((char *, struct mystat *));
+int	flex_fstat _((int, Stat_t *));
+int	flex_stat _((char *, Stat_t *));
 int	trim_unixpath _((char *, char*, int));
 int	my_vfork _(());
 bool	vms_do_aexec _((SV *, SV **, SV **));
 bool	vms_do_exec _((char *));
-unsigned long int	do_aspawn _((SV *, SV **, SV **));
+unsigned long int	do_aspawn _((void *, void **, void **));
 unsigned long int	do_spawn _((char *));
 int	my_fwrite _((void *, size_t, size_t, FILE *));
 int	my_flush _((FILE *));

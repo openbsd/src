@@ -7,28 +7,35 @@ perlmod - Perl modules (packages and symbol tables)
 =head2 Packages
 
 Perl provides a mechanism for alternative namespaces to protect packages
-from stomping on each other's variables.  In fact, apart from certain
-magical variables, there's really no such thing as a global variable
-in Perl.  The package statement declares the compilation unit as
+from stomping on each other's variables.  In fact, there's really no such
+thing as a global variable in Perl (although some identifiers default
+to the main package instead of the current one).  The package statement
+declares the compilation unit as
 being in the given namespace.  The scope of the package declaration
 is from the declaration itself through the end of the enclosing block,
 C<eval>, C<sub>, or end of file, whichever comes first (the same scope
 as the my() and local() operators).  All further unqualified dynamic
-identifiers will be in this namespace.  A package statement affects
-only dynamic variables--including those you've used local() on--but
+identifiers will be in this namespace.  A package statement only affects
+dynamic variables--including those you've used local() on--but
 I<not> lexical variables created with my().  Typically it would be
 the first declaration in a file to be included by the C<require> or
 C<use> operator.  You can switch into a package in more than one place;
-it influences merely which symbol table is used by the compiler for the
+it merely influences which symbol table is used by the compiler for the
 rest of that block.  You can refer to variables and filehandles in other
 packages by prefixing the identifier with the package name and a double
 colon: C<$Package::Variable>.  If the package name is null, the C<main>
 package is assumed.  That is, C<$::sail> is equivalent to C<$main::sail>.
 
-(The old package delimiter was a single quote, but double colon
-is now the preferred delimiter, in part because it's more readable
-to humans, and in part because it's more readable to B<emacs> macros.
-It also makes C++ programmers feel like they know what's going on.)
+The old package delimiter was a single quote, but double colon is now the
+preferred delimiter, in part because it's more readable to humans, and
+in part because it's more readable to B<emacs> macros.  It also makes C++
+programmers feel like they know what's going on--as opposed to using the
+single quote as separator, which was there to make Ada programmers feel
+like they knew what's going on.  Because the old-fashioned syntax is still
+supported for backwards compatibility, if you try to use a string like
+C<"This is $owner's house">, you'll be accessing C<$owner::s>; that is,
+the $s variable in package C<owner>, which is probably not what you meant.
+Use braces to disambiguate, as in C<"This is ${owner}'s house">.
 
 Packages may be nested inside other packages: C<$OUTER::INNER::var>.  This
 implies nothing about the order of name lookups, however.  All symbols
@@ -39,13 +46,13 @@ It would treat package C<INNER> as a totally separate global package.
 
 Only identifiers starting with letters (or underscore) are stored in a
 package's symbol table.  All other symbols are kept in package C<main>,
-including all of the punctuation variables like $_.  In addition, the
-identifiers STDIN, STDOUT, STDERR, ARGV, ARGVOUT, ENV, INC, and SIG are
-forced to be in package C<main>, even when used for other purposes than
-their builtin one.  Note also that, if you have a package called C<m>,
-C<s>, or C<y>, then you can't use the qualified form of an identifier
-because it will be interpreted instead as a pattern match, a substitution,
-or a translation.
+including all of the punctuation variables like $_.  In addition, when
+unqualified, the identifiers STDIN, STDOUT, STDERR, ARGV, ARGVOUT, ENV,
+INC, and SIG are forced to be in package C<main>, even when used for other
+purposes than their builtin one.  Note also that, if you have a package
+called C<m>, C<s>, or C<y>, then you can't use the qualified form of an
+identifier because it will be interpreted instead as a pattern match,
+a substitution, or a transliteration.
 
 (Variables beginning with underscore used to be forced into package
 main, but we decided it was more useful for package writers to be able
@@ -85,62 +92,29 @@ table lookups at compile time:
     local $main::{foo}  = $main::{bar};
 
 You can use this to print out all the variables in a package, for
-instance.  Here is F<dumpvar.pl> from the Perl library:
-
-   package dumpvar;
-   sub main::dumpvar {
-       ($package) = @_;
-       local(*stab) = eval("*${package}::");
-       while (($key,$val) = each(%stab)) {
-	   local(*entry) = $val;
-	   if (defined $entry) {
-	       print "\$$key = '$entry'\n";
-	   }
-
-	   if (defined @entry) {
-	       print "\@$key = (\n";
-	       foreach $num ($[ .. $#entry) {
-		   print "  $num\t'",$entry[$num],"'\n";
-	       }
-	       print ")\n";
-	   }
-
-	   if ($key ne "${package}::" && defined %entry) {
-	       print "\%$key = (\n";
-	       foreach $key (sort keys(%entry)) {
-		   print "  $key\t'",$entry{$key},"'\n";
-	       }
-	       print ")\n";
-	   }
-       }
-   }
-
-Note that even though the subroutine is compiled in package C<dumpvar>,
-the name of the subroutine is qualified so that its name is inserted into
-package C<main>.  While popular many years ago, this is now considered
-very poor style; in general, you should be writing modules and using the
-normal export mechanism instead of hammering someone else's namespace,
-even main's.
+instance.  The standard F<dumpvar.pl> library and the CPAN module
+Devel::Symdump make use of this.
 
 Assignment to a typeglob performs an aliasing operation, i.e.,
 
     *dick = *richard;
 
-causes variables, subroutines, and file handles accessible via the
-identifier C<richard> to also be accessible via the identifier C<dick>.  If
-you want to alias only a particular variable or subroutine, you can
-assign a reference instead:
+causes variables, subroutines, formats, and file and directory handles
+accessible via the identifier C<richard> also to be accessible via the
+identifier C<dick>.  If you want to alias only a particular variable or
+subroutine, you can assign a reference instead:
 
     *dick = \$richard;
 
-makes $richard and $dick the same variable, but leaves
+Which makes $richard and $dick the same variable, but leaves
 @richard and @dick as separate arrays.  Tricky, eh?
 
 This mechanism may be used to pass and return cheap references
 into or from subroutines if you won't want to copy the whole
-thing.
+thing.  It only works when assigning to dynamic variables, not
+lexicals.
 
-    %some_hash = ();
+    %some_hash = ();			# can't be my()
     *some_hash = fn( \%another_hash );
     sub fn {
 	local *hashsym = shift;
@@ -161,14 +135,15 @@ Another use of symbol tables is for making "constant"  scalars.
     *PI = \3.14159265358979;
 
 Now you cannot alter $PI, which is probably a good thing all in all.
-This isn't the same as a constant subroutine (one prototyped to 
-take no arguments and to return a constant expression), which is
-subject to optimization at compile-time.  This isn't.  See L<perlsub>
-for details on these.
+This isn't the same as a constant subroutine, which is subject to
+optimization at compile-time.  This isn't.  A constant subroutine is one
+prototyped to take no arguments and to return a constant expression.
+See L<perlsub> for details on these.  The C<use constant> pragma is a
+convenient shorthand for these.
 
 You can say C<*foo{PACKAGE}> and C<*foo{NAME}> to find out what name and
 package the *foo symbol table entry comes from.  This may be useful
-in a subroutine which is passed typeglobs as arguments
+in a subroutine that gets passed typeglobs as arguments:
 
     sub identify_typeglob {
         my $glob = shift;
@@ -200,27 +175,32 @@ files in time to be visible to the rest of the file.  Once a C<BEGIN>
 has run, it is immediately undefined and any code it used is returned to
 Perl's memory pool.  This means you can't ever explicitly call a C<BEGIN>.
 
-An C<END> subroutine is executed as late as possible, that is, when the
-interpreter is being exited, even if it is exiting as a result of a
-die() function.  (But not if it's is being blown out of the water by a
-signal--you have to trap that yourself (if you can).)  You may have
-multiple C<END> blocks within a file--they will execute in reverse
-order of definition; that is: last in, first out (LIFO).
+An C<END> subroutine is executed as late as possible, that is, when
+the interpreter is being exited, even if it is exiting as a result of
+a die() function.  (But not if it's polymorphing into another program
+via C<exec>, or being blown out of the water by a signal--you have to
+trap that yourself (if you can).)  You may have multiple C<END> blocks
+within a file--they will execute in reverse order of definition; that is:
+last in, first out (LIFO).
 
-Inside an C<END> subroutine C<$?> contains the value that the script is
+Inside an C<END> subroutine, C<$?> contains the value that the script is
 going to pass to C<exit()>.  You can modify C<$?> to change the exit
 value of the script.  Beware of changing C<$?> by accident (e.g. by
 running something via C<system>).
 
-Note that when you use the B<-n> and B<-p> switches to Perl, C<BEGIN>
-and C<END> work just as they do in B<awk>, as a degenerate case.
+Note that when you use the B<-n> and B<-p> switches to Perl, C<BEGIN> and
+C<END> work just as they do in B<awk>, as a degenerate case.  As currently
+implemented (and subject to change, since its inconvenient at best),
+both C<BEGIN> I<and> C<END> blocks are run when you use the B<-c> switch
+for a compile-only syntax check, although your main code is not.
 
 =head2 Perl Classes
 
 There is no special class syntax in Perl, but a package may function
-as a class if it provides subroutines that function as methods.  Such a
-package may also derive some of its methods from another class package
-by listing the other package name in its @ISA array.
+as a class if it provides subroutines to act as methods.  Such a
+package may also derive some of its methods from another class (package)
+by listing the other package name in its global @ISA array (which 
+must be a package global, not a lexical).
 
 For more on this, see L<perltoot> and L<perlobj>.
 
@@ -263,7 +243,7 @@ a file called Some/Module.pm and start with this template:
     # non-exported package globals go here
     use vars      qw(@more $stuff);
 
-    # initalize package globals, first exported ones
+    # initialize package globals, first exported ones
     $Var1   = '';
     %Hashit = ();
 
@@ -310,11 +290,11 @@ or
 
 This is exactly equivalent to
 
-    BEGIN { require "Module.pm"; import Module; }
+    BEGIN { require Module; import Module; }
 
 or
 
-    BEGIN { require "Module.pm"; import Module LIST; }
+    BEGIN { require Module; import Module LIST; }
 
 As a special case
 
@@ -322,7 +302,7 @@ As a special case
 
 is exactly equivalent to
 
-    BEGIN { require "Module.pm"; }
+    BEGIN { require Module; }
 
 All Perl module files have the extension F<.pm>.  C<use> assumes this so
 that you don't have to spell out "F<Module.pm>" in quotes.  This also
@@ -330,6 +310,19 @@ helps to differentiate new modules from old F<.pl> and F<.ph> files.
 Module names are also capitalized unless they're functioning as pragmas,
 "Pragmas" are in effect compiler directives, and are sometimes called
 "pragmatic modules" (or even "pragmata" if you're a classicist).
+
+The two statements:
+
+    require SomeModule;
+    require "SomeModule.pm";		
+
+differ from each other in two ways.  In the first case, any double
+colons in the module name, such as C<Some::Module>, are translated
+into your system's directory separator, usually "/".   The second
+case does not, and would have to be specified literally.  The other difference
+is that seeing the first C<require> clues in the compiler that uses of 
+indirect object notation involving "SomeModule", as in C<$ob = purge SomeModule>,
+are method calls, not function calls.  (Yes, this really can make a difference.)
 
 Because the C<use> statement implies a C<BEGIN> block, the importation
 of semantics happens at the moment the C<use> statement is compiled,
@@ -348,7 +341,11 @@ instead of C<use>.  With require you can get into this problem:
     require Cwd;	    	# make Cwd:: accessible
     $here = getcwd(); 		# oops! no main::getcwd()
 
-In general C<use Module ();> is recommended over C<require Module;>.
+In general, C<use Module ()> is recommended over C<require Module>,
+because it determines module availability at compile time, not in the
+middle of your program's execution.  An exception would be if two modules
+each tried to C<use> each other, and each also called a function from
+that other module.  In that case, it's easy to use C<require>s instead.
 
 Perl packages may be nested inside other package names, so we can have
 package names containing C<::>.  But if we used that package name

@@ -15,29 +15,27 @@ fi
 . $TOP/config.sh
 
 # Note that the text lines /^Summary of/ .. /^\s*$/ are copied into Config.pm.
-# XXX Add d_sigaction (?) once it's defined.
 
 $spitshell <<!GROK!THIS!
-
 Summary of my $package ($baserev patchlevel $PATCHLEVEL subversion $SUBVERSION) configuration:
   Platform:
     osname=$osname, osvers=$osvers, archname=$archname
     uname='$myuname'
     hint=$hint, useposix=$useposix, d_sigaction=$d_sigaction
-    bincompat3=$bincompat3 useperlio=$useperlio d_sfio=$d_sfio
+    usethreads=$usethreads useperlio=$useperlio d_sfio=$d_sfio
   Compiler:
     cc='$cc', optimize='$optimize', gccversion=$gccversion
     cppflags='$cppflags'
     ccflags ='$ccflags'
     stdchar='$stdchar', d_stdstdio=$d_stdstdio, usevfork=$usevfork
-    voidflags=$voidflags, castflags=$castflags, d_casti32=$d_casti32, d_castneg=$d_castneg
-    intsize=$intsize, alignbytes=$alignbytes, usemymalloc=$usemymalloc, prototype=$prototype
+    intsize=$intsize, longsize=$longsize, ptrsize=$ptrsize, doublesize=$doublesize
+    d_longlong=$d_longlong, longlongsize=$longlongsize, d_longdbl=$d_longdbl, longdblsize=$longdblsize
+    alignbytes=$alignbytes, usemymalloc=$usemymalloc, prototype=$prototype
   Linker and Libraries:
     ld='$ld', ldflags ='$ldflags'
     libpth=$libpth
     libs=$libs
-    libc=$libc, so=$so
-    useshrplib=$useshrplib, libperl=$libperl
+    libc=$libc, so=$so, useshrplib=$useshrplib, libperl=$libperl
   Dynamic Linking:
     dlsrc=$dlsrc, dlext=$dlext, d_dlsymun=$d_dlsymun, ccdlflags='$ccdlflags'
     cccdlflags='$cccdlflags', lddlflags='$lddlflags'

@@ -2,15 +2,15 @@ package IPC::Open3;
 
 use strict;
 no strict 'refs'; # because users pass me bareword filehandles
-use vars qw($VERSION @ISA @EXPORT $Fh $Me);
+use vars qw($VERSION @ISA @EXPORT $Me);
 
 require 5.001;
 require Exporter;
 
 use Carp;
-use Symbol 'qualify';
+use Symbol qw(gensym qualify);
 
-$VERSION	= 1.0101;
+$VERSION	= 1.0103;
 @ISA		= qw(Exporter);
 @EXPORT		= qw(open3);
 
@@ -66,8 +66,9 @@ C<cat -v> and continually read and write a line from it.
 # &open3: Marc Horowitz <marc@mit.edu>
 # derived mostly from &open2 by tom christiansen, <tchrist@convex.com>
 # fixed for 5.001 by Ulrich Kunitz <kunitz@mai-koeln.com>
+# ported to Win32 by Ron Schmidt, Merrill Lynch almost ended my career
 #
-# $Id: Open3.pm,v 1.2 1997/11/30 07:57:45 millert Exp $
+# $Id: Open3.pm,v 1.3 1999/04/29 22:51:56 millert Exp $
 #
 # usage: $pid = open3('wtr', 'rdr', 'err' 'some cmd and args', 'optarg', ...);
 #
@@ -93,7 +94,6 @@ C<cat -v> and continually read and write a line from it.
 #   rdr or wtr are null
 #   a system call fails
 
-$Fh = 'FHOPEN000';	# package static in case called more than once
 $Me = 'open3 (bug)';	# you should never see this, it's always localized
 
 # Fatal.pm needs to be fixed WRT prototypes.
@@ -119,7 +119,7 @@ sub xclose {
     close $_[0] or croak "$Me: close($_[0]) failed: $!";
 }
 
-my $do_spawn = $^O eq 'os2';
+my $do_spawn = $^O eq 'os2' || $^O eq 'MSWin32';
 
 sub _open3 {
     local $Me = shift;
@@ -139,9 +139,9 @@ sub _open3 {
     $dad_rdr = qualify $dad_rdr, $package;
     $dad_err = qualify $dad_err, $package;
 
-    my $kid_rdr = ++$Fh;
-    my $kid_wtr = ++$Fh;
-    my $kid_err = ++$Fh;
+    my $kid_rdr = gensym;
+    my $kid_wtr = gensym;
+    my $kid_err = gensym;
 
     xpipe $kid_rdr, $dad_wtr if !$dup_wtr;
     xpipe $dad_rdr, $kid_wtr if !$dup_rdr;
@@ -153,7 +153,7 @@ sub _open3 {
 	# save a copy of her stdout before I put something else there.
 	if ($dad_rdr ne $dad_err && $dup_err
 		&& fileno($dad_err) == fileno(STDOUT)) {
-	    my $tmp = ++$Fh;
+	    my $tmp = gensym;
 	    xopen($tmp, ">&$dad_err");
 	    $dad_err = $tmp;
 	}
@@ -162,54 +162,54 @@ sub _open3 {
 	    xopen \*STDIN,  "<&$dad_wtr" if fileno(STDIN) != fileno($dad_wtr);
 	} else {
 	    xclose $dad_wtr;
-	    xopen \*STDIN,  "<&$kid_rdr";
-	    xclose $kid_rdr;
+	    xopen \*STDIN,  "<&=" . fileno $kid_rdr;
 	}
 	if ($dup_rdr) {
 	    xopen \*STDOUT, ">&$dad_rdr" if fileno(STDOUT) != fileno($dad_rdr);
 	} else {
 	    xclose $dad_rdr;
-	    xopen \*STDOUT, ">&$kid_wtr";
-	    xclose $kid_wtr;
+	    xopen \*STDOUT, ">&=" . fileno $kid_wtr;
 	}
 	if ($dad_rdr ne $dad_err) {
 	    if ($dup_err) {
-		xopen \*STDERR, ">&$dad_err"
+		# I have to use a fileno here because in this one case
+		# I'm doing a dup but the filehandle might be a reference
+		# (from the special case above).
+		xopen \*STDERR, ">&" . fileno $dad_err
 		    if fileno(STDERR) != fileno($dad_err);
 	    } else {
 		xclose $dad_err;
-		xopen \*STDERR, ">&$kid_err";
-		xclose $kid_err;
+		xopen \*STDERR, ">&=" . fileno $kid_err;
 	    }
 	} else {
 	    xopen \*STDERR, ">&STDOUT" if fileno(STDERR) != fileno(STDOUT);
 	}
 	local($")=(" ");
 	exec @cmd
-	    or croak "open3: exec of @cmd failed";
+	    or croak "$Me: exec of @cmd failed";
     } elsif ($do_spawn) {
 	# All the bookkeeping of coincidence between handles is
 	# handled in spawn_with_handles.
 
 	my @close;
 	if ($dup_wtr) {
-	  $kid_rdr = $dad_wtr;
-	  push @close, \*{$kid_rdr};
+	  $kid_rdr = \*{$dad_wtr};
+	  push @close, $kid_rdr;
 	} else {
-	  push @close, \*{$dad_wtr}, \*{$kid_rdr};
+	  push @close, \*{$dad_wtr}, $kid_rdr;
 	}
 	if ($dup_rdr) {
-	  $kid_wtr = $dad_rdr;
-	  push @close, \*{$kid_wtr};
+	  $kid_wtr = \*{$dad_rdr};
+	  push @close, $kid_wtr;
 	} else {
-	  push @close, \*{$dad_rdr}, \*{$kid_wtr};
+	  push @close, \*{$dad_rdr}, $kid_wtr;
 	}
 	if ($dad_rdr ne $dad_err) {
 	    if ($dup_err) {
-	      $kid_err = $dad_err ;
-	      push @close, \*{$kid_err};
+	      $kid_err = \*{$dad_err};
+	      push @close, $kid_err;
 	    } else {
-	      push @close, \*{$dad_err}, \*{$kid_err};
+	      push @close, \*{$dad_err}, $kid_err;
 	    }
 	} else {
 	  $kid_err = $kid_wtr;
@@ -217,17 +217,17 @@ sub _open3 {
 	require IO::Pipe;
 	$kidpid = eval {
 	    spawn_with_handles( [ { mode => 'r',
-				    open_as => \*{$kid_rdr},
+				    open_as => $kid_rdr,
 				    handle => \*STDIN },
 				  { mode => 'w',
-				    open_as => \*{$kid_wtr},
+				    open_as => $kid_wtr,
 				    handle => \*STDOUT },
 				  { mode => 'w',
-				    open_as => \*{$kid_err},
+				    open_as => $kid_err,
 				    handle => \*STDERR },
 				], \@close, @cmd);
 	};
-	die "open3: $@" if $@;
+	die "$Me: $@" if $@;
     }
 
     xclose $kid_rdr if !$dup_wtr;
@@ -267,10 +267,12 @@ sub spawn_with_handles {
 	$fd->{handle}->fdopen($saved{fileno $fd->{open_as}} || $fd->{open_as},
 			      $fd->{mode});
     }
-    # Stderr may be redirected below, so we save the err text:
-    foreach $fd (@$close_in_child) {
-	fcntl($fd, Fcntl::F_SETFD(), 1) or push @errs, "fcntl $fd: $!"
-	    unless $saved{fileno $fd};	# Do not close what we redirect!
+    unless ($^O eq 'MSWin32') {
+	# Stderr may be redirected below, so we save the err text:
+	foreach $fd (@$close_in_child) {
+	    fcntl($fd, Fcntl::F_SETFD(), 1) or push @errs, "fcntl $fd: $!"
+		unless $saved{fileno $fd}; # Do not close what we redirect!
+	}
     }
 
     unless (@errs) {

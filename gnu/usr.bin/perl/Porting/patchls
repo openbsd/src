@@ -17,10 +17,10 @@ use Text::Tabs qw(expand unexpand);
 use strict;
 use vars qw($VERSION);
 
-$VERSION = 2.04;
+$VERSION = 2.08;
 
 sub usage {
-die q{
+die qq{
   patchls [options] patchfile [ ... ]
 
     -h     no filename headers (like grep), only the listing.
@@ -30,13 +30,20 @@ die q{
     -m     print formatted Meta-information (Subject,From,Msg-ID etc).
     -p N   strip N levels of directory Prefix (like patch), else automatic.
     -v     more verbose (-d for noisy debugging).
+    -n     give a count of the number of patches applied to a file if >1.
     -f F   only list patches which patch files matching regexp F
-           (F has $ appended unless it contains a /).
+           (F has \$ appended unless it contains a /).
+    -e     Expect patched files to Exist (relative to current directory)
+           Will print warnings for files which don't. Also affects -4 option.
   other options for special uses:
     -I     just gather and display summary Information about the patches.
     -4     write to stdout the PerForce commands to prepare for patching.
+    -5     like -4 but add "|| exit 1" after each command
     -M T   Like -m but only output listed meta tags (eg -M 'Title From')
     -W N   set wrap width to N (defaults to 70, use 0 for no wrap)
+    -X     list patchfiles that may clash (i.e. patch the same file)
+
+  patchls version $VERSION by Tim Bunce
 }
 }
 
@@ -44,40 +51,75 @@ $::opt_p = undef;	# undef != 0
 $::opt_d = 0;
 $::opt_v = 0;
 $::opt_m = 0;
+$::opt_n = 0;
 $::opt_i = 0;
 $::opt_h = 0;
 $::opt_l = 0;
 $::opt_c = 0;
 $::opt_f = '';
+$::opt_e = 0;
 
 # special purpose options
 $::opt_I = 0;
 $::opt_4 = 0;	# output PerForce commands to prepare for patching
+$::opt_5 = 0;
 $::opt_M = '';	# like -m but only output these meta items (-M Title)
 $::opt_W = 70;	# set wrap width columns (see Text::Wrap module)
+$::opt_C = 0;	# 'Chip' mode (handle from/tags/article/bug files) undocumented
+$::opt_X = 0;	# list patchfiles that patch the same file
 
 usage unless @ARGV;
 
-getopts("mihlvc4p:f:IM:W:") or usage;
+getopts("dmnihlvecC45Xp:f:IM:W:") or usage;
 
 $columns = $::opt_W || 9999999;
 
 $::opt_m = 1 if $::opt_M;
-my @show_meta = split(' ', $::opt_M || 'Title From Msg-ID');
+$::opt_4 = 1 if $::opt_5;
+$::opt_i = 1 if $::opt_X;
+
+# see get_meta_info()
+my @show_meta = split(' ', $::opt_M || 'Title From Msg-ID Files');
+my %show_meta = map { ($_,1) } @show_meta;
 
 my %cat_title = (
     'BUILD'	=> 'BUILD PROCESS',
     'CORE'	=> 'CORE LANGUAGE',
     'DOC'	=> 'DOCUMENTATION',
-    'LIB'	=> 'LIBRARY AND EXTENSIONS',
+    'LIB'	=> 'LIBRARY',
     'PORT1'	=> 'PORTABILITY - WIN32',
     'PORT2'	=> 'PORTABILITY - GENERAL',
     'TEST'	=> 'TESTS',
     'UTIL'	=> 'UTILITIES',
     'OTHER'	=> 'OTHER CHANGES',
+    'EXT'	=> 'EXTENSIONS',
+    'UNKNOWN'	=> 'UNKNOWN - NO FILES PATCH',
 );
 
-my %ls;
+
+sub get_meta_info {
+    my $ls = shift;
+    local($_) = shift;
+    if (/^From:\s+(.*\S)/i) {;
+	my $from = $1;	# temporary measure for Chip Salzenberg
+	$from =~ s/chip\@(atlantic\.net|perlsupport\.com)/chip\@pobox.com/;
+	$from =~ s/\(Tim Bunce\) \(Tim Bunce\)/(Tim Bunce)/;
+	$ls->{From}{$from} = 1
+    }
+    if (/^Subject:\s+(?:Re: )?(.*\S)/i) {
+	my $title = $1;
+	$title =~ s/\[(PATCH|PERL)[\w\. ]*\]:?//g;
+	$title =~ s/\b(PATCH|PERL)[\w\.]*://g;
+	$title =~ s/\bRe:\s+/ /g;
+	$title =~ s/\s+/ /g;
+	$title =~ s/^\s*(.*?)\s*$/$1/g;
+	$ls->{Title}{$title} = 1;
+    }
+    $ls->{'Msg-ID'}{$1}=1 if /^Message-Id:\s+(.*\S)/i;
+    $ls->{Date}{$1}=1     if /^Date:\s+(.*\S)/i;
+    $ls->{$1}{$2}=1       if $::opt_M && /^([-\w]+):\s+(.*\S)/;
+}
+
 
 # Style 1:
 #	*** perl-5.004/embed.h  Sat May 10 03:39:32 1997
@@ -97,9 +139,15 @@ my %ls;
 # Variation:
 #	Index: embed.h
 
-my($in, $prevline, $prevtype, $ls);
-my(@removed, @added);
+my %ls;
+
+my $in;
+my $ls;
+my $prevline = '';
+my $prevtype = '';
+my (@removed, @added);
 my $prologue = 1;	# assume prologue till patch or /^exit\b/ seen
+
 
 foreach my $argv (@ARGV) {
     $in = $argv;
@@ -119,25 +167,24 @@ foreach my $argv (@ARGV) {
 		push @removed, $1   if /^rm\s+(?:-f)?\s*(\S+)/;
 		$prologue = 0       if /^exit\b/;
 	    }
-	    next unless $::opt_m;
-	    $ls->{From}{$1}=1,next     if /^From:\s+(.*\S)/i;
-	    $ls->{Title}{$1}=1,next    if /^Subject:\s+(?:Re: )?(.*\S)/i;
-	    $ls->{'Msg-ID'}{$1}=1,next if /^Message-Id:\s+(.*\S)/i;
-	    $ls->{Date}{$1}=1,next     if /^Date:\s+(.*\S)/i;
-	    $ls->{$1}{$2}=1,next       if /^([-\w]+):\s+(.*\S)/;
+	    get_meta_info($ls, $_) if $::opt_m;
 	    next;
 	}
 	$type = $1;
 	next if /^--- [0-9,]+ ----$/ || /^\*\*\* [0-9,]+ \*\*\*\*$/;
 	$prologue = 0;
 
-	print "Last: $prevline","This: ${_}Got:  $1\n\n" if $::opt_d;
+	print "Last: $prevline","This: ${_}Got:  $type\n\n" if $::opt_d;
 
 	# Some patches have Index lines but not diff headers
 	# Patch copes with this, so must we. It's also handy for
 	# documenting manual changes by simply adding Index: lines
-	# to the file which describes the problem bing fixed.
-	add_file($ls, $1), next if /^Index:\s+(\S+)/;
+	# to the file which describes the problem being fixed.
+	if (/^Index:\s+(.*)/) {
+	    my $f;
+	    foreach $f (split(/ /, $1)) { add_file($ls, $f) }
+	    next;
+	}
 
 	if (	($type eq '---' and $prevtype eq '***')	# Style 1
 	    or	($type eq '+++' and $prevtype eq '---')	# Style 2
@@ -152,9 +199,32 @@ foreach my $argv (@ARGV) {
     }
     continue {
 	$prevline = $_;
-	$prevtype = $type;
+	$prevtype = $type || '';
 	$type = '';
     }
+
+    # special mode for patch sets from Chip
+    if ($in =~ m:[\\/]patch$:) {
+	my $is_chip;
+	my $chip;
+	my $dir; ($dir = $in) =~ s:[\\/]patch$::;
+	if (!$ls->{From} && (open(CHIP,"$dir/article") || open(CHIP,"$dir/bug"))) {
+	    get_meta_info($ls, $_) while (<CHIP>);
+	    $is_chip = 1;
+	}
+	if (open CHIP,"<$dir/from") {
+	    chop($chip = <CHIP>);
+	    $ls->{From} = { $chip => 1 };
+	    $is_chip = 1;
+	}
+	if (open CHIP,"<$dir/tag") {
+	    chop($chip = <CHIP>);
+	    $ls->{Title} = { $chip => 1 };
+	    $is_chip = 1;
+	}
+	$ls->{From} = { "Chip Salzenberg" => 1 } if $is_chip && !$ls->{From};
+    }
+
     # if we don't have a title for -m then use the file name
     $ls->{Title}{$in}=1 if $::opt_m
 	and !$ls->{Title} and $ls->{out};
@@ -170,13 +240,15 @@ print scalar(@ARGV)." files read.\n" if $::opt_v and @ARGV > 1;
 my @ls  = values %ls;
 
 if ($::opt_f) {		# filter out patches based on -f <regexp>
-    my $out;
     $::opt_f .= '$' unless $::opt_f =~ m:/:;
     @ls = grep {
-	my @out = keys %{$_->{out}};
 	my $match = 0;
-	for $out (@out) {
-	    ++$match if $out =~ m/$::opt_f/o;
+	if ($_->{is_in}) {
+	    my @out = keys %{ $_->{out} };
+	    $match=1 if grep { m/$::opt_f/o } @out;
+	}
+	else {
+	    $match=1 if $_->{in} =~ m/$::opt_f/o;
 	}
 	$match;
     } @ls;
@@ -190,35 +262,54 @@ if ($::opt_f) {		# filter out patches based on -f <regexp>
 # --- Handle special modes ---
 
 if ($::opt_4) {
-    print map { "p4 delete $_\n" } @removed if @removed;
-    print map { "p4 add    $_\n" } @added   if @added;
-    my @patches = grep { $_->{is_in} } @ls;
+    my $tail = ($::opt_5) ? "|| exit 1" : "";
+    print map { "p4 delete $_$tail\n" } @removed if @removed;
+    print map { "p4 add    $_$tail\n" } @added   if @added;
+    my @patches = sort grep { $_->{is_in} } @ls;
+    my @no_outs = grep { keys %{$_->{out}} == 0 } @patches;
+    warn "Warning: Some files contain no patches:",
+	join("\n\t", '', map { $_->{in} } @no_outs), "\n" if @no_outs;
     my %patched = map { ($_, 1) } map { keys %{$_->{out}} } @patches;
     delete @patched{@added};
     my @patched = sort keys %patched;
-    print map { "p4 edit   $_\n" } @patched if @patched;
-    exit 0;
+    foreach(@patched) {
+	my $edit = ($::opt_e && !-f $_) ? "add " : "edit";
+	print "p4 $edit   $_$tail\n";
+    }
+    exit 0 unless $::opt_C;
 }
+
 
 if ($::opt_I) {
     my $n_patches = 0;
     my($in,$out);
     my %all_out;
+    my @no_outs;
     foreach $in (@ls) {
 	next unless $in->{is_in};
 	++$n_patches;
 	my @outs = keys %{$in->{out}};
+	push @no_outs, $in unless @outs;
 	@all_out{@outs} = ($in->{in}) x @outs;
     }
     my @all_out = sort keys %all_out;
     my @missing = grep { ! -f $_ } @all_out;
     print "$n_patches patch files patch ".@all_out." files (".@missing." missing)\n";
+    print @no_outs." patch files don't contain patches.\n" if @no_outs;
     print "(use -v to list patches which patch 'missing' files)\n"
-	    if @missing && !$::opt_v;
+	    if (@missing || @no_outs) && !$::opt_v;
+    if ($::opt_v and @no_outs) {
+	print "Patch files which don't contain patches:\n";
+	foreach $out (@no_outs) {
+	    printf "  %-20s\n", $out->{in};
+	}
+    }
     if ($::opt_v and @missing) {
 	print "Missing files:\n";
 	foreach $out (@missing) {
-	    printf "  %-20s\t%s\n", $out, $all_out{$out};
+	    printf "  %-20s\t", $out	unless $::opt_h;
+	    print $all_out{$out}	unless $::opt_l;
+	    print "\n";
 	}
     }
     print "Added files:   @added\n"   if @added;
@@ -229,6 +320,7 @@ if ($::opt_I) {
 unless ($::opt_c and $::opt_m) {
     foreach $ls (@ls) {
 	next unless ($::opt_i) ? $ls->{is_out} : $ls->{is_in};
+	next if $::opt_X and keys %{$ls->{out}} <= 1;
 	list_files_by_patch($ls);
     }
 }
@@ -263,9 +355,12 @@ exit 0;
 
 sub add_file {
     my $ls = shift;
+	print "add_file '$_[0]'\n" if $::opt_d;
     my $out = trim_name(shift);
 
     $ls->{out}->{$out} = 1;
+
+    warn "$out patched but not present\n" if $::opt_e && !-f $out;
 
     # do the -i inverse as well, even if we're not doing -i
     my $i = $ls{$out} ||= {
@@ -308,7 +403,8 @@ sub list_files_by_patch {
 	    my @list = sort keys %{$ls->{$meta}};
 	    push @meta, sprintf "%7s:  ", $meta;
 	    if ($meta eq 'Title') {
-		@list = map { s/\[?PATCH\]?:?\s*//g; "\"$_\""; } @list
+		@list = map { "\"$_\""; } @list;
+		push @list, "#$1" if $::opt_C && $ls->{in} =~ m:\b(\w\d+)/patch$:;
 	    }
 	    elsif ($meta eq 'From') {
 		# fix-up bizzare addresses from japan and ibm :-)
@@ -328,17 +424,27 @@ sub list_files_by_patch {
 	$name = "\n$name" if @meta and $name;
     }
     # don't print the header unless the file contains something interesting
-    return if !@meta and !$ls->{out};
-    print("$ls->{in}\n"),return  if $::opt_l;	# -l = no listing
+    return if !@meta and !$ls->{out} and !$::opt_v;
+    if ($::opt_l) {	# -l = no listing, just names
+	print "$ls->{in}";
+	my $n = keys %{ $ls->{out} };
+	print " ($n patches)" if $::opt_n and $n>1;
+	print "\n";
+	return;
+    }
 
     # a twisty maze of little options
     my $cat = ($ls->{category} and !$::opt_m) ? "\t$ls->{category}" : "";
     print "$name$cat: "	unless ($::opt_h and !$::opt_v) or !"$name$cat";
     print join('',"\n",@meta) if @meta;
 
+    return if $::opt_m && !$show_meta{Files};
     my @v = sort PATORDER keys %{ $ls->{out} };
-    my $v = "@v\n";
+    my $n = @v;
+    my $v = "@v";
     print $::opt_m ? "  Files:  ".my_wrap("","          ",$v) : $v;
+    print " ($n patches)" if $::opt_n and $n>1;
+    print "\n";
 }
 
 
@@ -364,8 +470,10 @@ sub categorize_files {
 	    if m:^(cygwin32|os2|plan9|qnx|vms)/:
 	    or m:^(hints|Porting|ext/DynaLoader)/:
 	    or m:^README\.:;
+	$c{EXT}  += 10,next
+	    if m:^(ext|lib/ExtUtils)/:;
 	$c{LIB}  += 10,next
-	    if m:^(lib|ext)/:;
+	    if m:^(lib)/:;
 	$c{'CORE'} += 15,next
 	    if m:^[^/]+[\._]([chH]|sym|pl)$:;
 	$c{BUILD} += 10,next
@@ -391,7 +499,7 @@ sub categorize_files {
     }
     else {
 	my($c, $v) = %c;
-	$c ||= 'OTHER'; $v ||= 0;
+	$c ||= 'UNKNOWN'; $v ||= 0;
 	print "  ".@$files." patches: $c: $v\n" if $verb;
 	return $c;
     }

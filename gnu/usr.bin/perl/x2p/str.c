@@ -13,9 +13,7 @@
 #include "util.h"
 
 void
-str_numset(str,num)
-register STR *str;
-double num;
+str_numset(register STR *str, double num)
 {
     str->str_nval = num;
     str->str_pok = 0;		/* invalidate pointer */
@@ -23,8 +21,7 @@ double num;
 }
 
 char *
-str_2ptr(str)
-register STR *str;
+str_2ptr(register STR *str)
 {
     register char *s;
 
@@ -47,8 +44,7 @@ register STR *str;
 }
 
 double
-str_2num(str)
-register STR *str;
+str_2num(register STR *str)
 {
     if (!str)
 	return 0.0;
@@ -65,9 +61,7 @@ register STR *str;
 }
 
 void
-str_sset(dstr,sstr)
-STR *dstr;
-register STR *sstr;
+str_sset(STR *dstr, register STR *sstr)
 {
     if (!sstr)
 	str_nset(dstr,No,0);
@@ -80,10 +74,7 @@ register STR *sstr;
 }
 
 void
-str_nset(str,ptr,len)
-register STR *str;
-register char *ptr;
-register int len;
+str_nset(register STR *str, register char *ptr, register int len)
 {
     GROWSTR(&(str->str_ptr), &(str->str_len), len + 1);
     bcopy(ptr,str->str_ptr,len);
@@ -94,9 +85,7 @@ register int len;
 }
 
 void
-str_set(str,ptr)
-register STR *str;
-register char *ptr;
+str_set(register STR *str, register char *ptr)
 {
     register int len;
 
@@ -111,9 +100,9 @@ register char *ptr;
 }
 
 void
-str_chop(str,ptr)	/* like set but assuming ptr is in str */
-register STR *str;
-register char *ptr;
+str_chop(register STR *str, register char *ptr)	/* like set but assuming ptr is in str */
+                  
+                   
 {
     if (!(str->str_pok))
 	str_2ptr(str);
@@ -124,10 +113,7 @@ register char *ptr;
 }
 
 void
-str_ncat(str,ptr,len)
-register STR *str;
-register char *ptr;
-register int len;
+str_ncat(register STR *str, register char *ptr, register int len)
 {
     if (!(str->str_pok))
 	str_2ptr(str);
@@ -140,9 +126,7 @@ register int len;
 }
 
 void
-str_scat(dstr,sstr)
-STR *dstr;
-register STR *sstr;
+str_scat(STR *dstr, register STR *sstr)
 {
     if (!(sstr->str_pok))
 	str_2ptr(sstr);
@@ -151,9 +135,7 @@ register STR *sstr;
 }
 
 void
-str_cat(str,ptr)
-register STR *str;
-register char *ptr;
+str_cat(register STR *str, register char *ptr)
 {
     register int len;
 
@@ -170,11 +152,7 @@ register char *ptr;
 }
 
 char *
-str_append_till(str,from,delim,keeplist)
-register STR *str;
-register char *from;
-register int delim;
-char *keeplist;
+str_append_till(register STR *str, register char *from, register int delim, char *keeplist)
 {
     register char *to;
     register int len;
@@ -209,8 +187,7 @@ char *keeplist;
 }
 
 STR *
-str_new(len)
-int len;
+str_new(int len)
 {
     register STR *str;
     
@@ -228,9 +205,7 @@ int len;
 }
 
 void
-str_grow(str,len)
-register STR *str;
-int len;
+str_grow(register STR *str, int len)
 {
     if (len && str)
 	GROWSTR(&(str->str_ptr), &(str->str_len), len + 1);
@@ -239,11 +214,9 @@ int len;
 /* make str point to what nstr did */
 
 void
-str_replace(str,nstr)
-register STR *str;
-register STR *nstr;
+str_replace(register STR *str, register STR *nstr)
 {
-    Safefree(str->str_ptr);
+    safefree(str->str_ptr);
     str->str_ptr = nstr->str_ptr;
     str->str_len = nstr->str_len;
     str->str_cur = nstr->str_cur;
@@ -254,8 +227,7 @@ register STR *nstr;
 }
 
 void
-str_free(str)
-register STR *str;
+str_free(register STR *str)
 {
     if (!str)
 	return;
@@ -269,8 +241,7 @@ register STR *str;
 }
 
 int
-str_len(str)
-register STR *str;
+str_len(register STR *str)
 {
     if (!str)
 	return 0;
@@ -283,9 +254,7 @@ register STR *str;
 }
 
 char *
-str_gets(str,fp)
-register STR *str;
-register FILE *fp;
+str_gets(register STR *str, register FILE *fp)
 {
 #if defined(USE_STDIO_PTR) && defined(STDIO_PTR_LVALUE) && defined(STDIO_CNT_LVALUE)
     /* Here is some breathtakingly efficient cheating */
@@ -366,8 +335,7 @@ thats_all_folks:
 }
 
 void
-str_inc(str)
-register STR *str;
+str_inc(register STR *str)
 {
     register char *d;
 
@@ -403,8 +371,7 @@ register STR *str;
 }
 
 void
-str_dec(str)
-register STR *str;
+str_dec(register STR *str)
 {
     register char *d;
 
@@ -436,8 +403,7 @@ register STR *str;
 /* make a string that will exist for the duration of the expression eval */
 
 STR *
-str_mortal(oldstr)
-STR *oldstr;
+str_mortal(STR *oldstr)
 {
     register STR *str = str_new(0);
     static long tmps_size = -1;
@@ -458,8 +424,7 @@ STR *oldstr;
 }
 
 STR *
-str_make(s)
-char *s;
+str_make(char *s)
 {
     register STR *str = str_new(0);
 
@@ -468,8 +433,7 @@ char *s;
 }
 
 STR *
-str_nmake(n)
-double n;
+str_nmake(double n)
 {
     register STR *str = str_new(0);
 

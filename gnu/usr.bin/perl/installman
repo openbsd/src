@@ -3,8 +3,11 @@ BEGIN { @INC = ('lib') }
 use Config;
 use Getopt::Long;
 use File::Find;
+use File::Copy;
 use File::Path qw(mkpath);
+use ExtUtils::Packlist;
 use subs qw(unlink chmod rename link);
+use vars qw($packlist);
 require Cwd;
 
 umask 022;
@@ -49,6 +52,8 @@ $notify = $opt_notify || $opt_n;
 		Have you run make install?.  (Installing anyway.)\n";
 -x "t/perl$Config{exe_ext}"		|| warn "WARNING: You've never run 'make test'!!!",
 	"  (Installing anyway.)\n";
+
+$packlist = ExtUtils::Packlist->new("$Config{installarchlib}/.packlist");
 
 # Install the main pod pages.
 runpod2man('pod', $man1dir, $man1ext);
@@ -129,7 +134,7 @@ sub runpod2man {
 	# Convert name from  File/Basename.pm to File::Basename.3 format,
 	# if necessary.
 	$manpage =~ s#\.p(m|od)$##;
-	if ($^O eq 'os2' || $^O eq 'amigaos') {
+	if ($^O eq 'os2' || $^O eq 'amigaos' || $^O eq 'uwin') {
 	  $manpage =~ s#/#.#g;
 	} else {
 	  $manpage =~ s#/#::#g;
@@ -156,6 +161,7 @@ sub lsmodpods {
     }
 }
 
+$packlist->write() unless $notify;
 print STDERR "  Installation complete\n";
 
 exit 0;
@@ -194,12 +200,27 @@ print STDERR "  unlink $name\n";
 }
 
 sub link {
-    local($from,$to) = @_;
+    my($from,$to) = @_;
+    my($success) = 0;
 
     print STDERR "  ln $from $to\n";
-    eval { CORE::link($from,$to) }
-|| system('cp', $from, $to) == 0
-|| warn "Couldn't link $from to $to: $!\n" unless $notify;
+    eval {
+        CORE::link($from, $to)
+            ? $success++
+            : ($from =~ m#^/afs/# || $to =~ m#^/afs/#)
+              ? die "AFS"  # okay inside eval {}
+              : warn "Couldn't link $from to $to: $!\n"
+          unless $notify;
+        $packlist->{$to} = { type => 'file' };
+    };
+    if ($@) {
+        File::Copy::copy($from, $to)
+            ? $success++
+            : warn "Couldn't copy $from to $to: $!\n"
+          unless $notify;
+        $packlist->{$to} = { type => 'file' };
+    }
+    $success;
 }
 
 sub rename {
@@ -214,6 +235,7 @@ warn("Cannot rename to `$to.$i': $!"), return 0
     }
     link($from,$to) || return 0;
     unlink($from);
+    $packlist->{$to} = { type => 'file' };
 }
 
 sub chmod {

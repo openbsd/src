@@ -2,7 +2,7 @@
 
 # $RCSfile: auto.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:39 $
 
-print "1..34\n";
+print "1..37\n";
 
 $x = 10000;
 if (0 + ++$x - 1 == 10000) { print "ok 1\n";} else {print "not ok 1\n";}
@@ -46,3 +46,7 @@ if (++($foo = '99') eq '100') {print "ok 31\n";} else {print "not ok 31\n";}
 if (++($foo = 'a0') eq 'a1') {print "ok 32\n";} else {print "not ok 32\n";}
 if (++($foo = 'Az') eq 'Ba') {print "ok 33\n";} else {print "not ok 33\n";}
 if (++($foo = 'zz') eq 'aaa') {print "ok 34\n";} else {print "not ok 34\n";}
+if (++($foo = 'A99') eq 'B00') {print "ok 35\n";} else {print "not ok 35\n";}
+# EBCDIC guards: i and j, r and s, are not contiguous.
+if (++($foo = 'zi') eq 'zj') {print "ok 36\n";} else {print "not ok 36\n";}
+if (++($foo = 'zr') eq 'zs') {print "ok 37\n";} else {print "not ok 37\n";}

@@ -3,21 +3,27 @@ package Pod::Html;
 use Pod::Functions;
 use Getopt::Long;	# package for handling command-line parameters
 require Exporter;
+use vars qw($VERSION);
+$VERSION = 1.01;
 @ISA = Exporter;
 @EXPORT = qw(pod2html htmlify);
 use Cwd;
 
 use Carp;
 
+use locale;	# make \w work right in non-ASCII lands
+
 use strict;
+
+use Config;
 
 =head1 NAME
 
-Pod::HTML - module to convert pod files to HTML
+Pod::Html - module to convert pod files to HTML
 
 =head1 SYNOPSIS
 
-    use Pod::HTML;
+    use Pod::Html;
     pod2html([options]);
 
 =head1 DESCRIPTION
@@ -199,6 +205,8 @@ my %pages = ();			# associative array used to find the location
 my %sections = ();		# sections within this page
 my %items = ();			# associative array used to find the location
 				#   of =item directives referenced by C<> links
+my $Is83;                       # is dos with short filenames (8.3)
+
 sub init_globals {
 $dircache = "pod2html-dircache";
 $itemcache = "pod2html-itemcache";
@@ -244,7 +252,7 @@ $paragraph = '';			# which paragraph we're processing (used
 				#   of pages referenced by L<> links.
 #%items = ();			# associative array used to find the location
 				#   of =item directives referenced by C<> links
-
+$Is83=$^O eq 'dos';
 }
 
 sub pod2html {
@@ -253,6 +261,8 @@ sub pod2html {
     local $_;
 
     init_globals();
+
+    $Is83 = 0 if (defined (&Dos::UseLFN) && Dos::UseLFN());
 
     # cache of %pages and %items from last time we ran pod2html
 
@@ -292,18 +302,20 @@ sub pod2html {
     open(HTML, ">$htmlfile")
 	    || die "$0: cannot open $htmlfile file for output: $!\n";
 
-    # put a title in the HTML file
-    $title = '';
-    TITLE_SEARCH: {
-	for (my $i = 0; $i < @poddata; $i++) { 
-	    if ($poddata[$i] =~ /^=head1\s*NAME\b/m) {
-		for my $para ( @poddata[$i, $i+1] ) { 
-		    last TITLE_SEARCH if ($title) = $para =~ /(\S+\s+-+\s*.*)/s;
-		}
-	    } 
+    # put a title in the HTML file if one wasn't specified
+    if ($title eq '') {
+	TITLE_SEARCH: {
+	    for (my $i = 0; $i < @poddata; $i++) { 
+		if ($poddata[$i] =~ /^=head1\s*NAME\b/m) {
+		    for my $para ( @poddata[$i, $i+1] ) { 
+			last TITLE_SEARCH
+			    if ($title) = $para =~ /(\S+\s+-+.*\S)/s;
+		    }
+		} 
 
-	} 
-    } 
+	    } 
+	}
+    }
     if (!$title and $podfile =~ /\.pod$/) {
 	# probably a split pod so take first =head[12] as title
 	for (my $i = 0; $i < @poddata; $i++) { 
@@ -312,19 +324,22 @@ sub pod2html {
 	warn "adopted '$title' as title for $podfile\n"
 	    if $verbose and $title;
     } 
-    unless ($title) { 
+    if ($title) {
+	$title =~ s/\s*\(.*\)//;
+    } else {
 	warn "$0: no title for $podfile";
 	$podfile =~ /^(.*)(\.[^.\/]+)?$/;
 	$title = ($podfile eq "-" ? 'No Title' : $1);
 	warn "using $title" if $verbose;
     }
     print HTML <<END_OF_HEAD;
-    <HTML> 
-	<HEAD> 
-	    <TITLE>$title</TITLE> 
-	</HEAD>
+<HTML>
+<HEAD>
+<TITLE>$title</TITLE>
+<LINK REV="made" HREF="mailto:$Config{perladmin}">
+</HEAD>
 
-	<BODY>
+<BODY>
 
 END_OF_HEAD
 
@@ -364,9 +379,9 @@ END_OF_HEAD
 	    } else {
 		next if @begin_stack && $begin_stack[-1] ne 'html';
 
-		if (/^=(head[1-6])\s+(.*)/s) {	# =head[1-6] heading
+		if (/^=(head[1-6])\s+(.*\S)/s) {	# =head[1-6] heading
 		    process_head($1, $2);
-		} elsif (/^=item\s*(.*)/sm) {	# =item text
+		} elsif (/^=item\s*(.*\S)/sm) {	# =item text
 		    process_item($1);
 		} elsif (/^=over\s*(.*)/) {		# =over N
 		    process_over();
@@ -387,16 +402,16 @@ END_OF_HEAD
 	    next if @begin_stack && $begin_stack[-1] ne 'html';
 	    my $text = $_;
 	    process_text(\$text, 1);
-	    print HTML "$text\n<P>\n\n";
+	    print HTML "<P>\n$text";
 	}
     }
 
     # finish off any pending directives
     finish_list();
     print HTML <<END_OF_TAIL;
-    </BODY>
+</BODY>
 
-    </HTML>
+</HTML>
 END_OF_TAIL
 
     # close the html file
@@ -766,17 +781,19 @@ sub scan_headings {
 	    chomp($title);
 	    $$sections{htmlify(0,$title)} = 1;
 
-	    if ($which_head > $listdepth) {
-		$index .= "\n" . ("\t" x $listdepth) . "<UL>\n";
-	    } elsif ($which_head < $listdepth) {
-		$listdepth--;
-		$index .= "\n" . ("\t" x $listdepth) . "</UL>\n";
+	    while ($which_head != $listdepth) {
+		if ($which_head > $listdepth) {
+		    $index .= "\n" . ("\t" x $listdepth) . "<UL>\n";
+		    $listdepth++;
+		} elsif ($which_head < $listdepth) {
+		    $listdepth--;
+		    $index .= "\n" . ("\t" x $listdepth) . "</UL>\n";
+		}
 	    }
-	    $listdepth = $which_head;
 
 	    $index .= "\n" . ("\t" x $listdepth) . "<LI>" .
 	              "<A HREF=\"#" . htmlify(0,$title) . "\">" .
-		      process_text(\$title, 0) . "</A>";
+		      html_escape(process_text(\$title, 0)) . "</A>";
 	}
     }
 
@@ -817,8 +834,8 @@ sub scan_items {
 	    if ($1 eq "*") {		# bullet list
 		/\A=item\s+\*\s*(.*?)\s*\Z/s;
 		$item = $1;
-	    } elsif ($1 =~ /^[0-9]+/) {	# numbered list
-		/\A=item\s+[0-9]+\.?(.*?)\s*\Z/s;
+	    } elsif ($1 =~ /^\d+/) {	# numbered list
+		/\A=item\s+\d+\.?(.*?)\s*\Z/s;
 		$item = $1;
 	    } else {
 #		/\A=item\s+(.*?)\s*\Z/s;
@@ -850,6 +867,7 @@ sub process_head {
     print HTML "<H$level>"; # unless $listlevel;
     #print HTML "<H$level>" unless $listlevel;
     my $convert = $heading; process_text(\$convert, 0);
+    $convert = html_escape($convert);
     print HTML '<A NAME="' . htmlify(0,$heading) . "\">$convert</A>";
     print HTML "</H$level>"; # unless $listlevel;
     print HTML "\n";
@@ -892,30 +910,36 @@ sub process_item {
 	    print HTML "<UL>\n";
 	}
 
-       print HTML "<LI><STRONG>";
-       $text =~ /\A\*\s*(.*)\Z/s;
-       print HTML "<A NAME=\"item_" . htmlify(1,$1) . "\">" if $1 && !$items_named{$1}++;
-       $quote = 1;
-       #print HTML process_puretext($1, \$quote);
-       print HTML $1;
-       print HTML "</A>" if $1;
-       print HTML "</STRONG>";
+	print HTML '<LI>';
+	if ($text =~ /\A\*\s*(.+)\Z/s) {
+	    print HTML '<STRONG>';
+	    if ($items_named{$1}++) {
+		print HTML html_escape($1);
+	    } else {
+		my $name = 'item_' . htmlify(1,$1);
+		print HTML qq(<A NAME="$name">), html_escape($1), '</A>';
+	    }
+	    print HTML '</STRONG>';
+	}
 
-    } elsif ($text =~ /\A[0-9#]+/) {	# numbered list
+    } elsif ($text =~ /\A[\d#]+/) {	# numbered list
 
 	if ($need_preamble) {
 	    push(@listend,  "</OL>");
 	    print HTML "<OL>\n";
 	}
 
-       print HTML "<LI><STRONG>";
-       $text =~ /\A[0-9]+\.?(.*)\Z/s;
-       print HTML "<A NAME=\"item_" . htmlify(0,$1) . "\">" if $1;
-       $quote = 1;
-       #print HTML process_puretext($1, \$quote);
-       print HTML $1 if $1;
-       print HTML "</A>" if $1;
-       print HTML "</STRONG>";
+	print HTML '<LI>';
+	if ($text =~ /\A\d+\.?\s*(.+)\Z/s) {
+	    print HTML '<STRONG>';
+	    if ($items_named{$1}++) {
+		print HTML html_escape($1);
+	    } else {
+		my $name = 'item_' . htmlify(0,$1);
+		print HTML qq(<A NAME="$name">), html_escape($1), '</A>';
+	    }
+	    print HTML '</STRONG>';
+	}
 
     } else {			# all others
 
@@ -924,18 +948,17 @@ sub process_item {
 	    print HTML "<DL>\n";
 	}
 
-       print HTML "<DT><STRONG>";
-       print HTML "<A NAME=\"item_" . htmlify(1,$text) . "\">" 
-	    if $text && !$items_named{($text =~ /(\S+)/)[0]}++;
-	    # preceding craziness so that the duplicate leading bits in 
-	    # perlfunc work to find just the first one.  otherwise
-	    # open etc would have many names
-       $quote = 1;
-       #print HTML process_puretext($text, \$quote);
-       print HTML $text;
-       print HTML "</A>" if $text;
-       print HTML "</STRONG>";
-
+	print HTML '<DT>';
+	if ($text =~ /(\S+)/) {
+	    print HTML '<STRONG>';
+	    if ($items_named{$1}++) {
+		print HTML html_escape($text);
+	    } else {
+		my $name = 'item_' . htmlify(1,$text);
+		print HTML qq(<A NAME="$name">), html_escape($text), '</A>';
+	    }
+	    print HTML '</STRONG>';
+	}
        print HTML '<DD>';
     }
 
@@ -991,13 +1014,19 @@ sub process_pod {
 
 #
 # process_for - process a =for pod tag.  if it's for html, split
-# it out verbatim, otherwise ignore it.
+# it out verbatim, if illustration, center it, otherwise ignore it.
 #
 sub process_for {
     my($whom, $text) = @_;
     if ( $whom =~ /^(pod2)?html$/i) {
 	print HTML $text;
-    } 
+    } elsif ($whom =~ /^illustration$/i) {
+        1 while chomp $text;
+	for my $ext (qw[.png .gif .jpeg .jpg .tga .pcl .bmp]) {
+	  $text .= $ext, last if -r "$text$ext";
+	}
+        print HTML qq{<p align = "center"><img src = "$text" alt = "$text illustration"></p>};
+    }
 }
 
 #
@@ -1063,6 +1092,8 @@ sub process_text {
 		  }{
 		    if (defined $pages{$2}) {	# is a link
 			qq($1<A HREF="$htmlroot/$pages{$2}">$2</A>);
+		    } elsif (defined $pages{dosify($2)}) {	# is a link
+			qq($1<A HREF="$htmlroot/$pages{dosify($2)}">$2</A>);
 		    } else {
 			"$1$2";
 		    }
@@ -1110,7 +1141,7 @@ sub process_text {
 	# parse through the string, stopping each time we find a
 	# pod-escape.  once the string has been throughly processed
 	# we can output it.
-	while ($rest) {
+	while (length $rest) {
 	    # check to see if there are any possible pod directives in
 	    # the remaining part of the text.
 	    if ($rest =~ m/[BCEIFLSZ]</) {
@@ -1266,14 +1297,17 @@ sub process_puretext {
 	} elsif ($word =~ m,^\w+://\w,) {
 	    # looks like a URL
 	    $word = qq(<A HREF="$word">$word</A>);
-	} elsif ($word =~ /[\w.-]+\@\w+\.\w/) {
+	} elsif ($word =~ /[\w.-]+\@[\w-]+\.\w/) {
 	    # looks like an e-mail address
-	    $word = qq(<A HREF="MAILTO:$word">$word</A>);
+	    my ($w1, $w2, $w3) = ("", $word, "");
+	    ($w1, $w2, $w3) = ("(", $1, ")$2") if $word =~ /^\((.*?)\)(,?)/;
+	    ($w1, $w2, $w3) = ("&lt;", $1, "&gt;$2") if $word =~ /^<(.*?)>(,?)/;
+	    $word = qq($w1<A HREF="mailto:$w2">$w2</A>$w3);
 	} elsif ($word !~ /[a-z]/ && $word =~ /[A-Z]/) {  # all uppercase?
-	    $word = html_escape($word) if $word =~ /[&<>]/;
+	    $word = html_escape($word) if $word =~ /["&<>]/;
 	    $word = "\n<FONT SIZE=-1>$word</FONT>" if $netscape;
 	} else { 
-	    $word = html_escape($word) if $word =~ /[&<>]/;
+	    $word = html_escape($word) if $word =~ /["&<>]/;
 	}
     }
 
@@ -1309,6 +1343,19 @@ sub pre_escape {
 }
 
 #
+# dosify - convert filenames to 8.3
+#
+sub dosify {
+    my($str) = @_;
+    if ($Is83) {
+        $str = lc $str;
+        $str =~ s/(\.\w+)/substr ($1,0,4)/ge;
+        $str =~ s/(\w+)/substr ($1,0,8)/ge;
+    }
+    return $str;
+}
+
+#
 # process_L - convert a pod L<> directive to a corresponding HTML link.
 #  most of the links made are inferred rather than known about directly
 #  (i.e it's not known whether the =head\d section exists in the target file,
@@ -1320,13 +1367,13 @@ sub pre_escape {
 #
 sub process_L {
     my($str) = @_;
-    my($s1, $s2, $linktext, $page, $section, $link);	# work strings
+    my($s1, $s2, $linktext, $page, $page83, $section, $link);	# work strings
 
     $str =~ s/\n/ /g;			# undo word-wrapped tags
     $s1 = $str;
     for ($s1) {
-	# a :: acts like a /
-	s,::,/,;
+	# LREF: a la HREF L<show this text|man/section>
+	$linktext = $1 if s:^([^|]+)\|::;
 
 	# make sure sections start with a /
 	s,^",/",g;
@@ -1346,15 +1393,22 @@ sub process_L {
 	}
     }
 
+    $page83=dosify($page);
+    $page=$page83 if (defined $pages{$page83});
     if ($page eq "") {
 	$link = "#" . htmlify(0,$section);
-	$linktext = $section;
+	$linktext = $section unless defined($linktext);
+    } elsif ( $page =~ /::/ ) {
+	$linktext  = ($section ? "$section" : "$page");
+	$page =~ s,::,/,g;
+	$link = "$htmlroot/$page.html";
+	$link .= "#" . htmlify(0,$section) if ($section);
     } elsif (!defined $pages{$page}) {
 	warn "$0: $podfile: cannot resolve L<$str> in paragraph $paragraph: no such page '$page'\n";
 	$link = "";
-	$linktext = $page;
+	$linktext = $page unless defined($linktext);
     } else {
-	$linktext  = ($section ? "$section" : "the $page manpage");
+	$linktext  = ($section ? "$section" : "the $page manpage") unless defined($linktext);
 	$section = htmlify(0,$section) if $section ne "";
 
 	# if there is a directory by the name of the page, then assume that an
@@ -1376,7 +1430,7 @@ sub process_L {
 		warn "$0: $podfile: cannot resolve L$str in paragraph $paragraph: ".
 			     "no .pod or .pm found\n";
 		$link = "";
-		$linktext = $section;
+		$linktext = $section unless defined($linktext);
 	    }
 	}
     }
@@ -1417,6 +1471,7 @@ sub process_C {
     $s1 =~ s/\([^()]*\)//g;	# delete parentheses
     $s2 = $s1;
     $s1 =~ s/\W//g;		# delete bogus characters
+    $str = html_escape($str);
 
     # if there was a pod file that we found earlier with an appropriate
     # =item directive, then create a link to that page.
@@ -1486,7 +1541,7 @@ sub process_X {
 # after the entire pod file has been read and converted.
 #
 sub finish_list {
-    while ($listlevel >= 0) {
+    while ($listlevel > 0) {
 	print HTML "</DL>\n";
 	$listlevel--;
     }
@@ -1520,4 +1575,3 @@ BEGIN {
 }
 
 1;
-

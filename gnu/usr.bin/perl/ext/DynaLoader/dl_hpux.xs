@@ -65,6 +65,9 @@ dl_load_file(filename, flags=0)
        * unresolved references in situations like this.  */
       /* bind_type = BIND_IMMEDIATE|BIND_NONFATAL; */
     }
+    /* BIND_NOSTART removed from bind_type because it causes the shared library's	*/
+    /* initialisers not to be run.  This causes problems with all of the static objects */
+    /* in the library.	   */
 #ifdef DEBUGGING
     if (dl_debug)
 	bind_type |= BIND_VERBOSE;
@@ -74,14 +77,14 @@ dl_load_file(filename, flags=0)
     for (i = 0; i <= max; i++) {
 	char *sym = SvPVX(*av_fetch(dl_resolve_using, i, 0));
 	DLDEBUG(1,PerlIO_printf(PerlIO_stderr(), "dl_load_file(%s) (dependent)\n", sym));
-	obj = shl_load(sym, bind_type | BIND_NOSTART, 0L);
+	obj = shl_load(sym, bind_type, 0L);
 	if (obj == NULL) {
 	    goto end;
 	}
     }
 
     DLDEBUG(1,PerlIO_printf(PerlIO_stderr(), "dl_load_file(%s): ", filename));
-    obj = shl_load(filename, bind_type | BIND_NOSTART, 0L);
+    obj = shl_load(filename, bind_type, 0L);
 
     DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), " libref=%x\n", obj));
 end:

@@ -7,10 +7,12 @@ perlpod - plain old documentation
 A pod-to-whatever translator reads a pod file paragraph by paragraph,
 and translates it to the appropriate output format.  There are
 three kinds of paragraphs:
+L<verbatim|/"Verbatim Paragraph">,
+L<command|/"Command Paragraph">, and
+L<ordinary text|/"Ordinary Block of Text">.
 
-=over 4
 
-=item *
+=head2 Verbatim Paragraph
 
 A verbatim paragraph, distinguished by being indented (that is,
 it starts with space or tab).  It should be reproduced exactly,
@@ -18,9 +20,10 @@ with tabs assumed to be on 8-column boundaries.  There are no
 special formatting escapes, so you can't italicize or anything
 like that.  A \ means \, and nothing else.
 
-=item *
 
-A command.  All command paragraphs start with "=", followed by an
+=head2 Command Paragraph
+
+All command paragraphs start with "=", followed by an
 identifier, followed by arbitrary text that the command can
 use however it pleases.  Currently recognized commands are
 
@@ -35,12 +38,28 @@ use however it pleases.  Currently recognized commands are
     =begin X
     =end X
 
+=over 4
+
+=item =pod
+
+=item =cut
+
 The "=pod" directive does nothing beyond telling the compiler to lay
 off parsing code through the next "=cut".  It's useful for adding
 another paragraph to the doc if you're mixing up code and pod a lot.
 
+=item =head1
+
+=item =head2
+
 Head1 and head2 produce first and second level headings, with the text in
 the same paragraph as the "=headn" directive forming the heading description.
+
+=item =over
+
+=item =back
+
+=item =item
 
 Item, over, and back require a little more explanation: "=over" starts a
 section specifically for the generation of a list using "=item" commands. At
@@ -55,6 +74,13 @@ or use "=item 1.", "=item 2.", etc., to produce numbered lists, or use
 "=item foo", "=item bar", etc., i.e., things that looks nothing like bullets
 or numbers. If you start with bullets or numbers, stick with them, as many
 formatters use the first "=item" type to decide how to format the list.
+
+
+=item =for
+
+=item =begin
+
+=item =end
 
 For, begin, and end let you include sections that are not interpreted
 as pod text, but passed directly to particular formatters. A formatter
@@ -123,9 +149,13 @@ Some examples of lists include:
 
  =back
 
-=item *
 
-An ordinary block of text.  It will be filled, and maybe even
+=back
+
+
+=head2 Ordinary Block of Text
+
+It will be filled, and maybe even
 justified.  Certain interior sequences are recognized both
 here and in commands:
 
@@ -140,19 +170,31 @@ here and in commands:
 		    L<"sec">		section in this manual page
 					(the quotes are optional)
 		    L</"sec">		ditto
+		same as above but only 'text' is used for output.
+		(Text can not contain the characters '/' and '|', 
+		and should contain matched '<' or '>')
+		    L<text|name>
+		    L<text|name/ident>
+		    L<text|name/"sec">
+		    L<text|"sec">
+		    L<text|/"sec">
+		
     F<file>	Used for filenames
     X<index>	An index entry
     Z<>		A zero-width character
     E<escape>   A named character (very similar to HTML escapes)
 		    E<lt>		A literal <
 		    E<gt>		A literal >
+		    E<sol>		A literal /
+		    E<verbar>		A literal |
 		    (these are optional except in other interior
 		     sequences and when preceded by a capital letter)
 		    E<n>		Character number n (probably in ASCII)
     	    	    E<html>		Some non-numeric HTML entity, such
 					as E<Agrave>
 
-=back
+
+=head2 The Intent
 
 That's it.  The intent is simplicity, not power.  I wanted paragraphs
 to look like paragraphs (block format), so that they stand out
@@ -179,9 +221,10 @@ Note that I'm not at all claiming this to be sufficient for producing a
 book.  I'm just trying to make an idiot-proof common source for nroff,
 TeX, and other markup languages, as used for online documentation.
 Translators exist for B<pod2man>  (that's for nroff(1) and troff(1)),
-B<pod2html>, B<pod2latex>, and B<pod2fm>.
+B<pod2text>, B<pod2html>, B<pod2latex>, and B<pod2fm>.
 
-=head1 Embedding Pods in Perl Modules
+
+=head2 Embedding Pods in Perl Modules
 
 You can embed pod documentation in your Perl scripts.  Start your
 documentation with a "=head1" command at the beginning, and end it
@@ -201,7 +244,8 @@ directive.
 If you had not had that empty line there, then the translators wouldn't
 have seen it.
 
-=head1 Common Pod Pitfalls
+
+=head2 Common Pod Pitfalls
 
 =over 4
 
@@ -218,6 +262,10 @@ C<LE<lt>foo(1)E<gt>> becomes "the I<foo>(1) manpage", for example (see
 B<pod2man> for details).  Thus, you shouldn't write things like C<the
 LE<lt>fooE<gt> manpage>, if you want the translated document to read
 sensibly.
+
+If you don need or want total control of the text used for a
+link in the output use the form LE<lt>show this text|fooE<gt>
+instead.
 
 =item *
 

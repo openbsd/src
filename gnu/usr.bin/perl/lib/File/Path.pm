@@ -88,11 +88,11 @@ in situations where security is an issue.
 =head1 AUTHORS
 
 Tim Bunce <F<Tim.Bunce@ig.co.uk>> and
-Charles Bailey <F<bailey@genetics.upenn.edu>>
+Charles Bailey <F<bailey@newman.upenn.edu>>
 
 =head1 REVISION
 
-Current $VERSION is 1.04.
+Current $VERSION is 1.0401.
 
 =cut
 
@@ -103,7 +103,7 @@ use Exporter ();
 use strict;
 
 use vars qw( $VERSION @ISA @EXPORT );
-$VERSION = "1.04";
+$VERSION = "1.0401";
 @ISA = qw( Exporter );
 @EXPORT = qw( mkpath rmtree );
 
@@ -111,7 +111,7 @@ my $Is_VMS = $^O eq 'VMS';
 
 # These OSes complain if you want to remove a file that you have no
 # write permission to:
-my $force_writeable = ($^O eq 'os2' || $^O eq 'msdos' || $^O eq 'MSWin32'
+my $force_writeable = ($^O eq 'os2' || $^O eq 'dos' || $^O eq 'MSWin32'
 		       || $^O eq 'amigaos');
 
 sub mkpath {
@@ -124,15 +124,20 @@ sub mkpath {
     $paths = [$paths] unless ref $paths;
     my(@created,$path);
     foreach $path (@$paths) {
+	$path .= '/' if $^O eq 'os2' and $path =~ /^\w:$/; # feature of CRT 
 	next if -d $path;
 	# Logic wants Unix paths, so go with the flow.
 	$path = VMS::Filespec::unixify($path) if $Is_VMS;
 	my $parent = File::Basename::dirname($path);
-	push(@created,mkpath($parent, $verbose, $mode)) unless (-d $parent);
+	# Allow for creation of new logical filesystems under VMS
+	if (not $Is_VMS or $parent !~ m:/[^/]+/000000/?:) {
+	    push(@created,mkpath($parent, $verbose, $mode)) unless (-d $parent);
+	}
 	print "mkdir $path\n" if $verbose;
 	unless (mkdir($path,$mode)) {
-	    # allow for another process to have created it meanwhile
-	    croak "mkdir $path: $!" unless -d $path;
+	  my $e = $!;
+	  # allow for another process to have created it meanwhile
+	  croak "mkdir $path: $e" unless -d $path;
 	}
 	push(@created, $path);
     }
@@ -202,18 +207,18 @@ sub rmtree {
 		if $force_writeable;
 	    print "unlink $root\n" if $verbose;
 	    # delete all versions under VMS
-	    while (-e $root || -l $root) {
-		if (unlink $root) {
-		    ++$count;
-		}
-		else {
+	    for (;;) {
+		unless (unlink $root) {
 		    carp "Can't unlink file $root: $!";
 		    if ($force_writeable) {
 			chmod $rp, $root
 			    or carp("and can't restore permissions to "
 			            . sprintf("0%o",$rp) . "\n");
 		    }
+		    last;
 		}
+		++$count;
+		last unless $Is_VMS && lstat $root;
 	    }
 	}
     }

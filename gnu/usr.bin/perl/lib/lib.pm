@@ -18,6 +18,10 @@ sub import {
 	    Carp::carp("Empty compile time value given to use lib");
 							# at foo.pl line ...
 	}
+	if (-e && ! -d _) {
+	    require Carp;
+	    Carp::carp("Parameter to use lib must be directory, not file");
+	}
 	unshift(@INC, $_);
 	# Put a corresponding archlib directory infront of $_ if it
 	# looks like $_ has an archlib directory below it.

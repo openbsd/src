@@ -3,7 +3,8 @@ use Carp;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(AUTOLOAD);
-$VERSION = 1.07; sub Version {$VERSION}
+$VERSION = "1.08";
+sub Version {$VERSION}
 $DEBUG = 0;
 
 my %Cache;      # private cache for all SelfLoader's client packages
@@ -45,6 +46,7 @@ sub _load_stubs {
         unless fileno($fh);
     $Cache{"${currpack}::<DATA"} = 1;   # indicate package is cached
 
+    local($/) = "\n";
     while(defined($line = <$fh>) and $line !~ m/^__END__/) {
         if ($line =~ m/^sub\s+([\w:]+)\s*(\([\\\$\@\%\&\*\;]*\))?/) {
             push(@stubs, $self->_add_to_cache($name, $currpack, \@lines, $protoype));
@@ -131,7 +133,7 @@ is available for reading via the filehandle FOOBAR::DATA,
 where FOOBAR is the name of the current package when the C<__DATA__>
 token is reached. This works just the same as C<__END__> does in
 package 'main', but for other modules data after C<__END__> is not
-automatically retreivable , whereas data after C<__DATA__> is.
+automatically retrievable, whereas data after C<__DATA__> is.
 The C<__DATA__> token is not recognized in versions of perl prior to
 5.001m.
 
@@ -201,7 +203,7 @@ There is no need to inherit from the B<SelfLoader>.
 
 The B<SelfLoader> works similarly to the AutoLoader, but picks up the
 subs from after the C<__DATA__> instead of in the 'lib/auto' directory.
-There is a maintainance gain in not needing to run AutoSplit on the module
+There is a maintenance gain in not needing to run AutoSplit on the module
 at installation, and a runtime gain in not needing to keep opening and
 closing files to load subs. There is a runtime loss in needing
 to parse the code after the C<__DATA__>. Details of the B<AutoLoader> and

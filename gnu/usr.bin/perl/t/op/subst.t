@@ -1,8 +1,6 @@
 #!./perl
 
-# $RCSfile: subst.t,v $$Revision: 1.2 $$Date: 1997/11/30 08:05:45 $
-
-print "1..62\n";
+print "1..71\n";
 
 $x = 'foo';
 $_ = "x";
@@ -157,11 +155,11 @@ $x ne $x || s/bb/x/;
 print $_ eq 'aaaXXXXxb' ? "ok 39\n" : "not ok 39\n";
 
 $_ = 'abc123xyz';
-s/\d+/$&*2/e;              # yields 'abc246xyz'
+s/(\d+)/$1*2/e;              # yields 'abc246xyz'
 print $_ eq 'abc246xyz' ? "ok 40\n" : "not ok 40\n";
-s/\d+/sprintf("%5d",$&)/e; # yields 'abc  246xyz'
+s/(\d+)/sprintf("%5d",$1)/e; # yields 'abc  246xyz'
 print $_ eq 'abc  246xyz' ? "ok 41\n" : "not ok 41\n";
-s/\w/$& x 2/eg;            # yields 'aabbcc  224466xxyyzz'
+s/(\w)/$1 x 2/eg;            # yields 'aabbcc  224466xxyyzz'
 print $_ eq 'aabbcc  224466xxyyzz' ? "ok 42\n" : "not ok 42\n";
 
 $_ = "aaaaa";
@@ -183,13 +181,21 @@ tr/a-z/A-Z/;
 print $_ eq 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' ? "ok 52\n" : "not ok 52\n";
 
 # same as tr/A-Z/a-z/;
-y[\101-\132][\141-\172];
+if ($^O eq 'os390') {	# An EBCDIC variant.
+    y[\301-\351][\201-\251];
+} else {		# Ye Olde ASCII.  Or something like it.
+    y[\101-\132][\141-\172];
+}
 
 print $_ eq 'abcdefghijklmnopqrstuvwxyz0123456789' ? "ok 53\n" : "not ok 53\n";
 
-$_ = '+,-';
-tr/+--/a-c/;
-print $_ eq 'abc' ? "ok 54\n" : "not ok 54\n";
+if (ord("+") == ord(",") - 1 && ord(",") == ord("-") - 1 &&
+    ord("a") == ord("b") - 1 && ord("b") == ord("c") - 1) {
+  $_ = '+,-';
+  tr/+--/a-c/;
+  print "not " unless $_ eq 'abc';
+}
+print "ok 54\n";
 
 $_ = '+,-';
 tr/+\--/a\/c/;
@@ -232,10 +238,73 @@ print exp_vars('foo $(DIR)/yyy bar',0) eq 'foo $(UNDEFINEDNAME)/xxx/yyy bar'
 # a match nested in the RHS of a substitution:
 
 $_ = "abcd";
-s/../$x = $&, m#.#/eg;
+s/(..)/$x = $1, m#.#/eg;
 print $x eq "cd" ? "ok 61\n" : "not ok 61\n";
+
+# Subst and lookbehind
+
+$_="ccccc";
+s/(?<!x)c/x/g;
+print $_ eq "xxxxx" ? "ok 62\n" : "not ok 62 # `$_' ne `xxxxx'\n";
+
+$_="ccccc";
+s/(?<!x)(c)/x/g;
+print $_ eq "xxxxx" ? "ok 63\n" : "not ok 63 # `$_' ne `xxxxx'\n";
+
+$_="foobbarfoobbar";
+s/(?<!r)foobbar/foobar/g;
+print $_ eq "foobarfoobbar" ? "ok 64\n" : "not ok 64 # `$_' ne `foobarfoobbar'\n";
+
+$_="foobbarfoobbar";
+s/(?<!ar)(foobbar)/foobar/g;
+print $_ eq "foobarfoobbar" ? "ok 65\n" : "not ok 65 # `$_' ne `foobarfoobbar'\n";
+
+$_="foobbarfoobbar";
+s/(?<!ar)foobbar/foobar/g;
+print $_ eq "foobarfoobbar" ? "ok 66\n" : "not ok 66 # `$_' ne `foobarfoobbar'\n";
 
 # check parsing of split subst with comment
 eval 's{foo} # this is a comment, not a delimiter
        {bar};';
-print @? ? "not ok 62\n" : "ok 62\n";
+print @? ? "not ok 67\n" : "ok 67\n";
+
+# check if squashing works at the end of string
+$_="baacbaa";
+tr/a/b/s;
+print $_ eq "bbcbb" ? "ok 68\n" : "not ok 68 # `$_' ne `bbcbb'\n";
+
+# XXX TODO: Most tests above don't test return values of the ops. They should.
+$_ = "ab";
+print (s/a/b/ == 1 ? "ok 69\n" : "not ok 69\n");
+
+$_ = <<'EOL';
+     $url = new URI::URL "http://www/";   die if $url eq "xXx";
+EOL
+$^R = 'junk';
+
+$foo = ' $@%#lowercase $@%# lowercase UPPERCASE$@%#UPPERCASE' .
+  ' $@%#lowercase$@%#lowercase$@%# lowercase lowercase $@%#lowercase' .
+  ' lowercase $@%#MiXeD$@%# ';
+
+s{  \d+          \b [,.;]? (?{ 'digits' })
+   |
+    [a-z]+       \b [,.;]? (?{ 'lowercase' })
+   |
+    [A-Z]+       \b [,.;]? (?{ 'UPPERCASE' })
+   |
+    [A-Z] [a-z]+ \b [,.;]? (?{ 'Capitalized' })
+   |
+    [A-Za-z]+    \b [,.;]? (?{ 'MiXeD' })
+   |
+    [A-Za-z0-9]+ \b [,.;]? (?{ 'alphanumeric' })
+   |
+    \s+                    (?{ ' ' })
+   |
+    [^A-Za-z0-9\s]+          (?{ '$@%#' })
+}{$^R}xg;
+print ($_ eq $foo ? "ok 70\n" : "not ok 70\n#'$_'\n#'$foo'\n");
+
+$_ = 'x' x 20; 
+s/\d*|x/<$&>/g; 
+$foo = '<>' . ('<x><>' x 20) ;
+print ($_ eq $foo ? "ok 71\n" : "not ok 71\n#'$_'\n#'$foo'\n");

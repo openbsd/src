@@ -7,7 +7,7 @@ PSZ			T_PVNULL
 #############################################################################
 INPUT
 T_PVNULL
-	$var = ( SvOK($arg) ? ($type)SvPV($arg,na) : NULL )
+	$var = ( SvOK($arg) ? ($type)SvPV($arg,PL_na) : NULL )
 #############################################################################
 OUTPUT
 T_PVNULL

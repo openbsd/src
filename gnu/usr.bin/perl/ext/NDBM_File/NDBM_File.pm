@@ -12,7 +12,7 @@ require DynaLoader;
 
 @ISA = qw(Tie::Hash DynaLoader);
 
-$VERSION = "1.00";
+$VERSION = "1.01";
 
 bootstrap NDBM_File $VERSION;
 
@@ -27,6 +27,7 @@ NDBM_File - Tied access to ndbm files
 =head1 SYNOPSIS
 
  use NDBM_File;
+ use Fcntl;       # for O_ constants
 
  tie(%h, 'NDBM_File', 'Op.dbmx', O_RDWR|O_CREAT, 0640);
 

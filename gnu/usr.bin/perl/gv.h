@@ -1,6 +1,6 @@
 /*    gv.h
  *
- *    Copyright (c) 1991-1997, Larry Wall
+ *    Copyright (c) 1991-1999, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -127,6 +127,11 @@ HV *GvHVn();
 #define DM_EGID   0x020
 #define DM_DELAY 0x100
 
-#define GV_ADD		0x01
-#define GV_ADDMULTI	0x02
-#define GV_ADDWARN	0x04
+/*
+ * symbol creation flags, for use in gv_fetchpv() and perl_get_*v()
+ */
+#define GV_ADD		0x01	/* add, if symbol not already there */
+#define GV_ADDMULTI	0x02	/* add, pretending it has been added already */
+#define GV_ADDWARN	0x04	/* add, but warn if symbol wasn't already there */
+#define GV_ADDINEVAL	0x08	/* add, as though we're doing so within an eval */
+#define GV_NOINIT	0x10	/* add, but don't init symbol, if type != PVGV */

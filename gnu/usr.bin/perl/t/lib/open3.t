@@ -4,7 +4,10 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require Config; import Config;
-    unless ($Config{'d_fork'}) {
+    if (!$Config{'d_fork'}
+       # open2/3 supported on win32 (but not Borland due to CRT bugs)
+       && ($^O ne 'MSWin32' || $Config{'cc'} =~ /^bcc/i))
+    {
 	print "1..0\n";
 	exit 0;
     }
@@ -25,9 +28,21 @@ sub ok {
 	print "ok $n\n";
     }
     else {
-    	print "not ok $n\n";
+	print "not ok $n\n";
 	print "# $info\n" if $info;
     }
+}
+
+sub cmd_line {
+	if ($^O eq 'MSWin32') {
+		my $cmd = shift;
+		$cmd =~ tr/\r\n//d;
+		$cmd =~ s/"/\\"/g;
+		return qq/"$cmd"/;
+	}
+	else {
+		return $_[0];
+	}
 }
 
 my ($pid, $reaped_pid);
@@ -37,14 +52,14 @@ STDERR->autoflush;
 print "1..21\n";
 
 # basic
-ok 1, $pid = open3 'WRITE', 'READ', 'ERROR', $perl, '-e', <<'EOF';
+ok 1, $pid = open3 'WRITE', 'READ', 'ERROR', $perl, '-e', cmd_line(<<'EOF');
     $| = 1;
     print scalar <STDIN>;
     print STDERR "hi error\n";
 EOF
 ok 2, print WRITE "hi kid\n";
-ok 3, <READ> eq "hi kid\n";
-ok 4, <ERROR> eq "hi error\n";
+ok 3, <READ> =~ /^hi kid\r?\n$/;
+ok 4, <ERROR> =~ /^hi error\r?\n$/;
 ok 5, close(WRITE), $!;
 ok 6, close(READ), $!;
 ok 7, close(ERROR), $!;
@@ -53,7 +68,7 @@ ok 8, $reaped_pid == $pid, $reaped_pid;
 ok 9, $? == 0, $?;
 
 # read and error together, both named
-$pid = open3 'WRITE', 'READ', 'READ', $perl, '-e', <<'EOF';
+$pid = open3 'WRITE', 'READ', 'READ', $perl, '-e', cmd_line(<<'EOF');
     $| = 1;
     print scalar <STDIN>;
     print STDERR scalar <STDIN>;
@@ -65,7 +80,7 @@ print scalar <READ>;
 waitpid $pid, 0;
 
 # read and error together, error empty
-$pid = open3 'WRITE', 'READ', '', $perl, '-e', <<'EOF';
+$pid = open3 'WRITE', 'READ', '', $perl, '-e', cmd_line(<<'EOF');
     $| = 1;
     print scalar <STDIN>;
     print STDERR scalar <STDIN>;
@@ -79,7 +94,7 @@ waitpid $pid, 0;
 # dup writer
 ok 14, pipe PIPE_READ, PIPE_WRITE;
 $pid = open3 '<&PIPE_READ', 'READ', '',
-		    $perl, '-e', 'print scalar <STDIN>';
+		    $perl, '-e', cmd_line('print scalar <STDIN>');
 close PIPE_READ;
 print PIPE_WRITE "ok 15\n";
 close PIPE_WRITE;
@@ -88,7 +103,7 @@ waitpid $pid, 0;
 
 # dup reader
 $pid = open3 'WRITE', '>&STDOUT', 'ERROR',
-		    $perl, '-e', 'print scalar <STDIN>';
+		    $perl, '-e', cmd_line('print scalar <STDIN>');
 print WRITE "ok 16\n";
 waitpid $pid, 0;
 
@@ -96,12 +111,12 @@ waitpid $pid, 0;
 # stdout but putting stdout somewhere else, is a good case because it
 # used not to work.
 $pid = open3 'WRITE', 'READ', '>&STDOUT',
-		    $perl, '-e', 'print STDERR scalar <STDIN>';
+		    $perl, '-e', cmd_line('print STDERR scalar <STDIN>');
 print WRITE "ok 17\n";
 waitpid $pid, 0;
 
 # dup reader and error together, both named
-$pid = open3 'WRITE', '>&STDOUT', '>&STDOUT', $perl, '-e', <<'EOF';
+$pid = open3 'WRITE', '>&STDOUT', '>&STDOUT', $perl, '-e', cmd_line(<<'EOF');
     $| = 1;
     print STDOUT scalar <STDIN>;
     print STDERR scalar <STDIN>;
@@ -111,7 +126,7 @@ print WRITE "ok 19\n";
 waitpid $pid, 0;
 
 # dup reader and error together, error empty
-$pid = open3 'WRITE', '>&STDOUT', '', $perl, '-e', <<'EOF';
+$pid = open3 'WRITE', '>&STDOUT', '', $perl, '-e', cmd_line(<<'EOF');
     $| = 1;
     print STDOUT scalar <STDIN>;
     print STDERR scalar <STDIN>;

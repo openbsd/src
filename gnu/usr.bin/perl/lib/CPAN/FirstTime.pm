@@ -13,9 +13,10 @@ package CPAN::FirstTime;
 use strict;
 use ExtUtils::MakeMaker qw(prompt);
 use FileHandle ();
+use File::Basename ();
 use File::Path ();
 use vars qw($VERSION);
-$VERSION = substr q$Revision: 1.1 $, 10;
+$VERSION = substr q$Revision: 1.2 $, 10;
 
 =head1 NAME
 
@@ -36,22 +37,61 @@ file. Nothing special.
 sub init {
     my($configpm) = @_;
     use Config;
-    require CPAN::Nox;
+    unless ($CPAN::VERSION) {
+	require CPAN::Nox;
+    }
     eval {require CPAN::Config;};
     $CPAN::Config ||= {};
     local($/) = "\n";
     local($\) = "";
+    local($|) = 1;
 
     my($ans,$default,$local,$cont,$url,$expected_size);
-    
+
     #
     # Files, directories
     #
 
+    print qq[
+
+CPAN is the world-wide archive of perl resources. It consists of about
+100 sites that all replicate the same contents all around the globe.
+Many countries have at least one CPAN site already. The resources
+found on CPAN are easily accessible with the CPAN.pm module. If you
+want to use CPAN.pm, you have to configure it properly.
+
+If you do not want to enter a dialog now, you can answer 'no' to this
+question and I\'ll try to autoconfigure. (Note: you can revisit this
+dialog anytime later by typing 'o conf init' at the cpan prompt.)
+
+];
+
+    my $manual_conf =
+	ExtUtils::MakeMaker::prompt("Are you ready for manual configuration?",
+				    "yes");
+    my $fastread;
+    {
+      local $^W;
+      if ($manual_conf =~ /^\s*y/i) {
+	$fastread = 0;
+	*prompt = \&ExtUtils::MakeMaker::prompt;
+      } else {
+	$fastread = 1;
+	*prompt = sub {
+	  my($q,$a) = @_;
+	  my($ret) = defined $a ? $a : "";
+	  printf qq{%s [%s]\n\n}, $q, $ret;
+	  $ret;
+	};
+      }
+    }
     print qq{
-The CPAN module needs a directory of its own to cache important
-index files and maybe keep a temporary mirror of CPAN files. This may
-be a site-wide directory or a personal directory.
+
+The following questions are intended to help you with the
+configuration. The CPAN module needs a directory of its own to cache
+important index files and maybe keep a temporary mirror of CPAN files.
+This may be a site-wide directory or a personal directory.
+
 };
 
     my $cpan_home = $CPAN::Config->{cpan_home} || MM->catdir($ENV{HOME}, ".cpan");
@@ -73,16 +113,21 @@ First of all, I\'d like to create this directory. Where?
 
     $default = $cpan_home;
     while ($ans = prompt("CPAN build and cache directory?",$default)) {
-	File::Path::mkpath($ans); # dies if it can't
-	if (-d $ans && -w _) {
-	    last;
-	} else {
-	    warn "Couldn't find directory $ans
+      eval { File::Path::mkpath($ans); }; # dies if it can't
+      if ($@) {
+	warn "Couldn't create directory $ans.
+Please retry.\n";
+	next;
+      }
+      if (-d $ans && -w _) {
+	last;
+      } else {
+	warn "Couldn't find directory $ans
   or directory is not writable. Please retry.\n";
-	}
+      }
     }
     $CPAN::Config->{cpan_home} = $ans;
-    
+
     print qq{
 
 If you want, I can keep the source files after a build in the cpan
@@ -113,6 +158,42 @@ with all the intermediate files?
     # XXX This the time when we refetch the index files (in days)
     $CPAN::Config->{'index_expire'} = 1;
 
+    print qq{
+
+By default, each time the CPAN module is started, cache scanning
+is performed to keep the cache size in sync. To prevent from this,
+disable the cache scanning with 'never'.
+
+};
+
+    $default = $CPAN::Config->{scan_cache} || 'atstart';
+    do {
+        $ans = prompt("Perform cache scanning (atstart or never)?", $default);
+    } while ($ans ne 'atstart' && $ans ne 'never');
+    $CPAN::Config->{scan_cache} = $ans;
+
+    #
+    # prerequisites_policy
+    # Do we follow PREREQ_PM?
+    #
+    print qq{
+
+The CPAN module can detect when a module that which you are trying to
+build depends on prerequisites. If this happens, it can build the
+prerequisites for you automatically ('follow'), ask you for
+confirmation ('ask'), or just ignore them ('ignore'). Please set your
+policy to one of the three values.
+
+};
+
+    $default = $CPAN::Config->{prerequisites_policy} || 'follow';
+    do {
+      $ans =
+	  prompt("Policy on building prerequisites (follow, ask or ignore)?",
+		 $default);
+    } while ($ans ne 'follow' && $ans ne 'ask' && $ans ne 'ignore');
+    $CPAN::Config->{prerequisites_policy} = $ans;
+
     #
     # External programs
     #
@@ -126,24 +207,46 @@ those.
 
 };
 
+    my $old_warn = $^W;
+    local $^W if $^O eq 'MacOS';
     my(@path) = split /$Config{'path_sep'}/, $ENV{'PATH'};
-    my $prog;
-    for $prog (qw/gzip tar unzip make lynx ncftp ftp/){
-	my $path = $CPAN::Config->{$prog} || "";
-	if (MM->file_name_is_absolute($path)) {
-	    warn "Warning: configured $path does not exist\n" unless -e $path;
-	    $path = "";
-	} else {
-	    $path = '';
-	}
-	$path ||= find_exe($prog,[@path]);
-	warn "Warning: $prog not found in PATH\n" unless -e $path;
-	$ans = prompt("Where is your $prog program?",$path) || $path;
-	$CPAN::Config->{$prog} = $ans;
+    local $^W = $old_warn;
+    my $progname;
+    for $progname (qw/gzip tar unzip make lynx ncftpget ncftp ftp/){
+      if ($^O eq 'MacOS') {
+          $CPAN::Config->{$progname} = 'not_here';
+          next;
+      }
+      my $progcall = $progname;
+      # we don't need ncftp if we have ncftpget
+      next if $progname eq "ncftp" && $CPAN::Config->{ncftpget} gt " ";
+      my $path = $CPAN::Config->{$progname} 
+	  || $Config::Config{$progname}
+	      || "";
+      if (MM->file_name_is_absolute($path)) {
+	# testing existence is not good enough, some have these exe
+	# extensions
+
+	# warn "Warning: configured $path does not exist\n" unless -e $path;
+	# $path = "";
+      } else {
+	$path = '';
+      }
+      unless ($path) {
+	# e.g. make -> nmake
+	$progcall = $Config::Config{$progname} if $Config::Config{$progname};
+      }
+
+      $path ||= find_exe($progcall,[@path]);
+      warn "Warning: $progcall not found in PATH\n" unless
+	  $path; # not -e $path, because find_exe already checked that
+      $ans = prompt("Where is your $progname program?",$path) || $path;
+      $CPAN::Config->{$progname} = $ans;
     }
     my $path = $CPAN::Config->{'pager'} || 
 	$ENV{PAGER} || find_exe("less",[@path]) || 
-	    find_exe("more",[@path]) || "more";
+	    find_exe("more",[@path]) || ($^O eq 'MacOS' ? $ENV{EDITOR} : 0 )
+	    || "more";
     $ans = prompt("What is your favorite pager program?",$path);
     $CPAN::Config->{'pager'} = $ans;
     $path = $CPAN::Config->{'shell'};
@@ -152,8 +255,13 @@ those.
 	$path = "";
     }
     $path ||= $ENV{SHELL};
-    $ans = prompt("What is your favorite shell?",$path);
-    $CPAN::Config->{'shell'} = $ans;
+    if ($^O eq 'MacOS') {
+        $CPAN::Config->{'shell'} = 'not_here';
+    } else {
+        $path =~ s,\\,/,g if $^O eq 'os2';	# Cosmetic only
+        $ans = prompt("What is your favorite shell?",$path);
+        $CPAN::Config->{'shell'} = $ans;
+    }
 
     #
     # Arguments to make etc.
@@ -198,65 +306,9 @@ the default and recommended setting.
 
     $default = $CPAN::Config->{inactivity_timeout} || 0;
     $CPAN::Config->{inactivity_timeout} =
-	prompt("Timeout for inacivity during Makefile.PL?",$default);
+	prompt("Timeout for inactivity during Makefile.PL?",$default);
 
-
-    #
-    # MIRRORED.BY
-    #
-
-    $local = 'MIRRORED.BY';
-    $local = MM->catfile($CPAN::Config->{keep_source_where},"MIRRORED.BY") unless -f $local;
-    if (@{$CPAN::Config->{urllist}||[]}) {
-	print qq{
-I found a list of URLs in CPAN::Config and will use this.
-You can change it later with the 'o conf urllist' command.
-
-}
-    } elsif (
-	     -s $local
-	     &&
-	     -M $local < 30
-	    ) {
-	read_mirrored_by($local);
-    } else {
-	$CPAN::Config->{urllist} ||= [];
-	while (! @{$CPAN::Config->{urllist}}) {
-	    my($input) = prompt(qq{
-We need to know the URL of your favorite CPAN site.
-Please enter it here:});
-	    $input =~ s/\s//g;
-	    next unless $input;
-	    my($wanted) = "MIRRORED.BY";
-	    print qq{
-Testing "$input" ...
-};
-	    push @{$CPAN::Config->{urllist}}, $input;
-	    CPAN::FTP->localize($wanted,$local,"force");
-	    if (-s $local) {
-		print qq{
-"$input" seems to work
-};
-	    } else {
-		my $ans = prompt(qq{$input doesn\'t seem to work. Keep it in the list?},"n");
-		last unless $ans =~ /^n/i;
-		pop @{$CPAN::Config->{urllist}};
-	    }
-	}
-    }
-
-    unless (@{$CPAN::Config->{'wait_list'}||[]}) {
-	print qq{
-
-WAIT support is available as a Plugin. You need the CPAN::WAIT module
-to actually use it.  But we need to know your favorite WAIT server. If
-you don\'t know a WAIT server near you, just press ENTER.
-
-};
-	$default = "wait://ls6.informatik.uni-dortmund.de:1404";
-	$ans = prompt("Your favorite WAIT server?\n  ",$default);
-	push @{$CPAN::Config->{'wait_list'}}, $ans;
-    }
+    # Proxies
 
     print qq{
 
@@ -271,6 +323,25 @@ the \$CPAN::Config takes precedence.
 	$CPAN::Config->{$_} = prompt("Your $_?",$default);
     }
 
+    #
+    # MIRRORED.BY
+    #
+
+    conf_sites() unless $fastread;
+
+    unless (@{$CPAN::Config->{'wait_list'}||[]}) {
+	print qq{
+
+WAIT support is available as a Plugin. You need the CPAN::WAIT module
+to actually use it.  But we need to know your favorite WAIT server. If
+you don\'t know a WAIT server near you, just press ENTER.
+
+};
+	$default = "wait://ls6.informatik.uni-dortmund.de:1404";
+	$ans = prompt("Your favorite WAIT server?\n  ",$default);
+	push @{$CPAN::Config->{'wait_list'}}, $ans;
+    }
+
     # We don't ask that now, it will be noticed in time, won't it?
     $CPAN::Config->{'inhibit_startup_message'} = 0;
     $CPAN::Config->{'getcwd'} = 'cwd';
@@ -279,16 +350,64 @@ the \$CPAN::Config takes precedence.
     CPAN::Config->commit($configpm);
 }
 
+sub conf_sites {
+  my $m = 'MIRRORED.BY';
+  my $mby = MM->catfile($CPAN::Config->{keep_source_where},$m);
+  File::Path::mkpath(File::Basename::dirname($mby));
+  if (-f $mby && -f $m && -M $m < -M $mby) {
+    require File::Copy;
+    File::Copy::copy($m,$mby) or die "Could not update $mby: $!";
+  }
+  if ( ! -f $mby ){
+    print qq{You have no $mby
+  I\'m trying to fetch one
+};
+    $mby = CPAN::FTP->localize($m,$mby,3);
+  } elsif (-M $mby > 30 ) {
+    print qq{Your $mby is older than 30 days,
+  I\'m trying to fetch one
+};
+    $mby = CPAN::FTP->localize($m,$mby,3);
+  }
+  read_mirrored_by($mby);
+}
+
 sub find_exe {
     my($exe,$path) = @_;
     my($dir);
     #warn "in find_exe exe[$exe] path[@$path]";
     for $dir (@$path) {
 	my $abs = MM->catfile($dir,$exe);
-	if (MM->maybe_command($abs)) {
+	if (($abs = MM->maybe_command($abs))) {
 	    return $abs;
 	}
     }
+}
+
+sub picklist {
+    my($items,$prompt,$default,$require_nonempty,$empty_warning)=@_;
+    $default ||= '';
+
+    my ($item, $i);
+    for $item (@$items) {
+	printf "(%d) %s\n", ++$i, $item;
+    }
+
+    my @nums;
+    while (1) {
+	my $num = prompt($prompt,$default);
+	@nums = split (' ', $num);
+	(warn "invalid items entered, try again\n"), next
+	    if grep (/\D/ || $_ < 1 || $_ > $i, @nums);
+	if ($require_nonempty) {
+	    (warn "$empty_warning\n"), next
+		unless @nums;
+	}
+	last;
+    }
+    print "\n";
+    for (@nums) { $_-- }
+    @{$items}[@nums];
 }
 
 sub read_mirrored_by {
@@ -296,6 +415,7 @@ sub read_mirrored_by {
     my(%all,$url,$expected_size,$default,$ans,$host,$dst,$country,$continent,@location);
     my $fh = FileHandle->new;
     $fh->open($local) or die "Couldn't open $local: $!";
+    local $/ = "\012";
     while (<$fh>) {
 	($host) = /^([\w\.\-]+)/ unless defined $host;
 	next unless defined $host;
@@ -303,6 +423,7 @@ sub read_mirrored_by {
 	/location\s+=\s+\"([^\"]+)/ and @location = (split /\s*,\s*/, $1) and
 	    ($continent, $country) = @location[-1,-2];
 	$continent =~ s/\s\(.*//;
+	$continent =~ s/\W+$//; # if Jarkko doesn't know latitude/longitude
 	/dst_dst\s+=\s+\"([^\"]+)/  and $dst = $1;
 	next unless $host && $dst && $continent && $country;
 	$all{$continent}{$country}{$dst} = CPAN::Mirrored::By->new($continent,$country,$dst);
@@ -311,92 +432,97 @@ sub read_mirrored_by {
     }
     $fh->close;
     $CPAN::Config->{urllist} ||= [];
-    if ($expected_size = @{$CPAN::Config->{urllist}}) {
-	for $url (@{$CPAN::Config->{urllist}}) {
-	    # sanity check, scheme+colon, not "q" there:
-	    next unless $url =~ /^\w+:\/./;
-	    $all{"[From previous setup]"}{"found URL"}{$url}=CPAN::Mirrored::By->new('[From previous setup]','found URL',$url);
-	}
+    my(@previous_urls);
+    if (@previous_urls = @{$CPAN::Config->{urllist}}) {
 	$CPAN::Config->{urllist} = [];
-    } else {
-	$expected_size = 6;
     }
-    
+
     print qq{
 
-Now we need to know, where your favorite CPAN sites are located. Push
+Now we need to know where your favorite CPAN sites are located. Push
 a few sites onto the array (just in case the first on the array won\'t
 work). If you are mirroring CPAN to your local workstation, specify a
 file: URL.
 
-You can enter the number in front of the URL on the next screen, a
-file:, ftp: or http: URL, or "q" to finish selecting.
+First, pick a nearby continent and country (you can pick several of
+each, separated by spaces, or none if you just want to keep your
+existing selections). Then, you will be presented with a list of URLs
+of CPAN mirrors in the countries you selected, along with previously
+selected URLs. Select some of those URLs, or just keep the old list.
+Finally, you will be prompted for any extra URLs -- file:, ftp:, or
+http: -- that host a CPAN mirror.
 
 };
 
-    $ans = prompt("Press RETURN to continue");
-    my $other;
-    $ans = $other = "";
-    my(%seen);
-    
-    my $pipe = -t *STDIN ? "| $CPAN::Config->{'pager'}" : ">/dev/null";
-    while () {
-	my(@valid,$previous_best);
-	my $fh = FileHandle->new;
-	$fh->open($pipe);
-	{
-	    my($cont,$country,$url,$item);
-	    my(@cont) = sort keys %all;
-	    for $cont (@cont) {
-		$fh->print("    $cont\n");
-		for $country (sort {lc $a cmp lc $b} keys %{$all{$cont}}) {
-		    for $url (sort {lc $a cmp lc $b} keys %{$all{$cont}{$country}}) {
-			my $t = sprintf(
-					"      %-18s (%2d) %s\n",
-					$country,
-					++$item,
-					$url
-				       );
-			if ($cont =~ /^\[/) {
-			    $previous_best ||= $item;
-			}
-			push @valid, $all{$cont}{$country}{$url};
-			$fh->print($t);
-		    }
-		}
-	    }
-	}
-	$fh->close;
-	$previous_best ||= 1;
-	$default =
-	    @{$CPAN::Config->{urllist}} >= $expected_size ? "q" : $previous_best;
-	$ans = prompt(
-		      "\nSelect an$other ftp or file URL or a number (q to finish)",
-		      $default
-		     );
-	my $sel;
-	if ($ans =~ /^\d/) {
-	    my $this = $valid[$ans-1];
-	    my($con,$cou,$url) = ($this->continent,$this->country,$this->url);
-	    push @{$CPAN::Config->{urllist}}, $url unless $seen{$url}++;
-	    delete $all{$con}{$cou}{$url};
-	    #	    print "Was a number [$ans] con[$con] cou[$cou] url[$url]\n";
-	} elsif (@{$CPAN::Config->{urllist}} && $ans =~ /^q/i) {
-	    last;
-	} else {
-	    $ans =~ s|/?$|/|; # has to end with one slash
-	    $ans = "file:$ans" unless $ans =~ /:/; # without a scheme is a file:
-	    if ($ans =~ /^\w+:\/./) {
-		push @{$CPAN::Config->{urllist}}, $ans unless $seen{$ans}++;
-	    } else {
-		print qq{"$ans" doesn\'t look like an URL at first sight.
-I\'ll ignore it for now. You can add it to lib/CPAN/Config.pm
-later and report a bug in my Makefile.PL to me (andreas koenig).
-Thanks.\n};
-	    }
-	}
-	$other ||= "other";
+    my (@cont, $cont, %cont, @countries, @urls, %seen);
+    my $no_previous_warn = 
+       "Sorry! since you don't have any existing picks, you must make a\n" .
+       "geographic selection.";
+    @cont = picklist([sort keys %all],
+                     "Select your continent (or several nearby continents)",
+                     '',
+                     ! @previous_urls,
+                     $no_previous_warn);
+
+
+    foreach $cont (@cont) {
+        my @c = sort keys %{$all{$cont}};
+        @cont{@c} = map ($cont, 0..$#c);
+        @c = map ("$_ ($cont)", @c) if @cont > 1;
+        push (@countries, @c);
     }
+
+    if (@countries) {
+        @countries = picklist (\@countries,
+                               "Select your country (or several nearby countries)",
+                               '',
+                               ! @previous_urls,
+                               $no_previous_warn);
+        %seen = map (($_ => 1), @previous_urls);
+        # hmmm, should take list of defaults from CPAN::Config->{'urllist'}...
+        foreach $country (@countries) {
+            (my $bare_country = $country) =~ s/ \(.*\)//;
+            my @u = sort keys %{$all{$cont{$bare_country}}{$bare_country}};
+            @u = grep (! $seen{$_}, @u);
+            @u = map ("$_ ($bare_country)", @u)
+               if @countries > 1;
+            push (@urls, @u);
+        }
+    }
+    push (@urls, map ("$_ (previous pick)", @previous_urls));
+    my $prompt = "Select as many URLs as you like";
+    if (@previous_urls) {
+       $default = join (' ', ((scalar @urls) - (scalar @previous_urls) + 1) ..
+                             (scalar @urls));
+       $prompt .= "\n(or just hit RETURN to keep your previous picks)";
+    }
+
+    @urls = picklist (\@urls, $prompt, $default);
+    foreach (@urls) { s/ \(.*\)//; }
+    %seen = map (($_ => 1), @urls);
+
+    do {
+        $ans = prompt ("Enter another URL or RETURN to quit:", "");
+
+        if ($ans) {
+            $ans =~ s|/?$|/|; # has to end with one slash
+            $ans = "file:$ans" unless $ans =~ /:/; # without a scheme is a file:
+            if ($ans =~ /^\w+:\/./) {
+               push @urls, $ans 
+                  unless $seen{$ans};
+            }
+            else {
+                print qq{"$ans" doesn\'t look like an URL at first sight.
+I\'ll ignore it for now.  You can add it to $INC{'CPAN/MyConfig.pm'}
+later if you\'re sure it\'s right.\n};
+            }
+        }
+    } while $ans;
+
+    push @{$CPAN::Config->{urllist}}, @urls;
+    # xxx delete or comment these out when you're happy that it works
+    print "New set of picks:\n";
+    map { print "  $_\n" } @{$CPAN::Config->{urllist}};
 }
 
 1;

@@ -2,6 +2,7 @@
 
 use Config;
 use File::Basename qw(&basename &dirname);
+use Cwd;
 
 # List explicitly here the variables you want Configure to
 # generate.  Metaconfig only looks for shell variables, so you
@@ -13,6 +14,7 @@ use File::Basename qw(&basename &dirname);
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
+$origdir = cwd;
 chdir dirname($0);
 $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
@@ -315,9 +317,13 @@ $cutting = 1;
 # We try first to get the version number from a local binary, in case we're
 # running an installed version of Perl to produce documentation from an
 # uninstalled newer version's pod files.
-if ($^O ne 'plan9') {
-  ($version,$patch) =
-    `\PATH=.:..:\$PATH; perl -v` =~ /version (\d\.\d{3})(?:_(\d{2}))?/;
+if ($^O ne 'plan9' and $^O ne 'dos' and $^O ne 'os2' and $^O ne 'MSWin32') {
+  my $perl = (-x './perl' && -f './perl' ) ?
+                 './perl' :
+                 ((-x '../perl' && -f '../perl') ?
+                      '../perl' :
+                      '');
+  ($version,$patch) = `$perl -e 'print $]'` =~ /^(\d\.\d{3})(\d{2})?/ if $perl;
 }
 # No luck; we'll just go with the running Perl's version
 ($version,$patch) = $] =~ /^(.{5})(\d{2})?/ unless $version;
@@ -329,6 +335,7 @@ sub makedate {
     my $secs = shift;
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($secs);
     my $mname = (qw{Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec})[$mon];
+    $year += 1900;
     return "$mday/$mname/$year";
 }
 
@@ -415,8 +422,12 @@ $name =~ s-//+-/-g;
 if ($name =~ s-^.*?/lib/[^/]*perl[^/]*/--i
 	or $name =~ s-^.*?/[^/]*perl[^/]*/lib/--i
 	or $name =~ s-^.*?/[^/]*perl[^/]*/--i) {
-    # Lose ^arch/version/.
-    $name =~ s-^[^/]+/\d+\.\d+/--;
+    # Lose ^site(_perl)?/.
+    $name =~ s-^site(_perl)?/--;
+    # Lose ^arch/.	(XXX should we use Config? Just for archname?)
+    $name =~ s~^(.*-$^O|$^O-.*)/~~o;
+    # Lose ^version/.
+    $name =~ s-^\d+\.\d+/--;
 }
 
 # Translate Getopt/Long to Getopt::Long, etc.
@@ -667,6 +678,9 @@ $indent = 0;
 
 $begun = "";
 
+# Unrolling [^A-Z>]|[A-Z](?!<) gives:    // MRE pp 165.
+my $nonest = '(?:[^A-Z>]*(?:[A-Z](?!<)[^A-Z>]*)*)';
+
 while (<>) {
     if ($cutting) {
 	next unless /^=/;
@@ -736,7 +750,7 @@ while (<>) {
 	# first hide the escapes in case we need to
 	# intuit something and get it wrong due to fmting
 
-	s/([A-Z]<[^<>]*>)/noremap($1)/ge;
+	1 while s/([A-Z]<$nonest>)/noremap($1)/ge;
 
 	# func() is a reference to a perl function
 	s{
@@ -793,13 +807,16 @@ while (<>) {
     while ($maxnest-- && /[A-Z]</) {
 
 	# can't do C font here
-	s/([BI])<([^<>]*)>/font($1) . $2 . font('R')/eg;
+	s/([BI])<($nonest)>/font($1) . $2 . font('R')/eg;
 
 	# files and filelike refs in italics
-	s/F<([^<>]*)>/I<$1>/g;
+	s/F<($nonest)>/I<$1>/g;
 
 	# no break -- usually we want C<> for this
-	s/S<([^<>]*)>/nobreak($1)/eg;
+	s/S<($nonest)>/nobreak($1)/eg;
+
+	# LREF: a la HREF L<show this text|man/section>
+	s:L<([^|>]+)\|[^>]+>:$1:g;
 
 	# LREF: a manpage(3f)
 	s:L<([a-zA-Z][^\s\/]+)(\([^\)]+\))?>:the I<$1>$2 manpage:g;
@@ -850,7 +867,7 @@ while (<>) {
 	s/Z<>/\\&/g;
 
 	# comes last because not subject to reprocessing
-	s/C<([^<>]*)>/noremap("${CFont_embed}${1}\\fR")/eg;
+	s/C<($nonest)>/noremap("${CFont_embed}${1}\\fR")/eg;
     }
 
     if (s/^=//) {
@@ -1047,10 +1064,6 @@ sub mkindex {
     my ($entry) = @_;
     my @entries = split m:\s*/\s*:, $entry;
     push @Indices, ".IX Xref " . join ' ', map {qq("$_")} @entries;
-    for $entry (@entries) {
-	print qq("$entry" );
-    }
-    print "\n";
     return '';
 }
 
@@ -1118,7 +1131,10 @@ sub internal_lrefs {
     }
 
     $retstr .= " entr" . ( @items > 1  ? "ies" : "y" )
-	    .  " elsewhere in this document "; # terminal space to avoid words running together (pattern used strips terminal spaces)
+	    .  " elsewhere in this document";
+    # terminal space to avoid words running together (pattern used
+    # strips terminal spaces)
+    $retstr .= " " if length $trailing_and;
     $retstr .=  $trailing_and;
 
     return $retstr;
@@ -1202,3 +1218,4 @@ BEGIN {
 close OUT or die "Can't close $file: $!";
 chmod 0755, $file or die "Can't reset permissions for $file: $!\n";
 exec("$Config{'eunicefix'} $file") if $Config{'eunicefix'} ne ':';
+chdir $origdir;

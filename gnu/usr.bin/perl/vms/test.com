@@ -21,8 +21,17 @@ $       EndIf
 $   EndIf
 $   Set Message /Facility/Severity/Identification/Text
 $
-$  exe = ".Exe"
-$  If p1.nes."" Then exe = p1
+$   exe = ".Exe"
+$   If p1.nes."" Then exe = p1
+$   If F$Extract(0,1,exe) .nes. "."
+$   Then
+$     Write Sys$Error ""
+$     Write Sys$Error "The first parameter passed to Test.Com must be the file type used for the"
+$     Write Sys$Error "images produced when you built Perl (i.e. "".Exe"", unless you edited"
+$     Write Sys$Error "Descrip.MMS or used the AXE=1 macro in the MM[SK] command line."
+$     Write Sys$Error ""
+$     Exit 44
+$   EndIf
 $!  Pick up a copy of perl to use for the tests
 $   Delete/Log/NoConfirm Perl.;*
 $   Copy/Log/NoConfirm [-]Perl'exe' []Perl.
@@ -74,6 +83,7 @@ $   Delete/Log/NoConfirm Echo.Obj;*
 $   echo = "$" + F$Parse("Echo.Exe")
 $
 $!  And do it
+$   Show Process/Accounting
 $   testdir = "Directory/NoHead/NoTrail/Column=1"
 $   Define/User Perlshr Sys$Disk:[-]PerlShr'exe'
 $   MCR Sys$Disk:[]Perl. "-I[-.lib]" - "''p2'" "''p3'" "''p4'" "''p5'" "''p6'"
@@ -90,11 +100,10 @@ $   Deck/Dollar=$$END-OF-TEST$$
 use Config;
 
 @compexcl=('cpp.t');
-@ioexcl=('argv.t','dup.t','fs.t','inplace.t','pipe.t');
-@libexcl=('anydbm.t','db-btree.t','db-hash.t','db-recno.t',
+@ioexcl=('argv.t','dup.t','fs.t','pipe.t');
+@libexcl=('db-btree.t','db-hash.t','db-recno.t',
           'gdbm.t','io_dup.t', 'io_pipe.t', 'io_sel.t', 'io_sock.t',
-          'ndbm.t','odbm.t','open2.t','open3.t','posix.t',
-          'sdbm.t');
+          'ndbm.t','odbm.t','open2.t','open3.t', 'ph.t', 'posix.t');
 
 # Note: POSIX is not part of basic build, but can be built
 # separately if you're using DECC
@@ -103,7 +112,7 @@ use Config;
 # insists on stat()ing a file descriptor before it'll use it.
 push(@libexcl,'io_xs.t') if $Config{'vms_cc_type'} ne 'decc';
 
-@opexcl=('exec.t','fork.t','glob.t','groups.t','magic.t','misc.t','stat.t');
+@opexcl=('die_exit.t','exec.t','fork.t','glob.t','groups.t','magic.t','misc.t','stat.t');
 @exclist=(@compexcl,@ioexcl,@libexcl,@opexcl);
 foreach $file (@exclist) { $skip{$file}++; }
 
@@ -111,7 +120,7 @@ $| = 1;
 
 @ARGV = grep($_,@ARGV);  # remove empty elements due to "''p1'" syntax
 
-if ($ARGV[0] eq '-v') {
+if (lc($ARGV[0]) eq '-v') {
     $verbose = 1;
     shift;
 }
@@ -153,7 +162,7 @@ while ($test = shift) {
 	} else {
 	    $switch = '';
 	}
-	open(results,"\$ MCR Sys\$Disk:[]Perl. $switch $test |") || (print "can't run.\n");
+	open(results,"\$ MCR Sys\$Disk:[]Perl. \"-I[-.lib]\" $switch $test |") || (print "can't run.\n");
     $ok = 0;
     $next = 0;
     while (<results>) {
@@ -218,6 +227,7 @@ print sprintf("u=%g  s=%g  cu=%g  cs=%g  files=%d  tests=%d\n",
     $user,$sys,$cuser,$csys,$files,$totmax);
 $$END-OF-TEST$$
 $ wrapup:
+$   Show Process/Accounting
 $   If F$Search("Echo.Exe").nes."" Then Delete/Log/NoConfirm Echo.Exe;*
 $   Set Default &olddef
 $   Set Message 'oldmsg'

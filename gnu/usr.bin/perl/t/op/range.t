@@ -1,8 +1,6 @@
 #!./perl
 
-# $RCSfile: range.t,v $$Revision: 4.1 $$Date: 92/08/07 18:28:14 $
-
-print "1..8\n";
+print "1..12\n";
 
 print join(':',1..5) eq '1:2:3:4:5' ? "ok 1\n" : "not ok 1\n";
 
@@ -34,3 +32,26 @@ print $x eq 'abcdefghijklmnopqrstuvwxyz' ? "ok 7\n" : "not ok 7 $x\n";
 
 @x = 'A'..'ZZ';
 print @x == 27 * 26 ? "ok 8\n" : "not ok 8\n";
+
+@x = '09' .. '08';  # should produce '09', '10',... '99' (strange but true)
+print "not " unless join(",", @x) eq
+                    join(",", map {sprintf "%02d",$_} 9..99);
+print "ok 9\n";
+
+# same test with foreach (which is a separate implementation)
+@y = ();
+foreach ('09'..'08') {
+    push(@y, $_);
+}
+print "not " unless join(",", @y) eq join(",", @x);
+print "ok 10\n";
+
+# check bounds
+@a = 0x7ffffffe..0x7fffffff;
+print "not " unless "@a" eq "2147483646 2147483647";
+print "ok 11\n";
+
+@a = -0x7fffffff..-0x7ffffffe;
+print "not " unless "@a" eq "-2147483647 -2147483646";
+print "ok 12\n";
+

@@ -5,7 +5,7 @@ require 5.002;
 use vars qw($VERSION $XS_VERSION @ISA @EXPORT_OK);
 
 $VERSION = "1.04";
-$XS_VERSION = "1.02";
+$XS_VERSION = "1.03";
 
 use strict;
 use Carp;
@@ -152,7 +152,7 @@ like gv2cv, i_ncmp and ftsvtx.
 =item an operator tag name (optag)
 
 Operator tags can be used to refer to groups (or sets) of operators.
-Tag names always being with a colon. The Opcode module defines several
+Tag names always begin with a colon. The Opcode module defines several
 optags and the user can define others using the define_optag function.
 
 =item a negated opname or optag
@@ -326,7 +326,7 @@ invert_opset function.
 
     ucfirst lcfirst uc lc quotemeta trans chop schop chomp schomp
 
-    match split
+    match split qr
 
     list lslice splice push pop shift unshift reverse
 
@@ -398,7 +398,7 @@ These are a hotchpotch of opcodes still waiting to be considered
 
     bless -- could be used to change ownership of objects (reblessing)
 
-    pushre regcmaybe regcomp subst substcont
+    pushre regcmaybe regcreset regcomp subst substcont
 
     sprintf prtf -- can core dump
 
@@ -427,12 +427,18 @@ beyond the scope of the compartment.
 
     rand srand
 
+=item :base_thread
+
+These ops are related to multi-threading.
+
+    lock threadsv
+
 =item :default
 
 A handy tag name for a I<reasonable> default set of ops.  (The current ops
 allowed are unstable while development continues. It will change.)
 
-    :base_core :base_mem :base_loop :base_io :base_orig
+    :base_core :base_mem :base_loop :base_io :base_orig :base_thread
 
 If safety matters to you (and why else would you be using the Opcode module?)
 then you should not rely on the definition of this, or indeed any other, optag!
@@ -563,7 +569,7 @@ Originally designed and implemented by Malcolm Beattie,
 mbeattie@sable.ox.ac.uk as part of Safe version 1.
 
 Split out from Safe module version 1, named opcode tags and other
-changes added by Tim Bunce E<lt>F<Tim.Bunce@ig.co.uk>E<gt>.
+changes added by Tim Bunce.
 
 =cut
 

@@ -2,6 +2,7 @@
 
 use Config;
 use File::Basename qw(&basename &dirname);
+use Cwd;
 
 # List explicitly here the variables you want Configure to
 # generate.  Metaconfig only looks for shell variables, so you
@@ -12,6 +13,7 @@ use File::Basename qw(&basename &dirname);
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
+$origdir = cwd;
 chdir dirname($0);
 $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
@@ -39,19 +41,19 @@ h2xs - convert .h C header files to Perl extensions
 
 =head1 SYNOPSIS
 
-B<h2xs> [B<-AOPXcdf>] [B<-v> version] [B<-n> module_name] [B<-p> prefix] [B<-s> sub] [headerfile [extra_libraries]]
+B<h2xs> [B<-AOPXcdf>] [B<-v> version] [B<-n> module_name] [B<-p> prefix] [B<-s> sub] [headerfile ... [extra_libraries]]
 
 B<h2xs> B<-h>
 
 =head1 DESCRIPTION
 
-I<h2xs> builds a Perl extension from any C header file.  The extension will
-include functions which can be used to retrieve the value of any #define
-statement which was in the C header.
+I<h2xs> builds a Perl extension from C header files.  The extension
+will include functions which can be used to retrieve the value of any
+#define statement which was in the C header files.
 
 The I<module_name> will be used for the name of the extension.  If
-module_name is not supplied then the name of the header file will be used,
-with the first character capitalized.
+module_name is not supplied then the name of the first header file
+will be used, with the first character capitalized.
 
 If the extension might need extra libraries, they should be included
 here.  The extension Makefile.PL will take care of checking whether
@@ -209,7 +211,7 @@ The usual warnings if it cannot read or write the files involved.
 
 =cut
 
-my( $H2XS_VERSION ) = ' $Revision: 1.18 $ ' =~ /\$Revision:\s+([^\s]+)/;
+my( $H2XS_VERSION ) = ' $Revision: 1.19 $ ' =~ /\$Revision:\s+([^\s]+)/;
 my $TEMPLATE_VERSION = '0.01';
 
 use Getopt::Std;
@@ -249,15 +251,21 @@ if( $opt_v ){
 $opt_c = 1 if $opt_A;
 %const_xsub = map { $_,1 } split(/,+/, $opt_s) if $opt_s;
 
-$path_h    = shift;
-$extralibs = "@ARGV";
+while (my $arg = shift) {
+    if ($arg =~ /^-l/i) {
+        $extralibs = "$arg @ARGV";
+        last;
+    }
+    push(@path_h, $arg);
+}
 
 usage "Must supply header file or module name\n"
-	unless ($path_h or $opt_n);
+        unless (@path_h or $opt_n);
 
 
-if( $path_h ){
-    $name = $path_h;
+if( @path_h ){
+    foreach my $path_h (@path_h) {
+        $name ||= $path_h;
     if( $path_h =~ s#::#/#g && $opt_n ){
 	warn "Nesting of headerfile ignored with -n\n";
     }
@@ -288,7 +296,7 @@ if( $path_h ){
       die "Can't find $path_h\n" if ( ! $opt_f && ! -f $path_h );
       # Scan the header file (we should deal with nested header files)
       # Record the names of simple #define constants into const_names
-      # Function prototypes are not (currently) processed.
+            # Function prototypes are processed below.
       open(CH, "<$path_h") || die "Can't open $path_h: $!\n";
       while (<CH>) {
 	if (/^#[ \t]*define\s+([\$\w]+)\b\s*[^("]/) {
@@ -307,8 +315,9 @@ if( $path_h ){
 	  }
       }
       close(CH);
-      @const_names = sort keys %const_names;
     }
+    }
+    @const_names = sort keys %const_names;
 }
 
 
@@ -365,7 +374,8 @@ if( ! $opt_X ){  # use XS, unless it was disabled
     get_typemap();
     my $c;
     my $filter;
-    my $filename = $path_h;
+        my @fdecls;
+        foreach my $filename (@path_h) {
     my $addflags = $opt_F || '';
     if ($fullpath =~ /,/) {
       $filename = $`;
@@ -377,7 +387,9 @@ if( ! $opt_X ){  # use XS, unless it was disabled
     $c->set('includeDirs' => ["$Config::Config{archlib}/CORE"]);
     
     $fdecls_parsed = $c->get('parsed_fdecls');
-    $fdecls = $c->get('fdecls');
+            push(@fdecls, @{$c->get('fdecls')});
+        }
+        $fdecls = [ @fdecls ];
   }
 }
 
@@ -476,6 +488,7 @@ sub AUTOLOAD {
 
     my \$constname;
     (\$constname = \$AUTOLOAD) =~ s/.*:://;
+    croak "&$module::constant not defined" if \$constname eq 'constant';
     my \$val = constant(\$constname, \@_ ? \$_[0] : 0);
     if (\$! != 0) {
 	if (\$! =~ /Invalid/) {
@@ -486,7 +499,8 @@ sub AUTOLOAD {
 		croak "Your vendor has not defined $module macro \$constname";
 	}
     }
-    eval "sub \$AUTOLOAD { \$val }";
+    no strict 'refs';
+    *\$AUTOLOAD = sub () { \$val };
     goto &\$AUTOLOAD;
 }
 
@@ -578,41 +592,32 @@ if( ! $opt_X ){ # print XS, unless it is disabled
 warn "Writing $ext$modpname/$modfname.xs\n";
 
 print XS <<"END";
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#ifdef __cplusplus
-}
-#endif
 
 END
-if( $path_h ){
+if( @path_h ){
+    foreach my $path_h (@path_h) {
 	my($h) = $path_h;
 	$h =~ s#^/usr/include/##;
 	if ($^O eq 'VMS') { $h =~ s#.*vms\]#sys/# or $h =~ s#.*[:>\]]##; }
-print XS <<"END";
-#include <$h>
-
-END
+        print XS qq{#include <$h>\n};
+    }
+    print XS "\n";
 }
 
 if( ! $opt_c ){
 print XS <<"END";
 static int
-not_here(s)
-char *s;
+not_here(char *s)
 {
     croak("$module::%s not implemented on this architecture", s);
     return -1;
 }
 
 static double
-constant(name, arg)
-char *name;
-int arg;
+constant(char *name, int arg)
 {
     errno = 0;
     switch (*name) {
@@ -889,3 +894,4 @@ close MANI;
 close OUT or die "Can't close $file: $!";
 chmod 0755, $file or die "Can't reset permissions for $file: $!\n";
 exec("$Config{'eunicefix'} $file") if $Config{'eunicefix'} ne ':';
+chdir $origdir;

@@ -11,13 +11,16 @@ use Time::Local;
 @time =
   (
    #year,mon,day,hour,min,sec 
-   [1970,  1,  1, 00, 00, 00],
+   [1970,  1,  2, 00, 00, 00],
    [1980,  2, 28, 12, 00, 00],
    [1980,  2, 29, 12, 00, 00],
    [1999, 12, 31, 23, 59, 59],
    [2000,  1,  1, 00, 00, 00],
    [2010, 10, 12, 14, 13, 12],
   );
+
+# use vmsish 'time' makes for oddness around the Unix epoch
+if ($^O eq 'VMS') { $time[0][2]++ }
 
 print "1..", @time * 2 + 5, "\n";
 

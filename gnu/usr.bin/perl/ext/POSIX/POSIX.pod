@@ -1009,13 +1009,14 @@ Convert date and time information to string.  Returns the string.
 
 Synopsis:
 
-	strftime(fmt, sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = 0)
+	strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
 
 The month (C<mon>), weekday (C<wday>), and yearday (C<yday>) begin at zero.
 I.e. January is 0, not 1; Sunday is 0, not 1; January 1st is 0, not 1.  The
-year (C<year>) is given in years since 1900.  I.e. The year 1995 is 95; the
+year (C<year>) is given in years since 1900.  I.e., the year 1995 is 95; the
 year 2001 is 101.  Consult your system's C<strftime()> manpage for details
-about these and the other arguments.
+about these and the other arguments.  The given arguments are made consistent
+by calling C<mktime()> before calling your system's C<strftime()> function.
 
 The string for Tuesday, December 12, 1995.
 
@@ -1392,7 +1393,9 @@ Tests the SigSet object to see if it contains a specific signal.
 =item new
 
 Create a new Termios object.  This object will be destroyed automatically
-when it is no longer needed.
+when it is no longer needed.  A Termios object corresponds to the termios
+C struct.  new() mallocs a new one, getattr() fills it from a file descriptor,
+and setattr() sets a file descriptor's parameters to match Termios' contents.
 
 	$termios = POSIX::Termios->new;
 
@@ -1474,13 +1477,13 @@ array so an index must be specified.
 
 Set the c_cflag field of a termios object.
 
-	$termios->setcflag( &POSIX::CLOCAL );
+	$termios->setcflag( $c_cflag | &POSIX::CLOCAL );
 
 =item setiflag
 
 Set the c_iflag field of a termios object.
 
-	$termios->setiflag( &POSIX::BRKINT );
+	$termios->setiflag( $c_iflag | &POSIX::BRKINT );
 
 =item setispeed
 
@@ -1494,13 +1497,13 @@ Returns C<undef> on failure.
 
 Set the c_lflag field of a termios object.
 
-	$termios->setlflag( &POSIX::ECHO );
+	$termios->setlflag( $c_lflag | &POSIX::ECHO );
 
 =item setoflag
 
 Set the c_oflag field of a termios object.
 
-	$termios->setoflag( &POSIX::OPOST );
+	$termios->setoflag( $c_oflag | &POSIX::OPOST );
 
 =item setospeed
 

@@ -315,7 +315,7 @@ be made through methods.
 Perl doesn't impose restrictions on who gets to use which methods.
 The public-versus-private distinction is by convention, not syntax.
 (Well, unless you use the Alias module described below in
-L</"Data Members as Variables">.)  Occasionally you'll see method names beginning or ending
+L<Data Members as Variables>.)  Occasionally you'll see method names beginning or ending
 with an underscore or two.  This marking is a convention indicating
 that the methods are private to that class alone and sometimes to its
 closest acquaintances, its immediate subclasses.  But this distinction
@@ -1753,27 +1753,25 @@ L<perltie>,
 and
 L<overload>.
 
+=head1 AUTHOR AND COPYRIGHT
+
+Copyright (c) 1997, 1998 Tom Christiansen 
+All rights reserved.
+
+When included as part of the Standard Version of Perl, or as part of
+its complete documentation whether printed or otherwise, this work
+may be distributed only under the terms of Perl's Artistic License.
+Any distribution of this file or derivatives thereof I<outside>
+of that package require that special arrangements be made with
+copyright holder.
+
+Irrespective of its distribution, all code examples in this file
+are hereby placed into the public domain.  You are permitted and
+encouraged to use this code in your own programs for fun
+or for profit as you see fit.  A simple comment in the code giving
+credit would be courteous but is not required.
+
 =head1 COPYRIGHT
-
-I I<really> hate to have to say this, but recent unpleasant
-experiences have mandated its inclusion:
-
-    Copyright 1996 Tom Christiansen.  All Rights Reserved.
-
-This work derives in part from the second edition of I<Programming Perl>.
-Although destined for release as a manpage with the standard Perl
-distribution, it is not public domain (nor is any of Perl and its docset:
-publishers beware).  It's expected to someday make its way into a revision
-of the Camel Book.  While it is copyright by me with all rights reserved,
-permission is granted to freely distribute verbatim copies of this
-document provided that no modifications outside of formatting be made,
-and that this notice remain intact.  You are permitted and encouraged to
-use its code and derivatives thereof in your own source code for fun or
-for profit as you see fit.  But so help me, if in six months I find some
-book out there with a hacked-up version of this material in it claiming to
-be written by someone else, I'll tell all the world that you're a jerk.
-Furthermore, your lawyer will meet my lawyer (or O'Reilly's) over lunch
-to arrange for you to receive your just deserts.  Count on it.
 
 =head2 Acknowledgments
 

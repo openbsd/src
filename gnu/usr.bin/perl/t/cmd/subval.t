@@ -33,7 +33,7 @@ sub foo6 {
     'true2' unless $_[0];
 }
 
-print "1..34\n";
+print "1..36\n";
 
 if (&foo1(0) eq '0') {print "ok 1\n";} else {print "not ok 1 $foo\n";}
 if (&foo1(1) eq 'true2') {print "ok 2\n";} else {print "not ok 2\n";}
@@ -177,3 +177,10 @@ sub iseof {
         eof UNIQ ? print "not ok $main'i\n" : print "ok $main'i\n";
  }
 }
+
+sub autov { $_[0] = 23 };
+
+my $href = {};
+print keys %$href ? 'not ' : '', "ok 35\n";
+autov($href->{b});
+print join(':', %$href) eq 'b:23' ? '' : 'not ', "ok 36\n";

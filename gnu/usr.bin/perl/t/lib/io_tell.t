@@ -27,7 +27,7 @@ print "1..13\n";
 use IO::File;
 
 $tst = IO::File->new("$tell_file","r") || die("Can't open $tell_file");
-binmode $tst if $^O eq 'MSWin32';
+binmode $tst if ($^O eq 'MSWin32' or $^O eq 'dos');
 if ($tst->eof) { print "not ok 1\n"; } else { print "ok 1\n"; }
 
 $firstline = <$tst>;

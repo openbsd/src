@@ -1,7 +1,8 @@
-#!/usr/local/bin/perl
+#!/usr/local/bin/perl -w
 
+use lib '..';
 use CGI qw(:standard);
-use CGI::Carp;
+use CGI::Carp qw/fatalsToBrowser/;
 
 print header();
 print start_html("File Upload Example");
@@ -32,9 +33,12 @@ print start_multipart_form(),
 # Process the form if there is a file name entered
 if ($file = param('filename')) {
     $tmpfile=tmpFileName($file);
+    $mimetype = uploadInfo($file)->{'Content-Type'} || '';
     print hr(),
           h2($file),
-          h3($tmpfile);
+          h3($tmpfile),
+          h4("MIME Type:",em($mimetype));
+
     my($lines,$words,$characters,@words) = (0,0,0,0);
     while (<$file>) {
 	$lines++;
@@ -51,6 +55,8 @@ if ($file = param('filename')) {
 	print strong("No statistics selected.");
     }
 }
+
+# print cite("URL parameters: "),url_param();
 
 print hr(),
     a({href=>"../cgi_docs.html"},"CGI documentation"),

@@ -2,8 +2,21 @@
 use Config;
 use File::Compare qw(compare);
 use File::Copy qw(copy);
+my $OBJ   = 1 if $Config{'ccflags'} =~ /PERL_OBJECT/i;
 my $name = $0;
 $name =~ s#^(.*)\.PL$#../$1.SH#;
+my %opt;
+while (@ARGV && $ARGV[0] =~ /^([\w_]+)=(.*)$/)
+ {
+  $opt{$1}=$2;
+  shift(@ARGV);
+ }
+my $patchlevel = $opt{INST_VER};
+$patchlevel =~ s|^[\\/]||;
+$patchlevel =~ s|~VERSION~|$]|g;
+$patchlevel ||= $];
+$patchlevel = qq["$patchlevel"];
+
 open(SH,"<$name") || die "Cannot open $name:$!";
 while (<SH>)
  {
@@ -27,6 +40,7 @@ eval $str;
 die "$str:$@" if $@;
 
 open(H,">$file.new") || die "Cannot open $file.new:$!";
+binmode H;		# no CRs (which cause a spurious rebuild)
 while (<SH>)
  {
   last if /^$term$/o;
@@ -35,18 +49,18 @@ while (<SH>)
   munge();
   s/\\\$/\$/g;
   s#/[ *\*]*\*/#/**/#;
-  if (/^\s*#define\s+ARCHLIB_EXP/)
+  if (/^\s*#define\s+(PRIVLIB|SITELIB)_EXP/)
    {
-     $_ = "#define ARCHLIB_EXP (win32PerlLibPath())\t/**/\n"
-        . "#define APPLLIB_EXP (win32SiteLibPath())\t/**/\n";
+     $_ = "#define ". $1 . "_EXP (win32_get_". lc($1) . "($patchlevel))\t/**/\n";
+   }
+  # incpush() handles archlibs, so disable them
+  elsif (/^\s*#define\s+(ARCHLIB|SITEARCH)_EXP/)
+   {
+     $_ = "/*#define ". $1 . "_EXP \"\"\t/**/\n";
    }
   print H;
  }
-print H "#include <win32.h>
-#ifndef DEBUGGING
-#define DEBUGGING
-#endif
-";
+print H "#include <win32.h>\n";
 close(H);
 close(SH);
 
@@ -55,14 +69,19 @@ chmod(0666,"../lib/CORE/config.h");
 copy("$file.new","../lib/CORE/config.h") || die "Cannot copy:$!";
 chmod(0444,"../lib/CORE/config.h");
 
-if (compare("$file.new",$file))
+if (!$OBJ && compare("$file.new",$file))
  {
   warn "$file has changed\n";
   chmod(0666,$file);
   unlink($file);
   rename("$file.new",$file);
-  chmod(0444,$file);
+  #chmod(0444,$file);
   exit(1);
+ }
+else
+ {
+  unlink ("$file.new");
+  exit(0);
  }
 
 sub Config

@@ -4,7 +4,10 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require Config; import Config;
-    unless ($Config{'d_fork'}) {
+    if (!$Config{'d_fork'}
+       # open2/3 supported on win32 (but not Borland due to CRT bugs)
+       && ($^O ne 'MSWin32' || $Config{'cc'} =~ /^bcc/i))
+    {
 	print "1..0\n";
 	exit 0;
     }
@@ -25,9 +28,18 @@ sub ok {
 	print "ok $n\n";
     }
     else {
-    	print "not ok $n\n";
+	print "not ok $n\n";
 	print "# $info\n" if $info;
     }
+}
+
+sub cmd_line {
+	if ($^O eq 'MSWin32') {
+		return qq/"$_[0]"/;
+	}
+	else {
+		return $_[0];
+	}
 }
 
 my ($pid, $reaped_pid);
@@ -36,9 +48,10 @@ STDERR->autoflush;
 
 print "1..7\n";
 
-ok 1, $pid = open2 'READ', 'WRITE', $perl, '-e', 'print scalar <STDIN>';
+ok 1, $pid = open2 'READ', 'WRITE', $perl, '-e',
+	cmd_line('print scalar <STDIN>');
 ok 2, print WRITE "hi kid\n";
-ok 3, <READ> eq "hi kid\n";
+ok 3, <READ> =~ /^hi kid\r?\n$/;
 ok 4, close(WRITE), $!;
 ok 5, close(READ), $!;
 $reaped_pid = waitpid $pid, 0;

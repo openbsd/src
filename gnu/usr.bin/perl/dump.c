@@ -1,6 +1,6 @@
 /*    dump.c
  *
- *    Copyright (c) 1991-1997, Larry Wall
+ *    Copyright (c) 1991-1999, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -15,32 +15,27 @@
 #include "EXTERN.h"
 #include "perl.h"
 
-#ifndef DEBUGGING
-void
-dump_all()
-{
-}
-#else  /* Rest of file is for DEBUGGING */
-
-#ifdef I_STDARG
+#ifndef PERL_OBJECT
 static void dump(char *pat, ...);
-#else
-static void dump();
-#endif
+#endif /* PERL_OBJECT */
 
 void
-dump_all()
+dump_all(void)
 {
+#ifdef DEBUGGING
+    dTHR;
     PerlIO_setlinebuf(Perl_debug_log);
-    if (main_root)
-	dump_op(main_root);
-    dump_packsubs(defstash);
+    if (PL_main_root)
+	dump_op(PL_main_root);
+    dump_packsubs(PL_defstash);
+#endif	/* DEBUGGING */
 }
 
 void
-dump_packsubs(stash)
-HV* stash;
+dump_packsubs(HV *stash)
 {
+#ifdef DEBUGGING
+    dTHR;
     I32	i;
     HE	*entry;
 
@@ -50,21 +45,24 @@ HV* stash;
 	for (entry = HvARRAY(stash)[i]; entry; entry = HeNEXT(entry)) {
 	    GV *gv = (GV*)HeVAL(entry);
 	    HV *hv;
+	    if (SvTYPE(gv) != SVt_PVGV || !GvGP(gv))
+		continue;
 	    if (GvCVu(gv))
 		dump_sub(gv);
 	    if (GvFORM(gv))
 		dump_form(gv);
 	    if (HeKEY(entry)[HeKLEN(entry)-1] == ':' &&
-	      (hv = GvHV(gv)) && HvNAME(hv) && hv != defstash)
+	      (hv = GvHV(gv)) && HvNAME(hv) && hv != PL_defstash)
 		dump_packsubs(hv);		/* nested package */
 	}
     }
+#endif	/* DEBUGGING */
 }
 
 void
-dump_sub(gv)
-GV* gv;
+dump_sub(GV *gv)
 {
+#ifdef DEBUGGING
     SV *sv = sv_newmortal();
 
     gv_fullname3(sv, gv, Nullch);
@@ -77,12 +75,13 @@ GV* gv;
 	dump_op(CvROOT(GvCV(gv)));
     else
 	dump("<undef>\n");
+#endif	/* DEBUGGING */
 }
 
 void
-dump_form(gv)
-GV* gv;
+dump_form(GV *gv)
 {
+#ifdef DEBUGGING
     SV *sv = sv_newmortal();
 
     gv_fullname3(sv, gv, Nullch);
@@ -91,45 +90,48 @@ GV* gv;
 	dump_op(CvROOT(GvFORM(gv)));
     else
 	dump("<undef>\n");
+#endif	/* DEBUGGING */
 }
 
 void
-dump_eval()
+dump_eval(void)
 {
-    dump_op(eval_root);
+#ifdef DEBUGGING
+    dump_op(PL_eval_root);
+#endif	/* DEBUGGING */
 }
 
 void
-dump_op(op)
-register OP *op;
+dump_op(OP *o)
 {
+#ifdef DEBUGGING
     dump("{\n");
-    if (op->op_seq)
-	PerlIO_printf(Perl_debug_log, "%-4d", op->op_seq);
+    if (o->op_seq)
+	PerlIO_printf(Perl_debug_log, "%-4d", o->op_seq);
     else
 	PerlIO_printf(Perl_debug_log, "    ");
-    dump("TYPE = %s  ===> ", op_name[op->op_type]);
-    if (op->op_next) {
-	if (op->op_seq)
-	    PerlIO_printf(Perl_debug_log, "%d\n", op->op_next->op_seq);
+    dump("TYPE = %s  ===> ", op_name[o->op_type]);
+    if (o->op_next) {
+	if (o->op_seq)
+	    PerlIO_printf(Perl_debug_log, "%d\n", o->op_next->op_seq);
 	else
-	    PerlIO_printf(Perl_debug_log, "(%d)\n", op->op_next->op_seq);
+	    PerlIO_printf(Perl_debug_log, "(%d)\n", o->op_next->op_seq);
     }
     else
 	PerlIO_printf(Perl_debug_log, "DONE\n");
-    dumplvl++;
-    if (op->op_targ) {
-	if (op->op_type == OP_NULL)
-	    dump("  (was %s)\n", op_name[op->op_targ]);
+    PL_dumplvl++;
+    if (o->op_targ) {
+	if (o->op_type == OP_NULL)
+	    dump("  (was %s)\n", op_name[o->op_targ]);
 	else
-	    dump("TARG = %d\n", op->op_targ);
+	    dump("TARG = %d\n", o->op_targ);
     }
 #ifdef DUMPADDR
-    dump("ADDR = 0x%lx => 0x%lx\n",op, op->op_next);
+    dump("ADDR = 0x%lx => 0x%lx\n",o, o->op_next);
 #endif
-    if (op->op_flags) {
+    if (o->op_flags) {
 	SV *tmpsv = newSVpv("", 0);
-	switch (op->op_flags & OPf_WANT) {
+	switch (o->op_flags & OPf_WANT) {
 	case OPf_WANT_VOID:
 	    sv_catpv(tmpsv, ",VOID");
 	    break;
@@ -143,58 +145,58 @@ register OP *op;
 	    sv_catpv(tmpsv, ",UNKNOWN");
 	    break;
 	}
-	if (op->op_flags & OPf_KIDS)
+	if (o->op_flags & OPf_KIDS)
 	    sv_catpv(tmpsv, ",KIDS");
-	if (op->op_flags & OPf_PARENS)
+	if (o->op_flags & OPf_PARENS)
 	    sv_catpv(tmpsv, ",PARENS");
-	if (op->op_flags & OPf_STACKED)
+	if (o->op_flags & OPf_STACKED)
 	    sv_catpv(tmpsv, ",STACKED");
-	if (op->op_flags & OPf_REF)
+	if (o->op_flags & OPf_REF)
 	    sv_catpv(tmpsv, ",REF");
-	if (op->op_flags & OPf_MOD)
+	if (o->op_flags & OPf_MOD)
 	    sv_catpv(tmpsv, ",MOD");
-	if (op->op_flags & OPf_SPECIAL)
+	if (o->op_flags & OPf_SPECIAL)
 	    sv_catpv(tmpsv, ",SPECIAL");
 	dump("FLAGS = (%s)\n", SvCUR(tmpsv) ? SvPVX(tmpsv) + 1 : "");
 	SvREFCNT_dec(tmpsv);
     }
-    if (op->op_private) {
+    if (o->op_private) {
 	SV *tmpsv = newSVpv("", 0);
-	if (op->op_type == OP_AASSIGN) {
-	    if (op->op_private & OPpASSIGN_COMMON)
+	if (o->op_type == OP_AASSIGN) {
+	    if (o->op_private & OPpASSIGN_COMMON)
 		sv_catpv(tmpsv, ",COMMON");
 	}
-	else if (op->op_type == OP_SASSIGN) {
-	    if (op->op_private & OPpASSIGN_BACKWARDS)
+	else if (o->op_type == OP_SASSIGN) {
+	    if (o->op_private & OPpASSIGN_BACKWARDS)
 		sv_catpv(tmpsv, ",BACKWARDS");
 	}
-	else if (op->op_type == OP_TRANS) {
-	    if (op->op_private & OPpTRANS_SQUASH)
+	else if (o->op_type == OP_TRANS) {
+	    if (o->op_private & OPpTRANS_SQUASH)
 		sv_catpv(tmpsv, ",SQUASH");
-	    if (op->op_private & OPpTRANS_DELETE)
+	    if (o->op_private & OPpTRANS_DELETE)
 		sv_catpv(tmpsv, ",DELETE");
-	    if (op->op_private & OPpTRANS_COMPLEMENT)
+	    if (o->op_private & OPpTRANS_COMPLEMENT)
 		sv_catpv(tmpsv, ",COMPLEMENT");
 	}
-	else if (op->op_type == OP_REPEAT) {
-	    if (op->op_private & OPpREPEAT_DOLIST)
+	else if (o->op_type == OP_REPEAT) {
+	    if (o->op_private & OPpREPEAT_DOLIST)
 		sv_catpv(tmpsv, ",DOLIST");
 	}
-	else if (op->op_type == OP_ENTERSUB ||
-		 op->op_type == OP_RV2SV ||
-		 op->op_type == OP_RV2AV ||
-		 op->op_type == OP_RV2HV ||
-		 op->op_type == OP_RV2GV ||
-		 op->op_type == OP_AELEM ||
-		 op->op_type == OP_HELEM )
+	else if (o->op_type == OP_ENTERSUB ||
+		 o->op_type == OP_RV2SV ||
+		 o->op_type == OP_RV2AV ||
+		 o->op_type == OP_RV2HV ||
+		 o->op_type == OP_RV2GV ||
+		 o->op_type == OP_AELEM ||
+		 o->op_type == OP_HELEM )
 	{
-	    if (op->op_type == OP_ENTERSUB) {
-		if (op->op_private & OPpENTERSUB_AMPER)
+	    if (o->op_type == OP_ENTERSUB) {
+		if (o->op_private & OPpENTERSUB_AMPER)
 		    sv_catpv(tmpsv, ",AMPER");
-		if (op->op_private & OPpENTERSUB_DB)
+		if (o->op_private & OPpENTERSUB_DB)
 		    sv_catpv(tmpsv, ",DB");
 	    }
-	    switch (op->op_private & OPpDEREF) {
+	    switch (o->op_private & OPpDEREF) {
 	    case OPpDEREF_SV:
 		sv_catpv(tmpsv, ",SV");
 		break;
@@ -205,84 +207,85 @@ register OP *op;
 		sv_catpv(tmpsv, ",HV");
 		break;
 	    }
-	    if (op->op_type == OP_AELEM || op->op_type == OP_HELEM) {
-		if (op->op_private & OPpLVAL_DEFER)
+	    if (o->op_type == OP_AELEM || o->op_type == OP_HELEM) {
+		if (o->op_private & OPpLVAL_DEFER)
 		    sv_catpv(tmpsv, ",LVAL_DEFER");
 	    }
 	    else {
-		if (op->op_private & HINT_STRICT_REFS)
+		if (o->op_private & HINT_STRICT_REFS)
 		    sv_catpv(tmpsv, ",STRICT_REFS");
 	    }
 	}
-	else if (op->op_type == OP_CONST) {
-	    if (op->op_private & OPpCONST_BARE)
+	else if (o->op_type == OP_CONST) {
+	    if (o->op_private & OPpCONST_BARE)
 		sv_catpv(tmpsv, ",BARE");
 	}
-	else if (op->op_type == OP_FLIP) {
-	    if (op->op_private & OPpFLIP_LINENUM)
+	else if (o->op_type == OP_FLIP) {
+	    if (o->op_private & OPpFLIP_LINENUM)
 		sv_catpv(tmpsv, ",LINENUM");
 	}
-	else if (op->op_type == OP_FLOP) {
-	    if (op->op_private & OPpFLIP_LINENUM)
+	else if (o->op_type == OP_FLOP) {
+	    if (o->op_private & OPpFLIP_LINENUM)
 		sv_catpv(tmpsv, ",LINENUM");
 	}
-	if (op->op_flags & OPf_MOD && op->op_private & OPpLVAL_INTRO)
+	if (o->op_flags & OPf_MOD && o->op_private & OPpLVAL_INTRO)
 	    sv_catpv(tmpsv, ",INTRO");
 	if (SvCUR(tmpsv))
 	    dump("PRIVATE = (%s)\n", SvPVX(tmpsv) + 1);
 	SvREFCNT_dec(tmpsv);
     }
 
-    switch (op->op_type) {
+    switch (o->op_type) {
     case OP_GVSV:
     case OP_GV:
-	if (cGVOP->op_gv) {
+	if (cGVOPo->op_gv) {
+	    STRLEN n_a;
 	    SV *tmpsv = NEWSV(0,0);
 	    ENTER;
 	    SAVEFREESV(tmpsv);
-	    gv_fullname3(tmpsv, cGVOP->op_gv, Nullch);
-	    dump("GV = %s\n", SvPV(tmpsv, na));
+	    gv_fullname3(tmpsv, cGVOPo->op_gv, Nullch);
+	    dump("GV = %s\n", SvPV(tmpsv, n_a));
 	    LEAVE;
 	}
 	else
 	    dump("GV = NULL\n");
 	break;
     case OP_CONST:
-	dump("SV = %s\n", SvPEEK(cSVOP->op_sv));
+	dump("SV = %s\n", SvPEEK(cSVOPo->op_sv));
 	break;
     case OP_NEXTSTATE:
     case OP_DBSTATE:
-	if (cCOP->cop_line)
-	    dump("LINE = %d\n",cCOP->cop_line);
-	if (cCOP->cop_label)
-	    dump("LABEL = \"%s\"\n",cCOP->cop_label);
+	if (cCOPo->cop_line)
+	    dump("LINE = %d\n",cCOPo->cop_line);
+	if (cCOPo->cop_label)
+	    dump("LABEL = \"%s\"\n",cCOPo->cop_label);
 	break;
     case OP_ENTERLOOP:
 	dump("REDO ===> ");
-	if (cLOOP->op_redoop)
-	    PerlIO_printf(Perl_debug_log, "%d\n", cLOOP->op_redoop->op_seq);
+	if (cLOOPo->op_redoop)
+	    PerlIO_printf(Perl_debug_log, "%d\n", cLOOPo->op_redoop->op_seq);
 	else
 	    PerlIO_printf(Perl_debug_log, "DONE\n");
 	dump("NEXT ===> ");
-	if (cLOOP->op_nextop)
-	    PerlIO_printf(Perl_debug_log, "%d\n", cLOOP->op_nextop->op_seq);
+	if (cLOOPo->op_nextop)
+	    PerlIO_printf(Perl_debug_log, "%d\n", cLOOPo->op_nextop->op_seq);
 	else
 	    PerlIO_printf(Perl_debug_log, "DONE\n");
 	dump("LAST ===> ");
-	if (cLOOP->op_lastop)
-	    PerlIO_printf(Perl_debug_log, "%d\n", cLOOP->op_lastop->op_seq);
+	if (cLOOPo->op_lastop)
+	    PerlIO_printf(Perl_debug_log, "%d\n", cLOOPo->op_lastop->op_seq);
 	else
 	    PerlIO_printf(Perl_debug_log, "DONE\n");
 	break;
     case OP_COND_EXPR:
 	dump("TRUE ===> ");
-	if (cCONDOP->op_true)
-	    PerlIO_printf(Perl_debug_log, "%d\n", cCONDOP->op_true->op_seq);
+	if (cCONDOPo->op_true)
+	    PerlIO_printf(Perl_debug_log, "%d\n", cCONDOPo->op_true->op_seq);
 	else
 	    PerlIO_printf(Perl_debug_log, "DONE\n");
 	dump("FALSE ===> ");
-	if (cCONDOP->op_false)
-	    PerlIO_printf(Perl_debug_log, "%d\n", cCONDOP->op_false->op_seq);
+	if (cCONDOPo->op_false)
+	    PerlIO_printf(Perl_debug_log, "%d\n", cCONDOPo->op_false->op_seq);
 	else
 	    PerlIO_printf(Perl_debug_log, "DONE\n");
 	break;
@@ -291,32 +294,34 @@ register OP *op;
     case OP_OR:
     case OP_AND:
 	dump("OTHER ===> ");
-	if (cLOGOP->op_other)
-	    PerlIO_printf(Perl_debug_log, "%d\n", cLOGOP->op_other->op_seq);
+	if (cLOGOPo->op_other)
+	    PerlIO_printf(Perl_debug_log, "%d\n", cLOGOPo->op_other->op_seq);
 	else
 	    PerlIO_printf(Perl_debug_log, "DONE\n");
 	break;
     case OP_PUSHRE:
     case OP_MATCH:
+    case OP_QR:
     case OP_SUBST:
-	dump_pm((PMOP*)op);
+	dump_pm(cPMOPo);
 	break;
     default:
 	break;
     }
-    if (op->op_flags & OPf_KIDS) {
+    if (o->op_flags & OPf_KIDS) {
 	OP *kid;
-	for (kid = cUNOP->op_first; kid; kid = kid->op_sibling)
+	for (kid = cUNOPo->op_first; kid; kid = kid->op_sibling)
 	    dump_op(kid);
     }
-    dumplvl--;
+    PL_dumplvl--;
     dump("}\n");
+#endif	/* DEBUGGING */
 }
 
 void
-dump_gv(gv)
-register GV *gv;
+dump_gv(GV *gv)
 {
+#ifdef DEBUGGING
     SV *sv;
 
     if (!gv) {
@@ -324,7 +329,7 @@ register GV *gv;
 	return;
     }
     sv = sv_newmortal();
-    dumplvl++;
+    PL_dumplvl++;
     PerlIO_printf(Perl_debug_log, "{\n");
     gv_fullname3(sv, gv, Nullch);
     dump("GV_NAME = %s", SvPVX(sv));
@@ -333,14 +338,15 @@ register GV *gv;
 	dump("-> %s", SvPVX(sv));
     }
     dump("\n");
-    dumplvl--;
+    PL_dumplvl--;
     dump("}\n");
+#endif	/* DEBUGGING */
 }
 
 void
-dump_pm(pm)
-register PMOP *pm;
+dump_pm(PMOP *pm)
 {
+#ifdef DEBUGGING
     char ch;
 
     if (!pm) {
@@ -348,7 +354,7 @@ register PMOP *pm;
 	return;
     }
     dump("{\n");
-    dumplvl++;
+    PL_dumplvl++;
     if (pm->op_pmflags & PMf_ONCE)
 	ch = '?';
     else
@@ -363,18 +369,19 @@ register PMOP *pm;
 	dump("PMf_REPL = ");
 	dump_op(pm->op_pmreplroot);
     }
-    if (pm->op_pmshort) {
-	dump("PMf_SHORT = %s\n",SvPEEK(pm->op_pmshort));
-    }
-    if (pm->op_pmflags) {
+    if (pm->op_pmflags || (pm->op_pmregexp && pm->op_pmregexp->check_substr)) {
 	SV *tmpsv = newSVpv("", 0);
-	if (pm->op_pmflags & PMf_USED)
+	if (pm->op_pmdynflags & PMdf_USED)
 	    sv_catpv(tmpsv, ",USED");
+	if (pm->op_pmdynflags & PMdf_TAINTED)
+	    sv_catpv(tmpsv, ",TAINTED");
 	if (pm->op_pmflags & PMf_ONCE)
 	    sv_catpv(tmpsv, ",ONCE");
-	if (pm->op_pmflags & PMf_SCANFIRST)
+	if (pm->op_pmregexp && pm->op_pmregexp->check_substr
+	    && !(pm->op_pmregexp->reganch & ROPT_NOSCAN))
 	    sv_catpv(tmpsv, ",SCANFIRST");
-	if (pm->op_pmflags & PMf_ALL)
+	if (pm->op_pmregexp && pm->op_pmregexp->check_substr
+	    && pm->op_pmregexp->reganch & ROPT_CHECK_ALL)
 	    sv_catpv(tmpsv, ",ALL");
 	if (pm->op_pmflags & PMf_SKIPWHITE)
 	    sv_catpv(tmpsv, ",SKIPWHITE");
@@ -386,56 +393,31 @@ register PMOP *pm;
 	    sv_catpv(tmpsv, ",GLOBAL");
 	if (pm->op_pmflags & PMf_CONTINUE)
 	    sv_catpv(tmpsv, ",CONTINUE");
+	if (pm->op_pmflags & PMf_RETAINT)
+	    sv_catpv(tmpsv, ",RETAINT");
 	if (pm->op_pmflags & PMf_EVAL)
 	    sv_catpv(tmpsv, ",EVAL");
 	dump("PMFLAGS = (%s)\n", SvCUR(tmpsv) ? SvPVX(tmpsv) + 1 : "");
 	SvREFCNT_dec(tmpsv);
     }
 
-    dumplvl--;
+    PL_dumplvl--;
     dump("}\n");
+#endif	/* DEBUGGING */
 }
 
 
-#if !defined(I_STDARG) && !defined(I_VARARGS)
-/* VARARGS1 */
-static void dump(arg1,arg2,arg3,arg4,arg5)
-char *arg1;
-long arg2, arg3, arg4, arg5;
-{
-    I32 i;
-
-    for (i = dumplvl*4; i; i--)
-	(void)PerlIO_putc(Perl_debug_log,' ');
-    PerlIO_printf(Perl_debug_log, arg1, arg2, arg3, arg4, arg5);
-}
-
-#else
-
-#ifdef I_STDARG
-static void
+STATIC void
 dump(char *pat,...)
-#else
-/*VARARGS0*/
-static void
-dump(pat,va_alist)
-    char *pat;
-    va_dcl
-#endif
 {
+#ifdef DEBUGGING
     I32 i;
     va_list args;
 
-#ifdef I_STDARG
     va_start(args, pat);
-#else
-    va_start(args);
-#endif
-    for (i = dumplvl*4; i; i--)
+    for (i = PL_dumplvl*4; i; i--)
 	(void)PerlIO_putc(Perl_debug_log,' ');
     PerlIO_vprintf(Perl_debug_log,pat,args);
     va_end(args);
+#endif	/* DEBUGGING */
 }
-#endif
-
-#endif

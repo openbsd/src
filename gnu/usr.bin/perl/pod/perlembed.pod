@@ -12,7 +12,7 @@ Do you want to:
 
 =item B<Use C from Perl?>
 
-Read L<perlcall> and L<perlxs>.
+Read L<perlxstut>, L<perlxs>, L<h2xs>, and L<perlguts>.
 
 =item B<Use a Unix program from Perl?>
 
@@ -20,7 +20,7 @@ Read about back-quotes and about C<system> and C<exec> in L<perlfunc>.
 
 =item B<Use Perl from Perl?>
 
-Read about L<perlfunc/do> and L<perlfunc/eval> and L<perlfunc/require>
+Read about L<perlfunc/do> and L<perlfunc/eval> and L<perlfunc/require> 
 and L<perlfunc/use>.
 
 =item B<Use C from C?>
@@ -35,9 +35,9 @@ Read on...
 
 =head2 ROADMAP
 
-L<Compiling your C program>
+=over 5
 
-There's one example in each of the nine sections:
+L<Compiling your C program>
 
 L<Adding a Perl interpreter to your C program>
 
@@ -56,6 +56,8 @@ L<Maintaining multiple interpreter instances>
 L<Using Perl modules, which themselves use C libraries, from your C program>
 
 L<Embedding Perl under Win32>
+
+=back 
 
 =head2 Compiling your C program
 
@@ -103,8 +105,8 @@ L<Adding a Perl interpreter to your C program>, on my Linux box:
     -L/usr/local/lib/perl5/i586-linux/5.003/CORE
     -o interp interp.c -lperl -lm
 
-(That's all one line.)  On my DEC Alpha running 5.003_05, the incantation
-is a bit different:
+(That's all one line.)  On my DEC Alpha running old 5.003_05, the 
+incantation is a bit different:
 
     % cc -O2 -Olimit 2900 -DSTANDARD_C -I/usr/local/include
     -I/usr/local/lib/perl5/alpha-dec_osf/5.00305/CORE
@@ -139,7 +141,7 @@ you:
 
 If the B<ExtUtils::Embed> module isn't part of your Perl distribution,
 you can retrieve it from
-http://www.perl.com/perl/CPAN/modules/by-module/ExtUtils::Embed.  (If
+http://www.perl.com/perl/CPAN/modules/by-module/ExtUtils/.  (If
 this documentation came from your Perl distribution, then you're
 running 5.004 or better and you already have it.)
 
@@ -151,7 +153,7 @@ information you may find useful.
 
 In a sense, perl (the C program) is a good example of embedding Perl
 (the language), so I'll demonstrate embedding with I<miniperlmain.c>,
-from the source distribution.  Here's a bastardized, nonportable
+included in the source distribution.  Here's a bastardized, nonportable
 version of I<miniperlmain.c> containing the essentials of embedding:
 
     #include <EXTERN.h>               /* from the Perl distribution     */
@@ -194,13 +196,13 @@ or
 
 You can also read and execute Perl statements from a file while in the
 midst of your C program, by placing the filename in I<argv[1]> before
-calling I<perl_run()>.
+calling I<perl_run>.
 
 =head2 Calling a Perl subroutine from your C program
 
 To call individual Perl subroutines, you can use any of the B<perl_call_*>
-functions documented in the L<perlcall> manpage.
-In this example we'll use I<perl_call_argv>.
+functions documented in L<perlcall>.
+In this example we'll use C<perl_call_argv>.
 
 That's shown below, in a program I'll call I<showtime.c>.
 
@@ -263,15 +265,15 @@ your C program>.
 =head2 Evaluating a Perl statement from your C program
 
 Perl provides two API functions to evaluate pieces of Perl code.
-These are L<perlguts/perl_eval_sv()> and L<perlguts/perl_eval_pv()>.
+These are L<perlguts/perl_eval_sv> and L<perlguts/perl_eval_pv>.
 
 Arguably, these are the only routines you'll ever need to execute
-snippets of Perl code from within your C program.  Your code can be
-as long as you wish; it can contain multiple statements; it can employ
-L<perlfunc/use>, L<perlfunc/require> and L<perlfunc/do> to include
-external Perl files.
+snippets of Perl code from within your C program.  Your code can be as
+long as you wish; it can contain multiple statements; it can employ
+L<perlfunc/use>, L<perlfunc/require>, and L<perlfunc/do> to
+include external Perl files.
 
-I<perl_eval_pv()> lets us evaluate individual Perl strings, and then
+I<perl_eval_pv> lets us evaluate individual Perl strings, and then
 extract variables for coercion into C types.  The following program,
 I<string.c>, executes three Perl strings, extracting an C<int> from
 the first, a C<float> from the second, and a C<char *> from the third.
@@ -283,6 +285,7 @@ the first, a C<float> from the second, and a C<char *> from the third.
    
    main (int argc, char **argv, char **env)
    {
+       STRLEN n_a;
        char *embedding[] = { "", "-e", "0" };
    
        my_perl = perl_alloc();
@@ -301,7 +304,7 @@ the first, a C<float> from the second, and a C<char *> from the third.
    
        /** Treat $a as a string **/
        perl_eval_pv("$a = 'rekcaH lreP rehtonA tsuJ'; $a = reverse($a);", TRUE);
-       printf("a = %s\n", SvPV(perl_get_sv("a", FALSE), na));
+       printf("a = %s\n", SvPV(perl_get_sv("a", FALSE), n_a));
    
        perl_destruct(my_perl);
        perl_free(my_perl);
@@ -320,11 +323,12 @@ I<SvPV()> to create a string:
 In the example above, we've created a global variable to temporarily
 store the computed value of our eval'd expression.  It is also
 possible and in most cases a better strategy to fetch the return value
-from L<perl_eval_pv> instead.  Example:
+from I<perl_eval_pv()> instead.  Example:
 
    ...
+   STRLEN n_a;
    SV *val = perl_eval_pv("reverse 'rekcaH lreP rehtonA tsuJ'", TRUE);
-   printf("%s\n", SvPV(val,na));
+   printf("%s\n", SvPV(val,n_a));
    ...
 
 This way, we avoid namespace pollution by not creating global
@@ -332,11 +336,11 @@ variables and we've simplified our code as well.
 
 =head2 Performing Perl pattern matches and substitutions from your C program
 
-The I<perl_eval_sv()> function lets us evaluate chunks of Perl code, so we can
+The I<perl_eval_sv()> function lets us evaluate strings of Perl code, so we can
 define some functions that use it to "specialize" in matches and
 substitutions: I<match()>, I<substitute()>, and I<matches()>.
 
-   char match(SV *string, char *pattern);
+   I32 match(SV *string, char *pattern);
 
 Given a string and a pattern (e.g., C<m/clasp/> or C</\b\w*\b/>, which
 in your C program might appear as "/\\b\\w*\\b/"), match()
@@ -369,16 +373,17 @@ been wrapped here):
  {
      dSP;
      SV* retval;
+     STRLEN n_a;
  
-     PUSHMARK(sp);
+     PUSHMARK(SP);
      perl_eval_sv(sv, G_SCALAR);
  
      SPAGAIN;
      retval = POPs;
      PUTBACK;
  
-     if (croak_on_error && SvTRUE(GvSV(errgv)))
- 	croak(SvPVx(GvSV(errgv), na));
+     if (croak_on_error && SvTRUE(ERRSV))
+ 	croak(SvPVx(ERRSV, n_a));
  
      return retval;
  }
@@ -392,10 +397,11 @@ been wrapped here):
  
  I32 match(SV *string, char *pattern)
  {
-     SV *command = newSV(0), *retval;
+     SV *command = NEWSV(1099, 0), *retval;
+     STRLEN n_a;
  
      sv_setpvf(command, "my $string = '%s'; $string =~ %s",
- 	      SvPV(string,na), pattern);
+ 	      SvPV(string,n_a), pattern);
  
      retval = my_perl_eval_sv(command, TRUE);
      SvREFCNT_dec(command);
@@ -413,10 +419,11 @@ been wrapped here):
  
  I32 substitute(SV **string, char *pattern)
  {
-     SV *command = newSV(0), *retval;
+     SV *command = NEWSV(1099, 0), *retval;
+     STRLEN n_a;
  
      sv_setpvf(command, "$string = '%s'; ($string =~ %s)",
- 	      SvPV(*string,na), pattern);
+ 	      SvPV(*string,n_a), pattern);
  
      retval = my_perl_eval_sv(command, TRUE);
      SvREFCNT_dec(command);
@@ -435,11 +442,12 @@ been wrapped here):
  
  I32 matches(SV *string, char *pattern, AV **match_list)
  {
-     SV *command = newSV(0);
+     SV *command = NEWSV(1099, 0);
      I32 num_matches;
+     STRLEN n_a;
  
      sv_setpvf(command, "my $string = '%s'; @array = ($string =~ %s)",
- 	      SvPV(string,na), pattern);
+ 	      SvPV(string,n_a), pattern);
  
      my_perl_eval_sv(command, TRUE);
      SvREFCNT_dec(command);
@@ -456,7 +464,8 @@ been wrapped here):
      char *embedding[] = { "", "-e", "0" };
      AV *match_list;
      I32 num_matches, i;
-     SV *text = newSV(0);
+     SV *text = NEWSV(1099,0);
+     STRLEN n_a;
  
      perl_construct(my_perl);
      perl_parse(my_perl, NULL, 3, embedding, NULL);
@@ -478,7 +487,7 @@ been wrapped here):
      printf("matches: m/(wi..)/g found %d matches...\n", num_matches);
  
      for (i = 0; i < num_matches; i++)
- 	printf("match: %s\n", SvPV(*av_fetch(match_list, i, FALSE),na));
+ 	printf("match: %s\n", SvPV(*av_fetch(match_list, i, FALSE),n_a));
      printf("\n");
  
      /** Remove all vowels from text **/
@@ -486,7 +495,7 @@ been wrapped here):
      if (num_matches) {
  	printf("substitute: s/[aeiou]//gi...%d substitutions made.\n",
  	       num_matches);
- 	printf("Now text is: %s\n\n", SvPV(text,na));
+ 	printf("Now text is: %s\n\n", SvPV(text,n_a));
      }
  
      /** Attempt a substitution **/
@@ -495,7 +504,7 @@ been wrapped here):
      }
  
      SvREFCNT_dec(text);
-     perl_destruct_level = 1;
+     PL_perl_destruct_level = 1;
      perl_destruct(my_perl);
      perl_free(my_perl);
  }
@@ -563,7 +572,7 @@ deep breath...
       dSP;                            /* initialize stack pointer      */
       ENTER;                          /* everything created after here */
       SAVETMPS;                       /* ...is a temporary variable.   */
-      PUSHMARK(sp);                   /* remember the stack pointer    */
+      PUSHMARK(SP);                   /* remember the stack pointer    */
       XPUSHs(sv_2mortal(newSViv(a))); /* push the base onto the stack  */
       XPUSHs(sv_2mortal(newSViv(b))); /* push the exponent onto stack  */
       PUTBACK;                      /* make local stack pointer global */
@@ -648,6 +657,7 @@ with L<perlfunc/my> whenever possible.
 
  use strict;
  use vars '%Cache';
+ use Symbol qw(delete_package);
 
  sub valid_package_name {
      my($string) = @_;
@@ -658,20 +668,6 @@ with L<perlfunc/my> whenever possible.
      # Dress it up as a real package name
      $string =~ s|/|::|g;
      return "Embed" . $string;
- }
-
- #borrowed from Safe.pm
- sub delete_package {
-     my $pkg = shift;
-     my ($stem, $leaf);
-
-     no strict 'refs';
-     $pkg = "main::$pkg\::";    # expand to full symbol table name
-     ($stem, $leaf) = $pkg =~ m/(.*::)(\w+::)$/;
-
-     my $stem_symtab = *{$stem}{HASH};
-
-     delete $stem_symtab->{$leaf};
  }
 
  sub eval_file {
@@ -737,6 +733,7 @@ with L<perlfunc/my> whenever possible.
      char *args[] = { "", DO_CLEAN, NULL };
      char filename [1024];
      int exitstatus = 0;
+     STRLEN n_a;
 
      if((perl = perl_alloc()) == NULL) {
         fprintf(stderr, "no memory!");
@@ -757,12 +754,12 @@ with L<perlfunc/my> whenever possible.
                            G_DISCARD | G_EVAL, args);
 
             /* check $@ */
-            if(SvTRUE(GvSV(errgv)))
-                fprintf(stderr, "eval error: %s\n", SvPV(GvSV(errgv),na));
+            if(SvTRUE(ERRSV))
+                fprintf(stderr, "eval error: %s\n", SvPV(ERRSV,n_a));
         }
      }
 
-     perl_destruct_level = 0;
+     PL_perl_destruct_level = 0;
      perl_destruct(perl);
      perl_free(perl);
      exit(exitstatus);
@@ -800,16 +797,16 @@ release any resources associated with the interpreter.
 
 The program must take care to ensure that this takes place I<before>
 the next interpreter is constructed.  By default, the global variable
-C<perl_destruct_level> is set to C<0>, since extra cleaning isn't
+C<PL_perl_destruct_level> is set to C<0>, since extra cleaning isn't
 needed when a program has only one interpreter.
 
-Setting C<perl_destruct_level> to C<1> makes everything squeaky clean:
+Setting C<PL_perl_destruct_level> to C<1> makes everything squeaky clean:
 
- perl_destruct_level = 1;
+ PL_perl_destruct_level = 1;
 
  while(1) {
      ...
-     /* reset global variables here with perl_destruct_level = 1 */
+     /* reset global variables here with PL_perl_destruct_level = 1 */
      perl_construct(my_perl);
      ...
      /* clean and reset _everything_ during perl_destruct */
@@ -825,7 +822,7 @@ and symbol tables are cleaned up, and global variables are reset.
 Now suppose we have more than one interpreter instance running at the
 same time.  This is feasible, but only if you used the
 C<-DMULTIPLICITY> flag when building Perl.  By default, that sets
-C<perl_destruct_level> to C<1>.
+C<PL_perl_destruct_level> to C<1>.
 
 Let's give it a try:
 
@@ -960,39 +957,39 @@ Consult L<perlxs> and L<perlguts> for more details.
 
 =head1 Embedding Perl under Win32
 
-At the time of this writing, there are two versions of Perl which run
-under Win32.  Interfacing to Activeware's Perl library is quite
-different from the examples in this documentation, as significant
-changes were made to the internal Perl API.  However, it is possible
-to embed Activeware's Perl runtime, see the Perl for Win32 FAQ:
-http://www.perl.com/perl/faq/win32/Perl_for_Win32_FAQ.html
+At the time of this writing (5.004), there are two versions of Perl
+which run under Win32.  (The two versions are merging in 5.005.)
+Interfacing to ActiveState's Perl library is quite different from the
+examples in this documentation, as significant changes were made to
+the internal Perl API.  However, it is possible to embed ActiveState's
+Perl runtime.  For details, see the Perl for Win32 FAQ at
+http://www.perl.com/CPAN/doc/FAQs/win32/perlwin32faq.html.
 
 With the "official" Perl version 5.004 or higher, all the examples
-within this documentation will compile and run untouched, although,
+within this documentation will compile and run untouched, although
 the build process is slightly different between Unix and Win32.  
 
-For starters, backticks don't work under the Win32 native command shell!
+For starters, backticks don't work under the Win32 native command shell.
 The ExtUtils::Embed kit on CPAN ships with a script called
 B<genmake>, which generates a simple makefile to build a program from
-a single C source file.  It can be used like so:
+a single C source file.  It can be used like this:
 
  C:\ExtUtils-Embed\eg> perl genmake interp.c
  C:\ExtUtils-Embed\eg> nmake
  C:\ExtUtils-Embed\eg> interp -e "print qq{I'm embedded in Win32!\n}"
 
-You may wish to use a more robust environment such as the MS Developer
-stdio.  In this case, to generate perlxsi.c run:
+You may wish to use a more robust environment such as the Microsoft
+Developer Studio.  In this case, run this to generate perlxsi.c:
 
  perl -MExtUtils::Embed -e xsinit
 
-Create a new project, Insert -> Files into Project: perlxsi.c, perl.lib,
-and your own source files, e.g. interp.c.  Typically you'll find
-perl.lib in B<C:\perl\lib\CORE>, if not, you should see the B<CORE>
-directory relative to C<perl -V:archlib>.
-The studio will also need this path so it knows where to find Perl
-include files.  This path can be added via the Tools -> Options ->
-Directories menu.  Finnally, select Build -> Build interp.exe and
-you're ready to go!
+Create a new project and Insert -> Files into Project: perlxsi.c,
+perl.lib, and your own source files, e.g. interp.c.  Typically you'll
+find perl.lib in B<C:\perl\lib\CORE>, if not, you should see the
+B<CORE> directory relative to C<perl -V:archlib>.  The studio will
+also need this path so it knows where to find Perl include files.
+This path can be added via the Tools -> Options -> Directories menu.
+Finally, select Build -> Build interp.exe and you're ready to go.
 
 =head1 MORAL
 
@@ -1003,28 +1000,38 @@ each from the other, combine them as you wish.
 
 =head1 AUTHOR
 
-Jon Orwant and <F<orwant@tpj.com>> and Doug MacEachern <F<dougm@osf.org>>,
-with small contributions from Tim Bunce, Tom Christiansen, Hallvard Furuseth,
-Dov Grobgeld, and Ilya Zakharevich.
+Jon Orwant <F<orwant@tpj.com>> and Doug MacEachern
+<F<dougm@osf.org>>, with small contributions from Tim Bunce, Tom
+Christiansen, Guy Decoux, Hallvard Furuseth, Dov Grobgeld, and Ilya
+Zakharevich.
 
-Check out Doug's article on embedding in Volume 1, Issue 4 of The Perl
-Journal.  Info about TPJ is available from http://tpj.com.
+Doug MacEachern has an article on embedding in Volume 1, Issue 4 of
+The Perl Journal (http://tpj.com).  Doug is also the developer of the
+most widely-used Perl embedding: the mod_perl system
+(perl.apache.org), which embeds Perl in the Apache web server.
+Oracle, Binary Evolution, ActiveState, and Ben Sugars's nsapi_perl
+have used this model for Oracle, Netscape and Internet Information
+Server Perl plugins.
 
-July 17, 1997
-
-Some of this material is excerpted from Jon Orwant's book: I<Perl 5
-Interactive>, Waite Group Press, 1996 (ISBN 1-57169-064-6) and appears
-courtesy of Waite Group Press.
+July 22, 1998
 
 =head1 COPYRIGHT
 
-Copyright (C) 1995, 1996, 1997 Doug MacEachern and Jon Orwant.  All
+Copyright (C) 1995, 1996, 1997, 1998 Doug MacEachern and Jon Orwant.  All
 Rights Reserved.
 
-Although destined for release with the standard Perl distribution,
-this document is not public domain, nor is any of Perl and its
-documentation.  Permission is granted to freely distribute verbatim
-copies of this document provided that no modifications outside of
-formatting be made, and that this notice remain intact.  You are
-permitted and encouraged to use its code and derivatives thereof in
-your own source code for fun or for profit as you see fit.
+Permission is granted to make and distribute verbatim copies of this
+documentation provided the copyright notice and this permission notice are
+preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+documentation under the conditions for verbatim copying, provided also
+that they are marked clearly as modified versions, that the authors'
+names and title are unchanged (though subtitles and additional
+authors' names may be added), and that the entire resulting derived
+work is distributed under the terms of a permission notice identical
+to this one.
+
+Permission is granted to copy and distribute translations of this
+documentation into another language, under the above conditions for
+modified versions.

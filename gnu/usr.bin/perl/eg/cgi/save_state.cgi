@@ -12,7 +12,7 @@ print "<H1>Save and Restore Example</H1>\n";
 $query = &restore_parameters($query)  if $query->param('action') eq 'RESTORE';
 
 # Here's where we create the form
-print $query->startform;
+print $query->start_multipart_form;
 print "Popup 1: ",$query->popup_menu('popup1',[qw{red green purple magenta orange chartreuse brown}]),"\n";
 print "Popup 2: ",$query->popup_menu('popup2',[qw{lion tiger bear zebra potto wildebeest frog emu gazelle}]),"\n";
 print "<P>";

@@ -106,7 +106,7 @@ sub new
     }
     elsif ($self->{"proto"} eq "icmp")
     {
-        croak("icmp ping requires root privilege") if $>;
+        croak("icmp ping requires root privilege") if ($> and $^O ne 'VMS');
         $self->{"proto_num"} = (getprotobyname('icmp'))[2] ||
                     croak("Can't get icmp protocol by name");
         $self->{"pid"} = $$ & 0xffff;           # Save lower 16 bits of pid

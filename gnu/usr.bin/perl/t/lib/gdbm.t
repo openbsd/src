@@ -1,6 +1,6 @@
 #!./perl
 
-# $RCSfile: gdbm.t,v $$Revision: 1.2 $$Date: 1997/11/30 08:00:31 $
+# $RCSfile: gdbm.t,v $$Revision: 1.3 $$Date: 1999/04/29 22:52:30 $
 
 BEGIN {
     @INC = '../lib';
@@ -24,8 +24,8 @@ $Dfile = "Op.dbmx.pag";
 if (! -e $Dfile) {
 	($Dfile) = <Op.dbmx*>;
 }
-if ($^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32') {
-    print "ok 2\n";
+if ($^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'dos') {
+    print "ok 2 # Skipped: different file permission semantics\n";
 }
 else {
     ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
@@ -87,7 +87,7 @@ delete $h{'goner3'};
 
 if ($#keys == 29 && $#values == 29) {print "ok 5\n";} else {print "not ok 5\n";}
 
-while (($key,$value) = each(h)) {
+while (($key,$value) = each(%h)) {
     if ($key eq $keys[$i] && $value eq $values[$i] && $key eq lc($value)) {
 	$key =~ y/a-z/A-Z/;
 	$i++ if $key eq $value;
@@ -96,7 +96,7 @@ while (($key,$value) = each(h)) {
 
 if ($i == 30) {print "ok 6\n";} else {print "not ok 6\n";}
 
-@keys = ('blurfl', keys(h), 'dyick');
+@keys = ('blurfl', keys(%h), 'dyick');
 if ($#keys == 31) {print "ok 7\n";} else {print "not ok 7\n";}
 
 $h{'foo'} = '';
@@ -201,6 +201,8 @@ EOM
     main::ok(19, $@ eq "") ;
     main::ok(20, $ret eq "[[5]]") ;
 
+    undef $X;
+    untie(%h);
     unlink "SubDB.pm", <dbhash.tmp*> ;
 
 }

@@ -29,7 +29,8 @@ Specified line by line via B<-e> switches on the command line.
 =item 2.
 
 Contained in the file specified by the first filename on the command line.
-(Note that systems supporting the #! notation invoke interpreters this way.)
+(Note that systems supporting the #! notation invoke interpreters this
+way. See L<Location of Perl>.)
 
 =item 3.
 
@@ -72,7 +73,7 @@ The sequences "-*" and "- " are specifically ignored so that you could,
 if you were so inclined, say
 
     #!/bin/sh -- # -*- perl -*- -p
-    eval 'exec /usr/bin/perl $0 -S ${1+"$@"}'
+    eval 'exec /usr/bin/perl -wS $0 ${1+"$@"}'
         if $running_under_some_shell;
 
 to let Perl see the B<-p> switch.
@@ -116,15 +117,32 @@ distribution for more information).
 =item Win95/NT
 
 The Win95/NT installation, when using the Activeware port of Perl,
-will modify the Registry to associate the .pl extension with the perl
+will modify the Registry to associate the F<.pl> extension with the perl
 interpreter.  If you install another port of Perl, including the one
 in the Win32 directory of the Perl distribution, then you'll have to
-modify the Registry yourself.
+modify the Registry yourself.  Note that this means you can no 
+longer tell the difference between an executable Perl program
+and a Perl library file.
 
 =item Macintosh
 
 Macintosh perl scripts will have the appropriate Creator and
 Type, so that double-clicking them will invoke the perl application.
+
+=item VMS
+
+Put
+
+    $ perl -mysw 'f$env("procedure")' 'p1' 'p2' 'p3' 'p4' 'p5' 'p6' 'p7' 'p8' !
+    $ exit++ + ++$status != 0 and $exit = $status = undef;
+
+at the top of your script, where C<-mysw> are any command line switches you
+want to pass to Perl.  You can now invoke the script directly, by saying
+C<perl script>, or as a DCL procedure, by saying C<@script> (or implicitly
+via F<DCL$PATH> by just using the name of the script).
+
+This incantation is a bit much to remember, but Perl will display it for
+you if you say C<perl "-V:startperl">.
 
 =back
 
@@ -169,6 +187,19 @@ quoting variants, except that it makes free use of the Macintosh's non-ASCII
 characters as control characters.
 
 There is no general solution to all of this.  It's just a mess.
+
+=head2 Location of Perl
+
+It may seem obvious to say, but Perl is useful only when users can
+easily find it. When possible, it's good for both B</usr/bin/perl> and
+B</usr/local/bin/perl> to be symlinks to the actual binary. If that
+can't be done, system administrators are strongly encouraged to put
+(symlinks to) perl and its accompanying utilities, such as perldoc, into
+a directory typically found along a user's PATH, or in another obvious
+and convenient place.
+
+In this documentation, C<#!/usr/bin/perl> on the first line of the script
+will stand in for whatever method works on your system.
 
 =head2 Switches
 
@@ -252,10 +283,15 @@ equivalent to B<-Dtls>):
       512  r  Regular expression parsing and execution
      1024  x  Syntax tree dump
      2048  u  Tainting checks
-     4096  L  Memory leaks (not supported anymore)
+     4096  L  Memory leaks (needs C<-DLEAKTEST> when compiling Perl)
      8192  H  Hash dump -- usurps values()
     16384  X  Scratchpad allocation
     32768  D  Cleaning up
+    65536  S  Thread synchronization
+
+All these flags require C<-DDEBUGGING> when you compile the Perl
+executable.  This flag is automatically set if you include C<-g>
+option when C<Configure> asks you about optimizer/debugger flags.
 
 =item B<-e> I<commandline>
 
@@ -278,12 +314,44 @@ prints a summary of the options.
 
 =item B<-i>[I<extension>]
 
-specifies that files processed by the C<E<lt>E<gt>> construct are to be edited
-in-place.  It does this by renaming the input file, opening the output
-file by the original name, and selecting that output file as the default
-for print() statements.  The extension, if supplied, is added to the name
-of the old file to make a backup copy.  If no extension is supplied, no
-backup is made.  From the shell, saying
+specifies that files processed by the C<E<lt>E<gt>> construct are to be
+edited in-place.  It does this by renaming the input file, opening the
+output file by the original name, and selecting that output file as the
+default for print() statements.  The extension, if supplied, is used to
+modify the name of the old file to make a backup copy, following these
+rules:
+
+If no extension is supplied, no backup is made and the current file is
+overwritten.
+
+If the extension doesn't contain a C<*> then it is appended to the end
+of the current filename as a suffix.
+
+If the extension does contain one or more C<*> characters, then each C<*>
+is replaced with the current filename.  In perl terms you could think of
+this as:
+
+    ($backup = $extension) =~ s/\*/$file_name/g;
+
+This allows you to add a prefix to the backup file, instead of (or in
+addition to) a suffix:
+
+    $ perl -pi'bak_*' -e 's/bar/baz/' fileA	# backup to 'bak_fileA'
+
+Or even to place backup copies of the original files into another
+directory (provided the directory already exists):
+
+    $ perl -pi'old/*.bak' -e 's/bar/baz/' fileA # backup to 'old/fileA.bak'
+
+These sets of one-liners are equivalent:
+
+    $ perl -pi -e 's/bar/baz/' fileA		# overwrite current file
+    $ perl -pi'*' -e 's/bar/baz/' fileA		# overwrite current file
+
+    $ perl -pi'.bak' -e 's/bar/baz/' fileA	# backup to 'fileA.bak'
+    $ perl -pi'*.bak' -e 's/bar/baz/' fileA	# backup to 'fileA.bak'
+
+From the shell, saying
 
     $ perl -p -i.bak -e "s/foo/bar/; ... "
 
@@ -295,9 +363,16 @@ is the same as using the script:
 which is equivalent to
 
     #!/usr/bin/perl
+    $extension = '.bak';
     while (<>) {
 	if ($ARGV ne $oldargv) {
-	    rename($ARGV, $ARGV . '.bak');
+	    if ($extension !~ /\*/) {
+		$backup = $ARGV . $extension;
+	    }
+	    else {
+		($backup = $extension) =~ s/\*/$ARGV/g;
+	    }
+	    rename($ARGV, $backup);
 	    open(ARGVOUT, ">$ARGV");
 	    select(ARGVOUT);
 	    $oldargv = $ARGV;
@@ -311,12 +386,36 @@ which is equivalent to
 
 except that the B<-i> form doesn't need to compare $ARGV to $oldargv to
 know when the filename has changed.  It does, however, use ARGVOUT for
-the selected filehandle.  Note that STDOUT is restored as the
-default output filehandle after the loop.
+the selected filehandle.  Note that STDOUT is restored as the default
+output filehandle after the loop.
 
-You can use C<eof> without parenthesis to locate the end of each input file,
-in case you want to append to each file, or reset line numbering (see
-example in L<perlfunc/eof>).
+As shown above, Perl creates the backup file whether or not any output
+is actually changed.  So this is just a fancy way to copy files:
+
+    $ perl -p -i'/some/file/path/*' -e 1 file1 file2 file3...
+  or
+    $ perl -p -i'.bak' -e 1 file1 file2 file3...
+
+You can use C<eof> without parentheses to locate the end of each input
+file, in case you want to append to each file, or reset line numbering
+(see example in L<perlfunc/eof>).
+
+If, for a given file, Perl is unable to create the backup file as
+specified in the extension then it will skip that file and continue on
+with the next one (if it exists).
+
+For a discussion of issues surrounding file permissions and C<-i>, see
+L<perlfaq5/Why does Perl let me delete read-only files?  Why does -i clobber protected files?  Isn't this a bug in Perl?>.
+
+You cannot use B<-i> to create directories or to strip extensions from
+files.
+
+Perl does not expand C<~>, so don't do that.
+
+Finally, note that the B<-i> switch does not impede execution when no
+files are given on the command line.  In this case, no backup is made
+(the original file cannot, of course, be determined) and processing
+proceeds from STDIN to STDOUT as might be expected.
 
 =item B<-I>I<directory>
 
@@ -408,7 +507,7 @@ makes it iterate over filename arguments somewhat like B<sed>:
 
 If a file named by an argument cannot be opened for some reason, Perl
 warns you about it, and moves on to the next file.  Note that the
-lines are printed automatically.  An error occuring during printing is
+lines are printed automatically.  An error occurring during printing is
 treated as fatal.  To suppress printing use the B<-n> switch.  A B<-p>
 overrides a B<-n> switch.
 
@@ -444,7 +543,7 @@ original name fails, and if the name does not already end in one
 of those suffixes.  If your Perl was compiled with DEBUGGING turned
 on, using the -Dp switch to Perl shows how the search progresses.
 
-If the file supplied contains directory separators (i.e. it is an
+If the filename supplied contains directory separators (i.e. it is an
 absolute or relative pathname), and if the file is not found,
 platforms that append file extensions will do so and try to look
 for the file with those extensions added, one by one.
@@ -459,7 +558,7 @@ don't support #!.  This example works on many platforms that
 have a shell compatible with Bourne shell:
 
     #!/usr/bin/perl
-    eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
+    eval 'exec /usr/bin/perl -wS $0 ${1+"$@"}'
 	    if $running_under_some_shell;
 
 The system ignores the first line and feeds the script to /bin/sh,
@@ -469,36 +568,40 @@ starts up the Perl interpreter.  On some systems $0 doesn't always
 contain the full pathname, so the B<-S> tells Perl to search for the
 script if necessary.  After Perl locates the script, it parses the
 lines and ignores them because the variable $running_under_some_shell
-is never true.  A better construct than C<$*> would be C<${1+"$@"}>, which
-handles embedded spaces and such in the filenames, but doesn't work if
-the script is being interpreted by csh.  To start up sh rather
+is never true. If the script will be interpreted by csh, you will need
+to replace C<${1+"$@"}> with C<$*>, even though that doesn't understand
+embedded spaces (and such) in the argument list.  To start up sh rather
 than csh, some systems may have to replace the #! line with a line
 containing just a colon, which will be politely ignored by Perl.  Other
 systems can't control that, and need a totally devious construct that
 will work under any of csh, sh, or Perl, such as the following:
 
-	eval '(exit $?0)' && eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
-	& eval 'exec /usr/bin/perl -S $0 $argv:q'
+	eval '(exit $?0)' && eval 'exec /usr/bin/perl -wS $0 ${1+"$@"}'
+	& eval 'exec /usr/bin/perl -wS $0 $argv:q'
 		if $running_under_some_shell;
 
 =item B<-T>
 
-forces "taint" checks to be turned on so you can test them.  Ordinarily these checks are
-done only when running setuid or setgid.  It's a good idea to turn
-them on explicitly for programs run on another's behalf, such as CGI
-programs.  See L<perlsec>.
+forces "taint" checks to be turned on so you can test them.  Ordinarily
+these checks are done only when running setuid or setgid.  It's a good
+idea to turn them on explicitly for programs run on another's behalf,
+such as CGI programs.  See L<perlsec>.  Note that (for security reasons)
+this option must be seen by Perl quite early; usually this means it must
+appear early on the command line or in the #! line (for systems which
+support that).
 
 =item B<-u>
 
 causes Perl to dump core after compiling your script.  You can then
-take this core dump and turn it into an executable file by using the
+in theory take this core dump and turn it into an executable file by using the
 B<undump> program (not supplied).  This speeds startup at the expense of
 some disk space (which you can minimize by stripping the executable).
 (Still, a "hello world" executable comes out to about 200K on my
 machine.)  If you want to execute a portion of your script before dumping,
 use the dump() operator instead.  Note: availability of B<undump> is
 platform specific and may not be available for a specific port of
-Perl.
+Perl.  It has been superseded by the new perl-to-C compiler, which is more
+portable, even though it's still only considered beta.
 
 =item B<-U>
 
@@ -583,7 +686,8 @@ Command-line options (switches).  Switches in this variable are taken
 as if they were on every Perl command line.  Only the B<-[DIMUdmw]>
 switches are allowed.  When running taint checks (because the script
 was running setuid or setgid, or the B<-T> switch was used), this
-variable is ignored.
+variable is ignored.  If PERL5OPT begins with B<-T>, tainting will be
+enabled, and any subsequent options ignored.
 
 =item PERLLIB
 
@@ -600,18 +704,23 @@ The command used to load the debugger code.  The default is:
 =item PERL5SHELL (specific to WIN32 port)
 
 May be set to an alternative shell that perl must use internally for
-executing "backtick" commands or system().  Perl doesn't use COMSPEC
-for this purpose because COMSPEC has a high degree of variability
-among users, leading to portability concerns.  Besides, perl can use
-a shell that may not be fit for interactive use, and setting COMSPEC
-to such a shell may interfere with the proper functioning of other
-programs (which usually look in COMSPEC to find a shell fit for
-interactive use).
+executing "backtick" commands or system().  Default is C<cmd.exe /x/c>
+on WindowsNT and C<command.com /c> on Windows95.  The value is considered
+to be space delimited.  Precede any character that needs to be protected
+(like a space or backslash) with a backslash.
+
+Note that Perl doesn't use COMSPEC for this purpose because
+COMSPEC has a high degree of variability among users, leading to
+portability concerns.  Besides, perl can use a shell that may not be
+fit for interactive use, and setting COMSPEC to such a shell may
+interfere with the proper functioning of other programs (which usually
+look in COMSPEC to find a shell fit for interactive use).
 
 =item PERL_DEBUG_MSTATS
 
-Relevant only if your perl executable was built with B<-DDEBUGGING_MSTATS>,
-if set, this causes memory statistics to be dumped after execution.  If set
+Relevant only if perl is compiled with the malloc included with the perl
+distribution (that is, if C<perl -V:d_mymalloc> is 'define').
+If set, this causes memory statistics to be dumped after execution.  If set
 to an integer greater than one, also causes memory statistics to be dumped
 after compilation.
 

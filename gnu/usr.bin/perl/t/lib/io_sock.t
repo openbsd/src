@@ -32,6 +32,13 @@ $listen = IO::Socket::INET->new(Listen => 2,
 
 print "ok 1\n";
 
+# Check if can fork with dynamic extensions (bug in CRT):
+if ($^O eq 'os2' and
+    system "$^X -I../lib -MOpcode -e 'defined fork or die'  > /dev/null 2>&1") {
+    print "ok $_ # skipped: broken fork\n" for 2..5;
+    exit 0;
+}
+
 $port = $listen->sockport;
 
 if($pid = fork()) {
@@ -55,11 +62,14 @@ if($pid = fork()) {
     # This can fail if localhost is undefined or the
     # special 'loopback' address 127.0.0.1 is not configured
     # on your system. (/etc/rc.config.d/netconfig on HP-UX.)
+    # As a shortcut (not recommended) you could change 'localhost'
+    # here to be the name of this machine eg 'myhost.mycompany.com'.
 
     $sock = IO::Socket::INET->new(PeerPort => $port,
 				  Proto => 'tcp',
 				  PeerAddr => 'localhost'
-				 ) or die "$!";
+				 )
+	    or die "$! (maybe your system does not have the 'localhost' address defined)";
 
     $sock->autoflush(1);
 

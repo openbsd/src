@@ -365,6 +365,13 @@
  */
 #undef HAS_ISASCII		/**/
 
+/* HAS_LCHOWN:
+ *	This symbol, if defined, indicates that the lchown routine is
+ *	available to operate on a symbolic link (instead of following the
+ *	link).
+ */
+/*#define HAS_LCHOWN		/ **/
+
 /* HAS_KILLPG:
  *	This symbol, if defined, indicates that the killpg routine is available
  *	to kill process groups.  If unavailable, you probably should use kill
@@ -1144,12 +1151,17 @@
  *	This symbol, if defined, indicates to the C program that struct passwd
  *	contains pw_comment.
  */
+/* PWGECOS:
+ *	This symbol, if defined, indicates to the C program that struct passwd
+ *	contains pw_gecos.
+ */
 #define I_PWD		/**/
 #undef PWQUOTA	/**/
 #undef PWAGE	/**/
 #undef PWCHANGE	/**/
 #undef PWCLASS	/**/
 #undef PWEXPIRE	/**/
+#define PWGECOS	/**/
 #undef PWCOMMENT	/**/
 
 /* I_STDDEF:

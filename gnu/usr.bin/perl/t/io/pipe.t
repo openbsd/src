@@ -13,7 +13,7 @@ BEGIN {
 }
 
 $| = 1;
-print "1..10\n";
+print "1..12\n";
 
 open(PIPE, "|-") || (exec 'tr', 'YX', 'ko');
 print PIPE "Xk 1\n";
@@ -25,6 +25,7 @@ if (open(PIPE, "-|")) {
 	s/^not //;
 	print;
     }
+    close PIPE;        # avoid zombies which disrupt test 12
 }
 else {
     print STDOUT "not ok 3\n";
@@ -40,6 +41,7 @@ if ($pid = fork) {
 	y/A-Z/a-z/;
 	print;
     }
+    close READER;     # avoid zombies which disrupt test 12
 }
 else {
     die "Couldn't fork" unless defined $pid;
@@ -57,27 +59,31 @@ close READER;
 $SIG{'PIPE'} = 'broken_pipe';
 
 sub broken_pipe {
+    $SIG{'PIPE'} = 'IGNORE';       # loop preventer
     print "ok 7\n";
 }
 
 print WRITER "not ok 7\n";
 close WRITER;
-
+sleep 1;
 print "ok 8\n";
 
 # VMS doesn't like spawning subprocesses that are still connected to
-# STDOUT.  Someone should modify tests #9 and #10 to work with VMS.
+# STDOUT.  Someone should modify tests #9 to #12 to work with VMS.
 
 if ($^O eq 'VMS') {
     print "ok 9\n";
     print "ok 10\n";
+    print "ok 11\n";
+    print "ok 12\n";
     exit;
 }
 
-if ($Config{d_sfio} || $^O eq machten) {
+if ($Config{d_sfio} || $^O eq machten || $^O eq beos) {
     # Sfio doesn't report failure when closing a broken pipe
     # that has pending output.  Go figure.  MachTen doesn't either,
     # but won't write to broken pipes, so nothing's pending at close.
+    # BeOS will not write to broken pipes, either.
     print "ok 9\n";
 }
 else {
@@ -107,4 +113,23 @@ elsif ($? == 0) {
 }
 else {
     print "ok 10\n";
+}
+
+# check that status for the correct process is collected
+wait;				# Collect from $pid
+my $zombie = fork or exit 37;
+my $pipe = open *FH, "sleep 2;exit 13|" or die "Open: $!\n";
+$SIG{ALRM} = sub { return };
+alarm(1);
+my $close = close FH;
+if ($? == 13*256 && ! length $close && ! $!) {
+    print "ok 11\n";
+} else {
+    print "not ok 11\n# close $close\$?=$?   \$!=", $!+0, ":$!\n";
+};
+my $wait = wait;
+if ($? == 37*256 && $wait == $zombie && ! $!) {
+    print "ok 12\n";
+} else {
+    print "not ok 12\n# pid=$wait first=$pid pipe=$pipe zombie=$zombie me=$$ \$?=$?   \$!=", $!+0, ":$!\n";
 }

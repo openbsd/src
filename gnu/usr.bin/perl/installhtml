@@ -295,7 +295,7 @@ sub create_index {
     # get the list of .html files in this directory
     opendir(DIR, $dir) ||
 	die "$0: error opening directory $dir for reading: $!\n";
-    @files = sort(grep(/\.html$/, readdir(DIR)));
+    @files = sort(grep(/\.html?$/, readdir(DIR)));
     closedir(DIR);
 
     open(HTML, ">$html") ||

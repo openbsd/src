@@ -4,6 +4,6 @@
 #  passes all args to ld.
 #
 
-PERLPATH=/perl5.004
+PERLPATH=/perl5.005
 
 $PERLPATH/perl $PERLPATH/perlld "$@"

@@ -1,8 +1,8 @@
 /* VMS::Stdio - VMS extensions to stdio routines 
  *
- * Version:  2.02
+ * Version:  2.1
  * Author:   Charles Bailey  bailey@genetics.upenn.edu
- * Revised:  15-Feb-1997
+ * Revised:  24-Mar-1998
  *
  */
 
@@ -10,6 +10,9 @@
 #include "perl.h"
 #include "XSUB.h"
 #include <file.h>
+#include <iodef.h>
+#include <rms.h>
+#include <starlet.h>
 
 static bool
 constant(name, pval)
@@ -84,16 +87,17 @@ newFH(FILE *fp, char type) {
     HV *stash;
     IO *io;
 
+    dTHR;
     /* Find stash for VMS::Stdio.  We don't do this once at boot
      * to allow for possibility of threaded Perl with per-thread
      * symbol tables.  This code (through io = ...) is really
      * equivalent to gv_fetchpv("VMS::Stdio::__FH__",TRUE,SVt_PVIO),
      * with a little less overhead, and good exercise for me. :-) */
-    stashp = (GV **)hv_fetch(defstash,"VMS::",5,TRUE);
-    if (!stashp || *stashp == (GV *)&sv_undef) return Nullsv;
+    stashp = (GV **)hv_fetch(PL_defstash,"VMS::",5,TRUE);
+    if (!stashp || *stashp == (GV *)&PL_sv_undef) return Nullsv;
     if (!(stash = GvHV(*stashp))) stash = GvHV(*stashp) = newHV();
     stashp = (GV **)hv_fetch(GvHV(*stashp),"Stdio::",7,TRUE);
-    if (!stashp || *stashp == (GV *)&sv_undef) return Nullsv;
+    if (!stashp || *stashp == (GV *)&PL_sv_undef) return Nullsv;
     if (!(stash = GvHV(*stashp))) stash = GvHV(*stashp) = newHV();
 
     /* Set up GV to point to IO, and then take reference */
@@ -118,24 +122,22 @@ constant(name)
 	if (constant(name, &i))
 	    ST(0) = sv_2mortal(newSViv(i));
 	else
-	    ST(0) = &sv_undef;
+	    ST(0) = &PL_sv_undef;
 
 void
-flush(sv)
-	SV *	sv
+flush(fp)
+	FILE *	fp
 	PROTOTYPE: $
 	CODE:
-	    FILE *fp = Nullfp;
-	    if (SvOK(sv)) fp = IoIFP(sv_2io(sv));
-	    if (fflush(fp)) { ST(0) = &sv_undef; }
-	    else            { clearerr(fp); ST(0) = &sv_yes; }
+	    if (fflush(fp)) { ST(0) = &PL_sv_undef; }
+	    else            { clearerr(fp); ST(0) = &PL_sv_yes; }
 
 char *
 getname(fp)
 	FILE *	fp
 	PROTOTYPE: $
 	CODE:
-	    char fname[257];
+	    char fname[NAM$C_MAXRSS+1];
 	    ST(0) = sv_newmortal();
 	    if (fgetname(fp,fname) != NULL) sv_setpv(ST(0),fname);
 
@@ -144,22 +146,76 @@ rewind(fp)
 	FILE *	fp
 	PROTOTYPE: $
 	CODE:
-	    ST(0) = rewind(fp) ? &sv_undef : &sv_yes;
+	    ST(0) = rewind(fp) ? &PL_sv_undef : &PL_sv_yes;
 
 void
 remove(name)
 	char *name
 	PROTOTYPE: $
 	CODE:
-	    ST(0) = remove(name) ? &sv_undef : &sv_yes;
+	    ST(0) = remove(name) ? &PL_sv_undef : &PL_sv_yes;
+
+void
+setdef(...)
+	PROTOTYPE: @
+	CODE:
+	    char vmsdef[NAM$C_MAXRSS+1], es[NAM$C_MAXRSS], sep;
+	    unsigned long int retsts;
+	    struct FAB deffab = cc$rms_fab;
+	    struct NAM defnam = cc$rms_nam;
+	    struct dsc$descriptor_s dirdsc = {0, DSC$K_DTYPE_T, DSC$K_CLASS_S, 0};
+	    STRLEN n_a;
+	    if (items) {
+		SV *defsv = ST(items-1);  /* mimic chdir() */
+		ST(0) = &PL_sv_undef;
+		if (!SvPOK(defsv)) { SETERRNO(EINVAL,LIB$_INVARG); XSRETURN(1); }
+		if (tovmsspec(SvPV(defsv,n_a),vmsdef) == NULL) { XSRETURN(1); }
+		deffab.fab$l_fna = vmsdef; deffab.fab$b_fns = strlen(vmsdef);
+	    }
+	    else {
+		deffab.fab$l_fna = "SYS$LOGIN"; deffab.fab$b_fns = 9;
+		EXTEND(sp,1);  ST(0) = &PL_sv_undef;
+	    }
+	    defnam.nam$l_esa = es;  defnam.nam$b_ess = sizeof es;
+	    deffab.fab$l_nam = &defnam;
+	    retsts = sys$parse(&deffab,0,0);
+	    if (retsts & 1) {
+		if (defnam.nam$v_wildcard) retsts = RMS$_WLD;
+		else if (defnam.nam$b_name || defnam.nam$b_type > 1 ||
+	             defnam.nam$b_ver > 1) retsts = RMS$_DIR;
+		}
+	    defnam.nam$b_nop |= NAM$M_SYNCHK; defnam.nam$l_rlf = NULL; deffab.fab$b_dns = 0;
+	    if (!(retsts & 1)) {
+		set_vaxc_errno(retsts);
+		switch (retsts) {
+		    case RMS$_DNF:
+			set_errno(ENOENT); break;
+		    case RMS$_SYN: case RMS$_DIR: case RMS$_DEV:
+			set_errno(EINVAL); break;
+		    case RMS$_PRV:
+			set_errno(EACCES); break;
+		    default:
+			set_errno(EVMSERR); break;
+		}
+		(void) sys$parse(&deffab,0,0);  /* free up context */
+		XSRETURN(1);
+	    }
+	    sep = *defnam.nam$l_dir;
+	    *defnam.nam$l_dir = '\0';
+	    my_setenv("SYS$DISK",defnam.nam$b_node ? defnam.nam$l_node : defnam.nam$l_dev);
+	    *defnam.nam$l_dir = sep;
+	    dirdsc.dsc$a_pointer = defnam.nam$l_dir; dirdsc.dsc$w_length = defnam.nam$b_dir;
+	    if ((retsts = sys$setddir(&dirdsc,0,0)) & 1) ST(0) = &PL_sv_yes;
+	    else { set_errno(EVMSERR); set_vaxc_errno(retsts); }
+	    (void) sys$parse(&deffab,0,0);  /* free up context */
 
 void
 sync(fp)
 	FILE *	fp
 	PROTOTYPE: $
 	CODE:
-	    if (fsync(fileno(fp))) { ST(0) = &sv_undef; }
-	    else                   { clearerr(fp); ST(0) = &sv_yes; }
+	    if (fsync(fileno(fp))) { ST(0) = &PL_sv_undef; }
+	    else                   { clearerr(fp); ST(0) = &PL_sv_yes; }
 
 char *
 tmpnam()
@@ -177,6 +233,7 @@ vmsopen(spec,...)
 	    char *args[8],mode[3] = {'r','\0','\0'}, type = '<';
 	    register int i, myargc;
 	    FILE *fp;
+	    STRLEN n_a;
 	
 	    if (!spec || !*spec) {
 	       SETERRNO(EINVAL,LIB$_INVARG);
@@ -195,7 +252,7 @@ vmsopen(spec,...)
 	    }
 	    else if (*spec == '<') spec++;
 	    myargc = items - 1;
-	    for (i = 0; i < myargc; i++) args[i] = SvPV(ST(i+1),na);
+	    for (i = 0; i < myargc; i++) args[i] = SvPV(ST(i+1),n_a);
 	    /* This hack brought to you by C's opaque arglist management */
 	    switch (myargc) {
 	      case 0:
@@ -228,9 +285,9 @@ vmsopen(spec,...)
 	    }
 	    if (fp != Nullfp) {
 	      SV *fh = newFH(fp,(mode[1] ? '+' : (mode[0] == 'r' ? '<' : (mode[0] == 'a' ? 'a' : '>'))));
-	      ST(0) = (fh ? sv_2mortal(fh) : &sv_undef);
+	      ST(0) = (fh ? sv_2mortal(fh) : &PL_sv_undef);
 	    }
-	    else { ST(0) = &sv_undef; }
+	    else { ST(0) = &PL_sv_undef; }
 
 void
 vmssysopen(spec,mode,perm,...)
@@ -243,13 +300,14 @@ vmssysopen(spec,mode,perm,...)
 	    int i, myargc, fd;
 	    FILE *fp;
 	    SV *fh;
+	    STRLEN n_a;
 	    if (!spec || !*spec) {
 	       SETERRNO(EINVAL,LIB$_INVARG);
 	       XSRETURN_UNDEF;
 	    }
 	    if (items > 11) croak("too many args");
 	    myargc = items - 3;
-	    for (i = 0; i < myargc; i++) args[i] = SvPV(ST(i+3),na);
+	    for (i = 0; i < myargc; i++) args[i] = SvPV(ST(i+3),n_a);
 	    /* More fun with C calls; can't combine with above because
 	       args 2,3 of different types in fopen() and open() */
 	    switch (myargc) {
@@ -285,13 +343,53 @@ vmssysopen(spec,mode,perm,...)
 	    if (fd >= 0 &&
 	       ((fp = fdopen(fd, &("r\000w\000r+"[2*i]))) != Nullfp)) {
 	      SV *fh = newFH(fp,"<>++"[i]);
-	      ST(0) = (fh ? sv_2mortal(fh) : &sv_undef);
+	      ST(0) = (fh ? sv_2mortal(fh) : &PL_sv_undef);
 	    }
-	    else { ST(0) = &sv_undef; }
+	    else { ST(0) = &PL_sv_undef; }
 
 void
 waitfh(fp)
 	FILE *	fp
 	PROTOTYPE: $
 	CODE:
-	    ST(0) = fwait(fp) ? &sv_undef : &sv_yes;
+	    ST(0) = fwait(fp) ? &PL_sv_undef : &PL_sv_yes;
+
+void
+writeof(mysv)
+	SV *	mysv
+	PROTOTYPE: $
+	CODE:
+	    char devnam[257], *cp;
+	    unsigned long int chan, iosb[2], retsts, retsts2;
+	    struct dsc$descriptor devdsc = {0, DSC$K_DTYPE_T, DSC$K_CLASS_S, devnam};
+	    IO *io = sv_2io(mysv);
+	    FILE *fp = io ? IoOFP(io) : NULL;
+	    if (fp == NULL || strchr(">was+-|",IoTYPE(io)) == Nullch) {
+	      set_errno(EBADF); set_vaxc_errno(SS$_IVCHAN);
+	      ST(0) = &PL_sv_undef;  XSRETURN(1);
+	    }
+	    if (fgetname(fp,devnam) == Nullch) { ST(0) = &PL_sv_undef; XSRETURN(1); }
+	    if ((cp = strrchr(devnam,':')) != NULL) *(cp+1) = '\0';
+	    devdsc.dsc$w_length = strlen(devnam);
+	    retsts = sys$assign(&devdsc,&chan,0,0);
+	    if (retsts & 1) retsts = sys$qiow(0,chan,IO$_WRITEOF,iosb,0,0,0,0,0,0,0,0);
+	    if (retsts & 1) retsts = iosb[0];
+	    retsts2 = sys$dassgn(chan);  /* Be sure to deassign the channel */
+	    if (retsts & 1) retsts = retsts2;
+	    if (retsts & 1) { ST(0) = &PL_sv_yes; }
+	    else {
+	      set_vaxc_errno(retsts);
+	      switch (retsts) {
+	        case SS$_EXQUOTA:  case SS$_INSFMEM:  case SS$_MBFULL:
+	        case SS$_MBTOOSML: case SS$_NOIOCHAN: case SS$_NOLINKS:
+	        case SS$_BUFFEROVF:
+	          set_errno(ENOSPC); break;
+	        case SS$_ILLIOFUNC: case SS$_DEVOFFLINE: case SS$_NOSUCHDEV:
+	          set_errno(EBADF);  break;
+	        case SS$_NOPRIV:
+	          set_errno(EACCES); break;
+	        default:  /* Includes "shouldn't happen" cases that might map */
+	          set_errno(EVMSERR); break;         /* to other errno values */
+	      }
+	      ST(0) = &PL_sv_undef;
+	    }

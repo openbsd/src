@@ -38,6 +38,7 @@ use symbolic references (see L<perlref>).
 =item C<strict vars>
 
 This generates a compile-time error if you access a variable that wasn't
+declared via C<use vars>,
 localized via C<my()> or wasn't fully qualified.  Because this is to avoid
 variable suicide problems and subtle dynamic scoping issues, a merely
 local() variable isn't good enough.  See L<perlfunc/my> and
@@ -47,6 +48,10 @@ L<perlfunc/local>.
     $X::foo = 1;	 # ok, fully qualified
     my $foo = 10;	 # ok, my() var
     local $foo = 9;	 # blows up
+
+    package Cinna;
+    use vars qw/ $bar /;	# Declares $bar in current package
+    $bar = 'HgS';		# ok, global declared via pragma
 
 The local() generated a compile-time error because you just touched a global
 name without fully qualifying it.
@@ -67,19 +72,22 @@ appears in curly braces or on the left hand side of the "=E<gt>" symbol.
 
 =back
 
-See L<perlmod/Pragmatic Modules>.
+See L<perlmodlib/Pragmatic Modules>.
 
 
 =cut
 
+$strict::VERSION = "1.01";
+
+my %bitmask = (
+refs => 0x00000002,
+subs => 0x00000200,
+vars => 0x00000400
+);
+
 sub bits {
     my $bits = 0;
-    my $sememe;
-    foreach $sememe (@_) {
-	$bits |= 0x00000002, next if $sememe eq 'refs';
-	$bits |= 0x00000200, next if $sememe eq 'subs';
-	$bits |= 0x00000400, next if $sememe eq 'vars';
-    }
+    foreach my $s (@_){ $bits |= $bitmask{$s} || 0; };
     $bits;
 }
 

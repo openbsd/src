@@ -2,12 +2,22 @@
 
 # $RCSfile: term.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:07 $
 
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
+
+use Config;
+
 print "1..7\n";
 
 # check "" interpretation
 
 $x = "\n";
-if ($x eq chr(10)) {print "ok 1\n";} else {print "not ok 1\n";}
+# 10 is ASCII/Iso Latin, 21 is EBCDIC.
+if ($x eq chr(10) ||
+    ($Config{ebcdic} eq 'define' && $x eq chr(21))) {print "ok 1\n";}
+else {print "not ok 1\n";}
 
 # check `` processing
 

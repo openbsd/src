@@ -1,7 +1,16 @@
+#ifdef WIN32
+#define _POSIX_
+#endif
 #include "EXTERN.h"
 #define PERLIO_NOT_STDIO 1
 #include "perl.h"
 #include "XSUB.h"
+#ifdef PERL_OBJECT	/* XXX _very_ temporary hacks */
+#  undef signal
+#  undef open
+#  undef setmode
+#  define open PerlLIO_open3
+#endif
 #include <ctype.h>
 #ifdef I_DIRENT    /* XXX maybe better to just rely on perl.h? */
 #include <dirent.h>
@@ -20,12 +29,12 @@
 #endif
 #include <setjmp.h>
 #include <signal.h>
-#ifdef I_STDARG
 #include <stdarg.h>
-#endif
+
 #ifdef I_STDDEF
 #include <stddef.h>
 #endif
+
 /* XXX This comment is just to make I_TERMIO and I_SGTTY visible to 
    metaconfig for future extension writers.  We don't use them in POSIX.
    (This is really sneaky :-)  --AD
@@ -40,7 +49,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
-#include <unistd.h>	/* see hints/sunos_4_1.sh */
+#ifdef I_UNISTD
+#include <unistd.h>
+#endif
 #include <fcntl.h>
 
 #if defined(__VMS) && !defined(__POSIX_SOURCE)
@@ -51,83 +62,13 @@
 #    define pid_t int       /* old versions of DECC miss this in types.h */
 #  endif
 
-#  undef mkfifo  /* #defined in perl.h */
+#  undef mkfifo
 #  define mkfifo(a,b) (not_here("mkfifo"),-1)
 #  define tzset() not_here("tzset")
 
 #if ((__VMS_VER >= 70000000) && (__DECC_VER >= 50200000)) || (__CRTL_VER >= 70000000)
 #    define HAS_TZNAME  /* shows up in VMS 7.0 or Dec C 5.6 */
 #    include <utsname.h>
-#else
-     /* The default VMS emulation of Unix signals isn't very POSIXish */
-     typedef int sigset_t;
-#    define sigpending(a) (not_here("sigpending"),0)
-
-     /* sigset_t is atomic under VMS, so these routines are easy */
-     int sigemptyset(sigset_t *set) {
-	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
-	*set = 0; return 0;
-     }
-     int sigfillset(sigset_t *set) {
-	int i;
-	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
-	for (i = 0; i < NSIG; i++) *set |= (1 << i);
-	return 0;
-     }
-     int sigaddset(sigset_t *set, int sig) {
-	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
-	if (sig > NSIG) { SETERRNO(EINVAL,LIB$_INVARG); return -1; }
-	*set |= (1 << (sig - 1));
-	return 0;
-     }
-     int sigdelset(sigset_t *set, int sig) {
-	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
-	if (sig > NSIG) { SETERRNO(EINVAL,LIB$_INVARG); return -1; }
-	*set &= ~(1 << (sig - 1));
-	return 0;
-     }
-     int sigismember(sigset_t *set, int sig) {
-	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
-	if (sig > NSIG) { SETERRNO(EINVAL,LIB$_INVARG); return -1; }
-	*set & (1 << (sig - 1));
-     }
-     /* The tools for sigprocmask() are there, just not the routine itself */
-#    ifndef SIG_UNBLOCK
-#      define SIG_UNBLOCK 1
-#    endif
-#    ifndef SIG_BLOCK
-#      define SIG_BLOCK 2
-#    endif
-#    ifndef SIG_SETMASK
-#      define SIG_SETMASK 3
-#    endif
-     int sigprocmask(int how, sigset_t *set, sigset_t *oset) {
-	if (!set || !oset) {
-	  set_errno(EFAULT); set_vaxc_errno(SS$_ACCVIO);
-	  return -1;
-	}
-	switch (how) {
-	  case SIG_SETMASK:
-	    *oset = sigsetmask(*set);
-	    break;
-	  case SIG_BLOCK:
-	    *oset = sigblock(*set);
-	    break;
-	  case SIG_UNBLOCK:
-	    *oset = sigblock(0);
-	    sigsetmask(*oset & ~*set);
-	    break;
-	  default:
-	    set_errno(EINVAL); set_vaxc_errno(LIB$_INVARG);
-	    return -1;
-	}
-	return 0;
-     }
-#    define sigaction sigvec
-#    define sa_flags sv_onstack
-#    define sa_handler sv_handler
-#    define sa_mask sv_mask
-#    define sigsuspend(set) sigpause(*set)
 #  endif /* __VMS_VER >= 70000000 or Dec C 5.6 */
 
    /* The POSIX notion of ttyname() is better served by getname() under VMS */
@@ -136,7 +77,7 @@
 
    /* The non-POSIX CRTL times() has void return type, so we just get the
       current time directly */
-   clock_t vms_times(struct tms *bufptr) {
+   clock_t vms_times(struct tms *PL_bufptr) {
 	clock_t retval;
 	/* Get wall time and convert to 10 ms intervals to
 	 * produce the return value that the POSIX standard expects */
@@ -156,11 +97,49 @@
 	_ckvmssts(lib$ediv(&divisor,vmstime,(long int *)&retval,&remainder));
 #  endif
 	/* Fill in the struct tms using the CRTL routine . . .*/
-	times((tbuffer_t *)bufptr);
+	times((tbuffer_t *)PL_bufptr);
 	return (clock_t) retval;
    }
 #  define times(t) vms_times(t)
 #else
+#if defined (WIN32)
+#  undef mkfifo
+#  define mkfifo(a,b) not_here("mkfifo")
+#  define ttyname(a) (char*)not_here("ttyname")
+#  define sigset_t long
+#  define pid_t long
+#  ifdef __BORLANDC__
+#    define tzname _tzname
+#  endif
+#  ifdef _MSC_VER
+#    define mode_t short
+#  endif
+#  ifdef __MINGW32__
+#    define mode_t short
+#    ifndef tzset
+#      define tzset()		not_here("tzset")
+#    endif
+#    ifndef _POSIX_OPEN_MAX
+#      define _POSIX_OPEN_MAX	FOPEN_MAX	/* XXX bogus ? */
+#    endif
+#  endif
+#  define sigaction(a,b,c)	not_here("sigaction")
+#  define sigpending(a)		not_here("sigpending")
+#  define sigprocmask(a,b,c)	not_here("sigprocmask")
+#  define sigsuspend(a)		not_here("sigsuspend")
+#  define sigemptyset(a)	not_here("sigemptyset")
+#  define sigaddset(a,b)	not_here("sigaddset")
+#  define sigdelset(a,b)	not_here("sigdelset")
+#  define sigfillset(a)		not_here("sigfillset")
+#  define sigismember(a,b)	not_here("sigismember")
+#else
+
+#  ifndef HAS_MKFIFO
+#    ifndef mkfifo
+#      define mkfifo(path, mode) (mknod((path), (mode) | S_IFIFO, 0))
+#    endif
+#  endif /* !HAS_MKFIFO */
+
 #  include <grp.h>
 #  include <sys/times.h>
 #  ifdef HAS_UNAME
@@ -170,7 +149,8 @@
 #  ifdef I_UTIME
 #    include <utime.h>
 #  endif
-#endif
+#endif /* WIN32 */
+#endif /* __VMS */
 
 typedef int SysRet;
 typedef long SysRetLong;
@@ -298,9 +278,13 @@ unsigned long strtoul _((const char *, char **, int));
 #endif
 
 #ifdef HAS_TZNAME
+#  ifndef WIN32
 extern char *tzname[];
+#  endif
 #else
+#if !defined(WIN32) || (defined(__MINGW32__) && !defined(tzname))
 char *tzname[] = { "" , "" };
+#endif
 #endif
 
 /* XXX struct tm on some systems (SunOS4/BSD) contains extra (non POSIX)
@@ -317,6 +301,12 @@ char *tzname[] = { "" , "" };
  * support is added and NETaa14816 is considered in full.
  * It does not address tzname aspects of NETaa14816.
  */
+#ifdef HAS_GNULIBC
+# ifndef STRUCT_TM_HASZONE
+#    define STRUCT_TM_HAS_ZONE
+# endif
+#endif
+
 #ifdef STRUCT_TM_HASZONE
 static void
 init_tm(ptm)		/* see mktime, strftime and asctime	*/
@@ -332,7 +322,13 @@ init_tm(ptm)		/* see mktime, strftime and asctime	*/
 #endif
 
 
-#ifndef HAS_LONG_DOUBLE /* XXX What to do about long doubles? */
+#ifdef HAS_LONG_DOUBLE
+#  if LONG_DOUBLESIZE > DOUBLESIZE
+#    undef HAS_LONG_DOUBLE  /* XXX until we figure out how to use them */
+#  endif
+#endif
+
+#ifndef HAS_LONG_DOUBLE 
 #ifdef LDBL_MAX
 #undef LDBL_MAX
 #endif
@@ -345,17 +341,19 @@ init_tm(ptm)		/* see mktime, strftime and asctime	*/
 #endif
 
 static int
-not_here(s)
-char *s;
+not_here(char *s)
 {
     croak("POSIX::%s not implemented on this architecture", s);
     return -1;
 }
 
-static double
-constant(name, arg)
-char *name;
-int arg;
+static
+#ifdef HAS_LONG_DOUBLE
+long double
+#else
+double
+#endif
+constant(char *name, int arg)
 {
     errno = 0;
     switch (*name) {
@@ -822,6 +820,8 @@ int arg;
 #else
 		goto not_there;
 #endif
+	    break;
+	case 'L':
 	    if (strEQ(name, "ELOOP"))
 #ifdef ELOOP
 		return ELOOP;
@@ -2315,55 +2315,55 @@ int arg;
     case '_':
 	if (strnEQ(name, "_PC_", 4)) {
 	    if (strEQ(name, "_PC_CHOWN_RESTRICTED"))
-#ifdef _PC_CHOWN_RESTRICTED
+#if defined(_PC_CHOWN_RESTRICTED) || HINT_SC_EXIST
 		return _PC_CHOWN_RESTRICTED;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_PC_LINK_MAX"))
-#ifdef _PC_LINK_MAX
+#if defined(_PC_LINK_MAX) || HINT_SC_EXIST
 		return _PC_LINK_MAX;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_PC_MAX_CANON"))
-#ifdef _PC_MAX_CANON
+#if defined(_PC_MAX_CANON) || HINT_SC_EXIST
 		return _PC_MAX_CANON;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_PC_MAX_INPUT"))
-#ifdef _PC_MAX_INPUT
+#if defined(_PC_MAX_INPUT) || HINT_SC_EXIST
 		return _PC_MAX_INPUT;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_PC_NAME_MAX"))
-#ifdef _PC_NAME_MAX
+#if defined(_PC_NAME_MAX) || HINT_SC_EXIST
 		return _PC_NAME_MAX;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_PC_NO_TRUNC"))
-#ifdef _PC_NO_TRUNC
+#if defined(_PC_NO_TRUNC) || HINT_SC_EXIST
 		return _PC_NO_TRUNC;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_PC_PATH_MAX"))
-#ifdef _PC_PATH_MAX
+#if defined(_PC_PATH_MAX) || HINT_SC_EXIST
 		return _PC_PATH_MAX;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_PC_PIPE_BUF"))
-#ifdef _PC_PIPE_BUF
+#if defined(_PC_PIPE_BUF) || HINT_SC_EXIST
 		return _PC_PIPE_BUF;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_PC_VDISABLE"))
-#ifdef _PC_VDISABLE
+#if defined(_PC_VDISABLE) || HINT_SC_EXIST
 		return _PC_VDISABLE;
 #else
 		goto not_there;
@@ -2489,61 +2489,61 @@ int arg;
 	}
 	if (strnEQ(name, "_SC_", 4)) {
 	    if (strEQ(name, "_SC_ARG_MAX"))
-#ifdef _SC_ARG_MAX
+#if defined(_SC_ARG_MAX) || HINT_SC_EXIST
 		return _SC_ARG_MAX;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_SC_CHILD_MAX"))
-#ifdef _SC_CHILD_MAX
+#if defined(_SC_CHILD_MAX) || HINT_SC_EXIST
 		return _SC_CHILD_MAX;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_SC_CLK_TCK"))
-#ifdef _SC_CLK_TCK
+#if defined(_SC_CLK_TCK) || HINT_SC_EXIST
 		return _SC_CLK_TCK;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_SC_JOB_CONTROL"))
-#ifdef _SC_JOB_CONTROL
+#if defined(_SC_JOB_CONTROL) || HINT_SC_EXIST
 		return _SC_JOB_CONTROL;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_SC_NGROUPS_MAX"))
-#ifdef _SC_NGROUPS_MAX
+#if defined(_SC_NGROUPS_MAX) || HINT_SC_EXIST
 		return _SC_NGROUPS_MAX;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_SC_OPEN_MAX"))
-#ifdef _SC_OPEN_MAX
+#if defined(_SC_OPEN_MAX) || HINT_SC_EXIST
 		return _SC_OPEN_MAX;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_SC_SAVED_IDS"))
-#ifdef _SC_SAVED_IDS
+#if defined(_SC_SAVED_IDS) || HINT_SC_EXIST
 		return _SC_SAVED_IDS;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_SC_STREAM_MAX"))
-#ifdef _SC_STREAM_MAX
+#if defined(_SC_STREAM_MAX) || HINT_SC_EXIST
 		return _SC_STREAM_MAX;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_SC_TZNAME_MAX"))
-#ifdef _SC_TZNAME_MAX
+#if defined(_SC_TZNAME_MAX) || HINT_SC_EXIST
 		return _SC_TZNAME_MAX;
 #else
 		goto not_there;
 #endif
 	    if (strEQ(name, "_SC_VERSION"))
-#ifdef _SC_VERSION
+#if defined(_SC_VERSION) || HINT_SC_EXIST
 		return _SC_VERSION;
 #else
 		goto not_there;
@@ -2567,7 +2567,7 @@ new(packname = "POSIX::SigSet", ...)
     CODE:
 	{
 	    int i;
-	    RETVAL = (sigset_t*)safemalloc(sizeof(sigset_t));
+	    New(0, RETVAL, 1, sigset_t);
 	    sigemptyset(RETVAL);
 	    for (i = 1; i < items; i++)
 		sigaddset(RETVAL, SvIV(ST(i)));
@@ -2579,7 +2579,7 @@ void
 DESTROY(sigset)
 	POSIX::SigSet	sigset
     CODE:
-	safefree((char *)sigset);
+	Safefree(sigset);
 
 SysRet
 sigaddset(sigset, sig)
@@ -2613,9 +2613,10 @@ new(packname = "POSIX::Termios", ...)
     CODE:
 	{
 #ifdef I_TERMIOS
-	    RETVAL = (struct termios*)safemalloc(sizeof(struct termios));
+	    New(0, RETVAL, 1, struct termios);
 #else
 	    not_here("termios");
+        RETVAL = 0;
 #endif
 	}
     OUTPUT:
@@ -2626,7 +2627,7 @@ DESTROY(termios_ref)
 	POSIX::Termios	termios_ref
     CODE:
 #ifdef I_TERMIOS
-	safefree((char *)termios_ref);
+	Safefree(termios_ref);
 #else
 	    not_here("termios");
 #endif
@@ -2665,7 +2666,8 @@ getiflag(termios_ref)
 #ifdef I_TERMIOS /* References a termios structure member so ifdef it out. */
 	RETVAL = termios_ref->c_iflag;
 #else
-	    not_here("getiflag");
+     not_here("getiflag");
+     RETVAL = 0;
 #endif
     OUTPUT:
 	RETVAL
@@ -2677,7 +2679,8 @@ getoflag(termios_ref)
 #ifdef I_TERMIOS /* References a termios structure member so ifdef it out. */
 	RETVAL = termios_ref->c_oflag;
 #else
-	    not_here("getoflag");
+     not_here("getoflag");
+     RETVAL = 0;
 #endif
     OUTPUT:
 	RETVAL
@@ -2689,7 +2692,8 @@ getcflag(termios_ref)
 #ifdef I_TERMIOS /* References a termios structure member so ifdef it out. */
 	RETVAL = termios_ref->c_cflag;
 #else
-	    not_here("getcflag");
+     not_here("getcflag");
+     RETVAL = 0;
 #endif
     OUTPUT:
 	RETVAL
@@ -2701,7 +2705,8 @@ getlflag(termios_ref)
 #ifdef I_TERMIOS /* References a termios structure member so ifdef it out. */
 	RETVAL = termios_ref->c_lflag;
 #else
-	    not_here("getlflag");
+     not_here("getlflag");
+     RETVAL = 0;
 #endif
     OUTPUT:
 	RETVAL
@@ -2716,7 +2721,8 @@ getcc(termios_ref, ccix)
 	    croak("Bad getcc subscript");
 	RETVAL = termios_ref->c_cc[ccix];
 #else
-	    not_here("getcc");
+     not_here("getcc");
+     RETVAL = 0;
 #endif
     OUTPUT:
 	RETVAL
@@ -2802,7 +2808,7 @@ isalnum(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isalnum(*s))
 		RETVAL = 0;
@@ -2814,7 +2820,7 @@ isalpha(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isalpha(*s))
 		RETVAL = 0;
@@ -2826,7 +2832,7 @@ iscntrl(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!iscntrl(*s))
 		RETVAL = 0;
@@ -2838,7 +2844,7 @@ isdigit(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isdigit(*s))
 		RETVAL = 0;
@@ -2850,7 +2856,7 @@ isgraph(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isgraph(*s))
 		RETVAL = 0;
@@ -2862,7 +2868,7 @@ islower(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!islower(*s))
 		RETVAL = 0;
@@ -2874,7 +2880,7 @@ isprint(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isprint(*s))
 		RETVAL = 0;
@@ -2886,7 +2892,7 @@ ispunct(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!ispunct(*s))
 		RETVAL = 0;
@@ -2898,7 +2904,7 @@ isspace(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isspace(*s))
 		RETVAL = 0;
@@ -2910,7 +2916,7 @@ isupper(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isupper(*s))
 		RETVAL = 0;
@@ -2922,7 +2928,7 @@ isxdigit(charstring)
 	unsigned char *	charstring
     CODE:
 	unsigned char *s = charstring;
-	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	unsigned char *e = s + PL_na;	/* "PL_na" set by typemap side effect */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isxdigit(*s))
 		RETVAL = 0;
@@ -2948,7 +2954,6 @@ localeconv()
 #ifdef HAS_LOCALECONV
 	struct lconv *lcbuf;
 	RETVAL = newHV();
-	SET_NUMERIC_LOCAL();
 	if (lcbuf = localeconv()) {
 	    /* the strings */
 	    if (lcbuf->decimal_point && *lcbuf->decimal_point)
@@ -2957,9 +2962,11 @@ localeconv()
 	    if (lcbuf->thousands_sep && *lcbuf->thousands_sep)
 		hv_store(RETVAL, "thousands_sep", 13,
 		    newSVpv(lcbuf->thousands_sep, 0), 0);
+#ifndef NO_LOCALECONV_GROUPING
 	    if (lcbuf->grouping && *lcbuf->grouping)
 		hv_store(RETVAL, "grouping", 8,
 		    newSVpv(lcbuf->grouping, 0), 0);
+#endif
 	    if (lcbuf->int_curr_symbol && *lcbuf->int_curr_symbol)
 		hv_store(RETVAL, "int_curr_symbol", 15,
 		    newSVpv(lcbuf->int_curr_symbol, 0), 0);
@@ -2969,12 +2976,16 @@ localeconv()
 	    if (lcbuf->mon_decimal_point && *lcbuf->mon_decimal_point)
 		hv_store(RETVAL, "mon_decimal_point", 17,
 		    newSVpv(lcbuf->mon_decimal_point, 0), 0);
+#ifndef NO_LOCALECONV_MON_THOUSANDS_SEP
 	    if (lcbuf->mon_thousands_sep && *lcbuf->mon_thousands_sep)
 		hv_store(RETVAL, "mon_thousands_sep", 17,
 		    newSVpv(lcbuf->mon_thousands_sep, 0), 0);
+#endif                    
+#ifndef NO_LOCALECONV_MON_GROUPING
 	    if (lcbuf->mon_grouping && *lcbuf->mon_grouping)
 		hv_store(RETVAL, "mon_grouping", 12,
 		    newSVpv(lcbuf->mon_grouping, 0), 0);
+#endif
 	    if (lcbuf->positive_sign && *lcbuf->positive_sign)
 		hv_store(RETVAL, "positive_sign", 13,
 		    newSVpv(lcbuf->positive_sign, 0), 0);
@@ -3150,11 +3161,13 @@ sigaction(sig, action, oldaction = 0)
 	POSIX::SigAction	action
 	POSIX::SigAction	oldaction
     CODE:
-
+#ifdef WIN32
+	RETVAL = not_here("sigaction");
+#else
 # This code is really grody because we're trying to make the signal
 # interface look beautiful, which is hard.
 
-	if (!siggv)
+	if (!PL_siggv)
 	    gv_fetchpv("SIG", TRUE, SVt_PVHV);
 
 	{
@@ -3162,14 +3175,15 @@ sigaction(sig, action, oldaction = 0)
 	    struct sigaction oact;
 	    POSIX__SigSet sigset;
 	    SV** svp;
-	    SV** sigsvp = hv_fetch(GvHVn(siggv),
+	    SV** sigsvp = hv_fetch(GvHVn(PL_siggv),
 				 sig_name[sig],
 				 strlen(sig_name[sig]),
 				 TRUE);
+	    STRLEN n_a;
 
 	    /* Remember old handler name if desired. */
 	    if (oldaction) {
-		char *hand = SvPVx(*sigsvp, na);
+		char *hand = SvPVx(*sigsvp, n_a);
 		svp = hv_fetch(oldaction, "HANDLER", 7, TRUE);
 		sv_setpv(*svp, *hand ? hand : "DEFAULT");
 	    }
@@ -3180,7 +3194,7 @@ sigaction(sig, action, oldaction = 0)
 		svp = hv_fetch(action, "HANDLER", 7, FALSE);
 		if (!svp)
 		    croak("Can't supply an action without a HANDLER");
-		sv_setpv(*sigsvp, SvPV(*svp, na));
+		sv_setpv(*sigsvp, SvPV(*svp, n_a));
 		mg_set(*sigsvp);	/* handles DEFAULT and IGNORE */
 		act.sa_handler = sighandler;
 
@@ -3219,7 +3233,7 @@ sigaction(sig, action, oldaction = 0)
 		    sigset = (sigset_t*) tmp;
 		}
 		else {
-		    sigset = (sigset_t*)safemalloc(sizeof(sigset_t));
+		    New(0, sigset, 1, sigset_t);
 		    sv_setptrobj(*svp, sigset, "POSIX::SigSet");
 		}
 		*sigset = oact.sa_mask;
@@ -3229,6 +3243,7 @@ sigaction(sig, action, oldaction = 0)
 		sv_setiv(*svp, oact.sa_flags);
 	    }
 	}
+#endif
     OUTPUT:
 	RETVAL
 
@@ -3240,7 +3255,20 @@ SysRet
 sigprocmask(how, sigset, oldsigset = 0)
 	int			how
 	POSIX::SigSet		sigset
-	POSIX::SigSet		oldsigset
+	POSIX::SigSet		oldsigset = NO_INIT
+INIT:
+	if ( items < 3 ) {
+	    oldsigset = 0;
+	}
+	else if (sv_derived_from(ST(2), "POSIX::SigSet")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(2)));
+	    oldsigset = (POSIX__SigSet) tmp;
+	}
+	else {
+	    New(0, oldsigset, 1, sigset_t);
+	    sigemptyset(oldsigset);
+	    sv_setref_pv(ST(2), "POSIX::SigSet", (void*)oldsigset);
+	}
 
 SysRet
 sigsuspend(signal_mask)
@@ -3278,7 +3306,7 @@ pipe()
     PPCODE:
 	int fds[2];
 	if (pipe(fds) != -1) {
-	    EXTEND(sp,2);
+	    EXTEND(SP,2);
 	    PUSHs(sv_2mortal(newSViv(fds[0])));
 	    PUSHs(sv_2mortal(newSViv(fds[1])));
 	}
@@ -3322,7 +3350,7 @@ uname()
 #ifdef HAS_UNAME
 	struct utsname buf;
 	if (uname(&buf) >= 0) {
-	    EXTEND(sp, 5);
+	    EXTEND(SP, 5);
 	    PUSHs(sv_2mortal(newSVpv(buf.sysname, 0)));
 	    PUSHs(sv_2mortal(newSVpv(buf.nodename, 0)));
 	    PUSHs(sv_2mortal(newSVpv(buf.release, 0)));
@@ -3390,11 +3418,11 @@ strtod(str)
 	num = strtod(str, &unparsed);
 	PUSHs(sv_2mortal(newSVnv(num)));
 	if (GIMME == G_ARRAY) {
-	    EXTEND(sp, 1);
+	    EXTEND(SP, 1);
 	    if (unparsed)
 		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
 	    else
-		PUSHs(&sv_undef);
+		PUSHs(&PL_sv_undef);
 	}
 
 void
@@ -3411,11 +3439,11 @@ strtol(str, base = 0)
 	else
 	    PUSHs(sv_2mortal(newSVnv((double)num)));
 	if (GIMME == G_ARRAY) {
-	    EXTEND(sp, 1);
+	    EXTEND(SP, 1);
 	    if (unparsed)
 		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
 	    else
-		PUSHs(&sv_undef);
+		PUSHs(&PL_sv_undef);
 	}
 
 void
@@ -3432,11 +3460,11 @@ strtoul(str, base = 0)
 	else
 	    PUSHs(sv_2mortal(newSVnv((double)num)));
 	if (GIMME == G_ARRAY) {
-	    EXTEND(sp, 1);
+	    EXTEND(SP, 1);
 	    if (unparsed)
 		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
 	    else
-		PUSHs(&sv_undef);
+		PUSHs(&PL_sv_undef);
 	}
 
 SV *
@@ -3533,7 +3561,7 @@ times()
 	struct tms tms;
 	clock_t realtime;
 	realtime = times( &tms );
-	EXTEND(sp,5);
+	EXTEND(SP,5);
 	PUSHs( sv_2mortal( newSViv( (IV) realtime ) ) );
 	PUSHs( sv_2mortal( newSViv( (IV) tms.tms_utime ) ) );
 	PUSHs( sv_2mortal( newSViv( (IV) tms.tms_stime ) ) );
@@ -3575,7 +3603,7 @@ mktime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = 0)
 	RETVAL
 
 char *
-strftime(fmt, sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = 0)
+strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
 	char *		fmt
 	int		sec
 	int		min
@@ -3601,8 +3629,45 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = 0)
 	    mytm.tm_wday = wday;
 	    mytm.tm_yday = yday;
 	    mytm.tm_isdst = isdst;
+	    (void) mktime(&mytm);
 	    len = strftime(tmpbuf, sizeof tmpbuf, fmt, &mytm);
-	    ST(0) = sv_2mortal(newSVpv(tmpbuf, len));
+	    /*
+	    ** The following is needed to handle to the situation where 
+	    ** tmpbuf overflows.  Basically we want to allocate a buffer
+	    ** and try repeatedly.  The reason why it is so complicated
+	    ** is that getting a return value of 0 from strftime can indicate
+	    ** one of the following:
+	    ** 1. buffer overflowed,
+	    ** 2. illegal conversion specifier, or
+	    ** 3. the format string specifies nothing to be returned(not
+	    **	  an error).  This could be because format is an empty string
+	    **    or it specifies %p that yields an empty string in some locale.
+	    ** If there is a better way to make it portable, go ahead by
+	    ** all means.
+	    */
+	    if ( ( len > 0 && len < sizeof(tmpbuf) )
+	    		|| ( len == 0 && strlen(fmt) == 0 ) ) {
+		ST(0) = sv_2mortal(newSVpv(tmpbuf, len));
+	    } else {
+		/* Possibly buf overflowed - try again with a bigger buf */
+		int	bufsize = strlen(fmt) + sizeof(tmpbuf);
+		char* 	buf;
+		int	buflen;
+
+		New(0, buf, bufsize, char);
+		while( buf ) {
+		    buflen = strftime(buf, bufsize, fmt, &mytm);
+		    if ( buflen > 0 && buflen < bufsize ) break;
+		    bufsize *= 2;
+		    Renew(buf, bufsize, char);
+		}
+		if ( buf ) {
+		    ST(0) = sv_2mortal(newSVpv(buf, buflen));
+		    Safefree(buf);
+		} else {
+		    ST(0) = sv_2mortal(newSVpv(tmpbuf, len));
+		}
+	    }
 	}
 
 void
@@ -3611,7 +3676,7 @@ tzset()
 void
 tzname()
     PPCODE:
-	EXTEND(sp,2);
+	EXTEND(SP,2);
 	PUSHs(sv_2mortal(newSVpv(tzname[0],strlen(tzname[0]))));
 	PUSHs(sv_2mortal(newSVpv(tzname[1],strlen(tzname[1]))));
 

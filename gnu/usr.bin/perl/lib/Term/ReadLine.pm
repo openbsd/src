@@ -139,12 +139,23 @@ None
 
 =head1 ENVIRONMENT
 
-The variable C<PERL_RL> governs which ReadLine clone is loaded. If the
-value is false, a dummy interface is used. If the value is true, it
-should be tail of the name of the package to use, such as C<Perl> or
-C<Gnu>. 
+The environment variable C<PERL_RL> governs which ReadLine clone is
+loaded. If the value is false, a dummy interface is used. If the value
+is true, it should be tail of the name of the package to use, such as
+C<Perl> or C<Gnu>.  
 
-If the variable is not set, the best available package is loaded.
+As a special case, if the value of this variable is space-separated,
+the tail might be used to disable the ornaments by setting the tail to
+be C<o=0> or C<ornaments=0>.  The head should be as described above, say
+
+If the variable is not set, or if the head of space-separated list is
+empty, the best available package is loaded.
+
+  export "PERL_RL=Perl o=0"	# Use Perl ReadLine without ornaments
+  export "PERL_RL= o=0"		# Use best available ReadLine without ornaments
+
+(Note that processing of C<PERL_RL> for ornaments is in the discretion of the 
+particular used C<Term::ReadLine::*> package).
 
 =cut
 
@@ -182,7 +193,7 @@ sub findConsole {
 	$console = "sys\$command";
     }
 
-    if ($^O eq 'amigaos') {
+    if (($^O eq 'amigaos') || ($^O eq 'beos')) {
 	$console = undef;
     }
     elsif ($^O eq 'os2') {
@@ -205,7 +216,7 @@ sub new {
   die "method new called with wrong number of arguments" 
     unless @_==2 or @_==4;
   #local (*FIN, *FOUT);
-  my ($FIN, $FOUT);
+  my ($FIN, $FOUT, $ret);
   if (@_==2) {
     ($console, $consoleOUT) = findConsole;
 
@@ -215,15 +226,21 @@ sub new {
     $sel = select(FOUT);
     $| = 1;				# for DB::OUT
     select($sel);
-    bless [\*FIN, \*FOUT];
+    $ret = bless [\*FIN, \*FOUT];
   } else {			# Filehandles supplied
     $FIN = $_[2]; $FOUT = $_[3];
     #OUT->autoflush(1);		# Conflicts with debugger?
     $sel = select($FOUT);
     $| = 1;				# for DB::OUT
     select($sel);
-    bless [$FIN, $FOUT];
+    $ret = bless [$FIN, $FOUT];
   }
+  if ($ret->Features->{ornaments} 
+      and not ($ENV{PERL_RL} and $ENV{PERL_RL} =~ /\bo\w*=0/)) {
+    local $Term::ReadLine::termcap_nowarn = 1;
+    $ret->ornaments(1);
+  }
+  return $ret;
 }
 
 sub newTTY {
@@ -245,7 +262,7 @@ sub Features { \%features }
 
 package Term::ReadLine;		# So late to allow the above code be defined?
 
-my $which = $ENV{PERL_RL};
+my ($which) = exists $ENV{PERL_RL} ? split /\s+/, $ENV{PERL_RL} : undef;
 if ($which) {
   if ($which =~ /\bgnu\b/i){
     eval "use Term::ReadLine::Gnu;";
@@ -254,7 +271,7 @@ if ($which) {
   } else {
     eval "use Term::ReadLine::$which;";
   }
-} elsif (defined $which) {	# Defined but false
+} elsif (defined $which and $which ne '') {	# Defined but false
   # Do nothing fancy
 } else {
   eval "use Term::ReadLine::Gnu; 1" or eval "use Term::ReadLine::Perl; 1";
@@ -293,10 +310,14 @@ sub ornaments {
   return $rl_term_set unless @_;
   $rl_term_set = shift;
   $rl_term_set ||= ',,,';
-  $rl_term_set = 'us,ue,md,me' if $rl_term_set == 1;
+  $rl_term_set = 'us,ue,md,me' if $rl_term_set eq '1';
   my @ts = split /,/, $rl_term_set, 4;
   eval { LoadTermCap };
-  warn("Cannot find termcap: $@\n"), return unless defined $terminal;
+  unless (defined $terminal) {
+    warn("Cannot find termcap: $@\n") unless $Term::ReadLine::termcap_nowarn;
+    $rl_term_set = ',,,';
+    return;
+  }
   @rl_term_set = map {$_ ? $terminal->Tputs($_,1) || '' : ''} @ts;
   return $rl_term_set;
 }
@@ -336,6 +357,7 @@ sub get_line {
   my $self = shift;
   $self->Tk_loop if $Term::ReadLine::toloop && defined &Tk::DoOneEvent;
   my $in = $self->IN;
+  local ($/) = "\n";
   return scalar <$in>;
 }
 

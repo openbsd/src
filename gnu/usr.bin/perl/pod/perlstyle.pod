@@ -16,7 +16,7 @@ The C<use sigtrap> and even C<use diagnostics> pragmas may also prove
 useful.
 
 Regarding aesthetics of code lay out, about the only thing Larry
-cares strongly about is that the closing curly brace of
+cares strongly about is that the closing curly bracket of
 a multi-line BLOCK should line up with the keyword that started the construct.
 Beyond that, he has other preferences that aren't so strong:
 
@@ -242,7 +242,7 @@ to fit on one line anyway.
 
 Always check the return codes of system calls.  Good error messages should
 go to STDERR, include which program caused the problem, what the failed
-system call and arguments were, and VERY IMPORTANT) should contain the
+system call and arguments were, and (VERY IMPORTANT) should contain the
 standard system error message for what went wrong.  Here's a simple but
 sufficient example:
 
@@ -250,7 +250,7 @@ sufficient example:
 
 =item *
 
-Line up your translations when it makes sense:
+Line up your transliterations when it makes sense:
 
     tr [abc]
        [xyz];

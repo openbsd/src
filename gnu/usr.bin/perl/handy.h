@@ -1,6 +1,6 @@
 /*    handy.h
  *
- *    Copyright (c) 1991-1997, Larry Wall
+ *    Copyright (c) 1991-1999, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -65,7 +65,7 @@
 #endif /* NeXT */
 
 #ifndef HAS_BOOL
-# ifdef UTS
+# if defined(UTS) || defined(VMS)
 #  define bool int
 # else
 #  define bool char
@@ -82,22 +82,27 @@
    expecting an int), but the disadvantage that an I32 is not 32 bits.
    Andy Dougherty	August 1996
 
-   In the future, we may perhaps want to think about something like
-    #if INTSIZE == 4
-	typedef I32 int;
-    #else
-    #  if LONGSIZE == 4
-	    typedef I32 long;
-    #  else
-    #    if SHORTSIZE == 4
-	    typedef I32 short;
-    #    else
-	    typedef I32 int;
-    #    endif
-    #  endif
-    #endif
-   For the moment, these are mentioned here so metaconfig will
-   construct Configure to figure out the various sizes.
+   There is no guarantee that there is *any* integral type with
+   exactly 32 bits.  It is perfectly legal for a system to have
+   sizeof(short) == sizeof(int) == sizeof(long) == 8.
+
+   Similarly, there is no guarantee that I16 and U16 have exactly 16
+   bits.
+
+   For dealing with issues that may arise from various 32/64-bit 
+   systems, we will ask Configure to check out 
+   	SHORTSIZE == sizeof(short)
+   	INTSIZE == sizeof(int)
+   	LONGSIZE == sizeof(long)
+	LONGLONGSIZE == sizeof(long long) (if HAS_LONG_LONG)
+   	PTRSIZE == sizeof(void *)
+	DOUBLESIZE == sizeof(double)
+	LONG_DOUBLESIZE == sizeof(long double) (if HAS_LONG_DOUBLE).
+    Most of these are currently unused, but they are mentioned here so
+    metaconfig will include the appropriate tests in Configure and
+    we can then start to consider how best to deal with long long
+    variables.
+   Andy Dougherty	April 1998
 */
 
 typedef char		I8;
@@ -114,7 +119,7 @@ typedef unsigned short	U16;
 #define U16_MAX PERL_USHORT_MAX
 #define U16_MIN PERL_USHORT_MIN
 
-#if BYTEORDER > 0x4321
+#if LONGSIZE > 4
   typedef int		I32;
   typedef unsigned int	U32;
 # define I32_MAX PERL_INT_MAX
@@ -178,11 +183,20 @@ typedef unsigned short	U16;
 #define isSPACE(c) \
 	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) =='\r' || (c) == '\f')
 #define isDIGIT(c)	((c) >= '0' && (c) <= '9')
-#define isUPPER(c)	((c) >= 'A' && (c) <= 'Z')
-#define isLOWER(c)	((c) >= 'a' && (c) <= 'z')
-#define isPRINT(c)	(((c) > 32 && (c) < 127) || isSPACE(c))
-#define toUPPER(c)	(isLOWER(c) ? (c) - ('a' - 'A') : (c))
-#define toLOWER(c)	(isUPPER(c) ? (c) + ('a' - 'A') : (c))
+#ifdef EBCDIC
+    /* In EBCDIC we do not do locales: therefore() isupper() is fine. */
+#   define isUPPER(c)	isupper(c)
+#   define isLOWER(c)	islower(c)
+#   define isPRINT(c)	isprint(c)
+#   define toUPPER(c)	toupper(c)
+#   define toLOWER(c)	tolower(c)
+#else
+#   define isUPPER(c)	((c) >= 'A' && (c) <= 'Z')
+#   define isLOWER(c)	((c) >= 'a' && (c) <= 'z')
+#   define isPRINT(c)	(((c) > 32 && (c) < 127) || isSPACE(c))
+#   define toUPPER(c)	(isLOWER(c) ? (c) - ('a' - 'A') : (c))
+#   define toLOWER(c)	(isUPPER(c) ? (c) + ('a' - 'A') : (c))
+#endif
 
 #ifdef USE_NEXT_CTYPE
 
@@ -233,8 +247,13 @@ typedef unsigned short	U16;
 #  endif
 #endif /* USE_NEXT_CTYPE */
 
-/* This conversion works both ways, strangely enough. */
-#define toCTRL(c)    (toUPPER(c) ^ 64)
+#ifdef EBCDIC
+EXT int ebcdic_control _((int));
+#  define toCTRL(c)	ebcdic_control(c)
+#else
+  /* This conversion works both ways, strangely enough. */
+#  define toCTRL(c)    (toUPPER(c) ^ 64)
+#endif
 
 /* Line numbers are unsigned, 16 bits. */
 typedef U16 line_t;
@@ -244,7 +263,10 @@ typedef U16 line_t;
 #define NOLINE ((line_t) 65535)
 #endif
 
-/* XXX LEAKTEST doesn't really work in perl5.  There are direct calls to
+
+/* This looks obsolete (IZ):
+
+   XXX LEAKTEST doesn't really work in perl5.  There are direct calls to
    safemalloc() in the source, so LEAKTEST won't pick them up.
    Further, if you try LEAKTEST, you'll also end up calling
    Safefree, which might call safexfree() on some things that weren't
@@ -255,6 +277,9 @@ typedef U16 line_t;
 */
 
 #ifndef lint
+
+#define NEWSV(x,len)	newSV(len)
+
 #ifndef LEAKTEST
 
 #define New(x,v,n,t)	(v = (t*)safemalloc((MEM_SIZE)((n)*sizeof(t))))
@@ -266,7 +291,6 @@ typedef U16 line_t;
 #define Renewc(v,n,t,c) \
 	  (v = (c*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
 #define Safefree(d)	safefree((Malloc_t)(d))
-#define NEWSV(x,len)	newSV(len)
 
 #else /* LEAKTEST */
 
@@ -278,12 +302,15 @@ typedef U16 line_t;
 	  (v = (t*)safexrealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
 #define Renewc(v,n,t,c) \
 	  (v = (c*)safexrealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
-#define Safefree(d)	safexfree((Malloc_t)d)
-#define NEWSV(x,len)	newSV(x,len)
+#define Safefree(d)	safexfree((Malloc_t)(d))
 
 #define MAXXCOUNT 1400
-long xcount[MAXXCOUNT];
-long lastxcount[MAXXCOUNT];
+#define MAXY_SIZE 80
+#define MAXYCOUNT 16			/* (MAXY_SIZE/4 + 1) */
+extern long xcount[MAXXCOUNT];
+extern long lastxcount[MAXXCOUNT];
+extern long xycount[MAXXCOUNT][MAXYCOUNT];
+extern long lastxycount[MAXXCOUNT][MAXYCOUNT];
 
 #endif /* LEAKTEST */
 

@@ -20,7 +20,7 @@ C<use subs> declarations are not BLOCK-scoped.  They are thus effective
 for the entire file in which they appear.  You may not rescind such
 declarations with C<no vars> or C<no subs>.
 
-See L<perlmod/Pragmatic Modules> and L<strict/strict subs>.
+See L<perlmodlib/Pragmatic Modules> and L<strict/strict subs>.
 
 =cut
 

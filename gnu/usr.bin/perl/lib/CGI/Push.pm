@@ -14,23 +14,25 @@ package CGI::Push;
 # listing the modifications you have made.
 
 # The most recent version and complete docs are available at:
-#   http://www.genome.wi.mit.edu/ftp/pub/software/WWW/cgi_docs.html
-#   ftp://ftp-genome.wi.mit.edu/pub/software/WWW/
+#   http://stein.cshl.org/WWW/software/CGI/
 
-$CGI::Push::VERSION='1.00';
+$CGI::Push::VERSION='1.01';
 use CGI;
 @ISA = ('CGI');
 
-# add do_push() to exported tags
-push(@{$CGI::EXPORT_TAGS{':standard'}},'do_push');
+$CGI::DefaultClass = 'CGI::Push';
+$CGI::Push::AutoloadClass = 'CGI';
+
+# add do_push() and push_delay() to exported tags
+push(@{$CGI::EXPORT_TAGS{':standard'}},'do_push','push_delay');
 
 sub do_push {
-    my ($self,@p) = CGI::self_or_CGI(@_);
+    my ($self,@p) = CGI::self_or_default(@_);
 
     # unbuffer output
     $| = 1;
     srand;
-    my ($random) = rand()*1E16;
+    my ($random) = sprintf("%16.0f",rand()*1E16);
     my ($boundary) = "----------------------------------$random";
 
     my (@header);
@@ -39,6 +41,7 @@ sub do_push {
     $type = 'text/html' unless $type;
     $callback = \&simple_counter unless $callback && ref($callback) eq 'CODE';
     $delay = 1 unless defined($delay);
+    $self->push_delay($delay);
 
     my(@o);
     foreach (@other) { push(@o,split("=")); }
@@ -55,15 +58,18 @@ sub do_push {
     my @contents;
     while (1) {
 	last unless (@contents = &$callback($self,++$COUNTER)) && defined($contents[0]);
-	print "Content-type: ${type}$CGI::CRLF$CGI::CRLF";
+	print "Content-type: ${type}$CGI::CRLF$CGI::CRLF" 
+	    unless $type eq 'dynamic';
 	print @contents,"$CGI::CRLF";
 	print "${boundary}$CGI::CRLF";
-	do_sleep($delay) if $delay;
+	do_sleep($self->push_delay()) if $self->push_delay();
     }
-    print "Content-type: ${type}$CGI::CRLF$CGI::CRLF",
-          &$last_page($self,++$COUNTER),
-          "$CGI::CRLF${boundary}$CGI::CRLF"
-	      if $last_page && ref($last_page) eq 'CODE';
+
+    # Optional last page
+    if ($last_page && ref($last_page) eq 'CODE') {
+	print "Content-type: ${type}$CGI::CRLF$CGI::CRLF" unless $type =~ /^dynamic|heterogeneous$/i;
+	print  &$last_page($self,$COUNTER),"$CGI::CRLF${boundary}$CGI::CRLF";
+    }
 }
 
 sub simple_counter {
@@ -85,6 +91,12 @@ sub do_sleep {
     } else {
 	select(undef,undef,undef,$delay);
     }
+}
+
+sub push_delay {
+   my ($self,$delay) = CGI::self_or_default(@_);
+   return defined($delay) ? $self->{'.delay'} = 
+	$delay : $self->{'.delay'};
 }
 
 1;
@@ -176,6 +188,9 @@ redrawing loop and print out the final page (if any)
 	       "This page called $counter times";
     }
 
+You are of course free to refer to create and use global variables
+within your draw routine in order to achieve special effects.
+
 =item -last_page
 
 This optional parameter points to a reference to the subroutine
@@ -187,8 +202,12 @@ itself should have exactly the same calling conventions as the
 =item -type
 
 This optional parameter indicates the content type of each page.  It
-defaults to "text/html".  Currently, server push of heterogeneous
-document types is not supported.
+defaults to "text/html".  Normally the module assumes that each page
+is of a homogenous MIME type.  However if you provide either of the
+magic values "heterogeneous" or "dynamic" (the latter provided for the
+convenience of those who hate long parameter names), you can specify
+the MIME type -- and other header fields -- on a per-page basis.  See 
+"heterogeneous pages" for more details.
 
 =item -delay
 
@@ -204,6 +223,60 @@ CGI::header().
 
 =back
 
+=head2 Heterogeneous Pages
+
+Ordinarily all pages displayed by CGI::Push share a common MIME type.
+However by providing a value of "heterogeneous" or "dynamic" in the
+do_push() -type parameter, you can specify the MIME type of each page
+on a case-by-case basis.  
+
+If you use this option, you will be responsible for producing the
+HTTP header for each page.  Simply modify your draw routine to
+look like this:
+
+    sub my_draw_routine {
+        my($q,$counter) = @_;
+        return header('text/html'),   # note we're producing the header here
+	       start_html('testing'),
+               h1('testing'),
+	       "This page called $counter times";
+    }
+
+You can add any header fields that you like, but some (cookies and
+status fields included) may not be interpreted by the browser.  One
+interesting effect is to display a series of pages, then, after the
+last page, to redirect the browser to a new URL.  Because redirect() 
+does b<not> work, the easiest way is with a -refresh header field,
+as shown below:
+
+    sub my_draw_routine {
+        my($q,$counter) = @_;
+	return undef if $counter > 10;
+        return header('text/html'),   # note we're producing the header here
+	       start_html('testing'),
+               h1('testing'),
+	       "This page called $counter times";
+    }
+   
+    sub my_last_page {
+	header(-refresh=>'5; URL=http://somewhere.else/finished.html',
+	       -type=>'text/html'),
+        start_html('Moved'),
+        h1('This is the last page'),
+	'Goodbye!'
+         hr,	
+         end_html; 
+    }
+
+=head2 Changing the Page Delay on the Fly
+
+If you would like to control the delay between pages on a page-by-page
+basis, call push_delay() from within your draw routine.  push_delay()
+takes a single numeric argument representing the number of seconds you
+wish to delay after the current page is displayed and before
+displaying the next one.  The delay may be fractional.  Without
+parameters, push_delay() just returns the current delay.
+
 =head1 INSTALLING CGI::Push SCRIPTS
 
 Server push scripts B<must> be installed as no-parsed-header (NPH)
@@ -213,19 +286,14 @@ Recognition of NPH scripts happens automatically with WebSTAR and
 Microsoft IIS.  Users of other servers should see their documentation
 for help.
 
-=head1 CAVEATS
-
-This is a new module.  It hasn't been extensively tested.
-
 =head1 AUTHOR INFORMATION
 
-be used and modified freely, but I do request that this copyright
-notice remain attached to the file.  You may modify this module as you
-wish, but if you redistribute a modified version, please attach a note
-listing the modifications you have made.
+Copyright 1995-1998, Lincoln D. Stein.  All rights reserved.  
 
-Address bug reports and comments to:
-lstein@genome.wi.mit.edu
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+Address bug reports and comments to: lstein@cshl.org
 
 =head1 BUGS
 

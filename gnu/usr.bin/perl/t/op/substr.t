@@ -1,8 +1,6 @@
 #!./perl
 
-# $RCSfile: substr.t,v $$Revision: 1.2 $$Date: 1997/11/30 08:05:45 $
-
-print "1..97\n";
+print "1..106\n";
 
 #P = start of string  Q = start of substr  R = end of substr  S = end of string
 
@@ -14,8 +12,10 @@ $SIG{__WARN__} = sub {
           $w++;
      } elsif ($_[0] =~ /^Attempt to use reference as lvalue in substr/) {
           $w += 2;
+     } elsif ($_[0] =~ /^Use of uninitialized value/) {
+          $w += 3;
      } else {
-          warn @_;
+          warn $_[0];
      }
 };
 
@@ -178,3 +178,34 @@ for (0,1) {
 
 # check no spurious warnings
 print $w ? "not ok 97\n" : "ok 97\n";
+
+# check new 4 arg replacement syntax
+$a = "abcxyz";
+$w = 0;
+print "not " unless substr($a, 0, 3, "") eq "abc" && $a eq "xyz";
+print "ok 98\n";
+print "not " unless substr($a, 0, 0, "abc") eq "" && $a eq "abcxyz";
+print "ok 99\n";
+print "not " unless substr($a, 3, -1, "") eq "xy" && $a eq "abcz";
+print "ok 100\n";
+
+print "not " unless substr($a, 3, undef, "xy") eq "" && $a eq "abcxyz"
+                 && $w == 3;
+print "ok 101\n";
+$w = 0;
+
+print "not " unless substr($a, 3, 9999999, "") eq "xyz" && $a eq "abc";
+print "ok 102\n";
+print "not " unless fail(substr($a, -99, 0, ""));
+print "ok 103\n";
+print "not " unless fail(substr($a, 99, 3, ""));
+print "ok 104\n";
+
+substr($a, 0, length($a), "foo");
+print "not " unless $a eq "foo" && !$w;
+print "ok 105\n";
+
+# using 4 arg substr as lvalue is a compile time error
+eval 'substr($a,0,0,"") = "abc"';
+print "not " unless $@ && $@ =~ /Can't modify substr/ && $a eq "foo";
+print "ok 106\n";

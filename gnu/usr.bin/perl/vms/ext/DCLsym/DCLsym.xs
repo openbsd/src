@@ -54,7 +54,7 @@ _getsym(name)
       _ckvmssts(lib$sfree1_dd(&valdsc));
     }
     else {
-      ST(0) = &sv_undef;  /* error - we're returning undef, if anything */
+      ST(0) = &PL_sv_undef;  /* error - we're returning undef, if anything */
       switch (retsts) {
         case LIB$_NOSUCHSYM:
           break;   /* nobody home */;

@@ -38,6 +38,7 @@ END
 EQ
 GE
 GT
+INIT
 LE
 LT
 NE
@@ -144,6 +145,7 @@ link
 listen
 local
 localtime
+lock
 log
 lstat
 lt
@@ -175,6 +177,7 @@ prototype
 push
 q
 qq
+qr
 quotemeta
 qw
 qx

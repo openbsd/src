@@ -14,6 +14,12 @@ B<CGI::Carp> - CGI routines for writing to the HTTPD (or other) error log
     warn "I'm confused";
     die  "I'm dying.\n";
 
+    use CGI::Carp qw(cluck);
+    cluck "I wouldn't do that if I were you";
+
+    use CGI::Carp qw(fatalsToBrowser);
+    die "Fatal error messages are now sent to browser";
+
 =head1 DESCRIPTION
 
 CGI scripts have a nasty habit of leaving warning messages in the error
@@ -87,6 +93,8 @@ accepted as well:
 
     ... and so on
 
+FileHandle and other objects work as well.
+
 Use of carpout() is not great for performance, so it is recommended
 for debugging purposes or for moderate-use applications.  A future
 version of this module may delay redirecting STDERR until one of the
@@ -106,6 +114,34 @@ occur in the early compile phase will be seen.
 Nonfatal errors will still be directed to the log file only (unless redirected
 with carpout).
 
+=head2 Changing the default message
+
+By default, the software error message is followed by a note to
+contact the Webmaster by e-mail with the time and date of the error.
+If this message is not to your liking, you can change it using the
+set_message() routine.  This is not imported by default; you should
+import it on the use() line:
+
+    use CGI::Carp qw(fatalsToBrowser set_message);
+    set_message("It's not a bug, it's a feature!");
+
+You may also pass in a code reference in order to create a custom
+error message.  At run time, your code will be called with the text
+of the error message that caused the script to die.  Example:
+
+    use CGI::Carp qw(fatalsToBrowser set_message);
+    BEGIN {
+       sub handle_errors {
+          my $msg = shift;
+          print "<h1>Oh gosh</h1>";
+          print "Got an error: $msg";
+      }
+      set_message(\&handle_errors);
+    }
+
+In order to correctly intercept compile-time errors, you should call
+set_message() from within a BEGIN{} block.
+
 =head1 CHANGE LOG
 
 1.05 carpout() added and minor corrections by Marc Hedlund
@@ -114,11 +150,32 @@ with carpout).
 1.06 fatalsToBrowser() no longer aborts for fatal errors within
      eval() statements.
 
+1.08 set_message() added and carpout() expanded to allow for FileHandle
+     objects.
+
+1.09 set_message() now allows users to pass a code REFERENCE for 
+     really custom error messages.  croak and carp are now
+     exported by default.  Thanks to Gunther Birznieks for the
+     patches.
+
+1.10 Patch from Chris Dean (ctdean@cogit.com) to allow 
+     module to run correctly under mod_perl.
+
+1.11 Changed order of &gt; and &lt; escapes.
+
+1.12 Changed die() on line 217 to CORE::die to avoid B<-w> warning.
+
+1.13 Added cluck() to make the module orthogonal with Carp.
+    More mod_perl related fixes.
+
 =head1 AUTHORS
 
-Lincoln D. Stein <lstein@genome.wi.mit.edu>.  Feel free to redistribute
-this under the Perl Artistic License.
+Copyright 1995-1998, Lincoln D. Stein.  All rights reserved.  
 
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+Address bug reports and comments to: lstein@cshl.org
 
 =head1 SEE ALSO
 
@@ -133,18 +190,19 @@ use Carp;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(confess croak carp);
-@EXPORT_OK = qw(carpout fatalsToBrowser);
+@EXPORT_OK = qw(carpout fatalsToBrowser wrap set_message cluck);
 
 $main::SIG{__WARN__}=\&CGI::Carp::warn;
 $main::SIG{__DIE__}=\&CGI::Carp::die;
-$CGI::Carp::VERSION = '1.06';
+$CGI::Carp::VERSION = '1.13';
+$CGI::Carp::CUSTOM_MSG = undef;
 
 # fancy import routine detects and handles 'errorWrap' specially.
 sub import {
     my $pkg = shift;
     my(%routines);
-    grep($routines{$_}++,@_);
-    $WRAP++ if $routines{'fatalsToBrowser'};
+    grep($routines{$_}++,@_,@EXPORT);
+    $WRAP++ if $routines{'fatalsToBrowser'} || $routines{'wrap'};
     my($oldlevel) = $Exporter::ExportLevel;
     $Exporter::ExportLevel = 1;
     Exporter::import($pkg,keys %routines);
@@ -152,8 +210,8 @@ sub import {
 }
 
 # These are the originals
-sub realwarn { warn(@_); }
-sub realdie { die(@_); }
+sub realwarn { CORE::warn(@_); }
+sub realdie { CORE::die(@_); }
 
 sub id {
     my $level = shift;
@@ -183,16 +241,29 @@ sub warn {
     realwarn $message;
 }
 
+# The mod_perl package Apache::Registry loads CGI programs by calling
+# eval.  These evals don't count when looking at the stack backtrace.
+sub _longmess {
+    my $message = Carp::longmess();
+    my $mod_perl = exists $ENV{MOD_PERL};
+    $message =~ s,eval[^\n]+Apache/Registry\.pm.*,,s if $mod_perl;
+    return( $message );    
+}
+
 sub die {
     my $message = shift;
     my $time = scalar(localtime);
     my($file,$line,$id) = id(1);
-    return undef if $file=~/^\(eval/;
-    $message .= " at $file line $line.\n" unless $message=~/\n$/;
-    &fatalsToBrowser($message) if $WRAP;
+    $message .= " at $file line $line." unless $message=~/\n$/;
+    &fatalsToBrowser($message) if $WRAP && _longmess() !~ /eval [{\']/m;
     my $stamp = stamp;
     $message=~s/^/$stamp/gm;
     realdie $message;
+}
+
+sub set_message {
+    $CGI::Carp::CUSTOM_MSG = shift;
+    return $CGI::Carp::CUSTOM_MSG;
 }
 
 # Avoid generating "subroutine redefined" warnings with the following
@@ -201,8 +272,9 @@ sub die {
     local $^W=0;
     eval <<EOF;
 sub confess { CGI::Carp::die Carp::longmess \@_; }
-sub croak { CGI::Carp::die Carp::shortmess \@_; }
-sub carp { CGI::Carp::warn Carp::shortmess \@_; }
+sub croak   { CGI::Carp::die Carp::shortmess \@_; }
+sub carp    { CGI::Carp::warn Carp::shortmess \@_; }
+sub cluck   { CGI::Carp::warn Carp::longmess \@_; }
 EOF
     ;
 }
@@ -211,14 +283,8 @@ EOF
 # or a string.
 sub carpout {
     my($in) = @_;
-    $in = $$in if ref($in); # compatability with Marc's method;
-    my($no) = fileno($in);
-    unless (defined($no)) {
-	my($package) = caller;
-	my($handle) = $in=~/[':]/ ? $in : "$package\:\:$in"; 
-	$no = fileno($handle);
-    }
-    die "Invalid filehandle $in\n" unless $no;
+    my($no) = fileno(to_filehandle($in));
+    realdie("Invalid filehandle $in\n") unless defined $no;
     
     open(SAVEERR, ">&STDERR");
     open(STDERR, ">&$no") or 
@@ -228,15 +294,72 @@ sub carpout {
 # headers
 sub fatalsToBrowser {
     my($msg) = @_;
+    $msg=~s/&/&amp;/g;
     $msg=~s/>/&gt;/g;
     $msg=~s/</&lt;/g;
-    print STDOUT "Content-type: text/html\n\n";
-    print STDOUT <<END;
+    $msg=~s/\"/&quot;/g;
+    my($wm) = $ENV{SERVER_ADMIN} ? 
+	qq[the webmaster (<a href="mailto:$ENV{SERVER_ADMIN}">$ENV{SERVER_ADMIN}</a>)] :
+	"this site's webmaster";
+    my ($outer_message) = <<END;
+For help, please send mail to $wm, giving this error message 
+and the time and date of the error.
+END
+    ;
+    my $mod_perl = exists $ENV{MOD_PERL};
+    print STDOUT "Content-type: text/html\n\n" 
+	unless $mod_perl;
+
+    if ($CUSTOM_MSG) {
+	if (ref($CUSTOM_MSG) eq 'CODE') {
+	    &$CUSTOM_MSG($msg); # nicer to perl 5.003 users
+	    return;
+	} else {
+	    $outer_message = $CUSTOM_MSG;
+	}
+    }
+    
+    my $mess = <<END;
 <H1>Software error:</H1>
 <CODE>$msg</CODE>
 <P>
-Please send mail to this site's webmaster for help.
+$outer_message
 END
+    ;
+
+    if ($mod_perl) {
+	my $r = Apache->request;
+	# If bytes have already been sent, then
+	# we print the message out directly.
+	# Otherwise we make a custom error
+	# handler to produce the doc for us.
+	if ($r->bytes_sent) {
+	    $r->print($mess);
+	    $r->exit;
+	} else {
+	    $r->status(500);
+	    $r->custom_response(500,$mess);
+	}
+    } else {
+	print STDOUT $mess;
+    }
+}
+
+# Cut and paste from CGI.pm so that we don't have the overhead of
+# always loading the entire CGI module.
+sub to_filehandle {
+    my $thingy = shift;
+    return undef unless $thingy;
+    return $thingy if UNIVERSAL::isa($thingy,'GLOB');
+    return $thingy if UNIVERSAL::isa($thingy,'FileHandle');
+    if (!ref($thingy)) {
+	my $caller = 1;
+	while (my $package = caller($caller++)) {
+	    my($tmp) = $thingy=~/[\':]/ ? $thingy : "$package\:\:$thingy"; 
+	    return $tmp if defined(fileno($tmp));
+	}
+    }
+    return undef;
 }
 
 1;

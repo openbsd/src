@@ -25,6 +25,14 @@
  */
 #undef USEMYBINMODE
 
+/* Stat_t:
+ *	This symbol holds the type used to declare buffers for information
+ *	returned by stat().  It's usually just struct stat.  It may be necessary
+ *	to include <sys/stat.h> and <sys/types.h> to get any typedef'ed
+ *	information.
+ */
+#define Stat_t struct stat
+
 /* USE_STAT_RDEV:
  *	This symbol is defined if this system has a stat structure declaring
  *	st_rdev
@@ -64,17 +72,114 @@
 /* It is not working without TCPIPV4 defined. */
 # undef I_SYS_UN
 #endif 
+
+#ifdef USE_THREADS
+
+#define OS2_ERROR_ALREADY_POSTED 299	/* Avoid os2.h */
+
+extern int rc;
+
+#define MUTEX_INIT(m) \
+    STMT_START {						\
+	int rc;							\
+	if ((rc = _rmutex_create(m,0)))				\
+	    croak("panic: MUTEX_INIT: rc=%i", rc);		\
+    } STMT_END
+#define MUTEX_LOCK(m) \
+    STMT_START {						\
+	int rc;							\
+	if ((rc = _rmutex_request(m,_FMR_IGNINT)))		\
+	    croak("panic: MUTEX_LOCK: rc=%i", rc);		\
+    } STMT_END
+#define MUTEX_UNLOCK(m) \
+    STMT_START {						\
+	int rc;							\
+	if ((rc = _rmutex_release(m)))				\
+	    croak("panic: MUTEX_UNLOCK: rc=%i", rc);		\
+    } STMT_END
+#define MUTEX_DESTROY(m) \
+    STMT_START {						\
+	int rc;							\
+	if ((rc = _rmutex_close(m)))				\
+	    croak("panic: MUTEX_DESTROY: rc=%i", rc);		\
+    } STMT_END
+
+#define COND_INIT(c) \
+    STMT_START {						\
+	int rc;							\
+	if ((rc = DosCreateEventSem(NULL,c,0,0)))		\
+	    croak("panic: COND_INIT: rc=%i", rc);		\
+    } STMT_END
+#define COND_SIGNAL(c) \
+    STMT_START {						\
+	int rc;							\
+	if ((rc = DosPostEventSem(*(c))) && rc != OS2_ERROR_ALREADY_POSTED)		\
+	    croak("panic: COND_SIGNAL, rc=%ld", rc);		\
+    } STMT_END
+#define COND_BROADCAST(c) \
+    STMT_START {						\
+	int rc;							\
+	if ((rc = DosPostEventSem(*(c))) && rc != OS2_ERROR_ALREADY_POSTED)\
+	    croak("panic: COND_BROADCAST, rc=%i", rc);		\
+    } STMT_END
+/* #define COND_WAIT(c, m) \
+    STMT_START {						\
+	if (WaitForSingleObject(*(c),INFINITE) == WAIT_FAILED)	\
+	    croak("panic: COND_WAIT");				\
+    } STMT_END
+*/
+#define COND_WAIT(c, m) os2_cond_wait(c,m)
+
+#define COND_WAIT_win32(c, m) \
+    STMT_START {						\
+	int rc;							\
+	if ((rc = SignalObjectAndWait(*(m),*(c),INFINITE,FALSE)))\
+	    croak("panic: COND_WAIT");				\
+	else							\
+	    MUTEX_LOCK(m);					\
+    } STMT_END
+#define COND_DESTROY(c) \
+    STMT_START {						\
+	int rc;							\
+	if ((rc = DosCloseEventSem(*(c))))			\
+	    croak("panic: COND_DESTROY, rc=%i", rc);		\
+    } STMT_END
+/*#define THR ((struct thread *) TlsGetValue(PL_thr_key))
+#define dTHR struct thread *thr = THR
+*/
+
+#define pthread_getspecific(k)		(*_threadstore())
+#define pthread_setspecific(k,v)	(*_threadstore()=v,0)
+#define pthread_self()			_gettid()
+#define pthread_key_create(keyp,flag)	(*keyp=_gettid(),0)
+#define YIELD				DosSleep(0)
+
+#ifdef PTHREADS_INCLUDED		/* For ./x2p stuff. */
+int pthread_join(pthread_t tid, void **status);
+int pthread_detach(pthread_t tid);
+int pthread_create(pthread_t *tid, const pthread_attr_t *attr,
+		   void *(*start_routine)(void*), void *arg);
+#endif 
+
+#define THREADS_ELSEWHERE
+
+#endif 
  
 void Perl_OS2_init(char **);
 
 /* XXX This code hideously puts env inside: */
 
-#define PERL_SYS_INIT(argcp, argvp) STMT_START {	\
+#ifdef __EMX__
+#  define PERL_SYS_INIT(argcp, argvp) STMT_START {	\
     _response(argcp, argvp);			\
     _wildcard(argcp, argvp);			\
     Perl_OS2_init(env);	} STMT_END
-
-#define PERL_SYS_TERM()
+#else  /* Compiling embedded Perl with non-EMX compiler */
+#  define PERL_SYS_INIT(argcp, argvp) STMT_START {	\
+    Perl_OS2_init(env);	} STMT_END
+#  define PERL_CALLCONV _System
+#endif
+#define PERL_SYS_TERM()		MALLOC_TERM
 
 /* #define PERL_SYS_TERM() STMT_START {	\
     if (Perl_HAB_set) WinTerminate(Perl_hab);	} STMT_END */

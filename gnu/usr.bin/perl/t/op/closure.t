@@ -12,7 +12,7 @@ BEGIN {
 
 use Config;
 
-print "1..167\n";
+print "1..169\n";
 
 my $test = 1;
 sub test (&) {
@@ -129,6 +129,33 @@ test {
   &{$foo[3]}() == 1 and
   &{$foo[4]}() == 0
   };
+
+# test if closures get created in optimized for loops
+
+my %foo;
+for my $n ('A'..'E') {
+    $foo{$n} = sub { $n eq $_[0] };
+}
+
+test {
+  &{$foo{A}}('A') and
+  &{$foo{B}}('B') and
+  &{$foo{C}}('C') and
+  &{$foo{D}}('D') and
+  &{$foo{E}}('E')
+};
+
+for my $n (0..4) {
+    $foo[$n] = sub { $n == $_[0] };
+}
+
+test {
+  &{$foo[0]}(0) and
+  &{$foo[1]}(1) and
+  &{$foo[2]}(2) and
+  &{$foo[3]}(3) and
+  &{$foo[4]}(4)
+};
 
 # Additional tests by Tom Phoenix <rootbeer@teleport.com>.
 
@@ -452,3 +479,4 @@ END
     }	# End of foreach $inner_type
 
 }
+

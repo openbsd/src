@@ -29,17 +29,17 @@ if ($foo{5} eq '') {print "ok 11\n";} else {print "not ok 11 $foo{5}\n";}
 if ($foo{1} eq 'a') {print "ok 12\n";} else {print "not ok 12\n";}
 if ($foo{3} eq 'c') {print "ok 13\n";} else {print "not ok 13\n";}
 
-$foo = join('',values(foo));
+$foo = join('',values(%foo));
 if ($foo eq 'ac' || $foo eq 'ca') {print "ok 14\n";} else {print "not ok 14\n";}
 
-foreach $key (keys foo) {
+foreach $key (keys %foo) {
     delete $foo{$key};
 }
 
 $foo{'foo'} = 'x';
 $foo{'bar'} = 'y';
 
-$foo = join('',values(foo));
+$foo = join('',values(%foo));
 print +($foo eq 'xy' || $foo eq 'yx') ? "ok 15\n" : "not ok 15\n";
 
 $refhash{"top"}->{"foo"} = "FOO";

@@ -1,6 +1,6 @@
 /*    hv.h
  *
- *    Copyright (c) 1991-1997, Larry Wall
+ *    Copyright (c) 1991-1999, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -22,11 +22,12 @@ struct hek {
     char	hek_key[1];
 };
 
+/* This structure must match the beginning of struct xpvmg in sv.h. */
 struct xpvhv {
     char *	xhv_array;	/* pointer to malloced string */
     STRLEN	xhv_fill;	/* how full xhv_array currently is */
     STRLEN	xhv_max;	/* subscript of last element of xhv_array */
-    I32		xhv_keys;	/* how many elements in the array */
+    IV		xhv_keys;	/* how many elements in the array */
     double	xnv_nv;		/* numeric value, if any */
     MAGIC*	xmg_magic;	/* magic for scalar array */
     HV*		xmg_stash;	/* class package */
@@ -109,7 +110,7 @@ struct xpvhv {
 				  HeKEY_sv(he) :			\
 				  sv_2mortal(newSVpv(HeKEY(he),		\
 						     HeKLEN(he)))) :	\
-				 &sv_undef)
+				 &PL_sv_undef)
 #define HeSVKEY_set(he,sv)	((HeKLEN(he) = HEf_SVKEY), (HeKEY_sv(he) = sv))
 
 #define Nullhek Null(HEK*)

@@ -5,6 +5,7 @@ use Carp;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(openlog closelog setlogmask syslog);
+@EXPORT_OK = qw(setlogsock);
 
 use Socket;
 use Sys::Hostname;
@@ -14,6 +15,10 @@ use Sys::Hostname;
 # Tom Christiansen <tchrist@convex.com>
 # modified to use sockets by Larry Wall <lwall@jpl-devvax.jpl.nasa.gov>
 # NOTE: openlog now takes three arguments, just like openlog(3)
+# Modified to add UNIX domain sockets by Sean Robinson <robinson_s@sc.maricopa.edu>
+#  with support from Tim Bunce <Tim.Bunce@ig.co.uk> and the perl5-porters mailing list
+
+# Todo: enable connect to try all three types before failing (auto setlogsock)?
 
 =head1 NAME
 
@@ -21,8 +26,10 @@ Sys::Syslog, openlog, closelog, setlogmask, syslog - Perl interface to the UNIX 
 
 =head1 SYNOPSIS
 
-    use Sys::Syslog;
+    use Sys::Syslog;                          # all except setlogsock, or:
+    use Sys::Syslog qw(:DEFAULT setlogsock);  # default set, plus setlogsock
 
+    setlogsock $sock_type;
     openlog $ident, $logopt, $facility;
     syslog $priority, $format, @args;
     $oldmask = setlogmask $mask_priority;
@@ -41,7 +48,7 @@ Syslog provides the functions:
 =item openlog $ident, $logopt, $facility
 
 I<$ident> is prepended to every message.
-I<$logopt> contains one or more of the words I<pid>, I<ndelay>, I<cons>, I<nowait>.
+I<$logopt> contains zero or more of the words I<pid>, I<ndelay>, I<cons>, I<nowait>.
 I<$facility> specifies the part of the system
 
 =item syslog $priority, $format, @args
@@ -54,19 +61,17 @@ is replaced with C<"$!"> (the latest error message).
 
 Sets log mask I<$mask_priority> and returns the old mask.
 
-=item setlogsock $sock_type (added in 5.004_03)
- 
+=item setlogsock $sock_type (added in 5.004_02)
+
 Sets the socket type to be used for the next call to
-C<openlog()> or C<syslog()>.
- 
+C<openlog()> or C<syslog()> and returns TRUE on success,
+undef on failure.
+
 A value of 'unix' will connect to the UNIX domain socket returned by
-C<_PATH_LOG> in F<syslog.ph>. If F<syslog.ph> fails to define
-C<_PATH_LOG>, C<setlogsock> returns C<undef>; otherwise a true value is
-returned. A value of 'inet' will connect to an INET socket returned by
-getservbyname().  Any other value croaks.
+C<_PATH_LOG> in F<syslog.ph>.  A value of 'inet' will connect to an
+INET socket returned by getservbyname().  Any other value croaks.
 
 The default is for the INET socket to be used.
-
 
 =item closelog
 
@@ -135,14 +140,19 @@ sub setlogmask {
  
 sub setlogsock {
     local($setsock) = shift;
+    &disconnect if $connected;
     if (lc($setsock) eq 'unix') {
-	if (defined &_PATH_LOG) {
-	    $sock_unix = 1;
-	} else {
-	    return undef;
-	}
+        if (defined &_PATH_LOG) {
+            $sock_type = 1;
+        } else {
+            return undef;
+        }
     } elsif (lc($setsock) eq 'inet') {
-        undef($sock_unix);
+        if (getservbyname('syslog','udp')) {
+            undef($sock_type);
+        } else {
+            return undef;
+        }
     } else {
         croak "Invalid argument passed to setlogsock; must be 'unix' or 'inet'";
     }
@@ -238,7 +248,7 @@ sub connect {
 	my($host_uniq) = Sys::Hostname::hostname();
 	($host) = $host_uniq =~ /([A-Za-z0-9_.-]+)/; # allow FQDN (inc _)
     }
-    unless ( $sock_unix ) {
+    unless ( $sock_type ) {
         my $udp = getprotobyname('udp');
         my $syslog = getservbyname('syslog','udp');
         my $this = sockaddr_in($syslog, INADDR_ANY);
@@ -248,8 +258,11 @@ sub connect {
     } else {
         my $syslog = &_PATH_LOG                          || croak "_PATH_LOG not found in syslog.ph";
         my $that = sockaddr_un($syslog)                  || croak "Can't locate $syslog";
-        socket(SYSLOG,AF_UNIX,SOCK_STREAM,0)             || croak "open: $!";
-        connect(SYSLOG,$that)                            || croak "connect: $!";
+        socket(SYSLOG,AF_UNIX,SOCK_STREAM,0)             || croak "socket: $!";
+        if (!connect(SYSLOG,$that)) {
+            socket(SYSLOG,AF_UNIX,SOCK_DGRAM,0)          || croak "socket: $!";
+            connect(SYSLOG,$that) || croak "connect: $! (SOCK_DGRAM after trying SOCK_STREAM)";
+        }
     }
     local($old) = select(SYSLOG); $| = 1; select($old);
     $connected = 1;

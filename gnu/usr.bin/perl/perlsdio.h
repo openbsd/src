@@ -55,7 +55,12 @@
 #define PerlIO_clearerr(f)		clearerr(f)
 #define PerlIO_flush(f)			Fflush(f)
 #define PerlIO_tell(f)			ftell(f)
-#define PerlIO_seek(f,o,w)		fseek(f,o,w)
+#if defined(VMS) && !defined(__DECC)
+   /* Old VAXC RTL doesn't reset EOF on seek; Perl folk seem to expect this */
+#  define PerlIO_seek(f,o,w)	(((f) && (*f) && ((*f)->_flag &= ~_IOEOF)),fseek(f,o,w))
+#else
+#  define PerlIO_seek(f,o,w)		fseek(f,o,w)
+#endif
 #ifdef HAS_FGETPOS
 #define PerlIO_getpos(f,p)		fgetpos(f,p)
 #endif
@@ -232,7 +237,9 @@
 #undef fopen
 #undef vfprintf
 #undef fgetc
+#undef getc_unlocked
 #undef fputc
+#undef putc_unlocked
 #undef fputs
 #undef ungetc
 #undef fread
@@ -265,8 +272,14 @@
 #define fputc(c,f)		PerlIO_putc(f,c)
 #define fputs(s,f)		PerlIO_puts(f,s)
 #define getc(f)			PerlIO_getc(f)
+#ifdef getc_unlocked
+#undef getc_unlocked
+#endif
 #define getc_unlocked(f)	PerlIO_getc(f)
 #define putc(c,f)		PerlIO_putc(f,c)
+#ifdef putc_unlocked
+#undef putc_unlocked
+#endif
 #define putc_unlocked(c,f)	PerlIO_putc(c,f)
 #define ungetc(c,f)		PerlIO_ungetc(f,c)
 #if 0

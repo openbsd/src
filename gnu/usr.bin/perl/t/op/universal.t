@@ -75,7 +75,11 @@ test ! (eval { $a->VERSION(2.719) }) &&
 test (eval { $a->VERSION(2.718) }) && ! $@;
 
 my $subs = join ' ', sort grep { defined &{"UNIVERSAL::$_"} } keys %UNIVERSAL::;
-test $subs eq "VERSION can isa";
+if ('a' lt 'A') {
+    test $subs eq "can isa VERSION";
+} else {
+    test $subs eq "VERSION can isa";
+}
 
 test $a->isa("UNIVERSAL");
 
@@ -86,7 +90,11 @@ test $a->isa("UNIVERSAL");
 
 my $sub2 = join ' ', sort grep { defined &{"UNIVERSAL::$_"} } keys %UNIVERSAL::; 
 # XXX import being here is really a bug
-test $sub2 eq "VERSION can import isa";
+if ('a' lt 'A') {
+    test $sub2 eq "can import isa VERSION";
+} else {
+    test $sub2 eq "VERSION can import isa";
+}
 
 eval 'sub UNIVERSAL::sleep {}';
 test $a->can("sleep");

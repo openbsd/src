@@ -2,22 +2,28 @@
 
 perlref - Perl references and nested data structures
 
+=head1 NOTE
+
+This is complete documentation about all aspects of references.
+For a shorter, tutorial introduction to just the essential features,
+see L<perlreftut>.
+
 =head1 DESCRIPTION
 
 Before release 5 of Perl it was difficult to represent complex data
-structures, because all references had to be symbolic, and even that was
-difficult to do when you wanted to refer to a variable rather than a
-symbol table entry.  Perl not only makes it easier to use symbolic
-references to variables, but lets you have "hard" references to any piece
-of data.  Any scalar may hold a hard reference.  Because arrays and hashes
-contain scalars, you can now easily build arrays of arrays, arrays of
-hashes, hashes of arrays, arrays of hashes of functions, and so on.
+structures, because all references had to be symbolic--and even then
+it was difficult to refer to a variable instead of a symbol table entry.
+Perl now not only makes it easier to use symbolic references to variables,
+but also lets you have "hard" references to any piece of data or code.
+Any scalar may hold a hard reference.  Because arrays and hashes contain
+scalars, you can now easily build arrays of arrays, arrays of hashes,
+hashes of arrays, arrays of hashes of functions, and so on.
 
 Hard references are smart--they keep track of reference counts for you,
 automatically freeing the thing referred to when its reference count goes
-to zero.  (Note: The reference counts for values in self-referential or
+to zero.  (Note: the reference counts for values in self-referential or
 cyclic data structures may not go to zero without a little help; see
-L<perlobj/"Two-Phased Garbage Collection"> for a detailed explanation.
+L<perlobj/"Two-Phased Garbage Collection"> for a detailed explanation.)
 If that thing happens to be an object, the object is destructed.  See
 L<perlobj> for more about objects.  (In a sense, everything in Perl is an
 object, but we usually reserve the word for references to objects that
@@ -32,7 +38,7 @@ them that; references are confusing enough without useless synonyms.)
 In contrast, hard references are more like hard links in a Unix file
 system: They are used to access an underlying object without concern for
 what its (other) name is.  When the word "reference" is used without an
-adjective, like in the following paragraph, it usually is talking about a
+adjective, as in the following paragraph, it is usually talking about a
 hard reference.
 
 References are easy to use in Perl.  There is just one overriding
@@ -41,7 +47,9 @@ scalar is holding a reference, it always behaves as a simple scalar.  It
 doesn't magically start being an array or hash or subroutine; you have to
 tell it explicitly to do so, by dereferencing it.
 
-References can be constructed in several ways.
+=head2 Making References
+
+References can be created in several ways.
 
 =over 4
 
@@ -60,20 +68,20 @@ reference that the backslash returned.  Here are some examples:
     $coderef   = \&handler;
     $globref   = \*foo;
 
-It isn't possible to create a true reference to an IO handle (filehandle or
-dirhandle) using the backslash operator.  See the explanation of the
-*foo{THING} syntax below.  (However, you're apt to find Perl code
-out there using globrefs as though they were IO handles, which is
-grandfathered into continued functioning.)
+It isn't possible to create a true reference to an IO handle (filehandle
+or dirhandle) using the backslash operator.  The most you can get is a
+reference to a typeglob, which is actually a complete symbol table entry.
+But see the explanation of the C<*foo{THING}> syntax below.  However,
+you can still use type globs and globrefs as though they were IO handles.
 
 =item 2.
 
-A reference to an anonymous array can be constructed using square
+A reference to an anonymous array can be created using square
 brackets:
 
     $arrayref = [1, 2, ['a', 'b', 'c']];
 
-Here we've constructed a reference to an anonymous array of three elements
+Here we've created a reference to an anonymous array of three elements
 whose final element is itself a reference to another anonymous array of three
 elements.  (The multidimensional syntax described later can be used to
 access this.  For example, after the above, C<$arrayref-E<gt>[2][1]> would have
@@ -87,11 +95,13 @@ a list of references!
     @list = \($a, @b, %c);	# same thing!
 
 As a special case, C<\(@foo)> returns a list of references to the contents
-of C<@foo>, not a reference to C<@foo> itself.  Likewise for C<%foo>.
+of C<@foo>, not a reference to C<@foo> itself.  Likewise for C<%foo>,
+except that the key references are to copies (since the keys are just
+strings rather than full-fledged scalars).
 
 =item 3.
 
-A reference to an anonymous hash can be constructed using curly
+A reference to an anonymous hash can be created using curly
 brackets:
 
     $hashref = {
@@ -99,7 +109,7 @@ brackets:
 	'Clyde' => 'Bonnie',
     };
 
-Anonymous hash and array constructors can be intermixed freely to
+Anonymous hash and array composers like these can be intermixed freely to
 produce as complicated a structure as you want.  The multidimensional
 syntax described below works for these too.  The values above are
 literals, but variables and expressions would work just as well, because
@@ -120,9 +130,18 @@ reference to it, you have these options:
     sub hashem {       +{ @_ } }   # ok
     sub hashem { return { @_ } }   # ok
 
+On the other hand, if you want the other meaning, you can do this:
+
+    sub showem {        { @_ } }   # ambiguous (currently ok, but may change)
+    sub showem {       {; @_ } }   # ok
+    sub showem { { return @_ } }   # ok
+
+Note how the leading C<+{> and C<{;> always serve to disambiguate
+the expression to mean either the HASH reference, or the BLOCK.
+
 =item 4.
 
-A reference to an anonymous subroutine can be constructed by using
+A reference to an anonymous subroutine can be created by using
 C<sub> without a subname:
 
     $coderef = sub { print "Boink!\n" };
@@ -130,7 +149,7 @@ C<sub> without a subname:
 Note the presence of the semicolon.  Except for the fact that the code
 inside isn't executed immediately, a C<sub {}> is not so much a
 declaration as it is an operator, like C<do{}> or C<eval{}>.  (However, no
-matter how many times you execute that line (unless you're in an
+matter how many times you execute that particular line (unless you're in an
 C<eval("...")>), C<$coderef> will still have a reference to the I<SAME>
 anonymous subroutine.)
 
@@ -174,7 +193,7 @@ newprint() I<despite> the fact that the "my $x" has seemingly gone out of
 scope by the time the anonymous subroutine runs.  That's what closure
 is all about.
 
-This applies to only lexical variables, by the way.  Dynamic variables
+This applies only to lexical variables, by the way.  Dynamic variables
 continue to work as they have always worked.  Closure is not something
 that most Perl programmers need trouble themselves about to begin with.
 
@@ -185,10 +204,22 @@ Perl objects are just references to a special kind of object that happens to kno
 which package it's associated with.  Constructors are just special
 subroutines that know how to create that association.  They do so by
 starting with an ordinary reference, and it remains an ordinary reference
-even while it's also being an object.  Constructors are customarily
-named new(), but don't have to be:
+even while it's also being an object.  Constructors are often
+named new() and called indirectly:
 
     $objref = new Doggie (Tail => 'short', Ears => 'long');
+
+But don't have to be:
+
+    $objref   = Doggie->new(Tail => 'short', Ears => 'long');
+
+    use Term::Cap;
+    $terminal = Term::Cap->Tgetent( { OSPEED => 9600 });
+
+    use Tk;
+    $main    = MainWindow->new();
+    $menubar = $main->Frame(-relief              => "raised",
+                            -borderwidth         => 2)
 
 =item 6.
 
@@ -221,35 +252,33 @@ except in the case of scalars.  *foo{SCALAR} returns a reference to an
 anonymous scalar if $foo hasn't been used yet.  This might change in a
 future release.
 
-The use of *foo{IO} is the best way to pass bareword filehandles into or
-out of subroutines, or to store them in larger data structures.
+*foo{IO} is an alternative to the \*HANDLE mechanism given in
+L<perldata/"Typeglobs and Filehandles"> for passing filehandles
+into or out of subroutines, or storing into larger data structures.
+Its disadvantage is that it won't create a new filehandle for you.
+Its advantage is that you have no risk of clobbering more than you want
+to with a typeglob assignment, although if you assign to a scalar instead
+of a typeglob, you're ok.
 
+    splutter(*STDOUT);
     splutter(*STDOUT{IO});
+
     sub splutter {
 	my $fh = shift;
 	print $fh "her um well a hmmm\n";
     }
 
+    $rec = get_rec(*STDIN);
     $rec = get_rec(*STDIN{IO});
+
     sub get_rec {
 	my $fh = shift;
 	return scalar <$fh>;
     }
 
-Beware, though, that you can't do this with a routine which is going to
-open the filehandle for you, because *HANDLE{IO} will be undef if HANDLE
-hasn't been used yet.  Use \*HANDLE for that sort of thing instead.
-
-Using \*HANDLE (or *HANDLE) is another way to use and store non-bareword
-filehandles (before perl version 5.002 it was the only way).  The two
-methods are largely interchangeable, you can do
-
-    splutter(\*STDOUT);
-    $rec = get_rec(\*STDIN);
-
-with the above subroutine definitions.
-
 =back
+
+=head2 Using References
 
 That's it for creating references.  By now you're probably dying to
 know how to use references to get back to your long-lost data.  There
@@ -338,6 +367,7 @@ statement, C<$array[$x]> may have been undefined.  If so, it's
 automatically defined with a hash reference so that we can look up
 C<{"foo"}> in it.  Likewise C<$array[$x]-E<gt>{"foo"}> will automatically get
 defined with an array reference so that we can look up C<[0]> in it.
+This process is called I<autovivification>.
 
 One more thing here.  The arrow is optional I<BETWEEN> brackets
 subscripts, so you can shrink the above down to
@@ -367,8 +397,8 @@ civility though.
 The ref() operator may be used to determine what type of thing the
 reference is pointing to.  See L<perlfunc>.
 
-The bless() operator may be used to associate a reference with a package
-functioning as an object class.  See L<perlobj>.
+The bless() operator may be used to associate the object a reference
+points to with a package functioning as an object class.  See L<perlobj>.
 
 A typeglob may be dereferenced the same way a reference can, because
 the dereference syntax always indicates the kind of reference desired.
@@ -421,12 +451,12 @@ block.  An inner block may countermand that with
 
     no strict 'refs';
 
-Only package variables are visible to symbolic references.  Lexical
-variables (declared with my()) aren't in a symbol table, and thus are
-invisible to this mechanism.  For example:
+Only package variables (globals, even if localized) are visible to
+symbolic references.  Lexical variables (declared with my()) aren't in
+a symbol table, and thus are invisible to this mechanism.  For example:
 
-    local($value) = 10;
-    $ref = \$value;
+    local $value = 10;
+    $ref = "value";
     {
 	my $value = 20;
 	print $$ref;
@@ -489,6 +519,111 @@ The B<-w> switch will warn you if it interprets a reserved word as a string.
 But it will no longer warn you about using lowercase words, because the
 string is effectively quoted.
 
+=head2 Pseudo-hashes: Using an array as a hash
+
+WARNING:  This section describes an experimental feature.  Details may
+change without notice in future versions.
+
+Beginning with release 5.005 of Perl you can use an array reference
+in some contexts that would normally require a hash reference.  This
+allows you to access array elements using symbolic names, as if they
+were fields in a structure.
+
+For this to work, the array must contain extra information.  The first
+element of the array has to be a hash reference that maps field names
+to array indices.  Here is an example:
+
+   $struct = [{foo => 1, bar => 2}, "FOO", "BAR"];
+
+   $struct->{foo};  # same as $struct->[1], i.e. "FOO"
+   $struct->{bar};  # same as $struct->[2], i.e. "BAR"
+
+   keys %$struct;   # will return ("foo", "bar") in some order
+   values %$struct; # will return ("FOO", "BAR") in same some order
+
+   while (my($k,$v) = each %$struct) {
+       print "$k => $v\n";
+   }
+
+Perl will raise an exception if you try to delete keys from a pseudo-hash
+or try to access nonexistent fields.  For better performance, Perl can also
+do the translation from field names to array indices at compile time for
+typed object references.  See L<fields>.
+
+
+=head2 Function Templates
+
+As explained above, a closure is an anonymous function with access to the
+lexical variables visible when that function was compiled.  It retains
+access to those variables even though it doesn't get run until later,
+such as in a signal handler or a Tk callback.
+
+Using a closure as a function template allows us to generate many functions
+that act similarly.  Suppose you wanted functions named after the colors
+that generated HTML font changes for the various colors:
+
+    print "Be ", red("careful"), "with that ", green("light");
+
+The red() and green() functions would be very similar.  To create these,
+we'll assign a closure to a typeglob of the name of the function we're
+trying to build.  
+
+    @colors = qw(red blue green yellow orange purple violet);
+    for my $name (@colors) {
+        no strict 'refs';	# allow symbol table manipulation
+        *$name = *{uc $name} = sub { "<FONT COLOR='$name'>@_</FONT>" };
+    } 
+
+Now all those different functions appear to exist independently.  You can
+call red(), RED(), blue(), BLUE(), green(), etc.  This technique saves on
+both compile time and memory use, and is less error-prone as well, since
+syntax checks happen at compile time.  It's critical that any variables in
+the anonymous subroutine be lexicals in order to create a proper closure.
+That's the reasons for the C<my> on the loop iteration variable.
+
+This is one of the only places where giving a prototype to a closure makes
+much sense.  If you wanted to impose scalar context on the arguments of
+these functions (probably not a wise idea for this particular example),
+you could have written it this way instead:
+
+    *$name = sub ($) { "<FONT COLOR='$name'>$_[0]</FONT>" };
+
+However, since prototype checking happens at compile time, the assignment
+above happens too late to be of much use.  You could address this by
+putting the whole loop of assignments within a BEGIN block, forcing it
+to occur during compilation.
+
+Access to lexicals that change over type--like those in the C<for> loop
+above--only works with closures, not general subroutines.  In the general
+case, then, named subroutines do not nest properly, although anonymous
+ones do.  If you are accustomed to using nested subroutines in other
+programming languages with their own private variables, you'll have to
+work at it a bit in Perl.  The intuitive coding of this kind of thing
+incurs mysterious warnings about ``will not stay shared''.  For example,
+this won't work:
+
+    sub outer {
+        my $x = $_[0] + 35;
+        sub inner { return $x * 19 }   # WRONG
+        return $x + inner();
+    } 
+
+A work-around is the following:
+
+    sub outer {
+        my $x = $_[0] + 35;
+        local *inner = sub { return $x * 19 };
+        return $x + inner();
+    } 
+
+Now inner() can only be called from within outer(), because of the
+temporary assignments of the closure (anonymous subroutine).  But when
+it does, it has normal access to the lexical variable $x from the scope
+of outer().
+
+This has the interesting effect of creating a function local to another
+function, something not normally supported in Perl.
+
 =head1 WARNING
 
 You may not (usefully) use a reference as the key to a hash.  It will be
@@ -506,6 +641,8 @@ more like
 And then at least you can use the values(), which will be
 real refs, instead of the keys(), which won't.
 
+The standard Tie::RefHash module provides a convenient workaround to this.
+
 =head1 SEE ALSO
 
 Besides the obvious documents, source code can be instructive.
@@ -513,5 +650,5 @@ Some rather pathological examples of the use of references can be found
 in the F<t/op/ref.t> regression test in the Perl source directory.
 
 See also L<perldsc> and L<perllol> for how to use references to create
-complex data structures, and L<perlobj> for how to use them to create
-objects.
+complex data structures, and L<perltoot>, L<perlobj>, and L<perlbot>
+for how to use them to create objects.

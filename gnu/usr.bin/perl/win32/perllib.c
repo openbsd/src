@@ -2,31 +2,28 @@
  * "The Road goes ever on and on, down from the door where it began."
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
 
-#ifdef __cplusplus
-}
-#  define EXTERN_C extern "C"
-#else
-#  define EXTERN_C extern
-#endif
-
 static void xs_init _((void));
 
-__declspec(dllexport) int
+DllExport int
 RunPerl(int argc, char **argv, char **env, void *iosubsystem)
 {
     int exitstatus;
     PerlInterpreter *my_perl;
-    void *pOldIOSubsystem;
 
-    pOldIOSubsystem = SetIOSubSystem(iosubsystem);
+#ifdef PERL_GLOBAL_STRUCT
+#define PERLVAR(var,type) /**/
+#define PERLVARI(var,type,init) PL_Vars.var = init;
+#define PERLVARIC(var,type,init) PL_Vars.var = init;
+#include "perlvars.h"
+#undef PERLVAR
+#undef PERLVARI
+#undef PERLVARIC
+#endif
 
     PERL_SYS_INIT(&argc,&argv);
 
@@ -35,7 +32,7 @@ RunPerl(int argc, char **argv, char **env, void *iosubsystem)
     if (!(my_perl = perl_alloc()))
 	return (1);
     perl_construct( my_perl );
-    perl_destruct_level = 0;
+    PL_perl_destruct_level = 0;
 
     exitstatus = perl_parse( my_perl, xs_init, argc, argv, env);
     if (!exitstatus) {
@@ -47,12 +44,10 @@ RunPerl(int argc, char **argv, char **env, void *iosubsystem)
 
     PERL_SYS_TERM();
 
-    SetIOSubSystem(pOldIOSubsystem);
-
     return (exitstatus);
 }
 
-extern HANDLE PerlDllHandle;
+extern HANDLE w32_perldll_handle;
 
 BOOL APIENTRY
 DllMain(HANDLE hModule,		/* DLL module handle */
@@ -71,7 +66,7 @@ DllMain(HANDLE hModule,		/* DLL module handle */
 	setmode( fileno( stderr ), O_BINARY );
 	_fmode = O_BINARY;
 #endif
-	PerlDllHandle = hModule;
+	w32_perldll_handle = hModule;
 	break;
 
 	/* The DLL is detaching from a process due to

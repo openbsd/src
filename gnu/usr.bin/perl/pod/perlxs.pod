@@ -25,6 +25,11 @@ linked.
 
 See L<perlxstut> for a tutorial on the whole extension creation process.
 
+Note: For many extensions, Dave Beazley's SWIG system provides a
+significantly more convenient mechanism for creating the XS glue
+code. See L<http://www.cs.utah.edu/~beazley/SWIG> for more 
+information.
+
 =head2 On The Road
 
 Many of the examples which follow will concentrate on creating an interface
@@ -176,10 +181,10 @@ directive is used which sets ST(0) explicitly.
 
 Older versions of this document recommended to use C<void> return
 value in such cases. It was discovered that this could lead to
-segfaults in cases when XSUB was I<truely> C<void>. This practice is
+segfaults in cases when XSUB was I<truly> C<void>. This practice is
 now deprecated, and may be not supported at some future version. Use
 the return value C<SV *> in such cases. (Currently C<xsubpp> contains
-some heuristic code which tries to disambiguate between "truely-void"
+some heuristic code which tries to disambiguate between "truly-void"
 and "old-practice-declared-as-void" functions. Hence your code is at
 mercy of this heuristics unless you use C<SV *> as return value.)
 
@@ -277,6 +282,17 @@ typemap.
           OUTPUT:
           timep sv_setnv(ST(1), (double)timep);
 
+B<xsubpp> emits an automatic C<SvSETMAGIC()> for all parameters in the
+OUTPUT section of the XSUB, except RETVAL.  This is the usually desired
+behavior, as it takes care of properly invoking 'set' magic on output
+parameters (needed for hash or array element parameters that must be
+created if they didn't exist).  If for some reason, this behavior is
+not desired, the OUTPUT section may contain a C<SETMAGIC: DISABLE> line
+to disable it for the remainder of the parameters in the OUTPUT section.
+Likewise,  C<SETMAGIC: ENABLE> can be used to reenable it for the
+remainder of the OUTPUT section.  See L<perlguts> for more details
+about 'set' magic.
+
 =head2 The CODE: Keyword
 
 This keyword is used in more complicated XSUBs which require
@@ -344,17 +360,19 @@ Function parameters are normally initialized with their
 values from the argument stack.  The typemaps contain the
 code segments which are used to transfer the Perl values to
 the C parameters.  The programmer, however, is allowed to
-override the typemaps and supply alternate initialization
-code.
+override the typemaps and supply alternate (or additional)
+initialization code.
 
 The following code demonstrates how to supply initialization code for
-function parameters.  The initialization code is eval'd by the compiler
-before it is added to the output so anything which should be interpreted
-literally, such as double quotes, must be protected with backslashes.
+function parameters.  The initialization code is eval'd within double
+quotes by the compiler before it is added to the output so anything
+which should be interpreted literally [mainly C<$>, C<@>, or C<\\>]
+must be protected with backslashes.  The variables C<$var>, C<$arg>,
+and C<$type> can be used as in typemaps.
 
      bool_t
      rpcb_gettime(host,timep)
-          char *host = (char *)SvPV(ST(0),na);
+          char *host = (char *)SvPV($arg,PL_na);
           time_t &timep = 0;
           OUTPUT:
           timep
@@ -363,6 +381,24 @@ This should not be used to supply default values for parameters.  One
 would normally use this when a function parameter must be processed by
 another library function before it can be used.  Default parameters are
 covered in the next section.
+
+If the initialization begins with C<=>, then it is output on
+the same line where the input variable is declared.  If the
+initialization begins with C<;> or C<+>, then it is output after
+all of the input variables have been declared.  The C<=> and C<;>
+cases replace the initialization normally supplied from the typemap.
+For the C<+> case, the initialization from the typemap will precede
+the initialization code included after the C<+>.  A global
+variable, C<%v>, is available for the truly rare case where
+information from one initialization is needed in another
+initialization.
+
+     bool_t
+     rpcb_gettime(host,timep)
+          time_t &timep ; /*\$v{time}=@{[$v{time}=$arg]}*/
+          char *host + SvOK($v{time}) ? SvPV($arg,PL_na) : NULL;
+          OUTPUT:
+          timep
 
 =head2 Default Parameter Values
 
@@ -517,13 +553,40 @@ The XS code, with ellipsis, follows.
           time_t timep = NO_INIT
 	  PREINIT:
           char *host = "localhost";
+	  STRLEN n_a;
           CODE:
 		  if( items > 1 )
-		       host = (char *)SvPV(ST(1), na);
+		       host = (char *)SvPV(ST(1), n_a);
 		  RETVAL = rpcb_gettime( host, &timep );
           OUTPUT:
           timep
           RETVAL
+
+=head2 The C_ARGS: Keyword
+
+The C_ARGS: keyword allows creating of XSUBS which have different
+calling sequence from Perl than from C, without a need to write
+CODE: or CPPCODE: section.  The contents of the C_ARGS: paragraph is
+put as the argument to the called C function without any change.
+
+For example, suppose that C function is declared as
+
+    symbolic nth_derivative(int n, symbolic function, int flags);
+
+and that the default flags are kept in a global C variable
+C<default_flags>.  Suppose that you want to create an interface which
+is called as
+
+    $second_deriv = $function->nth_derivative(2);
+
+To do this, declare the XSUB as
+
+    symbolic
+    nth_derivative(function, n)
+	symbolic	function
+	int		n
+    C_ARGS:
+	n, function, default_flags
 
 =head2 The PPCODE: Keyword
 
@@ -547,7 +610,7 @@ Perl as a single list.
           bool_t  status;
           PPCODE:
           status = rpcb_gettime( host, &timep );
-          EXTEND(sp, 2);
+          EXTEND(SP, 2);
           PUSHs(sv_2mortal(newSViv(status)));
           PUSHs(sv_2mortal(newSViv(timep)));
 
@@ -562,7 +625,7 @@ directive.
 
 The EXTEND() macro is used to make room on the argument
 stack for 2 return values.  The PPCODE: directive causes the
-B<xsubpp> compiler to create a stack pointer called C<sp>, and it
+B<xsubpp> compiler to create a stack pointer available as C<SP>, and it
 is this pointer which is being used in the EXTEND() macro.
 The values are then pushed onto the stack with the PUSHs()
 macro.
@@ -571,6 +634,9 @@ Now the rpcb_gettime() function can be used from Perl with
 the following statement.
 
      ($status, $timep) = rpcb_gettime("localhost");
+
+When handling output parameters with a PPCODE section, be sure to handle
+'set' magic properly.  See L<perlguts> for details about 'set' magic.
 
 =head2 Returning Undef And Empty Lists
 
@@ -584,7 +650,7 @@ of $timep will either be undef or it will be a valid time.
 
      $timep = rpcb_gettime( "localhost" );
 
-The following XSUB uses the C<SV *> return type as a mneumonic only,
+The following XSUB uses the C<SV *> return type as a mnemonic only,
 and uses a CODE: block to indicate to the compiler
 that the programmer has supplied all the necessary code.  The
 sv_newmortal() call will initialize the return value to undef, making that
@@ -616,7 +682,7 @@ return value, should the need arise.
                sv_setnv( ST(0), (double)timep);
           }
           else{
-               ST(0) = &sv_undef;
+               ST(0) = &PL_sv_undef;
           }
 
 To return an empty list one must use a PPCODE: block and
@@ -721,9 +787,10 @@ prototypes.
 	  PROTOTYPE: $;$
 	  PREINIT:
           char *host = "localhost";
+	  STRLEN n_a;
           CODE:
 		  if( items > 1 )
-		       host = (char *)SvPV(ST(1), na);
+		       host = (char *)SvPV(ST(1), n_a);
 		  RETVAL = rpcb_gettime( host, &timep );
           OUTPUT:
           timep
@@ -731,7 +798,7 @@ prototypes.
 
 =head2 The ALIAS: Keyword
 
-The ALIAS: keyword allows an XSUB to have two more unique Perl names
+The ALIAS: keyword allows an XSUB to have two or more unique Perl names
 and to know which of those names was used when it was invoked.  The Perl
 names may be fully-qualified with package names.  Each alias is given an
 index.  The compiler will setup a variable called C<ix> which contain the
@@ -752,6 +819,77 @@ C<BAR::getit()> for this function.
 	  printf("# ix = %d\n", ix );
           OUTPUT:
           timep
+
+=head2 The INTERFACE: Keyword
+
+This keyword declares the current XSUB as a keeper of the given
+calling signature.  If some text follows this keyword, it is
+considered as a list of functions which have this signature, and
+should be attached to XSUBs.
+
+Say, if you have 4 functions multiply(), divide(), add(), subtract() all
+having the signature
+
+    symbolic f(symbolic, symbolic);
+
+you code them all by using XSUB
+
+    symbolic
+    interface_s_ss(arg1, arg2)  
+	symbolic	arg1
+	symbolic	arg2
+    INTERFACE:
+	multiply divide 
+	add subtract
+
+The advantage of this approach comparing to ALIAS: keyword is that one
+can attach an extra function remainder() at runtime by using
+    
+    CV *mycv = newXSproto("Symbolic::remainder", 
+			  XS_Symbolic_interface_s_ss, __FILE__, "$$");
+    XSINTERFACE_FUNC_SET(mycv, remainder);
+
+(This example supposes that there was no INTERFACE_MACRO: section,
+otherwise one needs to use something else instead of
+C<XSINTERFACE_FUNC_SET>.)
+
+=head2 The INTERFACE_MACRO: Keyword
+
+This keyword allows one to define an INTERFACE using a different way
+to extract a function pointer from an XSUB.  The text which follows
+this keyword should give the name of macros which would extract/set a
+function pointer.  The extractor macro is given return type, C<CV*>,
+and C<XSANY.any_dptr> for this C<CV*>.  The setter macro is given cv,
+and the function pointer.
+
+The default value is C<XSINTERFACE_FUNC> and C<XSINTERFACE_FUNC_SET>.
+An INTERFACE keyword with an empty list of functions can be omitted if
+INTERFACE_MACRO keyword is used.
+
+Suppose that in the previous example functions pointers for 
+multiply(), divide(), add(), subtract() are kept in a global C array
+C<fp[]> with offsets being C<multiply_off>, C<divide_off>, C<add_off>,
+C<subtract_off>.  Then one can use 
+
+    #define XSINTERFACE_FUNC_BYOFFSET(ret,cv,f) \
+	((XSINTERFACE_CVT(ret,))fp[CvXSUBANY(cv).any_i32])
+    #define XSINTERFACE_FUNC_BYOFFSET_set(cv,f) \
+	CvXSUBANY(cv).any_i32 = CAT2( f, _off )
+
+in C section,
+
+    symbolic
+    interface_s_ss(arg1, arg2)  
+	symbolic	arg1
+	symbolic	arg2
+    INTERFACE_MACRO: 
+	XSINTERFACE_FUNC_BYOFFSET
+	XSINTERFACE_FUNC_BYOFFSET_set
+    INTERFACE:
+	multiply divide 
+	add subtract
+
+in XSUB section.
 
 =head2 The INCLUDE: Keyword
 
@@ -1076,13 +1214,15 @@ getnetconfigent() XSUB and an object created by a normal Perl subroutine.
 The typemap is a collection of code fragments which are used by the B<xsubpp>
 compiler to map C function parameters and values to Perl values.  The
 typemap file may consist of three sections labeled C<TYPEMAP>, C<INPUT>, and
-C<OUTPUT>.  The INPUT section tells the compiler how to translate Perl values
+C<OUTPUT>.  Any unlabelled initial section is assumed to be a C<TYPEMAP>
+section if a name is not explicitly specified.  The INPUT section tells
+the compiler how to translate Perl values
 into variables of certain C types.  The OUTPUT section tells the compiler
 how to translate the values from certain C types into values Perl can
 understand.  The TYPEMAP section tells the compiler which of the INPUT and
 OUTPUT code fragments should be used to map a given C type to a Perl value.
-Each of the sections of the typemap must be preceded by one of the TYPEMAP,
-INPUT, or OUTPUT keywords.
+The section labels C<TYPEMAP>, C<INPUT>, or C<OUTPUT> must begin
+in the first column on a line by themselves, and must be in uppercase.
 
 The default typemap in the C<ext> directory of the Perl source contains many
 useful types which can be used by Perl extensions.  Some extensions define

@@ -9,11 +9,15 @@ open(try,'>Comp.try') || (die "Can't open temp file.");
 $x = 'now is the time
 for all good men
 to come to.
+
+
+!
+
 ';
 
 $y = 'now is the time' . "\n" .
 'for all good men' . "\n" .
-'to come to.' . "\n";
+'to come to.' . "\n\n\n!\n\n";
 
 if ($x eq $y) {print "ok 1\n";} else {print "not ok 1\n";}
 
@@ -30,7 +34,7 @@ while (<try>) {
 
 if ($z eq $y) {print "ok 2\n";} else {print "not ok 2\n";}
 
-if ($count == 3) {print "ok 3\n";} else {print "not ok 3\n";}
+if ($count == 7) {print "ok 3\n";} else {print "not ok 3\n";}
 
 $_ = ($^O eq 'MSWin32') ? `type Comp.try` : `cat Comp.try`;
 

@@ -106,7 +106,7 @@ sub termcap_path { ## private
     # $TERMCAP, if it's a filespec
     push(@termcap_path, $ENV{TERMCAP})
 	if ((exists $ENV{TERMCAP}) &&
-	    (($^O eq 'os2' || $^O eq 'MSWin32')
+	    (($^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'dos')
 	     ? $ENV{TERMCAP} =~ /^[a-z]:[\\\/]/i
 	     : $ENV{TERMCAP} =~ /^\//));
     if ((exists $ENV{TERMPATH}) && ($ENV{TERMPATH})) {

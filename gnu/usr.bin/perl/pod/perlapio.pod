@@ -57,7 +57,7 @@ perlapio - perl's IO abstraction interface.
 =head1 DESCRIPTION
 
 Perl's source code should use the above functions instead of those
-defined in ANSI C's I<stdio.h>,  I<perlio.h> will the C<#define> them to
+defined in ANSI C's I<stdio.h>.  The perl headers will C<#define> them to
 the I/O mechanism selected at Configure time.
 
 The functions are modeled on those in I<stdio.h>, but parameter order
@@ -67,7 +67,7 @@ has been "tidied up a little".
 
 =item B<PerlIO *>
 
-This takes the place of FILE *. Unlike FILE * it should be treated as
+This takes the place of FILE *. Like FILE * it should be treated as
 opaque (it is probably safe to assume it is a pointer to something).
 
 =item B<PerlIO_stdin()>, B<PerlIO_stdout()>, B<PerlIO_stderr()>
@@ -84,7 +84,7 @@ These correspond to fopen()/fdopen() arguments are the same.
 
 =item B<PerlIO_printf(f,fmt,...)>, B<PerlIO_vprintf(f,fmt,a)>
 
-These are is fprintf()/vfprintf equivalents.
+These are fprintf()/vfprintf() equivalents.
 
 =item B<PerlIO_stdoutf(fmt,...)>
 
@@ -201,8 +201,8 @@ behaviour.
 =item B<PerlIO_setlinebuf(f)>
 
 This corresponds to setlinebuf(). Use is deprecated pending
-further discussion. (Perl core uses it I<only> when "dumping"
-is has nothing to do with $| auto-flush.)
+further discussion. (Perl core uses it I<only> when "dumping";
+it has nothing to do with $| auto-flush.)
 
 =back
 

@@ -1,138 +1,100 @@
 package Text::ParseWords;
 
+use vars qw($VERSION @ISA @EXPORT $PERL_SINGLE_QUOTE);
+$VERSION = "3.1";
+
 require 5.000;
-use Carp;
 
-require AutoLoader;
-*AUTOLOAD = \&AutoLoader::AUTOLOAD;
-
-require Exporter;
+use Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(shellwords quotewords);
+@EXPORT = qw(shellwords quotewords nested_quotewords parse_line);
 @EXPORT_OK = qw(old_shellwords);
 
-=head1 NAME
-
-Text::ParseWords - parse text into an array of tokens
-
-=head1 SYNOPSIS
-
-  use Text::ParseWords;
-  @words = &quotewords($delim, $keep, @lines);
-  @words = &shellwords(@lines);
-  @words = &old_shellwords(@lines);
-
-=head1 DESCRIPTION
-
-&quotewords() accepts a delimiter (which can be a regular expression)
-and a list of lines and then breaks those lines up into a list of
-words ignoring delimiters that appear inside quotes.
-
-The $keep argument is a boolean flag.  If true, the quotes are kept
-with each word, otherwise quotes are stripped in the splitting process.
-$keep also defines whether unprotected backslashes are retained.
-
-A &shellwords() replacement is included to demonstrate the new package.
-This version differs from the original in that it will _NOT_ default
-to using $_ if no arguments are given.  I personally find the old behavior
-to be a mis-feature.
-
-&quotewords() works by simply jamming all of @lines into a single
-string in $_ and then pulling off words a bit at a time until $_
-is exhausted.
-
-=head1 AUTHORS
-
-Hal Pomeranz (pomeranz@netcom.com), 23 March 1994
-
-Basically an update and generalization of the old shellwords.pl.
-Much code shamelessly stolen from the old version (author unknown).
-
-=cut
-
-1;
-__END__
 
 sub shellwords {
     local(@lines) = @_;
     $lines[$#lines] =~ s/\s+$//;
-    &quotewords('\s+', 0, @lines);
+    return(quotewords('\s+', 0, @lines));
 }
 
 
 
 sub quotewords {
+    my($delim, $keep, @lines) = @_;
+    my($line, @words, @allwords);
+    
 
-# The inner "for" loop builds up each word (or $field) one $snippet
-# at a time.  A $snippet is a quoted string, a backslashed character,
-# or an unquoted string.  We fall out of the "for" loop when we reach
-# the end of $_ or when we hit a delimiter.  Falling out of the "for"
-# loop, we push the $field we've been building up onto the list of
-# @words we'll be returning, and then loop back and pull another word
-# off of $_.
-#
-# The first two cases inside the "for" loop deal with quoted strings.
-# The first case matches a double quoted string, removes it from $_,
-# and assigns the double quoted string to $snippet in the body of the
-# conditional.  The second case handles single quoted strings.  In
-# the third case we've found a quote at the current beginning of $_,
-# but it didn't match the quoted string regexps in the first two cases,
-# so it must be an unbalanced quote and we croak with an error (which can
-# be caught by eval()).
-#
-# The next case handles backslashed characters, and the next case is the
-# exit case on reaching the end of the string or finding a delimiter.
-#
-# Otherwise, we've found an unquoted thing and we pull of characters one
-# at a time until we reach something that could start another $snippet--
-# a quote of some sort, a backslash, or the delimiter.  This one character
-# at a time behavior was necessary if the delimiter was going to be a
-# regexp (love to hear it if you can figure out a better way).
-
-    my ($delim, $keep, @lines) = @_;
-    my (@words, $snippet, $field);
-
-    local $_ = join ('', @lines);
-
-    while (length) {
-	$field = '';
-
-	for (;;) {
-	    $snippet = '';
-
-	    if (s/^"([^"\\]*(\\.[^"\\]*)*)"//) {
-		$snippet = $1;
-		$snippet = qq|"$snippet"| if $keep;
-	    }
-	    elsif (s/^'([^'\\]*(\\.[^'\\]*)*)'//) {
-		$snippet = $1;
-		$snippet = "'$snippet'" if $keep;
-	    }
-	    elsif (/^["']/) {
-		croak 'Unmatched quote';
-	    }
-	    elsif (s/^\\(.)//) {
-		$snippet = $1;
-		$snippet = "\\$snippet" if $keep;
-	    }
-	    elsif (!length || s/^$delim//) {
-	       last;
-	    }
-	    else {
-		while (length && !(/^$delim/ || /^['"\\]/)) {
-		   $snippet .= substr ($_, 0, 1);
-		   substr($_, 0, 1) = '';
-		}
-	    }
-
-	    $field .= $snippet;
-	}
-
-	push @words, $field;
+    foreach $line (@lines) {
+	@words = parse_line($delim, $keep, $line);
+	return() unless (@words || !length($line));
+	push(@allwords, @words);
     }
-
-    return @words;
+    return(@allwords);
 }
+
+
+
+sub nested_quotewords {
+    my($delim, $keep, @lines) = @_;
+    my($i, @allwords);
+    
+    for ($i = 0; $i < @lines; $i++) {
+	@{$allwords[$i]} = parse_line($delim, $keep, $lines[$i]);
+	return() unless (@{$allwords[$i]} || !length($lines[$i]));
+    }
+    return(@allwords);
+}
+
+
+
+sub parse_line {
+	# We will be testing undef strings
+	local($^W) = 0;
+
+    my($delimiter, $keep, $line) = @_;
+    my($quote, $quoted, $unquoted, $delim, $word, @pieces);
+
+    while (length($line)) {
+
+	($quote, $quoted, undef, $unquoted, $delim, undef) =
+	    $line =~ m/^(["'])                 # a $quote
+                        ((?:\\.|(?!\1)[^\\])*)    # and $quoted text
+                        \1 		       # followed by the same quote
+                        ([\000-\377]*)	       # and the rest
+		       |                       # --OR--
+                       ^((?:\\.|[^\\"'])*?)    # an $unquoted text
+		      (\Z(?!\n)|(?-x:$delimiter)|(?!^)(?=["']))  
+                                               # plus EOL, delimiter, or quote
+                      ([\000-\377]*)	       # the rest
+		      /x;		       # extended layout
+	return() unless( $quote || length($unquoted) || length($delim));
+
+	$line = $+;
+
+        if ($keep) {
+	    $quoted = "$quote$quoted$quote";
+	}
+        else {
+	    $unquoted =~ s/\\(.)/$1/g;
+	    if (defined $quote) {
+		$quoted =~ s/\\(.)/$1/g if ($quote eq '"');
+		$quoted =~ s/\\([\\'])/$1/g if ( $PERL_SINGLE_QUOTE && $quote eq "'");
+            }
+	}
+        $word .= defined $quote ? $quoted : $unquoted;
+ 
+        if (length($delim)) {
+            push(@pieces, $word);
+            push(@pieces, $delim) if ($keep eq 'delimiters');
+            undef $word;
+        }
+        if (!length($line)) {
+            push(@pieces, $word);
+	}
+    }
+    return(@pieces);
+}
+
 
 
 sub old_shellwords {
@@ -154,13 +116,13 @@ sub old_shellwords {
 		($snippet = $1) =~ s#\\(.)#$1#g;
 	    }
 	    elsif (/^"/) {
-		croak "Unmatched double quote: $_";
+		return();
 	    }
 	    elsif (s/^'(([^'\\]|\\.)*)'//) {
 		($snippet = $1) =~ s#\\(.)#$1#g;
 	    }
 	    elsif (/^'/) {
-		croak "Unmatched single quote: $_";
+		return();
 	    }
 	    elsif (s/^\\(.)//) {
 		$snippet = $1;
@@ -178,3 +140,117 @@ sub old_shellwords {
     }
     @words;
 }
+
+1;
+
+__END__
+
+=head1 NAME
+
+Text::ParseWords - parse text into an array of tokens or array of arrays
+
+=head1 SYNOPSIS
+
+  use Text::ParseWords;
+  @lists = &nested_quotewords($delim, $keep, @lines);
+  @words = &quotewords($delim, $keep, @lines);
+  @words = &shellwords(@lines);
+  @words = &parse_line($delim, $keep, $line);
+  @words = &old_shellwords(@lines); # DEPRECATED!
+
+=head1 DESCRIPTION
+
+The &nested_quotewords() and &quotewords() functions accept a delimiter 
+(which can be a regular expression)
+and a list of lines and then breaks those lines up into a list of
+words ignoring delimiters that appear inside quotes.  &quotewords()
+returns all of the tokens in a single long list, while &nested_quotewords()
+returns a list of token lists corresponding to the elements of @lines.
+&parse_line() does tokenizing on a single string.  The &*quotewords()
+functions simply call &parse_lines(), so if you're only splitting
+one line you can call &parse_lines() directly and save a function
+call.
+
+The $keep argument is a boolean flag.  If true, then the tokens are
+split on the specified delimiter, but all other characters (quotes,
+backslashes, etc.) are kept in the tokens.  If $keep is false then the
+&*quotewords() functions remove all quotes and backslashes that are
+not themselves backslash-escaped or inside of single quotes (i.e.,
+&quotewords() tries to interpret these characters just like the Bourne
+shell).  NB: these semantics are significantly different from the
+original version of this module shipped with Perl 5.000 through 5.004.
+As an additional feature, $keep may be the keyword "delimiters" which
+causes the functions to preserve the delimiters in each string as
+tokens in the token lists, in addition to preserving quote and
+backslash characters.
+
+&shellwords() is written as a special case of &quotewords(), and it
+does token parsing with whitespace as a delimiter-- similar to most
+Unix shells.
+
+=head1 EXAMPLES
+
+The sample program:
+
+  use Text::ParseWords;
+  @words = &quotewords('\s+', 0, q{this   is "a test" of\ quotewords \"for you});
+  $i = 0;
+  foreach (@words) {
+      print "$i: <$_>\n";
+      $i++;
+  }
+
+produces:
+
+  0: <this>
+  1: <is>
+  2: <a test>
+  3: <of quotewords>
+  4: <"for>
+  5: <you>
+
+demonstrating:
+
+=over 4
+
+=item 0
+a simple word
+
+=item 1
+multiple spaces are skipped because of our $delim
+
+=item 2
+use of quotes to include a space in a word
+
+=item 3
+use of a backslash to include a space in a word
+
+=item 4
+use of a backslash to remove the special meaning of a double-quote
+
+=item 5
+another simple word (note the lack of effect of the
+backslashed double-quote)
+
+=back
+
+Replacing C<&quotewords('\s+', 0, q{this   is...})>
+with C<&shellwords(q{this   is...})>
+is a simpler way to accomplish the same thing.
+
+=head1 AUTHORS
+
+Maintainer is Hal Pomeranz <pomeranz@netcom.com>, 1994-1997 (Original
+author unknown).  Much of the code for &parse_line() (including the
+primary regexp) from Joerk Behrends <jbehrends@multimediaproduzenten.de>.
+
+Examples section another documentation provided by John Heidemann 
+<johnh@ISI.EDU>
+
+Bug reports, patches, and nagging provided by lots of folks-- thanks
+everybody!  Special thanks to Michael Schwern <schwern@envirolink.org>
+for assuring me that a &nested_quotewords() would be useful, and to 
+Jeff Friedl <jfriedl@yahoo-inc.com> for telling me not to worry about
+error-checking (sort of-- you had to be there).
+
+=cut

@@ -58,10 +58,10 @@ dl_private_init()
     dlderr = dld_init("/proc/self/exe");
     if (dlderr) {
 #endif
-        dlderr = dld_init(dld_find_executable(origargv[0]));
+        dlderr = dld_init(dld_find_executable(PL_origargv[0]));
         if (dlderr) {
             char *msg = dld_strerror(dlderr);
-            SaveError("dld_init(%s) failed: %s", origargv[0], msg);
+            SaveError("dld_init(%s) failed: %s", PL_origargv[0], msg);
             DLDEBUG(1,PerlIO_printf(PerlIO_stderr(), "%s", LastError));
         }
 #ifdef __linux__
@@ -144,7 +144,7 @@ dl_undef_symbols()
     if (dld_undefined_sym_count) {
 	int x;
 	char **undef_syms = dld_list_undefined_sym();
-	EXTEND(sp, dld_undefined_sym_count);
+	EXTEND(SP, dld_undefined_sym_count);
 	for (x=0; x < dld_undefined_sym_count; x++)
 	    PUSHs(sv_2mortal(newSVpv(undef_syms[x]+1, 0)));
 	free(undef_syms);

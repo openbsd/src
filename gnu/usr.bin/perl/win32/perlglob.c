@@ -22,7 +22,8 @@ main(int argc, char *argv[])
 
     /* check out the file system characteristics */
     if (GetFullPathName(".", MAX_PATH, root, &dummy)) {
-	if (dummy = strchr(root, '\\'))
+        dummy = strchr(root,'\\'); 
+	if (dummy)
 	    *++dummy = '\0';
 	if (GetVolumeInformation(root, volname, MAX_PATH, 
 				 &serial, &maxname, &flags, 0, 0)) {
@@ -40,3 +41,4 @@ main(int argc, char *argv[])
     }
     return 0;
 }
+

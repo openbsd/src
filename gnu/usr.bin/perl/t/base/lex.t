@@ -1,8 +1,6 @@
 #!./perl
 
-# $RCSfile: lex.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:04 $
-
-print "1..27\n";
+print "1..35\n";
 
 $x = 'x';
 
@@ -104,4 +102,43 @@ print "FOO:" =~ /$foo[:]/ ? "ok 24\n" : "not ok 24\n";
 print "ABC" =~ /^$ary[$A]$/ ? "ok 25\n" : "not ok 25\n";
 print "FOOZ" =~ /^$foo[$A-Z]$/ ? "ok 26\n" : "not ok 26\n";
 
-print (((q{{\{\(}} . q{{\)\}}}) eq '{{\(}{\)}}') ? "ok 27\n" : "not ok 27\n");
+# MJD 19980425
+($X, @X) = qw(a b c d); 
+print "d" =~ /^$X[-1]$/ ? "ok 27\n" : "not ok 27\n";
+print "a1" !~ /^$X[-1]$/ ? "ok 28\n" : "not ok 28\n";
+
+print (((q{{\{\(}} . q{{\)\}}}) eq '{{\(}{\)}}') ? "ok 29\n" : "not ok 29\n");
+
+
+$foo = "not ok 30\n";
+$foo =~ s/^not /substr(<<EOF, 0, 0)/e;
+  Ignored
+EOF
+print $foo;
+
+# see if eval '', s///e, and heredocs mix
+
+sub T {
+    my ($where, $num) = @_;
+    my ($p,$f,$l) = caller;
+    print "# $p:$f:$l vs /$where/\nnot " unless "$p:$f:$l" =~ /$where/;
+    print "ok $num\n";
+}
+
+my $test = 31;
+
+{
+# line 42 "plink"
+    local $_ = "not ok ";
+    eval q{
+	s/^not /<<EOT/e and T '^main:\(eval \d+\):2$', $test++;
+# fuggedaboudit
+EOT
+        print $_, $test++, "\n";
+	T('^main:\(eval \d+\):6$', $test++);
+# line 1 "plunk"
+	T('^main:plunk:1$', $test++);
+    };
+    print "# $@\nnot ok $test\n" if $@;
+    T '^main:plink:53$', $test++;
+}

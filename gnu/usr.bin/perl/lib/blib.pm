@@ -45,6 +45,7 @@ sub import
 {
  my $package = shift;
  my $dir = getcwd;
+ if ($^O eq 'VMS') { ($dir = VMS::Filespec::unixify($dir)) =~ s-/$--; }
  if (@_)
   {
    $dir = shift;

@@ -1,6 +1,6 @@
 /*    doop.c
  *
- *    Copyright (c) 1991-1997, Larry Wall
+ *    Copyright (c) 1991-1999, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -19,20 +19,20 @@
 #endif
 
 I32
-do_trans(sv,arg)
-SV *sv;
-OP *arg;
+do_trans(SV *sv, OP *arg)
 {
+    dTHR;
     register short *tbl;
     register U8 *s;
     register U8 *send;
     register U8 *d;
     register I32 ch;
     register I32 matches = 0;
-    register I32 squash = op->op_private & OPpTRANS_SQUASH;
+    register I32 squash = PL_op->op_private & OPpTRANS_SQUASH;
+    register U8 *p;
     STRLEN len;
 
-    if (SvREADONLY(sv))
+    if (SvREADONLY(sv) && !(PL_op->op_private & OPpTRANS_COUNTONLY))
 	croak(no_modify);
     tbl = (short*)cPVOP->op_pv;
     s = (U8*)SvPV(sv, len);
@@ -45,7 +45,7 @@ OP *arg;
     if (!tbl || !s)
 	croak("panic: do_trans");
     DEBUG_t( deb("2.TBL\n"));
-    if (!op->op_private) {
+    if (!PL_op->op_private) {
 	while (s < send) {
 	    if ((ch = tbl[*s]) >= 0) {
 		matches++;
@@ -53,17 +53,27 @@ OP *arg;
 	    }
 	    s++;
 	}
+	SvSETMAGIC(sv);
+    }
+    else if (PL_op->op_private & OPpTRANS_COUNTONLY) {
+	while (s < send) {
+	    if (tbl[*s] >= 0)
+		matches++;
+	    s++;
+	}
     }
     else {
 	d = s;
+	p = send;
 	while (s < send) {
 	    if ((ch = tbl[*s]) >= 0) {
 		*d = ch;
-		if (matches++ && squash) {
-		    if (d[-1] == *d)
+		matches++;
+		if (squash) {
+		    if (p == d - 1 && *p == *d)
 			matches--;
 		    else
-			d++;
+		        p = d++;
 		}
 		else
 		    d++;
@@ -75,17 +85,13 @@ OP *arg;
 	matches += send - d;	/* account for disappeared chars */
 	*d = '\0';
 	SvCUR_set(sv, d - (U8*)SvPVX(sv));
+	SvSETMAGIC(sv);
     }
-    SvSETMAGIC(sv);
     return matches;
 }
 
 void
-do_join(sv,del,mark,sp)
-register SV *sv;
-SV *del;
-register SV **mark;
-register SV **sp;
+do_join(register SV *sv, SV *del, register SV **mark, register SV **sp)
 {
     SV **oldmark = mark;
     register I32 items = sp - mark;
@@ -100,7 +106,7 @@ register SV **sp;
 	sv_upgrade(sv, SVt_PV);
     if (SvLEN(sv) < len + items) {	/* current length is way too short */
 	while (items-- > 0) {
-	    if (*mark) {
+	    if (*mark && !SvGMAGICAL(*mark) && SvOK(*mark)) {
 		SvPV(*mark, tmplen);
 		len += tmplen;
 	    }
@@ -141,10 +147,7 @@ register SV **sp;
 }
 
 void
-do_sprintf(sv,len,sarg)
-SV *sv;
-I32 len;
-SV **sarg;
+do_sprintf(SV *sv, I32 len, SV **sarg)
 {
     STRLEN patlen;
     char *pat = SvPV(*sarg, patlen);
@@ -157,8 +160,7 @@ SV **sarg;
 }
 
 void
-do_vecset(sv)
-SV *sv;
+do_vecset(SV *sv)
 {
     SV *targ = LvTARG(sv);
     register I32 offset;
@@ -209,9 +211,7 @@ SV *sv;
 }
 
 void
-do_chop(astr,sv)
-register SV *astr;
-register SV *sv;
+do_chop(register SV *astr, register SV *sv)
 {
     STRLEN len;
     char *s;
@@ -223,7 +223,7 @@ register SV *sv;
         max = AvFILL(av);
         for (i = 0; i <= max; i++) {
 	    sv = (SV*)av_fetch(av, i, FALSE);
-	    if (sv && ((sv = *(SV**)sv), sv != &sv_undef))
+	    if (sv && ((sv = *(SV**)sv), sv != &PL_sv_undef))
 		do_chop(astr, sv);
 	}
         return;
@@ -253,14 +253,14 @@ register SV *sv;
 } 
 
 I32
-do_chomp(sv)
-register SV *sv;
+do_chomp(register SV *sv)
 {
+    dTHR;
     register I32 count;
     STRLEN len;
     char *s;
 
-    if (RsSNARF(rs))
+    if (RsSNARF(PL_rs))
 	return 0;
     count = 0;
     if (SvTYPE(sv) == SVt_PVAV) {
@@ -270,7 +270,7 @@ register SV *sv;
         max = AvFILL(av);
         for (i = 0; i <= max; i++) {
 	    sv = (SV*)av_fetch(av, i, FALSE);
-	    if (sv && ((sv = *(SV**)sv), sv != &sv_undef))
+	    if (sv && ((sv = *(SV**)sv), sv != &PL_sv_undef))
 		count += do_chomp(sv);
 	}
         return count;
@@ -289,7 +289,7 @@ register SV *sv;
 	s = SvPV_force(sv, len);
     if (s && len) {
 	s += --len;
-	if (RsPARA(rs)) {
+	if (RsPARA(PL_rs)) {
 	    if (*s != '\n')
 		goto nope;
 	    ++count;
@@ -301,7 +301,7 @@ register SV *sv;
 	}
 	else {
 	    STRLEN rslen;
-	    char *rsptr = SvPV(rs, rslen);
+	    char *rsptr = SvPV(PL_rs, rslen);
 	    if (rslen == 1) {
 		if (*s != *rsptr)
 		    goto nope;
@@ -327,12 +327,9 @@ register SV *sv;
 } 
 
 void
-do_vop(optype,sv,left,right)
-I32 optype;
-SV *sv;
-SV *left;
-SV *right;
+do_vop(I32 optype, SV *sv, SV *left, SV *right)
 {
+    dTHR;	/* just for taint */
 #ifdef LIBERAL
     register long *dl;
     register long *ll;
@@ -355,7 +352,8 @@ SV *right;
     len = leftlen < rightlen ? leftlen : rightlen;
     lensave = len;
     if (SvOK(sv) || SvTYPE(sv) > SVt_PVMG) {
-	dc = SvPV_force(sv, na);
+	STRLEN n_a;
+	dc = SvPV_force(sv, n_a);
 	if (SvCUR(sv) < len) {
 	    dc = SvGROW(sv, len + 1);
 	    (void)memzero(dc + SvCUR(sv), len - SvCUR(sv) + 1);
@@ -444,22 +442,23 @@ SV *right;
 }
 
 OP *
-do_kv(ARGS)
-dARGS
+do_kv(ARGSproto)
 {
-    dSP;
+    djSP;
     HV *hv = (HV*)POPs;
+    HV *keys;
     register HE *entry;
     SV *tmpstr;
     I32 gimme = GIMME_V;
-    I32 dokeys =   (op->op_type == OP_KEYS);
-    I32 dovalues = (op->op_type == OP_VALUES);
-
-    if (op->op_type == OP_RV2HV || op->op_type == OP_PADHV) 
+    I32 dokeys =   (PL_op->op_type == OP_KEYS);
+    I32 dovalues = (PL_op->op_type == OP_VALUES);
+    I32 realhv = (SvTYPE(hv) == SVt_PVHV);
+    
+    if (PL_op->op_type == OP_RV2HV || PL_op->op_type == OP_PADHV) 
 	dokeys = dovalues = TRUE;
 
     if (!hv) {
-	if (op->op_flags & OPf_MOD) {	/* lvalue */
+	if (PL_op->op_flags & OPf_MOD) {	/* lvalue */
 	    dTARGET;		/* make sure to clear its target here */
 	    if (SvTYPE(TARG) == SVt_PVLV)
 		LvTARG(TARG) = Nullsv;
@@ -468,55 +467,58 @@ dARGS
 	RETURN;
     }
 
-    (void)hv_iterinit(hv);	/* always reset iterator regardless */
+    keys = realhv ? hv : avhv_keys((AV*)hv);
+    (void)hv_iterinit(keys);	/* always reset iterator regardless */
 
     if (gimme == G_VOID)
 	RETURN;
 
     if (gimme == G_SCALAR) {
-	I32 i;
+	IV i;
 	dTARGET;
 
-	if (op->op_flags & OPf_MOD) {	/* lvalue */
+	if (PL_op->op_flags & OPf_MOD) {	/* lvalue */
 	    if (SvTYPE(TARG) < SVt_PVLV) {
 		sv_upgrade(TARG, SVt_PVLV);
 		sv_magic(TARG, Nullsv, 'k', Nullch, 0);
 	    }
 	    LvTYPE(TARG) = 'k';
-	    LvTARG(TARG) = (SV*)hv;
+	    if (LvTARG(TARG) != (SV*)keys) {
+		if (LvTARG(TARG))
+		    SvREFCNT_dec(LvTARG(TARG));
+		LvTARG(TARG) = SvREFCNT_inc(keys);
+	    }
 	    PUSHs(TARG);
 	    RETURN;
 	}
 
-	if (!SvRMAGICAL(hv) || !mg_find((SV*)hv,'P'))
-	    i = HvKEYS(hv);
+	if (! SvTIED_mg((SV*)keys, 'P'))
+	    i = HvKEYS(keys);
 	else {
 	    i = 0;
 	    /*SUPPRESS 560*/
-	    while (entry = hv_iternext(hv)) {
-		i++;
-	    }
+	    while (hv_iternext(keys)) i++;
 	}
 	PUSHi( i );
 	RETURN;
     }
 
-    /* Guess how much room we need.  hv_max may be a few too many.  Oh well. */
-    EXTEND(sp, HvMAX(hv) * (dokeys + dovalues));
+    EXTEND(SP, HvKEYS(keys) * (dokeys + dovalues));
 
     PUTBACK;	/* hv_iternext and hv_iterval might clobber stack_sp */
-    while (entry = hv_iternext(hv)) {
+    while (entry = hv_iternext(keys)) {
 	SPAGAIN;
 	if (dokeys)
 	    XPUSHs(hv_iterkeysv(entry));	/* won't clobber stack_sp */
 	if (dovalues) {
 	    tmpstr = sv_newmortal();
 	    PUTBACK;
-	    sv_setsv(tmpstr,hv_iterval(hv,entry));
+	    sv_setsv(tmpstr,realhv ?
+		     hv_iterval(hv,entry) : avhv_iterval((AV*)hv,entry));
 	    DEBUG_H(sv_setpvf(tmpstr, "%lu%%%d=%lu",
 			    (unsigned long)HeHASH(entry),
-			    HvMAX(hv)+1,
-			    (unsigned long)(HeHASH(entry) & HvMAX(hv))));
+			    HvMAX(keys)+1,
+			    (unsigned long)(HeHASH(entry) & HvMAX(keys))));
 	    SPAGAIN;
 	    XPUSHs(tmpstr);
 	}

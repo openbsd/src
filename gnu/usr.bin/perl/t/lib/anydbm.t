@@ -1,6 +1,6 @@
 #!./perl
 
-# $RCSfile: anydbm.t,v $$Revision: 1.2 $$Date: 1997/11/30 08:00:20 $
+# $RCSfile: anydbm.t,v $$Revision: 1.3 $$Date: 1999/04/29 22:52:28 $
 
 BEGIN {
     chdir 't' if -d 't';
@@ -12,18 +12,18 @@ use Fcntl;
 
 print "1..12\n";
 
-unlink <Op.dbmx*>;
+unlink <Op_dbmx*>;
 
 umask(0);
-print (tie(%h,AnyDBM_File,'Op.dbmx', O_RDWR|O_CREAT, 0640)
+print (tie(%h,AnyDBM_File,'Op_dbmx', O_RDWR|O_CREAT, 0640)
        ? "ok 1\n" : "not ok 1\n");
 
-$Dfile = "Op.dbmx.pag";
+$Dfile = "Op_dbmx.pag";
 if (! -e $Dfile) {
-	($Dfile) = <Op.dbmx*>;
+	($Dfile) = <Op_dbmx*>;
 }
-if ($^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32') {
-    print "ok 2\n";
+if ($^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'dos') {
+    print "ok 2 # Skipped: different file permission semantics\n";
 }
 else {
     ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
@@ -33,7 +33,7 @@ else {
 while (($key,$value) = each(%h)) {
     $i++;
 }
-print (!$i ? "ok 3\n" : "not ok 3\n");
+print (!$i ? "ok 3\n" : "not ok 3 # i=$i\n\n");
 
 $h{'goner1'} = 'snork';
 
@@ -55,7 +55,7 @@ $h{'goner2'} = 'snork';
 delete $h{'goner2'};
 
 untie(%h);
-print (tie(%h,AnyDBM_File,'Op.dbmx', O_RDWR, 0640) ? "ok 4\n" : "not ok 4\n");
+print (tie(%h,AnyDBM_File,'Op_dbmx', O_RDWR, 0640) ? "ok 4\n" : "not ok 4\n");
 
 $h{'j'} = 'J';
 $h{'k'} = 'K';
@@ -85,7 +85,7 @@ delete $h{'goner3'};
 
 if ($#keys == 29 && $#values == 29) {print "ok 5\n";} else {print "not ok 5\n";}
 
-while (($key,$value) = each(h)) {
+while (($key,$value) = each(%h)) {
     if ($key eq $keys[$i] && $value eq $values[$i] && $key eq lc($value)) {
 	$key =~ y/a-z/A-Z/;
 	$i++ if $key eq $value;
@@ -94,7 +94,7 @@ while (($key,$value) = each(h)) {
 
 if ($i == 30) {print "ok 6\n";} else {print "not ok 6\n";}
 
-@keys = ('blurfl', keys(h), 'dyick');
+@keys = ('blurfl', keys(%h), 'dyick');
 if ($#keys == 31) {print "ok 7\n";} else {print "not ok 7\n";}
 
 $h{'foo'} = '';
@@ -118,4 +118,8 @@ print ($h{'foo'} eq '' ? "ok 11\n" : "not ok 11\n");
 print ($h{''} eq 'bar' ? "ok 12\n" : "not ok 12\n");
 
 untie %h;
-unlink 'Op.dbmx.dir', $Dfile;
+if ($^O eq 'VMS') {
+  unlink 'Op_dbmx.sdbm_dir', $Dfile;
+} else {
+  unlink 'Op_dbmx.dir', $Dfile;  
+}

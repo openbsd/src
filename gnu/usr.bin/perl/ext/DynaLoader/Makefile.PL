@@ -4,13 +4,14 @@ WriteMakefile(
     NAME => 'DynaLoader',
     LINKTYPE	=> 'static',
     DEFINE	=> '-DPERL_CORE -DLIBC="$(LIBC)"',
-    MAN3PODS 	=> ' ', 	# Pods will be built by installman.
+    MAN3PODS 	=> {}, 	# Pods will be built by installman.
     SKIP	=> [qw(dynamic dynamic_lib dynamic_bs)],
     XSPROTOARG => '-noprototypes', 		# XXX remove later?
-    VERSION_FROM => 'DynaLoader.pm',
-    clean	=> {FILES => 'DynaLoader.c DynaLoader.xs'},
+    VERSION_FROM => 'DynaLoader_pm.PL',
+    PL_FILES	=> {'DynaLoader_pm.PL'=>'DynaLoader.pm'},
+    PM		=> {'DynaLoader.pm' => '$(INST_LIBDIR)/DynaLoader.pm'},
+    clean	=> {FILES => 'DynaLoader.c DynaLoader.xs DynaLoader.pm'},
 );
-
 
 sub MY::postamble {
 	'

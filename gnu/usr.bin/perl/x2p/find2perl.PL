@@ -2,6 +2,7 @@
 
 use Config;
 use File::Basename qw(&basename &dirname);
+use Cwd;
 
 # List explicitly here the variables you want Configure to
 # generate.  Metaconfig only looks for shell variables, so you
@@ -12,6 +13,7 @@ use File::Basename qw(&basename &dirname);
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
+$origdir = cwd;
 chdir dirname($0);
 $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
@@ -26,7 +28,7 @@ print "Extracting $file (with variable substitutions)\n";
 print OUT <<"!GROK!THIS!";
 $Config{startperl}
     eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
-	if \$running_under_some_shell;
+      if \$running_under_some_shell;
 \$startperl = "$Config{startperl}";
 \$perlpath = "$Config{perlpath}";
 !GROK!THIS!
@@ -34,10 +36,16 @@ $Config{startperl}
 # In the following, perl variables are not expanded during extraction.
 
 print OUT <<'!NO!SUBS!';
+
 # 
 # Modified September 26, 1993 to provide proper handling of years after 1999
 #   Tom Link <tml+@pitt.edu>
 #   University of Pittsburgh
+# 
+# Modified April 7, 1998 with nasty hacks to implement the troublesome -follow
+#  Billy Constantine <wdconsta@cs.adelaide.edu.au> <billy@smug.adelaide.edu.au>
+#  University of Adelaide, Adelaide, South Australia
+# 
 
 while ($ARGV[0] =~ /^[^-!(]/) {
     push(@roots, shift);
@@ -47,6 +55,8 @@ for (@roots) { $_ = &quote($_); }
 $roots = join(',', @roots);
 
 $indent = 1;
+$stat = 'lstat';
+$decl = '';
 
 while (@ARGV) {
     $_ = shift;
@@ -59,6 +69,12 @@ while (@ARGV) {
     elsif ($_ eq ')') {
 	$indent--;
 	$out .= &tab . ")";
+    }
+    elsif ($_ eq 'follow') {
+	$stat = 'stat';
+	$decl = '%already_seen = ();';
+	$out .= &tab . '(not $already_seen{"$dev,$ino"}) &&';
+	$out .= "\n" . &tab . '(($already_seen{"$dev,$ino"} = !(-d _)) || 1)';
     }
     elsif ($_ eq '!') {
 	$out .= &tab . "!";
@@ -178,7 +194,7 @@ while (@ARGV) {
 	$file = shift;
 	$newername = 'AGE_OF' . $file;
 	$newername =~ s/[^\w]/_/g;
-	$newername = '$' . $newername;
+	$newername = "\$$newername";
 	$out .= "(-M _ < $newername)";
 	$initnewer .= "$newername = -M " . &quote($file) . ";\n";
     }
@@ -278,10 +294,10 @@ require "$find.pl";
 
 # Traverse desired filesystems
 
+$decl
 &$find($roots);
 $flushall
 exit;
-
 sub wanted {
 $out;
 }
@@ -312,10 +328,11 @@ END
 }
 
 if ($initls) {
-    print <<'END';
+    print <<"INTERP", <<'END';
 sub ls {
-    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$sizemm,
-      $atime,$mtime,$ctime,$blksize,$blocks) = lstat(_);
+    (\$dev,\$ino,\$mode,\$nlink,\$uid,\$gid,\$rdev,\$sizemm,
+      \$atime,\$mtime,\$ctime,\$blksize,\$blocks) = $stat\(_\);
+INTERP
 
     $pname = $name;
 
@@ -380,7 +397,7 @@ END
 }
 
 if ($initcpio) {
-print <<'END';
+print <<'START', <<"INTERP", <<'END';
 sub cpio {
     local($nc,$fh) = @_;
     local($text);
@@ -390,8 +407,10 @@ sub cpio {
 	$size = 0;
     }
     else {
-	($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
-	  $atime,$mtime,$ctime,$blksize,$blocks) = lstat(_);
+START
+	(\$dev,\$ino,\$mode,\$nlink,\$uid,\$gid,\$rdev,\$size,
+	  \$atime,\$mtime,\$ctime,\$blksize,\$blocks) = $stat\(_\);
+INTERP
 	if (-f _) {
 	    open(IN, "./$_\0") || do {
 		warn "Couldn't open $name: $!\n";
@@ -465,14 +484,16 @@ END
 }
 
 if ($inittar) {
-print <<'END';
+print <<'START', <<"INTERP", <<'END';
 sub tar {
     local($fh) = @_;
     local($linkname,$header,$l,$slop);
     local($linkflag) = "\0";
 
-    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
-      $atime,$mtime,$ctime,$blksize,$blocks) = lstat(_);
+START
+    (\$dev,\$ino,\$mode,\$nlink,\$uid,\$gid,\$rdev,\$size,
+      \$atime,\$mtime,\$ctime,\$blksize,\$blocks) = $stat\(_\);
+INTERP
     $nm = $name;
     if ($nlink > 1) {
 	if ($linkname = $linkseen{$fh,$dev,$ino}) {
@@ -561,13 +582,13 @@ sub tab {
 	}
 	else {
 	    if ($saw_or) {
-		$tabstring .= <<'ENDOFSTAT' . $tabstring;
-($nlink || (($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_))) &&
+		$tabstring .= <<"ENDOFSTAT" . $tabstring;
+(\$nlink || ((\$dev,\$ino,\$mode,\$nlink,\$uid,\$gid) = $stat\(\$_\))) &&
 ENDOFSTAT
 	    }
 	    else {
-		$tabstring .= <<'ENDOFSTAT' . $tabstring;
-(($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_)) &&
+		$tabstring .= <<"ENDOFSTAT" . $tabstring;
+((\$dev,\$ino,\$mode,\$nlink,\$uid,\$gid) = $stat\(\$_\)) &&
 ENDOFSTAT
 	    }
 	    $statdone = 1;
@@ -603,3 +624,4 @@ sub quote {
 close OUT or die "Can't close $file: $!";
 chmod 0755, $file or die "Can't reset permissions for $file: $!\n";
 exec("$Config{'eunicefix'} $file") if $Config{'eunicefix'} ne ':';
+chdir $origdir;

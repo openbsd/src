@@ -1,8 +1,9 @@
 #   VMS::Stdio - VMS extensions to Perl's stdio calls
 #
 #   Author:  Charles Bailey  bailey@genetics.upenn.edu
-#   Version: 2.02
-#   Revised: 15-Feb-1997
+#   Version: 2.1
+#   Revised: 24-Mar-1998
+#   Docs revised: 13-Oct-1998 Dan Sugalski <sugalskd@ous.edu>
 
 package VMS::Stdio;
 
@@ -12,17 +13,18 @@ use Carp '&croak';
 use DynaLoader ();
 use Exporter ();
  
-$VERSION = '2.02';
+$VERSION = '2.1';
 @ISA = qw( Exporter DynaLoader IO::File );
 @EXPORT = qw( &O_APPEND &O_CREAT &O_EXCL  &O_NDELAY &O_NOWAIT
               &O_RDONLY &O_RDWR  &O_TRUNC &O_WRONLY );
-@EXPORT_OK = qw( &flush &getname &remove &rewind &sync &tmpnam
-                 &vmsopen &vmssysopen &waitfh );
+@EXPORT_OK = qw( &flush &getname &remove &rewind &sync &setdef &tmpnam
+                 &vmsopen &vmssysopen &waitfh &writeof );
 %EXPORT_TAGS = ( CONSTANTS => [ qw( &O_APPEND &O_CREAT &O_EXCL  &O_NDELAY
                                     &O_NOWAIT &O_RDONLY &O_RDWR &O_TRUNC
                                     &O_WRONLY ) ],
-                 FUNCTIONS => [ qw( &flush &getname &remove &rewind &sync
-                                     &tmpnam &vmsopen &vmssysopen &waitfh ) ] );
+                 FUNCTIONS => [ qw( &flush &getname &remove &rewind &setdef
+                                    &sync &tmpnam &vmsopen &vmssysopen
+                                    &waitfh &writeof ) ] );
 
 bootstrap VMS::Stdio $VERSION;
 
@@ -32,7 +34,7 @@ sub AUTOLOAD {
     if ($constname =~ /^O_/) {
       my($val) = constant($constname);
       defined $val or croak("Unknown VMS::Stdio constant $constname");
-      *$AUTOLOAD = sub { val; }
+      *$AUTOLOAD = sub { $val; }
     }
     else { # We don't know about it; hand off to IO::File
       require IO::File;
@@ -80,22 +82,24 @@ VMS::Stdio - standard I/O functions via VMS extensions
 
 =head1 SYNOPSIS
 
-use VMS::Stdio qw( &flush &getname &remove &rewind &sync &tmpnam
-                   &vmsopen &vmssysopen &waitfh );
-$uniquename = tmpnam;
-$fh = vmsopen("my.file","rfm=var","alq=100",...) or die $!;
-$name = getname($fh);
-print $fh "Hello, world!\n";
-flush($fh);
-sync($fh);
-rewind($fh);
-$line = <$fh>;
-undef $fh;  # closes file
-$fh = vmssysopen("another.file", O_RDONLY | O_NDELAY, 0, "ctx=bin");
-sysread($fh,$data,128);
-waitfh($fh);
-close($fh);
-remove("another.file");
+  use VMS::Stdio qw( &flush &getname &remove &rewind &setdef &sync &tmpnam
+                     &vmsopen &vmssysopen &waitfh &writeof );
+  setdef("new:[default.dir]");
+  $uniquename = tmpnam;
+  $fh = vmsopen("my.file","rfm=var","alq=100",...) or die $!;
+  $name = getname($fh);
+  print $fh "Hello, world!\n";
+  flush($fh);
+  sync($fh);
+  rewind($fh);
+  $line = <$fh>;
+  undef $fh;  # closes file
+  $fh = vmssysopen("another.file", O_RDONLY | O_NDELAY, 0, "ctx=bin");
+  sysread($fh,$data,128);
+  waitfh($fh);
+  close($fh);
+  remove("another.file");
+  writeof($pipefh);
 
 =head1 DESCRIPTION
 
@@ -175,6 +179,13 @@ to the beginning of the file.  It's really just a convenience
 method equivalent in effect to C<seek($fh,0,0)>.  It returns a
 true value if successful, and C<undef> if it fails.
 
+=item setdef
+
+This function sets the default device and directory for the process.
+It is identical to the built-in chdir() operator, except that the change
+persists after Perl exits.  It returns a true value on success, and
+C<undef> if it encounters and error.
+
 =item sync
 
 This function flushes buffered data for the specified file handle
@@ -212,6 +223,373 @@ as a normal Perl file handle only.  When the scalar containing
 a VMS::Stdio file handle is overwritten, C<undef>d, or goes
 out of scope, the associated file is closed automatically.
 
+=over 4
+
+=head2 File characteristic options
+
+=over 2
+
+=item alq=INTEGER
+
+Sets the allocation quantity for this file
+
+=item bls=INTEGER
+
+File blocksize
+
+=item ctx=STRING
+
+Sets the context for the file. Takes one of these arguments:
+
+=over 4
+
+=item bin
+
+Disables LF to CRLF translation
+
+=item cvt
+
+Negates previous setting of C<ctx=noctx>
+
+=item nocvt
+
+Disables conversion of FORTRAN carriage control
+
+=item rec
+
+Force record-mode access
+
+=item stm
+
+Force stream mode
+
+=item xplct
+
+Causes records to be flushed I<only> when the file is closed, or when an
+explicit flush is done
+
+=back
+
+=item deq=INTEGER
+
+Sets the default extension quantity
+
+=item dna=FILESPEC
+
+Sets the default filename string. Used to fill in any missing pieces of the
+filename passed.
+
+=item fop=STRING
+
+File processing option. Takes one or more of the following (in a
+comma-separated list if there's more than one)
+
+=over 4
+
+=item ctg
+
+Contiguous.
+
+=item cbt
+
+Contiguous-best-try.
+
+=item dfw
+
+Deferred write; only applicable to files opened for shared access.
+
+=item dlt
+
+Delete file on close.
+
+=item tef
+
+Truncate at end-of-file.
+
+=item cif
+
+Create if nonexistent.
+
+=item sup
+
+Supersede.
+
+=item scf
+
+Submit as command file on close.
+
+=item spl
+
+Spool to system printer on close.
+
+=item tmd
+
+Temporary delete.
+
+=item tmp
+
+Temporary (no file directory).
+
+=item nef
+
+Not end-of-file.
+
+=item rck
+
+Read check compare operation.
+
+=item wck
+
+Write check compare operation.
+
+=item mxv
+
+Maximize version number.
+
+=item rwo
+
+Rewind file on open.
+
+=item pos
+
+Current position.
+
+=item rwc
+
+Rewind file on close.
+
+=item sqo
+
+File can only be processed in a sequential manner.
+
+=back
+
+=item fsz=INTEGER
+
+Fixed header size
+
+=item gbc=INTEGER
+
+Global buffers requested for the file
+
+=item mbc=INTEGER
+
+Multiblock count
+
+=item mbf=INTEGER
+
+Bultibuffer count
+
+=item mrs=INTEGER
+
+Maximum record size
+
+=item rat=STRING
+
+File record attributes. Takes one of the following:
+
+=over 4
+
+=item cr
+
+Carriage-return control.
+
+=item blk
+
+Disallow records to span block boundaries.
+
+=item ftn
+
+FORTRAN print control.
+
+=item none
+
+Explicitly forces no carriage control.
+
+=item prn
+
+Print file format.
+
+=back
+
+=item rfm=STRING
+
+File record format. Takes one of the following:
+
+=over 4
+
+=item fix
+
+Fixed-length record format.
+
+=item stm
+
+RMS stream record format.
+
+=item stmlf
+
+Stream format with line-feed terminator.
+
+=item stmcr
+
+Stream format with carriage-return terminator.
+
+=item var
+
+Variable-length record format.
+
+=item vfc
+
+Variable-length record with fixed control.
+
+=item udf
+
+Undefined format
+
+=back
+
+=item rop=STRING
+
+Record processing operations. Takes one or more of the following in a
+comma-separated list:
+
+=over 4
+
+=item asy
+
+Asynchronous I/O.
+
+=item cco
+
+Cancel Ctrl/O (used with Terminal I/O).
+
+=item cvt
+
+Capitalizes characters on a read from the terminal.
+
+=item eof
+
+Positions the record stream to the end-of-file for the connect operation
+only.
+
+=item nlk
+
+Do not lock record.
+
+=item pmt
+
+Enables use of the prompt specified by pmt=usr-prmpt on input from the
+terminal.
+
+=item pta
+
+Eliminates any information in the type-ahead buffer on a read from the
+terminal.
+
+=item rea
+
+Locks record for a read operation for this process, while allowing other
+accessors to read the record.
+
+=item rlk
+
+Locks record for write.
+
+=item rne
+
+Suppresses echoing of input data on the screen as it is entered on the
+keyboard.
+
+=item rnf
+
+Indicates that Ctrl/U, Ctrl/R, and DELETE are not to be considered control
+commands on terminal input, but are to be passed to the application
+program.
+
+=item rrl
+
+Reads regardless of lock.
+
+=item syncsts
+
+Returns success status of RMS$_SYNCH if the requested service completes its
+task immediately.
+
+=item tmo
+
+Timeout I/O.
+
+=item tpt
+
+Allows put/write services using sequential record access mode to occur at
+any point in the file, truncating the file at that point.
+
+=item ulk
+
+Prohibits RMS from automatically unlocking records.
+
+=item wat
+
+Wait until record is available, if currently locked by another stream.
+
+=item rah
+
+Read ahead.
+
+=item wbh
+
+Write behind.
+
+=back
+
+=item rtv=INTEGER
+
+The number of retrieval pointers that RMS has to maintain (0 to 127255)
+
+=item shr=STRING
+
+File sharing options. Choose one of the following:
+
+=over 4
+
+=item del
+
+Allows users to delete.
+
+=item get
+
+Allows users to read.
+
+=item mse
+
+Allows mainstream access.
+
+=item nil
+
+Prohibits file sharing.
+
+=item put
+
+Allows users to write.
+
+=item upd
+
+Allows users to update.
+
+=item upi
+
+Allows one or more writers.
+
+=back
+
+=item tmo=INTEGER
+
+I/O timeout value
+
+=back
+
+=back
+
 =item vmssysopen
 
 This function bears the same relationship to the CORE function
@@ -231,8 +609,17 @@ operation on the file handle specified as its argument.  It is
 used with handles opened for asynchronous I/O, and performs its
 task by calling the CRTL routine fwait().
 
+=item writeof
+
+This function writes an EOF to a file handle, if the device driver
+supports this operation.  Its primary use is to send an EOF to a
+subprocess through a pipe opened for writing without closing the
+pipe.  It returns a true value if successful, and C<undef> if
+it encounters an error.
+
 =head1 REVISION
 
-This document was last revised on 10-Dec-1996, for Perl 5.004.
+This document was last revised on 13-Oct-1998, for Perl 5.004, 5.005, and
+5.006.
 
 =cut

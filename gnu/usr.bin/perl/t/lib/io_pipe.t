@@ -41,6 +41,13 @@ print $pipe "not ok 3\n" ;
 $pipe->close or print "# \$!=$!\nnot ";
 print "ok 4\n";
 
+# Check if can fork with dynamic extensions (bug in CRT):
+if ($^O eq 'os2' and
+    system "$^X -I../lib -MOpcode -e 'defined fork or die'  > /dev/null 2>&1") {
+    print "ok $_ # skipped: broken fork\n" for 5..10;
+    exit 0;
+}
+
 $pipe = new IO::Pipe;
 
 $pid = fork();
@@ -104,6 +111,7 @@ sub broken_pipe {
 print $pipe "not ok 9\n";
 $pipe->close;
 
+sleep 1;
 
 print "ok 10\n";
 

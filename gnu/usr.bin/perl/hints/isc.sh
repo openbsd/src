@@ -34,6 +34,9 @@ ccflags="$ccflags -DBOGUS_GETNAME_RETURN=256"
 # rename(2) can't rename long filenames
 d_rename=undef
 
+# for ext/IPC/SysV/SysV.xs
+ccflags="$ccflags -DPERL_ISC"
+
 # You can also include -D_SYSV3 to pick up "traditionally visible"
 # symbols hidden by name-space pollution rules.  This raises some
 # compilation "redefinition" warnings, but they appear harmless.

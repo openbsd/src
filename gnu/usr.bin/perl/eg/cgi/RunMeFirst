@@ -9,10 +9,17 @@ unless (-w $ww) {
 }
 
 # Decode the sample image.
-for $bin (qw(wilogo.gif)) {
-    unless (open UU, "$bin.uu") { warn "Can't open $bin.uu: $!\n"; next }
+for $uu (<*.uu>) {
+    unless (open UU, "<$uu") { warn "Can't open $uu: $!\n"; next }
+    while (<UU>) {
+        chomp;
+	if (/^begin\s+\d+\s+(.+)$/) {
+	    $bin = $1;
+	    last;
+	}
+    }
     unless (open BIN, "> $bin") { warn "Can't create $bin: $!\n"; next }
-    $_ = <UU>;
+    binmode BIN;
     while (<UU>) {
 	chomp;
 	last if /^end/;
@@ -24,6 +31,6 @@ for $bin (qw(wilogo.gif)) {
 
 # Create symlinks from *.txt to *.cgi for documentation purposes.
 foreach (<*.cgi>) {
-    ($target = $_) =~ s/cgi$/txt/;
+    ($target = $_) =~ s/cgi$/txt/i;
     symlink $_, $target unless -e $target;
 }

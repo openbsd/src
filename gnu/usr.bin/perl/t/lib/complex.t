@@ -3,13 +3,9 @@
 # $RCSfile: complex.t,v $
 #
 # Regression tests for the Math::Complex pacakge
-# -- Raphael Manfredi	September 1996
-# -- Jarkko Hietaniemi	March-October 1997
-# -- Daniel S. Lewart	September-October 1997
-
-$VERSION = '1.05';
-
-# $Id: complex.t,v 1.1 1997/11/30 08:00:23 millert Exp $
+# -- Raphael Manfredi	since Sep 1996
+# -- Jarkko Hietaniemi	since Mar 1997
+# -- Daniel S. Lewart	since Sep 1997
 
 BEGIN {
     chdir 't' if -d 't';
@@ -17,6 +13,8 @@ BEGIN {
 }
 
 use Math::Complex;
+
+my $VERSION = sprintf("%s", q$Id: complex.t,v 1.2 1999/04/29 22:52:29 millert Exp $ =~ /(\d+\.d+)/);
 
 my ($args, $op, $target, $test, $test_set, $try, $val, $zvalue, @set, @val);
 
@@ -26,7 +24,12 @@ my @script = (
     'my ($res, $s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,$s8,$s9,$s10, $z0,$z1,$z2);' .
 	"\n\n"
 );
-my $eps = 1e-11;
+my $eps = 1e-13;
+
+if ($^O eq 'unicos') { 	# For some reason root() produces very inaccurate
+    $eps = 1e-11;	# results in Cray UNICOS, and occasionally also
+}			# cos(), sin(), cosh(), sinh().  The division
+			# of doubles is the current suspect.
 
 while (<DATA>) {
 	s/^\s+//;
@@ -59,16 +62,70 @@ while (<DATA>) {
 	}
 }
 
+#
+
+sub test_mutators {
+    my $op;
+
+    $test++;
+push(@script, <<'EOT');
+{
+    my $z = cplx(  1,  1);
+    $z->Re(2);
+    $z->Im(3);
+    print 'not ' unless Re($z) == 2 and Im($z) == 3;
+EOT
+    push(@script, qq(print "ok $test\\n"}\n));
+
+    $test++;
+push(@script, <<'EOT');
+{
+    my $z = cplx(  1,  1);
+    $z->abs(3 * sqrt(2));
+    print 'not ' unless (abs($z) - 3 * sqrt(2)) < $eps and
+                        (arg($z) - pi / 4     ) < $eps and
+                        (Re($z) - 3           ) < $eps and
+                        (Im($z) - 3           ) < $eps;
+EOT
+    push(@script, qq(print "ok $test\\n"}\n));
+
+    $test++;
+push(@script, <<'EOT');
+{
+    my $z = cplx(  1,  1);
+    $z->arg(-3 / 4 * pi);
+    print 'not ' unless (arg($z) + 3 / 4 * pi) < $eps and
+                        (abs($z) - sqrt(2)   ) < $eps and
+                        (Re($z) + 1          ) < $eps and
+                        (Im($z) + 1          ) < $eps;
+EOT
+    push(@script, qq(print "ok $test\\n"}\n));
+}
+
+test_mutators();
+
+my $constants = '
+my $i    = cplx(0,  1);
+my $pi   = cplx(pi, 0);
+my $pii  = cplx(0, pi);
+my $pip2 = cplx(pi/2, 0);
+my $zero = cplx(0, 0);
+';
+
+push(@script, $constants);
+
+
 # test the divbyzeros
 
 sub test_dbz {
     for my $op (@_) {
 	$test++;
 
-#	push(@script, qq(print "# '$op'\n";));
-	push(@script, qq(eval '$op';));
-	push(@script, qq(print 'not ' unless (\$@ =~ /Division by zero/);));
-	push(@script, qq( print "ok $test\\n";\n));
+	push(@script, <<EOT);
+eval '$op';
+print 'not ' unless (\$@ =~ /Division by zero/);
+EOT
+        push(@script, qq(print "ok $test\\n";\n));
     }
 }
 
@@ -78,57 +135,43 @@ sub test_loz {
     for my $op (@_) {
 	$test++;
 
-#	push(@script, qq(print "# '$op'\n";));
-	push(@script, qq(eval '$op';));
-	push(@script, qq(print 'not ' unless (\$@ =~ /Logarithm of zero/);));
-	push(@script, qq( print "ok $test\\n";\n));
+	push(@script, <<EOT);
+eval '$op';
+print 'not ' unless (\$@ =~ /Logarithm of zero/);
+EOT
+        push(@script, qq(print "ok $test\\n";\n));
     }
 }
 
-my $minusi = cplx(0, -1);
-
 test_dbz(
 	 'i/0',
-#	 'tan(pi/2)',	# may succeed thanks to floating point inaccuracies
-#	 'sec(pi/2)',	# may succeed thanks to floating point inaccuracies
-	 'csc(0)',
-	 'cot(0)',
-	 'atan(i)',
-	 'atan($minusi)',
-	 'asec(0)',
+	 'acot(0)',
+	 'acot(+$i)',
+#	 'acoth(-1)',	# Log of zero.
+	 'acoth(0)',
+	 'acoth(+1)',
 	 'acsc(0)',
-	 'acot(i)',
-	 'acot($minusi)',
-#	 'tanh(pi/2)',	# may succeed thanks to floating point inaccuracies
-#	 'sech(pi/2)',	# may succeed thanks to floating point inaccuracies
-	 'csch(0)',
-	 'coth(0)',
-	 'atanh(1)',
-	 'asech(0)',
 	 'acsch(0)',
-	 'acoth(1)',
+	 'asec(0)',
+	 'asech(0)',
+	 'atan(-$i)',
+	 'atan($i)',
+#	 'atanh(-1)',	# Log of zero.
+	 'atanh(+1)',
+	 'cot(0)',
+	 'coth(0)',
+	 'csc(0)',
+	 'tan($pip2)',
+	 'csch(0)',
+	 'tan($pip2)',
 	);
-
-my $zero = cplx(0, 0);
 
 test_loz(
 	 'log($zero)',
+	 'acot(-$i)',
 	 'atanh(-1)',
 	 'acoth(-1)',
 	);
-
-# test the 0**0
-
-sub test_ztz {
-	$test++;
-
-#	push(@script, qq(print "# 0**0\n";));
-	push(@script, qq(eval 'cplx(0)**cplx(0)';));
-	push(@script, qq(print 'not ' unless (\$@ =~ /zero raised to the/);));
-	push(@script, qq( print "ok $test\\n";\n));
-}
-
-test_ztz;
 
 # test the bad roots
 
@@ -136,10 +179,11 @@ sub test_broot {
     for my $op (@_) {
 	$test++;
 
-#	push(@script, qq(print "# root(2, $op)\n";));
-	push(@script, qq(eval 'root(2, $op)';));
-	push(@script, qq(print 'not ' unless (\$@ =~ /root must be/);));
-	push(@script, qq( print "ok $test\\n";\n));
+	push(@script, <<EOT);
+eval 'root(2, $op)';
+print 'not ' unless (\$@ =~ /root must be/);
+EOT
+        push(@script, qq(print "ok $test\\n";\n));
     }
 }
 
@@ -200,7 +244,7 @@ EOB
 			$test++;
 			# check that the rhs has not changed
 			push @script, qq(print "not " unless (\$zbr == \$z1r and \$zbi == \$z1i););
-			push @script, qq( print "ok $test\\n";\n);
+			push @script, qq(print "ok $test\\n";\n);
 			push @script, "}\n";
 		}
 	}
@@ -225,6 +269,9 @@ sub value {
 	local ($_) = @_;
 	if (/^\s*\((.*),(.*)\)/) {
 		return "cplx($1,$2)";
+	}
+	elsif (/^\s*([\-\+]?(?:\d+(\.\d+)?|\.\d+)(?:[e[\-\+]\d+])?)/) {
+		return "cplx($1,0)";
 	}
 	elsif (/^\s*\[(.*),(.*)\]/) {
 		return "cplxe($1,$2)";
@@ -326,6 +373,7 @@ __END__
 (1,0):(2,3):(1,0)
 (2,3):(0,0):(1,0)
 (2,3):(1,0):(2,3)
+(0,0):(0,0):(1,0)
 
 &Re
 (3,4):3
@@ -815,4 +863,3 @@ __END__
 ( 2,-3):(  0.14694666622553,  0.23182380450040)
 
 # eof
-

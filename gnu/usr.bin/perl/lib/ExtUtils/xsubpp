@@ -6,7 +6,7 @@ xsubpp - compiler to convert Perl XS code into C code
 
 =head1 SYNOPSIS
 
-B<xsubpp> [B<-v>] [B<-C++>] [B<-except>] [B<-s pattern>] [B<-prototypes>] [B<-noversioncheck>] [B<-nolinenumbers>] [B<-typemap typemap>]... file.xs
+B<xsubpp> [B<-v>] [B<-C++>] [B<-except>] [B<-s pattern>] [B<-prototypes>] [B<-noversioncheck>] [B<-nolinenumbers>] [B<-typemap typemap>] [B<-object_capi>]... file.xs
 
 =head1 DESCRIPTION
 
@@ -59,7 +59,11 @@ number.
 
 Prevents the inclusion of `#line' directives in the output.
 
-=back
+=item B<-object_capi>
+
+Compile code as C in a PERL_OBJECT environment.
+
+back
 
 =head1 ENVIRONMENT
 
@@ -82,12 +86,15 @@ perl(1), perlxs(1), perlxstut(1)
 require 5.002;
 use Cwd;
 use vars '$cplusplus';
+use vars '%v';
+
+use Config;
 
 sub Q ;
 
 # Global Constants
 
-$XSUBPP_version = "1.9505";
+$XSUBPP_version = "1.9507";
 
 my ($Is_VMS, $SymSet);
 if ($^O eq 'VMS') {
@@ -103,6 +110,8 @@ $FH = 'File0000' ;
 $usage = "Usage: xsubpp [-v] [-C++] [-except] [-prototypes] [-noversioncheck] [-nolinenumbers] [-s pattern] [-typemap typemap]... file.xs\n";
 
 $proto_re = "[" . quotemeta('\$%&*@;') . "]" ;
+# mjn
+$OBJ   = 1 if $Config{'ccflags'} =~ /PERL_OBJECT/i;
 
 $except = "";
 $WantPrototypes = -1 ;
@@ -118,6 +127,7 @@ SWITCH: while (@ARGV and $ARGV[0] =~ /^-./) {
     $WantPrototypes = 1, next SWITCH	if $flag eq 'prototypes';
     $WantVersionChk = 0, next SWITCH	if $flag eq 'noversioncheck';
     $WantVersionChk = 1, next SWITCH	if $flag eq 'versioncheck';
+    $WantCAPI = 1, next SWITCH    if $flag eq 'object_capi';
     $except = " TRY",	next SWITCH	if $flag eq 'except';
     push(@tm,shift),	next SWITCH	if $flag eq 'typemap';
     $WantLineNumbers = 0, next SWITCH	if $flag eq 'nolinenumbers';
@@ -234,7 +244,7 @@ $END = "!End!\n\n";		# "impossible" keyword (multiple newline)
 $BLOCK_re= '\s*(' . join('|', qw(
 	REQUIRE BOOT CASE PREINIT INPUT INIT CODE PPCODE OUTPUT 
 	CLEANUP ALIAS PROTOTYPES PROTOTYPE VERSIONCHECK INCLUDE
-	SCOPE
+	SCOPE INTERFACE INTERFACE_MACRO C_ARGS
 	)) . "|$END)\\s*:";
 
 # Input:  ($_, @line) == unparsed input.
@@ -301,6 +311,20 @@ sub print_section {
     print "$xsubpp::counter::SECTION_END_MARKER\n" if $WantLineNumbers;
 }
 
+sub merge_section {
+    my $in = '';
+  
+    while (!/\S/ && @line) {
+        $_ = shift(@line);
+    }
+    
+    for (;  defined($_) && !/^$BLOCK_re/o;  $_ = shift(@line)) {
+	$in .= "$_\n";
+    }
+    chomp $in;
+    return $in;
+}
+
 sub process_keyword($)
 {
     my($pattern) = @_ ;
@@ -328,11 +352,11 @@ sub INPUT_handler {
 	my $line = $_ ;
 
 	# remove trailing semicolon if no initialisation
-	s/\s*;$//g unless /=/ ;
+	s/\s*;$//g unless /[=;+].*\S/ ;
 
 	# check for optional initialisation code
 	my $var_init = '' ;
-	$var_init = $1 if s/\s*(=.*)$//s ;
+	$var_init = $1 if s/\s*([=;+].*)$//s ;
 	$var_init =~ s/"/\\"/g;
 
 	s/\s+/ /g;
@@ -355,10 +379,10 @@ sub INPUT_handler {
 	    $var_addr{$var_name} = 1;
 	    $func_args =~ s/\b($var_name)\b/&$1/;
 	}
-	if ($var_init =~ /^=\s*NO_INIT\s*;?\s*$/) {
+	if ($var_init =~ /^[=;]\s*NO_INIT\s*;?\s*$/) {
 	    print "\t$var_name;\n";
 	} elsif ($var_init =~ /\S/) {
-	    &output_init($var_type, $var_num, "$var_name $var_init");
+	    &output_init($var_type, $var_num, $var_name, $var_init);
 	} elsif ($var_num) {
 	    # generate initialization code
 	    &generate_init($var_type, $var_num, $var_name);
@@ -371,6 +395,10 @@ sub INPUT_handler {
 sub OUTPUT_handler {
     for (;  !/^$BLOCK_re/o;  $_ = shift(@line)) {
 	next unless /\S/;
+	if (/^\s*SETMAGIC\s*:\s*(ENABLE|DISABLE)\s*/) {
+	    $DoSetMagic = ($1 eq "ENABLE" ? 1 : 0);
+	    next;
+	}
 	my ($outarg, $outcode) = /^\s*(\S+)\s*(.*?)\s*$/s ;
 	blurt ("Error: duplicate OUTPUT argument '$outarg' ignored"), next
 	    if $outargs{$outarg} ++ ;
@@ -384,13 +412,50 @@ sub OUTPUT_handler {
 	    unless defined($args_match{$outarg});
 	blurt("Error: No input definition for OUTPUT argument '$outarg' - ignored"), next
 	    unless defined $var_types{$outarg} ;
+	$var_num = $args_match{$outarg};
 	if ($outcode) {
 	    print "\t$outcode\n";
+	    print "\tSvSETMAGIC(ST(" , $var_num-1 , "));\n" if $DoSetMagic;
 	} else {
-	    $var_num = $args_match{$outarg};
-	    &generate_output($var_types{$outarg}, $var_num, $outarg); 
+	    &generate_output($var_types{$outarg}, $var_num, $outarg, $DoSetMagic);
 	}
     }
+}
+
+sub C_ARGS_handler() {
+    my $in = merge_section();
+  
+    TrimWhitespace($in);
+    $func_args = $in;
+} 
+
+sub INTERFACE_MACRO_handler() {
+    my $in = merge_section();
+  
+    TrimWhitespace($in);
+    if ($in =~ /\s/) {		# two
+        ($interface_macro, $interface_macro_set) = split ' ', $in;
+    } else {
+        $interface_macro = $in;
+	$interface_macro_set = 'UNKNOWN_CVT'; # catch later
+    }
+    $interface = 1;		# local
+    $Interfaces = 1;		# global
+}
+
+sub INTERFACE_handler() {
+    my $in = merge_section();
+  
+    TrimWhitespace($in);
+    
+    foreach (split /[\s,]+/, $in) {
+        $Interfaces{$_} = $_;
+    }
+    print Q<<"EOF";
+#	XSFUNCTION = $interface_macro($ret_type,cv,XSANY.any_dptr);
+EOF
+    $interface = 1;		# local
+    $Interfaces = 1;		# global
 }
 
 sub CLEANUP_handler() { print_section() } 
@@ -709,9 +774,15 @@ print("#line 1 \"$filename\"\n")
 while (<$FH>) {
     last if ($Module, $Package, $Prefix) =
 	/^MODULE\s*=\s*([\w:]+)(?:\s+PACKAGE\s*=\s*([\w:]+))?(?:\s+PREFIX\s*=\s*(\S+))?\s*$/;
+
+    if ($OBJ) {
+        s/#if(?:def\s|\s+defined)\s*(\(__cplusplus\)|__cplusplus)/#if defined(__cplusplus) && !defined(PERL_OBJECT)/;
+    }
     print $_;
 }
 &Exit unless defined $_;
+
+print "$xsubpp::counter::SECTION_END_MARKER\n" if $WantLineNumbers;
 
 $lastline    = $_;
 $lastline_no = $.;
@@ -829,6 +900,9 @@ while (fetch_para()) {
     undef(@proto_arg) ;
     undef($proto_in_this_xsub) ;
     undef($scope_in_this_xsub) ;
+    undef($interface);
+    $interface_macro = 'XSINTERFACE_FUNC' ;
+    $interface_macro_set = 'XSINTERFACE_FUNC_SET' ;
     $ProtoThisXSUB = $WantPrototypes ;
     $ScopeThisXSUB = 0;
 
@@ -849,7 +923,7 @@ while (fetch_para()) {
 
 
     # extract return type, function name and arguments
-    my($ret_type) = TidyType($_);
+    ($ret_type) = TidyType($_);
 
     # a function definition needs at least 2 lines
     blurt ("Error: Function definition too short '$ret_type'"), next PARAGRAPH
@@ -859,9 +933,10 @@ while (fetch_para()) {
 
     $func_header = shift(@line);
     blurt ("Error: Cannot parse function definition from '$func_header'"), next PARAGRAPH
-	unless $func_header =~ /^(?:([\w:]*)::)?(\w+)\s*\(\s*(.*?)\s*\)\s*$/s;
+	unless $func_header =~ /^(?:([\w:]*)::)?(\w+)\s*\(\s*(.*?)\s*\)\s*(const)?\s*$/s;
 
     ($class, $func_name, $orig_args) =  ($1, $2, $3) ;
+    $class = "$4 $class" if $4;
     ($pname = $func_name) =~ s/^($Prefix)?/$Packprefix/;
     ($clean_func_name = $func_name) =~ s/^$Prefix//;
     $Full_func_name = "${Packid}_$clean_func_name";
@@ -874,7 +949,8 @@ while (fetch_para()) {
 	last;
     }
     $XSStack[$XSS_work_idx]{functions}{$Full_func_name} ++ ;
-    %XsubAliases = %XsubAliasValues = ();
+    %XsubAliases = %XsubAliasValues = %Interfaces = ();
+    $DoSetMagic = 1;
 
     @args = split(/\s*,\s*/, $orig_args);
     if (defined($class)) {
@@ -916,6 +992,7 @@ while (fetch_para()) {
     $EXPLICIT_RETURN = ($CODE &&
 		("@line" =~ /(\bST\s*\([^;]*=) | (\bXST_m\w+\s*\()/x ));
     $ALIAS  = grep(/^\s*ALIAS\s*:/,  @line);
+    $INTERFACE  = grep(/^\s*INTERFACE\s*:/,  @line);
 
     # print function header
     print Q<<"EOF";
@@ -925,6 +1002,9 @@ while (fetch_para()) {
 EOF
     print Q<<"EOF" if $ALIAS ;
 #    dXSI32;
+EOF
+    print Q<<"EOF" if $INTERFACE ;
+#    dXSFUNCTION($ret_type);
 EOF
     if ($elipsis) {
 	$cond = ($min_args ? qq(items < $min_args) : 0);
@@ -978,7 +1058,7 @@ EOF
         $gotRETVAL = 0;
 
 	INPUT_handler() ;
-	process_keyword("INPUT|PREINIT|ALIAS|PROTOTYPE|SCOPE") ;
+	process_keyword("INPUT|PREINIT|INTERFACE_MACRO|C_ARGS|ALIAS|PROTOTYPE|SCOPE") ;
 
 	print Q<<"EOF" if $ScopeThisXSUB;
 #   ENTER;
@@ -1012,7 +1092,7 @@ EOF
 
 		print $deferred;
 
-        process_keyword("INIT|ALIAS|PROTOTYPE") ;
+        process_keyword("INIT|ALIAS|PROTOTYPE|INTERFACE_MACRO|INTERFACE|C_ARGS") ;
 
 		if (check_keyword("PPCODE")) {
 			print_section();
@@ -1045,6 +1125,7 @@ EOF
 			}
 			$func_name =~ s/^($spat)//
 			    if defined($spat);
+			$func_name = 'XSFUNCTION' if $interface;
 			print "$func_name($func_args);\n";
 		}
 	}
@@ -1059,7 +1140,8 @@ EOF
 	if ($gotRETVAL && $RETVAL_code) {
 	    print "\t$RETVAL_code\n";
 	} elsif ($gotRETVAL || $wantRETVAL) {
-	    &generate_output($ret_type, 0, 'RETVAL');
+	    # RETVAL almost never needs SvSETMAGIC()
+	    &generate_output($ret_type, 0, 'RETVAL', 0);
 	}
 
 	# do cleanup
@@ -1152,6 +1234,18 @@ EOF
 #        sv_setpv((SV*)cv$proto) ;
 EOF
         }
+    } 
+    elsif ($interface) {
+	while ( ($name, $value) = each %Interfaces) {
+	    $name = "$Package\::$name" unless $name =~ /::/;
+	    push(@InitFileCode, Q<<"EOF");
+#        cv = newXS(\"$name\", XS_$Full_func_name, file);
+#        $interface_macro_set(cv,$value) ;
+EOF
+	    push(@InitFileCode, Q<<"EOF") if $proto;
+#        sv_setpv((SV*)cv$proto) ;
+EOF
+        }
     }
     else {
 	push(@InitFileCode,
@@ -1160,11 +1254,32 @@ EOF
 }
 
 # print initialization routine
+
 print Q<<"EOF";
 ##ifdef __cplusplus
 #extern "C"
 ##endif
+EOF
+
+if ($WantCAPI) {
+print Q<<"EOF";
+##ifdef PERL_CAPI
+#XS(boot__CAPI_entry)
+##else
+EOF
+}
+
+print Q<<"EOF";
 #XS(boot_$Module_cname)
+EOF
+
+if ($WantCAPI) {
+print Q<<"EOF";
+##endif	/* PERL_CAPI */
+EOF
+}
+
+print Q<<"EOF";
 #[[
 #    dXSARGS;
 #    char* file = __FILE__;
@@ -1176,7 +1291,7 @@ print Q<<"EOF" if $WantVersionChk ;
 #
 EOF
 
-print Q<<"EOF" if defined $XsubAliases ;
+print Q<<"EOF" if defined $XsubAliases or defined $Interfaces ;
 #    {
 #        CV * cv ;
 #
@@ -1184,7 +1299,7 @@ EOF
 
 print @InitFileCode;
 
-print Q<<"EOF" if defined $XsubAliases ;
+print Q<<"EOF" if defined $XsubAliases or defined $Interfaces ;
 #    }
 EOF
 
@@ -1197,21 +1312,50 @@ if (@BootCode)
 }
 
 print Q<<"EOF";;
-#    ST(0) = &sv_yes;
-#    XSRETURN(1);
+#    XSRETURN_YES;
 #]]
+#
 EOF
+
+if ($WantCAPI) { 
+print Q<<"EOF";
+##ifdef PERL_CAPI
+##define XSCAPI(name) void name(CV* cv, void* pPerl)
+#
+##ifdef __cplusplus
+#extern "C"
+##endif
+#XSCAPI(boot_$Module_cname)
+#[[
+#    SetCPerlObj(pPerl);
+#    boot__CAPI_entry(cv);
+#]]
+##endif	/* PERL_CAPI */
+EOF
+}
 
 warn("Please specify prototyping behavior for $filename (see perlxs manual)\n") 
     unless $ProtoUsed ;
 &Exit;
 
-
 sub output_init {
-    local($type, $num, $init) = @_;
+    local($type, $num, $var, $init) = @_;
     local($arg) = "ST(" . ($num - 1) . ")";
 
-    eval qq/print " $init\\\n"/;
+    if(  $init =~ /^=/  ) {
+	eval qq/print "\\t$var $init\\n"/;
+	warn $@   if  $@;
+    } else {
+	if(  $init =~ s/^\+//  &&  $num  ) {
+	    &generate_init($type, $num, $var);
+	} else {
+	    eval qq/print "\\t$var;\\n"/;
+	    warn $@   if  $@;
+	    $init =~ s/^;//;
+	}
+	$deferred .= eval qq/"\\n\\t$init\\n"/;
+	warn $@   if  $@;
+    }
 }
 
 sub Warn
@@ -1273,17 +1417,22 @@ sub generate_init {
 	    $expr =~ s/(\t+)/$1    /g;
 	    $expr =~ s/        /\t/g;
 	    eval qq/print "\\t$var;\\n"/;
+	    warn $@   if  $@;
 	    $deferred .= eval qq/"\\n\\tif (items < $num)\\n\\t    $var = $defaults{$var};\\n\\telse {\\n$expr;\\n\\t}\\n"/;
+	    warn $@   if  $@;
     } elsif ($ScopeThisXSUB or $expr !~ /^\t\$var =/) {
 	    eval qq/print "\\t$var;\\n"/;
+	    warn $@   if  $@;
 	    $deferred .= eval qq/"\\n$expr;\\n"/;
+	    warn $@   if  $@;
     } else {
 	    eval qq/print "$expr;\\n"/;
+	    warn $@   if  $@;
     }
 }
 
 sub generate_output {
-    local($type, $num, $var) = @_;
+    local($type, $num, $var, $do_setmagic) = @_;
     local($arg) = "ST(" . ($num - ($num != 0)) . ")";
     local($argoff) = $num - 1;
     local($ntype);
@@ -1291,6 +1440,7 @@ sub generate_output {
     $type = TidyType($type) ;
     if ($type =~ /^array\(([^,]*),(.*)\)/) {
 	    print "\tsv_setpvn($arg, (char *)$var, $2 * sizeof($1)), XFree((char *)$var);\n";
+	    print "\tSvSETMAGIC($arg);\n" if $do_setmagic;
     } else {
 	    blurt("Error: '$type' not in typemap"), return
 		unless defined($type_kind{$type});
@@ -1312,23 +1462,25 @@ sub generate_output {
 		$subexpr =~ s/\n\t/\n\t\t/g;
 		$expr =~ s/DO_ARRAY_ELEM\n/$subexpr/;
 		eval "print qq\a$expr\a";
+		warn $@   if  $@;
+		print "\t\tSvSETMAGIC(ST(ix_$var));\n" if $do_setmagic;
 	    }
 	    elsif ($var eq 'RETVAL') {
 		if ($expr =~ /^\t\$arg = new/) {
 		    # We expect that $arg has refcnt 1, so we need to
 		    # mortalize it.
 		    eval "print qq\a$expr\a";
+		    warn $@   if  $@;
 		    print "\tsv_2mortal(ST(0));\n";
+		    print "\tSvSETMAGIC(ST(0));\n" if $do_setmagic;
 		}
 		elsif ($expr =~ /^\s*\$arg\s*=/) {
 		    # We expect that $arg has refcnt >=1, so we need
-		    # to mortalize it. However, the extension may have
-		    # returned the built-in perl value, which is
-		    # read-only, thus not mortalizable. However, it is
-		    # safe to leave it as it is, since it would be
-		    # ignored by REFCNT_dec. Builtin values have REFCNT==0.
+		    # to mortalize it!
 		    eval "print qq\a$expr\a";
-		    print "\tif (SvREFCNT(ST(0))) sv_2mortal(ST(0));\n";
+		    warn $@   if  $@;
+		    print "\tsv_2mortal(ST(0));\n";
+		    print "\tSvSETMAGIC(ST(0));\n" if $do_setmagic;
 		}
 		else {
 		    # Just hope that the entry would safely write it
@@ -1337,10 +1489,14 @@ sub generate_output {
 		    # works too.
 		    print "\tST(0) = sv_newmortal();\n";
 		    eval "print qq\a$expr\a";
+		    warn $@   if  $@;
+		    # new mortals don't have set magic
 		}
 	    }
 	    elsif ($arg =~ /^ST\(\d+\)$/) {
 		eval "print qq\a$expr\a";
+		warn $@   if  $@;
+		print "\tSvSETMAGIC($arg);\n" if $do_setmagic;
 	    }
     }
 }

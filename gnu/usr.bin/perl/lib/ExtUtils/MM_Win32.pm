@@ -30,14 +30,18 @@ $ENV{EMXSHELL} = 'sh'; # to run `commands`
 unshift @MM::ISA, 'ExtUtils::MM_Win32';
 
 $BORLAND = 1 if $Config{'cc'} =~ /^bcc/i;
+$GCC     = 1 if $Config{'cc'} =~ /^gcc/i;
 $DMAKE = 1 if $Config{'make'} =~ /^dmake/i;
 $NMAKE = 1 if $Config{'make'} =~ /^nmake/i;
+$PERLMAKE = 1 if $Config{'make'} =~ /^pmake/i;
+$OBJ   = 1 if $Config{'ccflags'} =~ /PERL_OBJECT/i;
 
 sub dlsyms {
     my($self,%attribs) = @_;
 
     my($funcs) = $attribs{DL_FUNCS} || $self->{DL_FUNCS} || {};
     my($vars)  = $attribs{DL_VARS} || $self->{DL_VARS} || [];
+    my($funclist) = $attribs{FUNCLIST} || $self->{FUNCLIST} || [];
     my($imports)  = $attribs{IMPORTS} || $self->{IMPORTS} || {};
     my(@m);
     (my $boot = $self->{NAME}) =~ s/:/_/g;
@@ -50,6 +54,7 @@ $self->{BASEEXT}.def: Makefile.PL
      -e "Mksymlists('NAME' => '!, $self->{NAME},
      q!', 'DLBASE' => '!,$self->{DLBASE},
      q!', 'DL_FUNCS' => !,neatvalue($funcs),
+     q!, 'FUNCLIST' => !,neatvalue($funclist),
      q!, 'IMPORTS' => !,neatvalue($imports),
      q!, 'DL_VARS' => !, neatvalue($vars), q!);"
 !);
@@ -65,7 +70,21 @@ sub replace_manpage_separator {
 
 sub maybe_command {
     my($self,$file) = @_;
-    return "$file.exe" if -e "$file.exe";
+    my @e = exists($ENV{'PATHEXT'})
+          ? split(/;/, $ENV{PATHEXT})
+	  : qw(.com .exe .bat .cmd);
+    my $e = '';
+    for (@e) { $e .= "\Q$_\E|" }
+    chop $e;
+    # see if file ends in one of the known extensions
+    if ($file =~ /($e)$/i) {
+	return $file if -e $file;
+    }
+    else {
+	for (@e) {
+	    return "$file$_" if -e "$file$_";
+	}
+    }
     return;
 }
 
@@ -153,13 +172,19 @@ sub init_others
  $self->{'TEST_F'} = '$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e test_f';
  $self->{'LD'}     = $Config{'ld'} || 'link';
  $self->{'AR'}     = $Config{'ar'} || 'lib';
- $self->{'LDLOADLIBS'}
-    ||= ( $BORLAND
-          ? 'import32.lib cw32mti.lib '
-          : 'msvcrt.lib oldnames.lib kernel32.lib comdlg32.lib winspool.lib gdi32.lib '
-	    .'advapi32.lib user32.lib shell32.lib netapi32.lib ole32.lib '
-	    .'oleaut32.lib uuid.lib wsock32.lib mpr.lib winmm.lib version.lib '
-	) . ' odbc32.lib odbccp32.lib';
+ $self->{'LDLOADLIBS'} ||= $Config{'libs'};
+ # -Lfoo must come first for Borland, so we put it in LDDLFLAGS
+ if ($BORLAND) {
+     my $libs = $self->{'LDLOADLIBS'};
+     my $libpath = '';
+     while ($libs =~ s/(?:^|\s)(("?)-L.+?\2)(?:\s|$)/ /) {
+         $libpath .= ' ' if length $libpath;
+         $libpath .= $1;
+     }
+     $self->{'LDLOADLIBS'} = $libs;
+     $self->{'LDDLFLAGS'} ||= $Config{'lddlflags'};
+     $self->{'LDDLFLAGS'} .= " $libpath";
+ }
  $self->{'DEV_NULL'} = '> NUL';
  # $self->{'NOECHO'} = ''; # till we have it working
 }
@@ -344,7 +369,9 @@ END
     push(@m, "\t$self->{CP} \$(MYEXTLIB) \$\@\n") if $self->{MYEXTLIB};
 
     push @m,
-q{	$(AR) }.($BORLAND ? '$@ $(OBJECT:^"+")' : '-out:$@ $(OBJECT)').q{
+q{	$(AR) }.($BORLAND ? '$@ $(OBJECT:^"+")'
+			  : ($GCC ? '-ru $@ $(OBJECT)'
+			          : '-out:$@ $(OBJECT)')).q{
 	}.$self->{NOECHO}.q{echo "$(EXTRALIBS)" > $(INST_ARCHAUTODIR)\extralibs.ld
 	$(CHMOD) 755 $@
 };
@@ -415,11 +442,25 @@ INST_DYNAMIC_DEP = '.$inst_dynamic_dep.'
 
 $(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP) $(INST_ARCHAUTODIR)\.exists $(EXPORT_LIST) $(PERL_ARCHIVE) $(INST_DYNAMIC_DEP)
 ');
-
-    push(@m, $BORLAND ?
-q{	$(LD) $(LDDLFLAGS) $(OTHERLDFLAGS) }.$ldfrom.q{,$@,,$(PERL_ARCHIVE:s,/,\,) $(LDLOADLIBS:s,/,\,) $(MYEXTLIB:s,/,\,),$(EXPORT_LIST:s,/,\,),$(RESFILES)} :
-q{	$(LD) -out:$@ $(LDDLFLAGS) }.$ldfrom.q{ $(OTHERLDFLAGS) $(MYEXTLIB) $(PERL_ARCHIVE) $(LDLOADLIBS) -def:$(EXPORT_LIST)}
-	);
+    if ($GCC) {
+      push(@m,  
+       q{	dlltool --def $(EXPORT_LIST) --output-exp dll.exp
+	$(LD) -o $@ -Wl,--base-file -Wl,dll.base $(LDDLFLAGS) }.$ldfrom.q{ $(OTHERLDFLAGS) $(MYEXTLIB) $(PERL_ARCHIVE) $(LDLOADLIBS) dll.exp
+	dlltool --def $(EXPORT_LIST) --base-file dll.base --output-exp dll.exp
+	$(LD) -o $@ $(LDDLFLAGS) }.$ldfrom.q{ $(OTHERLDFLAGS) $(MYEXTLIB) $(PERL_ARCHIVE) $(LDLOADLIBS) dll.exp });
+    } elsif ($BORLAND) {
+      push(@m,
+       q{	$(LD) $(LDDLFLAGS) $(OTHERLDFLAGS) }.$ldfrom.q{,$@,,}
+       .($DMAKE ? q{$(PERL_ARCHIVE:s,/,\,) $(LDLOADLIBS:s,/,\,) }
+		 .q{$(MYEXTLIB:s,/,\,),$(EXPORT_LIST:s,/,\,)}
+		: q{$(subst /,\,$(PERL_ARCHIVE)) $(subst /,\,$(LDLOADLIBS)) }
+		 .q{$(subst /,\,$(MYEXTLIB)),$(subst /,\,$(EXPORT_LIST))})
+       .q{,$(RESFILES)});
+    } else {	# VC
+      push(@m,
+       q{	$(LD) -out:$@ $(LDDLFLAGS) }.$ldfrom.q{ $(OTHERLDFLAGS) }
+      .q{$(MYEXTLIB) $(PERL_ARCHIVE) $(LDLOADLIBS) -def:$(EXPORT_LIST)});
+    }
     push @m, '
 	$(CHMOD) 755 $@
 ';
@@ -430,7 +471,13 @@ q{	$(LD) -out:$@ $(LDDLFLAGS) }.$ldfrom.q{ $(OTHERLDFLAGS) $(MYEXTLIB) $(PERL_AR
 
 sub perl_archive
 {
- return '$(PERL_INC)\perl$(LIB_EXT)';
+    my ($self) = @_;
+    if($OBJ) {
+        if ($self->{CAPI}) {
+            return '$(PERL_INC)\perlCAPI$(LIB_EXT)';
+        }
+    }
+    return '$(PERL_INC)\\'.$Config{'libperl'};
 }
 
 sub export_list
@@ -487,10 +534,11 @@ sub pm_to_blib {
 pm_to_blib: $(TO_INST_PM)
 	}.$self->{NOECHO}.q{$(PERL) "-I$(INST_ARCHLIB)" "-I$(INST_LIB)" \
 	"-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" -MExtUtils::Install \
-        -e "pm_to_blib(qw[ }.
-	($NMAKE ? '<<pmfiles.dat'
-		: '$(mktmp,pmfiles.dat $(PM_TO_BLIB:s,\\,\\\\,)\n)').
-	q{ ],'}.$autodir.q{')"
+        -e "pm_to_blib(}.
+	($NMAKE ? 'qw[ <<pmfiles.dat ],'
+	        : $DMAKE ? 'qw[ $(mktmp,pmfiles.dat $(PM_TO_BLIB:s,\\,\\\\,)\n) ],'
+			 : '{ qw[$(PM_TO_BLIB)] },'
+	 ).q{'}.$autodir.q{')"
 	}. ($NMAKE ? q{
 $(PM_TO_BLIB)
 <<
@@ -693,6 +741,7 @@ We don't want manpage process.  XXX add pod2html support later.
 =cut
 
 sub manifypods {
+    my($self) = shift;
     return "\nmanifypods :\n\t$self->{NOECHO}\$(NOOP)\n";
 }
 
@@ -781,4 +830,5 @@ __END__
 =back
 
 =cut 
+
 

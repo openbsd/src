@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..51\n";
+print "1..55\n";
 
 # Test glob operations.
 
@@ -231,12 +231,54 @@ $bar = "ok 48";
 local(*bar) = *bar;
 print "$bar\n";
 
+$var = "ok 49";
+$_   = \$var;
+print $$_,"\n";
+
+# test if reblessing during destruction results in more destruction
+
+{
+    package A;
+    sub new { bless {}, shift }
+    DESTROY { print "# destroying 'A'\nok 51\n" }
+    package B;
+    sub new { bless {}, shift }
+    DESTROY { print "# destroying 'B'\nok 50\n"; bless shift, 'A' }
+    package main;
+    my $b = B->new;
+}
+
+# test if $_[0] is properly protected in DESTROY()
+
+{
+    my $i = 0;
+    local $SIG{'__DIE__'} = sub {
+	my $m = shift;
+	if ($i++ > 4) {
+	    print "# infinite recursion, bailing\nnot ok 52\n";
+	    exit 1;
+        }
+	print "# $m";
+	if ($m =~ /^Modification of a read-only/) { print "ok 52\n" }
+    };
+    package C;
+    sub new { bless {}, shift }
+    DESTROY { $_[0] = 'foo' }
+    {
+	print "# should generate an error...\n";
+	my $c = C->new;
+    }
+    print "# good, didn't recurse\n";
+}
+
+# test global destruction
+
 package FINALE;
 
 {
-    $ref3 = bless ["ok 51\n"];		# package destruction
-    my $ref2 = bless ["ok 50\n"];	# lexical destruction
-    local $ref1 = bless ["ok 49\n"];	# dynamic destruction
+    $ref3 = bless ["ok 55\n"];		# package destruction
+    my $ref2 = bless ["ok 54\n"];	# lexical destruction
+    local $ref1 = bless ["ok 53\n"];	# dynamic destruction
     1;					# flush any temp values on stack
 }
 

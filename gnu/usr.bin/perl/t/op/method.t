@@ -4,7 +4,7 @@
 # test method calls and autoloading.
 #
 
-print "1..24\n";
+print "1..26\n";
 
 @A::ISA = 'B';
 @B::ISA = 'C';
@@ -64,6 +64,12 @@ eval 'sub B::d {"B::d4"}';	# Import now.
 test (A->d, "B::d4");		# Update hash table;
 
 delete $B::{d};			# Should work without any help too
+test (A->d, "C::d");
+
+{
+    local *C::d;
+    test (eval { A->d } || "nope", "nope");
+}
 test (A->d, "C::d");
 
 *A::x = *A::d;			# See if cache incorrectly follows synonyms

@@ -7,11 +7,8 @@
  * page-level routines
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: pair.c,v 1.10 90/12/13 13:00:35 oz Exp $";
-#endif
-
 #include "config.h"
+#include "EXTERN.h"
 #include "sdbm.h"
 #include "tune.h"
 #include "pair.h"
@@ -44,9 +41,7 @@ static int seepair proto((char *, int, char *, int));
  */
 
 int
-fitpair(pag, need)
-char *pag;
-int need;
+fitpair(char *pag, int need)
 {
 	register int n;
 	register int off;
@@ -63,10 +58,7 @@ int need;
 }
 
 void
-putpair(pag, key, val)
-char *pag;
-datum key;
-datum val;
+putpair(char *pag, datum key, datum val)
 {
 	register int n;
 	register int off;
@@ -92,9 +84,7 @@ datum val;
 }
 
 datum
-getpair(pag, key)
-char *pag;
-datum key;
+getpair(char *pag, datum key)
 {
 	register int i;
 	register int n;
@@ -114,9 +104,7 @@ datum key;
 
 #ifdef SEEDUPS
 int
-duppair(pag, key)
-char *pag;
-datum key;
+duppair(char *pag, datum key)
 {
 	register short *ino = (short *) pag;
 	return ino[0] > 0 && seepair(pag, ino[0], key.dptr, key.dsize) > 0;
@@ -124,9 +112,7 @@ datum key;
 #endif
 
 datum
-getnkey(pag, num)
-char *pag;
-int num;
+getnkey(char *pag, int num)
 {
 	datum key;
 	register int off;
@@ -145,9 +131,7 @@ int num;
 }
 
 int
-delpair(pag, key)
-char *pag;
-datum key;
+delpair(char *pag, datum key)
 {
 	register int n;
 	register int i;
@@ -219,11 +203,7 @@ datum key;
  * return 0 if not found.
  */
 static int
-seepair(pag, n, key, siz)
-char *pag;
-register int n;
-register char *key;
-register int siz;
+seepair(char *pag, register int n, register char *key, register int siz)
 {
 	register int i;
 	register int off = PBLKSIZ;
@@ -239,10 +219,7 @@ register int siz;
 }
 
 void
-splpage(pag, new, sbit)
-char *pag;
-char *new;
-long sbit;
+splpage(char *pag, char *New, long int sbit)
 {
 	datum key;
 	datum val;
@@ -254,7 +231,7 @@ long sbit;
 
 	(void) memcpy(cur, pag, PBLKSIZ);
 	(void) memset(pag, 0, PBLKSIZ);
-	(void) memset(new, 0, PBLKSIZ);
+	(void) memset(New, 0, PBLKSIZ);
 
 	n = ino[0];
 	for (ino++; n > 0; ino += 2) {
@@ -265,14 +242,14 @@ long sbit;
 /*
  * select the page pointer (by looking at sbit) and insert
  */
-		(void) putpair((exhash(key) & sbit) ? new : pag, key, val);
+		(void) putpair((exhash(key) & sbit) ? New : pag, key, val);
 
 		off = ino[1];
 		n -= 2;
 	}
 
 	debug(("%d split %d/%d\n", ((short *) cur)[0] / 2, 
-	       ((short *) new)[0] / 2,
+	       ((short *) New)[0] / 2,
 	       ((short *) pag)[0] / 2));
 }
 
@@ -283,8 +260,7 @@ long sbit;
  * this could be made more rigorous.
  */
 int
-chkpage(pag)
-char *pag;
+chkpage(char *pag)
 {
 	register int n;
 	register int off;

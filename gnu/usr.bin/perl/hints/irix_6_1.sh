@@ -41,3 +41,14 @@ libswanted="$*"
 # set `echo X "$libswanted "|sed -e 's/ socket / /' -e 's/ sun / /' -e 's/ crypt / /' -e 's/ nsl / /' -e 's/ dl / /'`
 # shift
 # libswanted="$*"
+
+case "$usethreads" in
+$define|true|[yY]*)
+        cat >&4 <<EOM
+IRIX `uname -r` does not support POSIX threads.
+You should upgrade to at least IRIX 6.2 with pthread patches.
+EOM
+	exit 1
+	;;
+esac
+

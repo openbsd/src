@@ -2,6 +2,7 @@
 
 use Config;
 use File::Basename qw(&basename &dirname);
+use Cwd;
 
 # List explicitly here the variables you want Configure to
 # generate.  Metaconfig only looks for shell variables, so you
@@ -12,6 +13,7 @@ use File::Basename qw(&basename &dirname);
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
+$origdir = cwd;
 chdir dirname($0);
 $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
@@ -135,7 +137,7 @@ while ($ARGV[0] =~ /^-/) {
 }
 
 unless ($debug) {
-    open(BODY,">/tmp/sperl$$") ||
+    open(BODY,"+>/tmp/sperl$$") ||
       &Die("Can't open temp file: $!\n");
 }
 
@@ -343,26 +345,7 @@ print BODY &q(<<'EOT');
 EOT
 }
 
-close BODY;
-
 unless ($debug) {
-    open(HEAD,">/tmp/sperl2$$.c")
-      || &Die("Can't open temp file 2: $!\n");
-    print HEAD "#define PRINTIT\n"	if $printit;
-    print HEAD "#define APPENDSEEN\n"	if $appendseen;
-    print HEAD "#define TSEEN\n"	if $tseen;
-    print HEAD "#define DSEEN\n"	if $dseen;
-    print HEAD "#define ASSUMEN\n"	if $assumen;
-    print HEAD "#define ASSUMEP\n"	if $assumep;
-    print HEAD "#define TOPLABEL\n"	if $toplabel;
-    print HEAD "#define SAWNEXT\n"	if $sawnext;
-    if ($opens) {print HEAD "$opens\n";}
-    open(BODY,"/tmp/sperl$$")
-      || &Die("Can't reopen temp file: $!\n");
-    while (<BODY>) {
-	print HEAD $_;
-    }
-    close HEAD;
 
     print &q(<<"EOT");
 :	$startperl
@@ -370,11 +353,13 @@ unless ($debug) {
 :		if \$running_under_some_shell;
 :	
 EOT
-    open(BODY,"cc -E /tmp/sperl2$$.c |") ||
-	&Die("Can't reopen temp file: $!\n");
+    print"$opens\n" if $opens;
+    seek(BODY, 0, 0) || die "Can't rewind temp file: $!\n";
     while (<BODY>) {
-	/^# [0-9]/ && next;
 	/^[ \t]*$/ && next;
+	/^#ifdef (\w+)/ && ((${lc $1} || &skip), next);
+	/^#else/ && (&skip, next);
+	/^#endif/ && next;
 	s/^<><>//;
 	print;
     }
@@ -384,8 +369,7 @@ EOT
 exit;
 
 sub Cleanup {
-    chdir "/tmp";
-    unlink "sperl$$", "sperl2$$", "sperl2$$.c";
+    unlink "/tmp/sperl$$";
 }
 sub Die {
     &Cleanup;
@@ -603,7 +587,6 @@ EOT
 	    $repl = substr($_, $repl+1, $end-$repl-1);
 	    $end = substr($_, $end + 1, 1000);
 	    &simplify($pat);
-	    $dol = '$';
 	    $subst = "$pat$repl$delim";
 	    $cmd = '';
 	    while ($end) {
@@ -688,7 +671,7 @@ EOT
 	}
 
 	if (/^H/) {
-	    $_ = '$hold .= "\n"; $hold .= $_;';
+	    $_ = '$hold .= "\n", $hold .= $_;';
 	    next;
 	}
 
@@ -698,7 +681,7 @@ EOT
 	}
 
 	if (/^G/) {
-	    $_ = '$_ .= "\n"; $_ .= $hold;';
+	    $_ = '$_ .= "\n", $_ .= $hold;';
 	    next;
 	}
 
@@ -846,8 +829,20 @@ sub simplify {
     $_[0] =~ s/([\w\s!@#%^&-=,:;'"])\1\*/$1+/g;
 }
 
+sub skip {
+    local($level) = 0;
+
+    while(<BODY>) {
+	/^#ifdef/ && $level++;
+	/^#else/  && !$level && return;
+	/^#endif/ && !$level-- && return;
+    }
+
+    die "Unterminated `#ifdef' conditional\n";
+}
 !NO!SUBS!
 
 close OUT or die "Can't close $file: $!";
 chmod 0755, $file or die "Can't reset permissions for $file: $!\n";
 exec("$Config{'eunicefix'} $file") if $Config{'eunicefix'} ne ':';
+chdir $origdir;

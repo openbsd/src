@@ -22,6 +22,8 @@ $printUndef = 1 unless defined $printUndef;
 $tick = "auto" unless defined $tick;
 $unctrl = 'quote' unless defined $unctrl;
 $subdump = 1;
+$dumpReused = 0 unless defined $dumpReused;
+$bareStringify = 1 unless defined $bareStringify;
 
 sub main::dumpValue {
   local %address;
@@ -49,6 +51,10 @@ sub stringify {
 
 	return 'undef' unless defined $_ or not $printUndef;
 	return $_ . "" if ref \$_ eq 'GLOB';
+	$_ = &{'overload::StrVal'}($_) 
+	  if $bareStringify and ref $_ 
+	    and defined %overload:: and defined &{'overload::StrVal'};
+	
 	if ($tick eq 'auto') {
 	  if (/[\000-\011\013-\037\177]/) {
 	    $tick = '"';
@@ -109,7 +115,7 @@ sub unwrap {
     return if $DB::signal;
     local($v) = shift ; 
     local($s) = shift ; # extra no of spaces
-    local(%v,@v,$sp,$value,$key,$type,@sortKeys,$more,$shortmore,$short) ;
+    local(%v,@v,$sp,$value,$key,@sortKeys,$more,$shortmore,$short) ;
     local($tHashDepth,$tArrayDepth) ;
 
     $sp = " " x $s ;
@@ -117,9 +123,11 @@ sub unwrap {
 
     # Check for reused addresses
     if (ref $v) { 
-      ($address) = $v =~ /(0x[0-9a-f]+)\)$/ ; 
-      if (defined $address) { 
-	($type) = $v =~ /=(.*?)\([^=]+$/ ;
+      my $val = $v;
+      $val = &{'overload::StrVal'}($v) 
+	if defined %overload:: and defined &{'overload::StrVal'};
+      ($address) = $val =~ /(0x[0-9a-f]+)\)$/ ; 
+      if (!$dumpReused && defined $address) { 
 	$address{$address}++ ;
 	if ( $address{$address} > 1 ) { 
 	  print "${sp}-> REUSED_ADDRESS\n" ; 

@@ -20,10 +20,20 @@ getcwd - get pathname of current working directory
     chdir "/tmp";
     print $ENV{'PWD'};
 
+    use Cwd 'abs_path';
+    print abs_path($ENV{'PWD'});
+
+    use Cwd 'fast_abs_path';
+    print fast_abs_path($ENV{'PWD'});
+
 =head1 DESCRIPTION
 
 The getcwd() function re-implements the getcwd(3) (or getwd(3)) functions
 in Perl.
+
+The abs_path() function takes a single argument and returns the
+absolute pathname for that argument. It uses the same algorithm as
+getcwd(). (actually getcwd() is abs_path("."))
 
 The fastcwd() function looks the same as getcwd(), but runs faster.
 It's also more dangerous because it might conceivably chdir() you out
@@ -34,6 +44,9 @@ everything appears to have worked, the fastcwd() function will check
 that it leaves you in the same directory that it started in. If it has
 changed it will C<die> with the message "Unstable directory path,
 current directory changed unexpectedly". That should never happen.
+
+The fast_abs_path() function looks the same as abs_path(), but runs faster.
+And like fastcwd() is more dangerous.
 
 The cwd() function looks the same as getcwd and fastgetcwd but is
 implemented using the most natural and safe form for the current
@@ -54,7 +67,7 @@ kept up to date if all packages which use chdir import it from Cwd.
 
 use Carp;
 
-$VERSION = '2.00';
+$VERSION = '2.01';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -82,65 +95,8 @@ sub _backtick_pwd {
 
 sub getcwd
 {
-    my($dotdots, $cwd, @pst, @cst, $dir, @tst);
-
-    unless (@cst = stat('.'))
-    {
-	warn "stat(.): $!";
-	return '';
-    }
-    $cwd = '';
-    $dotdots = '';
-    do
-    {
-	$dotdots .= '/' if $dotdots;
-	$dotdots .= '..';
-	@pst = @cst;
-	unless (opendir(PARENT, $dotdots))
-	{
-	    warn "opendir($dotdots): $!";
-	    return '';
-	}
-	unless (@cst = stat($dotdots))
-	{
-	    warn "stat($dotdots): $!";
-	    closedir(PARENT);
-	    return '';
-	}
-	if ($pst[0] == $cst[0] && $pst[1] == $cst[1])
-	{
-	    $dir = undef;
-	}
-	else
-	{
-	    do
-	    {
-		unless (defined ($dir = readdir(PARENT)))
-	        {
-		    warn "readdir($dotdots): $!";
-		    closedir(PARENT);
-		    return '';
-		}
-		unless (@tst = lstat("$dotdots/$dir"))
-		{
-		    # warn "lstat($dotdots/$dir): $!";
-		    # Just because you can't lstat this directory
-		    # doesn't mean you'll never find the right one.
-		    # closedir(PARENT);
-		    # return '';
-		}
-	    }
-	    while ($dir eq '.' || $dir eq '..' || $tst[0] != $pst[0] ||
-		   $tst[1] != $pst[1]);
-	}
-	$cwd = (defined $dir ? "$dir" : "" ) . "/$cwd" ;
-	closedir(PARENT);
-    } while (defined $dir);
-    chop($cwd) unless $cwd eq '/'; # drop the trailing /
-    $cwd;
+    abs_path('.');
 }
-
-
 
 # By John Bazik
 #
@@ -162,7 +118,7 @@ sub fastcwd {
     for (;;) {
 	my $direntry;
 	($odev, $oino) = ($cdev, $cino);
-	chdir('..') || return undef;
+	CORE::chdir('..') || return undef;
 	($cdev, $cino) = stat('.');
 	last if $odev == $cdev && $oino == $cino;
 	opendir(DIR, '.') || return undef;
@@ -183,7 +139,7 @@ sub fastcwd {
     # At this point $path may be tainted (if tainting) and chdir would fail.
     # To be more useful we untaint it then check that we landed where we started.
     $path = $1 if $path =~ /^(.*)$/;	# untaint
-    chdir($path) || return undef;
+    CORE::chdir($path) || return undef;
     ($cdev, $cino) = stat('.');
     die "Unstable directory path, current directory changed unexpectedly"
 	if $cdev != $orig_cdev || $cino != $orig_cino;
@@ -199,7 +155,7 @@ sub fastcwd {
 my $chdir_init = 0;
 
 sub chdir_init {
-    if ($ENV{'PWD'} and $^O ne 'os2' and $^O ne 'msdos') {
+    if ($ENV{'PWD'} and $^O ne 'os2' and $^O ne 'dos') {
 	my($dd,$di) = stat('.');
 	my($pd,$pi) = stat($ENV{'PWD'});
 	if (!defined $dd or !defined $pd or $di != $pi or $dd != $pd) {
@@ -249,7 +205,7 @@ sub chdir {
 
 sub abs_path
 {
-    my $start = shift || '.';
+    my $start = @_ ? shift : '.';
     my($dotdots, $cwd, @pst, @cst, $dir, @tst);
 
     unless (@cst = stat( $start ))
@@ -276,7 +232,7 @@ sub abs_path
 	}
 	if ($pst[0] == $cst[0] && $pst[1] == $cst[1])
 	{
-	    $dir = '';
+	    $dir = undef;
 	}
 	else
 	{
@@ -293,19 +249,19 @@ sub abs_path
 	    while ($dir eq '.' || $dir eq '..' || $tst[0] != $pst[0] ||
 		   $tst[1] != $pst[1]);
 	}
-	$cwd = "$dir/$cwd";
+	$cwd = (defined $dir ? "$dir" : "" ) . "/$cwd" ;
 	closedir(PARENT);
-    } while ($dir);
-    chop($cwd); # drop the trailing /
+    } while (defined $dir);
+    chop($cwd) unless $cwd eq '/'; # drop the trailing /
     $cwd;
 }
 
 sub fast_abs_path {
     my $cwd = getcwd();
     my $path = shift || '.';
-    chdir($path) || croak "Cannot chdir to $path:$!";
+    CORE::chdir($path) || croak "Cannot chdir to $path:$!";
     my $realpath = getcwd();
-    chdir($cwd)  || croak "Cannot chdir back to $cwd:$!";
+    CORE::chdir($cwd)  || croak "Cannot chdir back to $cwd:$!";
     $realpath;
 }
 
@@ -313,7 +269,7 @@ sub fast_abs_path {
 # --- PORTING SECTION ---
 
 # VMS: $ENV{'DEFAULT'} points to default directory at all times
-# 06-Mar-1996  Charles Bailey  bailey@genetics.upenn.edu
+# 06-Mar-1996  Charles Bailey  bailey@newman.upenn.edu
 # Note: Use of Cwd::chdir() causes the logical name PWD to be defined
 #   in the process logical name table as the default device and directory
 #   seen by Perl. This may not be the same as the default device
@@ -339,21 +295,38 @@ sub _os2_cwd {
 }
 
 sub _win32_cwd {
-    $ENV{'PWD'} = Win32::GetCurrentDirectory();
+    $ENV{'PWD'} = Win32::GetCwd();
     $ENV{'PWD'} =~ s:\\:/:g ;
     return $ENV{'PWD'};
 }
 
 *_NT_cwd = \&_win32_cwd if (!defined &_NT_cwd && 
-                            defined &Win32::GetCurrentDirectory);
+                            defined &Win32::GetCwd);
 
 *_NT_cwd = \&_os2_cwd unless defined &_NT_cwd;
 
-sub _msdos_cwd {
-    $ENV{'PWD'} = `command /c cd`;
-    chop $ENV{'PWD'};
-    $ENV{'PWD'} =~ s:\\:/:g ;
+sub _dos_cwd {
+    if (!defined &Dos::GetCwd) {
+        $ENV{'PWD'} = `command /c cd`;
+        chop $ENV{'PWD'};
+        $ENV{'PWD'} =~ s:\\:/:g ;
+    } else {
+        $ENV{'PWD'} = Dos::GetCwd();
+    }
     return $ENV{'PWD'};
+}
+
+sub _qnx_cwd {
+    $ENV{'PWD'} = `/usr/bin/fullpath -t`;
+    chop $ENV{'PWD'};
+    return $ENV{'PWD'};
+}
+
+sub _qnx_abs_path {
+    my $path = shift || '.';
+    my $realpath=`/usr/bin/fullpath -t $path`;
+    chop $realpath;
+    return $realpath;
 }
 
 {
@@ -383,12 +356,20 @@ sub _msdos_cwd {
         *fastcwd	= \&cwd;
         *abs_path	= \&fast_abs_path;
     }
-    elsif ($^O eq 'msdos') {
-        *cwd		= \&_msdos_cwd;
-        *getcwd		= \&_msdos_cwd;
-        *fastgetcwd	= \&_msdos_cwd;
-        *fastcwd	= \&_msdos_cwd;
+    elsif ($^O eq 'dos') {
+        *cwd		= \&_dos_cwd;
+        *getcwd		= \&_dos_cwd;
+        *fastgetcwd	= \&_dos_cwd;
+        *fastcwd	= \&_dos_cwd;
         *abs_path	= \&fast_abs_path;
+    }
+    elsif ($^O eq 'qnx') {
+        *cwd		= \&_qnx_cwd;
+        *getcwd		= \&_qnx_cwd;
+        *fastgetcwd	= \&_qnx_cwd;
+        *fastcwd	= \&_qnx_cwd;
+        *abs_path	= \&_qnx_abs_path;
+        *fast_abs_path	= \&_qnx_abs_path;
     }
 }
 

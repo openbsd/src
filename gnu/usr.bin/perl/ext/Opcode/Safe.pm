@@ -53,11 +53,11 @@ sub new {
 
 sub DESTROY {
     my $obj = shift;
-    $obj->erase if $obj->{Erase};
+    $obj->erase('DESTROY') if $obj->{Erase};
 }
 
 sub erase {
-    my $obj= shift;
+    my ($obj, $action) = @_;
     my $pkg = $obj->root();
     my ($stem, $leaf);
 
@@ -73,18 +73,22 @@ sub erase {
     #warn " stem_symtab hash ".scalar(%$stem_symtab)."\n";
 	# ", join(', ', %$stem_symtab),"\n";
 
-    delete $stem_symtab->{$leaf};
+#    delete $stem_symtab->{$leaf};
 
-#    my $leaf_glob   = $stem_symtab->{$leaf};
-#    my $leaf_symtab = *{$leaf_glob}{HASH};
+    my $leaf_glob   = $stem_symtab->{$leaf};
+    my $leaf_symtab = *{$leaf_glob}{HASH};
 #    warn " leaf_symtab ", join(', ', %$leaf_symtab),"\n";
-#    %$leaf_symtab = ();
+    %$leaf_symtab = ();
     #delete $leaf_symtab->{'__ANON__'};
     #delete $leaf_symtab->{'foo'};
     #delete $leaf_symtab->{'main::'};
 #    my $foo = undef ${"$stem\::"}{"$leaf\::"};
 
-    $obj->share_from('main', $default_share);
+    if ($action and $action eq 'DESTROY') {
+        delete $stem_symtab->{$leaf};
+    } else {
+        $obj->share_from('main', $default_share);
+    }
     1;
 }
 
@@ -279,8 +283,8 @@ perl code is compiled into an internal format before execution.
 Evaluating perl code (e.g. via "eval" or "do 'file'") causes
 the code to be compiled into an internal format and then,
 provided there was no error in the compilation, executed.
-Code evaulated in a compartment compiles subject to the
-compartment's operator mask. Attempting to evaulate code in a
+Code evaluated in a compartment compiles subject to the
+compartment's operator mask. Attempting to evaluate code in a
 compartment which contains a masked operator will cause the
 compilation to fail with an error. The code will not be executed.
 

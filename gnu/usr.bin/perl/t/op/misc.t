@@ -36,6 +36,9 @@ for (@prgs){
     $status = $?;
     $results = `$CAT $tmpfile`;
     $results =~ s/\n+$//;
+# bison says 'parse error' instead of 'syntax error',
+# various yaccs may or may not capitalize 'syntax'.
+    $results =~ s/^(syntax|parse) error/syntax error/mig;
     $expected =~ s/\n+$//;
     if ( $results ne $expected){
 	print STDERR "PROG: $switch\n$prog\n";
@@ -61,7 +64,7 @@ EXPECT
 ########
 $foo=undef; $foo->go;
 EXPECT
-Can't call method "go" without a package or object reference at - line 1.
+Can't call method "go" on an undefined value at - line 1.
 ########
 BEGIN
         {
@@ -336,11 +339,110 @@ sub foo { local $_ = shift; split; @_ }
 @x = foo(' x  y  z ');
 print "you die joe!\n" unless "@x" eq 'x y z';
 ########
-sub foo { local(@_) = ('p', 'q', 'r'); }
-sub bar { unshift @_, 'D'; @_ }
-sub baz { push @_, 'E'; return @_ }
-for (1..3) { print foo('a', 'b', 'c'), bar('d'), baz('e'), "\n" }
+/(?{"{"})/	# Check it outside of eval too
 EXPECT
-pqrDdeE
-pqrDdeE
-pqrDdeE
+Sequence (?{...}) not terminated or not {}-balanced at - line 1, within pattern
+/(?{"{"})/: Sequence (?{...}) not terminated or not {}-balanced at - line 1.
+########
+/(?{"{"}})/	# Check it outside of eval too
+EXPECT
+Unmatched right bracket at (re_eval 1) line 1, at end of line
+syntax error at (re_eval 1) line 1, near ""{"}"
+Compilation failed in regexp at - line 1.
+########
+BEGIN { @ARGV = qw(a b c) }
+BEGIN { print "argv <@ARGV>\nbegin <",shift,">\n" }
+END { print "end <",shift,">\nargv <@ARGV>\n" }
+INIT { print "init <",shift,">\n" }
+EXPECT
+argv <a b c>
+begin <a>
+init <b>
+end <c>
+argv <>
+########
+-l
+# fdopen from a system descriptor to a system descriptor used to close
+# the former.
+open STDERR, '>&=STDOUT' or die $!;
+select STDOUT; $| = 1; print fileno STDOUT;
+select STDERR; $| = 1; print fileno STDERR;
+EXPECT
+1
+2
+########
+-w
+sub testme { my $a = "test"; { local $a = "new test"; print $a }}
+EXPECT
+Can't localize lexical variable $a at - line 2.
+########
+package X;
+sub ascalar { my $r; bless \$r }
+sub DESTROY { print "destroyed\n" };
+package main;
+*s = ascalar X;
+EXPECT
+destroyed
+########
+package X;
+sub anarray { bless [] }
+sub DESTROY { print "destroyed\n" };
+package main;
+*a = anarray X;
+EXPECT
+destroyed
+########
+package X;
+sub ahash { bless {} }
+sub DESTROY { print "destroyed\n" };
+package main;
+*h = ahash X;
+EXPECT
+destroyed
+########
+package X;
+sub aclosure { my $x; bless sub { ++$x } }
+sub DESTROY { print "destroyed\n" };
+package main;
+*c = aclosure X;
+EXPECT
+destroyed
+########
+package X;
+sub any { bless {} }
+my $f = "FH000"; # just to thwart any future optimisations
+sub afh { select select ++$f; my $r = *{$f}{IO}; delete $X::{$f}; bless $r }
+sub DESTROY { print "destroyed\n" }
+package main;
+$x = any X; # to bump sv_objcount. IO objs aren't counted??
+*f = afh X;
+EXPECT
+destroyed
+destroyed
+########
+BEGIN {
+  $| = 1;
+  $SIG{__WARN__} = sub {
+    eval { print $_[0] };
+    die "bar\n";
+  };
+  warn "foo\n";
+}
+EXPECT
+foo
+bar
+BEGIN failed--compilation aborted at - line 8.
+########
+use strict;
+my $foo = "ZZZ\n";
+END { print $foo }
+EXPECT
+ZZZ
+########
+eval '
+use strict;
+my $foo = "ZZZ\n";
+END { print $foo }
+';
+EXPECT
+ZZZ

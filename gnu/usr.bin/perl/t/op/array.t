@@ -1,8 +1,10 @@
 #!./perl
 
-# $RCSfile: array.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:37 $
+print "1..65\n";
 
-print "1..36\n";
+#
+# @foo, @bar, and @ary are also used from tie-stdarray after tie-ing them
+#
 
 @ary = (1,2,3,4,5);
 if (join('',@ary) eq '12345') {print "ok 1\n";} else {print "not ok 1\n";}
@@ -118,3 +120,94 @@ print $foo eq 'e' ? "ok 35\n" : "not ok 35\n";
 
 $foo = ('a','b','c','d','e','f')[1];
 print $foo eq 'b' ? "ok 36\n" : "not ok 36\n";
+
+@foo = ( 'foo', 'bar', 'burbl');
+push(foo, 'blah');
+print $#foo == 3 ? "ok 37\n" : "not ok 37\n";
+
+# various AASSIGN_COMMON checks (see newASSIGNOP() in op.c)
+
+$test = 37;
+sub t { ++$test; print "not " unless $_[0]; print "ok $test\n"; }
+
+@foo = @foo;
+t("@foo" eq "foo bar burbl blah");				# 38
+
+(undef,@foo) = @foo;
+t("@foo" eq "bar burbl blah");					# 39
+
+@foo = ('XXX',@foo, 'YYY');
+t("@foo" eq "XXX bar burbl blah YYY");				# 40
+
+@foo = @foo = qw(foo bar burbl blah);
+t("@foo" eq "foo bar burbl blah");				# 41
+
+@bar = @foo = qw(foo bar);					# 42
+t("@foo" eq "foo bar");
+t("@bar" eq "foo bar");						# 43
+
+# try the same with local
+# XXX tie-stdarray fails the tests involving local, so we use
+# different variable names to escape the 'tie'
+
+@bee = ( 'foo', 'bar', 'burbl', 'blah');
+{
+
+    local @bee = @bee;
+    t("@bee" eq "foo bar burbl blah");				# 44
+    {
+	local (undef,@bee) = @bee;
+	t("@bee" eq "bar burbl blah");				# 45
+	{
+	    local @bee = ('XXX',@bee,'YYY');
+	    t("@bee" eq "XXX bar burbl blah YYY");		# 46
+	    {
+		local @bee = local(@bee) = qw(foo bar burbl blah);
+		t("@bee" eq "foo bar burbl blah");		# 47
+		{
+		    local (@bim) = local(@bee) = qw(foo bar);
+		    t("@bee" eq "foo bar");			# 48
+		    t("@bim" eq "foo bar");			# 49
+		}
+		t("@bee" eq "foo bar burbl blah");		# 50
+	    }
+	    t("@bee" eq "XXX bar burbl blah YYY");		# 51
+	}
+	t("@bee" eq "bar burbl blah");				# 52
+    }
+    t("@bee" eq "foo bar burbl blah");				# 53
+}
+
+# try the same with my
+{
+
+    my @bee = @bee;
+    t("@bee" eq "foo bar burbl blah");				# 54
+    {
+	my (undef,@bee) = @bee;
+	t("@bee" eq "bar burbl blah");				# 55
+	{
+	    my @bee = ('XXX',@bee,'YYY');
+	    t("@bee" eq "XXX bar burbl blah YYY");		# 56
+	    {
+		my @bee = my @bee = qw(foo bar burbl blah);
+		t("@bee" eq "foo bar burbl blah");		# 57
+		{
+		    my (@bim) = my(@bee) = qw(foo bar);
+		    t("@bee" eq "foo bar");			# 58
+		    t("@bim" eq "foo bar");			# 59
+		}
+		t("@bee" eq "foo bar burbl blah");		# 60
+	    }
+	    t("@bee" eq "XXX bar burbl blah YYY");		# 61
+	}
+	t("@bee" eq "bar burbl blah");				# 62
+    }
+    t("@bee" eq "foo bar burbl blah");				# 63
+}
+
+# make sure reification behaves
+my $t = 63;
+sub reify { $_[1] = ++$t; print "@_\n"; }
+reify('ok');
+reify('ok');

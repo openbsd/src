@@ -18,6 +18,27 @@
 # No version of Linux supports setuid scripts.
 d_suidsafe='undef'
 
+# Debian and Red Hat, and perhaps other vendors, provide both runtime and
+# development packages for some libraries.  The runtime packages contain shared
+# libraries with version information in their names (e.g., libgdbm.so.1.7.3);
+# the development packages supplement this with versionless shared libraries
+# (e.g., libgdbm.so).
+#
+# If you want to link against such a library, you must install the development
+# version of the package.
+#
+# These packages use a -dev naming convention in both Debian and Red Hat:
+#   libgdbmg1  (non-development version of GNU libc 2-linked GDBM library)
+#   libgdbmg1-dev (development version of GNU libc 2-linked GDBM library)
+# So make sure that for any libraries you wish to link Perl with under
+# Debian or Red Hat you have the -dev packages installed.
+#
+# Some operating systems (e.g., Solaris 2.6) will link to a versioned shared
+# library implicitly.  For example, on Solaris, `ld foo.o -lgdbm' will find an
+# appropriate version of libgdbm, if one is available; Linux, however, doesn't
+# do the implicit mapping.
+ignore_versioned_solibs='y'
+
 # perl goes into the /usr tree.  See the Filesystem Standard
 # available via anonymous FTP at tsx-11.mit.edu in
 # /pub/linux/docs/linux-standards/fsstnd.
@@ -29,16 +50,9 @@ esac
 # gcc-2.6.3 defines _G_HAVE_BOOL to 1, but doesn't actually supply bool.
 ccflags="-Dbool=char -DHAS_BOOL $ccflags"
 
-# libc6, aka glibc2, seems to need STRUCT_TM_HASZONE defined.
-# Thanks to Bart Schuller <schuller@Lunatech.com>
-# See Message-ID: <19971009002636.50729@tanglefoot>
-# This is currently commented out for maintenance releases
-# but should probably be uncommented for 5.005 or after
-# more widespread testing.
-#POSIX_cflags='ccflags="$ccflags -DSTRUCT_TM_HASZONE"'
-
 # BSD compatability library no longer needed
-set `echo X "$libswanted "| sed -e 's/ bsd / /'`
+# 'kaffe' has a /usr/lib/libnet.so which is not at all relevent for perl.
+set `echo X "$libswanted "| sed -e 's/ bsd / /' -e 's/ net / /'`
 shift
 libswanted="$*"
 
@@ -177,8 +191,8 @@ fi
 if [  ! "`csh -c 'echo $version' 2>/dev/null`"  ] 
 then
     echo 'Real csh found (might break); looking for tcsh ...'
-    # Use ../UU/loc to find tcsh.  (We run in the hints/ directory.)
-    if xxx=`../UU/loc tcsh blurfl $pth`; $test -f "$xxx"; then
+    # Use ./UU/loc to find tcsh.  (We no longer run in the hints/ directory)
+    if xxx=`./UU/loc tcsh blurfl $pth`; $test -f "$xxx"; then
 	echo "Found tcsh.  I'll use it for globbing."
 	# We can't change Configure's setting of $csh, due to the way
 	# Configure handles $d_portable and commands found in $loclist.
@@ -194,11 +208,31 @@ fi
 # Shimpei Yamashita <shimpei@socrates.patnet.caltech.edu>
 # Message-Id: <33EF1634.B36B6500@pobox.com>
 # 
-# MkLinux (osname=linux,archname=ppc-linux), which differs slightly from other
-# linuces, needs special flags passed in order for dynamic loading to work.
+# The DR2 of MkLinux (osname=linux,archname=ppc-linux) may need
+# special flags passed in order for dynamic loading to work.
 # instead of the recommended:
+#
 # ccdlflags='-rdynamic'
 # 
 # it should be:
 # ccdlflags='-Wl,-E'
+#
+# So if your DR2 (DR3 came out summer 1998, consider upgrading)
+# has problems with dynamic loading, uncomment the
+# following three lines, make distclean, and re-Configure:
+#case "`uname -r | sed 's/^[0-9.-]*//'``arch`" in
+#'osfmach3ppc') ccdlflags='-Wl,-E' ;;
+#esac
 
+# This script UU/usethreads.cbu will get 'called-back' by Configure 
+# after it has prompted the user for whether to use threads.
+cat > UU/usethreads.cbu <<'EOCBU'
+case "$usethreads" in
+$define|true|[yY]*)
+        ccflags="-D_REENTRANT $ccflags"
+        set `echo X "$libswanted "| sed -e 's/ c / pthread c /'`
+        shift
+        libswanted="$*"
+	;;
+esac
+EOCBU

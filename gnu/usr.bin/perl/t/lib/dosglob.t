@@ -9,7 +9,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..9\n";
+print "1..10\n";
 
 # override it in main::
 use File::DosGlob 'glob';
@@ -92,3 +92,21 @@ while (<*/a*.t>) {
 print "not " if "@r" ne "@s";
 print "ok 9\n";
 
+# how about a global override, hm?
+eval <<'EOT';
+use File::DosGlob 'GLOBAL_glob';
+package Bar;
+@s = ();
+while (<*/a*.t>) {
+    my $i = 0;
+    print "# $_ <";
+    push @s, $_;
+    while (glob '*/b*.t') {
+        print " $_";
+	$i++;
+    }
+    print " >\n";
+}
+print "not " if "@r" ne "@s";
+print "ok 10\n";
+EOT

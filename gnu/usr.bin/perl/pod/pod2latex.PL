@@ -2,6 +2,7 @@
 
 use Config;
 use File::Basename qw(&basename &dirname);
+use Cwd;
 
 # List explicitly here the variables you want Configure to
 # generate.  Metaconfig only looks for shell variables, so you
@@ -12,6 +13,7 @@ use File::Basename qw(&basename &dirname);
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
+$origdir = cwd;
 chdir dirname($0);
 $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
@@ -472,6 +474,12 @@ while (<POD>) {
 	  noindex:
 	    ;
 	}
+	elsif ($cmd eq 'pod') {
+	    ;	# recognise the pod directive, as no op (hs)
+	}
+ 	elsif ($cmd eq 'pod') {
+ 	    ;    # recognise the pod directive, as no op (hs)
+ 	}
 	else {
 	    warn "Unrecognized directive: $cmd\n";
 	}
@@ -676,7 +684,7 @@ BEGIN {
     "otilde"	=>	"\\~{o}",	#   small o, tilde
     "Ouml"	=>	'\\"{O}',	#   capital O, dieresis or umlaut mark
     "ouml"	=>	'\\"{o}',	#   small o, dieresis or umlaut mark
-    "szlig"	=>	'\\ss',		#   small sharp s, German (sz ligature)
+    "szlig"	=>	'\\ss{}',	#   small sharp s, German (sz ligature)
     "THORN"	=>	'\\L',		#   capital THORN, Icelandic
     "thorn"	=>	'\\l',,		#   small thorn, Icelandic
     "Uacute"	=>	"\\'{U}",	#   capital U, acute accent
@@ -697,3 +705,4 @@ BEGIN {
 close OUT or die "Can't close $file: $!";
 chmod 0755, $file or die "Can't reset permissions for $file: $!\n";
 exec("$Config{'eunicefix'} $file") if $Config{'eunicefix'} ne ':';
+chdir $origdir;

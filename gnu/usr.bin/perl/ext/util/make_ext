@@ -61,6 +61,8 @@ fi
 case "$extspec" in
 lib*)	# Remove lib/auto prefix and /*.* suffix
 	pname=`echo "$extspec" | sed -e 's:^lib/auto/::' -e 's:/[^/]*\.[^/]*$::' ` ;;
+ext*)	# Remove ext/ prefix and /pm_to_blib suffix
+	pname=`echo "$extspec" | sed -e 's:^ext/::' -e 's:/pm_to_blib$::' ` ;;
 *::*)	# Convert :: to /
 	pname=`echo "$extspec" | sed -e 's/::/\//g' ` ;;
 *)	pname="$extspec" ;;
@@ -90,6 +92,10 @@ static)     makeargs="LINKTYPE=static CCCDLFLAGS="
 	    target=all
 	    ;;
 dynamic)    makeargs="LINKTYPE=dynamic";
+	    target=all
+	    ;;
+
+nonxs)      makeargs="";
 	    target=all
 	    ;;
 

@@ -16,16 +16,22 @@
 -4,			4 5 6 7,	0 1 2 3
 EOF
 
-print "1..", 2 + @tests, "\n";
+print "1..", 4 + @tests, "\n";
 die "blech" unless @tests;
 
 @x = (1,2,3);
 push(@x,@x);
 if (join(':',@x) eq '1:2:3:1:2:3') {print "ok 1\n";} else {print "not ok 1\n";}
-push(x,4);
+push(@x,4);
 if (join(':',@x) eq '1:2:3:1:2:3:4') {print "ok 2\n";} else {print "not ok 2\n";}
 
-$test = 3;
+# test for push/pop intuiting @ on array
+push(x,3);
+if (join(':',@x) eq '1:2:3:1:2:3:4:3') {print "ok 3\n";} else {print "not ok 3\n";}
+pop(x);
+if (join(':',@x) eq '1:2:3:1:2:3:4') {print "ok 4\n";} else {print "not ok 4\n";}
+
+$test = 5;
 foreach $line (@tests) {
     ($list,$get,$leave) = split(/,\t*/,$line);
     ($pos, $len, @list) = split(' ',$list);
@@ -47,3 +53,4 @@ foreach $line (@tests) {
     }
 }
 
+1;  # this file is require'd by lib/tie-stdpush.t

@@ -1,14 +1,26 @@
 #!./perl
+
 print "1..15\n";
 
-$_=join "", map chr($_), 32..127;
+if ($^O eq 'os390') { # An EBCDIC variant.
+    $_=join "", map chr($_), 129..233;
 
-# 96 characters - 52 letters - 10 digits - 1 underscore = 33 backslashes
-# 96 characters + 33 backslashes = 129 characters
-$_=quotemeta $_;
-if ( length == 129 ){print "ok 1\n"} else {print "not ok 1\n"}
-# 95 non-backslash characters
-if (tr/\\//cd == 95){print "ok 2\n"} else {print "not ok 2\n"}
+    # 105 characters - 52 letters = 53 backslashes
+    # 105 characters + 53 backslashes = 158 characters
+    $_=quotemeta $_;
+    if ( length == 158 ){print "ok 1\n"} else {print "not ok 1\n"}
+    # 104 non-backslash characters
+    if (tr/\\//cd == 104){print "ok 2\n"} else {print "not ok 2\n"}
+} else { # some ASCII descendant, then.
+    $_=join "", map chr($_), 32..127;
+
+    # 96 characters - 52 letters - 10 digits - 1 underscore = 33 backslashes
+    # 96 characters + 33 backslashes = 129 characters
+    $_=quotemeta $_;
+    if ( length == 129 ){print "ok 1\n"} else {print "not ok 1\n"}
+    # 95 non-backslash characters
+    if (tr/\\//cd == 95){print "ok 2\n"} else {print "not ok 2\n"}
+}
 
 if (length quotemeta "" == 0){print "ok 3\n"} else {print "not ok 3\n"}
 

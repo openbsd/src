@@ -71,6 +71,7 @@ sub init
 {
   ## initialize variables that might be reset by command-line args
   $DOREP=0; 		## set true by -dorep (redo multi-hardlink files)
+  $DOREP=1 if $^O eq 'MSWin32';
   $DO_SORT=0;           ## set by -sort (sort files in a dir before checking)
   $FIND_ONLY=0;         ## set by -find (don't search files)
   $LIST_ONLY=0;		## set true by -l (list filenames only)
@@ -867,7 +868,7 @@ sub dodir
     }
 
     ## skip things that are empty
-    unless (-s _) {
+    unless (-s _ || -d _) {
 	warn qq/skip (empty): $file\n/ if $WHY;
 	next;
     }
@@ -894,7 +895,7 @@ sub dodir
 	}
 
 	## _never_ redo a directory
-	if (defined $dir_done{$id}) {
+	if (defined $dir_done{$id} and $^O ne 'MSWin32') {
 	    warn qq/skip (did as "$dir_done{$id}"): $file\n/ if $WHY;
 	    next;
 	}

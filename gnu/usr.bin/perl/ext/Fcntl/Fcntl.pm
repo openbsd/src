@@ -52,33 +52,71 @@ $VERSION = "1.03";
 # (move infrequently used names to @EXPORT_OK below)
 @EXPORT =
   qw(
-     F_DUPFD F_GETFD F_GETLK F_SETFD F_GETFL F_SETFL F_SETLK F_SETLKW
-     FD_CLOEXEC F_RDLCK F_UNLCK F_WRLCK F_POSIX
-     O_CREAT O_EXCL O_NOCTTY O_TRUNC
-     O_APPEND O_NONBLOCK
-     O_NDELAY O_DEFER
-     O_RDONLY O_RDWR O_WRONLY
-     O_BINARY O_TEXT
-     O_EXLOCK O_SHLOCK O_ASYNC O_DSYNC O_RSYNC O_SYNC
-     F_SETOWN F_GETOWN
+	FD_CLOEXEC
+	F_DUPFD
+	F_EXLCK
+	F_GETFD
+	F_GETFL
+	F_GETLK
+	F_GETOWN
+	F_POSIX
+	F_RDLCK
+	F_SETFD
+	F_SETFL
+	F_SETLK
+	F_SETLKW
+	F_SETOWN
+	F_SHLCK
+	F_UNLCK
+	F_WRLCK
+	O_ACCMODE
+	O_APPEND
+	O_ASYNC
+	O_BINARY
+	O_CREAT
+	O_DEFER
+	O_DSYNC
+	O_EXCL
+	O_EXLOCK
+	O_NDELAY
+	O_NOCTTY
+	O_NONBLOCK
+	O_RDONLY
+	O_RDWR
+	O_RSYNC
+	O_SHLOCK
+	O_SYNC
+	O_TEXT
+	O_TRUNC
+	O_WRONLY
      );
 
 # Other items we are prepared to export if requested
 @EXPORT_OK = qw(
-    LOCK_SH LOCK_EX LOCK_NB LOCK_UN
-    FAPPEND FASYNC FCREAT FDEFER FEXCL FNDELAY FNONBLOCK FSYNC FTRUNC
+	FAPPEND
+	FASYNC
+	FCREAT
+	FDEFER
+	FEXCL
+	FNDELAY
+	FNONBLOCK
+	FSYNC
+	FTRUNC
+	LOCK_EX
+	LOCK_NB
+	LOCK_SH
+	LOCK_UN
 );
 # Named groups of exports
 %EXPORT_TAGS = (
     'flock'   => [qw(LOCK_SH LOCK_EX LOCK_NB LOCK_UN)],
     'Fcompat' => [qw(FAPPEND FASYNC FCREAT FDEFER FEXCL
-	               FNDELAY FNONBLOCK FSYNC FTRUNC)],
+	             FNDELAY FNONBLOCK FSYNC FTRUNC)],
 );
 
 sub AUTOLOAD {
-    my($constname);
-    ($constname = $AUTOLOAD) =~ s/.*:://;
-    my $val = constant($constname, @_ ? $_[0] : 0);
+    (my $constname = $AUTOLOAD) =~ s/.*:://;
+    my $val = constant($constname, 0);
     if ($! != 0) {
 	if ($! =~ /Invalid/) {
 	    $AutoLoader::AUTOLOAD = $AUTOLOAD;
@@ -90,7 +128,7 @@ sub AUTOLOAD {
 ";
 	}
     }
-    eval "sub $AUTOLOAD { $val }";
+    *$AUTOLOAD = sub { $val };
     goto &$AUTOLOAD;
 }
 

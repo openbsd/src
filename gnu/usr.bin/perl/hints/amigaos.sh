@@ -42,10 +42,6 @@ lddlflags='-oformat a.out-amiga -r'
 # ccflags='-DAMIGAOS -mstackextend -m68020 -resident32'
 # ldflags='-m68020 -resident32'
 
-# Avoid telldir prototype conflict in pp_sys.c  (AmigaOS uses const DIR *)
-# Configure should test for this.  Volunteers?
-pp_sys_cflags='ccflags="$ccflags -DHAS_TELLDIR_PROTOTYPE"'
-
 # AmigaOS always reports only two links to directories, even if they
 # contain subdirectories.  Consequently, we use this variable to stop
 # File::Find using the link count to determine whether there are

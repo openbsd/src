@@ -1,7 +1,7 @@
 package Socket;
 
-use vars qw($VERSION @ISA @EXPORT);
-$VERSION = "1.6";
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
+$VERSION = "1.7";
 
 =head1 NAME
 
@@ -20,7 +20,7 @@ Socket, sockaddr_in, sockaddr_un, inet_aton, inet_ntoa - load the C socket.h def
 
     $proto = getprotobyname('tcp');
     socket(Socket_Handle, PF_INET, SOCK_STREAM, $proto);
-    $port = getservbyname('smtp');
+    $port = getservbyname('smtp', 'tcp');
     $sin = sockaddr_in($port,inet_aton("127.1"));
     $sin = sockaddr_in(7,inet_aton("localhost"));
     $sin = sockaddr_in(7,INADDR_LOOPBACK);
@@ -44,6 +44,15 @@ file, this uses the B<h2xs> program (see the Perl source distribution)
 and your native C compiler.  This means that it has a 
 far more likely chance of getting the numbers right.  This includes
 all of the commonly used pound-defines like AF_INET, SOCK_STREAM, etc.
+
+Also, some common socket "newline" constants are provided: the
+constants C<CR>, C<LF>, and C<CRLF>, as well as C<$CR>, C<$LF>, and
+C<$CRLF>, which map to C<\015>, C<\012>, and C<\015\012>.  If you do
+not want to use the literal characters in your programs, then use
+the constants provided here.  They are not exported by default, but can
+be imported individually, and with the C<:crlf> export tag:
+
+    use Socket qw(:DEFAULT :crlf);
 
 In addition, some structure manipulation functions are available:
 
@@ -184,10 +193,25 @@ require DynaLoader;
 	AF_UNIX
 	AF_UNSPEC
 	AF_X25
+	MSG_CTLFLAGS
+	MSG_CTLIGNORE
+	MSG_CTRUNC
 	MSG_DONTROUTE
+	MSG_DONTWAIT
+	MSG_EOF
+	MSG_EOR
+	MSG_ERRQUEUE
+	MSG_FIN
 	MSG_MAXIOVLEN
+	MSG_NOSIGNAL
 	MSG_OOB
 	MSG_PEEK
+	MSG_PROXY
+	MSG_RST
+	MSG_SYN
+	MSG_TRUNC
+	MSG_URG
+	MSG_WAITALL
 	PF_802
 	PF_APPLETALK
 	PF_CCITT
@@ -212,6 +236,11 @@ require DynaLoader;
 	PF_UNIX
 	PF_UNSPEC
 	PF_X25
+	SCM_CONNECT
+	SCM_CREDENTIALS
+	SCM_CREDS
+	SCM_RIGHTS
+	SCM_TIMESTAMP
 	SOCK_DGRAM
 	SOCK_RAW
 	SOCK_RDM
@@ -238,6 +267,23 @@ require DynaLoader;
 	SO_TYPE
 	SO_USELOOPBACK
 );
+
+@EXPORT_OK = qw(CR LF CRLF $CR $LF $CRLF);
+
+%EXPORT_TAGS = (
+    crlf    => [qw(CR LF CRLF $CR $LF $CRLF)],
+    all     => [@EXPORT, @EXPORT_OK],
+);
+
+BEGIN {
+    sub CR   () {"\015"}
+    sub LF   () {"\012"}
+    sub CRLF () {"\015\012"}
+}
+
+*CR   = \CR();
+*LF   = \LF();
+*CRLF = \CRLF();
 
 sub sockaddr_in {
     if (@_ == 6 && !wantarray) { # perl5.001m compat; use this && die

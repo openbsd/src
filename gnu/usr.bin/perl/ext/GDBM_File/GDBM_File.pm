@@ -7,7 +7,7 @@ GDBM_File - Perl5 access to the gdbm library.
 =head1 SYNOPSIS
 
     use GDBM_File ;
-    tie %hash, 'GDBM_File', $filename, &GDBM_WRCREAT, 0640);
+    tie %hash, 'GDBM_File', $filename, &GDBM_WRCREAT, 0640;
     # Use the %hash array.
     untie %hash ;
 

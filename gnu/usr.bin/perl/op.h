@@ -1,6 +1,6 @@
 /*    op.h
  *
- *    Copyright (c) 1991-1997, Larry Wall
+ *    Copyright (c) 1991-1999, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -24,6 +24,7 @@
  */
 
 typedef U32 PADOFFSET;
+#define NOT_IN_PAD ((PADOFFSET) -1)
 
 #ifdef DEBUGGING_OPS
 #define OPCODE opcode
@@ -31,15 +32,19 @@ typedef U32 PADOFFSET;
 #define OPCODE U16
 #endif
 
+#ifdef BASEOP_DEFINITION
+#define BASEOP BASEOP_DEFINITION
+#else
 #define BASEOP				\
     OP*		op_next;		\
     OP*		op_sibling;		\
-    OP*		(*op_ppaddr)();		\
+    OP*		(CPERLscope(*op_ppaddr))_((ARGSproto));		\
     PADOFFSET	op_targ;		\
     OPCODE	op_type;		\
     U16		op_seq;			\
     U8		op_flags;		\
     U8		op_private;
+#endif
 
 #define OP_GIMME(op,dfl) \
 	(((op)->op_flags & OPf_WANT) == OPf_WANT_VOID   ? G_VOID   : \
@@ -47,7 +52,7 @@ typedef U32 PADOFFSET;
 	 ((op)->op_flags & OPf_WANT) == OPf_WANT_LIST   ? G_ARRAY   : \
 	 dfl)
 
-#define GIMME_V		OP_GIMME(op, block_gimme())
+#define GIMME_V		OP_GIMME(PL_op, block_gimme())
 
 /* Public flags */
 
@@ -73,12 +78,17 @@ typedef U32 PADOFFSET;
 				/*  On UNOPs, saw bare parens, e.g. eof(). */
 				/*  On OP_ENTERSUB || OP_NULL, saw a "do". */
 				/*  On OP_(ENTER|LEAVE)EVAL, don't clear $@ */
+				/*  On OP_ENTERITER, loop var is per-thread */
 
 /* old names; don't use in new code, but don't break them, either */
-#define OPf_LIST	1
-#define OPf_KNOW	2
+#define OPf_LIST	OPf_WANT_LIST
+#define OPf_KNOW	OPf_WANT
 #define GIMME \
-	  (op->op_flags & OPf_KNOW ? op->op_flags & OPf_LIST : dowantarray())
+	  (PL_op->op_flags & OPf_WANT					\
+	   ? ((PL_op->op_flags & OPf_WANT) == OPf_WANT_LIST		\
+	      ? G_ARRAY							\
+	      : G_SCALAR)						\
+	   : dowantarray())
 
 /* Private for lvalues */
 #define OPpLVAL_INTRO	128	/* Lvalue must be localized */
@@ -93,6 +103,7 @@ typedef U32 PADOFFSET;
 #define OPpRUNTIME		64	/* Pattern coming in on the stack */
 
 /* Private for OP_TRANS */
+#define OPpTRANS_COUNTONLY	8
 #define OPpTRANS_SQUASH		16
 #define OPpTRANS_DELETE		32
 #define OPpTRANS_COMPLEMENT	64
@@ -128,6 +139,9 @@ typedef U32 PADOFFSET;
 
 /* Private for OP_SORT, OP_PRTF, OP_SPRINTF, string cmp'n, and case changers */
 #define OPpLOCALE		64	/* Use locale */
+
+/* Private for OP_THREADSV */
+#define OPpDONE_SVREF		64	/* Been through newSVREF once */
 
 struct op {
     BASEOP
@@ -173,28 +187,33 @@ struct pmop {
     OP *	op_pmreplstart;
     PMOP *	op_pmnext;		/* list of all scanpats */
     REGEXP *	op_pmregexp;		/* compiled expression */
-    SV *	op_pmshort;		/* for a fast bypass of execute() */
     U16		op_pmflags;
     U16		op_pmpermflags;
-    char	op_pmslen;
+    U8		op_pmdynflags;
 };
 
-#define PMf_USED	0x0001		/* pm has been used once already */
+#define PMdf_USED	0x01		/* pm has been used once already */
+#define PMdf_TAINTED	0x02		/* pm compiled from tainted pattern */
+
+#define PMf_RETAINT	0x0001		/* taint $1 etc. if target tainted */
 #define PMf_ONCE	0x0002		/* use pattern only once per reset */
-#define PMf_SCANFIRST	0x0004		/* initial constant not anchored */
-#define PMf_ALL		0x0008		/* initial constant is whole pat */
+#define PMf_REVERSED	0x0004		/* Should be matched right->left */
+#define PMf_MAYBE_CONST	0x0008		/* replacement contains variables */
 #define PMf_SKIPWHITE	0x0010		/* skip leading whitespace for split */
-#define PMf_FOLD	0x0020		/* case insensitivity */
+#define PMf_WHITE	0x0020		/* pattern is \s+ */
 #define PMf_CONST	0x0040		/* subst replacement is constant */
 #define PMf_KEEP	0x0080		/* keep 1st runtime pattern forever */
 #define PMf_GLOBAL	0x0100		/* pattern had a g modifier */
 #define PMf_CONTINUE	0x0200		/* don't reset pos() if //g fails */
 #define PMf_EVAL	0x0400		/* evaluating replacement as expr */
-#define PMf_WHITE	0x0800		/* pattern is \s+ */
+#define PMf_LOCALE	0x0800		/* use locale for character types */
 #define PMf_MULTILINE	0x1000		/* assume multiple lines */
 #define PMf_SINGLELINE	0x2000		/* assume single line */
-#define PMf_LOCALE	0x4000		/* use locale for character types */
+#define PMf_FOLD	0x4000		/* case insensitivity */
 #define PMf_EXTENDED	0x8000		/* chuck embedded whitespace */
+
+/* mask of bits stored in regexp->reganch */
+#define PMf_COMPILETIME	(PMf_MULTILINE|PMf_SINGLELINE|PMf_LOCALE|PMf_FOLD|PMf_EXTENDED)
 
 struct svop {
     BASEOP
@@ -221,17 +240,30 @@ struct loop {
     OP *	op_lastop;
 };
 
-#define cUNOP ((UNOP*)op)
-#define cBINOP ((BINOP*)op)
-#define cLISTOP ((LISTOP*)op)
-#define cLOGOP ((LOGOP*)op)
-#define cCONDOP ((CONDOP*)op)
-#define cPMOP ((PMOP*)op)
-#define cSVOP ((SVOP*)op)
-#define cGVOP ((GVOP*)op)
-#define cPVOP ((PVOP*)op)
-#define cCOP ((COP*)op)
-#define cLOOP ((LOOP*)op)
+#define cUNOP ((UNOP*)PL_op)
+#define cBINOP ((BINOP*)PL_op)
+#define cLISTOP ((LISTOP*)PL_op)
+#define cLOGOP ((LOGOP*)PL_op)
+#define cCONDOP ((CONDOP*)PL_op)
+#define cPMOP ((PMOP*)PL_op)
+#define cSVOP ((SVOP*)PL_op)
+#define cGVOP ((GVOP*)PL_op)
+#define cPVOP ((PVOP*)PL_op)
+#define cCOP ((COP*)PL_op)
+#define cLOOP ((LOOP*)PL_op)
+
+#define cUNOPo ((UNOP*)o)
+#define cBINOPo ((BINOP*)o)
+#define cLISTOPo ((LISTOP*)o)
+#define cLOGOPo ((LOGOP*)o)
+#define cCONDOPo ((CONDOP*)o)
+#define cPMOPo ((PMOP*)o)
+#define cSVOPo ((SVOP*)o)
+#define cGVOPo ((GVOP*)o)
+#define cPVOPo ((PVOP*)o)
+#define cCVOPo ((CVOP*)o)
+#define cCOPo ((COP*)o)
+#define cLOOPo ((LOOP*)o)
 
 #define kUNOP ((UNOP*)kid)
 #define kBINOP ((BINOP*)kid)
@@ -257,7 +289,26 @@ struct loop {
 #define OA_DANGEROUS 64
 #define OA_DEFGV 128
 
-#define OASHIFT 8
+/* The next 4 bits encode op class information */
+#define OA_CLASS_MASK (15 << 8)
+
+#define OA_BASEOP (0 << 8)
+#define OA_UNOP (1 << 8)
+#define OA_BINOP (2 << 8)
+#define OA_LOGOP (3 << 8)
+#define OA_CONDOP (4 << 8)
+#define OA_LISTOP (5 << 8)
+#define OA_PMOP (6 << 8)
+#define OA_SVOP (7 << 8)
+#define OA_GVOP (8 << 8)
+#define OA_PVOP (9 << 8)
+#define OA_LOOP (10 << 8)
+#define OA_COP (11 << 8)
+#define OA_BASEOP_OR_UNOP (12 << 8)
+#define OA_FILESTATOP (13 << 8)
+#define OA_LOOPEXOP (14 << 8)
+
+#define OASHIFT 12
 
 /* Remaining nybbles of opargs */
 #define OA_SCALAR 1

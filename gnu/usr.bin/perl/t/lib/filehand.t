@@ -31,7 +31,7 @@ $buffer = <$fh>;
 print $buffer eq "#!./perl\n" ? "ok 3\n" : "not ok 3\n";
 
 
-ungetc $fh 65;
+ungetc $fh ord 'A';
 CORE::read($fh, $buf,1);
 print $buf eq 'A' ? "ok 4\n" : "not ok 4\n";
 
@@ -63,6 +63,12 @@ autoflush STDOUT 1;
 
 print "not " unless ($|);
 print "ok 10\n";
+
+if ($^O eq 'dos')
+{
+    printf("ok %d\n",11);
+    exit(0);
+}
 
 ($rd,$wr) = FileHandle::pipe;
 

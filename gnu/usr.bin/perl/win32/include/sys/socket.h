@@ -11,6 +11,13 @@ extern "C" {
 #endif
 
 #ifndef  _WINDOWS_
+#ifdef   __GNUC__
+#define WIN32_LEAN_AND_MEAN
+#ifdef __GNUC__
+#define Win32_Winsock
+#endif
+#include <windows.h>
+#else
 #define  _WINDOWS_
 
 #define  FAR
@@ -38,12 +45,50 @@ typedef struct _OVERLAPPED {
     HANDLE  hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
 
+#endif
 #endif //_WINDOWS_
+#ifndef __GNUC__
 #include <winsock.h>
+#endif
 
 #define  ENOTSOCK	WSAENOTSOCK
 #undef   HOST_NOT_FOUND
 
+#ifdef USE_SOCKETS_AS_HANDLES
+
+#ifndef PERL_FD_SETSIZE
+#define PERL_FD_SETSIZE		64
+#endif
+
+#define PERL_BITS_PER_BYTE	8
+#define	PERL_NFDBITS		(sizeof(Perl_fd_mask)*PERL_BITS_PER_BYTE)
+
+typedef int			Perl_fd_mask;
+
+typedef struct	Perl_fd_set {
+    Perl_fd_mask bits[(PERL_FD_SETSIZE+PERL_NFDBITS-1)/PERL_NFDBITS];
+}				Perl_fd_set;
+
+#define PERL_FD_CLR(n,p) \
+    ((p)->bits[(n)/PERL_NFDBITS] &= ~((unsigned)1 << ((n)%PERL_NFDBITS)))
+
+#define PERL_FD_SET(n,p) \
+    ((p)->bits[(n)/PERL_NFDBITS] |=  ((unsigned)1 << ((n)%PERL_NFDBITS)))
+
+#define PERL_FD_ZERO(p) memset((char *)(p),0,sizeof(*(p)))
+
+#define PERL_FD_ISSET(n,p) \
+    ((p)->bits[(n)/PERL_NFDBITS] &   ((unsigned)1 << ((n)%PERL_NFDBITS)))
+
+#else	/* USE_SOCKETS_AS_HANDLES */
+
+#define Perl_fd_set	fd_set
+#define PERL_FD_SET(n,p)	FD_SET(n,p)
+#define PERL_FD_CLR(n,p)	FD_CLR(n,p)
+#define PERL_FD_ISSET(n,p)	FD_ISSET(n,p)
+#define PERL_FD_ZERO(p)		FD_ZERO(p)
+
+#endif	/* USE_SOCKETS_AS_HANDLES */
 
 SOCKET win32_accept (SOCKET s, struct sockaddr *addr, int *addrlen);
 int win32_bind (SOCKET s, const struct sockaddr *addr, int namelen);
@@ -63,7 +108,8 @@ u_short win32_ntohs (u_short netshort);
 int win32_recv (SOCKET s, char * buf, int len, int flags);
 int win32_recvfrom (SOCKET s, char * buf, int len, int flags,
                          struct sockaddr *from, int * fromlen);
-int win32_select (int nfds, int *readfds, int *writefds, int *exceptfds, const struct timeval *timeout);
+int win32_select (int nfds, Perl_fd_set *rfds, Perl_fd_set *wfds, Perl_fd_set *xfds,
+		  const struct timeval *timeout);
 int win32_send (SOCKET s, const char * buf, int len, int flags);
 int win32_sendto (SOCKET s, const char * buf, int len, int flags,
                        const struct sockaddr *to, int tolen);
@@ -95,6 +141,8 @@ void win32_endnetent(void);
 void win32_endprotoent(void);
 void win32_endservent(void);
 
+#ifndef WIN32SCK_IS_STDSCK
+#ifndef PERL_OBJECT
 //
 // direct to our version
 //
@@ -115,6 +163,7 @@ void win32_endservent(void);
 #define recv		win32_recv
 #define recvfrom	win32_recvfrom
 #define shutdown	win32_shutdown
+#define closesocket	win32_closesocket
 #define ioctlsocket	win32_ioctlsocket
 #define setsockopt	win32_setsockopt
 #define getsockopt	win32_getsockopt
@@ -141,6 +190,22 @@ void win32_endservent(void);
 #define setnetent	win32_setnetent
 #define setprotoent	win32_setprotoent
 #define setservent	win32_setservent
+
+#ifdef USE_SOCKETS_AS_HANDLES
+#undef fd_set
+#undef FD_SET
+#undef FD_CLR
+#undef FD_ISSET
+#undef FD_ZERO
+#define fd_set		Perl_fd_set
+#define FD_SET(n,p)	PERL_FD_SET(n,p)
+#define FD_CLR(n,p)	PERL_FD_CLR(n,p)
+#define FD_ISSET(n,p)	PERL_FD_ISSET(n,p)
+#define FD_ZERO(p)	PERL_FD_ZERO(p)
+#endif	/* USE_SOCKETS_AS_HANDLES */
+
+#endif  /* PERL_OBJECT */
+#endif	/* WIN32SCK_IS_STDSCK */
 
 #ifdef __cplusplus
 }

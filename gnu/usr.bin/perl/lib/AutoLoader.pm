@@ -2,31 +2,73 @@ package AutoLoader;
 
 use vars qw(@EXPORT @EXPORT_OK);
 
+my $is_dosish;
+my $is_vms;
+
 BEGIN {
     require Exporter;
     @EXPORT = ();
     @EXPORT_OK = qw(AUTOLOAD);
+    $is_dosish = $^O eq 'dos' || $^O eq 'os2' || $^O eq 'MSWin32';
+    $is_vms = $^O eq 'VMS';
 }
 
 AUTOLOAD {
     my $name;
     # Braces used to preserve $1 et al.
     {
-     my ($pkg,$func) = $AUTOLOAD =~ /(.*)::([^:]+)$/;
-     $pkg =~ s#::#/#g;
-     if (defined($name=$INC{"$pkg.pm"}))
-      {
-       $name =~ s#^(.*)$pkg\.pm$#$1auto/$pkg/$func.al#;
-       $name = undef unless (-r $name); 
-      }
-     unless (defined $name)
-      {
-       $name = "auto/$AUTOLOAD.al";
-       $name =~ s#::#/#g;
-      }
+	# Try to find the autoloaded file from the package-qualified
+	# name of the sub. e.g., if the sub needed is
+	# Getopt::Long::GetOptions(), then $INC{Getopt/Long.pm} is
+	# something like '/usr/lib/perl5/Getopt/Long.pm', and the
+	# autoload file is '/usr/lib/perl5/auto/Getopt/Long/GetOptions.al'.
+	#
+	# However, if @INC is a relative path, this might not work.  If,
+	# for example, @INC = ('lib'), then $INC{Getopt/Long.pm} is
+	# 'lib/Getopt/Long.pm', and we want to require
+	# 'auto/Getopt/Long/GetOptions.al' (without the leading 'lib').
+	# In this case, we simple prepend the 'auto/' and let the
+	# C<require> take care of the searching for us.
+
+	my ($pkg,$func) = $AUTOLOAD =~ /(.*)::([^:]+)$/;
+	$pkg =~ s#::#/#g;
+	if (defined($name=$INC{"$pkg.pm"})) {
+	    $name =~ s#^(.*)$pkg\.pm$#$1auto/$pkg/$func.al#;
+
+	    # if the file exists, then make sure that it is a
+	    # a fully anchored path (i.e either '/usr/lib/auto/foo/bar.al',
+	    # or './lib/auto/foo/bar.al'.  This avoids C<require> searching
+	    # (and failing) to find the 'lib/auto/foo/bar.al' because it
+	    # looked for 'lib/lib/auto/foo/bar.al', given @INC = ('lib').
+
+	    if (-r $name) {
+	        unless ($name =~ m|^/|) {
+		    if ($is_dosish) {
+			unless ($name =~ m{^([a-z]:)?[\\/]}i) {
+			     $name = "./$name";
+			}
+		    }
+		    elsif ($is_vms) {
+		        # XXX todo by VMSmiths
+			$name = "./$name";
+		    }
+		    else {
+			$name = "./$name";
+		    }
+		}
+	    }
+	    else {
+		$name = undef;
+	    }
+	}
+	unless (defined $name) {
+	    # let C<require> do the searching
+	    $name = "auto/$AUTOLOAD.al";
+	    $name =~ s#::#/#g;
+	}
     }
     my $save = $@;
-    eval {local $SIG{__DIE__};require $name};
+    eval { local $SIG{__DIE__}; require $name };
     if ($@) {
 	if (substr($AUTOLOAD,-9) eq '::DESTROY') {
 	    *$AUTOLOAD = sub {};
@@ -73,7 +115,7 @@ sub import {
     # 'auto/POSIX/autosplit.ix' (without the leading 'lib').
     #
 
-    (my $calldir = $callpkg) =~ s#::#/#;
+    (my $calldir = $callpkg) =~ s#::#/#g;
     my $path = $INC{$calldir . '.pm'};
     if (defined($path)) {
 	# Try absolute path name.
@@ -136,7 +178,7 @@ such a file exists, AUTOLOAD will read and evaluate it,
 thus (presumably) defining the needed subroutine.  AUTOLOAD will then
 C<goto> the newly defined subroutine.
 
-Once this process completes for a given funtion, it is defined, so
+Once this process completes for a given function, it is defined, so
 future calls to the subroutine will bypass the AUTOLOAD mechanism.
 
 =head2 Subroutine Stubs
@@ -224,7 +266,7 @@ C<__DATA__>, after which routines are cached.  B<SelfLoader> can also
 handle multiple packages in a file.
 
 B<AutoLoader> only reads code as it is requested, and in many cases
-should be faster, but requires a machanism like B<AutoSplit> be used to
+should be faster, but requires a mechanism like B<AutoSplit> be used to
 create the individual files.  L<ExtUtils::MakeMaker> will invoke
 B<AutoSplit> automatically if B<AutoLoader> is used in a module source
 file.
@@ -241,6 +283,10 @@ On systems with restrictions on file name length, the file corresponding
 to a subroutine may have a shorter name that the routine itself.  This
 can lead to conflicting file names.  The I<AutoSplit> package warns of
 these potential conflicts when used to split a module.
+
+AutoLoader may fail to find the autosplit files (or even find the wrong
+ones) in cases where C<@INC> contains relative paths, B<and> the program
+does C<chdir>.
 
 =head1 SEE ALSO
 

@@ -122,13 +122,15 @@ directory name to be F<.>).
 
 =cut
 
-require 5.002;
+
+## use strict;
+use re 'taint';
+
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(fileparse fileparse_set_fstype basename dirname);
-#use strict;
-#use vars qw($VERSION $Fileparse_fstype $Fileparse_igncase);
-$VERSION = "2.5";
+use vars qw($VERSION $Fileparse_fstype $Fileparse_igncase);
+$VERSION = "2.6";
 
 
 #   fileparse_set_fstype() - specify OS-based rules used in future
@@ -141,7 +143,7 @@ sub fileparse_set_fstype {
   my @old = ($Fileparse_fstype, $Fileparse_igncase);
   if (@_) {
     $Fileparse_fstype = $_[0];
-    $Fileparse_igncase = ($_[0] =~ /^(?:MacOS|VMS|AmigaOS|os2|RISCOS|MSWin32)/i);
+    $Fileparse_igncase = ($_[0] =~ /^(?:MacOS|VMS|AmigaOS|os2|RISCOS|MSWin32|MSDOS)/i);
   }
   wantarray ? @old : $old[0];
 }
@@ -155,11 +157,13 @@ sub fileparse {
   my($fullname,@suffices) = @_;
   my($fstype,$igncase) = ($Fileparse_fstype, $Fileparse_igncase);
   my($dirpath,$tail,$suffix,$basename);
+  my($taint) = substr($fullname,0,0);  # Is $fullname tainted?
 
   if ($fstype =~ /^VMS/i) {
     if ($fullname =~ m#/#) { $fstype = '' }  # We're doing Unix emulation
     else {
       ($dirpath,$basename) = ($fullname =~ /^(.*[:>\]])?(.*)/);
+      $dirpath ||= '';  # should always be defined
     }
   }
   if ($fstype =~ /^MS(DOS|Win32)/i) {
@@ -175,6 +179,10 @@ sub fileparse {
   }
   elsif ($fstype !~ /^VMS/i) {  # default to Unix
     ($dirpath,$basename) = ($fullname =~ m#^(.*/)?(.*)#);
+    if ($^O eq 'VMS' and $fullname =~ m:/[^/]+/000000/?:) {
+      # dev:[000000] is top of VMS tree, similar to Unix '/'
+      ($basename,$dirpath) = ('',$fullname);
+    }
     $dirpath = './' unless $dirpath;
   }
 
@@ -183,12 +191,15 @@ sub fileparse {
     foreach $suffix (@suffices) {
       my $pat = ($igncase ? '(?i)' : '') . "($suffix)\$";
       if ($basename =~ s/$pat//) {
+        $taint .= substr($suffix,0,0);
         $tail = $1 . $tail;
       }
     }
   }
 
-  wantarray ? ($basename,$dirpath,$tail) : $basename;
+  $tail .= $taint if defined $tail; # avoid warning if $tail == undef
+  wantarray ? ($basename . $taint, $dirpath . $taint, $tail)
+            : $basename . $taint;
 }
 
 

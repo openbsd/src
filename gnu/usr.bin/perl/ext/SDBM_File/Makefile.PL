@@ -6,21 +6,30 @@ use ExtUtils::MakeMaker;
 # which perform the corresponding actions in the subdirectory.
 
 $define = ($^O eq 'MSWin32') ? '-DMSDOS' : '';
+if ($^O eq 'MSWin32') { $myextlib = 'sdbm\\libsdbm$(LIB_EXT)'; }
+else                  { $myextlib = 'sdbm/libsdbm$(LIB_EXT)';  }
 
 WriteMakefile(
-    NAME	=> 'SDBM_File',
-    MYEXTLIB => 'sdbm'.($^O eq 'MSWin32' ? '\\' : '/').'libsdbm$(LIB_EXT)',
-    MAN3PODS 	=> ' ', 	# Pods will be built by installman.
-    XSPROTOARG => '-noprototypes', 		# XXX remove later?
-    VERSION_FROM => 'SDBM_File.pm',
-    DEFINE => $define,
-);
-
+              NAME	=> 'SDBM_File',
+              MYEXTLIB => $myextlib,
+              MAN3PODS 	=> {}, 	# Pods will be built by installman.
+              XSPROTOARG => '-noprototypes', 		# XXX remove later?
+              VERSION_FROM => 'SDBM_File.pm',
+              DEFINE => $define,
+             );
 
 sub MY::postamble {
+  if ($^O ne 'VMS') {
     '
 $(MYEXTLIB): sdbm/Makefile
 	cd sdbm && $(MAKE) all
 ';
+  } else {
+  '   
+$(MYEXTLIB) : [.sdbm]descrip.mms
+	set def [.sdbm]
+    $(MMS) all
+    set def [-]
+';  
+  }
 }
-

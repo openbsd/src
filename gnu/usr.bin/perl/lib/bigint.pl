@@ -74,7 +74,7 @@ sub external { #(int_num_array) return num_str
 sub main'bneg { #(num_str) return num_str
     local($_) = &'bnorm(@_);
     vec($_,0,8) ^= ord('+') ^ ord('-') unless $_ eq '+0';
-    s/^H/N/;
+    s/^./N/ unless /^[-+]/; # works both in ASCII and EBCDIC
     $_;
 }
 

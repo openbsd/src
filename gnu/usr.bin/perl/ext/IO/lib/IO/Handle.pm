@@ -207,7 +207,7 @@ use SelectSaver;
 require Exporter;
 @ISA = qw(Exporter);
 
-$VERSION = "1.1504";
+$VERSION = "1.1505";
 $XS_VERSION = "1.15";
 
 @EXPORT_OK = qw(
@@ -423,84 +423,79 @@ sub stat {
 ##
 
 sub autoflush {
-    my $old = new SelectSaver qualify($_[0], caller);
+    my $old = new SelectSaver qualify($_[0], caller) if ref($_[0]);
     my $prev = $|;
     $| = @_ > 1 ? $_[1] : 1;
     $prev;
 }
 
 sub output_field_separator {
-    my $old = new SelectSaver qualify($_[0], caller);
     my $prev = $,;
     $, = $_[1] if @_ > 1;
     $prev;
 }
 
 sub output_record_separator {
-    my $old = new SelectSaver qualify($_[0], caller);
     my $prev = $\;
     $\ = $_[1] if @_ > 1;
     $prev;
 }
 
 sub input_record_separator {
-    my $old = new SelectSaver qualify($_[0], caller);
     my $prev = $/;
     $/ = $_[1] if @_ > 1;
     $prev;
 }
 
 sub input_line_number {
-    my $old = new SelectSaver qualify($_[0], caller);
+    # localizing $. doesn't work as advertised.  grrrrrr.
     my $prev = $.;
     $. = $_[1] if @_ > 1;
     $prev;
 }
 
 sub format_page_number {
-    my $old = new SelectSaver qualify($_[0], caller);
+    my $old = new SelectSaver qualify($_[0], caller) if ref($_[0]);
     my $prev = $%;
     $% = $_[1] if @_ > 1;
     $prev;
 }
 
 sub format_lines_per_page {
-    my $old = new SelectSaver qualify($_[0], caller);
+    my $old = new SelectSaver qualify($_[0], caller) if ref($_[0]);
     my $prev = $=;
     $= = $_[1] if @_ > 1;
     $prev;
 }
 
 sub format_lines_left {
-    my $old = new SelectSaver qualify($_[0], caller);
+    my $old = new SelectSaver qualify($_[0], caller) if ref($_[0]);
     my $prev = $-;
     $- = $_[1] if @_ > 1;
     $prev;
 }
 
 sub format_name {
-    my $old = new SelectSaver qualify($_[0], caller);
+    my $old = new SelectSaver qualify($_[0], caller) if ref($_[0]);
     my $prev = $~;
     $~ = qualify($_[1], caller) if @_ > 1;
     $prev;
 }
 
 sub format_top_name {
-    my $old = new SelectSaver qualify($_[0], caller);
+    my $old = new SelectSaver qualify($_[0], caller) if ref($_[0]);
     my $prev = $^;
     $^ = qualify($_[1], caller) if @_ > 1;
     $prev;
 }
 
 sub format_line_break_characters {
-    my $old = new SelectSaver qualify($_[0], caller);
     my $prev = $:;
     $: = $_[1] if @_ > 1;
     $prev;
 }
 
 sub format_formfeed {
-    my $old = new SelectSaver qualify($_[0], caller);
     my $prev = $^L;
     $^L = $_[1] if @_ > 1;
     $prev;
@@ -520,10 +515,10 @@ sub format_write {
     if (@_ == 2) {
 	my ($fh, $fmt) = @_;
 	my $oldfmt = $fh->format_name($fmt);
-	write($fh);
+	CORE::write($fh);
 	$fh->format_name($oldfmt);
     } else {
-	write($_[0]);
+	CORE::write($_[0]);
     }
 }
 

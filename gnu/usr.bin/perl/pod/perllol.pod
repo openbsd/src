@@ -26,7 +26,7 @@ a declaration of the array:
   bart
 
 Now you should be very careful that the outer bracket type
-is a round one, that is, parentheses.  That's because you're assigning to
+is a round one, that is, a parenthesis.  That's because you're assigning to
 an @list, so you need parentheses.  If you wanted there I<not> to be an @LoL,
 but rather just a reference to it, you could do something more like this:
 
@@ -34,7 +34,7 @@ but rather just a reference to it, you could do something more like this:
     $ref_to_LoL = [
 	[ "fred", "barney", "pebbles", "bambam", "dino", ],
 	[ "homer", "bart", "marge", "maggie", ],
-	[ "george", "jane", "alroy", "judy", ],
+	[ "george", "jane", "elroy", "judy", ],
     ];
 
     print $ref_to_LoL->[2][2];
@@ -144,17 +144,7 @@ you'd have to do something like this:
 	push @$ref_to_LoL, [ split ];
     }
 
-Actually, if you were using strict, you'd have to declare not only
-$ref_to_LoL as you had to declare @LoL, but you'd I<also> having to
-initialize it to a reference to an empty list.  (This was a bug in
-perl version 5.001m that's been fixed for the 5.002 release.)
-
-    my $ref_to_LoL = [];
-    while (<>) {
-	push @$ref_to_LoL, [ split ];
-    }
-
-Ok, now you can add new rows.  What about adding new columns?  If you're
+Now you can add new rows.  What about adding new columns?  If you're
 dealing with just matrices, it's often easiest to use simple assignment:
 
     for $x (1 .. 10) {
@@ -310,4 +300,4 @@ perldata(1), perlref(1), perldsc(1)
 
 Tom Christiansen <F<tchrist@perl.com>>
 
-Last udpate: Sat Oct  7 19:35:26 MDT 1995
+Last update: Thu Jun  4 16:16:23 MDT 1998

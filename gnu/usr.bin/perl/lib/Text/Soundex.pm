@@ -5,7 +5,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(&soundex $soundex_nocode);
 
-# $Id: Soundex.pm,v 1.2 1997/11/30 07:58:05 millert Exp $
+# $Id: Soundex.pm,v 1.3 1999/04/29 22:52:00 millert Exp $
 #
 # Implementation of soundex algorithm as described by Knuth in volume
 # 3 of The Art of Computer Programming, with ideas stolen from Ian
@@ -23,8 +23,8 @@ require Exporter;
 # Lukasiewicz, Lissajous -> L222
 #
 # $Log: Soundex.pm,v $
-# Revision 1.2  1997/11/30 07:58:05  millert
-# perl 5.004_04
+# Revision 1.3  1999/04/29 22:52:00  millert
+# perl5.005_03 (stock)
 #
 # Revision 1.2  1994/03/24  00:30:27  mike
 # Subtle bug (any excuse :-) spotted by Rich Pinder <rpinder@hsc.usc.edu>

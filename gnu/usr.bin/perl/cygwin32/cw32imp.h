@@ -165,7 +165,6 @@
 #define  Perl_scopestack   (*__imp_Perl_scopestack)
 #define  Perl_scopestack_ix   (*__imp_Perl_scopestack_ix)
 #define  Perl_scopestack_max   (*__imp_Perl_scopestack_max)
-#define  Perl_scrgv   (*__imp_Perl_scrgv)
 #define  Perl_sh_path   (*__imp_Perl_sh_path)
 #define  Perl_sig_name   (*__imp_Perl_sig_name)
 #define  Perl_sig_num   (*__imp_Perl_sig_num)

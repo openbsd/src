@@ -1,4 +1,4 @@
-#!./perl
+#!./perl -T
 
 BEGIN {
     chdir 't' if -d 't';
@@ -7,7 +7,7 @@ BEGIN {
 
 use File::Basename qw(fileparse basename dirname);
 
-print "1..34\n";
+print "1..36\n";
 
 # import correctly?
 print +(defined(&basename) && !defined(&fileparse_set_fstype) ?
@@ -119,3 +119,21 @@ File::Basename::fileparse_set_fstype 'UNIX';
 print +(dirname('/perl/') eq '/' ? '' : 'not '), "ok 33\n";
 # perl5.003_18 gives '/perl/lib'
 print +(dirname('/perl/lib//') eq '/perl' ? '' : 'not '), "ok 34\n";
+
+#   The empty tainted value, for tainting strings
+my $TAINT = substr($^X, 0, 0);
+# How to identify taint when you see it
+sub any_tainted (@) {
+    not eval { join("",@_), kill 0; 1 };
+}
+sub tainted ($) {
+    any_tainted @_;
+}
+sub all_tainted (@) {
+    for (@_) { return 0 unless tainted $_ }
+    1;
+}
+
+print +(tainted(dirname($TAINT.'/perl/lib//')) ? '' : 'not '), "ok 35\n";
+print +(all_tainted(fileparse($TAINT.'/dir/draft.book7','\.book\d+'))
+		? '' : 'not '), "ok 36\n";

@@ -2,7 +2,7 @@
 
 # $RCSfile: my.t,v $
 
-print "1..28\n";
+print "1..30\n";
 
 sub foo {
     my($a, $b) = @_;
@@ -10,7 +10,8 @@ sub foo {
     my $d;
     $c = "ok 3\n";
     $d = "ok 4\n";
-    { my($a,$c) = ("ok 9\n", "ok 10\n"); ($x, $y) = ($a, $c); }
+    { my($a, undef, $c) = ("ok 9\n", "not ok 10\n", "ok 10\n");
+      ($x, $y) = ($a, $c); }
     print $a, $b;
     $c . $d;
 }
@@ -83,3 +84,11 @@ foreach my $i (26, 27) {
 
 print "not " if $i ne "outer";
 print "ok 28\n";
+
+# Ensure that C<my @y> (without parens) doesn't force scalar context.
+my @x;
+{ @x = my @y }
+print +(@x ? "not " : ""), "ok 29\n";
+{ @x = my %y }
+print +(@x ? "not " : ""), "ok 30\n";
+

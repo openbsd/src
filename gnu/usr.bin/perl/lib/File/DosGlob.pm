@@ -6,21 +6,6 @@
 
 package File::DosGlob;
 
-unless (caller) {
-    $| = 1;
-    while (@ARGV) {
-	#
-	# We have to do this one by one for compatibility reasons.
-	# If an arg doesn't match anything, we are supposed to return
-	# the original arg.  I know, it stinks, eh?
-	#
-	my $arg = shift;
-	my @m = doglob(1,$arg);
-	print (@m ? join("\0", sort @m) : $arg);
-	print "\0" if @ARGV;
-    }
-}
-
 sub doglob {
     my $cond = shift;
     my @retval = ();
@@ -112,9 +97,19 @@ my %entries;
 sub glob {
     my $pat = shift;
     my $cxix = shift;
+    my @pat;
 
     # glob without args defaults to $_
     $pat = $_ unless defined $pat;
+
+    # extract patterns
+    if ($pat =~ /\s/) {
+	require Text::ParseWords;
+	@pat = Text::ParseWords::parse_line('\s+',0,$pat);
+    }
+    else {
+	push @pat, $pat;
+    }
 
     # assume global context if not provided one
     $cxix = '_G_' unless defined $cxix;
@@ -122,7 +117,7 @@ sub glob {
 
     # if we're just beginning, do it all first
     if ($iter{$cxix} == 0) {
-	$entries{$cxix} = [doglob(1,$pat)];
+	$entries{$cxix} = [doglob(1,@pat)];
     }
 
     # chuck it all out, quick or slow
@@ -145,10 +140,10 @@ sub glob {
 
 sub import {
     my $pkg = shift;
-    my $callpkg = caller(0);
+    return unless @_;
     my $sym = shift;
-    *{$callpkg.'::'.$sym} = \&{$pkg.'::'.$sym}
-	if defined($sym) and $sym eq 'glob';
+    my $callpkg = ($sym =~ s/^GLOBAL_// ? 'CORE::GLOBAL' : caller(0));
+    *{$callpkg.'::'.$sym} = \&{$pkg.'::'.$sym} if $sym eq 'glob';
 }
 
 1;
@@ -159,8 +154,6 @@ __END__
 
 File::DosGlob - DOS like globbing and then some
 
-perlglob.bat - a more capable perlglob.exe replacement
-
 =head1 SYNOPSIS
 
     require 5.004;
@@ -168,19 +161,19 @@ perlglob.bat - a more capable perlglob.exe replacement
     # override CORE::glob in current package
     use File::DosGlob 'glob';
     
+    # override CORE::glob in ALL packages (use with extreme caution!)
+    use File::DosGlob 'GLOBAL_glob';
+
     @perlfiles = glob  "..\\pe?l/*.p?";
     print <..\\pe?l/*.p?>;
     
     # from the command line (overrides only in main::)
     > perl -MFile::DosGlob=glob -e "print <../pe*/*p?>"
-    
-    > perlglob ../pe*/*p?
 
 =head1 DESCRIPTION
 
 A module that implements DOS-like globbing with a few enhancements.
-This file is also a portable replacement for perlglob.exe.  It
-is largely compatible with perlglob.exe (the M$ setargv.obj
+It is largely compatible with perlglob.exe (the M$ setargv.obj
 version) in all but one respect--it understands wildcards in
 directory components.
 
@@ -191,16 +184,14 @@ backslashes and forward slashes are both accepted, and preserved.
 You may have to double the backslashes if you are putting them in
 literally, due to double-quotish parsing of the pattern by perl.
 
-When invoked as a program, it will print null-separated filenames
-to standard output.
-
-While one may replace perlglob.exe with this, usage by overriding
-CORE::glob via importation should be much more efficient, because
-it avoids launching a separate process, and is therefore strongly
-recommended.  Note that it is currently possible to override
-builtins like glob() only on a per-package basis, not "globally".
-Thus, every namespace that wants to override glob() must explicitly
-request the override.  See L<perlsub>.
+Spaces in the argument delimit distinct patterns, so
+C<glob('*.exe *.dll')> globs all filenames that end in C<.exe>
+or C<.dll>.  If you want to put in literal spaces in the glob
+pattern, you can escape them with either double quotes, or backslashes.
+e.g. C<glob('c:/"Program Files"/*/*.dll')>, or
+C<glob('c:/Program\ Files/*/*.dll')>.  The argument is tokenized using
+C<Text::ParseWords::parse_line()>, so see L<Text::ParseWords> for details
+of the quoting rules used.
 
 Extending it to csh patterns is left as an exercise to the reader.
 
@@ -220,6 +211,10 @@ Gurusamy Sarathy <gsar@umich.edu>
 =head1 HISTORY
 
 =over 4
+
+=item *
+
+Support for globally overriding glob() (GSAR 3-JUN-98)
 
 =item *
 
@@ -245,6 +240,10 @@ Initial version (GSAR 20-FEB-97)
 =head1 SEE ALSO
 
 perl
+
+perlglob.bat
+
+Text::ParseWords
 
 =cut
 

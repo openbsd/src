@@ -21,8 +21,8 @@ tmp=/tmp/f$$
 
 if grep 'yaccpar 1.8 (Berkeley)' $input >/dev/null 2>&1; then
     cp $input $output
-    if test -f perly.c.diff; then
-	patch -F3 $output <perly.c.diff
+    if test -f perly_c.diff; then
+	patch -F3 $output <perly_c.diff
 	rm -rf $input
     fi
     exit
@@ -50,7 +50,7 @@ echo "Warning: the yacc you have used is not directly supported by perl."
 echo "The perly.fixer script will attempt to make some changes to the generated"
 echo "file. The changes may be incomplete and that might lead to problems later"
 echo "(especially with complex scripts). You may need to apply the changes"
-echo "embedded in perl.fixer (and/or perly.c.dif*) by hand."
+echo "embedded in perl.fixer (and/or perly_c.dif*) by hand."
 echo ""
 
 # Below, we check for various characteristic yaccpar outputs.
@@ -105,8 +105,8 @@ short *maxyyps;
 
 /yypv *= *&yyv\[ *-1 *\];/c\
 \	if (!yyv) {\
-\	    yyv = (YYSTYPE*) safemalloc(yymaxdepth * sizeof(YYSTYPE));\
-\	    yys = (short*) safemalloc(yymaxdepth * sizeof(short));\
+\	    New(73, yyv, yymaxdepth, YYSTYPE);\
+\	    New(73, yys, yymaxdepth, short);\
 \	    if ( !yyv || !yys ) {\
 \		yyerror( "out of memory" );\
 \		return(1);\
@@ -123,10 +123,8 @@ short *maxyyps;
 \		    int ts = yyps - yys;\
 \
 \		    yymaxdepth *= 2;\
-\		    yyv = (YYSTYPE*)realloc((char*)yyv,\
-\		      yymaxdepth*sizeof(YYSTYPE));\
-\		    yys = (short*)realloc((char*)yys,\
-\		      yymaxdepth*sizeof(short));\
+\		    Renew(yyv, yymaxdepth, YYSTYPE);\
+\		    Renew(yys, yymaxdepth, short);\
 \		    if ( !yyv || !yys ) {\
 \			yyerror( "yacc stack overflow" );\
 \			return(1);\
@@ -170,8 +168,8 @@ int *maxyyps;
 
 /yypv *= *&yyv\[ *-1 *\];/c\
 \	if (!yyv) {\
-\	    yyv = (YYSTYPE*) safemalloc(yymaxdepth * sizeof(YYSTYPE));\
-\	    yys = (int*) safemalloc(yymaxdepth * sizeof(int));\
+\	    New(73, yyv, yymaxdepth, YYSTYPE);\
+\	    New(73, yys, yymaxdepth, int);\
 \	    maxyyps = &yys[yymaxdepth];\
 \	}\
 \	yyps = &yys[-1];\
@@ -183,10 +181,8 @@ int *maxyyps;
 \		    int ts = yy_ps - yys;\
 \
 \		    yymaxdepth *= 2;\
-\		    yyv = (YYSTYPE*)realloc((char*)yyv,\
-\		      yymaxdepth*sizeof(YYSTYPE));\
-\		    yys = (int*)realloc((char*)yys,\
-\		      yymaxdepth*sizeof(int));\
+\		    Renew(yyv, yymaxdepth, YYSTYPE);\
+\		    Renew(yys, yymaxdepth, int);\
 \		    yy_ps = yyps = yys + ts;\
 \		    yy_pv = yypv = yyv + tv;\
 \		    maxyyps = &yys[yymaxdepth];\

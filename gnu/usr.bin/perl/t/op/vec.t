@@ -2,7 +2,7 @@
 
 # $RCSfile: vec.t,v $$Revision: 4.1 $$Date: 92/08/07 18:28:36 $
 
-print "1..13\n";
+print "1..15\n";
 
 print vec($foo,0,1) == 0 ? "ok 1\n" : "not ok 1\n";
 print length($foo) == 0 ? "ok 2\n" : "not ok 2\n";
@@ -21,4 +21,7 @@ print vec($foo,1,8) == 0xf1 ? "ok 10\n" : "not ok 10\n";
 print ((ord(substr($foo,1,1)) & 255) == 0xf1 ? "ok 11\n" : "not ok 11\n");
 print vec($foo,2,4) == 1 ? "ok 12\n" : "not ok 12\n";
 print vec($foo,3,4) == 15 ? "ok 13\n" : "not ok 13\n";
+vec($Vec, 0, 32) = 0xbaddacab;
+print $Vec eq "\xba\xdd\xac\xab" ? "ok 14\n" : "not ok 14\n";
+print vec($Vec, 0, 32) == 3135089835 ? "ok 15\n" : "not ok 15\n";
 

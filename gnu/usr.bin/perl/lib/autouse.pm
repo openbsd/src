@@ -146,15 +146,6 @@ The first line ensures that the errors in your argument specification
 are found early.  When you ship your application you should comment
 out the first line, since it makes the second one useless.
 
-=head1 BUGS
-
-If Module::func3() is autoused, and the module is loaded between the
-C<autouse> directive and a call to Module::func3(), warnings about
-redefinition would appear if warnings are enabled.
-
-If Module::func3() is autoused, warnings are disabled when loading the
-module via autoused functions.
-
 =head1 AUTHOR
 
 Ilya Zakharevich (ilya@math.ohio-state.edu)

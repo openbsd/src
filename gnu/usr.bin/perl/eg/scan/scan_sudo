@@ -1,6 +1,6 @@
 #!/usr/bin/perl -P
 
-# $RCSfile: scan_sudo,v $$Revision: 1.2 $$Date: 1997/11/30 07:54:53 $
+# $RCSfile: scan_sudo,v $$Revision: 1.3 $$Date: 1999/04/29 22:51:21 $
 
 # Analyze the sudo log.
 

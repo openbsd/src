@@ -36,6 +36,12 @@ sub stringify { "${$_[0]}" }
 sub numify { 0 + "${$_[0]}" }	# Not needed, additional overhead
 				# comparing to direct compilation based on
 				# stringify
+sub import {
+  shift;
+  return unless @_;
+  die "unknown import: @_" unless @_ == 1 and $_[0] eq ':constant';
+  overload::constant integer => sub {Math::BigInt->new(shift)};
+}
 
 $zero = 0;
 
@@ -76,8 +82,8 @@ sub external { #(int_num_array) return num_str
 # Negate input value.
 sub bneg { #(num_str) return num_str
     local($_) = &bnorm(@_);
-    vec($_,0,8) ^= ord('+') ^ ord('-') unless $_ eq '+0';
-    s/^H/N/;
+    return $_ if $_ eq '+0' or $_ eq 'NaN';
+    vec($_,0,8) ^= ord('+') ^ ord('-');
     $_;
 }
 
@@ -100,7 +106,7 @@ sub bcmp { #(num_str, num_str) return cond_code
     } elsif ($y eq 'NaN') {
 	undef;
     } else {
-	&cmp($x,$y);
+	&cmp($x,$y) <=> 0;
     }
 }
 
@@ -171,7 +177,7 @@ sub add { #(int_num_array, int_num_array) return int_num_array
     $car = 0;
     for $x (@x) {
 	last unless @y || $car;
-	$x -= 1e5 if $car = (($x += shift(@y) + $car) >= 1e5) ? 1 : 0;
+	$x -= 1e5 if $car = (($x += (@y ? shift(@y) : 0) + $car) >= 1e5) ? 1 : 0;
     }
     for $y (@y) {
 	last unless $car;
@@ -185,8 +191,8 @@ sub sub { #(int_num_array, int_num_array) return int_num_array
     local(*sx, *sy) = @_;
     $bar = 0;
     for $sx (@sx) {
-	last unless @y || $bar;
-	$sx += 1e5 if $bar = (($sx -= shift(@sy) + $bar) < 0);
+	last unless @sy || $bar;
+	$sx += 1e5 if $bar = (($sx -= (@sy ? shift(@sy) : 0) + $bar) < 0);
     }
     @sx;
 }
@@ -252,9 +258,9 @@ sub bdiv { #(dividend: num_str, divisor: num_str) return num_str
     else {
 	push(@x, 0);
     }
-    @q = (); ($v2,$v1) = @y[-2,-1];
+    @q = (); ($v2,$v1) = ($y[-2] || 0, $y[-1]);
     while ($#x > $#y) {
-	($u2,$u1,$u0) = @x[-3..-1];
+	($u2,$u1,$u0) = ($x[-3] || 0, $x[-2] || 0, $x[-1]);
 	$q = (($u0 == $v1) ? 99999 : int(($u0*1e5+$u1)/$v1));
 	--$q while ($v2*$q > ($u0*1e5+$u1-$q*$v1)*1e5+$u2);
 	if ($q) {
@@ -383,6 +389,19 @@ are not numbers, as well as the result of dividing by zero.
    '   -123 123 123'               canonical value '-123123123'
    '1 23 456 7890'                 canonical value '+1234567890'
 
+
+=head1 Autocreating constants
+
+After C<use Math::BigInt ':constant'> all the integer decimal constants
+in the given scope are converted to C<Math::BigInt>.  This conversion
+happens at compile time.
+
+In particular
+
+  perl -MMath::BigInt=:constant -e 'print 2**100'
+
+print the integer value of C<2**100>.  Note that without conversion of 
+constants the expression 2**100 will be calculated as floating point number.
 
 =head1 BUGS
 

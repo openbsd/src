@@ -5,12 +5,11 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Config;
 use Math::BigInt;
 
 $test = 0;
 $| = 1;
-print "1..246\n";
+print "1..247\n";
 while (<DATA>) {
        chop;
        if (s/^&//) {
@@ -116,6 +115,7 @@ abc:+0:NaN
 +124:+123:+1
 -123:-124:+1
 -124:-123:-1
++100:+5:+1
 &badd
 abc:abc:NaN
 abc:+0:NaN

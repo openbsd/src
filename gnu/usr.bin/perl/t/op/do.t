@@ -10,7 +10,7 @@ sub foo1
 
 sub foo2
 {
-    shift(_);
+    shift;
     print $_[0];
     $x = 'value';
     $x;

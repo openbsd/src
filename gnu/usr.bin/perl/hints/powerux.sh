@@ -75,6 +75,16 @@ d_memcmp='undef'
 #
 useshrplib='false'
 
+# PowerMAX OS has support for a few different kinds of filesystems. The
+# newer "xfs" filesystem does *not* report a reasonable value in the
+# 'nlinks' field of stat() info for directories (in fact, it is always 1).
+# Since xfs is the only filesystem which supports partitions bigger than
+# 2gig and you can't hardly buy a disk that small anymore, xfs is coming in
+# to greater and greater use, so we pretty much have no choice but to
+# abandon all hope that number of links will mean anything.
+#
+dont_use_nlink=define
+
 # Misc other flags that might be able to change, but I know these work right.
 #
 d_suidsafe='define'

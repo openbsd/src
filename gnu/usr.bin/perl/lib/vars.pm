@@ -13,11 +13,20 @@ sub import {
     my $callpack = caller;
     my ($pack, @imports, $sym, $ch) = @_;
     foreach $sym (@imports) {
-	if ($sym =~ /::/) {
-	    require Carp;
-	    Carp::croak("Can't declare another package's variables");
-	}
         ($ch, $sym) = unpack('a1a*', $sym);
+	if ($sym =~ tr/A-Za-Z_0-9//c) {
+	    # time for a more-detailed check-up
+	    if ($sym =~ /::/) {
+		require Carp;
+		Carp::croak("Can't declare another package's variables");
+	    } elsif ($sym =~ /^\w+[[{].*[]}]$/) {
+		require Carp;
+		Carp::croak("Can't declare individual elements of hash or array");
+	    } elsif ($^W and length($sym) == 1 and $sym !~ tr/a-zA-Z//) {
+		require Carp;
+		Carp::carp("No need to declare built-in vars");
+	    }
+	}
         *{"${callpack}::$sym"} =
           (  $ch eq "\$" ? \$   {"${callpack}::$sym"}
            : $ch eq "\@" ? \@   {"${callpack}::$sym"}
@@ -26,7 +35,7 @@ sub import {
            : $ch eq "\&" ? \&   {"${callpack}::$sym"}
            : do {
 		require Carp;
-		Carp::croak("'$ch$sym' is not a valid variable name\n");
+		Carp::croak("'$ch$sym' is not a valid variable name");
 	     });
     }
 };
@@ -61,6 +70,6 @@ outside of the package), it can act as an acceptable substitute by
 pre-declaring global symbols, ensuring their availability to the
 later-loaded routines.
 
-See L<perlmod/Pragmatic Modules>.
+See L<perlmodlib/Pragmatic Modules>.
 
 =cut

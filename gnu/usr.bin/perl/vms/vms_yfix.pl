@@ -27,6 +27,11 @@ while (<C>) {
     # accomodate old VAXC's macro susbstitution pecularities
     $_ = "#   ifndef getenv\n$_#   endif\n";
   }
+  elsif ( /getenv\("YYDEBUG"\)/ ) {
+    # Reset the "error" status if an optional lookup fails
+    while (not /^\s+\}/) { print COUT; $_ = <C>; }
+    $_ .= "\telse SETERRNO(0,SS\$_NORMAL);\n";
+  }
   else {
     # add the dEXT tag to definitions of global vars, so we'll insert
     # a globaldef when perly.c is compiled

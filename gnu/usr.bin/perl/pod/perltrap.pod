@@ -451,8 +451,8 @@ Also see precedence traps, for parsing C<$:>.
 The second and third arguments of C<splice()> are now evaluated in scalar
 context (as the Camel says) rather than list context.
 
-    sub sub1{return(0,2) }          # return a 2-elem array
-    sub sub2{ return(1,2,3)}        # return a 3-elem array
+    sub sub1{return(0,2) }          # return a 2-element list
+    sub sub2{ return(1,2,3)}        # return a 3-element list
     @a1 = ("a","b","c","d","e");
     @a2 = splice(@a1,&sub1,&sub2);
     print join(' ',@a2),"\n";
@@ -650,6 +650,23 @@ Better parsing in perl 5
     # perl4 prints: is zero
     # perl5 warns: "Useless use of a constant in void context" if using -w
 
+=item * Parsing
+
+String interpolation of the C<$#array> construct differs when braces
+are to used around the name.
+
+    @ = (1..3);
+    print "${#a}";
+
+    # perl4 prints: 2
+    # perl5 fails with syntax error
+
+    @ = (1..3);
+    print "$#{a}";
+
+    # perl4 prints: {a}
+    # perl5 prints: 2
+
 =back
 
 =head2 Numerical Traps
@@ -757,15 +774,11 @@ variable is localized subsequent to the assignment
     # perl4 prints: This is Perl 4
     # perl5 prints:
 
-    # Another example
+=item * (Globs)
 
-    *fred = *barney; # fred is aliased to barney
-    @barney = (1, 2, 4);
-    # @fred;
-    print "@fred";  # should print "1, 2, 4"
-
-    # perl4 prints: 1 2 4
-    # perl5 prints: In string, @fred now must be written as \@fred
+Assigning C<undef> to a glob has no effect in Perl 5.   In Perl 4
+it undefines the associated scalar (but may have other side effects
+including SEGVs).
 
 =item * (Scalar String)
 
@@ -925,6 +938,10 @@ Probably a bug.
 
 Perl4-to-Perl5 traps involving precedence order.
 
+Perl 4 has almost the same precedence rules as Perl 5 for the operators
+that they both have.  Perl 4 however, seems to have had some
+inconsistencies that made the behavior differ from what was documented.
+
 =over 5
 
 =item * Precedence
@@ -1000,12 +1017,33 @@ treats C<$::> as main C<package>
 
 =item * Precedence
 
-concatenation precedence over filetest operator?
+perl4 had buggy precedence for the file test operators vis-a-vis
+the assignment operators.  Thus, although the precedence table
+for perl4 leads one to believe C<-e $foo .= "q"> should parse as
+C<((-e $foo) .= "q")>, it actually parses as C<(-e ($foo .= "q"))>.
+In perl5, the precedence is as documented.
 
     -e $foo .= "q"
 
     # perl4 prints: no output
     # perl5 prints: Can't modify -e in concatenation
+
+=item * Precedence
+
+In perl4, keys(), each() and values() were special high-precedence operators
+that operated on a single hash, but in perl5, they are regular named unary
+operators.  As documented, named unary operators have lower precedence
+than the arithmetic and concatenation operators C<+ - .>, but the perl4
+variants of these operators actually bind tighter than C<+ - .>.
+Thus, for:
+
+    %foo = 1..10;
+    print keys %foo - 1
+
+    # perl4 prints: 4
+    # perl5 prints: Type of arg 1 to keys must be hash (not subtraction)
+
+The perl4 behavior was probably more useful, if less consistent.
 
 =back
 
@@ -1139,26 +1177,6 @@ repeatedly, like C</x/> or C<m!x!>.
     # perl4 prints: perl4
     # perl5 prints: perl5
 
-
-=item * Regular Expression
-
-Under perl4 and upto version 5.003, a failed C<m//g> match used to
-reset the internal iterator, so that subsequent C<m//g> match attempts
-began from the beginning of the string.  In perl version 5.004 and later,
-failed C<m//g> matches do not reset the iterator position (which can be
-found using the C<pos()> function--see L<perlfunc/pos>).
-
-    $test = "foop";
-    for (1..3) {
-        print $1 while ($test =~ /(o)/g);
-        # pos $test = 0;     # to get old behavior
-    }
-
-    # perl4     prints: oooooo
-    # perl5.004 prints: oo
-
-You may always reset the iterator yourself as shown in the commented line
-to get the old behavior.
 
 =back
 

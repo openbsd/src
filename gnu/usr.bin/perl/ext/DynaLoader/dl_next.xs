@@ -100,7 +100,7 @@ static void TranslateError
 		     path, number, type);
 	break;
     }
-    safefree(dl_last_error);
+    Safefree(dl_last_error);
     dl_last_error = savepv(error);
 }
 
@@ -151,10 +151,10 @@ static void TransferError(NXStream *s)
     int len, maxlen;
 
     if ( dl_last_error ) {
-        safefree(dl_last_error);
+        Safefree(dl_last_error);
     }
     NXGetMemoryBuffer(s, &buffer, &len, &maxlen);
-    dl_last_error = safemalloc(len);
+    New(1097, dl_last_error, len, char);
     strcpy(dl_last_error, buffer);
 }
 
@@ -172,6 +172,7 @@ static char *dlopen(char *path, int mode /* mode is ignored */)
     I32 i, psize;
     char *result;
     char **p;
+    STRLEN n_a;
 	
     /* Do not load what is already loaded into this process */
     if (hv_fetch(dl_loaded_files, path, strlen(path), 0))
@@ -182,7 +183,7 @@ static char *dlopen(char *path, int mode /* mode is ignored */)
     p = (char **) safemalloc(psize * sizeof(char*));
     p[0] = path;
     for(i=1; i<psize-1; i++) {
-	p[i] = SvPVx(*av_fetch(dl_resolve_using, i-1, TRUE), na);
+	p[i] = SvPVx(*av_fetch(dl_resolve_using, i-1, TRUE), n_a);
     }
     p[psize-1] = 0;
     rld_success = rld_load(nxerr, (struct mach_header **)0, p,
@@ -191,7 +192,7 @@ static char *dlopen(char *path, int mode /* mode is ignored */)
     if (rld_success) {
 	result = path;
 	/* prevent multiple loads of same file into same process */
-	hv_store(dl_loaded_files, path, strlen(path), &sv_yes, 0);
+	hv_store(dl_loaded_files, path, strlen(path), &PL_sv_yes, 0);
     } else {
 	TransferError(nxerr);
 	result = (char*) 0;

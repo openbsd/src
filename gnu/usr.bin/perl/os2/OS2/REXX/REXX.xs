@@ -46,6 +46,7 @@ static long incompartment;
 static SV*
 exec_in_REXX(char *cmd, char * handlerName, RexxFunctionHandler *handler)
 {
+    dTHR;
     HMODULE hRexx, hRexxAPI;
     BYTE    buf[200];
     LONG    APIENTRY (*pRexxStart) (LONG, PRXSTRING, PSZ, PRXSTRING, 
@@ -93,9 +94,10 @@ exec_in_REXX(char *cmd, char * handlerName, RexxFunctionHandler *handler)
     } else {
 	res = NEWSV(729,0);
     }
-    if (rc || SvTRUE(GvSV(errgv))) {
-	if (SvTRUE(GvSV(errgv))) {
-	    die ("Error inside perl function called from REXX compartment.\n%s", SvPV(GvSV(errgv), na)) ;
+    if (rc || SvTRUE(GvSV(PL_errgv))) {
+	if (SvTRUE(GvSV(PL_errgv))) {
+	    STRLEN n_a;
+	    die ("Error inside perl function called from REXX compartment.\n%s", SvPV(GvSV(PL_errgv), n_a)) ;
 	}
 	die ("REXX compartment returned non-zero status %li", rc);
     }
@@ -132,7 +134,7 @@ PERLCALL(PSZ name, ULONG argc, PRXSTRING argv, PSZ queue, PRXSTRING ret)
 
     ENTER;
     SAVETMPS;
-    PUSHMARK(sp);
+    PUSHMARK(SP);
 
 #if 0
     if (!my_perl) {
@@ -338,7 +340,7 @@ _fetch(name, ...)
    {
        int   i;
        ULONG rc;
-       EXTEND(sp, items);
+       EXTEND(SP, items);
        needvars(items);
        if (trace)
 	   fprintf(stderr, "REXXCALL::_fetch");
@@ -373,7 +375,7 @@ _fetch(name, ...)
 			   var->shvname.strlength, var->shvname.strptr,
 			   namelen, var->shvvalue.strptr);
 	       if (var->shvret & RXSHV_NEWV || !var->shvvalue.strptr)
-		   PUSHs(&sv_undef);
+		   PUSHs(&PL_sv_undef);
 	       else
 		   PUSHs(sv_2mortal(newSVpv(var->shvvalue.strptr,
 					    namelen)));
@@ -409,7 +411,7 @@ _next(stem)
 	   rc = RexxVariablePool(&sv);
        } while (!rc && memcmp(stem, sv.shvname.strptr, len) != 0);
        if (!rc) {
-	   EXTEND(sp, 2);
+	   EXTEND(SP, 2);
 	   /* returned lengths appear to be swapped */
 	   /* but beware of "future bug fixes" */
 	   namelen = sv.shvname.strlength; /* should be */
@@ -427,7 +429,7 @@ _next(stem)
 	       PUSHs(sv_2mortal(newSVpv(sv.shvvalue.strptr, valuelen)));
 				DosFreeMem(sv.shvvalue.strptr);
 	   } else	
-	       PUSHs(&sv_undef);
+	       PUSHs(&PL_sv_undef);
        } else if (rc != RXSHV_LVAR) {
 	   die("Error %i when in _next", rc);
        } else {

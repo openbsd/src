@@ -47,54 +47,54 @@ if( $args=~/\-o (.+?)\.dll/i){
 	writeInit();
 	$command = "gcc -c $fixup.c\n";
 	print $command;
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 	$command = "gcc -c $init.cc\n";
 	print $command;	
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 	
 	$command = "echo EXPORTS > $libname.def\n";
 	print $command;	
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 	$command = "nm ".join(" ",@objs)."  $init.o $fixup.o | grep '^........ [TCD] _' | sed 's/[^_]*_//' >> $libname.def\n";
 	print $command;	
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 
 	$command = "ld --base-file $libname.base --dll -o $libname.dll ".join(" ",@objs)."  $init.o $fixup.o ";
  	$command .= join(" ",@flags)." -e _dll_entry\@12 \n";
 	print $command;	
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 
 	$command = "dlltool --as=as --dllname $libname.dll --def $libname.def --base-file $libname.base --output-exp $libname.exp\n";
 	print $command;	
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 	
 	$command = "ld --base-file $libname.base $libname.exp --dll -o $libname.dll ".join(" ",@objs)."   $init.o $fixup.o ";
  	$command .= join(" ",@flags)." -e _dll_entry\@12 \n";
 	print $command;	
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 
 	$command = "dlltool --as=as --dllname $libname.dll --def $libname.def --base-file $libname.base --output-exp $libname.exp\n";
 	print $command;	
-	system($command);			
+	system($command) == 0 or die "system() failed.\n";
 
 	$command = "ld $libname.exp --dll -o $libname.dll ".join(" ",@objs)."   $init.o $fixup.o ";
  	$command .= join(" ",@flags)." -e _dll_entry\@12 \n";
 	print $command;	
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 
 	print "Build the import lib\n";
 	$command = "dlltool --as=as --dllname $libname.dll --def $libname.def --output-lib $libname.a\n";
 	print $command;	
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 
 	# if there was originally a path, copy the dll and a to that location:
 	if($path && $path ne "./" && $path."\n" ne  "`pwd`"){
 		$command = "mv $libname.dll $path".$libname.".dll\n";
 		print $command;	
-		system($command);
+		system($command) == 0 or die "system() failed.\n";
 		$command = "mv $libname.a $path".$libname.".a\n";
 		print $command;	
-		system($command);
+		system($command) == 0 or die "system() failed.\n";
 		
 	}
 
@@ -102,7 +102,7 @@ if( $args=~/\-o (.+?)\.dll/i){
 else{  # no special processing, just call ld
 	$command = "ld $args\n";
 	print $command;	
-	system($command);
+	system($command) == 0 or die "system() failed.\n";
 }
 
 #---------------------------------------------------------------------------

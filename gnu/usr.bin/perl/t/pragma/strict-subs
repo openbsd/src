@@ -81,7 +81,7 @@ use strict 'vars' ;
 $joe = 1 ;
 EXPECT
 Variable "$joe" is not imported at - line 8.
-Global symbol "joe" requires explicit package name at - line 8.
+Global symbol "$joe" requires explicit package name at - line 8.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -93,7 +93,7 @@ no strict;
 }
 $joe = 1 ;
 EXPECT
-Global symbol "joe" requires explicit package name at - line 6.
+Global symbol "$joe" requires explicit package name at - line 6.
 Execution of - aborted due to compilation errors.
 ########
 

@@ -1,12 +1,12 @@
 # $Header$ 
 # basic C types
 int			T_IV
-unsigned		T_IV
-unsigned int		T_IV
+unsigned		T_UV
+unsigned int		T_UV
 long			T_IV
-unsigned long		T_IV
+unsigned long		T_UV
 short			T_IV
-unsigned short		T_IV
+unsigned short		T_UV
 char			T_CHAR
 unsigned char		T_U_CHAR
 char *			T_PV
@@ -34,7 +34,7 @@ I16			T_IV
 I8			T_IV
 U32			T_U_LONG
 U16			T_U_SHORT
-U8			T_IV
+U8			T_UV
 Result			T_U_CHAR
 Boolean			T_IV
 double			T_DOUBLE
@@ -73,6 +73,8 @@ T_CVREF
 	    croak(\"$var is not of type ${ntype}\")
 T_SYSRET
 	$var NOT IMPLEMENTED
+T_UV
+	$var = ($type)SvUV($arg)
 T_IV
 	$var = ($type)SvIV($arg)
 T_INT
@@ -82,19 +84,19 @@ T_ENUM
 T_BOOL
 	$var = (int)SvIV($arg)
 T_U_INT
-	$var = (unsigned int)SvIV($arg)
+	$var = (unsigned int)SvUV($arg)
 T_SHORT
 	$var = (short)SvIV($arg)
 T_U_SHORT
-	$var = (unsigned short)SvIV($arg)
+	$var = (unsigned short)SvUV($arg)
 T_LONG
 	$var = (long)SvIV($arg)
 T_U_LONG
-	$var = (unsigned long)SvIV($arg)
+	$var = (unsigned long)SvUV($arg)
 T_CHAR
-	$var = (char)*SvPV($arg,na)
+	$var = (char)*SvPV($arg,PL_na)
 T_U_CHAR
-	$var = (unsigned char)SvIV($arg)
+	$var = (unsigned char)SvUV($arg)
 T_FLOAT
 	$var = (float)SvNV($arg)
 T_NV
@@ -102,7 +104,7 @@ T_NV
 T_DOUBLE
 	$var = (double)SvNV($arg)
 T_PV
-	$var = ($type)SvPV($arg,na)
+	$var = ($type)SvPV($arg,PL_na)
 T_PTR
 	$var = ($type)SvIV($arg)
 T_PTRREF
@@ -158,7 +160,7 @@ T_REFOBJ
 T_OPAQUE
 	$var NOT IMPLEMENTED
 T_OPAQUEPTR
-	$var = ($type)SvPV($arg,na)
+	$var = ($type)SvPV($arg,PL_na)
 T_PACKED
 	$var = XS_unpack_$ntype($arg)
 T_PACKEDARRAY
@@ -191,6 +193,8 @@ T_CVREF
 	$arg = newRV((SV*)$var);
 T_IV
 	sv_setiv($arg, (IV)$var);
+T_UV
+	sv_setuv($arg, (UV)$var);
 T_INT
 	sv_setiv($arg, (IV)$var);
 T_SYSRET
@@ -205,19 +209,19 @@ T_ENUM
 T_BOOL
 	$arg = boolSV($var);
 T_U_INT
-	sv_setiv($arg, (IV)$var);
+	sv_setuv($arg, (UV)$var);
 T_SHORT
 	sv_setiv($arg, (IV)$var);
 T_U_SHORT
-	sv_setiv($arg, (IV)$var);
+	sv_setuv($arg, (UV)$var);
 T_LONG
 	sv_setiv($arg, (IV)$var);
 T_U_LONG
-	sv_setiv($arg, (IV)$var);
+	sv_setuv($arg, (UV)$var);
 T_CHAR
 	sv_setpvn($arg, (char *)&$var, 1);
 T_U_CHAR
-	sv_setiv($arg, (IV)$var);
+	sv_setuv($arg, (UV)$var);
 T_FLOAT
 	sv_setnv($arg, (double)$var);
 T_NV
@@ -262,14 +266,14 @@ T_ARRAY
 		ST(ix_$var) = sv_newmortal();
 	DO_ARRAY_ELEM
 	}
-	sp += $var.size - 1;
+	SP += $var.size - 1;
 T_IN
 	{
 	    GV *gv = newGVgen("$Package");
 	    if ( do_open(gv, "<&", 2, FALSE, 0, 0, $var) )
 		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
 	    else
-		$arg = &sv_undef;
+		$arg = &PL_sv_undef;
 	}
 T_INOUT
 	{
@@ -277,7 +281,7 @@ T_INOUT
 	    if ( do_open(gv, "+<&", 3, FALSE, 0, 0, $var) )
 		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
 	    else
-		$arg = &sv_undef;
+		$arg = &PL_sv_undef;
 	}
 T_OUT
 	{
@@ -285,5 +289,5 @@ T_OUT
 	    if ( do_open(gv, "+>&", 3, FALSE, 0, 0, $var) )
 		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
 	    else
-		$arg = &sv_undef;
+		$arg = &PL_sv_undef;
 	}

@@ -145,7 +145,6 @@ void endnetent();
 #include <socket.h>
 #include <in.h>
 #include <inet.h>
-#include <netdb.h>
 
 /* SocketShr doesn't support these routines, but the DECC RTL contains
  * stubs with these names, designed to be used with the UCX socket
@@ -156,6 +155,8 @@ void endnetent();
 #define getnetent    no_getnetent
 #define setnetent    no_setnetent
 #define endnetent    no_endnetent
+
+#include <netdb.h>
 #endif
 
 /* We don't have these two in the system headers. */

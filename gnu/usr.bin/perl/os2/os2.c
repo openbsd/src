@@ -5,6 +5,8 @@
 #define INCL_DOSERRORS
 #include <os2.h>
 
+#include <sys/uflags.h>
+
 /*
  * Various Unix compatibility functions for OS/2
  */
@@ -17,6 +19,161 @@
 
 #include "EXTERN.h"
 #include "perl.h"
+
+#ifdef USE_THREADS
+
+typedef void (*emx_startroutine)(void *);
+typedef void* (*pthreads_startroutine)(void *);
+
+enum pthreads_state {
+    pthreads_st_none = 0, 
+    pthreads_st_run,
+    pthreads_st_exited, 
+    pthreads_st_detached, 
+    pthreads_st_waited,
+};
+const char *pthreads_states[] = {
+    "uninit",
+    "running",
+    "exited",
+    "detached",
+    "waited for",
+};
+
+typedef struct {
+    void *status;
+    perl_cond cond;
+    enum pthreads_state state;
+} thread_join_t;
+
+thread_join_t *thread_join_data;
+int thread_join_count;
+perl_mutex start_thread_mutex;
+
+int
+pthread_join(perl_os_thread tid, void **status)
+{
+    MUTEX_LOCK(&start_thread_mutex);
+    switch (thread_join_data[tid].state) {
+    case pthreads_st_exited:
+	thread_join_data[tid].state = pthreads_st_none;	/* Ready to reuse */
+	MUTEX_UNLOCK(&start_thread_mutex);
+	*status = thread_join_data[tid].status;
+	break;
+    case pthreads_st_waited:
+	MUTEX_UNLOCK(&start_thread_mutex);
+	croak("join with a thread with a waiter");
+	break;
+    case pthreads_st_run:
+	thread_join_data[tid].state = pthreads_st_waited;
+	COND_INIT(&thread_join_data[tid].cond);
+	MUTEX_UNLOCK(&start_thread_mutex);
+	COND_WAIT(&thread_join_data[tid].cond, NULL);    
+	COND_DESTROY(&thread_join_data[tid].cond);
+	thread_join_data[tid].state = pthreads_st_none;	/* Ready to reuse */
+	*status = thread_join_data[tid].status;
+	break;
+    default:
+	MUTEX_UNLOCK(&start_thread_mutex);
+	croak("join: unknown thread state: '%s'", 
+	      pthreads_states[thread_join_data[tid].state]);
+	break;
+    }
+    return 0;
+}
+
+void
+pthread_startit(void *arg)
+{
+    /* Thread is already started, we need to transfer control only */
+    pthreads_startroutine start_routine = *((pthreads_startroutine*)arg);
+    int tid = pthread_self();
+    void *retval;
+    
+    arg = ((void**)arg)[1];
+    if (tid >= thread_join_count) {
+	int oc = thread_join_count;
+	
+	thread_join_count = tid + 5 + tid/5;
+	if (thread_join_data) {
+	    Renew(thread_join_data, thread_join_count, thread_join_t);
+	    Zero(thread_join_data + oc, thread_join_count - oc, thread_join_t);
+	} else {
+	    Newz(1323, thread_join_data, thread_join_count, thread_join_t);
+	}
+    }
+    if (thread_join_data[tid].state != pthreads_st_none)
+	croak("attempt to reuse thread id %i", tid);
+    thread_join_data[tid].state = pthreads_st_run;
+    /* Now that we copied/updated the guys, we may release the caller... */
+    MUTEX_UNLOCK(&start_thread_mutex);
+    thread_join_data[tid].status = (*start_routine)(arg);
+    switch (thread_join_data[tid].state) {
+    case pthreads_st_waited:
+	COND_SIGNAL(&thread_join_data[tid].cond);    
+	break;
+    default:
+	thread_join_data[tid].state = pthreads_st_exited;
+	break;
+    }
+}
+
+int
+pthread_create(perl_os_thread *tid, const pthread_attr_t *attr, 
+	       void *(*start_routine)(void*), void *arg)
+{
+    void *args[2];
+
+    args[0] = (void*)start_routine;
+    args[1] = arg;
+
+    MUTEX_LOCK(&start_thread_mutex);
+    *tid = _beginthread(pthread_startit, /*stack*/ NULL, 
+			/*stacksize*/ 10*1024*1024, (void*)args);
+    MUTEX_LOCK(&start_thread_mutex);
+    MUTEX_UNLOCK(&start_thread_mutex);
+    return *tid ? 0 : EINVAL;
+}
+
+int 
+pthread_detach(perl_os_thread tid)
+{
+    MUTEX_LOCK(&start_thread_mutex);
+    switch (thread_join_data[tid].state) {
+    case pthreads_st_waited:
+	MUTEX_UNLOCK(&start_thread_mutex);
+	croak("detach on a thread with a waiter");
+	break;
+    case pthreads_st_run:
+	thread_join_data[tid].state = pthreads_st_detached;
+	MUTEX_UNLOCK(&start_thread_mutex);
+	break;
+    default:
+	MUTEX_UNLOCK(&start_thread_mutex);
+	croak("detach: unknown thread state: '%s'", 
+	      pthreads_states[thread_join_data[tid].state]);
+	break;
+    }
+    return 0;
+}
+
+/* This is a very bastardized version: */
+int
+os2_cond_wait(perl_cond *c, perl_mutex *m)
+{						
+    int rc;
+    STRLEN n_a;
+    if ((rc = DosResetEventSem(*c,&n_a)) && (rc != ERROR_ALREADY_RESET))
+	croak("panic: COND_WAIT-reset: rc=%i", rc);		
+    if (m) MUTEX_UNLOCK(m);					
+    if (CheckOSError(DosWaitEventSem(*c,SEM_INDEFINITE_WAIT))
+	&& (rc != ERROR_INTERRUPT))
+	croak("panic: COND_WAIT: rc=%i", rc);		
+    if (rc == ERROR_INTERRUPT)
+	errno = EINTR;
+    if (m) MUTEX_LOCK(m);					
+} 
+#endif 
 
 /*****************************************************************************/
 /* 2.1 would not resolve symbols on demand, and has no ExtLIBPATH. */
@@ -156,7 +313,28 @@ getpriority(int which /* ignored */, int pid)
 
 /*****************************************************************************/
 /* spawn */
-typedef void (*Sigfunc) _((int));
+
+/* There is no big sense to make it thread-specific, since signals 
+   are delivered to thread 1 only.  XXXX Maybe make it into an array? */
+static int spawn_pid;
+static int spawn_killed;
+
+static Signal_t
+spawn_sighandler(int sig)
+{
+    /* Some programs do not arrange for the keyboard signals to be
+       delivered to them.  We need to deliver the signal manually. */
+    /* We may get a signal only if 
+       a) kid does not receive keyboard signal: deliver it;
+       b) kid already died, and we get a signal.  We may only hope
+          that the pid number was not reused.
+     */
+    
+    if (spawn_killed) 
+	sig = SIGKILL;			/* Try harder. */
+    kill(spawn_pid, sig);
+    spawn_killed = 1;
+}
 
 static int
 result(int flag, int pid)
@@ -173,15 +351,17 @@ result(int flag, int pid)
 		return pid;
 
 #ifdef __EMX__
-	ihand = rsignal(SIGINT, SIG_IGN);
-	qhand = rsignal(SIGQUIT, SIG_IGN);
+	spawn_pid = pid;
+	spawn_killed = 0;
+	ihand = rsignal(SIGINT, &spawn_sighandler);
+	qhand = rsignal(SIGQUIT, &spawn_sighandler);
 	do {
 	    r = wait4pid(pid, &status, 0);
 	} while (r == -1 && errno == EINTR);
 	rsignal(SIGINT, ihand);
 	rsignal(SIGQUIT, qhand);
 
-	statusvalue = (U16)status;
+	PL_statusvalue = (U16)status;
 	if (r < 0)
 		return -1;
 	return status & 0xFFFF;
@@ -189,27 +369,406 @@ result(int flag, int pid)
 	ihand = rsignal(SIGINT, SIG_IGN);
 	r = DosWaitChild(DCWA_PROCESS, DCWW_WAIT, &res, &rpid, pid);
 	rsignal(SIGINT, ihand);
-	statusvalue = res.codeResult << 8 | res.codeTerminate;
+	PL_statusvalue = res.codeResult << 8 | res.codeTerminate;
 	if (r)
 		return -1;
-	return statusvalue;
+	return PL_statusvalue;
 #endif
 }
 
+#define EXECF_SPAWN 0
+#define EXECF_EXEC 1
+#define EXECF_TRUEEXEC 2
+#define EXECF_SPAWN_NOWAIT 3
+
+/* const char* const ptypes[] = { "FS", "DOS", "VIO", "PM", "DETACH" }; */
+
+static int
+my_type()
+{
+    int rc;
+    TIB *tib;
+    PIB *pib;
+    
+    if (!(_emx_env & 0x200)) return 1; /* not OS/2. */
+    if (CheckOSError(DosGetInfoBlocks(&tib, &pib))) 
+	return -1; 
+    
+    return (pib->pib_ultype);
+}
+
+static ULONG
+file_type(char *path)
+{
+    int rc;
+    ULONG apptype;
+    
+    if (!(_emx_env & 0x200)) 
+	croak("file_type not implemented on DOS"); /* not OS/2. */
+    if (CheckOSError(DosQueryAppType(path, &apptype))) {
+	switch (rc) {
+	case ERROR_FILE_NOT_FOUND:
+	case ERROR_PATH_NOT_FOUND:
+	    return -1;
+	case ERROR_ACCESS_DENIED:	/* Directory with this name found? */
+	    return -3;
+	default:			/* Found, but not an
+					   executable, or some other
+					   read error. */
+	    return -2;
+	}
+    }    
+    return apptype;
+}
+
+static ULONG os2_mytype;
+
+/* Spawn/exec a program, revert to shell if needed. */
+/* global PL_Argv[] contains arguments. */
+
+int
+do_spawn_ve(really, flag, execf, inicmd)
+SV *really;
+U32 flag;
+U32 execf;
+char *inicmd;
+{
+    dTHR;
+	int trueflag = flag;
+	int rc, pass = 1;
+	char *tmps;
+	char buf[256], *s = 0, scrbuf[280];
+	char *args[4];
+	static char * fargs[4] 
+	    = { "/bin/sh", "-c", "\"$@\"", "spawn-via-shell", };
+	char **argsp = fargs;
+	char nargs = 4;
+	int force_shell;
+	STRLEN n_a;
+	
+	if (flag == P_WAIT)
+		flag = P_NOWAIT;
+
+      retry:
+	if (strEQ(PL_Argv[0],"/bin/sh")) 
+	    PL_Argv[0] = PL_sh_path;
+
+	if (PL_Argv[0][0] != '/' && PL_Argv[0][0] != '\\'
+	    && !(PL_Argv[0][0] && PL_Argv[0][1] == ':' 
+		 && (PL_Argv[0][2] == '/' || PL_Argv[0][2] != '\\'))
+	    ) /* will spawnvp use PATH? */
+	    TAINT_ENV();	/* testing IFS here is overkill, probably */
+	/* We should check PERL_SH* and PERLLIB_* as well? */
+	if (!really || !*(tmps = SvPV(really, n_a)))
+	    tmps = PL_Argv[0];
+
+      reread:
+	force_shell = 0;
+	if (_emx_env & 0x200) { /* OS/2. */ 
+	    int type = file_type(tmps);
+	  type_again:
+	    if (type == -1) {		/* Not found */
+		errno = ENOENT;
+		rc = -1;
+		goto do_script;
+	    }
+	    else if (type == -2) {		/* Not an EXE */
+		errno = ENOEXEC;
+		rc = -1;
+		goto do_script;
+	    }
+	    else if (type == -3) {		/* Is a directory? */
+		/* Special-case this */
+		char tbuf[512];
+		int l = strlen(tmps);
+
+		if (l + 5 <= sizeof tbuf) {
+		    strcpy(tbuf, tmps);
+		    strcpy(tbuf + l, ".exe");
+		    type = file_type(tbuf);
+		    if (type >= -3)
+			goto type_again;
+		}
+		
+		errno = ENOEXEC;
+		rc = -1;
+		goto do_script;
+	    }
+	    switch (type & 7) {
+		/* Ignore WINDOWCOMPAT and FAPI, start them the same type we are. */
+	    case FAPPTYP_WINDOWAPI: 
+	    {
+		if (os2_mytype != 3) {	/* not PM */
+		    if (flag == P_NOWAIT)
+			flag = P_PM;
+		    else if ((flag & 7) != P_PM && (flag & 7) != P_SESSION)
+			warn("Starting PM process with flag=%d, mytype=%d",
+			     flag, os2_mytype);
+		}
+	    }
+	    break;
+	    case FAPPTYP_NOTWINDOWCOMPAT: 
+	    {
+		if (os2_mytype != 0) {	/* not full screen */
+		    if (flag == P_NOWAIT)
+			flag = P_SESSION;
+		    else if ((flag & 7) != P_SESSION)
+			warn("Starting Full Screen process with flag=%d, mytype=%d",
+			     flag, os2_mytype);
+		}
+	    }
+	    break;
+	    case FAPPTYP_NOTSPEC: 
+		/* Let the shell handle this... */
+		force_shell = 1;
+		goto doshell_args;
+		break;
+	    }
+	}
+
+#if 0
+	rc = result(trueflag, spawnvp(flag,tmps,PL_Argv));
+#else
+	if (execf == EXECF_TRUEEXEC)
+	    rc = execvp(tmps,PL_Argv);
+	else if (execf == EXECF_EXEC)
+	    rc = spawnvp(trueflag | P_OVERLAY,tmps,PL_Argv);
+	else if (execf == EXECF_SPAWN_NOWAIT)
+	    rc = spawnvp(flag,tmps,PL_Argv);
+        else				/* EXECF_SPAWN */
+	    rc = result(trueflag, 
+			spawnvp(flag,tmps,PL_Argv));
+#endif 
+	if (rc < 0 && pass == 1
+	    && (tmps == PL_Argv[0])) { /* Cannot transfer `really' via shell. */
+	      do_script:
+	    {
+	    int err = errno;
+
+	    if (err == ENOENT || err == ENOEXEC) {
+		/* No such file, or is a script. */
+		/* Try adding script extensions to the file name, and
+		   search on PATH. */
+		char *scr = find_script(PL_Argv[0], TRUE, NULL, 0);
+
+		if (scr) {
+		    FILE *file;
+		    char *s = 0, *s1;
+		    int l;
+
+                    l = strlen(scr);
+		
+                    if (l >= sizeof scrbuf) {
+                       Safefree(scr);
+                     longbuf:
+                       croak("Size of scriptname too big: %d", l);
+                    }
+                    strcpy(scrbuf, scr);
+                    Safefree(scr);
+                    scr = scrbuf;
+
+		    file = fopen(scr, "r");
+		    PL_Argv[0] = scr;
+		    if (!file)
+			goto panic_file;
+		    if (!fgets(buf, sizeof buf, file)) { /* Empty... */
+
+			buf[0] = 0;
+			fclose(file);
+			/* Special case: maybe from -Zexe build, so
+			   there is an executable around (contrary to
+			   documentation, DosQueryAppType sometimes (?)
+			   does not append ".exe", so we could have
+			   reached this place). */
+			if (l + 5 < sizeof scrbuf) {
+			    strcpy(scrbuf + l, ".exe");
+			    if (PerlLIO_stat(scrbuf,&PL_statbuf) >= 0
+				&& !S_ISDIR(PL_statbuf.st_mode)) {
+				/* Found */
+				tmps = scr;
+				pass++;
+				goto reread;
+			    } else
+				scrbuf[l] = 0;
+			} else
+			    goto longbuf;
+		    }
+		    if (fclose(file) != 0) { /* Failure */
+		      panic_file:
+			warn("Error reading \"%s\": %s", 
+			     scr, Strerror(errno));
+			buf[0] = 0;	/* Not #! */
+			goto doshell_args;
+		    }
+		    if (buf[0] == '#') {
+			if (buf[1] == '!')
+			    s = buf + 2;
+		    } else if (buf[0] == 'e') {
+			if (strnEQ(buf, "extproc", 7) 
+			    && isSPACE(buf[7]))
+			    s = buf + 8;
+		    } else if (buf[0] == 'E') {
+			if (strnEQ(buf, "EXTPROC", 7)
+			    && isSPACE(buf[7]))
+			    s = buf + 8;
+		    }
+		    if (!s) {
+			buf[0] = 0;	/* Not #! */
+			goto doshell_args;
+		    }
+		    
+		    s1 = s;
+		    nargs = 0;
+		    argsp = args;
+		    while (1) {
+			/* Do better than pdksh: allow a few args,
+			   strip trailing whitespace.  */
+			while (isSPACE(*s))
+			    s++;
+			if (*s == 0) 
+			    break;
+			if (nargs == 4) {
+			    nargs = -1;
+			    break;
+			}
+			args[nargs++] = s;
+			while (*s && !isSPACE(*s))
+			    s++;
+			if (*s == 0) 
+			    break;
+			*s++ = 0;
+		    }
+		    if (nargs == -1) {
+			warn("Too many args on %.*s line of \"%s\"",
+			     s1 - buf, buf, scr);
+			nargs = 4;
+			argsp = fargs;
+		    }
+		  doshell_args:
+		    {
+			char **a = PL_Argv;
+			char *exec_args[2];
+
+			if (force_shell 
+			    || (!buf[0] && file)) { /* File without magic */
+			    /* In fact we tried all what pdksh would
+			       try.  There is no point in calling
+			       pdksh, we may just emulate its logic. */
+			    char *shell = getenv("EXECSHELL");
+			    char *shell_opt = NULL;
+
+			    if (!shell) {
+				char *s;
+
+				shell_opt = "/c";
+				shell = getenv("OS2_SHELL");
+				if (inicmd) { /* No spaces at start! */
+				    s = inicmd;
+				    while (*s && !isSPACE(*s)) {
+					if (*s++ = '/') {
+					    inicmd = NULL; /* Cannot use */
+					    break;
+					}
+				    }
+				}
+				if (!inicmd) {
+				    s = PL_Argv[0];
+				    while (*s) { 
+					/* Dosish shells will choke on slashes
+					   in paths, fortunately, this is
+					   important for zeroth arg only. */
+					if (*s == '/') 
+					    *s = '\\';
+					s++;
+				    }
+				}
+			    }
+			    /* If EXECSHELL is set, we do not set */
+			    
+			    if (!shell)
+				shell = ((_emx_env & 0x200)
+					 ? "c:/os2/cmd.exe"
+					 : "c:/command.com");
+			    nargs = shell_opt ? 2 : 1;	/* shell file args */
+			    exec_args[0] = shell;
+			    exec_args[1] = shell_opt;
+			    argsp = exec_args;
+			    if (nargs == 2 && inicmd) {
+				/* Use the original cmd line */
+				/* XXXX This is good only until we refuse
+				        quoted arguments... */
+				PL_Argv[0] = inicmd;
+				PL_Argv[1] = Nullch;
+			    }
+			} else if (!buf[0] && inicmd) { /* No file */
+			    /* Start with the original cmdline. */
+			    /* XXXX This is good only until we refuse
+			            quoted arguments... */
+
+			    PL_Argv[0] = inicmd;
+			    PL_Argv[1] = Nullch;
+			    nargs = 2;	/* shell -c */
+			} 
+
+			while (a[1])		/* Get to the end */
+			    a++;
+			a++;			/* Copy finil NULL too */
+			while (a >= PL_Argv) {
+			    *(a + nargs) = *a;	/* PL_Argv was preallocated to be
+						   long enough. */
+			    a--;
+			}
+			while (nargs-- >= 0)
+			    PL_Argv[nargs] = argsp[nargs];
+			/* Enable pathless exec if #! (as pdksh). */
+			pass = (buf[0] == '#' ? 2 : 3);
+			goto retry;
+		    }
+		}
+		/* Not found: restore errno */
+		errno = err;
+	    }
+	  }
+	} else if (rc < 0 && pass == 2 && errno == ENOENT) { /* File not found */
+	    char *no_dir = strrchr(PL_Argv[0], '/');
+
+	    /* Do as pdksh port does: if not found with /, try without
+	       path. */
+	    if (no_dir) {
+		PL_Argv[0] = no_dir + 1;
+		pass++;
+		goto retry;
+	    }
+	}
+	if (rc < 0 && PL_dowarn)
+	    warn("Can't %s \"%s\": %s\n", 
+		 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
+		  ? "spawn" : "exec"),
+		 PL_Argv[0], Strerror(errno));
+	if (rc < 0 && (execf != EXECF_SPAWN_NOWAIT) 
+	    && ((trueflag & 0xFF) == P_WAIT)) 
+	    rc = 255 << 8; /* Emulate the fork(). */
+
+    return rc;
+}
+
+/* Array spawn.  */
 int
 do_aspawn(really,mark,sp)
 SV *really;
 register SV **mark;
 register SV **sp;
 {
+    dTHR;
     register char **a;
     char *tmps = NULL;
     int rc;
     int flag = P_WAIT, trueflag, err, secondtry = 0;
+    STRLEN n_a;
 
     if (sp > mark) {
-	New(1301,Argv, sp - mark + 3, char*);
-	a = Argv;
+	New(1301,PL_Argv, sp - mark + 3, char*);
+	a = PL_Argv;
 
 	if (mark < sp && SvNIOKp(*(mark+1)) && !SvPOKp(*(mark+1))) {
 		++mark;
@@ -218,73 +777,20 @@ register SV **sp;
 
 	while (++mark <= sp) {
 	    if (*mark)
-		*a++ = SvPVx(*mark, na);
+		*a++ = SvPVx(*mark, n_a);
 	    else
 		*a++ = "";
 	}
 	*a = Nullch;
 
-	trueflag = flag;
-	if (flag == P_WAIT)
-		flag = P_NOWAIT;
-
-	if (strEQ(Argv[0],"/bin/sh")) Argv[0] = sh_path;
-
-	if (Argv[0][0] != '/' && Argv[0][0] != '\\'
-	    && !(Argv[0][0] && Argv[0][1] == ':' 
-		 && (Argv[0][2] == '/' || Argv[0][2] != '\\'))
-	    ) /* will swawnvp use PATH? */
-	    TAINT_ENV();	/* testing IFS here is overkill, probably */
-	/* We should check PERL_SH* and PERLLIB_* as well? */
-      retry:
-	if (really && *(tmps = SvPV(really, na)))
-	    rc = result(trueflag, spawnvp(flag,tmps,Argv));
-	else
-	    rc = result(trueflag, spawnvp(flag,Argv[0],Argv));
-
-	if (rc < 0 && secondtry == 0 
-	    && (!tmps || !*tmps)) { /* Cannot transfer `really' via shell. */
-	    err = errno;
-	    if (err == ENOENT) {	/* No such file. */
-		/* One reason may be that EMX added .exe. We suppose
-		   that .exe-less files are automatically shellable. */
-		char *no_dir;
-		(no_dir = strrchr(Argv[0], '/')) 
-		    || (no_dir = strrchr(Argv[0], '\\'))
-		    || (no_dir = Argv[0]);
-		if (!strchr(no_dir, '.')) {
-		    struct stat buffer;
-		    if (stat(Argv[0], &buffer) != -1) { /* File exists. */
-			/* Maybe we need to specify the full name here? */
-			goto doshell;
-		    }
-		}
-	    } else if (err == ENOEXEC) { /* Need to send to shell. */
-	      doshell:
-		while (a >= Argv) {
-		    *(a + 2) = *a;
-		    a--;
-		}
-		*Argv = sh_path;
-		*(Argv + 1) = "-c";
-		secondtry = 1;
-		goto retry;
-	    }
-	}
-	if (rc < 0 && dowarn)
-	    warn("Can't spawn \"%s\": %s", Argv[0], Strerror(errno));
-	if (rc < 0) rc = 255 << 8; /* Emulate the fork(). */
+	rc = do_spawn_ve(really, flag, EXECF_SPAWN, NULL);
     } else
     	rc = -1;
     do_execfree();
     return rc;
 }
 
-#define EXECF_SPAWN 0
-#define EXECF_EXEC 1
-#define EXECF_TRUEEXEC 2
-#define EXECF_SPAWN_NOWAIT 3
-
+/* Try converting 1-arg form to (usually shell-less) multi-arg form. */
 int
 do_spawn2(cmd, execf)
 char *cmd;
@@ -294,7 +800,7 @@ int execf;
     register char *s;
     char flags[10];
     char *shell, *copt, *news = NULL;
-    int rc, added_shell = 0, err, seenspace = 0;
+    int rc, err, seenspace = 0;
     char fullcmd[MAXNAMLEN + 1];
 
 #ifdef TRYSHELL
@@ -311,7 +817,7 @@ int execf;
        have a shell which will not change between computers with the
        same architecture, to avoid "action on a distance". 
        And to have simple build, this shell should be sh. */
-    shell = sh_path;
+    shell = PL_sh_path;
     copt = "-c";
 #endif 
 
@@ -319,13 +825,12 @@ int execf;
 	cmd++;
 
     if (strnEQ(cmd,"/bin/sh",7) && isSPACE(cmd[7])) {
-	STRLEN l = strlen(sh_path);
+	STRLEN l = strlen(PL_sh_path);
 	
 	New(1302, news, strlen(cmd) - 7 + l + 1, char);
-	strcpy(news, sh_path);
+	strcpy(news, PL_sh_path);
 	strcpy(news + l, cmd + 7);
 	cmd = news;
-	added_shell = 1;
     }
 
     /* save an extra exec if possible */
@@ -349,32 +854,38 @@ int execf;
 	    } else if (*s == '\\' && !seenspace) {
 		continue;		/* Allow backslashes in names */
 	    }
+	    /* We do not convert this to do_spawn_ve since shell
+	       should be smart enough to start itself gloriously. */
 	  doshell:
 	    if (execf == EXECF_TRUEEXEC)
-                return execl(shell,shell,copt,cmd,(char*)0);
+                rc = execl(shell,shell,copt,cmd,(char*)0);		
 	    else if (execf == EXECF_EXEC)
-                return spawnl(P_OVERLAY,shell,shell,copt,cmd,(char*)0);
+                rc = spawnl(P_OVERLAY,shell,shell,copt,cmd,(char*)0);
 	    else if (execf == EXECF_SPAWN_NOWAIT)
-                return spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0);
-	    /* In the ak code internal P_NOWAIT is P_WAIT ??? */
-	    rc = result(P_WAIT,
-			spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0));
-	    if (rc < 0 && dowarn)
-		warn("Can't %s \"%s\": %s", 
-		     (execf == EXECF_SPAWN ? "spawn" : "exec"),
-		     shell, Strerror(errno));
-	    if (rc < 0) rc = 255 << 8; /* Emulate the fork(). */
-	    if (news) Safefree(news);
+                rc = spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0);
+	    else {
+		/* In the ak code internal P_NOWAIT is P_WAIT ??? */
+		rc = result(P_WAIT,
+			    spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0));
+		if (rc < 0 && PL_dowarn)
+		    warn("Can't %s \"%s\": %s", 
+			 (execf == EXECF_SPAWN ? "spawn" : "exec"),
+			 shell, Strerror(errno));
+		if (rc < 0) rc = 255 << 8; /* Emulate the fork(). */
+	    }
+	    if (news)
+		Safefree(news);
 	    return rc;
 	} else if (*s == ' ' || *s == '\t') {
 	    seenspace = 1;
 	}
     }
 
-    New(1303,Argv, (s - cmd) / 2 + 2, char*);
-    Cmd = savepvn(cmd, s-cmd);
-    a = Argv;
-    for (s = Cmd; *s;) {
+    /* cmd="a" may lead to "sh", "-c", "\"$@\"", "a", "a.cmd", NULL */
+    New(1303,PL_Argv, (s - cmd + 11) / 2, char*);
+    PL_Cmd = savepvn(cmd, s-cmd);
+    a = PL_Argv;
+    for (s = PL_Cmd; *s;) {
 	while (*s && isSPACE(*s)) s++;
 	if (*s)
 	    *(a++) = s;
@@ -383,46 +894,12 @@ int execf;
 	    *s++ = '\0';
     }
     *a = Nullch;
-    if (Argv[0]) {
-	int err;
-	
-	if (execf == EXECF_TRUEEXEC)
-	    rc = execvp(Argv[0],Argv);
-	else if (execf == EXECF_EXEC)
-	    rc = spawnvp(P_OVERLAY,Argv[0],Argv);
-	else if (execf == EXECF_SPAWN_NOWAIT)
-	    rc = spawnvp(P_NOWAIT,Argv[0],Argv);
-        else
-	    rc = result(P_WAIT, spawnvp(P_NOWAIT,Argv[0],Argv));
-	if (rc < 0) {
-	    err = errno;
-	    if (err == ENOENT) {	/* No such file. */
-		/* One reason may be that EMX added .exe. We suppose
-		   that .exe-less files are automatically shellable. */
-		char *no_dir;
-		(no_dir = strrchr(Argv[0], '/')) 
-		    || (no_dir = strrchr(Argv[0], '\\'))
-		    || (no_dir = Argv[0]);
-		if (!strchr(no_dir, '.')) {
-		    struct stat buffer;
-		    if (stat(Argv[0], &buffer) != -1) { /* File exists. */
-			/* Maybe we need to specify the full name here? */
-			goto doshell;
-		    }
-		}
-	    } else if (err == ENOEXEC) { /* Need to send to shell. */
-		goto doshell;
-	    }
-	}
-	if (rc < 0 && dowarn)
-	    warn("Can't %s \"%s\": %s", 
-		 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
-		  ? "spawn" : "exec"),
-		 Argv[0], Strerror(err));
-	if (rc < 0) rc = 255 << 8; /* Emulate the fork(). */
-    } else
+    if (PL_Argv[0])
+	rc = do_spawn_ve(NULL, 0, execf, cmd);
+    else
     	rc = -1;
-    if (news) Safefree(news);
+    if (news)
+	Safefree(news);
     do_execfree();
     return rc;
 }
@@ -445,7 +922,8 @@ bool
 do_exec(cmd)
 char *cmd;
 {
-    return do_spawn2(cmd, EXECF_EXEC);
+    do_spawn2(cmd, EXECF_EXEC);
+    return FALSE;
 }
 
 bool
@@ -468,15 +946,15 @@ char	*mode;
     PerlIO *res;
     SV *sv;
     
-    if (pipe(p) < 0)
-	return Nullfp;
     /* `this' is what we use in the parent, `that' in the child. */
     this = (*mode == 'w');
     that = !this;
-    if (tainting) {
+    if (PL_tainting) {
 	taint_env();
 	taint_proper("Insecure %s%s", "EXEC");
     }
+    if (pipe(p) < 0)
+	return Nullfp;
     /* Now we need to spawn the child. */
     newfd = dup(*mode == 'r');		/* Preserve std* */
     if (p[that] != (*mode == 'r')) {
@@ -491,7 +969,8 @@ char	*mode;
 	dup2(newfd, *mode == 'r');	/* Return std* back. */
 	close(newfd);
     }
-    close(p[that]);
+    if (p[that] == (*mode == 'r'))
+	close(p[that]);
     if (pid == -1) {
 	close(p[this]);
 	return NULL;
@@ -501,10 +980,10 @@ char	*mode;
 	close(p[this]);
 	p[this] = p[that];
     }
-    sv = *av_fetch(fdpid,p[this],TRUE);
+    sv = *av_fetch(PL_fdpid,p[this],TRUE);
     (void)SvUPGRADE(sv,SVt_IV);
     SvIVX(sv) = pid;
-    forkprocess = pid;
+    PL_forkprocess = pid;
     return PerlIO_fdopen(p[this], mode);
 
 #else  /* USE_POPEN */
@@ -517,11 +996,11 @@ char	*mode;
 #  else
     char *shell = getenv("EMXSHELL");
 
-    my_setenv("EMXSHELL", sh_path);
+    my_setenv("EMXSHELL", PL_sh_path);
     res = popen(cmd, mode);
     my_setenv("EMXSHELL", shell);
 #  endif 
-    sv = *av_fetch(fdpid, PerlIO_fileno(res), TRUE);
+    sv = *av_fetch(PL_fdpid, PerlIO_fileno(res), TRUE);
     (void)SvUPGRADE(sv,SVt_IV);
     SvIVX(sv) = -1;			/* A cooky. */
     return res;
@@ -536,7 +1015,7 @@ char	*mode;
 int
 fork(void)
 {
-    die(no_func, "Unsupported function fork");
+    die(PL_no_func, "Unsupported function fork");
     errno = EINVAL;
     return -1;
 }
@@ -675,8 +1154,9 @@ XS(XS_File__Copy_syscopy)
     if (items < 2 || items > 3)
 	croak("Usage: File::Copy::syscopy(src,dst,flag=0)");
     {
-	char *	src = (char *)SvPV(ST(0),na);
-	char *	dst = (char *)SvPV(ST(1),na);
+	STRLEN n_a;
+	char *	src = (char *)SvPV(ST(0),n_a);
+	char *	dst = (char *)SvPV(ST(1),n_a);
 	U32	flag;
 	int	RETVAL, rc;
 
@@ -693,6 +1173,8 @@ XS(XS_File__Copy_syscopy)
     XSRETURN(1);
 }
 
+#include "patchlevel.h"
+
 char *
 mod2fname(sv)
      SV   *sv;
@@ -703,6 +1185,7 @@ mod2fname(sv)
     AV  *av;
     SV  *svp;
     char *s;
+    STRLEN n_a;
 
     if (!SvROK(sv)) croak("Not a reference given to mod2fname");
     sv = SvRV(sv);
@@ -713,7 +1196,7 @@ mod2fname(sv)
     if (avlen < 0) 
       croak("Empty array reference given to mod2fname");
 
-    s = SvPV(*av_fetch((AV*)sv, avlen, FALSE), na);
+    s = SvPV(*av_fetch((AV*)sv, avlen, FALSE), n_a);
     strncpy(fname, s, 8);
     len = strlen(s);
     if (len < 6) pos = len;
@@ -723,12 +1206,16 @@ mod2fname(sv)
     }
     avlen --;
     while (avlen >= 0) {
-	s = SvPV(*av_fetch((AV*)sv, avlen, FALSE), na);
+	s = SvPV(*av_fetch((AV*)sv, avlen, FALSE), n_a);
 	while (*s) {
 	    sum = 33 * sum + *(s++);	/* 7 is primitive mod 13. */
 	}
 	avlen --;
     }
+#ifdef USE_THREADS
+    sum++;				/* Avoid conflict of DLLs in memory. */
+#endif 
+    sum += PATCHLEVEL * 200 + SUBVERSION * 2;  /*  */
     fname[pos] = 'A' + (sum % 26);
     fname[pos + 1] = 'A' + (sum / 26 % 26);
     fname[pos + 2] = '\0';
@@ -764,6 +1251,12 @@ os2error(int rc)
 		sprintf(buf, "OS/2 system error code %d=0x%x", rc, rc);
 	else
 		buf[len] = '\0';
+	if (len > 0 && buf[len - 1] == '\n')
+	    buf[len - 1] = '\0';
+	if (len > 1 && buf[len - 2] == '\r')
+	    buf[len - 2] = '\0';
+	if (len > 2 && buf[len - 3] == '.')
+	    buf[len - 3] = '\0';
 	return buf;
 }
 
@@ -850,7 +1343,8 @@ XS(XS_Cwd_sys_chdir)
     if (items != 1)
 	croak("Usage: Cwd::sys_chdir(path)");
     {
-	char *	path = (char *)SvPV(ST(0),na);
+	STRLEN n_a;
+	char *	path = (char *)SvPV(ST(0),n_a);
 	bool	RETVAL;
 
 	RETVAL = sys_chdir(path);
@@ -866,7 +1360,8 @@ XS(XS_Cwd_change_drive)
     if (items != 1)
 	croak("Usage: Cwd::change_drive(d)");
     {
-	char	d = (char)*SvPV(ST(0),na);
+	STRLEN n_a;
+	char	d = (char)*SvPV(ST(0),n_a);
 	bool	RETVAL;
 
 	RETVAL = change_drive(d);
@@ -882,7 +1377,8 @@ XS(XS_Cwd_sys_is_absolute)
     if (items != 1)
 	croak("Usage: Cwd::sys_is_absolute(path)");
     {
-	char *	path = (char *)SvPV(ST(0),na);
+	STRLEN n_a;
+	char *	path = (char *)SvPV(ST(0),n_a);
 	bool	RETVAL;
 
 	RETVAL = sys_is_absolute(path);
@@ -898,7 +1394,8 @@ XS(XS_Cwd_sys_is_rooted)
     if (items != 1)
 	croak("Usage: Cwd::sys_is_rooted(path)");
     {
-	char *	path = (char *)SvPV(ST(0),na);
+	STRLEN n_a;
+	char *	path = (char *)SvPV(ST(0),n_a);
 	bool	RETVAL;
 
 	RETVAL = sys_is_rooted(path);
@@ -914,7 +1411,8 @@ XS(XS_Cwd_sys_is_relative)
     if (items != 1)
 	croak("Usage: Cwd::sys_is_relative(path)");
     {
-	char *	path = (char *)SvPV(ST(0),na);
+	STRLEN n_a;
+	char *	path = (char *)SvPV(ST(0),n_a);
 	bool	RETVAL;
 
 	RETVAL = sys_is_relative(path);
@@ -945,7 +1443,8 @@ XS(XS_Cwd_sys_abspath)
     if (items < 1 || items > 2)
 	croak("Usage: Cwd::sys_abspath(path, dir = NULL)");
     {
-	char *	path = (char *)SvPV(ST(0),na);
+	STRLEN n_a;
+	char *	path = (char *)SvPV(ST(0),n_a);
 	char *	dir;
 	char p[MAXPATHLEN];
 	char *	RETVAL;
@@ -953,7 +1452,7 @@ XS(XS_Cwd_sys_abspath)
 	if (items < 2)
 	    dir = NULL;
 	else {
-	    dir = (char *)SvPV(ST(1),na);
+	    dir = (char *)SvPV(ST(1),n_a);
 	}
 	if (path[0] == '.' && (path[1] == '/' || path[1] == '\\')) {
 	    path += 2;
@@ -1093,7 +1592,8 @@ XS(XS_Cwd_extLibpath_set)
     if (items < 1 || items > 2)
 	croak("Usage: Cwd::extLibpath_set(s, type = 0)");
     {
-	char *	s = (char *)SvPV(ST(0),na);
+	STRLEN n_a;
+	char *	s = (char *)SvPV(ST(0),n_a);
 	bool	type;
 	U32	rc;
 	bool	RETVAL;
@@ -1147,27 +1647,31 @@ Perl_OS2_init(char **env)
 {
     char *shell;
 
+    MALLOC_INIT;
     settmppath();
     OS2_Perl_data.xs_init = &Xs_OS2_init;
+    _uflags (_UF_SBRK_MODEL, _UF_SBRK_ARBITRARY);
     if (environ == NULL) {
 	environ = env;
     }
     if ( (shell = getenv("PERL_SH_DRIVE")) ) {
-	New(1304, sh_path, strlen(SH_PATH) + 1, char);
-	strcpy(sh_path, SH_PATH);
-	sh_path[0] = shell[0];
+	New(1304, PL_sh_path, strlen(SH_PATH) + 1, char);
+	strcpy(PL_sh_path, SH_PATH);
+	PL_sh_path[0] = shell[0];
     } else if ( (shell = getenv("PERL_SH_DIR")) ) {
 	int l = strlen(shell), i;
 	if (shell[l-1] == '/' || shell[l-1] == '\\') {
 	    l--;
 	}
-	New(1304, sh_path, l + 8, char);
-	strncpy(sh_path, shell, l);
-	strcpy(sh_path + l, "/sh.exe");
+	New(1304, PL_sh_path, l + 8, char);
+	strncpy(PL_sh_path, shell, l);
+	strcpy(PL_sh_path + l, "/sh.exe");
 	for (i = 0; i < l; i++) {
-	    if (sh_path[i] == '\\') sh_path[i] = '/';
+	    if (PL_sh_path[i] == '\\') PL_sh_path[i] = '/';
 	}
     }
+    MUTEX_INIT(&start_thread_mutex);
+    os2_mytype = my_type();		/* Do it before morphing.  Needed? */
 }
 
 #undef tmpnam
@@ -1205,7 +1709,7 @@ my_tmpfile ()
 
 /* This code was contributed by Rocco Caputo. */
 int 
-my_flock(int handle, int op)
+my_flock(int handle, int o)
 {
   FILELOCK      rNull, rFull;
   ULONG         timeout, handle_type, flag_word;
@@ -1221,7 +1725,7 @@ my_flock(int handle, int op)
 	use_my = 1;
   }
   if (!(_emx_env & 0x200) || !use_my) 
-    return flock(handle, op);	/* Delegate to EMX. */
+    return flock(handle, o);	/* Delegate to EMX. */
   
                                         // is this a file?
   if ((DosQueryHType(handle, &handle_type, &flag_word) != 0) ||
@@ -1234,11 +1738,11 @@ my_flock(int handle, int op)
   rNull.lOffset = rNull.lRange = rFull.lOffset = 0;
   rFull.lRange = 0x7FFFFFFF;
                                         // set timeout for blocking
-  timeout = ((blocking = !(op & LOCK_NB))) ? 100 : 1;
+  timeout = ((blocking = !(o & LOCK_NB))) ? 100 : 1;
                                         // shared or exclusive?
-  shared = (op & LOCK_SH) ? 1 : 0;
+  shared = (o & LOCK_SH) ? 1 : 0;
                                         // do not block the unlock
-  if (op & (LOCK_UN | LOCK_SH | LOCK_EX)) {
+  if (o & (LOCK_UN | LOCK_SH | LOCK_EX)) {
     rc = DosSetFileLocks(handle, &rFull, &rNull, timeout, shared);
     switch (rc) {
       case 0:
@@ -1266,7 +1770,7 @@ my_flock(int handle, int op)
     }
   }
                                         // lock may block
-  if (op & (LOCK_SH | LOCK_EX)) {
+  if (o & (LOCK_SH | LOCK_EX)) {
                                         // for blocking operations
     for (;;) {
       rc =

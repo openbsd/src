@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $RCSfile: vanexp,v $$Revision: 1.2 $$Date: 1997/11/30 07:55:00 $
+# $RCSfile: vanexp,v $$Revision: 1.3 $$Date: 1999/04/29 22:51:22 $
 
 # This is for running from a find at night to expire old .deleteds
 

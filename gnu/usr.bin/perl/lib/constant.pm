@@ -20,6 +20,18 @@ constant - Perl pragma to declare constants
 
     print "This line does nothing"		unless DEBUGGING;
 
+    # references can be declared constant
+    use constant CHASH		=> { foo => 42 };
+    use constant CARRAY		=> [ 1,2,3,4 ];
+    use constant CPSEUDOHASH	=> [ { foo => 1}, 42 ];
+    use constant CCODE		=> sub { "bite $_[0]\n" };
+
+    print CHASH->{foo};
+    print CARRAY->[$i];
+    print CPSEUDOHASH->{foo};
+    print CCODE->("me");
+    print CHASH->[10];				# compile-time error
+
 =head1 DESCRIPTION
 
 This will declare a symbol to be a constant with the given scalar
@@ -86,6 +98,8 @@ constants at compile time, allowing for way cool stuff like this.
     print   E2BIG, "\n";	# something like "Arg list too long"
     print 0+E2BIG, "\n";	# "7"
 
+Errors in dereferencing constant references are trapped at compile-time.
+
 =head1 TECHNICAL NOTE
 
 In the current implementation, scalar constants are actually
@@ -105,6 +119,15 @@ name as a constant. This is probably a Good Thing.
 
 Unlike constants in some languages, these cannot be overridden
 on the command line or via environment variables.
+
+You can get into trouble if you use constants in a context which
+automatically quotes barewords (as is true for any subroutine call).
+For example, you can't say C<$hash{CONSTANT}> because C<CONSTANT> will
+be interpreted as a string.  Use C<$hash{CONSTANT()}> or
+C<$hash{+CONSTANT}> to prevent the bareword quoting mechanism from
+kicking in.  Similarly, since the C<=E<gt>> operator quotes a bareword
+immediately to its left you have to say C<CONSTANT() =E<gt> 'value'>
+instead of C<CONSTANT =E<gt> 'value'>.
 
 =head1 AUTHOR
 

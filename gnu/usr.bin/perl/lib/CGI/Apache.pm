@@ -4,7 +4,7 @@ use vars qw(@ISA $VERSION);
 require CGI;
 @ISA = qw(CGI);
 
-$VERSION = (qw$Revision: 1.1 $)[1];
+$VERSION = (qw$Revision: 1.2 $)[1];
 $CGI::DefaultClass = 'CGI::Apache';
 $CGI::Apache::AutoloadClass = 'CGI';
 
@@ -78,7 +78,7 @@ CGI::Apache - Make things work with CGI.pm against Perl-Apache API
 =head1 DESCRIPTION
 
 When using the Perl-Apache API, your applications are faster, but the
-enviroment is different than CGI.
+environment is different than CGI.
 This module attempts to set-up that environment as best it can.
 
 =head1 NOTE 1
@@ -98,6 +98,6 @@ perl(1), Apache(3), CGI(3)
 
 =head1 AUTHOR
 
-Doug MacEachern E<lt>dougm@osf.orgE<gt>, hacked over by Andreas König E<lt>a.koenig@mind.deE<gt>, modified by Lincoln Stein <lt>lstein@genome.wi.mit.edu<gt>
+Doug MacEachern E<lt>dougm@osf.orgE<gt>, hacked over by Andreas KE<ouml>nig E<lt>a.koenig@mind.deE<gt>, modified by Lincoln Stein <lt>lstein@genome.wi.mit.edu<gt>
 
 =cut

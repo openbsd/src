@@ -163,3 +163,61 @@ after 5.004_03:
 	changes to errno?)
 	$0 may be edited to longer lengths (at least under OS/2).
 	OS2::REXX->loads looks in the OS/2-ish fashion too.
+
+after 5.004_04:
+	Default perl.exe was built with a shorter stack than expected.
+	Strip extensions DLLs too (unless debugging build).
+	./os2.c being RO could stop cp.
+	When starting scripts, Perl will find them on path (using the same
+	  extensions as for -S command-line switch).  If it finds magic
+	  `extproc ' or `#!' cookies, it will start the scripts directly.
+	May use `cmd /c more <' as a pager.
+	If a program could not be started, this might have been hidden.
+	End of pipe was closed twice when `open'ing a pipeline.
+
+after 5.004_53:
+	Minimal thread support added.  One needs to manually move pthread.h
+
+after 5.004_64:
+	Make DLL names different if thread-enabled.
+	Emit more informative internal DLL descriptions.
+
+5.004_72:
+	Updated OS2::Process (v0.2) included.
+	
+after 5.004_73:
+	Fixed a bug with argv not NULL-terminated when starting scripts.
+	Support all the forms of starting scripts.
+	Support killing a child when receiving a signal during system()
+	(in two stage, on first send the same signal, on the next
+	send SIGKILL).
+	Add the same logic for scripts as in pdksh, including 
+		stripping the path from #! line if needed, 
+		calling EXECSHELL or COMSPEC for magic-less scripts;
+	Now pdksh is called only if one-arg system()/friends contains
+	metachars, or if magic-line asks for sh, or there is no magic
+	line and EXECSHELL is set to sh.
+	Shell is supplied the original command line if possible.
+
+after 5.005_02:
+	Can start PM programs from non-PM sessions by plain system()
+		and friends.  Can start DOS/Win programs.  Can start
+		fullscreen programs from non-fullscreen sessions too.
+	In fact system(P_PM,...) was broken.
+	We mangle the name of perl*.DLL, to allow coexistence of different
+		versions of Perl executables on the system.  Mangling of
+		names of extension DLL is also changed, thus running two
+		different versions of the executable with loaded
+		extensions should not lead to conflicts (since 
+		extension-full-name and Perl-version mangling work in the 
+		same set ot 576 possible keys, this may lead to clashes).
+	$^E was reset on the second read, and contained ".\r\n" at the end.
+after 5.005_53:
+	Would segfault system()ing non-existing program;
+	AOUT build was hosed;
+	warning-test for getpriority() might lock the system hard on 
+		pre-fixpak22 configuration (calling getpriority() on 
+		non-existing process triggers a system-wide bug).
+
+
+	PrfDB was using a bug in processing XSUBs returning U32.

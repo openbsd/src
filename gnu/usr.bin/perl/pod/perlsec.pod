@@ -36,7 +36,9 @@ L<perllocale>), results of certain system calls (readdir, readlink,
 the gecos field of getpw* calls), and all file input are marked as
 "tainted".  Tainted data may not be used directly or indirectly in any
 command that invokes a sub-shell, nor in any command that modifies
-files, directories, or processes.  Any variable set
+files, directories, or processes. (B<Important exception>: If you pass
+a list of arguments to either C<system> or C<exec>, the elements of
+that list are B<NOT> checked for taintedness.) Any variable set
 to a value derived from tainted data will itself be tainted,
 even if it is logically impossible for the tainted data
 to alter the variable.  Because taintedness is associated with each
@@ -86,9 +88,9 @@ For example:
     @files = glob('*.c');	# Always insecure (uses csh)
 
 If you try to do something insecure, you will get a fatal error saying
-something like "Insecure dependency" or "Insecure PATH".  Note that you
+something like "Insecure dependency" or "Insecure $ENV{PATH}".  Note that you
 can still write an insecure B<system> or B<exec>, but only by explicitly
-doing something like the last example above.
+doing something like the "considered secure" example above.
 
 =head2 Laundering and Detecting Tainted Data
 
@@ -173,6 +175,14 @@ guarantee that the executable in question isn't itself going to turn
 around and execute some other program that is dependent on your PATH, it
 makes sure you set the PATH.
 
+The PATH isn't the only environment variable which can cause problems.
+Because some shells may use the variables IFS, CDPATH, ENV, and
+BASH_ENV, Perl checks that those are either empty or untainted when
+starting subprocesses. You may wish to add something like this to your
+setid and taint-checking scripts.
+
+    delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};   # Make %ENV safer
+
 It's also possible to get into trouble with other operations that don't
 care whether they use tainted values.  Make judicious use of the file
 tests in dealing with any user-supplied filenames.  When possible, do
@@ -215,15 +225,14 @@ never call the shell at all.
     } else {
 	my @temp = ($EUID, $EGID);
 	$EUID = $UID;
-	$EGID = $GID;    # XXX: initgroups() not called
+	$EGID = $GID;    # 	initgroups() also called!
 	# Make sure privs are really gone
 	($EUID, $EGID) = @temp;
-	die "Can't drop privileges" unless
-	    $UID == $EUID and
-	    $GID eq $EGID;	# String test
+	die "Can't drop privileges" 
+		unless $UID == $EUID  && $GID eq $EGID;	
 	$ENV{PATH} = "/bin:/usr/bin";
-	exec 'myprog', 'arg1', 'arg2' or
-	die "can't exec myprog: $!";
+	exec 'myprog', 'arg1', 'arg2' 
+	    or die "can't exec myprog: $!";
     }
 
 A similar strategy would work for wildcard expansion via C<glob>, although
@@ -310,9 +319,10 @@ First of all, however, you I<can't> take away read permission, because
 the source code has to be readable in order to be compiled and
 interpreted.  (That doesn't mean that a CGI script's source is
 readable by people on the web, though.)  So you have to leave the
-permissions at the socially friendly 0755 level.
+permissions at the socially friendly 0755 level.  This lets 
+people on your local system only see your source.
 
-Some people regard this as a security problem.  If your program does
+Some people mistakenly regard this as a security problem.  If your program does
 insecure things, and relies on people not knowing how to exploit those
 insecurities, it is not secure.  It is often possible for someone to
 determine the insecure things and exploit them without viewing the
@@ -335,3 +345,7 @@ statements like "This is unpublished proprietary software of XYZ Corp.
 Your access to it does not give you permission to use it blah blah
 blah."  You should see a lawyer to be sure your licence's wording will
 stand up in court.
+
+=head1 SEE ALSO
+
+L<perlrun> for its description of cleaning up environment variables.

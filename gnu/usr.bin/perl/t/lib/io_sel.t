@@ -49,7 +49,7 @@ $sel->remove([\*STDOUT, 5]);
 print "not " unless $sel->count == 0 && !defined($sel->bits);
 print "ok 9\n";
 
-if ($^O eq 'MSWin32') {  # 4-arg select is only valid on sockets
+if ($^O eq 'MSWin32' || $^O eq 'dos') {  # 4-arg select is only valid on sockets
     print "# skipping tests 10..15\n";
     for (10 .. 15) { print "ok $_\n" }
     $sel->add(\*STDOUT);  # update

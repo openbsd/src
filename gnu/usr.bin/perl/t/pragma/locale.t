@@ -19,6 +19,13 @@ eval {
     $have_setlocale++;
 };
 
+# Visual C's CRT goes silly on strings of the form "en_US.ISO8859-1"
+# and mingw32 uses said silly CRT
+$have_setlocale = 0 if $^O eq 'MSWin32' && $Config{cc} =~ /^(cl|gcc)/i;
+
+# 103 (the last test) may fail but that is okay.
+# (It indicates something broken in the environment, not Perl)
+# Therefore .. only until 102, not 103.
 print "1..", ($have_setlocale ? 102 : 98), "\n";
 
 use vars qw($a
@@ -283,21 +290,25 @@ locatelocale(\$Spanish, \@Spanish,
 # Select the largest of the alpha(num)bets.
 
 ($Locale, @Locale) = ($English, @English)
-    if (length(@English) > length(@Locale));
+    if (@English > @Locale);
 ($Locale, @Locale) = ($German, @German)
-    if (length(@German)  > length(@Locale));
+    if (@German  > @Locale);
 ($Locale, @Locale) = ($French, @French)
-    if (length(@French)  > length(@Locale));
+    if (@French  > @Locale);
 ($Locale, @Locale) = ($Spanish, @Spanish)
-    if (length(@Spanish) > length(@Locale));
-
-print "# Locale = $Locale\n";
-print "# Alnum_ = @Locale\n";
+    if (@Spanish > @Locale);
 
 {
     local $^W = 0;
     setlocale(&LC_ALL, $Locale);
 }
+
+# Sort it now that LC_ALL has been set.
+
+@Locale = sort @Locale;
+
+print "# Locale = $Locale\n";
+print "# Alnum_ = @Locale\n";
 
 {
     my $i = 0;
@@ -396,6 +407,7 @@ print "ok 101\n";
 
 # Test for read-onlys.
 
+print "# testing 102\n";
 {
     no locale;
     $a = "qwerty";
@@ -411,7 +423,7 @@ print "ok 102\n";
 # Thanks to Hallvard Furuseth <h.b.furuseth@usit.uio.no>
 # for inventing a way to test for ordering consistency
 # without requiring any particular order.
-# ++$jhi;#@iki.fi
+# <jhi@iki.fi>
 
 print "# testing 103\n";
 {

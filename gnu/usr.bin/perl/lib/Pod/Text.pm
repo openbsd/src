@@ -52,6 +52,8 @@ require Exporter;
 use vars qw($VERSION);
 $VERSION = "1.0203";
 
+use locale;	# make \w work right in non-ASCII lands
+
 $termcap=0;
 
 $opt_alt_format = 0;
@@ -79,7 +81,7 @@ if($termcap and !$setuptermcap) {
 $SCREEN = ($_[0] =~ /^-(\d+)/ && (shift, $1))
        ||  $ENV{COLUMNS}
        || ($ENV{TERMCAP} =~ /co#(\d+)/)[0]
-       || ($^O ne 'MSWin32' && (`stty -a 2>/dev/null` =~ /(\d+) columns/)[0])
+       || ($^O ne 'MSWin32' && $^O ne 'dos' && (`stty -a 2>/dev/null` =~ /(\d+) columns/)[0])
        || 72;
 
 @_ = ("<&STDIN") unless @_;
@@ -165,6 +167,10 @@ sub prepare_for_output {
         s/I<(.*?)>/*$1*/sg;
         # s/[CB]<(.*?)>/bold($1)/ge;
 	s/X<.*?>//sg;
+
+	# LREF: a la HREF L<show this text|man/section>
+	s:L<([^|>]+)\|[^>]+>:$1:g;
+
 	# LREF: a manpage(3f)
 	s:L<([a-zA-Z][^\s\/]+)(\([^\)]+\))?>:the $1$2 manpage:g;
 	# LREF: an =item on another manpage
@@ -269,14 +275,14 @@ sub prepare_for_output {
 		    my $paratag = $_;
 		    $_ = <IN>;
 		    if (/^=/) {  # tricked!
-			local($indent) = $indent[$#index - 1] || $DEF_INDENT;
+			local($indent) = $indent[$#indent - 1] || $DEF_INDENT;
 			output($paratag);
 			redo POD_DIRECTIVE;
 		    }
 		    &prepare_for_output;
 		    IP_output($paratag, $_);
 		} else {
-		    local($indent) = $indent[$#index - 1] || $DEF_INDENT;
+		    local($indent) = $indent[$#indent - 1] || $DEF_INDENT;
 		    output($_, 0);
 		}
 	    }
@@ -364,7 +370,7 @@ sub fill {
 
 sub IP_output {
     local($tag, $_) = @_;
-    local($tag_indent) = $indent[$#index - 1] || $DEF_INDENT;
+    local($tag_indent) = $indent[$#indent - 1] || $DEF_INDENT;
     $tag_cols = $SCREEN - $tag_indent;
     $cols = $SCREEN - $indent;
     $tag =~ s/\s*$//;
