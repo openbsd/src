@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.12 2000/01/05 15:58:27 espie Exp $	*/
+/*	$OpenBSD: print.c,v 1.13 2000/01/05 16:00:19 espie Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.12 2000/01/05 15:58:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.13 2000/01/05 16:00:19 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -174,6 +174,9 @@ printcol(dp)
 	int base, chcnt, col, colwidth, num;
 	int numcols, numrows, row;
 
+	if ( (colwidth = compute_columns(dp, &numcols)) == 0)
+		return;
+
 	/*
 	 * Have to do random access in the linked list -- build a table
 	 * of pointers.
@@ -193,9 +196,6 @@ printcol(dp)
 	for (p = dp->list, num = 0; p; p = p->fts_link)
 		if (p->fts_number != NO_PRINT)
 			array[num++] = p;
-
-	if ( (colwidth = compute_columns(dp, &numcols)) == 0)
-		return;
 
 	numrows = num / numcols;
 	if (num % numcols)
