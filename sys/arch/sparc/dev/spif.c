@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.7 2000/06/02 15:53:22 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.8 2001/10/05 15:50:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -455,6 +455,9 @@ sttyioctl(dev, cmd, data, flags, p)
 		break;
 	case TIOCMGET:
 		*((int *)data) = stty_modem_control(sp, 0, DMGET);
+		break;
+	case TIOCMSET:
+		stty_modem_control(sp, *((int *)data), DMSET);
 		break;
 	case TIOCGFLAGS:
 		*((int *)data) = sp->sp_openflags;
