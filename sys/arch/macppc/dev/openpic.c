@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.12 2002/03/02 17:27:18 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.13 2002/03/02 17:31:53 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -430,13 +430,13 @@ mapirq(irq)
 	if (o_virq_inited == 0) {
 		o_virq_max = 0;
 		for (i = 0; i < ICU_LEN; i++) {
-			o_virq[i] = -1;
+			o_virq[i] = 0;
 		}
 		o_virq_inited = 1;
 	}
 
 	/* irq in table already? */
-	if (o_virq[irq] != -1) {
+	if (o_virq[irq] != 0) {
 		return o_virq[irq];
 	}
 
