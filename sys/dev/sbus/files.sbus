@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.8 2001/12/04 20:07:06 jason Exp $
+#	$OpenBSD: files.sbus,v 1.9 2001/12/04 21:43:01 jason Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -55,3 +55,7 @@ file	dev/sbus/isp_sbus.c		isp_sbus
 device	cgsix: wsemuldisplaydev, wsrasteremulops
 attach	cgsix at sbus
 file	dev/sbus/cgsix.c		cgsix
+
+device	cgthree: wsemuldisplaydev, wsrasteremulops
+attach	cgthree at sbus
+file	dev/sbus/cgthree.c		cgthree
