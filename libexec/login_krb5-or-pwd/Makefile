@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2003/05/13 04:41:00 hin Exp $
+#	$OpenBSD: Makefile,v 1.9 2003/05/17 00:45:02 hin Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ CFLAGS+=-DPASSWD -Wall -Werror -I${.CURDIR}/../login_passwd
 SRCS+=	login_krb5.c
 DPADD+=  ${LIBKRB} ${LIBCRYPTO} ${LIBUTIL} ${LIBKRB5} ${LIBKASN1} \
 	${LIBCOM_ERR} ${LIBKAFS} ${LIBDES}
-LDADD+=	-lkrb5 -lasn1 -lcrypto -lcom_err -lkrb -lutil -lkafs -ldes
+LDADD+=	-lkrb5 -lasn1 -lcrypto -lcom_err -lutil -ldes
 CFLAGS+=-DKRB5
 .PATH:	${.CURDIR}/../login_passwd ${.CURDIR}/../login_krb5
 .else
