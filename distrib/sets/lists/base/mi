@@ -2679,3 +2679,4 @@
 ./usr/sbin/sesd
 ./usr/sbin/setencstat
 ./usr/sbin/setobjstat
+./usr/sbin/config

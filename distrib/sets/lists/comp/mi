@@ -1394,7 +1394,6 @@
 ./usr/libdata/lint/llib-lstdc.ln
 ./usr/libexec/lint1
 ./usr/libexec/lint2
-./usr/sbin/config
 ./usr/sbin/gspa
 ./usr/sbin/gspahextoc
 ./usr/sbin/kgmon
