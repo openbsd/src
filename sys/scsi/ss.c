@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.11 1997/03/07 03:05:15 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.12 1997/03/07 12:57:55 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -501,19 +501,47 @@ ss_set_window(sc, sio)
 	struct scsi_window_header	window_header;
 	struct scsi_window_data		window_data;
 
+	/*
+	 * The CDB for SET WINDOW goes in here.
+	 * The two structures that follow are sent via data out.
+	 */
 	bzero(&window_cmd, sizeof(window_cmd));
 	window_cmd.opcode = SET_WINDOW;
 	_lto3l(sizeof(window_data), window_cmd.length);
 
+	/*
+	 * XXX Window Descriptor Length needs a quirk.
+	 * Some scanners have peculiar notions about what the value
+	 * should be.
+	 *
+	 *  In general 40 <= WDL <= sizeof(vendor unique window data)
+	 *
+	 *  Ricoh IS-50 & IS-410 insist on 320 (even it transfer len is less.)
+	 *  Ricoh FS-1 insists on 256.
+	 *  UMAX UC-630 accepts 46 (I haven't tested other values.)
+	 *  Fujitsu M3096G wants 40 <= x <= 248 (tested OK at 40 & 64.)
+	 */
 	bzero(&window_header, sizeof(window_header));
 	_lto2l(, window_header.len);
 
+	/*
+	 * The first 40 bytes of the window descriptor block are defined
+	 * in the standard.  After that "venor unique" data is limited
+	 * only by 16-bit xfer len value.
+	 */
 	bzero(&window_data, sizeof(window_data));
+	/* leave window id at zero */
+	/* leave auto bit at zero */
 	_lto2l(sio->sio.scan_x_resolution, window_data.x_res);
 	_lto2l(sio->sio.scan_y_resolution, window_data.y_res);
 	_lto4l(sio->sio.scan_x_origin, window_data.x_org);
 	_lto4l(sio->sio.scan_y_origin, window_data.y_org);
-	_lto4l(sio->sio.scan_width, window_data.width);
+	_lto4l(sio->sio.scan_width,  window_data.width);
 	_lto4l(sio->sio.scan_height, window_data.length);
+	window_data.brightness     = sio->sio.scan_brightness;
+	window_data.threshold      = sio->sio.
+	window_data.contrast       = sio->sio.scan_contrast;
+	window_data.image_comp     = sio->sio.
+	window_data.bits_per_pixel = sio->sio.scan_bits_per_pixel;
 }
 #endif
