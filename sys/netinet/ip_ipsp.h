@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.108 2001/06/25 23:08:24 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.109 2001/06/25 23:18:08 beck Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -427,7 +427,7 @@ htonq(u_int64_t q)
  * special on some architectures, assuming it is always an spl lowering
  * operation).
  */
-#define	spltdb	plsoftnet
+#define	spltdb	splsoftnet
 
 extern int encdebug;
 extern int ipsec_acl;
