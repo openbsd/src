@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.14 1999/08/08 02:42:58 niklas Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.15 1999/08/20 04:53:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -466,7 +466,7 @@ bridge_bifconf(sc, bifc)
 	struct ifbifconf *bifc;
 {
 	struct bridge_iflist *p;
-	u_int32_t total, i;
+	u_int32_t total = 0, i;
 	int error = 0;
 	struct ifbreq breq;
 

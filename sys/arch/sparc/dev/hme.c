@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.19 1999/04/18 03:13:14 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.20 1999/08/20 04:55:03 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -1094,7 +1094,7 @@ hme_mii_read(self, phy, reg)
 {
 	struct hme_softc *sc = (struct hme_softc *)self;
 	struct hme_tcvr *tcvr = sc->sc_tcvr;
-	int tries = 16, i, ret;
+	int tries = 16, i, ret = 0;
 
 	/* Use the frame if possible */
 	if (sc->sc_flags & HME_FLAG_FENABLE) {
