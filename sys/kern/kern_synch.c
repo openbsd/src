@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.19 2000/03/03 11:46:09 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.20 2000/03/03 16:49:25 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -64,6 +64,14 @@
 u_char	curpriority;		/* usrpri of curproc */
 int	lbolt;			/* once a second sleep address */
 
+/*
+ * We need to keep track on how many times we call roundrobin before we
+ * actually attempt a switch (that is when we call mi_switch()).
+ * This is done so that some slow kernel subsystems can yield instead of
+ * blocking the scheduling.
+ */
+int	roundrobin_attempts;
+
 void roundrobin __P((void *));
 void schedcpu __P((void *));
 void updatepri __P((struct proc *));
@@ -79,6 +87,7 @@ roundrobin(arg)
 {
 
 	need_resched();
+	roundrobin_attempts++;
 	timeout(roundrobin, NULL, hz / 10);
 }
 
@@ -630,6 +639,13 @@ mi_switch()
 #endif
 	cpu_switch(p);
 	microtime(&runtime);
+
+	/*
+	 * We reset roundrobin_attempts at exit, because cpu_switch could
+	 * have looped in the idle loop and the attempts would increase
+	 * leading to unjust punishment of an innocent process.
+	 */
+	roundrobin_attempts = 0;
 }
 
 /*
