@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.755 2004/08/18 17:34:53 millert Exp 
+ *	OpenBSD: pcidevs,v 1.756 2004/08/20 06:17:05 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1555,6 +1555,7 @@
 
 /* Marvell products */
 #define	PCI_PRODUCT_MARVELL_SK_V2	0x4320		/* SKv2 */
+#define	PCI_PRODUCT_MARVELL_SK_V2_BELKIN	0x5005		/* Belkin F5D5005 */
 
 /* Matrox products */
 #define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (Atlas) */
