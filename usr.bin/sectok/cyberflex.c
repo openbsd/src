@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.18 2001/08/02 17:09:18 rees Exp $ */
+/* $Id: cyberflex.c,v 1.19 2001/08/15 21:11:29 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -38,7 +38,6 @@ such damages.
 #include <signal.h>
 #include <string.h>
 #include <fcntl.h>
-#include <openssl/des.h>
 #include <des.h>
 #ifdef __linux
 #include <sha.h>
