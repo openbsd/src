@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_number.h,v 1.12 2003/10/05 20:25:08 miod Exp $	*/
+/*	$OpenBSD: cpu_number.h,v 1.13 2004/04/25 17:34:24 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,6 @@
 
 #ifdef	_KERNEL
 #ifndef _LOCORE
-#include <machine/param.h>
 
 static unsigned cpu_number(void);
 
@@ -39,13 +38,10 @@ static __inline__ unsigned cpu_number(void)
 {
 	unsigned cpu;
 
-	/* XXX what about 197DP? */
-	if (brdtyp != BRD_188)
-		return 0;
-
-	__asm__ ("ldcr %0, cr18" : "=r" (cpu));
+	__asm__ __volatile__ ("ldcr %0, cr18" : "=r" (cpu));
 	return (cpu & 3);
 }
+
 #endif /* _LOCORE */
 #endif /* _KERNEL */
 #endif /* _M88K_CPU_NUMBER_ */
