@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.17 2001/04/13 20:16:53 millert Exp $
+.\"	$OpenBSD: identd.8,v 1.18 2002/07/16 10:16:10 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -49,7 +49,7 @@
 .Op Fl p Ar port
 .Op Fl a Ar address
 .Op Fl c Ar charset
-.Op Fl noelVvmNUdh
+.Op Fl noelvmNUdh
 .Sh DESCRIPTION
 .Nm
 is a server which implements the
@@ -132,8 +132,6 @@ Default is "auth" (113).
 Specify a local IP address in dotted quad format
 to bind the listen socket to if running as a standalone daemon.
 By default the daemon listens on all local IP addresses.
-.It Fl V
-Print the version number and the exit.
 .It Fl l
 Use
 .Xr syslogd 8

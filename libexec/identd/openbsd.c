@@ -1,4 +1,4 @@
-/* $OpenBSD: openbsd.c,v 1.16 2002/06/22 20:34:31 deraadt Exp $ */
+/* $OpenBSD: openbsd.c,v 1.17 2002/07/16 10:16:10 deraadt Exp $ */
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -52,7 +52,7 @@ k_getuid(struct in_addr *faddr, int fport, struct in_addr *laddr,
 	tir.laddr.ss_family = AF_INET;
 	fin = (struct sockaddr_in *) &tir.faddr;
 	lin = (struct sockaddr_in *) &tir.laddr;
-	
+
 	memcpy(&fin->sin_addr, faddr, sizeof (struct in_addr));
 	memcpy(&lin->sin_addr, laddr, sizeof (struct in_addr));
 	fin->sin_port = fport;
@@ -87,7 +87,7 @@ k_getuid6(struct sockaddr_in6 *faddr, int fport, struct sockaddr_in6 *laddr,
 	memset(&tir, 0, sizeof (tir));
 	fin = (struct sockaddr_in6 *) &tir.faddr;
 	lin = (struct sockaddr_in6 *) &tir.laddr;
-	
+
 	if (faddr->sin6_len > sizeof(tir.faddr))
 		return -1;
 	memcpy(fin, faddr, faddr->sin6_len);

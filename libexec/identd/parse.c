@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.30 2002/06/22 20:34:31 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.31 2002/07/16 10:16:10 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -61,10 +61,9 @@ check_noident(char *homedir)
 int
 getuserident(char *homedir, char *buf, int len)
 {
-	char   path[MAXPATHLEN];
+	char   path[MAXPATHLEN], *p;
 	struct stat st;
 	int    fd, nread;
-	char   *p;
 
 	if (len == 0)
 		return 0;
@@ -188,7 +187,7 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 	uid_t	uid;
 
 	if (debug_flag && syslog_flag)
-		syslog(LOG_DEBUG, "In function parse(), from %s to %s", 
+		syslog(LOG_DEBUG, "In function parse(), from %s to %s",
 		       gethost4_addr(faddr), gethost4_addr(laddr));
 
 	if (debug_flag && syslog_flag)
@@ -250,7 +249,7 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 	if (k_getuid(&faddr2, htons(fport), laddr,
 	    htons(lport), &uid) == -1) {
 		if (syslog_flag)
-			syslog(LOG_DEBUG, "Returning: %d , %d : NO-USER",	
+			syslog(LOG_DEBUG, "Returning: %d , %d : NO-USER",
 			    lport, fport);
 		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
 		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER");
@@ -356,7 +355,7 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 	uid_t	uid;
 
 	if (debug_flag && syslog_flag)
-		syslog(LOG_DEBUG, "In function parse6(), from %s to %s", 
+		syslog(LOG_DEBUG, "In function parse6(), from %s to %s",
 		       gethost6(faddr), gethost6(laddr));
 
 	if (debug_flag && syslog_flag)
@@ -418,7 +417,7 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 	if (k_getuid6(&faddr2, htons(fport), laddr,
 	    htons(lport), &uid) == -1) {
 		if (syslog_flag)
-			syslog(LOG_DEBUG, "Returning: %d , %d : NO-USER",	
+			syslog(LOG_DEBUG, "Returning: %d , %d : NO-USER",
 			    lport, fport);
 		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
 		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER");

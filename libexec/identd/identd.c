@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.27 2002/06/22 20:34:31 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.28 2002/07/16 10:16:10 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -35,7 +35,6 @@
 #include "identd.h"
 #include "error.h"
 
-extern char *version;
 extern char *__progname;
 
 int     verbose_flag = 0;
@@ -64,7 +63,7 @@ usage(void)
 {
 	syslog(LOG_ERR,
 	    "%s [-i | -w | -b] [-t seconds] [-u uid] [-g gid] [-p port] "
-	    "[-a address] [-c charset] [-noelVvmNUdh]", __progname);
+	    "[-a address] [-c charset] [-noelvmNUdh]", __progname);
 	exit(2);
 }
 
@@ -113,9 +112,9 @@ gethost6(struct sockaddr_in6 *addr)
 #else
 	const int niflags = NI_NUMERICHOST;
 #endif
-	static int bb=0; 
+	static int bb = 0;
 	int error;
-	
+
 	bb = (bb+1)%2;
 	error = getnameinfo((struct sockaddr *)addr, addr->sin6_len,
 	    hbuf[bb], sizeof(hbuf[bb]), NULL, 0, niflags);
@@ -144,7 +143,7 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_storage sa, sa2;
-	/* 	struct sockaddr_in sin;*/
+	/* struct sockaddr_in sin;*/
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
 	struct in_addr laddr, faddr;
@@ -163,7 +162,7 @@ main(int argc, char *argv[])
 	/*
 	 * Parse the command line arguments
 	 */
-	while ((ch = getopt(argc, argv, "hbwit:p:a:u:g:c:r:loenVvdmNU")) != -1) {
+	while ((ch = getopt(argc, argv, "hbwit:p:a:u:g:c:r:loenvdmNU")) != -1) {
 		switch (ch) {
 		case 'h':
 			token_flag = 1;
@@ -232,10 +231,6 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			number_flag = 1;
-			break;
-		case 'V':	/* Give version of this daemon */
-			(void)fprintf(stderr, "[identd version %s]\r\n", version);
-			exit(0);
 			break;
 		case 'v':	/* Be verbose */
 			verbose_flag++;
@@ -346,7 +341,7 @@ main(int argc, char *argv[])
 				signal(SIGALRM, alarm_handler);
 				alarm(timeout);
 			}
-			
+
 			/*
 			 * Wait for a connection request to occur.
 			 * Ignore EINTR (Interrupted System Call).
