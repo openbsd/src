@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.30 2005/03/11 20:39:15 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.31 2005/03/11 20:41:06 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1265,6 +1265,9 @@ ral_decryption_intr(struct ral_softc *sc)
 		/* give rssi to the rate adatation algorithm */
 		rn = (struct ral_node *)ni;
 		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt, desc->rssi);
+
+		/* node is no longer needed */
+		ieee80211_release_node(ic, ni);
 
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
