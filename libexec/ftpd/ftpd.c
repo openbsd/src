@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.112 2001/12/18 00:27:57 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.113 2002/01/07 03:56:02 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.112 2001/12/18 00:27:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.113 2002/01/07 03:56:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -484,7 +484,7 @@ main(argc, argv, envp)
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
-	sa.sa_handler = SIG_IGN;
+	sa.sa_handler = SIG_DFL;
 	(void) sigaction(SIGCHLD, &sa, NULL);
 
 	sa.sa_handler = sigurg;
