@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 1997/01/21 12:02:41 graichen Exp $
+#	$OpenBSD: Makefile,v 1.37 1997/01/22 11:13:53 niklas Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -29,6 +29,19 @@ PCS=	pcs750.bin
 WCS1=	wcs fppwcs poc poc1 poc2 fppoc
 WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 
+# Use NOGZIP on architectures where the gzip'ing would take too much time
+# (pmax or slower :-)).  This way you get only tar'ed snap files and you can
+# gzip them on a faster machine
+.ifndef NOGZIP
+GZIP?=		gzip
+GZIPFLAGS?=	-9
+GZIPEXT?=	.gz
+.else
+GZIP=		cat
+GZIPFLAGS=
+GZIPEXT=
+.endif
+
 all clean cleandir depend etc install lint:
 
 .ifndef DESTDIR
@@ -37,7 +50,7 @@ distribution-etc-root-var distribution distrib-dirs snapshot:
 	@false
 .else
 distribution-etc-root-var: distrib-dirs
-	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	cat etc.${MACHINE}/ttys ttys.pty > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
@@ -46,101 +59,101 @@ distribution-etc-root-var: distrib-dirs
 	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/fbtab && \
 	    chmod 644 ${DESTDIR}/etc/fbtab
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
-	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
-	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
+	${INSTALL} -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
+	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
-	install -c -o ${BINOWN} -g ${BINGRP} -m 555 \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	(cd root; \
-		install -c -o root -g wheel -m 644 dot.cshrc \
+		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/root/.cshrc; \
-		install -c -o root -g wheel -m 644 dot.klogin \
+		${INSTALL} -c -o root -g wheel -m 644 dot.klogin \
 		    ${DESTDIR}/root/.klogin; \
-		install -c -o root -g wheel -m 644 dot.login \
+		${INSTALL} -c -o root -g wheel -m 644 dot.login \
 		    ${DESTDIR}/root/.login; \
-		install -c -o root -g wheel -m 644 dot.profile \
+		${INSTALL} -c -o root -g wheel -m 644 dot.profile \
 		    ${DESTDIR}/root/.profile; \
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
 		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
 	(cd kerberosIV; \
-		install -c -o root -g wheel -m 644 README \
+		${INSTALL} -c -o root -g wheel -m 644 README \
 		    ${DESTDIR}/etc/kerberosIV; \
-		install -c -o root -g wheel -m 644 krb.conf \
+		${INSTALL} -c -o root -g wheel -m 644 krb.conf \
 		    ${DESTDIR}/etc/kerberosIV; \
-		install -c -o root -g wheel -m 444 krb.realms \
+		${INSTALL} -c -o root -g wheel -m 444 krb.realms \
 		    ${DESTDIR}/etc/kerberosIV)
 	(cd amd; \
-		install -c -o root -g wheel -m 644 master.sample \
+		${INSTALL} -c -o root -g wheel -m 644 master.sample \
 		    ${DESTDIR}/etc/amd)
 	(cd mtree; \
-		install -c -o root -g wheel -m 600 special \
+		${INSTALL} -c -o root -g wheel -m 600 special \
 		    ${DESTDIR}/etc/mtree; \
-		install -c -o root -g wheel -m 444 4.4BSD.dist \
+		${INSTALL} -c -o root -g wheel -m 444 4.4BSD.dist \
 		    ${DESTDIR}/etc/mtree)
 	(cd ppp; \
-		install -c -o root -g wheel -m 600 chap-secrets \
+		${INSTALL} -c -o root -g wheel -m 600 chap-secrets \
 		    ${DESTDIR}/etc/ppp; \
-		install -c -o root -g wheel -m 600 options \
+		${INSTALL} -c -o root -g wheel -m 600 options \
 		    ${DESTDIR}/etc/ppp; \
-		install -c -o root -g wheel -m 600 options.leaf \
+		${INSTALL} -c -o root -g wheel -m 600 options.leaf \
 		    ${DESTDIR}/etc/ppp; \
-		install -c -o root -g wheel -m 600 options.sample \
+		${INSTALL} -c -o root -g wheel -m 600 options.sample \
 		    ${DESTDIR}/etc/ppp; \
-		install -c -o root -g wheel -m 600 chatscript.sample \
+		${INSTALL} -c -o root -g wheel -m 600 chatscript.sample \
 		    ${DESTDIR}/etc/ppp; \
-		install -c -o root -g wheel -m 600 pap-secrets \
+		${INSTALL} -c -o root -g wheel -m 600 pap-secrets \
 		    ${DESTDIR}/etc/ppp)
-	cd namedb; install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
+	cd namedb; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
 	    ${DESTDIR}/etc/namedb
 	/bin/rm -f ${DESTDIR}/etc/localtime
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	/bin/rm -f ${DESTDIR}/etc/rmt
 	ln -s /usr/sbin/rmt ${DESTDIR}/etc/rmt
-	install -c -o root -g wheel -m 644 minfree \
+	${INSTALL} -c -o root -g wheel -m 644 minfree \
 		${DESTDIR}/var/crash
-	install -c -o ${BINOWN} -g operator -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g operator -m 664 /dev/null \
 		${DESTDIR}/etc/dumpdates
-	install -c -o ${BINOWN} -g operator -m 644 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g operator -m 644 /dev/null \
 		${DESTDIR}/etc/skeykeys
-	install -c -o root -g wheel -m 600 /dev/null \
+	${INSTALL} -c -o root -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/cron/log
-	install -c -o nobody -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/authlog
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/daemon
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lastlog
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lpd-errs
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/maillog
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/messages
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/ftpd
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/secure
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/wtmp
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/xferlog
-	install -c -o daemon -g staff -m 664 /dev/null \
+	${INSTALL} -c -o daemon -g staff -m 664 /dev/null \
 		${DESTDIR}/var/msgs/bounds
-	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/run/utmp
-	(cd etc.${MACHINE}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    fstab.* ${DESTDIR}/etc)
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
 .if ${MACHINE} == "tahoe"
-	(cd etc.tahoe; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS1} \
+	(cd etc.tahoe; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS1} \
 	    ${DESTDIR}/)
 .endif
 .if ${MACHINE} == "vax"
-	(cd etc.vax; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
+	(cd etc.vax; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
 	    ${DESTDIR}/)
 .endif
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
@@ -149,14 +162,14 @@ distribution: distribution-etc-root-var
 	(cd ..; ${MAKE} install)
 
 hcx9-distribution:
-	(cd etc.tahoe; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS2} \
+	(cd etc.tahoe; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS2} \
 	    ${DESTDIR}/)
 
 distrib-dirs:
-	install -d -o root -g wheel -m 755 ${DESTDIR}
+	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}
 	-mtree -def mtree/4.4BSD.dist -p ${DESTDIR}/ -u
 	if [ ! -f ${DESTDIR}/usr/src ]; then \
-		install -d -o root -g wsrc -m 775 ${DESTDIR}/usr/src; \
+		${INSTALL} -d -o root -g wsrc -m 775 ${DESTDIR}/usr/src; \
 	fi
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
@@ -165,19 +178,7 @@ snapshot: distribution snap_pre snap_tar snap_md
 
 snap_pre:
 	/bin/rm -rf ${DESTDIR}/snapshot
-	install -d -o root -g wheel -m 755 ${DESTDIR}/snapshot
-
-# check if GZIP is set - else set it to "gzip"
-# you may set it to "cat" alternatively for architectures
-# where the gzip'ing would take too much time (pmax or slower :-)
-# this way you get only tar'ed snap files and you can gzip
-# them on a faster machine
-
-.ifndef GZIP
-GZIP=		gzip
-GZIPFLAGS=	-9
-GZIPEXT=	.gz
-.endif
+	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}/snapshot
 
 snap_tar:
 	cd ${DESTDIR} && tar cf - bin \
