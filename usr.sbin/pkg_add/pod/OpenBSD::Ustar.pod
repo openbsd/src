@@ -1,0 +1,122 @@
+$OpenBSD: OpenBSD::Ustar.pod,v 1.1 2005/02/28 13:08:41 espie Exp $
+
+=head1 NAME
+
+OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
+
+=head1 SYNOPSIS
+
+    use OpenBSD::Ustar;
+    open(my $fh, "<", $filename);
+    $arc = OpenBSD::Ustar->new($fh, $destdir);
+    while (my $o = $arc->next()) {
+    	# decide whether we want to extract it, change object attributes
+	$o->create();
+    }
+
+
+=head1 DESCRIPTION
+
+C<OpenBSD::Ustar> provides an API to read archives created by C<tar(1)>.
+For the time being, it can only handle the USTAR archive format.
+
+Most client software will specialize C<OpenBSD::Ustar> to their own needs.
+Note however that C<OpenBSD::Ustar> is not designed for inheritance.
+Composition (putting a C<OpenBSD::Ustar> object inside your class) and
+forwarding methods (writing C<create> or C<next> methods that call the
+C<OpenBSD::Ustar> method) are the correct way to use this API.
+
+A filehandle C<$fh> is associated with an C<OpenBSD::Ustar> object through
+C<new>. The filehandle should support C<read>. C<OpenBSD::UStar> does not
+rely on C<seek> or C<rewind> in order to be usable on pipe outputs.
+
+On the other hand, C<OpenBSD::Ustar> does not do any caching. The client
+code is responsible for retrieving and storing archives if it
+needs to scan through them multiple times in a row.
+
+Access to the archive object C<$arc> occurs through a loop that repeatedly 
+calls C<$o = $arc-E<gt>next()> to obtain the next archive entry.  
+It returns an archive entry object C<$o> that can be 
+queried to decide whether to extract this entry or not.
+
+Actual extraction is performed through C<$o-E<gt>extract()> and is not 
+mandatory. Thus, client code can control whether it wants to extract archive
+elements or not.
+
+Client code may decide to abort archive extraction early, or to run it through
+until C<$arc-E<gt>next()> returns false.  The C<OpenBSD::Ustar> object doesn't
+hold any resources and doesn't need any specific clean-up. However, client
+code is responsible for closing the filehandle and terminating any associated
+pipe process.
+
+An object C<$o> returned through C<next> holds all the characteristics of the 
+archive header:
+
+=over 20
+
+=item C<$o-E<gt>IsDir()>
+
+true if archive entry is a directory
+
+=item C<$o-E<gt>IsFile()>
+
+true if archive entry is a file
+
+=item C<$o-E<gt>IsLink()>
+
+true if archive entry is any kind of link
+
+=item C<$o-E<gt>IsSymLink()>
+
+true if archive entry is a symbolic link
+
+=item C<$o-E<gt>IsHardLink()>
+
+true if archive entry is a hard link
+
+=item C<$o-E<gt>{name}>
+
+filename
+
+=item C<$o-E<gt>{mode}>
+
+C<chmod(2)> mode
+
+=item C<$o-E<gt>{mtime}>
+
+C<utime(2)> modification time
+
+=item C<$o-E<gt>{uid}>
+
+owner user ID
+
+=item C<$o-E<gt>{gid}>
+
+owner group ID
+
+=item C<$o-E<gt>{uname}>
+
+owner user name
+
+=item C<$o-E<gt>{gname}>
+
+owner group name
+
+=item C<$o-E<gt>{linkname}>
+
+name of the source link, if applicable
+
+=back
+
+The fields C<name>, C<mode>, C<mtime>, C<uid>, C<gid> and C<linkname>
+can be altered before calling C<$o-E<gt>create()>, and will properly
+influence the resulting file.
+
+The relationship between C<uid> and C<uname>, and C<gid> and C<gname>
+conforms to the USTAR format usual behavior.
+
+In addition, client code may define C<$o-E<gt>{cwd}> in a way similar
+to C<tar(1)>'s C<-C> option to affect the creation of hard links.
+
+All creation commands happen relative to the C<$destdir> that was used
+for creating the C<$arc> C<OpenBSD::Ustar> object.

@@ -1,0 +1,70 @@
+$OpenBSD: OpenBSD::Vstat.pod,v 1.1 2005/02/28 13:08:41 espie Exp $
+
+=head1 NAME
+
+OpenBSD::Vstat - virtual filesystem for C<pkg_add(1)> simulations
+
+=head1 SYNOPSIS
+
+    use OpenBSD::Vstat;
+
+    $h = OpenBSD::Vstat::add($filename, $size, $tag);
+    OpenBSD::Vstat::remove($filename, $size);
+    $e = OpenBSD::Vstat::vexists($filename);
+    OpenBSD::Vstat::tally();
+
+=head1 DESCRIPTION
+
+C<OpenBSD::Vstat> provides functions to layout a virtual file system on top
+of the real one.  This is generally used to simulate file system manipulations
+before doing them for real.
+
+The functions C<OpenBSD::Vstat::add> (respectively
+C<OpenBSD::Vstat::remove>) can be used to add a filename to
+the file system (resp. remove a filename from the file system).  
+The function C<OpenBSD::Vstat:vexists> looks for
+a given filename: first it checks if it has been added or removed in
+the virtual filesystem. Failing that, it looks into the real file system
+using C<-e>.
+
+Both C<OpenBSD::Vstat::add> and C<OpenBSD::Vstat::remove> also know about
+Unix filesystem semantics, namely C<mount(8)> points and disk usage.
+They return a small object corresponding to the filename's file system with
+the following fields
+
+=over 8
+
+=item ro
+
+defined if the filesystem is read-only. Usually hard to add files there.
+
+=item nodev
+
+defined if the filesystem forbids devices.
+
+=item nosuid
+
+defined if the filesystem forbids SUID files.
+
+=item avail()
+
+returns the number of bytes still available on the filesystem.
+
+=back
+
+C<OpenBSD::Vstat::vexists> returns a true value if the filename exists.
+If it is a virtual name added through C<OpenBSD::Vstat::add>, it returns
+the C<$tag> specified as an optional argument. Otherwise, it returns 1.
+
+C<OpenBSD::Vstat:tally> displays a summary of filesystem manipulations
+after a series of additions and removals.
+
+=head1 CAVEATS
+
+The API to this module may change.
+
+=head1 BUGS AND LIMITATIONS
+
+C<OpenBSD::Vstat> now handles C<chroot(8)> situations gracefully, but
+it doesn't know about symbolic links to directories and will report bogus
+results in complicated cases.

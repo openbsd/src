@@ -1,0 +1,135 @@
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.1 2005/02/28 13:08:41 espie Exp $
+
+=head1 NAME
+
+OpenBSD::PackingElement - C<pkg_add(1)> packing-elements object hierarchy
+
+=head1 SYNOPSIS
+
+    package OpenBSD::PackingElement;
+    sub method
+    {
+    }
+
+    package OpenBSD::PackingElement::Depend;
+    sub method
+    {
+    	my ($self, $args) = @_;
+	# do something
+    }
+
+    package main;
+    use OpenBSD::PackingList;
+
+    $plist = OpenBSD::PackingList->fromfile($filename);
+    $plist->visit('method', @args);
+
+=head1 DESCRIPTION
+
+C<OpenBSD::PackingElement> is the base class for all elements in a 
+packing-list (see L<OpenBSD::PackingList>).
+
+Manipulation of packing-lists mostly occurs through visitor patterns
+such as C<OpenBSD::PackingList::visit>: client code defines a method for
+each relevant class in the hierarchy and calls C<$plist-E<gt>visit('method')>
+to perform the processing.
+
+=over 4
+
+=item ::Meta
+
+base class for all meta information that can be reordered at will.
+
+=over 4
+
+=item ::Unique
+
+meta information with uniqueness properties.
+
+=over 4
+
+=item ::ExtraInfo
+
+=item ::Name
+
+=back
+
+=item ::Depend
+
+all dependency information.
+
+=over 4
+
+=item ::PkgDep
+
+deprecated
+
+=item ::NewDepend
+
+deprecated
+
+=item ::LibDepend
+
+deprecated
+
+=item ::Wantlib
+
+=item ::Dependency
+
+=back
+
+=item ::Conflict
+
+=over 4
+
+=item ::PkgConflict
+
+deprecated
+
+=item ::Conflict
+
+=back
+
+=back
+
+=item ::Annotation
+
+=item ::Object
+
+somewhat concrete elements in packing-lists.
+
+=over 4
+
+=item ::FileObject
+
+objects with a filename.
+
+=over 4
+
+=item ::FileBase
+
+abstract class for files.
+
+=item ::DirlikeObject
+
+abstract class for directories.
+
+=back
+
+=item ::Action
+
+stuff that performs some action during addition/removal of package.
+
+=item ::State
+
+annotation-like stuff that can't be easily moved around because it influences
+surrounding objects.
+
+=back
+
+=back
+
+=head1 CAVEATS
+
+Some aspects of this API are likely to change in the future, although the
+basic class hierarchy is now more or less worked out.

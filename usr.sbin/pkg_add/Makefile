@@ -1,6 +1,9 @@
-# $OpenBSD: Makefile,v 1.19 2005/02/15 09:13:05 espie Exp $
+# $OpenBSD: Makefile,v 1.20 2005/02/28 13:08:41 espie Exp $
+
+.include <bsd.own.mk>
 
 MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg.1 pkg_mklocatedb.1
+POD2MAN=/usr/bin/pod2man
 
 PACKAGES= \
     OpenBSD/Add.pm \
@@ -39,10 +42,45 @@ SCRIPTS= \
 
 LIBBASE=/usr/libdata/perl5
 
+PODS= \
+    OpenBSD::IdCache \
+    OpenBSD::Mtree \
+    OpenBSD::PackingElement \
+    OpenBSD::PackingList \
+    OpenBSD::PkgCfl \
+    OpenBSD::PkgSpec \
+    OpenBSD::Ustar \
+    OpenBSD::Vstat
+
+.for p in ${PODS}
+.  ifndef NOMAN
+MANALL+= $p.cat3p
+MANSRCALL += $p.3p
+MANSRC_COOKIE=stamp-mansrc.build
+_quick3p+=${.CURDIR}/pod/$p.pod $p
+.    ifdef MANPS
+PSALL+= $p.ps3p
+.    endif
+.  else
+MANSRC_COOKIE=
+.  endif
+
+$p.3p: pod/$p.pod
+	${POD2MAN} --section=3p --official ${.ALLSRC} $@
+.endfor
+
+mansrc.build:
+.if !empty(_quick3p)
+	cd ${.OBJDIR} && ${POD2MAN} --section=3p --official ${_quick3p}
+.endif
+
 # Nothing to build
 depend:
-all:
+all: ${MANSRC_COOKIE}
 
+stamp-mansrc.build:
+	@cd ${.CURDIR} && exec ${MAKE} mansrc.build
+	@touch $@
 
 install: 
 .for i in ${PACKAGES}
@@ -58,8 +96,6 @@ install:
 
 clean:
 
-.include <bsd.own.mk>
-
 .if !defined(NOMAN)
 install: maninstall
 .include <bsd.man.mk>
@@ -67,3 +103,4 @@ install: maninstall
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
+.PHONY: mansrc.build
