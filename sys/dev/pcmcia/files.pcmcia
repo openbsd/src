@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.36 2001/08/18 16:19:01 aaron Exp $
+#	$OpenBSD: files.pcmcia,v 1.37 2002/06/15 05:55:59 fgsch Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -90,3 +90,8 @@ file	dev/pcmcia/if_ray.c			ray
 # Aironet 4500/4800 802.11 DS WLAN
 attach	an at pcmcia with an_pcmcia
 file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
+
+# Gemplus GPR400 SmartCard reader
+device	gpr
+attach	gpr at pcmcia with gpr
+file	dev/pcmcia/gpr.c			gpr needs-flag
