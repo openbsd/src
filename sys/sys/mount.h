@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.50 2003/04/18 22:12:25 tedu Exp $	*/
+/*	$OpenBSD: mount.h,v 1.51 2003/05/06 20:52:59 tedu Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ int	speedup_syncer(void);
 int	vfs_syncwait(int);	/* sync and wait for complete */
 void	vfs_shutdown(void);	/* unmount and sync file systems */
 long	makefstype(char *);
-int	dounmount(struct mount *, int, struct proc *);
+int	dounmount(struct mount *, int, struct proc *, struct vnode *);
 void	vfsinit(void);
 #ifdef DEBUG
 void	vfs_bufstats(void);
