@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.74 2003/12/08 09:09:03 markus Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.75 2003/12/16 03:29:06 mcbride Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -58,6 +58,14 @@
 .Ar vlan-tag
 .Cm vlandev
 .Ar parent-interface
+.Nm ifconfig
+.Ar carp-interface
+.Cm vhid 
+.Ar host-id
+.Nm ifconfig
+.Ar pfsync-interface
+.Cm syncif
+.Ar iface
 .Nm ifconfig
 .Ar interface
 .Op Ar address_family
@@ -382,6 +390,16 @@ will begin advertising as master.
 If the driver is a carp pseudo-device, set the authentication key to
 .Ar passphrase .
 There is no passphrase by default.
+.It Cm syncif Ar iface
+If the driver is a pfsync pseudo-device, use the specified interface
+to send and recieve pfsync state synchronisation messages.
+.It Fl syncif
+If the driver is a pfsync pseudo-device, stop sending pfsync state
+synchronisation messages over the network.
+.It Cm maxupd Ar n
+If the driver is a pfsync pseudo-device, indicate the maximum number
+of updates for a single state which can be collapsed into one.
+This is an 8-bit number; the default value is 128.
 .It Cm metric Ar n
 Set the routing metric of the interface to
 .Ar n ,
@@ -650,6 +668,7 @@ tried to alter an interface's configuration.
 .Xr ifmedia 4 ,
 .Xr lo 4 ,
 .Xr netintro 4 ,
+.Xr pfsync 4 ,
 .Xr ppp 4 ,
 .Xr sl 4 ,
 .Xr tun 4 ,
