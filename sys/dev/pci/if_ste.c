@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.25 2004/09/23 17:45:16 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.26 2004/10/30 15:48:15 canacar Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1014,7 +1014,7 @@ int ste_newbuf(sc, c, m)
 
 	c->ste_mbuf = m_new;
 	c->ste_ptr->ste_status = 0;
-	c->ste_ptr->ste_frag.ste_addr = vtophys(mtod(m_new, caddr_t));
+	c->ste_ptr->ste_frag.ste_addr = vtophys(mtod(m_new, vaddr_t));
 	c->ste_ptr->ste_frag.ste_len = 1536 | STE_FRAG_LAST;
 
 	return(0);
@@ -1038,12 +1038,12 @@ int ste_init_rx_list(sc)
 			cd->ste_rx_chain[i].ste_next =
 			    &cd->ste_rx_chain[0];
 			ld->ste_rx_list[i].ste_next =
-			    vtophys(&ld->ste_rx_list[0]);
+			    vtophys((vaddr_t)&ld->ste_rx_list[0]);
 		} else {
 			cd->ste_rx_chain[i].ste_next =
 			    &cd->ste_rx_chain[i + 1];
 			ld->ste_rx_list[i].ste_next =
-			    vtophys(&ld->ste_rx_list[i + 1]);
+			    vtophys((vaddr_t)&ld->ste_rx_list[i + 1]);
 		}
 		ld->ste_rx_list[i].ste_status = 0;
 	}
@@ -1064,7 +1064,7 @@ void ste_init_tx_list(sc)
 	ld = sc->ste_ldata;
 	for (i = 0; i < STE_TX_LIST_CNT; i++) {
 		cd->ste_tx_chain[i].ste_ptr = &ld->ste_tx_list[i];
-		cd->ste_tx_chain[i].ste_phys = vtophys(&ld->ste_tx_list[i]);
+		cd->ste_tx_chain[i].ste_phys = vtophys((vaddr_t)&ld->ste_tx_list[i]);
 		if (i == (STE_TX_LIST_CNT - 1))
 			cd->ste_tx_chain[i].ste_next =
 			    &cd->ste_tx_chain[0];
@@ -1148,7 +1148,7 @@ void ste_init(xsc)
 	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_RXDMA_STALL);
 	ste_wait(sc);
 	CSR_WRITE_4(sc, STE_RX_DMALIST_PTR,
-	    vtophys(&sc->ste_ldata->ste_rx_list[0]));
+	    vtophys((vaddr_t)&sc->ste_ldata->ste_rx_list[0]));
 	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_RXDMA_UNSTALL);
 	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_RXDMA_UNSTALL);
 
@@ -1457,7 +1457,7 @@ void ste_start(ifp)
 			ste_wait(sc);
 
 			CSR_WRITE_4(sc, STE_TX_DMALIST_PTR,
-			    vtophys(&sc->ste_ldata->ste_tx_list[0]));
+			    vtophys((vaddr_t)&sc->ste_ldata->ste_tx_list[0]));
 
 			/* Set TX polling interval to start TX engine */
 			CSR_WRITE_1(sc, STE_TX_DMAPOLL_PERIOD, 64);

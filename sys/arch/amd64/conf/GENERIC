@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2004/10/13 03:58:07 brad Exp $
+#	$OpenBSD: GENERIC,v 1.33 2004/10/30 15:48:15 canacar Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -274,7 +274,7 @@ vr*	at pci?				# VIA Rhine ethernet
 #wb*	at pci?				# Winbond W89C840F ethernet
 sf*	at pci? 			# Adaptec AIC-6915 ethernet
 sis*	at pci?				# SiS 900/7016 ethernet
-#ste*	at pci?				# Sundance ST201 ethernet
+ste*	at pci?				# Sundance ST201 ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet
 #dc*	at cardbus?			# 21143, "tulip" clone ethernet
 ti*	at pci?				# Alteon Tigon 1Gb ethernet
