@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2001/07/05 12:36:47 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.34 2001/10/05 05:59:06 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ conf_remove_now (char *section, char *tag)
 	  && strcasecmp (cb->tag, tag) == 0)
 	{
 	  LIST_REMOVE (cb, link);
-	  LOG_DBG ((LOG_MISC, 70, "[%s]:%s->%s removed", section, tag,
+	  LOG_DBG ((LOG_MISC, 95, "[%s]:%s->%s removed", section, tag,
 		    cb->value));
 	  free (cb->section);
 	  free (cb->tag);
@@ -168,7 +168,7 @@ conf_remove_section_now (char *section)
 	{
 	  unseen = 0;
 	  LIST_REMOVE (cb, link);
-	  LOG_DBG ((LOG_MISC, 70, "[%s]:%s->%s removed", section, cb->tag,
+	  LOG_DBG ((LOG_MISC, 95, "[%s]:%s->%s removed", section, cb->tag,
 		    cb->value));
 	  free (cb->section);
 	  free (cb->tag);
@@ -211,7 +211,7 @@ conf_set_now (char *section, char *tag, char *value, int override,
   node->is_default = is_default;
 
   LIST_INSERT_HEAD (&conf_bindings[conf_hash (section)], node, link);
-  LOG_DBG ((LOG_MISC, 70, "conf_set: [%s]:%s->%s", node->section, node->tag,
+  LOG_DBG ((LOG_MISC, 95, "conf_set: [%s]:%s->%s", node->section, node->tag,
 	    node->value));
   return 0;
 }
@@ -440,7 +440,7 @@ conf_load_defaults (int tr)
 	    continue;
 #endif
 
-	  LOG_DBG ((LOG_MISC, 40, "conf_load_defaults : main mode %s", sect));
+	  LOG_DBG ((LOG_MISC, 90, "conf_load_defaults : main mode %s", sect));
 
 	  conf_set (tr, sect, "ENCRYPTION_ALGORITHM", mm_enc[enc], 0, 1);
 	  if (strcmp (mm_enc[enc], "BLOWFISH_CBC") == 0)
@@ -493,7 +493,7 @@ conf_load_defaults (int tr)
 		  continue;
 #endif
 
-		LOG_DBG ((LOG_MISC, 40, "conf_load_defaults : quick mode %s",
+		LOG_DBG ((LOG_MISC, 90, "conf_load_defaults : quick mode %s",
 			  sect));
 
 		conf_set (tr, sect, "Protocols", tmp, 0, 1);
@@ -683,11 +683,11 @@ conf_get_str (char *section, char *tag)
     if (strcasecmp (section, cb->section) == 0
 	&& strcasecmp (tag, cb->tag) == 0)
       {
-	LOG_DBG ((LOG_MISC, 60, "conf_get_str: [%s]:%s->%s", section,
+	LOG_DBG ((LOG_MISC, 95, "conf_get_str: [%s]:%s->%s", section,
 		  tag, cb->value));
 	return cb->value;
       }
-  LOG_DBG ((LOG_MISC, 60,
+  LOG_DBG ((LOG_MISC, 95,
 	    "conf_get_str: configuration value not found [%s]:%s", section,
 	    tag));
   return 0;
@@ -1044,7 +1044,7 @@ conf_end (int transaction, int commit)
 
 /*
  * Dump running configuration upon SIGUSR1.
- * XXX Configuration is "stored in reverse order", so reverse it.
+ * Configuration is "stored in reverse order", so reverse it again.
  */
 struct dumper {
   char *s, *v;
