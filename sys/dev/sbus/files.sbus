@@ -1,0 +1,26 @@
+#	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
+#
+# Config file and device description for machine-independent SBUS code.
+# Included by ports that need it.
+
+device	sbus { slot = -1, offset = -1 }
+#notyet:file	dev/sbus/sbus.c			sbus
+
+# Sbus NCR539x SCSI & Lance Ethernet
+device	dma {}: lsi64854
+attach	dma at sbus with dma_sbus
+device	ledma {}: lsi64854
+attach	ledma at sbus
+file	dev/sbus/dma_sbus.c		dma_sbus | ledma
+
+device	lebuffer {}
+attach	lebuffer at sbus
+file	dev/sbus/lebuffer.c		lebuffer
+
+# device definition in sys/conf/files
+attach	le at sbus with le_sbus
+attach	le at lebuffer with le_lebuffer
+attach	le at ledma with le_ledma
+file	dev/sbus/if_le.c		le_sbus
+file	dev/sbus/if_le_lebuffer.c	le_lebuffer
+file	dev/sbus/if_le_ledma.c		le_ledma
