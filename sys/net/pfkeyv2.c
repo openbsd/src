@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.37 2000/08/08 21:26:52 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.38 2000/08/24 22:51:29 fgsch Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -1565,6 +1565,16 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    encapnetmask.sen_type = SENT_IP4;
 		    encapnetmask.sen_ip_src = flow->flow_srcmask.sin.sin_addr;
 		    encapnetmask.sen_ip_dst = flow->flow_dstmask.sin.sin_addr;
+	  	    if (flow->flow_proto)
+		    {
+		        encapnetmask.sen_proto = 0xff;
+
+		        if (flow->flow_src.sin.sin_port)
+		          encapnetmask.sen_sport = 0xffff;
+
+		        if (flow->flow_dst.sin.sin_port)
+		          encapnetmask.sen_dport = 0xffff;
+		    }
 		    break;
 #endif /* INET */
 
@@ -1585,6 +1595,16 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 					     flow->flow_srcmask.sin6.sin6_addr;
 		    encapnetmask.sen_ip6_dst =
 					     flow->flow_dstmask.sin6.sin6_addr;
+		    if (flow->flow_proto)
+		    {
+		        encapnetmask.sen_ip6_proto = 0xff;
+
+		        if (flow->flow_src.sin6.sin6_port)
+		          encapnetmask.sen_ip6_sport = 0xffff;
+
+		        if (flow->flow_dst.sin6.sin6_port)
+		          encapnetmask.sen_ip6_dport = 0xffff;
+		    }
 		    break;
 #endif /* INET6 */
 	    }
@@ -1602,16 +1622,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			encapgw.sen_ipsp_spi = sa2->tdb_spi;
 			encapgw.sen_ipsp_sproto = sa2->tdb_sproto;
 
-			if (flow->flow_proto)
-			{
-			    encapnetmask.sen_proto = 0xff;
-
-			    if (flow->flow_src.sin.sin_port)
-			      encapnetmask.sen_sport = 0xffff;
-
-			    if (flow->flow_dst.sin.sin_port)
-			      encapnetmask.sen_dport = 0xffff;
-			}
 			break;
 #endif /* INET */
 
@@ -1624,16 +1634,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			encapgw.sen_ipsp6_spi = sa2->tdb_spi;
 			encapgw.sen_ipsp6_sproto = sa2->tdb_sproto;
 
-			if (flow->flow_proto)
-			{
-			    encapnetmask.sen_ip6_proto = 0xff;
-
-			    if (flow->flow_src.sin6.sin6_port)
-			      encapnetmask.sen_ip6_sport = 0xffff;
-
-			    if (flow->flow_dst.sin6.sin6_port)
-			      encapnetmask.sen_ip6_dport = 0xffff;
-			}
 			break;
 #endif /* INET6 */
 
