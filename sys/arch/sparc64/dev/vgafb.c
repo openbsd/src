@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.8 2002/03/26 01:28:18 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.9 2002/03/27 01:00:48 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -412,7 +412,7 @@ vgafb_mmap(v, off, prot)
 		return (-1);
 
 	if (off >= 0 && off < 0x800000) {
-		return (bus_space_mmap(sc->sc_mem_t, sc->sc_mem_h, off, prot,
+		return (bus_space_mmap(sc->sc_mem_t, sc->sc_mem_addr, off, prot,
 		    BUS_SPACE_MAP_LINEAR));
 	}
 
