@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.1 1999/02/26 17:01:31 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.2 1999/02/27 21:19:27 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -73,19 +73,19 @@ extern int ifqmaxlen;
  * Bridge interface list
  */
 struct bridge_iflist {
-	struct ifnet			*ifp;		/* member interface */
-	u_int16_t			bif_flags;	/* member flags */
 	LIST_ENTRY(bridge_iflist)	next;		/* next in list */
+	struct ifnet			*ifp;		/* member interface */
+	u_int32_t			bif_flags;	/* member flags */
 };
 
 /*
  * Bridge route node
  */
 struct bridge_rtnode {
-	struct ifnet			*brt_if;	/* destination ifs */
-	struct ether_addr		brt_addr;	/* destination addr */
 	LIST_ENTRY(bridge_rtnode)	brt_next;	/* next in list */
-	u_int16_t			brt_age;	/* age counter */
+	struct ifnet			*brt_if;	/* destination ifs */
+	u_int32_t			brt_age;	/* age counter */
+	struct ether_addr		brt_addr;	/* destination addr */
 };
 
 /*
