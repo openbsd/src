@@ -1,4 +1,4 @@
-# $Id: disktab,v 1.7 1996/12/21 05:28:21 deraadt Exp $
+# $Id: disktab,v 1.8 1997/04/29 21:42:21 niklas Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -17,10 +17,12 @@
 #	f[a-p]	partition fragment sizes in bytes
 #
 
-# pseudo-geometry taken from rd7945
 miniroot:\
-	:ty=winchester:ns#16:nt#7:nc#968:\
-	:pa#10240:ba#8192:fa#1024:
+	:ty=winchester:se#512:nt#2:rm#300:ns#64:nc#80:\
+	:ts=3500:\
+	:pa#10240:oa#0:ba#4096:fa#512:ta=4.2BSD:\
+	:pb#0:ob#0:\
+	:pc#10240:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
@@ -607,20 +609,6 @@ NEC D2363:\
 NEC-D2352:\
 	:ty#XD7053:ns#57:nt#19:nc#758:
 
-QUANTUM EMPIRE_2100S:\
-	:ty#winchester:ns#137:nt#12:nc#2497:\
-	:pc#4105068:oc#0:
-
-QUANTUM LPS540S:\
-	:ty#winchester:ns#125:nt#4:nc#2113:
-
-QUANTUM PD1050iS:\
-	:ty#winchester:ns#92:nt#12:nc#1859:\
-	:pc#2052336:oc#0:
-
-QUANTUM XP34301:\
-	:ty#winchester:ns#118:nt#20:nc#3561:
-
 Quantum ELS 127S:\
 	:ty#winchester:ns#54:nt#3:nc#1541:
 
@@ -630,11 +618,15 @@ Quantum ELS 170S:\
 Quantum ELS 85S:\
 	:ty#winchester:ns#54:nt#2:nc#1535:
 
+Quantum Empire 540S:\
+	:ty#winchester:ns#92:nt#8:nc#1431:
+
 Quantum Empire 1080S:\
 	:ty#winchester:ns#92:nt#16:nc#1431:
 
-Quantum Empire 540S:\
-	:ty#winchester:ns#92:nt#8:nc#1431:
+Quantum Empire 2100S:\
+	:ty#winchester:ns#137:nt#12:nc#2497:\
+	:pc#4105068:oc#0:
 
 Quantum GoDrive 120S:\
 	:ty#winchester:ns#56:nt#4:nc#1067:
@@ -657,6 +649,9 @@ Quantum LPS 270S:\
 Quantum LPS 525S:\
 	:ty#winchester:ns#70:nt#6:nc#2444:
 
+Quantum LPS 540S:\
+	:ty#winchester:ns#125:nt#4:nc#2113:
+
 Quantum Lightning 730S:\
 	:ty#winchester:ns#63:nt#16:nc#1415:\
 	:pa#161280:oa#0:ba#8192:\
@@ -664,14 +659,11 @@ Quantum Lightning 730S:\
 	:pc#1426320:oc#0:\
 	:pg#1168272:og#258048:
 
-Quantum PD 1050S:\
-	:ty#winchester:ns#70:nt#12:nc#2444:
+Quantum PD 80S:\
+	:ty#winchester:ns#34:nt#6:nc#832:
 
 Quantum PD 120S:\
 	:ty#winchester:ns#42:nt#5:nc#1114:
-
-Quantum PD 1225S:\
-	:ty#winchester:ns#70:nt#14:nc#2442:
 
 Quantum PD 170S:\
 	:ty#winchester:ns#42:nt#7:nc#1117:
@@ -685,11 +677,24 @@ Quantum PD 425S:\
 Quantum PD 700S:\
 	:ty#winchester:ns#70:nt#8:nc#2441:
 
-Quantum ProDrive 80S:\
-	:ty#winchester:ns#34:nt#6:nc#832:
+Quantum PD 1050iS:\
+	:ty#winchester:ns#92:nt#12:nc#1859:\
+	:pc#2052336:oc#0:
+
+Quantum PD 1050S:\
+	:ty#winchester:ns#70:nt#12:nc#2444:
+
+Quantum PD 1225S:\
+	:ty#winchester:ns#70:nt#14:nc#2442:
 
 Quantum XP32150:\
 	:ty#winchester:ns#109:nt#10:nc#3850:
+
+Quantum XP34301:\
+	:ty#winchester:ns#118:nt#20:nc#3561:
+
+Quantum XP34300W:\
+	:ty#winchester:ns#107:nt#20:nc#3907:
 
 RICOH RO-5031E:\
 	:ty#winchester:ns#54:nt#15:nc#710:\
