@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.30 2001/03/01 20:54:36 provos Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.31 2001/04/25 21:31:17 csapuntz Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -921,9 +921,6 @@ abortit:
 		return (error);
 	}
 
-	/*
-	 * Check if just deleting a link name.
-	 */
 	if (tvp && ((VTOI(tvp)->i_ffs_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(tdvp)->i_ffs_flags & APPEND))) {
 		error = EPERM;
@@ -967,6 +964,9 @@ abortit:
 			panic("ufs_rename: lost from startdir");
 		fcnp->cn_nameiop = DELETE;
 		(void) relookup(fdvp, &fvp, fcnp);
+		if (fvp == NULL) {
+			return (ENOENT);
+		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
 
