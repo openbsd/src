@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.15 2000/03/29 01:53:01 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.16 2000/06/10 15:56:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -56,7 +56,7 @@ static struct part_type {
 	{ 0x04, "DOS FAT-16  ", "Primary DOS with 16 bit FAT"},
 	{ 0x05, "Extended DOS", "Extended DOS"},
 	{ 0x06, "DOS > 32MB  ", "Primary 'big' DOS (> 32MB)"},
-	{ 0x07, "HPFS/QNX/AUX", "OS/2 HPFS, QNX or Advanced UNIX"},
+	{ 0x07, "HPFS/QNX/AUX", "OS/2 HPFS, QNX-2 or Advanced UNIX"},
 	{ 0x08, "AIX fs      ", "AIX filesystem"},
 	{ 0x09, "AIX/Coherent", "AIX boot partition or Coherent"},
 	{ 0x0A, "OS/2 Bootmgr", "OS/2 Boot Manager or OPUS"},
@@ -67,6 +67,9 @@ static struct part_type {
 	{ 0x10, "OPUS        ", "OPUS"},
 	{ 0x12, "Compaq Diag.", "Compaq Diagnostics"},
 	{ 0x40, "VENIX 286   ", "VENIX 286"},
+	{ 0x4d, "QNX 4.2 Pri ", "QNX 4.2 Primary"},
+	{ 0x4e, "QNX 4.2 Sec ", "QNX 4.2 Secondary"},
+	{ 0x4f, "QNX 4.2 Ter ", "QNX 4.2 Tertiary"},
 	{ 0x50, "DM          ", "DM"},
 	{ 0x51, "DM          ", "DM"},
 	{ 0x52, "CP/M or SysV", "CP/M or Microport SysV/AT"},
