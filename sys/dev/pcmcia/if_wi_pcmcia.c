@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.12 2001/11/02 22:07:00 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.13 2001/11/20 23:39:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -138,6 +138,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_SAMSUNG_SWL_2000N,
 	  PCMCIA_CIS_SAMSUNG_SWL_2000N,
 	  "Samsung MagicLAN SWL-2000N",
+	},
+	{ PCMCIA_VENDOR_LINKSYS2,
+	  PCMCIA_PRODUCT_LINKSYS2_IWN,
+	  PCMCIA_CIS_LINKSYS2_IWN,
+	  "Linksys Instant Wireless Network",
 	},
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
