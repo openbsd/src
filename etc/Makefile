@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.207 2004/05/18 16:45:46 drahn Exp $
+#	$OpenBSD: Makefile,v 1.208 2004/07/06 04:01:49 henning Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -18,7 +18,7 @@ BIN1=	changelist ccd.conf csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	mrouted.conf myname netstart networks newsyslog.conf phones printcap \
 	protocols rbootd.conf rc rc.conf rc.local rc.securelevel rc.shutdown \
 	remote rpc security services shells spamd.conf syslog.conf weekly \
-	etc.${MACHINE}/disktab dhclient.conf mailer.conf
+	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "cats" || ${MACHINE} == "hppa" || \
@@ -373,7 +373,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.207 2004/05/18 16:45:46 drahn Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.208 2004/07/06 04:01:49 henning Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
