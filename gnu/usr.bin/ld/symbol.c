@@ -1,4 +1,4 @@
-/* * $OpenBSD: symbol.c,v 1.3 1999/01/23 00:14:13 espie Exp $	- symbol table routines*/
+/* * $OpenBSD: symbol.c,v 1.4 1999/08/24 19:05:16 niklas Exp $	- symbol table routines*/
 /*
  */
 
@@ -37,14 +37,14 @@ symtab_init(relocatable_output)
 #define END_SYM		"_end"
 #define DYN_SYM		"__DYNAMIC"
 #define GOT_SYM		"__GLOBAL_OFFSET_TABLE_"
-#define OTHER_SYM		"_GLOBAL_OFFSET_TABLE_"
+#define OTHER_SYM	"_GLOBAL_OFFSET_TABLE_"
 #else
 #define ETEXT_SYM	"etext"
 #define EDATA_SYM	"edata"
 #define END_SYM		"end"
 #define DYN_SYM		"_DYNAMIC"
 #define GOT_SYM		"_GLOBAL_OFFSET_TABLE_"
-#define OTHER_SYM		"__GLOBAL_OFFSET_TABLE_"
+#define OTHER_SYM	"__GLOBAL_OFFSET_TABLE_"
 #endif
 
 	dynamic_symbol = getsym(DYN_SYM);
