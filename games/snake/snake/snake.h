@@ -75,7 +75,7 @@ struct point {
 struct point cursor;
 struct termios orig, new;
 struct point *point();
-#if __STDC__
+#ifdef __STDC__
 void	apr(struct point *, const char *, ...);
 void	pr(const char *, ...);
 #else

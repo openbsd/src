@@ -96,7 +96,7 @@ static char rcsid[] = "$NetBSD: move.c,v 1.12 1996/05/19 20:22:09 pk Exp $";
  *
  ******************************************************************************/
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -396,7 +396,7 @@ pch(c)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 apr(struct point *ps, const char *fmt, ...)
 #else
 apr(ps, fmt, va_alist)
@@ -410,7 +410,7 @@ apr(ps, fmt, va_alist)
 
 	p.line = ps->line+1; p.col = ps->col+1;
 	move(&p);
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -421,7 +421,7 @@ apr(ps, fmt, va_alist)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 pr(const char *fmt, ...)
 #else
 pr(fmt, va_alist)
@@ -431,7 +431,7 @@ pr(fmt, va_alist)
 {
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

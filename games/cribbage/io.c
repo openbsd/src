@@ -49,7 +49,7 @@ static char rcsid[] = "$NetBSD: io.c,v 1.7 1995/03/21 15:08:53 cgd Exp $";
 #include <termios.h>
 #include <unistd.h>
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -391,7 +391,7 @@ int     Mpos = 0;
 static int Newpos = 0;
 
 void
-#if __STDC__
+#ifdef __STDC__
 msg(const char *fmt, ...)
 #else
 msg(fmt, va_alist)
@@ -401,7 +401,7 @@ msg(fmt, va_alist)
 {
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -417,7 +417,7 @@ msg(fmt, va_alist)
  *	Add things to the current message
  */
 void
-#if __STDC__
+#ifdef __STDC__
 addmsg(const char *fmt, ...)
 #else
 addmsg(fmt, va_alist)
@@ -427,7 +427,7 @@ addmsg(fmt, va_alist)
 {
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
