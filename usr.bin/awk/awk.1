@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.16 2003/12/12 19:50:55 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.17 2003/12/16 11:18:37 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -87,17 +87,20 @@ Read program code from the specified file
 instead of from the command line.
 .It Fl safe
 Disable file output
-.Pf ( Ic print > ,
-.Ic print >> ) ,
+.Pf ( Ic print No > ,
+.Ic print No >> ) ,
 process creation
 .Po
-.Ar cmd Ic \&| getline ,
-.Ic print \&| , system
+.Ar cmd | Ic getline ,
+.Ic print No \&| ,
+.Ic system
 .Pc
 and access to the environment
-.Pq Va ENVIRON .
-This
-is a first
+.Pf ( Va ENVIRON ;
+see
+.Sx VARIABLES
+below).
+This is a first
 .Pq and not very reliable
 approximation to a
 .Dq safe
@@ -166,11 +169,11 @@ A statement can be one of the following:
 .Xc
 .Ic print Xo
 .Op Ar expression-list
-.Op Ic > Ns Ar expression
+.Op > Ns Ar expression
 .Xc
 .Ic printf Ar format Xo
 .Op Ar ... , expression-list
-.Op Ic > Ns Ar expression
+.Op > Ns Ar expression
 .Xc
 .Ic return Op Ar expression
 .Ic next Xo
@@ -221,17 +224,20 @@ Multiple subscripts such as
 .Li [i,j,k]
 are permitted; the constituents are concatenated,
 separated by the value of
-.Va SUBSEP .
+.Va SUBSEP
+(see
+.Sx VARIABLES
+below).
 .Pp
 The
 .Ic print
 statement prints its arguments on the standard output
 (or on a file if
-.Ic > Ns Ar file
+.Pf > Ns Ar file
 or
-.Ic >> Ns Ar file
+.Pf >> Ns Ar file
 is present or on a pipe if
-.Ic \&| Ar cmd
+.Pf |\ \& Ar cmd
 is present), separated by the current output field separator,
 and terminated by the output record separator.
 .Ar file
@@ -245,65 +251,93 @@ The
 statement formats its expression list according to the format
 (see
 .Xr printf 3 ) .
-The built-in function
-.Fn close expr
-closes the file or pipe
-.Fa expr .
-The built-in function
-.Fn fflush expr
-flushes any buffered output for the file or pipe
-.Fa expr .
-.Pp
-The mathematical functions
-.Fn exp ,
-.Fn log ,
-.Fn sqrt ,
-.Fn sin ,
-.Fn cos ,
-and
-.Fn atan2
-are built in.
-Other built-in functions:
-.Bl -tag -width Fn
-.It Fn length
-The length of its argument
-taken as a string,
-or of
-.Va $0
-if no argument.
+.Sh FUNCTIONS
+The awk language has a variety of built-in functions:
+arithmetic, string, input/output and general.
+.Ss Arithmetic Functions
+.Bl -tag -width "atan2(y, x)"
+.It Fn atan2 y x
+Return the arctangent of
+.Fa y Ns / Ns Fa x
+in radians.
+.It Fn cos x
+Return the cosine of
+.Fa x ,
+where
+.Fa x
+is in radians.
+.It Fn exp x
+Return the exponential of
+.Fa x .
+.It Fn int x
+Return
+.Fa x
+truncated to an integer value.
+.It Fn log x
+Return the natural logarithm of
+.Fa x .
 .It Fn rand
-Random number on (0,1).
-.It Fn srand
+Return a random number,
+.Fa n ,
+such that
+.Sm off
+.Pf 0 \*(Le Fa n No \*(Lt 1 .
+.Sm on
+.It Fn sin x
+Return the sine of
+.Fa x ,
+where
+.Fa x
+is in radians.
+.It Fn sqrt x
+Return the square root of
+.Fa x .
+.It Fn srand expr
 Sets seed for
 .Fn rand
+to
+.Fa expr
 and returns the previous seed.
-.It Fn int
-Truncates to an integer value.
-.It Fn substr s m n
-The
-.Fa n Ns No -character
-substring of
-.Fa s
-that begins at position
-.Fa m
-counted from 1.
+If
+.Fa expr
+is omitted, the time of day is used instead.
+.El
+.Ss String Functions
+.Bl -tag -width "split(s, a, fs)"
+.It Fn gsub r t s
+The same as
+.Fn sub
+except that all occurrences of the regular expression are replaced.
+.Fn gsub
+returns the number of replacements.
 .It Fn index s t
 The position in
 .Fa s
 where the string
 .Fa t
 occurs, or 0 if it does not.
+.It Fn length s
+The length of
+.Fa s
+taken as a string,
+or of
+.Va $0
+if no argument is given.
 .It Fn match s r
 The position in
 .Fa s
 where the regular expression
 .Fa r
 occurs, or 0 if it does not.
-The variables
+The variable
 .Va RSTART
-and
+is set to the starting position of the matched string
+.Pq which is the same as the returned value
+or zero if no match is found.
+The variable
 .Va RLENGTH
-are set to the position and length of the matched string.
+is set to the length of the matched string,
+or \-1 if no match is found.
 .It Fn split s a fs
 Splits the string
 .Fa s
@@ -320,6 +354,13 @@ if
 is not given.
 An empty string as field separator splits the string
 into one array element per character.
+.It Fn sprintf fmt expr ...
+The string resulting from formatting
+.Fa expr , ...
+according to the
+.Xr printf 3
+format
+.Fa fmt .
 .It Fn sub r t s
 Substitutes
 .Fa t
@@ -332,26 +373,35 @@ If
 is not given,
 .Va $0
 is used.
-.It Fn gsub r t s
-Same as
+An ampersand
+.Pq Sq &
+in
+.Fa t
+is replaced in string
+.Fa s
+with regular expression
+.Fa r .
+A literal ampersand can be specified by preceding it with two backslashes
+.Pq Sq \e\e .
+A literal backslash can be specified by preceding it with another backslash
+.Pq Sq \e\e .
 .Fn sub
-except that all occurrences of the regular expression
-are replaced;
-.Fn sub
-and
-.Fn gsub
-return the number of replacements.
-.It Fn sprintf fmt expr ...
-The string resulting from formatting
-.Fa expr , ...
-according to the
-.Xr printf 3
-format
-.Fa fmt .
-.It Fn system cmd
-Executes
-.Fa cmd
-and returns its exit status.
+returns the number of replacements.
+.It Fn substr s m n
+Return at most the
+.Fa n Ns -character
+substring of
+.Fa s
+that begins at position
+.Fa m
+counted from 1.
+If
+.Fa n
+is omitted, or if
+.Fa n
+specifies more characters than are left in the string,
+the length of the substring is limited by the length of
+.Fa s .
 .It Fn tolower str
 Returns a copy of
 .Fa str
@@ -363,37 +413,106 @@ Returns a copy of
 with all lower-case characters translated to their
 corresponding upper-case equivalents.
 .El
-.Pp
-The
-.Sq function
-.Ic getline
-sets
+.Ss Input/Output and General Functions
+.Bl -tag -width "getline [var] < file"
+.It Fn close expr
+Closes the file or pipe
+.Fa expr .
+.Fa expr
+should match the string that was used to open the file or pipe.
+.It Ar cmd | Ic getline Op Va var
+Read a record of input from a stream piped from the output of
+.Ar cmd .
+If
+.Va var
+is omitted, the variables
 .Va $0
-to the next input record from the current input file;
-.Ic getline < Ar file
-sets
+and
+.Va NF
+are set.
+Otherwise
+.Va var
+is set.
+If the stream is not open, it is opened.
+As long as the stream remains open, subsequent calls
+will read subsequent records from the stream.
+The stream remains open until explicitly closed with a call to
+.Fn close .
+.It Fn fflush expr
+Flushes any buffered output for the file or pipe
+.Fa expr .
+.Fa expr
+should match the string that was used to open the file or pipe.
+.It Ic getline
+Sets
+.Va $0
+to the next input record from the current input file.
+This form of
+.Ic getline
+sets the variables
+.Va NF ,
+.Va NR ,
+and
+.Va FNR .
+.Ic getline
+returns 1 for a successful input, 0 for end of file, and \-1 for an error.
+.It Ic getline Va var
+Sets
+.Va $0
+to variable
+.Va var .
+This form of
+.Ic getline
+sets the variables
+.Va NR
+and
+.Va FNR .
+.Ic getline
+returns 1 for a successful input, 0 for end of file, and \-1 for an error.
+.It Xo
+.Ic getline Op Va var
+.Pf \ \&< Ar file
+.Xc
+Sets
 .Va $0
 to the next record from
 .Ar file .
-.Ic getline Va x
-sets variable
-.Va x
-instead.
-Finally,
-.Ar cmd Ic \&| getline
-pipes the output of
-.Ar cmd
-into
-.Ic getline ;
-each call of
-.Ic getline
-returns the next line of output from
-.Ar cmd .
-In all cases,
-.Ic getline
-returns 1 for a successful input,
-0 for end of file, and \-1 for an error.
+If
+.Va var
+is omitted, the variables
+.Va $0
+and
+.Va NF
+are set.
+Otherwise
+.Va var
+is set.
+If
+.Ar file
+is not open, it is opened.
+As long as the stream remains open, subsequent calls will read subsequent
+records from
+.Ar file .
+.Ar file
+remains open until explicitly closed with a call to
+.Fn close .
+.It Fn system cmd
+Executes
+.Fa cmd
+and returns its exit status.
+.El
 .Pp
+Functions may be defined (at the position of a pattern-action statement)
+thusly:
+.Pp
+.Dl function foo(a, b, c) { ...; return x }
+.Pp
+Parameters are passed by value if scalar, and by reference if array name;
+functions may be called recursively.
+Parameters are local to the function; all other variables are global.
+Thus local variables may be created by providing excess parameters in
+the function definition.
+.Sh PATTERNS
 Patterns are arbitrary Boolean combinations
 (with
 .Ic "\&! || &&" )
@@ -408,7 +527,7 @@ relational expressions, using the operators
 .Ic ~
 and
 .Ic !~ .
-.Ic / Ns Ar re Ns Ic /
+.Pf / Ns Ar re Ns /
 is a constant regular expression;
 any string (constant or variable) may be used
 as a regular expression, except in the position of an isolated regular expression
@@ -455,7 +574,7 @@ and after the last.
 and
 .Ic END
 do not combine with other patterns.
-.Pp
+.Sh VARIABLES
 Variable names with special meanings:
 .Pp
 .Bl -tag -width "FILENAME" -compact
@@ -489,22 +608,19 @@ Output format for numbers (default
 Output field separator (default blank).
 .It Va ORS
 Output record separator (default newline).
+.It Va RLENGTH
+The length of the string matched by the
+.Fn match
+function.
 .It Va RS
 Input record separator (default newline).
+.It Va RSTART
+The starting position of the string matched by the
+.Fn match
+function.
 .It Va SUBSEP
 Separates multiple subscripts (default 034).
 .El
-.Pp
-Functions may be defined (at the position of a pattern-action statement)
-thusly:
-.Pp
-.Dl function foo(a, b, c) { ...; return x }
-.Pp
-Parameters are passed by value if scalar, and by reference if array name;
-functions may be called recursively.
-Parameters are local to the function; all other variables are global.
-Thus local variables may be created by providing excess parameters in
-the function definition.
 .Sh EXAMPLES
 Print lines longer than 72 characters:
 .Pp
