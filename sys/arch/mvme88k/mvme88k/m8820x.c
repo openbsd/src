@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.37 2004/08/04 13:16:14 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.38 2004/08/04 15:54:38 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -120,10 +120,7 @@ void m8820x_cmmu_parity_enable(void);
 unsigned m8820x_cmmu_cpu_number(void);
 void m8820x_cmmu_set_sapr(unsigned, unsigned);
 void m8820x_cmmu_set_uapr(unsigned);
-void m8820x_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
 void m8820x_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, vsize_t);
-void m8820x_cmmu_pmap_activate(unsigned, unsigned,
-    u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
 void m8820x_cmmu_flush_cache(int, paddr_t, psize_t);
 void m8820x_cmmu_flush_inst_cache(int, paddr_t, psize_t);
 void m8820x_cmmu_flush_data_cache(int, paddr_t, psize_t);
@@ -143,9 +140,7 @@ struct cmmu_p cmmu8820x = {
 	m8820x_cmmu_cpu_number,
 	m8820x_cmmu_set_sapr,
 	m8820x_cmmu_set_uapr,
-	m8820x_cmmu_set_pair_batc_entry,
 	m8820x_cmmu_flush_tlb,
-	m8820x_cmmu_pmap_activate,
 	m8820x_cmmu_flush_cache,
 	m8820x_cmmu_flush_inst_cache,
 	m8820x_cmmu_flush_data_cache,
@@ -833,28 +828,9 @@ m8820x_cmmu_set_uapr(unsigned ap)
 	int cpu = cpu_number();
 
 	CMMU_LOCK;
-	/* this functionality also mimiced in m8820x_cmmu_pmap_activate() */
 	m8820x_cmmu_set(CMMU_UAPR, ap, 0, cpu, 0, 0);
 	CMMU_UNLOCK;
 	splx(s);
-}
-
-/*
- * Set batc entry number entry_no to value in
- * the data and instruction cache for the named CPU.
- *
- * Except for the cmmu_init, this function and m8820x_cmmu_pmap_activate
- * are the only functions which may set the batc values.
- */
-void
-m8820x_cmmu_set_pair_batc_entry(unsigned cpu, unsigned entry_no, unsigned value)
-{
-	CMMU_LOCK;
-
-	m8820x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL, cpu, DATA_CMMU, 0);
-	m8820x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL, cpu, INST_CMMU, 0);
-
-	CMMU_UNLOCK;
 }
 
 /*
@@ -863,7 +839,6 @@ m8820x_cmmu_set_pair_batc_entry(unsigned cpu, unsigned entry_no, unsigned value)
 
 /*
  *	flush any tlb
- *	Some functionality mimiced in m8820x_cmmu_pmap_activate.
  */
 void
 m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
@@ -905,39 +880,6 @@ m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 
 	CMMU_UNLOCK;
 	splx(s);
-}
-
-/*
- * New fast stuff for pmap_activate.
- * Does what a few calls used to do.
- * Only called from pmap_activate().
- */
-void
-m8820x_cmmu_pmap_activate(unsigned cpu, unsigned uapr, u_int32_t i_batc[],
-    u_int32_t d_batc[])
-{
-	int entry_no;
-
-	CMMU_LOCK;
-
-	/* the following is from m8820x_cmmu_set_uapr */
-	m8820x_cmmu_set(CMMU_UAPR, uapr, 0, cpu, 0, 0);
-
-	for (entry_no = 0; entry_no < BATC_MAX; entry_no++) {
-		m8820x_cmmu_set(CMMU_BWP(entry_no), i_batc[entry_no],
-		    MODE_VAL, cpu, INST_CMMU, 0);
-		m8820x_cmmu_set(CMMU_BWP(entry_no), d_batc[entry_no],
-		    MODE_VAL, cpu, DATA_CMMU, 0);
-	}
-
-	/*
-	 * Flush the user TLB.
-	 * IF THE KERNEL WILL EVER CARE ABOUT THE BATC ENTRIES,
-	 * THE SUPERVISOR TLBs SHOULD BE FLUSHED AS WELL.
-	 */
-	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_USER_ALL, 0, cpu, 0, 0);
-
-	CMMU_UNLOCK;
 }
 
 /*

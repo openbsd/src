@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.3 2004/08/02 08:34:57 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.4 2004/08/04 15:54:35 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -105,8 +105,6 @@
  */
 #define BROKEN_MMU_MASK
 
-#undef	SHADOW_BATC		/* don't use BATCs for now XXX nivas */
-
 #ifdef DEBUG
 unsigned int m8820x_debuglevel;
 #define dprintf(_X_) \
@@ -130,10 +128,7 @@ void m8820x_cmmu_parity_enable(void);
 unsigned m8820x_cmmu_cpu_number(void);
 void m8820x_cmmu_set_sapr(unsigned, unsigned);
 void m8820x_cmmu_set_uapr(unsigned);
-void m8820x_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
 void m8820x_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, vsize_t);
-void m8820x_cmmu_pmap_activate(unsigned, unsigned,
-    u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
 void m8820x_cmmu_flush_cache(int, paddr_t, psize_t);
 void m8820x_cmmu_flush_inst_cache(int, paddr_t, psize_t);
 void m8820x_cmmu_flush_data_cache(int, paddr_t, psize_t);
@@ -153,9 +148,7 @@ struct cmmu_p cmmu8820x = {
 	m8820x_cmmu_cpu_number,
 	m8820x_cmmu_set_sapr,
 	m8820x_cmmu_set_uapr,
-	m8820x_cmmu_set_pair_batc_entry,
 	m8820x_cmmu_flush_tlb,
-	m8820x_cmmu_pmap_activate,
 	m8820x_cmmu_flush_cache,
 	m8820x_cmmu_flush_inst_cache,
 	m8820x_cmmu_flush_data_cache,
@@ -195,15 +188,7 @@ struct m8820x_cmmu {
 	vaddr_t		cmmu_addr;	/* address range */
 	vaddr_t		cmmu_addr_mask;	/* address mask */
 	int		cmmu_addr_match;/* return value of address comparison */
-#ifdef SHADOW_BATC
-	unsigned batc[BATC_MAX];
-#endif
 };
-
-#ifdef SHADOW_BATC
-/* CMMU(cpu,data) is the cmmu struct for the named cpu's indicated cmmu.  */
-#define CMMU(cpu, data) cpu_cmmu[(cpu)].pair[(data) ? DATA_CMMU : INST_CMMU]
-#endif
 
 /*
  * Structure for accessing MMUS properly
@@ -605,16 +590,6 @@ m8820x_cmmu_init()
 			    ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL |
 			    CACHE_INH) & ~APR_V;
 
-#ifdef SHADOW_BATC
-			m8820x_cmmu[cmmu_num].batc[0] =
-			m8820x_cmmu[cmmu_num].batc[1] =
-			m8820x_cmmu[cmmu_num].batc[2] =
-			m8820x_cmmu[cmmu_num].batc[3] =
-			m8820x_cmmu[cmmu_num].batc[4] =
-			m8820x_cmmu[cmmu_num].batc[5] =
-			m8820x_cmmu[cmmu_num].batc[6] =
-			m8820x_cmmu[cmmu_num].batc[7] = 0;
-#endif
 			cr[CMMU_BWP0] = cr[CMMU_BWP1] =
 			cr[CMMU_BWP2] = cr[CMMU_BWP3] =
 			cr[CMMU_BWP4] = cr[CMMU_BWP5] =
@@ -774,38 +749,9 @@ m8820x_cmmu_set_uapr(ap)
 	int cpu = cpu_number();
 
 	CMMU_LOCK;
-	/* this functionality also mimiced in m8820x_cmmu_pmap_activate() */
 	m8820x_cmmu_set(CMMU_UAPR, ap, ACCESS_VAL, cpu, 0, CMMU_ACS_USER, 0);
 	CMMU_UNLOCK;
 	splx(s);
-}
-
-/*
- * Set batc entry number entry_no to value in
- * the data and instruction cache for the named CPU.
- *
- * Except for the cmmu_init, this function and m8820x_cmmu_pmap_activate
- * are the only functions which may set the batc values.
- */
-void
-m8820x_cmmu_set_pair_batc_entry(cpu, entry_no, value)
-	unsigned cpu, entry_no;
-	unsigned value;	/* the value to stuff into the batc */
-{
-	CMMU_LOCK;
-
-	m8820x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL | ACCESS_VAL,
-	    cpu, DATA_CMMU, CMMU_ACS_USER, 0);
-#ifdef SHADOW_BATC
-	CMMU(cpu,DATA_CMMU)->batc[entry_no] = value;
-#endif
-	m8820x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL | ACCESS_VAL,
-	    cpu, INST_CMMU, CMMU_ACS_USER, 0);
-#ifdef SHADOW_BATC
-	CMMU(cpu,INST_CMMU)->batc[entry_no] = value;
-#endif
-
-	CMMU_UNLOCK;
 }
 
 /*
@@ -814,7 +760,6 @@ m8820x_cmmu_set_pair_batc_entry(cpu, entry_no, value)
 
 /*
  *	flush any tlb
- *	Some functionality mimiced in m8820x_cmmu_pmap_activate.
  */
 void
 m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
@@ -861,47 +806,6 @@ m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 
 	CMMU_UNLOCK;
 	splx(s);
-}
-
-/*
- * New fast stuff for pmap_activate.
- * Does what a few calls used to do.
- * Only called from pmap_activate().
- */
-void
-m8820x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
-	unsigned cpu, uapr;
-	u_int32_t i_batc[BATC_MAX];
-	u_int32_t d_batc[BATC_MAX];
-{
-	int entry_no;
-
-	CMMU_LOCK;
-
-	/* the following is from m8820x_cmmu_set_uapr */
-	m8820x_cmmu_set(CMMU_UAPR, uapr, ACCESS_VAL,
-		      cpu, 0, CMMU_ACS_USER, 0);
-
-	for (entry_no = 0; entry_no < BATC_MAX; entry_no++) {
-		m8820x_cmmu_set(CMMU_BWP(entry_no), i_batc[entry_no],
-		    MODE_VAL | ACCESS_VAL, cpu, INST_CMMU, CMMU_ACS_USER, 0);
-		m8820x_cmmu_set(CMMU_BWP(entry_no), d_batc[entry_no],
-		    MODE_VAL | ACCESS_VAL, cpu, DATA_CMMU, CMMU_ACS_USER, 0);
-#ifdef SHADOW_BATC
-		CMMU(cpu,INST_CMMU)->batc[entry_no] = i_batc[entry_no];
-		CMMU(cpu,DATA_CMMU)->batc[entry_no] = d_batc[entry_no];
-#endif
-	}
-
-	/*
-	 * Flush the user TLB.
-	 * IF THE KERNEL WILL EVER CARE ABOUT THE BATC ENTRIES,
-	 * THE SUPERVISOR TLBs SHOULD BE FLUSHED AS WELL.
-	 */
-	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_USER_ALL, ACCESS_VAL,
-	    cpu, 0, CMMU_ACS_USER, 0);
-
-	CMMU_UNLOCK;
 }
 
 /*
@@ -1437,28 +1341,6 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 		value = m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_SAPR];
 	else
 		value = m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_UAPR];
-
-#ifdef SHADOW_BATC
-	{
-		int i;
-		union batcu batc;
-		for (i = 0; i < 8; i++) {
-			batc.bits = m8820x_cmmu[cmmu_num].batc[i];
-			if (batc.field.v == 0) {
-				if (verbose_flag>1)
-					db_printf("cmmu #%d batc[%d] invalid.\n", cmmu_num, i);
-			} else {
-				db_printf("cmmu#%d batc[%d] v%08x p%08x", cmmu_num, i,
-					  batc.field.lba << 18, batc.field.pba);
-				if (batc.field.s)  db_printf(", supervisor");
-				if (batc.field.wt) db_printf(", wt.th");
-				if (batc.field.g)  db_printf(", global");
-				if (batc.field.ci) db_printf(", cache inhibit");
-				if (batc.field.wp) db_printf(", write protect");
-			}
-		}
-	}
-#endif	/* SHADOW_BATC */
 
 	/******* SEE WHAT A PROBE SAYS (if not a thread) ***********/
 	{

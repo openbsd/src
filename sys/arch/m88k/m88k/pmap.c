@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 2004/08/02 08:34:59 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 2004/08/04 15:54:38 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -175,20 +175,6 @@ pg_to_pvh(struct vm_page *pg)
 		simple_unlock(&(pmap)->pm_lock); \
 		SPLX(spl); \
 	} while (0)
-
-#ifdef	PMAP_USE_BATC
-
-/*
- * number of BATC entries used
- */
-int batc_used;
-
-/*
- * keep track BATC mapping
- */
-batc_entry_t batc_entry[BATC_MAX];
-
-#endif	/* PMAP_USE_BATC */
 
 vaddr_t kmapva = 0;
 
@@ -409,10 +395,6 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 	u_int num_phys_pages;
 	pt_entry_t template, *pte;
 	paddr_t	 page;
-#ifdef	PMAP_USE_BATC
-	u_int32_t batctmp;
-	int i;
-#endif
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_MAP)
@@ -433,65 +415,9 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 		template |= PG_M;
 #endif
 
-#ifdef	PMAP_USE_BATC
-	batctmp = BATC_SO | BATC_V;
-	if (template & CACHE_WT)
-		batctmp |= BATC_WT;
-	if (template & CACHE_GLOBAL)
-		batctmp |= BATC_GLOBAL;
-	if (template & CACHE_INH)
-		batctmp |= BATC_INH;
-	if (template & PG_PROT)
-		batctmp |= BATC_PROT;
-#endif
-
 	page = trunc_page(start);
 	npages = atop(round_page(end) - page);
 	for (num_phys_pages = npages; num_phys_pages != 0; num_phys_pages--) {
-#ifdef	PMAP_USE_BATC
-
-#ifdef DEBUG
-		if ((pmap_con_dbg & (CD_MAP | CD_FULL)) == (CD_MAP | CD_FULL))
-			printf("(pmap_map: %x) num_phys_pg=%x, virt=%x, "
-			    "align V=%d, page=%x, align P=%d\n",
-			    curproc, num_phys_pages, virt,
-			    BATC_BLK_ALIGNED(virt), page,
-			    BATC_BLK_ALIGNED(page));
-#endif
-
-		if (BATC_BLK_ALIGNED(virt) && BATC_BLK_ALIGNED(page) &&
-		     num_phys_pages >= BATC_BLKBYTES/PAGE_SIZE &&
-		     batc_used < BATC_MAX ) {
-			/*
-			 * map by BATC
-			 */
-			batctmp |= M88K_BTOBLK(virt) << BATC_VSHIFT;
-			batctmp |= M88K_BTOBLK(page) << BATC_PSHIFT;
-
-			for (i = 0; i < MAX_CPUS; i++)
-				if (cpu_sets[i])
-					cmmu_set_pair_batc_entry(i, batc_used,
-					    batctmp);
-			batc_entry[batc_used] = batctmp;
-#ifdef DEBUG
-			if (pmap_con_dbg & CD_MAP) {
-				printf("(pmap_map: %x) BATC used=%d, data=%x\n", curproc, batc_used, batctmp);
-				for (i = 0; i < BATC_BLKBYTES; i += PAGE_SIZE) {
-					pte = pmap_pte(kernel_pmap, virt + i);
-					if (PDT_VALID(pte))
-						printf("(pmap_map: %x) va %x is already mapped: pte %x\n",
-						    curproc, virt + i, *pte);
-				}
-			}
-#endif
-			batc_used++;
-			virt += BATC_BLKBYTES;
-			page += BATC_BLKBYTES;
-			num_phys_pages -= BATC_BLKBYTES/PAGE_SIZE;
-			continue;
-		}
-#endif	/* PMAP_USE_BATC */
-
 		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
 			pte = pmap_expand_kmap(virt,
 			    VM_PROT_READ | VM_PROT_WRITE);
@@ -943,9 +869,6 @@ pmap_create(void)
 	sdt_entry_t *segdt;
 	paddr_t stpa;
 	u_int s;
-#ifdef	PMAP_USE_BATC
-	int i;
-#endif
 
 	pmap = pool_get(&pmappool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
@@ -1003,14 +926,6 @@ pmap_create(void)
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
 	pmap->pm_cpus = 0;
-
-#ifdef	PMAP_USE_BATC
-	/* initialize block address translation cache */
-	for (i = 0; i < BATC_MAX; i++) {
-		pmap->pm_ibatc[i].bits = 0;
-		pmap->pm_dbatc[i].bits = 0;
-	}
-#endif
 
 	return pmap;
 }
@@ -1935,10 +1850,7 @@ pmap_unwire(pmap_t pmap, vaddr_t v)
  *	PMAP_LOCK, PMAP_UNLOCK
  *	pmap_pte
  *
- * If BATC mapping is enabled and the specified pmap is kernel_pmap,
- * batc_entry is scanned to find out the mapping.
- *
- * Then the routine calls pmap_pte to get a (virtual) pointer to
+ * The routine calls pmap_pte to get a (virtual) pointer to
  * the page table entry (PTE) associated with the given virtual
  * address. If the page table does not exist, or if the PTE is not valid,
  * then 0 address is returned. Otherwise, the physical page address from
@@ -1952,27 +1864,9 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	int spl;
 	boolean_t rv = FALSE;
 
-#ifdef	PMAP_USE_BATC
-	int i;
-#endif
-
 #ifdef DIAGNOSTIC
 	if (pmap == PMAP_NULL)
 		panic("pmap_extract: pmap is NULL");
-#endif
-
-#ifdef	PMAP_USE_BATC
-	/*
-	 * check BATC first
-	 */
-	if (pmap == kernel_pmap && batc_used != 0)
-		for (i = batc_used - 1; i != 0; i--)
-			if (batc_entry[i].lba == M88K_BTOBLK(va)) {
-				if (pap != NULL)
-					*pap = (batc_entry[i].pba << BATC_BLKSHIFT) |
-						(va & BATC_BLKMASK);
-				return TRUE;
-			}
 #endif
 
 	PMAP_LOCK(pmap, spl);
@@ -2114,9 +2008,6 @@ pmap_activate(struct proc *p)
 {
 	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	int cpu = cpu_number();
-#ifdef	PMAP_USE_BATC
-	int n;
-#endif
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_ACTIVATE)
@@ -2129,22 +2020,9 @@ pmap_activate(struct proc *p)
 		 */
 		simple_lock(&pmap->pm_lock);
 
-#ifdef	PMAP_USE_BATC
-		/*
-		 * cmmu_pmap_activate will set the uapr and the batc entries,
-		 * then flush the *USER* TLB. IF THE KERNEL WILL EVER CARE
-		 * ABOUT THE BATC ENTRIES, THE SUPERVISOR TLBs SHOULB BE
-		 * FLUSHED AS WELL.
-		 */
-		cmmu_pmap_activate(cpu, pmap->pm_apr,
-		    pmap->pm_ibatc, pmap->pm_dbatc);
-		for (n = 0; n < BATC_MAX; n++)
-			*(register_t *)&batc_entry[n] = pmap->pm_ibatc[n].bits;
-#else
 		cmmu_set_uapr(pmap->pm_apr);
 		cmmu_flush_tlb(cpu, FALSE, VM_MIN_ADDRESS,
 		    VM_MAX_ADDRESS - VM_MIN_ADDRESS);
-#endif	/* PMAP_USE_BATC */
 
 		/*
 		 * Mark that this cpu is using the pmap.

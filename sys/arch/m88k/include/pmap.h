@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.2 2004/07/26 11:08:19 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.3 2004/08/04 15:54:37 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -22,7 +22,6 @@
  * PMAP structure
  */
 
-/* #define PMAP_USE_BATC */
 struct pmap {
 	sdt_entry_t		*pm_stab;	/* virtual pointer to sdt */
 	u_int32_t		pm_apr;
@@ -31,10 +30,6 @@ struct pmap {
 	u_int32_t		pm_cpus;
 	struct simplelock	pm_lock;
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-#ifdef	PMAP_USE_BATC
-	u_int32_t		pm_ibatc[BATC_MAX];	/* instruction BATCs */
-	u_int32_t		pm_dbatc[BATC_MAX];	/* data BATCs */
-#endif
 };
 
 #define PMAP_NULL ((pmap_t) 0)
