@@ -1,5 +1,5 @@
-/*	$OpenBSD: isadma.c,v 1.5 1996/04/22 20:03:05 hannken Exp $	*/
-/*	$NetBSD: isadma.c,v 1.18 1996/03/31 20:51:43 mycroft Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.6 1996/05/07 07:37:10 deraadt Exp $	*/
+/*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ultra14f.c,v 1.13 1996/04/21 22:24:36 deraadt Exp $	*/
-/*	$NetBSD: ultra14f.c,v 1.64 1996/04/11 22:30:20 cgd Exp $	*/
+/*	$OpenBSD: ultra14f.c,v 1.14 1996/05/07 07:37:54 deraadt Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.65 1996/04/29 19:51:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -264,11 +264,11 @@ struct uha_softc {
 	int sc_iobase;
 	int sc_irq, sc_drq;
 
-	void (*send_mbox)();
-	int (*abort)();
-	int (*poll)();
-	int (*intr)();
-	void (*init)();
+	void (*send_mbox) __P((struct uha_softc *, struct uha_mscp *));
+	int (*abort) __P((struct uha_softc *, struct uha_mscp *));
+	int (*poll) __P((struct uha_softc *, struct scsi_xfer *, int));
+	int (*intr) __P((void *));
+	void (*init) __P((struct uha_softc *));
 
 	struct uha_mscp *mscphash[MSCP_HASH_SIZE];
 	TAILQ_HEAD(, uha_mscp) free_mscp;
@@ -302,6 +302,9 @@ void uha_timeout __P((void *arg));
 void uha_print_mscp __P((struct uha_mscp *));
 void uha_print_active_mscp __P((struct uha_softc *));
 #endif
+static __inline void uha_init_mscp __P((struct uha_softc *, struct uha_mscp *));
+static __inline void uha_reset_mscp __P((struct uha_softc *, 
+    struct uha_mscp *));
 
 u_long	scratch;
 #define UHA_SHOWMSCPS 0x01
@@ -811,7 +814,7 @@ uha_free_mscp(uha, mscp, flags)
 	splx(s);
 }
 
-static inline void
+static __inline void
 uha_init_mscp(uha, mscp)
 	struct uha_softc *uha;
 	struct uha_mscp *mscp;
@@ -829,7 +832,7 @@ uha_init_mscp(uha, mscp)
 	uha->mscphash[hashnum] = mscp;
 }
 
-static inline void
+static __inline void
 uha_reset_mscp(uha, mscp)
 	struct uha_softc *uha;
 	struct uha_mscp *mscp;
@@ -864,8 +867,10 @@ uha_get_mscp(uha, flags)
 			break;
 		}
 		if (uha->nummscps < UHA_MSCP_MAX) {
-			if (mscp = (struct uha_mscp *) malloc(sizeof(struct uha_mscp),
-			    M_TEMP, M_NOWAIT)) {
+			mscp = (struct uha_mscp *)
+			    malloc(sizeof(struct uha_mscp),
+			    M_TEMP, M_NOWAIT);
+			if (mscp) {
 				uha_init_mscp(uha, mscp);
 				uha->nummscps++;
 			} else {
@@ -1156,7 +1161,9 @@ uha_scsi_cmd(xs)
 	int seg;		/* scatter gather seg being worked on */
 	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
+#ifdef TFS
 	struct iovec *iovp;
+#endif
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("uha_scsi_cmd\n"));

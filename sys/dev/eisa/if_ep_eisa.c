@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.1 1996/04/25 02:16:40 thorpej Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.3 1996/05/03 19:07:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -33,6 +33,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -60,7 +61,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
@@ -87,7 +88,6 @@ ep_eisa_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct eisa_attach_args *ea = aux;
 
 	/* must match one of our known ID strings */
@@ -106,31 +106,39 @@ ep_eisa_attach(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct eisa_attach_args *ea = aux;
-	int iobase, irq, k;
+	bus_chipset_tag_t bc = ea->ea_bc;
+	bus_io_handle_t ioh;
+	int irq, k;
 	u_short conn = 0;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
 
-	sc->ep_iobase = iobase = EISA_SLOT_ADDR(ea->ea_slot);
+	/* Map i/o space. */
+	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE,
+	    &ioh))
+		panic("ep_eisa_attach: can't map i/o space");
+
 	sc->bustype = EP_BUS_EISA;
+	sc->sc_ioh = ioh;
+	sc->sc_bc = bc;
 
 	/* Reset card. */
-	outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
+	bus_io_write_1(bc, ioh, EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 	delay(10);
-	outb(iobase + EISA_CONTROL, EISA_ENABLE);
+	bus_io_write_1(bc, ioh, EISA_CONTROL, EISA_ENABLE);
 	/* Wait for reset? */
 	delay(1000);
 
-	/* XXX What is this doing?! */
-	k = inw(iobase + EP_W0_ADDRESS_CFG);
+	/* XXX What is this doing?!  Reading the i/o address? */
+	k = bus_io_read_2(bc, ioh, EP_W0_ADDRESS_CFG);
 	k = (k & 0x1f) * 0x10 + 0x200;
 
 	/* Read the IRQ from the card. */
-	irq = inw(iobase + EP_W0_RESOURCE_CFG) >> 12;
+	irq = bus_io_read_2(bc, ioh, EP_W0_RESOURCE_CFG) >> 12;
 
 	GO_WINDOW(0);
-	conn = inw(iobase + EP_W0_CONFIG_CTRL);
+	conn = bus_io_read_2(bc, ioh, EP_W0_CONFIG_CTRL);
 
 	if (strcmp(ea->ea_idstring, "TCM5091") == 0)
 		model = EISA_PRODUCT_TCM5091;

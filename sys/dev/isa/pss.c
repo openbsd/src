@@ -1,5 +1,5 @@
-/*	$OpenBSD: pss.c,v 1.8 1996/04/21 22:24:26 deraadt Exp $ */
-/*	$NetBSD: pss.c,v 1.13 1996/04/11 22:29:52 cgd Exp $	*/
+/*	$OpenBSD: pss.c,v 1.9 1996/05/07 07:37:33 deraadt Exp $ */
+/*	$NetBSD: pss.c,v 1.14 1996/04/29 20:00:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -150,16 +150,16 @@ int	pssdebug = 0;
 #define DPRINTF(x)
 #endif
 
-int	pssprobe();
+int	pssprobe __P((struct device *, void *, void *));
 void	pssattach __P((struct device *, struct device *, void *));
 
-int	spprobe();
+int	spprobe __P((struct device *, void *, void *));
 void	spattach __P((struct device *, struct device *, void *));
 
-int	mpuprobe();
+int	mpuprobe __P((struct device *, void *, void *));
 void	mpuattach __P((struct device *, struct device *, void *));
 
-int	pcdprobe();
+int	pcdprobe __P((struct device *, void *, void *));
 void	pcdattach __P((struct device *, struct device *, void *));
 
 int	spopen __P((dev_t, int));
@@ -179,6 +179,28 @@ int	pss_get_in_port __P((void *));
 int	pss_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	pss_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	pss_query_devinfo __P((void *, mixer_devinfo_t *));
+
+void	pss_dspwrite __P((struct pss_softc *, int));
+void	pss_setaddr __P((int, int));
+int	pss_setint __P((int, int));
+int	pss_setdma __P((int, int));
+int	pss_testdma __P((struct pss_softc *, int));
+int	pss_reset_dsp __P((struct pss_softc *));
+int	pss_download_dsp __P((struct pss_softc *, u_char *, int));
+void	pss_dump_regs __P((struct pss_softc *));
+int	pss_set_master_gain __P((struct pss_softc *, struct ad1848_volume *));
+int	pss_set_master_mode __P((struct pss_softc *, int));
+int	pss_set_treble __P((struct pss_softc *, u_int));
+int	pss_set_bass __P((struct pss_softc *, u_int));
+int	pss_get_master_gain __P((struct pss_softc *, struct ad1848_volume *));
+int	pss_get_master_mode __P((struct pss_softc *, u_int *));
+int	pss_get_treble __P((struct pss_softc *, u_char *));
+int	pss_get_bass __P((struct pss_softc *, u_char *));
+
+static int pss_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
+static int pss_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
+
+void	wss_dump_regs __P((struct ad1848_softc *));
 
 /*
  * Define our interface to the higher level audio driver.
@@ -277,7 +299,9 @@ struct audio_device pss_device = {
 };
 
 void
-pss_dspwrite(struct pss_softc *sc, int data)
+pss_dspwrite(sc, data)
+	struct pss_softc *sc;
+	int data;
 {
     int i;
     int pss_base = sc->sc_iobase;
@@ -299,7 +323,9 @@ pss_dspwrite(struct pss_softc *sc, int data)
 }
 
 void
-pss_setaddr(int addr, int configAddr)
+pss_setaddr(addr, configAddr)
+	int addr;
+	int configAddr;
 {
     int val;
     
@@ -315,7 +341,9 @@ pss_setaddr(int addr, int configAddr)
  * enable the chosen interrupt.
  */
 int
-pss_setint(int intNum, int configAddress)
+pss_setint(intNum, configAddress)
+	int intNum;
+	int configAddress;
 {
     int val;
     switch(intNum) {
@@ -374,7 +402,9 @@ pss_setint(int intNum, int configAddress)
 }
 
 int
-pss_setdma(int dmaNum, int configAddress)
+pss_setdma(dmaNum, configAddress)
+	int dmaNum;
+	int configAddress;
 {
     int val;
     
@@ -515,7 +545,9 @@ pss_testirq(struct pss_softc *sc, int intNum)
  * is ok.
  */
 int
-pss_testdma(struct pss_softc *sc, int dmaNum)
+pss_testdma(sc, dmaNum)
+	struct pss_softc *sc;
+	int dmaNum;
 {
     int iobase = sc->sc_iobase;
     int val;
@@ -588,7 +620,8 @@ pss_testdma(struct pss_softc *sc, int dmaNum)
 }
 
 int
-pss_reset_dsp(struct pss_softc *sc)
+pss_reset_dsp(sc)
+	struct pss_softc *sc;
 {
     u_long i;
     int pss_base = sc->sc_iobase;
@@ -615,7 +648,10 @@ pss_reset_dsp(struct pss_softc *sc)
  * byte which removes BR.
  */
 int
-pss_download_dsp(struct pss_softc *sc, u_char *block, int size)
+pss_download_dsp(sc, block, size)
+	struct pss_softc *sc;
+	u_char *block;
+	int size;
 {
     int i, val, count;
     int pss_base = sc->sc_iobase;
@@ -685,7 +721,8 @@ pss_download_dsp(struct pss_softc *sc, u_char *block, int size)
 }
 
 void
-wss_dump_regs(struct ad1848_softc *sc)
+wss_dump_regs(sc)
+	struct ad1848_softc *sc;
 {
     printf("WSS regs: config=%x version=%x\n",
 	   (u_char)inb(sc->sc_iobase+WSS_CONFIG),
@@ -693,7 +730,8 @@ wss_dump_regs(struct ad1848_softc *sc)
 }
 
 void
-pss_dump_regs(struct pss_softc *sc)
+pss_dump_regs(sc)
+	struct pss_softc *sc;
 {
     printf("PSS regs: status=%x vers=%x ",
 	   (u_short)inw(sc->sc_iobase+PSS_STATUS),
@@ -709,13 +747,13 @@ pss_dump_regs(struct pss_softc *sc)
  */
 int
 pssprobe(parent, self, aux)
-    struct device *parent, *self;
+    struct device *parent;
+    void *self;
     void *aux;
 {
-    struct pss_softc *sc = (void *)self;
+    struct pss_softc *sc = self;
     struct isa_attach_args *ia = aux;
     int iobase = ia->ia_iobase;
-    int i;
     
     if (!PSS_BASE_VALID(iobase)) {
 	printf("pss: configured iobase %x invalid\n", iobase);
@@ -812,8 +850,8 @@ spprobe(parent, match, aux)
     struct device *parent;
     void *match, *aux;
 {
-    struct ad1848_softc *sc = (void *)match;
-    struct pss_softc *pc = (void *)parent;
+    struct ad1848_softc *sc = match;
+    struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
     u_char bits;
     int i;
@@ -906,8 +944,8 @@ mpuprobe(parent, match, aux)
     struct device *parent;
     void *match, *aux;
 {
-    struct mpu_softc *sc = (void *)match;
-    struct pss_softc *pc = (void *)parent;
+    struct mpu_softc *sc = match;
+    struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
 
     /* Check if midi is enabled; if it is check the interrupt */
@@ -951,8 +989,8 @@ pcdprobe(parent, match, aux)
     struct device *parent;
     void *match, *aux;
 {
-    struct cd_softc *sc = (void *)match;
-    struct pss_softc *pc = (void *)parent;
+    struct cd_softc *sc = match;
+    struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
     u_short val;
     
@@ -964,7 +1002,7 @@ pcdprobe(parent, match, aux)
     val = inw(pc->sc_iobase+CD_CONFIG);
     outw(pc->sc_iobase+CD_CONFIG, 0);
     val &= CD_POL_MASK;
-    val | CD_POL_BIT;	/* XXX if (pol) */
+    val |= CD_POL_BIT;	/* XXX if (pol) */
     outw(pc->sc_iobase+CD_CONFIG, val);
     
     if (cf->cf_irq == IRQUNK) {
@@ -1233,7 +1271,7 @@ pss_set_master_mode(sc, mode)
 int
 pss_set_treble(sc, treb)
     register struct pss_softc *sc;
-    u_char treb;
+    u_int treb;
 {
     DPRINTF(("pss_set_treble: %d\n", treb));
 
@@ -1348,7 +1386,7 @@ mpuintr(arg)
     
     sr = inb(sc->sc_iobase+MIDI_STATUS_REG);
 
-    printf("mpuintr: sc=%x sr=%x\n", sc, sr);
+    printf("mpuintr: sc=%p sr=%x\n", sc, sr);
 
     /* XXX Need to clear intr */
     return 1;
@@ -1410,7 +1448,6 @@ pss_set_in_port(addr, port)
     int port;
 {
     register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
 	
     DPRINTF(("pss_set_in_port: %d\n", port));
 
@@ -1437,7 +1474,6 @@ pss_get_in_port(addr)
     void *addr;
 {
     register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
     int port = PSS_MIC_IN_LVL;
     
     switch(ad1848_get_rec_port(ac)) {
@@ -1465,7 +1501,6 @@ pss_mixer_set_port(addr, cp)
     register struct ad1848_softc *ac = addr;
     register struct pss_softc *sc = ac->parent;
     struct ad1848_volume vol;
-    u_char eq;
     int error = EINVAL;
     
     DPRINTF(("pss_mixer_set_port: dev=%d type=%d\n", cp->dev, cp->type));
@@ -1692,9 +1727,6 @@ pss_query_devinfo(addr, dip)
     void *addr;
     register mixer_devinfo_t *dip;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
-
     DPRINTF(("pss_query_devinfo: index=%d\n", dip->index));
 
     switch(dip->index) {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sbdsp.c,v 1.4 1996/04/18 23:47:47 niklas Exp $	*/
-/*	$NetBSD: sbdsp.c,v 1.24 1996/03/16 04:00:11 jtk Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.5 1996/05/07 07:37:41 deraadt Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.25 1996/04/29 20:03:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -120,9 +120,21 @@ u_int sbdsp_jazz16_probe __P((struct sbdsp_softc *));
 #define SB_DAC_LS_MAX	0xd4	/* 22727 Hz */
 #define SB_DAC_HS_MAX	0xea	/* 45454 Hz */
 
+int	sbdsp16_wait __P((int));
+void	sbdsp_to __P((void *));
+void	sbdsp_pause __P((struct sbdsp_softc *));
+int	sbdsp_setrate __P((struct sbdsp_softc *, int, int, int *));
+int	sbdsp_tctosr __P((struct sbdsp_softc *, int));
+int	sbdsp_set_timeconst __P((struct sbdsp_softc *, int));
+
+#ifdef AUDIO_DEBUG
+void sb_printsc __P((struct sbdsp_softc *));
+#endif
+
 #ifdef AUDIO_DEBUG
 void
-sb_printsc(struct sbdsp_softc *sc)
+sb_printsc(sc)
+	struct sbdsp_softc *sc;
 {
 	int i;
     
@@ -153,7 +165,6 @@ int
 sbdsp_probe(sc)
 	struct sbdsp_softc *sc;
 {
-	register int iobase = sc->sc_iobase;
 
 	if (sbdsp_reset(sc) < 0) {
 		DPRINTF(("sbdsp: couldn't reset card\n"));
@@ -223,7 +234,6 @@ void
 sbdsp_attach(sc)
 	struct sbdsp_softc *sc;
 {
-	register int iobase = sc->sc_iobase;
 
 	/* Set defaults */
 	if (ISSB16CLASS(sc))
@@ -359,8 +369,6 @@ sbdsp_query_encoding(addr, fp)
 	void *addr;
 	struct audio_encoding *fp;
 {
-	register struct sbdsp_softc *sc = addr;
-
 	switch (fp->index) {
 	case 0:
 		strcpy(fp->name, AudioEmulaw);
@@ -476,7 +484,7 @@ sbdsp_set_ifilter(addr, which)
 	int which;
 {
 	register struct sbdsp_softc *sc = addr;
-	int rval, mixval;
+	int mixval;
 
 	if (ISSBPROCLASS(sc)) {
 		mixval = sbdsp_mix_read(sc, SBP_INFILTER) & ~SBP_IFILTER_MASK;
@@ -1098,7 +1106,7 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr)();
+	void (*intr) __P((void *));
 	void *arg;
 {
 	register struct sbdsp_softc *sc = addr;
@@ -1214,7 +1222,7 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr)();
+	void (*intr) __P((void *));
 	void *arg;
 {
 	register struct sbdsp_softc *sc = addr;
@@ -1490,6 +1498,8 @@ sbdsp_mixer_set_port(addr, cp)
 				return EINVAL;
 			}
 			break;
+		default:
+			return EINVAL;
 		}
 
 		switch (cp->dev) {
@@ -1511,6 +1521,8 @@ sbdsp_mixer_set_port(addr, cp)
 		case SB_CD_PORT:
 			src = SBP_CD_VOL;
 			break;
+		default:
+			return EINVAL;
 		}
 
 		sbdsp_mix_write(sc, src, gain);

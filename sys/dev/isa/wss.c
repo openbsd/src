@@ -1,5 +1,5 @@
-/*	$OpenBSD: wss.c,v 1.9 1996/04/24 16:51:15 mickey Exp $	*/
-/*	$NetBSD: wss.c,v 1.11 1996/04/11 22:30:46 cgd Exp $	*/
+/*	$OpenBSD: wss.c,v 1.10 1996/05/07 07:38:08 deraadt Exp $	*/
+/*	$NetBSD: wss.c,v 1.12 1996/04/29 19:46:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -115,6 +115,8 @@ int	wss_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	wss_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	wss_query_devinfo __P((void *, mixer_devinfo_t *));
 
+static int wss_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
+static int wss_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
 /*
  * Define our interface to the higher level audio driver.
  */
@@ -368,7 +370,6 @@ wss_set_in_port(addr, port)
     int port;
 {
     register struct ad1848_softc *ac = addr;
-    register struct wss_softc *sc = ac->parent;
 	
     DPRINTF(("wss_set_in_port: %d\n", port));
 
@@ -395,7 +396,6 @@ wss_get_in_port(addr)
     void *addr;
 {
     register struct ad1848_softc *ac = addr;
-    register struct wss_softc *sc = ac->parent;
     int port = WSS_MIC_IN_LVL;
     
     switch(ad1848_get_rec_port(ac)) {
@@ -423,7 +423,6 @@ wss_mixer_set_port(addr, cp)
     register struct ad1848_softc *ac = addr;
     register struct wss_softc *sc = ac->parent;
     struct ad1848_volume vol;
-    u_char eq;
     int error = EINVAL;
     
     DPRINTF(("wss_mixer_set_port: dev=%d type=%d\n", cp->dev, cp->type));
@@ -510,7 +509,6 @@ wss_mixer_get_port(addr, cp)
     register struct ad1848_softc *ac = addr;
     register struct wss_softc *sc = ac->parent;
     struct ad1848_volume vol;
-    u_char eq;
     int error = EINVAL;
     
     DPRINTF(("wss_mixer_get_port: port=%d\n", cp->dev));
@@ -597,9 +595,6 @@ wss_query_devinfo(addr, dip)
     void *addr;
     register mixer_devinfo_t *dip;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct wss_softc *sc = ac->parent;
-
     DPRINTF(("wss_query_devinfo: index=%d\n", dip->index));
 
     switch(dip->index) {

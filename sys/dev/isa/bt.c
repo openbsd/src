@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.8 1996/04/25 18:54:47 is Exp $	*/
+/*	$NetBSD: bt.c,v 1.9 1996/04/29 20:02:53 christos Exp $	*/
 
 #define BTDIAG
 #define integrate
@@ -694,11 +694,10 @@ bt_start_ccbs(sc)
 	int iobase = sc->sc_iobase;
 	struct bt_mbx_out *wmbo;	/* Mail Box Out pointer */
 	struct bt_ccb *ccb;
-	int i;
 
 	wmbo = wmbx->tmbo;
 
-	while (ccb = sc->sc_waiting_ccb.tqh_first) {
+	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
 		if (sc->sc_mbofull >= BT_MBX_SIZE) {
 			bt_collect_mbo(sc);
 			if (sc->sc_mbofull >= BT_MBX_SIZE) {
@@ -1022,7 +1021,6 @@ bt_inquire_setup_information(sc)
 	struct bt_model model;
 	struct bt_revision revision;
 	struct bt_digit digit;
-	char dummy[8];
 	char *p;
 
 	/*
@@ -1101,7 +1099,9 @@ bt_scsi_cmd(xs)
 	int seg;		/* scatter gather seg being worked on */
 	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
+#ifdef TFS
 	struct iovec *iovp;
+#endif
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("bt_scsi_cmd\n"));

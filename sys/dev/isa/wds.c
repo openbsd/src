@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.4 1996/04/11 22:30:38 cgd Exp $	*/
+/*	$NetBSD: wds.c,v 1.5 1996/04/29 19:48:26 christos Exp $	*/
 
 #define	WDSDIAG
 #define	integrate
@@ -370,11 +370,7 @@ wdsintr(arg)
 {
 	struct wds_softc *sc = arg;
 	int iobase = sc->sc_iobase;
-	u_char sts;
-
-	struct wds_mbx_in *in;
-	struct wds_scb *scb;
-	u_char stat, c;
+	u_char c;
 
 	/* Was it really an interrupt from the board? */
 	if ((inb(iobase + WDS_STAT) & WDSS_IRQ) == 0)
@@ -396,7 +392,8 @@ wdsintr(arg)
 		break;
 
 	default:
-		printf("%s: unrecognized interrupt type %02x", c);
+		printf("%s: unrecognized interrupt type %02x",
+		    sc->sc_dev.dv_xname, c);
 		break;
 	}
 
@@ -639,12 +636,11 @@ wds_start_scbs(sc)
 	int iobase = sc->sc_iobase;
 	struct wds_mbx_out *wmbo;	/* Mail Box Out pointer */
 	struct wds_scb *scb;
-	int i;
 	u_char c;
 
 	wmbo = wmbx->tmbo;
 
-	while (scb = sc->sc_waiting_scb.tqh_first) {
+	while ((scb = sc->sc_waiting_scb.tqh_first) != NULL) {
 		if (sc->sc_mbofull >= WDS_MBX_SIZE) {
 			wds_collect_mbo(sc);
 			if (sc->sc_mbofull >= WDS_MBX_SIZE) {
@@ -674,7 +670,6 @@ wds_start_scbs(sc)
 		if ((scb->flags & SCB_POLLED) == 0)
 			timeout(wds_timeout, scb, (scb->timeout * hz) / 1000);
 
-	next:
 		++sc->sc_mbofull;
 		wds_nextmbx(wmbo, wmbx, mbo);
 	}
@@ -692,7 +687,6 @@ wds_done(sc, scb, stat)
 	u_char stat;
 {
 	struct scsi_xfer *xs = scb->xs;
-	int i, x;
 
 	/* XXXXX */
 
@@ -964,7 +958,9 @@ wds_scsi_cmd(xs)
 	int seg;
 	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
+#ifdef TFS
 	struct iovec *iovp;
+#endif
 	int s;
 
 	int iobase;
@@ -1163,8 +1159,6 @@ wds_sense(sc, scb)
 	struct scsi_xfer *xs = scb->xs;
 	struct scsi_sense *ss = (void *)&scb->sense.scb;
 	int s;
-	u_char c;
-	int i;
 
 	/* XXXXX */
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr.c,v 1.7 1996/04/21 22:25:22 deraadt Exp $	*/
-/*	$NetBSD: ncr.c,v 1.33 1996/04/03 08:44:15 mycroft Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.8 1996/05/07 07:38:40 deraadt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.34 1996/05/03 17:39:49 christos Exp $	*/
 
 /**************************************************************************
 **
@@ -1273,12 +1273,12 @@ static	void	ncr_exception	(ncb_p np);
 static	void	ncr_free_ccb	(ncb_p np, ccb_p cp, int flags);
 static	void	ncr_getclock	(ncb_p np);
 static	ccb_p	ncr_get_ccb	(ncb_p np, u_long flags, u_long t,u_long l);
-static  U_INT32 ncr_info	(int unit);
 static	void	ncr_init	(ncb_p np, char * msg, u_long code);
 #ifdef __NetBSD__
 static	int     ncr_intr        (void *);
 #else	/* !__NetBSD__ */
 static	int	ncr_intr	(ncb_p np);
+static  U_INT32 ncr_info	(int unit);
 #endif	/* __NetBSD__ */	
 static	void	ncr_int_ma	(ncb_p np);
 static	void	ncr_int_sir	(ncb_p np);
@@ -1329,8 +1329,10 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 */
 
 
+#if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.33 1996/04/03 08:44:15 mycroft Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.34 1996/05/03 17:39:49 christos Exp $\n";
+#endif
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -3257,10 +3259,12 @@ void ncr_minphys (struct buf *bp)
 **----------------------------------------------------------
 */
 
+#ifndef __NetBSD__
 U_INT32 ncr_info (int unit)
 {
 	return (1);   /* may be changed later */
 }
+#endif
 
 /*----------------------------------------------------------
 **
@@ -3276,10 +3280,10 @@ ncr_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
+#if 0
+	struct cfdata *cf = match;
 
-#ifdef 0
 	if (!pci_targmatch(cf, pa))
 		return 0;
 #endif
@@ -3338,6 +3342,8 @@ static	char* ncr_probe (pcici_t tag, pcidi_t type)
 #define	MIN_SYNC_PD	20
 
 #ifdef __NetBSD__
+
+int ncr_print __P((void *, char *));
 
 int
 ncr_print(aux, name)
@@ -4292,7 +4298,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	ncb_profile (np, cp);
 
 	if (DEBUG_FLAGS & DEBUG_TINY)
-		printf ("CCB=%x STAT=%x/%x\n", (unsigned long)cp & 0xfff,
+		printf ("CCB=%lx STAT=%x/%x\n", (unsigned long)cp & 0xfff,
 			cp->host_status,cp->scsi_status);
 
 	xp = cp->xfer;
@@ -4759,7 +4765,7 @@ static void ncr_setsync (ncb_p np, ccb_p cp, u_char sxfer)
 	xp = cp->xfer;
 	assert (xp);
 	if (!xp) return;
-	assert (target == xp->sc_link->target & 7);
+	assert (target == (xp->sc_link->target & 7));
 
 	tp = &np->target[target];
 	tp->period= sxfer&0xf ? ((sxfer>>5)+4) * np->ns_sync : 0xffff;
@@ -4818,7 +4824,7 @@ static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide)
 	xp = cp->xfer;
 	assert (xp);
 	if (!xp) return;
-	assert (target == xp->sc_link->target & 7);
+	assert (target == (xp->sc_link->target & 7));
 
 	tp = &np->target[target];
 	tp->widedone  =  wide+1;

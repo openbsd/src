@@ -43,7 +43,7 @@
  * are token separators.
  *
  *-M*************************************************************************/
-static char id[] = "$Id: aic7xxx_asm.c,v 1.2 1996/05/05 12:42:38 deraadt Exp $";
+static char id[] = "$Id: aic7xxx_asm.c,v 1.3 1996/05/07 07:38:22 deraadt Exp $";
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -87,7 +87,9 @@ Malloc(size_t size)
 }
 
 void *
-Realloc(void *ptr, size_t size)
+Realloc(ptr, size)
+	void *ptr;
+	size_t size;
 {
 	void *p = realloc(ptr, size);
 	if (!p)
@@ -141,7 +143,8 @@ define(char *name, int value)
 }
 
 sym_t *
-lookup(char *name)
+lookup(name)
+	char *name;
 {
 	sym_t *p;
 
@@ -160,7 +163,7 @@ patch(sym_t *p, int location)
 	p->patch[p->npatch - 1] = location;
 }
 
-void backpatch(void)
+void backpatch()
 {
 	int i;
 	sym_t *p;
@@ -200,7 +203,8 @@ void backpatch(void)
  *  since the sequencer RAM is loaded that way.
  */
 void
-output(FILE *fp)
+output(fp)
+	FILE *fp;
 {
 	int i;
 
@@ -214,7 +218,8 @@ output(FILE *fp)
 }
 
 char **
-getl(int *n)
+getl(n)
+	int *n;
 {
 	int i;
 	char *p, *quote;
@@ -373,7 +378,9 @@ eval_operand(char **a, int spec)
 }
 
 int
-eval_sdi(char **a, int spec)
+eval_sdi(a, spec)
+	char **a;
+	int spec;
 {
 	sym_t *p;
 	unsigned val;
@@ -443,7 +450,9 @@ eval_sdi(char **a, int spec)
 }
 
 int
-eval_addr(char **a, int spec)
+eval_addr(a, spec)
+	char **a;
+	int spec;
 {
 	sym_t *p;
 
@@ -468,7 +477,9 @@ eval_addr(char **a, int spec)
 }
 
 int
-crack(char **a, int n)
+crack(a, n)
+	char **a;
+	int n;
 {
 	int i;
 	int I_imm, I_addr;

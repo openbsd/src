@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.1 1996/04/25 02:17:06 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.3 1996/05/03 19:08:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -33,6 +33,7 @@
 #include "bpfilter.h" 
  
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h> 
 #include <sys/socket.h> 
 #include <sys/ioctl.h>
@@ -59,7 +60,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
@@ -86,7 +87,6 @@ ep_pci_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
 	if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_3COM)
@@ -109,21 +109,29 @@ ep_pci_attach(parent, self, aux)
 	void *aux;
 {
 	struct ep_softc *sc = (void *)self;
-	u_short conn = 0;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
+	bus_chipset_tag_t bc = pa->pa_bc;
+	bus_io_addr_t iobase;
+	bus_io_size_t iosize;
 	pci_intr_handle_t ih;
-	int iobase;
-	u_short i;
+	u_short i, conn = 0;
 	char *model;
 	const char *intrstr = NULL;
 
-	if (pci_map_io(pa->pa_tag, PCI_CBMA, &iobase)) {
-		printf(": couldn't map io\n");
+	if (pci_io_find(pc, pa->pa_tag, PCI_CBMA, &iobase, &iosize)) {
+		printf(": can't find i/o space\n");
 		return;
 	}
+
+	if (bus_io_map(bc, iobase, iosize, &sc->sc_ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
+
+	sc->sc_bc = bc;
 	sc->bustype = EP_BUS_PCI;
-	sc->ep_iobase = iobase; /* & 0xfffffff0 */
+
 	i = pci_conf_read(pc, pa->pa_tag, PCI_CONN);
 
 	/*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sbdspvar.h,v 1.4 1996/04/18 23:47:48 niklas Exp $	*/
-/*	$NetBSD: sbdspvar.h,v 1.12 1996/03/16 04:00:13 jtk Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.5 1996/05/07 07:37:46 deraadt Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.13 1996/04/29 20:28:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -180,8 +180,8 @@ int	sbdsp_get_avail_out_ports __P((void *));
 int	sbdsp_speaker_ctl __P((void *, int));
 int	sbdsp_commit_settings __P((void *));
 
-int	sbdsp_dma_output __P((void *, void *, int, void (*)(), void*));
-int	sbdsp_dma_input __P((void *, void *, int, void (*)(), void*));
+int	sbdsp_dma_output __P((void *, void *, int, void (*)(void *), void*));
+int	sbdsp_dma_input __P((void *, void *, int, void (*)(void *), void*));
 
 int	sbdsp_haltdma __P((void *));
 int	sbdsp_contdma __P((void *));

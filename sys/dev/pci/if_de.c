@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_de.c,v 1.7 1996/05/05 13:38:58 mickey Exp $       */
-/*    $NetBSD: if_de.c,v 1.17 1996/04/01 19:37:54 cgd Exp $       */
+/*    $OpenBSD: if_de.c,v 1.8 1996/05/07 07:38:29 deraadt Exp $       */
+/*    $NetBSD: if_de.c,v 1.18 1996/05/03 17:32:20 christos Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -1937,7 +1937,7 @@ tulip_ioctl(
 
     s = splnet();
 
-    if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+    if ((error = ether_ioctl(ifp, &sc->tulip_ac, cmd, data)) > 0) {
 	splx(s);
 	return error;
     }
@@ -2593,14 +2593,14 @@ tulip_pci_attach(
 
 	    if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 		pa->pa_intrline, &intrhandle)) {
-		printf(": couldn't map interrupt\n", self->dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	    }
 	    intrstr = pci_intr_string(pc, intrhandle);
 	    sc->tulip_ih = pci_intr_establish(pc, intrhandle, IPL_NET,
 		tulip_intr, sc, self->dv_xname);
 	    if (sc->tulip_ih == NULL) {
-		printf(": couldn't establish interrupt", self->dv_xname);
+		printf(": couldn't establish interrupt");
                 if (intrstr != NULL)
                         printf(" at %s", intrstr);
                 printf("\n");

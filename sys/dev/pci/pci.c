@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci.c,v 1.2 1996/04/21 22:25:34 deraadt Exp $	*/
-/*	$NetBSD: pci.c,v 1.18 1996/03/27 04:08:24 cgd Exp $	*/
+/*	$OpenBSD: pci.c,v 1.3 1996/05/07 07:38:49 deraadt Exp $	*/
+/*	$NetBSD: pci.c,v 1.19 1996/05/03 17:33:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -105,8 +105,7 @@ pciattach(parent, self, aux)
 		pcitag_t tag;
 		pcireg_t id, class, intr, bhlcr;
 		struct pci_attach_args pa;
-		struct cfdata *cf;
-		int supported, pin;
+		int pin;
 
 		tag = pci_make_tag(pc, bus, device, 0);
 		id = pci_conf_read(pc, tag, PCI_ID_REG);

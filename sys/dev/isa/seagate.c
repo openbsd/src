@@ -260,12 +260,14 @@ static const BiosSignature signatures[] = {
 
 #define	nsignatures	(sizeof(signatures) / sizeof(signatures[0]))
 
+#ifdef notdef
 static const char *bases[] = {
 	(char *) 0xc8000, (char *) 0xca000, (char *) 0xcc000,
 	(char *) 0xce000, (char *) 0xdc000, (char *) 0xde000
 };
 
 #define	nbases		(sizeof(bases) / sizeof(bases[0]))
+#endif
 
 int seaintr __P((void *));
 int sea_scsi_cmd __P((struct scsi_xfer *));
@@ -383,7 +385,7 @@ seaprobe(parent, match, aux)
 		break;
 	default:
 #ifdef DIAGNOSTIC
-		printf("%s: board type unknown at address 0x%lx\n",
+		printf("%s: board type unknown at address %p\n",
 		    sea->sc_dev.dv_xname, sea->maddr);
 #endif
 		return 0;
@@ -629,8 +631,9 @@ sea_get_scb(sea, flags)
 			break;
 		}
 		if (sea->numscbs < SEA_SCB_MAX) {
-			if (scb = (struct sea_scb *) malloc(sizeof(struct sea_scb),
-			    M_TEMP, M_NOWAIT)) {
+			scb = (struct sea_scb *) malloc(sizeof(struct sea_scb),
+			    M_TEMP, M_NOWAIT);
+			if (scb) {
 				bzero(scb, sizeof(struct sea_scb));
 				sea->numscbs++;
 			} else
@@ -884,6 +887,7 @@ sea_reselect(sea)
 		printf("%s: expecting IDENTIFY message, got 0x%x\n",
 		    sea->sc_dev.dv_xname, msg[0]);
 		abort = 1;
+		scb = NULL;
 	} else {
 		lun = msg[0] & 0x07;
 

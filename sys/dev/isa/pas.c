@@ -1,5 +1,5 @@
-/*	$OpenBSD: pas.c,v 1.9 1996/04/21 22:24:23 deraadt Exp $	*/
-/*	$NetBSD: pas.c,v 1.15 1996/04/11 22:29:48 cgd Exp $	*/
+/*	$OpenBSD: pas.c,v 1.10 1996/05/07 07:37:25 deraadt Exp $	*/
+/*	$NetBSD: pas.c,v 1.16 1996/04/29 20:03:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -102,6 +102,7 @@ struct pas_softc {
 
 int	pasopen __P((dev_t, int));
 int	pas_getdev __P((void *, struct audio_device *));
+void	pasconf __P((int, int, int, int));
 
 
 /*
@@ -170,10 +171,12 @@ static struct audio_device pas_device = {
 #define paswrite(d, p) outb(p, d)
 
 void
-pasconf(int model, int sbbase, int sbirq, int sbdrq)
+pasconf(model, sbbase, sbirq, sbdrq)
+	int model;
+	int sbbase;
+	int sbirq;
+	int sbdrq;
 {
-	int i;
-
 	paswrite(0x00, INTERRUPT_MASK);
 	/* Local timer control register */
 	paswrite(0x36, SAMPLE_COUNTER_CONTROL);

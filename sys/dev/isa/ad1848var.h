@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.7 1995/11/10 04:30:40 mycroft Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.8 1996/04/29 20:02:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -124,8 +124,8 @@ int	ad1848_get_channels __P((void *));
 
 int	ad1848_round_blocksize __P((void *, int));
 
-int	ad1848_dma_output __P((void *, void *, int, void (*)(), void*));
-int	ad1848_dma_input __P((void *, void *, int, void (*)(), void*));
+int	ad1848_dma_output __P((void *, void *, int, void (*)(void *), void*));
+int	ad1848_dma_input __P((void *, void *, int, void (*)(void *), void*));
 
 int	ad1848_commit_settings __P((void *));
 

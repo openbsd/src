@@ -1,5 +1,5 @@
-/*	$OpenBSD: wt.c,v 1.8 1996/04/21 22:24:52 deraadt Exp $	*/
-/*	$NetBSD: wt.c,v 1.31 1996/04/11 22:30:49 cgd Exp $	*/
+/*	$OpenBSD: wt.c,v 1.9 1996/05/07 07:38:11 deraadt Exp $	*/
+/*	$NetBSD: wt.c,v 1.32 1996/04/29 19:45:32 christos Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -60,6 +60,8 @@
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/device.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <vm/vm_param.h>
 
@@ -149,6 +151,10 @@ struct wt_softc {
 	int DATAPORT, CMDPORT, STATPORT, CTLPORT, SDMAPORT, RDMAPORT;
 	u_char BUSY, NOEXCEP, RESETMASK, RESETVAL, ONLINE, RESET, REQUEST, IEN;
 };
+
+/* XXX: These don't belong here really */
+cdev_decl(wt);
+bdev_decl(wt);
 
 int wtwait __P((struct wt_softc *sc, int catch, char *msg));
 int wtcmd __P((struct wt_softc *sc, int cmd));
@@ -283,9 +289,11 @@ wtsize(dev)
  * Open routine, called on every device open.
  */
 int
-wtopen(dev, flag)
+wtopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	int unit = minor(dev) & T_UNIT;
 	struct wt_softc *sc;
@@ -304,7 +312,7 @@ wtopen(dev, flag)
 	/* If the tape is in rewound state, check the status and set density. */
 	if (sc->flags & TPSTART) {
 		/* If rewind is going on, wait */
-		if (error = wtwait(sc, PCATCH, "wtrew"))
+		if ((error = wtwait(sc, PCATCH, "wtrew")) != 0)
 			return error;
 
 		/* Check the controller status */
@@ -372,8 +380,11 @@ wtopen(dev, flag)
  * Close routine, called on last device close.
  */
 int
-wtclose(dev)
+wtclose(dev, flags, mode, p)
 	dev_t dev;
+	int flags;
+	int mode;
+	struct proc *p;
 {
 	int unit = minor(dev) & T_UNIT;
 	struct wt_softc *sc = wt_cd.cd_devs[unit];
@@ -423,11 +434,12 @@ done:
  * ioctl(int fd, WTQICMD, int qicop)		-- do QIC op
  */
 int
-wtioctl(dev, cmd, addr, flag)
+wtioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
-	void *addr;
+	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	int unit = minor(dev) & T_UNIT;
 	struct wt_softc *sc = wt_cd.cd_devs[unit];
@@ -444,11 +456,11 @@ wtioctl(dev, cmd, addr, flag)
 		case QIC_ERASE:		/* erase the whole tape */
 			if ((sc->flags & TPWRITE) == 0 || (sc->flags & TPWP))
 				return EACCES;
-			if (error = wtwait(sc, PCATCH, "wterase"))
+			if ((error = wtwait(sc, PCATCH, "wterase")) != 0)
 				return error;
 			break;
 		case QIC_RETENS:	/* retension the tape */
-			if (error = wtwait(sc, PCATCH, "wtretens"))
+			if ((error = wtwait(sc, PCATCH, "wtretens")) != 0)
 				return error;
 			break;
 		}
@@ -494,25 +506,25 @@ wtioctl(dev, cmd, addr, flag)
 	case MTOFFL:	/* rewind and put the drive offline */
 		if (sc->flags & TPREW)   /* rewind is running */
 			return 0;
-		if (error = wtwait(sc, PCATCH, "wtorew"))
+		if ((error = wtwait(sc, PCATCH, "wtorew")) != 0)
 			return error;
 		wtrewind(sc);
 		return 0;
 	case MTFSF:	/* forward space file */
 		for (count = ((struct mtop*)addr)->mt_count; count > 0;
 		    --count) {
-			if (error = wtwait(sc, PCATCH, "wtorfm"))
+			if ((error = wtwait(sc, PCATCH, "wtorfm")) != 0)
 				return error;
-			if (error = wtreadfm(sc))
+			if ((error = wtreadfm(sc)) != 0)
 				return error;
 		}
 		return 0;
 	case MTWEOF:	/* write an end-of-file record */
 		if ((sc->flags & TPWRITE) == 0 || (sc->flags & TPWP))
 			return EACCES;
-		if (error = wtwait(sc, PCATCH, "wtowfm"))
+		if ((error = wtwait(sc, PCATCH, "wtowfm")) != 0)
 			return error;
-		if (error = wtwritefm(sc))
+		if ((error = wtwritefm(sc)) != 0)
 			return error;
 		return 0;
 	}
@@ -601,18 +613,20 @@ xit:
 }
 
 int
-wtread(dev, uio)
+wtread(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(wtstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-wtwrite(dev, uio)
+wtwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(wtstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -843,7 +857,7 @@ wtwait(sc, catch, msg)
 
 	WTDBPRINT(("wtwait() `%s'\n", msg));
 	while (sc->flags & (TPACTIVE | TPREW | TPRMARK | TPWMARK))
-		if (error = tsleep((caddr_t)sc, WTPRI | catch, msg, 0))
+		if ((error = tsleep((caddr_t)sc, WTPRI | catch, msg, 0)) != 0)
 			return error;
 	return 0;
 }

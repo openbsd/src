@@ -1,5 +1,5 @@
-/*	$OpenBSD: mcd.c,v 1.10 1996/04/24 16:51:16 mickey Exp $ */
-/*	$NetBSD: mcd.c,v 1.47 1996/04/11 22:29:43 cgd Exp $	*/
+/*	$OpenBSD: mcd.c,v 1.11 1996/05/07 07:37:20 deraadt Exp $ */
+/*	$NetBSD: mcd.c,v 1.48 1996/04/29 20:28:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -140,10 +140,9 @@ struct mcd_softc {
 };
 
 /* prototypes */
-int mcdopen __P((dev_t, int, int, struct proc *));
-int mcdclose __P((dev_t, int, int));
-int mcdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int mcdsize __P((dev_t));
+/* XXX does not belong here */
+cdev_decl(mcd);
+bdev_decl(mcd);
 
 static int bcd2bin __P((bcd_t));
 static bcd_t bin2bcd __P((int));
@@ -187,10 +186,13 @@ struct cfdriver mcd_cd = {
 	NULL, "mcd", DV_DISK
 };
 
-void mcdgetdisklabel __P((struct mcd_softc *));
-int mcd_get_parms __P((struct mcd_softc *));
-void mcdstrategy __P((struct buf *));
-void mcdstart __P((struct mcd_softc *));
+void	mcdgetdisklabel __P((struct mcd_softc *));
+int	mcd_get_parms __P((struct mcd_softc *));
+void	mcdstrategy __P((struct buf *));
+void	mcdstart __P((struct mcd_softc *));
+int	mcdlock __P((struct mcd_softc *));
+void	mcdunlock __P((struct mcd_softc *));
+void	mcd_pseudointr __P((void *));
 
 struct dkdriver mcddkdriver = { mcdstrategy };
 
@@ -290,7 +292,7 @@ mcdopen(dev, flag, fmt, p)
 	if (!sc)
 		return ENXIO;
 
-	if (error = mcdlock(sc))
+	if ((error = mcdlock(sc)) != 0)
 		return error;
 
 	if (sc->sc_dk.dk_openmask != 0) {
@@ -380,9 +382,10 @@ bad3:
 }
 
 int
-mcdclose(dev, flag, fmt)
+mcdclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
+	struct proc *p;
 {
 	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(dev)];
 	int part = MCDPART(dev);
@@ -390,7 +393,7 @@ mcdclose(dev, flag, fmt)
 	
 	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
 
-	if (error = mcdlock(sc))
+	if ((error = mcdlock(sc)) != 0)
 		return error;
 
 	switch (fmt) {
@@ -428,7 +431,7 @@ mcdstrategy(bp)
 	    bp->b_blkno, bp->b_bcount, 0);
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % sc->blksize) != 0) {
-		printf("%s: strategy: blkno = %d bcount = %d\n",
+		printf("%s: strategy: blkno = %d bcount = %ld\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
 		goto bad;
@@ -528,18 +531,20 @@ loop:
 }
 
 int
-mcdread(dev, uio)
+mcdread(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(mcdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-mcdwrite(dev, uio)
+mcdwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(mcdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -577,7 +582,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if (error = mcdlock(sc))
+		if ((error = mcdlock(sc)) != 0)
 			return error;
 		sc->flags |= MCDF_LABELLING;
 
@@ -1010,9 +1015,10 @@ msf2hsg(msf, relative)
 }
 
 void
-mcd_pseudointr(sc)
-	struct mcd_softc *sc;
+mcd_pseudointr(v)
+	void *v;
 {
+	struct mcd_softc *sc = v;
 	int s;
 
 	s = splbio();
@@ -1163,7 +1169,6 @@ readerr:
 		printf("; giving up\n");
 
 changed:
-harderr:
 	/* Invalidate the buffer. */
 	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount - mbx->skip;

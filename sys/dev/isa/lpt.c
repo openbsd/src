@@ -1,5 +1,5 @@
-/*	$OpenBSD: lpt.c,v 1.9 1996/04/21 22:24:18 deraadt Exp $ */
-/*	$NetBSD: lpt.c,v 1.37 1996/04/11 22:29:37 cgd Exp $	*/
+/*	$OpenBSD: lpt.c,v 1.10 1996/05/07 07:37:16 deraadt Exp $ */
+/*	$NetBSD: lpt.c,v 1.38 1996/04/29 20:30:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -63,6 +63,7 @@
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <sys/syslog.h>
 
 #ifdef i386							/* XXX */
@@ -82,9 +83,9 @@
 #define	LPT_BSIZE	1024
 
 #if !defined(DEBUG) || !defined(notdef)
-#define lprintf
+#define LPRINTF(a)
 #else
-#define lprintf		if (lptdebug) printf
+#define LPRINTF		if (lptdebug) printf a
 int lptdebug = 1;
 #endif
 
@@ -111,6 +112,9 @@ struct lpt_softc {
 	u_char sc_control;
 	u_char sc_laststatus;
 };
+
+/* XXX does not belong here */
+cdev_decl(lpt);
 
 int lptprobe __P((struct device *, void *, void *));
 void lptattach __P((struct device *, struct device *, void *));
@@ -160,8 +164,8 @@ lpt_port_test(bc, ioh, base, off, data, mask)
 		delay(10);
 		temp = bus_io_read_1(bc, ioh, off) & mask;
 	} while (temp != data && --timeout);
-	lprintf("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", base + off,
-	    data, temp, timeout);
+	LPRINTF(("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", base + off,
+	    data, temp, timeout));
 	return (temp == data);
 }
 
@@ -281,9 +285,11 @@ lptattach(parent, self, aux)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag)
+lptopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	int unit = LPTUNIT(dev);
 	u_char flags = LPTFLAGS(dev);
@@ -314,7 +320,7 @@ lptopen(dev, flag)
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
-	lprintf("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags);
+	LPRINTF(("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags));
 	bc = sc->sc_bc;
 	ioh = sc->sc_ioh;
 
@@ -335,8 +341,8 @@ lptopen(dev, flag)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen",
-		    STEP) != EWOULDBLOCK) {
+		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen", STEP);
+		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			return error;
 		}
@@ -356,7 +362,7 @@ lptopen(dev, flag)
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
 		lptwakeup(sc);
 
-	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
+	LPRINTF(("%s: opened\n", sc->sc_dev.dv_xname));
 	return 0;
 }
 
@@ -399,9 +405,11 @@ lptwakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag)
+lptclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	int unit = LPTUNIT(dev);
 	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
@@ -419,7 +427,7 @@ lptclose(dev, flag)
 	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
 	brelse(sc->sc_inbuf);
 
-	lprintf("%s: closed\n", sc->sc_dev.dv_xname);
+	LPRINTF(("%s: closed\n", sc->sc_dev.dv_xname));
 	return 0;
 }
 
@@ -471,14 +479,15 @@ pushbytes(sc)
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
-				lprintf("%s: write %d\n", sc->sc_dev.dv_xname,
-				    sc->sc_count);
+				LPRINTF(("%s: write %d\n", sc->sc_dev.dv_xname,
+				    sc->sc_count));
 				s = spltty();
 				(void) lptintr(sc);
 				splx(s);
 			}
-			if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
-			    "lptwrite2", 0))
+			error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
+			    "lptwrite2", 0);
+			if (error)
 				return error;
 		}
 	}
@@ -490,15 +499,16 @@ pushbytes(sc)
  * chars moved to the output queue.
  */
 int
-lptwrite(dev, uio)
+lptwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
 	size_t n;
 	int error = 0;
 
-	while (n = min(LPT_BSIZE, uio->uio_resid)) {
+	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
 		sc->sc_count = n;
 		error = pushbytes(sc);
@@ -554,11 +564,12 @@ lptintr(arg)
 }
 
 int
-lptioctl(dev, cmd, data, flag)
+lptioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	int error = 0;
 

@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_el.c,v 1.8 1996/05/05 13:38:27 mickey Exp $       */
-/*	$NetBSD: if_el.c,v 1.36 1996/04/11 22:29:07 cgd Exp $	*/
+/*    $OpenBSD: if_el.c,v 1.9 1996/05/07 07:36:53 deraadt Exp $       */
+/*	$NetBSD: if_el.c,v 1.37 1996/04/29 20:03:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -22,6 +22,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
@@ -78,7 +79,7 @@ struct el_softc {
  * prototypes
  */
 int elintr __P((void *));
-int elinit __P((struct el_softc *));
+void elinit __P((struct el_softc *));
 int elioctl __P((struct ifnet *, u_long, caddr_t));
 void elstart __P((struct ifnet *));
 void elwatchdog __P((int));
@@ -259,7 +260,7 @@ el_hardreset(sc)
 /*
  * Initialize interface.
  */
-int
+void
 elinit(sc)
 	struct el_softc *sc;
 {
@@ -616,7 +617,6 @@ elioctl(ifp, cmd, data)
 {
 	struct el_softc *sc = el_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.1 1996/04/25 02:17:35 thorpej Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.2 1996/04/30 22:32:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@novatel.ca>
@@ -318,8 +318,8 @@
 #define ENABLE_DRQ_IRQ			0x0001
 #define MFG_ID				0x506d	/* `TCM' */
 #define PROD_ID				0x5090
-#define BASE 				sc->ep_iobase
-#define GO_WINDOW(x) 			outw(BASE+EP_COMMAND, WINDOW_SELECT|x)
+#define GO_WINDOW(x) 			bus_io_write_2(sc->sc_bc, \
+				sc->sc_ioh, EP_COMMAND, WINDOW_SELECT|x)
 #define AUI 				0x1
 #define BNC 				0x2
 #define UTP 				0x4

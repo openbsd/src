@@ -1,5 +1,5 @@
-/*	$OpenBSD: ad1848.c,v 1.4 1996/04/18 23:47:28 niklas Exp $	*/
-/*	$NetBSD: ad1848.c,v 1.9 1996/03/01 04:08:24 mycroft Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.5 1996/05/07 07:35:55 deraadt Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.10 1996/04/29 20:02:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -149,11 +149,16 @@ static int ad1848_init_values[] = {
 
 };
 
-int	ad1848_probe();
-void	ad1848_attach();
-
 void	ad1848_reset __P((struct ad1848_softc *));
 int	ad1848_set_speed __P((struct ad1848_softc *, int));
+int	ad1848_set_format __P((struct ad1848_softc *, int, int)); 
+void	ad1848_mute_monitor __P((void *, int));
+
+static int ad_read __P((struct ad1848_softc *, int));
+static __inline void ad_write __P((struct ad1848_softc *, int, int));
+static void ad_set_MCE __P((struct ad1848_softc *, int));
+static void wait_for_calibration __P((struct ad1848_softc *));
+
 
 static int
 ad_read(sc, reg)
@@ -169,7 +174,7 @@ ad_read(sc, reg)
     return x;
 }
 
-static __inline__ void
+static __inline void
 ad_write(sc, reg, data)
     struct ad1848_softc *sc;
     int reg;
@@ -469,7 +474,6 @@ void
 ad1848_attach(sc)
     struct ad1848_softc *sc;
 {
-    register int iobase = sc->sc_iobase;
     int i;
     struct ad1848_volume vol_mid = {150, 150};
     struct ad1848_volume vol_0   = {0, 0};
@@ -652,7 +656,6 @@ ad1848_set_mic_gain(sc, gp)
     struct ad1848_volume *gp;
 {
     u_char reg;
-    u_int atten;
     
     DPRINTF(("cs4231_set_mic_gain: %d\n", gp->left));
 
@@ -1050,7 +1053,6 @@ ad1848_set_channels(addr, chans)
     int chans;
 {
     register struct ad1848_softc *sc = addr;
-    int mode;
 	
     DPRINTF(("ad1848_set_channels: %d\n", chans));
 
@@ -1296,7 +1298,9 @@ void
 ad1848_reset(sc)
     register struct ad1848_softc *sc;
 {
+#if 0
     u_char r;
+#endif
     
     DPRINTF(("ad1848_reset\n"));
     
@@ -1502,11 +1506,10 @@ ad1848_dma_input(addr, p, cc, intr, arg)
     void *addr;
     void *p;
     int cc;
-    void (*intr)();
+    void (*intr) __P((void *));
     void *arg;
 {
     register struct ad1848_softc *sc = addr;
-    register int iobase;
     register u_char reg;
     
     if (sc->sc_locked) {
@@ -1557,11 +1560,10 @@ ad1848_dma_output(addr, p, cc, intr, arg)
     void *addr;
     void *p;
     int cc;
-    void (*intr)();
+    void (*intr) __P((void *));
     void *arg;
 {
     register struct ad1848_softc *sc = addr;
-    register int iobase;
     register u_char reg;
     
     if (sc->sc_locked) {

@@ -1,6 +1,7 @@
-/*	$NetBSD: if_ep_isa.c,v 1.1 1996/04/25 02:15:47 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.3 1996/05/03 19:06:25 christos Exp $	*/
 
 /*
+ * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
  * All rights reserved.
  *
@@ -33,6 +34,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -40,6 +42,7 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -60,7 +63,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
@@ -75,11 +78,27 @@ struct cfattach ep_isa_ca = {
 	sizeof(struct ep_softc), ep_isa_probe, ep_isa_attach
 };
 
-static	void epaddcard __P((int, int));
+static	void epaddcard __P((int, int, int));
 
-#define MAXEPCARDS	10	/* 10 ISA slots */
+/*
+ * This keeps track of which ISAs have been through an ep probe sequence.
+ * A simple static variable isn't enough, since it's conceivable that
+ * a system might have more than one ISA bus.
+ *
+ * The "er_bus" member is the unit number of the parent ISA bus, e.g. "0"
+ * for "isa0".
+ */
+struct ep_isa_done_probe {
+	LIST_ENTRY(ep_isa_done_probe)	er_link;
+	int				er_bus;
+};
+static LIST_HEAD(, ep_isa_done_probe) ep_isa_all_probes;
+static int ep_isa_probes_initialized;
+
+#define MAXEPCARDS	20	/* if you have more than 20, you lose */
 
 static struct epcard {
+	int	bus;
 	int	iobase;
 	int	irq;
 	char	available;
@@ -87,13 +106,13 @@ static struct epcard {
 static int nepcards;
 
 static void
-epaddcard(iobase, irq)
-	int iobase;
-	int irq;
+epaddcard(bus, iobase, irq)
+	int bus, iobase, irq;
 {
 
 	if (nepcards >= MAXEPCARDS)
 		return;
+	epcards[nepcards].bus = bus;
 	epcards[nepcards].iobase = iobase;
 	epcards[nepcards].irq = (irq == 2) ? 9 : irq;
 	epcards[nepcards].available = 1;
@@ -113,58 +132,93 @@ ep_isa_probe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	static int probed;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_io_handle_t ioh;
 	int slot, iobase, irq, i;
-	u_short vendor, model;
+	u_int16_t vendor, model;
+	struct ep_isa_done_probe *er;
+	int bus = parent->dv_unit;
 
-	if (!probed) {
-		probed = 1;
-
-		for (slot = 0; slot < MAXEPCARDS; slot++) {
-			elink_reset();
-			elink_idseq(ELINK_509_POLY);
-
-			/* Untag all the adapters so they will talk to us. */
-			if (slot == 0)
-				outb(ELINK_ID_PORT, TAG_ADAPTER + 0);
-
-			vendor =
-			    htons(epreadeeprom(ELINK_ID_PORT, EEPROM_MFG_ID));
-			if (vendor != MFG_ID)
-				continue;
-
-			model =
-			    htons(epreadeeprom(ELINK_ID_PORT, EEPROM_PROD_ID));
-			if ((model & 0xfff0) != PROD_ID) {
-#ifndef trusted
-				printf(
-				 "ep_isa_probe: ignoring model %04x\n", model);
-#endif
-				continue;
-			}
-
-			iobase = epreadeeprom(ELINK_ID_PORT, EEPROM_ADDR_CFG);
-			iobase = (iobase & 0x1f) * 0x10 + 0x200;
-
-			irq = epreadeeprom(ELINK_ID_PORT, EEPROM_RESOURCE_CFG);
-			irq >>= 12;
-			epaddcard(iobase, irq);
-
-			/* so card will not respond to contention again */
-			outb(ELINK_ID_PORT, TAG_ADAPTER + 1);
-
-			/*
-			 * XXX: this should probably not be done here
-			 * because it enables the drq/irq lines from
-			 * the board. Perhaps it should be done after
-			 * we have checked for irq/drq collisions?
-			 */
-			outb(ELINK_ID_PORT, ACTIVATE_ADAPTER_TO_CONFIG);
-		}
-		/* XXX should we sort by ethernet address? */
+	if (ep_isa_probes_initialized == 0) {
+		LIST_INIT(&ep_isa_all_probes);
+		ep_isa_probes_initialized = 1;
 	}
 
+	/*
+	 * Probe this bus if we haven't done so already.
+	 */
+	for (er = ep_isa_all_probes.lh_first; er != NULL;
+	    er = er->er_link.le_next)
+		if (er->er_bus == parent->dv_unit)
+			goto bus_probed;
+
+	/*
+	 * Mark this bus so we don't probe it again.
+	 */
+	er = (struct ep_isa_done_probe *)
+	    malloc(sizeof(struct ep_isa_done_probe), M_DEVBUF, M_NOWAIT);
+	if (er == NULL)
+		panic("ep_isa_probe: can't allocate state storage");
+
+	er->er_bus = bus;
+	LIST_INSERT_HEAD(&ep_isa_all_probes, er, er_link);
+
+	/*
+	 * Map the Etherlink ID port for the probe sequence.
+	 */
+	if (bus_io_map(bc, ELINK_ID_PORT, 1, &ioh)) {
+		printf("ep_isa_probe: can't map Etherlink ID port\n");
+		return 0;
+	}
+
+	for (slot = 0; slot < MAXEPCARDS; slot++) {
+		elink_reset(bc, ioh, parent->dv_unit);
+		elink_idseq(bc, ioh, ELINK_509_POLY);
+
+		/* Untag all the adapters so they will talk to us. */
+		if (slot == 0)
+			bus_io_write_1(bc, ioh, 0, TAG_ADAPTER + 0);
+
+		vendor = htons(epreadeeprom(bc, ioh, EEPROM_MFG_ID));
+		if (vendor != MFG_ID)
+			continue;
+
+		model = htons(epreadeeprom(bc, ioh, EEPROM_PROD_ID));
+		if ((model & 0xfff0) != PROD_ID) {
+#ifndef trusted
+			printf(
+			 "ep_isa_probe: ignoring model %04x\n", model);
+#endif
+			continue;
+			}
+
+		iobase = epreadeeprom(bc, ioh, EEPROM_ADDR_CFG);
+		iobase = (iobase & 0x1f) * 0x10 + 0x200;
+
+		irq = epreadeeprom(bc, ioh, EEPROM_RESOURCE_CFG);
+		irq >>= 12;
+		epaddcard(bus, iobase, irq);
+
+		/* so card will not respond to contention again */
+		bus_io_write_1(bc, ioh, 0, TAG_ADAPTER + 1);
+
+		/*
+		 * XXX: this should probably not be done here
+		 * because it enables the drq/irq lines from
+		 * the board. Perhaps it should be done after
+		 * we have checked for irq/drq collisions?
+		 */
+		bus_io_write_1(bc, ioh, 0, ACTIVATE_ADAPTER_TO_CONFIG);
+	}
+	/* XXX should we sort by ethernet address? */
+
+	bus_io_unmap(bc, ioh, 1);
+
+ bus_probed:
+
 	for (i = 0; i < nepcards; i++) {
+		if (epcards[i].bus != bus)
+			continue;
 		if (epcards[i].available == 0)
 			continue;
 		if (ia->ia_iobase != IOBASEUNK &&
@@ -193,14 +247,20 @@ ep_isa_attach(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_io_handle_t ioh;
 	u_short conn = 0;
-	int iobase;
 
-	sc->ep_iobase = iobase = ia->ia_iobase;
+	/* Map i/o space. */
+	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh))
+		panic("ep_isa_attach: can't map i/o space");
+
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
 	sc->bustype = EP_BUS_ISA;
 
 	GO_WINDOW(0);
-	conn = inw(iobase + EP_W0_CONFIG_CTRL);
+	conn = bus_io_read_2(bc, ioh, EP_W0_CONFIG_CTRL);
 
 	printf(": <3Com 3C509 Ethernet> ");
 

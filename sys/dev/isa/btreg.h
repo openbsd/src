@@ -39,10 +39,12 @@ typedef u_int8_t physlen[4];
 #define BT_START_SCSI		0x02	/* start scsi command */
 #define BT_INQUIRE_REVISION	0x04	/* Adapter Inquiry */
 #define BT_MBO_INTR_EN		0x05	/* Enable MBO available interrupt */
-/*#define BT_SEL_TIMEOUT_SET	0x06	/* set selection time-out */
-/*#define BT_BUS_ON_TIME_SET	0x07	/* set bus-on time */
-/*#define BT_BUS_OFF_TIME_SET	0x08	/* set bus-off time */
-/*#define BT_SPEED_SET		0x09	/* set transfer speed */
+#if 0
+#define BT_SEL_TIMEOUT_SET	0x06	/* set selection time-out */
+#define BT_BUS_ON_TIME_SET	0x07	/* set bus-on time */
+#define BT_BUS_OFF_TIME_SET	0x08	/* set bus-off time */
+#define BT_SPEED_SET		0x09	/* set transfer speed */
+#endif
 #define BT_INQUIRE_DEVICES	0x0a	/* return installed devices 0-7 */
 #define BT_INQUIRE_CONFIG	0x0b	/* return configuration data */
 #define BT_TARGET_EN		0x0c	/* enable target mode */
@@ -96,7 +98,9 @@ struct bt_mbx_in {
 
 #if	defined(BIG_DMA)
 WARNING...THIS WON'T WORK(won't fit on 1 page)
-/* #define      BT_NSEG 2048    /* Number of scatter gather segments - to much vm */
+#if 0
+#define      BT_NSEG 2048    /* Number of scatter gather segments - to much vm */
+#endif
 #define	BT_NSEG	128
 #else
 #define	BT_NSEG	33

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.3 1995/10/07 09:19:16 mycroft Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.4 1996/04/29 20:03:23 christos Exp $	*/
 
 /*
  * LANCE Ethernet driver header file
@@ -48,12 +48,16 @@ struct le_softc {
 	struct	device sc_dev;		/* base structure */
 	struct	arpcom sc_arpcom;	/* Ethernet common part */
 
-	void	(*sc_copytodesc)();	/* Copy to descriptor */
-	void	(*sc_copyfromdesc)();	/* Copy from descriptor */
-
-	void	(*sc_copytobuf)();	/* Copy to buffer */
-	void	(*sc_copyfrombuf)();	/* Copy from buffer */
-	void	(*sc_zerobuf)();	/* and Zero bytes in buffer */
+	void	(*sc_copytodesc)	/* Copy to descriptor */
+			__P((struct le_softc *, void *, int, int));
+	void	(*sc_copyfromdesc)	/* Copy from descriptor */
+			__P((struct le_softc *, void *, int, int));
+	void	(*sc_copytobuf)		/* Copy to buffer */
+			__P((struct le_softc *, void *, int, int));
+	void	(*sc_copyfrombuf)	/* Copy from buffer */
+			__P((struct le_softc *, void *, int, int));
+	void	(*sc_zerobuf)		/* and Zero bytes in buffer */
+			__P((struct le_softc *, int, int));
 
 	u_int16_t sc_conf3;		/* CSR3 value */
 
@@ -77,6 +81,7 @@ struct le_softc {
 #endif
 
 	void	*sc_ih;
+	bus_io_handle_t sc_ioh;
 	void	*sc_sh;
 	int	sc_card;
 	int	sc_rap, sc_rdp;		/* LANCE registers */

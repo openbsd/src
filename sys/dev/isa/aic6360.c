@@ -1,5 +1,5 @@
-/*	$OpenBSD: aic6360.c,v 1.7 1996/04/21 22:22:39 deraadt Exp $ */
-/*	$NetBSD: aic6360.c,v 1.44 1996/04/11 22:28:08 cgd Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.8 1996/05/07 07:36:09 deraadt Exp $ */
+/*	$NetBSD: aic6360.c,v 1.45 1996/04/29 20:02:45 christos Exp $	*/
 
 #define	integrate	static inline
 
@@ -454,7 +454,9 @@ struct aic_acb {
 
 	u_char target_stat;		/* SCSI status byte */
 
-/*	struct aic_dma_seg dma[AIC_NSEG]; /* Physical addresses+len */
+#ifdef notdef
+	struct aic_dma_seg dma[AIC_NSEG]; /* Physical addresses+len */
+#endif
 
 	TAILQ_ENTRY(aic_acb) chain;
 	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
@@ -560,7 +562,7 @@ struct aic_softc {
 #define AIC_SHOWTRACE	0x10
 #define AIC_SHOWSTART	0x20
 #define AIC_DOBREAK	0x40
-int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; /**/
+int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 #define	AIC_PRINT(b, s)	do {if ((aic_debug & (b)) != 0) printf s;} while (0)
 #define	AIC_BREAK()	do {if ((aic_debug & AIC_DOBREAK) != 0) Debugger();} while (0)
 #define	AIC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
@@ -595,10 +597,21 @@ int	aic_find	__P((struct aic_softc *));
 void	aic_sched	__P((struct aic_softc *));
 void	aic_scsi_reset	__P((struct aic_softc *));
 void	aic_reset	__P((struct aic_softc *));
+void	aic_free_acb	__P((struct aic_softc *, struct aic_acb *, int));
+struct aic_acb* aic_get_acb __P((struct aic_softc *, int));
+int	aic_reselect	__P((struct aic_softc *, int));
+void	aic_sense	__P((struct aic_softc *, struct aic_acb *));
+void	aic_msgin	__P((struct aic_softc *));
+void	aic_abort	__P((struct aic_softc *, struct aic_acb *));
+void	aic_msgout	__P((struct aic_softc *));
+int	aic_dataout_pio	__P((struct aic_softc *, u_char *, int));
+int	aic_datain_pio	__P((struct aic_softc *, u_char *, int));
 #if AIC_DEBUG
-void	aic_print_active_acb();
-void	aic_dump_driver();
-void	aic_dump6360();
+void	aic_print_acb	__P((struct aic_acb *));
+void	aic_dump_driver __P((struct aic_softc *));
+void	aic_dump6360	__P((struct aic_softc *));
+void	aic_show_scsi_cmd __P((struct aic_acb *));
+void	aic_print_active_acb __P((void));
 #endif
 
 struct cfattach aic_ca = {
@@ -638,7 +651,6 @@ aicprobe(parent, match, aux)
 {
 	struct aic_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-	int i, len, ic;
 
 #ifdef NEWCONFIG
 	if (ia->ia_iobase == IOBASEUNK)
@@ -683,7 +695,6 @@ aic_find(sc)
 {
 	int iobase = sc->sc_iobase;
 	char chip_id[sizeof(IDSTRING)];	/* For chips that support it */
-	char *start;
 	int i;
 
 	/* Remove aic6360 from possible powerdown mode */
@@ -874,7 +885,7 @@ aic_init(sc)
 			untimeout(aic_timeout, acb);
 			aic_done(sc, acb);
 		}
-		while (acb = sc->nexus_list.tqh_first) {
+		while ((acb = sc->nexus_list.tqh_first) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			untimeout(aic_timeout, acb);
 			aic_done(sc, acb);
@@ -1136,7 +1147,7 @@ aic_select(sc, acb)
 int
 aic_reselect(sc, message)
 	struct aic_softc *sc;
-	u_char message;
+	int message;
 {
 	u_char selid, target, lun;
 	struct aic_acb *acb;
@@ -1625,9 +1636,11 @@ nextbyte:
 		aic_sched_msgout(sc, SEND_DEV_RESET);
 		break;
 
+#ifdef notdef
 	abort:
 		aic_sched_msgout(sc, SEND_ABORT);
 		break;
+#endif
 	}
 
 	outb(iobase + SXFRCTL0, CHEN | SPIOEN);
@@ -1652,7 +1665,9 @@ aic_msgout(sc)
 	register struct aic_softc *sc;
 {
 	int iobase = sc->sc_iobase;
+#if AIC_USE_SYNCHRONOUS
 	struct aic_tinfo *ti;
+#endif
 	u_char sstat1;
 	int n;
 
@@ -1844,7 +1859,7 @@ aic_dataout_pio(sc, p, n)
 	int n;
 {
 	int iobase = sc->sc_iobase;
-	register u_char dmastat;
+	register u_char dmastat = 0;
 	int out = 0;
 #define DOUTAMOUNT 128		/* Full FIFO */
 
@@ -2527,9 +2542,9 @@ aic_print_acb(acb)
 	struct aic_acb *acb;
 {
 
-	printf("acb@%x xs=%x flags=%x", acb, acb->xs, acb->flags);
-	printf(" dp=%x dleft=%d target_stat=%x\n",
-	    (long)acb->data_addr, acb->data_length, acb->target_stat);
+	printf("acb@%p xs=%p flags=%x", acb, acb->xs, acb->flags);
+	printf(" dp=%p dleft=%d target_stat=%x\n",
+	       acb->data_addr, acb->data_length, acb->target_stat);
 	aic_show_scsi_cmd(acb);
 }
 
@@ -2579,7 +2594,7 @@ aic_dump_driver(sc)
 	struct aic_tinfo *ti;
 	int i;
 
-	printf("nexus=%x prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
+	printf("nexus=%p prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
 	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n",
 	    sc->sc_state, sc->sc_imess[0],
 	    sc->sc_msgpriq, sc->sc_msgoutq, sc->sc_lastmsg, sc->sc_currmsg);

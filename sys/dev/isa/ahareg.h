@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahareg.h,v 1.2 1996/04/22 20:03:04 hannken Exp $	*/
+/*	$OpenBSD: ahareg.h,v 1.3 1996/05/07 07:36:05 deraadt Exp $	*/
 typedef u_int8_t physaddr[3];
 typedef u_int8_t physlen[3];
 #define	ltophys	_lto3b
@@ -40,10 +40,12 @@ typedef u_int8_t physlen[3];
 #define AHA_START_SCSI		0x02	/* start scsi command */
 #define AHA_INQUIRE_REVISION	0x04	/* Adapter Inquiry */
 #define AHA_MBO_INTR_EN		0x05	/* Enable MBO available interrupt */
-/*#define AHA_SEL_TIMEOUT_SET	0x06	/* set selection time-out */
-/*#define AHA_BUS_ON_TIME_SET	0x07	/* set bus-on time */
-/*#define AHA_BUS_OFF_TIME_SET	0x08	/* set bus-off time */
-/*#define AHA_SPEED_SET		0x09	/* set transfer speed */
+#if 0
+#define AHA_SEL_TIMEOUT_SET	0x06	/* set selection time-out */
+#define AHA_BUS_ON_TIME_SET	0x07	/* set bus-on time */
+#define AHA_BUS_OFF_TIME_SET	0x08	/* set bus-off time */
+#define AHA_SPEED_SET		0x09	/* set transfer speed */
+#endif
 #define AHA_INQUIRE_DEVICES	0x0a	/* return installed devices 0-7 */
 #define AHA_INQUIRE_CONFIG	0x0b	/* return configuration data */
 #define AHA_TARGET_EN		0x0c	/* enable target mode */
