@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.24 1997/10/24 02:49:55 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.25 1997/11/04 19:46:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.24 1997/10/24 02:49:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.25 1997/11/04 19:46:39 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1281,7 +1281,8 @@ has_overlap(lp, freep, resolve)
 {
 	struct partition **spp;
 	u_int16_t npartitions;
-	int c, i, j, rval = 0;
+	int c, i, j;
+	char buf[BUFSIZ];
 
 	/* Get a sorted list of the partitions */
 	spp = sort_partitions(lp, &npartitions);
@@ -1319,27 +1320,31 @@ has_overlap(lp, freep, resolve)
 					return(1);
 				}
 
-				printf("Disable which one? [%c %c] ",
-				    'a' + i, 'a' + j);
-				/* XXX - make less gross */
-				while ((c = getchar()) != EOF && c != '\n') {
-					c -= 'a';
-					if (c == i || c == j)
+				/* Get partition to disable or ^D */
+				do {
+					printf("Disable which one? [%c %c] ",
+					    'a' + i, 'a' + j);
+					buf[0] = '\0';
+					if (!fgets(buf, sizeof(buf), stdin))
+						return(1);	/* ^D */
+					c = buf[0] - 'a';
+					if ((buf[1] == '\n' || buf[1] == '\0')
+					    && (c == i || c == j))
 						break;
-				}
-				putchar('\n');
-				/* Mark the selected one as unused or... */
-				if (c == i || c == j) {
-					lp->d_partitions[c].p_fstype = FS_UNUSED;
-					*freep += lp->d_partitions[c].p_size;
-				} else
-					rval = 1;	/* still has overlap */
-			    }
+				} while (buf[1] != '\n' && buf[1] != '\0' &&
+				    c != i && c != j);
+
+				/* Mark the selected one as unused */
+				lp->d_partitions[c].p_fstype = FS_UNUSED;
+				*freep += lp->d_partitions[c].p_size;
+				(void)free(spp);
+				return(has_overlap(lp, freep, resolve));
+			}
 		}
 	}
 
 	(void)free(spp);
-	return(rval);
+	return(0);
 }
 
 void
