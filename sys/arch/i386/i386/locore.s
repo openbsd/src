@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.66 2002/07/24 23:20:11 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.67 2002/10/29 01:52:46 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1829,8 +1829,7 @@ switch_return:
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-	.globl	_C_LABEL(proc0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
-	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
+	.globl	_C_LABEL(proc0)
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_C_LABEL(proc0),%ebx
