@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.14 2002/10/13 14:21:49 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.15 2002/10/30 20:21:41 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -144,8 +144,6 @@ Mode of operation:
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
@@ -240,7 +238,7 @@ i82596_probe(sc)
 
 	if ((sc->ie_bus_read16)(sc, IE_ISCP_BUSY(sc->iscp))) {
 #ifdef I82596_DEBUG
-		printf ("%s: ISCP set failed\n", sc->sc_dev.dv_xname);
+		printf("%s: ISCP set failed\n", sc->sc_dev.dv_xname);
 #endif
 		return 0;
 	}
@@ -253,12 +251,6 @@ i82596_probe(sc)
 			     (sc->ie_bus_read16)(sc, IE_SCP_TEST(sc->scp));
 		     DELAY(100))
 			;
-
-#ifdef I82596_DEBUG
-		printf ("%s: test %x:%x\n", sc->sc_dev.dv_xname,
-			*((volatile int32_t *)(sc->bh + sc->scp)),
-			*(int32_t *)(sc->bh + IE_SCP_TEST(sc->scp)));
-#endif
 	}
 
 	return 1;
@@ -369,17 +361,17 @@ i82596_cmd_wait(sc)
 		if ((sc->ie_bus_read16)(sc, off) == 0) {
 #ifdef I82596_DEBUG1
 			if (sc->sc_debug & IED_CMDS)
-				printf ("%s: cmd_wait after %d usec\n",
-					sc->sc_dev.dv_xname, (90000 - i) * 10);
+				printf("%s: cmd_wait after %d usec\n",
+				    sc->sc_dev.dv_xname, (90000 - i) * 10);
 #endif
 			return (0);
 		}
 		delay(10);
 	}
 
-	printf ("i82596_cmd_wait: timo(%ssync): scb status: %b\n",
-		sc->async_cmd_inprogress?"a":"",
-		sc->ie_bus_read16(sc, off), IE_STAT_BITS);
+	printf("i82596_cmd_wait: timo(%ssync): scb status: %b\n",
+	    sc->async_cmd_inprogress?"a":"",
+	    sc->ie_bus_read16(sc, IE_SCB_STATUS(sc->scb)), IE_STAT_BITS);
 	return (1);	/* Timeout */
 }
 
@@ -445,9 +437,9 @@ i82596_start_cmd(sc, cmd, iecmdbuf, mask, async)
 			if (status & mask) {
 #ifdef I82596_DEBUG
 				if (sc->sc_debug & IED_CMDS)
-					printf ("%s: cmd status %b\n",
-						sc->sc_dev.dv_xname,
-						status, IE_STAT_BITS);
+					printf("%s: cmd status %b\n",
+					    sc->sc_dev.dv_xname,
+					    status, IE_STAT_BITS);
 #endif
 				return (0);
 			}
@@ -549,9 +541,12 @@ loop:
 	/*
 	 * Interrupt ACK was posted asynchronously; wait for
 	 * completion here before reading SCB status again.
+	 *
+	 * If ACK fails, try to reset the chip, in hopes that
+	 * it helps.
 	 */
 	if (i82596_cmd_wait(sc))
-		goto out;
+		goto reset;
 
 	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_READ);
 	status = sc->ie_bus_read16(sc, off);
@@ -972,7 +967,7 @@ i82596_chk_rx_ring(sc)
 static __inline__ struct mbuf *
 i82596_get(struct ie_softc *sc, int head, int totlen)
 {
-	struct mbuf *top, **mp, *m;
+	struct mbuf *m, *m0, *newm;
 	int off, len, resid;
 	int thisrboff, thismboff;
 	struct ether_header eh;
@@ -985,50 +980,47 @@ i82596_get(struct ie_softc *sc, int head, int totlen)
 
 	resid = totlen;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	if (m0 == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
-	m->m_pkthdr.len = totlen;
+	m0->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
-	top = 0;
-	mp = &top;
+	m = m0;
 
 	/*
 	 * This loop goes through and allocates mbufs for all the data we will
 	 * be copying in.  It does not actually do the copying yet.
 	 */
 	while (totlen > 0) {
-		if (top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
-				m_freem(top);
-				return (0);
-			}
-			len = MLEN;
-		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_freem(top);
-				return (0);
-			}
+			if ((m->m_flags & M_EXT) == 0)
+				goto bad;
 			len = MCLBYTES;
 		}
-		if (mp == &top) {
+
+		if (m == m0) {
 			caddr_t newdata = (caddr_t)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
 			m->m_data = newdata;
 		}
+
 		m->m_len = len = min(totlen, len);
+
 		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
+		if (totlen > 0) {
+			MGET(newm, M_DONTWAIT, MT_DATA);
+			if (newm == 0)
+				goto bad;
+			len = MLEN;
+			m = m->m_next = newm;
+		}
 	}
 
-	m = top;
+	m = m0;
 	thismboff = 0;
 
 	/*
@@ -1072,7 +1064,11 @@ i82596_get(struct ie_softc *sc, int head, int totlen)
 	 * we have now copied everything in from the shared memory.
 	 * This means that we are done.
 	 */
-	return (top);
+	return (m0);
+
+bad:
+	m_freem(m0);
+	return (NULL);
 }
 
 /*
@@ -1226,7 +1222,7 @@ i82596_start(ifp)
 
 #ifdef I82596_DEBUG
 	if (sc->sc_debug & IED_ENQ)
-		printf ("i82596_start(%p)\n", ifp);
+		printf("i82596_start(%p)\n", ifp);
 #endif
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -1325,13 +1321,13 @@ i82596_proberam(sc)
 
 	/* Put in 16-bit mode */
 	off = IE_SCP_BUS_USE(sc->scp);
-	bus_space_write_1(sc->bt, sc->bh, off, 0);
-	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_WRITE);
+	(sc->ie_bus_write16)(sc, off, 0);
+	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_WRITE);
 
 	/* Set the ISCP `busy' bit */
 	off = IE_ISCP_BUSY(sc->iscp);
-	bus_space_write_1(sc->bt, sc->bh, off, 1);
-	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_WRITE);
+	(sc->ie_bus_write16)(sc, off, 1);
+	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_WRITE);
 
 	if (sc->hwreset)
 		(sc->hwreset)(sc, IE_CHIP_PROBE);
@@ -1343,7 +1339,7 @@ i82596_proberam(sc)
 	/* Read back the ISCP `busy' bit; it should be clear by now */
 	off = IE_ISCP_BUSY(sc->iscp);
 	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_READ);
-	result = bus_space_read_1(sc->bt, sc->bh, off) == 0;
+	result = (sc->ie_bus_read16)(sc, off) == 0;
 
 	/* Acknowledge any interrupts we may have caused. */
 	ie_ack(sc, IE_ST_WHENCE);
@@ -1975,9 +1971,9 @@ again:
 	if (size > sc->mcast_addrs_size) {
 		/* Need to allocate more space */
 		if (sc->mcast_addrs_size)
-			free(sc->mcast_addrs, M_IPMADDR);
+			free(sc->mcast_addrs, M_IFMADDR);
 		sc->mcast_addrs = (char *)
-			malloc(size, M_IPMADDR, M_WAITOK);
+			malloc(size, M_IFMADDR, M_WAITOK);
 		sc->mcast_addrs_size = size;
 	}
 
