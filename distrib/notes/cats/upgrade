@@ -1,4 +1,2 @@
-dnl	$OpenBSD: upgrade,v 1.3 2004/03/16 08:24:59 jmc Exp $
-Since OpenBSD/OSREV is the first MACHINE release, there is no upgrade
-functionality.
-dnl OpenBSDUpgrade({:-the CD-ROM-:})
+dnl	$OpenBSD: upgrade,v 1.4 2004/09/10 19:21:08 miod Exp $
+OpenBSDUpgrade({:-the CD-ROM-:})
