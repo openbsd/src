@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.10 1997/01/15 23:41:14 millert Exp $	*/
+/*	$OpenBSD: modload.c,v 1.11 1997/01/18 15:12:44 mickey Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ int fileopen = 0;
 #define	PART_RESRV	0x04
 int devfd, modfd;
 struct lmc_resrv resrv;
+char modout[80];
 
 void
 cleanup()
@@ -146,6 +147,9 @@ cleanup()
 
 	if (fileopen & MOD_OPEN)
 		close(modfd);
+
+	if(dounlink && unlink(modout) != 0)
+		err(17, "unlink(%s)", modout);
 }
 
 int
@@ -159,7 +163,7 @@ main(argc, argv)
 	char *post = NULL;
 	char *out = NULL;
 	char *modobj;
-	char modout[80], *p;
+	char *p;
 	struct exec info_buf;
 	struct stat stb;
 	u_int modsize;	/* XXX */
@@ -495,9 +499,6 @@ main(argc, argv)
 		execl(post, post, id, type, offset, 0);
 		err(16, "can't exec `%s'", post);
 	}
-
-	if(dounlink && unlink(out) != 0)
-		err(17, "unlink(%s)", out);
 
 	return 0;
 }
