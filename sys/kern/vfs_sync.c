@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.26 2004/06/21 23:50:36 tholo Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.27 2004/08/03 13:34:48 art Exp $  */
 
 /*
  *  Portions of this code are:
@@ -179,8 +179,13 @@ sched_sync(p)
 				 * slot we are safe.
 				 */
 				if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
-				    vp->v_type != VBLK)
+				    vp->v_type != VBLK) {
+					vprint("fsync failed", vp);
+					if (vp->v_mount != NULL)
+						printf("mounted on: %s\n",
+						    vp->v_mount->mnt_stat.f_mntonname);
 					panic("sched_sync: fsync failed");
+				}
 				/*
 				 * Put us back on the worklist.  The worklist
 				 * routine will remove us from our current
