@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm.h,v 1.2 1996/07/03 17:24:30 chuck Exp $	*/
+/*	$OpenBSD: natm.h,v 1.3 1997/07/19 22:56:35 chuck Exp $	*/
 
 /*
  *
@@ -82,7 +82,7 @@ struct natmpcb {
   u_int	npcb_inq;			/* # of our pkts in proto q */
   struct socket	*npcb_socket;		/* backpointer to socket */
   struct ifnet *npcb_ifp;		/* pointer to hardware */
-  struct in_addr ipaddr;		/* remote IP address, if APCB_IP */
+  struct in_addr ipaddr;		/* remote IP address, if NPCB_IP */
   u_int16_t npcb_vci;			/* VCI */
   u_int8_t npcb_vpi;			/* VPI */
   u_int8_t npcb_flags;			/* flags */
