@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.36 1998/03/17 11:05:23 deraadt Exp $
+$OpenBSD: pcidevs,v 1.37 1998/03/17 16:28:14 mickey Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -810,6 +810,7 @@ product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX ATLAS		0x0518	MGA PX2085 (Atlas)
 product MATROX MILLENIUM	0x0519	MGA Millenium 2064W (Storm)
+product MATROX MYSTIQUE_220	0x051A	MGA 1064SG 220MHz
 product MATROX MILLENNIUM_II	0x051B	MGA Millennium II 2164W
 product MATROX MILLENNIUM_II_AGP	0x051F	MGA Millennium II 2164WA-B AGP
 product MATROX MYSTIQUE		0x102B	MGA 1064SG
