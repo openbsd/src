@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.10 2000/04/15 01:37:28 deraadt Exp $
+.\"	$OpenBSD: queue.3,v 1.11 2000/04/15 01:42:29 deraadt Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -404,8 +404,8 @@ and
 .Li headp
 are user selectable.)
 .sp
-The 
-.Fa HEADNAME 
+The
+.Fa HEADNAME
 facility is often not used, leading to the following bizarre code:
 .Bd -literal -offset indent
 SLIST_HEAD(, TYPE) head, *headp;
@@ -421,7 +421,7 @@ The
 macro initializes the list referenced by
 .Fa head .
 .Pp
-The list can also be initialized statically by using the 
+The list can also be initialized statically by using the
 .Fn SLIST_HEAD_INITIALIZER
 macro like this:
 .Bd -literal -offset indent
@@ -446,7 +446,7 @@ The
 macro removes the first element of the list pointed by
 .Fa head .
 .Pp
-The 
+The
 .Fn SLIST_FIRST ,
 and
 .Fn SLIST_NEXT
@@ -455,14 +455,14 @@ macros can be used to traverse the list:
 for (np = SLIST_FIRST(&head); np != NULL; np = SLIST_NEXT(np, NAME))
 .Ed
 .Pp
-Or, for simplicity, one can use the 
+Or, for simplicity, one can use the
 .Fn SLIST_FOREACH
 macro:
 .Bd -literal -offset indent
 SLIST_FOREACH(np, head, NAME)
 .Ed
 .Pp
-The 
+The
 .Fn SLIST_EMPTY
 macro should be used to check whether a simple list is empty.
 .Sh LISTS
@@ -498,8 +498,8 @@ and
 .Li headp
 are user selectable.)
 .sp
-The 
-.Fa HEADNAME 
+The
+.Fa HEADNAME
 facility is often not used, leading to the following bizarre code:
 .Bd -literal -offset indent
 LIST_HEAD(, TYPE) head, *headp;
@@ -515,7 +515,7 @@ The
 macro initializes the list referenced by
 .Fa head .
 .Pp
-The list can also be initialized statically by using the 
+The list can also be initialized statically by using the
 .Fn LIST_HEAD_INITIALIZER
 macro like this:
 .Bd -literal -offset indent
@@ -548,7 +548,7 @@ macro removes the element
 .Fa elm
 from the list.
 .Pp
-The 
+The
 .Fn LIST_FIRST ,
 and
 .Fn LIST_NEXT
@@ -564,7 +564,7 @@ macro:
 LIST_FOREACH(np, head, NAME)
 .Ed
 .Pp
-The 
+The
 .Fn LIST_EMPTY
 macro should be used to check whether a list is empty.
 .Sh LIST EXAMPLE
@@ -598,8 +598,8 @@ while (head.lh_first != NULL)		/* Delete. */
 A simple queue is headed by a structure defined by the
 .Fn SIMPLEQ_HEAD
 macro.
-This structure contains a pair of pointers, 
-one to the first element in the simple queue and the other to 
+This structure contains a pair of pointers,
+one to the first element in the simple queue and the other to
 the last element in the simple queue.
 The elements are singly linked.
 New elements can be added to the queue after an existing element,
@@ -637,7 +637,7 @@ The
 macro initializes the queue referenced by
 .Fa head .
 .Pp
-The queue can also be initialized statically by using the 
+The queue can also be initialized statically by using the
 .Fn SIMPLEQ_HEAD_INITIALIZER
 macro like this:
 .Bd -literal -offset indent
@@ -668,7 +668,7 @@ The
 macro removes the first element
 from the queue.
 .Pp
-The 
+The
 .Fn SIMPLEQ_FIRST ,
 and
 .Fn SIMPLEQ_NEXT
@@ -680,7 +680,7 @@ is used for queue traversal
 SIMPLEQ_FOREACH(np, head, NAME)
 .Ed
 .Pp
-The 
+The
 .Fn SIMPLEQ_EMPTY
 macro should be used to check whether a list is empty.
 .Sh SIMPLE QUEUE EXAMPLE
@@ -791,9 +791,9 @@ from the tail queue.
 The
 .Fn TAIL_FIRST ,
 .Fn TAILQ_NEXT ,
-.Fn TAILQ_LAST 
+.Fn TAILQ_LAST
 and
-.Fn TAILQ_PREV 
+.Fn TAILQ_PREV
 macros can be used to traverse a tail queue.
 The
 .Fn TAILQ_FOREACH
@@ -808,7 +808,7 @@ acts like
 .Fn TAILQ_FOREACH
 but traveres the tail queue in reverse.
 .Pp
-The 
+The
 .Fn TAILQ_EMPTY
 macro should be used to check whether a tail queue is empty.
 .Sh TAIL QUEUE EXAMPLE
@@ -926,7 +926,7 @@ The
 .Fn CIRCLEQ_FIRST ,
 .Fn CIRCLEQ_LAST ,
 .Fn CIRCLEQ_END ,
-.Fn CIRCLEQ_NEXT 
+.Fn CIRCLEQ_NEXT
 and
 .Fn CIRCLEQ_PREV
 macros can be used to traverse a circular queue.
@@ -943,7 +943,7 @@ macro acts like
 .Fn CIRCLEQ_FOREACH
 but traverses the circular queue backwards.
 .Pp
-The 
+The
 .Fn CIRCLEQ_EMPTY
 macro should be used to check whether a circular queue is empty.
 .Sh CIRCULAR QUEUE EXAMPLE
@@ -970,11 +970,11 @@ CIRCLEQ_INSERT_AFTER(&head, n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 CIRCLEQ_INSERT_BEFORE(&head, n1, n2, entries);
 					/* Forward traversal. */
-for (np = CIRCLEQ_FIRST(&head); np != CIRCLEQ_END(&head); 
+for (np = CIRCLEQ_FIRST(&head); np != CIRCLEQ_END(&head);
     np = CIRCLEQ_NEXT(np, entries))
 	np-> ...
 					/* Reverse traversal. */
-for (np = CIRCLEQ_LAST(&head); np != CIRCLEQ_END(&head); 
+for (np = CIRCLEQ_LAST(&head); np != CIRCLEQ_END(&head);
     np = CIRCLEQ_PREV(np, entries))
 	np-> ...
 					/* Delete. */
@@ -985,12 +985,12 @@ while (CIRCLEQ_FIRST(&head) != CIRCLEQ_END(&head))
 The
 .Fn SLIST_END ,
 .Fn LIST_END ,
-.Fn SIMPLEQ_END 
+.Fn SIMPLEQ_END
 and
 .Fn TAILQ_END
 macros are provided for symetry with
 .Fn CIRCLEQ_END .
-They expand to 
+They expand to
 .Dv NULL
 and don't serve any useful purpose.
 .Pp
@@ -1000,10 +1000,11 @@ LIST_FOREACH(var, head, entry)
 	free(var);
 free(head);
 .Ed
-Since 
+.Pp
+Since
 .Va var
-is free'd, the 
-.Fn FOREACH 
+is free'd, the
+.Fn FOREACH
 macro refers to a pointer that may have been reallocated already.
 Proper code needs a second variable.
 .Bd -literal -offset indent
