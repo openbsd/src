@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.3 1996/11/03 06:35:20 deraadt Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.4 1997/10/24 09:04:24 deraadt Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -100,9 +100,12 @@
 #define	O_NOCTTY	0x8000		/* don't assign controlling terminal */
 
 #ifdef _KERNEL
-/* convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE */
-#define	FFLAGS(oflags)	((oflags) + 1)
-#define	OFLAGS(fflags)	((fflags) - 1)
+/*
+ * convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE.
+ * For out-of-range values for the flags, be slightly careful (but lossy).
+ */
+#define	FFLAGS(oflags)	(((oflags) & ~O_ACCMODE) | (((oflags) + 1) & O_ACCMODE))
+#define	OFLAGS(fflags)	(((fflags) & ~O_ACCMODE) | (((fflags) - 1) & O_ACCMODE))
 
 /* bits to save after open */
 #define	FMASK		(FREAD|FWRITE|FAPPEND|FASYNC|FFSYNC|FNONBLOCK)
