@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgrcv.2,v 1.9 2000/10/18 05:12:10 aaron Exp $
+.\"	$OpenBSD: msgrcv.2,v 1.10 2001/08/06 10:42:26 mpech Exp $
 .\"	$NetBSD: msgrcv.2,v 1.2 1997/03/27 08:20:37 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -198,7 +198,8 @@ is set in
 .Xr msgget 2 ,
 .Xr msgsnd 2
 .Sh BUGS
-OpenBSD does not define the
+.Ox
+does not define the
 .Er EIDRM
 error value, which should be used in
 the case of a removed message queue, nor the

@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.5,v 1.6 2000/09/17 02:11:13 aaron Exp $
+.\" $OpenBSD: keynote.5,v 1.7 2001/08/06 10:42:26 mpech Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -68,14 +68,12 @@ Blank lines are not permitted in assertions. Multiple assertions
 stored in a file (e.g., in application policy configurations),
 therefore, can be separated from one another unambiguously by the use
 of blank lines between them.
-.Pp
 .Sh COMMENTS
 The octothorp character ("#", ASCII 35 decimal) can be used to
 introduce comments. Outside of quoted strings, all characters from the
 "#" character through the end of the current line are ignored.
 However, commented text is included in the computation of assertion
 signatures.
-.Pp
 .Sh STRINGS
 A `string' is a lexical object containing a sequence of characters.
 Strings may contain any non-NUL characters, including newlines and
@@ -120,7 +118,6 @@ leading backslash removed (e.g., "\\a" becomes "a", and "\\\\" becomes
              newline\\n followed by one space."
         "this string contains a newline\\012\\040followed by one space."
 .Ed
-.Pp
 .Sh STRING EXPRESSIONS
 In general, anywhere a quoted string literal is allowed, a `string
 expression' can be used. A string expression constructs a string from
@@ -137,7 +134,6 @@ parenthesized.
 .Ed
 
 The "$" operator has higher precedence than the "." operator.
-.Pp
 .Sh DEREFERENCED ATTRIBUTES
 Action attributes provide the primary mechanism for applications to
 pass information to assertions. Attribute names are strings from a
@@ -193,7 +189,6 @@ The <DerefAttribute> token is defined as:
                         underscore character, followed by any number of
                         a-z, A-Z, 0-9, or underscore characters} ;
 .Ed
-.Pp
 .Sh PRINCIPAL IDENTIFIERS
 Principals are represented as ASCII strings called `Principal
 Identifiers'. Principal Identifiers may be arbitrary labels whose
@@ -205,7 +200,6 @@ verification.
        <PrincipalIdentifier>:: <OpaqueID>
                              | <KeyID> ;
 .Ed
-.Pp
 .Sh OPAQUE PRINCIPAL IDENTIFIERS
 Principal Identifiers that are used by KeyNote only as labels are
 said to be `opaque'.  Opaque identifiers are encoded in assertions as
@@ -216,7 +210,6 @@ strings (as defined above):
 .Ed
 
 Opaque identifier strings should not contain the ":" character.
-.Pp
 .Sh CRYPTOGRAPHIC PRINCIPAL IDENTIFIERS
 Principal Identifiers that are used by KeyNote as keys, e.g., to
 verify credential signatures, are said to be `cryptographic'.
@@ -251,7 +244,6 @@ convention, hexadecimal encoded keys use lower-case ASCII characters.
 Cryptographic Principal Identifiers are converted to a normalized
 canonical form for the purposes of any internal comparisons between
 them; see RFC 2704 for more details.
-.Pp
 .Sh KEYNOTE-VERSION FIELD
 The KeyNote-Version field identifies the version of the KeyNote
 assertion language under which the assertion was written. The
@@ -269,7 +261,6 @@ version number of the KeyNote language under which they are to be
 interpreted. Assertions written to conform with this document should
 be identified with the version string "2" (or the integer 2). The
 KeyNote-Version field, if included, should appear first.
-.Pp
 .Sh LOCAL-CONSTANTS FIELD
 This field adds or overrides action attributes in the current
 assertion only.  This mechanism allows the use of short names for
@@ -295,7 +286,6 @@ An attribute may be initialized at most once in the Local-Constants
 field. If an attribute is initialized more than once in an assertion,
 the entire assertion is considered invalid and is not considered by
 the KeyNote compliance checker in evaluating queries.
-.Pp
 .Sh AUTHORIZER FIELD
 The Authorizer identifies the Principal issuing the assertion. This
 field is of the form:
@@ -308,7 +298,6 @@ field is of the form:
 
 The Principal Identifier may be given directly or by reference to the
 attribute namespace.
-.Pp
 .Sh LICENSEES FIELD
 The Licensees field identifies the principals authorized by the
 assertion. More than one principal can be authorized, and
@@ -339,7 +328,6 @@ The "&&" operator has higher precedence than the "||" operator. <K> is
 an ASCII-encoded positive decimal integer. If a <PrincList> contains
 fewer than <K> principals, the entire assertion is omitted from
 processing.
-.Pp
 .Sh CONDITIONS FIELD
 This field gives the `conditions' under which the Authorizer trusts
 the Licensees to perform an action. `Conditions' are predicates that
@@ -452,7 +440,6 @@ fractional component of an attribute value dereferenced as an integer
 is rounded down. If an attribute dereferenced as a number cannot be
 properly converted (e.g., it contains invalid characters or is empty)
 its value is considered to be zero.
-.Pp
 .Sh COMMENT FIELD
 The Comment field allows assertions to be annotated with information
 describing their purpose. It is of the form:
@@ -466,7 +453,6 @@ KeyNote. Note that this is one of two mechanisms for including
 comments in KeyNote assertions; comments can also be inserted anywhere
 in an assertion's body by preceding them with the "#" character
 (except inside string literals).
-.Pp
 .Sh SIGNATURE FIELD
 The Signature field identifies a signed assertion and gives the
 encoded digital signature of the principal identified in the
@@ -502,7 +488,6 @@ signature field identifier is the last character included in signature
 calculation. The signature is always the last field in a KeyNote
 assertion. Text following this field is not considered part of the
 assertion.
-.Pp
 .Sh EXAMPLES
 Note that the keys and signatures in these examples are fictional, and
 generally much shorter than would be required for real security, in
@@ -544,7 +529,6 @@ the interest of readability.
                         (address == "jf@keynote.research.att.com"));
            Signature: "DSA-SHA1:8912aa"
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr keynote 1 ,
 .Xr keynote 3 ,
@@ -560,7 +544,7 @@ M. Blaze, J. Feigenbaum, J. Lacy,
 M. Blaze, J. Feigenbaum, M. Strauss,
 1998 Financial Crypto Conference
 .El
-.Sh AUTHOR
+.Sh AUTHORS
 Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .Sh WEB PAGE
 http://www.cis.upenn.edu/~keynote

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.13 2000/12/21 17:34:33 aaron Exp $
+.\"	$OpenBSD: rmd160.3,v 1.14 2001/08/06 10:42:26 mpech Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -188,7 +188,7 @@ If a message digest is to be copied to a multi-byte type (ie:
 an array of five 32-bit integers) it will be necessary to
 perform byte swapping on little endian machines such as the i386, alpha,
 and vax.
-.Sh AUTHOR
+.Sh AUTHORS
 This implementation of RMD-160 was written by Antoon Bosselaers.
 .Pp
 The
@@ -202,7 +202,6 @@ helper functions are derived from code written by Poul-Henning Kamp.
 .Xr md4 3 ,
 .Xr md5 3 ,
 .Xr sha1 3
-.Pp
 .Rs
 .%A H. Dobbertin, A. Bosselaers, B. Preneel
 .%T RIPEMD-160, a strengthened version of RIPEMD

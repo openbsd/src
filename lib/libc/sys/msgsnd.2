@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgsnd.2,v 1.8 2000/10/18 05:12:10 aaron Exp $
+.\"	$OpenBSD: msgsnd.2,v 1.9 2001/08/06 10:42:26 mpech Exp $
 .\"	$NetBSD: msgsnd.2,v 1.2 1997/03/27 08:20:36 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -156,7 +156,8 @@ The system call was interrupted by the delivery of a signal.
 .Xr msgget 2 ,
 .Xr msgrcv 2
 .Sh BUGS
-OpenBSD does not define the
+.Ox
+does not define the
 .Er EIDRM
 error value, which should be used
 in the case of a removed message queue.

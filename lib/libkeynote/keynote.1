@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.1,v 1.17 2000/09/17 02:11:12 aaron Exp $
+.\" $OpenBSD: keynote.1,v 1.18 2001/08/06 10:42:26 mpech Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -61,7 +61,6 @@ operations
 For more details on
 .Nm KeyNote ,
 see RFC 2704.
-.Pp
 .Sh KEY GENERATION
 "keynote keygen" creates a public/private key of size
 .Fa KeySize ,
@@ -104,7 +103,6 @@ for the first line and has to be longer (by at least 2) than
 also accounts for the line-continuation character (backslash) at
 the end of each line, and the doublequotes at the beginning and end
 of the key encoding.  Default values are 12 and 50 respectively.
-.Pp
 .Sh ASSERTION SIGNING
 "keynote sign" reads the assertion contained in
 .Fa AssertionFile
@@ -178,7 +176,6 @@ for the first line and has to be longer (by at least 2) than
 also accounts for the line-continuation character (backslash) at
 the end of each line, and the doublequotes at the beginning and end
 of the signature encoding.  Default values are 12 and 50 respectively.
-.Pp
 .Sh SIGNATURE VERIFICATION
 "keynote sigver" reads the assertions contained in
 .Fa AssertionFile
@@ -244,7 +241,6 @@ flags should be given per invocation. If no flags are given,
 "keynote verify" prints the usage message and exits with error code \-1.
 .Pp
 "keynote verify" exits with code \-1 if there was an error, and 0 on success.
-.Pp
 .Sh SEE ALSO
 .Xr keynote 3 ,
 .Xr keynote 4 ,
@@ -260,7 +256,7 @@ M. Blaze, J. Feigenbaum, J. Lacy,
 M. Blaze, J. Feigenbaum, M. Strauss,
 1998 Financial Crypto Conference
 .El
-.Sh AUTHOR
+.Sh AUTHORS
 Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .Sh WEB PAGE
 http://www.cis.upenn.edu/~keynote

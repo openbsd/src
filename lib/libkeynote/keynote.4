@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.17 2000/09/17 02:11:12 aaron Exp $
+.\" $OpenBSD: keynote.4,v 1.18 2001/08/06 10:42:26 mpech Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -313,13 +313,11 @@ sender), and any "organization" headers present (the organization
 name). The values of these attributes would be derived in the obvious
 way from the email message headers. The public key of the message's
 signer would be given in the "_ACTION_AUTHORIZERS" attribute.
-.Pp
 .Sh QUERY SEMANTICS
 The discussion in the following sections assume some familiarity with
 assertion syntax. Please refer to
 .Xr keynote 5
 for more details on the syntax.
-.Pp
 .Sh QUERY PARAMETERS
 A KeyNote query has four parameters:
 
@@ -343,7 +341,6 @@ distribution system), while still others might be requested from the
 application as needed by the evaluator, through a `callback' mechanism
 (e.g., for attribute values that represent values from among a very
 large namespace).
-.Pp
 .Sh ACTION REQUESTER
 At least one Principal must be identified in each query as the
 `requester' of the action. Actions may be requested by several
@@ -352,7 +349,6 @@ allows policies that require multiple authorizations, e.g., `two
 person control'. The set of authorizing principals is made available
 in the special attribute "_ACTION_AUTHORIZERS"; if several principals
 are authorizers, their identifiers are separated with commas.
-.Pp
 .Sh ORDERED COMPLIANCE VALUE SET
 The set of compliance values of interest to an application (and their
 relative ranking to one another) is determined by the invoking
@@ -371,7 +367,6 @@ _MAX_TRUST) in the special attribute named "_VALUES". Values are
 separated with commas; applications that use assertions that make use
 of the _VALUES attribute should therefore avoid the use of compliance
 value strings that themselves contain commas.
-.Pp
 .Sh PRINCIPAL IDENTIFIER NORMALIZATION
 Principal identifier comparisons among Cryptographic Principal
 Identifiers (that represent keys) in the Authorizer and Licensees
@@ -389,12 +384,9 @@ Opaque identifiers are compared as case-sensitive strings.
 Notice that use of opaque identifiers in the Authorizer field requires
 that the assertion's integrity be locally trusted (since it cannot be
 cryptographically verified by the compliance checker).
-.Pp
-
 .Sh POLICY COMPLIANCE VALUE CALCULATION
 The Policy Compliance Value of a query is the Principal Compliance
 Value of the principal named "POLICY".
-.Pp
 .Sh PRINCIPAL COMPLIANCE VALUE
 The Compliance Value of a principal <X> is the highest order (maximum)
 of:
@@ -409,12 +401,10 @@ of:
 The Direct Authorization Value of a principal <X> is _MAX_TRUST if <X>
 is listed in the query as an authorizer of the action. Otherwise, the
 Direct Authorization Value of <X> is _MIN_TRUST.
-.Pp
 .Sh ASSERTION COMPLIANC VALUE
 The Assertion Compliance Value of an assertion is the lowest order
 (minimum) of the assertion's Conditions Compliance Value and its
 Licensee Compliance Value.
-.Pp
 .Sh CONDITIONS COMPLIANCE VALUE
 The Conditions Compliance Value of an assertion is the highest-order
 (maximum) value among all successful clauses listed in the conditions
@@ -522,7 +512,6 @@ evaluated normally.
 .Pp
 An invalid <RegExpr> is considered a runtime error and causes the test
 in which it occurs to be considered false.
-.Pp
 .Sh LICENSEE COMPLIANCE VALUE
 The Licensee Compliance Value of an assertion is calculated by
 evaluating the expression in the Licensees field, based on the
@@ -571,7 +560,6 @@ resulting Licensee Compliance Value is "no".
 Observe that if there are exactly two possible compliance values
 (e.g., "false" and "true"), the rules of Licensee Compliance Value
 resolution reduce exactly to standard Boolean logic.
-.Pp
 .Sh ASSERTION MANAGEMENT
 Assertions may be either signed or unsigned. Only signed assertions
 should be used as credentials or transmitted or stored on untrusted
@@ -597,7 +585,6 @@ applications might need only a small number of infrequently changed
 trusted assertions to `bootstrap' a policy whose details are specified
 in signed credentials issued by others and submitted over the
 untrusted interface.
-.Pp
 .Sh EXAMPLES
 A policy that delegates authority for the "SPEND" application domain
 to RSA key dab212 when the amount given in the "dollars" attribute is
@@ -705,7 +692,6 @@ However, the following return "Reject" (_MIN_TRUST):
         app_domain = "SPEND"
         dollars = "5500"
 .Ed
-.Pp
 .Sh FILES
 .Fd keynote.h
 .Fd libkeynote.a
@@ -724,7 +710,7 @@ M. Blaze, J. Feigenbaum, J. Lacy,
 M. Blaze, J. Feigenbaum, M. Strauss,
 1998 Financial Crypto Conference
 .El
-.Sh AUTHOR
+.Sh AUTHORS
 Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .Sh WEB PAGE
 http://www.cis.upenn.edu/~keynote
