@@ -39,7 +39,7 @@ struct raw_phdr
   {
     /* FIXME: Checking a host compiler define means that we can't use
        a cross gprof to the alpha.  */
-#ifdef __alpha__
+#if defined(__alpha__) || defined(__sparc64__)
     char low_pc[8];		/* base pc address of sample buffer */
     char high_pc[8];		/* max pc address of sampled buffer */
 #else
@@ -59,7 +59,7 @@ struct old_raw_phdr
   {
     /* FIXME: Checking a host compiler define means that we can't use
        a cross gprof to the alpha.  */
-#ifdef __alpha__
+#if defined(__alpha__) || defined(__sparc64__)
     char low_pc[8];		/* base pc address of sample buffer */
     char high_pc[8];		/* max pc address of sampled buffer */
 #else
