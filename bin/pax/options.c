@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.38 1999/07/04 18:21:11 espie Exp $	*/
+/*	$OpenBSD: options.c,v 1.39 1999/07/27 20:00:45 espie Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.38 1999/07/04 18:21:11 espie Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.39 1999/07/27 20:00:45 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,12 +76,19 @@ static int no_op __P((void));
 static void printflg __P((unsigned int));
 static int c_frmt __P((const void *, const void *));
 static off_t str_offt __P((char *));
+static char *getline __P((FILE *fp));
 static void pax_options __P((register int, register char **));
 static void pax_usage __P((void));
 static void tar_options __P((register int, register char **));
 static void tar_usage __P((void));
 static void cpio_options __P((register int, register char **));
 static void cpio_usage __P((void));
+
+/* errors from getline */
+#define GETLINE_FILE_CORRUPT 1
+#define GETLINE_OUT_OF_MEM 2
+static int getline_error;
+
 
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
@@ -858,15 +865,16 @@ tar_options(argc, argv)
 		}
 
 		while (*argv != NULL) {
-			if (!strcmp(*argv, "-C")) {
+			if (strcmp(*argv, "-C") == 0) {
 				if (*++argv == NULL)
 					break;
 				if (ftree_add(*argv++, 1) < 0)
 					tar_usage();
-			} else {
-				if (ftree_add(*argv++, 0) < 0)
-					tar_usage();
+
+				continue;
 			}
+			if (ftree_add(*argv++, 0) < 0)
+				tar_usage();
 		}
 		/*
 		 * no read errors allowed on updates/append operation!
@@ -931,8 +939,7 @@ cpio_options(argc, argv)
 #endif
 {
 	register int c, i;
-	size_t len;
-	char *p, *str;
+	char *str;
 	FSUB tmp;
 	FILE *fp;
 
@@ -1071,11 +1078,14 @@ cpio_options(argc, argv)
 					paxwarn(1, "Unable to open file '%s' for read", optarg);
 					cpio_usage();
 				}
-				while ((str = fgetln(fp, &len)) != NULL) {
-					str[len - 1] = '\0';
+				while ((str = getline(fp)) != NULL) {
 					pat_add(str, NULL);
 				}
 				fclose(fp);
+				if (getline_error) {
+					paxwarn(1, "Problem with file '%s'", optarg);
+					cpio_usage();
+				}
 				break;
 			case 'F':
 			case 'I':
@@ -1168,13 +1178,12 @@ cpio_options(argc, argv)
 			 * no read errors allowed on updates/append operation!
 			 */
 			maxflt = 0;
-			while ((str = fgetln(stdin, &len)) != NULL) {
-				str[len - 1] = '\0';
-				if ((p = strdup(str)) == NULL) {
-					paxwarn(0, "Out of memory.");
-					exit(1);
-				}
-				ftree_add(p, NULL);
+			while ((str = getline(stdin)) != NULL) {
+				ftree_add(str, NULL);
+			}
+			if (getline_error) {
+				paxwarn(1, "Problem while reading stdin");
+				cpio_usage();
 			}
 			break;
 		default:
@@ -1431,6 +1440,35 @@ str_offt(val)
 	return(num);
 }
 
+#ifdef __STDC__
+char *
+getline(FILE *f)
+#else
+char *
+getline(f)
+	FILE *f;
+#endif
+{
+	char *name, *temp;
+	size_t len;
+
+	name = fgetln(f, &len);
+	if (!name) {
+		getline_error = ferror(f) ? GETLINE_FILE_CORRUPT : 0;
+		return(0);
+	}
+	if (name[len-1] != '\n')
+		len++;
+	temp = malloc(len);
+	if (!temp) {
+		getline_error = GETLINE_OUT_OF_MEM;
+		return(0);
+	}
+	memcpy(temp, name, len-1);
+	temp[len-1] = 0;
+	return(temp);
+}
+			
 /*
  * no_op()
  *	for those option functions where the archive format has nothing to do.
