@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.18 2001/06/23 03:47:58 angelos Exp $	*/
+/*	$OpenBSD: queue.h,v 1.19 2001/06/23 03:49:06 angelos Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ struct {								\
  */
 #define DLIST_HEAD(name, type)						\
 struct name {								\
-	struct type dh_first;	/* first element */			\
+	struct type *dh_first;	/* first element */			\
 }
 
 #define DLIST_HEAD_INITIALIZER(head)					\
