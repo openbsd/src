@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.18 2003/10/12 10:58:25 dhartmei Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.19 2004/01/15 12:27:07 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.18 2003/10/12 10:58:25 dhartmei Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.19 2004/01/15 12:27:07 markus Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -570,6 +570,15 @@ tcp_print(register const u_char *bp, register u_int length,
 				datalen = 4;
 				LENCHECK(datalen);
 				(void)printf(" %u", EXTRACT_32BITS(cp));
+				break;
+
+			case TCPOPT_SIGNATURE:
+				(void)printf("tcpmd5:");
+				datalen = len - 2;
+				for (i = 0; i < datalen; ++i) {
+					LENCHECK(i);
+					(void)printf("%02x", cp[i]);
+				}
 				break;
 
 			default:
