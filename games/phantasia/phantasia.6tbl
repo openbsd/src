@@ -1,4 +1,4 @@
-.\"	$OpenBSD: phantasia.6tbl,v 1.5 2003/05/12 08:46:09 pjanzen Exp $
+.\"	$OpenBSD: phantasia.6tbl,v 1.6 2003/05/17 21:47:13 jmc Exp $
 .\"	$NetBSD: phantasia.6,v 1.9 2002/09/26 18:32:03 wiz Exp $
 .\"
 .Dd April 1, 2001
@@ -55,7 +55,7 @@ Only characters above
 zero are saved.
 Characters unused for a while will be purged.
 Characters are only placed on the scoreboard when they die.
-.Sh AUTHOR
+.Sh AUTHORS
 .An Edward Estes ,
 AT&T Information Systems, Skokie, IL
 .Sh PARTICULARS
@@ -317,6 +317,7 @@ The progression as characters increase in
 is summarized in the following table.
 .Pp
 .TS
+nokeep ;
 l c c c c c
 l n n n n n.
 Type	Strength	Mana	Energy	Brains	Magic
