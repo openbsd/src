@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.68 2001/10/08 14:16:55 aaron Exp $
+	$OpenBSD: pcmciadevs,v 1.69 2001/10/25 16:17:52 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -61,7 +61,7 @@ vendor GREYCELL			0x0143	Grey Cell
 vendor LINKSYS			0x0149	Linksys
 vendor NETGEAR			0x0149	Netgear
 vendor SIMPLETECH		0x014d	Simple Technology
-vendor SYMBOL			0x014d	Symbol
+vendor SYMBOL2			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent
 vendor AIRONET			0x015f	Aironet Wireless Communications
 vendor PSION			0x016c	Psion
@@ -75,6 +75,7 @@ vendor FARALLON			0x0200	Farallon Communications
 vendor TELECOMDEVICE		0x021b	Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
+vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor IODATA2			0x028a	I-O DATA
 vendor BREEZECOM		0x0a02	BreezeCOM
@@ -282,7 +283,8 @@ product SMC 8016		0x0105 SMC 8016
 product SMC EZCARD		0x8022 SMC EZCard
 
 /* Symbol */
-product SYMBOL SPECTRUM24	0x0801 Spectrum24 WLAN IEEE 802.11 FHSS
+product SYMBOL  SPECTRUM24	0x0801 Spectrum24 WLAN IEEE 802.11 FHSS
+product SYMBOL2 LA4100		0x0001 Spectrum24 LA4100 Series WLAN
 
 /* Telecom Device */
 product TELECOMDEVICE TCD_HPC100	0x0202 Telecom Device TCD-HPC100
@@ -317,6 +319,7 @@ vendor DLINK			-1	D-Link
 vendor EDIMAX			-1	Edimax
 vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
+vendor GEMTEK			-1	GEMTEK
 vendor ICOM			-1	ICOM Inc
 vendor INTERSIL			-1	Intersil
 vendor PLANET			-1	Planet
@@ -393,3 +396,4 @@ product GVC NIC2000P		{ "GVC", "NIC-2000p", "ETHERNET", "R01" }
 product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
 product WISECOM T210CT		{ "PCMCIA", "Ethernet&spCard", NULL, NULL }
 product WISECOM IPORT		{ "iPort", "10/100&spEthernet&spCard", NULL, NULL }
+product GEMTEK WLAN		{ "Intersil", "PRISM&sp2_5&spPCMCIA&spADAPTER", "ISL37300P", "Eval-RevA" }
