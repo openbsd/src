@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.31 2000/01/09 22:17:56 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.32 2000/01/10 04:30:52 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -606,8 +606,9 @@ struct in6_pktinfo {
 #define	IPCTL_IPPORT_MAXQUEUE	11
 #define	IPCTL_ENCDEBUG		12
 #define IPCTL_GIF_TTL		13	/* default TTL for gif encap packet */
-#define IPCTL_IPSEC_ACL		14	/* Ingress IPsec access control */
-#define	IPCTL_MAXID		15
+#define IPCTL_IPSEC_ACL		14	/* ingress IPsec access control */
+#define IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT	15 /* new SA lifetime */
+#define	IPCTL_MAXID		16
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -625,6 +626,7 @@ struct in6_pktinfo {
 	{ "encdebug", CTLTYPE_INT }, \
 	{ "gifttl", CTLTYPE_INT }, \
 	{ "ipsec-acl", CTLTYPE_INT }, \
+	{ "ipsec-invalid-life", CTLTYPE_INT }, \
 }
 
 /* INET6 stuff */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.65 2000/01/10 04:16:52 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.66 2000/01/10 04:30:52 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -210,7 +210,7 @@ int
 check_ipsec_policy(struct inpcb *inp, void *daddr)
 {
     struct route_enc re0, *re = &re0;
-    struct sockaddr_encap *dst *gw;
+    struct sockaddr_encap *dst, *gw;
     u_int8_t sa_require, sa_have;
     struct tdb tdb2, *tdb = NULL;
     union sockaddr_union sunion;
@@ -368,7 +368,7 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 	/* XXX */
 
 	/* Send PF_KEYv2 Notify */
-	if ((error = pfkeyv2_acquire(tdb2, 0)) != 0)
+	if ((error = pfkeyv2_acquire(&tdb2, 0)) != 0)
 	  return error;
 
 	/* 

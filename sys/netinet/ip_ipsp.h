@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.53 2000/01/09 22:31:07 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.54 2000/01/10 04:30:53 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -103,6 +103,9 @@ union sockaddr_union
 #define SPI_LOCAL_USE		0
 #define SPI_RESERVED_MIN	1
 #define SPI_RESERVED_MAX	255
+
+/* How long are we going to keep embryonic SAs (default value) */
+#define IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT	60	/* 1 minute */
 
 struct sockaddr_encap
 {
@@ -439,6 +442,7 @@ htonq(u_int64_t q)
 
 extern int encdebug;
 extern int ipsec_acl;
+extern int ipsec_keep_invalid;
 extern int ipsec_in_use;
 extern u_int8_t hmac_ipad_buffer[64];
 extern u_int8_t hmac_opad_buffer[64];

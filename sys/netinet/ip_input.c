@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.46 2000/01/09 22:30:37 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.47 2000/01/10 04:30:52 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 
 int encdebug = 0;
 int ipsec_acl = 0;
+int ipsec_keep_invalid = IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT;
 
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
@@ -1494,6 +1495,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &encdebug));
 	case IPCTL_IPSEC_ACL:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &ipsec_acl));
+	case IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_keep_invalid));
 	default:
 		return (EOPNOTSUPP);
 	}
