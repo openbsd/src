@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.251 2002/07/28 01:14:58 krw Exp $
+#	$OpenBSD: install.sub,v 1.252 2002/08/15 22:56:03 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1788,8 +1788,10 @@ donetconfig() {
 
 	DIDNET=y
 
-	_nam=
 	[ -f /tmp/myname ] && _nam=`cat /tmp/myname`
+
+	# chop off any fqdn that may be present in /tmp/myname.
+	_nam=${_nam%%.*}
 
 	ask_until "Enter system hostname (short form, e.g. 'foo'):" "$_nam"
 	hostname $resp
