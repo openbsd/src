@@ -32,7 +32,7 @@ static void print_Q(void);
 #endif
 
 void
-callout_init()
+callout_init(void)
 {
     Q = (struct timeout_q *) 0;
 }
@@ -42,7 +42,7 @@ callout_init()
  * signal handler for SIGALARM that is called once every second
  */
 void
-age_callout_queue()
+age_callout_queue(void)
 {
     struct timeout_q *ptr;
     
@@ -80,12 +80,12 @@ age_callout_queue()
 
 /* 
  * sets the timer
+ * delay	number of units for timeout
+ * action	function to be called on timeout
+ * data 	what to call the timeout function with
  */
 int
-timer_setTimer(delay, action, data)
-    int 	delay;  	/* number of units for timeout */
-    cfunc_t	action; 	/* function to be called on timeout */
-    char  	*data;  	/* what to call the timeout function with */
+timer_setTimer(int delay, cfunc_t action, char *data)
 {
     struct     timeout_q  *ptr, *node, *prev;
     
@@ -148,8 +148,7 @@ timer_setTimer(delay, action, data)
 
 /* clears the associated timer */
 void
-timer_clearTimer(timer_id)
-    int  timer_id;
+timer_clearTimer(int timer_id)
 {
     struct timeout_q  *ptr, *prev;
     
@@ -200,7 +199,7 @@ timer_clearTimer(timer_id)
  * debugging utility
  */
 static void
-print_Q()
+print_Q(void)
 {
     struct timeout_q  *ptr;
     
@@ -208,9 +207,9 @@ print_Q()
 	log(LOG_DEBUG,0,"(%d,%d) ", ptr->id, ptr->time);
 }
 #endif /* IGMP_DEBUG */
+
 int
-secs_remaining( timer_id)
-    int  timer_id;
+secs_remaining(int timer_id)
 {
     struct timeout_q  *ptr;
     int left=0;

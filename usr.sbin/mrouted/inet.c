@@ -28,8 +28,7 @@ char s4[19];
  * {subnet,-1}.)
  */
 int
-inet_valid_host(naddr)
-    u_int32_t naddr;
+inet_valid_host(u_int32_t naddr)
 {
     register u_int32_t addr;
 
@@ -46,8 +45,7 @@ inet_valid_host(naddr)
  * a series of 0's with no discontiguous 1's.
  */
 int
-inet_valid_mask(mask)
-    u_int32_t mask;
+inet_valid_mask(u_int32_t mask)
 {
     if (~(((mask & -mask) - 1) | mask) != 0) {
 	/* Mask is not contiguous */
@@ -67,8 +65,7 @@ inet_valid_mask(mask)
  * are all 0.
  */
 int
-inet_valid_subnet(nsubnet, nmask)
-    u_int32_t nsubnet, nmask;
+inet_valid_subnet(u_int32_t nsubnet, u_int32_t nmask)
 {
     register u_int32_t subnet, mask;
 
@@ -106,9 +103,7 @@ inet_valid_subnet(nsubnet, nmask)
  * Convert an IP address in u_long (network) format into a printable string.
  */
 char *
-inet_fmt(addr, s)
-    u_int32_t addr;
-    char *s;
+inet_fmt(u_int32_t addr, char *s)
 {
     register u_char *a;
 
@@ -123,9 +118,7 @@ inet_fmt(addr, s)
  * string including the netmask as a number of bits.
  */
 char *
-inet_fmts(addr, mask, s)
-    u_int32_t addr, mask;
-    char *s;
+inet_fmts(u_int32_t addr, u_int32_t mask, char *s)
 {
     register u_char *a, *m;
     int bits;
@@ -154,8 +147,7 @@ inet_fmts(addr, mask, s)
  * with "255.255.255.255".)
  */
 u_int32_t
-inet_parse(s)
-    char *s;
+inet_parse(char *s)
 {
     u_int32_t a = 0;
     u_int a0, a1, a2, a3;
@@ -193,9 +185,7 @@ inet_parse(s)
  *
  */
 int
-inet_cksum(addr, len)
-	u_int16_t *addr;
-	u_int len;
+inet_cksum(u_int16_t *addr, u_int len)
 {
 	register int nleft = (int)len;
 	register u_int16_t *w = addr;

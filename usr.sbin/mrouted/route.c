@@ -68,9 +68,7 @@ init_routes()
  * leaf bitmaps for 'r'.
  */
 static int
-init_children_and_leaves(r, parent)
-    register struct rtentry *r;
-    register vifi_t parent;
+init_children_and_leaves(struct rtentry *r, vifi_t parent)
 {
     register vifi_t vifi;
     register struct uvif *v;
@@ -113,8 +111,7 @@ init_children_and_leaves(r, parent)
  * entries to take that into account.
  */
 void
-add_vif_to_routes(vifi)
-    register vifi_t vifi;
+add_vif_to_routes(vifi_t vifi)
 {
     register struct rtentry *r;
     register struct uvif *v;
@@ -147,8 +144,7 @@ add_vif_to_routes(vifi)
  * account the failed vif.
  */
 void
-delete_vif_from_routes(vifi)
-    register vifi_t vifi;
+delete_vif_from_routes(vifi_t vifi)
 {
     register struct rtentry *r;
 
@@ -182,9 +178,7 @@ delete_vif_from_routes(vifi)
  * take appropriate action.
  */
 void
-delete_neighbor_from_routes(addr, vifi)
-    register u_int32_t addr;
-    register vifi_t vifi;
+delete_neighbor_from_routes(u_int32_t addr, vifi_t vifi)
 {
     register struct rtentry *r;
     register struct uvif *v;
@@ -238,7 +232,7 @@ delete_neighbor_from_routes(addr, vifi)
  * table.
  */
 void
-start_route_updates()
+start_route_updates(void)
 {
     rtp = RT_ADDR;
 }
@@ -254,8 +248,7 @@ start_route_updates()
  * be examined is the matching entry.
  */
 static int
-find_route(origin, mask)
-    register u_int32_t origin, mask;
+find_route(u_int32_t origin, u_int32_t mask)
 {
     register struct rtentry *r;
 
@@ -287,8 +280,7 @@ find_route(origin, mask)
  * rest.
  */
 static void
-create_route(origin, mask)
-    u_int32_t origin, mask;
+create_route(u_int32_t origin, u_int32_t mask)
 {
     register struct rtentry *r;
 
@@ -325,8 +317,7 @@ create_route(origin, mask)
  * Discard the routing table entry following the one to which 'prev_r' points.
  */
 static void
-discard_route(prev_r)
-    register struct rtentry *prev_r;
+discard_route(struct rtentry *prev_r)
 {
     register struct rtentry *r;
 
@@ -348,11 +339,8 @@ discard_route(prev_r)
  * to indicate a change of status of one of our own interfaces.
  */
 void
-update_route(origin, mask, metric, src, vifi)
-    u_int32_t origin, mask;
-    u_int metric;
-    u_int32_t src;
-    vifi_t vifi;
+update_route(u_int32_t origin, u_int32_t mask, u_int metric, u_int32_t src,
+    vifi_t vifi)
 {
     register struct rtentry *r;
     u_int adj_metric;
@@ -580,7 +568,7 @@ update_route(origin, mask, metric, src, vifi)
  * On every timer interrupt, advance the timer in each routing entry.
  */
 void
-age_routes()
+age_routes(void)
 {
     register struct rtentry *r;
     register struct rtentry *prev_r;
@@ -662,7 +650,7 @@ age_routes()
  * expensive kernel calls now.
  */
 void
-expire_all_routes()
+expire_all_routes(void)
 {
     register struct rtentry *r;
 
@@ -678,7 +666,7 @@ expire_all_routes()
  * Delete all the routes in the routing table.
  */
 void
-free_all_routes()
+free_all_routes(void)
 {
     register struct rtentry *r;
 
@@ -693,12 +681,8 @@ free_all_routes()
  * Process an incoming neighbor probe message.
  */
 void
-accept_probe(src, dst, p, datalen, level)
-    u_int32_t src;
-    u_int32_t dst;
-    char *p;
-    int datalen;
-    u_int32_t level;
+accept_probe(u_int32_t src, u_int32_t dst, char *p, int datalen,
+    u_int32_t level)
 {
     vifi_t vifi;
 
@@ -719,9 +703,7 @@ struct newrt {
 }; 
 
 static int
-compare_rts(rt1, rt2)
-    const void *rt1;
-    const void *rt2;
+compare_rts(const void *rt1, const void *rt2)
 {
     register struct newrt *r1 = (struct newrt *)rt1;
     register struct newrt *r2 = (struct newrt *)rt2;
@@ -748,10 +730,8 @@ compare_rts(rt1, rt2)
  * Process an incoming route report message.
  */
 void
-accept_report(src, dst, p, datalen, level)
-    u_int32_t src, dst, level;
-    register char *p;
-    register int datalen;
+accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
+    u_int32_t level)
 {
     vifi_t vifi;
     register int width, i, nrt = 0;
@@ -846,10 +826,7 @@ accept_report(src, dst, p, datalen, level)
  * 'vifi'.  'which_routes' specifies ALL_ROUTES or CHANGED_ROUTES.
  */
 void
-report(which_routes, vifi, dst)
-    int which_routes;
-    vifi_t vifi;
-    u_int32_t dst;
+report(int which_routes, vifi_t vifi, u_int32_t dst)
 {
     register struct rtentry *r;
     register char *p;
@@ -935,8 +912,7 @@ report(which_routes, vifi, dst)
  * 'which_routes' specifies ALL_ROUTES or CHANGED_ROUTES.
  */
 void
-report_to_all_neighbors(which_routes)
-    int which_routes;
+report_to_all_neighbors(int which_routes)
 {
     register vifi_t vifi;
     register struct uvif *v;
@@ -984,10 +960,7 @@ report_to_all_neighbors(which_routes)
  * 'vifi'.  'which_routes' specifies ALL_ROUTES or CHANGED_ROUTES.
  */
 static int
-report_chunk(start_rt, vifi, dst)
-    register struct rtentry *start_rt;
-    vifi_t vifi;
-    u_int32_t dst;
+report_chunk(struct rtentry *start_rt, vifi_t vifi, u_int32_t dst)
 {
     register struct rtentry *r;
     register char *p;
@@ -1058,7 +1031,7 @@ report_chunk(start_rt, vifi, dst)
  * return the length of the smallest chunk we sent out.
  */
 int
-report_next_chunk()
+report_next_chunk(void)
 {
     register vifi_t vifi;
     register struct uvif *v;
@@ -1111,8 +1084,7 @@ report_next_chunk()
  * Print the contents of the routing table on file 'fp'.
  */
 void
-dump_routes(fp)
-    FILE *fp;
+dump_routes(FILE *fp)
 {
     register struct rtentry *r;
     register vifi_t i;
@@ -1146,8 +1118,7 @@ dump_routes(fp)
 }
 
 struct rtentry *
-determine_route(src)
-    u_int32_t src;
+determine_route(u_int32_t src)
 {
     struct rtentry *rt;
 

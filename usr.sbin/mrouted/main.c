@@ -30,7 +30,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.10 2002/08/09 02:27:16 itojun Exp $";
+	"@(#) $Id: main.c,v 1.11 2003/03/03 14:58:23 deraadt Exp $";
 #endif
 
 extern char *configfilename;
@@ -71,13 +71,8 @@ static void timer(void);
 static void cleanup(void);
 static void resetlogging(void *);
 
-/* To shut up gcc -Wstrict-prototypes */
-int main(int argc, char **argv);
-
 int
-register_input_handler(fd, func)
-    int fd;
-    ihfunc_t func;
+register_input_handler(int fd, ihfunc_t func)
 {
     if (nhandlers >= NHANDLERS)
 	return -1;
@@ -89,9 +84,7 @@ register_input_handler(fd, func)
 }
 
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     register int recvlen;
     int dummy;
@@ -379,8 +372,7 @@ usage:	fprintf(stderr,
  * do all the other time-based processing.
  */
 static void
-fasttimer(i)
-    int i;
+fasttimer(int i)
 {
     static unsigned int tlast;
     static unsigned int nsent;
@@ -443,7 +435,7 @@ static u_long virtual_time = 0;
  * virtual interface data structures.
  */
 static void
-timer()
+timer(void)
 {
     age_routes();	/* Advance the timers in the route entries     */
     age_vifs();		/* Advance the timers for neighbors */
@@ -495,8 +487,7 @@ timer()
  * On termination, let everyone know we're going away.
  */
 static void
-done(i)
-    int i;
+done(int i)
 {
     log(LOG_NOTICE, 0, "%s exiting", versionstring);
     cleanup();
@@ -504,7 +495,7 @@ done(i)
 }
 
 static void
-cleanup()
+cleanup(void)
 {
     static in_cleanup = 0;
 
@@ -524,8 +515,7 @@ cleanup()
  * Dump internal data structures to stderr.
  */
 static void
-dump(i)
-    int i;
+dump(int i)
 {
     dump_vifs(stderr);
     dump_routes(stderr);
@@ -536,8 +526,7 @@ dump(i)
  * Dump internal data structures to a file.
  */
 static void
-fdump(i)
-    int i;
+fdump(int i)
 {
     FILE *fp;
 
@@ -554,8 +543,7 @@ fdump(i)
  * Dump local cache contents to a file.
  */
 static void
-cdump(i)
-    int i;
+cdump(int i)
 {
     FILE *fp;
 
@@ -571,8 +559,7 @@ cdump(i)
  * Restart mrouted
  */
 static void
-restart(i)
-    int i;
+restart(int i)
 {
     sigset_t mask, omask;
 
@@ -613,8 +600,7 @@ restart(i)
 static int log_nmsgs = 0;
 
 static void
-resetlogging(arg)
-    void *arg;
+resetlogging(void *arg)
 {
     int nxttime = 60;
     void *narg = NULL;
@@ -686,9 +672,7 @@ log(int severity, int syserr, char *format, ...)
 
 #ifdef DEBUG_MFC
 void
-md_log(what, origin, mcastgrp)
-    int what;
-    u_int32_t origin, mcastgrp;
+md_log(int what, u_int32_t origin, u_int32_t mcastgrp)
 {
     static FILE *f = NULL;
     struct timeval tv;

@@ -13,8 +13,7 @@
 #include "defs.h"
 
 
-void k_set_rcvbuf(bufsize)
-    int bufsize;
+void k_set_rcvbuf(int bufsize)
 {
     if (setsockopt(igmp_socket, SOL_SOCKET, SO_RCVBUF,
 		   (char *)&bufsize, sizeof(bufsize)) < 0)
@@ -22,8 +21,7 @@ void k_set_rcvbuf(bufsize)
 }
 
 
-void k_hdr_include(bool)
-    int bool;
+void k_hdr_include(int bool)
 {
 #ifdef IP_HDRINCL
     if (setsockopt(igmp_socket, IPPROTO_IP, IP_HDRINCL,
@@ -33,8 +31,7 @@ void k_hdr_include(bool)
 }
 
 
-void k_set_ttl(t)
-    int t;
+void k_set_ttl(int t)
 {
     u_char ttl;
 
@@ -45,8 +42,7 @@ void k_set_ttl(t)
 }
 
 
-void k_set_loop(l)
-    int l;
+void k_set_loop(int l)
 {
     u_char loop;
 
@@ -57,8 +53,7 @@ void k_set_loop(l)
 }
 
 
-void k_set_if(ifa)
-    u_int32_t ifa;
+void k_set_if(u_int32_t ifa)
 {
     struct in_addr adr;
 
@@ -70,9 +65,7 @@ void k_set_if(ifa)
 }
 
 
-void k_join(grp, ifa)
-    u_int32_t grp;
-    u_int32_t ifa;
+void k_join(u_int32_t grp, u_int32_t ifa)
 {
     struct ip_mreq mreq;
 
@@ -86,9 +79,7 @@ void k_join(grp, ifa)
 }
 
 
-void k_leave(grp, ifa)
-    u_int32_t grp;
-    u_int32_t ifa;
+void k_leave(u_int32_t grp, u_int32_t ifa)
 {
     struct ip_mreq mreq;
 
@@ -102,7 +93,7 @@ void k_leave(grp, ifa)
 }
 
 
-void k_init_dvmrp()
+void k_init_dvmrp(void)
 {
 #ifdef OLD_KERNEL
     if (setsockopt(igmp_socket, IPPROTO_IP, MRT_INIT,
@@ -117,7 +108,7 @@ void k_init_dvmrp()
 }
 
 
-void k_stop_dvmrp()
+void k_stop_dvmrp(void)
 {
     if (setsockopt(igmp_socket, IPPROTO_IP, MRT_DONE,
 		   (char *)NULL, 0) < 0)
@@ -125,9 +116,7 @@ void k_stop_dvmrp()
 }
 
 
-void k_add_vif(vifi, v)
-    vifi_t vifi;
-    struct uvif *v;
+void k_add_vif(vifi_t vifi, struct uvif *v)
 {
     struct vifctl vc;
 
@@ -144,8 +133,7 @@ void k_add_vif(vifi, v)
 }
 
 
-void k_del_vif(vifi)
-    vifi_t vifi;
+void k_del_vif(vifi_t vifi)
 {
     if (setsockopt(igmp_socket, IPPROTO_IP, MRT_DEL_VIF,
 		   (char *)&vifi, sizeof(vifi)) < 0)
@@ -156,9 +144,7 @@ void k_del_vif(vifi)
 /*
  * Adds a (source, mcastgrp) entry to the kernel
  */
-void k_add_rg(origin, g)
-    u_int32_t origin;
-    struct gtable *g;
+void k_add_rg(u_int32_t origin, struct gtable *g)
 {
     struct mfcctl mc;
     vifi_t i;
@@ -190,9 +176,7 @@ void k_add_rg(origin, g)
 /*
  * Deletes a (source, mcastgrp) entry from the kernel
  */
-int k_del_rg(origin, g)
-    u_int32_t origin;
-    struct gtable *g;
+int k_del_rg(u_int32_t origin, struct gtable *g)
 {
     struct mfcctl mc;
     int retval;
@@ -222,7 +206,7 @@ int k_del_rg(origin, g)
 /*
  * Get the kernel's idea of what version of mrouted needs to run with it.
  */
-int k_get_version()
+int k_get_version(void)
 {
 #ifdef OLD_KERNEL
     return -1;

@@ -36,7 +36,7 @@ static int	igmp_log_level(u_int type, u_int code);
  * IP header fields in the output packet buffer.
  */
 void
-init_igmp()
+init_igmp(void)
 {
     struct ip *ip;
 
@@ -74,8 +74,7 @@ init_igmp()
 #define PIM_GRAFT_ACK    7
 
 static char *
-packet_kind(type, code)
-     u_int type, code;
+packet_kind(u_int type, u_int code)
 {
     switch (type) {
 	case IGMP_HOST_MEMBERSHIP_QUERY:	return "membership query  ";
@@ -120,8 +119,7 @@ packet_kind(type, code)
  * packet buffer.
  */
 void
-accept_igmp(recvlen)
-    int recvlen;
+accept_igmp(int recvlen)
 {
     register u_int32_t src, dst, group;
     struct ip *ip;
@@ -277,8 +275,7 @@ accept_igmp(recvlen)
  * reachability and someone is trying to, i.e., mrinfo me periodically.
  */
 static int
-igmp_log_level(type, code)
-    u_int type, code;
+igmp_log_level(u_int type, u_int code)
 {
     switch (type) {
 	case IGMP_MTRACE_REPLY:
@@ -300,11 +297,8 @@ igmp_log_level(type, code)
  * the message from the interface with IP address 'src' to destination 'dst'.
  */
 void
-send_igmp(src, dst, type, code, group, datalen)
-    u_int32_t src, dst;
-    int type, code;
-    u_int32_t group;
-    int datalen;
+send_igmp(u_int32_t src, u_int32_t dst, int type, int code,
+    u_int32_t group, int datalen)
 {
     struct sockaddr_in sdst;
     struct ip *ip;
