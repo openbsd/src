@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.38 2004/06/07 15:18:19 mickey Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.39 2004/08/11 19:14:56 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -45,6 +45,7 @@ static void _dl_unload_deps(elf_object_t *object);
 static void _dl_thread_kern_stop(void);
 static void _dl_thread_kern_go(void);
 static void (*_dl_thread_fnc)(int) = NULL;
+static elf_object_t *obj_from_addr(const void *addr);
 
 void *
 dlopen(const char *libname, int flags)
@@ -129,19 +130,47 @@ dlsym(void *handle, const char *name)
 	elf_object_t	*dynobj;
 	void		*retval;
 	const Elf_Sym	*sym = NULL;
+	int		flags;
 
-	object = (elf_object_t *)handle;
-	dynobj = _dl_objects;
-	while (dynobj && dynobj != object)
-		dynobj = dynobj->next;
+	if (handle == NULL || handle == RTLD_NEXT ||
+	    handle == RTLD_SELF) {
+		void *retaddr;
 
-	if (!dynobj || object != dynobj) {
-		_dl_errno = DL_INVALID_HANDLE;
-		return(0);
+		retaddr = __builtin_return_address(0);	/* __GNUC__ only */
+
+		if ((object = obj_from_addr(retaddr)) == NULL) {
+			_dl_errno = DL_CANT_FIND_OBJ;
+			return(0);
+		}
+
+		if (handle == RTLD_NEXT)
+			object = object->next;
+
+		if (handle == NULL)
+			flags = SYM_SEARCH_SELF|SYM_PLT;
+		else
+			flags = SYM_SEARCH_ALL|SYM_PLT;
+
+	} else if (handle == RTLD_DEFAULT) {
+		object = _dl_objects;
+		flags = SYM_SEARCH_ALL|SYM_PLT;
+	} else {
+		object = (elf_object_t *)handle;
+		flags = SYM_SEARCH_SELF|SYM_NOTPLT;
+
+		dynobj = _dl_objects;
+		while (dynobj && dynobj != object)
+			dynobj = dynobj->next;
+
+		if (!dynobj || object != dynobj) {
+			_dl_errno = DL_INVALID_HANDLE;
+			return(0);
+		}
 	}
 
 	retval = (void *)_dl_find_symbol(name, object, &sym, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_NOTPLT, 0, object);
+	    flags|SYM_NOWARNNOTFOUND, 0, object);
+
 	if (sym != NULL) {
 		retval += sym->st_value;
 #ifdef __hppa__
@@ -274,6 +303,12 @@ dlerror(void)
 	case DL_INVALID_CTL:
 		errmsg = "Invalid dlctl() command";
 		break;
+	case DL_NO_OBJECT:
+		errmsg = "No shared object contains address";
+		break;
+	case DL_CANT_FIND_OBJ:
+		errmsg = "Cannot determine caller's shared object";
+		break;
 	default:
 		errmsg = "Unknown error";
 	}
@@ -351,3 +386,117 @@ _dl_thread_kern_go(void)
 		(*_dl_thread_fnc)(1);
 }
 
+static elf_object_t *
+obj_from_addr(const void *addr)
+{
+	elf_object_t *dynobj;
+	Elf_Ehdr *ehdr;
+	Elf_Phdr *phdr;
+	Elf_Addr start;
+	Elf_Addr end;
+	u_int32_t symoffset;
+	const Elf_Sym *sym;
+	int i;
+
+	for (dynobj = _dl_objects; dynobj != NULL; dynobj = dynobj->next) {
+		ehdr = (Elf_Ehdr *)dynobj->load_addr;
+		if (ehdr == NULL)
+			continue;
+
+		phdr = (Elf_Phdr *)((char *)dynobj->load_addr + ehdr->e_phoff);
+
+		for (i = 0; i < ehdr->e_phnum; i++) {
+			switch (phdr[i].p_type) {
+			case PT_LOAD:
+				start = phdr[i].p_vaddr + dynobj->load_addr;
+				if ((Elf_Addr)addr >= start &&
+				    (Elf_Addr)addr < start + phdr[i].p_memsz)
+					return dynobj;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	/* find the lowest & highest symbol address in the main exe */
+	start = -1;
+	end = 0;
+
+	for (symoffset = 0; symoffset < _dl_objects->nchains; symoffset++) {
+		sym = _dl_objects->dyn.symtab + symoffset;
+
+		/*
+		 * For skip the symbol if st_shndx is either SHN_UNDEF or
+		 * SHN_COMMON.
+		 */
+		if (sym->st_shndx == SHN_UNDEF || sym->st_shndx == SHN_COMMON)
+			continue;
+
+		if (sym->st_value < start)
+			start = sym->st_value;
+
+		if (sym->st_value > end)
+			end = sym->st_value;
+	}
+
+	if (end && addr >= start && addr <= end)
+		return _dl_objects;
+	else
+		return NULL;
+}
+
+int
+dladdr(const void *addr, Dl_info *info)
+{
+	const elf_object_t *object;
+	const Elf_Sym *sym;
+	void *symbol_addr;
+	u_int32_t symoffset;
+
+	object = obj_from_addr(addr);
+
+	if (object == NULL) {
+		_dl_errno = DL_NO_OBJECT;
+		return 0;
+	}
+
+	info->dli_fname = (char *)object->load_name;
+	info->dli_fbase = (void *)object->load_addr;
+	info->dli_sname = NULL;
+	info->dli_saddr = (void *)0;
+
+	/*
+	 * Walk the symbol list looking for the symbol whose address is
+	 * closest to the address sent in.
+	 */
+	for (symoffset = 0; symoffset < object->nchains; symoffset++) {
+		sym = object->dyn.symtab + symoffset;
+
+		/*
+		 * For skip the symbol if st_shndx is either SHN_UNDEF or
+		 * SHN_COMMON.
+		 */
+		if (sym->st_shndx == SHN_UNDEF || sym->st_shndx == SHN_COMMON)
+			continue;
+
+		/*
+		 * If the symbol is greater than the specified address, or if
+		 * it is further away from addr than the current nearest
+		 * symbol, then reject it.
+		 */
+		symbol_addr = (void *)(object->load_addr + sym->st_value);
+		if (symbol_addr > addr || symbol_addr < info->dli_saddr)
+			continue;
+
+		/* Update our idea of the nearest symbol. */
+		info->dli_sname = object->dyn.strtab + sym->st_name;
+		info->dli_saddr = symbol_addr;
+
+		/* Exact match? */
+		if (info->dli_saddr == addr)
+			break;
+	}
+
+	return 1;
+}

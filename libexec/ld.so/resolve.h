@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.31 2004/07/05 00:47:40 kjell Exp $ */
+/*	$OpenBSD: resolve.h,v 1.32 2004/08/11 19:14:56 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -213,6 +213,8 @@ extern char *_dl_debug;
 #define	DL_NO_SYMBOL		6
 #define	DL_INVALID_HANDLE	7
 #define	DL_INVALID_CTL		8
+#define	DL_NO_OBJECT		9
+#define	DL_CANT_FIND_OBJ	10
 
 #define ELF_ROUND(x,malign) (((x) + (malign)-1) & ~((malign)-1))
 #define ELF_TRUNC(x,malign) ((x) & ~((malign)-1))

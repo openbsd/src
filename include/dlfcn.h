@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.h,v 1.8 2003/09/02 15:14:54 drahn Exp $	*/
+/*	$OpenBSD: dlfcn.h,v 1.9 2004/08/11 19:14:56 drahn Exp $	*/
 /*	$NetBSD: dlfcn.h,v 1.2 1995/06/05 19:38:00 pk Exp $	*/
 
 /*
@@ -37,6 +37,16 @@
 #include <sys/cdefs.h>
 
 /*
+ * Structure filled in by dladdr().
+ */
+typedef	struct dl_info {
+	const char	*dli_fname;	/* Pathname of shared object. */
+	void		*dli_fbase;	/* Base address of shared object. */
+	const char	*dli_sname;	/* Name of nearest symbol. */
+	void		*dli_saddr;	/* Address of nearest symbol. */
+} Dl_info;
+
+/*
  * User interface to the run-time linker.
  */
 __BEGIN_DECLS
@@ -45,6 +55,7 @@ extern int	dlclose(void *);
 extern void	*dlsym(void *, const char *);
 extern int	dlctl(void *, int, void *);
 extern const char	*dlerror(void);
+extern int	dladdr(const void *, Dl_info *);
 __END_DECLS
 
 /* Values for dlopen `mode'. */
@@ -53,6 +64,13 @@ __END_DECLS
 #define RTLD_GLOBAL	0x100
 #define RTLD_LOCAL	0x000
 #define	DL_LAZY		RTLD_LAZY	/* Compat */
+
+/*
+ * Special handle arguments for dlsym().
+ */
+#define	RTLD_NEXT	((void *) -1)	/* Search subsequent objects. */
+#define	RTLD_DEFAULT	((void *) -2)	/* Use default search algorithm. */
+#define	RTLD_SELF	((void *) -3)	/* Search the caller itself. */
 
 /*
  * dlctl() commands

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2004/02/09 19:21:51 espie Exp $
+#	$OpenBSD: Makefile,v 1.16 2004/08/11 19:14:56 drahn Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	assert.3 bitstring.3 dlfcn.3 end.3 intro.3 queue.3 stdarg.3 \
@@ -49,7 +49,7 @@ MLINKS+=queue.3 SLIST_ENTRY.3 queue.3 SLIST_HEAD.3 \
 MLINKS+=stdarg.3 varargs.3 stdarg.3 va_arg.3 stdarg.3 va_end.3
 MLINKS+=stdarg.3 va_start.3 stdarg.3 va_copy.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
-	dlfcn.3 dlerror.3
+	dlfcn.3 dlerror.3 dlfcn.3 dladdr.3
 MLINKS+=tree.3 SPLAY_PROTOTYPE.3 tree.3 SPLAY_GENERATE.3 \
 	tree.3 SPLAY_ENTRY.3 tree.3 SPLAY_HEAD.3 \
 	tree.3 SPLAY_INITIALIZER.3 tree.3 SPLAY_ROOT.3 \
