@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.33 2000/05/15 17:22:39 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.34 2000/06/05 12:58:29 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -2396,6 +2396,14 @@ ENTRY(switch_exit)
 	mtctl	t4, pidr2
 
 	/* XXX we need to switch to some stupid stack here */
+	/* arg0 -- oldproc */
+	.import exit2, code
+	ldil    L%exit2, t2
+	ldo     R%exit2(t2), t2
+	.call
+	blr     %r0, rp
+	bv,n    %r0(t2)
+	nop
 
 	b	switch_search
 	copy	r0, arg2	/* no old proc */
