@@ -477,7 +477,7 @@
 ./usr/libdata/perl5/hppa-openbsd/5.8.0/auto/Unicode/Normalize
 ./usr/libdata/perl5/hppa-openbsd/5.8.0/auto/Unicode/Normalize/Normalize.a
 ./usr/libdata/perl5/hppa-openbsd/5.8.0/auto/Unicode/Normalize/autosplit.ix
-./usr/libdata/perl5/hppa-openbsd/5.8.0/auto/Unicode/Normalize/stY29335
+./usr/libdata/perl5/hppa-openbsd/5.8.0/auto/Unicode/Normalize/extralibs.ld
 ./usr/libdata/perl5/hppa-openbsd/5.8.0/auto/attrs
 ./usr/libdata/perl5/hppa-openbsd/5.8.0/auto/attrs/attrs.a
 ./usr/libdata/perl5/hppa-openbsd/5.8.0/auto/attrs/extralibs.ld
