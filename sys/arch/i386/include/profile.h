@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.5 2001/06/27 04:16:37 mickey Exp $	*/
+/*	$OpenBSD: profile.h,v 1.6 2001/11/30 20:26:02 mickey Exp $	*/
 /*	$NetBSD: profile.h,v 1.6 1995/03/28 18:17:08 jtc Exp $	*/
 
 /*
@@ -50,11 +50,12 @@ mcount()								\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm("movl 4(%%ebp),%0" : "=r" (selfpc));			\
+	__asm __volatile ("movl 4(%%ebp),%0" : "=r" (selfpc));		\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	__asm("movl (%%ebp),%0;movl 4(%0),%0" : "+r" (frompcindex));	\
+	__asm __volatile ("movl (%%ebp),%0;movl 4(%0),%0" :		\
+	    "+r" (frompcindex));					\
 	_mcount(frompcindex, selfpc);					\
 }
 
