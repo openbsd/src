@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.92 2004/03/15 08:52:17 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.93 2004/03/18 20:52:13 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.92 2004/03/15 08:52:17 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.93 2004/03/18 20:52:13 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,6 +207,7 @@ void	setcarp_advbase(const char *,int);
 void	setcarp_advskew(const char *, int);
 void	setcarp_passwd(const char *, int);
 void	setcarp_vhid(const char *, int);
+void	setcarp_state(const char *, int);
 void	setpfsync_syncif(const char *, int);
 void	setpfsync_maxupd(const char *, int);
 void	unsetpfsync_syncif(const char *, int);
@@ -298,6 +299,7 @@ const struct	cmd {
 	{ "advskew",	NEXTARG,	0,		setcarp_advskew },
 	{ "pass",	NEXTARG,	0,		setcarp_passwd },
 	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
+	{ "state",	NEXTARG,	0,		setcarp_state },
 	{ "syncif",	NEXTARG,	0,		setpfsync_syncif },
 	{ "maxupd",	NEXTARG,	0,		setpfsync_maxupd },
 	{ "-syncif",	1,		0,		unsetpfsync_syncif },
@@ -2827,6 +2829,29 @@ setcarp_advbase(const char *val, int d)
 		err(1, "SIOCGVH");
 
 	carpr.carpr_advbase = advbase;
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+}
+
+void
+setcarp_state(const char *val, int d)
+{
+	struct carpreq carpr;
+	int i;
+
+	bzero((char *)&carpr, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	for (i = 0; i <= CARP_MAXSTATE; i++) {
+		if (!strcasecmp(val, carp_states[i])) {
+			carpr.carpr_state = i;
+			break;
+		}
+	}
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");

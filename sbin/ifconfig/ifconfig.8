@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.78 2004/01/13 07:45:10 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.79 2004/03/18 20:52:13 mcbride Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -398,6 +398,13 @@ will begin advertising as master.
 If the driver is a carp pseudo-device, set the authentication key to
 .Ar passphrase .
 There is no passphrase by default.
+.It Cm state Ar state
+Explicitly force the carp pseudo-device to enter this state.
+Valid states are
+.Ar init ,
+.Ar backup ,
+and
+.Ar master .
 .It Cm syncif Ar iface
 If the driver is a pfsync pseudo-device, use the specified interface
 to send and receive pfsync state synchronisation messages.
