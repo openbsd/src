@@ -2,8 +2,8 @@
 
 Port 22
 ListenAddress 0.0.0.0
-HostKey _ETCDIR_/ssh_host_key
-RandomSeed _ETCDIR_/ssh_random_seed
+HostKey /etc/ssh_host_key
+RandomSeed /etc/ssh_random_seed
 ServerKeyBits 768
 LoginGraceTime 600
 KeyRegenerationInterval 3600
@@ -20,7 +20,7 @@ KeepAlive yes
 SyslogFacility DAEMON
 RhostsAuthentication no
 #
-# For this to work you will also need host keys in _ETCDIR_/ssh_known_hosts
+# For this to work you will also need host keys in /etc/ssh_known_hosts
 RhostsRSAAuthentication yes
 #
 # Changed RSAAuthentication to no/bg
