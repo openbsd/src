@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.23 2000/04/21 15:50:21 millert Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.24 2001/01/23 05:48:04 csapuntz Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -376,6 +376,43 @@ sunos_sys_sigpending(p, v, retval)
  *
  * This is quite ugly, but what do you expect from compatibility code?
  */
+int sunos_readdir_callback __P((void *, struct dirent *, off_t));
+
+struct sunos_readdir_callback_args {
+	caddr_t outp;
+	int     resid;
+};
+
+int
+sunos_readdir_callback(arg, bdp, cookie)
+	void *arg;
+	struct dirent *bdp;
+	off_t cookie;
+{
+	struct sunos_dirent idb;
+	struct sunos_readdir_callback_args *cb = arg; 
+	int sunos_reclen;
+	int error;
+
+	sunos_reclen = SUNOS_RECLEN(&idb, bdp->d_namlen);
+	if (cb->resid < sunos_reclen)
+		return (ENOMEM);
+	
+	idb.d_fileno = bdp->d_fileno;
+	idb.d_off = cookie;
+	idb.d_reclen = sunos_reclen;
+	idb.d_namlen = bdp->d_namlen;
+	strlcpy(idb.d_name, bdp->d_name, SUNOS_MAXNAMLEN+1);
+
+	if ((error = copyout((caddr_t)&idb, cb->outp, sunos_reclen)))
+		return (error);
+
+	cb->outp += sunos_reclen;
+	cb->resid -= sunos_reclen;
+
+	return (0);
+}
+
 int
 sunos_sys_getdents(p, v, retval)
 	struct proc *p;
@@ -387,116 +424,31 @@ sunos_sys_getdents(p, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(int) nbytes;
 	} */ *uap = v;
-	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
-	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* Sun-format */
-	int resid, sunos_reclen;/* Sun-format */
 	struct file *fp;
-	struct uio auio;
-	struct iovec aiov;
-	struct sunos_dirent idb;
-	off_t off;			/* true file offset */
-	int buflen, error, eofflag;
-	u_long *cookiebuf = NULL, *cookie;
-	int ncookies;
+	int error;
+	struct sunos_readdir_callback_args args;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
-	vp = (struct vnode *)fp->f_data;
 
+	vp = (struct vnode *)fp->f_data;
 	/* SunOS returns ENOTDIR here, BSD would use EINVAL */
 	if (vp->v_type != VDIR)
 		return (ENOTDIR);
-	if (SCARG(uap, nbytes) < sizeof(struct sunos_dirent))
-		return (EINVAL);
 
-	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	off = fp->f_offset;
-again:
-	aiov.iov_base = buf;
-	aiov.iov_len = buflen;
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
-	auio.uio_resid = buflen;
-	auio.uio_offset = off;
-	/*
-	 * First we read into the malloc'ed buffer, then
-	 * we massage it into user space, one record at a time.
-	 */
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, 
-	    &ncookies, &cookiebuf);
-	if (error)
-		goto out;
-	if (!cookiebuf) {
-		error = EPERM;
-		goto out;
-	}
+	args.resid = SCARG(uap, nbytes);
+	args.outp = (caddr_t)SCARG(uap, buf);
+	
+	if ((error = readdir_with_callback(fp, &fp->f_offset, args.resid,
+	    sunos_readdir_callback, &args)) != 0)
+		return (error);
 
-	inp = buf;
-	outp = SCARG(uap, buf);
-	resid = SCARG(uap, nbytes);
-	if ((len = buflen - auio.uio_resid) == 0)
-		goto eof;
+	*retval = SCARG(uap, nbytes) - args.resid;
 
-	for (cookie = cookiebuf; len > 0; len -= reclen) {
-		bdp = (struct dirent *)inp;
-		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("sunos_getdents: bad reclen");
-		if (bdp->d_fileno == 0) {
-			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
-			continue;
-		}
-		sunos_reclen = SUNOS_RECLEN(&idb, bdp->d_namlen);
-		if (reclen > len || resid < sunos_reclen) {
-			/* entry too big for buffer, so just stop */
-			outp++;
-			break;
-		}
-		off = *cookie++;	/* each entry points to next */
-		/*
-		 * Massage in place to make a Sun-shaped dirent (otherwise
-		 * we have to worry about touching user memory outside of
-		 * the copyout() call).
-		 */
-		idb.d_fileno = bdp->d_fileno;
-		idb.d_off = off;
-		idb.d_reclen = sunos_reclen;
-		idb.d_namlen = bdp->d_namlen;
-		strcpy(idb.d_name, bdp->d_name);
-		if ((error = copyout((caddr_t)&idb, outp, sunos_reclen)) != 0)
-			goto out;
-		/* advance past this real entry */
-		inp += reclen;
-		/* advance output past Sun-shaped entry */
-		outp += sunos_reclen;
-		resid -= sunos_reclen;
-	}
-
-	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, buf))
-		goto again;
-	fp->f_offset = off;		/* update the vnode offset */
-
-eof:
-	*retval = SCARG(uap, nbytes) - resid;
-out:
-	VOP_UNLOCK(vp, 0, p);
-	if (cookiebuf)
-		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
-	return (error);
+	return (0);
 }
+
 
 #define	SUNOS__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
