@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.67 2004/05/03 20:55:46 millert Exp $	*/
+/*	$OpenBSD: ping.c,v 1.68 2004/09/14 23:51:34 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.67 2004/05/03 20:55:46 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.68 2004/09/14 23:51:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -536,6 +536,7 @@ main(int argc, char *argv[])
  * launched exactly at 1-second intervals).  This does not affect the
  * quality of the delay and loss statistics.
  */
+/* ARGSUSED */
 void
 catcher(int signo)
 {
@@ -563,6 +564,7 @@ catcher(int signo)
  * Print statistics when SIGINFO is received.
  * XXX not race safe
  */
+/* ARGSUSED */
 void
 prtsig(int signo)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.23 2004/05/09 03:28:11 deraadt Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.24 2004/09/14 23:53:22 deraadt Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.23 2004/05/09 03:28:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.24 2004/09/14 23:53:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -426,6 +426,7 @@ printhdr(void)
  * Called if an interval expires before sidewaysintpr has completed a loop.
  * Sets a flag to not wait for the alarm.
  */
+/* ARGSUSED */
 void
 catchalarm(int signo)
 {

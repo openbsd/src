@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.19 2003/06/10 22:20:50 deraadt Exp $	*/
+/*	$OpenBSD: script.c,v 1.20 2004/09/14 23:53:07 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.19 2003/06/10 22:20:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.20 2004/09/14 23:53:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,7 +90,8 @@ static char rcsid[] = "$OpenBSD: script.c,v 1.19 2003/06/10 22:20:50 deraadt Exp
 
 FILE	*fscript;
 int	master, slave;
-pid_t	child, subchild;
+volatile sig_atomic_t child;
+pid_t	subchild;
 char	*fname;
 
 volatile sig_atomic_t dead;
@@ -195,6 +196,7 @@ main(int argc, char *argv[])
 	done(sigdeadstatus);
 }
 
+/* ARGSUSED */
 void
 finish(int signo)
 {
@@ -203,7 +205,7 @@ finish(int signo)
 	pid_t pid;
 
 	while ((pid = wait3(&status, WNOHANG, 0)) > 0) {
-		if (pid == child) {
+		if (pid == (pid_t)child) {
 			if (WIFEXITED(status))
 				e = WEXITSTATUS(status);
 		}
@@ -213,6 +215,7 @@ finish(int signo)
 	errno = save_errno;
 }
 
+/* ARGSUSED */
 void
 handlesigwinch(int signo)
 {
@@ -276,6 +279,7 @@ dooutput(void)
 	done(0);
 }
 
+/* ARGSUSED */
 void
 scriptflush(int signo)
 {
