@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)tempnam.c	5.1 (Berkeley) 2/22/91";*/
-static char *rcsid = "$Id: tempnam.c,v 1.2 1996/08/26 00:17:28 deraadt Exp $";
+static char *rcsid = "$Id: tempnam.c,v 1.3 1997/02/15 04:57:42 angelos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -56,7 +56,7 @@ tempnam(dir, pfx)
 	if (!pfx)
 		pfx = "tmp.";
 
-	if (issetugid() == 0 && f = getenv("TMPDIR")) {
+	if ((issetugid() == 0) && (f = getenv("TMPDIR"))) {
 		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXX", f,
 			*(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if (f = mktemp(name))
