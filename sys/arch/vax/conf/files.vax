@@ -1,3 +1,4 @@
+#       $OpenBSD: files.vax,v 1.5 1997/05/28 23:08:23 niklas Exp $
 #       $NetBSD: files.vax,v 1.23 1997/01/05 18:50:27 ragge Exp $
 #
 # new style config file for vax architecture
@@ -307,7 +308,7 @@ file	arch/vax/vax/machdep.c
 file	arch/vax/vax/ka750.c		vax750
 file	arch/vax/vax/ctu.c		vax750
 file	arch/vax/vax/ka780.c		vax780
-file	arch/vax/vax/cfl.c		vax780
+#file	arch/vax/vax/cfl.c		vax780
 file	arch/vax/vax/ka820.c		vax8200
 file	arch/vax/vax/ka860.c		vax8600
 file	arch/vax/vax/crl.c		vax8600
