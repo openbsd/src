@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.78 2002/01/23 07:14:41 ericj Exp $	*/
+/*	$OpenBSD: com.c,v 1.79 2002/01/25 21:23:38 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1404,7 +1404,7 @@ comintr(arg)
  * Following are all routines needed for COM to act as console
  */
 
-#if defined(arc) || defined(hppa)
+#if defined(arc)
 #undef CONADDR
 	extern int CONADDR;
 #endif
