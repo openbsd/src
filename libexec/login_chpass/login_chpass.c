@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.7 2002/05/26 09:32:08 deraadt Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.8 2002/06/02 01:27:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -110,7 +110,7 @@ main(argc, argv)
 	openlog("login", LOG_ODELAY, LOG_AUTH);
 
     	while ((c = getopt(argc, argv, "s:v:")) != -1)
-		switch(c) {
+		switch (c) {
 		case 'v':
 			break;
 		case 's':	/* service */
@@ -124,7 +124,7 @@ main(argc, argv)
 			exit(1);
 		}
 
-	switch(argc - optind) {
+	switch (argc - optind) {
 	case 2:
 		/* class is not used */
 	case 1:

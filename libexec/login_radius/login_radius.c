@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_radius.c,v 1.1 2001/07/08 17:56:33 millert Exp $	*/
+/*	$OpenBSD: login_radius.c,v 1.2 2002/06/02 01:27:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -85,7 +85,7 @@ main(int argc, char **argv)
 	 * Usage: login_xxx [-s service] [-v var] user [class]
 	 */
 	while ((c = getopt(argc, argv, "ds:v:")) != -1)
-		switch(c) {
+		switch (c) {
 		case 'd':
 			back = stdout;
 			break;
@@ -106,7 +106,7 @@ main(int argc, char **argv)
 	if (service == NULL)
 		service = LOGIN_DEFSERVICE;
 
-	switch(argc - optind) {
+	switch (argc - optind) {
 	case 2:
 		class = argv[optind + 1];
 	case 1:

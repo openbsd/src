@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.22 2001/08/18 21:37:38 deraadt Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.23 2002/06/02 01:27:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -45,7 +45,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";
 #else
-static char rcsid[] = "$OpenBSD: mail.local.c,v 1.22 2001/08/18 21:37:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mail.local.c,v 1.23 2002/06/02 01:27:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ main(argc, argv)
 
 	from = NULL;
 	while ((ch = getopt(argc, argv, "lLdf:r:H")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'd':		/* backward compatible */
 			break;
 		case 'f':

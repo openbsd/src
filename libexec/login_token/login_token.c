@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_token.c,v 1.5 2001/12/07 17:16:18 millert Exp $	*/
+/*	$OpenBSD: login_token.c,v 1.6 2002/06/02 01:27:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -92,7 +92,7 @@ main(argc, argv)
 	(void)sigprocmask(SIG_UNBLOCK, &blockset, NULL);
 
 	while ((c = getopt(argc, argv, "ds:v:")) != -1)
-		switch(c) {
+		switch (c) {
 		case 'd':		/* to remain undocumented */
 			back = stdout;
 			break;
@@ -115,7 +115,7 @@ main(argc, argv)
 			exit(1);
 		}
 
-	switch(argc - optind) {
+	switch (argc - optind) {
 	case 2:
 		class = argv[optind + 1];
 	case 1:

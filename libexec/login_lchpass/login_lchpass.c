@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.7 2002/02/16 21:27:30 millert Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.8 2002/06/02 01:27:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -88,7 +88,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "couldn't get local hostname: %m");
 
     	while ((c = getopt(argc, argv, "v:s:")) != -1)
-		switch(c) {
+		switch (c) {
 		case 'v':
 			break;
 		case 's':	/* service */
@@ -102,7 +102,7 @@ main(argc, argv)
 			exit(1);
 		}
 
-	switch(argc - optind) {
+	switch (argc - optind) {
 	case 2:
 		/* class is not used */
 	case 1:
