@@ -77,7 +77,7 @@
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
-#include "assym.s"
+#include "assym.h"
 #include "vectors.s"
 #include "macglobals.s"
 
