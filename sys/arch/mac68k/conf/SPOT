@@ -1,5 +1,5 @@
-#	$OpenBSD: SPOT,v 1.2 1996/05/26 18:35:10 briggs Exp $
-#	$NetBSD: SPOT,v 1.8 1996/05/20 03:23:36 scottr Exp $
+#	$OpenBSD: SPOT,v 1.3 1996/06/23 16:19:13 briggs Exp $
+#	$NetBSD: SPOT,v 1.10 1996/06/20 04:11:55 scottr Exp $
 #
 # SPOT
 
@@ -24,12 +24,13 @@ options		DDB
 options		FFS
 options		QUOTA		# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
-#options	NFSSERVER	# Sun NFS-compatible filesystem
-#options	NFSCLIENT	# Sun NFS-compatible filesystem
-#options	NULLFS		# Null (formerly loop-back) filesystem
+options		NFSSERVER	# Sun NFS-compatible filesystem
+options		NFSCLIENT	# Sun NFS-compatible filesystem
+options		NULLFS		# Null (formerly loop-back) filesystem
 options		CD9660		# ISO-9660 w/ RockRidge
 options		KERNFS		# kernel data-structure filesystem
 options		FDESC		# user file descriptor filesystem
+options		UNION		# union filesystem
 #options	UMAPFS		# uid/gid remapping filesystem
 #options	LFS		# Log-based filesystem (still experimental)
 #options	PORTAL		# portal filesystem (still experimental)
