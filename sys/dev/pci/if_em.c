@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.33 2004/12/08 04:28:40 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.34 2004/12/08 15:41:46 markus Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -208,6 +208,7 @@ void em_intr(void *);
 int  em_probe(struct device *, void *, void *);
 void em_attach(struct device *, struct device *, void *);
 int  em_intr(void *);
+void em_power(int, void *);
 #endif /* __OpenBSD__ */
 void em_start(struct ifnet *);
 void em_start_locked(struct ifnet *);
@@ -661,6 +662,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	return(0);
 #endif
 #ifdef __OpenBSD__
+	sc->sc_powerhook = powerhook_establish(em_power, sc);
 	return;
 #endif
 
@@ -679,6 +681,21 @@ err_sysctl:
 #endif /* __FreeBSD__ */
 
 }
+
+#ifdef __OpenBSD__
+void
+em_power(int why, void *arg)
+{
+	struct em_softc *sc = (struct em_softc *)arg;
+	struct ifnet *ifp;
+
+	if (why == PWR_RESUME) {
+		ifp = &sc->interface_data.ac_if;
+		if (ifp->if_flags & IFF_UP)
+			em_init(sc);
+	}
+}
+#endif
 
 /*********************************************************************
  *  Device removal routine
