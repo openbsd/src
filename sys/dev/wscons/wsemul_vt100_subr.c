@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.3 2000/11/15 17:27:18 aaron Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.4 2001/03/07 17:55:43 aaron Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -618,6 +618,7 @@ wsemul_vt100_handle_csi(edp, c)
 #ifdef VT100_PRINTUNKNOWN
 		printf("CSI%c (%d, %d) unknown\n", c, ARG(0), ARG(1));
 #endif
+		break;
 	}
 }
 
@@ -734,6 +735,7 @@ wsemul_vt100_handle_dcs(edp)
 #ifdef VT100_PRINTUNKNOWN
 				printf("unknown char %c in DCS\n", c);
 #endif
+				break;
 			}
 		}
 		if (pos > 0)
@@ -776,6 +778,7 @@ vt100_ansimode(edp, nr, op)
 #ifdef VT100_PRINTUNKNOWN
 		printf("ANSI mode %d unknown\n", nr);
 #endif
+		break;
 	}
 	return (res);
 }
