@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.86 2004/12/17 12:42:02 pascoe Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.87 2004/12/19 03:25:36 mcbride Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -677,7 +677,8 @@ ether_input(ifp, eh, m)
 
 #if NCARP > 0
 	if (ifp->if_carp && ifp->if_type != IFT_CARP &&
-	    (carp_input(eh, m) == 0))
+	    (carp_input(m, (u_int8_t *)&eh->ether_shost,
+	    (u_int8_t *)&eh->ether_dhost, eh->ether_type) == 0))
 		return;
 #endif /* NCARP > 0 */
 

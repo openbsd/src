@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.85 2004/12/18 00:52:21 pascoe Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.86 2004/12/19 03:25:37 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -718,15 +718,15 @@ carp_clone_create(ifc, unit)
 	    unit);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST | IFF_NOARP;
 	ifp->if_ioctl = carp_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = carp_start;
+	ifp->if_output = carp_output;
 	ifp->if_type = IFT_CARP;
 	ifp->if_addrlen = ETHER_ADDR_LEN;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_mtu = ETHERMTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
-	if_attachhead(ifp);
+	if_attach(ifp);
 
 	if_alloc_sadl(ifp);
 	carp_set_enaddr(sc);
@@ -1249,7 +1249,7 @@ carp_macmatch6(void *v, struct mbuf *m, struct in6_addr *taddr)
 #endif /* INET6 */
 
 struct ifnet *
-carp_ourether(void *v, struct ether_header *eh, int src)
+carp_ourether(void *v, struct ether_header *eh, u_char iftype, int src)
 {
 	struct carp_if *cif = (struct carp_if *)v;
 	struct carp_softc *vh;
@@ -1260,8 +1260,20 @@ carp_ourether(void *v, struct ether_header *eh, int src)
 	else
 		ena = (u_int8_t *)&eh->ether_dhost;
 
-	if (ena[0] || ena[1] || ena[2] != 0x5e || ena[3] || ena[4] != 1)
+	switch (iftype) {
+	case IFT_ETHER:
+	case IFT_FDDI:
+		if (ena[0] || ena[1] || ena[2] != 0x5e || ena[3] || ena[4] != 1)
+			return (NULL);
+		break;
+	case IFT_ISO88025:
+		if (ena[0] != 3 || ena[1] || ena[4] || ena[5])
+			return (NULL);
+		break;
+	default:
 		return (NULL);
+		break;
+	}
 
 	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list)
 		if ((vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
@@ -1274,12 +1286,17 @@ carp_ourether(void *v, struct ether_header *eh, int src)
 }
 
 int
-carp_input(struct ether_header *eh, struct mbuf *m)
+carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 {
+	struct ether_header eh;
 	struct carp_if *cif = (struct carp_if *)m->m_pkthdr.rcvif->if_carp;
 	struct ifnet *ifp;
 
-	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+	bcopy(shost, &eh.ether_shost, sizeof(eh.ether_shost));
+	bcopy(dhost, &eh.ether_dhost, sizeof(eh.ether_dhost));
+	eh.ether_type = etype;
+
+	if (m->m_flags & (M_BCAST|M_MCAST)) {
 		struct carp_softc *vh;
 		struct mbuf *m0;
 
@@ -1292,12 +1309,12 @@ carp_input(struct ether_header *eh, struct mbuf *m)
 			if (m0 == NULL)
 				continue;
 			m0->m_pkthdr.rcvif = &vh->sc_ac.ac_if;
-			ether_input(&vh->sc_ac.ac_if, eh, m0);
+			ether_input(&vh->sc_ac.ac_if, &eh, m0);
 		}
 		return (1);
 	}
 
-	ifp = carp_ourether(cif, eh, 0);
+	ifp = carp_ourether(cif, &eh, m->m_pkthdr.rcvif->if_type, 0);
 	if (ifp == NULL)
 		return (1);
 
@@ -1316,12 +1333,12 @@ carp_input(struct ether_header *eh, struct mbuf *m)
 		m0.m_flags = 0;
 		m0.m_next = m;
 		m0.m_len = ETHER_HDR_LEN;
-		m0.m_data = (char *)eh;
+		m0.m_data = (char *)&eh;
 		bpf_mtap(ifp->if_bpf, &m0);
 	}
 #endif
 	ifp->if_ipackets++;
-	ether_input(ifp, eh, m);
+	ether_input(ifp, &eh, m);
 
 	return (0);
 }
@@ -1973,6 +1990,17 @@ carp_start(struct ifnet *ifp)
 #ifdef DEBUG
 	printf("%s: start called\n", ifp->if_xname);
 #endif
+}
+
+int
+carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
+    struct rtentry *rt)
+{
+	struct ifnet *ifp0 = ((struct carp_softc *)ifp->if_softc)->sc_carpdev;
+	if (ifp0)
+		return (ifp0->if_output(ifp, m, sa, rt));
+	else
+		return (EINVAL);
 }
 
 int

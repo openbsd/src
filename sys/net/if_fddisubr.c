@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.42 2004/12/10 22:35:17 mcbride Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.43 2004/12/19 03:25:36 mcbride Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -152,8 +152,8 @@ extern struct ifqueue pkintrq;
  * Assumes that ifp is actually pointer to arpcom structure.
  */
 int
-fddi_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
+fddi_output(ifp0, m0, dst, rt0)
+	struct ifnet *ifp0;
 	struct mbuf *m0;
 	struct sockaddr *dst;
 	struct rtentry *rt0;
@@ -165,9 +165,28 @@ fddi_output(ifp, m0, dst, rt0)
 	struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	struct fddi_header *fh;
-	struct arpcom *ac = (struct arpcom *)ifp;
+	struct arpcom *ac = (struct arpcom *)ifp0;
 	short mflags;
+	struct ifnet *ifp = ifp0;
 
+#if NCARP > 0
+	if (ifp->if_type == IFT_CARP) {
+		struct ifaddr *ifa;
+
+		/* loop back if this is going to the carp interface */
+		if (dst != NULL && ifp0->if_link_state == LINK_STATE_UP &&
+		    (ifa = ifa_ifwithaddr(dst)) != NULL &&
+		    ifa->ifa_ifp == ifp0)
+			return (looutput(ifp0, m, dst, rt0));
+
+		ifp = ifp->if_carpdev;
+		ac = (struct arpcom *)ifp;
+
+		if ((ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING))
+			senderr(ENETDOWN);
+	}
+#endif /* NCARP > 0 */
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 	if ((rt = rt0) != NULL) {
@@ -396,7 +415,7 @@ fddi_output(ifp, m0, dst, rt0)
 		    sizeof(fh->fddi_shost));
 #if NCARP > 0
 	if (ifp->if_carp) { 
-		error = carp_fix_lladdr(ifp, m, NULL, NULL);
+		error = carp_fix_lladdr(ifp0, m, dst, NULL);
 		if (error)
 			goto bad;
 	}
@@ -415,6 +434,10 @@ fddi_output(ifp, m0, dst, rt0)
 		return (error);
 	}
 	ifp->if_obytes += len;
+#if NCARP > 0
+	if (ifp != ifp0)
+		ifp0->if_obytes += len;
+#endif /* NCARP > 0 */
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
@@ -468,6 +491,14 @@ fddi_input(ifp, fh, m)
 			goto dropanyway;
 		etype = ntohs(l->llc_snap.ether_type);
 		m_adj(m, LLC_SNAPFRAMELEN);
+
+#if NCARP > 0
+		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
+		    (carp_input(m, (u_int8_t *)&fh->fddi_shost,
+		    (u_int8_t *)&fh->fddi_dhost, l->llc_snap.ether_type) == 0))
+			return;
+#endif
+
 		switch (etype) {
 #ifdef INET
 		case ETHERTYPE_IP:
