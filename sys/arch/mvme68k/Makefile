@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/04/28 11:12:35 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/05/05 11:08:02 deraadt Exp $
 
 # from: @(#)Makefile	8.1 (Berkeley) 6/11/93
 #
@@ -7,6 +7,8 @@
 NOPROG=	noprog
 NOMAN=	noman
 NOOBJ=	noobj
+
+SUBDIR=	stand
 
 DIRS=	conf dev include mvme68k
 
@@ -30,3 +32,4 @@ SUBDIR+=stand ../m68k
 obj:	_SUBDIRUSE
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
