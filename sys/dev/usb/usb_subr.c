@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.31 2004/11/08 22:01:02 dlg Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.32 2004/12/12 06:13:15 dlg Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -87,8 +87,6 @@ Static int usbd_submatch(device_ptr_t, struct cfdata *cf, void *);
 Static int usbd_print(void *aux, const char *pnp);
 Static int usbd_submatch(device_ptr_t, void *, void *);
 #endif
-Static usbd_status usbd_new_device2(device_ptr_t, usbd_bus_handle, int, int,
-    int, struct usbd_port *);
 Static void usbd_free_iface_data(usbd_device_handle dev, int ifcno);
 Static void usbd_kill_pipe(usbd_pipe_handle);
 Static usbd_status usbd_probe_and_attach(device_ptr_t parent,
@@ -134,7 +132,6 @@ Static const char * const usbd_error_strs[] = {
 	"SHORT_XFER",
 	"STALLED",
 	"INTERRUPTED",
-	"NEED_RESET",
 	"XXX",
 };
 
@@ -921,12 +918,6 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 			uaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
 			dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print,
 					   usbd_submatch);
-			if (dev->address == USB_START_ADDR) {
-#if defined(__FreeBSD__)
-				device_delete_child(parent, bdev);
-#endif
-				return (USBD_NEED_RESET);
-			}
 
 			if (dv != NULL) {
 				dev->subdevs[found++] = dv;
@@ -997,7 +988,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
  * and attach a driver.
  */
 usbd_status
-usbd_new_device2(device_ptr_t parent, usbd_bus_handle bus, int depth,
+usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 		int speed, int port, struct usbd_port *up)
 {
 	usbd_device_handle dev;
@@ -1142,37 +1133,11 @@ usbd_new_device2(device_ptr_t parent, usbd_bus_handle bus, int depth,
 
 	err = usbd_probe_and_attach(parent, dev, port, addr);
 	if (err) {
-		if (err == USBD_NEED_RESET) {
-			DPRINTF(("usbd_new_device2: device needs reset\n"));
-			/* must set address back to what it was */
-			dev->address = addr;
-		} 
 		usbd_remove_device(dev, up);
 		return (err);
   	}
 
   	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status
-usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
-    int speed, int ports, struct usbd_port *up)
-{
-	int retry = 0;
-	usbd_status err;
-
-	do {
-		if (retry > 0)
-			DPRINTF(("usbd_new_device: re-enumerating device\n"));
-		err = usbd_new_device2(parent, bus, depth, speed, ports, up);
-	} while ((err == USBD_NEED_RESET) && (retry++ < 5));
-
-	if (retry == 5) {
-		DPRINTF(("usbd_new_device: giving up after 5 tries\n"));
-		return (USBD_NOT_CONFIGURED);
-	}
-
-	return (err);
 }
 
 usbd_status
