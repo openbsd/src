@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2004/07/12 09:22:38 dtucker Exp $ */
+/*	$OpenBSD: parse.y,v 1.13 2004/07/20 16:47:55 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,7 @@ typedef struct {
 	union {
 		u_int32_t		 number;
 		char			*string;
-		struct ntp_addr		*addr;
+		struct ntp_addr_wrap	*addr;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -127,7 +127,7 @@ conf_main	: LISTEN ON address	{
 			struct listen_addr	*la;
 			struct ntp_addr		*h, *next;
 
-			for (h = $3; h != NULL; h = next) {
+			for (h = $3->a; h != NULL; h = next) {
 				next = h->next;
 				if (h->ss.ss_family == AF_UNSPEC) {
 					conf->listen_all = 1;
@@ -144,17 +144,21 @@ conf_main	: LISTEN ON address	{
 				    entry);
 				free(h);
 			}
+			free($3->name);
+			free($3);
 		}
 		| SERVERS address	{
 			struct ntp_peer		*p;
 			struct ntp_addr		*h, *next;
 
-			for (h = $2; h != NULL; h = next) {
+			for (h = $2->a; h != NULL; h = next) {
 				next = h->next;
 				if (h->ss.ss_family != AF_INET &&
 				    h->ss.ss_family != AF_INET6) {
 					yyerror("IPv4 or IPv6 address "
 					    "or hostname expected");
+					free($2->name);
+					free($2);
 					YYERROR;
 				}
 				p = calloc(1, sizeof(struct ntp_peer));
@@ -162,8 +166,14 @@ conf_main	: LISTEN ON address	{
 					fatal("conf_main server calloc");
 				h->next = NULL;
 				p->addr = h;
-				p->addr_head = h;
+				p->addr_head.a = h;
+				p->addr_head.pool = 1;
+				p->addr_head.name = strdup($2->name);
+				if (p->addr_head.name == NULL)
+					fatal(NULL);
 				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
+				free($2->name);
+				free($2);
 			}
 		}
 		| SERVER address	{
@@ -172,31 +182,42 @@ conf_main	: LISTEN ON address	{
 
 			if ((p = calloc(1, sizeof(struct ntp_peer))) == NULL)
 				fatal("conf_main server calloc");
-			for (h = $2; h != NULL; h = next) {
+			for (h = $2->a; h != NULL; h = next) {
 				next = h->next;
 				if (h->ss.ss_family != AF_INET &&
 				    h->ss.ss_family != AF_INET6) {
 					yyerror("IPv4 or IPv6 address "
 					    "or hostname expected");
+					free($2->name);
+					free($2);
 					YYERROR;
 				}
 				h->next = p->addr;
 				p->addr = h;
 			}
 
-			p->addr_head = p->addr;
+			p->addr_head.a = p->addr;
+			p->addr_head.pool = 0;
+			p->addr_head.name = strdup($2->name);
+			if (p->addr_head.name == NULL)
+				fatal(NULL);
 			TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
+			free($2->name);
+			free($2);
 		}
 		;
 
 address		: STRING		{
-			if (($$ = host($1)) == NULL) {
+			if (($$ = calloc(1, sizeof(struct ntp_addr_wrap))) ==
+			    NULL)
+				fatal(NULL);
+			if (($$->a = host($1)) == NULL) {
 				yyerror("could not parse address spec \"%s\"",
 				    $1);
 				free($1);
 				YYERROR;
 			}
-			free($1);
+			$$->name = $1;
 		}
 		;
 

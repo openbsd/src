@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.27 2004/07/18 12:59:41 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.28 2004/07/20 16:47:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -68,6 +68,12 @@ struct ntp_addr {
 	struct sockaddr_storage	 ss;
 };
 
+struct ntp_addr_wrap {
+	char			*name;
+	u_int8_t		 pool;
+	struct ntp_addr		*a;
+};
+
 struct ntp_status {
 	u_int8_t	leap;
 	int8_t		precision;
@@ -89,7 +95,7 @@ struct ntp_offset {
 
 struct ntp_peer {
 	TAILQ_ENTRY(ntp_peer)		 entry;
-	struct ntp_addr			*addr_head;
+	struct ntp_addr_wrap		 addr_head;
 	struct ntp_addr			*addr;
 	struct ntp_query		*query;
 	enum client_state		 state;
