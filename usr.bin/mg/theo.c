@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.19 2001/12/25 16:54:51 hugh Exp $	*/
+/*	$OpenBSD: theo.c,v 1.20 2002/03/26 02:12:29 hugh Exp $	*/
 
 #include "def.h"
 #include "kbd.h"
@@ -68,6 +68,7 @@ static const char *talk[] = {
 	"Lazy bums slacking on your asses.",
 	"35 commits an hour? That's pathetic!",
 	"Fine software takes time to prepare.  Give a little slack.",
+	"emacs on the vax",
 	"Just a minute ago we were hugging and now you, guys, do not love me anymore",
 	"I'll let you know when I need to floss my teeth",
 	"If you can't figure out yourself, you're lacking some mental faculties",
