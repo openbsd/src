@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.8 2001/08/18 21:22:09 drahn Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.9 2001/08/19 15:09:20 miod Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
@@ -246,6 +246,8 @@ int	adbOutTail = 0;			/* tail of out queue */
 int	tickle_count = 0;		/* how many tickles seen for this packet? */
 int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
+struct	timeout adb_cuda_timeout;
+struct	timeout adb_softintr_timeout;
 
 volatile u_char *Via1Base;
 extern int adb_polling;			/* Are we polling? */
@@ -348,7 +350,7 @@ adb_cuda_tickle(void)
 		tickle_count = 0;
 	}
 
-	timeout((void *)adb_cuda_tickle, 0, ADB_TICKLE_TICKS);
+	timeout_add(&adb_cuda_timeout, ADB_TICKLE_TICKS);
 }
 
 /*
@@ -1483,8 +1485,10 @@ adb_reinit(void)
 		printf_intr("adb: ADBReInit complete\n");
 #endif
 
-	if (adbHardware == ADB_HW_CUDA)
-		timeout((void *)adb_cuda_tickle, 0, ADB_TICKLE_TICKS);
+	if (adbHardware == ADB_HW_CUDA) {
+		timeout_set(&adb_cuda_timeout, (void *)adb_cuda_tickle, NULL);
+		timeout_add(&adb_cuda_timeout, ADB_TICKLE_TICKS);
+	}
 
 	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
 		splx(s);
@@ -2167,7 +2171,9 @@ ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum)
 int
 setsoftadb()
 {
-	timeout((void *)adb_soft_intr, NULL, 1);
+	if (!timeout_initialized(&adb_softintr_timeout))
+		timeout_set(&adb_softintr_timeout, (void *)adb_soft_intr, NULL);
+	timeout_add(&adb_softintr_timeout, 1);
 	return 0;
 }
 
