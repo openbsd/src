@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.new.c,v 1.3 1998/07/29 00:36:03 mickey Exp $	*/
+/*	$OpenBSD: exec.new.c,v 1.4 1998/08/27 20:36:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -89,14 +89,15 @@ exec(path, loadaddr, howto)
 		       param.sym.addr,  param.sym.size,  param.sym.foff,
 		       param.str.addr,  param.str.size,  param.str.foff);
 #endif
-	pa = loadaddr;
+	param.xp_end = (u_int)pa = loadaddr;
 
 	printf("%u", param.text.size);
-	/* read .text + .data + .sym */
+	/* .text */
 	if (lseek(fd, param.text.foff, SEEK_SET) < 0 ||
 	    read(fd, pa+param.text.addr, param.text.size) != param.text.size)
 		goto err;
 
+	/* .data */
 	if (param.data.size) {
 		printf("+%u", param.data.size);
 		if (lseek(fd, param.data.foff, SEEK_SET) <= 0 ||
@@ -108,26 +109,29 @@ exec(path, loadaddr, howto)
 	printf("+%u", param.bss.size);
 	bzero (pa + param.bss.addr, param.bss.size);
 
-	sz = param.bss.addr + param.bss.size;
-	if (param.sym.size) {
+	if (!param.sym.size)
+		pa += param.bss.addr + param.bss.size;
+	else {
+		*(u_int *)(pa + param.sym.addr) = param.sym.size;
+		param.sym.addr += sizeof(u_int);
 		printf("+[%u", param.sym.size);
 		if (lseek(fd, param.sym.foff, SEEK_SET) <= 0 ||
 		    read(fd,pa+param.sym.addr,param.sym.size) != param.sym.size)
 			goto err;
 
 		/* .str */
-		if (lseek(fd, param.str.foff, SEEK_SET) <= 0)
+		if (param.str.foff && lseek(fd, param.str.foff, SEEK_SET) <= 0)
 			goto err;
 
-		pa += param.str.addr;
+		pa += param.sym.addr + param.sym.size;
 		sz = param.str.size;
 
 		/* special hack for a.out, where .str size is it's first int */
-		if (param.str.foff && sz == 0) {
+		if (param.str.foff && !sz) {
 			if (read(fd, pa, sizeof(u_int)) != sizeof(u_int))
 				goto err;
 			else {
-				sz = param.sym.size = *(u_int*)pa;
+				sz = param.str.size = *(u_int*)pa;
 				pa += sizeof(u_int);
 				sz -= sizeof(u_int);
 			}
@@ -137,9 +141,11 @@ exec(path, loadaddr, howto)
 				goto err;
 		}
 		printf("+%u]", sz);
+		pa += sz;
 	}
 
-	param.xp_end = ((u_int)(pa + sz) + sizeof(int) -1) & ~(sizeof(int) -1);
+	/* round to int */
+	param.xp_end = ((u_int)pa + sizeof(int) - 1) & ~(sizeof(int) - 1);
 
 	printf(" total=0x%x start=0x%x\n", param.xp_end, param.xp_entry);
 
