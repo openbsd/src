@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.3 2005/01/02 19:25:41 kettenis Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.4 2005/01/24 20:40:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -789,7 +789,7 @@ mavb_query_devinfo(void *hdl, struct mixer_devinfo *di)
 		di->type = AUDIO_MIXER_VALUE;
 		di->mixer_class = AD1843_INPUT_CLASS;
 		di->next = AD1843_DAC1_MUTE;
-		strlcpy(di->label.name, AudioNmaster, sizeof di->label.name);
+		strlcpy(di->label.name, AudioNdac "1", sizeof di->label.name);
 		di->un.v.num_channels = 2;
 		strlcpy(di->un.v.units.name, AudioNvolume,
 		    sizeof di->un.v.units.name);
@@ -1120,7 +1120,7 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ring += MAVB_ISA_RING_SIZE; /* XXX */
 
 	bus_space_write_8(sc->sc_st, sc->sc_isash, MACE_ISA_RING_BASE,
-	   sc->sc_dmamap->dm_segs[0].ds_addr);
+	    sc->sc_dmamap->dm_segs[0].ds_addr);
 
 	/* Establish interrupt.  */
 	BUS_INTR_ESTABLISH(ca, NULL, ca->ca_intr, IST_EDGE, IPL_AUDIO,
