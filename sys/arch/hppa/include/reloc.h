@@ -1,4 +1,4 @@
-/*	$OpenBSD: reloc.h,v 1.2 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: reloc.h,v 1.3 2004/05/22 04:25:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -120,7 +120,9 @@ enum reloc_type {
 	RELOC_LTOFF_FPTR16WF,	/* pa2: ltoff(fptr(symbol + addend)) */
 	RELOC_LTOFF_FPTR16DF,	/* pa2: ltoff(fptr(symbol + addend)) */
 	RELOC_LORESERVE,	/*	reserved for environment-specific use */
-	RELOC_COPY = 136,
+	RELOC_COPY = 128,
+	RELOC_IPLT,
+	RELOC_EPLT,
 	RELOC_GDATA,
 	RELOC_JMPSLOT,
 	RELOC_RELATIVE,
