@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.7 1996/08/11 08:46:44 tholo Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.8 1996/08/30 02:20:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.7 1996/08/11 08:46:44 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.8 1996/08/30 02:20:57 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,7 +101,7 @@ main(argc, argv)
 	host = user = NULL;
 
 	/* if called as something other than "rsh", use it as the host name */
-	if (p = rindex(argv[0], '/'))
+	if (p = strrchr(argv[0], '/'))
 		++p;
 	else
 		p = argv[0];
@@ -177,6 +177,10 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	if (geteuid()) {
+		(void)fprintf(stderr, "rsh: must be setuid root.\n");
+		exit(1);
+	}
 	if (!(pw = getpwuid(uid = getuid()))) {
 		(void)fprintf(stderr, "rsh: unknown user id.\n");
 		exit(1);
