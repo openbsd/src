@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.21 2004/02/10 10:06:48 miod Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.22 2004/05/16 22:23:06 miod Exp $ */
 
 /* Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -299,19 +299,14 @@ void
 bugtty_chkinput()
 {
 	struct tty *tp;
-	int rc = 0;
-	tp = bugtty_tty[0]; /* Kinda ugly hack */
-	if (tp == NULL )
+
+	tp = bugtty_tty[0]; /* assumes console is the first port */
+	if (tp == NULL)
 		return;
 
-	if ((rc = buginstat()) != 0) {
-		while (buginstat() != 0) {
-			u_char c = buginchr() & 0xff;
-			(*linesw[tp->t_line].l_rint)(c, tp);
-		}
-		/*
-		wakeup(tp);
-		*/
+	while (buginstat() != 0) {
+		u_char c = buginchr() & 0xff;
+		(*linesw[tp->t_line].l_rint)(c, tp);
 	}
 }
 
