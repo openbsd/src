@@ -829,7 +829,6 @@
 ./usr/libexec/vfontedpr
 ./usr/libexec/vi.recover
 ./usr/lkm
-./usr/lkm/ipl.o
 ./usr/local
 ./usr/local/bin
 ./usr/local/info
@@ -2667,3 +2666,4 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/sbin/ifmcstat
