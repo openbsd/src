@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.13 2003/06/25 03:55:45 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.14 2003/06/25 07:26:59 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -354,10 +354,10 @@ copytemp(void)
 	char buf[BUFSIZ];
 	int i, f;
 
-	signal(SIGHUP, catchsig);
-	signal(SIGINT, catchsig);
-	signal(SIGPIPE, catchsig);
-	signal(SIGTERM, catchsig);
+	signal(SIGHUP, done);
+	signal(SIGINT, done);
+	signal(SIGPIPE, done);
+	signal(SIGTERM, done);
 	f = mkstemp(tempfile);
 	if (f < 0) {
 		fprintf(stderr, "diff: ");
@@ -921,8 +921,7 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 			if (c == '\t' && tflag)
 				do
 					putchar(' ');
-				while (++col & 7)
-					;
+				while (++col & 7);
 			else {
 				putchar(c);
 				col++;
