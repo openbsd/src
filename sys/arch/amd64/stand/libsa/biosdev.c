@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.1 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.2 2004/08/21 18:53:38 tom Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -14,8 +14,8 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -34,6 +34,7 @@
 #include <machine/tss.h>
 #include <machine/biosvar.h>
 #include <lib/libsa/saerrno.h>
+#include <isofs/cd9660/iso.h>
 #include "disk.h"
 #include "libsa.h"
 #include "biosdev.h"
@@ -46,6 +47,7 @@ static int EDD_rw (int, int, u_int64_t, u_int32_t, void *);
 
 extern int debug;
 int bios_bootdev;
+int bios_cddev = -1;		/* Set by srt0 if coming from CD */
 
 #if 0
 struct biosdisk {
@@ -238,22 +240,40 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 	int dev = bd->bios_number;
 	int j, error;
 	void *bb;
+	int bbsize = nsect * DEV_BSIZE;
 
-	/* use a bounce buffer to not cross 64k DMA boundary */
-	if ((((u_int32_t)buf) & ~0xffff) !=
-	    (((u_int32_t)buf + nsect * DEV_BSIZE) & ~0xffff)) {
+	if (bd->flags & BDI_EL_TORITO) {	/* It's a CD device */
+		dev &= 0xff;			/* Mask out this flag bit */
+
+		/*
+		 * sys/lib/libsa/cd9600.c converts 2,048-byte CD sectors
+		 * to DEV_BSIZE blocks before calling the device strategy
+		 * routine.  However, the El Torito spec says that the
+		 * BIOS will work in 2,048-byte sectors.  So shift back.
+		 */
+		off >>= (ISO_DEFAULT_BLOCK_SHIFT - DEV_BSHIFT);
+		nsect >>= (ISO_DEFAULT_BLOCK_SHIFT - DEV_BSHIFT);
+	}
+
+	/*
+	 * Use a bounce buffer to not cross 64k DMA boundary, and to
+	 * not access 1 MB or above.
+	 */
+	if (((((u_int32_t)buf) & ~0xffff) !=
+	    (((u_int32_t)buf + bbsize) & ~0xffff)) ||
+	    (((u_int32_t)buf) >= 0x100000)) {
 		/*
 		 * XXX we believe that all the io is buffered
 		 * by fs routines, so no big reads anyway
 		 */
-		bb = alloca(nsect * DEV_BSIZE);
+		bb = alloca(bbsize);
 		if (rw != F_READ)
-			bcopy (buf, bb, nsect * DEV_BSIZE);
+			bcopy(buf, bb, bbsize);
 	} else
 		bb = buf;
 
 	/* Try to do operation up to 5 times */
-	for (error = 1, j = 5; j-- && error;) {
+	for (error = 1, j = 5; j-- && error; ) {
 		/* CHS or LBA access? */
 		if (bd->bios_edd != -1) {
 			error = EDD_rw(rw, dev, off, nsect, bb);
@@ -264,9 +284,11 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 
 			/* Handle track boundaries */
 			for (error = i = 0; error == 0 && i < nsect;
- 					i += n, off += n, p += n * DEV_BSIZE) {
+			    i += n, off += n, p += n * DEV_BSIZE) {
 
-				btochs(off, cyl, head, sect, bd->bios_heads, bd->bios_sectors);
+				btochs(off, cyl, head, sect, bd->bios_heads,
+				    bd->bios_sectors);
+
 				if ((sect + (nsect - i)) >= bd->bios_sectors)
 					n = bd->bios_sectors - sect;
 				else
@@ -289,7 +311,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 #ifdef BIOS_DEBUG
 			if (debug)
 				printf("\nBIOS error 0x%x (%s)\n",
-					error, biosdisk_err(error));
+				    error, biosdisk_err(error));
 #endif
 			biosdreset(dev);
 			break;
@@ -297,7 +319,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 	}
 
 	if (bb != buf && rw == F_READ)
-		bcopy (bb, buf, nsect * DEV_BSIZE);
+		bcopy(bb, buf, bbsize);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
@@ -307,7 +329,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 	}
 #endif
 
-	return (error);
+	return error;
 }
 
 /*
@@ -396,7 +418,7 @@ biosopen(struct open_file *f, ...)
 			cp++;
 	}
 
-	for (maj = 0; maj < nbdevs && 
+	for (maj = 0; maj < nbdevs &&
 	     strncmp(*file, bdevs[maj], cp - *file); maj++);
 	if (maj >= nbdevs) {
 		printf("Unknown device: ");
@@ -435,6 +457,9 @@ biosopen(struct open_file *f, ...)
 		biosdev |= 0x80;
 		break;
 	case 2:  /* fd */
+		break;
+	case 6:  /* cd */
+		biosdev = bios_bootdev & 0xff;
 		break;
 	default:
 		return ENXIO;
@@ -485,7 +510,7 @@ biosopen(struct open_file *f, ...)
 	return 0;
 }
 
-const u_char bidos_errs[] = 
+const u_char bidos_errs[] =
 /* ignored	"\x00" "successful completion\0" */
 		"\x01" "invalid function/parameter\0"
 		"\x02" "address mark not found\0"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.1 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.2 2004/08/21 18:53:38 tom Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -97,12 +97,18 @@ devboot(dev_t bootdev, char *p)
 	*p++ = '/';
 	*p++ = 'r';
 #endif
-	if (bootdev & 0x80)
-		*p++ = 'h';
-	else
-		*p++ = 'f';
-	*p++ = 'd';
-	*p++ = '0' + (bootdev & 0x7f);
+	if (bootdev & 0x100) {
+		*p++ = 'c';
+		*p++ = 'd';
+		*p++ = '0';
+	} else {
+		if (bootdev & 0x80)
+			*p++ = 'h';
+		else
+			*p++ = 'f';
+		*p++ = 'd';
+		*p++ = '0' + (bootdev & 0x7f);
+	}
 	*p++ = 'a';
 	*p = '\0';
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.2 2004/03/21 21:37:41 tom Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.3 2004/08/21 18:53:38 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -13,8 +13,8 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -53,6 +53,8 @@ struct disklist_lh disklist;
 struct diskinfo *bootdev_dip;
 
 extern int debug;
+extern int bios_bootdev;
+extern int bios_cddev;
 
 /* Probe for all BIOS floppies */
 static void
@@ -201,6 +203,84 @@ diskprobe(void)
 }
 
 
+void
+cdprobe(void)
+{
+	struct diskinfo *dip;
+	int cddev = bios_cddev & 0xff;
+
+	/* Another BIOS boot device... */
+
+	if (bios_cddev == -1)			/* Not been set, so don't use */
+		return;
+
+	dip = alloc(sizeof(struct diskinfo));
+	bzero(dip, sizeof(*dip));
+
+#if 0
+	if (bios_getdiskinfo(cddev, &dip->bios_info)) {
+		printf(" <!cd0>");	/* XXX */
+		free(dip, 0);
+		return;
+	}
+#endif
+
+	printf(" cd0");
+
+	dip->bios_info.bios_number = cddev;
+	dip->bios_info.bios_edd = 1;		/* Use the LBA calls */
+	dip->bios_info.flags |= BDI_GOODLABEL | BDI_EL_TORITO;
+	dip->bios_info.checksum = 0;		 /* just in case */
+	dip->bios_info.bsd_dev =
+	    MAKEBOOTDEV(0, 0, 0, 0xff, RAW_PART);
+
+	/* Create an imaginary disk label */
+	dip->disklabel.d_secsize = 2048;
+	dip->disklabel.d_ntracks = 1;
+	dip->disklabel.d_nsectors = 100;
+	dip->disklabel.d_ncylinders = 1;
+	dip->disklabel.d_secpercyl = dip->disklabel.d_ntracks *
+	    dip->disklabel.d_nsectors;
+	if (dip->disklabel.d_secpercyl == 0) {
+		dip->disklabel.d_secpercyl = 100;
+		/* as long as it's not 0, since readdisklabel divides by it */
+	}
+
+	strncpy(dip->disklabel.d_typename, "ATAPI CD-ROM",
+	    sizeof(dip->disklabel.d_typename));
+	dip->disklabel.d_type = DTYPE_ATAPI;
+
+	strncpy(dip->disklabel.d_packname, "fictitious",
+	    sizeof(dip->disklabel.d_packname));
+	dip->disklabel.d_secperunit = 100;
+	dip->disklabel.d_rpm = 300;
+	dip->disklabel.d_interleave = 1;
+	dip->disklabel.d_flags = D_REMOVABLE;
+
+	dip->disklabel.d_bbsize = 2048;
+	dip->disklabel.d_sbsize = 2048;
+
+	dip->disklabel.d_magic = DISKMAGIC;
+	dip->disklabel.d_magic2 = DISKMAGIC;
+	dip->disklabel.d_checksum = dkcksum(&dip->disklabel);
+
+	/* 'a' partition covering the "whole" disk */
+	dip->disklabel.d_partitions[0].p_offset = 0;
+	dip->disklabel.d_partitions[0].p_size = 100;
+	dip->disklabel.d_partitions[0].p_fstype = FS_UNUSED;
+
+	/* The raw partition is special */
+	dip->disklabel.d_partitions[RAW_PART].p_offset = 0;
+	dip->disklabel.d_partitions[RAW_PART].p_size = 100;
+	dip->disklabel.d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+
+	dip->disklabel.d_npartitions = RAW_PART + 1;
+
+	/* Add to queue of disks */
+	TAILQ_INSERT_TAIL(&disklist, dip, list);
+}
+
+
 /* Find info on given BIOS disk */
 struct diskinfo *
 dklookup(int dev)
@@ -220,13 +300,22 @@ dump_diskinfo(void)
 	struct diskinfo *dip;
 
 	printf("Disk\tBIOS#\tType\tCyls\tHeads\tSecs\tFlags\tChecksum\n");
-	for(dip = TAILQ_FIRST(&disklist); dip; dip = TAILQ_NEXT(dip, list)){
+	for (dip = TAILQ_FIRST(&disklist); dip; dip = TAILQ_NEXT(dip, list)) {
 		bios_diskinfo_t *bdi = &dip->bios_info;
 		int d = bdi->bios_number;
+		int u = d & 0x7f;
+		char c;
+
+		if (bdi->flags & BDI_EL_TORITO) {
+			c = 'c';
+			u = 0;
+		} else {
+		    	c = (d & 0x80) ? 'h' : 'f';
+		}
 
 		printf("%cd%d\t0x%x\t%s\t%d\t%d\t%d\t0x%x\t0x%x\n",
-		    (d & 0x80)?'h':'f', d & 0x7F, d,
-			(bdi->flags & BDI_BADLABEL)?"*none*":"label",
+		    c, u, d,
+		    (bdi->flags & BDI_BADLABEL)?"*none*":"label",
 		    bdi->bios_cylinders, bdi->bios_heads, bdi->bios_sectors,
 		    bdi->flags, bdi->checksum);
 	}
@@ -288,4 +377,3 @@ disksum(int blk)
 
 	return (reprobe);
 }
-
