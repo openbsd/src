@@ -979,6 +979,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/pdqvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/pt2254a.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ramdac.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/revar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rf3000reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rln.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rlncmd.ph

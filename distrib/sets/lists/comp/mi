@@ -298,6 +298,7 @@
 ./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/pt2254a.h
 ./usr/include/dev/ic/ramdac.h
+./usr/include/dev/ic/revar.h
 ./usr/include/dev/ic/rf3000reg.h
 ./usr/include/dev/ic/rln.h
 ./usr/include/dev/ic/rlncmd.h
