@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.70 2002/05/31 02:22:21 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.71 2002/06/18 19:25:48 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -495,9 +495,9 @@ esp_input_cb(void *op)
 	s = spltdb();
 
 	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-	FREE(tc, M_XDATA);
 	if (tdb == NULL)
 	{
+		FREE(tc, M_XDATA);
 		espstat.esps_notdb++;
 		DPRINTF(("esp_input_cb(): TDB is expired while in crypto"));
 		goto baddone;
@@ -509,6 +509,8 @@ esp_input_cb(void *op)
 	/* Check for crypto errors */
 	if (crp->crp_etype)
 	{
+		FREE(tc, M_XDATA);
+
 		/* Reset the session ID */
 		if (tdb->tdb_cryptoid != 0)
 			tdb->tdb_cryptoid = crp->crp_sid;
@@ -528,6 +530,7 @@ esp_input_cb(void *op)
 	/* Shouldn't happen... */
 	if (m == NULL)
 	{
+		FREE(tc, M_XDATA);
 		espstat.esps_crypto++;
 		DPRINTF(("esp_input_cb(): bogus returned buffer from crypto\n"));
 		error = EINVAL;
@@ -552,6 +555,7 @@ esp_input_cb(void *op)
 			/* Verify authenticator */
 			if (bcmp(ptr, aalg, esph->authsize))
 			{
+				FREE(tc, M_XDATA);
 				DPRINTF(("esp_input_cb(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 				espstat.esps_badauth++;
 				error = EACCES;
@@ -562,6 +566,8 @@ esp_input_cb(void *op)
 		/* Remove trailing authenticator */
 		m_adj(m, -(esph->authsize));
 	}
+
+	FREE(tc, M_XDATA);
 
 	/* Replay window checking, if appropriate */
 	if ((tdb->tdb_wnd > 0) && (!(tdb->tdb_flags & TDBF_NOREPLAY)))
@@ -1017,7 +1023,6 @@ esp_output_cb(void *op)
 	s = spltdb();
 
 	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-
 	FREE(tc, M_XDATA);
 	if (tdb == NULL) {
 		espstat.esps_notdb++;
