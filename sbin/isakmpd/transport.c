@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.c,v 1.3 1998/11/17 11:10:21 niklas Exp $	*/
-/*	$EOM: transport.c,v 1.20 1998/10/11 20:25:09 niklas Exp $	*/
+/*	$OpenBSD: transport.c,v 1.4 1999/02/26 03:51:07 niklas Exp $	*/
+/*	$EOM: transport.c,v 1.25 1999/02/25 11:39:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,8 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 
+#include "sysdep.h"
+
 #include "conf.h"
 #include "exchange.h"
 #include "log.h"
@@ -44,6 +46,9 @@
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
+
+/* If no retransmit limit is given, use this as a default.  */
+#define RETRANSMIT_DEFAULT 10
 
 LIST_HEAD (transport_list, transport) transport_list;
 LIST_HEAD (transport_method_list, transport_vtbl) transport_method_list;
@@ -62,6 +67,7 @@ transport_add (struct transport *t)
 {
   TAILQ_INIT (&t->sendq);
   LIST_INSERT_HEAD (&transport_list, t, link);
+  t->flags = 0;
 }
 
 /* Register another transport method T.  */
@@ -96,7 +102,7 @@ transport_fd_set (fd_set *fds)
   for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
     if (t->flags & TRANSPORT_LISTEN)
       {
-	n = (*t->vtbl->fd_set) (t, fds);
+	n = t->vtbl->fd_set (t, fds, 1);
 	if (n > max)
 	  max = n;
       }
@@ -120,7 +126,7 @@ transport_pending_wfd_set (fd_set *fds)
     {
       if (TAILQ_FIRST (&t->sendq))
 	{
-	  n = (*t->vtbl->fd_set) (t, fds);
+	  n = t->vtbl->fd_set (t, fds, 1);
 	  if (n > max)
 	    max = n;
 	}
@@ -143,22 +149,26 @@ transport_handle_messages (fd_set *fds)
 }
 
 /*
- * Send the first queued message on the transports whose file descriptor
- * is in FDS.
+ * Send the first queued message on the first transport found whose file
+ * descriptor is in FDS and has messages queued.  For fairness always try
+ * the transport right after the last one which got a message sent on it.
+ * XXX Would this perhaps be nicer done with CIRCLEQ chaining?
  */
 void
 transport_send_messages (fd_set *fds)
 {
-  struct transport *t;
+  struct transport *t = 0;
   struct message *msg;
   struct timeval expiration;
   struct sa *sa, *next_sa;
   int expiry;
 
   for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
-    if (TAILQ_FIRST (&t->sendq) && (*t->vtbl->fd_isset) (t, fds))
+    if (TAILQ_FIRST (&t->sendq) && t->vtbl->fd_isset (t, fds))
       {
+	t->vtbl->fd_set (t, fds, 0);
 	msg = TAILQ_FIRST (&t->sendq);
+	msg->flags &= ~MSG_IN_TRANSIT;
 	TAILQ_REMOVE (&t->sendq, msg, link);
 
 	/*
@@ -181,7 +191,8 @@ transport_send_messages (fd_set *fds)
 	if ((msg->flags & MSG_NO_RETRANS) == 0)
 	  {
 	    /* XXX make this a configurable parameter.  */
-	    if (msg->xmits > conf_get_num ("General", "retransmits"))
+	    if (msg->xmits
+		> conf_get_num ("General", "retransmits", RETRANSMIT_DEFAULT))
 	      {
 		log_print ("transport_send_messages: giving up on message %p",
 			   msg);
@@ -200,7 +211,7 @@ transport_send_messages (fd_set *fds)
 
 		exchange_free (msg->exchange);
 		message_free (msg);
-		return;
+		continue;
 	      };
 
 	    gettimeofday (&expiration, 0);
