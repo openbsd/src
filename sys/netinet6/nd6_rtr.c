@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.27 2003/06/24 07:47:54 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.28 2003/06/24 07:55:12 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ nd6_rs_input(m, off, icmp6len)
 	union nd_opts ndopts;
 
 	/* If I'm not a router, ignore it. */
-	if (ip6_accept_rtadv != 0 || ip6_forwarding != 1)
+	if (ip6_accept_rtadv != 0 || !ip6_forwarding)
 		goto freeit;
 
 	/* Sanity checks */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.63 2003/06/24 07:48:51 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.64 2003/06/24 07:55:12 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -808,7 +808,7 @@ nd6_free(rt, gc)
 	 * even though it is not harmful, it was not really necessary.
 	 */
 
-	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
+	if (!ip6_forwarding) {
 		int s;
 		s = splsoftnet();
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,

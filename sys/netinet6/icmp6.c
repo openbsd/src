@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.72 2003/06/24 07:47:54 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.73 2003/06/24 07:55:12 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2405,7 +2405,7 @@ icmp6_redirect_output(m0, rt)
 	icmp6_errcount(&icmp6stat.icp6s_outerrhist, ND_REDIRECT, 0);
 
 	/* if we are not router, we don't send icmp6 redirect */
-	if (!ip6_forwarding || ip6_accept_rtadv)
+	if (!ip6_forwarding)
 		goto fail;
 
 	/* sanity check */
