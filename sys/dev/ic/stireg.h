@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.6 2003/06/02 19:24:22 mickey Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.7 2003/08/19 02:25:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -430,6 +430,22 @@ typedef struct sti_inqconfout {
 	u_int32_t	planes;
 	u_int8_t	name[STI_DEVNAME_LEN];
 	u_int32_t	attributes;
+#define	STI_INQCONF_Y2X		0x0001	/* pixel is higher tan wider */
+#define	STI_INQCONF_HWBLKMV	0x0002	/* hw blkmv is present */
+#define	STI_INQCONF_AHW		0x0004	/* adv hw accel */
+#define	STI_INQCONF_INT		0x0008	/* can interrupt */
+#define	STI_INQCONF_GONOFF	0x0010	/* supports on/off */
+#define	STI_INQCONF_AONOFF	0x0020	/* supports alpha on/off */
+#define	STI_INQCONF_VARY	0x0040	/* variable fb height */
+#define	STI_INQCONF_ODDBYTES	0x0080	/* use only odd fb bytes */
+#define	STI_INQCONF_FLUSH	0x0100	/* fb cache requires flushing */
+#define	STI_INQCONF_DMA		0x0200	/* supports dma */
+#define	STI_INQCONF_VDMA	0x0400	/* supports vdma */
+#define	STI_INQCONF_YUV1	0x2000	/* supports YUV type 1 */
+#define	STI_INQCONF_YUV2	0x4000	/* supports YUV type 2 */
+#define	STI_INQCONF_BITS \
+    "\020\001y2x\002hwblkmv\003ahw\004int\005gonoff\006aonoff\007vary"\
+    "\010oddb\011flush\012dma\013vdma\016yuv1\017yuv2"
 	sti_einqconfout_t ext;
 } *sti_inqconfout_t;
 

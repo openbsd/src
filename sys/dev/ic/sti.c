@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.29 2003/08/17 05:52:41 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.30 2003/08/19 02:25:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -124,6 +124,7 @@ sti_attach_common(sc)
 	struct sti_softc *sc;
 {
 	struct sti_inqconfout cfg;
+	struct sti_einqconfout ecfg;
 	bus_space_handle_t fbh;
 	struct sti_dd *dd;
 	struct sti_cfg *cc;
@@ -186,17 +187,15 @@ sti_attach_common(sc)
 
 #ifdef STIDEBUG
 	printf("dd:\n"
-	    "devtype=%x, rev=%x;%d, gid=%x%x, font=%x, mss=%x\n"
-	    "end=%x, mmap=%x, msto=%x, timo=%d, mont=%x, ua=%x\n"
-	    "memrq=%x, pwr=%d, bus=%x, ebus=%x, altt=%x, cfb=%x\n"
+	    "devtype=%x, rev=%x;%d, altt=%x, gid=%016llx, font=%x, mss=%x\n"
+	    "end=%x, regions=%x, msto=%x, timo=%d, mont=%x, user=%x[%x]\n"
+	    "memrq=%x, pwr=%d, bus=%x, ebus=%x, cfb=%x\n"
 	    "code=",
-	    dd->dd_type & 0xff, dd->dd_grrev, dd->dd_lrrev,
-	    dd->dd_grid[0], dd->dd_grid[1],
-	    dd->dd_fntaddr, dd->dd_maxst, dd->dd_romend,
-	    dd->dd_reglst, dd->dd_maxreent,
-	    dd->dd_maxtimo, dd->dd_montbl, dd->dd_udaddr,
-	    dd->dd_stimemreq, dd->dd_udsize, dd->dd_pwruse,
-	    dd->dd_bussup, dd->dd_altcodet, dd->dd_cfbaddr);
+	    dd->dd_type & 0xff, dd->dd_grrev, dd->dd_lrrev, dd->dd_altcodet,
+	    *(u_int64_t *)dd->dd_grid, dd->dd_fntaddr, dd->dd_maxst,
+	    dd->dd_romend, dd->dd_reglst, dd->dd_maxreent, dd->dd_maxtimo,
+	    dd->dd_montbl, dd->dd_udaddr, dd->dd_udsize, dd->dd_stimemreq,
+	    dd->dd_pwruse, dd->dd_bussup, dd->dd_ebussup, dd->dd_cfbaddr);
 	printf("%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x\n",
 	    dd->dd_pacode[0x0], dd->dd_pacode[0x1], dd->dd_pacode[0x2],
 	    dd->dd_pacode[0x3], dd->dd_pacode[0x4], dd->dd_pacode[0x5],
@@ -205,7 +204,7 @@ sti_attach_common(sc)
 	    dd->dd_pacode[0xc], dd->dd_pacode[0xd], dd->dd_pacode[0xe],
 	    dd->dd_pacode[0xf]);
 #endif
-	/* divine code size, could be less than STI_END entries */
+	/* divise code size, could be less than STI_END entries */
 	for (i = STI_END; !dd->dd_pacode[i]; i--);
 	size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
 	if (sc->sc_devtype == STI_DEVTYPE1)
@@ -302,6 +301,9 @@ sti_attach_common(sc)
 		return;
 	}
 
+	bzero(&cfg, sizeof(cfg));
+	bzero(&ecfg, sizeof(ecfg));
+	cfg.ext = &ecfg;
 	if ((error = sti_inqcfg(sc, &cfg))) {
 		printf(": error %d inquiring config\n", error);
 		return;
@@ -312,13 +314,20 @@ sti_attach_common(sc)
 		return;
 	}
 
+#ifdef STIDEBUG
+	printf("conf: bpp=%d planes=%d attr=%b\n"
+	    "crt=0x%x:0x%x:0x%x hw=0x%x:0x%x:0x%x\n", cfg.bpp,
+	    cfg.planes, cfg.attributes, STI_INQCONF_BITS,
+	    ecfg.crt_config[0], ecfg.crt_config[1], ecfg.crt_config[2],
+	    ecfg.crt_hw[0], ecfg.crt_hw[1], ecfg.crt_hw[2]);
+#endif
 	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
 	printf(": %s rev %d.%02d;%d, ID 0x%016llX\n"
 	    "%s: %dx%d frame buffer, %dx%dx%d display, offset %dx%d\n",
 	    cfg.name, dd->dd_grrev >> 4, dd->dd_grrev & 0xf, dd->dd_lrrev,
 	    *(u_int64_t *)dd->dd_grid,
 	    sc->sc_dev.dv_xname, cfg.fbwidth, cfg.fbheight,
-	    cfg.width, cfg.height, cfg.bpp, cfg.owidth, cfg.oheight);
+	    cfg.width, cfg.height, cfg.bppu, cfg.owidth, cfg.oheight);
 
 	if ((error = sti_fetchfonts(sc, &cfg, dd->dd_fntaddr))) {
 		printf("%s: cannot fetch fonts (%d)\n",
@@ -499,7 +508,6 @@ sti_inqcfg(sc, out)
 	} a;
 
 	bzero(&a,  sizeof(a));
-	bzero(out, sizeof(*out));
 
 	a.flags.flags = STI_INQCONFF_WAIT;
 	(*sc->inqconf)(&a.flags, &a.in, out, &sc->sc_cfg);
