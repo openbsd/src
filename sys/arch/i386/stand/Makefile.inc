@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.18 1998/03/11 13:33:27 graichen Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 1998/03/18 03:09:51 mickey Exp $
 
-CFLAGS=-O2 -Wall -Werror
+CFLAGS=${DEBUG} -O2 -Wall -Werror
 CPPFLAGS+=-I${S} -I${SADIR}/libsa -I. -I${.CURDIR}
 SACFLAGS=-nostdinc -fno-builtin -fpack-struct
 SACFLAGS+=-D_STANDALONE
