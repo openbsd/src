@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.121 2004/09/19 01:30:11 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.122 2004/11/27 20:05:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -461,7 +461,7 @@ pmap_bootstrap(vstart)
 	 */
 	kpm = &kernel_pmap_store;
 	bzero(kpm, sizeof(*kpm));
-	simple_lock_init(&kpm->pm_obj.vmobjlock);
+	simple_lock_init(&kpm->pm_lock);
 	kpm->pm_obj.pgops = NULL;
 	TAILQ_INIT(&kpm->pm_obj.memq);
 	kpm->pm_obj.uo_npages = 0;
@@ -632,7 +632,7 @@ pmap_create()
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
-	simple_lock_init(&pmap->pm_obj.vmobjlock);
+	simple_lock_init(&pmap->pm_lock);
 	pmap->pm_obj.pgops = NULL;	/* currently not a mappable object */
 	TAILQ_INIT(&pmap->pm_obj.memq);
 	pmap->pm_obj.uo_npages = 0;
@@ -667,9 +667,9 @@ pmap_destroy(pmap)
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_destroy(%p)\n", pmap));
 
-	simple_lock(&pmap->pm_obj.vmobjlock);
+	simple_lock(&pmap->pm_lock);
 	refs = --pmap->pm_obj.uo_refs;
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	simple_unlock(&pmap->pm_lock);
 
 	if (refs > 0)
 		return;
@@ -729,9 +729,9 @@ pmap_reference(pmap)
 {
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_reference(%p)\n", pmap));
 
-	simple_lock(&pmap->pm_obj.vmobjlock);
+	simple_lock(&pmap->pm_lock);
 	pmap->pm_obj.uo_refs++;
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	simple_unlock(&pmap->pm_lock);
 }
 
 void
@@ -759,12 +759,12 @@ pmap_enter(pmap, va, pa, prot, flags)
 	    ("pmap_enter(%p, 0x%x, 0x%x, 0x%x, 0x%x)\n",
 	    pmap, va, pa, prot, flags));
 
-	simple_lock(&pmap->pm_obj.vmobjlock);
+	simple_lock(&pmap->pm_lock);
 
 	if (!(pde = pmap_pde_get(pmap->pm_pdir, va)) &&
 	    !(pde = pmap_pde_alloc(pmap, va, &ptp))) {
 		if (flags & PMAP_CANFAIL) {
-			simple_unlock(&pmap->pm_obj.vmobjlock);
+			simple_unlock(&pmap->pm_lock);
 			return (KERN_RESOURCE_SHORTAGE);
 		}
 
@@ -812,7 +812,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		if (!pve && !(pve = pmap_pv_alloc())) {
 			if (flags & PMAP_CANFAIL) {
 				simple_unlock(&pg->mdpage.pvh_lock);
-				simple_unlock(&pmap->pm_obj.vmobjlock);
+				simple_unlock(&pmap->pm_lock);
 				return (KERN_RESOURCE_SHORTAGE);
 			}
 			panic("pmap_enter: no pv entries available");
@@ -830,7 +830,7 @@ enter:
 		pte |= PTE_PROT(TLB_WIRED);
 	pmap_pte_set(pde, va, pte);
 
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	simple_unlock(&pmap->pm_lock);
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_enter: leaving\n"));
 
@@ -853,7 +853,7 @@ pmap_remove(pmap, sva, eva)
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
 	    ("pmap_remove(%p, 0x%x, 0x%x)\n", pmap, sva, eva));
 
-	simple_lock(&pmap->pm_obj.vmobjlock);
+	simple_lock(&pmap->pm_lock);
 
 	for (batch = 0, pdemask = 1; sva < eva; sva += PAGE_SIZE) {
 		if (pdemask != (sva & PDE_MASK)) {
@@ -892,7 +892,7 @@ pmap_remove(pmap, sva, eva)
 		}
 	}
 
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	simple_unlock(&pmap->pm_lock);
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_remove: leaving\n"));
 }
@@ -915,7 +915,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 	sva = hppa_trunc_page(sva);
 	tlbprot = PTE_PROT(pmap_prot(pmap, prot));
 
-	simple_lock(&pmap->pm_obj.vmobjlock);
+	simple_lock(&pmap->pm_lock);
 
 	for (pdemask = 1; sva < eva; sva += PAGE_SIZE) {
 		if (pdemask != (sva & PDE_MASK)) {
@@ -949,7 +949,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 		}
 	}
 
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	simple_unlock(&pmap->pm_lock);
 }
 
 void
@@ -971,7 +971,7 @@ pmap_page_remove(pg)
 		volatile pt_entry_t *pde;
 		pt_entry_t pte;
 
-		simple_lock(&pmap->pm_obj.vmobjlock);
+		simple_lock(&pmap->pm_lock);
 
 		pde = pmap_pde_get(pmap->pm_pdir, va);
 		pte = pmap_pte_get(pde, va);
@@ -983,7 +983,7 @@ pmap_page_remove(pg)
 		pmap->pm_stats.resident_count--;
 
 		pmap_pte_set(pde, va, 0);
-		simple_unlock(&pmap->pm_obj.vmobjlock);
+		simple_unlock(&pmap->pm_lock);
 	}
 	pg->mdpage.pvh_list = NULL;
 	simple_unlock(&pg->mdpage.pvh_lock);
@@ -1002,7 +1002,7 @@ pmap_unwire(pmap, va)
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_unwire(%p, 0x%x)\n", pmap, va));
 
-	simple_lock(&pmap->pm_obj.vmobjlock);
+	simple_lock(&pmap->pm_lock);
 	if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
 		pte = pmap_pte_get(pde, va);
 
@@ -1012,7 +1012,7 @@ pmap_unwire(pmap, va)
 			pmap_pte_set(pde, va, pte);
 		}
 	}
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	simple_unlock(&pmap->pm_lock);
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_unwire: leaving\n"));
 
@@ -1039,7 +1039,7 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 		volatile pt_entry_t *pde;
 		pt_entry_t opte, pte;
 
-		simple_lock(&pmap->pm_obj.vmobjlock);
+		simple_lock(&pmap->pm_lock);
 		if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
 			opte = pte = pmap_pte_get(pde, va);
 #ifdef PMAPDEBUG
@@ -1059,7 +1059,7 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 				pmap_pte_set(pde, va, pte);
 			}
 		}
-		simple_unlock(&pmap->pm_obj.vmobjlock);
+		simple_unlock(&pmap->pm_lock);
 	}
 	simple_unlock(&pg->mdpage.pvh_lock);
 
@@ -1077,9 +1077,9 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 	simple_lock(&pg->mdpage.pvh_lock);
 	for(pve = pg->mdpage.pvh_list; !(pg->mdpage.pvh_attrs & bit) && pve;
 	    pve = pve->pv_next) {
-		simple_lock(&pve->pv_pmap->pm_obj.vmobjlock);
+		simple_lock(&pve->pv_pmap->pm_lock);
 		pte = pmap_vp_find(pve->pv_pmap, pve->pv_va);
-		simple_unlock(&pve->pv_pmap->pm_obj.vmobjlock);
+		simple_unlock(&pve->pv_pmap->pm_lock);
 		pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 	}
 	simple_unlock(&pg->mdpage.pvh_lock);
@@ -1097,9 +1097,9 @@ pmap_extract(pmap, va, pap)
 
 	DPRINTF(PDB_FOLLOW|PDB_EXTRACT, ("pmap_extract(%p, %x)\n", pmap, va));
 
-	simple_lock(&pmap->pm_obj.vmobjlock);
+	simple_lock(&pmap->pm_lock);
 	pte = pmap_vp_find(pmap, va);
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	simple_unlock(&pmap->pm_lock);
 
 	if (pte) {
 		if (pap)
@@ -1179,7 +1179,7 @@ pmap_kenter_pa(va, pa, prot)
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_kenter_pa(%x, %x, %x)\n", va, pa, prot));
 
-	simple_lock(&pmap->pm_obj.vmobjlock);
+	simple_lock(&pmap->pm_lock);
 
 	if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, va)) &&
 	    !(pde = pmap_pde_alloc(pmap_kernel(), va, NULL)))
@@ -1208,7 +1208,7 @@ pmap_kenter_pa(va, pa, prot)
 		}
 	}
 #endif
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	simple_unlock(&pmap->pm_lock);
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_kenter_pa: leaving\n"));
 }
@@ -1233,7 +1233,7 @@ pmap_kremove(va, size)
 	}
 #endif
 
-	simple_lock(&pmap->pm_obj.vmobjlock);
+	simple_lock(&pmap->pm_lock);
 
 	for (pdemask = 1, eva = va + size; va < eva; va += PAGE_SIZE) {
 		if (pdemask != (va & PDE_MASK)) {
@@ -1263,7 +1263,7 @@ pmap_kremove(va, size)
 		}
 	}
 
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	simple_unlock(&pmap->pm_lock);
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_kremove: leaving\n"));
 }
