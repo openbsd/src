@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphy.c,v 1.1 2001/04/11 06:47:31 deraadt Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.2 2001/06/01 21:40:48 deraadt Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,9 @@ bmtphymatch(parent, match, aux)
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5201)
 		return (10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5221)
+		return (10);
 
 	return (0);
 }
@@ -63,9 +66,14 @@ bmtphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	char *model;
 
-	printf(": %s, rev. %d\n", MII_STR_BROADCOM_BCM5201,
-	    MII_REV(ma->mii_id2));
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5201)
+		model = MII_STR_BROADCOM_BCM5201;
+	else if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5221)
+		model = MII_STR_BROADCOM_BCM5221;
+
+	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
