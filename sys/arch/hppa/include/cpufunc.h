@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.20 2002/09/05 21:37:18 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.21 2003/04/07 17:43:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,2000 Michael Shalayeff
@@ -79,6 +79,12 @@ static __inline register_t ldsid(vaddr_t p) {
 #define mtctl(v,r) __asm __volatile("mtctl %0,%1":: "r" (v), "i" (r))
 #define mfctl(r,v) __asm __volatile("mfctl %1,%0": "=r" (v): "i" (r))
 
+#define	mfcpu(r,v)	/* XXX for the lack of the mnemonics */		\
+	__asm __volatile(".word	%1\n\t"					\
+			 "copy	%%r22, %0"				\
+	    : "=r" (v) : "i" ((0x14000600 | ((r) << 21) | ((22) << 16)))\
+	    : "r22")
+
 #define mtsp(v,r) __asm __volatile("mtsp %0,%1":: "r" (v), "i" (r))
 #define mfsp(r,v) __asm __volatile("mfsp %1,%0": "=r" (v): "i" (r))
 
@@ -86,32 +92,13 @@ static __inline register_t ldsid(vaddr_t p) {
 #define rsm(v,r) __asm __volatile("rsm %1,%0": "=r" (r): "i" (v))
 
 /* Move to system mask. Old value of system mask is returned. */
-static __inline register_t mtsm(register_t mask) {
+static __inline register_t
+mtsm(register_t mask) {
 	register_t ret;
 	__asm __volatile("ssm 0,%0\n\t"
 			 "mtsm %1": "=&r" (ret) : "r" (mask));
 	return ret;
 }
-
-static __inline register_t get_psw(void)
-{
-	register_t ret;
-	__asm __volatile("break %1, %2\n\tcopy %%ret0, %0" : "=r" (ret)
-		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_GET_PSW)
-		: "r28");
-	return ret;
-}
-
-static __inline register_t set_psw(register_t psw)
-{
-	register_t ret;
-	__asm __volatile("copy	%0, %%arg0\n\tbreak %1, %2\n\tcopy %%ret0, %0"
-		: "=r" (ret)
-		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SET_PSW), "0" (psw)
-		: "r26", "r28");
-	return ret;
-}
-
 
 #define	fdce(sp,off) __asm __volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
 #define	fice(sp,off) __asm __volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))
