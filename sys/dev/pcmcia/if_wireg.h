@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.3 1999/08/08 15:18:59 niklas Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.4 1999/11/05 04:25:30 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -112,7 +112,7 @@ struct wi_softc	{
 #define WI_DEFAULT_TX_RATE	3
 
 /* Default network name: ANY */
-#define WI_DEFAULT_NETNAME	"ANY"
+#define WI_DEFAULT_NETNAME	""
 
 #define WI_DEFAULT_AP_DENSITY	1
 
