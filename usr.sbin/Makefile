@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.58 2000/02/12 15:27:29 espie Exp $
+#	$OpenBSD: Makefile,v 1.59 2000/02/16 06:04:26 itojun Exp $
 
 # not yet done: catman
 
@@ -17,7 +17,7 @@ SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest \
 	usbdevs vipw vnconfig zdump zic
 
 # IPv6
-SUBDIR+=faithd ifmcstat ndp rip6query route6d rtadvd rtsold
+SUBDIR+=faithd ifmcstat ndp rip6query route6d rtadvd rtsold traceroute6
 
 # Amiga manpages
 SUBDIR+=iteconfig grfconfig videomode
