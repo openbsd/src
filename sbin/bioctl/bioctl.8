@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.4 2005/04/01 15:59:20 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.5 2005/04/04 22:43:07 marco Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -45,6 +45,10 @@ The options are as follows:
 .It Fl a Ar function
 Get or set alarm state.
 Supported functions are: silence/quiet, enable, disable, get, and test.
+Or use the first letter of the function.
+.It Fl b Ar function
+Blink or unblink hard drive LED, if supported by the enclosure.
+Supported functions are: blink and unblink.
 Or use the first letter of the function.
 .It Fl D
 Enable debug output.

@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.h,v 1.1 2005/04/04 17:36:46 marco Exp $       */
+/* $OpenBSD: bioctl.h,v 1.2 2005/04/04 22:43:07 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -28,10 +28,10 @@
 #ifndef _BIOCTL_H_
 #define _BIOCTL_H_
 
-#define READCAP 0x01
-#define ENUM    0x02
-#define TUR     0x04
-#define INQUIRY 0x08
+#define F_READCAP 0x01
+#define F_ENUM    0x02
+#define F_TUR     0x04
+#define F_INQUIRY 0x08
 
 #define PARSELIST (0x8000000000000000llu)
 
@@ -56,6 +56,7 @@ void		print_sense(u_int8_t *, u_int8_t);
 
 int		bio_get_capabilities(bioc_capabilities *);
 void		bio_alarm(char *);
+void		bio_blink(char *, u_int8_t, u_int8_t);
 void		bio_ping(void);
 void		bio_startstop(char *, u_int8_t, u_int8_t);
 void		bio_status(void);

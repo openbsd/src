@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.3 2005/04/04 17:37:17 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.4 2005/04/04 22:43:07 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -26,6 +26,7 @@
  *
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +36,7 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <scsi/scsi_disk.h>
+#include <scsi/scsi_all.h>
 #include <dev/biovar.h>
 
 #include "bioctl.h"
@@ -81,10 +83,14 @@ main(int argc, char *argv[])
 
 	atexit(cleanup);
 
-	while ((ch = getopt(argc, argv, "a:Dd:ehl:pst:u:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:b:Dd:ehl:pst:u:")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
+			al_arg = optarg;
+			break;
+		case 'b': /* LED blink/unblink */
+			func |= BIOC_BLINK;
 			al_arg = optarg;
 			break;
 
@@ -98,7 +104,7 @@ main(int argc, char *argv[])
 
 		case 'e': /* enumerate */
 			func |= BIOC_SCSICMD;
-			subfunc |= ENUM;
+			subfunc |= F_ENUM;
 			break;
 
 		case 'l': /* device list, separated for now use one dev only*/
@@ -157,6 +163,15 @@ main(int argc, char *argv[])
 			else
 				warnx("alarms are not supported.");
 
+		if (func & BIOC_BLINK)
+			if (bc.ioctls & BIOC_BLINK)
+				SLIST_FOREACH(delm, &ul, next) {
+					bio_blink(al_arg, delm->channel,
+					    delm->target);
+				}
+			else
+				warnx("blink is not supported.");
+
 		if (func & BIOC_PING)
 			if (bc.ioctls & BIOC_PING)
 				bio_ping();
@@ -182,28 +197,28 @@ main(int argc, char *argv[])
 
 		if (func & BIOC_SCSICMD) {
 			if (bc.ioctls & BIOC_SCSICMD) {
-				if (subfunc & READCAP) {
+				if (subfunc & F_READCAP) {
 					SLIST_FOREACH(delm, &ul, next) {
 						bio_pt_readcap(delm->channel,
 						    delm->target);
 					}
 				}
 
-				if (subfunc & INQUIRY) {
+				if (subfunc & F_INQUIRY) {
 					SLIST_FOREACH(delm, &ul, next) {
 						bio_pt_inquire(delm->channel,
 						    delm->target, &inq[0]);
 					}
 				}
 
-				if (subfunc & TUR) {
+				if (subfunc & F_TUR) {
 					SLIST_FOREACH(delm, &ul, next) {
 						bio_pt_tur(delm->channel,
 						    delm->target);
 					}
 				}
 
-				if (subfunc & ENUM)
+				if (subfunc & F_ENUM)
 					bio_pt_enum();
 			} else
 				warnx("passthrough not supported.");
@@ -218,8 +233,13 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-Dehpt] [-a alarm function] [-s get status]"
-	    "[-t passthrough] [-l device list] [-u go/stop function ] "
+	fprintf(stderr, "usage: %s [-Dehpt] "
+	    "[-a alarm function] "
+	    "[-b blink function] "
+	    "[-s get status] "
+	    "[-t passthrough] "
+	    "[-l device list] "
+	    "[-u go/stop function ] "
 	    "-d raid device\n", __progname);
 
 	exit(1);
@@ -263,22 +283,22 @@ parse_passthru(char *f)
 	case 'i': /* INQUIRY */
 		if (debug)
 			printf("inquiry\n");
-		return (INQUIRY);
+		return (F_INQUIRY);
 
 	case 'e': /* ENUMERATE, not a pass through hmmm */
 		if (debug)
 			printf("enumerate\n");
-		return (ENUM);
+		return (F_ENUM);
 
 	case 'r': /* READ CAPACITY */
 		if (debug)
 			printf("read cap\n");
-		return (READCAP);
+		return (F_READCAP);
 
 	case 't': /* TUR */
 		if (debug)
 			printf("TUR\n");
-		return (TUR);
+		return (F_TUR);
 
 	default:
 		errx(1, "invalid pass through function");
@@ -422,6 +442,47 @@ bio_alarm(char *arg)
 }
 
 void
+bio_blink(char * arg, u_int8_t c, u_int8_t t)
+{
+	int rv;
+	bioc_blink bb;
+
+	if (debug)
+		printf("blink in: %s, ", arg);
+
+	bb.cookie = bl.cookie;
+
+	switch (arg[0]) {
+	case 'b': /* blink hdd */
+		if (debug)
+			printf("blink\n");
+		bb.opcode = BIOCSBLINK_BLINK;
+		break;
+
+	case 'u': /* unblink hdd */
+		if (debug)
+			printf("unblink\n");
+		bb.opcode = BIOCSBLINK_UNBLINK;
+		break;
+
+	default:
+		warnx("invalid blink function: %s", arg);
+		return;
+	}
+
+	rv = ioctl(devh, BIOCBLINK, &bb);
+	if (rv == -1) {
+		if (errno == EOPNOTSUPP) {
+			/* operation is not supported in kernel, do it here */
+			if (debug)
+				printf("doing blink in userland\n");
+		}
+		else
+			warnx("bioc_ioctl() call failed");
+	}
+}
+
+void
 bio_ping(void)
 {
 	int rv;
@@ -531,6 +592,9 @@ bio_pt_readcap(u_int8_t c, u_int8_t t)
 	else if (bpt.status) {
 		if (bpt.sensebuf[0] == 0x70 || bpt.sensebuf[0] == 0x71)
 			print_sense(&bpt.sensebuf[0], bpt.senselen);
+		else
+			printf("read capacity failed without sense data\n");
+
 		return (0);
 	}
 
@@ -574,6 +638,8 @@ bio_pt_inquire(u_int8_t c, u_int8_t t, u_int8_t *inq)
 	else if (bpt.status) {
 		if (bpt.sensebuf[0] == 0x70 || bpt.sensebuf[0] == 0x71)
 			print_sense(&bpt.sensebuf[0], bpt.senselen);
+		else
+			printf("inquiry failed without sense data\n");
 
 		return 0;
 	}
@@ -608,6 +674,7 @@ bio_pt_tur(u_int8_t c, u_int8_t t)
 	bpt.channel = c;
 	bpt.target = t;
 	bpt.cdblen = 6;
+	bpt.cdb[0] = TEST_UNIT_READY;
 	bpt.direction = BIOC_DIRNONE;
 	rv = ioctl(devh, BIOCSCSICMD, &bpt);
 	if (rv == -1) {
@@ -618,6 +685,8 @@ bio_pt_tur(u_int8_t c, u_int8_t t)
 	if (bpt.status) {
 		if (bpt.sensebuf[0] == 0x70 || bpt.sensebuf[0] == 0x71)
 			print_sense(&bpt.sensebuf[0], bpt.senselen);
+		else
+			printf("tur failed without sense data\n");
 
 		return (0);
 	}
@@ -636,7 +705,7 @@ bio_pt_enum(void)
 	bioc_scsicmd bpt;
 	u_int32_t c, t, i, d;
 	int rv;
-	unsigned char inq[36];
+	u_int8_t inq[36];
 
 	struct dev *delm;
 
