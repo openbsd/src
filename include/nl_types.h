@@ -88,8 +88,10 @@ typedef struct _nl_catd {
 
 typedef long	nl_item;
 
+__BEGIN_DECLS
 extern nl_catd 	catopen __P((const char *, int));
 extern char    *catgets __P((nl_catd, int, int, const char *));
 extern int	catclose __P((nl_catd));
+__END_DECLS
 
 #endif	/* _NL_TYPES_H_ */
