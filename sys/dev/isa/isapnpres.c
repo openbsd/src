@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpres.c,v 1.3 1997/12/25 10:32:16 downsj Exp $	*/
+/*	$OpenBSD: isapnpres.c,v 1.4 1997/12/26 23:43:51 deraadt Exp $	*/
 /*	$NetBSD: isapnpres.c,v 1.7.4.1 1997/11/20 07:46:13 mellon Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ isapnp_newdev(card)
 	bzero(dev, sizeof(*dev));
 
 	dev->ipa_pref = ISAPNP_DEP_ACCEPTABLE;
-	memcpy(dev->ipa_devident, card->ipa_devident,
+	bcopy(card->ipa_devident, dev->ipa_devident,
 	    sizeof(card->ipa_devident));
 
 	if (card->ipa_child == NULL)
@@ -124,13 +124,13 @@ isapnp_newconf(dev)
 
 	bzero(conf, sizeof(*conf));
 
-	memcpy(conf->ipa_devident, dev->ipa_devident,
+	bcopy(dev->ipa_devident, conf->ipa_devident,
 	    sizeof(conf->ipa_devident));
-	memcpy(conf->ipa_devlogic, dev->ipa_devlogic,
+	bcopy(dev->ipa_devlogic, conf->ipa_devlogic,
 	    sizeof(conf->ipa_devlogic));
-	memcpy(conf->ipa_devcompat, dev->ipa_devcompat,
+	bcopy(dev->ipa_devcompat, conf->ipa_devcompat,
 	    sizeof(conf->ipa_devcompat));
-	memcpy(conf->ipa_devclass, dev->ipa_devclass,
+	bcopy(dev->ipa_devclass, conf->ipa_devclass,
 	    sizeof(conf->ipa_devclass));
 
 	if (dev->ipa_child == NULL)
