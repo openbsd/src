@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.14 2001/05/05 20:56:50 art Exp $	*/
+/*	$OpenBSD: param.h,v 1.15 2001/06/23 01:59:05 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 #endif	/* _LOCORE */
 #endif
 
+
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
@@ -50,6 +51,7 @@
 
 #define	ALIGNBYTES	(sizeof(double) - 1)
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	PGSHIFT		12
 #define	NBPG		4096

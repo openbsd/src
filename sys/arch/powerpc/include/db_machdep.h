@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.6 1998/08/22 17:54:29 rahnds Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.7 2001/06/23 01:59:04 drahn Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /* 
@@ -37,6 +37,14 @@
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
 #include <machine/trap.h>
+
+#define DB_MACHINE_COMMANDS
+
+/*
+ * We use Elf64 symbols in DDB.
+ */
+#define	DB_ELF_SYMBOLS
+#define	DB_ELFSIZE	32
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
