@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers_proc.c,v 1.5 1997/07/09 15:56:19 kstailey Exp $";
+static char rcsid[] = "$Id: rusers_proc.c,v 1.6 1999/06/16 10:15:14 espie Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -155,7 +155,7 @@ getidle(tty, display)
 	idle = 0;
 	if (*tty == 'X') {
 		u_long kbd_idle, mouse_idle;
-#if !defined(i386)
+#if !defined(__i386__)
 		kbd_idle = getidle("kbd", NULL);
 #else
 		/*
