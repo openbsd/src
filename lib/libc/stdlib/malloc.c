@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.43 2001/10/30 17:01:07 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.44 2001/11/01 07:00:51 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -82,7 +82,7 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.43 2001/10/30 17:01:07 tdeval Exp 
    static spinlock_t malloc_lock = _SPINLOCK_INITIALIZER;
 #  define THREAD_LOCK()		if (__isthreaded) _SPINLOCK(&malloc_lock)
 #  define THREAD_UNLOCK()	if (__isthreaded) _SPINUNLOCK(&malloc_lock)
-#  define THREAD_LOCK_INIT()	
+#  define THREAD_LOCK_INIT()
    /*
     * Malloc can't use the wrapped write() if it fails very early, so
     * we use the unwrapped syscall _thread_sys_write()
@@ -138,7 +138,7 @@ struct pgfree {
  * Magic values to put in the page_directory
  */
 #define MALLOC_NOT_MINE	((struct pginfo*) 0)
-#define MALLOC_FREE 	((struct pginfo*) 1)
+#define MALLOC_FREE	((struct pginfo*) 1)
 #define MALLOC_FIRST	((struct pginfo*) 2)
 #define MALLOC_FOLLOW	((struct pginfo*) 3)
 #define MALLOC_MAGIC	((struct pginfo*) 4)
@@ -186,7 +186,7 @@ static int fdzero;
 #endif
 
 /* Set when initialization has been done */
-static unsigned malloc_started;	
+static unsigned malloc_started;
 
 /* Number of free pages we cache */
 static unsigned malloc_cache = 16;
@@ -320,7 +320,7 @@ malloc_dump(fd)
 	fprintf(fd, "Free: @%p [%p...%p[ %ld ->%p <-%p\n",
 		pf, pf->page, pf->end, pf->size, pf->prev, pf->next);
 	if (pf == pf->next) {
- 		fprintf(fd, "Free_list loops.\n");
+		fprintf(fd, "Free_list loops.\n");
 		break;
 	}
     }
@@ -513,7 +513,7 @@ malloc_init ()
 	    if (issetugid() == 0)
 		p = getenv("MALLOC_OPTIONS");
 	    else
-	    	continue;
+		continue;
 	} else if (i == 2) {
 	    p = malloc_options;
 	}
@@ -627,11 +627,11 @@ malloc_pages(size)
 	    wrterror("(ES): zero length entry on free_list\n");
 	if (pf->page == pf->end)
 	    wrterror("(ES): zero entry on free_list\n");
-	if (pf->page > pf->end) 
+	if (pf->page > pf->end)
 	    wrterror("(ES): sick entry on free_list\n");
 	if ((void*)pf->page >= (void*)sbrk(0))
 	    wrterror("(ES): entry on free_list past brk\n");
-	if (page_dir[ptr2index(pf->page)] != MALLOC_FREE) 
+	if (page_dir[ptr2index(pf->page)] != MALLOC_FREE)
 	    wrterror("(ES): non-free first page on free-list\n");
 	if (page_dir[ptr2index(pf->end)-1] != MALLOC_FREE)
 	    wrterror("(ES): non-free last page on free-list\n");
@@ -647,7 +647,7 @@ malloc_pages(size)
 	    pf->prev->next = pf->next;
 	    delay_free = pf;
 	    break;
-	} 
+	}
 
 	p = pf->page;
 	pf->page = (char *)pf->page + size;
@@ -915,8 +915,8 @@ irealloc(ptr, size)
 	for (osize = malloc_pagesize; *++mp == MALLOC_FOLLOW;)
 	    osize += malloc_pagesize;
 
-        if (!malloc_realloc && 			/* unless we have to, */
-	  size <= osize && 			/* .. or are too small, */
+        if (!malloc_realloc &&			/* unless we have to, */
+	  size <= osize &&			/* .. or are too small, */
 	  size > (osize - malloc_pagesize)) {	/* .. or can free a page, */
 	    return ptr;				/* don't do anything. */
 	}
@@ -941,8 +941,8 @@ irealloc(ptr, size)
 	osize = (*mp)->size;
 
 	if (!malloc_realloc &&		/* Unless we have to, */
-	  size < osize && 		/* ..or are too small, */
-	  (size > osize/2 ||	 	/* ..or could use a smaller size, */
+	  size < osize &&		/* ..or are too small, */
+	  (size > osize/2 ||		/* ..or could use a smaller size, */
 	  osize == malloc_minsize)) {	/* ..(if there is one) */
 	    return ptr;			/* ..Don't do anything */
 	}
@@ -964,7 +964,7 @@ irealloc(ptr, size)
 		memcpy(p, ptr, size);
 	}
 	ifree(ptr);
-    } 
+    }
     return p;
 }
 
@@ -1074,7 +1074,7 @@ free_pages(ptr, index, info)
 	    wrterror("freelist is destroyed.\n");
 	}
     }
-    
+
     /* Return something to OS ? */
     if (!pf->next &&				/* If we're the last one, */
       pf->size > malloc_cache &&		/* ..and the cache is full, */
@@ -1175,7 +1175,7 @@ free_bytes(ptr, index, info)
     }
 
     vp = info->page;		/* Order is important ! */
-    if(vp != (void*)info) 
+    if(vp != (void*)info)
 	ifree(info);
     ifree(vp);
 }
