@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.21 2003/05/17 00:10:52 fgsch Exp $	*/
+/*	$OpenBSD: history.c,v 1.22 2003/05/18 01:02:42 jsyn Exp $	*/
 
 /*
  * command history
@@ -64,7 +64,7 @@ static int	hist_replace ARGS((char **hp, const char *pat, const char *rep,
 				   int global));
 static char   **hist_get ARGS((const char *str, int approx, int allow_cur));
 static char   **hist_get_newest ARGS((int allow_cur));
-static char   **hist_get_oldest ARGS(());
+static char   **hist_get_oldest ARGS((void));
 static void	histbackup ARGS((void));
 
 static char   **current;	/* current position in history[] */
