@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.13 2000/07/03 02:59:24 aaron Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.14 2000/07/03 19:02:47 niklas Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -263,7 +263,7 @@ pcic_intr_find(sc, ist)
 {
 	struct pcic_handle *ph = &sc->handle[0];
 	isa_chipset_tag_t ic = sc->intr_est;
-	int i, tickle, check, irq, chosen_irq = 0;
+	int i, tickle, check, irq, chosen_irq = 0, csc_touched = 0;
 	void *ih;
 	u_int8_t saved_csc_intr;
 
@@ -313,6 +313,7 @@ pcic_intr_find(sc, ist)
 				    (saved_csc_intr & ~PCIC_CSC_INTR_IRQ_MASK)
 				    | PCIC_CSC_INTR_CD_ENABLE
 				    | (irq << PCIC_CSC_INTR_IRQ_SHIFT));
+				csc_touched = 1;
 
 				/* Teehee, you tickle me! ;-) */
 				pcic_write(ph, PCIC_CARD_DETECT,
@@ -337,13 +338,12 @@ pcic_intr_find(sc, ist)
 					goto out;
 				}
 			}
-
-			if (tickle)
-				/* Restore card detection bit. */
-				pcic_write(ph, PCIC_CSC_INTR, saved_csc_intr);
 		}
 	}
 
 out:
+	if (csc_touched)
+		/* Restore card detection bit. */
+		pcic_write(ph, PCIC_CSC_INTR, saved_csc_intr);
 	return (chosen_irq);
 }
