@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.16 1996/10/18 15:43:56 niklas Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.17 1996/10/31 01:05:12 niklas Exp $	*/
 /*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
 
 /**************************************************************************
@@ -166,9 +166,15 @@
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #ifdef _KERNEL
 #define KERNEL
+
+/*
+ * Normally found in the userland header stddef.h, which isn't available.
+ */
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 #endif
-#endif
+#else
 #include <stddef.h>
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

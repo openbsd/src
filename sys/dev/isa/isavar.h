@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.16 1996/08/15 17:31:42 shawn Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.17 1996/10/31 01:05:10 niklas Exp $	*/
 /*	$NetBSD: isavar.h,v 1.23 1996/05/08 23:32:31 thorpej Exp $	*/
 
 /*
@@ -182,8 +182,10 @@ struct isa_softc {
  */
 
 /* ISA interrupt sharing types */
-void	isascan __P((struct device *parent, void *match));
 char	*isa_intr_typename __P((int type));
+
+void	isascan __P((struct device *parent, void *match));
+int	isaprint __P((void *, char *));
 
 #ifdef NEWCONFIG
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.6 1996/05/26 00:27:54 deraadt Exp $	*/
+/*	$OpenBSD: tc.c,v 1.7 1996/10/31 01:05:13 niklas Exp $	*/
 /*	$NetBSD: tc.c,v 1.16 1996/05/17 23:39:19 cgd Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdevs.h>
+
+#include <machine/autoconf.h>	/* for the proto of badaddr() */
 
 struct tc_softc {
 	struct	device sc_dv;

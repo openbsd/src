@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.17 1996/08/15 07:38:56 deraadt Exp $	*/
+/*	$OpenBSD: isa.c,v 1.18 1996/10/31 01:05:08 niklas Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@
 
 int isamatch __P((struct device *, void *, void *));
 void isaattach __P((struct device *, struct device *, void *));
-int isaprint __P((void *, char *));
 
 struct cfattach isa_ca = {
 	sizeof(struct isa_softc), isamatch, isaattach
