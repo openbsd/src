@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnreg.h,v 1.8 2001/06/26 18:12:20 jason Exp $	*/
+/*	$OpenBSD: lofnreg.h,v 1.9 2001/06/26 21:50:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -100,3 +100,36 @@
 
 #define	LOFN_LENADDR(win,r)				\
     ((win) | (((r) << 2) + LOFN_REL_LEN))
+
+#define	LOFN_LENMASK		0x000007ff	/* mask for length space */
+
+#define	OP_DONE			0x80000000	/* final instruction */
+#define	OP_CODE_MASK		0x7c000000	/* opcode mask */
+#define	OP_CODE_MODEXP		0x00000000	/*  modular exponentiation */
+#define	OP_CODE_MODMUL		0x04000000	/*  modular multiplication */
+#define	OP_CODE_MODRED		0x08000000	/*  modular reduction */
+#define	OP_CODE_MODADD		0x0c000000	/*  modular addition */
+#define	OP_CODE_MODSUB		0x10000000	/*  modular subtraction */
+#define	OP_CODE_ADD		0x14000000	/*  addition */
+#define	OP_CODE_SUB		0x18000000	/*  subtraction */
+#define	OP_CODE_ADDC		0x1c000000	/*  addition with carry */
+#define	OP_CODE_SUBC		0x20000000	/*  subtraction with carry */
+#define	OP_CODE_MULT		0x24000000	/*  2048bit multiplication */
+#define	OP_CODE_SR		0x28000000	/*  shift right */
+#define	OP_CODE_SL		0x2c000000	/*  shift left */
+#define	OP_CODE_INC		0x30000000	/*  increment */
+#define	OP_CODE_DEC		0x34000000	/*  set length tag */
+#define	OP_CODE_NOP		0x7c000000	/*  nop */
+
+#define	OP_RD_SHIFT		21
+#define	OP_RA_SHIFT		16
+#define	OP_RB_SHIFT		11
+#define	OP_RM_SHIFT		6
+#define	OP_R_MASK		0x1f
+
+#define	LOFN_INSTR(done,op,rd,ra,rb,rm) 		\
+    ((done) | (op) |					\
+     (((rd) & OP_R_MASK) << OP_RD_SHIFT) |		\
+     (((ra) & OP_R_MASK) << OP_RA_SHIFT) |		\
+     (((rb) & OP_R_MASK) << OP_RB_SHIFT) |		\
+     (((rm) & OP_R_MASK) << OP_RM_SHIFT))
