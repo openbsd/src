@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.16 2002/03/26 20:42:51 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.17 2002/03/27 22:01:16 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -26,59 +26,37 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * Copyright (c) 1997, 1998, 1999
- *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Bill Paul.
- * 4. Neither the name of the author nor the names of any co-contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY Bill Paul AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL Bill Paul OR THE VOICES IN HIS HEAD
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- */
 
 /*
- * This is a PCI shim for the Wavelan wireless network driver.
- * It works with PCI adaptors based on the PLX 9050 and PLX 9052
- * PCI to "dumb bus" bridge chip.  It has been tested with the
- * Global Sun Technology GL24110P02 (aka Linksys WDT11), 3Com 3CRWE777A,
- * and Netgear MA301.  It is also expected to work with the
- * Global Sun GL24110P and Eumitcom WL11000P.
+ * PCI attachment for the Wavelan driver.  There are two basic types
+ * of PCI card supported:
  *
- * All we do here is handle the PCI match and attach, set up an
- * interrupt handler entry point, and setup the PLX chip for level
- * interrupts and config index 1.
+ * 1) Cards based on the Prism2.5 Mini-PCI chipset
+ * 2) Cards that use a dumb ISA->PCI bridge
  *
- * The PLX 9052 provides us with multiple PCI address space mappings.
- * The primary mappings at PCI registers 0x10 (mem) and 0x14 (I/O) are for
- * the PLX chip itself, *NOT* the pcmcia card.
- * The PLX 9052 provides 4 local address space registers: 0x18, 0x1C,
- * 0x20, and 0x24.  The mem and I/O spaces for the PCMCIA card are
- * mapped to 0x18 and 0x1C respectively.
+ * Only the first type are "true" PCI cards.
  *
- * The datasheet may be downloaded from PLX (though you do have to register)
- * http://www.plxtech.com/products/toolbox/9050.htm
+ * The latter are often sold as "PCI wireless card adapters" and are
+ * sold by several vendors.  Most are simply rebadged versions of the
+ * Eumitcom WL11000P or Global Sun Technology GL24110P02.
+ * These cards use the PLX 9052 dumb bridge chip to connect a PCMCIA
+ * wireless card to the PCI bus.  Because it is a dumb bridge and
+ * not a true PCMCIA bridge, the PCMCIA subsystem is not involved
+ * (or even required).  The PLX 9052 provides multiple PCI address
+ * space mappings.  The primary mappings at PCI registers 0x10 (mem)
+ * and 0x14 (I/O) are for the PLX chip itself, *NOT* the PCMCIA card.
+ * The mem and I/O spaces for the PCMCIA card are mapped to 0x18 and
+ * 0x1C respectively.
+ * The PLX 9050/9052 datasheet may be downloaded from PLX at
+ *	http://www.plxtech.com/products/toolbox/9050.htm
+ *
+ * This driver also supports the TMD7160 dumb bridge chip which is used
+ * on some versions of the NDC/Sohoware NCP130.  The TMD7160 provides
+ * two PCI I/O registers.  The first, at 0x14, is for the TMD7160
+ * chip itself.  The second, at 0x18, is for the Prism2 chip.
+ * The datasheet for the TMD7160 does not seem to be publicly available.
+ * The magic for initializing the chip was gleened from NDC's version of
+ * the Linux wlan driver.
  */
 
 #include <sys/param.h>
