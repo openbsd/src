@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.42 2004/05/05 10:51:23 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.43 2004/05/05 11:19:07 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 	struct passwd		*pw;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
+	openlog(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
 	while ((ch = getopt(argc, argv, "c:dl:qu")) != -1)
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 	if (quiet)
 		log_perror = 0;
 
-	/* Get the current time... */
+	tzset();
 	time(&cur_time);
 
 	memset(&sockaddr_broadcast, 0, sizeof(sockaddr_broadcast));
