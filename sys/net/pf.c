@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.208 2002/05/12 02:21:14 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.209 2002/05/19 22:31:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -940,7 +940,7 @@ pf_dynaddr_update(void *p)
 				if (ad->undefined ||
 				    memcmp(a, b, sizeof(*a))) {
 					bcopy(b, a, sizeof(*a));
-					changed = 1;		
+					changed = 1;
 				}
 			} else if (ad->af == AF_INET6) {
 				struct in6_addr *a, *b;
@@ -951,7 +951,7 @@ pf_dynaddr_update(void *p)
 				if (ad->undefined ||
 				    memcmp(a, b, sizeof(*a))) {
 					bcopy(b, a, sizeof(*a));
-					changed = 1;		
+					changed = 1;
 				}
 			}
 			if (changed)

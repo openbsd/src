@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.26 2002/05/09 21:58:12 jasoni Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.27 2002/05/19 22:31:28 deraadt Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -589,7 +589,7 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO];
-		else if (r->src.noroute && pf_routable(pd->src, af))  
+		else if (r->src.noroute && pf_routable(pd->src, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute && !PF_AZERO(&r->src.mask, af) &&
 		    !PF_MATCHA(r->src.not, &r->src.addr.addr, &r->src.mask,
@@ -690,7 +690,7 @@ pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
 	thoff = th->th_off << 2;
 	cnt = thoff - sizeof(struct tcphdr);
 	optp = mtod(m, caddr_t) + off + sizeof(struct tcphdr);
-	
+
 	for (; cnt > 0; cnt -= optlen, optp += optlen) {
 		opt = optp[0];
 		if (opt == TCPOPT_EOL)

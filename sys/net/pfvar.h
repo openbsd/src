@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.72 2002/05/12 00:54:56 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.73 2002/05/19 22:31:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,8 +55,8 @@ enum	{ PF_LIMIT_STATES=0, PF_LIMIT_FRAGS=1, PF_LIMIT_MAX=2 };
 
 struct pf_addr {
 	union {
-		struct in_addr 		v4;
-		struct in6_addr 	v6;
+		struct in_addr		v4;
+		struct in6_addr		v6;
 		u_int8_t		addr8[16];
 		u_int16_t		addr16[8];
 		u_int32_t		addr32[4];
@@ -283,7 +283,7 @@ struct pf_state_host {
 };
 
 struct pf_state_peer {
-	u_int32_t	seqlo;		/* Max sequence number sent 	*/
+	u_int32_t	seqlo;		/* Max sequence number sent	*/
 	u_int32_t	seqhi;		/* Max the other end ACKd + win	*/
 	u_int32_t	seqdiff;	/* Sequence number modulator	*/
 	u_int16_t	max_win;
@@ -375,7 +375,7 @@ struct pf_tree_key {
 TAILQ_HEAD(pf_rulequeue, pf_rule);
 
 struct pf_pdesc {
-	u_int64_t	 tot_len; 	/* Make Mickey money */
+	u_int64_t	 tot_len;	/* Make Mickey money */
 	union {
 		struct tcphdr		*tcp;
 		struct udphdr		*udp;
@@ -388,7 +388,7 @@ struct pf_pdesc {
 	struct pf_addr	*src;
 	struct pf_addr	*dst;
 	u_int16_t	*ip_sum;
-	u_int32_t	 p_len; 	/* total length of payload */
+	u_int32_t	 p_len;		/* total length of payload */
 	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
 					 * state code. Easier than tags */
 	u_int8_t	 af;
@@ -455,7 +455,7 @@ struct pf_status {
 	u_int32_t	debug;
 };
 
-#define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */  
+#define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
 
 /*
@@ -568,20 +568,20 @@ struct pfioc_limit {
 #define DIOCSTART	_IO  ('D',  1)
 #define DIOCSTOP	_IO  ('D',  2)
 #define DIOCBEGINRULES	_IOWR('D',  3, u_int32_t)
-#define DIOCADDRULE	_IOWR('D',  4, struct pfioc_rule) 
+#define DIOCADDRULE	_IOWR('D',  4, struct pfioc_rule)
 #define DIOCCOMMITRULES	_IOWR('D',  5, u_int32_t)
 #define DIOCGETRULES	_IOWR('D',  6, struct pfioc_rule)
-#define DIOCGETRULE	_IOWR('D',  7, struct pfioc_rule) 
+#define DIOCGETRULE	_IOWR('D',  7, struct pfioc_rule)
 #define DIOCBEGINNATS	_IOWR('D',  8, u_int32_t)
-#define DIOCADDNAT	_IOWR('D',  9, struct pfioc_nat) 
+#define DIOCADDNAT	_IOWR('D',  9, struct pfioc_nat)
 #define DIOCCOMMITNATS	_IOWR('D', 10, u_int32_t)
 #define DIOCGETNATS	_IOWR('D', 11, struct pfioc_nat)
-#define DIOCGETNAT	_IOWR('D', 12, struct pfioc_nat) 
+#define DIOCGETNAT	_IOWR('D', 12, struct pfioc_nat)
 #define DIOCBEGINRDRS	_IOWR('D', 13, u_int32_t)
-#define DIOCADDRDR	_IOWR('D', 14, struct pfioc_rdr) 
+#define DIOCADDRDR	_IOWR('D', 14, struct pfioc_rdr)
 #define DIOCCOMMITRDRS	_IOWR('D', 15, u_int32_t)
 #define DIOCGETRDRS	_IOWR('D', 16, struct pfioc_rdr)
-#define DIOCGETRDR	_IOWR('D', 17, struct pfioc_rdr) 
+#define DIOCGETRDR	_IOWR('D', 17, struct pfioc_rdr)
 #define DIOCCLRSTATES	_IO  ('D', 18)
 #define DIOCGETSTATE	_IOWR('D', 19, struct pfioc_state)
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
@@ -637,7 +637,7 @@ int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
 void	pf_purge_expired_fragments(void);
-int	pf_routable(struct pf_addr *addr, int af); 
+int	pf_routable(struct pf_addr *addr, int af);
 
 extern struct pf_rulequeue *pf_rules_active;
 extern struct pf_status pf_status;
