@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.7 1997/09/16 10:43:01 deraadt Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.8 1997/09/16 11:01:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -236,7 +236,7 @@ char **argv;
 			usage ();
 		firstC = NULL;
 		c = &firstC;
-		(void) snprintf (buf,sizeof buf,sizeof buf,FILEHOSTS,DEFDIR);
+		(void) snprintf (buf,sizeof buf,FILEHOSTS,DEFDIR);
 		if ((f = fopen (buf,"r")) == NULL)
 			quit (1,"supscan: Unable to open %s\n",buf);
 		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
@@ -300,7 +300,7 @@ register char *filename,*collname,*basedir;
 			(void) fclose (f);
 		}
 		if (basedir == NULL) {
-			(void) snprintf (buf,sizeof buf,sizeof buf,
+			(void) snprintf (buf,sizeof buf,
 				FILEBASEDEFAULT,collname);
 			basedir = salloc (buf);
 		}

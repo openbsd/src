@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.5 1997/09/16 10:42:55 deraadt Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.6 1997/09/16 11:01:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -82,8 +82,8 @@ prtime ()
 		logerr ("Can't change to base directory %s for collection %s",
 			thisC->Cbase,thisC->Cname);
 	twhen = getwhen(thisC->Cname,relsufix);
-	(void) strcpy (buf,ctime (&twhen));
-	buf[strlen(buf)-1] = '\0';
+	(void) strncpy (buf,ctime (&twhen), sizeof buf-1);
+	buf[sizeof buf-1] = '\0';
 	loginfo ("Last update occurred at %s for collection %s",
 		buf,thisC->Cname);
 }
@@ -92,7 +92,7 @@ int establishdir (fname)
 char *fname;
 {
 	char dpart[STRINGLENGTH],fpart[STRINGLENGTH];
-	path (fname,dpart,fpart);
+	path (fname,dpart,fpart,sizeof fpart);
 	return (estabd (fname,dpart));
 }
 
@@ -104,7 +104,7 @@ char *fname,*dname;
 	register int x;
 
 	if (stat (dname,&sbuf) >= 0)  return (FALSE); /* exists */
-	path (dname,dpart,fpart);
+	path (dname,dpart,fpart,sizeof fpart);
 	if (strcmp (fpart,".") == 0) {		/* dname is / or . */
 		notify ("SUP: Can't create directory %s for %s\n",dname,fname);
 		return (TRUE);
@@ -262,8 +262,10 @@ va_dcl
 	if ((thisC->Cflags&CFURELSUF) && thisC->Crelease) 
 		(void) snprintf (collrelname,sizeof collrelname,
 			"%s-%s",collname,thisC->Crelease);
-	else
-		(void) strcpy (collrelname,collname);
+	else {
+		(void) strncpy (collrelname,collname,sizeof collrelname-1);
+		collrelname[sizeof collrelname-1] = '\0';
+	}
 	
 	if (noteF == NULL) {
 		if ((thisC->Cflags&CFMAIL) && thisC->Cnotify) {
@@ -314,9 +316,10 @@ time_t time;
 	static char buf[STRINGLENGTH];
 	int len;
 
-	(void) strcpy (buf,ctime (&time));
+	(void) strncpy (buf,ctime (&time), sizeof buf-1);
+	buf[sizeof buf-1] = '\0';
 	len = strlen(buf+4)-6;
-	(void) strncpy (buf,buf+4,len);
-	buf[len] = '\0';
+	(void) strncpy (buf,buf+4,len);		/* XXX TDR */
+	buf[sizeof buf-1] = '\0';
 	return (buf);
 }

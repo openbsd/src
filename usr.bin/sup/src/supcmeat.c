@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.7 1997/09/16 10:42:54 deraadt Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.8 1997/09/16 11:01:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -919,7 +919,7 @@ register struct stat *statp;
 				t->Tname);
 			return (TRUE);		/* mark upgrade as nogood */
 		}
-		path (t->Tname,dirpart,filepart);
+		path (t->Tname,dirpart,filepart,sizeof filepart);
 		(void) snprintf (filename,sizeof filename,
 			FILEBACKUP,dirpart,filepart);
 		fout = fopen (filename,"w");
@@ -1060,7 +1060,7 @@ char *from;		/* 0 if reading from network */
 	/* Now try hard to find a temp file name.  Try VERY hard. */
 	for (;;) {
 	/* try destination directory */
-		path (to,dpart,fpart);
+		path (to,dpart,fpart,sizeof fpart);
 		(void) snprintf (tname,sizeof tname,
 			"%s/#%d.sup",dpart,thispid);
 		tof = open (tname,(O_WRONLY|O_CREAT|O_TRUNC),0600);
@@ -1255,7 +1255,8 @@ int x;
 			"%s-%s",collname,release);
 	} else {
 		relsufix[0] = '\0';
-		(void) strcpy (collrelname,collname);
+		(void) strncpy (collrelname,collname,sizeof collrelname-1);
+		collrelname[sizeof collrelname-1] = '\0';
 	}
 	dontjump = TRUE;		/* once here, no more longjmp */
 	(void) netcrypt ((char *)NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stree.c,v 1.4 1997/04/01 07:35:27 todd Exp $	*/
+/*	$OpenBSD: stree.c,v 1.5 1997/09/16 11:01:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -255,7 +255,7 @@ TREE *t;
 char *p;
 {
 	register TREE *x;
-	char buf[MAXPATHLEN+1];
+	char buf[MAXPATHLEN];
 
 	if (p == NULL)
 		return (NULL);
@@ -269,7 +269,7 @@ char *p;
 	if (*p != '/' && (x = Tsearch (t,".")) != NULL)
 		return (x);
 	(void) strncpy(buf, p, sizeof(buf)-1);
-	buf[MAXPATHLEN] = '\0';
+	buf[sizeof buf-1] = '\0';
 	while ((p = strrchr(buf, '/')) != NULL) {
 		while (p >= buf && *(p-1) == '/')
 			p--;

@@ -1,4 +1,4 @@
-/*     $OpenBSD: supextern.h,v 1.1 1997/04/01 07:35:41 todd Exp $  */
+/*     $OpenBSD: supextern.h,v 1.2 1997/09/16 11:01:22 deraadt Exp $  */
 
 #ifndef __P
 #ifdef __STDC__
@@ -44,7 +44,7 @@ void encode __P((char *, char *, int));
 char *nxtarg __P((char **, char *));
 
 /* path.c */
-void path __P((char *, char *, char *));
+void path __P((char *, char *, char *, int));
 
 /* quit.c */
 void quit __P((int, char *, ...));

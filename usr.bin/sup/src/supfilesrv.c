@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.10 1997/09/16 10:42:59 deraadt Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.11 1997/09/16 11:01:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1464,12 +1464,16 @@ int fileuid,filegid;
 			return (errbuf);
 		}
 		grp = getgrgid (filegid);
-		if (grp)  group = strcpy (nbuf,grp->gr_name);
+		if (grp) {
+			group = strncpy (nbuf,grp->gr_name, sizeof nbuf-1);
+			nbuf[sizeof nbuf-1] = '\0';
+		}
 		else  group = NULL;
 		account = NULL;
 		pswdp = NULL;
 	} else {
-		(void) strcpy (nbuf,namep);
+		(void) strncpy (nbuf,namep, sizeof nbuf-1);
+		nbuf[sizeof nbuf-1] = '\0';
 		account = group = strchr (nbuf,',');
 		if (group != NULL) {
 			*group++ = '\0';
@@ -1666,9 +1670,10 @@ time_t time;
 	static char buf[STRINGLENGTH];
 	int len;
 
-	(void) strcpy (buf,ctime (&time));
+	(void) strncpy (buf,ctime (&time), sizeof buf-1);
+	buf[sizeof buf-1] = '\0';
 	len = strlen(buf+4)-6;
-	(void) strncpy (buf,buf+4,len);
+	(void) strncpy (buf,buf+4,len);		/* XXX TDR */
 	buf[len] = '\0';
 	return (buf);
 }

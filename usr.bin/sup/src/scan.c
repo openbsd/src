@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.c,v 1.7 1997/09/16 10:42:51 deraadt Exp $	*/
+/*	$OpenBSD: scan.c,v 1.8 1997/09/16 11:01:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -721,8 +721,10 @@ int always;
 		ename[i] = 0;
 		if (*newname)
 			(void) snprintf (filename,sizeof filename,"%s/%s",newname,ename);
-		else
-			(void) strcpy (filename,ename);
+		else {
+			(void) strncpy (filename,ename,sizeof filename-1);
+			filename[sizeof filename-1] = '\0';
+		}
 		listentry(ename,filename,newname,always);
 	}
 	closedir (dirp);
@@ -976,7 +978,8 @@ void *v;
 {
 	FILE *scanF = v;
 	char fname[MAXPATHLEN*4+1];
-	strcpy(fname, t->Tname);
+	strncpy(fname, t->Tname, sizeof fname-1);
+	fname[sizeof fname-1] = '\0';
 	fprintf(scanF,"X%s\n",fname);
 	return (SCMOK);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.3 1997/04/01 07:35:13 todd Exp $	*/
+/*	$OpenBSD: path.c,v 1.4 1997/09/16 11:01:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -26,11 +26,12 @@
  */
 /*  path  --  break filename into directory and file
  *
- *  path (filename,direc,file);
+ *  path (filename,direc,file,filen);
  *  char *filename,*direc,*file;
+ *  int filen;
  *  filename is input; direc and file are output (user-supplied).
  *  file will not have any trailing /; direc might.
- *
+ *  filen is the length of the file buffer.
  *  Note these rules:
  *  1.  trailing / are ignored (except as first character)
  *  2.  x/y is x;y where y contains no / (x may contain /)
@@ -62,8 +63,9 @@
 #include "supextern.h"
 
 void
-path (original,direc,file)
+path (original,direc,file, filen)
 char *original,*direc,*file;
+int filen;
 {
 	register char *y;
 	/* x is direc */
@@ -91,8 +93,9 @@ char *original,*direc,*file;
 	}
 
 	/* find file name part */
-	if (*y)  strcpy (file,y);
-	else     strcpy (file,".");
+	if (*y)  strncpy (file,y, filen-1);
+	else     strncpy (file,".", filen-1);
+	file[filen-1] = '\0';
 
 	/* find directory part */
 	if (direc == y)        strcpy (direc,".");

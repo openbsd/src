@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.6 1997/09/16 10:42:52 deraadt Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.7 1997/09/16 11:01:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -623,9 +623,10 @@ char **argv;
 		argv++;
 	}
 	if ((p = (char *)getlogin()) ||
-	    ((pw = getpwuid ((int)getuid())) && (p = pw->pw_name)))
-		(void) strcpy (username,p);
-	else
+	    ((pw = getpwuid ((int)getuid())) && (p = pw->pw_name))) {
+		(void) strncpy (username,p, sizeof username-1);
+		username[sizeof username-1] = '\0';
+	} else
 		*username = '\0';
 	if (*supfname) {
 		f = fopen (supfname,"r");
