@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInit.c,v 1.5 1999/12/18 02:11:27 espie Exp $	*/
+/*	$OpenBSD: lstInit.c,v 1.6 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: lstInit.c,v 1.5 1996/11/06 17:59:43 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstInit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstInit.c,v 1.5 1999/12/18 02:11:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstInit.c,v 1.6 1999/12/18 21:53:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,8 +72,8 @@ Lst_Init()
 
     PAlloc (nList, List);
 
-    nList->firstPtr = NilListNode;
-    nList->lastPtr = NilListNode;
+    nList->firstPtr = NULL;
+    nList->lastPtr = NULL;
     nList->isOpen = FALSE;
     nList->atEnd = Unknown;
 

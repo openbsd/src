@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDeQueue.c,v 1.4 1998/12/05 00:06:31 espie Exp $	*/
+/*	$OpenBSD: lstDeQueue.c,v 1.5 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: lstDeQueue.c,v 1.5 1996/11/06 17:59:36 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstDeQueue.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.4 1998/12/05 00:06:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.5 1999/12/18 21:53:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.4 1998/12/05 00:06:31 espie Ex
  *	Remove and return the datum at the head of the given list.
  *
  * Results:
- *	The datum in the node at the head or (ick) NIL if the list
+ *	The datum in the node at the head or (ick) NULL if the list
  *	is empty.
  *
  * Side Effects:
@@ -74,13 +74,13 @@ Lst_DeQueue (l)
     register ListNode	tln;
 
     tln = (ListNode) Lst_First (l);
-    if (tln == NilListNode) {
-	return ((ClientData) NIL);
+    if (tln == NULL) {
+	return ((ClientData) NULL);
     }
 
     rd = tln->datum;
     if (Lst_Remove (l, (LstNode)tln) == FAILURE) {
-	return ((ClientData) NIL);
+	return ((ClientData) NULL);
     } else {
 	return (rd);
     }

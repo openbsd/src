@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.17 1999/12/16 17:31:51 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.18 1999/12/18 21:53:32 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.17 1999/12/16 17:31:51 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.18 1999/12/18 21:53:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ extern int errno;
 
 static char 	    meta[256];
 
-static GNode	    *curTarg = NILGNODE;
+static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
 static void CompatInterrupt __P((int));
 static int CompatRunCommand __P((ClientData, ClientData));
@@ -110,7 +110,7 @@ CompatInterrupt (signo)
 {
     GNode   *gn;
 
-    if ((curTarg != NILGNODE) && !Targ_Precious (curTarg)) {
+    if ((curTarg != NULL) && !Targ_Precious (curTarg)) {
 	char 	  *file = Var_Value(TARGET, curTarg);
 
 	if (!noExecute && eunlink(file) != -1) {
@@ -122,7 +122,7 @@ CompatInterrupt (signo)
 	 */
 	if (signo == SIGINT) {
 	    gn = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
-	    if (gn != NILGNODE) {
+	    if (gn != NULL) {
 		Lst_ForEach(gn->commands, CompatRunCommand, (ClientData)gn);
 	    }
 	}
@@ -467,7 +467,7 @@ CompatMake (gnp, pgnp)
 	    return (0);
 	}
 
-	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
+	if (Lst_Member (gn->iParents, pgn) != NULL) {
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn), pgn);
 	}
 
@@ -524,7 +524,7 @@ CompatMake (gnp, pgnp)
 	    if (!touchFlag) {
 		curTarg = gn;
 		Lst_ForEach (gn->commands, CompatRunCommand, (ClientData)gn);
-		curTarg = NILGNODE;
+		curTarg = NULL;
 	    } else {
 		Job_Touch (gn, gn->type & OP_SILENT);
 	    }
@@ -615,7 +615,7 @@ CompatMake (gnp, pgnp)
 	 */
 	pgn->make = FALSE;
     } else {
-	if (Lst_Member (gn->iParents, pgn) != NILLNODE)
+	if (Lst_Member (gn->iParents, pgn) != NULL)
 	    Var_Set (IMPSRC, Var_Value(TARGET, gn), pgn);
 	switch(gn->made) {
 	    case BEINGMADE:
@@ -691,7 +691,7 @@ Compat_Run(targs)
      */
     if (!queryFlag) {
 	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
-	if (gn != NILGNODE) {
+	if (gn != NULL) {
 	    Lst_ForEach(gn->commands, CompatRunCommand, (ClientData)gn);
             if (gn->made == ERROR) {
                 printf("\n\nStop.\n");

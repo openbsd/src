@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInsert.c,v 1.5 1999/12/18 02:11:27 espie Exp $	*/
+/*	$OpenBSD: lstInsert.c,v 1.6 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: lstInsert.c,v 1.5 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstInsert.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.5 1999/12/18 02:11:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.6 1999/12/18 21:53:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ Lst_Insert (l, ln, d)
     /*
      * check validity of arguments
      */
-    if (LstValid (l) && (LstIsEmpty (l) && ln == NILLNODE))
+    if (LstValid (l) && (LstIsEmpty (l) && ln == NULL))
 	goto ok;
 
     if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
@@ -94,14 +94,14 @@ Lst_Insert (l, ln, d)
     nLNode->datum = d;
     nLNode->useCount = nLNode->flags = 0;
 
-    if (ln == NILLNODE) {
-	nLNode->prevPtr = nLNode->nextPtr = NilListNode;
+    if (ln == NULL) {
+	nLNode->prevPtr = nLNode->nextPtr = NULL;
 	list->firstPtr = list->lastPtr = nLNode;
     } else {
 	nLNode->prevPtr = lNode->prevPtr;
 	nLNode->nextPtr = lNode;
 
-	if (nLNode->prevPtr != NilListNode) {
+	if (nLNode->prevPtr != NULL) {
 	    nLNode->prevPtr->nextPtr = nLNode;
 	}
 	lNode->prevPtr = nLNode;

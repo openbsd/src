@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprite.h,v 1.5 1998/12/05 00:06:29 espie Exp $	*/
+/*	$OpenBSD: sprite.h,v 1.6 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: sprite.h,v 1.6 1996/11/06 17:59:22 christos Exp $	*/
 
 /*
@@ -83,14 +83,6 @@ typedef int  ReturnStatus;
 #define	FAILURE			0x00000001
 
 
-/*
- * A nil pointer must be something that will cause an exception if
- * referenced.  There are two nils: the kernels nil and the nil used
- * by user processes.
- */
-
-#define NIL 		~0
-#define USER_NIL 	0
 #ifndef NULL
 #define NULL	 	0
 #endif /* NULL */

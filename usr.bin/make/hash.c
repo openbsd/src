@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.4 1998/12/05 00:06:27 espie Exp $	*/
+/*	$OpenBSD: hash.c,v 1.5 1999/12/18 21:53:32 espie Exp $	*/
 /*	$NetBSD: hash.c,v 1.6 1996/11/06 17:59:06 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: hash.c,v 1.4 1998/12/05 00:06:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.5 1999/12/18 21:53:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -360,7 +360,7 @@ Hash_EnumNext(searchPtr)
 
 	/*
 	 * The hashEntryPtr field points to the most recently returned
-	 * entry, or is nil if we are starting up.  If not nil, we have
+	 * entry, or is null if we are starting up.  If not null, we have
 	 * to start at the next one in the chain.
 	 */
 	e = searchPtr->hashEntryPtr;

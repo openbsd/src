@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstIsEmpty.c,v 1.4 1998/12/05 00:06:32 espie Exp $	*/
+/*	$OpenBSD: lstIsEmpty.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
 /*	$NetBSD: lstIsEmpty.c,v 1.5 1996/11/06 17:59:47 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstIsEmpty.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstIsEmpty.c,v 1.4 1998/12/05 00:06:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstIsEmpty.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,8 @@ static char rcsid[] = "$OpenBSD: lstIsEmpty.c,v 1.4 1998/12/05 00:06:32 espie Ex
  * Side Effects:
  *	None.
  *
- *	A list is considered empty if its firstPtr == NilListNode (or if
- *	the list itself is NILLIST).
+ *	A list is considered empty if its firstPtr == NULL (or if
+ *	the list itself is NULL).
  *-----------------------------------------------------------------------
  */
 Boolean

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstNext.c,v 1.4 1998/12/05 00:06:32 espie Exp $	*/
+/*	$OpenBSD: lstNext.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
 /*	$NetBSD: lstNext.c,v 1.5 1996/11/06 17:59:49 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstNext.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstNext.c,v 1.4 1998/12/05 00:06:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstNext.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,8 @@ static char rcsid[] = "$OpenBSD: lstNext.c,v 1.4 1998/12/05 00:06:32 espie Exp $
  *	Return the next node for the given list.
  *
  * Results:
- *	The next node or NILLNODE if the list has yet to be opened. Also
- *	if the list is non-circular and the end has been reached, NILLNODE
+ *	The next node or NULL if the list has yet to be opened. Also
+ *	if the list is non-circular and the end has been reached, NULL
  *	is returned.
  *
  * Side Effects:
@@ -81,12 +81,12 @@ Lst_Next (l)
 
     if ((LstValid (l) == FALSE) ||
 	(list->isOpen == FALSE)) {
-	    return (NILLNODE);
+	    return (NULL);
     }
 
     list->prevPtr = list->curPtr;
 
-    if (list->curPtr == NilListNode) {
+    if (list->curPtr == NULL) {
 	if (list->atEnd == Unknown) {
 	    /*
 	     * If we're just starting out, atEnd will be Unknown.
@@ -96,14 +96,14 @@ Lst_Next (l)
 	    list->curPtr = tln = list->firstPtr;
 	    list->atEnd = Middle;
 	} else {
-	    tln = NilListNode;
+	    tln = NULL;
 	    list->atEnd = Tail;
 	}
     } else {
 	tln = list->curPtr->nextPtr;
 	list->curPtr = tln;
 
-	if (tln == list->firstPtr || tln == NilListNode) {
+	if (tln == list->firstPtr || tln == NULL) {
 	    /*
 	     * If back at the front, then we've hit the end...
 	     */

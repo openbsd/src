@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.15 1999/11/11 11:47:27 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.16 1999/12/18 21:53:32 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -169,7 +169,6 @@ typedef struct GNode {
 /*
  * Manifest constants
  */
-#define NILGNODE	((GNode *) NIL)
 
 /*
  * The OP_ constants are used when parsing a dependency line as a way of
@@ -238,7 +237,7 @@ typedef struct GNode {
  * do if the desired node(s) is (are) not found. If the TARG_CREATE constant
  * is given, a new, empty node will be created for the target, placed in the
  * table of all targets and its address returned. If TARG_NOCREATE is given,
- * a NIL pointer will be returned.
+ * a NULL pointer will be returned.
  */
 #define TARG_CREATE	0x01	  /* create node if not found */
 #define TARG_NOCREATE	0x00	  /* don't create it */

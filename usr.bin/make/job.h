@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.h,v 1.5 1998/12/05 00:06:28 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.6 1999/12/18 21:53:32 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
  *	1) The process id of the child shell
  *	2) The graph node describing the target being made by this job
  *	3) A LstNode for the first command to be saved after the job
- *	   completes. This is NILLNODE if there was no "..." in the job's
+ *	   completes. This is NULL if there was no "..." in the job's
  *	   commands.
  *	4) An FILE* for writing out the commands. This is only
  *	   used before the job is actually started.

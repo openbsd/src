@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.8 1999/12/18 02:11:27 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.9 1999/12/18 21:53:32 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -60,9 +60,6 @@
 
 typedef	struct	Lst	*Lst;
 typedef	struct	LstNode	*LstNode;
-
-#define	NILLST		((Lst) NIL)
-#define	NILLNODE	((LstNode) NIL)
 
 /*
  * NOFREE can be used as the freeProc to Lst_Destroy when the elements are

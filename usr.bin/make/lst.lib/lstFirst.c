@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstFirst.c,v 1.4 1998/12/05 00:06:32 espie Exp $	*/
+/*	$OpenBSD: lstFirst.c,v 1.5 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: lstFirst.c,v 1.5 1996/11/06 17:59:41 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstFirst.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstFirst.c,v 1.4 1998/12/05 00:06:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstFirst.c,v 1.5 1999/12/18 21:53:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: lstFirst.c,v 1.4 1998/12/05 00:06:32 espie Exp 
  *	Return the first node on the given list.
  *
  * Results:
- *	The first node or NILLNODE if the list is empty.
+ *	The first node or NULL if the list is empty.
  *
  * Side Effects:
  *	None.
@@ -70,7 +70,7 @@ Lst_First (l)
     Lst	l;
 {
     if (!LstValid (l) || LstIsEmpty (l)) {
-	return (NILLNODE);
+	return (NULL);
     } else {
 	return ((LstNode)((List)l)->firstPtr);
     }

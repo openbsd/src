@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstLast.c,v 1.4 1998/12/05 00:06:32 espie Exp $	*/
+/*	$OpenBSD: lstLast.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
 /*	$NetBSD: lstLast.c,v 1.5 1996/11/06 17:59:48 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstLast.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstLast.c,v 1.4 1998/12/05 00:06:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstLast.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: lstLast.c,v 1.4 1998/12/05 00:06:32 espie Exp $
  *	Return the last node on the list l.
  *
  * Results:
- *	The requested node or NILLNODE if the list is empty.
+ *	The requested node or NULL if the list is empty.
  *
  * Side Effects:
  *	None.
@@ -70,7 +70,7 @@ Lst_Last (l)
     Lst	    l;
 {
     if (!LstValid(l) || LstIsEmpty (l)) {
-	return (NILLNODE);
+	return (NULL);
     } else {
 	return ((LstNode)((List)l)->lastPtr);
     }

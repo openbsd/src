@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 1999/12/18 02:11:27 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 1999/12/18 21:53:32 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.24 1999/12/18 02:11:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.25 1999/12/18 21:53:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -662,7 +662,7 @@ main(argc, argv)
 	Targ_Init();
 	Suff_Init();
 
-	DEFAULT = NILGNODE;
+	DEFAULT = NULL;
 	(void)time(&now);
 
 	/*
@@ -673,7 +673,7 @@ main(argc, argv)
 	if (!Lst_IsEmpty(create)) {
 		LstNode ln;
 
-		for (ln = Lst_First(create); ln != NILLNODE;
+		for (ln = Lst_First(create); ln != NULL;
 		    ln = Lst_Succ(ln)) {
 			char *name = (char *)Lst_Datum(ln);
 
@@ -714,7 +714,7 @@ main(argc, argv)
 		if (Lst_IsEmpty(sysMkPath))
 			Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);
 		ln = Lst_Find(sysMkPath, (ClientData)NULL, ReadMakefile);
-		if (ln != NILLNODE)
+		if (ln != NULL)
 			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
 	}
 
@@ -722,7 +722,7 @@ main(argc, argv)
 		LstNode ln;
 
 		ln = Lst_Find(makefiles, (ClientData)NULL, ReadMakefile);
-		if (ln != NILLNODE)
+		if (ln != NULL)
 			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
 	} else if (!ReadMakefile("BSDmakefile", NULL))
 		if (!ReadMakefile("makefile", NULL))
@@ -786,7 +786,7 @@ main(argc, argv)
 	if (printVars) {
 		LstNode ln;
 
-		for (ln = Lst_First(variables); ln != NILLNODE;
+		for (ln = Lst_First(variables); ln != NULL;
 		    ln = Lst_Succ(ln)) {
 			char *value = Var_Value((char *)Lst_Datum(ln),
 					  VAR_GLOBAL);

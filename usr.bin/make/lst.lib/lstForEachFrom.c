@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstForEachFrom.c,v 1.4 1998/12/05 00:06:32 espie Exp $	*/
+/*	$OpenBSD: lstForEachFrom.c,v 1.5 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.4 1998/12/05 00:06:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.5 1999/12/18 21:53:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ Lst_ForEachFrom (l, ln, proc, d)
 	 *    doesn't exist.
 	 */
 	done = (next == tln->nextPtr &&
-		(next == NilListNode || next == list->firstPtr));
+		(next == NULL || next == list->firstPtr));
 
 	next = tln->nextPtr;
 

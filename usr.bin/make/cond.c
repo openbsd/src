@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.11 1999/12/16 17:02:45 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.12 1999/12/18 21:53:32 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.11 1999/12/16 17:02:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.12 1999/12/18 21:53:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -339,7 +339,7 @@ CondDoMake (argLen, arg)
     Boolean result;
 
     arg[argLen] = '\0';
-    if (Lst_Find (create, (ClientData)arg, CondStrMatch) == NILLNODE) {
+    if (Lst_Find (create, (ClientData)arg, CondStrMatch) == NULL) {
 	result = FALSE;
     } else {
 	result = TRUE;
@@ -406,7 +406,7 @@ CondDoTarget(argLen, arg)
 
     arg[argLen] = '\0';
     gn = Targ_FindNode(arg, TARG_NOCREATE);
-    if ((gn != NILGNODE) && !OP_NOP(gn->type)) {
+    if ((gn != NULL) && !OP_NOP(gn->type)) {
 	result = TRUE;
     } else {
 	result = FALSE;

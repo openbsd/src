@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstSucc.c,v 1.4 1998/12/05 00:06:33 espie Exp $	*/
+/*	$OpenBSD: lstSucc.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
 /*	$NetBSD: lstSucc.c,v 1.5 1996/11/06 17:59:52 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstSucc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.4 1998/12/05 00:06:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,8 @@ LstNode
 Lst_Succ (ln)
     LstNode	ln;
 {
-    if (ln == NILLNODE) {
-	return (NILLNODE);
+    if (ln == NULL) {
+	return (NULL);
     } else {
 	return ((LstNode) ((ListNode) ln)->nextPtr);
     }

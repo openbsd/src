@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstAppend.c,v 1.5 1999/12/18 02:11:27 espie Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.6 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.5 1999/12/18 02:11:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.6 1999/12/18 21:53:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.5 1999/12/18 02:11:27 espie Exp
  *	A new ListNode is created and linked in to the List. The lastPtr
  *	field of the List will be altered if ln is the last node in the
  *	list. lastPtr and firstPtr will alter if the list was empty and
- *	ln was NILLNODE.
+ *	ln was NULL.
  *
  *-----------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ Lst_Append (l, ln, d)
     register ListNode	lNode;
     register ListNode	nLNode;
 
-    if (LstValid (l) && (ln == NILLNODE && LstIsEmpty (l))) {
+    if (LstValid (l) && (ln == NULL && LstIsEmpty (l))) {
 	goto ok;
     }
 
@@ -94,15 +94,15 @@ Lst_Append (l, ln, d)
     nLNode->datum = d;
     nLNode->useCount = nLNode->flags = 0;
 
-    if (lNode == NilListNode) {
-	nLNode->nextPtr = nLNode->prevPtr = NilListNode;
+    if (lNode == NULL) {
+	nLNode->nextPtr = nLNode->prevPtr = NULL;
 	list->firstPtr = list->lastPtr = nLNode;
     } else {
 	nLNode->prevPtr = lNode;
 	nLNode->nextPtr = lNode->nextPtr;
 
 	lNode->nextPtr = nLNode;
-	if (nLNode->nextPtr != NilListNode) {
+	if (nLNode->nextPtr != NULL) {
 	    nLNode->nextPtr->prevPtr = nLNode;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.25 1999/12/18 02:11:27 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.26 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.25 1999/12/18 02:11:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.26 1999/12/18 21:53:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -260,7 +260,7 @@ VarCmp (v, name)
  *
  * Results:
  *	A pointer to the structure describing the desired variable or
- *	NIL if the variable does not exist.
+ *	NULL if the variable does not exist.
  *
  * Side Effects:
  *	Caches env variables in the VAR_ENV context.
@@ -322,28 +322,28 @@ VarFind (name, ctxt, flags)
      */
     var = Lst_Find(ctxt->context, (ClientData)name, VarCmp);
 
-    if ((var == NILLNODE) && (flags & FIND_CMD) && (ctxt != VAR_CMD))
+    if ((var == NULL) && (flags & FIND_CMD) && (ctxt != VAR_CMD))
 	var = Lst_Find (VAR_CMD->context, (ClientData)name, VarCmp);
-    if (!checkEnvFirst && (var == NILLNODE) && (flags & FIND_GLOBAL) &&
+    if (!checkEnvFirst && (var == NULL) && (flags & FIND_GLOBAL) &&
 	(ctxt != VAR_GLOBAL)) {
 	var = Lst_Find (VAR_GLOBAL->context, (ClientData)name, VarCmp);
     }
-    if ((var == NILLNODE) && (flags & FIND_ENV)) {
+    if ((var == NULL) && (flags & FIND_ENV)) {
     	var = Lst_Find(VAR_ENV->context, (ClientData)name, VarCmp);
-	if (var == NILLNODE) {
+	if (var == NULL) {
 	    char *env;
 
 	    if ((env = getenv(name)) != NULL)
 	    	return VarAdd(name, env, VAR_ENV);
 	}
     }
-    if (var == NILLNODE && checkEnvFirst && (flags & FIND_GLOBAL) &&
+    if (var == NULL && checkEnvFirst && (flags & FIND_GLOBAL) &&
 		   (ctxt != VAR_GLOBAL)) 
 	    var = Lst_Find(VAR_GLOBAL->context, (ClientData)name, VarCmp);
-    if (var == NILLNODE)
-	return ((Var *) NIL);
+    if (var == NULL)
+	return NULL;
     else 
-	return ((Var *) Lst_Datum (var));
+	return (Var *)Lst_Datum(var);
 }
 
 /*-
@@ -436,7 +436,7 @@ Var_Delete(name, ctxt)
 	printf("%s:delete %s\n", ctxt->name, name);
     }
     ln = Lst_Find(ctxt->context, (ClientData)name, VarCmp);
-    if (ln != NILLNODE) {
+    if (ln != NULL) {
 	register Var 	  *v;
 
 	v = (Var *)Lst_Datum(ln);
@@ -482,7 +482,7 @@ Var_Set (name, val, ctxt)
      * point in searching them all just to save a bit of memory...
      */
     v = VarFind (name, ctxt, 0);
-    if (v == (Var *) NIL) {
+    if (v == NULL) {
 	(void)VarAdd(name, val, ctxt);
     } else {
 	Buf_Reset(&(v->val));
@@ -537,7 +537,7 @@ Var_Append (name, val, ctxt)
 
     v = VarFind (name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
-    if (v == (Var *) NIL) {
+    if (v == NULL) {
 	(void)VarAdd(name, val, ctxt);
     } else {
 	Buf_AddSpace(&(v->val));
@@ -572,7 +572,7 @@ Var_Exists(name, ctxt)
 
     v = VarFind(name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
 
-    if (v == (Var *)NIL)
+    if (v == NULL)
 	return FALSE;
     else
 	return TRUE;
@@ -598,7 +598,7 @@ Var_Value(name, ctxt)
     Var            *v;
 
     v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-    if (v != (Var *)NIL) 
+    if (v != NULL) 
 	return VarValue(v);
     else
 	return NULL;
@@ -1473,7 +1473,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	name[1] = '\0';
 
 	v = VarFind (name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-	if (v == (Var *)NIL) {
+	if (v == NULL) {
 	    *lengthPtr = 2;
 
 	    if ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)) {
@@ -1535,7 +1535,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	*tstr = '\0';
 
 	v = VarFind (str + 2, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-	if ((v == (Var *)NIL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
+	if ((v == NULL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
 	    ((tstr-str) == 4) && (str[3] == 'F' || str[3] == 'D'))
 	{
 	    /*
@@ -1560,7 +1560,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    vname[1] = '\0';
 		    v = VarFind(vname, ctxt, 0);
 
-		    if (v != (Var *)NIL) {
+		    if (v != NULL) {
 			/*
 			 * No need for nested expansion or anything, as we're
 			 * the only one who sets these things and we sure don't
@@ -1587,7 +1587,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    }
 	}
 
-	if (v == (Var *)NIL) {
+	if (v == NULL) {
 	    if ((((tstr-str) == 3) ||
 		 ((((tstr-str) == 4) && (str[3] == 'F' ||
 					 str[3] == 'D')))) &&

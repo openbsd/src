@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstFind.c,v 1.4 1998/12/05 00:06:31 espie Exp $	*/
+/*	$OpenBSD: lstFind.c,v 1.5 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: lstFind.c,v 1.6 1996/11/06 17:59:39 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstFind.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstFind.c,v 1.4 1998/12/05 00:06:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstFind.c,v 1.5 1999/12/18 21:53:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$OpenBSD: lstFind.c,v 1.4 1998/12/05 00:06:31 espie Exp $
  *	and the given datum.
  *
  * Results:
- *	The found node or NILLNODE if none matches.
+ *	The found node or NULL if none matches.
  *
  * Side Effects:
  *	None.

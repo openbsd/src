@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstFindFrom.c,v 1.4 1998/12/05 00:06:32 espie Exp $	*/
+/*	$OpenBSD: lstFindFrom.c,v 1.5 1999/12/18 21:53:33 espie Exp $	*/
 /*	$NetBSD: lstFindFrom.c,v 1.6 1996/11/06 17:59:40 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstFindFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: lstFindFrom.c,v 1.4 1998/12/05 00:06:32 espie Exp $";
+static char *rcsid = "$OpenBSD: lstFindFrom.c,v 1.5 1999/12/18 21:53:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ static char *rcsid = "$OpenBSD: lstFindFrom.c,v 1.4 1998/12/05 00:06:32 espie Ex
  *	determine when it has been found.
  *
  * Results:
- *	The found node or NILLNODE
+ *	The found node or NULL
  *
  * Side Effects:
  *	None.
@@ -78,7 +78,7 @@ Lst_FindFrom (l, ln, d, cProc)
     Boolean		found = FALSE;
 
     if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
-	return (NILLNODE);
+	return (NULL);
     }
 
     tln = (ListNode)ln;
@@ -90,12 +90,12 @@ Lst_FindFrom (l, ln, d, cProc)
 	} else {
 	    tln = tln->nextPtr;
 	}
-    } while (tln != (ListNode)ln && tln != NilListNode);
+    } while (tln != (ListNode)ln && tln != NULL);
 
     if (found) {
 	return ((LstNode)tln);
     } else {
-	return (NILLNODE);
+	return (NULL);
     }
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.19 1999/12/18 02:11:26 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.20 1999/12/18 21:53:32 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.19 1999/12/18 02:11:26 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.20 1999/12/18 21:53:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -339,7 +339,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 		 */
 		gn = Targ_FindNode(buf, TARG_CREATE);
 
-		if (gn == NILGNODE) {
+		if (gn == NULL) {
 		    free(buf);
 		    return(FAILURE);
 		} else {
@@ -369,7 +369,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 		sprintf(nameBuf, "%s(%s)", libName, member);
 		free(member);
 		gn = Targ_FindNode (nameBuf, TARG_CREATE);
-		if (gn == NILGNODE) {
+		if (gn == NULL) {
 		    return (FAILURE);
 		} else {
 		    /*
@@ -387,7 +387,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	} else {
 	    sprintf(nameBuf, "%s(%s)", libName, memName);
 	    gn = Targ_FindNode (nameBuf, TARG_CREATE);
-	    if (gn == NILGNODE) {
+	    if (gn == NULL) {
 		return (FAILURE);
 	    } else {
 		/*
@@ -498,7 +498,7 @@ ArchStatMember (archive, member, hash)
 	member = cp + 1;
 
     ln = Lst_Find (archives, (ClientData) archive, ArchFindArchive);
-    if (ln != NILLNODE) {
+    if (ln != NULL) {
 	ar = (Arch *) Lst_Datum (ln);
 
 	he = Hash_FindEntry (&ar->members, member);
@@ -1051,7 +1051,7 @@ Arch_MemMTime (gn)
 	gn->mtime = 0;
 	return (0);
     }
-    while ((ln = Lst_Next (gn->parents)) != NILLNODE) {
+    while ((ln = Lst_Next (gn->parents)) != NULL) {
 	pgn = (GNode *) Lst_Datum (ln);
 
 	if (pgn->type & OP_ARCHV) {
