@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors_88100.S,v 1.1 2004/04/29 14:33:27 miod Exp $	*/
+/*	$OpenBSD: vectors_88100.S,v 1.2 2004/07/02 08:32:07 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991, 1992 Carnegie Mellon University
@@ -39,7 +39,6 @@
 	word UNKNOWN_HANDLER; word UNKNOWN_HANDLER;
 
 	data
-	.align 4096			  /* VBR points to page aligned list */
 GLOBAL(vector_list)
 	VECTOR(reset_handler)			/* 00 */
 	VECTOR(interrupt_handler)		/* 01 */
