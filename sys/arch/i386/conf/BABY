@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.35 1998/07/11 15:31:16 todd Exp $
+#	$OpenBSD: BABY,v 1.36 1998/08/18 23:31:47 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -35,9 +35,9 @@ option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
 #option		SHMMAXPGS=1024	# 1024 pages is the default
 
-option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
-option		COMPAT_10	# NetBSD 1.0,
-option		COMPAT_11	# NetBSD 1.1,
+#option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
+#option		COMPAT_10	# NetBSD 1.0,
+#option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD
 #option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
