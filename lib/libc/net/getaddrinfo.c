@@ -381,6 +381,7 @@ gaih_inet(const char *name, const struct gaih_service *service,
 	}
 
 build:
+	at2 = at;
 	while (at2) {
 		if (req->ai_flags & AI_CANONNAME) {
 			if (at2->cname)
