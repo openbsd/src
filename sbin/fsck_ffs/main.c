@@ -68,6 +68,17 @@ int argtoi __P((int, char *, char *, int));
 int checkfilesys __P((char *, char *, long, int));
 int docheck __P((struct fstab *));
 
+void
+usage()
+{
+	fprintf(stderr,
+	    "usage: fsck -p [-f] [-m mode]\n");
+	fprintf(stderr,
+	    "       fsck [-f] [-b block#] [-c level] [-l maxparallel] [-y] "
+	    "[-n] [-m mode] [filesystems]\n");
+	exit(1);
+}
+
 int
 main(argc, argv)
 	int	argc;
@@ -129,7 +140,7 @@ main(argc, argv)
 			break;
 
 		default:
-			errexit("%c option?\n", ch);
+			usage();
 		}
 	}
 	argc -= optind;
