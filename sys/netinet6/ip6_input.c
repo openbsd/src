@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_input.c,v 1.24 2001/02/16 08:48:05 itojun Exp $	*/
-/*	$KAME: ip6_input.c,v 1.172 2001/02/08 11:18:05 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.25 2001/02/16 14:58:12 itojun Exp $	*/
+/*	$KAME: ip6_input.c,v 1.176 2001/02/14 07:13:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -314,12 +314,17 @@ ip6_input(m)
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
 		goto bad;
 	}
-#if 1
 	/*
 	 * The following check is not documented in the spec.  Malicious party
 	 * may be able to use IPv4 mapped addr to confuse tcp/udp stack and
 	 * bypass security checks (act as if it was from 127.0.0.1 by using
 	 * IPv6 src ::ffff:127.0.0.1).	Be cautious.
+	 *
+	 * This check chokes if we are in SIIT cloud.  As none of BSDs support
+	 * IPv4-less kernel compilation, we cannot support SIIT environment
+	 * at all.  So, it makes more sense for us to reject any malicious
+	 * packets for non-SIIT environment, than try to do a partical support
+	 * for SIIT environment.
 	 */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
@@ -327,7 +332,6 @@ ip6_input(m)
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
 		goto bad;
 	}
-#endif
 #if 0
 	/*
 	 * Reject packets with IPv4 compatible addresses (auto tunnel).
@@ -795,7 +799,7 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 
 			/*
 			 * IPv6 packets that have non 0 payload length
-			 * must not contain a jumbo paylod option.
+			 * must not contain a jumbo payload option.
 			 */
 			ip6 = mtod(m, struct ip6_hdr *);
 			if (ip6->ip6_plen) {
@@ -965,8 +969,8 @@ ip6_savecontrol(in6p, mp, ip6, m)
 #endif
 
 	/* RFC 2292 sec. 5 */
-	if (in6p->in6p_flags & IN6P_PKTINFO) {
-		struct in6_pktinfo pi6;
+	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
+		struct in6_pktinfo pi6, *prevpi = NULL;
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		if (IN6_IS_SCOPE_LINKLOCAL(&pi6.ipi6_addr))
 			pi6.ipi6_addr.s6_addr16[1] = 0;
@@ -994,7 +998,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	 * be some hop-by-hop options which can be returned to normal user.
 	 * See RFC 2292 section 6.
 	 */
-	if ((in6p->in6p_flags & IN6P_HOPOPTS) && privileged) {
+	if ((in6p->in6p_flags & IN6P_HOPOPTS) != 0 && privileged) {
 		/*
 		 * Check if a hop-by-hop options header is contatined in the
 		 * received packet, and if so, store the options as ancillary
@@ -1143,7 +1147,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 			default:
 				/*
-				 * other cases have been filtered in the above.
+			 	 * other cases have been filtered in the above.
 				 * none will visit this case.  here we supply
 				 * the code just in case (nxt overwritten or
 				 * other cases).

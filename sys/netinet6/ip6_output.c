@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_output.c,v 1.23 2001/02/16 08:48:06 itojun Exp $	*/
-/*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.24 2001/02/16 14:58:13 itojun Exp $	*/
+/*	$KAME: ip6_output.c,v 1.164 2001/02/10 05:05:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2405,7 +2405,6 @@ ip6_splithdr(m, exthdrs)
  */
 # define in6pcb	inpcb
 # define in6p_outputopts	inp_outputopts6
-
 int
 ip6_optlen(in6p)
 	struct in6pcb *in6p;

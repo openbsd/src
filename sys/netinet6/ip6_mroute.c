@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.11 2001/02/16 08:48:06 itojun Exp $	*/
-/*	$KAME: ip6_mroute.c,v 1.39 2001/02/10 02:13:13 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.12 2001/02/16 14:58:12 itojun Exp $	*/
+/*	$KAME: ip6_mroute.c,v 1.40 2001/02/16 08:37:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
