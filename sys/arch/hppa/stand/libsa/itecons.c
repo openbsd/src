@@ -1,4 +1,4 @@
-/*	$OpenBSD: itecons.c,v 1.1.1.1 1998/06/23 18:46:42 mickey Exp $	*/
+/*	$OpenBSD: itecons.c,v 1.2 1998/07/08 21:34:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -63,8 +63,8 @@
 
 #include "dev_hppa.h"
 
-int (*cniodc)();	/* console IODC entry point */
-int (*kyiodc)();	/* keyboard IODC entry point */
+iodcio_t cniodc;	/* console IODC entry point */
+iodcio_t kyiodc;	/* keyboard IODC entry point */
 
 /*
  * Console.
@@ -85,7 +85,7 @@ void
 ite_probe(cn)
 	struct consdev *cn;
 {
-	cniodc = (int (*)()) PAGE0->mem_free;
+	cniodc = (iodcio_t)PAGE0->mem_free;
 
 	if ((*pdc)   (PDC_IODC, PDC_IODC_READ, pdcbuf, CN_HPA, IODC_INIT,
 		      cniodc, IODC_MAXSIZE) < 0 ||
@@ -114,7 +114,7 @@ ite_init(cn)
 	 */
 	if (CN_CLASS != PCL_DUPLEX || KY_CLASS == PCL_KEYBD) {
 
-		kyiodc = (int (*)()) kycode;
+		kyiodc = (iodcio_t)kycode;
 
 		if ((*pdc)   (PDC_IODC, PDC_IODC_READ, pdcbuf, KY_HPA,
 			      IODC_INIT, kyiodc, IODC_MAXSIZE) < 0 ||

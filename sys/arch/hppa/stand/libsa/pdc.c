@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.1.1.1 1998/06/23 18:46:42 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.2 1998/07/08 21:34:37 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -52,7 +52,7 @@
  * Interface routines to initialize and access the PDC.
  */
 
-int (*pdc)();
+pdcio_t pdc;
 int	pdcbuf[64] __attribute ((aligned(8)));		/* PDC return buffer */
 struct	stable_storage sstor;	/* contents of Stable Storage */
 int	sstorsiz;		/* size of Stable Storage */
@@ -74,7 +74,7 @@ pdc_init()
 	/*
 	 * Initialize important global variables (defined above).
 	 */
-	pdc = PAGE0->mem_pdc;
+	pdc = (pdcio_t)PAGE0->mem_pdc;
 
 	err = (*pdc)(PDC_STABLE, PDC_STABLE_SIZE, pdcbuf, 0, 0);
 	if (err >= 0) {

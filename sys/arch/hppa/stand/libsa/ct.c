@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.1.1.1 1998/06/23 18:46:42 mickey Exp $	*/
+/*	$OpenBSD: ct.c,v 1.2 1998/07/08 21:34:33 mickey Exp $	*/
 /*	$NOWHERE: ct.c,v 2.2 1998/06/22 18:41:34 mickey Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 
 #include "dev_hppa.h"
 
-int (*ctiodc)();	/* cartridge tape IODC entry point */
+iodcio_t ctiodc;	/* cartridge tape IODC entry point */
 int ctcode[IODC_MAXSIZE/sizeof(int)];
 
 /* hp800-specific comments:
@@ -101,7 +101,7 @@ ctopen(f)
 			printf("ct: device ENTRY_IO Read ret'd %d\n", ret);
 			return (EIO);
 		} else
-			ctdev.pz_iodc_io = ctiodc = (int (*)()) ctcode;
+			ctdev.pz_iodc_io = ctiodc = (iodcio_t) ctcode;
 	}
 
 	if (ctiodc != NULL)

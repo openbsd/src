@@ -1,4 +1,4 @@
-/*	$OpenBSD: dk.c,v 1.1.1.1 1998/06/23 18:46:42 mickey Exp $	*/
+/*	$OpenBSD: dk.c,v 1.2 1998/07/08 21:34:34 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -33,7 +33,7 @@
 
 #include "dev_hppa.h"
 
-int (*btiodc)();	/* boot IODC entry point */
+iodcio_t btiodc;	/* boot IODC entry point */
 
 char btbuf[BTIOSIZ] __attribute ((aligned (MINIOSIZ)));
 int HP800;	
@@ -44,7 +44,7 @@ btinit()
 	int err;
 	static int firstime = 1;
 
-	btiodc = (int (*)()) ((unsigned int)PAGE0->mem_free + IODC_MAXSIZE);
+	btiodc = (iodcio_t)(PAGE0->mem_free + IODC_MAXSIZE);
 
 	if (firstime) {
 		/*
