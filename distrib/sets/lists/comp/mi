@@ -2904,6 +2904,12 @@
 ./usr/share/man/cat3/dirfd.0
 ./usr/share/man/cat3/dirname.0
 ./usr/share/man/cat3/div.0
+./usr/share/man/cat3/dlclose.0
+./usr/share/man/cat3/dlctl.0
+./usr/share/man/cat3/dlerror.0
+./usr/share/man/cat3/dlfcn.0
+./usr/share/man/cat3/dlopen.0
+./usr/share/man/cat3/dlsym.0
 ./usr/share/man/cat3/dn_comp.0
 ./usr/share/man/cat3/dn_expand.0
 ./usr/share/man/cat3/doupdate.0
@@ -3505,6 +3511,10 @@
 ./usr/share/man/cat3/kuserok.0
 ./usr/share/man/cat3/kvm.0
 ./usr/share/man/cat3/kvm_close.0
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0
 ./usr/share/man/cat3/kvm_getargv.0
 ./usr/share/man/cat3/kvm_getenvv.0
 ./usr/share/man/cat3/kvm_geterr.0
@@ -4803,13 +4813,3 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
-./usr/share/man/cat3/kvm_dump.0
-./usr/share/man/cat3/kvm_dump_inval.0
-./usr/share/man/cat3/kvm_dump_mkheader.0
-./usr/share/man/cat3/kvm_dump_wrtheader.0
-./usr/share/man/cat3/dlclose.0
-./usr/share/man/cat3/dlctl.0
-./usr/share/man/cat3/dlerror.0
-./usr/share/man/cat3/dlfcn.0
-./usr/share/man/cat3/dlopen.0
-./usr/share/man/cat3/dlsym.0

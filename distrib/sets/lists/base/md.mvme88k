@@ -1,5 +1,5 @@
-./usr/bin/c++filt
 ./sbin/ldconfig
+./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/include/m88k
 ./usr/include/readline

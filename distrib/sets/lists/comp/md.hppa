@@ -4,7 +4,10 @@
 ./usr/bin/objcopy
 ./usr/bin/objdump
 ./usr/bin/readelf
-./usr/include/hppa/hppa_cpu.h
+./usr/include/ansidecl.h
+./usr/include/bfd.h
+./usr/include/bfdlink.h
+./usr/include/dlfcn.h
 ./usr/include/hppa/ansi.h
 ./usr/include/hppa/aout_machdep.h
 ./usr/include/hppa/asm.h
@@ -26,6 +29,7 @@
 ./usr/include/hppa/fbio.h
 ./usr/include/hppa/float.h
 ./usr/include/hppa/frame.h
+./usr/include/hppa/hppa_cpu.h
 ./usr/include/hppa/ieee.h
 ./usr/include/hppa/ieeefp.h
 ./usr/include/hppa/intr.h
@@ -57,10 +61,6 @@
 ./usr/include/hppa/vmparam.h
 ./usr/include/hppa/vuid_event.h
 ./usr/include/hppa/wsconsio.h
-./usr/include/ansidecl.h
-./usr/include/bfd.h
-./usr/include/bfdlink.h
-./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
 ./usr/include/readline/chardefs.h
@@ -91,11 +91,11 @@
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/stddef.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/syslimits.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/typeinfo
-./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/va-hppa.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/va-arc.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/va-c4x.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/va-clipper.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/va-h8300.h
+./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/va-hppa.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/va-i860.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/va-i960.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/include/va-m32r.h

@@ -1,4 +1,3 @@
-./usr/bin/c++filt
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl
@@ -7,6 +6,7 @@
 ./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/bin/addr2line
+./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/bin/readelf
 ./usr/bin/windres

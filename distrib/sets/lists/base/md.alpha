@@ -1,10 +1,10 @@
-./usr/bin/c++filt
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl
 ./sbin/ldconfig
 ./sbin/wicontrol
 ./sbin/wsconsctl
+./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/include/alpha
 ./usr/include/readline

@@ -1,6 +1,6 @@
-./usr/bin/c++filt
 ./sbin/ldconfig
 ./sbin/wsconsctl
+./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/include/readline
 ./usr/lib/apache/modules/libproxy.so
