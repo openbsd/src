@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.30 1997/09/11 08:03:20 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.31 1997/09/30 02:49:18 millert Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -379,6 +379,11 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_FORCELUNS|SDEV_AUTOSAVE},
+	/* Gives non-media hardware failure in response to start-unit command */
+	{{T_DIRECT, T_FIXED,
+	 "HITACHI", "DK515C",            "CP15"}, SDEV_NOSTARTUNIT},
+	{{T_DIRECT, T_FIXED,
+	 "HITACHI", "DK515C",            "CP16"}, SDEV_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
 	 "IBMRAID ", "0662S",            ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
