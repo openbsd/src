@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.28 2002/06/07 15:27:58 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.29 2002/06/07 15:32:42 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -564,6 +564,7 @@ struct in6_pktinfo {
 	{ "rr_prune", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "v6only", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
