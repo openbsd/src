@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.20 2002/05/11 21:56:54 millert Exp $
+.\" $OpenBSD: at.1,v 1.21 2002/05/11 22:14:48 millert Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -11,9 +11,9 @@
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
-.Op Fl q Ar queue
+.Op Fl bdlmv
 .Op Fl f Ar file
-.Op Fl mldbv
+.Op Fl q Ar queue
 .Ar time
 .Nm at
 .Fl c Ar job Op Ar job ...
@@ -24,9 +24,9 @@
 .Ar job
 .Op Ar job ...
 .Nm batch
-.Op Fl q Ar queue
-.Op Fl f Ar file
 .Op Fl mv
+.Op Fl f Ar file
+.Op Fl q Ar queue
 .Op Ar time
 .Sh DESCRIPTION
 .Nm at
@@ -54,6 +54,24 @@ the load average drops below 1.5, or the value specified in the invocation of
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl b
+An alias for
+.Nm batch .
+.It Fl c
+Prints the jobs listed on the command line to standard output.
+.It Fl d
+An alias for
+.Nm atrm .
+.It Fl f Ar file
+Reads the job from
+.Ar file
+rather than standard input.
+.It Fl l
+An alias for
+.Nm atq .
+.It Fl m
+Send mail to the user when the job has completed, even if there was no
+output.
 .It Fl q Ar queue
 Uses the specified queue.
 A queue designation consists of a single letter.
@@ -79,29 +97,11 @@ is treated as if it had been submitted to batch at that time.
 If
 .Nm atq
 is given a specific queue, it will only show jobs pending in that queue.
-.It Fl m
-Send mail to the user when the job has completed, even if there was no
-output.
-.It Fl f Ar file
-Reads the job from
-.Ar file
-rather than standard input.
-.It Fl l
-An alias for
-.Nm atq .
-.It Fl d
-An alias for
-.Nm atrm .
-.It Fl b
-An alias for
-.Nm batch .
 .It Fl v
 For
 .Nm atq ,
 shows completed but not yet deleted jobs in the queue.
 Otherwise shows the time the job will be executed.
-.It Fl c
-Prints the jobs listed on the command line to standard output.
 .El
 .Pp
 .Nm at
@@ -234,8 +234,6 @@ This is the default configuration.
 directory containing job files
 .It Pa /var/at/spool
 directory containing output spool files
-.It Pa /var/run/utmp
-login records
 .It Pa /var/at/at.allow
 allow permission control
 .It Pa /var/at/at.deny
@@ -255,16 +253,6 @@ job sequence file
 was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
 The time parsing routines are by David Parsons <orc@pell.chi.il.us>.
 .Sh BUGS
-If the file
-.Pa /var/run/utmp
-is not available or corrupted, or if the user is not logged on at the
-time
-.Nm at
-is invoked, the mail is sent to the user ID found
-in the environment variable
-.Ev LOGNAME .
-If that is undefined or empty, the current user ID is assumed.
-.Pp
 .Nm at
 and
 .Nm batch
