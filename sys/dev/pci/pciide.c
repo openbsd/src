@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.114 2003/02/21 20:10:33 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.115 2003/02/24 01:34:41 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2549,8 +2549,8 @@ cmd_channel_map(pa, sc, channel)
 		pciide_unmap_compat_intr(pa, cp, channel, interface);
 		return;
 	}
-	if (channel == 1) {
-		if (pciide_chan_candisable(cp)) {
+	if (pciide_chan_candisable(cp)) {
+		if (channel == 1) {
 			ctrl &= ~CMD_CTRL_2PORT;
 			pciide_pci_write(pa->pa_pc, pa->pa_tag,
 			    CMD_CTRL, ctrl);
