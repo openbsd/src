@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2003/06/01 17:43:50 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2003/06/02 18:14:16 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1265,6 +1265,15 @@ _bus_dmamap_load_mbuf(t, t0, map, m, flags)
 	int i;
 	size_t len;
 
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+ 	map->dm_mapsize = 0;
+ 	map->dm_nsegs = 0;
+
+	if (m->m_pkthdr.len > map->_dm_size)
+		return (EINVAL);
+
 	/* Record mbuf for *_unload */
 	map->_dm_type = _DM_TYPE_MBUF;
 	map->_dm_source = m;
@@ -1331,6 +1340,15 @@ _bus_dmamap_load_uio(t, t0, map, uio, flags)
 	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i, j;
 	size_t len;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+ 	map->dm_mapsize = 0;
+ 	map->dm_nsegs = 0;
+
+	if (uio->uio_resid > map->_dm_size)
+		return (EINVAL);
 
 	if (uio->uio_segflg != UIO_SYSSPACE)
 		return (EOPNOTSUPP);

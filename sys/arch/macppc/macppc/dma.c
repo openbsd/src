@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.18 2002/12/10 23:41:37 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.19 2003/06/02 18:14:16 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -320,6 +320,9 @@ _dmamap_load_uio(t, map, uio, flags)
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
+
+	if (resid > map->_dm_size)
+		return (EINVAL);
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
 		p = uio->uio_procp;
