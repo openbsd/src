@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.3 2004/04/28 20:24:59 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.4 2004/04/29 18:38:23 millert Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -18,65 +18,34 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: md5.c,v 1.3 2004/04/28 20:24:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: md5.c,v 1.4 2004/04/29 18:38:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <string.h>
 #include <md5.h>
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#define PUT_64BIT_LE(cp, value) do {					\
+	(cp)[7] = (value) >> 56;					\
+	(cp)[6] = (value) >> 48;					\
+	(cp)[5] = (value) >> 40;					\
+	(cp)[4] = (value) >> 32;					\
+	(cp)[3] = (value) >> 24;					\
+	(cp)[2] = (value) >> 16;					\
+	(cp)[1] = (value) >> 8;						\
+	(cp)[0] = (value); } while (0)
 
-#define htole32_4(buf)		/* Nothing */
-#define htole32_14(buf)		/* Nothing */
-#define htole32_16(buf)		/* Nothing */
+#define PUT_32BIT_LE(cp, value) do {					\
+	(cp)[3] = (value) >> 24;					\
+	(cp)[2] = (value) >> 16;					\
+	(cp)[1] = (value) >> 8;						\
+	(cp)[0] = (value); } while (0)
 
-#else
-
-#define htole32_4(buf) do {						\
-	(buf)[ 0] = htole32((buf)[ 0]);					\
-	(buf)[ 1] = htole32((buf)[ 1]);					\
-	(buf)[ 2] = htole32((buf)[ 2]);					\
-	(buf)[ 3] = htole32((buf)[ 3]);					\
-} while (0)
-
-#define htole32_14(buf) do {						\
-	(buf)[ 0] = htole32((buf)[ 0]);					\
-	(buf)[ 1] = htole32((buf)[ 1]);					\
-	(buf)[ 2] = htole32((buf)[ 2]);					\
-	(buf)[ 3] = htole32((buf)[ 3]);					\
-	(buf)[ 4] = htole32((buf)[ 4]);					\
-	(buf)[ 5] = htole32((buf)[ 5]);					\
-	(buf)[ 6] = htole32((buf)[ 6]);					\
-	(buf)[ 7] = htole32((buf)[ 7]);					\
-	(buf)[ 8] = htole32((buf)[ 8]);					\
-	(buf)[ 9] = htole32((buf)[ 9]);					\
-	(buf)[10] = htole32((buf)[10]);					\
-	(buf)[11] = htole32((buf)[11]);					\
-	(buf)[12] = htole32((buf)[12]);					\
-	(buf)[13] = htole32((buf)[13]);					\
-} while (0)
-
-#define htole32_16(buf) do {						\
-	(buf)[ 0] = htole32((buf)[ 0]);					\
-	(buf)[ 1] = htole32((buf)[ 1]);					\
-	(buf)[ 2] = htole32((buf)[ 2]);					\
-	(buf)[ 3] = htole32((buf)[ 3]);					\
-	(buf)[ 4] = htole32((buf)[ 4]);					\
-	(buf)[ 5] = htole32((buf)[ 5]);					\
-	(buf)[ 6] = htole32((buf)[ 6]);					\
-	(buf)[ 7] = htole32((buf)[ 7]);					\
-	(buf)[ 8] = htole32((buf)[ 8]);					\
-	(buf)[ 9] = htole32((buf)[ 9]);					\
-	(buf)[10] = htole32((buf)[10]);					\
-	(buf)[11] = htole32((buf)[11]);					\
-	(buf)[12] = htole32((buf)[12]);					\
-	(buf)[13] = htole32((buf)[13]);					\
-	(buf)[14] = htole32((buf)[14]);					\
-	(buf)[15] = htole32((buf)[15]);					\
-} while (0)
-
-#endif
+static u_char PADDING[MD5_BLOCK_LENGTH] = {
+	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
 
 /*
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
@@ -97,43 +66,37 @@ MD5Init(MD5_CTX *ctx)
  * of bytes.
  */
 void
-MD5Update(MD5_CTX *ctx, const unsigned char *buf, size_t len)
+MD5Update(MD5_CTX *ctx, const unsigned char *input, size_t len)
 {
-	u_int32_t count;
+	u_int32_t have, need;
 
-	/* Bytes already stored in ctx->buffer */
-	count = (u_int32_t)((ctx->count >> 3) & 0x3f);
+	/* Check how many bytes we already have and how many more we need. */
+	have = (u_int32_t)((ctx->count >> 3) & (MD5_BLOCK_LENGTH - 1));
+	need = MD5_BLOCK_LENGTH - have;
 
 	/* Update bitcount */
 	ctx->count += (u_int64_t)len << 3;
 
-	/* Handle any leading odd-sized chunks */
-	if (count) {
-		unsigned char *p = (unsigned char *)ctx->buffer + count;
-
-		count = MD5_BLOCK_LENGTH - count;
-		if (len < count) {
-			memcpy(p, buf, len);
-			return;
+	if (len >= need) {
+		if (have != 0) {
+			memcpy(ctx->buffer + have, input, need);
+			MD5Transform(ctx->state, ctx->buffer);
+			input += need;
+			len -= need;
+			have = 0;
 		}
-		memcpy(p, buf, count);
-		htole32_16((u_int32_t *)ctx->buffer);
-		MD5Transform(ctx->state, ctx->buffer);
-		buf += count;
-		len -= count;
-	}
 
-	/* Process data in MD5_BLOCK_LENGTH-byte chunks */
-	while (len >= MD5_BLOCK_LENGTH) {
-		memcpy(ctx->buffer, buf, MD5_BLOCK_LENGTH);
-		htole32_16((u_int32_t *)ctx->buffer);
-		MD5Transform(ctx->state, ctx->buffer);
-		buf += MD5_BLOCK_LENGTH;
-		len -= MD5_BLOCK_LENGTH;
+		/* Process data in MD5_BLOCK_LENGTH-byte chunks. */
+		while (len >= MD5_BLOCK_LENGTH) {
+			MD5Transform(ctx->state, input);
+			input += MD5_BLOCK_LENGTH;
+			len -= MD5_BLOCK_LENGTH;
+		}
 	}
 
 	/* Handle any remaining bytes of data. */
-	memcpy(ctx->buffer, buf, len);
+	if (len != 0)
+		memcpy(ctx->buffer + have, input, len);
 }
 
 /*
@@ -143,44 +106,25 @@ MD5Update(MD5_CTX *ctx, const unsigned char *buf, size_t len)
 void
 MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 {
-	u_int32_t count;
-	unsigned char *p;
+	u_int8_t count[8];
+	u_int32_t padlen;
+	int i;
 
-	/* number of bytes mod 64 */
-	count = (u_int32_t)(ctx->count >> 3) & 0x3f;
+	/* Convert count to 8 bytes in little endian order. */
+	PUT_64BIT_LE(count, ctx->count);
 
-	/*
-	 * Set the first char of padding to 0x80.
-	 * This is safe since there is always at least one byte free.
-	 */
-	p = ctx->buffer + count;
-	*p++ = 0x80;
+	/* Pad out to 56 mod 64. */
+	padlen = MD5_BLOCK_LENGTH -
+	    ((ctx->count >> 3) & (MD5_BLOCK_LENGTH - 1));
+	if (padlen < 1 + 8)
+		padlen += MD5_BLOCK_LENGTH;
+	MD5Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
+	MD5Update(ctx, count, 8);
 
-	/* Bytes of padding needed to make 64 bytes */
-	count = 64 - 1 - count;
-
-	/* Pad out to 56 mod 64 */
-	if (count < 8) {
-		/* Two lots of padding:  Pad the first block to 64 bytes */
-		memset(p, 0, count);
-		htole32_16((u_int32_t *)ctx->buffer);
-		MD5Transform(ctx->state, ctx->buffer);
-
-		/* Now fill the next block with 56 bytes */
-		memset(ctx->buffer, 0, 56);
-	} else {
-		/* Pad block to 56 bytes */
-		memset(p, 0, count - 8);
+	if (digest != NULL) {
+		for (i = 0; i < 4; i++)
+			PUT_32BIT_LE(digest + i * 4, ctx->state[i]);
 	}
-	htole32_14((u_int32_t *)ctx->buffer);
-
-	/* Append bit count and transform */
-	((u_int32_t *)ctx->buffer)[14] = ctx->count & 0xffffffff;
-	((u_int32_t *)ctx->buffer)[15] = (u_int32_t)(ctx->count >> 32);
-
-	MD5Transform(ctx->state, ctx->buffer);
-	htole32_4(ctx->state);
-	memcpy(digest, ctx->state, MD5_DIGEST_LENGTH);
 	memset(ctx, 0, sizeof(*ctx));	/* in case it's sensitive */
 }
 
@@ -203,15 +147,26 @@ MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
  * the data and converts bytes into longwords for this routine.
  */
 void
-MD5Transform(u_int32_t buf[4], const unsigned char inc[MD5_BLOCK_LENGTH])
+MD5Transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH])
 {
-	u_int32_t a, b, c, d;
-	const u_int32_t *in = (const u_int32_t *)inc;
+	u_int32_t a, b, c, d, in[MD5_BLOCK_LENGTH / 4];
 
-	a = buf[0];
-	b = buf[1];
-	c = buf[2];
-	d = buf[3];
+#if BYTE_ORDER == LITTLE_ENDIAN
+	memcpy(in, block, sizeof(in));
+#else
+	for (a = 0; a < MD5_BLOCK_LENGTH / 4; a++) {
+		in[a] = (u_int32_t)(
+		    (u_int32_t)(block[a * 4 + 0]) |
+		    (u_int32_t)(block[a * 4 + 1]) <<  8 |
+		    (u_int32_t)(block[a * 4 + 2]) << 16 |
+		    (u_int32_t)(block[a * 4 + 3]) << 24);
+	}
+#endif
+
+	a = state[0];
+	b = state[1];
+	c = state[2];
+	d = state[3];
 
 	MD5STEP(F1, a, b, c, d, in[ 0] + 0xd76aa478,  7);
 	MD5STEP(F1, d, a, b, c, in[ 1] + 0xe8c7b756, 12);
@@ -281,8 +236,8 @@ MD5Transform(u_int32_t buf[4], const unsigned char inc[MD5_BLOCK_LENGTH])
 	MD5STEP(F4, c, d, a, b, in[2 ] + 0x2ad7d2bb, 15);
 	MD5STEP(F4, b, c, d, a, in[9 ] + 0xeb86d391, 21);
 
-	buf[0] += a;
-	buf[1] += b;
-	buf[2] += c;
-	buf[3] += d;
+	state[0] += a;
+	state[1] += b;
+	state[2] += c;
+	state[3] += d;
 }
