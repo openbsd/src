@@ -2294,10 +2294,6 @@
 ./usr/share/man/cat3/MD5_Final.0
 ./usr/share/man/cat3/MD5_Init.0
 ./usr/share/man/cat3/MD5_Update.0
-./usr/share/man/cat3/MDC2.0
-./usr/share/man/cat3/MDC2_Final.0
-./usr/share/man/cat3/MDC2_Init.0
-./usr/share/man/cat3/MDC2_Update.0
 ./usr/share/man/cat3/OBJ_nid2sn.0
 ./usr/share/man/cat3/OBJ_obj2nid.0
 ./usr/share/man/cat3/OPENSSL_VERSION_NUMBER.0
