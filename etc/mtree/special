@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.12 1997/04/14 00:55:04 millert Exp $
+#	$OpenBSD: special,v 1.13 1997/04/18 20:25:54 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -143,11 +143,14 @@ etc		type=dir mode=0511 uname=root gname=wheel optional
 group		type=file mode=0444 uname=root gname=wheel optional
 localtime	type=file mode=0444 uname=root gname=wheel optional
 master.passwd	type=file mode=0400 uname=root gname=wheel optional
+spwd.db		type=file mode=0400 uname=root gname=wheel optional
+motd		type=file mode=0444 uname=root gname=wheel optional
 passwd		type=file mode=0444 uname=root gname=wheel optional
+pwd.db		type=file mode=0444 uname=root gname=wheel optional
 ..	#var/spool/ftp/etc
 hidden		type=dir mode=0111 uname=root gname=wheel optional ignore
 ..	#var/spool/ftp/hidden
-pub		type=dir mode=0777 uname=root gname=wheel optional ignore
+pub		type=dir mode=0555 uname=root gname=wheel optional ignore
 ..	#var/spool/ftp/pub
 ..	#var/spool/ftp
 mqueue		type=dir mode=0755 uname=root gname=wheel ignore
