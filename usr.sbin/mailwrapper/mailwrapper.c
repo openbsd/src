@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.2 1999/08/02 20:25:47 jakob Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.3 1999/08/02 20:42:24 jakob Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -73,17 +73,17 @@ addarg(al, arg, copy)
 	char **argv2;
  
 	if (al->argc == al->maxc) {
-	    al->maxc <<= 1;
+		al->maxc <<= 1;
 
-	    if ((argv2 = realloc(al->argv,
-				 al->maxc * sizeof(char *))) == NULL) {
-	      if (al->argv) 
-		free(al->argv);
-	      al->argv = NULL;
-	      err(1, "mailwrapper");
-	    } else {
-	      al->argv = argv2;
-	    }
+		if ((argv2 = realloc(al->argv,
+		    al->maxc * sizeof(char *))) == NULL) {
+			if (al->argv)
+				free(al->argv);
+			al->argv = NULL;
+			err(1, "mailwrapper");
+		} else {
+			al->argv = argv2;
+		}
 	}
 	if (copy) {
 		if ((al->argv[al->argc++] = strdup(arg)) == NULL)
