@@ -19,4 +19,5 @@ VERSIONID(`$Sendmail: submit.mc,v 8.5 2001/09/08 01:20:53 gshapiro Exp $')
 define(`confCF_VERSION', `Submit')dnl
 define(`__OSTYPE__',`')dnl dirty hack to keep proto.m4 from complaining
 define(`_USE_DECNET_SYNTAX_', `1')dnl support DECnet
+define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 FEATURE(`msp')dnl
