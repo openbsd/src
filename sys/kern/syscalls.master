@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.62 2003/09/07 21:00:27 miod Exp $
+;	$OpenBSD: syscalls.master,v 1.63 2003/12/10 23:10:08 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -487,7 +487,7 @@
 			    int inherit); }
 251	STD		{ int sys_rfork(int flags); }
 252	STD		{ int sys_poll(struct pollfd *fds, \
-			    int nfds, int timeout); }
+			    u_int nfds, int timeout); }
 253	STD		{ int sys_issetugid(void); }
 254	STD		{ int sys_lchown(const char *path, uid_t uid, gid_t gid); }
 255	STD		{ pid_t sys_getsid(pid_t pid); }

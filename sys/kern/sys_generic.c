@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.46 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.47 2003/12/10 23:10:08 millert Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 
 int selscan(struct proc *, fd_set *, fd_set *, int, register_t *);
 int seltrue(dev_t, int, struct proc *);
-void pollscan(struct proc *, struct pollfd *, int, register_t *);
+void pollscan(struct proc *, struct pollfd *, u_int, register_t *);
 
 /*
  * Read system call.
@@ -868,12 +868,13 @@ void
 pollscan(p, pl, nfd, retval)
 	struct proc *p;
 	struct pollfd *pl;
-	int nfd;
+	u_int nfd;
 	register_t *retval;
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int i, n = 0;
+	u_int i;
+	int n = 0;
 
 	for (i = 0; i < nfd; i++, pl++) {
 		/* Check the file descriptor. */
@@ -902,19 +903,18 @@ pollscan(p, pl, nfd, retval)
 int
 sys_poll(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_poll_args *uap = v;
+	struct sys_poll_args /* {
+		syscallarg(struct pollfd *) fds;
+		syscallarg(u_int) nfds;
+		syscallarg(int) timeout;
+	} */ *uap = v;
 	size_t sz;
 	struct pollfd pfds[4], *pl = pfds;
 	int msec = SCARG(uap, timeout);
 	struct timeval atv;
 	int timo, ncoll, i, s, error;
 	extern int nselcoll, selwait;
-	u_int nfds;
-
-	if (SCARG(uap, nfds) < 0)
-		return (EINVAL);
-
-	nfds = SCARG(uap, nfds);
+	u_int nfds = SCARG(uap, nfds);
 
 	/* Standards say no more than MAX_OPEN; this is possibly better. */
 	if (nfds > min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles))

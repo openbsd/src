@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_poll.c,v 1.7 2002/01/10 00:38:39 fgsch Exp $	*/
+/*	$OpenBSD: uthread_poll.c,v 1.8 2003/12/10 23:10:08 millert Exp $	*/
 /*
  * Copyright (c) 1999 Daniel Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -45,11 +45,11 @@
 
 
 int 
-poll(struct pollfd fds[], int nfds, int timeout)
+poll(struct pollfd fds[], nfds_t nfds, int timeout)
 {
 	struct pthread	*curthread = _get_curthread();
 	struct timespec	ts;
-	int		numfds = nfds;
+	nfds_t		numfds = nfds;
 	int             i, ret = 0;
 	struct pthread_poll_data data;
 
