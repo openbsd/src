@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.5 2001/09/26 10:19:16 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.6 2001/09/26 10:45:02 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -594,7 +594,8 @@ void *
 _dl_bind(elf_object_t *object, Elf_Word reloff)
 {
 	Elf_RelA *rela;
-	Elf_Addr *addr, ooff;
+	Elf_Word *addr;
+	Elf_Addr ooff;
 	const Elf_Sym *sym, *this;
 	const char *symn;
 
@@ -604,16 +605,45 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 	sym += ELF64_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
+	addr = (Elf_Word *)(object->load_offs + rela->r_offset);
 	ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
 	}
-	*addr = ooff + this->st_value + rela->r_addend;
+	
+	_dl_reloc_plt(addr, ooff + this->st_value, rela);
 
-	return (void *)*addr;
+	return (void *)ooff + this->st_value;
 }
+
+/*
+ * Install rtld function call into this PLT slot.
+ */
+#define SAVE		0x9de3bf50
+#define SETHI_l0	0x21000000
+#define SETHI_l1	0x23000000
+#define OR_l0_l0	0xa0142000
+#define SLLX_l0_32_l0	0xa12c3020
+#define OR_l0_l1_l0	0xa0140011
+#define JMPL_l0_o1	0x93c42000
+#define MOV_g1_o0	0x90100001
+
+void
+_dl_install_plt(Elf_Word *pltgot, Elf_Addr proc)
+{
+	pltgot[0] = SAVE;
+	pltgot[1] = SETHI_l0  | HIVAL(proc, 42);
+	pltgot[2] = SETHI_l1  | HIVAL(proc, 10);
+	pltgot[3] = OR_l0_l0  | LOVAL((proc) >> 32);
+	pltgot[4] = SLLX_l0_32_l0;
+	pltgot[5] = OR_l0_l1_l0;
+	pltgot[6] = JMPL_l0_o1 | LOVAL(proc);
+	pltgot[7] = MOV_g1_o0;
+}
+
+void _dl_bind_start_0(long, long);
+void _dl_bind_start_1(long, long);
 
 /*
  *	Relocate the Global Offset Table (GOT).
@@ -621,6 +651,19 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
-	if (object->Dyn.info[DT_PLTREL] == DT_RELA)
+	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
+	Elf_Word *entry = (Elf_Word *)pltgot;
+
+	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
+		return;
+
+	if (!lazy) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+		return;
+	}
+
+	_dl_install_plt(&entry[0], (Elf_Addr)&_dl_bind_start_0);
+	_dl_install_plt(&entry[8], (Elf_Addr)&_dl_bind_start_1);
+
+	pltgot[8] = (Elf_Addr)object;
 }
