@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.14 2003/07/01 17:15:06 krw Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.15 2003/09/06 22:24:14 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.22 2002/10/23 02:32:36 christos Exp $ */
 
 /*
@@ -44,7 +44,12 @@ typedef struct scr_table {
 } scr_table_t __attribute__((__packed__));
 
 /* Number of scatter/gather entries */
+#ifdef __hppa__
+/* XXX Ensure alignment of siop_xfer's. For hppa only at the moment. */
+#define SIOP_NSG	17	/* XXX (MAXPHYS/NBPG + 1) */
+#else
 #define SIOP_NSG	(MAXPHYS/NBPG + 1)	/* XXX NBPG */
+#endif
 
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.6 2002/09/16 00:53:12 krw Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.7 2003/09/06 22:24:14 krw Exp $ */
 /*	$NetBSD: siopvar.h,v 1.18 2002/04/23 20:41:15 bouyer Exp $ */
 
 /*
@@ -43,7 +43,12 @@
 struct siop_xfer {
 	struct siop_common_xfer siop_tables;
 	/* u_int32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
+#ifdef __hppa__
+	/* XXX Add some entries to make size 384 bytes (256+128) */
+	u_int32_t resel[36];
+#else
 	u_int32_t resel[25];
+#endif
 } __attribute__((__packed__));
 
 /*

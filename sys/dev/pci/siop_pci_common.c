@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.9 2002/09/16 00:53:12 krw Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.10 2003/09/06 22:24:14 krw Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.17 2002/05/04 18:11:06 bouyer Exp $ */
 
 /*
@@ -233,6 +233,10 @@ siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
 	}
 	/* copy interesting infos about the chip */
 	siop_sc->features = pci_sc->sc_pp->features;
+#ifdef __hppa__
+	/* XXX On board ram doesn't work (yet?) on hppa. */
+	siop_sc->features &= ~SF_CHIP_RAM;
+#endif
 #ifdef SIOP_SYMLED    /* XXX Should be a devprop! */
 	siop_sc->features |= SF_CHIP_LED0;
 #endif
