@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.2,v 1.12 2000/04/15 11:46:04 aaron Exp $
+.\"	$OpenBSD: stat.2,v 1.13 2000/06/29 00:57:02 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,21 +55,19 @@ The
 .Fn stat
 function obtains information about the file pointed to by
 .Fa path .
-Read, write or execute
+Read, write, or execute
 permission of the named file is not required, but all directories
 listed in the path name leading to the file must be searchable.
 .Pp
+The
 .Fn lstat
-is like
+function is identical to
 .Fn stat
-except in the case where the named file is a symbolic link,
+except when the named file is a symbolic link,
 in which case
 .Fn lstat
-returns information about the link,
-while
-.Fn stat
-returns information about the file the link references.
-Unlike other filesystem objects,
+returns information about the link itself, not the file the link references.
+Unlike other file system objects,
 symbolic links do not have an owner, group, access mode, times, etc.
 Instead, these attributes are taken from the directory that
 contains the link.
@@ -98,8 +96,8 @@ and into which information is placed concerning the file.
 struct stat {
     dev_t      st_dev;    /* device inode resides on */
     ino_t      st_ino;    /* inode's number */
-    mode_t     st_mode;   /* inode protection mode */
-    nlink_t    st_nlink;  /* number or hard links to the file */
+    mode_t     st_mode;   /* inode's mode */
+    nlink_t    st_nlink;  /* number of hard links to the file */
     uid_t      st_uid;    /* user ID of owner */
     gid_t      st_gid;    /* group ID of owner */
     dev_t      st_rdev;   /* device type, for special file inode */
@@ -122,7 +120,7 @@ are as follows:
 Time when file data was last accessed.
 Changed by the
 .Xr mknod 2 ,
-.Xr utimes 2
+.Xr utimes 2 ,
 and
 .Xr read 2
 system calls.
@@ -130,7 +128,7 @@ system calls.
 Time when file data was last modified.
 Changed by the
 .Xr mknod 2 ,
-.Xr utimes 2
+.Xr utimes 2 ,
 and
 .Xr write 2
 system calls.
@@ -143,7 +141,7 @@ Changed by the
 .Xr mknod 2 ,
 .Xr rename 2 ,
 .Xr unlink 2 ,
-.Xr utimes 2
+.Xr utimes 2 ,
 and
 .Xr write 2
 system calls.
@@ -174,8 +172,8 @@ has the following bits:
 #define S_IFLNK  0120000  /* symbolic link */
 #define S_IFSOCK 0140000  /* socket */
 #define S_IFWHT  0160000  /* whiteout */
-#define S_ISUID  0004000  /* set user id on execution */
-#define S_ISGID  0002000  /* set group id on execution */
+#define S_ISUID  0004000  /* set-user-ID on execution */
+#define S_ISGID  0002000  /* set-group-ID on execution */
 #define S_ISVTX  0001000  /* save swapped text even after use */
 #define S_IRUSR  0000400  /* read permission, owner */
 #define S_IWUSR  0000200  /* write permission, owner */
@@ -184,7 +182,7 @@ has the following bits:
 .Pp
 For a list of access modes, see
 .Aq Pa sys/stat.h ,
-.Xr access 2
+.Xr access 2 ,
 and
 .Xr chmod 2 .
 .Sh RETURN VALUES
@@ -199,7 +197,7 @@ Previous versions of the system used different types for the
 .Fa st_gid ,
 .Fa st_rdev ,
 .Fa st_size ,
-.Fa st_blksize
+.Fa st_blksize ,
 and
 .Fa st_blocks
 fields.
@@ -254,8 +252,8 @@ The fields in the stat structure currently marked
 .Fa st_spare2 ,
 and
 .Fa st_spare3
-are present in preparation for inode time stamps expanding
-to 64 bits.  This, however, can break certain programs that
+are present in preparation for inode time stamps expanding to 64 bits.
+This, however, can break certain programs that
 depend on the time stamps being contiguous (in calls to
 .Xr utimes 2 ) .
 .Sh SEE ALSO
