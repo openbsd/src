@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.18 2003/06/02 19:24:22 mickey Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.19 2004/02/28 02:03:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -82,6 +82,7 @@ struct	ami_pci_device {
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4DI,	0 },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4DI_2,	0 },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80960RP_ATU, AMI_CHECK_SIGN },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID,	0 },
 	{ 0 }
 };
 
@@ -99,6 +100,7 @@ struct	ami_pci_subsys {
 	{ 0x10c7103c,	"HP T5/T6" },
 	{ 0x10cc103c,	"HP T7" },
 	{ 0x10cd103c,	"HP 466" },
+	{ 0x45231000,	"LSI 523" },
 	{ 0 }
 };
 
@@ -110,6 +112,7 @@ struct ami_pci_vendor {
 	{ 0x101e, "AMI" },
 	{ 0x1028, "Dell" },
 	{ 0x103c, "HP" },
+	{ 0x1000, "LSI" },
 	{ 0 }
 };
 
@@ -224,7 +227,7 @@ ami_pci_attach(parent, self, aux)
 
 	if (!model) {
 		const struct ami_pci_vendor *vp;
-		static char modelbuf[12];
+		static char modelbuf[32];
 
 		for (vp = ami_pci_vendors;
 		     vp->id && vp->id != (csr & 0xffff); vp++);
