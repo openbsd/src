@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.5 2004/09/26 16:45:40 grange Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.6 2004/10/05 19:03:58 grange Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -106,17 +106,16 @@ struct cfdriver viaenv_cd = {
 
 struct timeout viaenv_timeout;
 
+const struct pci_matchid viaenv_devices[] = {
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231_PWR }
+};
+
 int
 viaenv_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT82C686A_SMB ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT8231_PWR))
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, viaenv_devices,
+	    sizeof(viaenv_devices) / sizeof(viaenv_devices[0])));
 }
 
 /*
@@ -351,9 +350,9 @@ nohwm:
 	viaenv_timecounter.tc_priv = sc;
 	tc_init(&viaenv_timecounter);
 
-	printf(": %s-bit timer at %u Hz",
+	printf(": %s-bit timer at %lluHz",
 	    (viaenv_timecounter.tc_counter_mask == 0xffffffff ? "32" : "24"),
-	    viaenv_timecounter.tc_frequency);
+	    (unsigned long long)viaenv_timecounter.tc_frequency);
 
 nopm:
 #endif	/* __HAVE_TIMECOUNTER */
