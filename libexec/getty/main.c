@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.1.1.1 1995/10/18 08:43:17 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.2 1995/11/13 11:27:23 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,32 +193,32 @@ main(argc, argv)
 	 * J. Gettys - MIT Project Athena.
 	 */
 	if (argc <= 2 || strcmp(argv[2], "-") == 0)
-	    strcpy(ttyn, ttyname(0));
+		strcpy(ttyn, ttyname(0));
 	else {
-	    int i;
+		int i;
 
-	    strcpy(ttyn, dev);
-	    strncat(ttyn, argv[2], sizeof(ttyn)-sizeof(dev));
-	    if (strcmp(argv[0], "+") != 0) {
-		chown(ttyn, 0, 0);
-		chmod(ttyn, 0600);
-		revoke(ttyn);
-		/*
-		 * Delay the open so DTR stays down long enough to be detected.
-		 */
-		sleep(2);
-		while ((i = open(ttyn, O_RDWR)) == -1) {
-			if ((repcnt % 10 == 0) &&
-			    (errno != ENXIO || !failopenlogged)) {
-				syslog(LOG_ERR, "%s: %m", ttyn);
-				closelog();
-				failopenlogged = 1;
+		strcpy(ttyn, dev);
+		strncat(ttyn, argv[2], sizeof(ttyn)-sizeof(dev));
+		if (strcmp(argv[0], "+") != 0) {
+			chown(ttyn, 0, 0);
+			chmod(ttyn, 0600);
+			revoke(ttyn);
+			/*
+			 * Delay the open so DTR stays down long enough to be detected.
+			 */
+			sleep(2);
+			while ((i = open(ttyn, O_RDWR)) == -1) {
+				if ((repcnt % 10 == 0) &&
+				    (errno != ENXIO || !failopenlogged)) {
+					syslog(LOG_ERR, "%s: %m", ttyn);
+					closelog();
+					failopenlogged = 1;
+				}
+				repcnt++;
+				sleep(60);
 			}
-			repcnt++;
-			sleep(60);
+			login_tty(i);
 		}
-		login_tty(i);
-	    }
 	}
 
 	/* Start with default tty settings */
