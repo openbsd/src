@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.3 2003/02/19 19:18:54 jason Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.4 2003/03/02 19:22:00 beck Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -36,39 +36,60 @@
 .Nd parse and load file of spammer addresses
 .Sh SYNOPSIS
 .Nm spamd-setup
+.Op Fl c
+.Op Fl s
 .Op Fl s
 .Op Fl 1
 .Op Fl 2
 .Op Fl f Ar file
 .Op Fl w Ar file
+.Op Ar file ... 
 .Sh DESCRIPTION
 The
 .Nm
-utility adds or deletes address from the
+utility adds blacklists by adding addresses to the 
 .Xr pf 4
 table
-.Aq spamd .
-This table combined with
-.Xr spamd 8 
-and a
-.Xr pf 4
-redirection rule can be used to selectively send spammers
+.Aq spamd ,
+as well as configuring mail rejection messages for
+the added list of addresses in 
 .Xr spamd 8 .
+The
+.Aq spamd
+table is used in conjuction with a
+.Xr pf 4
+redirection rule can be used to selectively redirect mail connections
+to the 
+.Xr spamd 8 .
+daemon . 
 Sources and actions are as follows:
 .Bl -tag -width XXXXXXXXXX
 .It Fl s
 The SPEWS level 1 database is fetched via
 .Xr ftp 1
-and used in the black-list.
+and used in a blacklist named
+.Li spews-1
 .It Fl 1
 Synonym for
 .Fl s .
 .It Fl 2
 The SPEWS level 2 database is fetched via
 .Xr ftp 1
-and used in the black-list.
+and used in a blacklist named 
+.Li spews-2
+.It Fl c
+The chinese netblock datbase is fetched via 
+.Xr ftp 1
+and used in a blacklist named 
+.Li china
+.It Fl k
+The korean netblock database is fetched via 
+.Xr ftp 1
+and used in a blacklist named 
+.Li korea
 .It Fl f Ar file
-The local file specified is added to the black-list.
+The local file specified is used in a black-list named 
+.Li local
 .It Fl w Ar file
 The local file specified is added to the white-list.
 .El
@@ -78,11 +99,64 @@ output is concatenated to build up a table for
 .Xr pf 4 .
 First, all of the addresses from the black-list are added.
 Then, all of the addresses from the white-list are removed.
-The input file is expected to consist of one IP address per line (optionally
-followed by a space and text that is ignored).
+Then, the blacklist address, are sent to a running
+.Xr spamd 8
+along with the message spamd will give on mail rejection when
+a matching client connects. 
+The input file is expected to consist of one network block or address
+ per line (optionally followed by a space and text that is ignored).
 Comment lines beginning with
 .Li #
 are ignored.
+Network blocks may be specified in any of the formats as in
+the following example:
+.Bd -literal -offset indent
+.Ic # CIDR format
+.Ic 192.168.20.0/24
+.Ic # A start - end range
+.Ic 192.168.21.0 - 192.168.21.255
+.Ic # A masked address
+.Ic 192.168.22.0:255.255.255.0
+.Ic # As a single IP address
+.Ic 192.168.23.1
+.Ed
+.Sh BLACKLIST FILES
+additional files given as parameters to
+.Nm
+will be read to configure blacklists. The blacklist file format is
+as follows.  
+.Bd -literal -offset indent
+.Ic SPAMD_SOURCE;mylist;"Sorry %A, You are a probably spammer\enBye\en"
+.Ic file:/usr/local/share/spammers.txt
+.Ic http://www.somewhere.org/bigspamblocks.txt
+.Ic SPAMD_SOURCE_REMOVE
+.Ic file:/usr/local/share/notspammers.txt
+.Ic file://www.somewhereelse.org/notspamblocks.txt
+.Ic SPAMD_SOURCE;mykorealist;"Your address %A, appears to be from korea"
+.Ic http://www.okean.com/koreacidr.txt
+.Ic SPAMD_SOURCE_REMOVE
+.Ic file:/usr/local/share/taekwondopals
+.Ed
+.Pp
+The
+.Li SPAMD_SOURCE
+line includes a tag to name the blacklist, and the message to be
+given to any connections that match this list. the message must
+be enclosed in double quotes
+and may include \en to produce a newline in the output. \e\" will produce
+a double quote in the output, and %% will produce a single % in the output.
+%A will be expanded by  
+.Xr spamd 8
+to display the connecting IP address in the output.
+.Pp
+Following the 
+.Li SPAMD_SOURCE
+should be URL's, one per line, from which to fetch the 
+network blocks to blacklist. 
+Following the 
+.Li SPAMD_SOURCE_REMOVE
+line may be further URL's, one per line, from which to
+fetch network blocks that will be removed from this blacklist.
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr pf 4 ,

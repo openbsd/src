@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.11 2003/02/26 15:05:07 david Exp $
+.\"	$OpenBSD: spamd.8,v 1.12 2003/03/02 19:22:00 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -103,30 +103,64 @@ The
 rules used for this purpose are described in
 .Xr pf.conf 5 .
 The rules can be loaded into an
-.Em anchor
+.Em table
 to simplify handling.
-If the main ruleset contains the following
-.Em rdr-anchor rule ,
-all
-.Em rdr
-rules inside the specified
-.Em anchor
-are evaluated for SMTP connections:
 .Bd -literal
-    rdr-anchor spews proto tcp from any to any port smtp
+    table <spamd>	
+    rdr proto tcp from { <spamd> } to any port smtp -> 127.0.0.1 port 8025
 .Ed
 .Pp
-And all
-.Em rdr
-rules related to
+Any addresses in table
+.Aq spamd
+are then redirected to 
 .Nm
-can be loaded into one or more rulesets inside that
-.Em anchor ,
+running on port 25.
+Addresses can then be can be loaded into the
+.Em table ,
 like:
 .Bd -literal
-    echo "rdr inet proto tcp from { 10.1.2.3, 10.2.3.4/30, 10.3.4.5/24 }
-      to any port smtp -> 127.0.0.1 port 8025" | pfctl -a spews:first -f -
+      pfctl -q -t spamd -T replace -f /usr/local/share/spammers
 .Ed
+.Pp
+.Xr spamd-setup 8
+can also be used to load addresses into the
+.Aq spamd
+table. 
+.Xr spamd-setup 8
+also has the added benefit of being able to remove addresses from
+blacklists, and will connect to
+.Nm
+over a localhost socket, giving
+.Nm
+information about each source of blacklist addresses, as well as custom
+rejection messages for each blacklist source 
+that can be used to let any real person whose mail
+is deferred by spamd know why their address has been listed
+from sending mail. This is important as it allows legitimate mail
+senders to pressure spam sources into behaving properly so that they
+may be removed from the relevant blacklists. 
+.Pp
+.Sh CONFIGURATION CONNECTIONS
+.Nm
+receives configuration information through a localhost connection
+Configuration information consists of blacklists, each with a name,
+a message to reject mail with, and addresses in CIDR format. When
+multiple lists are configured, Each configuration line specifies
+a blacklist, and  must have the format:
+.Bd -literal
+      tag;"rejection message";aaa.bbb.ccc.ddd/mm;aaa.bbb.ccc.ddd/mm
+.Ed
+
+The rejection message must be inside double quotes.  a \e" will
+produce a double quote in the output. \en will produce a newline. %A
+will expand to the connecting ip address in dotted quad format, %% may
+be used to produce a single % in the output, \e\e will produce a
+single \e.
+.Nm
+will reject mail by displaying all the messages from all blacklists in which
+a connecting address is matched. 
+.Xr spamd-setup 8
+is normally used to configure this informaiton. 
 .Pp
 .Sh SEE ALSO
 .Xr pf.conf 5 ,

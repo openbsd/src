@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.10 2003/02/11 01:41:10 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.11 2003/03/02 19:22:00 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -41,12 +41,19 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <err.h>
+#include "sdl.h"
 
 char hostname[MAXHOSTNAMELEN];
 struct syslog_data sdata = SYSLOG_DATA_INIT;
 char *reply = NULL;
 char *nreply = "450";
 char *spamd = "spamd IP-based SPAM blocker";
+
+extern struct sdlist *blacklists;
+
+int conffd = -1;
+char *cb;
+size_t cbs, cbu; 
 
 time_t t;
 
@@ -59,6 +66,9 @@ int debug;
 struct con {
 	int fd;
 	int state;
+	int af;
+	struct sockaddr_in sin;
+	void *ia;
 	char addr[32];
 	char mail[64], rcpt[64];
 
@@ -75,7 +85,9 @@ struct con {
 	int il;
 	char rend[5];	/* any chars in here causes input termination */
 
-	char obuf[8192];
+	int obufalloc;
+	char *obuf;
+	size_t osize;
 	char *op;
 	int ol;
 } *con;
@@ -88,21 +100,334 @@ usage(void)
 	exit(1);
 }
 
+char *
+grow_obuf(struct con *cp, int off)
+{
+	char * tmp;
+	if (!cp->obufalloc)
+		cp->obuf = NULL;
+	tmp = realloc(cp->obuf, cp->osize + 8192);
+	if (tmp != NULL) {
+		cp->osize += 8192;
+		cp->obuf = tmp;
+		cp->obufalloc = 1;
+		return(cp->obuf + off);
+	}
+	return(NULL);
+}
+
+
+int
+parse_configline(char *line)
+{
+	  char *cp, prev, *name, *msg;
+	  static char **av = NULL;
+	  static size_t ac = 0;
+	  size_t au = 0;
+	  int mdone = 0;
+
+	  if (debug)
+		  printf("read config line %40s ...\n", line);
+
+	  name = line;
+
+	  for (cp = name; *cp != ';'; cp++);
+	  *cp++ = '\0';
+	  msg = cp;
+	  if (*cp++ != '"')
+		  goto parse_error;
+	  prev = '\0';
+	  for (;!mdone;cp++) {
+		  switch (*cp) {
+		  case '\\':
+			if (!prev)
+				prev = *cp;
+			else 
+				prev = '\0';
+			break;
+		  case '"':
+			  if (prev != '\\') {
+				  cp++;
+				  if (*cp == ';') {
+					  mdone = 1;
+					  *cp = '\0';
+				  } else 
+					  goto parse_error;
+			  }
+			break;
+		  case '\0':
+			  goto parse_error;
+		  default:
+			  prev = '\0';
+		  }
+				
+	  }
+
+	  do {
+		  if (ac == au) {
+			  char **tmp;
+			  tmp = realloc(av, (ac + 2048) * sizeof(char *));
+			  if (tmp == NULL) {
+				  return (-1);
+			  }
+			  av = tmp;
+			  ac += 2048;
+		  }
+	  } while ((av[au++] = strsep(&cp, ";")) != NULL);
+	  if (au < 2)
+		  goto parse_error;
+	  else 
+		  sdl_add(name, msg, av, au - 1);
+	  return(0);
+
+ parse_error:
+	  if (debug > 0)
+		  printf("bogus config line - need 'tag;message;a/m;a/m;a/m...'\n");
+	  return (-1);
+
+}
+
+
+void
+parse_configs(void) {
+	int i;
+	char *start, *end;
+
+	if (cbu == cbs) { 
+		char * tmp;
+		tmp = realloc(cb, cbs + 8192);
+		if (tmp == NULL) {
+			if (debug > 0)
+				perror("malloc()");
+			free(cb);
+			cbs = cbu = 0;
+			return;
+		}
+		cbs += 8192;
+		cb = tmp;
+	}
+	cb[cbu++]='\0';
+	
+	start = cb;
+	end = start;
+	for (i = 0; i < cbu; i++) {
+		if (*end == '\n') {
+			*end = '\0';
+			if (end > start + 1)
+				parse_configline(start);
+			start = ++end;
+		}
+		else 
+			++end;
+	}
+	if (end > start + 1)
+		parse_configline(start);
+}
+
+
+void
+do_config(void)
+{
+	int n;
+
+	if (debug > 0)
+		printf("got configuration connection\n");
+
+	if (cbu == cbs) { 
+		char * tmp;
+		tmp = realloc(cb, cbs + 8192);
+		if (tmp == NULL) {
+			if (debug > 0)
+				perror("malloc()");
+			free(cb);
+			cbs = 0;
+			goto configdone;
+		}
+		cbs += 8192;
+		cb = tmp;
+	}
+
+	n = read(conffd, cb+cbu, cbs-cbu);
+	if (debug > 0)
+		printf("read %d config bytes\n", n); 
+	if (n == 0) {
+		parse_configs();
+		goto configdone;
+	} else if (n == -1) {
+		if (debug > 0)
+			perror("read()");
+		goto configdone;
+	} else {
+		cbu += n;  
+	}
+	return;
+ configdone:
+	cbu = 0;
+	close(conffd);
+	conffd = -1;
+}
+
+
+int
+append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
+{
+	char sav = '\0';
+	static int lastcont = 0;
+	char *c = cp->obuf + off;
+	char *s = fmt;
+	size_t len = cp->osize - off;
+	int i = 0;
+
+	if (off == 0) {
+		lastcont = 0;
+	}
+	if (lastcont != 0)
+		cp->obuf[lastcont] = '-';
+	i += snprintf(c, len, "%s ", nreply);
+	lastcont = off + i - 1;
+	if (*s == '"')
+		s++;
+	while (*s) {
+		/* make sure we at minimum, have room to add a 
+		 * format code (4 bytes), and a v6 address(39 bytes) 
+		 * and a byte saved in sav.
+		 */
+		if (i >= len - 46) {
+			c = grow_obuf(cp, off);
+			if (c == NULL)
+				goto no_mem;
+			len = cp->osize - (off + i);
+		}
+
+		if (c[i-1] == '\n') {
+			if (lastcont != 0)
+				cp->obuf[lastcont] = '-';
+			i += snprintf(c + i, len, "%s ", nreply);
+			lastcont = off + i - 1;
+		}
+
+		switch (*s) {
+		case '\\':
+		case '%':
+			if (!sav)
+				sav = *s;
+			else {
+				c[i++] = sav;
+				sav = '\0';
+				c[i] = '\0';
+			}
+			break;
+		case '"':
+		case 'A':
+		case 'n':
+			if (*(s+1) == '\0') {
+				break;
+			}
+			if (sav == '\\' && *s == 'n') {
+				c[i++] = '\n';
+				sav = '\0';
+				c[i] = '\0';
+				break;
+			} else if (sav == '\\' && *s == '"') {
+				c[i++] = '"';
+				sav = '\0';
+				c[i] = '\0';
+				break;
+			} else if (sav == '%' && *s == 'A') {
+				inet_ntop(af, ia, c + i, (len - i));
+				i += strlen(c + i);
+				sav = '\0';
+				break;
+			}
+			/* fallthrough */
+		default:
+			if (sav)
+			c[i++] = sav;
+			c[i++] = *s;
+			sav='\0'; 
+			c[i] = '\0';
+			break;
+		}
+		s++;
+	}
+	return(i);
+ no_mem:
+	/* Out of memory, free obuf and bail, caller must deal */
+	if (cp->osize)
+		free(cp->obuf);
+	cp->osize = 0;
+	cp->obuf = NULL;
+	return(-1);
+}
+
+
+void
+build_reply(struct  con * cp)
+{
+	struct sdlist **matches;
+	int off = 0;
+
+	matches = sdl_lookup(blacklists, cp->af, cp->ia);
+	if (matches == NULL) {
+		if (cp->osize)
+			free(cp->obuf);
+		cp->osize = 0;
+		cp->obuf = NULL;
+		goto bad;
+	}
+	for (; *matches; matches++) {
+		int used = 0;
+		char *c = cp->obuf + off;
+		int left = cp->osize - off;
+		used = append_error_string(cp, off, matches[0]->string,
+		    cp->af, cp->ia);
+		if (used == -1)
+			goto bad;
+		off += used;
+		left -= used;
+		if (cp->obuf[off - 1] != '\n') {
+			if ( left < 1) {
+				c = grow_obuf(cp, off);
+				if (c == NULL) {
+					if (cp->osize)
+						free(cp->obuf);
+					cp->osize = 0;
+					cp->obuf = NULL;
+					goto bad;
+				}
+			}
+			cp->obuf[off++]='\n';
+			cp->obuf[off]='\0';
+		}
+	}
+	return;
+bad:
+	/* Out of memory, or no match. give generic reply */
+	asprintf(&cp->obuf,
+	    "%s-Sorry %s\n"
+	    "%s-You are trying to send mail from an address listed by one\n"
+	    "%s or more IP-based registries as being a SPAM source.\n",
+	    nreply, cp->addr, nreply, nreply);
+	if (cp->obuf == NULL) {
+		/* we're having a really bad day.. */
+		cp->obufalloc = 0; /* know not to free or mangle */
+		cp->obuf="450 Try again\r\n";
+	} else {
+		cp->osize = strlen(cp->obuf) + 1;
+	}
+}
+
 void
 doreply(struct con *cp)
 {
 	if (reply) {
-		snprintf(cp->obuf, sizeof cp->obuf,
+		if (!cp->obufalloc)
+			err(1, "shouldn't happen");
+		snprintf(cp->obuf, cp->osize,
 		    "%s %s\n", nreply, reply);
 		return;
 	}
-
-	snprintf(cp->obuf, sizeof cp->obuf,
-	    "%s-SPAM. www.spews.org/ask.cgi?x=%s\n"
-	    "%s-You are trying to send mail from an address listed by one or\n"
-	    "%s-more IP-based registries as being in a SPAM-generating netblock.\n"
-	    "%s SPAM. www.spews.org/ask.cgi?x=%s\n",
-	    nreply, cp->addr, nreply, nreply, nreply, cp->addr);
+	build_reply(cp);
 }
 
 void
@@ -131,10 +456,18 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	time_t t;
 
 	time(&t);
+	if (cp->obufalloc) {
+		free(cp->obuf);
+	}
 	bzero(cp, sizeof(struct con));
+	if (grow_obuf(cp, 0) == NULL)
+		err(1, "malloc");
 	cp->fd = fd;
+	memcpy(&cp->sin, sin, sizeof(struct sockaddr_in));
+	cp->af = sin->sin_family;
+	cp->ia = (void *) &cp->sin.sin_addr;
 	strlcpy(cp->addr, inet_ntoa(sin->sin_addr), sizeof(cp->addr));
-	snprintf(cp->obuf, sizeof(cp->obuf),
+	snprintf(cp->obuf, cp->osize,
 	    "220 %s ESMTP %s; %s",
 	    hostname, spamd, ctime(&t));
 	cp->op = cp->obuf;
@@ -153,6 +486,11 @@ closecon(struct con *cp)
 
 		time(&t);
 		printf("%s connected for %d seconds.\n", cp->addr, t - cp->s);
+	}
+	if (cp->osize > 0 && cp->obufalloc) {
+		free(cp->obuf);
+		cp->obuf = NULL;
+		cp->osize = 0;	
 	}
 	close(cp->fd);
 	clients--;
@@ -180,7 +518,7 @@ nextstate(struct con *cp)
 		/* received input: parse, and select next state */
 		if (match(cp->ibuf, "HELO") ||
 		    match(cp->ibuf, "EHLO")) {
-			snprintf(cp->obuf, sizeof cp->obuf,
+			snprintf(cp->obuf, cp->osize,
 			    "250 Hello, spam sender. "
 			    "Pleased to be wasting your time.\n");
 			cp->op = cp->obuf;
@@ -201,9 +539,9 @@ nextstate(struct con *cp)
 	case 3:
 		if (match(cp->ibuf, "MAIL")) {
 			setlog(cp->mail, sizeof cp->mail, cp->ibuf);
-			snprintf(cp->obuf, sizeof cp->obuf,
+			snprintf(cp->obuf, cp->osize,
 			    "250 You are about to try to deliver spam. "
-			    "Your time will be spent, amounting to nothing.\n");
+			    "Your time will be spent, for nothing.\n");
 			cp->op = cp->obuf;
 			cp->ol = strlen(cp->op);
 			cp->state = 4;
@@ -222,7 +560,7 @@ nextstate(struct con *cp)
 	case 5:
 		if (match(cp->ibuf, "RCPT")) {
 			setlog(cp->rcpt, sizeof(cp->rcpt), cp->ibuf);
-			snprintf(cp->obuf, sizeof cp->obuf,
+			snprintf(cp->obuf, cp->osize,
 			    "250 This is hurting you more than it is "
 			    "hurting me.\n");
 			cp->op = cp->obuf;
@@ -295,6 +633,19 @@ handlew(struct con *cp, int one)
 	int n;
 
 	if (cp->w) {
+		if (*cp->op == '\n') {
+			/* insert \r before \n */
+			n = write(cp->fd, "\r", 1);
+			if (n == 0) {
+				closecon(cp);
+				goto handled;
+			} else if (n == -1) {
+				if (debug > 0 && errno != EPIPE)
+					perror("write()");
+				closecon(cp);
+				goto handled;
+			}
+		}
 		n = write(cp->fd, cp->op, one ? 1 : cp->ol);
 		if (n == 0) {
 			closecon(cp);
@@ -307,6 +658,7 @@ handlew(struct con *cp, int one)
 			cp->ol -= n;
 		}
 	}
+ handled:
 	cp->w = t + 1;
 	if (cp->ol == 0) {
 		cp->w = 0;
@@ -319,8 +671,9 @@ main(int argc, char *argv[])
 {
 	fd_set *fdsr = NULL, *fdsw = NULL;
 	struct sockaddr_in sin;
+	struct sockaddr_in lin;
 	struct passwd *pw;
-	int ch, s, s2, i, omax = 0;
+	int ch, s, s2, conflisten = 0, i, omax = 0;
 	int sinlen, one = 1;
 	u_short port = 8025;
 
@@ -367,6 +720,12 @@ main(int argc, char *argv[])
 	if (con == NULL)
 		err(1, "calloc");
 
+	con->obuf = malloc(8192);
+
+	if (con->obuf == NULL)
+		err(1, "malloc");
+	con->osize = 8192;
+
 	for (i = 0; i < maxcon; i++)
 		con[i].fd = -1;
 
@@ -380,13 +739,31 @@ main(int argc, char *argv[])
 	    sizeof(one)) == -1)
 		return(-1);
 
+	conflisten = socket(AF_INET, SOCK_STREAM, 0);
+	if (conflisten == -1)
+		err(1, "socket");
+
+	if (setsockopt(conflisten, SOL_SOCKET, SO_REUSEADDR, &one,
+	    sizeof(one)) == -1)
+		return(-1);
+
 	memset(&sin, 0, sizeof sin);
 	sin.sin_len = sizeof(sin);
+	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 
 	if (bind(s, (struct sockaddr *)&sin, sizeof sin) == -1)
 		err(1, "bind");
+
+	memset(&lin, 0, sizeof sin);
+	lin.sin_len = sizeof(sin);
+	lin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	lin.sin_family = AF_INET;
+	lin.sin_port = htons(port);
+
+	if (bind(conflisten, (struct sockaddr *)&lin, sizeof lin) == -1)
+		err(1, "bind local");
 
 	pw = getpwnam("_spamd");
 	if (!pw)
@@ -408,6 +785,9 @@ main(int argc, char *argv[])
 	if (listen(s, 10) == -1)
 		err(1, "listen");
 
+	if (listen(conflisten, 10) == -1)
+		err(1, "listen");
+
 	if (debug == 0) {
 		if (daemon(1, 1) == -1)
 			err(1, "fork");
@@ -416,8 +796,10 @@ main(int argc, char *argv[])
 
 	while (1) {
 		struct timeval tv, *tvp;
-		int max = s, i, n;
+		int max, i, n;
 		int writers;
+		max = MAX(s, conflisten);
+		max = MAX(max, conffd);
 
 		time(&t);
 		for (i = 0; i < maxcon; i++)
@@ -466,6 +848,13 @@ main(int argc, char *argv[])
 		}
 		FD_SET(s, fdsr);
 
+		/* only one active config conn at a time */
+		if (conffd == -1) 
+			FD_SET(conflisten, fdsr);
+		else
+			FD_SET(conffd, fdsr);
+			
+
 		if (writers == 0) {
 			tvp = NULL;
 		} else {
@@ -502,6 +891,20 @@ main(int argc, char *argv[])
 			else
 				initcon(&con[i], s2, &sin);
 		}
+		if (FD_ISSET(conflisten, fdsr)) {
+			sinlen = sizeof(lin);
+			conffd = accept(conflisten, (struct sockaddr *)&lin,
+			    &sinlen);
+			if (conffd == -1) {
+				if (errno == EINTR)
+					continue;
+				err(1, "accept");
+			}
+		}
+		if (conffd != -1  && FD_ISSET(conffd, fdsr)) {
+			do_config();
+		}
+
 	}
 	exit(1);
 }
