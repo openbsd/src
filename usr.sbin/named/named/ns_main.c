@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.22 2002/08/03 08:55:35 pvalchev Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.23 2002/09/06 22:33:47 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.22 2002/08/03 08:55:35 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.23 2002/09/06 22:33:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,6 +187,7 @@ main(argc, argv, envp)
 	int nfds;
 	const int on = 1;
 	int rfd, size, len;
+	socklen_t getsockoptlen;
 	time_t lasttime, maxctime;
 	u_char buf[PACKETSZ];
 #ifdef NeXT
@@ -825,7 +826,7 @@ main(argc, argv, envp)
 		     dqp = dqp->dq_next) {
 		    if (FD_ISSET(dqp->dq_dfd, tmpmask))
 		        for (udpcnt = 0; udpcnt < 42; udpcnt++) {  /*XXX*/
-			    int from_len = sizeof(from_addr);
+			    socklen_t from_len = sizeof(from_addr);
 
 			    if ((n = recvfrom(dqp->dq_dfd, (char *)buf,
 					      MIN(PACKETSZ, sizeof buf), 0,
@@ -870,7 +871,7 @@ main(argc, argv, envp)
 		** which, if our accept() failed, will bring us back here.
 		*/
 		if (FD_ISSET(vs, tmpmask)) {
-			int from_len = sizeof(from_addr);
+			socklen_t from_len = sizeof(from_addr);
 
 			rfd = accept(vs,
 				     (struct sockaddr *)&from_addr,
@@ -912,23 +913,23 @@ main(argc, argv, envp)
 				continue;
 			}
 #if defined(IP_OPTIONS)
-			len = sizeof ip_opts;
+			getsockoptlen = sizeof ip_opts;
 			if (getsockopt(rfd, IPPROTO_IP, IP_OPTIONS,
-				       (char *)&ip_opts, &len) < 0) {
+				       (char *)&ip_opts, &getsockoptlen) < 0) {
 				syslog(LOG_INFO,
 				       "getsockopt(rfd, IP_OPTIONS): %m");
 				(void) my_close(rfd);
 				continue;
 			}
-			if (len != 0) {
+			if (getsockoptlen != 0) {
 				int i;
 
 				nameserIncr(from_addr.sin_addr, nssRcvdOpts);
 				/* any socket with an LSRR or SSRR option
 				 * must be killed immediately or it can be
 				 * tcp sequenced */
-				for (i = 0; (void *)&ip_opts.ipopt_list[i] -
-				    (void *)&ip_opts < len && rfd != -1; ) {	
+				for (i = 0; (char *)&ip_opts.ipopt_list[i] -
+				    (char *)&ip_opts < getsockoptlen && rfd != -1; ) {	
 					u_char c = (u_char)ip_opts.ipopt_list[i];
 					if (c == IPOPT_LSRR || c == IPOPT_SSRR) {
 						my_close(rfd);
@@ -1348,6 +1349,7 @@ opensocket(dqp)
 	register struct qdatagram *dqp;
 {
 	int m, n;
+	socklen_t getsockoptlen;
 	int on = 1;
 	int fd;
 
@@ -1377,9 +1379,10 @@ opensocket(dqp)
 		/* XXX press on regardless, this is not too serious. */
 	}
 #ifdef SO_RCVBUF
-	m = sizeof(n);
-	if ((getsockopt(dqp->dq_dfd, SOL_SOCKET, SO_RCVBUF, (char*)&n, &m) >= 0)
-	    && (m == sizeof(n))
+	getsockoptlen = sizeof(n);
+	if ((getsockopt(dqp->dq_dfd, SOL_SOCKET, SO_RCVBUF, (char*)&n,
+	    &getsockoptlen) >= 0)
+	    && (getsockoptlen == sizeof(n))
 	    && (n < rbufsize)) {
 		(void) setsockopt(dqp->dq_dfd, SOL_SOCKET, SO_RCVBUF,
 				  (char *)&rbufsize, sizeof(rbufsize));
@@ -1779,7 +1782,7 @@ ns_setproctitle(a, s)
 	char *a;
 	int s;
 {
-	int size;
+	socklen_t size;
 	register char *cp;
 	struct sockaddr_in sin;
 	char buf[80];
