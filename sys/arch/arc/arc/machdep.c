@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 1997/03/17 08:11:12 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 1997/03/23 11:34:30 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.22 1997/03/17 08:11:12 pefo Exp $
+ *      $Id: machdep.c,v 1.23 1997/03/23 11:34:30 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -96,14 +96,6 @@
 #include <arc/dti/desktech.h>
 #include <arc/algor/algor.h>
 
-#if 0
-#include <asc.h>
-
-#if NASC > 0
-#include <arc/dev/ascreg.h>
-#endif
-#endif
-
 extern struct consdev *cn_tab;
 extern char kernel_start[];
 
@@ -134,7 +126,9 @@ int	cputype;		/* Mother board type */
 int	num_tlbentries = 48;	/* Size of the CPU tlb */
 int	ncpu = 1;		/* At least one cpu in the system */
 int	CONADDR;		/* Well, ain't it just plain stupid... */
-struct arc_bus_space arc_bus;
+struct arc_bus_space arc_bus;	/* Bus tag for bus.h macros */
+char   **environment;		/* On some arches, pointer to environment */
+char	eth_hw_addr[6];		/* HW ether addr not stored elsewhere */
 
 struct mem_descriptor mem_layout[MAXMEMSEGS];
 
@@ -150,6 +144,9 @@ int	(*Mach_splstatclock)() = splhigh;
 static void tlb_init_pica();
 static void tlb_init_tyne();
 static int get_simm_size(int *fadr, int max);
+static char *getenv(char *env);
+static void get_eth_hw_addr(char *);
+static int atoi(char *s, int b);
 
 
 /*
@@ -167,15 +164,15 @@ struct	proc nullproc;		/* for use by swtch_exit() */
  * Reset mapping and set up mapping to hardware and init "wired" reg.
  * Return the first page address following the system.
  */
-mips_init(argc, argv, code)
+mips_init(argc, argv, envv)
 	int argc;
 	char *argv[];
-	u_int code;
+	char *envv[];	/* Not on all arches... */
 {
-	register char *cp;
-	register int i;
-	register unsigned firstaddr;
-	register caddr_t sysend;
+	char *cp;
+	int i;
+	unsigned firstaddr;
+	caddr_t sysend;
 	caddr_t start;
 	struct tlb tlb;
 	extern char edata[], end[];
@@ -185,6 +182,8 @@ mips_init(argc, argv, code)
 	/* clear the BSS segment in OpenBSD code */
 	sysend = (caddr_t)mips_round_page(end);
 	bzero(edata, sysend - edata);
+
+	environment = &argv[1];
 
 	/* Initialize the CPU type */
 	bios_ident();
@@ -199,6 +198,7 @@ mips_init(argc, argv, code)
 	arc_bus.isa_io_sparse2 = 0;
 	arc_bus.isa_io_sparse4 = 0;
 	arc_bus.isa_io_sparse8 = 0;
+
 	switch (cputype) {
 	case ACER_PICA_61:	/* ALI PICA 61 and MAGNUM is almost the */
 	case MAGNUM:		/* Same kind of hardware. NEC goes here too */
@@ -259,15 +259,21 @@ mips_init(argc, argv, code)
 		i = get_simm_size((int *)0, 128*1024*1024);
 		mem_layout[1].mem_size = i - (int)(CACHED_TO_PHYS(sysend));
 		physmem = i;
-#if 0
-		mem_layout[2].mem_start = 0x800000;
-		mem_layout[2].mem_size = 0x1000000;
-		physmem += 8192 * 1024;
-#endif
+/*XXX Ouch!!! */
+		mem_layout[2].mem_start = i;
+		mem_layout[2].mem_size = get_simm_size((int *)(i), 0);
+		physmem += mem_layout[2].mem_size;
+		mem_layout[3].mem_start = i+i/2;
+		mem_layout[3].mem_size = get_simm_size((int *)(i+i/2), 0);
+		physmem += mem_layout[3].mem_size;
+/*XXX*/
+		environment = envv;
+		argv[0] = getenv("bootdev");
+
 
 		break;
 
-	default:
+	default:	/* This is probably the best we can do... */
 		bios_putstring("kernel not configured for this system\n");
 		boot(RB_HALT | RB_NOSYNC);
 	}
@@ -284,34 +290,32 @@ mips_init(argc, argv, code)
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
-	if (argc > 1) {
-		for (i = 1; i < argc; i++) {
-			if(strncasecmp("osloadoptions=",argv[i],14) == 0) {
-				for (cp = argv[i]+14; *cp; cp++) {
-					switch (*cp) {
-					case 'a': /* autoboot */
-						boothowto &= ~RB_SINGLE;
-						break;
+	get_eth_hw_addr(getenv("ethaddr"));
+	cp = getenv("osloadoptions");
+	if(cp) {
+		while(*cp) {
+			switch (*cp++) {
+			case 'a': /* autoboot */
+				boothowto &= ~RB_SINGLE;
+				break;
 
-					case 'd': /* use compiled in default root */
-						boothowto |= RB_DFLTROOT;
-						break;
+			case 'd': /* use compiled in default root */
+				boothowto |= RB_DFLTROOT;
+				break;
 
-					case 'm': /* mini root present in memory */
-						boothowto |= RB_MINIROOT;
-						break;
+			case 'm': /* mini root present in memory */
+				boothowto |= RB_MINIROOT;
+				break;
 
-					case 'n': /* ask for names */
-						boothowto |= RB_ASKNAME;
-						break;
+			case 'n': /* ask for names */
+				boothowto |= RB_ASKNAME;
+				break;
 
-					case 'N': /* don't ask for names */
-						boothowto &= ~RB_ASKNAME;
-						break;
-					}
-
-				}
+			case 'N': /* don't ask for names */
+				boothowto &= ~RB_ASKNAME;
+				break;
 			}
+
 		}
 	}
 
@@ -574,6 +578,7 @@ tlb_init_tyne()
 
 /*
  * Simple routine to figure out SIMM module size.
+ * This code is a real hack and can surely be improved on... :-)
  */
 static int
 get_simm_size(fadr, max)
@@ -582,29 +587,94 @@ get_simm_size(fadr, max)
 {
 	int msave;
 	int msize;
+	int ssize;
+	static int a1 = 0, a2 = 0;
+	static int s1 = 0, s2 = 0;
 
+	if(!max) {
+		if(a1 == (int)fadr)
+			return(s1);
+		else if(a2 == (int)fadr)
+			return(s2);
+		else
+			return(0);
+	}
 	fadr = (int *)PHYS_TO_UNCACHED(CACHED_TO_PHYS((int)fadr));
 
-	msize = 1024*1024;
+	msize = max - 0x400000;
+	ssize = msize - 0x400000;
 
-	while(max >= msize) {
-		msave = fadr[0];
-		fadr[0] = 0xC0DEB00F;
-		if(fadr[msize/4] == 0xC0DEB00F) {
-			fadr[0] = msave;
+	/* Find bank size of last module */
+	while(ssize >= 0) {
+		msave = fadr[ssize / 4];
+		fadr[ssize / 4] = 0xC0DEB00F;
+		if(fadr[msize /4 ] == 0xC0DEB00F) {
+			fadr[ssize / 4] = msave;
 			if(fadr[msize/4] == msave) {
 				break;	/* Wrap around */
 			}
 		}
+		fadr[ssize / 4] = msave;
+		ssize -= 0x400000;
+	}
+	msize = msize - ssize;
+	if(msize == max)
+		return(msize);	/* well it never wrapped... */
+
+	msave = fadr[0];
+	fadr[0] = 0xC0DEB00F;
+	if(fadr[msize / 4] == 0xC0DEB00F) {
 		fadr[0] = msave;
-		msize += msize;
+		if(fadr[msize / 4] == msave)
+			return(msize);	/* First module wrap = size */
 	}
-	if(msize <= max) {
-		return(msize);
+
+	/* Ooops! Two not equal modules. Find size of first + second */
+	s1 = s2 = msize;
+	ssize = 0;
+	while(ssize < max) {
+		msave = fadr[ssize / 4];
+		fadr[ssize / 4] = 0xC0DEB00F;
+		if(fadr[msize /4 ] == 0xC0DEB00F) {
+			fadr[ssize / 4] = msave;
+			if(fadr[msize/4] == msave) {
+				break;	/* Found end of module 1 */
+			}
+		}
+		fadr[ssize / 4] = msave;
+		ssize += s2;
+		msize += s2;
 	}
-	else {
-		return(-1);
+
+	/* Is second bank dual sided? */
+	fadr[(ssize+ssize/2)/4] = ~fadr[ssize];
+	if(fadr[(ssize+ssize/2)/4] != fadr[ssize]) {
+		a2 = ssize+ssize/2;
 	}
+	a1 = ssize;
+
+	return(ssize);
+}
+
+/*
+ * Return a pointer to the given environment variable.
+ */
+static char *
+getenv(envname)
+	char *envname;
+{
+	char **env = environment;
+	int i;
+
+	i = strlen(envname);
+
+	while(*env) {
+		if(strncasecmp(envname, *env, i) == 0 && (*env)[i] == '=') {
+			return(&(*env)[i+1]);
+		}
+		env++;
+	}
+	return(NULL);
 }
 
 /*
@@ -1170,16 +1240,32 @@ initcpu()
 		break;
 	}
 }
+/*
+ * Convert "xx:xx:xx:xx:xx:xx" string to ethernet hardware address.
+ */
+static void
+get_eth_hw_addr(s)
+	char *s;
+{
+	int i;
+	if(s != NULL) {
+		for(i = 0; i < 6; i++) {
+			eth_hw_addr[i] = atoi(s, 16);
+			s += 3;		/* Don't get to fancy here :-) */
+		}
+	}
+}
 
 /*
  * Convert an ASCII string into an integer.
  */
-int
-atoi(s)
+static int
+atoi(s, b)
 	char *s;
+	int   b;
 {
 	int c;
-	unsigned base = 10, d;
+	unsigned base = b, d;
 	int neg = 0, val = 0;
 
 	if (s == 0 || (c = *s++) == 0)

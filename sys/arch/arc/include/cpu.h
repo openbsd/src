@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 1997/03/12 19:16:56 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 1997/03/23 11:34:34 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -61,10 +61,6 @@
 #define	UNCACHED_TO_PHYS(x) 	((unsigned)(x) & 0x1fffffff)
 #define	PHYS_TO_UNCACHED(x) 	((unsigned)(x) | UNCACHED_MEMORY_ADDR)
 #define VA_TO_CINDEX(x) 	((unsigned)(x) & 0xffffff | CACHED_MEMORY_ADDR)
-
-#if 0
-#define CODE_START		0x80080000
-#endif
 
 #ifdef _KERNEL
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.12 1997/03/12 19:16:49 pefo Exp $
+#	$OpenBSD: files.arc,v 1.13 1997/03/23 11:34:32 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -109,7 +109,7 @@ attach	clock at pica with clock_pica
 attach	clock at isa with clock_isa
 attach	clock at algor with clock_algor
 file	arch/arc/arc/clock.c	clock & (clock_isa | clock_pica | clock_algor) needs-flag
-file	arch/arc/arc/clock_mc.c	clock & (clock_isa | clock_pica) needs-flag
+file	arch/arc/arc/clock_mc.c	clock & (clock_isa | clock_pica | clock_algor) needs-flag
 
 #	Console driver on PC-style graphics
 device	pc: tty
@@ -122,12 +122,12 @@ file	arch/arc/dev/pccons.c		pc & (pc_pica | pc_isa)	needs-flag
 # BusLogic BT-445C VLB SCSI Controller. Special on TYNE local bus.
 device  btl: scsi
 attach  btl at isa
-file    arch/arc/dti/btl.c                    btl needs-count
+file    arch/arc/dti/btl.c              btl needs-count
 
 # 8250/16[45]50-based "com" ports
 attach	com at pica with com_pica
 attach	com at algor with com_algor
-file	arch/arc/pica/com_pica.c	com_pica
+file	arch/arc/dev/com_lbus.c		com & (com_pica | com_algor)
 
 
 # National Semiconductor DS8390/WD83C690-based boards
@@ -140,9 +140,9 @@ file    dev/isa/if_ed.c                 ed & (ed_isa | ed_pcmcia) needs-flag
 
 # PC parallel ports (XXX what chip?)
 attach	lpt at pica with lpt_pica
-file	arch/arc/pica/lpt_pica.c	lpt_pica
+attach	lpt at algor with lpt_algor
+file	arch/arc/dev/lpt_lbus.c		lpt & (lpt_pica | lpt_algor)
 
-#
 
 #
 #	PCI Bus support

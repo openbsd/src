@@ -1,4 +1,4 @@
-/*	$OpenBSD: algorbus.c,v 1.1 1997/03/12 19:16:35 pefo Exp $ */
+/*	$OpenBSD: algorbus.c,v 1.2 1997/03/23 11:34:26 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -111,9 +111,11 @@ struct algor_dev algor_4032_cpu[] = {
     {{ "dallas_rtc",	 0, 0, },
        P4032_IM_RTC,  IPL_CLOCK, 0xc000, algor_intrnull, (void *)P4032_CLOCK, },
     {{ "com",		 1, 0, },
-       P4032_IM_COM1, IPL_TTY,   0x00c0, algor_intrnull, (void *)P4032_COM1, },
+       P4032_IM_COM1, IPL_TTY,   0x00c0, algor_intrnull, (void *)P4032_COM1,  },
     {{ "com",      	 2, 0, },
-       P4032_IM_COM2, IPL_TTY,   0x0300, algor_intrnull, (void *)P4032_COM2, },
+       P4032_IM_COM2, IPL_TTY,   0x0300, algor_intrnull, (void *)P4032_COM2,  },
+    {{ "lpt",      	 3, 0, },
+       P4032_IM_CENTR,IPL_TTY,   0x0c00, algor_intrnull, (void *)P4032_CENTR, },
     {{ NULL,     	 -1, NULL, },
        0, 		0x0000,	NULL,		(void *)NULL, },
 };
@@ -381,6 +383,7 @@ algor_iointr(mask, cf)
 		if(pend & int_table[i].int_mask)
 			(*int_table[i].int_hand)(int_table[i].param);
 	}
+	outb(P4032_ICR, pend & P4032_IM_CENTR);	/* Ack any centronics int */
 	return(~0);  /* Dont reenable */
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 1997/03/12 19:16:40 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.13 1997/03/23 11:34:27 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.12 1997/03/12 19:16:40 pefo Exp $
+ *      $Id: conf.c,v 1.13 1997/03/23 11:34:27 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -175,7 +175,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: berkeley packet filter */
 	cdev_disk_init(NFDC,fd),	/* 13: Floppy disk */
 	cdev_pc_init(NPC,pc),		/* 14: builtin pc style console dev */
-	cdev_mouse_init(1,pms),		/* 15: builtin PS2 style mouse */
+	cdev_mouse_init(NPC,pms),	/* 15: builtin PS2 style mouse */
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
 	cdev_disk_init(NWDC,wd),	/* 18: ST506/ESDI/IDE disk */

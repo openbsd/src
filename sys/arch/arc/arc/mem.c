@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 1997/03/23 11:34:30 pefo Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ mmrw(dev, uio, flags)
 			if (v < CACHED_MEMORY_ADDR)
 				return (EFAULT);
 			if (v + c > PHYS_TO_CACHED(avail_end +
-							sizeof (struct msgbuf)) &&
+						sizeof (struct msgbuf)) &&
 			    (v < KSEG2_ADDR ||
 			    !kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.1 1997/03/23 10:14:58 pefo Exp $	*/
+/*	$OpenBSD: com_lbus.c,v 1.2 1997/03/23 11:34:33 pefo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -77,7 +77,11 @@ int	com_localbus_probe __P((struct device *, void *, void *));
 void	com_localbus_attach __P((struct device *, struct device *, void *));
 
 
-struct cfattach com_localbus_ca = {
+struct cfattach com_pica_ca = {
+	sizeof(struct com_softc), com_localbus_probe, com_localbus_attach
+};
+
+struct cfattach com_algor_ca = {
 	sizeof(struct com_softc), com_localbus_probe, com_localbus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_mc.c,v 1.5 1997/03/12 19:16:39 pefo Exp $	*/
+/*	$OpenBSD: clock_mc.c,v 1.6 1997/03/23 11:34:27 pefo Exp $	*/
 /*	$NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp $	*/
 
 /*
@@ -79,7 +79,6 @@ struct mcclockdata {
 	void	(*mc_write) __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 	u_int	(*mc_read) __P((struct clock_softc *csc, u_int reg));
-	void	*mc_addr;
 };
 
 #define	mc146818_write(sc, reg, datum)					\
@@ -87,19 +86,19 @@ struct mcclockdata {
 #define	mc146818_read(sc, reg)						\
 	    (*((struct mcclockdata *)sc->sc_data)->mc_read)(sc, reg)
 
-/* Acer pica clock read code */
+/* Acer Pica clock access code */
 static void	mc_write_pica __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 static u_int	mc_read_pica __P((struct clock_softc *csc, u_int reg));
 static struct mcclockdata mcclockdata_pica = { mc_write_pica, mc_read_pica };
 
-/* Deskstation clock read code */
+/* Deskstation clock access code */
 static void	mc_write_tyne __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 static u_int	mc_read_tyne __P((struct clock_softc *csc, u_int reg));
 static struct mcclockdata mcclockdata_tyne = { mc_write_tyne, mc_read_tyne };
 
-/* Algorithmics P4032 clock read code */
+/* Algorithmics P4032 clock access code */
 static void	mc_write_p4032 __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 static u_int	mc_read_p4032 __P((struct clock_softc *csc, u_int reg));
@@ -124,13 +123,8 @@ mcclock_attach(parent, self, aux)
         switch (cputype) {
 
         case ACER_PICA_61:
-		/* 
-		 * XXX should really allocate a new one and copy, or
-		 * something.  unlikely we'll have more than one...
-		 */
 		csc->sc_init = mcclock_init_pica;
 		csc->sc_data = &mcclockdata_pica;
-		mcclockdata_tyne.mc_addr = BUS_CVTADDR(ca);
 		mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 		break;
 
@@ -228,6 +222,7 @@ mcclock_set(csc, ct)
 
 	s = splclock();
 	MC146818_GETTOD(csc, &regs);
+printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs[MC_HOUR], regs[MC_MIN], regs[MC_SEC]);
 
 	regs[MC_SEC] = ct->sec;
 	regs[MC_MIN] = ct->min;
@@ -241,6 +236,8 @@ mcclock_set(csc, ct)
 		regs[MC_YEAR] = ct->year;
 
 	MC146818_PUTTOD(csc, &regs);
+	MC146818_GETTOD(csc, &regs);
+printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs[MC_HOUR], regs[MC_MIN], regs[MC_SEC]);
 	splx(s);
 }
 

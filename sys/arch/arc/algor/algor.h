@@ -1,4 +1,4 @@
-/*	$OpenBSD: algor.h,v 1.1 1997/03/12 19:16:33 pefo Exp $ */
+/*	$OpenBSD: algor.h,v 1.2 1997/03/23 11:34:25 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -62,8 +62,9 @@
 #define	P4032_GPIO		0xbff40000	/* General purpose I/O */
 #define	P4032_GPIO_IACK		0xbff50000	/* General purpose I/O Iack */
 #define	P4032_FPY		0xbff807c0	/* Floppy controller */
-#define	P4032_COM1		0xbff80fe0
-#define	P4032_COM2		0xbff80be0
+#define	P4032_COM1		0xbff80fe0	/* Serial port com1 */
+#define	P4032_COM2		0xbff80be0	/* Serial port com2 */
+#define	P4032_CENTR		0xbff80de0	/* Centronics paralell port */
 #define	P4032_IMR		0xbff90000	/* Int mask reg (wr) */
 #define	P4032_IRR		0xbff90000	/* Int request reg (rd) */
 #define	P4032_EIRR		0xbff90004	/* Error int request reg (rd) */

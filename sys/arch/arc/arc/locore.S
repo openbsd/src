@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 1997/03/12 19:16:42 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 1997/03/23 11:34:29 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.9 1997/03/12 19:16:42 pefo Exp $
+ *	$Id: locore.S,v 1.10 1997/03/23 11:34:29 pefo Exp $
  */
 
 /*
@@ -1372,8 +1372,7 @@ NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
  * Save the relevant user registers into the u.u_pcb struct.
- * We don't need to save s0 - s8 because
- * the compiler does it for us.
+ * We don't need to save s0 - s8 because the compiler does it for us.
  */
 	sw	AT, UADDR+U_PCB_REGS+(AST * 4)
 	sw	v0, UADDR+U_PCB_REGS+(V0 * 4)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbcpcibus.c,v 1.1 1997/03/12 19:17:00 pefo Exp $ */
+/*	$OpenBSD: pbcpcibus.c,v 1.2 1997/03/23 11:34:35 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -57,6 +57,7 @@
 
 extern vm_map_t phys_map;
 extern int cputype;
+extern char eth_hw_addr[];	/* Hardware ethernet address stored elsewhere */
 
 int	 pbcpcibrmatch __P((struct device *, void *, void *));
 void	 pbcpcibrattach __P((struct device *, struct device *, void *));
@@ -327,12 +328,7 @@ pbc_ether_hw_addr(cp)
 	u_int8_t *cp;
 {
 	if(cputype == ALGOR_P4032) {
-		cp[0] = 0x00;
-		cp[1] = 0x40;
-		cp[2] = 0xbc;
-		cp[3] = 0x03;
-		cp[4] = 0x00;
-		cp[5] = 0x33;
+		bcopy(eth_hw_addr, cp, 6);
 		return(0);
 	}
 	return(-1);
