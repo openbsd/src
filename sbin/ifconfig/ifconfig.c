@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.114 2004/10/11 10:13:49 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.115 2004/11/02 02:12:16 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.114 2004/10/11 10:13:49 henning Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.115 2004/11/02 02:12:16 reyk Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,8 @@ static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.114 2004/10/11 10:13:49 he
 #include <netinet/ip_ipsp.h>
 #include <netinet/if_ether.h>
 #include <net/if_enc.h>
-#include <net/if_ieee80211.h>
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
 
@@ -163,6 +164,7 @@ void	setifmetric(const char *, int);
 void	setifmtu(const char *, int);
 void	setifnwid(const char *, int);
 void	setifnwkey(const char *, int);
+void    setifchan(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifpowersavesleep(const char *, int);
 void	setifnetmask(const char *, int);
@@ -182,6 +184,7 @@ void	setia6eui64(const char *, int);
 void	checkatrange(struct sockaddr_at *);
 void	setmedia(const char *, int);
 void	setmediaopt(const char *, int);
+void    setmediamode(const char *, int);
 void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
 void	unsetmediaopt(const char *, int);
@@ -225,6 +228,7 @@ int	actions;			/* Actions performed */
 #define	A_MEDIAOPTCLR	0x0004		/* -mediaopt command */
 #define	A_MEDIAOPT	(A_MEDIAOPTSET|A_MEDIAOPTCLR)
 #define	A_MEDIAINST	0x0008		/* instance or inst command */
+#define A_MEDIAMODE     0x0010          /* mode command */
 
 #define	NEXTARG		0xffffff
 #define NEXTARG2	0xfffffe
@@ -260,6 +264,8 @@ const struct	cmd {
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
 	{ "-nwkey",	-1,		0,		setifnwkey },
+	{ "chan",       NEXTARG,        0,              setifchan },
+	{ "-chan",      -1,             0,              setifchan },
 	{ "powersave",	1,		0,		setifpowersave },
 	{ "-powersave",	0,		0,		setifpowersave },
 	{ "powersavesleep", NEXTARG,	0,		setifpowersavesleep },
@@ -313,6 +319,7 @@ const struct	cmd {
 	{ "media",	NEXTARG,	A_MEDIA,	setmedia },
 	{ "mediaopt",	NEXTARG,	A_MEDIAOPTSET,	setmediaopt },
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
+	{ "mode",       NEXTARG,        A_MEDIAMODE,    setmediamode },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "timeslot",	NEXTARG,	0,		settimeslot },
@@ -336,6 +343,7 @@ void	list_cloners(void);
 
 const char *get_media_type_string(int);
 const char *get_media_subtype_string(int);
+int     get_media_mode(int, const char *);
 int	get_media_subtype(int, const char *);
 int	get_media_options(int, const char *);
 int	lookup_media_word(const struct ifmedia_description *, int,
@@ -1249,6 +1257,28 @@ setifnwkey(const char *val, int d)
 		warn("SIOCS80211NWKEY");
 }
 
+void
+setifchan(const char *val, int d)
+{
+	struct ieee80211chanreq channel;
+	int chan;
+
+	if (d != 0)
+		chan = IEEE80211_CHAN_ANY;
+	else {
+		chan = atoi(val);
+		if (chan < 0 || chan > 0xffff) {
+			warnx("invalid channel: %s", val);
+			return;
+		}
+	}
+
+	(void)strlcpy(channel.i_name, name, sizeof(channel.i_name));
+	channel.i_channel = (u_int16_t) chan;
+	if (ioctl(s, SIOCS80211CHANNEL, (caddr_t)&channel) == -1)
+		warn("SIOCS80211CHANNEL");
+}
+
 /* ARGSUSED */
 void
 setifpowersave(const char *val, int d)
@@ -1384,7 +1414,7 @@ init_current_media(void)
 	 * If we have not yet done so, grab the currently-selected
 	 * media.
 	 */
-	if ((actions & (A_MEDIA|A_MEDIAOPT)) == 0) {
+	if ((actions & (A_MEDIA|A_MEDIAOPT|A_MEDIAMODE)) == 0) {
 		(void) memset(&ifmr, 0, sizeof(ifmr));
 		(void) strlcpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 
@@ -1440,6 +1470,10 @@ setmedia(const char *val, int d)
 	if (actions & A_MEDIA)
 		errx(1, "only one `media' command may be issued");
 
+	/* Must not come after mode commands */
+	if (actions & A_MEDIAMODE)
+		errx(1, "may not issue `media' after `mode' commands");
+
 	/* Must not come after mediaopt commands */
 	if (actions & A_MEDIAOPT)
 		errx(1, "may not issue `media' after `mediaopt' commands");
@@ -1462,6 +1496,30 @@ setmedia(const char *val, int d)
 }
 
 /* ARGSUSED */
+void
+setmediamode(const char *val, int d)
+{
+	int type, subtype, options, inst, mode;
+	 
+	init_current_media();
+	 
+	/* Can only issue `mode' once. */
+	if (actions & A_MEDIAMODE)
+		errx(1, "only one `mode' command may be issued");
+	 
+	type = IFM_TYPE(media_current);
+	subtype = IFM_SUBTYPE(media_current);
+	options = IFM_OPTIONS(media_current);
+	inst = IFM_INST(media_current);
+	 
+	if ((mode = get_media_mode(type, val)) == -1)
+		errx(1, "invalid media mode: %s", val);
+	 
+	media_current = IFM_MAKEWORD(type, subtype, options, inst) | mode;
+	 
+	/* Media will be set after other processing is complete. */
+}
+
 void
 setmediaopt(const char *val, int d)
 {
@@ -1603,6 +1661,9 @@ const struct ifmedia_description ifm_type_descriptions[] =
 const struct ifmedia_description ifm_subtype_descriptions[] =
     IFM_SUBTYPE_DESCRIPTIONS;
 
+struct ifmedia_description ifm_mode_descriptions[] =
+    IFM_MODE_DESCRIPTIONS;
+
 const struct ifmedia_description ifm_option_descriptions[] =
     IFM_OPTION_DESCRIPTIONS;
 
@@ -1643,6 +1704,19 @@ get_media_subtype(int type, const char *val)
 		errx(1, "unknown %s media subtype: %s",
 		    get_media_type_string(type), val);
 
+	return (rval);
+}
+
+int
+get_media_mode(int type, const char *val)
+{
+	int rval;
+	 
+	rval = lookup_media_word(ifm_mode_descriptions, type, val);
+	if (rval == -1)
+		errx(1, "unknown %s media mode: %s",
+		    get_media_type_string(type), val);
+	 
 	return (rval);
 }
 
@@ -1696,6 +1770,18 @@ print_media_word(int ifmw, int print_type, int as_syntax)
 		printf("%s ", get_media_type_string(ifmw));
 	printf("%s%s", as_syntax ? "media " : "",
 	    get_media_subtype_string(ifmw));
+
+	/* Find mode. */
+	if (IFM_MODE(ifmw) != 0) {
+		for (desc = ifm_mode_descriptions; desc->ifmt_string != NULL;
+		     desc++) {
+			if (IFM_TYPE_MATCH(desc->ifmt_word, ifmw) &&
+			    IFM_MODE(ifmw) == IFM_MODE(desc->ifmt_word)) {
+				printf(" mode %s", desc->ifmt_string);
+				break;
+			}
+		}
+	}
 
 	/* Find options. */
 	for (desc = ifm_option_descriptions; desc->ifmt_string != NULL;
@@ -2559,10 +2645,10 @@ usage(void)
 	    "\t[tunnel src_address dest_address] [deletetunnel]\n"
 	    "\t[description value] [[-]group group-name]\n"
 	    "\t[[-]link0] [[-]link1] [[-]link2]\n"
-	    "\t[media type] [[-]mediaopt opts] [instance minst]\n"
+	    "\t[media type] [[-]mediaopt opts] [mode mode] [instance minst]\n"
 	    "\t[mtu value] [metric nhops] [netmask mask] [prefixlen n]\n"
 	    "\t[nwid id] [nwkey key] [nwkey persist[:key]] [-nwkey]\n"
-	    "\t[[-]powersave] [powersavesleep duration]\n"
+	    "\t[chan n] [-chan] [[-]powersave] [powersavesleep duration]\n"
 #ifdef INET6
 	    "\t[[-]anycast] [eui64] [pltime n] [vltime n] [[-]tentative]\n"
 #endif

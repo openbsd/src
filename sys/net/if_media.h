@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.16 2004/10/28 20:35:44 henning Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.17 2004/11/02 02:12:16 reyk Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -334,7 +334,8 @@ int	ifmedia_baudrate(int);
  */
 #define	IFM_MAKEWORD(type, subtype, options, instance)			\
     ((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
-
+#define IFM_MAKEMODE(mode)                                              \
+           (((mode) << IFM_MSHIFT) & IFM_MMASK)
 /*
  * NetBSD extension not defined in the BSDI API.  This is used in various
  * places to get the canonical description for a given type/subtype.
@@ -433,10 +434,10 @@ struct ifmedia_description {
 									\
 	{ IFM_IEEE80211|IFM_IEEE80211_FH1,	"FH1" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_FH2,	"FH2" },		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS1,	"DS1" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	"DS2" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1,	"DS1" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS22,	"DS22" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_OFDM6,	"OFDM6" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_OFDM9,	"OFDM9" },		\
@@ -461,6 +462,16 @@ struct ifmedia_description {
 	{ IFM_TDM|IFM_TDM_E3_G832,	"e3-g.832" },			\
 									\
 	{ 0, NULL },							\
+}
+
+#define IFM_MODE_DESCRIPTIONS {                                         \
+        { IFM_AUTO,                             "autoselect" },         \
+        { IFM_AUTO,                             "auto" },               \
+        { IFM_IEEE80211|IFM_IEEE80211_11A,      "11a" },                \
+        { IFM_IEEE80211|IFM_IEEE80211_11B,      "11b" },                \
+        { IFM_IEEE80211|IFM_IEEE80211_11G,      "11g" },                \
+        { IFM_IEEE80211|IFM_IEEE80211_FH,       "fh" },                 \
+        { 0, NULL },                                                    \
 }
 
 #define	IFM_OPTION_DESCRIPTIONS {					\
@@ -492,6 +503,7 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_IBSS,	"ibss" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_IBSSMASTER, "ibss-master" },	\
 	{ IFM_IEEE80211|IFM_IEEE80211_MONITOR,	"monitor" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_TURBO,	"turbo" },		\
 									\
 	{ IFM_TDM|IFM_TDM_HDLC_CRC16,	"hdlc-crc16" },			\
 	{ IFM_TDM|IFM_TDM_PPP,		"ppp" },			\
@@ -538,10 +550,20 @@ struct ifmedia_baudrate {
 									\
 	{ IFM_IEEE80211|IFM_IEEE80211_FH1, IF_Mbps(1) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_FH2, IF_Mbps(2) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1, IF_Mbps(1) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS2, IF_Mbps(2) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS5, IF_Mbps(5) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS11, IF_Mbps(11) },		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS1, IF_Mbps(1) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS22, IF_Mbps(22) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM6, IF_Mbps(6) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM9, IF_Mbps(9) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM12, IF_Mbps(12) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM18, IF_Mbps(18) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM24, IF_Mbps(24) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM36, IF_Mbps(36) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM48, IF_Mbps(48) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM54, IF_Mbps(54) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM72, IF_Mbps(72) },		\
 									\
 	{ IFM_TDM|IFM_TDM_T1,		IF_Kbps(1536) },		\
 	{ IFM_TDM|IFM_TDM_T1_AMI,	IF_Kbps(1536) },		\
