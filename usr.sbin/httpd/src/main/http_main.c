@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.24 2002/09/08 17:14:57 markus Exp $ */
+/* $OpenBSD: http_main.c,v 1.25 2002/09/09 14:21:18 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -125,6 +125,9 @@ int ap_main(int argc, char *argv[]);
 #ifdef HAVE_BSTRING_H
 #include <bstring.h>		/* for IRIX, FD_SET calls bzero() */
 #endif
+#ifdef MOD_SSL
+#include <openssl/evp.h>
+#endif
 
 #ifdef MULTITHREAD
 /* special debug stuff -- PCS */
@@ -203,10 +206,6 @@ long _stksize = 32768;
 #include <stdio.h>
 caddr_t create_shared_heap(const char *, size_t);
 caddr_t get_shared_heap(const char *);
-#endif
-
-#ifdef MOD_SSL
-#include <openssl/evp.h>
 #endif
 
 DEF_Explain
