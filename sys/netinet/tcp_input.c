@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.161 2004/04/14 20:46:50 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.162 2004/04/15 02:59:22 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -113,7 +113,6 @@ struct  tcpipv6hdr tcp_saveti6;
 #endif
 
 int	tcprexmtthresh = 3;
-struct	tcpiphdr tcp_saveti;
 int	tcptv_keep_init = TCPTV_KEEP_INIT;
 
 extern u_long sb_max;
@@ -448,15 +447,6 @@ tcp_input(struct mbuf *m, ...)
 			return;
 		}
 #endif /* DIAGNOSTIC */
-		if (iphlen > sizeof(struct ip)) {
-#if 0	/*XXX*/
-			ip_stripoptions(m, (struct mbuf *)0);
-			iphlen = sizeof(struct ip);
-#else
-			m_freem(m);
-			return;
-#endif
-		}
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -473,12 +463,10 @@ tcp_input(struct mbuf *m, ...)
 		return;
 	}
 
-	if (m->m_len < iphlen + sizeof(struct tcphdr)) {
-		m = m_pullup2(m, iphlen + sizeof(struct tcphdr));
-		if (m == NULL) {
-			tcpstat.tcps_rcvshort++;
-			return;
-		}
+	IP6_EXTHDR_GET(th, struct tcphdr *, m, iphlen, sizeof(*th));
+	if (!th) {
+		tcpstat.tcps_rcvshort++;
+		return;
 	}
 
 	ip = NULL;
@@ -487,16 +475,12 @@ tcp_input(struct mbuf *m, ...)
 #endif
 	switch (af) {
 	case AF_INET:
-	    {
-		struct tcpiphdr *ti;
-
 		ip = mtod(m, struct ip *);
 		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
 			goto drop;
 
 		tlen = m->m_pkthdr.len - iphlen;
-		ti = mtod(m, struct tcpiphdr *);
 
 #ifdef TCP_ECN
 		/* save ip_tos before clearing it for checksum */
@@ -505,17 +489,14 @@ tcp_input(struct mbuf *m, ...)
 		/*
 		 * Checksum extended TCP header and data.
 		 */
-		len = sizeof(struct ip) + tlen;
-		bzero(ti->ti_x1, sizeof ti->ti_x1);
-		ti->ti_len = (u_int16_t)tlen;
-		HTONS(ti->ti_len);
 		if ((m->m_pkthdr.csum & M_TCP_CSUM_IN_OK) == 0) {
 			if (m->m_pkthdr.csum & M_TCP_CSUM_IN_BAD) {
 				tcpstat.tcps_inhwcsum++;
 				tcpstat.tcps_rcvbadsum++;
 				goto drop;
 			}
-			if ((ti->ti_sum = in_cksum(m, len)) != 0) {
+			len = m->m_pkthdr.len - iphlen;
+			if (in4_cksum(m, IPPROTO_TCP, iphlen, len) != 0) {
 				tcpstat.tcps_rcvbadsum++;
 				goto drop;
 			}
@@ -524,7 +505,6 @@ tcp_input(struct mbuf *m, ...)
 			tcpstat.tcps_inhwcsum++;
 		}
 		break;
-	    }
 #ifdef INET6
 	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -584,22 +564,10 @@ tcp_input(struct mbuf *m, ...)
 	}
 	tlen -= off;
 	if (off > sizeof(struct tcphdr)) {
-		if (m->m_len < iphlen + off) {
-			if ((m = m_pullup2(m, iphlen + off)) == NULL) {
-				tcpstat.tcps_rcvshort++;
-				return;
-			}
-			switch (af) {
-			case AF_INET:
-				ip = mtod(m, struct ip *);
-				break;
-#ifdef INET6
-			case AF_INET6:
-				ip6 = mtod(m, struct ip6_hdr *);
-				break;
-#endif
-			}
-			th = (struct tcphdr *)(mtod(m, caddr_t) + iphlen);
+		IP6_EXTHDR_GET(th, struct tcphdr *, m, iphlen, off);
+		if (!th) {
+			tcpstat.tcps_rcvshort++;
+			return;
 		}
 		optlen = off - sizeof(struct tcphdr);
 		optp = mtod(m, u_int8_t *) + iphlen + sizeof(struct tcphdr);
@@ -730,11 +698,13 @@ findpcb:
 			switch (af) {
 #ifdef INET6
 			case AF_INET6:
-				tcp_saveti6 = *(mtod(m, struct tcpipv6hdr *));
+				bcopy(ip6, &tcp_saveti6.ti6_i, sizeof(*ip6));
+				bcopy(th, &tcp_saveti6.ti6_t, sizeof(*th));
 				break;
 #endif
 			case AF_INET:
-				tcp_saveti = *(mtod(m, struct tcpiphdr *));
+				bcopy(ip, &tcp_saveti.ti_i, sizeof(*ip));
+				bcopy(th, &tcp_saveti.ti_t, sizeof(*th));
 				break;
 			}
 		}
