@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.12 2004/01/03 22:40:19 miod Exp $
+dnl	$OpenBSD: install,v 1.13 2004/01/13 00:44:52 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -11,6 +11,18 @@ convenient way to install on a machine whose disk does not currently
 hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
 use afterwards.  (See ``Installing using a diskless setup'' below).
+
+
+Boot device restrictions:
+
+The BUG firmware will not necessarily be able to boot from any device in
+the system.
+
+The following limitations apply:
+- bootable SCSI tapes must have device ID 4 or 5.
+- bootable SCSI disks must have device ID 0, 1, 2 or 3.
+- only the first two MVME328 cards in a system (CLUN 6 and 7) can be
+  used as the boot controller.
 
 
 Booting from the Installation Media:
