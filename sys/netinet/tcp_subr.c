@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.38 2000/12/21 00:54:10 itojun Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.39 2001/02/16 16:00:54 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -724,16 +724,17 @@ tcp6_ctlinput(cmd, sa, d)
 	struct sockaddr *sa;
 	void *d;
 {
-	struct tcphdr *thp;
 	struct tcphdr th;
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
-	int nmatch;
-	struct sockaddr_in6 sa6;
 	struct ip6_hdr *ip6;
+	const struct sockaddr_in6 *sa6_src = NULL;
+	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
 	struct mbuf *m;
 	int off;
-	struct in6_addr finaldst;
-	struct in6_addr s;
+	struct {
+		u_int16_t th_sport;
+		u_int16_t th_dport;
+	} *thp;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -758,25 +759,12 @@ tcp6_ctlinput(cmd, sa, d)
 		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
-
-		/* translate addresses into internal form */
-		bcopy(ip6cp->ip6c_finaldst, &finaldst, sizeof(finaldst));
-		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
-			finaldst.s6_addr16[1] =
-			    htons(m->m_pkthdr.rcvif->if_index);
-		}
-		bcopy(&ip6->ip6_src, &s, sizeof(s));
-		if (IN6_IS_ADDR_LINKLOCAL(&s))
-			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+		sa6_src = ip6cp->ip6c_src;
 	} else {
 		m = NULL;
 		ip6 = NULL;
+		sa6_src = &sa6_any;
 	}
-
-	/* translate addresses into internal form */
-	sa6 = *(struct sockaddr_in6 *)sa;
-	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr) && m && m->m_pkthdr.rcvif)
-		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
 	if (ip6) {
 		/*
@@ -785,18 +773,15 @@ tcp6_ctlinput(cmd, sa, d)
 		 */
 
 		/* check if we can safely examine src and dst ports */
-		if (m->m_pkthdr.len < off + sizeof(th))
+		if (m->m_pkthdr.len < off + sizeof(*thp))
 			return;
 
-		if (m->m_len < off + sizeof(th)) {
-			/*
-			 * this should be rare case,
-			 * so we compromise on this copy...
-			 */
-			m_copydata(m, off, sizeof(th), (caddr_t)&th);
-			thp = &th;
-		} else
-			thp = (struct tcphdr *)(mtod(m, caddr_t) + off);
+		bzero(&th, sizeof(th));
+#ifdef DIAGNOSTIC
+		if (sizeof(*thp) > sizeof(th))
+			panic("assumption failed in tcp6_ctlinput");
+#endif
+		m_copydata(m, off, sizeof(*thp), (caddr_t)&th);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;
@@ -806,27 +791,32 @@ tcp6_ctlinput(cmd, sa, d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in_pcblookup(&tcbtable, &finaldst,
-			    thp->th_dport, &s, thp->th_sport,
-			    INPLOOKUP_WILDCARD))
+			if (in6_pcbhashlookup(&tcbtable, &sa6->sin6_addr,
+			    th.th_dport, (struct in6_addr *)&sa6_src->sin6_addr,
+			    th.th_sport))
+				valid++;
+			else if (in_pcblookup(&tcbtable, &sa6->sin6_addr,
+			    th.th_dport, (struct in6_addr *)&sa6_src->sin6_addr,
+			    th.th_sport, INPLOOKUP_IPV6))
 				valid++;
 
 			/*
-			 * Now that we've validated that we are actually
-			 * communicating with the host indicated in the ICMPv6
-			 * message, recalculate the new MTU, and create the
-			 * corresponding routing entry.
+			 * Depending on the value of "valid" and routing table
+			 * size (mtudisc_{hi,lo}wat), we will:
+			 * - recalcurate the new MTU and create the
+			 *   corresponding routing entry, or
+			 * - ignore the MTU change notification.
 			 */
 			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 
 			return;
 		}
 
-		nmatch = in6_pcbnotify(&tcbtable, (struct sockaddr *)&sa6,
-		    thp->th_dport, &s, thp->th_sport, cmd, notify);
+		(void) in6_pcbnotify(&tcbtable, sa, th.th_dport,
+		    (struct sockaddr *)sa6_src, th.th_sport, cmd, NULL, notify);
 	} else {
-		(void) in6_pcbnotify(&tcbtable, (struct sockaddr *)&sa6, 0,
-		    &zeroin6_addr, 0, cmd, notify);
+		(void) in6_pcbnotify(&tcbtable, sa, 0,
+		    (struct sockaddr *)sa6_src, 0, cmd, NULL, notify);
 	}
 }
 #endif
@@ -881,7 +871,7 @@ tcp_ctlinput(cmd, sa, v)
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		in_pcbnotify(&tcbtable, sa, th->th_dport, ip->ip_src,
-		    th->th_sport, errno, notify);
+			     th->th_sport, errno, notify);
 	} else
 		in_pcbnotifyall(&tcbtable, sa, errno, notify);
 
@@ -902,6 +892,25 @@ tcp_quench(inp, errno)
 	if (tp)
 		tp->snd_cwnd = tp->t_maxseg;
 }
+
+#ifdef INET6
+/*
+ * Path MTU Discovery handlers.
+ */
+void
+tcp6_mtudisc_callback(faddr)
+	struct in6_addr *faddr;
+{
+	struct sockaddr_in6 sin6;
+
+	bzero(&sin6, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(struct sockaddr_in6);
+	sin6.sin6_addr = *faddr;
+	(void) in6_pcbnotify(&tcbtable, (struct sockaddr *)&sin6, 0,
+	    (struct sockaddr *)&sa6_any, 0, PRC_MSGSIZE, NULL, tcp_mtudisc);
+}
+#endif /* INET6 */
 
 /*
  * On receipt of path MTU corrections, flush old route and replace it
@@ -960,25 +969,6 @@ tcp_mtudisc_increase(inp, errno)
 		tcp_mss(tp, -1);
 	}
 }
-
-#ifdef INET6
-/*
- * Path MTU Discovery handlers.
- */
-void
-tcp6_mtudisc_callback(faddr)
-	struct in6_addr *faddr;
-{
-	struct sockaddr_in6 sin6;
-
-	bzero(&sin6, sizeof(sin6));
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_len = sizeof(struct sockaddr_in6);
-	sin6.sin6_addr = *faddr;
-	(void) in6_pcbnotify(&tcbtable, (struct sockaddr *)&sin6, 0,
-	    &zeroin6_addr, 0, PRC_MSGSIZE, tcp_mtudisc);
-}
-#endif /* INET6 */
 
 #ifdef TCP_SIGNATURE
 int

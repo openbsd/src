@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.25 2001/02/16 14:58:12 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.26 2001/02/16 16:00:57 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.176 2001/02/14 07:13:39 itojun Exp $	*/
 
 /*
@@ -970,7 +970,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 	/* RFC 2292 sec. 5 */
 	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
-		struct in6_pktinfo pi6, *prevpi = NULL;
+		struct in6_pktinfo pi6;
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		if (IN6_IS_SCOPE_LINKLOCAL(&pi6.ipi6_addr))
 			pi6.ipi6_addr.s6_addr16[1] = 0;

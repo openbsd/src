@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6.h,v 1.18 2000/10/17 21:46:19 itojun Exp $	*/
-/*	$KAME: in6.h,v 1.52 2000/07/15 15:28:02 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.19 2001/02/16 16:00:56 itojun Exp $	*/
+/*	$KAME: in6.h,v 1.77 2001/02/09 06:17:40 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -163,6 +163,8 @@ struct sockaddr_in6 {
 #endif
 
 #ifdef _KERNEL
+extern const struct sockaddr_in6 sa6_any;
+
 extern const struct in6_addr in6mask0;
 extern const struct in6_addr in6mask32;
 extern const struct in6_addr in6mask64;
