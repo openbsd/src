@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.12 2003/08/06 21:08:07 millert Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.13 2003/10/06 06:43:12 david Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1245,7 +1245,7 @@ int lge_encap(sc, m_head, txidx)
 			tot_len += m->m_len;
 			f = &cur_tx->lge_frags[frag];
 			f->lge_fraglen = m->m_len;
-			f->lge_fragptr_lo = vtophys(mtod(m, vm_offset_t));
+			f->lge_fragptr_lo = vtophys(mtod(m, vaddr_t));
 			f->lge_fragptr_hi = 0;
 			frag++;
 		}
