@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.31 2001/02/27 09:07:53 csapuntz Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.32 2001/03/15 21:18:30 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -889,7 +889,8 @@ db_show_all_procs(addr, haddr, count, modif)
 		pp = p->p_pptr;
 		if (p->p_stat) {
 
-			db_printf("%5d  ", p->p_pid);
+			db_printf("%c%5d  ", p == curproc ? '*' : ' ',
+				p->p_pid);
 
 			switch (*mode) {
 
