@@ -24,7 +24,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.14 1999/09/16 20:58:48 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.15 2000/01/16 13:36:36 jakob Exp $ (LBL)";
 #endif
 
 /*
@@ -507,10 +507,12 @@ __dead void
 usage(void)
 {
 	extern char version[];
+	extern char pcap_version[];
 
 	(void)fprintf(stderr, "%s version %s\n", program_name, version);
+	(void)fprintf(stderr, "libpcap version %s\n", pcap_version);
 	(void)fprintf(stderr,
-"Usage: tcpdump [-adeflnNOpqStvxX] [-c count] [ -F file ]\n");
+"Usage: %s [-adeflnNOpqStvxX] [-c count] [ -F file ]\n", program_name);
 	(void)fprintf(stderr,
 "\t\t[ -i interface ] [ -r file ] [ -s snaplen ]\n");
 	(void)fprintf(stderr,
