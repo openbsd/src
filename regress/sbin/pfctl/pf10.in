@@ -27,4 +27,5 @@ block return-icmp6(3) in inet6 proto ipv6-icmp all
 block return-icmp6(addr-unr) in inet6 proto ipv6-icmp all
 block return-icmp6(4) in inet6 proto ipv6-icmp all
 block return-icmp6(port-unr) in inet6 proto ipv6-icmp all
-
+block return-icmp(5, 1) in all
+block return-icmp(srcfail, admin-unr) in all
