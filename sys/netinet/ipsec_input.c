@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.57 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.58 2002/06/13 08:02:36 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1065,6 +1065,3 @@ ipcomp6_input_cb(struct mbuf *m, int skip, int protoff)
 }
 
 #endif /* INET6 */
-
-
-
