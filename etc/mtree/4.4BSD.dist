@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.138 2002/11/22 22:07:17 henning Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.139 2002/11/23 18:43:20 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -488,11 +488,6 @@ sbin
 
 # ./usr/share
 share
-
-# ./usr/share/altq
-altq
-# ./usr/share/altq
-..
 
 # ./usr/share/calendar
 calendar
