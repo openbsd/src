@@ -1,4 +1,5 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.6 2000/02/07 06:09:10 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.7 2000/03/02 09:44:28 itojun Exp $	*/
+/*	$KAME: in6_ifattach.c,v 1.39 2000/03/02 09:24:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,7 +50,6 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_ifattach.h>
-#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
@@ -339,11 +339,15 @@ in6_ifattach(ifp, type, laddr, noloop)
 	ia = (struct in6_ifaddr *)malloc(sizeof(*ia), M_IFADDR, M_WAITOK);
 	bzero((caddr_t)ia, sizeof(*ia));
 	ia->ia_ifa.ifa_addr =    (struct sockaddr *)&ia->ia_addr;
-	ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&ia->ia_dstaddr;
+	if (ifp->if_flags & IFF_POINTOPOINT)
+		ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&ia->ia_dstaddr;
+	else
+		ia->ia_ifa.ifa_dstaddr = NULL;
 	ia->ia_ifa.ifa_netmask = (struct sockaddr *)&ia->ia_prefixmask;
 	ia->ia_ifp = ifp;
 
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+	ia->ia_ifa.ifa_refcnt++;
 
 	/*
 	 * Also link into the IPv6 address chain beginning with in6_ifaddr.
@@ -355,6 +359,7 @@ in6_ifattach(ifp, type, laddr, noloop)
 		oia->ia_next = ia;
 	} else
 		in6_ifaddr = ia;
+	ia->ia_ifa.ifa_refcnt++;
 
 	ia->ia_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 	ia->ia_prefixmask.sin6_family = AF_INET6;
@@ -441,11 +446,12 @@ in6_ifattach(ifp, type, laddr, noloop)
 
 			/* undo changes */
 			TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+			IFAFREE(&ia->ia_ifa);
 			if (oia)
 				oia->ia_next = ia->ia_next;
 			else
 				in6_ifaddr = ia->ia_next;
-			free(ia, M_IFADDR);
+			IFAFREE(&ia->ia_ifa);
 			return;
 		}
 	}
@@ -495,6 +501,7 @@ in6_ifattach(ifp, type, laddr, noloop)
 		ia->ia_next = ib;
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ib,
 			ifa_list);
+		ib->ia_ifa.ifa_refcnt++;
 
 		ib->ia_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 		ib->ia_prefixmask.sin6_family = AF_INET6;
@@ -502,6 +509,20 @@ in6_ifattach(ifp, type, laddr, noloop)
 		ib->ia_addr.sin6_len = sizeof(struct sockaddr_in6);
 		ib->ia_addr.sin6_family = AF_INET6;
 		ib->ia_addr.sin6_addr = in6addr_loopback;
+
+		/*
+		 * Always initialize ia_dstaddr (= broadcast address)
+		 * to loopback address, to make getifaddr happier.
+		 *
+		 * For BSDI, it is mandatory.  The BSDI version of
+		 * ifa_ifwithroute() rejects to add a route to the loopback
+		 * interface.  Even for other systems, loopback looks somewhat
+		 * special.
+		 */
+		ib->ia_dstaddr.sin6_len = sizeof(struct sockaddr_in6);
+		ib->ia_dstaddr.sin6_family = AF_INET6;
+		ib->ia_dstaddr.sin6_addr = in6addr_loopback;
+
 		ib->ia_ifa.ifa_metric = ifp->if_metric;
 
 		rtrequest(RTM_ADD,
