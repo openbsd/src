@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.36 2003/05/17 07:24:11 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.37 2003/05/17 07:45:54 mdw Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3995,16 +3995,11 @@ dostart:
 	 * Ready to run C code; finish bootstrap.
 	 */
 	set	CTX_SECONDARY, %o1		! Store -1 in the context register
-	mov	-1, %o2
-	stxa	%o2, [%o1] ASI_DMMU
-	membar	#Sync
-	ldxa	[%o1] ASI_DMMU, %o0		! then read it back
-	membar	#Sync
+	set	0x2000,%o0			! fixed: 8192 contexts
 	stxa	%g0, [%o1] ASI_DMMU
 	membar	#Sync
-	clr	%g4				! Clear data segment pointer
 	call	_C_LABEL(bootstrap)
-	 inc	%o0				! and add 1 to discover maxctx
+	 clr	%g4				! Clear data segment pointer
 
 	/*
 	 * pmap_bootstrap should have allocated a stack for proc 0 and
