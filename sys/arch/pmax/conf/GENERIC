@@ -13,9 +13,6 @@ option	 	DS5000_25		# MAXINE (kn02ca/xine)
 option	 	DS5000_100		# 3MIN (kn02ba/kmin)
 option	 	DS5000_200		# 3MAX (kn02)
 option	 	DS5000_240		# 3MAXPLUS (kn03)
-# pmax specific
-option		"HZ=256"		# rtc rate required
-option		"NKMEMCLUSTERS=1024"	# 4k pages in kernel malloc pool
 # timezone stuff
 option		TIMEZONE=0
 option		DST=0			# use daylight savings rules
@@ -55,6 +52,7 @@ option		KTRACE			# ktrace(1) support
 # other stuff
 #option		NTP			# network time protocol
 #option		UCONSOLE		# users can redirect console (unsafe)
+#option		HW_FLOW_CONTROL		# enable hw flctrl code in dc driver
 # other filesystems
 #option		MFS			# memory-based filesystem
 option		KERNFS			# kernel data-structure filesystem
