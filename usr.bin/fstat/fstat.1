@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.17 2000/03/23 21:10:17 aaron Exp $
+.\"	$OpenBSD: fstat.1,v 1.18 2000/07/16 23:40:48 hugh Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd display status of open files
 .Sh SYNOPSIS
 .Nm fstat
-.Op Fl fnv
+.Op Fl fnov
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl p Ar pid
@@ -84,6 +84,10 @@ device number that the special device refers to rather than the filename
 in
 .Pa /dev .
 Also, print the mode of the file in octal instead of symbolic form.
+.It Fl o
+Output file offset.
+Follow the size field with the descriptor's offset.
+Useful for checking progress as a process works through a large file.
 .It Fl p pid
 Report all files open by the specified process.
 .It Fl u user

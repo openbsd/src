@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.27 2000/06/30 16:00:14 millert Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.28 2000/07/16 23:40:48 hugh Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.27 2000/06/30 16:00:14 millert Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.28 2000/07/16 23:40:48 hugh Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,6 +122,7 @@ int 	fsflg,	/* show files on same filesystem as file(s) argument */
 	uflg;	/* show files open by a particular (effective) user */
 int 	checkfile; /* true if restricting to particular files or filesystems */
 int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
+int	oflg;	/* display file offset */
 int	vflg;	/* display errors in locating kernel data objects etc... */
 
 struct file **ofiles;	/* buffer of pointers to file structures */
@@ -152,7 +153,7 @@ void dofiles __P((struct kinfo_proc *));
 void getinetproto __P((int));
 void socktrans __P((struct socket *, int));
 void usage __P((void));
-void vtrans __P((struct vnode *, int, int));
+void vtrans __P((struct vnode *, int, int, off_t));
 int getfname __P((char *));
 void pipetrans __P((struct pipe *, int));
 
@@ -173,7 +174,8 @@ main(argc, argv)
 	arg = 0;
 	what = KERN_PROC_ALL;
 	nlistf = memf = NULL;
-	while ((ch = getopt(argc, argv, "fnp:u:vN:M:")) != -1)
+	oflg = 0;
+	while ((ch = getopt(argc, argv, "fnop:u:vN:M:")) != -1)
 		switch((char)ch) {
 		case 'f':
 			fsflg = 1;
@@ -186,6 +188,9 @@ main(argc, argv)
 			break;
 		case 'n':
 			nflg = 1;
+			break;
+		case 'o':
+			oflg = 1;
 			break;
 		case 'p':
 			if (pflg++)
@@ -250,10 +255,12 @@ main(argc, argv)
 		errx(1, "%s", kvm_geterr(kd));
 	if (nflg)
 		printf("%s",
-"USER     CMD          PID   FD  DEV    INUM       MODE SZ|DV R/W");
+"USER     CMD          PID   FD  DEV    INUM       MODE R/W    DV|SZ");
 	else
 		printf("%s",
-"USER     CMD          PID   FD MOUNT      INUM MODE         SZ|DV R/W");
+"USER     CMD          PID   FD MOUNT      INUM MODE       R/W    DV|SZ");
+	if (oflg)
+		printf("%s", ":OFFSET  ");
 	if (checkfile && fsflg == 0)
 		printf(" NAME\n");
 	else
@@ -324,16 +331,16 @@ dofiles(kp)
 	 * root directory vnode, if one
 	 */
 	if (filed.fd_rdir)
-		vtrans(filed.fd_rdir, RDIR, FREAD);
+		vtrans(filed.fd_rdir, RDIR, FREAD, 0);
 	/*
 	 * current working directory vnode
 	 */
-	vtrans(filed.fd_cdir, CDIR, FREAD);
+	vtrans(filed.fd_cdir, CDIR, FREAD, 0);
 	/*
 	 * ktrace vnode, if one
 	 */
 	if (p->p_tracep)
-		vtrans(p->p_tracep, TRACE, FREAD|FWRITE);
+		vtrans(p->p_tracep, TRACE, FREAD|FWRITE, 0);
 	/*
 	 * open files
 	 */
@@ -357,7 +364,7 @@ dofiles(kp)
 			continue;
 		}
 		if (file.f_type == DTYPE_VNODE)
-			vtrans((struct vnode *)file.f_data, i, file.f_flag);
+			vtrans((struct vnode *)file.f_data, i, file.f_flag, file.f_offset);
 		else if (file.f_type == DTYPE_SOCKET) {
 			if (checkfile == 0)
 				socktrans((struct socket *)file.f_data, i);
@@ -372,10 +379,11 @@ dofiles(kp)
 }
 
 void
-vtrans(vp, i, flag)
+vtrans(vp, i, flag, offset)
 	struct vnode *vp;
 	int i;
 	int flag;
+	off_t offset;
 {
 	struct vnode vn;
 	struct filestat fst;
@@ -458,7 +466,13 @@ vtrans(vp, i, flag)
 		(void)sprintf(mode, "%o", fst.mode);
 	else
 		strmode(fst.mode, mode);
-	(void)printf(" %6ld %10s", fst.fileid, mode);
+	(void)printf(" %6ld %11s", fst.fileid, mode);
+	rw[0] = '\0';
+	if (flag & FREAD)
+		strcat(rw, "r");
+	if (flag & FWRITE)
+		strcat(rw, "w");
+	printf(" %2s", rw);
 	switch (vn.v_type) {
 	case VBLK:
 	case VCHR: {
@@ -466,22 +480,20 @@ vtrans(vp, i, flag)
 
 		if (nflg || ((name = devname(fst.rdev, vn.v_type == VCHR ? 
 		    S_IFCHR : S_IFBLK)) == NULL))
-			printf("  %2d,%-2d", major(fst.rdev), minor(fst.rdev));
+			printf("   %2d,%-3d", major(fst.rdev), minor(fst.rdev));
 		else
-			printf(" %6s", name);
+			printf("  %7s", name);
+		if (oflg)
+			printf("         ");
 		break;
 	}
 	default:
-		printf(" %6qd", fst.size);
+		printf(" %8qd", fst.size);
+		if (oflg)
+			printf(":%-8qd", offset);
 	}
-	rw[0] = '\0';
-	if (flag & FREAD)
-		strcat(rw, "r");
-	if (flag & FWRITE)
-		strcat(rw, "w");
-	printf(" %2s", rw);
 	if (filename && !fsflg)
-		printf("  %s", filename);
+		printf(" %s", filename);
 	putchar('\n');
 }
 
