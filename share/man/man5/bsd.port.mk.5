@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.95 2003/07/09 06:05:08 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.96 2003/07/09 10:37:51 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1283,17 +1283,13 @@ Likewise, use
 .Ev EXTRACT_CASES
 instead.
 .It Ev USE_BZIP2
-Use
-.Ev EXTRACT_SUFX
-or
-.Ev EXTRACT_CASES
-instead.
+The framework will automatically detect the presence of
+.Pa .tar.bz2
+files to extract.
 .It Ev USE_ZIP
-Use
-.Ev EXTRACT_SUFX
-or
-.Ev EXTRACT_CASES
-instead.
+The framework will automatically detect the presence of
+.Pa .zip
+files to extract.
 .It Ev GNU_CONFIGURE
 Use
 .Ev CONFIGURE_STYLE
@@ -1728,7 +1724,8 @@ improvements.
 .\" AUTOCONF_ENV: probably not needed anyway, should be internal.
 .Sh BUGS AND LIMITATIONS
 .Ev LOCALBASE ,
-.Ev X11BASE
+.Ev X11BASE ,
+.Ev SYSCONFDIR
 and
 .Ev PREFIX
 are not heeded consistently.
