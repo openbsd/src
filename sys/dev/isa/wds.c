@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.7 1996/10/25 08:04:20 niklas Exp $	*/
+/*	$OpenBSD: wds.c,v 1.8 1996/11/09 08:40:53 niklas Exp $	*/
 /*	$NetBSD: wds.c,v 1.7 1996/05/12 23:54:09 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -138,7 +138,12 @@ struct wds_buf {
 
 TAILQ_HEAD(, wds_buf) wds_free_buffer;
 
-integrate void    wds_wait __P((struct wds_softc *, int, int, int));
+#ifdef WDSDEBUG
+int wds_debug = WDSDEBUG;
+#endif
+
+integrate void    wds_wait
+    __P((bus_chipset_tag_t, bus_io_handle_t, int, int, int));
 int     wds_cmd __P((struct wds_softc *, u_char *, int));
 integrate void wds_finish_scbs __P((struct wds_softc *));
 int     wdsintr __P((void *));
@@ -193,15 +198,13 @@ struct cfdriver wds_cd = {
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 integrate void
-wds_wait(sc, port, mask, val)
-	struct wds_softc *sc;
+wds_wait(bc, ioh, port, mask, val)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	int port;
 	int mask;
 	int val;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
-
 	while ((bus_io_read_1(bc, ioh, port) & mask) != val)
 		;
 }
@@ -212,18 +215,18 @@ wds_wait(sc, port, mask, val)
 int
 wds_cmd(sc, ibuf, icnt)
 	struct wds_softc *sc;
-	u_char *ibuf;
+	u_int8_t *ibuf;
 	int icnt;
 {
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
-	u_char c;
+	u_int8_t c;
 
-	wds_wait(sc, WDS_STAT, WDSS_RDY, WDSS_RDY);
+	wds_wait(bc, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
 
 	while (icnt--) {
 		bus_io_write_1(bc, ioh, WDS_CMD, *ibuf++);
-		wds_wait(sc, WDS_STAT, WDSS_RDY, WDSS_RDY);
+		wds_wait(bc, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
 		c = bus_io_read_1(bc, ioh, WDS_STAT);
 		if (c & WDSS_REJ)
 			return 1;
@@ -252,7 +255,7 @@ wdsprobe(parent, match, aux)
 		return 0;
 
 	ia->ia_msize = 0;
-	ia->ia_iosize = 8;
+	ia->ia_iosize = WDS_IO_PORTS;
 	return 1;
 }
 
@@ -280,11 +283,11 @@ wdsattach(parent, self, aux)
 
 	if (wds_find(ia, sc) != 0)
 		panic("wdsattach: wds_find of %s failed", self->dv_xname);
+	wds_init(sc);
 
 	if (sc->sc_drq != DRQUNK)
 		isa_dmacascade(sc->sc_drq);
 
-	wds_init(sc);
 	TAILQ_INIT(&sc->sc_free_scb);
 	TAILQ_INIT(&sc->sc_waiting_scb);
 	wds_inquire_setup_information(sc);
@@ -350,7 +353,7 @@ AGAIN:
 
 #ifdef WDSDEBUG
 		if (wds_debug) {
-			u_char *cp = &scb->scsi_cmd;
+			u_int8_t *cp = (u_int8_t *)&scb->cmd.scb;
 			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 			printf("stat %x for mbi addr = 0x%08x, ",
@@ -360,6 +363,10 @@ AGAIN:
 #endif /* WDSDEBUG */
 
 		untimeout(wds_timeout, scb);
+#ifdef notyet
+		isadma_copyfrombuf((caddr_t)scb, SCB_PHYS_SIZE,
+		    1, scb->scb_phys);
+#endif
 		wds_done(sc, scb, wmbi->stat);
 
 	next:
@@ -436,6 +443,11 @@ wds_free_scb(sc, scb)
 
 	s = splbio();
 
+#ifdef notyet
+	if (scb->scb_phys[0].addr)
+	        isadma_unmap((caddr_t)scb, SCB_PHYS_SIZE, 1, scb->scb_phys);
+#endif
+
 	wds_reset_scb(sc, scb);
 	TAILQ_INSERT_HEAD(&sc->sc_free_scb, scb, chain);
 
@@ -504,8 +516,18 @@ wds_get_scb(sc, flags, needbuffer)
 {
 	struct wds_scb *scb;
 	int s;
+#ifdef notyet
+	int mflags, hashnum;
+#endif
 
 	s = splbio();
+
+#ifdef notyet
+	if (flags & SCSI_NOSLEEP)
+		mflags = ISADMA_MAP_BOUNCE;
+	else
+		mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
+#endif
 
 	/*
 	 * If we can and have to, sleep waiting for one to come free
@@ -536,12 +558,27 @@ wds_get_scb(sc, flags, needbuffer)
 
 	scb->flags |= SCB_ALLOC;
 
-	if (needbuffer) {
-		scb->buf = wds_get_buf(sc, flags);
-		if (scb->buf == 0)
-			wds_free_scb(sc, scb);
+#ifdef notyet
+	if (isadma_map((caddr_t)scb, SCB_PHYS_SIZE, scb->scb_phys,
+	    mflags | ISADMA_MAP_CONTIG) == 1) {
+		hashnum = SCB_HASH(scb->scb_phys[0].addr);
+		scb->nexthash = sc->sc_scbhash[hashnum];
+		sc->sc_scbhash[hashnum] = ccb;
+	} else {
+		scb->scb_phys[0].addr = 0;
+		wds_free_scb(sc, scb);
 		scb = 0;
 	}
+#else
+	if (needbuffer) {
+		scb->buf = wds_get_buf(sc, flags);
+		if (scb->buf == 0) {
+			wds_free_scb(sc, scb);
+			scb = 0;
+		}
+	}
+#endif
+
 
 out:
 	splx(s);
@@ -667,10 +704,16 @@ wds_start_scbs(sc)
 #endif
 
 		/* Link scb to mbo. */
+#ifdef notyet
+		isadma_copytobuf((caddr_t)scb, SCB_PHYS_SIZE,
+		    1, scb->scb_phys);
+		ltophys(scb->scb_phys[0].addr, wmbo->scb_addr);
+#else
 		if (scb->flags & SCB_SENSE)
 			ltophys(KVTOPHYS(&scb->sense), wmbo->scb_addr);
 		else
 			ltophys(KVTOPHYS(&scb->cmd), wmbo->scb_addr);
+#endif
 		/* XXX What about aborts? */
 		wmbo->cmd = WDS_MBO_START;
 
@@ -695,7 +738,7 @@ void
 wds_done(sc, scb, stat)
 	struct wds_softc *sc;
 	struct wds_scb *scb;
-	u_char stat;
+	u_int8_t stat;
 {
 	struct scsi_xfer *xs = scb->xs;
 
@@ -776,6 +819,15 @@ wds_done(sc, scb, stat)
 		}
 	} /* XS_NOERROR */
 
+#ifdef notyet
+	if (scb->data_nseg) {
+		if (xs->flags & SCSI_DATA_IN)
+			isadma_copyfrombuf(xs->data, xs->datalen,
+			    scb->data_nseg, scb->data_phys);
+		isadma_unmap(xs->data, xs->datalen,
+		    scb->data_nseg, scb->data_phys);
+	}
+#endif
 	wds_free_scb(sc, scb);
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
@@ -816,16 +868,16 @@ ready:
 	delay(10000);
 	bus_io_write_1(bc, ioh, WDS_HCR, 0x00);
 	delay(500000);
-	wds_wait(sc, WDS_STAT, WDSS_RDY, WDSS_RDY);
+	wds_wait(bc, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
 	if (bus_io_read_1(bc, ioh, WDS_IRQSTAT) != 1)
 		if (bus_io_read_1(bc, ioh, WDS_IRQSTAT) != 7)
 			printf("%s: failed reset!!! %2x\n",
-			    sc->sc_dev.dv_xname,
+			    sc ? sc->sc_dev.dv_xname : "wds?",
 			    bus_io_read_1(bc, ioh, WDS_IRQSTAT));
 
 	if ((bus_io_read_1(bc, ioh, WDS_STAT) & (WDSS_RDY)) != WDSS_RDY) {
 		printf("%s: waiting for controller to become ready.",
-		    sc->sc_dev.dv_xname);
+		    sc ? sc->sc_dev.dv_xname : "wds?");
 		for (i = 0; i < 20; i++) {
 			if ((bus_io_read_1(bc, ioh, WDS_STAT) & (WDSS_RDY)) ==
 			    WDSS_RDY)
@@ -850,7 +902,8 @@ ready:
 		sc->sc_ioh = ioh;
 		sc->sc_irq = ia->ia_irq;
 		sc->sc_drq = ia->ia_drq;
-	}
+	} else
+		bus_io_unmap(bc, ioh, WDS_IO_PORTS);
 
 	return 0;
 }
@@ -862,9 +915,14 @@ void
 wds_init(sc)
 	struct wds_softc *sc;
 {
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	struct wds_setup init;
 	u_char c;
 	int i;
+#ifdef notyet
+	struct isadma_seg mbx_phys[1];
+#endif
 
 	/*
 	 * Set up initial mail box for round-robin operation.
@@ -891,16 +949,23 @@ wds_init(sc)
 	init.buson_t = 48;
 	init.busoff_t = 24;
 	init.xx = 0;
+#ifdef notyet
+	if (isadma_map((caddr_t)(wmbx), sizeof(struct wds_mbx),
+	    mbx_phys, ISADMA_MAP_CONTIG) != 1)
+		panic("wds_init: cannot map mail box");
+	ltophys(mbx_phys[0].addr, init.mbaddr);
+#else
 	ltophys(KVTOPHYS(wmbx), init.mbaddr);
+#endif
 	init.nomb = init.nimb = WDS_MBX_SIZE;
 	wds_cmd(sc, (u_char *)&init, sizeof init);
 
-	wds_wait(sc, WDS_STAT, WDSS_INIT, WDSS_INIT);
+	wds_wait(bc, ioh, WDS_STAT, WDSS_INIT, WDSS_INIT);
 
 	c = WDSC_DISUNSOL;
 	wds_cmd(sc, &c, sizeof c);
 
-	bus_io_write_1(sc->sc_bc, sc->sc_ioh, WDS_HCR, WDSH_DRQEN);
+	bus_io_write_1(bc, ioh, WDS_HCR, WDSH_DRQEN);
 }
 
 /*
@@ -982,6 +1047,9 @@ wds_scsi_cmd(xs)
 	struct iovec *iovp;
 #endif
 	int s;
+#ifdef notyet
+	int mflags;
+#endif
 
 	if (xs->flags & SCSI_RESET) {
 		/* XXX Fix me! */
@@ -991,6 +1059,12 @@ wds_scsi_cmd(xs)
 	}
 
 	flags = xs->flags;
+#ifdef notyet
+	if (flags & SCSI_NOSLEEP)
+		mflags = ISADMA_MAP_BOUNCE;
+	else
+		mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
+#endif
 	if ((scb = wds_get_scb(sc, flags, NEEDBUFFER(sc))) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
@@ -1046,6 +1120,16 @@ wds_scsi_cmd(xs)
 			SC_DEBUG(sc_link, SDEV_DB4,
 			    ("%d @0x%x:- ", xs->datalen, xs->data));
 
+#ifdef notyet
+			scb->data_nseg = isadma_map(xs->data, xs->datalen,
+						    scb->data_phys, mflags);
+			for (seg = 0; seg < scb->data_nseg; seg++) {
+				ltophys(scb->data_phys[seg].addr,
+				       sg[seg].seg_addr);
+				ltophys(scb->data_phys[seg].length,
+				       sg[seg].seg_len);
+			}
+#else
 			datalen = xs->datalen;
 			thiskv = (int)xs->data;
 			thisphys = KVTOPHYS(xs->data);
@@ -1095,6 +1179,7 @@ wds_scsi_cmd(xs)
 				ltophys(bytes_this_seg, sg->seg_len);
 				sg++;
 				seg++;
+#endif
 			}
 		}
 		/* end of iov/kv decision */
@@ -1107,9 +1192,23 @@ wds_scsi_cmd(xs)
 			    sc->sc_dev.dv_xname, WDS_NSEG);
 			goto bad;
 		}
+#ifdef notyet
+		if (scb->data_nseg == 0) {
+			printf("%s: wds_scsi_cmd, cannot map\n",
+			       sc->sc_dev.dv_xname);
+			goto bad;
+		} else if (flags & SCSI_DATA_OUT)
+			isadma_copytobuf(xs->data, xs->datalen,
+					 scb->data_nseg, scb->data_phys);
+		ltophys((unsigned)((struct wds_scb *)(scb->scb_phys[0].addr))->scat_gath,
+			scb->data_addr);
+		ltophys(scb->data_nseg * sizeof(struct wds_scat_gath),
+			scb->data_length);
+#else
 		scb->cmd.opcode = WDSX_SCSISG;
 		ltophys(KVTOPHYS(scb->scat_gath), scb->cmd.data);
 		ltophys(seg * sizeof(struct wds_scat_gath), scb->cmd.len);
+#endif
 	} else if (xs->datalen > 0) {
 		/* The board is an ASC or ASE. Do not use scatter/gather. */
 		if (xs->datalen > BUFLEN) {
@@ -1146,6 +1245,25 @@ wds_scsi_cmd(xs)
 
 	s = splbio();
 	wds_queue_scb(sc, scb);
+
+#ifdef notyet
+	if (VOLATILE_XS(xs)) {
+		while ((scb->xs->flags & ITSDONE) == 0) {
+			tsleep(scb, PRIBIO, "wdswait", 0);
+		}
+		if (scb->data_nseg) {
+			if (flags & SCSI_DATA_IN)
+				isadma_copyfrombuf(xs->data, xs->datalen,
+				    scb->data_nseg, scb->data_phys);
+			isadma_unmap(xs->data, xs->datalen,
+			    scb->data_nseg, scb->data_phys);
+		}
+		wds_free_scb(sc, scb);
+		scsi_done(xs);
+		splx(s);
+		return COMPLETE;
+	}
+#endif
 	splx(s);
 
 	if ((flags & SCSI_POLL) == 0)
@@ -1275,15 +1393,21 @@ wds_timeout(arg)
 	void *arg;
 {
 	struct wds_scb *scb = arg;
-	struct scsi_xfer *xs = scb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
-	struct wds_softc *sc = sc_link->adapter_softc;
+	struct scsi_xfer *xs;
+	struct scsi_link *sc_link;
+	struct wds_softc *sc;
 	int s;
+
+	s = splbio();
+#ifdef notyet
+	isadma_copyfrombuf((caddr_t)scb, SCB_PHYS_SIZE, 1, scb->scb_phys);
+#endif
+	xs = scb->xs;
+	sc_link = xs->sc_link;
+	sc = sc_link->adapter_softc;
 
 	sc_print_addr(sc_link);
 	printf("timed out");
-
-	s = splbio();
 
 #ifdef WDSDIAG
 	/*
