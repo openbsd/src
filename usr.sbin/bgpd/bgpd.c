@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.8 2003/12/20 21:26:48 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.9 2003/12/21 18:18:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -155,18 +155,18 @@ main(int argc, char *argv[])
 
 	logit(LOG_INFO, "startup");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
-		fatal("socketpair", errno);
+	if (pipe(pipe_m2s) == -1)
+		fatal("pipe", errno);
 	if (fcntl(pipe_m2s[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(pipe_m2s[1], F_SETFL, O_NONBLOCK) == -1)
 		fatal("fcntl", errno);
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2r) == -1)
-		fatal("socketpair", errno);
+	if (pipe(pipe_m2r) == -1)
+		fatal("pipe", errno);
 	if (fcntl(pipe_m2r[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(pipe_m2r[1], F_SETFL, O_NONBLOCK) == -1)
 		fatal("fcntl", errno);
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2r) == -1)
-		fatal("socketpair", errno);
+	if (pipe(pipe_s2r) == -1)
+		fatal("pipe", errno);
 	if (fcntl(pipe_s2r[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(pipe_s2r[1], F_SETFL, O_NONBLOCK) == -1)
 		fatal("fcntl", errno);
