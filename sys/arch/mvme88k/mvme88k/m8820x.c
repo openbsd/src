@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.18 2003/09/16 20:53:41 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.19 2003/09/26 22:27:26 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -220,15 +220,15 @@ void
 m8820x_show_apr(value)
 	unsigned value;
 {
-	union apr_template apr_template;
-	apr_template.bits = value;
-
-	printf("table @ 0x%x000", apr_template.field.st_base);
-	if (apr_template.field.wt) printf(", writethrough");
-	if (apr_template.field.g)  printf(", global");
-	if (apr_template.field.ci) printf(", cache inhibit");
-	if (apr_template.field.te) printf(", valid");
-	else			   printf(", not valid");
+	printf("table @ 0x%x000", PG_PFNUM(value));
+	if (value & CACHE_WT)
+		printf(", writethrough");
+	if (value & CACHE_GLOBAL)
+		printf(", global");
+	if (value & CACHE_INH)
+		printf(", cache inhibit");
+	if (value & APR_V)
+		printf(", valid");
 	printf("\n");
 }
 
@@ -1216,8 +1216,8 @@ m8820x_cmmu_flush_tlb(kernel, vaddr, size)
 void
 m8820x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
 	unsigned cpu, uapr;
-	batc_template_t i_batc[BATC_MAX];
-	batc_template_t d_batc[BATC_MAX];
+	u_int32_t i_batc[BATC_MAX];
+	u_int32_t d_batc[BATC_MAX];
 {
 	int entry_no;
 	CMMU_LOCK;
@@ -1227,13 +1227,13 @@ m8820x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
 		      cpu, 0, CMMU_ACS_USER, 0);
 
 	for (entry_no = 0; entry_no < BATC_MAX; entry_no++) {
-		m8820x_cmmu_set(CMMU_BWP(entry_no), i_batc[entry_no].bits, MODE_VAL|ACCESS_VAL,
-			      cpu, INST_CMMU, CMMU_ACS_USER, 0);
-		m8820x_cmmu_set(CMMU_BWP(entry_no), d_batc[entry_no].bits, MODE_VAL|ACCESS_VAL,
-			      cpu, DATA_CMMU, CMMU_ACS_USER, 0);
+		m8820x_cmmu_set(CMMU_BWP(entry_no), i_batc[entry_no],
+		    MODE_VAL | ACCESS_VAL, cpu, INST_CMMU, CMMU_ACS_USER, 0);
+		m8820x_cmmu_set(CMMU_BWP(entry_no), d_batc[entry_no],
+		    MODE_VAL | ACCESS_VAL, cpu, DATA_CMMU, CMMU_ACS_USER, 0);
 #ifdef SHADOW_BATC
-		CMMU(cpu,INST_CMMU)->batc[entry_no] = i_batc[entry_no].bits;
-		CMMU(cpu,DATA_CMMU)->batc[entry_no] = d_batc[entry_no].bits;
+		CMMU(cpu,INST_CMMU)->batc[entry_no] = i_batc[entry_no];
+		CMMU(cpu,DATA_CMMU)->batc[entry_no] = d_batc[entry_no];
 #endif
 	}
 
@@ -1717,7 +1717,7 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 			page_offset:PG_BITS;
 		} field;
 	} virtual_address;
-	unsigned value;
+	u_int32_t value;
 
 	if (verbose_flag)
 		DEBUG_MSG("-------------------------------------------\n");
@@ -1727,8 +1727,7 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 	/****** ACCESS PROPER CMMU or THREAD ***********/
 #if 0 /* no thread */
 	if (thread != 0) {
-		/* the following tidbit from _pmap_activate in m88k/pmap.c */
-		register apr_template_t apr_data;
+		/* the following tidbit from pmap_activate() */
 		supervisor_flag = 0; /* thread implies user */
 
 		if (thread->task == 0) {
@@ -1748,13 +1747,8 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 				  "pmap %x is locked]\n", thread, thread->task,
 				  thread->task->map, thread->task->map->pmap);
 		}
-		apr_data.bits = 0;
-		apr_data.field.st_base = atop(thread->task->map->pmap->sdt_paddr);
-		apr_data.field.wt = 0;
-		apr_data.field.g  = 1;
-		apr_data.field.ci = 0;
-		apr_data.field.te = 1;
-		value = apr_data.bits;
+		value = CACHE_GLOBAL | APR_V |
+		    (atop(thread->task->map->pmap->sdt_paddr) << PG_SHIFT);
 		if (verbose_flag) {
 			DEBUG_MSG("[thread %x task %x map %x pmap %x UAPR is %x]\n",
 				  thread, thread->task, thread->task->map,
@@ -1867,8 +1861,6 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 
 	/******* INTERPRET AREA DESCRIPTOR *********/
 	{
-		union apr_template apr_template;
-		apr_template.bits = value;
 		if (verbose_flag > 1) {
 			DEBUG_MSG("CMMU#%d", cmmu_num);
 #if 0
@@ -1878,7 +1870,7 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 				DEBUG_MSG("THREAD %x", thread);
 #endif /* 0 */
 			DEBUG_MSG(" %cAPR is 0x%08x\n",
-				  supervisor_flag ? 'S' : 'U', apr_template.bits);
+				  supervisor_flag ? 'S' : 'U', value);
 		}
 		DEBUG_MSG("CMMU#%d", cmmu_num);
 #if 0
@@ -1888,25 +1880,25 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 			DEBUG_MSG("THREAD %x", thread);
 #endif /* 0 */
 		DEBUG_MSG(" %cAPR: SegTbl: 0x%x000p",
-			  supervisor_flag ? 'S' : 'U', apr_template.field.st_base);
-		if (apr_template.field.wt) DEBUG_MSG(", WTHRU");
-		else			   DEBUG_MSG(", !wthru");
-		if (apr_template.field.g)  DEBUG_MSG(", GLOBAL");
-		else			   DEBUG_MSG(", !global");
-		if (apr_template.field.ci) DEBUG_MSG(", $INHIBIT");
-		else			   DEBUG_MSG(", $ok");
-		if (apr_template.field.te) DEBUG_MSG(", VALID");
-		else			   DEBUG_MSG(", !valid");
-		DEBUG_MSG(".\n");
+			  supervisor_flag ? 'S' : 'U', PG_PFNUM(value));
+		if (value & CACHE_WT)
+			DEBUG_MSG(", WTHRU");
+		if (value & CACHE_GLOBAL)
+			DEBUG_MSG(", GLOBAL");
+		if (value & CACHE_INH)
+			DEBUG_MSG(", INHIBIT");
+		if (value & APR_V)
+			DEBUG_MSG(", VALID");
+		DEBUG_MSG("\n");
 
 		/* if not valid, done now */
-		if (apr_template.field.te == 0) {
+		if ((value & APR_V) == 0) {
 			DEBUG_MSG("<would report an error, valid bit not set>\n");
 
 			return;
 		}
 
-		value = apr_template.field.st_base << PG_BITS; /* now point to seg page */
+		value &= PG_FRAME;	/* now point to seg page */
 	}
 
 	/* translate value from physical to virtual */

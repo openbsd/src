@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.12 2003/09/16 20:52:19 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.13 2003/09/26 22:27:25 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -93,8 +93,7 @@ struct cmmu_p {
 	void (*cmmu_flush_remote_tlb_func)(unsigned, unsigned, vm_offset_t, int);
 	void (*cmmu_flush_tlb_func)(unsigned, vm_offset_t, int);
 	void (*cmmu_pmap_activate_func)(unsigned, unsigned,
-					     batc_template_t i_batc[BATC_MAX],
-					     batc_template_t d_batc[BATC_MAX]);
+	    u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
 	void (*cmmu_flush_remote_cache_func)(int, vm_offset_t, int);
 	void (*cmmu_flush_cache_func)(vm_offset_t, int);
 	void (*cmmu_flush_remote_inst_cache_func)(int, vm_offset_t, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.20 2003/09/07 13:52:17 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.21 2003/09/26 22:27:25 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -65,33 +65,18 @@
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
 /* cache control bits */
-#define	CACHE_DFL	0x0000000
-#define	CACHE_INH	0x0000040	/* cache inhibit */
-#define	CACHE_GLOBAL	0x0000080	/* global scope */
-#define	CACHE_WT	0x0000200	/* write through */
+#define	CACHE_DFL	0x00000000
+#define	CACHE_INH	0x00000040	/* cache inhibit */
+#define	CACHE_GLOBAL	0x00000080	/* global scope */
+#define	CACHE_WT	0x00000200	/* write through */
 
-#define	CACHE_MASK	(~(CACHE_INH | CACHE_GLOBAL | CACHE_WT))
+#define	CACHE_MASK	(CACHE_INH | CACHE_GLOBAL | CACHE_WT)
 
 /*
  * Area descriptors
  */
 
-typedef struct cmmu_apr {
-	unsigned long
-			st_base:20,	/* segment table base address */
-			rsvA:2,		/* reserved */
-			wt:1,		/* writethrough (cache control) */
-			rsvB:1,		/* reserved */
-			g:1,		/* global (cache control) */
-			ci:1,		/* cache inhibit */
-			rsvC:5,		/* reserved */
-			te:1;		/* translation enable */
-} cmmu_apr_t;
-
-typedef union apr_template {
-	cmmu_apr_t	field;
-	unsigned long	bits;
-} apr_template_t;
+#define	APR_V		0x00000001	/* valid bit */
 
 /*
  * 88200 PATC (TLB)
@@ -103,22 +88,13 @@ typedef union apr_template {
  * BATC entries
  */
 
-typedef struct {
-	unsigned long
-			lba:13,		/* logical block address */
-			pba:13,		/* physical block address */
-			sup:1,		/* supervisor mode bit */
-			wt:1,		/* writethrough (cache control) */
-			g:1,		/* global (cache control) */
-			ci:1,		/* cache inhibit */
-			wp:1,		/* write protect */
-			v:1;		/* valid */
-} batc_entry_t;
+#define	BATC_V		0x00000001
+#define	BATC_PROT	0x00000002
+#define	BATC_INH	0x00000004
+#define	BATC_GLOBAL	0x00000008
+#define	BATC_WT		0x00000010
+#define	BATC_SO		0x00000020
 
-typedef union batc_template {
-	batc_entry_t	field;
-	unsigned long	bits;
-} batc_template_t;
 
 /*
  * Segment table entries
@@ -251,6 +227,10 @@ typedef	u_int32_t	pt_ind_entry_t;
 /* number of BATC entries */
 #define BATC_MAX	8
 
+/* physical and logical block address */
+#define	BATC_PSHIFT	6
+#define	BATC_VSHIFT	(BATC_PSHIFT + (32 - BATC_BLKSHIFT))
+
 #define BATC_BLK_ALIGNED(x)	((x & BATC_BLKMASK) == 0)
 
 #define M88K_BTOBLK(x)	(x >> BATC_BLKSHIFT)
@@ -263,15 +243,6 @@ typedef	u_int32_t	pt_ind_entry_t;
 #define DMA_CACHE_INV		0x3
 
 void dma_cachectl(vm_offset_t, int, int);
-
-/*
- * Alignment checks for pages (must lie on page boundaries).
- */
-
-#define PAGE_ALIGNED(ad)	(((vm_offset_t)(ad) & PAGE_MASK) == 0)
-#define	CHECK_PAGE_ALIGN(ad,who)	\
-    if (!PAGE_ALIGNED(ad))		\
-    	printf("%s: addr  %x not page aligned.\n", who, ad)
 
 unsigned invalidate_pte(pt_entry_t *);
 

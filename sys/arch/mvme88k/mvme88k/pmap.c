@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.76 2003/09/19 23:12:22 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.77 2003/09/26 22:27:26 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -110,7 +110,21 @@ extern vaddr_t      virtual_avail, virtual_end;
 #define CD_ALL		0x0FFFFFC
 
 int pmap_con_dbg = CD_NONE;
-#endif /* DEBUG */
+
+/*
+ * Alignment checks for pages (must lie on page boundaries).
+ */
+
+#define PAGE_ALIGNED(ad)	(((vm_offset_t)(ad) & PAGE_MASK) == 0)
+#define	CHECK_PAGE_ALIGN(ad,who) \
+	if (!PAGE_ALIGNED(ad)) \
+		printf("%s: addr  %x not page aligned.\n", who, ad)
+
+#else	/* DEBUG */
+
+#define	CHECK_PAGE_ALIGN(ad,who)
+
+#endif	/* DEBUG */
 
 struct pool pmappool, pvpool;
 
@@ -462,7 +476,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 	pt_entry_t template, *pte;
 	paddr_t	 page;
 #ifdef	PMAP_USE_BATC
-	batc_template_t	batctmp;
+	u_int32_t batctmp;
 	int i;
 #endif
 
@@ -480,17 +494,15 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 	template = m88k_protection(kernel_pmap, prot) | cmode | PG_V;
 
 #ifdef	PMAP_USE_BATC
-	batctmp.bits = 0;
-	batctmp.field.sup = 1;	     /* supervisor */
+	batctmp = BATC_SO | BATC_V;
 	if (template & CACHE_WT)
-		batctmp.field.wt = 1;	 /* write through */
+		batctmp |= BATC_WT;
 	if (template & CACHE_GLOBAL)
-		batctmp.field.g = 1;     /* global */
+		batctmp |= BATC_GLOBAL;
 	if (template & CACHE_INH)
-		batctmp.field.ci = 1;	 /* cache inhibit */
+		batctmp |= BATC_INH;
 	if (template & PG_PROT)
-		batctmp.field.wp = 1; /* protection */
-	batctmp.field.v = 1;	     /* valid */
+		batctmp |= BATC_PROT;
 #endif
 
 	page = trunc_page(start);
@@ -513,17 +525,17 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 			/*
 			 * map by BATC
 			 */
-			batctmp.field.lba = M88K_BTOBLK(virt);
-			batctmp.field.pba = M88K_BTOBLK(page);
+			batctmp |= M88K_BTOBLK(virt) << BATC_VSHIFT;
+			batctmp |= M88K_BTOBLK(page) << BATC_PSHIFT;
 
 			for (i = 0; i < MAX_CPUS; i++)
 				if (cpu_sets[i])
 					cmmu_set_pair_batc_entry(i, batc_used,
-								 batctmp.bits);
-			batc_entry[batc_used] = batctmp.field;
+					    batctmp);
+			batc_entry[batc_used] = batctmp;
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_MAP | CD_NORM)) == (CD_MAP | CD_NORM)) {
-				printf("(pmap_map: %x) BATC used=%d, data=%x\n", curproc, batc_used, batctmp.bits);
+				printf("(pmap_map: %x) BATC used=%d, data=%x\n", curproc, batc_used, batctmp);
 			}
 			if (pmap_con_dbg & CD_MAP)
 				for (i = 0; i < BATC_BLKBYTES; i += PAGE_SIZE) {
@@ -594,7 +606,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 	u_int users;
 
 #ifdef DEBUG
-	if (mode & CACHE_MASK) {
+	if ((mode & CACHE_MASK) != mode) {
 		printf("(cache_ctrl) illegal mode %x\n",mode);
 		return;
 	}
@@ -630,7 +642,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 		 * the modified bit and/or the reference bit by any other cpu.
 		 * XXX
 		 */
-		*pte = (invalidate_pte(pte) & CACHE_MASK) | mode;
+		*pte = (invalidate_pte(pte) & ~CACHE_MASK) | mode;
 		flush_atc_entry(users, va, kflush);
 
 		/*
@@ -699,7 +711,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	sdt_entry_t *kmap;
 	vaddr_t vaddr, virt, kernel_pmap_size, pdt_size;
 	paddr_t s_text, e_text, kpdt_phys;
-	apr_template_t apr_data;
+	u_int32_t apr_data;
 	pt_entry_t *pte;
 	int i;
 	pmap_table_t ptable;
@@ -709,8 +721,6 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	if ((pmap_con_dbg & (CD_BOOT | CD_NORM)) == (CD_BOOT | CD_NORM)) {
 		printf("pmap_bootstrap: \"load_start\" 0x%x\n", load_start);
 	}
-#endif
-#ifdef DIAGNOSTIC
 	if (!PAGE_ALIGNED(load_start))
 		panic("pmap_bootstrap: \"load_start\" not on the m88k page boundary: 0x%x", load_start);
 #endif
@@ -1003,21 +1013,16 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * Switch to using new page tables
 	 */
 
-	apr_data.bits = 0;
-	apr_data.field.st_base = atop(kernel_pmap->pm_stpa);
-	apr_data.field.wt = 1;
-	apr_data.field.g  = 1;
-	apr_data.field.ci = 0;
-	apr_data.field.te = 1; /* Translation enable */
+	apr_data = (atop(kernel_pmap->pm_stpa) << PG_SHIFT) | CACHE_WT | APR_V;
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		show_apr(apr_data.bits);
+		show_apr(apr_data);
 	}
 #endif
 	/* Invalidate entire kernel TLB. */
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("invalidating tlb %x\n", apr_data.bits);
+		printf("invalidating tlb %x\n", apr_data);
 	}
 #endif
 
@@ -1036,7 +1041,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 			pte = pmap_pte(kernel_pmap, phys_map_vaddr2);
 			*pte = PG_NV;
 			/* Load supervisor pointer to segment table. */
-			cmmu_remote_set_sapr(i, apr_data.bits);
+			cmmu_remote_set_sapr(i, apr_data);
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 				printf("Processor %d running virtual.\n", i);
@@ -1181,11 +1186,11 @@ pmap_create(void)
 	    (paddr_t *)&pmap->pm_stpa) == FALSE)
 		panic("pmap_create: pmap_extract failed!");
 
+#ifdef DEBUG
 	if (!PAGE_ALIGNED(pmap->pm_stpa))
 		panic("pmap_create: sdt_table 0x%x not aligned on page boundary",
 		    (int)pmap->pm_stpa);
 
-#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_CREAT | CD_NORM)) == (CD_CREAT | CD_NORM)) {
 		printf("(pmap_create: %x) pmap=0x%p, pm_stab=0x%x, pm_stpa=0x%x\n",
 		       curproc, pmap, pmap->pm_stab, pmap->pm_stpa);
@@ -2423,7 +2428,7 @@ pmap_collect(pmap_t pmap)
 void
 pmap_activate(struct proc *p)
 {
-	apr_template_t apr_data;
+	u_int32_t apr_data;
 	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	int cpu = cpu_number();
 
@@ -2442,12 +2447,8 @@ pmap_activate(struct proc *p)
 		 */
 
 		simple_lock(&pmap->pm_lock);
-		apr_data.bits = 0;
-		apr_data.field.st_base = atop(pmap->pm_stpa);
-		apr_data.field.wt = 0;
-		apr_data.field.g  = 1;
-		apr_data.field.ci = 0;
-		apr_data.field.te = 1;
+		apr_data = (atop(pmap->pm_stpa) << PG_SHIFT) |
+		    CACHE_GLOBAL | APR_V;
 
 #ifdef	PMAP_USE_BATC
 		/*
@@ -2456,12 +2457,12 @@ pmap_activate(struct proc *p)
 		 * ABOUT THE BATC ENTRIES, THE SUPERVISOR TLBs SHOULB BE
 		 * FLUSHED AS WELL.
 		 */
-		cmmu_pmap_activate(cpu, apr_data.bits,
-				   pmap->pm_ibatc, pmap->pm_dbatc);
+		cmmu_pmap_activate(cpu, apr_data,
+		    pmap->pm_ibatc, pmap->pm_dbatc);
 		for (n = 0; n < BATC_MAX; n++)
 			*(register_t *)&batc_entry[n] = pmap->pm_ibatc[n].bits;
 #else
-		cmmu_set_uapr(apr_data.bits);
+		cmmu_set_uapr(apr_data);
 		cmmu_flush_tlb(FALSE, 0, -1);
 #endif	/* PMAP_USE_BATC */
 

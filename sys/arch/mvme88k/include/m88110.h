@@ -1,12 +1,7 @@
-/*	$OpenBSD: m88110.h,v 1.13 2003/08/20 20:33:44 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.14 2003/09/26 22:27:25 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
-
-#include <uvm/uvm_extern.h>
-#ifndef _LOCORE
-# include <machine/mmu.h>		 /* batc_template_t */
-#endif
 
 /*
  *	88110 CMMU definitions
@@ -42,8 +37,8 @@
 #define CMMU_ICMD_INV_LINE       0x005    /* Invalidate Inst Cache Line */
 #define CMMU_ICMD_PRB_SUPR       0x008    /* MMU Probe Supervisor */
 #define CMMU_ICMD_PRB_USER       0x009    /* MMU Probe User */
-#define CMMU_ICMD_INV_SATC       0x00A    /* Invalidate All Supervisor ATCs */
-#define CMMU_ICMD_INV_UATC       0x00B    /* Invalidate All User ATCs */
+#define CMMU_ICMD_INV_SATC       0x00a    /* Invalidate All Supervisor ATCs */
+#define CMMU_ICMD_INV_UATC       0x00b    /* Invalidate All User ATCs */
 
 #define CMMU_ICTL_DID            0x8000   /* Double instruction disable */
 #define CMMU_ICTL_PREN           0x4000   /* Branch Prediction Enable */
@@ -116,26 +111,16 @@
 #define CMMU_INST 0
 
 /* definitions for use of the BATC */
-#define BATC_512K	(0x00 << 19)
-#define BATC_1M		(0x01 << 19)
-#define BATC_2M		(0x03 << 19)
-#define BATC_4M		(0x07 << 19)
-#define BATC_8M		(0x0F << 19)
-#define BATC_16M	(0x1F << 19)
-#define BATC_32M	(0x3F << 19)
-#define BATC_64M	(0x7F << 19)
-#define BATC_ADDR_MASK	0xFFF80000
-#define BATC_ADDR_SHIFT	13
-#define BATC_LBA_SHIFT	19
-#define BATC_PBA_SHIFT	6
-#define BATC_SU		0x20
-#define BATC_WT		0x10
-#define BATC_G		0x08
-#define BATC_CI		0x04
-#define BATC_WP		0x02
-#define BATC_V		0x01
+#define BATC_512K	(0x00 << BATC_BLKSHIFT)
+#define BATC_1M		(0x01 << BATC_BLKSHIFT)
+#define BATC_2M		(0x03 << BATC_BLKSHIFT)
+#define BATC_4M		(0x07 << BATC_BLKSHIFT)
+#define BATC_8M		(0x0f << BATC_BLKSHIFT)
+#define BATC_16M	(0x1f << BATC_BLKSHIFT)
+#define BATC_32M	(0x3f << BATC_BLKSHIFT)
+#define BATC_64M	(0x7f << BATC_BLKSHIFT)
 
-#define CLINE_MASK	0x1F
+#define CLINE_MASK	0x1f
 #define CLINE_SIZE	(8 * 32)
 
 #ifndef	_LOCORE
@@ -161,8 +146,7 @@ void m88110_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
 void m88110_cmmu_flush_remote_tlb(unsigned, unsigned, vm_offset_t, int);
 void m88110_cmmu_flush_tlb(unsigned, vm_offset_t, int);
 void m88110_cmmu_pmap_activate(unsigned, unsigned, 
-				  batc_template_t i_batc[BATC_MAX],
-				  batc_template_t d_batc[BATC_MAX]);
+    u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
 void m88110_cmmu_flush_remote_cache(int, vm_offset_t, int);
 void m88110_cmmu_flush_cache(vm_offset_t, int);
 void m88110_cmmu_flush_remote_inst_cache(int, vm_offset_t, int);

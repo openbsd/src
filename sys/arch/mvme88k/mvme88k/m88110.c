@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.8 2003/09/16 20:46:11 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.9 2003/09/26 22:27:26 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -59,9 +59,9 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/systm.h>
 #include <sys/simplelock.h>
 #include <machine/board.h>
-#include <machine/cpus.h>
 #include <machine/cpu_number.h>
 #include <machine/cmmu.h>
 #include <machine/locore.h>
@@ -84,23 +84,8 @@ unsigned int debuglevel = 0;
 #define STATIC	static
 #endif /* DDB */
 
-/* kernel copy of PATC entries */
-unsigned patc_data_u[32];
-unsigned patc_data_l[32];
-unsigned patc_inst_u[32];
-unsigned patc_inst_l[32];
-
-#define INST	0
-#define DATA	1
-#define BOTH    2
-#define KERN	1
-#define USER	0
-
 /* FORWARDS */
-void patc_insert(unsigned upper, unsigned lower, int which);
 void patc_clear(void);
-void patc_sync(int which);
-void patc_load(int index, unsigned upper, unsigned lower, int which);
 void m88110_cmmu_sync_cache(vm_offset_t physaddr, int size);
 void m88110_cmmu_sync_inval_cache(vm_offset_t physaddr, int size);
 void m88110_cmmu_inval_cache(vm_offset_t physaddr, int size);
@@ -141,118 +126,32 @@ struct cmmu_p cmmu88110 = {
 };
 
 void
-patc_load(int index, unsigned upper, unsigned lower, int which)
-{
-#ifdef DEBUG
-	if (index > 31)
-		panic("invalid PATC index %d!", index);
-#endif
-
-	index = index << 5;
-	switch (which) {
-	case INST:
-		set_iir(index);
-		set_ippu(upper);
-		set_ippl(lower);
-		break;
-	case DATA:
-		set_dir(index);
-		set_dppu(upper);
-		set_dppl(lower);
-		break;
-#ifdef DEBUG
-	default:
-		panic("invalid PATC! Choose DATA or INST...");
-#endif
-	}
-}
-
-void
-patc_sync(int which)
-{
-	int i;
-
-	switch (which) {
-	case BOTH:
-		for (i = 0; i < 32; i++) {
-			patc_load(i, patc_data_u[i], patc_data_l[i], DATA);
-			patc_load(i, patc_inst_u[i], patc_inst_l[i], INST);
-		}
-		break;
-	case INST:
-		for (i = 0; i < 32; i++) {
-			patc_load(i, patc_inst_u[i], patc_inst_l[i], INST);
-		}
-		break;
-	case DATA:
-		for (i = 0; i < 32; i++) {
-			patc_load(i, patc_data_u[i], patc_data_l[i], DATA);
-		}
-		break;
-	}
-}
-
-void 
 patc_clear(void)
 {
 	int i;
 
 	for (i = 0; i < 32; i++) {
-		patc_data_u[i] = 0;
-		patc_data_l[i] = 0;
-		patc_inst_u[i] = 0;
-		patc_inst_l[i] = 0;
-	}
-	patc_sync(BOTH);
-}
+		set_dir(i << 5);
+		set_dppu(0);
+		set_dppl(0);
 
-/* implement a FIFO on the PATC entries */
-void 
-patc_insert(unsigned upper, unsigned lower, int which)
-{
-	int i;
-
-	switch(which) {
-	case INST:
-		for (i = 31; i > 0; i--) {
-			patc_inst_u[i] = patc_inst_u[i - 1];
-			patc_inst_l[i] = patc_inst_l[i - 1];
-		}
-		patc_inst_u[0] = upper;
-		patc_inst_l[0] = lower;
-		patc_sync(INST);
-		break;
-	case DATA:
-		for (i = 31; i > 0; i--) {
-			patc_data_u[i] = patc_data_u[i - 1];
-			patc_data_l[i] = patc_data_l[i - 1];
-		}
-		patc_data_u[0] = upper;
-		patc_data_l[0] = lower;
-		patc_sync(DATA);
-		break;
-#ifdef DEBUG
-	case BOTH:
-		panic("patc_insert(): can't insert both INST and DATA.");
-#endif
+		set_iir(i << 5);
+		set_ippu(0);
+		set_ippl(0);
 	}
 }
 
 void
 m88110_show_apr(unsigned value)
 {
-	union apr_template apr_template;
-
-	apr_template.bits = value;
-
-	printf("table @ 0x%x000", apr_template.field.st_base);
-	if (apr_template.field.wt)
+	printf("table @ 0x%x000", PG_PFNUM(value));
+	if (value & CACHE_WT)
 		printf(", writethrough");
-	if (apr_template.field.g)
+	if (value & CACHE_GLOBAL)
 		printf(", global");
-	if (apr_template.field.ci)
+	if (value & CACHE_INH)
 		printf(", cache inhibit");
-	if (apr_template.field.te)
+	if (value & APR_V)
 		printf(", valid");
 	else
 		printf(", not valid");
@@ -545,14 +444,14 @@ m88110_cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size)
  */
 void
 m88110_cmmu_pmap_activate(unsigned cpu, unsigned uapr,
-    batc_template_t i_batc[BATC_MAX], batc_template_t d_batc[BATC_MAX])
+    u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX])
 {
 	m88110_cmmu_set_uapr(uapr);
 
 	/*
 	for (entry_no = 0; entry_no < 8; entry_no++) {
-	   m88110_cmmu_set_batc_entry(cpu, entry_no, 0, i_batc[entry_no].bits);
-	   m88110_cmmu_set_batc_entry(cpu, entry_no, 1, d_batc[entry_no].bits);
+	   m88110_cmmu_set_batc_entry(cpu, entry_no, 0, i_batc[entry_no]);
+	   m88110_cmmu_set_batc_entry(cpu, entry_no, 1, d_batc[entry_no]);
 	}
 	*/
 	/*
@@ -793,30 +692,28 @@ m88110_cmmu_show_translation(unsigned address,
 
 	/******* INTERPRET AREA DESCRIPTOR *********/
 	{
-		union apr_template apr_template;
-		apr_template.bits = value;
 		if (verbose_flag > 1) {
 			DEBUG_MSG(" %cAPR is 0x%08x\n",
-				  supervisor_flag ? 'S' : 'U', apr_template.bits);
+				  supervisor_flag ? 'S' : 'U', value);
 		}
 		DEBUG_MSG(" %cAPR: SegTbl: 0x%x000p",
-			  supervisor_flag ? 'S' : 'U', apr_template.field.st_base);
-		if (apr_template.field.wt) DEBUG_MSG(", WTHRU");
-		else			   DEBUG_MSG(", !wthru");
-		if (apr_template.field.g)  DEBUG_MSG(", GLOBAL");
-		else			   DEBUG_MSG(", !global");
-		if (apr_template.field.ci) DEBUG_MSG(", $INHIBIT");
-		else			   DEBUG_MSG(", $ok");
-		if (apr_template.field.te) DEBUG_MSG(", VALID");
-		else			   DEBUG_MSG(", !valid");
-		DEBUG_MSG(".\n");
+			  supervisor_flag ? 'S' : 'U', PG_PFNUM(value));
+		if (value & CACHE_WT)
+			DEBUG_MSG(", WTHRU");
+		if (value & CACHE_GLOBAL)
+			DEBUG_MSG(", GLOBAL");
+		if (value & CACHE_INH)
+			DEBUG_MSG(", INHIBIT");
+		if (value & APR_V)
+			DEBUG_MSG(", VALID");
+		DEBUG_MSG("\n");
 
 		/* if not valid, done now */
-		if (apr_template.field.te == 0) {
+		if ((value & APR_V) == 0) {
 			DEBUG_MSG("<would report an error, valid bit not set>\n");
 			return;
 		}
-		value = apr_template.field.st_base << PG_BITS; /* now point to seg page */
+		value &= PG_FRAME;	/* now point to seg page */
 	}
 
 	/* translate value from physical to virtual */
