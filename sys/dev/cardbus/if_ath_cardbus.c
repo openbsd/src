@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.2 2004/11/23 09:39:29 reyk Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.3 2005/02/16 14:29:14 aaron Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -217,9 +217,10 @@ ath_cardbus_detach(struct device *self, int flags)
 	/*
 	 * Unhook the interrupt handler.
 	 */
-	if (csc->sc_ih != NULL)
+	if (csc->sc_ih != NULL) {
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
 		csc->sc_ih = NULL;
+	}
 
 	/*
 	 * Release bus space and close window.
