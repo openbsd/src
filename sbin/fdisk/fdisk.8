@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.13 1998/02/19 20:48:07 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.14 1998/04/01 18:46:48 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -90,6 +90,14 @@ table of the specified device, ie.
      3: 00    0   0   0 -    0   0   0 [         0 -          0] unused
 .Ed
 .Pp
+The geometry displayed is the BIOS geometry unless another geometry
+has been selected using the
+.Fl c ,
+.Fl h ,
+and
+.Fl s
+options. 
+.Pp
 This disk is divided into two partitions that happen to fill the disk.
 The first partition overlaps the third partition.  (Used for debugging
 purposes)
@@ -105,7 +113,7 @@ If no 166 partition is found, it will use an older FreeBSD partition
 (with a magic number of 165 or A5 in hex).
 .It Em "cyl/hd/sec"
 These fields provide the starting and ending address of the partition
-in physical BIOS geometry
+in BIOS geometry
 .It Em "start/size"
 These fields provide the starting sector and size in sectors of the
 partition in linear block addresses.
@@ -169,7 +177,7 @@ This command will display the current drive geometry that fdisk has
 probed.  You are given a chance to edit them if you wish.
 .It Em edit
 This command is used to edit a given table entry in the memory copy of
-the current boot block.  You may edit either in physical geometry mode,
+the current boot block.  You may edit either in BIOS geometry mode,
 or in sector offsets and sizes.
 .It Em flag
 This command makes the given partition table entry bootable.  Only one
