@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1997/06/17 05:35:44 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/06/17 05:53:44 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/06/17 05:35:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/06/17 05:53:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ main(argc, argv)
 
 	(void)time(&now);	/* initialize the time-of-day */
 
-	p = paths = (char **) emalloc(sizeof(char *) * (argc > 1 ? argc : 2));
+	p = paths = (char **) emalloc(sizeof(char *) * argc);
 
 	sigaction(SIGINFO, &sa, NULL);
 
@@ -120,7 +120,7 @@ main(argc, argv)
 	}
 
 	if (p == paths)
-		*p++ = ".";		/* use cwd if no dir specified */
+		usage();
 	*p = NULL;
 
 	if (!(paths = realloc(paths, sizeof(char *) * (p - paths + 1))))
