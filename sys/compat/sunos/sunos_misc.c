@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.16 1997/11/13 18:35:28 deraadt Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.17 1997/11/14 22:59:20 deraadt Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -521,8 +521,8 @@ sunos_sys_mmap(p, v, retval)
 
 	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&ouap, addr) != 0 &&
-	    SCARG(&ouap, addr) < (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
-		SCARG(&ouap, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+	    SCARG(&ouap, addr) < (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
+		SCARG(&ouap, addr) = (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
 
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, prot) = SCARG(uap, prot);
