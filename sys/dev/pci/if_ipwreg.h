@@ -1,4 +1,4 @@
-/*      $Id: if_ipwreg.h,v 1.5 2004/10/27 21:21:16 damien Exp $ */
+/*      $Id: if_ipwreg.h,v 1.6 2004/10/27 21:22:14 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -102,7 +102,6 @@
 #define IPW_INFO_CURRENT_TX_RATE	768
 
 /* table2 offsets */
-#define IPW_INFO_ADAPTER_MAC	8
 #define IPW_INFO_CURRENT_SSID	48
 #define IPW_INFO_CURRENT_BSSID	112
 
@@ -251,6 +250,22 @@ struct ipw_configuration {
 	u_int32_t	ibss_chan;
 } __attribute__((__packed__));
 
+/* EEPROM = Electrically Erasable Programmable Read-Only Memory */
+
+#define IPW_MEM_EEPROM_CTL	0x00300040
+
+#define IPW_EEPROM_MAC	0x21
+
+#define IPW_EEPROM_DELAY	1	/* minimum hold time (microsecond) */
+
+#define IPW_EEPROM_C	(1 << 0)	/* Serial Clock */
+#define IPW_EEPROM_S	(1 << 1)	/* Chip Select */
+#define IPW_EEPROM_D	(1 << 2)	/* Serial data input */
+#define IPW_EEPROM_Q	(1 << 4)	/* Serial data output */
+
+#define IPW_EEPROM_SHIFT_D	2
+#define IPW_EEPROM_SHIFT_Q	4
+
 /*
  * control and status registers access macros
  */
@@ -298,4 +313,12 @@ struct ipw_configuration {
 	CSR_WRITE_4((sc), IPW_CSR_INDIRECT_ADDR, (addr));		\
 	CSR_WRITE_MULTI_1((sc), IPW_CSR_INDIRECT_DATA, (buf), (len));	\
 } while (/* CONSTCOND */0)
+
+/*
+ * EEPROM access macro
+ */
+#define IPW_EEPROM_CTL(sc, val) do {					\
+	MEM_WRITE_4((sc), IPW_MEM_EEPROM_CTL, (val));			\
+	DELAY(IPW_EEPROM_DELAY);					\
+} while (0)
 

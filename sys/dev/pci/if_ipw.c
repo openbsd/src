@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.12 2004/10/27 21:21:16 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.13 2004/10/27 21:22:14 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -82,6 +82,7 @@ int ipw_detach(struct device *, int);
 int ipw_media_change(struct ifnet *);
 void ipw_media_status(struct ifnet *, struct ifmediareq *);
 int ipw_newstate(struct ieee80211com *, enum ieee80211_state, int);
+u_int16_t ipw_read_prom_word(struct ipw_softc *, u_int8_t);
 void ipw_command_intr(struct ipw_softc *, struct ipw_soft_buf *);
 void ipw_newstate_intr(struct ipw_softc *, struct ipw_soft_buf *);
 void ipw_data_intr(struct ipw_softc *, struct ipw_status *,
@@ -170,6 +171,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t base;
 	pci_intr_handle_t ih;
 	pcireg_t data;
+	u_int16_t val;
 	int error, i;
 
 	sc->sc_pct = pa->pa_pc;
@@ -215,6 +217,11 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", intrstr);
 
+	if (ipw_reset(sc) != 0) {
+		printf(": could not reset adapter\n");
+		return;
+	}
+
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
@@ -222,6 +229,17 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	/* set device capabilities */
 	ic->ic_caps =  IEEE80211_C_IBSS | IEEE80211_C_MONITOR |
 	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+
+	/* read MAC address from EEPROM */
+	val = ipw_read_prom_word(sc, IPW_EEPROM_MAC + 0);
+	ic->ic_myaddr[0] = val >> 8;
+	ic->ic_myaddr[1] = val & 0xff;
+	val = ipw_read_prom_word(sc, IPW_EEPROM_MAC + 1);
+	ic->ic_myaddr[2] = val >> 8;
+	ic->ic_myaddr[3] = val & 0xff;
+	val = ipw_read_prom_word(sc, IPW_EEPROM_MAC + 2);
+	ic->ic_myaddr[4] = val >> 8;
+	ic->ic_myaddr[5] = val & 0xff;
 
 	/* set supported .11b rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ipw_rateset_11b;
@@ -395,6 +413,62 @@ ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	ic->ic_state = nstate;
 	return 0;
+}
+
+/*
+ * Read 16 bits at address 'addr' from the Microwire EEPROM.
+ * DON'T PLAY WITH THIS CODE UNLESS YOU KNOW *EXACTLY* WHAT YOU'RE DOING!
+ */
+u_int16_t
+ipw_read_prom_word(struct ipw_softc *sc, u_int8_t addr)
+{
+	u_int32_t tmp;
+	u_int16_t val;
+	int n;
+
+	/* Clock C once before the first command */
+	IPW_EEPROM_CTL(sc, 0);
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_C);
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
+
+	/* Write start bit (1) */
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_D);
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_D | IPW_EEPROM_C);
+
+	/* Write READ opcode (10) */
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_D);
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_D | IPW_EEPROM_C);
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_C);
+
+	/* Write address A7-A0 */
+	for (n = 7; n >= 0; n--) {
+		IPW_EEPROM_CTL(sc, IPW_EEPROM_S |
+		    (((addr >> n) & 1) << IPW_EEPROM_SHIFT_D));
+		IPW_EEPROM_CTL(sc, IPW_EEPROM_S |
+		    (((addr >> n) & 1) << IPW_EEPROM_SHIFT_D) | IPW_EEPROM_C);
+	}
+
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
+
+	/* Read data Q15-Q0 */
+	val = 0;
+	for (n = 15; n >= 0; n--) {
+		IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_C);
+		IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
+		tmp = MEM_READ_4(sc, IPW_MEM_EEPROM_CTL);
+		val |= ((tmp & IPW_EEPROM_Q) >> IPW_EEPROM_SHIFT_Q) << n;
+	}
+
+	IPW_EEPROM_CTL(sc, 0);
+
+	/* Clear Chip Select and clock C */
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
+	IPW_EEPROM_CTL(sc, 0);
+	IPW_EEPROM_CTL(sc, IPW_EEPROM_C);
+
+	return letoh16(val);
 }
 
 void
@@ -1876,9 +1950,8 @@ int
 ipw_init(struct ifnet *ifp)
 {
 	struct ipw_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct ipw_firmware *fw = &sc->fw;
-	int error, len;
+	int error;
 
 	/* exit immediately if firmware has not been ioctl'd */
 	if (!(sc->flags & IPW_FLAG_FW_CACHED)) {
@@ -1922,12 +1995,6 @@ ipw_init(struct ifnet *ifp)
 	sc->table2_base = CSR_READ_4(sc, IPW_CSR_TABLE2_BASE);
 
 	ipw_write_table1(sc, IPW_INFO_LOCK, 0);
-
-	/* Retrieve adapter MAC address */
-	len = IEEE80211_ADDR_LEN;
-	ipw_read_table2(sc, IPW_INFO_ADAPTER_MAC, ic->ic_myaddr, &len);
-
-	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
 
 	if ((error = ipw_config(sc)) != 0) {
 		printf("%s: device configuration failed\n",
