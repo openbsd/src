@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.54 1998/12/29 07:59:25 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.55 1999/01/04 03:47:35 jason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -259,12 +259,12 @@ bwtwo*)
 	;;
 
 cgtwo*)
-	rm -f bwtwo$unit
+	rm -f cgtwo$unit
 	mknod cgtwo$unit	c 31 $unit; chmod 666 cgtwo$unit
 	;;
 
 cgthree*)
-	rm -f bwtwo$unit
+	rm -f cgthree$unit
 	mknod cgthree$unit	c 55 $unit; chmod 666 cgthree$unit
 	;;
 
@@ -289,7 +289,7 @@ cgfourteen*)
 	;;
 
 tcx*)
-	rm -f cgfourteen$unit
+	rm -f tcx$unit
 	mknod tcx$unit		c 109 $unit; chmod 666 tcx$unit
 	;;
 
@@ -483,7 +483,7 @@ vnd*)
 
 rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
-	rm -f rd${unit}*
+	rm -f rd${unit}* rrd${unit}*
 	mknod rd${unit}a b 17 `expr $unit '*' 16 + 0`
 	mknod rd${unit}c b 17 `expr $unit '*' 16 + 2`
 	mknod rrd${unit}a c 106 `expr $unit '*' 16 + 0`
