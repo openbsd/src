@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.5 1998/08/26 00:57:04 jason Exp $	*/
+/*	$OpenBSD: qec.c,v 1.6 1998/10/19 05:41:20 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -98,6 +98,13 @@ qecattach(parent, self, aux)
 	    ca->ca_ra.ra_reg[1].rr_len);
 	sc->sc_bufsiz = ca->ca_ra.ra_reg[1].rr_len;
 
+	/*
+	 * On qec+qe, the qec has the interrupt priority, but we
+	 * need to pass that down so that the qe's can handle them.
+	 */
+	if (ca->ca_ra.ra_nintr == 1)
+		sc->sc_pri = ca->ca_ra.ra_intr[0].int_pri;
+
 	node = sc->sc_node = ca->ca_ra.ra_node;
 
 	qec_fix_range(sc, (struct sbus_softc *)parent);
@@ -109,6 +116,16 @@ qecattach(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
+	sc->sc_nchannels = getpropint(ca->ca_ra.ra_node, "#channels", -1);
+	if (sc->sc_nchannels == -1) {
+		printf(": no channels\n");
+		return;
+	}
+	else if (sc->sc_nchannels < 1 || sc->sc_nchannels > 4) {
+		printf(": invalid number of channels: %d\n", sc->sc_nchannels);
+		return;
+	}
+
 	sc->sc_burst = getpropint(ca->ca_ra.ra_node, "burst-sizes", -1);
 	if (sc->sc_burst == -1)
 		/* take SBus burst sizes */
@@ -117,7 +134,9 @@ qecattach(parent, self, aux)
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= sbusburst;
 
-	printf(": %dK memory", sc->sc_bufsiz / 1024);
+	printf(": %dK memory %d %s",
+	    sc->sc_bufsiz / 1024, sc->sc_nchannels,
+	    (sc->sc_nchannels == 1) ? "channel" : "channels");
 
 	node = sc->sc_node = ca->ca_ra.ra_node;
 

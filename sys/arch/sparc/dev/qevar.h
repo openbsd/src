@@ -1,7 +1,7 @@
-/*	$OpenBSD: qecvar.h,v 1.5 1998/10/19 05:41:20 jason Exp $	*/
+/*	$OpenBSD: qevar.h,v 1.1 1998/10/19 05:41:21 jason Exp $	*/
 
 /*
- * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
+ * Copyright (c) 1998 Jason L. Wright.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,18 +27,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct qec_softc {
-	struct	device sc_dev;		/* us as a device */
+struct qesoftc {
+	struct	device sc_dev;
 	struct	sbusdev sc_sd;		/* sbus device */
-	struct	qecregs *sc_regs;	/* QEC registers */
-	int	sc_node;		/* PROM node ID */
-	int	sc_burst;		/* DVMA burst size in effect */
-	caddr_t	sc_buffer;		/* VA of the buffer we provide */
-	int	sc_bufsiz;		/* Size of buffer */
-	int	sc_nrange;		/* number of ranges */
-	int	sc_pri;
-	int	sc_nchannels;		/* number of channels on board */
-	struct	rom_range *sc_range;	/* array of ranges */
-};
+	struct	intrhand sc_ih;		/* interrupt vectoring */
+	struct	arpcom sc_arpcom;	/* ethernet common */
 
-void	qec_reset __P((struct qec_softc *));
+	struct	qec_softc *sc_qec;	/* QEC parent */
+	struct	qecregs *sc_qr;		/* QEC registers */
+	struct	qe_mregs *sc_mr;	/* MACE registers */
+	struct	qe_cregs *sc_cr;	/* Channel registers */
+
+	void	*sc_mem;
+	int	sc_memsize;
+	int	sc_channel;
+	u_int	sc_rev;
+
+	int	sc_promisc;
+	int	sc_burst;
+
+	struct	qe_bufs *sc_bufs, *sc_bufs_dva;
+	struct	qe_desc *sc_desc, *sc_desc_dva;
+
+	int	sc_no_td, sc_first_td, sc_last_td;
+	int	sc_last_rd;
+};
