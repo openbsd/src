@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.4 2001/02/01 05:56:14 aaron Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.5 2001/02/02 08:08:17 aaron Exp $	*/
 /*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ void
 wsmux_setmax(n)
 	int n;
 {
-	int i;
+	int i = 0;
 	struct wsmux_softc **wsmuxdevs_tmp = NULL;
 
 	if (n >= nwsmux) {
@@ -118,7 +118,7 @@ wsmux_setmax(n)
 			    M_DEVBUF, M_NOWAIT);
 			if (wsmuxdevs_tmp == 0)
 				panic("wsmux_setmax: no mem\n");
-			for (i = 0; i < nwsmux; i++)
+			for (; i < nwsmux; i++)
 				wsmuxdevs_tmp[i] = wsmuxdevs[i];
 			free(wsmuxdevs, M_DEVBUF);
 		}
