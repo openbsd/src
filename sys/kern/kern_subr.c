@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.21 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.22 2002/07/12 13:31:20 art Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -219,9 +219,9 @@ hook_disestablish(head, vhook)
 	struct hook_desc_head *head;
 	void *vhook;
 {
-#ifdef DIAGNOSTIC
 	struct hook_desc *hdp;
 
+#ifdef DIAGNOSTIC
 	for (hdp = TAILQ_FIRST(head); hdp != NULL;
 	    hdp = TAILQ_NEXT(hdp, hd_list))
                 if (hdp == vhook)
@@ -229,8 +229,9 @@ hook_disestablish(head, vhook)
 	if (hdp == NULL)
 		panic("hook_disestablish: hook not established");
 #endif
-
-	TAILQ_REMOVE(head, (struct hook_desc *)vhook, hd_list);
+	hdp = vhook;
+	TAILQ_REMOVE(head, hdp, hd_list);
+	free(hdp, M_DEVBUF);
 }
 
 /*
@@ -240,14 +241,22 @@ hook_disestablish(head, vhook)
  * after crash dump done, etc.
  */
 void
-dohooks(head)
-	struct hook_desc_head *head;
+dohooks(struct hook_desc_head *head, int flags)
 {
 	struct hook_desc *hdp;
 
-	for (hdp = TAILQ_FIRST(head); hdp != NULL;
-	    hdp = TAILQ_NEXT(hdp, hd_list))
-		(*hdp->hd_fn)(hdp->hd_arg);
+	if ((flags & HOOK_REMOVE) == 0) {
+		TAILQ_FOREACH(hdp, head, hd_list) {
+			(*hdp->hd_fn)(hdp->hd_arg);
+		}
+	} else {
+		while ((hdp = TAILQ_FIRST(head)) != NULL) {
+			TAILQ_REMOVE(head, hdp, hd_list);
+			(*hdp->hd_fn)(hdp->hd_arg);
+			if ((flags & HOOK_FREE) != 0)
+				free(hdp, M_DEVBUF);
+		}
+	}
 }
 
 /*

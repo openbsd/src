@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.27 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: in.c,v 1.28 2002/07/12 13:31:20 art Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -368,7 +368,7 @@ in_control(so, cmd, data, ifp)
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
 		if (!error)
-			dohooks(ifp->if_addrhooks);
+			dohooks(ifp->if_addrhooks, 0);
 		return error;
 
 	case SIOCSIFNETMASK:
@@ -408,7 +408,7 @@ in_control(so, cmd, data, ifp)
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
 		if (!error)
-			dohooks(ifp->if_addrhooks);
+			dohooks(ifp->if_addrhooks, 0);
 		return (error);
 
 	case SIOCDIFADDR:
@@ -416,7 +416,7 @@ in_control(so, cmd, data, ifp)
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 		IFAFREE((&ia->ia_ifa));
-		dohooks(ifp->if_addrhooks);
+		dohooks(ifp->if_addrhooks, 0);
 		break;
 
 #ifdef MROUTING
