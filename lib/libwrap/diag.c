@@ -1,4 +1,4 @@
-/*	$OpenBSD: diag.c,v 1.2 2002/02/19 19:39:37 millert Exp $	*/
+/*	$OpenBSD: diag.c,v 1.3 2002/06/07 00:05:09 itojun Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -15,7 +15,7 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-static char rcsid[] = "$OpenBSD: diag.c,v 1.2 2002/02/19 19:39:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: diag.c,v 1.3 2002/06/07 00:05:09 itojun Exp $";
 #endif
 #endif
 
@@ -32,6 +32,9 @@ static char rcsid[] = "$OpenBSD: diag.c,v 1.2 2002/02/19 19:39:37 millert Exp $"
 
 struct tcpd_context tcpd_context;
 jmp_buf tcpd_buf;
+
+static void tcpd_diag(int, char *, char *, va_list)
+	__attribute__((__format__(__printf__, 3, 0)));
 
 /* tcpd_diag - centralize error reporter */
 
