@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfb.c,v 1.7 1997/01/24 19:58:08 niklas Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.8 1997/07/31 13:40:03 kstailey Exp $	*/
 /*	$NetBSD: cfb.c,v 1.7 1996/12/05 01:39:39 cgd Exp $	*/
 
 /*
@@ -81,6 +81,7 @@ struct wscons_emulfuncs cfb_emulfuncs = {
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
+	rcons_setattr,
 };
 
 int	cfbioctl __P((void *, u_long, caddr_t, int, struct proc *));

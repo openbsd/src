@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga.c,v 1.5 1997/07/31 04:03:43 kstailey Exp $	*/
+/*	$OpenBSD: vga.c,v 1.6 1997/07/31 13:40:01 kstailey Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -50,6 +50,7 @@ void	vga_copycols __P((void *, int, int, int, int));
 void	vga_erasecols __P((void *, int, int, int));
 void	vga_copyrows __P((void *, int, int, int));
 void	vga_eraserows __P((void *, int, int));
+void	vga_set_attr __P((void *, int));
 
 struct wscons_emulfuncs vga_emulfuncs = {
 	vga_cursor,
@@ -58,6 +59,7 @@ struct wscons_emulfuncs vga_emulfuncs = {
 	vga_erasecols,
 	vga_copyrows,
 	vga_eraserows,
+	vga_set_attr,
 };
 
 int	vgaprint __P((void *, const char *));
@@ -349,4 +351,14 @@ vga_eraserows(id, startrow, nrows)
 	val = (vc->vc_at << 8) | ' ';
 
 	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, val, count);
+}
+
+void
+vga_set_attr(id, val)
+	void *id;
+	int val;
+{
+	struct vga_config *vc = id;
+
+	vc->vc_so = val;
 }

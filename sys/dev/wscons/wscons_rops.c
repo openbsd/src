@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_rops.c,v 1.3 1996/10/30 22:41:55 niklas Exp $ */
+/*	$OpenBSD: wscons_rops.c,v 1.4 1997/07/31 13:40:05 kstailey Exp $ */
 /*	$NetBSD: wscons_rops.c,v 1.1 1996/04/12 02:00:55 cgd Exp $ */
 
 /*
@@ -117,7 +117,7 @@ rcons_putstr(id, row, col, str, n)
 }
 
 /*
- * Possibly change to white-on-black or black-on-white modes.
+ * Possibly change entire display to white-on-black or black-on-white modes.
  */
 void
 rcons_invert(id, inverted)
@@ -215,4 +215,12 @@ rcons_eraserows(id, startrow, nrows)
 	raster_op(rc->rc_sp, rc->rc_xorigin, starty,
 	    rc->rc_raswidth, ny, rc->rc_ras_blank,
 	    (struct raster *) 0, 0, 0);
+}
+
+void
+rcons_setattr(id, val)
+	void *id;
+	int val;
+{
+	/* XXX */
 }

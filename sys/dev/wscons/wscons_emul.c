@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_emul.c,v 1.10 1997/07/31 04:48:11 kstailey Exp $	*/
+/*	$OpenBSD: wscons_emul.c,v 1.11 1997/07/31 13:40:04 kstailey Exp $	*/
 /*	$NetBSD: wscons_emul.c,v 1.7 1996/11/19 05:23:13 cgd Exp $	*/
 
 /*
@@ -370,6 +370,14 @@ wscons_emul_docontrol(we, c)
 		break;
 	case 'm':		/* video attributes */
 		/* 7 for so; 0 for se */
+		switch (we->ac_args[0]) {
+		case 7:
+			(we->ac_ef->wef_set_attr)(we->ac_efa, 1);
+			break;
+		case 0:
+			(we->ac_ef->wef_set_attr)(we->ac_efa, 0);
+			break;
+		}
 		break;
 	}
 }
