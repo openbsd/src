@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.90 1998/09/19 07:05:11 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.91 1998/09/19 23:02:16 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -455,7 +455,7 @@ addifconfig() {
 	# $2 - interface symbolic name
 	# $3 - interface IP address
 	# $4 - interface netmask
-	# $5 - (optional) interface link-layer directives
+	# $5 - (optional) interface media directives
 
 	# Create a hostname.* file for the interface.
 	if [ "$3" = "dhcp" ]; then
@@ -596,12 +596,12 @@ configure_ifs() {
 		echo "This is a list of supported media:"
 		ifconfig -m ${_interface_name} | sed -n '
 			/media:/D
+			s/^	//
 			/media/p'
 		echo "If the default is not satisfactory, and you wish to use"
-		echo "another media, enter it now, like:"
-		echo "        media 100baseTX mediaopt full-duplex"
+		echo "another media, copy that line from above."
 		echo ""
-		echo -n "Additional link-layer arguments? [$_interface_extra] "
+		echo -n "Media directives? [$_interface_extra] "
 		getresp "$_interface_extra"
 		if [ "X${resp}" != X"" ]; then
 			_interface_extra=$resp
