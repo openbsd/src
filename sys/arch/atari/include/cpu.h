@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 1995/12/21 05:01:53 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 1996/01/19 13:46:56 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,17 +117,18 @@ extern int	want_resched;	/* resched() was called */
 /*
  * Values for machineid.
  */
-#define ATARI_68020	(1L<<2)
-#define ATARI_68030	(1L<<3)
-#define ATARI_68040	(1L<<4)
-#define ATARI_68881	(1L<<8)
-#define ATARI_68882	(1L<<9)
-#define	ATARI_FPU40	(1L<<10)
+#define	ATARI_68000	1		/* 68000 CPU			*/
+#define	ATARI_68010	(1<<1)		/* 68010 CPU			*/
+#define ATARI_68020	(1L<<2)		/* 68020 CPU			*/
+#define ATARI_68030	(1L<<3)		/* 68030 CPU			*/
+#define ATARI_68040	(1L<<4)		/* 68040 CPU			*/
 #define	ATARI_TT	(1L<<11)
 #define	ATARI_FALCON	(1L<<12)
 
 #define	ATARI_CLKBROKEN	(1L<<16)
 
+#define	ATARI_ANYCPU	(ATARI_68000|ATARI_68010|ATARI_68020|ATARI_68030 \
+			|ATARI_68040)
 
 /*
  * Values for mmutype (assigned for quick testing)
