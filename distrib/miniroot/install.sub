@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.186 2002/03/04 13:59:52 krw Exp $
+#	$OpenBSD: install.sub,v 1.187 2002/03/22 01:41:54 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -94,17 +94,9 @@ if [ "X$EDITOR" = X ]; then
 	export EDITOR
 fi
 
-# Please don't use the 1 of n form below, good idea, wrong implementation!
-# get a reponse with default[s]
 getresp() {
-	local _shell_aware=0
 	local _no_shell=0
 
-	# -s option means exit after a shell (caller is shell-aware)
-	if [ "$1" = "-s" ]; then
-		_shell_aware=1
-		shift
-	fi
 	# -n option means don't try to run shell commands
 	if [ "$1" = "-n" ]; then
 		_no_shell=1
@@ -112,8 +104,8 @@ getresp() {
 	fi
 
 	set -o noglob
-	valid="false"
-	while [ "X$valid" = "Xfalse" ]; do
+	valid=""
+	while [ "X$valid" = "X" ]; do
 		read resp
 		if [ ${_no_shell} -eq 1 ]; then
 			test -z "$resp" && resp="$1"
@@ -123,26 +115,15 @@ getresp() {
 					;;
 				!)	echo "Type 'exit' to return to install."
 					sh
-					test $_shell_aware -eq 0 && continue
+					continue
 					;;
 				!*)
 					eval ${resp#?}
-					test $_shell_aware -eq 0 && continue
+					continue
 					;;
 			esac
 		fi
-		if [ $# -gt 1 ]; then
-			for i in $@; do
-				if [ "X$resp" = "X$i" ]; then
-					valid="true"
-				fi
-			done
-		else
-			valid="true"
-		fi
-		if [ "X$valid" = "Xfalse" ]; then
-			echo "Try again: Enter one of [$@]"
-		fi
+		valid="true"
 	done
 	set +o noglob
 }
