@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.53 2002/11/18 04:45:11 itojun Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.54 2003/04/24 16:20:04 cloder Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.53 2002/11/18 04:45:11 itojun Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.54 2003/04/24 16:20:04 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -480,7 +480,7 @@ main(int argc, char *argv[])
 		errno = 0;
 		ep = NULL;
 		l = strtoul(*argv, &ep, 10);
-		if (errno || !*argv || *ep || datalen > INT_MAX)
+		if (errno || !*argv || *ep || l > INT_MAX)
 			errx(1, "datalen out of range");
 		datalen = (int)l;
 	}
