@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.28 2001/02/23 02:52:37 pjanzen Exp $	*/
+/*	$OpenBSD: df.c,v 1.29 2001/07/09 22:37:56 millert Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.28 2001/02/23 02:52:37 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.29 2001/07/09 22:37:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -449,7 +449,7 @@ posixprint(mntbuf, mntsize, maxwidth)
 	char *blockstr;
 	struct statfs *sfsp;
 	long used, avail;
-	int percentused;
+	double percentused;
 
 	if (kflag) {
 		blocksize = 1024;
@@ -469,12 +469,11 @@ posixprint(mntbuf, mntsize, maxwidth)
 		used = sfsp->f_blocks - sfsp->f_bfree;
 		avail = sfsp->f_bavail + used;
 		if (avail == 0)
-			percentused = 100;
+			percentused = 100.0;
 		else
-			percentused = (used * 100 / avail) +
-			    ((used % avail) ? 1 : 0);
+			percentused = (double)used / (double)avail * 100.0;
 
-		(void) printf ("%-*.*s %*d %10ld %11d %5d%%   %s\n",
+		(void) printf ("%-*.*s %*d %10ld %11d %5.0f%%   %s\n",
 			maxwidth, maxwidth, sfsp->f_mntfromname,
 			strlen(blockstr),
 			fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
@@ -483,7 +482,6 @@ posixprint(mntbuf, mntsize, maxwidth)
 			percentused, sfsp->f_mntonname);
 	}
 }
-
 
 int
 raw_df(file, sfsp)
