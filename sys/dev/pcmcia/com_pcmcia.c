@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.13 1999/07/26 05:43:15 deraadt Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.14 1999/07/26 06:15:42 fgsch Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -304,13 +304,13 @@ found:
 
 	com_attach_subr(sc);
 #endif
-	com_attach(sc);
-
 	/* establish the interrupt. */
 	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_TTY, comintr, sc);
 	if (psc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
+
+	com_attach(sc);
 
 #ifdef notyet
 	sc->enabled = 0;
