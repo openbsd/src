@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.9 1997/01/07 05:37:35 tholo Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.10 1997/04/17 01:25:17 niklas Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -98,7 +98,13 @@ void		swapout_threads __P((void));
 int		swfree __P((struct proc *, int));
 void		swstrategy __P((struct buf *));
 void		thread_block __P((void));
-void		thread_sleep __P((void *, simple_lock_t, boolean_t));
+void		thread_sleep_msg __P((void *, simple_lock_t,
+		    boolean_t, char *));
+
+/* backwards compatibility */
+#define		thread_sleep(event, lock, ruptible) \
+    thread_sleep_msg((event), (lock), (ruptible), "thrd_sleep")
+
 /*
  * This define replaces a thread_wakeup prototype, as thread_wakeup
  * was solely a wrapper around wakeup.
@@ -145,7 +151,6 @@ int		vsunlock __P((caddr_t, u_int));
 /* Machine dependent portion */
 void		vmapbuf __P((struct buf *, vm_size_t));
 void		vunmapbuf __P((struct buf *, vm_size_t));
-void		remrq __P((struct proc *));
 void		pagemove __P((caddr_t, caddr_t, size_t));
 #ifdef __FORK_BRAINDAMAGE
 int		cpu_fork __P((struct proc *, struct proc *));

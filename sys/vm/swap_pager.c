@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap_pager.c,v 1.9 1997/03/05 12:49:38 niklas Exp $	*/
+/*	$OpenBSD: swap_pager.c,v 1.10 1997/04/17 01:25:16 niklas Exp $	*/
 /*	$NetBSD: swap_pager.c,v 1.27 1996/03/16 23:15:20 christos Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ swap_pager_alloc(handle, size, prot, foff)
 			 */
 			if (vm_object_lookup(pager) == NULL)
 				panic("swap_pager_alloc: bad object");
-			return(pager);
+			return (pager);
 		}
 	}
 	/*
@@ -282,7 +282,7 @@ swap_pager_alloc(handle, size, prot, foff)
 	waitok = handle ? M_WAITOK : M_NOWAIT;
 	pager = (vm_pager_t)malloc(sizeof *pager, M_VMPAGER, waitok);
 	if (pager == NULL)
-		return(NULL);
+		return (NULL);
 	swp = (sw_pager_t)malloc(sizeof *swp, M_VMPGDATA, waitok);
 	if (swp == NULL) {
 #ifdef DEBUG
@@ -290,7 +290,7 @@ swap_pager_alloc(handle, size, prot, foff)
 			printf("swpg_alloc: swpager malloc failed\n");
 #endif
 		free((caddr_t)pager, M_VMPAGER);
-		return(NULL);
+		return (NULL);
 	}
 	size = round_page(size);
 	for (swt = swtab; swt->st_osize; swt++)
@@ -303,9 +303,8 @@ swap_pager_alloc(handle, size, prot, foff)
 	swp->sw_osize = size;
 	swp->sw_bsize = swt->st_bsize;
 	swp->sw_nblocks = (btodb(size) + swp->sw_bsize - 1) / swp->sw_bsize;
-	swp->sw_blocks = (sw_blk_t)
-		malloc(swp->sw_nblocks*sizeof(*swp->sw_blocks),
-		       M_VMPGDATA, M_NOWAIT);
+	swp->sw_blocks = (sw_blk_t)malloc(swp->sw_nblocks *
+	    sizeof(*swp->sw_blocks), M_VMPGDATA, M_NOWAIT);
 	if (swp->sw_blocks == NULL) {
 		free((caddr_t)swp, M_VMPGDATA);
 		free((caddr_t)pager, M_VMPAGER);
@@ -315,10 +314,10 @@ swap_pager_alloc(handle, size, prot, foff)
 		swt->st_inuse--;
 		swt->st_usecnt--;
 #endif
-		return(FALSE);
+		return (FALSE);
 	}
 	bzero((caddr_t)swp->sw_blocks,
-	      swp->sw_nblocks * sizeof(*swp->sw_blocks));
+	    swp->sw_nblocks * sizeof(*swp->sw_blocks));
 	swp->sw_poip = swp->sw_cnt = 0;
 	if (handle) {
 		vm_object_t object;
@@ -349,7 +348,7 @@ swap_pager_alloc(handle, size, prot, foff)
 		printf("swpg_alloc: pg_data %p, %x of %x at %p\n",
 		    swp, swp->sw_nblocks, swp->sw_bsize, swp->sw_blocks);
 #endif
-	return(pager);
+	return (pager);
 }
 
 static void
@@ -451,7 +450,7 @@ swap_pager_getpage(pager, mlist, npages, sync)
 		m->flags &= ~PG_FAULTING;
 	}
 #endif
-	return(rv);
+	return (rv);
 }
 
 static int
@@ -475,8 +474,8 @@ swap_pager_putpage(pager, mlist, npages, sync)
 	flags = B_WRITE;
 	if (!sync)
 		flags |= B_ASYNC;
-	return(swap_pager_io((sw_pager_t)pager->pg_data,
-			     mlist, npages, flags));
+	return (swap_pager_io((sw_pager_t)pager->pg_data, mlist, npages,
+	    flags));
 }
 
 static boolean_t
@@ -500,7 +499,7 @@ swap_pager_haspage(pager, offset)
 			printf("swpg_haspage: %p bad offset %lx, ix %x\n",
 			    swp->sw_blocks, offset, ix);
 #endif
-		return(FALSE);
+		return (FALSE);
 	}
 	swb = &swp->sw_blocks[ix];
 	if (swb->swb_block)
@@ -513,8 +512,8 @@ swap_pager_haspage(pager, offset)
 		    "FT"[swb->swb_block && (swb->swb_mask & (1 << ix))]);
 #endif
 	if (swb->swb_block && (swb->swb_mask & (1 << ix)))
-		return(TRUE);
-	return(FALSE);
+		return (TRUE);
+	return (FALSE);
 }
 
 static void
@@ -603,16 +602,16 @@ swap_pager_io(swp, mlist, npages, flags)
 #ifdef DEBUG
 		if ((flags & B_READ) == 0 && (swpagerdebug & SDB_ANOM)) {
 			printf("swap_pager_io: no swap block on write\n");
-			return(VM_PAGER_BAD);
+			return (VM_PAGER_BAD);
 		}
 #endif
-		return(VM_PAGER_FAIL);
+		return (VM_PAGER_FAIL);
 	}
 	swb = &swp->sw_blocks[ix];
 	off = off % dbtob(swp->sw_bsize);
 	if ((flags & B_READ) &&
 	    (swb->swb_block == 0 || (swb->swb_mask & (1 << atop(off))) == 0))
-		return(VM_PAGER_FAIL);
+		return (VM_PAGER_FAIL);
 
 	/*
 	 * For reads (pageins) and synchronous writes, we clean up
@@ -645,7 +644,7 @@ swap_pager_io(swp, mlist, npages, flags)
 				printf("%s: no available io headers\n",
 				    "swap_pager_io");
 #endif
-			return(VM_PAGER_AGAIN);
+			return (VM_PAGER_AGAIN);
 		}
 	}
 
@@ -667,7 +666,7 @@ swap_pager_io(swp, mlist, npages, flags)
 			 * trying again (the pageout daemon's current response
 			 * to AGAIN) so we just return FAIL.
 			 */
-			return(VM_PAGER_FAIL);
+			return (VM_PAGER_FAIL);
 		}
 #ifdef DEBUG
 		if (swpagerdebug & (SDB_FULL|SDB_ALLOCBLK))
@@ -687,7 +686,7 @@ swap_pager_io(swp, mlist, npages, flags)
 			printf("%s: no KVA space to map pages\n",
 			    "swap_pager_io");
 #endif
-		return(VM_PAGER_AGAIN);
+		return (VM_PAGER_AGAIN);
 	}
 
 	/*
@@ -795,7 +794,7 @@ swap_pager_io(swp, mlist, npages, flags)
 		if (swpagerdebug & SDB_IO)
 			printf("swpg_io:  IO started: bp %p\n", bp);
 #endif
-		return(VM_PAGER_PEND);
+		return (VM_PAGER_PEND);
 	}
 	s = splbio();
 #ifdef DEBUG
@@ -836,7 +835,7 @@ swap_pager_io(swp, mlist, npages, flags)
 		printf("swpg_io: IO error\n");
 #endif
 	vm_pager_unmap_pages(kva, npages);
-	return(rv);
+	return (rv);
 }
 
 static void
@@ -926,8 +925,7 @@ swap_pager_clean(rw)
 		 * Done with the object, decrement the paging count
 		 * and unlock it.
 		 */
-		if (--object->paging_in_progress == 0)
-			wakeup(object);
+		vm_object_paging_end(object);
 		vm_object_unlock(object);
 
 		/*
@@ -1066,7 +1064,7 @@ swap_pager_remove(pager, from, to)
 
 	/*	Special case stupid ranges.	*/
 	if (to > 0 && from >= to)
-		return(0);
+		return (0);
 
 	swp = (sw_pager_t)pager->pg_data;
 
@@ -1079,14 +1077,14 @@ swap_pager_remove(pager, from, to)
 	 *	be created without any pages put into it?
 	 */
 	if (swp->sw_cnt == 0)
-		return(0);
+		return (0);
 
 	bsize = dbtob(swp->sw_bsize);
 	blk = from / bsize;
 
 	/*	Another fast one.. no blocks in range.	*/
 	if (blk >= swp->sw_nblocks)
-		return(0);
+		return (0);
 	bit = atop(from % bsize);
 
 	/*
@@ -1149,18 +1147,18 @@ swap_pager_remove(pager, from, to)
 	if (swp->sw_cnt < 0)
 		panic("swap_pager_remove: sw_cnt < 0");
 #endif
-	return(cnt);
+	return (cnt);
 }
 
 /*
- *	swap_pager_next:
+ * swap_pager_next:
  *
- *	This is called via the vm_pager_next path and
- *	will return the offset of the next page (addresswise)
- *	which this pager is backing.  If there are no more
- *	pages we will return the size of the pager's managed
- *	space (which by definition is larger than any page's
- *	offset).
+ * This is called via the vm_pager_next path and
+ * will return the offset of the next page (addresswise)
+ * which this pager is backing.  If there are no more
+ * pages we will return the size of the pager's managed
+ * space (which by definition is larger than any page's
+ * offset).
  */
 static vm_offset_t
 swap_pager_next(pager, offset)
@@ -1179,22 +1177,22 @@ swap_pager_next(pager, offset)
 	swp = (sw_pager_t)pager->pg_data;
 
 	/*
-	 *	If we back no pages, just return our size.  XXX Can
-	 *	this ever be the case?  At least all remove calls
-	 *	should be through vm_object_remove_from_pager which
-	 *	also deallocates the pager when it no longer backs any
-	 *	pages.  Left is the initial case: can a swap-pager
-	 *	be created without any pages put into it?
+	 * If we back no pages, just return our size.  XXX Can
+	 * this ever be the case?  At least all remove calls
+	 * should be through vm_object_remove_from_pager which
+	 * also deallocates the pager when it no longer backs any
+	 * pages.  Left is the initial case: can a swap-pager
+	 * be created without any pages put into it?
 	 */
 	if (swp->sw_cnt == 0)
-		return(swp->sw_osize);
+		return (swp->sw_osize);
 
 	bsize = dbtob(swp->sw_bsize);
 	blk = offset / bsize;
 
-	/*	Another fast one.. no blocks in range.	*/
+	/* Another fast one.. no blocks in range.	*/
 	if (blk >= swp->sw_nblocks)
-		return(swp->sw_osize);
+		return (swp->sw_osize);
 	bit = atop(offset % bsize);
 	to_blk = swp->sw_osize / bsize;
 	to_bit = atop(swp->sw_osize % bsize);
@@ -1219,7 +1217,7 @@ swap_pager_next(pager, offset)
 		 */
 		mask &= swb->swb_mask;
 		if (mask)
-			return(blk * bsize + (ffs (mask) - 1) * PAGE_SIZE);
+			return (blk * bsize + (ffs (mask) - 1) * PAGE_SIZE);
 
 		/*
 		 *	If we handled the end of range now, this
@@ -1233,7 +1231,7 @@ swap_pager_next(pager, offset)
 		swb++;
 		mask = ~0;
  	}
-	return swp->sw_osize;
+	return (swp->sw_osize);
 }
 
 /*
@@ -1246,7 +1244,7 @@ swap_pager_count(pager)
 	vm_pager_t	pager;
 {
 #ifndef notyet
-	return((sw_pager_t)pager->pg_data)->sw_cnt;
+	return ((sw_pager_t)pager->pg_data)->sw_cnt;
 #else
 	sw_pager_t swp;
 	sw_blk_t swb;
@@ -1254,10 +1252,10 @@ swap_pager_count(pager)
 
 	swp = (sw_pager_t)pager->pg_data;
 	if (swp->sw_blocks == NULL)
-		return 0;
+		return (0);
 	for (i = 0; i < swp->sw_nblocks; i++)
 		cnt += count_bits(swp->sw_blocks[i].swb_mask); 
-	return cnt;
+	return (cnt);
 #endif
 }
 
@@ -1276,5 +1274,5 @@ count_bits(x)
 		cnt += x & 1;
 		x >>= 1;
 	}
-	return(cnt);
+	return (cnt);
 }

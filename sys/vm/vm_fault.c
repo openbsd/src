@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_fault.c,v 1.5 1996/11/23 21:47:14 kstailey Exp $	*/
+/*	$OpenBSD: vm_fault.c,v 1.6 1997/04/17 01:25:17 niklas Exp $	*/
 /*	$NetBSD: vm_fault.c,v 1.18 1996/05/20 17:40:02 mrg Exp $	*/
 
 /* 
@@ -145,12 +145,12 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 }
 
 #define	UNLOCK_THINGS	{				\
-	object->paging_in_progress--;			\
+	vm_object_paging_end(object);			\
 	vm_object_unlock(object);			\
 	if (object != first_object) {			\
 		vm_object_lock(first_object);		\
 		FREE_PAGE(first_m);			\
-		first_object->paging_in_progress--;	\
+		vm_object_paging_end(first_object);	\
 		vm_object_unlock(first_object);		\
 	}						\
 	UNLOCK_MAP;					\
@@ -191,11 +191,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 	vm_object_lock(first_object);
 
 	first_object->ref_count++;
-#ifdef DIAGNOSTIC
-	if (first_object->paging_in_progress == 0xdead)
-		panic("vm_fault: first_object deallocated");
-#endif
-	first_object->paging_in_progress++;
+	vm_object_paging_begin(first_object);
 
 	/*
 	 *	INVARIANTS (through entire routine):
@@ -407,7 +403,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 *	in the top object with zeros.
 			 */
 			if (object != first_object) {
-				object->paging_in_progress--;
+				vm_object_paging_end(object);
 				vm_object_unlock(object);
 
 				object = first_object;
@@ -425,14 +421,10 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 		else {
 			vm_object_lock(next_object);
 			if (object != first_object)
-				object->paging_in_progress--;
+				vm_object_paging_end(object);
 			vm_object_unlock(object);
 			object = next_object;
-#ifdef DIAGNOSTIC
-			if (object->paging_in_progress == 0xdead)
-				panic("vm_fault: object deallocated (1)");
-#endif
-			object->paging_in_progress++;
+			vm_object_paging_begin(object);
 		}
 	}
 
@@ -508,7 +500,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 *	We no longer need the old page or object.
 			 */
 			PAGE_WAKEUP(m);
-			object->paging_in_progress--;
+			vm_object_paging_end(object);
 			vm_object_unlock(object);
 
 			/*
@@ -529,15 +521,10 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 *	But we have to play ugly games with
 			 *	paging_in_progress to do that...
 			 */
-			object->paging_in_progress--;
+			vm_object_paging_end(object);
 			vm_object_collapse(object);
-#ifdef DIAGNOSTIC
-			if (object->paging_in_progress == 0xdead)
-				panic("vm_fault: object deallocated (2)");
-#endif
-			object->paging_in_progress++;
-		}
-		else {
+			vm_object_paging_begin(object);
+		} else {
 		    	prot &= ~VM_PROT_WRITE;
 			m->flags |= PG_COPYONWRITE;
 		}

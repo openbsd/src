@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_meter.c,v 1.3 1996/10/23 15:38:36 deraadt Exp $	*/
+/*	$OpenBSD: vm_meter.c,v 1.4 1997/04/17 01:25:20 niklas Exp $	*/
 /*	$NetBSD: vm_meter.c,v 1.18 1996/02/05 01:53:59 christos Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ vmtotal(totalp)
 			    entry->object.vm_object == NULL)
 				continue;
 			entry->object.vm_object->flags |= OBJ_ACTIVE;
-			paging |= entry->object.vm_object->paging_in_progress;
+			paging |= vm_object_paging(entry->object.vm_object);
 		}
 		if (paging)
 			totalp->t_pw++;
