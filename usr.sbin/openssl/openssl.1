@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.30 2004/01/23 21:43:09 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.31 2004/01/25 20:27:37 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -3463,16 +3463,14 @@ $ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA \e
 .\"
 .Sh PASSWD
 .Nm openssl passwd
-.Op Fl crypt
-.Op Fl 1
-.Op Fl apr1
-.Op Fl salt Ar string
-.Op Fl in Ar file
-.Op Fl stdin
+.Op Fl 1 | apr1 | crypt
 .Op Fl noverify
 .Op Fl quiet
-.Op Fl table
 .Op Fl reverse
+.Op Fl stdin
+.Op Fl table
+.Op Fl in Ar file
+.Op Fl salt Ar string
 .Op Ar password
 .Pp
 The
@@ -3500,11 +3498,6 @@ are available.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl crypt
-Use the
-.Em crypt
-algorithm
-.Pq default .
 .It Fl 1
 Use the MD5 based
 .Bx
@@ -3517,26 +3510,34 @@ algorithm
 .Pq Apache variant of the
 .Bx
 algorithm.
+.It Fl crypt
+Use the
+.Em crypt
+algorithm
+.Pq default .
+.It Fl in Ar file
+Read passwords from
+.Ar file .
+.It Fl noverify
+Don't verify when reading a password from the terminal.
+.It Fl quiet
+Don't output warnings when passwords given on the command line are truncated.
+.It Fl reverse
+Switch table columns.
+This only makes sense in conjunction with the
+.Fl table
+option.
 .It Fl salt Ar string
 Use the specified
 .Ar salt .
 When reading a password from the terminal, this implies
 .Fl noverify .
-.It Fl in Ar file
-Read passwords from
-.Ar file .
 .It Fl stdin
 Read passwords from
 .Em stdin .
-.It Fl noverify
-Don't verify when reading a password from the terminal.
-.It Fl quiet
-Don't output warnings when passwords given on the command line are truncated.
 .It Fl table
 In the output list, prepend the cleartext password and a TAB character
 to each password hash.
-.It Fl reverse
-Switch table columns.
 .El
 .Sh PASSWD EXAMPLES
 .Dl $ openssl passwd -crypt -salt xx password
