@@ -1,3 +1,4 @@
+/*	$OpenBSD: start.s,v 1.5 1997/05/29 00:04:27 niklas Exp $ */
 /*	$NetBSD: start.s,v 1.8 1996/08/02 11:22:47 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.

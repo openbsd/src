@@ -1,3 +1,4 @@
+/*	$OpenBSD: udiv.s,v 1.2 1997/05/29 00:05:26 niklas Exp $	*/
 /*	$NetBSD: udiv.s,v 1.2 1994/10/26 08:03:34 cgd Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ctu.c,v 1.3 1997/05/29 00:05:14 niklas Exp $ */
 /*	$NetBSD: ctu.c,v 1.5 1996/10/13 03:35:36 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

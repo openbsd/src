@@ -1,3 +1,4 @@
+/*	$OpenBSD: hp.c,v 1.3 1997/05/29 00:04:22 niklas Exp $ */
 /*	$NetBSD: hp.c,v 1.5 1996/02/17 18:23:22 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.

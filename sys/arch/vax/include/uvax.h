@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvax.h,v 1.2 1997/05/29 00:04:55 niklas Exp $ */
 /*	$NetBSD: uvax.h,v 1.1 1996/07/20 17:58:24 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

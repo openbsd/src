@@ -1,3 +1,4 @@
+/*	$OpenBSD: dz.c,v 1.3 1997/05/29 00:05:06 niklas Exp $	*/
 /*	$NetBSD: dz.c,v 1.4 1996/10/13 03:35:15 christos Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: devopen.c,v 1.4 1997/05/29 00:04:21 niklas Exp $ */
 /*	$NetBSD: devopen.c,v 1.6 1996/08/02 16:18:39 ragge Exp $ */
 /*-
  *  Copyright (c) 1993 John Brezak

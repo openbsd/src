@@ -1,3 +1,4 @@
+/*	$OpenBSD: hpreg.h,v 1.4 1997/05/29 00:04:59 niklas Exp $ */
 /*	$NetBSD: hpreg.h,v 1.4 1996/02/11 13:19:35 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.

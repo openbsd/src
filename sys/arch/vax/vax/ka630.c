@@ -1,3 +1,4 @@
+/*	$OpenBSD: ka630.c,v 1.2 1997/05/29 00:05:20 niklas Exp $	*/
 /*	$NetBSD: ka630.c,v 1.4 1996/10/13 03:35:44 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993

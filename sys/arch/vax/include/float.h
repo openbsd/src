@@ -1,3 +1,4 @@
+/*	$OpenBSD: float.h,v 1.2 1997/05/29 00:04:39 niklas Exp $	*/
 /*	$NetBSD: float.h,v 1.2 1994/10/26 08:02:08 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: dc7085cons.h,v 1.2 1997/05/29 00:05:31 niklas Exp $	*/
 /*	$NetBSD: dc7085cons.h,v 1.1 1996/07/20 18:55:10 ragge Exp $	*/
 /*
  * Copyright (c) 1992, 1993

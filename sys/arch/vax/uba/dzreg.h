@@ -1,3 +1,4 @@
+/*	$OpenBSD: dzreg.h,v 1.2 1997/05/29 00:05:06 niklas Exp $	*/
 /*	$NetBSD: dzreg.h,v 1.1 1996/04/08 17:22:21 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: clock.c,v 1.7 1997/05/29 00:05:13 niklas Exp $	 */
 /*	$NetBSD: clock.c,v 1.18 1996/10/13 03:35:33 christos Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.

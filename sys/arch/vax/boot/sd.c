@@ -1,3 +1,4 @@
+/*	$OpenBSD: sd.c,v 1.2 1997/05/29 00:04:26 niklas Exp $	*/
 /*	$NetBSD: sd.c,v 1.1 1996/08/02 11:22:36 ragge Exp $	*/
 
 /*

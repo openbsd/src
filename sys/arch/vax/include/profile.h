@@ -1,3 +1,4 @@
+/*      $OpenBSD: profile.h,v 1.5 1997/05/29 00:04:47 niklas Exp $ */
 /*      $NetBSD: profile.h,v 1.5 1995/12/31 12:15:58 ragge Exp $ */
 /*
  * Copyright (c) 1992 The Regents of the University of California.

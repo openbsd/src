@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_qe.c,v 1.8 1997/05/29 00:04:32 niklas Exp $ */
 /*	$NetBSD: if_qe.c,v 1.18 1996/10/13 03:34:55 christos Exp $ */
 
 /*

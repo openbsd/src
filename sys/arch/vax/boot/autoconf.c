@@ -1,3 +1,4 @@
+/*	$OpenBSD: autoconf.c,v 1.4 1997/05/29 00:04:18 niklas Exp $ */
 /*	$NetBSD: autoconf.c,v 1.6 1996/08/02 11:21:46 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: tsreg.h,v 1.2 1997/05/29 00:05:09 niklas Exp $ */
 /*	$NetBSD: tsreg.h,v 1.1 1996/01/06 16:43:47 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.

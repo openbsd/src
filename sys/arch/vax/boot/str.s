@@ -1,3 +1,4 @@
+/*	$OpenBSD: str.s,v 1.2 1997/05/29 00:04:28 niklas Exp $ */
 /*	$NetBSD: str.s,v 1.2 1996/08/02 16:18:40 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mscp_subr.c,v 1.2 1997/05/29 00:05:03 niklas Exp $	*/
 /*	$NetBSD: mscp_subr.c,v 1.6 1997/01/11 11:20:34 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: hdc9224.c,v 1.2 1997/05/29 00:05:32 niklas Exp $ */
 /*	$NetBSD: hdc9224.c,v 1.4 1996/10/13 03:36:11 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

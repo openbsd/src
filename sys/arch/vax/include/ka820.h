@@ -1,3 +1,4 @@
+/*	$OpenBSD: ka820.h,v 1.2 1997/05/29 00:04:43 niklas Exp $	*/
 /*	$NetBSD: ka820.h,v 1.1 1996/07/20 17:33:09 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.

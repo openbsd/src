@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_dereg.h,v 1.3 1997/05/29 00:04:32 niklas Exp $	*/
 /*	$NetBSD: if_dereg.h,v 1.3 1996/04/08 18:34:55 ragge Exp $	*/
 
 /*

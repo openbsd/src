@@ -1,3 +1,4 @@
+/*	$OpenBSD: so.h,v 1.2 1997/05/29 00:04:27 niklas Exp $	*/
 /*	$NetBSD: so.h,v 1.1 1996/08/02 11:22:41 ragge Exp $	*/
 
 #ifndef _SO_H_INCLUDE

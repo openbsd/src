@@ -1,3 +1,4 @@
+/*	$OpenBSD: bi.c,v 1.2 1997/05/29 00:04:16 niklas Exp $ */
 /*	$NetBSD: bi.c,v 1.4 1996/10/13 03:34:44 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

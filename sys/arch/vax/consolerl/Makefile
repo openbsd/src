@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1997/05/29 00:04:30 niklas Exp $
 #	$NetBSD: Makefile,v 1.1 1996/03/08 12:41:33 ragge Exp $
-#	@(#)Makefile	7.2 (Berkeley) 5/8/91
 
 BOOTS=	boot
 STDBOOS= defboo.com anyboo.com

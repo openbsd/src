@@ -1,3 +1,4 @@
+/*	$OpenBSD: edlabel.c,v 1.3 1997/05/29 00:04:22 niklas Exp $ */
 /*	$NetBSD: edlabel.c,v 1.2 1996/08/02 11:22:11 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.

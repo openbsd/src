@@ -1,3 +1,4 @@
+/*	$OpenBSD: asm.h,v 1.4 1997/05/29 00:04:35 niklas Exp $ */
 /*	$NetBSD: asm.h,v 1.5 1996/11/30 02:49:06 jtc Exp $ */
 /*
  * Copyright (c) 1982, 1993

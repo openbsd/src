@@ -1,3 +1,4 @@
+/*	$OpenBSD: ns_cksum.c,v 1.3 1997/05/29 00:05:24 niklas Exp $	*/
 /*	$NetBSD: ns_cksum.c,v 1.3 1996/10/13 03:35:55 christos Exp $	*/
 /*
  * Copyright (c) 1985, 1986 Regents of the University of California.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mscpvar.h,v 1.2 1997/05/29 00:05:04 niklas Exp $	*/
 /*	$NetBSD: mscpvar.h,v 1.4 1997/01/11 11:20:36 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

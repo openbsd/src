@@ -1,3 +1,4 @@
+/*	$OpenBSD: dc.c,v 1.2 1997/05/29 00:05:30 niklas Exp $	*/
 /*	$NetBSD: dc.c,v 1.4 1996/10/13 03:36:10 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993

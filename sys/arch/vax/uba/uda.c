@@ -1,3 +1,4 @@
+/*	$OpenBSD: uda.c,v 1.7 1997/05/29 00:05:11 niklas Exp $	*/
 /*	$NetBSD: uda.c,v 1.23 1996/10/13 03:35:26 christos Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ka410.c,v 1.2 1997/05/29 00:05:19 niklas Exp $ */
 /*	$NetBSD: ka410.c,v 1.3 1996/10/13 03:35:42 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

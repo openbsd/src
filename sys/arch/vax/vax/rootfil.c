@@ -1,3 +1,4 @@
+/*	$OpenBSD: rootfil.c,v 1.5 1997/05/29 00:05:24 niklas Exp $	*/
 /*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: macros.h,v 1.6 1997/05/29 00:04:44 niklas Exp $	*/
 /*	$NetBSD: macros.h,v 1.10 1997/01/11 11:07:52 ragge Exp $	*/
 
 /*

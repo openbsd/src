@@ -1,3 +1,4 @@
+/*	$OpenBSD: mscp.c,v 1.2 1997/05/29 00:05:01 niklas Exp $	*/
 /*	$NetBSD: mscp.c,v 1.5 1997/01/11 11:20:31 ragge Exp $	*/
 
 /*
