@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_termios.c,v 1.4 1996/04/18 21:21:30 niklas Exp $	 */
+/*	$OpenBSD: svr4_termios.c,v 1.5 1996/04/19 09:38:59 niklas Exp $	 */
 /*	$NetBSD: svr4_termios.c,v 1.8 1996/03/30 22:38:23 christos Exp $	 */
 
 /*
@@ -52,6 +52,7 @@
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_termios.h>
 
+#define SVR4_OXTABS   SVR4_XTABS      /* XXX */
 
 #ifndef __CONCAT3
 # if __STDC__
@@ -214,11 +215,20 @@ svr4_to_bsd_termios(st, bt)
 	svr4_to_bsd_char(V,QUIT);
 	svr4_to_bsd_char(V,ERASE);
 	svr4_to_bsd_char(V,KILL);
+	if (st->c_lflag & ICANON) {
+		svr4_to_bsd_char(V,EOF);  
+		svr4_to_bsd_char(V,EOL);
+	} else {
+		/*
+		 * These are not chars so _POSIX_DISABLE values should not be
+		 * special cased.
+		 */
+		bt->c_cc[VMIN] = st->c_cc[SVR4_VMIN];
+		bt->c_cc[VTIME] = st->c_cc[SVR4_VTIME];
+	}
 	svr4_to_bsd_char(V,EOF);
 	svr4_to_bsd_char(V,EOL);
 	svr4_to_bsd_char(V,EOL2);
-	svr4_to_bsd_char(V,MIN);
-	svr4_to_bsd_char(V,TIME);
 	undefined_char(V,SWTCH);
 	svr4_to_bsd_char(V,START);
 	svr4_to_bsd_char(V,STOP);
@@ -258,6 +268,16 @@ svr4_to_bsd_termios(st, bt)
 	undefined_flag2(c_oflag,N,LDLY,N,L0,N,L1);
 	undefined_flag4(c_oflag,C,RDLY,C,R0,C,R1,C,R2,C,R3);
 	undefined_flag4(c_oflag,T,ABDLY,T,AB0,T,AB1,T,AB2,T,AB3);
+	/* 
+	 * XXX Note, we cannot use svr4_to_bsd_flag1 here because the SVR4
+	 * field is a two bit value where identity is important, i.e. any bit
+	 * set in that field is *not* enough.  Someday we might to wish to
+	 * support the other values of this bitfield, but not now...
+	 */      
+	if ((st->c_oflag & SVR4_XTABS) == SVR4_XTABS)
+		bt->c_oflag |= OXTABS;
+	else    
+		bt->c_oflag &= ~OXTABS;
 	undefined_flag2(c_oflag,B,SDLY,B,S0,B,S1);
 	undefined_flag2(c_oflag,V,TDLY,V,T0,V,T1);
 	undefined_flag2(c_oflag,F,FDLY,F,F0,F,F1);
@@ -310,11 +330,18 @@ bsd_to_svr4_termios(bt, st)
 	bsd_to_svr4_char(V,QUIT);
 	bsd_to_svr4_char(V,ERASE);
 	bsd_to_svr4_char(V,KILL);
-	bsd_to_svr4_char(V,EOF);
-	bsd_to_svr4_char(V,EOL);
+	if (bt->c_lflag & ICANON) {
+		bsd_to_svr4_char(V,EOF);
+		bsd_to_svr4_char(V,EOL);
+	} else {
+		/*
+		 * These are not chars so _POSIX_DISABLE values should not be
+		 * special cased.
+		 */
+		st->c_cc[SVR4_VMIN] = bt->c_cc[VMIN];
+		st->c_cc[SVR4_VTIME] = bt->c_cc[VTIME];
+	}
 	bsd_to_svr4_char(V,EOL2);
-	bsd_to_svr4_char(V,MIN);
-	bsd_to_svr4_char(V,TIME);
 	undefined_char(V,SWTCH);
 	bsd_to_svr4_char(V,START);
 	bsd_to_svr4_char(V,STOP);
@@ -345,7 +372,7 @@ bsd_to_svr4_termios(bt, st)
 	/* Output modes */
 	bsd_to_svr4_flag1(c_oflag,O,POST);
 	undefined_flag1(c_oflag,O,LCUC);
-	undefined_flag1(c_oflag,O,NLCR);
+	bsd_to_svr4_flag1(c_oflag,O,NLCR);
 	undefined_flag1(c_oflag,O,CRNL);
 	undefined_flag1(c_oflag,O,NOCR);
 	undefined_flag1(c_oflag,O,NLRET);
@@ -354,6 +381,12 @@ bsd_to_svr4_termios(bt, st)
 	undefined_flag2(c_oflag,N,LDLY,N,L0,N,L1);
 	undefined_flag4(c_oflag,C,RDLY,C,R0,C,R1,C,R2,C,R3);
 	undefined_flag4(c_oflag,T,ABDLY,T,AB0,T,AB1,T,AB2,T,AB3);
+	/* 
+	 * XXX This isn't what it seem to be, a one bit flag...  It's actually
+	 * a two bit value in SVR4 with composite semantics, where we only
+	 * support one of them.  Be careful if you change this...
+	 */
+	bsd_to_svr4_flag1(c_oflag,OX,TABS);
 	undefined_flag2(c_oflag,B,SDLY,B,S0,B,S1);
 	undefined_flag2(c_oflag,V,TDLY,V,T0,V,T1);
 	undefined_flag2(c_oflag,F,FDLY,F,F0,F,F1);
@@ -516,6 +549,7 @@ svr4_termioctl(fp, cmd, data, p, retval)
 			if ((error = copyin(data, &t, sizeof(t))) != 0)
 				return error;
 
+			bsd_to_svr4_termios(&bt, &st);
 			svr4_termio_to_termios(&t, &st);
 			break;
 		}
