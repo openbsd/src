@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.272 2003/10/07 09:57:43 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.273 2003/10/07 20:18:36 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1695,7 +1695,7 @@ handshake.
 The proxy is transparent to both endpoints, they each see a single
 connection from/to the other endpoint.
 .Xr pf 4
-choses random initial sequence numbers for both handshakes.
+chooses random initial sequence numbers for both handshakes.
 Once the handshakes are completed, the sequence number modulators
 (see previous section) are used to translate further packets of the
 connection.
