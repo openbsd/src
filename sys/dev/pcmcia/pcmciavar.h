@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.6 1998/09/11 10:47:15 fgsch Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.7 1999/01/28 04:58:32 fgsch Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
 #include <machine/bus.h>
 
 #include <dev/pcmcia/pcmciachip.h>
+
+extern int	pcmcia_verbose;
 
 /*
  * Contains information about mapped/allocated i/o spaces.
@@ -176,6 +178,14 @@ struct pcmcia_softc {
 	bus_size_t iosize;		/* size of the i/o space range */
 };
 
+struct pcmcia_cis_quirk {
+	int32_t manufacturer;
+	int32_t product;
+	char *cis1_info[4];
+	struct pcmcia_function *pf;
+	struct pcmcia_config_entry *cfe;
+};
+
 struct pcmcia_attach_args {
 	int32_t manufacturer;
 	int32_t product;
@@ -193,6 +203,7 @@ struct pcmcia_tuple {
 };
 
 void	pcmcia_read_cis __P((struct pcmcia_softc *));
+void	pcmcia_check_cis_quirks __P((struct pcmcia_softc *));
 void	pcmcia_print_cis __P((struct pcmcia_softc *));
 int	pcmcia_scan_cis __P((struct device * dev,
 	    int (*) (struct pcmcia_tuple *, void *), void *));

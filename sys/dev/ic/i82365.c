@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.3 1999/01/03 10:05:51 deraadt Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.4 1999/01/28 04:58:33 fgsch Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -49,8 +49,7 @@
 #include <dev/ic/i82365var.h>
 
 #ifdef PCICDEBUG
-int	pcic_debug = 1;
-#define	DPRINTF(arg) if (pcic_debug) printf arg;
+#define	DPRINTF(arg)	printf arg;
 #else
 #define	DPRINTF(arg)
 #endif
@@ -130,7 +129,6 @@ pcic_vendor(h)
 				return (PCIC_VENDOR_CIRRUS_PD6710);
 		}
 	}
-	/* XXX how do I identify the GD6729? */
 
 	reg = pcic_read(h, PCIC_IDENT);
 
@@ -199,27 +197,37 @@ pcic_attach(sc)
 
 	DPRINTF((" 0x%02x", reg));
 
+	/*
+	 * The CL-PD6729 has only one controller and always returns 0
+	 * if you try to read from the second one. Maybe pcic_ident_ok
+	 * shouldn't accept 0?
+	 */
 	sc->handle[2].sc = sc;
 	sc->handle[2].sock = C1SA;
-	if (pcic_ident_ok(reg = pcic_read(&sc->handle[2], PCIC_IDENT))) {
-		sc->handle[2].flags = PCIC_FLAG_SOCKETP;
-		count++;
-	} else {
-		sc->handle[2].flags = 0;
+	if (pcic_vendor(&sc->handle[0]) != PCIC_VENDOR_CIRRUS_PD672X ||
+	    pcic_read(&sc->handle[2], PCIC_IDENT) != 0) {
+		if (pcic_ident_ok(reg = pcic_read(&sc->handle[2],
+						  PCIC_IDENT))) {
+			sc->handle[2].flags = PCIC_FLAG_SOCKETP;
+			count++;
+		} else {
+			sc->handle[2].flags = 0;
+		}
+
+		DPRINTF((" 0x%02x", reg));
+
+		sc->handle[3].sc = sc;
+		sc->handle[3].sock = C1SB;
+		if (pcic_ident_ok(reg = pcic_read(&sc->handle[3],
+						  PCIC_IDENT))) {
+			sc->handle[3].flags = PCIC_FLAG_SOCKETP;
+			count++;
+		} else {
+			sc->handle[3].flags = 0;
+		}
+
+		DPRINTF((" 0x%02x\n", reg));
 	}
-
-	DPRINTF((" 0x%02x", reg));
-
-	sc->handle[3].sc = sc;
-	sc->handle[3].sock = C1SB;
-	if (pcic_ident_ok(reg = pcic_read(&sc->handle[3], PCIC_IDENT))) {
-		sc->handle[3].flags = PCIC_FLAG_SOCKETP;
-		count++;
-	} else {
-		sc->handle[3].flags = 0;
-	}
-
-	DPRINTF((" 0x%02x\n", reg));
 
 	if (count == 0)
 		panic("pcic_attach: attach found no sockets");
@@ -1077,10 +1085,8 @@ pcic_wait_ready(h)
 			return;
 		delay(500);
 #ifdef PCICDEBUG
-		if (pcic_debug) {
 			if ((i>5000) && (i%100 == 99))
 				printf(".");
-		}
 #endif
 	}
 
@@ -1141,6 +1147,13 @@ pcic_chip_socket_enable(pch)
 	delay(20000);
 
 	/* wait for the chip to finish initializing */
+
+#ifdef DIAGNOSTIC
+	reg = pcic_read(h, PCIC_IF_STATUS);
+	if (!(reg & PCIC_IF_STATUS_POWERACTIVE)) {
+		printf("pcic_chip_socket_enable: status %x", reg);
+	}
+#endif
 
 	pcic_wait_ready(h);
 

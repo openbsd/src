@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.11 1998/09/11 10:47:14 fgsch Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.12 1999/01/28 04:58:31 fgsch Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -35,18 +35,16 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-/* XXX only needed for intr debugging */
-#include <vm/vm.h>
-
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>
 #include <dev/pcmcia/pcmciavar.h>
 
 #ifdef PCMCIADEBUG
-int	pcmcia_debug = 1;
-#define	DPRINTF(arg) if (pcmcia_debug) printf arg
+#define	DPRINTF(arg) printf arg
+#define PCMCIA_CARD_INTR (pcmcia_card_intrdebug)
 #else
 #define	DPRINTF(arg)
+#define PCMCIA_CARD_INTR (pcmcia_card_intr)
 #endif
 
 #ifdef PCMCIAVERBOSE
@@ -65,7 +63,11 @@ static inline void pcmcia_socket_enable __P((pcmcia_chipset_tag_t,
 static inline void pcmcia_socket_disable __P((pcmcia_chipset_tag_t,
 					      pcmcia_chipset_handle_t *));
 
+#ifdef PCMCIADEBUG
+int pcmcia_card_intrdebug __P((void *));
+#else
 int pcmcia_card_intr __P((void *));
+#endif
 
 struct cfdriver pcmcia_cd = {
 	NULL, "pcmcia", DV_DULL
@@ -144,6 +146,8 @@ pcmcia_card_attach(dev)
 	pcmcia_read_cis(sc);
 
 	pcmcia_chip_socket_disable(sc->pct, sc->pch);
+
+	pcmcia_check_cis_quirks(sc);
 
 	/*
 	 * bail now if the card has no functions, or if there was an error in
@@ -410,17 +414,26 @@ pcmcia_function_enable(pf)
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, iosize);
 	}
 
-	DPRINTF(("%s: function %d CCR at %d offset %lx: "
-		 "%x %x %x %x, %x %x %x %x, %x\n",
-		 pf->sc->dev.dv_xname, pf->number,
-		 pf->pf_ccr_window, pf->pf_ccr_offset,
-		 pcmcia_ccr_read(pf, 0x00), pcmcia_ccr_read(pf, 0x02),
-		 pcmcia_ccr_read(pf, 0x04), pcmcia_ccr_read(pf, 0x06),
+#ifdef PCMCIADEBUG
+	for (tmp = pf->sc->card.pf_head.sqh_first; tmp != NULL;
+	     tmp = tmp->pf_list.sqe_next) {
+		printf("%s: function %d CCR at %d offset %lx: "
+		       "%x %x %x %x, %x %x %x %x, %x\n",
+		       tmp->sc->dev.dv_xname, tmp->number,
+		       tmp->pf_ccr_window, tmp->pf_ccr_offset,
+		       pcmcia_ccr_read(tmp, 0x00),
+		       pcmcia_ccr_read(tmp, 0x02),
+		       pcmcia_ccr_read(tmp, 0x04),
+		       pcmcia_ccr_read(tmp, 0x06),
 
-		 pcmcia_ccr_read(pf, 0x0A), pcmcia_ccr_read(pf, 0x0C), 
-		 pcmcia_ccr_read(pf, 0x0E), pcmcia_ccr_read(pf, 0x10),
+		       pcmcia_ccr_read(tmp, 0x0A),
+		       pcmcia_ccr_read(tmp, 0x0C), 
+		       pcmcia_ccr_read(tmp, 0x0E),
+		       pcmcia_ccr_read(tmp, 0x10),
 
-		 pcmcia_ccr_read(pf, 0x12)));
+		       pcmcia_ccr_read(tmp, 0x12));
+	}
+#endif
 
 	pf->pf_flags |= PFF_ENABLED;
 	return (0);
@@ -607,7 +620,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			pf->ih_ipl = ipl;
 
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc);
+			    pf->sc->pch, pf, ipl, PCMCIA_CARD_INTR, pf->sc);
 			splx(s);
 		} else if (ipl > hiipl) {
 #ifdef DIAGNOSTIC
@@ -627,7 +640,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			pf->ih_ipl = ipl;
 
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc);
+			    pf->sc->pch, pf, ipl, PCMCIA_CARD_INTR, pf->sc);
 
 			splx(s);
 		} else {
@@ -737,7 +750,7 @@ pcmcia_intr_disestablish(pf, ih)
 			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 			    pf->sc->ih);
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, hiipl, pcmcia_card_intr, pf->sc);
+			    pf->sc->pch, pf, hiipl, PCMCIA_CARD_INTR, pf->sc);
 
 			/* null out the handler for this function */
 
@@ -770,15 +783,6 @@ pcmcia_card_intr(arg)
 
 	for (pf = sc->card.pf_head.sqh_first; pf != NULL;
 	    pf = pf->pf_list.sqe_next) {
-#if 0
-		printf("%s: intr flags=%x fct=%d physaddr=%lx cor=%02x csr=%02x pin=%02x",
-		       sc->dev.dv_xname, pf->pf_flags, pf->number,
-		       pmap_extract(pmap_kernel(),
-		           (vaddr_t) pf->pf_ccrh) + pf->pf_ccr_offset,
-		       pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION),
-		       pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS),
-		       pcmcia_ccr_read(pf, PCMCIA_CCR_PIN));
-#endif
 		if (pf->ih_fct != NULL &&
 		    (pf->ccr_mask & (1 << (PCMCIA_CCR_STATUS / 2)))) {
 			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
@@ -787,18 +791,50 @@ pcmcia_card_intr(arg)
 				if (ret2 != 0 && ret == 0)
 					ret = ret2;
 				reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
-#if 0
-				printf("; csr %02x->%02x",
-				    reg, reg & ~PCMCIA_CCR_STATUS_INTR);
-#endif
 				pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS,
 				    reg & ~PCMCIA_CCR_STATUS_INTR);
 			}
 		}
-#if 0
-		printf("\n");
-#endif
 	}
 
 	return (ret);
 }
+
+#ifdef PCMCIADEBUG
+int 
+pcmcia_card_intrdebug(arg)
+	void *arg;
+{
+	struct pcmcia_softc *sc = arg;
+	struct pcmcia_function *pf;
+	int reg, ret, ret2;
+
+	ret = 0;
+
+	for (pf = sc->card.pf_head.sqh_first; pf != NULL;
+	    pf = pf->pf_list.sqe_next) {
+		printf("%s: intr flags=%x fct=%d cor=%02x csr=%02x pin=%02x",
+		       sc->dev.dv_xname, pf->pf_flags, pf->number,
+		       pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION),
+		       pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS),
+		       pcmcia_ccr_read(pf, PCMCIA_CCR_PIN));
+		if (pf->ih_fct != NULL &&
+		    (pf->ccr_mask & (1 << (PCMCIA_CCR_STATUS / 2)))) {
+			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
+			if (reg & PCMCIA_CCR_STATUS_INTR) {
+				ret2 = (*pf->ih_fct)(pf->ih_arg);
+				if (ret2 != 0 && ret == 0)
+					ret = ret2;
+				reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
+				printf("; csr %02x->%02x",
+				    reg, reg & ~PCMCIA_CCR_STATUS_INTR);
+				pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS,
+				    reg & ~PCMCIA_CCR_STATUS_INTR);
+			}
+		}
+		printf("\n");
+	}
+
+	return (ret);
+}
+#endif

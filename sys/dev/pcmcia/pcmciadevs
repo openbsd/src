@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.7 1998/12/22 02:43:55 niklas Exp $
+	$OpenBSD: pcmciadevs,v 1.8 1999/01/28 04:58:32 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -44,7 +44,6 @@ vendor 3COM			0x0101	3Com
 vendor MEGAHERTZ		0x0102	Megahertz
 vendor SOCKET			0x0104	Socket Communications
 vendor TDK			0x0105	TDK
-vendor XIRCOM			0x0105	Xircom
 vendor SMC			0x0108	SMC
 vendor MOTOROLA			0x0109	Motorola
 vendor USROBOTICS		0x0115	US Robotics
@@ -57,8 +56,9 @@ vendor SIMPLETECH		0x014d	Simple Technology
 vendor COMPAQ2			0x0183	Compaq
 vendor DAYNA			0x0194	Dayna
 vendor IODATA			0x01bf	I-O DATA
+vendor COMPEX			0x8a01	Compex Corporation
+vendor COREGA			0xc00f	Corega K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
-vendor UNKNOWN			0x8a01	Unknown
 
 /*
  * List of known products.  Grouped by vendor.
@@ -68,9 +68,13 @@ product ADAPTEC APA1460_1	0x0001 Adaptec APA-1460/A SCSI Host Adapter
 product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B SCSI Host Adapter
 
 /* 3COM Products */
+product 3COM 3CXEM556		0x0035 3Com/Megahertz 3XEM556 Ethernet/Modem
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
 product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
 product 3COM 3C574		0x0574 3Com 3c574-TX 10/100Mbps Ethernet
+
+/* Compex Products */
+product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B Ethernet
 
 /* Dayna Products */
 product DAYNA COMMUNICARD_E_1	0x002d Dayna CommuniCard E
@@ -87,9 +91,13 @@ product MOTOROLA MONTANA_336	0x0505 Motorola Montana 33.6 Fax/Modem
 /* IBM Products */
 product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
 product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
+product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry
 
 /* I-O DATA */
 product IODATA PCLAT		0x2216 I-O DATA PCLA/T
+
+/* Intel */
+product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 
 /* Linksys corporation */
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
@@ -122,17 +130,17 @@ product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
 product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 
+/* TDK Vendor ID also used by Xircom! */
+product TDK XIR_CE_10		0x0108 Xircom CreditCard Ethernet
+product TDK XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
+product TDK XIR_CNW		0x0802 Xircom CreditCard Netwave
+product TDK XIR_CEM_10		0x110a Xircom CreditCard Ethernet + Modem
+
 /* NewMedia Products */
 product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
 
 /* Standard Microsystems Corporation Products */
 product SMC 8016		0x0105 SMC 8016 EtherCard
-
-/* Xircom Products */
-product XIRCOM REM56G_100	0x110a Xircom RealPort Ethernet 10/100 + 56K Modem
-
-/* Unknown Product */
-product UNKNOWN ECARD		0x0100 NE2000 Compatible
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
@@ -143,6 +151,7 @@ vendor ACCTON			-1 	ACCTON
 vendor YEDATA			-1 	Y-E DATA
 vendor DIGITAL			-1 	Digital
 vendor TEAC			-1	TEAC
+vendor SVEC			-1	SVEC/Hawking Technology
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -155,3 +164,6 @@ product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E D
 product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
 product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
+product COREGA PCC_2		{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega
+product SVEC COMBOCARD		{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. Combo Card
+product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL } SVEC PCMCIA Lan Card

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.14 1999/01/21 08:26:47 niklas Exp $
+#	$OpenBSD: files.pcmcia,v 1.15 1999/01/28 04:58:30 fgsch Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -7,11 +7,13 @@
 device	pcmcia {[function = -1], [irq = -1]}
 file	dev/pcmcia/pcmcia.c			pcmcia
 file	dev/pcmcia/pcmcia_cis.c			pcmcia
+file	dev/pcmcia/pcmcia_cis_quirks.c		pcmcia
 
 # device declaration in sys/conf/files
 attach	pcmcia at pcic
 
-# 3Com 3c589 Ethernet and 3c562 multifunction Ethernet controllers
+# 3Com 3c589 Ethernet, 3c562 multifunction Ethernet, and 3CXEM556
+#   multifunction Ethernet controllers
 # device declaration in sys/conf/files
 attach	ep at pcmcia with ep_pcmcia
 file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
@@ -29,7 +31,7 @@ attach	com at pcmcia with com_pcmcia
 file	dev/pcmcia/com_pcmcia.c			com_pcmcia | pccom_pcmcia
 
 # Digital RoamAbout / Lucent WaveLAN PCMCIA card
-#device	wl: arp, ether, ifnet
+#device	wl: ether, ifnet
 #attach	wl at pcmcia with wl_pcmcia
 #file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
 
@@ -48,3 +50,14 @@ file	dev/pcmcia/if_sm_pcmcia.c		sm_pcmcia
 # PCMCIA Floppy controller
 #attach	fdc at pcmcia with fdc_pcmcia
 #file	dev/pcmcia/fdc_pcmcia.c			fdc_pcmcia
+
+# PCMCIA multi-port serial cards
+#device	pcmcom {[slave = -1]}
+#attach	pcmcom at pcmcia
+#attach	com at pcmcom with com_pcmcom
+#file	dev/pcmcia/pcmcom.c			pcmcom | com_pcmcom needs-flag
+
+# Xircom Netwave
+#device	cnw: ether, ifnet
+#attach	cnw at pcmcia
+#file	dev/pcmcia/if_cnw.c			cnw

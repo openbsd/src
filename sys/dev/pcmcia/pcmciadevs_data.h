@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciadevs_data.h,v 1.8 1998/12/22 02:46:18 niklas Exp $	*/
+/*	$OpenBSD: pcmciadevs_data.h,v 1.9 1999/01/28 04:58:32 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -55,6 +55,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Adaptec APA-1460/B SCSI Host Adapter"	},
 	},
 	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556,
+	    PCMCIA_CIS_3COM_3CXEM556,
+	    0,
+	    "3Com",
+	    "3Com/Megahertz 3XEM556 Ethernet/Modem"	},
+	},
+	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C562,
 	    PCMCIA_CIS_3COM_3C562,
 	    0,
@@ -74,6 +81,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3Com 3c574-TX 10/100Mbps Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
+	    PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
+	    0,
+	    "Compex Corporation",
+	    "Compex Linkport ENET-B Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_1,
@@ -132,11 +146,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IBM Home and Away Modem"	},
 	},
 	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_WIRELESS_LAN_ENTRY,
+	    PCMCIA_CIS_IBM_WIRELESS_LAN_ENTRY,
+	    0,
+	    "IBM",
+	    "Wireless LAN Entry"	},
+	},
+	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
 	    PCMCIA_CIS_IODATA_PCLAT,
 	    0,
 	    "I-O DATA",
 	    "I-O DATA PCLA/T"	},
+	},
+	{
+	    PCMCIA_VENDOR_INTEL, PCMCIA_PRODUCT_INTEL_EEPRO100,
+	    PCMCIA_CIS_INTEL_EEPRO100,
+	    0,
+	    "Intel",
+	    "Intel EtherExpress PRO/100"	},
 	},
 	{
 	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
@@ -244,6 +272,34 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "TDK DFL9610 Ethernet & Digital Cellular"	},
 	},
 	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE_10,
+	    PCMCIA_CIS_TDK_XIR_CE_10,
+	    0,
+	    "TDK",
+	    "Xircom CreditCard Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10,
+	    PCMCIA_CIS_TDK_XIR_PS_CE2_10,
+	    0,
+	    "TDK",
+	    "Xircom CreditCard CE2 Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW,
+	    PCMCIA_CIS_TDK_XIR_CNW,
+	    0,
+	    "TDK",
+	    "Xircom CreditCard Netwave"	},
+	},
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CEM_10,
+	    PCMCIA_CIS_TDK_XIR_CEM_10,
+	    0,
+	    "TDK",
+	    "Xircom CreditCard Ethernet + Modem"	},
+	},
+	{
 	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BASICS,
 	    PCMCIA_CIS_NEWMEDIA_BASICS,
 	    0,
@@ -256,20 +312,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "SMC",
 	    "SMC 8016 EtherCard"	},
-	},
-	{
-	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_REM56G_100,
-	    PCMCIA_CIS_XIRCOM_REM56G_100,
-	    0,
-	    "Xircom",
-	    "Xircom RealPort Ethernet 10/100 + 56K Modem"	},
-	},
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_UNKNOWN_ECARD,
-	    PCMCIA_CIS_UNKNOWN_ECARD,
-	    0,
-	    "Unknown",
-	    "NE2000 Compatible"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
@@ -349,6 +391,27 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Linksys E-Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_PCC_2,
+	    PCMCIA_CIS_COREGA_PCC_2,
+	    0,
+	    "Corega K.K.",
+	    "Corega"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_COMBOCARD,
+	    PCMCIA_CIS_SVEC_COMBOCARD,
+	    0,
+	    "SVEC/Hawking Technology",
+	    "SVEC/Hawking Tech. Combo Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_LANCARD,
+	    PCMCIA_CIS_SVEC_LANCARD,
+	    0,
+	    "SVEC/Hawking Technology",
+	    "SVEC PCMCIA Lan Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_SANDISK, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -402,13 +465,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "TDK",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_XIRCOM, 0,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    "Xircom",
 	    NULL,
 	},
 	{
@@ -496,17 +552,24 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_COMPEX, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Compex Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_COREGA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Corega K.K.",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_HAGIWARASYSCOM, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Hagiwara SYS-COM",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_UNKNOWN, 0,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    "Unknown",
 	    NULL,
 	},
 	{
@@ -563,6 +626,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "TEAC",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SVEC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "SVEC/Hawking Technology",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.5 1998/12/04 06:49:58 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.6 1999/01/28 04:58:30 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -122,28 +122,15 @@ struct ne2000dev {
       PCMCIA_CIS_ACCTON_EN2212,
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
 
-    /*
-     * D-Link DE-650 has many minor versions:
-     *
-     *   CIS information          Manufacturer Product  Note
-     * 1 "D-Link, DE-650"             INVALID  INVALID  white card
-     * 2 "D-Link, DE-650, Ver 01.00"  INVALID  INVALID  became bare metal
-     * 3 "D-Link, DE-650, Ver 01.00"   0x149    0x265   minor change in look
-     * 4 "D-Link, DE-650, Ver 01.00"   0x149    0x265   collision LED added
-     *
-     * While the 1st and the 2nd types should use the "D-Link DE-650" entry,
-     * the 3rd and the 4th types should use the "Linksys EtherCard" entry.
-     * Therefore, the Linksys entry should be before the D-Link.  --itohy
-     */
-    { PCMCIA_STR_LINKSYS_ECARD_1, 
-      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
-      PCMCIA_CIS_LINKSYS_ECARD_1, 
-      0, -1, { 0x00, 0x80, 0xc8 } },
-
-    { PCMCIA_STR_DLINK_DE650,
+    { PCMCIA_STR_SVEC_COMBOCARD,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-      PCMCIA_CIS_DLINK_DE650,
-      0, 0x0040, { 0x00, 0x80, 0xc8 } },
+      PCMCIA_CIS_SVEC_COMBOCARD,
+      0, -1, { 0x00, 0xe0, 0x98 } },
+
+    { PCMCIA_STR_SVEC_LANCARD,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_SVEC_LANCARD,
+      0, 0x7f0, { 0x00, 0xc0, 0x6c } },
 
     /*
      * You have to add new entries which contains
@@ -160,6 +147,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
       PCMCIA_CIS_IBM_INFOMOVER,
       0, 0x0ff0, { 0x08, 0x00, 0x5a } },
+
+    { PCMCIA_STR_LINKSYS_ECARD_1,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+      PCMCIA_CIS_LINKSYS_ECARD_1,
+      0, -1, { 0x00, 0x80, 0xc8 } },
 
     { PCMCIA_STR_LINKSYS_COMBO_ECARD, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
@@ -180,6 +172,24 @@ struct ne2000dev {
       PCMCIA_CIS_LINKSYS_ECARD_2,
       0, -1, { 0x00, 0x80, 0xc8 } },
 
+    /*
+     * D-Link DE-650 has many minor versions:
+     *
+     *   CIS information          Manufacturer Product  Note
+     * 1 "D-Link, DE-650"             INVALID  INVALID  white card
+     * 2 "D-Link, DE-650, Ver 01.00"  INVALID  INVALID  became bare metal
+     * 3 "D-Link, DE-650, Ver 01.00"   0x149    0x265   minor change in look
+     * 4 "D-Link, DE-650, Ver 01.00"   0x149    0x265   collision LED added
+     *
+     * While the 1st and the 2nd types should use the "D-Link DE-650" entry,
+     * the 3rd and the 4th types should use the "Linksys EtherCard" entry.
+     * Therefore, this enty must be below the LINKSYS_ECARD_1.  --itohy
+     */
+    { PCMCIA_STR_DLINK_DE650,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_DLINK_DE650,
+      0, 0x0040, { 0x00, 0x80, 0xc8 } },
+
     { PCMCIA_STR_IODATA_PCLAT,
       PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
       PCMCIA_CIS_IODATA_PCLAT,
@@ -196,10 +206,16 @@ struct ne2000dev {
       PCMCIA_CIS_DAYNA_COMMUNICARD_E_2,
       0, -1, { 0x00, 0x80, 0x19 } },
 
-    { PCMCIA_STR_UNKNOWN_ECARD,
-      PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_UNKNOWN_ECARD,
-      PCMCIA_CIS_UNKNOWN_ECARD,
-      0, -1, { 0x00, 0xa0, 0x0c } },
+    { PCMCIA_STR_COREGA_PCC_2,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_PCC_2,
+      PCMCIA_CIS_COREGA_PCC_2,
+      0, -1, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_STR_COMPEX_LINKPORT_ENET_B,
+      PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
+      PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
+      0, 0xd400, { 0x01, 0x03, 0xdc } },
+
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for

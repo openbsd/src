@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.8 1998/12/22 02:46:18 niklas Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.9 1999/01/28 04:58:32 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -51,7 +51,6 @@
 #define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
 #define	PCMCIA_VENDOR_TDK	0x0105	/* TDK */
-#define	PCMCIA_VENDOR_XIRCOM	0x0105	/* Xircom */
 #define	PCMCIA_VENDOR_SMC	0x0108	/* SMC */
 #define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola */
 #define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics */
@@ -64,8 +63,9 @@
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
+#define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
-#define	PCMCIA_VENDOR_UNKNOWN	0x8a01	/* Unknown */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -79,6 +79,9 @@
 #define	PCMCIA_STR_ADAPTEC_APA1460_2	"Adaptec APA-1460/B SCSI Host Adapter"
 
 /* 3COM Products */
+#define	PCMCIA_CIS_3COM_3CXEM556	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CXEM556	0x0035
+#define	PCMCIA_STR_3COM_3CXEM556	"3Com/Megahertz 3XEM556 Ethernet/Modem"
 #define	PCMCIA_CIS_3COM_3C562	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C562	0x0562
 #define	PCMCIA_STR_3COM_3C562	"3Com 3c562 33.6 Modem/10Mbps Ethernet"
@@ -88,6 +91,11 @@
 #define	PCMCIA_CIS_3COM_3C574	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C574	0x0574
 #define	PCMCIA_STR_3COM_3C574	"3Com 3c574-TX 10/100Mbps Ethernet"
+
+/* Compex Products */
+#define	PCMCIA_CIS_COMPEX_LINKPORT_ENET_B	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B	0x0100
+#define	PCMCIA_STR_COMPEX_LINKPORT_ENET_B	"Compex Linkport ENET-B Ethernet"
 
 /* Dayna Products */
 #define	PCMCIA_CIS_DAYNA_COMMUNICARD_E_1	{ NULL, NULL, NULL, NULL }
@@ -120,11 +128,19 @@
 #define	PCMCIA_CIS_IBM_HOME_AND_AWAY	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IBM_HOME_AND_AWAY	0x002e
 #define	PCMCIA_STR_IBM_HOME_AND_AWAY	"IBM Home and Away Modem"
+#define	PCMCIA_CIS_IBM_WIRELESS_LAN_ENTRY	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IBM_WIRELESS_LAN_ENTRY	0x0032
+#define	PCMCIA_STR_IBM_WIRELESS_LAN_ENTRY	"Wireless LAN Entry"
 
 /* I-O DATA */
 #define	PCMCIA_CIS_IODATA_PCLAT	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLAT	0x2216
 #define	PCMCIA_STR_IODATA_PCLAT	"I-O DATA PCLA/T"
+
+/* Intel */
+#define	PCMCIA_CIS_INTEL_EEPRO100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_INTEL_EEPRO100	0x010a
+#define	PCMCIA_STR_INTEL_EEPRO100	"Intel EtherExpress PRO/100"
 
 /* Linksys corporation */
 #define	PCMCIA_CIS_LINKSYS_ECARD_1	{ NULL, NULL, NULL, NULL }
@@ -187,6 +203,20 @@
 #define	PCMCIA_PRODUCT_TDK_DFL9610	0x0d0a
 #define	PCMCIA_STR_TDK_DFL9610	"TDK DFL9610 Ethernet & Digital Cellular"
 
+/* TDK Vendor ID also used by Xircom! */
+#define	PCMCIA_CIS_TDK_XIR_CE_10	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_CE_10	0x0108
+#define	PCMCIA_STR_TDK_XIR_CE_10	"Xircom CreditCard Ethernet"
+#define	PCMCIA_CIS_TDK_XIR_PS_CE2_10	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10	0x010b
+#define	PCMCIA_STR_TDK_XIR_PS_CE2_10	"Xircom CreditCard CE2 Ethernet"
+#define	PCMCIA_CIS_TDK_XIR_CNW	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_CNW	0x0802
+#define	PCMCIA_STR_TDK_XIR_CNW	"Xircom CreditCard Netwave"
+#define	PCMCIA_CIS_TDK_XIR_CEM_10	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_CEM_10	0x110a
+#define	PCMCIA_STR_TDK_XIR_CEM_10	"Xircom CreditCard Ethernet + Modem"
+
 /* NewMedia Products */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
@@ -197,16 +227,6 @@
 #define	PCMCIA_PRODUCT_SMC_8016	0x0105
 #define	PCMCIA_STR_SMC_8016	"SMC 8016 EtherCard"
 
-/* Xircom Products */
-#define	PCMCIA_CIS_XIRCOM_REM56G_100	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_XIRCOM_REM56G_100	0x110a
-#define	PCMCIA_STR_XIRCOM_REM56G_100	"Xircom RealPort Ethernet 10/100 + 56K Modem"
-
-/* Unknown Product */
-#define	PCMCIA_CIS_UNKNOWN_ECARD	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_UNKNOWN_ECARD	0x0100
-#define	PCMCIA_STR_UNKNOWN_ECARD	"NE2000 Compatible"
-
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
@@ -216,6 +236,7 @@
 #define	PCMCIA_VENDOR_YEDATA	-1	/* Y-E DATA */
 #define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital */
 #define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
+#define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking Technology */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -250,3 +271,12 @@
 #define	PCMCIA_CIS_LINKSYS_ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_2	-1
 #define	PCMCIA_STR_LINKSYS_ECARD_2	"Linksys E-Card"
+#define	PCMCIA_CIS_COREGA_PCC_2	{ "corega K.K.", "corega Ether PCC-T", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_PCC_2	-1
+#define	PCMCIA_STR_COREGA_PCC_2	"Corega"
+#define	PCMCIA_CIS_SVEC_COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL }
+#define	PCMCIA_PRODUCT_SVEC_COMBOCARD	-1
+#define	PCMCIA_STR_SVEC_COMBOCARD	"SVEC/Hawking Tech. Combo Card"
+#define	PCMCIA_CIS_SVEC_LANCARD	{ "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL }
+#define	PCMCIA_PRODUCT_SVEC_LANCARD	-1
+#define	PCMCIA_STR_SVEC_LANCARD	"SVEC PCMCIA Lan Card"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciareg.h,v 1.3 1998/09/11 10:47:15 fgsch Exp $	*/
+/*	$OpenBSD: pcmciareg.h,v 1.4 1999/01/28 04:58:32 fgsch Exp $	*/
 /*	$NetBSD: pcmciareg.h,v 1.6 1998/08/13 15:00:02 nathanw Exp $	*/
 
 /*
@@ -178,6 +178,8 @@
 #define	PCMCIA_TPLFE_TYPE_LAN_MEDIA			0x03
 #define	PCMCIA_TPLFE_TYPE_LAN_NID			0x04
 #define	PCMCIA_TPLFE_TYPE_LAN_CONN			0x05
+#define	PCMCIA_TPLFE_TYPE_DISK_DEVICE_INTERFACE		0x01
+#define	PCMCIA_TPLFE_DDI_PCCARD_ATA				0x01
 #define	PCMCIA_CISTPL_END			0xFF
 
 /* Layer 2 Data Recording Format Tuples */
