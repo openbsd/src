@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.22 2003/05/29 09:31:11 jmc Exp $
+.\"	$OpenBSD: chio.1,v 1.23 2005/02/08 18:24:59 jaredy Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -41,12 +41,7 @@
 .Nm chio
 .Op Fl f Ar changer
 .Ar command
-.Ar arg1
-.Ar arg2
-.Oo
-.Ar arg3 Oo Ar ...
-.Oc
-.Oc
+.Op Ar argument ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,28 +49,24 @@ utility is used to control the operation of medium changers, such as those
 found in tape and optical disk jukeboxes.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width 10n
 .It Fl f Ar changer
 Use the device
-.Pa changer
+.Ar changer
 rather than the default device
 .Pa /dev/ch0 .
 .El
 .Pp
-The default changer may be overridden by setting the environment variable
-.Ev CHANGER
-to the desired changer device.
-.Pp
 A medium changer apparatus is made up of
-.Pa elements .
+.Em elements .
 There are four element types:
-.Pa picker
+.Em picker
 (medium transport),
-.Pa slot
+.Em slot
 (storage),
-.Pa portal
+.Em portal
 (import/export), and
-.Pa drive
+.Em drive
 (data transfer).
 In this command description, the shorthand
 .Sq ET
@@ -87,101 +78,80 @@ the first robotic arm in the changer, the ET would be
 .Dq picker
 and the EU would be
 .Dq 0 .
-.Sh SUPPORTED COMMANDS
-.Li # chio move
-.Aq Ar from ET
-.Aq Ar from EU
-.Aq Ar to ET
-.Aq Ar to EU
-.Op Ar inv
 .Pp
-Moves the media unit from
-.Aq Ar from ET/EU
-to
-.Aq Ar to ET/EU .
-If the optional modifier
-.Pa inv
-is specified, the media unit will be inverted before insertion.
-.Pp
-.Li # chio exchange
-.Aq Ar src ET
-.Aq Ar src EU
-.Aq Ar dst1 ET
-.Aq Ar dst1 EU
-.Oo
-.Aq Ar dst2\& ET
-.Aq Ar dst2\& EU
-.Oc
-.Op Ar inv1
-.Op Ar inv2
-.Pp
+The following commands are supported:
+.Bl -tag -width Ds
+.It Xo
+.Cm exchange
+.Ar src-ET src-EU dst1-ET dst1-EU
+.Op Ar dst2-ET dst2-EU
+.Op Cm inv1
+.Op Cm inv2
+.Xc
 Performs a media unit exchange operation.
 The media unit in
-.Aq Ar src ET/EU
+.Ar src-ET Ns / Ns Ar src-EU
 is moved to
-.Aq Ar dst1 ET/EU
+.Ar dst1-ET Ns / Ns Ar dst1-EU
 and the media unit previously in
-.Aq Ar dst1 ET/EU
+.Ar dst1-ET Ns / Ns Ar dst1-EU
 is moved to
-.Aq Ar dst2 ET/EU .
+.Ar dst2-ET Ns / Ns Ar dst2-EU .
 In the case of a simple exchange,
-.Aq Ar dst2 ET/EU
+.Ar dst2-ET Ns / Ns Ar dst2-EU
 is omitted and the values
-.Aq Ar src ET/EU
+.Ar src-ET Ns / Ns Ar src-EU
 are used in their place.
 The optional modifiers
-.Ar inv1
+.Cm inv1
 and
-.Ar inv2
+.Cm inv2
 specify whether the media units are to be inverted before insertion into
-.Aq Ar dst1 ET/EU
+.Ar dst1-ET Ns / Ns Ar dst2-EU
 and
-.Aq Ar dst2 ET/EU
+.Ar dst2-ET Ns / Ns Ar dst2-EU
 respectively.
 .Pp
 Note that not all medium changers support the
 .Cm exchange
 operation; the changer must have multiple free pickers or emulate
 multiple free pickers with transient storage.
-.Pp
-.Li # chio position
-.Aq Ar to ET
-.Aq Ar to EU
-.Op Ar inv
-.Pp
-Position the picker in front of the element described by
-.Aq Ar to ET/EU .
+.It Cm getpicker
+Report which picker unit the changer is currently configured to use.
+.It Xo
+.Cm move
+.Ar from-ET from-EU to-ET to-EU
+.Op Cm inv
+.Xc
+Moves the media unit from
+.Ar from-ET Ns / Ns Ar from-EU
+to
+.Ar to-ET Ns / Ns Ar to-EU .
 If the optional modifier
-.Ar inv
+.Cm inv
+is specified, the media unit will be inverted before insertion.
+.It Cm params
+Report the number of slots, drives, pickers, and portals in the changer,
+and which picker unit the changer is currently configured to use.
+.It Cm position Ar to-ET to-EU Op Cm inv
+Position the picker in front of the element described by
+.Ar to-ET Ns / Ns Ar to-EU .
+If the optional modifier
+.Cm inv
 is specified, the media unit will be inverted before insertion.
 .Pp
 Note that not all changers behave as expected in response to this command.
-.Pp
-.Li # chio params
-.Pp
-Report the number of slots, drives, pickers, and portals in the changer,
-and which picker unit the changer is currently configured to use.
-.Pp
-.Li # chio getpicker
-.Pp
-Report which picker unit the changer is currently configured to use.
-.Pp
-.Li # chio setpicker
-.Aq Ar unit
-.Pp
+.It Cm setpicker Ar unit
 Configure the changer to use picker
-.Aq Ar unit .
-.Pp
-.Li # chio status
-.Op Aq Ar type
-.Pp
+.Ar unit .
+.It Cm status Op Ar ET
 Report the status of all elements in the changer.
 If
-.Aq Ar type
+.Ar ET
 is specified, report the status of all elements of type
-.Aq Ar type .
+.Ar ET .
 .Pp
-The status bits are defined as follows:
+The status bits output are defined as follows:
 .Bl -tag -width indent
 .It Dv FULL
 Element contains a media unit.
@@ -196,19 +166,26 @@ Element supports passing media (exporting) to an outside human operator.
 .It Dv INENAB
 Element supports receiving media (importing) from an outside human operator.
 .El
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width CHANGER
+.It Ev CHANGER
+The default changer may be overridden by setting this environmental
+variable to the desired changer device.
+.El
 .Sh FILES
 .Bl -tag -width /dev/ch0 -compact
 .It Pa /dev/ch0
 default changer device
 .El
 .Sh EXAMPLES
-.Li # chio move slot 3 drive 0
+Move the media in slot 3 (fourth slot) to drive 0 (first drive):
 .Pp
-Moves the media in slot 3 (fourth slot) to drive 0 (first drive).
+.Dl # chio move slot 3 drive 0
 .Pp
-.Li # chio setpicker 2
+Configure the changer to use picker 2 (third picker) for operations:
 .Pp
-Configures the changer to use picker 2 (third picker) for operations.
+.Dl # chio setpicker 2
 .Sh SEE ALSO
 .Xr mt 1 ,
 .Xr ch 4
