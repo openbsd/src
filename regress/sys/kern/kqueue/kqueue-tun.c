@@ -1,3 +1,4 @@
+/* $OpenBSD: kqueue-tun.c,v 1.2 2003/12/07 15:45:57 markus Exp $ */
 /* $Gateweaver: tunkq.c,v 1.2 2003/11/27 22:47:41 cmaxwell Exp $ */
 /*
  * Copyright 2003 Christopher J. Maxwell <cmaxwell@themanor.net>
@@ -39,8 +40,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define TUN0_ADDR	"172.16.0.1"
-#define TUN1_ADDR	"172.16.0.2"
+#define TUN0		"tun98"
+#define TUN1		"tun99"
+#define TUN0_ADDR	"192.0.2.1"
+#define TUN1_ADDR	"192.0.2.2"
 #define TUN_MAXWAIT	5
 #define TUN_PINGDEL	1
 
@@ -112,11 +115,11 @@ tunnel_ping(int fd, short which, void *arg)
 
 /*
  * +------------+     +------------+
- * |    tun0    |     |    tun1    |
- * | 172.16.0.1 |     | 172.16.0.2 |
+ * |    TUN0    |     |    TUN1    |
+ * | TUN0_ADDR  |     | TUN1_ADDR  |
  * +------------+     +------------+
  *
- * Set up both tunnel devices (tun0, tun1)
+ * Set up both tunnel devices (TUN0, TUN1)
  * This works because the routing table prefers the opposing end of the ptp
  * interfaces.
  * Set up one read and one write event per tunnel.
@@ -137,15 +140,15 @@ do_tun(void)
 	event_init();
 
 	/* tun0 */
-	if ((tunfd[0] = open("/dev/tun0", O_RDWR)) < 0)
-		errx(1, "Cannot open /dev/tun0");
+	if ((tunfd[0] = open("/dev/" TUN0, O_RDWR)) < 0)
+		errx(1, "Cannot open /dev/" TUN0);
 	event_set(&tunrev[0], tunfd[0], EV_READ, tunnel_read, NULL);
 	event_set(&tunwev[0], tunfd[0], EV_WRITE, tunnel_write, NULL);
 	event_add(&tunrev[0], &exittv);
 
 	/* tun1 */
-	if ((tunfd[1] = open("/dev/tun1", O_RDWR)) < 0)
-		errx(1, "Cannot open /dev/tun1");
+	if ((tunfd[1] = open("/dev/" TUN1, O_RDWR)) < 0)
+		errx(1, "Cannot open /dev/" TUN1);
 	event_set(&tunrev[1], tunfd[1], EV_READ, tunnel_read, NULL);
 	event_set(&tunwev[1], tunfd[1], EV_WRITE, tunnel_write, NULL);
 	event_add(&tunrev[1], &exittv);
@@ -155,9 +158,9 @@ do_tun(void)
 	event_add(&pingev, &pingtv);
 
 	/* configure the interfaces */
-	system("ifconfig tun0 " TUN0_ADDR
+	system("ifconfig " TUN0 " " TUN0_ADDR
 	    " netmask 255.255.255.255 " TUN1_ADDR);
-	system("ifconfig tun1 " TUN1_ADDR
+	system("ifconfig " TUN1 " " TUN1_ADDR
 	    " netmask 255.255.255.255 " TUN0_ADDR);
 
 	state = 0;
