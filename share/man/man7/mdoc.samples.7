@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.47 2003/10/04 14:50:45 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.48 2003/12/20 11:36:33 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -257,7 +257,7 @@ Most macros in
 accept nine arguments and,
 in limited cases, arguments may be continued or extended
 on the
-next line (See
+next line (see
 .Sx Extended Arguments ) .
 A few macros handle quoted arguments (see
 .Sx Passing Space Characters in an Argument
@@ -392,7 +392,7 @@ containing blank spaces is to use the hard or unpaddable space character
 .Ql \e\  ,
 that is, a blank space preceded by the escape character
 .Ql \e .
-This method may be used with any macro but has the side effect
+This method may be used with any macro, but has the side effect
 of interfering with the adjustment of text
 over the length of a line.
 .Em Troff
@@ -988,7 +988,7 @@ without arguments.
 The
 .Ql \&.Ev
 macro is parsed and is callable.
-.Ss Errno (Section two only)
+.Ss Errno (section two only)
 The
 .Ql \&.Er
 errno macro specifies the error return value
@@ -1501,7 +1501,7 @@ The
 .Ql \&.Xr
 macro expects the first argument to be
 a manual page name, and the second argument, if it exists,
-to be either a section page number or punctuation.
+to be either a section number or punctuation.
 Any
 remaining arguments are assumed to be punctuation.
 .Pp
@@ -2474,7 +2474,7 @@ There are six types of displays: a quickie, one-line indented display
 .Ql \&.D1 ;
 a quickie one-line literal display
 .Ql \&.Dl ;
-and a block-ragged, block-unfilled, block-filled, and block-literal
+and block-ragged, block-unfilled, block-filled, and block-literal displays,
 which use the
 .Ql \&.Bd
 begin-display
@@ -2985,7 +2985,7 @@ is the name of the defined string or as
 where
 .Em x
 is the name of the string.
-The interpreting sequence may be used any where in the text.
+The interpreting sequence may be used anywhere in the text.
 .Bl -column "String " "Nroff " "Troff " -offset indent
 .It Sy "String	Nroff	Troff"
 .It Li "<=" Ta \&<\&= Ta \*(<=
@@ -3073,7 +3073,7 @@ In general, any time huge portions
 of text do not appear where expected in the output, or small strings
 such as list tags disappear, chances are there is a misunderstanding
 about an argument type in the argument list.
-Your mother never intended for you to remember this evil stuff - so here
+Your mother never intended for you to remember this evil stuff \- so here
 is a way to find out whether or not your arguments are valid: The
 .Ql \&.Db
 (debug)
