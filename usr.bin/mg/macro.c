@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.c,v 1.7 2004/02/01 22:26:41 vincent Exp $	*/
+/*	$OpenBSD: macro.c,v 1.8 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *	Keyboard macros.
@@ -28,7 +28,7 @@ definemacro(int f, int n)
 
 	if (macrodef) {
 		ewprintf("already defining macro");
-		return macrodef = FALSE;
+		return (macrodef = FALSE);
 	}
 
 	/* free lines allocated for string arguments */
@@ -41,11 +41,11 @@ definemacro(int f, int n)
 	}
 
 	if ((maclhead = lp1 = lalloc(0)) == NULL)
-		return FALSE;
+		return (FALSE);
 
 	ewprintf("Defining Keyboard Macro...");
 	maclcur = lp1->l_fp = lp1->l_bp = lp1;
-	return macrodef = TRUE;
+	return (macrodef = TRUE);
 }
 
 /* ARGSUSED */
@@ -54,7 +54,7 @@ finishmacro(int f, int n)
 {
 	macrodef = FALSE;
 	ewprintf("End Keyboard Macro Definition");
-	return TRUE;
+	return (TRUE);
 }
 
 /* ARGSUSED */
@@ -66,10 +66,10 @@ executemacro(int f, int n)
 
 	if (macrodef ||
 	    (macrocount >= MAXMACRO && macro[MAXMACRO].m_funct != finishmacro))
-		return FALSE;
+		return (FALSE);
 
 	if (macrocount == 0)
-		return TRUE;
+		return (TRUE);
 
 	inmacro = TRUE;
 
@@ -86,7 +86,7 @@ executemacro(int f, int n)
 			}
 			if ((*funct)(flag, num) != TRUE) {
 				inmacro = FALSE;
-				return FALSE;
+				return (FALSE);
 			}
 			lastflag = thisflag;
 			thisflag = 0;
@@ -95,6 +95,6 @@ executemacro(int f, int n)
 		}
 	}
 	inmacro = FALSE;
-	return TRUE;
+	return (TRUE);
 }
 #endif	/* NO_MACRO */

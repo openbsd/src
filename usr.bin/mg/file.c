@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.31 2005/03/10 18:27:47 henning Exp $	*/
+/*	$OpenBSD: file.c,v 1.32 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *	File commands.
@@ -19,13 +19,13 @@ fileinsert(int f, int n)
 
 	bufp = eread("Insert file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
 	if (bufp == NULL)
-		return ABORT;
+		return (ABORT);
 	else if (bufp[0] == '\0')
-		return FALSE;
+		return (FALSE);
 	adjf = adjustname(bufp);
 	if (adjf == NULL)
 		return (FALSE);
-	return insertfile(adjf, NULL, FALSE);
+	return (insertfile(adjf, NULL, FALSE));
 }
 
 /*
@@ -43,25 +43,25 @@ filevisit(int f, int n)
 
 	bufp = eread("Find file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
 	if (bufp == NULL)
-		return ABORT;
+		return (ABORT);
 	else if (bufp[0] == '\0')
-		return FALSE;
+		return (FALSE);
 	adjf = adjustname(fname);
 	if (adjf == NULL)
 		return (FALSE);
 	if ((bp = findbuffer(adjf)) == NULL)
-		return FALSE;
+		return (FALSE);
 	curbp = bp;
 	if (showbuffer(bp, curwp, WFHARD) != TRUE)
-		return FALSE;
+		return (FALSE);
 	if (bp->b_fname[0] == 0) {
 		int status;
 
 		if ((status = readin(adjf)) != TRUE)
 			killbuffer(bp);
-		return status;
+		return (status);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 int
@@ -75,6 +75,7 @@ filevisitro(int f, int n)
 	curbp->b_flag |= BFREADONLY;
 	return (TRUE);
 }
+
 /*
  * Pop to a file in the other window.  Same as the last function, but uses
  * popbuf instead of showbuffer.
@@ -89,16 +90,16 @@ poptofile(int f, int n)
 
 	if ((bufp = eread("Find file in other window: ", fname, NFILEN,
 	    EFNEW | EFCR | EFFILE)) == NULL)
-		return ABORT;
+		return (ABORT);
 	else if (bufp[0] == '\0')
-		return FALSE;
+		return (FALSE);
 	adjf = adjustname(fname);
 	if (adjf == NULL)
 		return (FALSE);
 	if ((bp = findbuffer(adjf)) == NULL)
-		return FALSE;
+		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
-		return FALSE;
+		return (FALSE);
 	curbp = bp;
 	curwp = wp;
 	if (bp->b_fname[0] == 0) {
@@ -106,13 +107,13 @@ poptofile(int f, int n)
 
 		if ((status = readin(adjf)) != TRUE)
 			killbuffer(bp);
-		return status;
+		return (status);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
- * given a file name, either find the buffer it uses, or create a new
+ * Given a file name, either find the buffer it uses, or create a new
  * empty buffer to put it in.
  */
 BUFFER *
@@ -124,14 +125,14 @@ findbuffer(char *fname)
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (strcmp(bp->b_fname, fname) == 0)
-			return bp;
+			return (bp);
 	}
 	i = strlcpy(bname, basename(fname), sizeof(bname));
 	remain = sizeof(bname) - i;
 	for (count = 2; bfind(bname, FALSE) != NULL; count++)
 		snprintf(&bname[i], remain, "<%d>", count);
 
-	return bfind(bname, TRUE);
+	return (bfind(bname, TRUE));
 }
 
 /*
@@ -149,10 +150,10 @@ readin(char *fname)
 
 	/* might be old */
 	if (bclear(curbp) != TRUE)
-		return TRUE;
+		return (TRUE);
 	if ((status = insertfile(fname, fname, TRUE)) != TRUE) {
 		ewprintf("File is not readable: %s", fname);
-		return FALSE;
+		return (FALSE);
 	}
 
 	/*
@@ -175,7 +176,7 @@ readin(char *fname)
 		}
 	}
 
-	/* We need to set the READONLY flag after we insert the file */
+	/* We need to set the READONLY flag after we insert the file. */
 	if (access(fname, W_OK) && errno != ENOENT)
 		curbp->b_flag |= BFREADONLY;
 	else
@@ -184,7 +185,7 @@ readin(char *fname)
 	if (startrow)
 		gotoline(FFARG, startrow);
 
-	return status;
+	return (status);
 }
 
 /*
@@ -198,7 +199,7 @@ readin(char *fname)
  * Insert a file in the current buffer, after dot.  Set mark at the end of
  * the text inserted; point at the beginning.  Return a standard status.
  * Print a summary (lines read, error message) out as well.  Unless the
- * NO_BACKUP conditional is set, this routine also does the read end of 
+ * NO_BACKUP conditional is set, this routine also does the read end of
  * backup processing.  The BFBAK flag, if set in a buffer, says that a
  * backup should be taken.  It is set when a file is read in, but not on
  * a new file.  (You don't need to make a backup copy of nothing.)
@@ -341,7 +342,7 @@ endoffile:
 	bp->b_flag |= BFCHG;
 #endif /* !NO_BACKUP */
 	/*
-	 * if the insert was at the end of buffer, set lp1 to the end of
+	 * If the insert was at the end of buffer, set lp1 to the end of
 	 * buffer line, and lp2 to the beginning of the newly inserted text.
 	 * (Otherwise lp2 is set to NULL.)  This is used below to set
 	 * pointers in other windows correctly if they are also at the end of
@@ -372,7 +373,7 @@ out:		lp2 = NULL;
 		undo_enable(x);
 
 	/* return false if error */
-	return s != FIOERR;
+	return (s != FIOERR);
 }
 
 /*
@@ -391,9 +392,9 @@ filewrite(int f, int n)
 
 	if ((bufp = eread("Write file: ", fname, NFILEN,
 	    EFNEW | EFCR | EFFILE)) == NULL)
-		return ABORT;
+		return (ABORT);
 	else if (bufp[0] == '\0')
-		return FALSE;
+		return (FALSE);
 
 	adjfname = adjustname(fname);
 	if (adjfname == NULL)
@@ -417,7 +418,7 @@ filewrite(int f, int n)
 #endif /* !NO_BACKUP */
 		upmodes(curbp);
 	}
-	return s;
+	return (s);
 }
 
 /*
@@ -434,7 +435,7 @@ static int	makebackup = MAKEBACKUP;
 int
 filesave(int f, int n)
 {
-	return buffsave(curbp);
+	return (buffsave(curbp));
 }
 
 /*
@@ -453,7 +454,7 @@ buffsave(BUFFER *bp)
 	/* return, no changes */
 	if ((bp->b_flag & BFCHG) == 0) {
 		ewprintf("(No changes need to be saved)");
-		return TRUE;
+		return (TRUE);
 	}
 
 	/* must have a name */
@@ -467,11 +468,11 @@ buffsave(BUFFER *bp)
 		s = fbackupfile(bp->b_fname);
 		/* hard error */
 		if (s == ABORT)
-			return FALSE;
+			return (FALSE);
 		/* softer error */
 		if (s == FALSE &&
 		    (s = eyesno("Backup error, save anyway")) != TRUE)
-			return s;
+			return (s);
 	}
 #endif /* !NO_BACKUP */
 	if ((s = writeout(bp, bp->b_fname)) == TRUE) {
@@ -482,7 +483,7 @@ buffsave(BUFFER *bp)
 #endif /* !NO_BACKUP */
 		upmodes(bp);
 	}
-	return s;
+	return (s);
 }
 
 #ifndef NO_BACKUP
@@ -502,7 +503,7 @@ makebkfile(int f, int n)
 	else
 		makebackup = !makebackup;
 	ewprintf("Backup files %sabled", makebackup ? "en" : "dis");
-	return TRUE;
+	return (TRUE);
 }
 #endif /* !NO_BACKUP */
 
@@ -537,7 +538,7 @@ writeout(BUFFER *bp, char *fn)
 	} else
 		/* ignore close error if it is a write error */
 		(void)ffclose(bp);
-	return s == FIOSUC;
+	return (s == FIOSUC);
 }
 
 /*

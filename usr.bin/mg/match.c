@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.9 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: match.c,v 1.10 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *	Limited parenthesis matching routines
@@ -23,7 +23,6 @@ static void	displaymatch(LINE *, int);
  * If the character is not in the table, the character is balanced by itself.
  * This is to allow delimiters in Scribe documents to be matched.
  */
-
 static struct balance {
 	char	left, right;
 } bal[] = {
@@ -54,15 +53,15 @@ showmatch(int f, int n)
 	int	i, s;
 
 	if (f & FFRAND)
-		return FALSE;
+		return (FALSE);
 	for (i = 0; i < n; i++) {
 		if ((s = selfinsert(FFRAND, 1)) != TRUE)
-			return s;
+			return (s);
 		/* unbalanced -- warn user */
 		if (balance() != TRUE)
 			ttbeep();
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -72,17 +71,13 @@ showmatch(int f, int n)
  * for a balancing character.  If such a balancing character
  * is found, it uses displaymatch() to display the match.
  */
-
 static int
 balance(void)
 {
 	LINE	*clp;
 	int	 cbo;
-	int	 c;
-	int	 i;
-	int	 rbal;
-	int	 lbal;
-	int	 depth;
+	int	 c, i, depth;
+	int	 rbal, lbal;
 
 	rbal = key.k_chars[key.k_count - 1];
 
@@ -137,13 +132,11 @@ balance(void)
 	/* NOTREACHED */
 }
 
-
 /*
  * Display matching character.  Matching characters that are not in the
  * current window are displayed in the echo line. If in the current window,
  * move dot to the matching character, sit there a while, then move back.
  */
-
 static void
 displaymatch(LINE *clp, int cbo)
 {

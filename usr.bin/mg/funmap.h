@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.h,v 1.3 2002/03/11 13:02:56 vincent Exp $	*/
+/*	$OpenBSD: funmap.h,v 1.4 2005/04/03 02:09:28 db Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -23,8 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	funmap_init(void);
-PF	name_function(const char *);
-const char *function_name(PF);
-LIST	*complete_function_list(const char *, int);
-int	funmap_add(PF, const char *);
+void		 funmap_init(void);
+PF		 name_function(const char *);
+const char	*function_name(PF);
+LIST		*complete_function_list(const char *, int);
+int		 funmap_add(PF, const char *);

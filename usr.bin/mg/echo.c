@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.30 2005/03/10 16:58:57 deraadt Exp $	*/
+/*	$OpenBSD: echo.c,v 1.31 2005/04/03 02:09:28 db Exp $	*/
 /*
  *	Echo line reading and writing.
  *
@@ -17,13 +17,13 @@
 #include <stdarg.h>
 
 static char	*veread(const char *, char *, size_t, int, va_list);
-static int	complt(int, int, char *, size_t, int);
-static int	complt_list(int, int, char *, int);
-static void	eformat(const char *, va_list);
-static void	eputi(int, int);
-static void	eputl(long, int);
-static void	eputs(const char *);
-static void	eputc(char);
+static int	 complt(int, int, char *, size_t, int);
+static int	 complt_list(int, int, char *, int);
+static void	 eformat(const char *, va_list);
+static void	 eputi(int, int);
+static void	 eputl(long, int);
+static void	 eputs(const char *);
+static void	 eputc(char);
 static LIST	*copy_list(LIST *);
 
 int		epresf = FALSE;		/* stuff in echo line flag */
@@ -54,17 +54,17 @@ eyorn(const char *sp)
 
 #ifndef NO_MACRO
 	if (inmacro)
-		return TRUE;
+		return (TRUE);
 #endif /* !NO_MACRO */
 	ewprintf("%s? (y or n) ", sp);
 	for (;;) {
 		s = getkey(FALSE);
 		if (s == 'y' || s == 'Y')
-			return TRUE;
+			return (TRUE);
 		if (s == 'n' || s == 'N')
-			return FALSE;
+			return (FALSE);
 		if (s == CCHR('G'))
-			return ctrlg(FFRAND, 1);
+			return (ctrlg(FFRAND, 1));
 		ewprintf("Please answer y or n.  %s? (y or n) ", sp);
 	}
 	/* NOTREACHED */
@@ -72,7 +72,7 @@ eyorn(const char *sp)
 
 /*
  * Like eyorn, but for more important questions.  User must type all of
- * "yes" or "no" and the trainling newline.
+ * "yes" or "no" and the trailing newline.
  */
 int
 eyesno(const char *sp)
@@ -81,12 +81,12 @@ eyesno(const char *sp)
 
 #ifndef NO_MACRO
 	if (inmacro)
-		return TRUE;
+		return (TRUE);
 #endif /* !NO_MACRO */
 	rep = ereply("%s? (yes or no) ", buf, sizeof(buf), sp);
 	for (;;) {
 		if (rep == NULL)
-			return ABORT;
+			return (ABORT);
 		if (rep[0] != '\0') {
 #ifndef NO_MACRO
 			if (macrodef) {
@@ -101,11 +101,11 @@ eyesno(const char *sp)
 			    (rep[1] == 'e' || rep[1] == 'E') &&
 			    (rep[2] == 's' || rep[2] == 'S') &&
 			    (rep[3] == '\0'))
-				return TRUE;
+				return (TRUE);
 			if ((rep[0] == 'n' || rep[0] == 'N') &&
 			    (rep[1] == 'o' || rep[0] == 'O') &&
 			    (rep[2] == '\0'))
-				return FALSE;
+				return (FALSE);
 		}
 		rep = ereply("Please answer yes or no.  %s? (yes or no) ",
 		    buf, sizeof(buf), sp);
@@ -129,7 +129,7 @@ ereply(const char *fmt, char *buf, size_t nbuf, ...)
 	va_start(ap, nbuf);
 	rep = veread(fmt, buf, nbuf, EFNEW | EFCR, ap);
 	va_end(ap);
-	return rep;
+	return (rep);
 }
 
 /*
@@ -144,32 +144,31 @@ char *
 eread(const char *fmt, char *buf, size_t nbuf, int flag, ...)
 {
 	va_list	 ap;
-	char *rep;
+	char	*rep;
 
 	va_start(ap, flag);
 	rep = veread(fmt, buf, nbuf, flag, ap);
 	va_end(ap);
-	return rep;
+	return (rep);
 }
 
 static char *
 veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 {
 	int	 cpos, dynbuf = (buf == NULL);
-	int	 i;
-	int	 c;
+	int	 c, i;
 
 #ifndef NO_MACRO
 	if (inmacro) {
 		if (dynbuf) {
 			if ((buf = malloc(maclcur->l_used + 1)) == NULL)
-				return NULL;
+				return (NULL);
 		} else if (maclcur->l_used >= nbuf)
-			return NULL;
+			return (NULL);
 		bcopy(maclcur->l_text, buf, maclcur->l_used);
 		buf[maclcur->l_used] = '\0';
 		maclcur = maclcur->l_fp;
-		return buf;
+		return (buf);
 	}
 #endif /* !NO_MACRO */
 	cpos = 0;
@@ -182,7 +181,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 	eformat(fp, ap);
 	if ((flag & EFDEF) != 0) {
 		if (buf == NULL)
-			return NULL;
+			return (NULL);
 		eputs(buf);
 		cpos += strlen(buf);
 	}
@@ -223,7 +222,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 					/* XXX hackish */
 					if (dynbuf && buf != NULL)
 						free(buf);
-					return falseval;
+					return (falseval);
 				}
 				lp->l_fp = maclcur->l_fp;
 				maclcur->l_fp = lp;
@@ -237,7 +236,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 			eputc(CCHR('G'));
 			(void)ctrlg(FFRAND, 0);
 			ttflush();
-			return NULL;
+			return (NULL);
 		case CCHR('H'):			/* rubout, erase */
 		case CCHR('?'):
 			if (cpos != 0) {
@@ -310,7 +309,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 				if ((newp = realloc(buf, newsize)) == NULL) {
 					ewprintf("Out of memory");
 					free(buf);
-					return NULL;
+					return (NULL);
 				}
 				buf = newp;
 				nbuf = newsize;
@@ -323,11 +322,11 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 		}
 	}
 done:
-	return buf;
+	return (buf);
 }
 
 /*
- * do completion on a list of objects.
+ * Do completion on a list of objects.
  */
 static int
 complt(int flags, int c, char *buf, size_t nbuf, int cpos)
@@ -392,17 +391,17 @@ complt(int flags, int c, char *buf, size_t nbuf, int cpos)
 		ttflush();
 		free_file_list(wholelist);
 		if (nxtra < 0 && c != CCHR('M'))
-			return 0;
-		return nxtra;
+			return (0);
+		return (nxtra);
 	}
 
 	/*
-	 * wholelist is null if we are doing buffers.  want to free lists
+	 * wholelist is NULL if we are doing buffers.  Want to free lists
 	 * that were created for us, but not the buffer list!
 	 */
 	free_file_list(wholelist);
 
-	/* Set up backspaces, etc., being mindful of echo line limit */
+	/* Set up backspaces, etc., being mindful of echo line limit. */
 	msglen = strlen(msg);
 	nshown = (ttcol + msglen + 2 > ncol) ?
 		ncol - ttcol - 2 : msglen;
@@ -417,11 +416,11 @@ complt(int flags, int c, char *buf, size_t nbuf, int cpos)
 	ttcol -= (i = nshown);	/* update ttcol on BS's		 */
 	while (i--)
 		ttputc('\b');	/* update ttcol again!		 */
-	return 0;
+	return (0);
 }
 
 /*
- * do completion on a list of objects, listing instead of completing
+ * Do completion on a list of objects, listing instead of completing.
  */
 static int
 complt_list(int flags, int c, char *buf, int cpos)
@@ -442,13 +441,13 @@ complt_list(int flags, int c, char *buf, int cpos)
 
 	ttflush();
 
-	/* the results are put into a help buffer */
+	/* The results are put into a help buffer. */
 	bp = bfind("*help*", TRUE);
 	if (bclear(bp) == FALSE)
-		return FALSE;
+		return (FALSE);
 
 	/*
-	 * first get the list of objects.  This list may contain only
+	 * First get the list of objects.  This list may contain only
 	 * the ones that complete what has been typed, or may be the
 	 * whole list of all objects of this type.  They are filtered
 	 * later in any case.  Set wholelist if the list has been
@@ -476,7 +475,6 @@ complt_list(int flags, int c, char *buf, int cpos)
 			preflen = cp - buf + 1;
 	} else
 		panic("broken complt call: flags");
-
 
 	/*
 	 * Sort the list, since users expect to see it in alphabetic
@@ -517,17 +515,17 @@ complt_list(int flags, int c, char *buf, int cpos)
 	maxwidth += 1 - preflen;
 
 	/*
-	 * Now do the display.  objects are written into linebuf until
+	 * Now do the display.  Objects are written into linebuf until
 	 * it fills, and then put into the help buffer.
 	 */
 	linesize = MAX(ncol, maxwidth) + 1;
 	if ((linebuf = malloc(linesize)) == NULL)
-		return FALSE;
+		return (FALSE);
 	width = 0;
 
 	/*
 	 * We're going to strlcat() into the buffer, so it has to be
-	 * NUL terminated
+	 * NUL terminated.
 	 */
 	linebuf[0] = '\0';
 	for (lh2 = lh; lh2 != NULL; lh2 = lh2->l_next) {
@@ -570,7 +568,7 @@ complt_list(int flags, int c, char *buf, int cpos)
 	ttmove(oldrow, oldcol);	/* update leaves cursor in arbitrary place */
 	ttcolor(oldhue);	/* with arbitrary color */
 	ttflush();
-	return 0;
+	return (0);
 }
 
 /*
@@ -667,7 +665,7 @@ eformat(const char *fp, va_list ap)
 				break;
 
 			case 'p':
-				snprintf(tmp, sizeof tmp, "%p",
+				snprintf(tmp, sizeof(tmp), "%p",
 				    va_arg(ap, void *));
 				eputs(tmp);
 				break;

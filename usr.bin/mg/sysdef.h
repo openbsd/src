@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdef.h,v 1.11 2002/02/21 04:16:23 deraadt Exp $	*/
+/*	$OpenBSD: sysdef.h,v 1.12 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *		POSIX system header file
@@ -10,14 +10,14 @@
 #include <string.h>
 #include <errno.h>
 
-#define	KBLOCK	8192		/* Kill grow.			 */
-#define	GOOD	0		/* Good exit status.		 */
-#define SYMBLINK	1	/* Handle symbolic links	 */
+#define	KBLOCK		8192	/* Kill grow.			 */
+#define	GOOD		0	/* Good exit status.		 */
+#define	SYMBLINK	1	/* Handle symbolic links.	 */
 
 typedef int	RSIZE;		/* Type for file/region sizes	 */
 typedef short	KCHAR;		/* Type for internal keystrokes	 */
 
-#define MALLOCROUND(m)	(m+=7,m&=~7)	/* round up to 8 byte boundry	 */
+#define MALLOCROUND(m)	(m+=7,m&=~7)	/* round up to 8 byte boundary	 */
 
 struct fileinfo {
 	uid_t		fi_uid;

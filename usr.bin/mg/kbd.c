@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.15 2004/02/01 22:26:40 vincent Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.16 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *	Terminal independent keyboard handling.
@@ -41,7 +41,7 @@ do_meta(int f, int n)
 	else
 		use_metakey = !use_metakey;
 	ewprintf("Meta keys %sabled", use_metakey ? "en" : "dis");
-	return TRUE;
+	return (TRUE);
 }
 #endif /* DO_METAKEY */
 
@@ -58,7 +58,7 @@ bsmap(int f, int n)
 	else
 		bs_map = !bs_map;
 	ewprintf("Backspace mapping %sabled", bs_map ? "en" : "dis");
-	return TRUE;
+	return (TRUE);
 }
 #endif /* BSMAP */
 
@@ -119,7 +119,7 @@ getkey(int flag)
 		*promptp = '\0';
 	}
 #endif /* !NO_DPROMPT */
-	return c;
+	return (c);
 }
 
 /*
@@ -132,7 +132,7 @@ doscan(KEYMAP *map, int c, KEYMAP **newmap)
 {
 	MAP_ELEMENT	*elec = &map->map_element[0];
 	MAP_ELEMENT	*last = &map->map_element[map->map_num];
-	PF		ret;
+	PF		 ret;
 
 	while (elec < last && c > elec->k_num)
 		elec++;
@@ -146,7 +146,7 @@ doscan(KEYMAP *map, int c, KEYMAP **newmap)
 	if (ret == NULL && newmap != NULL)
 		*newmap = elec->k_prefmap;
 
-	return ret;
+	return (ret);
 }
 
 int
@@ -162,12 +162,12 @@ doin(void)
 	key.k_count = 0;
 	while ((funct = doscan(curmap, (key.k_chars[key.k_count++] =
 	    getkey(TRUE)), &curmap)) == NULL)
-		/*nothing*/;
+		/* nothing */;
 #ifndef NO_MACRO
 	if (macrodef && macrocount < MAXMACRO)
 		macro[macrocount++].m_funct = funct;
 #endif /* !NO_MACRO */
-	return (*funct)(0, 1);
+	return ((*funct)(0, 1));
 }
 
 int
@@ -193,20 +193,20 @@ rescan(int f, int n)
 					while ((fp = doscan(curmap,
 					    key.k_chars[key.k_count++] =
 					    getkey(TRUE), &curmap)) == NULL)
-						/*nothing*/;
+						/* nothing */;
 				if (fp != rescan) {
 #ifndef NO_MACRO
 					if (macrodef && macrocount <= MAXMACRO)
 						macro[macrocount - 1].m_funct
 						    = fp;
 #endif /* !NO_MACRO */
-					return (*fp)(f, n);
+					return ((*fp)(f, n));
 				}
 			}
 		}
 		/* try previous mode */
 		if (--mode < 0)
-			return ABORT;
+			return (ABORT);
 		curmap = curbp->b_modes[mode]->p_map;
 		for (i = 0; i < key.k_count; i++) {
 			if ((fp = doscan(curmap, (key.k_chars[i]), &curmap)) != NULL)
@@ -215,7 +215,7 @@ rescan(int f, int n)
 		if (fp == NULL) {
 			while ((fp = doscan(curmap, key.k_chars[i++] =
 			    getkey(TRUE), &curmap)) == NULL)
-				/*nothing*/;
+				/* nothing */;
 			key.k_count = i;
 		}
 		if (fp != rescan && i >= key.k_count - 1) {
@@ -223,7 +223,7 @@ rescan(int f, int n)
 			if (macrodef && macrocount <= MAXMACRO)
 				macro[macrocount - 1].m_funct = fp;
 #endif /* !NO_MACRO */
-			return (*fp)(f, n);
+			return ((*fp)(f, n));
 		}
 	}
 }
@@ -233,8 +233,7 @@ universal_argument(int f, int n)
 {
 	KEYMAP	*curmap;
 	PF	 funct;
-	int	 c;
-	int	 nn = 4;
+	int	 c, nn = 4;
 
 	if (f & FFUNIV)
 		nn *= n;
@@ -242,9 +241,9 @@ universal_argument(int f, int n)
 		key.k_chars[0] = c = getkey(TRUE);
 		key.k_count = 1;
 		if (c == '-')
-			return negative_argument(f, nn);
+			return (negative_argument(f, nn));
 		if (c >= '0' && c <= '9')
-			return digit_argument(f, nn);
+			return (digit_argument(f, nn));
 		curmap = curbp->b_modes[curbp->b_nmodes]->p_map;
 		while ((funct = doscan(curmap, c, &curmap)) == NULL) {
 			key.k_chars[key.k_count++] = c = getkey(TRUE);
@@ -258,7 +257,7 @@ universal_argument(int f, int n)
 				macro[macrocount++].m_funct = funct;
 			}
 #endif /* !NO_MACRO */
-			return (*funct)(FFUNIV, nn);
+			return ((*funct)(FFUNIV, nn));
 		}
 		nn <<= 2;
 	}
@@ -296,7 +295,7 @@ digit_argument(int f, int n)
 		macro[macrocount++].m_funct = funct;
 	}
 #endif /* !NO_MACRO */
-	return (*funct)(FFOTHARG, nn);
+	return ((*funct)(FFOTHARG, nn));
 }
 
 int
@@ -334,7 +333,7 @@ negative_argument(int f, int n)
 		macro[macrocount++].m_funct = funct;
 	}
 #endif /* !NO_MACRO */
-	return (*funct)(FFNEGARG, nn);
+	return ((*funct)(FFNEGARG, nn));
 }
 
 /*
@@ -351,9 +350,9 @@ selfinsert(int f, int n)
 	int	 count;
 
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 	if (n == 0)
-		return TRUE;
+		return (TRUE);
 	c = key.k_chars[key.k_count - 1];
 #ifndef NO_MACRO
 	if (macrodef && macrocount < MAXMACRO) {
@@ -367,7 +366,7 @@ selfinsert(int f, int n)
 			if (maclcur->l_size < maclcur->l_used + n) {
 				if (lrealloc(maclcur, maclcur->l_used + n) ==
 				    FALSE)
-					return FALSE;
+					return (FALSE);
 			}
 			maclcur->l_used += n;
 			/* Copy in the new data */
@@ -377,7 +376,7 @@ selfinsert(int f, int n)
 		} else {
 			macro[macrocount - 1].m_funct = insert;
 			if ((lp = lalloc(n)) == NULL)
-				return FALSE;
+				return (FALSE);
 			lp->l_bp = maclcur;
 			lp->l_fp = maclcur->l_fp;
 			maclcur->l_fp = lp;
@@ -392,7 +391,7 @@ selfinsert(int f, int n)
 		do {
 			count = lnewline();
 		} while (--n && count == TRUE);
-		return count;
+		return (count);
 	}
 
 	/* overwrite mode */
@@ -401,13 +400,13 @@ selfinsert(int f, int n)
 		while (curwp->w_doto < llength(curwp->w_dotp) && n--)
 			lputc(curwp->w_dotp, curwp->w_doto++, c);
 		if (n <= 0)
-			return TRUE;
+			return (TRUE);
 	}
-	return linsert(n, c);
+	return (linsert(n, c));
 }
 
 /*
- * This could be implemented as a keymap with everthing defined as self-insert.
+ * This could be implemented as a keymap with everything defined as self-insert.
  */
 int
 quote(int f, int n)
@@ -428,5 +427,5 @@ quote(int f, int n)
 		} else
 			ungetkey(c);
 	}
-	return selfinsert(f, n);
+	return (selfinsert(f, n));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.21 2004/07/09 13:50:40 vincent Exp $	*/
+/*	$OpenBSD: line.c,v 1.22 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *		Text line handling.
@@ -28,7 +28,7 @@
 #endif
 
 #ifndef NBLOCK
-#define NBLOCK	16		/* Line block chunk size	 */
+#define NBLOCK	16		/* Line block chunk size.	 */
 #endif
 
 #ifndef KBLOCK
@@ -51,16 +51,16 @@ lalloc(int used)
 {
 	LINE *lp;
 
-	if ((lp = malloc(sizeof *lp)) == NULL)
-		return NULL;
+	if ((lp = malloc(sizeof(*lp))) == NULL)
+		return (NULL);
 	lp->l_text = NULL;
 	lp->l_size = 0;
 	lp->l_used = used;	/* XXX */
 	if (lrealloc(lp, used) == FALSE) {
 		free(lp);
-		return NULL;
+		return (NULL);
 	}
-	return lp;
+	return (lp);
 }
 
 int
@@ -70,12 +70,11 @@ lrealloc(LINE *lp, int newsize)
 
 	if (lp->l_size < newsize) {
 		if ((tmp = realloc(lp->l_text, newsize)) == NULL)
-			return FALSE;
+			return (FALSE);
 		lp->l_text = tmp;
 		lp->l_size = newsize;
 	}
-
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -159,14 +158,14 @@ lchange(int flag)
 int
 linsert_str(const char *s, int n)
 {
-	LINE *lp1;
+	LINE	*lp1;
 	MGWIN	*wp;
 	RSIZE	 i;
 	int	 doto;
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
-		return FALSE;
+		return (FALSE);
 	}
 
 	if (!n)
@@ -186,7 +185,7 @@ linsert_str(const char *s, int n)
 			panic("bug: linsert_str");
 		/* allocate a new line */
 		if ((lp2 = lalloc(n)) == NULL)
-			return FALSE;
+			return (FALSE);
 		/* previous line */
 		lp3 = lp1->l_bp;
 		/* link in */
@@ -206,14 +205,14 @@ linsert_str(const char *s, int n)
 		}
 		undo_add_insert(lp2, 0, n);
 		curwp->w_doto = n;
-		return TRUE;
+		return (TRUE);
 	}
 	/* save for later */
 	doto = curwp->w_doto;
 
 	if ((lp1->l_used + n) > lp1->l_size) {
 		if (lrealloc(lp1, lp1->l_used + n) == FALSE)
-			return FALSE;
+			return (FALSE);
 	}
 	lp1->l_used += n;
 	if (lp1->l_used != n)
@@ -234,7 +233,7 @@ linsert_str(const char *s, int n)
 		}
 	}
 	undo_add_insert(curwp->w_dotp, doto, n);
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -249,7 +248,7 @@ linsert_str(const char *s, int n)
 int
 linsert(int n, int c)
 {
-	LINE *lp1;
+	LINE	*lp1;
 	MGWIN	*wp;
 	RSIZE	 i;
 	int	 doto;
@@ -259,7 +258,7 @@ linsert(int n, int c)
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
-		return FALSE;
+		return (FALSE);
 	}
 
 	lchange(WFEDIT);
@@ -274,11 +273,11 @@ linsert(int n, int c)
 		/* now should only happen in empty buffer */
 		if (curwp->w_doto != 0) {
 			ewprintf("bug: linsert");
-			return FALSE;
+			return (FALSE);
 		}
 		/* allocate a new line */
 		if ((lp2 = lalloc(n)) == NULL)
-			return FALSE;
+			return (FALSE);
 		/* previous line */
 		lp3 = lp1->l_bp;
 		/* link in */
@@ -298,15 +297,14 @@ linsert(int n, int c)
 		}
 		undo_add_insert(lp2, 0, n);
 		curwp->w_doto = n;
-		return TRUE;
+		return (TRUE);
 	}
 	/* save for later */
 	doto = curwp->w_doto;
 
-
 	if ((lp1->l_used + n) > lp1->l_size) {
 		if (lrealloc(lp1, lp1->l_used + n) == FALSE)
-			return FALSE;
+			return (FALSE);
 	}
 	lp1->l_used += n;
 	if (lp1->l_used != n)
@@ -327,7 +325,7 @@ linsert(int n, int c)
 		}
 	}
 	undo_add_insert(curwp->w_dotp, doto, n);
-	return TRUE;
+	return (TRUE);
 }
 
 int
@@ -347,7 +345,7 @@ lnewline_at(LINE *lp1, int doto)
 	if (doto == 0) {
 		/* new first part */
 		if ((lp2 = lalloc(0)) == NULL)
-			return FALSE;
+			return (FALSE);
 		lp2->l_bp = lp1->l_bp;
 		lp1->l_bp->l_fp = lp2;
 		lp2->l_fp = lp1;
@@ -355,7 +353,7 @@ lnewline_at(LINE *lp1, int doto)
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 			if (wp->w_linep == lp1)
 				wp->w_linep = lp2;
-		return TRUE;
+		return (TRUE);
 	}
 
 	/* length of new part */
@@ -363,7 +361,7 @@ lnewline_at(LINE *lp1, int doto)
 
 	/* new second half line */
 	if ((lp2 = lalloc(nlen)) == NULL)
-		return FALSE;
+		return (FALSE);
 	if (nlen != 0)
 		bcopy(&lp1->l_text[doto], &lp2->l_text[0], nlen);
 	lp1->l_used = doto;
@@ -382,7 +380,7 @@ lnewline_at(LINE *lp1, int doto)
 			wp->w_marko -= doto;
 		}
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -394,9 +392,9 @@ lnewline(void)
 {
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
-		return FALSE;
+		return (FALSE);
 	}
-	return lnewline_at(curwp->w_dotp, curwp->w_doto);
+	return (lnewline_at(curwp->w_dotp, curwp->w_doto));
 }
 
 /*
@@ -417,7 +415,7 @@ ldelete(RSIZE n, int kflag)
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
-		return FALSE;
+		return (FALSE);
 	}
 
 	undo_add_delete(curwp->w_dotp, curwp->w_doto, n);
@@ -434,7 +432,7 @@ ldelete(RSIZE n, int kflag)
 		doto = curwp->w_doto;
 		/* Hit the end of the buffer */
 		if (dotp == curbp->b_linep)
-			return FALSE;
+			return (FALSE);
 		/* Size of the chunk */
 		chunk = dotp->l_used - doto;
 
@@ -444,11 +442,11 @@ ldelete(RSIZE n, int kflag)
 		if (chunk == 0) {
 			if (dotp == lback(curbp->b_linep))
 				/* End of buffer */
-				return FALSE;
+				return (FALSE);
 			lchange(WFHARD);
 			if (ldelnewline() == FALSE ||
 			    (kflag != KNONE && kinsert('\n', kflag) == FALSE))
-				return FALSE;
+				return (FALSE);
 			--n;
 			continue;
 		}
@@ -458,13 +456,13 @@ ldelete(RSIZE n, int kflag)
 		if (kflag == KFORW) {
 			while (ksize - kused < chunk)
 				if (kgrow(FALSE) == FALSE)
-					return FALSE;
+					return (FALSE);
 			bcopy(cp1, &(kbufp[kused]), (int)chunk);
 			kused += chunk;
 		} else if (kflag == KBACK) {
 			while (kstart < chunk)
 				if (kgrow(TRUE) == FALSE)
-					return FALSE;
+					return (FALSE);
 			bcopy(cp1, &(kbufp[kstart - chunk]), (int)chunk);
 			kstart -= chunk;
 		} else if (kflag != KNONE)
@@ -489,7 +487,7 @@ ldelete(RSIZE n, int kflag)
 		}
 		n -= chunk;
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -509,14 +507,14 @@ ldelnewline(void)
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
-		return FALSE;
+		return (FALSE);
 	}
 
 	lp1 = curwp->w_dotp;
 	lp2 = lp1->l_fp;
 	/* at the end of the buffer */
 	if (lp2 == curbp->b_linep)
-		return TRUE;
+		return (TRUE);
 	if (lp2->l_used <= lp1->l_size - lp1->l_used) {
 		bcopy(&lp2->l_text[0], &lp1->l_text[lp1->l_used], lp2->l_used);
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
@@ -535,10 +533,10 @@ ldelnewline(void)
 		lp1->l_fp = lp2->l_fp;
 		lp2->l_fp->l_bp = lp1;
 		free((char *)lp2);
-		return TRUE;
+		return (TRUE);
 	}
 	if ((lp3 = lalloc(lp1->l_used + lp2->l_used)) == NULL)
-		return FALSE;
+		return (FALSE);
 	bcopy(&lp1->l_text[0], &lp3->l_text[0], lp1->l_used);
 	bcopy(&lp2->l_text[0], &lp3->l_text[lp1->l_used], lp2->l_used);
 	lp1->l_bp->l_fp = lp3;
@@ -563,9 +561,8 @@ ldelnewline(void)
 	}
 	free((char *)lp1);
 	free((char *)lp2);
-	return TRUE;
+	return (TRUE);
 }
-
 
 /*
  * Replace plen characters before dot with argument string.  Control-J
@@ -583,7 +580,7 @@ lreplace(RSIZE plen, char *st, int f)
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
-		return FALSE;
+		return (FALSE);
 	}
 
 	undo_add_change(curwp->w_dotp, curwp->w_doto, plen);
@@ -618,7 +615,7 @@ lreplace(RSIZE plen, char *st, int f)
 		(void)ldelete((RSIZE) (plen - rlen), KNONE);
 	else if (plen < rlen) {
 		if (linsert((int)(rlen - plen), ' ') == FALSE)
-			return FALSE;
+			return (FALSE);
 	}
 	curwp->w_doto = doto;
 
@@ -651,7 +648,6 @@ lreplace(RSIZE plen, char *st, int f)
 	return (TRUE);
 }
 
-
 /*
  * Delete all of the text saved in the kill buffer.  Called by commands when
  * a new kill context is created. The kill buffer array is released, just in
@@ -678,9 +674,9 @@ int
 kinsert(int c, int dir)
 {
 	if (kused == ksize && dir == KFORW && kgrow(FALSE) == FALSE)
-		return FALSE;
+		return (FALSE);
 	if (kstart == 0 && dir == KBACK && kgrow(TRUE) == FALSE)
-		return FALSE;
+		return (FALSE);
 	if (dir == KFORW)
 		kbufp[kused++] = c;
 	else if (dir == KBACK)
@@ -703,11 +699,11 @@ kgrow(int back)
 	if ((unsigned)(ksize + KBLOCK) <= (unsigned)ksize) {
 		/* probably 16 bit unsigned */
 		ewprintf("Kill buffer size at maximum");
-		return FALSE;
+		return (FALSE);
 	}
 	if ((nbufp = malloc((unsigned)(ksize + KBLOCK))) == NULL) {
 		ewprintf("Can't get %ld bytes", (long)(ksize + KBLOCK));
-		return FALSE;
+		return (FALSE);
 	}
 	nstart = (back == TRUE) ? (kstart + KBLOCK) : (KBLOCK / 4);
 	bcopy(&(kbufp[kstart]), &(nbufp[nstart]), (int)(kused - kstart));
@@ -717,7 +713,7 @@ kgrow(int back)
 	ksize += KBLOCK;
 	kused = kused - kstart + nstart;
 	kstart = nstart;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -729,6 +725,6 @@ int
 kremove(int n)
 {
 	if (n < 0 || n + kstart >= kused)
-		return -1;
-	return CHARMASK(kbufp[n + kstart]);
+		return (-1);
+	return (CHARMASK(kbufp[n + kstart]));
 }

@@ -1,11 +1,11 @@
-/*	$OpenBSD: tty.c,v 1.20 2003/06/10 22:20:48 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.21 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  * Terminfo display driver
  *
  * Terminfo is a terminal information database and routines to describe
  * terminals on most modern UNIX systems.  Many other systems have adopted
- * this as a reasonable way to allow for widly varying and ever changing
+ * this as a reasonable way to allow for widely varying and ever changing
  * varieties of terminal types.	 This should be used where practical.
  */
 /*
@@ -15,14 +15,14 @@
  * thought everyone with delete line would have clear to end of screen too...
  *
  * Code for terminals without clear to end of screen and/or clear to end of line
- * has not been extensivly tested.
+ * has not been extensively tested.
  *
  * Cost calculations are very rough.  Costs of insert/delete line may be far
  * from the truth.  This is accentuated by display.c not knowing about
  * multi-line insert/delete.
  *
  * Using scrolling region vs insert/delete line should probably be based on cost
- * rather than the assuption that scrolling region operations look better.
+ * rather than the assumption that scrolling region operations look better.
  */
 
 #include "def.h"
@@ -39,7 +39,7 @@ static int	 cci;
 static int	 insdel;	/* Do we have both insert & delete line? */
 static char	*scroll_fwd;	/* How to scroll forward. */
 
-static void	winchhandler(int);
+static void	 winchhandler(int);
 
 static void
 winchhandler(int sig)
@@ -128,14 +128,13 @@ ttinit(void)
 void
 ttreinit(void)
 {
-	if (enter_ca_mode) {
+	if (enter_ca_mode)
 		/* enter application mode */
 		putpad(enter_ca_mode, 1);
-	}
-	if (keypad_xmit) {
+
+	if (keypad_xmit)
 		/* turn on keypad */
 		putpad(keypad_xmit, 1);
-	}
 
 	ttresize();
 }
@@ -282,11 +281,10 @@ ttinsl(int row, int bot, int nchunk)
  * Delete nchunk line(s) from "row", replacing the bottom line on the
  * screen with a blank line.  Unless we're using the scrolling region,
  * this is done with crafty sequences of insert and delete lines.  The
- * presence of the echo area makes a boundry condition go away.
+ * presence of the echo area makes a boundary condition go away.
  */
 void
-ttdell(row, bot, nchunk)
-	int row, bot, nchunk;
+ttdell(int row, int bot, int nchunk)
 {
 	int	i, nl;
 
@@ -339,8 +337,7 @@ ttdell(row, bot, nchunk)
  * window adjustment moves the cursor).
  */
 void
-ttwindow(top, bot)
-	int top, bot;
+ttwindow(int top, int bot)
 {
 	if (change_scroll_region && (tttop != top || ttbot != bot)) {
 		putpad(tgoto(change_scroll_region, bot, top), nrow - ttrow);
@@ -380,8 +377,7 @@ ttnowindow(void)
  * color shift.
  */
 void
-ttcolor(color)
-	int color;
+ttcolor(int color)
 {
 	if (color != tthue) {
 		if (color == CTEXT)
@@ -433,7 +429,7 @@ static int
 fakec(int c)
 {
 	cci++;
-	return 0;
+	return (0);
 }
 
 /* calculate the cost of doing string s */

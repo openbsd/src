@@ -1,4 +1,4 @@
-/* $OpenBSD: mail.c,v 1.4 2004/07/22 01:25:25 vincent Exp $ */
+/* $OpenBSD: mail.c,v 1.5 2005/04/03 02:09:28 db Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -48,7 +48,7 @@ static struct KEYMAPE (1 + IMAPEXT) mailmap = {
 	1 + IMAPEXT,
 	rescan,
 	{
-		{ ' ', '~', mail_fake, NULL },
+		{ ' ', '~', mail_fake, NULL }
 	}
 };
 
@@ -61,12 +61,12 @@ mail_set_limit(int f, int n)
 		limit = n;
 	} else {
 		if ((rep = ereply("Margin: ", buf, sizeof(buf))) == NULL)
-			return ABORT;
+			return (ABORT);
 		else if (*rep == '\0')
-			return FALSE;
+			return (FALSE);
 		limit = atoi(rep);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 void
@@ -99,8 +99,8 @@ fake_self_insert(int f, int n)
 
 	if (len + 1 > limit) {
 		/*
-		 * find the column at which we should cut, taking
-		 * word boundaries into account
+		 * Find the column at which we should cut, taking
+		 * word boundaries into account.
 		 */
 		for (col = limit; col > 0; col--)
 			if (isspace(curwp->w_dotp->l_text[col])) {
@@ -110,7 +110,7 @@ fake_self_insert(int f, int n)
 
 		if (curbp->b_doto == len) {
 			/*
-			 * user is appending to the line; simple case.
+			 * User is appending to the line; simple case.
 			 */
 			if (col) {
 				curwp->w_doto = col;
@@ -120,7 +120,7 @@ fake_self_insert(int f, int n)
 			curwp->w_wrapline = NULL;
 		} else if ((len - col) > 0) {
 			/*
-			 * user is shifting words by inserting in the middle.
+			 * User is shifting words by inserting in the middle.
 			 */
 			const char *trail;
 			int save_doto = curwp->w_doto;
@@ -153,7 +153,7 @@ fake_self_insert(int f, int n)
 			}
 
 			/*
-			 * readjust dot to point at where the user expects
+			 * Readjust dot to point at where the user expects
 			 * it to be after an insertion.
 			 */
 			curwp->w_doto = save_doto;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.17 2005/03/10 16:58:57 deraadt Exp $	*/
+/*	$OpenBSD: basic.c,v 1.18 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -37,7 +37,7 @@ backchar(int f, int n)
 	LINE   *lp;
 
 	if (n < 0)
-		return forwchar(f, -n);
+		return (forwchar(f, -n));
 	while (n--) {
 		if (curwp->w_doto == 0) {
 			if ((lp = lback(curwp->w_dotp)) == curbp->b_linep) {
@@ -51,7 +51,7 @@ backchar(int f, int n)
 		} else
 			curwp->w_doto--;
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -75,9 +75,8 @@ gotoeol(int f, int n)
 int
 forwchar(int f, int n)
 {
-
 	if (n < 0)
-		return backchar(f, -n);
+		return (backchar(f, -n));
 	while (n--) {
 		if (curwp->w_doto == llength(curwp->w_dotp)) {
 			curwp->w_dotp = lforw(curwp->w_dotp);
@@ -85,14 +84,14 @@ forwchar(int f, int n)
 				curwp->w_dotp = lback(curwp->w_dotp);
 				if (!(f & FFRAND))
 					ewprintf("End of buffer");
-				return FALSE;
+				return (FALSE);
 			}
 			curwp->w_doto = 0;
 			curwp->w_flag |= WFMOVE;
 		} else
 			curwp->w_doto++;
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -103,12 +102,11 @@ forwchar(int f, int n)
 int
 gotobob(int f, int n)
 {
-
 	(void) setmark(f, n);
 	curwp->w_dotp = lforw(curbp->b_linep);
 	curwp->w_doto = 0;
 	curwp->w_flag |= WFHARD;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -119,12 +117,11 @@ gotobob(int f, int n)
 int
 gotoeob(int f, int n)
 {
-
 	(void) setmark(f, n);
 	curwp->w_dotp = lback(curbp->b_linep);
 	curwp->w_doto = llength(curwp->w_dotp);
 	curwp->w_flag |= WFHARD;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -141,12 +138,12 @@ forwline(int f, int n)
 	LINE  *dlp;
 
 	if (n < 0)
-		return backline(f | FFRAND, -n);
+		return (backline(f | FFRAND, -n));
 	if ((lastflag & CFCPCN) == 0)	/* Fix goal. */
 		setgoal();
 	thisflag |= CFCPCN;
 	if (n == 0)
-		return TRUE;
+		return (TRUE);
 	dlp = curwp->w_dotp;
 	while (dlp != curbp->b_linep && n--)
 		dlp = lforw(dlp);
@@ -160,7 +157,7 @@ forwline(int f, int n)
 		curwp->w_doto = 0;
 		while (n-- >= 0) {
 			if ((dlp = lalloc(0)) == NULL)
-				return FALSE;
+				return (FALSE);
 			dlp->l_fp = curbp->b_linep;
 			dlp->l_bp = lback(dlp->l_fp);
 			dlp->l_bp->l_fp = dlp->l_fp->l_bp = dlp;
@@ -170,7 +167,7 @@ forwline(int f, int n)
 		curwp->w_dotp = dlp;
 		curwp->w_doto = getgoal(dlp);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -187,7 +184,7 @@ backline(int f, int n)
 	LINE   *dlp;
 
 	if (n < 0)
-		return forwline(f | FFRAND, -n);
+		return (forwline(f | FFRAND, -n));
 	if ((lastflag & CFCPCN) == 0)	/* Fix goal. */
 		setgoal();
 	thisflag |= CFCPCN;
@@ -197,7 +194,7 @@ backline(int f, int n)
 	curwp->w_dotp = dlp;
 	curwp->w_doto = getgoal(dlp);
 	curwp->w_flag |= WFMOVE;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -240,7 +237,7 @@ getgoal(LINE *dlp)
 		else {
 			char tmp[5];
 
-			snprintf(tmp, sizeof tmp, "\\%o", c);
+			snprintf(tmp, sizeof(tmp), "\\%o", c);
 			col += strlen(tmp);
 		}
 		if (col > curgoal)
@@ -268,7 +265,7 @@ forwpage(int f, int n)
 		if (n <= 0)			/* Forget the overlap	 */
 			n = 1;			/* if tiny window.	 */
 	} else if (n < 0)
-		return backpage(f | FFRAND, -n);
+		return (backpage(f | FFRAND, -n));
 #ifdef	CVMVAS
 	else					/* Convert from pages	 */
 		n *= curwp->w_ntrows;		/* to lines.		 */
@@ -281,10 +278,10 @@ forwpage(int f, int n)
 	/* if in current window, don't move dot */
 	for (n = curwp->w_ntrows; n-- && lp != curbp->b_linep; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
-			return TRUE;
+			return (TRUE);
 	curwp->w_dotp = curwp->w_linep;
 	curwp->w_doto = 0;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -306,7 +303,7 @@ backpage(int f, int n)
 		if (n <= 0)			/* Don't blow up if the  */
 			n = 1;			/* window is tiny.	 */
 	} else if (n < 0)
-		return forwpage(f | FFRAND, -n);
+		return (forwpage(f | FFRAND, -n));
 #ifdef	CVMVAS
 	else					/* Convert from pages	 */
 		n *= curwp->w_ntrows;		/* to lines.		 */
@@ -319,10 +316,10 @@ backpage(int f, int n)
 	/* if in current window, don't move dot */
 	for (n = curwp->w_ntrows; n-- && lp != curbp->b_linep; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
-			return TRUE;
+			return (TRUE);
 	curwp->w_dotp = curwp->w_linep;
 	curwp->w_doto = 0;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -337,7 +334,7 @@ forw1page(int f, int n)
 		f = FFUNIV;
 	}
 	forwpage(f | FFRAND, n);
-	return TRUE;
+	return (TRUE);
 }
 
 int
@@ -348,7 +345,7 @@ back1page(int f, int n)
 		f = FFUNIV;
 	}
 	backpage(f | FFRAND, n);
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -362,14 +359,14 @@ pagenext(int f, int n)
 
 	if (wheadp->w_wndp == NULL) {
 		ewprintf("No other window");
-		return FALSE;
+		return (FALSE);
 	}
 	wp = curwp;
 	(void) nextwind(f, n);
 	(void) forwpage(f, n);
 	curwp = wp;
 	curbp = wp->w_bufp;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -391,10 +388,9 @@ isetmark(void)
 int
 setmark(int f, int n)
 {
-
 	isetmark();
 	ewprintf("Mark set");
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -413,7 +409,7 @@ swapmark(int f, int n)
 
 	if (curwp->w_markp == NULL) {
 		ewprintf("No mark in this window");
-		return FALSE;
+		return (FALSE);
 	}
 	odotp = curwp->w_dotp;
 	odoto = curwp->w_doto;
@@ -422,7 +418,7 @@ swapmark(int f, int n)
 	curwp->w_markp = odotp;
 	curwp->w_marko = odoto;
 	curwp->w_flag |= WFMOVE;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -442,18 +438,18 @@ gotoline(int f, int n)
 
 	if (!(f & FFARG)) {
 		if ((bufp = ereply("Goto line: ", buf, sizeof(buf))) == NULL)
-			return ABORT;
+			return (ABORT);
 		else if (bufp[0] == '\0')
-			return FALSE;
+			return (FALSE);
 
 		nl = strtol(bufp, &tmp, 10);
 		if (bufp[0] == '\0' || *tmp != '\0') {
 			ewprintf("Invalid number");
-			return FALSE;
+			return (FALSE);
 		}
 		if (nl >= INT_MAX || nl <= INT_MIN) {
 			ewprintf("Out of range");
-			return FALSE;
+			return (FALSE);
 		}
 		n = (int)nl;
 	}
@@ -476,5 +472,5 @@ gotoline(int f, int n)
 	curwp->w_dotp = clp;
 	curwp->w_doto = 0;
 	curwp->w_flag |= WFMOVE;
-	return TRUE;
+	return (TRUE);
 }

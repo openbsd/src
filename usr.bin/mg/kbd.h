@@ -1,20 +1,20 @@
-/*	$OpenBSD: kbd.h,v 1.14 2002/03/11 13:02:56 vincent Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.15 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  * kbd.h: type definitions for symbol.c and kbd.c for mg experimental
  */
 
 typedef struct {
-	KCHAR	k_base;	/* first key in element		 */
-	KCHAR	k_num;		/* last key in element		 */
-	PF	*k_funcp;	/* pointer to array of pointers
-					 * to functions */
-	struct keymap_s *k_prefmap;	/* keymap of ONLY prefix key in
-					 * element */
+	KCHAR	 k_base;		/* first key in element		 */
+	KCHAR	 k_num;			/* last key in element		 */
+	PF	*k_funcp;		/* pointer to array of pointers	 */
+					/* to functions			 */
+	struct keymap_s *k_prefmap;	/* keymap of ONLY prefix key in	 */
+					/* element			 */
 } MAP_ELEMENT;
 
 /*
- * predefined keymaps are NOT type KEYMAP because final array needs
+ * Predefined keymaps are NOT type KEYMAP because final array needs
  * dimension.  If any changes are made to this struct, they must be reflected
  * in all keymap declarations.
  */
@@ -36,9 +36,9 @@ typedef struct keymap_s KEYMAPE(1) KEYMAP;
 #define MAPELEDEF 4
 
 typedef struct MAPS_S {
-	KEYMAP	*p_map;
-	const char *p_name;
-	struct MAPS_S *p_next;
+	KEYMAP		*p_map;
+	const char	*p_name;
+	struct MAPS_S	*p_next;
 } MAPS;
 
 extern MAPS	*maps;

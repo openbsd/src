@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.15 2004/01/27 23:43:37 vincent Exp $	*/
+/*	$OpenBSD: window.c,v 1.16 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *		Window handling.
@@ -65,7 +65,7 @@ reposition(int f, int n)
 #endif /* !GOSREC */
 	curwp->w_flag |= WFFORCE;
 	sgarbf = TRUE;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -107,7 +107,7 @@ refresh(int f, int n)
 		update();
 	} else
 		sgarbf = TRUE;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -125,7 +125,7 @@ nextwind(int f, int n)
 		wp = wheadp;
 	curwp = wp;
 	curbp = wp->w_bufp;
-	return TRUE;
+	return (TRUE);
 }
 
 /* not in Gnu Emacs */
@@ -148,14 +148,14 @@ prevwind(int f, int n)
 		wp1 = wp1->w_wndp;
 	curwp = wp1;
 	curbp = wp1->w_bufp;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
  * This command makes the current window the only window on the screen.  Try
  * to set the framing so that "." does not have to move on the display.  Some
  * care has to be taken to keep the values of dot and mark in the buffer
- * structures right if the distruction of a window makes a buffer become
+ * structures right if the destruction of a window makes a buffer become
  * undisplayed.
  */
 /* ARGSUSED */
@@ -200,7 +200,7 @@ onlywind(int f, int n)
 	curwp->w_ntrows = nrow - 2;
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFMODE | WFHARD;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -282,7 +282,7 @@ splitwind(int f, int n)
 
 	curwp->w_flag |= WFMODE | WFHARD;
 	wp->w_flag |= WFMODE | WFHARD;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -300,10 +300,10 @@ enlargewind(int f, int n)
 	int	 i;
 
 	if (n < 0)
-		return shrinkwind(f, -n);
+		return (shrinkwind(f, -n));
 	if (wheadp->w_wndp == NULL) {
 		ewprintf("Only one window");
-		return FALSE;
+		return (FALSE);
 	}
 	if ((adjwp = curwp->w_wndp) == NULL) {
 		adjwp = wheadp;
@@ -312,7 +312,7 @@ enlargewind(int f, int n)
 	}
 	if (adjwp->w_ntrows <= n) {
 		ewprintf("Impossible change");
-		return FALSE;
+		return (FALSE);
 	}
 
 	/* shrink below */
@@ -334,7 +334,7 @@ enlargewind(int f, int n)
 	adjwp->w_ntrows -= n;
 	curwp->w_flag |= WFMODE | WFHARD;
 	adjwp->w_flag |= WFMODE | WFHARD;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -349,10 +349,10 @@ shrinkwind(int f, int n)
 	int	 i;
 
 	if (n < 0)
-		return enlargewind(f, -n);
+		return (enlargewind(f, -n));
 	if (wheadp->w_wndp == NULL) {
 		ewprintf("Only one window");
-		return FALSE;
+		return (FALSE);
 	}
 	/*
 	 * Bit of flakiness - KRANDOM means it was an internal call, and
@@ -404,7 +404,7 @@ delwind(int f, int n)
 
 	/* shrinkwind returning false means only one window... */
 	if (shrinkwind(FFRAND, wp->w_ntrows + 1) == FALSE)
-		return FALSE;
+		return (FALSE);
 	if (--wp->w_bufp->b_nwnd == 0) {
 		wp->w_bufp->b_dotp = wp->w_dotp;
 		wp->w_bufp->b_doto = wp->w_doto;
@@ -424,7 +424,7 @@ delwind(int f, int n)
 			break;
 		}
 	free_window(wp);
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -439,12 +439,12 @@ wpopup(void)
 
 	if (wheadp->w_wndp == NULL &&
 	    splitwind(FFRAND, 0) == FALSE)
-		return NULL;
+		return (NULL);
 
 	/* find a window to use */
 	wp = wheadp;
 
 	while (wp != NULL && wp == curwp)
 		wp = wp->w_wndp;
-	return wp;
+	return (wp);
 }

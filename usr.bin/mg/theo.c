@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.80 2005/03/09 11:11:52 henning Exp $	*/
+/*	$OpenBSD: theo.c,v 1.81 2005/04/03 02:09:28 db Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -28,12 +28,12 @@
 #include "kbd.h"
 #include "funmap.h"
 
-void theo_init(void);
+void		theo_init(void);
 static int	theo_analyze(int, int);
 static int	theo(int, int);
 
 static PF theo_pf[] = {
-	theo_analyze,
+	theo_analyze
 };
 
 static struct KEYMAPE (1 + IMAPEXT) theomap = {
@@ -41,7 +41,7 @@ static struct KEYMAPE (1 + IMAPEXT) theomap = {
 	1 + IMAPEXT,
 	rescan,
 	{
-		{ CCHR('M'), CCHR('M'), theo_pf, NULL },
+		{ CCHR('M'), CCHR('M'), theo_pf, NULL }
 	}
 };
 
@@ -57,23 +57,23 @@ theo_init(void)
 static int
 theo(int f, int n)
 {
-	BUFFER *bp;
-	MGWIN *wp;
+	BUFFER	*bp;
+	MGWIN	*wp;
 
 	bp = bfind("theo", TRUE);
 	if (bclear(bp) != TRUE)
-		return FALSE;
+		return (FALSE);
 
 	bp->b_modes[0] = name_mode("fundamental");
 	bp->b_modes[1] = name_mode("theo");
 	bp->b_nmodes = 1;
 
 	if ((wp = popbuf(bp)) == NULL)
-		return FALSE;
+		return (FALSE);
 
 	tbuf = curbp = bp;
 	curwp = wp;
-	return TRUE;
+	return (TRUE);
 }
 
 static const char *talk[] = {
@@ -178,19 +178,18 @@ static const int ntalk = sizeof(talk)/sizeof(talk[0]);
 static int
 theo_analyze(int f, int n)
 {
-	const char *str;
-	int len;
+	const char	*str;
+	int		 len;
 
 	str = talk[arc4random() % ntalk];
 	len = strlen(str);
 
 	newline(FFRAND, 2);
 
-	while (len--) {
+	while (len--)
 		linsert(1, *str++);
-	}
 
 	newline(FFRAND, 2);
 
-	return TRUE;
+	return (TRUE);
 }

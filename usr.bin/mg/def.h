@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.59 2005/03/12 06:16:07 deraadt Exp $	*/
+/*	$OpenBSD: def.h,v 1.60 2005/04/03 02:09:28 db Exp $	*/
 
 #include <sys/queue.h>
 
@@ -34,7 +34,7 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define HUGE	1000		/* A rather large number.	 */
 #define NSRCH	128		/* Undoable search commands.	 */
 #define NXNAME	64		/* Length, extended command.	 */
-#define NKNAME	20		/* Length, key names		 */
+#define NKNAME	20		/* Length, key names.		 */
 /*
  * Universal.
  */
@@ -53,7 +53,7 @@ typedef int	(*PF)(int, int);	/* generally useful type */
  */
 #define CFCPCN	0x0001		/* Last command was C-P, C-N	 */
 #define CFKILL	0x0002		/* Last command was a kill	 */
-#define CFINS	0x0004		/* Last command was self-insert */
+#define CFINS	0x0004		/* Last command was self-insert	 */
 
 /*
  * File I/O.
@@ -93,7 +93,7 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define EFFUNC	0x0001		/* Autocomplete functions.	 */
 #define EFBUF	0x0002		/* Autocomplete buffers.	 */
 #define EFFILE	0x0004		/* " files (maybe someday)	 */
-#define EFAUTO	0x0007		/* Some autocompleteion on	 */
+#define EFAUTO	0x0007		/* Some autocompletion on	 */
 #define EFNEW	0x0008		/* New prompt.			 */
 #define EFCR	0x0010		/* Echo CR at end; last read.	 */
 #define EFDEF	0x0020		/* buffer contains default args	 */
@@ -114,8 +114,8 @@ typedef int	(*PF)(int, int);	/* generally useful type */
  */
 typedef struct {
 	struct LINE	*r_linep;	/* Origin LINE address.		 */
-	int		r_offset;	/* Origin LINE offset.		 */
-	RSIZE		r_size;		/* Length in characters.	 */
+	int		 r_offset;	/* Origin LINE offset.		 */
+	RSIZE		 r_size;	/* Length in characters.	 */
 } REGION;
 
 
@@ -124,7 +124,7 @@ typedef struct {
  * lists of "LINE" structures. These begin at the
  * header line (which is the blank line beyond the
  * end of the buffer). This line is pointed to by
- * the "BUFFER". Each line contains a the number of
+ * the "BUFFER". Each line contains the number of
  * bytes in the line (the "used" size), the size
  * of the text array, and the text. The end of line
  * is not stored as a byte; it's implied. Future
@@ -132,11 +132,11 @@ typedef struct {
  * list of marks into the line.
  */
 typedef struct LINE {
-	struct LINE	*l_fp;	/* Link to the next line	 */
-	struct LINE	*l_bp;	/* Link to the previous line	 */
-	int		l_size;	/* Allocated size		 */
-	int		l_used;	/* Used size			 */
-	char		*l_text;	/* Content of the line */
+	struct LINE	*l_fp;		/* Link to the next line	 */
+	struct LINE	*l_bp;		/* Link to the previous line	 */
+	int		 l_size;	/* Allocated size		 */
+	int		 l_used;	/* Used size			 */
+	char		*l_text;	/* Content of the line		 */
 } LINE;
 
 /*
@@ -159,7 +159,7 @@ typedef struct LINE {
  * All of these start with a LIST structure (except lines, which
  * have their own abstraction). This will allow for
  * later conversion to generic list manipulation routines should
- * I decide to do that. it does mean that there are four extra
+ * I decide to do that. It does mean that there are four extra
  * bytes per window. I feel that this is an acceptable price,
  * considering that there are usually only one or two windows.
  */
@@ -189,20 +189,20 @@ typedef struct LIST {
  * expensive to run for every input character.
  */
 typedef struct MGWIN {
-	LIST		w_list;		/* List header			*/
+	LIST		 w_list;	/* List header			*/
 	struct BUFFER	*w_bufp;	/* Buffer displayed in window	*/
 	struct LINE	*w_linep;	/* Top line in the window	*/
 	struct LINE	*w_dotp;	/* Line containing "."		*/
 	struct LINE	*w_markp;	/* Line containing "mark"	*/
-	int		w_doto;		/* Byte offset for "."		*/
-	int		w_marko;	/* Byte offset for "mark"	*/
-	char		w_toprow;	/* Origin 0 top row of window	*/
-	char		w_ntrows;	/* # of rows of text in window	*/
-	char		w_force;	/* If NZ, forcing row.		*/
-	char		w_flag;		/* Flags.			*/
-	LIST_HEAD(, undo_rec) w_undo;	/* Undo actions list */
-	int		w_undopos;	/* Where we were during the last
-					   undo action */
+	int		 w_doto;	/* Byte offset for "."		*/
+	int		 w_marko;	/* Byte offset for "mark"	*/
+	char		 w_toprow;	/* Origin 0 top row of window	*/
+	char		 w_ntrows;	/* # of rows of text in window	*/
+	char		 w_force;	/* If NZ, forcing row.		*/
+	char		 w_flag;	/* Flags.			*/
+	LIST_HEAD(, undo_rec) w_undo;	/* Undo actions list		*/
+	int		 w_undopos;	/* Where we were during the	*/
+                                        /* last undo action.		*/
 	struct undo_rec *w_undoptr;
 	struct LINE	*w_wrapline;
 } MGWIN;
@@ -237,19 +237,19 @@ struct undo_rec;
  * a pointer to the header line in "b_linep".
  */
 typedef struct BUFFER {
-	LIST		b_list;		/* buffer list pointer		 */
+	LIST		 b_list;	/* buffer list pointer		 */
 	struct BUFFER	*b_altb;	/* Link to alternate buffer	 */
 	struct LINE	*b_dotp;	/* Link to "." LINE structure	 */
 	struct LINE	*b_markp;	/* ditto for mark		 */
 	struct LINE	*b_linep;	/* Link to the header LINE	 */
 	struct MAPS_S	*b_modes[PBMODES]; /* buffer modes		 */
-	int		b_doto;		/* Offset of "." in above LINE	 */
-	int		b_marko;	/* ditto for the "mark"		 */
-	short		b_nmodes;	/* number of non-fundamental modes */
-	char		b_nwnd;		/* Count of windows on buffer	 */
-	char		b_flag;		/* Flags			 */
-	char		b_fname[NFILEN];/* File name			 */
-	struct fileinfo	b_fi;		/* File attributes		 */
+	int		 b_doto;	/* Offset of "." in above LINE	 */
+	int		 b_marko;	/* ditto for the "mark"		 */
+	short		 b_nmodes;	/* number of non-fundamental modes */
+	char		 b_nwnd;	/* Count of windows on buffer	 */
+	char		 b_flag;	/* Flags			 */
+	char		 b_fname[NFILEN]; /* File name			 */
+	struct fileinfo	 b_fi;		/* File attributes		 */
 } BUFFER;
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
@@ -260,8 +260,7 @@ typedef struct BUFFER {
 #define BFNOTAB 0x04			/* no tab mode			 */
 #endif
 #define BFOVERWRITE 0x08		/* overwrite mode		 */
-#define BFREADONLY  0x10		/* read only mode */
-
+#define BFREADONLY  0x10		/* read only mode		 */
 
 /*
  * This structure holds information about recent actions for the Undo command.
@@ -441,7 +440,7 @@ int	 ctrlg(int, int);
 int	 quit(int, int);
 
 /* ttyio.c */
-void	panic(char *);
+void	 panic(char *);
 
 /* cinfo.c */
 char	*keyname(char  *, size_t, int);

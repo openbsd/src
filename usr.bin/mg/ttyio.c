@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.25 2003/12/04 01:37:28 vincent Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.26 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  * POSIX terminal I/O.
@@ -7,14 +7,14 @@
  * keyboard characters, and write characters to the display in a barely
  * buffered fashion.
  */
-#include	"def.h"
+#include "def.h"
 
-#include	<sys/types.h>
-#include	<sys/time.h>
-#include	<sys/ioctl.h>
-#include	<fcntl.h>
-#include	<termios.h>
-#include	<term.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <term.h>
 
 #define NOBUF	512			/* Output buffer size. */
 
@@ -136,8 +136,8 @@ ttputc(int c)
 void
 ttflush(void)
 {
-	ssize_t written;
-	char *buf = obuf;
+	ssize_t	 written;
+	char	*buf = obuf;
 
 	if (nobuf == 0)
 		return;
@@ -159,7 +159,7 @@ int
 ttgetc(void)
 {
 	char	c;
-	int ret;
+	int	ret;
 
 	do {
 		ret = read(0, &c, 1);
@@ -200,7 +200,7 @@ panic(char *s)
 
 /*
  * This function returns FALSE if any characters have showed up on the
- * tty before 'msec' miliseconds.
+ * tty before 'msec' milliseconds.
  */
 int
 ttwait(int msec)

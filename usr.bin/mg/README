@@ -19,7 +19,7 @@ agree with the opinions expressed by Richard Stallman in "The GNU
 Manifesto".
 
 Documentation of Mg is in the TeX file mg.tex.  This should be
-formatted with the TeX text formatter and printed.  A start twords a
+formatted with the TeX text formatter and printed.  A start towards a
 mg programmers guide is in mgprog.doc, and some of the changes from 1b
 are mentioned briefly in mg2a.change.
 
@@ -44,8 +44,8 @@ This also comes from mod.sources, and is the latest version from the
 original MicroEMACS author Dave Conroy.  Mg is derived from this
 version, and for the most part has replaced it.
 
-Mg is continuing to diverge from other MicroEmacs varients.
-Significant modifacations would me nessisary to adapt code from either
+Mg is continuing to diverge from other MicroEmacs variants.
+Significant modifications would me require to adapt code from either
 the 3.x strains or v30.  Command functions and key mapping, for
 instance, are completely different.
 
@@ -79,7 +79,7 @@ These systems are known to work in the current version:
 
 Ms-Dos support is planned, but did not get done in time for this
 release.  (Jeff Siegal <jbs@eddie.mit.edu> was the one doing it.)
-The Ms-Dos files will probably be distributed seperatly when it
+The Ms-Dos files will probably be distributed separately when it
 becomes available.
 
 Cpm/68k support was dropped due to compiler bugs.  Eunice support was
@@ -112,7 +112,7 @@ There are several other directories under sys: osk, vms, amiga, atari,
 prime.  You should follow the directions contained therein to make one
 of those versions.
 
-For most systems (everyting except the amiga, and atari currently),
+For most systems (everything except the amiga, and atari currently),
 the termcap terminal definition is used.  There is a readme file in
 the default subdirectory of the sys directory explaining what entries
 are used and how.  (Termcap is a way to do display manipulation in a
@@ -123,13 +123,13 @@ example, in .mg.vt100 you may want to (global-set-key "\e[A"
 
 Some changes made to make this version more like Gnu Emacs may break
 startup files.	Gnu Emacs 18 has both backward-delete-char and
-delete-backward-char that apperently do the same thing.	 This version
+delete-backward-char that apparently do the same thing.  This version
 has only the latter because that is what is documented in my manual
 (version 17) and bound by Gnu Emacs to DEL.
 
 ----------------------------------------------------------------------
 
-Known limitaions:
+Known limitations:
 
 Recursive bindings may cause help and key rebinding code to go into
 an infinite loop, aborting with a stack overflow.
@@ -172,9 +172,9 @@ Internet.  (UUCP sites that are customers of uunet can get it via
 them.  Contact uunet!uunet-request for details.) If you can't reach
 one of us via a computer network, I suppose you could send a change to
 my snail mail address below on 5" os9 format disks or 9 track tape
-(ANSI variable label or Prime magsav format), but this effectivly
+(ANSI variable label or Prime magsav format), but this effectively
 rules you out as a potential beta tester.  (Don't expect the disk or
-tape back unless you inculude a SASE with sufficent postage.)  I will
+tape back unless you include a SASE with sufficient postage.)  I will
 not be sending out copies on magnetic media, so please don't ask.  If
 you somehow got an incomplete or non-standard copy, (i.e. missing one
 of the sys directories mentioned here as working) complain to who you

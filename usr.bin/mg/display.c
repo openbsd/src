@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.20 2003/08/15 23:23:18 vincent Exp $	*/
+/*	$OpenBSD: display.c,v 1.21 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -12,8 +12,8 @@
  * changes things around for memory mapped video. With
  * both off, the terminal is a VT52.
  */
-#include	"def.h"
-#include	"kbd.h"
+#include "def.h"
+#include "kbd.h"
 
 #include <ctype.h>
 
@@ -89,13 +89,13 @@ int	ttrow = HUGE;		/* Physical cursor row.		 */
 int	ttcol = HUGE;		/* Physical cursor column.	 */
 int	tttop = HUGE;		/* Top of scroll region.	 */
 int	ttbot = HUGE;		/* Bottom of scroll region.	 */
-int	lbound = 0;		/* leftmost bound of the current line */
-				/*     being displayed		 */
+int	lbound = 0;		/* leftmost bound of the current */
+				/* line being displayed		 */
 
 VIDEO	**vscreen;		/* Edge vector, virtual.	 */
 VIDEO	**pscreen;		/* Edge vector, physical.	 */
-VIDEO	*video;			/* Actual screen data.		 */
-VIDEO	blanks;			/* Blank line image.		 */
+VIDEO	 *video;		/* Actual screen data.		 */
+VIDEO	  blanks;		/* Blank line image.		 */
 
 #ifdef	GOSLING
 /*
@@ -115,10 +115,10 @@ SCORE *score;			/* [NROW * NROW] */
 int
 vtresize(int force, int newrow, int newcol)
 {
-	int i;
-	int rowchanged, colchanged;
-	static int first_run = 1;
-	VIDEO *vp;
+	int	 i;
+	int	 rowchanged, colchanged;
+	static	 int first_run = 1;
+	VIDEO	*vp;
 
 	if (newrow < 1 || newcol < 1)
 		return (FALSE);
@@ -135,13 +135,11 @@ vtresize(int force, int newrow, int newcol)
 	} while (0)
 
 	/* No update needed */
-	if (!first_run && !force && !rowchanged && !colchanged) {
+	if (!first_run && !force && !rowchanged && !colchanged)
 		return (TRUE);
-	}
 
-	if (first_run) {
+	if (first_run)
 		memset(&blanks, 0, sizeof(blanks));
-	}
 
 	if (rowchanged || first_run) {
 		int vidstart;
@@ -155,7 +153,7 @@ vtresize(int force, int newrow, int newcol)
 			vidstart = 2 * (nrow - 1);
 
 		/*
-		 * We're shrinking, free some internal data
+		 * We're shrinking, free some internal data.
 		 */
 		if (newrow < nrow) {
 			for (i = 2 * (newrow - 1); i < 2 * (nrow - 1); i++) {
@@ -172,7 +170,7 @@ vtresize(int force, int newrow, int newcol)
 		TRYREALLOC(video, (2 * (newrow - 1)) * sizeof(VIDEO));
 
 		/*
-		 * Zero-out the entries we just allocated
+		 * Zero-out the entries we just allocated.
 		 */
 		for (i = vidstart; i < 2 * (newrow - 1); i++)
 			memset(&video[i], 0, sizeof(VIDEO));
@@ -247,7 +245,6 @@ vtinit(void)
 void
 vttidy(void)
 {
-
 	ttcolor(CTEXT);
 	ttnowindow();		/* No scroll window.	 */
 	ttmove(nrow - 1, 0);	/* Echo line.		 */
@@ -309,7 +306,7 @@ vtputc(int c)
 	else {
 		char bf[5];
 
-		snprintf(bf, sizeof bf, "\\%o", c);
+		snprintf(bf, sizeof(bf), "\\%o", c);
 		vtputs(bf);
 	}
 }
@@ -347,7 +344,6 @@ vtpute(int c)
 	}
 }
 
-
 /*
  * Erase from the end of the software cursor to the end of the line on which
  * the software cursor is located. The display routines will decide if a
@@ -379,13 +375,10 @@ update(void)
 	MGWIN	*wp;
 	VIDEO	*vp1;
 	VIDEO	*vp2;
-	int	i, j;
-	int	c;
-	int	hflag;
-	int	currow;
-	int	curcol;
-	int	offs;
-	int	size;
+	int	 c, i, j;
+	int	 hflag;
+	int	 currow, curcol;
+	int	 offs, size;
 
 	if (typeahead())
 		return;
@@ -396,7 +389,7 @@ update(void)
 			wp = wp->w_wndp;
 		}
 	}
-	hflag = FALSE;			/* Not hard.		 */
+	hflag = FALSE;			/* Not hard. */
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		/*
 		 * Nothing to be done.
@@ -430,7 +423,7 @@ update(void)
 			i = wp->w_ntrows / 2; /* current center, no change */
 
 		/*
-		 * Find the line
+		 * Find the line.
 		 */
 		lp = wp->w_dotp;
 		while (i != 0 && lback(lp) != wp->w_bufp->b_linep) {
@@ -473,7 +466,7 @@ update(void)
 		wp->w_flag = 0;
 		wp->w_force = 0;
 	}
-	lp = curwp->w_linep;	/* Cursor location.	 */
+	lp = curwp->w_linep;	/* Cursor location. */
 	currow = curwp->w_toprow;
 	while (lp != curwp->w_dotp) {
 		++currow;
@@ -497,7 +490,7 @@ update(void)
 		else {
 			char bf[5];
 
-			snprintf(bf, sizeof bf, "\\%o", c);
+			snprintf(bf, sizeof(bf), "\\%o", c);
 			curcol += strlen(bf);
 		}
 	}
@@ -509,8 +502,8 @@ update(void)
 		lbound = 0;	/* not extended line */
 
 	/*
-	 * make sure no lines need to be de-extended because the cursor is no
-	 * longer on them
+	 * Make sure no lines need to be de-extended because the cursor is no
+	 * longer on them.
 	 */
 	wp = wheadp;
 	while (wp != NULL) {
@@ -541,9 +534,9 @@ update(void)
 	}
 
 	if (sgarbf != FALSE) {	/* Screen is garbage.	 */
-		sgarbf = FALSE;	/* Erase-page clears	 */
-		epresf = FALSE;	/* the message area.	 */
-		tttop = HUGE;	/* Forget where you set */
+		sgarbf = FALSE;	/* Erase-page clears.	 */
+		epresf = FALSE;	/* The message area.	 */
+		tttop = HUGE;	/* Forget where you set. */
 		ttbot = HUGE;	/* scroll region.	 */
 		tthue = CNONE;	/* Color unknown.	 */
 		ttmove(0, 0);
@@ -623,7 +616,6 @@ update(void)
 void
 ucopy(VIDEO *vvp, VIDEO *pvp)
 {
-
 	vvp->v_flag &= ~VFCHG;		/* Changes done.	 */
 	pvp->v_flag = vvp->v_flag;	/* Update model.	 */
 	pvp->v_hash = vvp->v_hash;
@@ -635,13 +627,13 @@ ucopy(VIDEO *vvp, VIDEO *pvp)
 /*
  * updext: update the extended line which the cursor is currently on at a
  * column greater than the terminal width. The line will be scrolled right or
- * left to let the user see where the cursor is
+ * left to let the user see where the cursor is.
  */
 void
 updext(int currow, int curcol)
 {
 	LINE	*lp;			/* pointer to current line */
-	int	j;			/* index into line */
+	int	 j;			/* index into line */
 
 	if (ncol < 2)
 		return;
@@ -660,7 +652,7 @@ updext(int currow, int curcol)
 	lp = curwp->w_dotp;			/* line to output */
 	for (j = 0; j < llength(lp); ++j)	/* until the end-of-line */
 		vtpute(lgetc(lp, j));
-	vteeol();		/* truncate the virtual line */
+	vteeol();				/* truncate the virtual line */
 	vscreen[currow]->v_text[0] = '$';	/* and put a '$' in column 1 */
 }
 
@@ -681,7 +673,7 @@ uline(int row, VIDEO *vvp, VIDEO *pvp)
 	char  *cp3;
 	char  *cp4;
 	char  *cp5;
-	int	nbflag;
+	int    nbflag;
 
 #ifdef	MEMMAP
 	putline(row + 1, 1, &vvp->v_text[0]);
@@ -697,8 +689,8 @@ uline(int row, VIDEO *vvp, VIDEO *pvp)
 #ifdef	STANDOUT_GLITCH
 		cp1 = &vvp->v_text[magic_cookie_glitch > 0 ? magic_cookie_glitch : 0];
 		/*
-		 * the odd code for magic_cookie_glitch==0 is to avoid
-		 * putting the invisable glitch character on the next line.
+		 * The odd code for magic_cookie_glitch==0 is to avoid
+		 * putting the invisible glitch character on the next line.
 		 * (Hazeltine executive 80 model 30)
 		 */
 		cp2 = &vvp->v_text[ncol - (magic_cookie_glitch >= 0 ? (magic_cookie_glitch != 0 ? magic_cookie_glitch : 1) : 0)];
@@ -715,7 +707,7 @@ uline(int row, VIDEO *vvp, VIDEO *pvp)
 #endif
 		return;
 	}
-	cp1 = &vvp->v_text[0];	/* Compute left match.	 */
+	cp1 = &vvp->v_text[0];		/* Compute left match.	 */
 	cp2 = &pvp->v_text[0];
 	while (cp1 != &vvp->v_text[ncol] && cp1[0] == cp2[0]) {
 		++cp1;
@@ -724,7 +716,7 @@ uline(int row, VIDEO *vvp, VIDEO *pvp)
 	if (cp1 == &vvp->v_text[ncol])	/* All equal.		 */
 		return;
 	nbflag = FALSE;
-	cp3 = &vvp->v_text[ncol];	/* Compute right match. */
+	cp3 = &vvp->v_text[ncol];	/* Compute right match.  */
 	cp4 = &pvp->v_text[ncol];
 	while (cp3[-1] == cp4[-1]) {
 		--cp3;
@@ -762,7 +754,7 @@ uline(int row, VIDEO *vvp, VIDEO *pvp)
 
 /*
  * Redisplay the mode line for the window pointed to by the "wp".
- * This is the only routine that has any idea of how the modeline is
+ * This is the only routine that has any idea of how the mode line is
  * formatted. You can change the modeline format by hacking at this
  * routine. Called by "update" any time there is a dirty window.  Note
  * that if STANDOUT_GLITCH is defined, first and last magic_cookie_glitch
@@ -773,7 +765,7 @@ modeline(MGWIN *wp)
 {
 	int	n;
 	BUFFER *bp;
-	int mode;
+	int	mode;
 
 	n = wp->w_toprow + wp->w_ntrows;	/* Location.		 */
 	vscreen[n]->v_color = CMODE;		/* Mode line color.	 */
@@ -800,7 +792,7 @@ modeline(MGWIN *wp)
 	n += vtputs("Mg: ");
 	if (bp->b_bname[0] != '\0')
 		n += vtputs(&(bp->b_bname[0]));
-	while (n < 42) {		/* Pad out with blanks	 */
+	while (n < 42) {			/* Pad out with blanks.	 */
 		vtputc(' ');
 		++n;
 	}
@@ -815,13 +807,14 @@ modeline(MGWIN *wp)
 	}
 	vtputc(')');
 	++n;
-	while (n < ncol) {		/* Pad out.		 */
+	while (n < ncol) {			/* Pad out.		 */
 		vtputc('-');
 		++n;
 	}
 }
+
 /*
- * output a string to the mode line, report how long it was.
+ * Output a string to the mode line, report how long it was.
  */
 int
 vtputs(const char *s)
@@ -832,7 +825,7 @@ vtputs(const char *s)
 		vtputc(*s++);
 		++n;
 	}
-	return n;
+	return (n);
 }
 
 #ifdef	GOSLING
@@ -847,9 +840,8 @@ vtputs(const char *s)
 void
 hash(VIDEO *vp)
 {
-	int	i;
-	int	n;
-	char  *s;
+	int	i, n;
+	char   *s;
 
 	if ((vp->v_flag & VFHBAD) != 0) {	/* Hash bad.		 */
 		s = &vp->v_text[ncol - 1];
@@ -896,13 +888,13 @@ hash(VIDEO *vp)
 void
 setscores(int offs, int size)
 {
-	SCORE	*sp;
-	SCORE	*sp1;
-	int	tempcost;
-	int	bestcost;
-	int	j, i;
+	SCORE	 *sp;
+	SCORE	 *sp1;
 	VIDEO	**vp, **pp;
 	VIDEO	**vbase, **pbase;
+	int	  tempcost;
+	int	  bestcost;
+	int	  j, i;
 
 	vbase = &vscreen[offs - 1];	/* By hand CSE's.	 */
 	pbase = &pscreen[offs - 1];
@@ -983,12 +975,9 @@ setscores(int offs, int size)
 void
 traceback(int offs, int size, int i, int j)
 {
-	int	itrace;
-	int	jtrace;
+	int	itrace, jtrace;
 	int	k;
-	int	ninsl;
-	int	ndraw;
-	int	ndell;
+	int	ninsl, ndraw, ndell;
 
 	if (i == 0 && j == 0)	/* End of update.	 */
 		return;

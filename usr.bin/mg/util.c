@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *		Assorted commands.
@@ -23,8 +23,7 @@ int
 showcpos(int f, int n)
 {
 	LINE	*clp;
-	long	 nchar;
-	long	 cchar;
+	long	 nchar, cchar;
 	int	 nline, row;
 	int	 cline, cbyte;		/* Current line/char/byte */
 	int	 ratio;
@@ -67,7 +66,7 @@ showcpos(int f, int n)
 	ratio = nchar ? (100L * cchar) / nchar : 100;
 	ewprintf("Char: %c (0%o)  point=%ld(%d%%)  line=%d  row=%d  col=%d",
 	    cbyte, cbyte, cchar, ratio, cline, row, getcolpos());
-	return TRUE;
+	return (TRUE);
 }
 
 int
@@ -93,12 +92,12 @@ getcolpos(void)
 			col++;
 		else {
 			char tmp[5];
-			snprintf(tmp, sizeof tmp, "\\%o", c);
+			snprintf(tmp, sizeof(tmp), "\\%o", c);
 			col += strlen(tmp);
 		}
 
 	}
-	return col;
+	return (col);
 }
 
 /*
@@ -120,36 +119,35 @@ twiddle(int f, int n)
 	doto = curwp->w_doto;
 	if (doto == llength(dotp)) {
 		if (--doto <= 0)
-			return FALSE;
+			return (FALSE);
 	} else {
 		if (doto == 0)
-			return FALSE;
+			return (FALSE);
 		++curwp->w_doto;
 	}
 	cr = lgetc(dotp, doto--);
 	lputc(dotp, doto + 1, lgetc(dotp, doto));
 	lputc(dotp, doto, cr);
 	lchange(WFEDIT);
-	return TRUE;
+	return (TRUE);
 }
 
 /*
  * Open up some blank space.  The basic plan is to insert a bunch of
  * newlines, and then back up over them.  Everything is done by the
- * subcommand procerssors.  They even handle the looping.  Normally this
+ * subcommand processors.  They even handle the looping.  Normally this
  * is bound to "C-O".
  */
 /* ARGSUSED */
 int
 openline(int f, int n)
 {
-	int	i;
-	int	s;
+	int	i, s;
 
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 	if (n == 0)
-		return TRUE;
+		return (TRUE);
 
 	/* insert newlines */
 	i = n;
@@ -160,14 +158,14 @@ openline(int f, int n)
 	/* then go back up overtop of them all */
 	if (s == TRUE)
 		s = backchar(f | FFRAND, n);
-	return s;
+	return (s);
 }
 
 /*
  * Insert a newline.  [following "feature" not present in current version of
  * Gnu, and now disabled here too] If you are at the end of the line and the
  * next line is a blank line, just move into the blank line.  This makes
- * "C-O" and "C-X C-O" work nicely, and reduces the ammount of screen update
+ * "C-O" and "C-X C-O" work nicely, and reduces the amount of screen update
  * that has to be done.  This would not be as critical if screen update were a
  * lot more efficient.
  */
@@ -179,7 +177,7 @@ newline(int f, int n)
 	int	 s;
 
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 
 	while (n--) {
 		lp = curwp->w_dotp;
@@ -188,13 +186,13 @@ newline(int f, int n)
 		    lforw(lp) != curbp->b_linep &&
 		    llength(lforw(lp)) == 0) {
 			if ((s = forwchar(FFRAND, 1)) != TRUE)
-				return s;
+				return (s);
 		} else
 #endif /* undef */
 		if ((s = lnewline()) != TRUE)
-			return s;
+			return (s);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -223,7 +221,7 @@ deblank(int f, int n)
 		return (TRUE);
 	curwp->w_dotp = lforw(lp1);
 	curwp->w_doto = 0;
-	return ldelete((RSIZE)nld, KNONE);
+	return (ldelete((RSIZE)nld, KNONE));
 }
 
 /*
@@ -233,7 +231,7 @@ int
 justone(int f, int n)
 {
 	(void)delwhite(f, n);
-	return linsert(1, ' ');
+	return (linsert(1, ' '));
 }
 
 /*
@@ -262,7 +260,7 @@ delwhite(int f, int n)
 	if (s == TRUE)
 		(void)forwchar(FFRAND, 1);
 	(void)ldelete((RSIZE)(col - curwp->w_doto), KNONE);
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -271,15 +269,13 @@ delwhite(int f, int n)
  * simple.  Figure out the indentation of the current line.  Insert a newline
  * by calling the standard routine.  Insert the indentation by inserting the
  * right number of tabs and spaces.  Return TRUE if all ok.  Return FALSE if
- * one of the subcomands failed. Normally bound to "C-J".
+ * one of the subcommands failed. Normally bound to "C-J".
  */
 /* ARGSUSED */
 int
 indent(int f, int n)
 {
-	int	nicol;
-	int	c;
-	int	i;
+	int	c, i, nicol;
 
 	if (n < 0)
 		return (FALSE);
@@ -300,9 +296,9 @@ indent(int f, int n)
 #endif /* NOTAB */
 		    ((i = nicol / 8) != 0 && linsert(i, '\t') == FALSE) ||
 		    ((i = nicol % 8) != 0 && linsert(i, ' ') == FALSE))))
-			return FALSE;
+			return (FALSE);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -316,7 +312,7 @@ int
 forwdel(int f, int n)
 {
 	if (n < 0)
-		return backdel(f | FFRAND, -n);
+		return (backdel(f | FFRAND, -n));
 
 	/* really a kill */
 	if (f & FFARG) {
@@ -325,7 +321,7 @@ forwdel(int f, int n)
 		thisflag |= CFKILL;
 	}
 
-	return ldelete((RSIZE) n, (f & FFARG) ? KFORW : KNONE);
+	return (ldelete((RSIZE) n, (f & FFARG) ? KFORW : KNONE));
 }
 
 /*
@@ -340,7 +336,7 @@ backdel(int f, int n)
 	int	s;
 
 	if (n < 0)
-		return forwdel(f | FFRAND, -n);
+		return (forwdel(f | FFRAND, -n));
 
 	/* really a kill */
 	if (f & FFARG) {
@@ -351,7 +347,7 @@ backdel(int f, int n)
 	if ((s = backchar(f | FFRAND, n)) == TRUE)
 		s = ldelete((RSIZE)n, (f & FFARG) ? KFORW : KNONE);
 
-	return s;
+	return (s);
 }
 
 /*
@@ -434,7 +430,7 @@ yank(int f, int n)
 	int	 c, i, nline;
 
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 
 	/* newline counting */
 	nline = 0;
@@ -446,11 +442,11 @@ yank(int f, int n)
 		while ((c = kremove(i)) >= 0) {
 			if (c == '\n') {
 				if (newline(FFRAND, 1) == FALSE)
-					return FALSE;
+					return (FALSE);
 				++nline;
 			} else {
 				if (linsert(1, c) == FALSE)
-					return FALSE;
+					return (FALSE);
 			}
 			++i;
 		}
@@ -466,7 +462,7 @@ yank(int f, int n)
 		curwp->w_linep = lp;
 		curwp->w_flag |= WFHARD;
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 #ifdef	NOTAB
@@ -475,9 +471,9 @@ int
 space_to_tabstop(int f, int n)
 {
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 	if (n == 0)
-		return TRUE;
-	return linsert((n << 3) - (curwp->w_doto & 7), ' ');
+		return (TRUE);
+	return (linsert((n << 3) - (curwp->w_doto & 7), ' '));
 }
 #endif /* NOTAB */

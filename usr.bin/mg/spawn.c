@@ -1,4 +1,4 @@
-/*	$OpenBSD: spawn.c,v 1.8 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: spawn.c,v 1.9 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  * Spawn.  Actually just suspends Mg.
@@ -31,7 +31,7 @@ spawncli(int f, int n)
 		epresf = FALSE;
 	}
 	if (ttcooked() == FALSE)
-		return(FALSE);
+		return (FALSE);
 
 	/* Exit application mode and tidy. */
 	tttidy();
@@ -43,5 +43,5 @@ spawncli(int f, int n)
 
 	/* Force repaint. */
 	sgarbf = TRUE;
-	return ttraw();
+	return (ttraw());
 }

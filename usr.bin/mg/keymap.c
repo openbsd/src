@@ -1,12 +1,12 @@
-/*	$OpenBSD: keymap.c,v 1.27 2005/03/09 16:20:48 jfb Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.28 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific
  * parts of building the keymap has been moved to a better place.
  */
 
-#include	"def.h"
-#include	"kbd.h"
+#include "def.h"
+#include "kbd.h"
 
 /*
  * initial keymap declarations, deepest first
@@ -15,13 +15,13 @@
 #ifndef NO_HELP
 static PF cHcG[] = {
 	ctrlg,			/* ^G */
-	help_help,		/* ^H */
+	help_help		/* ^H */
 };
 
 static PF cHa[] = {
 	apropos_command,	/* a */
 	wallchart,		/* b */
-	desckey,		/* c */
+	desckey			/* c */
 };
 
 static struct KEYMAPE (2 + IMAPEXT) helpmap = {
@@ -34,21 +34,21 @@ static struct KEYMAPE (2 + IMAPEXT) helpmap = {
 		},
 		{
 			'a', 'c', cHa, NULL
-		},
+		}
 	}
 };
 #endif /* !NO_HELP */
 
 static PF cX4cF[] = {
 	poptofile,		/* ^f */
-	ctrlg,			/* ^g */
+	ctrlg			/* ^g */
 };
 static PF cX4b[] = {
 	poptobuffer,		/* b */
 	rescan,			/* c */
 	rescan,			/* d */
 	rescan,			/* e */
-	poptofile,		/* f */
+	poptofile		/* f */
 };
 static struct KEYMAPE (2 + IMAPEXT) cX4map = {
 	2,
@@ -60,7 +60,7 @@ static struct KEYMAPE (2 + IMAPEXT) cX4map = {
 		},
 		{
 			'b', 'f', cX4b, NULL
-		},
+		}
 	}
 };
 
@@ -70,7 +70,7 @@ static PF cXcB[] = {
 	rescan,			/* ^D */
 	rescan,			/* ^E */
 	filevisit,		/* ^F */
-	ctrlg,			/* ^G */
+	ctrlg			/* ^G */
 };
 
 static PF cXcL[] = {
@@ -86,13 +86,13 @@ static PF cXcL[] = {
 	upperregion,		/* ^U */
 	rescan,			/* ^V */
 	filewrite,		/* ^W */
-	swapmark,		/* ^X */
+	swapmark		/* ^X */
 };
 
 #ifndef NO_MACRO
 static PF cXlp[] = {
 	definemacro,		/* ( */
-	finishmacro,		/* ) */
+	finishmacro		/* ) */
 };
 #endif /* !NO_MACRO */
 
@@ -101,11 +101,11 @@ static PF cX0[] = {
 	onlywind,		/* 1 */
 	splitwind,		/* 2 */
 	rescan,			/* 3 */
-	NULL,			/* 4 */
+	NULL			/* 4 */
 };
 
 static PF cXeq[] = {
-	showcpos,		/* = */
+	showcpos		/* = */
 };
 
 static PF cXcar[] = {
@@ -173,24 +173,24 @@ static struct KEYMAPE (5 + IMAPEXT) cXmap = {
 		},
 		{
 			'^', 'u', cXcar, NULL
-		},
+		}
 	}
 };
 
 static PF metacG[] = {
-	ctrlg,			/* ^G */
+	ctrlg			/* ^G */
 };
 
 static PF metacV[] = {
-	pagenext,		/* ^V */
+	pagenext		/* ^V */
 };
 
 static PF metasp[] = {
-	justone,		/* space */
+	justone			/* space */
 };
 
 static PF metapct[] = {
-	queryrepl,		/* % */
+	queryrepl		/* % */
 };
 
 static PF metami[] = {
@@ -211,7 +211,7 @@ static PF metami[] = {
 	rescan,			/* ; */
 	gotobob,		/* < */
 	rescan,			/* = */
-	gotoeob,		/* > */
+	gotoeob			/* > */
 };
 
 static PF metalb[] = {
@@ -226,7 +226,7 @@ static PF metalb[] = {
 	capword,		/* c */
 	delfword,		/* d */
 	rescan,			/* e */
-	forwword,		/* f */
+	forwword		/* f */
 };
 
 static PF metal[] = {
@@ -242,12 +242,12 @@ static PF metal[] = {
 	upperword,		/* u */
 	backpage,		/* v */
 	copyregion,		/* w */
-	extend,			/* x */
+	extend			/* x */
 };
 
 static PF metatilde[] = {
 	notmodified,		/* ~ */
-	delbword,		/* DEL */
+	delbword		/* DEL */
 };
 
 static struct KEYMAPE (8 + IMAPEXT) metamap = {
@@ -278,7 +278,7 @@ static struct KEYMAPE (8 + IMAPEXT) metamap = {
 		},
 		{
 			'~', CCHR('?'), metatilde, NULL
-		},
+		}
 	}
 };
 
@@ -316,7 +316,7 @@ static PF fund_CJ[] = {
 	killregion,		/* ^W */
 	NULL,			/* ^X */
 	yank,			/* ^Y */
-	spawncli,		/* ^Z */
+	spawncli		/* ^Z */
 };
 
 static PF fund_esc[] = {
@@ -324,11 +324,11 @@ static PF fund_esc[] = {
 	rescan,			/* ^\ selfinsert is default on fundamental */
 	rescan,			/* ^] */
 	rescan,			/* ^^ */
-	undo,			/* ^_ */
+	undo			/* ^_ */
 };
 
 static PF fund_del[] = {
-	backdel,		/* DEL */
+	backdel			/* DEL */
 };
 
 #ifndef	FUND_XMAPS
@@ -365,7 +365,7 @@ static struct KEYMAPE (4 + NFUND_XMAPS + IMAPEXT) fundmap = {
 };
 
 static PF fill_sp[] = {
-	fillword,		/* ' ' */
+	fillword		/* ' ' */
 };
 
 static struct KEYMAPE (1 + IMAPEXT) fillmap = {
@@ -375,7 +375,7 @@ static struct KEYMAPE (1 + IMAPEXT) fillmap = {
 	{
 		{
 			' ', ' ', fill_sp, NULL
-		},
+		}
 	}
 };
 
@@ -383,7 +383,7 @@ static PF indent_lf[] = {
 	newline,		/* ^J */
 	rescan,			/* ^K */
 	rescan,			/* ^L */
-	indent,			/* ^M */
+	indent			/* ^M */
 };
 
 static struct KEYMAPE (1 + IMAPEXT) indntmap = {
@@ -393,12 +393,12 @@ static struct KEYMAPE (1 + IMAPEXT) indntmap = {
 	{
 		{
 			CCHR('J'), CCHR('M'), indent_lf, NULL
-		},
+		}
 	}
 };
 
 static PF blink_rp[] = {
-	showmatch,		/* ) */
+	showmatch		/* ) */
 };
 
 static struct KEYMAPE (1 + IMAPEXT) blinkmap = {
@@ -408,13 +408,13 @@ static struct KEYMAPE (1 + IMAPEXT) blinkmap = {
 	{
 		{
 			')', ')', blink_rp, NULL
-		},
+		}
 	}
 };
 
 #ifdef NOTAB
 static PF notab_tab[] = {
-	space_to_tabstop,	/* ^I */
+	space_to_tabstop	/* ^I */
 };
 
 static struct KEYMAPE (1 + IMAPEXT) notabmap = {
@@ -424,7 +424,7 @@ static struct KEYMAPE (1 + IMAPEXT) notabmap = {
 	{
 		{
 			CCHR('I'), CCHR('I'), notab_tab, NULL
-		},
+		}
 	}
 };
 #endif /* NOTAB */
@@ -437,7 +437,7 @@ static struct KEYMAPE (1 + IMAPEXT) overwmap = {
 		/* unused dummy entry for VMS C */
 		{
 			(KCHAR)0, (KCHAR)0, NULL, NULL
-		},
+		}
 	}
 };
 
@@ -469,7 +469,7 @@ static PF diredcl[] = {
 	universal_argument,	/* ^U */
 	forwpage,		/* ^V */
 	rescan,			/* ^W */
-	NULL,			/* ^X */
+	NULL			/* ^X */
 };
 
 static PF diredcz[] = {
@@ -479,14 +479,14 @@ static PF diredcz[] = {
 	rescan,			/* ^] */
 	rescan,			/* ^^ */
 	rescan,			/* ^_ */
-	forwline,		/* SP */
+	forwline		/* SP */
 };
 
 static PF diredc[] = {
 	d_copy,			/* c */
 	d_del,			/* d */
 	d_findfile,		/* e */
-	d_findfile,		/* f */
+	d_findfile		/* f */
 };
 
 static PF diredn[] = {
@@ -500,11 +500,11 @@ static PF diredn[] = {
 	d_undel,		/* u */
 	rescan,			/* v */
 	rescan,			/* w */
-	d_expunge,		/* x */
+	d_expunge		/* x */
 };
 
 static PF direddl[] = {
-	d_undelbak,		/* del */
+	d_undelbak		/* del */
 };
 
 #ifndef	DIRED_XMAPS
@@ -547,12 +547,12 @@ static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
 };
 #endif /* !NO_DIRED */
 
-MAPS	fundamental_mode = { (KEYMAP *)&fundmap, "fundamental", };
+MAPS	fundamental_mode = { (KEYMAP *)&fundmap, "fundamental" };
 
 /*
  * give names to the maps, for use by help etc. If the map is to be bindable,
  * it must also be listed in the function name table below with the same
- * name. Maps created dynamicly currently don't get added here, thus are
+ * name. Maps created dynamically currently don't get added here, thus are
  * unnamed. Modes are just named keymaps with functions to add/subtract them
  * from a buffer's list of modes.  If you change a mode name, change it in
  * modes.c also.
@@ -575,7 +575,7 @@ static MAPS map_table[] = {
 #ifndef NO_DIRED
 	{(KEYMAP *) &diredmap, "dired",},
 #endif
-	{NULL, NULL},
+	{NULL, NULL}
 };
 
 MAPS *maps;
@@ -583,8 +583,8 @@ MAPS *maps;
 void
 maps_init(void)
 {
-	int i;
-	MAPS *mp;
+	int	 i;
+	MAPS	*mp;
 
 	maps = &fundamental_mode;
 	for (i = 0; map_table[i].p_name != NULL; i++) {
@@ -597,45 +597,44 @@ maps_init(void)
 int
 maps_add(KEYMAP *map, const char *name)
 {
-	MAPS *mp;
+	MAPS	*mp;
 
 	if ((mp = malloc(sizeof(*mp))) == NULL)
-		return FALSE;
+		return (FALSE);
 
 	mp->p_name = name;
 	mp->p_map = map;
 	mp->p_next = maps;
 	maps = mp;
 
-	return TRUE;
+	return (TRUE);
 }
 
 const char *
 map_name(KEYMAP *map)
 {
-	MAPS *mp;
+	MAPS	*mp;
 
 	for (mp = maps; mp != NULL; mp = mp->p_next)
 		if (mp->p_map == map)
-			return mp->p_name;
-	return NULL;
+			return (mp->p_name);
+	return (NULL);
 }
 
 MAPS *
 name_mode(const char *name)
 {
-	MAPS *mp;
+	MAPS	*mp;
 
 	for (mp = maps; mp != NULL; mp = mp->p_next)
 		if (strcmp(mp->p_name, name) == 0)
-			return mp;
-	return NULL;
+			return (mp);
+	return (NULL);
 }
 
 KEYMAP *
 name_map(const char *name)
 {
 	MAPS	*mp;
-	return (mp = name_mode(name)) == NULL ? NULL : mp->p_map;
+	return ((mp = name_mode(name)) == NULL ? NULL : mp->p_map);
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.8 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: word.c,v 1.9 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *		Word mode commands.
@@ -17,20 +17,20 @@ int
 backword(int f, int n)
 {
 	if (n < 0)
-		return forwword(f | FFRAND, -n);
+		return (forwword(f | FFRAND, -n));
 	if (backchar(FFRAND, 1) == FALSE)
-		return FALSE;
+		return (FALSE);
 	while (n--) {
 		while (inword() == FALSE) {
 			if (backchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 		}
 		while (inword() != FALSE) {
 			if (backchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 		}
 	}
-	return forwchar(FFRAND, 1);
+	return (forwchar(FFRAND, 1));
 }
 
 /*
@@ -42,18 +42,18 @@ int
 forwword(int f, int n)
 {
 	if (n < 0)
-		return backword(f | FFRAND, -n);
+		return (backword(f | FFRAND, -n));
 	while (n--) {
 		while (inword() == FALSE) {
 			if (forwchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 		}
 		while (inword() != FALSE) {
 			if (forwchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 		}
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -72,11 +72,11 @@ upperword(int f, int n)
 	}
 
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 	while (n--) {
 		while (inword() == FALSE) {
 			if (forwchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 		}
 		while (inword() != FALSE) {
 			c = lgetc(curwp->w_dotp, curwp->w_doto);
@@ -86,10 +86,10 @@ upperword(int f, int n)
 				lchange(WFHARD);
 			}
 			if (forwchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 		}
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -107,11 +107,11 @@ lowerword(int f, int n)
 		return (FALSE);
 	}
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 	while (n--) {
 		while (inword() == FALSE) {
 			if (forwchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 		}
 		while (inword() != FALSE) {
 			c = lgetc(curwp->w_dotp, curwp->w_doto);
@@ -121,10 +121,10 @@ lowerword(int f, int n)
 				lchange(WFHARD);
 			}
 			if (forwchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 		}
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -145,11 +145,11 @@ capword(int f, int n)
 	}
 
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 	while (n--) {
 		while (inword() == FALSE) {
 			if (forwchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 		}
 		if (inword() != FALSE) {
 			c = lgetc(curwp->w_dotp, curwp->w_doto);
@@ -159,7 +159,7 @@ capword(int f, int n)
 				lchange(WFHARD);
 			}
 			if (forwchar(FFRAND, 1) == FALSE)
-				return TRUE;
+				return (TRUE);
 			while (inword() != FALSE) {
 				c = lgetc(curwp->w_dotp, curwp->w_doto);
 				if (ISUPPER(c) != FALSE) {
@@ -168,11 +168,11 @@ capword(int f, int n)
 					lchange(WFHARD);
 				}
 				if (forwchar(FFRAND, 1) == FALSE)
-					return TRUE;
+					return (TRUE);
 			}
 		}
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -191,7 +191,7 @@ delfword(int f, int n)
 		return (FALSE);
 	}
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 
 	/* purge kill buffer */
 	if ((lastflag & CFKILL) == 0)
@@ -243,7 +243,7 @@ delbword(int f, int n)
 	}
 
 	if (n < 0)
-		return FALSE;
+		return (FALSE);
 
 	/* purge kill buffer */
 	if ((lastflag & CFKILL) == 0)
@@ -270,22 +270,22 @@ delbword(int f, int n)
 		}
 	}
 	if (forwchar(FFRAND, 1) == FALSE)
-		return FALSE;
+		return (FALSE);
 
 	/* undo assumed delete */
 	--size;
 out:
-	return ldelete(size, KBACK);
+	return (ldelete(size, KBACK));
 }
 
 /*
  * Return TRUE if the character at dot is a character that is considered to be
- * part of a word. The word character list is hard coded. Should be setable.
+ * part of a word. The word character list is hard coded. Should be settable.
  */
 int
 inword(void)
 {
 	/* can't use lgetc in ISWORD due to bug in OSK cpp */
-	return curwp->w_doto != llength(curwp->w_dotp) &&
-	    ISWORD(curwp->w_dotp->l_text[curwp->w_doto]);
+	return (curwp->w_doto != llength(curwp->w_dotp) &&
+	    ISWORD(curwp->w_dotp->l_text[curwp->w_doto]));
 }

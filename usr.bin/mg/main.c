@@ -1,15 +1,15 @@
-/*	$OpenBSD: main.c,v 1.37 2005/03/12 10:36:13 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *	Mainline.
  */
 
-#include	"def.h"
-#include	"kbd.h"
-#include	"funmap.h"
+#include "def.h"
+#include "kbd.h"
+#include "funmap.h"
 
 #ifndef NO_MACRO
-#include	"macro.h"
+#include "macro.h"
 #endif	/* NO_MACRO */
 
 #include <err.h>
@@ -19,7 +19,7 @@ int		 lastflag;			/* flags, last command	*/
 int		 curgoal;			/* goal column		*/
 int		 startrow;			/* row to start		*/
 BUFFER		*curbp;				/* current buffer	*/
-BUFFER		*bheadp;			/* BUFFER list head */
+BUFFER		*bheadp;			/* BUFFER list head	*/
 MGWIN		*curwp;				/* current window	*/
 MGWIN		*wheadp;			/* MGWIN listhead	*/
 char		 pat[NPAT];			/* pattern		*/
@@ -30,9 +30,9 @@ int
 main(int argc, char **argv)
 {
 	char	*cp, *init_fcn_name = NULL;
-	PF init_fcn = NULL;
-	int o, i, nfiles, status;
-	int nobackups = 0;
+	PF	 init_fcn = NULL;
+	int	 o, i, nfiles, status;
+	int	 nobackups = 0;
 
 	while ((o = getopt(argc, argv, "nf:")) != -1)
 		switch (o) {
@@ -107,14 +107,14 @@ main(int argc, char **argv)
 notnum:
 			cp = adjustname(argv[i]);
 			if (cp != NULL) {
-				if (nfiles == 1) {
+				if (nfiles == 1)
 					splitwind(0, 1);
-				}
+
 				curbp = findbuffer(cp);
 				(void)showbuffer(curbp, curwp, 0);
-				if ((status = readin(cp)) != TRUE) {
+				if ((status = readin(cp)) != TRUE)
 					killbuffer(curbp);
-				} else {
+				else {
 					if (init_fcn_name)
 						init_fcn(0, 1);
 					nfiles++;
@@ -178,8 +178,8 @@ edinit(PF init_fcn)
 	curwp = wp;
 	wp->w_wndp = NULL;			/* Initialize window.	 */
 	wp->w_linep = wp->w_dotp = bp->b_linep;
-	wp->w_ntrows = nrow - 2;		/* 2 = mode, echo. */
-	wp->w_flag = WFMODE | WFHARD;		/* Full. */
+	wp->w_ntrows = nrow - 2;		/* 2 = mode, echo.	 */
+	wp->w_flag = WFMODE | WFHARD;		/* Full.		 */
 
 	if (init_fcn)
 		init_fcn(0, 1);
@@ -196,7 +196,7 @@ quit(int f, int n)
 	int	 s;
 
 	if ((s = anycb(FALSE)) == ABORT)
-		return ABORT;
+		return (ABORT);
 	if (s == FALSE
 	    || eyesno("Some modified buffers exist, really exit") == TRUE) {
 		vttidy();
@@ -205,7 +205,7 @@ quit(int f, int n)
 #endif	/* SYSCLEANUP */
 		exit(GOOD);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*

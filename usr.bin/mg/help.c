@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.21 2004/07/22 01:25:25 vincent Exp $	*/
+/*	$OpenBSD: help.c,v 1.22 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  * Help functions for Mg 2
@@ -23,8 +23,7 @@ static int	findbind(KEYMAP *, PF, char *, size_t);
  */
 /* ARGSUSED */
 int
-desckey(f, n)
-	int f, n;
+desckey(int f, int n)
 {
 	KEYMAP	*curmap;
 	PF	 funct;
@@ -34,11 +33,11 @@ desckey(f, n)
 
 #ifndef NO_MACRO
 	if (inmacro)
-		return TRUE;	/* ignore inside keyboard macro */
+		return (TRUE);	/* ignore inside keyboard macro */
 #endif /* !NO_MACRO */
 	num = strlcpy(prompt, "Describe key briefly: ", sizeof(prompt));
-	if (num >= sizeof prompt)
-		num = sizeof prompt - 1;
+	if (num >= sizeof(prompt))
+		num = sizeof(prompt) - 1;
 	pep = prompt + num;
 	key.k_count = 0;
 	m = curbp->b_nmodes;
@@ -90,7 +89,7 @@ found:
 		ewprintf("%k runs the command %s", pep);
 	else
 		ewprintf("%k is bound to an unnamed function");
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -100,8 +99,7 @@ found:
  */
 /* ARGSUSED */
 int
-wallchart(f, n)
-	int f, n;
+wallchart(int f, int n)
 {
 	int		 m;
 	BUFFER		*bp;
@@ -109,31 +107,31 @@ wallchart(f, n)
 	bp = bfind("*help*", TRUE);
 	if (bclear(bp) != TRUE)
 		/* clear it out */
-		return FALSE;
+		return (FALSE);
 	bp->b_flag |= BFREADONLY;
 	for (m = curbp->b_nmodes; m > 0; m--) {
 		if ((addlinef(bp, "Local keybindings for mode %s:",
 				curbp->b_modes[m]->p_name) == FALSE) ||
 		    (showall(bp, curbp->b_modes[m]->p_map, "") == FALSE) ||
 		    (addline(bp, "") == FALSE))
-			return FALSE;
+			return (FALSE);
 	}
 	if ((addline(bp, "Global bindings:") == FALSE) ||
 	    (showall(bp, fundamental_map, "") == FALSE))
-		return FALSE;
-	return popbuftop(bp);
+		return (FALSE);
+	return (popbuftop(bp));
 }
 
 static int
 showall(BUFFER *bp, KEYMAP *map, char *prefix)
 {
-	KEYMAP *newmap;
-	char buf[80], key[16];
-	PF fun;
-	int c;
+	KEYMAP	*newmap;
+	char	 buf[80], key[16];
+	PF	 fun;
+	int	 c;
 
 	if (addline(bp, "") == FALSE)
-		return FALSE;
+		return (FALSE);
 
 	/* XXX - 256 ? */
 	for (c = 0; c < 256; c++) {
@@ -141,29 +139,27 @@ showall(BUFFER *bp, KEYMAP *map, char *prefix)
 		if (fun == rescan || fun == selfinsert)
 			continue;
 		keyname(buf, sizeof(buf), c);
-		(void)snprintf(key, sizeof key, "%s%s ", prefix, buf);
+		(void)snprintf(key, sizeof(key), "%s%s ", prefix, buf);
 		if (fun == NULL) {
 			if (showall(bp, newmap, key) == FALSE)
-				return FALSE;
+				return (FALSE);
 		} else {
 			if (addlinef(bp, "%-16s%s", key,
 				    function_name(fun)) == FALSE)
-				return FALSE;
+				return (FALSE);
 		}
 	}
-
-	return TRUE;
+	return (TRUE);
 }
 
 int
-help_help(f, n)
-	int f, n;
+help_help(int f, int n)
 {
 	KEYMAP	*kp;
 	PF	 funct;
 
 	if ((kp = name_map("help")) == NULL)
-		return FALSE;
+		return (FALSE);
 	ewprintf("a b c: ");
 	do {
 		funct = doscan(kp, getkey(FALSE), NULL);
@@ -172,24 +168,23 @@ help_help(f, n)
 	if (macrodef && macrocount < MAXMACRO)
 		macro[macrocount - 1].m_funct = funct;
 #endif /* !NO_MACRO */
-	return (*funct)(f, n);
+	return ((*funct)(f, n));
 }
 
 /* ARGSUSED */
 int
-apropos_command(f, n)
-	int f, n;
+apropos_command(int f, int n)
 {
 	BUFFER		*bp;
 	LIST		*fnames, *el;
 	char		 string[32], *bufp;
 
 	if ((bufp = eread("apropos: ", string, sizeof(string), EFNEW)) == NULL)
-		return ABORT;
+		return (ABORT);
 	/* FALSE means we got a 0 character string, which is fine */
 	bp = bfind("*help*", TRUE);
 	if (bclear(bp) == FALSE)
-		return FALSE;
+		return (FALSE);
 
 	fnames = complete_function_list("", NULL);
 	for (el = fnames; el != NULL; el = el->l_next) {
@@ -204,37 +199,36 @@ apropos_command(f, n)
 
 		if (addlinef(bp, "%-32s%s", el->l_name,  buf) == FALSE) {
 			free_file_list(fnames);
-			return FALSE;
+			return (FALSE);
 		}
 	}
 	free_file_list(fnames);
-	return popbuftop(bp);
+	return (popbuftop(bp));
 }
 
 static int
 findbind(KEYMAP *map, PF fun, char *buf, size_t len)
 {
-	KEYMAP *newmap;
-	PF nfun;
-	char buf2[16], key[16];
-	int c;
+	KEYMAP	*newmap;
+	PF	 nfun;
+	char	 buf2[16], key[16];
+	int	 c;
 
 	/* XXX - 256 ? */
 	for (c = 0; c < 256; c++) {
 		nfun = doscan(map, c, &newmap);
 		if (nfun == fun) {
 			keyname(buf, len, c);
-			return TRUE;
+			return (TRUE);
 		}
 		if (nfun == NULL) {
 			if (findbind(newmap, fun, buf2, sizeof(buf2)) == TRUE) {
 				keyname(key, sizeof(key), c);
 				(void)snprintf(buf, len, "%s %s", key, buf2);
-				return TRUE;
+				return (TRUE);
 			}
 		}
 	}
-
-	return FALSE;
+	return (FALSE);
 }
 #endif /* !NO_HELP */

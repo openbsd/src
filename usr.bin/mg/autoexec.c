@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.5 2005/03/10 16:58:57 deraadt Exp $ */
+/* $OpenBSD: autoexec.c,v 1.6 2005/04/03 02:09:28 db Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -26,8 +26,8 @@ static int			 ready;
 PF *
 find_autoexec(const char *fname)
 {
-	PF *pfl, *npfl;
-	int have, used;
+	PF		*pfl, *npfl;
+	int		 have, used;
 	struct autoexec *ae;
 
 	if (!ready)
@@ -58,7 +58,7 @@ find_autoexec(const char *fname)
 int
 add_autoexec(const char *pattern, const char *func)
 {
-	PF fp;
+	PF 		 fp;
 	struct autoexec *ae;
 
 	if (!ready) {
@@ -68,7 +68,7 @@ add_autoexec(const char *pattern, const char *func)
 	fp = name_function(func);
 	if (fp == NULL)
 		return (FALSE);
-	ae = malloc(sizeof *ae);
+	ae = malloc(sizeof(*ae));
 	if (ae == NULL)
 		return (FALSE);
 	ae->fp = fp;
@@ -85,17 +85,17 @@ add_autoexec(const char *pattern, const char *func)
 int
 auto_execute(int f, int n)
 {
-	char patbuf[128], funcbuf[128], *patp, *funcp;
-	int s;
+	char	patbuf[128], funcbuf[128], *patp, *funcp;
+	int	s;
 
-	if ((patp = ereply("Filename pattern: ", patbuf, sizeof patbuf)) == NULL)
-		return ABORT;
+	if ((patp = ereply("Filename pattern: ", patbuf, sizeof(patbuf))) == NULL)
+		return (ABORT);
 	else if (patp[0] == '\0')
-		return FALSE;
-	if ((funcp = ereply("Execute: ", funcbuf, sizeof funcbuf)) == NULL)
-		return ABORT;
+		return (FALSE);
+	if ((funcp = ereply("Execute: ", funcbuf, sizeof(funcbuf))) == NULL)
+		return (ABORT);
 	else if (funcp[0] == '\0')
-		return FALSE;
+		return (FALSE);
 	if ((s = add_autoexec(patp, funcp)) != TRUE)
 		return (s);
 	return (TRUE);

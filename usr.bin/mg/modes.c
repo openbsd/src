@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.9 2004/07/22 01:25:25 vincent Exp $	*/
+/*	$OpenBSD: modes.c,v 1.10 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  * Commands to toggle modes.   Without an argument, these functions will
@@ -23,7 +23,7 @@ changemode(int f, int n, char *mode)
 
 	if ((m = name_mode(mode)) == NULL) {
 		ewprintf("Can't find mode %s", mode);
-		return FALSE;
+		return (FALSE);
 	}
 	if (!(f & FFARG)) {
 		for (i = 0; i <= curbp->b_nmodes; i++)
@@ -37,10 +37,10 @@ changemode(int f, int n, char *mode)
 		for (i = 0; i <= curbp->b_nmodes; i++)
 			if (curbp->b_modes[i] == m)
 				/* mode already set */
-				return TRUE;
+				return (TRUE);
 		if (curbp->b_nmodes >= PBMODES - 1) {
 			ewprintf("Too many modes");
-			return FALSE;
+			return (FALSE);
 		}
 		curbp->b_modes[++(curbp->b_nmodes)] = m;
 	} else {
@@ -48,25 +48,25 @@ changemode(int f, int n, char *mode)
 		for (i = 1; i <= curbp->b_nmodes && m != curbp->b_modes[i];
 		    i++);
 		if (i > curbp->b_nmodes)
-			return TRUE;	/* mode wasn't set */
+			return (TRUE);	/* mode wasn't set */
 		for (; i < curbp->b_nmodes; i++)
 			curbp->b_modes[i] = curbp->b_modes[i + 1];
 		curbp->b_nmodes--;
 	}
 	upmodes(curbp);
-	return TRUE;
+	return (TRUE);
 }
 
 int
 indentmode(int f, int n)
 {
-	return changemode(f, n, "indent");
+	return (changemode(f, n, "indent"));
 }
 
 int
 fillmode(int f, int n)
 {
-	return changemode(f, n, "fill");
+	return (changemode(f, n, "fill"));
 }
 
 /*
@@ -75,7 +75,7 @@ fillmode(int f, int n)
 int
 blinkparen(int f, int n)
 {
-	return changemode(f, n, "blink");
+	return (changemode(f, n, "blink"));
 }
 
 #ifdef NOTAB
@@ -83,7 +83,7 @@ int
 notabmode(int f, int n)
 {
 	if (changemode(f, n, "notab") == FALSE)
-		return FALSE;
+		return (FALSE);
 	if (f & FFARG) {
 		if (n <= 0)
 			curbp->b_flag &= ~BFNOTAB;
@@ -91,7 +91,7 @@ notabmode(int f, int n)
 			curbp->b_flag |= BFNOTAB;
 	} else
 		curbp->b_flag ^= BFNOTAB;
-	return TRUE;
+	return (TRUE);
 }
 #endif	/* NOTAB */
 
@@ -99,7 +99,7 @@ int
 overwrite(int f, int n)
 {
 	if (changemode(f, n, "overwrite") == FALSE)
-		return FALSE;
+		return (FALSE);
 	if (f & FFARG) {
 		if (n <= 0)
 			curbp->b_flag &= ~BFOVERWRITE;
@@ -107,7 +107,7 @@ overwrite(int f, int n)
 			curbp->b_flag |= BFOVERWRITE;
 	} else
 		curbp->b_flag ^= BFOVERWRITE;
-	return TRUE;
+	return (TRUE);
 }
 
 int
@@ -118,12 +118,12 @@ set_default_mode(int f, int n)
 	char	 mode[32], *bufp;
 
 	if ((bufp = eread("Set Default Mode: ", mode, 32, EFNEW)) == NULL)
-		return ABORT;
+		return (ABORT);
 	else if (bufp[0] == '\0')
-		return FALSE;
+		return (FALSE);
 	if ((m = name_mode(mode)) == NULL) {
 		ewprintf("can't find mode %s", mode);
-		return FALSE;
+		return (FALSE);
 	}
 	if (!(f & FFARG)) {
 		for (i = 0; i <= defb_nmodes; i++)
@@ -137,10 +137,10 @@ set_default_mode(int f, int n)
 		for (i = 0; i <= defb_nmodes; i++)
 			if (defb_modes[i] == m)
 				/* mode already set */
-				return TRUE;
+				return (TRUE);
 		if (defb_nmodes >= PBMODES - 1) {
 			ewprintf("Too many modes");
-			return FALSE;
+			return (FALSE);
 		}
 		defb_modes[++defb_nmodes] = m;
 	} else {
@@ -148,7 +148,7 @@ set_default_mode(int f, int n)
 		for (i = 1; i <= defb_nmodes && m != defb_modes[i]; i++);
 		if (i > defb_nmodes)
 			/* mode was not set */
-			return TRUE;
+			return (TRUE);
 		for (; i < defb_nmodes; i++)
 			defb_modes[i] = defb_modes[i + 1];
 		defb_nmodes--;
@@ -166,5 +166,5 @@ set_default_mode(int f, int n)
 		else
 			defb_flag |= BFNOTAB;
 #endif	/* NOTAB */
-	return TRUE;
+	return (TRUE);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.14 2004/07/22 01:25:25 vincent Exp $	*/
+/*	$OpenBSD: region.c,v 1.15 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  *		Region based commands.
@@ -48,7 +48,7 @@ copyregion(int f, int n)
 	int	 s;
 
 	if ((s = getregion(&region)) != TRUE)
-		return s;
+		return (s);
 
 	/* kill type command */
 	if ((lastflag & CFKILL) == 0)
@@ -69,11 +69,11 @@ copyregion(int f, int n)
 			loffs = 0;
 		} else {			/* Middle of line.	 */
 			if ((s = kinsert(lgetc(linep, loffs), KFORW)) != TRUE)
-				return s;
+				return (s);
 			++loffs;
 		}
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -96,7 +96,7 @@ lowerregion(int f, int n)
 	}
 
 	if ((s = getregion(&region)) != TRUE)
-		return s;
+		return (s);
 
 	undo_add_change(region.r_linep, region.r_offset, region.r_size);
 
@@ -114,7 +114,7 @@ lowerregion(int f, int n)
 			++loffs;
 		}
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -136,7 +136,7 @@ upperregion(int f, int n)
 		return (FALSE);
 	}
 	if ((s = getregion(&region)) != TRUE)
-		return s;
+		return (s);
 
 	undo_add_change(region.r_linep, region.r_offset, region.r_size);
 
@@ -154,7 +154,7 @@ upperregion(int f, int n)
 			++loffs;
 		}
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -166,7 +166,7 @@ upperregion(int f, int n)
  * the size field of the region structure. If this assignment loses any bits,
  * then we print an error. This is "type independent" overflow checking. All
  * of the callers of this routine should be ready to get an ABORT status,
- * because I might add a "if regions is big, ask before clobberring" flag.
+ * because I might add a "if regions is big, ask before clobbering" flag.
  */
 static int
 getregion(REGION *rp)
@@ -189,7 +189,7 @@ getregion(REGION *rp)
 			rp->r_offset = curwp->w_marko;
 			rp->r_size = (RSIZE)(curwp->w_doto - curwp->w_marko);
 		}
-		return TRUE;
+		return (TRUE);
 	}
 	/* get region size */
 	flp = blp = curwp->w_dotp;
@@ -218,7 +218,7 @@ getregion(REGION *rp)
 		}
 	}
 	ewprintf("Bug: lost mark");
-	return FALSE;
+	return (FALSE);
 }
 
 /*
@@ -230,9 +230,9 @@ setsize(REGION *rp, RSIZE size)
 	rp->r_size = size;
 	if (rp->r_size != size) {
 		ewprintf("Region is too large");
-		return FALSE;
+		return (FALSE);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 #ifdef PREFIXREGION
@@ -267,7 +267,7 @@ prefixregion(int f, int n)
 		return (FALSE);
 	}
 	if ((f == TRUE) && ((s = setprefix(FFRAND, 1)) != TRUE))
-		return s;
+		return (s);
 
 	/* get # of lines to affect */
 	if ((s = getregion(&region)) != TRUE)
@@ -289,7 +289,7 @@ prefixregion(int f, int n)
 		(void)forwline(FFRAND, 1);
 	}
 	(void)gotobol(FFRAND, 1);
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -300,31 +300,30 @@ int
 setprefix(int f, int n)
 {
 	char	buf[PREFIXLENGTH], *rep;
-	int retval;
+	int	retval;
 
 	if (prefix_string[0] == '\0')
-		rep = ereply("Prefix string: ", buf, sizeof buf);
+		rep = ereply("Prefix string: ", buf, sizeof(buf));
 	else
 		rep = ereply("Prefix string (default %s): ",
-		    buf, sizeof buf, prefix_string);
+		    buf, sizeof(buf), prefix_string);
 	if (rep != NULL && *rep != '\0') {
-		(void)strlcpy(prefix_string, rep, sizeof prefix_string);
+		(void)strlcpy(prefix_string, rep, sizeof(prefix_string));
 		retval = TRUE;
 	} else if (*rep == '\0' && prefix_string[0] != '\0') {
 		/* CR -- use old one */
 		retval = TRUE;
 	} else
 		retval = FALSE;
-	return retval;
+	return (retval);
 }
 #endif /* PREFIXREGION */
-
 
 int
 region_get_data(REGION *reg, char *buf, int len)
 {
-	int i, off;
-	LINE *lp;
+	int	 i, off;
+	LINE	*lp;
 
 	off = reg->r_offset;
 	lp = reg->r_linep;
@@ -341,7 +340,7 @@ region_get_data(REGION *reg, char *buf, int len)
 		}
 	}
 	buf[i] = '\0';
-	return i;
+	return (i);
 }
 
 int
@@ -355,5 +354,5 @@ region_put_data(const char *buf, int len)
 		else
 			linsert(1, buf[i]);
 	}
-	return 0;
+	return (0);
 }

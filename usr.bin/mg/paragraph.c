@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.9 2003/10/24 20:32:06 avsm Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.10 2005/04/03 02:09:28 db Exp $	*/
 
 /*
  * Code for dealing with paragraphs and filling. Adapted from MicroEMACS 3.6
@@ -12,9 +12,9 @@ static int	fillcol = 70;
 #define MAXWORD 256
 
 /*
- * Move to start of paragraph.  Go back to the begining of the current
+ * Move to start of paragraph.  Go back to the beginning of the current
  * paragraph here we look for a <NL><NL> or <NL><TAB> or <NL><SPACE>
- * combination to delimit the begining of a paragraph.
+ * combination to delimit the beginning of a paragraph.
  */
 /* ARGSUSED */
 int
@@ -22,7 +22,7 @@ gotobop(int f, int n)
 {
 	/* the other way... */
 	if (n < 0)
-		return gotoeop(f, -n);
+		return (gotoeop(f, -n));
 
 	while (n-- > 0) {
 		/* first scan back until we are in a word */
@@ -47,7 +47,7 @@ gotobop(int f, int n)
 					curwp->w_dotp = lforw(curwp->w_dotp);
 					if (curwp->w_dotp == curbp->b_linep) {
 						/*
-						 * beond end of buffer,
+						 * beyond end of buffer,
 						 * cleanup time
 						 */
 						curwp->w_dotp =
@@ -61,13 +61,13 @@ gotobop(int f, int n)
 	}
 	/* force screen update */
 	curwp->w_flag |= WFMOVE;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
- * Move to end of paragraph.  Go forword to the end of the current paragraph
+ * Move to end of paragraph.  Go forward to the end of the current paragraph
  * here we look for a <NL><NL> or <NL><TAB> or <NL><SPACE> combination to
- * delimit the begining of a paragraph.
+ * delimit the beginning of a paragraph.
  */
 /* ARGSUSED */
 int
@@ -75,7 +75,7 @@ gotoeop(int f, int n)
 {
 	/* the other way... */
 	if (n < 0)
-		return gotobop(f, -n);
+		return (gotobop(f, -n));
 
 	/* for each one asked for */
 	while (n-- > 0) {
@@ -97,7 +97,7 @@ gotoeop(int f, int n)
 				break;
 		}
 		if (curwp->w_dotp == curbp->b_linep) {
-			/* beond end of buffer, cleanup time */
+			/* beyond end of buffer, cleanup time */
 			curwp->w_dotp = lback(curwp->w_dotp);
 			curwp->w_doto = llength(curwp->w_dotp);
 			break;
@@ -105,7 +105,7 @@ gotoeop(int f, int n)
 	}
 	/* force screen update */
 	curwp->w_flag |= WFMOVE;
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -116,7 +116,7 @@ gotoeop(int f, int n)
 int
 fillpara(int f, int n)
 {
-	int	 c;		/* current char durring scan		*/
+	int	 c;		/* current char during scan		*/
 	int	 wordlen;	/* length of current word		*/
 	int	 clength;	/* position on line during fill		*/
 	int	 i;		/* index during word copy		*/
@@ -160,7 +160,7 @@ fillpara(int f, int n)
 
 		/* and then delete it */
 		if (ldelete((RSIZE) 1, KNONE) == FALSE && !eopflag)
-			return FALSE;
+			return (FALSE);
 
 		/* if not a separator, just add it in */
 		if (c != ' ' && c != '\t') {
@@ -177,7 +177,7 @@ fillpara(int f, int n)
 			}
 		} else if (wordlen) {
 
-			/* calculate tenatitive new length with word added */
+			/* calculate tentative new length with word added */
 			newlength = clength + 1 + wordlen;
 
 			/*
@@ -222,12 +222,12 @@ fillpara(int f, int n)
 	(void)lnewline();
 
 	/*
-	 * we realy should wind up where we started, (which is hard to keep
+	 * We really should wind up where we started, (which is hard to keep
 	 * track of) but I think the end of the last line is better than the
-	 * begining of the blank line.
+	 * beginning of the blank line.
 	 */
 	(void)backchar(FFRAND, 1);
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -242,14 +242,14 @@ killpara(int f, int n)
 	/* for each paragraph to delete */
 	while (n--) {
 
-		/* mark out the end and begining of the para to delete */
+		/* mark out the end and beginning of the para to delete */
 		(void)gotoeop(FFRAND, 1);
 
 		/* set the mark here */
 		curwp->w_markp = curwp->w_dotp;
 		curwp->w_marko = curwp->w_doto;
 
-		/* go to the begining of the paragraph */
+		/* go to the beginning of the paragraph */
 		(void)gotobop(FFRAND, 1);
 
 		/* force us to the beginning of line */
@@ -257,12 +257,12 @@ killpara(int f, int n)
 
 		/* and delete it */
 		if ((status = killregion(FFRAND, 1)) != TRUE)
-			return status;
+			return (status);
 
 		/* and clean up the 2 extra lines */
 		(void)ldelete((RSIZE) 1, KFORW);
 	}
-	return TRUE;
+	return (TRUE);
 }
 
 /*
@@ -314,8 +314,8 @@ fillword(int f, int n)
 	curwp->w_doto = i > 0 ? i : 0;
 	curwp->w_flag |= WFMOVE;
 	if (nce == 0 && curwp->w_doto != 0)
-		return fillword(f, n);
-	return TRUE;
+		return (fillword(f, n));
+	return (TRUE);
 }
 
 /*
@@ -326,5 +326,5 @@ setfillcol(int f, int n)
 {
 	fillcol = ((f & FFARG) ? n : getcolpos());
 	ewprintf("Fill column set to %d", fillcol);
-	return TRUE;
+	return (TRUE);
 }

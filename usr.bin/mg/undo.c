@@ -1,6 +1,6 @@
-/* $OpenBSD: undo.c,v 1.24 2003/12/15 00:00:12 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.25 2005/04/03 02:09:28 db Exp $ */
 /*
- * Copyright (c) 2002 Vincent Labrecque
+ * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,12 +64,11 @@ static int drop_oldest_undo_record(void);
  * Since lines can be deleted while they are referenced by undo record, we
  * need to have an absolute dot to have something reliable.
  */
-
 static int
 find_dot(LINE *lp, int off)
 {
-	int count = 0;
-	LINE *p;
+	int	 count = 0;
+	LINE	*p;
 
 	for (p = curbp->b_linep; p != lp; p = lforw(p)) {
 		if (count != 0) {
@@ -116,7 +115,7 @@ new_undo_record(void)
 		LIST_REMOVE(rec, next);	/* Remove it from the free-list */
 		undo_free_num--;
 	} else {
-		if ((rec = malloc(sizeof *rec)) == NULL)
+		if ((rec = malloc(sizeof(*rec))) == NULL)
 			panic("Out of memory in undo code (record)");
 	}
 	memset(rec, 0, sizeof(struct undo_rec));
@@ -151,7 +150,7 @@ free_undo_record(struct undo_rec *rec)
 
 /*
  * Drop the oldest undo record in our list. Return 1 if we could remove it,
- * 0 if the undo list was empty
+ * 0 if the undo list was empty.
  */
 static int
 drop_oldest_undo_record(void)
@@ -206,9 +205,9 @@ undo_add_boundary(void)
 int
 undo_add_insert(LINE *lp, int offset, int size)
 {
-	REGION reg;
-	struct undo_rec *rec;
-	int pos;
+	REGION	reg;
+	struct	undo_rec *rec;
+	int	pos;
 
 	if (undo_disable_flag)
 		return (TRUE);
@@ -230,7 +229,7 @@ undo_add_insert(LINE *lp, int offset, int size)
 	}
 
 	/*
-	 * We couldn't reuse the last undo record, so prepare a new one
+	 * We couldn't reuse the last undo record, so prepare a new one.
 	 */
 	rec = new_undo_record();
 	rec->pos = pos;
@@ -247,14 +246,14 @@ undo_add_insert(LINE *lp, int offset, int size)
 }
 
 /*
- * This of course must be done _before_ the actual deletion is done
+ * This of course must be done _before_ the actual deletion is done.
  */
 int
 undo_add_delete(LINE *lp, int offset, int size)
 {
-	REGION reg;
-	struct undo_rec *rec;
-	int pos;
+	REGION	reg;
+	struct	undo_rec *rec;
+	int	pos;
 
 	if (undo_disable_flag)
 		return (TRUE);
@@ -300,7 +299,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 }
 
 /*
- * This of course must be called before the change takes place
+ * This of course must be called before the change takes place.
  */
 int
 undo_add_change(LINE *lp, int offset, int size)
@@ -323,11 +322,11 @@ undo_add_change(LINE *lp, int offset, int size)
 int
 undo_dump(int f, int n)
 {
-	struct undo_rec *rec;
-	BUFFER *bp;
-	MGWIN *wp;
-	char buf[4096], tmp[1024];
-	int num;
+	struct	 undo_rec *rec;
+	BUFFER	*bp;
+	MGWIN	*wp;
+	char	 buf[4096], tmp[1024];
+	int	 num;
 
 	/*
 	 * Prepare the buffer for insertion.
@@ -349,7 +348,7 @@ undo_dump(int f, int n)
 	for (rec = LIST_FIRST(&curwp->w_undo); rec != NULL;
 	    rec = LIST_NEXT(rec, next)) {
 		num++;
-		snprintf(buf, sizeof buf,
+		snprintf(buf, sizeof(buf),
 		    "Record %d =>\t %s at %d ", num,
 		    (rec->type == DELETE) ? "DELETE":
 		    (rec->type == INSERT) ? "INSERT":
@@ -357,21 +356,21 @@ undo_dump(int f, int n)
 		    rec->pos);
 
 		if (rec->content) {
-			strlcat(buf, "\"", sizeof buf);
-			snprintf(tmp, sizeof tmp, "%.*s", rec->region.r_size,
+			strlcat(buf, "\"", sizeof(buf));
+			snprintf(tmp, sizeof(tmp), "%.*s", rec->region.r_size,
 			    rec->content);
-			strlcat(buf, tmp, sizeof buf);
-			strlcat(buf, "\"", sizeof buf);
+			strlcat(buf, tmp, sizeof(buf));
+			strlcat(buf, "\"", sizeof(buf));
 		}
-		snprintf(tmp, sizeof tmp, " [%d]", rec->region.r_size);
-		strlcat(buf, tmp, sizeof buf);
+		snprintf(tmp, sizeof(tmp), " [%d]", rec->region.r_size);
+		strlcat(buf, tmp, sizeof(buf));
 		addlinef(bp, "%s", buf);
 	}
 	return (TRUE);
 }
 
 /*
- * After the user did action1, then action2, then action3 :
+ * After the user did action1, then action2, then action3:
  *
  *	[action3] <--- Undoptr
  *	[action2]
@@ -396,8 +395,8 @@ undo_dump(int f, int n)
  *	 ------
  *	 [undo]
  *
- * Note that the "undo of actionX" have no special meaning. Only when,
- * say, we undo a deletion, the insertion will be recorded just as if it
+ * Note that the "undo of actionX" have no special meaning. Only when
+ * we undo a deletion, the insertion will be recorded just as if it
  * was typed on the keyboard. Resulting in the inverse operation being
  * saved in the list.
  *
@@ -408,10 +407,10 @@ undo_dump(int f, int n)
 int
 undo(int f, int n)
 {
-	struct undo_rec *ptr, *nptr;
-	int done, rval;
-	LINE *lp;
-	int offset, save, dot;
+	struct undo_rec	*ptr, *nptr;
+	int 		 done, rval;
+	LINE		*lp;
+	int		 offset, save, dot;
 
 	dot = find_dot(curwp->w_dotp, curwp->w_doto);
 
