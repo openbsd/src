@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.3 2000/08/26 20:04:18 nate Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.4 2001/04/14 18:50:17 jason Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.5 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@ struct cfattach nsphyter_ca = {
 };
 
 struct cfdriver nsphyter_cd = {
-	NULL, "nsphy", DV_DULL
+	NULL, "nsphyter", DV_DULL
 };
 
 int	nsphyter_service __P((struct mii_softc *, struct mii_data *, int));
@@ -112,9 +112,13 @@ nsphytermatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_NATSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_NATSEMI_DP83843)
-		return (10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_NATSEMI) {
+		switch (MII_MODEL(ma->mii_id2)) {
+		case MII_MODEL_NATSEMI_DP83843:
+		case MII_MODEL_NATSEMI_DP83815:
+			return (10);
+		}
+	}
 
 	return (0);
 }
@@ -128,8 +132,11 @@ nsphyterattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83843,
-	    MII_REV(ma->mii_id2));
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_NATSEMI_DP83815)
+		printf(": %s", MII_STR_NATSEMI_DP83815);
+	else
+		printf(": %s", MII_STR_NATSEMI_DP83843);
+	printf(", rev. %d\n", MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
