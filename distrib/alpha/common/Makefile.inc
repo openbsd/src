@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2001/09/18 17:35:00 jason Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2002/04/25 22:00:07 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -82,9 +82,6 @@ bsd:
 
 ${IMAGE}:	do_prep do_mount do_files do_umount
 	mv -f ${REALIMAGE} ${IMAGE}
-
-ecoffrdsetroot:	${TOP}/ecoffrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o ecoffrdsetroot ${TOP}/ecoffrdsetroot.c
 
 elfrdsetroot: ${TOP}/../common/elfrdsetroot.c
 	${HOSTCC} ${HOSTCFLAGS} -o elfrdsetroot ${TOP}/../common/elfrdsetroot.c
