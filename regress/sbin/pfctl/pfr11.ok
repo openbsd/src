@@ -2,30 +2,39 @@
 # pass list 
 regress
 # pass list -v
+-----h	regress
 -pa---	regress	regress:regress
 # pass rule pass in from <regress.1> to any
 # pass list 
 regress
 # pass list -v
+-----h	regress
 -pa---	regress	regress:regress
+-----h	regress.1
 ----r-	regress.1	regress:regress
 # pass rule pass in from <regress.1> to <regress.2>
 # pass list 
 regress
 # pass list -v
+-----h	regress
 -pa---	regress	regress:regress
+-----h	regress.1
 ----r-	regress.1	regress:regress
+-----h	regress.2
 ----r-	regress.2	regress:regress
 # pass rule pass in from <regress.1> to any
 # pass list 
 regress
 # pass list -v
+-----h	regress
 -pa---	regress	regress:regress
+-----h	regress.1
 ----r-	regress.1	regress:regress
 # pass rule 
 # pass list 
 regress
 # pass list -v
+-----h	regress
 -pa---	regress	regress:regress
 # kill
 1 tables deleted.
