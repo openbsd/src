@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openpty.3,v 1.5 1999/08/23 14:46:23 millert Exp $
+.\"	$OpenBSD: openpty.3,v 1.6 1999/12/06 19:18:17 deraadt Exp $
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -68,7 +68,8 @@ and
 If
 .Fa name
 is non-null, the filename of the slave is returned in
-.Fa name .
+.Fa name
+(a string of at least 16 characters).
 If
 .Fa termp
 is non-null, the terminal parameters of the slave will be set to the
