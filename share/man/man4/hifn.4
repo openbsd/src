@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.24 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: hifn.4,v 1.25 2002/01/08 23:23:18 jason Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -31,13 +31,14 @@
 .Os
 .Sh NAME
 .Nm hifn
-.Nd Hifn 7751/7951 crypto accelerator
+.Nd Hifn 7751/7951/7811 crypto accelerator
 .Sh SYNOPSIS
 .Cd "hifn* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports various cards containing the Hifn 7751 or Hifn 7951
+driver supports various cards containing the Hifn 7751, Hifn 7951, or
+Hifn 7811
 chipsets, such as
 .Bl -tag -width namenamenamena -offset indent
 .It Invertex AEON
@@ -49,6 +50,11 @@ Reference board with 512KB SRAM.
 See
 .Pa http://www.powercrypt.com/ .
 Comes with 512KB SRAM.
+.It XL-Crypt
+See
+.Pa http://www.powercrypt.com/ .
+Only board based on 7811 (which is faster than 7751 and has
+a random number generator).
 .It NetSec 7751
 See
 .Pa http://www.netsec.net/ .
@@ -65,6 +71,8 @@ and SHA1-HMAC96 operations in
 .Pp
 The
 .Tn Hifn 7951
+and
+.Tn Hifn 7811
 will also supply data to the kernel
 .Xr random 4
 subsystem.
