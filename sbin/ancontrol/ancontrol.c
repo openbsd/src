@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.17 2001/06/04 14:59:46 mickey Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.18 2001/09/29 21:57:15 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -1120,10 +1120,7 @@ an_readcache()
 				        ((sc->ipsrc >> 8) & 0xff),
 				        ((sc->ipsrc >> 16) & 0xff),
 				        ((sc->ipsrc >> 24) & 0xff));
-		printf(" sig: %d, noise: %d, qual: %d\n",
-		   			sc->signal,
-		   			sc->noise,
-		   			sc->quality);
+		printf(" sig: %d\n", sc->signal);
 		sc++;
 	}
 
