@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.11 1996/09/22 05:16:40 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.12 1996/09/22 09:02:33 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -676,13 +676,17 @@ wdcintr(arg)
 	struct wdc_xfer *xfer;
 
 	if ((wdc->sc_flags & WDCF_IRQ_WAIT) == 0) {
+		u_char s;
+#ifdef ATAPI_DEBUG_WDC
+		u_char e, i;
+#endif
 		DELAY(100);
 
 		/* Clear the pending interrupt and abort. */
-		u_char s = bus_io_read_1(bc, ioh, wd_status);
+		s = bus_io_read_1(bc, ioh, wd_status);
 #ifdef ATAPI_DEBUG_WDC
-		u_char e = bus_io_read_1(bc, ioh, wd_error);
-		u_char i = bus_io_read_1(bc, ioh, wd_seccnt);
+		e = bus_io_read_1(bc, ioh, wd_error);
+		i = bus_io_read_1(bc, ioh, wd_seccnt);
 
 		printf("wdcintr: inactive controller, "
 		    "punting st=%02x er=%02x irr=%02x\n", s, e, i);
@@ -1348,30 +1352,49 @@ wdc_get_parms(d_link)
 		/* Read in parameter block. */
 		bus_io_read_multi_2(bc, ioh, wd_data, tb,
 		    sizeof(tb) / sizeof(u_int16_t));
-		d_link->sc_params.wdp_config = (int16_t)tb[0];
-		d_link->sc_params.wdp_cylinders = (int16_t)tb[1];
-		d_link->sc_params.wdp_heads = (int16_t)tb[3];
-		d_link->sc_params.wdp_unfbytespertrk = (int16_t)tb[4];
-		d_link->sc_params.wdp_unfbytespersec = (int16_t)tb[5];
-		d_link->sc_params.wdp_sectors = (int16_t)tb[6];
+		d_link->sc_params.wdp_config = (u_int16_t)tb[0];
+		d_link->sc_params.wdp_cylinders = (u_int16_t)tb[1];
+		d_link->sc_params.wdp_heads = (u_int16_t)tb[3];
+		d_link->sc_params.wdp_unfbytespertrk = (u_int16_t)tb[4];
+		d_link->sc_params.wdp_unfbytespersec = (u_int16_t)tb[5];
+		d_link->sc_params.wdp_sectors = (u_int16_t)tb[6];
 		u_int16_to_string (tb + 7, d_link->sc_params.wdp_vendor1, 6);
 		u_int16_to_string (tb + 10, d_link->sc_params.wdp_serial, 20);
-		d_link->sc_params.wdp_buftype = (int16_t)tb[20];
-		d_link->sc_params.wdp_bufsize = (int16_t)tb[21];
-		d_link->sc_params.wdp_eccbytes = (int16_t)tb[22];
+		d_link->sc_params.wdp_buftype = (u_int16_t)tb[20];
+		d_link->sc_params.wdp_bufsize = (u_int16_t)tb[21];
+		d_link->sc_params.wdp_eccbytes = (u_int16_t)tb[22];
 		u_int16_to_string (tb + 23, d_link->sc_params.wdp_revision, 8);
 		u_int16_to_string (tb + 27, d_link->sc_params.wdp_model, 40);
 		d_link->sc_params.wdp_maxmulti = (u_int8_t)(tb[47] & 0xff);
-		d_link->sc_params.wdp_vendor2[0] = (int8_t)(tb[47] >> 8 &
+		d_link->sc_params.wdp_vendor2[0] = (u_int8_t)(tb[47] >> 8 &
 		    0xff);
-		d_link->sc_params.wdp_usedmovsd = (int16_t)tb[48];
-		d_link->sc_params.wdp_vendor3[0] = (int8_t)(tb[49] & 0xff);
-		d_link->sc_params.wdp_capabilities = (int8_t)(tb[49] >> 8 &
+		d_link->sc_params.wdp_usedmovsd = (u_int16_t)tb[48];
+		d_link->sc_params.wdp_vendor3[0] = (u_int8_t)(tb[49] & 0xff);
+		d_link->sc_params.wdp_capabilities = (u_int8_t)(tb[49] >> 8 &
 		    0xff);
-		d_link->sc_params.wdp_vendor4[0] = (int8_t)(tb[50] & 0xff);
-		d_link->sc_params.wdp_piotiming = (int8_t)(tb[50] >> 8 & 0xff);
-		d_link->sc_params.wdp_vendor5[0] = (int8_t)(tb[51] & 0xff);
-		d_link->sc_params.wdp_dmatiming = (int8_t)(tb[51] >> 8 & 0xff);
+		d_link->sc_params.wdp_vendor4[0] = (u_int8_t)(tb[50] & 0xff);
+		d_link->sc_params.wdp_piotiming = (u_int8_t)(tb[50] >> 8 &
+		    0xff);
+		d_link->sc_params.wdp_vendor5[0] = (u_int8_t)(tb[51] & 0xff);
+		d_link->sc_params.wdp_dmatiming = (u_int8_t)(tb[51] >> 8 &
+		    0xff);
+		d_link->sc_params.wdp_capvalid = (u_int16_t)tb[52];
+		d_link->sc_params.wdp_curcyls = (u_int16_t)tb[53];
+		d_link->sc_params.wdp_curheads = (u_int16_t)tb[54];
+		d_link->sc_params.wdp_cursectors = (u_int16_t)tb[55];
+		d_link->sc_params.wdp_curcapacity[0] = (u_int16_t)tb[56];
+		d_link->sc_params.wdp_curcapacity[1] = (u_int16_t)tb[57];
+		d_link->sc_params.wdp_curmulti = (u_int8_t)(tb[58] & 0xff);
+		d_link->sc_params.wdp_valmulti = (u_int8_t)(tb[58] >> 8 & 0xff);
+		d_link->sc_params.wdp_lbacapacity[0] = (u_int16_t)tb[59];
+		d_link->sc_params.wdp_lbacapacity[1] = (u_int16_t)tb[60];
+		d_link->sc_params.wdp_dma1word = (u_int16_t)tb[61];
+		d_link->sc_params.wdp_dmamword = (u_int16_t)tb[62];
+		d_link->sc_params.wdp_eidepiomode = (u_int16_t)tb[63];
+		d_link->sc_params.wdp_eidedmamin = (u_int16_t)tb[64];
+		d_link->sc_params.wdp_eidedmatime = (u_int16_t)tb[65];
+		d_link->sc_params.wdp_eidepiotime = (u_int16_t)tb[66];
+		d_link->sc_params.wdp_eidepioiordy = (u_int16_t)tb[67];
 	}
 
 	/* Clear any leftover interrupt. */

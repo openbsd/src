@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.18 1996/09/16 02:36:10 downsj Exp $	*/
+/*	$OpenBSD: wd.c,v 1.19 1996/09/22 09:02:32 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -175,7 +175,7 @@ wdattach(parent, self, aux)
 
 	printf(": <%s>\n", buf);
 	if (d_link->sc_lp->d_type != DTYPE_ST506) {
-		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec (%dKB cache)\n",
 		    self->dv_xname,
 		    d_link->sc_params.wdp_cylinders *
 		    (d_link->sc_params.wdp_heads *
@@ -183,7 +183,8 @@ wdattach(parent, self, aux)
 		    d_link->sc_params.wdp_cylinders,
 		    d_link->sc_params.wdp_heads,
 		    d_link->sc_params.wdp_sectors,
-		    DEV_BSIZE);
+		    DEV_BSIZE,
+		    d_link->sc_params.wdp_bufsize / 2);
 	}
 
 #if NISADMA > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdreg.h,v 1.5 1996/09/17 15:55:42 mickey Exp $	*/
+/*	$OpenBSD: wdreg.h,v 1.6 1996/09/22 09:02:34 downsj Exp $	*/
 /*	$NetBSD: wdreg.h,v 1.13 1995/03/29 21:56:46 briggs Exp $	*/
 
 /*-
@@ -149,38 +149,56 @@
  * read parameters command returns this:
  */
 struct wdparams {
-	/* drive info */
-	short	wdp_config;		/* general configuration */
+	u_int16_t wdp_config;		/* general configuration */
 #define	WD_CFG_REMOVABLE	0x0080
 #define	WD_CFG_FIXED		0x0040
-	short	wdp_cylinders;		/* number of non-removable cylinders */
-	char	__reserved1[2];
-	short	wdp_heads;		/* number of heads */
-	short	wdp_unfbytespertrk;	/* number of unformatted bytes/track */
-	short	wdp_unfbytespersec;	/* number of unformatted bytes/sector */
-	short	wdp_sectors;		/* number of sectors */
-	char	wdp_vendor1[6];
-	/* controller info */
-	char	wdp_serial[20];		/* serial number */
-	short	wdp_buftype;		/* buffer type */
-#define	WD_BUF_SINGLEPORTSECTOR	1	 /* single port, single sector buffer */
-#define	WD_BUF_DUALPORTMULTI	2	 /* dual port, multiple sector buffer */
-#define	WD_BUF_DUALPORTMULTICACHE 3	 /* above plus track cache */
-	short	wdp_bufsize;		/* buffer size, in 512-byte units */
-	short	wdp_eccbytes;		/* ecc bytes appended */
-	char	wdp_revision[8];	/* firmware revision */
-	char	wdp_model[40];		/* model name */
-	u_char	wdp_maxmulti;		/* maximum sectors per interrupt */
-	char	wdp_vendor2[1];
-	short	wdp_usedmovsd;		/* can use double word read/write? */
-	char	wdp_vendor3[1];
-	char	wdp_capabilities;	/* capability flags */
-#define	WD_CAP_LBA	0x02
+	u_int16_t wdp_cylinders;	/* number of non-removable cylinders */
+	u_int8_t  __reserved1[2];
+	u_int16_t wdp_heads;		/* number of heads */
+	u_int16_t wdp_unfbytespertrk;	/* number of unformatted bytes/track */
+	u_int16_t wdp_unfbytespersec;	/* number of unformatted bytes/sector */
+	u_int16_t wdp_sectors;		/* number of sectors */
+	u_int8_t  wdp_vendor1[6];
+	u_int8_t  wdp_serial[20];	/* serial number */
+	u_int16_t wdp_buftype;		/* buffer type */
+#define	WD_BUF_SINGLEPORTSECTOR	1	/* single port, single sector buffer */
+#define	WD_BUF_DUALPORTMULTI	2	/* dual port, multiple sector buffer */
+#define	WD_BUF_DUALPORTMULTICACHE 3	/* above plus track cache */
+	u_int16_t wdp_bufsize;		/* buffer size, in 512-byte units */
+	u_int16_t wdp_eccbytes;		/* ecc bytes appended */
+	u_int8_t  wdp_revision[8];	/* firmware revision */
+	u_int8_t  wdp_model[40];	/* model name */
+	u_int8_t  wdp_maxmulti;		/* maximum sectors per interrupt */
+	u_int8_t  wdp_vendor2[1];
+	u_int16_t wdp_usedmovsd;	/* can use double word read/write? */
+	u_int8_t  wdp_vendor3[1];
+	u_int8_t  wdp_capabilities;	/* capability flags */
 #define	WD_CAP_DMA	0x01
-	char	__reserved2[2];
-	char	wdp_vendor4[1];		
-	char	wdp_piotiming;		/* PIO timing mode */
-	char	wdp_vendor5[1];
-	char	wdp_dmatiming;		/* DMA timing mode */
+#define	WD_CAP_LBA	0x02
+#define WD_CAP_IORDYSW	0x04
+#define WD_CAP_IODRYSUP	0x08
+	u_int8_t  __reserved2[2];
+	u_int8_t  wdp_vendor4[1];		
+	u_int8_t  wdp_piotiming;	/* PIO timing mode */
+	u_int8_t  wdp_vendor5[1];
+	u_int8_t  wdp_dmatiming;	/* DMA timing mode */
+	u_int16_t wdp_capvalid;		/* valid capabilities */
+	u_int16_t wdp_curcyls;		/* logical cylinders */
+	u_int16_t wdp_curheads;		/* logical heads */
+	u_int16_t wdp_cursectors;	/* logical sectors per track */
+	u_int16_t wdp_curcapacity[2];	/* logical total sectors on drive */
+	u_int8_t  wdp_curmulti;		/* current multiple sector count */
+	u_int8_t  wdp_valmulti;		/* multiple sector is valid */
+#define WD_CAP_MULTI	0x01
+	u_int16_t wdp_lbacapacity[2];	/* total number of sectors */
+	u_int16_t wdp_dma1word;		/* single-word dma info */
+	u_int16_t wdp_dmamword;		/* multiple-word dma info */
+	u_int16_t wdp_eidepiomode;	/* EIDE PIO mode */
+#define WD_CAP_PIO3	0x01
+#define WD_CAP_PIO4	0x02
+	u_int16_t wdp_eidedmamin;	/* min mword dma cycle time (ns) */
+	u_int16_t wdp_eidedmatime;	/* rec'd mword dma cycle time (ns) */
+	u_int16_t wdp_eidepiotime;	/* min cycle time (ns), no IORDY  */
+	u_int16_t wdp_eidepioiordy;	/* min cycle time (ns), with IORDY */
 };
 #endif /* _KERNEL && !_LOCORE*/
