@@ -197,7 +197,7 @@ int	asc_debug = 1;
 int	asc_debug_cmd;
 int	asc_debug_bn;
 int	asc_debug_sz;
-#define NLOG 32
+#define NLOG 8
 struct asc_log {
 	u_int	status;
 	u_char	state;
