@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.7 2005/03/08 11:45:36 dlg Exp $	*/
+/*	$OpenBSD: build.c,v 1.8 2005/03/08 11:50:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -76,9 +76,9 @@ main(int argc, char *argv[])
 	output("atu-at76c503-rfmd-acc-ext", atmel_at76c503_rfmd_acc_fw_ext,
 	    sizeof(atmel_at76c503_rfmd_acc_fw_ext));
 
-	output("atu-at76c5050rfmd-int", atmel_at76c505_rfmd_fw_int,
+	output("atu-at76c505-rfmd-int", atmel_at76c505_rfmd_fw_int,
 	    sizeof(atmel_at76c505_rfmd_fw_int));
-	output("atu-at76c5050rfmd-ext", atmel_at76c505_rfmd_fw_ext,
+	output("atu-at76c505-rfmd-ext", atmel_at76c505_rfmd_fw_ext,
 	    sizeof(atmel_at76c505_rfmd_fw_ext));
 
 	return (0);
