@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.599 2003/02/27 18:22:14 grange Exp $
+	$OpenBSD: pcidevs,v 1.600 2003/02/27 18:25:51 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1990,6 +1990,7 @@ product RCC ROSB4		0x0200	ROSB4 SouthBridge
 product RCC CSB5		0x0201	CSB5 SouthBridge
 product RCC OSB4_IDE		0x0211	OSB4 IDE
 product RCC CSB5_IDE		0x0212	CSB5 IDE
+product RCC CSB6_IDE		0x0213	CSB6 IDE
 product RCC USB			0x0220	OSB4/CSB5 USB
 product RCC CSB5BRIDGE		0x0225	CSB5 PCI Bridge
 product RCC ISA			0x0230	PCI/ISA Bridge
