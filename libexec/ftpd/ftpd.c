@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.104 2001/09/05 22:32:36 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.105 2001/10/02 17:43:47 wilfried Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.104 2001/09/05 22:32:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.105 2001/10/02 17:43:47 wilfried Exp $";
 #endif
 #endif /* not lint */
 
@@ -872,7 +872,6 @@ pass(passwd)
 			usleep(us);
 		} else {
 			authok = auth_userresponse(as, passwd, 0);
-			auth_close(as);
 			as = NULL;
 		}
 		if (authok == 0) {
