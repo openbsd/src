@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.5 2001/06/25 18:02:44 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.6 2001/07/16 21:09:38 markus Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -33,14 +33,42 @@
 #ifndef _PFCTL_PARSER_H_
 #define _PFCTL_PARSER_H_
 
-char	*next_line (char **);
-int	 parse_rule (int, char *, struct pf_rule *);
-int	 parse_nat (int, char *, struct pf_nat *);
-int	 parse_rdr (int, char *, struct pf_rdr *);
+struct pfctl {
+	int dev;
+	int opts;
+	struct pfioc_rule *prule;
+	struct pfioc_nat *pnat;
+	struct pfioc_rdr *prdr;
+};
+
+int	 pfctl_add_rule(struct pfctl *, struct pf_rule *);
+int	 pfctl_add_nat(struct pfctl *, struct pf_nat *);
+int	 pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
+
+int	 parse_rules(FILE *, struct pfctl *);
+int	 parse_nat(FILE *, struct pfctl *);
+int	 parse_flags(char *);
+
 void	 print_rule (struct pf_rule *);
 void	 print_nat (struct pf_nat *);
 void	 print_rdr (struct pf_rdr *);
 void	 print_state (struct pf_state *);
 void	 print_status (struct pf_status *);
+
+struct icmptypeent {
+	char *name;
+	u_int8_t type;
+};
+
+struct icmpcodeent {
+	char *name;
+	u_int8_t type;
+	u_int8_t code;
+};
+
+struct icmptypeent * geticmptypebynumber(u_int8_t);
+struct icmptypeent * geticmptypebyname(char *);
+struct icmpcodeent * geticmpcodebynumber(u_int8_t, u_int8_t);
+struct icmpcodeent * geticmpcodebyname(u_long, char *);
 
 #endif /* _PFCTL_PARSER_H_ */

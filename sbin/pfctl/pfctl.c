@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.27 2001/07/05 11:40:25 ho Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.28 2001/07/16 21:09:37 markus Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -54,7 +54,6 @@
 #define PF_OPT_QUIET		0x0010
 
 void	 usage(void);
-char	*load_file(char *, size_t *);
 int	 pfctl_enable(int, int);
 int	 pfctl_disable(int, int);
 int	 pfctl_clear_stats(int, int);
@@ -82,73 +81,6 @@ usage()
 	fprintf(stderr, "usage: pfctl [-dehnqv] [-F set] [-l interface] ");
 	fprintf(stderr, "[-N file] [-R file] [-s set]\n");
 	exit(1);
-}
-
-char *
-load_file(char *name, size_t *len)
-{
-	FILE *file;
-	char *buf = 0, *buf2 = 0;
-	u_int32_t i;
-
-	if (!strcmp(name, "-"))
-		file = stdin;
-	else  
-		file = fopen(name, "r");
-
-	*len = 0;
-	if (file == NULL) {
-		fprintf(stderr, "ERROR: couldn't open file %s (%s)\n",
-		    name, strerror(errno));
-		return (0);
-	}
-
-	i = 512;	/* Start with this. Grow it as req'd */
-	*len = 0;
-	if ((buf = malloc(i)) == NULL) {
-		fprintf(stderr, "ERROR: could not allocate space "
-			"for rules file\n");
-		return (0);
-	}
-	while (!feof(file)) {
-		*len += fread((buf + *len), 1, (i - *len), file);
-		if (*len == i) {
-			/* Out of space - realloc time */
-			i *= 2;
-			if ((buf2 = realloc(buf, i)) == NULL) {
-				if (buf)
-					free(buf);
-				buf = NULL;
-				fprintf(stderr, "ERROR: realloc of "
-					"stdin buffer failed\n");
-				return (0);
-			}
-			buf = buf2;
-		}
-	}
-	if (*len == i) {
-		/* 
-		 * file is exactly the size of our buffer.
-		 * grow ours one so we can null terminate it
-		 */
-		if ((buf2 = realloc(buf, i+1)) == NULL) {
-			if (buf)
-				free(buf);
-			buf = NULL;
-			fprintf(stderr, "ERROR: realloc of "
-				"stdin buffer failed\n");
-			return (0);
-		}
-		buf = buf2;
-	}
-	if (file != stdin)
-		fclose(file);
-	buf[*len]='\0';
-	if (strlen(buf) != *len) {
-		fprintf(stderr, "WARNING: nulls embedded in rules file\n");
-		*len = strlen(buf);
-	}
-	return (buf);
 }
 
 int
@@ -303,56 +235,97 @@ pfctl_show_status(int dev)
 	return (0);
 }
 
+/* callbacks for rule/nat/rdr */
+
+int
+pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
+{
+	memcpy(&pf->prule->rule, r, sizeof(pf->prule->rule));
+	if ((pf->opts & PF_OPT_NOACTION) == 0) {
+		if (ioctl(pf->dev, DIOCADDRULE, pf->prule))
+			err(1, "DIOCADDRULE");
+	}
+	if (pf->opts & PF_OPT_VERBOSE)
+		print_rule(&pf->prule->rule);
+	return 0;
+}
+
+int
+pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
+{
+	memcpy(&pf->pnat->nat, n, sizeof(pf->pnat->nat));
+	if ((pf->opts & PF_OPT_NOACTION) == 0) {
+		if (ioctl(pf->dev, DIOCADDNAT, pf->pnat))
+			err(1, "DIOCADDNAT");
+	}
+	if (pf->opts & PF_OPT_VERBOSE)
+		print_nat(&pf->pnat->nat);
+	return 0;
+}
+
+int
+pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
+{
+	memcpy(&pf->prdr->rdr, r, sizeof(pf->prdr->rdr));
+	if ((pf->opts & PF_OPT_NOACTION) == 0) {
+		if (ioctl(pf->dev, DIOCADDRDR, pf->prdr))
+			err(1, "DIOCADDRDR");
+	}
+	if (pf->opts & PF_OPT_VERBOSE)
+		print_rdr(&pf->prdr->rdr);
+	return 0;
+}
+
 int
 pfctl_rules(int dev, char *filename, int opts)
 {
-	struct pfioc_rule pr;
-	char *buf, *s;
-	size_t len;
-	unsigned n, nr;
+	FILE *fin;
+	struct pfioc_rule	pr;
+	struct pfctl		pf;
 
-	buf = load_file(filename, &len);
-	if (buf == NULL)
+	if (strcmp(filename, "-") == 0)
+		fin = stdin;
+	else
+		fin = fopen(filename, "r");
+	if (fin == NULL)
 		return (1);
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCBEGINRULES, &pr.ticket))
 			err(1, "DIOCBEGINRULES");
 	}
-	n = 0;
-	nr = 0;
-	s = buf;
-	do {
-		char *line = next_line(&s);
-		nr++;
-		if (*line && (*line != '#'))
-			if (parse_rule(nr, line, &pr.rule)) {
-				if ((opts & PF_OPT_NOACTION) == 0) {
-					if (ioctl(dev, DIOCADDRULE, &pr))
-						err(1, "DIOCADDRULE");
-				}
-				if (opts & PF_OPT_VERBOSE)
-					print_rule(&pr.rule);
-				n++;
-			}
-	} while (s < (buf + len));
-	free(buf);
+	/* fill in callback data */
+	pf.dev = dev;
+	pf.opts = opts;
+	pf.prule = &pr;
+	if (parse_rules(fin, &pf) < 0)
+		errx(1, "syntax error in rule file: pf rules not loaded");
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket))
 			err(1, "DIOCCOMMITRULES");
+#if 0
 		if ((opts & PF_OPT_QUIET) == 0)
 			printf("%u rules loaded\n", n);
+#endif
 	}
+	if (fin != stdin)
+		fclose(fin);
 	return (0);
 }
 
 int
 pfctl_nat(int dev, char *filename, int opts)
 {
-	struct pfioc_nat pn;
-	struct pfioc_rdr pr;
-	char *buf, *s;
-	size_t len;
-	unsigned n, r, nr;
+	FILE *fin;
+	struct pfioc_nat	pn;
+	struct pfioc_rdr	pr;
+	struct pfctl		pf;
+
+	if (strcmp(filename, "-") == 0)
+		fin = stdin;
+	else
+		fin = fopen(filename, "r");
+	if (fin == NULL)
+		return (1);
 
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
@@ -361,48 +334,27 @@ pfctl_nat(int dev, char *filename, int opts)
 		if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
 			err(1, "DIOCBEGINRDRS");
 	}
-
-	buf = load_file(filename, &len);
-	if (buf == NULL)
-		return (1);
-	n = 0;
-	r = 0;
-	nr = 0;
-	s = buf;
-	do {
-		char *line = next_line(&s);
-		nr++;
-		if (*line && (*line == 'n'))
-			if (parse_nat(nr, line, &pn.nat)) {
-				if ((opts & PF_OPT_NOACTION) == 0)
-					if (ioctl(dev, DIOCADDNAT, &pn))
-						err(1, "DIOCADDNAT");
-				if (opts & PF_OPT_VERBOSE)
-					print_nat(&pn.nat);
-				n++;
-			}
-		if (*line && (*line == 'r'))
-			if (parse_rdr(nr, line, &pr.rdr)) {
-				if ((opts & PF_OPT_NOACTION) == 0)
-					if (ioctl(dev, DIOCADDRDR, &pr))
-						err(1, "DIOCADDRDR");
-				if (opts & PF_OPT_VERBOSE)
-					print_rdr(&pr.rdr);
-				r++;
-			}
-	} while (s < (buf + len));
-
+	/* fill in callback data */
+	pf.dev = dev;
+	pf.opts = opts;
+	pf.pnat = &pn;
+	pf.prdr = &pr;
+	if (parse_nat(fin, &pf) < 0)
+		errx(1, "syntax error in file: nat rules not loaded");
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
 			err(1, "DIOCCOMMITNATS");
 		if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
 			err(1, "DIOCCOMMITRDRS");
+#if 0
 		if ((opts & PF_OPT_QUIET) == 0) {
 			printf("%u nat entries loaded\n", n);
 			printf("%u rdr entries loaded\n", r);
 		}
+#endif
 	}
-	free(buf);
+	if (fin != stdin)
+		fclose(fin);
 	return (0);
 }
 
@@ -425,7 +377,7 @@ main(int argc, char *argv[])
 	extern char *optarg;
 	extern int optind;
 	int error = 0;
-	int dev;
+	int dev = -1;
 	int ch;
 
 	if (argc < 2)
@@ -470,9 +422,15 @@ main(int argc, char *argv[])
 		}
 	}
 
-	dev = open("/dev/pf", O_RDWR);
-	if (dev == -1)
-		err(1, "open(\"/dev/pf\")");
+	if ((opts & PF_OPT_NOACTION) == 0) {
+		dev = open("/dev/pf", O_RDWR);
+		if (dev == -1)
+			err(1, "open(\"/dev/pf\")");
+	} else {
+		/* turn off options */
+		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
+		clearopt = logopt = showopt = NULL;
+	}
 
 	if (opts & PF_OPT_DISABLE)
 		if (pfctl_disable(dev, opts))
