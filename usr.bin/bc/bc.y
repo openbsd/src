@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.21 2003/12/19 19:24:22 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.22 2004/01/13 08:43:23 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.21 2003/12/19 19:24:22 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.22 2004/01/13 08:43:23 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -859,7 +859,7 @@ lookup(char * str, size_t len, char type)
 		p[2] = ENCODE(num % VAR_BASE + 1);
 		p[3] = '\0';
 
-		entry.data = p;
+		entry.data = (char *)p;
 		entry.key = strdup(str);
 		if (entry.key == NULL)
 			err(1, NULL);
