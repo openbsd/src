@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.13 1995/12/04 22:32:53 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.14 1995/12/30 21:37:31 ragge Exp $    */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,7 +149,7 @@
 ({                                                      \
         register int val;                               \
         asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"	\
-                        : "=g" (val)                    \
+                        : "&=g" (val)                   \
                         : "g" (reg));                   \
         val;                                            \
 })
@@ -168,7 +168,7 @@
 #define splhigh()       splx(0x1f)	/* IPL1F */
 #define	splstatclock()	splclock()
 
-#define	ovbcopy(x,y,z)	bcopy(x,y,z)	/* This should work i hope... */
+#define	ovbcopy(x,y,z)	bcopy(x,y,z)
 
 #define vmapbuf(p,q)
 #define vunmapbuf(p,q)
