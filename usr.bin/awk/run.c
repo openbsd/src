@@ -1,3 +1,4 @@
+/*	$OpenBSD: run.c,v 1.9 1997/01/25 03:24:52 kstailey Exp $	*/
 /****************************************************************
 Copyright (C) AT&T and Lucent Technologies 1996
 All Rights Reserved
@@ -718,12 +719,16 @@ Cell *sindex(Node **a, int nnn)		/* index(a[0], a[1]) */
 	return(z);
 }
 
-int format(char *buf, int bufsize, char *s, Node *a)	/* printf-like conversions */
+/*
+ * printf-like conversions
+ *   returns len of buf or -1 on error
+ */
+int format(char *buf, int bufsize, char *s, Node *a)
 {
 	char fmt[RECSIZE];
 	char *p, *t, *os;
 	Cell *x;
-	int flag = 0, n;
+	int flag = 0, len = 0, n;
 
 	os = s;
 	p = buf;
@@ -731,10 +736,12 @@ int format(char *buf, int bufsize, char *s, Node *a)	/* printf-like conversions 
 		if (p - buf >= bufsize)
 			return -1;
 		if (*s != '%') {
+		        len++;
 			*p++ = *s++;
 			continue;
 		}
 		if (*(s+1) == '%') {
+			len++;
 			*p++ = '%';
 			s += 2;
 			continue;
@@ -784,6 +791,7 @@ int format(char *buf, int bufsize, char *s, Node *a)	/* printf-like conversions 
 		a = a->nnext;
 		switch (flag) {
 		case 0:	sprintf((char *)p, "%s", fmt);	/* unknown, so dump it too */
+			len += strlen(p);
 			p += strlen(p);
 			sprintf((char *)p, "%s", getsval(x));
 			break;
@@ -799,18 +807,22 @@ int format(char *buf, int bufsize, char *s, Node *a)	/* printf-like conversions 
 			sprintf((char *)p, (char *)fmt, t);
 			break;
 		case 5:
-			isnum(x) ? sprintf((char *)p, (char *)fmt, (int) getfval(x))
+			isnum(x) ?
+			  (getfval(x) ?
+			    sprintf((char *)p, (char *)fmt, (int) getfval(x))
+                                      : (*p++ = '\0', len++))
 				 : sprintf((char *)p, (char *)fmt, getsval(x)[0]);
 			break;
 		}
 		tempfree(x);
+		len += strlen(p);
 		p += strlen(p);
 		s++;
 	}
 	*p = '\0';
 	for ( ; a; a = a->nnext)		/* evaluate any remaining args */
 		execute(a);
-	return 0;
+	return (len);
 }
 
 Cell *awksprintf(Node **a, int n)		/* sprintf(a[0]) */
@@ -837,19 +849,20 @@ Cell *awkprintf(Node **a, int n)		/* printf */
 	Cell *x;
 	Node *y;
 	char buf[3*RECSIZE];
+	int len;
 
 	y = a[0]->nnext;
 	x = execute(a[0]);
-	if (format(buf, sizeof buf, getsval(x), y) == -1)
+	if ((len = format(buf, sizeof buf, getsval(x), y)) == -1)
 		ERROR "printf string %.30s... too long", buf FATAL;
 	tempfree(x);
 	if (a[1] == NULL) {
-		fputs((char *)buf, stdout);
+		fwrite(buf, len, 1, stdout);
 		if (ferror(stdout))
 			ERROR "write error on stdout" FATAL;
 	} else {
 		fp = redirect((int)a[1], a[2]);
-		fputs((char *)buf, fp);
+		fwrite(buf, len, 1, fp);
 		fflush(fp);
 		if (ferror(fp))
 			ERROR "write error on %s", filename(fp) FATAL;
