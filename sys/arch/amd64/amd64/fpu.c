@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.1 2004/01/28 01:39:38 mickey Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.2 2004/02/20 01:28:01 deraadt Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -258,7 +258,7 @@ fpusave_cpu(struct cpu_info *ci, int save)
 }
 
 /*
- * Save l's FPU state, which may be on this processor or another processor.
+ * Save p's FPU state, which may be on this processor or another processor.
  */
 void
 fpusave_proc(struct proc *p, int save)
