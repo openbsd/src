@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.6 1997/08/25 15:09:10 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.7 1998/04/26 18:11:04 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$OpenBSD: tape.c,v 1.6 1997/08/25 15:09:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tape.c,v 1.7 1998/04/26 18:11:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -888,9 +888,13 @@ doslave(cmd, slave_number)
 			size = 0;
 
 		/*
-		 * fixme: Pyramids running OSx return ENOSPC
-		 * at EOT on 1/2 inch drives.
+		 * Handle ENOSPC as an EOT condition
 		 */
+		if (wrote < 0 && errno == ENOSPC) {
+			wrote = 0;
+			eot_count++;
+		}
+
 		if (size < 0) {
 			(void) kill(master, SIGUSR1);
 			sigemptyset(&sigset);
