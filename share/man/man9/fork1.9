@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fork1.9,v 1.4 2000/10/12 18:05:59 aaron Exp $
+.\"	$OpenBSD: fork1.9,v 1.5 2001/01/14 19:43:25 millert Exp $
 .\"	$NetBSD: fork1.9,v 1.3 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ This function is used primarily to implement the
 .Xr rfork 2 ,
 .Xr vfork 2
 system calls, as well as the
-.Xr create_kthread 9
+.Xr kthread_create 9
 function.
 .Pp
 The
@@ -158,6 +158,6 @@ so that feature is not even tested.
 .Xr fork 2 ,
 .Xr rfork 2 ,
 .Xr vfork 2 ,
+.Xr kthread_create 9 ,
 .Xr pfind 9 ,
-.Xr psignal 9 ,
-.Xr create_kthread 9
+.Xr psignal 9
