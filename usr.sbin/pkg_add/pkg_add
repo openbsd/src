@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.114 2004/11/13 12:49:58 espie Exp $
+# $OpenBSD: pkg_add,v 1.115 2004/11/13 13:06:11 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -461,6 +461,28 @@ sub build_deptree
 	}
 }
 
+sub find_old_lib
+{
+	my ($state, $dep, $global_avail, $dependencies) = @_;
+
+	my $pattern = ".libs-".$dep->{pattern};
+	for my $try (OpenBSD::PkgSpec::match($pattern, installed_packages())) {
+		my $plist = OpenBSD::PackingList->from_installation($try,
+			\&OpenBSD::PackingList::LibraryOnly);
+		my $available = {};
+		$plist->visit('available_lib', $available);
+		if (check_lib_specs($state->{very_verbose},
+		    $state->{destdir}.$plist->pkgbase(), $dep->{libspec},
+		    $available)) {
+			Warn "Found libspec ", $dep->{libspec}, " in old package $try\n";
+			$plist->visit('available_lib', $global_avail);
+			push(@$dependencies, $try);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 sub install_package
 {
 	my ($pkg, $state, @todo) = @_;
@@ -516,9 +538,12 @@ sub install_package
 		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
 		if (!check_lib_specs($state->{very_verbose}, 
 		    $state->{destdir}.$plist->pkgbase(), $dep->{libspec}, $available)) {
-			Warn "Can't install $pkg: incorrect libspec: ",
-			    $dep->{libspec}, "\n";
-			return () unless $forced{libdepends};
+		    	# second chance
+			if (!find_old_lib($state, $dep, $available, $handle->{solved_dependencies})) {
+				Warn "Can't install $pkg: incorrect libspec: ",
+				    $dep->{libspec}, "\n";
+				return () unless $forced{libdepends};
+			}
 		}
 	}
 	for my $dep (@{$handle->{solved_dependencies}}) {

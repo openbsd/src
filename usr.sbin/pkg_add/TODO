@@ -10,7 +10,5 @@
 - smart package dependency handling
 
 Known update issues:
-- shared libs should be looked for in .libs-pkgspec as well if -f old(?)
-so that correct dependencies are registered.
 - pkg_add -r can have two conflicting packages (or more) n-to-m updates
 should be handled.
