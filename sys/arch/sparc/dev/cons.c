@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.11 2001/03/03 23:36:05 provos Exp $	*/
+/*	$OpenBSD: cons.c,v 1.12 2001/05/01 11:43:26 ho Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1997/07/07 23:30:23 pk Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/conf.h>
+#include <sys/timeout.h>
 
 #include <dev/cons.h>
 
@@ -88,6 +89,7 @@ int	cons_ocount;		/* output byte count */
  * The output driver may munge the minor number in cons.t_dev.
  */
 struct tty cons;		/* rom console tty device */
+struct timeout cons_cnfbdma_tmo;/* for cnfdbma() timeouts */
 static int (*fcnstop) __P((struct tty *, int));
 
 static void cnstart __P((struct tty *));
@@ -293,6 +295,7 @@ cnopen(dev, flag, mode, p)
 		/* output queue doesn't need quoting */
 		clalloc(&tp->t_outq, 1024, 0);
 		tty_attach(tp);
+		timeout_set(&cons_cnfbdma_tmo, cnfbdma, tp);
 
 		/*
 		 * get the console struct winsize.
@@ -546,7 +549,7 @@ cnfbstart(tp)
 			(void) spllowersoftclock();
 			cnfbdma((void *)tp);
 		} else
-			timeout(cnfbdma, tp, 1);
+			timeout_add(&cons_cnfbdma_tmo, 1);
 	}
 	splx(s);
 }
