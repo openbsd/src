@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.32 2003/07/09 00:39:26 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.33 2003/07/15 23:17:56 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.32 2003/07/09 00:39:26 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.33 2003/07/15 23:17:56 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -184,6 +184,7 @@ static void fetch(long *, int, int, FILE *, char *, int);
 static void output(char *, FILE *, char *, FILE *);
 static void check(char *, FILE *, char *, FILE *);
 static void range(int, int, char *);
+static void uni_range(int, int);
 static void dump_context_vec(FILE *, FILE *);
 static void dump_unified_vec(FILE *, FILE *);
 static void prepare(int, FILE *);
@@ -880,6 +881,25 @@ output(char *file1, FILE *f1, char *file2, FILE *f2)
 	}
 }
 
+static __inline void
+range(int a, int b, char *separator)
+{
+	printf("%d", a > b ? b : a);
+	if (a < b)
+		printf("%s%d", separator, b);
+}
+
+static __inline void
+uni_range(int a, int b)
+{
+	if (a < b)
+		printf("%d,%d", a, b - a + 1);
+	else if (a == b)
+		printf("%d", b);
+	else
+		printf("%d,0", b);
+}
+
 /*
  * The following struct is used to record change information when
  * doing a "context" or "unified" diff.  (see routine "change" to
@@ -984,14 +1004,6 @@ change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 		printf("#endif /* %s */\n", ifdefname);
 		inifdef = 0;
 	}
-}
-
-static void
-range(int a, int b, char *separator)
-{
-	printf("%d", a > b ? b : a);
-	if (a < b)
-		printf("%s%d", separator, b);
 }
 
 static void
@@ -1261,8 +1273,11 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	lowc = max(1, cvp->c - context);
 	upd = min(len[1], context_vec_ptr->d + context);
 
-	printf("@@ -%d,%d +%d,%d @@\n", lowa, upb - lowa + 1,
-	    lowc, upd - lowc + 1);
+	fputs("@@ -", stdout);
+	uni_range(lowa, upb);
+	fputs(" +", stdout);
+	uni_range(lowc, upd);
+	fputs(" @@\n", stdout);
 
 	/*
 	 * Output changes in "unified" diff format--the old and new lines
