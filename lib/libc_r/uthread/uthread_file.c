@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_file.c,v 1.2 1998/11/09 03:13:19 d Exp $
- * $OpenBSD: uthread_file.c,v 1.2 1998/11/09 03:13:19 d Exp $
+ * $FreeBSD: uthread_file.c,v 1.6 1998/09/09 16:50:33 dt Exp $
+ * $OpenBSD: uthread_file.c,v 1.3 1998/12/23 22:44:39 d Exp $
  *
  * POSIX stdio FILE locking functions. These assume that the locking
  * is only required at FILE structure level, not at file descriptor
@@ -255,6 +255,15 @@ ftrylockfile(FILE * fp)
 		/* Lock the hash table: */
 		_SPINLOCK(&hash_lock);
 
+		/* Check if the static array has not been initialised: */
+		if (!init_done) {
+			/* Initialise the global array: */
+			memset(flh,0,sizeof(flh));
+
+			/* Flag the initialisation as complete: */
+			init_done = 1;
+		}
+
 		/* Get a pointer to any existing lock for the file: */
 		if ((p = find_lock(idx, fp)) == NULL) {
 			/*
@@ -310,7 +319,7 @@ funlockfile(FILE * fp)
 		 * Get a pointer to the lock for the file and check that
 		 * the running thread is the one with the lock:
 		 */
-		if ((p = find_lock(idx, fp)) != NULL &&
+		if (init_done && (p = find_lock(idx, fp)) != NULL &&
 		    p->owner == _thread_run) {
 			/*
 			 * Check if this thread has locked the FILE
