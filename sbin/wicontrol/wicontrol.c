@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.24 2002/03/28 20:48:38 mickey Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.25 2002/03/31 00:54:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.24 2002/03/28 20:48:38 mickey Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.25 2002/03/31 00:54:03 mickey Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -699,7 +699,7 @@ wi_dumpstations(iface)
 		printb(", caps", info->capinfo, IEEE80211_CAPINFO_BITS);
 		printb(", rates", info->rates, WI_RATES_BITS);
 		if (info->sig_info)
-			printf(", sig=%d/%d\n",
+			printf(", sig=%d/%d",
 			    info->sig_info >> 8, info->sig_info & 0xff);
 		putchar('\n');
 	}
