@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.281 2003/10/01 21:41:05 itojun Exp $
+#	$OpenBSD: files,v 1.282 2003/10/07 07:08:45 markus Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -727,6 +727,7 @@ file crypto/criov.c			(inet & ipsec) | crypto
 file crypto/cryptosoft.c		(inet & ipsec) | crypto
 file crypto/xform.c			(inet & ipsec) | crypto
 file crypto/deflate.c			(inet & ipsec) | crypto
+file crypto/arc4.c			wi
 file netatalk/aarp.c			netatalk
 file netatalk/at_control.c		netatalk
 file netatalk/at_proto.c		netatalk

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.98 2003/09/06 20:53:57 drahn Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.99 2003/10/07 07:08:45 markus Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -101,6 +101,8 @@
 #include <dev/ic/if_wi_ieee.h>
 #include <dev/ic/if_wivar.h>
 
+#include <crypto/arc4.h>
+
 #define BPF_MTAP(if,mbuf) bpf_mtap((if)->if_bpf, (mbuf))
 #define BPFATTACH(if_bpf,if,dlt,sz)
 #define STATIC
@@ -124,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.98 2003/09/06 20:53:57 drahn Exp $";
+	"$OpenBSD: if_wi.c,v 1.99 2003/10/07 07:08:45 markus Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2001,17 +2003,13 @@ static const u_int32_t crc32tab[] = {
 	0xb40bbe37L, 0xc30c8ea1L, 0x5a05df1bL, 0x2d02ef8dL
 };
 
-#define RC4STATE 256
-#define RC4KEYLEN 16
-#define RC4SWAP(x,y) \
-    do { u_int8_t t = state[x]; state[x] = state[y]; state[y] = t; } while(0)
-
 STATIC void
 wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 {
 	u_int32_t i, crc, klen;
-	u_int8_t state[RC4STATE], key[RC4KEYLEN];
-	u_int8_t x, y, *dat;
+	u_int8_t key[RC4KEYLEN];
+	u_int8_t *dat;
+	struct rc4_ctx ctx;
 
 	if (!sc->wi_icv_flag) {
 		sc->wi_icv = arc4random();
@@ -2038,14 +2036,7 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	klen = (klen > IEEE80211_WEP_KEYLEN) ? RC4KEYLEN : RC4KEYLEN / 2;
 
 	/* rc4 keysetup */
-	x = y = 0;
-	for (i = 0; i < RC4STATE; i++)
-		state[i] = i;
-	for (i = 0; i < RC4STATE; i++) {
-		y = (key[x] + state[i] + y) % RC4STATE;
-		RC4SWAP(i, y);
-		x = (x + 1) % klen;
-	}
+	rc4_keysetup(&ctx, key, klen);
 
 	/* output: IV, tx keyid, rc4(data), rc4(crc32(data)) */
 	dat = buf;
@@ -2055,17 +2046,12 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	dat[3] = sc->wi_tx_key << 6;		/* pad and keyid */
 	dat += 4;
 
-	/* compute rc4 over data, crc32 over data */
+	/* compute crc32 over data and encrypt */
 	crc = ~0;
-	x = y = 0;
-	for (i = 0; i < len; i++) {
-		x = (x + 1) % RC4STATE;
-		y = (state[x] + y) % RC4STATE;
-		RC4SWAP(x, y);
+	for (i = 0; i < len; i++)
 		crc = crc32tab[(crc ^ dat[i]) & 0xff] ^ (crc >> 8);
-		dat[i] ^= state[(state[x] + state[y]) % RC4STATE];
-	}
 	crc = ~crc;
+	rc4_crypt(&ctx, dat, dat, len);
 	dat += len;
 
 	/* append little-endian crc32 and encrypt */
@@ -2073,20 +2059,16 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	dat[1] = crc >> 8;
 	dat[2] = crc >> 16;
 	dat[3] = crc >> 24;
-	for (i = 0; i < IEEE80211_WEP_CRCLEN; i++) {
-		x = (x + 1) % RC4STATE;
-		y = (state[x] + y) % RC4STATE;
-		RC4SWAP(x, y);
-		dat[i] ^= state[(state[x] + state[y]) % RC4STATE];
-	}
+	rc4_crypt(&ctx, dat, dat, IEEE80211_WEP_CRCLEN);
 }
 
 STATIC int
 wi_do_hostdecrypt(struct wi_softc *sc, caddr_t buf, int len)
 {
 	u_int32_t i, crc, klen, kid;
-	u_int8_t state[RC4STATE], key[RC4KEYLEN];
-	u_int8_t x, y, *dat;
+	u_int8_t key[RC4KEYLEN];
+	u_int8_t *dat;
+	struct rc4_ctx ctx;
 
 	if (len < IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN +
 	    IEEE80211_WEP_CRCLEN)
@@ -2109,35 +2091,19 @@ wi_do_hostdecrypt(struct wi_softc *sc, caddr_t buf, int len)
 	klen = (klen > IEEE80211_WEP_KEYLEN) ? RC4KEYLEN : RC4KEYLEN / 2;
 
 	/* rc4 keysetup */
-	x = y = 0;
-	for (i = 0; i < RC4STATE; i++)
-		state[i] = i;
-	for (i = 0; i < RC4STATE; i++) {
-		y = (key[x] + state[i] + y) % RC4STATE;
-		RC4SWAP(i, y);
-		x = (x + 1) % klen;
-	}
+	rc4_keysetup(&ctx, key, klen);
 
-	/* compute rc4 over data, crc32 over data */
+	/* decrypt and compute crc32 over data */
+	rc4_crypt(&ctx, dat, dat, len);
 	crc = ~0;
-	x = y = 0;
-	for (i = 0; i < len; i++) {
-		x = (x + 1) % RC4STATE;
-		y = (state[x] + y) % RC4STATE;
-		RC4SWAP(x, y);
-		dat[i] ^= state[(state[x] + state[y]) % RC4STATE];
+	for (i = 0; i < len; i++)
 		crc = crc32tab[(crc ^ dat[i]) & 0xff] ^ (crc >> 8);
-	}
 	crc = ~crc;
 	dat += len;
 
-	/* append little-endian crc32 and encrypt */
-	for (i = 0; i < IEEE80211_WEP_CRCLEN; i++) {
-		x = (x + 1) % RC4STATE;
-		y = (state[x] + y) % RC4STATE;
-		RC4SWAP(x, y);
-		dat[i] ^= state[(state[x] + state[y]) % RC4STATE];
-	}
+	/* decrypt little-endian crc32 and verify */
+	rc4_crypt(&ctx, dat, dat, IEEE80211_WEP_CRCLEN);
+
 	if ((dat[0] != crc) && (dat[1] != crc >> 8) &&
 	    (dat[2] != crc >> 16) && (dat[3] != crc >> 24)) {
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
