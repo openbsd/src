@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 1999/09/26 17:35:49 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2000/03/10 06:53:51 d Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 1999/09/26 17:35:49 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 2000/03/10 06:53:51 d Exp $";
 #endif
 #endif /* not lint */
 
@@ -432,6 +432,7 @@ decompress(in, out, method, bits)
 	if (!pipin && (method = check_method(ifd, out)) == NULL) {
 		if (verbose >= 0)
 			warnx("%s: unrecognized file format", in);
+		close (ifd);
 		return -1;
 	}
 
