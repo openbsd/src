@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.13 2000/06/28 23:58:48 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.14 2000/11/18 03:21:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.13 2000/06/28 23:58:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.14 2000/11/18 03:21:36 deraadt Exp $";
 #endif
 
 #include "yp.h"
@@ -521,9 +521,20 @@ sig_child()
 	errno = save_errno;
 }
 
+/*
+ * XXX
+ * This is calling illegal functions inside a signal routine.
+ * It's a massive race.
+ */
 void
 sig_hup()
 {
+	int save_errno = errno;
+
+	/* Handle the log. */
+	ypcloselog();
+	ypopenlog();
+
 	acl_reset();
 	if (aclfile != NULL) {
 		yplog("sig_hup: reread %s",aclfile);
@@ -532,4 +543,6 @@ sig_hup()
 		yplog("sig_hup: reread %s",YP_SECURENET_FILE);
 		(void)acl_securenet(YP_SECURENET_FILE);
 	}
+
+	errno = save_errno;
 }
