@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.2 2003/02/01 18:09:27 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.3 2003/02/04 07:38:51 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -609,9 +609,9 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
 	audio_wait(fd);
 
 out:
-	if (samples == NULL)
+	if (samples != NULL)
 		free(samples);
-	if (outbuf == NULL)
+	if (outbuf != NULL)
 		free(outbuf);
 }
 
@@ -671,9 +671,9 @@ enc_ulaw_8(int fd, audio_encoding_t *enc, int chans)
 	audio_wait(fd);
 
 out:
-	if (samples == NULL)
+	if (samples != NULL)
 		free(samples);
-	if (outbuf == NULL)
+	if (outbuf != NULL)
 		free(outbuf);
 }
 
@@ -733,9 +733,9 @@ enc_alaw_8(int fd, audio_encoding_t *enc, int chans)
 	audio_wait(fd);
 
 out:
-	if (samples == NULL)
+	if (samples != NULL)
 		free(samples);
-	if (outbuf == NULL)
+	if (outbuf != NULL)
 		free(outbuf);
 }
 
