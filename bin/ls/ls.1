@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ls.1,v 1.41 2004/07/23 00:42:22 jaredy Exp $
+.\"	$OpenBSD: ls.1,v 1.42 2004/09/16 20:48:35 millert Exp $
 .\"	$NetBSD: ls.1,v 1.14 1995/12/05 02:44:01 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -228,7 +228,8 @@ or
 options are specified.
 .Pp
 File information is displayed with one or more
-<blank>s separating the information associated with the
+.Ao blank Ac Ns s
+separating the information associated with the
 .Fl i ,
 .Fl s ,
 .Fl l ,
@@ -276,7 +277,7 @@ format
 .Pp
 If the file is a symbolic link, the pathname of the
 linked-to file is preceded by
-.Dq \-> .
+.Dq \-\*(Gt .
 .Pp
 The file mode printed under the
 .Fl l
@@ -396,7 +397,7 @@ system immutable
 .Pp
 The
 .Nm
-utility exits 0 on success or >0 if an error occurred.
+utility exits 0 on success or \*(Gt0 if an error occurred.
 .Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
