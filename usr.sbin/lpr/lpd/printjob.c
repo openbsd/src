@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.13 1997/07/20 19:04:34 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.14 1997/07/21 05:24:12 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -497,6 +497,8 @@ pass2:
 			continue;
 
 		case 'U':
+			if (strchr(line+1, '/'))
+				continue;
 			(void) unlink(line+1);
 		}
 	/*
@@ -821,7 +823,7 @@ sendit(file)
 	 */
 	fseek(cfp, 0L, 0);
 	while (getline(cfp))
-		if (line[0] == 'U')
+		if (line[0] == 'U' && !strchr(line+1, '/'))
 			(void) unlink(line+1);
 	/*
 	 * clean-up in case another control file exists
