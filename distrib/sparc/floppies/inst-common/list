@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.13 1997/05/11 22:47:33 grr Exp $
+#	$OpenBSD: list,v 1.14 1998/12/20 23:36:42 millert Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -79,5 +79,4 @@ COPY	${DESTDIR}/etc/services		etc/services
 # and the common installation tools
 COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
 # and a few useful bits of the termcap file (sun*, basic vt100, dumb, unknown)
-# COPY	${TOPDIR}/inst-common/termcap.pc3	usr/share/misc/termcap
-SPECIAL sed -n -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^sun.*|/,/:[ 	]*$/p' -e '/^vt100|/,/:[ 	]*$/p' ${CURDIR}/../../../../share/termcap/termcap.src > usr/share/misc/termcap
+SPECIAL tic -C ${CURDIR}/../../../../share/termtypes/termtypes.master | sed -n -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^sun.*|/,/:[ 	]*$/p' -e '/^vt100|/,/:[ 	]*$/p' > usr/share/misc/termcap
