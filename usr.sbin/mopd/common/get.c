@@ -1,4 +1,4 @@
-/*	$OpenBSD: get.c,v 1.5 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: get.c,v 1.6 2004/04/14 20:37:28 henning Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -25,121 +25,103 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: get.c,v 1.5 2003/12/01 00:56:51 avsm Exp $";
+static const char rcsid[] =
+    "$OpenBSD: get.c,v 1.6 2004/04/14 20:37:28 henning Exp $";
 #endif
 
 #include <sys/types.h>
 #include "common/mopdef.h"
 
 u_char
-mopGetChar(pkt, index)
-	u_char *pkt;
-	int    *index;
+mopGetChar(u_char *pkt, int *index)
 {
-        u_char ret;
+	u_char ret;
 
 	ret = pkt[*index];
 	*index = *index + 1;
-	return(ret);
+	return (ret);
 }
 
 u_short
-mopGetShort(pkt, index)
-	u_char *pkt;
-	int    *index;
+mopGetShort(u_char *pkt, int *index)
 {
-        u_short ret;
-	
+	u_short ret;
+
 	ret = pkt[*index] + pkt[*index+1]*256;
 	*index = *index + 2;
-	return(ret);
+	return (ret);
 }
 
 u_long
-mopGetLong(pkt, index)
-	u_char *pkt;
-	int    *index;
+mopGetLong(u_char *pkt, int *index)
 {
-        u_long ret;
-	
-	ret = pkt[*index] +
-	      pkt[*index+1]*0x100 +
-	      pkt[*index+2]*0x10000 +
-	      pkt[*index+3]*0x1000000;
+	u_long ret;
+
+	ret = pkt[*index] + pkt[*index+1]*0x100 + pkt[*index+2]*0x10000 +
+	    pkt[*index+3]*0x1000000;
 	*index = *index + 4;
-	return(ret);
+	return (ret);
 }
 
 void
-mopGetMulti(pkt, index, dest, size)
-	u_char *pkt,*dest;
-	int    *index,size;
+mopGetMulti(u_char *pkt, int *index, u_char *dest, int size)
 {
 	int i;
 
-	for (i = 0; i < size; i++) {
-	  dest[i] = pkt[*index+i];
-	}  
+	for (i = 0; i < size; i++)
+		dest[i] = pkt[*index+i];
 	*index = *index + size;
-
 }
 
 int
-mopGetTrans(pkt, trans)
-	u_char	*pkt;
-	int	 trans;
+mopGetTrans(u_char *pkt, int trans)
 {
 	u_short	*ptype;
-	
+
 	if (trans == 0) {
 		ptype = (u_short *)(pkt+12);
-		if (ntohs(*ptype) < 1600) {
+		if (ntohs(*ptype) < 1600)
 			trans = TRANS_8023;
-		} else {
+		else
 			trans = TRANS_ETHER;
-		}
 	}
-	return(trans);
+	return (trans);
 }
 
 void
-mopGetHeader(pkt, index, dst, src, proto, len, trans)
-	u_char	*pkt, **dst, **src;
-	int	*index, *len, trans;
-	u_short	*proto;
+mopGetHeader(u_char *pkt, int *index, u_char **dst, u_char **src,
+    u_short *proto, int *len, int trans)
 {
 	*dst = pkt;
 	*src = pkt + 6;
 	*index = *index + 12;
 
-	switch(trans) {
+	switch (trans) {
 	case TRANS_ETHER:
-		*proto = (u_short)(pkt[*index]*256 + pkt[*index+1]);
+		*proto = (u_short)(pkt[*index] * 256 + pkt[*index + 1]);
 		*index = *index + 2;
-		*len   = (int)(pkt[*index+1]*256 + pkt[*index]);
+		*len   = (int)(pkt[*index + 1] * 256 + pkt[*index]);
 		*index = *index + 2;
 		break;
 	case TRANS_8023:
-		*len   = (int)(pkt[*index]*256 + pkt[*index+1]);
+		*len   = (int)(pkt[*index] * 256 + pkt[*index + 1]);
 		*index = *index + 8;
-		*proto = (u_short)(pkt[*index]*256 + pkt[*index+1]);
+		*proto = (u_short)(pkt[*index] * 256 + pkt[*index + 1]);
 		*index = *index + 2;
 		break;
 	}
 }
 
 u_short
-mopGetLength(pkt, trans)
-	u_char	*pkt;
-	int	 trans;
+mopGetLength(u_char *pkt, int trans)
 {
-	switch(trans) {
+	switch (trans) {
 	case TRANS_ETHER:
-		return(pkt[15]*256 + pkt[14]);
+		return (pkt[15] * 256 + pkt[14]);
 		break;
 	case TRANS_8023:
-		return(pkt[12]*256 + pkt[13]);
+		return (pkt[12] * 256 + pkt[13]);
 		break;
 	}
-	return(0);
+	return (0);
 }

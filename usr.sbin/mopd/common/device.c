@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.c,v 1.11 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: device.c,v 1.12 2004/04/14 20:37:28 henning Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -25,17 +25,18 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: device.c,v 1.11 2003/12/01 00:56:51 avsm Exp $";
+static const char rcsid[] =
+    "$OpenBSD: device.c,v 1.12 2004/04/14 20:37:28 henning Exp $";
 #endif
 
 #include "os.h"
 #include "common/common.h"
 #include "common/mopdef.h"
 
-struct	if_info *iflist;		/* Interface List		*/
+struct if_info	*iflist;		/* Interface List		*/
 
-void mopReadDL();
-void mopReadRC();
+void mopReadDL(void);
+void mopReadRC(void);
 int  mopOpenDL(struct if_info *, int);
 int  mopOpenRC(struct if_info *, int);
 int  pfTrans();
@@ -48,12 +49,10 @@ int  pfWrite();
  */
 
 void
-deviceEthAddr(ifname, eaddr)
-	char *ifname;
-        u_char *eaddr;
+deviceEthAddr(char *ifname, u_char *eaddr)
 {
-	struct sockaddr_dl *sdl;
-	struct ifaddrs *ifap, *ifa;
+	struct sockaddr_dl	*sdl;
+	struct ifaddrs		*ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0) {
 		syslog(LOG_ERR, "deviceEthAddr: getifaddrs: %m");
@@ -66,7 +65,7 @@ deviceEthAddr(ifname, eaddr)
 		    sdl->sdl_alen != 6)
 			continue;
 		if (!strcmp(ifa->ifa_name, ifname)) {
-			bcopy((caddr_t)LLADDR(sdl), (caddr_t)eaddr, 6);
+			bcopy(LLADDR(sdl), eaddr, 6);
 			freeifaddrs(ifap);
 			return;
 		}
@@ -78,17 +77,14 @@ deviceEthAddr(ifname, eaddr)
 #endif	/* DEV_NEW_CONF */
 
 void
-deviceOpen(ifname, proto, trans)
-	char	*ifname;
-	u_short	 proto;
-	int	 trans;
+deviceOpen(char *ifname, u_short proto, int trans)
 {
-	struct if_info *p, tmp;
+	struct if_info	*p, tmp;
 
-	strncpy(tmp.if_name,ifname,sizeof(tmp.if_name) - 1);
-	tmp.if_name[sizeof(tmp.if_name)-1] = 0;
-	tmp.iopen   = pfInit;
-	
+	strncpy(tmp.if_name, ifname, sizeof(tmp.if_name) - 1);
+	tmp.if_name[sizeof(tmp.if_name) - 1] = 0;
+	tmp.iopen = pfInit;
+
 	switch (proto) {
 	case MOP_K_PROTO_RC:
 		tmp.read = mopReadRC;
@@ -101,53 +97,49 @@ deviceOpen(ifname, proto, trans)
 	default:
 		break;
 	}
-	
+
 	if (tmp.fd != -1) {
-		
-		p = (struct if_info *)malloc(sizeof(*p));
+		p = malloc(sizeof(*p));
 		if (p == 0) {
-		syslog(LOG_ERR, "deviceOpen: malloc: %m");
-		exit(1);
+			syslog(LOG_ERR, "deviceOpen: malloc: %m");
+			exit(1);
 		}
-	
+
 		p->next = iflist;
 		iflist = p;
 
-		strncpy(p->if_name,tmp.if_name, IFNAME_SIZE -1);
-		p->if_name[IFNAME_SIZE -1] = 0;
+		strlcpy(p->if_name, tmp.if_name, IFNAME_SIZE);
 		p->iopen   = tmp.iopen;
 		p->write   = pfWrite;
 		p->read    = tmp.read;
-		bzero((char *)p->eaddr,sizeof(p->eaddr));
+		bzero(p->eaddr, sizeof(p->eaddr));
 		p->fd      = tmp.fd;
 
 #ifdef	DEV_NEW_CONF
-		deviceEthAddr(p->if_name,&p->eaddr[0]);
+		deviceEthAddr(p->if_name, &p->eaddr[0]);
 #else
-		p->eaddr[0]= tmp.eaddr[0];
-		p->eaddr[1]= tmp.eaddr[1];
-		p->eaddr[2]= tmp.eaddr[2];
-		p->eaddr[3]= tmp.eaddr[3];
-		p->eaddr[4]= tmp.eaddr[4];
-		p->eaddr[5]= tmp.eaddr[5];
+		p->eaddr[0] = tmp.eaddr[0];
+		p->eaddr[1] = tmp.eaddr[1];
+		p->eaddr[2] = tmp.eaddr[2];
+		p->eaddr[3] = tmp.eaddr[3];
+		p->eaddr[4] = tmp.eaddr[4];
+		p->eaddr[5] = tmp.eaddr[5];
 #endif	/* DEV_NEW_CONF */
-	
+
 #ifdef LINUX2_PF
 		{
 			int s;
 
-			s = socket(AF_INET,SOCK_DGRAM,0);
-			pfEthAddr(s,p->if_name,&p->eaddr[0]);
-			(void) close(s);
-			
-		}	
+			s = socket(AF_INET, SOCK_DGRAM, 0);
+			pfEthAddr(s, p->if_name, &p->eaddr[0]);
+			close(s);
+		}
 #endif
 	}
 }
 
 void
-deviceInitOne(ifname)
-	char	*ifname;
+deviceInitOne(char *ifname)
 {
 	char	interface[IFNAME_SIZE];
 	struct if_info *p;
@@ -155,81 +147,72 @@ deviceInitOne(ifname)
 #ifdef _AIX
 	char	dev[IFNAME_SIZE];
 	int	unit,j;
-	
+
 	unit = 0;
 	for (j = 0; j < strlen(ifname); j++) {
-		if (isalpha(ifname[j])) {
+		if (isalpha(ifname[j]))
 			dev[j] = ifname[j];
-		} else {
+		else
 			if (isdigit(ifname[j])) {
-				unit = unit*10 + ifname[j] - '0';
+				unit = unit * 10 + ifname[j] - '0';
 				dev[j] = '\0';
 			}
-		}
 	}
-	
-	if ((strlen(dev) == 2) &&
-	    (dev[0] == 'e') &&
-	    ((dev[1] == 'n') || (dev[1] == 't'))) {
-		snprintf(interface,sizeof(interface),"ent%d\0",unit);
-	} else {
-		snprintf(interface,sizeof(interface),"%s%d\0",dev,unit);
-	}
+
+	if ((strlen(dev) == 2) && (dev[0] == 'e') &&
+	    ((dev[1] == 'n') || (dev[1] == 't')))
+		snprintf(interface, sizeof(interface), "ent%d\0", unit);
+	else
+		snprintf(interface, sizeof(interface), "%s%d\0", dev, unit);
 #else
-	snprintf(interface,sizeof(interface),"%s",ifname);
+	snprintf(interface, sizeof(interface), "%s", ifname);
 #endif /* _AIX */
 
-	/* Ok, init it just once */
-	
+	/* Ok, init it just once */	
 	p = iflist;
-	for (p = iflist; p; p = p->next)  {
-		if (strcmp(p->if_name,interface) == 0) {
+	for (p = iflist; p; p = p->next)
+		if (strcmp(p->if_name, interface) == 0)
 			return;
-		}
-	}
 
 	syslog(LOG_INFO, "Initialized %s", interface);
 
 	/* Ok, get transport information */
-	
 	trans = pfTrans(interface);
 
 #ifndef NORC
 	/* Start with MOP Remote Console */
-
 	switch (trans) {
 	case TRANS_ETHER:
-		deviceOpen(interface,MOP_K_PROTO_RC,TRANS_ETHER);
+		deviceOpen(interface, MOP_K_PROTO_RC, TRANS_ETHER);
 		break;
 	case TRANS_8023:
-		deviceOpen(interface,MOP_K_PROTO_RC,TRANS_8023);
+		deviceOpen(interface, MOP_K_PROTO_RC, TRANS_8023);
 		break;
-	case TRANS_ETHER+TRANS_8023:
-		deviceOpen(interface,MOP_K_PROTO_RC,TRANS_ETHER);
-		deviceOpen(interface,MOP_K_PROTO_RC,TRANS_8023);
+	case TRANS_ETHER + TRANS_8023:
+		deviceOpen(interface, MOP_K_PROTO_RC, TRANS_ETHER);
+		deviceOpen(interface, MOP_K_PROTO_RC, TRANS_8023);
 		break;
-	case TRANS_ETHER+TRANS_8023+TRANS_AND:
-		deviceOpen(interface,MOP_K_PROTO_RC,TRANS_ETHER+TRANS_8023);
+	case TRANS_ETHER + TRANS_8023 + TRANS_AND:
+		deviceOpen(interface, MOP_K_PROTO_RC, TRANS_ETHER + TRANS_8023);
 		break;
 	}
 #endif
 
 #ifndef NODL
 	/* and next MOP Dump/Load */
-
 	switch (trans) {
 	case TRANS_ETHER:
-		deviceOpen(interface,MOP_K_PROTO_DL,TRANS_ETHER);
+		deviceOpen(interface, MOP_K_PROTO_DL, TRANS_ETHER);
 		break;
 	case TRANS_8023:
-		deviceOpen(interface,MOP_K_PROTO_DL,TRANS_8023);
+		deviceOpen(interface, MOP_K_PROTO_DL, TRANS_8023);
 		break;
-	case TRANS_ETHER+TRANS_8023:
-		deviceOpen(interface,MOP_K_PROTO_DL,TRANS_ETHER);
-		deviceOpen(interface,MOP_K_PROTO_DL,TRANS_8023);
+	case TRANS_ETHER + TRANS_8023:
+		deviceOpen(interface, MOP_K_PROTO_DL, TRANS_ETHER);
+		deviceOpen(interface, MOP_K_PROTO_DL, TRANS_8023);
 		break;
-	case TRANS_ETHER+TRANS_8023+TRANS_AND:
-		deviceOpen(interface,MOP_K_PROTO_DL,TRANS_ETHER+TRANS_8023);
+	case TRANS_ETHER + TRANS_8023 + TRANS_AND:
+		deviceOpen(interface, MOP_K_PROTO_DL, TRANS_ETHER + TRANS_8023);
 		break;
 	}
 #endif
@@ -245,8 +228,8 @@ void
 deviceInitAll()
 {
 #ifdef DEV_NEW_CONF
-	struct sockaddr_dl *sdl;
-	struct ifaddrs *ifap, *ifa;
+	struct sockaddr_dl	*sdl;
+	struct ifaddrs		*ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0) {
 		syslog(LOG_ERR, "deviceInitAll: getifaddrs: %m");
@@ -265,7 +248,7 @@ deviceInitAll()
 	}
 	freeifaddrs(ifap);
 #else
-	struct ifaddrs *ifap, *ifa;
+	struct ifaddrs	*ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0) {
 		syslog(LOG_ERR, "deviceInitAll: getifaddrs: %m");

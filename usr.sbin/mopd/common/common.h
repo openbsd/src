@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.4 2003/06/02 21:38:39 maja Exp $ */
+/*	$OpenBSD: common.h,v 1.5 2004/04/14 20:37:28 henning Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,25 +23,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: common.h,v 1.4 2003/06/02 21:38:39 maja Exp $
+ *	$OpenBSD: common.h,v 1.5 2004/04/14 20:37:28 henning Exp $
  *
  */
 
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#define MAXDL		16		/* maximum number concurrent load */
-#define IFNAME_SIZE	32		/* maximum size if interface name */
-#define BUFSIZE		1600		/* main receive buffer size	*/
-#define HDRSIZ		22		/* room for 803.2 header	*/
+#define	MAXDL		16		/* maximum number concurrent load */
+#define	IFNAME_SIZE	32		/* maximum size if interface name */
+#define	BUFSIZE		1600		/* main receive buffer size	*/
+#define	HDRSIZ		22		/* room for 803.2 header	*/
 
 #ifndef MOP_FILE_PATH
 #define MOP_FILE_PATH	"/tftpboot/mop"
 #endif
 
-#define DEBUG_ONELINE	1
-#define DEBUG_HEADER	2
-#define DEBUG_INFO	3
+#define	DEBUG_ONELINE	1
+#define	DEBUG_HEADER	2
+#define	DEBUG_INFO	3
 
 /*
  * structure per interface
@@ -59,10 +59,10 @@ struct if_info {
 	struct if_info *next;		/* Next Interface		   */
 };
 
-#define DL_STATUS_FREE		 0
-#define DL_STATUS_READ_IMGHDR	 1
-#define DL_STATUS_SENT_MLD	 2
-#define DL_STATUS_SENT_PLT	 3
+#define	DL_STATUS_FREE		 0
+#define	DL_STATUS_READ_IMGHDR	 1
+#define	DL_STATUS_SENT_MLD	 2
+#define	DL_STATUS_SENT_PLT	 3
 
 struct dllist {
 	u_char	status;			/* Status byte			*/

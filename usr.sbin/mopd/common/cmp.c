@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmp.c,v 1.6 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: cmp.c,v 1.7 2004/04/14 20:37:28 henning Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -25,14 +25,14 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: cmp.c,v 1.6 2003/12/01 00:56:51 avsm Exp $";
+static const char rcsid[] =
+    "$OpenBSD: cmp.c,v 1.7 2004/04/14 20:37:28 henning Exp $";
 #endif
 
 #include "os.h"
 
 int
-mopCmpEAddr(addr1, addr2)
-	u_char *addr1, *addr2;
+mopCmpEAddr(u_char *addr1, u_char *addr2)
 {
-        return(bcmp((char *)addr1, (char *)addr2, 6));
+	return (bcmp(addr1, addr2, 6));
 }

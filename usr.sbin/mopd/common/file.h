@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.8 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: file.h,v 1.9 2004/04/14 20:37:28 henning Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: file.h,v 1.8 2003/12/01 00:56:51 avsm Exp $
+ *	$OpenBSD: file.h,v 1.9 2004/04/14 20:37:28 henning Exp $
  *
  */
 
@@ -32,9 +32,9 @@
 
 void	mopFilePutLX(u_char *, int, u_long, int);
 void	mopFilePutBX(u_char *, int, u_long, int);
-u_long	mopFileGetLX(u_char *, int, int);
-u_long	mopFileGetBX(u_char *, int, int);
-void	mopFileSwapX(u_char *, int, int);
+u_long	mopFileGetLX(void *, int, int);
+u_long	mopFileGetBX(void *, int, int);
+void	mopFileSwapX(void *, int, int);
 int	CheckMopFile(int);
 int	GetMopFileInfo(int, u_long *, u_long *);
 int	CheckAOutFile(int);

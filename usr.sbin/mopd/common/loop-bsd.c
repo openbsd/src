@@ -1,4 +1,4 @@
-/*	$OpenBSD: loop-bsd.c,v 1.8 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: loop-bsd.c,v 1.9 2004/04/14 20:37:28 henning Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,8 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: loop-bsd.c,v 1.8 2003/12/01 00:56:51 avsm Exp $";
+static const char rcsid[] =
+    "$OpenBSD: loop-bsd.c,v 1.9 2004/04/14 20:37:28 henning Exp $";
 #endif
 
 #include <stdlib.h>
@@ -43,42 +44,32 @@ static const char rcsid[] = "$OpenBSD: loop-bsd.c,v 1.8 2003/12/01 00:56:51 avsm
 #include "common/mopdef.h"
 
 int
-mopOpenRC(p, trans)
-	struct if_info *p;
-	int	trans;
+mopOpenRC(struct if_info *p, int trans)
 {
 #ifndef NORC
-	return (*(p->iopen))(p->if_name,
-			     O_RDWR,
-			     MOP_K_PROTO_RC,
-			     trans);
+	return (*(p->iopen))(p->if_name, O_RDWR, MOP_K_PROTO_RC, trans);
 #else
-	return -1;
+	return (-1);
 #endif
 }
 
 int
-mopOpenDL(p, trans)
-	struct if_info *p;
-	int	trans;
+mopOpenDL(struct if_info *p, int trans)
 {
 #ifndef NODL
-	return (*(p->iopen))(p->if_name,
-			     O_RDWR,
-			     MOP_K_PROTO_DL,
-			     trans);
+	return (*(p->iopen))(p->if_name, O_RDWR, MOP_K_PROTO_DL, trans);
 #else
-	return -1;
+	return (-1);
 #endif
 }
 
 void
-mopReadRC()
+mopReadRC(void)
 {
 }
 
 void
-mopReadDL()
+mopReadDL(void)
 {
 }
 
@@ -95,25 +86,25 @@ void   mopProcess(struct if_info *, u_char *);
  * interfaces in 'iflist'.
  */
 void
-Loop()
+Loop(void)
 {
-	u_char *buf, *bp, *ep;
-	int     cc;
-	fd_set  fds, listeners;
-	int     bufsize, maxfd = 0;
-	struct if_info *ii;
+	u_char		*buf, *bp, *ep;
+	int		 cc;
+	fd_set		 fds, listeners;
+	int		 bufsize, maxfd = 0;
+	struct if_info	*ii;
 
 	if (iflist == 0) {
 		syslog(LOG_ERR, "no interfaces");
 		exit(0);
 	}
-	if (iflist->fd != -1) {
-		if (ioctl(iflist->fd, BIOCGBLEN, (caddr_t) & bufsize) < 0) {
+	if (iflist->fd != -1)
+		if (ioctl(iflist->fd, BIOCGBLEN, (caddr_t)&bufsize) < 0) {
 			syslog(LOG_ERR, "BIOCGBLEN: %m");
 			exit(0);
-	        }
-	}
-	buf = (u_char *) malloc((unsigned) bufsize);
+		}
+
+	buf = malloc(bufsize);
 	if (buf == 0) {
 		syslog(LOG_ERR, "malloc: %m");
 		exit(0);
@@ -123,27 +114,25 @@ Loop()
          * Initialize the set of descriptors to listen to.
          */
 	FD_ZERO(&fds);
-	for (ii = iflist; ii; ii = ii->next) {
+	for (ii = iflist; ii; ii = ii->next)
 		if (ii->fd != -1) {
 			FD_SET(ii->fd, &fds);
 			if (ii->fd > maxfd)
 				maxfd = ii->fd;
-	        }
-	}
+		}
+
 	while (1) {
 		listeners = fds;
-		if (select(maxfd + 1, &listeners, (fd_set *) 0,
-			(fd_set *) 0, (struct timeval *) 0) < 0) {
+		if (select(maxfd + 1, &listeners, NULL, NULL, NULL) < 0) {
 			syslog(LOG_ERR, "select: %m");
 			exit(0);
 		}
-		for (ii = iflist; ii; ii = ii->next) {
+		for (ii = iflist; ii; ii = ii->next)
 			if (ii->fd != -1) {
 				if (!FD_ISSET(ii->fd, &listeners))
 					continue;
-			}
-	again:
-			cc = read(ii->fd, (char *) buf, bufsize);
+again:
+			cc = read(ii->fd, buf, bufsize);
 			/* Don't choke when we get ptraced */
 			if (cc < 0 && errno == EINTR)
 				goto again;
@@ -151,9 +140,9 @@ Loop()
 			 * offset overflows and read fails with EINVAL.  The
 			 * lseek() to 0 will fix things. */
 			if (cc < 0) {
-				if (errno == EINVAL &&
-				    (lseek(ii->fd, 0, SEEK_CUR) + bufsize) < 0) {
-					(void) lseek(ii->fd, 0, 0);
+				if (errno == EINVAL && (lseek(ii->fd, 0,
+				    SEEK_CUR) + bufsize) < 0) {
+					lseek(ii->fd, 0, 0);
 					goto again;
 				}
 				syslog(LOG_ERR, "read: %m");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopdef.c,v 1.5 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: mopdef.c,v 1.6 2004/04/14 20:37:28 henning Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,8 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: mopdef.c,v 1.5 2003/12/01 00:56:51 avsm Exp $";
+static const char rcsid[] =
+    "$OpenBSD: mopdef.c,v 1.6 2004/04/14 20:37:28 henning Exp $";
 #endif
 
 #include <sys/types.h>
@@ -40,9 +41,9 @@ u_char rc_802_proto[5] = MOP_K_PROTO_802_RC; /* MOP Remote Console 802.2 */
 u_char lp_802_proto[5] = MOP_K_PROTO_802_LP; /* Loopback 802.2           */
 
 int
-mopdef_dummy()
+mopdef_dummy(void)
 {
 	/* Just to keep them as variables */
-	return(dl_mcst[0]-rc_mcst[0]-
-	       lp_802_proto[1]-rc_802_proto[1]-lp_802_proto[1]);
+	return (dl_mcst[0] - rc_mcst[0] - lp_802_proto[1] - rc_802_proto[1] -
+	    lp_802_proto[1]);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nma.c,v 1.4 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: nma.c,v 1.5 2004/04/14 20:37:28 henning Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,8 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: nma.c,v 1.4 2003/12/01 00:56:51 avsm Exp $";
+static const char rcsid[] =
+    "$OpenBSD: nma.c,v 1.5 2004/04/14 20:37:28 henning Exp $";
 #endif
 
 #include <stddef.h>
@@ -186,36 +187,33 @@ struct commDev nmaCommDev[] = {
 };
 
 char *
-nmaGetShort(devno)
-	int devno;
+nmaGetShort(int devno)
 {
 	struct commDev *current;
 
 	current = nmaCommDev;
-	
+
 	while (current->sname != NULL) {
 		if (current->val == devno)
 			break;
 		current++;
 	}
 
-	return(current->sname);
+	return (current->sname);
 }
 
 char *
-nmaGetDevice(devno)
-	int devno;
+nmaGetDevice(int devno)
 {
 	struct commDev *current;
 
 	current = nmaCommDev;
-	
+
 	while (current->name != NULL) {
 		if (current->val == devno)
 			break;
 		current++;
 	}
 
-	return(current->name);
+	return (current->name);
 }
-
