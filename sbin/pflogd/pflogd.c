@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.14 2002/10/17 09:12:04 dhartmei Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.15 2002/11/30 19:36:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -107,9 +107,10 @@ logmsg(int pri, const char *message, ...)
 	va_list ap;
 	va_start(ap, message);
 
-	if (log_debug)
+	if (log_debug) {
 		vfprintf(stderr, message, ap);
-	else
+		fprintf("\n");
+	} else
 		vsyslog(pri, message, ap);
 	va_end(ap);
 }
@@ -148,21 +149,21 @@ init_pcap(void)
 
 	hpcap = pcap_open_live(interface, snaplen, 1, PCAP_TO_MS, errbuf);
 	if (hpcap == NULL) {
-		logmsg(LOG_ERR, "Failed to initialize: %s\n", errbuf);
+		logmsg(LOG_ERR, "Failed to initialize: %s", errbuf);
 		hpcap = oldhpcap;
 		return (-1);
 	}
 
 	if (filter != NULL) {
 		if (pcap_compile(hpcap, &bprog, filter, PCAP_OPT_FIL, 0) < 0)
-			logmsg(LOG_WARNING, "%s\n", pcap_geterr(hpcap));
+			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
 		else if (pcap_setfilter(hpcap, &bprog) < 0)
-			logmsg(LOG_WARNING, "%s\n", pcap_geterr(hpcap));
+			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
 		free(filter);
 	}
 
 	if (pcap_datalink(hpcap) != DLT_PFLOG) {
-		logmsg(LOG_ERR, "Invalid datalink type\n");
+		logmsg(LOG_ERR, "Invalid datalink type");
 		pcap_close(hpcap);
 		hpcap = oldhpcap;
 		return (-1);
@@ -172,8 +173,8 @@ init_pcap(void)
 		pcap_close(oldhpcap);
 
 	snaplen = pcap_snapshot(hpcap);
-	logmsg(LOG_NOTICE, "Listening on %s, logging to %s, snaplen %d\n",
-		interface, filename, snaplen);
+	logmsg(LOG_NOTICE, "Listening on %s, logging to %s, snaplen %d",
+	    interface, filename, snaplen);
 	return (0);
 }
 
@@ -200,13 +201,13 @@ reset_dump(void)
 	if (fp == NULL) {
 		snprintf(hpcap->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
 		    filename, pcap_strerror(errno));
-		logmsg(LOG_ERR, "Error: %s\n", pcap_geterr(hpcap));
+		logmsg(LOG_ERR, "Error: %s", pcap_geterr(hpcap));
 		return (1);
 	}
 	if (fstat(fileno(fp), &st) == -1) {
 		snprintf(hpcap->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
 		    filename, pcap_strerror(errno));
-		logmsg(LOG_ERR, "Error: %s\n", pcap_geterr(hpcap));
+		logmsg(LOG_ERR, "Error: %s", pcap_geterr(hpcap));
 		return (1);
 	}
 
@@ -216,11 +217,11 @@ reset_dump(void)
 
 	if (st.st_size == 0) {
 		if (snaplen != pcap_snapshot(hpcap)) {
-			logmsg(LOG_NOTICE, "Using snaplen %d\n", snaplen);
+			logmsg(LOG_NOTICE, "Using snaplen %d", snaplen);
 			if (init_pcap()) {
-				logmsg(LOG_ERR, "Failed to initialize\n");
+				logmsg(LOG_ERR, "Failed to initialize");
 				if (hpcap == NULL) return (-1);
-				logmsg(LOG_NOTICE, "Using old settings\n");
+				logmsg(LOG_NOTICE, "Using old settings");
 			}
 		}
 		hdr.magic = TCPDUMP_MAGIC;
@@ -256,11 +257,11 @@ reset_dump(void)
 			tmpsnap = snaplen;
 			snaplen = hdr.snaplen;
 			if (init_pcap()) {
-				logmsg(LOG_ERR, "Failed to re-initialize\n");
+				logmsg(LOG_ERR, "Failed to re-initialize");
 				if (hpcap == 0)
 					return (-1);
 				logmsg(LOG_NOTICE,
-					"Using old settings, offset: %d\n",
+					"Using old settings, offset: %d",
 					st.st_size);
 			}
 			snaplen = tmpsnap;
@@ -309,7 +310,7 @@ main(int argc, char **argv)
 		openlog("pflogd", LOG_PID | LOG_CONS, LOG_DAEMON);
 		if (daemon(0, 0)) {
 			logmsg(LOG_WARNING, "Failed to become daemon: %s",
-				strerror(errno));
+			    strerror(errno));
 		}
 		pidfile(NULL);
 	}
@@ -330,12 +331,12 @@ main(int argc, char **argv)
 	}
 
 	if (init_pcap()) {
-		logmsg(LOG_ERR, "Exiting, init failure\n");
+		logmsg(LOG_ERR, "Exiting, init failure");
 		exit(1);
 	}
 
 	if (reset_dump()) {
-		logmsg(LOG_ERR, "Failed to open log file %s\n", filename);
+		logmsg(LOG_ERR, "Failed to open log file %s", filename);
 		pcap_close(hpcap);
 		exit(1);
 	}
@@ -343,16 +344,16 @@ main(int argc, char **argv)
 	while (1) {
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS, pcap_dump, (u_char *)dpcap);
 		if (np < 0)
-			logmsg(LOG_NOTICE, "%s\n", pcap_geterr(hpcap));
+			logmsg(LOG_NOTICE, "%s", pcap_geterr(hpcap));
 
 		if (gotsig_close)
 			break;
 		if (gotsig_hup) {
 			if (reset_dump()) {
-				logmsg(LOG_ERR, "Failed to open log file!\n");
+				logmsg(LOG_ERR, "Failed to open log file!");
 				break;
 			}
-			logmsg(LOG_NOTICE, "Reopened logfile\n");
+			logmsg(LOG_NOTICE, "Reopened logfile");
 			gotsig_hup = 0;
 		}
 
@@ -364,14 +365,14 @@ main(int argc, char **argv)
 		}
 	}
 
-	logmsg(LOG_NOTICE, "Exiting due to signal\n");
+	logmsg(LOG_NOTICE, "Exiting due to signal");
 	if (dpcap)
 		pcap_dump_close(dpcap);
 
 	if (pcap_stats(hpcap, &pstat) < 0)
-		logmsg(LOG_WARNING, "Reading stats: %s\n", pcap_geterr(hpcap));
+		logmsg(LOG_WARNING, "Reading stats: %s", pcap_geterr(hpcap));
 	else
-		logmsg(LOG_NOTICE, "%d packets received, %d dropped\n",
+		logmsg(LOG_NOTICE, "%d packets received, %d dropped",
 		    pstat.ps_recv, pstat.ps_drop);
 
 	pcap_close(hpcap);
