@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.101 2004/03/20 23:17:35 david Exp $ */
+/*	$OpenBSD: rde.c,v 1.102 2004/04/25 02:57:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1069,7 +1069,7 @@ peer_down(u_int32_t id)
 
 	peer = peer_get(id);
 	if (peer == NULL) {
-		log_warnx("peer_down: unknown peer id &d", id);
+		log_warnx("peer_down: unknown peer id %d", id);
 		return;
 	}
 	peer->remote_bgpid = 0;
