@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.113 2001/06/27 01:34:07 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.114 2001/06/27 04:39:11 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -160,6 +160,8 @@ struct ipsec_acquire {
 	struct sockaddr_encap		ipa_info;
 	struct sockaddr_encap		ipa_mask;
 	struct timeout			ipa_timeout;
+	struct ipsec_policy		*ipa_policy;
+	TAILQ_ENTRY(ipsec_acquire)	ipa_ipo_next;
 	TAILQ_ENTRY(ipsec_acquire)	ipa_next;
 };
 
@@ -190,6 +192,7 @@ struct ipsec_policy {
 	struct ipsec_ref	*ipo_local_cred;
 	struct ipsec_ref	*ipo_local_auth;
 
+	TAILQ_HEAD(ipo_acquires_head, ipsec_acquire) ipo_acquires; /* List of acquires */
 	TAILQ_ENTRY(ipsec_policy)	ipo_tdb_next;	/* List TDB policies */
 	TAILQ_ENTRY(ipsec_policy)	ipo_list;	/* List of all policies */
 };
