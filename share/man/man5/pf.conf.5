@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.275 2003/10/30 19:08:07 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.276 2003/11/06 14:38:03 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1428,6 +1428,7 @@ Packet tagging can be done during
 or
 .Ar binat
 rules in addition to filter rules.
+Tags take the same macros as labels (see above).
 .It Ar tagged <string>
 Used with filter rules to specify that packets must already
 be tagged with the given tag in order to match the rule.
