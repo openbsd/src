@@ -1,3 +1,5 @@
+/*	$OpenBSD: asm.h,v 1.2 1998/07/07 21:32:37 mickey Exp $	*/
+
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
  * the Computer Systems Laboratory (CSL).  All rights reserved.

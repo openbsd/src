@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.1 1998/06/23 19:45:25 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.2 1998/07/07 21:32:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -434,7 +434,7 @@ struct pz_device {
 #define	pz_layers	pz_dp.dp_layers
 	struct iomod *pz_hpa;	/* HPA base address of device */
 	caddr_t	pz_spa;		/* SPA base address (zero if no SPA exists) */
-	int	(*pz_iodc_io)();/* entry point of device's driver routines */
+	int	(*pz_iodc_io) __P((int, ...));/* entry point of device's driver routines */
 	short	pz_resv;	/* (reserved) */
 	u_short	pz_class;	/* (see below) */
 };
@@ -455,7 +455,7 @@ struct pz_device {
 	delay(5000000); \
 }
 
-extern int (*pdc)();
+extern int (*pdc) __P((int, ...));
 
 #endif	/* !(_LOCORE || ASSEMBLER) */
 

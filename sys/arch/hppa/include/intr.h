@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1 1998/06/23 19:45:22 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 1998/07/07 21:32:41 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1992,1994 The University of Utah and
@@ -205,9 +205,6 @@
 int	splx __P((int));
 #define	setsoftclock()		(PAGE0->mem_hpa->io_eir = SPL_IBIT_SOFTCLK)
 #define	setsoftnet()		(void)(1)
-
-void	mtctl __P((u_int, u_int));
-u_int	mfctl __P((u_int));
 
 /*
  * BASEPRI is true when the specified EIEM is equal to the SPL level of

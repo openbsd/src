@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1 1998/06/23 19:45:20 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 1998/07/07 21:32:38 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -22,6 +22,9 @@
  *
  * 	Utah $Hdr: cpu.h 1.19 94/12/16$
  */
+
+#ifndef	_HPPA_CPU_H_
+#define	_HPPA_CPU_H_
 
 #include <machine/frame.h>
 
@@ -83,6 +86,11 @@
 #define	HP_743v_2	0x618
 #define	HP_743i_3	0x619
 
+#define	CPU_M770_100	0x585   /* J-class J200 */
+#define	CPU_M770_120	0x586   /* J-class J210 */
+#define	CPU_M777_100	0x592   /* C-class C200 */
+#define	CPU_M777_120	0x58E   /* C-class C210 */
+
 #define	HPPA_IOSPACE	0xf0000000
 #define	HPPA_IOBCAST	0xfffc0000
 #define	HPPA_PDC_LOW	0xef000000
@@ -104,6 +112,15 @@
 #define	need_proftick(p)	{(void)(p);}
 
 /*
+ * Expected (and optimized for) cache line size (in bytes).
+ */
+#define CACHE_LINE_SIZE 32
+
+#ifdef _KERNEL
+void	hppa_init __P((void));
+#endif
+
+/*
  * Boot arguments stuff
  */
 
@@ -120,3 +137,5 @@
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
+
+#endif /* _HPPA_CPU_H_ */
