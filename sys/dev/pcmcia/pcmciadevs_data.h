@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs_data.h,v 1.1 1998/09/11 10:47:15 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs_data.h,v 1.2 1998/09/11 13:47:00 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD
+ *		OpenBSD: pcmciadevs,v 1.1 1998/09/11 10:47:15 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -97,8 +97,8 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Motorola Personal Messenger 100C CDPD Modem"	},
 	},
 	{
-	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_MONTANA_33.6,
-	    PCMCIA_CIS_MOTOROLA_MONTANA_33.6,
+	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_MONTANA_336,
+	    PCMCIA_CIS_MOTOROLA_MONTANA_336,
 	    0,
 	    "Motorola Corporation",
 	    "Motorola Montana 33.6 Fax/Modem"	},

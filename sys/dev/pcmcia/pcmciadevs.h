@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.1 1998/09/11 10:47:15 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.2 1998/09/11 13:46:59 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD
+ *		OpenBSD: pcmciadevs,v 1.1 1998/09/11 10:47:15 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -93,9 +93,9 @@
 #define	PCMCIA_CIS_MOTOROLA_PM100C	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MOTOROLA_PM100C	0x0302
 #define	PCMCIA_STR_MOTOROLA_PM100C	"Motorola Personal Messenger 100C CDPD Modem"
-#define	PCMCIA_CIS_MOTOROLA_MONTANA_33.6	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_MOTOROLA_MONTANA_33.6	0x0505
-#define	PCMCIA_STR_MOTOROLA_MONTANA_33.6	"Motorola Montana 33.6 Fax/Modem"
+#define	PCMCIA_CIS_MOTOROLA_MONTANA_336	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_MOTOROLA_MONTANA_336	0x0505
+#define	PCMCIA_STR_MOTOROLA_MONTANA_336	"Motorola Montana 33.6 Fax/Modem"
 
 /* IBM Products */
 #define	PCMCIA_CIS_IBM_INFOMOVER	{ NULL, NULL, NULL, NULL }

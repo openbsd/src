@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.1 1998/09/11 10:47:15 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.2 1998/09/11 13:46:59 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -70,7 +70,7 @@ product DAYNA COMMUNICARD_E	0x002d Dayna CommuniCard E
 /* Motorola Products */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
 product MOTOROLA PM100C		0x0302 Motorola Personal Messenger 100C CDPD Modem
-product MOTOROLA MONTANA_33.6	0x0505 Motorola Montana 33.6 Fax/Modem
+product MOTOROLA MONTANA_336	0x0505 Motorola Montana 33.6 Fax/Modem
 
 /* IBM Products */
 product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
