@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.51 2004/10/11 12:31:02 espie Exp $
+# $OpenBSD: pkg_delete,v 1.52 2004/10/11 13:10:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -452,18 +452,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 
-	my $dir = $state->{dir};
-	my $opt_v = $state->{verbose};
-	my $opt_n = $state->{not};
-	my $pkgname = $state->{pkgname};
-
-	main::ensure_ldconfig($opt_v) unless $opt_n;
-	print "Require script: $dir",REQUIRE," $pkgname DEINSTALL\n" if $opt_v or $opt_n;
-	unless ($opt_n) {
-		chmod 0755, $dir.REQUIRE;
-		System($dir.REQUIRE, $pkgname, "DEINSTALL") == 0 or 
-		    Fatal "Require script borked";
-	}
+	$self->run($state, "DEINSTALL");
 }
 
 package OpenBSD::PackingElement::FDEINSTALL;
@@ -474,17 +463,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 
-	my $dir = $state->{dir};
-	my $opt_v = $state->{verbose};
-	my $opt_n = $state->{not};
-	my $pkgname = $state->{pkgname};
-	main::ensure_ldconfig($opt_v) unless $opt_n;
-	print "Deinstall script: $dir",DEINSTALL ," $pkgname DEINSTALL\n" if $opt_v or $opt_n;
-	unless ($opt_n) {
-		chmod 0755, $dir.DEINSTALL;
-		System($dir.DEINSTALL, $pkgname, "DEINSTALL") == 0 or 
-		    Fatal "deinstall script borked";
-	}
+	$self->run($state, "DEINSTALL");
 }
 
 package OpenBSD::PackingElement::FUNDISPLAY;
@@ -502,7 +481,7 @@ sub delete
 
 package main;
 
-our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B);
+our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I);
 
 sub remove_packing_info
 {
@@ -596,7 +575,10 @@ sub delete_package
 	remove_packing_info($dir) unless $opt_n;
 }
 
-getopts('vcDdnf:qpS:L:B:');
+getopts('vcDdnf:qpS:L:B:I');
+if ($opt_D) {
+	$opt_I = 1;
+}
 $opt_B = $ENV{'PKG_DESTDIR'} unless defined $opt_B;
 $opt_B = '' unless defined $opt_B;
 if ($opt_B ne '') {
@@ -630,6 +612,7 @@ $state->{quick} = $opt_q;
 $state->{verbose} = $opt_v;
 $state->{beverbose} = $opt_n || $opt_v;
 $state->{extra} = $opt_c;
+$state->{dont_run_scripts} = $opt_I;
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
 # First, resolve pkg names

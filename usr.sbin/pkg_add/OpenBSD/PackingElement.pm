@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.48 2004/10/11 10:30:34 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.49 2004/10/11 13:10:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -963,9 +963,9 @@ our %fonts_todo = ();
 
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
-	$self->SUPER::install($archive, $destdir, $verbose, $not);
-	$fonts_todo{$destdir.$self->fullname()} = 1;
+	my ($self, $state) = @_;
+	$self->SUPER::install($state);
+	$fonts_todo{$state->{destdir}.$self->fullname()} = 1;
 }
 
 sub reload
@@ -1065,6 +1065,30 @@ package OpenBSD::PackingElement::FCONTENTS;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub category() { OpenBSD::PackageInfo::CONTENTS }
 
+package OpenBSD::PackingElement::ScriptFile;
+our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
+use OpenBSD::Error;
+
+sub run
+{
+	my ($self, $state, @args) = @_;
+
+	my $dir = $state->{dir};
+	my $verbose = $state->{verbose};
+	my $not = $state->{not};
+	my $pkgname = $state->{pkgname};
+	my $name = $self->{name};
+
+	return if $state->{dont_run_scripts};
+
+	main::ensure_ldconfig($verbose) unless $not;
+	print $self->beautify(), " script: $dir$name $pkgname ", join(' ', @args), "\n" if $state->{beverbose};
+	return if $not;
+	chmod 0755, $dir.$name;
+	return if System($dir.$name, $pkgname, @args) == 0;
+	Fatal $self->beautify()." script borked";
+}
+
 package OpenBSD::PackingElement::FCOMMENT;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub category() { OpenBSD::PackageInfo::COMMENT }
@@ -1074,16 +1098,19 @@ our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub category() { OpenBSD::PackageInfo::DESC }
 
 package OpenBSD::PackingElement::FINSTALL;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
+our @ISA=qw(OpenBSD::PackingElement::ScriptFile);
 sub category() { OpenBSD::PackageInfo::INSTALL }
+sub beautify() { "Install" }
 
 package OpenBSD::PackingElement::FDEINSTALL;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
+our @ISA=qw(OpenBSD::PackingElement::ScriptFile);
 sub category() { OpenBSD::PackageInfo::DEINSTALL }
+sub beautify() { "Deinstall" }
 
 package OpenBSD::PackingElement::FREQUIRE;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
+our @ISA=qw(OpenBSD::PackingElement::ScriptFile);
 sub category() { OpenBSD::PackageInfo::REQUIRE }
+sub beautify() { "Require" }
 
 package OpenBSD::PackingElement::FREQUIRED_BY;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);

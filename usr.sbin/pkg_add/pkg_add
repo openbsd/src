@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.69 2004/10/11 12:50:09 espie Exp $
+# $OpenBSD: pkg_add,v 1.70 2004/10/11 13:10:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -367,6 +367,7 @@ if ($< && !$forced{nonroot}) {
 
 $state->{conflict_list} = {};
 $state->{not} = $opt_n;
+$state->{dont_run_scripts} = $opt_I;
 $state->{verbose} = $opt_v;
 $state->{beverbose} = $opt_n || $opt_v;
 
@@ -671,18 +672,9 @@ sub validate_plist($$)
 
 sub do_script
 {
-	my ($plist, $dir, $name, $msg, $pkgname, $args, $opt_v, $opt_n) = @_;
+	my ($plist, $name, $state, $args) = @_;
 	return unless $plist->has($name);
-	ensure_ldconfig($opt_v) unless $opt_n;
-	print "$msg script: $dir$name $pkgname $args\n" if $opt_v or $opt_n;
-	return if $opt_n;
-	chmod 0755, $dir.$name;
-	return if System($dir.$name, $pkgname, $args) == 0;
-	if ($forced{scripts}) {
-		Warn "$msg borked\n";
-	} else {	
-		Fatal "$msg borked";
-	}
+	$plist->get($name)->run($state, $args);
 }
 
 sub manpages_index
@@ -711,6 +703,8 @@ sub really_add($$)
 	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
 	$state->{archive} = $handle;
+	$state->{dir} = $dir;
+	$state->{pkgname} = $pkgname;
 
 	validate_plist($plist, $destdir);
 
@@ -725,9 +719,9 @@ sub really_add($$)
 		$interrupted = 1;
 	};
 
-	do_script($plist, $dir, REQUIRE, "Require", $pkgname, "INSTALL", $verbose, $not);
+	do_script($plist, REQUIRE, $state, "INSTALL");
 
-	do_script($plist, $dir, INSTALL, "Install", $pkgname, "PRE-INSTALL", $verbose, $not) unless $opt_I;
+	do_script($plist, INSTALL, $state, "PRE-INSTALL");
 
 	$plist->{done} = [];
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
@@ -744,8 +738,8 @@ sub really_add($$)
 	manpages_index($plist, $destdir);
 	$handle->close();
 
-	if (!$opt_I && !$interrupted) {
-		eval { do_script($plist, $dir, INSTALL, "Install", $pkgname, "POST-INSTALL", $verbose, $not) };
+	if (!$interrupted) {
+		eval { do_script($plist, INSTALL, $state, "POST-INSTALL") };
 		if ($@) {
 			Warn $@;
 			$errors++;
