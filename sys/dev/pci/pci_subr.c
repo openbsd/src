@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.13 2002/01/03 20:52:24 nate Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.14 2002/04/07 19:21:40 tdeval Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ const struct pci_class pci_class[] = {
 
 #ifdef PCIVERBOSE
 /*
- * Descriptions of of known vendors and devices ("products").
+ * Descriptions of known vendors and devices ("products").
  */
 struct pci_known_vendor {
 	pci_vendor_id_t		vendor;
