@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.7 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.8 2003/07/29 02:01:22 avsm Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -1210,7 +1210,7 @@ m_priv_local_sanitize_path (char *path, size_t pmax, int flags)
     return;
 
  bad_path:
-  log_print ("m_priv_local_sanitize_path: illegal path \"%.1024s\", "
+  log_print ("m_priv_local_sanitize_path: illegal path \"%.1023s\", "
 	     "replaced with \"/dev/null\"", path);
   strlcpy (path, "/dev/null", pmax);
   return;
