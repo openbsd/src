@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.3 1996/10/21 11:37:53 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.4 1997/01/02 12:24:35 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -311,8 +311,8 @@ struct apmregs *regs;
 	case APM_USER_STANDBY_REQ:
 		DPRINTF(("user wants STANDBY--fat chance\n"));
 		(void) apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_REJECTED);
-		(void) apm_record_event(sc, regs->bx);
-		apm_userstandbys++;
+		if (apm_record_event(sc, regs->bx))
+			apm_userstandbys++;
 		break;
 	case APM_STANDBY_REQ:
 		DPRINTF(("standby requested\n"));
@@ -330,8 +330,8 @@ struct apmregs *regs;
 		DPRINTF(("user wants suspend--fat chance!\n"));
 		(void) apm_set_powstate(APM_DEV_ALLDEVS,
 					APM_LASTREQ_REJECTED);
-		apm_suspends++;
-		apm_record_event(sc, regs->bx);
+		if (apm_record_event(sc, regs->bx))
+			apm_suspends++;
 		break;
 	case APM_SUSPEND_REQ:
 		DPRINTF(("suspend requested\n"));
