@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.45 2004/05/08 20:54:13 canacar Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.46 2004/05/25 17:36:49 canacar Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -373,6 +373,7 @@ bpfclose(dev, flag, mode, p)
 	s = splimp();
 	if (d->bd_bif)
 		bpf_detachd(d);
+	bpf_wakeup(d);
 	D_PUT(d);
 	splx(s);
 
@@ -432,6 +433,16 @@ bpfread(dev, uio, ioflag)
 	 * have arrived to fill the store buffer.
 	 */
 	while (d->bd_hbuf == 0) {
+		if (d->bd_bif == NULL) {
+			/* interface is gone */
+			if (d->bd_slen == 0) {
+				D_PUT(d);
+				splx(s);
+				return (EIO);
+			}
+			ROTATE_BUFFERS(d);
+			break;
+		}
 		if (d->bd_immediate && d->bd_slen != 0) {
 			/*
 			 * A packet(s) either arrived since the previous
@@ -1301,11 +1312,8 @@ void
 bpf_freed(d)
 	struct bpf_d *d;
 {
-	d->bd_ref--;
-	if (d->bd_ref > 0) {
-		bpf_wakeup(d);
+	if (--d->bd_ref > 0)
 		return;
-	}
 
 	if (d->bd_sbuf != 0) {
 		free(d->bd_sbuf, M_DEVBUF);
