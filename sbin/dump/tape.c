@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.8 1999/02/20 21:46:06 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.9 1999/02/21 00:07:16 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$OpenBSD: tape.c,v 1.8 1999/02/20 21:46:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tape.c,v 1.9 1999/02/21 00:07:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -287,7 +287,7 @@ statussig(notused)
 	deltat = tstart_writing - tnow + (1.0 * (tnow - tstart_writing))
 		/ blockswritten * tapesize;
 	(void)snprintf(msgbuf, sizeof(msgbuf),
-	    "%3.2f%% done at %ld KB/s, finished in %d:%02d\n",
+	    "%3.2f%% done at %d KB/s, finished in %d:%02d\n",
 	    (blockswritten * 100.0) / tapesize,
 	    (spcl.c_tapea - tapea_volume) / (tnow - tstart_volume),
 	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
@@ -811,7 +811,8 @@ doslave(cmd, slave_number)
         int slave_number;
 {
 	register int nread;
-	int nextslave, size, wrote, eot_count;
+	int nextslave, size, eot_count;
+	volatile int wrote;
 	sigset_t sigset;
 
 	/*
