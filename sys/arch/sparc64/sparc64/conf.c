@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2002/01/04 15:57:19 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 2002/01/04 16:00:34 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -109,19 +109,12 @@
 #include "ses.h"
 
 #include "usb.h"
-cdev_decl(usb);
 #include "uhid.h"
-cdev_decl(uhid);
 #include "ugen.h"
-cdev_decl(ugen);
 #include "ulpt.h"
-cdev_decl(ulpt);
 #include "urio.h"
-cdev_decl(urio);
 #include "ucom.h"
-cdev_decl(ucom);
 #include "uscanner.h"
-cdev_decl(uscanner);
 
 #include "pf.h"
 
