@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 2001/05/25 23:33:47 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 2001/05/26 03:27:58 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@ extern struct pmap kernel_pmap_;
 
 /*
  * Alternate mapping methods for pool.
- * Really simple. 0x0->0x8000000 contain 1->1 mappings of the physical
+ * Really simple. 0x0->0x80000000 contain 1->1 mappings of the physical
  * memory.
  */
 #define PMAP_MAP_POOLPAGE(pa)	((vaddr_t)pa)
