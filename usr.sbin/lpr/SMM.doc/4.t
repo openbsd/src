@@ -1,4 +1,4 @@
-.\" $OpenBSD: 4.t,v 1.2 1997/01/17 15:54:17 millert Exp $
+.\" $OpenBSD: 4.t,v 1.3 2002/05/18 23:03:04 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@ Setting up
 The 4.3BSD release comes with the necessary programs 
 installed and with the default line printer queue
 created.  If the system must be modified, the
-makefile in the directory /usr/src/usr.lib/lpr
+makefile in the directory /usr/src/usr.sbin/lpr
 should be used in recompiling and reinstalling
 the necessary programs.
 .PP
@@ -70,7 +70,7 @@ locally via a 1200 baud serial line.
 .DT
 lp|LA-180 DecWriter III:\e
 	:lp=/dev/lp:br#1200:fs#06320:\e
-	:tr=\ef:of=/usr/lib/lpf:lf=/usr/adm/lpd-errs:
+	:tr=\ef:of=/usr/libexec/lpr/lpf:lf=/var/log/lpd-errs:
 .DE
 The
 .B lp
@@ -93,7 +93,7 @@ entry specifies the filter program
 should be used for printing the files;
 more will be said about filters later.
 The last entry causes errors
-to be written to the file ``/usr/adm/lpd-errs''
+to be written to the file ``/var/log/lpd-errs''
 instead of the console.  Most errors from \fIlpd\fP are logged using
 \fIsyslogd\fP\|(8) and will not be logged in the specified file.  The
 filters should use \fIsyslogd\fP to report errors; only those that
@@ -111,7 +111,7 @@ named ``lp'' on the machine ``ucbvax''.
 .DS
 .DT
 lp|default line printer:\e
-	:lp=:rm=ucbvax:rp=lp:sd=/usr/spool/vaxlpd:
+	:lp=:rm=ucbvax:rp=lp:sd=/var/spool/output/vaxlpd:
 .DE
 The
 .B rm
@@ -124,9 +124,9 @@ the name of the printer on the remote machine is ``lp'';
 here it could be left out since this is the default value.
 The
 .B sd
-entry specifies ``/usr/spool/vaxlpd''
+entry specifies ``/var/spool/output/vaxlpd''
 as the spooling directory instead of the
-default value of ``/usr/spool/lpd''.
+default value of ``/var/spool/lpd''.
 .NH 2
 Output filters
 .PP
@@ -152,12 +152,12 @@ is the Benson-Varian.
 .DS
 .DT
 va|varian|Benson-Varian:\e
-	:lp=/dev/va0:sd=/usr/spool/vad:of=/usr/lib/vpf:\e
-	:tf=/usr/lib/rvcat:mx#2000:pl#58:px=2112:py=1700:tr=\ef:
+	:lp=/dev/va0:sd=/var/spool/output/vad:of=/usr/libexec/lpr/vpf:\e
+	:tf=/usr/libexec/lpr/rvcat:mx#2000:pl#58:px=2112:py=1700:tr=\ef:
 .DE
 The
 .B tf
-entry specifies ``/usr/lib/rvcat'' as the filter to be
+entry specifies ``/usr/libexec/lpr/rvcat'' as the filter to be
 used in printing \fItroff\fP\|(1) output.
 This filter is needed to set the device into print mode
 for text, and plot mode for printing
@@ -173,9 +173,9 @@ filter as shown below.
 .DS
 .DT
 va|varian|Benson-Varian:\e
-	:lp=/dev/va0:sd=/usr/spool/vad:of=/usr/lib/vpf:\e
-	:if=/usr/lib/vpf:tf=/usr/lib/rvcat:af=/usr/adm/vaacct:\e
-	:mx#2000:pl#58:px=2112:py=1700:tr=\ef:
+	:lp=/dev/va0:sd=/var/spool/output/vad:of=/usr/libexec/lpr/vpf:\e
+	:if=/usr/libexec/lpr/vpf:tf=/usr/libexec/lpr/rvcat:\e
+	:af=/var/log/vaacct:mx#2000:pl#58:px=2112:py=1700:tr=\ef:
 .DE
 .NH 2
 Access Control
