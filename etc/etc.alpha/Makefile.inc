@@ -1,7 +1,7 @@
 #
 #	etc.alpha/Makefile.inc -- alpha-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.5 1997/05/14 09:55:32 graichen Exp $
+#	$Id: Makefile.inc,v 1.6 1997/05/14 10:00:28 graichen Exp $
 
 .ifdef DESTDIR
 
@@ -17,9 +17,6 @@ bsd:
 	    make clean && make depend && make
 	cp ${.CURDIR}/../sys/arch/alpha/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
-
-boot:
-	cp ${DESTDIR}/usr/mdec/boot ${DESTDIR}/snapshot/boot
 
 floppy:
 	cd ${.CURDIR}/../distrib/alpha/ramdisk && \
