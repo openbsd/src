@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.data
-	.string "$OpenBSD: _setjmp.S,v 1.5 2003/01/07 22:01:29 miod Exp $"
+	.string "$OpenBSD: _setjmp.S,v 1.6 2003/08/01 07:41:35 miod Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -47,14 +47,13 @@
  * or restored.
  *
  * For m88k, we define our jmp_buf length
- * to be the size of 22 longs.  <machine/setjmp.h>
+ * to be the size of 21 longs.  <machine/setjmp.h>
  * The buffer's usage is as follows:
  *
  * jmp_buf[0]		return address
  * jmp_buf[1]		signal set (if used)
  * jmp_buf[2 to 19]	r14 to r31
- * jmp_buf[20]		'used' flag
- * jmp_buf[21]		setjmp type
+ * jmp_buf[20]		setjmp type
  *
  */
 
@@ -86,10 +85,9 @@ ENTRY(_setjmp)
 	st	r29,r2,68
 	st	r30,r2,72
 	st	r31,r2,76
-	st	r0,r2,80	/* mark environment as NOT returned (0x0) */
 	or	r4,r0,0		/* clear r4 */
 	or	r4,r0,U_SETJMP_SIG	/* r4 now contains setjmp type */
-	st	r4,r2,84	/* setjmp type to _setjmp */
+	st	r4,r2,80	/* setjmp type to _setjmp */
 	jmp.n	r1		/* return 0 */
 	 or	r2,r0,0
 		
@@ -99,10 +97,7 @@ void _longjmp(jmp_buf env, int val);
 ENTRY(_longjmp)
 	cmp	r4,r2,r0	/* check for bad environment buffer address. */
 	bb1	eq,r4,2f	/* if == 0, abort. */
-	ld	r4,r2,80	/* check if environment buffer has */
-	cmp	r4,r4,r0	/* already returned. */
-	bb1	ne,r4,2f	/* if != 0, abort. */
-	ld	r4,r2,84	/* check setjmp type. */
+	ld	r4,r2,80	/* check setjmp type. */
 	cmp	r4,r4,U_SETJMP_SIG	/* should be U_SETJMP_SIG */
 	bb1	ne,r4,2f	/* if != U_SETJMP_SIG, abort. */
 	
@@ -124,8 +119,6 @@ ENTRY(_longjmp)
 	ld	r29,r2,68
 	ld	r30,r2,72
 	ld	r31,r2,76
-	or	r4,r0,1
-	st	r4,r2,80	/* mark environment buffer as returned */
 	ld	r1,r2,0		/* restore r1 */
 	bcnd.n	ne0,r3,1f
 	 or	r2,r3,r0
