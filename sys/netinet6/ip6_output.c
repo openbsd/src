@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.36 2001/05/28 05:26:53 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.37 2001/05/28 05:27:30 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -276,7 +276,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			    sizeof(union sockaddr_union))) {
 				splx(s);
 				sproto = 0; /* mark as no-IPsec-needed */
-				DPRINTF(("ip6_output: IPsec loop detected, skipping further IPsec processing for this packet.\n"));
 				goto done_spd;
 			}
 		}
