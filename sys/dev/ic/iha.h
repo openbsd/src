@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.2 2001/02/08 17:35:05 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.3 2001/07/09 15:20:27 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -135,7 +135,6 @@ struct tcs {
 #define		      FLAG_SYNC_DONE	 0x0200 /* SDTR msg has been sent    */
 #define		      FLAG_NO_NEG_SYNC   (FLAG_NO_SYNC | FLAG_SYNC_DONE)
 #define		      FLAG_NO_NEG_WIDE   (FLAG_NO_WIDE | FLAG_WIDE_DONE)
-#define		      FLAG_NO_NEGOTIATE	 (FLAG_NO_NEG_SYNC | FLAG_NO_NEG_WIDE)
 	u_int8_t  TCS_JS_Period;
 #define		      PERIOD_WIDE_SCSI	 0x80	/* Enable Wide SCSI	     */
 #define		      PERIOD_SYXPD	 0x70	/* Synch. SCSI Xfer rate     */

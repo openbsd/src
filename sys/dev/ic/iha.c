@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.3 2001/02/20 00:47:33 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.4 2001/07/09 15:20:28 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -1054,7 +1054,9 @@ tul_scsi(sc, iot, ioh)
 	if ((pScb->SCB_Flags & SCSI_RESET) == 0) {
 		bus_space_write_1(iot, ioh, TUL_SYNCM, pTcs->TCS_JS_Period);
 
-		if ((pTcs->TCS_Flags & FLAG_NO_NEGOTIATE) == 0)
+		if (((pTcs->TCS_Flags & FLAG_NO_NEG_WIDE) == 0)
+		    ||
+		    ((pTcs->TCS_Flags & FLAG_NO_NEG_SYNC) == 0))
 			tul_select(sc, iot, ioh, pScb, SELATNSTOP);
 
 		else if (pScb->SCB_TagMsg != 0)
