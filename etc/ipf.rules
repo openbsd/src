@@ -1,0 +1,9 @@
+#
+# IP filtering rules.  See the ipf(5) man page for more
+# information on the format of this file, and /usr/share/ipf
+# for example configuration files.
+#
+# Pass all packets by default.
+#
+pass in from any to any
+pass out from any to any

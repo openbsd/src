@@ -20,12 +20,15 @@ nfs_client=NO
 gated=NO
 kerberos_server=NO
 amd=NO
+ipfilter=NO
 
 # miscellaneous other flags
 # only used if the appropriate server is marked YES above
 gated_flags=
 amd_dir=/amd			# AMD's mount directory
 amd_master=/etc/amd/master	# AMD 'master' map
+ipfilter_rules=/etc/ipf.rules	# Rules for IP packet filtering
+ipmon_flags=-s			# To disable logging, use ipmon_flags=NO
 
 # /etc/myname contains my symbolic name
 #
@@ -33,6 +36,15 @@ hostname=`cat /etc/myname`
 hostname $hostname
 if [ -f /etc/defaultdomain ]; then
 	domainname `cat /etc/defaultdomain`
+fi
+
+# Configure the IP filter before configuring network interfaces
+#
+if [ X"${ipfilter}" = X"YES" -a -f "${ipfilter_rules}" ]; then
+	echo 'configuring IP filter'
+	ipf -Fa -f ${ipfilter_rules} -E
+else
+	ipfilter=NO
 fi
 
 # configure all of the interfaces which we know about.

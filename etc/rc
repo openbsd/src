@@ -80,6 +80,10 @@ echo 'starting network'
 mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
 
+if [ X"${ipfilter}" = X"YES" -a X"${ipmon_flags}" != X"NO" ]; then
+	ipmon ${ipmon_flags} &
+fi
+
 # clean up left-over files
 rm -f /etc/nologin
 rm -f /var/spool/lock/LCK.*
