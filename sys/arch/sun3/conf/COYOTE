@@ -1,5 +1,5 @@
 #
-# $OpenBSD: COYOTE,v 1.9 1997/07/25 04:40:48 kstailey Exp $
+# $OpenBSD: COYOTE,v 1.10 1997/09/26 16:47:42 kstailey Exp $
 #
 
 #
@@ -35,7 +35,7 @@ option	 	KERNFS		# /kern
 #option 	NULLFS		# loopback file system
 option	 	PROCFS		# /proc
 #option 	UNION		# union file system (merged directories)
-#option 	PORTAL		# union file system (run programs via open(2))
+#option 	PORTAL		# dynamically created filesystem objects
 
 # Networking options
 option	 	INET		# IP prototol stack support
