@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.6 1997/07/23 02:50:55 denny Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.7 1999/02/27 21:22:19 deraadt Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.6 1997/07/23 02:50:55 denny Exp $";
+static char *rcsid = "$OpenBSD: mbuf.c,v 1.7 1999/02/27 21:22:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,8 @@ mbpr(mbaddr)
 	totmem = totmbufs * MSIZE + mbstat.m_clusters * MCLBYTES;
 	totfree = mbstat.m_clfree * MCLBYTES;
 	printf("%u Kbytes allocated to network (%d%% in use)\n",
-		totmem / 1024, (totmem - totfree) * 100 / totmem);
+	    totmem / 1024,
+	    totmem ? (totmem - totfree) * 100 / totmem : 100);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);
