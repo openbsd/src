@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.152 2000/05/07 17:08:26 millert Exp $
+#	$OpenBSD: install.sub,v 1.153 2000/05/08 21:28:03 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1336,20 +1336,27 @@ done
 }
 
 install_cdrom() {
-local _drive _partition_range _partition _fstype _directory
+local _drive _range _part _fstype _directory _n
 
 # Get the cdrom device info
+_CDDEVS=`md_get_cddevs`
+if [ "X${_CDDEVS}" = X"" ]; then
+	echo "No CD-ROM devices were found.  Aborting."
+	return
+fi
+
 cat << __EOT
 
-The following CD-ROM devices are installed on your system; please select
-the CD-ROM device containing the partition with the installation sets:
+The following CD-ROM devices are installed on your system.
+Please make sure the CD is in the CD-ROM drive and select
+the device containing the CD with the installation sets:
+
+$_CDDEVS
 
 __EOT
-_CDDEVS=`md_get_cddevs`
-echo    "$_CDDEVS"
-echo
-echo -n	"Which is the CD-ROM with the installation media? [abort] "
-getresp "abort"
+_drive=`echo $_CDDEVS | cutword 1`
+echo -n	"Which CD-ROM contains the installation media? [$_drive] "
+getresp "$_drive"
 case "$resp" in
 	abort)
 		echo "Aborting."
@@ -1368,51 +1375,75 @@ case "$resp" in
 		;;
 esac
 
-# Get partition
-_partition_range=`md_get_partition_range`
-resp=		# force one iteration
-while [ "X${resp}" = X"" ]; do
-	echo -n "CD-ROM partition to mount (normally \"c\")? [c] "
-	getresp "c"
-	case "$resp" in
-		$_partition_range)
-			_partition=$resp
-			;;
-
-		*)
-			echo "Invalid response: $resp"
-			resp=		# force loop to repeat
-			;;
-	esac
+# If it is an ISO9660 CD-ROM, we don't need to ask any other questions
+_n=0
+until disklabel $_drive >/tmp/label.$_drive 2>&1; do
+	# Try up to 6 times to access the CD
+	if egrep -q '(Input/output error)|(sector size 0)' /tmp/label.$_drive; then
+		_n=$(( $_n + 1 ))
+		if [ _n -le 5 ]; then
+			echo "I/O error accessing $_drive; retrying"
+			sleep 10
+		else
+			echo "Cannot access $_drive.  Aborting."
+			return
+		fi
+	else
+		break
+	fi
 done
+echo
+if grep -q '^ *c: .*ISO9660' /tmp/label.$_drive; then
+	_fstype=cd9660
+	_part=c
+else
+	# Get partition from user
+	_range=`md_get_partition_range`
+	resp=		# force one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo -n 'CD-ROM partition to mount (normally "c")? [c] '
+		getresp c
+		case "$resp" in
+			$_range)
+				_part=$resp
+				;;
 
-# Ask for filesystem type
-cat << __EOT
+			*)
+				echo "Invalid response: $resp"
+				resp=		# force loop to repeat
+				;;
+		esac
+	done
+
+	# Ask for filesystem type
+	cat << __EOT
 
 There are two CD-ROM filesystem types currently supported by this program:
 cd9660		ISO-9660
 ffs		Berkeley Fast Filesystem
 
 __EOT
-resp=		# force one iteration
-while [ "X${resp}" = X"" ]; do
-	echo -n "Which filesystem type (Official OpenBSD CD-ROM is cd9660)? [cd9660] "
-	getresp "cd9660"
-	case "$resp" in
-		cd9660|ffs)
-			_fstype=$resp
-			;;
+	resp=		# force one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo -n "Which filesystem type? [cd9660] "
+		getresp "cd9660"
+		case "$resp" in
+			cd9660|ffs)
+				_fstype=$resp
+				;;
 
-		*)
-			echo "Invalid response: $resp"
-			resp=		# force loop to repeat
-			;;
-	esac
-done
+			*)
+				echo "Invalid response: $resp"
+				resp=		# force loop to repeat
+				;;
+		esac
+	done
+fi
+rm -f /tmp/label.$_drive
 
 # Mount the CD-ROM
 if ! mount -t ${_fstype} -o ro \
-    /dev/${_drive}${_partition} /mnt2 ; then
+    /dev/${_drive}${_part} /mnt2 ; then
 	echo "Cannot mount CD-ROM drive.  Aborting."
 	return
 fi
