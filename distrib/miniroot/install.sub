@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.22 1997/05/14 16:26:15 millert Exp $
+#	$OpenBSD: install.sub,v 1.23 1997/05/14 17:08:11 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -705,6 +705,8 @@ __install_ftp_1
 			*)	;;
 		esac
 		# *.tar.gz and *.tgz are possible sets
+		_sets=""
+		_kernel=""
 		for _f in `echo "${_ftp_file_list}" | sed 's/^.*\///'` ; do
 			case "$_f" in
 			    *.tar.gz|*.tgz)	_sets="$_sets ${_f}"
