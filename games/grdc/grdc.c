@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.7 2000/01/21 07:10:39 pjanzen Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.8 2000/01/24 07:53:57 pjanzen Exp $	*/
 /*
  * Grand digital clock for curses compatible terminals
  * Usage: grdc [-s] [n]   -- run for n seconds (default infinity)
@@ -8,22 +8,21 @@
  * 10-18-89 added signal handling
  */
 
-#include <time.h>
-#include <signal.h>
+#include <sys/types.h>
 #include <curses.h>
+#include <limits.h>
+#include <signal.h>
 #include <stdlib.h>
-#ifndef NONPOSIX
+#include <stdio.h>
+#include <time.h>
 #include <unistd.h>
-#endif
-#include <sys/time.h>
 
 #define YBASE	10
 #define XBASE	10
 #define XLENGTH 58
 #define YDEPTH  7
 
-/* it won't be */
-struct timespec now; /* yeah! */
+struct timespec now;
 struct tm *tm;
 
 short disp[11] = {
@@ -37,9 +36,10 @@ int sigtermed=0;
 
 int hascolor = 0;
 
-void set(int, int);
-void standt(int);
-void movto(int, int);
+void set __P((int, int));
+void standt __P((int));
+void movto __P((int, int));
+void usage __P((void));
 
 void
 sighndl(signo)
@@ -58,11 +58,39 @@ main(argc, argv)
 	int n = 0;
 	struct timeval nowtv;
 	struct timespec delay;
-	char *hc;
+	time_t then;
+	char *ep;
 
 	/* revoke privs */
 	setegid(getgid());
 	setgid(getgid());
+
+	scrol = 0;
+	while ((i = getopt(argc, argv, "sh")) != -1)
+		switch (i) {
+		case 's':
+			scrol = 1;
+			break;
+		case 'h':
+		case '?':
+		default:
+			usage();
+		}
+	argv += optind;
+	argc -= optind;
+
+	if (argc > 1)
+		usage();
+	if (argc == 1) {
+		t = strtol(*argv, &ep, 10);
+		if ((*argv)[0] == '\0' || *ep != '\0')
+			usage();
+		if (t < 1 || t >= INT_MAX) {
+			fprintf(stderr, "number of seconds is out of range");
+			usage();
+		}
+		n = t;
+	}
 
 	initscr();
 
@@ -83,18 +111,9 @@ main(argc, argv)
 		attrset(COLOR_PAIR(2));
 	}
 
-	if ((hc = tigetstr("civis")) != 0 && hc != (char *)-1)
-		putp(hc);
-
+	curs_set(0);
 	clear();
 	refresh();
-	while(--argc > 0) {
-		if(**++argv == '-')
-			scrol = 1;
-		else
-			n = atoi(*argv);
-	}
-
 	if(hascolor) {
 		attrset(COLOR_PAIR(3));
 
@@ -116,6 +135,7 @@ main(argc, argv)
 	}
 	gettimeofday(&nowtv, NULL);
 	TIMEVAL_TO_TIMESPEC(&nowtv, &now);
+	then = now.tv_sec - 1;
 	do {
 		mask = 0;
 		tm = localtime(&now.tv_sec);
@@ -161,15 +181,21 @@ main(argc, argv)
 		refresh();
 		gettimeofday(&nowtv, NULL);
 		TIMEVAL_TO_TIMESPEC(&nowtv, &now);
-		delay.tv_sec = 0;
+		/* On some systems nanosleep() can return early, before a full
+		 * second has passed according to gettimeofday().
+		 */
+		if (now.tv_sec == then) {
+			delay.tv_sec = 1;
+			now.tv_sec++;
+		} else
+			delay.tv_sec = 0;
 		delay.tv_nsec = (1000000000 - now.tv_nsec);
 		nanosleep(&delay, NULL);
+		then = now.tv_sec;
 		now.tv_sec++;
 
 		if (sigtermed) {
 			standend();
-			if ((hc = tigetstr("cnorm")) > 0 && hc != (char *)-1)
-				putp(hc);
 			clear();
 			refresh();
 			endwin();
@@ -178,8 +204,6 @@ main(argc, argv)
 		}
 	} while(--n);
 	standend();
-	if ((hc = tigetstr("cnorm")) > 0 && hc != (char *)-1)
-		putp(hc);
 	clear();
 	refresh();
 	endwin();
@@ -222,4 +246,11 @@ void
 movto(int line, int col)
 {
 	move(line, col);
+}
+
+void
+usage()
+{
+	(void)fprintf(stderr, "usage: grdc [-s] [number_of_seconds]\n");
+	exit(1);
 }
