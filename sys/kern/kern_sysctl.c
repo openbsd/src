@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.66 2002/06/08 22:24:47 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.67 2002/06/08 23:17:22 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -276,6 +276,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxproc));
 	case KERN_MAXFILES:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxfiles));
+	case KERN_NFILES:
+		return (sysctl_rdint(oldp, oldlenp, newp, nfiles));
 	case KERN_ARGMAX:
 		return (sysctl_rdint(oldp, oldlenp, newp, ARG_MAX));
 	case KERN_NSELCOLL:
