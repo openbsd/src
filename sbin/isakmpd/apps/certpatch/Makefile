@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2001/01/27 12:03:37 niklas Exp $
+#	$OpenBSD: Makefile,v 1.6 2001/04/09 21:50:04 ho Exp $
 #	$EOM: Makefile,v 1.6 2000/03/28 21:22:06 ho Exp $
 
 #
@@ -37,7 +37,7 @@
 
 PROG=		certpatch
 SRCS=		certpatch.c
-BINDIR=		/usr/sbin
+BINDIR?=	/usr/sbin
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
