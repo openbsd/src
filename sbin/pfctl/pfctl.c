@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.179 2003/07/03 09:13:06 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.180 2003/07/03 21:09:13 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -914,6 +914,9 @@ int
 pfctl_rules(int dev, char *filename, int opts, char *anchorname,
     char *rulesetname)
 {
+#define ERR(x) do { warn(x); goto _error; } while(0)
+#define ERRX(x) do { warnx(x); goto _error; } while(0)
+
 	FILE *fin;
 	struct pfioc_rule	pr[PF_RULESET_MAX];
 	struct pfioc_altq	pa;
@@ -944,29 +947,31 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
 			pr[PF_RULESET_NAT].rule.action = PF_NAT;
 			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_NAT]))
-				err(1, "DIOCBEGINRULES");
+				ERR("DIOCBEGINRULES");
 			pr[PF_RULESET_RDR].rule.action = PF_RDR;
 			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_RDR]))
-				err(1, "DIOCBEGINRULES");
+				ERR("DIOCBEGINRULES");
 			pr[PF_RULESET_BINAT].rule.action = PF_BINAT;
 			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_BINAT]))
-				err(1, "DIOCBEGINRULES");
+				ERR("DIOCBEGINRULES");
 		}
 		if (((altqsupport && (loadopt &
 		    (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0)) &&
 		    ioctl(dev, DIOCBEGINALTQS, &pa.ticket)) {
-			err(1, "DIOCBEGINALTQS");
+			ERR("DIOCBEGINALTQS");
 		}
 		if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
 			pr[PF_RULESET_SCRUB].rule.action = PF_SCRUB;
 			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_SCRUB]))
-				err(1, "DIOCBEGINRULES");
+				ERR("DIOCBEGINRULES");
 			pr[PF_RULESET_FILTER].rule.action = PF_PASS;
 			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_FILTER]))
-				err(1, "DIOCBEGINRULES");
+				ERR("DIOCBEGINRULES");
 		}
-		if (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL))
-			pfctl_begin_table();
+		if (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) {
+		        if (pfr_ina_begin(&pf.tticket, NULL, 0) != 0)
+				ERR("begin table");
+		}
 	}
 	/* fill in callback data */
 	pf.dev = dev;
@@ -981,41 +986,44 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	pf.anchor = anchorname;
 	pf.ruleset = rulesetname;
 	if (parse_rules(fin, &pf) < 0)
-		errx(1, "Syntax error in config file: pf rules not loaded");
+		ERRX("Syntax error in config file: pf rules not loaded");
 	if ((altqsupport && (loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0))
 		if (check_commit_altq(dev, opts) != 0)
-			errx(1, "errors in altq config");
+			ERRX("errors in altq config");
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
 			pr[PF_RULESET_NAT].rule.action = PF_NAT;
 			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_NAT]) &&
 			    (errno != EINVAL || pf.rule_nr))
-				err(1, "DIOCCOMMITRULES NAT");
+				ERR("DIOCCOMMITRULES NAT");
 			pr[PF_RULESET_RDR].rule.action = PF_RDR;
 			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_RDR]) &&
 			    (errno != EINVAL || pf.rule_nr))
-				err(1, "DIOCCOMMITRULES RDR");
+				ERR("DIOCCOMMITRULES RDR");
 			pr[PF_RULESET_BINAT].rule.action = PF_BINAT;
 			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_BINAT]) &&
 			    (errno != EINVAL || pf.rule_nr))
-				err(1, "DIOCCOMMITRULES BINAT");
+				ERR("DIOCCOMMITRULES BINAT");
 		}
 		if (((altqsupport && (loadopt &
 		    (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0)) &&
 		    ioctl(dev, DIOCCOMMITALTQS, &pa.ticket))
-			err(1, "DIOCCOMMITALTQS");
+			ERR("DIOCCOMMITALTQS");
 		if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
 			pr[PF_RULESET_SCRUB].rule.action = PF_SCRUB;
 			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_SCRUB]) &&
 			    (errno != EINVAL || pf.rule_nr))
-				err(1, "DIOCCOMMITRULES SCRUB");
+				ERR("DIOCCOMMITRULES SCRUB");
 			pr[PF_RULESET_FILTER].rule.action = PF_PASS;
 			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_FILTER]) &&
 			    (errno != EINVAL || pf.rule_nr))
-				err(1, "DIOCCOMMITRULES FILTER");
+				ERR("DIOCCOMMITRULES FILTER");
 		}
-		if (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL))
-			pfctl_commit_table();
+		if (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) {
+			if (pfr_ina_commit(pf.tticket, NULL, NULL, 0))
+				ERR("commit table");
+			pf.tdirty = 0;
+		}
 	}
 	if (fin != stdin)
 		fclose(fin);
@@ -1023,9 +1031,17 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	/* process "load anchor" directives */
 	if (!anchorname[0] && !rulesetname[0])
 		if (pfctl_load_anchors(dev, opts) == -1)
-			return (-1);
+			ERRX("load anchors");
 
 	return (0);
+
+_error:
+	if (pf.tdirty) /* cleanup kernel leftover */
+		pfr_ina_begin(NULL, NULL, 0);
+	exit(1);
+
+#undef ERR
+#undef ERRX
 }
 
 int

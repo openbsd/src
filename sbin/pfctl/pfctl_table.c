@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.46 2003/07/03 09:13:06 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.47 2003/07/03 21:09:13 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -60,11 +60,7 @@ static int	load_addr(struct pfr_buffer *, int, char *[], char *, int);
 static void	print_addrx(struct pfr_addr *, struct pfr_addr *, int);
 static void	print_astats(struct pfr_astats *, int);
 static void	radix_perror(void);
-static void	inactive_cleanup(void);
 static void	xprintf(int, const char *, ...);
-
-static int	 ticket, inactive;
-extern char	*__progname;
 
 static const char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
 	{ "In/Block:",	"In/Pass:",	"In/XPass:" },
@@ -441,27 +437,14 @@ print_astats(struct pfr_astats *as, int dns)
 void
 radix_perror(void)
 {
+	extern char *__progname;
 	fprintf(stderr, "%s: %s.\n", __progname, pfr_strerror(errno));
-}
-
-void
-pfctl_begin_table(void)
-{
-	static int hookreg;
-
-	if (pfr_ina_begin(&ticket, NULL, 0) != 0) {
-		radix_perror();
-		exit(1);
-	}
-	if (!hookreg) {
-		atexit(inactive_cleanup);
-		hookreg = 1;
-	}
 }
 
 int
 pfctl_define_table(char *name, int flags, int addrs, int noaction,
-    const char *anchor, const char *ruleset, struct pfr_buffer *ab)
+    const char *anchor, const char *ruleset, struct pfr_buffer *ab,
+    int ticket)
 {
 	struct pfr_table tbl;
 	int rv = 0;
@@ -477,7 +460,6 @@ pfctl_define_table(char *name, int flags, int addrs, int noaction,
 			errx(1, "pfctl_define_table: strlcpy");
 		tbl.pfrt_flags = flags;
 
-		inactive = 1;
 		if (pfr_ina_define(&tbl, ab->pfrb_caddr, ab->pfrb_size, NULL,
 		    NULL, ticket, addrs ? PFR_FLAG_ADDRSTOO : 0) != 0) {
 			rv = -1;
@@ -485,23 +467,6 @@ pfctl_define_table(char *name, int flags, int addrs, int noaction,
 	}
 	pfr_buf_clear(ab);
 	return (rv);
-}
-
-void
-pfctl_commit_table(void)
-{
-	if (pfr_ina_commit(ticket, NULL, NULL, 0) != 0) {
-		radix_perror();
-		exit(1);
-	}
-	inactive = 0;
-}
-
-void
-inactive_cleanup(void)
-{
-	if (inactive)
-		pfr_ina_begin(NULL, NULL, 0);
 }
 
 void
