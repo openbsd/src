@@ -1,7 +1,7 @@
-/*	$OpenBSD: lofnvar.h,v 1.6 2002/05/08 19:09:25 jason Exp $	*/
+/*	$OpenBSD: lofnvar.h,v 1.7 2002/05/09 19:13:09 jason Exp $	*/
 
 /*
- * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
+ * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,10 +44,19 @@ struct lofn_softc {
 	bus_space_handle_t	sc_sh;
 	bus_space_tag_t		sc_st;
 	bus_dma_tag_t		sc_dmat;
-	u_int32_t		sc_rngbuf[LOFN_RNGBUF_SIZE];
+	u_int32_t		sc_rngbuf[LOFN_RNGBUF_SIZE], sc_ier;
 	int32_t			sc_cid;
 	union lofn_reg		sc_tmp;
 	union lofn_reg		sc_zero;
+	SIMPLEQ_HEAD(,lofn_q)	sc_queue;
+	struct lofn_q		*sc_current;
+};
+
+struct lofn_q {
+	SIMPLEQ_ENTRY(lofn_q) q_next;
+	int (*q_start)(struct lofn_softc *, struct lofn_q *);
+	void (*q_finish)(struct lofn_softc *, struct lofn_q *);
+	struct cryptkop *q_krp;
 };
 
 #define	READ_REG(sc,r)		\
