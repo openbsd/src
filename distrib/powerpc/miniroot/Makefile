@@ -34,7 +34,7 @@ elfrdsetroot:	${TOP}//elfrdsetroot.c
 	${HOSTCC} -o elfrdsetroot ${TOP}/elfrdsetroot.c
 
 setroot: ${IMAGE} bsd elfrdsetroot
-	elfrdsetroot bsd < ${IMAGE}
+	${.OBJDIR}/elfrdsetroot bsd < ${IMAGE}
 
 bsd:	${KERNEL}
 	cp ${KERNEL} bsd
