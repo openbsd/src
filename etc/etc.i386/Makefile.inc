@@ -1,14 +1,21 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2004/03/19 18:12:02 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2004/06/13 22:05:14 deraadt Exp $
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 
 .ifdef DESTDIR
-snap_md: bsd notes bootblocks distrib
+snap_md: bsd bsd.mp notes bootblocks distrib 
 	cp ${.CURDIR}/../sys/arch/i386/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
+	cp ${.CURDIR}/../sys/arch/i386/compile/GENERIC.MP/bsd \
+	    ${DESTDIR}/snapshot/bsd.mp
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/i386/compile/GENERIC && \
+	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+
+bsd.mp:
+	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERIC.MP
+	cd ${.CURDIR}/../sys/arch/i386/compile/GENERIC.MP && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 notes:
