@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.4 1999/07/05 21:01:19 rahnds Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.5 2001/06/24 05:16:09 drahn Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -76,5 +76,6 @@ struct firmware {
 #endif
 };
 extern  struct firmware *fw;
+void ofwconprobe(void);
 
 #endif	/* _MACHINE_POWERPC_H_ */
