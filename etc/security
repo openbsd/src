@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.15 1996/12/06 17:51:49 millert Exp $
+#	$OpenBSD: security,v 1.16 1996/12/06 18:12:57 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -43,7 +43,7 @@ awk -F: '{
 		printf("Login %s has more than 8 characters.\n", $1);
 	if ($2 == "")
 		printf("Login %s has no password.\n", $1);
-	if ((length($2) != 13 && ($10 ~ /.*sh$/ || $10 == "")) && system("for i in .rhosts .shosts .klogin ; do test -s "$9"/$i -a ! -O "$9"/$i && exit 1 ; done ; exit 0") != 0)
+	if ((length($2) != 13 && ($10 ~ /.*sh$/ || $10 == "")) && system("if grep -q \"^"$1" \" /etc/skeykeys || test -d "$9"/.ssh -a ! -O "$9"/.ssh ; then exit 1 ; fi ; for i in .rhosts .shosts .klogin ; do test -s "$9"/$i -a ! -O "$9"/$i && exit 1 ; done ; exit 0") != 0)
 		printf("Login %s is off but still has a valid shell.\n", $1);
 	if ($3 == 0 && $1 != "root")
 		printf("Login %s has a user id of 0.\n", $1);
