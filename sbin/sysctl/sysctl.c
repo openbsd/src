@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.108 2004/02/10 03:52:53 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.109 2004/02/10 19:53:33 grange Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.108 2004/02/10 03:52:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.109 2004/02/10 19:53:33 grange Exp $";
 #endif
 #endif /* not lint */
 
@@ -888,7 +888,7 @@ parse(char *string, int flags)
 	if (special & SENSORS) {
 		struct sensor *s = (struct sensor *)buf;
 
-		if (size > 0) {
+		if (size > 0 && (s->flags & SENSOR_FINVALID) == 0) {
 			if (!nflag)
 				printf("%s%s", string, equ);
 			printf("%s, %s, ", s->device, s->desc);

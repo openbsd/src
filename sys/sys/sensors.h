@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.3 2004/02/07 18:20:22 grange Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.4 2004/02/10 19:53:34 grange Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -52,6 +52,8 @@ struct sensor {
 	char desc[32];			/* sensor description */
 	int64_t value;			/* current value */
 	u_int rfact;			/* resistor factor */
+	int flags;			/* sensor flags */
+#define SENSOR_FINVALID		0x0001	/* sensor is invalid */
 };
 
 SLIST_HEAD(sensors_head, sensor);
