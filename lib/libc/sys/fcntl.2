@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.20 2003/03/06 20:04:06 jmc Exp $
+.\"	$OpenBSD: fcntl.2,v 1.21 2003/03/28 20:05:11 millert Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -117,11 +117,15 @@ is either 0 or
 .Dv FD_CLOEXEC ,
 as described above.
 .It Dv F_GETFL
-Get descriptor status flags, as described below
+Get file status flags associated with the file descriptor
+.Fa fd ,
+as described below
 .Fa ( arg
 is ignored).
 .It Dv F_SETFL
-Set descriptor status flags to
+Set file status flags associated with the file descriptor
+.Fa fd
+to
 .Fa arg
 (interpreted as an
 .Li int ) .
