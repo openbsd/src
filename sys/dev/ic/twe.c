@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.15 2001/12/06 09:30:31 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.16 2002/01/31 23:15:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Michael Shalayeff.  All rights reserved.
@@ -672,13 +672,13 @@ twe_done(sc, idx)
 	lock = TWE_LOCK_TWE(sc);
 	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 	twe_put_ccb(ccb);
-	TWE_UNLOCK_TWE(sc, lock);
 
 	if (xs) {
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
 	}
+	TWE_UNLOCK_TWE(sc, lock);
 
 	return 0;
 }
@@ -855,12 +855,12 @@ twe_scsi_cmd(xs)
 			}
 			if (blockno >= sc->sc_hdr[target].hd_size ||
 			    blockno + blockcnt > sc->sc_hdr[target].hd_size) {
-				TWE_UNLOCK_TWE(sc, lock);
 				printf("%s: out of bounds %u-%u >= %u\n",
 				    sc->sc_dev.dv_xname, blockno, blockcnt,
 				    sc->sc_hdr[target].hd_size);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsi_done(xs);
+				TWE_UNLOCK_TWE(sc, lock);
 				return (COMPLETE);
 			}
 		}
@@ -874,9 +874,9 @@ twe_scsi_cmd(xs)
 		}
 
 		if ((ccb = twe_get_ccb(sc)) == NULL) {
-			TWE_UNLOCK_TWE(sc, lock);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
+			TWE_UNLOCK_TWE(sc, lock);
 			return (COMPLETE);
 		}
 
