@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.6 1998/06/28 04:35:17 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.7 1998/09/09 04:48:16 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -112,6 +112,14 @@ ofrootfound()
 	probe.phandle = node;
 	if (!config_rootfound("ofroot", &probe))
 		panic("ofroot not configured");
+	if (system_type == OFWMACH) {
+		pending_int_f = ofw_do_pending_int;
+		ofw_intr_init();
+	}
+}
+void
+ofw_intr_establish()
+{
 	if (system_type == OFWMACH) {
 		pending_int_f = ofw_do_pending_int;
 		ofw_intr_init();
