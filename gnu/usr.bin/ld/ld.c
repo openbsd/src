@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.19 2001/10/30 16:47:32 deraadt Exp $	*/
+/*	$OpenBSD: ld.c,v 1.20 2002/02/26 06:26:38 fgsch Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -3660,7 +3660,7 @@ printf("writesym(#%d): %s, type %x\n", syms_written, sp->name, sp->defined);
 
 	if (symtab_offset + symtab_len != strtab_offset)
 		errx(1,
-		"internal error: inconsistent symbol table length: %d vs %s",
+		"internal error: inconsistent symbol table length: %d vs %d",
 		symtab_offset + symtab_len, strtab_offset);
 
 	if (fseek(outstream, strtab_offset, SEEK_SET) != 0)
