@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.41 2004/11/18 14:10:36 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.42 2004/11/18 14:30:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -245,7 +245,7 @@ fatal_ensure(const char *file, int line, const char *cond)
 }
 
 void
-log_statechange(const struct peer *peer, enum session_state nstate,
+log_statechange(struct peer *peer, enum session_state nstate,
     enum session_events event)
 {
 	char	*p;

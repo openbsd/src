@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.66 2004/11/18 14:10:36 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.67 2004/11/18 14:30:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -199,7 +199,7 @@ int		 imsg_compose_parent(int, pid_t, void *, u_int16_t);
 int		 imsg_compose_rde(int, pid_t, void *, u_int16_t);
 
 /* log.c */
-void		 log_statechange(const struct peer *, enum session_state,
+void		 log_statechange(struct peer *, enum session_state,
 		    enum session_events);
 void		 log_notification(const struct peer *, u_int8_t, u_int8_t,
 		    u_char *, u_int16_t);
