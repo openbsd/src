@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.84 2003/10/11 22:08:35 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.85 2003/10/11 23:54:17 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1192,7 +1192,7 @@ pmap_create(void)
 	}
 #endif
 
-	/* memory for page tables should be CACHE DISABLED */
+	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
 	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_WT | CACHE_GLOBAL);
 
@@ -1831,7 +1831,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 	if (pmap_extract(kernel_pmap, pdt_vaddr, &pdt_paddr) == FALSE)
 		panic("pmap_expand: pmap_extract failed");
 
-	/* memory for page tables should be CACHE DISABLED */
+	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
 	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_WT | CACHE_GLOBAL);
 
