@@ -644,8 +644,6 @@
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sparc64
-./usr/share/man/cat3/strcat.0
-./usr/share/man/cat3/strcpy.0
 ./usr/share/man/cat3/vax
 ./usr/share/man/cat3p
 ./usr/share/man/cat3p/AnyDBM_File.0

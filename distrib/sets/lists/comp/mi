@@ -2789,6 +2789,8 @@
 ./usr/share/man/cat3/baudrate.0
 ./usr/share/man/cat3/bcmp.0
 ./usr/share/man/cat3/bcopy.0
+./usr/share/man/cat3/bcrypt.0
+./usr/share/man/cat3/bcrypt_gensalt.0
 ./usr/share/man/cat3/beep.0
 ./usr/share/man/cat3/betoh16.0
 ./usr/share/man/cat3/betoh32.0
@@ -3770,6 +3772,7 @@
 ./usr/share/man/cat3/mcprint.0
 ./usr/share/man/cat3/md4.0
 ./usr/share/man/cat3/md5.0
+./usr/share/man/cat3/md5crypt.0
 ./usr/share/man/cat3/memccpy.0
 ./usr/share/man/cat3/memchr.0
 ./usr/share/man/cat3/memcmp.0
@@ -4391,9 +4394,11 @@
 ./usr/share/man/cat3/stdio.0
 ./usr/share/man/cat3/store.0
 ./usr/share/man/cat3/strcasecmp.0
+./usr/share/man/cat3/strcat.0
 ./usr/share/man/cat3/strchr.0
 ./usr/share/man/cat3/strcmp.0
 ./usr/share/man/cat3/strcoll.0
+./usr/share/man/cat3/strcpy.0
 ./usr/share/man/cat3/strcspn.0
 ./usr/share/man/cat3/strdup.0
 ./usr/share/man/cat3/strerror.0
