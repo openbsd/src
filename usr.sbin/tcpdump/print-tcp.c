@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.9 1999/11/26 18:16:55 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.10 2000/01/16 11:43:58 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -381,6 +381,19 @@ tcp_print(register const u_char *bp, register u_int length,
 		}
 		putchar('>');
 	}
+
+	if (length <= 0)
+		return;
+
+	/*
+	 * Decode payload if necessary.
+	*/
+#ifndef BGP_PORT
+#define BGP_PORT	179
+#endif
+	bp += (tp->th_off * 4);
+	if (sport == BGP_PORT || dport == BGP_PORT)
+		bgp_print(bp, length);
 	return;
 bad:
 	fputs("[bad opt]", stdout);
