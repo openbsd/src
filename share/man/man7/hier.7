@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.53 2005/01/20 17:03:21 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.54 2005/02/25 10:22:31 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -54,6 +54,11 @@ system libraries to run.
 .It /bsd
 Pure kernel executable (the operating system loaded into memory
 at boot-time).
+.It /bsd.rd
+Installation kernel.
+The built-in RAM disk contains utilities which can be run
+without an external file system, so this kernel is useful
+for limited system maintenance too.
 .It /dev/
 Block and character device files.
 .Pp
