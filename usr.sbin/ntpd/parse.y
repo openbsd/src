@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2004/06/17 19:17:48 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2004/07/05 07:57:52 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -138,11 +138,6 @@ conf_main	:  LISTEN ON address	{
 		| SERVER address	{
 			struct ntp_peer		*p;
 
-			if (!TAILQ_EMPTY(&conf->ntp_peers)) {
-				yyerror("king bula sez: only on remote server "
-				    "supported for now");
-				YYERROR;
-			}
 			if ((p = calloc(1, sizeof(struct listen_addr))) == NULL)
 				fatal("parse conf_mail server on calloc");
 			memcpy(&p->ss, &$2, sizeof(struct sockaddr_storage));
