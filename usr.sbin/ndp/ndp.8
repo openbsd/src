@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ndp.8,v 1.9 2001/02/08 08:35:17 itojun Exp $
-.\"	$KAME: ndp.8,v 1.15 2001/02/08 07:17:03 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.10 2002/05/29 08:05:39 itojun Exp $
+.\"	$KAME: ndp.8,v 1.20 2002/05/29 07:37:51 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -62,7 +62,7 @@
 .Nm ndp
 .Fl i
 .Ar interface
-.Op Ar flags...
+.Op Ar flags ...
 .Nm ndp
 .Fl p
 .Nm ndp
@@ -87,6 +87,35 @@ used by Neighbor Discovery Protocol (NDP).
 .Bl -tag -width Ds
 .It Fl a
 Dump the currently existing NDP entries.
+The following information will be printed:
+.Bl -tag -width Ds
+.It Neighbor
+IPv6 address of the neighbor.
+.It Linklayer Address
+Linklayer address of the neighbor.
+It could be 
+.Dq Li (incomplete)
+when the address is not available.
+.It Netif
+Network interface associated with the neighbor cache entry.
+.It Expire
+The time until the expiry of the entry.
+The entry could become
+.Dq Li permanent
+when it will never expire.
+.It S
+State of the neighbor cache entry, in a single letter.
+They are:
+Nostate, Waitdelete, Incomplete, Reachable, Stale, Delay and Probe.
+.Dq Li ?
+indicates unknown state, which should never happen.
+.It Flgs
+Flags on the neighbor cache entry, in a single letter.
+They are: Router, proxy neighbor advertisement
+.Pq Dq p .
+The field could be followed by a decimal number,
+which means the number of NS probes the node have sent during the current state.
+.El
 .It Fl A Ar wait
 Repeat
 .Fl a
@@ -115,13 +144,14 @@ is specified, the interface will be used as the default.
 If a special keyword
 .Ic delete
 is specified, the current default interface will be deleted from the kernel.
-.It Fl i Ar interface Op Ar flags...
+.It Fl i Ar interface Op Ar flags ...
 View ND information for the specified interface.
 If additional arguments
 .Ar flags
 are given,
 .Nm
 sets or clears the specified flags for the interface.
+Each flag should be separated by white spaces or tab characters.
 Possible flags are as follows.
 All of the flags can begin with the
 special character
