@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file64.c,v 1.5 2003/08/02 18:37:06 deraadt Exp $	*/
+/*	$OpenBSD: linux_file64.c,v 1.6 2003/08/03 18:08:03 deraadt Exp $	*/
 /*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
 
 /*-
@@ -221,11 +221,15 @@ linux_sys_truncate64(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(off_t) length;
 	} */ *uap = v;
+	struct sys_truncate_args ta;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_truncate(p, uap, retval);
+	SCARG(&ta, path) = SCARG(uap, path);
+	SCARG(&ta, length) = SCARG(uap, length);
+
+	return sys_truncate(p, &ta, retval);
 }
 
 /*
