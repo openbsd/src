@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 1997/01/24 01:35:48 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 1997/02/21 05:49:29 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.129 1997/01/09 07:20:46 scottr Exp $	*/
 
 /*
@@ -507,11 +507,12 @@ struct sigstate {
  */
 struct sigframe {
 	int     sf_signum;	/* signo for handler */
-	int     sf_code;	/* additional info for handler */
+	siginfo_t	*sf_sip;
 	struct sigcontext *sf_scp;	/* context ptr for handler */
 	sig_t   sf_handler;	/* handler addr for u_sigc */
 	struct sigstate sf_state;	/* state of the hardware */
 	struct sigcontext sf_sc;/* actual context */
+	siginfo_t	sf_si;
 };
 #ifdef DEBUG
 int     sigdebug = 0x0;
@@ -525,10 +526,12 @@ int     sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
+sendsig(catcher, sig, mask, code, type, val)
 	sig_t   catcher;
 	int     sig, mask;
 	u_long  code;
+	int	type;
+	union sigval val;
 {
 	extern short	exframesize[];
 	extern char	sigcode[], esigcode[];
@@ -585,9 +588,10 @@ sendsig(catcher, sig, mask, code)
 	kfp = malloc(sizeof(struct sigframe), M_TEMP, M_WAITOK);
 	/* Build the argument list for the signal handler. */
 	kfp->sf_signum = sig;
-	kfp->sf_code = code;
+	kfp->sf_sip = NULL;
 	kfp->sf_scp = &fp->sf_sc;
 	kfp->sf_handler = catcher;
+
 	/*
 	 * Save necessary hardware state.  Currently this includes:
 	 *	- general registers
@@ -646,6 +650,13 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_sc.sc_ap = (int) &fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
+
+	if (psp->ps_siginfo & sigmask(sig)) {
+		kfp->sf_sip = &fp->sf_si;
+		initsiginfo(&kfp->sf_si, sig, code, type, val);
+	}
+
+	/* XXX For perf., do not copy out siginfo if not needed */
 	(void) copyout((caddr_t) kfp, (caddr_t) fp, sizeof(struct sigframe));
 	frame->f_regs[SP] = (int) fp;
 #ifdef DEBUG
@@ -847,6 +858,11 @@ boot(howto)
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
 		via_shutdown();
+#ifdef HWDIRECT                 /* adb_poweroff is available only when
+                                 * the HWDIRECT ADB method is used. */
+                adb_poweroff(); /* Shut down machines whose power functions
+                                 * are accessed via modified ADB calls. */
+#endif
 	} else {
 		if (howto & RB_DUMP) {
 			savectx(&dumppcb);

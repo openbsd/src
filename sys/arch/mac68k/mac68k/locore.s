@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.17 1997/02/10 12:01:45 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.18 1997/02/21 05:49:28 briggs Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/01/09 07:28:12 scottr Exp $	*/
 
 /*
@@ -1086,7 +1086,7 @@ _szicode:
  * Stack looks like:
  *
  *	sp+0 ->	signal number
- *	sp+4	signal specific code
+ *	sp+4	pointer to siginfo (sip)
  *	sp+8	pointer to signal context frame (scp)
  *	sp+12	address of handler
  *	sp+16	saved hardware state
@@ -1107,6 +1107,7 @@ _sigcode:
 	trap	#0			| exit(errno)		(2 bytes)
 	.align	2
 _esigcode:
+	.text
 
 /*
  * Primitives
