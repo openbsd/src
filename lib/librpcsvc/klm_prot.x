@@ -1,4 +1,4 @@
-/*	$OpenBSD: klm_prot.x,v 1.2 1997/08/19 07:54:47 niklas Exp $	*/
+/*	$OpenBSD: klm_prot.x,v 1.3 2002/01/21 17:30:38 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -34,7 +34,7 @@
  * Copyright (C) 1986 Sun Microsystems, Inc.
  *
  * protocol used between the UNIX kernel (the "client") and the
- * local lock manager.  The local lock manager is a deamon running
+ * local lock manager.  The local lock manager is a daemon running
  * above the kernel.
  */
 
@@ -42,7 +42,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)klm_prot.x 1.7 87/07/08 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)klm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: klm_prot.x,v 1.2 1997/08/19 07:54:47 niklas Exp $";
+%static char rcsid[] = "$OpenBSD: klm_prot.x,v 1.3 2002/01/21 17:30:38 deraadt Exp $";
 %#endif /* not lint */
 #endif
 

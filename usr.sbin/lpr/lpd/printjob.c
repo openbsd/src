@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.28 2001/11/19 20:27:13 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.29 2002/01/21 17:30:38 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ printjob()
 		exit(1);
 	}
 	if (flock(lfd, LOCK_EX|LOCK_NB) < 0) {
-		if (errno == EWOULDBLOCK)	/* active deamon present */
+		if (errno == EWOULDBLOCK)	/* active daemon present */
 			exit(0);
 		syslog(LOG_ERR, "%s: %s: %m", printer, LO);
 		exit(1);

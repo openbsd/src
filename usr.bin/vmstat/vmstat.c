@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.63 2002/01/15 22:40:38 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.64 2002/01/21 17:30:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -321,7 +321,7 @@ choosedrives(argv)
 			break;
 		}
 	}
-	for (i = 0; i < dk_ndrive && ndrives < 4; i++) {
+	for (i = 0; i < dk_ndrive && ndrives < 2; i++) {
 		if (dk_select[i])
 			continue;
 		dk_select[i] = 1;
@@ -416,14 +416,14 @@ dovmstat(interval, reps)
 #define pgtok(a) ((a) * ((int)uvmexp.pagesize >> 10))
 		(void)printf("%7u%7u ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
-		(void)printf("%4u ", rate(uvmexp.faults - ouvmexp.faults));
+		(void)printf("%5u ", rate(uvmexp.faults - ouvmexp.faults));
 		(void)printf("%3u ", rate(uvmexp.pdreact - ouvmexp.pdreact));
 		(void)printf("%3u ", rate(uvmexp.pageins - ouvmexp.pageins));
 		(void)printf("%3u %3u ",
 		    rate(uvmexp.pdpageouts - ouvmexp.pdpageouts), 0);
 		(void)printf("%3u ", rate(uvmexp.pdscans - ouvmexp.pdscans));
 		dkstats();
-		(void)printf("%4u %4u %3u ",
+		(void)printf("%4u %5u %4u ",
 		    rate(uvmexp.intrs - ouvmexp.intrs),
 		    rate(uvmexp.syscalls - ouvmexp.syscalls),
 		    rate(uvmexp.swtch - ouvmexp.swtch));
@@ -450,19 +450,20 @@ printhdr()
 
 	(void)printf(" procs   memory       page%*s", 20, "");
 	if (ndrives > 0)
-		(void)printf("%s %*sfaults   cpu\n",
+		(void)printf("%s %*sfaults      cpu\n",
 		   ((ndrives > 1) ? "disks" : "disk"),
-		   ((ndrives > 1) ? ndrives * 3 - 4 : 0), "");
+		   ((ndrives > 1) ? ndrives * 4 - 4 : 0), "");
 	else
-		(void)printf("%*s  faults   cpu\n",
+		(void)printf("%*s  faults      cpu\n",
 		   ndrives * 3, "");
 
-	(void)printf(" r b w    avm    fre  flt  re  pi  po  fr  sr ");
+	(void)printf(" r b w    avm    fre   flt  re  pi  po  fr  sr ");
 	for (i = 0; i < dk_ndrive; i++)
 		if (dk_select[i])
-			(void)printf("%c%c ", dr_name[i][0],
+			(void)printf("%c%c%c", dr_name[i][0],
+			    dr_name[i][1],
 			    dr_name[i][strlen(dr_name[i]) - 1]);
-	(void)printf("  in   sy  cs us sy id\n");
+	(void)printf("   in    sy   cs us sy id\n");
 	hdrcnt = winlines - 2;
 }
 
@@ -579,7 +580,7 @@ dosum()
 		     uvmexp.forks_sharevm);
 
 	/* daemon counters */
-	(void)printf("%11u number of times the pagedeamon woke up\n",
+	(void)printf("%11u number of times the pagedaemon woke up\n",
 		     uvmexp.pdwoke);
 	(void)printf("%11u revolutions of the clock hand\n", uvmexp.pdrevs);
 	(void)printf("%11u pages freed by pagedaemon\n", uvmexp.pdfreed);
@@ -674,7 +675,7 @@ dkstats()
 	for (dn = 0; dn < dk_ndrive; ++dn) {
 		if (!dk_select[dn])
 			continue;
-		(void)printf("%2.0f ", cur.dk_xfer[dn] / etime);
+		(void)printf("%3.0f ", cur.dk_xfer[dn] / etime);
 	}
 }
 
