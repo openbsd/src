@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.754 2004/08/02 23:29:07 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.755 2004/08/18 17:34:53 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1666,6 +1666,7 @@
 
 /* NetMos */
 #define	PCI_PRODUCT_NETMOS_2S1P	0x9835		/* 2S1P */
+#define	PCI_PRODUCT_NETMOS_4S	0x9845		/* 4S */
 
 /* Network Security Technologies */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
