@@ -12,7 +12,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.20.1
-./usr/lib/libcurses.so.4.2
+./usr/lib/libcurses.so.5.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
@@ -23,13 +23,13 @@
 ./usr/lib/libkvm.so.4.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
-./usr/lib/libocurses.so.2.1
+./usr/lib/libocurses.so.3.0
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
 ./usr/lib/libskey.so.1.0
-./usr/lib/libtermcap.so.0.0
-./usr/lib/libtermlib.so.3.0
+./usr/lib/libtermcap.so.3.0
+./usr/lib/libtermlib.so.5.0
 ./usr/lib/libutil.so.4.2
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.2
@@ -401,3 +401,4 @@
 ./usr/mipsel-unknown-openbsd2.3/lib
 ./usr/mipsel-unknown-openbsd2.3/lib/ldscripts
 ./usr/lib/perl5/site_perl/mips-openbsd/cast.ph
+./usr/lib/perl5/site_perl/mips-openbsd/ncurses.ph

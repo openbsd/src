@@ -24,6 +24,7 @@
 ./usr/bin/strip
 ./usr/bin/xstr
 ./usr/bin/yacc
+./usr/include/ncurses.h
 ./usr/include/a.out.h
 ./usr/include/ar.h
 ./usr/include/arpa/ftp.h
