@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.30 2001/03/28 15:02:11 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.31 2001/03/28 22:00:59 naddy Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -113,7 +113,8 @@ Do a fake port installation, that is, simulate the port installation under
 ${WRKINST}.
 Described in a separate section below.
 .It Ar fetch
-Fetch the distfiles and patchfiles. Each file of the
+Fetch the distfiles and patchfiles.
+Each file of the
 .Ev DISTFILES
 and
 .Ev PATCHFILES
@@ -161,7 +162,8 @@ ${IGNOREFILES}.
 .It Ar patch
 Apply distribution and
 .Ox
-specific patches. Because of historical accident,
+specific patches.
+Because of historical accident,
 .Ar patch
 does not follow the exact same scheme other standard targets do.
 Namely,
@@ -242,13 +244,15 @@ is set relative to ${PORTSDIR}.
 is an optional subpackage name, to install instead of the default main
 package name.
 .Sq flavor ...
-is a comma separated list of flavors. By default, the dependency will build
-the default flavor.
+is a comma separated list of flavors.
+By default, the dependency will build the default flavor.
 Build dependencies are checked at the beginning of the extract stage.
 .It Ev BZIP2
 Name of the bzip2 binary.
 .It Ev CATEGORIES
-List of descriptive categories into which this port fails. Mandatory. See
+List of descriptive categories into which this port fails.
+Mandatory.
+See
 .Ar link-categories ,
 .Ar unlink-categories .
 .It Ev CDROM_PACKAGES
@@ -258,7 +262,8 @@ PERMIT_PACKAGE_CDROM) will be placed
 .It Ev CDROM_SITE
 Path to a local database that holds distribution files (usually a CD-Rom
 or other similar media), used to retrieve distribution files before going
-to the network. Defaults to
+to the network.
+Defaults to
 .Pa /cdrom/distfiles
 if this path exists.
 Distribution files are still copied or linked (see
@@ -294,7 +299,8 @@ unappropriate.
 .It Ev COMMENT-foo-vanilla
 Comment used for a sub-, flavored package.
 .It Ev CONFIGURE_ARGS
-Arguments to pass to configure script. Defaults are empty, except for
+Arguments to pass to configure script.
+Defaults are empty, except for
 gnu-style configure, where prefix and sysconfdir are set.
 .It Ev CONFIGURE_ENV
 Basic environment passed to configure script (path and libtool setup).
@@ -356,14 +362,16 @@ Don't override.
 Directory where all ports distfiles and patchfiles are stashed.
 Defaults to
 .Pa ${PORTSDIR}/distfiles.
-Override if distfiles are stored elsewhere. Always use
+Override if distfiles are stored elsewhere.
+Always use
 .Ev FULLDISTDIR
 to refer to ports's distfiles location, as it takes an eventual
 .Ev DIST_SUBDIR
 into account.
 .It Ev DISTFILES
 The main port distribution files (the actual software source, except
-for binary-only ports). Will be retrieved from the MASTER_SITES (see
+for binary-only ports).
+Will be retrieved from the MASTER_SITES (see
 .Ar fetch ) ,
 checksummed and extracted (see
 .Ar checksum ,
@@ -379,7 +387,8 @@ appended to select a different
 See also
 .Ev SUPDISTFILES .
 .It Ev DISTNAME
-Name used to identify the port. See
+Name used to identify the port.
+See
 .Ev DISTFILES
 and
 .Ev PKGNAME .
@@ -488,8 +497,8 @@ Base location where packages suitable for ftp (see
 PERMIT_PACKAGE_FTP) will be placed
 (default: ${PORTSDIR}/ftp-packages/${ARCH})
 .It Ev FULLPKGNAME
-Full name of the created package, taking flavors into account. Defaults to
-${PKGNAME}${FLAVOR_EXT}.
+Full name of the created package, taking flavors into account.
+Defaults to ${PKGNAME}${FLAVOR_EXT}.
 .It Ev FULLPKGNAME-foo
 Full package name for sub-package foo, if the default value is not
 appropriate.
@@ -497,8 +506,9 @@ appropriate.
 Location of the gnu make binary, if needed.
 Defaults to gmake.
 .It Ev IGNOREFILES
-Set to the list of files that cannot be checksummed. For used by ports
-fetching dynamically generated archives that can't be checksummed.
+Set to the list of files that cannot be checksummed.
+For use by ports which
+fetch dynamically generated archives that can't be checksummed.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
 Similar to BUILD_DEPENDS, except that
@@ -571,7 +581,8 @@ target.
 .Ev MTREE_FILE
 can hold a list of file names, to which
 .Pa ${PORTSDIR}/infrastructure/db/fake.mtree
-is always appended.  These specifications are rooted at
+is always appended.
+These specifications are rooted at
 .Pa ${WRKINST} ,
 and are subject to
 .Ev SUBST_VARS
@@ -595,11 +606,16 @@ needed by this ports tree.
 Usually set to the current version of
 .Nm
 when port was built, and updated by port maintainers when needed.
+.It Ev NOT_FOR_ARCHS
+List of architectures on which this port does not build.
+See also
+.Ev ONLY_FOR_ARCHS .
 .It Ev NO_BUILD
 Port does not need any build stage.
 .It Ev NO_DEPENDS
-Don't verify build of dependencies. Do not use in any ports Makefile. This
-is only meant as a user convenience when, e.g., you just want to browse
+Don't verify build of dependencies.
+Do not use in any ports Makefile.
+This is only meant as a user convenience when, e.g., you just want to browse
 through a given port's source and do not wish to trigger the build of
 dependencies.
 .It Ev NO_SHARED_LIBS
@@ -610,9 +626,9 @@ To be tested after including
 .Nm bsd.port.mk ,
 if neither PFRAG.SHARED nor CONFIGURE_SHARED are enough.
 .It Ev ONLY_FOR_ARCHS
-List of architectures on which this port builds.  Can hold both
-processor-specific information (e.g., m68k), and more specific model
-information (e.g., amiga).
+List of architectures on which this port builds.
+Can hold both processor-specific information (e.g., m68k), and more
+specific model information (e.g., amiga).
 .It Ev OPSYS
 Always
 .Ox
@@ -636,7 +652,8 @@ Files to fetch from the master sites like
 but serving a different purpose, as they hold distribution patches that
 will be applied at the
 .Ar patch
-stage. See also
+stage.
+See also
 .Ev SUPDISTFILES .
 .It Ev PATCH_ARGS
 Full list of options used while applying port's patches.
@@ -680,7 +697,8 @@ Default: pkg.${ARCH} or pkg.
 Name of the created package.
 Default is ${DISTNAME} for the main package,
 and ${DISTNAME}${SUBPACKAGE} for multi-packages ports.
-This does not take flavors into account. See
+This does not take flavors into account.
+See
 .Ev FULLPKGNAME
 for that.
 .It Ev PKGNAME-foo
@@ -774,8 +792,8 @@ and
 .Ev DISTFILES ,
 .Ev PATCHFILES
 is admissible, and in fact, expected, as it is much simpler to build
-an error-free list of files to retrieve in that way. See
-the xanim port for an example.
+an error-free list of files to retrieve in that way.
+See the xanim port for an example.
 .It Ev SYSCONFDIR
 Location for ports system configuration files.
 Defaults to
@@ -848,7 +866,7 @@ and is always appended.
 .It Ev YACC
 Name of yacc program to pass to gnu-configure, defaults to yacc.
 (gnu-configure would always try to use bison otherwise, which leads to
-unreproductible builds.)
+unreproducible builds.)
 Set to bison if needed.
 .El
 .Sh FILES
