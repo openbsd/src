@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.135 2003/07/25 08:31:16 markus Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.136 2003/08/08 08:37:36 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2042,9 +2042,17 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
     goto cleanup;
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+#ifdef LINUX_IPSEC
+  addr->sadb_address_proto = tproto;
+#else
   addr->sadb_address_proto = IPSEC_ULPROTO_ANY;
+#endif
   addr->sadb_address_reserved = 0;
+#ifdef LINUX_IPSEC
+  pf_key_v2_setup_sockaddr (addr + 1, laddr, 0, sport, 0);
+#else
   pf_key_v2_setup_sockaddr (addr + 1, laddr, 0, IPSEC_PORT_ANY, 0);
+#endif
   switch (laddr->sa_family)
     {
     case AF_INET:
@@ -2069,9 +2077,17 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
     goto cleanup;
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+#ifdef LINUX_IPSEC
+  addr->sadb_address_proto = tproto;
+#else
   addr->sadb_address_proto = IPSEC_ULPROTO_ANY;
+#endif
   addr->sadb_address_reserved = 0;
+#ifdef LINUX_IPSEC
+  pf_key_v2_setup_sockaddr (addr + 1, raddr, 0, dport, 0);
+#else
   pf_key_v2_setup_sockaddr (addr + 1, raddr, 0, IPSEC_PORT_ANY, 0);
+#endif
   switch (raddr->sa_family)
     {
     case AF_INET:
