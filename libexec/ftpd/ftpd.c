@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.152 2003/12/10 22:57:12 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.153 2003/12/12 19:45:22 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.152 2003/12/10 22:57:12 deraadt Exp $";
+    "$OpenBSD: ftpd.c,v 1.153 2003/12/12 19:45:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1018,10 +1018,10 @@ pass(char *passwd)
 
 			/* Compute root directory. */
 			snprintf(rootdir, sizeof(rootdir), "%s/%s",
-				  pw->pw_dir, dhostname);
+			    pw->pw_dir, dhostname);
 			if (stat(rootdir, &ts) < 0) {
 				snprintf(rootdir, sizeof(rootdir), "%s/%s",
-					  pw->pw_dir, hostname);
+				    pw->pw_dir, hostname);
 			}
 		} else
 			strlcpy(rootdir, pw->pw_dir, sizeof(rootdir));
@@ -1190,7 +1190,7 @@ retrieve(char *cmd, char *name)
 		goto done;
 	time(&start);
 	send_data(fin, dout, st.st_blksize, st.st_size,
-		  (restart_point == 0 && cmd == 0 && S_ISREG(st.st_mode)));
+	    (restart_point == 0 && cmd == 0 && S_ISREG(st.st_mode)));
 	if ((cmd == 0) && stats)
 		logxfer(name, byte_count, start);
 	(void) fclose(dout);
@@ -1545,7 +1545,7 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, off_t filesize, int isreg)
 
 		if (isreg && filesize < (off_t)16 * 1024 * 1024) {
 			buf = mmap(0, filesize, PROT_READ, MAP_SHARED, filefd,
-				   (off_t)0);
+			    (off_t)0);
 			if (buf == MAP_FAILED) {
 				syslog(LOG_WARNING, "mmap(%lu): %m",
 				    (unsigned long)filesize);
@@ -1561,7 +1561,8 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, off_t filesize, int isreg)
 				}
 				len -= cnt;
 				bp += cnt;
-				if (cnt > 0) byte_count += cnt;
+				if (cnt > 0)
+					byte_count += cnt;
 			} while(cnt > 0 && len > 0);
 
 			transflag = 0;
@@ -2813,7 +2814,7 @@ copy_dir(char *dir, struct passwd *pw)
 	size_t dirsiz;
 
 	/* Nothing to expand */
-	if (dir[0] !=  '~')
+	if (dir[0] != '~')
 		return (strdup(dir));
 
 	/* "dir" is of form ~user/some/dir, lookup user. */
