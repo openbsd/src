@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.61 2003/09/02 17:57:12 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.62 2003/09/03 22:52:47 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1095,7 +1095,7 @@ uvm_map_hint(struct proc *p, vm_prot_t prot)
 	}
 #endif
 	addr = (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ;
-#ifndef __vax__
+#if 0
 	addr += arc4random() & (256 * 1024 * 1024 - 1);
 #endif
 	return (round_page(addr));
