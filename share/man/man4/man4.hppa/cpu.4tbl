@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.6 2002/12/17 14:27:50 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.7 2002/12/17 14:33:40 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -56,7 +56,7 @@ l l l l l l l l
 _ _ _ _ _ _ _ _
 l l l l l l l l .
 CPU:PA:CLK:FPU:Caches:TLB:BTLB:Models
-   :  :Mhz:y/n:  KB  :   :    :
+   :  :Mhz:y/n:(max), KB: :   :
 7000:1.1a:66 :No : 256 L1I:96I:4 I:705,710,720
     :    :   :   : 256 L1D:96D:4 D:730,750
 7100:1.1b:100:Yes:1024 L1I:120:16:715/33/50/75
