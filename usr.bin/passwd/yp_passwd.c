@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.8 1997/03/27 00:30:55 weingart Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.9 1997/09/12 04:12:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.8 1997/03/27 00:30:55 weingart Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.9 1997/09/12 04:12:53 millert Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -104,7 +104,8 @@ yp_passwd(username)
 	 * the daemon.
 	 */
 	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
-		warnx("can't find the master YP server. Reason: %s\n", yperr_string(r));
+		warnx("can't find the master YP server. Reason: %s",
+		    yperr_string(r));
 		exit(1);
 	}
 
@@ -150,7 +151,7 @@ yp_passwd(username)
 	
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client==NULL) {
-		warnx("cannot contact yppasswdd on %s: Reason: %s\n",
+		warnx("cannot contact yppasswdd on %s: Reason: %s",
 		    master, yperr_string(YPERR_YPBIND));
 		free(yppasswd.newpw.pw_passwd);
 		return(YPERR_YPBIND);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.3 1996/06/26 05:38:47 deraadt Exp $	*/
+/*	$OpenBSD: rs.c,v 1.4 1997/09/12 04:12:54 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -50,6 +50,7 @@ static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
  */
 
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -266,7 +267,8 @@ prepfile()
 	else if (orows == 0 && ocols == 0) {	/* decide rows and cols */
 		ocols = owidth / colw;
 		if (ocols == 0) {
-			warnx("Display width %d is less than column width %d\n", owidth, colw);
+			warnx("Display width %d is less than column width %d",
+			    owidth, colw);
 			ocols = 1;
 		}
 		if (ocols > nelem)
