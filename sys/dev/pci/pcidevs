@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.169 1999/08/05 17:36:52 deraadt Exp $
+$OpenBSD: pcidevs,v 1.170 1999/08/06 22:35:19 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -595,6 +595,7 @@ product ALI M1445		0x1445	M1445 VL-PCI
 product ALI M1449		0x1449	M1449 PCI-ISA
 product ALI M1451		0x1451	M1451 Host-PCI
 product ALI M1461		0x1461	M1461 Host-PCI
+product ALI M1489		0x1489	M1489 Host-PCI
 product ALI M1521		0x1521	M1523 Host-PCI
 product ALI M1531		0x1531	M1531 Host-PCI
 product ALI M1541		0x1541	M1543 Host-PCI
