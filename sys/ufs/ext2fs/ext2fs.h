@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.6 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.7 2002/07/29 04:01:09 fgsch Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -181,6 +181,8 @@ struct m_ext2fs {
 
 #define EXT2F_INCOMPAT_COMP		0x0001
 #define EXT2F_INCOMPAT_FTYPE		0x0002
+#define EXT2F_INCOMPAT_RECOVER		0x0004
+#define EXT2F_INCOMPAT_JOURNAL_DEV	0x0008
 
 /* features supported in this implementation */
 #define EXT2F_COMPAT_SUPP		0x0000
