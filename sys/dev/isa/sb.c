@@ -1,5 +1,5 @@
-/*	$OpenBSD: sb.c,v 1.13 1997/08/07 05:27:32 deraadt Exp $	*/
-/*	$NetBSD: sb.c,v 1.36 1996/05/12 23:53:33 mycroft Exp $	*/
+/*	$OpenBSD: sb.c,v 1.14 1998/04/26 21:02:56 provos Exp $	*/
+/*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -45,11 +45,11 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -57,14 +57,6 @@
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
-
-struct sb_softc {
-	struct	device sc_dev;		/* base device */
-	struct	isadev sc_id;		/* ISA device */
-	void	*sc_ih;			/* interrupt vectoring */
-
-	struct	sbdsp_softc sc_sbdsp;
-};
 
 struct cfdriver sb_cd = {
 	NULL, "sb", DV_DULL
@@ -76,7 +68,6 @@ struct audio_device sb_device = {
 	"sb"
 };
 
-int	sbopen __P((dev_t, int));
 int	sb_getdev __P((void *, struct audio_device *));
 
 /*
@@ -84,41 +75,30 @@ int	sb_getdev __P((void *, struct audio_device *));
  */
 
 struct audio_hw_if sb_hw_if = {
-	sbopen,
+	sbdsp_open,
 	sbdsp_close,
-	NULL,
-	sbdsp_set_in_sr,
-	sbdsp_get_in_sr,
-	sbdsp_set_out_sr,
-	sbdsp_get_out_sr,
+	0,
 	sbdsp_query_encoding,
-	sbdsp_set_format,
-	sbdsp_get_encoding,
-	sbdsp_get_precision,
-	sbdsp_set_channels,
-	sbdsp_get_channels,
+	sbdsp_set_params,
 	sbdsp_round_blocksize,
-	sbdsp_set_out_port,
-	sbdsp_get_out_port,
-	sbdsp_set_in_port,
-	sbdsp_get_in_port,
-	sbdsp_commit_settings,
-	mulaw_expand,
-	mulaw_compress,
+	0,
+	sbdsp_dma_init_output,
+	sbdsp_dma_init_input,
 	sbdsp_dma_output,
 	sbdsp_dma_input,
 	sbdsp_haltdma,
 	sbdsp_haltdma,
-	sbdsp_contdma,
-	sbdsp_contdma,
 	sbdsp_speaker_ctl,
 	sb_getdev,
-	sbdsp_setfd,
+	0,
 	sbdsp_mixer_set_port,
 	sbdsp_mixer_get_port,
 	sbdsp_mixer_query_devinfo,
-	0,	/* not full-duplex */
-	0
+	sb_malloc,
+	sb_free,
+	sb_round,
+        sb_mappage,
+	sbdsp_get_props,
 };
 
 /*
@@ -157,7 +137,15 @@ sbmatch(sc)
 			return 0;
 		}
 	}
-	
+
+        if (0 <= sc->sc_drq16 && sc->sc_drq16 <= 3)
+        	/* 
+                 * XXX Some ViBRA16 cards seem to have two 8 bit DMA 
+                 * channels.  I've no clue how to use them, so ignore
+                 * one of them for now.  -- augustss@netbsd.org
+                 */
+        	sc->sc_drq16 = -1;
+
 	if (ISSB16CLASS(sc)) {
 		if (sc->sc_drq16 == -1)
 			sc->sc_drq16 = sc->sc_drq8;
@@ -207,14 +195,21 @@ sbmatch(sc)
 	}
 
 	if (ISSB16CLASS(sc)) {
+		int w, r;
 #if 0
 		printf("%s: old drq conf %02x\n", sc->sc_dev.dv_xname,
 		    sbdsp_mix_read(sc, SBP_SET_DRQ));
 		printf("%s: try drq conf %02x\n", sc->sc_dev.dv_xname,
 		    drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8]);
 #endif
-		sbdsp_mix_write(sc, SBP_SET_DRQ,
-		    drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8]);
+		w = drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8];
+		sbdsp_mix_write(sc, SBP_SET_DRQ, w);
+		r = sbdsp_mix_read(sc, SBP_SET_DRQ) & 0xeb;
+		if (r != w) {
+			printf("%s: setting drq mask %02x failed, got %02x\n",
+			    sc->sc_dev.dv_xname, w, r);
+			return 0;
+		}
 #if 0
 		printf("%s: new drq conf %02x\n", sc->sc_dev.dv_xname,
 		    sbdsp_mix_read(sc, SBP_SET_DRQ));
@@ -226,8 +221,14 @@ sbmatch(sc)
 		printf("%s: try irq conf %02x\n", sc->sc_dev.dv_xname,
 		    irq_conf[sc->sc_irq]);
 #endif
-		sbdsp_mix_write(sc, SBP_SET_IRQ,
-		    irq_conf[sc->sc_irq]);
+		w = irq_conf[sc->sc_irq];
+		sbdsp_mix_write(sc, SBP_SET_IRQ, w);
+		r = sbdsp_mix_read(sc, SBP_SET_IRQ) & 0x0f;
+		if (r != w) {
+			printf("%s: setting irq mask %02x failed, got %02x\n",
+			    sc->sc_dev.dv_xname, w, r);
+			return 0;
+		}
 #if 0
 		printf("%s: new irq conf %02x\n", sc->sc_dev.dv_xname,
 		    sbdsp_mix_read(sc, SBP_SET_IRQ));
@@ -242,16 +243,12 @@ void
 sbattach(sc)
 	struct sbdsp_softc *sc;
 {
-	int error;
-
 	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq, IST_EDGE,
 	    IPL_AUDIO, sbdsp_intr, sc, sc->sc_dev.dv_xname);
 
 	sbdsp_attach(sc);
 
-	if ((error = audio_hardware_attach(&sb_hw_if, sc)) != 0)
-		printf("%s: could not attach to audio device driver (%d)\n",
-		    sc->sc_dev.dv_xname, error);
+	audio_attach_mi(&sb_hw_if, 0, sc, &sc->sc_dev);
 }
 
 #ifdef NEWCONFIG
@@ -287,38 +284,26 @@ sbforceintr(aux)
  */
 
 int
-sbopen(dev, flags)
-    dev_t dev;
-    int flags;
-{
-    struct sbdsp_softc *sc;
-    int unit = AUDIOUNIT(dev);
-    
-    if (unit >= sb_cd.cd_ndevs)
-	return ENODEV;
-    
-    sc = sb_cd.cd_devs[unit];
-    if (!sc)
-	return ENXIO;
-    
-    return sbdsp_open(sc, dev, flags);
-}
-
-int
 sb_getdev(addr, retp)
 	void *addr;
 	struct audio_device *retp;
 {
 	struct sbdsp_softc *sc = addr;
+	static char *names[] = SB_NAMES;
+	char *config;
 
-	if (sc->sc_model & MODEL_JAZZ16)
+	if (sc->sc_model == SB_JAZZ)
 		strncpy(retp->name, "MV Jazz16", sizeof(retp->name));
 	else
 		strncpy(retp->name, "SoundBlaster", sizeof(retp->name));
 	sprintf(retp->version, "%d.%02d", 
-		SBVER_MAJOR(sc->sc_model),
-		SBVER_MINOR(sc->sc_model));
-	strncpy(retp->config, "sb", sizeof(retp->config));
+		SBVER_MAJOR(sc->sc_version),
+		SBVER_MINOR(sc->sc_version));
+	if (0 <= sc->sc_model && sc->sc_model < sizeof names / sizeof names[0])
+		config = names[sc->sc_model];
+	else
+		config = "??";
+	strncpy(retp->config, config, sizeof(retp->config));
 		
 	return 0;
 }

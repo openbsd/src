@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.77 1998/03/24 03:26:03 deraadt Exp $
+#	$OpenBSD: files,v 1.78 1998/04/26 21:03:05 provos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -9,11 +9,16 @@ define	disk
 define	tape
 define	ifnet
 define	tty
-define	audio
+define	audio {}
 define	scsi {}
 
 # audio device attributes
 define	mulaw
+define	auconv
+
+# audio device, attaches to audio hardware driver
+device	audio
+attach	audio at audio
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # and fddi.
@@ -129,6 +134,7 @@ file ddb/db_watch.c			ddb
 file ddb/db_write_cmd.c			ddb
 file ddb/db_usrreq.c			ddb
 file ddb/db_hangman.c			ddb
+file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
@@ -235,6 +241,8 @@ file miscfs/procfs/procfs_fpregs.c
 file miscfs/procfs/procfs_mem.c
 file miscfs/procfs/procfs_note.c	procfs
 file miscfs/procfs/procfs_regs.c
+file miscfs/procfs/procfs_environ.c	procfs
+file miscfs/procfs/procfs_eproc.c	procfs
 file miscfs/procfs/procfs_status.c	procfs
 file miscfs/procfs/procfs_subr.c	procfs
 file miscfs/procfs/procfs_vfsops.c	procfs

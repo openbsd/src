@@ -1,5 +1,5 @@
-/*	$OpenBSD: ad1848reg.h,v 1.4 1996/10/31 01:01:22 niklas Exp $	*/
-/*	$NetBSD: ad1848reg.h,v 1.1 1995/07/07 02:11:45 brezak Exp $	*/
+/*	$OpenBSD: ad1848reg.h,v 1.5 1998/04/26 21:03:12 provos Exp $	*/
+/*	$NetBSD: ad1848reg.h,v 1.4 1997/05/07 20:23:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -37,17 +37,16 @@
  */
 /*
  * Copyright (c) 1993 Analog Devices Inc. All rights reserved
- * (http://www.analog.com, mike.long@analog.com)
  */
 
 /* parent driver is primarily responsible for checking this */
 #define AD1848_BASE_VALID(base)	(((base) & 0x003) == 0)
 
 /* AD1848 direct registers */
-#define AD1848_IADDR		0x04
-#define AD1848_IDATA		0x05
-#define AD1848_STATUS		0x06
-#define AD1848_PIO		0x07
+#define AD1848_IADDR		0x00
+#define AD1848_IDATA		0x01
+#define AD1848_STATUS		0x02
+#define AD1848_PIO		0x03
 
 /* Gain constants  */
 #define GAIN_0			0x00
@@ -89,9 +88,7 @@
 /* AD1848 Sound Port bit defines */
 #define SP_IN_INIT		0x80
 #define MODE_CHANGE_ENABLE	0x40
-#define MODE_CHANGE_MASK	0xbf
 #define TRANSFER_DISABLE	0x20
-#define TRANSFER_DISABLE_MASK	0xdf
 #define ADDRESS_MASK		0xe0
 
 /* Status bits */
@@ -101,7 +98,6 @@
 /* pbright is not left */
 #define PLAYBACK_UPPER		0x08
 /* bplower is not upper */
-
 #define SAMPLE_ERROR		0x10
 #define CAPTURE_READY		0x20
 #define CAPTURE_LEFT		0x40
@@ -113,53 +109,42 @@
 #define LINE_INPUT		0x00
 #define AUX_INPUT		0x40
 #define MIC_INPUT		0x80
-#define MIXED_DAC_INPUT		0xC0
+#define MIXED_DAC_INPUT		0xc0
 #define INPUT_GAIN_MASK		0xf0
 #define INPUT_MIC_GAIN_ENABLE	0x20
-#define INPUT_MIC_GAIN_MASK	0xdf
 #define INPUT_SOURCE_MASK	0x3f
 #define AUX_INPUT_ATTEN_BITS	0x1f
 #define AUX_INPUT_ATTEN_MASK	0xe0
 #define AUX_INPUT_MUTE		0x80
-#define AUX_INPUT_MUTE_MASK	0x7f
 #define OUTPUT_MUTE		0x80
-#define OUTPUT_MUTE_MASK	0x7f
 #define OUTPUT_ATTEN_BITS	0x3f
 #define OUTPUT_ATTEN_MASK	0xc0
 
 /* Clock and Data format reg bits (some also Capture Data format) */
-#define CLOCK_SELECT_MASK	0xfe
 #define CLOCK_XTAL2		0x01
 #define CLOCK_XTAL1		0x00
 #define CLOCK_FREQ_MASK		0xf1
-#define STEREO_MONO_MASK	0xef
-#define FMT_STEREO		0x10
 #define FMT_MONO		0x00
+#define FMT_STEREO		0x10
 #define FORMAT_MASK		0x1f
 #define FMT_PCM8		0x00	/* 8-bit unsigned */
 #define FMT_ULAW		0x20	/* 8-bit mu-law */
 #define FMT_TWOS_COMP		0x40	/* 16-bit signed */
 #define FMT_ALAW		0x60	/* 8-bit alaw */
-#define FMT_TWOS_COMP_BE	0xC0	/* 16-bit signed, big endian */
+#define FMT_ADPCM		0xa0	/* IMA ADPCM */
+#define FMT_TWOS_COMP_BE	0xc0	/* 16-bit signed, big endian */
 
 /* Interface Configuration reg bits */
 #define PLAYBACK_ENABLE		0x01
-#define PLAYBACK_ENABLE_MASK	0xfe
 #define CAPTURE_ENABLE		0x02
-#define CAPTURE_ENABLE_MASK	0xfd
-#define SINGLE_DMA		0x04
-#define SINGLE_DMA_MASK		0xfb
 #define DUAL_DMA		0x00
+#define SINGLE_DMA		0x04
 #define AUTO_CAL_ENABLE		0x08
-#define AUTO_CAL_DISABLE_MASK	0xf7
 #define PLAYBACK_PIO_ENABLE	0x40
-#define PLAYBACK_DMA_MASK	0xbf
 #define CAPTURE_PIO_ENABLE	0x80
-#define CAPTURE_DMA_MASK	0x7f
 
 /* Pin control bits */
 #define INTERRUPT_ENABLE	0x02
-#define INTERRUPT_MASK		0xfd
 #define XCTL0_ENABLE		0x40
 #define XCTL1_ENABLE		0x80
 
@@ -176,7 +161,6 @@
 #define MODE2			0x40
 
 /* Digital Mix Control reg bits */
-#define DIGITAL_MIX1_MUTE_MASK	0xfe
 #define DIGITAL_MIX1_ENABLE	0x01
 #define MIX_ATTEN_MASK		0xfc
 

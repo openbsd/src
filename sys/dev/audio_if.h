@@ -1,5 +1,5 @@
-/*	$OpenBSD: audio_if.h,v 1.5 1997/07/10 23:06:30 provos Exp $	*/
-/*	$NetBSD: audio_if.h,v 1.7 1996/03/07 15:00:10 christos Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.6 1998/04/26 21:03:08 provos Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -41,37 +41,38 @@
 
 struct audio_softc;
 
+struct audio_params {
+	u_long	sample_rate;			/* sample rate */
+	u_int	encoding;			/* e.g. ulaw, linear, etc */
+	u_int	precision;			/* bits/sample */
+	u_int	channels;			/* mono(1), stereo(2) */
+	/* Software en/decode functions, set if SW coding required by HW */
+	void	(*sw_code)__P((void *, u_char *, int));
+	int	factor;				/* coding space change */
+};
+
+/* The default audio mode: 8 kHz mono ulaw */
+extern struct audio_params audio_default;
+
 struct audio_hw_if {
-	int	(*open)__P((dev_t, int));	/* open hardware */
+	int	(*open)__P((void *, int));	/* open hardware */
 	void	(*close)__P((void *));		/* close hardware */
 	int	(*drain)__P((void *));		/* Optional: drain buffers */
 	
-	/* Sample rate */
-	int	(*set_in_sr)__P((void *, u_long));
-	u_long	(*get_in_sr)__P((void *));
-	int	(*set_out_sr)__P((void *, u_long));
-	u_long	(*get_out_sr)__P((void *));
-
 	/* Encoding. */
-	/* Precision = bits/sample, usually 8 or 16 */
 	/* XXX should we have separate in/out? */
 	int	(*query_encoding)__P((void *, struct audio_encoding *));
-	int	(*set_format)__P((void *, u_int, u_int));
-	int	(*get_encoding)__P((void *));
-	int	(*get_precision)__P((void *));
 
-	/* Channels - mono(1), stereo(2) */
-	int	(*set_channels)__P((void *, int));
-	int	(*get_channels)__P((void *));
-
+	/* Set the audio encoding parameters (record and play).
+	 * Return 0 on success, or an error code if the 
+	 * requested parameters are impossible.
+	 * The values in the params struct may be changed (e.g. rounding
+	 * to the nearest sample rate.)
+	 */
+        int	(*set_params)__P((void *, int, int, struct audio_params *, struct audio_params *));
+  
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)__P((void *, int));
-
-	/* Ports (in/out ports) */
-	int	(*set_out_port)__P((void *, int));
-	int	(*get_out_port)__P((void *));
-	int	(*set_in_port)__P((void *, int));
-	int	(*get_in_port)__P((void *));
 
 	/*
 	 * Changing settings may require taking device out of "data mode",
@@ -83,19 +84,15 @@ struct audio_hw_if {
 	 */
 	int	(*commit_settings)__P((void *));
 
-	/* Software en/decode functions, set if SW coding required by HW */
-	void	(*sw_encode)__P((void *, int, u_char *, int));
-	void	(*sw_decode)__P((void *, int, u_char *, int));
-
 	/* Start input/output routines. These usually control DMA. */
+	int	(*init_output)__P((void *, void *, int));
+	int	(*init_input)__P((void *, void *, int));
 	int	(*start_output)__P((void *, void *, int,
 				    void (*)(void *), void *));
 	int	(*start_input)__P((void *, void *, int,
 				   void (*)(void *), void *));
 	int	(*halt_output)__P((void *));
 	int	(*halt_input)__P((void *));
-	int	(*cont_output)__P((void *));
-	int	(*cont_input)__P((void *));
 
 	int	(*speaker_ctl)__P((void *, int));
 #define SPKR_ON		1
@@ -110,25 +107,59 @@ struct audio_hw_if {
 
 	int	(*query_devinfo)__P((void *, mixer_devinfo_t *));
 	
-	int full_duplex; /* non-null if HW is able to do full-duplex */
-	int audio_unit;
+	/* Allocate/free memory for the ring buffer. Usually malloc/free. */
+	void	*(*alloc)__P((void *, unsigned long, int, int));
+	void	(*free)__P((void *, void *, int));
+	unsigned long (*round_buffersize)__P((void *, unsigned long));
+	int	(*mappage)__P((void *, void *, int, int));
+
+	int 	(*get_props)__P((void *)); /* device properties */
 };
 
-/* Register / deregister hardware driver */
-extern int	audio_hardware_attach __P((struct audio_hw_if *, void *));
-extern int	audio_hardware_detach __P((struct audio_hw_if *));
+struct midi_info {
+	char	*name;		/* Name of MIDI hardware */
+	int	props;
+};
+#define MIDI_PROP_OUT_INTR 1
+
+struct midi_hw_if {
+	int	(*open)__P((void *, int, 	/* open hardware */
+			    void (*)__P((void *, int)),
+			    void (*)__P((void *)),
+			    void *));
+	void	(*close)__P((void *));		/* close hardware */
+	int	(*output)__P((void *, int));	/* output a byte */
+	void	(*getinfo)__P((void *, struct midi_info *));
+	int	(*ioctl)__P((u_long, caddr_t, int, struct proc *));
+};
+
+struct audio_attach_args {
+	int	type;
+	void	*hwif;		/* either audio_hw_if * or midi_hw_if * */
+	void	*hdl;
+};
+#define	AUDIODEV_TYPE_AUDIO	0
+#define	AUDIODEV_TYPE_MIDI	1
+
+/* Attach the MI driver(s) to the MD driver. */
+extern void	audio_attach_mi __P((struct audio_hw_if *, struct midi_hw_if *, void *, struct device *));
 
 /* Device identity flags */
 #define SOUND_DEVICE		0
 #define AUDIO_DEVICE		0x80
+#define AUDIOCTL_DEVICE		0xc0
 #define MIXER_DEVICE		0x10
-
-#define ISDEVAUDIO(x)		((minor(x)&0xf0) == AUDIO_DEVICE)
-#define ISDEVSOUND(x)		((minor(x)&0xf0) == SOUND_DEVICE)
-#define ISDEVMIXER(x)		((minor(x)&0xf0) == MIXER_DEVICE)
 
 #define AUDIOUNIT(x)		(minor(x)&0x0f)
 #define AUDIODEV(x)		(minor(x)&0xf0)
 
+#define ISDEVSOUND(x)		(AUDIODEV((x)) == SOUND_DEVICE)
+#define ISDEVAUDIO(x)		(AUDIODEV((x)) == AUDIO_DEVICE)
+#define ISDEVAUDIOCTL(x)	(AUDIODEV((x)) == AUDIOCTL_DEVICE)
+#define ISDEVMIXER(x)		(AUDIODEV((x)) == MIXER_DEVICE)
+
+/*#ifndef __i386__*/
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
+/*#endif*/
+

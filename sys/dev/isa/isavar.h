@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.27 1998/01/20 18:40:33 niklas Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.28 1998/04/26 21:02:48 provos Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -289,6 +289,7 @@ struct isa_attach_args {
 #define ia_iosize	ipa_io[0].length
 #define ia_irq		ipa_irq[0].num
 #define	ia_drq		ipa_drq[0].num
+#define	ia_drq2		ipa_drq[1].num
 #define ia_maddr	ipa_mem[0].base
 #define ia_msize	ipa_mem[0].length
 #define ia_ioh		ipa_io[0].h
@@ -372,6 +373,7 @@ struct isa_softc {
 #define		cf_msize		cf_loc[3]
 #define		cf_irq			cf_loc[4]
 #define		cf_drq			cf_loc[5]
+#define		cf_drq2			cf_loc[6]
 
 /*
  * ISA interrupt handler manipulation.

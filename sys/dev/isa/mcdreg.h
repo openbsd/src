@@ -1,5 +1,5 @@
-/*	$OpenBSD: mcdreg.h,v 1.2 1997/11/07 08:07:05 niklas Exp $	*/
-/*	$NetBSD: mcdreg.h,v 1.7 1995/07/10 01:27:27 cgd Exp $	*/
+/*	$OpenBSD: mcdreg.h,v 1.3 1998/04/26 21:02:50 provos Exp $	*/
+/*	$NetBSD: mcdreg.h,v 1.8 1997/04/04 18:59:37 christos Exp $	*/
 
 /*
  * Copyright 1993 by Holger Veit (data part)
@@ -60,6 +60,7 @@ typedef unsigned char	bcd_t;
 #define	MCD_XFER	1
 #define	MCD_CTL2	2 /* XXX Is this right? */
 #define	MCD_CONFIG	3
+#define MCD_NPORT	4
 
 #define	MCD_MASK_DMA	0x07	/* bits 2-0 = DMA channel */
 #define	MCD_MASK_IRQ	0x70	/* bits 6-4 = INT number */

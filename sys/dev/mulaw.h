@@ -1,5 +1,5 @@
-/*	$OpenBSD: mulaw.h,v 1.2 1996/04/18 23:47:03 niklas Exp $	*/
-/*	$NetBSD: mulaw.h,v 1.2 1996/02/27 22:29:42 jtc Exp $	*/
+/*	$OpenBSD: mulaw.h,v 1.3 1998/04/26 21:03:11 provos Exp $	*/
+/*	$NetBSD: mulaw.h,v 1.8 1997/10/09 08:11:10 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -27,8 +27,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -37,8 +37,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Convert 8-bit mu-law to/from 8 bit unsigned linear (PCM8)
- */
-extern void mulaw_compress __P((void *hw_hdl, int encoding, unsigned char *buf, int cnt));
-extern void mulaw_expand __P((void *hw_hdl, int encoding, unsigned char *buf, int cnt));
+/* Convert 8-bit mu-law to 16 bit unsigned linear. */
+extern void mulaw_to_ulinear16 __P((void *, u_char *buf, int cnt));
+/* Convert 8-bit mu-law to/from 8 bit unsigned linear. */
+extern void mulaw_to_ulinear8 __P((void *, u_char *buf, int cnt));
+extern void ulinear8_to_mulaw __P((void *, u_char *buf, int cnt));
+/* Convert 8-bit a-law to 16 bit unsigned linear. */
+extern void alaw_to_ulinear16 __P((void *, u_char *buf, int cnt));
+/* Convert 8-bit a-law to/from 8 bit unsigned linear. */
+extern void alaw_to_ulinear8 __P((void *, u_char *buf, int cnt));
+extern void ulinear8_to_alaw __P((void *, u_char *buf, int cnt));

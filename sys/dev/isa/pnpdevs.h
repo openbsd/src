@@ -58,6 +58,7 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "CTL0042", "sb" },
 	{ "CTL0044", "sb" },
 	{ "CTL0045", "sb" },
+	{ "YMH0021", "sb" },
 	{ "ESS1868", "sb" },
 	{ NULL, NULL, }
 };

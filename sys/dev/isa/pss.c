@@ -1,5 +1,5 @@
-/*	$OpenBSD: pss.c,v 1.12 1997/07/12 01:42:08 millert Exp $ */
-/*	$NetBSD: pss.c,v 1.15 1996/05/12 23:53:23 mycroft Exp $	*/
+/*	$OpenBSD: pss.c,v 1.13 1998/04/26 21:02:55 provos Exp $ */
+/*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -62,6 +62,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
@@ -155,8 +156,7 @@ struct pcd_softc {
 #endif
 
 #ifdef AUDIO_DEBUG
-extern void Dprintf __P((const char *, ...));
-#define DPRINTF(x)	if (pssdebug) Dprintf x
+#define DPRINTF(x)	if (pssdebug) printf x
 int	pssdebug = 0;
 #else
 #define DPRINTF(x)
@@ -176,8 +176,6 @@ int	pcdprobe __P((struct device *, void *, void *));
 void	pcdattach __P((struct device *, struct device *, void *));
 #endif
 
-int	spopen __P((dev_t, int));
-
 int	pssintr __P((void *));
 #ifdef notyet
 int	mpuintr __P((void *));
@@ -186,12 +184,7 @@ int	mpuintr __P((void *));
 int	pss_speaker_ctl __P((void *, int));
 
 int	pss_getdev __P((void *, struct audio_device *));
-int	pss_setfd __P((void *, int));
 
-int	pss_set_out_port __P((void *, int));
-int	pss_get_out_port __P((void *));
-int	pss_set_in_port __P((void *, int));
-int	pss_get_in_port __P((void *));
 int	pss_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	pss_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	pss_query_devinfo __P((void *, mixer_devinfo_t *));
@@ -232,41 +225,30 @@ void	wss_dump_regs __P((struct ad1848_softc *));
  */
 
 struct audio_hw_if pss_audio_if = {
-	spopen,
+	ad1848_open,
 	ad1848_close,
 	NULL,
-	ad1848_set_in_sr,
-	ad1848_get_in_sr,
-	ad1848_set_out_sr,
-	ad1848_get_out_sr,
 	ad1848_query_encoding,
-	ad1848_set_format,
-	ad1848_get_encoding,
-	ad1848_get_precision,
-	ad1848_set_channels,
-	ad1848_get_channels,
+	ad1848_set_params,
 	ad1848_round_blocksize,
-	pss_set_out_port,
-	pss_get_out_port,
-	pss_set_in_port,
-	pss_get_in_port,
 	ad1848_commit_settings,
-	NULL,
-	NULL,
+	ad1848_dma_init_output,
+	ad1848_dma_init_input,
 	ad1848_dma_output,
 	ad1848_dma_input,
 	ad1848_halt_out_dma,
 	ad1848_halt_in_dma,
-	ad1848_cont_out_dma,
-	ad1848_cont_in_dma,
 	pss_speaker_ctl,
 	pss_getdev,
-	pss_setfd,
+	NULL,
 	pss_mixer_set_port,
 	pss_mixer_get_port,
 	pss_query_devinfo,
-	0,	/* not full-duplex */
-	0
+	ad1848_malloc,
+	ad1848_free,
+	ad1848_round,
+        ad1848_mappage,
+	ad1848_get_props,
 };
 
 
@@ -845,9 +827,11 @@ spprobe(parent, match, aux)
     struct ad1848_softc *sc = match;
     struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    struct isa_attach_args *ia = aux;
     u_char bits;
     int i;
 
+    sc->sc_iot = ia->ia_iot;
     sc->sc_iobase = cf->cf_iobase + WSS_CODEC;
     
     /* Set WSS io address */
@@ -1043,7 +1027,6 @@ pssattach(parent, self, aux)
     int iobase = ia->ia_iobase;
     u_char vers;
     struct ad1848_volume vol = {150, 150};
-    int err;
     
     sc->sc_iobase = iobase;
     sc->sc_drq = ia->ia_drq;
@@ -1068,8 +1051,7 @@ pssattach(parent, self, aux)
     (void)pss_set_treble(sc, AUDIO_MAX_GAIN/2);
     (void)pss_set_bass(sc, AUDIO_MAX_GAIN/2);
 
-    if ((err = audio_hardware_attach(&pss_audio_if, sc->ad1848_sc)) != 0)
-	printf("pss: could not attach to audio pseudo-device driver (%d)\n", err);
+    audio_attach_mi(&pss_audio_if, 0, sc->ad1848_sc, &sc->ad1848_sc->sc_dev);
 }
 
 void
@@ -1092,10 +1074,7 @@ spattach(parent, self, aux)
     sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
 	ad1848_intr, sc, sc->sc_dev.dv_xname);
 
-    /* XXX might use pssprint func ?? */
-    printf(" port 0x%x-0x%x irq %d drq %d",
-	   sc->sc_iobase, sc->sc_iobase+AD1848_NPORT,
-	   cf->cf_irq, cf->cf_drq);
+    sc->sc_isa = parent->dv_parent;
 
     ad1848_attach(sc);
 
@@ -1190,26 +1169,8 @@ pss_from_vol(cp, vol)
 }
 
 int
-spopen(dev, flags)
-    dev_t dev;
-    int flags;
-{
-    struct ad1848_softc *sc;
-    int unit = AUDIOUNIT(dev);
-    
-    if (unit >= sp_cd.cd_ndevs)
-	return ENODEV;
-    
-    sc = sp_cd.cd_devs[unit];
-    if (!sc)
-	return ENXIO;
-    
-    return ad1848_open(sc, dev, flags);
-}
-
-int
 pss_set_master_gain(sc, gp)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     struct ad1848_volume *gp;
 {
     DPRINTF(("pss_set_master_gain: %d:%d\n", gp->left, gp->right));
@@ -1236,7 +1197,7 @@ pss_set_master_gain(sc, gp)
 
 int
 pss_set_master_mode(sc, mode)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     int mode;
 {
     short phillips_mode;
@@ -1266,7 +1227,7 @@ pss_set_master_mode(sc, mode)
 
 int
 pss_set_treble(sc, treb)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_int treb;
 {
     DPRINTF(("pss_set_treble: %d\n", treb));
@@ -1287,7 +1248,7 @@ pss_set_treble(sc, treb)
 
 int
 pss_set_bass(sc, bass)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_int bass;
 {
     DPRINTF(("pss_set_bass: %d\n", bass));
@@ -1308,7 +1269,7 @@ pss_set_bass(sc, bass)
 	
 int
 pss_get_master_gain(sc, gp)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     struct ad1848_volume *gp;
 {
     *gp = sc->master_volume;
@@ -1317,7 +1278,7 @@ pss_get_master_gain(sc, gp)
 
 int
 pss_get_master_mode(sc, mode)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_int *mode;
 {
     *mode = sc->master_mode;
@@ -1326,7 +1287,7 @@ pss_get_master_mode(sc, mode)
 
 int
 pss_get_treble(sc, tp)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_char *tp;
 {
     *tp = sc->monitor_treble;
@@ -1335,7 +1296,7 @@ pss_get_treble(sc, tp)
 
 int
 pss_get_bass(sc, bp)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_char *bp;
 {
     *bp = sc->monitor_bass;
@@ -1354,12 +1315,12 @@ int
 pssintr(arg)
 	void *arg;
 {
-    register struct pss_softc *sc = arg;
+    struct pss_softc *sc = arg;
     u_short sr;
     
     sr = inw(sc->sc_iobase+PSS_STATUS);
     
-    DPRINTF(("pssintr: sc=%x st=%x\n", sc, sr));
+    DPRINTF(("pssintr: sc=%p st=%x\n", sc, sr));
 
     /* Acknowledge intr */
     outw(sc->sc_iobase+PSS_IRQ_ACK, 0);
@@ -1378,7 +1339,7 @@ int
 mpuintr(arg)
 	void *arg;
 {
-    register struct mpu_softc *sc = arg;
+    struct mpu_softc *sc = arg;
     u_char sr;
     
     sr = inb(sc->sc_iobase+MIDI_STATUS_REG);
@@ -1395,100 +1356,10 @@ pss_getdev(addr, retp)
     void *addr;
     struct audio_device *retp;
 {
-    DPRINTF(("pss_getdev: retp=0x%x\n", retp));
+    DPRINTF(("pss_getdev: retp=%p\n", retp));
 
     *retp = pss_device;
     return 0;
-}
-
-int
-pss_setfd(addr, flag)
-    void *addr;
-    int flag;
-{
-    /* Can't do full-duplex */
-    return(ENOTTY);
-}
-
-int
-pss_set_out_port(addr, port)
-    void *addr;
-    int port;
-{
-    register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
-	
-    DPRINTF(("pss_set_out_port: %d\n", port));
-
-    if (port != PSS_MASTER_VOL)
-	return(EINVAL);
-    
-    sc->out_port = port;
-
-    return(0);
-}
-
-int
-pss_get_out_port(addr)
-    void *addr;
-{
-    register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
-
-    DPRINTF(("pss_get_out_port: %d\n", sc->out_port));
-
-    return(sc->out_port);
-}
-
-int
-pss_set_in_port(addr, port)
-    void *addr;
-    int port;
-{
-    register struct ad1848_softc *ac = addr;
-	
-    DPRINTF(("pss_set_in_port: %d\n", port));
-
-    switch(port) {
-    case PSS_MIC_IN_LVL:
-	port = MIC_IN_PORT;
-	break;
-    case PSS_LINE_IN_LVL:
-	port = LINE_IN_PORT;
-	break;
-    case PSS_DAC_LVL:
-	port = DAC_IN_PORT;
-	break;
-    default:
-	return(EINVAL);
-	/*NOTREACHED*/
-    }
-    
-    return(ad1848_set_rec_port(ac, port));
-}
-
-int
-pss_get_in_port(addr)
-    void *addr;
-{
-    register struct ad1848_softc *ac = addr;
-    int port = PSS_MIC_IN_LVL;
-    
-    switch(ad1848_get_rec_port(ac)) {
-    case MIC_IN_PORT:
-	port = PSS_MIC_IN_LVL;
-	break;
-    case LINE_IN_PORT:
-	port = PSS_LINE_IN_LVL;
-	break;
-    case DAC_IN_PORT:
-	port = PSS_DAC_LVL;
-	break;
-    }
-
-    DPRINTF(("pss_get_in_port: %d\n", port));
-
-    return(port);
 }
 
 int
@@ -1496,8 +1367,8 @@ pss_mixer_set_port(addr, cp)
     void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
+    struct ad1848_softc *ac = addr;
+    struct pss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     int error = EINVAL;
     
@@ -1606,8 +1477,8 @@ pss_mixer_get_port(addr, cp)
     void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
+    struct ad1848_softc *ac = addr;
+    struct pss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     u_char eq;
     int error = EINVAL;
@@ -1723,7 +1594,7 @@ pss_mixer_get_port(addr, cp)
 int
 pss_query_devinfo(addr, dip)
     void *addr;
-    register mixer_devinfo_t *dip;
+    mixer_devinfo_t *dip;
 {
     DPRINTF(("pss_query_devinfo: index=%d\n", dip->index));
 
@@ -1782,7 +1653,7 @@ pss_query_devinfo(addr, dip)
 	dip->mixer_class = PSS_OUTPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = PSS_OUTPUT_MODE;
-	strcpy(dip->label.name, AudioNvolume);
+	strcpy(dip->label.name, AudioNmaster);
 	dip->un.v.num_channels = 2;
 	strcpy(dip->un.v.units.name, AudioNvolume);
 	break;
@@ -1809,28 +1680,28 @@ pss_query_devinfo(addr, dip)
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = PSS_OUTPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNspeaker);
+	strcpy(dip->label.name, AudioCoutputs);
 	break;
 
     case PSS_INPUT_CLASS:			/* input class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = PSS_INPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCInputs);
+	strcpy(dip->label.name, AudioCinputs);
 	break;
 
     case PSS_MONITOR_CLASS:			/* monitor class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = PSS_MONITOR_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNmonitor);
+	strcpy(dip->label.name, AudioCmonitor);
 	break;
 	    
     case PSS_RECORD_CLASS:			/* record source class */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = PSS_RECORD_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNrecord);
+	strcpy(dip->label.name, AudioCrecord);
 	break;
 	
     case PSS_MIC_IN_MUTE:

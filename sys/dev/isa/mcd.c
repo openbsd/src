@@ -1,5 +1,5 @@
-/*	$OpenBSD: mcd.c,v 1.23 1997/11/30 22:33:21 mickey Exp $ */
-/*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
+/*	$OpenBSD: mcd.c,v 1.24 1998/04/26 21:02:49 provos Exp $ */
+/*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -75,7 +75,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/mcdreg.h>
@@ -118,12 +118,12 @@ struct mcd_softc {
 	struct	disk sc_dk;
 	void *sc_ih;
 
-	int	iobase;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+
 	int	irq, drq;
 
 	char	*type;
-	u_char	readcmd;
-	u_char	attached;
 	int	flags;
 #define	MCDF_LOCKED	0x01
 #define	MCDF_WANTED	0x02
@@ -143,8 +143,10 @@ struct mcd_softc {
 #define	MCD_MD_UNKNOWN	-1
 	int	lastupc;
 #define	MCD_UPC_UNKNOWN	-1
-	int	debug;
 	struct	buf buf_queue;
+	u_char	readcmd;
+	u_char	debug;
+	u_char	probe;
 };
 
 /* prototypes */
@@ -181,7 +183,13 @@ int mcd_read_toc __P((struct mcd_softc *));
 int mcd_getqchan __P((struct mcd_softc *, union mcd_qchninfo *, int));
 int mcd_setlock __P((struct mcd_softc *, int));
 
+int mcd_find __P((bus_space_tag_t, bus_space_handle_t, struct mcd_softc *));
+#define __BROKEN_INDIRECT_CONFIG
+#ifdef __BROKEN_INDIRECT_CONFIG
 int mcdprobe __P((struct device *, void *, void *));
+#else
+int mcdprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void mcdattach __P((struct device *, struct device *, void *));
 
 struct cfattach mcd_ca = {
@@ -192,6 +200,7 @@ struct cfdriver mcd_cd = {
 	NULL, "mcd", DV_DISK
 };
 
+void	mcdgetdefaultlabel __P((dev_t, struct mcd_softc *, struct disklabel *));
 void	mcdgetdisklabel __P((dev_t, struct mcd_softc *));
 int	mcd_get_parms __P((struct mcd_softc *));
 void	mcdstrategy __P((struct buf *));
@@ -219,7 +228,26 @@ mcdattach(parent, self, aux)
 {
 	struct mcd_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	struct mcd_mbox mbx;
+
+	/* Map i/o space */
+	if (bus_space_map(iot, ia->ia_iobase, MCD_NPORT, 0, &ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
+
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
+
+	sc->probe = 0;
+	sc->debug = 0;
+
+	if (!mcd_find(iot, ioh, sc)) {
+		printf(": mcd_find failed\n");
+		return;
+	}
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -611,6 +639,10 @@ mcdioctl(dev, cmd, addr, flag, p)
 	case DIOCWLABEL:
 		return EBADF;
 
+/*	case DIOCGDEFLABEL:
+		mcdgetdefaultlabel(dev, sc, (struct disklabel *)addr);
+		return 0;
+*/
 	case CDIOCPLAYTRACKS:
 		return mcd_playtracks(sc, (struct ioc_play_track *)addr);
 	case CDIOCPLAYMSF:
@@ -673,20 +705,15 @@ mcdioctl(dev, cmd, addr, flag, p)
 #endif
 }
 
-/*
- * This could have been taken from scsi/cd.c, but it is not clear
- * whether the scsi cd driver is linked in.
- */
 void
-mcdgetdisklabel(dev, sc)
+mcdgetdefaultlabel(dev, sc, lp)
 	dev_t dev;
 	struct mcd_softc *sc;
+	struct disklabel *lp;
 {
-	struct disklabel *lp = sc->sc_dk.dk_label;
 	char *errstring;
 	
 	bzero(lp, sizeof(struct disklabel));
-	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = sc->blksize;
 	lp->d_ntracks = 1;
@@ -711,7 +738,7 @@ mcdgetdisklabel(dev, sc)
 	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
-	
+
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
@@ -725,6 +752,22 @@ mcdgetdisklabel(dev, sc)
 		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
 		return;
 	}
+}
+
+/*
+ * This could have been taken from scsi/cd.c, but it is not clear
+ * whether the scsi cd driver is linked in.
+ */
+void
+mcdgetdisklabel(dev, sc)
+        dev_t dev;
+	struct mcd_softc *sc;
+{
+	struct disklabel *lp = sc->sc_dk.dk_label;
+	
+	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+
+	mcdgetdefaultlabel(dev, sc, lp);
 }
 
 int
@@ -775,28 +818,27 @@ mcddump(dev, blkno, va, size)
 	return ENXIO;
 }
 
+/*
+ * Find the board and fill in the softc.
+ */
 int
-mcdprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+mcd_find(iot, ioh, sc)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	struct mcd_softc *sc;
 {
-	struct mcd_softc *sc = match;
-	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
 	int i;
 	struct mcd_mbox mbx;
 
-	sc->iobase = iobase;
-
-	if( !opti_cd_setup( OPTI_MITSUMI, iobase, ia->ia_irq, ia->ia_drq ) )
-		/* printf("mcdprobe: could not setup OPTi chipset.\n") */;
+        sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
 
 	/* Send a reset. */
-	outb(iobase + MCD_RESET, 0);
+	bus_space_write_1(iot, ioh, MCD_RESET, 0);
 	delay(1000000);
 	/* Get any pending status and throw away. */
 	for (i = 10; i; i--)
-		inb(iobase + MCD_STATUS);
+		bus_space_read_1(iot, ioh, MCD_STATUS);
 	delay(1000);
 
 	/* Send get status command. */
@@ -849,22 +891,64 @@ mcdprobe(parent, match, aux)
 		break;
 	}
 
-	sc->attached = 1;
-	ia->ia_iosize = 4;
-	ia->ia_msize = 0;
 	return 1;
+
+}
+
+int
+mcdprobe(parent, match, aux)
+	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	struct mcd_softc sc;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
+	int rv;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == -1 /*ISACF_PORT_DEFAULT*/)
+		return (0);
+
+	/* Map i/o space */
+	if (bus_space_map(iot, ia->ia_iobase, MCD_NPORT, 0, &ioh))
+		return 0;
+
+	if (!opti_cd_setup(OPTI_MITSUMI, ia->ia_iobase, ia->ia_irq, ia->ia_drq))
+		/* printf("mcdprobe: could not setup OPTi chipset.\n") */;
+
+	sc.debug = 0;
+	sc.probe = 1;
+
+	rv = mcd_find(iot, ioh, &sc);
+
+	bus_space_unmap(iot, ioh, MCD_NPORT);
+
+	if (rv)	{
+		ia->ia_iosize = MCD_NPORT;
+		ia->ia_msize = 0;
+	}
+
+	return (rv);
 }
 
 int
 mcd_getreply(sc)
 	struct mcd_softc *sc;
 {
-	int iobase = sc->iobase;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
 	/* Wait until xfer port senses data ready. */
 	for (i = DELAY_GETREPLY; i; i--) {
-		if ((inb(iobase + MCD_XFER) & MCD_XF_STATUSUNAVAIL) == 0)
+		if ((bus_space_read_1(iot, ioh, MCD_XFER) &
+		    MCD_XF_STATUSUNAVAIL) == 0)
 			break;
 		delay(DELAY_GRANULARITY);
 	}
@@ -872,7 +956,7 @@ mcd_getreply(sc)
 		return -1;
 
 	/* Get the data. */
-	return inb(iobase + MCD_STATUS);
+	return bus_space_read_1(iot, ioh, MCD_STATUS);
 }
 
 int
@@ -901,7 +985,7 @@ mcd_getresult(sc, res)
 	if ((x = mcd_getreply(sc)) < 0) {
 		if (sc->debug)
 			printf(" timeout\n");
-		else if (sc->attached)
+		else if (sc->probe)
 			printf("%s: timeout in getresult\n", sc->sc_dev.dv_xname);
 		return EIO;
 	}
@@ -931,8 +1015,9 @@ mcd_getresult(sc, res)
 
 #ifdef MCDDEBUG
 	delay(10);
-	while ((inb(sc->iobase + MCD_XFER) & MCD_XF_STATUSUNAVAIL) == 0) {
-		x = inb(sc->iobase + MCD_STATUS);
+	while ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, MCD_XFER) &
+	    MCD_XF_STATUSUNAVAIL) == 0) {
+		x = bus_space_read_1(sc->sc_iot, sc->sc_ioh, MCD_STATUS);
 		printf("%s: got extra byte %02x during getstatus\n",
 		    sc->sc_dev.dv_xname, (u_int)x);
 		delay(10);
@@ -973,8 +1058,9 @@ mcd_send(sc, mbx, diskin)
 	struct mcd_mbox *mbx;
 	int diskin;
 {
-	int iobase = sc->iobase;
 	int retry, i, error;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	
 	if (sc->debug) {
 		printf("%s: mcd_send: %d %02x", sc->sc_dev.dv_xname,
@@ -985,9 +1071,9 @@ mcd_send(sc, mbx, diskin)
 	}
 
 	for (retry = MCD_RETRIES; retry; retry--) {
-		outb(iobase + MCD_COMMAND, mbx->cmd.opcode);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, mbx->cmd.opcode);
 		for (i = 0; i < mbx->cmd.length; i++)
-			outb(iobase + MCD_COMMAND, mbx->cmd.data.raw.data[i]);
+			bus_space_write_1(iot, ioh, MCD_COMMAND, mbx->cmd.data.raw.data[i]);
 		if ((error = mcd_getresult(sc, &mbx->res)) == 0)
 			break;
 		if (error == EINVAL)
@@ -1054,8 +1140,9 @@ mcdintr(arg)
 {
 	struct mcd_softc *sc = arg;
 	struct mcd_mbx *mbx = &sc->mbx;
-	int iobase = sc->iobase;
 	struct buf *bp = mbx->bp;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	int i;
 	u_char x;
@@ -1071,8 +1158,8 @@ mcdintr(arg)
 			goto firstblock;
 
 		sc->lastmode = MCD_MD_UNKNOWN;
-		outb(iobase + MCD_COMMAND, MCD_CMDSETMODE);
-		outb(iobase + MCD_COMMAND, mbx->mode);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, MCD_CMDSETMODE);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, mbx->mode);
 
 		mbx->count = RDELAY_WAITMODE;
 		mbx->state = MCD_S_WAITMODE;
@@ -1080,14 +1167,14 @@ mcdintr(arg)
 	case MCD_S_WAITMODE:
 		untimeout(mcd_pseudointr, sc);
 		for (i = 20; i; i--) {
-			x = inb(iobase + MCD_XFER);
+			x = bus_space_read_1(iot, ioh, MCD_XFER);
 			if ((x & MCD_XF_STATUSUNAVAIL) == 0)
 				break;
 			delay(50);
 		}
 		if (i == 0)
 			goto hold;
-		sc->status = inb(iobase + MCD_STATUS);
+		sc->status = bus_space_read_1(iot, ioh, MCD_STATUS);
 		mcd_setflags(sc);
 		if ((sc->flags & MCDF_LOADED) == 0)
 			goto changed;
@@ -1104,13 +1191,13 @@ mcdintr(arg)
 		hsg2msf(mbx->blkno, msf);
 
 		/* Send the read command. */
-		outb(iobase + MCD_COMMAND, sc->readcmd);
-		outb(iobase + MCD_COMMAND, msf[0]);
-		outb(iobase + MCD_COMMAND, msf[1]);
-		outb(iobase + MCD_COMMAND, msf[2]);
-		outb(iobase + MCD_COMMAND, 0);
-		outb(iobase + MCD_COMMAND, 0);
-		outb(iobase + MCD_COMMAND, mbx->nblk);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, sc->readcmd);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, msf[0]);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, msf[1]);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, msf[2]);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, 0);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, 0);
+		bus_space_write_1(iot, ioh, MCD_COMMAND, mbx->nblk);
 
 		mbx->count = RDELAY_WAITREAD;
 		mbx->state = MCD_S_WAITREAD;
@@ -1120,7 +1207,7 @@ mcdintr(arg)
 	nextblock:
 	loop:
 		for (i = 20; i; i--) {
-			x = inb(iobase + MCD_XFER);
+			x = bus_space_read_1(iot, ioh, MCD_XFER);
 			if ((x & MCD_XF_DATAUNAVAIL) == 0)
 				goto gotblock;
 			if ((x & MCD_XF_STATUSUNAVAIL) == 0)
@@ -1129,7 +1216,7 @@ mcdintr(arg)
 		}
 		if (i == 0)
 			goto hold;
-		sc->status = inb(iobase + MCD_STATUS);
+		sc->status = bus_space_read_1(iot, ioh, MCD_STATUS);
 		mcd_setflags(sc);
 		if ((sc->flags & MCDF_LOADED) == 0)
 			goto changed;
@@ -1144,9 +1231,10 @@ mcdintr(arg)
 		    RDELAY_WAITREAD - mbx->count, 0, 0, 0);
 
 		/* Data is ready. */
-		outb(iobase + MCD_CTL2, 0x04);	/* XXX */
-		insb(iobase + MCD_RDATA, bp->b_data + mbx->skip, mbx->sz);
-		outb(iobase + MCD_CTL2, 0x0c);	/* XXX */
+		bus_space_write_1(iot, ioh, MCD_CTL2, 0x04);	/* XXX */
+		bus_space_read_multi_1(iot, ioh, MCD_RDATA,
+		    bp->b_data + mbx->skip, mbx->sz);
+		bus_space_write_1(iot, ioh, MCD_CTL2, 0x0c);	/* XXX */
 		mbx->blkno += 1;
 		mbx->skip += mbx->sz;
 		if (--mbx->nblk > 0)
@@ -1196,7 +1284,7 @@ changed:
 
 #ifdef notyet
 	printf("%s: unit timeout; resetting\n", sc->sc_dev.dv_xname);
-	outb(mbx->iobase + MCD_RESET, MCD_CMDRESET);
+	bus_space_write_1(iot, ioh, MCD_RESET, MCD_CMDRESET);
 	delay(300000);
 	(void) mcd_getstat(sc, 1);
 	(void) mcd_getstat(sc, 1);
@@ -1215,7 +1303,7 @@ mcd_soft_reset(sc)
 	sc->lastmode = MCD_MD_UNKNOWN;
 	sc->lastupc = MCD_UPC_UNKNOWN;
 	sc->audio_status = CD_AS_AUDIO_INVALID;
-	outb(sc->iobase + MCD_CTL2, 0x0c);	/* XXX */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MCD_CTL2, 0x0c); /* XXX */
 }
 
 int

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sb_isa.c,v 1.1 1997/07/10 23:06:37 provos Exp $	*/
-/*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
+/*	$OpenBSD: sb_isa.c,v 1.2 1998/04/26 21:02:57 provos Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.15 1997/11/30 15:32:25 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -43,6 +43,8 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 
+#include <machine/bus.h>
+
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
@@ -55,7 +57,14 @@
 
 #include <dev/isa/sbdspvar.h>
 
+static	int sbfind __P((struct device *, struct sbdsp_softc *, struct isa_attach_args *));
+
+#define __BROKEN_INDIRECT_CONFIG /* XXX */
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	sb_isa_match __P((struct device *, void *, void *));
+#else
+int	sb_isa_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	sb_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sb_isa_ca = {
@@ -72,13 +81,32 @@ struct cfattach sb_isa_ca = {
 int
 sb_isa_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
-	/*
-	 * Indirect brokedness!
-	 */
-	register struct sbdsp_softc *sc = match;
-	register struct isa_attach_args *ia = aux;
+	struct sbdsp_softc probesc, *sc = &probesc;
+
+	bzero(sc, sizeof *sc);
+#ifdef __BROKEN_INDIRECT_CONFIG
+	sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
+#else
+	sc->sc_dev.dv_cfdata = match;
+#endif
+	strcpy(sc->sc_dev.dv_xname, "sb");
+	return sbfind(parent, sc, aux);
+}
+
+static int
+sbfind(parent, sc, ia)
+	struct device *parent;
+	struct sbdsp_softc *sc;
+	struct isa_attach_args *ia;
+{
+	int rc = 0;
 
 	if (!SB_BASE_VALID(ia->ia_iobase)) {
 		printf("sb: configured iobase 0x%x invalid\n", ia->ia_iobase);
@@ -87,7 +115,7 @@ sb_isa_match(parent, match, aux)
 
 	sc->sc_iot = ia->ia_iot;
 
-	/* Map i/o space [we map 24 ports which is the max of the sb and pro  */
+	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
 	if (bus_space_map(sc->sc_iot, ia->ia_iobase, SBP_NPORT, 0,
 	    &sc->sc_ioh)) {
 		printf("sb: can't map i/o space 0x%x/%d in probe\n",
@@ -95,28 +123,34 @@ sb_isa_match(parent, match, aux)
 		return 0;
 	}
 
-	/*
-	 * Indirect brokedness!
-	 */
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
 	sc->sc_drq8 = ia->ia_drq;
-	sc->sc_drq16 = -1;	/* XXX */
+	sc->sc_drq16 = ia->ia_drq2;
 	sc->sc_ic = ia->ia_ic;
 
-	if (!sbmatch(sc)) {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, SBP_NPORT);
-		return 0;
-	}
+	if (!sbmatch(sc))
+		goto bad;
+
+	if ((sc->sc_drq8 != -1 && !isa_drq_isfree(parent, sc->sc_drq8)) ||
+	    (sc->sc_drq16 != -1 && !isa_drq_isfree(parent, sc->sc_drq16)))
+		goto bad;
 
 	if (ISSBPROCLASS(sc))
 		ia->ia_iosize = SBP_NPORT;
 	else
 		ia->ia_iosize = SB_NPORT;
 
+	if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
+		ia->ia_drq2 = -1;
+
 	ia->ia_irq = sc->sc_irq;
 
-	return 1;
+	rc = 1;
+
+bad:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, SBP_NPORT);
+	return rc;
 }
 
 
@@ -129,5 +163,15 @@ sb_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	sbattach((struct sbdsp_softc *) self);
+	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
+	struct isa_attach_args *ia = aux;
+
+	if (!sbfind(parent, sc, ia) || 
+	    bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 
+			  0, &sc->sc_ioh)) {
+		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	sc->sc_isa = parent;
+	sbattach(sc);
 }

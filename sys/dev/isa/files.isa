@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.39 1998/03/31 23:02:11 niklas Exp $
+#	$OpenBSD: files.isa,v 1.40 1998/04/26 21:02:40 provos Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -12,7 +12,7 @@
 device	isa {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1],
-	     [pnpid = -1]}
+	     [drq2 = -1]}
 attach	isa at isabus
 file	dev/isa/isa.c			isa needs-flag
 
@@ -217,7 +217,7 @@ define	sbdsp
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isa_dma, sbdsp, mulaw, opti
+device	sb: audio, isa_dma, sbdsp, mulaw, opti, auconv
 file	dev/isa/sb.c			sb needs-flag
 
 attach	sb at isa with sb_isa
@@ -231,7 +231,7 @@ attach	aria at isa
 file	dev/isa/aria.c			aria needs-flag
 
 # ProAudio Spectrum
-device	pas: audio, isa_dma, sbdsp, mulaw
+device	pas: audio, isa_dma, sbdsp, mulaw, auconv
 attach	pas at isa
 file	dev/isa/pas.c			pas needs-flag
 
@@ -249,19 +249,21 @@ device	pss {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1]}
 attach	pss at isa
-device	sp: audio, isa_dma, ad1848
+device	sp: audio, isa_dma, ad1848, auconv
 attach	sp at pss
 file	dev/isa/pss.c			pss needs-flag
 
 # Microsoft Windows Sound System
-device	wss: audio, isa_dma, ad1848, opti
-attach	wss at isa
+device	wss: audio, isa_dma, ad1848, auconv
 file	dev/isa/wss.c			wss needs-flag
+
+attach	wss at isa with wss_isa
+file	dev/isa/wss_isa.c		wss_isa needs-flag
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation. 
-device	gus: audio, isa_dma, ics2101, ad1848, mulaw
+device	gus: audio, isa_dma, ics2101, ad1848, mulaw, auconv
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
 
