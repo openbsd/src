@@ -1,10 +1,19 @@
 .\" The following requests are required for all man pages.
-.Dd DATE
-.Dt DOCUMENT_TITLE
+.Dd Month DD, YYYY
+.Dt NAME SECTION
 .Os
 .Sh NAME
+.Nm program
+.Nd one line about what it does 
 .Sh SYNOPSIS
+.\" For a program:  program [-abc] files...
+.Nm program
+.Op Fl abc
+.Op Ar
 .Sh DESCRIPTION
+The
+.Nm
+utility processes files ...
 .\" The following requests should be uncommented and used where appropriate.
 .\" This next request is for sections 2 and 3 function return values only.
 .\" .Sh RETURN VALUES
@@ -18,6 +27,7 @@
 .\" The next request is for sections 2 and 3 error and signal handling only.
 .\" .Sh ERRORS
 .\" .Sh SEE ALSO
+.\" .Xr foobar 1
 .\" .Sh STANDARDS
 .\" .Sh HISTORY
 .\" .Sh AUTHORS
