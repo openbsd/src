@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)asctime.c	7.22";
-static char rcsid[] = "$OpenBSD: asctime.c,v 1.10 2005/03/02 12:25:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: asctime.c,v 1.11 2005/03/06 01:40:05 cloder Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
@@ -85,7 +85,7 @@ int				bufsize;
 		timeptr->tm_mday, timeptr->tm_hour,
 		timeptr->tm_min, timeptr->tm_sec,
 		year);
-	if (len < bufsize) {
+	if (len != -1 && len < bufsize) {
 		return buf;
 	} else {
 #ifdef EOVERFLOW
