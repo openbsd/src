@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.7 1998/05/18 21:25:20 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.8 1998/05/19 16:31:11 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -537,7 +537,7 @@ init_times(void)
 	  else if (!strcmp(p, CONFIG_RET_TIMEOUT))
 	       value = &retrans_timeout;
 	  else if (!strcmp(p, CONFIG_EX_TIMEOUT))
-	       value = &exchange_lifetime;
+	       value = &exchange_timeout;
 	  else if (!strcmp(p, CONFIG_EX_LIFETIME))
 	       value = &exchange_lifetime;
 	  else if (!strcmp(p, CONFIG_SPI_LIFETIME))
