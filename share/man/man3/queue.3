@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.29 2003/05/17 18:40:12 krw Exp $
+.\"	$OpenBSD: queue.3,v 1.30 2003/05/20 09:13:38 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -299,7 +299,7 @@ However:
 .Pp
 .Bl -enum -compact -offset indent
 .It
-Each elements requires two pointers rather than one.
+Each element requires two pointers rather than one.
 .It
 Code size and execution time of operations (except for removal) is about
 twice that of the singly-linked data-structures.
@@ -454,7 +454,7 @@ of the list pointed by
 .Fa head .
 .Pp
 The
-.Fn SLIST_FIRST ,
+.Fn SLIST_FIRST
 and
 .Fn SLIST_NEXT
 macros can be used to traverse the list:
@@ -561,7 +561,7 @@ with the new element
 .Fa elm2 .
 .Pp
 The
-.Fn LIST_FIRST ,
+.Fn LIST_FIRST
 and
 .Fn LIST_NEXT
 macros can be used to traverse the list:
@@ -680,13 +680,13 @@ macro removes the first element
 from the queue.
 .Pp
 The
-.Fn SIMPLEQ_FIRST ,
+.Fn SIMPLEQ_FIRST
 and
 .Fn SIMPLEQ_NEXT
 macros can be used to traverse the queue.
 The
 .Fn SIMPLEQ_FOREACH
-is used for queue traversal
+is used for queue traversal:
 .Bd -literal -offset indent
 SIMPLEQ_FOREACH(np, head, NAME)
 .Ed
@@ -947,7 +947,7 @@ and
 macros can be used to traverse a circular queue.
 The
 .Fn CIRCLEQ_FOREACH
-is used for circular queue forward traversal
+is used for circular queue forward traversal:
 .Bd -literal -offset indent
 CIRCLEQ_FOREACH(np, head, NAME)
 .Ed

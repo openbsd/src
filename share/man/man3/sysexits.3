@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sysexits.3,v 1.5 2001/01/24 22:49:06 aaron Exp $
+.\" $OpenBSD: sysexits.3,v 1.6 2003/05/20 09:13:38 jmc Exp $
 .\" $FreeBSD: src/share/man/man3/sysexits.3,v 1.4.2.1 1999/08/29 16:45:41 peter Exp $
 .\"
 .Dd March 31, 1996
@@ -37,7 +37,7 @@
 .Sh DESCRIPTION
 According to
 .Xr style 9 ,
-it is not a good practice to call
+it is not good practice to call
 .Xr exit 3
 with arbitrary values to indicate a failure condition when ending a program.
 Instead, the pre-defined exit codes from
@@ -55,7 +55,7 @@ The meaning of the code is approximately as follows:
 .Bl -tag -width "EX_UNAVAILABLEXX(XX)"
 .It Dv EX_USAGE Pq 64
 The command was used incorrectly, e.g., with the wrong number of
-arguments, a bad flag, a bad syntax in a parameter, or whatever.
+arguments, a bad flag, bad syntax in a parameter, or whatever.
 .It Dv EX_DATAERR Pq 65
 The input data was incorrect in some way.
 This should only be used for user's data and not system files.
@@ -90,8 +90,8 @@ returning a user that does not exist in the passwd file.
 .It Dv EX_OSFILE Pq 72
 Some system file (e.g.,
 .Pa /etc/passwd ,
-.Pa /var/run/utmp ,
-etc.) does not exist, cannot be opened, or has some sort of error
+.Pa /var/run/utmp )
+does not exist, cannot be opened, or has some sort of error
 (e.g., syntax error).
 .It Dv EX_CANTCREAT Pq 73
 A (user specified) output file cannot be created.
@@ -99,7 +99,7 @@ A (user specified) output file cannot be created.
 An error occurred while doing I/O on some file.
 .It Dv EX_TEMPFAIL Pq 75
 Temporary failure, indicating something that is not really an error.
-In sendmail, this means that a mailer (e.g.) could not create a
+In sendmail, this means that a mailer, for example, could not create a
 connection, and the request should be reattempted later.
 .It Dv EX_PROTOCOL Pq 76
 The remote system returned something that was
@@ -127,7 +127,7 @@ The
 file appeared sometime after
 .Bx 4.3 .
 .Sh AUTHORS
-This man page has been written by
+This man page was written by
 .ie t J\(:org Wunsch
 .el Joerg Wunsch
 after the comments in
