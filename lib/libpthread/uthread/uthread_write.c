@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_write.c,v 1.9 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: uthread_write.c,v 1.10 2003/12/22 00:33:42 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -99,7 +99,7 @@ write(int fd, const void *buf, size_t nbytes)
 			 * write:
 			 */
 			if (blocking && ((n < 0 && (errno == EWOULDBLOCK ||
-			    errno == EAGAIN)) || (n >= 0 && num < nbytes))) {
+			    errno == EAGAIN)) || (n > 0 && num < nbytes))) {
 				curthread->data.fd.fd = fd;
 				_thread_kern_set_timeout(NULL);
 
@@ -114,19 +114,36 @@ write(int fd, const void *buf, size_t nbytes)
 				 * interrupted by a signal
 				 */
 				if (curthread->interrupted) {
-					/* Return an error: */
-					ret = -1;
+					if (num > 0) {
+						/* Return partial success: */
+						ret = num;
+					} else {
+						/* Return an error: */
+						errno = EINTR;
+						ret = -1;
+					}
 				}
 
 			/*
-			 * If performing a non-blocking write or if an
-			 * error occurred, just return whatever the write
-			 * syscall did:
+			 * If performing a non-blocking write,
+			 * just return whatever the write syscall did:
 			 */
-			} else if (!blocking || n < 0) {
+			} else if (!blocking) {
 				/* A non-blocking call might return zero: */
 				ret = n;
 				break;
+
+			/*
+			 * If there was an error, return partial success
+			 * (if any bytes were written) or else the error:
+			 */
+			} else if (n <= 0) {
+				if (num > 0)
+					ret = num;
+				else
+					ret = n;
+				if (n == 0)                                                                            
+					break;
 
 			/* Check if the write has completed: */
 			} else if (num >= nbytes)
