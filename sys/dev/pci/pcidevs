@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.308 2000/09/01 09:04:42 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.309 2000/09/04 13:13:18 itojun Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -800,6 +800,7 @@ product BROOKTREE BT849		0x0351	BT849
 product BROOKTREE BT878		0x036e	BT878
 product BROOKTREE BT879		0x036f	BT879
 product BROOKTREE BT878_DEV2	0x0878	BT878 (2nd device)
+product BROOKTREE BT8474	0x8474	Bt8474 Multichannel HDLC Controller
 
 /* BusLogic products */
 product BUSLOGIC MULTIMASTER_NC	0x0140	MultiMaster NC
