@@ -1,37 +1,23 @@
-LESSONS = files editor morefiles macros eqn C
+PROG = learn
 
-CFLAGS = -g
-LLIB	= ../lib
+LLIB = /usr/share/learn	# must agree with pathnames.h
 
-cp:	all
-	cp learn tee lcount $(LLIB)
-	@echo "Do 'make lessons' if you need to extract the lesson archives"
-	@echo "Do 'make play; make log' to make playpen and log directories"
+CFLAGS += -g
 
 all:	learn tee lcount
 
-learn: learn.c learn.h
-	cc -o learn $(CFLAGS) '-DLLIB="$(LLIB)"' learn.c
-
-lcount tee:
-	cc $(CFLAGS) $@.c -o $@
-
-lessons:	$(LESSONS)
-
-$(LESSONS):
-	-rm -rf $(LLIB)/$@
-	mkdir $(LLIB)/$@
-	(cd $(LLIB)/$@; ar x ../$@.a)
-
-play log:
-	-rm -rf $(LLIB)/$@; mkdir $(LLIB)/$@; chmod +w $(LLIB)/$@
+# tee and lcount must be installed in LLIB!
+# old makefile installed learn into LLIB as well - is it needed there?
+install:	all
+	echo install -o ${BINOWN} -g ${BINGRP} -m 444 learn \
+			${DESTDIR}${BINDIR}/learn; \
+	install -o ${BINOWN} -g ${BINGRP} tee lcount $(LLIB)
 
 check:
 	-@test -r $(LLIB)/tee || echo 'tee not present; make tee'
 	-@test -r $(LLIB)/lcount || echo 'lcount not present; make lcount'
-	-@test -r $(LLIB)/play || echo 'play directory not present; make play'
-	-@test -r $(LLIB)/log || echo 'log directory not present; make log'
-	-@for i in $(LESSONS); do test -r $(LLIB)/$$i/L0 || echo $$i not unarchived, make $$i; done
 
-clean:
-	rm -rf lcount learn tee $(LLIB)/play $(LLIB)/log
+
+# clean rule should also remove tee and lcount
+
+.include <bsd.prog.mk>

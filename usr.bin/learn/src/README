@@ -1,33 +1,15 @@
-This is a historical document describing code that once
+Learn was originally written by Mike Lesk with some contributions
+from Brian Kernighan.  The paper in the /usr/share/doc/usd/02.learn
+directory dates from the second version of learn, around 1979.
+
+This version of learn has been resurrected from the original V7
+source and edited enough that the source compiles and the
+lessons can be executed.  We have made no attempt to update the
+lessons, nor to fix some of the glaring problems with the code.
+Think of it as a historical document, not a polished system.
+A historical document, that is, describing code that once
 worked fine.  It sort of limps along now, but there are
 some things that don't work right.  Caveat emptor.
 
-
-Make a learn by
-	make
-
-When this seems right, extract the lessons by
-	make lessons
-
-This extracts the lesson archives for each course.  You can also
-do this one step at a time with "make files", "make editor",
-etc., if you don't want all courses.  The C script is not
-complete; use at your own risk.
-
-To set up the working directories, you must also say
-	make play; make log
-
-Finally, check that it's sensible with
-	make check
-If that doesn't print any messages, you're probably in good shape.
-
-Learn requires general write permission on the user playpen
-directory .../lib/play.  Lesson directories may be protected.
-
-Learn collects a log file for each script in the .../lib/log
-directory, with a file for each script (files, editor, etc.)
-containing an entry for each lesson attempted.  These files will
-grow without bound, unless they are periodically truncated.  The
-log files should have general write permission.  If you don't
-want logging (a sensible position to take), set the variable
-"logging" to zero in source/lrndef before making learn.
+Code warmed over at OpenBSD, September, 1998.
+$OpenBSD: README,v 1.2 1998/09/28 16:40:16 ian Exp $

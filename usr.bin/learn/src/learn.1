@@ -1,0 +1,44 @@
+.Dd January 30, 1979
+.\" $OpenBSD: learn.1,v 1.1 1998/09/28 16:40:16 ian Exp $
+.Dt LEARN 1
+.Os OpenBSD
+.Sh NAME
+.Nm learn
+.Nd computer based learning
+.Sh SYNOPSIS
+.Nm learn 
+.Op lesson
+.Sh DESCRIPTION
+This is a resurrection of the learn command from V7 UNIX, circa 1979.
+The program works fine, but many of the lessons are quite antiquated.
+It remains for others to write new lessons describing current
+versions of UNIX-like systems.
+.Sh FILES
+.Nm /usr/libdata/learn/* 
+.Nd lesson files.
+.br
+.Nm /tmp/pl** 
+.Nd playground directory created for each invocation.
+Removed at end of run.
+.Sh SEE ALSO
+Learn \- Computer-Aided Instruction on UNIX,
+(Second Edition), Brian W. Kernighan and Michael E. Lesk.
+January 30, 1979
+.sp
+The version described there created the "play" directory for each
+user under the lesson file directory; this version creates
+a directory under /tmp for each user.
+.Sh HISTORY
+The program originated in Seventh Edition UNIX.
+A lightly-revised version of the program was released by
+Lucent/Bell Laboratories in 1997, and
+modernized for OpenBSD 2.4 by Ian Darwin, who also wrote this man page,
+and Paul Janzen.
+.Sh BUGS
+The lessons need updating. There should be lessons on awk, sed,
+perl, shell, and other scripting languages.
+.sp
+There is no way to drive a screen-based program such as vi or emacs.
+.sp
+Perhaps the lesson file should be reorganized so that all the lessons
+for each topic are in one large file instead of so many tiny ones.

@@ -1,3 +1,7 @@
+/* defines for learn.
+ * $OpenBSD: learn.h,v 1.2 1998/09/28 16:40:17 ian Exp $
+ */
+
 #define	READY	0
 #define	PRINT	1
 #define	COPYIN	2
@@ -47,3 +51,4 @@ extern	int	ask;
 
 extern	void intrpt(int);
 extern	void hangup(int);
+extern	void trim(char *);
