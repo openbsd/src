@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.58 1997/12/26 08:16:48 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.59 1997/12/26 08:17:14 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -174,6 +174,7 @@ pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
 
 sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+sb*	at isapnp?
 wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record drq)
