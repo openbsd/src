@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.24 1999/02/06 23:07:46 millert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.25 1999/02/26 03:16:26 art Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -411,7 +411,11 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
 				return (error);
+#if defined(UVM)
+			uvm_vnp_uncache(vp);
+#else
 			(void) vnode_pager_uncache(vp);
+#endif
 			np->n_brev = np->n_lrev;
 		    }
 		}
@@ -420,7 +424,11 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
 				return (error);
+#if defined(UVM)
+			uvm_vnp_uncache(vp);
+#else
 			(void) vnode_pager_uncache(vp);
+#endif
 			np->n_attrstamp = 0;
 			if (vp->v_type == VDIR)
 				np->n_direofoffset = 0;
@@ -438,7 +446,11 @@ nfs_open(v)
 				if ((error = nfs_vinvalbuf(vp, V_SAVE,
 					ap->a_cred, ap->a_p, 1)) == EINTR)
 					return (error);
+#if defined(UVM)
+				uvm_vnp_uncache(vp);
+#else
 				(void) vnode_pager_uncache(vp);
+#endif
 				np->n_mtime = vattr.va_mtime.tv_sec;
 			}
 		}
@@ -622,7 +634,11 @@ nfs_setattr(v)
 				return (error);
  			tsize = np->n_size;
  			np->n_size = np->n_vattr.va_size = vap->va_size;
+#if defined(UVM)
+			uvm_vnp_setsize(vp, np->n_size);
+#else
  			vnode_pager_setsize(vp, (u_long)np->n_size);
+#endif
   		};
   	} else if ((vap->va_mtime.tv_sec != VNOVAL ||
 		vap->va_atime.tv_sec != VNOVAL) &&
@@ -633,7 +649,11 @@ nfs_setattr(v)
 	error = nfs_setattrrpc(vp, vap, ap->a_cred, ap->a_p);
 	if (error && vap->va_size != VNOVAL) {
 		np->n_size = np->n_vattr.va_size = tsize;
+#if defined(UVM)
+		uvm_vnp_setsize(vp, np->n_size);
+#else
 		vnode_pager_setsize(vp, (u_long)np->n_size);
+#endif
 	}
 	return (error);
 }

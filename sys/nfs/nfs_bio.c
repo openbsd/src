@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.14 1997/12/02 16:57:57 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.15 1999/02/26 03:16:25 art Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -467,7 +467,11 @@ nfs_write(v)
 		/*
 		 * XXX make sure we aren't cached in the VM page cache
 		 */
+#if defined(UVM)
+		uvm_vnp_uncache(vp);
+#else
 		(void)vnode_pager_uncache(vp);
+#endif
 
 		/*
 		 * Check for a valid write lease.
@@ -510,7 +514,11 @@ again:
 		np->n_flag |= NMODIFIED;
 		if (uio->uio_offset + n > np->n_size) {
 			np->n_size = uio->uio_offset + n;
+#if defined(UVM)
+			uvm_vnp_setsize(vp, (u_long)np->n_size);
+#else
 			vnode_pager_setsize(vp, (u_long)np->n_size);
+#endif
 		}
 
 		/*

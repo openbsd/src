@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.18 1999/02/06 23:07:42 millert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.19 1999/02/26 03:16:25 art Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -1658,7 +1658,11 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 			goto out;
 		}
 		if (vp->v_flag & VTEXT)
+#if defined(UVM)
+			uvm_vnp_uncache(vp);
+#else
 			(void) vnode_pager_uncache(vp);
+#endif
 out:
 		if (!error) {
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
@@ -3288,7 +3292,11 @@ nfsrv_access(vp, flags, cred, rdonly, p, override)
 		 * the inode, try to free it up once.  If
 		 * we fail, we can't allow writing.
 		 */
+#if defined(UVM)
+		if ((vp->v_flag & VTEXT) && !uvm_vnp_uncache(vp))
+#else
 		if ((vp->v_flag & VTEXT) && !vnode_pager_uncache(vp))
+#endif
 			return (ETXTBSY);
 	}
 	error = VOP_ACCESS(vp, flags, cred, p);
