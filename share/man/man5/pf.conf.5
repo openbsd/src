@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.98 2002/10/14 19:37:51 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.99 2002/10/27 13:56:59 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -461,7 +461,7 @@ connections:
     block out proto { tcp, udp } all
     pass  out proto { tcp, udp } all user { < 1000, dhartmei } keep state
 .Ed
-.Ss flags <a> | <a>/<b> | /<b>
+.Ss flags <a>/<b> | /<b>
 The rule only applies to TCP packets that have the flags <a> set
 out of set <b>.
 Flags not specified in <b> are ignored.
@@ -474,11 +474,6 @@ The other flags are ignored.
 .It Em flags S/SA
 Of SYN and ACK, exactly SYN is set.
 SYN, SYN+PSH, SYN+RST match, but SYN+ACK, ACK and ACK+RST don't.
-This is more restrictive than the previous example.
-.It Em flags S
-If the second set is not specified, it defaults to FSRPAUEW.
-Hence, only packets with SYN set and all other flags unset match this 
-rule.
 This is more restrictive than the previous example.
 .It Em flags /SFRA
 If the first set is not specified, it defaults to none.
