@@ -1411,6 +1411,7 @@
 ./usr/libdata/ssh
 ./usr/libdata/ssh/Ssh.bin
 ./usr/libexec
+./usr/libexec/afsd
 ./usr/libexec/auth
 ./usr/libexec/auth/login_activ
 ./usr/libexec/auth/login_chpass
@@ -1536,6 +1537,7 @@
 ./usr/sbin/bootpef
 ./usr/sbin/bootpgw
 ./usr/sbin/bootptest
+./usr/sbin/bos
 ./usr/sbin/certpatch
 ./usr/sbin/chat
 ./usr/sbin/chgrp
@@ -1553,6 +1555,7 @@
 ./usr/sbin/edquota
 ./usr/sbin/extattrctl
 ./usr/sbin/faithd
+./usr/sbin/fs
 ./usr/sbin/getencstat
 ./usr/sbin/getextattr
 ./usr/sbin/group
@@ -1612,6 +1615,7 @@
 ./usr/sbin/pppstats
 ./usr/sbin/praliases
 ./usr/sbin/pstat
+./usr/sbin/pts
 ./usr/sbin/pwd_mkdb
 ./usr/sbin/quot
 ./usr/sbin/quotaoff
@@ -1675,6 +1679,7 @@
 ./usr/sbin/vipw
 ./usr/sbin/visudo
 ./usr/sbin/vnconfig
+./usr/sbin/vos
 ./usr/sbin/ypbind
 ./usr/sbin/ypinit
 ./usr/sbin/yppoll
