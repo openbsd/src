@@ -448,10 +448,10 @@ run_byacc:	FORCE
 # We don't want to regenerate perly.c and perly.h, but they might
 # appear out-of-date after a patch is applied or a new distribution is
 # made.
-perly.c: perly.y
+perly.c:
 	-@sh -c true
 
-perly.h: perly.y
+perly.h:
 	-@sh -c true
 
 # No compat3.sym here since and including the 5.004_50.
