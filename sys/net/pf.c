@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.235 2002/06/14 21:35:00 todd Exp $ */
+/*	$OpenBSD: pf.c,v 1.236 2002/07/10 22:17:58 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3194,7 +3194,10 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			do {
 				switch (pd2.proto) {
 				case IPPROTO_FRAGMENT:
-					/* XXX we don't handle fagments yet */
+					/*
+					 * ICMPv6 error messages for
+					 * non-first fragments
+					 */
 					return (PF_DROP);
 				case IPPROTO_AH:
 				case IPPROTO_HOPOPTS:
@@ -4094,9 +4097,9 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	do {
 		switch (pd.proto) {
 		case IPPROTO_FRAGMENT:
-			/* XXX we don't handle fragments yet */
-			action = PF_DROP;
-			REASON_SET(&reason, PFRES_FRAG);
+			action = pf_test_fragment(&r, dir, ifp, m, h, &pd);
+			if (action == PF_DROP)
+				REASON_SET(&reason, PFRES_FRAG);
 			goto done;
 		case IPPROTO_AH:
 		case IPPROTO_HOPOPTS:
