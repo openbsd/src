@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.2 2001/04/13 15:58:43 aaron Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.3 2001/05/22 11:35:16 mickey Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1222,7 +1222,8 @@ rl_attach(sc)
 	rl_read_eeprom(sc, (caddr_t)&rl_did, RL_EE_PCI_DID, 1, 0);
 
 	if (rl_did == RT_DEVICEID_8139 || rl_did == ACCTON_DEVICEID_5030 ||
-	    rl_did == DELTA_DEVICEID_8139 || rl_did == ADDTRON_DEVICEID_8139)
+	    rl_did == DELTA_DEVICEID_8139 || rl_did == ADDTRON_DEVICEID_8139
+	    || rl_did == DLINK_DEVICEID_8139)
 		sc->rl_type = RL_8139;
 	else if (rl_did == RT_DEVICEID_8129)
 		sc->rl_type = RL_8129;
