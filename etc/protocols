@@ -1,19 +1,19 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.16 2002/12/30 22:17:03 mcbride Exp $
+#	$OpenBSD: protocols,v 1.17 2003/01/16 19:49:52 rohee Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.iana.org/assignments/protocol-numbers
 #
-ip	0	IP		# internet protocol, pseudo protocol number
+ip	0	IP HOPOPT	# internet protocol, pseudo protocol number
 icmp	1	ICMP		# internet control message protocol
 igmp	2	IGMP		# Internet Group Management
 ggp	3	GGP		# gateway-gateway protocol
 ipencap	4	IP-ENCAP	# IP encapsulated in IP (officially ``IP'')
 st	5	ST		# ST datagram mode
 tcp	6	TCP		# transmission control protocol
-ucl	7	UCL		# UCL
+ucl	7	UCL CBT		# UCL
 egp	8	EGP		# exterior gateway protocol
 igp	9	IGP		# any private interior gateway
 bbn-rcc-mon 10	BBN-RCC-MON	# BBN RCC Monitoring
@@ -45,7 +45,7 @@ idpr	35	IDPR		# Inter-Domain Policy Routing Protocol
 xtp	36	XTP		# Xpress Transfer Protocol
 ddp	37	DDP		# Datagram Delivery Protocol
 idpr-cmtp 38	IDPR-CMTP	# IDPR Control Message Transport Proto
-idpr-cmtp 39	IDPR-CMTP	# IDPR Control Message Transport
+tp++	39	TP++		# TP++ Transport Protocol
 il	40	IL		# IL Transport Protocol
 ipv6	41	IPv6		# Internet Protocol version 6
 sdrp	42	SDRP		# Source Demand Routing Protocol
@@ -56,12 +56,12 @@ rsvp	46	RSVP		# Reservation Protocol
 gre	47	GRE		# General Routing Encapsulation
 mhrp	48	MHRP		# Mobile Host Routing Protocol
 bna	49	BNA		# BNA
-esp	50	IPSEC-ESP	# Encap Security Payload
-ah	51	IPSEC-AH	# Authentication Header
+esp	50	IPSEC-ESP ESP	# Encap Security Payload
+ah	51	IPSEC-AH AH	# Authentication Header
 i-nlsp	52	I-NLSP		# Integrated Net Layer Security TUBA
 swipe	53	SWIPE		# IP with Encryption
-nhrp	54	NHRP		# NBMA Next Hop Resolution Protocol
-mobileip 55	MOBILEIP	# MobileIP encapsulation
+nhrp	54	NHRP NARP	# NBMA Next Hop Resolution Protocol
+mobileip 55	MOBILEIP MOBILE	# MobileIP encapsulation
 skip	57	SKIP		# SKIP
 ipv6-icmp 58	IPv6-ICMP icmp6	# ICMP for IPv6
 ipv6-nonxt 59	IPv6-NoNxt	# No Next Header for IPv6
@@ -93,7 +93,7 @@ ttp	84	TTP		# TTP
 nsfnet-igp 85	NSFNET-IGP	# NSFNET-IGP
 dgp	86	DGP		# Dissimilar Gateway Protocol
 tcf	87	TCF		# TCF
-igrp	88	IGRP		# IGRP
+igrp	88	IGRP EIGRP	# IGRP
 ospf	89	OSPFIGP		# Open Shortest Path First IGP
 sprite-rpc 90	Sprite-RPC	# Sprite RPC Protocol
 larp	91	LARP		# Locus Address Resolution Protocol
@@ -106,7 +106,39 @@ etherip	97	ETHERIP		# Ethernet-within-IP Encapsulation
 encap	98	ENCAP		# Yet Another IP encapsulation
 any	99	any		# private encryption scheme
 gmtp	100	GMTP		# GMTP
+ifmp	101	IFMP		# Ipsilon Flow Management Protocol
+ifmp	101	IFMP		# Ipsilon Flow Management Protocol
+pnni	102	PNNI		# PNNI over IP
 pim	103	PIM		# Protocol Independent Multicast
+aris	104	ARIS
+scps	105	SCPS		# Space Communication Protocol Standards TCP Compressed Header
+qnx	106	QNX
+a/n	107	A/N		# Active Networks
 ipcomp	108	IPComp		# IP Payload Compression Protocol
+snp	109	SNP		# Sitara Networks Protocol
+compaq-peer	110	Compaq-Peer	# Compaq Peer Protocol
+ipx-in-ip	111	IPX-in-IP	# IPX in IP
 vrrp	112	VRRP		# Virtual Router Redundancy Protocol
+pgm	113	PGM		# PGM Reliable Transport Protocol
+#	114			# any 0-hop protocol
+l2tp	115	L2TP		# Layer Two Tunneling Protocol
+ddx	116	DDX		# D-II Data Exchange (DDX)
+iatp	117	IATP		# Interactive Agent Transfer Protocol
+stp	118	STP		# Schedule Transfer Protocol
+srp	119	SRP		# SpectraLink Radio Protocol
+uti	120	UTI
+smp	121	SMP		# Simple Message Protocol
+sm	122	SM
+ptp	123	PTP		# Performance Transparency Protocol
+isis	124	ISIS		# IS-IS over IPv4
+fire	125	FIRE
+crtp	126	CRTP		# Combat Radio Transport Protocol
+crudp	127	CRUDP		# Combat Radio User Datagram
+sscopmce	128	SSCOPMCE
+iplt	129	IPLT
+sps	130	SPS		# Secure Packet Shield
+pipe	131	PIPE		# Private IP Encapsulation within IP
+sctp	132	SCTP		# Stream Control Transmission Protocol
+fc	133	FC		# Fibre Channel
+rsvp-e2e-ignore	134	RSVP-E2E-IGNORE
 reserved 255	Reserved	#
