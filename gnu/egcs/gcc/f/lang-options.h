@@ -31,7 +31,10 @@ DEFINE_LANG_NAME ("Fortran")
 
 /* Use of FTNOPT makes tracking changes between FSF-g77 and egcs-g77
    easier, since FSF-gcc doesn't support doc strings.  */
-#define FTNOPT(opt,doc) { opt, doc },
+/* XXX OpenBSD i386 linker has a bug. Currently, we trim down Fortran
+  options size to avoid triggering that bug.  */
+/* #define FTNOPT(opt,doc) { opt, doc }, */
+#define FTNOPT(opt,doc) { opt, "" },
 
 FTNOPT( "-fversion", "Print g77-specific compiler version info, run internal tests" )
 FTNOPT( "-fnull-version", "" )
