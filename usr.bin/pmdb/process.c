@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.12 2003/08/02 20:38:38 mickey Exp $	*/
+/*	$OpenBSD: process.c,v 1.13 2003/08/18 17:55:57 jfb Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -74,6 +74,37 @@ process_load(struct pstate *ps)
 		ps->ps_flags |= PSF_ATCH;
 	}
 
+	return (0);
+}
+
+
+int
+process_setargv(struct pstate *ps, int argc, char **argv)
+{
+	int i;
+
+	if (ps->ps_argv != NULL) {
+		for (i = 0; i < ps->ps_argc; i++)
+			free(ps->ps_argv[i]);
+		free(ps->ps_argv);
+	}
+
+	ps->ps_argv = (char **)calloc((argc + 1), sizeof(char *));
+	if (ps->ps_argv == NULL) {
+		warn("failed to allocate argument vector");
+		return (-1);
+	}
+
+	ps->ps_argc = argc;
+	for (i = 0; i < argc; i++) {
+		ps->ps_argv[i] = strdup(argv[i]);
+		if (ps->ps_argv[i] == NULL) {
+			warn("failed to copy argument");
+			return (-1);
+		}
+	}
+
+	ps->ps_argv[i] = NULL;
 	return (0);
 }
 

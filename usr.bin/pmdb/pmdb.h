@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.h,v 1.6 2003/05/15 00:11:03 jfb Exp $	*/
+/*	$OpenBSD: pmdb.h,v 1.7 2003/08/18 17:55:57 jfb Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -81,10 +81,12 @@ struct pstate {
 #define SS_IGNORE	0x01
 
 /* misc helper functions */
+int getexecpath(const char *, char *, size_t);
 int process_kill(struct pstate *);
 
 /* process.c */
 int process_load(struct pstate *);
+int process_setargv(struct pstate *, int, char **);
 int process_run(struct pstate *);
 int process_read(struct pstate *, off_t, void *, size_t);
 int process_write(struct pstate *, off_t, void *, size_t);

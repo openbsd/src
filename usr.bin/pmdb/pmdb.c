@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.18 2003/08/02 20:38:38 mickey Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.19 2003/08/18 17:55:57 jfb Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -36,6 +36,7 @@
 #include <err.h>
 #include <errno.h>
 #include <string.h>
+#include <paths.h>
 
 #include "pmdb.h"
 #include "symbol.h"
@@ -96,7 +97,7 @@ main(int argc, char **argv)
 	int i, c;
 	int status;
 	void *cm;
-	char *pmenv, *core, *perr;
+	char *pmenv, *core, *perr, execpath[MAXPATHLEN];
 	int level;
 	pid_t pid;
 
@@ -138,10 +139,16 @@ main(int argc, char **argv)
 	if (pmenv)
 		free(pmenv);
 
+	if (getexecpath(argv[0], execpath, sizeof(execpath)) == -1) {
+		err(1, "cannot find `%s'", argv[0]);
+	}
+	argv[0] = execpath;
+
+	memset(&ps, 0, sizeof(ps));
+	process_setargv(&ps, argc, argv);
+
 	ps.ps_pid = pid;
 	ps.ps_state = NONE;
-	ps.ps_argc = argc;
-	ps.ps_argv = argv;
 	ps.ps_flags = 0;
 	ps.ps_signum = 0;
 	ps.ps_npc = 1;
@@ -407,4 +414,58 @@ emalloc(size_t sz)
 	if ((ret = malloc(sz)) == NULL)
 		err(1, "malloc");
 	return (ret);
+}
+
+
+/*
+ * Find the first valid path to the executable whose name is <ename>.
+ * The resulting path is stored in <dst>, up to <dlen> - 1 bytes, and is
+ * NUL-terminated.  If <dst> is too small, the result will be truncated to
+ * fit, but getexecpath() will return -1.
+ * Returns 0 on success, -1 on failure.
+ */
+
+int
+getexecpath(const char *ename, char *dst, size_t dlen)
+{
+	char *envp, *pathenv, *pp, *pfp;
+	struct stat pstat;
+
+	if (stat(ename, &pstat) == 0) {
+		if (strlcpy(dst, ename, dlen) >= dlen)
+			return (-1);
+		return (0);
+	}
+
+	if (strchr(ename, '/') != NULL) {
+		/* don't bother looking in PATH */
+		return (-1);
+	}
+
+	envp = getenv("PATH");
+	if (envp == NULL)
+		envp = _PATH_DEFPATH;
+
+	pathenv = strdup(envp);
+	if (pathenv == NULL) {
+		warn("failed to allocate PATH buffer");
+		return (-1);
+	}
+
+	for (pp = pathenv; (pfp = strsep(&pp, ":")) != NULL; ) {
+		/* skip cwd, was already tested */
+		if (*pfp == '\0')
+			continue;
+
+		if (snprintf(dst, dlen, "%s/%s", pfp, ename) >= (int)dlen)
+			continue;
+
+		if (stat(dst, &pstat) != -1) {
+			free(pathenv);
+			return (0);
+		}
+	}
+
+	free(pathenv);
+	return (-1);
 }
