@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.16 2003/04/12 15:19:54 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.17 2003/04/12 18:59:16 henning Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ hfsc_add_altq(struct pf_altq *a)
 {
 	struct hfsc_if *hif;
 	struct ifnet *ifp;
-	struct service_curve root_sc;
 
 	if ((ifp = ifunit(a->ifname)) == NULL)
 		return (EINVAL);
@@ -171,19 +170,6 @@ hfsc_add_altq(struct pf_altq *a)
 	}
 
 	hif->hif_ifq = &ifp->if_snd;
-
-	/*
-	 * create root class
-	 */
-	root_sc.m1 = a->ifbandwidth;
-	root_sc.d = 0;
-	root_sc.m2 = a->ifbandwidth;
-	if ((hif->hif_rootclass = hfsc_class_create(hif,
-	    &root_sc, &root_sc, NULL, NULL, 0, 0, 0)) == NULL) {
-		ellist_destroy(hif->hif_eligible);
-		FREE(hif, M_DEVBUF);
-		return (ENOMEM);
-	}
 
 	/* keep the state in pf_altq */
 	a->altq_disc = hif;
@@ -223,9 +209,9 @@ hfsc_add_queue(struct pf_altq *a)
 
 	opts = &a->pq_u.hfsc_opts;
 
-	parent = clh_to_clp(hif, a->parent_qid);
-	if (parent == NULL)
-		return (EINVAL);
+	if (a->qid != HFSC_ROOTCLASS_HANDLE)
+		if ((parent = clh_to_clp(hif, a->parent_qid)) == NULL)
+			return (EINVAL);
 
 	if (a->qid >= HFSC_MAX_CLASSES || a->qid == 0)
 		return (EINVAL);
@@ -300,7 +286,8 @@ hfsc_clear_interface(struct hfsc_if *hif)
 	struct hfsc_class	*cl;
 
 	/* clear out the classes */
-	while ((cl = hif->hif_rootclass->cl_children) != NULL) {
+	while (hif->hif_rootclass != NULL &&
+	    (cl = hif->hif_rootclass->cl_children) != NULL) {
 		/*
 		 * remove the first leaf class found in the hierarchy
 		 * then start over
@@ -506,6 +493,9 @@ static int
 hfsc_class_destroy(struct hfsc_class *cl)
 {
 	int s;
+
+	if (cl == NULL)
+		return (0);
 
 	if (is_a_parent_class(cl))
 		return (EBUSY);
