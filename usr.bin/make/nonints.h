@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.6 1995/06/14 15:19:45 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.7 1995/11/02 23:55:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -73,6 +73,7 @@ int PrintAddr __P((ClientData, ClientData));
 void Finish __P((int));
 char *emalloc __P((size_t));
 void enomem __P((void));
+int eunlink __P((const char *));
 
 /* parse.c */
 void Parse_Error __P((int, char *, ...));

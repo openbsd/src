@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.10 1995/09/25 02:46:30 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.11 1995/11/02 23:55:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$NetBSD: suff.c,v 1.10 1995/09/25 02:46:30 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.11 1995/11/02 23:55:08 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1427,7 +1427,7 @@ SuffExpandChildren(cgnp, pgnp)
 	    /*
 	     * Add all elements of the members list to the parent node.
 	     */
-	    while (!Lst_IsEmpty(members)) {
+	    while(!Lst_IsEmpty(members)) {
 		gn = (GNode *)Lst_DeQueue(members);
 
 		if (DEBUG(SUFF)) {
@@ -1995,6 +1995,7 @@ sfnd_abort:
 				    (targ == NULL ? dirSearchPath :
 				     targ->suff->searchPath));
 	    if (gn->path != NULL) {
+		char *ptr;
 		Var_Set(TARGET, gn->path, gn);
 
 		if (targ != NULL) {
@@ -2002,7 +2003,7 @@ sfnd_abort:
 		     * Suffix known for the thing -- trim the suffix off
 		     * the path to form the proper .PREFIX variable.
 		     */
-		    int		len = strlen(gn->path);
+		    int		savep = strlen(gn->path) - targ->suff->nameLen;
 		    char	savec;
 
 		    if (gn->suffix)
@@ -2010,12 +2011,17 @@ sfnd_abort:
 		    gn->suffix = targ->suff;
 		    gn->suffix->refCount++;
 
-		    savec = gn->path[len-targ->suff->nameLen];
-		    gn->path[len-targ->suff->nameLen] = '\0';
+		    savec = gn->path[savep];
+		    gn->path[savep] = '\0';
 
-		    Var_Set(PREFIX, gn->path, gn);
+		    if ((ptr = strrchr(gn->path, '/')) != NULL)
+			ptr++;
+		    else
+			ptr = gn->path;
 
-		    gn->path[len-targ->suff->nameLen] = savec;
+		    Var_Set(PREFIX, ptr, gn);
+
+		    gn->path[savep] = savec;
 		} else {
 		    /*
 		     * The .PREFIX gets the full path if the target has
@@ -2025,7 +2031,12 @@ sfnd_abort:
 			gn->suffix->refCount--;
 		    gn->suffix = NULL;
 
-		    Var_Set(PREFIX, gn->path, gn);
+		    if ((ptr = strrchr(gn->path, '/')) != NULL)
+			ptr++;
+		    else
+			ptr = gn->path;
+
+		    Var_Set(PREFIX, ptr, gn);
 		}
 	    }
 	} else {

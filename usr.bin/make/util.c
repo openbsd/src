@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 1995/06/14 15:20:11 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1995/11/22 17:40:17 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: util.c,v 1.1.1.1 1995/10/18 08:45:43 deraadt Exp $";
+static char rcsid[] = "$Id: util.c,v 1.2 1995/12/14 03:23:39 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -302,3 +302,26 @@ utimes(file, tvp)
 
 
 #endif /* __hpux */
+
+#if defined(sun) && defined(__svr4__)
+#include <signal.h>
+
+/* turn into bsd signals */
+void (*
+signal(s, a)) ()
+    int     s;
+    void (*a)();
+{
+    struct sigaction sa, osa;
+
+    sa.sa_handler = a;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    if (sigaction(s, &sa, &osa) == -1)
+	return SIG_ERR;
+    else
+	return osa.sa_handler;
+}
+
+#endif

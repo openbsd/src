@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.16 1995/09/10 03:58:16 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.17 1995/11/02 23:55:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.16 1995/09/10 03:58:16 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.17 1995/11/02 23:55:03 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -2216,7 +2216,11 @@ test_char:
 		break;
 	    case '#':
 		if (!ignComment) {
-		    if (compatMake && (lastc != '\\')) {
+		    if (
+#if 0
+		    compatMake &&
+#endif
+		    (lastc != '\\')) {
 			/*
 			 * If the character is a hash mark and it isn't escaped
 			 * (or we're being compatible), the thing is a comment.

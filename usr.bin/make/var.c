@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.11 1995/06/14 15:20:13 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.12 1995/11/02 23:55:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.11 1995/06/14 15:20:13 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.12 1995/11/02 23:55:12 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1116,7 +1116,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
     Boolean 	    haveModifier;/* TRUE if have modifiers for the variable */
     register char   endc;    	/* Ending character when variable in parens
 				 * or braces */
-    register char   startc;	/* Starting character when variable in parens
+    register char   startc=0;	/* Starting character when variable in parens
 				 * or braces */
     int             cnt;	/* Used to count brace pairs when variable in
 				 * in parens or braces */

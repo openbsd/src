@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.9.2.1 1995/12/05 02:50:07 jtc Exp $
+.\"	$NetBSD: make.1,v 1.11 1995/11/08 02:31:00 christos Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -40,7 +40,7 @@
 .Nd maintain program dependencies
 .Sh SYNOPSIS
 .Nm make
-.Op Fl eiknqrstv
+.Op Fl Beiknqrstv
 .Op Fl D Ar variable
 .Op Fl d Ar flags
 .Op Fl f Ar makefile
@@ -74,6 +74,9 @@ and makefiles, please refer to
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl B 
+Try to be backwards compatible by executing a single shell per command and
+by executing the commands to make the sources of a dependency line in sequence.
 .It Fl D Ar variable
 Define
 .Ar variable
@@ -112,7 +115,7 @@ Print debugging information about target list maintenance.
 Print debugging information about variable assignment.
 .El
 .It Fl e
-Specify that environment variables override macro assignments within
+Specify that environmental variables override macro assignments within
 makefiles.
 .It Fl f Ar makefile
 Specify a makefile to read instead of the default
@@ -137,7 +140,9 @@ before each command line in the makefile.
 .It Fl j Ar max_jobs
 Specify the maximum number of jobs that
 .Nm make
-may have running at any one time.
+may have running at any one time. Turns compatibility mode off, unless the 
+.Ar B
+flag is also specified.
 .It Fl k
 Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.

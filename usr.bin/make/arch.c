@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.9 1995/06/14 15:18:46 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.11 1995/11/22 17:39:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.9 1995/06/14 15:18:46 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.11 1995/11/22 17:39:53 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,9 @@ static char rcsid[] = "$NetBSD: arch.c,v 1.9 1995/06/14 15:18:46 christos Exp $"
 #include    <sys/param.h>
 #include    <ctype.h>
 #include    <ar.h>
+#ifndef __svr4__
 #include    <ranlib.h>
+#endif
 #include    <stdio.h>
 #include    <stdlib.h>
 #include    "make.h"
@@ -492,7 +494,7 @@ ArchStatMember (archive, member, hash)
 		strncpy(copy, member, AR_MAX_NAME_LEN);
 		copy[AR_MAX_NAME_LEN] = '\0';
 	    }
-	    if (he = Hash_FindEntry (&ar->members, copy))
+	    if ((he = Hash_FindEntry (&ar->members, copy)) != NULL)
 		return ((struct ar_hdr *) Hash_GetValue (he));
 	    return ((struct ar_hdr *) NULL);
 	}
@@ -1031,6 +1033,7 @@ Arch_LibOODate (gn)
     } else if ((gn->mtime > now) || (gn->mtime < gn->cmtime)) {
 	oodate = TRUE;
     } else {
+#ifdef RANLIBMAG
 	struct ar_hdr  	*arhPtr;    /* Header for __.SYMDEF */
 	int 	  	modTimeTOC; /* The table-of-contents's mod time */
 
@@ -1052,6 +1055,9 @@ Arch_LibOODate (gn)
 	    }
 	    oodate = TRUE;
 	}
+#else
+	oodata = FALSE;
+#endif
     }
     return (oodate);
 }
