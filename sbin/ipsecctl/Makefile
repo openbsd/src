@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 2005/04/04 22:19:50 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.2 2005/04/04 22:22:55 hshoexer Exp $
 
 PROG=	ipsecctl
 MAN=	ipsecctl.8 ipsec.conf.5

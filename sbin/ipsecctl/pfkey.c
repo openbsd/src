@@ -1,4 +1,4 @@
-/*	$Id: pfkey.c,v 1.1 2005/04/04 22:19:50 hshoexer Exp $	 */
+/*	$OpenBSD: pfkey.c,v 1.2 2005/04/04 22:22:55 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
