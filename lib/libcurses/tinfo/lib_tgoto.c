@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tgoto.c,v 1.2 2001/01/22 18:01:53 millert Exp $	*/
+/*	$OpenBSD: lib_tgoto.c,v 1.3 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 2000 Free Software Foundation, Inc.                        *
@@ -161,7 +161,7 @@ tgoto_internal(const char *string, int x, int y)
 		break;
 	    }
 	    if (fmt != 0) {
-		sprintf(result + used, fmt, *value++);
+		snprintf(result + used, length - used, fmt, *value++);
 		used += strlen(result + used);
 		fmt = 0;
 	    }

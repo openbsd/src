@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tparm.c,v 1.7 2001/01/22 18:01:54 millert Exp $	*/
+/*	$OpenBSD: lib_tparm.c,v 1.8 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -165,7 +165,7 @@ save_text(const char *fmt, const char *s, int len)
 
     get_space(s_len + 1);
 
-    (void) sprintf(out_buff + out_used, fmt, s);
+    (void) snprintf(out_buff + out_used, out_size - out_used, fmt, s);
     out_used += strlen(out_buff + out_used);
 }
 
@@ -177,7 +177,7 @@ save_number(const char *fmt, int number, int len)
 
     get_space(len + 1);
 
-    (void) sprintf(out_buff + out_used, fmt, number);
+    (void) snprintf(out_buff + out_used, out_size - out_used, fmt, number);
     out_used += strlen(out_buff + out_used);
 }
 

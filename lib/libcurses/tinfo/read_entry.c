@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.12 2001/01/22 18:01:55 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.13 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -414,7 +414,7 @@ _nc_read_tic_entry(char *const filename,
 
     if (strlen(dir) > MAX_TPATH)
 	return 0;
-    (void) sprintf(filename, "%s/%s", dir, ttn);
+    (void) snprintf(filename, MAX_TPATH + 1, "%s/%s", dir, ttn);
     return _nc_read_file_entry(filename, tp);
 }
 
@@ -478,7 +478,7 @@ _nc_read_entry
 #endif /* __OpenBSD__ */
 
     /* truncate the terminal name to prevent dangerous buffer airline */
-    (void) sprintf(ttn, "%c/%.*s", *tn, MAX_ALIAS, tn);
+    (void) snprintf(ttn, sizeof(ttn), "%c/%.*s", *tn, MAX_ALIAS, tn);
 
     /* This is System V behavior, in conjunction with our requirements for
      * writing terminfo entries.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_traceatr.c,v 1.3 2001/01/22 18:01:58 millert Exp $	*/
+/*	$OpenBSD: lib_traceatr.c,v 1.4 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -103,14 +103,14 @@ _traceattr2(int bufnum, attr_t newmode)
 		short fg, bg;
 
 		if (pair_content(pairnum, &fg, &bg) == OK)
-		    (void) sprintf(tmp,
-				   "{%d = {%s, %s}}",
-				   pairnum,
-				   COLOR_OF(fg),
-				   COLOR_OF(bg)
+		    (void) snprintf(tmp, BUFSIZ - (tmp - buf),
+				    "{%d = {%s, %s}}",
+				    pairnum,
+				    COLOR_OF(fg),
+				    COLOR_OF(bg)
 			);
 		else
-		    (void) sprintf(tmp, "{%d}", pairnum);
+		    (void) snprintf(tmp, BUFSIZ - (tmp - buf), "{%d}", pairnum);
 	    }
 	}
     }
@@ -212,7 +212,7 @@ _tracechtype2(int bufnum, chtype ch)
 	(void) strcat(buf, _tracechar(TextOf(ch)));
 
     if (AttrOf(ch) != A_NORMAL)
-	(void) sprintf(buf + strlen(buf), " | %s",
+	(void) snprintf(buf + strlen(buf), BUFSIZ - strlen(buf), " | %s",
 		_traceattr2(bufnum + 20, AttrOf(ch)));
 
     strcat(buf, "}");

@@ -40,7 +40,7 @@ curses_version(void)
     static char my_version[80];
 
     T((T_CALLED("curses_version()")));
-    sprintf(my_version, "ncurses %s.%d",
+    snprintf(my_version, sizeof(my_version), "ncurses %s.%d",
 	    NCURSES_VERSION,
 	    NCURSES_VERSION_PATCH);
     returnPtr(my_version);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hardscroll.c,v 1.4 2002/06/22 18:13:05 deraadt Exp $	*/
+/*	$OpenBSD: hardscroll.c,v 1.5 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -273,7 +273,8 @@ _nc_linedump(void)
 
     (void) strcpy(buf, "virt");
     for (n = 0; n < screen_lines; n++)
-	(void) sprintf(buf + strlen(buf), " %02d", OLDNUM(n));
+	(void) snprintf(buf + strlen(buf), have - strlen(buf), " %02d",
+	    		OLDNUM(n));
     TR(TRACE_UPDATE | TRACE_MOVE, (buf));
 #if NO_LEAKS
     free(buf);

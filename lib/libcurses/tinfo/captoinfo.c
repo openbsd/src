@@ -1,4 +1,4 @@
-/*	$OpenBSD: captoinfo.c,v 1.9 2001/01/22 18:01:50 millert Exp $	*/
+/*	$OpenBSD: captoinfo.c,v 1.10 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -579,7 +579,7 @@ bcd_expression(const char *str)
 	{
 	    char buffer[80];
 	    int tst;
-	    sprintf(buffer, fmt, ch1, ch2);
+	    snprintf(buffer, sizeof(buffer), fmt, ch1, ch2);
 	    tst = strlen(buffer) - 1;
 	    assert(len == tst);
 	}
@@ -601,7 +601,7 @@ save_tc_char(char *bufptr, int c1)
 	if (c1 == (c1 & 0x1f))	/* iscntrl() returns T on 255 */
 	    (void) strcpy(temp, unctrl((chtype) c1));
 	else
-	    (void) sprintf(temp, "\\%03o", c1);
+	    (void) snprintf(temp, sizeof(temp), "\\%03o", c1);
 	bufptr = save_string(bufptr, temp);
     }
     return bufptr;

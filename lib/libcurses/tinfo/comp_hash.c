@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_hash.c,v 1.4 1999/06/27 08:14:21 millert Exp $	*/
+/*	$OpenBSD: comp_hash.c,v 1.5 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -288,8 +288,8 @@ int main(int argc, char **argv)
 		root_name);
 	printf("{\n");
 	for (n = 0; n < CAPTABSIZE; n++) {
-		sprintf(buffer, "\"%s\"",
-			name_table[n].nte_name);
+		snprintf(buffer, sizeof(buffer), "\"%s\"",
+			 name_table[n].nte_name);
 		printf("\t{ %15s,\t%10s,\t%3d, %3d }%c\n",
 			buffer,
 			typenames[name_table[n].nte_type],
@@ -305,8 +305,8 @@ int main(int argc, char **argv)
 	printf("{\n");
 	for (n = 0; n < HASHTABSIZE; n++) {
 		if (hash_table[n] != 0) {
-			sprintf(buffer, "_nc_%s_table + %3ld",
-				root_name,
+			snprintf(buffer, sizeof(buffer), "_nc_%s_table + %3ld",
+				 root_name,
 				(long) (hash_table[n] - name_table));
 		} else {
 			strcpy(buffer, "0");

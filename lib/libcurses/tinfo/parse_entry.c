@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_entry.c,v 1.11 2003/03/10 04:02:49 david Exp $	*/
+/*	$OpenBSD: parse_entry.c,v 1.12 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -619,14 +619,14 @@ postprocess_termcap(TERMTYPE * tp, bool has_base)
 
 	if (WANTED(carriage_return)) {
 	    if (carriage_return_delay > 0) {
-		sprintf(buf, "%s$<%d>", C_CR, carriage_return_delay);
+		snprintf(buf, sizeof(buf), "%s$<%d>", C_CR, carriage_return_delay);
 		carriage_return = _nc_save_str(buf);
 	    } else
 		carriage_return = _nc_save_str(C_CR);
 	}
 	if (WANTED(cursor_left)) {
 	    if (backspace_delay > 0) {
-		sprintf(buf, "%s$<%d>", C_BS, backspace_delay);
+		snprintf(buf, sizeof(buf), "%s$<%d>", C_BS, backspace_delay);
 		cursor_left = _nc_save_str(buf);
 	    } else if (backspaces_with_bs == 1)
 		cursor_left = _nc_save_str(C_BS);
@@ -639,7 +639,7 @@ postprocess_termcap(TERMTYPE * tp, bool has_base)
 		cursor_down = linefeed_if_not_lf;
 	    else if (linefeed_is_newline != 1) {
 		if (new_line_delay > 0) {
-		    sprintf(buf, "%s$<%d>", C_LF, new_line_delay);
+		    snprintf(buf, sizeof(buf), "%s$<%d>", C_LF, new_line_delay);
 		    cursor_down = _nc_save_str(buf);
 		} else
 		    cursor_down = _nc_save_str(C_LF);
@@ -650,7 +650,7 @@ postprocess_termcap(TERMTYPE * tp, bool has_base)
 		cursor_down = linefeed_if_not_lf;
 	    else if (linefeed_is_newline != 1) {
 		if (new_line_delay > 0) {
-		    sprintf(buf, "%s$<%d>", C_LF, new_line_delay);
+		    snprintf(buf, sizeof(buf), "%s$<%d>", C_LF, new_line_delay);
 		    scroll_forward = _nc_save_str(buf);
 		} else
 		    scroll_forward = _nc_save_str(C_LF);
@@ -659,7 +659,7 @@ postprocess_termcap(TERMTYPE * tp, bool has_base)
 	if (WANTED(newline)) {
 	    if (linefeed_is_newline == 1) {
 		if (new_line_delay > 0) {
-		    sprintf(buf, "%s$<%d>", C_LF, new_line_delay);
+		    snprintf(buf, sizeof(buf), "%s$<%d>", C_LF, new_line_delay);
 		    newline = _nc_save_str(buf);
 		} else
 		    newline = _nc_save_str(C_LF);
@@ -701,7 +701,7 @@ postprocess_termcap(TERMTYPE * tp, bool has_base)
 	 */
 	if (WANTED(tab)) {
 	    if (horizontal_tab_delay > 0) {
-		sprintf(buf, "%s$<%d>", C_HT, horizontal_tab_delay);
+		snprintf(buf, sizeof(buf), "%s$<%d>", C_HT, horizontal_tab_delay);
 		tab = _nc_save_str(buf);
 	    } else
 		tab = _nc_save_str(C_HT);

@@ -43,7 +43,8 @@ NCURSES_EXPORT(char *)
 _tracechar(const unsigned char ch)
 {
     static char crep[20];
-    (void) sprintf(crep, "'%s' = 0x%02x", unctrl(ch), (unsigned) ch);
+    (void) snprintf(crep, sizeof(crep), "'%s' = 0x%02x", unctrl(ch),
+	            (unsigned) ch);
     return (crep);
 }
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: write_entry.c,v 1.10 2001/01/22 18:01:57 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.11 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -96,7 +96,7 @@ make_directory(const char *path)
     } else {
 	if (strlen(destination) + strlen(path) + 2 > sizeof(fullpath))
 	    return (-1);
-	(void) sprintf(fullpath, "%s/%s", destination, path);
+	(void) snprintf(fullpath, sizeof(fullpath), "%s/%s", destination, path);
     }
 
     if ((rc = stat(path, &statbuf)) < 0) {
@@ -257,7 +257,7 @@ _nc_write_entry(TERMTYPE * const tp)
     if (strlen(first_name) > sizeof(filename) - 3)
 	_nc_warning("terminal name too long.");
 
-    sprintf(filename, "%c/%s", first_name[0], first_name);
+    snprintf(filename, sizeof(filename), "%c/%s", first_name[0], first_name);
 
     /*
      * Has this primary name been written since the first call to
@@ -298,7 +298,7 @@ _nc_write_entry(TERMTYPE * const tp)
 	}
 
 	check_writeable(ptr[0]);
-	sprintf(linkname, "%c/%s", ptr[0], ptr);
+	snprintf(linkname, sizeof(linkname), "%c/%s", ptr[0], ptr);
 
 	if (strcmp(filename, linkname) == 0) {
 	    _nc_warning("self-synonym ignored");

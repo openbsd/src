@@ -985,7 +985,8 @@ _nc_read_termcap_entry
 	    ADD_TC(tc, 0);
 	} else if (_nc_name_match(tc, tn, "|:")) {	/* treat as a capability file */
 	    use_buffer = TRUE;
-	    (void) sprintf(tc_buf, "%.*s\n", (int) sizeof(tc_buf) - 2, tc);
+	    (void) snprintf(tc_buf, sizeof(tc_buf), "%.*s\n",
+		(int) sizeof(tc_buf) - 2, tc);
 	} else if ((tc = getenv("TERMPATH")) != 0) {
 	    char *cp;
 
@@ -1017,7 +1018,7 @@ _nc_read_termcap_entry
 	    && (strlen(h) + sizeof(PRIVATE_CAP)) < PATH_MAX) {
 	    /* user's .termcap, if any, should override it */
 	    (void) strcpy(envhome, h);
-	    (void) sprintf(pathbuf, PRIVATE_CAP, envhome);
+	    (void) snprintf(pathbuf, sizeof(pathbuf), PRIVATE_CAP, envhome);
 	    ADD_TC(pathbuf, filecount);
 	}
     }

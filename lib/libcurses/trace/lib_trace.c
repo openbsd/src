@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_trace.c,v 1.6 2001/01/22 18:01:58 millert Exp $	*/
+/*	$OpenBSD: lib_trace.c,v 1.7 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -88,6 +88,7 @@ NCURSES_EXPORT(const char *)
 _nc_visbuf2(int bufnum, const char *buf)
 /* visibilize a given string */
 {
+    size_t vbsize;
     char *vbuf;
     char *tp;
     int c;
@@ -97,12 +98,13 @@ _nc_visbuf2(int bufnum, const char *buf)
     if (buf == CANCELLED_STRING)
 	return ("(cancelled)");
 
+    vbsize = (strlen(buf) * 4) + 5;
 #ifdef TRACE
-    tp = vbuf = _nc_trace_buf(bufnum, (strlen(buf) * 4) + 5);
+    tp = vbuf = _nc_trace_buf(bufnum, vbsize);
 #else
     {
 	static char *mybuf[2];
-	mybuf[bufnum] = _nc_doalloc(mybuf[bufnum], (strlen(buf) * 4) + 5);
+	mybuf[bufnum] = _nc_doalloc(mybuf[bufnum], vbsize);
 	tp = vbuf = mybuf[bufnum];
     }
 #endif
@@ -130,7 +132,7 @@ _nc_visbuf2(int bufnum, const char *buf)
 	    *tp++ = '^';
 	    *tp++ = '@' + c;
 	} else {
-	    sprintf(tp, "\\%03o", CharOf(c));
+	    snprintf(tp, vbsize - (tp - vbuf), "\\%03o", CharOf(c));
 	    tp += strlen(tp);
 	}
     }

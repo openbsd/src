@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tracedmp.c,v 1.2 2001/01/22 18:01:58 millert Exp $	*/
+/*	$OpenBSD: lib_tracedmp.c,v 1.3 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -65,10 +65,10 @@ _tracedump(const char *name, WINDOW *win)
 	bool haveattrs, havecolors;
 
 	/* dump A_CHARTEXT part */
-	(void) sprintf(buf, "%s[%2d] %3d%3d ='",
-		       name, n,
-		       win->_line[n].firstchar,
-		       win->_line[n].lastchar);
+	(void) snprintf(buf, sizeof(buf), "%s[%2d] %3d%3d ='",
+		        name, n,
+		        win->_line[n].firstchar,
+		        win->_line[n].lastchar);
 	ep = buf + strlen(buf);
 	for (j = 0; j <= width; j++) {
 	    ep[j] = TextOf(win->_line[n].text[j]);
@@ -87,8 +87,8 @@ _tracedump(const char *name, WINDOW *win)
 		break;
 	    }
 	if (havecolors) {
-	    (void) sprintf(buf, "%*s[%2d]%*s='", (int) strlen(name),
-			   "colors", n, 8, " ");
+	    (void) snprintf(buf, sizeof(buf), "%*s[%2d]%*s='",
+			    (int) strlen(name), "colors", n, 8, " ");
 	    ep = buf + strlen(buf);
 	    for (j = 0; j <= width; j++)
 		ep[j] = CharOf(win->_line[n].text[j] >> 8) + ' ';
@@ -108,8 +108,8 @@ _tracedump(const char *name, WINDOW *win)
 		    break;
 		}
 	    if (haveattrs) {
-		(void) sprintf(buf, "%*s%d[%2d]%*s='", (int) strlen(name) -
-			       1, "attrs", i, n, 8, " ");
+		(void) snprintf(buf, sizeof(buf), "%*s%d[%2d]%*s='",
+				(int) strlen(name) - 1, "attrs", i, n, 8, " ");
 		ep = buf + strlen(buf);
 		for (j = 0; j <= width; j++)
 		    ep[j] = hex[(win->_line[n].text[j] & mask) >> ((i + 4) * 4)];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: home_terminfo.c,v 1.7 2001/01/22 18:01:51 millert Exp $	*/
+/*	$OpenBSD: home_terminfo.c,v 1.8 2003/03/17 19:16:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -58,7 +58,7 @@ _nc_home_terminfo(void)
 		temp = typeMalloc(char, my_length);
 		if (temp == 0)
 		    _nc_err_abort("Out of memory");
-		(void) sprintf(temp, PRIVATE_INFO, home);
+		(void) snprintf(temp, my_length, PRIVATE_INFO, home);
 	    }
 	}
 	return temp;
