@@ -1,7 +1,12 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.4 1996/06/24 03:35:04 downsj Exp $	*/
-/*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
+/*	$OpenBSD: ext2_readwrite.c,v 1.1 1996/06/24 03:34:57 downsj Exp $	*/
 
-/*-
+/*
+ *  modified for Lites 1.1
+ *
+ *  Aug 1995, Godmar Back (gback@cs.utah.edu)
+ *  University of Utah, Department of Computer Science
+ */
+/*
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,45 +38,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_readwrite.c	8.8 (Berkeley) 8/4/94
+ *	@(#)ufs_readwrite.c	8.7 (Berkeley) 1/21/94
  */
 
-/*
- * ext2fs support added to this module by Jason Downs, based on Godmar Back's
- * original ext2_readwrite.c.
- */
-
-#ifdef LFS_READWRITE
-#define	BLKSIZE(a, b, c)	blksize(a)
-#define	FS			struct lfs
-#define	I_FS			i_lfs
-#define	READ			lfs_read
-#define	READ_S			"lfs_read"
-#define	WRITE			lfs_write
-#define	WRITE_S			"lfs_write"
-#define	fs_bsize		lfs_bsize
-#define	fs_maxfilesize		lfs_maxfilesize
-#else
-#ifdef EXT2_READWRITE
-#define BLKSIZE(a, b, c)	blksize(a, b, c)
-#define FS			struct ext2_sb_info
-#define I_FS			i_e2fs
-#define READ			ext2_read
-#define READ_S			"ext2_read"
-#define WRITE			ext2_write
-#define WRITE_S			"ext2_write"
-#define fs_bsize		s_frag_size
-#define MAXFILESIZE		((u_int64_t)0x80000000 * fs->s_frag_size - 1)
-#else
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
-#define	FS			struct fs
-#define	I_FS			i_fs
-#define	READ			ffs_read
-#define	READ_S			"ffs_read"
-#define	WRITE			ffs_write
-#define	WRITE_S			"ffs_write"
-#endif
-#endif
+#define	FS			struct ext2_sb_info
+#define	I_FS			i_e2fs
+#define	READ			ext2_read
+#define	READ_S			"ext2_read"
+#define	WRITE			ext2_write
+#define	WRITE_S			"ext2_write"
 
 /*
  * Vnode op for reading.
@@ -103,25 +79,21 @@ READ(v)
 	mode = ip->i_mode;
 	uio = ap->a_uio;
 
-#ifdef DIAGNOSTIC
+#if DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
 		panic("%s: mode", READ_S);
 
 	if (vp->v_type == VLNK) {
-		if ((int)ip->i_size < vp->v_mount->mnt_maxsymlinklen ||
-		    (vp->v_mount->mnt_maxsymlinklen == 0 &&
-		     ip->i_din.di_blocks == 0))
+		if ((int)ip->i_size < vp->v_mount->mnt_maxsymlinklen)
 			panic("%s: short symlink", READ_S);
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", READ_S, vp->v_type);
 #endif
 	fs = ip->I_FS;
-#ifdef EXT2_READWRITE
-	if ((u_int64_t)uio->uio_offset > MAXFILESIZE)
-#else
+#if 0
 	if ((u_int64_t)uio->uio_offset > fs->fs_maxfilesize)
-#endif
 		return (EFBIG);
+#endif
 
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		if ((bytesinfile = ip->i_size - uio->uio_offset) <= 0)
@@ -130,21 +102,13 @@ READ(v)
 		nextlbn = lbn + 1;
 		size = BLKSIZE(fs, ip, lbn);
 		blkoffset = blkoff(fs, uio->uio_offset);
-		xfersize = fs->fs_bsize - blkoffset;
+		xfersize = fs->s_frag_size - blkoffset;
 		if (uio->uio_resid < xfersize)
 			xfersize = uio->uio_resid;
 		if (bytesinfile < xfersize)
 			xfersize = bytesinfile;
 
-#ifdef LFS_READWRITE
-		(void)lfs_check(vp, lbn);
-		error = cluster_read(vp, ip->i_size, lbn, size, NOCRED, &bp);
-#else
-#ifdef EXT2_READWRITE
 		if (lblktosize(fs, nextlbn) > ip->i_size)
-#else
-		if (lblktosize(fs, nextlbn) >= ip->i_size)
-#endif
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		else if (doclusterread)
 			error = cluster_read(vp,
@@ -155,9 +119,11 @@ READ(v)
 			    size, &nextlbn, &nextsize, 1, NOCRED, &bp);
 		} else
 			error = bread(vp, lbn, size, NOCRED, &bp);
-#endif
-		if (error)
+		if (error) {
+			brelse(bp);
+			bp = NULL;
 			break;
+		}
 		vp->v_lastr = lbn;
 
 		/*
@@ -207,14 +173,13 @@ WRITE(v)
 	daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
-	struct timespec ts;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 
-#ifdef DIAGNOSTIC
+#if DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("%s: mode", WRITE_S);
 #endif
@@ -237,11 +202,11 @@ WRITE(v)
 	}
 
 	fs = ip->I_FS;
+#if 0
 	if (uio->uio_offset < 0 ||
-#ifdef EXT2_READWRITE
-	    (u_int64_t)uio->uio_offset + uio->uio_resid > MAXFILESIZE)
-#else
 	    (u_int64_t)uio->uio_offset + uio->uio_resid > fs->fs_maxfilesize)
+#else
+	if (uio->uio_offset < 0)
 #endif
 		return (EFBIG);
 	/*
@@ -263,25 +228,18 @@ WRITE(v)
 	for (error = 0; uio->uio_resid > 0;) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
-		xfersize = fs->fs_bsize - blkoffset;
+		xfersize = fs->s_frag_size - blkoffset;
 		if (uio->uio_resid < xfersize)
 			xfersize = uio->uio_resid;
-#ifdef LFS_READWRITE
-		(void)lfs_check(vp, lbn);
-		error = lfs_balloc(vp, xfersize, lbn, &bp);
-#else
-		if (fs->fs_bsize > xfersize)
+
+		if (fs->s_frag_size > xfersize)
 			flags |= B_CLRBUF;
 		else
 			flags &= ~B_CLRBUF;
 
-#ifdef EXT2_READWRITE
 		error = ext2_balloc(ip,
-#else
-		error = ffs_balloc(ip,
-#endif
 		    lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
-#endif
+
 		if (error)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_size) {
@@ -296,19 +254,17 @@ WRITE(v)
 
 		error =
 		    uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio);
-#ifdef LFS_READWRITE
-		(void)VOP_BWRITE(bp);
-#else
+
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
-		else if (xfersize + blkoffset == fs->fs_bsize)
+		else if (xfersize + blkoffset == fs->s_frag_size) {
 			if (doclusterwrite)
 				cluster_write(bp, ip->i_size);
 			else
 				bawrite(bp);
-		else
+		} else
 			bdwrite(bp);
-#endif
+
 		if (error || xfersize == 0)
 			break;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -328,7 +284,9 @@ WRITE(v)
 			uio->uio_resid = resid;
 		}
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC)) {
+		struct timespec ts;
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
+
 		error = VOP_UPDATE(vp, &ts, &ts, 1);
 	}
 	return (error);

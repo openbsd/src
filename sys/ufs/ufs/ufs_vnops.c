@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.4 1996/05/22 11:47:22 deraadt Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.5 1996/06/24 03:35:04 downsj Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -71,6 +71,12 @@
 static int ufs_chmod __P((struct vnode *, int, struct ucred *, struct proc *));
 static int ufs_chown
 	__P((struct vnode *, uid_t, gid_t, struct ucred *, struct proc *));
+
+#ifdef EXT2FS
+#include <gnu/ext2fs/ext2_extern.h>
+#include <gnu/ext2fs/ext2_fs.h>
+#include <gnu/ext2fs/ext2_fs_sb.h>
+#endif /* EXT2FS */
 
 union _qcvt {
 	int64_t	qcvt;
@@ -627,7 +633,8 @@ ufs_remove(v)
 		error = EPERM;
 		goto out;
 	}
-	if ((error = ufs_dirremove(dvp, ap->a_cnp)) == 0) {
+	error = VTOI(dvp)->i_dirops->dirremove(dvp, ap->a_cnp);
+	if (error == 0) {
 		ip->i_nlink--;
 		ip->i_flag |= IN_CHANGE;
 	}
@@ -693,7 +700,8 @@ ufs_link(v)
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	error = VOP_UPDATE(vp, &ts, &ts, 1);
 	if (!error)
-		error = ufs_direnter(ip, dvp, cnp);
+		error = VTOI(dvp)->i_dirops->direnter(ip, dvp, cnp);
+
 	if (error) {
 		ip->i_nlink--;
 		ip->i_flag |= IN_CHANGE;
@@ -938,7 +946,8 @@ abortit:
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0)
+		error = VTOI(tdvp)->i_dirops->checkpath(ip, dp, tcnp->cn_cred);
+		if (error != 0)
 			goto out;
 		if ((tcnp->cn_flags & SAVESTART) == 0)
 			panic("ufs_rename: lost to startdir");
@@ -974,7 +983,8 @@ abortit:
 			if ((error = VOP_UPDATE(tdvp, &ts, &ts, 1)) != 0)
 				goto bad;
 		}
-		if ((error = ufs_direnter(ip, tdvp, tcnp)) != 0) {
+		error = VTOI(tdvp)->i_dirops->direnter(ip, tdvp, tcnp);
+		if (error != 0) {
 			if (doingdirectory && newparent) {
 				dp->i_nlink--;
 				dp->i_flag |= IN_CHANGE;
@@ -1009,7 +1019,8 @@ abortit:
 		 * (both directories, or both not directories).
 		 */
 		if ((xp->i_mode&IFMT) == IFDIR) {
-			if (!ufs_dirempty(xp, dp->i_number, tcnp->cn_cred) || 
+			if (! xp->i_dirops->dirempty
+				(xp, dp->i_number, tcnp->cn_cred) || 
 			    xp->i_nlink > 2) {
 				error = ENOTEMPTY;
 				goto bad;
@@ -1023,7 +1034,8 @@ abortit:
 			error = EISDIR;
 			goto bad;
 		}
-		if ((error = ufs_dirrewrite(dp, ip, tcnp)) != 0)
+		error = dp->i_dirops->dirrewrite(dp, ip, tcnp);
+		if (error != 0)
 			goto bad;
 		/*
 		 * If the target directory is in the same
@@ -1114,6 +1126,11 @@ abortit:
 #				else
 					namlen = dirbuf.dotdot_namlen;
 #				endif
+#ifdef EXT2FS
+				if(IS_EXT2_VNODE(fvp))
+					namlen = ((struct odirtemplate *)
+						    &dirbuf)->dotdot_namlen;
+#endif /* EXT2FS */
 				if (namlen != 2 ||
 				    dirbuf.dotdot_name[0] != '.' ||
 				    dirbuf.dotdot_name[1] != '.') {
@@ -1132,7 +1149,7 @@ abortit:
 				}
 			}
 		}
-		error = ufs_dirremove(fdvp, fcnp);
+		error = VTOI(fdvp)->i_dirops->dirremove(fdvp, fcnp);
 		if (!error) {
 			xp->i_nlink--;
 			xp->i_flag |= IN_CHANGE;
@@ -1248,13 +1265,28 @@ ufs_mkdir(v)
 		goto bad;
 
 	/* Initialize directory with "." and ".." from static template. */
-	if (dvp->v_mount->mnt_maxsymlinklen > 0)
+	if (dvp->v_mount->mnt_maxsymlinklen > 0
+#ifdef EXT2FS
+		/* omastertemplate is want we want for EXT2 */
+		&& !IS_EXT2_VNODE(dvp)
+#endif /* EXT2FS */
+	)
 		dtp = &mastertemplate;
 	else
 		dtp = (struct dirtemplate *)&omastertemplate;
 	dirtemplate = *dtp;
 	dirtemplate.dot_ino = ip->i_number;
 	dirtemplate.dotdot_ino = dp->i_number;
+#ifdef EXT2FS
+	/* note that in ext2 DIRBLKSIZ == blocksize, not DEV_BSIZE
+	 * so let's just redefine it - for this function only
+	 */
+#undef  DIRBLKSIZ
+#define DIRBLKSIZ (IS_EXT2_VNODE(dvp) ? \
+		   VTOI(dvp)->i_e2fs->s_blocksize : DEV_BSIZE)
+	if(IS_EXT2_VNODE(dvp))
+		dirtemplate.dotdot_reclen = DIRBLKSIZ - 12;
+#endif /* EXT2FS */
 	error = vn_rdwr(UIO_WRITE, tvp, (caddr_t)&dirtemplate,
 	    sizeof (dirtemplate), (off_t)0, UIO_SYSSPACE,
 	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, (int *)0, (struct proc *)0);
@@ -1271,7 +1303,8 @@ ufs_mkdir(v)
 	}
 
 	/* Directory set up, now install it's entry in the parent directory. */
-	if ((error = ufs_direnter(ip, dvp, cnp)) != 0) {
+	error = VTOI(dvp)->i_dirops->direnter(ip, dvp, cnp);
+	if (error != 0) {
 		dp->i_nlink--;
 		dp->i_flag |= IN_CHANGE;
 	}
@@ -1290,6 +1323,10 @@ out:
 	FREE(cnp->cn_pnbuf, M_NAMEI);
 	vput(dvp);
 	return (error);
+#ifdef EXT2FS
+#undef	DIRBLKSIZ
+#define	DIRBLKSIZ	DEV_BSIZE
+#endif /* EXT2FS */
 }
 
 /*
@@ -1329,7 +1366,7 @@ ufs_rmdir(v)
 	 */
 	error = 0;
 	if (ip->i_nlink != 2 ||
-	    !ufs_dirempty(ip, dp->i_number, cnp->cn_cred)) {
+	    !ip->i_dirops->dirempty(ip, dp->i_number, cnp->cn_cred)) {
 		error = ENOTEMPTY;
 		goto out;
 	}
@@ -1342,7 +1379,8 @@ ufs_rmdir(v)
 	 * inode.  If we crash in between, the directory
 	 * will be reattached to lost+found,
 	 */
-	if ((error = ufs_dirremove(dvp, cnp)) != 0)
+	error = VTOI(dvp)->i_dirops->dirremove(dvp, cnp);
+	if (error != 0)
 		goto out;
 	dp->i_nlink--;
 	dp->i_flag |= IN_CHANGE;
@@ -2044,7 +2082,8 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if ((error = VOP_UPDATE(tvp, &ts, &ts, 1)) != 0)
 		goto bad;
-	if ((error = ufs_direnter(ip, dvp, cnp)) != 0)
+	error = VTOI(dvp)->i_dirops->direnter(ip, dvp, cnp);
+	if (error != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
 		FREE(cnp->cn_pnbuf, M_NAMEI);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.4 1996/02/27 07:27:39 niklas Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.5 1996/06/24 03:35:01 downsj Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>
 
 #include <ufs/ffs/fs.h>
@@ -77,6 +78,14 @@ struct vfsops ffs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	ffs_init,
+};
+
+static struct ufs_dirops ffs_dirops = {
+	ufs_dirremove,
+	ufs_direnter, 
+	ufs_dirempty,
+	ufs_dirrewrite,
+	ufs_checkpath,
 };
 
 extern u_long nextgennumber;
@@ -794,6 +803,7 @@ ffs_vget(mp, ino, vpp)
 	ip->i_fs = fs = ump->um_fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
+	ip->i_dirops = &ffs_dirops;
 #ifdef QUOTA
 	{
 		int i;

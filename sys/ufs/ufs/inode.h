@@ -1,3 +1,4 @@
+/*	$OpenBSD: inode.h,v 1.2 1996/06/24 03:35:03 downsj Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -62,11 +63,13 @@ struct inode {
 	ino_t	  i_number;	/* The identity of the inode. */
 
 	union {			/* Associated filesystem. */
-		struct	fs *fs;		/* FFS */
-		struct	lfs *lfs;	/* LFS */
+		struct	fs *fs;			/* FFS */
+		struct	lfs *lfs;		/* LFS */
+		struct	ext2_sb_info *e2fs;	/* EXT2FS */
 	} inode_u;
 #define	i_fs	inode_u.fs
 #define	i_lfs	inode_u.lfs
+#define i_e2fs	inode_u.e2fs
 
 	struct	 dquot *i_dquot[MAXQUOTAS]; /* Dquot structures. */
 	u_quad_t i_modrev;	/* Revision level for NFS lease. */
@@ -82,6 +85,10 @@ struct inode {
 	doff_t	  i_offset;	/* Offset of free space in directory. */
 	ino_t	  i_ino;	/* Inode number of found directory. */
 	u_int32_t i_reclen;	/* Size of found directory entry. */
+	/*
+	 * Directory operations pointers.
+	 */
+	struct ufs_dirops 	*i_dirops;
 	/*
 	 * The on-disk dinode itself.
 	 */

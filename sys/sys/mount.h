@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.7 1996/04/18 21:41:00 niklas Exp $	*/
+/*	$OpenBSD: mount.h,v 1.8 1996/06/24 03:35:00 downsj Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ struct statfs {
 #define	MOUNT_CD9660	"cd9660"	/* ISO9660 (aka CDROM) Filesystem */
 #define	MOUNT_UNION	"union"		/* Union (translucent) Filesystem */
 #define	MOUNT_ADOSFS	"adosfs"	/* AmigaDOS Filesystem */
+#define MOUNT_EXT2FS	"ext2fs"	/* Second Extended Filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an

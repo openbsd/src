@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.25 1996/06/23 19:37:23 maja Exp $
+#	$OpenBSD: files,v 1.26 1996/06/24 03:34:51 downsj Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -363,13 +363,23 @@ file ufs/lfs/lfs_vfsops.c		lfs
 file ufs/lfs/lfs_vnops.c		lfs
 file ufs/mfs/mfs_vfsops.c		mfs
 file ufs/mfs/mfs_vnops.c		mfs
-file ufs/ufs/ufs_bmap.c			ffs | lfs | mfs
-file ufs/ufs/ufs_ihash.c		ffs | lfs | mfs
-file ufs/ufs/ufs_inode.c		ffs | lfs | mfs
-file ufs/ufs/ufs_lookup.c		ffs | lfs | mfs
-file ufs/ufs/ufs_quota.c		ffs | lfs | mfs
-file ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs
-file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs
+file ufs/ufs/ufs_bmap.c			ffs | lfs | mfs | ext2fs
+file ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
+file ufs/ufs/ufs_inode.c		ffs | lfs | mfs | ext2fs
+file ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
+file ufs/ufs/ufs_quota.c		ffs | lfs | mfs | ext2fs
+file ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
+file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
+file gnu/ext2fs/ext2_alloc.c		ext2fs
+file gnu/ext2fs/ext2_balloc.c		ext2fs
+file gnu/ext2fs/ext2_inode.c		ext2fs
+file gnu/ext2fs/ext2_inode_cnv.c	ext2fs
+file gnu/ext2fs/ext2_linux_balloc.c	ext2fs
+file gnu/ext2fs/ext2_linux_ialloc.c	ext2fs
+file gnu/ext2fs/ext2_lookup.c		ext2fs
+file gnu/ext2fs/ext2_subr.c		ext2fs
+file gnu/ext2fs/ext2_vfsops.c		ext2fs
+file gnu/ext2fs/ext2_vnops.c		ext2fs
 file vm/device_pager.c			devpager
 file vm/kern_lock.c
 file vm/swap_pager.c			swappager

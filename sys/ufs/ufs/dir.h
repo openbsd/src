@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.2 1996/04/19 16:10:44 niklas Exp $	*/
+/*	$OpenBSD: dir.h,v 1.3 1996/06/24 03:35:03 downsj Exp $	*/
 /*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
 
 /*
@@ -155,4 +155,24 @@ struct odirtemplate {
 	u_int16_t	dotdot_namlen;
 	char		dotdot_name[4];	/* ditto */
 };
+
+/*
+ * For lack of a better place...
+ *
+ * This structure defines a set of function pointers, for managing rouge
+ * ufs-like filesystems in vnop code.  Most have to do with directories.
+ */
+
+struct inode;
+struct ufs_dirops {
+	int (*dirremove) __P((struct vnode *, struct componentname *));
+	int (*direnter) __P((struct inode *, struct vnode *,
+				struct componentname *));
+	int (*dirempty) __P((struct inode *, ino_t, struct ucred *));
+	int (*dirrewrite) __P((struct inode *, struct inode *,
+				struct componentname *));
+	int (*checkpath) __P((struct inode *, struct inode *,
+				struct ucred *));
+};
+
 #endif /* !_DIR_H_ */
