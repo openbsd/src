@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.57 2004/04/19 17:48:31 millert Exp $ */
+/* $OpenBSD: user.c,v 1.58 2004/05/10 09:44:45 deraadt Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -320,10 +320,11 @@ creategid(char *group, gid_t gid, const char *name)
 	struct stat	st;
 	FILE		*from;
 	FILE		*to;
-	char		buf[LINE_MAX];
+	char		*buf;
 	char		f[MaxFileNameLen];
-	int		fd;
-	int		cc;
+	int		fd, ret;
+	int		wroteit = 0;
+	size_t		len;
 
 	if (getgrnam(group) != NULL) {
 		warnx("group `%s' already exists", group);
@@ -351,8 +352,14 @@ creategid(char *group, gid_t gid, const char *name)
 		warn("can't create gid: fdopen `%s' failed", f);
 		return 0;
 	}
-	while ((cc = fread(buf, sizeof(char), sizeof(buf), from)) > 0) {
-		if (fwrite(buf, cc, 1, to) != 1) {
+	while ((buf = fgetln(from, &len)) != NULL && len > 0) {
+		ret = 0;
+		if (buf[0] == '+' && wroteit == 0) {
+			ret = fprintf(to, "%s:*:%u:%s\n", group, gid, name);
+			wroteit = 1;
+		}
+		if (ret == -1 ||
+		    fprintf(to, "%*.*s", (int)len, (int)len, buf) != len) {
 			(void) fclose(from);
 			(void) fclose(to);
 			(void) unlink(f);
@@ -360,9 +367,15 @@ creategid(char *group, gid_t gid, const char *name)
 			return 0;
 		}
 	}
-	(void) fprintf(to, "%s:*:%u:%s\n", group, gid, name);
+	ret = 0;
+	if (wroteit == 0)
+		ret = fprintf(to, "%s:*:%u:%s\n", group, gid, name);
 	(void) fclose(from);
-	(void) fclose(to);
+	if (fclose(to) == EOF || ret == -1) {
+		(void) unlink(f);
+		warn("can't create gid: short write to `%s'", f);
+		return 0;
+	}
 	if (rename(f, _PATH_GROUP) < 0) {
 		(void) unlink(f);
 		warn("can't create gid: can't rename `%s' to `%s'", f,
