@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.33 1998/11/20 11:18:50 d Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.34 1999/02/01 07:58:30 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -102,6 +102,15 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.33 1998/11/20 11:18:50 d Exp $";
 #  define THREAD_LOCK()		if (__isthreaded) _SPINLOCK(&malloc_lock)
 #  define THREAD_UNLOCK()	if (__isthreaded) _SPINUNLOCK(&malloc_lock)
 #  define THREAD_LOCK_INIT()	
+   /*
+    * Malloc can't use the wrapped write() if it fails very early, so
+    * we use the unwrapped syscall _thread_sys_write()
+    */
+#  define write _thread_sys_write
+   int write __P((int, const void *, size_t));
+#   undef malloc
+#   undef realloc
+#   undef free
 # endif
 #else
   /* no threads */
