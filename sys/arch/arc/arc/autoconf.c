@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 1996/09/02 11:33:22 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 1996/11/06 01:38:35 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.3 1996/09/02 11:33:22 pefo Exp $
+ *      $Id: autoconf.c,v 1.4 1996/11/06 01:38:35 deraadt Exp $
  */
 
 /*
@@ -219,14 +219,9 @@ setroot()
 	struct device *dv;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
-	extern int (*mountroot) __P((void *));
 
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
-	extern int nfs_mountroot __P((void *));
-#endif
-#if defined(FFS)
-	extern int ffs_mountroot __P((void *));
 #endif
 
 	/* Lookup boot device from boot if not set by configuration */
@@ -360,15 +355,13 @@ gotswap:
 		nfsbootdevname = bootdv->dv_xname;
 		return;
 #endif
-#if defined(FFS)
 	case DV_DISK:
-		mountroot = ffs_mountroot;
+		mountroot = dk_mountroot;
 		majdev = major(rootdev);
 		mindev = minor(rootdev);
 		printf("root on %s%c\n", bootdv->dv_xname,
 		    (mindev & PARTITIONMASK) + 'a');
 		break;
-#endif
 	default:
 		printf("can't figure root, hope your kernel is right\n");
 		return;

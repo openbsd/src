@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkswap.c,v 1.4 1996/10/23 22:37:57 niklas Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.5 1996/11/06 01:38:56 deraadt Exp $	*/
 /*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
@@ -118,10 +118,10 @@ mkoneswap(cf)
 	if (fputs("\t{ NODEV, 0, 0 }\n};\n\n", fp) < 0)
 		goto wrerror;
 	mountroot =
-	    cf->cf_root->nv_str == s_nfs ? "nfs_mountroot" : "ffs_mountroot";
+	    cf->cf_root->nv_str == s_nfs ? "nfs_mountroot" : "dk_mountroot";
 	if (fprintf(fp, "extern int %s __P((void *));\n", mountroot) < 0)
 		goto wrerror;
-	if (fprintf(fp, "int (*mountroot) __P((void *)) = %s;\n", mountroot) < 0)
+	if (fprintf(fp, "int (*mountroot) __P((void)) = %s;\n", mountroot) < 0)
 		goto wrerror;
 
 	if (fclose(fp)) {

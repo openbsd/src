@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 1996/10/16 23:11:44 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 1996/11/06 01:37:23 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -249,8 +249,6 @@ struct	genericconf {
 void
 setconf()
 {
-	extern int ffs_mountroot __P((void *));
-	extern int (*mountroot) __P((void *));
 	register struct genericconf *gc;
 	int unit;
 #if 0
@@ -327,7 +325,7 @@ noask:
 	}
 
 doswap:
-	mountroot = ffs_mountroot;
+	mountroot = dk_mountroot;
 	swdevt[0].sw_dev = argdev = dumpdev =
 	    makedev(major(rootdev), minor(rootdev) + 1);
 	/* swap size and dumplo set during autoconfigure */

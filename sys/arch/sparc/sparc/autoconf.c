@@ -1899,17 +1899,12 @@ setroot()
 	register int len, majdev, mindev;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
-	extern int (*mountroot) __P((void *));
 	dev_t temp;
 	struct mountroot_hook *mrhp;
 	struct device *bootdv;
 	struct bootpath *bp;
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
-	extern int nfs_mountroot __P((void *));
-#endif
-#if defined(FFS)
-	extern int ffs_mountroot __P((void *));
 #endif
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
@@ -2041,15 +2036,13 @@ gotswap:
 		nfsbootdevname = bootdv->dv_xname;
 		return;
 #endif
-#if defined(FFS)
 	case DV_DISK:
-		mountroot = ffs_mountroot;
+		mountroot = dk_mountroot;
 		majdev = major(rootdev);
 		mindev = minor(rootdev);
 		printf("root on %s%c\n", bootdv->dv_xname,
 		    (mindev & PARTITIONMASK) + 'a');
 		break;
-#endif
 	default:
 		printf("can't figure root, hope your kernel is right\n");
 		return;
