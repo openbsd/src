@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_forward.c,v 1.12 2001/02/16 16:38:14 itojun Exp $	*/
-/*	$KAME: ip6_forward.c,v 1.44 2000/07/27 13:43:21 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.13 2001/03/30 11:09:00 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.67 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -449,26 +449,15 @@ ip6_forward(m, srcrt)
 			       if_name(rt->rt_ifp));
 		}
 
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-			origifp = ifindex2ifnet[ntohs(ip6->ip6_src.s6_addr16[1])];
-		else if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-			origifp = ifindex2ifnet[ntohs(ip6->ip6_dst.s6_addr16[1])];
-		else
-			origifp = rt->rt_ifp;
+		/* we can just use rcvif in forwarding. */
+		origifp = m->m_pkthdr.rcvif;
 	}
 	else
 		origifp = rt->rt_ifp;
-#ifndef FAKE_LOOPBACK_IF
-	if ((rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
-#else
-	if (1)
-#endif
-	{
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-			ip6->ip6_src.s6_addr16[1] = 0;
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-			ip6->ip6_dst.s6_addr16[1] = 0;
-	}
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+		ip6->ip6_src.s6_addr16[1] = 0;
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+		ip6->ip6_dst.s6_addr16[1] = 0;
 
 #ifdef OLDIP6OUTPUT
 	error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.31 2001/03/21 21:57:10 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.32 2001/03/30 11:09:03 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.137 2001/03/21 21:52:06 jinmei Exp $	*/
 
 /*
@@ -1955,12 +1955,10 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	
   sendpkt:
 
-#ifdef FAKE_LOOPBACK_IF
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
 		return((*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
 					 rt));
 	}
-#endif
 	return((*ifp->if_output)(ifp, m, (struct sockaddr *)dst, rt));
 
   bad:
