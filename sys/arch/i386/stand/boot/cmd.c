@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.6 1997/04/11 19:12:56 weingart Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.7 1997/04/15 08:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <libsa.h>
 #include <debug.h>
+#include <sys/reboot.h>
 #include "cmd.h"
 #ifndef _TEST
 #include <biosdev.h>
@@ -68,8 +69,9 @@ const struct cmd_table {
 
 extern const char version[];
 static void ls __P((char *, register struct stat *));
-static char *skipblnk __P((register char *));
 static int readline __P((register char *, int));
+char *nextword __P((register char *));
+int bootparse __P((struct cmd_state *));
 
 char *cmd_buf = NULL;
 
@@ -78,10 +80,11 @@ getcmd(cmd)
 	struct cmd_state *cmd;
 {
 	register const struct cmd_table *ct = cmd_table;
-	register char *p = cmd_buf, *q; /* input */
+	register char *p, *q;
+	int l;
 
 	if (cmd_buf == NULL)
-		p = cmd_buf = alloc(133);
+		cmd_buf = alloc(133);
 
 	cmd->rc = 0;
 	cmd->argc = 1;
@@ -90,36 +93,37 @@ getcmd(cmd)
 		cmd->cmd = CMD_BOOT;
 		cmd->argv[0] = cmd_table[CMD_BOOT].cmd_name;
 		cmd->argv[1] = NULL;
+		cmd->rc = 1;
 		return 0;
 	}
 
-	p = skipblnk(cmd_buf);
-
 	/* command */
-	for ( q = p; *p != '\0' && *p != ' ' && *p != '\t'; p++);
-	*p = '\0';
+	for (q = cmd_buf; *q && (*q == ' ' || *q == '\t'); q++)
+		;
+	p = nextword(q);
+printf("cmd=%s\n", q);
 
-	while (ct->cmd_name != NULL && strncmp(q, ct->cmd_name, (p - q)))
+	for (l = 0; q[l]; l++)
+		;
+	while (ct->cmd_name != NULL && strncmp(q, ct->cmd_name, l))
 		ct++;
 
 	if (ct->cmd_name == NULL) {
 		cmd->cmd = CMD_BOOT;
 		cmd->argv[0] = cmd_table[CMD_BOOT].cmd_name;
-		cmd->argv[1] = skipblnk(cmd_buf);
-		cmd->argv[2] = NULL;
-		cmd->argc++;
-		return 0;
+		if (q && *q)
+			cmd->argv[cmd->argc++] = q;
+	} else {
+		cmd->cmd = ct->cmd_id;
+		cmd->argv[0] = ct->cmd_name;
 	}
-
-	cmd->cmd = ct->cmd_id;
-	cmd->argv[0] = ct->cmd_name;
-	for (p++; *(p = skipblnk(p)) != '\0'; *p++ = '\0') {
-		cmd->argv[cmd->argc++] = q = p;
-		for (; *p && *p != '\t' && *p != ' '; p++);
+	while (p && cmd->argc+1 < sizeof(cmd->argv) / sizeof(cmd->argv[0])) {
+		cmd->argv[cmd->argc++] = p;
+printf("argN=%s\n", p);
+		p = nextword(p);
 	}
 	cmd->argv[cmd->argc] = NULL;
-
-	return cmd->rc;
+	return bootparse(cmd);
 }
 
 static int
@@ -140,9 +144,9 @@ readline(buf, to)
 		return 0;
 
 	while (1) {
-		switch (ch = getchar()) {
+		switch ((ch = getchar())) {
 		case CTRL('u'):
-			while (pe > buf) {
+			while (pe >= buf) {
 				pe--;
 				putchar('\b');
 				putchar(' ');
@@ -173,14 +177,25 @@ readline(buf, to)
 	return pe - buf;
 }
 
+/*
+ * Search for spaces/tabs after the current word. If found, \0 the
+ * first one.  Then pass a pointer to the first character of the
+ * next word, or NULL if there is no next word. 
+ */
 char *
-skipblnk(p)
+nextword(p)
 	register char *p;
 {
 	/* skip blanks */
-	while (*p == '\t' || *p == ' ')
+	while (*p && *p != '\t' && *p != ' ')
 		p++;
-
+	if (*p) {
+		*p++ = '\0';
+		while (*p == '\t' || *p == ' ')
+			p++;
+	}
+	if (*p == '\0')
+		p = NULL;
 	return p;
 }
 
@@ -356,12 +371,22 @@ execmd(cmd)
 		break;
 
 	case CMD_BOOT:
-		if (cmd->argc > 1)
-			strncpy(cmd->path, cmd->argv[1], sizeof(cmd->path));
-		else
+		/* XXX "boot -s" will not work as this is written */
+		if (cmd->argc > 1) {
+			char *p;
+
+			for (p = cmd->argv[1]; *p; p++)
+				if (*p == ':')
+					break;
+			if (*p == ':')
+				sprintf(cmd->path, "%s", cmd->argv[1]);
+			else 
+				sprintf(cmd->path, "%s:%s", cmd->bootdev,
+				    cmd->argv[1]);
+		} else
 			sprintf(cmd->path, "%s:%s%s", cmd->bootdev,
 				cmd->cwd, cmd->image);
-		cmd->rc = 1;
+		cmd->rc = !bootparse(cmd);
 		break;
 
 	case CMD_ERROR:
@@ -393,3 +418,36 @@ ls(name, sb)
 		(u_long)sb->st_size, name);
 }
 
+int
+bootparse(cmd)
+	struct cmd_state *cmd;
+{
+	char *cp;
+	int i;
+
+	for (i = 2; i < cmd->argc; i++) {
+		cp = cmd->argv[i];
+		if (*cp == '-') {
+			while (*++cp) {
+				switch (*cp) {
+				case 'a':
+					boothowto |= RB_ASKNAME;
+					break;
+				case 'b':
+					boothowto |= RB_HALT;
+					break;
+				case 'c':
+					boothowto |= RB_CONFIG;
+					break;
+				case 's':
+					boothowto |= RB_SINGLE;
+					break;
+				}
+			}
+		} else {
+			printf("boot: illegal argument %s\n", cmd->argv[i]);
+			return 1;
+		}
+	}
+	return 0;
+}
