@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.68 2004/05/23 19:37:24 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.69 2004/05/23 19:41:23 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -92,9 +92,6 @@ struct	mbstat mbstat;		/* mbuf stats */
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
 
-struct pool_cache mbpool_cache;
-struct pool_cache mclpool_cache;
-
 struct vm_map *mb_map;
 
 int max_linkhdr;		/* largest link-level header */
@@ -126,9 +123,6 @@ mbinit()
 
 	pool_set_drain_hook(&mbpool, m_reclaim, NULL);
 	pool_set_drain_hook(&mclpool, m_reclaim, NULL);
-
-	pool_cache_init(&mbpool_cache, &mbpool, NULL, NULL, NULL);
-	pool_cache_init(&mclpool_cache, &mclpool, NULL, NULL, NULL);
 
 	nmbclust_update();
 
