@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.31 1998/04/20 07:25:15 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.32 1998/04/25 18:32:35 millert Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -285,7 +285,7 @@ loadprotoblocks(fname, size)
 		goto bad;
 	}
 	if (N_GETMAGIC(eh) != OMAGIC) {
-		warn("bad magic: 0x%lx", eh.a_midmag);
+		warn("bad magic: 0x%x", eh.a_midmag);
 		goto bad;
 	}
 	/*
@@ -318,7 +318,7 @@ loadprotoblocks(fname, size)
 	maxblocknum = *block_count_p;
 
 	if (verbose) {
-		fprintf(stderr, "%s: entry point %#lx\n", fname, eh.a_entry);
+		fprintf(stderr, "%s: entry point %#x\n", fname, eh.a_entry);
 		fprintf(stderr, "proto bootblock size %ld\n", *size);
 		fprintf(stderr, "room for %d filesystem blocks at %#lx\n",
 			maxblocknum, nl[X_BLOCK_TABLE].n_value);
@@ -396,7 +396,7 @@ loadblocknums(boot, devfd, dl)
 	}
 
 	if (N_GETMAGIC(eh) != ZMAGIC) {
-		errx(1, "%s: bad magic: 0x%lx", boot, eh.a_midmag);
+		errx(1, "%s: bad magic: 0x%x", boot, eh.a_midmag);
 	}
 
 	if (fsync(fd) != 0)
