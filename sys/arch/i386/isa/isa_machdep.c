@@ -145,6 +145,7 @@ isa_nmi()
 	return(0);
 }
 
+u_long	intrstray[ICU_LEN] = {0};
 /*
  * Caught a stray interrupt, notify
  */
@@ -153,6 +154,8 @@ isa_strayintr(irq)
 	int irq;
 {
 	static u_long strays;
+
+	intrstray[irq]++;
 
         /*
          * Stray interrupts on irq 7 occur when an interrupt line is raised
