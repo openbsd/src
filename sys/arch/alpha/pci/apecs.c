@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.13 2001/06/26 21:13:43 art Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.14 2001/11/04 23:12:46 art Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*-
@@ -168,7 +168,9 @@ apecs_init(acp, mallocsafe)
 	alpha_pci_chipset->pc_name = "apecs";
 	alpha_pci_chipset->pc_mem = APECS_PCI_SPARSE;
 	alpha_pci_chipset->pc_dense = APECS_PCI_DENSE;
+	alpha_pci_chipset->pc_ports = APECS_PCI_SIO;
 	alpha_pci_chipset->pc_bwx = 0;
+	alpha_pci_chipset->pc_hae_mask = EPIC_HAXR1_EADDR;
 
 	acp->ac_initted = 1;
 }

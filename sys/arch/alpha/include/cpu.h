@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.13 2001/06/26 21:13:43 art Exp $ */
+/* $OpenBSD: cpu.h,v 1.14 2001/11/04 23:12:46 art Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -317,6 +317,8 @@ do {									\
 #define CPU_CHIPSET_BWX		2	/* PCI supports BWX */
 #define CPU_CHIPSET_TYPE	3	/* PCI chipset name */
 #define CPU_CHIPSET_DENSE	4	/* PCI chipset dense memory addr */
+#define CPU_CHIPSET_PORTS	5	/* PCI port address */
+#define CPU_CHIPSET_HAE_MASK	6	/* PCI chipset mask for HAE register */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
