@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.17 1996/08/02 07:18:35 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.18 1996/08/11 23:24:25 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.17 1996/08/02 07:18:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.18 1996/08/11 23:24:25 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -96,19 +96,19 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.17 1996/08/02 07:18:35 deraadt Exp 
  * 
  * 	a) user = root:	NO setuid() or setgid() is done
  * 
- * 	b) other:	setuid()
- * 			setgid(primary group as found in passwd)
+ * 	b) other:	setgid(primary group as found in passwd)
  * 			initgroups(name, primary group)
- * 
+ * 			setuid()
+ *
  * 2) set-group-option on.
  * 
- * 	a) user = root:	NO setuid()
- * 			setgid(specified group)
+ * 	a) user = root:	setgid(specified group)
  * 			NO initgroups()
- * 
- * 	b) other:	setuid()
- * 			setgid(specified group)
+ * 			NO setuid()
+ *
+ * 	b) other:	setgid(specified group)
  * 			initgroups(name, specified group)
+ * 			setuid()
  * 
  */
 
