@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2001/08/22 18:26:28 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2001/09/01 16:50:19 drahn Exp $
 
 NOPROG=
 NOMAN=
@@ -22,8 +22,8 @@ allarchs:
 	    ${MAKE} M=hp300   M_A=m68k; \
 	    ${MAKE} M=i386    M_A=i386; \
 	    ${MAKE} M=mac68k  M_A=m68k; \
+	    ${MAKE} M=macppc  M_A=powerpc; \
 	    ${MAKE} M=mvme68k M_A=m68k; \
-	    ${MAKE} M=powerpc M_A=powerpc; \
 	    ${MAKE} M=sparc   M_A=sparc; \
 	    ${MAKE} M=sun3    M_A=m68k; \
 	    ${MAKE} M=vax     M_A=vax ;
