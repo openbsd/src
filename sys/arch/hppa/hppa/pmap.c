@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 1999/11/25 17:39:46 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 1999/11/25 18:35:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -596,7 +596,8 @@ pmap_clear_pv(paddr_t pa, struct pv_entry *cpv)
 		if (pv == cpv)
 			continue;
 #ifdef PMAPDEBUG
-		printf("pmap_clear_pv: %x:%x\n", pv->pv_space, pv->pv_va);
+		if (pmapdebug & PDB_PV)
+			printf("pmap_clear_pv: %x:%x\n", pv->pv_space, pv->pv_va);
 #endif
 		/*
 		 * have to clear the icache first since fic uses the dtlb.
@@ -1329,7 +1330,6 @@ pmap_zero_page(pa)
 	register paddr_t pa;
 {
 	extern int dcache_line_mask;
-	/* register int psw; */
 	register paddr_t pe = pa + PAGE_SIZE;
 
 #ifdef PMAPDEBUG
@@ -1339,10 +1339,9 @@ pmap_zero_page(pa)
 
 	pmap_clear_pv(pa, NULL);
 
-	/* rsm(PSW_I,psw); */
 	while (pa < pe) {
 		__asm volatile("stwas,ma %%r0,4(%0)\n\t"
-			       : "=r" (pa) : "0" (pa) : "memory");
+		    : "+r" (pa) :: "memory");
 
 		if (!(pa & dcache_line_mask))
 			__asm volatile("rsm %1, %%r0\n\t"
@@ -1352,7 +1351,6 @@ pmap_zero_page(pa)
 	}
 
 	sync_caches();
-	/* mtsm(psw); */
 }
 
 /*
@@ -1373,7 +1371,7 @@ pmap_copy_page(spa, dpa)
 	int s;
 
 #ifdef PMAPDEBUG
-	/*if (1 && pmapdebug & PDB_FOLLOW)*/
+	if (1 && pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%x, %x)\n", spa, dpa);
 #endif
 
