@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.26 2001/03/31 02:51:26 hugh Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 2001/04/01 20:14:40 hugh Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -109,14 +109,14 @@ std)
 	mknod kmem		c 3 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 3 0	; chmod 640 mem ; chgrp kmem mem
 	mknod null		c 3 2	; chmod 666 null
-	mknod zero              c 3 12  ; chmod 666 zero
+	mknod zero		c 3 12  ; chmod 666 zero
 	mknod tty		c 2 0	; chmod 666 tty
 	mknod klog		c 33 0	; chmod 600 klog
 	mknod stdin		c 53 0	; chmod 666 stdin
 	mknod stdout		c 53 1	; chmod 666 stdout
 	mknod stderr		c 53 2	; chmod 666 stderr
-    mknod ipl		c 42 0	; chmod 600 ipl
-	mknod ksyms		c 50 0  ; chmod 640 ksyms ; chown root.kmem ksyms
+	mknod ipl		c 42 0	; chmod 600 ipl
+	mknod ksyms		c 50 0	; chmod 640 ksyms ; chown root.kmem ksyms
 	mknod ipnat		c 42 1	; chmod 600 ipnat
 	mknod ipstate		c 42 2	; chmod 600 ipstate
 	mknod ipauth		c 42 3	; chmod 600 ipauth
@@ -205,8 +205,7 @@ st*)
 	unit=${i#st};	blk=21; chr=60;
 	case $unit in
 	0|1|2|3|4|5|6|7)
-		rm -f st${unit} nst${unit} est${unit} enst${unit} \
-		    rst${unit} nrst${unit} erst${unit} enrst${unit}
+		rm -f {e,}{n,}{r,}st${unit}
 		mknod st${unit}		b $blk $(($unit * 16 + 0))
 		mknod nst${unit}	b $blk $(($unit * 16 + 1))
 		mknod est${unit}	b $blk $(($unit * 16 + 2))
@@ -215,12 +214,8 @@ st*)
 		mknod nrst${unit}	c $chr $(($unit * 16 + 1))
 		mknod erst${unit}	c $chr $(($unit * 16 + 2))
 		mknod enrst${unit}	c $chr $(($unit * 16 + 3))
-		chown root.operator \
-		    st${unit} nst${unit} est${unit} enst${unit} \
-		    rst${unit} nrst${unit} erst${unit} enrst${unit}
-		chmod 660 \
-		    st${unit} nst${unit} est${unit} enst${unit} \
-		    rst${unit} nrst${unit} erst${unit} enrst${unit}
+		chown root.operator {e,}{n,}{r,}st${unit}
+		chmod 660 {e,}{n,}{r,}st${unit}
 		;;
 	*)
 		echo bad tape unit: $i - $unit
@@ -291,7 +286,7 @@ vnd*)
 		vnd) off=0;;
 		svnd) off=128;;
 		esac
-		rm -f $name$unit? r$name$unit?
+		rm -f {r,}${name}${unit}?
 		minor=$(($unit * 16 + $off))
 		for slice in a b c d e f g h i j k l m n o p
 		do
@@ -299,8 +294,8 @@ vnd*)
 			mknod r${name}${unit}${slice} c $chr $minor
 			minor=$(($minor + 1))
 		done
-		chown root.operator $name$unit? r$name$unit?
-		chmod 640 $name$unit? r$name$unit?
+		chown root.operator {r,}${name}${unit}?
+		chmod 640 {r,}${name}${unit}?
 	done
 	umask 77
 	;;
@@ -344,25 +339,25 @@ cd*)
 	case $i in
 	cd*) name=cd;   unit=${i#cd};   chr=61; blk=22;;
 	esac
-	rm -f $name$unit? r$name$unit?
+	rm -f {r,}${name}${unit}?
 	mknod ${name}${unit}a   b $blk $(($unit * 16 + 0))
 	mknod ${name}${unit}c   b $blk $(($unit * 16 + 2))
 	mknod r${name}${unit}a  c $chr $(($unit * 16 + 0))
 	mknod r${name}${unit}c  c $chr $(($unit * 16 + 2))
-	chgrp operator $name$unit? r$name$unit?
-	chmod 640 $name$unit? r$name$unit?
+	chgrp operator {r,}${name}${unit}?
+	chmod 640 {r,}${name}${unit}?
 	;;
 
 ss*)
 	case $i in
 	ss*) name=ss;   unit=${i#ss};   chr=64;;
 	esac
-	rm -f $name$unit n$name$unit en$name$unit
+	rm -f {,n,en}${name}${unit}
 	mknod $name$unit	c $chr $(($unit * 16 + 0))
 	mknod n$name$unit	c $chr $(($unit * 16 + 1))
 	mknod en$name$unit	c $chr $(($unit * 16 + 3))
-	chgrp operator $name$unit n$name$unit en$name$unit
-	chmod 640 $name$unit n$name$unit en$name$unit
+	chgrp operator {,n,en}${name}${unit}
+	chmod 640 {,n,en}${name}${unit}
 	;;
 
 ch*|uk*)
@@ -501,54 +496,54 @@ lp*|va*|vp*)
 pty*)
 	class=${i#pty};
 	case $class in
-	0)      name=p;;
-	1)      name=q;;
-	2)      name=r;;
-	3)      name=s;;
-	4)      name=t;;
-	5)      name=u;;
-	6)      name=v
+	0)	name=p;;
+	1)	name=q;;
+	2)	name=r;;
+	3)	name=s;;
+	4)	name=t;;
+	5)	name=u;;
+	6)	name=v
 		echo "$0: $i: pty unit conflicts with another use."
 		continue;;
-	7)      name=w;;
-	8)      name=x;;
-	9)      name=y;;
-	10)     name=z;;
-	11)     name=P;;
-	12)     name=Q;;
-	13)     name=R;;
-	14)     name=S;;
-	15)     name=T;;
-	*)      echo "$0: $i: pty unit must be between 0 and 15"
+	7)	name=w;;
+	8)	name=x;;
+	9)	name=y;;
+	10)	name=z;;
+	11)	name=P;;
+	12)	name=Q;;
+	13)	name=R;;
+	14)	name=S;;
+	15)	name=T;;
+	*)	echo "$0: $i: pty unit must be between 0 and 15"
 	        continue ;;
 	esac
 	rm -f tty$name[0-9a-f] pty$name[0-9a-f]
 	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 	do
 		case $j in
-		[0-9])  jn=$j ;;
-		a)      jn=10 ;;
-		b)      jn=11 ;;
-		c)      jn=12 ;;
-		d)      jn=13 ;;
-		e)      jn=14 ;;
-		f)      jn=15 ;;
+		[0-9])	jn=$j ;;
+		a)	jn=10 ;;
+		b)	jn=11 ;;
+		c)	jn=12 ;;
+		d)	jn=13 ;;
+		e)	jn=14 ;;
+		f)	jn=15 ;;
 		esac
 		unit=$(($class * 16 + $jn))
 		mknod tty$name$j c 20 $unit
 		mknod pty$name$j c 21 $unit
 	done
-        chgrp wheel tty$name? pty$name?
-        chmod 666 tty$name? pty$name?
+	chgrp wheel tty$name? pty$name?
+	chmod 666 tty$name? pty$name?
 	;;
 
 np*)
 	class=${i#np}
 	case $class in
-	0) offset=0 name=0;;
-	1) offset=16 name=1;;
-	2) offset=32 name=2;;
-	*) echo bad unit for np in: $i;;
+	0)	offset=0  name=0;;
+	1)	offset=16 name=1;;
+	2)	offset=32 name=2;;
+	*)	echo bad unit for np in: $i;;
 	esac
 	case $class in
 	0|1|2)
@@ -558,6 +553,7 @@ np*)
 		if [ $no -lt 10 ]; then
 			no="0${no}"
 		fi
+		rm -f np${no}
 		mknod np${no} c 39 $no
 		i=$(($i + 1))
 	done
