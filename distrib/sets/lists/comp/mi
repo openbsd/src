@@ -5047,6 +5047,7 @@
 ./usr/share/man/cat9/disk_unbusy.0
 ./usr/share/man/cat9/disklabel.0
 ./usr/share/man/cat9/dohooks.0
+./usr/share/man/cat9/domountroothooks.0
 ./usr/share/man/cat9/dopowerhooks.0
 ./usr/share/man/cat9/doshutdownhooks.0
 ./usr/share/man/cat9/dostartuphooks.0
@@ -5158,6 +5159,8 @@
 ./usr/share/man/cat9/microuptime.0
 ./usr/share/man/cat9/min.0
 ./usr/share/man/cat9/mono_time.0
+./usr/share/man/cat9/mountroothook_disestablish.0
+./usr/share/man/cat9/mountroothook_establish.0
 ./usr/share/man/cat9/namei.0
 ./usr/share/man/cat9/nanotime.0
 ./usr/share/man/cat9/nanouptime.0
