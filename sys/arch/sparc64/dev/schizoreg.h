@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.5 2002/07/24 19:10:54 jason Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.6 2002/08/02 16:44:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -31,43 +31,52 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 struct schizo_pbm_regs {
-	u_int64_t	_unused1[64];
-	struct iommureg	iommu;
-	u_int64_t	iommu_ctxflush;
-	u_int64_t	_unused2[1212];
-	struct iommu_strbuf strbuf;
-	u_int64_t	strbuf_ctxflush;
-	u_int64_t	_unused3[4012];
-	u_int64_t	iommu_tag;
-	u_int64_t	_unused4[15];
-	u_int64_t	iommu_data;
-	u_int64_t	_unused5[2879];
-	u_int64_t	strbuf_ctxmatch;
-	u_int64_t	_unusedN[122879];
+	volatile u_int64_t	_unused1[64];
+	struct iommureg		iommu;
+	volatile u_int64_t	iommu_ctxflush;
+	volatile u_int64_t	_unused2[444];
+	volatile u_int64_t	imap[64];
+	volatile u_int64_t	_unused3[64];
+	volatile u_int64_t	iclr[64];
+	volatile u_int64_t	_unused4[320];
+	volatile u_int64_t	ctrl;
+	volatile u_int64_t	__unused;
+	volatile u_int64_t	afsr;
+	volatile u_int64_t	afar;
+	volatile u_int64_t	_unused5[252];
+	struct iommu_strbuf	strbuf;
+	volatile u_int64_t	strbuf_ctxflush;
+	volatile u_int64_t	_unused6[4012];
+	volatile u_int64_t	iommu_tag;
+	volatile u_int64_t	_unused7[15];
+	volatile u_int64_t	iommu_data;
+	volatile u_int64_t	_unused8[2879];
+	volatile u_int64_t	strbuf_ctxmatch;
+	volatile u_int64_t	_unused9[122879];
 };
 
 struct schizo_regs {
-	u_int64_t	_unused0[8];
-	u_int64_t	pcia_mem_match;
-	u_int64_t	pcia_mem_mask;
-	u_int64_t	pcia_io_match;
-	u_int64_t	pcia_io_mask;
-	u_int64_t	pcib_mem_match;
-	u_int64_t	pcib_mem_mask;
-	u_int64_t	pcib_io_match;
-	u_int64_t	pcib_io_mask;
-	u_int64_t	_unused1[8176];
+	volatile u_int64_t	_unused0[8];
+	volatile u_int64_t	pcia_mem_match;
+	volatile u_int64_t	pcia_mem_mask;
+	volatile u_int64_t	pcia_io_match;
+	volatile u_int64_t	pcia_io_mask;
+	volatile u_int64_t	pcib_mem_match;
+	volatile u_int64_t	pcib_mem_mask;
+	volatile u_int64_t	pcib_io_match;
+	volatile u_int64_t	pcib_io_mask;
+	volatile u_int64_t	_unused1[8176];
 
-	u_int64_t	_unused2[3];
-	u_int64_t	safari_errlog;
-	u_int64_t	eccctrl;
-	u_int64_t	_unused3[1];
-	u_int64_t	ue_afsr;
-	u_int64_t	ue_afar;
-	u_int64_t	ce_afsr;
-	u_int64_t	ce_afar;
+	volatile u_int64_t	_unused2[3];
+	volatile u_int64_t	safari_errlog;
+	volatile u_int64_t	eccctrl;
+	volatile u_int64_t	_unused3[1];
+	volatile u_int64_t	ue_afsr;
+	volatile u_int64_t	ue_afar;
+	volatile u_int64_t	ce_afsr;
+	volatile u_int64_t	ce_afar;
 
-	u_int64_t	_unused4[253942];
+	volatile u_int64_t	_unused4[253942];
 	struct schizo_pbm_regs pbm_a;
 	struct schizo_pbm_regs pbm_b;
 };
@@ -94,6 +103,7 @@ struct schizo_regs {
 #define	SCZ_PCI_IOMMU_CTXFLUSH		0x00218
 #define	SCZ_PCI_IMAP_BASE		0x01000
 #define	SCZ_PCI_ICLR_BASE		0x01400
+#define	SCZ_PCI_CTRL			0x02000
 #define	SCZ_PCI_AFSR			0x02010
 #define	SCZ_PCI_AFAR			0x02018
 #define	SCZ_PCI_STRBUF_CTRL		0x02800
@@ -137,6 +147,41 @@ struct schizo_regs {
 #define	SCZ_CEAFSR_MTAGSYND		0x00000000000f0000UL
 #define	SCZ_CEAFSR_MTAG			0x000000000000e000UL
 #define	SCZ_CEAFSR_ECCSYND		0x00000000000001ffUL
+
+#define	SCZ_PCICTRL_BUS_UNUS		(1UL << 63UL)
+#define	SCZ_PCICTRL_ESLCK		(1UL << 51UL)
+#define	SCZ_PCICTRL_ERRSLOT		(7UL << 48UL)
+#define	SCZ_PCICTRL_TTO_ERR		(1UL << 38UL)
+#define	SCZ_PCICTRL_RTRY_ERR		(1UL << 37UL)
+#define	SCZ_PCICTRL_DTO_ERR		(1UL << 36UL)
+#define	SCZ_PCICTRL_SBH_ERR		(1UL << 35UL)
+#define	SCZ_PCICTRL_SERR		(1UL << 34UL)
+#define	SCZ_PCICTRL_PCISPD		(1UL << 33UL)
+#define	SCZ_PCICTRL_PTO			(3UL << 24UL)
+#define	SCZ_PCICTRL_DTO_INT		(1UL << 19UL)
+#define	SCZ_PCICTRL_SBH_INT		(1UL << 18UL)
+#define	SCZ_PCICTRL_EEN			(1UL << 17UL)
+#define	SCZ_PCICTRL_PARK		(1UL << 16UL)
+#define	SCZ_PCICTRL_PCIRST		(1UL <<  8UL)
+#define	SCZ_PCICTRL_ARB			(0x3fUL << 0UL)
+
+#define	SCZ_PCIAFSR_PMA			0x8000000000000000UL
+#define	SCZ_PCIAFSR_PTA			0x4000000000000000UL
+#define	SCZ_PCIAFSR_PRTRY		0x2000000000000000UL
+#define	SCZ_PCIAFSR_PPERR		0x1000000000000000UL
+#define	SCZ_PCIAFSR_PTTO		0x0800000000000000UL
+#define	SCZ_PCIAFSR_PUNUS		0x0400000000000000UL
+#define	SCZ_PCIAFSR_SMA			0x0200000000000000UL
+#define	SCZ_PCIAFSR_STA			0x0100000000000000UL
+#define	SCZ_PCIAFSR_SRTRY		0x0080000000000000UL
+#define	SCZ_PCIAFSR_SPERR		0x0040000000000000UL
+#define	SCZ_PCIAFSR_STTO		0x0020000000000000UL
+#define	SCZ_PCIAFSR_SUNUS		0x0010000000000000UL
+#define	SCZ_PCIAFSR_BMSK		0x000003ff00000000UL
+#define	SCZ_PCIAFSR_BLK			0x0000000080000000UL
+#define	SCZ_PCIAFSR_CFG			0x0000000040000000UL
+#define	SCZ_PCIAFSR_MEM			0x0000000020000000UL
+#define	SCZ_PCIAFSR_IO			0x0000000010000000UL
 
 #define	SCZ_PBM_A_REGS			(0x600000UL - 0x400000UL)
 #define	SCZ_PBM_B_REGS			(0x700000UL - 0x400000UL)
