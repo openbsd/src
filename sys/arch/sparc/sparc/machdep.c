@@ -194,9 +194,9 @@ cpu_startup()
 
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) {
+	if (base >= MAXBSIZE / CLBYTES) {
 		/* don't want to alloc more physical mem than needed */
-		base = MAXBSIZE;
+		base = MAXBSIZE / CLBYTES;
 		residual = 0;
 	}
 
@@ -335,17 +335,20 @@ allocsys(v)
 	if (bufpages == 0)
 		bufpages = (physmem / ((100/BUFCACHEPERCENT) / CLSIZE));
 	/* Restrict to at most 70% filled kvm */
-	if (bufpages * MAXBSIZE >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
-		bufpages = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-		    MAXBSIZE * 7 / 10;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-	if (nbuf > 200)		/* XXX Sorry, our kvm space is too small */
-		nbuf = 200;
+	if (nbuf * MAXBSIZE >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+		    MAXBSIZE * 7 / 10;
+
+	/* More buffer pages than fits into the buffers is senseless.  */
+	if (bufpages > nbuf * MAXBSIZE / CLBYTES)
+		bufpages = nbuf * MAXBSIZE / CLBYTES;
+
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
