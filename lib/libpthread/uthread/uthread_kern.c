@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.23 2002/11/04 21:28:49 marc Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.24 2003/01/24 21:03:15 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -115,11 +115,6 @@ _thread_kern_sched(struct sigcontext * scp)
 		memcpy(&curthread->saved_sigcontext, scp,
 		    sizeof(curthread->saved_sigcontext));
 
-		/*
-		 * Save floating point state.
-		 */
-		_thread_machdep_save_float_state(&curthread->_machdep);
-
 		/* Flag the signal context as the last state saved: */
 		curthread->sig_saved = 1;
 	} else
@@ -129,6 +124,9 @@ _thread_kern_sched(struct sigcontext * scp)
 	/* If the currently running thread is a user thread, save it: */
 	if ((curthread->flags & PTHREAD_FLAGS_PRIVATE) == 0)
 		_last_user_thread = curthread;
+
+	/* Save floating point state. */
+	_thread_machdep_save_float_state(&curthread->_machdep);
 
 	/* Save errno. */
 	curthread->error = errno;
@@ -501,41 +499,38 @@ _thread_kern_sched(struct sigcontext * scp)
 			/* Restore errno. */
 			errno = curthread->error;
 
+			/* Restore floating point state. */
+			_thread_machdep_restore_float_state(&curthread->_machdep);
+
 			/*
 			 * Restore the new thread, saving current.
 			 */
 			_thread_machdep_switch(&curthread->_machdep,
-			    &old_thread_run->_machdep);
+					       &old_thread_run->_machdep);
+
+			/*
+			 * Process any pending signals for the thread we
+			 * just switched to.
+			 */
+			_thread_kern_in_sched = 0;
+			_dispatch_signals(scp);
+
+			/* run any installed switch-hooks */
+			if ((_sched_switch_hook != NULL) &&
+			    (_last_user_thread != curthread)) {
+				_thread_run_switch_hook(_last_user_thread,
+							curthread);
+			}
+
+			/* check for thread cancellation */
+			if (((curthread->cancelflags &
+			      PTHREAD_AT_CANCEL_POINT) == 0) &&
+			    ((curthread->cancelflags &
+			      PTHREAD_CANCEL_ASYNCHRONOUS) != 0))
+				pthread_testcancel();
 
 			/* Check if a signal context was saved: */
 			if (curthread->sig_saved == 1) {
-				/*
-				 * Restore floating point state.
-				 */
-				_thread_machdep_restore_float_state(&curthread->_machdep);
-
-				/*
-				 * Do a sigreturn to restart the thread that
-				 * was interrupted by a signal:
-				 */
-				_thread_kern_in_sched = 0;
-
-				/*
-				 * If we had a context switch, run any
-				 * installed switch hooks.
-				 */
-				if ((_sched_switch_hook != NULL) &&
-				    (_last_user_thread != curthread)) {
-					_thread_run_switch_hook(_last_user_thread,
-					    curthread);
-				}
-
-				if (((curthread->cancelflags &
-				    PTHREAD_AT_CANCEL_POINT) == 0) &&
-				    ((curthread->cancelflags &
-				     PTHREAD_CANCEL_ASYNCHRONOUS) != 0))
-					pthread_testcancel();
-
 				/* return to signal handler.   This code
 				   should be:
 				   _thread_sys_sigreturn(&curthread->saved_sigcontext);
@@ -543,22 +538,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				   sparc */
 				return;
 			} else {
-				/*
-				 * This is the normal way out of the scheduler.
-				 */
-				_thread_kern_in_sched = 0;
-
-				if (_sched_switch_hook != NULL) {
-					/* Run the installed switch hook: */
-					_thread_run_switch_hook(_last_user_thread,
-					    curthread);
-				}
-
-				if (((curthread->cancelflags &
-				    PTHREAD_AT_CANCEL_POINT) == 0) &&
-				    ((curthread->cancelflags &
-				     PTHREAD_CANCEL_ASYNCHRONOUS) != 0))
-					pthread_testcancel();
+				/* This is the normal way out */
 				return;
 			}
 

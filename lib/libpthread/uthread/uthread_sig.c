@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.16 2002/11/08 23:18:25 todd Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.17 2003/01/24 21:03:15 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -75,8 +75,8 @@ _thread_sig_process(int sig, struct sigcontext * scp)
 		locked = 1;
 
 	if (locked || _thread_sigact[sig - 1].sa_flags & SA_NODEFER) {
-		_thread_sig_handle(sig, scp);
 		pending_sigs[sig - 1] = 0;
+		_thread_sig_handle(sig, scp);
 	} else
 		check_pending = 1;
 	if (locked)
@@ -167,7 +167,7 @@ _thread_sig_handler(int sig, siginfo_t *info, struct sigcontext * scp)
 			signal_lock = _SPINLOCK_UNLOCKED;
 			for (i = 1; i < NSIG; i++)
 				if (pending_sigs[i - 1])
-				    _thread_sig_process(i, scp);
+					_thread_sig_process(i, scp);
 		}
 	}
 
@@ -268,22 +268,14 @@ _thread_sig_handle(int sig, struct sigcontext * scp)
 					pthread->sig_defer_count--;
 			}
 			/*
-			 * give each thread a chance to dispatch pending
-			 * signals.
+			 * Give the current thread a chance to dispatch
+			 * the signals.  Other threads will get thier
+			 * chance (if the signal is still pending) later.
 			 */
-			TAILQ_FOREACH(pthread, &_thread_list, tle) {
-				/* Current thread inside critical region? */
-				if (curthread->sig_defer_count > 0)
-					pthread->sig_defer_count++;
-				_dispatch_signals(pthread, scp);
-				if (curthread->sig_defer_count > 0)
-					pthread->sig_defer_count--;
-			}
+			_dispatch_signals(scp);
+
 		}
 	}
-
-	/* Returns nothing. */
-	return;
 }
 
 /* Perform thread specific actions in response to a signal: */
@@ -385,12 +377,12 @@ _thread_signal(pthread_t pthread, int sig)
 }
 
 /*
- * possibly dispatch a signal to the given thread.
+ * possibly dispatch a signal to the current thread.
  */
 void
-_dispatch_signals(pthread_t pthread, struct sigcontext * scp)
+_dispatch_signals(struct sigcontext * scp)
 {
-	pthread_t pthread_saved;
+	struct pthread	*curthread = _get_curthread();
 	struct sigaction act;
 	void (*action)(int, siginfo_t *, void *);
 	int i;
@@ -399,7 +391,7 @@ _dispatch_signals(pthread_t pthread, struct sigcontext * scp)
 	 * Check if there are pending signals for the running
 	 * thread that aren't blocked:
 	 */
-	if ((pthread->sigpend & ~pthread->sigmask) != 0)
+	if ((curthread->sigpend & ~curthread->sigmask) != 0)
 		/* Look for all possible pending signals: */
 		for (i = 1; i < NSIG; i++)
 			/*
@@ -408,8 +400,8 @@ _dispatch_signals(pthread_t pthread, struct sigcontext * scp)
 			 */
 			if (_thread_sigact[i - 1].sa_handler != SIG_DFL &&
 			    _thread_sigact[i - 1].sa_handler != SIG_IGN &&
-			    sigismember(&pthread->sigpend,i) &&
-			    !sigismember(&pthread->sigmask,i)) {
+			    sigismember(&curthread->sigpend,i) &&
+			    !sigismember(&curthread->sigmask,i)) {
 				action = _thread_sigact[i - 1].sa_sigaction;
 				_clear_pending_flag(i);
 
@@ -426,10 +418,7 @@ _dispatch_signals(pthread_t pthread, struct sigcontext * scp)
 				 * Dispatch the signal via the custom signal
 				 * handler.
 				 */
-				pthread_saved = _get_curthread();
-				_set_curthread(pthread);
 				(*action)(i, &info_queue[i - 1], scp);
-				_set_curthread(pthread_saved);
 			}
 }
 #endif
