@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 1999/11/17 05:00:41 millert Exp $
+#	$OpenBSD: Makefile,v 1.41 1999/11/17 05:37:53 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -75,8 +75,10 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_attr.3 wattron.3 curs_attr.3 attrset.3 curs_attr.3 wattrset.3 \
 	curs_attr.3 standend.3 curs_attr.3 wstandend.3 curs_attr.3 standout.3 \
 	curs_attr.3 wstandout.3 curs_attr.3 color_set.3 curs_attr.3 \
-	wcolor_set.3 curs_attr.3 attr_get.3 curs_attr.3 wattr_get.3 \
-	curs_attr.3 wattr_off.3 curs_attr.3 chgat.3 curs_attr.3 wchgat.3 \
+	wcolor_set.3 curs_attr.3 attr_get.3 curs_attr.3 attr_on.3 \
+	curs_attr.3 attr_off.3 curs_attr.3 attr_set.3 curs_attr.3 wattr_get.3 \
+	curs_attr.3 wattr_on.3 curs_attr.3 wattr_off.3 curs_attr.3 attr_set.3 \
+	curs_attr.3 wattr_set.3 curs_attr.3 chgat.3 curs_attr.3 wchgat.3 \
 	curs_attr.3 mvchgat.3 curs_attr.3 mvwchgat.3 curs_beep.3 beep.3 \
 	curs_beep.3 flash.3 curs_bkgd.3 bkgdset.3 curs_bkgd.3 wbkgdset.3 \
 	curs_bkgd.3 bkgd.3 curs_bkgd.3 wbkgd.3 curs_bkgd.3 getbkgd.3 \
