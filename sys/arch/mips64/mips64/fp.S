@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp.S,v 1.1 2004/08/06 20:56:03 pefo Exp $	*/
+/*	$OpenBSD: fp.S,v 1.2 2004/08/15 18:35:58 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fp.s	8.1 (Berkeley) 6/10/93
- *      $Id: fp.S,v 1.1 2004/08/06 20:56:03 pefo Exp $
+ *      $Id: fp.S,v 1.2 2004/08/15 18:35:58 pefo Exp $
  */
 
 /*
@@ -2219,16 +2219,18 @@ invalid_w:					# trap invalid operation
  */
 fpe_trap:
 	move	a2, a1				# code = FP CSR
-	ctc1	a1, FPC_CSR		# save exceptions
-	break	0
+	ctc1	a1, FPC_CSR			# save exceptions
+	li	v0, 1
+	b	done_err
 
 /*
  * Send an illegal instruction signal to the current process.
  */
 ill:
-	ctc1	a1, FPC_CSR		# save exceptions
+	ctc1	a1, FPC_CSR			# save exceptions
 	move	a2, a0				# code = FP instruction
-	break	0
+	li	v0, 1
+	b	done_err
 
 result_ft_s:
 	move	t0, t4				# result is FT
@@ -2251,6 +2253,8 @@ result_fs_d:					# result is FS
 	jal	set_fd_d			# save result (in t0,t1,t2,t3)
 
 done:
+	li	v0, 0
+done_err:
 	PTR_L	ra, CF_RA_OFFS(sp)
 	PTR_ADD	sp, sp, FRAMESZ(CF_SZ)
 	j	ra

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.4 2004/08/15 18:35:58 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -498,6 +498,9 @@ NON_LEAF(MipsFPTrap, FRAMESZ(CF_SZ), ra)
  */
 4:
 	jal	MipsEmulateFP
+	nop
+
+	bnez	v0, 3b			# Emulation failed.
 	nop
 
 /*
