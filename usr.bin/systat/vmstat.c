@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.49 2004/06/11 06:30:31 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.50 2004/06/11 06:31:32 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.49 2004/06/11 06:30:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.50 2004/06/11 06:31:32 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -179,11 +179,14 @@ static struct nlist namelist[] = {
 
 #define	DRIVESPACE	45	/* max space for drives */
 
+int ncpu = 1;
+
 int
 initkre(void)
 {
 	char *intrnamebuf, *cp;
-	int i, ret;
+	size_t size = sizeof(ncpu);
+	int mib[2], i, ret;
 
 	if (namelist[0].n_type == 0) {
 		if ((ret = kvm_nlist(kd, namelist)) == -1)
@@ -199,6 +202,12 @@ initkre(void)
 			return(0);
 		}
 	}
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1)
+                return (-1);
+
 	hertz = stathz ? stathz : hz;
 	if (!dkinit(1))
 		return(0);
@@ -426,6 +435,7 @@ showkre(void)
 	}
 	failcnt = 0;
 	etime /= hertz;
+	etime /= ncpu;
 	inttotal = 0;
 	for (i = 0; i < nintr; i++) {
 		if (s.intrcnt[i] == 0)
