@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.9 1997/05/31 07:37:58 downsj Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.10 1997/05/31 08:48:20 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.9 1997/05/31 07:37:58 downsj Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.10 1997/05/31 08:48:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -363,6 +363,8 @@ vnode_print(avnode, vp)
 		*fp++ = 'B';
 	if (flag & VALIASED)
 		*fp++ = 'A';
+	if (flag & VDIROP)
+		*fp++ = 'D';
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';

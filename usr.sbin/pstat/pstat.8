@@ -55,7 +55,7 @@ in
 .Pa /dev/kmem .
 The required namelist is taken from
 .Pa /bsd
-unless 
+unless
 .Ar system
 is specified.
 .Pp
@@ -104,12 +104,12 @@ Use 1K-byte blocks.
 .It Fl n
 Print devices by major/minor number rather than by name.
 .It Fl s
-Print information about swap space usage on all the 
+Print information about swap space usage on all the
 swap areas compiled into the kernel.
 The first column is the device name of the partition.  The next column is
-the total space available in the partition.  The 
+the total space available in the partition.  The
 .Ar Used
-column indicates the total blocks used so far;  the 
+column indicates the total blocks used so far;  the
 .Ar Available
 column indicates how much space is remaining on each partition.
 The
@@ -196,7 +196,7 @@ to a particular filesystem is preceded by a two line header.  The
 first line consists of the following:
 .Pp
 .Df I
-.No *** MOUNT Em fstype from 
+.No *** MOUNT Em fstype from
 on
 .Em on fsflags
 .De
@@ -204,10 +204,11 @@ on
 where
 .Em fstype
 is one of
-.Em adosfs , afs , cd9660 , fdesc ,
-.Em kernfs , lfs , lofs , mfs ,
-.Em msdos , nfs , null , portal ,
-.Em procfs , ufs , umap , union ;
+.Em adosfs , afs , cd9660 , ext2fs ,
+.Em fdesc , ffs, kernfs , lfs ,
+.Em lofs , mfs , msdos , nfs ,
+.Em null , portal , procfs ,
+.Em umap , union ;
 .Em from
 is the filesystem is mounted from;
 .Em on
@@ -254,12 +255,12 @@ The number of I/O buffers held by this vnode.
 .It FILEID
 The vnode fileid.
 In the case of
-.Em ufs
+.Em ffs
 this is the inode number.
 .It IFLAG
 Miscellaneous filesystem specific state variables encoded thus:
 .Bl -tag -width indent
-.It "For ufs:"
+.It "For ffs:"
 .Bl -tag -width indent -compact
 .It L
 locked
