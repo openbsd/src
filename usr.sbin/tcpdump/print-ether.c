@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.18 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.19 2004/01/22 16:18:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.18 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.19 2004/01/22 16:18:52 jason Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -52,9 +52,12 @@ struct rtentry;
 #include "interface.h"
 #include "addrtoname.h"
 #include "ethertype.h"
+#include "extract.h"
 
 const u_char *packetp;
 const u_char *snapend;
+
+void ether_macctl(const u_char *, u_int);
 
 void
 ether_print(register const u_char *bp, u_int length)
@@ -228,6 +231,10 @@ recurse:
 		return (1);
 #endif
 
+	case ETHERTYPE_FLOWCONTROL:
+		ether_macctl(p, length);
+		return (1);
+
 	case ETHERTYPE_LAT:
 	case ETHERTYPE_SCA:
 	case ETHERTYPE_MOPRC:
@@ -236,4 +243,31 @@ recurse:
 	default:
 		return (0);
 	}
+}
+
+void
+ether_macctl(const u_char *p, u_int length)
+{
+	printf("MACCTL");
+
+	if (length < 2)
+		goto trunc;
+	if (EXTRACT_16BITS(p) == 0x0001) {
+		u_int plen;
+
+		printf(" PAUSE");
+
+		length -= 2;
+		p += 2;
+		if (length < 2)
+			goto trunc;
+		plen = 512 * EXTRACT_16BITS(p);
+		printf(" quanta %u", plen);
+	} else {
+		printf(" unknown-opcode(0x%04x)", EXTRACT_16BITS(p));
+	}
+	return;
+
+trunc:
+	printf("[|MACCTL]");
 }
