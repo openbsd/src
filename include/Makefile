@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 1996/08/16 04:19:14 downsj Exp $
+#	$OpenBSD: Makefile,v 1.21 1996/08/16 09:40:02 mickey Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -26,7 +26,7 @@ MFILES=	float.h frame.h stdarg.h varargs.h
 LFILES=	errno.h fcntl.h syslog.h termios.h
 
 DIRS=	arpa protocols rpc rpcsvc
-LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm ddb scsi
+LDIRS=	dev net netinet netccitt netiso netns netipx nfs sys ufs vm ddb scsi
 
 RDIRS=	../lib/libcompat ../lib/libcurses ../lib/libform ../lib/libmenu \
 	../lib/libocurses ../lib/libpanel ../lib/librpcsvc ../lib/libtermlib \
