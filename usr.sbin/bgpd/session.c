@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.166 2004/05/06 12:18:02 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.167 2004/05/06 14:07:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -992,7 +992,7 @@ session_open(struct peer *p)
 		if (p->capa.ann_mp) {
 			/* multiprotocol extensions, RFC 2858 */
 			bzero(&capa_mp_v4, sizeof(capa_mp_v4));
-			capa_mp_v4.afi = AFI_IPv4;
+			capa_mp_v4.afi = htons(AFI_IPv4);
 			capa_mp_v4.safi = SAFI_UNICAST;
 			op_len += 6;	/* 1 code + 1 len + 4 data */
 		}
@@ -1682,6 +1682,7 @@ parse_refresh(struct peer *peer)
 
 	/* afi, 2 byte */
 	memcpy(&r.afi, p, sizeof(r.afi));
+	r.afi = ntohs(r.afi);
 	p += 2;
 	/* reserved, 1 byte */
 	p += 1;
@@ -1835,6 +1836,7 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 				return (-1);
 			}
 			memcpy(&mp_afi, capa_val, sizeof(mp_afi));
+			mp_afi = ntohs(mp_afi);
 			memcpy(&mp_safi, capa_val + 3, sizeof(mp_safi));
 			switch (mp_afi) {
 			case AFI_IPv4:
