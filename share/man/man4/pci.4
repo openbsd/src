@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.67 2002/06/03 18:03:23 mickey Exp $
+.\"	$OpenBSD: pci.4,v 1.68 2002/09/25 18:01:37 miod Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -181,6 +181,8 @@ bridges with multiple
 instances on the
 .Tn PCI
 bus on the other side of the bridge.
+.It Xr em 4
+Intel Gigabit Ethernet interfaces. (i82542, i82543, i82544)
 .It Xr en 4
 Midway-based Efficient Networks Inc.
 and Adaptec ATM interfaces.
@@ -193,8 +195,6 @@ DEFPA
 interfaces.
 .It Xr fxp 4
 Intel EtherExpress PRO 10+/100B Ethernet interfaces.
-.It Xr gx 4
-Intel Gigabit Ethernet interfaces. (i82542, i82543, i82544)
 .It Xr le 4
 PCNet-PCI Ethernet interfaces.
 .It Xr lge 4
