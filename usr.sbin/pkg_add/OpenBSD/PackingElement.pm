@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.38 2004/10/05 10:20:40 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.39 2004/10/05 10:21:42 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -644,13 +644,6 @@ __PACKAGE__->setKeyword('pkgdep');
 sub keyword() { "pkgdep" }
 sub category() { "pkgdep" }
 
-package OpenBSD::PackingElement::PkgConflict;
-our @ISA=qw(OpenBSD::PackingElement::Meta);
-
-__PACKAGE__->setKeyword('pkgcfl');
-sub keyword() { "pkgcfl" }
-sub category() { "pkgcfl" }
-
 package OpenBSD::PackingElement::Conflict;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
@@ -658,6 +651,12 @@ __PACKAGE__->setKeyword('conflict');
 sub keyword() { "conflict" }
 sub category() { "conflict" }
 
+package OpenBSD::PackingElement::PkgConflict;
+our @ISA=qw(OpenBSD::PackingElement::Conflict);
+
+__PACKAGE__->setKeyword('pkgcfl');
+sub keyword() { "pkgcfl" }
+sub category() { "pkgcfl" }
 
 package OpenBSD::PackingElement::NewDepend;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
