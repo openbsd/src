@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.9 1997/09/05 04:27:02 millert Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.10 1998/02/10 12:00:46 angelos Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -194,6 +194,9 @@ typedef char ttychar_t;
 #endif
 #define	SLMAX		(MCLBYTES - BUFOFFSET)
 #define	SLBUFSIZE	(SLMAX + BUFOFFSET)
+#ifdef SLMTU
+#undef SLMTU
+#endif
 #define SLMTU		1100 /* XXX -- appromaximated. 1024 may be safer. */
 
 #define STRIP_MTU_ONWIRE (SLMTU + 20 + STRIP_HDRLEN) /* (2*SLMTU+2 in sl.c */
