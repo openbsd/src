@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_misc.c,v 1.10 2001/02/26 17:24:55 art Exp $	*/
+/*	$OpenBSD: netbsd_misc.c,v 1.11 2001/04/03 20:37:16 niklas Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -53,7 +53,6 @@
 #include <compat/netbsd/netbsd_signal.h>
 #include <compat/netbsd/netbsd_syscallargs.h>
 
-/* XXX doesn't do shared address space */
 /*ARGSUSED*/
 int
 netbsd_sys___vfork14(p, v, retval)
@@ -61,8 +60,7 @@ netbsd_sys___vfork14(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* XXX - should add FORK_SHAREVM */
-	return (fork1(p, FORK_VFORK|FORK_PPWAIT, NULL, 0, retval));
+	return (fork1(p, SIGCHLD, FORK_PPWAIT|FORK_SHAREVM, NULL, 0, retval));
 }
 
 /* XXX syncs whole file */
