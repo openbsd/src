@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.79 2004/06/03 12:21:08 dhartmei Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.80 2004/06/25 19:10:54 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.79 2004/06/03 12:21:08 dhartmei Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.80 2004/06/25 19:10:54 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,6 +148,7 @@ struct filed {
 		struct {
 			char	f_mname[MAX_MEMBUF_NAME];
 			struct ringbuf *f_rb;
+			int	f_overflow;
 		} f_mb;		/* Memory buffer */
 	} f_un;
 	char	f_prevline[MAXSVLINE];		/* last message logged */
@@ -211,15 +212,35 @@ char	*ctlsock_path = NULL;	/* Path to control socket */
 #define CTL_WRITING_REPLY	2
 int	ctl_state = 0;		/* What the control socket is up to */
 
-size_t	ctl_cmd_bytes = 0;	/* number of bytes of ctl_cmd read */
+/*
+ * Client protocol NB. all numeric fields in network byte order
+ */
+#define CTL_VERSION		0
+
+/* Request */
 struct	{
+	u_int32_t	version;
 #define CMD_READ	1	/* Read out log */
 #define CMD_READ_CLEAR	2	/* Read and clear log */
 #define CMD_CLEAR	3	/* Clear log */
 #define CMD_LIST	4	/* List available logs */
-	int	cmd;
-	char	logname[MAX_MEMBUF_NAME];
+#define CMD_FLAGS	5	/* Query flags only */
+	u_int32_t	cmd;
+	char		logname[MAX_MEMBUF_NAME];
 }	ctl_cmd;
+
+size_t	ctl_cmd_bytes = 0;	/* number of bytes of ctl_cmd read */
+
+/* Reply */
+struct ctl_reply_hdr {
+	u_int32_t	version;
+#define CTL_HDR_FLAG_OVERFLOW	0x01
+	u_int32_t	flags;
+	/* Reply text follows, up to MAX_MEMBUF long */
+};
+
+#define CTL_HDR_LEN		(sizeof(struct ctl_reply_hdr))
+#define CTL_REPLY_MAXSIZE	(CTL_HDR_LEN + MAX_MEMBUF)
 
 char	*ctl_reply = NULL;	/* Buffer for control connection reply */
 size_t	ctl_reply_size = 0;	/* Number of bytes used in reply */
@@ -439,7 +460,7 @@ main(int argc, char *argv[])
 
 	/* Allocate ctl socket reply buffer if we have a ctl socket */
 	if (pfd[PFD_CTLSOCK].fd != -1 &&
-	    (ctl_reply = malloc(MAX_MEMBUF)) == NULL) {
+	    (ctl_reply = malloc(CTL_REPLY_MAXSIZE)) == NULL) {
 		logerror("Couldn't allocate ctlsock reply buffer");
 		die(0);
 	}
@@ -897,7 +918,8 @@ fprintlog(struct filed *f, int flags, char *msg)
 		snprintf(line, sizeof(line), "%.15s %s %s",
 		    (char *)iov[0].iov_base, (char *)iov[2].iov_base, 
 		    (char *)iov[4].iov_base);
-		ringbuf_append_line(f->f_un.f_mb.f_rb, line);
+		if (ringbuf_append_line(f->f_un.f_mb.f_rb, line) == 1)
+			f->f_un.f_mb.f_overflow = 1;
 		break;
 	}
 	f->f_prevcount = 0;
@@ -1412,6 +1434,7 @@ cfline(char *line, struct filed *f, char *prog)
 			logerror(p);
 			break;
 		}
+		f->f_un.f_mb.f_overflow = 0;
 		break;
 
 	default:
@@ -1635,6 +1658,10 @@ ctlconn_read_handler(void)
 {
 	ssize_t n;
 	struct filed *f;
+	u_int32_t flags = 0;
+	size_t reply_text_size;
+	struct ctl_reply_hdr *reply_hdr = (struct ctl_reply_hdr *)ctl_reply;
+	char *reply_text = ctl_reply + CTL_HDR_LEN;
 
 	if (ctl_state != CTL_READING_CMD) {
 		/* Shouldn't be here! */
@@ -1642,6 +1669,7 @@ ctlconn_read_handler(void)
 		ctlconn_cleanup();
 		return;
 	}
+
  retry:
 	n = read(pfd[PFD_CTLCONN].fd, (char*)&ctl_cmd + ctl_cmd_bytes,
 	    sizeof(ctl_cmd) - ctl_cmd_bytes);
@@ -1661,6 +1689,12 @@ ctlconn_read_handler(void)
 	if (ctl_cmd_bytes < sizeof(ctl_cmd))
 		return;
 
+	if (ntohl(ctl_cmd.version) != CTL_VERSION) {
+		logerror("Unknown client protocol version");
+		ctlconn_cleanup();
+		return;
+	}
+
 	/* Ensure that logname is \0 terminated */
 	if (memchr(ctl_cmd.logname, '\0', sizeof(ctl_cmd.logname)) == NULL) {
 		logerror("Corrupt ctlsock command");
@@ -1668,59 +1702,73 @@ ctlconn_read_handler(void)
 		return;
 	}
 
-	ctl_reply_size = ctl_reply_offset = 0;
-	*ctl_reply = '\0';
+	*reply_text = '\0';
 
+	ctl_reply_size = reply_text_size = ctl_reply_offset = 0;
+	memset(reply_hdr, '\0', sizeof(*reply_hdr));
+
+	ctl_cmd.cmd = ntohl(ctl_cmd.cmd);
 	dprintf("ctlcmd %x logname \"%s\"\n", ctl_cmd.cmd, ctl_cmd.logname);
 
 	switch (ctl_cmd.cmd) {
 	case CMD_READ:
 	case CMD_READ_CLEAR:
+	case CMD_FLAGS:
 		f = find_membuf_log(ctl_cmd.logname);
 		if (f == NULL) {
-			strlcpy(ctl_reply, "No such log\n", MAX_MEMBUF);
+			strlcpy(reply_text, "No such log\n", MAX_MEMBUF);
 		} else {
-			ringbuf_to_string(ctl_reply, MAX_MEMBUF,
-			    f->f_un.f_mb.f_rb);
-			if (ctl_cmd.cmd == CMD_READ_CLEAR)
+			if (ctl_cmd.cmd != CMD_FLAGS) {
+				ringbuf_to_string(reply_text, MAX_MEMBUF,
+				    f->f_un.f_mb.f_rb);
+			}
+			if (f->f_un.f_mb.f_overflow)
+				flags |= CTL_HDR_FLAG_OVERFLOW;
+			if (ctl_cmd.cmd == CMD_READ_CLEAR) {
 				ringbuf_clear(f->f_un.f_mb.f_rb);
+				f->f_un.f_mb.f_overflow = 0;
+			}
 		}
-		ctl_reply_size = strlen(ctl_reply);
+		reply_text_size = strlen(reply_text);
 		break;
 	case CMD_CLEAR:
 		f = find_membuf_log(ctl_cmd.logname);
 		if (f == NULL) {
-			strlcpy(ctl_reply, "No such log\n", MAX_MEMBUF);
+			strlcpy(reply_text, "No such log\n", MAX_MEMBUF);
 		} else {
 			ringbuf_clear(f->f_un.f_mb.f_rb);
-			strlcpy(ctl_reply, "Log cleared\n", MAX_MEMBUF);
+			if (f->f_un.f_mb.f_overflow)
+				flags |= CTL_HDR_FLAG_OVERFLOW;
+			f->f_un.f_mb.f_overflow = 0;
+			strlcpy(reply_text, "Log cleared\n", MAX_MEMBUF);
 		}
-		ctl_reply_size = strlen(ctl_reply);
+		reply_text_size = strlen(reply_text);
 		break;
 	case CMD_LIST:
 		for (f = Files; f != NULL; f = f->f_next) {
 			if (f->f_type == F_MEMBUF) {
-				strlcat(ctl_reply, f->f_un.f_mb.f_mname,
+				strlcat(reply_text, f->f_un.f_mb.f_mname,
 				    MAX_MEMBUF);
-				strlcat(ctl_reply, " ", MAX_MEMBUF);
+				if (f->f_un.f_mb.f_overflow) {
+					strlcat(reply_text, "*", MAX_MEMBUF);
+					flags |= CTL_HDR_FLAG_OVERFLOW;
+				}
+				strlcat(reply_text, " ", MAX_MEMBUF);
 			}
 		}
-		strlcat(ctl_reply, "\n", MAX_MEMBUF);
-		ctl_reply_size = strlen(ctl_reply);
+		strlcat(reply_text, "\n", MAX_MEMBUF);
+		reply_text_size = strlen(reply_text);
 		break;
 	default:
 		logerror("Unsupported ctlsock command");
 		ctlconn_cleanup();
 		return;
 	}
+	reply_hdr->version = htonl(CTL_VERSION);
+	reply_hdr->flags = htonl(flags);
 
+	ctl_reply_size = reply_text_size + CTL_HDR_LEN;
 	dprintf("ctlcmd reply length %d\n", ctl_reply_size);
-
-	/* If there is no reply, close the connection now */
-	if (ctl_reply_size == 0) {
-		ctlconn_cleanup();
-		return;
-	}
 
 	/* Otherwise, set up to write out reply */
 	ctl_state = CTL_WRITING_REPLY;
