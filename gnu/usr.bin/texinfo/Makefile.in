@@ -1,5 +1,7 @@
-# Makefile for Texinfo distribution.	-*- Indented-Text -*-
-# Copyright (C) 1993 Free Software Foundation, Inc.
+# Makefile for Texinfo distribution.
+# $Id: Makefile.in,v 1.4 1996/12/15 22:21:02 downsj Exp $
+# 
+# Copyright (C) 1993, 96 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,11 +51,10 @@ exec_prefix = @exec_prefix@
 bindir = $(exec_prefix)/bin
 # Prefix for each installed program, normally empty or `g'.
 binprefix = 
-libdir = $(prefix)/lib
 # Prefix for each installed man page, normally empty or `g'.
 manprefix = 
-mandir = $(prefix)/man/man1
 manext = 1
+mandir = $(prefix)/man/man$(manext)
 infodir = $(prefix)/info
 
 # For info program. 
@@ -61,7 +62,7 @@ DEFAULT_INFOPATH = $(infodir):.
 
 #### End of system configuration section. ####
 
-VERSION = 3.7
+VERSION = 3.9
 DISTNAME = texinfo-$(VERSION)
 
 # Subdirectories that have makefiles
@@ -79,18 +80,20 @@ MDEFINES = bindir='$(bindir)' mandir='$(mandir)' manext='$(manext)' \
 all: sub-all texinfo
 
 install: all installdirs
+	test -f $(infodir)/dir || $(INSTALL_DATA) $(srcdir)/dir $(infodir)  
 	for dir in $(SUBDIRS); do \
 	   echo making $@ in $$dir; \
 	   (cd $$dir && $(MAKE) $(MDEFINES) $@ || exit 1); \
 	done
 	d=$(srcdir); test -f ./texinfo && d=.; \
-	(cd $$d; \
-	  for f in texinfo texinfo-* ; do \
-	    $(INSTALL_DATA) $$f $(infodir)/$$f; \
-	  done)
+	(cd $$d && for f in texinfo texinfo-* ; do \
+	    $(INSTALL_DATA) $$f $(infodir)/$$f; done)
+	$(POST_INSTALL)
+	./util/install-info --info-dir=$(infodir) $(infodir)/texinfo
+	@echo Please install $(srcdir)/texinfo.tex manually.
 
 installdirs:
-	-sh $(srcdir)/util/mkinstalldirs $(bindir) $(datadir) $(libdir) $(infodir) $(mandir)
+	-$(SHELL) $(srcdir)/util/mkinstalldirs $(bindir) $(datadir) $(infodir) $(mandir)
 
 uninstall:
 	for dir in $(SUBDIRS); do \
@@ -100,19 +103,20 @@ uninstall:
 	$(RM) $(infodir)/texinfo $(infodir)/texinfo-*
 
 Makefile: Makefile.in config.status
-	sh ./config.status
+	$(SHELL) ./config.status
 
 config.status: configure
-	sh ./config.status --recheck
+	$(SHELL) ./config.status --recheck
 
 configure: configure.in
-	cd $(srcdir); autoconf
+	cd $(srcdir) && autoconf
 
 sub-all TAGS:
 	for dir in $(SUBDIRS); do \
 	  echo making $@ in $$dir; \
 	  (cd $$dir && $(MAKE) $(MDEFINES) $@ || exit 1); \
 	done
+.PHONY: sub-all
 
 clean mostlyclean:
 	for dir in $(SUBDIRS); do \
@@ -133,41 +137,40 @@ texclean:
 
 realclean: distclean
 
-texinfo: makeinfo/makeinfo texinfo.texi
+info texinfo: makeinfo/makeinfo texinfo.texi
 	./makeinfo/makeinfo -I$(srcdir) texinfo.texi
+.PHONY: info
 
 makeinfo/makeinfo: sub-all
 
-texinfo.dvi:
+dvi texinfo.dvi:
 	PATH="$(srcdir)/util:$${PATH}" TEXINPUTS="$(srcdir):$(common):$${TEXINPUTS}" texi2dvi $(srcdir)/texinfo.texi
+.PHONY: dvi
 
 dist: DISTFILES
-	$(RM) -rf $(DISTNAME)
+	$(RM) -r $(DISTNAME)
 	$(MKDIR) $(DISTNAME)
 	for d in `find . -type d ! -name RCS -print`; do \
-	  d=`echo $$d | grep -v '='`; \
-	  if [ "$$d" != "" ]; then \
-	    if [ "$$d" != "." -a "$$d" != "./$(DISTNAME)" ]; then \
-	      mkdir $(DISTNAME)/$$d; \
-	    fi; \
-	  fi; \
-	done
+	  d=`echo $$d | grep -v '[@=]'`; \
+	  test -z "$$d" || test "$$d" = . || test "$$d" = "./$(DISTNAME)" \
+	  || mkdir $(DISTNAME)/$$d; done
 	for f in `cat DISTFILES`; do \
 	   $(LN) $(srcdir)/$$f $(DISTNAME)/$$f || \
 		{ echo copying $$f; cp -p $(srcdir)/$$f $(DISTNAME)/$$f ; } \
 	done
 	(cd $(DISTNAME); $(MAKE) $(MFLAGS) distclean)
 	$(TAR) chvf - $(DISTNAME) | gzip >$(DISTNAME).tar.gz
-	$(RM) -rf $(DISTNAME)
+	$(RM) -r $(DISTNAME)
 
 # Gets rid of most of the unwanted files.  Verify manually (if necessary)
 # that this produces a list of all the files desired in the distribution. 
 DISTFILES: force
 	(cd $(srcdir); find . ! -type d -print) \
-	| sed  '/\/RCS\//d; \
+	| sed '/\/RCS\//d; \
 	       /\/EMACS-BACKUPS\//d; \
 	       /\.tar.*/d; \
 	       /~$$/d; /\.o$$/d; \
+	       /\.gdbinit$$/d; \
 	       /\.orig$$/d; \
 	       /\#$$/d; \
 	       /\/info\/info$$/d; \
@@ -184,12 +187,13 @@ DISTFILES: force
 	       /\/*\.core$$/d; \
 	       /\/core\..*$$/d; \
 	       /\/a.out$$/d; \
-	       /\/=/d; \
+	       /\/[=@]/d; \
 	       /\/conftest\.c$$/d; \
 	       /\/DISTFILES$$/d; \
 	       /\/foo$$/d; \
 	       /\/bar$$/d; \
 	       /\.toc$$/d; \
+	       /\.bak$$/d; \
 	       /\.aux$$/d; /\.log$$/d; \
 	       /\.cps$$/d; /\.cp$$/d; \
 	       /\.fns$$/d; /\.fn$$/d; \
@@ -197,6 +201,7 @@ DISTFILES: force
 	       /\.vrs$$/d; /\.vr$$/d; \
 	       /\.pgs$$/d; /\.pg$$/d; \
 	       /\.kys$$/d; /\.ky$$/d; \
+	       /\.ops$$/d; /\.op$$/d; \
 	       s/^.\///; /^\.$$/d;' \
 	| sort | uniq > DISTFILES
 

@@ -1,5 +1,7 @@
 # Makefile for texinfo/info.	-*- Indented-Text -*-
-# Copyright (C) 1993 Free Software Foundation, Inc.
+# $Id: Makefile.in,v 1.3 1996/12/15 22:21:05 downsj Exp $
+# 
+# Copyright (C) 1993,96 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,10 +33,8 @@ INSTALL_DATA = @INSTALL_DATA@
 
 LN	= ln
 RM	= rm -f
-TAR	= tar
 MKDIR	= mkdir
-MAKEINFO= PATH=../makeinfo:$$PATH makeinfo
-COMPRESS= compress
+MAKEINFO= ../makeinfo/makeinfo
 
 DEFS = @DEFS@
 
@@ -54,7 +54,6 @@ exec_prefix = @exec_prefix@
 bindir = $(exec_prefix)/bin
 # Prefix for each installed program, normally empty or `g'.
 binprefix = 
-libdir = $(prefix)/lib
 # Prefix for each installed man page, normally empty or `g'.
 manprefix = 
 mandir = $(prefix)/man/man1
@@ -97,10 +96,12 @@ CMDFILES = $(srcdir)/session.c $(srcdir)/echo_area.c $(srcdir)/infodoc.c \
 MAKEDOC_OBJECTS = makedoc.o clib.o xmalloc.o
 MAKEDOC_SOURCE = makedoc.c clib.c xmalloc.c
 
+infofiles = info.info info-stnd.info
+
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(LDEFS) $(DEFS) -I. -I$(srcdir) -I$(common) $(CFLAGS) $<
 
-all: info info.info info-stnd.info
+all: info $(infofiles)
 sub-all: all
 
 install: all $(INSTALL_MAN)
@@ -109,13 +110,16 @@ install: all $(INSTALL_MAN)
 	-d=$(srcdir); test -f ./info-stnd.info && d=.; $(INSTALL_DATA) $$d/info-stnd.info $(infodir)/info-stnd.info
 
 install-man:
-	-$(INSTALL_DATA) $(srcdir)/info.1 $(mandir)/info.$(manext)
+	-$(INSTALL_DATA) $(srcdir)/info.1 $(mandir)/$(manprefix)info.$(manext)
+	$(POST_INSTALL)
+	../util/install-info --info-dir=$(infodir) $(infodir)/info.info
+	../util/install-info --info-dir=$(infodir) $(infodir)/info-stnd.info
 
 uninstall:
 	$(RM) $(bindir)/info
 	$(RM) $(infodir)/info.info
 	$(RM) $(infodir)/info-stnd.info
-	$(RM) $(mandir)/info.$(manext)
+	$(RM) $(mandir)/$(manprefix)info.$(manext)
 
 info: $(OBJS) ../libtxi/libtxi.a
 	$(CC) $(LDFLAGS) -o info $(OBJS) $(LOADLIBES)
@@ -128,7 +132,7 @@ info.info: info.texi
 info-stnd.info: info-stnd.texi
 	$(MAKEINFO) --no-split -I$(srcdir) info-stnd.texi
 
-all-dvi: info.dvi info-stnd.dvi
+dvi all-dvi: info.dvi info-stnd.dvi
 info.dvi: info.texi
 	PATH="$(util):$${PATH}" TEXINPUTS="$(srcdir):$(common):$${TEXINPUTS}" texi2dvi $(srcdir)/info.texi
 
@@ -146,7 +150,7 @@ clean:
 
 distclean: clean texclean
 	$(RM) Makefile config.status config.cache *~ core core.* *.core
-	$(RM) *.BAK makedoc-TAGS TAGS \#*
+	$(RM) *.BAK makedoc-TAGS TAGS \#* *.info*
 
 mostlyclean: clean
 
