@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.71 2002/06/21 20:15:37 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.72 2002/06/22 16:14:14 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.71 2002/06/21 20:15:37 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.72 2002/06/22 16:14:14 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -908,7 +908,7 @@ wi_cor_reset(sc)
 	 * we only soft reset Symbol cards for now.
 	 */
 	if (sc->sc_firmware_type == WI_SYMBOL) {
-		cor_value = bus_space_read_2(sc->wi_ltag, sc->wi_lhandle,
+		cor_value = bus_space_read_1(sc->wi_ltag, sc->wi_lhandle,
 		    sc->wi_cor_offset);
 		bus_space_write_1(sc->wi_ltag, sc->wi_lhandle,
 		    sc->wi_cor_offset, (cor_value | WI_COR_SOFT_RESET));
