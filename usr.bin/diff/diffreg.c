@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.26 2003/07/04 17:37:07 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.27 2003/07/06 20:48:59 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -33,20 +33,56 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+/*-
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)diffreg.c   8.1 (Berkeley) 6/6/93
+ */
+
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.27 2003/07/06 20:48:59 millert Exp $";
+#endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
-#include <stdlib.h>
-#include <unistd.h>
+#include <ctype.h>
+#include <err.h>
 #include <fcntl.h>
+#include <libgen.h>
+#include <paths.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "diff.h"
-#include "pathnames.h"
-
-#if 0
-static char const sccsid[] = "@(#)diffreg.c 4.21 4/6/90";
-#endif
 
 /*
  * diff - compare two files.
@@ -115,10 +151,6 @@ static char const sccsid[] = "@(#)diffreg.c 4.21 4/6/90";
  *	6n words for files of length n.
  */
 
-#define	prints(s)	fputs(s,stdout)
-
-FILE *input[2];
-
 struct cand {
 	int x;
 	int y;
@@ -130,40 +162,42 @@ struct line {
 	int value;
 } *file[2];
 
-int len[2];
-struct line *sfile[2];	/* shortened by pruning common prefix and suffix */
-int slen[2];
-int pref, suff;			/* length of prefix and suffix */
-int inifdef;			/* whether or not we are in a #ifdef block */
-int *class;			/* will be overlaid on file[0] */
-int *member;			/* will be overlaid on file[1] */
-int *klist;			/* will be overlaid on file[0] after class */
-struct cand *clist;		/* merely a free storage pot for candidates */
-int clen = 0;
-int *J;				/* will be overlaid on class */
-long *ixold;			/* will be overlaid on klist */
-long *ixnew;			/* will be overlaid on file[1] */
-u_char *chrtran;		/* translation table for case-folding */
+static int  *J;			/* will be overlaid on class */
+static int  *class;		/* will be overlaid on file[0] */
+static int  *klist;		/* will be overlaid on file[0] after class */
+static int  *member;		/* will be overlaid on file[1] */
+static int   clen;
+static int   inifdef;		/* whether or not we are in a #ifdef block */
+static int   len[2];
+static int   pref, suff;	/* length of prefix and suffix */
+static int   slen[2];
+static int   anychange;
+static long *ixnew;		/* will be overlaid on file[1] */
+static long *ixold;		/* will be overlaid on klist */
+static struct cand *clist;	/* merely a free storage pot for candidates */
+static struct line *sfile[2];	/* shortened by pruning common prefix/suffix */
+static u_char *chrtran;		/* translation table for case-folding */
 
 static void fetch(long *, int, int, FILE *, char *, int);
-static void output(void);
-static void check(void);
+static void output(char *, FILE *, char *, FILE *);
+static void check(char *, FILE *, char *, FILE *);
 static void range(int, int, char *);
-static void dump_context_vec(void);
-static void dump_unified_vec(void);
+static void dump_context_vec(FILE *, FILE *);
+static void dump_unified_vec(FILE *, FILE *);
 static void prepare(int, FILE *);
 static void prune(void);
 static void equiv(struct line *, int, struct line *, int, int *);
 static void unravel(int);
 static void unsort(struct line *, int, int *);
-static void change(int, int, int, int);
+static void change(char *, FILE *, char *, FILE *, int, int, int, int);
 static void sort(struct line *, int);
-static int newcand(int, int, int);
-static int search(int *, int, int);
-static int skipline(int);
-static int asciifile(FILE *);
-static int stone(int *, int, int *, int *);
-static int readhash(FILE *);
+static int  asciifile(FILE *);
+static int  newcand(int, int, int);
+static int  search(int *, int, int);
+static int  skipline(FILE *);
+static int  stone(int *, int, int *, int *);
+static int  readhash(FILE *);
+static int  files_differ(FILE *, FILE *, int);
 
 /*
  * chrtran points to one of 2 translation tables: cup2low if folding upper to
@@ -224,70 +258,100 @@ u_char cup2low[256] = {
 };
 
 void
-diffreg(void)
+diffreg(char *ofile1, char *ofile2, int flags)
 {
-	char buf1[BUFSIZ], buf2[BUFSIZ];
-	FILE *f1, *f2;
-	int i, j;
+	char *file1 = ofile1;
+	char *file2 = ofile2;
+	FILE *f1 = NULL;
+	FILE *f2 = NULL;
+	int i;
 
+	anychange = 0;
 	chrtran = (iflag ? cup2low : clow2low);
 	if (strcmp(file1, "-") == 0 && strcmp(file2, "-") == 0)
-		errorx("can't specify - -");
-	if (S_ISDIR(stb1.st_mode)) {
-		file1 = splice(file1, file2);
-		if (stat(file1, &stb1) < 0)
-			error("%s", file1);
-	} else if (strcmp(file1, "-") == 0 ||
-	    (!S_ISREG(stb1.st_mode) && strcmp(file1, _PATH_DEVNULL) != 0)) {
-		file1 = copytemp(file1, 1);
-		if (stat(file1, &stb1) < 0)
-			error("%s", file1);
-	}
-	if (S_ISDIR(stb2.st_mode)) {
-		file2 = splice(file2, file1);
-		if (stat(file2, &stb2) < 0)
-			error("%s", file2);
-	} else if (strcmp(file2, "-") == 0 ||
-	    (!S_ISREG(stb2.st_mode) && strcmp(file2, _PATH_DEVNULL) != 0)) {
-		file2 = copytemp(file2, 2);
-		if (stat(file2, &stb2) < 0)
-			error("%s", file2);
-	}
-	if ((f1 = fopen(file1, "r")) == NULL)
-		error("%s", file1);
-	if ((f2 = fopen(file2, "r")) == NULL)
-		error("%s", file2);
-	if ((stb1.st_mode & S_IFMT) != (stb2.st_mode & S_IFMT) ||
-	    stb1.st_size != stb2.st_size)
 		goto notsame;
-	for (;;) {
-		i = fread(buf1, 1, BUFSIZ, f1);
-		j = fread(buf2, 1, BUFSIZ, f2);
-		if (i < 0 || j < 0 || i != j)
-			goto notsame;
-		if (i == 0 && j == 0) {
-			fclose(f1);
-			fclose(f2);
-			status = 0;	/* files don't differ */
-			goto same;
+
+	/* XXX - only make temp file for stdin if not seekable? (millert) */
+	if (flags & D_EMPTY1)
+		f1 = fopen(_PATH_DEVNULL, "r");
+	else {
+		if (S_ISDIR(stb1.st_mode)) {
+			file1 = splice(file1, file2);
+			if (stat(file1, &stb1) < 0) {
+				warn("%s", file1);
+				status |= 2;
+				goto closem;
+			}
+		} else if (strcmp(file1, "-") == 0 || !S_ISREG(stb1.st_mode)) {
+			file1 = copytemp(file1, 1);
+			if (file1 == NULL || stat(file1, &stb1) < 0) {
+				warn("%s", file1);
+				status |= 2;
+				goto closem;
+			}
 		}
-		for (j = 0; j < i; j++)
-			if (buf1[j] != buf2[j])
-				goto notsame;
+		f1 = fopen(file1, "r");
 	}
+	if (f1 == NULL) {
+		warn("%s", file1);
+		status |= 2;
+		goto closem;
+	}
+
+	if (flags & D_EMPTY2)
+		f2 = fopen(_PATH_DEVNULL, "r");
+	else {
+		if (S_ISDIR(stb2.st_mode)) {
+			file2 = splice(file2, file1);
+			if (stat(file2, &stb2) < 0) {
+				warn("%s", file2);
+				status |= 2;
+				goto closem;
+			}
+		} else if (strcmp(file2, "-") == 0 || !S_ISREG(stb2.st_mode)) {
+			file2 = copytemp(file2, 2);
+			if (file2 == NULL || stat(file2, &stb2) < 0) {
+				warn("%s", file2);
+				status |= 2;
+				goto closem;
+			}
+		}
+		f2 = fopen(file2, "r");
+	}
+	if (f2 == NULL) {
+		warn("%s", file2);
+		status |= 2;
+		goto closem;
+	}
+
+	switch (files_differ(f1, f2, flags)) {
+	case 0:
+		goto same;
+	case 1:
+		break;
+	default:
+		/* error */
+		status |= 2;
+		goto closem;
+	}
+
 notsame:
 	/*
 	 * Files certainly differ at this point; set status accordingly
 	 */
-	status = 1;
+	status |= 1;
+	if (flags & D_HEADER) {
+		if (format == D_EDIT)
+			printf("ed - %s << '-*-END-*-'\n", basename(file1));
+		else
+			printf("%s %s %s\n", diffargs, file1, file2);
+	}
 	if (!asciifile(f1) || !asciifile(f2)) {
 		printf("Binary files %s and %s differ\n", file1, file2);
-		exit(status);
+		goto closem;
 	}
 	prepare(0, f1);
 	prepare(1, f2);
-	fclose(f1);
-	fclose(f2);
 	prune();
 	sort(sfile[0], slen[0]);
 	sort(sfile[1], slen[1]);
@@ -306,23 +370,74 @@ notsame:
 	free(member);
 	free(class);
 
-	J = emalloc((len[0] + 2) * sizeof(int));
+	J = erealloc(J, (len[0] + 2) * sizeof(int));
 	unravel(klist[i]);
 	free(clist);
 	free(klist);
 
-	ixold = emalloc((len[0] + 2) * sizeof(long));
-	ixnew = emalloc((len[1] + 2) * sizeof(long));
-	check();
-	output();
-	status = anychange;
+	ixold = erealloc(ixold, (len[0] + 2) * sizeof(long));
+	ixnew = erealloc(ixnew, (len[1] + 2) * sizeof(long));
+	check(file1, f1, file2, f2);
+	output(file1, f1, file2, f2);
+	if ((flags & D_HEADER) && format == D_EDIT)
+		printf("w\nq\n-*-END-*-\n");
 same:
-	if (anychange == 0 && (opt == D_CONTEXT || opt == D_UNIFIED))
-		printf("No differences encountered\n");
+	if (anychange == 0 && sflag != 0)
+		printf("Files %s and %s are identical\n", file1, file2);
+
+closem:
+	if (f1 != NULL)
+		fclose(f1);
+	if (f2 != NULL)
+		fclose(f2);
+	if (tempfiles[0] != NULL) {
+		unlink(tempfiles[0]);
+		free(tempfiles[0]);
+		tempfiles[0] = NULL;
+	}
+	if (tempfiles[1] != NULL) {
+		unlink(tempfiles[1]);
+		free(tempfiles[1]);
+		tempfiles[1] = NULL;
+	}
+	if (file1 != ofile1)
+		free(file1);
+	if (file2 != ofile2)
+		free(file2);
+}
+
+/*
+ * Check to see if the given files differ.
+ * Returns 0 if they are the same, 1 if different, and -1 on error.
+ * XXX - could use code from cmp(1) [faster]
+ */
+static int
+files_differ(FILE *f1, FILE *f2, int flags)
+{
+	char buf1[BUFSIZ], buf2[BUFSIZ];
+	size_t i, j;
+
+	if ((flags & (D_EMPTY1|D_EMPTY2)) || stb1.st_size != stb2.st_size ||
+	    (stb1.st_mode & S_IFMT) != (stb2.st_mode & S_IFMT))
+		return (1);
+	for (;;) {
+		i = fread(buf1, 1, sizeof(buf1), f1);
+		j = fread(buf2, 1, sizeof(buf2), f2);
+		if (i != j)
+			return (1);
+		if (i == 0 && j == 0) {
+			if (ferror(f1) || ferror(f2))
+				return (1);
+			return (0);
+		}
+		if (memcmp(buf1, buf2, i) != 0)
+			return (1);
+	}
 }
 
 char *tempfiles[2];
 
+/* XXX - pass back a FILE * too (millert) */
 char *
 copytemp(const char *file, int n)
 {
@@ -335,24 +450,24 @@ copytemp(const char *file, int n)
 	if (strcmp(file, "-") == 0)
 		ifd = STDIN_FILENO;
 	else if ((ifd = open(file, O_RDONLY, 0644)) < 0)
-		error("%s", file);
+		return (NULL);
 
 	if ((tempdir = getenv("TMPDIR")) == NULL)
 		tempdir = _PATH_TMP;
 	if (asprintf(&tempfile, "%s/diff%d.XXXXXXXX", tempdir, n) == -1)
-		error(NULL);
+		return (NULL);
 	tempfiles[n - 1] = tempfile;
 
-	signal(SIGHUP, done);
-	signal(SIGINT, done);
-	signal(SIGPIPE, done);
-	signal(SIGTERM, done);
+	signal(SIGHUP, quit);
+	signal(SIGINT, quit);
+	signal(SIGPIPE, quit);
+	signal(SIGTERM, quit);
 	ofd = mkstemp(tempfile);
 	if (ofd < 0)
-		error("%s", tempfile);
+		return (NULL);
 	while ((i = read(ifd, buf, BUFSIZ)) > 0) {
 		if (write(ofd, buf, i) != i)
-			error("%s", tempfile);
+			return (NULL);
 	}
 	close(ifd);
 	close(ofd);
@@ -365,8 +480,6 @@ splice(char *dir, char *file)
 	char *tail, *buf;
 	size_t len;
 
-	if (!strcmp(file, "-"))
-		errorx("can't specify - with other arg directory");
 	tail = strrchr(file, '/');
 	if (tail == NULL)
 		tail = file;
@@ -384,7 +497,7 @@ prepare(int i, FILE *fd)
 	struct line *p;
 	int j, h;
 
-	fseek(fd, 0L, SEEK_SET);
+	rewind(fd);
 	p = emalloc(3 * sizeof(struct line));
 	for (j = 0; (h = readhash(fd));) {
 		p = erealloc(p, (++j + 3) * sizeof(struct line));
@@ -538,32 +651,30 @@ unravel(int p)
  *  2.  collect random access indexes to the two files
  */
 static void
-check(void)
+check(char *file1, FILE *f1, char *file2, FILE *f2)
 {
 	int i, j, jackpot, c, d;
 	long ctold, ctnew;
 
-	if ((input[0] = fopen(file1, "r")) == NULL)
-		error("%s", file1);
-	if ((input[1] = fopen(file2, "r")) == NULL)
-		error("%s", file2);
+	rewind(f1);
+	rewind(f2);
 	j = 1;
 	ixold[0] = ixnew[0] = 0;
 	jackpot = 0;
 	ctold = ctnew = 0;
 	for (i = 1; i <= len[0]; i++) {
 		if (J[i] == 0) {
-			ixold[i] = ctold += skipline(0);
+			ixold[i] = ctold += skipline(f1);
 			continue;
 		}
 		while (j < J[i]) {
-			ixnew[j] = ctnew += skipline(1);
+			ixnew[j] = ctnew += skipline(f2);
 			j++;
 		}
 		if (bflag || wflag || iflag) {
 			for (;;) {
-				c = getc(input[0]);
-				d = getc(input[1]);
+				c = getc(f1);
+				d = getc(f2);
 				ctold++;
 				ctnew++;
 				if (bflag && isspace(c) && isspace(d)) {
@@ -571,19 +682,19 @@ check(void)
 						if (c == '\n')
 							break;
 						ctold++;
-					} while (isspace(c = getc(input[0])));
+					} while (isspace(c = getc(f1)));
 					do {
 						if (d == '\n')
 							break;
 						ctnew++;
-					} while (isspace(d = getc(input[1])));
+					} while (isspace(d = getc(f2)));
 				} else if (wflag) {
 					while (isspace(c) && c != '\n') {
-						c = getc(input[0]);
+						c = getc(f1);
 						ctold++;
 					}
 					while (isspace(d) && d != '\n') {
-						d = getc(input[1]);
+						d = getc(f2);
 						ctnew++;
 					}
 				}
@@ -591,9 +702,9 @@ check(void)
 					jackpot++;
 					J[i] = 0;
 					if (c != '\n')
-						ctold += skipline(0);
+						ctold += skipline(f1);
 					if (d != '\n')
-						ctnew += skipline(1);
+						ctnew += skipline(f2);
 					break;
 				}
 				if (c == '\n')
@@ -603,13 +714,13 @@ check(void)
 			for (;;) {
 				ctold++;
 				ctnew++;
-				if ((c = getc(input[0])) != (d = getc(input[1]))) {
+				if ((c = getc(f1)) != (d = getc(f2))) {
 					/* jackpot++; */
 					J[i] = 0;
 					if (c != '\n')
-						ctold += skipline(0);
+						ctold += skipline(f1);
 					if (d != '\n')
-						ctnew += skipline(1);
+						ctnew += skipline(f2);
 					break;
 				}
 				if (c == '\n')
@@ -620,11 +731,8 @@ check(void)
 		ixnew[j] = ctnew;
 		j++;
 	}
-	for (; j <= len[1]; j++) {
-		ixnew[j] = ctnew += skipline(1);
-	}
-	fclose(input[0]);
-	fclose(input[1]);
+	for (; j <= len[1]; j++)
+		ixnew[j] = ctnew += skipline(f2);
 	/*
 	 * if (jackpot)
 	 *	fprintf(stderr, "jackpot\n");
@@ -678,27 +786,27 @@ unsort(struct line *f, int l, int *b)
 }
 
 static int
-skipline(int f)
+skipline(FILE *f)
 {
 	int i, c;
 
-	for (i = 1; (c = getc(input[f])) != '\n'; i++)
+	for (i = 1; (c = getc(f)) != '\n'; i++)
 		if (c < 0)
 			return (i);
 	return (i);
 }
 
 static void
-output(void)
+output(char *file1, FILE *f1, char *file2, FILE *f2)
 {
 	int m, i0, i1, j0, j1;
 
-	input[0] = fopen(file1, "r");
-	input[1] = fopen(file2, "r");
+	rewind(f1);
+	rewind(f2);
 	m = len[0];
 	J[0] = 0;
 	J[m + 1] = len[1] + 1;
-	if (opt != D_EDIT) {
+	if (format != D_EDIT) {
 		for (i0 = 1; i0 <= m; i0 = i1 + 1) {
 			while (i0 <= m && J[i0] == J[i0 - 1] + 1)
 				i0++;
@@ -708,7 +816,7 @@ output(void)
 				i1++;
 			j1 = J[i1 + 1] - 1;
 			J[i1] = j1;
-			change(i0, i1, j0, j1);
+			change(file1, f1, file2, f2, i0, i1, j0, j1);
 		}
 	} else {
 		for (i0 = m; i0 >= 1; i0 = i1 - 1) {
@@ -720,15 +828,15 @@ output(void)
 				i1--;
 			j1 = J[i1 - 1] + 1;
 			J[i1] = j1;
-			change(i1, i0, j1, j0);
+			change(file1, f1, file2, f2, i1, i0, j1, j0);
 		}
 	}
 	if (m == 0)
-		change(1, 0, 1, len[1]);
-	if (opt == D_IFDEF) {
+		change(file1, f1, file2, f2, 1, 0, 1, len[1]);
+	if (format == D_IFDEF) {
 		for (;;) {
 #define	c i0
-			c = getc(input[0]);
+			c = getc(f1);
 			if (c < 0)
 				return;
 			putchar(c);
@@ -736,17 +844,17 @@ output(void)
 #undef c
 	}
 	if (anychange != 0) {
-		if (opt == D_CONTEXT)
-			dump_context_vec();
-		else if (opt == D_UNIFIED)
-			dump_unified_vec();
+		if (format == D_CONTEXT)
+			dump_context_vec(f1, f2);
+		else if (format == D_UNIFIED)
+			dump_unified_vec(f1, f2);
 	}
 }
 
 /*
  * The following struct is used to record change information when
- * doing a "context" diff.  (see routine "change" to understand the
- * highly mneumonic field names)
+ * doing a "context" or "unified" diff.  (see routine "change" to
+ * understand the highly mnemonic field names)
  */
 struct context_vec {
 	int a;			/* start line in old file */
@@ -760,35 +868,32 @@ struct context_vec *context_vec_start, *context_vec_end, *context_vec_ptr;
 #define	MAX_CONTEXT	128
 
 /*
- * indicate that there is a difference between lines a and b of the from file
- * to get to lines c to d of the to file. If a is greater then b then there
+ * Indicate that there is a difference between lines a and b of the from file
+ * to get to lines c to d of the to file.  If a is greater then b then there
  * are no lines in the from file involved and this means that there were
- * lines appended (beginning at b). If c is greater than d then there are
+ * lines appended (beginning at b).  If c is greater than d then there are
  * lines missing from the to file.
  */
 static void
-change(int a, int b, int c, int d)
+change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 {
-	struct stat stbuf;
-
-	if (opt != D_IFDEF && a > b && c > d)
+	if (format != D_IFDEF && a > b && c > d)
 		return;
 	if (anychange == 0) {
 		anychange = 1;
-		if (opt == D_CONTEXT || opt == D_UNIFIED) {
-			stat(file1, &stbuf);
-			printf("%s %s	%s", opt == D_CONTEXT ? "***" : "---",
-			   file1, ctime(&stbuf.st_mtime));
-			stat(file2, &stbuf);
-			printf("%s %s	%s", opt == D_CONTEXT ? "---" : "+++",
-			    file2, ctime(&stbuf.st_mtime));
-			context_vec_start = emalloc(MAX_CONTEXT *
-			    sizeof(struct context_vec));
+		if (format == D_CONTEXT || format == D_UNIFIED) {
+			printf("%s %s	%s", format == D_CONTEXT ? "***" : "---",
+			   file1, ctime(&stb1.st_mtime));
+			printf("%s %s	%s", format == D_CONTEXT ? "---" : "+++",
+			    file2, ctime(&stb2.st_mtime));
+			if (context_vec_start == NULL)
+				context_vec_start = emalloc(MAX_CONTEXT *
+				    sizeof(struct context_vec));
 			context_vec_end = context_vec_start + MAX_CONTEXT;
 			context_vec_ptr = context_vec_start - 1;
 		}
 	}
-	if (opt == D_CONTEXT || opt == D_UNIFIED) {
+	if (format == D_CONTEXT || format == D_UNIFIED) {
 		/*
 		 * If this new change is within 'context' lines of
 		 * the previous change, just add it to the change
@@ -800,10 +905,10 @@ change(int a, int b, int c, int d)
 		    (context_vec_ptr >= context_vec_start &&
 		    a > (context_vec_ptr->b + 2 * context) &&
 		    c > (context_vec_ptr->d + 2 * context))) {
-			if (opt == D_CONTEXT)
-				dump_context_vec();
+			if (format == D_CONTEXT)
+				dump_context_vec(f1, f2);
 			else
-				dump_unified_vec();
+				dump_unified_vec(f1, f2);
 		}
 		context_vec_ptr++;
 		context_vec_ptr->a = a;
@@ -812,13 +917,13 @@ change(int a, int b, int c, int d)
 		context_vec_ptr->d = d;
 		return;
 	}
-	switch (opt) {
+	switch (format) {
 
 	case D_NORMAL:
 	case D_EDIT:
 		range(a, b, ",");
 		putchar(a > b ? 'a' : c > d ? 'd' : 'c');
-		if (opt == D_NORMAL)
+		if (format == D_NORMAL)
 			range(c, d, ",");
 		putchar('\n');
 		break;
@@ -838,14 +943,14 @@ change(int a, int b, int c, int d)
 		}
 		break;
 	}
-	if (opt == D_NORMAL || opt == D_IFDEF) {
-		fetch(ixold, a, b, input[0], "< ", 1);
-		if (a <= b && c <= d && opt == D_NORMAL)
-			prints("---\n");
+	if (format == D_NORMAL || format == D_IFDEF) {
+		fetch(ixold, a, b, f1, "< ", 1);
+		if (a <= b && c <= d && format == D_NORMAL)
+			puts("---");
 	}
-	fetch(ixnew, c, d, input[1], opt == D_NORMAL ? "> " : "", 0);
-	if ((opt == D_EDIT || opt == D_REVERSE) && c <= d)
-		prints(".\n");
+	fetch(ixnew, c, d, f2, format == D_NORMAL ? "> " : "", 0);
+	if ((format == D_EDIT || format == D_REVERSE) && c <= d)
+		puts(".");
 	if (inifdef) {
 		fprintf(stdout, "#endif /* %s */\n", ifdefname);
 		inifdef = 0;
@@ -869,7 +974,7 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 	 * When doing #ifdef's, copy down to current line
 	 * if this is the first file, so that stuff makes it to output.
 	 */
-	if (opt == D_IFDEF && oldfile) {
+	if (format == D_IFDEF && oldfile) {
 		long curpos = ftell(lb);
 		/* print through if append (a>b), else to (nb: 0 vs 1 orig) */
 		nc = f[a > b ? b : a - 1] - curpos;
@@ -878,7 +983,7 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 	}
 	if (a > b)
 		return;
-	if (opt == D_IFDEF) {
+	if (format == D_IFDEF) {
 		if (inifdef) {
 			fprintf(stdout, "#else /* %s%s */\n",
 			    oldfile == 1 ? "!" : "", ifdefname);
@@ -893,8 +998,8 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 	for (i = a; i <= b; i++) {
 		fseek(lb, f[i - 1], SEEK_SET);
 		nc = f[i] - f[i - 1];
-		if (opt != D_IFDEF)
-			prints(s);
+		if (format != D_IFDEF)
+			fputs(s, stdout);
 		col = 0;
 		for (j = 0; j < nc; j++) {
 			c = getc(lb);
@@ -984,17 +1089,17 @@ readhash(FILE *f)
 	return ((short) low(sum) + (short) high(sum));
 }
 
-static int
+int
 asciifile(FILE *f)
 {
 	char buf[BUFSIZ], *cp;
 	int cnt;
 
-	if (aflag)
+	if (aflag || f == NULL)
 		return (1);
 
-	fseek(f, 0L, SEEK_SET);
-	cnt = fread(buf, 1, BUFSIZ, f);
+	rewind(f);
+	cnt = fread(buf, 1, sizeof(buf), f);
 	cp = buf;
 	while (--cnt >= 0)
 		if (*cp++ & 0200)
@@ -1002,9 +1107,19 @@ asciifile(FILE *f)
 	return (1);
 }
 
+static __inline int min(int a, int b)
+{
+	return (a < b ? a : b);
+}
+
+static __inline int max(int a, int b)
+{
+	return (a > b ? a : b);
+}
+
 /* dump accumulated "context" diff changes */
 static void
-dump_context_vec(void)
+dump_context_vec(FILE *f1, FILE *f2)
 {
 	struct context_vec *cvp = context_vec_start;
 	int lowa, upb, lowc, upd, do_output;
@@ -1025,7 +1140,7 @@ dump_context_vec(void)
 	printf(" ****\n");
 
 	/*
-	 * output changes to the "old" file.  The first loop suppresses
+	 * Output changes to the "old" file.  The first loop suppresses
 	 * output if there were no changes to the "old" file (we'll see
 	 * the "old" lines as context in the "new" list).
 	 */
@@ -1049,16 +1164,16 @@ dump_context_vec(void)
 				ch = (a <= b) ? 'd' : 'a';
 
 			if (ch == 'a')
-				fetch(ixold, lowa, b, input[0], "  ", 0);
+				fetch(ixold, lowa, b, f1, "  ", 0);
 			else {
-				fetch(ixold, lowa, a - 1, input[0], "  ", 0);
-				fetch(ixold, a, b, input[0],
+				fetch(ixold, lowa, a - 1, f1, "  ", 0);
+				fetch(ixold, a, b, f1,
 				    ch == 'c' ? "! " : "- ", 0);
 			}
 			lowa = b + 1;
 			cvp++;
 		}
-		fetch(ixold, b + 1, upb, input[0], "  ", 0);
+		fetch(ixold, b + 1, upb, f1, "  ", 0);
 	}
 	/* output changes to the "new" file */
 	printf("--- ");
@@ -1085,23 +1200,23 @@ dump_context_vec(void)
 				ch = (a <= b) ? 'd' : 'a';
 
 			if (ch == 'd')
-				fetch(ixnew, lowc, d, input[1], "  ", 0);
+				fetch(ixnew, lowc, d, f2, "  ", 0);
 			else {
-				fetch(ixnew, lowc, c - 1, input[1], "  ", 0);
-				fetch(ixnew, c, d, input[1],
+				fetch(ixnew, lowc, c - 1, f2, "  ", 0);
+				fetch(ixnew, c, d, f2,
 				    ch == 'c' ? "! " : "+ ", 0);
 			}
 			lowc = d + 1;
 			cvp++;
 		}
-		fetch(ixnew, d + 1, upd, input[1], "  ", 0);
+		fetch(ixnew, d + 1, upd, f2, "  ", 0);
 	}
 	context_vec_ptr = context_vec_start - 1;
 }
 
 /* dump accumulated "unified" diff changes */
 static void
-dump_unified_vec(void)
+dump_unified_vec(FILE *f1, FILE *f2)
 {
 	struct context_vec *cvp = context_vec_start;
 	int lowa, upb, lowc, upd;
@@ -1142,23 +1257,23 @@ dump_unified_vec(void)
 
 		switch (ch) {
 		case 'c':
-			fetch(ixold, lowa, a - 1, input[0], " ", 0);
-			fetch(ixold, a, b, input[0], "-", 0);
-			fetch(ixnew, c, d, input[1], "+", 0);
+			fetch(ixold, lowa, a - 1, f1, " ", 0);
+			fetch(ixold, a, b, f1, "-", 0);
+			fetch(ixnew, c, d, f2, "+", 0);
 			break;
 		case 'd':
-			fetch(ixold, lowa, a - 1, input[0], " ", 0);
-			fetch(ixold, a, b, input[0], "-", 0);
+			fetch(ixold, lowa, a - 1, f1, " ", 0);
+			fetch(ixold, a, b, f1, "-", 0);
 			break;
 		case 'a':
-			fetch(ixnew, lowc, c - 1, input[1], " ", 0);
-			fetch(ixnew, c, d, input[1], "+", 0);
+			fetch(ixnew, lowc, c - 1, f2, " ", 0);
+			fetch(ixnew, c, d, f2, "+", 0);
 			break;
 		}
 		lowa = b + 1;
 		lowc = d + 1;
 	}
-	fetch(ixnew, d + 1, upd, input[1], " ", 0);
+	fetch(ixnew, d + 1, upd, f2, " ", 0);
 
 	context_vec_ptr = context_vec_start - 1;
 }
