@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.85 2004/05/05 23:16:03 frantzen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.86 2004/05/09 00:16:38 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1738,7 +1738,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 	 * TCP streams immedietly after the 3whs and don't timestamp their
 	 * packets (seen in a WWW accelerator or cache).
 	 */
-	if (pd->p_len > 0 && (src->scrub->pfss_flags &
+	if (pd->p_len > 0 && src->scrub && (src->scrub->pfss_flags &
 	    (PFSS_TIMESTAMP|PFSS_DATA_TS|PFSS_DATA_NOTS)) == PFSS_TIMESTAMP) {
 		if (got_ts)
 			src->scrub->pfss_flags |= PFSS_DATA_TS;
