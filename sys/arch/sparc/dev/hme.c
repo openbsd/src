@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.6 1998/09/08 04:48:38 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.7 1998/09/09 19:23:34 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -740,7 +740,7 @@ hme_tcvr_reset(sc)
 		sc->sc_sw.bmcr = result;
 		if (!(result & BMCR_RESET))
 			break;
-		DELAY(200);
+		DELAY(20);
 	}
 	if (!tries) {
 		printf("%s: bmcr reset failed\n", sc->sc_dev.dv_xname);
@@ -762,7 +762,7 @@ hme_tcvr_reset(sc)
 			return -1;
 		if (!(result & BMCR_ISOLATE))
 			break;
-		DELAY(200);
+		DELAY(20);
 	}
 	if (!tries) {
 		printf("%s: bmcr unisolate failed\n", sc->sc_dev.dv_xname);
@@ -841,7 +841,7 @@ hme_poll_stop(sc)
 	tcvr->int_mask = 0xffff;
         tcvr->cfg &= ~(TCVR_CFG_PENABLE);
 	sc->sc_flags &= ~(HME_FLAG_POLL);
-	DELAY(200);
+	DELAY(20);
 }
 
 #define XCVR_WRITE_TRIES	16
@@ -865,7 +865,7 @@ hme_tcvr_write(sc, reg, val)
 		      (val & 0xffff);
 	while (!(tcvr->frame & 0x10000) && (tries != 0)) {
 		tries--;
-		DELAY(200);
+		DELAY(20);
 	}
 
 	if (!tries)
@@ -896,7 +896,7 @@ hme_tcvr_read(sc, reg)
 		      ((reg & 0xff) << 18);
 	while (!(tcvr->frame & 0x10000) && (tries != 0)) {
 		tries--;
-		DELAY(200);
+		DELAY(20);
 	}
 
 	if (!tries) {
@@ -1025,29 +1025,6 @@ hme_auto_negotiate(sc)
 	if (! (sc->sc_sw.bmsr & BMSR_ANC))
 		return;
 
-	/* advertise -everything- supported */
-	if (sc->sc_sw.bmsr & BMSR_10BASET_HALF)
-		sc->sc_sw.anar |= ANAR_10;
-	else
-		sc->sc_sw.anar &= ~(ANAR_10);
-
-	if (sc->sc_sw.bmsr & BMSR_10BASET_FULL)
-		sc->sc_sw.anar |= ANAR_10_FD;
-	else
-		sc->sc_sw.anar &= ~(ANAR_10_FD);
-
-	if (sc->sc_sw.bmsr & BMSR_100BASETX_HALF)
-		sc->sc_sw.anar |= ANAR_TX;
-	else
-		sc->sc_sw.anar &= ~(ANAR_TX);
-
-	if (sc->sc_sw.bmsr & BMSR_100BASETX_FULL)
-		sc->sc_sw.anar |= ANAR_TX_FD;
-	else
-		sc->sc_sw.anar &= ~(ANAR_TX_FD);
-
-	hme_tcvr_write(sc, DP83840_ANAR, sc->sc_sw.anar);
-
 	/* Start autonegoiation */
 	sc->sc_sw.bmcr |= BMCR_ANE;	/* enable auto-neg */
 	hme_tcvr_write(sc, DP83840_BMCR, sc->sc_sw.bmcr);
@@ -1091,7 +1068,6 @@ hme_negotiate_watchdog(arg)
 	    case HME_TIMER_DONE:
 		return;
 	    case HME_TIMER_AUTONEG:
-		printf("%s: tick: autoneg...\n", sc->sc_dev.dv_xname);
 		sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
 		if (sc->sc_sw.bmsr & BMSR_ANCOMPLETE) {
 			sc->sc_an_state = HME_TIMER_LINKUP;
@@ -1102,12 +1078,12 @@ hme_negotiate_watchdog(arg)
 		if (sc->sc_an_ticks > 10) {
 			printf("%s: auto-negotiation failed.\n",
 				sc->sc_dev.dv_xname);
+			hme_auto_negotiate(sc);
 			return;
 		}
 		timeout(hme_negotiate_watchdog, sc, (12 * hz)/10);
 		break;
 	    case HME_TIMER_LINKUP:
-		printf("%s: tick: linkup..\n", sc->sc_dev.dv_xname);
 		ifp->if_flags |= IFF_RUNNING;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_timer = 0;
@@ -1131,12 +1107,12 @@ static void
 hme_print_link_mode(sc)
 	struct hme_softc *sc;
 {
-	sc->sc_sw.anlpar = hme_tcvr_read(sc, DP83840_ANLPAR);
+	sc->sc_sw.bmcr = hme_tcvr_read(sc, DP83840_BMCR);
 	printf("%s: %s transceiver up %dMb/s %s duplex\n",
 	    sc->sc_dev.dv_xname,
 	    (sc->sc_tcvr_type == HME_TCVR_EXTERNAL) ? "external" : "internal",
-	    (sc->sc_sw.anlpar & (ANLPAR_TX_FD | ANLPAR_TX)) ? 100 : 10,
-	    (sc->sc_sw.anlpar & (ANLPAR_TX_FD | ANLPAR_10_FD)) ? "full" : "half");
+	    (sc->sc_sw.bmcr & BMCR_SPEED) ? 100 : 10,
+	    (sc->sc_sw.bmcr & BMCR_DUPLEX) ? "full" : "half");
 }
 
 #define RESET_TRIES	32
@@ -1598,73 +1574,62 @@ hme_ifmedia_upd(ifp)
 {
 	struct hme_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_ifmedia;
-	int tries, result;
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return (EINVAL);
 
+	sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
+
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO &&
 	    sc->sc_sw.bmsr & BMSR_ANC) {
+		
+		/* advertise -everything- supported */
+		if (sc->sc_sw.bmsr & BMSR_10BASET_HALF)
+			sc->sc_sw.anar |= ANAR_10;
+		else
+			sc->sc_sw.anar &= ~(ANAR_10);
+
+		if (sc->sc_sw.bmsr & BMSR_10BASET_FULL)
+			sc->sc_sw.anar |= ANAR_10_FD;
+		else
+			sc->sc_sw.anar &= ~(ANAR_10_FD);
+
+		if (sc->sc_sw.bmsr & BMSR_100BASETX_HALF)
+			sc->sc_sw.anar |= ANAR_TX;
+		else
+			sc->sc_sw.anar &= ~(ANAR_TX);
+
+		if (sc->sc_sw.bmsr & BMSR_100BASETX_FULL)
+			sc->sc_sw.anar |= ANAR_TX_FD;
+		else
+			sc->sc_sw.anar &= ~(ANAR_TX_FD);
+
+		hme_tcvr_write(sc, DP83840_ANAR, sc->sc_sw.anar);
 		hme_auto_negotiate(sc);
 		return (0);
 	}
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO)
 		return (EINVAL);
 
-	hme_tcvr_write(sc, DP83840_BMCR,
-	    (BMCR_LOOPBACK | BMCR_PDOWN | BMCR_ISOLATE));
-	if (result == TCVR_FAILURE) {
-		printf("%s: tcvr_reset failed\n", sc->sc_dev.dv_xname);
-		return (EIO);
-	}
-	hme_tcvr_write(sc, DP83840_BMCR, BMCR_RESET);
+	sc->sc_sw.anar = hme_tcvr_read(sc, DP83840_ANAR);
+	sc->sc_sw.anar &= ~(ANAR_T4 | ANAR_TX_FD | ANAR_TX
+	    | ANAR_10_FD | ANAR_10);
 
-	tries = 32;
-	while (--tries) {
-		result = hme_tcvr_read(sc, DP83840_BMCR);
-		if (result == TCVR_FAILURE)
-			return (EIO);
-		sc->sc_sw.bmcr = result;
-		if (!(result & BMCR_RESET))
-			break;
-		DELAY(200);
-	}
-	if (!tries) {
-		printf("%s: bmcr reset failed\n", sc->sc_dev.dv_xname);
-		return -1;
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
+		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
+			sc->sc_sw.anar |= ANAR_TX_FD;
+		else
+			sc->sc_sw.anar |= ANAR_TX;
 	}
 
-	sc->sc_sw.bmcr = hme_tcvr_read(sc, DP83840_BMCR);
-
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_T4) {
-		sc->sc_sw.bmcr |= BMCR_SPEED;
-		sc->sc_sw.bmcr &= ~BMCR_DUPLEX;
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T) {
+		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
+			sc->sc_sw.anar |= ANAR_10_FD;
+		else
+			sc->sc_sw.anar |= ANAR_10;
 	}
 
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX)
-		sc->sc_sw.bmcr |= BMCR_SPEED;
-
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T)
-		sc->sc_sw.bmcr &= ~BMCR_SPEED;
-
-	if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
-		sc->sc_sw.bmcr |= BMCR_DUPLEX;
-	else
-		sc->sc_sw.bmcr &= ~BMCR_DUPLEX;
-
-	sc->sc_sw.bmcr &= ~(BMCR_ISOLATE);
-	hme_tcvr_write(sc, DP83840_BMCR, sc->sc_sw.bmcr);
-	tries = 32;
-	while (--tries) {
-		sc->sc_sw.bmcr = hme_tcvr_read(sc, DP83840_BMCR);
-		if ((sc->sc_sw.bmcr & BMCR_ISOLATE) == 0)
-			break;
-		DELAY(20);
-	}
-	if (!tries) {
-		printf("%s: bmcr unisolate failed\n", sc->sc_dev.dv_xname);
-		return (EIO);
-	}
-
+	hme_tcvr_write(sc, DP83840_ANAR, sc->sc_sw.anar);
+	hme_auto_negotiate(sc);
 	return (0);
 }
