@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.87 2003/05/12 00:48:52 jason Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.88 2003/05/29 00:32:59 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -205,38 +205,11 @@ udp_input(struct mbuf *m, ...)
 		goto bad;
 	}
 
-	/*
-	 * Strip IP options, if any; should skip this,
-	 * make available to user, and use on returned packets,
-	 * but we don't yet have a way to check the checksum
-	 * with options still present.
-	 */
-	/*
-	 * (contd. from above...)  Furthermore, we may want to strip options
-	 * for such things as ICMP errors, where options just get in the way.
-	 */
-	if (ip && iphlen > sizeof (struct ip)) {
-		ip_stripoptions(m, (struct mbuf *)0);
-		iphlen = sizeof(struct ip);
+	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
+	if (!uh) {
+		udpstat.udps_hdrops++;
+		return;
 	}
-
-	/*
-	 * Get IP and UDP header together in first mbuf.
-	 */
-	if (m->m_len < iphlen + sizeof(struct udphdr)) {
-		if ((m = m_pullup2(m, iphlen + sizeof(struct udphdr))) ==
-		    NULL) {
-			udpstat.udps_hdrops++;
-			return;
-		}
-#ifdef INET6
-		if (ip6)
-			ip6 = mtod(m, struct ip6_hdr *);
-		else
-#endif /* INET6 */
-			ip = mtod(m, struct ip *);
-	}
-	uh = (struct udphdr *)(mtod(m, caddr_t) + iphlen);
 
 	/* Check for illegal destination port 0 */
 	if (uh->uh_dport == 0) {
@@ -249,14 +222,26 @@ udp_input(struct mbuf *m, ...)
 	 * If not enough data to reflect UDP length, drop.
 	 */
 	len = ntohs((u_int16_t)uh->uh_ulen);
-	if (m->m_pkthdr.len - iphlen != len) {
-		if (len > (m->m_pkthdr.len - iphlen) ||
-		    len < sizeof(struct udphdr)) {
+	if (ip) {
+		if (m->m_pkthdr.len - iphlen != len) {
+			if (len > (m->m_pkthdr.len - iphlen) ||
+			    len < sizeof(struct udphdr)) {
+				udpstat.udps_badlen++;
+				goto bad;
+			}
+			m_adj(m, len - (m->m_pkthdr.len - iphlen));
+		}
+	} else if (ip6) {
+		/* jumbograms */
+		if (len == 0 && m->m_pkthdr.len - iphlen > 0xffff)
+			len = m->m_pkthdr.len - iphlen;
+		if (len != m->m_pkthdr.len - iphlen) {
 			udpstat.udps_badlen++;
 			goto bad;
 		}
-		m_adj(m, len - (m->m_pkthdr.len - iphlen));
-	}
+	} else /* shouldn't happen */
+		goto bad;
+
 	/*
 	 * Save a copy of the IP header in case we want restore it
 	 * for sending an ICMP error message in response.
@@ -615,8 +600,7 @@ udp_input(struct mbuf *m, ...)
 	}
 	iphlen += sizeof(struct udphdr);
 	m_adj(m, iphlen);
-	if (sbappendaddr(&inp->inp_socket->so_rcv,
-		&srcsa.sa, m, opts) == 0) {
+	if (sbappendaddr(&inp->inp_socket->so_rcv, &srcsa.sa, m, opts) == 0) {
 		udpstat.udps_fullsock++;
 		goto bad;
 	}
