@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.32 2004/06/22 22:46:30 millert Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.33 2004/07/31 16:34:57 brad Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #define _NETINET_IF_ETHER_H_
 
 /*
- * Some Ethernet constants.
+ * Some basic Ethernet constants.
  */
 #define	ETHER_ADDR_LEN	6	/* Ethernet address length		*/
 #define ETHER_TYPE_LEN	2	/* Ethernet type field length		*/
@@ -44,9 +44,12 @@
 #define ETHER_HDR_LEN	((ETHER_ADDR_LEN * 2) + ETHER_TYPE_LEN)
 #define ETHER_MIN_LEN	64	/* Minimum frame length, CRC included	*/
 #define ETHER_MAX_LEN	1518	/* Maximum frame length, CRC included	*/
-#define	ETHER_MAX_LEN_JUMBO	9018	/* max jumbo frame len, including CRC */
+#define ETHER_MAX_LEN_JUMBO	9018	/* max jumbo frame len, including CRC */
 
-#define	ETHER_VLAN_ENCAP_LEN	4	/* len of 802.1Q VLAN encapsulation */
+/*
+ * Some Ethernet extensions.
+ */
+#define ETHER_VLAN_ENCAP_LEN	4	/* len of 802.1Q VLAN encapsulation */
 
 /*
  * Mbuf adjust factor to force 32-bit alignment of IP header.
@@ -54,7 +57,7 @@
  * receive so the upper layers get the IP header properly aligned
  * past the 14-byte Ethernet header.
  */
-#define	ETHER_ALIGN		2	/* driver adjust for IP hdr alignment */
+#define ETHER_ALIGN	2	/* driver adjust for IP hdr alignment */
 
 /*
  * Ethernet address - 6 octets
