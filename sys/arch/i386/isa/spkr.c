@@ -24,6 +24,7 @@
 #include <machine/spkr.h>
 
 #include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
 #include <i386/isa/timerreg.h>
 #include <i386/isa/spkrreg.h>
 
