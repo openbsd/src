@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.21 2002/10/15 16:13:56 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.22 2002/11/09 02:16:50 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -370,6 +370,7 @@
 10/21	Guggenheim Museum opens, 1959
 10/23	Battle of Leyte Gulf begins, 1944
 10/23	Swallows leave Capistrano
+10/23	South African troops invade Angola in support of UNITA and FNLA, 1975
 10/25	The UN removes Taiwan and admits the People's Republic of China, 1971
 10/26	UN's World Health Organization declares smallpox eradicated, 1978
 10/27	New York's Boss Tweed is arrested on fraud charges, 1871

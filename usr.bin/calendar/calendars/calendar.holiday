@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.9 2002/07/08 14:59:52 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.10 2002/11/09 02:16:50 mickey Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -410,7 +410,6 @@
 11/06	Green March Day in Morocco
 11/07	National Revolution Day
 11/07	October Revolution Day in Hungary
-11/11	Independence Day in Angola
 11/11	Remembrance Day in Canada
 11/11	Republic Day in Maldives
 11/15	Dynasty Day in Belgium
