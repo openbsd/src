@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.14 1997/04/15 15:18:49 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.15 1998/04/27 02:02:57 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.14 1997/04/15 15:18:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.15 1998/04/27 02:02:57 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ main(argc, argv)
 	}
 	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
 	if (bind(lsock, (struct sockaddr *)&laddr, len) != 0) {
-		syslog(LOG_ERR, "cannot bind udp: %m");
+		syslog(LOG_ERR, "cannot bind local udp: %m");
 		exit(1);
 	}
 
