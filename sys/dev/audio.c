@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.19 1999/12/05 18:35:33 espie Exp $	*/
+/*	$OpenBSD: audio.c,v 1.20 2000/01/03 19:38:12 fgsch Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -405,17 +405,7 @@ audio_attach_mi(ahwp, hdlp, dev)
 	}
 }
 
-#include "midi.h"
-
-#if NAUDIO == 0 && (NMIDI > 0 || NMIDIBUS > 0)
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/audioio.h>
-#include <dev/audio_if.h>
-#endif
-
-#if NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0)
+#if NAUDIO > 0
 int
 audioprint(aux, pnp)
 	void *aux;
@@ -428,9 +418,6 @@ audioprint(aux, pnp)
 		switch (arg->type) {
 		case AUDIODEV_TYPE_AUDIO:
 			type = "audio";
-			break;
-		case AUDIODEV_TYPE_MIDI:
-			type = "midi";
 			break;
 		case AUDIODEV_TYPE_OPL:
 			type = "opl";
@@ -446,7 +433,7 @@ audioprint(aux, pnp)
 	return (UNCONF);
 }
 
-#endif /* NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0) */
+#endif /* NAUDIO > 0 */
 
 #ifdef AUDIO_DEBUG
 void	audio_printsc __P((struct audio_softc *));

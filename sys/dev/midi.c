@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.2 1999/01/02 00:59:08 niklas Exp $	*/
+/*	$OpenBSD: midi.c,v 1.3 2000/01/03 19:38:13 fgsch Exp $	*/
 /*	$NetBSD: midi.c,v 1.10 1998/12/20 14:26:44 drochner Exp $	*/
 
 /*
@@ -744,7 +744,7 @@ midi_getinfo(dev, mi)
 
 #if NMIDI > 0 || NMIDIBUS > 0
 
-int	audioprint __P((void *, const char *));
+int	midiprint __P((void *, const char *));
 
 void
 midi_attach_mi(mhwp, hdlp, dev)
@@ -763,7 +763,17 @@ midi_attach_mi(mhwp, hdlp, dev)
 	arg.type = AUDIODEV_TYPE_MIDI;
 	arg.hwif = mhwp;
 	arg.hdl = hdlp;
-	(void)config_found(dev, &arg, audioprint);
+	(void)config_found(dev, &arg, midiprint);
+}
+
+int
+midiprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	if (pnp)
+		printf("midi at %s", pnp);
+	return (UNCONF);
 }
 
 #endif /* NMIDI > 0 || NMIDIBUS > 0 */
