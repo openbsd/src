@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.28 2004/07/20 16:47:55 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.29 2004/07/28 16:38:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -56,7 +56,8 @@ client_peer_init(struct ntp_peer *p)
 		}
 	}
 
-	if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM, 0)) == -1)
+	if (p->addr != NULL &&
+	    (p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM, 0)) == -1)
 		fatal("client_query socket");
 
 	p->query->msg.status = MODE_CLIENT | (NTP_VERSION << 3);
@@ -73,6 +74,15 @@ client_nextaddr(struct ntp_peer *p)
 {
 	close(p->query->fd);
 
+	if (p->addr_head.a == NULL) {
+		if (host_dns(p->addr_head.name, &p->addr_head.a) > 0) {
+			p->addr = p->addr_head.a;
+			p->shift = 0;
+			p->trustlevel = TRUSTLEVEL_PATHETIC;
+		} else
+			return (-1);
+	}
+
 	if ((p->addr = p->addr->next) == NULL)
 		p->addr = p->addr_head.a;
 
@@ -88,6 +98,11 @@ client_nextaddr(struct ntp_peer *p)
 int
 client_query(struct ntp_peer *p)
 {
+	if (p->addr == NULL && client_nextaddr(p) == -1) {
+		p->next = time(NULL) + INTERVAL_QUERY_PATHETIC;
+		return (-1);
+	}
+
 	/*
 	 * Send out a random 64-bit number as our transmit time.  The NTP
 	 * server will copy said number into the originate field on the

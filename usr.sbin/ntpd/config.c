@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.8 2004/07/25 18:27:58 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.9 2004/07/28 16:38:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,12 +29,12 @@
 
 struct ntp_addr	*host_v4(const char *);
 struct ntp_addr	*host_v6(const char *);
-struct ntp_addr	*host_dns(const char *);
 
-struct ntp_addr	*
-host(const char *s)
+int
+host(const char *s, struct ntp_addr **hn)
 {
-	struct ntp_addr		*h = NULL;
+	struct ntp_addr	*h = NULL;
+	int		 cnt = 1;
 
 	if (!strcmp(s, "*"))
 		if ((h = calloc(1, sizeof(struct ntp_addr))) == NULL)
@@ -50,9 +50,10 @@ host(const char *s)
 
 	/* Hostname? */
 	if (h == NULL)
-		h = host_dns(s);
+		cnt = host_dns(s, &h);
 
-	return (h);
+	*hn = h;
+	return (cnt);
 }
 
 struct ntp_addr	*
@@ -105,11 +106,11 @@ host_v6(const char *s)
 	return (h);
 }
 
-struct ntp_addr	*
-host_dns(const char *s)
+int
+host_dns(const char *s, struct ntp_addr **hn)
 {
 	struct addrinfo		 hints, *res0, *res;
-	int			 error;
+	int			 error, cnt = 0;
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_in6	*sa_in6;
 	struct ntp_addr		*h, *hh = NULL;
@@ -118,8 +119,14 @@ host_dns(const char *s)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
 	error = getaddrinfo(s, NULL, &hints, &res0);
-	if (error)
-		return (NULL);
+	if (error) {
+		log_warnx("could not parse \"%s\": %s", s,
+		    gai_strerror(error));
+		if (error == EAI_AGAIN || error == EAI_NODATA)
+			return (0);
+		else
+			return (-1);
+	}
 
 	for (res = res0; res; res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
@@ -142,8 +149,10 @@ host_dns(const char *s)
 
 		h->next = hh;
 		hh = h;
+		cnt++;
 	}
 	freeaddrinfo(res0);
 
-	return (hh);
+	*hn = hh;
+	return (cnt);
 }
