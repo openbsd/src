@@ -1,4 +1,6 @@
-/*	$OpenBSD: kvm_private.h,v 1.1 1996/03/19 23:15:39 niklas Exp $	*/
+/*	$OpenBSD: kvm_private.h,v 1.2 1996/05/26 01:04:41 deraadt Exp $	*/
+
+/*	$NetBSD: kvm_private.h,v 1.2 1996/05/13 02:30:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

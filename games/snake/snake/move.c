@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.11 1995/04/29 01:17:12 mycroft Exp $	*/
+/*	$NetBSD: move.c,v 1.12 1996/05/19 20:22:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.11 1995/04/29 01:17:12 mycroft Exp $";
+static char rcsid[] = "$NetBSD: move.c,v 1.12 1996/05/19 20:22:09 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -642,14 +642,23 @@ getcap()
 	if (xPC)
 		PC = *xPC;
 
-	NDlength = strlen(ND);
-	BSlength = strlen(BS);
 	if ((CM == 0) &&
-		(HO == 0 | UP==0 || BS==0 || ND==0)) {
+		(HO == 0 || UP == 0 || BS == 0 || ND == 0)) {
 		fprintf(stderr, "Terminal must have addressible ");
 		fprintf(stderr, "cursor or home + 4 local motions\n");
 		exit(5);
 	}
+	if (ND == 0) {
+		fprintf(stderr, "Terminal must have `nd' capability\n");
+		exit(5);
+	}
+	NDlength = strlen(ND);
+	if (BS == 0) {
+		fprintf(stderr, "Terminal must have `bs' or `bc' capability\n");
+		exit(5);
+	}
+	BSlength = strlen(BS);
+
 	if (tgetflag("os")) {
 		fprintf(stderr, "Terminal must not overstrike\n");
 		exit(5);

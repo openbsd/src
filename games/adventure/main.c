@@ -48,16 +48,16 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1996/02/06 22:47:06 jtc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.4 1996/05/21 10:48:07 mrg Exp $";
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: main program                          */
 
 #include <sys/file.h>
+#include <sys/signal.h>
 #include <stdio.h>
 #include "hdr.h"
-
 
 main(argc,argv)
 int argc;
@@ -68,8 +68,12 @@ char **argv;
 	struct text *kk;
 	extern trapdel();
 
+	/* adventure doesn't need setuid-ness, so, just get rid of it */
+	if (setuid(getuid()) < 0)
+		perror("setuid");
+
 	init();         /* Initialize everything */
-	signal(2,trapdel);
+	signal(SIGINT,trapdel);
 
 	if (argc > 1)   /* Restore file specified */
 	{               /* Restart is label 8305 (Fortran) */

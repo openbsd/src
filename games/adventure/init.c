@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.2 1995/03/21 12:05:04 cgd Exp $	*/
+/*	$NetBSD: init.c,v 1.3 1996/05/21 10:48:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,13 +42,14 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.2 1995/03/21 12:05:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.3 1996/05/21 10:48:09 mrg Exp $";
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: data initialization                   */
 
 #include <sys/types.h>
+#include <sys/signal.h>
 #include <stdio.h>
 #include "hdr.h"
 
@@ -203,7 +204,7 @@ linkdata()                              /*  secondary data manipulation */
 
 trapdel()                               /* come here if he hits a del   */
 {	delhit++;			/* main checks, treats as QUIT  */
-	signal(2,trapdel);		/* catch subsequent DELs        */
+	signal(SIGINT,trapdel);		/* catch subsequent DELs        */
 }
 
 
