@@ -1,4 +1,4 @@
-.TH suexec 8 "March 2001"
+.\"	$OpenBSD: suexec.8,v 1.9 2004/12/20 15:23:46 jaredy Exp $
 .\" ====================================================================
 .\" The Apache Software License, Version 1.1
 .\"
@@ -56,26 +56,43 @@
 .\" originally written at the National Center for Supercomputing Applications,
 .\" University of Illinois, Urbana-Champaign.
 .\"
-.SH NAME
-suexec \- Switch User For Exec
-.SH SYNOPSIS
-.B suexec -V
-.PP
-No other synopsis for usage, because this program
-is otherwise only used internally by the Apache HTTP server. 
-.PP
-.SH DESCRIPTION
-.B suexec
-is the "wrapper" support program for the suexec behaviour for the
-Apache HTTP server.  It is run from within the server automatically
-to switch the user when an external program has to be run under a
-different user. For more information about suexec, see the online
-document `Apache suexec Support' on the HTTP server project's
-Web site at  http://httpd.apache.org/docs/suexec.html .
-.SH OPTIONS
-.IP -V
-Display the list of compile-time settings used when \fBsuexec\fP
-was built.  No other action is taken.
-.PD
-.SH SEE ALSO
-.BR httpd(8)
+.Dd December 18, 2004
+.Dt SUEXEC 8
+.Os
+.Sh NAME
+.Nm suexec
+.Nd switch user for Apache CGI execution
+.Sh SYNOPSIS
+.Nm suexec
+.Fl V
+.Sh DESCRIPTION
+.Nm
+is the
+.Dq wrapper
+support program for the
+.Em suexec
+behaviour for the Apache HTTP server.
+It is run from within the server automatically to switch the user when
+an external program has to be run under a different user.
+For more information about
+.Nm ,
+see the online document
+.Dq Apache suexec Support
+on the Apache project's Web site at
+.Pa http://httpd.apache.org/docs/suexec.html .
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl V
+Display the list of compile-time settings used when
+.Nm
+was built.
+No other action is taken.
+.El
+.Pp
+Because this program is only used internally by
+.Xr httpd 8 ,
+there are no other ways to directly invoke
+.Nm .
+.Sh SEE ALSO
+.Xr httpd 8

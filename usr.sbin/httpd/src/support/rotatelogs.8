@@ -1,4 +1,4 @@
-.TH rotatelogs 8 "March 2001"
+.\"	$OpenBSD: rotatelogs.8,v 1.7 2004/12/20 15:23:46 jaredy Exp $
 .\" ====================================================================
 .\" The Apache Software License, Version 1.1
 .\"
@@ -56,39 +56,56 @@
 .\" originally written at the National Center for Supercomputing Applications,
 .\" University of Illinois, Urbana-Champaign.
 .\"
-.SH NAME
-rotatelogs \- rotate Apache logs without having to kill the server
-.SH SYNOPSIS
-.B rotatelogs
-.I logfile
-.I rotationtime
-.I [offset]
-.PP
-.SH DESCRIPTION
-.B rotatelogs
+.Dd December 18, 2004
+.Dt ROTATELOGS 8
+.Os
+.Sh NAME
+.Nm rotatelogs
+.Nd rotate Apache logs without having to kill the server
+.Sh SYNOPSIS
+.Nm rotatelogs
+.Ar logfile rotationtime Op Ar offset
+.Sh DESCRIPTION
+.Nm
 is a simple program for use in conjunction with Apache's piped logfile
 feature which can be used like this:
-
-.fi
-   TransferLog "| rotatelogs /path/to/logs/access_log 86400"
-.mf
-
-This creates the files /path/to/logs/access_log.nnnn where nnnn is the system
-time at which the log nominally starts (this time will always be a multiple of
-the rotation time, so you can synchronize cron scripts with it).  At the end
-of each rotation time (here after 24 hours) a new log is started.
-.SH OPTIONS
-.IP \fB\fIlogfile\fP
-The path plus basename of the logfile.  If \fBlogfile\fP includes any
-\fB%\fP characters, it is treated as a format string for \fIstrftime(3)\fP.
-Otherwise, the suffix .nnnn is automatically added and is the time at which
-the logfile was created.
-.IP \fB\fIrotationtime\fP
+.Bd -literal -offset indent
+TransferLog "| rotatelogs /path/to/logs/access_log 86400"
+.Ed
+.Pp
+This creates the files
+.Pa /path/to/logs/access_log.nnnn
+where
+.Em nnnn
+is the system time at which the log nominally starts (this time will
+always be a multiple of the rotation time, so you can synchronize
+.Xr cron 1
+scripts with it).
+At the end of each rotation time (here, after 24 hours), a new log is
+started.
+.Pp
+The arguments are as follows:
+.Bl -tag -width rotationtime
+.It Ar logfile
+The path plus basename of the logfile.
+If
+.Ar logfile
+includes any percent characters
+.Pq Sq % ,
+it is treated as a format string for
+.Xr strftime 3 .
+Otherwise, the suffix
+.Em .nnnn
+is automatically added and is the time at which the logfile was created.
+.It Ar rotationtime
 The rotation time in seconds.
-.IP \fB\fIoffset\fP
-The number of minutes offset from UTC.  If omitted, zero is assumed and
-UTC is used.  For example, to use local time in the zone UTC -5 hours,
-specify a value of \fI-300\fP for this argument.
-.PD
-.SH SEE ALSO
-.BR httpd(8)
+.It Ar offset
+The number of minutes offset from UTC.
+If omitted, zero is assumed and UTC is used.
+For example, to use local time in the zone UTC \-5 hours, specify a
+value of \-300 for this argument.
+.El
+.Sh SEE ALSO
+.Xr cron 1 ,
+.Xr strftime 3 ,
+.Xr httpd 8

@@ -1,4 +1,4 @@
-.TH logresolve 8 "March 1998"
+.\"	$OpenBSD: logresolve.8,v 1.7 2004/12/20 15:23:46 jaredy Exp $
 .\" ====================================================================
 .\" The Apache Software License, Version 1.1
 .\"
@@ -56,37 +56,43 @@
 .\" originally written at the National Center for Supercomputing Applications,
 .\" University of Illinois, Urbana-Champaign.
 .\"
-.SH NAME
-logresolve \- resolve hostnames for IP-adresses in Apache logfiles
-.SH SYNOPSIS
-.B logresolve
-[
-.BI \-s " filename"
-] [
-.B \-c
-] < 
-.I access_log
+.Dd December 18, 2004
+.Dt LOGRESOLVE 8
+.Os
+.Sh NAME
+.Nm logresolve
+.Nd resolve hostnames for IP adresses in Apache logfiles
+.Sh SYNOPSIS
+.Nm logresolve
+.Op Fl c
+.Op Fl s Ar filename
+< 
+.Ar access_log
 >
-.I access_log.new
-.PP
-.SH DESCRIPTION
-.B logresolve
-is a post-processing program to resolve IP-adresses in Apache's access
-logfiles.  To minimize impact on your nameserver, logresolve has its very own
-internal hash-table cache. This means that each IP number will only be looked
-up the first time it is found in the log file.
-.SH OPTIONS
-.TP 12
-.BI \-s " filename"
-Specifies a filename to record statistics.
-.TP 12
-.B \-c 
+.Ar access_log.new
+.Sh DESCRIPTION
+.Nm
+is a post-processing program to resolve IP adresses in Apache's access
+logfiles.
+To minimize impact on the nameserver,
+.Nm
+has its very own internal hash-table cache.
+This means that each IP number will only be looked up the first time it
+is found in the log file.
+.Pp
+The following options are supported:
+.Bl -tag -width "-s filename"
+.It Fl s Ar filename
+Specifies the
+.Ar filename
+to record statistics.
+.It Fl c
 This causes 
-.B logresolve 
-to apply some DNS checks: after finding the hostname from the IP address, it
-looks up the IP addresses for the hostname and checks that one of these
-matches the original address.
-.PD
-.SH SEE ALSO
-.BR httpd(8)
-.
+.Nm
+to apply some DNS checks:
+after finding the hostname from the IP address, it looks up the IP
+addresses for the hostname and checks that one of them matches the
+original address.
+.El
+.Sh SEE ALSO
+.Xr httpd 8
