@@ -1,7 +1,7 @@
-/*	$OpenBSD: gscbusvar.h,v 1.9 2002/12/18 23:52:45 mickey Exp $	*/
+/*	$OpenBSD: gscbusvar.h,v 1.10 2003/04/07 17:38:51 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2002 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,15 +50,6 @@ struct gsc_attach_args {
 	struct gscbus_ic *ga_ic;	/* IC pointer */
 }; 
 
-struct gscbus_intr {
-	int pri;
-	int (*handler)(void *);
-	void *arg;
-	void *softc;
-	void *cpuiv;
-	struct evcnt evcnt;
-};
-
 struct gsc_softc {
 	struct  device sc_dev;
 	void *sc_ih;
@@ -66,17 +57,11 @@ struct gsc_softc {
 	bus_space_tag_t sc_iot;
 	struct gscbus_ic *sc_ic;
 	struct hppa_bus_dma_tag sc_dmatag;
-
-	/* interrupt vectors */
-	struct gscbus_intr sc_intrvs[32];
-	u_int32_t sc_intrmask;
 };
 
 void *gsc_intr_establish(struct gsc_softc *sc, int pri, int irq,
-			 int (*handler)(void *v), void *arg,
-			 struct device *name);
+    int (*handler)(void *v), void *arg, struct device *name);
 void gsc_intr_disestablish(struct gsc_softc *sc, void *v);
 int gsc_intr(void *);
 
 int gscprint(void *, const char *);
-
