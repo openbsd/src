@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.19 1998/05/18 21:10:43 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.20 1998/05/24 22:56:29 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -124,13 +124,13 @@ struct esp_xform esp_new_xform[] = {
      },
      { ALG_ENC_BLF, "Blowfish",
        ESP_BLF_BLKS, ESP_BLF_IVS,
-       5, BLF_MAXKEYLEN, 8,
+       5, BLF_MAXKEYLEN, 8 | 1,
        blf_encrypt,
        blf_decrypt 
      },
      { ALG_ENC_CAST, "CAST",
        ESP_CAST_BLKS, ESP_CAST_IVS,
-       5, 16, 8,
+       5, 16, 8 | 1,
        cast5_encrypt,
        cast5_decrypt 
      }
