@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.1 1995/10/09 09:49:30 mycroft Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.2 1996/01/13 02:05:22 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -536,10 +536,10 @@ ahc_print_scb(scb)
 	    scb->SG_segment_count,
 	    scb->SG_list_pointer);
 	printf("\tsg_addr:%x sg_len:%d\n",
-	    scb->ahc_dma[0].addr,
-	    scb->ahc_dma[0].len);
+	    scb->ahc_dma[0].seg_addr,
+	    scb->ahc_dma[0].seg_len);
 	printf("	size:%d\n",
-	    (int)&scb->next - (int)scb);
+	    (int)&scb->next_waiting - (int)scb);
 }
 
 void
@@ -1003,7 +1003,7 @@ ahcintr(ahc)
 
 			ahc_getscb(iobase, scb);
 
-#ifdef AHC_DEBUG
+#ifdef AHC_MORE_DEBUG
 			if (xs->sc_link->target == DEBUGTARGET)
 				ahc_print_scb(scb);
 #endif
@@ -1418,19 +1418,19 @@ ahc_init(ahc)
 
 	switch (ahc->type) {
 	case AHC_274:
-		printf(": 274x ", ahc->sc_dev.dv_xname);
+		printf("%s: 274x ", ahc->sc_dev.dv_xname);
 		ahc->maxscbs = 0x4;
 		break;
 	case AHC_284:
-		printf(": 284x ", ahc->sc_dev.dv_xname);
+		printf("%s: 284x ", ahc->sc_dev.dv_xname);
 		ahc->maxscbs = 0x4;
 		break;
 	case AHC_AIC7870:
 	case AHC_294:
 		if (ahc->type == AHC_AIC7870)
-			printf(": aic7870 ", ahc->sc_dev.dv_xname);
+			printf("%s: aic7870 ", ahc->sc_dev.dv_xname);
 		else
-			printf(": 294x ", ahc->sc_dev.dv_xname);
+			printf("%s: 294x ", ahc->sc_dev.dv_xname);
 		ahc->maxscbs = 0x10;
 		#define DFTHRESH        3
 		outb(DSPCISTATUS + iobase, DFTHRESH << 6);
@@ -1441,6 +1441,9 @@ ahc_init(ahc)
 		outb(HA_SCSICONF + iobase, 0x07 | (DFTHRESH << 6));
 		/* In case we are a wide card */
 		outb(HA_SCSICONF + 1 + iobase, 0x07);
+		break;
+	default:
+	        printf("%s: unknown(0x%x) ", ahc->sc_dev.dv_xname, ahc->type);
 		break;
 	}
 	
@@ -1466,7 +1469,7 @@ ahc_init(ahc)
 		outb(HA_FLAGS + iobase, TWIN_BUS);
 		break;
 	default:
-		printf(" Unsupported adapter type.  %x Ignoring\n",sblkctl);
+		printf(" Unsupported adapter type.  %x Ignoring\n", sblkctl);
 		return(-1);
 	}
 
@@ -1839,7 +1842,7 @@ ahc_scsi_cmd(xs)
 		scb->SG_segment_count = 0;
 	}
 
-#ifdef AHC_DEBUG
+#ifdef AHC_MORE_DEBUG
 	if (sc_link->target == DEBUGTARGET)
 		ahc_print_scb(scb);
 #endif

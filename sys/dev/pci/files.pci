@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.8 1995/10/10 12:16:54 mycroft Exp $
+#	$NetBSD: files.pci,v 1.9 1996/01/13 02:05:18 thorpej Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -23,6 +23,5 @@ device	ncr at pci: scsi
 file	dev/pci/ncr.c			ncr
 
 # Adaptec 7870 chips
-device	ahc at pci: scsi
+device	ahc at pci: scsi, aic7xxx
 file	dev/pci/aic7870.c		ahc
-file	dev/ic/aic7xxx.c		ahc
