@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_connect.c,v 1.4 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_connect.c,v 1.5 2003/12/23 19:31:05 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -47,6 +47,9 @@ connect(int fd, const struct sockaddr * name, socklen_t namelen)
 	struct sockaddr tmpname;
 	int             errnolen, ret, tmpnamelen;
 
+	/* This is a cancellation point: */
+	_thread_enter_cancellation_point();
+
 	if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
 		if ((ret = _thread_sys_connect(fd, name, namelen)) < 0) {
 			if (!(_thread_fd_table[fd]->flags & O_NONBLOCK) &&
@@ -75,6 +78,10 @@ connect(int fd, const struct sockaddr * name, socklen_t namelen)
 		}
 		_FD_UNLOCK(fd, FD_RDWR);
 	}
+
+	/* No longer in a cancellation point: */
+	_thread_leave_cancellation_point();
+
 	return (ret);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cond.c,v 1.13 2002/06/04 00:09:07 deraadt Exp $	*/
+/*	$OpenBSD: uthread_cond.c,v 1.14 2003/12/23 19:31:05 brad Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -166,9 +166,11 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 	int	interrupted = 0;
 	int	seqno;
 
+	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
 	if (cond == NULL) {
+		/* No longer in a cancellation point: */
 		_thread_leave_cancellation_point();
 		return (EINVAL);
 	}
@@ -179,6 +181,7 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 	 */
 	if (*cond == NULL &&
 	    (rval = pthread_cond_init(cond, NULL)) != 0) {
+		/* No longer in a cancellation point: */
 		_thread_leave_cancellation_point();
 		return (rval);
 	}
@@ -314,6 +317,7 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 			curthread->continuation((void *) curthread);
 	} while ((done == 0) && (rval == 0));
 
+	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */
@@ -330,11 +334,13 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 	int	interrupted = 0;
 	int	seqno;
 
+	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
 	if (cond == NULL ||
 	    abstime == NULL || abstime->tv_sec < 0 || abstime->tv_nsec < 0 ||
 	    abstime->tv_nsec >= 1000000000) {
+		/* No longer in a cancellation point: */
 		_thread_leave_cancellation_point();
 		return (EINVAL);
 	}
@@ -343,6 +349,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 	 * initialization.
 	 */
 	if (*cond == NULL && (rval = pthread_cond_init(cond, NULL)) != 0) {
+		/* No longer in a cancellation point: */
 		_thread_leave_cancellation_point();
 		return (rval);
 	}
@@ -490,6 +497,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 			curthread->continuation((void *) curthread);
 	} while ((done == 0) && (rval == 0));
 
+	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_recvmsg.c,v 1.4 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_recvmsg.c,v 1.5 2003/12/23 19:31:05 brad Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,6 +46,9 @@ recvmsg(int fd, struct msghdr *msg, int flags)
 	struct pthread	*curthread = _get_curthread();
 	int             ret;
 
+	/* This is a cancellation point: */
+	_thread_enter_cancellation_point();
+
 	if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
 		while ((ret = _thread_sys_recvmsg(fd, msg, flags)) < 0) {
 			if (!(_thread_fd_table[fd]->flags & O_NONBLOCK) && ((errno == EWOULDBLOCK) || (errno == EAGAIN))) {
@@ -70,6 +73,10 @@ recvmsg(int fd, struct msghdr *msg, int flags)
 		}
 		_FD_UNLOCK(fd, FD_READ);
 	}
+
+	/* No longer in a cancellation point: */
+	_thread_leave_cancellation_point();
+
 	return (ret);
 }
 #endif

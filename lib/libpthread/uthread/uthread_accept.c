@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_accept.c,v 1.7 2002/11/12 20:12:45 marc Exp $	*/
+/*	$OpenBSD: uthread_accept.c,v 1.8 2003/12/23 19:31:05 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,6 +46,9 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 {
 	struct pthread	*curthread = _get_curthread();
 	int             ret;
+
+	/* This is a cancellation point: */
+	_thread_enter_cancellation_point();
 
 	/* Lock the file descriptor: */
 	if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
@@ -101,6 +104,10 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 		/* Unlock the file descriptor: */
 		_FD_UNLOCK(fd, FD_RDWR);
 	}
+
+	/* No longer in a cancellation point: */
+	_thread_leave_cancellation_point();
+
 	/* Return the socket file descriptor or -1 on error: */
 	return (ret);
 }
