@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.55 2001/12/01 16:44:45 frantzen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.56 2001/12/10 18:08:12 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -296,10 +296,12 @@ print_host(struct pf_state_host *h, int af)
 	u_int16_t p = ntohs(h->port);
 
 	print_addr(&h->addr, NULL, af);
-	if (af == AF_INET)
-		printf(":%u", p);
-	else
-		printf("[%u]", p);
+	if (p) {
+		if (af == AF_INET)
+			printf(":%u", p);
+		else
+			printf("[%u]", p);
+	}
 }
 		
 
@@ -365,6 +367,13 @@ print_nat(struct pf_nat *n)
 			printf("! ");
 		printf("%s ", n->ifname);
 	}
+	if (n->proto) {
+		struct protoent *p = getprotobynumber(n->proto);
+		if (n != NULL)
+			printf("proto %s ", p->p_name);
+		else
+			printf("proto %u ", n->proto);
+	}
 	printf("from ");
 	if (!PF_AZERO(&n->saddr, n->af) || !PF_AZERO(&n->smask, n->af)) {
 		if (n->snot)
@@ -383,18 +392,6 @@ print_nat(struct pf_nat *n)
 		printf("any ");
 	printf("-> ");
 	print_addr(&n->raddr, NULL, n->af);
-	printf(" ");
-	switch (n->proto) {
-	case IPPROTO_TCP:
-		printf("proto tcp");
-		break;
-	case IPPROTO_UDP:
-		printf("proto udp");
-		break;
-	case IPPROTO_ICMP:
-		printf("proto icmp");
-		break;
-	}
 	printf("\n");
 }
 
@@ -406,16 +403,12 @@ print_binat(struct pf_binat *b)
 		printf("on ");
 		printf("%s ", b->ifname);
 	}
-	switch (b->proto) {
-	case IPPROTO_TCP:
-		printf("proto tcp ");
-		break;
-	case IPPROTO_UDP:
-		printf("proto udp ");
-		break;
-	case IPPROTO_ICMP:
-		printf("proto icmp ");
-		break;
+	if (b->proto) {
+		struct protoent *p = getprotobynumber(b->proto);
+		if (p != NULL)
+			printf("proto %s ", p->p_name);
+		else
+			printf("proto %u ", b->proto);
 	}
 	printf("from ");
 	print_addr(&b->saddr, NULL, b->af);
@@ -443,13 +436,12 @@ print_rdr(struct pf_rdr *r)
 			printf("! ");
 		printf("%s ", r->ifname);
 	}
-	switch (r->proto) {
-	case IPPROTO_TCP:
-		printf("proto tcp ");
-		break;
-	case IPPROTO_UDP:
-		printf("proto udp ");
-		break;
+	if (r->proto) {
+		struct protoent *p = getprotobynumber(r->proto);
+		if (p != NULL)
+			printf("proto %s ", p->p_name);
+		else
+			printf("proto %u ", r->proto);
 	}
 	printf("from ");
 	if (!PF_AZERO(&r->saddr, r->af) || !PF_AZERO(&r->smask, r->af)) {
@@ -467,15 +459,19 @@ print_rdr(struct pf_rdr *r)
 		printf(" ");
 	} else
 		printf("any ");
-	printf("port %u", ntohs(r->dport));
-	if (r->opts & PF_DPORT_RANGE)
-		printf(":%u", ntohs(r->dport2));
+	if (r->dport) {
+		printf("port %u", ntohs(r->dport));
+		if (r->opts & PF_DPORT_RANGE)
+			printf(":%u", ntohs(r->dport2));
+	}
 	printf(" -> ");
 	print_addr(&r->raddr, NULL, r->af);
 	printf(" ");
-	printf("port %u", ntohs(r->rport));
-	if (r->opts & PF_RPORT_RANGE)
-		printf(":*");
+	if (r->rport) {
+		printf("port %u", ntohs(r->rport));
+		if (r->opts & PF_RPORT_RANGE)
+			printf(":*");
+	}
 	printf("\n");
 }
 
@@ -534,6 +530,7 @@ void
 print_state(struct pf_state *s, int opts)
 {
 	struct pf_state_peer *src, *dst;
+	struct protoent *p;
 	u_int8_t hrs, min, sec;
 
 	if (s->direction == PF_OUT) {
@@ -543,21 +540,10 @@ print_state(struct pf_state *s, int opts)
 		src = &s->dst;
 		dst = &s->src;
 	}
-	switch (s->proto) {
-	case IPPROTO_TCP:
-		printf("TCP  ");
-		break;
-	case IPPROTO_UDP:
-		printf("UDP  ");
-		break;
-	case IPPROTO_ICMPV6:
-	case IPPROTO_ICMP:
-		printf("ICMP ");
-		break;
-	default:
-		printf("???? ");
-		break;
-	}
+	if ((p = getprotobynumber(s->proto)) != NULL)
+		printf("%s ", p->p_name);
+	else
+		printf("%u ", s->proto);
 	if (PF_ANEQ(&s->lan.addr, &s->gwy.addr, s->af) ||
 	    (s->lan.port != s->gwy.port)) {
 		print_host(&s->lan, s->af);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2001/12/05 17:11:54 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.47 2001/12/10 18:08:12 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -921,11 +921,21 @@ rdrrule		: RDR interface proto FROM ipspec TO ipspec dport ARROW address rport
 			rdr.rport  = $11.a;
 			rdr.opts  |= $11.t;
 
+			if (rdr.proto && rdr.proto != IPPROTO_TCP &&
+			    rdr.proto != IPPROTO_UDP &&
+			    (rdr.dport || rdr.dport2 || rdr.rport)) {
+				yyerror("rdr ports are only valid for proto tcp/udp");
+				YYERROR;
+			}
+
 			pfctl_add_rdr(pf, &rdr);
 		}
 		;
 
-dport		: PORT port			{
+dport		: /* empty */			{
+			$$.a = $$.b = $$.t = 0;
+		}
+		| PORT port			{
 			$$.a = $2;
 			$$.b = $$.t = 0;
 		}
@@ -936,7 +946,10 @@ dport		: PORT port			{
 		}
 		;
 
-rport		: PORT port			{
+rport		: /* empty */			{
+			$$.a = $$.b = $$.t = 0;
+		}
+		| PORT port			{
 			$$.a = $2;
 			$$.b = $$.t = 0;
 		}

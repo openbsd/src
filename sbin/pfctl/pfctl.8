@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.34 2001/10/11 00:53:21 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.35 2001/12/10 18:08:12 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -213,6 +213,12 @@ The state after the first packet.
 The state after an icmp error came back in response to an icmp packet.
 .El
 .Pp
+Other protocols are handled similarly to UDP:
+.Bl -tag -width "t other.multiple " -compact
+.It Fl t Ar other.first
+.It Fl t Ar other.single
+.It Fl t Ar other.multiple
+.El
 .Bd -literal
 Example:
     # Timeout established connections after an hour of inactivity
