@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.49 2004/10/11 10:30:33 espie Exp $
+# $OpenBSD: pkg_delete,v 1.50 2004/10/11 11:48:18 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -267,6 +267,8 @@ sub delete
 
 package OpenBSD::PackingElement::Sample;
 use OpenBSD::md5;
+use OpenBSD::Error;
+
 sub delete
 {
 	my ($self, $state) = @_;
@@ -275,7 +277,7 @@ sub delete
 
 	my $orig = $self->{copyfrom};
 	if (!defined $orig) {
-		die "\@sample element does not reference a valid file\n";
+		Fatal "\@sample element does not reference a valid file\n";
 	}
 	my $origname = $state->{destdir}.$orig->fullname();
 	if (! -e $realname) {
@@ -460,7 +462,7 @@ sub delete
 	unless ($opt_n) {
 		chmod 0755, $dir.REQUIRE;
 		System($dir.REQUIRE, $pkgname, "DEINSTALL") == 0 or 
-		    die "Require script borked";
+		    Fatal "Require script borked";
 	}
 }
 
@@ -481,7 +483,7 @@ sub delete
 	unless ($opt_n) {
 		chmod 0755, $dir.DEINSTALL;
 		System($dir.DEINSTALL, $pkgname, "DEINSTALL") == 0 or 
-		    die "deinstall script borked";
+		    Fatal "deinstall script borked";
 	}
 }
 
@@ -509,7 +511,7 @@ sub remove_packing_info
 	for my $fname (info_names()) {
 		unlink($dir.$fname);
 	}
-	rmdir($dir) or die "Can't finish removing directory $dir: $!";
+	rmdir($dir) or Fatal "Can't finish removing directory $dir: $!";
 }
 
 sub manpages_unindex
@@ -527,6 +529,24 @@ sub manpages_unindex
 	}
 }
 
+sub validate_plist($$)
+{
+	my ($plist, $destdir) = @_;
+
+	my $problems = 0;
+	for my $item (@{$plist->{items}}) {
+		next unless $item->IsFile();
+		my $fname = $destdir.$item->fullname();
+		my $s = OpenBSD::Vstat::remove($fname, $item->{size});
+		next unless defined $s;
+		if ($s->{ro}) {
+			Warn "Error: ", $s->{mnt}, " is read-only ($fname)\n";
+			$problems++;
+		}
+	}
+	Fatal "fatal issues" if $problems;
+}
+
 sub delete_package
 {
 	my ($pkgname, $state) = @_;
@@ -534,26 +554,15 @@ sub delete_package
 	my $dir = installed_info($pkgname);
 	$state->{dir} = $dir;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS) or 
-	    die "Bad package";
+	    Fatal "Bad package";
 	if (!defined $plist->pkgname()) {
-		die "Package $pkgname has no name";
+		Fatal "Package $pkgname has no name";
 	}
 	if ($plist->pkgname() ne $pkgname) {
-		die "Package $pkgname real name does not match";
+		Fatal "Package $pkgname real name does not match";
 	}
 
-	my $problems = 0;
-	for my $item (@{$plist->{items}}) {
-		next unless $item->IsFile();
-		my $fname = $item->fullname();
-		my $s = OpenBSD::Vstat::remove($fname, $item->{size});
-		next unless defined $s;
-		if ($s->{ro}) {
-			print "Error: ", $s->{mnt}, " is read-only ($fname)\n";
-			$problems++;
-		}
-	}
-	die if $problems;
+	validate_plist($plist, $state->{destdir});
 
 	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
 	if ($plist->has(REQUIRE)) {
@@ -598,10 +607,10 @@ $ENV{'PKG_DESTDIR'} = $opt_B;
 $opt_L = '/usr/local' unless defined $opt_L;
 
 if (defined $opt_p) {
-	die "Option p is obsolete";
+	Fatal "Option p is obsolete";
 }
 if (defined $opt_d) {
-	die "Option d is obsolete";
+	Fatal "Option d is obsolete";
 }
 
 if ($opt_f) {
@@ -609,7 +618,7 @@ if ($opt_f) {
 }
 
 if ($< && !$forced{nonroot}) {
-	die "$0 must be run as root";
+	Fatal "$0 must be run as root";
 }
 
 my %done;
