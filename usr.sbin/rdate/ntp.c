@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.20 2004/06/05 19:18:56 alexander Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.21 2004/06/09 07:15:56 alexander Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -64,11 +64,11 @@
 
 #define NTP_MODE_CLIENT       3		/* NTP client mode */
 #define NTP_MODE_SERVER       4		/* NTP server mode */
-#define NTP_VERSION           3		/* The current version */
+#define NTP_VERSION           4		/* The current version */
 #define NTP_VERSION_MIN       1		/* The minum valid version */
 #define NTP_VERSION_MAX       4		/* The maximum valid version */
 #define NTP_STRATUM_MIN       1		/* The minum valid stratum */
-#define NTP_STRATUM_MAX      15		/* The maximum valid stratum */
+#define NTP_STRATUM_MAX      14		/* The maximum valid stratum */
 #define NTP_INSANITY     3600.0		/* Errors beyond this are hopeless */
 
 #define NTP_PACKET_MIN       48		/* Without authentication */
@@ -92,32 +92,31 @@
 #define MILLION_D       1.0e6		/* Must be equal to MILLION_L */
 
 struct ntp_data {
-	u_char	status;
-	u_char	version;
-	u_char	mode;
-	u_char	stratum;
-	u_char	polling;
-	u_char	precision;
-	double	dispersion;
-	double	reference;
-	double	originate;
-	double	receive;
-	double	transmit;
-	double	current;
+	u_char		status;
+	u_char		version;
+	u_char		mode;
+	u_char		stratum;
+	double		receive;
+	double		transmit;
+	double		current;
+	u_int64_t	recvck;
 
-	u_int64_t xmitck;
-	u_int64_t recvck;
+	/* Local State */
+	double		originate;
+	u_int64_t	xmitck;
 };
 
 void	ntp_client(const char *, int, struct timeval *, struct timeval *, int);
 int	sync_ntp(int, const struct sockaddr *, double *, double *);
-void	make_packet(struct ntp_data *);
-int	write_packet(int, const struct sockaddr *, struct ntp_data *);
-int	read_packet(int, struct ntp_data *, double *, double *, double *);
-void	pack_ntp(u_char *, int, struct ntp_data *);
-void	unpack_ntp(struct ntp_data *, u_char *, int);
+int	write_packet(int, struct ntp_data *);
+int	read_packet(int, struct ntp_data *, double *, double *);
+void	unpack_ntp(struct ntp_data *, u_char *);
 double	current_time(double);
 void	create_timeval(double, struct timeval *, struct timeval *);
+
+#if DEBUG
+void	print_packet(const struct ntp_data *);
+#endif
 
 int	corrleaps;
 
@@ -127,7 +126,7 @@ ntp_client(const char *hostname, int family, struct timeval *new,
 {
 	struct addrinfo hints, *res0, *res;
 	double offset, error;
-	int packets = 0, s, ierror;
+	int accept = 0, ret, s, ierror;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = family;
@@ -148,8 +147,8 @@ ntp_client(const char *hostname, int family, struct timeval *new,
 		if (s < 0)
 			continue;
 
-		packets = sync_ntp(s, res->ai_addr, &offset, &error);
-		if (packets == 0) {
+		ret = sync_ntp(s, res->ai_addr, &offset, &error);
+		if (ret < 0) {
 #ifdef DEBUG
 			fprintf(stderr, "try the next address\n");
 #endif
@@ -157,10 +156,8 @@ ntp_client(const char *hostname, int family, struct timeval *new,
 			s = -1;
 			continue;
 		}
-		if (error > NTP_INSANITY) {
-			/* should we try the next address instead? */
-			errx(1, "Unable to get a reasonable time estimate");
-		}
+
+		accept++;
 		break;
 	}
 	freeaddrinfo(res0);
@@ -169,6 +166,10 @@ ntp_client(const char *hostname, int family, struct timeval *new,
 	fprintf(stderr,"Correction: %.6f +/- %.6f\n", offset,error);
 #endif
 
+	if (accept < 1) {
+		errx(1, "Unable to get a reasonable time estimate");
+	}
+
 	create_timeval(offset, new, adjust);
 }
 
@@ -176,35 +177,52 @@ int
 sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 {
 	int attempts = 0, accepts = 0, rejects = 0;
-	int delay = MAX_DELAY;
+	int delay = MAX_DELAY, ret;
 	double deadline;
 	double a, b, x, y;
 	double minerr = 0.1;		/* Maximum ignorable variation */
-	double dispersion = 0.0;	/* The source dispersion in seconds */
 	struct ntp_data data;
 
 	deadline = current_time(JAN_1970) + delay;
 	*offset = 0.0;
 	*error = NTP_INSANITY;
 
+	if (connect(fd, peer, SA_LEN(peer)) < 0) {
+		warn("Failed to connect to server");
+		return -1;
+	}
+
 	while (accepts < MAX_QUERIES && attempts < 2 * MAX_QUERIES) {
-		if (current_time(JAN_1970) > deadline)
-			errx(1, "Not enough valid responses received in time");
+		memset(&data, 0, sizeof(data));
 
-		make_packet(&data);
-		write_packet(fd, peer, &data);
+		if (current_time(JAN_1970) > deadline) {
+			warnx("Not enough valid responses received in time");
+			return -1;
+		}
 
-		if (read_packet(fd, &data, &x, &y, &dispersion)) {
-			if (++rejects > MAX_QUERIES)
-				errx(1, "Too many bad or lost packets");
-			else
-			  continue;
+		if (write_packet(fd, &data) < 0)
+			return -1;
+
+		ret = read_packet(fd, &data, &x, &y);
+
+		if (ret < 0)
+			return -1;
+		else if (ret > 0) {
+#ifdef DEBUG
+			print_packet(&data);
+#endif
+
+			if (++rejects > MAX_QUERIES) {
+				warnx("Too many bad or lost packets");
+				return -1;
+			} else
+				continue;
 		} else
 			++accepts;
 
 #ifdef DEBUG
-		fprintf(stderr,"Offset: %.6f +/- %.6f disp=%.6f\n",
-		    x, y, dispersion);
+		fprintf(stderr,"Offset: %.6f +/- %.6f\n",
+			x, y);
 #endif
 
 		if ((a = x - *offset) < 0.0)
@@ -221,8 +239,10 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 		fprintf(stderr,"Best: %.6f +/- %.6f\n", *offset, *error);
 #endif
 
-		if (a > b)
-			errx(1, "Inconsistent times received from NTP server");
+		if (a > b) {
+			warnx("Inconsistent times received from NTP server");
+			return -1;
+		}
 
 		if (*error <= minerr)
 			break;
@@ -231,21 +251,18 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 	return accepts;
 }
 
-/* Create an outgoing NTP packet */
-void
-make_packet(struct ntp_data *data)
+/* Send out NTP packet. */
+int
+write_packet(int fd, struct ntp_data *data)
 {
-	data->status = STATUS_NOWARNING;
-	data->version = NTP_VERSION;
-	data->mode = NTP_MODE_CLIENT;
-	data->stratum = 0;
-	data->polling = 0;
-	data->precision = 0;
-	data->reference = data->dispersion = 0.0;
-	data->receive = 0.0;
-	data->current = data->transmit = current_time(JAN_1970);
-	data->originate = data->transmit;
+	u_char	packet[NTP_PACKET_MIN];
+	ssize_t	length;
 
+	memset(packet, 0, sizeof(packet));
+
+	packet[0] = (NTP_VERSION << 3) | (NTP_MODE_CLIENT);
+
+	data->xmitck = (u_int64_t)arc4random() << 32 | arc4random();
 
 	/*
 	 * Send out a random 64-bit number as our transmit time.  The NTP
@@ -258,23 +275,20 @@ make_packet(struct ntp_data *data)
 	 * getting spoofed by an attacker that can't capture our traffic
 	 * but can spoof packets from the NTP server we're communicating with.
 	 *
+	 * No endian concerns here.  Since we're running as a strict
+	 * unicast client, we don't have to worry about anyone else finding
+	 * the transmit field intelligible.
 	 */
 
-	data->xmitck = ((u_int64_t)arc4random() << 32) | arc4random();
-	data->recvck = 0;
-}
+	*(u_int64_t *)(packet + NTP_TRANSMIT) = data->xmitck;
 
-int
-write_packet(int fd, const struct sockaddr *peer, struct ntp_data *data)
-{
-	u_char	transmit[NTP_PACKET_MIN];
-	ssize_t	length;
+	data->originate = current_time(JAN_1970);
 
-	pack_ntp(transmit, NTP_PACKET_MIN, data);
-	length = sendto(fd, transmit, NTP_PACKET_MIN, 0, peer, SA_LEN(peer));
-	if (length == -1) {
-		warnx("Unable to send NTP packet to server");
-		return 1;
+	length = write(fd, packet, sizeof(packet));
+
+	if (length != sizeof(packet)) {
+		warn("Unable to send NTP packet to server");
+		return -1;
 	}
 
 	return 0;
@@ -287,14 +301,13 @@ write_packet(int fd, const struct sockaddr *peer, struct ntp_data *data)
  * if it fails.
  */
 int
-read_packet(int fd, struct ntp_data *data, double *off, double *error,
-    double *dispersion)
+read_packet(int fd, struct ntp_data *data, double *off, double *error)
 {
-	u_char	receive[NTP_PACKET_MAX+1];
-	double	delay, x, y;
+	u_char	receive[NTP_PACKET_MAX];
+	struct	timeval tv;
+	double	x, y;
 	int	length, r;
 	fd_set	*rfds;
-	struct	timeval tv;
 
 	rfds = (fd_set *)calloc(howmany(fd + 1, NFDBITS), sizeof(fd_mask));
 	if (!rfds) {
@@ -309,22 +322,31 @@ retry:
 	tv.tv_usec = 1000000 * MAX_DELAY / MAX_QUERIES;
 
 	r = select(fd + 1, rfds, NULL, NULL, &tv);
-	if (r < 1 || !FD_ISSET(fd, rfds)) {
-		if (r < 0) {
-			if (errno == EINTR)
-				goto retry;
-			else
-				warnx("select() failed");
-		}
+
+	if (r < 0) {
+		if (errno == EINTR)
+			goto retry;
+		else
+			warn("select");
+
 		free(rfds);
+
+		return r;
+	}
+
+	if (r != 1 || !FD_ISSET(fd, rfds)) {
+		free(rfds);
+
 		return 1;
 	}
+
 	free(rfds);
 
-	length = recvfrom(fd, receive, NTP_PACKET_MAX + 1, 0, NULL, 0);
+	length = read(fd, receive, NTP_PACKET_MAX);
+
 	if (length < 0) {
-		warnx("Unable to receive NTP packet from server");
-		return 1;
+		warn("Unable to receive NTP packet from server");
+		return -1;
 	}
 
 	if (length < NTP_PACKET_MIN || length > NTP_PACKET_MAX) {
@@ -332,16 +354,16 @@ retry:
 		return 1;
 	}
 
-	unpack_ntp(data, receive, length);
+	unpack_ntp(data, receive);
 
 	if (data->recvck != data->xmitck) {
 		warnx("Invalid cookie received, packet rejected");
 		return 1;
 	}
 
-	if (data->version < NTP_VERSION_MIN ||
-	    data->version > NTP_VERSION_MAX) {
-		warnx("Invalid NTP version, packet rejected");
+	if (data->version != NTP_VERSION) {
+		warnx("Received different NTP version than sent,"
+		      "packet rejected");
 		return 1;
 	}
 
@@ -350,76 +372,34 @@ retry:
 		return 1;
 	}
 
+	if (data->stratum < NTP_STRATUM_MIN ||
+	    data->stratum > NTP_STRATUM_MAX) {
+		warnx("Invalid stratum received, packet rejected");
+		return 1;
+	}
+
 	if (data->status == STATUS_ALARM) {
 		warnx("Server clock not synchronized, packet rejected");
 		return 1;
 	}
 
-	/*
-	 * Note that the conventions are very poorly defined in the NTP
-	 * protocol, so we have to guess.  Any full NTP server perpetrating
-	 * completely unsynchronised packets is an abomination, anyway, so
-	 * reject it.
-	 */
-	delay = data->transmit - data->receive;
-
-	if (data->reference == 0.0 ||
-	    data->transmit == 0.0 ||
-	    data->receive == 0.0 ||
-	    (data->reference != 0.0 && data->receive < data->reference) ||
-	    delay < 0.0 ||
-	    delay > NTP_INSANITY ||
-	    data->dispersion > NTP_INSANITY) {
-		warnx("Incomprehensible NTP packet rejected");
+	if (data->transmit == 0.0) {
+		warnx("Server clock invalid, packet rejected");
 		return 1;
 	}
 
-	if (*dispersion < data->dispersion)
-		*dispersion = data->dispersion;
-
 	x = data->receive - data->originate;
-	y = (data->transmit == 0.0 ? 0.0 : data->transmit-data->current);
-	*off = 0.5*(x+y);
-	*error = x-y;
-	x = data->current - data->originate;
-	if (0.5*x > *error)
-		*error = 0.5*x;
+	y = data->transmit - data->current;
+
+	*off = (x + y) / 2;
+	*error = x - y;
+
+	x = (data->current - data->originate) / 2;
+
+	if (x > *error)
+		*error = x;
 
 	return 0;
-}
-
-/*
- * Pack the essential data into an NTP packet, bypassing struct layout
- * and endian problems.  Note that it ignores fields irrelevant to
- * SNTP.
- */
-void
-pack_ntp(u_char	*packet, int length, struct ntp_data *data)
-{
-	int i, k;
-	double d;
-
-	memset(packet,0, (size_t)length);
-
-	packet[0] = (data->status<<6)|(data->version<<3)|data->mode;
-	packet[1] = data->stratum;
-	packet[2] = data->polling;
-	packet[3] = data->precision;
-
-	d = data->receive/NTP_SCALE;
-	for (i = 0; i < 8; ++i) {
-		if ((k = (int)(d *= 256.0)) >= 256) k = 255;
-		packet[NTP_RECEIVE+i] = k;
-		d -= k;
-	}
-
-	/*
-	 * No endian concerns here.  Since we're running as a strict
-	 * unicast client, we don't have to worry about anyone else finding
-	 * this field intelligible.
-	 */
-
-	*(u_int64_t *)(packet + NTP_TRANSMIT) = data->xmitck;
 }
 
 /*
@@ -428,7 +408,7 @@ pack_ntp(u_char	*packet, int length, struct ntp_data *data)
  * to SNTP.
  */
 void
-unpack_ntp(struct ntp_data *data, u_char *packet, int length)
+unpack_ntp(struct ntp_data *data, u_char *packet)
 {
 	int i;
 	double d;
@@ -436,19 +416,9 @@ unpack_ntp(struct ntp_data *data, u_char *packet, int length)
 	data->current = current_time(JAN_1970);
 
 	data->status = (packet[0] >> 6);
-	data->version = (packet[0] >> 3)&0x07;
-	data->mode = packet[0]&0x07;
+	data->version = (packet[0] >> 3) & 0x07;
+	data->mode = packet[0] & 0x07;
 	data->stratum = packet[1];
-	data->polling = packet[2];
-	data->precision = packet[3];
-
-	for (i = 0, d = 0.0; i < 4; ++i)
-	    d = 256.0*d+packet[NTP_DISP_FIELD+i];
-	data->dispersion = d/65536.0;
-
-	for (i = 0, d = 0.0; i < 8; ++i)
-	    d = 256.0*d+packet[NTP_REFERENCE+i];
-	data->reference = d/NTP_SCALE;
 
 	for (i = 0, d = 0.0; i < 8; ++i)
 	    d = 256.0*d+packet[NTP_RECEIVE+i];
@@ -458,7 +428,7 @@ unpack_ntp(struct ntp_data *data, u_char *packet, int length)
 	    d = 256.0*d+packet[NTP_TRANSMIT+i];
 	data->transmit = d/NTP_SCALE;
 
-	/* See unpack_ntp for why there is no byte-order change. */
+	/* See write_packet for why this isn't an endian problem. */
 	data->recvck = *(u_int64_t *)(packet + NTP_ORIGINATE);
 }
 
@@ -526,14 +496,10 @@ print_packet(const struct ntp_data *data)
 	printf("version:     %u\n", data->version);
 	printf("mode:        %u\n", data->mode);
 	printf("stratum:     %u\n", data->stratum);
-	printf("polling:     %u\n", data->polling);
-	printf("precision:   %u\n", data->precision);
-	printf("dispersion:  %e\n", data->dispersion);
-	printf("reference:   %e\n", data->reference);
-	printf("originate:   %e\n", data->originate);
-	printf("receive:     %e\n", data->receive);
-	printf("transmit:    %e\n", data->transmit);
-	printf("current:     %e\n", data->current);
+	printf("originate:   %f\n", data->originate);
+	printf("receive:     %f\n", data->receive);
+	printf("transmit:    %f\n", data->transmit);
+	printf("current:     %f\n", data->current);
 	printf("xmitck:      0x%0llX\n", data->xmitck);
 	printf("recvck:      0x%0llX\n", data->recvck);
 };
