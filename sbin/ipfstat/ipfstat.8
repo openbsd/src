@@ -1,5 +1,5 @@
-.\"     $OpenBSD: ipfstat.8,v 1.12 1999/07/04 15:34:52 aaron Exp $
-.Dd 13 June, 1999
+.\"     $OpenBSD: ipfstat.8,v 1.13 1999/07/04 16:06:38 aaron Exp $
+.Dd June 13, 1999
 .Os
 .Dt ipfstat 8
 .Sh NAME
@@ -10,7 +10,7 @@
 .Op Fl aAfhIinosv
 .Op Fl d Ar device
 .Sh DESCRIPTION
-By default
+By default,
 .Nm
 displays current kernel statistics gathered
 as a result of applying the filters in place (if any) to packets going through
@@ -39,8 +39,8 @@ and the kernel itself.
 .Sh OPTIONS
 .Bl -tag -width "-d device"
 .It Fl a
-Display the accounting filter list and show bytes counted against each rule. Used
-with
+Display the accounting filter list and show bytes counted against each rule.
+Used with
 .Fl i
 or
 .Fl o .
@@ -57,7 +57,7 @@ Show fragment state information (statistics) and held state information (in
 the kernel) if any is present.
 .It Fl h
 Show per-rule the number of times each one scores a
-.Sq hit .
+.Dq hit .
 For use in
 combination with
 .Fl i .
@@ -65,9 +65,9 @@ combination with
 Display the filter list used for the input side of the kernel IP processing.
 .It Fl I
 Swap between retrieving
-.Sq inactive
-/
-.Sq active
+.Dq inactive
+and
+.Dq active
 filter list details. For use in combination with
 .Fl i .
 .It Fl n
@@ -81,13 +81,16 @@ the kernel) if any is present.
 Turn verbose mode on. Displays more debugging information.
 .El
 .Sh FILES
-.Pa /dev/kmem
-.br
-.Pa /dev/ipl
-.br
-.Pa /dev/ipstate
-.br
-.Pa /bsd
+.Bl -tag -width /dev/ipstate -compact
+.It Pa /bsd
+default system
+.It Pa /dev/kmem
+default kernel memory
+.It Pa /dev/ipl
+IP packet logging pseudo-device
+.It Pa /dev/ipstate
+IP filter state device
+.El
 .Sh SEE ALSO
 .Xr ipftest 1 ,
 .Xr ipf 4 ,
@@ -102,3 +105,4 @@ Turn verbose mode on. Displays more debugging information.
 http://coombs.anu.edu.au/ipfilter/
 .Sh BUGS
 If you find any, please send email to me at darrenr@pobox.com.
+
