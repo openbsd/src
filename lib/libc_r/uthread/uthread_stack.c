@@ -1,4 +1,5 @@
-/*	$OpenBSD: uthread_stack.c,v 1.2 1999/11/25 19:00:19 deraadt Exp $	*/
+/*	$OpenBSD: uthread_stack.c,v 1.3 1999/11/26 00:53:21 d Exp $	*/
+/* David Leonard <david.leonard@csee.uq.edu.au> 1999.
 
 /*
  * Thread stack allocation.
@@ -28,7 +29,7 @@ _thread_stack_alloc(base, size)
 	int nbpg = getpagesize();
 
 	/* Maintain a queue of default-sized stacks that we can re-use. */
-	if (size == PTHREAD_STACK_DEFAULT) {
+	if (base == NULL && size == PTHREAD_STACK_DEFAULT) {
 		if (pthread_mutex_lock(&_gc_mutex) != 0)
 			PANIC("Cannot lock gc mutex");
 
