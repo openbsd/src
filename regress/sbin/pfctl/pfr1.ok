@@ -55,7 +55,6 @@ A  1.1.1.2
 # pass list 
 regress
 # pass list -v
------h	regress
 -pa---	regress	regress:regress
 # kill
 1 tables deleted.
