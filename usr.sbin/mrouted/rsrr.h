@@ -93,7 +93,7 @@ struct rsrr_header {
  *
  * We explicitly list the ID because we can't assume that all routing
  * protocols will use the same numbering scheme.
- * 
+ *
  * The status is a bitmask of status flags, as defined above.  It is the
  * responsibility of the reservation protocol to perform any status checks
  * if it uses the MULTICAST_VIF socket option.
@@ -113,13 +113,13 @@ struct rsrr_vif {
 };
 
 /* Definition of an RSRR Route Query.
- * 
+ *
  * The query asks routing for the forwarding entry for a particular
  * source and destination.  The query ID uniquely identifies the query
  * for the reservation protocol.  Thus, the combination of the client's
  * address and the query ID forms a unique identifier for routing.
  * Flags are defined above.
- */ 
+ */
 struct rsrr_rq {
     struct in_addr dest_addr;		/* destination */
     struct in_addr source_addr;		/* source */

@@ -107,7 +107,7 @@ stmts	: /* Empty */
 	;
 
 stmt	: error
-	| PHYINT interface 		{
+	| PHYINT interface		{
 
 			vifi_t vifi;
 
@@ -120,7 +120,7 @@ stmt	: error
 			    if (!(v->uv_flags & VIFF_TUNNEL) &&
 				$2 == v->uv_lcl_addr)
 				break;
-			
+
 			if (vifi == numvifs)
 			    fatal("%s is not a configured interface",
 				inet_fmt($2,s1));
@@ -525,7 +525,7 @@ yylex()
 	}
 	if (sscanf(q,"%[.0-9]%c",s1,s2) == 1) {
 		if ((addr = inet_parse(s1)) != 0xffffffff &&
-		    inet_valid_host(addr)) { 
+		    inet_valid_host(addr)) {
 			yylval.addr = addr;
 			return ADDR;
 		}

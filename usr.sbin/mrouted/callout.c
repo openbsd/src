@@ -19,16 +19,16 @@ static int in_callout = 0;
 
 struct timeout_q {
 	struct timeout_q *next;		/* next event */
-	int        	 id;  
-	cfunc_t          func;    	/* function to call */
-	char	   	 *data;		/* func's data */
-	int            	 time;		/* time offset to next event*/
+	int		 id;
+	cfunc_t          func;		/* function to call */
+	char		 *data;		/* func's data */
+	int		 time;		/* time offset to next event*/
 };
 
 #ifdef IGMP_DEBUG
 static void print_Q(void);
 #else
-#define	print_Q()	
+#define	print_Q()
 #endif
 
 void
@@ -45,13 +45,13 @@ void
 age_callout_queue(void)
 {
     struct timeout_q *ptr;
-    
+
     if (in_callout)
 	return;
 
     in_callout = 1;
     ptr = Q;
-    
+
     while (ptr) {
 	if (!ptr->time) {
 	    /* timeout has happened */
@@ -61,7 +61,7 @@ age_callout_queue(void)
 	    if (ptr->func)
 		ptr->func(ptr->data);
 	    in_callout = 1;
-	    
+
 	    free(ptr);
 	    ptr = Q;
 	}
@@ -78,49 +78,49 @@ age_callout_queue(void)
 }
 
 
-/* 
+/*
  * sets the timer
  * delay	number of units for timeout
  * action	function to be called on timeout
- * data 	what to call the timeout function with
+ * data		what to call the timeout function with
  */
 int
 timer_setTimer(int delay, cfunc_t action, char *data)
 {
     struct     timeout_q  *ptr, *node, *prev;
-    
+
     if (in_callout)
 	return -1;
 
     in_callout = 1;
-    
-    /* create a node */	
+
+    /* create a node */
     node = (struct timeout_q *)malloc(sizeof(struct timeout_q));
     if (node == 0) {
 	log(LOG_WARNING, 0, "Malloc Failed in timer_settimer\n");
 	in_callout = 0;
 	return -1;
     }
-    node->func = action; 
+    node->func = action;
     node->data = data;
-    node->time = delay; 
-    node->next = 0;	
+    node->time = delay;
+    node->next = 0;
     node->id   = ++id;
-    
+
     prev = ptr = Q;
-    
+
     /* insert node in the queue */
-    
+
     /* if the queue is empty, insert the node and return */
     if (!Q)
 	Q = node;
     else {
 	/* chase the pointer looking for the right place */
 	while (ptr) {
-	    
+
 	    if (delay < ptr->time) {
 		/* right place */
-		
+
 		node->next = ptr;
 		if (ptr == Q)
 		    Q = node;
@@ -132,7 +132,7 @@ timer_setTimer(int delay, cfunc_t action, char *data)
 		return node->id;
 	    } else  {
 		/* keep moving */
-		
+
 		delay -= ptr->time; node->time = delay;
 		prev = ptr;
 		ptr = ptr->next;
@@ -151,36 +151,36 @@ void
 timer_clearTimer(int timer_id)
 {
     struct timeout_q  *ptr, *prev;
-    
+
     if (in_callout)
         return;
     if (!timer_id)
 	return;
 
     in_callout = 1;
-    
+
     prev = ptr = Q;
-    
+
     /*
      * find the right node, delete it. the subsequent node's time
      * gets bumped up
      */
-    
+
     print_Q();
     while (ptr) {
 	if (ptr->id == timer_id) {
 	    /* got the right node */
-	    
+
 	    /* unlink it from the queue */
 	    if (ptr == Q)
 		Q = Q->next;
 	    else
 		prev->next = ptr->next;
-	    
+
 	    /* increment next node if any */
 	    if (ptr->next != 0)
 		(ptr->next)->time += ptr->time;
-	    
+
 	    free(ptr->data);
 	    free(ptr);
 	    print_Q();
@@ -202,7 +202,7 @@ static void
 print_Q(void)
 {
     struct timeout_q  *ptr;
-    
+
     for(ptr = Q; ptr; ptr = ptr->next)
 	log(LOG_DEBUG,0,"(%d,%d) ", ptr->id, ptr->time);
 }

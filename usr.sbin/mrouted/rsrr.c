@@ -61,7 +61,7 @@
  */
 int rsrr_socket;			/* interface to reservation protocol */
 
-/* 
+/*
  * Global RSRR variables.
  */
 char rsrr_recv_buf[RSRR_MAX_LEN];	/* RSRR receive buffer */
@@ -102,7 +102,7 @@ rsrr_init()
 #else
     servlen = sizeof(serv_addr.sun_family) + strlen(serv_addr.sun_path);
 #endif
- 
+
     if (bind(rsrr_socket, (struct sockaddr *) &serv_addr, servlen) < 0)
 	log(LOG_ERR, errno, "Can't bind RSRR socket");
 
@@ -118,11 +118,11 @@ rsrr_read(f, rfd)
 {
     int rsrr_recvlen;
     sigset_t mask, omask;
-    
+
     bzero((char *) &client_addr, sizeof(client_addr));
     rsrr_recvlen = recvfrom(rsrr_socket, rsrr_recv_buf, sizeof(rsrr_recv_buf),
 			    0, (struct sockaddr *)&client_addr, &client_length);
-    if (rsrr_recvlen < 0) {	
+    if (rsrr_recvlen < 0) {
 	if (errno != EINTR)
 	    log(LOG_ERR, errno, "RSRR recvfrom");
 	return;
@@ -144,23 +144,23 @@ rsrr_accept(recvlen)
 {
     struct rsrr_header *rsrr;
     struct rsrr_rq *route_query;
-    
+
     if (recvlen < RSRR_HEADER_LEN) {
 	log(LOG_WARNING, 0,
 	    "Received RSRR packet of %d bytes, which is less than min size",
 	    recvlen);
 	return;
     }
-    
+
     rsrr = (struct rsrr_header *) rsrr_recv_buf;
-    
+
     if (rsrr->version > RSRR_MAX_VERSION) {
 	log(LOG_WARNING, 0,
 	    "Received RSRR packet version %d, which I don't understand",
 	    rsrr->version);
 	return;
     }
-    
+
     switch (rsrr->version) {
       case 1:
 	switch (rsrr->type) {
@@ -194,7 +194,7 @@ rsrr_accept(recvlen)
 	    break;
 	}
 	break;
-	
+
       default:
 	log(LOG_WARNING, 0,
 	    "Received RSRR packet version %d, which I don't understand",
@@ -211,7 +211,7 @@ rsrr_accept_iq()
     struct rsrr_vif *vif_list;
     struct uvif *v;
     int vifi, sendlen;
-    
+
     /* Check for space.  There should be room for plenty of vifs,
      * but we should check anyway.
      */
@@ -221,16 +221,16 @@ rsrr_accept_iq()
 	    numvifs);
 	return;
     }
-    
+
     /* Set up message */
     rsrr = (struct rsrr_header *) rsrr_send_buf;
     rsrr->version = 1;
     rsrr->type = RSRR_INITIAL_REPLY;
     rsrr->flags = 0;
     rsrr->num = numvifs;
-    
+
     vif_list = (struct rsrr_vif *) (rsrr_send_buf + RSRR_HEADER_LEN);
-    
+
     /* Include the vif list. */
     for (vifi=0, v = uvifs; vifi < numvifs; vifi++, v++) {
 	vif_list[vifi].id = vifi;
@@ -240,10 +240,10 @@ rsrr_accept_iq()
 	vif_list[vifi].threshold = v->uv_threshold;
 	vif_list[vifi].local_addr.s_addr = v->uv_lcl_addr;
     }
-    
+
     /* Get the size. */
     sendlen = RSRR_HEADER_LEN + numvifs*RSRR_VIF_LEN;
-    
+
     /* Send it. */
     log(LOG_INFO, 0, "Send RSRR Initial Reply");
     rsrr_send(sendlen);
@@ -268,24 +268,24 @@ rsrr_accept_rq(route_query,flags,gt_notify)
     struct rtentry *r;
     int sendlen,i;
     u_long mcastgrp;
-    
+
     /* Set up message */
     rsrr = (struct rsrr_header *) rsrr_send_buf;
     rsrr->version = 1;
     rsrr->type = RSRR_ROUTE_REPLY;
     rsrr->flags = 0;
     rsrr->num = 0;
-    
+
     route_reply = (struct rsrr_rr *) (rsrr_send_buf + RSRR_HEADER_LEN);
     route_reply->dest_addr.s_addr = route_query->dest_addr.s_addr;
     route_reply->source_addr.s_addr = route_query->source_addr.s_addr;
     route_reply->query_id = route_query->query_id;
-    
+
     /* Blank routing entry for error. */
     route_reply->in_vif = 0;
     route_reply->reserved = 0;
     route_reply->out_vif_bm = 0;
-    
+
     /* Get the size. */
     sendlen = RSRR_RR_LEN;
 
@@ -305,7 +305,7 @@ rsrr_accept_rq(route_query,flags,gt_notify)
 
 	/* Found kernel entry. Code taken from add_table_entry() */
 	gt = gtp ? gtp->gt_gnext : kernel_table;
-	
+
 	/* Include the routing entry. */
 	route_reply->in_vif = gt->gt_route->rt_parent;
 	route_reply->out_vif_bm = gt->gt_grpmems;
@@ -315,11 +315,11 @@ rsrr_accept_rq(route_query,flags,gt_notify)
 	    rsrr_cache(gt,route_query);
 	    BIT_SET(rsrr->flags,RSRR_NOTIFICATION_BIT);
 	}
-	
+
     } else {
 	/* No kernel entry; use routing table. */
 	r = determine_route(route_query->source_addr.s_addr);
-	
+
 	if (r != NULL) {
 	    /* We need to mimic what will happen if a data packet
 	     * is forwarded by multicast routing -- the kernel will
@@ -328,28 +328,28 @@ rsrr_accept_rq(route_query,flags,gt_notify)
 	     * will look like.  Grab code from add_table_entry().
 	     * This is gross, but it's probably better to be accurate.
 	     */
-	    
+
 	    gt = &local_g;
 	    mcastgrp = route_query->dest_addr.s_addr;
-	    
-	    gt->gt_mcastgrp    	= mcastgrp;
+
+	    gt->gt_mcastgrp	= mcastgrp;
 	    gt->gt_grpmems	= 0;
 	    gt->gt_scope	= 0;
 	    gt->gt_route        = r;
-	    
+
 	    /* obtain the multicast group membership list */
 	    for (i = 0; i < numvifs; i++) {
-		if (VIFM_ISSET(i, r->rt_children) && 
+		if (VIFM_ISSET(i, r->rt_children) &&
 		    !(VIFM_ISSET(i, r->rt_leaves)))
 		    VIFM_SET(i, gt->gt_grpmems);
-		
+
 		if (VIFM_ISSET(i, r->rt_leaves) && grplst_mem(i, mcastgrp))
 		    VIFM_SET(i, gt->gt_grpmems);
 	    }
-	    
+
 	    GET_SCOPE(gt);
 	    gt->gt_grpmems &= ~gt->gt_scope;
-	    
+
 	    /* Include the routing entry. */
 	    route_reply->in_vif = gt->gt_route->rt_parent;
 	    route_reply->out_vif_bm = gt->gt_grpmems;
@@ -359,7 +359,7 @@ rsrr_accept_rq(route_query,flags,gt_notify)
 	    BIT_SET(rsrr->flags,RSRR_ERROR_BIT);
 	}
     }
-    
+
     if (gt_notify)
 	log(LOG_INFO, 0, "Route Change: Send RSRR Route Reply");
 
@@ -370,7 +370,7 @@ rsrr_accept_rq(route_query,flags,gt_notify)
 	inet_fmt(route_reply->source_addr.s_addr,s1),
 	inet_fmt(route_reply->dest_addr.s_addr,s2),
 	route_reply->in_vif,route_reply->out_vif_bm);
-    
+
     /* Send it. */
     return rsrr_send(sendlen);
 }
@@ -381,11 +381,11 @@ rsrr_send(sendlen)
     int sendlen;
 {
     int error;
-    
+
     /* Send it. */
     error = sendto(rsrr_socket, rsrr_send_buf, sendlen, 0,
 		   (struct sockaddr *)&client_addr, client_length);
-    
+
     /* Check for errors. */
     if (error < 0) {
 	log(LOG_WARNING, errno, "Failed send on RSRR socket");
@@ -411,9 +411,9 @@ rsrr_cache(gt,route_query)
 
     rcnp = &gt->gt_rsrr_cache;
     while ((rc = *rcnp) != NULL) {
-	if ((rc->route_query.source_addr.s_addr == 
+	if ((rc->route_query.source_addr.s_addr ==
 	     route_query->source_addr.s_addr) &&
-	    (rc->route_query.dest_addr.s_addr == 
+	    (rc->route_query.dest_addr.s_addr ==
 	     route_query->dest_addr.s_addr) &&
 	    (!strcmp(rc->client_addr.sun_path,client_addr.sun_path))) {
 	    /* Cache entry already exists.

@@ -16,8 +16,8 @@
 /*
  * Exported variables.
  */
-char		*recv_buf; 		     /* input packet buffer         */
-char		*send_buf; 		     /* output packet buffer        */
+char		*recv_buf;		     /* input packet buffer         */
+char		*send_buf;		     /* output packet buffer        */
 int		igmp_socket;		     /* socket for all network I/O  */
 u_int32_t	allhosts_group;		     /* All hosts addr in net order */
 u_int32_t	allrtrs_group;		     /* All-Routers "  in net order */
@@ -43,7 +43,7 @@ init_igmp(void)
     recv_buf = malloc(RECV_BUF_SIZE);
     send_buf = malloc(RECV_BUF_SIZE);
 
-    if ((igmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) < 0) 
+    if ((igmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) < 0)
 	log(LOG_ERR, errno, "IGMP socket");
 
     k_hdr_include(TRUE);	/* include IP header when sending */
@@ -66,7 +66,7 @@ init_igmp(void)
 
 #define PIM_QUERY        0
 #define PIM_REGISTER     1
-#define PIM_REGISTER_STOP 	2
+#define PIM_REGISTER_STOP	2
 #define PIM_JOIN_PRUNE   3
 #define PIM_RP_REACHABLE 4
 #define PIM_ASSERT       5
@@ -83,34 +83,34 @@ packet_kind(u_int type, u_int code)
 	case IGMP_HOST_LEAVE_MESSAGE:           return "leave message     ";
 	case IGMP_DVMRP:
 	  switch (code) {
-	    case DVMRP_PROBE:	    		return "neighbor probe    ";
-	    case DVMRP_REPORT:	    		return "route report      ";
-	    case DVMRP_ASK_NEIGHBORS:   	return "neighbor request  ";
-	    case DVMRP_NEIGHBORS:	    	return "neighbor list     ";
-	    case DVMRP_ASK_NEIGHBORS2:   	return "neighbor request 2";
-	    case DVMRP_NEIGHBORS2:	    	return "neighbor list 2   ";
+	    case DVMRP_PROBE:			return "neighbor probe    ";
+	    case DVMRP_REPORT:			return "route report      ";
+	    case DVMRP_ASK_NEIGHBORS:		return "neighbor request  ";
+	    case DVMRP_NEIGHBORS:		return "neighbor list     ";
+	    case DVMRP_ASK_NEIGHBORS2:		return "neighbor request 2";
+	    case DVMRP_NEIGHBORS2:		return "neighbor list 2   ";
 	    case DVMRP_PRUNE:			return "prune message     ";
 	    case DVMRP_GRAFT:			return "graft message     ";
 	    case DVMRP_GRAFT_ACK:		return "graft message ack ";
 	    case DVMRP_INFO_REQUEST:		return "info request      ";
 	    case DVMRP_INFO_REPLY:		return "info reply        ";
-	    default:	    			return "unknown DVMRP msg ";
+	    default:				return "unknown DVMRP msg ";
 	  }
- 	case IGMP_PIM:
- 	  switch (code) {
- 	    case PIM_QUERY:			return "PIM Router-Query  ";
- 	    case PIM_REGISTER:			return "PIM Register      ";
- 	    case PIM_REGISTER_STOP:		return "PIM Register-Stop ";
- 	    case PIM_JOIN_PRUNE:		return "PIM Join/Prune    ";
- 	    case PIM_RP_REACHABLE:		return "PIM RP-Reachable  ";
- 	    case PIM_ASSERT:			return "PIM Assert        ";
- 	    case PIM_GRAFT:			return "PIM Graft         ";
- 	    case PIM_GRAFT_ACK:			return "PIM Graft-Ack     ";
- 	    default:		    		return "unknown PIM msg   ";
- 	  }
+	case IGMP_PIM:
+	  switch (code) {
+	    case PIM_QUERY:			return "PIM Router-Query  ";
+	    case PIM_REGISTER:			return "PIM Register      ";
+	    case PIM_REGISTER_STOP:		return "PIM Register-Stop ";
+	    case PIM_JOIN_PRUNE:		return "PIM Join/Prune    ";
+	    case PIM_RP_REACHABLE:		return "PIM RP-Reachable  ";
+	    case PIM_ASSERT:			return "PIM Assert        ";
+	    case PIM_GRAFT:			return "PIM Graft         ";
+	    case PIM_GRAFT_ACK:			return "PIM Graft-Ack     ";
+	    default:				return "unknown PIM msg   ";
+	  }
 	case IGMP_MTRACE_QUERY:			return "IGMP trace query  ";
 	case IGMP_MTRACE_REPLY:			return "IGMP trace reply  ";
-	default:			    	return "unknown IGMP msg  ";
+	default:				return "unknown IGMP msg  ";
     }
 }
 
@@ -136,9 +136,9 @@ accept_igmp(int recvlen)
     src       = ip->ip_src.s_addr;
     dst       = ip->ip_dst.s_addr;
 
-    /* 
+    /*
      * this is most likely a message from the kernel indicating that
-     * a new src grp pair message has arrived and so, it would be 
+     * a new src grp pair message has arrived and so, it would be
      * necessary to install a route into the kernel for this.
      */
     if (ip->ip_p == 0) {
@@ -182,7 +182,7 @@ accept_igmp(int recvlen)
 	case IGMP_v2_HOST_MEMBERSHIP_REPORT:
 	    accept_group_report(src, dst, group, igmp->igmp_type);
 	    return;
-	    
+
 	case IGMP_HOST_LEAVE_MESSAGE:
 	    accept_leave_message(src, dst, group);
 	    return;
@@ -197,7 +197,7 @@ accept_igmp(int recvlen)
 		    return;
 
 		case DVMRP_REPORT:
- 		    accept_report(src, dst,
+		    accept_report(src, dst,
 				  (char *)(igmp+1), igmpdatalen, group);
 		    return;
 
@@ -248,8 +248,8 @@ accept_igmp(int recvlen)
 		    return;
 	    }
 
- 	case IGMP_PIM:
- 	    return;
+	case IGMP_PIM:
+	    return;
 
 	case IGMP_MTRACE_REPLY:
 	    return;

@@ -163,11 +163,11 @@
 #define DEFAULT_METRIC		1	/* default subnet/tunnel metric     */
 #define DEFAULT_THRESHOLD	1	/* default subnet/tunnel threshold  */
 
-#define MAX_RATE_LIMIT      	100000 	/* max rate limit      	    	    */
-#define DEFAULT_PHY_RATE_LIMIT  0 	/* default phyint rate limit  	    */
+#define MAX_RATE_LIMIT		100000	/* max rate limit		    */
+#define DEFAULT_PHY_RATE_LIMIT  0	/* default phyint rate limit	    */
 #define DEFAULT_TUN_RATE_LIMIT	500	/* default tunnel rate limit	    */
 
-#define DEFAULT_CACHE_LIFETIME 	300   	/* kernel route entry discard time  */
+#define DEFAULT_CACHE_LIFETIME	300	/* kernel route entry discard time  */
 #define GRAFT_TIMEOUT_VAL	5	/* retransmission time for grafts   */
 
 #define OLD_AGE_THRESHOLD	2

@@ -61,7 +61,7 @@ void k_set_if(u_int32_t ifa)
     if (setsockopt(igmp_socket, IPPROTO_IP, IP_MULTICAST_IF,
 		   (char *)&adr, sizeof(adr)) < 0)
 	log(LOG_ERR, errno, "setsockopt IP_MULTICAST_IF %s",
-	    		    inet_fmt(ifa, s1));
+			    inet_fmt(ifa, s1));
 }
 
 
@@ -201,7 +201,7 @@ int k_del_rg(u_int32_t origin, struct gtable *g)
     }
 
     return retval;
-}	
+}
 
 /*
  * Get the kernel's idea of what version of mrouted needs to run with it.

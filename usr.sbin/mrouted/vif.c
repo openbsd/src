@@ -17,9 +17,9 @@
  * Exported variables.
  */
 struct uvif	uvifs[MAXVIFS];	/* array of virtual interfaces		    */
-vifi_t		numvifs;	/* number of vifs in use	    	    */
-int		vifs_down;	/* 1=>some interfaces are down	    	    */
-int		phys_vif;	/* An enabled vif		    	    */
+vifi_t		numvifs;	/* number of vifs in use		    */
+int		vifs_down;	/* 1=>some interfaces are down		    */
+int		phys_vif;	/* An enabled vif			    */
 int		udp_socket;	/* Since the honkin' kernel doesn't support */
 				/* ioctls on raw IP sockets, we need a UDP  */
 				/* socket as well as our IGMP (raw) socket. */
@@ -88,8 +88,8 @@ init_vifs(void)
 	if (!(v->uv_flags & VIFF_DISABLED)) {
 	    ++enabled_vifs;
 	    if (!(v->uv_flags & VIFF_TUNNEL)) {
-    	    	if (phys_vif == -1)
-    	    	    phys_vif = vifi;
+		if (phys_vif == -1)
+		    phys_vif = vifi;
 		++enabled_phyints;
 	    }
 	}
@@ -301,7 +301,7 @@ start_vif2(vifi_t vifi)
 	 * query.
 	 */
 	v->uv_flags |= VIFF_QUERIER;
-	send_igmp(src, allhosts_group, IGMP_HOST_MEMBERSHIP_QUERY, 
+	send_igmp(src, allhosts_group, IGMP_HOST_MEMBERSHIP_QUERY,
 	      (v->uv_flags & VIFF_IGMPV1) ? 0 :
 	      IGMP_MAX_HOST_REPORT_DELAY * IGMP_TIMER_SCALE, 0, 0);
 	age_old_hosts();
@@ -483,7 +483,7 @@ query_groups(void)
     for (vifi = 0, v = uvifs; vifi < numvifs; vifi++, v++) {
 	if (v->uv_flags & VIFF_QUERIER) {
 	    send_igmp(v->uv_lcl_addr, allhosts_group,
-		      IGMP_HOST_MEMBERSHIP_QUERY, 
+		      IGMP_HOST_MEMBERSHIP_QUERY,
 		      (v->uv_flags & VIFF_IGMPV1) ? 0 :
 		      IGMP_MAX_HOST_REPORT_DELAY * IGMP_TIMER_SCALE, 0, 0);
 	}
@@ -566,7 +566,7 @@ accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group,
 		g->al_query = DeleteTimer(g->al_query);
 	    if (g->al_timerid)
 		g->al_timerid = DeleteTimer(g->al_timerid);
-	    g->al_timerid = SetTimer(vifi, g);	
+	    g->al_timerid = SetTimer(vifi, g);
 	    break;
 	}
     }
@@ -599,7 +599,7 @@ accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group,
 	update_lclgrp(vifi, group);
     }
 
-    /* 
+    /*
      * Check if a graft is necessary for this group
      */
     chkgrp_graft(vifi, group);
@@ -651,12 +651,12 @@ accept_leave_message(u_int32_t src, u_int32_t dst, u_int32_t group)
 	    /** send a group specific querry **/
 	    g->al_timer = LEAVE_EXPIRE_TIME;
 	    send_igmp(v->uv_lcl_addr, g->al_addr,
-		      IGMP_HOST_MEMBERSHIP_QUERY, 
+		      IGMP_HOST_MEMBERSHIP_QUERY,
 		      LEAVE_EXPIRE_TIME / 3 * IGMP_TIMER_SCALE,
 		      g->al_addr, 0);
 	    g->al_query = SetQueryTimer(g, vifi, g->al_timer / 3,
-			 	LEAVE_EXPIRE_TIME / 3 * IGMP_TIMER_SCALE);
-	    g->al_timerid = SetTimer(vifi, g);	
+				LEAVE_EXPIRE_TIME / 3 * IGMP_TIMER_SCALE);
+	    g->al_timerid = SetTimer(vifi, g);
 	    break;
 	}
     }
@@ -720,7 +720,7 @@ accept_neighbor_request(u_int32_t src, u_int32_t dst)
 	close(udp);
 	us = addr.sin_addr.s_addr;
     } else			/* query sent to us alone */
-	us = dst;	
+	us = dst;
 
 #define PUT_ADDR(a)	temp_addr = ntohl(a); \
 			*p++ = temp_addr >> 24; \
@@ -807,7 +807,7 @@ accept_neighbor_request2(u_int32_t src, u_int32_t dst)
 	close(udp);
 	us = addr.sin_addr.s_addr;
     } else			/* query sent to us alone */
-	us = dst;	
+	us = dst;
 
     p = (u_char *) (send_buf + MIN_IP_HEADER_LEN + IGMP_MINLEN);
     datalen = 0;
@@ -1034,7 +1034,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 
 	/*
 	 * update the neighbors version and protocol number
-	 * if changed => router went down and came up, 
+	 * if changed => router went down and came up,
 	 * so take action immediately.
 	 */
 	if ((n->al_pv != (level & 0xff)) ||
@@ -1045,7 +1045,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 		"version change neighbor %s [old:%d.%d, new:%d.%d]",
 		inet_fmt(addr, s1),
 		n->al_pv, n->al_mv, level&0xff, (level >> 8) & 0xff);
-	    
+
 	    n->al_pv = level & 0xff;
 	    n->al_mv = (level >> 8) & 0xff;
 	}
@@ -1126,13 +1126,13 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 		n->al_genid = genid;
 		do_reset = TRUE;
 	    }
-	    
-	    /* 
+
+	    /*
 	     * loop through router list and check for one-way ifs.
 	     */
-	    
+
 	    v->uv_flags |= VIFF_ONEWAY;
-	    
+
 	    while (datalen > 0) {
 		if (datalen < 4) {
 		    log(LOG_WARNING, 0,
@@ -1378,7 +1378,7 @@ DelVif(void *arg)
 
     anp = &(v->uv_groups);
     while ((a = *anp) != NULL) {
-    	if (a == g) {
+	if (a == g) {
 	    *anp = a->al_next;
 	    free((char *)a);
 	} else {

@@ -32,7 +32,7 @@ struct rtentry {
     u_char	     rt_metric;		/* cost of route back to origin     */
     u_char	     rt_flags;		/* RTF_ flags defined below         */
     u_int32_t	     rt_gateway;	/* first-hop gateway back to origin */
-    vifi_t	     rt_parent;	    	/* incoming vif (ie towards origin) */
+    vifi_t	     rt_parent;		/* incoming vif (ie towards origin) */
     vifbitmap_t	     rt_children;	/* outgoing children vifs           */
     vifbitmap_t	     rt_leaves;		/* subset of outgoing children vifs */
     u_int32_t	    *rt_dominants;      /* per vif dominant gateways        */
@@ -40,7 +40,7 @@ struct rtentry {
     u_int	    *rt_leaf_timers;	/* per vif leaf confirmation timers */
     u_int	     rt_timer;		/* for timing out the route entry   */
     struct rtentry  *rt_prev;		/* link to previous entry           */
-    struct gtable   *rt_groups;		/* link to active groups 	    */
+    struct gtable   *rt_groups;		/* link to active groups	    */
 };
 
 #define	RTF_CHANGED		0x01	/* route changed but not reported   */

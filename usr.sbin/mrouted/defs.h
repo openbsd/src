@@ -89,7 +89,7 @@ typedef void (*ihfunc_t)(int, fd_set *);
 
 #ifdef SYSV
 #define bcopy(a, b, c)	memcpy(b, a, c)
-#define bzero(s, n) 	memset((s), 0, (n))
+#define bzero(s, n)	memset((s), 0, (n))
 #define setlinebuf(s)	setvbuf(s, NULL, _IOLBF, 0)
 #define signal(s,f)	sigset(s,f)
 #endif
@@ -227,25 +227,25 @@ extern int		inet_cksum(u_int16_t *addr, u_int len);
 /* prune.c */
 extern unsigned		kroutes;
 extern void		add_table_entry(u_int32_t origin, u_int32_t mcastgrp);
-extern void 		del_table_entry(struct rtentry *r,
+extern void		del_table_entry(struct rtentry *r,
 			    u_int32_t mcastgrp, u_int del_flag);
 extern void		update_table_entry(struct rtentry *r);
 extern void		init_ktable(void);
-extern void 		accept_prune(u_int32_t src, u_int32_t dst, char *p,
+extern void		accept_prune(u_int32_t src, u_int32_t dst, char *p,
 			    int datalen);
 extern void		steal_sources(struct rtentry *rt);
 extern void		reset_neighbor_state(vifi_t vifi, u_int32_t addr);
 extern int		grplst_mem(vifi_t vifi, u_int32_t mcastgrp);
 extern int		scoped_addr(vifi_t vifi, u_int32_t addr);
 extern void		free_all_prunes(void);
-extern void 		age_table_entry(void);
+extern void		age_table_entry(void);
 extern void		dump_cache(FILE *fp2);
-extern void 		update_lclgrp(vifi_t vifi, u_int32_t mcastgrp);
+extern void		update_lclgrp(vifi_t vifi, u_int32_t mcastgrp);
 extern void		delete_lclgrp(vifi_t vifi, u_int32_t mcastgrp);
 extern void		chkgrp_graft(vifi_t vifi, u_int32_t mcastgrp);
 extern void		accept_graft(u_int32_t src, u_int32_t dst, char *p,
 			    int datalen);
-extern void 		accept_g_ack(u_int32_t src, u_int32_t dst, char *p,
+extern void		accept_g_ack(u_int32_t src, u_int32_t dst, char *p,
 			    int datalen);
 /* u_int is promoted u_char */
 extern void		accept_mtrace(u_int32_t src, u_int32_t dst,

@@ -306,7 +306,7 @@ create_route(u_int32_t origin, u_int32_t mask)
     r->rt_prev = rtp;
     if (r->rt_next != NULL)
       (r->rt_next)->rt_prev = r;
-    else 
+    else
       rt_end = r;
     rtp = r;
     ++nroutes;
@@ -688,7 +688,7 @@ accept_probe(u_int32_t src, u_int32_t dst, char *p, int datalen,
 
     if ((vifi = find_vif(src, dst)) == NO_VIF) {
 	log(LOG_INFO, 0,
-    	    "ignoring probe from non-neighbor %s", inet_fmt(src, s1));
+	    "ignoring probe from non-neighbor %s", inet_fmt(src, s1));
 	return;
     }
 
@@ -700,7 +700,7 @@ struct newrt {
 	u_int32_t origin;
 	int metric;
 	int pad;
-}; 
+};
 
 static int
 compare_rts(const void *rt1, const void *rt2)
@@ -742,7 +742,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 
     if ((vifi = find_vif(src, dst)) == NO_VIF) {
 	log(LOG_INFO, 0,
-    	    "ignoring route report from non-neighbor %s", inet_fmt(src, s1));
+	    "ignoring route report from non-neighbor %s", inet_fmt(src, s1));
 	return;
     }
 
@@ -751,7 +751,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 
     if (datalen > 2*4096) {
 	log(LOG_INFO, 0,
-    	    "ignoring oversize (%d bytes) route report from %s",
+	    "ignoring oversize (%d bytes) route report from %s",
 	    datalen, inet_fmt(src, s1));
 	return;
     }
@@ -760,7 +760,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 
 	if (datalen < 3) {
 	    log(LOG_WARNING, 0,
-		"received truncated route report from %s", 
+		"received truncated route report from %s",
 		inet_fmt(src, s1));
 	    return;
 	}
@@ -779,7 +779,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 	do {			/* Loop through (origin, metric) pairs */
 	    if (datalen < width + 1) {
 		log(LOG_WARNING, 0,
-		    "received truncated route report from %s", 
+		    "received truncated route report from %s",
 		    inet_fmt(src, s1));
 		return;
 	    }
@@ -812,7 +812,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 		inet_fmt(src, s1), inet_fmts(rt[i].origin, rt[i].mask, s2));
 	    continue;
 	}
-	update_route(rt[i].origin, rt[i].mask, rt[i].metric, 
+	update_route(rt[i].origin, rt[i].mask, rt[i].metric,
 		     src, vifi);
     }
 
@@ -1123,7 +1123,7 @@ determine_route(u_int32_t src)
     struct rtentry *rt;
 
     for (rt = routing_table; rt != NULL; rt = rt->rt_next) {
-	if (rt->rt_origin == (src & rt->rt_originmask)) 
+	if (rt->rt_origin == (src & rt->rt_originmask))
 	    break;
     }
     return rt;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mrouted.8,v 1.10 2003/03/01 01:56:56 deraadt Exp $	
+.\"	$OpenBSD: mrouted.8,v 1.11 2003/03/03 15:14:28 deraadt Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
@@ -39,7 +39,7 @@ routers that do not support IP multicasting,
 .Nm
 includes support for
 "tunnels", which are virtual point-to-point links between pairs of
-.Nm 
+.Nm
 daemons located anywhere in an internet.  IP multicast packets are encapsulated
 for transmission through tunnels, so that they look like normal unicast
 datagrams to intervening routers and subnets.  The encapsulation is added on
@@ -293,7 +293,7 @@ dumps the internal routing tables to stderr (only if
 was invoked with a non-zero debug level).
 .El
 .Pp
-For convenience in sending signals, 
+For convenience in sending signals,
 .Nm
 writes its pid to
 .Pa /var/run/mrouted.pid

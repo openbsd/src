@@ -30,8 +30,8 @@ struct gtable {
     u_char	    gt_ttls[MAXVIFS];	/* ttl vector for forwarding        */
     vifbitmap_t	    gt_grpmems;		/* forw. vifs for src, grp          */
     int		    gt_prsent_timer;	/* prune timer for this group	    */
-    int  	    gt_timer;		/* timer for this group entry	    */
-    time_t 	    gt_ctime;		/* time of entry creation         */
+    int		    gt_timer;		/* timer for this group entry	    */
+    time_t	    gt_ctime;		/* time of entry creation         */
     u_char	    gt_grftsnt;		/* graft sent/retransmit timer	    */
     struct stable  *gt_srctbl;		/* source table			    */
     struct ptable  *gt_pruntbl;		/* prune table			    */
@@ -46,9 +46,9 @@ struct gtable {
  *
  * When source-based prunes exist, there will be a struct ptable here as well.
  */
-struct stable 
+struct stable
 {
-    struct stable  *st_next;       	/* pointer to the next entry        */
+    struct stable  *st_next;		/* pointer to the next entry        */
     u_int32_t	    st_origin;		/* host origin of multicasts        */
     u_long	    st_pktcnt;		/* packet count for src-grp entry   */
 };
@@ -56,7 +56,7 @@ struct stable
 /*
  * structure to store incoming prunes.  Can hang off of either group or source.
  */
-struct ptable 
+struct ptable
 {
     struct ptable  *pt_next;		/* pointer to the next entry	    */
     u_int32_t	    pt_router;		/* router that sent this prune	    */
