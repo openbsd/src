@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.47 2002/10/16 01:06:32 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.48 2002/11/08 23:20:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.47 2002/10/16 01:06:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.48 2002/11/08 23:20:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ void	auth_errx(auth_session_t *, int, const char *, ...);
 int
 main(int argc, char **argv)
 {
-	int asme = 0, asthem = 0, ch, fastlogin = 0, emlogin = 0, prio;
+	int asme = 0, asthem = 0, ch, fastlogin = 0, emlogin = 0, flags, prio;
 	char *user, *shell = NULL, *avshell, *username, **np;
 	char *class = NULL, *style = NULL, *p;
 	enum { UNSET, YES, NO } iscsh = UNSET;
@@ -301,9 +301,12 @@ main(int argc, char **argv)
 		    username, user, ontty());
 
 	(void)setpriority(PRIO_PROCESS, 0, prio);
-	if (setusercontext(lc, pwd, pwd->pw_uid,
-	    (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
-	    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER))
+	if (emlogin)
+		flags = LOGIN_SETALL & ~LOGIN_SETPATH;
+	else
+		flags = (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
+		    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER;
+	if (setusercontext(lc, pwd, pwd->pw_uid, flags) != 0)
 		auth_err(as, 1, "unable to set user context");
 	if (pwd->pw_uid && auth_approval(as, lc, pwd->pw_name, "su") <= 0)
 		auth_err(as, 1, "approval failure");
