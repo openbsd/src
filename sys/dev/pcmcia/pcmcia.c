@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.19 1999/08/08 01:00:14 niklas Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.20 1999/08/16 06:21:13 deraadt Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -297,23 +297,17 @@ pcmcia_print(arg, pnp)
 	int i;
 
 	if (pnp) {
-		int p = 0;
-		for (i = 0; i < 4; i++) {
-			if (p == 0) {
-				printf("\"");
-				p = 1;
-			}
-			if (card->cis1_info[i] == NULL)
-				break;
+		printf("\"");
+		for (i = 0; i < 4 && card->cis1_info[i]; i++) {
 			if (i)
 				printf(", ");
 			printf("%s", card->cis1_info[i]);
 		}
-		if (p)
-			printf("\"");
-		if (i)
-			printf(" ");
+		printf("\"");
+
 		if (card->manufacturer != -1 && card->product != -1) {
+			if (i)
+				printf(" ");
 			printf("(");
 			if (card->manufacturer != -1)
 				printf("manufacturer 0x%lx%s",
@@ -324,8 +318,21 @@ pcmcia_print(arg, pnp)
 				    card->product);
 			printf(")");
 		}
+		if (i)
+			printf(" ");
+		printf("at %s", pnp);
 	}
 	printf(" function %d", pa->pf->number);
+
+	if (!pnp) {
+		printf(" \"");
+		for (i = 0; i < 3 && card->cis1_info[i]; i++) {
+			if (i)
+				printf(" ");
+			printf("%s", card->cis1_info[i]);
+		}
+		printf("\"");
+	}
 
 	return (UNCONF);
 }
