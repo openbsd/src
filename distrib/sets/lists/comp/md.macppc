@@ -166,7 +166,6 @@
 ./usr/lib/libutil_pic.a
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
-./usr/lib/scrt0.o
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32ppc.x
 ./usr/libdata/ldscripts/elf32ppc.xbn
