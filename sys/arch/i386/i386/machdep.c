@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.236 2003/06/06 11:11:53 andreas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.237 2003/07/07 03:07:19 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -334,6 +334,24 @@ cyrix_write_reg(u_char reg, u_char data)
 {
 	outb(0x22, reg);
 	outb(0x23, data);
+}
+
+/*
+ * cpuid instruction.  request in eax, result in eax, ebx, ecx, edx.
+ * requires caller to provide u_int32_t regs[4] array.
+ */
+void
+cpuid(u_int32_t ax, u_int32_t *regs)
+{
+	__asm __volatile(
+	    "cpuid\n\t"
+	    "movl	%%eax, 0(%2)\n\t"
+	    "movl	%%ebx, 4(%2)\n\t"
+	    "movl	%%ecx, 8(%2)\n\t"
+	    "movl	%%edx, 12(%2)\n\t"
+	    :"=a" (ax)
+	    :"0" (ax), "S" (regs)
+	    :"bx", "cx", "dx");
 }
 #endif
 

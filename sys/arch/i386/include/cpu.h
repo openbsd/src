@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.49 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.50 2003/07/07 03:07:18 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -166,6 +166,7 @@ void	dkcsumattach(void);
 void	dumpconf(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
+void	cpuid(u_int32_t, u_int32_t *);
 
 /* locore.s */
 struct region_descriptor;

@@ -1,4 +1,4 @@
-/* $OpenBSD: longrun.c,v 1.3 2003/05/27 23:52:01 fgsch Exp $ */
+/* $OpenBSD: longrun.c,v 1.4 2003/07/07 03:07:19 tedu Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * Copyright (c) 2001 Tamotsu Hattori
@@ -34,7 +34,6 @@
 
 #include <machine/longrun.h>
 
-static void	longrun_readreg(u_int32_t, u_int32_t *);
 static void	longrun_getmode(u_int32_t *, u_int32_t *, u_int32_t *);
 static void	longrun_setmode(u_int32_t, u_int32_t, u_int32_t);
 int		longrun_sysctl(void *, size_t *, void *, size_t);
@@ -110,31 +109,13 @@ longrun_getmode(u_int32_t *freq, u_int32_t *voltage, u_int32_t *percent)
 	eflags = read_eflags();
 	disable_intr();
 
-	longrun_readreg(0x80860007, regs);
+	cpuid(0x80860007, regs);
 	*freq = regs[0];
 	*voltage = regs[1];
 	*percent = regs[2];
 
 	enable_intr();
 	write_eflags(eflags);
-}
-
-/*
- * Get the info.  Multiple return values
- */
-static void
-longrun_readreg(u_int32_t ax, u_int32_t *regs)
-{
-	__asm __volatile(
-	"cpuid;"
-	"movl	%%eax, 0(%2);"
-	"movl	%%ebx, 4(%2);"
-	"movl	%%ecx, 8(%2);"
-	"movl	%%edx, 12(%2);"
-	:"=a"(ax)
-	:"0"(ax), "S"(regs)
-	:"bx", "cx", "dx"
-	);
 }
 
 /*
