@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.9 1999/12/07 22:02:18 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.10 1999/12/10 20:47:54 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.7 1999/12/07 22:01:31 jason Exp 
+ *	OpenBSD: miidevs,v 1.8 1999/12/10 20:47:26 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -141,6 +141,8 @@
 #define	MII_STR_xxTI_TLAN10T	"ThunderLAN 10baseT media interface"
 #define	MII_MODEL_xxTI_100VGPMI	0x0002
 #define	MII_STR_xxTI_100VGPMI	"ThunderLAN 100VG-AnyLan media interface"
+#define	MII_MODEL_xxTI_TNETE2101	0x0003
+#define	MII_STR_xxTI_TNETE2101	"TNETE2101 media interface"
 
 /* TDK Semiconductor PHYs */
 #define	MII_MODEL_TSC_78Q2120	0x0014
