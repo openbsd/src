@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.13 1999/01/11 20:25:09 niklas Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.14 1999/02/19 19:21:42 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 int	nprocs = 1;		/* process 0 */
 int	randompid;		/* when set to 1, pid's go random */
@@ -111,6 +112,18 @@ fork1(p1, forktype, rforkflags, retval)
 	int count;
 	static int pidchecked = 0;
 	int dupfd = 1, cleanfd = 0;
+	vm_offset_t uaddr;
+
+	/*
+	 * Allocate a pcb and kernel stack for the process
+	 */
+#if defined(arc) || defined(mips_cachealias)
+	uaddr = kmem_alloc_upage(kernel_map, USPACE);
+#else
+	uaddr = kmem_alloc_pageable(kernel_map, USPACE);
+#endif
+	if (uaddr == 0)
+		return ENOMEM;
 
 	if (forktype == ISRFORK) {
 		dupfd = 0;
@@ -290,6 +303,8 @@ again:
 		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - MAXSSIZ,
 		    VM_INHERIT_SHARE);
 	}
+
+	p2->p_addr = (struct user *)uaddr;
 
 #ifdef __FORK_BRAINDAMAGE
 	/*
