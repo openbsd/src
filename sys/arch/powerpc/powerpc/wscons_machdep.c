@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.1 2001/03/01 23:19:34 drahn Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.2 2001/06/24 23:29:37 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -46,6 +46,7 @@
 #if NWSDISPLAY > 0
 #include <dev/wscons/wsdisplayvar.h>
 #endif
+#include <dev/wscons/wskbdvar.h>
 
 void wscnprobe __P((struct consdev *));
 void wscninit __P((struct consdev *));

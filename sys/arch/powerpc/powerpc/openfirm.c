@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.7 2000/09/07 03:30:10 rahnds Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.8 2001/06/24 23:29:36 drahn Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/psl.h>
 #include <machine/stdarg.h>
@@ -205,8 +206,9 @@ OF_finddevice(name)
 		return -1;
 	return args.phandle;
 }
+static void OF_rboot(char *bootspec);
 
-void
+static void
 OF_rboot(bootspec)
 	char *bootspec;
 {
@@ -228,7 +230,6 @@ OF_rboot(bootspec)
 	/* will attempt exit in OF_boot */
 }
 
-void OF_exit();
 
 void
 OF_boot(bootspec)

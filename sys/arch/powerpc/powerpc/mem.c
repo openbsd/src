@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.7 2001/05/05 20:56:51 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.8 2001/06/24 23:29:35 drahn Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -46,19 +46,26 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
+#include <sys/ioccom.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/types.h>
+
+#include <machine/cpu.h>
 
 #include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
+#include <machine/conf.h>
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	switch (minor(dev)) {
@@ -74,9 +81,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return 0;
@@ -89,8 +97,8 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t o, v;
-	u_int c;
+	vm_offset_t v;
+	vm_size_t c;
 	struct iovec *iov;
 	int error = 0;
 	static caddr_t zeropage;

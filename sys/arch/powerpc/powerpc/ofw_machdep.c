@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.21 2001/03/03 05:33:47 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.22 2001/06/24 23:29:35 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -49,7 +49,15 @@
 #include <machine/powerpc.h>
 #include <machine/autoconf.h>
 
+#include <dev/ofw/openfirm.h>
+
 #include <ukbd.h>
+#include <dev/usb/ukbdvar.h>
+#include <powerpc/mac/akbdvar.h>
+
+/* XXX, called from asm */
+int save_ofw_mapping(void);
+int restore_ofw_mapping(void);
 
 void OF_exit __P((void)) __attribute__((__noreturn__));
 void OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
@@ -80,7 +88,7 @@ void
 ofw_mem_regions(memp, availp)
 	struct mem_region **memp, **availp;
 {
-	int phandle, i, j, cnt;
+	int phandle;
 	
 	/*
 	 * Get memory.
@@ -125,6 +133,7 @@ static struct {
 
 int OF_stdout;
 int OF_stdin;
+
 int
 save_ofw_mapping()
 {
@@ -188,14 +197,12 @@ restore_ofw_mapping()
 	return 0;
 }
 
-#include <dev/ofw/openfirm.h>
-
 typedef void  (void_f) (void);
 extern void_f *pending_int_f;
-void ofw_do_pending_int();
+void ofw_do_pending_int(void);
 extern int system_type;
 
-void ofw_intr_init();
+void ofw_intr_init(void);
 void
 ofrootfound()
 {
@@ -253,9 +260,7 @@ ofw_intr_init()
 void
 ofw_do_pending_int()
 {
-	int vector;
 	int pcpl;
-	int hwpend;
 	int emsr, dmsr;
 static int processing;
 
@@ -269,7 +274,7 @@ static int processing;
 
 
 	pcpl = splhigh();		/* Turn off all */
-	if((ipending & SINT_CLOCK) && (pcpl & imask[IPL_CLOCK] == 0)) {
+	if((ipending & SINT_CLOCK) && ((pcpl & imask[IPL_CLOCK]) == 0)) {
 		ipending &= ~SINT_CLOCK;
 		softclock();
 	}
@@ -285,6 +290,7 @@ static int processing;
 	__asm__ volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
 }
+#if 0
 u_int32_t ppc_console_iomem=0;
 u_int32_t ppc_console_addr=0;
 u_int32_t ppc_console_qhandle=0;
@@ -320,12 +326,14 @@ ofwtrysercon(char *name, int qhandle)
 		ppc_console_serfreq=freq;
 	}
 }
+#endif
 
 #include <dev/pci/pcivar.h>
 #include <arch/powerpc/pci/vgafb_pcivar.h>
+static pcitag_t ofw_make_tag( void *cpv, int bus, int dev, int fnc);
 
-static
-pcitag_t 
+/* ARGSUSED */
+static pcitag_t 
 ofw_make_tag(cpv, bus, dev, fnc)
         void *cpv;
         int bus, dev, fnc;
@@ -333,6 +341,8 @@ ofw_make_tag(cpv, bus, dev, fnc)
         return (bus << 16) | (dev << 11) | (fnc << 8);
 }
 
+#if 0
+/* XXX */
 void
 ofwenablepcimemio(char *name, int qhandle)
 {
@@ -341,6 +351,7 @@ ofwenablepcimemio(char *name, int qhandle)
 	 * on MCG, VI machines.
 	 */
 }
+#endif
 #define       OFW_PCI_PHYS_HI_BUSMASK         0x00ff0000
 #define       OFW_PCI_PHYS_HI_BUSSHIFT        16
 #define       OFW_PCI_PHYS_HI_DEVICEMASK      0x0000f800
@@ -381,7 +392,6 @@ ofwconprobe()
 	char iname[32];
 	int len;
 	int stdout_node, stdin_node;
-	int parent;
 	int err;
 	u_int32_t memtag, iotag;
 	struct ppc_pci_chipset pa;
@@ -425,10 +435,8 @@ ofwconprobe()
 	printf("console in [%s] ", iname);
 	/* what to do about serial console? */
 	if (strcmp ("keyboard", iname) == 0) {
-		int node;
 		struct usb_kbd_ihandles *ukbds;
 		int akbd;
-		char type[20];
 		/* if there is a usb keyboard, we want it, do not 
 		 * dereference the pointer that is returned
 		 */
@@ -484,7 +492,7 @@ kbd_found:
 #endif
 
 	{
-		int i,j;
+		int i;
 
 		cons_membus->bus_base = 0x80000000;
 		cons_membus->bus_reverse = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2001/06/10 15:20:16 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2001/06/24 23:29:36 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -96,32 +96,31 @@ dump_avail()
 }
 #endif
 
+int pmap_vp_valid(pmap_t pm, vaddr_t va);
+void pmap_vp_enter(pmap_t pm, vaddr_t va, paddr_t pa);
+int pmap_vp_remove(pmap_t pm, vaddr_t va);
+void pmap_vp_destroy(pmap_t pm);
 
 /* virtual to physical map */
 static inline int
-VP_SR(va)
-	paddr_t va;
+VP_SR(paddr_t va)
 {
 	return (va >> VP_SR_POS) & VP_SR_MASK;
 }
 static inline int
-VP_IDX1(va)
-	paddr_t va;
+VP_IDX1(paddr_t va)
 {
 	return (va >> VP_IDX1_POS) & VP_IDX1_MASK;
 }
 
 static inline int
-VP_IDX2(va)
-	paddr_t va;
+VP_IDX2(paddr_t va)
 {
 	return (va >> VP_IDX2_POS) & VP_SR_MASK;
 }
 
 int
-pmap_vp_valid(pm, va)
-	pmap_t pm;
-	vaddr_t va;
+pmap_vp_valid(pmap_t pm, vaddr_t va)
 {
 	pmapv_t *vp1;
 	vp1 = pm->vps[VP_SR(va)];
@@ -130,10 +129,9 @@ pmap_vp_valid(pm, va)
 	}
 	return 0;
 }
+
 int
-pmap_vp_remove(pm, va)
-	pmap_t pm;
-	vaddr_t va;
+pmap_vp_remove(pmap_t pm, vaddr_t va)
 {
 	pmapv_t *vp1;
 	int s;
@@ -155,10 +153,7 @@ pmap_vp_remove(pm, va)
 	return retcode;
 }
 void
-pmap_vp_enter(pm, va, pa)
-	pmap_t pm;
-	vaddr_t va;
-	paddr_t pa;
+pmap_vp_enter(pmap_t pm, vaddr_t va, paddr_t pa)
 {
 	pmapv_t *vp1;
 	pmapv_t *mem1;
@@ -205,7 +200,10 @@ pmap_vp_destroy(pm)
 	pmap_t pm;
 {
 	pmapv_t *vp1;
-	int sr, idx1;
+	int sr;
+#ifdef SANITY
+	int idx1;
+#endif
 
 	for (sr = 0; sr < 32; sr++) {
 		vp1 = pm->vps[sr];
@@ -232,6 +230,8 @@ pmap_vp_destroy(pm)
 }
 static int vp_page0[1024];
 static int vp_page1[1024];
+void pmap_vp_preinit(void);
+
 void
 pmap_vp_preinit()
 {
@@ -259,24 +259,49 @@ struct pv_entry {
 struct pv_entry *pv_table;
 
 struct pool pmap_pv_pool;
-static struct pv_entry *pmap_alloc_pv __P((void));
-static void pmap_free_pv __P((struct pv_entry *));
+struct pv_entry *pmap_alloc_pv __P((void));
+void pmap_free_pv __P((struct pv_entry *));
 
 struct pool pmap_po_pool;
-static struct pte_ovfl *poalloc __P((void));
-static void pofree __P((struct pte_ovfl *, int));
+struct pte_ovfl *poalloc __P((void));
+void pofree __P((struct pte_ovfl *, int));
 
 static u_int usedsr[NPMAPS / sizeof(u_int) / 8];
 
 static int pmap_initialized;
+
+static inline void tlbie(vm_offset_t ea);
+static inline void tlbsync(void);
+static inline void tlbia(void);
+static inline int ptesr(sr_t *sr, vm_offset_t addr);
+static inline int pteidx(sr_t sr, vm_offset_t addr);
+static inline int ptematch( pte_t *ptp, sr_t sr, vm_offset_t va, int which);
+int pte_insert(int idx, pte_t *pt);
+int pte_spill(vm_offset_t addr);
+int pmap_page_index(vm_offset_t pa);
+u_int pmap_free_pages(void);
+int pmap_next_page(vm_offset_t *paddr);
+struct pv_entry *pmap_alloc_pv(void);
+void pmap_free_pv(struct pv_entry *pv);
+struct pte_ovfl *poalloc(void);
+static inline int pmap_enter_pv(struct pmap *pm, int pteidx, vm_offset_t va,
+	vm_offset_t pa);
+void pmap_remove_pv(struct pmap *pm, int pteidx, vm_offset_t va,
+	u_int32_t pte_lo);
+pte_t * pte_find(struct pmap *pm, vm_offset_t va);
+
+/* XXX */
+void pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot);
+void pmap_kenter_pgs(vaddr_t va, struct vm_page **pgs, int npgs);
+void pmap_kremove(vaddr_t va, vsize_t len);
+void addbatmap(u_int32_t vaddr, u_int32_t raddr, u_int32_t wimg);
 
 /*
  * These small routines may have to be replaced,
  * if/when we support processors other that the 604.
  */
 static inline void
-tlbie(ea)
-	caddr_t ea;
+tlbie(vm_offset_t ea)
 {
 	asm volatile ("tlbie %0" :: "r"(ea));
 }
@@ -290,10 +315,10 @@ tlbsync()
 static void
 tlbia()
 {
-	caddr_t i;
+	vm_offset_t i;
 	
 	asm volatile ("sync");
-	for (i = 0; i < (caddr_t)0x00040000; i += 0x00001000)
+	for (i = 0; i < 0x00040000; i += 0x00001000)
 		tlbie(i);
 	tlbsync();
 }
@@ -336,7 +361,7 @@ ptematch(ptp, sr, va, which)
  * Note: *pt mustn't have PTE_VALID set.
  * This is done here as required by Book III, 4.12.
  */
-static int
+int
 pte_insert(idx, pt)
 	int idx;
 	pte_t *pt;
@@ -755,7 +780,7 @@ pmap_page_index(pa)
 	return -1;
 }
 #ifdef MACHINE_NEW_NONCONTIG
-static __inline struct pv_entry *
+static inline struct pv_entry *
 pmap_find_pv(paddr_t pa)
 {
 	int bank, off;
@@ -766,7 +791,7 @@ pmap_find_pv(paddr_t pa)
 	} 
 	return NULL;
 }
-static __inline char *
+static inline char *
 pmap_find_attr(paddr_t pa)
 {
 	int bank, off;
@@ -992,7 +1017,7 @@ pmap_copy_page(src, dst)
 	bcopy((caddr_t)src, (caddr_t)dst, NBPG);
 }
 
-static struct pv_entry *
+struct pv_entry *
 pmap_alloc_pv()
 {
 	struct pv_entry *pv;
@@ -1021,7 +1046,7 @@ pmap_alloc_pv()
 	return pv;
 }
 
-static void
+void
 pmap_free_pv(pv)
 	struct pv_entry *pv;
 {
@@ -1038,7 +1063,7 @@ pmap_free_pv(pv)
  * before the VM system is initialized!							XXX
  * XXX - see pmap_alloc_pv
  */
-static struct pte_ovfl *
+struct pte_ovfl *
 poalloc()
 {
 	struct pte_ovfl *po;
@@ -1056,7 +1081,7 @@ poalloc()
 	return po;
 }
 
-static void
+void
 pofree(po, freepage)
 	struct pte_ovfl *po;
 	int freepage;
@@ -1090,7 +1115,7 @@ pmap_enter_pv(pm, pteidx, va, pa)
 
 	s = splimp();
 
-	if (first = pv->pv_idx == -1) {
+	if ((first = pv->pv_idx) == -1) {
 		/*
 		 * No entries yet, use header as the first entry.
 		 */
@@ -1114,7 +1139,7 @@ pmap_enter_pv(pm, pteidx, va, pa)
 	return first;
 }
 
-static void
+void
 pmap_remove_pv(pm, pteidx, va, pte_lo)
 	struct pmap *pm;                                            
 	int pteidx;
@@ -1158,7 +1183,7 @@ pmap_remove_pv(pm, pteidx, va, pte_lo)
 			pv->pv_idx = -1;
 		}
 	} else {
-		for (; npv = pv->pv_next; pv = npv) {
+		for (; (npv = pv->pv_next) != NULL; pv = npv) {
 			if (va == npv->pv_va && pm == npv->pv_pmap)
 			{
 				break;
@@ -1193,7 +1218,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	vm_prot_t access_type;
 {
 	sr_t sr;
-	int idx, i, s;
+	int idx, s;
 	pte_t pte;
 	struct pte_ovfl *po;
 	struct mem_region *mp;
@@ -1308,7 +1333,6 @@ pmap_remove(pm, va, endva)
 	sr_t sr;
 	pte_t *ptp;
 	struct pte_ovfl *po, *npo;
-	struct pv_entry *pv;
 	
 	s = splimp();
 	for (; va < endva; va += NBPG) {
@@ -1361,7 +1385,7 @@ pmap_remove(pm, va, endva)
 	splx(s);
 }
 
-static pte_t *
+pte_t *
 pte_find(pm, va)
 	struct pmap *pm;
 	vm_offset_t va;
@@ -1432,7 +1456,7 @@ pmap_protect(pm, sva, eva, prot)
 	if (prot & VM_PROT_READ) {
 		s = splimp();
 		while (sva < eva) {
-			if (ptp = pte_find(pm, sva)) {
+			if ((ptp = pte_find(pm, sva))) {
 				valid = ptp->pte_hi & PTE_VALID;
 				ptp->pte_hi &= ~PTE_VALID;
 				asm volatile ("sync");
@@ -1594,9 +1618,7 @@ pmap_page_protect(pa, prot)
 	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
 #endif
 	vm_offset_t va;
-	pte_t *ptp;
-	struct pte_ovfl *po, *npo;
-	int i, s, pind, idx;
+	int s;
 	struct pmap *pm;
 	struct pv_entry *pv;
 	
