@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.11 2005/01/20 23:47:04 espie Exp $ */
+/* $OpenBSD: trace.c,v 1.12 2005/01/21 19:11:02 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -33,7 +33,7 @@
 #include "stdd.h"
 #include "extern.h"
 
-FILE *traceout = stderr;
+FILE *traceout;
 
 #define TRACE_ARGS 	1
 #define TRACE_EXPANSION 2
@@ -56,7 +56,7 @@ void
 trace_file(const char *name)
 {
 
-	if (traceout != stderr)
+	if (traceout && traceout != stderr)
 		fclose(traceout);
 	traceout = fopen(name, "w");
 	if (!traceout)
@@ -145,6 +145,8 @@ print_header(struct input_file *inp)
 ssize_t 
 trace(const char *argv[], int argc, struct input_file *inp)
 {
+	if (!traceout)
+		traceout = stderr;
 	print_header(inp);
 	if (trace_flags & TRACE_CONT) {
 		fprintf(traceout, "%s ...\n", argv[1]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.52 2005/01/20 23:47:04 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.53 2005/01/21 19:11:02 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.52 2005/01/20 23:47:04 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.53 2005/01/21 19:11:02 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -614,6 +614,8 @@ dopushdef(const char *name, const char *defn)
 static void
 dump_one_def(const char *name, struct macro_definition *p)
 {
+	if (!traceout)
+		traceout = stderr;
 	if (mimic_gnu) {
 		if ((p->type & TYPEMASK) == MACRTYPE)
 			fprintf(traceout, "%s:\t%s\n", name, p->defn);
