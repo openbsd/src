@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.29 2002/12/02 18:48:52 henning Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.30 2003/05/13 12:10:46 todd Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -618,9 +618,6 @@ am7990_tint(sc)
 			if (tmd.tmd3 & LE_T3_LCAR) {
 				if (sc->sc_nocarrier)
 					(*sc->sc_nocarrier)(sc);
-				else
-					printf("%s: lost carrier\n",
-					    sc->sc_dev.dv_xname);
 			}
 			if (tmd.tmd3 & LE_T3_LCOL)
 				ifp->if_collisions++;
