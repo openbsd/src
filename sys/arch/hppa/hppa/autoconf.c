@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 1999/04/20 20:37:10 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 1999/06/22 23:45:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -354,7 +354,7 @@ hppa_mod_info(type, sv)
 	     (mi->mi_type != type || mi->mi_sv != sv); mi++);
 
 	if (mi->mi_type < 0) {
-		sprintf(fakeid, "type %d, sv %d", type, sv);
+		sprintf(fakeid, "type %x, sv %x", type, sv);
 		return fakeid;
 	} else
 		return mi->mi_name;
