@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.16 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.17 2002/10/16 00:13:53 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -15,6 +15,7 @@
 #include "ksh_stat.h"
 #include "ksh_dir.h"
 #include <ctype.h>
+#include <locale.h>
 #include "edit.h"
 
 static	Area	aedit;
@@ -23,6 +24,8 @@ static	Area	aedit;
 #undef CTRL			/* _BSD brain damage */
 #define	CTRL(x)		((x) == '?' ? 0x7F : (x) & 0x1F)	/* ASCII */
 #define	UNCTRL(x)	((x) == 0x7F ? '?' : (x) | 0x40)	/* ASCII */
+#define	META(x)		((x) & 0x7f)
+#define	ISMETA(x)	(x_usemeta && ((x) & 0x80))
 
 
 /* values returned by keyboard functions */
@@ -98,6 +101,7 @@ static int	x_col;
 static int	x_displen;
 static int	x_arg;		/* general purpose arg */
 static int	x_arg_defaulted;/* x_arg not explicitly set; defaulted to 1 */
+static int	x_usemeta;	/* no 8-bit ascii, meta = ESC */
 
 static int	xlp_valid;
 /* end from 4.9 edit.h } */
@@ -365,6 +369,11 @@ x_emacs(buf, len)
 		x_flush();
 		if ((c = x_e_getc()) < 0)
 			return 0;
+
+		if (ISMETA(c)) {
+			c = META(c);
+			x_curprefix = 1;
+		}
 
 		f = x_curprefix == -1 ? XFUNC_insert
 			: x_tab[x_curprefix][c&CHARMASK];
@@ -1495,6 +1504,7 @@ void
 x_init_emacs()
 {
 	register int i, j;
+	char *locale;
 
 	ainit(AEDIT);
 	x_nextcmd = -1;
@@ -1513,6 +1523,14 @@ x_init_emacs()
 	for (i = 1; i < X_NTABS; i++)
 		for (j = 0; j < X_TABSZ; j++)
 			x_atab[i][j] = NULL;
+
+	/* Determine if we can translate meta key or use 8-bit AscII 
+	 * XXX - It would be nice if there was a locale attribute to
+	 * determine if the locale is 7-bit or not.
+	 */
+	locale = setlocale(LC_CTYPE, NULL);
+	if (locale == NULL || !strcmp(locale, "C") || !strcmp(locale, "POSIX"))
+		x_usemeta = 1;
 }
 
 static void
