@@ -1,4 +1,4 @@
-/*	$OpenBSD: gateA20.c,v 1.3 1997/04/21 19:55:39 mickey Exp $	*/
+/*	$OpenBSD: gateA20.c,v 1.4 1997/07/17 23:00:26 mickey Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -30,7 +30,7 @@
 
 #include <sys/types.h>
 #include <machine/pio.h>
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <dev/ic/i8042reg.h>
 
 #define KC_CMD_WOUT	0xd1		/* write output port */
