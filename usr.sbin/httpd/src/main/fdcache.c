@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdcache.c,v 1.1 2002/07/17 11:17:00 henning Exp $ */
+/*	$OpenBSD: fdcache.c,v 1.2 2002/07/17 13:15:57 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Henning Brauer
@@ -48,12 +48,11 @@ fdcache_open(char *fn, int flags, mode_t mode)
 {
 	struct fdcache *fdcp = NULL, *tmp = NULL;
 
-	for(fdcp = fdc; fdcp && strncmp(fn, fdcp->fname, 1024);
+	for (fdcp = fdc; fdcp && strncmp(fn, fdcp->fname, 1024);
 	    fdcp = fdcp->next);
 		/* nothing */
 
-	if (fdcp == NULL)
-	{
+	if (fdcp == NULL) {
 		/* need to open */
 		tmp = calloc(1, sizeof(struct fdcache));
 		if (tmp == NULL) {
@@ -83,8 +82,7 @@ fdcache_closeall()
 {
 	struct fdcache *fdcp = NULL;
 
-	for(fdcp = fdc; fdcp; fdcp = fdcp->next)
-	{
+	for (fdcp = fdc; fdcp; fdcp = fdcp->next) {
 		if (fdcp->fd > 0)
 			close(fdcp->fd);
 		free(fdcp->fname);
