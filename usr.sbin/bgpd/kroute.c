@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.17 2003/12/25 02:51:52 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.18 2003/12/25 16:21:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -40,10 +40,12 @@ struct kroute_node {
 	int			flags;
 };
 
-int	kroute_msg(int, int, struct kroute *);
-int	kroute_compare(struct kroute_node *, struct kroute_node *);
-void	get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
-int	kroute_fetchtable(void);
+int		kroute_msg(int, int, struct kroute *);
+int		kroute_compare(struct kroute_node *, struct kroute_node *);
+void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
+u_int8_t	prefixlen_classful(in_addr_t);
+u_int8_t	mask2prefixlen(in_addr_t);
+int		kroute_fetchtable(void);
 
 RB_HEAD(kroute_tree, kroute_node)	kroute_tree, krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare);
@@ -233,6 +235,30 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	}
 }
 
+u_int8_t
+prefixlen_classful(in_addr_t ina)
+{
+	if (ina >= 0xf0000000)		/* class E */
+		return (32);
+	else if (ina >= 0xe0000000)	/* class D */
+		return (4);
+	else if (ina >= 0xc0000000)	/* class C */
+		return (24);
+	else if (ina >= 0x80000000)	/* class B */
+		return (16);
+	else				/* class A */
+		return (8);
+}
+
+u_int8_t
+mask2prefixlen(in_addr_t ina)
+{
+	if (ina == 0)
+		return (0);
+	else
+		return (33 - ffs(ntohl(ina)));
+}
+
 int
 kroute_fetchtable(void)
 {
@@ -243,7 +269,6 @@ kroute_fetchtable(void)
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
 	struct kroute_node	*kr;
-	in_addr_t		 ina;
 
 	mib[0] = CTL_NET;
 	mib[1] = AF_ROUTE;
@@ -268,7 +293,7 @@ kroute_fetchtable(void)
 		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_DST]) == NULL)
 			continue;
 
-		if (rtm->rtm_flags & RTF_LLINFO)
+		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 			continue;
 
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
@@ -278,26 +303,11 @@ kroute_fetchtable(void)
 		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK]) !=
 		    NULL) {
 			kr->r.prefixlen =
-			    33 - ffs(ntohl(sa_in->sin_addr.s_addr));
-			if (sa_in->sin_addr.s_addr == 0 || kr->r.prefix == 0)
-				kr->r.prefixlen = 0;
+			    mask2prefixlen(sa_in->sin_addr.s_addr);
 		} else if (rtm->rtm_flags & RTF_HOST)
 			kr->r.prefixlen = 32;
-		else {
-			/* classfull... */
-			ina = ntohl(kr->r.prefix);
-
-			if (ina >= 0xf0000000)		/* class E */
-				kr->r.prefixlen = 32;
-			else if (ina >= 0xe0000000)	/* class D */
-				kr->r.prefixlen = 4;
-			else if (ina >= 0xc0000000)	/* class C */
-				kr->r.prefixlen = 24;
-			else if (ina >= 0x80000000)	/* class B */
-				kr->r.prefixlen = 16;
-			else					/* class A */
-				kr->r.prefixlen = 8;
-		}
+		else
+			kr->r.prefixlen = prefixlen_classful(kr->r.prefix);
 
 		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_GATEWAY]) !=
 		    NULL)
@@ -312,4 +322,4 @@ kroute_fetchtable(void)
 	}
 	free(buf);
 	return (0);
-};
+}
