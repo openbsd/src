@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.34 2001/02/22 01:07:52 chris Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.35 2001/03/05 15:11:02 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -82,6 +82,42 @@ pcic*	at pci? dev? function ?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
+
+# PCI USB Controllers
+uhci*	at pci?				# Universal Host Controller (Intel)
+ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+usb*	at uhci?
+usb*	at ohci?
+
+uhub*	at usb?				# USB Hubs
+uhub*	at uhub? port ? configuration ?	# USB Hubs
+#uhid*	at uhub? port ? configuration ?	# USB Generic HID devices
+#umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
+#ucom*	at umodem?
+#uvisor*	at uhub? port ? configuration ?	# Handspring Visor
+#ucom*	at uvisor?
+#uftdi*	at uhub? port ?
+#ucom*	at uftdi? portno ?
+#uaudio* at uhub? port ? configuration ?# USB Audio
+#ulpt*	at uhub? port ? configuration ? # USB Printers
+ukbd*	at uhub? port ? configuration ?	# USB Keyboards
+wskbd*	at ukbd? console ? mux 1
+umass*	at uhub? port ? configuration ? # USB Mass Storage devices
+scsibus* at umass?
+#ums*	at uhub? port ? configuration ?	# USB Mice
+#wsmouse* at ums? mux 0
+#aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
+#cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
+#kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+#upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
+#urio*	at uhub? port ?			# Diamond Multimedia Rio 500
+#uscanner* at uhub? port ?		# USB Scanners
+#usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
+#scsibus* at usscanner?
+#uyap*	at uhub? port ?			# Y@P firmware loader
+#ugen*	at uhub? port ? configuration ? # USB Generic driver
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
