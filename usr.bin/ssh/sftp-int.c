@@ -27,7 +27,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.8 2001/02/06 05:22:02 provos Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.9 2001/02/06 22:18:16 djm Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -477,6 +477,18 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 	case I_CHDIR:
 		path1 = make_absolute(path1, *pwd);
 		tmp = do_realpath(in, out, path1);
+		aa = do_stat(in, out, tmp);
+		if (!(aa->flags & SSH2_FILEXFER_ATTR_PERMISSIONS)) {
+			error("Can't change directory: Can't check target");
+			xfree(tmp);
+			break;
+		}
+		if (!S_ISDIR(aa->perm)) {
+			error("Can't change directory: \"%s\" is not "
+			    "a directory", tmp);
+			xfree(tmp);
+			break;
+		}
 		if (tmp) {
 			xfree(*pwd);
 			*pwd = tmp;
