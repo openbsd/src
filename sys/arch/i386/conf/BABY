@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.7 1996/08/31 02:09:14 deraadt Exp $
+#	$OpenBSD: BABY,v 1.8 1996/09/12 21:55:06 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -12,6 +12,7 @@ option		MATH_EMULATE	# floating point emulation
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
 #option		EXTMEM_SIZE=... # size of extended memory
+option		BUFCACHEPERCENT=20
 
 #option		DUMMY_NOPS	# speed hack; recommended
 option		XSERVER
@@ -168,7 +169,7 @@ le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 #fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 #le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
-#de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
+de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 #ed*	at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
 #ep*	at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
