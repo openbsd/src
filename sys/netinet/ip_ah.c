@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.30 1999/12/07 08:57:59 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.31 1999/12/07 09:01:47 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -283,8 +283,6 @@ ah_input(m, va_alist)
 	m->m_pkthdr.tdbi = tdbi;
     } else
         m->m_pkthdr.tdbi = NULL;
-
-    printf("here4\n");
 
     /* Packet is authentic */
     m->m_flags |= M_AUTH;
