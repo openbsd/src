@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.8 2001/06/25 23:14:40 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.9 2001/08/06 14:29:59 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.12 2001/02/11 18:04:50 bouyer Exp $	*/
 
 /*
@@ -584,7 +584,7 @@ siop_clearfifo(sc)
 	int timeout = 0;
 	int ctest3 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST3);
 
-#ifdef DEBUG_INTR
+#ifdef SIOP_DEBUG_INTR
 	printf("DMA fifo not empty!\n");
 #endif
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST3,
