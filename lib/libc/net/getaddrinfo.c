@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.46 2003/03/17 23:16:36 jason Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.47 2003/05/14 05:38:34 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ static int explore_fqdn(const struct addrinfo *, const char *,
 static int explore_null(const struct addrinfo *,
 	const char *, struct addrinfo **);
 static int explore_numeric(const struct addrinfo *, const char *,
-	const char *, struct addrinfo **);
+	const char *, struct addrinfo **, const char *);
 static int explore_numeric_scope(const struct addrinfo *, const char *,
 	const char *, struct addrinfo **);
 static int get_canonname(const struct addrinfo *,
@@ -418,7 +418,8 @@ getaddrinfo(hostname, servname, hints, res)
 		if (hostname == NULL)
 			error = explore_null(pai, servname, &cur->ai_next);
 		else
-			error = explore_numeric_scope(pai, hostname, servname, &cur->ai_next);
+			error = explore_numeric_scope(pai, hostname, servname,
+			    &cur->ai_next);
 
 		if (error)
 			goto free;
@@ -673,11 +674,12 @@ free:
  * numeric hostname
  */
 static int
-explore_numeric(pai, hostname, servname, res)
+explore_numeric(pai, hostname, servname, res, canonname)
 	const struct addrinfo *pai;
 	const char *hostname;
 	const char *servname;
 	struct addrinfo **res;
+	const char *canonname;
 {
 	const struct afd *afd;
 	struct addrinfo *cur;
@@ -707,6 +709,14 @@ explore_numeric(pai, hostname, servname, res)
 			    pai->ai_family == PF_UNSPEC /*?*/) {
 				GET_AI(cur->ai_next, afd, pton);
 				GET_PORT(cur->ai_next, servname);
+				if ((pai->ai_flags & AI_CANONNAME)) {
+					/*
+					 * Set the numeric address itself as
+					 * the canonical name, based on a
+					 * clarification in rfc2553bis-03.
+					 */
+					GET_CANONNAME(cur->ai_next, canonname);
+				}
 				while (cur && cur->ai_next)
 					cur = cur->ai_next;
 			} else
@@ -720,6 +730,14 @@ explore_numeric(pai, hostname, servname, res)
 			    pai->ai_family == PF_UNSPEC /*?*/) {
 				GET_AI(cur->ai_next, afd, pton);
 				GET_PORT(cur->ai_next, servname);
+				if ((pai->ai_flags & AI_CANONNAME)) {
+					/*
+					 * Set the numeric address itself as
+					 * the canonical name, based on a
+					 * clarification in rfc2553bis-03.
+					 */
+					GET_CANONNAME(cur->ai_next, canonname);
+				}
 				while (cur && cur->ai_next)
 					cur = cur->ai_next;
 			} else
@@ -749,7 +767,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 	struct addrinfo **res;
 {
 #if !defined(SCOPE_DELIMITER) || !defined(INET6)
-	return explore_numeric(pai, hostname, servname, res);
+	return explore_numeric(pai, hostname, servname, res, hostname);
 #else
 	const struct afd *afd;
 	struct addrinfo *cur;
@@ -768,11 +786,11 @@ explore_numeric_scope(pai, hostname, servname, res)
 		return 0;
 
 	if (!afd->a_scoped)
-		return explore_numeric(pai, hostname, servname, res);
+		return explore_numeric(pai, hostname, servname, res, hostname);
 
 	cp = strchr(hostname, SCOPE_DELIMITER);
 	if (cp == NULL)
-		return explore_numeric(pai, hostname, servname, res);
+		return explore_numeric(pai, hostname, servname, res, hostname);
 
 	/*
 	 * Handle special case of <scoped_address><delimiter><scope id>
@@ -785,7 +803,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 	addr = hostname2;
 	scope = cp + 1;
 
-	error = explore_numeric(pai, addr, servname, res);
+	error = explore_numeric(pai, addr, servname, res, hostname);
 	if (error == 0) {
 		u_int32_t scopeid;
 
