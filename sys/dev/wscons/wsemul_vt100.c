@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.3 2001/02/10 19:42:06 mickey Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.4 2001/02/20 05:40:23 deraadt Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -144,10 +144,7 @@ wsemul_vt100_cnattach(type, cookie, ccol, crow, defattr)
 	long defattr;
 {
 	struct wsemul_vt100_emuldata *edp;
-#if defined(WS_KERNEL_FG) || defined(WS_KERNEL_BG) || \
-  defined(WS_KERNEL_COLATTR) || defined(WS_KERNEL_MONOATTR)
 	int res;
-#endif
 
 	edp = &wsemul_vt100_console_emuldata;
 	wsemul_vt100_init(edp, type, cookie, ccol, crow, defattr);
@@ -156,8 +153,6 @@ wsemul_vt100_cnattach(type, cookie, ccol, crow, defattr)
 #endif
 	edp->cbcookie = NULL;
 
-#if defined(WS_KERNEL_FG) || defined(WS_KERNEL_BG) || \
-  defined(WS_KERNEL_COLATTR) || defined(WS_KERNEL_MONOATTR)
 #ifndef WS_KERNEL_FG
 #define WS_KERNEL_FG WSCOL_WHITE
 #endif
@@ -180,8 +175,7 @@ wsemul_vt100_cnattach(type, cookie, ccol, crow, defattr)
 					    WS_KERNEL_MONOATTR,
 					    &edp->kernattr);
 	if (res)
-#endif
-	edp->kernattr = defattr;
+		edp->kernattr = defattr;
 
 	edp->tabs = 0;
 	edp->dblwid = 0;
