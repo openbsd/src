@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: pty.c,v 1.10 1999/12/09 00:24:03 deraadt Exp $");
+RCSID("$Id: pty.c,v 1.11 1999/12/11 09:35:46 markus Exp $");
 
 #include <util.h>
 #include "pty.h"
@@ -153,7 +153,7 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 		*ptyfd = open(buf, O_RDWR | O_NOCTTY);
 		if (*ptyfd < 0)
 			continue;
-		snprintf(namebuf, sizeof namebuflen, "/dev/tty%c%c",
+		snprintf(namebuf, namebuflen, "/dev/tty%c%c",
 		    ptymajors[i / num_minors], ptyminors[i % num_minors]);
 
 		/* Open the slave side. */
