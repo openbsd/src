@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.156 2004/09/30 09:20:48 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.157 2004/09/30 14:55:54 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -46,7 +46,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -70,17 +69,14 @@
 #include <net/netisr.h>
 
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
-#include <machine/mmu.h>
 #include <machine/bug.h>
 #include <machine/bugio.h>
-#include <machine/cmmu.h>		/* CMMU stuff	*/
+#include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
 #include <machine/kcore.h>
 #include <machine/locore.h>
-#include <machine/prom.h>
 #include <machine/reg.h>
-#include <machine/trap.h>
 #ifdef M88100
 #include <machine/m88100.h>		/* DMT_VALID */
 #endif
@@ -120,7 +116,6 @@ struct md_p md;
 
 /* prototypes */
 void setupiackvectors(void);
-void regdump(struct trapframe *f);
 void dumpsys(void);
 void consinit(void);
 vaddr_t size_memory(void);
@@ -179,12 +174,6 @@ int want_ast;
 int want_resched;
 
 int physmem;	  /* available physical memory, in pages */
-int longformat = 1;  /* for regdump() */
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int   safepri = IPL_NONE;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -479,36 +468,6 @@ identifycpu()
 
 	snprintf(cpu_model, sizeof cpu_model,
 	    "Motorola MVME%x%s, %dMHz", brdtyp, suffix, cpuspeed);
-}
-
-/*
- *	Setup u area ptes for u area double mapping.
- */
-
-void
-save_u_area(struct proc *p, vaddr_t va)
-{
-	int i;
-
-	for (i = 0; i < UPAGES; i++) {
-		p->p_md.md_upte[i] = *((pt_entry_t *)kvtopte(va));
-		va += NBPG;
-	}
-}
-
-void
-load_u_area(struct proc *p)
-{
-	int i;
-	vaddr_t va;
-	pt_entry_t *t;
-
-	for (i = 0, va = UADDR; i < UPAGES; i++) {
-		t = kvtopte(va);
-		*t = p->p_md.md_upte[i];
-		va += NBPG;
-	}
-	cmmu_flush_tlb(cpu_number(), 1, UADDR, USPACE);
 }
 
 /*
@@ -816,84 +775,6 @@ allocsys(v)
 	valloc(buf, struct buf, nbuf);
 
 	return v;
-}
-
-/*
- * Set registers on exec.
- * Clear all except sp and pc.
- */
-void
-setregs(p, pack, stack, retval)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	int retval[2];
-{
-	struct trapframe *tf = (struct trapframe *)USER_REGS(p);
-
-	/*
-	 * The syscall will ``return'' to snip; set it.
-	 * argc, argv, envp are placed on the stack by copyregs.
-	 * Point r2 to the stack. crt0 should extract envp from
-	 * argc & argv before calling user's main.
-	 */
-#if 0
-	/*
-	 * I don't think I need to mess with fpstate on 88k because
-	 * we make sure the floating point pipeline is drained in
-	 * the trap handlers. Should check on this later. XXX Nivas.
-	 */
-
-	if ((fs = p->p_md.md_fpstate) != NULL) {
-		/*
-		 * We hold an FPU state.  If we own *the* FPU chip state
-		 * we must get rid of it, and the only way to do that is
-		 * to save it.  In any case, get rid of our FPU state.
-		 */
-		if (p == fpproc) {
-			savefpstate(fs);
-			fpproc = NULL;
-		}
-		free((void *)fs, M_SUBPROC);
-		p->p_md.md_fpstate = NULL;
-	}
-#endif /* 0 */
-	bzero((caddr_t)tf, sizeof *tf);
-
-	if (cputyp == CPU_88110) {
-		/*
-		 * user mode, serialize mem, interrupts enabled,
-		 * graphics unit, fp enabled
-		 */
-		tf->tf_epsr = PSR_SRM | PSR_SFD;
-		/*
-		 * XXX disable OoO for now...
-		 */
-		tf->tf_epsr |= PSR_SER;
-	} else {
-		/*
-		 * user mode, interrupts enabled,
-		 * no graphics unit, fp enabled
-		 */
-		tf->tf_epsr = PSR_SFD | PSR_SFD2;
-	}
-
-	/*
-	 * We want to start executing at pack->ep_entry. The way to
-	 * do this is force the processor to fetch from ep_entry. Set
-	 * NIP to something bogus and invalid so that it will be a NOOP.
-	 * And set sfip to ep_entry with valid bit on so that it will be
-	 * fetched.  mc88110 - just set exip to pack->ep_entry.
-	 */
-	if (cputyp == CPU_88110) {
-		tf->tf_exip = pack->ep_entry & ~3;
-	} else {
-		tf->tf_snip = pack->ep_entry & ~3;
-		tf->tf_sfip = (pack->ep_entry & ~3) | FIP_V;
-	}
-	tf->tf_r[2] = stack;
-	tf->tf_r[31] = stack;
-	retval[1] = 0;
 }
 
 __dead void
@@ -1799,72 +1680,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/*NOTREACHED*/
 }
 
-int
-copystr(fromaddr, toaddr, maxlength, lencopied)
-	const void *fromaddr;
-	void *toaddr;
-	size_t maxlength;
-	size_t *lencopied;
-{
-	u_int tally;
-
-	tally = 0;
-
-	while (maxlength--) {
-		*(u_char *)toaddr = *(u_char *)fromaddr++;
-		tally++;
-		if (*(u_char *)toaddr++ == 0) {
-			if (lencopied) *lencopied = tally;
-			return (0);
-		}
-	}
-
-	if (lencopied)
-		*lencopied = tally;
-
-	return (ENAMETOOLONG);
-}
-
-void
-setrunqueue(p)
-	struct proc *p;
-{
-	struct prochd *q;
-	struct proc *oldlast;
-	int which = p->p_priority >> 2;
-
-	if (p->p_back != NULL)
-		panic("setrunqueue %p", p);
-	q = &qs[which];
-	whichqs |= 1 << which;
-	p->p_forw = (struct proc *)q;
-	p->p_back = oldlast = q->ph_rlink;
-	q->ph_rlink = p;
-	oldlast->p_forw = p;
-}
-
-/*
- * Remove process p from its run queue, which should be the one
- * indicated by its priority.  Calls should be made at splstatclock().
- */
-void
-remrunqueue(vp)
-	struct proc *vp;
-{
-	struct proc *p = vp;
-	int which = p->p_priority >> 2;
-	struct prochd *q;
-
-	if ((whichqs & (1 << which)) == 0)
-		panic("remrq %p", p);
-	p->p_forw->p_back = p->p_back;
-	p->p_back->p_forw = p->p_forw;
-	p->p_back = NULL;
-	q = &qs[which];
-	if (q->ph_link == (struct proc *)q)
-		whichqs &= ~(1 << which);
-}
-
 /* dummys for now */
 
 void
@@ -1921,93 +1736,6 @@ spl0()
 	setipl(0);
 
 	return (x);
-}
-
-void
-nmihand(void *framep)
-{
-#if 0
-	struct trapframe *frame = framep;
-#endif
-
-#if DDB
-	printf("Abort Pressed\n");
-	Debugger();
-#else
-	printf("Spurious NMI?\n");
-#endif /* DDB */
-}
-
-void
-regdump(struct trapframe *f)
-{
-#define R(i) f->tf_r[i]
-	printf("R00-05: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
-	       R(0),R(1),R(2),R(3),R(4),R(5));
-	printf("R06-11: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
-	       R(6),R(7),R(8),R(9),R(10),R(11));
-	printf("R12-17: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
-	       R(12),R(13),R(14),R(15),R(16),R(17));
-	printf("R18-23: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
-	       R(18),R(19),R(20),R(21),R(22),R(23));
-	printf("R24-29: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
-	       R(24),R(25),R(26),R(27),R(28),R(29));
-	printf("R30-31: 0x%08x  0x%08x\n",R(30),R(31));
-	if (cputyp == CPU_88110) {
-		printf("exip %x enip %x\n", f->tf_exip, f->tf_enip);
-	} else {
-		printf("sxip %x snip %x sfip %x\n",
-		    f->tf_sxip, f->tf_snip, f->tf_sfip);
-	}
-#ifdef M88100
-	if (f->tf_vector == 0x3 && cputyp != CPU_88110) {
-		/* print dmt stuff for data access fault */
-		printf("dmt0 %x dmd0 %x dma0 %x\n",
-		    f->tf_dmt0, f->tf_dmd0, f->tf_dma0);
-		printf("dmt1 %x dmd1 %x dma1 %x\n",
-		    f->tf_dmt1, f->tf_dmd1, f->tf_dma1);
-		printf("dmt2 %x dmd2 %x dma2 %x\n",
-		    f->tf_dmt2, f->tf_dmd2, f->tf_dma2);
-		printf("fault type %d\n", (f->tf_dpfsr >> 16) & 0x7);
-		dae_print((unsigned *)f);
-	}
-	if (longformat && cputyp != CPU_88110) {
-		printf("fpsr %x fpcr %x epsr %x ssbr %x\n",
-		    f->tf_fpsr, f->tf_fpcr, f->tf_epsr, f->tf_ssbr);
-		printf("fpecr %x fphs1 %x fpls1 %x fphs2 %x fpls2 %x\n",
-		    f->tf_fpecr, f->tf_fphs1, f->tf_fpls1,
-		    f->tf_fphs2, f->tf_fpls2);
-		printf("fppt %x fprh %x fprl %x fpit %x\n",
-		    f->tf_fppt, f->tf_fprh, f->tf_fprl, f->tf_fpit);
-		printf("vector %d mask %x mode %x scratch1 %x cpu %x\n",
-		    f->tf_vector, f->tf_mask, f->tf_mode,
-		    f->tf_scratch1, f->tf_cpu);
-	}
-#endif
-#ifdef M88110
-	if (longformat && cputyp == CPU_88110) {
-		printf("fpsr %x fpcr %x fpecr %x epsr %x\n",
-		    f->tf_fpsr, f->tf_fpcr, f->tf_fpecr, f->tf_epsr);
-		printf("dsap %x duap %x dsr %x dlar %x dpar %x\n",
-		    f->tf_dsap, f->tf_duap, f->tf_dsr, f->tf_dlar, f->tf_dpar);
-		printf("isap %x iuap %x isr %x ilar %x ipar %x\n",
-		    f->tf_isap, f->tf_iuap, f->tf_isr, f->tf_ilar, f->tf_ipar);
-		printf("vector %d mask %x mode %x scratch1 %x cpu %x\n",
-		    f->tf_vector, f->tf_mask, f->tf_mode,
-		    f->tf_scratch1, f->tf_cpu);
-	}
-#endif
-#ifdef MVME188
-	if (brdtyp == BRD_188) {
-		unsigned int istr, cur_mask;
-
-		istr = *(int *volatile)IST_REG;
-		cur_mask = GET_MASK(0, istr);
-		printf("emask = 0x%b\n", f->tf_mask, IST_STRING);
-		printf("istr  = 0x%b\n", istr, IST_STRING);
-		printf("cmask = 0x%b\n", cur_mask, IST_STRING);
-	}
-#endif
 }
 
 /*
