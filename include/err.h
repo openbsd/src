@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.h,v 1.6 2001/07/19 15:06:22 espie Exp $	*/
+/*	$OpenBSD: err.h,v 1.7 2001/08/07 21:34:42 millert Exp $	*/
 /*	$NetBSD: err.h,v 1.11 1994/10/26 00:55:52 cgd Exp $	*/
 
 /*-
@@ -52,13 +52,13 @@
 __BEGIN_DECLS
 
 __dead void	err __P((int, const char *, ...))
-			__attribute__((__noreturn__, __format__ (printf, 2, 3)));
+			__attribute__((__format__ (printf, 2, 3)));
 __dead void	verr __P((int, const char *, _BSD_VA_LIST_))
-			__attribute__((__noreturn__, __format__ (printf, 2, 0)));
+			__attribute__((__format__ (printf, 2, 0)));
 __dead void	errx __P((int, const char *, ...))
-			__attribute__((__noreturn__, __format__ (printf, 2, 3)));
+			__attribute__((__format__ (printf, 2, 3)));
 __dead void	verrx __P((int, const char *, _BSD_VA_LIST_))
-			__attribute__((__noreturn__, __format__ (printf, 2, 0)));
+			__attribute__((__format__ (printf, 2, 0)));
 void		warn __P((const char *, ...))
 			__attribute__((__format__ (printf, 1, 2)));
 void		vwarn __P((const char *, _BSD_VA_LIST_))
@@ -73,13 +73,13 @@ void		vwarnx __P((const char *, _BSD_VA_LIST_))
  * versions of err*,warn* do not get used.
  */
 __dead void	_err __P((int, const char *, ...))
-			__attribute__((__noreturn__, __format__ (printf, 2, 3)));
+			__attribute__((__format__ (printf, 2, 3)));
 __dead void	_verr __P((int, const char *, _BSD_VA_LIST_))
-			__attribute__((__noreturn__, __format__ (printf, 2, 0)));
+			__attribute__((__format__ (printf, 2, 0)));
 __dead void	_errx __P((int, const char *, ...))
-			__attribute__((__noreturn__, __format__ (printf, 2, 3)));
+			__attribute__((__format__ (printf, 2, 3)));
 __dead void	_verrx __P((int, const char *, _BSD_VA_LIST_))
-			__attribute__((__noreturn__, __format__ (printf, 2, 0)));
+			__attribute__((__format__ (printf, 2, 0)));
 void		_warn __P((const char *, ...))
 			__attribute__((__format__ (printf, 1, 2)));
 void		_vwarn __P((const char *, _BSD_VA_LIST_))
