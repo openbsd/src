@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.94 1998/09/28 01:23:44 mickey Exp $
+#	$OpenBSD: files,v 1.95 1998/09/28 02:33:55 jason Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -84,7 +84,7 @@ file	dev/ic/smc91cxx.c	sm
 
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
-device	ne: ether, ifnet, dp8390nic
+device	ne: ether, ifnet, dp8390nic, ifmedia
 file	dev/ic/ne2000.c		ne
 
 # 8250/16[45]50-based "com" ports
