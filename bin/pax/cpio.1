@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.13 2000/11/09 23:58:55 aaron Exp $
+.\"	$OpenBSD: cpio.1,v 1.14 2000/11/10 17:52:02 aaron Exp $
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -98,11 +98,17 @@ Recognized formats are:
 .Pp
 .Bl -tag -width sv4cpio -compact
 .It Ar bcpio
-Old binary cpio format.
+Old binary
+.Nm
+format.
 .It Ar cpio
-Old octal character cpio format.
+Old octal character
+.Nm
+format.
 .It Ar sv4cpio
-SVR4 hex cpio format.
+SVR4 hex
+.Nm
+format.
 .It Ar tar
 Old tar format.
 .It Ar ustar
@@ -159,11 +165,17 @@ Recognized formats are:
 .Pp
 .Bl -tag -width sv4cpio -compact
 .It Ar bcpio
-Old binary cpio format.
+Old binary
+.Nm
+format.
 .It Ar cpio
-Old octal character cpio format.
+Old octal character
+.Nm
+format.
 .It Ar sv4cpio
-SVR4 hex cpio format.
+SVR4 hex
+.Nm
+format.
 .It Ar tar
 Old tar format.
 .It Ar ustar
@@ -195,7 +207,9 @@ Uncompress archive using
 .Xr compress 1
 format.
 .It Fl 6
-Process old-style \*Qcpio\*U format archives.
+Process old-style
+.Nm
+format archives.
 .El
 .It Fl p
 Copy files from one location to another in a single pass.
