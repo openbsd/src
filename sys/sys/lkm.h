@@ -1,4 +1,4 @@
-/*	$OpenBSD: lkm.h,v 1.3 1996/06/21 11:33:31 mickey Exp $	*/
+/*	$OpenBSD: lkm.h,v 1.4 1996/06/21 17:03:25 mickey Exp $	*/
 /*	$NetBSD: lkm.h,v 1.12 1996/02/09 18:25:13 christos Exp $	*/
 
 /*
@@ -246,6 +246,7 @@ struct lkm_table {
 
 
 extern int	lkm_nofunc __P((struct lkm_table *lkmtp, int cmd));
+extern struct lkm_table *lkm_list __P((struct lkm_table *));
 
 /*
  * DISPATCH -- body function for use in module entry point function;
