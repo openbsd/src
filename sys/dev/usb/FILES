@@ -31,13 +31,20 @@ ugen.c			generic driver that can handle access to any USB device
 uhci.c			Host controller driver for UHCI
 uhcireg.h		Hardware definitions for UHCI
 uhcivar.h		API for uhci.c
-uhid.c			USB HID class driver
+uhid.c			USB generic HID driver
+uhidev.c		USB HID class driver
+uhidev.h		  and definitions for it
 uhub.c			USB hub driver
 ukbd.c			USB keyboard driver
 ukbdmap.c		wscons key mapping for ukbd
 ukbdvar.h		API for ukbd.c
 ulpt.c			USB printer class driver
 umass.c			USB mass storage driver (bulk only for now)
+umidi.c			USB MIDI driver
+umidi_quirks.c		Strange MIDI devices
+umidi_quirks.h		  and definitions for it
+umidireg.h		Protocol definitions for umidi.c
+umidivar.h		definitions for umidi.c
 umodem.c		USB modem (CDC ACM) driver
 ums.c			USB mouse driver
 urio.c			USB Diamond Rio500 driver
