@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.23 2001/03/04 06:32:40 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.24 2001/11/21 21:16:18 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -84,6 +84,8 @@ int msdosfs_check_export __P((struct mount *mp, struct mbuf *nam,
 
 int msdosfs_mountfs __P((struct vnode *, struct mount *, struct proc *,
 			 struct msdosfs_args *));
+
+int msdosfs_sync_vnode(struct vnode *, void *);
 
 /*
  * mp - path - addr in user space of mount point (ie /usr or whatever) 
@@ -702,6 +704,41 @@ msdosfs_statfs(mp, sbp, p)
 	return (0);
 }
 
+
+struct msdosfs_sync_arg {
+	struct proc *p;
+	struct ucred *cred;
+	int allerror;
+	int waitfor;
+};
+
+int
+msdosfs_sync_vnode(struct vnode *vp, void *arg)
+{
+	struct msdosfs_sync_arg *msa = arg;
+	int error;
+	struct denode *dep;
+
+	dep = VTODE(vp);
+	if (vp->v_type == VNON || 
+	    ((dep->de_flag & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0
+		&& vp->v_dirtyblkhd.lh_first == NULL) ||
+	    msa->waitfor == MNT_LAZY) {
+		simple_unlock(&vp->v_interlock);
+		return (0);
+	}
+
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, msa->p))
+		return (0);
+
+	if ((error = VOP_FSYNC(vp, msa->cred, msa->waitfor, msa->p)) != 0)
+		msa->allerror = error;
+	vput(vp);
+
+	return (0);
+}
+
+
 int
 msdosfs_sync(mp, waitfor, cred, p)
 	struct mount *mp;
@@ -709,10 +746,14 @@ msdosfs_sync(mp, waitfor, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	struct vnode *vp, *nvp;
-	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	int error, allerror = 0;
+	struct msdosfs_sync_arg msa;
+	int error;
+
+	msa.allerror = 0;
+	msa.p = p;
+	msa.cred = cred;
+	msa.waitfor = waitfor;
 
 	/*
 	 * If we ever switch to not updating all of the fats all the time,
@@ -728,55 +769,19 @@ msdosfs_sync(mp, waitfor, cred, p)
 	/*
 	 * Write back each (modified) denode.
 	 */
-	simple_lock(&mntvnode_slock);
-loop:
-	for (vp = mp->mnt_vnodelist.lh_first;
-	     vp != NULL;
-	     vp = nvp) {
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * assoicated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
+	vfs_mount_foreach_vnode(mp, msdosfs_sync_vnode, &msa);
 
-		simple_lock(&vp->v_interlock);
-		nvp = vp->v_mntvnodes.le_next;
-		dep = VTODE(vp);
-		if (vp->v_type == VNON || ((dep->de_flag &
-		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0
-		    && vp->v_dirtyblkhd.lh_first == NULL) ||
-		    waitfor == MNT_LAZY) {
-			simple_unlock(&vp->v_interlock);
-			continue;
-		}
-		simple_unlock(&mntvnode_slock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, p);
-		if (error) {
-			simple_lock(&mntvnode_slock);
-			if (error == ENOENT)
-				goto loop;
-			continue;
-		}
-		if ((error = VOP_FSYNC(vp, cred, waitfor, p)) != 0)
-			allerror = error;
-		VOP_UNLOCK(vp, 0, p);
-		vrele(vp);
-		simple_lock(&mntvnode_slock);
-	}
-	simple_unlock(&mntvnode_slock);
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
 	if (waitfor != MNT_LAZY) {
 		vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		if ((error = VOP_FSYNC(pmp->pm_devvp, cred, waitfor, p)) != 0)
-			allerror = error;
+			msa.allerror = error;
 		VOP_UNLOCK(pmp->pm_devvp, 0, p);
 	}
-#ifdef QUOTA
-#endif
-	return (allerror);
+
+	return (msa.allerror);
 }
 
 int
