@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.24 2003/05/15 00:26:55 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.25 2003/05/15 00:27:29 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.58 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -260,8 +260,6 @@ daemon_main(int argc, char **argv)
 		/*NOTREACHED*/
 	default:
 	    {
-		int len;
-
 		serverargc = argc - NUMARG;
 		if (serverargc >= MAXARGV)
 			exit_stderr("too many arguments");
