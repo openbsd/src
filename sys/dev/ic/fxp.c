@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.1 2000/04/18 18:44:26 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.2 2000/04/26 12:48:53 aaron Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ fxp_attach_common(sc, enaddr, intrstr)
 	fxp_read_eeprom(sc, (u_int16_t *)enaddr, 0, 3);
 
 	ifp = &sc->arpcom.ac_if;
-	bcopy(enaddr, sc->arpcom.ac_enaddr, sizeof(enaddr));
+	bcopy(enaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
