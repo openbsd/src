@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.27 2004/06/12 04:58:48 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.28 2004/08/23 01:30:30 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -459,8 +459,10 @@ rip6_output(struct mbuf *m, ...)
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
 	    in6p->in6p_cksum != -1) {
+		struct mbuf *n;
 		int off;
-		u_int16_t sum;
+		u_int16_t *sump;
+		int sumoff;
 
 		/* compute checksum */
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
@@ -473,10 +475,15 @@ rip6_output(struct mbuf *m, ...)
 		}
 		off += sizeof(struct ip6_hdr);
 
-		sum = 0;
-		m_copyback(m, off, sizeof(sum), &sum);
-		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
-		m_copyback(m, off, sizeof(sum), &sum);
+		n = m_pulldown(m, off, sizeof(*sump), &sumoff);
+		if (n == NULL) {
+			m = NULL;
+			error = ENOBUFS;
+			goto bad;
+		}
+		sump = (u_int16_t *)(mtod(n, caddr_t) + sumoff);
+		*sump = 0;
+		*sump = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
 	}
 
 	flags = 0;
