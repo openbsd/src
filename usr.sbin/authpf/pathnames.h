@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.5 2002/10/25 18:35:33 camield Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.6 2003/06/03 20:38:59 beck Exp $	*/
 
 /*
  * Copyright (C) 2002 Chris Kuethe (ckuethe@ualberta.ca)
@@ -11,9 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the author nor the names of contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
