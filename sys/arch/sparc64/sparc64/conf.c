@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 2002/05/16 21:11:18 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.31 2002/06/11 05:15:21 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -54,12 +54,6 @@
 #include <sys/conf.h>
 
 #include <machine/conf.h>
-
-/* open, close, write, ioctl */
-#define cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
 
 #include "pty.h"
 #include "bpfilter.h"

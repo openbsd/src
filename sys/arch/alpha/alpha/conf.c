@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.40 2002/06/11 04:53:39 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.41 2002/06/11 05:15:17 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -79,12 +79,6 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRAID,raid),	/* 16 */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
-
-/* open, close, write, ioctl */
-#define cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
 
 #define	mmread  mmrw
 #define	mmwrite mmrw

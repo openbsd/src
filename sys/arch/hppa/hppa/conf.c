@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2002/05/16 21:40:12 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 2002/06/11 05:15:18 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -86,11 +86,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
 	dev_init(c,n,tty), ttselect /* ttpoll */, dev_init(c,n,mmap) }
-
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl),(dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
 
 #include "pty.h"
 #include "wsdisplay.h"
