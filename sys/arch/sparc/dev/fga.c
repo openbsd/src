@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.10 2002/07/08 21:15:24 jason Exp $	*/
+/*	$OpenBSD: fga.c,v 1.11 2002/07/08 21:55:56 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -525,7 +525,7 @@ fga_intr_establish(sc, vec, level, ih)
 		    sizeof(struct intrhand *), M_DEVBUF, M_NOWAIT);
 		if (sc->sc_vmevec == NULL)
 			panic("fga_addirq");
-		bzero(sc->sc_vmevec, 256 * sizeof(struct intrhand));
+		bzero(sc->sc_vmevec, 256 * sizeof(struct intrhand *));
 	}
 	if (sc->sc_vmevec[vec] == NULL)
 		sc->sc_vmevec[vec] = ih;
