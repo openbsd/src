@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sun3/MAKEDEV.md,v 1.1 2002/01/08 00:59:59 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.15 2002/01/08 05:10:38 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.41 2002/01/08 05:29:14 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.42 2002/01/23 06:21:20 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -334,20 +334,19 @@ local)
 	;;
 
 all)
-	R std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 st0 st1 cd0 cd1
-	R vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3 xy0 xy1 xy2 xy3
-	R xd0 xd1 xd2 xd3 rd0
-	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	R tun0 tun1 tun2 tun3 altq pf ttya ttyb ttyc ttyd random
-	R uk0 uk1 ss0 ss1 xfs0 bwtwo0 cgtwo0 cgfour0 local
+	R local cgfour0 cgtwo0 bwtwo0 xfs0 ss0 uk0 rndrandom ttya
+	R ttyb ttyc ttyd pf altq tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2
+	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 rd0 xd0 xd1 xd2 xd3 xy0
+	R xy1 xy2 xy3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0
+	R st0 pty0 fd sd0 sd1 sd2 sd3 sd4
 	;;
 
-sd*|ccd*|xd*|xy*)
+xd*|xy*|sd*|ccd*)
 	case $i in
-	sd*) dodisk sd $U 7 17 $U 0;;
-	ccd*) dodisk ccd $U 9 33 $U 0;;
 	xd*) dodisk xd $U 10 42 $U 0;;
 	xy*) dodisk xy $U 3 9 $U 0;;
+	sd*) dodisk sd $U 7 17 $U 0;;
+	ccd*) dodisk ccd $U 9 33 $U 0;;
 	esac
 	;;
 

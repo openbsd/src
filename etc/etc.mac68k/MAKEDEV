@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.1 2002/01/08 03:14:50 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.15 2002/01/08 05:10:38 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.37 2002/01/08 05:29:13 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.38 2002/01/23 06:21:20 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -355,11 +355,11 @@ fd)
 	;;
 
 all)
-	R std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 st0 st1 ch0 cd0 cd1
-	R vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
-	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	R tun0 tun1 tun2 tun3 altq pf tty00 tty01 ttye0 lkm random
-	R uk0 uk1 ss0 ss1 xfs0 asc0 adb grf0 grf1 grf2 grf3 local
+	R local grf0 grf1 grf2 grf3 adb asc0 xfs0 ss0 uk0 rndrandom
+	R lkm ttye0 tty00 tty01 pf altq tun0 tun1 tun2 tun3 bpf0 bpf1
+	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 ccd0 ccd1 ccd2 ccd3
+	R vnd0 vnd1 vnd2 vnd3 std cd0 ch0 st0 pty0 fd sd0 sd1 sd2 sd3
+	R sd4
 	;;
 
 sd*|ccd*)

@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.8 2002/01/13 02:06:45 jason Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.17 2002/01/12 21:14:57 jason Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.9 2002/01/23 06:18:52 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.41 2002/01/13 02:07:28 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.42 2002/01/23 06:21:20 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -89,7 +89,9 @@
 #	lkm	loadable kernel modules interface
 #	*random	inkernel random data source
 #	magma*	magma card (makes 16 tty and 2 bpp)
+#	bppmag[mno]	magma parallel port device
 #	spif*	spif card (makes 8 tty and 1 bpp)
+#	bpp[jkl]	spif parallel port device
 #	crypto	hardware crypto access driver
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -230,25 +232,11 @@ mouse*)name=${i##mouse-}
 		$0 $name	# make the appropriate device
 	fi
 	RMlist="$RMlist mouse"
-	MKlist="$MKlist;ln -s $name mouse";;
+	MKlist="$MKlist;ln -s $name mouse"
+	;;
 
-magma*)
-	case $U in
-	0)	offset=0  nam=m;;
-	1)	offset=16 nam=n;;
-	2)	offset=32 nam=o;;
-	*)	echo "bad unit for $i: $U"; exit 127;;
-	esac
-	offset=$(($U*64))
-	n=0
-	while [ $n -lt 16 ]
-	do
-		name=${nam}`hex $n`
-		M tty$name c 71 $(($offset+$n)) 660 dialer uucp
-		n=$(($n+1))
-	done
-	M bpp${nam}0 c 72 $(($offset+0)) 600 wheel root
-	M bpp${nam}1 c 72 $(($offset+1)) 600 wheel root
+crypto)
+	M crypto c 75 0
 	;;
 
 spif*)
@@ -266,11 +254,26 @@ spif*)
 		M tty$name c 108 $(($offset+$n)) 660 dialer uucp
 		n=$(($n+1))
 	done
-	M bpp${nam}0 c 109 $(($offset+0)) 600 wheel root
+	M bpp${nam}0 c 109 $(($offset+0)) 600
 	;;
 
-crypto)
-	M crypto c 75 0
+magma*)
+	case $U in
+	0)	offset=0  nam=m;;
+	1)	offset=16 nam=n;;
+	2)	offset=32 nam=o;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=$(($U*64))
+	n=0
+	while [ $n -lt 16 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 71 $(($offset+$n)) 660 dialer uucp
+		n=$(($n+1))
+	done
+	M bpp${nam}0 c 72 $(($offset+0)) 600
+	M bpp${nam}1 c 72 $(($offset+1)) 600
 	;;
 
 *random)
@@ -342,8 +345,8 @@ ses*)
 	;;
 
 usbs)
-	R usb0 usb1 urio uscanner0 uhid0 uhid1 uhid2 uhid3
-	R ulpt0 ulpt1 ugen0 ugen1 utty0 utty1
+	R utty0 utty1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
+	R urio0 usb0 usb1
 	;;
 
 uscanner*)
@@ -532,24 +535,22 @@ local)
 	;;
 
 all)
-	R std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 st0 st1 ch0 cd0 cd1
-	R vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3 wd0 wd1 wd2 wd3
-	R raid0 raid1 raid2 raid3 rd0
-	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
-	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	R tun0 tun1 tun2 tun3 altq pf crypto ttyh0 ttyh1
-	R ttya ttyb ttyc ttyd cuaa cuab cuac cuad
-	R tty00 tty01 tty02 tty03 lkm random ses0 uk0 uk1 ss0 ss1 xfs0
-	R audio0 usbs wscons
+	R wscons usbs audio0 xfs0 ss0 uk0 ses0 rndrandom lkm tty00
+	R tty01 tty02 tty03 cuaa cuab cuac cuad ttya ttyb ttyc ttyd
+	R tth0 tth1 crypto pf altq tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2
+	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 fd1 fd1B fd1C fd1D fd1E
+	R fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H rd0
+	R raid0 raid1 raid2 raid3 wd0 wd1 wd2 wd3 ccd0 ccd1 ccd2 ccd3
+	R vnd0 vnd1 vnd2 vnd3 std cd0 ch0 st0 pty0 fd sd0 sd1 sd2 sd3
+	R sd4
 	;;
 
-sd*|ccd*|raid*|wd*)
+wd*|sd*|raid*|ccd*)
 	case $i in
-	sd*) dodisk sd $U 7 17 $U 0;;
-	ccd*) dodisk ccd $U 9 23 $U 0;;
-	raid*) dodisk raid $U 25 121 $U 0;;
 	wd*) dodisk wd $U 12 26 $U 0;;
+	sd*) dodisk sd $U 7 17 $U 0;;
+	raid*) dodisk raid $U 25 121 $U 0;;
+	ccd*) dodisk ccd $U 9 23 $U 0;;
 	esac
 	;;
 

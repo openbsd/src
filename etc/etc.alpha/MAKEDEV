@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.1 2002/01/08 01:33:19 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.15 2002/01/08 05:10:38 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.2 2002/01/23 06:15:53 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.63 2002/01/08 05:29:13 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.64 2002/01/23 06:21:20 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -89,6 +89,8 @@
 #	ss*	SCSI scanners
 #	xfs*	XFS filesystem devices
 #	audio*	audio device
+#	speaker	pc speaker
+#	music*	midi devices
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -194,6 +196,11 @@ U=`unt $i`
 [ "$U" ] || U=0
 
 case $i in
+floppy)
+	R std wt0 fd0 wd0 wd1 sd0 sd1 tty00 tty01
+	R st0 cd0 ttyC0 random
+	;;
+
 raminst)
 	R std random
 	R sd0 sd1 sd2 wd0 st0
@@ -229,6 +236,17 @@ ttyB*|ttyc*)
 
 mmclock)
 	M mmclock c 28 0 444
+	;;
+
+music*)
+	M music$U     c 53 $U
+	M sequencer$U c 53 $(($U+128))
+	MKlist="$MKlist;[ -e music ] || ln -s music$U music"
+	MKlist="$MKlist;[ -e sequencer ] || ln -s sequencer$U sequencer"
+	;;
+
+speaker)
+	M speaker c 27 0 600
 	;;
 
 audio*)
@@ -284,8 +302,8 @@ fd)
 	;;
 
 usbs)
-	R usb0 usb1 uhid0 uhid1 uhid2 uhid3 ulpt0 ulpt1 ugen0 ugen1
-	R utty0 utty1
+	R utty0 utty1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
+	R usb0 usb1
 	;;
 
 pci)
@@ -470,26 +488,23 @@ local)
 	;;
 
 all)
-	R std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 st0 st1 ch0 cd0 cd1
-	R vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3 wd0 wd1 wd2 wd3
-	R raid0 raid1 raid2 raid3 rd0
-	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
-	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	R tun0 tun1 tun2 tun3 altq pf
-	R ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5
-	R ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
-	R tty00 tty01 tty02 tty03 lkm mmclock
-	R lpa0 lpt0 lpa1 lpt1 lpa2 lpt2 random uk0 uk1 ss0 ss1 xfs0
-	R audio0 usbs iop0 iop1 pci wscons
+	R wscons pci iop0 iop1 usbs music0 speaker audio0 xfs0 ss0
+	R uk0 rndrandom lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 mmclock lkm
+	R tty00 tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5
+	R ttyc6 ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 pf altq tun0
+	R tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8
+	R bpf9 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
+	R fd0D fd0E fd0F fd0G fd0H rd0 raid0 raid1 raid2 raid3 wd0 wd1
+	R wd2 wd3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0 ch0
+	R st0 pty0 fd sd0 sd1 sd2 sd3 sd4
 	;;
 
-sd*|ccd*|raid*|wd*)
+wd*|sd*|raid*|ccd*)
 	case $i in
-	sd*) dodisk sd $U 8 8 $U 0;;
-	ccd*) dodisk ccd $U 7 27 $U 0;;
-	raid*) dodisk raid $U 16 43 $U 0;;
 	wd*) dodisk wd $U 0 36 $U 0;;
+	sd*) dodisk sd $U 8 8 $U 0;;
+	raid*) dodisk raid $U 16 43 $U 0;;
+	ccd*) dodisk ccd $U 7 27 $U 0;;
 	esac
 	;;
 

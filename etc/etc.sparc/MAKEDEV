@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.4 2002/01/12 21:25:45 jason Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.17 2002/01/12 21:14:57 jason Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.5 2002/01/23 06:17:09 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.74 2002/01/12 21:26:14 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.75 2002/01/23 06:21:20 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -75,7 +75,9 @@
 #	tun*	network tunnel driver
 #	*random	inkernel random data source
 #	magma*	magma card (makes 16 tty and 2 bpp)
+#	bppmag[mno]	magma parallel port device
 #	spif*	spif card (makes 8 tty and 1 bpp)
+#	bpp[jkl]	spif parallel port device
 #	xfs*	XFS filesystem devices
 #	raid*	RAIDframe disk devices
 #	fd	makes fd/* for the fdescfs
@@ -216,23 +218,18 @@ std)
 	M kbd		c 29 0
 	;;
 
-magma*)
-	case $U in
-	0)	offset=0  nam=m;;
-	1)	offset=16 nam=n;;
-	2)	offset=32 nam=o;;
-	*)	echo "bad unit for $i: $U"; exit 127;;
-	esac
-	offset=$(($U*64))
-	n=0
-	while [ $n -lt 16 ]
-	do
-		name=${nam}`hex $n`
-		M tty$name c 100 $(($offset+$n)) 660 dialer uucp
-		n=$(($n+1))
-	done
-	M bpp${nam}0 c 101 $(($offset+0)) 600 wheel root
-	M bpp${nam}1 c 101 $(($offset+1)) 600 wheel root
+ses*)
+	M ses$U c 124 $U 640 operator
+	;;
+
+fd)
+	RMlist="mkdir -p fd;$RMlist" n=0
+	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
+	MKlist="$MKlist;chmod 555 fd"
+	;;
+
+xfs*)
+	M xfs$U c 51 $U 600
 	;;
 
 spif*)
@@ -250,21 +247,26 @@ spif*)
 		M tty$name c 102 $(($offset+$n)) 660 dialer uucp
 		n=$(($n+1))
 	done
-	M bpp${nam}0 c 103 $(($offset+0)) 600 wheel root
+	M bpp${nam}0 c 103 $(($offset+0)) 600
 	;;
 
-ses*)
-	M ses$U c 124 $U 640 operator
-	;;
-
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
-	;;
-
-xfs*)
-	M xfs$U c 51 $U 600
+magma*)
+	case $U in
+	0)	offset=0  nam=m;;
+	1)	offset=16 nam=n;;
+	2)	offset=32 nam=o;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=$(($U*64))
+	n=0
+	while [ $n -lt 16 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 100 $(($offset+$n)) 660 dialer uucp
+		n=$(($n+1))
+	done
+	M bpp${nam}0 c 101 $(($offset+0)) 600
+	M bpp${nam}1 c 101 $(($offset+1)) 600
 	;;
 
 *random)
@@ -472,25 +474,23 @@ local)
 	;;
 
 all)
-	R std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 st0 st1 ch0 cd0 cd1
-	R vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
-	R raid0 raid1 raid2 raid3 xy0 xy1 xy2 xy3 xd0 xd1 xd2 xd3 rd0
-	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
-	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	R tun0 tun1 tun2 tun3 altq pf ttya ttyb ttyc ttyd
-	R cuaa cuab cuac cuad lkm random ses0 uk0 uk1 ss0 ss1 xfs0
-	R audio0 bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0 cgeight0
-	R cgfourteen0 tcx0
+	R tcx0 cgfourteen0 cgeight0 cgsix0 cgfour0 cgthree0 cgtwo0
+	R bwtwo0 audio0 xfs0 ss0 uk0 ses0 rndrandom lkm cuaa cuab cuac
+	R cuad ttya ttyb ttyc ttyd pf altq tun0 tun1 tun2 tun3 bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 fd1 fd1B fd1C
+	R fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G
+	R fd0H rd0 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3 raid0 raid1 raid2
+	R raid3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0 ch0
+	R st0 pty0 fd sd0 sd1 sd2 sd3 sd4
 	;;
 
-sd*|ccd*|raid*|xd*|xy*)
+xd*|xy*|sd*|raid*|ccd*)
 	case $i in
-	sd*) dodisk sd $U 7 17 $U 0;;
-	ccd*) dodisk ccd $U 9 23 $U 0;;
-	raid*) dodisk raid $U 25 123 $U 0;;
 	xd*) dodisk xd $U 10 42 $U 0;;
 	xy*) dodisk xy $U 3 9 $U 0;;
+	sd*) dodisk sd $U 7 17 $U 0;;
+	raid*) dodisk raid $U 25 123 $U 0;;
+	ccd*) dodisk ccd $U 9 23 $U 0;;
 	esac
 	;;
 
