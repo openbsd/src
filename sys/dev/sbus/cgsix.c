@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.4 2002/01/04 19:39:06 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.5 2002/01/06 00:49:41 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -137,7 +137,7 @@ struct wsscreen_descr cgsix_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
 	0,
 	0, 0,
-	WSSCREEN_REVERSE
+	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *cgsix_scrlist[] = {
