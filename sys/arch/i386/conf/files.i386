@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.54 1999/07/25 10:38:30 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.55 1999/07/25 18:05:42 csapuntz Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -84,9 +84,7 @@ file	arch/i386/i386/mainbus.c	mainbus
 
 include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
-#Start Uncomment for new ATA stuff
-#file	arch/i386/pci/pciide_machdep.c	pciide
-#End Uncomment for new ATA stuff
+file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pci_compat.c	pci	# XXX compatibility
 
 # PCI-Host bridge chipsets
