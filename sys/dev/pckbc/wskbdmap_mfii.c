@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.20 2003/01/04 13:24:31 maja Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.21 2003/01/04 13:40:08 maja Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -779,6 +779,20 @@ static const keysym_t pckbd_keydesc_tr_nodead[] = {
     KC(43),  KS_comma,		KS_semicolon,	KS_grave,
 };
 
+static const keysym_t pckbd_keydesc_pl[] = {
+/*  pos      normal		shifted         altgr           shift-altgr */
+    KC(18),  KS_e,		KS_E,		KS_L2_eogonek,	KS_L2_Eogonek,
+    KC(24),  KS_o,		KS_O,		KS_oacute,	KS_Oacute,
+    KC(30),  KS_a,		KS_A,		KS_L2_aogonek,	KS_L2_Aogonek,
+    KC(31),  KS_s,		KS_S,		KS_L2_sacute,	KS_L2_Sacute,
+    KC(38),  KS_l,		KS_L,		KS_L2_lstroke,	KS_L2_Lstroke,
+    KC(44),  KS_z,		KS_Z,		KS_L2_zdotabove,KS_L2_Zdotabove,
+    KC(45),  KS_x,		KS_X,		KS_L2_zacute,	KS_L2_Zacute,
+    KC(46),  KS_c,		KS_C,		KS_L2_cacute,	KS_L2_Cacute,
+    KC(49),  KS_n,		KS_N,		KS_L2_nacute,	KS_L2_Nacute,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -821,6 +835,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_BR,			KB_US,	pckbd_keydesc_br),
 	KBD_MAP(KB_TR,			KB_US,	pckbd_keydesc_tr),
 	KBD_MAP(KB_TR | KB_NODEAD,	KB_TR,	pckbd_keydesc_tr_nodead),
+	KBD_MAP(KB_PL,			KB_US,	pckbd_keydesc_pl),
 	{0, 0, 0, 0}
 };
 
