@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.4 1997/05/24 14:21:00 pefo Exp $
+#	$OpenBSD: list,v 1.5 1997/05/24 16:22:18 pefo Exp $
 
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
 SRCDIRS usr.bin/vi usr.sbin/pppd
@@ -64,8 +64,6 @@ SYMLINK ../../instbin		usr/bin/ftp
 SYMLINK ../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 SYMLINK ../../instbin		usr/bin/sed
 SYMLINK ../../instbin		usr/bin/build usr/bin/vi
-
-SPECIAL	/bin/rm instbin
 
 # `internal' crunchgen links
 ARGVLINK sh		-sh
