@@ -1,8 +1,24 @@
-#	$OpenBSD: Makefile,v 1.1 2002/01/17 13:21:28 markus Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/02/14 23:18:00 markus Exp $
 
-REGRESSTARGETS=t1 t2 t3 t4 t5 t6 t7
+REGRESSTARGETS=	t1 t2 t3 t4 t5 t6 t7
 
-CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub
+CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub 
+
+LTESTS= 	connect \
+		proxy-connect \
+		exit-status \
+		broken-pipe \
+		try-ciphers \
+		yes-head \
+		agent \
+		forwarding
+
+USER!=		id -un
+CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
+		ssh_config sshd_config sshd_config_proxy \
+		rsa.pub rsa rsa1.pub rsa1 host.rsa host.rsa1 \
+		rsa-agent rsa-agent.pub rsa1-agent rsa1-agent.pub \
+		ls.copy
 
 t1:
 	ssh-keygen -if ${.CURDIR}/rsa_ssh2.prv | diff - ${.CURDIR}/rsa_openssh.prv
@@ -37,5 +53,12 @@ t7.out:
 t7: t7.out
 	ssh-keygen -lf t7.out > /dev/null
 	ssh-keygen -Bf t7.out > /dev/null
+
+.for t in ${LTESTS}
+REGRESSTARGETS+=t-${t}
+REGRESSSLOWTARGETS+=t-${t}
+t-${t}:
+	sh ${.CURDIR}/test-exec.sh ${.OBJDIR} ${.CURDIR}/${t}.sh
+.endfor
 
 .include <bsd.regress.mk>
