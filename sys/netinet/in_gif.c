@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.11 2000/12/30 21:50:46 angelos Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.12 2000/12/31 17:20:14 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,6 @@ in_gif_output(ifp, family, m, rt)
 	    sin_src->sin_family != AF_INET ||
 	    sin_dst->sin_family != AF_INET) {
 		m_freem(m);
-printf("failure 1\n");
 		return EAFNOSUPPORT;
 	}
 
