@@ -14,6 +14,7 @@ guest:*:31:root
 utmp:*:45:
 www:*:67:
 network:*:69:
+named:*:70:
 ingres:*:74:ingres
 dialer:*:117:
 nogroup:*:32766:

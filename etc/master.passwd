@@ -4,5 +4,5 @@ operator:*:2:5::0:0:System &:/operator:/sbin/nologin
 bin:*:3:7::0:0:Binaries Commands and Source,,,:/:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
 www:*:67:67::0:0:HTTP server:/var/www:/sbin/nologin
-named:*:70:7::0:0:BIND Name Service Daemon:/var/named:/sbin/nologin
+named:*:70:70::0:0:BIND Name Service Daemon:/var/named:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
