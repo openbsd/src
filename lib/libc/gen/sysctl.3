@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.90 2002/06/08 23:28:39 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.91 2002/06/08 23:35:19 art Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -318,6 +318,7 @@ information.
 .It Dv KERN_STACKGAPRANDOM No "	integer	yes"
 .It Dv KERN_USERCRYPTO No "	integer	yes"
 .It Dv KERN_CRYPTODEVALLOWSOFT No "	integer	yes"
+.It Dv KERN_PROC_ARGS No "	node not applicable"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -642,6 +643,25 @@ for cryptographic support via hardware cryptographic devices.
 Permits userland to use
 .Pa /dev/crypto
 even if there is no hardware crypto accelerator in the system.
+.It Dv KERN_PROC_ARGS
+Returns the arguments or environment of a process.
+The third level name is the pid of the process.
+The fourth level name is one of:
+.Bl -column KERN_PROC_NARGVXXX -offset indent
+.It Dv KERN_PROC_ARGV
+.It Dv KERN_PROC_NARGV
+.It Dv KERN_PROC_ENV
+.It Dv KERN_PROC_NENV
+.El
+.Pp
+.Dv KERN_PROC_NARGV
+and
+.Dv KERN_PROC_NENV
+return the number of elements in the the argv or env array.
+.Dv KERN_PROC_ARG
+returns the argv array and
+.Dv KERN_PROC_ENV
+returns the environ array.
 .El
 .Ss CTL_MACHDEP
 The set of variables defined is architecture dependent.
