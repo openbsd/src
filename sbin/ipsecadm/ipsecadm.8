@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.66 2004/09/23 21:47:33 jaredy Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.67 2004/09/26 07:16:54 jaredy Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Ar command Op Ar modifier ...
 .Sh NOTE
 To use
-.Nm ipsecadm ,
+.Nm ,
 .Xr ipsec 4
 must be enabled by having one or more of the following
 .Xr sysctl 3
@@ -61,7 +61,7 @@ To keep local modifications of these variables across reboots, see
 .Xr sysctl.conf 5 .
 .Sh DESCRIPTION
 The
-.Nm ipsecadm
+.Nm
 utility sets up security associations in the kernel
 to be used with
 .Xr ipsec 4 .
@@ -70,8 +70,8 @@ algorithms and key material for the network layer security
 provided by IPsec.
 The possible commands are:
 .Bl -tag -width new_esp
-.It new esp
-Set up a Security Association (SA) which uses the new esp transforms.
+.It Cm new esp
+Set up a Security Association (SA) which uses the new ESP transforms.
 An SA consists of the destination address,
 a Security Parameter Index (SPI) and a security protocol.
 Encryption and authentication algorithms can be applied.
@@ -95,8 +95,8 @@ modifiers are:
 .Fl key ,
 and
 .Fl keyfile .
-.It old esp
-Set up an SA which uses the old esp transforms.
+.It Cm old esp
+Set up an SA which uses the old ESP transforms.
 Only encryption algorithms can be applied.
 Allowed modifiers are:
 .Fl dst ,
@@ -113,8 +113,8 @@ Allowed modifiers are:
 .Fl key ,
 and
 .Fl keyfile .
-.It new ah
-Set up an SA which uses the new ah transforms.
+.It Cm new ah
+Set up an SA which uses the new AH transforms.
 Authentication will be done with Hashed Message Authentication Code
 (HMAC) using the specified hash algorithm.
 Allowed modifiers are:
@@ -131,8 +131,8 @@ Allowed modifiers are:
 .Fl key ,
 and
 .Fl keyfile .
-.It old ah
-Set up an SA which uses the old ah transforms.
+.It Cm old ah
+Set up an SA which uses the old AH transforms.
 Simple keyed hashes will be used for authentication.
 Allowed modifiers are:
 .Fl dst ,
@@ -148,7 +148,7 @@ Allowed modifiers are:
 .Fl key ,
 and
 .Fl keyfile .
-.It group
+.It Cm group
 Group two SAs together, such that whenever the first one is applied, the
 second one will be applied as well (SA bundle).
 Arbitrarily long SA bundles can thus be created.
@@ -164,7 +164,7 @@ Allowed modifiers are:
 .Fl spi2 ,
 and
 .Fl proto2 .
-.It ip4
+.It Cm ip4
 Set up an SA which uses the IP-in-IP encapsulation protocol.
 This mode
 offers no security services by itself but can be used to route other
@@ -172,21 +172,21 @@ offers no security services by itself but can be used to route other
 The SPI value
 is not used for anything other than referencing the information and
 does not appear on the wire.
-Unlike other setups, like new esp, there
+Unlike other setups, like new ESP, there
 is no necessary setup in the receiving side.
 Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
 and
 .Fl spi .
-.It delspi
+.It Cm delspi
 Delete the specified SA.
 Allowed modifiers are:
 .Fl dst ,
 .Fl spi ,
 and
 .Fl proto .
-.It flow
+.It Cm flow
 Create a flow determining what security parameters a packet should
 have (input or output).
 Allowed modifiers are:
@@ -253,13 +253,13 @@ by IPsec, but key management will not be asked to provide such an SA.
 The
 .Fl proto
 argument (by default set to
-.Nm esp )
+.Cm esp )
 can be used to determine what type of SA should be established.
 .Pp
 A
-.Nm bypass
+.Em bypass
 or
-.Nm permit
+.Em permit
 flow (created with
 .Fl bypass
 or
@@ -277,13 +277,13 @@ flows, additional modifiers are restricted to:
 and
 .Fl delete .
 A
-.Nm deny
+.Em deny
 flow is used to specify classes of packets that must be dropped
 (either on output or input) without further processing.
-.Nm deny
+.Fl deny
 takes the same additional modifiers as
-.Nm bypass .
-.It flush
+.Fl bypass .
+.It Cm flush
 Flush SAs from kernel.
 This includes flushing any flows and
 routing entries associated with the SAs.
@@ -298,7 +298,7 @@ and
 .Fl tcpmd5 .
 Default action is to flush all types of security associations
 from the kernel.
-.It show
+.It Cm show
 Show SAs from kernel.
 Allowed modifiers are:
 .Fl ah ,
@@ -311,17 +311,17 @@ and
 .Fl tcpmd5 .
 Default action is to show all types of security associations
 from the kernel.
-.It monitor
+.It Cm monitor
 Continuously display all
 .Dv PF_KEY
 messages exchanged with
 the kernel.
-.It ipcomp
-Set up an IP Compression Association (IPCA) which will use the IPcomp
+.It Cm ipcomp
+Set up an IP Compression Association (IPCA) which will use the IPComp
 transforms.
 Just like an SA, an IPCA consists of the destination
 address, a Compression Parameter Index (CPI) and a protocol (which is
-fixed to IPcomp).
+fixed to IPComp).
 Compression algorithms are applied.
 Allowed modifiers are:
 .Fl dst ,
@@ -333,10 +333,10 @@ and
 To create an IPsec SA using compression, an IPCA and an SA must first
 be created.
 After this, an IPCA/SA bundle must be created using the
-.Nm group
+.Cm group
 command.
 The IPCA must be applied first.
-.It tcpmd5
+.It Cm tcpmd5
 Set up a key for use by the RFC 2385 TCP MD5 option.
 Allowed modifiers are:
 .Fl dst ,
@@ -348,24 +348,24 @@ and
 .El
 .Pp
 If no command is given,
-.Nm ipsecadm
-defaults to new esp mode.
+.Nm
+defaults to new ESP mode.
 .Pp
 The modifiers have the following meanings:
 .Bl -tag -width 7n
-.It Fl src
+.It Fl src Ar address
 The source IP address for the SA.
 This is necessary for incoming
 SAs to avoid source address spoofing between mutually
 suspicious hosts that have established SAs with us.
 For outgoing SAs,
 this field is used to fill in the source address when doing tunneling.
-.It Fl dst
+.It Fl dst Ar address
 The destination IP address for the SA.
-.It Fl dst2
+.It Fl dst2 Ar address
 The second IP address used by
-.Nm group .
-.It Fl proxy
+.Cm group .
+.It Fl proxy Ar address
 This IP address, if provided, is checked against the inner IP address when
 doing tunneling to a firewall, to prevent source spoofing attacks.
 It is
@@ -376,17 +376,17 @@ firewall B, and through that to host C.
 In that case, the proxy address for
 the incoming SA should be C.
 This option is not necessary for outgoing SAs.
-.It Fl spi
+.It Fl spi Ar index
 The Security Parameter Index (SPI), given as a hexadecimal number.
-.It Fl spi2
+.It Fl spi2 Ar index
 The second SPI used by
-.Nm group .
-.It Fl cpi
+.Cm group .
+.It Fl cpi Ar index
 The Compression Parameter Index (CPI), given as a 16-bit hexadecimal number.
 .It Fl tunnel
 .Sy This modifier has been deprecated.
 The arguments are ignored, and it otherwise has the same effect as the
-.Nm forcetunnel
+.Fl forcetunnel
 option.
 .It Fl newpadding
 .Sy This modifier has been deprecated.
@@ -395,22 +395,22 @@ Force IP-inside-IP encapsulation before ESP or AH processing is performed for
 outgoing packets.
 The source/destination addresses of the outgoing IP packet
 will be those provided in the
-.Nm src
+.Fl src
 and
-.Nm dst
+.Fl dst
 options.
 Notice that the IPsec stack will perform IP-inside-IP encapsulation
 when deemed necessary, even if this flag has not been set.
-.It Fl udpencap
+.It Fl udpencap Ar port
 Enable ESP-inside-UDP encapsulation.
 The UDP destination port must be specified on the command line.
 This port will be used for sending encapsulated UDP packets.
-.It Fl enc
+.It Fl enc Ar algorithm
 The encryption algorithm to be used with the SA.
 Possible values are:
 .Bl -tag -width skipjack
-.It Nm des
-This is available for both old and new esp.
+.It Cm des
+This is available for both old and new ESP.
 Notice that hardware crackers for DES can be (and have been) built for
 US$250,000 (in 1998).
 Use DES for encryption of critical information at your own risk.
@@ -419,68 +419,68 @@ DES support is kept for interoperability
 (with old implementations) purposes only.
 See
 .Xr des_cipher 3 .
-.It Nm 3des
-This is available for both old and new esp.
+.It Cm 3des
+This is available for both old and new ESP.
 It is considered more secure than straight DES, since it uses larger
 keys.
-.It Nm aes
-Rijndael encryption is available only in new esp.
-.It Nm blf
-Blowfish encryption is available only in new esp.
+.It Cm aes
+Rijndael encryption is available only in new ESP.
+.It Cm blf
+Blowfish encryption is available only in new ESP.
 See
 .Xr blf_key 3 .
-.It Nm cast
-CAST encryption is available only in new esp.
-.It Nm skipjack
-SKIPJACK encryption is available only in new esp.
+.It Cm cast
+CAST encryption is available only in new ESP.
+.It Cm skipjack
+SKIPJACK encryption is available only in new ESP.
 This algorithm was designed by the NSA and is faster than 3DES.
 However, since it was designed by the NSA,
 it is a poor choice.
 .El
 .Pp
-.It Fl auth
+.It Fl auth Ar algorithm
 The authentication algorithm to be used with the SA.
 Possible values are:
-.Nm md5
+.Cm md5
 and
-.Nm sha1
-for both old and new ah and also new esp.
-.Nm rmd160 ,
-.Nm sha2-256 ,
-.Nm sha2-384 ,
+.Cm sha1
+for both old and new AH and also new ESP.
+.Cm rmd160 ,
+.Cm sha2-256 ,
+.Cm sha2-384 ,
 and
-.Nm sha2-512
+.Cm sha2-512
 are also available
-for both new ah and esp.
-.It Fl comp
+for both new AH and ESP.
+.It Fl comp Ar algorithm
 The compression algorithm to be used with the IPCA.
 Possible values are:
-.Nm deflate
+.Cm deflate
 and
-.Nm lzs .
+.Cm lzs .
 Note that
-.Nm lzs
+.Cm lzs
 is only available with
 .Xr hifn 4
 because of the patent held by Hifn, Inc.
-.It Fl key
+.It Fl key Ar key
 The secret symmetric key used for encryption and authentication.
 The sizes for
-.Nm des
+.Cm des
 and
-.Nm 3des
+.Cm 3des
 are fixed to 8 and 24 bits, respectively.
 For other ciphers like
-.Nm cast ,
-.Nm aes ,
+.Cm cast ,
+.Cm aes ,
 or
-.Nm blf
+.Cm blf ,
 the key length can vary, depending on the algorithm.
 The
-.Nm key
+.Ar key
 should be given in hexadecimal digits.
 The
-.Nm key
+.Ar key
 should be chosen at random (ideally, using some true-random source like
 coin flipping).
 It is very important that the key is not guessable.
@@ -488,22 +488,22 @@ One practical way of generating 160-bit (20-byte) keys is as follows:
 .Bd -literal -offset indent
 $ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
-.It Fl keyfile
+.It Fl keyfile Ar file
 Read the key from a file.
 May be used instead of the
 .Fl key
 flag, and has the same syntax considerations.
-.It Fl authkey
+.It Fl authkey Ar key
 The secret key material used for authentication
-if additional authentication in new esp mode is required.
-For old or new ah, the key material for authentication is passed with the
-.Nm key
+if additional authentication in new ESP mode is required.
+For old or new AH, the key material for authentication is passed with the
+.Fl key
 option.
 The
-.Nm key
+.Ar key
 should be given in hexadecimal digits.
 The
-.Nm key
+.Ar key
 should be chosen at random (ideally, using some true-random source like
 coin flipping).
 It is very important that the key is not guessable.
@@ -511,7 +511,7 @@ One practical way of generating 160-bit (20-byte) keys is as follows:
 .Bd -literal -offset indent
 $ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
-.It Fl authkeyfile
+.It Fl authkeyfile Ar file
 Read the additional authentication key from a file.
 May be used instead of the
 .Fl authkey
@@ -520,17 +520,17 @@ flag, and has the same syntax considerations.
 .Sy This modifier has been deprecated.
 The argument is ignored.
 When applicable, it has the same behaviour as the
-.Nm halfiv
+.Fl halfiv
 option.
 .It Fl halfiv
 This option causes use of a 4-byte initialization vector (IV) in old ESP
 (as opposed to 8 bytes).
 It may only be used with old ESP.
-.It Fl proto
+.It Fl proto Ar protocol
 The security protocol needed by
-.Nm delspi
+.Cm delspi
 or
-.Nm flow ,
+.Cm flow ,
 to uniquely specify the SA.
 The default value is 50 which means
 .Dv IPPROTO_ESP .
@@ -544,65 +544,77 @@ One can also specify the symbolic names
 and
 .Dq ip4 ,
 case insensitive.
-.It Fl proto2
+.It Fl proto2 Ar protocol
 The second security protocol used by
-.Nm group .
+.Cm group .
 It defaults to
 .Dv IPPROTO_AH ,
 otherwise takes the same values as
 .Fl proto .
-.It Fl addr
-The source address, source network mask, destination address and destination
-network mask against which packets need to match to use the specified
-Security Association.
-Alternatively, addresses and masks can be specified as
-.Dq Li source/prefixlen destination/prefixlen .
+.It Fl addr Ar srcnet mask dstnet mask
+.It Xo
+.Fl addr
+.Ar srcnet Ns / Ns Ar prefixlen
+.Ar dstnet Ns / Ns Ar prefixlen
+.Xc
+The first form is the source address, source network mask, destination
+address, and destination network mask.
+The second form is the source and destination addresses and netmasks
+in CIDR notation.
+Either form can be specified against which packets need to match
+in order to use the specified Security Association.
 All addresses must be of the same address family
 (IPv4 or IPv6).
-.It Fl transport
+.It Fl transport Ar protocol
 The protocol number which packets need to match to use the specified
 Security Association.
 By default, the protocol number is not used for matching.
 Instead of a number, a valid protocol name that appears in
 .Xr protocols 5
 can be used.
-.It Fl sport
+.It Fl sport Ar port
 The source port which packets have to match for the flow.
 By default, the source port is not used for matching.
 Instead of a number, a valid service name that appears in
 .Xr services 5
 can be used.
-.It Fl dport
+.It Fl dport Ar port
 The destination port which packets have to match for the flow.
 By default, the destination port is not used for matching.
 Instead of a number, a valid service name that appears in
 .Xr services 5
 can be used.
-.It Fl srcid
-For flow, used to specify what local identity key management
+.It Fl srcid Ar id
+For
+.Cm flow ,
+used to specify what local identity key management
 should use when negotiating the SAs.
 If left unspecified, the source address of the flow is used
 (see the discussion on
-.Nm flow
+.Cm flow
 above, with regard to source address).
-.It Fl dstid
-For flow, used to specify what the remote identity key management
+.It Fl dstid Ar id
+For
+.Cm flow ,
+used to specify what the remote identity key management
 should expect.
 If left unspecified, the destination address of the flow is used
 (see the discussion on
-.Nm flow
+.Cm flow
 above, with regard to destination address).
-.It Fl srcid_type
-For flow, used to specify the type of identity given by
+.It Fl srcid_type Ar type
+For
+.Cm flow ,
+used to specify the type of identity given by
 .Fl srcid .
 Valid values are
-.Nm prefix ,
-.Nm fqdn ,
+.Cm prefix ,
+.Cm fqdn ,
 and
-.Nm ufqdn .
+.Cm ufqdn .
 .Pp
 The
-.Nm prefix
+.Cm prefix
 type implies an IPv4 or IPv6 address followed by a forward slash
 character and a decimal number indicating the number of important bits
 in the address (equivalent to a netmask, in IPv4 terms).
@@ -610,23 +622,23 @@ Key management then has to pick a local identity that falls within the
 address space indicated.
 .Pp
 The
-.Nm fqdn
+.Cm fqdn
 and
-.Nm ufqdn
+.Cm ufqdn
 types are DNS-style host names and mailbox-format user
 addresses, respectively, and are especially useful for mobile user
 scenarios.
 Note that no validity checking on the identities is done.
-.It Fl dstid_type
+.It Fl dstid_type Ar type
 See
 .Fl srcid_type .
 .It Fl delete
 Instead of creating a flow, an existing flow is deleted.
 .It Fl bypass
 For
-.Nm flow ,
+.Cm flow ,
 create or delete a
-.Nm bypass
+.Em bypass
 flow.
 Packets matching this flow will not be processed by IPsec.
 .It Fl permit
@@ -634,31 +646,31 @@ Same as
 .Fl bypass .
 .It Fl deny
 For
-.Nm flow ,
+.Cm flow ,
 create or delete a
-.Nm deny
+.Em deny
 flow.
 Packets matching this flow will be dropped.
 .It Fl use
 For
-.Nm flow ,
+.Cm flow ,
 specify that packets matching this flow should try to use IPsec if
 possible.
 .It Fl acquire
 For
-.Nm flow ,
+.Cm flow ,
 specify that packets matching this flow should try to use IPsec and
 establish SAs dynamically if possible, but permit unencrypted
 traffic.
 .It Fl require
 For
-.Nm flow ,
+.Cm flow ,
 specify that packets matching this flow must use IPsec, and establish
 SAs dynamically as needed.
 If no SAs are established, traffic is not allowed through.
 .It Fl dontacq
 For
-.Nm flow ,
+.Cm flow ,
 specify that packets matching this flow must use IPsec.
 If such SAs are not present, simply drop the packets.
 Such a policy may be used to demand peers establish SAs before they
@@ -668,32 +680,32 @@ attacks).
 This flow type is particularly suitable for security gateways.
 .It Fl in
 For
-.Nm flow ,
+.Cm flow ,
 specify that it should be used to match incoming packets only.
 .It Fl out
 For
-.Nm flow ,
+.Cm flow ,
 specify that it should be used to match outgoing packets only.
 .It Fl ah
 For
-.Nm flush ,
-only flush SAs of type ah.
+.Cm flush ,
+only flush SAs of type AH.
 .It Fl esp
 For
-.Nm flush ,
-only flush SAs of type esp.
+.Cm flush ,
+only flush SAs of type ESP.
 .It Fl oldah
 For
-.Nm flush ,
-only flush SAs of type old ah.
+.Cm flush ,
+only flush SAs of type old AH.
 .It Fl oldesp
 For
-.Nm flush ,
-only flush SAs of type old esp.
+.Cm flush ,
+only flush SAs of type old ESP.
 .It Fl ip4
 For
-.Nm flush ,
-only flush SAs of type ip4.
+.Cm flush ,
+only flush SAs of type IPv4.
 .It Fl ipcomp
 For
 .Cm flush ,
