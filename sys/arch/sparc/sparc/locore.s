@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.36 2000/02/23 16:43:42 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.37 2000/02/27 05:25:01 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -5918,37 +5918,52 @@ ENTRY(ffs)
 	add	%o0, 24, %o0
 
 /*
- * V8 sparc {,u}{mul,div,rem} replacements.
+ * V8 sparc .{,u}{mul,div,rem} replacements.
+ * We try to mimic them 100%.  Full 64 bit sources or outputs, and
+ * these routines are required to update the condition codes.
  */
 .globl __mulreplace, __mulreplace_end
 __mulreplace:
+	smulcc	%o0, %o1, %o0
 	retl
-	 smulcc	%o0, %o1, %o0
+	 rd	%y, %o1
 __mulreplace_end:
 
 .globl __umulreplace, __umulreplace_end
 __umulreplace:
+	umulcc	%o0, %o1, %o0
 	retl
-	 umulcc	%o0, %o1, %o0
+	 rd	%y, %o1
 __umulreplace_end:
 
 .globl __divreplace, __divreplace_end
 __divreplace:
-	mov	%g0, %y
+	sra	%o0, 31, %g1
+	wr	%g1, 0, %y
+	nop
+	nop
+	nop
 	retl
 	 sdivcc	%o0, %o1, %o0
 __divreplace_end:
 
 .globl __udivreplace, __udivreplace_end
 __udivreplace:
-	mov	%g0, %y
+	wr	%g0, 0, %y
+	nop
+	nop
+	nop
 	retl
 	 udivcc	%o0, %o1, %o0
 __udivreplace_end:
 
 .globl __remreplace, __remreplace_end
 __remreplace:
-	mov	%g0, %y
+	sra	%o0, 31, %g1
+	wr	%g1, 0, %y
+	nop
+	nop
+	nop
 	sdiv	%o0, %o1, %o2
 	smul	%o1, %o2, %o2
 	retl
@@ -5957,7 +5972,10 @@ __remreplace_end:
 
 .globl __uremreplace, __uremreplace_end
 __uremreplace:
-	mov	%g0, %y
+	wr	%g0, 0, %y
+	nop
+	nop
+	nop
 	udiv	%o0, %o1, %o2
 	umul	%o1, %o2, %o2
 	retl
