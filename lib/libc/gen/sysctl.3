@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.53 2000/10/10 16:00:20 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.54 2000/10/14 01:06:44 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -567,6 +567,7 @@ The currently defined protocols and names are:
 .It tcp	sendspace	integer	yes
 .It tcp	sack	integer	yes
 .It tcp	mssdflt	integer	yes
+.It tcp	rstppslimit	integer	yes
 .It udp	checksum	integer	yes
 .It udp	baddynamic	array	yes
 .It udp	recvspace	integer	yes
@@ -809,6 +810,12 @@ Returns 1 if RFC2018 Selective Acknowledgements are enabled.
 .It Li tcp.mssdflt
 The maximum segment size that is used as default for non-local connections.
 The default value is 512.
+.It li tcp.rstppslimit
+The variable specifies the maximum number of outgoing TCP RST packets,
+per second.
+TCP RST packet that exceeded the value are subject to rate limitation
+and will not go out from the node.
+Negative value disables rate limitation.
 .It Li udp.checksum
 Returns 1 when
 .Tn UDP
