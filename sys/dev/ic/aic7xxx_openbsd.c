@@ -29,10 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.c,v 1.1 2002/02/16 04:36:33 smurph Exp $
+ * $Id: aic7xxx_openbsd.c,v 1.2 2002/03/14 00:04:09 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.c,v 1.26 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.c,v 1.1 2002/02/16 04:36:33 smurph Exp $
+ * $OpenBSD: aic7xxx_openbsd.c,v 1.2 2002/03/14 00:04:09 krw Exp $
  */
 
 #include <dev/ic/aic7xxx_openbsd.h>
@@ -95,10 +95,10 @@ void		ahc_check_tags __P((struct ahc_softc *ahc,
 				    struct scsi_xfer *xs));
 
 /*
- * Routines to manage busy targets.  The old driver didn't need to 
- * pause the sequecer because no device registers were acessed.  Now
- * busy targetes are controlled via the device registers and thus, 
- * we have to pause the sequencer for chips that don't have the 
+ * Routines to manage busy targets.  The old driver didn't need to
+ * pause the sequencer because no device registers were accessed.  Now
+ * busy targets are controlled via the device registers and thus, we
+ * have to pause the sequencer for chips that don't have the
  * auto-pause feature.  XXX smurph
  */
 static __inline u_int	ahc_pause_index_busy_tcl __P((struct ahc_softc *ahc, 
@@ -158,13 +158,13 @@ void
 ahc_force_neg(ahc)
 	struct ahc_softc *ahc;
 {
-	int max_targ = AHC_NUM_TARGETS;
+	int num_targets = AHC_NUM_TARGETS;
 	int i;
 	
 	if ((ahc->features & (AHC_WIDE|AHC_TWIN)) == 0)
-		max_targ = 7;
+		num_targets = 8;
 
-	for (i = 0; i <= max_targ; i++) {
+	for (i = 0; i < num_targets; i++) {
 		struct ahc_initiator_tinfo *tinfo;
 		struct ahc_tmode_tstate *tstate;
 		u_int our_id;
@@ -267,7 +267,6 @@ ahc_freedmamem(tag, size, map, vaddr, seg, nseg)
 	bus_dma_segment_t *seg;
 	int nseg;
 {
-
 	bus_dmamap_unload(tag, map);
 	bus_dmamap_destroy(tag, map);
 	bus_dmamem_unmap(tag, vaddr, size);
@@ -719,7 +718,7 @@ ahc_done(ahc, scb)
 		/*
 		 * We performed autosense retrieval.
 		 *
-		 * bzero the sense data before having
+		 * Zero the sense data before having
 		 * the drive fill it.  The SCSI spec mandates
 		 * that any untransfered data should be
 		 * assumed to be zero.  Complete the 'bounce'
@@ -754,8 +753,11 @@ ahc_done(ahc, scb)
 		ahc_list_insert_head(ahc, xs);
 		ahc_unlock(ahc, &s);
 	} else {
+		if ((xs->sc_link->lun == 0) &&
+		    (xs->flags & SCSI_POLL) &&
+		    (xs->error == XS_NOERROR))
+			ahc_check_tags(ahc, xs);
 		xs->flags |= ITSDONE;
-                ahc_check_tags(ahc, xs);
 		scsi_done(xs);
 	}
 
@@ -933,7 +935,7 @@ get_scb:
 	timeout_set(&xs->stimeout, ahc_timeout, scb);
 
 	if (ahc_istagged_device(ahc, xs, 0)){
-		hscb->control |= MSG_SIMPLE_Q_TAG;
+		hscb->control |= TAG_ENB;
 	} else {
 		ahc_pause_busy_tcl(ahc, tcl, scb->hscb->tag);
 	}
@@ -1575,6 +1577,7 @@ ahc_platform_set_tags(ahc, devinfo, alg)
 				    devinfo->our_scsiid,
 				    devinfo->target,
 				    &tstate);
+
 	switch (alg) {
 	case AHC_QUEUE_BASIC:
 	case AHC_QUEUE_TAGGED:
@@ -1582,7 +1585,6 @@ ahc_platform_set_tags(ahc, devinfo, alg)
 		break;
 	case AHC_QUEUE_NONE:
 		tstate->tagenable &= ~devinfo->target_mask;
-		tstate->tagdisable |= devinfo->target_mask;
 		break;
 	}
 }
@@ -1628,57 +1630,40 @@ ahc_check_tags(ahc, xs)
 	struct ahc_softc *ahc;
 	struct scsi_xfer *xs;
 {
-	struct scsi_inquiry_data *inq;
 	struct ahc_devinfo devinfo;
-	struct ahc_tmode_tstate *tstate;
-	int target_id, our_id;
-	char channel;
-
-	if (xs->cmd->opcode != INQUIRY || xs->error != XS_NOERROR)
-		return;
 
 	if (xs->sc_link->quirks & SDEV_NOTAGS)
 		return;
 
-	target_id = xs->sc_link->target;
-	our_id = SCSI_SCSI_ID(ahc, xs->sc_link);
-	channel = SCSI_CHANNEL(ahc, xs->sc_link);
-
-	(void)ahc_fetch_transinfo(ahc, channel, our_id, target_id, &tstate);
-	ahc_compile_devinfo(&devinfo, our_id, target_id,
-	    xs->sc_link->lun, channel, ROLE_INITIATOR);
-
-	if (tstate->tagdisable & devinfo.target_mask)
+	if (ahc_istagged_device(ahc, xs, 1))
 		return;
 
-	/*
-	 * Sneak a look at the results of the SCSI Inquiry
-	 * command and see if we can do Tagged queing.  This
-	 * should really be done by the higher level drivers.
-	 */
-	inq = (struct scsi_inquiry_data *)xs->data;
-	if ((inq->flags & SID_CmdQue) && !(ahc_istagged_device(ahc, xs, 1))) {
-#ifdef AHC_DEBUG 
-		printf("%s: target %d using tagged queuing\n",
-			ahc_name(ahc), xs->sc_link->target);
-#endif 
-		ahc_set_tags(ahc, &devinfo, AHC_QUEUE_TAGGED);
+	ahc_compile_devinfo(&devinfo,
+	    SCSI_SCSI_ID(ahc, xs->sc_link),
+	    XS_SCSI_ID(xs),
+	    XS_LUN(xs),
+	    SCSI_CHANNEL(ahc, xs->sc_link),
+	    ROLE_INITIATOR);
 
-		if (ahc->scb_data->maxhscbs >= 16 ||
-		    (ahc->flags & AHC_PAGESCBS)) {
-			/* Default to 16 tags */
-			xs->sc_link->openings += 14;
-		} else {
-			/*
-			 * Default to 4 tags on whimpy
-			 * cards that don't have much SCB
-			 * space and can't page.  This prevents
-			 * a single device from hogging all
-			 * slots.  We should really have a better
-			 * way of providing fairness.
-			 */
-			xs->sc_link->openings += 2;
-		}
+	ahc_set_tags(ahc, &devinfo, AHC_QUEUE_TAGGED);
+
+	printf("%s: target %d using tagged queuing\n",
+	    ahc_name(ahc), XS_SCSI_ID(xs));
+
+	if (ahc->scb_data->maxhscbs >= 16 ||
+	    (ahc->flags & AHC_PAGESCBS)) {
+		/* Default to 16 tags */
+		xs->sc_link->openings += 14;
+	} else {
+		/*	
+		 * Default to 4 tags on whimpy
+		 * cards that don't have much SCB
+		 * space and can't page.  This prevents
+		 * a single device from hogging all
+		 * slots.  We should really have a better
+		 * way of providing fairness.
+		 */
+		xs->sc_link->openings += 2;
 	}
 }
 

@@ -30,10 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.h,v 1.1 2002/02/16 04:36:33 smurph Exp $
+ * $Id: aic7xxx_openbsd.h,v 1.2 2002/03/14 00:04:09 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.h,v 1.12 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.h,v 1.1 2002/02/16 04:36:33 smurph Exp $
+ * $OpenBSD: aic7xxx_openbsd.h,v 1.2 2002/03/14 00:04:09 krw Exp $
  */
 
 #ifndef _AIC7XXX_OPENBSD_H_
@@ -486,9 +486,9 @@ void ahc_set_transaction_tag(scb, enabled, type)
 	switch (type) {
 	case MSG_SIMPLE_TASK:
 		if (enabled)
-			xs->sc_link->flags &= ~SDEV_NOTAGS;
+			xs->sc_link->quirks &= ~SDEV_NOTAGS;
 		else
-			xs->sc_link->flags |= SDEV_NOTAGS;
+			xs->sc_link->quirks |= SDEV_NOTAGS;
 		break;
 	}
 }
