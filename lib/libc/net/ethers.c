@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.10 1998/11/18 23:28:54 deraadt Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.11 2000/08/22 19:04:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.10 1998/11/18 23:28:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ethers.c,v 1.11 2000/08/22 19:04:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,9 @@ static char rcsid[] = "$OpenBSD: ethers.c,v 1.10 1998/11/18 23:28:54 deraadt Exp
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef YP
+#include <rpcsvc/ypclnt.h>
+#endif
 
 #ifndef _PATH_ETHERS
 #define _PATH_ETHERS	"/etc/ethers"

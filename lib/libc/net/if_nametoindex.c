@@ -38,6 +38,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
 
 unsigned int 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.25 2000/07/09 04:48:35 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.26 2000/08/22 19:04:42 deraadt Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.30 2000/07/09 04:37:25 itojun Exp $	*/
 
 /*
@@ -103,8 +103,9 @@
 
 #ifdef YP
 #include <rpc/rpc.h>
-#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
+#include "ypinternal.h"
 #endif
 
 #define SUCCESS 0

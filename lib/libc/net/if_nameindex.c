@@ -38,6 +38,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <errno.h>
+#include <unistd.h>
 #include <string.h>
 
 struct if_nameindex *
@@ -48,7 +49,6 @@ if_nameindex(void)
 	struct ifconf ifconf;
 	char    lastname[IFNAMSIZ], *c, *inbuf;
 	struct if_nameindex *n;
-	struct sockaddr_dl *sd;
 	struct sockaddr *sa;
 	void   *p;
 

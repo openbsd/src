@@ -38,6 +38,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <errno.h>
+#include <unistd.h>
 #include <string.h>
 
 static char __name[IFNAMSIZ];
