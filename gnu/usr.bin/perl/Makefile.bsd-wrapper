@@ -1,0 +1,94 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1.1.1 1996/08/19 10:11:52 downsj Exp $
+#
+# Build wrapper for Perl 5.003.
+#
+
+MAN=		x2p/a2p.man x2p/s2p.man pod/perl.man pod/perlbook.man \
+		pod/perlbot.man pod/perlcall.man pod/perldata.man \
+		pod/perldebug.man pod/perldiag.man pod/perldsc.man \
+		pod/perlembed.man pod/perlform.man pod/perlfunc.man \
+		pod/perlguts.man pod/perlipc.man pod/perllol.man \
+		pod/perlmod.man pod/perlobj.man pod/perlop.man \
+		pod/perlovl.man pod/perlpod.man pod/perlre.man \
+		pod/perlref.man pod/perlrun.man pod/perlsec.man \
+		pod/perlstyle.man pod/perlsub.man pod/perlsyn.man \
+		pod/perltie.man pod/perltoc.man pod/perltrap.man \
+		pod/perlvar.man pod/perlxs.man pod/perlxstut.man
+
+MANALL=		${MAN:S/.man$/.cat1/g}
+
+MANLOCALBUILD=	yes
+
+.SUFFIXES: .man .cat1
+
+.man.cat1:
+	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
+	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+GENERATED=	config.sh Makefile cflags config.h makeaperl makedepend \
+		makedir perl.exp writemain x2p/Makefile x2p/cflags
+
+CLEANFILES=	config.sh
+
+.BEGIN:
+	@if [ ${.CURDIR} != ${.OBJDIR} ]; then lndir -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
+
+all:	${GENERATED}
+	(cd ${.OBJDIR}; ${MAKE})
+	(cd ${.OBJDIR}/pod; ${MAKE} man)
+
+config.sh:
+	(cd ${.OBJDIR}; /bin/sh Configure -f config.sh.OpenBSD -dsE)
+
+Makefile:
+	(cd ${.OBJDIR}; /bin/sh Makefile.SH)
+
+cflags:
+	(cd ${.OBJDIR}; /bin/sh cflags.SH)
+
+config.h:
+	(cd ${.OBJDIR}; /bin/sh config_h.SH)
+
+makeaperl:
+	(cd ${.OBJDIR}; /bin/sh makeaperl.SH)
+
+makedepend:
+	(cd ${.OBJDIR}; /bin/sh makedepend.SH)
+
+makedir:
+	(cd ${.OBJDIR}; /bin/sh makedir.SH)
+
+perl.exp:
+	(cd ${.OBJDIR}; /bin/sh perl_exp.SH)
+
+writemain:
+	(cd ${.OBJDIR}; /bin/sh writemain.SH)
+
+x2p/Makefile:
+	(cd ${.OBJDIR}/x2p; /bin/sh Makefile.SH)
+
+x2p/cflags:
+	(cd ${.OBJDIR}/x2p; /bin/sh cflags.SH)
+
+install: ${MANALL} maninstall
+	(cd ${.OBJDIR}; ${MAKE} install)
+
+clean:
+	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
+
+cleandir:
+	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
+	-@rm -f ${CLEANFILES}
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.man.mk>

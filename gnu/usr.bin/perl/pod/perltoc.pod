@@ -1,0 +1,3153 @@
+
+=head1 NAME
+
+perltoc - perl documentation table of contents
+
+=head1 DESCRIPTION
+
+This page provides a brief table of contents for the rest of the Perl
+documentation set.  It is meant to be be quickly scanned or grepped
+through to locate the proper section you're looking for.
+
+=head1 BASIC DOCUMENTATION
+
+
+
+
+=head2 perl - Practical Extraction and Report Language
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+Many usability enhancements, Simplified grammar, Lexical scoping,
+Arbitrarily nested data structures, Modularity and reusability,
+Object-oriented programming, Embeddable and Extensible, POSIX
+compliant, Package constructors and destructors, Multiple simultaneous
+DBM implementations, Subroutine definitions may now be autoloaded,
+Regular expression enhancements
+
+=item ENVIRONMENT
+
+
+HOME, LOGDIR, PATH, PERL5LIB, PERL5DB, PERLLIB
+
+=item AUTHOR
+
+
+=item FILES
+
+
+=item SEE ALSO
+
+
+=item DIAGNOSTICS
+
+
+=item BUGS
+
+
+=item NOTES
+
+
+
+
+
+=head2 perldata - Perl data types
+
+=item DESCRIPTION
+
+
+=over
+
+=item Variable names
+
+
+=item Context
+
+
+=item Scalar values
+
+
+=item Scalar value constructors
+
+
+=item List value constructors
+
+
+=item Typeglobs and FileHandles
+
+
+
+
+=back
+
+
+
+
+=head2 perlsyn - Perl syntax
+
+=item DESCRIPTION
+
+
+=over
+
+=item Declarations
+
+
+=item Simple statements
+
+
+=item Compound statements
+
+
+=item Loop Control
+
+
+=item For Loops
+
+
+=item Foreach Loops
+
+
+=item Basic BLOCKs and Switch Statements
+
+
+=item Goto
+
+
+=item PODs: Embedded Documentation
+
+
+
+
+=back
+
+
+
+
+=head2 perlop - Perl operators and precedence
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item Terms and List Operators (Leftward)
+
+
+=item The Arrow Operator
+
+
+=item Autoincrement and Autodecrement
+
+
+=item Exponentiation
+
+
+=item Symbolic Unary Operators
+
+
+=item Binding Operators
+
+
+=item Multiplicative Operators
+
+
+=item Additive Operators
+
+
+=item Shift Operators
+
+
+=item Named Unary Operators
+
+
+=item Relational Operators
+
+
+=item Equality Operators
+
+
+=item Bitwise And
+
+
+=item Bitwise Or and Exclusive Or
+
+
+=item C-style Logical And
+
+
+=item C-style Logical Or
+
+
+=item Range Operator
+
+
+=item Conditional Operator
+
+
+=item Assignment Operators
+
+
+=item Comma Operator
+
+
+=item List Operators (Rightward)
+
+
+=item Logical Not
+
+
+=item Logical And
+
+
+=item Logical or and Exclusive Or
+
+
+=item C Operators Missing From Perl
+
+
+unary &, unary *, (TYPE)
+
+=item Quote and Quotelike Operators
+
+
+=item Regexp Quotelike Operators
+
+
+?PATTERN?, m/PATTERN/gimosx, /PATTERN/gimosx, q/STRING/, C<'STRING'>,
+qq/STRING/, "STRING", qx/STRING/, `STRING`, qw/STRING/,
+s/PATTERN/REPLACEMENT/egimosx, tr/SEARCHLIST/REPLACEMENTLIST/cds,
+y/SEARCHLIST/REPLACEMENTLIST/cds
+
+=item I/O Operators
+
+
+=item Constant Folding
+
+
+=item Integer arithmetic
+
+
+
+
+=back
+
+
+
+
+=head2 perlre - Perl regular expressions
+
+=item DESCRIPTION
+
+
+=over
+
+=item Regular Expressions
+
+
+(?#text), (?:regexp), (?=regexp), (?!regexp), (?imsx)
+
+=item Backtracking
+
+
+=item Version 8 Regular Expressions
+
+
+=item WARNING on \1 vs $1
+
+
+
+
+=back
+
+
+
+
+=head2 perlrun - how to execute the Perl interpreter
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item Switches
+
+
+B<-0>I<digits>, B<-a>, B<-c>, B<-d>, B<-d:foo>, B<-D>I<number>,
+B<-D>I<list>, B<-e> I<commandline>, B<-F>I<regexp>, B<-i>I<extension>,
+B<-I>I<directory>, B<-l>I<octnum>, B<-m>I<module>, B<-M>I<module>,
+B<-n>, B<-p>, B<-P>, B<-s>, B<-S>, B<-T>, B<-u>, B<-U>, B<-v>, B<-V>,
+B<-V:name>, B<-w>, B<-x> I<directory>
+
+
+
+=back
+
+
+
+
+=head2 perlfunc - Perl builtin functions
+
+=item DESCRIPTION
+
+
+
+
+=over
+
+=item Perl Functions by Category
+
+
+Functions for SCALARs or strings, Regular expressions and pattern
+matching, Numeric functions, Functions for real @ARRAYs, Functions for
+list data, Functions for real %HASHes, Input and output functions,
+Functions for fixed length data or records, Functions for filehandles,
+files, or directories, Keywords related to the control flow of your
+perl program, Keywords related to scoping, Miscellaneous functions,
+Functions for processes and process groups, Keywords related to perl
+modules, Keywords related to classes and object-orientedness, Low-level
+socket functions, System V interprocess communication functions,
+Fetching user and group info, Fetching network info, Time-related
+functions
+
+=item Alphabetical Listing of Perl Functions
+
+
+-X FILEHANDLE, -X EXPR, -X, abs VALUE, accept NEWSOCKET,GENERICSOCKET,
+alarm SECONDS, atan2 Y,X, bind SOCKET,NAME, binmode FILEHANDLE, bless
+REF,CLASSNAME, bless REF, caller EXPR, caller, chdir EXPR, chmod LIST,
+chomp VARIABLE, chomp LIST, chomp, chop VARIABLE, chop LIST, chop,
+chown LIST, chr NUMBER, chroot FILENAME, close FILEHANDLE, closedir
+DIRHANDLE, connect SOCKET,NAME, continue BLOCK, cos EXPR, crypt
+PLAINTEXT,SALT, dbmclose ASSOC_ARRAY, dbmopen ASSOC,DBNAME,MODE,
+defined EXPR, delete EXPR, die LIST, do BLOCK, do SUBROUTINE(LIST), do
+EXPR, dump LABEL, each ASSOC_ARRAY, eof FILEHANDLE, eof (), eof, eval
+EXPR, eval BLOCK, exec LIST, exists EXPR, exit EXPR, exp EXPR, fcntl
+FILEHANDLE,FUNCTION,SCALAR, fileno FILEHANDLE, flock
+FILEHANDLE,OPERATION, fork, format, formline PICTURE, LIST, getc
+FILEHANDLE, getc, getlogin, getpeername SOCKET, getpgrp PID, getppid,
+getpriority WHICH,WHO, getpwnam NAME, getgrnam NAME, gethostbyname
+NAME, getnetbyname NAME, getprotobyname NAME, getpwuid UID, getgrgid
+GID, getservb
+
+
+
+=back
+
+
+
+
+=head2 perlvar - Perl predefined variables
+
+=item DESCRIPTION
+
+
+=over
+
+=item Predefined Names
+
+
+$ARG, $_, $<I<digit>>, $MATCH, $&, $PREMATCH, $`, $POSTMATCH, $',
+$LAST_PAREN_MATCH, $+, $MULTILINE_MATCHING, $*, input_line_number
+HANDLE EXPR, $INPUT_LINE_NUMBER, $NR, $, input_record_separator HANDLE
+EXPR, $INPUT_RECORD_SEPARATOR, $RS, $/, autoflush HANDLE EXPR,
+$OUTPUT_AUTOFLUSH, $|, output_field_separator HANDLE EXPR,
+$OUTPUT_FIELD_SEPARATOR, $OFS, $,, output_record_separator HANDLE EXPR,
+$OUTPUT_RECORD_SEPARATOR, $ORS, $\, $LIST_SEPARATOR, $",
+$SUBSCRIPT_SEPARATOR, $SUBSEP, $;, $OFMT, $#, format_page_number HANDLE
+EXPR, $FORMAT_PAGE_NUMBER, $%, format_lines_per_page HANDLE EXPR,
+$FORMAT_LINES_PER_PAGE, $=, format_lines_left HANDLE EXPR,
+$FORMAT_LINES_LEFT, $-, format_name HANDLE EXPR, $FORMAT_NAME, $~,
+format_top_name HANDLE EXPR, $FORMAT_TOP_NAME, $^,
+format_line_break_characters HANDLE EXPR,
+$FORMAT_LINE_BREAK_CHARACTERS, $:, format_formfeed HANDLE EXPR,
+$FORMAT_FORMFEED, $^L, $ACCUMULATOR, $^A, $CHILD_ERROR, $?, $OS_ERROR,
+$ERRNO, $!, $EVAL_ERROR, $@, $PROCESS_ID, $PID, $$, $REAL_USER_ID,
+$UID, $<,
+
+
+
+=back
+
+
+
+
+=head2 perlsub - Perl subroutines
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item Private Variables via my()
+
+
+=item Temporary Values via local()
+
+
+=item Passing Symbol Table Entries (typeglobs)
+
+
+=item Pass by Reference
+
+
+=item Prototypes
+
+
+=item Overriding Builtin Functions
+
+
+=item Autoloading
+
+
+
+
+=back
+
+=item SEE ALSO
+
+
+
+
+
+=head2 perlmod - Perl modules (packages)
+
+=item DESCRIPTION
+
+
+=over
+
+=item Packages
+
+
+=item Symbol Tables
+
+
+=item Package Constructors and Destructors
+
+
+=item Perl Classes
+
+
+=item Perl Modules
+
+
+
+
+=back
+
+=item NOTE
+
+
+=item THE PERL MODULE LIBRARY
+
+
+=over
+
+=item Pragmatic Modules
+
+
+diagnostics, integer, less, overload, sigtrap, strict, subs
+
+=item Standard Modules
+
+
+AnyDBM_File, AutoLoader, AutoSplit, Benchmark, Carp, Config, Cwd,
+DB_File, Devel::SelfStubber, DynaLoader, English, Env, Exporter,
+ExtUtils::Liblist, ExtUtils::MakeMaker, ExtUtils::Manifest,
+ExtUtils::Mkbootstrap, ExtUtils::Miniperl, Fcntl, File::Basename,
+File::CheckTree, File::Find, FileHandle, File::Path, Getopt::Long,
+Getopt::Std, I18N::Collate, IPC::Open2, IPC::Open3, Net::Ping, POSIX,
+SelfLoader, Safe, Socket, Test::Harness, Text::Abbrev
+
+=item Extension Modules
+
+
+
+
+=back
+
+=item CPAN
+
+
+Language Extensions and Documentation Tools, Development Support,
+Operating System Interfaces, Networking, Device Control (modems) and
+InterProcess Communication, Data Types and Data Type Utilities,
+Database Interfaces, User Interfaces, Interfaces to / Emulations of
+Other Programming Languages, File Names, File Systems and File Locking
+(see also File Handles), String Processing, Language Text Processing,
+Parsing and Searching, Option, Argument, Parameter and Configuration
+File Processing, Internationalization and Locale, Authentication,
+Security and Encryption, World Wide Web, HTML, HTTP, CGI, MIME, Server
+and Daemon Utilities, Archiving and Compression, Images, Pixmap and
+Bitmap Manipulation, Drawing and Graphing, Mail and Usenet News,
+Control Flow Utilities (callbacks and exceptions etc), File Handle and
+Input/Output Stream Utilities, Miscellaneous Modules
+
+=item Modules: Creation, Use and Abuse
+
+
+=over
+
+=item Guidelines for Module Creation
+
+
+Do similar modules already exist in some form?, Try to design the new
+module to be easy to extend and reuse, Some simple style guidelines,
+Select what to export, Select a name for the module, Have you got it
+right?, README and other Additional Files, A description of the
+module/package/extension etc, A copyright notice - see below,
+Prerequisites - what else you may need to have, How to build it -
+possible changes to Makefile.PL etc, How to install it, Recent changes
+in this release, especially incompatibilities, Changes / enhancements
+you plan to make in the future, Adding a Copyright Notice, Give the
+module a version/issue/release number, How to release and distribute a
+module, Take care when changing a released module
+
+=item Guidelines for Converting Perl 4 Library Scripts into Modules
+
+
+There is no requirement to convert anything, Consider the implications,
+Make the most of the opportunity, The pl2pm utility will get you
+started, Adds the standard Module prologue lines, Converts package
+specifiers from ' to ::, Converts die(...) to croak(...), Several other
+minor changes
+
+=item Guidelines for Reusing Application Code
+
+
+Complete applications rarely belong in the Perl Module Library, Many
+applications contain some perl code which could be reused, Break-out
+the reusable code into one or more separate module files, Take the
+opportunity to reconsider and redesign the interfaces, In some cases
+the 'application' can then be reduced to a small
+
+
+
+=back
+
+
+
+
+=head2 perlref - Perl references and nested data structures
+
+=item DESCRIPTION
+
+
+=over
+
+=item Symbolic references
+
+
+=item Not-so-symbolic references
+
+
+
+
+=back
+
+=item WARNING
+
+
+=item SEE ALSO
+
+
+
+
+
+=head2 perldsc - Perl Data Structures Cookbook
+
+=item DESCRIPTION
+
+
+arrays of arrays, hashes of arrays, arrays of hashes, hashes of hashes,
+more elaborate constructs, recursive and self-referential data
+structures, objects
+
+=item REFERENCES
+
+
+=item COMMON MISTAKES
+
+
+=item CAVEAT ON PRECEDENCE
+
+
+=item WHY YOU SHOULD ALWAYS C<use strict>
+
+
+=item DEBUGGING
+
+
+=item CODE EXAMPLES
+
+
+=item LISTS OF LISTS
+
+
+=over
+
+=item Declaration of a LIST OF LISTS
+
+
+=item Generation of a LIST OF LISTS
+
+
+=item Access and Printing of a LIST OF LISTS
+
+
+
+
+=back
+
+=item HASHES OF LISTS
+
+
+=over
+
+=item Declaration of a HASH OF LISTS
+
+
+=item Generation of a HASH OF LISTS
+
+
+=item Access and Printing of a HASH OF LISTS
+
+
+
+
+=back
+
+=item LISTS OF HASHES
+
+
+=over
+
+=item Declaration of a LIST OF HASHES
+
+
+=item Generation of a LIST OF HASHES
+
+
+=item Access and Printing of a LIST OF HASHES
+
+
+
+
+=back
+
+=item HASHES OF HASHES
+
+
+=over
+
+=item Declaration of a HASH OF HASHES
+
+
+=item Generation of a HASH OF HASHES
+
+
+=item Access and Printing of a HASH OF HASHES
+
+
+
+
+=back
+
+=item MORE ELABORATE RECORDS
+
+
+=over
+
+=item Declaration of MORE ELABORATE RECORDS
+
+
+=item Declaration of a HASH OF COMPLEX RECORDS
+
+
+=item Generation of a HASH OF COMPLEX RECORDS
+
+
+
+
+=back
+
+=item Database Ties
+
+
+=item SEE ALSO
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 perllol, perlLoL - Manipulating Lists of Lists in Perl
+
+=item DESCRIPTION
+
+
+=item Declaration and Access of Lists of Lists
+
+
+=item Growing Your Own
+
+
+=item Access and Printing
+
+
+=item Slices
+
+
+=item SEE ALSO
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 perlobj - Perl objects
+
+=item DESCRIPTION
+
+
+=over
+
+=item An Object is Simply a Reference
+
+
+=item A Class is Simply a Package
+
+
+=item A Method is Simply a Subroutine
+
+
+=item Method Invocation
+
+
+=item Destructors
+
+
+=item WARNING
+
+
+=item Summary
+
+
+=item Two-Phased Garbage Collection
+
+
+
+
+=back
+
+=item SEE ALSO
+
+
+
+
+
+=head2 perltie - how to hide an object class in a simple variable
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item Tying Scalars
+
+
+TIESCALAR classname, LIST, FETCH this, STORE this, value, DESTROY this
+
+=item Tying Arrays
+
+
+TIEARRAY classname, LIST, FETCH this, index, STORE this, index, value,
+DESTROY this
+
+=item Tying Hashes
+
+
+USER, HOME, CLOBBER, LIST, TIEHASH classname, LIST, FETCH this, key,
+STORE this, key, value, DELETE this, key, CLEAR this, EXISTS this, key,
+FIRSTKEY this, NEXTKEY this, lastkey, DESTROY this
+
+=item Tying FileHandles
+
+
+
+
+=back
+
+=item SEE ALSO
+
+
+=item BUGS
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 perlbot - Bag'o Object Tricks (the BOT)
+
+=item DESCRIPTION
+
+
+=item OO SCALING TIPS
+
+
+=item INSTANCE VARIABLES
+
+
+=item SCALAR INSTANCE VARIABLES
+
+
+=item INSTANCE VARIABLE INHERITANCE
+
+
+=item OBJECT RELATIONSHIPS
+
+
+=item OVERRIDING SUPERCLASS METHODS
+
+
+=item USING RELATIONSHIP WITH SDBM
+
+
+=item THINKING OF CODE REUSE
+
+
+=item CLASS CONTEXT AND THE OBJECT
+
+
+=item INHERITING A CONSTRUCTOR
+
+
+=item DELEGATION
+
+
+
+
+
+=head2 perldebug - Perl debugging
+
+=item DESCRIPTION
+
+
+=over
+
+=item Debugging
+
+
+h, T, s, n, f, c, c line, <CR>, l min+incr, l min-max, l line, l, -, w
+line, l subname, /pattern/, ?pattern?, L, S, t, b line [ condition ], b
+subname [ condition ], d line, D, a line command, A, < command, >
+command, V package [symbols], X [symbols], ! number, ! -number, H
+-number, q or ^D, command, p expr
+
+=item Customization
+
+
+=item Other resources
+
+
+
+
+=back
+
+=item BUGS
+
+
+
+
+
+=head2 perldiag - various Perl diagnostics
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 perlform - Perl formats
+
+=item DESCRIPTION
+
+
+=over
+
+=item Format Variables
+
+
+
+
+=back
+
+=item NOTES
+
+
+=over
+
+=item Footers
+
+
+=item Accessing Formatting Internals
+
+
+
+
+=back
+
+=item WARNING
+
+
+
+
+
+=head2 perlipc - Perl interprocess communication (signals, fifos,
+pipes, safe subprocceses, sockets, and semaphores)
+
+=item DESCRIPTION
+
+
+=item Signals
+
+
+=item Named Pipes
+
+
+=item Using open() for IPC
+
+
+=over
+
+=item Safe Pipe Opens
+
+
+=item Bidirectional Communication
+
+
+
+
+=back
+
+=item Sockets: Client/Server Communication
+
+
+=over
+
+=item Internet TCP Clients and Servers
+
+
+=item Unix-Domain TCP Clients and Servers
+
+
+=item UDP: Message Passing
+
+
+
+
+=back
+
+=item SysV IPC
+
+
+=item WARNING
+
+
+=item NOTES
+
+
+=item BUGS
+
+
+=item AUTHOR
+
+
+=item SEE ALSO
+
+
+
+
+
+=head2 perlsec - Perl security
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 perltrap - Perl traps for the unwary
+
+=item DESCRIPTION
+
+
+=over
+
+=item Awk Traps
+
+
+=item C Traps
+
+
+=item Sed Traps
+
+
+=item Shell Traps
+
+
+=item Perl Traps
+
+
+=item Perl4 Traps
+
+
+
+
+=back
+
+
+
+
+=head2 perlstyle - Perl style guide
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 perlxs - XS language reference manual
+
+=item DESCRIPTION
+
+
+=over
+
+=item Introduction
+
+
+=item On The Road
+
+
+=item The Anatomy of an XSUB
+
+
+=item The Argument Stack
+
+
+=item The RETVAL Variable
+
+
+=item The MODULE Keyword
+
+
+=item The PACKAGE Keyword
+
+
+=item The PREFIX Keyword
+
+
+=item The OUTPUT: Keyword
+
+
+=item The CODE: Keyword
+
+
+=item The INIT: Keyword
+
+
+=item The NO_INIT Keyword
+
+
+=item Initializing Function Parameters
+
+
+=item Default Parameter Values
+
+
+=item The PREINIT: Keyword
+
+
+=item The INPUT: Keyword
+
+
+=item Variable-length Parameter Lists
+
+
+=item The PPCODE: Keyword
+
+
+=item Returning Undef And Empty Lists
+
+
+=item The REQUIRE: Keyword
+
+
+=item The CLEANUP: Keyword
+
+
+=item The BOOT: Keyword
+
+
+=item The VERSIONCHECK: Keyword
+
+
+=item The PROTOTYPES: Keyword
+
+
+=item The PROTOTYPE: Keyword
+
+
+=item The ALIAS: Keyword
+
+
+=item The INCLUDE: Keyword
+
+
+=item The CASE: Keyword
+
+
+=item The & Unary Operator
+
+
+=item Inserting Comments and C Preprocessor Directives
+
+
+=item Using XS With C++
+
+
+=item Interface Strategy
+
+
+=item Perl Objects And C Structures
+
+
+=item The Typemap
+
+
+
+
+=back
+
+=item EXAMPLES
+
+
+=item XS VERSION
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 perlxstut, perlXStut - Tutorial for XSUB's
+
+=item DESCRIPTION
+
+
+=over
+
+=item VERSION CAVEAT
+
+
+=item DYNAMIC VERSUS STATIC
+
+
+=item EXAMPLE 1
+
+
+=item EXAMPLE 2
+
+
+=item WHAT HAS GONE ON?
+
+
+=item EXAMPLE 3
+
+
+=item WHAT'S NEW HERE?
+
+
+=item INPUT AND OUTPUT PARAMETERS
+
+
+=item THE XSUBPP COMPILER
+
+
+=item THE TYPEMAP FILE
+
+
+=item WARNING
+
+
+=item SPECIFYING ARGUMENTS TO XSUBPP
+
+
+=item THE ARGUMENT STACK
+
+
+=item EXTENDING YOUR EXTENSION
+
+
+=item DOCUMENTING YOUR EXTENSION
+
+
+=item INSTALLING YOUR EXTENSION
+
+
+=item SEE ALSO
+
+
+=item Author
+
+
+=item Last Changed
+
+
+
+
+=back
+
+
+
+
+=head2 perlguts - Perl's Internal Functions
+
+=item DESCRIPTION
+
+
+=item Datatypes
+
+
+=over
+
+=item What is an "IV"?
+
+
+=item Working with SV's
+
+
+=item What's Really Stored in an SV?
+
+
+=item Working with AV's
+
+
+=item Working with HV's
+
+
+=item References
+
+
+=item Blessed References and Class Objects
+
+
+
+
+=back
+
+=item Creating New Variables
+
+
+=item XSUB's and the Argument Stack
+
+
+=item Mortality
+
+
+=item Stashes
+
+
+=item Magic
+
+
+=over
+
+=item Assigning Magic
+
+
+=item Magic Virtual Tables
+
+
+=item Finding Magic
+
+
+
+
+=back
+
+=item Double-Typed SV's
+
+
+=item Calling Perl Routines from within C Programs
+
+
+=item Memory Allocation
+
+
+=item API LISTING
+
+
+AvFILL, av_clear, av_extend, av_fetch, av_len, av_make, av_pop,
+av_push, av_shift, av_store, av_undef, av_unshift, CLASS, Copy, croak,
+CvSTASH, DBsingle, DBsub, dMARK, dORIGMARK, dSP, dXSARGS, ENTER,
+EXTEND, FREETMPS, G_ARRAY, G_DISCARD, G_EVAL, GIMME, G_NOARGS,
+G_SCALAR, gv_stashpv, gv_stashsv, GvSV, he_free, hv_clear, hv_delete,
+hv_exists, hv_fetch, hv_iterinit, hv_iterkey, hv_iternext,
+hv_iternextsv, hv_iterval, hv_magic, HvNAME, hv_store, hv_undef,
+isALNUM, isALPHA, isDIGIT, isLOWER, isSPACE, isUPPER, items, LEAVE,
+MARK, mg_clear, mg_copy, mg_find, mg_free, mg_get, mg_len, mg_magical,
+mg_set, Move, na, New, Newc, Newz, newAV, newHV, newRV, newSV, newSViv,
+newSVnv, newSVpv, newSVrv, newSVsv, newXS, newXSproto, Nullav, Nullch,
+Nullcv, Nullhv, Nullsv, ORIGMARK, perl_alloc, perl_call_argv,
+perl_call_method, perl_call_pv, perl_call_sv, perl_construct,
+perl_destruct, perl_eval_sv, perl_free, perl_get_av, perl_get_cv,
+perl_get_hv, perl_get_sv, perl_parse, perl_require_pv, perl_run, POPi,
+POPl, POPp, POPn, POPs,
+
+=item AUTHOR
+
+
+=item DATE
+
+
+
+
+
+=head2 perlcall - Perl calling conventions from C
+
+=item DESCRIPTION
+
+
+An Error Handler, An Event Driven Program
+
+=item THE PERL_CALL FUNCTIONS
+
+
+B<perl_call_sv>, B<perl_call_pv>, B<perl_call_method>,
+B<perl_call_argv>
+
+=item FLAG VALUES
+
+
+=over
+
+=item  G_SCALAR
+
+
+=item G_ARRAY
+
+
+=item G_DISCARD
+
+
+=item G_NOARGS
+
+
+=item G_EVAL
+
+
+=item G_KEEPERR
+
+
+=item Determining the Context
+
+
+
+
+=back
+
+=item KNOWN PROBLEMS
+
+
+=item EXAMPLES
+
+
+=over
+
+=item No Parameters, Nothing returned
+
+
+=item Passing Parameters
+
+
+=item Returning a Scalar
+
+
+=item Returning a list of values
+
+
+=item Returning a list in a scalar context
+
+
+=item Returning Data from Perl via the parameter list
+
+
+=item Using G_EVAL
+
+
+=item Using G_KEEPERR
+
+
+=item Using perl_call_sv
+
+
+=item Using perl_call_argv
+
+
+=item Using perl_call_method
+
+
+=item Using GIMME
+
+
+=item Using Perl to dispose of temporaries
+
+
+=item Strategies for storing Callback Context Information
+
+
+1. Ignore the problem - Allow only 1 callback, 2. Create a sequence of
+callbacks - hard wired limit, 3. Use a parameter to map to the Perl
+callback
+
+=item Alternate Stack Manipulation
+
+
+
+
+=back
+
+=item SEE ALSO
+
+
+=item AUTHOR
+
+
+=item DATE
+
+
+
+
+
+=head2 perlembed - how to embed perl in your C program
+
+=item DESCRIPTION
+
+
+=over
+
+=item PREAMBLE
+
+
+B<Use C from Perl?>, B<Use a UNIX program from Perl?>, B<Use Perl from
+Perl?>, B<Use C from C?>, B<Use Perl from C?>
+
+=item ROADMAP
+
+
+=item Compiling your C program
+
+
+=item Adding a Perl interpreter to your C program
+
+
+=item Calling a Perl subroutine from your C program
+
+
+=item Evaluating a Perl statement from your C program
+
+
+=item Performing Perl pattern matches and substitutions from your C
+program
+
+
+
+
+=back
+
+=item MORAL
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 perlpod - plain old documentation
+
+=item DESCRIPTION
+
+
+=item Embedding Pods in Perl Modules
+
+
+=item SEE ALSO
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 perlbook - Perl book information
+
+=item DESCRIPTION
+
+
+
+
+
+=head1 PRAGMA DOCUMENTATION
+
+
+
+
+=head2 diagnostics - Perl compiler pragma to force verbose warning
+diagnostics
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item The C<diagnostics> Pragma
+
+
+=item The I<splain> Program
+
+
+
+
+=back
+
+=item EXAMPLES
+
+
+=item INTERNALS
+
+
+=item BUGS
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 integer - Perl pragma to compute arithmetic in integer instead
+of double
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 less - perl pragma to request less of something from the
+compiler
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 lib - manipulate @INC at compile time
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item ADDING DIRECTORIES TO @INC
+
+
+=item DELETING DIRECTORIES FROM @INC
+
+
+=item RESTORING ORIGINAL @INC
+
+
+
+
+=back
+
+=item SEE ALSO
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 overload - Package for overloading perl operations
+
+=item SYNOPSIS
+
+
+=item CAVEAT SCRIPTOR
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item Declaration of overloaded functions
+
+
+=item Calling Conventions for Binary Operations
+
+
+FALSE, TRUE, C<undef>
+
+=item Calling Conventions for Unary Operations
+
+
+=item Overloadable Operations
+
+
+I<Arithmetic operations>, I<Comparison operations>, I<Bit operations>,
+I<Increment and decrement>, I<Transcendental functions>, I<Boolean,
+string and numeric conversion>, I<Special>
+
+
+
+=back
+
+=item SPECIAL SYMBOLS FOR C<use overload>
+
+
+=over
+
+=item  Last Resort
+
+
+=item Fallback
+
+
+C<undef>, TRUE, defined, but FALSE
+
+=item Copy Constructor
+
+
+B<Example>
+
+
+
+=back
+
+=item MAGIC AUTOGENERATION
+
+
+I<Assignment forms of arithmetic operations>, I<Conversion operations>,
+I<Increment and decrement>, C<abs($a)>, I<Unary minus>,
+I<Concatenation>, I<Comparison operations>, I<Copy operator>
+
+=item WARNING
+
+
+=item Run-time Overloading
+
+
+=item Public functions
+
+
+overload::StrVal(arg), overload::Overloaded(arg),
+overload::Method(obj,op)
+
+=item IMPLEMENTATION
+
+
+=item AUTHOR
+
+
+=item DIAGNOSTICS
+
+
+=item BUGS
+
+
+
+
+
+=head2 sigtrap - Perl pragma to enable stack backtrace on unexpected
+signals
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 strict - Perl pragma to restrict unsafe constructs
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+C<strict refs>, C<strict vars>, C<strict subs>
+
+
+
+
+=head2 subs - Perl pragma to predeclare sub names
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 vars - Perl pragma to predeclare global variable names
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head1 MODULE DOCUMENTATION
+
+
+
+
+=head2 AnyDBM_File - provide framework for multiple DBMs
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item DBM Comparisons
+
+
+[0], [1], [2], [3]
+
+
+
+=back
+
+=item SEE ALSO
+
+
+
+
+
+=head2 AutoLoader - load functions only on demand
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 AutoSplit - split a package for autoloading
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 Benchmark - benchmark running times of code
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item Methods
+
+
+new, debug
+
+=item Standard Exports
+
+
+timeit(COUNT, CODE), timethis, timethese, timediff, timestr
+
+=item Optional Exports
+
+
+
+
+=back
+
+=item NOTES
+
+
+=item INHERITANCE
+
+
+=item CAVEATS
+
+
+=item AUTHORS
+
+
+=item MODIFICATION HISTORY
+
+
+
+
+
+=head2 Carp, carp - warn of errors (from perspective of caller)
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 Cwd, getcwd - get pathname of current working directory
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 DB_File - Perl5 access to Berkeley DB
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+DB_HASH, DB_BTREE, DB_RECNO
+
+=over
+
+=item How does DB_File interface to Berkeley DB?
+
+
+=item Differences with Berkeley DB
+
+
+=item RECNO
+
+
+=item In Memory Databases
+
+
+=item Using the Berkeley DB Interface Directly
+
+
+get, put, del, fd, seq, sync
+
+
+
+=back
+
+=item EXAMPLES
+
+
+=over
+
+=item Using HASH
+
+
+=item Using BTREE
+
+
+=item Using RECNO
+
+
+=item Locking Databases
+
+
+
+
+=back
+
+=item HISTORY
+
+
+=item WARNINGS
+
+
+=item BUGS
+
+
+=item AVAILABILITY
+
+
+=item SEE ALSO
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 Devel::SelfStubber - generate stubs for a SelfLoading module
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 DirHandle - supply object methods for directory handles
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 DynaLoader - Dynamically load C libraries into Perl code
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+@dl_library_path, @dl_resolve_using, @dl_require_symbols, dl_error(),
+$dl_debug, dl_findfile(), dl_expandspec(), dl_load_file(),
+dl_find_symbol(), dl_undef_symbols(), dl_install_xsub(), boostrap()
+
+=item AUTHOR
+
+
+
+
+
+=head2 English - use nice English (or awk) names for ugly punctuation
+variables
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 Env - perl module that imports environment variables
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 Exporter - Implements default import method for modules
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item Selecting What To Export
+
+
+=item Specialised Import Lists
+
+
+=item Module Version Checking
+
+
+=item Managing Unknown Symbols
+
+
+=item Tag Handling Utility Functions
+
+
+
+
+=back
+
+
+
+
+=head2 ExtUtils::Install - install files from here to there
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 ExtUtils::Liblist - determine libraries to use and how to use
+them
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+For static extensions, For dynamic extensions, For dynamic extensions
+
+=over
+
+=item EXTRALIBS
+
+
+=item LDLOADLIBS and LD_RUN_PATH
+
+
+=item BSLOADLIBS
+
+
+
+
+=back
+
+=item PORTABILITY
+
+
+=item SEE ALSO
+
+
+
+
+
+=head2 ExtUtils::MM_OS2 - methods to override UN*X behaviour in
+ExtUtils::MakeMaker
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 ExtUtils::MM_Unix - methods used by ExtUtils::MakeMaker
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item METHODS
+
+
+=over
+
+=item Preloaded methods
+
+
+catdir, catfile, nicetext, libscan, exescan, lsdir, path,
+replace_manpage_separator, file_name_is_absolute, prefixify,
+maybe_command_in_dirs, maybe_command, perl_script
+
+=item SelfLoaded methods
+
+
+guess_name, init_main, init_dirscan, init_others, find_perl
+
+=item Methods to actually produce chunks of text for the Makefile
+
+
+post_initialize, const_config, constants, const_loadlibs, const_cccmd,
+tool_autosplit, tool_xsubpp, tools_other, dist, macro, depend,
+post_constants, pasthru, c_o, xs_c, xs_o, top_targets, linkext, dlsyms,
+dynamic, dynamic_bs, dynamic_lib, static, static_lib, installpm,
+installpm_x, manifypods, processPL, installbin, subdirs, subdir_x,
+clean, realclean, dist_basics, dist_core, dist_dir, dist_test, dist_ci,
+install, force, perldepend, makefile, staticmake, test,
+test_via_harness, test_via_script, postamble, makeaperl, extliblist,
+dir_target, needs_linking, has_link_code, writedoc
+
+
+
+=back
+
+=item SEE ALSO
+
+
+
+
+
+=head2 ExtUtils::MM_VMS - methods to override UN*X behaviour in
+ExtUtils::MakeMaker
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 ExtUtils::MakeMaker - create an extension Makefile
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item Hintsfile support
+
+
+=item What's new in version 5 of MakeMaker
+
+
+=item Incompatibilities between MakeMaker 5.00 and 4.23
+
+
+=item Default Makefile Behaviour
+
+
+=item make test
+
+
+=item make install
+
+
+=item PREFIX attribute
+
+
+=item AFS users
+
+
+=item Static Linking of a new Perl Binary
+
+
+=item Determination of Perl Library and Installation Locations
+
+
+=item Useful Default Makefile Macros
+
+
+=item Using Attributes and Parameters
+
+
+C, CONFIG, CONFIGURE, DEFINE, DIR, DISTNAME, DL_FUNCS, DL_VARS,
+EXE_FILES, FIRST_MAKEFILE, FULLPERL, H, INC, INSTALLARCHLIB,
+INSTALLBIN, INSTALLDIRS, INSTALLMAN1DIR, INSTALLMAN3DIR,
+INSTALLPRIVLIB, INSTALLSITELIB, INSTALLSITEARCH, INST_ARCHLIB,
+INST_EXE, INST_LIB, INST_MAN1DIR, INST_MAN3DIR, LDFROM, LIBPERL_A,
+LIBS, LINKTYPE, MAKEAPERL, MAKEFILE, MAN1PODS, MAN3PODS, MAP_TARGET,
+MYEXTLIB, NAME, NEEDS_LINKING, NOECHO, NORECURS, OBJECT, PERL,
+PERLMAINCC, PERL_ARCHLIB, PERL_LIB, PERL_SRC, PL_FILES, PM, PMLIBDIRS,
+PREFIX, PREREQ, SKIP, TYPEMAPS, VERSION, VERSION_FROM, XS, XSOPT,
+XSPROTOARG, XS_VERSION
+
+=item Additional lowercase attributes
+
+
+clean, depend, dist, dynamic_lib, installpm, linkext, macro, realclean,
+tool_autosplit
+
+=item Overriding MakeMaker Methods
+
+
+=item Distribution Support
+
+
+   make distcheck,    make skipcheck,    make distclean,    make
+   manifest,    make distdir,    make tardist,    make dist,    make
+   uutardist,    make shdist,    make ci
+
+
+
+=back
+
+=item AUTHORS
+
+
+=item MODIFICATION HISTORY
+
+
+=item TODO
+
+
+
+
+
+=head2 ExtUtils::Manifest - utilities to write and check a MANIFEST
+file
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item MANIFEST.SKIP
+
+
+=item EXPORT_OK
+
+
+=item GLOBAL VARIABLES
+
+
+=item DIAGNOSTICS
+
+
+C<Not in MANIFEST:> I<file>, C<No such file:> I<file>, C<MANIFEST:>
+I<$!>, C<Added to MANIFEST:> I<file>
+
+=item SEE ALSO
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 ExtUtils::Mkbootstrap - make a bootstrap file for use by
+DynaLoader
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 ExtUtils::Mksymlists - write linker options files for dynamic
+extension
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+NAME, DL_FUNCS, DL_VARS, FILE, FUNCLIST, DLBASE
+
+=item AUTHOR
+
+
+=item REVISION
+
+
+
+
+
+=head2 Fcntl - load the C Fcntl.h defines
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item NOTE
+
+
+
+
+
+=head2 File::Basename, Basename - parse file specifications
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+fileparse_set_fstype, fileparse
+
+=item EXAMPLES
+
+
+C<basename>, C<dirname>
+
+
+
+
+=head2 File::CheckTree, validate - run many filetest checks on a tree
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 File::Find, find - traverse a file tree
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 File::Path - create or remove a series of directories
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item AUTHORS
+
+
+=item REVISION
+
+
+
+
+
+=head2 FileCache - keep more files open than the system permits
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item BUGS
+
+
+
+
+
+=head2 FileHandle - supply object methods for filehandles
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+  $fh->print, $fh->printf, $fh->getline, $fh->getlines
+
+=item SEE ALSO
+
+
+=item BUGS
+
+
+
+
+
+=head2 GDBM_File - Perl5 access to the gdbm library.
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item AVAILABILITY
+
+
+=item BUGS
+
+
+=item SEE ALSO
+
+
+
+
+
+=head2 Getopt::Long, GetOptions - extended processing of command line
+options
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+<none>, !, =s, :s, =i, :i, =f, :f
+
+=over
+
+=item Linkage specification
+
+
+=item Aliases and abbreviations
+
+
+=item Non-option call-back routine
+
+
+=item Option starters
+
+
+=item Return value
+
+
+
+
+=back
+
+=item COMPATIBILITY
+
+
+=item EXAMPLES
+
+
+=item CONFIGURATION VARIABLES
+
+
+$Getopt::Long::autoabbrev, $Getopt::Long::getopt_compat,
+$Getopt::Long::order, $Getopt::Long::ignorecase,
+$Getopt::Long::VERSION, $Getopt::Long::error, $Getopt::Long::debug
+
+
+
+
+=head2 Getopt::Std, getopt - Process single-character switches with
+switch clustering
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 I18N::Collate - compare 8-bit scalar data according to the
+current locale
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 IPC::Open2, open2 - open a process for both reading and writing
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item WARNING
+
+
+=item SEE ALSO
+
+
+
+
+
+=head2 IPC::Open3, open3 - open a process for reading, writing, and
+error handling
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 Net::Ping, pingecho - check a host for upness
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item Parameters
+
+
+hostname, timeout
+
+
+
+=back
+
+=item WARNING
+
+
+
+
+
+=head2 POSIX - Perl interface to IEEE Std 1003.1
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item NOTE
+
+
+=item CAVEATS
+
+
+=item FUNCTIONS
+
+
+_exit, abort, abs, access, acos, alarm, asctime, asin, assert, atan,
+atan2, atexit, atof, atoi, atol, bsearch, calloc, ceil, chdir, chmod,
+chown, clearerr, clock, close, closedir, cos, cosh, creat, ctermid,
+ctime, cuserid, difftime, div, dup, dup2, errno, execl, execle, execlp,
+execv, execve, execvp, exit, exp, fabs, fclose, fcntl, fdopen, feof,
+ferror, fflush, fgetc, fgetpos, fgets, fileno, floor, fmod, fopen,
+fork, fpathconf, fprintf, fputc, fputs, fread, free, freopen, frexp,
+fscanf, fseek, fsetpos, fstat, ftell, fwrite, getc, getchar, getcwd,
+getegid, getenv, geteuid, getgid, getgrgid, getgrnam, getgroups,
+getlogin, getpgrp, getpid, getppid, getpwnam, getpwuid, gets, getuid,
+gmtime, isalnum, isalpha, isatty, iscntrl, isdigit, isgraph, islower,
+isprint, ispunct, isspace, isupper, isxdigit, kill, labs, ldexp, ldiv,
+link, localeconv, localtime, log, log10, longjmp, lseek, malloc, mblen,
+mbstowcs, mbtowc, memchr, memcmp, memcpy, memmove, memset, mkdir,
+mkfifo, mktime, modf, nice, offsetof, open, opendir, pat
+
+=item CLASSES
+
+
+=over
+
+=item POSIX::SigAction
+
+
+new
+
+=item POSIX::SigSet
+
+
+new, addset, delset, emptyset, fillset, ismember
+
+=item POSIX::Termios
+
+
+new, getattr, getcc, getcflag, getiflag, getispeed, getlflag, getoflag,
+getospeed, setattr, setcc, setcflag, setiflag, setispeed, setlflag,
+setoflag, setospeed, Baud rate values, Terminal interface values, c_cc
+field values, c_cflag field values, c_iflag field values, c_lflag field
+values, c_oflag field values
+
+
+
+=back
+
+=item PATHNAME CONSTANTS
+
+
+Constants
+
+=item POSIX CONSTANTS
+
+
+Constants
+
+=item SYSTEM CONFIGURATION
+
+
+Constants
+
+=item ERRNO
+
+
+Constants
+
+=item FCNTL
+
+
+Constants
+
+=item FLOAT
+
+
+Constants
+
+=item LIMITS
+
+
+Constants
+
+=item LOCALE
+
+
+Constants
+
+=item MATH
+
+
+Constants
+
+=item SIGNAL
+
+
+Constants
+
+=item STAT
+
+
+Constants, Macros
+
+=item STDLIB
+
+
+Constants
+
+=item STDIO
+
+
+Constants
+
+=item TIME
+
+
+Constants
+
+=item UNISTD
+
+
+Constants
+
+=item WAIT
+
+
+Constants, Macros
+
+=item CREATION
+
+
+
+
+
+=head2 Pod::Text - convert POD data to formatted ASCII text
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item AUTHOR
+
+
+=item TODO
+
+
+
+
+
+=head2 Safe - Safe extension module for Perl
+
+=item DESCRIPTION
+
+
+a new namespace, an operator mask
+
+=over
+
+=item Operator masks
+
+
+=item Methods in class Safe
+
+
+NAMESPACE, MASK, root (NAMESPACE), mask (MASK), trap (OP, ...), untrap
+(OP, ...), share (VARNAME, ...), varglob (VARNAME), reval (STRING), rdo
+(FILENAME)
+
+=item Subroutines in package Safe
+
+
+ops_to_mask (OP, ...), mask_to_ops (MASK), opcode (OP, ...), opname
+(OP, ...), fullmask, emptymask, MAXO, op_mask
+
+=item AUTHOR
+
+
+
+
+=back
+
+
+
+
+=head2 Search::Dict, look - search for key in dictionary file
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 SelectSaver - save and restore selected file handle
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 SelfLoader - load functions only on demand
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item The __DATA__ token
+
+
+=item SelfLoader autoloading
+
+
+=item Autoloading and package lexicals
+
+
+=item SelfLoader and AutoLoader
+
+
+=item __DATA__, __END__, and the FOOBAR::DATA filehandle.
+
+
+=item Classes and inherited methods.
+
+
+
+
+=back
+
+=item Multiple packages and fully qualified subroutine names
+
+
+
+
+
+=head2 Socket, sockaddr_in, sockaddr_un, inet_aton, inet_ntoa - load
+the C socket.h defines and structure manipulators
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+inet_aton HOSTNAME, inet_ntoa IP_ADDRESS, INADDR_ANY, INADDR_LOOPBACK,
+INADDR_NONE, sockaddr_in PORT, ADDRESS, sockaddr_in SOCKADDR_IN,
+pack_sockaddr_in PORT, IP_ADDRESS, unpack_sockaddr_in SOCKADDR_IN,
+sockaddr_un PATHNAME, sockaddr_un SOCKADDR_UN, pack_sockaddr_un PATH,
+unpack_sockaddr_un SOCKADDR_UN
+
+
+
+
+=head2 Symbol - manipulate Perl symbols and their names
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+
+=head2 Sys::Hostname - Try every conceivable way to get hostname
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 Syslog, Sys::Syslog, openlog, closelog, setlogmask, syslog -
+Perl interface to the UNIX syslog(3) calls
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+openlog $ident, $logopt, $facility, syslog $priority, $mask, $format,
+@args, setlogmask $mask_priority, closelog
+
+=item EXAMPLES
+
+
+=item DEPENDENCIES
+
+
+=item SEE ALSO
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 Term::Cap - Perl termcap interface
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item EXAMPLES
+
+
+
+
+
+=head2 Term::Complete - Perl word completion module
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+<tab>Attempts word completion.  Cannot be changed, ^D, ^U, <del>, <bs>
+
+=item DIAGNOSTICS
+
+
+=item BUGS
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 Term::ReadLine - Perl interface to various C<readline> packages.
+If no real package is found, substitutes stubs instead of basic
+functions.
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item Minimal set of supported functions
+
+
+C<ReadLine>, C<new>, C<readline>, C<addhistory>, C<IN>, $C<OUT>,
+C<MinLine>, C<findConsole>, C<Features>
+
+=item EXPORTS
+
+
+
+
+
+=head2 Test::Harness - run perl standard test scripts with statistics
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=over
+
+=item The test script output
+
+
+
+
+=back
+
+=item EXPORT
+
+
+=item DIAGNOSTICS
+
+
+C<All tests successful.\nFiles=%d,  Tests=%d, %s>, C<FAILED tests
+%s\n\tFailed %d/%d tests, %.2f%% okay.>, C<Test returned status %d
+(wstat %d)>, C<Failed 1 test, %.2f%% okay. %s>, C<Failed %d/%d tests,
+%.2f%% okay. %s>
+
+=item SEE ALSO
+
+
+=item AUTHORS
+
+
+=item BUGS
+
+
+
+
+
+=head2 Text::Abbrev, abbrev - create an abbreviation table from a list
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item EXAMPLE
+
+
+
+
+
+=head2 Text::Soundex - Implementation of the Soundex Algorithm as
+Described by Knuth
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item EXAMPLES
+
+
+=item LIMITATIONS
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 Text::Tabs -- expand and unexpand tabs
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 Text::Wrap -- wrap text into a paragraph
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item AUTHOR
+
+
+
+
+
+=head2 Tie::Hash, Tie::StdHash - base class definitions for tied hashes
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+TIEHASH classname, LIST, STORE this, key, value, FETCH this, key,
+FIRSTKEY this, NEXTKEY this, lastkey, EXISTS this, key, DELETE this,
+key, CLEAR this
+
+=item CAVEATS
+
+
+=item MORE INFORMATION
+
+
+
+
+
+=head2 Tie::Scalar, Tie::StdScalar - base class definitions for tied
+scalars
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+TIESCALAR classname, LIST, FETCH this, STORE this, value, DESTROY this
+
+=item MORE INFORMATION
+
+
+
+
+
+=head2 Tie::SubstrHash - Fixed-table-size, fixed-key-length hashing
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+=item CAVEATS
+
+
+
+
+
+=head2 Time::Local - efficiently compute tome from local and GMT time
+
+=item SYNOPSIS
+
+
+=item DESCRIPTION
+
+
+
+
+=head1 AUXILIARY DOCUMENTATION
+
+Here should be listed all the extra program's docs, but they don't all
+have man pages yet:
+
+=item a2p
+
+=item s2p
+
+=item find2perl
+
+=item h2ph
+
+=item c2ph
+
+=item h2xs
+
+=item xsubpp
+
+=item pod2man
+
+=item wrapsuid
+
+
+=head1 AUTHOR
+
+Larry Wall E<lt><F<lwall@sems.com>E<gt>, with the help of oodles of
+other folks.
+
+

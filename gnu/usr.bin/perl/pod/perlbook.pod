@@ -1,0 +1,22 @@
+=head1 NAME
+
+perlbook - Perl book information
+
+=head1 DESCRIPTION
+
+You can order Perl books from O'Reilly & Associates, 1-800-998-9938.
+Local/overseas is +1 707 829 0515.  If you can locate an O'Reilly order
+form, you can also fax to +1 707 829 0104.  I<Programming Perl> is a
+reference work that covers nearly all of Perl (version 4, alas), while
+I<Learning Perl> is a tutorial that covers the most frequently used subset
+of the language.
+
+    Programming Perl (the Camel Book):
+	ISBN 0-937175-64-1      (English)
+	ISBN 4-89052-384-7      (Japanese)
+
+    Learning Perl (the Llama Book):
+	ISBN 1-56592-042-2      (English)
+	ISBN 4-89502-678-1      (Japanese)
+	ISBN 2-84177-005-2      (French)
+	ISBN 3-930673-08-8      (German)

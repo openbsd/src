@@ -1,0 +1,39 @@
+# typemap for Perl 5 interface to Berkeley DB
+#
+# written by Paul Marquess (pmarquess@bfsec.bt.co.uk)
+# last modified 23rd June 1994
+# version 0.1
+#
+#################################### DB SECTION
+#
+# 
+
+u_int			T_U_INT
+DB_File			T_PTROBJ
+DBT			T_dbtdatum
+DBTKEY			T_dbtkeydatum
+
+INPUT
+T_dbtkeydatum
+	if (db->type != DB_RECNO)
+	{
+	    $var.data = SvPV($arg, na);
+	    $var.size = (int)na;
+	}
+	else
+	{
+	    Value =  SvIV($arg) ; 
+	    ++ Value ; 
+	    $var.data = & Value; 
+	    $var.size = (int)sizeof(recno_t);
+	}
+T_dbtdatum
+	$var.data = SvPV($arg, na);
+	$var.size = (int)na;
+
+OUTPUT
+
+T_dbtkeydatum
+	OutputKey($arg, $var)
+T_dbtdatum
+	OutputValue($arg, $var)

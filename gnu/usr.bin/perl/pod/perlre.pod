@@ -1,0 +1,530 @@
+=head1 NAME
+
+perlre - Perl regular expressions
+
+=head1 DESCRIPTION
+
+This page describes the syntax of regular expressions in Perl.  For a
+description of how to actually I<use> regular expressions in matching
+operations, plus various examples of the same, see C<m//> and C<s///> in
+L<perlop>.
+
+The matching operations can
+have various modifiers, some of which relate to the interpretation of
+the regular expression inside.  These are:
+
+    i   Do case-insensitive pattern matching.
+    m   Treat string as multiple lines.
+    s   Treat string as single line.
+    x   Extend your pattern's legibility with whitespace and comments.
+
+These are usually written as "the C</x> modifier", even though the delimiter
+in question might not actually be a slash.  In fact, any of these
+modifiers may also be embedded within the regular expression itself using
+the new C<(?...)> construct.  See below.
+
+The C</x> modifier itself needs a little more explanation.  It tells
+the regular expression parser to ignore whitespace that is not
+backslashed or within a character class.  You can use this to break up
+your regular expression into (slightly) more readable parts.  The C<#>
+character is also treated as a metacharacter introducing a comment,
+just as in ordinary Perl code.  Taken together, these features go a
+long way towards making Perl 5 a readable language.  See the C comment
+deletion code in L<perlop>.
+
+=head2 Regular Expressions
+
+The patterns used in pattern matching are regular expressions such as
+those supplied in the Version 8 regexp routines.  (In fact, the
+routines are derived (distantly) from Henry Spencer's freely
+redistributable reimplementation of the V8 routines.)
+See L<Version 8 Regular Expressions> for details.
+
+In particular the following metacharacters have their standard I<egrep>-ish
+meanings:
+
+    \	Quote the next metacharacter
+    ^	Match the beginning of the line
+    .	Match any character (except newline)
+    $	Match the end of the line (or before newline at the end)
+    |	Alternation
+    ()	Grouping
+    []	Character class
+
+By default, the "^" character is guaranteed to match only at the
+beginning of the string, the "$" character only at the end (or before the
+newline at the end) and Perl does certain optimizations with the
+assumption that the string contains only one line.  Embedded newlines
+will not be matched by "^" or "$".  You may, however, wish to treat a
+string as a multi-line buffer, such that the "^" will match after any
+newline within the string, and "$" will match before any newline.  At the
+cost of a little more overhead, you can do this by using the /m modifier
+on the pattern match operator.  (Older programs did this by setting C<$*>,
+but this practice is deprecated in Perl 5.)
+
+To facilitate multi-line substitutions, the "." character never matches a
+newline unless you use the C</s> modifier, which tells Perl to pretend
+the string is a single line--even if it isn't.  The C</s> modifier also
+overrides the setting of C<$*>, in case you have some (badly behaved) older
+code that sets it in another module.
+
+The following standard quantifiers are recognized:
+
+    *	   Match 0 or more times
+    +	   Match 1 or more times
+    ?	   Match 1 or 0 times
+    {n}    Match exactly n times
+    {n,}   Match at least n times
+    {n,m}  Match at least n but not more than m times
+
+(If a curly bracket occurs in any other context, it is treated
+as a regular character.)  The "*" modifier is equivalent to C<{0,}>, the "+"
+modifier to C<{1,}>, and the "?" modifier to C<{0,1}>.  n and m are limited
+to integral values less than 65536.
+
+By default, a quantified subpattern is "greedy", that is, it will match as
+many times as possible without causing the rest of the pattern not to match.  
+The standard quantifiers are all "greedy", in that they match as many
+occurrences as possible (given a particular starting location) without
+causing the pattern to fail.  If you want it to match the minimum number
+of times possible, follow the quantifier with a "?" after any of them.
+Note that the meanings don't change, just the "gravity":
+
+    *?	   Match 0 or more times
+    +?	   Match 1 or more times
+    ??	   Match 0 or 1 time
+    {n}?   Match exactly n times
+    {n,}?  Match at least n times
+    {n,m}? Match at least n but not more than m times
+
+Since patterns are processed as double quoted strings, the following
+also work:
+
+    \t		tab
+    \n		newline
+    \r		return
+    \f		form feed
+    \a		alarm (bell)
+    \e		escape (think troff)
+    \033	octal char (think of a PDP-11)
+    \x1B	hex char
+    \c[		control char
+    \l		lowercase next char (think vi)
+    \u		uppercase next char (think vi)
+    \L		lowercase till \E (think vi)
+    \U		uppercase till \E (think vi)
+    \E		end case modification (think vi)
+    \Q		quote regexp metacharacters till \E
+
+In addition, Perl defines the following:
+
+    \w	Match a "word" character (alphanumeric plus "_")
+    \W	Match a non-word character
+    \s	Match a whitespace character
+    \S	Match a non-whitespace character
+    \d	Match a digit character
+    \D	Match a non-digit character
+
+Note that C<\w> matches a single alphanumeric character, not a whole
+word.  To match a word you'd need to say C<\w+>.  You may use C<\w>,
+C<\W>, C<\s>, C<\S>, C<\d> and C<\D> within character classes (though not
+as either end of a range).
+
+Perl defines the following zero-width assertions:
+
+    \b	Match a word boundary
+    \B	Match a non-(word boundary)
+    \A	Match only at beginning of string
+    \Z	Match only at end of string (or before newline at the end)
+    \G	Match only where previous m//g left off
+
+A word boundary (C<\b>) is defined as a spot between two characters that
+has a C<\w> on one side of it and and a C<\W> on the other side of it (in
+either order), counting the imaginary characters off the beginning and
+end of the string as matching a C<\W>.  (Within character classes C<\b>
+represents backspace rather than a word boundary.)  The C<\A> and C<\Z> are
+just like "^" and "$" except that they won't match multiple times when the
+C</m> modifier is used, while "^" and "$" will match at every internal line
+boundary.  To match the actual end of the string, not ignoring newline,
+you can use C<\Z(?!\n)>.
+
+When the bracketing construct C<( ... )> is used, \<digit> matches the
+digit'th substring.  Outside of the pattern, always use "$" instead of "\"
+in front of the digit.  (While the \<digit> notation can on rare occasion work
+outside the current pattern, this should not be relied upon.  See the
+WARNING below.) The scope of $<digit> (and C<$`>, C<$&>, and C<$'>)
+extends to the end of the enclosing BLOCK or eval string, or to the next
+successful pattern match, whichever comes first.  If you want to use
+parentheses to delimit a subpattern (e.g. a set of alternatives) without
+saving it as a subpattern, follow the ( with a ?.
+
+You may have as many parentheses as you wish.  If you have more
+than 9 substrings, the variables $10, $11, ... refer to the
+corresponding substring.  Within the pattern, \10, \11, etc. refer back
+to substrings if there have been at least that many left parens before
+the backreference.  Otherwise (for backward compatibility) \10 is the
+same as \010, a backspace, and \11 the same as \011, a tab.  And so
+on.  (\1 through \9 are always backreferences.)
+
+C<$+> returns whatever the last bracket match matched.  C<$&> returns the
+entire matched string.  ($0 used to return the same thing, but not any
+more.)  C<$`> returns everything before the matched string.  C<$'> returns
+everything after the matched string.  Examples:
+
+    s/^([^ ]*) *([^ ]*)/$2 $1/;     # swap first two words
+
+    if (/Time: (..):(..):(..)/) {
+	$hours = $1;
+	$minutes = $2;
+	$seconds = $3;
+    }
+
+You will note that all backslashed metacharacters in Perl are
+alphanumeric, such as C<\b>, C<\w>, C<\n>.  Unlike some other regular expression
+languages, there are no backslashed symbols that aren't alphanumeric.
+So anything that looks like \\, \(, \), \<, \>, \{, or \} is always
+interpreted as a literal character, not a metacharacter.  This makes it
+simple to quote a string that you want to use for a pattern but that
+you are afraid might contain metacharacters.  Simply quote all the
+non-alphanumeric characters:
+
+    $pattern =~ s/(\W)/\\$1/g;
+
+You can also use the built-in quotemeta() function to do this.
+An even easier way to quote metacharacters right in the match operator
+is to say
+
+    /$unquoted\Q$quoted\E$unquoted/
+
+Perl 5 defines a consistent extension syntax for regular expressions.
+The syntax is a pair of parens with a question mark as the first thing
+within the parens (this was a syntax error in Perl 4).  The character
+after the question mark gives the function of the extension.  Several
+extensions are already supported:
+
+=over 10
+
+=item (?#text)
+
+A comment.  The text is ignored.  If the C</x> switch is used to enable
+whitespace formatting, a simple C<#> will suffice.
+
+=item (?:regexp)
+
+This groups things like "()" but doesn't make backrefences like "()" does.  So
+
+    split(/\b(?:a|b|c)\b/)
+
+is like
+
+    split(/\b(a|b|c)\b/)
+
+but doesn't spit out extra fields.
+
+=item (?=regexp)
+
+A zero-width positive lookahead assertion.  For example, C</\w+(?=\t)/>
+matches a word followed by a tab, without including the tab in C<$&>.
+
+=item (?!regexp)
+
+A zero-width negative lookahead assertion.  For example C</foo(?!bar)/>
+matches any occurrence of "foo" that isn't followed by "bar".  Note
+however that lookahead and lookbehind are NOT the same thing.  You cannot
+use this for lookbehind: C</(?!foo)bar/> will not find an occurrence of
+"bar" that is preceded by something which is not "foo".  That's because
+the C<(?!foo)> is just saying that the next thing cannot be "foo"--and
+it's not, it's a "bar", so "foobar" will match.  You would have to do
+something like C</(?foo)...bar/> for that.   We say "like" because there's
+the case of your "bar" not having three characters before it.  You could
+cover that this way: C</(?:(?!foo)...|^..?)bar/>.  Sometimes it's still
+easier just to say:
+
+    if (/foo/ && $` =~ /bar$/)
+
+
+=item (?imsx)
+
+One or more embedded pattern-match modifiers.  This is particularly
+useful for patterns that are specified in a table somewhere, some of
+which want to be case sensitive, and some of which don't.  The case
+insensitive ones merely need to include C<(?i)> at the front of the
+pattern.  For example:
+
+    $pattern = "foobar";
+    if ( /$pattern/i )
+
+    # more flexible:
+
+    $pattern = "(?i)foobar";
+    if ( /$pattern/ )
+
+=back
+
+The specific choice of question mark for this and the new minimal
+matching construct was because 1) question mark is pretty rare in older
+regular expressions, and 2) whenever you see one, you should stop
+and "question" exactly what is going on.  That's psychology...
+
+=head2 Backtracking
+
+A fundamental feature of regular expression matching involves the notion
+called I<backtracking>.  which is used (when needed) by all regular
+expression quantifiers, namely C<*>, C<*?>, C<+>, C<+?>, C<{n,m}>, and
+C<{n,m}?>.
+
+For a regular expression to match, the I<entire> regular expression must
+match, not just part of it.  So if the beginning of a pattern containing a
+quantifier succeeds in a way that causes later parts in the pattern to
+fail, the matching engine backs up and recalculates the beginning
+part--that's why it's called backtracking.
+
+Here is an example of backtracking:  Let's say you want to find the
+word following "foo" in the string "Food is on the foo table.":
+
+    $_ = "Food is on the foo table.";
+    if ( /\b(foo)\s+(\w+)/i ) {
+	print "$2 follows $1.\n";
+    }
+
+When the match runs, the first part of the regular expression (C<\b(foo)>)
+finds a possible match right at the beginning of the string, and loads up
+$1 with "Foo".  However, as soon as the matching engine sees that there's
+no whitespace following the "Foo" that it had saved in $1, it realizes its
+mistake and starts over again one character after where it had had the
+tentative match.  This time it goes all the way until the next occurrence
+of "foo". The complete regular expression matches this time, and you get
+the expected output of "table follows foo."
+
+Sometimes minimal matching can help a lot.  Imagine you'd like to match
+everything between "foo" and "bar".  Initially, you write something
+like this:
+
+    $_ =  "The food is under the bar in the barn.";
+    if ( /foo(.*)bar/ ) {
+	print "got <$1>\n";
+    }
+
+Which perhaps unexpectedly yields:
+
+  got <d is under the bar in the >
+
+That's because C<.*> was greedy, so you get everything between the
+I<first> "foo" and the I<last> "bar".  In this case, it's more effective
+to use minimal matching to make sure you get the text between a "foo"
+and the first "bar" thereafter.
+
+    if ( /foo(.*?)bar/ ) { print "got <$1>\n" }
+  got <d is under the >
+
+Here's another example: let's say you'd like to match a number at the end
+of a string, and you also want to keep the preceding part the match.
+So you write this:
+
+    $_ = "I have 2 numbers: 53147";
+    if ( /(.*)(\d*)/ ) {				# Wrong!
+	print "Beginning is <$1>, number is <$2>.\n";
+    }
+
+That won't work at all, because C<.*> was greedy and gobbled up the
+whole string. As C<\d*> can match on an empty string the complete
+regular expression matched successfully.
+
+    Beginning is <I have 2: 53147>, number is <>.
+
+Here are some variants, most of which don't work:
+
+    $_ = "I have 2 numbers: 53147";
+    @pats = qw{
+	(.*)(\d*)
+	(.*)(\d+)
+	(.*?)(\d*)
+	(.*?)(\d+)
+	(.*)(\d+)$
+	(.*?)(\d+)$
+	(.*)\b(\d+)$
+	(.*\D)(\d+)$
+    };
+
+    for $pat (@pats) {
+	printf "%-12s ", $pat;
+	if ( /$pat/ ) {
+	    print "<$1> <$2>\n";
+	} else {
+	    print "FAIL\n";
+	}
+    }
+
+That will print out:
+
+    (.*)(\d*)    <I have 2 numbers: 53147> <>
+    (.*)(\d+)    <I have 2 numbers: 5314> <7>
+    (.*?)(\d*)   <> <>
+    (.*?)(\d+)   <I have > <2>
+    (.*)(\d+)$   <I have 2 numbers: 5314> <7>
+    (.*?)(\d+)$  <I have 2 numbers: > <53147>
+    (.*)\b(\d+)$ <I have 2 numbers: > <53147>
+    (.*\D)(\d+)$ <I have 2 numbers: > <53147>
+
+As you see, this can be a bit tricky.  It's important to realize that a
+regular expression is merely a set of assertions that gives a definition
+of success.  There may be 0, 1, or several different ways that the
+definition might succeed against a particular string.  And if there are
+multiple ways it might succeed, you need to understand backtracking in
+order to know which variety of success you will achieve.
+
+When using lookahead assertions and negations, this can all get even
+tricker.  Imagine you'd like to find a sequence of nondigits not 
+followed by "123".  You might try to write that as
+
+	$_ = "ABC123";
+	if ( /^\D*(?!123)/ ) {				# Wrong!
+	    print "Yup, no 123 in $_\n";
+	}
+
+But that isn't going to match; at least, not the way you're hoping.  It
+claims that there is no 123 in the string.  Here's a clearer picture of
+why it that pattern matches, contrary to popular expectations:
+
+    $x = 'ABC123' ;
+    $y = 'ABC445' ;
+
+    print "1: got $1\n" if $x =~ /^(ABC)(?!123)/ ;
+    print "2: got $1\n" if $y =~ /^(ABC)(?!123)/ ;
+
+    print "3: got $1\n" if $x =~ /^(\D*)(?!123)/ ;
+    print "4: got $1\n" if $y =~ /^(\D*)(?!123)/ ;
+
+This prints
+
+    2: got ABC
+    3: got AB
+    4: got ABC
+
+You might have expected test 3 to fail because it just seems to a more
+general purpose version of test 1.  The important difference between
+them is that test 3 contains a quantifier (C<\D*>) and so can use
+backtracking, whereas test 1 will not.  What's happening is
+that you've asked "Is it true that at the start of $x, following 0 or more
+nondigits, you have something that's not 123?"  If the pattern matcher had
+let C<\D*> expand to "ABC", this would have caused the whole pattern to
+fail.  
+The search engine will initially match C<\D*> with "ABC".  Then it will
+try to match C<(?!123> with "123" which, of course, fails.  But because
+a quantifier (C<\D*>) has been used in the regular expression, the
+search engine can backtrack and retry the match differently
+in the hope of matching the complete regular expression.  
+
+Well now, 
+the pattern really, I<really> wants to succeed, so it uses the
+standard regexp backoff-and-retry and lets C<\D*> expand to just "AB" this
+time.  Now there's indeed something following "AB" that is not
+"123".  It's in fact "C123", which suffices.
+
+We can deal with this by using both an assertion and a negation.  We'll
+say that the first part in $1 must be followed by a digit, and in fact, it
+must also be followed by something that's not "123".  Remember that the
+lookaheads are zero-width expressions--they only look, but don't consume
+any of the string in their match.  So rewriting this way produces what
+you'd expect; that is, case 5 will fail, but case 6 succeeds:
+
+    print "5: got $1\n" if $x =~ /^(\D*)(?=\d)(?!123)/ ;
+    print "6: got $1\n" if $y =~ /^(\D*)(?=\d)(?!123)/ ;
+
+    6: got ABC
+
+In other words, the two zero-width assertions next to each other work like
+they're ANDed together, just as you'd use any builtin assertions:  C</^$/>
+matches only if you're at the beginning of the line AND the end of the
+line simultaneously.  The deeper underlying truth is that juxtaposition in
+regular expressions always means AND, except when you write an explicit OR
+using the vertical bar.  C</ab/> means match "a" AND (then) match "b",
+although the attempted matches are made at different positions because "a"
+is not a zero-width assertion, but a one-width assertion.
+
+One warning: particularly complicated regular expressions can take
+exponential time to solve due to the immense number of possible ways they
+can use backtracking to try match.  For example this will take a very long
+time to run
+
+    /((a{0,5}){0,5}){0,5}/
+
+And if you used C<*>'s instead of limiting it to 0 through 5 matches, then
+it would take literally forever--or until you ran out of stack space.
+
+=head2 Version 8 Regular Expressions
+
+In case you're not familiar with the "regular" Version 8 regexp
+routines, here are the pattern-matching rules not described above.
+
+Any single character matches itself, unless it is a I<metacharacter>
+with a special meaning described here or above.  You can cause
+characters which normally function as metacharacters to be interpreted
+literally by prefixing them with a "\" (e.g. "\." matches a ".", not any
+character; "\\" matches a "\").  A series of characters matches that
+series of characters in the target string, so the pattern C<blurfl>
+would match "blurfl" in the target string.
+
+You can specify a character class, by enclosing a list of characters
+in C<[]>, which will match any one of the characters in the list.  If the
+first character after the "[" is "^", the class matches any character not
+in the list.  Within a list, the "-" character is used to specify a
+range, so that C<a-z> represents all the characters between "a" and "z",
+inclusive.
+
+Characters may be specified using a metacharacter syntax much like that
+used in C: "\n" matches a newline, "\t" a tab, "\r" a carriage return,
+"\f" a form feed, etc.  More generally, \I<nnn>, where I<nnn> is a string
+of octal digits, matches the character whose ASCII value is I<nnn>.
+Similarly, \xI<nn>, where I<nn> are hexidecimal digits, matches the
+character whose ASCII value is I<nn>. The expression \cI<x> matches the
+ASCII character control-I<x>.  Finally, the "." metacharacter matches any
+character except "\n" (unless you use C</s>).
+
+You can specify a series of alternatives for a pattern using "|" to
+separate them, so that C<fee|fie|foe> will match any of "fee", "fie",
+or "foe" in the target string (as would C<f(e|i|o)e>).  Note that the
+first alternative includes everything from the last pattern delimiter
+("(", "[", or the beginning of the pattern) up to the first "|", and
+the last alternative contains everything from the last "|" to the next
+pattern delimiter.  For this reason, it's common practice to include
+alternatives in parentheses, to minimize confusion about where they
+start and end.  Note however that "|" is interpreted as a literal with
+square brackets, so if you write C<[fee|fie|foe]> you're really only
+matching C<[feio|]>.
+
+Within a pattern, you may designate subpatterns for later reference by
+enclosing them in parentheses, and you may refer back to the I<n>th
+subpattern later in the pattern using the metacharacter \I<n>.
+Subpatterns are numbered based on the left to right order of their
+opening parenthesis.  Note that a backreference matches whatever
+actually matched the subpattern in the string being examined, not the
+rules for that subpattern.  Therefore, C<(0|0x)\d*\s\1\d*> will
+match "0x1234 0x4321",but not "0x1234 01234", since subpattern 1
+actually matched "0x", even though the rule C<0|0x> could
+potentially match the leading 0 in the second number.
+
+=head2 WARNING on \1 vs $1
+
+Some people get too used to writing things like
+
+    $pattern =~ s/(\W)/\\\1/g;
+
+This is grandfathered for the RHS of a substitute to avoid shocking the
+B<sed> addicts, but it's a dirty habit to get into.  That's because in
+PerlThink, the right-hand side of a C<s///> is a double-quoted string.  C<\1> in
+the usual double-quoted string means a control-A.  The customary Unix
+meaning of C<\1> is kludged in for C<s///>.  However, if you get into the habit
+of doing that, you get yourself into trouble if you then add an C</e>
+modifier.
+
+    s/(\d+)/ \1 + 1 /eg;
+
+Or if you try to do
+
+    s/(\d+)/\1000/;
+
+You can't disambiguate that by saying C<\{1}000>, whereas you can fix it with
+C<${1}000>.  Basically, the operation of interpolation should not be confused
+with the operation of matching a backreference.  Certainly they mean two
+different things on the I<left> side of the C<s///>.

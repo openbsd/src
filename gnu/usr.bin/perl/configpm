@@ -1,0 +1,255 @@
+#!./miniperl -w
+
+$config_pm = $ARGV[0] || 'lib/Config.pm';
+@ARGV = "./config.sh";
+
+# list names to put first (and hence lookup fastest)
+@fast = qw(archname osname osvers prefix libs libpth
+	dynamic_ext static_ext extensions dlsrc so
+	sig_name cc ccflags cppflags
+	privlibexp archlibexp installprivlib installarchlib
+	sharpbang startsh shsharp
+);
+
+# names of things which may need to have slashes changed to double-colons
+@extensions = qw(dynamic_ext static_ext extensions known_extensions);
+
+
+open CONFIG, ">$config_pm" or die "Can't open $config_pm: $!\n";
+$myver = $];
+
+print CONFIG <<"ENDOFBEG";
+package Config;
+use Exporter ();
+\@ISA = (Exporter);
+\@EXPORT = qw(%Config);
+\@EXPORT_OK = qw(myconfig config_sh config_vars);
+
+\$] == $myver
+  or die "Perl lib version ($myver) doesn't match executable version (\$])\\n";
+
+# This file was created by configpm when Perl was built. Any changes
+# made to this file will be lost the next time perl is built.
+
+ENDOFBEG
+
+
+@fast{@fast} = @fast;
+@extensions{@extensions} = @extensions;
+@non_v=();
+@v_fast=();
+@v_others=();
+
+while (<>) {
+    next if m:^#!/bin/sh:;
+    # Catch CONFIG=true and PATCHLEVEL=n line from Configure.
+    s/^(\w+)=(true|\d+)\s*$/$1='$2'\n/;
+    unless (m/^(\w+)='(.*)'\s*$/){
+	push(@non_v, "#$_"); # not a name='value' line
+	next;
+    }
+    $name = $1;
+    if ($extensions{$name}) { s,/,::,g }
+    if (!$fast{$name}){ push(@v_others, $_); next; }
+    push(@v_fast,$_);
+}
+
+foreach(@non_v){ print CONFIG $_ }
+
+print CONFIG "\n",
+    "my \$config_sh = <<'!END!';\n",
+    join("", @v_fast, sort @v_others),
+    "!END!\n\n";
+
+# copy config summary format from the myconfig script
+
+print CONFIG "my \$summary = <<'!END!';\n";
+
+open(MYCONFIG,"<myconfig") || die "open myconfig failed: $!";
+1 while( ($_=<MYCONFIG>) !~ /^Summary of/);
+do { print CONFIG $_ } until ($_ = <MYCONFIG>) =~ /^\s*$/;
+close(MYCONFIG);
+
+print CONFIG "\n!END!\n", <<'EOT';
+my $summary_expanded = 0;
+
+sub myconfig {
+	return $summary if $summary_expanded;
+	$summary =~ s/\$(\w+)/$Config{$1}/ge;
+	$summary_expanded = 1;
+	$summary;
+}
+EOT
+
+# ----
+
+print CONFIG <<'ENDOFEND';
+
+tie %Config, Config;
+sub TIEHASH { bless {} }
+sub FETCH { 
+    # check for cached value (which maybe undef so we use exists not defined)
+    return $_[0]->{$_[1]} if (exists $_[0]->{$_[1]});
+ 
+    my($value); # search for the item in the big $config_sh string
+    return undef unless (($value) = $config_sh =~ m/^$_[1]='(.*)'\s*$/m);
+ 
+    $value = undef if $value eq 'undef'; # So we can say "if $Config{'foo'}".
+    $_[0]->{$_[1]} = $value; # cache it
+    return $value;
+}
+ 
+my $prevpos = 0;
+
+sub FIRSTKEY {
+    $prevpos = 0;
+    my($key) = $config_sh =~ m/^(.*?)=/;
+    $key;
+}
+
+sub NEXTKEY {
+    my $pos = index($config_sh, "\n", $prevpos) + 1;
+    my $len = index($config_sh, "=", $pos) - $pos;
+    $prevpos = $pos;
+    $len > 0 ? substr($config_sh, $pos, $len) : undef;
+}
+
+sub EXISTS { 
+     exists($_[0]->{$_[1]})  or  $config_sh =~ m/^$_[1]=/m; 
+}
+
+sub STORE  { die "\%Config::Config is read-only\n" }
+sub DELETE { &STORE }
+sub CLEAR  { &STORE }
+
+
+sub config_sh {
+    $config_sh
+}
+sub config_vars {
+    foreach(@_){
+	my $v=(exists $Config{$_}) ? $Config{$_} : 'UNKNOWN';
+	$v='undef' unless defined $v;
+	print "$_='$v';\n";
+    }
+}
+
+1;
+__END__
+
+=head1 NAME
+
+Config - access Perl configuration information
+
+=head1 SYNOPSIS
+
+    use Config;
+    if ($Config{'cc'} =~ /gcc/) {
+	print "built by gcc\n";
+    } 
+
+    use Config qw(myconfig config_sh config_vars);
+
+    print myconfig();
+
+    print config_sh();
+
+    config_vars(qw(osname archname));
+
+
+=head1 DESCRIPTION
+
+The Config module contains all the information that was available to
+the C<Configure> program at Perl build time (over 900 values).
+
+Shell variables from the F<config.sh> file (written by Configure) are
+stored in the readonly-variable C<%Config>, indexed by their names.
+
+Values stored in config.sh as 'undef' are returned as undefined
+values.  The perl C<exists> function can be used to check is a
+named variable exists.
+
+=over 4
+
+=item myconfig()
+
+Returns a textual summary of the major perl configuration values.
+See also C<-V> in L<perlrun/Switches>.
+
+=item config_sh()
+
+Returns the entire perl configuration information in the form of the
+original config.sh shell variable assignment script.
+
+=item config_vars(@names)
+
+Prints to STDOUT the values of the named configuration variable. Each is
+printed on a separate line in the form:
+
+  name='value';
+
+Names which are unknown are output as C<name='UNKNOWN';>.
+See also C<-V:name> in L<perlrun/Switches>.
+
+=back
+
+=head1 EXAMPLE
+
+Here's a more sophisticated example of using %Config:
+
+    use Config;
+
+    defined $Config{sig_name} || die "No sigs?";
+    foreach $name (split(' ', $Config{sig_name})) {
+	$signo{$name} = $i;
+	$signame[$i] = $name;
+	$i++;
+    }   
+
+    print "signal #17 = $signame[17]\n";
+    if ($signo{ALRM}) { 
+	print "SIGALRM is $signo{ALRM}\n";
+    }   
+
+=head1 WARNING
+
+Because this information is not stored within the perl executable
+itself it is possible (but unlikely) that the information does not
+relate to the actual perl binary which is being used to access it.
+
+The Config module is installed into the architecture and version
+specific library directory ($Config{installarchlib}) and it checks the
+perl version number when loaded.
+
+=head1 NOTE
+
+This module contains a good example of how to use tie to implement a
+cache and an example of how to make a tied variable readonly to those
+outside of it.
+
+=cut
+
+ENDOFEND
+
+close(CONFIG);
+
+# Now do some simple tests on the Config.pm file we have created
+unshift(@INC,'lib');
+require $config_pm;
+import Config;
+
+die "$0: $config_pm not valid"
+	unless $Config{'CONFIG'} eq 'true';
+
+die "$0: error processing $config_pm"
+	if defined($Config{'an impossible name'})
+	or $Config{'CONFIG'} ne 'true' # test cache
+	;
+
+die "$0: error processing $config_pm"
+	if eval '$Config{"cc"} = 1'
+	or eval 'delete $Config{"cc"}'
+	;
+
+
+exit 0;

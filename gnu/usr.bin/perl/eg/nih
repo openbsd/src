@@ -1,0 +1,10 @@
+eval "exec /usr/bin/perl -Spi.bak $0 $*"
+	if $running_under_some_shell;
+
+# $RCSfile: nih,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:11:53 $
+
+# This script makes #! scripts directly executable on machines that don't
+# support #!.  It edits in place any scripts mentioned on the command line.
+
+s|^#!(.*)|#!$1\neval "exec $1 -S \$0 \$*"\n\tif \$running_under_some_shell;|
+	if $. == 1;

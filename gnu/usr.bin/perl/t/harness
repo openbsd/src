@@ -1,0 +1,15 @@
+#!./perl
+
+# We suppose that perl _mostly_ works at this moment, so may use
+# sophisticated testing.
+
+# Note that _before install_ you may need to run it with -I ../lib flag
+
+use lib '../lib';
+use Test::Harness;
+
+$Test::Harness::switches = "";	# Too much noise otherwise
+
+@tests = @ARGV;
+@tests = <*/*.t> unless @tests;
+Test::Harness::runtests @tests;

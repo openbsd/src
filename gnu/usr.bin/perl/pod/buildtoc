@@ -1,0 +1,207 @@
+use File::Find;
+use Cwd;
+
+@pods = qw{
+	    perl perldata perlsyn perlop perlre perlrun perlfunc perlvar
+	    perlsub perlmod perlref perldsc perllol perlobj perltie
+	    perlbot perldebug perldiag perlform perlipc perlsec perltrap
+	    perlstyle perlxs perlxstut perlguts perlcall perlembed perlpod
+	    perlbook 
+	};
+for (@pods) { s/$/.pod/ } 
+
+$/ = '';
+@ARGV = @pods;
+
+($_= <<EOPOD2B) =~ s/^\t//gm && print;
+
+	=head1 NAME
+
+	perltoc - perl documentation table of contents
+
+	=head1 DESCRIPTION
+
+	This page provides a brief table of contents for the rest of the Perl 
+	documentation set.  It is meant to be be quickly scanned or grepped 
+	through to locate the proper section you're looking for.
+
+	=head1 BASIC DOCUMENTATION
+
+EOPOD2B
+
+podset(@pods);
+
+find \&getpods => qw(../lib ../ext);
+sub getpods {
+    if (/\.p(od|m)$/) { 
+	my $tmp;
+	# Skip .pm files that have corresponding .pod files, and Functions.pm.
+	return if (($tmp = $_) =~ s/\.pm$/.pod/ && -f $tmp);
+	return if ($_ eq '../lib/Pod/Functions.pm');####Used only by pod itself
+
+	my $file = $File::Find::name;
+	die "tut $name" if $file =~ /TUT/;
+	unless (open (F, "< $_\0")) {
+	    warn "bogus <$file>: $!";
+	    system "ls", "-l", $file;
+	}  else { 
+	    my $line;
+	    while ($line = <F>) {
+		if ($line =~ /^=head1\s+NAME\b/) {
+		    push @modpods, $file;
+		    #warn "GOOD $file\n";
+		    return;
+		} 
+	    } 
+	    warn "EVIL $file\n";
+	}
+    }
+}
+
+die "no pods" unless @modpods;
+
+for (@modpods) {
+    #($name) = /(\w+)\.p(m|od)$/;
+    $name = path2modname($_);
+    if ($name =~ /^[a-z]/) {
+	push @pragmata, $_;
+    } else {
+	if ($done{$name}++) {
+	    # warn "already did $_\n";
+	    next;
+	} 
+	push @modules, $_;
+	push @modname, $name;
+    } 
+} 
+
+($_= <<EOPOD2B) =~ s/^\t//gm && print;
+ 
+
+
+	=head1 PRAGMA DOCUMENTATION
+
+EOPOD2B
+
+podset(sort @pragmata);
+
+($_= <<EOPOD2B) =~ s/^\t//gm && print;
+ 
+
+
+	=head1 MODULE DOCUMENTATION
+
+EOPOD2B
+
+podset( @modules[ sort { $modname[$a] cmp $modname[$b] } 0 .. $#modules ] );
+
+($_= <<EOPOD2B) =~ s/^\t//gm;
+ 
+
+	=head1 AUXILIARY DOCUMENTATION
+
+	Here should be listed all the extra program's docs, but they
+	don't all have man pages yet:
+
+	=item a2p
+
+	=item s2p
+
+	=item find2perl
+	
+	=item h2ph
+	
+	=item c2ph
+
+	=item h2xs
+
+	=item xsubpp
+
+	=item pod2man 
+
+	=item wrapsuid
+
+
+	=head1 AUTHOR
+
+	Larry Wall E<lt>F<lwall\@sems.com>E<gt>, with the help of oodles 
+	of other folks.
+
+
+EOPOD2B
+print;
+
+exit;
+
+sub podset {
+    local @ARGV = @_;
+
+    while(<>) {
+	if (s/^=head1 (NAME)\s*/=head2 /) {
+	    $pod = path2modname($ARGV);
+	    sub path2modname {
+		local $_ = shift;
+		s/\.p(m|od)$//;
+		s-.*?/(lib|ext)/--;
+		s-/-::-g;
+		s/(\w+)::\1/$1/;
+		return $_;
+	    }
+	    unitem(); unhead2();
+	    print "\n \n\n=head2 ";
+	    $_ = <>;
+	    if ( /^\s*$pod\b/ ) {
+		print;
+	    } else {
+		s/^/$pod, /;
+		print;
+	    } 
+	    next;
+	}
+	if (s/^=head1 (.*)/=item $1/) {
+	    unitem(); unhead2();
+	    print; nl(); next;
+	} 
+	if (s/^=head2 (.*)/=item $1/) {
+	    unitem();
+	    print "=over\n\n" unless $inhead2;
+	    $inhead2 = 1;
+	    print; nl(); next;
+
+	} 
+	if (s/^=item (.*)\n/$1/) {
+	    next if $pod eq 'perldiag';
+	    s/^\s*\*\s*$// && next;
+	    s/^\s*\*\s*//;
+	    s/\s+$//;
+	    next if /^[\d.]+$/;
+	    next if $pod eq 'perlmod' && /^ftp:/;
+	    ##print "=over\n\n" unless $initem;
+	    print ", " if $initem;
+	    $initem = 1;
+	    s/\.$//;
+	    print; next;
+	} 
+    } 
+
+} 
+
+sub unhead2 {
+    if ($inhead2) {
+	print "\n\n=back\n\n";
+    } 
+    $inhead2 = 0; 
+    $initem = 0;
+} 
+
+sub unitem {
+    if ($initem) {
+	print "\n\n";
+	##print "\n\n=back\n\n";
+    } 
+    $initem = 0;
+} 
+
+sub nl {
+    print "\n";
+} 

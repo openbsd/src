@@ -1,0 +1,565 @@
+=head1 NAME
+
+perlembed - how to embed perl in your C program
+
+=head1 DESCRIPTION
+
+=head2 PREAMBLE
+
+Do you want to:
+
+=over 5
+
+=item B<Use C from Perl?>  
+
+Read L<perlcall> and L<perlxs>.
+
+=item B<Use a UNIX program from Perl?>  
+
+Read about backquotes and L<perlfunc/system> and L<perlfunc/exec>.
+
+=item B<Use Perl from Perl?>  
+
+Read about L<perlfunc/do> and L<perlfunc/eval> and L<perlmod/use> 
+and L<perlmod/require>.
+
+=item B<Use C from C?>  
+
+Rethink your design.
+
+=item B<Use Perl from C?>  
+
+Read on...
+
+=back
+
+=head2 ROADMAP
+
+L<Compiling your C program>
+
+There's one example in each of the five sections:
+
+L<Adding a Perl interpreter to your C program>
+
+L<Calling a Perl subroutine from your C program>
+
+L<Evaluating a Perl statement from your C program>
+
+L<Performing Perl pattern matches and substitutions from your C program>
+
+L<Fiddling with the Perl stack from your C program>
+
+This documentation is UNIX specific.
+
+=head2 Compiling your C program
+
+Every C program that uses Perl must link in the I<perl library>.  
+
+What's that, you ask?  Perl is itself written in C; the perl library
+is the collection of compiled C programs that were used to create your
+perl executable (I</usr/bin/perl> or equivalent).  (Corollary: you
+can't use Perl from your C program unless Perl has been compiled on
+your machine, or installed properly--that's why you shouldn't blithely
+copy Perl executables from machine to machine without also copying the
+I<lib> directory.)
+
+Your C program will--usually--allocate, "run", and deallocate a
+I<PerlInterpreter> object, which is defined in the perl library.  
+
+If your copy of Perl is recent enough to contain this documentation
+(5.002 or later), then the perl library (and I<EXTERN.h> and
+I<perl.h>, which you'll also need) will
+reside in a directory resembling this:
+
+    /usr/local/lib/perl5/your_architecture_here/CORE
+
+or perhaps just
+
+    /usr/local/lib/perl5/CORE
+
+or maybe something like
+
+    /usr/opt/perl5/CORE
+
+Execute this statement for a hint about where to find CORE:
+
+    perl -e 'use Config; print $Config{archlib}'
+
+Here's how you might compile the example in the next section,
+L<Adding a Perl interpreter to your C program>,
+on a DEC Alpha running the OSF operating system:
+
+    % cc -o interp interp.c -L/usr/local/lib/perl5/alpha-dec_osf/CORE 
+    -I/usr/local/lib/perl5/alpha-dec_osf/CORE -lperl -lm
+
+You'll have to choose the appropriate compiler (I<cc>, I<gcc>, et al.)  and
+library directory (I</usr/local/lib/...>)  for your machine.  If your
+compiler complains that certain functions are undefined, or that it
+can't locate I<-lperl>, then you need to change the path following the
+-L.  If it complains that it can't find I<EXTERN.h> or I<perl.h>, you need
+to change the path following the -I.  
+
+You may have to add extra libraries as well.  Which ones?
+Perhaps those printed by 
+
+   perl -e 'use Config; print $Config{libs}'
+
+=head2 Adding a Perl interpreter to your C program
+
+In a sense, perl (the C program) is a good example of embedding Perl
+(the language), so I'll demonstrate embedding with I<miniperlmain.c>,
+from the source distribution.  Here's a bastardized, non-portable version of
+I<miniperlmain.c> containing the essentials of embedding:
+
+    #include <stdio.h>
+    #include <EXTERN.h>               /* from the Perl distribution     */
+    #include <perl.h>                 /* from the Perl distribution     */
+    
+    static PerlInterpreter *my_perl;  /***    The Perl interpreter    ***/
+   
+    int main(int argc, char **argv, char **env)
+    {
+        my_perl = perl_alloc();
+        perl_construct(my_perl);
+        perl_parse(my_perl, NULL, argc, argv, env);
+        perl_run(my_perl);
+        perl_destruct(my_perl);
+        perl_free(my_perl);
+    }
+
+Now compile this program (I'll call it I<interp.c>) into an executable:
+
+    % cc -o interp interp.c -L/usr/local/lib/perl5/alpha-dec_osf/CORE 
+    -I/usr/local/lib/perl5/alpha-dec_osf/CORE -lperl -lm
+
+After a successful compilation, you'll be able to use I<interp> just
+like perl itself:
+
+    % interp
+    print "Pretty Good Perl \n";
+    print "10890 - 9801 is ", 10890 - 9801;
+    <CTRL-D>
+    Pretty Good Perl
+    10890 - 9801 is 1089
+
+or
+
+    % interp -e 'printf("%x", 3735928559)'
+    deadbeef
+
+You can also read and execute Perl statements from a file while in the
+midst of your C program, by placing the filename in I<argv[1]> before
+calling I<perl_run()>.  
+
+=head2 Calling a Perl subroutine from your C program
+
+To call individual Perl subroutines, you'll need to remove the call to
+I<perl_run()> and replace it with a call to I<perl_call_argv()>.
+
+That's shown below, in a program I'll call I<showtime.c>.
+
+    #include <stdio.h>
+    #include <EXTERN.h>
+    #include <perl.h>                 
+    
+    static PerlInterpreter *my_perl;  
+    
+    int main(int argc, char **argv, char **env)
+    {
+        my_perl = perl_alloc();
+        perl_construct(my_perl);
+    
+        perl_parse(my_perl, NULL, argc, argv, env);
+    
+                                     /*** This replaces perl_run() ***/
+        perl_call_argv("showtime", G_DISCARD | G_NOARGS, argv);
+        perl_destruct(my_perl);
+        perl_free(my_perl);
+    }
+
+where I<showtime> is a Perl subroutine that takes no arguments (that's the
+I<G_NOARGS>) and for which I'll ignore the return value (that's the 
+I<G_DISCARD>).  Those flags, and others, are discussed in L<perlcall>.
+
+I'll define the I<showtime> subroutine in a file called I<showtime.pl>:
+
+    print "I shan't be printed.";
+    
+    sub showtime {
+        print time;
+    }
+
+Simple enough.  Now compile and run:
+
+    % cc -o showtime showtime.c -L/usr/local/lib/perl5/alpha-dec_osf/CORE 
+    -I/usr/local/lib/perl5/alpha-dec_osf/CORE -lperl -lm
+    
+    % showtime showtime.pl
+    818284590
+
+yielding the number of seconds that elapsed between January 1, 1970
+(the beginning of the UNIX epoch), and the moment I began writing this
+sentence.
+
+If you want to pass some arguments to the Perl subroutine, or
+you want to access the return value, you'll need to manipulate the
+Perl stack, demonstrated in the last section of this document: 
+L<Fiddling with the Perl stack from your C program>
+
+=head2 Evaluating a Perl statement from your C program
+
+NOTE: This section, and the next, employ some very brittle techniques
+for evaluting strings of Perl code.  Perl 5.002 contains some nifty
+features that enable A Better Way (such as with L<perlguts/perl_eval_sv>).
+Look for updates to this document soon.
+
+One way to evaluate a Perl string is to define a function (we'll call 
+ours I<perl_eval()>) that wraps around Perl's L<perlfunc/eval>.
+
+Arguably, this is the only routine you'll ever need to execute
+snippets of Perl code from within your C program.  Your string can be
+as long as you wish; it can contain multiple statements; it can
+use L<perlmod/require> or L<perlfunc/do> to include external Perl
+files.  
+
+Our I<perl_eval()> lets us evaluate individual Perl strings, and then 
+extract variables for coercion into C types.  The following program, 
+I<string.c>, executes three Perl strings, extracting an C<int> from
+the first, a C<float> from the second, and a C<char *> from the third.
+
+   #include <stdio.h>
+   #include <EXTERN.h>
+   #include <perl.h>
+   
+   static PerlInterpreter *my_perl;
+   
+   int perl_eval(char *string)
+   {
+     char *argv[2];
+     argv[0] = string;
+     argv[1] = NULL;
+     perl_call_argv("_eval_", 0, argv);
+   }
+   
+   main (int argc, char **argv, char **env)
+   {
+     char *embedding[] = { "", "-e", "sub _eval_ { eval $_[0] }" };
+     STRLEN length;
+   
+     my_perl = perl_alloc();
+     perl_construct( my_perl );
+   
+     perl_parse(my_perl, NULL, 3, embedding, env);
+   
+                                       /** Treat $a as an integer **/
+     perl_eval("$a = 3; $a **= 2");
+     printf("a = %d\n", SvIV(perl_get_sv("a", FALSE)));
+   
+                                       /** Treat $a as a float **/
+     perl_eval("$a = 3.14; $a **= 2");
+     printf("a = %f\n", SvNV(perl_get_sv("a", FALSE)));
+   
+                                       /** Treat $a as a string **/
+     perl_eval("$a = 'rekcaH lreP rehtonA tsuJ'; $a = reverse($a); ");
+     printf("a = %s\n", SvPV(perl_get_sv("a", FALSE), length));
+   
+     perl_destruct(my_perl);
+     perl_free(my_perl);
+   }
+
+All of those strange functions with I<sv> in their names help convert Perl scalars to C types.  They're described in L<perlguts>.
+
+If you compile and run I<string.c>, you'll see the results of using
+I<SvIV()> to create an C<int>, I<SvNV()> to create a C<float>, and
+I<SvPV()> to create a string:
+
+   a = 9
+   a = 9.859600
+   a = Just Another Perl Hacker
+
+
+=head2 Performing Perl pattern matches and substitutions from your C program
+
+Our I<perl_eval()> lets us evaluate strings of Perl code, so we can
+define some functions that use it to "specialize" in matches and
+substitutions: I<match()>, I<substitute()>, and I<matches()>.
+
+   char match(char *string, char *pattern); 
+
+Given a string and a pattern (e.g. "m/clasp/" or "/\b\w*\b/", which in
+your program might be represented as C<"/\\b\\w*\\b/">),
+returns 1 if the string matches the pattern and 0 otherwise.
+
+
+   int substitute(char *string[], char *pattern);
+
+Given a pointer to a string and an "=~" operation (e.g. "s/bob/robert/g" or 
+"tr[A-Z][a-z]"), modifies the string according to the operation,
+returning the number of substitutions made.
+
+   int matches(char *string, char *pattern, char **matches[]);
+
+Given a string, a pattern, and a pointer to an empty array of strings,
+evaluates C<$string =~ $pattern> in an array context, and fills in
+I<matches> with the array elements (allocating memory as it does so), 
+returning the number of matches found.
+
+Here's a sample program, I<match.c>, that uses all three:
+
+   #include <stdio.h>
+   #include <EXTERN.h>
+   #include <perl.h>
+   
+   static PerlInterpreter *my_perl;
+   
+   int eval(char *string)
+   {
+     char *argv[2];
+     argv[0] = string;
+     argv[1] = NULL;
+     perl_call_argv("_eval_", 0, argv);
+   }
+   
+   /** match(string, pattern)
+    ** 
+    ** Used for matches in a scalar context.
+    **
+    ** Returns 1 if the match was successful; 0 otherwise. 
+    **/
+   char match(char *string, char *pattern) 
+   {
+     char *command;
+     command = malloc(sizeof(char) * strlen(string) + strlen(pattern) + 37);
+     sprintf(command, "$string = '%s'; $return = $string =~ %s", 
+	string, pattern); 
+     perl_eval(command);
+     free(command);
+     return SvIV(perl_get_sv("return", FALSE));
+   }
+   
+   /** substitute(string, pattern)
+    **
+    ** Used for =~ operations that modify their left-hand side (s/// and tr///)
+    **
+    ** Returns the number of successful matches, and
+    ** modifies the input string if there were any.
+    **/
+   int substitute(char *string[], char *pattern) 
+   {
+     char *command;
+     STRLEN length;
+     command = malloc(sizeof(char) * strlen(*string) + strlen(pattern) + 35);
+     sprintf(command, "$string = '%s'; $ret = ($string =~ %s)", 
+	*string, pattern); 
+     perl_eval(command);
+     free(command);
+     *string = SvPV(perl_get_sv("string", FALSE), length);
+     return SvIV(perl_get_sv("ret", FALSE));
+   }
+   
+   /** matches(string, pattern, matches)
+    ** 
+    ** Used for matches in an array context.
+    **
+    ** Returns the number of matches, 
+    ** and fills in **matches with the matching substrings (allocates memory!)
+    **/
+   int matches(char *string, char *pattern, char **matches[]) 
+   {
+     char *command;
+     SV *current_match;
+     AV *array;
+     I32 num_matches;
+     STRLEN length;
+     int i;
+   
+     command = malloc(sizeof(char) * strlen(string) + strlen(pattern) + 38);
+     sprintf(command, "$string = '%s'; @array = ($string =~ %s)", 
+	string, pattern); 
+     perl_eval(command);
+     free(command);
+     array = perl_get_av("array", FALSE);
+     num_matches = av_len(array) + 1; /** assume $[ is 0 **/
+     *matches = (char **) malloc(sizeof(char *) * num_matches);
+     for (i = 0; i <= num_matches; i++) {  
+       current_match = av_shift(array);
+       (*matches)[i] = SvPV(current_match, length);
+     }
+     return num_matches;
+   }
+   
+   main (int argc, char **argv, char **env)
+   {
+     char *embedding[] = { "", "-e", "sub _eval_ { eval $_[0] }" };
+     char *text, **matches;
+     int num_matches, i;
+     int j;
+   
+     my_perl = perl_alloc();
+     perl_construct( my_perl );
+   
+     perl_parse(my_perl, NULL, 3, embedding, env);
+   
+     text = (char *) malloc(sizeof(char) * 486); /** A long string follows! **/
+     sprintf(text, "%s", "When he is at a convenience store and the bill comes to some amount like 76 cents, Maynard is aware that there is something he *should* do, something that will enable him to get back a quarter, but he has no idea *what*.  He fumbles through his red squeezey changepurse and gives the boy three extra pennies with his dollar, hoping that he might luck into the correct amount.  The boy gives him back two of his own pennies and then the big shiny quarter that is his prize. -RICHH");  
+   
+     if (perl_match(text, "m/quarter/")) /** Does text contain 'quarter'? **/
+       printf("perl_match: Text contains the word 'quarter'.\n\n");
+     else 
+       printf("perl_match: Text doesn't contain the word 'quarter'.\n\n");
+   
+     if (perl_match(text, "m/eighth/")) /** Does text contain 'eighth'? **/
+       printf("perl_match: Text contains the word 'eighth'.\n\n");
+     else 
+       printf("perl_match: Text doesn't contain the word 'eighth'.\n\n");
+   
+	                               /** Match all occurrences of /wi../ **/
+     num_matches = perl_matches(text, "m/(wi..)/g", &matches);
+     
+     printf("perl_matches: m/(wi..)/g found %d matches...\n", num_matches);
+     for (i = 0; i < num_matches; i++) 
+       printf("match: %s\n", matches[i]);
+     printf("\n");
+     for (i = 0; i < num_matches; i++) {
+       free(matches[i]);
+     }
+     free(matches);
+   
+                                       /** Remove all vowels from text **/
+     num_matches = perl_substitute(&text, "s/[aeiou]//gi");
+     if (num_matches) {
+       printf("perl_substitute: s/[aeiou]//gi...%d substitutions made.\n", 
+	num_matches);
+       printf("Now text is: %s\n\n", text);
+     }
+   
+                                       /** Attempt a substitution
+     if (!perl_substitute(&text, "s/Perl/C/")) {
+       printf("perl_substitute: s/Perl/C...No substitution made.\n\n");
+     }
+   
+     free(text);
+   
+     perl_destruct(my_perl);
+     perl_free(my_perl);
+   }
+
+which produces the output
+
+   perl_match: Text contains the word 'quarter'.
+   
+   perl_match: Text doesn't contain the word 'eighth'.
+   
+   perl_matches: m/(wi..)/g found 2 matches...
+   match: will
+   match: with
+   
+   perl_substitute: s/[aeiou]//gi...139 substitutions made.
+   Now text is: Whn h s t  cnvnnc str nd th bll cms t sm mnt lk 76 cnts, Mynrd s wr tht thr s smthng h *shld* d, smthng tht wll nbl hm t gt bck  qrtr, bt h hs n d *wht*.  H fmbls thrgh hs rd sqzy chngprs nd gvs th by thr xtr pnns wth hs dllr, hpng tht h mght lck nt th crrct mnt.  Th by gvs hm bck tw f hs wn pnns nd thn th bg shny qrtr tht s hs prz. -RCHH
+   
+   perl_substitute: s/Perl/C...No substitution made.
+      
+=head2 Fiddling with the Perl stack from your C program
+
+When trying to explain stacks, most computer science textbooks mumble
+something about spring-loaded columns of cafeteria plates: the last
+thing you pushed on the stack is the first thing you pop off.  That'll
+do for our purposes: your C program will push some arguments onto "the Perl
+stack", shut its eyes while some magic happens, and then pop the
+results--the return value of your Perl subroutine--off the stack.
+   
+First you'll need to know how to convert between C types and Perl
+types, with newSViv() and sv_setnv() and newAV() and all their
+friends.  They're described in L<perlguts>.
+
+Then you'll need to know how to manipulate the Perl stack.  That's
+described in L<perlcall>.
+
+Once you've understood those, embedding Perl in C is easy.  
+
+Since C has no built-in function for integer exponentiation, let's
+make Perl's ** operator available to it (this is less useful than it
+sounds, since Perl implements ** with C's I<pow()> function).  First
+I'll create a stub exponentiation function in I<power.pl>:
+
+    sub expo {
+        my ($a, $b) = @_;
+        return $a ** $b;
+    }
+
+Now I'll create a C program, I<power.c>, with a function
+I<PerlPower()> that contains all the perlguts necessary to push the
+two arguments into I<expo()> and to pop the return value out.  Take a
+deep breath...
+
+    #include <stdio.h>
+    #include <EXTERN.h>
+    #include <perl.h>
+    
+    static PerlInterpreter *my_perl;
+    
+    static void
+    PerlPower(int a, int b)
+    {
+      dSP;                            /* initialize stack pointer      */
+      ENTER;                          /* everything created after here */
+      SAVETMPS;                       /* ...is a temporary variable.   */
+      PUSHMARK(sp);                   /* remember the stack pointer    */
+      XPUSHs(sv_2mortal(newSViv(a))); /* push the base onto the stack  */
+      XPUSHs(sv_2mortal(newSViv(b))); /* push the exponent onto stack  */
+      PUTBACK;                      /* make local stack pointer global */
+      perl_call_pv("expo", G_SCALAR); /* call the function             */
+      SPAGAIN;                        /* refresh stack pointer         */
+                                    /* pop the return value from stack */
+      printf ("%d to the %dth power is %d.\n", a, b, POPi);
+      PUTBACK;                               
+      FREETMPS;                       /* free that return value        */
+      LEAVE;                       /* ...and the XPUSHed "mortal" args.*/
+    }
+    
+    int main (int argc, char **argv, char **env) 
+    {
+      char *my_argv[2];
+    
+      my_perl = perl_alloc();
+      perl_construct( my_perl );
+    
+      my_argv[1] = (char *) malloc(10);
+      sprintf(my_argv[1], "power.pl");
+    
+      perl_parse(my_perl, NULL, argc, my_argv, env);
+      
+      PerlPower(3, 4);                      /*** Compute 3 ** 4 ***/
+    
+      perl_destruct(my_perl);
+      perl_free(my_perl);
+    }
+    
+
+
+Compile and run:
+
+    % cc -o power power.c -L/usr/local/lib/perl5/alpha-dec_osf/CORE 
+    -I/usr/local/lib/perl5/alpha-dec_osf/CORE -lperl -lm
+    
+    % power 
+    3 to the 4th power is 81.
+
+=head1 MORAL
+
+You can sometimes I<write faster code> in C, but
+you can always I<write code faster> in Perl.  Since you can use
+each from the other, combine them as you wish.
+
+
+=head1 AUTHOR
+
+Jon Orwant F<E<lt>orwant@media.mit.eduE<gt>>, with contributions from
+Tim Bunce, Tom Christiansen, Dov Grobgeld, and Ilya Zakharevich.
+
+December 18, 1995
+
+Some of this material is excerpted from my book: I<Perl 5 Interactive>, 
+Waite Group Press, 1996 (ISBN 1-57169-064-6) and appears
+courtesy of Waite Group Press.
+

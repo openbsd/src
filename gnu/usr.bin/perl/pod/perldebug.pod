@@ -1,0 +1,249 @@
+=head1 NAME
+
+perldebug - Perl debugging
+
+=head1 DESCRIPTION
+
+First of all, have you tried using the B<-w> switch?
+
+=head2 Debugging
+
+If you invoke Perl with a B<-d> switch, your script will be run under the
+debugger.  However, the Perl debugger is not a separate program as it is
+in a C environment.  Instead, the B<-d> flag tells the compiler to insert
+source information into the pseudocode it's about to hand to the
+interpreter.  (That means your code must compile correctly for the
+debugger to work on it.)  Then when the interpreter starts up, it
+pre-loads a Perl library file containing the debugger itself.  The program
+will halt before the first executable statement (but see below) and ask
+you for one of the following commands:
+
+=over 12
+
+=item h
+
+Prints out a help message.
+
+=item T
+
+Stack trace.
+If you do bizarre things to your @_ arguments in a subroutine, the stack
+backtrace will not always show the original values.
+
+=item s
+
+Single step.  Executes until it reaches the beginning of another
+statement.
+
+=item n
+
+Next.  Executes over subroutine calls, until it reaches the beginning
+of the next statement.
+
+=item f
+
+Finish.  Executes statements until it has finished the current
+subroutine.
+
+=item c
+
+Continue.  Executes until the next breakpoint is reached.
+
+=item c line
+
+Continue to the specified line.  Inserts a one-time-only breakpoint at
+the specified line.
+
+=item <CR>
+
+Repeat last n or s.
+
+=item l min+incr
+
+List incr+1 lines starting at min.  If min is omitted, starts where
+last listing left off.  If incr is omitted, previous value of incr is
+used.
+
+=item l min-max
+
+List lines in the indicated range.
+
+=item l line
+
+List just the indicated line.
+
+=item l
+
+List next window.
+
+=item -
+
+List previous window.
+
+=item w line
+
+List window (a few lines worth of code) around line.
+
+=item l subname
+
+List subroutine.  If it's a long subroutine it just lists the
+beginning.  Use "l" to list more.
+
+=item /pattern/
+
+Regular expression search forward in the source code for pattern; the
+final / is optional.
+
+=item ?pattern?
+
+Regular expression search backward in the source code for pattern; the
+final ? is optional.
+
+=item L
+
+List lines that have breakpoints or actions.
+
+=item S
+
+Lists the names of all subroutines.
+
+=item t
+
+Toggle trace mode on or off.
+
+=item b line [ condition ]
+
+Set a breakpoint.  If line is omitted, sets a breakpoint on the line
+that is about to be executed.  If a condition is specified, it is
+evaluated each time the statement is reached and a breakpoint is taken
+only if the condition is true.  Breakpoints may only be set on lines
+that begin an executable statement.  Conditions don't use C<if>:
+
+    b 237 $x > 30
+    b 33 /pattern/i
+
+=item b subname [ condition ]
+
+Set breakpoint at first executable line of subroutine.
+
+=item d line
+
+Delete breakpoint.  If line is omitted, deletes the breakpoint on the
+line that is about to be executed.
+
+=item D
+
+Delete all breakpoints.
+
+=item a line command
+
+Set an action for line.  A multiline command may be entered by
+backslashing the newlines.  This command is Perl code, not another
+debugger command.
+
+=item A
+
+Delete all line actions.
+
+=item < command
+
+Set an action to happen before every debugger prompt.  A multiline
+command may be entered by backslashing the newlines.
+
+=item > command
+
+Set an action to happen after the prompt when you've just given a
+command to return to executing the script.  A multiline command may be
+entered by backslashing the newlines.
+
+=item V package [symbols]
+
+Display all (or some) variables in package (defaulting to the C<main>
+package) using a data pretty-printer (hashes show their keys and values so
+you see what's what, control characters are made printable, etc.).  Make
+sure you don't put the type specifier (like $) there, just the symbol
+names, like this:
+
+    V DB filename line 
+
+=item X [symbols] 
+
+Same as as "V" command, but within the current package.  
+
+=item ! number
+
+Redo a debugging command.  If number is omitted, redoes the previous
+command.
+
+=item ! -number
+
+Redo the command that was that many commands ago.
+
+=item H -number
+
+Display last n commands.  Only commands longer than one character are
+listed.  If number is omitted, lists them all.
+
+=item q or ^D
+
+Quit.  ("quit" doesn't work for this.)
+
+=item command
+
+Execute command as a Perl statement.  A missing semicolon will be
+supplied.
+
+=item p expr
+
+Same as C<print DB::OUT expr>.  The DB::OUT filehandle is opened to
+/dev/tty, regardless of where STDOUT may be redirected to.
+
+=back
+
+Any command you type in that isn't recognized by the debugger will be
+directly executed (C<eval>'d) as Perl code.  Leading white space will
+cause the debugger to think it's C<NOT> a debugger command.
+
+If you have any compile-time executable statements (code within a BEGIN 
+block or a C<use> statement), these will I<NOT> be stopped by debugger,
+although C<require>s will.  From your own code, however, you can transfer
+control back to the debugger using the following statement, which is harmless
+if the debugger is not running:
+
+    $DB::single = 1;
+
+=head2 Customization
+
+If you want to modify the debugger, copy F<perl5db.pl> from the Perl
+library to another name and modify it as necessary.  You'll also want
+to set environment variable PERL5DB to say something like this:
+
+    BEGIN { require "myperl5db.pl" }
+
+You can do some customization by setting up a F<.perldb> file which
+contains initialization code.  For instance, you could make aliases
+like these (the last one in particular most people seem to expect to 
+be there):
+
+    $DB::alias{'len'} = 's/^len(.*)/p length($1)/';
+    $DB::alias{'stop'} = 's/^stop (at|in)/b/';
+    $DB::alias{'.'} = 's/^\./p '
+		    . '"\$DB::sub(\$DB::filename:\$DB::line):\t"'
+		    . ',\$DB::dbline[\$DB::line]/' ;
+
+
+=head2 Other resources
+
+You did try the B<-w> switch, didn't you?
+
+=head1 BUGS
+
+If your program exit()s or die()s, so does the debugger.
+
+There's no builtin way to restart the debugger without exiting and coming back
+into it.  You could use an alias like this:
+
+    $DB::alias{'rerun'} = 'exec "perl -d $DB::filename"';
+
+But you'd lose any pending breakpoint information, and that might not
+be the right path, etc.

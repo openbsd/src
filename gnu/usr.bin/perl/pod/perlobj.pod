@@ -1,0 +1,410 @@
+=head1 NAME
+
+perlobj - Perl objects
+
+=head1 DESCRIPTION
+
+First of all, you need to understand what references are in Perl.  See
+L<perlref> for that.  
+
+Here are three very simple definitions that you should find reassuring.
+
+=over 4
+
+=item 1.
+
+An object is simply a reference that happens to know which class it
+belongs to.
+
+=item 2.
+
+A class is simply a package that happens to provide methods to deal
+with object references.
+
+=item 3.
+
+A method is simply a subroutine that expects an object reference (or
+a package name, for static methods) as the first argument.
+
+=back
+
+We'll cover these points now in more depth.
+
+=head2 An Object is Simply a Reference
+
+Unlike say C++, Perl doesn't provide any special syntax for
+constructors.  A constructor is merely a subroutine that returns a
+reference to something "blessed" into a class, generally the
+class that the subroutine is defined in.  Here is a typical
+constructor:
+
+    package Critter;
+    sub new { bless {} }
+
+The C<{}> constructs a reference to an anonymous hash containing no 
+key/value pairs.  The bless() takes that reference and tells the object
+it references that it's now a Critter, and returns the reference.
+This is for convenience, since the referenced object itself knows that
+it has been blessed, and its reference to it could have been returned 
+directly, like this:
+
+    sub new {
+	my $self = {};
+	bless $self;
+	return $self;
+    }
+
+In fact, you often see such a thing in more complicated constructors
+that wish to call methods in the class as part of the construction:
+
+    sub new {
+	my $self = {}
+	bless $self;
+	$self->initialize();
+	return $self;
+    }
+
+If you care about inheritance (and you should; see L<perlmod/"Modules:
+Creation, Use and Abuse">), then you want to use the two-arg form of bless
+so that your constructors may be inherited:
+
+    sub new {
+	my $class = shift;
+	my $self = {};
+	bless $self, $class
+	$self->initialize();
+	return $self;
+    }
+
+Or if you expect people to call not just C<CLASS-E<gt>new()> but also
+C<$obj-E<gt>new()>, then use something like this.  The initialize()
+method used will be of whatever $class we blessed the 
+object into:
+
+    sub new {
+	my $this = shift;
+	my $class = ref($this) || $this;
+	my $self = {};
+	bless $self, $class
+	$self->initialize();
+	return $self;
+    }
+
+Within the class package, the methods will typically deal with the
+reference as an ordinary reference.  Outside the class package,
+the reference is generally treated as an opaque value that may
+only be accessed through the class's methods.
+
+A constructor may re-bless a referenced object currently belonging to
+another class, but then the new class is responsible for all cleanup
+later.  The previous blessing is forgotten, as an object may only
+belong to one class at a time.  (Although of course it's free to 
+inherit methods from many classes.)
+
+A clarification:  Perl objects are blessed.  References are not.  Objects
+know which package they belong to.  References do not.  The bless()
+function simply uses the reference in order to find the object.  Consider
+the following example:
+
+    $a = {};
+    $b = $a;
+    bless $a, BLAH;
+    print "\$b is a ", ref($b), "\n";
+
+This reports $b as being a BLAH, so obviously bless() 
+operated on the object and not on the reference.
+
+=head2 A Class is Simply a Package
+
+Unlike say C++, Perl doesn't provide any special syntax for class
+definitions.  You just use a package as a class by putting method
+definitions into the class.
+
+There is a special array within each package called @ISA which says
+where else to look for a method if you can't find it in the current
+package.  This is how Perl implements inheritance.  Each element of the
+@ISA array is just the name of another package that happens to be a
+class package.  The classes are searched (depth first) for missing
+methods in the order that they occur in @ISA.  The classes accessible
+through @ISA are known as base classes of the current class. 
+
+If a missing method is found in one of the base classes, it is cached
+in the current class for efficiency.  Changing @ISA or defining new
+subroutines invalidates the cache and causes Perl to do the lookup again.
+
+If a method isn't found, but an AUTOLOAD routine is found, then
+that is called on behalf of the missing method.
+
+If neither a method nor an AUTOLOAD routine is found in @ISA, then one
+last try is made for the method (or an AUTOLOAD routine) in a class
+called UNIVERSAL.  If that doesn't work, Perl finally gives up and
+complains.
+
+Perl classes only do method inheritance.  Data inheritance is left
+up to the class itself.  By and large, this is not a problem in Perl,
+because most classes model the attributes of their object using
+an anonymous hash, which serves as its own little namespace to be
+carved up by the various classes that might want to do something
+with the object.
+
+=head2 A Method is Simply a Subroutine
+
+Unlike say C++, Perl doesn't provide any special syntax for method
+definition.  (It does provide a little syntax for method invocation
+though.  More on that later.)  A method expects its first argument
+to be the object or package it is being invoked on.  There are just two
+types of methods, which we'll call static and virtual, in honor of
+the two C++ method types they most closely resemble.
+
+A static method expects a class name as the first argument.  It
+provides functionality for the class as a whole, not for any individual
+object belonging to the class.  Constructors are typically static
+methods.  Many static methods simply ignore their first argument, since
+they already know what package they're in, and don't care what package
+they were invoked via.  (These aren't necessarily the same, since
+static methods follow the inheritance tree just like ordinary virtual
+methods.)  Another typical use for static methods is to look up an
+object by name:
+
+    sub find {
+	my ($class, $name) = @_;
+	$objtable{$name};
+    }
+
+A virtual method expects an object reference as its first argument.
+Typically it shifts the first argument into a "self" or "this" variable,
+and then uses that as an ordinary reference.
+
+    sub display {
+	my $self = shift;
+	my @keys = @_ ? @_ : sort keys %$self;
+	foreach $key (@keys) {
+	    print "\t$key => $self->{$key}\n";
+	}
+    }
+
+=head2 Method Invocation
+
+There are two ways to invoke a method, one of which you're already
+familiar with, and the other of which will look familiar.  Perl 4
+already had an "indirect object" syntax that you use when you say
+
+    print STDERR "help!!!\n";
+
+This same syntax can be used to call either static or virtual methods.
+We'll use the two methods defined above, the static method to lookup
+an object reference and the virtual method to print out its attributes.
+
+    $fred = find Critter "Fred";
+    display $fred 'Height', 'Weight';
+
+These could be combined into one statement by using a BLOCK in the
+indirect object slot:
+
+    display {find Critter "Fred"} 'Height', 'Weight';
+
+For C++ fans, there's also a syntax using -E<gt> notation that does exactly
+the same thing.  The parentheses are required if there are any arguments.
+
+    $fred = Critter->find("Fred");
+    $fred->display('Height', 'Weight');
+
+or in one statement,
+
+    Critter->find("Fred")->display('Height', 'Weight');
+
+There are times when one syntax is more readable, and times when the
+other syntax is more readable.  The indirect object syntax is less
+cluttered, but it has the same ambiguity as ordinary list operators.
+Indirect object method calls are parsed using the same rule as list
+operators: "If it looks like a function, it is a function".  (Presuming
+for the moment that you think two words in a row can look like a
+function name.  C++ programmers seem to think so with some regularity,
+especially when the first word is "new".)  Thus, the parens of
+
+    new Critter ('Barney', 1.5, 70)
+
+are assumed to surround ALL the arguments of the method call, regardless
+of what comes after.  Saying
+
+    new Critter ('Bam' x 2), 1.4, 45
+
+would be equivalent to
+
+    Critter->new('Bam' x 2), 1.4, 45
+
+which is unlikely to do what you want.
+
+There are times when you wish to specify which class's method to use.
+In this case, you can call your method as an ordinary subroutine
+call, being sure to pass the requisite first argument explicitly:
+
+    $fred =  MyCritter::find("Critter", "Fred");
+    MyCritter::display($fred, 'Height', 'Weight');
+
+Note however, that this does not do any inheritance.  If you merely
+wish to specify that Perl should I<START> looking for a method in a
+particular package, use an ordinary method call, but qualify the method
+name with the package like this:
+
+    $fred = Critter->MyCritter::find("Fred");
+    $fred->MyCritter::display('Height', 'Weight');
+
+If you're trying to control where the method search begins I<and> you're
+executing in the class itself, then you may use the SUPER pseudoclass,
+which says to start looking in your base class's @ISA list without having
+to explicitly name it:
+
+    $self->SUPER::display('Height', 'Weight');
+
+Please note that the C<SUPER::> construct is I<only> meaningful within the
+class.
+
+Sometimes you want to call a method when you don't know the method name
+ahead of time.  You can use the arrow form, replacing the method name
+with a simple scalar variable containing the method name:
+
+    $method = $fast ? "findfirst" : "findbest";
+    $fred->$method(@args);
+
+=head2 Destructors
+
+When the last reference to an object goes away, the object is
+automatically destroyed.  (This may even be after you exit, if you've
+stored references in global variables.)  If you want to capture control
+just before the object is freed, you may define a DESTROY method in
+your class.  It will automatically be called at the appropriate moment,
+and you can do any extra cleanup you need to do.
+
+Perl doesn't do nested destruction for you.  If your constructor
+reblessed a reference from one of your base classes, your DESTROY may
+need to call DESTROY for any base classes that need it.  But this only
+applies to reblessed objects--an object reference that is merely
+I<CONTAINED> in the current object will be freed and destroyed
+automatically when the current object is freed.
+
+=head2 WARNING
+
+An indirect object is limited to a name, a scalar variable, or a block,
+because it would have to do too much lookahead otherwise, just like any
+other postfix dereference in the language.  The left side of -E<gt> is not so
+limited, because it's an infix operator, not a postfix operator.  
+
+That means that below, A and B are equivalent to each other, and C and D
+are equivalent, but AB and CD are different:
+
+    A: method $obref->{"fieldname"} 
+    B: (method $obref)->{"fieldname"}
+    C: $obref->{"fieldname"}->method() 
+    D: method {$obref->{"fieldname"}}
+
+=head2 Summary
+
+That's about all there is to it.  Now you just need to go off and buy a
+book about object-oriented design methodology, and bang your forehead
+with it for the next six months or so.
+
+=head2 Two-Phased Garbage Collection
+
+For most purposes, Perl uses a fast and simple reference-based
+garbage collection system.  For this reason, there's an extra
+dereference going on at some level, so if you haven't built
+your Perl executable using your C compiler's C<-O> flag, performance
+will suffer.  If you I<have> built Perl with C<cc -O>, then this
+probably won't matter.
+
+A more serious concern is that unreachable memory with a non-zero
+reference count will not normally get freed.  Therefore, this is a bad
+idea:  
+
+    {
+	my $a;
+	$a = \$a;
+    } 
+
+Even thought $a I<should> go away, it can't.  When building recursive data
+structures, you'll have to break the self-reference yourself explicitly
+if you don't care to leak.  For example, here's a self-referential
+node such as one might use in a sophisticated tree structure:
+
+    sub new_node {
+	my $self = shift;
+	my $class = ref($self) || $self;
+	my $node = {};
+	$node->{LEFT} = $node->{RIGHT} = $node;
+	$node->{DATA} = [ @_ ];
+	return bless $node => $class;
+    } 
+
+If you create nodes like that, they (currently) won't go away unless you
+break their self reference yourself.  (In other words, this is not to be
+construed as a feature, and you shouldn't depend on it.)
+
+Almost.
+
+When an interpreter thread finally shuts down (usually when your program
+exits), then a rather costly but complete mark-and-sweep style of garbage
+collection is performed, and everything allocated by that thread gets
+destroyed.  This is essential to support Perl as an embedded or a
+multithreadable language.  For example, this program demonstrates Perl's
+two-phased garbage collection:
+
+    #!/usr/bin/perl 
+    package Subtle;
+
+    sub new {
+	my $test;
+	$test = \$test;
+	warn "CREATING " . \$test;
+	return bless \$test;
+    } 
+
+    sub DESTROY {
+	my $self = shift;
+	warn "DESTROYING $self";
+    } 
+
+    package main;
+
+    warn "starting program";
+    {
+	my $a = Subtle->new;
+	my $b = Subtle->new;
+	$$a = 0;  # break selfref
+	warn "leaving block";
+    } 
+
+    warn "just exited block";
+    warn "time to die...";
+    exit;
+
+When run as F</tmp/test>, the following output is produced:
+
+    starting program at /tmp/test line 18.
+    CREATING SCALAR(0x8e5b8) at /tmp/test line 7.
+    CREATING SCALAR(0x8e57c) at /tmp/test line 7.
+    leaving block at /tmp/test line 23.
+    DESTROYING Subtle=SCALAR(0x8e5b8) at /tmp/test line 13.
+    just exited block at /tmp/test line 26.
+    time to die... at /tmp/test line 27.
+    DESTROYING Subtle=SCALAR(0x8e57c) during global destruction.
+
+Notice that "global destruction" bit there?  That's the thread
+garbage collector reaching the unreachable.  
+
+Objects are always destructed, even when regular refs aren't and in fact
+are destructed in a separate pass before ordinary refs just to try to
+prevent object destructors from using refs that have been themselves
+destructed.  Plain refs are only garbage collected if the destruct level
+is greater than 0.  You can test the higher levels of global destruction
+by setting the PERL_DESTRUCT_LEVEL environment variable, presuming
+C<-DDEBUGGING> was enabled during perl build time.
+
+A more complete garbage collection strategy will be implemented
+at a future date.
+
+=head1 SEE ALSO
+
+You should also check out L<perlbot> for other object tricks, traps, and tips, 
+as well as L<perlmod> for some style guides on constructing both modules
+and classes.

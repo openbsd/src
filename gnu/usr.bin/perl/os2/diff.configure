@@ -1,0 +1,589 @@
+*** Configure.orig	Thu Dec 07 14:38:08 1995
+--- Configure	Mon Dec 18 19:16:22 1995
+***************
+*** 1377,1383 ****
+  	*)
+  		echo "I don't know where '$file' is, and my life depends on it." >&4
+  		echo "Go find a public domain implementation or fix your PATH setting!" >&4
+! 		exit 1
+  		;;
+  	esac
+  done
+--- 1377,1383 ----
+  	*)
+  		echo "I don't know where '$file' is, and my life depends on it." >&4
+  		echo "Go find a public domain implementation or fix your PATH setting!" >&4
+! 		#exit 1
+  		;;
+  	esac
+  done
+***************
+*** 1386,1392 ****
+  say=offhand
+  for file in $trylist; do
+  	xxx=`./loc $file $file $pth`
+! 	eval $file=$xxx
+  	eval _$file=$xxx
+  	case "$xxx" in
+  	/*)
+--- 1386,1394 ----
+  say=offhand
+  for file in $trylist; do
+  	xxx=`./loc $file $file $pth`
+! 	if test "X$file" != "X$xxx" ; then
+! 		eval $file=$xxx
+! 	fi
+  	eval _$file=$xxx
+  	case "$xxx" in
+  	/*)
+***************
+*** 3173,3179 ****
+  	exit(0);
+  }
+  EOM
+! if $cc -o gccvers gccvers.c >/dev/null 2>&1; then
+  	gccversion=`./gccvers`
+  	case "$gccversion" in
+  	'') echo "You are not using GNU cc." ;;
+--- 3175,3181 ----
+  	exit(0);
+  }
+  EOM
+! if $cc -o gccvers gccvers.c $ldflags  >/dev/null 2>&1; then
+  	gccversion=`./gccvers`
+  	case "$gccversion" in
+  	'') echo "You are not using GNU cc." ;;
+***************
+*** 3765,3770 ****
+--- 3767,3778 ----
+  		*"-l$thislib "*);;
+  		*) dflt="$dflt -l$thislib";;
+  		esac
++ 	elif xxx=`./loc $thislib.lib X $libpth`; $test -f "$xxx"; then
++ 		echo "Found -l$thislib."
++ 		case " $dflt " in
++ 		*"-l$thislib "*);;
++ 		*) dflt="$dflt -l$thislib";;
++ 		esac
+  	else
+  		echo "No -l$thislib."
+  	fi
+***************
+*** 3864,3870 ****
+  	esac
+  	;;
+  esac
+! libnames='';
+  case "$libs" in
+  '') ;;
+  *)  for thislib in $libs; do
+--- 3872,3878 ----
+  	esac
+  	;;
+  esac
+! #libnames='';
+  case "$libs" in
+  '') ;;
+  *)  for thislib in $libs; do
+***************
+*** 3878,3889 ****
+  			:
+  		elif try=`./loc lib$thislib.$so X $libpth`; $test -f "$try"; then
+  			:
+! 		elif try=`./loc lib$thislib.a X $libpth`; $test -f "$try"; then
+  			:
+  		elif try=`./loc lib$thislib X $libpth`; $test -f "$try"; then
+  			:
+  		elif try=`./loc $thislib X $libpth`; $test -f "$try"; then
+  			:
+  		elif try=`./loc Slib$thislib.a X $xlibpth`; $test -f "$try"; then
+  			:
+  		else
+--- 3886,3899 ----
+  			:
+  		elif try=`./loc lib$thislib.$so X $libpth`; $test -f "$try"; then
+  			:
+! 		elif try=`./loc lib$thislib$lib_ext X $libpth`; $test -f "$try"; then
+  			:
+  		elif try=`./loc lib$thislib X $libpth`; $test -f "$try"; then
+  			:
+  		elif try=`./loc $thislib X $libpth`; $test -f "$try"; then
+  			:
++ 		elif try=`./loc $thislib$lib_ext X $libpth`; $test -f "$try"; then
++ 			:
+  		elif try=`./loc Slib$thislib.a X $xlibpth`; $test -f "$try"; then
+  			:
+  		else
+***************
+*** 3932,3942 ****
+  	fi
+  elif $test -r "$libc" || (test -h "$libc") >/dev/null 2>&1; then
+  	echo "Your C library seems to be in $libc, as you said before."
+! elif $test -r $incpath/usr/lib/libc.a; then
+! 	libc=$incpath/usr/lib/libc.a;
+  	echo "Your C library seems to be in $libc.  That's fine."
+! elif $test -r /lib/libc.a; then
+! 	libc=/lib/libc.a;
+  	echo "Your C library seems to be in $libc.  You're normal."
+  else
+  	if tans=`./loc libc.a blurfl/dyick $libpth`; $test -r "$tans"; then
+--- 3942,3952 ----
+  	fi
+  elif $test -r "$libc" || (test -h "$libc") >/dev/null 2>&1; then
+  	echo "Your C library seems to be in $libc, as you said before."
+! elif $test -r $incpath/usr/lib/libc$lib_ext; then
+! 	libc=$incpath/usr/lib/libc$lib_ext;
+  	echo "Your C library seems to be in $libc.  That's fine."
+! elif $test -r /lib/libc$lib_ext; then
+! 	libc=/lib/libc$lib_ext;
+  	echo "Your C library seems to be in $libc.  You're normal."
+  else
+  	if tans=`./loc libc.a blurfl/dyick $libpth`; $test -r "$tans"; then
+***************
+*** 4049,4054 ****
+--- 4059,4068 ----
+  	eval $xscan;\
+  	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+  		eval $xrun
++ elif com="$sed -n -e 's/^[-0-9a-f ]*_\(.*\)=.*/\1/p'";\
++ 	eval $xscan;\
++ 	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
++ 		eval $xrun
+  else
+  	nm -p $* 2>/dev/null >libc.tmp
+  	$grep fprintf libc.tmp > libc.ptf
+***************
+*** 4059,4081 ****
+  		eval $xrun
+  	else
+  		echo " "
+! 		echo "nm didn't seem to work right. Trying ar instead..." >&4
+  		com=''
+! 		if ar t $libc > libc.tmp; then
+  			for thisname in $libnames; do
+! 				ar t $thisname >>libc.tmp
+  			done
+! 			$sed -e 's/\.o$//' < libc.tmp > libc.list
+  			echo "Ok." >&4
+  		else
+! 			echo "ar didn't seem to work right." >&4
+  			echo "Maybe this is a Cray...trying bld instead..." >&4
+  			if bld t $libc | $sed -e 's/.*\///' -e 's/\.o:.*$//' > libc.list
+  			then
+  				for thisname in $libnames; do
+  					bld t $libnames | \
+  					$sed -e 's/.*\///' -e 's/\.o:.*$//' >>libc.list
+! 					ar t $thisname >>libc.tmp
+  				done
+  				echo "Ok." >&4
+  			else
+--- 4073,4096 ----
+  		eval $xrun
+  	else
+  		echo " "
+! 		echo "nm didn't seem to work right. Trying $ar instead..." >&4
+  		com=''
+! 		if test "X$osname" = "Xos2"; then ar_opt=tv ; else ar_opt=t ;fi
+! 		if $ar $ar_opt $libc > libc.tmp; then
+  			for thisname in $libnames; do
+! 				$ar $ar_opt $thisname >>libc.tmp
+  			done
+! 			$sed -e 's/\.o$//' -e 's/^ \+//' < libc.tmp | grep -v "^IMPORT#" > libc.list
+  			echo "Ok." >&4
+  		else
+! 			echo "$ar didn't seem to work right." >&4
+  			echo "Maybe this is a Cray...trying bld instead..." >&4
+  			if bld t $libc | $sed -e 's/.*\///' -e 's/\.o:.*$//' > libc.list
+  			then
+  				for thisname in $libnames; do
+  					bld t $libnames | \
+  					$sed -e 's/.*\///' -e 's/\.o:.*$//' >>libc.list
+! 					$ar t $thisname >>libc.tmp
+  				done
+  				echo "Ok." >&4
+  			else
+***************
+*** 4421,4427 ****
+  	exit(0);
+  }
+  EOCP
+! 	if $cc $ccflags try.c -o try >/dev/null 2>&1 && ./try > /dev/null; then
+  		intsize=`./try`
+  		echo "Your integers are $intsize bytes long."
+  	else
+--- 4436,4442 ----
+  	exit(0);
+  }
+  EOCP
+! 	if $cc $ccflags $ldflags try.c -o try >/dev/null 2>&1 && ./try > /dev/null; then
+  		intsize=`./try`
+  		echo "Your integers are $intsize bytes long."
+  	else
+***************
+*** 4501,4507 ****
+  	exit(result);
+  }
+  EOCP
+! if $cc -o try $ccflags try.c >/dev/null 2>&1; then
+  	./try
+  	yyy=$?
+  else
+--- 4516,4522 ----
+  	exit(result);
+  }
+  EOCP
+! if $cc -o try $ccflags try.c $ldflags >/dev/null 2>&1; then
+  	./try
+  	yyy=$?
+  else
+***************
+*** 4582,4588 ****
+  
+  }
+  EOCP
+! if $cc -o try $ccflags try.c >/dev/null 2>&1; then
+  	./try
+  	castflags=$?
+  else
+--- 4597,4603 ----
+  
+  }
+  EOCP
+! if $cc -o try $ccflags try.c $ldflags >/dev/null 2>&1; then
+  	./try
+  	castflags=$?
+  else
+***************
+*** 4621,4627 ****
+  	exit((unsigned long)vsprintf(buf,"%s",args) > 10L);
+  }
+  EOF
+! 	if $cc $ccflags vprintf.c -o vprintf >/dev/null 2>&1 && ./vprintf; then
+  		echo "Your vsprintf() returns (int)." >&4
+  		val2="$undef"
+  	else
+--- 4636,4642 ----
+  	exit((unsigned long)vsprintf(buf,"%s",args) > 10L);
+  }
+  EOF
+! 	if $cc $ccflags vprintf.c $ldflags -o vprintf >/dev/null 2>&1 && ./vprintf; then
+  		echo "Your vsprintf() returns (int)." >&4
+  		val2="$undef"
+  	else
+***************
+*** 4691,4697 ****
+  		cryptlib=-lcrypt
+  	fi
+  	if $test -z "$cryptlib"; then
+! 		cryptlib=`./loc libcrypt.a "" $libpth`
+  	else
+  		cryptlib=-lcrypt
+  	fi
+--- 4706,4712 ----
+  		cryptlib=-lcrypt
+  	fi
+  	if $test -z "$cryptlib"; then
+! 		cryptlib=`./loc libcrypt$lib_ext "" $libpth`
+  	else
+  		cryptlib=-lcrypt
+  	fi
+***************
+*** 5198,5204 ****
+  }
+  EOM
+  	if $cc $ccflags $cccdlflags -c dyna.c > /dev/null 2>&1 && 
+! 		$ld $lddlflags -o dyna.$dlext dyna.o > /dev/null 2>&1 && 
+  		$cc $ccflags $ldflags $cccdlflags $ccdlflags fred.c -o fred $libs > /dev/null 2>&1; then
+  		xxx=`./fred`
+  		case $xxx in
+--- 5213,5219 ----
+  }
+  EOM
+  	if $cc $ccflags $cccdlflags -c dyna.c > /dev/null 2>&1 && 
+! 		$ld $lddlflags -o dyna.$dlext dyna$obj_ext > /dev/null 2>&1 && 
+  		$cc $ccflags $ldflags $cccdlflags $ccdlflags fred.c -o fred $libs > /dev/null 2>&1; then
+  		xxx=`./fred`
+  		case $xxx in
+***************
+*** 5355,5361 ****
+  EOCP
+  : check sys/file.h first to get FREAD on Sun
+  if $test `./findhdr sys/file.h` && \
+! 		$cc $cppflags "-DI_SYS_FILE" open3.c -o open3 >/dev/null 2>&1 ; then
+  	h_sysfile=true;
+  	echo "<sys/file.h> defines the O_* constants..." >&4
+  	if ./open3; then
+--- 5370,5376 ----
+  EOCP
+  : check sys/file.h first to get FREAD on Sun
+  if $test `./findhdr sys/file.h` && \
+! 		$cc $cppflags $ldflags "-DI_SYS_FILE" open3.c -o open3 >/dev/null 2>&1 ; then
+  	h_sysfile=true;
+  	echo "<sys/file.h> defines the O_* constants..." >&4
+  	if ./open3; then
+***************
+*** 5366,5372 ****
+  		val="$undef"
+  	fi
+  elif $test `./findhdr fcntl.h` && \
+! 		$cc "-DI_FCNTL" open3.c -o open3 >/dev/null 2>&1 ; then
+  	h_fcntl=true;
+  	echo "<fcntl.h> defines the O_* constants..." >&4
+  	if ./open3; then
+--- 5381,5387 ----
+  		val="$undef"
+  	fi
+  elif $test `./findhdr fcntl.h` && \
+! 		$cc "-DI_FCNTL" $ldflags open3.c -o open3 >/dev/null 2>&1 ; then
+  	h_fcntl=true;
+  	echo "<fcntl.h> defines the O_* constants..." >&4
+  	if ./open3; then
+***************
+*** 5848,5854 ****
+  y*|true)
+  	usemymalloc='y'
+  	mallocsrc='malloc.c'
+! 	mallocobj='malloc.o'
+  	d_mymalloc="$define"
+  	case "$libs" in
+  	*-lmalloc*)
+--- 5863,5869 ----
+  y*|true)
+  	usemymalloc='y'
+  	mallocsrc='malloc.c'
+! 	mallocobj="malloc$obj_ext"
+  	d_mymalloc="$define"
+  	case "$libs" in
+  	*-lmalloc*)
+***************
+*** 6283,6292 ****
+  		: we will have to assume that it supports the 4.2 BSD interface
+  		d_oldsock="$undef"
+  	else
+! 		echo "You don't have Berkeley networking in libc.a..." >&4
+! 		if test -f /usr/lib/libnet.a; then
+! 			( (nm $nm_opt /usr/lib/libnet.a | eval $nm_extract) ||  \
+! 			ar t /usr/lib/libnet.a) 2>/dev/null >> libc.list
+  			if $contains socket libc.list >/dev/null 2>&1; then
+  			echo "...but the Wollongong group seems to have hacked it in." >&4
+  				socketlib="-lnet"
+--- 6298,6307 ----
+  		: we will have to assume that it supports the 4.2 BSD interface
+  		d_oldsock="$undef"
+  	else
+! 		echo "You don't have Berkeley networking in libc$lib_ext..." >&4
+! 		if test -f /usr/lib/libnet$lib_ext; then
+! 			( (nm $nm_opt /usr/lib/libnet$lib_ext | eval $nm_extract) ||  \
+! 			$ar t /usr/lib/libnet$lib_ext) 2>/dev/null >> libc.list
+  			if $contains socket libc.list >/dev/null 2>&1; then
+  			echo "...but the Wollongong group seems to have hacked it in." >&4
+  				socketlib="-lnet"
+***************
+*** 6299,6305 ****
+  					d_oldsock="$define"
+  				fi
+  			else
+! 				echo "or even in libnet.a, which is peculiar." >&4
+  				d_socket="$undef"
+  				d_oldsock="$undef"
+  			fi
+--- 6314,6320 ----
+  					d_oldsock="$define"
+  				fi
+  			else
+! 				echo "or even in libnet$lib_ext, which is peculiar." >&4
+  				d_socket="$undef"
+  				d_oldsock="$undef"
+  			fi
+***************
+*** 7055,7061 ****
+  	printf("%d\n", (char *)&try.bar - (char *)&try.foo);
+  }
+  EOCP
+! 	if $cc $ccflags try.c -o try >/dev/null 2>&1; then
+  		dflt=`./try`
+  	else
+  		dflt='8'
+--- 7070,7076 ----
+  	printf("%d\n", (char *)&try.bar - (char *)&try.foo);
+  }
+  EOCP
+! 	if $cc $ccflags $ldflags try.c -o try >/dev/null 2>&1; then
+  		dflt=`./try`
+  	else
+  		dflt='8'
+***************
+*** 7080,7086 ****
+  '') obj_ext='.o';;
+  esac
+  case "$path_sep" in
+! '') path_sep=':';;
+  esac
+  : Which makefile gets called first.  This is used by make depend.
+  case "$firstmakefile" in
+--- 7095,7101 ----
+  '') obj_ext='.o';;
+  esac
+  case "$path_sep" in
+! '') path_sep="$p_";;
+  esac
+  : Which makefile gets called first.  This is used by make depend.
+  case "$firstmakefile" in
+***************
+*** 7120,7126 ****
+  }
+  EOCP
+  	xxx_prompt=y
+! 	if $cc $ccflags try.c -o try >/dev/null 2>&1 && ./try > /dev/null; then
+  		dflt=`./try`
+  		case "$dflt" in
+  		[1-4][1-4][1-4][1-4]|12345678|87654321)
+--- 7135,7141 ----
+  }
+  EOCP
+  	xxx_prompt=y
+! 	if $cc $ccflags $ldflags try.c -o try >/dev/null 2>&1 && ./try > /dev/null; then
+  		dflt=`./try`
+  		case "$dflt" in
+  		[1-4][1-4][1-4][1-4]|12345678|87654321)
+***************
+*** 7470,7476 ****
+  	printf("%d\n",i);
+  }
+  EOCP
+! 	if $cc try.c -o try >/dev/null 2>&1 ; then
+  		dflt=`try`
+  	else
+  		dflt='?'
+--- 7485,7491 ----
+  	printf("%d\n",i);
+  }
+  EOCP
+! 	if $cc $ldflags try.c -o try >/dev/null 2>&1 ; then
+  		dflt=`try`
+  	else
+  		dflt='?'
+***************
+*** 7497,7514 ****
+  $cc $ccflags -c bar1.c >/dev/null 2>&1
+  $cc $ccflags -c bar2.c >/dev/null 2>&1
+  $cc $ccflags -c foo.c >/dev/null 2>&1
+! ar rc bar.a bar2.o bar1.o >/dev/null 2>&1
+! if $cc $ccflags $ldflags -o foobar foo.o bar.a $libs > /dev/null 2>&1 &&
+  	./foobar >/dev/null 2>&1; then
+! 	echo "ar appears to generate random libraries itself."
+  	orderlib=false
+  	ranlib=":"
+! elif ar ts bar.a >/dev/null 2>&1 &&
+! 	$cc $ccflags $ldflags -o foobar foo.o bar.a $libs > /dev/null 2>&1 &&
+  	./foobar >/dev/null 2>&1; then
+  		echo "a table of contents needs to be added with 'ar ts'."
+  		orderlib=false
+! 		ranlib="ar ts"
+  else
+  	case "$ranlib" in
+  	:) ranlib='';;
+--- 7512,7529 ----
+  $cc $ccflags -c bar1.c >/dev/null 2>&1
+  $cc $ccflags -c bar2.c >/dev/null 2>&1
+  $cc $ccflags -c foo.c >/dev/null 2>&1
+! $ar rc bar$lib_ext bar2$obj_ext bar1$obj_ext >/dev/null 2>&1
+! if $cc $ccflags $ldflags -o foobar foo$obj_ext bar$lib_ext $libs > /dev/null 2>&1 &&
+  	./foobar >/dev/null 2>&1; then
+! 	echo "$ar appears to generate random libraries itself."
+  	orderlib=false
+  	ranlib=":"
+! elif $ar ts bar$lib_ext >/dev/null 2>&1 &&
+! 	$cc $ccflags $ldflags -o foobar foo$obj_ext bar$lib_ext $libs > /dev/null 2>&1 &&
+  	./foobar >/dev/null 2>&1; then
+  		echo "a table of contents needs to be added with 'ar ts'."
+  		orderlib=false
+! 		ranlib="$ar ts"
+  else
+  	case "$ranlib" in
+  	:) ranlib='';;
+***************
+*** 7580,7586 ****
+  	'') $echo $n ".$c"
+  		if $cc $ccflags \
+  		$i_time $i_systime $i_systimek $sysselect $s_timeval $s_timezone \
+! 		try.c -o try >/dev/null 2>&1 ; then
+  			set X $i_time $i_systime $i_systimek $sysselect $s_timeval
+  			shift
+  			flags="$*"
+--- 7595,7601 ----
+  	'') $echo $n ".$c"
+  		if $cc $ccflags \
+  		$i_time $i_systime $i_systimek $sysselect $s_timeval $s_timezone \
+! 		try.c -o try $ldflags >/dev/null 2>&1 ; then
+  			set X $i_time $i_systime $i_systimek $sysselect $s_timeval
+  			shift
+  			flags="$*"
+***************
+*** 7649,7655 ****
+  #endif
+  }
+  EOCP
+! if $cc $ccflags -DTRYBITS fd_set.c -o fd_set >fd_set.out 2>&1 ; then
+  	d_fds_bits="$define"
+  	d_fd_set="$define"
+  	echo "Well, your system knows about the normal fd_set typedef..." >&4
+--- 7664,7670 ----
+  #endif
+  }
+  EOCP
+! if $cc $ccflags $ldflags -DTRYBITS fd_set.c -o fd_set >fd_set.out 2>&1 ; then
+  	d_fds_bits="$define"
+  	d_fd_set="$define"
+  	echo "Well, your system knows about the normal fd_set typedef..." >&4
+***************
+*** 7666,7672 ****
+  	$cat <<'EOM'
+  Hmm, your compiler has some difficulty with fd_set.  Checking further...
+  EOM
+! 	if $cc $ccflags fd_set.c -o fd_set >fd_set.out 2>&1 ; then
+  		d_fds_bits="$undef"
+  		d_fd_set="$define"
+  		echo "Well, your system has some sort of fd_set available..." >&4
+--- 7681,7687 ----
+  	$cat <<'EOM'
+  Hmm, your compiler has some difficulty with fd_set.  Checking further...
+  EOM
+! 	if $cc $ccflags $ldflags fd_set.c -o fd_set >fd_set.out 2>&1 ; then
+  		d_fds_bits="$undef"
+  		d_fd_set="$define"
+  		echo "Well, your system has some sort of fd_set available..." >&4
+***************
+*** 8380,8386 ****
+  else
+  	echo "false"
+  fi
+! $rm -f varargs.o
+  EOP
+  chmod +x varargs
+  
+--- 8395,8401 ----
+  else
+  	echo "false"
+  fi
+! $rm -f varargs$obj_ext
+  EOP
+  chmod +x varargs
+  
+***************
+*** 8744,8750 ****
+  	echo " "
+  	echo "Stripping down executable paths..." >&4
+  	for file in $loclist $trylist; do
+! 		eval $file="\$file"
+  	done
+  	;;
+  esac
+--- 8759,8765 ----
+  	echo " "
+  	echo "Stripping down executable paths..." >&4
+  	for file in $loclist $trylist; do
+! 		if test X$file != Xln -o X$osname != Xos2; then eval $file="\$file"; fi
+  	done
+  	;;
+  esac

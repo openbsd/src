@@ -1,0 +1,1119 @@
+=head1 NAME
+
+perlop - Perl operators and precedence
+
+=head1 SYNOPSIS
+
+Perl operators have the following associativity and precedence,
+listed from highest precedence to lowest.  Note that all operators
+borrowed from C keep the same precedence relationship with each other,
+even where C's precedence is slightly screwy.  (This makes learning
+Perl easier for C folks.)  With very few exceptions, these all 
+operate on scalar values only, not array values.
+
+    left	terms and list operators (leftward)
+    left	->
+    nonassoc	++ --
+    right	**
+    right	! ~ \ and unary + and -
+    left	=~ !~ 
+    left	* / % x
+    left	+ - .
+    left	<< >>
+    nonassoc	named unary operators
+    nonassoc	< > <= >= lt gt le ge
+    nonassoc	== != <=> eq ne cmp
+    left	&
+    left	| ^
+    left	&&
+    left	||
+    nonassoc	..
+    right	?:
+    right	= += -= *= etc.
+    left	, =>
+    nonassoc	list operators (rightward)
+    right	not
+    left	and
+    left	or xor
+
+In the following sections, these operators are covered in precedence order.
+
+=head1 DESCRIPTION
+
+=head2 Terms and List Operators (Leftward)
+
+Any TERM is of highest precedence of Perl.  These includes variables,
+quote and quotelike operators, any expression in parentheses,
+and any function whose arguments are parenthesized.  Actually, there
+aren't really functions in this sense, just list operators and unary
+operators behaving as functions because you put parentheses around
+the arguments.  These are all documented in L<perlfunc>.
+
+If any list operator (print(), etc.) or any unary operator (chdir(), etc.)
+is followed by a left parenthesis as the next token, the operator and
+arguments within parentheses are taken to be of highest precedence,
+just like a normal function call.
+
+In the absence of parentheses, the precedence of list operators such as
+C<print>, C<sort>, or C<chmod> is either very high or very low depending on
+whether you look at the left side of operator or the right side of it.
+For example, in
+
+    @ary = (1, 3, sort 4, 2);
+    print @ary;		# prints 1324
+
+the commas on the right of the sort are evaluated before the sort, but
+the commas on the left are evaluated after.  In other words, list
+operators tend to gobble up all the arguments that follow them, and
+then act like a simple TERM with regard to the preceding expression.
+Note that you have to be careful with parens:
+
+    # These evaluate exit before doing the print:
+    print($foo, exit);	# Obviously not what you want.
+    print $foo, exit;	# Nor is this.
+
+    # These do the print before evaluating exit:
+    (print $foo), exit;	# This is what you want.
+    print($foo), exit;	# Or this.
+    print ($foo), exit;	# Or even this.
+
+Also note that
+
+    print ($foo & 255) + 1, "\n";
+
+probably doesn't do what you expect at first glance.  See 
+L<Named Unary Operators> for more discussion of this.
+
+Also parsed as terms are the C<do {}> and C<eval {}> constructs, as
+well as subroutine and method calls, and the anonymous 
+constructors C<[]> and C<{}>.
+
+See also L<Quote and Quotelike Operators> toward the end of this section,
+as well as L<"I/O Operators">.
+
+=head2 The Arrow Operator
+
+Just as in C and C++, "C<-E<gt>>" is an infix dereference operator.  If the
+right side is either a C<[...]> or C<{...}> subscript, then the left side
+must be either a hard or symbolic reference to an array or hash (or
+a location capable of holding a hard reference, if it's an lvalue (assignable)).
+See L<perlref>.
+
+Otherwise, the right side is a method name or a simple scalar variable
+containing the method name, and the left side must either be an object
+(a blessed reference) or a class name (that is, a package name).
+See L<perlobj>.
+
+=head2 Autoincrement and Autodecrement
+
+"++" and "--" work as in C.  That is, if placed before a variable, they
+increment or decrement the variable before returning the value, and if
+placed after, increment or decrement the variable after returning the value.
+
+The autoincrement operator has a little extra built-in magic to it.  If
+you increment a variable that is numeric, or that has ever been used in
+a numeric context, you get a normal increment.  If, however, the
+variable has only been used in string contexts since it was set, and
+has a value that is not null and matches the pattern
+C</^[a-zA-Z]*[0-9]*$/>, the increment is done as a string, preserving each
+character within its range, with carry:
+
+    print ++($foo = '99');	# prints '100'
+    print ++($foo = 'a0');	# prints 'a1'
+    print ++($foo = 'Az');	# prints 'Ba'
+    print ++($foo = 'zz');	# prints 'aaa'
+
+The autodecrement operator is not magical.
+
+=head2 Exponentiation
+
+Binary "**" is the exponentiation operator.  Note that it binds even more
+tightly than unary minus, so -2**4 is -(2**4), not (-2)**4. (This is
+implemented using C's pow(3) function, which actually works on doubles
+internally.)
+
+=head2 Symbolic Unary Operators
+
+Unary "!" performs logical negation, i.e. "not".  See also C<not> for a lower
+precedence version of this.
+
+Unary "-" performs arithmetic negation if the operand is numeric.  If
+the operand is an identifier, a string consisting of a minus sign
+concatenated with the identifier is returned.  Otherwise, if the string
+starts with a plus or minus, a string starting with the opposite sign
+is returned.  One effect of these rules is that C<-bareword> is equivalent
+to C<"-bareword">.
+
+Unary "~" performs bitwise negation, i.e. 1's complement.
+
+Unary "+" has no effect whatsoever, even on strings.  It is useful
+syntactically for separating a function name from a parenthesized expression
+that would otherwise be interpreted as the complete list of function
+arguments.  (See examples above under L<List Operators>.)
+
+Unary "\" creates a reference to whatever follows it.  See L<perlref>.
+Do not confuse this behavior with the behavior of backslash within a
+string, although both forms do convey the notion of protecting the next
+thing from interpretation.
+
+=head2 Binding Operators
+
+Binary "=~" binds a scalar expression to a pattern match.  Certain operations
+search or modify the string $_ by default.  This operator makes that kind
+of operation work on some other string.  The right argument is a search
+pattern, substitution, or translation.  The left argument is what is
+supposed to be searched, substituted, or translated instead of the default
+$_.  The return value indicates the success of the operation.  (If the
+right argument is an expression rather than a search pattern,
+substitution, or translation, it is interpreted as a search pattern at run
+time.  This is less efficient than an explicit search, since the pattern
+must be compiled every time the expression is evaluated--unless you've
+used C</o>.)
+
+Binary "!~" is just like "=~" except the return value is negated in
+the logical sense.
+
+=head2 Multiplicative Operators
+
+Binary "*" multiplies two numbers.
+
+Binary "/" divides two numbers.
+
+Binary "%" computes the modulus of the two numbers.
+
+Binary "x" is the repetition operator.  In a scalar context, it
+returns a string consisting of the left operand repeated the number of
+times specified by the right operand.  In a list context, if the left
+operand is a list in parens, it repeats the list.
+
+    print '-' x 80;		# print row of dashes
+
+    print "\t" x ($tab/8), ' ' x ($tab%8);	# tab over
+
+    @ones = (1) x 80;		# a list of 80 1's
+    @ones = (5) x @ones;	# set all elements to 5
+
+
+=head2 Additive Operators
+
+Binary "+" returns the sum of two numbers.
+
+Binary "-" returns the difference of two numbers.
+
+Binary "." concatenates two strings.
+
+=head2 Shift Operators
+
+Binary "<<" returns the value of its left argument shifted left by the
+number of bits specified by the right argument.  Arguments should be 
+integers.
+
+Binary ">>" returns the value of its left argument shifted right by the
+number of bits specified by the right argument.  Arguments should be 
+integers.
+
+=head2 Named Unary Operators
+
+The various named unary operators are treated as functions with one
+argument, with optional parentheses.  These include the filetest
+operators, like C<-f>, C<-M>, etc.  See L<perlfunc>.
+
+If any list operator (print(), etc.) or any unary operator (chdir(), etc.)
+is followed by a left parenthesis as the next token, the operator and
+arguments within parentheses are taken to be of highest precedence,
+just like a normal function call.  Examples:
+
+    chdir $foo    || die;	# (chdir $foo) || die
+    chdir($foo)   || die;	# (chdir $foo) || die
+    chdir ($foo)  || die;	# (chdir $foo) || die
+    chdir +($foo) || die;	# (chdir $foo) || die
+
+but, because * is higher precedence than ||:
+
+    chdir $foo * 20;	# chdir ($foo * 20)
+    chdir($foo) * 20;	# (chdir $foo) * 20
+    chdir ($foo) * 20;	# (chdir $foo) * 20
+    chdir +($foo) * 20;	# chdir ($foo * 20)
+
+    rand 10 * 20;	# rand (10 * 20)
+    rand(10) * 20;	# (rand 10) * 20
+    rand (10) * 20;	# (rand 10) * 20
+    rand +(10) * 20;	# rand (10 * 20)
+
+See also L<"List Operators">.
+
+=head2 Relational Operators
+
+Binary "<" returns true if the left argument is numerically less than
+the right argument.
+
+Binary ">" returns true if the left argument is numerically greater
+than the right argument.
+
+Binary "<=" returns true if the left argument is numerically less than
+or equal to the right argument.
+
+Binary ">=" returns true if the left argument is numerically greater
+than or equal to the right argument.
+
+Binary "lt" returns true if the left argument is stringwise less than
+the right argument.
+
+Binary "gt" returns true if the left argument is stringwise greater
+than the right argument.
+
+Binary "le" returns true if the left argument is stringwise less than
+or equal to the right argument.
+
+Binary "ge" returns true if the left argument is stringwise greater
+than or equal to the right argument.
+
+=head2 Equality Operators
+
+Binary "==" returns true if the left argument is numerically equal to
+the right argument.
+
+Binary "!=" returns true if the left argument is numerically not equal
+to the right argument.
+
+Binary "<=>" returns -1, 0, or 1 depending on whether the left argument is numerically
+less than, equal to, or greater than the right argument.
+
+Binary "eq" returns true if the left argument is stringwise equal to
+the right argument.
+
+Binary "ne" returns true if the left argument is stringwise not equal
+to the right argument.
+
+Binary "cmp" returns -1, 0, or 1 depending on whether the left argument is stringwise
+less than, equal to, or greater than the right argument.
+
+=head2 Bitwise And
+
+Binary "&" returns its operators ANDed together bit by bit.
+
+=head2 Bitwise Or and Exclusive Or
+
+Binary "|" returns its operators ORed together bit by bit.
+
+Binary "^" returns its operators XORed together bit by bit.
+
+=head2 C-style Logical And
+
+Binary "&&" performs a short-circuit logical AND operation.  That is,
+if the left operand is false, the right operand is not even evaluated.
+Scalar or list context propagates down to the right operand if it
+is evaluated.
+
+=head2 C-style Logical Or
+
+Binary "||" performs a short-circuit logical OR operation.  That is,
+if the left operand is true, the right operand is not even evaluated.
+Scalar or list context propagates down to the right operand if it
+is evaluated.
+
+The C<||> and C<&&> operators differ from C's in that, rather than returning
+0 or 1, they return the last value evaluated.  Thus, a reasonably portable
+way to find out the home directory (assuming it's not "0") might be:
+
+    $home = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
+	(getpwuid($<))[7] || die "You're homeless!\n";
+
+As more readable alternatives to C<&&> and C<||>, Perl provides "and" and
+"or" operators (see below).  The short-circuit behavior is identical.  The
+precedence of "and" and "or" is much lower, however, so that you can
+safely use them after a list operator without the need for
+parentheses:
+
+    unlink "alpha", "beta", "gamma"
+	    or gripe(), next LINE;
+
+With the C-style operators that would have been written like this:
+
+    unlink("alpha", "beta", "gamma")
+	    || (gripe(), next LINE);
+
+=head2 Range Operator
+
+Binary ".." is the range operator, which is really two different
+operators depending on the context.  In a list context, it returns an
+array of values counting (by ones) from the left value to the right
+value.  This is useful for writing C<for (1..10)> loops and for doing
+slice operations on arrays.  Be aware that under the current implementation,
+a temporary array is created, so you'll burn a lot of memory if you 
+write something like this:
+
+    for (1 .. 1_000_000) {
+	# code
+    } 
+
+In a scalar context, ".." returns a boolean value.  The operator is
+bistable, like a flip-flop, and emulates the line-range (comma) operator
+of B<sed>, B<awk>, and various editors.  Each ".." operator maintains its
+own boolean state.  It is false as long as its left operand is false.
+Once the left operand is true, the range operator stays true until the
+right operand is true, I<AFTER> which the range operator becomes false
+again.  (It doesn't become false till the next time the range operator is
+evaluated.  It can test the right operand and become false on the same
+evaluation it became true (as in B<awk>), but it still returns true once.
+If you don't want it to test the right operand till the next evaluation
+(as in B<sed>), use three dots ("...") instead of two.)  The right
+operand is not evaluated while the operator is in the "false" state, and
+the left operand is not evaluated while the operator is in the "true"
+state.  The precedence is a little lower than || and &&.  The value
+returned is either the null string for false, or a sequence number
+(beginning with 1) for true.  The sequence number is reset for each range
+encountered.  The final sequence number in a range has the string "E0"
+appended to it, which doesn't affect its numeric value, but gives you
+something to search for if you want to exclude the endpoint.  You can
+exclude the beginning point by waiting for the sequence number to be
+greater than 1.  If either operand of scalar ".." is a numeric literal,
+that operand is implicitly compared to the C<$.> variable, the current
+line number.  Examples:
+
+As a scalar operator:
+
+    if (101 .. 200) { print; }	# print 2nd hundred lines
+    next line if (1 .. /^$/);	# skip header lines
+    s/^/> / if (/^$/ .. eof());	# quote body
+
+As a list operator:
+
+    for (101 .. 200) { print; }	# print $_ 100 times
+    @foo = @foo[$[ .. $#foo];	# an expensive no-op
+    @foo = @foo[$#foo-4 .. $#foo];	# slice last 5 items
+
+The range operator (in a list context) makes use of the magical
+autoincrement algorithm if the operands are strings.  You
+can say
+
+    @alphabet = ('A' .. 'Z');
+
+to get all the letters of the alphabet, or
+
+    $hexdigit = (0 .. 9, 'a' .. 'f')[$num & 15];
+
+to get a hexadecimal digit, or
+
+    @z2 = ('01' .. '31');  print $z2[$mday];
+
+to get dates with leading zeros.  If the final value specified is not
+in the sequence that the magical increment would produce, the sequence
+goes until the next value would be longer than the final value
+specified.
+
+=head2 Conditional Operator
+
+Ternary "?:" is the conditional operator, just as in C.  It works much
+like an if-then-else.  If the argument before the ? is true, the
+argument before the : is returned, otherwise the argument after the :
+is returned.  For example:
+
+    printf "I have %d dog%s.\n", $n, 
+	    ($n == 1) ? '' : "s";
+
+Scalar or list context propagates downward into the 2nd
+or 3rd argument, whichever is selected.  
+
+    $a = $ok ? $b : $c;  # get a scalar
+    @a = $ok ? @b : @c;  # get an array
+    $a = $ok ? @b : @c;  # oops, that's just a count!
+
+The operator may be assigned to if both the 2nd and 3rd arguments are
+legal lvalues (meaning that you can assign to them):
+
+    ($a_or_b ? $a : $b) = $c;
+
+This is not necessarily guaranteed to contribute to the readability of your program.
+
+=head2 Assignment Operators
+
+"=" is the ordinary assignment operator.
+
+Assignment operators work as in C.  That is,
+
+    $a += 2;
+
+is equivalent to
+
+    $a = $a + 2;
+
+although without duplicating any side effects that dereferencing the lvalue
+might trigger, such as from tie().  Other assignment operators work similarly.  
+The following are recognized: 
+
+    **=    +=    *=    &=    <<=    &&=
+           -=    /=    |=    >>=    ||=
+           .=    %=    ^=
+	         x=
+
+Note that while these are grouped by family, they all have the precedence
+of assignment.
+
+Unlike in C, the assignment operator produces a valid lvalue.  Modifying
+an assignment is equivalent to doing the assignment and then modifying
+the variable that was assigned to.  This is useful for modifying
+a copy of something, like this:
+
+    ($tmp = $global) =~ tr [A-Z] [a-z];
+
+Likewise,
+
+    ($a += 2) *= 3;
+
+is equivalent to
+
+    $a += 2;
+    $a *= 3;
+
+=head2 Comma Operator
+
+Binary "," is the comma operator.  In a scalar context it evaluates
+its left argument, throws that value away, then evaluates its right
+argument and returns that value.  This is just like C's comma operator.
+
+In a list context, it's just the list argument separator, and inserts
+both its arguments into the list.
+
+The => digraph is mostly just a synonym for the comma operator.  It's useful for
+documenting arguments that come in pairs.  As of release 5.001, it also forces
+any word to the left of it to be interpreted as a string.
+
+=head2 List Operators (Rightward)
+
+On the right side of a list operator, it has very low precedence,
+such that it controls all comma-separated expressions found there.
+The only operators with lower precedence are the logical operators
+"and", "or", and "not", which may be used to evaluate calls to list
+operators without the need for extra parentheses:
+
+    open HANDLE, "filename"
+	or die "Can't open: $!\n";
+
+See also discussion of list operators in L<List Operators (Leftward)>.
+
+=head2 Logical Not
+
+Unary "not" returns the logical negation of the expression to its right.
+It's the equivalent of "!" except for the very low precedence.
+
+=head2 Logical And
+
+Binary "and" returns the logical conjunction of the two surrounding
+expressions.  It's equivalent to && except for the very low
+precedence.  This means that it short-circuits: i.e. the right
+expression is evaluated only if the left expression is true.
+
+=head2 Logical or and Exclusive Or
+
+Binary "or" returns the logical disjunction of the two surrounding
+expressions.  It's equivalent to || except for the very low
+precedence.  This means that it short-circuits: i.e. the right
+expression is evaluated only if the left expression is false.
+
+Binary "xor" returns the exclusive-OR of the two surrounding expressions.
+It cannot short circuit, of course.
+
+=head2 C Operators Missing From Perl
+
+Here is what C has that Perl doesn't:
+
+=over 8
+
+=item unary &
+
+Address-of operator.  (But see the "\" operator for taking a reference.)
+
+=item unary *
+
+Dereference-address operator. (Perl's prefix dereferencing 
+operators are typed: $, @, %, and &.)
+
+=item (TYPE)
+
+Type casting operator.  
+
+=back
+
+=head2 Quote and Quotelike Operators
+
+While we usually think of quotes as literal values, in Perl they
+function as operators, providing various kinds of interpolating and
+pattern matching capabilities.  Perl provides customary quote characters
+for these behaviors, but also provides a way for you to choose your
+quote character for any of them.  In the following table, a C<{}> represents
+any pair of delimiters you choose.  Non-bracketing delimiters use
+the same character fore and aft, but the 4 sorts of brackets 
+(round, angle, square, curly) will all nest.
+
+    Customary  Generic     Meaning    Interpolates
+	''	 q{}	   Literal	   no
+	""	qq{}	   Literal	   yes
+	``	qx{}	   Command	   yes
+		qw{}	  Word list	   no
+	//	 m{}	Pattern match	   yes
+		 s{}{}	 Substitution	   yes
+		tr{}{}	 Translation	   no
+
+For constructs that do interpolation, variables beginning with "C<$>" or "C<@>"
+are interpolated, as are the following sequences:
+
+    \t		tab
+    \n		newline
+    \r		return
+    \f		form feed
+    \b		backspace
+    \a		alarm (bell)
+    \e		escape
+    \033	octal char
+    \x1b	hex char
+    \c[		control char
+    \l		lowercase next char
+    \u		uppercase next char
+    \L		lowercase till \E
+    \U		uppercase till \E
+    \E		end case modification
+    \Q		quote regexp metacharacters till \E
+
+Patterns are subject to an additional level of interpretation as a
+regular expression.  This is done as a second pass, after variables are
+interpolated, so that regular expressions may be incorporated into the
+pattern from the variables.  If this is not what you want, use C<\Q> to
+interpolate a variable literally.
+
+Apart from the above, there are no multiple levels of interpolation.  In
+particular, contrary to the expectations of shell programmers, backquotes
+do I<NOT> interpolate within double quotes, nor do single quotes impede
+evaluation of variables when used within double quotes.
+
+=head2 Regexp Quotelike Operators
+
+Here are the quotelike operators that apply to pattern
+matching and related activities.
+
+=over 8
+
+=item ?PATTERN?
+
+This is just like the C</pattern/> search, except that it matches only
+once between calls to the reset() operator.  This is a useful
+optimization when you only want to see the first occurrence of
+something in each file of a set of files, for instance.  Only C<??>
+patterns local to the current package are reset.
+
+This usage is vaguely deprecated, and may be removed in some future
+version of Perl.
+
+=item m/PATTERN/gimosx
+
+=item /PATTERN/gimosx
+
+Searches a string for a pattern match, and in a scalar context returns
+true (1) or false ('').  If no string is specified via the C<=~> or
+C<!~> operator, the $_ string is searched.  (The string specified with
+C<=~> need not be an lvalue--it may be the result of an expression
+evaluation, but remember the C<=~> binds rather tightly.)  See also
+L<perlre>.
+
+Options are:
+
+    g	Match globally, i.e. find all occurrences.
+    i	Do case-insensitive pattern matching.
+    m	Treat string as multiple lines.
+    o	Only compile pattern once.
+    s	Treat string as single line.
+    x	Use extended regular expressions.
+
+If "/" is the delimiter then the initial C<m> is optional.  With the C<m>
+you can use any pair of non-alphanumeric, non-whitespace characters as
+delimiters.  This is particularly useful for matching Unix path names
+that contain "/", to avoid LTS (leaning toothpick syndrome).
+
+PATTERN may contain variables, which will be interpolated (and the
+pattern recompiled) every time the pattern search is evaluated.  (Note
+that C<$)> and C<$|> might not be interpolated because they look like
+end-of-string tests.)  If you want such a pattern to be compiled only
+once, add a C</o> after the trailing delimiter.  This avoids expensive
+run-time recompilations, and is useful when the value you are
+interpolating won't change over the life of the script.  However, mentioning
+C</o> constitutes a promise that you won't change the variables in the pattern.
+If you change them, Perl won't even notice.
+
+If the PATTERN evaluates to a null string, the last
+successfully executed regular expression is used instead.
+
+If used in a context that requires a list value, a pattern match returns a
+list consisting of the subexpressions matched by the parentheses in the
+pattern, i.e. ($1, $2, $3...).  (Note that here $1 etc. are also set, and
+that this differs from Perl 4's behavior.)  If the match fails, a null
+array is returned.  If the match succeeds, but there were no parentheses,
+a list value of (1) is returned.
+
+Examples:
+
+    open(TTY, '/dev/tty');
+    <TTY> =~ /^y/i && foo();	# do foo if desired
+
+    if (/Version: *([0-9.]*)/) { $version = $1; }
+
+    next if m#^/usr/spool/uucp#;
+
+    # poor man's grep
+    $arg = shift;
+    while (<>) {
+	print if /$arg/o;	# compile only once
+    }
+
+    if (($F1, $F2, $Etc) = ($foo =~ /^(\S+)\s+(\S+)\s*(.*)/))
+
+This last example splits $foo into the first two words and the
+remainder of the line, and assigns those three fields to $F1, $F2 and
+$Etc.  The conditional is true if any variables were assigned, i.e. if
+the pattern matched.
+
+The C</g> modifier specifies global pattern matching--that is, matching
+as many times as possible within the string.  How it behaves depends on
+the context.  In a list context, it returns a list of all the
+substrings matched by all the parentheses in the regular expression.
+If there are no parentheses, it returns a list of all the matched
+strings, as if there were parentheses around the whole pattern.
+
+In a scalar context, C<m//g> iterates through the string, returning TRUE
+each time it matches, and FALSE when it eventually runs out of
+matches.  (In other words, it remembers where it left off last time and
+restarts the search at that point.  You can actually find the current
+match position of a string using the pos() function--see L<perlfunc>.)
+If you modify the string in any way, the match position is reset to the
+beginning.  Examples:
+
+    # list context
+    ($one,$five,$fifteen) = (`uptime` =~ /(\d+\.\d+)/g);
+
+    # scalar context
+    $/ = ""; $* = 1;  # $* deprecated in Perl 5
+    while ($paragraph = <>) {
+	while ($paragraph =~ /[a-z]['")]*[.!?]+['")]*\s/g) {
+	    $sentences++;
+	}
+    }
+    print "$sentences\n";
+
+=item q/STRING/
+
+=item C<'STRING'>
+
+A single-quoted, literal string.  Backslashes are ignored, unless
+followed by the delimiter or another backslash, in which case the
+delimiter or backslash is interpolated.
+
+    $foo = q!I said, "You said, 'She said it.'"!;
+    $bar = q('This is it.');
+
+=item qq/STRING/
+
+=item "STRING"
+
+A double-quoted, interpolated string.
+
+    $_ .= qq
+     (*** The previous line contains the naughty word "$1".\n)
+		if /(tcl|rexx|python)/;      # :-)
+
+=item qx/STRING/
+
+=item `STRING`
+
+A string which is interpolated and then executed as a system command.
+The collected standard output of the command is returned.  In scalar
+context, it comes back as a single (potentially multi-line) string.
+In list context, returns a list of lines (however you've defined lines
+with $/ or $INPUT_RECORD_SEPARATOR).
+
+    $today = qx{ date };
+
+See L<I/O Operators> for more discussion.
+
+=item qw/STRING/
+
+Returns a list of the words extracted out of STRING, using embedded
+whitespace as the word delimiters.  It is exactly equivalent to
+
+    split(' ', q/STRING/);
+
+Some frequently seen examples:
+
+    use POSIX qw( setlocale localeconv )
+    @EXPORT = qw( foo bar baz );
+
+=item s/PATTERN/REPLACEMENT/egimosx
+
+Searches a string for a pattern, and if found, replaces that pattern
+with the replacement text and returns the number of substitutions
+made.  Otherwise it returns false (0).
+
+If no string is specified via the C<=~> or C<!~> operator, the C<$_>
+variable is searched and modified.  (The string specified with C<=~> must
+be a scalar variable, an array element, a hash element, or an assignment
+to one of those, i.e. an lvalue.)
+
+If the delimiter chosen is single quote, no variable interpolation is
+done on either the PATTERN or the REPLACEMENT.  Otherwise, if the
+PATTERN contains a $ that looks like a variable rather than an
+end-of-string test, the variable will be interpolated into the pattern
+at run-time.  If you only want the pattern compiled once the first time
+the variable is interpolated, use the C</o> option.  If the pattern
+evaluates to a null string, the last successfully executed regular
+expression is used instead.  See L<perlre> for further explanation on these.
+
+Options are:
+
+    e	Evaluate the right side as an expression.
+    g	Replace globally, i.e. all occurrences.
+    i	Do case-insensitive pattern matching.
+    m	Treat string as multiple lines.
+    o	Only compile pattern once.
+    s	Treat string as single line.
+    x	Use extended regular expressions.
+
+Any non-alphanumeric, non-whitespace delimiter may replace the
+slashes.  If single quotes are used, no interpretation is done on the
+replacement string (the C</e> modifier overrides this, however).  If
+backquotes are used, the replacement string is a command to execute
+whose output will be used as the actual replacement text.  If the
+PATTERN is delimited by bracketing quotes, the REPLACEMENT has its own
+pair of quotes, which may or may not be bracketing quotes, e.g.
+C<s(foo)(bar)> or C<sE<lt>fooE<gt>/bar/>.  A C</e> will cause the
+replacement portion to be interpreter as a full-fledged Perl expression
+and eval()ed right then and there.  It is, however, syntax checked at
+compile-time.
+
+Examples:
+
+    s/\bgreen\b/mauve/g;		# don't change wintergreen
+
+    $path =~ s|/usr/bin|/usr/local/bin|;
+
+    s/Login: $foo/Login: $bar/; # run-time pattern
+
+    ($foo = $bar) =~ s/this/that/;
+
+    $count = ($paragraph =~ s/Mister\b/Mr./g);
+
+    $_ = 'abc123xyz';
+    s/\d+/$&*2/e;		# yields 'abc246xyz'
+    s/\d+/sprintf("%5d",$&)/e;	# yields 'abc  246xyz'
+    s/\w/$& x 2/eg;		# yields 'aabbcc  224466xxyyzz'
+
+    s/%(.)/$percent{$1}/g;	# change percent escapes; no /e
+    s/%(.)/$percent{$1} || $&/ge;	# expr now, so /e
+    s/^=(\w+)/&pod($1)/ge;	# use function call
+
+    # /e's can even nest;  this will expand
+    # simple embedded variables in $_
+    s/(\$\w+)/$1/eeg;
+
+    # Delete C comments.
+    $program =~ s {
+	/\*	# Match the opening delimiter.
+	.*?	# Match a minimal number of characters.
+	\*/	# Match the closing delimiter.
+    } []gsx;
+
+    s/^\s*(.*?)\s*$/$1/;	# trim white space
+
+    s/([^ ]*) *([^ ]*)/$2 $1/;	# reverse 1st two fields
+
+Note the use of $ instead of \ in the last example.  Unlike 
+B<sed>, we only use the \<I<digit>> form in the left hand side.
+Anywhere else it's $<I<digit>>.
+
+Occasionally, you can't just use a C</g> to get all the changes
+to occur.  Here are two common cases:
+
+    # put commas in the right places in an integer
+    1 while s/(.*\d)(\d\d\d)/$1,$2/g;      # perl4
+    1 while s/(\d)(\d\d\d)(?!\d)/$1,$2/g;  # perl5
+
+    # expand tabs to 8-column spacing
+    1 while s/\t+/' ' x (length($&)*8 - length($`)%8)/e;
+
+
+=item tr/SEARCHLIST/REPLACEMENTLIST/cds
+
+=item y/SEARCHLIST/REPLACEMENTLIST/cds
+
+Translates all occurrences of the characters found in the search list
+with the corresponding character in the replacement list.  It returns
+the number of characters replaced or deleted.  If no string is
+specified via the =~ or !~ operator, the $_ string is translated.  (The
+string specified with =~ must be a scalar variable, an array element,
+or an assignment to one of those, i.e. an lvalue.)  For B<sed> devotees,
+C<y> is provided as a synonym for C<tr>.  If the SEARCHLIST is
+delimited by bracketing quotes, the REPLACEMENTLIST has its own pair of
+quotes, which may or may not be bracketing quotes, e.g. C<tr[A-Z][a-z]>
+or C<tr(+-*/)/ABCD/>.
+
+Options:
+
+    c	Complement the SEARCHLIST.
+    d	Delete found but unreplaced characters.
+    s	Squash duplicate replaced characters.
+
+If the C</c> modifier is specified, the SEARCHLIST character set is
+complemented.  If the C</d> modifier is specified, any characters specified
+by SEARCHLIST not found in REPLACEMENTLIST are deleted.  (Note
+that this is slightly more flexible than the behavior of some B<tr>
+programs, which delete anything they find in the SEARCHLIST, period.)
+If the C</s> modifier is specified, sequences of characters that were
+translated to the same character are squashed down to a single instance of the
+character.
+
+If the C</d> modifier is used, the REPLACEMENTLIST is always interpreted
+exactly as specified.  Otherwise, if the REPLACEMENTLIST is shorter
+than the SEARCHLIST, the final character is replicated till it is long
+enough.  If the REPLACEMENTLIST is null, the SEARCHLIST is replicated.
+This latter is useful for counting characters in a class or for
+squashing character sequences in a class.
+
+Examples:
+
+    $ARGV[1] =~ tr/A-Z/a-z/;	# canonicalize to lower case
+
+    $cnt = tr/*/*/;		# count the stars in $_
+
+    $cnt = $sky =~ tr/*/*/;	# count the stars in $sky
+
+    $cnt = tr/0-9//;		# count the digits in $_
+
+    tr/a-zA-Z//s;		# bookkeeper -> bokeper
+
+    ($HOST = $host) =~ tr/a-z/A-Z/;
+
+    tr/a-zA-Z/ /cs;		# change non-alphas to single space
+
+    tr [\200-\377]
+       [\000-\177];		# delete 8th bit
+
+If multiple translations are given for a character, only the first one is used:
+
+    tr/AAA/XYZ/
+
+will translate any A to X.
+
+Note that because the translation table is built at compile time, neither
+the SEARCHLIST nor the REPLACEMENTLIST are subjected to double quote
+interpolation.  That means that if you want to use variables, you must use
+an eval():
+
+    eval "tr/$oldlist/$newlist/";
+    die $@ if $@;
+
+    eval "tr/$oldlist/$newlist/, 1" or die $@;
+
+=back
+
+=head2 I/O Operators
+
+There are several I/O operators you should know about.  
+A string is enclosed by backticks (grave accents) first undergoes
+variable substitution just like a double quoted string.  It is then
+interpreted as a command, and the output of that command is the value
+of the pseudo-literal, like in a shell.  In a scalar context, a single
+string consisting of all the output is returned.  In a list context,
+a list of values is returned, one for each line of output.  (You can
+set C<$/> to use a different line terminator.)  The command is executed
+each time the pseudo-literal is evaluated.  The status value of the
+command is returned in C<$?> (see L<perlvar> for the interpretation
+of C<$?>).  Unlike in B<csh>, no translation is done on the return
+data--newlines remain newlines.  Unlike in any of the shells, single
+quotes do not hide variable names in the command from interpretation.
+To pass a $ through to the shell you need to hide it with a backslash.
+The generalized form of backticks is C<qx//>.  (Because backticks
+always undergo shell expansion as well, see L<perlsec> for 
+security concerns.)
+
+Evaluating a filehandle in angle brackets yields the next line from
+that file (newline included, so it's never false until end of file, at
+which time an undefined value is returned).  Ordinarily you must assign
+that value to a variable, but there is one situation where an automatic
+assignment happens.  I<If and ONLY if> the input symbol is the only
+thing inside the conditional of a C<while> loop, the value is
+automatically assigned to the variable C<$_>.  The assigned value is
+then tested to see if it is defined.  (This may seem like an odd thing
+to you, but you'll use the construct in almost every Perl script you
+write.)  Anyway, the following lines are equivalent to each other:
+
+    while (defined($_ = <STDIN>)) { print; }
+    while (<STDIN>) { print; }
+    for (;<STDIN>;) { print; }
+    print while defined($_ = <STDIN>);
+    print while <STDIN>;
+
+The filehandles STDIN, STDOUT and STDERR are predefined.  (The
+filehandles C<stdin>, C<stdout> and C<stderr> will also work except in
+packages, where they would be interpreted as local identifiers rather
+than global.)  Additional filehandles may be created with the open()
+function.  See L<perlfunc/open()> for details on this.
+
+If a <FILEHANDLE> is used in a context that is looking for a list, a
+list consisting of all the input lines is returned, one line per list
+element.  It's easy to make a I<LARGE> data space this way, so use with
+care.
+
+The null filehandle E<lt>E<gt> is special and can be used to emulate the
+behavior of B<sed> and B<awk>.  Input from E<lt>E<gt> comes either from
+standard input, or from each file listed on the command line.  Here's
+how it works: the first time E<lt>E<gt> is evaluated, the @ARGV array is
+checked, and if it is null, C<$ARGV[0]> is set to "-", which when opened
+gives you standard input.  The @ARGV array is then processed as a list
+of filenames.  The loop
+
+    while (<>) {
+	...			# code for each line
+    }
+
+is equivalent to the following Perl-like pseudo code:
+
+    unshift(@ARGV, '-') if $#ARGV < $[;
+    while ($ARGV = shift) {
+	open(ARGV, $ARGV);
+	while (<ARGV>) {
+	    ...		# code for each line
+	}
+    }
+
+except that it isn't so cumbersome to say, and will actually work.  It
+really does shift array @ARGV and put the current filename into variable
+$ARGV.  It also uses filehandle I<ARGV> internally--E<lt>E<gt> is just a synonym
+for <ARGV>, which is magical.  (The pseudo code above doesn't work
+because it treats <ARGV> as non-magical.)
+
+You can modify @ARGV before the first E<lt>E<gt> as long as the array ends up
+containing the list of filenames you really want.  Line numbers (C<$.>)
+continue as if the input were one big happy file.  (But see example
+under eof() for how to reset line numbers on each file.)
+
+If you want to set @ARGV to your own list of files, go right ahead.  If
+you want to pass switches into your script, you can use one of the 
+Getopts modules or put a loop on the front like this:
+
+    while ($_ = $ARGV[0], /^-/) {
+	shift;
+        last if /^--$/;
+	if (/^-D(.*)/) { $debug = $1 }
+	if (/^-v/)     { $verbose++  }
+	...		# other switches
+    }
+    while (<>) {
+	...		# code for each line
+    }
+
+The E<lt>E<gt> symbol will return FALSE only once.  If you call it again after
+this it will assume you are processing another @ARGV list, and if you
+haven't set @ARGV, will input from STDIN.
+
+If the string inside the angle brackets is a reference to a scalar
+variable (e.g. <$foo>), then that variable contains the name of the
+filehandle to input from, or a reference to the same.  For example:
+
+    $fh = \*STDIN;
+    $line = <$fh>;
+
+If the string inside angle brackets is not a filehandle or a scalar
+variable containing a filehandle name or reference, then it is interpreted
+as a filename pattern to be globbed, and either a list of filenames or the
+next filename in the list is returned, depending on context.  One level of
+$ interpretation is done first, but you can't say C<E<lt>$fooE<gt>>
+because that's an indirect filehandle as explained in the previous
+paragraph.  In older version of Perl, programmers would insert curly
+brackets to force interpretation as a filename glob: C<E<lt>${foo}E<gt>>.
+These days, it's considered cleaner to call the internal function directly
+as C<glob($foo)>, which is probably the right way to have done it in the
+first place.)  Example:
+
+    while (<*.c>) {
+	chmod 0644, $_;
+    }
+
+is equivalent to
+
+    open(FOO, "echo *.c | tr -s ' \t\r\f' '\\012\\012\\012\\012'|");
+    while (<FOO>) {
+	chop;
+	chmod 0644, $_;
+    }
+
+In fact, it's currently implemented that way.  (Which means it will not
+work on filenames with spaces in them unless you have csh(1) on your
+machine.)  Of course, the shortest way to do the above is:
+
+    chmod 0644, <*.c>;
+
+Because globbing invokes a shell, it's often faster to call readdir() yourself
+and just do your own grep() on the filenames.  Furthermore, due to its current
+implementation of using a shell, the glob() routine may get "Arg list too 
+long" errors (unless you've installed tcsh(1L) as F</bin/csh>).
+
+A glob only evaluates its (embedded) argument when it is starting a new
+list.  All values must be read before it will start over.  In a list
+context this isn't important, because you automatically get them all
+anyway.  In a scalar context, however, the operator returns the next value
+each time it is called, or a FALSE value if you've just run out.  Again,
+FALSE is returned only once.  So if you're expecting a single value from
+a glob, it is much better to say
+
+    ($file) = <blurch*>;
+
+than
+
+    $file = <blurch*>;
+
+because the latter will alternate between returning a filename and
+returning FALSE.  
+
+It you're trying to do variable interpolation, it's definitely better
+to use the glob() function, because the older notation can cause people
+to become confused with the indirect filehandle notatin.
+
+    @files = glob("$dir/*.[ch]");
+    @files = glob($files[$i]);
+
+=head2 Constant Folding
+
+Like C, Perl does a certain amount of expression evaluation at
+compile time, whenever it determines that all of the arguments to an
+operator are static and have no side effects.  In particular, string
+concatenation happens at compile time between literals that don't do
+variable substitution.  Backslash interpretation also happens at
+compile time.  You can say
+
+    'Now is the time for all' . "\n" .
+	'good men to come to.'
+
+and this all reduces to one string internally.  Likewise, if 
+you say
+
+    foreach $file (@filenames) {
+	if (-s $file > 5 + 100 * 2**16) { ... }
+    } 
+
+the compiler will pre-compute the number that
+expression represents so that the interpreter
+won't have to.
+
+
+=head2 Integer arithmetic
+
+By default Perl assumes that it must do most of its arithmetic in
+floating point.  But by saying
+
+    use integer;
+
+you may tell the compiler that it's okay to use integer operations
+from here to the end of the enclosing BLOCK.  An inner BLOCK may
+countermand this by saying 
+
+    no integer;
+
+which lasts until the end of that BLOCK.
+

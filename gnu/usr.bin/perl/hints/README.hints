@@ -1,0 +1,61 @@
+These files are used by Configure to set things which Configure either
+can't or doesn't guess properly.  Many of these hints files are from
+perl4.  They may or may not work with perl5, but they are probably a
+good starting point.
+
+The following hints files have been tested with at least some version
+of perl5 and are probably reasonably close to being correct:
+
+aix.sh
+aux.sh
+bsdos.sh
+dec_osf.sh
+dgux.sh
+esix4.sh
+freebsd.sh
+hpux_9.sh
+irix_4.sh
+irix_5.sh
+irix_6.sh
+irix_6_2.sh
+isc.sh
+linux.sh
+machten_2.sh
+machten.sh
+ncr_tower.sh
+netbsd.sh
+next_3_2.sh
+sco_3.sh
+solaris_2.sh
+sunos_4_1.sh
+svr4.sh
+titanos.sh
+ultrix_4.sh
+unicos.sh
+utekv.sh
+
+The following hints files have not been tested with perl5:
+
+3b1.sh
+altos486.sh
+apollo.sh
+dnix.sh
+dynix.sh
+fps.sh
+genix.sh
+greenhills.sh
+i386.sh
+isc_2.sh
+mips.sh
+mpc.sh
+opus.sh
+sco_2_3_0.sh
+sco_2_3_1.sh
+sco_2_3_2.sh
+sco_2_3_3.sh
+sco_2_3_4.sh
+stellar.sh
+sunos_4_0.sh
+ti1500.sh
+unisysdynix.sh
+uts.sh

@@ -1,0 +1,147 @@
+=head1 NAME
+
+perlsec - Perl security
+
+=head1 DESCRIPTION
+
+Perl is designed to make it easy to write secure setuid and setgid
+scripts.  Unlike shells, which are based on multiple substitution
+passes on each line of the script, Perl uses a more conventional
+evaluation scheme with fewer hidden "gotchas".  Additionally, since the
+language has more built-in functionality, it has to rely less upon
+external (and possibly untrustworthy) programs to accomplish its
+purposes.
+
+Beyond the obvious problems that stem from giving special privileges to
+such flexible systems as scripts, on many operating systems, setuid
+scripts are inherently insecure right from the start.  This is because
+that between the time that the kernel opens up the file to see what to
+run, and when the now setuid interpreter it ran turns around and reopens
+the file so it can interpret it, things may have changed, especially if
+you have symbolic links on your system.
+
+Fortunately, sometimes this kernel "feature" can be disabled.
+Unfortunately, there are two ways to disable it.  The system can simply
+outlaw scripts with the setuid bit set, which doesn't help much.
+Alternately, it can simply ignore the setuid bit on scripts.  If the
+latter is true, Perl can emulate the setuid and setgid mechanism when it
+notices the otherwise useless setuid/gid bits on Perl scripts.  It does
+this via a special executable called B<suidperl> that is automatically
+invoked for you if it's needed.
+
+If, however, the kernel setuid script feature isn't disabled, Perl will
+complain loudly that your setuid script is insecure.  You'll need to
+either disable the kernel setuid script feature, or put a C wrapper around
+the script.  See the program B<wrapsuid> in the F<eg> directory of your
+Perl distribution for how to go about doing this.
+
+There are some systems on which setuid scripts are free of this inherent
+security bug.  For example, recent releases of Solaris are like this.  On
+such systems, when the kernel passes the name of the setuid script to open
+to the interpreter, rather than using a pathname subject to mettling, it
+instead passes /dev/fd/3.  This is a special file already opened on the
+script, so that there can be no race condition for evil scripts to
+exploit.  On these systems, Perl should be compiled with
+C<-DSETUID_SCRIPTS_ARE_SECURE_NOW>.  The B<Configure> program that builds
+Perl tries to figure this out for itself.
+
+When executing a setuid script, or when you have turned on taint checking
+explicitly using the B<-T> flag, Perl takes special precautions to
+prevent you from falling into any obvious traps.  (In some ways, a Perl
+script is more secure than the corresponding C program.)  Any command line
+argument, environment variable, or input is marked as "tainted", and may
+not be used, directly or indirectly, in any command that invokes a
+subshell, or in any command that modifies files, directories, or
+processes.  Any variable that is set within an expression that has
+previously referenced a tainted value also becomes tainted (even if it is
+logically impossible for the tainted value to influence the variable).
+For example:
+
+    $foo = shift;		# $foo is tainted
+    $bar = $foo,'bar';		# $bar is also tainted
+    $xxx = <>;			# Tainted
+    $path = $ENV{'PATH'};	# Tainted, but see below
+    $abc = 'abc';		# Not tainted
+
+    system "echo $foo";		# Insecure
+    system "/bin/echo", $foo;	# Secure (doesn't use sh)
+    system "echo $bar";		# Insecure
+    system "echo $abc";		# Insecure until PATH set
+
+    $ENV{'PATH'} = '/bin:/usr/bin';
+    $ENV{'IFS'} = '' if $ENV{'IFS'} ne '';
+
+    $path = $ENV{'PATH'};	# Not tainted
+    system "echo $abc";		# Is secure now!
+
+    open(FOO,"$foo");		# OK
+    open(FOO,">$foo"); 		# Not OK
+
+    open(FOO,"echo $foo|");	# Not OK, but...
+    open(FOO,"-|") || exec 'echo', $foo;	# OK
+
+    $zzz = `echo $foo`;		# Insecure, zzz tainted
+
+    unlink $abc,$foo;		# Insecure
+    umask $foo;			# Insecure
+
+    exec "echo $foo";		# Insecure
+    exec "echo", $foo;		# Secure (doesn't use sh)
+    exec "sh", '-c', $foo;	# Considered secure, alas
+
+The taintedness is associated with each scalar value, so some elements
+of an array can be tainted, and others not.
+
+If you try to do something insecure, you will get a fatal error saying
+something like "Insecure dependency" or "Insecure PATH".  Note that you
+can still write an insecure system call or exec, but only by explicitly
+doing something like the last example above.  You can also bypass the
+tainting mechanism by referencing subpatterns--Perl presumes that if
+you reference a substring using $1, $2, etc, you knew what you were
+doing when you wrote the pattern:
+
+    $ARGV[0] =~ /^-P(\w+)$/;
+    $printer = $1;		# Not tainted
+
+This is fairly secure since C<\w+> doesn't match shell metacharacters.
+Use of C</.+/> would have been insecure, but Perl doesn't check for that,
+so you must be careful with your patterns.  This is the I<ONLY> mechanism
+for untainting user supplied filenames if you want to do file operations
+on them (unless you make C<$E<gt>> equal to C<$E<lt>> ).
+
+For "Insecure $ENV{PATH}" messages, you need to set C<$ENV{'PATH'}> to a known
+value, and each directory in the path must be non-writable by the world.
+A frequently voiced gripe is that you can get this message even
+if the pathname to an executable is fully qualified.  But Perl can't
+know that the executable in question isn't going to execute some other
+program depending on the PATH.
+
+It's also possible to get into trouble with other operations that don't
+care whether they use tainted values.  Make judicious use of the file
+tests in dealing with any user-supplied filenames.  When possible, do
+opens and such after setting C<$E<gt> = $E<lt>>.  (Remember group IDs,
+too!) Perl doesn't prevent you from opening tainted filenames for reading,
+so be careful what you print out.  The tainting mechanism is intended to
+prevent stupid mistakes, not to remove the need for thought.
+
+This gives us a reasonably safe way to open a file or pipe: just reset the
+id set to the original IDs.  Here's a way to do backticks reasonably
+safely.  Notice how the exec() is not called with a string that the shell
+could expand.  By the time we get to the exec(), tainting is turned off,
+however, so be careful what you call and what you pass it.
+
+    die unless defined $pid = open(KID, "-|");
+    if ($pid) {	          # parent
+	while (<KID>) {
+	    # do something
+	} 
+	close KID;
+    } else {
+	$> = $<; 
+	$) = $(;  # BUG: initgroups() not called
+	exec 'program', 'arg1', 'arg2';
+	die "can't exec program: $!";
+    } 
+
+For those even more concerned about safety, see the I<Safe> and I<Safe CGI> 
+modules at a CPAN site near you.  See L<perlmod> for a list of CPAN sites.

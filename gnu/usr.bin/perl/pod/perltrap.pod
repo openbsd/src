@@ -1,0 +1,522 @@
+=head1 NAME
+
+perltrap - Perl traps for the unwary
+
+=head1 DESCRIPTION
+
+The biggest trap of all is forgetting to use the B<-w> switch; see
+L<perlrun>.  The second biggest trap is not making your entire program
+runnable under C<use strict>.
+
+=head2 Awk Traps
+
+Accustomed B<awk> users should take special note of the following:
+
+=over 4
+
+=item *
+
+The English module, loaded via
+
+    use English;
+
+allows you to refer to special variables (like $RS) as 
+though they were in B<awk>; see L<perlvar> for details.
+
+=item *
+
+Semicolons are required after all simple statements in Perl (except
+at the end of a block).  Newline is not a statement delimiter.
+
+=item *
+
+Curly brackets are required on C<if>s and C<while>s.
+
+=item *
+
+Variables begin with "$" or "@" in Perl.
+
+=item *
+
+Arrays index from 0.  Likewise string positions in substr() and
+index().
+
+=item *
+
+You have to decide whether your array has numeric or string indices.
+
+=item *
+
+Associative array values do not spring into existence upon mere
+reference.
+
+=item *
+
+You have to decide whether you want to use string or numeric
+comparisons.
+
+=item *
+
+Reading an input line does not split it for you.  You get to split it
+yourself to an array.  And split() operator has different
+arguments.
+
+=item *
+
+The current input line is normally in $_, not $0.  It generally does
+not have the newline stripped.  ($0 is the name of the program
+executed.)  See L<perlvar>.
+
+=item *
+
+$<I<digit>> does not refer to fields--it refers to substrings matched by
+the last match pattern.
+
+=item *
+
+The print() statement does not add field and record separators unless
+you set C<$,> and C<$.>.  You can set $OFS and $ORS if you're using
+the English module.
+
+=item *
+
+You must open your files before you print to them.
+
+=item *
+
+The range operator is "..", not comma.  The comma operator works as in
+C.
+
+=item *
+
+The match operator is "=~", not "~".  ("~" is the one's complement
+operator, as in C.)
+
+=item *
+
+The exponentiation operator is "**", not "^".  "^" is the XOR
+operator, as in C.  (You know, one could get the feeling that B<awk> is
+basically incompatible with C.)
+
+=item *
+
+The concatenation operator is ".", not the null string.  (Using the
+null string would render C</pat/ /pat/> unparsable, since the third slash
+would be interpreted as a division operator--the tokener is in fact
+slightly context sensitive for operators like "/", "?", and ">".
+And in fact, "." itself can be the beginning of a number.)
+
+=item *
+
+The C<next>, C<exit>, and C<continue> keywords work differently.
+
+=item *
+
+
+The following variables work differently:
+
+      Awk	Perl
+      ARGC	$#ARGV or scalar @ARGV
+      ARGV[0]	$0
+      FILENAME	$ARGV
+      FNR	$. - something
+      FS	(whatever you like)
+      NF	$#Fld, or some such
+      NR	$.
+      OFMT	$#
+      OFS	$,
+      ORS	$\
+      RLENGTH	length($&)
+      RS	$/
+      RSTART	length($`)
+      SUBSEP	$;
+
+=item *
+
+You cannot set $RS to a pattern, only a string.
+
+=item *
+
+When in doubt, run the B<awk> construct through B<a2p> and see what it
+gives you.
+
+=back
+
+=head2 C Traps
+
+Cerebral C programmers should take note of the following:
+
+=over 4
+
+=item *
+
+Curly brackets are required on C<if>'s and C<while>'s.
+
+=item *
+
+You must use C<elsif> rather than C<else if>.
+
+=item *
+
+The C<break> and C<continue> keywords from C become in 
+Perl C<last> and C<next>, respectively.
+Unlike in C, these do I<NOT> work within a C<do { } while> construct.
+
+=item *
+
+There's no switch statement.  (But it's easy to build one on the fly.)
+
+=item *
+
+Variables begin with "$" or "@" in Perl.
+
+=item *
+
+printf() does not implement the "*" format for interpolating
+field widths, but it's trivial to use interpolation of double-quoted
+strings to achieve the same effect.
+
+=item *
+
+Comments begin with "#", not "/*".
+
+=item *
+
+You can't take the address of anything, although a similar operator
+in Perl 5 is the backslash, which creates a reference.
+
+=item *
+
+C<ARGV> must be capitalized.  C<$ARGV[0]> is C's C<argv[1]>, and C<argv[0]>
+ends up in C<$0>.
+
+=item *
+
+System calls such as link(), unlink(), rename(), etc. return nonzero for
+success, not 0.
+
+=item *
+
+Signal handlers deal with signal names, not numbers.  Use C<kill -l>
+to find their names on your system.
+
+=back
+
+=head2 Sed Traps
+
+Seasoned B<sed> programmers should take note of the following:
+
+=over 4
+
+=item *
+
+Backreferences in substitutions use "$" rather than "\".
+
+=item *
+
+The pattern matching metacharacters "(", ")", and "|" do not have backslashes
+in front.
+
+=item *
+
+The range operator is C<...>, rather than comma.
+
+=back
+
+=head2 Shell Traps
+
+Sharp shell programmers should take note of the following:
+
+=over 4
+
+=item *
+
+The backtick operator does variable interpretation without regard to
+the presence of single quotes in the command.
+
+=item *
+
+The backtick operator does no translation of the return value, unlike B<csh>.
+
+=item *
+
+Shells (especially B<csh>) do several levels of substitution on each
+command line.  Perl does substitution only in certain constructs
+such as double quotes, backticks, angle brackets, and search patterns.
+
+=item *
+
+Shells interpret scripts a little bit at a time.  Perl compiles the
+entire program before executing it (except for C<BEGIN> blocks, which
+execute at compile time).
+
+=item *
+
+The arguments are available via @ARGV, not $1, $2, etc.
+
+=item *
+
+The environment is not automatically made available as separate scalar
+variables.
+
+=back
+
+=head2 Perl Traps
+
+Practicing Perl Programmers should take note of the following:
+
+=over 4
+
+=item *
+
+Remember that many operations behave differently in a list
+context than they do in a scalar one.  See L<perldata> for details.
+
+=item *
+
+Avoid barewords if you can, especially all lower-case ones.
+You can't tell just by looking at it whether a bareword is 
+a function or a string.  By using quotes on strings and 
+parens on function calls, you won't ever get them confused.
+
+=item *
+
+You cannot discern from mere inspection which built-ins
+are unary operators (like chop() and chdir()) 
+and which are list operators (like print() and unlink()).
+(User-defined subroutines can B<only> be list operators, never
+unary ones.)  See L<perlop>.
+
+=item *
+
+People have a hard time remembering that some functions
+default to $_, or @ARGV, or whatever, but that others which
+you might expect to do not.  
+
+=item * 
+
+The <FH> construct is not the name of the filehandle, it is a readline
+operation on that handle.  The data read is only assigned to $_ if the
+file read is the sole condition in a while loop:
+
+    while (<FH>)      { }
+    while ($_ = <FH>) { }..
+    <FH>;  # data discarded!
+
+=item * 
+
+Remember not to use "C<=>" when you need "C<=~>";
+these two constructs are quite different:
+
+    $x =  /foo/;
+    $x =~ /foo/;
+
+=item *
+
+The C<do {}> construct isn't a real loop that you can use 
+loop control on.
+
+=item *
+
+Use my() for local variables whenever you can get away with 
+it (but see L<perlform> for where you can't).  
+Using local() actually gives a local value to a global 
+variable, which leaves you open to unforeseen side-effects
+of dynamic scoping.
+
+=item *
+
+If you localize an exported variable in a module, its exported value will
+not change.  The local name becomes an alias to a new value but the
+external name is still an alias for the original.
+
+=back
+
+=head2 Perl4 Traps
+
+Penitent Perl 4 Programmers should take note of the following
+incompatible changes that occurred between release 4 and release 5:
+
+=over 4
+
+=item *
+
+C<@> now always interpolates an array in double-quotish strings.  Some programs
+may now need to use backslash to protect any C<@> that shouldn't interpolate.
+
+=item *
+
+Barewords that used to look like strings to Perl will now look like subroutine
+calls if a subroutine by that name is defined before the compiler sees them.
+For example:
+
+    sub SeeYa { die "Hasta la vista, baby!" }
+    $SIG{'QUIT'} = SeeYa;
+
+In Perl 4, that set the signal handler; in Perl 5, it actually calls the
+function!  You may use the B<-w> switch to find such places.
+
+=item *
+
+Symbols starting with C<_> are no longer forced into package C<main>, except
+for $_ itself (and @_, etc.).
+
+=item *
+
+Double-colon is now a valid package separator in an identifier.  Thus these
+behave differently in perl4 vs. perl5:
+
+    print "$a::$b::$c\n";
+    print "$var::abc::xyz\n";
+
+=item *
+
+C<s'$lhs'$rhs'> now does no interpolation on either side.  It used to
+interpolate C<$lhs> but not C<$rhs>.
+
+=item *
+
+The second and third arguments of splice() are now evaluated in scalar
+context (as the book says) rather than list context.
+
+=item *
+
+These are now semantic errors because of precedence:
+
+    shift @list + 20;	
+    $n = keys %map + 20; 
+
+Because if that were to work, then this couldn't:
+
+    sleep $dormancy + 20;
+
+=item *
+
+The precedence of assignment operators is now the same as the precedence
+of assignment.  Perl 4 mistakenly gave them the precedence of the associated
+operator.  So you now must parenthesize them in expressions like
+
+    /foo/ ? ($a += 2) : ($a -= 2);
+
+Otherwise
+
+    /foo/ ? $a += 2 : $a -= 2;
+
+would be erroneously parsed as
+
+    (/foo/ ? $a += 2 : $a) -= 2;
+
+On the other hand,
+
+    $a += /foo/ ? 1 : 2;
+
+now works as a C programmer would expect.
+
+=item *
+
+C<open FOO || die> is now incorrect.  You need parens around the filehandle.
+While temporarily supported, using such a construct will 
+generate a non-fatal (but non-suppressible) warning.
+
+=item *
+
+The elements of argument lists for formats are now evaluated in list
+context.  This means you can interpolate list values now.
+
+=item *
+
+You can't do a C<goto> into a block that is optimized away.  Darn.
+
+=item *
+
+It is no longer syntactically legal to use whitespace as the name
+of a variable, or as a delimiter for any kind of quote construct.
+Double darn.
+
+=item *
+
+The caller() function now returns a false value in a scalar context if there
+is no caller.  This lets library files determine if they're being required.
+
+=item *
+
+C<m//g> now attaches its state to the searched string rather than the
+regular expression.
+
+=item *
+
+C<reverse> is no longer allowed as the name of a sort subroutine.
+
+=item *
+
+B<taintperl> is no longer a separate executable.  There is now a B<-T>
+switch to turn on tainting when it isn't turned on automatically.
+
+=item *
+
+Double-quoted strings may no longer end with an unescaped C<$> or C<@>.
+
+=item *
+
+The archaic C<while/if> BLOCK BLOCK syntax is no longer supported.
+
+
+=item *
+
+Negative array subscripts now count from the end of the array.
+
+=item *
+
+The comma operator in a scalar context is now guaranteed to give a
+scalar context to its arguments.
+
+=item *
+
+The C<**> operator now binds more tightly than unary minus.  
+It was documented to work this way before, but didn't.
+
+=item *
+
+Setting C<$#array> lower now discards array elements.
+
+=item *
+
+delete() is not guaranteed to return the old value for tie()d arrays,
+since this capability may be onerous for some modules to implement.
+
+=item *
+
+The construct "this is $$x" used to interpolate the pid at that
+point, but now tries to dereference $x.  C<$$> by itself still
+works fine, however.
+
+=item *
+
+The meaning of foreach has changed slightly when it is iterating over a
+list which is not an array.  This used to assign the list to a
+temporary array, but no longer does so (for efficiency).  This means
+that you'll now be iterating over the actual values, not over copies of
+the values.  Modifications to the loop variable can change the original
+values.  To retain Perl 4 semantics you need to assign your list
+explicitly to a temporary array and then iterate over that.  For
+example, you might need to change
+
+    foreach $var (grep /x/, @list) { ... }
+
+to
+
+    foreach $var (my @tmp = grep /x/, @list) { ... }
+
+Otherwise changing C<$var> will clobber the values of @list.  (This most often
+happens when you use C<$_> for the loop variable, and call subroutines in
+the loop that don't properly localize C<$_>.)
+
+=item *
+
+Some error messages will be different.
+
+=item *
+
+Some bugs may have been inadvertently removed.
+
+=back

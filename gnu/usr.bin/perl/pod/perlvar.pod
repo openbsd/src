@@ -1,0 +1,695 @@
+=head1 NAME
+
+perlvar - Perl predefined variables
+
+=head1 DESCRIPTION
+
+=head2 Predefined Names
+
+The following names have special meaning to Perl.  Most of the
+punctuational names have reasonable mnemonics, or analogues in one of
+the shells.  Nevertheless, if you wish to use the long variable names,
+you just need to say
+
+    use English;
+
+at the top of your program.  This will alias all the short names to the
+long names in the current package.  Some of them even have medium names,
+generally borrowed from B<awk>.
+
+To go a step further, those variables that depend on the currently
+selected filehandle may instead be set by calling an object method on
+the FileHandle object.  (Summary lines below for this contain the word
+HANDLE.)  First you must say
+
+    use FileHandle;
+
+after which you may use either
+
+    method HANDLE EXPR
+
+or
+
+    HANDLE->method(EXPR)
+
+Each of the methods returns the old value of the FileHandle attribute.
+The methods each take an optional EXPR, which if supplied specifies the
+new value for the FileHandle attribute in question.  If not supplied,
+most of the methods do nothing to the current value, except for
+autoflush(), which will assume a 1 for you, just to be different.
+
+A few of these variables are considered "read-only".  This means that if
+you try to assign to this variable, either directly or indirectly through
+a reference, you'll raise a run-time exception.
+
+=over 8
+
+=item $ARG
+
+=item $_
+
+The default input and pattern-searching space.  The following pairs are
+equivalent:
+
+    while (<>) {...}	# only equivalent in while!
+    while ($_ = <>) {...}
+
+    /^Subject:/
+    $_ =~ /^Subject:/
+
+    tr/a-z/A-Z/
+    $_ =~ tr/a-z/A-Z/
+
+    chop
+    chop($_)
+
+Here are the places where Perl will assume $_ even if you 
+don't use it:
+
+=over 3
+
+=item *
+
+Various unary functions, including functions like ord() and int(), as well
+as the all file tests (C<-f>, C<-d>) except for C<-t>, which defaults to
+STDIN.
+
+=item *
+
+Various list functions like print() and unlink().
+
+=item *
+
+The pattern matching operations C<m//>, C<s///>, and C<tr///> when used
+without an C<=~> operator.
+
+=item * 
+
+The default iterator variable in a C<foreach> loop if no other
+variable is supplied.
+
+=item * 
+
+The implicit iterator variable in the grep() and map() functions.
+
+=item * 
+
+The default place to put an input record when a C<E<lt>FHE<gt>>
+operation's result is tested by itself as the sole criterion of a C<while>
+test.  Note that outside of a C<while> test, this will not happen.
+
+=back
+
+(Mnemonic: underline is understood in certain operations.)
+
+=item $<I<digit>>
+
+Contains the subpattern from the corresponding set of parentheses in
+the last pattern matched, not counting patterns matched in nested
+blocks that have been exited already.  (Mnemonic: like \digit.)
+These variables are all read-only.
+
+=item $MATCH
+
+=item $&
+
+The string matched by the last successful pattern match (not counting
+any matches hidden within a BLOCK or eval() enclosed by the current
+BLOCK).  (Mnemonic: like & in some editors.)  This variable is read-only.
+
+=item $PREMATCH
+
+=item $`
+
+The string preceding whatever was matched by the last successful
+pattern match (not counting any matches hidden within a BLOCK or eval
+enclosed by the current BLOCK).  (Mnemonic: ` often precedes a quoted
+string.)  This variable is read-only.
+
+=item $POSTMATCH
+
+=item $'
+
+The string following whatever was matched by the last successful
+pattern match (not counting any matches hidden within a BLOCK or eval()
+enclosed by the current BLOCK).  (Mnemonic: ' often follows a quoted
+string.)  Example:
+
+    $_ = 'abcdefghi';
+    /def/;
+    print "$`:$&:$'\n";  	# prints abc:def:ghi
+
+This variable is read-only.
+
+=item $LAST_PAREN_MATCH
+
+=item $+
+
+The last bracket matched by the last search pattern.  This is useful if
+you don't know which of a set of alternative patterns matched.  For
+example:
+
+    /Version: (.*)|Revision: (.*)/ && ($rev = $+);
+
+(Mnemonic: be positive and forward looking.)
+This variable is read-only.
+
+=item $MULTILINE_MATCHING
+
+=item $*
+
+Set to 1 to do multiline matching within a string, 0 to tell Perl
+that it can assume that strings contain a single line, for the purpose
+of optimizing pattern matches.  Pattern matches on strings containing
+multiple newlines can produce confusing results when "C<$*>" is 0.  Default
+is 0.  (Mnemonic: * matches multiple things.)  Note that this variable
+only influences the interpretation of "C<^>" and "C<$>".  A literal newline can
+be searched for even when C<$* == 0>.
+
+Use of "C<$*>" is deprecated in Perl 5.
+
+=item input_line_number HANDLE EXPR
+
+=item $INPUT_LINE_NUMBER
+
+=item $NR
+
+=item $.
+
+The current input line number of the last filehandle that was read.  An
+explicit close on the filehandle resets the line number.  Since
+"C<E<lt>E<gt>>" never does an explicit close, line numbers increase
+across ARGV files (but see examples under eof()).  Localizing C<$.> has
+the effect of also localizing Perl's notion of "the last read
+filehandle".  (Mnemonic: many programs use "." to mean the current line
+number.)
+
+=item input_record_separator HANDLE EXPR
+
+=item $INPUT_RECORD_SEPARATOR
+
+=item $RS
+
+=item $/
+
+The input record separator, newline by default.  Works like B<awk>'s RS
+variable, including treating blank lines as delimiters if set to the
+null string.  You may set it to a multicharacter string to match a
+multi-character delimiter.  Note that setting it to C<"\n\n"> means
+something slightly different than setting it to C<"">, if the file
+contains consecutive blank lines.  Setting it to C<""> will treat two or
+more consecutive blank lines as a single blank line.  Setting it to
+C<"\n\n"> will blindly assume that the next input character belongs to the
+next paragraph, even if it's a newline.  (Mnemonic: / is used to
+delimit line boundaries when quoting poetry.)
+
+    undef $/;
+    $_ = <FH>; 		# whole file now here
+    s/\n[ \t]+/ /g;
+
+=item autoflush HANDLE EXPR
+
+=item $OUTPUT_AUTOFLUSH
+
+=item $|
+
+If set to nonzero, forces a flush after every write or print on the
+currently selected output channel.  Default is 0.  Note that STDOUT
+will typically be line buffered if output is to the terminal and block
+buffered otherwise.  Setting this variable is useful primarily when you
+are outputting to a pipe, such as when you are running a Perl script
+under rsh and want to see the output as it's happening.  This has no
+effect on input buffering.  
+(Mnemonic: when you want your pipes to be piping hot.)
+
+=item output_field_separator HANDLE EXPR
+
+=item $OUTPUT_FIELD_SEPARATOR
+
+=item $OFS
+
+=item $,
+
+The output field separator for the print operator.  Ordinarily the
+print operator simply prints out the comma separated fields you
+specify.  In order to get behavior more like B<awk>, set this variable
+as you would set B<awk>'s OFS variable to specify what is printed
+between fields.  (Mnemonic: what is printed when there is a , in your
+print statement.)
+
+=item output_record_separator HANDLE EXPR
+
+=item $OUTPUT_RECORD_SEPARATOR
+
+=item $ORS
+
+=item $\
+
+The output record separator for the print operator.  Ordinarily the
+print operator simply prints out the comma separated fields you
+specify, with no trailing newline or record separator assumed.  In
+order to get behavior more like B<awk>, set this variable as you would
+set B<awk>'s ORS variable to specify what is printed at the end of the
+print.  (Mnemonic: you set "C<$\>" instead of adding \n at the end of the
+print.  Also, it's just like /, but it's what you get "back" from
+Perl.)
+
+=item $LIST_SEPARATOR
+
+=item $"
+
+This is like "C<$,>" except that it applies to array values interpolated
+into a double-quoted string (or similar interpreted string).  Default
+is a space.  (Mnemonic: obvious, I think.)
+
+=item $SUBSCRIPT_SEPARATOR
+
+=item $SUBSEP
+
+=item $;
+
+The subscript separator for multi-dimensional array emulation.  If you
+refer to a hash element as
+
+    $foo{$a,$b,$c}
+
+it really means
+
+    $foo{join($;, $a, $b, $c)}
+
+But don't put
+
+    @foo{$a,$b,$c}	# a slice--note the @
+
+which means
+
+    ($foo{$a},$foo{$b},$foo{$c})
+
+Default is "\034", the same as SUBSEP in B<awk>.  Note that if your
+keys contain binary data there might not be any safe value for "C<$;>".
+(Mnemonic: comma (the syntactic subscript separator) is a
+semi-semicolon.  Yeah, I know, it's pretty lame, but "C<$,>" is already
+taken for something more important.)
+
+Consider using "real" multi-dimensional arrays in Perl 5.
+
+=item $OFMT
+
+=item $#
+
+The output format for printed numbers.  This variable is a half-hearted
+attempt to emulate B<awk>'s OFMT variable.  There are times, however,
+when B<awk> and Perl have differing notions of what is in fact
+numeric.  Also, the initial value is %.20g rather than %.6g, so you
+need to set "C<$#>" explicitly to get B<awk>'s value.  (Mnemonic: # is the
+number sign.)
+
+Use of "C<$#>" is deprecated in Perl 5.
+
+=item format_page_number HANDLE EXPR
+
+=item $FORMAT_PAGE_NUMBER
+
+=item $%
+
+The current page number of the currently selected output channel.
+(Mnemonic: % is page number in B<nroff>.)
+
+=item format_lines_per_page HANDLE EXPR
+
+=item $FORMAT_LINES_PER_PAGE
+
+=item $=
+
+The current page length (printable lines) of the currently selected
+output channel.  Default is 60.  (Mnemonic: = has horizontal lines.)
+
+=item format_lines_left HANDLE EXPR
+
+=item $FORMAT_LINES_LEFT
+
+=item $-
+
+The number of lines left on the page of the currently selected output
+channel.  (Mnemonic: lines_on_page - lines_printed.)
+
+=item format_name HANDLE EXPR
+
+=item $FORMAT_NAME
+
+=item $~
+
+The name of the current report format for the currently selected output
+channel.  Default is name of the filehandle.  (Mnemonic: brother to
+"C<$^>".)
+
+=item format_top_name HANDLE EXPR
+
+=item $FORMAT_TOP_NAME
+
+=item $^
+
+The name of the current top-of-page format for the currently selected
+output channel.  Default is name of the filehandle with _TOP
+appended.  (Mnemonic: points to top of page.)
+
+=item format_line_break_characters HANDLE EXPR
+
+=item $FORMAT_LINE_BREAK_CHARACTERS
+
+=item $:
+
+The current set of characters after which a string may be broken to
+fill continuation fields (starting with ^) in a format.  Default is 
+S<" \n-">, to break on whitespace or hyphens.  (Mnemonic: a "colon" in
+poetry is a part of a line.)
+
+=item format_formfeed HANDLE EXPR
+
+=item $FORMAT_FORMFEED
+
+=item $^L
+
+What formats output to perform a formfeed.  Default is \f.
+
+=item $ACCUMULATOR
+
+=item $^A
+
+The current value of the write() accumulator for format() lines.  A format
+contains formline() commands that put their result into C<$^A>.  After
+calling its format, write() prints out the contents of C<$^A> and empties.
+So you never actually see the contents of C<$^A> unless you call
+formline() yourself and then look at it.  See L<perlform> and
+L<perlfunc/formline()>.
+
+=item $CHILD_ERROR
+
+=item $?
+
+The status returned by the last pipe close, backtick (C<``>) command,
+or system() operator.  Note that this is the status word returned by
+the wait() system call, so the exit value of the subprocess is actually
+(C<$? E<gt>E<gt> 8>).  Thus on many systems, C<$? & 255> gives which signal,
+if any, the process died from, and whether there was a core dump.
+(Mnemonic: similar to B<sh> and B<ksh>.)
+
+=item $OS_ERROR
+
+=item $ERRNO
+
+=item $!
+
+If used in a numeric context, yields the current value of errno, with
+all the usual caveats.  (This means that you shouldn't depend on the
+value of "C<$!>" to be anything in particular unless you've gotten a
+specific error return indicating a system error.)  If used in a string
+context, yields the corresponding system error string.  You can assign
+to "C<$!>" in order to set I<errno> if, for instance, you want "C<$!>" to return the
+string for error I<n>, or you want to set the exit value for the die()
+operator.  (Mnemonic: What just went bang?)
+
+=item $EXTENDED_OS_ERROR
+
+=item $^E
+
+More specific information about the last system error than that
+provided by C<$!>, if available.  (If not, it's just C<$!> again.)
+At the moment, this differs from C<$!> only under VMS, where it
+provides the VMS status value from the last system error.  The
+caveats mentioned in the description of C<$!> apply here, too.
+(Mnemonic: Extra error explanation.)
+
+
+=item $EVAL_ERROR
+
+=item $@
+
+The Perl syntax error message from the last eval() command.  If null, the
+last eval() parsed and executed correctly (although the operations you
+invoked may have failed in the normal fashion).  (Mnemonic: Where was
+the syntax error "at"?)
+
+Note that warning messages are not collected in this variable.  You can,
+however, set up a routine to process warnings by setting $SIG{__WARN__} below.
+
+=item $PROCESS_ID
+
+=item $PID
+
+=item $$
+
+The process number of the Perl running this script.  (Mnemonic: same
+as shells.)
+
+=item $REAL_USER_ID
+
+=item $UID
+
+=item $<
+
+The real uid of this process.  (Mnemonic: it's the uid you came I<FROM>,
+if you're running setuid.)
+
+=item $EFFECTIVE_USER_ID
+
+=item $EUID
+
+=item $>
+
+The effective uid of this process.  Example:
+
+    $< = $>;		# set real to effective uid
+    ($<,$>) = ($>,$<);	# swap real and effective uid
+
+(Mnemonic: it's the uid you went I<TO>, if you're running setuid.)  Note:
+"C<$E<lt>>" and "C<$E<gt>>" can only be swapped on machines supporting setreuid().
+
+=item $REAL_GROUP_ID
+
+=item $GID
+
+=item $(
+
+The real gid of this process.  If you are on a machine that supports
+membership in multiple groups simultaneously, gives a space separated
+list of groups you are in.  The first number is the one returned by
+getgid(), and the subsequent ones by getgroups(), one of which may be
+the same as the first number.  (Mnemonic: parentheses are used to I<GROUP>
+things.  The real gid is the group you I<LEFT>, if you're running setgid.)
+
+=item $EFFECTIVE_GROUP_ID
+
+=item $EGID
+
+=item $)
+
+The effective gid of this process.  If you are on a machine that
+supports membership in multiple groups simultaneously, gives a space
+separated list of groups you are in.  The first number is the one
+returned by getegid(), and the subsequent ones by getgroups(), one of
+which may be the same as the first number.  (Mnemonic: parentheses are
+used to I<GROUP> things.  The effective gid is the group that's I<RIGHT> for
+you, if you're running setgid.)
+
+Note: "C<$E<lt>>", "C<$E<gt>>", "C<$(>" and "C<$)>" can only be set on machines
+that support the corresponding I<set[re][ug]id()> routine.  "C<$(>" and "C<$)>" 
+can only be swapped on machines supporting setregid().   Because Perl doesn't
+currently use initgroups(), you can't set your group vector to multiple groups.
+
+=item $PROGRAM_NAME
+
+=item $0
+
+Contains the name of the file containing the Perl script being
+executed.  Assigning to "C<$0>" modifies the argument area that the ps(1)
+program sees.  This is more useful as a way of indicating the
+current program state than it is for hiding the program you're running.
+(Mnemonic: same as B<sh> and B<ksh>.)
+
+=item $[
+
+The index of the first element in an array, and of the first character
+in a substring.  Default is 0, but you could set it to 1 to make
+Perl behave more like B<awk> (or Fortran) when subscripting and when
+evaluating the index() and substr() functions.  (Mnemonic: [ begins
+subscripts.)
+
+As of Perl 5, assignment to "C<$[>" is treated as a compiler directive,
+and cannot influence the behavior of any other file.  Its use is
+discouraged.
+
+=item $PERL_VERSION
+
+=item $]
+
+The string printed out when you say C<perl -v>.
+(This is currently I<BROKEN>).
+It can be used to
+determine at the beginning of a script whether the perl interpreter
+executing the script is in the right range of versions.  If used in a
+numeric context, returns the version + patchlevel / 1000.  Example:
+
+    # see if getc is available
+    ($version,$patchlevel) =
+	     $] =~ /(\d+\.\d+).*\nPatch level: (\d+)/;
+    print STDERR "(No filename completion available.)\n"
+	     if $version * 1000 + $patchlevel < 2016;
+
+or, used numerically,
+
+    warn "No checksumming!\n" if $] < 3.019;
+
+(Mnemonic: Is this version of perl in the right bracket?)
+
+=item $DEBUGGING
+
+=item $^D
+
+The current value of the debugging flags.  (Mnemonic: value of B<-D>
+switch.)
+
+=item $SYSTEM_FD_MAX
+
+=item $^F
+
+The maximum system file descriptor, ordinarily 2.  System file
+descriptors are passed to exec()ed processes, while higher file
+descriptors are not.  Also, during an open(), system file descriptors are
+preserved even if the open() fails.  (Ordinary file descriptors are
+closed before the open() is attempted.)  Note that the close-on-exec
+status of a file descriptor will be decided according to the value of
+C<$^F> at the time of the open, not the time of the exec.
+
+=item $INPLACE_EDIT
+
+=item $^I
+
+The current value of the inplace-edit extension.  Use C<undef> to disable
+inplace editing.  (Mnemonic: value of B<-i> switch.)
+
+=item $OSNAME
+=item $^O
+
+The name of the operating system under which this copy of Perl was
+built, as determined during the configuration process.  The value
+is identical to C<$Config{'osname'}>.
+
+=item $PERLDB
+
+=item $^P
+
+The internal flag that the debugger clears so that it doesn't debug
+itself.  You could conceivably disable debugging yourself by clearing
+it.
+
+=item $BASETIME
+
+=item $^T
+
+The time at which the script began running, in seconds since the
+epoch (beginning of 1970).  The values returned by the B<-M>, B<-A> 
+and B<-C> filetests are
+based on this value.
+
+=item $WARNING
+
+=item $^W
+
+The current value of the warning switch, either TRUE or FALSE.  (Mnemonic: related to the
+B<-w> switch.)
+
+=item $EXECUTABLE_NAME
+
+=item $^X
+
+The name that the Perl binary itself was executed as, from C's C<argv[0]>.
+
+=item $ARGV
+
+contains the name of the current file when reading from <>.
+
+=item @ARGV
+
+The array @ARGV contains the command line arguments intended for the
+script.  Note that C<$#ARGV> is the generally number of arguments minus
+one, since C<$ARGV[0]> is the first argument, I<NOT> the command name.  See
+"C<$0>" for the command name.
+
+=item @INC
+
+The array @INC contains the list of places to look for Perl scripts to
+be evaluated by the C<do EXPR>, C<require>, or C<use> constructs.  It
+initially consists of the arguments to any B<-I> command line switches,
+followed by the default Perl library, probably "/usr/local/lib/perl",
+followed by ".", to represent the current directory.  If you need to
+modify this at runtime, you should use the C<use lib> pragma in order
+to also get the machine-dependent library properly loaded:
+
+    use lib '/mypath/libdir/';
+    use SomeMod;
+  
+=item %INC
+
+The hash %INC contains entries for each filename that has
+been included via C<do> or C<require>.  The key is the filename you
+specified, and the value is the location of the file actually found.
+The C<require> command uses this array to determine whether a given file
+has already been included.
+
+=item $ENV{expr}
+
+The hash %ENV contains your current environment.  Setting a
+value in C<ENV> changes the environment for child processes.
+
+=item $SIG{expr}
+
+The hash %SIG is used to set signal handlers for various
+signals.  Example:
+
+    sub handler {	# 1st argument is signal name
+	local($sig) = @_;
+	print "Caught a SIG$sig--shutting down\n";
+	close(LOG);
+	exit(0);
+    }
+
+    $SIG{'INT'} = 'handler';
+    $SIG{'QUIT'} = 'handler';
+    ...
+    $SIG{'INT'} = 'DEFAULT';	# restore default action
+    $SIG{'QUIT'} = 'IGNORE';	# ignore SIGQUIT
+
+The %SIG array only contains values for the signals actually set within
+the Perl script.  Here are some other examples:
+
+    $SIG{PIPE} = Plumber;       # SCARY!!
+    $SIG{"PIPE"} = "Plumber";   # just fine, assumes main::Plumber
+    $SIG{"PIPE"} = \&Plumber;   # just fine; assume current Plumber
+    $SIG{"PIPE"} = Plumber();   # oops, what did Plumber() return??
+
+The one marked scary is problematic because it's a bareword, which means
+sometimes it's a string representing the function, and sometimes it's 
+going to call the subroutine call right then and there!  Best to be sure
+and quote it or take a reference to it.  *Plumber works too.  See L<perlsubs>.
+
+Certain internal hooks can be also set using the %SIG hash.  The
+routine indicated by $SIG{__WARN__} is called when a warning message is
+about to be printed.  The warning message is passed as the first
+argument.  The presence of a __WARN__ hook causes the ordinary printing
+of warnings to STDERR to be suppressed.  You can use this to save warnings
+in a variable, or turn warnings into fatal errors, like this:
+
+    local $SIG{__WARN__} = sub { die $_[0] };
+    eval $proggie;
+
+The routine indicated by $SIG{__DIE__} is called when a fatal exception
+is about to be thrown.  The error message is passed as the first
+argument.  When a __DIE__ hook routine returns, the exception
+processing continues as it would have in the absence of the hook,
+unless the hook routine itself exits via a C<goto>, a loop exit, or a die().
+The __DIE__ handler is explicitly disabled during the call, so that you
+can die from a __DIE__ handler.  Similarly for __WARN__.
+
+=back
+

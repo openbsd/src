@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+
+use lib '../lib';  # If you haven't installed perl yet.
+use Pod::Functions;
+
+local $/ = '';
+
+$cur = '';
+while (<>) {
+
+    next unless /^=(?!cut)/ .. /^=cut/;
+
+    if (s/=item (\S+)/$1/) {
+	#$cur = "POSIX::" . $1;
+	$cur = $1;
+	$syn{$cur} .= $_;
+	next;
+    } else { 
+	#s,L</,L<POSIX/,g;
+	s,L</,L<perlfunc/,g;
+	$pod{$cur} .= $_ if $cur;
+    }
+} 
+
+for $f ( keys %syn ) {
+    $type = $Type{$f} || next;
+    $flavor = $Flavor{$f};
+    $orig = $f;
+    ($name = $f) =~ s/\W//g;
+    open (POD, "> $name.pod") || die "can't open $name.pod: $!";
+    print POD <<EOF;
+=head1 NAME
+
+$orig - $flavor
+
+=head1 SYNOPSIS
+
+$syn{$orig}
+
+=head1 DESCRIPTION
+
+$pod{$orig}
+
+EOF
+
+    close POD;
+
+} 

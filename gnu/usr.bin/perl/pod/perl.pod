@@ -1,0 +1,320 @@
+=head1 NAME
+
+perl - Practical Extraction and Report Language
+
+=head1 SYNOPSIS
+
+B<perl>	S<[ B<-sTuU> ]>
+	S<[ B<-hv> ] [ B<-V>[:I<configvar>] ]>
+	S<[ B<-cw> ] [ B<-d>[:I<debugger>] ] [ B<-D>[I<number/list>] ]>
+	S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal>] ]>
+	S<[ B<-I>I<dir> ] [ B<-m>[B<->]I<module> ] [ B<-M>[B<->]I<'module...'> ]>
+	S<[ B<-P> ]>
+	S<[ B<-S> ]>
+	S<[ B<-x>[I<dir>] ]>
+	S<[ B<-i>[I<extension>] ]>
+	S<[ B<-e> I<'command'> ] [ B<--> ] [ I<programfile> ] [ I<argument> ]...>
+
+For ease of access, the Perl manual has been split up into a number
+of sections:
+
+    perl	Perl overview (this section)
+    perltoc	Perl documentation table of contents
+    perldata	Perl data structures
+    perlsyn	Perl syntax
+    perlop	Perl operators and precedence
+    perlre	Perl regular expressions
+    perlrun	Perl execution and options
+    perlfunc	Perl builtin functions
+    perlvar	Perl predefined variables
+    perlsub	Perl subroutines
+    perlmod	Perl modules
+    perlref	Perl references 
+    perldsc	Perl data structures intro
+    perllol	Perl data structures: lists of lists
+    perlobj	Perl objects
+    perltie	Perl objects hidden behind simple variables
+    perlbot	Perl OO tricks and examples
+    perldebug	Perl debugging
+    perldiag	Perl diagnostic messages
+    perlform	Perl formats
+    perlipc	Perl interprocess communication
+    perlsec	Perl security
+    perltrap	Perl traps for the unwary
+    perlstyle	Perl style guide
+    perlxs	Perl XS application programming interface
+    perlxstut	Perl XS tutorial
+    perlguts	Perl internal functions for those doing extensions 
+    perlcall	Perl calling conventions from C
+    perlembed	Perl how to embed perl in your C or C++ app
+    perlpod	Perl plain old documentation
+    perlbook	Perl book information
+
+(If you're intending to read these straight through for the first time,
+the suggested order will tend to reduce the number of forward references.)
+
+Additional documentation for Perl modules is available in the
+F</usr/local/man/> directory.  Some of this is distributed standard with
+Perl, but you'll also find third-party modules there.  You should be able
+to view this with your man(1) program by including the proper directories
+in the appropriate start-up files.  To find out where these are, type:
+
+    perl -le 'use Config; print "@Config{man1dir,man3dir}"'
+
+If the directories were F</usr/local/man/man1> and F</usr/local/man/man3>,
+you would only need to add F</usr/local/man> to your MANPATH.  If 
+they are different, you'll have to add both stems.
+
+If that doesn't work for some reason, you can still use the
+supplied F<perldoc> script to view module information.  You might
+also look into getting a replacement man program.
+
+If something strange has gone wrong with your program and you're not
+sure where you should look for help, try the B<-w> switch first.  It
+will often point out exactly where the trouble is.
+
+=head1 DESCRIPTION
+
+Perl is an interpreted language optimized for scanning arbitrary
+text files, extracting information from those text files, and printing
+reports based on that information.  It's also a good language for many
+system management tasks.  The language is intended to be practical
+(easy to use, efficient, complete) rather than beautiful (tiny,
+elegant, minimal).
+
+Perl combines (in the author's opinion, anyway) some
+of the best features of C, B<sed>, B<awk>, and B<sh>, so people
+familiar with those languages should have little difficulty with it.
+(Language historians will also note some vestiges of B<csh>, Pascal,
+and even BASIC-PLUS.)  Expression syntax corresponds quite closely to C
+expression syntax.  Unlike most Unix utilities, Perl does not
+arbitrarily limit the size of your data--if you've got the memory,
+Perl can slurp in your whole file as a single string.  Recursion is
+of unlimited depth.  And the hash tables used by associative arrays
+grow as necessary to prevent degraded performance.  Perl uses
+sophisticated pattern matching techniques to scan large amounts of data
+very quickly.  Although optimized for scanning text, Perl can also
+deal with binary data, and can make dbm files look like associative
+arrays.  Setuid Perl scripts are safer than
+C programs through a dataflow tracing mechanism which prevents many
+stupid security holes.  If you have a problem that would ordinarily use
+B<sed> or B<awk> or B<sh>, but it exceeds their capabilities or must
+run a little faster, and you don't want to write the silly thing in C,
+then Perl may be for you.  There are also translators to turn your
+B<sed> and B<awk> scripts into Perl scripts.
+
+But wait, there's more...
+
+Perl version 5 is nearly a complete rewrite, and provides
+the following additional benefits:
+
+=over 5
+
+=item * Many usability enhancements
+
+It is now possible to write much more readable Perl code (even within
+regular expressions).  Formerly cryptic variable names can be replaced
+by mnemonic identifiers.  Error messages are more informative, and the
+optional warnings will catch many of the mistakes a novice might make.
+This cannot be stressed enough.  Whenever you get mysterious behavior,
+try the B<-w> switch!!!  Whenever you don't get mysterious behavior,
+try using B<-w> anyway.
+
+=item * Simplified grammar
+
+The new yacc grammar is one half the size of the old one.  Many of the
+arbitrary grammar rules have been regularized.  The number of reserved
+words has been cut by 2/3.  Despite this, nearly all old Perl scripts
+will continue to work unchanged.
+
+=item * Lexical scoping
+
+Perl variables may now be declared within a lexical scope, like "auto"
+variables in C.  Not only is this more efficient, but it contributes
+to better privacy for "programming in the large".
+
+=item * Arbitrarily nested data structures
+
+Any scalar value, including any array element, may now contain a
+reference to any other variable or subroutine.  You can easily create
+anonymous variables and subroutines.  Perl manages your reference
+counts for you.
+
+=item * Modularity and reusability
+
+The Perl library is now defined in terms of modules which can be easily
+shared among various packages.  A package may choose to import all or a
+portion of a module's published interface.  Pragmas (that is, compiler
+directives) are defined and used by the same mechanism.
+
+=item * Object-oriented programming
+
+A package can function as a class.  Dynamic multiple inheritance and
+virtual methods are supported in a straightforward manner and with very
+little new syntax.  Filehandles may now be treated as objects.
+
+=item * Embeddable and Extensible
+
+Perl may now be embedded easily in your C or C++ application, and can
+either call or be called by your routines through a documented
+interface.  The XS preprocessor is provided to make it easy to glue
+your C or C++ routines into Perl.  Dynamic loading of modules is
+supported.
+
+=item * POSIX compliant
+
+A major new module is the POSIX module, which provides access to all
+available POSIX routines and definitions, via object classes where
+appropriate.
+
+=item * Package constructors and destructors
+
+The new BEGIN and END blocks provide means to capture control as
+a package is being compiled, and after the program exits.  As a
+degenerate case they work just like awk's BEGIN and END when you
+use the B<-p> or B<-n> switches.
+
+=item * Multiple simultaneous DBM implementations
+
+A Perl program may now access DBM, NDBM, SDBM, GDBM, and Berkeley DB
+files from the same script simultaneously.  In fact, the old dbmopen
+interface has been generalized to allow any variable to be tied
+to an object class which defines its access methods.
+
+=item * Subroutine definitions may now be autoloaded
+
+In fact, the AUTOLOAD mechanism also allows you to define any arbitrary
+semantics for undefined subroutine calls.  It's not just for autoloading.
+
+=item * Regular expression enhancements
+
+You can now specify non-greedy quantifiers.  You can now do grouping
+without creating a backreference.  You can now write regular expressions
+with embedded whitespace and comments for readability.  A consistent
+extensibility mechanism has been added that is upwardly compatible with
+all old regular expressions.
+
+=back
+
+Ok, that's I<definitely> enough hype.
+
+=head1 ENVIRONMENT
+
+=over 12
+
+=item HOME
+
+Used if chdir has no argument.
+
+=item LOGDIR
+
+Used if chdir has no argument and HOME is not set.
+
+=item PATH
+
+Used in executing subprocesses, and in finding the script if B<-S> is
+used.
+
+=item PERL5LIB
+
+A colon-separated list of directories in which to look for Perl library
+files before looking in the standard library and the current
+directory.  If PERL5LIB is not defined, PERLLIB is used.  When running
+taint checks (because the script was running setuid or setgid, or the
+B<-T> switch was used), neither variable is used.  The script should
+instead say
+
+    use lib "/my/directory";
+
+=item PERL5DB
+
+The command used to get the debugger code.  If unset, uses
+
+	BEGIN { require 'perl5db.pl' }
+
+=item PERLLIB
+
+A colon-separated list of directories in which to look for Perl library
+files before looking in the standard library and the current
+directory.  If PERL5LIB is defined, PERLLIB is not used.
+
+=back
+
+Apart from these, Perl uses no other environment variables, except
+to make them available to the script being executed, and to child
+processes.  However, scripts running setuid would do well to execute
+the following lines before doing anything else, just to keep people
+honest:
+
+    $ENV{'PATH'} = '/bin:/usr/bin';    # or whatever you need
+    $ENV{'SHELL'} = '/bin/sh' if defined $ENV{'SHELL'};
+    $ENV{'IFS'} = ''          if defined $ENV{'IFS'};
+
+=head1 AUTHOR
+
+Larry Wall E<lt>F<lwall@sems.com>E<gt>, with the help of oodles of other folks.
+
+=head1 FILES
+
+ "/tmp/perl-e$$"	temporary file for -e commands
+ "@INC"			locations of perl 5 libraries
+
+=head1 SEE ALSO
+
+ a2p	awk to perl translator
+
+ s2p	sed to perl translator
+
+=head1 DIAGNOSTICS
+
+The B<-w> switch produces some lovely diagnostics.
+
+See L<perldiag> for explanations of all Perl's diagnostics.
+
+Compilation errors will tell you the line number of the error, with an
+indication of the next token or token type that was to be examined.
+(In the case of a script passed to Perl via B<-e> switches, each
+B<-e> is counted as one line.)
+
+Setuid scripts have additional constraints that can produce error
+messages such as "Insecure dependency".  See L<perlsec>.
+
+Did we mention that you should definitely consider using the B<-w>
+switch?
+
+=head1 BUGS
+
+The B<-w> switch is not mandatory.
+
+Perl is at the mercy of your machine's definitions of various
+operations such as type casting, atof() and sprintf().  The latter
+can even trigger a coredump when passed ludicrous input values.
+
+If your stdio requires a seek or eof between reads and writes on a
+particular stream, so does Perl.  (This doesn't apply to sysread()
+and syswrite().)
+
+While none of the built-in data types have any arbitrary size limits
+(apart from memory size), there are still a few arbitrary limits:  a
+given identifier may not be longer than 255 characters, and no
+component of your PATH may be longer than 255 if you use B<-S>.  A regular
+expression may not compile to more than 32767 bytes internally.
+
+See the perl bugs database at F< http://perl.com/perl/bugs/ >.  You may
+mail your bug reports (be sure to include full configuration information
+as output by the myconfig program in the perl source tree) to
+F<perlbug@perl.com>.
+If you've succeeded in compiling perl, the perlbug script in the utils/
+subdirectory can be used to help mail in a bug report.
+
+Perl actually stands for Pathologically Eclectic Rubbish Lister, but
+don't tell anyone I said that.
+
+=head1 NOTES
+
+The Perl motto is "There's more than one way to do it."  Divining
+how many more is left as an exercise to the reader.
+
+The three principal virtues of a programmer are Laziness,
+Impatience, and Hubris.  See the Camel Book for why.
+
