@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 1996/05/09 21:13:37 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 1996/05/28 09:45:11 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.65 1996/05/01 09:56:22 veego Exp $	*/
 
 /*
@@ -959,15 +959,9 @@ sys_sigreturn(p, v, retval)
 static int waittime = -1;
 
 void
-boot(howto)
-	register int howto;
+bootsync(void)
 {
-	/* take a snap shot before clobbering any registers */
-	if (curproc)
-		savectx(&curproc->p_addr->u_pcb);
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+	if (waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -976,6 +970,19 @@ boot(howto)
 		 */
 		resettodr();
 	}
+}
+
+void
+boot(howto)
+	register int howto;
+{
+	/* take a snap shot before clobbering any registers */
+	if (curproc)
+		savectx(&curproc->p_addr->u_pcb);
+
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0)
+		bootsync();
 
 	/* Disable interrupts. */
 	spl7();
