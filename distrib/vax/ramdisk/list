@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.11 2002/04/21 07:31:32 deraadt Exp $
+#	$OpenBSD: list,v 1.12 2002/04/22 02:43:16 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # extras
@@ -33,5 +33,4 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
-SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${ARCHDIR}/../ramdisk/dot.profile	 > .profile
 SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${ARCHDIR}/../install.md	 > install.md

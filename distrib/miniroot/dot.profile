@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.11 2002/04/05 03:13:18 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.1 2002/04/22 02:43:16 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -32,40 +32,30 @@
 #
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export HISTFILE=/.sh_history
-
 umask 022
-
 set -o emacs # emacs-style command line editing
 
-# terminals believed to be in termcap, default TERM
-TERMS="sun vt* pcvt* dumb"
-TERM=sun
+rootdisk=`dmesg|sed -n -e '/OpenBSD /h' -e '//!H' -e '${
+	g
+	p
+}'|sed -n -e '/^root on \([0-9a-z]*\).*/{
+	s//\/dev\/\1/
+	p
+}'`
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
-	mount -u /dev/rd0a /
+	mount -u ${rootdisk:-/dev/rd0a} /
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T 9600
 
-	# get the terminal type
-	_forceloop=""
-	while [ "X$_forceloop" = X"" ]; do
-		echo "Supported terminals are: $TERMS"
-		eval `tset -s -m ":?$TERM"`
-		if [ "X$TERM" != X"unknown" ]; then
-			_forceloop="done"
-		fi
-	done
-	export TERM
-
 	# Installing or upgrading?
 	_forceloop=""
 	while [ "X$_forceloop" = X"" ]; do
-		echo -n '(I)nstall, (U)pgrade, or (S)hell? '
+		echo -n '(I)nstall, (U)pgrade or (S)hell? '
 		read _forceloop
 		case "$_forceloop" in
 		i*|I*)	/install

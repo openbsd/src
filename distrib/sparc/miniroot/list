@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.16 2002/04/21 17:11:27 deraadt Exp $
+#	$OpenBSD: list,v 1.17 2002/04/22 02:43:16 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -41,7 +41,6 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
-SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${ARCHDIR}/../dot.profile	 > .profile
 SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${ARCHDIR}/../install.md	 > install.md
 
 COPY	${DESTDIR}/usr/mdec/boot	boot

@@ -1,7 +1,0 @@
-#	$OpenBSD: list,v 1.3 2000/03/01 22:10:13 todd Exp $
-
-# the disktab explanation file
-COPY	disktab.preinstall		etc
-
-# and the installation tools
-COPY	dot.profile			.profile
