@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.31 1996/01/24 22:40:25 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.36 1996/04/04 06:26:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -76,6 +76,7 @@
 #define ZSHARD_PRI	6	/* Wired on the CPU board... */
 #define ZSSOFT_PRI	3	/* Want tty pri (4) but this is OK. */
 
+#define ZS_DELAY()			delay(2)
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
@@ -164,12 +165,16 @@ static u_char zs_init_reg[16] = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_match(struct device *, void *, void *);
-static void	zsc_attach(struct device *, struct device *, void *);
+static int	zsc_match __P((struct device *, void *, void *));
+static void	zsc_attach __P((struct device *, struct device *, void *));
+static int  zsc_print __P((void *, char *name));
 
-struct cfdriver zsccd = {
-	NULL, "zsc", zsc_match, zsc_attach,
-	DV_DULL, sizeof(struct zsc_softc), NULL,
+struct cfattach zsc_ca = {
+	sizeof(struct zsc_softc), zsc_match, zsc_attach
+};
+
+struct cfdriver zsc_cd = {
+	NULL, "zsc", DV_DULL
 };
 
 static int zshard(void *);
@@ -182,47 +187,42 @@ static int zssoft(void *);
 static int
 zsc_match(parent, vcf, aux)
 	struct device *parent;
-	void *vcf;
-	void *aux;
+	void *vcf, *aux;
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
-	int unit, x;
-	void *zsva;
+	int pa, unit, x;
+	void *va;
 
 	unit = cf->cf_unit;
 	if (unit < 0 || unit >= NZS)
 		return (0);
 
-	/* Make sure zs_init() found mappings. */
-	zsva = zsaddr[unit];
-	if (zsva == NULL)
+	/*
+	 * OBIO match functions may be called for every possible
+	 * physical address, so match only our physical address.
+	 * This driver only supports its default mappings, so
+	 * non-default locators must match our defaults.
+	 */
+	if ((pa = cf->cf_paddr) == -1) {
+		/* Use our default PA. */
+		pa = zs_physaddr[unit];
+	} else {
+		/* Validate the given PA. */
+		if (pa != zs_physaddr[unit])
+			return (0);
+	}
+	if (pa != ca->ca_paddr)
 		return (0);
 
-	if (ca->ca_paddr == -1)
-		ca->ca_paddr = zs_physaddr[unit];
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = ZSHARD_PRI;
+	/* Make sure zs_init() found mappings. */
+	va = zsaddr[unit];
+	if (va == NULL)
+		return (0);
 
 	/* This returns -1 on a fault (bus error). */
-	x = peek_byte(zsva);
+	x = peek_byte(va);
 	return (x != -1);
-}
-
-static int
-zsc_print(aux, name)
-	void *aux;
-	char *name;
-{
-	struct zsc_attach_args *args = aux;
-
-	if (name != NULL)
-		printf("%s: ", name);
-
-	if (args->channel != -1)
-		printf(" channel %d", args->channel);
-
-	return UNCONF;
 }
 
 /*
@@ -238,17 +238,21 @@ zsc_attach(parent, self, aux)
 	void *aux;
 {
 	struct zsc_softc *zsc = (void *) self;
+	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = aux;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
-	int zsc_unit, channel;
+	int zsc_unit, intpri, channel;
 	int reset, s;
 	static int didintr;
 
 	zsc_unit = zsc->zsc_dev.dv_unit;
 
-	printf(" softpri %d\n", ZSSOFT_PRI);
+	if ((intpri = cf->cf_intpri) == -1)
+		intpri = ZSHARD_PRI;
+
+	printf(" level %d (softpri %d)\n", intpri, ZSSOFT_PRI);
 
 	/* Use the mapping setup by the Sun PROM. */
 	if (zsaddr[zsc_unit] == NULL)
@@ -283,7 +287,7 @@ zsc_attach(parent, self, aux)
 		 * so just do it on the A channel.
 		 */
 		if (channel == 0) {
-			ZS_WRITE(cs, 9, 0);
+			zs_write_reg(cs, 9, 0);
 		}
 
 		/*
@@ -292,12 +296,12 @@ zsc_attach(parent, self, aux)
 		 */
 		zsc_args.channel = channel;
 		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
-		if (!config_found(self, (void *) &zsc_args, zsc_print)) {
+		if (config_found(self, (void *)&zsc_args, zsc_print) == NULL) {
 			/* No sub-driver.  Just reset it. */
 			reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
 			s = splzs();
-			ZS_WRITE(cs,  9, reset);
+			zs_write_reg(cs,  9, reset);
 			splx(s);
 		}
 	}
@@ -316,10 +320,26 @@ zsc_attach(parent, self, aux)
 	cs = &zsc->zsc_cs[0];
 	s = splzs();
 	/* interrupt vector */
-	ZS_WRITE(cs, 2, zs_init_reg[2]);
+	zs_write_reg(cs, 2, zs_init_reg[2]);
 	/* master interrupt control (enable) */
-	ZS_WRITE(cs, 9, zs_init_reg[9]);
+	zs_write_reg(cs, 9, zs_init_reg[9]);
 	splx(s);
+}
+
+static int
+zsc_print(aux, name)
+	void *aux;
+	char *name;
+{
+	struct zsc_attach_args *args = aux;
+
+	if (name != NULL)
+		printf("%s: ", name);
+
+	if (args->channel != -1)
+		printf(" channel %d", args->channel);
+
+	return UNCONF;
 }
 
 static int
@@ -331,9 +351,9 @@ zshard(arg)
 	
 	/* Do ttya/ttyb first, because they go faster. */
 	rval = 0;
-	unit = zsccd.cd_ndevs;
+	unit = zsc_cd.cd_ndevs;
 	while (--unit >= 0) {
-		zsc = zsccd.cd_devs[unit];
+		zsc = zsc_cd.cd_devs[unit];
 		if (zsc != NULL) {
 			rval |= zsc_intr_hard(zsc);
 		}
@@ -375,9 +395,9 @@ zssoft(arg)
 	zssoftpending = 0;
 
 	/* Do ttya/ttyb first, because they go faster. */
-	unit = zsccd.cd_ndevs;
+	unit = zsc_cd.cd_ndevs;
 	while (--unit >= 0) {
-		zsc = zsccd.cd_devs[unit];
+		zsc = zsc_cd.cd_devs[unit];
 		if (zsc != NULL) {
 			(void) zsc_intr_soft(zsc);
 		}
@@ -412,6 +432,42 @@ zs_write_reg(cs, reg, val)
 	*cs->cs_reg_csr = reg;
 	ZS_DELAY();
 	*cs->cs_reg_csr = val;
+	ZS_DELAY();
+}
+
+u_char zs_read_csr(cs)
+	struct zs_chanstate *cs;
+{
+	register u_char v;
+
+	v = *cs->cs_reg_csr;
+	ZS_DELAY();
+	return v;
+}
+
+u_char zs_read_data(cs)
+	struct zs_chanstate *cs;
+{
+	register u_char v;
+
+	v = *cs->cs_reg_data;
+	ZS_DELAY();
+	return v;
+}
+
+void  zs_write_csr(cs, val)
+	struct zs_chanstate *cs;
+	u_char val;
+{
+	*cs->cs_reg_csr = val;
+	ZS_DELAY();
+}
+
+void  zs_write_data(cs, val)
+	struct zs_chanstate *cs;
+	u_char val;
+{
+	*cs->cs_reg_data = val;
 	ZS_DELAY();
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.29 1995/09/26 04:02:19 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.31 1996/02/16 23:36:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -37,8 +37,6 @@
  *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
  *	from: genassym.c,v 1.9 1994/05/23 06:14:19 mycroft
  */
-
-#define _KERNEL
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -171,6 +169,7 @@ main()
 	def("FR_SP", &fp->f_regs[15]);
 	def("FR_HW", &fp->f_sr);
 	def("FR_ADJ", &fp->f_stackadj);
+	def("FR_SIZE", sizeof(struct trapframe));
 
 	/* FP frame offsets */
 	def("FPF_REGS", &fpf->fpf_regs[0]);

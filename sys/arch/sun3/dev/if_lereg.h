@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.11 1995/12/10 08:46:07 mycroft Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.12 1996/03/26 14:42:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -34,8 +34,6 @@
  *
  *	@(#)if_lereg.h	7.1 (Berkeley) 5/8/90
  */
-
-#define MEMSIZE 0x4000
 
 /*
  * LANCE registers.

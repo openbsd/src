@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_disk.c,v 1.3 1995/10/17 23:07:19 gwr Exp $ */
+/*	$NetBSD: dev_disk.c,v 1.4 1996/04/10 18:31:14 gwr Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -49,6 +49,10 @@
 #include "dvma.h"
 #include "promdev.h"
 
+#define RETRY_COUNT	5
+
+extern int debug;
+int	disk_opencount;
 struct saioreq disk_ioreq;
 
 int
@@ -61,24 +65,25 @@ disk_open(f, devname)
 	int	error;
 
 #ifdef DEBUG_PROM
+	if (debug)
 	printf("disk_open: %s\n", devname);
 #endif
 
+	si = &disk_ioreq;
+	if (disk_opencount == 0) {
 	/*
 	 * Setup our part of the saioreq.
 	 * (determines what gets opened)
 	 */
-	si = &disk_ioreq;
-	bzero((caddr_t)si, sizeof(*si));
 	bp = *romp->bootParam;
-
 	si->si_boottab = bp->bootDevice;
 	si->si_ctlr = bp->ctlrNum;
 	si->si_unit = bp->unitNum;
 	si->si_boff = bp->partNum;
-
 	if ((error = prom_iopen(si)) != 0)
 		return (error);
+	}
+	disk_opencount++;
 
 	f->f_devdata = si;
 	return 0;
@@ -90,9 +95,17 @@ disk_close(f)
 {
 	struct saioreq *si;
 
+#ifdef DEBUG_PROM
+	if (debug)
+		printf("disk_close: ocnt=%d\n", disk_opencount);
+#endif
+
 	si = f->f_devdata;
-	prom_iclose(si);
 	f->f_devdata = NULL;
+	if (disk_opencount <= 0)
+		return 0;
+	if (--disk_opencount == 0)
+		prom_iclose(si);
 	return 0;
 }
 
@@ -108,27 +121,37 @@ disk_strategy(devdata, flag, dblk, size, buf, rsize)
 	struct saioreq *si;
 	struct boottab *ops;
 	char *dmabuf;
-	int	si_flag, xcnt;
+	int retry, si_flag, xcnt;
 
 	si = devdata;
 	ops = si->si_boottab;
 
 #ifdef DEBUG_PROM
+	if (debug > 1)
 	printf("disk_strategy: size=%d dblk=%d\n", size, dblk);
 #endif
 
 	dmabuf = dvma_mapin(buf, size);
+	si_flag = (flag == F_READ) ? SAIO_F_READ : SAIO_F_WRITE;
 	
+	/*
+	 * The PROM strategy will occasionally return -1 and expect
+	 * us to try again.  From mouse@Collatz.McRCIM.McGill.EDU
+	 */
+	retry = RETRY_COUNT;
+	do {
 	si->si_bn = dblk;
 	si->si_ma = dmabuf;
 	si->si_cc =	size;
-
-	si_flag = (flag == F_READ) ? SAIO_F_READ : SAIO_F_WRITE;
 	xcnt = (*ops->b_strategy)(si, si_flag);
+	} while ((xcnt <= 0) && (--retry > 0));
+
 	dvma_mapout(dmabuf, size);
 
 #ifdef DEBUG_PROM
-	printf("disk_strategy: xcnt = %x\n", xcnt);
+	if (debug > 1)
+		printf("disk_strategy: xcnt = %x retries=%d\n",
+		   xcnt, RETRY_COUNT - retry);
 #endif
 
 	if (xcnt <= 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.13 1994/12/12 18:59:42 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.14 1996/03/26 15:16:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -71,7 +71,10 @@
 #define OBIO_DES_SIZE		0x00004		
 #define OBIO_ECCREG_SIZE	0x00100			
 
+#ifdef	_KERNEL
+
 caddr_t obio_alloc __P((int, int));
 caddr_t obio_vm_alloc __P((int));
 caddr_t obio_find_mapping __P((int pa, int size));
 
+#endif	/* _KERNEL */

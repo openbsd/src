@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.34 1995/12/11 02:38:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.38 1996/04/07 05:42:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -43,7 +43,7 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <machine/trap.h>
 
 | Remember this is a fun project.  (Thanks, Adam.  I try! 8^)
@@ -421,6 +421,9 @@ _badtrap:
 	addql	#4, sp			| stack adjust count
 	jra	rei			| all done
 
+/*
+ * Trap 0 is for system calls
+ */
 	.globl	_syscall
 _trap0:
 	clrl	sp@-			| stack adjust count
@@ -437,69 +440,16 @@ _trap0:
 	jra	rei			| all done
 
 /*
- * Our native 4.3 implementation uses trap 1 as sigreturn() and trap 2
- * as a breakpoint trap.
+ * Trap 1 is either:
+ * sigreturn (native NetBSD executable)
+ * breakpoint (HPUX executable)
  */
 _trap1:
-	jra	sigreturn
-
-_trap2:
-	jra	_trace
-
-/*
- * Trap 12 is the entry point for the cachectl "syscall"
- *	cachectl(command, addr, length)
- * command in d0, addr in a1, length in d1
- */
-	.globl	_cachectl
-_trap12:
-	movl	d1,sp@-			| push length
-	movl	a1,sp@-			| push addr
-	movl	d0,sp@-			| push command
-	jbsr	_cachectl		| do it
-	lea	sp@(12),sp		| pop args
-	jra	rei			| all done
-
-/*
- * Trap 15 is used for:
- *	- KGDB traps
- *	- trace traps for SUN binaries (not fully supported yet)
- * We just pass it on and let trap() sort it all out
- */
-_trap15:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-#ifdef KGDB
-	moveq	#T_TRAP15,d0
-	movw	sp@(FR_HW),d1		| get PSW
-	andw	#PSL_S,d1		| from user mode?
-	jeq	fault			| yes, just a regular fault
-	movl	d0,sp@-
-	.globl	_kgdb_trap_glue
-	jbsr	_kgdb_trap_glue		| returns if no debugger
-	addl	#4,sp
+#if 0 /* COMPAT_HPUX */
+	/* If process is HPUX, this is a user breakpoint. */
+	jne	trap15			| breakpoint
 #endif
-	moveq	#T_TRAP15,d0
-	jra	fault
-
-/*
- * Hit a breakpoint (trap 1 or 2) instruction.
- * Push the code and treat as a normal fault.
- */
-_trace:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-#ifdef KGDB
-	moveq	#T_TRACE,d0
-	movw	sp@(FR_HW),d1		| get SSW
-	andw	#PSL_S,d1		| from user mode?
-	jeq	fault			| no, regular fault
-	movl	d0,sp@-
-	jbsr	_kgdb_trap_glue		| returns if no debugger
-	addl	#4,sp
-#endif
-	moveq	#T_TRACE,d0
-	jra	fault
+	/* fall into sigreturn */
 
 /*
  * The sigreturn() syscall comes here.  It requires special handling
@@ -536,6 +486,104 @@ Lsigr1:
 	movl	a1,sp@(FR_SP)		| new SP value
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
+	jra	rei			| all done
+
+/*
+ * Trap 2 is one of:
+ * NetBSD: not used (ignore)
+ * SunOS:  Some obscure FPU operation
+ * HPUX:   sigreturn
+ */
+_trap2:
+#if 0 /* COMPAT_HPUX */
+	/* XXX:	If HPUX, this is a user breakpoint. */
+	jne	sigreturn
+#endif
+	/* fall into trace (NetBSD or SunOS) */
+
+/*
+ * Trace (single-step) trap.  Kernel-mode is special.
+ * User mode traps are simply passed on to trap().
+ */
+_trace:
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-
+	moveq	#T_TRACE,d0
+	movw	sp@(FR_HW),d1		| get PSW
+	andw	#PSL_S,d1		| from system mode?
+	jne	kbrkpt			| yes, kernel breakpoint
+	jra	fault			| no, user-mode fault
+
+/*
+ * Trap 15 is used for:
+ *	- GDB breakpoints (in user programs)
+ *	- KGDB breakpoints (in the kernel)
+ *	- trace traps for SUN binaries (not fully supported yet)
+ * User mode traps are passed simply passed to trap()
+ */
+_trap15:
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-
+	moveq	#T_TRAP15,d0
+	movw	sp@(FR_HW),d1		| get PSW
+	andw	#PSL_S,d1		| from system mode?
+	jne	kbrkpt			| yes, kernel breakpoint
+	jra	fault			| no, user-mode fault
+
+kbrkpt:	| Kernel-mode breakpoint or trace trap.
+	| Save system sp rather than user sp.
+	lea	sp@(FR_SIZE),a6		| Save stack pointer
+	movl	a6,sp@(FR_SP)		|  from before trap
+
+	| If we are not on tmpstk switch to it.
+	| (allows debugger to frob the stack)
+	movl	a6,d1
+	cmpl	#tmpstk,d1
+	jls	Lbrkpt2 		| already on tmpstk
+	| Copy frame to the temporary stack
+	movl	sp,a0			| a0=src
+	lea	tmpstk-96,a1		| a1=dst
+	movl	a1,sp			| sp=new frame
+	moveq	#FR_SIZE,d1
+Lbrkpt1:
+	movl	a0@+,a1@+
+	subql	#4,d1
+	bgt	Lbrkpt1
+
+Lbrkpt2:
+	| Now call the trap handler as usual.
+	clrl	sp@-			| no VA arg
+	clrl	sp@-			| or code arg
+	movl	d0,sp@-			| push trap type
+	jbsr	_trap			| handle trap
+	lea	sp@(12),sp		| pop value args
+
+	| The stack pointer may have been modified, or
+	| data below it modified (by kgdb push call),
+	| so push the hardware frame at the current sp
+	| before restoring registers and returning.
+
+	movl	sp@(FR_SP),a0		| modified sp
+	lea	sp@(FR_SIZE),a1		| end of our frame
+	movl	a1@-,a0@-		| copy 2 longs with
+	movl	a1@-,a0@-		| ... predecrement
+	movl	a0,sp@(FR_SP)		| sp = h/w frame
+	moveml	sp@+,#0x7FFF		| restore all but sp
+	movl	sp@,sp			| ... and sp
+	rte				| all done
+
+/*
+ * Trap 12 is the entry point for the cachectl "syscall"
+ *	cachectl(command, addr, length)
+ * command in d0, addr in a1, length in d1
+ */
+	.globl	_cachectl
+_trap12:
+	movl	d1,sp@-			| push length
+	movl	a1,sp@-			| push addr
+	movl	d0,sp@-			| push command
+	jbsr	_cachectl		| do it
+	lea	sp@(12),sp		| pop args
 	jra	rei			| all done
 
 /*
@@ -1182,26 +1230,23 @@ Lm68881rdone:
 	frestore a0@			| restore state
 	rts
 
-| delay(int usecs)
-| Delay for "usec" microseconds.  Minimum delay is about 5 uS.
-|
-| This routine depends on the variable "cpuspeed"
-| which should be set based on the CPU clock rate.
-| XXX - Currently this is set in sun3_startup.c based on the
-| CPU model but this should be determined at run time...
-|
-	.globl	_delay
-_delay:
-	| d0 = (cpuspeed * usecs)
-	movel	_cpuspeed,d0
-	mulsl	sp@(4),d0
-	| subtract some overhead
-	moveq	#80,d1
+/*
+ * _delay(unsigned N)
+ * Delay for at least (N/256) microseconds.
+ * This routine depends on the variable:  delay_divisor
+ * which should be set based on the CPU clock rate.
+ * XXX: Currently this is set in sun3_startup.c based on the
+ * XXX: CPU model but this should be determined at run time...
+ */
+	.globl	__delay
+__delay:
+	| d0 = arg = (usecs << 8)
+	movl	sp@(4),d0
+	| d1 = delay_divisor;
+	movl	_delay_divisor,d1
+L_delay:
 	subl	d1,d0
-| This loop takes 8 clocks per cycle.
-Ldelay:
-	subql	#8,d0
-	jgt	Ldelay
+	jgt	L_delay
 	rts
 
 

@@ -2,15 +2,15 @@
 #include <stdarg.h>
 #include "stand.h"
 
-extern volatile void abort();
+extern __dead void abort();
 
-volatile void
+__dead void
 panic(const char *fmt, ...)
 {
     va_list ap;
 
     va_start(ap, fmt);
-    printf(fmt, ap);
+	vprintf(fmt, ap);
     printf("\n");
     va_end(ap);
 	abort();

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.24 1995/12/10 08:46:05 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.28 1996/04/22 02:25:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -68,16 +68,26 @@
 #define	LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
 
-#define	LE_SOFTC(unit)	lecd.cd_devs[unit]
+#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
 
-int	lematch __P((struct device *, void *, void *));
-void	leattach __P((struct device *, struct device *, void *));
+static int	le_match __P((struct device *, void *, void *));
+static void	le_attach __P((struct device *, struct device *, void *));
 int	leintr __P((void *));
 
-struct	cfdriver lecd = {
-	NULL, "le", lematch, leattach, DV_IFNET, sizeof(struct le_softc)
+struct cfattach le_ca = {
+	sizeof(struct le_softc), le_match, le_attach
 };
+
+struct	cfdriver le_cd = {
+	NULL, "le", DV_IFNET
+};
+
+integrate void
+lehwinit(sc)
+	struct le_softc *sc;
+{
+}
 
 integrate void
 lewrcsr(sc, port, val)
@@ -104,17 +114,24 @@ lerdcsr(sc, port)
 } 
 
 int
-lematch(parent, match, aux)
+le_match(parent, vcf, aux)
 	struct device *parent;
-	void *match, *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
-	int x;
+	int pa, x;
 
-	if (ca->ca_paddr == -1)
-		ca->ca_paddr = OBIO_AMD_ETHER;
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = 3;
+	/*
+	 * OBIO match functions may be called for every possible
+	 * physical address, so match only our physical address.
+	 */
+	if ((pa = cf->cf_paddr) == -1) {
+		/* Use our default PA. */
+		pa = OBIO_AMD_ETHER;
+	}
+	if (pa != ca->ca_paddr)
+		return (0);
 
 	/* The peek returns -1 on bus error. */
 	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
@@ -122,33 +139,66 @@ lematch(parent, match, aux)
 }
 
 void
-leattach(parent, self, aux)
+le_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct le_softc *sc = (void *)self;
+	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = aux;
+	int intpri;
+
+	/* Default interrupt level. */
+	if ((intpri = cf->cf_intpri) == -1)
+		intpri = 3;
+	printf(" level %d", intpri);
 
 	sc->sc_r1 = (struct lereg1 *)
 	    obio_alloc(ca->ca_paddr, OBIO_AMD_ETHER_SIZE);
-	sc->sc_mem = dvma_malloc(MEMSIZE);
-	sc->sc_conf3 = LE_C3_BSWP;
+
+	sc->sc_memsize = 0x4000;	/* 16K */
+	sc->sc_mem = dvma_malloc(sc->sc_memsize);
 	sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
-	sc->sc_memsize = MEMSIZE;
+	sc->sc_conf3 = LE_C3_BSWP;
 
 	idprom_etheraddr(sc->sc_arpcom.ac_enaddr);
 
-	sc->sc_copytodesc = copytobuf_contig;
-	sc->sc_copyfromdesc = copyfrombuf_contig;
-	sc->sc_copytobuf = copytobuf_contig;
-	sc->sc_copyfrombuf = copyfrombuf_contig;
-	sc->sc_zerobuf = zerobuf_contig;
+	sc->sc_copytodesc = am7990_copytobuf_contig;
+	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+	sc->sc_copytobuf = am7990_copytobuf_contig;
+	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+	sc->sc_zerobuf = am7990_zerobuf_contig;
 
-	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
+	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
 
 	/* Install interrupt handler. */
-	isr_add_autovect(leintr, (void *)sc, ca->ca_intpri);
+	isr_add_autovect(leintr, (void *)sc, intpri);
 }
+
+/*
+ * Compare two Ether/802 addresses for equality, inlined and
+ * unrolled for speed.  I'd love to have an inline assembler
+ * version of this...   XXX: Who wanted that? mycroft?
+ * I wrote one, but the following is just as efficient.
+ * This expands to 10 short m68k instructions! -gwr
+ * Note: use this like bcmp()
+ */
+static inline u_short
+ether_cmp(one, two)
+	u_char *one, *two;
+{
+	register u_short *a = (u_short *) one;
+	register u_short *b = (u_short *) two;
+	register u_short diff;
+
+	diff  = *a++ - *b++;
+	diff |= *a++ - *b++;
+	diff |= *a++ - *b++;
+
+	return (diff);
+}
+
+#define	ETHER_CMP ether_cmp
 
 #include <dev/ic/am7990.c>

@@ -7,4 +7,4 @@
  *	device access stays strictly on block boundaries.
  */
 
-char *version = "$Revision: 1.2 $";
+char *version = "$Revision: 1.3 $";

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sun.c,v 1.4 1995/09/23 03:42:40 gwr Exp $ */
+/*	$NetBSD: exec_sun.c,v 1.5 1996/01/29 23:41:06 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,6 +42,7 @@
 #include "stand.h"
 
 extern int debug;
+int errno;
 
 /*ARGSUSED*/
 int
@@ -159,13 +160,8 @@ exec_sun(file, loadaddr)
 	printf("=0x%x\n", cp - loadaddr);
 	close(io);
 
-	if (debug) {
-		printf("Debug mode - enter c to continue...");
-		/* This will print "\nAbort at ...\n" */
-		asm("	trap #0");
-	}
-
 	printf("Starting program at 0x%x\n", (int)entry);
+	asm("_exec_sun_call_entry:");
 	(*entry)();
 	panic("exec returned");
 

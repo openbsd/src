@@ -1,7 +1,6 @@
-/*	$NetBSD: z8530var.h,v 1.3 1996/01/30 22:35:04 gwr Exp $	*/
+/*	$NetBSD: memerr.h,v 1.1 1996/03/26 14:57:44 gwr Exp $ */
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -42,41 +41,55 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
+ *	@(#)memreg.h	8.1 (Berkeley) 6/11/93
  */
-
-#include <dev/ic/z8530sc.h>
 
 /*
- * Functions to read and write individual registers in a channel.
- * The ZS chip requires a 1.6 uSec. recovery time between accesses,
- * and the Sun3 hardware does NOT take care of this for you.
- * The delay is now handled inside the chip access functions.
- * These could be inlines, but with the delay, speed is moot.
+ * Sun3 memory error register.
+ *
+ * All Sun3 memory systems use either parity checking or
+ * Error Correction Coding (ECC).  A memory error causes
+ * the Memory Error Register (MER) to latch information
+ * about the location and type of error, and if the MER
+ * interrupt is enabled, generateds a level 7 interrupt.
+ * The latched information persists (even if more errors
+ * occur) until the MER is cleared by a write (at mer_er).
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
-
+struct memerr {
+	volatile u_char	me_csr;		/* MER control/status reg. */
+	volatile u_char	me__pad[3];
+	volatile u_int	me_vaddr;
+};
 
 /*
- * How to request a "soft" interrupt.
- * This could be a macro if you like.
+ * Bits in me_csr common between ECC/parity memory systems:
  */
-void zsc_req_softint __P((struct zsc_softc *zsc));
-
-/* Handle user request to enter kernel debugger. */
-void zs_abort();
+#define	ME_CSR_IPEND	0x80	/* (ro) error interrupt pending */
+#define	ME_CSR_IENA 	0x40	/* (rw) error interrupt enable */
 
 /*
- * Some warts needed by z8530tty.c -
- * The default parity REALLY needs to be the same as the PROM uses,
- * or you can not see messages done with printf during boot-up...
+ *  Bits in me_csr on parity-checked memory system:
  */
-#define	ZSTTY_MAJOR 	12		/* XXX */
-#define	ZSTTY_DEF_CFLAG 	(CREAD | CS8 | HUPCL)
+#define ME_PAR_TEST 	0x20	/* (rw) write inverse parity */
+#define ME_PAR_CHECK	0x10	/* (rw) enable parity checking */
+#define ME_PAR_ERR3 	0x08	/* (ro) parity error in <24..31> */
+#define ME_PAR_ERR2 	0x04	/* (ro) parity error in <16..23> */
+#define ME_PAR_ERR1 	0x02	/* (ro) parity error in <8..15> */
+#define ME_PAR_ERR0 	0x01	/* (ro) parity error in <0..7> */
+#define	ME_PAR_EMASK	0x0F	/* (ro) mask of above four */
+#define ME_PAR_STR	"\20\10IPEND\7IENA\6TEST\5CHK\4ERR3\3ERR2\2ERR1\1ERR0"
+
+/*
+ *  Bits in me_csr on an ECC memory system:
+ */
+#define ME_ECC_BUSLK	0x20	/* (rw) hold memory bus mastership */
+#define ME_ECC_CE_ENA	0x10	/* (rw) enable CE recording */
+#define	ME_ECC_WBTMO	0x08	/* (ro) write-back timeout */
+#define	ME_ECC_WBERR	0x04	/* (ro) write-back error */
+#define ME_ECC_UE		0x02	/* (ro) UE, uncorrectable error  */
+#define ME_ECC_CE		0x01	/* (ro) CE, correctable (single bit) error */
+#define	ME_ECC_EMASK	0x0F	/* (ro) mask for some ECC error occuring */
+#define ME_ECC_STR	"\20\10IPEND\7IENA\6BUSLK\5CE_ENA\4TMOUT\3WBERR\2UE\1CE"
+

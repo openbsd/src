@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 1995/10/10 21:33:33 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.56 1996/03/21 23:03:49 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -78,7 +78,7 @@ extern struct emul emul_sunos;
  */
 
 extern int fubail(), subail();
-extern int *nofault;
+extern label_t *nofault;
 
 /* XXX - put these in some header file? */
 extern vm_offset_t virtual_avail;
@@ -522,7 +522,7 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 		ucode = v;
-		sig = SIGSEGV;
+		sig = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
 		break;
 	} /* T_MMUFLT */
 	} /* switch */

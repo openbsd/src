@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9 1995/01/11 20:38:33 gwr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.10 1996/03/26 15:16:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -41,8 +41,6 @@
 #define	BUS_OBIO	1	/* "obio"  */
 #define	BUS_VME16	2	/* "vmes"  */
 #define	BUS_VME32	3	/* "vmel"  */
-/* These are pseudo buses: */
-#define	BUS_OBCTL	4
 
 /*
  * This is the "args" parameter to the bus match/attach functions.
@@ -54,8 +52,13 @@ struct confargs {
 	int ca_intvec;		/* interrupt vector index */
 };
 
-int always_match __P((struct device *, void *, void *));
-void bus_scan __P((struct device *, void *, int));
+/* Locator aliases */
+#define cf_paddr	cf_loc[0]
+#define cf_intpri	cf_loc[1]
+#define cf_intvec	cf_loc[2]
+
+int bus_scan __P((struct device *, void *, void *));
 int  bus_print __P((void *, char *));
 int  bus_peek __P((int, int, int));
 char * bus_mapin __P((int, int, int));
+

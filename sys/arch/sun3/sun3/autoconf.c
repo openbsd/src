@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1995/09/26 04:02:14 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 1996/04/07 05:45:08 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -61,51 +61,22 @@
 
 extern int soft1intr();
 
-void mainbusattach __P((struct device *, struct device *, void *));
 void swapgeneric();
 void swapconf(), dumpconf();
 
 int cold;
 
-struct mainbus_softc {
-	struct device mainbus_dev;
-};
-	
-struct cfdriver mainbuscd = 
-{ NULL, "mainbus", always_match, mainbusattach, DV_DULL,
-	sizeof(struct mainbus_softc), 0};
-
-void mainbusattach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
-{
-	struct cfdata *new_match;
-	
-	printf("\n");
-	while (1) {
-		new_match = config_search(NULL, self, NULL);
-		if (!new_match) break;
-		config_attach(self, new_match, NULL, NULL);
-	}
-}
-
 void configure()
 {
-	int root_found;
-
-	/* Install non-device interrupt handlers. */
-	isr_config();
+	struct device *mainbus;
 
 	/* General device autoconfiguration. */
-	root_found = config_rootfound("mainbus", NULL);
-	if (!root_found)
+	mainbus = config_rootfound("mainbus", NULL);
+	if (mainbus == NULL)
 		panic("configure: mainbus not found");
 
-#ifdef	GENERIC
 	/* Choose root and swap devices. */
 	swapgeneric();
-#endif
 	swapconf();
 	dumpconf();
 	cold = 0;
@@ -137,25 +108,30 @@ swapconf()
 	}
 }
 
-int always_match(parent, cf, args)
-	struct device *parent;
-	void *cf;
-	void *args;
-{
-	return 1;
-}
-
 /*
  * Generic "bus" support functions.
+ *
+ * bus_scan:
+ * This function is passed to config_search() by the attach function
+ * for each of the "bus" drivers (obctl, obio, obmem, vmes, vmel).
+ * The purpose of this function is to copy the "locators" into our
+ * confargs structure, so child drivers may use the confargs both
+ * as match parameters and as temporary storage for the defaulted
+ * locator values determined in the child_match and preserved for
+ * the child_attach function.  If the bus attach functions just
+ * used config_found, then we would not have an opportunity to
+ * setup the confargs for each child match and attach call.
+ *
+ * bus_print:
+ * Just prints out the final (non-default) locators.
  */
-void bus_scan(parent, child, bustype)
+int bus_scan(parent, child, aux)
 	struct device *parent;
-	void *child;
-	int bustype;
+	void *child, *aux;
 {
 	struct cfdata *cf = child;
-	struct confargs ca;
-	cfmatch_t match;
+	struct confargs *ca = aux;
+	cfmatch_t mf;
 
 #ifdef	DIAGNOSTIC
 	if (parent->dv_cfdata->cf_driver->cd_indirect)
@@ -164,22 +140,33 @@ void bus_scan(parent, child, bustype)
 		panic("bus_scan: FSTATE_STAR");
 #endif
 
-	ca.ca_bustype = bustype;
-	ca.ca_paddr  = cf->cf_loc[0];
-	ca.ca_intpri = cf->cf_loc[1];
+	/* ca->ca_bustype set by parent */
+	ca->ca_paddr  = cf->cf_loc[0];
+	ca->ca_intpri = cf->cf_loc[1];
+	ca->ca_intvec = -1;
 
-	if ((bustype == BUS_VME16) || (bustype == BUS_VME32)) {
-		ca.ca_intvec = cf->cf_loc[2];
-	} else {
-		ca.ca_intvec = -1;
+	if ((ca->ca_bustype == BUS_VME16) ||
+		(ca->ca_bustype == BUS_VME32))
+	{
+		ca->ca_intvec = cf->cf_loc[2];
 	}
 
-	match = cf->cf_driver->cd_match;
-	if ((*match)(parent, cf, &ca) > 0) {
-		config_attach(parent, cf, &ca, bus_print);
+	/*
+	 * Note that this allows the match function to save
+	 * defaulted locators in the confargs that will be
+	 * preserved for the related attach call.
+	 */
+	mf = cf->cf_attach->ca_match;
+	if ((*mf)(parent, cf, ca) > 0) {
+		config_attach(parent, cf, ca, bus_print);
 	}
+	return (0);
 }
 
+/*
+ * Print out the confargs.  The parent name is non-NULL
+ * when there was no match found by config_found().
+ */
 int
 bus_print(args, name)
 	void *args;
@@ -187,14 +174,17 @@ bus_print(args, name)
 {
 	struct confargs *ca = args;
 
+	if (name)
+		printf("%s:", name);
+
 	if (ca->ca_paddr != -1)
 		printf(" addr 0x%x", ca->ca_paddr);
 	if (ca->ca_intpri != -1)
 		printf(" level %d", ca->ca_intpri);
 	if (ca->ca_intvec != -1)
 		printf(" vector 0x%x", ca->ca_intvec);
-	/* XXXX print flags? */
-	return(QUIET);
+
+	return(UNCONF);
 }
 
 extern vm_offset_t tmp_vpages[];
@@ -269,7 +259,7 @@ bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
 	int off, pa, pgs, pmt;
-	vm_offset_t va;
+	vm_offset_t va, retval;
 
 	if (bustype & ~3)
 		return (NULL);
@@ -286,9 +276,19 @@ bus_mapin(bustype, paddr, sz)
 	va = kmem_alloc_wait(kernel_map, sz);
 	if (va == 0)
 		panic("bus_mapin");
+	retval = va + off;
 
 	/* Map it to the specified bus. */
+#if 0	/* XXX */
+	/* This has a problem with wrap-around... */
 	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
+#else
+	do {
+		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE);
+		va += NBPG;
+		pa += NBPG;
+	} while ((sz -= NBPG) > 0);
+#endif
 
-	return ((char*)(va + off));
+	return ((char*)retval);
 }	

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 1995/11/10 22:04:48 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -48,7 +48,9 @@
 /*
  * Machine dependent constants for the Sun3 series.
  */
+#define	_MACHINE     sun3
 #define	MACHINE     "sun3"
+#define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
 #define MID_MACHINE MID_M68K
 
@@ -149,17 +151,10 @@
 /* XXX - Does this really belong here? -gwr */
 #include <machine/psl.h>
 
-#ifdef _KERNEL
-#ifndef LOCORE
+#if defined(_KERNEL) && !defined(_LOCORE)
+extern void _delay __P((unsigned));
+#define delay(us)	_delay((us)<<8)
 #define	DELAY(n)	delay(n)
-extern int cpuspeed;
-static inline void delay2us()
-{
-	register int n = cpuspeed;
-
-	__asm __volatile ("0: subql #4,%0; jgt 0b" : "=d" (n) : "0" (n));
-}
-#endif	/* !LOCORE */
-#endif	/* _KERNEL */
+#endif	/* _KERNEL && !_LOCORE */
 
 #endif	/* MACHINE */

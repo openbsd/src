@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.3 1995/09/23 03:42:35 gwr Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.4 1996/01/29 23:41:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -38,10 +38,10 @@
 
 extern int edata[], end[];
 extern int * getvbr();
-extern volatile void abort();
+extern __dead void abort();
 extern void main();
 
-volatile void
+__dead void
 exit()
 {
 	mon_exit_to_mon();
@@ -52,7 +52,7 @@ exit()
  * This is called by SRT0.S
  * to do final prep for main
  */
-void
+__dead void
 _start()
 {
 	register int *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.3 1995/10/10 21:37:29 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.4 1996/02/20 22:05:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -56,36 +56,44 @@
 #include "cache.h"
 
 /* Resource map used by dvma_mapin/dvma_mapout */
-#define	NUM_DVMA_SEGS ((DVMA_SEGMAP_SIZE / NBSG) + 1)
+#define	NUM_DVMA_SEGS 10
 struct map dvma_segmap[NUM_DVMA_SEGS];
 
-/* DVMA page map managed with help from the VM system. */
-vm_map_t dvma_pgmap;
+/* XXX: Might need to tune this... */
+vm_size_t dvma_segmap_size = 6 * NBSG;
+
+/* Using phys_map to manage DVMA scratch-memory pages. */
 /* Note: Could use separate pagemap for obio if needed. */
 
 void dvma_init()
 {
-	int size;
+	vm_offset_t segmap_addr;
 
 	/*
-	 * Create the map used for small, permanent DVMA page
-	 * allocations, such as may be needed by drivers for
-	 * control structures shared with the device.
+	 * Create phys_map covering the entire DVMA space,
+	 * then allocate the segment pool from that.  The
+	 * remainder will be used as the DVMA page pool.
 	 */
-	dvma_pgmap = vm_map_create(pmap_kernel(),
-	    DVMA_PAGEMAP_BASE, DVMA_PAGEMAP_END, TRUE);
-	if (dvma_pgmap == NULL)
-		panic("dvma_init: unable to create DVMA page map.");
+	phys_map = vm_map_create(pmap_kernel(),
+		DVMA_SPACE_START, DVMA_SPACE_END, 1);
+	if (phys_map == NULL)
+		panic("unable to create DVMA map");
+
+	/*
+	 * Reserve the DVMA space used for segment remapping.
+	 * The remainder of phys_map is used for DVMA scratch
+	 * memory pages (i.e. driver control blocks, etc.)
+	 */
+	segmap_addr = kmem_alloc_wait(phys_map, dvma_segmap_size);
+	if (segmap_addr != DVMA_SPACE_START)
+		panic("dvma_init: unable to allocate DVMA segments");
 
 	/*
 	 * Create the VM pool used for mapping whole segments
 	 * into DVMA space for the purpose of data transfer.
 	 */
-	rminit(dvma_segmap,
-		   DVMA_SEGMAP_SIZE,
-		   DVMA_SEGMAP_BASE,
-		   "dvma_segmap",
-		   NUM_DVMA_SEGS);
+	rminit(dvma_segmap, dvma_segmap_size, segmap_addr,
+		   "dvma_segmap", NUM_DVMA_SEGS);
 }
 
 /*
@@ -101,9 +109,9 @@ caddr_t dvma_malloc(bytes)
     if (!bytes)
 		return NULL;
     new_size = sun3_round_page(bytes);
-    new_mem = (caddr_t) kmem_alloc(dvma_pgmap, new_size);
+    new_mem = (caddr_t) kmem_alloc(phys_map, new_size);
     if (!new_mem)
-		panic("dvma_malloc: no space in dvma_pgmap");
+		panic("dvma_malloc: no space in phys_map");
     /* The pmap code always makes DVMA pages non-cached. */
     return new_mem;
 }
@@ -115,7 +123,9 @@ void dvma_free(addr, size)
 	caddr_t	addr;
 	size_t	size;
 {
-	kmem_free(dvma_pgmap, (vm_offset_t)addr, (vm_size_t)size);
+	vm_size_t sz = sun3_round_page(size);
+
+	kmem_free(phys_map, (vm_offset_t)addr, sz);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 1995/11/17 23:30:19 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 1996/04/26 18:37:58 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -273,12 +273,21 @@ bad:
 	return(-1);
 }
 
-/* XXX - What is this for?  Where does it belong? -gwr */
+/*
+ * This function appears to be called by each disk driver.
+ * Aparently this is to give this MD code a chance to do
+ * additional "device registration" types of work. (?)
+ * For example, the sparc port uses this to record the
+ * device node for the PROM-specified boot device.
+ *
+ * XXX: return value not documented (ignored everywhere)
+ */
 void
 dk_establish(dk, dev)
-	struct dkdevice *dk;
+	struct disk *dk;
 	struct device *dev;
 {
+	return;
 }
 
 /************************************************************************

@@ -1,4 +1,4 @@
-/* $NetBSD: xdvar.h,v 1.2 1996/01/07 22:03:18 thorpej Exp $ */
+/*	$NetBSD: xdvar.h,v 1.3 1996/02/22 06:55:33 thorpej Exp $	*/
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.3 1995/09/23 03:42:51 gwr Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.4 1996/01/29 23:54:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -48,6 +48,7 @@
  * for use by the NFS open code (NFS/lookup).
  */
 
+#include <stdarg.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -59,7 +60,9 @@
 #include "net.h"
 #include "netif.h"
 #include "bootparam.h"
+#include "dev_net.h"
 
+extern int debug;
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
 /*
@@ -86,28 +89,63 @@ char domainname[FNAME_SIZE];
  * Local things...
  */
 static int netdev_sock = -1;
-static int open_count;
+static int netdev_opens;
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
  * This opens the low-level device and sets f->f_devdata.
+ * This is declared with variable arguments...
  */
 int
-net_open(f, devname)
-	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
+net_open(struct open_file *f, ...)
 {
+	va_list ap;
+	char *devname;		/* Device part of file name (or NULL). */
 	int error = 0;
 
+	va_start(ap, f);
+	devname = va_arg(ap, char*);
+	va_end(ap);
+
+#ifdef	NETIF_DEBUG
+	if (debug)
+		printf("net_open: %s\n", devname);
+#endif
+
 	/* On first open, do netif open, mount, etc. */
-	if (open_count == 0) {
+	if (netdev_opens == 0) {
 		/* Find network interface. */
-		if ((netdev_sock = netif_open(devname)) < 0)
-			return (error=ENXIO);
-		if ((error = net_mountroot(f, devname)) != 0)
+		if (netdev_sock < 0) {
+			netdev_sock = netif_open(devname);
+			if (netdev_sock < 0) {
+				printf("net_open: netif_open() failed\n");
+				return (ENXIO);
+			}
+			if (debug)
+				printf("net_open: netif_open() succeeded\n");
+		}
+		if (rootip.s_addr == 0) {
+			/* Get root IP address, and path, etc. */
+			error = net_getparams(netdev_sock);
+			if (error) {
+				/* getparams makes its own noise */
+				goto fail;
+			}
+			/* Get the NFS file handle (mountd). */
+			error = nfs_mount(netdev_sock, rootip, rootpath);
+			if (error) {
+				printf("net_open: NFS mount error=%d\n", error);
+				rootip.s_addr = 0;
+			fail:
+				netif_close(netdev_sock);
+				netdev_sock = -1;
 			return (error);
 	}
-	open_count++;
+			if (debug)
+				printf("net_open: NFS mount succeeded\n");
+		}
+	}
+	netdev_opens++;
 	f->f_devdata = nfs_root_node;
 	return (error);
 }
@@ -116,11 +154,29 @@ int
 net_close(f)
 	struct open_file *f;
 {
+
+#ifdef	NETIF_DEBUG
+	if (debug)
+		printf("net_close: opens=%d\n", netdev_opens);
+#endif
+
 	/* On last close, do netif close, etc. */
-	if (open_count > 0)
-		if (--open_count == 0)
-			netif_close(netdev_sock);
 	f->f_devdata = NULL;
+	/* Extra close call? */
+	if (netdev_opens <= 0)
+		return (0);
+	netdev_opens--;
+	/* Not last close? */
+	if (netdev_opens > 0)
+		return(0);
+	rootip.s_addr = 0;
+	if (netdev_sock >= 0) {
+		if (debug)
+			printf("net_close: calling netif_close()\n");
+		netif_close(netdev_sock);
+		netdev_sock = -1;
+	}
+	return (0);
 }
 
 int
@@ -136,16 +192,9 @@ net_strategy()
 }
 
 int
-net_mountroot(f, devname)
-	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
+net_getparams(sock)
+	int sock;
 {
-	int error;
-
-#ifdef DEBUG
-	printf("net_mountroot: %s\n", devname);
-#endif
-
 	/*
 	 * Get info for NFS boot: our IP address, our hostname,
 	 * server IP address, and our root path on the server.
@@ -155,23 +204,31 @@ net_mountroot(f, devname)
 
 #ifdef	SUN_BOOTPARAMS
 	/* Get our IP address.  (rarp.c) */
-	if (rarp_getipaddress(netdev_sock))
+	if (rarp_getipaddress(sock)) {
+		printf("net_open: RARP failed\n");
 		return (EIO);
+	}
 #else	/* BOOTPARAMS */
 	/*
 	 * Get boot info using BOOTP. (RFC951, RFC1048)
 	 * This also gets the server IP address, gateway,
 	 * root path, etc.
 	 */
-	bootp(netdev_sock);	/* XXX - Error return? */
+	bootp(sock);
+	if (myip.s_addr == 0) {
+		printf("net_open: BOOTP failed\n");
+		return (EIO);
+	}
 #endif	/* BOOTPARAMS */
 
 	printf("boot: client addr: %s\n", inet_ntoa(myip));
 
 #ifdef	SUN_BOOTPARAMS
 	/* Get our hostname, server IP address, gateway. */
-	if (bp_whoami(netdev_sock))
+	if (bp_whoami(sock)) {
+		printf("net_open: bootparam/whoami RPC failed\n");
 		return (EIO);
+	}
 #endif	/* BOOTPARAMS */
 
 	printf("boot: client name: %s\n", hostname);
@@ -182,15 +239,14 @@ net_mountroot(f, devname)
 
 #ifdef	SUN_BOOTPARAMS
 	/* Get the root pathname. */
-	if (bp_getfile(netdev_sock, "root", &rootip, rootpath))
+	if (bp_getfile(sock, "root", &rootip, rootpath)) {
+		printf("net_open: bootparam/getfile RPC failed\n");
 		return (EIO);
+	}
 #endif	/* BOOTPARAMS */
 
 	printf("boot: server addr: %s\n", inet_ntoa(rootip));
 	printf("boot: server path: %s\n", rootpath);
 
-	/* Get the NFS file handle (mount). */
-	error = nfs_mount(netdev_sock, rootip, rootpath);
-
-	return (error);
+	return (0);
 }

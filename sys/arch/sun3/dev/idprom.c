@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.10 1995/02/11 20:57:11 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.12 1996/03/26 15:16:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -51,51 +51,6 @@ extern long hostid;	/* in kern_sysctl.c */
  */
 struct idprom identity_prom;
 
-static int  idprom_match __P((struct device *, void *vcf, void *args));
-static void idprom_attach __P((struct device *, struct device *, void *));
-
-struct cfdriver idpromcd = {
-	NULL, "idprom", idprom_match, idprom_attach,
-	DV_DULL, sizeof(struct device), 0 };
-
-int idprom_match(parent, vcf, args)
-	struct device *parent;
-	void *vcf, *args;
-{
-	struct cfdata *cf = vcf;
-
-	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
-		return (0);
-
-	return (1);
-}
-
-void idprom_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
-{
-	struct idprom *idp;
-	union {
-		long l;
-		char c[4];
-	} id;
-
-	/*
-	 * Construct the hostid from the idprom contents.
-	 * This appears to be the way SunOS does it.
-	 */
-	idp = &identity_prom;
-	id.c[0] = idp->idp_machtype;
-	id.c[1] = idp->idp_serialnum[0];
-	id.c[2] = idp->idp_serialnum[1];
-	id.c[3] = idp->idp_serialnum[2];
-	hostid = id.l;
-
-	printf(" hostid 0x%x\n", id.l);
-}
-
 int idpromopen(dev, oflags, devtype, p)
 	dev_t dev;
 	int oflags;
@@ -141,6 +96,10 @@ int idprom_init()
 	struct idprom *idp;
 	char *src, *dst;
 	int len, x, xorsum;
+	union {
+		long l;
+		char c[4];
+	} hid;
 
 	idp = &identity_prom;
 	dst = (char*)idp;
@@ -162,6 +121,17 @@ int idprom_init()
 		mon_printf("idprom_fetch: bad version=%d\n", idp->idp_format);
 		return -1;
 	}
+
+	/*
+	 * Construct the hostid from the idprom contents.
+	 * This appears to be the way SunOS does it.
+	 */
+	hid.c[0] = idp->idp_machtype;
+	hid.c[1] = idp->idp_serialnum[0];
+	hid.c[2] = idp->idp_serialnum[1];
+	hid.c[3] = idp->idp_serialnum[2];
+	hostid = hid.l;
+
 	return 0;
 }
 

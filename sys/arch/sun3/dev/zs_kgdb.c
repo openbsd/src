@@ -47,6 +47,12 @@
 /*
  * Hooks for kgdb when attached vi the z8530 driver
  * XXX - not tested yet...
+ *
+ * To use this, build a kernel with: option KGDB, and
+ * boot that kernel with "-d".  (The kernel will call
+ * zs_kgdb_init, kgdb_connect.)  When the console prints
+ * "kgdb waiting..." you run "gdb -k kernel" and then
+ * connect to the remote using: "target remote /dev/ttyX"
  */
 
 #include <sys/param.h>
@@ -65,6 +71,8 @@
 
 /* The Sun3 provides a 4.9152 MHz clock to the ZS chips. */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
+
+#define ZS_DELAY()			delay(2)
 
 extern int kgdb_dev;
 extern int kgdb_rate;
@@ -175,7 +183,7 @@ zs_check_kgdb(cs, dev)
 	 * Yes, this is the kgdb port.  Finish the autoconfig
 	 * message and set up the port for our exclusive use.
 	 */
-	printf(" (kgdb,%d)\n", kgdb_rate);
+	printf(" (kgdb)\n");
 
 	cs->cs_private = NULL;
 	cs->cs_ops = &zsops_kgdb;
@@ -213,16 +221,14 @@ zs_kgdb_rxint(cs)
 	register u_char c, rr1;
 
 	/* Read the input data ASAP. */
-	c = *(cs->cs_reg_data);
-	ZS_DELAY();
+	c = zs_read_data(cs);
 
 	/* Save the status register too. */
-	rr1 = ZS_READ(cs, 1);
+	rr1 = zs_read_reg(cs, 1);
 
 	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 		/* Clear the receive error. */
-		*(cs->cs_reg_csr) = ZSWR0_RESET_ERRORS;
-		ZS_DELAY();
+		zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 	}
 
 	if (c == FRAME_START) {
@@ -238,11 +244,10 @@ static int
 zs_kgdb_txint(cs)
 	register struct zs_chanstate *cs;
 {
-	register int count, rval;
+	register int rr0;
 
-	*(cs->cs_reg_csr) = ZSWR0_RESET_TXINT;
-	ZS_DELAY();
-
+	rr0 = zs_read_csr(cs);
+	zs_write_csr(cs, ZSWR0_RESET_TXINT);
 	return (0);
 }
 
@@ -252,11 +257,8 @@ zs_kgdb_stint(cs)
 {
 	register int rr0;
 
-	rr0 = *(cs->cs_reg_csr);
-	ZS_DELAY();
-
-	*(cs->cs_reg_csr) = ZSWR0_RESET_STATUS;
-	ZS_DELAY();
+	rr0 = zs_read_csr(cs);
+	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.14 1996/01/24 22:40:20 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.16 1996/04/26 18:36:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -329,10 +329,7 @@ kd_later(tpaddr)
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (tp->t_line)
 		(*linesw[tp->t_line].l_start)(tp);
-	else
-		kdstart(tp);
 	splx(s);
 }
 
@@ -360,7 +357,8 @@ static void kd_putfb(tp)
 }
 
 /*
- * Our "interrupt" routine for input.
+ * Our "interrupt" routine for input. This is called by
+ * the keyboard driver (dev/sun/kbd.c) at spltty.
  */
 void
 kd_input(c)
@@ -376,7 +374,7 @@ kd_input(c)
     if ((tp->t_state & TS_ISOPEN) == 0)
 		return;
 
-	ttyinput(c, kd->kd_tty);
+	(*linesw[tp->t_line].l_rint)(c, tp);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.6 1995/10/13 21:45:21 gwr Exp $ */
+/*	$NetBSD: promdev.c,v 1.7 1996/01/29 23:41:10 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -40,6 +40,7 @@
 #include "dvma.h"
 
 extern void set_pte __P((int, int));
+extern int debug;
 
 static int promdev_inuse;
 
@@ -69,15 +70,17 @@ prom_iopen(si)
 	dip = ops->b_devinfo;
 
 #ifdef DEBUG_PROM
-	printf("Boot device type: %s\n", ops->b_desc);
-	printf("d_devbytes=%d\n", dip->d_devbytes);
-	printf("d_dmabytes=%d\n", dip->d_dmabytes);
-	printf("d_localbytes=%d\n", dip->d_localbytes);
-	printf("d_stdcount=%d\n", dip->d_stdcount);
-	printf("d_stdaddrs[%d]=%x\n", si->si_ctlr,
+	if (debug) {
+		printf("Boot device type: %s\n", ops->b_desc);
+		printf("d_devbytes=%d\n", dip->d_devbytes);
+		printf("d_dmabytes=%d\n", dip->d_dmabytes);
+		printf("d_localbytes=%d\n", dip->d_localbytes);
+		printf("d_stdcount=%d\n", dip->d_stdcount);
+		printf("d_stdaddrs[%d]=%x\n", si->si_ctlr,
 	              dip->d_stdaddrs[si->si_ctlr]);
-	printf("d_devtype=%d\n", dip->d_devtype);
-	printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
+		printf("d_devtype=%d\n", dip->d_devtype);
+		printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
+	}
 #endif
 
 	if (si->si_ctlr > dip->d_stdcount) {
@@ -91,14 +94,21 @@ prom_iopen(si)
 		si->si_devaddr = prom_mapin(dip->d_stdaddrs[si->si_ctlr],
 			dip->d_devbytes, dip->d_devtype);
 #ifdef	DEBUG_PROM
-		printf("prom_iopen: devaddr=0x%x pte=0x%x\n",
+		if (debug)
+			printf("prom_iopen: devaddr=0x%x pte=0x%x\n",
 			   si->si_devaddr, get_pte(si->si_devaddr));
 #endif
 	}
 
 	if (dip->d_dmabytes) {
-		si->si_dmaaddr = dvma_alloc(dip->d_dmabytes);
+		int addr, size;
+		/* try page-aligned address... */
+		size = dip->d_dmabytes + NBPG;
+		addr = (int) dvma_alloc(size);
+		addr = sun3_round_page(addr);
+		si->si_dmaaddr = (char*) addr;
 #ifdef	DEBUG_PROM
+		if (debug)
 		printf("prom_iopen: dmaaddr=0x%x\n", si->si_dmaaddr);
 #endif
 	}
@@ -106,7 +116,8 @@ prom_iopen(si)
 	if (dip->d_localbytes) {
 		si->si_devdata = alloc(dip->d_localbytes);
 #ifdef	DEBUG_PROM
-		printf("prom_iopen: devdata=0x%x\n", si->si_devdata);
+		if (debug)
+			printf("prom_iopen: devdata=0x%x\n", si->si_devdata);
 #endif
 	}
 
@@ -118,7 +129,8 @@ prom_iopen(si)
 		return (ENXIO);
 	}
 #ifdef	DEBUG_PROM
-	printf("prom_iopen: succeeded, error=%d\n", error);
+	if (debug)
+		printf("prom_iopen: prom open returned %d\n", error);
 #endif
 
 	promdev_inuse++;
@@ -138,12 +150,11 @@ prom_iclose(si)
 	ops = si->si_boottab;
 	dip = ops->b_devinfo;
 
+#ifdef	DEBUG_PROM
+	if (debug)
+		printf("prom_iclose: calling prom close...\n");
+#endif
 	(*ops->b_close)(si);
-
-	if (si->si_dmaaddr) {
-		dvma_free(si->si_dmaaddr, dip->d_dmabytes);
-		si->si_dmaaddr = NULL;
-	}
 
 	promdev_inuse = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 1995/04/10 12:42:29 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 1996/02/28 22:50:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -58,6 +58,9 @@ struct pmap	kernel_pmap_store;
 	pmap_activate(pmap, pcbp)
 #define PMAP_DEACTIVATE(pmap, pcbp) \
 	pmap_deactivate(pmap, pcbp)
+
+extern void pmap_prefer(vm_offset_t, vm_offset_t *);
+#define PMAP_PREFER(fo, ap) pmap_prefer((fo), (ap))
 
 /* XXX - Need a (silly) #define get code in kern_sysctl.c */
 extern segsz_t pmap_resident_pages(pmap_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.13 1995/08/21 21:37:41 gwr Exp $	*/
+/*	$NetBSD: vector.c,v 1.14 1996/02/16 20:17:58 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -66,7 +66,7 @@ void (*vector_table[NVECTORS])() = {
 	chkinst,			/* 6: CHK instruction */
 	trapvinst,			/* 7: TRAPV instruction */
 	privinst,			/* 8: privilege violation */
-	trace,				/* 9: trace */
+	trace,				/* 9: trace (single-step) */
 	illinst,			/* 10: line 1010 emulator */
 	fpfline,			/* 11: line 1111 emulator */
 	badtrap,			/* 12: unassigned, reserved */
@@ -90,8 +90,8 @@ void (*vector_table[NVECTORS])() = {
 	_isr_autovec,			/* 30: level 6 interrupt autovector */
 	_isr_autovec,			/* 31: level 7 interrupt autovector */
 	trap0,				/* 32: syscalls (at least on hp300) */
-	trap1,				/* 33: sigreturn syscall or breakpoi */
-	trap2,				/* 34: breakpoint or sigreturn sysca */
+	trap1,				/* 33: sigreturn syscall */
+	trap2,				/* 34: HPUX breakpoint */
 	illinst,			/* 35: TRAP instruction vector */
 	illinst,			/* 36: TRAP instruction vector */
 	illinst,			/* 37: TRAP instruction vector */
@@ -101,10 +101,10 @@ void (*vector_table[NVECTORS])() = {
 	illinst,			/* 41: TRAP instruction vector */
 	illinst,			/* 42: TRAP instruction vector */
 	illinst,			/* 43: TRAP instruction vector */
-	trap12,  			/* 44: TRAP instruction vector */
+	trap12,  			/* 44: TRAP 12: cachectl */
 	illinst,			/* 45: TRAP instruction vector */
 	illinst,			/* 46: TRAP instruction vector */
-	trap15,				/* 47: TRAP instruction vector */
+	trap15,				/* 47: TRAP 15: breakpoint */
 	fpbsun, 			/* 48: FPCP branch/set on unordered */
 	fpinex, 			/* 49: FPCP inexact result */
 	fpdz,   			/* 50: FPCP divide by zero */

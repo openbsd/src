@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 1995/10/10 21:39:04 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 1996/02/28 22:51:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -110,6 +110,8 @@ struct pmap_stats {
 	int	ps_changewire;		/* useless wiring changes */
 	int	ps_npg_prot_all;	/* of active pages protected */
 	int	ps_npg_prot_actual;	/* pages actually affected */
+	int	ps_vac_uncached;	/* non-cached due to bad alias */
+	int	ps_vac_recached;	/* re-cached when bad alias gone */
 } pmap_stats;
 
 struct context_state {
@@ -1279,6 +1281,7 @@ pv_link(pmap, pa, va, flags)
 			if (BADALIAS(va, npv->pv_va)) {
 				head->pv_flags |= PV_NC;
 				pv_changepte(head, PG_NC, 0);
+				pmap_stats.ps_vac_uncached++;
 				break;
 			}
 		}
@@ -1370,6 +1373,7 @@ pv_unlink(pmap, pa, va)
 				return;
 		head->pv_flags &= ~PV_NC;
 		pv_changepte(head, 0, PG_NC);
+		pmap_stats.ps_vac_recached++;
 	}
 }
 
@@ -1546,7 +1550,7 @@ pmap_next_page(paddr)
  *
  * XXX - Should make this a macro in pmap.h
  */
-u_long
+int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
@@ -3196,6 +3200,26 @@ pmap_collect(pmap)
 {
 }
 
+/*
+ * Find first virtual address >= *va that is
+ * least likely to cause cache aliases.
+ * (This will just seg-align mappings.)
+ */
+void
+pmap_prefer(fo, va)
+	register vm_offset_t fo;
+	register vm_offset_t *va;
+{
+	register long	d;
+
+	d = fo - *va;
+	d &= SEGOFSET;
+	*va += d;
+}
+
+/*
+ * Helper functions for changing unloaded PMEGs
+ */
 static int temp_seg_inuse;
 
 static int

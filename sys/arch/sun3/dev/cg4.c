@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.6 1995/04/13 21:51:34 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.7 1996/03/17 02:03:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,9 +87,13 @@ struct cg4_softc {
 static void	cg4attach __P((struct device *, struct device *, void *));
 static int	cg4match __P((struct device *, void *, void *));
 
-struct cfdriver cgfourcd = {
-	NULL, "cgfour", cg4match, cg4attach,
-	DV_DULL, sizeof(struct cg4_softc) };
+struct cfattach cgfour_ca = {
+	sizeof(struct cg4_softc), cg4match, cg4attach
+};
+
+struct cfdriver cgfour_cd = {
+	NULL, "cgfour", DV_DULL
+};
 
 /* frame buffer generic driver */
 int cg4open(), cg4close(), cg4mmap();
@@ -208,7 +212,7 @@ cg4open(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgfourcd.cd_ndevs || cgfourcd.cd_devs[unit] == NULL)
+	if (unit >= cgfour_cd.cd_ndevs || cgfour_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -231,7 +235,7 @@ cg4ioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	struct cg4_softc *sc = cgfourcd.cd_devs[minor(dev)];
+	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 
 	return (fbioctlfb(&sc->sc_fb, cmd, data));
 }
@@ -260,7 +264,7 @@ cg4mmap(dev, off, prot)
 	register int off;
 	int prot;
 {
-	struct cg4_softc *sc = cgfourcd.cd_devs[minor(dev)];
+	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 	register int physbase;
 
 	if (off & PGOFSET)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.4 1995/04/10 07:05:57 mycroft Exp $	*/
+/*	$NetBSD: cg2.c,v 1.5 1996/03/17 02:03:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,9 +94,13 @@ struct cg2_softc {
 static void	cg2attach __P((struct device *, struct device *, void *));
 static int	cg2match __P((struct device *, void *, void *));
 
-struct cfdriver cgtwocd = {
-	NULL, "cgtwo", cg2match, cg2attach,
-	DV_DULL, sizeof(struct cg2_softc) };
+struct cfattach cgtwo_ca = {
+	sizeof(struct cg2_softc), cg2match, cg2attach
+};
+
+struct cfdriver cgtwo_cd = {
+	NULL, "cgtwo", DV_DULL
+};
 
 /* frame buffer generic driver */
 int cg2open(), cg2close(), cg2mmap();
@@ -196,7 +200,7 @@ cg2open(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgtwocd.cd_ndevs || cgtwocd.cd_devs[unit] == NULL)
+	if (unit >= cgtwo_cd.cd_ndevs || cgtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -219,7 +223,7 @@ cg2ioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	struct cg2_softc *sc = cgtwocd.cd_devs[minor(dev)];
+	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 
 	return (fbioctlfb(&sc->sc_fb, cmd, data));
 }
@@ -233,7 +237,7 @@ cg2mmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	struct cg2_softc *sc = cgtwocd.cd_devs[minor(dev)];
+	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 	int realoff;
 
 	if (off & PGOFSET)

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.8 1995/10/10 21:28:00 gwr Exp $	*/
+/*	$NetBSD: psl.h,v 1.9 1996/02/01 22:33:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -35,7 +35,7 @@
 
 /* Could define this in the common <m68k/psl.h> instead. */
 
-#if defined(_KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(_LOCORE)
 
 #ifndef __GNUC__
 /* No inline, use real function in locore.s */
@@ -102,5 +102,5 @@ extern __inline__ int _spl(int new)
 #define splhigh()       spl7()
 #define splsched()      spl7()
 
-#endif	/* KERNEL && !LOCORE */
+#endif	/* KERNEL && !_LOCORE */
 #endif	/* PSL_C */

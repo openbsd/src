@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.1 1995/09/26 04:02:08 gwr Exp $	*/
+/*	$NetBSD: dvma.h,v 1.3 1996/02/20 22:06:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -54,25 +54,9 @@
  */
 
 /*
- * This range could be managed as whole MMU segments.
- * The last segment is pre-allocated (see below)
- */
-#define DVMA_SEGMAP_BASE	0x0FF00000
-#define DVMA_SEGMAP_SIZE	0x000E0000
-#define DVMA_SEGMAP_END (DVMA_SEGMAP_BASE+DVMA_SEGMAP_SIZE)
-
-/*
- * This range is managed as individual pages.
- * The last page is owned by the PROM monitor.
- */
-#define DVMA_PAGEMAP_BASE	0x0FFE0000
-#define DVMA_PAGEMAP_SIZE	0x0001E000
-#define DVMA_PAGEMAP_END (DVMA_PAGEMAP_BASE+DVMA_PAGEMAP_SIZE)
-
-/*
  * To convert an address in DVMA space to a slave address,
  * just use a logical AND with one of the following masks.
- * To convert back, use logical OR with DVMA_SEGMAP_BASE.
+ * To convert back, just logical OR with the base address.
  */
 #define DVMA_OBIO_SLAVE_BASE 0x0F000000
 #define DVMA_OBIO_SLAVE_MASK 0x00FFffff	/* 16MB */
@@ -81,25 +65,18 @@
 #define DVMA_VME_SLAVE_MASK  0x000Fffff	/*  1MB */
 
 
-#if 1	/* XXX - temporary */
-/*
- * XXX - For compatibility, until DVMA is re-worked.
- * Total DVMA space covers SEGMAP + PAGEMAP
- */
-#define	DVMA_SPACE_START DVMA_SEGMAP_BASE
-#define DVMA_SPACE_END   DVMA_PAGEMAP_END
-#define DVMA_SPACE_SIZE	 (DVMA_SPACE_END - DVMA_SPACE_START)
-#endif	/* XXX */
+/* DVMA is the last 1MB, but the PROM gets the last page. */
+#define	DVMA_SPACE_START	0x0FF00000
+#define DVMA_SPACE_END  	0x0FFFE000
 
-/*
- * XXX - These will change!  (will be like the sparc)
- */
-
+/* Allocate/free actual pages of DVMA space. */
 caddr_t dvma_malloc(size_t bytes);
 void dvma_free(caddr_t addr, size_t bytes);
 
+/* Remap/unmap kernel memory in DVMA space. */
 caddr_t dvma_mapin(char *kva, int len);
 void dvma_mapout(caddr_t dvma_addr, int len);
 
+/* Convert a kernel DVMA pointer to a slave address. */
 long dvma_kvtopa(long kva, int bus);
 

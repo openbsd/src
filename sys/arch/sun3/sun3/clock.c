@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 1995/08/21 21:37:36 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.28 1996/03/26 15:16:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -65,6 +65,8 @@
 #include "intersil7170.h"
 #include "interreg.h"
 
+#define	CLOCK_PRI	5
+
 extern volatile u_char *interrupt_reg;
 volatile char *clock_va;
 
@@ -76,40 +78,63 @@ volatile char *clock_va;
 
 #define intersil_clear() (void)intersil_clock->clk_intr_reg
 
-int clockmatch __P((struct device *, void *vcf, void *args));
-void clockattach __P((struct device *, struct device *, void *));
+static int  clock_match __P((struct device *, void *vcf, void *args));
+static void clock_attach __P((struct device *, struct device *, void *));
 
-struct cfdriver clockcd = {
-	NULL, "clock", clockmatch, clockattach,
-	DV_DULL, sizeof(struct device), 0 };
+struct cfattach clock_ca = {
+	sizeof(struct device), clock_match, clock_attach
+};
 
-int clockmatch(parent, vcf, args)
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL
+};
+
+static int
+clock_match(parent, vcf, args)
     struct device *parent;
     void *vcf, *args;
 {
     struct cfdata *cf = vcf;
 	struct confargs *ca = args;
+	int pa;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
 		return (0);
-	if (ca->ca_paddr == -1)
-		ca->ca_paddr = OBIO_CLOCK;
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = 5;
+
+	if ((pa = cf->cf_paddr) == -1) {
+		/* Use our default PA. */
+		pa = OBIO_CLOCK;
+	} else {
+		/* Validate the given PA. */
+		if (pa != OBIO_CLOCK)
+			panic("clock: wrong address");
+	}
+	if (pa != ca->ca_paddr)
+		return (0);
+
 	return (1);
 }
 
-void clockattach(parent, self, args)
+static void
+clock_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
 	void *args;
 {
+	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
+	int pri;
 
-	printf("\n");
-	if (ca->ca_intpri != 5)
-		panic("clock: level != 5");
+	if ((pri = cf->cf_intpri) == -1) {
+		pri = CLOCK_PRI;
+	} else {
+		if (pri != CLOCK_PRI)
+			panic("clock: level != %d", CLOCK_PRI);
+	}
+
+	printf(" level %d\n", pri);
+
 	/*
 	 * Can not hook up the ISR until cpu_initclock()
 	 * because hardclock is not ready until then.

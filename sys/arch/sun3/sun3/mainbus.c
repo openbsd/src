@@ -1,7 +1,7 @@
-/*	$NetBSD: vme.c,v 1.3 1996/03/26 15:16:19 gwr Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1 1996/03/26 15:03:58 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1996 Gordon W. Ross
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,11 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Gordon Ross
- * 4. The name of the Author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
+ * 4. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Gordon Ross
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -35,65 +35,57 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-/* #include <machine/vme.h> */
 
-static int  vmes_match __P((struct device *, void *, void *));
-static int  vmel_match __P((struct device *, void *, void *));
+static int 	main_match __P((struct device *, void *, void *));
+static void	main_attach __P((struct device *, struct device *, void *));
 
-static void vme_attach __P((struct device *, struct device *, void *));
-
-struct cfattach vmes_ca = {
-	sizeof(struct device), vmes_match, vme_attach
+struct cfattach mainbus_ca = {
+	sizeof(struct device), main_match, main_attach
 };
 
-struct cfdriver vmes_cd = {
-	NULL, "vmes", DV_DULL
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL
 };
 
-struct cfattach vmel_ca = {
-	sizeof(struct device), vmel_match, vme_attach
-};
-
-struct cfdriver vmel_cd = {
-	NULL, "vmel", DV_DULL
-};
-
-
-/* Does this machine have a VME bus? */
-extern int cpu_has_vme;
-
+/*
+ * Probe for the mainbus; always succeeds.
+ */
 static int
-vmes_match(parent, vcf, aux)
+main_match(parent, match, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	void *match, *aux;
 {
-	struct confargs *ca = aux;
 
-	if (ca->ca_bustype != BUS_VME16)
-		return (0);
-	return (cpu_has_vme);
+	return 1;
 }
 
-static int
-vmel_match(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
-{
-	struct confargs *ca = aux;
-
-	if (ca->ca_bustype != BUS_VME32)
-		return (0);
-	return (cpu_has_vme);
-}
+/*
+ * Do "direct" configuration for the bus types on mainbus.
+ * This controls the order of autoconfig for important things
+ * used early.  For example, idprom is used by Ether drivers.
+ */
+static int bus_order[] = {
+	BUS_OBIO,	/* eeprom, clock */
+	BUS_OBMEM,
+	BUS_VME16,
+	BUS_VME32
+};
+#define BUS_ORDER_SZ (sizeof(bus_order)/sizeof(bus_order[0]))
 
 static void
-vme_attach(parent, self, args)
+main_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
 	void *args;
 {
+	struct confargs ca;
+	struct cfdata *new_match;
+	int i;
+
 	printf("\n");
 
-	/* We know ca_bustype == BUS_VMExx */
-	(void) config_search(bus_scan, self, args);
+	for (i = 0; i < BUS_ORDER_SZ; i++) {
+		ca.ca_bustype = bus_order[i];
+		(void) config_found(self, &ca, NULL);
+	}
 }

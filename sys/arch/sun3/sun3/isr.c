@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.21 1995/10/08 23:47:34 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.22 1996/03/26 15:16:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -49,7 +49,6 @@
 #include <machine/isr.h>
 
 #include "vector.h"
-#include "interreg.h"
 
 #include "ether.h"	/* for NETHER */
 
@@ -64,83 +63,14 @@ struct isr {
 	int	isr_ipl;
 };
 
-
 void set_vector_entry __P((int, void (*handler)()));
 unsigned int get_vector_entry __P((int));
-static int nmi_intr();
-static int soft1intr();
-
-volatile u_char *interrupt_reg;
-
-/* called early (by internal_configure) */
-void isr_init()
-{
-	interrupt_reg = obio_find_mapping(OBIO_INTERREG, 1);
-	if (!interrupt_reg)
-		mon_panic("interrupt reg VA not found\n");
-	/* Turn off all interrupts until clock_attach */
-	*interrupt_reg = 0;
-}
-
-/* called later, by configure */
-void isr_config()
-{
-	isr_add_autovect(nmi_intr, 0, 7);
-	isr_add_autovect(soft1intr, 0, 1);
-}
 
 void isr_add_custom(level, handler)
 	int level;
 	void (*handler)();
 {
 	set_vector_entry(AUTOVEC_BASE + level, handler);
-}
-
-static int isr_soft_pending;
-void isr_soft_request(level)
-	int level;
-{
-	u_char bit, reg_val;
-	int s;
-
-	if ((level < 1) || (level > 3))
-		panic("isr_soft_request");
-
-	bit = 1 << level;
-
-	/* XXX - Should do this in the callers... */
-	if (isr_soft_pending & bit)
-		return;
-
-	s = splhigh();
-	isr_soft_pending |= bit;
-	reg_val = *interrupt_reg;
-	*interrupt_reg &= ~IREG_ALL_ENAB;
-
-	*interrupt_reg |= bit;
-	*interrupt_reg |= IREG_ALL_ENAB;
-	splx(s);
-}
-
-void isr_soft_clear(level)
-	int level;
-{
-	u_char bit, reg_val;
-	int s;
-
-	if ((level < 1) || (level > 3))
-		panic("isr_soft_clear");
-
-	bit = 1 << level;
-
-	s = splhigh();
-	isr_soft_pending &= ~bit;
-	reg_val = *interrupt_reg;
-	*interrupt_reg &= ~IREG_ALL_ENAB;
-
-	*interrupt_reg &= ~bit;
-	*interrupt_reg |= IREG_ALL_ENAB;
-	splx(s);
 }
 
 /*
@@ -185,63 +115,6 @@ void netintr()
 		pppintr();
 	}
 #endif
-}
-
-
-/*
- * Level 1 software interrupt.
- * Possible reasons:
- *	Network software interrupt
- *	Soft clock interrupt
- */
-int soft1intr(arg)
-	void *arg;
-{
-	union sun3sir sir;
-	int n, s;
-
-	s = splhigh();
-	sir.sir_any = sun3sir.sir_any;
-	sun3sir.sir_any = 0;
-	isr_soft_clear(1);
-	splx(s);
-
-	if (sir.sir_any) {
-		cnt.v_soft++;
-		if (sir.sir_which[SIR_NET]) {
-			sir.sir_which[SIR_NET] = 0;
-			netintr();
-		}
-		if (sir.sir_which[SIR_CLOCK]) {
-			sir.sir_which[SIR_CLOCK] = 0;
-			softclock();
-		}
-		if (sir.sir_which[SIR_SPARE2]) {
-			sir.sir_which[SIR_SPARE2] = 0;
-			/* spare2intr(); */
-		}
-		if (sir.sir_which[SIR_SPARE3]) {
-			sir.sir_which[SIR_SPARE3] = 0;
-			/* spare3intr(); */
-		}
-		return (1);
-	}
-	return(0);
-}
-
-/*
- * Generic handler for the non-maskable interrupt.
- * XXX: Should check memory error register here!
- */
-int nmi_intr(arg)
-	void *arg;
-{
-	static int nmi_cnt;
-	if (!nmi_cnt++) {
-		printf("nmi interrupt received\n");
-		Debugger();
-	}
-	return 1;
 }
 
 

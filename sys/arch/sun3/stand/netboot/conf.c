@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1995/09/23 03:42:50 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1996/01/29 23:54:14 gwr Exp $	*/
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -17,7 +17,3 @@ struct devsw devsw[] = {
 };
 int	ndevs = 1;
 
-/* XXX */
-int netif_debug;
-int debug;
-int errno;

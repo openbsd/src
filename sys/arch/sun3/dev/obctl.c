@@ -1,4 +1,4 @@
-/*	$NetBSD: obctl.c,v 1.6 1994/12/12 18:59:21 gwr Exp $	*/
+/*	$NetBSD: obctl.c,v 1.8 1996/03/26 15:16:12 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -15,21 +15,25 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Adam Glass.
- * 4. The name of the Author may not be used to endorse or promote products
+ *	This product includes software developed by Adam Glass and Gordon Ross.
+ * 4. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL Adam Glass BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * On-board control space (OBCTL)
+ * Used by the idprom...
  */
 
 #include <sys/param.h>
@@ -39,12 +43,28 @@
 #include <machine/autoconf.h>
 #include <machine/obctl.h>
 
+static int  obctl_match __P((struct device *, void *, void *));
 static void obctl_attach __P((struct device *, struct device *, void *));
-static void obctl_scan __P((struct device *, void *));
 
-struct cfdriver obctlcd = {
-	NULL, "obctl", always_match, obctl_attach, DV_DULL,
-	sizeof(struct device), 0 };
+struct cfattach obctl_ca = {
+	sizeof(struct device), obctl_match, obctl_attach
+};
+
+struct cfdriver obctl_cd = {
+	NULL, "obctl", DV_DULL
+};
+
+static int
+obctl_match(parent, vcf, aux)
+	struct device *parent;
+	void *vcf, *aux;
+{
+	struct confargs *ca = aux;
+
+	if (ca->ca_bustype != BUS_OBCTL)
+		return (0);
+	return(1);
+}
 
 static void
 obctl_attach(parent, self, args)
@@ -53,13 +73,7 @@ obctl_attach(parent, self, args)
 	void *args;
 {
 	printf("\n");
-	config_scan(obctl_scan, self);
-}
 
-static void
-obctl_scan(parent, child)
-	struct device *parent;
-	void *child;
-{
-	bus_scan(parent, child, BUS_OBCTL);
+	/* We know ca_bustype == BUS_OBCTL */
+	(void) config_search(bus_scan, self, args);
 }

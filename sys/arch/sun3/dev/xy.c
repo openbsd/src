@@ -1,4 +1,4 @@
-/* $NetBSD: xy.c,v 1.2 1996/01/07 22:03:20 thorpej Exp $ */
+/* $NetBSD: xy.c,v 1.9 1996/03/17 02:04:10 thorpej Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xy.c,v 1.5 1996/03/04 20:35:29 chuck Exp $
+ * id: $NetBSD: xy.c,v 1.5 1996/03/04 20:35:29 chuck Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -188,12 +188,20 @@ int	xygetdisklabel __P((struct xy_softc *, void *));
  * cfdrivers: device driver interface to autoconfig
  */
 
-struct cfdriver xyccd = {
-	NULL, "xyc", xycmatch, xycattach, DV_DULL, sizeof(struct xyc_softc)
+struct cfattach xyc_ca = {
+	sizeof(struct xyc_softc), xycmatch, xycattach
 };
 
-struct cfdriver xycd = {
-	NULL, "xy", xymatch, xyattach, DV_DISK, sizeof(struct xy_softc)
+struct cfdriver xyc_cd = {
+	NULL, "xyc", DV_DULL
+};
+
+struct cfattach xy_ca = {
+	sizeof(struct xy_softc), xymatch, xyattach
+};
+
+struct cfdriver xy_cd = {
+	NULL, "xy", DV_DISK
 };
 
 struct xyc_attach_args {	/* this is the "aux" args to xyattach */
@@ -683,7 +691,7 @@ xyclose(dev, flag, fmt)
 	int     flag, fmt;
 
 {
-	struct xy_softc *xy = xycd.cd_devs[DISKUNIT(dev)];
+	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
 
 	/* clear mask bits */
@@ -713,11 +721,11 @@ xydump(dev)
 	struct xy_softc *xy;
 
 	unit = DISKUNIT(dev);
-	if (unit >= xycd.cd_ndevs)
+	if (unit >= xy_cd.cd_ndevs)
 		return ENXIO;
 	part = DISKPART(dev);
 
-	xy = xycd.cd_devs[unit];
+	xy = xy_cd.cd_devs[unit];
 
 	printf("%s%c: crash dump not supported (yet)\n", xy->sc_dev.dv_xname,
 	    'a' + part);
@@ -756,7 +764,7 @@ xyioctl(dev, command, addr, flag, p)
 
 	unit = DISKUNIT(dev);
 
-	if (unit >= xycd.cd_ndevs || (xy = xycd.cd_devs[unit]) == NULL)
+	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
 	/* switch on ioctl type */
@@ -849,7 +857,7 @@ xyopen(dev, flag, fmt)
 	/* first, could it be a valid target? */
 
 	unit = DISKUNIT(dev);
-	if (unit >= xycd.cd_ndevs || (xy = xycd.cd_devs[unit]) == NULL)
+	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 	part = DISKPART(dev);
 
@@ -927,7 +935,7 @@ xysize(dev)
 
 	/* do it */
 
-	xysc = xycd.cd_devs[DISKUNIT(dev)];
+	xysc = xy_cd.cd_devs[DISKUNIT(dev)];
 	part = DISKPART(dev);
 	if (xysc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
@@ -957,7 +965,7 @@ xystrategy(bp)
 
 	/* check for live device */
 
-	if (unit >= xycd.cd_ndevs || (xy = xycd.cd_devs[unit]) == 0 ||
+	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xy->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
@@ -1126,11 +1134,11 @@ xyc_rqtopb(iorq, iopb, cmd, subfun)
 		iopb->cyl = block;
 	}
 	iopb->scnt = iorq->sectcnt;
-	dp = dvma_kvtopa((long)iorq->dbuf, BUS_VME16);
 	if (iorq->dbuf == NULL) {
 		iopb->dataa = 0;
 		iopb->datar = 0;
 	} else {
+		dp = dvma_kvtopa((long)iorq->dbuf, BUS_VME16);
 		iopb->dataa = (dp & 0xffff);
 		iopb->datar = ((dp & 0xff0000) >> 16);
 	}
@@ -1280,6 +1288,9 @@ xyc_startbuf(xycsc, xysc, bp)
 	    bp->b_bcount / XYFM_BPS, dbuf, bp);
 
 	xyc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XYCMD_RD : XYCMD_WR, 0);
+
+	/* Instrumentation. */
+	disk_busy(&xysc->sc_dk);
 
 	/* Instrumentation. */
 	disk_busy(&xysc->sc_dk);
@@ -1623,7 +1634,8 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 			    iorq->xy->xyq.b_actf =
 				iorq->buf->b_actf;
 			    disk_unbusy(&iorq->xy->sc_dk,
-				(iorq->buf->b_bcount - iorq->buf->b_resid));
+					        (iorq->buf->b_bcount -
+					         iorq->buf->b_resid));
 			    biodone(iorq->buf);
 			    iorq->mode = XY_SUB_FREE;
 			    break;

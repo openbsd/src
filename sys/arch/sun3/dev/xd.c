@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.2 1996/01/07 22:03:17 thorpej Exp $ */
+/*	$NetBSD: xd.c,v 1.7 1996/03/17 02:04:07 thorpej Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.5 1996/03/04 20:35:27 chuck Exp $
+ * id: $NetBSD: xd.c,v 1.7 1996/03/17 02:04:07 thorpej Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -245,12 +245,20 @@ int	xdgetdisklabel __P((struct xd_softc *, void *));
  * cfdrivers: device driver interface to autoconfig
  */
 
-struct cfdriver xdccd = {
-	NULL, "xdc", xdcmatch, xdcattach, DV_DULL, sizeof(struct xdc_softc)
+struct cfattach xdc_ca = {
+	sizeof(struct xdc_softc), xdcmatch, xdcattach
 };
 
-struct cfdriver xdcd = {
-	NULL, "xd", xdmatch, xdattach, DV_DISK, sizeof(struct xd_softc)
+struct cfdriver xdc_cd = {
+	NULL, "xdc", DV_DULL
+};
+
+struct cfattach xd_ca = {
+	sizeof(struct xd_softc), xdmatch, xdattach
+};
+
+struct cfdriver xd_cd = {
+	NULL, "xd", DV_DISK
 };
 
 struct xdc_attach_args {	/* this is the "aux" args to xdattach */
@@ -722,7 +730,7 @@ xdclose(dev, flag, fmt)
 	int     flag, fmt;
 
 {
-	struct xd_softc *xd = xdcd.cd_devs[DISKUNIT(dev)];
+	struct xd_softc *xd = xd_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
 
 	/* clear mask bits */
@@ -752,11 +760,11 @@ xddump(dev)
 	struct xd_softc *xd;
 
 	unit = DISKUNIT(dev);
-	if (unit >= xdcd.cd_ndevs)
+	if (unit >= xd_cd.cd_ndevs)
 		return ENXIO;
 	part = DISKPART(dev);
 
-	xd = xdcd.cd_devs[unit];
+	xd = xd_cd.cd_devs[unit];
 
 	printf("%s%c: crash dump not supported (yet)\n",
 		   xd->sc_dev.dv_xname, 'a' + part);
@@ -795,7 +803,7 @@ xdioctl(dev, command, addr, flag, p)
 
 	unit = DISKUNIT(dev);
 
-	if (unit >= xdcd.cd_ndevs || (xd = xdcd.cd_devs[unit]) == NULL)
+	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
 	/* switch on ioctl type */
@@ -887,7 +895,7 @@ xdopen(dev, flag, fmt)
 	/* first, could it be a valid target? */
 
 	unit = DISKUNIT(dev);
-	if (unit >= xdcd.cd_ndevs || (xd = xdcd.cd_devs[unit]) == NULL)
+	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 	part = DISKPART(dev);
 
@@ -964,7 +972,7 @@ xdsize(dev)
 
 	/* do it */
 
-	xdsc = xdcd.cd_devs[DISKUNIT(dev)];
+	xdsc = xd_cd.cd_devs[DISKUNIT(dev)];
 	part = DISKPART(dev);
 	if (xdsc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
@@ -993,7 +1001,7 @@ xdstrategy(bp)
 
 	/* check for live device */
 
-	if (unit >= xdcd.cd_ndevs || (xd = xdcd.cd_devs[unit]) == 0 ||
+	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
@@ -1421,6 +1429,9 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	    bp->b_bcount / XDFM_BPS, dbuf, bp);
 
 	xdc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XDCMD_RD : XDCMD_WR, 0);
+
+	/* Instrumentation. */
+	disk_busy(&xdsc->sc_dk);
 
 	/* Instrumentation. */
 	disk_busy(&xdsc->sc_dk);
