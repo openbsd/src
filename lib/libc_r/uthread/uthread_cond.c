@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cond.c,v 1.8 1999/11/25 07:01:33 d Exp $	*/
+/*	$OpenBSD: uthread_cond.c,v 1.9 2000/01/06 07:14:47 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -64,7 +64,7 @@ _cond_reinit(pthread_cond_t * cond)
 		(*cond)->c_flags = COND_FLAGS_INITED;
 		(*cond)->c_type = COND_TYPE_FAST;
 		(*cond)->c_mutex = NULL;
-		memset(&(*cond)->lock, 0, sizeof((*cond)->lock));
+		_SPINLOCK_INIT(&(*cond)->lock);
 	}
 	return (ret);
 }
@@ -159,7 +159,6 @@ int
 pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 {
 	int             rval = 0;
-	int             status;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
@@ -266,7 +265,6 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 		       const struct timespec * abstime)
 {
 	int             rval = 0;
-	int             status;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
