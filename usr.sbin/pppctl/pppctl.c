@@ -1,5 +1,5 @@
 /*
- * $Id: pppctl.c,v 1.1.1.1 1997/11/23 20:27:39 brian Exp $
+ * $Id: pppctl.c,v 1.2 1997/12/17 00:27:50 brian Exp $
  */
 
 #include <sys/types.h>
@@ -240,7 +240,7 @@ main(int argc, char **argv)
         hlen = strlen(host);
 
         if (strspn(host, "0123456789.") == hlen) {
-            if (!inet_aton(host, (struct in_addr *)&ifsin.sin_addr.s_addr)) {
+            if (!inet_aton(host, &ifsin.sin_addr)) {
                 fprintf(stderr, "Cannot translate %s\n", host);
                 return 1;
             }
