@@ -1223,6 +1223,7 @@
 ./usr/share/man/cat4/sparc/sw.0
 ./usr/share/man/cat4/sparc/tctrl.0
 ./usr/share/man/cat4/sparc/tcx.0
+./usr/share/man/cat4/sparc/vigra.0
 ./usr/share/man/cat4/sparc/xbox.0
 ./usr/share/man/cat4/sparc/xd.0
 ./usr/share/man/cat4/sparc/xy.0
@@ -1837,7 +1838,6 @@
 ./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/pfctl.0
 ./usr/share/man/cat8/pflogd.0
-./usr/share/man/cat8/photurisd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/ping6.0
 ./usr/share/man/cat8/popa3d.0

@@ -56,7 +56,6 @@
 ./etc/kerberosIV
 ./etc/mail
 ./etc/mtree
-./etc/photuris
 ./etc/ppp
 ./etc/skel
 ./etc/sliphome
@@ -126,7 +125,6 @@
 ./sbin/nologin
 ./sbin/pfctl
 ./sbin/pflogd
-./sbin/photurisd
 ./sbin/ping
 ./sbin/ping6
 ./sbin/quotacheck
@@ -1708,7 +1706,6 @@
 ./usr/share/groff_font/devps/zapfdr.pfa
 ./usr/share/info
 ./usr/share/ipsec
-./usr/share/ipsec/attributes.conf
 ./usr/share/ipsec/isakmpd
 ./usr/share/ipsec/isakmpd/VPN-3way-template.conf
 ./usr/share/ipsec/isakmpd/VPN-east.conf
@@ -1719,10 +1716,7 @@
 ./usr/share/ipsec/isakmpd/singlehost-setup.sh
 ./usr/share/ipsec/isakmpd/singlehost-west.conf
 ./usr/share/ipsec/isakmpd/singlehost-west.gdb
-./usr/share/ipsec/photuris.conf
-./usr/share/ipsec/photuris.startup
 ./usr/share/ipsec/rc.vpn
-./usr/share/ipsec/secrets.conf
 ./usr/share/lkm
 ./usr/share/lkm/misc
 ./usr/share/lkm/misc/module

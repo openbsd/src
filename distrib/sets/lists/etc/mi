@@ -68,10 +68,6 @@
 ./etc/passwd
 ./etc/pf.conf
 ./etc/phones
-./etc/photuris/attributes.conf
-./etc/photuris/photuris.conf
-./etc/photuris/photuris.startup
-./etc/photuris/secrets.conf
 ./etc/portal.conf
 ./etc/ppp/chap-secrets
 ./etc/ppp/chatscript.sample
