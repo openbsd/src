@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.25 2000/03/11 15:54:43 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.26 2000/03/18 01:06:55 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.25 2000/03/11 15:54:43 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.26 2000/03/18 01:06:55 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ static void	dodiv __P((int));
 static void	doundiv __P((const char *[], int));
 static void	dosub __P((const char *[], int));
 static void	map __P((char *, const char *, const char *, const char *));
+static const char *handledash __P((char *, char *, const char *));
 /*
  * eval - evaluate built-in macros.
  *	  argc - number of elements in argv.
@@ -677,6 +678,15 @@ dochq(argv, argc)
 	const char *argv[];
 	int argc;
 {
+	/* In gnu-m4 mode, having two empty arguments means no quotes at
+	 * all.  */
+	if (mimic_gnu) {
+		if (argc > 3 && !*argv[2] && !*argv[3]) {
+			lquote[0] = EOS;
+			rquote[0] = EOS;
+			return;
+		}
+	}
 	if (argc > 2) {
 		if (*argv[2])
 			strlcpy(lquote, argv[2], sizeof(lquote));
@@ -833,6 +843,8 @@ map(dest, src, from, to)
 {
 	const char *tmp;
 	unsigned char sch, dch;
+	static char frombis[257];
+	static char tobis[257];
 	static unsigned char mapvec[256] = {
 	    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
 	    19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
@@ -855,6 +867,13 @@ map(dest, src, from, to)
 	};
 
 	if (*src) {
+		if (mimic_gnu) {
+			/*
+			 * expand character ranges on the fly
+			 */
+			from = handledash(frombis, frombis + 256, from);
+			to = handledash(tobis, tobis + 256, to);
+		}
 		tmp = from;
 	/*
 	 * create a mapping between "from" and
@@ -884,3 +903,40 @@ map(dest, src, from, to)
 	}
 	*dest = '\0';
 }
+
+
+/*
+ * handledash:
+ *  use buffer to copy the src string, expanding character ranges
+ * on the way.
+ */
+static const char *
+handledash(buffer, end, src)
+	char *buffer;
+	char *end;
+	const char *src;
+{
+	char *p;
+	
+	p = buffer;
+	while(*src) {
+		if (src[1] == '-' && src[2]) {
+			unsigned char i;
+			for (i = (unsigned char)src[0]; 
+			    i <= (unsigned char)src[2]; i++) {
+				*p++ = i;
+				if (p == end) {
+					*p = '\0';
+					return buffer;
+				}
+			}
+			src += 3;
+		} else
+			*p++ = *src++;
+		if (p == end)
+			break;
+	}
+	*p = '\0';
+	return buffer;
+}
+			    

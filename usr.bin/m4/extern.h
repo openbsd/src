@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.17 2000/03/11 15:54:44 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.18 2000/03/18 01:06:55 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -111,3 +111,4 @@ extern char *null;		/* as it says.. just a null. */
 extern char rquote[MAXCCHARS+1];/* right quote character (') */
 extern char scommt[MAXCCHARS+1];/* start character for comment */
 
+extern int mimic_gnu;		/* behaves like gnu-m4 */

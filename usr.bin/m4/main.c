@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2000/03/11 15:54:44 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2000/03/18 01:06:56 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.31 2000/03/11 15:54:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.32 2000/03/18 01:06:56 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ main(argc,argv)
 	initkwds();
 	initspaces();
 
-	while ((c = getopt(argc, argv, "tD:U:o:I:")) != -1)
+	while ((c = getopt(argc, argv, "gtD:U:o:I:")) != -1)
 		switch(c) {
 
 		case 'D':               /* define something..*/
@@ -194,6 +194,9 @@ main(argc,argv)
 			break;
 		case 'U':               /* undefine...       */
 			remhash(optarg, TOP);
+			break;
+		case 'g':
+			mimic_gnu = 1;
 			break;
 		case 'o':		/* specific output   */
 		case '?':
