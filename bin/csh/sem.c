@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.7 2001/05/11 18:38:44 mickey Exp $	*/
+/*	$OpenBSD: sem.c,v 1.8 2001/06/22 21:07:35 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sem.c,v 1.7 2001/05/11 18:38:44 mickey Exp $";
+static char rcsid[] = "$OpenBSD: sem.c,v 1.8 2001/06/22 21:07:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -465,16 +465,6 @@ static void
 vffree(i)
 int i;
 {
-    register Char **v;
-
-    if ((v = gargv) != NULL) {
-	gargv = 0;
-	xfree((ptr_t) v);
-    }
-    if ((v = pargv) != NULL) {
-	pargv = 0;
-	xfree((ptr_t) v);
-    }
     _exit(i);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.13 2000/10/30 17:16:45 millert Exp $	*/
+/*	$OpenBSD: csh.c,v 1.14 2001/06/22 21:07:35 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.13 2000/10/30 17:16:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.14 2001/06/22 21:07:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -881,6 +881,8 @@ static void
 phup(sig)
 int sig;
 {
+    /* XXX sigh, everything after this is a signal race */
+
     rechist();
 
     /*
