@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.9 2003/04/07 19:25:43 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.10 2003/04/25 20:02:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint                                                              
-static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.9 2003/04/07 19:25:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.10 2003/04/25 20:02:02 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <paths.h>
@@ -99,8 +99,8 @@ main(argc, argv)
 		while (plen != 0 && prefix[plen - 1] == '/')
 			plen--;
 
-		tempfile = NULL;
-		asprintf(&tempfile, "%.*s/%s", plen, prefix, template);
+		if (asprintf(&tempfile, "%.*s/%s", plen, prefix, template) < 0)
+			tempfile = NULL;
 	} else
 		tempfile = strdup(template);
 	if (tempfile == NULL) {
