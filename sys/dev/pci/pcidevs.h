@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.729 2004/05/05 22:16:31 brad Exp 
+ *	OpenBSD: pcidevs,v 1.730 2004/05/06 16:42:40 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -598,6 +598,7 @@
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
 #define	PCI_PRODUCT_ATI_R200_BB	0x4242		/* Radeon 8500 BB */
 #define	PCI_PRODUCT_ATI_RADEON_IGP320M	0x4336		/* Radeon IGP 320M */
+#define	PCI_PRODUCT_ATI_MOBILITY_M6	0x4337		/* Mobility M6 */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_MACH64_ET	0x4554		/* Mach64 ET */
@@ -674,6 +675,8 @@
 #define	PCI_PRODUCT_ATI_MACH64_VV	0x5656		/* Mach64 VV */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_2	0x5941		/* Radeon 9200 2nd */
 #define	PCI_PRODUCT_ATI_RADEON_RV280	0x5961		/* Radeon 9200 */
+#define	PCI_PRODUCT_ATI_RS200_AGP	0x7010		/* RS200 AGP */
+#define	PCI_PRODUCT_ATI_RS200_PCI	0xcab2		/* RS200 PCI */
 
 /* Applied Micro Circuits products */
 #define	PCI_PRODUCT_AMCIRCUITS_S5933	0x4750		/* S5933 PCI Matchmaker */

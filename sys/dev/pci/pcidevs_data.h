@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.729 2004/05/05 22:16:31 brad Exp 
+ *	OpenBSD: pcidevs,v 1.730 2004/05/06 16:42:40 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1107,6 +1107,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon IGP 320M",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_M6,
+	    "Mobility M6",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
 	    "Mach64 CT",
 	},
@@ -1409,6 +1413,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280,
 	    "Radeon 9200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS200_AGP,
+	    "RS200 AGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS200_PCI,
+	    "RS200 PCI",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
