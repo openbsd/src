@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.17 1998/06/12 17:51:53 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.18 1998/06/12 18:07:58 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.17 1998/06/12 17:51:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.18 1998/06/12 18:07:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -356,10 +356,7 @@ sigchild(signo)
 	int status;
 	struct child *cp;
 	int save_errno = errno;
-	sigset_t set, oset;
 
-	(void)sigfillset(&set);
-	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	while ((pid =
 	    waitpid((pid_t)-1, &status, WNOHANG)) > 0) {
 		cp = findchild(pid, 1);
@@ -372,7 +369,6 @@ sigchild(signo)
 			cp->status = status;
 		}
 	}
-	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	errno = save_errno;
 }
 
