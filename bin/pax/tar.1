@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.44 2003/06/04 16:24:45 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.45 2003/11/21 20:54:02 jmc Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.44 2003/06/04 16:24:45 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.45 2003/11/21 20:54:02 jmc Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -144,7 +144,7 @@ operands according to the substitution expression
 using the syntax of the
 .Xr ed 1
 utility regular expressions.
-The format of these regular expressions are:
+The format of these regular expressions is:
 .Dl /old/new/[gp]
 As in
 .Xr ed 1 ,
@@ -166,7 +166,7 @@ The expressions are applied in the order they are specified on the
 command line, terminating with the first successful substitution.
 The optional trailing
 .Cm g
-continues to apply the substitution expression to the pathname substring
+continues to apply the substitution expression to the pathname substring,
 which starts with the first character following the end of the last successful
 substitution.
 The first unsuccessful substitution stops the operation of the
@@ -266,7 +266,7 @@ function
 .Pp
 Verbosely lists, but does not extract, all files ending in
 .Pa .jpeg
-from an compressed archive named
+from a compressed archive named
 .Pa backup.tar.gz .
 Note that the glob pattern has been quoted to avoid expansion by the shell.
 .Pp
@@ -308,7 +308,7 @@ be wrong.
 If the creation of an archive is prematurely terminated by a signal
 or error,
 .Nm
-may have only partially created the archive which may violate the
+may have only partially created the archive, which may violate the
 specific archive format specification.
 .Sh SEE ALSO
 .Xr cpio 1 ,
