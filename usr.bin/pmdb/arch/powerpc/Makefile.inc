@@ -1,0 +1,1 @@
+SRCS+=powerpc.c
