@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.38 2003/03/30 21:10:27 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.39 2003/04/01 16:28:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.38 2003/03/30 21:10:27 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.39 2003/04/01 16:28:03 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -515,8 +515,9 @@ pw_scan(bp, pw, flags)
 	if (flags != (int *)NULL)
 		*flags = 0;
 
-	if (!(pw->pw_name = strsep(&bp, ":")))		/* login */
+	if (!(p = strsep(&bp, ":")) || *p == '\0')	/* login */
 		goto fmt;
+	pw->pw_name = p;
 	root = !strcmp(pw->pw_name, "root");
 
 	if (!(pw->pw_passwd = strsep(&bp, ":")))	/* passwd */
