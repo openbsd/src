@@ -1,4 +1,4 @@
-/* $OpenBSD: if_gx.c,v 1.7 2002/09/24 03:51:22 nate Exp $ */
+/* $OpenBSD: if_gx.c,v 1.8 2002/10/03 23:50:07 jason Exp $ */
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon
  * All rights reserved.
@@ -239,7 +239,7 @@ gx_attach(struct device *parent, struct device *self, void *aux)
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	if (gx->gx_vflags & GXF_ENABLE_MWI)
-		command |= PCIM_CMD_MWIEN;
+		command |= PCI_COMMAND_INVALIDATE_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 

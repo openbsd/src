@@ -1,4 +1,4 @@
-/* $OpenBSD: if_gxvar.h,v 1.1 2002/04/02 13:03:31 nate Exp $ */
+/* $OpenBSD: if_gxvar.h,v 1.2 2002/10/03 23:50:07 jason Exp $ */
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon
  * All rights reserved.
@@ -35,10 +35,6 @@
 #define mtx_init(a, b, c)
 #define mtx_destroy(a)
 struct mtx { int filler; };
-
-#ifndef PCIM_CMD_MWIEN
-#define PCIM_CMD_MWIEN		0x0010
-#endif
 
 #define ETHER_ALIGN	2
 

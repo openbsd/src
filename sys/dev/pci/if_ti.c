@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.37 2002/07/05 13:48:11 aaron Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.38 2002/10/03 23:50:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1185,7 +1185,7 @@ int ti_chipinit(sc)
 	 * the write max parameter accordingly. This is necessary
 	 * to use MWI with the Tigon 2.
 	 */
-	if (CSR_READ_4(sc, TI_PCI_CMDSTAT) & PCIM_CMD_MWIEN) {
+	if (CSR_READ_4(sc, TI_PCI_CMDSTAT) & PCI_COMMAND_INVALIDATE_ENABLE) {
 		switch(cacheline) {
 		case 1:
 		case 4:
@@ -1201,7 +1201,7 @@ int ti_chipinit(sc)
 				    "supported; disabling PCI MWI\n",
 				    sc->sc_dv.dv_xname, cacheline);
 			CSR_WRITE_4(sc, TI_PCI_CMDSTAT, CSR_READ_4(sc,
-			    TI_PCI_CMDSTAT) & ~PCIM_CMD_MWIEN);
+			    TI_PCI_CMDSTAT) & ~PCI_COMMAND_INVALIDATE_ENABLE);
 			break;
 		}
 	}
