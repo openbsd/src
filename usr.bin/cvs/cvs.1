@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.8 2004/12/02 22:38:30 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.9 2004/12/07 22:56:09 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -218,7 +218,15 @@ The contents of this variable are ignored when the
 .Fl d
 option is given or if `Root' files exist in the checked-out copy.
 .It Ev EDITOR
+Name of the editor to use when editing commit messages.
+This is traditionally a line-oriented editor,
+such as
+.Xr ex 1 .
 .It Ev VISUAL
+Name of the editor to use when editing commit messages.
+This is traditionally a screen-oriented editor,
+such as
+.Xr vi 1 .
 .El
 .Sh FILES
 .Bl -tag -width Ds
