@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.12 1997/10/07 08:18:48 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.13 1997/10/24 22:21:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -117,7 +117,7 @@ com_probe(cn)
 {
 	register int i, n;
 
-	 /* get equip. (9-11 # of coms) */
+	/* get equip. (9-11 # of coms) */
 	__asm __volatile(DOINT(0x11) : "=a" (n) : : "%ecx", "%edx", "cc");
 	n >>= 9;
 	n &= 7;
