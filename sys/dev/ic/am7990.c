@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.24 2001/06/24 04:48:02 fgsch Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.25 2001/06/24 22:36:57 miod Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -446,7 +446,7 @@ am7990_read(sc, boff, len)
 	int boff, len;
 {
 	struct mbuf *m;
-#ifdef LANCE_RECV_BUG
+#ifdef LANCE_REVC_BUG
 	struct ether_header *eh;
 #endif
 
