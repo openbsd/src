@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wdc.4,v 1.5 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: wdc.4,v 1.6 2002/07/20 15:59:49 fgsch Exp $
 .\"	$NetBSD: wdc.4,v 1.4 1999/05/19 14:44:02 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -39,8 +39,8 @@
 .Nm wdc
 .Nd WD100x compatible hard disk controller driver
 .Sh SYNOPSIS
-.Cd "wdc0 at isa? port 0x1f0 irq 14"
-.Cd "wdc0 at isa? port 0x170 irq 15"
+.Cd "wdc0 at isa? port 0x1f0 irq 14 flags 0x00"
+.Cd "wdc0 at isa? port 0x170 irq 15 flags 0x00"
 .Cd "wdc* at isapnp?"
 .Cd "wdc* at pcmcia? function ?"
 .Cd "wd* at wdc? drive ?"
@@ -58,7 +58,9 @@ PCI IDE controllers in legacy mode are also supported, but the
 .Xr pciide 4
 driver may provide more functionality.
 .Pp
-For the ISA front-end, the 0x01 flag enables 32-bit I/O negotiation.
+For the ISA front-end, setting
+.Cm flags
+to 0x01 enables 32-bit I/O negotiation.
 This is known to cause problems with some motherboards.
 .Sh SEE ALSO
 .Xr intro 4 ,
