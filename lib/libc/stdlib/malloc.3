@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.9 1998/08/15 20:32:02 deraadt Exp $
+.\"	$OpenBSD: malloc.3,v 1.10 1998/11/17 23:41:43 aaron Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -318,6 +318,10 @@ as the default.
 .Pp
 ``unknown char in MALLOC_OPTIONS''
 we found something we didn't understand.
+.Sh FILES
+.Bl -tag -width "/etc/malloc.conf"
+.It Pa /etc/malloc.conf
+symbolic link to file containing option flags
 .Sh SEE ALSO
 .Xr brk 2 ,
 .Xr alloca 3 ,

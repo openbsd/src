@@ -39,7 +39,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 bsearch.3 \
 
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
 MLINKS+=malloc.3 free.3 malloc.3 realloc.3
-MLINKS+=malloc.3 cfree.3
+MLINKS+=malloc.3 cfree.3 malloc.3 malloc.conf.5
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
 MLINKS+=rand.3 srand.3
 MLINKS+=random.3 initstate.3 random.3 setstate.3 random.3 srandom.3
