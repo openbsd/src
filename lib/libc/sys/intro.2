@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.24 2002/06/16 04:40:42 todd Exp $
+.\"	$OpenBSD: intro.2,v 1.25 2002/08/11 16:50:26 aaron Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -187,7 +187,9 @@ while the pure procedure file was being executed an
 .Xr open 2
 call requested write access.
 .It Er 27 EFBIG Em "File too large" .
-The size of a file exceeded the maximum (about 2.1E9 bytes).
+The size of a file exceeded the maximum.
+(The system-wide maximum file size is 2**63 bytes.
+Each file system may impose a lower limit for files contained within it.)
 .It Er 28 ENOSPC Em "Device out of space" .
 A
 .Xr write 2
@@ -327,7 +329,7 @@ refused it.
 This usually results from trying to connect to a service that is
 inactive on the foreign host.
 .It Er 62 ELOOP Em "Too many levels of symbolic links" .
-A path name lookup involved more than 8 symbolic links.
+A path name lookup involved more than 32 symbolic links.
 .It Er 63 ENAMETOOLONG Em "File name too long" .
 A component of a path name exceeded 255
 .Pq Dv MAXNAMELEN
