@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipw.4,v 1.7 2004/11/23 00:42:43 deraadt Exp $
+.\" $OpenBSD: ipw.4,v 1.8 2004/11/23 20:03:35 jmc Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -51,7 +51,8 @@ This mode requires the use of an access point.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh FILES
-The driver needs a couple of firmware files which are loaded on demand.
+The driver needs some firmware files,
+which are loaded on demand when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Pa /etc/firmware/ipw-license
