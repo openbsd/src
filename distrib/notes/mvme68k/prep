@@ -1,12 +1,44 @@
+dnl	$OpenBSD: prep,v 1.6 2003/09/06 23:34:00 miod Exp $
 Before installing OpenBSD on your machine, you will want to check your
-machine's NVRAM settings.
+machine's NVRAM settings, from the BUG.
+
+The BUG provides a simple syntax reminder for every command, as well as
+description of the commands; if you need help, just use
+
+    167-Bug> HE
+
+for a command list, or
+
+    167-Bug> HE FOO
+
+for help on a specific command.
+
+If you are located in the diagnostics directory (with a prompt in -Diag>
+rather than -Bug>), be sure to revert to the normal Bug operating mode
+with the SD command:
+
+     167-Diag> SD
+     167-Bug>
 
 The defaults settings are usually suitable for OpenBSD; make sure the
 environment is configured in BUG mode. You can check and change this with
-the ENV command.
+the ENV command. Ideally, the first two items of the ENV data will be as
+follows:
 
-You will need to check that the ethernet address is correct as well, with
-the LSAD command.
+    167-Bug> ENV
+    Bug or System environment [B/S] = B? 
+    Field Service Menu Enable [Y/N] = N? 
+
+in order to boot directly into the BUG, without executing the complete
+selftest sequence. Do not forget, after changing the ENV parameters, to
+save the changes in NVRAM as suggested by the ENV command itself.
+
+If the board has a built-in ethernet controller, its address must be correct;
+the LSAD command allows the address to be edited.
+
+OpenBSD/MACHINE will not run correctly if the clock is stopped (power-saving
+mode). Be sure to check that it is running by setting the current date with
+the SET command.
 
 Some models also require specific preparation:
 MVME147:
@@ -14,14 +46,11 @@ MVME147:
 	be zero if you don't have any VMEBus memory cards. You can change
 	its value with the MM command.
 
-MVME162:
-	Be sure to use the SET command to set the date before trying
-	to use the ethernet support in the 162-Bug.
+If you plan to permanently boot from the network, make sure your ENV settings
+match the following setup:
 
-If you plan to boot from the network, make sure your ENV settings match
-the following setup:
-
-Network Auto Boot Enable [Y/N]   = N? y
-Network Auto Boot at power-up only [Y/N] = Y? n
-Network Auto Boot Abort Delay    = 5? 2
-Network Auto Boot Configuration Parameters Pointer (NVRAM) = 00000000? fffc0080
+    Network Auto Boot Enable [Y/N]   = N? Y
+    Network Auto Boot at power-up only [Y/N] = Y? N
+    Network Auto Boot Abort Delay    = 5? 2 (or any value at your choice)
+    Network Auto Boot Configuration Parameters Pointer (NVRAM) =
+        00000000? FFFC0080

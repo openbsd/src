@@ -1,9 +1,9 @@
-dnl	$OpenBSD: hardware,v 1.3 2003/08/10 21:04:06 miod Exp $
+dnl	$OpenBSD: hardware,v 1.4 2003/09/06 23:34:01 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- MVME187 - Single board computer with 88100 processor
 	- Motorola 8120 - non expandable MVME187
 
-The minimal configuration requires 8M of RAM and ~250M of disk space.
+The minimal configuration requires 16MB of RAM and ~250M of disk space.
 To install the entire system requires much more disk space, and to
 compile the system, more RAM is recommended.
 

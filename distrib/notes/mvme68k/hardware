@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.11 2003/06/21 01:06:00 miod Exp $
+dnl	$OpenBSD: hardware,v 1.12 2003/09/06 23:34:00 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- MVME147 - Motorola with 68030 and 68881
 	- MVME162 - Motorola with 68040 and IndustryPack slots
@@ -35,7 +35,7 @@ MVME162, MVME172:
 	VMEbus:
 		drivers for short I/O access (untested)
 	Flash:
-		1 MB flash, either Intel 28F008SA or 28F020
+		1MB flash, either Intel 28F008SA or 28F020
 		A driver is available, but doesn't work correctly.
 		Jumper GPIO3 selects Flash memory map and must
 		be installed for booting with the Flash driver (default)

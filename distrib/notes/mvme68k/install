@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.21 2003/06/22 00:37:57 miod Exp $
+dnl	$OpenBSD: install,v 1.22 2003/09/06 23:34:00 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -34,17 +34,47 @@ Booting from SCSI tape:
 
 Bootable tapes can be booted with the following command at the prompt:
 
-	167-bug> bo xx yy
+    167-Bug> BO xx yy
 
 Where `xx' is the SCSI controller number (00 for the built-in SCSI
-controller), and `yy' is ten times the tape drive ID, except for the
-MVME147, where `xx' should be the tape drive ID, and `yy' should be 00.
+controller), and `yy' is the encoding for the SCSI device ID, which varies
+between controllers.
 
-For example, booting from a tape drive using SCSI id 4:
-	147-bug> bo 04 00
+Recent BUG can list the available disk and tape controllers, using the
+"IOT;H" command:
+
+    167-Bug>IOT;H
+    I/O Controllers Available:
+    CLUN  CNTRL-TYPE  CNTRL-Address  N-Devices
+       0  VME167      $FFF47000      *
+       6  VME328      $FFFF9000      *
+
+In this example, the built-in controller, as well as an external MVME328
+controller, are available.
+
+The encoding for the drive ID is as follows:
+- built-in controller and MVME327 SCSI controller:
+    'yy' is ten times the device ID.
+- MVME328 SCSI controller:
+    'yy' is eight times the devic ID, written in hexadecimal
+- MVME350 tape controller:
+    'yy' is always zero, as this controller only supports one tape drive.
+
+MVME147 boards are slightly different, as they only support booting from
+the built-in SCSI controller (if present), using the following convention:
+- 'xx' is the device ID.
+- 'yy' is zero.
+
+For example, booting from a tape drive using SCSI ID #4:
+    147-Bug> BO 04 00
 for a MVME147, and
-	167-bug> bo 00 40
-for any other MACHINE board.
+    167-Bug> BO 00 40
+for any other MACHINE board using the built-in controller. However, a tape
+drive connected to an MVME328 board using SCSI ID #5, will be booted as:
+    167-Bug> BO 06 28
+
+Note that OpenBSD/MACHINE can boot off any tape drive supported by the BUG,
+even if its controller is not supported by OpenBSD.
 
 
 Installing using a diskless setup:
@@ -59,14 +89,105 @@ SunOS systems, add_client(8) and the Sun System/Networks administrators
 guide constitute a good start; on Solaris systems, share(1M) is a good
 starting point as well).
 
-Second, the MACHINE workstation should then be setup using the NIOT command
-at the BUG prompt. The ``Load Address'' value should be 0x6F0000, and the
-``Execution Address'' value should be 0x6F0000 as well.
+OpenBSD/MACHINE can boot off any network card supported by the BUG, even
+if the card itself is not supported by OpenBSD. The list of BUG-supported
+network controllers is available with the "NIOT;A" command. For example:
 
-Then, it should be possible to boot the machine from the server by entering
-the NBO command at the BUG prompt:
+    167-Bug> NIOT;A
+    Network Controllers/Nodes Supported
+    CLUN  DLUN  Name      Address
+       0     0  VME167    $FFF46000
+       2     0  VME376    $FFFF1200
+       3     0  VME376    $FFFF1400
+       4     0  VME376    $FFFF1600
+       5     0  VME376    $FFFF5400
+       6     0  VME376    $FFFF5600
+       7     0  VME376    $FFFFA400
+      10     0  VME374    $FF000000
+      11     0  VME374    $FF100000
+      12     0  VME374    $FF200000
+      13     0  VME374    $FF300000
+      14     0  VME374    $FF400000
+      15     0  VME374    $FF500000
+
+The "NIOT;H" lists only the available controllers in the machine. For
+example, if no external network card is present, only the built-in
+controller will be reported:
+
+    167-Bug> NIOT;A
+    Network Controllers/Nodes Available
+    CLUN  DLUN  Name      Address
+       0     0  VME167    $FFF46000
+
+If the BUG does not support the NIOT command (most MVME147 don't), then
+it has no support for netbooting, and you'll have to use S-Records,
+described later in this document.
+
+Before netbooting, enter "NIOT" and fill the parametrs. Be sure to provide
+the correct values for Controller LUN and Device LUN (as listed in the
+"NIOT;A" output); also the "Boot File Load Address" and "Boot File
+Execution Address" need to be set to 006F0000. The "Boot File Name" must
+match the name of the netboot file on the server (copying it as
+"netboot.mvme68k" is usually a wise choice). Finally, "Argument File Name"
+needs to be set to "bsd.rd" in order to boot the installation miniroot,
+rather than the regular kernel.
+
+Here are acceptable values for a 167 card using the built-in controller:
+
+    167-Bug> NIOT
+    Controller LUN =00? 
+    Device LUN     =00? 
+    Node Control Memory Address =01FF0000? 
+    Client IP Address      =0.0.0.0? 
+    Server IP Address      =0.0.0.0? 
+    Subnet IP Address Mask =255.255.255.0? 
+    Broadcast IP Address   =255.255.255.255? 
+    Gateway IP Address     =0.0.0.0? 
+    Boot File Name ("NULL" for None)     =? netboot.mvme68k
+    Argument File Name ("NULL" for None) =? bsd.rd
+    Boot File Load Address         =001F0000? 006F0000
+    Boot File Execution Address    =001F0000? 006F0000
+    Boot File Execution Delay      =00000000? 
+    Boot File Length               =00000000? 
+    Boot File Byte Offset          =00000000? 
+    BOOTP/RARP Request Retry       =00? 
+    TFTP/ARP Request Retry         =00? 
+    Trace Character Buffer Address =00000000? 
+    BOOTP/RARP Request Control: Always/When-Needed (A/W)=W? 
+    BOOTP/RARP Reply Update Control: Yes/No (Y/N)       =Y? 
+
+If you change the NIOT configuration, you will be asked whether you want to
+make these changes permanent. Do not answer Y unless you plan to netboot
+this board very often; be sure to have the ENV settings use a correct
+address for the NIOT parameters block in this case. A valid setting is:
+
+    Network Auto Boot Configuration Parameters Pointer (NVRAM) =
+        00000000? FFFC0080
+
+for example.
+
+Once the NIOT parameters are set, it should be possible to boot the machine
+from the server with the NBO command. However, in some cases, netbooting
+will prevent the OpenBSD kernel from probing the built-in SCSI controller
+(if any) properly, so it is recommended to do a disk probe first:
+
+    167-Bug> IOI;C
+    167-Bug> IOI
+
+This can take up to a couple of minutes, depending how many SCSI controllers
+are found in the machine. Once the BUG prompt is back, you can safely
+netboot:
 	
-	167-bug> nbo 00 00 bsd.rd
+    167-Bug> NBO 00 00
+
+or if you know the IP address for the MACHINE and the diskless server,
+you can directly provide the boot loader's filename and the kernel name
+on the commandline:
+
+     167-Bug> NBO 00 00 192.168.0.68 192.168.0.1 netboot.mvme68k bsd.rd
+
+where, in this example, 192.168.0.68 is the address of the MACHINE computer,
+and 192.168.0.1 the address of the diskless server.
 
 If the BUG version does not understand the NIOT and NBO commands (most
 MVME147 don't), the alternative is to boot from S-Records.
@@ -82,7 +203,7 @@ and send their contents over the serial link, such as cu(1) and tip(1) - both
 being available on OpenBSD - the MACHINE workstation should be put in
 S-Records receive mode, with the LO command at the BUG prompr:
 
-	147-bug> LO
+    147-Bug> LO
 
 If this command prints an error messages and returns to the BUG prompt
 immediately, it might be necessary to switch directories, using the SD
@@ -169,14 +290,16 @@ syslog and tcpdump(8) to get visibility of what's happening (or not).
 
 Your MACHINE expects to be able to download a second stage bootstrap
 program via TFTP after having acquired its IP address through RevARP when
-instructed to boot "over the net". It will look for a filename composed of
-the machine's IP address, followed by the machine's architecture, separated
-by a period. For example, a MACHINE board which has been assigned IP
-address 130.115.144.11, will make an TFTP request for `8273900B.MACHINE'.
+instructed to boot "over the net". If you are booting from S-Records, it
+will look for a filename composed of the machine's IP address, followed by
+the machine's architecture, separated by a period (for example, a MACHINE
+board which has been assigned IP address 130.115.144.11, will make an TFTP
+request for `8273900B.MACHINE'); if you are booting from the NBO command,
+you can specify the filename which will be looked for.
+
 Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
-
 You can find the boot program in `/usr/mdec/netboot' in the OpenBSD/MACHINE
 distribution.
 
