@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.6 1996/12/14 18:52:23 millert Exp $
+#	$OpenBSD: special,v 1.7 1996/12/14 19:40:14 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -16,8 +16,8 @@ mem		type=char mode=640 uname=root gname=kmem
 ..	#dev
 
 etc		type=dir mode=0755 uname=root gname=wheel
-aliases		type=file mode=0644 uname=root gname=wheel
-aliases.db	type=file mode=0644 uname=root gname=wheel
+aliases		type=file mode=0644 uname=root gname=wheel optional
+aliases.db	type=file mode=0644 uname=root gname=wheel optional
 crontab		type=file mode=0644 uname=root gname=wheel optional
 csh.cshrc	type=file mode=0644 uname=root gname=wheel
 csh.login	type=file mode=0644 uname=root gname=wheel
@@ -50,9 +50,9 @@ rc		type=file mode=0644 uname=root gname=wheel
 rc.local	type=file mode=0644 uname=root gname=wheel
 security	type=file mode=0644 uname=root gname=wheel
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
-sendmail.cf	type=file mode=0644 uname=root gname=wheel
+sendmail.cf	type=file mode=0644 uname=root gname=wheel optional
 shells		type=file mode=0644 uname=root gname=wheel
-skeykeys	type=file mode=0644 uname=root gname=wheel
+skeykeys	type=file mode=0644 uname=root gname=wheel optional
 spwd.db		type=file mode=0600 uname=root gname=wheel
 syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
