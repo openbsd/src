@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.12 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: bus.h,v 1.13 2002/05/13 19:31:32 jason Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -1430,6 +1430,7 @@ bus_space_copy_region_stream_8(t, h1, o1, h2, o2, c)
 
 #define	BUS_DMA_NOCACHE		BUS_DMA_BUS1
 #define	BUS_DMA_DVMA		BUS_DMA_BUS2	/* Don't bother with alignment */
+#define	BUS_DMA_24BIT		BUS_DMA_BUS3	/* 24bit device */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
