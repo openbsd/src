@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.26 1999/10/05 16:38:20 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.27 1999/10/07 02:43:08 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1501,6 +1501,7 @@ regular:
 						      vsp->Scrollback,
 						      vsp->maxcol *
 						      vsp->max_off * CHR);
+						vsp->scr_offset--;
 					}
 					bcopy(vsp->Crtat + vsp->cur_offset -
 					      vsp->col, vsp->Scrollback +
@@ -1530,10 +1531,8 @@ scroll_reset:
 		if (vsp->scrolling > 0)
 		{
 			vsp->scrolling -= vsp->screen_rows - 1;
-			if (vsp->scrolling <= 0)
+			if (vsp->scrolling < 0)
 				vsp->scrolling = 0;
-			else if (vsp->scrolling < vsp->screen_rows)
-				vsp->scrolling = vsp->screen_rows - 1;
 
 			if (vsp->scrolling <= vsp->row)
 			{
@@ -1542,10 +1541,16 @@ scroll_reset:
 			}
 			else
 			{
+				if (vsp->scrolling + 2 < vsp->screen_rows)
+					fillw(user_attr | ' ',
+					      (caddr_t)vsp->Crtat,
+					      vsp->screen_rows * vsp->maxcol);
+
 				bcopy(vsp->Scrollback + ((vsp->scr_offset -
 			      	      vsp->scrolling) * vsp->maxcol),
-			              vsp->Crtat, vsp->screen_rows *
-				      vsp->maxcol * CHR);
+			              vsp->Crtat, (vsp->scrolling + 2 <
+				      vsp->screen_rows ? vsp->scrolling + 2 :
+				      vsp->screen_rows) * vsp->maxcol * CHR);
 			}
 		}
 
