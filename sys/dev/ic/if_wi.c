@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.105 2004/03/02 21:59:29 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.106 2004/03/12 20:50:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.105 2004/03/02 21:59:29 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.106 2004/03/12 20:50:45 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -755,7 +755,7 @@ wi_rxeof(sc)
 		ifp->if_ipackets++;
 
 		if (sc->wi_use_wep &&
-		    rx_frame.wi_frame_ctl & WI_FCTL_WEP) {
+		    rx_frame.wi_frame_ctl & htole16(WI_FCTL_WEP)) {
 			int len;
 			u_int8_t rx_buf[1596];
 
