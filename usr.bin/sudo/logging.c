@@ -65,7 +65,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: logging.c,v 1.157 2003/03/15 20:31:02 millert Exp $";
+static const char rcsid[] = "$Sudo: logging.c,v 1.158 2003/03/20 02:04:32 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -547,10 +547,8 @@ send_mail(line)
 	get_timestr(), user_name, line);
     fclose(mail);
 
-    /* If mailer is done, wait for it now.  If not reapchild will get it.  */
-#ifdef sudo_waitpid
-    (void) sudo_waitpid(pid, &status, WNOHANG);
-#endif
+    /* If mailer is done, wait for it now.  If not, we'll get it later.  */
+    reapchild(SIGCHLD);
     (void) sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
@@ -592,7 +590,7 @@ reapchild(sig)
     int status, serrno = errno;
 
 #ifdef sudo_waitpid
-    while (sudo_waitpid(-1, &status, WNOHANG) != -1 && errno == EINTR)
+    while (sudo_waitpid(-1, &status, WNOHANG) != -1 || errno == EINTR)
 	;
 #else
     (void) wait(&status);
