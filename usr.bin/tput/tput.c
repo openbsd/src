@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.4 1997/03/07 21:54:48 gene Exp $	*/
+/*	$OpenBSD: tput.c,v 1.5 1997/06/24 02:40:15 dgregor Exp $	*/
 /*	$NetBSD: tput.c,v 1.8 1995/08/31 22:11:37 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: tput.c,v 1.4 1997/03/07 21:54:48 gene Exp $";
+static char rcsid[] = "$OpenBSD: tput.c,v 1.5 1997/06/24 02:40:15 dgregor Exp $";
 #endif /* not lint */
 
 #include <termios.h>
@@ -54,6 +54,7 @@ static char rcsid[] = "$OpenBSD: tput.c,v 1.4 1997/03/07 21:54:48 gene Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 static void   prlongname __P((char *));
 static void   setospeed __P((void));
