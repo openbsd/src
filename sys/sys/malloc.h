@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.52 2002/01/25 03:50:33 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.53 2002/01/28 11:54:30 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -90,8 +90,7 @@
 #define	M_UFSMNT	28	/* UFS mount structure */
 #define	M_SHM		29	/* SVID compatible shared memory segments */
 #define	M_VMMAP		30	/* VM map structures */
-#define	M_VMPAGE	31	/* VM page structures */
-/* 32-33 - free */
+/* 31-33 - free */
 #define	M_VMPMAP	34	/* VM pmap */
 #define	M_VMPVENT	35	/* VM phys-virt mapping entry */
 /* 36-37 - free */
@@ -125,8 +124,7 @@
 #define	M_ADOSFSMNT	66	/* adosfs mount structures */
 /* 67 - free */
 #define	M_ANODE		68	/* adosfs anode structures and tables. */
-#define	M_IPQ		69	/* IP packet queue entry */
-/* 70 - free */
+/* 69-70 - free */
 #define	M_ADOSFSBITMAP	71	/* adosfs bitmap */
 #define	M_EXT2FSNODE	72	/* EXT2FS vnode private part */
 /* 73 - free */
@@ -199,9 +197,9 @@
 	"UFS mount",	/* 28 M_UFSMNT */ \
 	"shm",		/* 29 M_SHM */ \
 	"VM map",	/* 30 M_VMMAP */ \
-	"VM page",	/* 31 M_VMPAGE */ \
-	NULL,	/* 32 */ \
-	NULL,	/* 33 */ \
+	NULL, \
+	NULL, \
+	NULL, \
 	"VM pmap",	/* 34 M_VMPMAP */ \
 	"VM pvmap",	/* 35 M_VMPVENT */ \
 	NULL,	/* 36 */ \
@@ -237,7 +235,7 @@
 	"adosfs mount",	/* 66 M_ADOSFSMNT */ \
 	NULL, \
 	"adosfs anode",	/* 68 M_ANODE */ \
-	"IP queue ent", /* 69 M_IPQ */ \
+	NULL, \
 	NULL, \
 	"adosfs bitmap", /* 71 M_ADOSFSBITMAP */ \
 	"EXT2FS node",	/* 72 M_EXT2FSNODE */ \
