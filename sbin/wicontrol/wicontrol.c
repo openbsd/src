@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.38 2002/06/19 18:53:53 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.39 2002/06/20 19:37:36 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.38 2002/06/19 18:53:53 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.39 2002/06/20 19:37:36 fgsch Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -538,7 +538,7 @@ wi_printaplist(iface)
 	for (nap = 0; i < (wreq.wi_len * 2) - len; i += len) {
 		res = (struct wi_scan_res *)((char *)wreq.wi_val + i);
 
-		res->wi_ssid[res->wi_ssid_len] = '\0';
+		res->wi_ssid[letoh16(res->wi_ssid_len)] = '\0';
 		res->wi_chan = letoh16(res->wi_chan);
 		res->wi_noise = letoh16(res->wi_noise);
 		res->wi_signal = letoh16(res->wi_signal);
