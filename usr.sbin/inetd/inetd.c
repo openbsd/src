@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.102 2002/06/28 22:41:10 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.103 2002/07/04 12:36:56 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.102 2002/06/28 22:41:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.103 2002/07/04 12:36:56 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -608,7 +608,7 @@ dg_broadcast(in)
 		if (ifa->ifa_addr->sa_family != AF_INET ||
 		    (ifa->ifa_flags & IFF_BROADCAST) == 0)
 			continue;
-		sin = (struct sockaddr_in *)ifa->ifa_addr;
+		sin = (struct sockaddr_in *)ifa->ifa_broadaddr;
 		if (sin->sin_addr.s_addr == in->s_addr) {
 			freeifaddrs(ifap);
 			return (1);
