@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.11 1999/06/02 06:28:34 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.33 1999/05/21 14:18:14 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.12 1999/07/07 22:11:45 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.35 1999/06/26 23:30:38 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -54,6 +54,10 @@
 #include "udp.h"
 #include "ui.h"
 
+#ifdef USE_KEYNOTE
+#include "policy.h"
+#endif
+
 /*
  * Set if -d is given, currently just for running in the foreground and log
  * to stderr instead of syslog.
@@ -78,6 +82,13 @@ static int sighupped = 0;
  */
 static int sigusr1ed = 0;
 static char *report_file = "/var/run/isakmpd.report";
+
+/*
+ * If we receive a USR2 signal, this flag gets set to show we need to
+ * rehash our SA soft expiration timers to a uniform distribution.
+ * XXX Perhaps this is a really bad idea?
+ */
+static int sigusr2ed = 0;
 
 static void
 usage ()
@@ -158,6 +169,11 @@ reinit (void)
   /* Reread config file. */
   conf_init ();
 
+#ifdef USE_KEYNOTE
+  /* Reread the policies. */
+  policy_init ();
+#endif
+
   /* Reinitalize our connection list. */
   connection_reinit ();
 
@@ -212,6 +228,26 @@ sigusr1 (int sig)
   sigusr1ed = 1;
 }
 
+/* Rehash soft expiration timers on SIGUSR2.  */
+static void
+rehash_timers (void)
+{
+#if 0
+  /* XXX - not yet */
+  log_print ("SIGUSR2 received, rehasing soft expiration timers.");
+  
+  timer_rehash_timers ();
+#endif
+
+  sigusr2ed = 0;
+}
+
+static void
+sigusr2 (int sig)
+{
+  sigusr2ed = 1;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -236,6 +272,9 @@ main (int argc, char *argv[])
   /* Report state on USR1 reception.  */
   signal (SIGUSR1, sigusr1);
 
+  /* Rehash soft expiration timers on USR2 reception.  */
+  signal (SIGUSR2, sigusr2);
+
   /* Allocate the file descriptor sets just big enough.  */
   n = getdtablesize ();
   mask_size = howmany (n, NFDBITS) * sizeof (fd_mask);
@@ -256,6 +295,10 @@ main (int argc, char *argv[])
       if (sigusr1ed)
 	report ();
 
+      /* and if someone sent SIGUSR2, do a timer rehash.  */
+      if (sigusr2ed)
+	rehash_timers ();
+      
       /* Setup the descriptors to look for incoming messages at.  */
       memset (rfds, 0, mask_size);
       n = transport_fd_set (rfds);
