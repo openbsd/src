@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_hash.c,v 1.1 1998/07/23 21:17:25 millert Exp $	*/
+/*	$OpenBSD: comp_hash.c,v 1.2 1998/09/13 19:16:15 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -51,7 +51,7 @@
 #define DEBUG(level, params) /*nothing*/
 #endif
 
-MODULE_ID("$From: comp_hash.c,v 1.17 1998/05/30 23:55:42 Todd.Miller Exp $")
+MODULE_ID("$From: comp_hash.c,v 1.18 1998/08/22 18:01:18 tom Exp $")
 
 static  int hash_function(const char *);
 
@@ -312,9 +312,9 @@ int main(int argc, char **argv)
 	printf("{\n");
 	for (n = 0; n < HASHTABSIZE; n++) {
 		if (hash_table[n] != 0) {
-			sprintf(buffer, "_nc_%s_table + %3d",
+			sprintf(buffer, "_nc_%s_table + %3ld",
 				root_name,
-				hash_table[n] - name_table);
+				(long) (hash_table[n] - name_table));
 		} else {
 			strcpy(buffer, "0");
 		}

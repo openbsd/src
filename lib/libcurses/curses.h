@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.10 1998/08/03 17:02:43 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.11 1998/09/13 19:16:24 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.67 1998/07/11 20:17:07 dnelson Exp $ */
+/* $From: curses.h.in,v 1.68 1998/09/05 22:03:59 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 4
 #define NCURSES_VERSION_MINOR 2
-#define NCURSES_VERSION_PATCH 980801
+#define NCURSES_VERSION_PATCH 980905
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -714,6 +714,7 @@ extern int tigetflag(NCURSES_CONST char *);		/* implemented */
 extern int tigetnum(NCURSES_CONST char *);		/* implemented */
 extern char *tigetstr(NCURSES_CONST char *);		/* implemented */
 extern void timeout(int);				/* generated */
+extern char *tparm(NCURSES_CONST char *, ...);		/* implemented */
 extern int typeahead(int);				/* implemented */
 extern int ungetch(int);				/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED

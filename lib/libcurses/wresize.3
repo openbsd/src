@@ -1,3 +1,5 @@
+.\" $OpenBSD: wresize.3,v 1.6 1998/09/13 19:16:31 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -29,7 +31,6 @@
 .\" Author: Thomas E. Dickey <dickey@clark.net> 1996
 .\"
 .\" $From: wresize.3x,v 1.5 1998/03/14 23:42:44 tom Exp $
-.\" $OpenBSD: wresize.3,v 1.5 1998/07/23 21:20:09 millert Exp $
 .TH wresize 3 ""
 .SH NAME
 \fBwresize\fR - resize a curses window
@@ -40,7 +41,7 @@
 \fBint wresize(WINDOW *win, int lines, int columns);\fR
 ..
 .SH DESCRIPTION
-The \fBwresize\fR function reallocates storage for an \fBcurses\fR
+The \fBwresize\fR function reallocates storage for a \fBcurses\fR
 window to adjust its dimensions to the specified values.
 If either dimension is larger than the current values, the
 window's data is filled with blanks that have the current background rendition

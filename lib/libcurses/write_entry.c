@@ -1,4 +1,4 @@
-/*	$OpenBSD: write_entry.c,v 1.3 1998/08/03 17:02:47 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.4 1998/09/13 19:16:31 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -51,7 +51,7 @@
 #define S_ISDIR(mode) ((mode & S_IFMT) == S_IFDIR)
 #endif
 
-MODULE_ID("$From: write_entry.c,v 1.30 1998/08/01 23:46:32 tom Exp $")
+MODULE_ID("$From: write_entry.c,v 1.31 1998/08/22 18:02:09 tom Exp $")
 
 static int total_written;
 
@@ -215,7 +215,6 @@ char		symlinkname[PATH_MAX];
 #endif /* USE_SYMLINKS */
 static int	call_count;
 static time_t	start_time;		/* time at start of writes */
-int		code;
 
 	if (call_count++ == 0) {
 		start_time = 0;
@@ -309,6 +308,7 @@ int		code;
 		else if (_nc_access(linkname, W_OK) == 0)
 #if HAVE_LINK
 		{
+			int code;
 #if USE_SYMLINKS
 			strcpy(symlinkname, "../");
 			strncat(symlinkname, filename, sizeof(symlinkname) - 4);

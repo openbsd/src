@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_setup.c,v 1.2 1998/08/14 23:02:31 millert Exp $	*/
+/*	$OpenBSD: lib_setup.c,v 1.3 1998/09/13 19:16:28 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -50,7 +50,7 @@
 
 #include <term.h>	/* lines, columns, cur_term */
 
-MODULE_ID("$From: lib_setup.c,v 1.38 1998/04/04 19:08:22 juergen Exp $")
+MODULE_ID("$From: lib_setup.c,v 1.42 1998/09/05 22:15:14 tom Exp $")
 
 /****************************************************************************
  *
@@ -91,8 +91,6 @@ MODULE_ID("$From: lib_setup.c,v 1.38 1998/04/04 19:08:22 juergen Exp $")
 #  define WINSIZE_COLS(n) (int)n.ws_col
 # endif
 #endif
-
-extern TERMINAL *cur_term;
 
 static int _use_env = TRUE;
 
@@ -136,6 +134,16 @@ long	l;
 	    }
 	    T(("screen size: environment LINES = %d COLUMNS = %d",*linep,*colp));
 
+#ifdef __EMX__
+	    if (*linep <= 0 || *colp <= 0)
+	    {
+		int screendata[2];
+		_scrsize(screendata);
+		*colp  = screendata[0];
+		*linep = screendata[1];
+		T(("EMX screen size: environment LINES = %d COLUMNS = %d",*linep,*colp));
+	    }
+#endif
 #if HAVE_SIZECHANGE
 	    /* if that didn't work, maybe we can try asking the OS */
 	    if (*linep <= 0 || *colp <= 0)
@@ -152,8 +160,14 @@ long	l;
 		    } while
 			(errno == EINTR);
 
-		    *linep = WINSIZE_ROWS(size);
-		    *colp  = WINSIZE_COLS(size);
+		    /*
+		     * Solaris lets users override either dimension with an
+		     * environment variable.
+		     */
+		    if (*linep <= 0)
+			*linep = WINSIZE_ROWS(size);
+		    if (*colp <= 0)
+			*colp  = WINSIZE_COLS(size);
 		}
 		/* FALLTHRU */
 	    failure:;

@@ -1,3 +1,6 @@
+'\" t 
+.\" $OpenBSD: curs_mouse.3tbl,v 1.6 1998/09/13 19:16:20 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -26,9 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-'\" t
-.'" $From: curs_mouse.3x,v 1.8 1998/03/11 21:12:53 juergen Exp $
-.'" $OpenBSD: curs_mouse.3tbl,v 1.5 1998/07/23 21:17:51 millert Exp $
+.'" $From: curs_mouse.3x,v 1.9 1998/08/27 21:21:04 Rick.Ohnemus Exp $
 .TH curs_mouse 3 ""
 .SH NAME
 \fBgetmouse\fR, \fBungetmouse\fR, 
@@ -142,7 +143,7 @@ termination.
 All routines return the integer \fBERR\fR upon failure or \fBOK\fR
 upon successful completion.
 .SH PORTABILITY
-These calls were designed for \fBcurses\fR(3), and are not found in SVr4
+These calls were designed for \fBncurses\fR, and are not found in SVr4
 curses, 4.4BSD curses, or any other previous version of curses.
 
 The feature macro \fBNCURSES_MOUSE_VERSION\fR is provided so the preprocessor
@@ -154,7 +155,7 @@ incremented.
 The order of the \fBMEVENT\fR structure members is not guaranteed.  
 Additional fields may be added to the structure in the future.
 
-Under \fBcurses\fR(3), these calls are implemented using either
+Under \fBncurses\fR, these calls are implemented using either
 xterm's built-in mouse-tracking API or Alessandro Rubini's gpm server.
 If you are using something other than xterm there is no gpm daemon
 running on your machine, mouse events will not be visible to

@@ -1,3 +1,5 @@
+.\" $OpenBSD: curs_clear.3,v 1.6 1998/09/13 19:16:17 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -27,7 +29,6 @@
 .\"***************************************************************************
 .\"
 .\" $From: curs_clear.3x,v 1.7 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: curs_clear.3,v 1.5 1998/07/23 21:17:34 millert Exp $
 .TH curs_clear 3 ""
 .SH NAME
 \fBerase\fR, \fBwerase\fR, \fBclear\fR,
@@ -84,7 +85,7 @@ error conditions.
 Some historic curses implementations had, as an undocumented feature, the
 ability to do the equivalent of \fBclearok(..., 1)\fR by saying
 \fBtouchwin(stdscr)\fR or \fBclear(stdscr)\fR.  This will not work under
-this version of curses.
+ncurses.
 .SH SEE ALSO
 \fBcurses\fR(3), \fBcurs_outopts\fR(3), \fBcurs_refresh\fR(3)
 .\"#

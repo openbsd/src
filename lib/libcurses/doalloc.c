@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace_buf.c,v 1.5 1998/09/13 19:16:31 millert Exp $	*/
+/*	$OpenBSD: doalloc.c,v 1.1 1998/09/13 19:16:25 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,55 +29,32 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1997                        *
+ *  Author: Thomas E. Dickey <dickey@clark.net> 1998                        *
  ****************************************************************************/
+
+
 /*
- *	trace_buf.c - Tracing/Debugging buffers (attributes)
+ * Wrapper for malloc/realloc.  Standard implementations allow realloc with
+ * a null pointer, but older libraries may not (e.g., SunOS).
+ *
+ * Also if realloc fails, we discard the old memory to avoid leaks.
  */
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: trace_buf.c,v 1.6 1998/08/15 23:37:25 tom Exp $")
+MODULE_ID("$From: doalloc.c,v 1.2 1998/08/18 22:52:39 Hans-Joachim.Widmaier Exp $")
 
-typedef struct {
-	char *text;
-	size_t size;
-} LIST;
-
-char * _nc_trace_buf(int bufnum, size_t want)
+void *_nc_doalloc(void *oldp, size_t amount)
 {
-	static LIST *list;
-	static size_t have;
+	void *newp;
 
-#if NO_LEAKS
-	if (bufnum < 0) {
-		if (have) {
-			while (have--) {
-				free(list[have].text);
-			}
-			free(list);
+	if (oldp != 0) {
+		if ((newp = realloc(oldp, amount)) == 0) {
+			free(oldp);
+			errno = ENOMEM;		/* just in case 'free' reset */
 		}
-		return 0;
+	} else {
+		newp = malloc(amount);
 	}
-#endif
-
-	if ((size_t)(bufnum+1) > have) {
-		size_t need = (bufnum + 1) * 2;
-		size_t used = sizeof(*list) * need;
-		if ((list = (LIST *)_nc_doalloc(list, used)) == 0)
-			return(0);
-		while (need > have)
-			list[have++].text = 0;
-	}
-
-	if (list[bufnum].text == 0
-	 || want > list[bufnum].size)
-	{
-		if ((list[bufnum].text = (char *)_nc_doalloc(list[bufnum].text, want)) != 0)
-			list[bufnum].size = want;
-	}
-
-	if (list[bufnum].text != 0)
-		*(list[bufnum].text) = '\0';
-	return list[bufnum].text;
+	return newp;
 }

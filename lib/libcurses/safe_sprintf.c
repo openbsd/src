@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe_sprintf.c,v 1.4 1998/08/15 19:06:38 millert Exp $	*/
+/*	$OpenBSD: safe_sprintf.c,v 1.5 1998/09/13 19:16:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$From: safe_sprintf.c,v 1.8 1998/07/11 20:31:37 Bernhard.Rosenkraenzer Exp $")
+MODULE_ID("$From: safe_sprintf.c,v 1.9 1998/08/15 23:58:49 tom Exp $")
 
 #if USE_SAFE_SPRINTF
 
@@ -68,8 +68,9 @@ _nc_printf_length(const char *fmt, va_list ap)
 
 	while (*fmt != '\0') {
 		if (*fmt == '%') {
+			static char dummy[] = "";
 			PRINTF state = Flags;
-			char *pval   = "";
+			char *pval   = dummy;	/* avoid const-cast */
 			double fval  = 0.0;
 			int done     = FALSE;
 			int ival     = 0;
@@ -150,17 +151,12 @@ _nc_printf_length(const char *fmt, va_list ap)
 						if (prec < 0)
 							prec = strlen(pval);
 						if (prec > (int)length) {
-							char *nbuffer;
-
 							length = length + prec;
-							nbuffer = realloc(buffer, length);
-							if (nbuffer == 0) {
-								if (buffer != 0)
-									free(buffer);
+							buffer = (char *)_nc_doalloc(buffer, length);
+							if (buffer == 0) {
 								free(format);
 								return -1;
 							}
-							buffer = nbuffer;
 						}
 						used = 'p';
 						break;
@@ -218,27 +214,23 @@ _nc_printf_string(const char *fmt, va_list ap)
 	int len = _nc_printf_length(fmt, ap);
 
 	if (len > 0) {
-		if ((buf = malloc(len+1)) == NULL)
-			return(NULL);
+		if ((buf = malloc(len+1)) == 0)
+			return(0);
 		vsprintf(buf, fmt, ap);
 	}
 #else
 	static int rows, cols;
 	static char *buf;
 	static size_t len;
-	char *nbuf;
 
 	if (screen_lines > rows || screen_columns > cols) {
 		if (screen_lines   > rows) rows = screen_lines;
 		if (screen_columns > cols) cols = screen_columns;
 		len = (rows * (cols + 1)) + 1;
-		nbuf = buf ? realloc(buf, len) : malloc(len);
-		if (nbuf == NULL) {
-			if (buf != NULL)
-				free(buf);
-			return(NULL);
+		buf = (char *)_nc_doalloc(buf, len);
+		if (buf == 0) {
+			return(0);
 		}
-		buf = nbuf;
 	}
 
 	if (buf != 0) {

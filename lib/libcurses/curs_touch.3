@@ -1,3 +1,5 @@
+.\" $OpenBSD: curs_touch.3,v 1.5 1998/09/13 19:16:23 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -27,7 +29,6 @@
 .\"***************************************************************************
 .\"
 .\" $From: curs_touch.3x,v 1.6 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: curs_touch.3,v 1.4 1998/07/23 21:18:06 millert Exp $
 .TH curs_touch 3 ""
 .SH NAME
 \fBtouchwin\fR, \fBtouchline\fR, \fBuntouchwin\fR,
@@ -81,7 +82,7 @@ The XSI Curses standard, Issue 4 describes these functions.
 Some historic curses implementations had, as an undocumented feature, the
 ability to do the equivalent of \fBclearok(..., 1)\fR by saying
 \fBtouchwin(stdscr)\fR or \fBclear(stdscr)\fR.  This will not work under
-\fBcurses\fR(3).
+ncurses.
 .SH NOTES
 Note that all routines except \fBwtouchln\fR may be macros.
 .SH SEE ALSO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_expand.c,v 1.3 1998/08/15 18:44:43 millert Exp $	*/
+/*	$OpenBSD: comp_expand.c,v 1.4 1998/09/13 19:16:15 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_expand.c,v 1.7 1998/05/30 23:32:45 Todd.Miller Exp $")
+MODULE_ID("$From: comp_expand.c,v 1.8 1998/08/15 23:01:54 tom Exp $")
 
 static int trailing_spaces(const char *src)
 {
@@ -58,20 +58,13 @@ static size_t	length;
 
 int		bufp;
 const char	*ptr, *str = VALID_STRING(srcp) ? srcp : "";
-char		*nbuffer;
 bool		islong = (strlen(str) > 3);
 size_t		need = (2 + strlen(str)) * 4;
 int		ch;
 
 	if (buffer == 0 || need > length) {
-		length = need;
-		nbuffer = buffer ? realloc(buffer, length) : malloc(length);
-		if (nbuffer == 0) {
-			if (buffer != 0)
-				free(buffer);
-			return(NULL);
-		}
-		buffer = nbuffer;
+		if ((buffer = (char *)_nc_doalloc(buffer, length = need)) == 0)
+			return 0;
 	}
 
 	bufp = 0;

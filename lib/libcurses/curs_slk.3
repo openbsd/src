@@ -1,3 +1,5 @@
+.\" $OpenBSD: curs_slk.3,v 1.6 1998/09/13 19:16:23 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -27,7 +29,6 @@
 .\"***************************************************************************
 .\"
 .\" $From: curs_slk.3x,v 1.9 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: curs_slk.3,v 1.5 1998/07/23 21:18:04 millert Exp $
 .TH curs_slk 3 ""
 .SH NAME
 \fBslk_init\fR, \fBslk_set\fR, \fBslk_refresh\fR,
@@ -68,10 +69,10 @@ The slk* functions manipulate the set of soft function-key labels that exist on
 many terminals.  For those terminals that do not have soft labels,
 \fBcurses\fR takes over the bottom line of \fBstdscr\fR, reducing the size of
 \fBstdscr\fR and the variable \fBLINES\fR.  \fBcurses\fR standardizes on eight
-labels of up to eight characters each. In addition to this, this curses 
+labels of up to eight characters each. In addition to this, the ncurses 
 implementation supports a mode where it simulates 12 labels of up to five
 characters each. This is most common for todays PC like enduser devices.
-Please note that curses simulates this mode by taking over up to two lines at
+Please note that ncurses simulates this mode by taking over up to two lines at
 the bottom of the screen, it doesn't try to use any hardware support for this
 mode.
 

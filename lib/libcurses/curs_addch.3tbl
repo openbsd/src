@@ -1,3 +1,6 @@
+'\" t 
+.\" $OpenBSD: curs_addch.3tbl,v 1.6 1998/09/13 19:16:16 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -26,9 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-'\" t
-.\" $OpenBSD: curs_addch.3tbl,v 1.5 1998/07/23 21:17:26 millert Exp $
-.\" $From: curs_addch.3x,v 1.12 1998/06/13 21:44:11 Alexander.V.Lukyanov Exp $
+.\" $From: curs_addch.3x,v 1.14 1998/08/27 21:21:04 Rick.Ohnemus Exp $
 .TH curs_addch 3 ""
 .SH NAME
 \fBaddch\fR, \fBwaddch\fR, \fBmvaddch\fR, \fBmvwaddch\fR,
@@ -93,38 +94,38 @@ l l l
 _ _ _
 l l l.
 \fIName\fR	\fIDefault\fR	\fIDescription\fR
-ACS_ULCORNER	+	upper left-hand corner
-ACS_LLCORNER	+	lower left-hand corner
-ACS_URCORNER	+	upper right-hand corner
-ACS_LRCORNER	+	lower right-hand corner
-ACS_RTEE	+	right tee
-ACS_LTEE	+	left tee
-ACS_BTEE	+	bottom tee
-ACS_TTEE	+	top tee
-ACS_HLINE	-	horizontal line
-ACS_VLINE	|	vertical line
-ACS_PLUS	+	plus
-ACS_S1	-	scan line 1
-ACS_S9	\&_	scan line 9
-ACS_DIAMOND	+	diamond
-ACS_CKBOARD	:	checker board (stipple)
-ACS_DEGREE	'	degree symbol
-ACS_PLMINUS	#	plus/minus
-ACS_BULLET	o	bullet
-ACS_LARROW	<	arrow pointing left
-ACS_RARROW	>	arrow pointing right
-ACS_DARROW	v	arrow pointing down
-ACS_UARROW	^	arrow pointing up
-ACS_BOARD	#	board of squares
-ACS_LANTERN	#	lantern symbol
 ACS_BLOCK	#	solid square block
+ACS_BOARD	#	board of squares
+ACS_BTEE	+	bottom tee
+ACS_BULLET	o	bullet
+ACS_CKBOARD	:	checker board (stipple)
+ACS_DARROW	v	arrow pointing down
+ACS_DEGREE	'	degree symbol
+ACS_DIAMOND	+	diamond
+ACS_GEQUAL	>	greater-than-or-equal-to
+ACS_HLINE	-	horizontal line
+ACS_LANTERN	#	lantern symbol
+ACS_LARROW	<	arrow pointing left
+ACS_LEQUAL	<	less-than-or-equal-to
+ACS_LLCORNER	+	lower left-hand corner
+ACS_LRCORNER	+	lower right-hand corner
+ACS_LTEE	+	left tee
+ACS_NEQUAL	!	not-equal
+ACS_PI	*	greek pi
+ACS_PLMINUS	#	plus/minus
+ACS_PLUS	+	plus
+ACS_RARROW	>	arrow pointing right
+ACS_RTEE	+	right tee
+ACS_S1	-	scan line 1
 ACS_S3	-	scan line 3
 ACS_S7	-	scan line 7
-ACS_LEQUAL	<	less-than-or-equal-to
-ACS_GEQUAL	>	greater-than-or-equal-to
-ACS_PI	*	greek pi
-ACS_NEQUAL	!	not-equal
+ACS_S9	\&_	scan line 9
 ACS_STERLING	f	pound-sterling symbol
+ACS_TTEE	+	top tee
+ACS_UARROW	^	arrow pointing up
+ACS_ULCORNER	+	upper left-hand corner
+ACS_URCORNER	+	upper right-hand corner
+ACS_VLINE	|	vertical line
 .TE
 
 .SH RETURN VALUE
@@ -144,7 +145,7 @@ The attribute A_ALTCHARSET actually forces literal display of PC ROM characters
 including the high-half graphics.  Your console driver may still capture or
 translate a few (such as ESC) but this feature should give you access to the
 card-suit characters, up and down-arrow, and most others in the range 0-32.
-(In a terminfo entry designed for use with \fBcurses\fR, the high-half
+(In a terminfo entry designed for use with \fBncurses\fR, the high-half
 characters are obtained using this attribute with an \fBacsc\fR string in
 which the second of each pair is a high-half character.)
 
@@ -162,7 +163,7 @@ The seven ACS symbols starting with \fBACS_S3\fR were not documented in
 any publicly released System V.  However, many publicly available terminfos
 include \fBacsc\fR strings in which their key characters (pryz{|}) are
 embedded, and a second-hand list of their character descriptions has come
-to light.  The ACS-prefixed names for them were invented for \fBcurses\fR(3).
+to light.  The ACS-prefixed names for them were invented for \fBncurses\fR(3).
 .SH SEE ALSO
 \fBcurses\fR(3), \fBcurs_attr\fR(3), \fBcurs_clear\fR(3),
 \fBcurs_inch\fR(3), \fBcurs_outopts\fR(3), \fBcurs_refresh\fR(3),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.h,v 1.1 1998/07/23 21:20:05 millert Exp $	*/
+/*	$OpenBSD: termcap.h,v 1.2 1998/09/13 19:16:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: termcap.h.in,v 1.6 1998/03/21 23:08:27 Adam.Richter Exp $ */
+/* $From: termcap.h.in,v 1.7 1998/09/05 22:20:45 tom Exp $ */
 
 #ifndef _TERMCAP_H
 #define _TERMCAP_H	1
@@ -54,14 +54,14 @@ extern char *UP;
 extern char *BC;
 extern speed_t ospeed; 
 
+#if !defined(__NCURSES_H) && !defined(_TERM_H)
+extern char *tgetstr(const char *, char **);
+extern char *tgoto(const char *, int, int);
 extern int tgetent(char *, const char *);
 extern int tgetflag(const char *);
 extern int tgetnum(const char *);
-extern char *tgetstr(const char *, char **);
-
 extern int tputs(const char *, int, int (*)(int));
-
-extern char *tgoto(const char *, int, int);
+#endif
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.7 1998/07/27 03:37:30 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.8 1998/09/13 19:16:25 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.106 1998/07/25 20:07:29 tom Exp $
+ * $From: curses.priv.h,v 1.109 1998/09/05 22:10:02 tom Exp $
  *
  *	curses.priv.h
  *
@@ -487,7 +487,6 @@ extern void _nc_fifo_dump(void);
 #define returnWin(code)  return code
 #endif
 
-extern const char *_nc_visbuf(const char *);
 extern const char *_nc_visbuf2(int, const char *);
 
 #define _trace_key(ch) ((ch > KEY_MIN) ? keyname(ch) : _tracechar((unsigned char)ch))
@@ -593,14 +592,12 @@ extern void _nc_expanded(void);
 
 #endif
 
+/* doalloc.c */
+extern void *_nc_doalloc(void *, size_t);
+
 /* doupdate.c */
 #if USE_XMC_SUPPORT
 extern void _nc_do_xmc_glitch(attr_t);
-#endif
-
-/* hardscroll.c */
-#if defined(TRACE) || defined(SCROLLDEBUG)
-extern void _nc_linedump(void);
 #endif
 
 /* hardscroll.c */
@@ -652,7 +649,6 @@ extern int _nc_setupscreen(short, short const, FILE *);
 extern int _nc_timed_wait(int, int, int *);
 extern int _nc_waddch_nosync(WINDOW *, const chtype);
 extern void _nc_do_color(int, bool, int (*)(int));
-extern void _nc_free_and_exit(int);
 extern void _nc_freeall(void);
 extern void _nc_freewin(WINDOW *win);
 extern void _nc_hash_map(void);

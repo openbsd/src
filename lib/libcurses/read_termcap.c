@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.3 1998/08/14 21:11:41 millert Exp $	*/
+/*	$OpenBSD: read_termcap.c,v 1.4 1998/09/13 19:16:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -63,7 +63,7 @@
 #include <fcntl.h>
 #endif
 
-MODULE_ID("$From: read_termcap.c,v 1.33 1998/07/25 20:22:11 tom Exp $")
+MODULE_ID("$From: read_termcap.c,v 1.35 1998/08/18 01:37:53 tom Exp $")
 
 #ifndef PURE_TERMINFO
 
@@ -262,6 +262,7 @@ _nc_cgetent(char **buf, int *oline, char **db_array, const char *name)
  *	  names interpolated, a name can't be found, or depth exceeds
  *	  MAX_RECURSION.
  */
+#define DOALLOC(size) (char *)_nc_doalloc(record, size)
 static int
 _nc_getent(
 	char **cap,         /* termcap-content */
@@ -276,7 +277,7 @@ _nc_getent(
 {
 	register char *r_end, *rp;
 	int myfd = FALSE;
-	char *record;
+	char *record = 0;
 	int tc_not_resolved;
 	int current;
 	int lineno;
@@ -292,7 +293,7 @@ _nc_getent(
 	 * Check if we have a top record from cgetset().
 	 */
 	if (depth == 0 && toprec != 0 && _nc_cgetmatch(toprec, name) == 0) {
-		if ((record = malloc (topreclen + BFRAG)) == 0) {
+		if ((record = DOALLOC(topreclen + BFRAG)) == 0) {
 			errno = ENOMEM;
 			return (TC_SYS_ERR);
 		}
@@ -306,7 +307,7 @@ _nc_getent(
 		/*
 		 * Allocate first chunk of memory.
 		 */
-		if ((record = malloc(BFRAG)) == 0) {
+		if ((record = DOALLOC(BFRAG)) == 0) {
 			errno = ENOMEM;
 			return (TC_SYS_ERR);
 		}
@@ -324,8 +325,8 @@ _nc_getent(
 			 */
 			if (fd >= 0) {
 				(void)lseek(fd, (off_t)0, SEEK_SET);
-			} else if (_nc_access(db_array[current], R_OK) < 0
-			  || (fd = open(db_array[current], O_RDONLY, 0) < 0)) {
+			} else if ((_nc_access(db_array[current], R_OK) < 0)
+			  || (fd = open(db_array[current], O_RDONLY, 0)) < 0) {
 				/* No error on unfound file. */
 				if (errno == ENOENT)
 					continue;
@@ -398,20 +399,16 @@ _nc_getent(
 						if (rp >= r_end) {
 							unsigned int pos;
 							size_t newsize;
-							char *nrecord;
 
 							pos = rp - record;
 							newsize = r_end - record + BFRAG;
-							nrecord = realloc(record, newsize);
-							if (nrecord == 0) {
-								if (record != 0)
-									free(nrecord);
+							record = DOALLOC(newsize);
+							if (record == 0) {
 								if (myfd)
 									(void)close(fd);
 								errno = ENOMEM;
 								return (TC_SYS_ERR);
 							}
-							record = nrecord;
 							r_end = record + newsize;
 							rp = record + pos;
 						}
@@ -535,23 +532,19 @@ _nc_getent(
 			if (diff >= r_end - rp) {
 				unsigned int pos, tcpos, tcposend;
 				size_t newsize;
-				char *nrecord;
 
 				pos = rp - record;
 				newsize = r_end - record + diff + BFRAG;
 				tcpos = tcstart - record;
 				tcposend = tcend - record;
-				nrecord = realloc(record, newsize);
+				record = DOALLOC(newsize);
 				if (record == 0) {
-					if (record != 0)
-						free(record);
 					if (myfd)
 						(void)close(fd);
 					free(icap);
 					errno = ENOMEM;
 					return (TC_SYS_ERR);
 				}
-				record = nrecord;
 				r_end = record + newsize;
 				rp = record + pos;
 				tcstart = record + tcpos;
@@ -583,14 +576,10 @@ _nc_getent(
 		(void)close(fd);
 	*len = rp - record - 1; /* don't count NUL */
 	if (r_end > rp) {
-		char *nrecord;
-		if ((nrecord = realloc(record, (size_t)(rp - record))) == 0) {
-			if (record != 0)
-				free(record);
+		if ((record = DOALLOC((size_t)(rp - record))) == 0) {
 			errno = ENOMEM;
 			return (TC_SYS_ERR);
 		}
-		record = nrecord;
 	}
 
 	*cap = record;

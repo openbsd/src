@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.2 1998/08/14 23:02:34 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.3 1998/09/13 19:16:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
 /*    and: Eric S. Raymond <esr@snark.thyrsus.com>                          */
 /****************************************************************************/
 
-/* $From: MKterm.h.awk.in,v 1.24 1998/04/11 22:46:44 tom Exp $ */
+/* $From: MKterm.h.awk.in,v 1.25 1998/09/05 22:19:41 tom Exp $ */
 
 /*
 **	term.h -- Definition of struct term
@@ -135,7 +135,6 @@ extern "C" {
 #define SET_TTY(fd, buf) stty(fd, buf)
 #endif
 
-extern char ttytype[];
 #define NAMESIZE 256
 
 #define CUR cur_term->type.
@@ -724,23 +723,26 @@ extern TERMINAL *set_curterm(TERMINAL *);
 extern int del_curterm(TERMINAL *);
 
 /* miscellaneous entry points */
-extern int putp(const char *);
 extern int restartterm(const char *, int, int *);
 extern int setupterm(const char *,int,int *);
 extern int tputs(const char *, int, int (*)(int));
 
-/* terminfo entry points */
-extern int tigetflag(NCURSES_CONST char *);
-extern int tigetnum(NCURSES_CONST char *);
+/* terminfo entry points, also declared in curses.h */
+#if !defined(__NCURSES_H) && !defined(_TERMCAP_H)
+extern char ttytype[];
 extern char *tigetstr(NCURSES_CONST char *);
 extern char *tparm(NCURSES_CONST char *, ...);
+extern int putp(const char *);
+extern int tigetflag(NCURSES_CONST char *);
+extern int tigetnum(NCURSES_CONST char *);
+#endif /* __NCURSES_H */
 
 /* termcap database emulation (XPG4 uses const only for 2nd param of tgetent) */
+extern char *tgetstr(const char *, char **);
+extern char *tgoto(const char *, int, int);
 extern int tgetent(char *, const char *);
 extern int tgetflag(const char *);
 extern int tgetnum(const char *);
-extern char *tgetstr(const char *, char **);
-extern char *tgoto(const char *, int, int);
 
 #ifdef __cplusplus
 }

@@ -1,3 +1,5 @@
+.\" $OpenBSD: curs_inopts.3,v 1.6 1998/09/13 19:16:19 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -27,7 +29,6 @@
 .\"***************************************************************************
 .\"
 .\" $From: curs_inopts.3x,v 1.8 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: curs_inopts.3,v 1.5 1998/07/23 21:17:45 millert Exp $
 .TH curs_inopts 3 ""
 .SH NAME
 \fBcbreak\fR, \fBnocbreak\fR, \fBecho\fR,
@@ -190,7 +191,7 @@ completion, unless otherwise noted in the preceding routine descriptions.
 .SH PORTABILITY
 These functions are described in the XSI Curses standard, Issue 4.
 
-This curses library obeys the XPG4 standard and the historical practice of the
+The ncurses library obeys the XPG4 standard and the historical practice of the
 AT&T curses implementations, in that the echo bit is cleared when curses
 initializes the terminal state.  BSD curses differed from this slightly; it
 left the echo bit on at initialization, but the BSD \fBraw\fR call turned it

@@ -1,3 +1,5 @@
+.\" $OpenBSD: curs_instr.3,v 1.6 1998/09/13 19:16:20 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -27,7 +29,6 @@
 .\"***************************************************************************
 .\"
 .\" $From: curs_instr.3x,v 1.8 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: curs_instr.3,v 1.5 1998/07/23 21:17:49 millert Exp $
 .TH curs_instr 3 ""
 .SH NAME
 \fBinstr\fR, \fBinnstr\fR, \fBwinstr\fR, \fBwinnstr\fR,
@@ -71,7 +72,7 @@ yet support XPG4 multi-byte characters).
 SVr4 does not
 document whether a length limit includes or excludes the trailing NUL.
 .PP
-This curses library extends the XSI description by allowing a negative
+The ncurses library extends the XSI description by allowing a negative
 value for \fIn\fR.
 In this case, the functions return the string ending at the right margin.
 .SH SEE ALSO

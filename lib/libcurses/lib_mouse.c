@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mouse.c,v 1.5 1998/07/23 21:19:01 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.6 1998/09/13 19:16:27 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -75,7 +75,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.35 1998/02/11 12:13:55 tom Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.36 1998/08/22 18:09:52 tom Exp $")
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -119,7 +119,9 @@ static void _trace_slot(const char *tag)
 	_tracef(tag);
 
 	for (ep = events; ep < events + EV_MAX; ep++)
-		_tracef("mouse event queue slot %d = %s", ep-events, _tracemouse(ep));
+		_tracef("mouse event queue slot %ld = %s",
+			(long) (ep - events),
+			_tracemouse(ep));
 }
 #endif
 
@@ -322,7 +324,9 @@ static bool _nc_mouse_inline(SCREEN *sp)
 
 	eventp->x = (kbuf[1] - ' ') - 1;
 	eventp->y = (kbuf[2] - ' ') - 1;
-	TR(MY_TRACE, ("_nc_mouse_inline: primitive mouse-event %s has slot %d", _tracemouse(eventp), eventp - events));
+	TR(MY_TRACE, ("_nc_mouse_inline: primitive mouse-event %s has slot %ld",
+		_tracemouse(eventp),
+		(long) (eventp - events)));
 
 	/* bump the next-free pointer into the circular list */
 	eventp = NEXT(eventp);
@@ -417,8 +421,9 @@ static bool _nc_mouse_parse(int runcount)
      */
     if (runcount == 1)
     {
-	TR(MY_TRACE, ("_nc_mouse_parse: returning simple mouse event %s at slot %d",
-	   _tracemouse(prev), prev-events));
+	TR(MY_TRACE, ("_nc_mouse_parse: returning simple mouse event %s at slot %ld",
+	    _tracemouse(prev),
+	    (long) (prev - events)));
 	return (prev->id >= 0)
 		? ((prev->bstate & eventmask) ? TRUE : FALSE)
 		: FALSE;
@@ -434,8 +439,10 @@ static bool _nc_mouse_parse(int runcount)
     if (_nc_tracing & TRACE_IEVENT)
     {
 	_trace_slot("before mouse press/release merge:");
-	_tracef("_nc_mouse_parse: run starts at %d, ends at %d, count %d",
-	    runp-events, ((eventp - events) + (EV_MAX-1)) % EV_MAX, runcount);
+	_tracef("_nc_mouse_parse: run starts at %ld, ends at %ld, count %d",
+	    (long) (runp - events),
+	    (long) ((eventp - events) + (EV_MAX-1)) % EV_MAX,
+	    runcount);
     }
 #endif /* TRACE */
 
@@ -486,8 +493,10 @@ static bool _nc_mouse_parse(int runcount)
     if (_nc_tracing & TRACE_IEVENT)
     {
 	_trace_slot("before mouse click merge:");
-	_tracef("_nc_mouse_parse: run starts at %d, ends at %d, count %d",
-	    runp-events, ((eventp - events) + (EV_MAX-1)) % EV_MAX, runcount);
+	_tracef("_nc_mouse_parse: run starts at %ld, ends at %ld, count %d",
+	    (long) (runp - events),
+	    (long) ((eventp - events) + (EV_MAX-1)) % EV_MAX,
+	    runcount);
     }
 #endif /* TRACE */
 
@@ -591,8 +600,10 @@ static bool _nc_mouse_parse(int runcount)
     if (_nc_tracing & TRACE_IEVENT)
     {
 	_trace_slot("before mouse event queue compaction:");
-	_tracef("_nc_mouse_parse: run starts at %d, ends at %d, count %d",
-	    runp-events, ((eventp - events) + (EV_MAX-1)) % EV_MAX, runcount);
+	_tracef("_nc_mouse_parse: run starts at %ld, ends at %ld, count %d",
+	    (long) (runp - events),
+	    (long) ((eventp - events) + (EV_MAX-1)) % EV_MAX,
+	    runcount);
     }
 #endif /* TRACE */
 
@@ -609,13 +620,16 @@ static bool _nc_mouse_parse(int runcount)
     if (_nc_tracing & TRACE_IEVENT)
     {
 	_trace_slot("after mouse event queue compaction:");
-	_tracef("_nc_mouse_parse: run starts at %d, ends at %d, count %d",
-	    runp-events, ((eventp - events) + (EV_MAX-1)) % EV_MAX, runcount);
+	_tracef("_nc_mouse_parse: run starts at %ld, ends at %ld, count %d",
+	    (long) (runp - events),
+	    (long) ((eventp - events) + (EV_MAX-1)) % EV_MAX,
+	    runcount);
     }
     for (ep = runp; ep != eventp; ep = NEXT(ep))
 	if (ep->id != INVALID_EVENT)
-	    TR(MY_TRACE, ("_nc_mouse_parse: returning composite mouse event %s at slot %d",
-		_tracemouse(ep), ep-events));
+	    TR(MY_TRACE, ("_nc_mouse_parse: returning composite mouse event %s at slot %ld",
+		_tracemouse(ep),
+		(long) (ep - events)));
 #endif /* TRACE */
 
     /* after all this, do we have a valid event? */
@@ -671,8 +685,9 @@ int getmouse(MEVENT *aevent)
 	/* copy the event we find there */
 	*aevent = *prev;
 
-	TR(TRACE_IEVENT, ("getmouse: returning event %s from slot %d",
-	    _tracemouse(prev), prev-events));
+	TR(TRACE_IEVENT, ("getmouse: returning event %s from slot %ld",
+	    _tracemouse(prev),
+	    (long) (prev - events)));
 
 	prev->id = INVALID_EVENT;	/* so the queue slot becomes free */
 	returnCode(OK);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_doupdate.c,v 1.8 1998/08/15 18:44:44 millert Exp $	*/
+/*	$OpenBSD: lib_doupdate.c,v 1.9 1998/09/13 19:16:27 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -77,7 +77,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: lib_doupdate.c,v 1.102 1998/05/30 23:37:01 Todd.Miller Exp $")
+MODULE_ID("$From: lib_doupdate.c,v 1.103 1998/08/15 23:34:47 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -927,23 +927,17 @@ static	size_t	lenLine;
 int	row, col;
 int	top    = total;
 int	last   = min(screen_columns, newscr->_maxx+1);
-int	error = 0;
 size_t	length = sizeof(chtype) * last;
 chtype	blank  = newscr->_line[total-1].text[last-1]; /* lower right char */
-void	*p;
 
 	if (!clr_eos || !can_clear_with(blank))
 		return total;
 
 	if (tstLine == 0 || length > lenLine) {
-		p = tstLine ? realloc(tstLine, length) : malloc(length);
-		if (p != 0)
-			tstLine = (chtype *)p;
-		else
-			error = 1;
+		tstLine = (chtype *)_nc_doalloc(tstLine, length);
 	}
 
-	if (!error) {
+	if (tstLine != 0) {
 		lenLine = length;
 		for (col = 0; col < last; col++)
 			tstLine[col] = blank;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_initscr.c,v 1.4 1998/07/23 21:18:51 millert Exp $	*/
+/*	$OpenBSD: lib_initscr.c,v 1.5 1998/09/13 19:16:27 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -47,7 +47,7 @@
 #include <sys/termio.h>	/* needed for ISC */
 #endif
 
-MODULE_ID("$From: lib_initscr.c,v 1.22 1998/04/18 21:51:33 tom Exp $")
+MODULE_ID("$From: lib_initscr.c,v 1.23 1998/08/09 00:18:48 tom Exp $")
 
 WINDOW *initscr(void)
 {

@@ -1,3 +1,5 @@
+.\" $OpenBSD: curs_outopts.3,v 1.6 1998/09/13 19:16:21 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -27,7 +29,6 @@
 .\"***************************************************************************
 .\"
 .\" $From: curs_outopts.3x,v 1.12 1998/03/21 22:56:02 jtc Exp $
-.\" $OpenBSD: curs_outopts.3,v 1.5 1998/07/23 21:17:53 millert Exp $
 .TH curs_outopts 3 ""
 .SH NAME
 \fBclearok\fR, \fBidlok\fR, \fBidcok immedok\fR,
@@ -141,11 +142,11 @@ system does not mess with.
 Some historic curses implementations had, as an undocumented feature, the
 ability to do the equivalent of \fBclearok(..., 1)\fR by saying
 \fBtouchwin(stdscr)\fR or \fBclear(stdscr)\fR.  This will not work under
-this curses.
+ncurses.
 
 Earlier System V curses implementations specified that with \fBscrollok\fR 
 enabled, any window modification triggering a scroll also forced a physical
-refresh.  XSI Curses does not require this, and \fBcurses\fR avoids doing
+refresh.  XSI Curses does not require this, and \fBncurses\fR avoids doing
 it in order to perform better vertical-motion optimization at \fBwrefresh\fR
 time.
 

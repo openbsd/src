@@ -1,3 +1,5 @@
+.\" $OpenBSD: curs_color.3,v 1.7 1998/09/13 19:16:17 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -27,7 +29,6 @@
 .\"***************************************************************************
 .\"
 .\" $From: curs_color.3x,v 1.10 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: curs_color.3,v 1.6 1998/07/23 21:17:35 millert Exp $
 .TH curs_color 3 ""
 .SH NAME
 \fBstart_color\fR, \fBinit_pair\fR,
@@ -149,7 +150,7 @@ All other routines return the integer \fBERR\fR upon failure and an \fBOK\fR
 (SVr4 specifies only "an integer value other than \fBERR\fR") upon successful
 completion.
 .SH NOTES
-In this \fIcurses\fR implementation, there is a separate color activation flag,
+In the \fIncurses\fR implementation, there is a separate color activation flag,
 color palette, color pairs table, and associated COLORS and COLOR_PAIRS counts
 for each screen; the \fBstart_color\fR function only affects the current
 screen.  The SVr4/XSI interface is not really designed with this in mind, and

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.2 1998/07/27 03:37:34 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.3 1998/09/13 19:16:28 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -49,7 +49,7 @@
 #include <term.h>
 #include <tic.h>
 
-MODULE_ID("$From: read_entry.c,v 1.40 1998/07/25 20:11:11 tom Exp $")
+MODULE_ID("$From: read_entry.c,v 1.42 1998/08/09 11:59:36 tom Exp $")
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -100,8 +100,10 @@ int _nc_read_file_entry(const char *const filename, TERMTYPE *ptr)
     char	buf[MAX_ENTRY_SIZE];
 
     if (_nc_access(filename, R_OK) < 0
-     || (fd = open(filename, O_RDONLY|O_BINARY)) < 0)
+     || (fd = open(filename, O_RDONLY|O_BINARY)) < 0) {
+	T(("cannot open terminfo %s (errno=%d)", filename, errno));
 	return(0);
+    }
 
     T(("read terminfo %s", filename));
 
@@ -136,8 +138,8 @@ int _nc_read_file_entry(const char *const filename, TERMTYPE *ptr)
     if (ptr->term_names == NULL) {
 	if (str_size)
 	    free(ptr->str_table);
-	    close(fd);
-	    return(0);
+	close(fd);
+	return(0);
     }
     (void) strcpy(ptr->term_names, buf);
     if (name_size > MAX_NAME_SIZE)
