@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.20 1999/06/02 06:33:36 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.112 1999/05/25 07:57:18 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.21 1999/07/07 22:13:08 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.113 1999/06/10 13:34:56 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -1743,4 +1743,37 @@ ipsec_informational_post_hook (struct message *msg)
   if (!msg->isakmp_sa)
     return 0;
   return ipsec_fill_in_hash (msg);
+}
+
+ssize_t
+ipsec_id_size (char *section, u_int8_t *id)
+{
+  char *type, *data;
+
+  type = conf_get_str (section, "ID-type");
+  if (!type)
+    {
+      log_print ("ipsec_id_size: section %s has no \"ID-type\" tag", section);
+      return -1;
+    }
+
+  *id = constant_value (ipsec_id_cst, type);
+  switch (*id)
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      return sizeof (in_addr_t);
+    case IPSEC_ID_IPV4_ADDR_SUBNET:
+      return 2 * sizeof (in_addr_t);
+    case IPSEC_ID_FQDN:
+    case IPSEC_ID_USER_FQDN:
+      data = conf_get_str (section, "Name");
+      if (!data)
+	{
+	  log_print ("ipsec_id_size: section %s has no \"Name\" tag", section);
+	  return -1;
+	}
+      return strlen (data);
+    }
+  log_print ("ipsec_id_size: unrecognized ID-type %d (%s)", *id, type);
+  return -1;
 }
