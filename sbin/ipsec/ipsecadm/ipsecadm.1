@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.7 1998/03/05 09:30:58 provos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.8 1998/04/25 06:58:20 niklas Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -42,18 +42,18 @@
 .Sh DESCRIPTION
 The
 .Nm ipsecadm
-utility allows to setup securtiy associations in the kernel
+utility allows to setup security associations in the kernel
 to be used with 
 .Xr ipsec 4 .
-It can be used to specifiy the encryption and authentication
-alogrithmns and key material for the network layer security
+It can be used to specify the encryption and authentication
+algorithms and key material for the network layer security
 provided by IPSec.
 The possible commands are:
 .Pp
 .Bl -tag -width new_esp
 .It new esp
 Setup a SPI which uses the new esp transforms.
-Encryption and authentication algorithmns can be applied. 
+Encryption and authentication algorithms can be applied. 
 This is the default mode.
 Allowed
 modifiers are:
@@ -70,7 +70,7 @@ and
 .Fl key .
 .It old esp
 Setup a SPI which uses the old esp transforms. Only
-encryption algorithmns can be applied. Allowed modifiers are:
+encryption algorithms can be applied. Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
 .Fl spi ,
