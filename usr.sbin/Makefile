@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.40 1998/10/07 02:38:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.41 1999/02/26 17:52:09 jason Exp $
 
 # not yet done: catman
 
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest \
+SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest brconfig \
 	chown chroot config cron ctm dev_mkdb dhcp \
 	edquota gspa httpd inetd iostat \
 	ipftest ipmon ipsend kgmon \
