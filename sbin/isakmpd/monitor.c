@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.24 2004/06/21 18:34:11 ho Exp $	 */
+/* $OpenBSD: monitor.c,v 1.25 2004/06/24 17:02:48 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -59,7 +59,6 @@ struct monitor_state {
 }               m_state;
 
 volatile sig_atomic_t sigchlded = 0;
-volatile sig_atomic_t monitor_sighupped = 0;
 extern volatile sig_atomic_t sigtermed;
 static volatile sig_atomic_t cur_state = STATE_INIT;
 
@@ -535,7 +534,7 @@ monitor_loop(int debug)
 	pid_t	 pid;
 	fd_set	*fds;
 	size_t	 fdsn;
-	int	 n, maxfd;
+	int	 status, n, maxfd;
 
 	if (!debug)
 		log_to(0);
@@ -563,27 +562,24 @@ monitor_loop(int debug)
 		 * Currently, there is no need for us to hang around if the
 		 * child is in the process of shutting down.
 	         */
-		if (sigtermed || sigchlded) {
-			if (sigtermed)
-				kill(m_state.pid, SIGTERM);
-
-			if (sigchlded) {
-				do {
-					pid = waitpid(m_state.pid, &n,
-					    WNOHANG);
-				}
-				while (pid == -1 && errno == EINTR);
-
-				if (pid == m_state.pid && (WIFEXITED(n) ||
-				    WIFSIGNALED(n)))
-					m_priv_increase_state(STATE_QUIT);
-			}
+		if (sigtermed) {
+			m_priv_increase_state(STATE_QUIT);
+			kill(m_state.pid, SIGTERM);
 			break;
 		}
-		if (monitor_sighupped) {
-			kill(m_state.pid, SIGHUP);
-			monitor_sighupped = 0;
+
+		if (sigchlded) {
+			do {
+				pid = waitpid(m_state.pid, &status, WNOHANG);
+			} while (pid == -1 && errno == EINTR);
+
+			if (pid == m_state.pid && (WIFEXITED(status) ||
+			    WIFSIGNALED(status))) {
+				m_priv_increase_state(STATE_QUIT);
+				break;
+			}
 		}
+
 		memset(fds, 0, fdsn);
 		FD_SET(m_state.s, fds);
 
