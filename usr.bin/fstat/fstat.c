@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.18 1998/09/06 22:48:46 art Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.19 1998/09/07 01:04:13 art Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.18 1998/09/06 22:48:46 art Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.19 1998/09/07 01:04:13 art Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,6 +79,8 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.18 1998/09/06 22:48:46 art Exp $";
 #include <netinet/in_pcb.h>
 
 #include <arpa/inet.h>
+
+#include <sys/pipe.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -144,6 +146,7 @@ void socktrans __P((struct socket *, int));
 void usage __P((void));
 void vtrans __P((struct vnode *, int, int));
 int getfname __P((char *));
+void pipetrans __P((struct pipe *, int));
 
 int
 main(argc, argv)
@@ -350,8 +353,10 @@ dofiles(kp)
 		else if (file.f_type == DTYPE_SOCKET) {
 			if (checkfile == 0)
 				socktrans((struct socket *)file.f_data, i);
-		}
-		else {
+		} else if (file.f_type == DTYPE_PIPE) {
+			if (checkfile == 0)
+				pipetrans((struct pipe *)file.f_data, i);
+		} else {
 			dprintf("unknown file type %d for file %d of pid %d",
 				file.f_type, i, Pid);
 		}
@@ -623,6 +628,43 @@ getmnton(m)
 	mt->next = mhead;
 	mhead = mt;
 	return (mt->mntonname);
+}
+
+void
+pipetrans(pipe, i)
+	struct pipe *pipe;
+	int i;
+{
+	struct pipe pi;
+	void *maxaddr;
+
+	PREFIX(i);
+
+	printf(" ");
+
+	/* fill in socket */
+	if (!KVM_READ(pipe, &pi, sizeof(struct pipe))) {
+		dprintf("can't read pipe at %p", pipe);
+		goto bad;
+	}
+
+	/*
+	 * We don't have enough space to fit both peer and own address, so
+	 * we select the higher address so both ends of the pipe have the
+	 * same visible addr. (it's the higher address because when the other
+	 * end closes, it becomes 0)
+	 */
+	maxaddr = MAX(pipe, pi.pipe_peer);
+
+	printf("pipe %p state: %s%s%s", maxaddr,
+	       (pi.pipe_state & PIPE_WANTR) ? "R" : "",
+	       (pi.pipe_state & PIPE_WANTW) ? "W" : "",
+	       (pi.pipe_state & PIPE_EOF) ? "E" : "");
+	
+	printf("\n");
+	return;
+bad:
+	printf("* error\n");
 }
 
 void

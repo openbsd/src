@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.7 1998/08/30 22:45:15 deraadt Exp $
+.\"	$OpenBSD: fstat.1,v 1.8 1998/09/07 01:04:13 art Exp $
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -210,6 +210,12 @@ and port.
 A ``*'' is used to indicate an INADDR_ANY binding.  In this case, the
 use of the arrow (``<--'' or ``-->'') indicates the direction the socket
 connection was created.
+.Sh PIPES
+Every pipe is printed as an address which is the same for both sides of
+the pipe and a state that is built of the letters 'RWE'.
+W - The pipe blocks waiting for the reader to read data.
+R - The pipe blocks waiting for the writer to write data.
+E - The pipe is in EOF state.
 .Sh BUGS
 Since
 .Nm fstat
