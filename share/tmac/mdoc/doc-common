@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.39 2004/08/09 18:08:51 deraadt Exp $
+.\"	$OpenBSD: doc-common,v 1.40 2004/08/10 22:21:31 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -186,6 +186,7 @@
 .	if "\\$3"pc532" .as vT \ (PC532)
 .	if "\\$3"pegasos" .as vT \ (Pegasos)
 .	if "\\$3"pmax"  .as vT \ (PMAX)
+.	if "\\$3"sgi"  .as vT \ (SGI)
 .	if "\\$3"sparc" .as vT \ (SPARC)
 .	if "\\$3"sparc64" .as vT \ (SPARC64)
 .	if "\\$3"sun3"  .as vT \ (Sun3)
