@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: snprintf.c,v 1.5 1998/01/12 06:14:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: snprintf.c,v 1.6 1998/01/12 06:20:56 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <limits.h>
@@ -75,7 +75,7 @@ snprintf(str, n, fmt, va_alist)
 	f._bf._size = f._w = n ? n - 1 : 0;
 	ret = vfprintf(&f, fmt, ap);
 	if (n)
-		*f._p = 0;
+		*f._p = '\0';
 	va_end(ap);
 	return (ret);
 }
