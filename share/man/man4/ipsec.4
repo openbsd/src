@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.15 1999/02/23 03:49:51 angelos Exp $
+.\" $OpenBSD: ipsec.4,v 1.16 1999/02/24 23:33:23 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -79,7 +79,10 @@ effect of multiple transactions being received by the peer.  Consider the
 attacker has got to know what the traffic is all about by other means than
 cracking the encryption, and that the traffic causes events favourable for him,
 like depositing money into his account.  We need to make sure he cannot just
-replay that traffic later.
+replay that traffic later. WARNING: as per the standards specification, replay
+protection is not performed when using manual-keyed IPsec (e.g., when using
+.Xr ipsecadm 8
+).
 .El
 .Pp
 .Tn IPSec
