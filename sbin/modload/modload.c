@@ -337,9 +337,11 @@ main(argc, argv)
 	 */
 	if (post) {
 		struct lmc_stat sbuf;
+		char name[MAXLKMNAME] = "";
 		char id[16], type[16], offset[16];
 
 		sbuf.id = resrv.slot;
+		sbuf.name = name;
 		if (ioctl(devfd, LMSTAT, &sbuf) == -1)
 			err(15, "error fetching module stats for post-install");
 		sprintf(id, "%d", sbuf.id);
