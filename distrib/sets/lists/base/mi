@@ -517,7 +517,6 @@
 ./usr/lib/perl5/Getopt/Std.pm
 ./usr/lib/perl5/I18N
 ./usr/lib/perl5/I18N/Collate.pm
-./usr/lib/perl5/IO
 ./usr/lib/perl5/IPC
 ./usr/lib/perl5/IPC/Open2.pm
 ./usr/lib/perl5/IPC/Open3.pm
@@ -787,6 +786,7 @@
 ./usr/sbin/iptest
 ./usr/sbin/kadmin
 ./usr/sbin/kadmind
+./usr/sbin/kauth
 ./usr/sbin/kdb_destroy
 ./usr/sbin/kdb_edit
 ./usr/sbin/kdb_init
