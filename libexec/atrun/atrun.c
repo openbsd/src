@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.4 1997/04/12 18:57:30 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.5 1997/07/29 02:22:46 deraadt Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -67,7 +67,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.4 1997/04/12 18:57:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.5 1997/07/29 02:22:46 deraadt Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -245,7 +245,9 @@ run_file(filename, uid, gid)
 
 	PRIV_END
 
-	write_string(fd_out, "Subject: Output from your job ");
+	write_string(fd_out, "To: ");
+	write_string(fd_out, mailname);
+	write_string(fd_out, "\nSubject: Output from your job ");
 	write_string(fd_out, filename);
 	write_string(fd_out, "\n\n");
 	if (fstat(fd_out, &buf) == -1)
@@ -348,7 +350,7 @@ run_file(filename, uid, gid)
 			perr("Cannot set user id");
 
 		execl(_PATH_SENDMAIL, "sendmail", "-F", "Atrun Service",
-		    "-odi", "-oem", mailname, (char *) NULL);
+		    "-odi", "-oem", "-t", (char *) NULL);
 		perr("Exec failed for mail command");
 
 		PRIV_END
