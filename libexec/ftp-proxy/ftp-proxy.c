@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.1 2001/08/19 04:11:12 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.2 2001/08/19 05:22:37 beck Exp $ */
 /*
  * Copyright (c) 1996-2001
  *	Obtuse Systems Corporation.  All rights reserved.
@@ -794,18 +794,14 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		}
 		
 		server_listen_sa.sin_family = AF_INET;
-		server_listen_sa.sin_addr.s_addr = htonl(
-			(values[0] << 24) |
-			(values[1] << 16) |
-			(values[2] <<  8) |
-			(values[3] <<  0)
-			);
-		server_listen_sa.sin_port = htons((values[4] << 8)
-						  | values[5]);
+		server_listen_sa.sin_addr.s_addr = htonl((values[0] << 24) |
+		    (values[1] << 16) | (values[2] <<  8) | (values[3] <<  0));
+		server_listen_sa.sin_port = htons((values[4] << 8) | 
+		    values[5]);
 
 		debuglog(1,"server wants us to use %s:%u\n",
-			inet_ntoa(server_listen_sa.sin_addr),
-			(values[4] << 8) | values[5]);
+		    inet_ntoa(server_listen_sa.sin_addr), (values[4] << 8) |
+		    values[5]);
 		
 		new_dataconn(0);
 		
@@ -814,8 +810,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		iap = &(server->sa.sin_addr);
 		
 		debuglog(1,"we want client to use %s:%u\n", inet_ntoa(*iap),
-		    (((u_char *)&client_listen_sa.sin_port)[0] << 8)
-			| ((u_char *)&client_listen_sa.sin_port)[1]);
+		    htons(client_listen_sa.sin_port));
 		
 		snprintf(tbuf, sizeof(tbuf),
 		    "227 Entering Passive Mode (%u,%u,%u,%u,%u,%u\r\n",
