@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.22 1998/03/03 22:34:56 niklas Exp $
+#	$OpenBSD: Makefile.i386,v 1.23 1998/08/10 22:08:27 mickey Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -191,6 +191,3 @@ locore.o: ${I386}/i386/locore.s assym.h
 	${NORMAL_S}
 
 %RULES
-
-### add microcode dependencies
-.include "$S/dev/microcode/Makefile.inc"
