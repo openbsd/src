@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.27 2003/03/30 20:50:05 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.28 2003/04/28 01:40:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.27 2003/03/30 20:50:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.28 2003/04/28 01:40:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.27 2003/03/30 20:50:05
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
