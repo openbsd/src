@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.27 2001/11/26 16:51:13 jasoni Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.28 2001/12/07 20:36:17 beck Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -499,6 +499,12 @@ pass out on $ext_if proto tcp all modulate state
 # pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
 pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \\
 	auth } keep state
+
+# pass in data mode connections for ftp-proxy running on this host.
+# (see ftp-proxy(8) for details)
+pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 41952 \\
+	keep state
+
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/pf.conf" -compact
