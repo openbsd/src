@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.obj.mk,v 1.7 1997/04/27 15:47:49 niklas Exp $
+#	$OpenBSD: bsd.obj.mk,v 1.8 1997/05/03 11:32:46 niklas Exp $
 #	$NetBSD: bsd.obj.mk,v 1.9 1996/04/10 21:08:05 thorpej Exp $
 
 .if !target(obj)
@@ -40,7 +40,7 @@ obj! _SUBDIRUSE
 		if test ! -L ${__objdir} -o \
 		    X`perl -e "print readlink('${__objdir}')"` != X$$dest; \
 		    then \
-			test -e ${__objdir} && rm -rf ${__objdir}; \
+			if test -e ${__objdir}; then rm -rf ${__objdir}; fi; \
 			ln -s $$dest ${__objdir}; \
 		fi; \
 		if test -d ${__usrobjdir} -a ! -d $$dest; then \
