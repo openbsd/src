@@ -37,12 +37,12 @@
 
 #if defined(SYSLIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: sigsuspend.S,v 1.2 1996/08/19 08:18:15 tholo Exp $"
+	.asciz "$OpenBSD: sigsuspend.S,v 1.3 1999/01/22 06:07:56 marc Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 
-ENTRY(sigsuspend)
+SYSENTRY(sigsuspend)
 	ld	[%o0], %o0		! indirect to mask argument
 	mov	SYS_sigsuspend, %g1
 	t	ST_SYSCALL

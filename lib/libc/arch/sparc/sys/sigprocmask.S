@@ -37,7 +37,7 @@
 
 #if defined(SYSLIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: sigprocmask.S,v 1.2 1996/08/19 08:18:13 tholo Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.3 1999/01/22 06:07:56 marc Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -45,7 +45,7 @@
 /*
  * sigprocmask(int how, sigset_t *set, sigset_t *oset)
  */
-ENTRY(sigprocmask)
+SYSENTRY(sigprocmask)
 	tst	%o1		! set == NULL?
 	bne,a	1f		! if not,
 	 ld	[%o1], %o1	!    replace it in %o1 with *set
