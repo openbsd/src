@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.39 1997/10/27 08:06:31 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.40 1997/10/27 14:42:02 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 
 #include <machine/conf.h>
 
-#include "dkcsum.h"
 #include "wdc.h"
 #include "wd.h"
 bdev_decl(wd);
@@ -370,7 +369,6 @@ blktochr(dev)
 	return (NODEV);
 }
 
-#if NDKCSUM > 0
 /*
  * In order to map BSD bdev numbers of disks to their BIOS equivalents
  * we use several heuristics, one being using checksums of the first
@@ -406,7 +404,6 @@ dev_rawpart(dv)
 			    RAW_PART));
 	return (NODEV);
 }
-#endif
 
 /*
  * This entire table could be autoconfig()ed but that would mean that

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.1 1997/10/27 08:06:30 niklas Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.2 1997/10/27 14:42:03 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -56,11 +56,10 @@ dev_t dev_rawpart __P((struct device *));	/* XXX */
 extern u_int32_t bios_cksumlen;
 extern bios_diskinfo_t *bios_diskinfo;
 
-void dkcsumattach __P((int));
+void dkcsumattach __P((void));			/* XXX should be elsewhere */
 
 void
-dkcsumattach(unused)
-	int unused;
+dkcsumattach()
 {
 	struct device *dv;
 	struct buf *bp;
@@ -169,5 +168,6 @@ dkcsumattach(unused)
 		    DISKUNIT(bp->b_dev), 0);	/* XXX RAW_PART later? */
 		hit->flags |= BDI_PICKED;
 	}
+	bp->b_flags |= B_INVAL;
 	brelse(bp);
 }

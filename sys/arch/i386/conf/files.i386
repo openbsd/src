@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.35 1997/10/27 08:06:31 niklas Exp $
+#	$OpenBSD: files.i386,v 1.36 1997/10/27 14:42:01 niklas Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -32,6 +32,8 @@ file	arch/i386/i386/random.s
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
+file	arch/i386/i386/dkcsum.c
+file	lib/libz/adler32.c		!ppp_deflate
 file	dev/cons.c
 file	dev/cninit.c
 major	{vnd = 14}
@@ -222,7 +224,3 @@ file	arch/i386/i386/bios.c		bios needs-count
 device apm
 attach apm at bios
 file	arch/i386/i386/apm.c		apm needs-count
-
-pseudo-device dkcsum
-file	arch/i386/i386/dkcsum.c		dkcsum needs-flag
-file	lib/libz/adler32.c		dkcsum & !ppp_deflate
