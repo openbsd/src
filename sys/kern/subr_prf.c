@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.44 2002/05/20 22:16:36 art Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.45 2002/10/14 20:15:23 art Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -98,8 +98,7 @@ extern int uvm_doswapencrypt;
  */
 
 int	 kprintf(const char *, int, void *, char *, va_list);
-void	 putchar(int, int, struct tty *);
-
+void	 kputchar(int, int, struct tty *);
 
 /*
  * globals
@@ -289,11 +288,11 @@ logpri(level)
 	char *p;
 	char snbuf[KPRINTF_BUFSIZE];
 
-	putchar('<', TOLOG, NULL);
+	kputchar('<', TOLOG, NULL);
 	sprintf(snbuf, "%d", level);
 	for (p = snbuf ; *p ; p++)
-		putchar(*p, TOLOG, NULL);
-	putchar('>', TOLOG, NULL);
+		kputchar(*p, TOLOG, NULL);
+	kputchar('>', TOLOG, NULL);
 }
 
 /*
@@ -322,13 +321,13 @@ addlog(const char *fmt, ...)
 
 
 /*
- * putchar: print a single character on console or user terminal.
+ * kputchar: print a single character on console or user terminal.
  *
  * => if console, then the last MSGBUFS chars are saved in msgbuf
  *	for inspection later (e.g. dmesg/syslog)
  */
 void
-putchar(c, flags, tp)
+kputchar(c, flags, tp)
 	register int c;
 	int flags;
 	struct tty *tp;
@@ -704,7 +703,7 @@ vsnprintf(buf, size, fmt, ap)
 		}							\
 		*sbuf++ = (C);						\
 	} else {							\
-		putchar((C), oflags, (struct tty *)vp);			\
+		kputchar((C), oflags, (struct tty *)vp);			\
 	}								\
 }
 
@@ -1179,3 +1178,33 @@ overflow:
 	return (ret);
 	/* NOTREACHED */
 }
+
+#if __GNUC_PREREQ__(2,96)
+/*
+ * XXX - these functions shouldn't be in the kernel, but gcc 3.X feels like
+ *       translating some printf calls to puts and since it doesn't seem
+ *       possible to just turn off parts of those optimizations (some of
+ *       them are really useful, we have to provide a dummy puts and putchar
+ *	 that are wrappers around printf.
+ */
+int	puts(const char *);
+int	putchar(int c);
+
+int
+puts(const char *str)
+{
+	printf("%s\n", str);
+
+	return (0);
+}
+
+int
+putchar(int c)
+{
+	printf("%c", c);
+
+	return (c);
+}
+
+
+#endif
