@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.17 2001/12/08 14:51:36 fgsch Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.18 2001/12/18 03:47:52 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -546,7 +546,12 @@ _thread_kern_sched(struct sigcontext * scp)
 				     PTHREAD_CANCEL_ASYNCHRONOUS) != 0))
 					pthread_testcancel();
 
-				_thread_sys_sigreturn(&_thread_run->saved_sigcontext);
+				/* return to signal handler.   This code
+				   should be:
+				   _thread_sys_sigreturn(&_thread_run->saved_sigcontext);
+				   but that doesn't currently work on the
+				   sparc */
+				return;
 			} else {
 				/*
 				 * This is the normal way out of the scheduler.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.10 2001/11/05 22:53:28 marc Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.11 2001/12/18 03:47:52 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -93,11 +93,17 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 			 */
 			_thread_kern_sched(scp);
 
-			/*
-			 * This point should not be reached, so abort the
-			 * process: 
-			 */
-			PANIC("Returned to signal function from scheduler");
+			/* The scheduler currently returns here instead
+			   of calling sigreturn due to a sparc sigreturn
+			   bug.   We should also return.   That brings
+			   us back to the sigtramp code which will
+			   sigreturn to the context stored on the current
+			   stack (which is the same as scp, above).
+			   The code originally did this:
+
+			   PANIC("Returned to signal function from scheduler");
+			*/
+			return;
 		}
 	}
 	/*
