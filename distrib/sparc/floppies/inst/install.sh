@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.5 1996/10/19 00:06:10 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.6 1996/12/09 07:06:58 tholo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -253,6 +253,7 @@ echo	""
 
 fragsize=1024
 blocksize=8192
+$DONTDOIT fsck -t ffs /dev/rfd0a
 $DONTDOIT mount -u /dev/fd0a /
 cat /etc/disktab.preinstall > $DT
 echo	"" >> $DT
