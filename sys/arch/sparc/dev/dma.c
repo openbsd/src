@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.19 2004/02/01 15:39:37 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.20 2005/02/27 22:01:03 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -154,12 +154,12 @@ dmaattach(parent, self, aux)
 		char *cabletype = getpropstring(ca->ca_ra.ra_node,
 						"cable-selection");
 		if (strcmp(cabletype, "tpe") == 0) {
-			sc->sc_regs->csr |= DE_AUI_TP;
+			sc->sc_regs->csr |= E_TP_AUI;
 		} else if (strcmp(cabletype, "aui") == 0) {
-			sc->sc_regs->csr &= ~DE_AUI_TP;
+			sc->sc_regs->csr &= ~E_TP_AUI;
 		} else {
 			/* assume TP if nothing there */
-			sc->sc_regs->csr |= DE_AUI_TP;
+			sc->sc_regs->csr |= E_TP_AUI;
 		}
 		delay(20000);	/* manual says we need 20ms delay */
 	}
@@ -290,15 +290,15 @@ espsearch:
 	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
 	 *     and "drain" bits while it is still thinking about a	\
 	 *     request.							\
-	 * other revs: D_R_PEND bit reads as 0				\
+	 * other revs: D_ESC_R_PEND bit reads as 0			\
 	 */								\
-	DMAWAIT(sc, sc->sc_regs->csr & D_R_PEND, "R_PEND", dontpanic);	\
+	DMAWAIT(sc, sc->sc_regs->csr & D_ESC_R_PEND, "R_PEND", dontpanic);\
 	/*								\
 	 * Select drain bit based on revision				\
 	 * also clears errors and D_TC flag				\
 	 */								\
 	if (sc->sc_rev == DMAREV_1 || sc->sc_rev == DMAREV_0)		\
-		DMACSR(sc) |= D_DRAIN;					\
+		DMACSR(sc) |= D_ESC_DRAIN;				\
 	else								\
 		DMACSR(sc) |= D_INVALIDATE;				\
 	/*								\
@@ -314,9 +314,9 @@ espsearch:
 	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
 	 *     and "drain" bits while it is still thinking about a	\
 	 *     request.							\
-	 * other revs: D_R_PEND bit reads as 0				\
+	 * other revs: D_ESC_R_PEND bit reads as 0			\
 	 */								\
-	DMAWAIT(sc, sc->sc_regs->csr & D_R_PEND, "R_PEND", dontpanic);	\
+	DMAWAIT(sc, sc->sc_regs->csr & D_ESC_R_PEND, "R_PEND", dontpanic);\
 	csr = DMACSR(sc);						\
 	csr &= ~(D_WRITE|D_EN_DMA);					\
 	csr |= D_INVALIDATE;						\
@@ -339,17 +339,17 @@ dma_reset(sc, isledma)
 
 	switch (sc->sc_rev) {
 	case DMAREV_2:
-		sc->sc_regs->csr &= ~D_BURST_SIZE; /* must clear first */
+		sc->sc_regs->csr &= ~L64854_BURST_SIZE; /* must clear first */
 		if (sc->sc_burst & SBUS_BURST_32) {
-			DMACSR(sc) |= D_BURST_32;
+			DMACSR(sc) |= L64854_BURST_32;
 		} else if (sc->sc_burst & SBUS_BURST_16) {
-			DMACSR(sc) |= D_BURST_16;
+			DMACSR(sc) |= L64854_BURST_16;
 		} else {
-			DMACSR(sc) |= D_BURST_0;
+			DMACSR(sc) |= L64854_BURST_0;
 		}
 		break;
 	case DMAREV_ESC:
-		DMACSR(sc) |= D_AUTODRAIN;	/* Auto-drain */
+		DMACSR(sc) |= D_ESC_AUTODRAIN;	/* Auto-drain */
 		if (sc->sc_burst & SBUS_BURST_32) {
 			DMACSR(sc) &= ~0x800;
 		} else
@@ -506,13 +506,13 @@ espdmaintr(sc)
 	csr = DMACSR(sc);
 
 	NCR_DMA(("%s: intr: addr %p, csr %b\n", sc->sc_dev.dv_xname,
-		 DMADDR(sc), csr, DMACSRBITS));
+		 DMADDR(sc), csr, DDMACSR_BITS));
 
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
 		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
-			csr, DMACSRBITS);
+			csr, DDMACSR_BITS);
 		return -1;
 	}
 
@@ -626,7 +626,7 @@ ledmaintr(sc)
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
 		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
-			csr, DMACSRBITS);
+			csr, DDMACSR_BITS);
 		DMA_RESET(sc);
 	}
 	return 1;

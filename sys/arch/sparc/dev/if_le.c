@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.24 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.25 2005/02/27 22:01:04 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -111,7 +111,6 @@ myleintr(arg)
 	}
 
 	if (dodrain) {	/* XXX - is this necessary with D_DSBL_WRINVAL on? */
-#define E_DRAIN 0x400 /* XXX: fix dmareg.h */
 		int i = 10;
 		while (i-- > 0 && (lesc->sc_dma->sc_regs->csr & D_DRAINING))
 			delay(1);
@@ -180,10 +179,10 @@ lesetutp(sc)
 
 	while (--tries) {
 		csr = lesc->sc_dma->sc_regs->csr;
-		csr |= DE_AUI_TP;
+		csr |= E_TP_AUI;
 		lesc->sc_dma->sc_regs->csr = csr;
 		delay(20000);	/* must not touch le for 20ms */
-		if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP)
+		if (lesc->sc_dma->sc_regs->csr & E_TP_AUI)
 			return;
 	}
 }
@@ -198,10 +197,10 @@ lesetaui(sc)
 
 	while (--tries) {
 		csr = lesc->sc_dma->sc_regs->csr;
-		csr &= ~DE_AUI_TP;
+		csr &= ~E_TP_AUI;
 		lesc->sc_dma->sc_regs->csr = csr;
 		delay(20000);	/* must not touch le for 20ms */
-		if ((lesc->sc_dma->sc_regs->csr & DE_AUI_TP) == 0)
+		if ((lesc->sc_dma->sc_regs->csr & E_TP_AUI) == 0)
 			return;
 	}
 }
@@ -281,7 +280,7 @@ lemediastatus(ifp, ifmr)
 		/*
 		 * Notify the world which media we're currently using.
 		 */
-		if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP)
+		if (lesc->sc_dma->sc_regs->csr & E_TP_AUI)
 			ifmr->ifm_active = IFM_ETHER | IFM_10_T;
 		else
 			ifmr->ifm_active = IFM_ETHER | IFM_10_5;
@@ -306,7 +305,7 @@ lehwreset(sc)
 	if (CPU_ISSUN4M && lesc->sc_dma) {
 		u_int32_t aui;
 
-		aui = lesc->sc_dma->sc_regs->csr & DE_AUI_TP;
+		aui = lesc->sc_dma->sc_regs->csr & E_TP_AUI;
 		DMA_RESET(lesc->sc_dma);
 		lesc->sc_dma->sc_regs->en_bar = lesc->sc_laddr & 0xff000000;
 		DMA_ENINTR(lesc->sc_dma);
@@ -359,7 +358,7 @@ lenocarrier(sc)
 		 * Check if the user has requested a certain cable type, and
 		 * if so, honor that request.
 		 */
-		if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP) {
+		if (lesc->sc_dma->sc_regs->csr & E_TP_AUI) {
 			switch (IFM_SUBTYPE(sc->sc_ifmedia.ifm_media)) {
 			case IFM_10_5:
 			case IFM_AUTO:
