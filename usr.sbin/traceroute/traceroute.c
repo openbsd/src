@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.22 1997/06/11 10:17:04 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.23 1997/06/12 01:12:27 mickey Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -272,7 +272,6 @@ u_char packet[512], *outpacket;	/* last inbound (icmp) packet */
 
 int wait_for_reply __P((int, struct sockaddr_in *, struct timeval *));
 void send_probe __P((int, int, struct sockaddr_in *));
-double deltaT __P((struct timeval *, struct timeval *));
 int packet_ok __P((u_char *, int, struct sockaddr_in *, int));
 void print __P((u_char *, int, struct sockaddr_in *));
 char *inetname __P((struct in_addr));
@@ -512,6 +511,7 @@ main(argc, argv)
 		int got_there = 0;
 		int unreachable = 0;
 		int timeout = 0;
+		quad_t dt;
 
 		Printf("%2d ", ttl);
 		for (probe = 0; probe < nprobes; ++probe) {
@@ -536,7 +536,12 @@ main(argc, argv)
 					print(packet, cc, &from);
 					lastaddr = from.sin_addr.s_addr;
 				}
-				Printf("  %g ms", deltaT(&t1, &t2));
+				dt = (quad_t)(t2.tv_sec - t1.tv_sec) * 1000000
+					+ (quad_t)(t2.tv_usec - t1.tv_usec);
+				Printf("  %u", (u_int)(dt / 1000));
+				if (dt % 1000)
+					Printf(".%u", (u_int)(dt % 1000));
+				Printf(" ms");
 				ip = (struct ip *)packet;
 				if (ttl_flag)
 					Printf(" (%d)", ip->ip_ttl);
@@ -726,19 +731,6 @@ send_probe(seq, ttl, to)
 		(void) fflush(stdout);
 	}
 }
-
-
-double
-deltaT(t1p, t2p)
-	struct timeval *t1p, *t2p;
-{
-	register double dt;
-
-	dt = (double)(t2p->tv_sec - t1p->tv_sec) * 1000.0 +
-	     (double)(t2p->tv_usec - t1p->tv_usec) / 1000.0;
-	return (dt);
-}
-
 
 /*
  * Convert an ICMP "type" field to a printable string.
