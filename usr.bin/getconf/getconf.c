@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.3 1996/06/26 05:33:43 deraadt Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.4 2001/03/01 21:15:41 aaron Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getconf.c,v 1.3 1996/06/26 05:33:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getconf.c,v 1.4 2001/03/01 21:15:41 aaron Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -233,7 +233,8 @@ main(argc, argv)
 static void
 usage()
 {
-  fprintf (stderr, "usage: getconf system_var\n");
-  fprintf (stderr, "       getconf path_var pathname\n");
-  exit(1);
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s name [pathname]\n", __progname);
+	exit(1);
 }
