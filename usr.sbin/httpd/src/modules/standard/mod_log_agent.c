@@ -1,3 +1,5 @@
+/*	$OpenBSD: mod_log_agent.c,v 1.5 2002/07/17 12:55:15 henning Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -60,6 +62,7 @@
 #include "httpd.h"
 #include "http_config.h"
 #include "http_log.h"
+#include "fdcache.h"
 
 module agent_log_module;
 
@@ -125,7 +128,11 @@ static void open_agent_log(server_rec *s, pool *p)
         cls->agent_fd = ap_piped_log_write_fd(pl);
     }
     else if (*cls->fname != '\0') {
-        if ((cls->agent_fd = ap_popenf(p, fname, xfer_flags, xfer_mode)) < 0) {
+	if (ap_server_chroot_desired())
+	    cls->agent_fd = fdcache_open(fname, xfer_flags, xfer_mode);
+	else
+	    cls->agent_fd = ap_popenf(p, fname, xfer_flags, xfer_mode);
+        if (cls->agent_fd < 0) {
             ap_log_error(APLOG_MARK, APLOG_ERR, s,
                          "could not open agent log file %s.", fname);
             exit(1);
