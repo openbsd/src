@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_time.c,v 1.6 1996/06/26 05:42:43 deraadt Exp $	*/
+/*	$OpenBSD: pr_time.c,v 1.7 1996/07/13 17:24:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -96,8 +96,14 @@ pr_idle(idle)
 	int days = idle / SECSPERDAY;
 
 	/* If idle more than 36 hours, print as a number of days. */
-	if (idle >= 36 * SECSPERHOUR)
-		printf(days == 1 ? "  %dday " : " %ddays ", days);
+	if (idle >= 36 * SECSPERHOUR) {
+		if (days == 1)
+			printf("  %dday ", days);
+		else if (days < 10)
+			printf(" %ddays ", days);
+		else
+			printf("%ddays ", days);
+	}
 
 	/* If idle more than an hour, print as HH:MM. */
 	else if (idle >= SECSPERHOUR)
