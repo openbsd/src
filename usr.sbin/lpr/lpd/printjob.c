@@ -1,5 +1,5 @@
-/*	$OpenBSD: printjob.c,v 1.4 1996/07/04 05:41:55 tholo Exp $ */
-/*	$NetBSD: printjob.c,v 1.9 1996/04/30 00:07:00 jtc Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.5 1996/07/27 10:31:17 deraadt Exp $ */
+/*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -1401,6 +1401,7 @@ openrem()
 	pstatus("sending to %s", RM);
 }
 
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 struct bauds {
 	int	baud;
 	int	speed;
@@ -1422,6 +1423,7 @@ struct bauds {
 	38400,	B38400,
 	0,	0
 };
+#endif
 
 /*
  * setup tty lines.
@@ -1429,7 +1431,6 @@ struct bauds {
 static void
 setty()
 {
-	register struct bauds *bp;
 	struct info i;
 	char **argv, **ap, *p, *val;
 
@@ -1444,6 +1445,10 @@ setty()
 		exit(1);
 	}
 	if (BR > 0) {
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+		cfsetspeed(&i.t, BR);
+#else
+		register struct bauds *bp;
 		for (bp = bauds; bp->baud; bp++)
 			if (BR == bp->baud)
 				break;
@@ -1452,6 +1457,7 @@ setty()
 			exit(1);
 		}
 		cfsetspeed(&i.t, bp->speed);
+#endif
 		i.set = 1;
 	}
 	if (MS) {
