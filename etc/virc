@@ -1,7 +1,0 @@
-" $OpenBSD: virc,v 1.2 1996/09/26 14:14:54 downsj Exp $
-" Compatible mode for vim.
-set cpoptions=w$ esckeys formatoptions=vt history=0 iskeyword=@,48-57,_
-set nomodeline nomore noshowcmd noshowmode notagrelative notextauto
-set nowritebackup
-set undolevels=0 updatecount=0 whichwrap="" wildchar=
-:version 4.0
