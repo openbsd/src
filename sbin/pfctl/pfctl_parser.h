@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.51 2003/03/27 18:01:57 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.52 2003/04/03 15:52:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -106,12 +106,8 @@ int	pfctl_set_logif(struct pfctl *, char *);
 int	parse_rules(FILE *, struct pfctl *);
 int	parse_flags(char *);
 
-void	print_filter(struct pf_rule *, int);
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int);
 void	print_rule(struct pf_rule *, int);
-void	print_nat(struct pf_rule *, int);
-void	print_binat(struct pf_rule *, int);
-void	print_rdr(struct pf_rule *, int);
 void	print_status(struct pf_status *);
 
 int	eval_pfaltq(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);

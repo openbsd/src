@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.23 2003/03/24 17:06:39 cedric Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.24 2003/04/03 15:52:24 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -50,11 +50,11 @@ void	print_name(struct pf_addr *, sa_family_t);
 void
 print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 {
-	char buf[48];
-
-	if (addr->type == PF_ADDR_DYNIFTL)
+	switch(addr->type) {
+	case PF_ADDR_DYNIFTL:
 		printf("(%s)", addr->v.ifname);
-	else if (addr->type == PF_ADDR_TABLE) {
+		break;
+	case PF_ADDR_TABLE:
 		if (verbose)
 			if (addr->p.tblcnt == -1)
 				printf("<%s:*>", addr->v.tblname);
@@ -64,11 +64,26 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 		else
 			printf("<%s>", addr->v.tblname);
 		return;
-	} else {
-		if (inet_ntop(af, &addr->v.a.addr, buf, sizeof(buf)) == NULL)
-			printf("?");
-		else
-			printf("%s", buf);
+	case PF_ADDR_ADDRMASK:
+		if (PF_AZERO(&addr->v.a.addr, AF_INET6) &&
+                    PF_AZERO(&addr->v.a.mask, AF_INET6))
+                        printf("any");
+		else {
+			char buf[48];
+
+			if (inet_ntop(af, &addr->v.a.addr, buf,
+			    sizeof(buf)) == NULL)
+				printf("?");
+			else
+				printf("%s", buf);
+		}
+		break;
+	case PF_ADDR_NOROUTE:
+		printf("no-route");
+		return;
+	default:
+		printf("?");
+		return;
 	}
 	if (! PF_AZERO(&addr->v.a.mask, af)) {
 		int bits = unmask(&addr->v.a.mask, af);

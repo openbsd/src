@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.166 2003/04/02 22:31:06 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.167 2003/04/03 15:52:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -678,6 +678,8 @@ pfctl_show_nat(int dev, int opts)
 {
 	struct pfioc_rule pr;
 	u_int32_t mnr, nr;
+	static int nattype[3] = { PF_NAT, PF_RDR, PF_BINAT };
+	int i;
 
 	if (*anchorname && !*rulesetname) {
 		struct pfioc_ruleset pr;
@@ -710,62 +712,26 @@ pfctl_show_nat(int dev, int opts)
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
 	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
-	pr.rule.action = PF_NAT;
-	if (ioctl(dev, DIOCGETRULES, &pr)) {
-		warn("DIOCGETRULES");
-		return (-1);
-	}
-	mnr = pr.nr;
-	for (nr = 0; nr < mnr; ++nr) {
-		pr.nr = nr;
-		if (ioctl(dev, DIOCGETRULE, &pr)) {
-			warn("DIOCGETRULE");
+	for (i = 0; i < 3; i++) {
+		pr.rule.action = nattype[i];
+		if (ioctl(dev, DIOCGETRULES, &pr)) {
+			warn("DIOCGETRULES");
 			return (-1);
 		}
-		if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
-		    pr.ticket, PF_NAT) != 0)
-			return (-1);
-		print_nat(&pr.rule, opts & PF_OPT_VERBOSE2);
-		pfctl_print_rule_counters(&pr.rule, opts);
-		pfctl_clear_pool(&pr.rule.rpool);
-	}
-	pr.rule.action = PF_RDR;
-	if (ioctl(dev, DIOCGETRULES, &pr)) {
-		warn("DIOCGETRULES");
-		return (-1);
-	}
-	mnr = pr.nr;
-	for (nr = 0; nr < mnr; ++nr) {
-		pr.nr = nr;
-		if (ioctl(dev, DIOCGETRULE, &pr)) {
-			warn("DIOCGETRULE");
-			return (-1);
+		mnr = pr.nr;
+		for (nr = 0; nr < mnr; ++nr) {
+			pr.nr = nr;
+			if (ioctl(dev, DIOCGETRULE, &pr)) {
+				warn("DIOCGETRULE");
+				return (-1);
+			}
+			if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
+			    pr.ticket, nattype[i]) != 0)
+				return (-1);
+			print_rule(&pr.rule, opts & PF_OPT_VERBOSE2);
+			pfctl_print_rule_counters(&pr.rule, opts);
+			pfctl_clear_pool(&pr.rule.rpool);
 		}
-		if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
-		    pr.ticket, PF_RDR) != 0)
-			return (-1);
-		print_rdr(&pr.rule, opts & PF_OPT_VERBOSE2);
-		pfctl_print_rule_counters(&pr.rule, opts);
-		pfctl_clear_pool(&pr.rule.rpool);
-	}
-	pr.rule.action = PF_BINAT;
-	if (ioctl(dev, DIOCGETRULES, &pr)) {
-		warn("DIOCGETRULES");
-		return (-1);
-	}
-	mnr = pr.nr;
-	for (nr = 0; nr < mnr; ++nr) {
-		pr.nr = nr;
-		if (ioctl(dev, DIOCGETRULE, &pr)) {
-			warn("DIOCGETRULE");
-			return (-1);
-		}
-		if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
-		    pr.ticket, PF_BINAT) != 0)
-			return (-1);
-		print_binat(&pr.rule, opts & PF_OPT_VERBOSE2);
-		pfctl_print_rule_counters(&pr.rule, opts);
-		pfctl_clear_pool(&pr.rule.rpool);
 	}
 	return (0);
 }

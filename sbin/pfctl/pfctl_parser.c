@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.148 2003/03/28 20:37:29 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.149 2003/04/03 15:52:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -56,8 +56,7 @@
 
 void		 print_op (u_int8_t, const char *, const char *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, const char *);
-void		 print_uid (u_int8_t, uid_t, uid_t, const char *);
-void		 print_gid (u_int8_t, gid_t, gid_t, const char *);
+void		 print_ugid (u_int8_t, unsigned, unsigned, const char *, unsigned);
 void		 print_flags (u_int8_t);
 void		 print_fromto(struct pf_rule_addr *, struct pf_rule_addr *,
 		    u_int8_t, u_int8_t, int);
@@ -324,28 +323,14 @@ print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, const char *proto)
 }
 
 void
-print_uid(u_int8_t op, uid_t u1, uid_t u2, const char *t)
+print_ugid(u_int8_t op, unsigned u1, unsigned u2, const char *t, unsigned umax)
 {
 	char	a1[11], a2[11];
 
 	snprintf(a1, sizeof(a1), "%u", u1);
 	snprintf(a2, sizeof(a2), "%u", u2);
 	printf("%s ", t);
-	if (u1 == UID_MAX && (op == PF_OP_EQ || op == PF_OP_NE))
-		print_op(op, "unknown", a2);
-	else
-		print_op(op, a1, a2);
-}
-
-void
-print_gid(u_int8_t op, gid_t g1, gid_t g2, const char *t)
-{
-	char	a1[11], a2[11];
-
-	snprintf(a1, sizeof(a1), "%u", g1);
-	snprintf(a2, sizeof(a2), "%u", g2);
-	printf("%s ", t);
-	if (g1 == GID_MAX && (op == PF_OP_EQ || op == PF_OP_NE))
+	if (u1 == umax && (op == PF_OP_EQ || op == PF_OP_NE))
 		print_op(op, "unknown", a2);
 	else
 		print_op(op, a1, a2);
@@ -365,72 +350,35 @@ void
 print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
     sa_family_t af, u_int8_t proto, int verbose)
 {
-	if (src->addr.type != PF_ADDR_NOROUTE &&
-	    dst->addr.type != PF_ADDR_NOROUTE &&
+	if (src->addr.type == PF_ADDR_ADDRMASK &&
+	    dst->addr.type == PF_ADDR_ADDRMASK &&
 	    PF_AZERO(&src->addr.v.a.addr, AF_INET6) &&
 	    PF_AZERO(&src->addr.v.a.mask, AF_INET6) &&
-	    !src->port_op && PF_AZERO(&dst->addr.v.a.addr, AF_INET6) &&
-	    PF_AZERO(&dst->addr.v.a.mask, AF_INET6) && !dst->port_op)
+	    PF_AZERO(&dst->addr.v.a.addr, AF_INET6) &&
+	    PF_AZERO(&dst->addr.v.a.mask, AF_INET6) &&
+	    !src->not && !dst->not &&
+	    !src->port_op && !dst->port_op)
 		printf("all ");
 	else {
 		printf("from ");
-		if (src->addr.type == PF_ADDR_NOROUTE)
-			printf("no-route ");
-		else if (PF_AZERO(&src->addr.v.a.addr, AF_INET6) &&
-		    PF_AZERO(&src->addr.v.a.mask, AF_INET6))
-			printf("any ");
-		else {
-			if (src->not)
-				printf("! ");
-			print_addr(&src->addr, af, verbose);
-			printf(" ");
-		}
+		if (src->not)
+			printf("! ");
+		print_addr(&src->addr, af, verbose);
+		printf(" ");
 		if (src->port_op)
 			print_port(src->port_op, src->port[0],
 			    src->port[1],
 			    proto == IPPROTO_TCP ? "tcp" : "udp");
 
 		printf("to ");
-		if (dst->addr.type == PF_ADDR_NOROUTE)
-			printf("no-route ");
-		else if (PF_AZERO(&dst->addr.v.a.addr, AF_INET6) &&
-		    PF_AZERO(&dst->addr.v.a.mask, AF_INET6))
-			printf("any ");
-		else {
-			if (dst->not)
-				printf("! ");
-			print_addr(&dst->addr, af, verbose);
-			printf(" ");
-		}
+		if (dst->not)
+			printf("! ");
+		print_addr(&dst->addr, af, verbose);
+		printf(" ");
 		if (dst->port_op)
 			print_port(dst->port_op, dst->port[0],
 			    dst->port[1],
 			    proto == IPPROTO_TCP ? "tcp" : "udp");
-	}
-}
-
-void
-print_rule(struct pf_rule *r, int verbose)
-{
-	switch (r->action) {
-	case PF_NAT:
-	case PF_NONAT:
-		print_nat(r, verbose);
-		break;
-	case PF_BINAT:
-	case PF_NOBINAT:
-		print_binat(r, verbose);
-		break;
-	case PF_RDR:
-	case PF_NORDR:
-		print_rdr(r, verbose);
-		break;
-	default:
-	case PF_PASS:
-	case PF_DROP:
-	case PF_SCRUB:
-		print_filter(r, verbose);
-		break;
 	}
 }
 
@@ -507,126 +455,6 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 	}
 	if (pool->opts & PF_POOL_STATICPORT)
 		printf(" static-port");
-}
-
-void
-print_nat(struct pf_rule *n, int verbose)
-{
-	if (verbose)
-		printf("@%d ", n->nr);
-	if (n->anchorname[0])
-		printf("nat-anchor %s ", n->anchorname);
-	else {
-		if (n->action == PF_NONAT)
-			printf("no ");
-		printf("nat ");
-	}
-	if (n->ifname[0]) {
-		printf("on ");
-		if (n->ifnot)
-			printf("! ");
-		printf("%s ", n->ifname);
-	}
-	if (n->af) {
-		if (n->af == AF_INET)
-			printf("inet ");
-		else
-			printf("inet6 ");
-	}
-	if (n->proto) {
-		struct protoent	*p;
-
-		if ((p = getprotobynumber(n->proto)) != NULL)
-			printf("proto %s ", p->p_name);
-		else
-			printf("proto %u ", n->proto);
-	}
-	print_fromto(&n->src, &n->dst, n->af, n->proto, verbose);
-	if (!n->anchorname[0] && (n->action == PF_NAT)) {
-		printf("-> ");
-		print_pool(&n->rpool, n->rpool.proxy_port[0],
-		    n->rpool.proxy_port[1], n->af, PF_NAT);
-	}
-	printf("\n");
-}
-
-void
-print_binat(struct pf_rule *b, int verbose)
-{
-	if (verbose)
-		printf("@%d ", b->nr);
-	if (b->anchorname[0])
-		printf("binat-anchor %s ", b->anchorname);
-	else {
-		if (b->action == PF_NOBINAT)
-			printf("no ");
-		printf("binat ");
-	}
-	if (b->ifname[0]) {
-		printf("on ");
-		printf("%s ", b->ifname);
-	}
-	if (b->af) {
-		if (b->af == AF_INET)
-			printf("inet ");
-		else
-			printf("inet6 ");
-	}
-	if (b->proto) {
-		struct protoent	*p;
-
-		if ((p = getprotobynumber(b->proto)) != NULL)
-			printf("proto %s ", p->p_name);
-		else
-			printf("proto %u ", b->proto);
-	}
-	print_fromto(&b->src, &b->dst, b->af, b->proto, verbose);
-	if (!b->anchorname[0] && (b->action == PF_BINAT)) {
-		printf("-> ");
-		print_pool(&b->rpool, 0, 0, b->af, PF_BINAT);
-	}
-	printf("\n");
-}
-
-void
-print_rdr(struct pf_rule *r, int verbose)
-{
-	if (verbose)
-		printf("@%d ", r->nr);
-	if (r->anchorname[0])
-		printf("rdr-anchor %s ", r->anchorname);
-	else {
-		if (r->action == PF_NORDR)
-			printf("no ");
-		printf("rdr ");
-	}
-	if (r->ifname[0]) {
-		printf("on ");
-		if (r->ifnot)
-			printf("! ");
-		printf("%s ", r->ifname);
-	}
-	if (r->af) {
-		if (r->af == AF_INET)
-			printf("inet ");
-		else
-			printf("inet6 ");
-	}
-	if (r->proto) {
-		struct protoent	*p;
-
-		if ((p = getprotobynumber(r->proto)) != NULL)
-			printf("proto %s ", p->p_name);
-		else
-			printf("proto %u ", r->proto);
-	}
-	print_fromto(&r->src, &r->dst, r->af, r->proto, verbose);
-	if (!r->anchorname[0] && (r->action == PF_RDR)) {
-		printf("-> ");
-		print_pool(&r->rpool, r->rpool.proxy_port[0],
-		    r->rpool.proxy_port[1], r->af, PF_RDR);
-	}
-	printf("\n");
 }
 
 const char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
@@ -713,18 +541,24 @@ print_status(struct pf_status *s)
 }
 
 void
-print_filter(struct pf_rule *r, int verbose)
+print_rule(struct pf_rule *r, int verbose)
 {
+	static const char *actiontypes[] = { "pass", "block", "scrub", "nat",
+	    "no nat", "binat", "no binat", "rdr", "no rdr" };
+	static const char *anchortypes[] = { "anchor", "anchor", "anchor",
+	    "nat-anchor", "nat-anchor", "binat-anchor", "binat-anchor",
+	    "rdr-anchor", "rdr-anchor" };
 	int	i, opts;
 
 	if (verbose)
 		printf("@%d ", r->nr);
-	if (r->anchorname[0])
-		printf("anchor %s ", r->anchorname);
-	else if (r->action == PF_PASS)
-		printf("pass ");
-	else if (r->action == PF_DROP) {
-		printf("block ");
+	if (r->action > PF_NORDR)
+		printf("action(%d) ", r->action);
+	else if (r->anchorname[0])
+		printf("%s %s ", anchortypes[r->action], r->anchorname);
+	else
+		printf("%s ", actiontypes[r->action]);
+	if (r->action == PF_DROP) {
 		if (r->rule_flag & PFRULE_RETURN)
 			printf("return ");
 		else if (r->rule_flag & PFRULE_RETURNRST) {
@@ -769,8 +603,7 @@ print_filter(struct pf_rule *r, int verbose)
 			}
 		} else
 			printf("drop ");
-	} else
-		printf("scrub ");
+	}
 	if (r->direction == PF_IN)
 		printf("in ");
 	else if (r->direction == PF_OUT)
@@ -816,10 +649,18 @@ print_filter(struct pf_rule *r, int verbose)
 			printf("proto %u ", r->proto);
 	}
 	print_fromto(&r->src, &r->dst, r->af, r->proto, verbose);
+	if (!r->anchorname[0] && (r->action == PF_NAT ||
+	    r->action == PF_BINAT || r->action == PF_RDR)) {
+		printf("-> ");
+		print_pool(&r->rpool, r->rpool.proxy_port[0],
+		    r->rpool.proxy_port[1], r->af, r->action);
+	}
 	if (r->uid.op)
-		print_uid(r->uid.op, r->uid.uid[0], r->uid.uid[1], "user");
+		print_ugid(r->uid.op, r->uid.uid[0], r->uid.uid[1], "user",
+		    UID_MAX);
 	if (r->gid.op)
-		print_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1], "group");
+		print_ugid(r->gid.op, r->gid.gid[0], r->gid.gid[1], "group",
+		    GID_MAX);
 	if (r->flags || r->flagset) {
 		printf("flags ");
 		print_flags(r->flags);
