@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nc.1,v 1.9 2000/07/08 15:42:04 aaron Exp $
+.\"	$OpenBSD: nc.1,v 1.10 2000/07/10 21:52:35 ian Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -179,7 +179,7 @@ Specifies that
 .Nm
 should just scan for listening
 daemons, without sending any data to them.
-Diagnostic messages about refused connections with not be displayed unless
+Diagnostic messages about refused connections will not be displayed unless
 .Fl v
 is specified twice.
 .El
@@ -187,7 +187,7 @@ is specified twice.
 .Bl -tag -width x
 .It Li "nc"
 Wait for the user to type what would normally be command-line
-arguments in at stdin.
+arguments on stdin.
 .It Li "nc example.host 42"
 Open a TCP connection to port 42 of example.host.
 If the connection
