@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.12 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.13 2002/05/31 05:18:56 pjanzen Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.12 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.13 2002/05/31 05:18:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,8 +80,6 @@ main(argc, argv)
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
-		case '?':
-		case 'h':
 		default:
 			usage();
 		}
