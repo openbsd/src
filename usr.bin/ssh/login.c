@@ -18,7 +18,7 @@ on a tty.
 */
 
 #include "includes.h"
-RCSID("$Id: login.c,v 1.6 1999/09/30 05:43:33 deraadt Exp $");
+RCSID("$Id: login.c,v 1.7 1999/09/30 16:55:06 deraadt Exp $");
 
 #include <util.h>
 #include <utmp.h>
@@ -45,7 +45,7 @@ unsigned long get_last_login_time(uid_t uid, const char *logname,
   fd = open(lastlog, O_RDONLY);
   if (fd < 0)
     return 0;
-  lseek(fd, (off_t)((long)uid * sizeof(ll)), 0);
+  lseek(fd, (off_t)((long)uid * sizeof(ll)), SEEK_SET);
   if (read(fd, &ll, sizeof(ll)) != sizeof(ll))
     {
       close(fd);
@@ -101,7 +101,7 @@ void record_login(int pid, const char *ttyname, const char *user, uid_t uid,
       fd = open(lastlog, O_RDWR);
       if (fd >= 0)
 	{
-	  lseek(fd, (off_t)((long)uid * sizeof(ll)), 0);
+	  lseek(fd, (off_t)((long)uid * sizeof(ll)), SEEK_SET);
 	  if (write(fd, &ll, sizeof(ll)) != sizeof(ll))
 	    log("Could not write %.100s: %.100s", lastlog, strerror(errno));
 	  close(fd);

@@ -15,7 +15,7 @@ for reading the passphrase from the user.
 */
 
 #include "includes.h"
-RCSID("$Id: authfile.c,v 1.4 1999/09/30 16:34:21 provos Exp $");
+RCSID("$Id: authfile.c,v 1.5 1999/09/30 16:55:06 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -134,7 +134,7 @@ load_public_key(const char *filename, RSA *pub,
 		char **comment_return)
 {
   int f, i;
-  unsigned long len;
+  off_t len;
   Buffer buffer;
   char *cp;
 
@@ -143,13 +143,13 @@ load_public_key(const char *filename, RSA *pub,
   if (f < 0)
     return 0;
 
-  len = lseek(f, (off_t)0L, 2);
-  lseek(f, (off_t)0L, 0);
+  len = lseek(f, (off_t)0, SEEK_END);
+  lseek(f, (off_t)0, SEEK_SET);
   
   buffer_init(&buffer);
   buffer_append_space(&buffer, &cp, len);
 
-  if (read(f, cp, len) != len)
+  if (read(f, cp, (size_t)len) != (size_t)len)
     {
       debug("Read from key file %.200s failed: %.100s", filename, 
 	    strerror(errno));
@@ -205,7 +205,7 @@ load_private_key(const char *filename, const char *passphrase,
 		 RSA *prv, char **comment_return)
 {
   int f, i, check1, check2, cipher_type;
-  unsigned long len;
+  off_t len;
   Buffer buffer, decrypted;
   char *cp;
   CipherContext cipher;
@@ -217,13 +217,13 @@ load_private_key(const char *filename, const char *passphrase,
   if (f < 0)
     return 0;
 
-  len = lseek(f, (off_t)0L, 2);
-  lseek(f, (off_t)0L, 0);
+  len = lseek(f, (off_t)0, SEEK_END);
+  lseek(f, (off_t)0, SEEK_SET);
   
   buffer_init(&buffer);
   buffer_append_space(&buffer, &cp, len);
 
-  if (read(f, cp, len) != len)
+  if (read(f, cp, (size_t)len) != (size_t)len)
     {
       debug("Read from key file %.200s failed: %.100s", filename,
 	    strerror(errno));
