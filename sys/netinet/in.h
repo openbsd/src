@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.28 1999/12/18 16:55:44 deraadt Exp $	*/
+/*	$OpenBSD: in.h,v 1.29 2000/01/07 19:37:09 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  * Protocols
  */
 #define	IPPROTO_IP		0		/* dummy for IP */
-#define IPPROTO_HOPOPTS		IPPROTO_IP	/* Hop-by-hop option header. */
+#define IPPROTO_HOPOPTS		IPPROTO_IP	/* Hop-by-hop option header */
 #define	IPPROTO_ICMP		1		/* control message protocol */
 #define	IPPROTO_IGMP		2		/* group mgmt protocol */
 #define	IPPROTO_GGP		3		/* gateway^2 (deprecated) */
@@ -61,14 +61,16 @@
 #define	IPPROTO_IDP		22		/* xns idp */
 #define	IPPROTO_TP		29 		/* tp-4 w/ class negotiation */
 #define IPPROTO_IPV6		41		/* IPv6 in IPv6 */
-#define IPPROTO_ROUTING		43		/* Routing header. */
-#define IPPROTO_FRAGMENT	44		/* Fragmentation/reassembly header. */
+#define IPPROTO_ROUTING		43		/* Routing header */
+#define IPPROTO_FRAGMENT	44		/* Fragmentation/reassembly header */
 #define IPPROTO_RSVP		46		/* resource reservation */
+#define	IPPROTO_GRE		47		/* GRE encap, RFCs 1701/1702 */
 #define	IPPROTO_ESP		50		/* Encap. Security Payload */
 #define	IPPROTO_AH		51		/* Authentication header */
+#define	IPPROTO_MOBILE		55		/* IP Mobility, RFC 2004 */
 #define IPPROTO_ICMPV6		58		/* ICMP for IPv6 */
 #define IPPROTO_NONE		59		/* No next header */
-#define IPPROTO_DSTOPTS		60		/* Destination options header. */
+#define IPPROTO_DSTOPTS		60		/* Destination options header */
 #define	IPPROTO_EON		80		/* ISO cnlp */
 #define IPPROTO_ETHERIP		97		/* Ethernet in IPv4 */
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
