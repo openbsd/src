@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.9 2002/02/19 19:39:37 millert Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.10 2002/03/23 01:33:16 frantzen Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.9 2002/02/19 19:39:37 millert Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.10 2002/03/23 01:33:16 frantzen Exp $ (LBL)
  */
 
 /* Address qualifiers. */
@@ -175,6 +175,12 @@ struct block *gen_byteop(int, int, int);
 struct block *gen_broadcast(int);
 struct block *gen_multicast(int);
 struct block *gen_inbound(int);
+
+struct block *gen_pf_ifname(char *);
+struct block *gen_pf_rnr(int);
+struct block *gen_pf_reason(int);
+struct block *gen_pf_action(int);
+struct block *gen_pf_dir(int);
 
 void bpf_optimize(struct block **);
 __dead void bpf_error(const char *, ...)
