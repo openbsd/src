@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.155 2004/01/31 19:29:39 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.156 2004/01/31 19:46:44 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -382,10 +382,12 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  piix_chip_map
 	},
+#ifdef notyet
 	{ PCI_PRODUCT_INTEL_31244,	 /* Intel 31244 SATA */
 	  0,
 	  artisea_chip_map
 	}
+#endif
 };
 
 const struct pciide_product_desc pciide_amd_products[] =  {
@@ -5210,6 +5212,7 @@ pdc20262_dma_finish(void *v, int channel, int drive, int force)
 	return (pciide_dma_finish(v, channel, drive, force));
 }
 
+#ifdef notyet
 /*
  * Inline functions for accessing the timing registers of the
  * OPTi controller.
@@ -5437,6 +5440,7 @@ opti_setup_channel(chp)
 
 	pciide_print_modes(cp);
 }
+#endif
 
 void
 serverworks_chip_map(sc, pa)
@@ -6043,6 +6047,7 @@ nforce_pci_intr(void *arg)
 	return rv;
 }
 
+#ifdef notyet
 void
 artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
@@ -6098,6 +6103,7 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sata_setup_channel(&cp->wdc_channel);
 	}
 }
+#endif
 
 void
 ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
