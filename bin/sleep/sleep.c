@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.9 2000/01/05 01:58:03 pjanzen Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.10 2001/05/20 08:04:48 mickey Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.9 2000/01/05 01:58:03 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.10 2001/05/20 08:04:48 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ main(argc, argv)
 		if (!isdigit(*cp)) usage();
 		t = (secs * 10) + (*cp++ - '0');
 		if (t / 10 != secs)	/* oflow */
-			exit(EINVAL);
+			return (EINVAL);
 		secs = t;
 	}
 
@@ -122,8 +122,8 @@ main(argc, argv)
 
 	if ((secs > 0) || (nsecs > 0))
 		if (nanosleep(&rqtp, NULL))
-			exit(errno);
-	exit(0);
+			return (errno);
+	return (0);
 }
 
 void
