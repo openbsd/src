@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.146 2003/02/28 15:26:23 mickey Exp $
+#	$OpenBSD: files.pci,v 1.147 2003/04/25 21:46:43 grange Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -447,6 +447,11 @@ file	dev/pci/if_stge.c		stge
 device	amdpm {}
 attach	amdpm at pci
 file	dev/pci/amdpm.c			amdpm
+
+# VIA VT82C686A hardware monitor
+device	viaenv
+attach	viaenv at pci
+file	dev/pci/viaenv.c		viaenv
 
 # OHCI IEEE 1394 controller
 attach	fwohci at pci with fwohci_pci
