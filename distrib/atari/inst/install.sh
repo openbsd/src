@@ -178,7 +178,7 @@ while [ "$answer" = "" ]; do
 	esac
 done
 echo	"Initializing / (root) filesystem, and mounting..."
-$DONTDOIT newfs /dev/r${rdev}a $name
+$DONTDOIT newfs -T $name /dev/r${rdev}a
 $DONTDOIT mount_ffs /dev/${rdev}a /mnt
 echo	""
 echo -n	"Creating a fstab..."
@@ -250,7 +250,7 @@ done
 
 echo	""
 echo	"Initializing /usr filesystem, and mounting..."
-$DONTDOIT newfs /dev/r${usrpart} $name
+$DONTDOIT newfs -T $name /dev/r${usrpart}
 $DONTDOIT mkdir -p /mnt/usr
 $DONTDOIT mount_ffs /dev/${usrpart} /mnt/usr
 echo	""
