@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.26 2003/05/09 21:42:36 millert Exp $
+.\" $OpenBSD: login.conf.5,v 1.27 2003/06/03 11:34:02 hin Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -447,24 +447,8 @@ Authenticate using a CRYPTOCard token.
 See
 .Xr login_crypto 8 .
 .\"
-.It Li krb4
-Request a password and use it to request a ticket from the kerberos 4 server.
-See
-.Xr kerberos 1 .
-.\"
-.It Li krb4-or-pwd
-Request a password and first try the
-.Li krb4
-authentication style and if that fails use the same password with the
-.Li passwd
-authentication style.
-See
-.Xr kerberos 1 .
-.\"
 .It Li krb5
 Request a password and use it to request a ticket from the kerberos 5 server.
-See
-.Xr kerberos 1 .
 .\"
 .It Li krb5-or-pwd
 Request a password and first try the
