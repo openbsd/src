@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccitt_addr.c,v 1.8 2003/06/26 16:35:21 deraadt Exp $	*/
+/*	$OpenBSD: ccitt_addr.c,v 1.9 2005/02/18 04:00:21 jaredy Exp $	*/
 /*	$NetBSD: ccitt_addr.c,v 1.8 1995/04/23 10:33:41 cgd Exp $	*/
 
 /*
@@ -49,25 +49,23 @@
  * Copyright (c) 1984
  */
 
-#include <stdlib.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
 #include <netccitt/x25.h>
+
+#include <stdlib.h>
+#include <string.h>
 
 static char *copychar(char *, char *);
 
-int	ccitt_addr(char *addr, struct sockaddr_x25 *xp);
-
 int
-ccitt_addr(addr, xp)
-char *addr;
-struct sockaddr_x25 *xp;
+ccitt_addr(char *addr, struct sockaddr_x25 *xp)
 {
 	char *p, *ap, *limit;
 	int havenet = 0;
 
-	memset(xp, 0, sizeof (*xp));
+	memset(xp, 0, sizeof(*xp));
 	xp->x25_family = AF_CCITT;
 	xp->x25_len = sizeof(*xp);
 	p = addr;
@@ -96,7 +94,7 @@ struct sockaddr_x25 *xp;
 	 */
 
 	ap = xp->x25_addr;
-	limit = ap + sizeof (xp->x25_addr) - 1;
+	limit = ap + sizeof(xp->x25_addr) - 1;
 	while (*p) {
 		if (*p == ',')
 			break;
@@ -104,7 +102,7 @@ struct sockaddr_x25 *xp;
 			if (havenet)
 				return (0);
 			havenet++;
-			xp->x25_net = atoi (xp->x25_addr);
+			xp->x25_net = atoi(xp->x25_addr);
 			p++;
 			ap = xp->x25_addr;
 			*ap = '\0';
@@ -124,14 +122,14 @@ struct sockaddr_x25 *xp;
 
 	p++;
 	ap = xp->x25_udata + 4;		/* first four bytes are protocol id */
-	limit = ap + sizeof (xp->x25_udata) - 4;
+	limit = ap + sizeof(xp->x25_udata) - 4;
 	xp->x25_udlen = 4;
 	while (*p) {
 		if (*p == ',')
 			break;
 		if (ap >= limit)
 			return (0);
-		p = copychar (p, ap++);
+		p = copychar(p, ap++);
 		xp->x25_udlen++;
 	}
 	if (xp->x25_udlen == 4)
@@ -147,7 +145,7 @@ struct sockaddr_x25 *xp;
 			return (0);
 		if (ap >= limit)
 			return (0);
-		p = copychar (p, ap++);
+		p = copychar(p, ap++);
 	}
 	if (xp->x25_udlen == 0)
 		xp->x25_udlen = ap - xp->x25_udata;
@@ -155,8 +153,7 @@ struct sockaddr_x25 *xp;
 }
 
 static char *
-copychar (from, to)
-char *from, *to;
+copychar(char *from, char *to)
 {
 	int n;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.39 2004/11/17 01:47:20 itojun Exp $	*/
+/*	$OpenBSD: show.c,v 1.40 2005/02/18 04:00:21 jaredy Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static const char rcsid[] = "$OpenBSD: show.c,v 1.39 2004/11/17 01:47:20 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: show.c,v 1.40 2005/02/18 04:00:21 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,7 @@ static const char rcsid[] = "$OpenBSD: show.c,v 1.39 2004/11/17 01:47:20 itojun 
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -52,8 +53,6 @@ static const char rcsid[] = "$OpenBSD: show.c,v 1.39 2004/11/17 01:47:20 itojun 
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
-
-#include <sys/sysctl.h>
 
 #include <err.h>
 #include <netdb.h>
@@ -120,7 +119,7 @@ p_rttables(int af, int Aflag)
 	char *buf = NULL, *next, *lim = NULL;
 	size_t needed;
 	int mib[6];
-        struct sockaddr *sa;
+	struct sockaddr *sa;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -135,7 +134,7 @@ p_rttables(int af, int Aflag)
 			err(1, NULL);
 		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
 			err(1, "sysctl of routing table");
-		lim  = buf + needed;
+		lim = buf + needed;
 	}
 
 	printf("Routing tables\n");
@@ -207,9 +206,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
  * Print a routing table entry.
  */
 void
-p_rtentry(rtm, Aflag)
-	struct rt_msghdr *rtm;
-	int		  Aflag;
+p_rtentry(struct rt_msghdr *rtm, int Aflag)
 {
 	static int	 old_af = -1;
 	struct sockaddr	*sa = (struct sockaddr *)(rtm + 1);
@@ -227,9 +224,9 @@ p_rtentry(rtm, Aflag)
 	mask = rti_info[RTAX_NETMASK];
 	if ((sa = rti_info[RTAX_DST]) == NULL)
 		return;
-	
+
 	p_sockaddr(sa, mask, rtm->rtm_flags, WID_DST(sa->sa_family));
-	p_sockaddr(rti_info[RTAX_GATEWAY], 0, RTF_HOST, WID_GW(sa->sa_family));
+	p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST, WID_GW(sa->sa_family));
 	p_flags(rtm->rtm_flags, "%-6.6s ");
 	printf("%6d %8ld ", 0, rtm->rtm_rmx.rmx_pksent);
 	if (rtm->rtm_rmx.rmx_mtu)
@@ -245,8 +242,7 @@ p_rtentry(rtm, Aflag)
  * Print address family header before a section of the routing table.
  */
 void
-pr_family(af)
-	int af;
+pr_family(int af)
 {
 	char *afname;
 
@@ -317,12 +313,13 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 	    }
 #endif
 	default:
-	    	if ((flags & RTF_HOST) || mask == NULL)
+		if ((flags & RTF_HOST) || mask == NULL)
 			cp = routename(sa);
 		else
 			cp = netname(sa, mask);;
+		break;
 	}
-	if (width < 0 )
+	if (width < 0)
 		printf("%s ", cp);
 	else {
 		if (nflag)
@@ -338,7 +335,7 @@ p_flags(int f, char *format)
 	char name[33], *flags;
 	const struct bits *p = bits;
 
-	for (flags = name; p->b_mask && flags < &name[sizeof name-2]; p++)
+	for (flags = name; p->b_mask && flags < &name[sizeof(name) - 2]; p++)
 		if (p->b_mask & f)
 			*flags++ = p->b_val;
 	*flags = '\0';
@@ -356,16 +353,16 @@ routename(struct sockaddr *sa)
 
 	if (first) {
 		first = 0;
-		if (gethostname(domain, sizeof domain) == 0 &&
+		if (gethostname(domain, sizeof(domain)) == 0 &&
 		    (cp = strchr(domain, '.')))
-			(void) strlcpy(domain, cp + 1, sizeof domain);
+			strlcpy(domain, cp + 1, sizeof(domain));
 		else
-			domain[0] = 0;
+			domain[0] = '\0';
 		cp = NULL;
 	}
 
 	if (sa->sa_len == 0) {
-		(void) strlcpy(line, "default", sizeof line);
+		strlcpy(line, "default", sizeof(line));
 		return (line);
 	}
 
@@ -410,12 +407,12 @@ routename(struct sockaddr *sa)
 			struct sockaddr_rtlabel *sr;
 
 			sr = (struct sockaddr_rtlabel *)sa;
-			(void) strlcpy(name, sr->sr_label, sizeof name);
+			strlcpy(name, sr->sr_label, sizeof(name));
 			return (name);
 		}
 		/* FALLTHROUGH */
 	default:
-		(void) snprintf(line, sizeof line, "(%d) %s",
+		snprintf(line, sizeof(line), "(%d) %s",
 		    sa->sa_family, any_ntoa(sa));
 		break;
 	}
@@ -433,15 +430,15 @@ routename4(in_addr_t in)
 		cp = "default";
 	if (!cp && !nflag) {
 		if ((hp = gethostbyaddr((char *)&in,
-		    sizeof (in), AF_INET)) != NULL) {
+		    sizeof(in), AF_INET)) != NULL) {
 			if ((cp = strchr(hp->h_name, '.')) &&
 			    !strcmp(cp + 1, domain))
-				*cp = 0;
+				*cp = '\0';
 			cp = hp->h_name;
 		}
 	}
 	ina.s_addr = in;
-	strlcpy(line, cp ? cp : inet_ntoa(ina), sizeof line);
+	strlcpy(line, cp ? cp : inet_ntoa(ina), sizeof(line));
 
 	return (line);
 }
@@ -491,15 +488,15 @@ netname4(in_addr_t in, struct sockaddr_in *maskp)
 		strlcpy(line, cp, sizeof(line));
 #define C(x)	((x) & 0xff)
 	else if (mbits < 9)
-		snprintf(line, sizeof line, "%u/%d", C(in >> 24), mbits);
+		snprintf(line, sizeof(line), "%u/%d", C(in >> 24), mbits);
 	else if (mbits < 17)
-		snprintf(line, sizeof line, "%u.%u/%d",
+		snprintf(line, sizeof(line), "%u.%u/%d",
 		    C(in >> 24) , C(in >> 16), mbits);
 	else if (mbits < 25)
-		snprintf(line, sizeof line, "%u.%u.%u/%d",
+		snprintf(line, sizeof(line), "%u.%u.%u/%d",
 		    C(in >> 24), C(in >> 16), C(in >> 8), mbits);
 	else
-		snprintf(line, sizeof line, "%u.%u.%u.%u/%d", C(in >> 24),
+		snprintf(line, sizeof(line), "%u.%u.%u.%u/%d", C(in >> 24),
 		    C(in >> 16), C(in >> 8), C(in), mbits);
 #undef C
 	return (line);
@@ -583,7 +580,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 		masklen = 128;
 
 	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr))
-		return("default");
+		return ("default");
 
 	if (illegal)
 		warnx("illegal prefixlen");
@@ -596,7 +593,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 		snprintf(hbuf, sizeof(hbuf), "invalid");
 
 	snprintf(line, sizeof(line), "%s/%d", hbuf, masklen);
-	return line;
+	return (line);
 }
 #endif
 
@@ -625,7 +622,7 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 		return (link_print(sa));
 
 	default:
-		snprintf(line, sizeof line, "af %d: %s",
+		snprintf(line, sizeof(line), "af %d: %s",
 		    sa->sa_family, any_ntoa(sa));
 		break;
 	}
@@ -647,7 +644,7 @@ any_ntoa(const struct sockaddr *sa)
 		*out++ = hexlist[(*in >> 4) & 15];
 		*out++ = hexlist[(*in++)    & 15];
 		*out++ = '.';
-	} while (--len > 0 && (out + 3) < &obuf[sizeof obuf-1]);
+	} while (--len > 0 && (out + 3) < &obuf[sizeof(obuf) - 1]);
 	out[-1] = '\0';
 	return (obuf);
 }
@@ -660,7 +657,10 @@ ipx_print(struct sockaddr *sa)
 {
 	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *)sa;
 	struct ipx_addr work;
-	union { union ipx_net net_e; u_int32_t long_e; } net;
+	union {
+		union ipx_net	net_e;
+		u_int32_t	long_e;
+	} net;
 	u_short port;
 	static char mybuf[50+MAXHOSTNAMELEN], cport[10], chost[25];
 	char *host = "";
@@ -670,11 +670,11 @@ ipx_print(struct sockaddr *sa)
 	work = sipx->sipx_addr;
 	port = ntohs(work.ipx_port);
 	work.ipx_port = 0;
-	net.net_e  = work.ipx_net;
+	net.net_e = work.ipx_net;
 	if (ipx_nullhost(work) && net.long_e == 0) {
 		if (!port)
 			return ("*.*");
-		(void) snprintf(mybuf, sizeof mybuf, "*.0x%XH", port);
+		snprintf(mybuf, sizeof(mybuf), "*.0x%XH", port);
 		return (mybuf);
 	}
 
@@ -684,18 +684,18 @@ ipx_print(struct sockaddr *sa)
 		host = "*";
 	else {
 		q = work.ipx_host.c_host;
-		(void) snprintf(chost, sizeof chost, "%02X%02X%02X%02X%02X%02XH",
-			q[0], q[1], q[2], q[3], q[4], q[5]);
+		snprintf(chost, sizeof(chost), "%02X%02X%02X%02X%02X%02XH",
+		    q[0], q[1], q[2], q[3], q[4], q[5]);
 		for (p = chost; *p == '0' && p < chost + 12; p++)
 			/* void */;
 		host = p;
 	}
 	if (port)
-		(void) snprintf(cport, sizeof cport, ".%XH", htons(port));
+		snprintf(cport, sizeof(cport), ".%XH", htons(port));
 	else
-		*cport = 0;
+		*cport = '\0';
 
-	(void) snprintf(mybuf, sizeof mybuf, "%XH.%s%s",
+	snprintf(mybuf, sizeof(mybuf), "%XH.%s%s",
 	    ntohl(net.long_e), host, cport);
 	return (mybuf);
 }
@@ -708,15 +708,12 @@ link_print(struct sockaddr *sa)
 
 	if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
 	    sdl->sdl_slen == 0) {
-		(void) snprintf(line, sizeof line,
-				"link#%d", sdl->sdl_index);
+		snprintf(line, sizeof(line), "link#%d", sdl->sdl_index);
 		return (line);
-	} else switch (sdl->sdl_type) {
-	case IFT_ETHER:
-		return (ether_ntoa((struct ether_addr *)lla));
-	default:
-		break;
-	}
+	} else
+		switch (sdl->sdl_type) {
+		case IFT_ETHER:
+			return (ether_ntoa((struct ether_addr *)lla));
+		}
 	return (link_ntoa(sdl));
 }
-
