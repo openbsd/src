@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.55 2002/03/27 15:12:22 jason Exp $
+#	$OpenBSD: GENERIC,v 1.56 2002/03/29 21:31:32 deraadt Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -50,8 +50,10 @@ ubsec*		at pci? dev ? function ?
 
 # PCI sound
 autri*		at pci? dev ? function ?	# Trident 4D WAVE
+eap*		at pci? dev ? function ?	# Ensoniq
 midi*		at autri?
 audio*		at autri?
+audio*		at eap?
 
 # USB bridges
 ohci*	at pci? dev ? function ?
