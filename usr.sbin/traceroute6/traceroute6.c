@@ -1,5 +1,5 @@
-/*	$OpenBSD: traceroute6.c,v 1.13 2000/10/07 21:47:31 itojun Exp $	*/
-/*	$KAME: traceroute6.c,v 1.33 2000/10/07 06:22:55 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.14 2000/12/22 15:17:25 itojun Exp $	*/
+/*	$KAME: traceroute6.c,v 1.39 2000/12/22 15:11:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -281,9 +281,6 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #define DUMMY_PORT 10010
 
 #define	MAXPACKET	65535	/* max ip packet size */
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN	64
-#endif
 
 #ifndef FD_SET
 #define NFDBITS         (8*sizeof(fd_set))
@@ -382,6 +379,7 @@ main(argc, argv)
 	int ch, i, on, probe, seq, hops, rcvcmsglen;
 	static u_char *rcvcmsgbuf;
 	char hbuf[NI_MAXHOST], src0[NI_MAXHOST];
+	char *ep;
 
 	/*
 	 * Receive ICMP
@@ -390,6 +388,10 @@ main(argc, argv)
 		perror("socket(ICMPv6)");
 		exit(5);
 	}
+
+	/* revoke privs */
+	seteuid(getuid());
+	setuid(getuid());
 
 	/* set a minimum set of socket options */
 	on = 1;
@@ -415,10 +417,6 @@ main(argc, argv)
 		err(1, "setsockopt(IPV6_HOPLIMIT)");
 #endif
 
-	/* revoke privs */
-	seteuid(getuid());
-	setuid(getuid());
-
 	seq = 0;
 	
 	while ((ch = getopt(argc, argv, "df:g:lm:np:q:rs:w:v")) != EOF)
@@ -427,7 +425,13 @@ main(argc, argv)
 			options |= SO_DEBUG;
 			break;
 		case 'f':
-			first_hop = atoi(optarg);
+			ep = NULL;
+			first_hop = strtoul(optarg, &ep, 0);
+			if (!*argv || *ep) {
+				Fprintf(stderr,
+				    "traceroute6: invalid min hoplimit.\n");
+				exit(1);
+			}
 			if (first_hop > max_hops) {
 				Fprintf(stderr,
 				    "traceroute6: min hoplimit must be <= %d.\n", max_hops);
@@ -474,7 +478,13 @@ main(argc, argv)
 			lflag++;
 			break;
 		case 'm':
-			max_hops = atoi(optarg);
+			ep = NULL;
+			max_hops = strtoul(optarg, &ep, 0);
+			if (!*argv || *ep) {
+				Fprintf(stderr,
+				    "traceroute6: invalid max hoplimit.\n");
+				exit(1);
+			}
 			if (max_hops < first_hop) {
 				Fprintf(stderr,
 				    "traceroute6: max hoplimit must be >= %d.\n", first_hop);
@@ -485,7 +495,13 @@ main(argc, argv)
 			nflag++;
 			break;
 		case 'p':
-			port = atoi(optarg);
+			ep = NULL;
+			port = strtoul(optarg, &ep, 0);
+			if (!*argv || *ep) {
+				Fprintf(stderr,
+				    "traceroute6: port.\n");
+				exit(1);
+			}
 			if (port < 1) {
 				Fprintf(stderr,
 				    "traceroute6: port must be >0.\n");
@@ -493,7 +509,13 @@ main(argc, argv)
 			}
 			break;
 		case 'q':
-			nprobes = atoi(optarg);
+			ep = NULL;
+			nprobes = strtoul(optarg, &ep, 0);
+			if (!*argv || *ep) {
+				Fprintf(stderr,
+				    "traceroute6: invalid nprobes.\n");
+				exit(1);
+			}
 			if (nprobes < 1) {
 				Fprintf(stderr,
 				    "traceroute6: nprobes must be >0.\n");
@@ -514,7 +536,13 @@ main(argc, argv)
 			verbose++;
 			break;
 		case 'w':
-			waittime = atoi(optarg);
+			ep = NULL;
+			waittime = strtoul(optarg, &ep, 0);
+			if (!*argv || *ep) {
+				Fprintf(stderr,
+				    "traceroute6: invalid wait time.\n");
+				exit(1);
+			}
 			if (waittime <= 1) {
 				Fprintf(stderr,
 				    "traceroute6: wait must be >1 sec.\n");
@@ -527,7 +555,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1)
+	if (argc < 1 || argc > 2)
 		usage();
 
 #if 1
@@ -554,9 +582,20 @@ main(argc, argv)
 	}
 	memcpy(&Dst, res->ai_addr, res->ai_addrlen);
 	hostname = res->ai_canonname ? strdup(res->ai_canonname) : *argv;
+	if (!hostname) {
+		(void)fprintf(stderr, "traceroute6: not enhough core\n");
+		exit(1);
+	}
 
-	if (*++argv)
-		datalen = atoi(*argv);
+	if (*++argv) {
+		ep = NULL;
+		datalen = strtoul(*argv, &ep, 0);
+		if (!*argv || *ep) {
+			Fprintf(stderr,
+			    "traceroute6: invalid packet length.\n");
+			exit(1);
+		}
+	}
 	if (datalen < 0 || datalen >= MAXPACKET - sizeof(struct opacket)) {
 		Fprintf(stderr,
 		    "traceroute6: packet size must be 0 <= s < %ld.\n",
@@ -784,7 +823,7 @@ main(argc, argv)
 	 */
 	if (getnameinfo((struct sockaddr *)&Dst, Dst.sin6_len, hbuf,
 			sizeof(hbuf), NULL, 0, NI_NUMERICHOST | niflag))
-		strcpy(hbuf, "(invalid)");
+		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	Fprintf(stderr, "traceroute6");
 	Fprintf(stderr, " to %s (%s)", hostname, hbuf);
 	if (source)
@@ -1071,7 +1110,7 @@ packet_ok(mhdr, cc, seq)
 			if (getnameinfo((struct sockaddr *)from, from->sin6_len,
 			    hbuf, sizeof(hbuf), NULL, 0,
 			    NI_NUMERICHOST | niflag) != 0)
-				strcpy(hbuf, "invalid");
+				strlcpy(hbuf, "invalid", sizeof(hbuf));
 			Printf("packet too short (%d bytes) from %s\n", cc,
 			    hbuf);
 		}
@@ -1085,7 +1124,7 @@ packet_ok(mhdr, cc, seq)
 			if (getnameinfo((struct sockaddr *)from, from->sin6_len,
 			    hbuf, sizeof(hbuf), NULL, 0,
 			    NI_NUMERICHOST | niflag) != 0)
-				strcpy(hbuf, "invalid");
+				strlcpy(hbuf, "invalid", sizeof(hbuf));
 			Printf("data too short (%d bytes) from %s\n", cc, hbuf);
 		}
 		return(0);
@@ -1143,7 +1182,7 @@ packet_ok(mhdr, cc, seq)
 
 		if (getnameinfo((struct sockaddr *)from, from->sin6_len,
 		    sbuf, sizeof(sbuf), NULL, 0, NI_NUMERICHOST | niflag) != 0)
-			strcpy(sbuf, "invalid");
+			strlcpy(sbuf, "invalid", sizeof(hbuf));
 		Printf("\n%d bytes from %s to %s", cc, sbuf,
 		    rcvpktinfo ? inet_ntop(AF_INET6, &rcvpktinfo->ipi6_addr,
 					dbuf, sizeof(dbuf))
@@ -1222,7 +1261,7 @@ print(mhdr, cc)
 
 	if (getnameinfo((struct sockaddr *)from, from->sin6_len,
 	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST | niflag) != 0)
-		strcpy(hbuf, "invalid");
+		strlcpy(hbuf, "invalid", sizeof(hbuf));
 	if (nflag)
 		Printf(" %s", hbuf);
 	else if (lflag)
@@ -1279,7 +1318,7 @@ inetname(sa)
 		first = 0;
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
 		    (cp = index(domain, '.')))
-			(void) strcpy(domain, cp + 1);
+			(void) strlcpy(domain, cp + 1, sizeof(domain));
 		else
 			domain[0] = 0;
 	}
@@ -1298,7 +1337,7 @@ inetname(sa)
 
 	if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
 	    NI_NUMERICHOST | niflag) != 0)
-		strcpy(line, "invalid");
+		strlcpy(line, "invalid", sizeof(line));
 	return line;
 }
 
@@ -1306,7 +1345,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: traceroute6 [-dlnrv] [-f first_hop] [-m max_hops] [-p port#] \n"
-"       [-q nqueries] [-s src_addr] [-g gateway] [-w wait] host [data size]\n");
+"usage: traceroute6 [-dlnrv] [-f firsthop] [-g gateway] [-m hoplimit] [-p port]\n"
+"       [-q probes] [-s src] [-w waittime] target [datalen]\n");
 	exit(1);
 }
