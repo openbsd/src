@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.400 2003/07/14 20:01:07 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.401 2003/07/15 17:12:38 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -852,6 +852,9 @@ not		: '!'		{ $$ = 1; }
 		| /* empty */	{ $$ = 0; }
 
 tabledef	: TABLE '<' STRING '>' table_opts {
+			struct node_host	 *h, *nh;
+			struct node_tinit	 *ti, *nti;
+
 			if (strlen($3) >= PF_TABLE_NAME_SIZE) {
 				yyerror("table name too long, max %d chars",
 				    PF_TABLE_NAME_SIZE - 1);
@@ -860,6 +863,17 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 			if (pf->loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL))
 				if (process_tabledef($3, &$5))
 					YYERROR;
+			for (ti = SIMPLEQ_FIRST(&$5.init_nodes);
+			    ti != SIMPLEQ_END(&$5.init_nodes); ti = nti) {
+				if (ti->file)
+					free(ti->file);
+				for (h = ti->host; h != NULL; h = nh) {
+					nh = h->next;
+					free(h);
+				}
+				nti = SIMPLEQ_NEXT(ti, entries);
+				free (ti);
+			}
 		}
 		;
 

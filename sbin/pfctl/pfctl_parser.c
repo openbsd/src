@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.168 2003/07/11 08:29:34 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.169 2003/07/15 17:12:38 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1219,8 +1219,8 @@ int
 append_addr(struct pfr_buffer *b, char *s, int test)
 {
 	char			 *r;
-	struct node_host	*n;
-	int			 not = 0;
+	struct node_host	*h, *n;
+	int			 rv, not = 0;
 
 	for (r = s; *r == '!'; r++)
 		not = !not;
@@ -1228,12 +1228,18 @@ append_addr(struct pfr_buffer *b, char *s, int test)
 		errno = 0;
 		return (-1);
 	}
-	return append_addr_host(b, n, test, not);
+	rv = append_addr_host(b, n, test, not);
+	do {
+		h = n;
+		n = n->next;
+		free(h);
+	} while (n != NULL);
+	return (rv);
 }
 
 /*
  * same as previous function, but with a pre-parsed input and the ability
- * to "negate" the result.
+ * to "negate" the result. Does not free the node_host list.
  * not:
  *      setting it to 1 is equivalent to adding "!" in front of parameter s.
  */
@@ -1241,7 +1247,6 @@ int
 append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 {
 	int			 bits;
-	struct node_host	*h;
 	struct pfr_addr		 addr;
 
 	do {
@@ -1270,10 +1275,7 @@ append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 		}
 		if (pfr_buf_add(b, &addr))
 			return (-1);
-		h = n;
-		n = n->next;
-		free(h);
-	} while (n != NULL);
+	} while ((n = n->next) != NULL);
 
 	return (0);
 }
