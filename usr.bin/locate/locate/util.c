@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2003/06/03 02:56:10 millert Exp $
+/*	$OpenBSD: util.c,v 1.8 2003/09/29 16:03:10 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.7 2003/06/03 02:56:10 millert Exp $
+ * $Id: util.c,v 1.8 2003/09/29 16:03:10 deraadt Exp $
  */
 
 
@@ -51,8 +51,8 @@ int 	getwm(caddr_t);
 int 	getwf(FILE *);
 int	check_bigram_char(int);
 
-/* 
- * Validate bigram chars. If the test failed the database is corrupt 
+/*
+ * Validate bigram chars. If the test failed the database is corrupt
  * or the database is obviously not a locate database.
  */
 int
@@ -65,8 +65,8 @@ check_bigram_char(ch)
 		return(ch);
 
 	(void)fprintf(stderr, "locate database header corrupt, bigram ");
-	(void)fprintf(stderr, "char outside 0, %d-%d: %d\n",  
-                      ASCII_MIN, ASCII_MAX, ch);
+	(void)fprintf(stderr, "char outside 0, %d-%d: %d\n",
+	    ASCII_MIN, ASCII_MAX, ch);
 	exit(1);
 }
 
@@ -101,27 +101,31 @@ colon(dbv, path, dot)
 	}
 
 	/* length of string vector */
-	for(vlen = 0, pv = dbv; *pv != NULL; pv++, vlen++);
+	for (vlen = 0, pv = dbv; *pv != NULL; pv++, vlen++)
+		;
 
 	for (ch = c = path; ; ch++) {
 		if (*ch == ':' ||
 		    (!*ch && !(*(ch - 1) == ':' && ch == 1+ path))) {
+			char **newdbv;
+
 			/* single colon -> dot */
 			if (ch == c)
 				p = dot;
 			else {
 				/* a string */
 				slen = ch - c;
-				if ((p = malloc(sizeof(char) * (slen + 1))) 
+				if ((p = malloc(sizeof(char) * (slen + 1)))
 				    == NULL)
 					err(1, "malloc");
 				bcopy(c, p, slen);
 				*(p + slen) = '\0';
 			}
 			/* increase dbv with element p */
-			if ((dbv = realloc(dbv, sizeof(char **) * (vlen + 2)))
+			if ((newdbv = realloc(dbv, sizeof(char **) * (vlen + 2)))
 			    == NULL)
 				err(1, "realloc");
+			dbv = newdbv;
 			*(dbv + vlen) = p;
 			*(dbv + ++vlen) = NULL;
 			c = ch + 1;
@@ -132,7 +136,7 @@ colon(dbv, path, dot)
 	return (dbv);
 }
 
-void 
+void
 print_matches(counter)
 	u_int counter;
 {
@@ -161,20 +165,20 @@ patprep(name)
 		if (strchr(LOCATE_REG, *p) == NULL)
 			break;
 
-	/* 
+	/*
 	 * check if maybe we are in a character class
 	 *
 	 * 'foo.[ch]'
 	 *        |----< p
 	 */
-	if (p >= name && 
+	if (p >= name &&
 	    (strchr(p, '[') != NULL || strchr(p, ']') != NULL)) {
 		for (p = name; *p != '\0'; p++)
 			if (*p == ']' || *p == '[')
 				break;
 		p--;
 
-		/* 
+		/*
 		 * cannot find a non-meta character, give up
 		 * '*\*[a-z]'
 		 *    |-------< p
@@ -182,8 +186,8 @@ patprep(name)
 		if (p >= name && strchr(LOCATE_REG, *p) != NULL)
 			p = name - 1;
 	}
-	
-	if (p < name) 			
+
+	if (p < name)
 		/* only meta chars: "???", force '/' search */
 		*subp++ = '/';
 
@@ -206,7 +210,7 @@ tolower_word(word)
 {
 	u_char *p;
 
-	for(p = word; *p != '\0'; p++)
+	for (p = word; *p != '\0'; p++)
 		*p = TOLOWER(*p);
 
 	return(word);
@@ -214,16 +218,16 @@ tolower_word(word)
 
 
 /*
- * Read integer from mmap pointer. 
- * Essential a simple  ``return *(int *)p'' but avoid sigbus 
+ * Read integer from mmap pointer.
+ * Essential a simple  ``return *(int *)p'' but avoid sigbus
  * for integer alignment (SunOS 4.x, 5.x).
  *
- * Convert network byte order to host byte order if neccessary. 
+ * Convert network byte order to host byte order if neccessary.
  * So we can read on FreeBSD/i386 (little endian) a locate database
  * which was built on SunOS/sparc (big endian).
  */
 
-int 
+int
 getwm(p)
 	caddr_t p;
 {
@@ -241,9 +245,9 @@ getwm(p)
 	if (i > MAXPATHLEN || i < -(MAXPATHLEN)) {
 		i = ntohl(i);
 		if (i > MAXPATHLEN || i < -(MAXPATHLEN)) {
-			(void)fprintf(stderr, 
-				"integer out of +-MAXPATHLEN (%d): %d\n", 
-			    	MAXPATHLEN, i);
+			(void)fprintf(stderr,
+			    "integer out of +-MAXPATHLEN (%d): %d\n",
+			    MAXPATHLEN, i);
 			exit(1);
 		}
 	}
@@ -253,7 +257,7 @@ getwm(p)
 /*
  * Read integer from stream.
  *
- * Convert network byte order to host byte order if neccessary. 
+ * Convert network byte order to host byte order if neccessary.
  * So we can read on FreeBSD/i386 (little endian) a locate database
  * which was built on SunOS/sparc (big endian).
  */
@@ -269,9 +273,9 @@ getwf(fp)
 	if (word > MAXPATHLEN || word < -(MAXPATHLEN)) {
 		word = ntohl(word);
 		if (word > MAXPATHLEN || word < -(MAXPATHLEN)) {
-			(void)fprintf(stderr, 
-				"integer out of +-MAXPATHLEN (%d): %d\n", 
-				MAXPATHLEN, word);
+			(void)fprintf(stderr,
+			    "integer out of +-MAXPATHLEN (%d): %d\n",
+			    MAXPATHLEN, word);
 			exit(1);
 		}
 	}
