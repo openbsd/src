@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.9 2001/09/19 10:58:07 mpech Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.10 2001/09/29 03:18:59 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -274,17 +274,32 @@ void
 _dl_show_objects()
 {
 	elf_object_t *object;
-	static char *otyp[] = {
-		"none", "rtld", "exe ", "rlib", "dlib"
-	};
+	char *objtypename;
 
 	object = _dl_objects;
 
 	_dl_printf("\tStart    End      Type Ref Name\n");
 
 	while (object) {
+		switch (object->obj_type) {
+		case OBJTYPE_LDR:
+			objtypename = "rtld";
+			break;
+		case OBJTYPE_EXE:
+			objtypename = "exe ";
+			break;
+		case OBJTYPE_LIB:
+			objtypename = "rlib";
+			break;
+		case OBJTYPE_DLO:
+			objtypename = "dlib";
+			break;
+		default:
+			objtypename = "????";
+			break;
+		}
 		_dl_printf("\t%X %X %s  %d  %s\n", object->load_addr,
-				object->load_size, otyp[object->obj_type],
+				object->load_size, objtypename,
 				object->refcount, object->load_name);
 		object = object->next;
 	}
