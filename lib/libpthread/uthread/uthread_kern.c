@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_kern.c,v 1.4 1998/12/21 07:42:03 d Exp $
- * $OpenBSD: uthread_kern.c,v 1.4 1998/12/21 07:42:03 d Exp $
+ * $FreeBSD: uthread_kern.c,v 1.15 1998/11/15 09:58:26 jb Exp $
+ * $OpenBSD: uthread_kern.c,v 1.5 1999/01/10 23:16:35 d Exp $
  *
  */
 #include <errno.h>
@@ -86,8 +86,7 @@ _thread_kern_sched(struct sigcontext * scp)
 		memcpy(&_thread_run->saved_sigcontext, scp, sizeof(_thread_run->saved_sigcontext));
 
 		/* Save the floating point data: */
-		if (_thread_run->attr.flags & PTHREAD_NOFLOAT == 0)
-			_thread_machdep_save_float_state(_thread_run);
+		_thread_machdep_save_float_state(_thread_run);
 
 		/* Flag the signal context as the last state saved: */
 		_thread_run->sig_saved = 1;
@@ -204,7 +203,7 @@ _thread_kern_sched(struct sigcontext * scp)
 		}
 
 		/* Check if there is a current thread: */
-		if (_thread_run != &_thread_kern_thread) {
+		if (_thread_run != _thread_kern_threadp) {
 			/*
 			 * Save the current time as the time that the thread
 			 * became inactive: 
@@ -415,7 +414,7 @@ _thread_kern_sched(struct sigcontext * scp)
 			 * the running thread to point to the global kernel
 			 * thread structure: 
 			 */
-			_thread_run = &_thread_kern_thread;
+			_thread_run = _thread_kern_threadp;
 
 			/*
 			 * There are no threads ready to run, so wait until
@@ -462,8 +461,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				 * times out. The interval time needs to be
 				 * calculated every time. 
 				 */
-				itimer.it_interval.tv_sec = 0;
-				itimer.it_interval.tv_usec = 0;
+				timerclear(&itimer.it_interval);
 
 				/*
 				 * Enter a loop to look for threads waiting
@@ -496,9 +494,8 @@ _thread_kern_sched(struct sigcontext * scp)
 						 * Check if the current time
 						 * is after the wakeup time: 
 						 */
-						else if ((ts.tv_sec > pthread->wakeup_time.tv_sec) ||
-							 ((ts.tv_sec == pthread->wakeup_time.tv_sec) &&
-							  (ts.tv_nsec > pthread->wakeup_time.tv_nsec))) {
+						else if (timespeccmp(&ts,
+						    &pthread->wakeup_time, > )){
 						} else {
 							/*
 							 * Calculate the time
@@ -507,44 +504,15 @@ _thread_kern_sched(struct sigcontext * scp)
 							 * for the clock
 							 * resolution: 
 							 */
-							ts1.tv_sec = pthread->wakeup_time.tv_sec - ts.tv_sec;
-							ts1.tv_nsec = pthread->wakeup_time.tv_nsec - ts.tv_nsec +
-								CLOCK_RES_NSEC;
-
-							/*
-							 * Check for
-							 * underflow of the
-							 * nanosecond field: 
-							 */
-							if (ts1.tv_nsec < 0) {
-								/*
-								 * Allow for
-								 * the
-								 * underflow
-								 * of the
-								 * nanosecond
-								 * field: 
-								 */
-								ts1.tv_sec--;
-								ts1.tv_nsec += 1000000000;
-							}
-							/*
-							 * Check for overflow
-							 * of the nanosecond
-							 * field: 
-							 */
-							if (ts1.tv_nsec >= 1000000000) {
-								/*
-								 * Allow for
-								 * the
-								 * overflow
-								 * of the
-								 * nanosecond
-								 * field: 
-								 */
-								ts1.tv_sec++;
-								ts1.tv_nsec -= 1000000000;
-							}
+							struct timespec
+							 clock_res
+							  = {0,CLOCK_RES_NSEC};
+							timespecsub(
+							  &pthread->wakeup_time,
+							  &ts, &ts1);
+							timespecadd(
+							  &ts1, &clock_res,
+							  &ts1);
 							/*
 							 * Convert the
 							 * timespec structure
@@ -585,14 +553,16 @@ _thread_kern_sched(struct sigcontext * scp)
 					PANIC("Cannot set virtual timer");
 				}
 			}
+
 			/* Restore errno. */
 			errno = _thread_run->error;
+
 			/* Check if a signal context was saved: */
 			if (_thread_run->sig_saved == 1) {
 
 				/* Restore the floating point state: */
-				if (_thread_run->attr.flags & PTHREAD_NOFLOAT == 0)
-					_thread_machdep_restore_float_state(_thread_run);
+				_thread_machdep_restore_float_state(_thread_run);
+
 				/*
 				 * Do a sigreturn to restart the thread that
 				 * was interrupted by a signal: 
