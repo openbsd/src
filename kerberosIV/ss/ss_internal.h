@@ -1,4 +1,4 @@
-/*	$Id: ss_internal.h,v 1.1.1.1 1995/12/14 06:52:46 tholo Exp $	*/
+/*	$Id: ss_internal.h,v 1.2 1996/09/16 03:13:00 tholo Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -110,6 +110,7 @@ typedef struct _ss_data {	/* init values */
      (*code_ptr=0,ss_info(sci_idx)->current_request)
 void ss_unknown_function();
 void ss_delete_info_dir();
+void ss_unimplemented(int, const char * const *, int, void *);
 int ss_execute_line();
 char **ss_parse();
 ss_abbrev_info *ss_abbrev_initialize PROTOTYPE((char *, int *));

@@ -1,4 +1,4 @@
-/*	$Id: requests.c,v 1.1.1.1 1995/12/14 06:52:46 tholo Exp $	*/
+/*	$Id: requests.c,v 1.2 1996/09/16 03:13:00 tholo Exp $	*/
 
 /*-
  * Copyright 1987, 1988, 1989 by the Student Information Processing Board
@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include "ss_internal.h"
 
-#define	DECLARE(name)	name(argc,argv,sci_idx)int argc,sci_idx;char **argv;
+#define	DECLARE(name)	void name(argc,argv,sci_idx,arg)int argc,sci_idx;const char *const *argv;void *arg;
 
 /*
  * ss_self_identify -- assigned by default to the "." request

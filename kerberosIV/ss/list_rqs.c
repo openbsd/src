@@ -1,4 +1,4 @@
-/*	$Id: list_rqs.c,v 1.1.1.1 1995/12/14 06:52:47 tholo Exp $	*/
+/*	$Id: list_rqs.c,v 1.2 1996/09/16 03:12:59 tholo Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -33,10 +33,10 @@ static char const twentyfive_spaces[26] =
     "                         ";
 static char const NL[2] = "\n";
 
-int
+void
 ss_list_requests(argc, argv, sci_idx, info_ptr)
     int argc;
-    char **argv;
+    const char * const *argv;
     int sci_idx;
     pointer info_ptr;
 {

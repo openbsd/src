@@ -532,7 +532,7 @@ static unsigned const char cov_2char[64]={
 };
 
 #ifdef _DES_PROTO
-#ifdef PERL5
+#if defined(PERL5) || defined(lint)
 char *des_crypt(char *buf,char *salt);
 #else
 char *crypt(char *buf,char *salt);
@@ -545,7 +545,7 @@ char *crypt();
 #endif
 #endif
 
-#ifdef PERL5
+#if defined(PERL5) || defined(lint)
 char *des_crypt(buf,salt)
 #else
 char *crypt(buf,salt)

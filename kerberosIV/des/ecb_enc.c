@@ -48,7 +48,7 @@
 #include "des_locl.h"
 #include "spr.h"
 
-const char *DES_version="libdes v 3.21 - 95/11/21 - eay";
+static const char *DES_version="libdes v 3.21 - 95/11/21 - eay";
 
 void des_ecb_encrypt(input, output, ks, encrypt)
 des_cblock (*input);

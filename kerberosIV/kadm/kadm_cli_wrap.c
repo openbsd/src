@@ -1,4 +1,4 @@
-/*	$Id: kadm_cli_wrap.c,v 1.1.1.1 1995/12/14 06:52:45 tholo Exp $	*/
+/*	$Id: kadm_cli_wrap.c,v 1.2 1996/09/16 03:16:27 tholo Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -250,7 +250,7 @@ kadm_cli_send(st_dat, st_siz, ret_dat, ret_siz)
 	(void) strncpy((char *)act_st, KADM_VERSTR, KADM_VERSIZE);
 	act_len = KADM_VERSIZE;
 
-	if ((retdat = kadm_cli_keyd(&sess_key, sess_sched)) != KADM_SUCCESS) {
+	if ((retdat = kadm_cli_keyd((des_cblock *)&sess_key, sess_sched)) != KADM_SUCCESS) {
 		free((char *)act_st);
 		return retdat;	       /* couldnt get key working */
 	}
