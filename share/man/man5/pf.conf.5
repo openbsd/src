@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.225 2003/04/25 19:18:25 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.226 2003/04/29 10:36:34 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1807,7 +1807,7 @@ Interface kue0 is the outside interface, and its external address is
 157.161.48.183.
 Interface fxp0 is the inside interface, and we are running
 .Xr ftp-proxy 8 ,
-listening for outbound ftp sessions captured to port 8081.
+listening for outbound ftp sessions captured to port 8021.
 .Bd -literal
 # NAT
 # translate outgoing packets' source addresses (any protocol)
@@ -1837,8 +1837,8 @@ rdr on kue0 inet proto udp from any to (kue0) port 8080 -> 10.1.2.151 \e
 
 # RDR
 # translate outgoing ftp control connections to send them to localhost
-# for proxying with ftp-proxy(8) running on port 8081
-rdr on fxp0 proto tcp from any to any port 21 -> 127.0.0.1 port 8081
+# for proxying with ftp-proxy(8) running on port 8021
+rdr on fxp0 proto tcp from any to any port 21 -> 127.0.0.1 port 8021
 
 In this example, a NAT gateway is set up to translate internal addresses
 using a pool of public addresses (192.0.2.16/28) and to redirect
