@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 1998/07/28 23:27:58 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 1998/08/07 17:29:25 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -347,36 +347,36 @@ main(argc, argv)
 	 *	the special name missing the leading '/',
 	 *	the file system name with or without the leading '/'.
 	 */
-	dt = fstabsearch(disk);
-	if (dt != NULL) {
+	if (!statfs(disk, &fsbuf) && !strcmp(fsbuf.f_mntonname, disk)) {
+		/* mounted disk? */
+		disk = rawname(fsbuf.f_mntfromname);
+		(void)strlcpy(spcl.c_dev, fsbuf.f_mntfromname,
+		    sizeof(spcl.c_dev));
+		if (dirlist != 0) {
+			(void)snprintf(spcl.c_filesys, sizeof(spcl.c_filesys),
+			    "a subset of %s", fsbuf.f_mntonname);
+		} else {
+			(void)strlcpy(spcl.c_filesys, fsbuf.f_mntonname,
+			    sizeof(spcl.c_filesys));
+		}
+	} else if ((dt = fstabsearch(disk)) != NULL) {
+		/* in fstab? */
 		disk = rawname(dt->fs_spec);
-		(void)strncpy(spcl.c_dev, dt->fs_spec, sizeof(spcl.c_dev) - 1);
-		spcl.c_dev[sizeof(spcl.c_dev) - 1] = '\0';
+		(void)strlcpy(spcl.c_dev, dt->fs_spec, sizeof(spcl.c_dev));
 		if (dirlist != 0) {
 			(void)snprintf(spcl.c_filesys, sizeof(spcl.c_filesys),
 			    "a subset of %s", dt->fs_file);
 		} else {
-			(void)strncpy(spcl.c_filesys, dt->fs_file,
-			    sizeof(spcl.c_filesys) - 1);
-			spcl.c_filesys[sizeof(spcl.c_filesys) - 1] = '\0';
+			(void)strlcpy(spcl.c_filesys, dt->fs_file,
+			    sizeof(spcl.c_filesys));
 		}
-	} else if (!statfs(disk, &fsbuf) && !strcmp(fsbuf.f_mntonname, disk)) {
-		disk = rawname(fsbuf.f_mntfromname);
-		(void)strncpy(spcl.c_dev, fsbuf.f_mntfromname,
-		    sizeof(spcl.c_dev) - 1);
-		spcl.c_dev[sizeof(spcl.c_dev) - 1] = '\0';
-		(void)strncpy(spcl.c_filesys, fsbuf.f_mntonname,
-		    sizeof(spcl.c_filesys) - 1);
-		spcl.c_filesys[sizeof(spcl.c_filesys) - 1] = '\0';
 	} else {
-		(void)strncpy(spcl.c_dev, disk, sizeof(spcl.c_dev) - 1);
-		spcl.c_dev[sizeof(spcl.c_dev) - 1] = '\0';
-		(void)strncpy(spcl.c_filesys, "an unlisted file system",
-		    sizeof(spcl.c_filesys) - 1);
-		spcl.c_filesys[sizeof(spcl.c_filesys) - 1] = '\0';
+		/* must be a device */
+		(void)strlcpy(spcl.c_dev, disk, sizeof(spcl.c_dev));
+		(void)strlcpy(spcl.c_filesys, "an unlisted file system",
+		    sizeof(spcl.c_filesys));
 	}
-	(void)strncpy(spcl.c_label, "none", sizeof(spcl.c_label) - 1);
-	spcl.c_label[sizeof(spcl.c_label) - 1] = '\0';
+	(void)strlcpy(spcl.c_label, "none", sizeof(spcl.c_label));
 	(void)gethostname(spcl.c_host, sizeof(spcl.c_host));
 	spcl.c_level = level - '0';
 	spcl.c_type = TS_TAPE;
