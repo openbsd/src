@@ -1,5 +1,5 @@
-/*	$OpenBSD: ispvar.h,v 1.5 1999/04/04 01:28:26 mjacob Exp $ */
-/* release_4_3_99 */
+/*	$OpenBSD: ispvar.h,v 1.6 1999/04/04 02:07:27 mjacob Exp $ */
+/* release_03_25_99 */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -259,8 +259,8 @@ struct ispsoftc {
 			isp_bustype	: 1,	/* BUS Implementation */
 			isp_type	: 8;	/* HBA Type and Revision */
 
-	u_int16_t		isp_fwrev[3];	/* Running F/W revision */
-	u_int16_t		isp_romfw_rev[3]; /* 'ROM' F/W revision */
+	u_int16_t		isp_fwrev;	/* Running F/W revision */
+	u_int16_t		isp_romfw_rev;	/* 'ROM' F/W revision */
 	void * 			isp_param;
 
 	/*
@@ -338,10 +338,8 @@ struct ispsoftc {
 #define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
 #define	ISP_CFG_NONVRAM		0x40	/* ignore NVRAM */
 
-#define	ISP_FW_REV(maj, min, mic)	((maj << 24) | (min << 16) | mic)
-#define	ISP_FW_REVX(xp)	((xp[0 ]<< 24) | (xp[1] << 16) | xp[2])
+#define	ISP_FW_REV(maj, min)	((maj) << 10| (min))
 
- 
 /*
  * Bus (implementation) types
  */
@@ -358,7 +356,6 @@ struct ispsoftc {
 #define	ISP_HA_SCSI_1040	0x4
 #define	ISP_HA_SCSI_1040A	0x5
 #define	ISP_HA_SCSI_1040B	0x6
-#define	ISP_HA_SCSI_1040C	0x7
 #define	ISP_HA_SCSI_1080	0xd
 #define	ISP_HA_SCSI_12X0	0xe
 #define	ISP_HA_FC		0xf0
