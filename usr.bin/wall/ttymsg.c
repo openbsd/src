@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.5 1998/11/18 02:57:22 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.6 1998/11/18 16:47:01 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.5 1998/11/18 02:57:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.6 1998/11/18 16:47:01 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,28 +93,24 @@ ttymsg(iov, iovcnt, line, tmout)
 		return (errbuf);
 	}
 
-	if (stat(device, &st) < 0)
-		return (NULL);
-	if ((st.st_mode & S_IWGRP) == 0)
-		return (NULL);
-
-	seteuid(geteuid());
+	if (getuid()) {
+		if (stat(device, &st) < 0)
+			return (NULL);
+		if ((st.st_mode & S_IWGRP) == 0)
+			return (NULL);
+	}
 
 	/*
 	 * open will fail on slip lines or exclusive-use lines
 	 * if not running as root; not an error.
 	 */
 	if ((fd = open(device, O_WRONLY|O_NONBLOCK, 0)) < 0) {
-		if (errno == EBUSY || errno == EACCES) {
-			seteuid(getuid());
+		if (errno == EBUSY || errno == EACCES)
 			return (NULL);
-		}
-		seteuid(getuid());
 		(void) snprintf(errbuf, sizeof(errbuf),
 		    "%s: %s", device, strerror(errno));
 		return (errbuf);
 	}
-	seteuid(getuid());
 
 	for (cnt = left = 0; cnt < iovcnt; ++cnt)
 		left += iov[cnt].iov_len;
