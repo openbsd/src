@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.11 2002/04/28 03:51:19 art Exp $	*/
+/*	$OpenBSD: spif.c,v 1.12 2002/04/30 01:12:29 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -212,15 +212,15 @@ spifattach(parent, self, aux)
 
 	sc->sc_ppcih.ih_fun = spifppcintr;
 	sc->sc_ppcih.ih_arg = sc;
-	intr_establish(ppcpri, &sc->sc_ppcih);
+	intr_establish(ppcpri, &sc->sc_ppcih, -1);
 
 	sc->sc_stcih.ih_fun = spifstcintr;
 	sc->sc_stcih.ih_arg = sc;
-	intr_establish(stcpri, &sc->sc_stcih);
+	intr_establish(stcpri, &sc->sc_stcih, -1);
 
 	sc->sc_softih.ih_fun = spifsoftintr;
 	sc->sc_softih.ih_arg = sc;
-	intr_establish(IPL_TTY, &sc->sc_softih);
+	intr_establish(IPL_TTY, &sc->sc_softih, IPL_TTY);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 }

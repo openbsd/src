@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2002/04/30 01:12:28 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -153,15 +153,18 @@ extern int	foundfpu;		/* true => we have an FPU */
  * ``not me'' or 1 (``I took care of it'').  intr_establish() inserts a
  * handler into the list.  The handler is called with its (single)
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
+ * ih_ipl specifies the interrupt level that should be blocked when
+ * executing this handler.
  */
 struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
+	int	ih_ipl;
 	struct	intrhand *ih_next;
 };
 extern struct intrhand *intrhand[15];
-void	intr_establish(int level, struct intrhand *);
-void	vmeintr_establish(int vec, int level, struct intrhand *);
+void	intr_establish(int level, struct intrhand *, int);
+void	vmeintr_establish(int vec, int level, struct intrhand *, int);
 
 /*
  * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''

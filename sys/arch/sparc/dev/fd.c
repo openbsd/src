@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.27 2002/04/28 03:51:19 art Exp $	*/
+/*	$OpenBSD: fd.c,v 1.28 2002/04/30 01:12:29 art Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -388,14 +388,14 @@ fdcattach(parent, self, aux)
 #ifdef FDC_C_HANDLER
 	fdc->sc_hih.ih_fun = (void *)fdchwintr;
 	fdc->sc_hih.ih_arg = fdc;
-	intr_establish(pri, &fdc->sc_hih);
+	intr_establish(pri, &fdc->sc_hih, IPL_FD);
 #else
 	fdciop = &fdc->sc_io;
 	intr_fasttrap(pri, fdchwintr);
 #endif
 	fdc->sc_sih.ih_fun = (void *)fdcswintr;
 	fdc->sc_sih.ih_arg = fdc;
-	intr_establish(IPL_FDSOFT, &fdc->sc_sih);
+	intr_establish(IPL_FDSOFT, &fdc->sc_sih, IPL_BIO);
 
 	/* Assume a 82077 */
 	fdc->sc_reg_msr = &((struct fdreg_77 *)fdc->sc_reg)->fd_msr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.3 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.4 2002/04/30 01:12:29 art Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -183,7 +183,7 @@ tctrl_attach(parent, self, aux)
 
 	sc->sc_ih.ih_fun = tctrl_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(pri, &sc->sc_ih);
+	intr_establish(pri, &sc->sc_ih, -1);
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	/* See what the external status is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.21 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: qe.c,v 1.22 2002/04/30 01:12:29 art Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -152,7 +152,7 @@ qeattach(parent, self, aux)
 
 	sc->sc_ih.ih_fun = qeintr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(pri, &sc->sc_ih);
+	intr_establish(pri, &sc->sc_ih, IPL_NET);
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.14 2002/04/28 03:51:19 art Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.15 2002/04/30 01:12:29 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -239,7 +239,7 @@ cs4231_attach(parent, self, aux)
 
 	sc->sc_ih.ih_fun = cs4231_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih);
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_AUHARD);
 
 	printf(" pri %d, softpri %d\n", pri, IPL_AUSOFT);
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.11 2002/04/28 21:48:08 art Exp $
+#	$OpenBSD: genassym.cf,v 1.12 2002/04/30 01:12:28 art Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -165,6 +165,7 @@ define	IE_REG_PTE_PG	(PG_V | PG_W | PG_S | PG_NC | PG_OBIO)
 struct	intrhand
 member	ih_fun
 member	ih_arg
+member	ih_ipl
 member	ih_next
 
 ifdef notyet

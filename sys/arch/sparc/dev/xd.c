@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.21 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: xd.c,v 1.22 2002/04/30 01:12:29 art Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -488,7 +488,7 @@ xdcattach(parent, self, aux)
 	xdc->sc_ih.ih_fun = xdcintr;
 	xdc->sc_ih.ih_arg = xdc;
 	vmeintr_establish(ca->ca_ra.ra_intr[0].int_vec,
-			  ca->ca_ra.ra_intr[0].int_pri, &xdc->sc_ih);
+			  ca->ca_ra.ra_intr[0].int_pri, &xdc->sc_ih, IPL_BIO);
 	evcnt_attach(&xdc->sc_dev, "intr", &xdc->sc_intrcnt);
 
 

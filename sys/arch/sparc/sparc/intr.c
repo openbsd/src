@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.18 2002/03/14 01:26:44 millert Exp $ */
+/*	$OpenBSD: intr.c,v 1.19 2002/04/30 01:12:28 art Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -104,8 +104,8 @@ strayintr(fp)
 	}
 }
 
-static struct intrhand level10 = { clockintr };
-static struct intrhand level14 = { statintr };
+static struct intrhand level10 = { clockintr, NULL, (IPL_CLOCK << 8) };
+static struct intrhand level14 = { statintr, NULL, (14 << 8) /* XXX - IPL_STATCLOCK */ };
 union sir sir;
 /*
  * Level 1 software interrupt (could also be Sbus level 1 interrupt).
@@ -210,7 +210,7 @@ nmi_hard()
 }
 #endif
 
-static struct intrhand level01 = { soft01intr };
+static struct intrhand level01 = { soft01intr, NULL, (IPL_SOFTINT << 8) };
 
 /*
  * Level 15 interrupts are special, and not vectored here.
@@ -246,9 +246,10 @@ extern int sparc_interrupt44c[];
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(level, ih)
+intr_establish(level, ih, ipl_block)
 	int level;
 	struct intrhand *ih;
+	int ipl_block;
 {
 	struct intrhand **p, *q;
 #ifdef DIAGNOSTIC
@@ -256,6 +257,29 @@ intr_establish(level, ih)
 	int displ;
 #endif
 	int s;
+
+	if (ipl_block == -1)
+		ipl_block = level;
+
+#ifdef DIAGNOSTIC
+	/*
+	 * If the level we're supposed to block is lower than this interrupts
+	 * level someone is doing something very wrong. Most likely it
+	 * means that some IPL_ constant in machine/psl.h is preconfigured too
+	 * low.
+	 */
+	if (ipl_block < level)
+		panic("intr_establish: level (%d) > block (%d)", level,
+		    ipl_block);
+	if (ipl_block > 15)
+		panic("intr_establish: strange block level: %d", ipl_block);
+#endif
+
+	/*
+	 * We store the ipl pre-shifted so that we can avoid one instruction
+	 * in the interrupt handlers.
+	 */
+	ih->ih_ipl = (ipl_block << 8);
 
 	s = splhigh();
 	if (fastvec & (1 << level))

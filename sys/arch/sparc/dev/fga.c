@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.8 2002/03/14 03:15:59 millert Exp $	*/
+/*	$OpenBSD: fga.c,v 1.9 2002/04/30 01:12:29 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -564,37 +564,37 @@ fga_hwintr_establish(sc, sint)
 	case 1:
 		sc->sc_ih1.ih_fun = fga_hwintr1;
 		sc->sc_ih1.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih1);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih1, -1);
 		break;
 	case 2:
 		sc->sc_ih2.ih_fun = fga_hwintr2;
 		sc->sc_ih2.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih2);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih2, -1);
 		break;
 	case 3:
 		sc->sc_ih3.ih_fun = fga_hwintr3;
 		sc->sc_ih3.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih3);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih3, -1);
 		break;
 	case 4:
 		sc->sc_ih4.ih_fun = fga_hwintr4;
 		sc->sc_ih4.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih4);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih4, -1);
 		break;
 	case 5:
 		sc->sc_ih5.ih_fun = fga_hwintr5;
 		sc->sc_ih5.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih5);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih5, -1);
 		break;
 	case 6:
 		sc->sc_ih6.ih_fun = fga_hwintr6;
 		sc->sc_ih6.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih6);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih6, -1);
 		break;
 	case 7:
 		sc->sc_ih7.ih_fun = fga_hwintr7;
 		sc->sc_ih7.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih7);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih7, -1);
 		break;
 	default:
 		panic("fga_sint");

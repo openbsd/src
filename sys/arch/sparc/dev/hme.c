@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.35 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: hme.c,v 1.36 2002/04/30 01:12:29 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -210,7 +210,7 @@ hmeattach(parent, self, aux)
 
 	sc->sc_ih.ih_fun = hmeintr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih);
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_NET);
 
 	/*
 	 * Get MAC address from card if 'local-mac-address' property exists.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.12 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: obio.c,v 1.13 2002/04/30 01:12:29 art Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -598,9 +598,10 @@ vmeintr(arg)
 }
 
 void
-vmeintr_establish(vec, level, ih)
+vmeintr_establish(vec, level, ih, ipl_block)
 	int vec, level;
 	struct intrhand *ih;
+	int ipl_block;
 {
 	struct intrhand *ihs;
 
@@ -630,7 +631,7 @@ vmeintr_establish(vec, level, ih)
 	bzero(ihs, sizeof *ihs);
 	ihs->ih_fun = vmeintr;
 	ihs->ih_arg = (void *)level;
-	intr_establish(level, ihs);
+	intr_establish(level, ihs, ipl_block);
 }
 
 #define	getpte(va)		lda(va, ASI_PTE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.49 2002/04/28 21:48:08 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.50 2002/04/30 01:12:28 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2364,8 +2364,12 @@ softintr_common:
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4 + IH_FUN], %o1
+1:	rd	%psr, %o1
+	ld	[%l4 + IH_IPL], %o0
+	and	%o1, ~PSR_PIL, %o1
+	wr	%o1, %o0, %psr
 	ld	[%l4 + IH_ARG], %o0
+	ld	[%l4 + IH_FUN], %o1
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
@@ -2433,8 +2437,12 @@ _sparc_interrupt_common:
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4 + IH_FUN], %o1
+1:	rd	%psr, %o1
+	ld	[%l4 + IH_IPL], %o0
+	and	%o1, ~PSR_PIL, %o1
+	wr	%o1, %o0, %psr
 	ld	[%l4 + IH_ARG], %o0
+	ld	[%l4 + IH_FUN], %o1
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
