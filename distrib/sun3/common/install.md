@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2000/03/01 22:10:09 todd Exp $
+#	$OpenBSD: install.md,v 1.6 2000/05/02 21:46:10 miod Exp $
 #	$NetBSD: install.md,v 1.2.2.1 1996/08/29 03:33:48 gwr Exp $
 #
 #
@@ -199,10 +199,10 @@ __md_prep_disklabel_1
 md_welcome_banner() {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the NetBSD/sun3 ${VERSION} installation program."
+		echo "Welcome to the OpenBSD/sun3 ${VERSION} installation program."
 		cat << \__welcome_banner_1
 
-This program is designed to help you put NetBSD on your disk,
+This program is designed to help you put OpenBSD on your disk,
 in a simple and rational way.  You'll be asked several questions,
 and it would probably be useful to have your disk's hardware
 manual, the installation notes, and a calculator handy.
@@ -210,10 +210,10 @@ __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the NetBSD/sun3 ${VERSION} upgrade program."
+		echo "Welcome to the OpenBSD/sun3 ${VERSION} upgrade program."
 		cat << \__welcome_banner_2
 
-This program is designed to help you upgrade your NetBSD system in a
+This program is designed to help you upgrade your OpenBSD system in a
 simple and rational way.
 
 As a reminder, installing the `etc' binary set is NOT recommended.
@@ -256,7 +256,7 @@ md_congrats() {
 	fi
 	cat << __congratulations_1
 
-CONGRATULATIONS!  You have successfully $what NetBSD!
+CONGRATULATIONS!  You have successfully $what OpenBSD!
 To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
 

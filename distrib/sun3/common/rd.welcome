@@ -1,5 +1,5 @@
 
-	Welcome to the NetBSD/sun3 RAMDISK root!
+	Welcome to the OpenBSD/sun3 RAMDISK root!
 
 This environment is designed to do only three things:
 1:  Partititon your disk (use the command:  edlabel /dev/rsd0c)
