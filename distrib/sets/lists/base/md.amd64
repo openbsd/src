@@ -2176,6 +2176,8 @@
 ./usr/local/libdata/perl5/site_perl/amd64-openbsd
 ./usr/mdec/biosboot
 ./usr/mdec/boot
+./usr/mdec/cdboot
+./usr/mdec/cdbr
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/mdec/pxeboot
