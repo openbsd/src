@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.23 2003/11/17 22:44:55 grange Exp $      */
+/*      $OpenBSD: ata.c,v 1.24 2004/01/15 21:37:57 grange Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -61,10 +61,8 @@ extern int wdcdebug_mask; /* init'ed in wdc.c */
 
 /* Get the disk's parameters */
 int
-ata_get_params(drvp, flags, prms)
-	struct ata_drive_datas *drvp;
-	u_int8_t flags;
-	struct ataparams *prms;
+ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
+    struct ataparams *prms)
 {
 	char tb[ATAPARAMS_SIZE];
 	struct wdc_command wdc_c;
@@ -156,10 +154,7 @@ ata_get_params(drvp, flags, prms)
 }
 
 int
-ata_set_mode(drvp, mode, flags)
-	struct ata_drive_datas *drvp;
-	u_int8_t mode;
-	u_int8_t flags;
+ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 {
 	struct wdc_command wdc_c;
 
@@ -188,8 +183,7 @@ ata_set_mode(drvp, mode, flags)
 }
 
 void
-ata_dmaerr(drvp)
-	struct ata_drive_datas *drvp;
+ata_dmaerr(struct ata_drive_datas *drvp)
 {
 	/*
 	 * Downgrade decision: if we get NERRS_MAX in NXFER.

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.24 2003/10/17 08:14:09 grange Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.25 2004/01/15 21:37:57 grange Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -116,10 +116,10 @@ struct cfdriver wdc_cd = {
 };
 #endif
 
-void  wdc_ata_bio_start(struct channel_softc *,struct wdc_xfer *);
-void  _wdc_ata_bio_start(struct channel_softc *,struct wdc_xfer *);
+void  wdc_ata_bio_start(struct channel_softc *, struct wdc_xfer *);
+void  _wdc_ata_bio_start(struct channel_softc *, struct wdc_xfer *);
 int   wdc_ata_bio_intr(struct channel_softc *, struct wdc_xfer *, int);
-void  wdc_ata_bio_kill_xfer(struct channel_softc *,struct wdc_xfer *);
+void  wdc_ata_bio_kill_xfer(struct channel_softc *, struct wdc_xfer *);
 void  wdc_ata_bio_done(struct channel_softc *, struct wdc_xfer *);
 int   wdc_ata_ctrl_intr(struct channel_softc *, struct wdc_xfer *, int);
 int   wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
@@ -132,9 +132,7 @@ int   wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
  * WDC_TRY_AGAIN. Must be called at splbio().
  */
 int
-wdc_ata_bio(drvp, ata_bio)
-	struct ata_drive_datas *drvp;
-	struct ata_bio *ata_bio;
+wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 {
 	struct wdc_xfer *xfer;
 	struct channel_softc *chp = drvp->chnl_softc;
@@ -160,9 +158,7 @@ wdc_ata_bio(drvp, ata_bio)
 }
 
 void
-wdc_ata_bio_start(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+wdc_ata_bio_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
 	WDCDEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d\n",
@@ -176,9 +172,7 @@ wdc_ata_bio_start(chp, xfer)
 }
 
 void
-_wdc_ata_bio_start(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+_wdc_ata_bio_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -403,10 +397,7 @@ timeout:
 }
 
 int
-wdc_ata_bio_intr(chp, xfer, irq)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int irq;
+wdc_ata_bio_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -518,9 +509,7 @@ timeout:
 }
 
 void
-wdc_ata_bio_kill_xfer(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+wdc_ata_bio_kill_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
 
@@ -538,9 +527,7 @@ wdc_ata_bio_kill_xfer(chp, xfer)
 }
 
 void
-wdc_ata_bio_done(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+wdc_ata_bio_done(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
 
@@ -571,10 +558,7 @@ wdc_ata_bio_done(chp, xfer)
  * Implement operations needed before read/write.
  */
 int
-wdc_ata_ctrl_intr(chp, xfer, irq)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int irq;
+wdc_ata_ctrl_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -734,9 +718,7 @@ error:
 }
 
 int
-wdc_ata_err(drvp, ata_bio)
-	struct ata_drive_datas *drvp;
-	struct ata_bio *ata_bio;
+wdc_ata_err(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	ata_bio->error = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.34 2003/10/21 09:57:04 jmc Exp $ */
+/*	$OpenBSD: wd.c,v 1.35 2004/01/15 21:37:57 grange Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -224,14 +224,7 @@ void	bad144intern(struct wd_softc *);
 
 
 int
-wdprobe(parent, match_, aux)
-	struct device *parent;
-#ifndef __OpenBSD__
-	struct cfdata *match;
-#else
-	void *match_;
-#endif
-	void *aux;
+wdprobe(struct device *parent, void *match_, void *aux)
 {
 	struct ata_atapi_attach *aa_link = aux;
 	struct cfdata *match = match_;
@@ -263,9 +256,7 @@ wdprobe(parent, match_, aux)
 }
 
 void
-wdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct wd_softc *wd = (void *)self;
 	struct ata_atapi_attach *aa_link= aux;
@@ -395,9 +386,7 @@ wdattach(parent, self, aux)
 }
 
 int
-wdactivate(self, act)
-	struct device *self;
-	enum devact act;
+wdactivate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -414,11 +403,8 @@ wdactivate(self, act)
 	return (rv);
 }
 
-
 int
-wddetach(self, flags)
-	struct device *self;
-	int flags;
+wddetach(struct device *self, int flags)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
 	struct buf *bp;
@@ -456,8 +442,7 @@ wddetach(self, flags)
 }
 
 void
-wdzeroref(self)
-	struct device *self;
+wdzeroref(struct device *self)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
 
@@ -470,8 +455,7 @@ wdzeroref(self)
  * transfer.  Does not wait for the transfer to complete.
  */
 void
-wdstrategy(bp)
-	struct buf *bp;
+wdstrategy(struct buf *bp)
 {
 	struct wd_softc *wd;
 	int s;
@@ -534,8 +518,7 @@ done:
  * Queue a drive for I/O.
  */
 void
-wdstart(arg)
-	void *arg;
+wdstart(void *arg)
 {
 	struct wd_softc *wd = arg;
 	struct buf *bp = NULL;
@@ -559,9 +542,7 @@ wdstart(arg)
 }
 
 void
-__wdstart(wd, bp)
-	struct wd_softc *wd;
-	struct buf *bp;
+__wdstart(struct wd_softc *wd, struct buf *bp)
 {
 	daddr_t p_offset;
 	daddr_t nblks;
@@ -620,8 +601,7 @@ __wdstart(wd, bp)
 }
 
 void
-wddone(v)
-	void *v;
+wddone(void *v)
 {
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
@@ -681,8 +661,7 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 }
 
 void
-wdrestart(v)
-	void *v;
+wdrestart(void *v)
 {
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
@@ -696,10 +675,7 @@ wdrestart(v)
 }
 
 int
-wdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+wdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	WDCDEBUG_PRINT(("wdread\n"), DEBUG_XFERS);
@@ -707,10 +683,7 @@ wdread(dev, uio, flags)
 }
 
 int
-wdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+wdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	WDCDEBUG_PRINT(("wdwrite\n"), DEBUG_XFERS);
@@ -718,10 +691,7 @@ wdwrite(dev, uio, flags)
 }
 
 int
-wdopen(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct wd_softc *wd;
 	int unit, part;
@@ -811,10 +781,7 @@ bad4:
 }
 
 int
-wdclose(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct wd_softc *wd;
 	int part = WDPART(dev);
@@ -840,7 +807,7 @@ wdclose(dev, flag, fmt, p)
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
 	if (wd->sc_dk.dk_openmask == 0) {
-		wd_flushcache(wd,0);
+		wd_flushcache(wd, 0);
 		/* XXXX Must wait for I/O to complete! */
 #ifndef __OpenBSD__
 		wdc_ata_delref(wd->drvp);
@@ -855,9 +822,7 @@ wdclose(dev, flag, fmt, p)
 }
 
 void
-wdgetdefaultlabel(wd, lp)
-	struct wd_softc *wd;
-	struct disklabel *lp;
+wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 {
 	WDCDEBUG_PRINT(("wdgetdefaultlabel\n"), DEBUG_FUNCS);
 	bzero(lp, sizeof(struct disklabel));
@@ -896,12 +861,8 @@ wdgetdefaultlabel(wd, lp)
  * Fabricate a default disk label, and try to read the correct one.
  */
 void
-wdgetdisklabel(dev, wd, lp, clp, spoofonly)
-	dev_t  dev;
-	struct wd_softc *wd;
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
-	int spoofonly;
+wdgetdisklabel(dev_t dev, struct wd_softc *wd, struct disklabel *lp,
+    struct cpu_disklabel *clp, int spoofonly)
 {
 	char *errstring;
 
@@ -943,12 +904,7 @@ wdgetdisklabel(dev, wd, lp, clp, spoofonly)
 }
 
 int
-wdioctl(dev, xfer, addr, flag, p)
-	dev_t dev;
-	u_long xfer;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 {
 	struct wd_softc *wd;
 	int error = 0;
@@ -1095,8 +1051,7 @@ wdformat(struct buf *bp)
 #endif
 
 int
-wdsize(dev)
-	dev_t dev;
+wdsize(dev_t dev)
 {
 	struct wd_softc *wd;
 	int part, omask;
@@ -1135,11 +1090,7 @@ static int wddumpmulti = 1;
  * Dump core after a system crash.
  */
 int
-wddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	struct wd_softc *wd;	/* disk unit to do the I/O */
 	struct disklabel *lp;   /* disk's disklabel */
@@ -1267,8 +1218,7 @@ again:
  * Internalize the bad sector table.
  */
 void
-bad144intern(wd)
-	struct wd_softc *wd;
+bad144intern(struct wd_softc *wd)
 {
 	struct dkbad *bt = &DKBAD(wd->sc_dk.dk_cpulabel);
 	struct disklabel *lp = wd->sc_dk.dk_label;
@@ -1290,10 +1240,7 @@ bad144intern(wd)
 #endif
 
 int
-wd_get_params(wd, flags, params)
-	struct wd_softc *wd;
-	u_int8_t flags;
-	struct ataparams *params;
+wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 {
 	switch (ata_get_params(wd->drvp, flags, params)) {
 	case CMD_AGAIN:
@@ -1323,9 +1270,7 @@ wd_get_params(wd, flags, params)
 }
 
 void
-wd_flushcache(wd, flags)
-	struct wd_softc *wd;
-	int flags;
+wd_flushcache(struct wd_softc *wd, int flags)
 {
 	struct wdc_command wdc_c;
 
@@ -1361,8 +1306,7 @@ wd_flushcache(wd, flags)
 }
 
 void
-wd_shutdown(arg)
-	void *arg;
+wd_shutdown(void *arg)
 {
 	struct wd_softc *wd = arg;
 	wd_flushcache(wd, AT_POLL);
