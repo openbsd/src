@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.c,v 1.8 2001/01/15 11:06:24 itojun Exp $	*/
-/*	$KAME: config.c,v 1.26 2000/12/25 12:19:27 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.9 2001/01/21 15:11:18 itojun Exp $	*/
+/*	$KAME: config.c,v 1.27 2001/01/19 03:07:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -433,81 +433,6 @@ getconfig(intface)
 static void
 get_prefix(struct rainfo *rai)
 {
-#if 0
-	size_t len;
-	u_char *buf, *lim, *next;
-	u_char ntopbuf[INET6_ADDRSTRLEN];
-
-	if ((len = rtbuf_len()) < 0) {
-		syslog(LOG_ERR,
-		       "<%s> can't get buffer length for routing info",
-		       __FUNCTION__);
-		exit(1);
-	}
-	if ((buf = malloc(len)) == NULL) {
-		syslog(LOG_ERR,
-		       "<%s> can't allocate buffer", __FUNCTION__);
-		exit(1);
-	}
-	if (get_rtinfo(buf, &len) < 0) {
-		syslog(LOG_ERR,
-		       "<%s> can't get routing inforamtion", __FUNCTION__);
-		exit(1);
-	}
-
-	lim = buf + len;
-	next = get_next_msg(buf, lim, rai->ifindex, &len,
-			    RTADV_TYPE2BITMASK(RTM_GET));
-	while (next < lim) {
-		struct prefix *pp;
-		struct in6_addr *a;
-
-		/* allocate memory to store prefix info. */
-		if ((pp = malloc(sizeof(*pp))) == NULL) {
-			syslog(LOG_ERR,
-			       "<%s> can't get allocate buffer for prefix",
-			       __FUNCTION__);
-			exit(1);
-		}
-		memset(pp, 0, sizeof(*pp));
-
-		/* set prefix and its length */
-		a = get_addr(next);
-		memcpy(&pp->prefix, a, sizeof(*a));
-		if ((pp->prefixlen = get_prefixlen(next)) < 0) {
-			syslog(LOG_ERR,
-			       "<%s> failed to get prefixlen "
-			       "or prefix is invalid",
-			       __FUNCTION__);
-			exit(1);
-		}
-		syslog(LOG_DEBUG,
-		       "<%s> add %s/%d to prefix list on %s",
-		       __FUNCTION__,
-		       inet_ntop(AF_INET6, a, ntopbuf, sizeof(ntopbuf)),
-		       pp->prefixlen, rai->ifname);
-
-		/* set other fields with protocol defaults */
-		pp->validlifetime = DEF_ADVVALIDLIFETIME;
-		pp->preflifetime = DEF_ADVPREFERREDLIFETIME;
-		pp->onlinkflg = 1;
-		pp->autoconfflg = 1;
-		pp->origin = PREFIX_FROM_KERNEL;
-
-		/* link into chain */
-		insque(pp, &rai->prefix);
-
-		/* counter increment */
-		rai->pfxs++;
-
-		/* forward pointer and get next prefix(if any) */
-		next += len;
-		next = get_next_msg(next, lim, rai->ifindex,
-				    &len, RTADV_TYPE2BITMASK(RTM_GET));
-	}
-
-	free(buf);
-#else
 	struct ifaddrs *ifap, *ifa;
 	struct prefix *pp;
 	struct in6_addr *a;
@@ -583,7 +508,6 @@ get_prefix(struct rainfo *rai)
 	}
 
 	freeifaddrs(ifap);
-#endif
 }
 
 static void

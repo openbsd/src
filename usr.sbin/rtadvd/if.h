@@ -1,5 +1,5 @@
-/*	$OpenBSD: if.h,v 1.5 2001/01/15 11:06:26 itojun Exp $	*/
-/*	$KAME: if.h,v 1.4 2000/09/06 20:06:30 itojun Exp $	*/
+/*	$OpenBSD: if.h,v 1.6 2001/01/21 15:11:18 itojun Exp $	*/
+/*	$KAME: if.h,v 1.5 2001/01/19 03:07:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -43,7 +43,6 @@ int if_getflags __P((int ifindex, int oifflags));
 int lladdropt_length __P((struct sockaddr_dl *sdl));
 void lladdropt_fill __P((struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt));
 int rtbuf_len __P((void));
-int get_rtinfo __P((char *buf, size_t *len));
 char *get_next_msg __P((char *buf, char *lim, int ifindex, size_t *lenp,
 			   int filter));
 struct in6_addr *get_addr __P((char *buf));
