@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_forward.c,v 1.8 2000/06/30 19:45:36 itojun Exp $	*/
-/*	$KAME: ip6_forward.c,v 1.38 2000/06/22 21:02:05 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.9 2000/07/27 16:05:07 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.44 2000/07/27 13:43:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -108,8 +108,15 @@ ip6_forward(m, srcrt)
 	}
 #endif /*IPSEC_IPV6FWD*/
 
+	/*
+	 * Do not forward packets to multicast destination (should be handled
+	 * by ip6_mforward().
+	 * Do not forward packets with unspecified source.  It was discussed
+	 * in July 2000, on ipngwg mailing list.
+	 */
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0 ||
-	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 		ip6stat.ip6s_cantforward++;
 		/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard) */
 		if (ip6_log_time + ip6_log_interval < time_second) {
