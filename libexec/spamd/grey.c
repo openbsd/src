@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.10 2004/03/11 17:29:50 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.11 2004/03/11 17:48:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -248,13 +248,11 @@ greyscan(char *dbname)
 		}
 	}
 	configure_pf(whitelist, whitecount);
-	db->sync(db, 0);
 	db->close(db);
 	db = NULL;
 	freewhiteaddr();
 	return(0);
  bad:
-	db->sync(db, 0);
 	db->close(db);
 	db = NULL;
 	freewhiteaddr();

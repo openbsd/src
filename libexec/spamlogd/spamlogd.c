@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.6 2004/03/10 00:35:55 deraadt Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.7 2004/03/11 17:48:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -108,12 +108,10 @@ dbupdate(char *dbname, char *ip)
 			goto bad;
 		}
 	}
-	db->sync(db, 0);
 	db->close(db);
 	db = NULL;
 	return (0);
  bad:
-	db->sync(db, 0);
 	db->close(db);
 	db = NULL;
 	return (-1);
