@@ -59,7 +59,7 @@ attach	cpu at mainbus
 file	arch/powerpc/powerpc/cpu.c
 
 include "../../../dev/ofw/files.ofw"
-file	arch/powerpc/powerpc/opendev.c ofcons | ofnet | ofdisk
+file	arch/powerpc/powerpc/opendev.c ofcons | ofnet | ofdisk | ofrtc
 major	{ ofdisk = 4 }
 
 pseudo-device rd
@@ -86,4 +86,3 @@ major	{ wd = 5 }		# Not even in bdevsw XXX
 
 include "../../../dev/isa/files.isapnp"
 file    arch/arc/isa/isapnp_machdep.c   isapnp   
-

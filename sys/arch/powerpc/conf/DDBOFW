@@ -54,7 +54,7 @@ config		bsd	swap generic
 mainbus0	at root
 cpu*		at mainbus0
 
-ofroot*		at root
+ofroot*		at mainbus0
 
 ofbus*		at openfirm?
 
