@@ -116,6 +116,8 @@ acct		type=file mode=644 uname=root gname=wheel
 ..	#var/account
 at		type=dir mode=0755 uname=root gname=daemon ignore
 ..	#var/at
+yp.no		type=dir mode=0755 uname=root gname=wheel ignore
+..	#var/yp.no
 backups		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/backups
 db		type=dir mode=0755 uname=root gname=wheel
