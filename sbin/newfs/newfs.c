@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.26 2001/04/14 03:15:54 gluk Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.27 2001/04/19 16:22:18 gluk Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.26 2001/04/14 03:15:54 gluk Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.27 2001/04/19 16:22:18 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -175,6 +175,8 @@ int	maxcontig = 8;		/* max contiguous blocks to allocate */
 int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	nrpos = NRPOS;		/* # of distinguished rotational positions */
+int	avgfilesize = AVFILESIZ;/* expected average file size */
+int	avgfilesperdir = AFPDIR;/* expected number of files per directory */
 int	bbsize = BBSIZE;	/* boot block size */
 int	sbsize = SBSIZE;	/* superblock size */
 int	mntflags = MNT_ASYNC;	/* flags to be passed to mount */
@@ -218,7 +220,7 @@ main(argc, argv)
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:i:m:o:s:" :
-	    "NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
+	    "NOS:T:a:b:c:d:e:f:g:h:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
 		case 'N':
@@ -262,6 +264,14 @@ main(argc, argv)
 		case 'f':
 			if ((fsize = atoi(optarg)) <= 0)
 				fatal("%s: bad fragment size", optarg);
+			break;
+		case 'g':
+			if ((avgfilesize = atoi(optarg)) <= 0)
+			       fatal("%s: bad average file size", optarg);
+			break;
+		case 'h':
+			if ((avgfilesperdir = atoi(optarg)) <= 0)
+				fatal("%s: bad average files per dir", optarg);
 			break;
 		case 'i':
 			if ((density = atoi(optarg)) <= 0)
@@ -728,6 +738,8 @@ struct fsoptions {
 	{ "-d rotational delay between contiguous blocks", 1 },
 	{ "-e maximum blocks per file in a cylinder group", 1 },
 	{ "-f frag size", 1 },
+	{ "-g average file size", 0 },
+	{ "-h average files per directory", 0 },
 	{ "-i number of bytes per inode", 1 },
 	{ "-k sector 0 skew, per track", 0 },
 	{ "-l hardware sector interleave", 0 },

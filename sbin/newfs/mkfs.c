@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.17 2001/04/13 02:39:06 gluk Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.18 2001/04/19 16:22:17 gluk Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.17 2001/04/13 02:39:06 gluk Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.18 2001/04/19 16:22:17 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,8 @@ extern int	maxbpg;		/* maximum blocks per file in a cyl group */
 extern int	nrpos;		/* # of distinguished rotational positions */
 extern int	bbsize;		/* boot block size */
 extern int	sbsize;		/* superblock size */
+extern int	avgfilesize;	/* expected average file size */
+extern int	avgfilesperdir;	/* expected number of files per directory */
 extern int	quiet;		/* quiet flag */
 extern u_long	memleft;	/* virtual memory available */
 extern caddr_t	membase;	/* start address of memory based filesystem */
@@ -205,6 +207,17 @@ recalc:
 		printf("preposterous ntrak %d\n", sblock.fs_ntrak), exit(14);
 	if (sblock.fs_nsect <= 0)
 		printf("preposterous nsect %d\n", sblock.fs_nsect), exit(15);
+	/*
+	 * collect and verify the filesystem density info
+	 */
+	sblock.fs_avgfilesize = avgfilesize;
+	sblock.fs_avgfpdir = avgfilesperdir;
+	if (sblock.fs_avgfilesize <= 0)
+		printf("illegal expected average file size %d\n",
+		    sblock.fs_avgfilesize), exit(14);
+	if (sblock.fs_avgfpdir <= 0)
+		printf("illegal expected number of files per directory %d\n",
+		    sblock.fs_avgfpdir), exit(15);
 	/*
 	 * collect and verify the block and fragment sizes
 	 */

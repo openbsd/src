@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.27 2001/04/06 20:43:31 gluk Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.28 2001/04/19 16:22:16 gluk Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -636,13 +636,15 @@ noinodes:
 /*
  * Find a cylinder group to place a directory.
  *
- * The policy implemented by this algorithm is to allocate inode
- * in the same cylinder group as a parent directory in, but also
- * reserve space for file's data and inodes. Restrict number of
- * directories which may be allocated one after another in a same
- * cg without intervening by files.
+ * The policy implemented by this algorithm is to allocate a
+ * directory inode in the same cylinder group as its parent
+ * directory, but also to reserve space for its files inodes
+ * and data. Restrict the number of directories which may be
+ * allocated one after another in the same cylinder group
+ * without intervening allocation of files.
+ *
  * If we allocate a first level directory then force allocation
- * in another cg.
+ * in another cylinder group.
  */
 static ino_t
 ffs_dirpref(pip)
@@ -710,8 +712,6 @@ ffs_dirpref(pip)
 #endif
 	cgsize = fs->fs_fsize * fs->fs_fpg;
 	dirsize = fs->fs_avgfilesize * fs->fs_avgfpdir;
-	if (dirsize <= 0)
-		dirsize = 16384 * 64;
 	curdirsize = avgndir ? (cgsize - avgbfree * fs->fs_bsize) / avgndir : 0;
 	if (dirsize < curdirsize)
 		dirsize = curdirsize;
@@ -733,8 +733,6 @@ ffs_dirpref(pip)
 	    	    fs->fs_cs(fs, cg).cs_nbfree >= minbfree) {
 			if (fs->fs_contigdirs[cg] < maxcontigdirs)
 				goto end;
-			else
-				continue;
 		}
 	for (cg = 0; cg < prefcg; cg++)
 		if (fs->fs_cs(fs, cg).cs_ndir < maxndir &&
@@ -742,10 +740,10 @@ ffs_dirpref(pip)
 	    	    fs->fs_cs(fs, cg).cs_nbfree >= minbfree) {
 			if (fs->fs_contigdirs[cg] < maxcontigdirs)
 				goto end;
-			else
-				continue;
 		}
-	/* This work when we have deficit in space */
+	/*
+	 * This is a backstop when we have deficit in space.
+	 */
 	for (cg = prefcg; cg < fs->fs_ncg; cg++)
 		if (fs->fs_cs(fs, cg).cs_nifree >= avgifree)
 			goto end;

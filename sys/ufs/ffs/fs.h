@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.11 2001/04/13 02:39:04 gluk Exp $	*/
+/*	$OpenBSD: fs.h,v 1.12 2001/04/19 16:22:16 gluk Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  * and the third points to an array that tracks the creation of new
  * directories.
  */
-#define		NOCSPTRS	((128 / sizeof(void *)) - 2)
+#define		NOCSPTRS	((128 / sizeof(void *)) - 3)
 
 /*
  * A summary of contiguous blocks of various sizes is maintained
@@ -141,6 +141,16 @@
  */
 #define MINFREE		5
 #define DEFAULTOPT	FS_OPTTIME
+
+/*
+ * The directory preference algorithm(dirpref) can be tuned by adjusting
+ * the following parameters which tell the system the average file size
+ * and the average number of files per directory. These defaults are well
+ * selected for typical filesystems, but may need to be tuned for odd
+ * cases like filesystems being used for sqiud caches or news spools.
+ */
+#define AVFILESIZ	16384	/* expected average file size */
+#define AFPDIR		64	/* expected number of files per directory */
 
 /*
  * Per cylinder group information; summarized in blocks allocated
@@ -228,19 +238,15 @@ struct fs {
 /* these fields retain the current block allocation info */
 	int32_t	 fs_cgrotor;		/* last cg searched */
 	void    *fs_ocsp[NOCSPTRS];	/* padding; was list of fs_cs buffers */
+	u_int8_t *fs_contigdirs;	/* # of contiguously allocated dirs */
 	struct csum *fs_csp;		/* cg summary info buffer for fs_cs */
 	int32_t	*fs_maxcluster;		/* max cluster in each cyl group */
 	int32_t	 fs_cpc;		/* cyl per cycle in postbl */
 	int16_t	 fs_opostbl[16][8];	/* old rotation block list head */
-#if LONG_BIT == 64
-	int32_t	 fs_sparecon[45];	/* reserved for future constants */
-#else
-	int32_t	 fs_sparecon[46];	/* reserved for future constants */
-#endif
-/* these fields used in dirpref routine for optimization */
-	u_int8_t *fs_contigdirs;	/* # of contiguously allocated dirs */
+	int32_t  fs_snapinum[20];	/* reserved for snapshot inode nums */
 	int32_t	 fs_avgfilesize;	/* expected average file size */
 	int32_t	 fs_avgfpdir;		/* expected # of files per directory */
+	int32_t	 fs_sparecon[27];	/* reserved for future constants */
 	time_t	 fs_fscktime;		/* last time fsck(8)ed */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */

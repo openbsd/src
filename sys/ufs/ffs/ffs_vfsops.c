@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.39 2001/04/15 23:46:29 gluk Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.40 2001/04/19 16:22:17 gluk Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -807,6 +807,10 @@ ffs_oldfscompat(fs)
 		fs->fs_qbmask = ~fs->fs_bmask;			/* XXX */
 		fs->fs_qfmask = ~fs->fs_fmask;			/* XXX */
 	}							/* XXX */
+	if (fs->fs_avgfilesize <= 0)				/* XXX */
+		fs->fs_avgfilesize = AVFILESIZ;			/* XXX */
+	if (fs->fs_avgfpdir <= 0)				/* XXX */
+		fs->fs_avgfpdir = AFPDIR;			/* XXX */
 	return (0);
 }
 
