@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.8 2001/07/17 17:58:23 rees Exp $ */
+/* $Id: cmds.c,v 1.9 2001/07/17 21:04:14 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -68,7 +68,8 @@ struct {
     { "write", "input-filename", dwrite },
 
     /* Cyberflex commands */
-    { "ls", "[ -l ] [ -a ]", ls },
+    { "ls", "[ -l ]", ls },
+    { "acl", "fid [ principal: r1 r2 ... ]", acl },
     { "create", "fid size", jcreate },
     { "delete", "fid", jdelete },
     { "jdefault", "[ -d ]", jdefault },
@@ -192,8 +193,8 @@ int quit(int ac, char *av[])
 
 int apdu(int ac, char *av[])
 {
-    int i, n, ins, xcl = cla, p1, p2, p3, r1, r2;
-    unsigned char buf[256], obuf[256], *bp;
+    int i, ilen, olen, n, ins, xcl = cla, p1, p2, p3, sw;
+    unsigned char ibuf[256], obuf[256], *bp;
 
     optind = optreset = 1;
 
@@ -215,27 +216,20 @@ int apdu(int ac, char *av[])
     sscanf(av[optind++], "%x", &p2);
     sscanf(av[optind++], "%x", &p3);
 
-#if 0
-    for (bp = buf, i = optind; i < ac; i++)
-	bp += parse_input(av[i], bp, (int) (sizeof buf - (bp - buf)));
-#else
-    for (bp = buf, i = optind; i < ac; i++) {
+    for (bp = ibuf, i = optind, ilen = 0; i < ac; i++) {
 	sscanf(av[i], "%x", &n);
 	*bp++ = n;
+	ilen++;
     }
-#endif
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
 
-    n = scrw(fd, xcl, ins, p1, p2, p3, buf, sizeof obuf, obuf, &r1, &r2);
+    olen = (p3 && !ilen) ? p3 : sizeof obuf;
 
-    if (n < 0) {
-	printf("scrw failed\n");
-	return -1;
-    }
+    n = sectok_apdu(fd, xcl, ins, p1, p2, ilen, ibuf, olen, obuf, &sw);
 
-    dump_reply(obuf, n, r1, r2);
+    sectok_dump_reply(obuf, n, sw);
 
     return 0;
 }
