@@ -100,10 +100,8 @@ gld${EMULATION_NAME}_search_dir (dirname, filename)
      const char *dirname;
      const char *filename;
 {
-  int force_maj, force_min;
   const char *dot;
   unsigned int len;
-  char *alc;
   char *found;
   int max_maj, max_min;
   DIR *dir;
@@ -113,33 +111,8 @@ gld${EMULATION_NAME}_search_dir (dirname, filename)
   int statval;
   struct stat st;
 
-  force_maj = -1;
-  force_min = -1;
   dot = strchr (filename, '.');
-#ifdef DO_FORCE_VERS
-  if (dot == NULL)
-    {
-#endif /* DO_FORCE_VERS */
-      len = strlen (filename);
-      alc = NULL;
-#ifdef DO_FORCE_VERS
-    }
-  else
-    {
-      force_maj = atoi (dot + 1);
-
-      len = dot - filename;
-      alc = (char *) xmalloc (len + 1);
-      strncpy (alc, filename, len);
-      alc[len] = '\0';
-      filename = alc;
-
-      dot = strchr (dot + 1, '.');
-      if (dot != NULL)
-	force_min = atoi (dot + 1);
-    }
-#endif /* DO_FORCE_VERS */
-
+  len = strlen (filename);
   found = NULL;
   max_maj = max_min = 0;
 
@@ -199,10 +172,6 @@ gld${EMULATION_NAME}_search_dir (dirname, filename)
 	  continue;
       }
 
-      if ((force_maj != -1 && force_maj != found_maj)
-	  || (force_min != -1 && force_min != found_min))
-	continue;
-
       /* Make sure the file really exists (ignore broken symlinks).  */
       full_path = xmalloc (dirnamelen + 1 + strlen (entry->d_name) + 1);
       sprintf (full_path, "%s/%s", dirname, entry->d_name);
@@ -228,9 +197,6 @@ gld${EMULATION_NAME}_search_dir (dirname, filename)
     }
 
   closedir (dir);
-
-  if (alc != NULL)
-    free (alc);
 
   return found;
 }
