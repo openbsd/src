@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.118 2004/10/11 15:16:37 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.119 2004/10/22 08:39:54 jsg Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -82,6 +82,7 @@ vendor FARALLON			0x0200	Farallon Communications
 vendor TELECOMDEVICE		0x021b	Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
+vendor HWN			0x0261	Home Wireless Networks
 vendor ARTEM			0x0268	ARtem
 vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
@@ -159,6 +160,7 @@ product	ASUS WL_100		0x0002 SpaceLink WL-100
 product BAY STACK_650		0x0804 BayStack 650
 product BAY SURFER_PRO		0x0806 AirSurfer Pro
 product BAY STACK_660		0x0807 BayStack 660
+product BAY EMOBILITY_11B	0x080a e-Mobility 11Mb
 
 /* Belkin */
 product BELKIN F5D5020		0x2328 F5D5020
@@ -188,6 +190,9 @@ product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 /* Digital */
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
 
+/* D-Link */
+product NETGEAR2 DWL650		0x7110 Dlink DWL650
+
 /* Dual */
 product DUAL NE2000		0x0100 Dual NE2000
 
@@ -207,12 +212,16 @@ product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
 product FUJITSU SCSI600		0x0401 Fujitsu 600
 product FUJITSU LA10S		0x1003 Fujitsu CF Ethernet
 product FUJITSU LA501		0x2000 Fujitsu Towa LA501
+product FUJITSU WL110		0x2003 PEGA-WL110 Wireless
 
 /* Gemplus */
 product GEMPLUS GPR400		0x3004 GPR400 Smartcard Reader
  
 /* Greycell */
 product GREYCELL GCS2000	0x0201 Grey Cell GCS2000 Gold II Ethernet
+
+/* Home Wireless Networks */
+product HWN AIRWAY80211		0x0002 HWN Airway Wireless
 
 /* IBM */
 product IBM MICRODRIVE		0x0000 IBM Microdrive
@@ -229,6 +238,7 @@ product IBM ETHERJET		0x003f IBM EtherJet
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
 product IODATA 8041TX		0x8041 SMC8041TX
 product IODATA2 WNB11PCM	0x0002 I-O DATA WN-B11/PCM
+product IODATA2 WCF12		0x0673 Wireless CF Card
 
 /* Intel */
 product INTEL PRO_WLAN_2011	0x0001 Intel PRO/Wireless 2011
@@ -251,6 +261,7 @@ product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LINKSYS2 IWN		0x1612 Instant Wireless Network
 product LINKSYS2 IWN2		0x1613 Instant Wireless Network
+product LINKSYS2 WCF11		0x3301 Instant Wireless Network CF
 
 /* Lucent WaveLAN/IEEE */
 product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
@@ -426,6 +437,7 @@ product PLANEX FNW3600T		-1
 product PLANEX FNW3700T		-1
 product PLANEX GWNS11H		{ "PLANEX", "GW-NS11H&spWireless&spLAN&spPC&spCard", NULL, NULL }
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL }
+product GREYCELL DWL650H	{ "D-Link&spCorporation", "D-Link&spDWL-650H&sp11Mbps&spWLAN&spAdapter", NULL, NULL }
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL }
 product DLINK DE660PLUS		{ "D-Link", "DE-660+", NULL, NULL }
 product DLINK DFE670TXD         { "D-Link", "DFE-670TXD", NULL, NULL }
@@ -447,6 +459,7 @@ product COREGA WIRELESS_LAN_PCC_11	{ "corega&spK.K.", "Wireless&spLAN&spPCC-11",
 product COREGA WIRELESS_LAN_PCCA_11	{ "corega&spK.K.", "Wireless&spLAN&spPCCA-11", NULL, NULL }
 product COREGA WIRELESS_LAN_PCCB_11	{ "corega_K.K.", "Wireless_LAN_PCCB-11", NULL, NULL }
 product COREGA WIRELESS_LAN_PCCL_11	{ "corega", "WL&spPCCL-11", "ISL37300P", NULL }
+product COREGA WIRELESS_LAN_WLCFL_11    { "corega", "WLCFL-11", NULL, NULL }
 product SVEC COMBOCARD		{ "Ethernet", "Adapter", NULL, NULL }
 product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL }
 /*
@@ -492,3 +505,4 @@ product SIMPLETECH SPECTRUM24_ALT	{ "Symbol&spTechnologies", "LA4111&spSpectrum2
 product AROWANA FE		{ "PCMCIA", "Fast-Ethernet", NULL, NULL }
 product GVC NP0335		{ "ETHER-C16", "ETHER-C16", "Fast&spEthernet", NULL }
 product RELIA RE2408T		{ "PCMCIA&spLAN", "Ethernet", "A", "004743118001" }
+product ALLIEDTELESIS WR211PCM	{ "Allied&spTelesis&spK.K.", "WR211PCM", NULL, NULL }
