@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.2 2001/03/09 14:54:45 art Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.3 2001/03/11 07:52:28 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie.
 .\"
@@ -70,7 +70,7 @@ the usual hash table functions.
 These provide storing and retrieval of records indexed by keys,
 where a key is a contiguous sequence of bytes at a fixed position in
 each record.
-Keys can either be  null-terminated strings, or fixed-size memory areas.
+Keys can either be null-terminated strings or fixed-size memory areas.
 All functions take a pointer to a ohash structure as the
 .Fa h
 function argument.
@@ -84,13 +84,13 @@ elements.
 holds the position of the key in each record, and two pointers to
 .Xr calloc 3
 and
-.Xr free 3
--like functions, to use for managing the table internal storage.
+.Xr free 3 Ns No -like
+functions, to use for managing the table internal storage.
 .Pp
 .Fn ohash_delete
 frees storage internal to
 .Fa h .
-Elements themselves should be freed by the user first, using  for instance
+Elements themselves should be freed by the user first, using for instance
 .Fn ohash_first
 and
 .Fn ohash_next .
@@ -140,7 +140,7 @@ returned by the
 .Fn ohash_lookup*
 functions.
 It returns
-.Va NULL
+.Dv NULL
 if the slot is empty.
 .Pp
 .Fn ohash_insert
@@ -160,7 +160,7 @@ call.
 removes element of ohash table at slot
 .Fa i .
 It returns the removed element, for user code to dispose of, or
-.Va NULL
+.Dv NULL
 if the slot was empty.
 .Pp
 .Fn ohash_first
@@ -238,5 +238,5 @@ portable programs.
 .Sh HISTORY
 Those functions were designed and written for
 .Ox
-make
+.Xr make 1
 by Marc Espie in 1999.
