@@ -1,37 +1,5 @@
 #!/bin/sh -
-#
-# THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
-# generated from:
-#
-#	OpenBSD: MAKEDEV.mi,v 1.26 2002/02/10 21:52:30 deraadt Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
-#
-#	$OpenBSD: MAKEDEV,v 1.4 2002/02/14 04:39:56 todd Exp $
-#
-# Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-# THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.4 2002/02/14 04:39:56 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.5 2002/02/14 04:58:36 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -56,181 +24,195 @@
 #	$NetBSD: MAKEDEV,v 1.17 1996/02/03 15:02:42 briggs Exp $ 
 #
 # Device "make" file.  Valid arguments:
-# Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
 #	std	standard devices
-#	fd	makes fd/* for the fdescfs
+#	fd	makes fd/* for the fdescfs.
 #	local	configuration specific devices
 #	ramdisk	makes all devices for a ramdisk kernel
+#
 # Tapes:
 #	st*	SCSI tapes
+#
 # Disks:
-#	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
+#	fd*	Floppy disk drives (3 1/2", 5 1/4")
+#	wd*	IDE disks
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
 #	vnd*	"file" pseudo-disks
 #	rd*	"ramdisk" pseudo-disks
 #	ccd*	concatenated disk devices
 #	raid*	RAIDframe disk devices
+#
 # Terminal ports:
-#	ttyC0	wscons screen 0
-#	ttyC*	wscons virtual consoles
-#	wskbd*	wscons keyboards
-#	tty0*	NS16x50 serial ports
+#	ttyC*	wscons
+#	tty*	standard built-in serial ports (2)
+#
 # Pointing devices:
-#	wsmouse*	wscons mice
+#	wsmouse* wscons mouse events
+#
+# Keyboard devices:
+#	wskbd* wscons keyboard events
+#
 # Pseudo terminals:
-#	tty*	set of 16 slave psuedo terminals
-#	pty*	set of 16 master pseudo terminals
-graphics_title
-mac_grf_dev
-_TTILE(usb)
+#	pty*	set of 16 master and slave pseudo terminals
+#
+# Graphics devices:
+#	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
+#		Cirrus boards (grf3), A2410 (grf4) video or
+#		CyberVision 64 (grf5)
+#
+# USB devices:
 #	usb*	Bus control devices used by usbd for attach/detach
-uid_dev
+#	uhid*	Generic HID devices
 #	ulpt*	Printer devices
 #	urio*	Diamond Multimedia Rio 500
 #	ugen*	Generic device
 #	utty*	Serial ports
+#
 # Special purpose devices:
-#	audio*	audio device
+#	audio*  audio
 #	ch*	SCSI media changer
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
-#	*random	inkernel random data source
-#	altq/	ALTQ control interface
-#	pf*	Packet Filter
-#	usbs	make USB devices
+#	*random	inkernal random data source
+#	altq	ALTQ control interface
 #
-PATH=/sbin:/usr/sbin:/bin:/usr/bin
-T=$0
 
-# set this to echo for Echo-Only debugging
-[ "$eo" ] || eo=
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+this=$0
+umask 77
 
-hex()
+# default shell support functions
+add ()
+{
+	tmp=0
+	while [ "$1" ]
+	do
+		tmp=$(( $1 + $tmp ))
+		shift
+	done
+	echo $tmp
+}
+mult ()
+{
+	echo "$(( $1 * $2 ))"
+}
+hex ()
 {
 	case $1 in
-	[0-9]) echo -n $1;;
-	10) echo -n a;;
-	11) echo -n b;;
-	12) echo -n c;;
-	13) echo -n d;;
-	14) echo -n e;;
-	15) echo -n f;;
+		[0-9]) echo -n $1;;
+		10) echo -n a;;
+		11) echo -n b;;
+		12) echo -n c;;
+		13) echo -n d;;
+		14) echo -n e;;
+		15) echo -n f;;
 	esac
 }
-
-trunc()
+trunc ()
 {
 	# XXX pdksh can't seem to deal with locally scoped variables
 	# in ${foo#$bar} expansions
 	arg1="$1"
 	arg2="$2"
-	case $3 in
-	l)   echo ${arg2#$arg1} ;;
-	r|*) echo ${arg1#$arg2} ;;
-	esac
+	echo ${arg1#$arg2}
 }
-
 unt()
 {
 	# XXX pdksh can't seem to deal with locally scoped variables
 	# in ${foo#$bar} expansions
-	arg="$1"
-	tmp="${arg#[a-zA-Z]*}"
-	tmp="${tmp%*[a-zA-Z]}"
-	while [ "$tmp" != "$arg" ]
+	arg1="$1"
+	tmp="${arg1#[a-z]*}"
+	while [ "$tmp" != "$arg1" ]
 	do
-		arg=$tmp
-		tmp="${arg#[a-zA-Z]*}"
-		tmp="${tmp%*[a-zA-Z]}"
+		arg1=$tmp
+		tmp="${arg1#[a-z]*}"
 	done
-	echo $arg
-}
-
-dodisk()
-{
-	[ "$DEBUG" ] && set -x
-	n=$(($((${5}*${7:-16}))+${6})) count=0
-	RMlist="$RMlist $1$2? r$1$2?"
-	[ 0$7 -ne 8 ] && l="i j k l m n o p"
-	for d in a b c d e f g h $l
+	tmp="${arg1%*[a-z]}"
+	while [ "$tmp" != "$arg1" ]
 	do
-		M $1$2$d	b $3 $(($n+$count)) 640
-		M r$1$2$d	c $4 $(($n+$count)) 640
-		let count=count+1
+		arg1=$tmp
+		tmp="${arg1%*[a-z]}"
 	done
-	MKlist="$MKlist;chown root.operator $1$2? r$1$2?"
+	echo $arg1
 }
 
-dodisk2()
-{
-	n=$(($(($5*${7:-16}))+$6))
-	M $1$2a b $3 $n 640 operator
-	M r$1$2a c $4 $n 640 operator
-	n=$(($n+2))
-	M $1$2c b $3 $n 640 operator
-	M r$1$2c c $4 $n 640 operator
-}
-
-# M name b/c major minor [mode] [group]
-RMlist="rm -f"
-MKlist=":"
-
-mkl() {
-	[ "${mklist[$1]}" ] && {
-		mklist[$1]="${mklist[$1]};mknod -m $1 $2 $3 $4 $5"
-	} || {
-		mklist[$1]="mknod -m $1 $2 $3 $4 $5"
-		modes="$modes $1"
-	}
-}
-
-M() {
-	RMlist="$RMlist $1"
-	mkl ${5-666} $1 $2 $3 $4
-	mklist="$mklist $1"
-	G=${6:-wheel}
-	[ "$7" ] && {
-		MKlist="$MKlist;chown $7.$G $1"
-	} || {
-		case $G in
-		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;
-		esac
-		[ "${grplist[$g]}" ] && {
-			grplist[$g]="${grplist[$g]} $1"
-		} || {
-			groups="$groups $g"
-			grplist[$g]="chgrp $G $1"
-		}
-	}
-	return 0
-}
-
-R() {
-[ "$DEBUG" ] && set -x
-for i in "$@"
+for i
 do
-U=`unt $i`
-[ "$U" ] || U=0
+
+unit=`unt $i`
+[ "$unit" ] || unit=0
 
 case $i in
+
+all)
+	sh $this std fd
+	sh $this wd0 wd1 wd2 wd3 
+	sh $this sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh $this vnd0 vnd1 vnd2 vnd3
+	sh $this ccd0 ccd1 ccd2 ccd3
+	sh $this raid0 raid1 raid2 raid3
+	sh $this rd0
+	sh $this ttyC0 ttyCcfg
+	sh $this tty00 tty01 tty02 tty03 pty0 pty1
+	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh $this pf tun0 tun1 tun2 tun3
+	sh $this audio0
+	sh $this random uk0 uk1 ss0 ss1
+	sh $this wscons
+	sh $this pci
+	sh $this lkm xfs0 altq
+	sh $this usbs
+	sh $this local
+	;;
+
+ramdisk)
+	sh $this std
+	sh $this wd0 wd1 wd2 wd3 
+	sh $this sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
+	sh $this rd0
+	sh $this random
+	sh $this bpf0
+	sh $this tty00 tty01 pty0
+	sh $this wscons
+	;;
+
 std)
-	M console	c 0 0 600
-	M tty		c 1 0
-	M mem		c 2 0 640 kmem
-	M kmem		c 2 1 640 kmem
-	M null		c 2 2
-	M zero		c 2 12
-	M stdin		c 21 0
-	M stdout	c 21 1
-	M stderr	c 21 2
-	M ksyms		c 43 0 640 kmem
-	M drum		c 3 0 640 kmem
-	M klog		c 6 0 600
-	M reload	c 2 20	640 kmem
+	rm -f console drum kmem mem reload zero null tty
+	rm -f klog stdin stdout stderr ksyms
+	mknod console		c 0 0
+	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
+	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
+	mknod mem		c 2 0	; chmod 640 mem ; chgrp kmem mem
+	mknod reload		c 2 20	; chmod 640 reload ; chgrp kmem reload
+	mknod zero		c 2 12	; chmod 666 zero
+	mknod null		c 2 2	; chmod 666 null
+	mknod tty		c 1 0	; chmod 666 tty
+	mknod klog		c 6 0	; chmod 600 klog
+	mknod stdin		c 21 0	; chmod 666 stdin
+	mknod stdout		c 21 1	; chmod 666 stdout
+	mknod stderr		c 21 2	; chmod 666 stderr
+	mknod ksyms		c 43 0  ; chmod 640 ksyms ; chown root.kmem ksyms
+	;;
+
+usbs)
+	sh $this usb0 usb1
+	sh $this uhid0 uhid1 uhid2 uhid3
+	sh $this ulpt0 ulpt1
+	sh $this urio0
+	sh $this utty0 utty1
+	;;
+
+fd)
+	rm -f fd/*
+	mkdir fd > /dev/null 2>&1
+	n=0
+	(cd fd && while [ $n -lt 64 ]; do mknod $n c 21 $n; n="$(( $n + 1 ))"; done)
+	chown -R root.wheel fd
+	chmod 555 fd
+	chmod 666 fd/*
 	;;
 
 sd*|wd*|ccd*|ofdisk*|raid*)
@@ -676,231 +658,3 @@ local)
 esac
 done
 
-
-usbs)
-	R utty0 utty1 ugen0 ugen1 ulpt0 ulpt1 urio0 usb0 usb1
-	;;
-
-pf*)
-	M pf c 39 0 600
-	;;
-
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c major_altq_c $U 644
-		U=$(($U+1))
-	done
-	;;
-
-*random)
-	n=0
-	for pre in " " s u p a
-	do
-		M ${pre}random c major_rnd_c $n 644
-		n=$(($n+1))
-	done
-	;;
-
-lkm)
-	M lkm c major_lkm_c 0 640 kmem
-	;;
-
-tun*)
-	M tun$U c major_tun_c $U 600
-	;;
-
-bpf*)
-	M bpf$U c major_bpf_c $U 600
-	;;
-
-ch*)
-	M ch$U c major_ch_c $U 660 operator
-	;;
-
-audio*)
-	M sound$U	c major_au_c $U
-	M mixer$U	c major_au_c $(($U+16))
-	M audio$U	c major_au_c $(($U+128))
-	M audioctl$U	c major_au_c $(($U+192))
-	MKlist="$MKlist;[ -e audio ] || ln -s audio$U audio"
-	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
-	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
-	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
-	;;
-
-utty*)
-	M utty$U c major_utty_c $U 660
-	;;
-
-ugen*)
-	n=$(($U*16))
-	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
-	do
-		M ugen$U.$j c major_ugen_c $(($n+$j)) 660
-	done
-	;;
-
-urio*)
-	M urio$U c major_urio_c $U 660
-	;;
-
-ulpt*)
-	M ulpt$U c major_ulpt_c $U 660
-	;;
-
-usb*)
-	[ "$i" = "usb" ] && u= || u=$U
-	M usb$u c major_usb_c $U 660
-	;;
-
-pty*)
-	case $U in
-	0) off=0 name=p;;
-	1) off=16 name=q;;
-	2) off=32 name=r;;
-	3) off=48 name=s;;
-	4) off=64 name=t;;
-	5) off=80 name=u;;
-	6) off=96 name=v;;
-	7) off=112 name=w;;
-	8) off=128 name=x;;
-	9) off=144 name=y;;
-	10) off=160 name=z;;
-	11) off=176 name=P;;
-	12) off=192 name=Q;;
-	13) off=206 name=R;;
-	14) off=224 name=S;;
-	15) off=240 name=T;;
-	*) echo bad unit for pty in: $i; continue;;
-	esac
-	n=0
-	while [ $n -lt 16 ]
-	do
-		nam=$name$(hex $n)
-		M tty$nam c major_tty_c $(($off+$n))
-		M pty$nam c major_pty_c $(($off+$n))
-		n=$(($n+1))
-	done
-	;;
-
-wsmouse*)
-	M wsmouse$U c 69 $U 600
-	;;
-
-tty0*)
-	M tty$U c 7 $U 660 dialer uucp
-	M cua$U c 7 $(($U+128)) 660 dialer uucp
-	;;
-
-wskbd*)
-	M wskbd$U c 68 $U 600
-	;;
-
-ttyC*)
-	U=${i##ttyC}
-	case $U in
-	[0-9a-f]) M ttyC$U c 67 $(( 16#$U )) 600;;
-	cfg) M ttyCcfg c 67 255 600;;
-	*) echo bad unit $U for $i; exit 1;;
-	esac
-	;;
-
-wscons)
-	R ttyCcfg
-	R ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9
-	R ttyCa ttyCb wskbd0 wskbd1 wskbd2 wskbd3
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3
-	;;
-
-rd*)
-	dodisk2 rd $U 17 17 $U 0
-	;;
-
-vnd*)
-	dodisk vnd $U 14 19 $U 0
-	dodisk svnd $U 14 19 $U 128
-	;;
-
-cd*)
-	dodisk2 cd $U 3 9 $U 0
-	;;
-
-st*)
-	n=$(($U*16))
-	for pre in " " n e en
-	do
-		M ${pre}st$U	b 5 $n 660 operator
-		M ${pre}rst$U	c 20 $n 660 operator
-		n=$(($n+1))
-	done
-	;;
-
-ramdisk)
-	R std bpf0 st0 st1 cd0 cd1 sd0 sd1 sd2 sd3 sd4 wd0 wd1 wd2
-	R wd3 rd0 ttyC0
-	;;
-
-local)
-	test -s $T.local && sh $T.local
-	;;
-
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
-	;;
-
-all)
-	R local wscons usbs audio0 rndrandom lkm tty00 tty01 tty02
-	R tty03 pf altq tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 wd0 wd1 wd2 wd3 rd0 raid0 raid1
-	R raid2 raid3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0
-	R cd1 ch0 st0 st1 pty0 pty1 fd sd0 sd1 sd2 sd3 sd4
-	;;
-
-wd*|sd*|raid*|ccd*)
-	case $i in
-	wd*) dodisk wd $U 0 11 $U 0;;
-	sd*) dodisk sd $U 2 8 $U 0;;
-	raid*) dodisk raid $U 19 54 $U 0;;
-	ccd*) dodisk ccd $U 16 18 $U 0;;
-	esac
-	;;
-
-*)
-	echo $i: unknown device
-	;;
-esac
-done
-}
-R "$@"
-if [ "$os" = "SunOS" ]; then
-	eo=transform
-	transform() {
-		case $mode in
-		600) mask=077;;
-		640) mask=027;;
-		660) mask=007;;
-		644) mask=022;;
-		666) mask=0;;
-		440) mask=227;;
-		esac
-		echo `echo "$@"|sed \
-		    's/mknod -m \([0-9]*\) /umask '$mask';mknod /;s/-m [0-9]* //g;\
-		    s/operator/5/g;s/root.kmem/root.2/g;s/root\./root:/g'`
-	}
-fi
-list="$RMlist"
-for mode in $modes; do
-	list="$list;${mklist[$mode]}"
-done
-for group in $groups; do
-	list="$list;${grplist[$group]}"
-done
-list="$list;$MKlist"
-if [ "$eo" = "echo" -o "$eo" = "transform" ]; then
-	$eo "$list"
-else
-	echo "$list" | sh
-fi
