@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.22 2005/03/03 11:42:48 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -169,13 +169,6 @@ struct atu_softc {
 #define INFRASTRUCTURE_MODE	2
 
 	u_int8_t		atu_radio_on;
-	u_int8_t		atu_encrypt;
-#define ATU_WEP_RX		0x01
-#define ATU_WEP_TX		0x02
-#define ATU_WEP_TXRX		(ATU_WEP_RX | ATU_WEP_TX)
-	int			atu_wepkey;
-	int			atu_wepkeylen;
-	u_int8_t		atu_wepkeys[4][13];
 };
 
 /* Commands for uploading the firmware (standard DFU interface) */

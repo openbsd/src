@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.55 2005/03/03 09:49:22 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.56 2005/03/03 11:42:48 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -187,7 +187,6 @@ int	atu_tx_list_init(struct atu_softc *);
 int	atu_rx_list_init(struct atu_softc *);
 void	atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
 	    int listlen);
-int	atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len);
 
 #ifdef ATU_DEBUG
 void	atu_print_a_bunch_of_debug_things(struct atu_softc *sc);
@@ -543,6 +542,7 @@ int
 atu_initial_config(struct atu_softc *sc)
 {
 	struct ieee80211com		*ic = &sc->sc_ic;
+	u_int32_t			i;
 	usbd_status			err;
 /*	u_int8_t			rates[4] = {0x82, 0x84, 0x8B, 0x96};*/
 	u_int8_t			rates[4] = {0x82, 0x04, 0x0B, 0x16};
@@ -588,24 +588,32 @@ atu_initial_config(struct atu_softc *sc)
 	cmd.PromiscuousMode = 1;
 
 	/* this goes into the beacon we transmit */
-	if (sc->atu_encrypt == ATU_WEP_OFF)
-		cmd.PrivacyInvoked = 0;
-	else
-		cmd.PrivacyInvoked = 1;
+	cmd.PrivacyInvoked = (ic->ic_flags & IEEE80211_F_WEPON) ? 1 : 0;
 
 	cmd.ExcludeUnencrypted = 0;
-	cmd.EncryptionType = sc->atu_wepkeylen;
+	switch (ic->ic_nw_keys[ic->ic_wep_txkey].wk_len) {
+	case 5:
+		cmd.EncryptionType = ATU_WEP_40BITS;
+		break;
+	case 13:
+		cmd.EncryptionType = ATU_WEP_104BITS;
+		break;
+	default:
+		cmd.EncryptionType = ATU_WEP_OFF;
+		break;
+	}
+
+	cmd.WEP_DefaultKeyID = ic->ic_wep_txkey;
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].wk_key,
+		    ic->ic_nw_keys[i].wk_len);
+	}
 
 	/* Setting the SSID here doesn't seem to do anything */
 	memset(cmd.SSID, 0, sizeof(cmd.SSID));
 	memcpy(cmd.SSID, sc->atu_ssid, sc->atu_ssidlen);
 	cmd.SSID_Len = sc->atu_ssidlen;
 
-	cmd.WEP_DefaultKeyID = sc->atu_wepkey;
-	memcpy(cmd.WEP_DefaultKey, sc->atu_wepkeys,
-	    sizeof(cmd.WEP_DefaultKey));
-
-	cmd.ShortPreamble = 1;
 	cmd.ShortPreamble = 0;
 	USETW(cmd.BeaconPeriod, 100);
 	/* cmd.BeaconPeriod = 65535; */
@@ -1323,9 +1331,6 @@ atu_complete_attach(struct atu_softc *sc)
 	printf(": address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	sc->atu_cdata.atu_tx_inuse = 0;
-	sc->atu_encrypt = ATU_WEP_OFF;
-	sc->atu_wepkeylen = ATU_WEP_104BITS;
-	sc->atu_wepkey = 0;
 
 	bzero(sc->atu_bssid, ETHER_ADDR_LEN);
 	sc->atu_ssidlen = strlen(ATU_DEFAULT_SSID);
@@ -1333,7 +1338,6 @@ atu_complete_attach(struct atu_softc *sc)
 	sc->atu_channel = ATU_DEFAULT_CHANNEL;
 	sc->atu_desired_channel = IEEE80211_CHAN_ANY;
 	sc->atu_mode = INFRASTRUCTURE_MODE;
-	sc->atu_encrypt = ATU_WEP_OFF;
 
 	ic->ic_softc = sc;
 	ic->ic_phytype = IEEE80211_T_DS;
@@ -1634,6 +1638,14 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		/*
+		 * WEP is decrypted by hardware. Clear WEP bit
+		 * header for ieee80211_input().
+		 */
+		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
+	}
 
 	ieee80211_input(ifp, m, ni, h->rssi, UGETDW(h->rx_time));
 
@@ -2062,24 +2074,6 @@ atu_print_a_bunch_of_debug_things(struct atu_softc *sc)
 	    tmp));
 }
 #endif /* ATU_DEBUG */
-int
-atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len)
-{
-	if ((len != 5) && (len != 13))
-		return EINVAL;
-
-	DPRINTFN(10, ("%s: changed wepkey %d (len=%d)\n",
-	    USBDEVNAME(sc->atu_dev), nr, len));
-
-	memcpy(sc->atu_wepkeys[nr], key, len);
-	if (len == 13)
-		sc->atu_wepkeylen = ATU_WEP_104BITS;
-	else
-		sc->atu_wepkeylen = ATU_WEP_40BITS;
-
-	atu_send_mib(sc, MIB_MAC_WEP__ENCR_LEVEL, NR(sc->atu_wepkeylen));
-	return atu_send_mib(sc, MIB_MAC_WEP__KEYS(nr), key);
-}
 
 int
 atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
