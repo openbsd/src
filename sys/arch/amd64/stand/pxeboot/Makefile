@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2004/03/21 21:37:41 tom Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/05/17 22:49:46 drahn Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -13,6 +13,7 @@ SRCS=	srt0.S conf.c devopen.c net.c open.c
 LD?=	ld
 SIZE?=	size
 LDFLAGS+=-melf_i386 -nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -noinhibit-exec
+LDFLAGS+=-L/usr/libdata 
 INSTALL_STRIP=
 
 .PATH:	${SADIR}/libsa

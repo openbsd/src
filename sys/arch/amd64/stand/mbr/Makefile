@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2004/02/03 12:09:47 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/05/17 22:49:46 drahn Exp $
 #
 
 PROG=	mbr
@@ -6,6 +6,7 @@ SRCS=	mbr.S
 AFLAGS+=-m32 -I${.CURDIR} -I${.CURDIR}/../../.. #-Wa,-a
 LD=ld
 LDFLAGS=-melf_i386 -nostdlib -Ttext 0 -x -N -s -Bstatic -e start
+LDFLAGS+=-L/usr/libdata 
 
 NOMAN=
 #MAN+=	mbr.8
