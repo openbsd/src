@@ -28,7 +28,7 @@
 ./usr/lib/libpanel.so.0.0
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
-./usr/lib/libskey.so.0.4
+./usr/lib/libskey.so.1.0
 ./usr/lib/libss.so.4.0
 ./usr/lib/libstdc++.so.27.1
 ./usr/lib/libtelnet.so.1.0
@@ -305,15 +305,18 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/grp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/histedit.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/ieeefp.ph
+./usr/lib/perl5/m68k-openbsd/5.003/inttypes.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/iso646.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/kvm.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/langinfo.ph
+./usr/lib/perl5/m68k-openbsd/5.003/libgen.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/limits.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/link.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/locale.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/ansi.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/asm.ph
+./usr/lib/perl5/m68k-openbsd/5.003/machine/audioio.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/bus.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/cdefs.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/conf.ph
