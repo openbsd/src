@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.23 2004/03/12 21:14:35 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.24 2004/03/12 21:21:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -946,6 +946,13 @@ aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 	int		 final;
 	u_int16_t	 len, seg_size;
 	u_int8_t	 i, seg_type, seg_len;
+
+	if (type == AS_EMPTY) {
+		if (a->hdr.len == 0)
+			return (1);
+		else
+			return (0);
+	}
 
 	final = 0;
 	seg = a->data;
