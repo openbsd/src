@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.h,v 1.7 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: lex.h,v 1.8 2004/11/02 22:09:24 deraadt Exp $	*/
 
 /*
  * Source input, lexer and parser
@@ -124,7 +124,7 @@ EXTERN	struct ioword *heres [HERES], **herep;
 EXTERN	char	ident [IDENT+1];
 
 #ifdef HISTORY
-# define HISTORYSIZE	128	/* size of saved history */
+# define HISTORYSIZE	500	/* size of saved history */
 
 EXTERN	char  **history;	/* saved commands */
 EXTERN	char  **histptr;	/* last history item */
