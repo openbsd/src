@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 1996/09/06 17:26:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 1996/09/17 07:18:15 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -31,12 +31,11 @@ WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 all clean cleandir depend etc install lint:
 
 .ifndef DESTDIR
-distribution distrib-dirs snapshot:
+distribution-etc-root-var distribution distrib-dirs snapshot:
 	@echo setenv DESTDIR before doing that!
 	@false
 .else
-distribution: distrib-dirs
-	(cd ..; ${MAKE} install)
+distribution-etc-root-var: distrib-dirs
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	cat etc.${MACHINE}/ttys ttys.pty > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
@@ -134,6 +133,9 @@ distribution: distrib-dirs
 	    ${DESTDIR}/)
 .endif
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
+
+distribution: distribution-etc-root-var
+	(cd ..; ${MAKE} install)
 
 hcx9-distribution:
 	(cd etc.tahoe; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS2} \
