@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.31 2004/12/29 06:59:42 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.32 2004/12/30 21:11:40 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1127,21 +1127,15 @@ getsc_line(Source *s)
 void
 set_prompt(int to, Source *s)
 {
-	struct shf *shf;
-	char * volatile ps1;
+	char *ps1;
 	Area *saved_atemp;
 
 	cur_prompt = to;
 
 	switch (to) {
 	case PS1: /* command */
-		ps1 = str_val(global("PS1"));
-		shf = shf_sopen((char *) 0, strlen(ps1) * 2,
-			SHF_WR | SHF_DYNAMIC, (struct shf *) 0);
-		while (*ps1)
-			shf_putchar(*ps1++, shf);
-		ps1 = shf_sclose(shf);
-		saved_atemp = ATEMP;
+		ps1 = str_save(str_val(global("PS1")), ATEMP);
+		saved_atemp = ATEMP;	/* ps1 is freed by substitute() */
 		newenv(E_ERRH);
 		if (sigsetjmp(e->jbuf, 0)) {
 			prompt = safe_prompt;
