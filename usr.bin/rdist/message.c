@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$Id: message.c,v 1.2 1996/03/05 03:16:08 dm Exp $";
+"$Id: message.c,v 1.3 1996/06/25 22:23:18 deraadt Exp $";
 
 static char sccsid[] = "@(#)common.c";
 
@@ -445,6 +445,8 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 	int flags;
 	char *msgbuf;
 {
+	int fd;
+
 	if (IS_ON(flags, MT_DEBUG))
 		return;
 
@@ -465,10 +467,13 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 		(void) sprintf(tempfile, "%s/%s", cp, _RDIST_TMP);
 
 		msgfac->mf_filename = tempfile;
-		(void) mktemp(msgfac->mf_filename);
-		if ((msgfac->mf_fptr = fopen(msgfac->mf_filename, "w"))==NULL)
+		if ((fd = mkstemp(msgfac->mf_filename)) == -1 ||
+		    (msgfac->mf_fptr = fdopen(fd, "w"))==NULL) {
+			if (fd != -1)
+				close(fd);
 			fatalerr("Cannot open notify file for writing: %s: %s.",
 			      msgfac->mf_filename, SYSERR);
+		}
 		debugmsg(DM_MISC, "Created notify temp file '%s'",
 			 msgfac->mf_filename);
 	}
