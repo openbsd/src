@@ -76,6 +76,7 @@
 ./usr/include/dev/ic/am7930reg.h
 ./usr/include/dev/ic/am7990reg.h
 ./usr/include/dev/ic/am7990var.h
+./usr/include/dev/ic/cd1190reg.h
 ./usr/include/dev/ic/cd1400reg.h
 ./usr/include/dev/ic/comreg.h
 ./usr/include/dev/ic/comvar.h

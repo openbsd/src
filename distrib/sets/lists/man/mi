@@ -23,6 +23,8 @@
 ./usr/share/doc/html/lynx_help/lynx_url_support.html
 ./usr/share/info/cpp.info
 ./usr/share/info/cpp.info-1
+./usr/share/info/history.info
+./usr/share/info/readline.info
 ./usr/share/info/cpp.info-2
 ./usr/share/info/cpp.info-3
 ./usr/share/info/cvs.info
@@ -590,6 +592,7 @@
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sparc/cgeight.0
 ./usr/share/man/cat4/sparc/cgfour.0
+./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/cgfourteen.0
 ./usr/share/man/cat4/sparc/cgtwo.0
 ./usr/share/man/cat4/sparc/esp.0
