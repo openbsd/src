@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.7 2003/06/28 13:30:17 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.8 2003/06/28 16:23:54 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -563,7 +563,12 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 	 * here.
 	 */
 	for (i = 30000; i != 0; i--) {
-		if (TSLOT_READ(td, TS102_REG_CARD_A_STS) & TS102_CARD_STS_RDY)
+		status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
+		if ((status & TS102_CARD_STS_PRES) == 0) {
+			tslot_slot_disable(pch);
+			return;
+		}
+		if (status & TS102_CARD_STS_RDY)
 			break;
 		else
 			DELAY(100);
