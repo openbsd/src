@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2001/08/20 22:49:36 jason Exp $
+#	$OpenBSD: GENERIC,v 1.5 2001/08/20 23:05:36 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -28,7 +28,6 @@ sbus0	at mainbus0				# Ultra 1
 pcons0	at mainbus0				# PROM console
 
 ## Mostek clock 
-## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
 clock*	at sbus? slot ? offset ?
 
 ## Timer chip found on (some) sun4u systems.
@@ -39,8 +38,7 @@ le*		at sbus? slot ? offset ?
 ledma*		at sbus? slot ? offset ?
 le*		at ledma?
 
+# Quad-ethernet glue device, and sub-devices
 qec*		at sbus? slot ? offset ?
-
 qe*		at qec?
-
 be*		at qec?
