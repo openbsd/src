@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.102 2003/05/05 00:21:52 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.103 2003/05/06 20:52:14 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -426,16 +426,17 @@ sys_unmount(p, v, retval)
 	if (vfs_busy(mp, LK_EXCLUSIVE, NULL, p))
 		return (EBUSY);
 
-	return (dounmount(mp, SCARG(uap, flags), p));
+	return (dounmount(mp, SCARG(uap, flags), p, vp));
 }
 
 /*
  * Do the actual file system unmount.
  */
 int
-dounmount(struct mount *mp, int flags, struct proc *p)
+dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
 {
 	struct vnode *coveredvp;
+	struct proc *p2;
 	int error;
 	int hadsyncer = 0;
 
@@ -460,7 +461,30 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
-		coveredvp->v_mountedhere = (struct mount *)0;
+		if (olddp) {
+			/* 
+			 * Try to put processes back in a real directory
+			 * after a forced unmount.
+			 * XXX We're not holding a ref on olddp, which may
+			 * change, so compare id numbers.
+			 */
+			LIST_FOREACH(p2, &allproc, p_list) {
+				struct filedesc *fdp = p2->p_fd;
+				if (fdp->fd_cdir &&
+				    fdp->fd_cdir->v_id == olddp->v_id) {
+					vrele(fdp->fd_cdir);
+					vref(coveredvp);
+					fdp->fd_cdir = coveredvp;
+				}
+				if (fdp->fd_rdir &&
+				    fdp->fd_rdir->v_id == olddp->v_id) {
+					vrele(fdp->fd_rdir);
+					vref(coveredvp);
+					fdp->fd_rdir = coveredvp;
+				}
+			}
+		}
+		coveredvp->v_mountedhere = NULL;
  		vrele(coveredvp);
  	}
 	mp->mnt_vfc->vfc_refcount--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.90 2003/05/01 21:13:05 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.91 2003/05/06 20:52:14 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1771,7 +1771,7 @@ vfs_unmountall(void)
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
 		if ((vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT, NULL, p)) != 0)
 			continue;
-		if ((error = dounmount(mp, MNT_FORCE, curproc)) != 0) {
+		if ((error = dounmount(mp, MNT_FORCE, curproc, NULL)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
 			allerror = 1;
