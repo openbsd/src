@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 3.t,v 1.7 2004/11/29 06:20:03 jsg Exp $
+.\"	$OpenBSD: 3.t,v 1.8 2005/02/02 04:36:56 jaredy Exp $
 .\"	$NetBSD: 3.t,v 1.4 1996/10/11 20:15:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1982, 1993
@@ -46,9 +46,6 @@ This happens when proper shutdown
 procedures are not observed,
 physically write-protecting a mounted file system,
 or a mounted file system is taken off-line.
-The most common operator procedural failure is forgetting to
-.I sync
-the system before halting the CPU.
 .PP
 File systems may become further corrupted if proper startup
 procedures are not observed, e.g.,
