@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.60 2002/03/15 21:44:18 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.61 2002/03/19 19:03:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1269,6 +1269,7 @@ EXIT($sfu_emu)
 #if defined(HP7000_CPU) || defined(HP7100_CPU)
 LEAF_ENTRY(desidhash_s)
 ALTENTRY(desidhash_x)
+	sync
 	MFCPU_T(DR_CPUCFG,22)	/* t1 */
 	MFCPU_T(DR_CPUCFG,22)
 	nop
@@ -1277,6 +1278,7 @@ ALTENTRY(desidhash_x)
 	depi	1, DR0_PCXS_EQWSTO, 1, t1
 	depi	0, DR0_PCXS_DHPMC, 1, t1
 	depi	0, DR0_PCXS_ILPMC, 1, t1
+	sync
 	MTCPU_T(22,DR_CPUCFG)
 	MTCPU_T(22,DR_CPUCFG)
 	nop
@@ -1291,6 +1293,7 @@ EXIT(desidhash_s)
  * void desidhash_t(void)
  */
 LEAF_ENTRY(desidhash_t)
+	sync
 	MFCPU_T(DR_CPUCFG,22)	/* t1 */
 	MFCPU_T(DR_CPUCFG,22)
 	nop
@@ -1299,6 +1302,7 @@ LEAF_ENTRY(desidhash_t)
 	depi	0, DR0_PCXT_DHE, 1, t1
 	depi	0, DR0_PCXT_DHPMC, 1, t1
 	depi	0, DR0_PCXT_ILPMC, 1, t1
+	sync
 	MTCPU_T(22,DR_CPUCFG)
 	MTCPU_T(22,DR_CPUCFG)
 	nop
@@ -1385,6 +1389,21 @@ LEAF_ENTRY(ibtlb_l)
 	mtsm	t4
 EXIT(ibtlb_l)
 
+/* hpti_l(addr,size) */
+LEAF_ENTRY(hpti_l)
+	ldo	-1(arg1), arg1
+	depi	0, 31, 12, arg1
+	ldi	0x1c0, t1		/* cache size assumed 128k XXX */
+	or	arg0, t1, arg0
+	sync
+	MTCPU_C(26,DR0_PCXL2_HTLB_ADDR)
+	MTCPU_C(25,DR0_PCXL2_HTLB_CFG)
+	nop
+	nop
+	bv,n	r0(rp)
+	nop
+EXIT(hpti_l)
+
 /*
  * int
  * pbtlb_l(int i)
@@ -1394,6 +1413,7 @@ LEAF_ENTRY(pbtlb_l)
 	rsm	(PSW_R|PSW_I), t4
 	ldil	L%0xc041, t1
 	dep	arg0, 30, 3, t1
+	sync
 	MTCPU_T(22,DR_DTLB)	/* t1 */
 	nop
 	nop
@@ -1401,6 +1421,8 @@ LEAF_ENTRY(pbtlb_l)
 	idtlba	r0,(sr1,r0)
 	idtlbp	r0,(sr1,r0)
 	zdepi	-1, 18, 1, t1
+	nop
+	sync
 	MTCPU_T(22,DR_DTLB)
 	nop
 	nop
@@ -1421,6 +1443,8 @@ LEAF_ENTRY(desidhash_l)
 	depi	0, DR0_PCXL_L1IHPMC, 1, t1	/* don't reset */
 	depi	0, DR0_PCXL_L2PARERR,1, t1	/* don't reset */
 		/* set DR0_PCXL_L1ICACHE_EN ??? */
+	depi	0, DR0_PCXL_PFMASK, 1, t1	/* enable power fail int */
+	sync
 	MTCPU_C(22,DR_CPUCFG)
 	nop
 	nop
@@ -1470,7 +1494,7 @@ $tlbd_l
 	nop
 $itlbna_l
 $itlb_l
-#if 0	/* XXX assume combined TLB */
+#if 0			/* only needed for a separate i/d tlb */
 	TLB_PULL_L(0)
 	IITLBAF(17)
 	IITLBPF(25)
@@ -2452,8 +2476,8 @@ switch_exited
 	ldw	TF_CR30(t1), t2
 	ldw	TF_R30(t1), sp
 	ldw	TF_CR9(t1), t3
-	mtctl	t3, pidr2
 	mtctl	t2, cr30
+	mtctl	t3, pidr2
 	ldw	HPPA_FRAME_ARG(0)(sp), t3
 	ldw	HPPA_FRAME_CRP(sp), rp
 	ldw	HPPA_FRAME_PSP(sp), t2

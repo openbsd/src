@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2002/03/15 21:44:18 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 2002/03/19 19:03:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -257,12 +257,12 @@ const struct hppa_cpu_typed {
 #ifdef HP7100LC_CPU
 	{ "PCXL",  hpcxl, 0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
 	  desidhash_l, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g},
+	  ibtlb_g, NULL, pbtlb_g, hpti_l},
 #endif
 #ifdef HP7300LC_CPU
 /* HOW?	{ "PCXL2", hpcxl2,0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
 	  desidhash_l, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
+	  ibtlb_g, NULL, pbtlb_g, hpti_l}, */
 #endif
 #ifdef HP8000_CPU
 	{ "PCXU",  hpcxu, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
