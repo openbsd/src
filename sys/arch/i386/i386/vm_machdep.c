@@ -99,6 +99,8 @@ cpu_fork(p1, p2)
 		npxsave();
 #endif
 
+	p2->p_md.md_flags = p1->p_md.md_flags;
+
 	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
 	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
