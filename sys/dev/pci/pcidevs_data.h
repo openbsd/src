@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.462 2001/11/09 00:49:41 millert Exp 
+ *		OpenBSD: pcidevs,v 1.463 2001/11/16 21:41:12 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -355,24 +355,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "M1523 Host-PCI",
 	},
 	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1531,
-	    "M1531 Host-PCI",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
-	    "M1543 Host-PCI",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1621,
-	    "M1621 Host-PCI",
-	},
-	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1523,
 	    "M1523 PCI-ISA",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1531,
+	    "M1531 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
 	    "M1543 PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
+	    "M1541 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1621,
+	    "M1621 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1647,

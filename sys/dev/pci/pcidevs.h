@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.462 2001/11/09 00:49:41 millert Exp 
+ *		OpenBSD: pcidevs,v 1.463 2001/11/16 21:41:12 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -687,11 +687,11 @@
 #define	PCI_PRODUCT_ALI_M1461	0x1461		/* M1461 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1489	0x1489		/* M1489 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1521	0x1521		/* M1523 Host-PCI */
-#define	PCI_PRODUCT_ALI_M1531	0x1531		/* M1531 Host-PCI */
-#define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1543 Host-PCI */
-#define	PCI_PRODUCT_ALI_M1621	0x1621		/* M1621 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1523	0x1523		/* M1523 PCI-ISA */
+#define	PCI_PRODUCT_ALI_M1531	0x1531		/* M1531 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA */
+#define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1541 Host-PCI */
+#define	PCI_PRODUCT_ALI_M1621	0x1621		/* M1621 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1647	0x1647		/* M1647 PCI */
 #define	PCI_PRODUCT_ALI_M3309	0x3309		/* M3309 MPEG Accelerator */
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
