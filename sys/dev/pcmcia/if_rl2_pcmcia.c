@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl2_pcmcia.c,v 1.3 1999/07/14 03:55:22 d Exp $	*/
+/*	$OpenBSD: if_rl2_pcmcia.c,v 1.4 1999/07/14 07:22:14 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -240,6 +240,10 @@ rl2_pcmcia_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 
 	printf("%s: %s", sc->sc_dev.dv_xname, rpp->name);
+#ifdef DIAGNOSTIC
+	if (rpp->manufacturer == 0)
+		printf(" manf %04x prod %04x", pa->manufacturer, pa->product);
+#endif
 	rl2config(sc);
 	printf("\n");
 }
