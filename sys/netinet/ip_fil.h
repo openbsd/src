@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.h,v 1.22 2001/01/30 04:23:56 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.h,v 1.23 2001/02/06 17:29:30 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -424,11 +424,9 @@ typedef	struct	ipflog	{
 } ipflog_t;
 
 
-#if !defined(__OpenBSD__)
 # ifndef	ICMP_UNREACH_FILTER
 #  define	ICMP_UNREACH_FILTER	13
 # endif
-#endif
 
 #ifndef	IPF_LOGGING
 # define	IPF_LOGGING	0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.c,v 1.38 2001/01/30 04:23:56 kjell Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.39 2001/02/06 17:29:30 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -426,24 +426,6 @@ int mode;
 	if ((securelevel >= 2) && (mode & FWRITE))
 		return EPERM;
 #endif
-#if defined(_KERNEL)
-# if defined(__OpenBSD__)
-       	/* Prevent IPNAT changes when securelevel > 1 */
-	if (securelevel > 1) {
-		switch (cmd) {
-		case SIOCIPFFL:
-#  ifdef IPFILTER_LOG
-		case SIOCIPFFB:
-#  endif
-		case SIOCADNAT:
-		case SIOCRMNAT:
-		case SIOCSTPUT:
-		case SIOCSTLCK:
-			return EPERM;
-		}
-	}
-# endif /* OpenBSD */
-#endif /* _KERNEL */
 
 	nat = NULL;     /* XXX gcc -Wuninitialized */
 	KMALLOC(nt, ipnat_t *);

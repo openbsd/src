@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.40 2001/01/30 04:23:55 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.41 2001/02/06 17:29:30 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -133,12 +133,7 @@ extern	int	tcp_ttl;
 # endif
 #endif
 
-# if defined (__OpenBSD__)
-int	ipl_unreach = ICMP_UNREACH_FILTER_PROHIB;
-# else
 int	ipl_unreach = ICMP_UNREACH_FILTER;
-# endif
-
 u_long	ipl_frouteok[2] = {0, 0};
 
 static	int	frzerostats __P((caddr_t));
@@ -488,34 +483,7 @@ int mode;
 	unit = GET_MINOR(dev);
 	if ((IPL_LOGMAX < unit) || (unit < 0))
 		return ENXIO;
-
-# if defined(__OpenBSD__)
-       	/* Prevent IPF changes when securelevel > 1 */
-	if (securelevel > 1) {
-		switch (cmd) {
-#  ifndef IPFILTER_LKM
-		case SIOCFRENB:
-#  endif
-		case SIOCSETFF:
-		case SIOCADAFR:
-		case SIOCADIFR:
-		case SIOCINAFR:
-		case SIOCINIFR:
-		case SIOCRMAFR:
-		case SIOCRMIFR:
-		case SIOCZRLST:
-		case SIOCSWAPA:
-		case SIOCFRZST:
-		case SIOCIPFFL:
-#  ifdef IPFILTER_LOG
-		case SIOCIPFFB:
-#  endif
-		case SIOCSTLCK:
-			return EPERM;
-		}
-	}
-# endif /* OpenBSD */
-#else /* _KERNEL */
+#else
 	unit = dev;
 #endif
 
