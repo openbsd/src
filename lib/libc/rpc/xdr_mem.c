@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_mem.c,v 1.9 2002/12/11 22:55:39 millert Exp $";
+static char *rcsid = "$OpenBSD: xdr_mem.c,v 1.10 2004/09/14 22:20:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -103,9 +103,7 @@ xdrmem_create(xdrs, addr, size, op)
 
 static void
 xdrmem_destroy(XDR *xdrs)
-	
 {
-
 }
 
 static bool_t
