@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.1 2003/06/23 09:28:00 miod Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.2 2003/06/23 19:47:03 jason Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -165,13 +165,11 @@ stpattach(parent, self, aux)
 	 * The higher level we use for status change interrupts;
 	 * the lower level for PC card I/O.
 	 */
-	if (sa->sa_nintr != 0) {
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
-		    IPL_NONE, 0, stp4020_statintr, sc);
+	bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
+	    IPL_NONE, 0, stp4020_statintr, sc);
 
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
-		    IPL_NONE, 0, stp4020_iointr, sc);
-	}
+	bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
+	    IPL_NONE, 0, stp4020_iointr, sc);
 
 	stpattach_common(sc, sa->sa_frequency);
 }
