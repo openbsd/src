@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.80 2001/07/06 05:44:40 angelos Exp $
+#	$OpenBSD: netstart,v 1.81 2001/07/06 05:53:17 angelos Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -15,6 +15,9 @@ isalphanumeric() {
 	done
 	return 0
 }
+
+# Re-read /etc/rc.conf
+. /etc/rc.conf
 
 # /etc/myname contains my symbolic name
 #
