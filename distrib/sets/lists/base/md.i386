@@ -1,8 +1,10 @@
 ./dev/audio
 ./dev/audioctl
 ./dev/mixer
+./dev/music
 ./dev/scan0
 ./dev/scan1
+./dev/sequencer
 ./dev/sound
 ./sbin/ancontrol
 ./sbin/fdisk
