@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
+/*	$OpenBSD: types.h,v 1.3 2004/08/15 10:37:36 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,5 +90,8 @@ typedef struct label_t {
 	register_t val[14];
 } label_t;
 #endif
+
+/* XXX check why this still has to be defined. pmap.c issue? */
+#define  __SWAP_BROKEN
 
 #endif	/* !_MIPS_TYPES_H_ */
