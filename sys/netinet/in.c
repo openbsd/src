@@ -1,5 +1,33 @@
-/*	$OpenBSD: in.c,v 1.20 2001/06/08 03:53:45 angelos Exp $	*/
+/*	$OpenBSD: in.c,v 1.21 2001/07/23 14:23:21 itojun Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
+
+/*
+ * Copyright (C) 2001 WIDE Project.  All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -62,6 +90,9 @@ static int in_mask2len __P((struct in_addr *));
 static void in_len2mask __P((struct in_addr *, int));
 static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 	struct ifnet *));
+
+static int in_addprefix __P((struct in_ifaddr *, int));
+static int in_scrubprefix __P((struct in_ifaddr *));
 
 #ifndef SUBNETSARELOCAL
 #define	SUBNETSARELOCAL	0
@@ -329,23 +360,6 @@ in_control(so, cmd, data, ifp)
 
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
-#if 0
-		/*
-		 * the code chokes if we are to assign multiple addresses with
-		 * the same address prefix (rtinit() will return EEXIST, which
-		 * is not fatal actually).  we will get memory leak if we
-		 * don't do it.
-		 * -> we may want to hide EEXIST from rtinit().
-		 */
-  undo:
-		if (error && newifaddr){
-			TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
-			TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
-			FREE(ia, M_IFADDR);
-			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-				in_interfaces--;
-		}
-#endif
 		return error;
 
 	case SIOCSIFNETMASK:
@@ -380,10 +394,6 @@ in_control(so, cmd, data, ifp)
 		if (ifra->ifra_addr.sin_family == AF_INET &&
 		    (hostIsNew || maskIsNew)) {
 			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0);
-#if 0
-			if (error)
-				goto undo;
-#endif
 		}
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
@@ -604,13 +614,7 @@ in_ifscrub(ifp, ia)
 	register struct in_ifaddr *ia;
 {
 
-	if ((ia->ia_flags & IFA_ROUTE) == 0)
-		return;
-	if (ifp->if_flags & (IFF_LOOPBACK|IFF_POINTOPOINT))
-		rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST);
-	else
-		rtinit(&(ia->ia_ifa), (int)RTM_DELETE, 0);
-	ia->ia_flags &= ~IFA_ROUTE;
+	in_scrubprefix(ia);
 }
 
 /*
@@ -683,8 +687,7 @@ in_ifinit(ifp, ia, sin, scrub)
 			return (0);
 		flags |= RTF_HOST;
 	}
-	if ((error = rtinit(&(ia->ia_ifa), (int)RTM_ADD, flags)) == 0)
-		ia->ia_flags |= IFA_ROUTE;
+	error = in_addprefix(ia, flags);
 	/*
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
@@ -698,6 +701,121 @@ in_ifinit(ifp, ia, sin, scrub)
 	return (error);
 }
 
+#define rtinitflags(x) \
+	(((((x)->ia_ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) != 0) && \
+	  (x)->ia_dstaddr.sin_family == AF_INET) ? RTF_HOST : 0)
+
+/*
+ * add a route to prefix ("connected route" in cisco terminology).
+ * does nothing if there's some interface address with the same prefix already.
+ */
+static int
+in_addprefix(target, flags)
+	struct in_ifaddr *target;
+	int flags;
+{
+	struct in_ifaddr *ia;
+	struct in_addr prefix, mask, p;
+	int error;
+
+	if ((flags & RTF_HOST) != 0)
+		prefix = target->ia_dstaddr.sin_addr;
+	else
+		prefix = target->ia_addr.sin_addr;
+	mask = target->ia_sockmask.sin_addr;
+	prefix.s_addr &= mask.s_addr;
+
+	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
+		/* easy one first */
+		if (mask.s_addr != ia->ia_sockmask.sin_addr.s_addr)
+			continue;
+
+		if (rtinitflags(ia))
+			p = ia->ia_dstaddr.sin_addr;
+		else
+			p = ia->ia_addr.sin_addr;
+		p.s_addr &= ia->ia_sockmask.sin_addr.s_addr;
+		if (prefix.s_addr != p.s_addr)
+			continue;
+
+		/*
+		 * if we got a matching prefix route inserted by other
+		 * interface adderss, we don't need to bother
+		 */
+		if (ia->ia_flags & IFA_ROUTE)
+			return 0;
+	}
+
+	/*
+	 * noone seem to have prefix route.  insert it.
+	 */
+	error = rtinit(&target->ia_ifa, (int)RTM_ADD, flags);
+	if (!error)
+		target->ia_flags |= IFA_ROUTE;
+	return error;
+}
+
+/*
+ * remove a route to prefix ("connected route" in cisco terminology).
+ * re-installs the route by using another interface address, if there's one
+ * with the same prefix (otherwise we lose the route mistakenly).
+ */
+static int
+in_scrubprefix(target)
+	struct in_ifaddr *target;
+{
+	struct in_ifaddr *ia;
+	struct in_addr prefix, mask, p;
+	int error;
+
+	if ((target->ia_flags & IFA_ROUTE) == 0)
+		return 0;
+
+	if (rtinitflags(target))
+		prefix = target->ia_dstaddr.sin_addr;
+	else
+		prefix = target->ia_addr.sin_addr;
+	mask = target->ia_sockmask.sin_addr;
+	prefix.s_addr &= mask.s_addr;
+
+	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
+		/* easy one first */
+		if (mask.s_addr != ia->ia_sockmask.sin_addr.s_addr)
+			continue;
+
+		if (rtinitflags(ia))
+			p = ia->ia_dstaddr.sin_addr;
+		else
+			p = ia->ia_addr.sin_addr;
+		p.s_addr &= ia->ia_sockmask.sin_addr.s_addr;
+		if (prefix.s_addr != p.s_addr)
+			continue;
+
+		/*
+		 * if we got a matching prefix route, move IFA_ROUTE to him
+		 */
+		if ((ia->ia_flags & IFA_ROUTE) == 0) {
+			rtinit(&(target->ia_ifa), (int)RTM_DELETE,
+			    rtinitflags(target));
+			target->ia_flags &= ~IFA_ROUTE;
+
+			error = rtinit(&ia->ia_ifa, (int)RTM_ADD,
+			    rtinitflags(ia) | RTF_UP);
+			if (error == 0)
+				ia->ia_flags |= IFA_ROUTE;
+			return error;
+		}
+	}
+
+	/*
+	 * noone seem to have prefix route.  remove it.
+	 */
+	rtinit(&(target->ia_ifa), (int)RTM_DELETE, rtinitflags(target));
+	target->ia_flags &= ~IFA_ROUTE;
+	return 0;
+}
+
+#undef rtinitflags
 
 /*
  * Return 1 if the address might be a local broadcast address.
