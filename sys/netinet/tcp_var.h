@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.53 2004/01/07 19:20:14 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.54 2004/01/13 13:26:14 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -493,8 +493,8 @@ struct tcpcb *
 	 tcp_disconnect(struct tcpcb *);
 struct tcpcb *
 	 tcp_drop(struct tcpcb *, int);
-void	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
-		struct tcp_opt_info *);
+int	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
+		struct mbuf *, int, struct tcp_opt_info *);
 void	 tcp_drain(void);
 void	 tcp_init(void);
 #if defined(INET6) && !defined(TCP6)

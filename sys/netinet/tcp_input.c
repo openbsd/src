@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.142 2004/01/13 09:22:52 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.143 2004/01/13 13:26:14 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -107,6 +107,10 @@ struct  tcpipv6hdr tcp_saveti6;
 #define M_V6_LEN(m)      (M_PH_LEN(m) - sizeof(struct ip6_hdr))
 #define M_V4_LEN(m)      (M_PH_LEN(m) - sizeof(struct ip))
 #endif /* INET6 */
+
+#ifdef TCP_SIGNATURE
+#include <sys/md5k.h>
+#endif
 
 int	tcprexmtthresh = 3;
 struct	tcpiphdr tcp_saveti;
@@ -860,7 +864,7 @@ findpcb:
 				 * state for it.
 				 */
 				if (so->so_qlen <= so->so_qlimit &&
-				    syn_cache_add(&src.sa, &dst.sa, th, tlen,
+				    syn_cache_add(&src.sa, &dst.sa, th, iphlen,
 						so, m, optp, optlen, &opti))
 					m = NULL;
 			}
@@ -948,8 +952,13 @@ after_listen:
 	/*
 	 * Process options.
 	 */
+#ifdef TCP_SIGNATURE
+	if (optp || (tp->t_flags & TF_SIGNATURE))
+#else
 	if (optp)
-		tcp_dooptions(tp, optp, optlen, th, &opti);
+#endif
+		if (tcp_dooptions(tp, optp, optlen, th, m, iphlen, &opti))
+			goto drop;
 
 #ifdef TCP_SACK
 	if (!tp->sack_disable) {
@@ -2165,16 +2174,21 @@ drop:
 #ifndef TUBA_INCLUDE
 }
 
-void
-tcp_dooptions(tp, cp, cnt, th, oi)
+int
+tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 	struct tcpcb *tp;
 	u_char *cp;
 	int cnt;
 	struct tcphdr *th;
+	struct mbuf *m;
+	int iphlen;
 	struct tcp_opt_info *oi;
 {
 	u_int16_t mss = 0;
 	int opt, optlen;
+#ifdef TCP_SIGNATURE
+	caddr_t sigp = NULL;
+#endif /* TCP_SIGNATURE */
 
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[0];
@@ -2246,8 +2260,133 @@ tcp_dooptions(tp, cp, cnt, th, oi)
 				continue;
 			break;
 #endif
+#ifdef TCP_SIGNATURE
+		case TCPOPT_SIGNATURE:
+			if (optlen != TCPOLEN_SIGNATURE)
+				continue;
+
+			if (sigp && bcmp(sigp, cp + 2, 16))
+				return -1;
+
+			sigp = cp + 2;
+			break;
+#endif /* TCP_SIGNATURE */
 		}
 	}
+
+#ifdef TCP_SIGNATURE
+	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE)) {
+		tcpstat.tcps_rcvbadsig++;
+		return -1;
+	}
+
+	if (sigp) {
+		MD5_CTX ctx;
+		union sockaddr_union sa;
+		struct tdb *tdb;
+		char sig[16];
+
+		memset(&sa, 0, sizeof(union sockaddr_union));
+
+		switch (tp->pf) {
+			case 0:
+			case AF_INET:
+				sa.sa.sa_len = sizeof(struct sockaddr_in);
+				sa.sa.sa_family = AF_INET;
+				sa.sin.sin_addr = tp->t_inpcb->inp_laddr;
+				break;
+#ifdef INET6
+			case AF_INET6:
+				sa.sa.sa_len = sizeof(struct sockaddr_in6);
+				sa.sa.sa_family = AF_INET6;
+				sa.sin6.sin6_addr = tp->t_inpcb->inp_laddr6;
+				break;
+#endif /* INET6 */
+		}
+
+		tdb = gettdb(0, &sa, IPPROTO_TCP);
+		if (tdb == NULL) {
+			printf("tdb miss\n");
+			tcpstat.tcps_rcvbadsig++;
+			return -1;
+		}
+
+		MD5Init(&ctx);
+
+		switch(tp->pf) {
+			case 0:
+#ifdef INET
+			case AF_INET:
+				{
+					struct ippseudo ippseudo;
+
+					ippseudo.ippseudo_src =
+						tp->t_inpcb->inp_faddr;
+					ippseudo.ippseudo_dst =
+						tp->t_inpcb->inp_laddr;
+					ippseudo.ippseudo_pad = 0;
+					ippseudo.ippseudo_p = IPPROTO_TCP;
+					ippseudo.ippseudo_len = htons(
+						m->m_pkthdr.len - iphlen);
+
+					MD5Update(&ctx, (char *)&ippseudo,
+						sizeof(struct ippseudo));
+				}
+				break;
+#endif /* INET */
+#ifdef INET6
+			case AF_INET6:
+				{
+					static int printed = 0;
+
+					if (!printed) {
+						printf("error: TCP MD5 support"
+							" for IPv6 not yet"
+							" implemented.\n");
+						printed = 1;
+					}
+				}
+				break;
+#endif /* INET6 */
+		}
+
+		{
+			struct tcphdr tcphdr;
+
+			tcphdr.th_sport = th->th_sport;
+			tcphdr.th_dport = th->th_dport;
+			tcphdr.th_seq = htonl(th->th_seq);
+			tcphdr.th_ack = htonl(th->th_ack);
+			tcphdr.th_off = th->th_off;
+			tcphdr.th_x2 = th->th_x2;
+			tcphdr.th_flags = th->th_flags;
+			tcphdr.th_win = htons(th->th_win);
+			tcphdr.th_sum = 0;
+			tcphdr.th_urp = htons(th->th_urp);
+
+			MD5Update(&ctx, (char *)&tcphdr,
+				sizeof(struct tcphdr));
+		}
+
+		if (m_apply(m, iphlen + th->th_off * sizeof(uint32_t),
+				m->m_pkthdr.len - (iphlen + th->th_off *
+				sizeof(uint32_t)), tcp_signature_apply,
+				(caddr_t)&ctx))
+			return (-1); 
+
+		MD5Update(&ctx, tdb->tdb_amxkey, tdb->tdb_amxkeylen);
+		MD5Final(sig, &ctx);
+
+		if (bcmp(sig, sigp, 16)) {
+			tcpstat.tcps_rcvbadsig++;
+			return (-1);
+		}
+
+		tcpstat.tcps_rcvgoodsig++;
+	}
+#endif /* TCP_SIGNATURE */
+
+	return (0);
 }
 
 #if defined(TCP_SACK)
@@ -3758,11 +3897,11 @@ syn_cache_unreach(src, dst, th)
  */
 
 int
-syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
+syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 	struct sockaddr *src;
 	struct sockaddr *dst;
 	struct tcphdr *th;
-	unsigned int hlen;
+	unsigned int iphlen;
 	struct socket *so;
 	struct mbuf *m;
 	u_char *optp;
@@ -3810,7 +3949,8 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 		tb.sack_disable = tcp_do_sack ? 0 : 1;
 #endif
 		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
-		tcp_dooptions(&tb, optp, optlen, th, oi);
+		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi))
+			return (0);
 
 		/* Update t_maxopd and t_maxseg after all options are processed */
 		(void) tcp_mss(tp, oi->maxseg);	/* sets t_maxseg */
