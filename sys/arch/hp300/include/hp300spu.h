@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp300spu.h,v 1.4 2001/08/26 00:15:37 miod Exp $	*/
+/*	$OpenBSD: hp300spu.h,v 1.5 2001/11/04 02:58:03 miod Exp $	*/
 /*	$NetBSD: hp300spu.h,v 1.2 1997/05/01 05:26:48 thorpej Exp $	*/
 
 /*-
@@ -78,53 +78,5 @@ extern	int machineid;		/* CPU model */
 extern	int cpuspeed;		/* CPU speed, in MHz */
 extern	int mmuid;		/* MMU id */
 #endif /* _KERNEL && ! _LOCORE */
-
-#ifdef _KERNEL
-
-/*
- * This section associates hp300 model configurations with certain
- * combinations of CPU, MMU, and cache.
- */
-
-/*
- * CPU configuration.
- */
-#if defined(HP320) || defined(HP330) || defined(HP350)
-#define M68020
-#endif
-
-#if defined(HP340) || defined(HP345) || defined(HP360) || defined(HP370) || \
-    defined(HP375) || defined(HP400)
-#define M68030
-#endif
-
-#if defined(HP380) || defined(HP385) || defined(HP425) || defined(HP433)
-#define M68040
-#endif
-
-/*
- * MMU configuration.
- */
-#if defined(HP320) || defined(HP350)
-#define M68K_MMU_HP
-#endif
-
-#if defined(HP330) || defined(M68030) || defined(M68040)
-#define	M68K_MMU_MOTOROLA
-#endif
-
-/*
- * Cache configuration.
- */
-#if defined(M68K_MMU_HP)
-#define	CACHE_HAVE_VAC
-#endif
-
-#if defined(HP345) || defined(HP360) || defined(HP370) || \
-    defined(HP375) || defined(HP400)
-#define	CACHE_HAVE_PAC
-#endif
-
-#endif /* _KERNEL */
 
 #endif /* _HP300_HP300SPU_H_ */
