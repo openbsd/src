@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 1999/04/20 20:25:54 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 1999/08/14 03:58:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -46,6 +46,7 @@ struct cpu_softc {
 	struct  device sc_dev;
 
 	hppa_hpa_t sc_hpa;
+	void *sc_ih;
 };
 
 int	cpumatch __P((struct device *, void *, void *));
@@ -91,20 +92,32 @@ cpuattach(parent, self, aux)
 
 	struct pdc_model pdc_model PDC_ALIGNMENT;
 	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
-	/* register struct cpu_softc *sc = (struct cpu_softc *)self; */
-	/* register struct confargs *ca = aux; */
-	u_int mhz;
+	u_int pdc_cversion[32] PDC_ALIGNMENT;
+	register struct cpu_softc *sc = (struct cpu_softc *)self;
+	register struct confargs *ca = aux;
+	const char *p = NULL;
+	u_int mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
 	int err;
 
-	printf (": ");
+	bzero (&pdc_cpuid, sizeof(pdc_cpuid));
 	if (pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_CPUID,
-		     &pdc_cpuid, 0, 0, 0, 0) >= 0) {
-		const char *p = hppa_mod_info(HPPA_TYPE_CPU,pdc_cpuid.version);
-		if (!p)
-			p = "pa-risc ??";
-		printf (": %s rev %d.%d",
-			p, pdc_cpuid.revision >> 4, pdc_cpuid.revision & 0xf);
+		     &pdc_cpuid, sc->sc_dev.dv_unit, 0, 0, 0) >= 0) {
+
+		/* patch for old 8200 */
+		if (pdc_cpuid.version == HPPA_CPU_PCXUP &&
+		    pdc_cpuid.revision > 0x0d)
+			pdc_cpuid.version = HPPA_CPU_PCXUP1;
+			
+		p = hppa_mod_info(HPPA_TYPE_CPU, pdc_cpuid.version);
 	}
+	/* otherwise try to guess on component version numbers */
+	else if (pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_COMP,
+		     &pdc_cversion, sc->sc_dev.dv_unit) >= 0) {
+		/* XXX p = hppa_mod_info(HPPA_TYPE_CPU,pdc_cversion[0]); */
+	}
+
+	printf (": %s v%d.%d, ", p? p : "PA7000",
+		pdc_cpuid.revision >> 4, pdc_cpuid.revision & 0xf);
 
 	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
 			    &pdc_model)) < 0) {
@@ -118,7 +131,6 @@ cpuattach(parent, self, aux)
 		       lvls[pdc_model.pa_lvl], "AB"[pdc_model.mc]);
 	}
 
-	mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
 	printf ("%d", mhz / 100);
 	if (mhz % 100 > 9)
 		printf(".%02d", mhz % 100);
@@ -147,4 +159,13 @@ cpuattach(parent, self, aux)
 	}
 
 	printf("\n");
+
+	if (ca->ca_irq == 31) {
+		sc->sc_ih = cpu_intr_establish(IPL_CLOCK, ca->ca_irq,
+					       clock_intr, NULL /*trapframe*/,
+					       sc->sc_dev.dv_xname);
+	} else {
+		printf ("%s: bad irq number %d\n", sc->sc_dev.dv_xname,
+			ca->ca_irq);
+	}
 }
