@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.51 2002/05/24 09:33:29 art Exp $     */
+/*      $OpenBSD: wdc.c,v 1.52 2002/07/02 15:26:19 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1649,26 +1649,49 @@ __wdccommand_start(chp, xfer)
 	if (wdc_c->r_command != ATAPI_SOFT_RESET) {
 		if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ, wdc_c->r_st_bmask,
 		    wdc_c->timeout) != 0) {
-			wdc_c->flags |= AT_TIMEOU;
-			__wdccommand_done(chp, xfer);
-			return;
+			goto timeout;
 		}
 	} else
 		DELAY(10);
 
 	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
+
+	if ((wdc_c->flags & AT_WRITE) == AT_WRITE) {
+		delay(10);
+		if (wait_for_unbusy(chp, wdc_c->timeout) != 0)
+			goto timeout;
+		
+		if ((chp->ch_status & (WDCS_DRQ | WDCS_ERR)) == WDCS_ERR) {
+			__wdccommand_done(chp, xfer);
+			return;
+		}
+
+		if (wait_for_drq(chp, wdc_c->timeout) != 0)
+			goto timeout;
+
+		wdc_output_bytes(&chp->ch_drive[drive], 
+		    wdc_c->data, wdc_c->bcount);
+	}
+
 	if ((wdc_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
 		timeout_add(&chp->ch_timo, wdc_c->timeout / 1000 * hz);
 		return;
 	}
+
 	/*
 	 * Polled command. Wait for drive ready or drq. Done in intr().
 	 * Wait for at last 400ns for status bit to be valid.
 	 */
 	delay(10);
 	__wdccommand_intr(chp, xfer, 0);
+	return;
+
+ timeout:
+	wdc_c->flags |= AT_TIMEOU;
+	__wdccommand_done(chp, xfer);
+	return;
 }
 
 int
@@ -1695,10 +1718,10 @@ __wdccommand_intr(chp, xfer, irq)
 	}
         if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
                 chp->wdc->irqack(chp);
-	if (wdc_c->flags & AT_READ) {
+
+	if ((wdc_c->flags & AT_READ) && (chp->ch_status & WDCS_DRQ)) {
 		wdc_input_bytes(drvp, data, bcount);
-	} else if (wdc_c->flags & AT_WRITE) {
-		wdc_output_bytes(drvp, data, bcount);
+		/* Should we wait for device to indicate idle? */
 	}
 	__wdccommand_done(chp, xfer);
 	WDCDEBUG_PRINT(("__wdccommand_intr returned\n"), DEBUG_INTR);
