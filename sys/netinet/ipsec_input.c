@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.3 1999/12/31 22:19:43 itojun Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.4 2000/01/02 10:56:32 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -97,7 +97,7 @@ int ah_enable = 0;
  * in IPv4 or IPv6.
  */
 
-static void
+static int
 ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 {
 #define IPSEC_ISTAT(y,z) (sproto == IPPROTO_ESP ? (y)++ : (z)++)
@@ -125,7 +125,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
     {
         m_freem(m);
         IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
-        return;
+        return EOPNOTSUPP;
     }
     
     /* Retrieve the SPI from the relevant IPsec header */
@@ -171,7 +171,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		 IPSEC_NAME, ipsp_address(sunion), ntohl(spi)));
 	m_freem(m);
 	IPSEC_ISTAT(espstat.esps_notdb, ahstat.ahs_notdb);
-	return;
+	return ENOENT;
     }
 	
     if (tdbp->tdb_flags & TDBF_INVALID)
@@ -180,7 +180,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		 IPSEC_NAME, ipsp_address(sunion), ntohl(spi)));
 	m_freem(m);
 	IPSEC_ISTAT(espstat.esps_invalid, ahstat.ahs_invalid);
-	return;
+	return EINVAL;
     }
 
     if (tdbp->tdb_xform == NULL)
@@ -189,7 +189,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		 IPSEC_NAME, ipsp_address(sunion), ntohl(spi)));
 	m_freem(m);
 	IPSEC_ISTAT(espstat.esps_noxform, ahstat.ahs_noxform);
-	return;
+	return ENXIO;
     }
 
     if (tdbp->tdb_interface)
@@ -209,7 +209,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
     {
 	/* The called routine will print a message if necessary */
 	IPSEC_ISTAT(espstat.esps_badkcr, ahstat.ahs_badkcr);
-	return;
+	return EINVAL;
     }
 
 #ifdef INET
@@ -221,7 +221,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    DPRINTF(("%s: processing failed for SA %s/%08x\n",
 		     IPSEC_NAME, ipsp_address(tdbp->tdb_dst), ntohl(spi)));
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
-            return;
+            return ENOMEM;
         }
 
 	ip = mtod(m, struct ip *);
@@ -249,7 +249,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ipn.ip_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 		m_free(m);
                 IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
-		return;
+		return EACCES;
 	    }
 	}
 
@@ -275,7 +275,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 		m_free(m);
 		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
-		return;
+		return EACCES;
 	    }
 	}
 #endif /* INET6 */
@@ -293,7 +293,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    DPRINTF(("%s: source address %s doesn't correspond to expected source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ip->ip_src), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 	    m_free(m);
 	    IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
-	    return;
+	    return EACCES;
 	}
     }
 #endif /* INET */
@@ -307,7 +307,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    DPRINTF(("%s: processing failed for SA %s/%08x\n",
 		     IPSEC_NAME, ipsp_address(tdbp->tdb_dst), ntohl(spi)));
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
-            return;
+            return ENOMEM;
         }
 
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -336,7 +336,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ipn.ip_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 		m_free(m);
 		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
-		return;
+		return EACCES;
 	    }
 	}
 #endif /* INET */
@@ -361,7 +361,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 		m_free(m);
 		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
-		return;
+		return EACCES;
 	    }
 	}
 
@@ -379,7 +379,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    DPRINTF(("%s: source address %s doesn't correspond to expected source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6->ip6_src), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 	    m_free(m);
 	    IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
-	    return;
+	    return EACCES;
 	}
     }
 #endif /* INET6 */
@@ -470,7 +470,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	IPSEC_ISTAT(espstat.esps_qfull, ahstat.ahs_qfull);
 	splx(s);
 	DPRINTF(("%s: dropped packet because of full IP queue\n", IPSEC_NAME));
-	return;
+	return ENOSPC;
     }
 
     IF_ENQUEUE(ifq, m);
@@ -486,53 +486,45 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 #endif /* INET6 */
 
     splx(s);
-    return;
+    return 0;
 #undef IPSEC_NAME
 #undef IPSEC_ISTAT
 }
 
 int
-esp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
+	   size_t newlen)
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
+    /* All sysctl names at this level are terminal. */
+    if (namelen != 1)
+      return ENOTDIR;
 
-	switch (name[0]) {
+    switch (name[0])
+    {
 	case ESPCTL_ENABLE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &esp_enable));
+	    return sysctl_int(oldp, oldlen, newp, newlen, &esp_enable);
 	default:
-		return (ENOPROTOOPT);
-	}
-	/* NOTREACHED */
+	    return ENOPROTOOPT;
+    }
+    /* NOTREACHED */
 }
 
 int
-ah_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
+	  size_t newlen)
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
+    /* All sysctl names at this level are terminal. */
+    if (namelen != 1)
+      return ENOTDIR;
 
-	switch (name[0]) {
+    switch (name[0])
+    {
 	case AHCTL_ENABLE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &ah_enable));
+	    return sysctl_int(oldp, oldlen, newp, newlen, &ah_enable);
 	default:
-		return (ENOPROTOOPT);
-	}
-	/* NOTREACHED */
+	    return ENOPROTOOPT;
+    }
+    /* NOTREACHED */
 }
 
 #ifdef INET
@@ -573,20 +565,22 @@ int
 ah6_input(struct mbuf **mp, int *offp, int proto)
 {
     struct mbuf *m = *mp;
-    int protoff;
     u_int8_t nxt;
+    int protoff;
 
     /*
      * XXX assuming that it is first hdr, i.e.
      * offp == sizeof(struct ip6_hdr)
      */
-    if (*offp != sizeof(struct ip6_hdr)) {
+    if (*offp != sizeof(struct ip6_hdr))
+    {
 	m_freem(m);
 	return IPPROTO_DONE;	/* not quite */
     }
 
     protoff = offsetof(struct ip6_hdr, ip6_nxt);
-    ipsec_common_input(m, *offp, protoff, AF_INET6, proto);
+    if (ipsec_common_input(m, *offp, protoff, AF_INET6, proto) != 0)
+      return IPPROTO_DONE;
 
     /* Retrieve new protocol */
     m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &nxt);
@@ -598,20 +592,22 @@ int
 esp6_input(struct mbuf **mp, int *offp, int proto)
 {
     struct mbuf *m = *mp;
-    int protoff;
     u_int8_t nxt;
+    int protoff;
 
     /*
      * XXX assuming that it is first hdr, i.e.
      * offp == sizeof(struct ip6_hdr)
      */
-    if (*offp != sizeof(struct ip6_hdr)) {
+    if (*offp != sizeof(struct ip6_hdr))
+    {
 	m_freem(m);
 	return IPPROTO_DONE;	/* not quite */
     }
 
     protoff = offsetof(struct ip6_hdr, ip6_nxt);
-    ipsec_common_input(m, *offp, protoff, AF_INET6, proto);
+    if (ipsec_common_input(m, *offp, protoff, AF_INET6, proto) != 0)
+      return IPPROTO_DONE;
 
     /* Retrieve new protocol */
     m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &nxt);
