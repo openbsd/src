@@ -1,4 +1,4 @@
-.\"	$OpenBSD: twe.4,v 1.4 2000/09/15 22:20:29 mickey Exp $
+.\"	$OpenBSD: twe.4,v 1.5 2000/09/21 14:28:49 mickey Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
 .\"
@@ -52,6 +52,12 @@ than this one.
 To avoid this situation, place
 .Nm
 cards in the lowest slot before other SCSI or RAID disk controllers.
+.Pp
+The current 3ware firmware is known to fail if a redundant configuration
+is selected (RAID0 or RAID10) and the array is heavily used
+(eg. installation) before the controller has finished initialising the array.
+In this case, create the array, boot the installation media and
+leave the array idle untill all controller activity has ceased.
 .Pp
 The card provides a mechanism to receive asynchronous notifications
 about RAID set status change and so forth, unfortunately this
