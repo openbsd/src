@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2001/09/23 02:24:07 drahn Exp $
+#	$OpenBSD: Makefile,v 1.10 2001/09/24 23:38:09 art Exp $
 
 SUBDIR=libdl ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
@@ -10,8 +10,8 @@ OBJS+=  strchr.o
 PROG=	ld.so
 MAN=	ld.so.8
 .if (${MACHINE_ARCH} == "sparc64")
-CFLAGS += -fPIC -msoft-float
-AFLAGS += -fPIC 
+CFLAGS += -fpic -msoft-float
+AFLAGS += -fpic
 .endif
 .if (${MACHINE_ARCH} == "powerpc")
 CFLAGS += -fpic -msoft-float
