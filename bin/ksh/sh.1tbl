@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1tbl,v 1.40 2003/12/22 11:54:02 jmc Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.41 2003/12/27 20:35:12 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -770,7 +770,7 @@ characters are called
 .Dq IFS whitespace .
 Sequences of one or more
 .Ev IFS
-whitespace characters, in combination with zero or no
+whitespace characters, in combination with zero or one
 .Pf non- Ev IFS
 whitespace
 characters, delimit a field.
@@ -788,11 +788,11 @@ is set to
 and VAR is set to
 .Dq <space>A<space>:<space><space>B::D ,
 the substitution for $VAR results in four fields:
-.Dq A ,
-.Dq B ,
-.Dq ,
+.Sq A ,
+.Sq B ,
+.Sq ,\&
 and
-.Dq D .
+.Sq D .
 Note that if the
 .Ev IFS
 parameter is set to the
