@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.1 2003/10/31 03:54:33 drahn Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.2 2004/02/04 20:07:18 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -100,14 +100,8 @@ wscninit(struct consdev *cp)
 
 
 #if (NVGA_PCI > 0)
-	/* NOTE!!!!
-	 *
-	 * ic/vga expects to be able to access vga registers
-	 * using pci  iot/ioh memt/memh, however that is not possible
-	 * on Pegasos, ISA handles must be passed.
-	 */
-	if (!vga_pci_cnattach(MD_ISA_IOT, MD_ISA_MEMT,
-	    NULL, 1, 0, 0))
+	if (!vga_pci_cnattach(MD_DISPLAY_ISA_IOT, MD_DISPLAY_ISA_MEMT,
+	    NULL, 1, 0, 0));
 #endif
 #if (NPCKBC > 0)
 	if (!pckbc_cnattach(MD_ISA_IOT, IO_KBD, KBCMDP, PCKBC_KBD_SLOT))

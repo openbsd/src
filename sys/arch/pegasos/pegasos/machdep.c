@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2004/01/15 03:26:36 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 2004/02/04 20:07:18 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -182,6 +182,8 @@ extern int OF_stdout;
 
 /* XXX, called from asm */
 void initppc(u_int startkernel, u_int endkernel, char *args);
+
+int pegasos = 0;
 
 void
 initppc(startkernel, endkernel, args)
@@ -448,6 +450,35 @@ initppc(startkernel, endkernel, args)
 #else
 		printf("kernel does not support -c; continuing..\n");
 #endif
+	}
+
+	{
+		char model[32];
+		int node, len;
+
+		node = OF_peer(0);
+		len = OF_getprop(node, "model", model,  sizeof(model));
+		model[len] = 0;
+
+		/*
+		 * Different versions of Pegasos:
+		 * Pegasos I, no April (not supported...)
+		 * Pegasos I, April I		0
+		 * Pegasos I, April II		1 (?)
+		 * Pegasos II			2
+		 *
+		 * However, OF does not distingush between
+		 * April I and April II therefore we must assume it
+		 * has the April I snoop bug...
+		 */
+
+		if (strcmp(model, "Pegasos2") == 0) {
+			pegasos = 2;
+		} else {
+			pegasos = 0; /* Assume PegI April I */
+		}
+
+
 	}
 	/*
 	 * Replace with real console.

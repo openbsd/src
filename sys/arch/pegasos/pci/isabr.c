@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabr.c,v 1.3 2004/01/30 22:38:30 miod Exp $	*/
+/*	$OpenBSD: isabr.c,v 1.4 2004/02/04 20:07:18 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -188,7 +188,6 @@ isabrattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	extern intr_establish_t *intr_establish_func;
 	extern intr_disestablish_t *intr_disestablish_func;
-
 
 	pending_int_f = isa_do_pending_int;
 	intr_establish_func = isabr_intr_establish;
@@ -486,6 +485,9 @@ isabr_iointr()
 
 	isa_vector &= (ICU_LEN - 1);	/* XXX Better safe than sorry */
 
+	if (isa_vector == 7) /* IRQ 7 == spurious */
+		goto fastout;
+
 	intrcnt[isa_vector]++;
 
 	o_imen = imen;
@@ -519,6 +521,7 @@ isabr_iointr()
 	isa_outb(IO_ICU1 + 1, imen);
 	isa_outb(IO_ICU2 + 1, imen >> 8);
 
+fastout:
 	ppc_intr_enable(1);
 
 	splx(pcpl);	/* Process pendings. */

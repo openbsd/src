@@ -1,4 +1,4 @@
- /*	$OpenBSD: ofw_machdep.c,v 1.1 2003/10/31 03:54:33 drahn Exp $	*/
+ /*	$OpenBSD: ofw_machdep.c,v 1.2 2004/02/04 20:07:18 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -460,14 +460,39 @@ struct usb_kbd_ihandles {
 u_int32_t ppc_console_addr;
 struct ppc_bus_space *ppc_isa_iobus_space;
 struct ppc_bus_space *ppc_isa_membus_space;
+struct ppc_bus_space *ppc_display_isa_iobus_space;
+struct ppc_bus_space *ppc_display_isa_membus_space;
+struct ppc_bus_space ppc_agp_isa_iobus_store;
+struct ppc_bus_space ppc_agp_isa_membus_store;
+
+extern int comdefaultrate;
+extern int pegasos;
+int ppc_agpconsole;
 
 void
 ofwconprobe()
 {
 	char type[32];
 	int stdout_node;
+	char path[128];
+	int len;
+	char name[32];
+	int display;
+
+	ppc_agpconsole = 0;
 
 	stdout_node = OF_instance_to_package(OF_stdout);
+
+	ppc_isa_iobus_space = &ppc_isa_io;
+	ppc_isa_iobus_space->bus_base = 0xfe000000;
+	ppc_isa_iobus_space->bus_reverse = 1;
+	ppc_isa_iobus_space->bus_io = 1;
+	ppc_isa_iobus_space->bus_size = 0x01000000;
+	ppc_isa_membus_space = &ppc_isa_mem;
+	ppc_isa_membus_space->bus_base = 0xfd000000;
+	ppc_isa_membus_space->bus_size = 0x01000000;
+	ppc_isa_membus_space->bus_reverse = 1;
+
 
 	/* handle different types of console */
 
@@ -475,29 +500,58 @@ ofwconprobe()
 	if (OF_getprop(stdout_node,  "device_type", type, sizeof(type)) == -1) {
 		return; /* XXX */
 	}
-	{
-		/*
-		 * Initialize the early bus_space values to
-		 * correct values for Pegasos I
-		 */
-		ppc_isa_iobus_space = &ppc_isa_io;
-		ppc_isa_iobus_space->bus_base = 0xfe000000;
-		ppc_isa_iobus_space->bus_reverse = 1;
-		ppc_isa_iobus_space->bus_io = 1;
-		ppc_isa_iobus_space->bus_size = 0x01000000;
-		ppc_isa_membus_space = &ppc_isa_mem;
-		ppc_isa_membus_space->bus_base = 0xfd000000;
-		ppc_isa_membus_space->bus_size = 0x01000000;
-		ppc_isa_membus_space->bus_reverse = 1;
+
+	len = OF_package_to_path(stdout_node, path, sizeof path);
+	path[len] = 0;
+	printf("console path [%s] type [%s]\n", path, type);
+
+	if (strcmp(path, "/failsafe") == 0) {
+		ppc_console_addr = 0x2f8;
+
+		/* failsafe serial console, at firmware dbg speed */
+		comdefaultrate = 115200;
+		return;
 	}
 	if (strcmp(type, "serial") == 0) {
 		/* XXX */
-		extern int     comdefaultrate;
 		ppc_console_addr = 0x2f8;
 		comdefaultrate = 9600;
+		return;
+	}
+
+	len = OF_getprop(stdout_node, "name", name, 20);
+	name[len] = 0;   
+	printf("console out [%s]\n", name);
+
+	display = OF_finddevice("/display");
+	if (display != -1 && display != 0) {
+		len = OF_package_to_path(display, path, sizeof path);
+		path[len] = 0;
+		printf("display path [%s]\n", path);
+		if (strncmp(path, "/pci@C0000000", 12) == 0)
+			ppc_agpconsole = 1;
+	}
+
+	/*
+	 * Initialize the early bus_space values to
+	 * correct values for Pegasos I
+	 */
+	if (pegasos == 2 && ppc_agpconsole) {
+		ppc_display_isa_iobus_space = &ppc_agp_isa_iobus_store;
+		ppc_display_isa_membus_space = &ppc_agp_isa_membus_store;
+
+		ppc_display_isa_iobus_space->bus_base = 0xf8000000;
+		ppc_display_isa_iobus_space->bus_reverse = 1;
+		ppc_display_isa_iobus_space->bus_io = 1;
+		ppc_display_isa_iobus_space->bus_size = 0x01000000;
+		ppc_display_isa_membus_space->bus_base = 0xf9000000;
+		ppc_display_isa_membus_space->bus_size = 0x01000000;
+		ppc_display_isa_membus_space->bus_reverse = 1;
+	} else {
+		ppc_display_isa_iobus_space = &ppc_isa_io;
+		ppc_display_isa_membus_space = &ppc_isa_mem;
 	}
 	if (strcmp(type, "bootconsole") == 0) {
-		extern int     comdefaultrate;
 		/* pegasos unknown console, */
 		/* which is set up already */
 

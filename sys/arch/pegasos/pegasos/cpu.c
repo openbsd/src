@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.2 2004/01/15 05:19:46 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.3 2004/02/04 20:07:18 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -55,6 +55,7 @@
 #define MPC7410         0x800c
 #define MPC7450         0x8000
 #define MPC7455         0x8001
+#define MPC7454         0x8002
 
 /* only valid on 603(e,ev) and G3, G4 */
 #define HID0_DOZE	(1 << (31-8))
@@ -66,6 +67,51 @@
 #define HID0_LRSTK	(1 << (31-27))
 #define HID0_FOLD	(1 << (31-28))
 #define HID0_BHT	(1 << (31-29))
+
+/* L2CR bit definitions */
+#define L2CR_L2E        0x80000000 /* 0: L2 enable */
+#define L2CR_L2PE       0x40000000 /* 1: L2 data parity enable */
+#define L2CR_L2SIZ      0x30000000 /* 2-3: L2 size */
+#define  L2SIZ_RESERVED         0x00000000
+#define  L2SIZ_256K             0x10000000
+#define  L2SIZ_512K             0x20000000
+#define  L2SIZ_1M       0x30000000
+#define L2CR_L2CLK      0x0e000000 /* 4-6: L2 clock ratio */
+#define  L2CLK_DIS              0x00000000 /* disable L2 clock */
+#define  L2CLK_10               0x02000000 /* core clock / 1   */
+#define  L2CLK_15               0x04000000 /*            / 1.5 */
+#define  L2CLK_20               0x08000000 /*            / 2   */
+#define  L2CLK_25               0x0a000000 /*            / 2.5 */
+#define  L2CLK_30               0x0c000000 /*            / 3   */
+#define L2CR_L2RAM      0x01800000 /* 7-8: L2 RAM type */
+#define  L2RAM_FLOWTHRU_BURST   0x00000000
+#define  L2RAM_PIPELINE_BURST   0x01000000
+#define  L2RAM_PIPELINE_LATE    0x01800000
+#define L2CR_L2DO       0x00400000 /* 9: L2 data-only.
+                                      Setting this bit disables instruction
+                                      caching. */
+#define L2CR_L2I        0x00200000 /* 10: L2 global invalidate. */
+#define L2CR_L2CTL      0x00100000 /* 11: L2 RAM control (ZZ enable).
+                                      Enables automatic operation of the
+                                      L2ZZ (low-power mode) signal. */
+#define L2CR_L2WT       0x00080000 /* 12: L2 write-through. */
+#define L2CR_L2TS       0x00040000 /* 13: L2 test support. */
+#define L2CR_L2OH       0x00030000 /* 14-15: L2 output hold. */
+#define L2CR_L2SL       0x00008000 /* 16: L2 DLL slow. */
+#define L2CR_L2DF       0x00004000 /* 17: L2 differential clock. */
+#define L2CR_L2BYP      0x00002000 /* 18: L2 DLL bypass. */
+#define L2CR_L2IP       0x00000001 /* 31: L2 global invalidate in progress
+				       (read only). */
+
+/* L3CR bit definitions */
+#define   L3CR_L3E                0x80000000 /*  0: L3 enable */
+#define   L3CR_L3SIZ              0x10000000 /*  3: L3 size (0=1MB, 1=2MB) */
+
+#ifdef L2CR_CONFIG
+u_int l2cr_config = L2CR_CONFIG;
+#else
+u_int l2cr_config = 0;
+#endif
 
 char cpu_model[80];
 char machine[] = MACHINE;	/* cpu architecture */
@@ -157,6 +203,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		 else
 			snprintf(cpu_model, sizeof(cpu_model), "7451");
 		break;
+	case MPC7454:
+		snprintf(cpu_model, sizeof(cpu_model), "7454");
+		break;
 	case MPC7455:
 		snprintf(cpu_model, sizeof(cpu_model), "7455");
 		break;
@@ -209,6 +258,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		hid0 |= HID0_DOZE | HID0_DPM;
 		break;
 	case MPC7450:
+	case MPC7454:
 	case MPC7455:
 		/* select NAP mode */
 		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
@@ -225,7 +275,22 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 
 	/* if processor is G3 or G4, configure l2 cache */
 	if ( (cpu == MPC750) || (cpu == MPC7400) || (cpu == IBM750FX)
-	    || (cpu == MPC7410) || (cpu == MPC7450) || (cpu == MPC7455)) {
+	    || (cpu == MPC7410) || (cpu == MPC7450) || (cpu == MPC7454)
+	    || (cpu == MPC7455)) {
+		/* Pegasos doesn't configure L2 in OF, 
+		 * should enable it's size based on OF values, not
+		 * this G3/G4 switch
+		 */
+		switch (cpu) {
+		case MPC750:
+			l2cr_config = L2CR_L2E|L2SIZ_512K;
+			break;
+		case MPC7454:
+			l2cr_config = L2CR_L2E|L2SIZ_256K;
+			break;
+		default:
+			;
+		}
 		config_l2cr(cpu);
 	}
 	printf("\n");
@@ -233,53 +298,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 
 }
 
-/* L2CR bit definitions */
-#define L2CR_L2E        0x80000000 /* 0: L2 enable */
-#define L2CR_L2PE       0x40000000 /* 1: L2 data parity enable */
-#define L2CR_L2SIZ      0x30000000 /* 2-3: L2 size */
-#define  L2SIZ_RESERVED         0x00000000
-#define  L2SIZ_256K             0x10000000
-#define  L2SIZ_512K             0x20000000
-#define  L2SIZ_1M       0x30000000
-#define L2CR_L2CLK      0x0e000000 /* 4-6: L2 clock ratio */
-#define  L2CLK_DIS              0x00000000 /* disable L2 clock */
-#define  L2CLK_10               0x02000000 /* core clock / 1   */
-#define  L2CLK_15               0x04000000 /*            / 1.5 */
-#define  L2CLK_20               0x08000000 /*            / 2   */
-#define  L2CLK_25               0x0a000000 /*            / 2.5 */
-#define  L2CLK_30               0x0c000000 /*            / 3   */
-#define L2CR_L2RAM      0x01800000 /* 7-8: L2 RAM type */
-#define  L2RAM_FLOWTHRU_BURST   0x00000000
-#define  L2RAM_PIPELINE_BURST   0x01000000
-#define  L2RAM_PIPELINE_LATE    0x01800000
-#define L2CR_L2DO       0x00400000 /* 9: L2 data-only.
-                                      Setting this bit disables instruction
-                                      caching. */
-#define L2CR_L2I        0x00200000 /* 10: L2 global invalidate. */
-#define L2CR_L2CTL      0x00100000 /* 11: L2 RAM control (ZZ enable).
-                                      Enables automatic operation of the
-                                      L2ZZ (low-power mode) signal. */
-#define L2CR_L2WT       0x00080000 /* 12: L2 write-through. */
-#define L2CR_L2TS       0x00040000 /* 13: L2 test support. */
-#define L2CR_L2OH       0x00030000 /* 14-15: L2 output hold. */
-#define L2CR_L2SL       0x00008000 /* 16: L2 DLL slow. */
-#define L2CR_L2DF       0x00004000 /* 17: L2 differential clock. */
-#define L2CR_L2BYP      0x00002000 /* 18: L2 DLL bypass. */
-#define L2CR_L2IP       0x00000001 /* 31: L2 global invalidate in progress
-				       (read only). */
-#ifndef L2CR_CONFIG
-#define L2CR_CONFIG L2CR_L2E|L2SIZ_512K
-#endif
-
-#ifdef L2CR_CONFIG
-u_int l2cr_config = L2CR_CONFIG;
-#else
-u_int l2cr_config = 0;
-#endif
-
-/* L3CR bit definitions */
-#define   L3CR_L3E                0x80000000 /*  0: L3 enable */
-#define   L3CR_L3SIZ              0x10000000 /*  3: L3 size (0=1MB, 1=2MB) */
 
 void
 config_l2cr(int cpu)
@@ -314,7 +332,7 @@ config_l2cr(int cpu)
 	}
 
 	if (l2cr & L2CR_L2E) {
-		if (cpu == MPC7450 || cpu == MPC7455) {
+		if (cpu == MPC7450 || cpu == MPC7454 || cpu == MPC7455) {
 			u_int l3cr;
 
 			printf(": 256KB L2 cache");

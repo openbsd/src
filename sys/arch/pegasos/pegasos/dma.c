@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.2 2003/12/20 22:40:27 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.3 2004/02/04 20:07:18 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -388,14 +388,15 @@ bus_size_t len, int op)
 	vaddr_t p;
 	int l;
 	int i;
+	extern int pegasos; /* XXX */
 
 	/* 
-	 * pegasos needs to sync before dma from memory to disk drives
-	 * snooping broken?
+	 * pegasos 1 (april1) needs to sync before dma from memory to
+	 * disk drives snooping broken?
 	 */
 
 	/* only flush before DMA to drive */
-	if ((op & BUS_DMASYNC_PREWRITE) == 0)
+	if ((pegasos != 0) || (op & BUS_DMASYNC_PREWRITE) == 0)
 		return;
 
 	for (i = 0; i < map->dm_nsegs; i++) {

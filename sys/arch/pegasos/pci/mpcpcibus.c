@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.4 2003/12/20 22:40:27 miod Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.5 2004/02/04 20:07:18 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -68,6 +68,8 @@ pcitag_t mpc_make_tag(void *, int, int, int);
 void	mpc_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t mpc_conf_read(void *, pcitag_t, int);
 void	mpc_conf_write(void *, pcitag_t, int, pcireg_t);
+pcireg_t peg2_conf_read(void *, pcitag_t, int);
+void	peg2_conf_write(void *, pcitag_t, int, pcireg_t);
 
 int	mpc_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 const char *mpc_intr_string(void *, pci_intr_handle_t);
@@ -152,6 +154,10 @@ struct ranges_new {
 	u_int32_t pad3;
 	u_int32_t size;
 };
+
+extern int pegasos;
+struct ppc_bus_space marvell_io;
+bus_space_handle_t marvell_ioh;
 
 void
 mpcpcibrattach(struct device *parent, struct device *self, void *aux)
@@ -244,48 +250,8 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 		sc->sc_membus_space.bus_size = size;
 
 	}
-	addr_offset = 0;
-
-	/* XXX? */
-	lcp->config_type = 0;
-	addr_offset=0x00c00cf8;
-	data_offset=0x00e00cfc;
-#ifdef DEBUG_FIXUP
-	printf(" mem base %x sz %x io base %x sz %x\n config addr %x"
-	    " config data %x\n",
-	    sc->sc_membus_space.bus_base,
-	    sc->sc_membus_space.bus_size,
-	    sc->sc_iobus_space.bus_base,
-	    sc->sc_iobus_space.bus_size,
-	    addr_offset, data_offset);
-#endif
-
-	if ( bus_space_map(&(sc->sc_iobus_space), addr_offset,
-	    NBPG, 0, &lcp->ioh_cf8) != 0 )
-		panic("mpcpcibus: unable to map self");
-
-	if ( bus_space_map(&(sc->sc_iobus_space), data_offset,
-	    NBPG, 0, &lcp->ioh_cfc) != 0 )
-		panic("mpcpcibus: unable to map self");
 
 	of_node = ca->ca_node;
-
-	{
-		u_int32_t pci_iack_paddr;
-
-		if ((rangelen = OF_getprop(ca->ca_node,
-		    "8259-interrupt-acknowledge",
-		    &pci_iack_paddr,
-		    sizeof(pci_iack_paddr))) <= 0) {
-			printf( "getprop 8259-interrupt-acknowledge "
-			    "failed\n");
-		}  else {
-			bus_space_map(&(sc->sc_iobus_space), pci_iack_paddr,
-			    NBPG, 0, &(sc->pci_iack_ioh));
-		}
-	}
-
-
 	lcp->node = ca->ca_node;
 	lcp->lc_pc.pc_conf_v = lcp;
 	lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
@@ -304,6 +270,91 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	lcp->lc_pc.pc_intr_line = mpc_intr_line;
 	lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 	lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
+
+	addr_offset = 0;
+
+	if (pegasos == 2) {
+		marvell_io.bus_base = 0xf1000000;
+		marvell_io.bus_reverse = 1;
+		marvell_io.bus_io = 1;
+
+		/* PegII */
+		if (sc->sc_iobus_space.bus_base == 0xfe000000) {
+		addr_offset=0x00000c78;
+		data_offset=0x00000c7c;
+		} else if (sc->sc_iobus_space.bus_base == 0xf8000000) {
+			addr_offset=0x00000cf8;
+			data_offset=0x00000cfc;
+			lcp->lc_pc.pc_conf_read = peg2_conf_read;
+			lcp->lc_pc.pc_conf_write = peg2_conf_write;
+			bus_space_map (&(marvell_io), 0xF000, PAGE_SIZE, 0,
+			    &marvell_ioh);
+		}
+		if ( bus_space_map(&(marvell_io), addr_offset,
+		    PAGE_SIZE, 0, &lcp->ioh_cf8) != 0 )
+			panic("mpcpcibus: unable to map self");
+
+		if ( bus_space_map(&(marvell_io), data_offset,
+		    PAGE_SIZE, 0, &lcp->ioh_cfc) != 0 )
+			panic("mpcpcibus: unable to map self");
+
+		{
+			u_int32_t pci_iack_paddr;
+
+			if ((rangelen = OF_getprop(ca->ca_node,
+			    "8259-interrupt-acknowledge",
+			    &pci_iack_paddr,
+			    sizeof(pci_iack_paddr))) <= 0) {
+				printf( "getprop 8259-interrupt-acknowledge "
+				    "failed\n");
+			}  else {
+				/* Peg 2 XXX */
+				bus_space_map(&(marvell_io), pci_iack_paddr,
+				    NBPG, 0, &(sc->pci_iack_ioh));
+			}
+		}
+	} else {
+		/* PegI */
+		lcp->config_type = 0;
+		addr_offset=0x00c00cf8;
+		data_offset=0x00e00cfc;
+
+
+#ifdef DEBUG_FIXUP
+		printf(" mem base %x sz %x io base %x sz %x\n config addr %x"
+		    " config data %x\n",
+		    sc->sc_membus_space.bus_base,
+		    sc->sc_membus_space.bus_size,
+		    sc->sc_iobus_space.bus_base,
+		    sc->sc_iobus_space.bus_size,
+		    addr_offset, data_offset);
+#endif
+
+		if ( bus_space_map(&(sc->sc_iobus_space), addr_offset,
+		    NBPG, 0, &lcp->ioh_cf8) != 0 )
+			panic("mpcpcibus: unable to map self");
+
+		if ( bus_space_map(&(sc->sc_iobus_space), data_offset,
+		    NBPG, 0, &lcp->ioh_cfc) != 0 )
+			panic("mpcpcibus: unable to map self");
+
+		{
+			u_int32_t pci_iack_paddr;
+
+			if ((rangelen = OF_getprop(ca->ca_node,
+			    "8259-interrupt-acknowledge",
+			    &pci_iack_paddr,
+			    sizeof(pci_iack_paddr))) <= 0) {
+				printf( "getprop 8259-interrupt-acknowledge "
+				    "failed\n");
+			}  else {
+				bus_space_map(&(sc->sc_iobus_space),
+				    pci_iack_paddr, NBPG, 0,
+				    &(sc->pci_iack_ioh));
+			}
+		}
+	}
+
 
 	printf("\n");
 
@@ -619,6 +670,121 @@ mpc_gen_config_reg(void *cpv, pcitag_t tag, int offset)
 	return reg;
 }
 
+int	marvell_data[16] = {
+	0x00000000,	/* 0: is passed on to the device (RO) */
+	0x00000000,	/* 4: is passed on to the device (RO) */
+	0x00000000,	/* 8: is passed on to the device (RO) */
+	0x00000000,	/* c: is passed on to the device (RO) */
+	0x00000000,	/* 10: faked 0 BAR */
+	0x00000000,	/* 14: faked 0 BAR */
+	0x00000000,	/* 18: faked 0 BAR */
+	0x00000000,	/* 1c: faked 0 BAR */
+	0x00000000,	/* 20: faked 0 BAR */
+	0x00000000,	/* 24: faked 0 BAR */
+	0x00000000,	/* 28: faked 0 CIS */
+	0x00000000,	/* 2c: faked 0 Subsystem */
+	0x00000000,	/* 30: faked 0 ROM */
+	0x00000000,	/* 34: faked 0 Res */
+	0x00000000,	/* 28: faked 0 Res */
+	0x00000109	/* 3c: faked 0 Lat/Gnt/pin/line */
+};
+
+pcireg_t
+peg2_conf_read(void *cpv, pcitag_t tag, int offset)
+{
+	struct pcibr_config *cp = cpv;
+	pcireg_t data;
+	u_int32_t reg;
+	int s;
+	int daddr = 0;
+	faultbuf env;
+	void *oldh;
+
+	if (offset & 3 || offset < 0 || offset >= 0x100)
+		return(~0);
+
+	reg = mpc_gen_config_reg(cpv, tag, offset);
+	/* if invalid tag, return -1 */
+	if (reg == 0xffffffff)
+		return(~0);
+
+	if (pegasos == 2 && tag == 0) {
+		if (offset >= 0x40)
+			return (~0);
+
+		if (offset >= 0x10) 
+			return marvell_data[offset / 4];
+
+		/* registers < 0x10 allow read */
+	}
+
+	if ((cp->config_type & 2) && (offset & 0x04))
+		daddr += 4;
+
+	s = ppc_intr_disable();
+
+	oldh = curpcb->pcb_onfault;
+	if (setfault(&env)) {
+		/* we faulted during the read? */
+		curpcb->pcb_onfault = oldh;
+		ppc_intr_enable(s);
+		return 0xffffffff;
+	}
+
+	bus_space_write_4(&marvell_io, marvell_ioh, 0x118, 0x00800000);
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+	data = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, daddr);
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+	bus_space_write_4(&marvell_io, marvell_ioh, 0x11c, 0x00800000);
+
+	curpcb->pcb_onfault = oldh;
+
+	ppc_intr_enable(s);
+	return(data);
+}
+void
+peg2_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
+{
+	struct pcibr_config *cp = cpv;
+	u_int32_t reg;
+	int s;
+	int daddr = 0;
+
+	reg = mpc_gen_config_reg(cpv, tag, offset);
+
+	/* if invalid tag, return ??? */
+	if (reg == 0xffffffff)
+		return;
+
+	if (pegasos == 2 && tag == 0) {
+		switch (offset) {
+		case 0x3c:
+			marvell_data[offset / 4] = data;
+			return;
+		}
+
+		if (offset != 4)
+			return;
+	}
+
+	if ((cp->config_type & 2) && (offset & 0x04))
+		daddr += 4;
+
+	s = splhigh();
+
+	bus_space_write_4(&marvell_io, marvell_ioh, 0x118, 0x00800000);
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+	bus_space_write_4(cp->lc_iot, cp->ioh_cfc, daddr, data);
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+	bus_space_write_4(&marvell_io, marvell_ioh, 0x11c, 0x00800000);
+
+	splx(s);
+}
+
 pcireg_t
 mpc_conf_read(void *cpv, pcitag_t tag, int offset)
 {
@@ -637,6 +803,16 @@ mpc_conf_read(void *cpv, pcitag_t tag, int offset)
 	/* if invalid tag, return -1 */
 	if (reg == 0xffffffff)
 		return(~0);
+
+	if (pegasos == 2 && tag == 0) {
+		if (offset >= 0x40)
+			return (~0);
+
+		if (offset >= 0x10) 
+			return marvell_data[offset / 4];
+
+		/* registers < 0x10 allow read */
+	}
 
 	if ((cp->config_type & 2) && (offset & 0x04))
 		daddr += 4;
@@ -661,7 +837,6 @@ mpc_conf_read(void *cpv, pcitag_t tag, int offset)
 	splx(s);
 	return(data);
 }
-
 void
 mpc_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
@@ -675,6 +850,17 @@ mpc_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	/* if invalid tag, return ??? */
 	if (reg == 0xffffffff)
 		return;
+
+	if (pegasos == 2 && tag == 0) {
+		switch (offset) {
+		case 0x3c:
+			marvell_data[offset / 4] = data;
+			return;
+		}
+
+		if (offset != 4)
+			return;
+	}
 
 	if ((cp->config_type & 2) && (offset & 0x04))
 		daddr += 4;
