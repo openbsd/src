@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hpux,v 1.2 2004/09/19 21:56:18 mickey Exp $
+#	$OpenBSD: hpux_sig2.c,v 1.1 2004/09/19 21:56:18 mickey Exp $
 #
 # Config file description for machine-independent HPUX compat code.
 # Included by ports that need it.

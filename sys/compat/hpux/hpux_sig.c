@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sig.c,v 1.1 2004/07/09 21:33:45 mickey Exp $	*/
+/*	$OpenBSD: hpux_sig.c,v 1.9 2004/09/19 21:56:18 mickey Exp $	*/
 /*	$NetBSD: hpux_sig.c,v 1.16 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_sig.h>
-#include <compat/hpux/m68k/hpux_syscallargs.h>
+#include <compat/hpux/hpux_syscallargs.h>
 
 /* indexed by HPUX signal number - 1 */
 char hpuxtobsdsigmap[NSIG] = {
@@ -348,45 +348,6 @@ hpux_sys_sigaction(p, v, retval)
 			p->p_flag |= SOUSIG;		/* XXX */
 #endif
 	}
-	return (0);
-}
-
-int
-hpux_sys_ssig_6x(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_ssig_6x_args /* {
-		syscallarg(int) signo;
-		syscallarg(sig_t) fun;
-	} */ *uap = v;
-	int a;
-	struct sigaction vec;
-	struct sigaction *sa = &vec;
-
-	a = hpuxtobsdsig(SCARG(uap, signo));
-	sa->sa_handler = SCARG(uap, fun);
-	/*
-	 * Kill processes trying to use job control facilities
-	 * (this'll help us find any vestiges of the old stuff).
-	 */
-	if ((a &~ 0377) ||
-	    (sa->sa_handler != SIG_DFL && sa->sa_handler != SIG_IGN &&
-	     ((int)sa->sa_handler) & 1)) {
-		psignal(p, SIGSYS);
-		return (0);
-	}
-	if (a <= 0 || a >= NSIG || a == SIGKILL || a == SIGSTOP ||
-	    (a == SIGCONT && sa->sa_handler == SIG_IGN))
-		return (EINVAL);
-	sa->sa_mask = 0;
-	sa->sa_flags = 0;
-	*retval = (int)p->p_sigacts->ps_sigact[a];
-	setsigvec(p, a, sa);
-#if 0
-	p->p_flag |= SOUSIG;		/* mark as simulating old stuff */
-#endif
 	return (0);
 }
 
