@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.3 2000/09/25 23:50:20 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.4 2000/11/07 20:15:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
@@ -141,7 +141,7 @@ twe_attach(sc)
 	struct twe_ccb	*ccb;
 	struct twe_cmd	*cmd;
 	u_int32_t	status;
-	int		error, i, retry;
+	int		error, i, retry, nunits;
 	const char	*errstr;
 
 	TAILQ_INIT(&sc->sc_ccb2q);
@@ -188,13 +188,6 @@ twe_attach(sc)
 		ccb->ccb_cmdpa = kvtop((caddr_t)cmd);
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 	}
-
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &twe_switch;
-	sc->sc_link.adapter_target = TWE_MAX_UNITS;
-	sc->sc_link.device = &twe_dev;
-	sc->sc_link.openings = TWE_MAXCMDS;	/* XXX or less? */
-	sc->sc_link.adapter_buswidth = TWE_MAX_UNITS;
 
 	for (errstr = NULL, retry = 3; retry--; ) {
 		int		veseen_srst;
@@ -329,7 +322,7 @@ twe_attach(sc)
 	/* we are assuming last read status was good */
 	printf(": Escalade V%d.%d\n", TWE_MAJV(status), TWE_MINV(status));
 
-	for (i = 0; i < TWE_MAX_UNITS; i++) {
+	for (nunits = i = 0; i < TWE_MAX_UNITS; i++) {
 		if (pb->data[i] == 0)
 			continue;
 
@@ -357,6 +350,7 @@ twe_attach(sc)
 			continue;
 		}
 
+		nunits++;
 		sc->sc_hdr[i].hd_present = 1;
 		sc->sc_hdr[i].hd_devtype = 0;
 		sc->sc_hdr[i].hd_size = letoh32(*(u_int32_t *)cap->data);
@@ -374,6 +368,13 @@ twe_attach(sc)
 	}
 
 	/* TODO: fetch & print cache params? */
+
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter = &twe_switch;
+	sc->sc_link.adapter_target = TWE_MAX_UNITS;
+	sc->sc_link.device = &twe_dev;
+	sc->sc_link.openings = TWE_MAXCMDS / nunits;
+	sc->sc_link.adapter_buswidth = TWE_MAX_UNITS;
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
