@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.251 2001/04/09 20:40:51 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.252 2001/04/13 05:43:03 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -348,7 +348,9 @@ rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
 dcphy*	at mii? phy ?				# Digital Clone PHYs
 amphy*	at mii? phy ?				# AMD 79C873 PHYs
 tqphy*	at mii? phy ?				# TDK 78Q212x PHYs
+bmtphy*	at mii? phy ?				# Broadcom 10/100 PHYs
 brgphy*	at mii? phy ?				# Broadcom Gigabit PHYs
+eephy* at mii? phy ?				# Marvell 88E1000 series PHY
 xmphy*	at mii? phy ?				# XaQti XMAC-II PHYs
 ukphy*	at mii? phy ?				# "unknown" PHYs
 
