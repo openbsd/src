@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.4 1997/11/13 18:35:33 deraadt Exp $	*/
+/*	$OpenBSD: mman.h,v 1.5 1997/11/14 20:56:06 deraadt Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -90,14 +90,15 @@
 
 __BEGIN_DECLS
 /* Some of these int's should probably be size_t's */
-caddr_t	mmap __P((caddr_t, size_t, int, int, int, off_t));
-int	mprotect __P((caddr_t, size_t, int));
-int	munmap __P((caddr_t, size_t));
+caddr_t	mmap __P((void *, size_t, int, int, int, off_t));
+int	mprotect __P((void *, size_t, int));
+int	munmap __P((void *, size_t));
 int	msync __P((void *, size_t, int));
-int	mlock __P((caddr_t, size_t));
-int	munlock __P((caddr_t, size_t));
-int	madvise __P((caddr_t, size_t, int));
-int	mincore __P((caddr_t, size_t, char *));
+int	mlock __P((void *, size_t));
+int	munlock __P((void *, size_t));
+int	madvise __P((void *, size_t, int));
+int	mincore __P((void *, size_t, char *));
+int	minherit __P((void *, size_t, int));
 __END_DECLS
 
 #endif /* !_KERNEL */

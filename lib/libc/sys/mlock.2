@@ -44,9 +44,9 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/mman.h>
 .Ft int
-.Fn mlock "caddr_t addr" "size_t len"
+.Fn mlock "void *addr" "size_t len"
 .Ft int
-.Fn munlock "caddr_t addr" "size_t len"
+.Fn munlock "void *addr" "size_t len"
 .Sh DESCRIPTION
 The
 .Nm mlock

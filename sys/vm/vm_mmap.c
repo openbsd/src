@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.9 1997/11/13 18:35:38 deraadt Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.10 1997/11/14 20:56:08 deraadt Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ sys_mmap(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_mmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
@@ -381,7 +381,7 @@ sys_munmap(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_munmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vm_offset_t addr;
@@ -453,7 +453,7 @@ sys_mprotect(p, v, retval)
 	register_t *retval;
 {
 	struct sys_mprotect_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(int) len;
 		syscallarg(int) prot;
 	} */ *uap = v;
@@ -543,7 +543,7 @@ sys_madvise(p, v, retval)
 {
 #if 0
 	struct sys_madvise_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) behav;
 	} */ *uap = v;
@@ -562,7 +562,7 @@ sys_mincore(p, v, retval)
 {
 #if 0
 	struct sys_mincore_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
 	} */ *uap = v;
@@ -579,7 +579,7 @@ sys_mlock(p, v, retval)
 	register_t *retval;
 {
 	struct sys_mlock_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vm_offset_t addr;
@@ -628,7 +628,7 @@ sys_munlock(p, v, retval)
 	register_t *retval;
 {
 	struct sys_munlock_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vm_offset_t addr;
