@@ -1,9 +1,1 @@
 ifconfig lo1 mtu 33224
-ARCH=`uname -m`
-if [ $ARCH -eq "alpha" ]; then
-  ifconfig lo1 33192
-fi;
-if [ $ARCH -eq "sparc64" ]; then
-  ifconfig lo1 33192
-fi;
-

@@ -1,1 +1,1 @@
-ifconfig lo1 inet 10.163.1.1 netmask 0xffffffff mtu 1500
+ifconfig lo1 mtu 1500
