@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.16 2003/11/11 19:49:02 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.17 2003/11/13 19:05:32 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.16 2003/11/11 19:49:02 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.17 2003/11/13 19:05:32 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -127,7 +127,7 @@ extern char *__progname;
 %right <str> ASSIGN_OP
 %left PLUS MINUS
 %left MULTIPLY DIVIDE REMAINDER
-%left EXPONENT
+%right EXPONENT
 %nonassoc UMINUS
 %nonassoc INCR DECR
 
