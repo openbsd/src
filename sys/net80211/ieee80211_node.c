@@ -1,4 +1,4 @@
-/*	$OpenBSD $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.2 2004/11/02 15:39:02 millert Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -479,7 +479,8 @@ ieee80211_node_alloc(struct ieee80211com *ic)
 	struct ieee80211_node *ni;
 	MALLOC(ni, struct ieee80211_node *, sizeof(struct ieee80211_node),
 	    M_80211_NODE, M_NOWAIT);
-	memset(ni, 0, sizeof(struct ieee80211_node));
+	if (ni != NULL)
+		memset(ni, 0, sizeof(struct ieee80211_node));
 	return ni;
 }
 
