@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.11 1997/03/30 17:52:19 millert Exp $
+#	$OpenBSD: special,v 1.12 1997/04/14 00:55:04 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -135,15 +135,15 @@ run		type=dir mode=0755 uname=root gname=wheel
 utmp		type=file mode=0664 uname=root gname=utmp
 ..	#var/run
 spool		type=dir mode=0755 uname=root gname=wheel
-ftp		type=dir mode=0755 uname=root gname=wheel optional
-bin		type=dir mode=0755 uname=root gname=wheel optional
-ls		type=file mode=0555 uname=root gname=wheel optional
+ftp		type=dir mode=0555 uname=root gname=wheel optional
+bin		type=dir mode=0511 uname=root gname=wheel optional
+ls		type=file mode=0111 uname=root gname=wheel optional
 ..	#var/spool/ftp/bin
-etc		type=dir mode=0755 uname=root gname=wheel optional
-group		type=file mode=0644 uname=root gname=wheel optional
-localtime	type=file mode=0644 uname=root gname=wheel optional
-master.passwd	type=file mode=0600 uname=root gname=wheel optional
-passwd		type=file mode=0644 uname=root gname=wheel optional
+etc		type=dir mode=0511 uname=root gname=wheel optional
+group		type=file mode=0444 uname=root gname=wheel optional
+localtime	type=file mode=0444 uname=root gname=wheel optional
+master.passwd	type=file mode=0400 uname=root gname=wheel optional
+passwd		type=file mode=0444 uname=root gname=wheel optional
 ..	#var/spool/ftp/etc
 hidden		type=dir mode=0111 uname=root gname=wheel optional ignore
 ..	#var/spool/ftp/hidden

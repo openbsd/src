@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.10 1997/03/29 20:02:00 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.11 1997/04/14 00:55:03 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -299,7 +299,7 @@ and unwritable by anyone (mode 555).
 .It Pa ~ftp/bin
 Make this directory owned by
 .Dq root
-and unwritable by anyone (mode 555 or 111).
+and unwritable by anyone (mode 511).
 The program
 .Xr ls 1
 must be present to support the list command.
@@ -307,7 +307,7 @@ This program should be mode 111 (executable only).
 .It Pa ~ftp/etc
 Make this directory owned by
 .Dq root
-and unwritable by anyone (mode 555 or 111).
+and unwritable by anyone (mode 511).
 The files pwd.db (see
 .Xr pwd_mkdb 8 )
 and
