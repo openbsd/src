@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipnat.c,v 1.20 1998/02/24 04:03:38 dgregor Exp $    */
+/*    $OpenBSD: ipnat.c,v 1.21 1998/03/07 00:34:27 deraadt Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -55,7 +55,7 @@
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.20 1998/02/24 04:03:38 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.21 1998/03/07 00:34:27 deraadt Exp $";
 #endif
 
 
@@ -520,7 +520,7 @@ int	*resolved;
 			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
 		}
-		return np->n_net;
+		return htonl(np->n_net);
 	}
 	return *(u_32_t *)hp->h_addr;
 }
