@@ -1,55 +1,52 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.17 2001/01/05 18:57:17 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.18 2001/01/23 23:54:26 brad Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
 LNDIR=          /usr/bin/lndir
 
-
-#   OpenBSD apache path layout.
+#    OpenBSD Layout
 #<Layout OpenBSD>
 #    prefix:        /var/www
 #    exec_prefix:   /usr
-#    bindir:        /usr/bin
-#    sbindir:       /usr/sbin
-#    libexecdir:    /usr/lib/apache/modules
-#    mandir:        /usr/share/man
-#    sysconfdir:    /var/www/conf
-#    datadir:       /var/www
-#    iconsdir:      /var/www/icons
-#    htdocsdir:     /var/www/htdocs
-#    cgidir:        /var/www/cgi-bin
-#    includedir:    /usr/lib/apache/include
-#    localstatedir: /var/www
-#    runtimedir:    /var/www/logs
-#    logfiledir:    /var/www/logs
-#    proxycachedir: /var/www/proxy
+#    bindir:        $exec_prefix/bin
+#    sbindir:       $exec_prefix/sbin
+#    libexecdir:    $exec_prefix/lib/apache/modules
+#    mandir:        $exec_prefix/share/man
+#    sysconfdir:    $prefix/conf
+#    datadir:       $prefix
+#    iconsdir:      $prefix/icons
+#    htdocsdir:     $prefix/htdocs
+#    cgidir:        $prefix/cgi-bin
+#    includedir:    $exec_prefix/lib/apache/include
+#    localstatedir: $prefix
+#    runtimedir:    $prefix/logs
+#    logfiledir:    $prefix/logs
+#    proxycachedir: $prefix/proxy
 #</Layout>
-#
 
-WWWROOT= /var/www
-HTTPD_PREFIX=	/var/www
-HTTPD_BINDIR=	/usr/bin
-HTTPD_SBINDIR=	/usr/sbin
-HTTPD_LIBEXECDIR= /usr/lib/apache/modules
-HTTPD_CONFDIR=	/var/www/conf
-HTTPD_DATADIR=	/var/www
-HTTPD_LOGDIR=	/var/www/logs
-HTTPD_RUNDIR=	/var/www/logs
-HTTPD_HTDOCSDIR= /var/www/htdocs
-HTTPD_ICONSDIR=	/var/www/icons
-HTTPD_INCLUDEDIR=	/usr/lib/apache/include
+HTTPD_PREFIX=		/var/www
+HTTPD_EXEC_PREFIX=	/usr
+HTTPD_BINDIR=		${HTTPD_EXEC_PREFIX}/bin
+HTTPD_SBINDIR=		${HTTPD_EXEC_PREFIX}/sbin
+HTTPD_LIBEXECDIR=	${HTTPD_EXEC_PREFIX}/lib/apache/modules
+HTTPD_SYSCONFDIR=	${HTTPD_PREFIX}/conf
+HTTPD_ICONSDIR=		${HTTPD_PREFIX}/icons
+HTTPD_HTDOCSDIR=	${HTTPD_PREFIX}/htdocs
+HTTPD_INCLUDEDIR=	${HTTPD_EXEC_PREFIX}/lib/apache/include
+HTTPD_RUNDIR=		${HTTPD_PREFIX}/logs
+HTTPD_LOGDIR=		${HTTPD_PREFIX}/logs
 
-CONFIG_ARGS=	--with-layout=OpenBSD --enable-module=ssl \
-	--enable-suexec --enable-module=ssl \
-	--suexec-caller=www --suexec-docroot=/var/www/htdocs \
-	--suexec-logfile=/var/log/suexec_log --suexec-userdir=public_html\
-	--suexec-uidmin=1000 --suexec-gidmin=1000 \
-	--suexec-safepath=/usr/bin:/bin:/usr/local/bin
+CONFIG_ARGS=	--with-layout="OpenBSD" --enable-module="ssl" \
+	--enable-suexec --suexec-caller="www" \
+	--suexec-docroot="${HTTPD_HTDOCSDIR}" \
+	--suexec-logfile="/var/log/suexec_log" --suexec-userdir="public_html" \
+	--suexec-uidmin="1000" --suexec-gidmin="1000" \
+	--suexec-safepath="/usr/bin:/bin:/usr/local/bin"
 
-# This is stupid - to build a DSO module for apache you not only need to
+# This is stupid - to build a DSO module for Apache you not only need to
 # --enable-shared, you need to --enable-module or --enable-shared doesn't
-# do anything   
+# do anything.
 
 DSO_MODULE_ARGS= --enable-module=so --enable-shared=auth_anon \
 	--enable-shared=auth_db --enable-shared=auth_dbm \
@@ -71,9 +68,10 @@ DSO_MODULE_ARGS= --enable-module=so --enable-shared=auth_anon \
 
 INSTALL_MODULES=
 
-# If you support dynamic loading, enable the so module, and build all the 
-# modules that come with apache 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "sparc" 
+# If you support dynamic loading, enable the so module, and build all the
+# modules that come with Apache.
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "sparc"
 CONFIG_ARGS+=  ${DSO_MODULE_ARGS}
 INSTALL_MODULES= src/modules/experimental/mod_mmap_static.so \
 src/modules/experimental/mod_auth_digest.so \
@@ -95,7 +93,7 @@ src/modules/standard/mod_usertrack.so \
 src/modules/standard/mod_unique_id.so
 .endif
 
-PERLPATH= /usr/bin/perl
+PERLPATH=	/usr/bin/perl
 
 MUNGEDFILES =	${.OBJDIR}/src/ap/Makefile \
 		${.OBJDIR}/src/include/ap_config_auto.h \
@@ -116,14 +114,13 @@ MUNGEDFILES =	${.OBJDIR}/src/ap/Makefile \
 		${.OBJDIR}/src/modules.c \
 		${.OBJDIR}/src/Configuration.apaci ${.OBJDIR}/Makefile \
 		${.OBJDIR}/config.status
-BINFILES= src/support/htdigest src/support/htpasswd \
+BINFILES= 	src/support/htdigest src/support/htpasswd
 
 SBINFILES= \
 	src/httpd src/support/ab \
 	src/support/logresolve src/support/rotatelogs src/support/suexec
 
-
-MAN+=  src/support/dbmmanage.1 src/support/htdigest.1 src/support/htpasswd.1 \
+MAN+=	src/support/dbmmanage.1 src/support/htdigest.1 src/support/htpasswd.1 \
 	src/support/ab.8 src/support/apachectl.8 src/support/logresolve.8 \
 	httpd.8 src/support/rotatelogs.8 src/support/apxs.8 \
 	src/support/suexec.8
@@ -179,10 +176,6 @@ XMLFILES= \
 	src/lib/expat-lite/xmltok.h \
 	src/lib/expat-lite/xmltok_impl.h
 
-# This is needed because apache generates these *as* it builds
-# so we can't pick them up on make includes. 
-KLUDGEINCFILES = \
-
 CONFFILES= \
 	conf/srm.conf-dist conf/access.conf-dist conf/httpd.conf-dist \
 	conf/mime.types conf/access.conf conf/httpd.conf \
@@ -194,9 +187,7 @@ HTDOCS= \
 	htdocs/logo23.jpg htdocs/logo24.jpg htdocs/smalltitle.gif \
 	htdocs/openbsd_pb.gif
 
-
-CGIFILES= \
-	cgi-bin/printenv cgi-bin/test-cgi	
+CGIFILES=	cgi-bin/printenv cgi-bin/test-cgi	
 
 MANUALFILES= \
 	manual/mod/core.html  \
@@ -438,22 +429,20 @@ ICONFILES= \
 	icons/small/text.gif icons/small/transfer.gif \
 	icons/small/unknown.gif icons/small/uu.gif  
 
-
 .include <bsd.own.mk>
 
 all: 	prereq
 	cd ${.OBJDIR} && ${MAKE}
 
-
 prereq: ${.OBJDIR}/config.status
 
 ${.OBJDIR}/config.status : ${.OBJDIR}/config.layout
-	cd ${.OBJDIR} && CC="${CC}" LD_SHLIB="${CC}" OPTIM="${CFLAGS}" \
+	@cd ${.OBJDIR} && CC="${CC}" LD_SHLIB="${CC}" OPTIM="${CFLAGS}" \
 		sh configure ${CONFIG_ARGS}
 
 .if !exists(${.OBJDIR}/config.layout)
 ${.OBJDIR}/config.layout: ${.CURDIR}/config.layout
-	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
+	@${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
 .endif
 
 includes: prereq
@@ -496,7 +485,7 @@ install: maninstall
 		-e 's;\@sbindir\@;${HTTPD_SBINDIR};' \
 		-e 's;\@libexecdir\@;${HTTPD_LIBEXECDIR};' \
 		-e 's;\@includedir\@;${HTTPD_INCLUDEDIR};' \
-		-e 's;\@sysconfdir\@;${HTTPD_CONFDIR};' \
+		-e 's;\@sysconfdir\@;${HTTPD_SYSCONFDIR};' \
 		< ${.OBJDIR}/src/support/apxs > $$d/apxs && \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 555 \
 		$$d/apxs ${DESTDIR}${HTTPD_SBINDIR}"; \
@@ -545,33 +534,33 @@ maninstall:
 distribution:
 	@-for i in ${CONFFILES}; do \
 		j=`dirname $$i`; \
-		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		echo "Installing ${DESTDIR}${HTTPD_PREFIX}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		    ${.OBJDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_PREFIX}/$$j/; \
 	done
 	@-for i in ${HTDOCS}; do \
 		j=`dirname $$i`; \
-		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		echo "Installing ${DESTDIR}${HTTPD_PREFIX}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		    ${.OBJDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_PREFIX}/$$j/; \
 	done
 	@-for i in ${MANUALFILES}; do \
 		j=`dirname $$i`; \
-		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		echo "Installing ${DESTDIR}${HTTPD_HTDOCSDIR}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		    ${.OBJDIR}/htdocs/$$i ${DESTDIR}${WWWROOT}/htdocs/$$j/; \
+		    ${.OBJDIR}/htdocs/$$i ${DESTDIR}${HTTPD_HTDOCSDIR}/$$j/; \
 	done
 	@-for i in ${CGIFILES}; do \
 		j=`dirname $$i`; \
-		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		echo "Installing ${DESTDIR}${HTTPD_PREFIX}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 000 \
-		    ${.OBJDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_PREFIX}/$$j/; \
 	done
 	@-for i in ${ICONFILES}; do \
 		j=`dirname $$i`; \
-		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		echo "Installing ${DESTDIR}${HTTPD_PREFIX}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		    ${.OBJDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_PREFIX}/$$j/; \
 	done
 
 .include <bsd.obj.mk>
