@@ -6,9 +6,7 @@
 #include "zutil.h"
 #include "inftrees.h"
 
-#ifndef i386
-char inflate_copyright[] = " inflate 1.0.4 Copyright 1995-1996 Mark Adler ";
-#endif
+const char inflate_copyright[] = "inflate 1.0.4 Copyright 1995-1996 Mark Adler";
 
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
@@ -375,19 +373,11 @@ z_streamp z;            /* for zfree function */
 /* build fixed tables only once--keep them here */
 local int fixed_built = 0;
 #define FIXEDH 530      /* number of hufts used by fixed tables */
-#ifndef i386
 local inflate_huft fixed_mem[FIXEDH];
 local uInt fixed_bl;
 local uInt fixed_bd;
 local inflate_huft *fixed_tl;
 local inflate_huft *fixed_td;
-#else
-local inflate_huft *fixed_mem = NULL;
-local uInt fixed_bl = 0;
-local uInt fixed_bd = 0;
-local inflate_huft *fixed_tl = NULL;
-local inflate_huft *fixed_td = NULL;
-#endif
 
 
 local voidpf falloc(q, n, s)
@@ -395,11 +385,6 @@ voidpf q;       /* opaque pointer */
 uInt n;         /* number of items */
 uInt s;         /* size of item */
 {
-#ifdef i386
-  extern void *alloc(u_int);
-  if (fixed_mem == NULL)
-  	fixed_mem = alloc (FIXEDH * sizeof(*fixed_mem));
-#endif
   Assert(s == sizeof(inflate_huft) && n <= *(intf *)q,
          "inflate_trees falloc overflow");
   *(intf *)q -= n+s-s; /* s-s to avoid warning */
