@@ -1,5 +1,6 @@
+/* $OpenBSD: stdfiles.c,v 1.2 2003/11/27 22:51:36 marc Exp $ */
 /* $snafu: stdfiles.c,v 1.3 2003/02/03 21:22:26 marc Exp $ */
-/* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
+/* PUBLIC DOMAIN Oct 2002 Marco S Hyman <marc@snafu.org> */
 
 #include <assert.h>
 #include <fcntl.h>
