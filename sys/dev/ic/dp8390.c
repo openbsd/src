@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.5 1999/08/13 21:10:14 deraadt Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.6 2000/04/19 21:35:10 fgsch Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -111,8 +111,10 @@ dp8390_config(sc, media, nmedia, defmedia)
 	if ((sc->mem_size < 16384) ||
 	    (sc->sc_flags & DP8390_NO_MULTI_BUFFERING))
 		sc->txb_cnt = 1;
-	else
+	else if (sc->mem_size < 8192 * 3)
 		sc->txb_cnt = 2;
+	else
+		sc->txb_cnt = 3;
 
 	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
@@ -432,6 +434,15 @@ dp8390_xmit(sc)
 #endif
 	u_short len;
 
+#ifdef DIAGNOSTIC
+	if ((sc->txb_next_tx + sc->txb_inuse) % sc->txb_cnt != sc->txb_new)
+		panic("dp8390_xmit: desync, next_tx=%d inuse=%d cnt=%d new=%d",
+		    sc->txb_next_tx, sc->txb_inuse, sc->txb_cnt, sc->txb_new);
+
+	if (sc->txb_inuse == 0)
+		panic("dp8390_xmit: no packets to xmit\n");
+#endif
+
 	len = sc->txb_len[sc->txb_next_tx];
 
 	/* Set NIC for page 0 register access. */
@@ -510,7 +521,7 @@ outloop:
 		len = dp8390_write_mbuf(sc, m0, buffer);
 
 	m_freem(m0);
-	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
+	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN - ETHER_CRC_LEN);
 
 	/* Point to next buffer slot and wrap if necessary. */
 	if (++sc->txb_new == sc->txb_cnt)
@@ -916,7 +927,7 @@ dp8390_ioctl(ifp, cmd, data)
 			if ((error = dp8390_enable(sc)) != 0)
 				break;
 			dp8390_init(sc);
-		} else if (sc->sc_enabled) {
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
