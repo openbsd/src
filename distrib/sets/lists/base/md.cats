@@ -1358,8 +1358,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/stp4020reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/stp4020var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/uperf_sbusreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/xboxreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/xboxvar.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/xboxxreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/zxreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sun
