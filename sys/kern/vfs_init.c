@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.12 2002/03/14 01:27:06 millert Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.13 2002/05/20 05:27:40 mickey Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 		bzero(opv_desc_vector, vfs_opv_numops * sizeof(PFI));
 		*(vfs_opv_desc->opv_desc_vector_p) = opv_desc_vector;
 		DODEBUG(printf("vector at %p allocated\n",
-		    opv_desc_vector_p));
+		    opv_desc_vector));
 	}
 
 	for (opve_descp = vfs_opv_desc->opv_desc_ops;
