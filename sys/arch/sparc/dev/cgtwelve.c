@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.6 2003/04/06 17:02:32 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.7 2003/05/12 20:18:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -274,7 +274,7 @@ cgtwelve_ioctl(dev, cmd, data, flags, p)
 	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNCG12;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
