@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nlist.c,v 1.2 1996/05/17 20:04:55 pefo Exp $";
+static char *rcsid = "$Id: nlist.c,v 1.3 1996/05/24 09:22:59 deraadt Exp $";
 #endif /* not lint */
 
 #define DO_AOUT			/* always do a.out */
@@ -70,6 +70,7 @@ typedef struct nlist NLIST;
 #define	badfmt(str)	errx(1, "%s: %s: %s", kfile, str, strerror(EFTYPE))
 
 static void badread __P((int, char *));
+static u_long get_kerntext __P((char *kfn));
 
 static char *kfile;
 
@@ -86,6 +87,7 @@ __aout_knlist(name, db)
 	NLIST nbuf;
 	DBT data, key;
 	int fd, nr, strsize;
+	u_long kerntextoff;
 	char *strtab, buf[1024];
 
 	kfile = name;
@@ -129,6 +131,8 @@ __aout_knlist(name, db)
 	data.data = (u_char *)&nbuf;
 	data.size = sizeof(NLIST);
 
+	kerntextoff = get_kerntext(name);
+
 	/* Read each symbol and enter it into the database. */
 	nsyms = ebuf.a_syms / sizeof(struct nlist);
 	while (nsyms--) {
@@ -147,16 +151,13 @@ __aout_knlist(name, db)
 
 		if (strcmp((char *)key.data, VRS_SYM) == 0) {
 			long cur_off, voff;
-#ifndef KERNTEXTOFF
-#define KERNTEXTOFF KERNBASE
-#endif
 			/*
 			 * Calculate offset relative to a normal (non-kernel)
-			 * a.out.  KERNTEXTOFF is where the kernel is really
+			 * a.out.  Kerntextoff is where the kernel is really
 			 * loaded; N_TXTADDR is where a normal file is loaded.
 			 * From there, locate file offset in text or data.
 			 */
-			voff = nbuf.n_value - KERNTEXTOFF + N_TXTADDR(ebuf);
+			voff = nbuf.n_value - kerntextoff + N_TXTADDR(ebuf);
 			if ((nbuf.n_type & N_TYPE) == N_TEXT)
 				voff += N_TXTOFF(ebuf) - N_TXTADDR(ebuf);
 			else
@@ -364,6 +365,34 @@ badread(nr, p)
 	if (nr < 0)
 		err(1, "%s", kfile);
 	badfmt(p);
+}
+
+/*
+ * XXX: Using this value from machine/param.h introduces a
+ * XXX: machine dependency on this program, so /usr can not
+ * XXX: be shared between (i.e.) several m68k machines.
+ * Instead of compiling in KERNTEXTOFF or KERNBASE, try to
+ * determine the text start address from a standard symbol.
+ * For backward compatibility, use the old compiled-in way
+ * when the standard symbol name is not found.
+ */
+#ifndef KERNTEXTOFF
+#define KERNTEXTOFF KERNBASE
+#endif
+
+static u_long
+get_kerntext(name)
+	char *name;
+{
+	NLIST nl[2];
+
+	bzero((caddr_t)nl, sizeof(nl));
+	nl[0]._name = "_kernel_text";
+
+	if (nlist(name, nl) != 0)
+		return (KERNTEXTOFF);
+
+	return (nl[0].n_value);
 }
 
 static struct knlist_handlers {
