@@ -845,7 +845,6 @@ static void	 help __P((struct tab *, char *));
 static struct tab *
 		 lookup __P((struct tab *, char *));
 static void	 sizecmd __P((char *));
-static void	 toolong __P((int));
 static int	 yylex __P((void));
 
 static struct tab *
@@ -941,7 +940,7 @@ getline(s, n, iop)
 	return (s);
 }
 
-static void
+void
 toolong(signo)
 	int signo;
 {

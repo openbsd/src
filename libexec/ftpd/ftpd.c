@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.25 1996/12/03 03:07:17 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.26 1996/12/07 09:00:22 bitblt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1114,7 +1114,10 @@ dataconn(name, size, mode)
 		struct sockaddr_in from;
 		int s, fromlen = sizeof(from);
 
+		signal (SIGALRM, toolong);
+		(void) alarm ((unsigned) timeout);
 		s = accept(pdata, (struct sockaddr *)&from, &fromlen);
+		(void) alarm (0);
 		if (s < 0) {
 			reply(425, "Can't open data connection.");
 			(void) close(pdata);

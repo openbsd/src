@@ -65,3 +65,4 @@ void	store __P((char *, char *, int));
 void	upper __P((char *));
 void	user __P((char *));
 void	yyerror __P((char *));
+void	toolong __P((int));
