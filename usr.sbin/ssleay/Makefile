@@ -15,12 +15,20 @@ SSLEAY_SRC= ${.CURDIR}/../../${SSLEAYDIST}/apps
 .if ${MACHINE_ARCH} == "i386"
 CFLAGS+= -DL_ENDIAN -DBN_ASM
 .else
+.if ${MACHINE_ARCH} == "arc"
+CFLAGS+= -DL_ENDIAN
+.else
+.if ${MACHINE_ARCH} == "pmax"
+CFLAGS+= -DL_ENDIAN
+.else
 .if ${MACHINE_ARCH} == "alpha"
 # no ENDIAN stuff defined for alpha
 .else
 CFLAGS+= -DB_ENDIAN
 .endif
 .endif
+.endif
+.endif 
 
 CFLAGS+= -DMONOLITH -DNO_IDEA -DTERMIOS -DANSI_SOURCE 
 CFLAGS+= -I/usr/include/ssl
