@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fnmatch.3,v 1.7 1999/06/05 04:47:41 aaron Exp $
+.\"	$OpenBSD: fnmatch.3,v 1.8 2000/03/24 17:16:30 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -134,7 +134,16 @@ otherwise, it returns the value
 The
 .Fn fnmatch
 function conforms to
-.St -p1003.2-92 .
+.St -p1003.2-92
+and
+.St -xpg4.2 .
+.Pp
+Note, however, that the flags
+.Dv FNM_LEADING_DIR
+and
+.Dv FNM_CASEFOLD
+are extensions and should not be used by applications striving for
+strict standards conformance.
 .Sh HISTORY
 The
 .Fn fnmatch
