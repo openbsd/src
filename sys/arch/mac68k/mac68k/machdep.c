@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 1997/04/24 00:54:34 gene Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 1997/04/25 18:34:17 gene Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -493,7 +493,8 @@ again:
 	configure();
 }
 
-void doboot __P((void));
+void doboot __P((void))
+	__attribute__((__noreturn__));
 void via_shutdown __P((void));
 
 /*
@@ -578,42 +579,48 @@ boot(howto)
 		}
 #else
 # ifdef DIAGNOSTIC
-		printf("OpenBSD/mac68k does not trust itself to update the "
-		    "RTC on shutdown.\n");
+		printf("OpenBSD/mac68k does not trust itself to update the clock on shutdown.\n");
 # endif
 #endif
 	}
-	splhigh();		/* extreme priority */
+
+	/* Disable interrupts. */
+	splhigh();
+
+	/* If rebooting and a dump is requested, do it. */
+	if (howto & RB_DUMP) {
+		savectx(&dumppcb);	/* XXX this goes away soon */
+		dumpsys();
+	}
+
+	/* Run any shutdown hooks. */
+	doshutdownhooks();
+
 	if (howto & RB_HALT) {
-		printf("halted\n\n");
+		printf("System halted.\n\n");
 		via_shutdown();
 #ifndef MRG_ADB                 /* adb_poweroff is available only when
                                  * the MRG_ADB method isn't used.       */
                 adb_poweroff(); /* Shut down machines whose power functions
                                  * are accessed via modified ADB calls. */
 #endif
-	} else {
-		if (howto & RB_DUMP) {
-			savectx(&dumppcb);
-			dumpsys();
-		}
-
-		/* run any shutdown hooks */
-		doshutdownhooks();
-
-		/*
-		 * Map ROM where the MacOS likes it, so we can reboot,
-		 * hopefully.
-		 */
-		pmap_map(MacOSROMBase, MacOSROMBase,
-			 MacOSROMBase + 4 * 1024 * 1024,
-			 VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-		doboot();
-		/* NOTREACHED */
+		printf("You may turn the machine off,");
+		printf(" or hit any key to reboot.\n");
+		(void)cngetc();
 	}
-	printf("            The system is down.\n");
-	printf("You may reboot or turn the machine off, now.\n");
-	for (;;);		/* Foil the compiler... */
+
+	/*
+	 * Map ROM where the MacOS likes it, so we can reboot,
+	 * hopefully.
+	 */
+	pmap_map(MacOSROMBase, MacOSROMBase,
+		 MacOSROMBase + 4 * 1024 * 1024,
+		 VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+
+	
+	printf("rebooting...\n");
+	DELAY(1000000);
+	doboot();
 	/* NOTREACHED */
 }
 
@@ -639,7 +646,7 @@ get_max_page()
 }
 
 /*
- * This is called by configure to set dumplo and dumpsize.
+ * This is called by main to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space in
  * case there might be a disk label stored there.  If there
  * is extra space, put dump at the end to reduce the chance
