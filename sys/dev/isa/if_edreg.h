@@ -1,4 +1,5 @@
-/*	$NetBSD: if_edreg.h,v 1.14 1995/04/11 04:46:22 mycroft Exp $	*/
+/*    $OpenBSD: if_edreg.h,v 1.3 1996/03/08 16:43:00 niklas Exp $      */
+/*    $NetBSD: if_edreg.h,v 1.15 1996/01/10 16:49:22 chuck Exp $      */
 
 /*
  * National Semiconductor DS8390 NIC register definitions.

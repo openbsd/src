@@ -1,4 +1,5 @@
-/*	$NetBSD: comreg.h,v 1.7 1995/10/15 19:43:07 mycroft Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.4 1996/03/08 16:42:52 niklas Exp $	*/
+/*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -41,27 +42,27 @@
 #define	COM_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
 
 /* interrupt enable register */
-#define	IER_ERXRDY	0x1	/* Character received */
-#define	IER_ETXRDY	0x2	/* Transmitter empty */
-#define	IER_ERLS	0x4	/* Error condition */
-#define	IER_EMSC	0x8	/* RS-232 line state change */
+#define	IER_ERXRDY	0x1	/* Enable receiver interrupt */
+#define	IER_ETXRDY	0x2	/* Enable transmitter empty interrupt */
+#define	IER_ERLS	0x4	/* Enable line status interrupt */
+#define	IER_EMSC	0x8	/* Enable modem status interrupt */
 
 /* interrupt identification register */
 #define	IIR_IMASK	0xf
 #define	IIR_RXTOUT	0xc
-#define	IIR_RLS		0x6
-#define	IIR_RXRDY	0x4
-#define	IIR_TXRDY	0x2
+#define	IIR_RLS		0x6	/* Line status change */
+#define	IIR_RXRDY	0x4	/* Receiver ready */
+#define	IIR_TXRDY	0x2	/* Transmitter ready */
+#define	IIR_MLSC	0x0	/* Modem status */
 #define	IIR_NOPEND	0x1	/* No pending interrupts */
-#define	IIR_MLSC	0x0
 #define	IIR_FIFO_MASK	0xc0	/* set if FIFOs are enabled */
 
 /* fifo control register */
 #define	FIFO_ENABLE	0x01	/* Turn the FIFO on */
 #define	FIFO_RCV_RST	0x02	/* Reset RX FIFO */
 #define	FIFO_XMT_RST	0x04	/* Reset TX FIFO */
-#define	FIFO_DMA_MODE	0x08	/* DMA mode? */
-#define	FIFO_TRIGGER_1	0x00	/* Trigger RXRDY Interrupt on 1 character */
+#define	FIFO_DMA_MODE	0x08
+#define	FIFO_TRIGGER_1	0x00	/* Trigger RXRDY intr on 1 character */
 #define	FIFO_TRIGGER_4	0x40	/* ibid 4 */
 #define	FIFO_TRIGGER_8	0x80	/* ibid 8 */
 #define	FIFO_TRIGGER_14	0xc0	/* ibid 14 */
@@ -83,9 +84,9 @@
 
 /* modem control register */
 #define	MCR_LOOPBACK	0x10	/* Loop test: echos from TX to RX */
-#define	MCR_IENABLE	0x08	/* Output 2: enables UART interrupts */
-#define	MCR_DRS		0x04	/* Output 1: resets some internal modems */
-#define	MCR_RTS		0x02	/* RTS: ready to receive data */
+#define	MCR_IENABLE	0x08	/* Out2: enables UART interrupts */
+#define	MCR_DRS		0x04	/* Out1: resets some internal modems */
+#define	MCR_RTS		0x02	/* Request To Send */
 #define	MCR_DTR		0x01	/* Data Terminal Ready */
 
 /* line status register */

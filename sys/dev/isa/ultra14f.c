@@ -1,4 +1,5 @@
-/*	$NetBSD: ultra14f.c,v 1.60 1995/12/26 17:16:55 mycroft Exp $	*/
+/*	$OpenBSD: ultra14f.c,v 1.9 1996/03/08 16:43:16 niklas Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.61 1996/02/09 17:38:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -917,15 +918,15 @@ u14_find(uha, ia)
 	if (ia->ia_iobase == IOBASEUNK)
 		return ENXIO;
 
-	model = htons(inw(iobase + U14_ID));
+	model = inb(iobase + U14_ID) | (inb(iobase + U14_ID + 1) << 8);
 	if ((model & 0xfff0) != 0x5640)
 		return ENXIO;
 
-	config = htons(inw(iobase + U14_CONFIG));
+	config = inb(iobase + U14_CONFIG) | (inb(iobase + U14_CONFIG + 1) << 8);
 
 	switch (model & 0x000f) {
 	case 0x0001:
-		/* This is a 34f, and doens't need an ISA DMA channel. */
+		/* This is a 34f, and doesn't need an ISA DMA channel. */
 		uha->sc_drq = DRQUNK;
 		break;
 	default:
@@ -1362,10 +1363,10 @@ uha_print_mscp(mscp)
 {
 
 	printf("mscp:%x op:%x cmdlen:%d senlen:%d\n",
-		mscp, mscp->opcode, mscp->cdblen, mscp->senselen);
+	    mscp, mscp->opcode, mscp->scsi_cmd_length, mscp->req_sense_length);
 	printf("	sg:%d sgnum:%x datlen:%d hstat:%x tstat:%x flags:%x\n",
-		mscp->sgth, mscp->sg_num, mscp->datalen, mscp->host_stat,
-		mscp->target_stat, mscp->flags);
+	    mscp->sgth, mscp->sg_num, mscp->datalen, mscp->host_stat,
+	    mscp->target_stat, mscp->flags);
 	show_scsi_cmd(mscp->xs);
 }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: isa.c,v 1.3 1996/02/27 10:31:32 niklas Exp $	*/
-/*	$NetBSD: isa.c,v 1.74 1995/06/07 06:46:04 cgd Exp $	*/
+/*	$OpenBSD: isa.c,v 1.4 1996/03/08 16:43:06 niklas Exp $	*/
+/*	$NetBSD: isa.c,v 1.76 1996/01/16 07:52:38 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -72,7 +72,7 @@ isascan(parent, match)
 	struct isa_attach_args ia;
 
 	if (cf->cf_fstate == FSTATE_STAR)
-		panic("not bloody likely");
+		panic("clone devices not supported on ISA bus");
 
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;

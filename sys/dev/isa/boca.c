@@ -1,4 +1,5 @@
-/*	$NetBSD: boca.c,v 1.5 1995/06/26 04:08:06 cgd Exp $	*/
+/*    $OpenBSD: boca.c,v 1.4 1996/03/08 16:42:49 niklas Exp $ */
+/*    $NetBSD: boca.c,v 1.6 1995/12/24 02:31:11 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.

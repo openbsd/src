@@ -1,4 +1,5 @@
-/*	$NetBSD: if_el.c,v 1.33 1995/08/05 23:53:18 mycroft Exp $	*/
+/*    $OpenBSD: if_el.c,v 1.4 1996/03/08 16:43:01 niklas Exp $       */
+/*    $NetBSD: if_el.c,v 1.34 1995/12/24 02:31:25 mycroft Exp $       */
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted

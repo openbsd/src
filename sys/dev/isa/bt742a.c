@@ -1,4 +1,5 @@
-/*	$NetBSD: bt742a.c,v 1.49 1995/10/03 20:58:58 mycroft Exp $	*/
+/*    $OpenBSD: bt742a.c,v 1.4 1996/03/08 16:42:50 niklas Exp $      */
+/*    $NetBSD: bt742a.c,v 1.50 1995/12/24 02:31:13 mycroft Exp $      */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.

@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ed.c,v 1.85 1995/07/25 05:11:11 mycroft Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.6 1996/03/08 16:42:59 niklas Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.87 1996/01/10 16:49:25 chuck Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -58,6 +59,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <i386/isa/isa_machdep.h>	/* XXX USES ISA HOLE DIRECTLY */
+#define ED_BYTE_ORDER LITTLE_ENDIAN
 #include <dev/ic/dp8390reg.h>
 #include <dev/isa/if_edreg.h>
 

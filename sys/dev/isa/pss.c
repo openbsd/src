@@ -1,4 +1,5 @@
-/*	$NetBSD: pss.c,v 1.10 1995/11/10 04:30:49 mycroft Exp $	*/
+/*	$OpenBSD: pss.c,v 1.5 1996/03/08 16:43:11 niklas Exp $ */
+/*	$NetBSD: pss.c,v 1.11 1995/12/24 02:31:45 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 John Brezak

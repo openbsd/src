@@ -1,4 +1,5 @@
-/*	$NetBSD: pas.c,v 1.10 1995/11/10 05:05:18 mycroft Exp $	*/
+/*	$OpenBSD: pas.c,v 1.5 1996/03/08 16:43:10 niklas Exp $	*/
+/*	$NetBSD: pas.c,v 1.12 1996/02/16 08:18:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -100,10 +101,6 @@ struct pas_softc {
 };
 
 int	pasopen __P((dev_t, int));
-
-int	pasprobe();
-void	pasattach();
-
 int	pas_getdev __P((void *, struct audio_device *));
 
 
@@ -250,6 +247,9 @@ pasconf(int model, int sbbase, int sbirq, int sbdrq)
 	paswrite(P_M_MV508_INPUTMIX | 30, PARALLEL_MIXER);
 }
 
+int	pasprobe __P((struct device *, void *, void *));
+void	pasattach __P((struct device *, struct device *, void *));
+
 struct cfdriver pascd = {
 	NULL, "pas", pasprobe, pasattach, DV_DULL, sizeof(struct pas_softc)
 };
@@ -262,11 +262,11 @@ struct cfdriver pascd = {
  * Probe for the soundblaster hardware.
  */
 int
-pasprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pasprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	register struct pas_softc *sc = (void *)self;
+	register struct pas_softc *sc = match;
 	register struct isa_attach_args *ia = aux;
 	register int iobase;
 	u_char id, t;

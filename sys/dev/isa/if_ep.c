@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ep.c,v 1.85 1995/12/05 03:30:15 christos Exp $	*/
+/*    $OpenBSD: if_ep.c,v 1.7 1996/03/08 16:43:02 niklas Exp $       */
+/*    $NetBSD: if_ep.c,v 1.86 1995/12/24 02:31:27 mycroft Exp $       */
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -477,9 +478,8 @@ epconfig(sc, conn)
 	 */
 	for (i = 0; i < 3; i++) {
 		u_short x;
-		if (epbusyeeprom(sc)) {
+		if (epbusyeeprom(sc))
 			return;
-		}
 		outw(BASE + EP_W0_EEPROM_COMMAND, READ_EEPROM | i);
 		if (epbusyeeprom(sc))
 			return;

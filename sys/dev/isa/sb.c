@@ -1,4 +1,5 @@
-/*	$NetBSD: sb.c,v 1.28 1995/11/10 05:01:05 mycroft Exp $	*/
+/*	$OpenBSD: sb.c,v 1.5 1996/03/08 16:43:13 niklas Exp $	*/
+/*	$NetBSD: sb.c,v 1.30 1996/02/16 08:18:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -71,7 +72,7 @@ struct sb_softc {
 	struct	sbdsp_softc sc_sbdsp;
 };
 
-int	sbprobe();
+int	sbprobe __P((struct device *, void *, void *));
 void	sbattach __P((struct device *, struct device *, void *));
 
 struct cfdriver sbcd = {
@@ -85,10 +86,6 @@ struct audio_device sb_device = {
 };
 
 int	sbopen __P((dev_t, int));
-
-int	sbprobe();
-void	sbattach();
-
 int	sb_getdev __P((void *, struct audio_device *));
 
 /*
@@ -143,11 +140,11 @@ struct audio_hw_if sb_hw_if = {
  * Probe for the soundblaster hardware.
  */
 int
-sbprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sbprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	register struct sbdsp_softc *sc = (void *)self;
+	register struct sbdsp_softc *sc = match;
 	register struct isa_attach_args *ia = aux;
 	register int iobase = ia->ia_iobase;
 	static u_char drq_conf[4] = {

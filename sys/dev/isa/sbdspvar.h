@@ -1,4 +1,5 @@
-/*	$NetBSD: sbdspvar.h,v 1.7 1995/11/10 05:01:08 mycroft Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.3 1996/03/08 16:43:15 niklas Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.9 1996/02/16 10:10:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -80,11 +81,6 @@ struct sbdsp_softc {
 	int	sc_drq;			/* DMA */
 
 	u_short	sc_open;		/* reference count of open calls */
-	u_short	sc_locked;		/* true when doing HS DMA  */
- 	u_short	sc_adacmode;		/* low/high speed mode indicator */
-
-	u_long	sc_irate;		/* Sample rate for input */
-	u_long	sc_orate;		/* ...and output */
 
 	u_int	gain[SB_NDEVS];		/* kept in SB levels: right/left each
 					   in a nibble */
@@ -96,9 +92,14 @@ struct sbdsp_softc {
 
 	u_int	spkr_state;		/* non-null is on */
 	
+	int	sc_itc;			/* Sample rate for input */
+	int	sc_otc;			/* ...and output */
+
+	int	sc_imode;
+	int	sc_omode;
 #define SB_ADAC_LS 0
 #define SB_ADAC_HS 1
- 	u_short	sc_adactc;		/* current adac time constant */
+
 	u_long	sc_interrupts;		/* number of interrupts taken */
 	void	(*sc_intr)(void*);	/* dma completion intr handler */
 	void	(*sc_mintr)(void*, int);/* midi input intr handler */
@@ -107,11 +108,12 @@ struct sbdsp_softc {
 	int	dmaflags;
 	caddr_t	dmaaddr;
 	vm_size_t	dmacnt;
-	int	sc_last_hsw_size;	/* last HS dma size */
-	int	sc_last_hsr_size;	/* last HS dma size */
+	int	sc_last_hs_size;	/* last HS dma size */
 	int	sc_chans;		/* # of channels */
-	char	sc_dmain_inprogress;	/* DMA input in progress? */
-	char	sc_dmaout_inprogress;	/* DMA output in progress? */
+	int	sc_dmadir;		/* DMA direction */
+#define	SB_DMA_NONE	0
+#define	SB_DMA_IN	1
+#define	SB_DMA_OUT	2
 
 	u_int	sc_model;		/* DSP model */
 #define SBVER_MAJOR(v)	((v)>>8)

@@ -1,4 +1,5 @@
-/*	$NetBSD: ad1848.c,v 1.7 1995/11/10 04:30:36 mycroft Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.3 1996/03/08 16:42:45 niklas Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.8 1996/02/05 21:32:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1124,8 +1125,7 @@ ad1848_round_blocksize(addr, blk)
     sc->sc_lastcc = -1;
 
     /* Higher speeds need bigger blocks to avoid popping and silence gaps. */
-    if ((sc->sc_orate > 8000 || sc->sc_irate > 8000) &&
-	(blk > NBPG/2 || blk < NBPG/4))
+    if ((sc->sc_orate > 8000 || sc->sc_irate > 8000) && blk < NBPG/2)
 	    blk = NBPG/2;
     /* don't try to DMA too much at once, though. */
     if (blk > NBPG)

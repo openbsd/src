@@ -1,4 +1,5 @@
-/*	$NetBSD: rtfps.c,v 1.13 1995/06/26 04:12:01 cgd Exp $	*/
+/*	$OpenBSD: rtfps.c,v 1.4 1996/03/08 16:43:12 niklas Exp $       */
+/*	$NetBSD: rtfps.c,v 1.14 1995/12/24 02:31:48 mycroft Exp $       */
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
