@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.42 2005/03/08 14:14:11 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.43 2005/03/13 02:30:31 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -833,19 +833,18 @@ ehci_idone(struct ehci_xfer *ex)
 	epipe->nexttoggle ^= pkts_left % 2;
 
 	cerr = EHCI_QTD_GET_CERR(status);
-	status &= EHCI_QTD_STATERRS;
 	DPRINTFN(/*10*/2, ("ehci_idone: len=%d, actlen=%d, cerr=%d, "
 	    "status=0x%x\n", xfer->length, actlen, cerr, status));
 	xfer->actlen = actlen;
+	if ((status & EHCI_QTD_HALTED) != 0) {
 #ifdef EHCI_DEBUG
-	if (status != 0) {
 		char sbuf[128];
 
 		bitmask_snprintf((u_int32_t)status,
-				 "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
-				 "\3MISSED", sbuf, sizeof(sbuf));
+		    "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
+		    "\3MISSED\2SPLIT\1PING", sbuf, sizeof(sbuf));
 
-		DPRINTFN((status == EHCI_QTD_HALTED) ? 2 : 0,
+		DPRINTFN(2,
 			 ("ehci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%s\n",
 			  xfer->pipe->device->address,
@@ -855,23 +854,13 @@ ehci_idone(struct ehci_xfer *ex)
 			ehci_dump_sqh(epipe->sqh);
 			ehci_dump_sqtds(ex->sqtdstart);
 		}
-	}
 #endif
-	/*
-	 * XactErr with CErr > 0 indicates that there were one or more retries
-	 * on the wire, but the transfer succeeded before the host controller
-	 * gave up.  Ignore the XactErr bit in this case, and determine the
-	 * overall transfer status from the remaining bits.
-	 */
-	if (status & EHCI_QTD_XACTERR && cerr > 0)
-		status &= ~EHCI_QTD_XACTERR;
-
-	if (status == 0)
+		if ((status & EHCI_QTD_BABBLE) == 0 && cerr > 0)
+			xfer->status = USBD_STALLED;
+		else
+			xfer->status = USBD_IOERROR; /* more info XXX */
+	} else
 		xfer->status = USBD_NORMAL_COMPLETION;
-	else if (status == EHCI_QTD_HALTED)
-		xfer->status = USBD_STALLED;
-	else
-		xfer->status = USBD_IOERROR; /* more info XXX */
 
 	usb_transfer_complete(xfer);
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p done\n", ex));
