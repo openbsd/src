@@ -1,9 +1,10 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.2 1999/12/10 10:04:28 angelos Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.3 2000/05/19 13:11:34 itojun Exp $	*/
+/*	$KAME: ip6_mroute.h,v 1.10 2000/05/19 02:38:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,15 +50,18 @@
 /*
  * Multicast Routing set/getsockopt commands.
  */
-#define MRT6_INIT		100	/* initialize forwarder */
+#ifdef _KERNEL
+#define MRT6_OINIT		100	/* initialize forwarder (omrt6msg) */
+#endif
 #define MRT6_DONE		101	/* shut down forwarder */
 #define MRT6_ADD_MIF		102	/* add multicast interface */
 #define MRT6_DEL_MIF		103	/* delete multicast interface */
 #define MRT6_ADD_MFC		104	/* insert forwarding cache entry */
 #define MRT6_DEL_MFC		105	/* delete forwarding cache entry */
 #define MRT6_PIM                107     /* enable pim code */
+#define MRT6_INIT		108	/* initialize forwarder (mrt6msg) */
 
-#if BSD >= 199103 
+#if BSD >= 199103
 #define GET_TIME(t)	microtime(&t)
 #elif defined(sun)
 #define GET_TIME(t)	uniqtime(&t)
@@ -135,19 +139,43 @@ struct mrt6stat {
 	u_quad_t mrt6s_upq_sockfull;	/* upcalls dropped - socket full   */
 };
 
+#ifdef MRT6_OINIT
 /*
  * Struct used to communicate from kernel to multicast router
  * note the convenient similarity to an IPv6 header.
+ * XXX old version, superseded by mrt6msg.
  */
-struct mrt6msg {
+struct omrt6msg {
 	u_long	    unused1;
 	u_char	    im6_msgtype;		/* what type of message	    */
+#if 0
+#define MRT6MSG_NOCACHE	1
+#define MRT6MSG_WRONGMIF	2
+#define MRT6MSG_WHOLEPKT	3		/* used for user level encap*/
+#endif
+	u_char	    im6_mbz;			/* must be zero		    */
+	u_char	    im6_mif;			/* mif rec'd on		    */
+	u_char	    unused2;
+	struct in6_addr  im6_src, im6_dst;
+};
+#endif
+
+/*
+ * Structure used to communicate from kernel to multicast router.
+ * We'll overlay the structure onto an MLD header (not an IPv6 header
+ * like igmpmsg{} used for IPv4 implementation). This is because this
+ * structure will be passed via an IPv6 raw socket, on which an application
+ * will only receive the payload i.e. the data after the IPv6 header and all
+ * the extension headers. (see Section 3 of draft-ietf-ipngwg-2292bis-01)
+ */
+struct mrt6msg {
 #define MRT6MSG_NOCACHE		1
 #define MRT6MSG_WRONGMIF	2
 #define MRT6MSG_WHOLEPKT	3		/* used for user level encap*/
 	u_char	    im6_mbz;			/* must be zero		    */
-	u_char	    im6_mif;			/* mif rec'd on		    */
-	u_char	    unused2;
+	u_char	    im6_msgtype;		/* what type of message	    */
+	u_int16_t   im6_mif;			/* mif rec'd on		    */
+	u_int32_t   im6_pad;			/* padding for 64bit arch   */
 	struct in6_addr  im6_src, im6_dst;
 };
 
@@ -183,7 +211,7 @@ struct mif6 {
 	u_int      	m6_rate_limit; 	/* max rate			     */
 #ifdef notyet
 	struct tbf      *m6_tbf;      	/* token bucket structure at intf.   */
-#endif 
+#endif
 	struct in6_addr	m6_lcl_addr;   	/* local interface address           */
 	struct ifnet    *m6_ifp;     	/* pointer to interface              */
 	u_quad_t	m6_pkt_in;	/* # pkts in on interface            */
@@ -194,11 +222,11 @@ struct mif6 {
 #ifdef notyet
 	u_int		m6_rsvp_on;	/* RSVP listening on this vif */
 	struct socket   *m6_rsvpd;	/* RSVP daemon socket */
-#endif 
+#endif
 };
 
 /*
- * The kernel's multicast forwarding cache entry structure 
+ * The kernel's multicast forwarding cache entry structure
  */
 struct mf6c {
 	struct sockaddr_in6  mf6c_origin;	/* IPv6 origin of mcasts     */
