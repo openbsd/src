@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.111 2002/01/08 23:17:24 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.112 2002/01/09 01:53:39 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -718,15 +718,21 @@ hifn_init_pci_registers(sc)
 	    HIFN_DMACSR_R_ABORT | HIFN_DMACSR_R_DONE | HIFN_DMACSR_R_LAST |
 	    HIFN_DMACSR_R_WAIT | HIFN_DMACSR_R_OVER |
 	    HIFN_DMACSR_S_ABORT | HIFN_DMACSR_S_DONE | HIFN_DMACSR_S_LAST |
-	    HIFN_DMACSR_S_WAIT | HIFN_DMACSR_S_OVER |
+	    HIFN_DMACSR_S_WAIT |
 	    HIFN_DMACSR_C_ABORT | HIFN_DMACSR_C_DONE | HIFN_DMACSR_C_LAST |
 	    HIFN_DMACSR_C_WAIT |
-	    HIFN_DMACSR_C_EIRQ |
-	    ((sc->sc_flags & HIFN_HAS_PUBLIC) ? HIFN_DMACSR_PUBDONE : 0));
+	    HIFN_DMACSR_ENGINE |
+	    ((sc->sc_flags & HIFN_HAS_PUBLIC) ?
+		HIFN_DMACSR_PUBDONE : 0) |
+	    ((sc->sc_flags & HIFN_IS_7811) ?
+		HIFN_DMACSR_ILLW | HIFN_DMACSR_ILLR : 0));
+
 	sc->sc_d_busy = sc->sc_r_busy = sc->sc_s_busy = sc->sc_c_busy = 0;
 	sc->sc_dmaier |= HIFN_DMAIER_R_DONE | HIFN_DMAIER_C_ABORT |
-	    HIFN_DMAIER_S_OVER | HIFN_DMAIER_D_OVER | HIFN_DMAIER_R_OVER |
-	    HIFN_DMAIER_S_ABORT | HIFN_DMAIER_D_ABORT | HIFN_DMAIER_R_ABORT;
+	    HIFN_DMAIER_D_OVER | HIFN_DMAIER_R_OVER |
+	    HIFN_DMAIER_S_ABORT | HIFN_DMAIER_D_ABORT | HIFN_DMAIER_R_ABORT |
+	    ((sc->sc_flags & HIFN_IS_7811) ?
+		HIFN_DMAIER_ILLW | HIFN_DMAIER_ILLR : 0);
 	sc->sc_dmaier &= ~HIFN_DMAIER_C_WAIT;
 	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 
@@ -1632,10 +1638,16 @@ hifn_intr(arg)
 		WRITE_REG_1(sc, HIFN_1_PUB_STATUS,
 		    READ_REG_1(sc, HIFN_1_PUB_STATUS) | HIFN_PUBSTS_DONE);
 
-	restart = dmacsr & (HIFN_DMACSR_S_OVER | HIFN_DMACSR_D_OVER |
-	    HIFN_DMACSR_R_OVER);
+	restart = dmacsr & (HIFN_DMACSR_D_OVER | HIFN_DMACSR_R_OVER);
 	if (restart)
 		printf("%s: overrun %x\n", sc->sc_dv.dv_xname, dmacsr);
+
+	if (sc->sc_flags & HIFN_IS_7811) {
+		if (dmacsr & HIFN_DMACSR_ILLR)
+			printf("%s: illegal read\n", sc->sc_dv.dv_xname);
+		if (dmacsr & HIFN_DMACSR_ILLW)
+			printf("%s: illegal write\n", sc->sc_dv.dv_xname);
+	}
 
 	restart = dmacsr & (HIFN_DMACSR_C_ABORT | HIFN_DMACSR_S_ABORT |
 	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_R_ABORT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.32 2002/01/08 23:17:24 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.33 2002/01/09 01:53:39 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -232,7 +232,8 @@ typedef struct hifn_desc {
 #define	HIFN_DMACSR_S_DONE	0x00001000	/* Source Ring Done */
 #define	HIFN_DMACSR_S_LAST	0x00000800	/* Source Ring Last */
 #define	HIFN_DMACSR_S_WAIT	0x00000400	/* Source Ring Waiting */
-#define	HIFN_DMACSR_S_OVER	0x00000200	/* Source Ring Overflow */
+#define	HIFN_DMACSR_ILLW	0x00000200	/* Illegal write (7811 only) */
+#define	HIFN_DMACSR_ILLR	0x00000100	/* Illegal read (7811 only) */
 #define	HIFN_DMACSR_C_CTRL	0x000000c0	/* Command Ring Control */
 #define	HIFN_DMACSR_C_CTRL_NOP	0x00000000	/* Command Control: no-op */
 #define	HIFN_DMACSR_C_CTRL_DIS	0x00000040	/* Command Control: disable */
@@ -242,7 +243,7 @@ typedef struct hifn_desc {
 #define	HIFN_DMACSR_C_LAST	0x00000008	/* Command Ring Last */
 #define	HIFN_DMACSR_C_WAIT	0x00000004	/* Command Ring Waiting */
 #define	HIFN_DMACSR_PUBDONE	0x00000002	/* Public op done (7951 only) */
-#define	HIFN_DMACSR_C_EIRQ	0x00000001	/* Command Ring Engine IRQ */
+#define	HIFN_DMACSR_ENGINE	0x00000001	/* Command Ring Engine IRQ */
 
 /* DMA Interrupt Enable Register (HIFN_1_DMA_IER) */
 #define	HIFN_DMAIER_D_ABORT	0x20000000	/* Destination Ring PCIAbort */
@@ -259,12 +260,13 @@ typedef struct hifn_desc {
 #define	HIFN_DMAIER_S_DONE	0x00001000	/* Source Ring Done */
 #define	HIFN_DMAIER_S_LAST	0x00000800	/* Source Ring Last */
 #define	HIFN_DMAIER_S_WAIT	0x00000400	/* Source Ring Waiting */
-#define	HIFN_DMAIER_S_OVER	0x00000200	/* Source Ring Overflow */
+#define	HIFN_DMAIER_ILLW	0x00000200	/* Illegal write (7811 only) */
+#define	HIFN_DMAIER_ILLR	0x00000100	/* Illegal read (7811 only) */
 #define	HIFN_DMAIER_C_ABORT	0x00000020	/* Command Ring PCI Abort */
 #define	HIFN_DMAIER_C_DONE	0x00000010	/* Command Ring Done */
 #define	HIFN_DMAIER_C_LAST	0x00000008	/* Command Ring Last */
 #define	HIFN_DMAIER_C_WAIT	0x00000004	/* Command Ring Waiting */
-#define	HIFN_DMAIER_PUBDONE	0x00000002	/* public op done (7951 only */
+#define	HIFN_DMAIER_PUBDONE	0x00000002	/* public op done (7951 only) */
 #define	HIFN_DMAIER_ENGINE	0x00000001	/* Engine IRQ */
 
 /* DMA Configuration Register (HIFN_1_DMA_CNFG) */
