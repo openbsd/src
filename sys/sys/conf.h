@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.48 2001/09/28 02:53:13 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.49 2001/10/04 21:46:03 gluk Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -416,6 +416,13 @@ void	randomattach __P((void));
 	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
+/* open, close, ioctl */
+#define       cdev_radio_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+
 /* symbolic sleep message strings */
 extern char devopn[], devio[], devwait[], devin[], devout[];
 extern char devioc[], devcls[];
@@ -490,7 +497,7 @@ cdev_decl(ctty);
 cdev_decl(audio);
 cdev_decl(midi);
 cdev_decl(sequencer);
-
+cdev_decl(radio);
 cdev_decl(cn);
 
 bdev_decl(sw);

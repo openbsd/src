@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.80 2001/09/28 02:53:13 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.81 2001/10/04 21:46:03 gluk Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -218,6 +218,8 @@ cdev_decl(urio);
 cdev_decl(ucom);
 #include "cz.h"
 cdev_decl(cztty);
+#include "radio.h"
+cdev_decl(radio);
 
 /* XXX -- this needs to be supported by config(8)! */
 #if (NCOM > 0) && (NPCCOM > 0)
@@ -345,6 +347,7 @@ struct cdevsw	cdevsw[] =
 	cdev_pf_init(NPF,pf),		/* 73: packet filter */
 	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
 	cdev_iop_init(NIOP,iop),	/* 75: I2O IOP control interface */
+	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
