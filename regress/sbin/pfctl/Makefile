@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.101 2003/02/26 14:22:58 cedric Exp $
+# $OpenBSD: Makefile,v 1.102 2003/02/28 21:25:22 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -30,22 +30,35 @@ PFOPT=1 2 3 4 5
 
 .for n in ${PFFAIL}
 PFAIL_TARGETS+=pfail${n}
+PFAIL_UPDATES+=pfail${n}-update
 
 pfail${n}:
 	pfctl -nv -f - < ${.CURDIR}/pfail${n}.in 2>&1 | \
 	    diff -u ${.CURDIR}/pfail${n}.ok /dev/stdin
 
+pfail${n}-update:
+	if pfctl -nv -f - < ${.CURDIR}/pfail${n}.in > \
+	    ${.CURDIR}/pfail${n}.ok 2>&1; then \
+		true; \
+	fi;
+	
 .endfor
 
-pfail:	${PFAIL_TARGETS}
+pfail:		${PFAIL_TARGETS}
+pfail-update:	${PFAIL_UPDATES}
 REGRESS_TARGETS+=pfail
+UPDATE_TARGETS+=pfail-update
 
 .for n in ${PFTESTS}
 PF_TARGETS+=pf${n}
+PF_UPDATES+=pf${n}-update
 
 pf${n}:
 	pfctl -nv -f - < ${.CURDIR}/pf${n}.in | \
 	    diff -u ${.CURDIR}/pf${n}.ok /dev/stdin
+
+pf${n}-update:
+	pfctl -nv -f - < ${.CURDIR}/pf${n}.in > ${.CURDIR}/pf${n}.ok
 
 SELFPF_TARGETS+=selfpf${n}
 selfpf${n}:
@@ -54,10 +67,12 @@ selfpf${n}:
 
 .endfor
 
-pf:	${PF_TARGETS}
-selfpf:	${SELFPF_TARGETS}
+pf:		${PF_TARGETS}
+selfpf:		${SELFPF_TARGETS}
+pf-update:	${PF_UPDATES}
 REGRESS_TARGETS+=pf
 REGRESS_TARGETS+=selfpf
+UPDATE_TARGETS+=pf-update
 
 .for n in ${PFSIMPLE}
 PFSIMPLE_TARGETS+=pfsimple${n}
@@ -72,6 +87,7 @@ REGRESS_TARGETS+=pfsimple
 
 .for n in ${PFLOAD}
 PFLOAD_TARGETS+=pfload${n}
+PFLOAD_UPDATES+=pfload${n}-update
 
 pfload${n}:
 	${SUDO} pfctl -a regress:regress -f - < ${.CURDIR}/pf${n}.in
@@ -81,38 +97,62 @@ pfload${n}:
 	${SUDO} pfctl -a regress:regress -Fn >/dev/null 2>&1
 	${SUDO} pfctl -a regress:regress -Fr >/dev/null 2>&1
 
+pfload${n}-update:
+	${SUDO} pfctl -a regress:regress -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} pfctl -a regress:regress -vvsn; \
+	${SUDO} pfctl -a regress:regress -vvsr) > ${.CURDIR}/pf${n}.loaded
+	${SUDO} pfctl -a regress:regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -a regress:regress -Fr >/dev/null 2>&1
+
 .endfor
 
-pfload:	${PFLOAD_TARGETS}
+pfload:		${PFLOAD_TARGETS}
+pfload-update:	${PFLOAD_UPDATES}
 REGRESS_TARGETS+=pfload
+UPDATE_TARGETS+=pfload-update
 
 .for n in ${PFTABLE}
 PFR_TARGETS+=pfr${n}
+PFR_UPDATES+=pfr${n}-update
 
 pfr${n}:
 	${SUDO} /bin/ksh ${.CURDIR}/pfr.exec ${.CURDIR}/pfr${n}.in | \
 	    diff -u ${.CURDIR}/pfr${n}.ok /dev/stdin
 
+pfr${n}-update:
+	${SUDO} /bin/ksh ${.CURDIR}/pfr.exec ${.CURDIR}/pfr${n}.in > \
+	    ${.CURDIR}/pfr${n}.ok
+
 .endfor
 
-pfr:	${PFR_TARGETS}
+pfr:		${PFR_TARGETS}
+pfr-update:	${PFR_UPDATES}
 REGRESS_TARGETS+=pfr
+UPDATE_TARGETS+=pfr-update
 
 .for n in ${PFOPT}
 PFOPT_TARGETS+=pfopt${n}
+PFOPT_UPDATES+=pfopt${n}-update
 
 pfopt${n}:
 	pfctl -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
 	    < ${.CURDIR}/pfopt${n}.in | \
 	    diff -u ${.CURDIR}/pfopt${n}.ok /dev/stdin
 
+pfopt${n}-update:
+	pfctl -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
+	    < ${.CURDIR}/pfopt${n}.in > ${.CURDIR}/pfopt${n}.ok
+
 .endfor
 
-pfopt:	${PFOPT_TARGETS}
+pfopt:		${PFOPT_TARGETS}
+pfopt-update:	${PFOPT_UPDATES}
 REGRESS_TARGETS+=pfopt
+UPDATE_TARGETS+=pfopt-update
 
 .for n in ${PFSETUP}
 PFSETUP_TARGETS+=pfsetup${n}
+PFSETUP_UPDATES+=pfsetup${n}-update
 
 pfsetup${n}:
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.setup
@@ -120,13 +160,22 @@ pfsetup${n}:
 	    diff -u ${.CURDIR}/pfsetup${n}.ok /dev/stdin
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.clean
 
+pfsetup${n}-update:
+	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.setup
+	pfctl -nv -f - < ${.CURDIR}/pfsetup${n}.in > ${.CURDIR}/pfsetup${n}.ok
+	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.clean
+
 .endfor
 
 pfsetup:	${PFSETUP_TARGETS}
+pfsetup-update:	${PFSETUP_UPDATES}
 
 .ifdef DO_PFSETUP
 REGRESS_TARGETS+=pfsetup
+UPDATE_TARGETS+=pfsetup-update
 .endif
+
+update:	${UPDATE_TARGETS}
 
 .PHONY: ${REGRESS_TARGETS}
 
