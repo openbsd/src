@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.45 2004/03/11 14:49:08 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.46 2004/03/11 15:08:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -688,17 +688,17 @@ show_rib_summary_msg(struct imsg *imsg)
 	struct ctl_show_rib_prefix	*p;
 	u_char				*asdata;
 
+	if (rib != NULL) {
+		free(rib);
+		rib = NULL;
+	}
+	if (aspath != NULL) {
+		free(aspath);
+		aspath = NULL;
+	}
+
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_RIB:
-		if (rib != NULL) {
-			free(rib);
-			rib = NULL;
-		}
-		if (aspath != NULL) {
-			free(aspath);
-			aspath = NULL;
-		}
-
 		if ((rib = malloc(imsg->hdr.len - IMSG_HEADER_SIZE)) == NULL)
 			err(1, NULL);
 		memcpy(rib, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
