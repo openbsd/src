@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.40 1998/02/17 12:07:21 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.41 1998/02/22 00:34:52 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -402,10 +402,10 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Clear the BSS. */
 	movl	$RELOC(_edata),%edi
-	movl	$_end, %ecx
-	subl	$_edata, %ecx
-	addl	$3, %ecx
-	shrl	$2, %ecx
+	movl	$_end,%ecx
+	subl	$_edata,%ecx
+	addl	$3,%ecx
+	shrl	$2,%ecx
 	xorl	%eax,%eax
 	cld
 	rep
