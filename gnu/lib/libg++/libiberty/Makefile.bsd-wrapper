@@ -1,73 +1,27 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/03/27 23:00:03 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/03/28 07:31:07 etheisen Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../include -I$(.OBJDIR)
 
-# You must do a GNU build and then examine needed-list
-# and config.h to determine HOST_FILES value.
-HOST_FILES=	insque.c
+# XXX -- GNUism
+# As we need to fill variables with contents of dynamically created files
+# we must first see to that they are really generated.  This is a hack that
+# ensures this.  The echo at the end is because make doesn't like command
+# substitutions to not generate output.
+PREREQ!=	test ! -f $(.OBJDIR)/needed-list && \
+			(cd $(.CURDIR); \
+			 $(MAKE) -f Makefile.bsd-wrapper1); \
+		echo 'Prerequistes made'
+HOST_FILES!=	cat $(.OBJDIR)/needed-list
+
 SRCS=		argv.c basename.c concat.c cplus-dem.c fdmatch.c \
 		getopt.c getopt1.c getruntime.c hex.c \
 		floatformat.c obstack.c spaces.c strerror.c strsignal.c \
 		vasprintf.c xatexit.c xexit.c xmalloc.c xstrerror.c \
 		$(HOST_FILES)
 
-CLEANFILES+=	alloca-conf.h needed-list $(NEEDED_LIST) config.h needed.awk \
-		needed2.awk errors dummy dummy.o
-
-all: alloca-conf.h config.h needed-list
-
-beforedepend: alloca-conf.h config.h needed-list
-
-alloca-conf.h:
-	@echo Creating $(.TARGET) symlink
-	@ln -s $(.CURDIR)/alloca-norm.h alloca-conf.h
-
-# The following is from the GNU makefile
-NEEDED_LIST=	lneeded-list
-EXTRA_OFILES=
-
-needed-list: $(NEEDED_LIST)
-	@cp $(NEEDED_LIST) needed-list
-
-lneeded-list: $(EXTRA_OFILES) needed.awk errors
-	@echo Generating needed-list
-	@rm -f lneeded-list
-	@f=""; \
-	for i in `awk -f needed.awk <errors` $(EXTRA_OFILES) ; do \
-	  case " $$f " in \
-	    *" $$i "*) ;; \
-	    *) f="$$f $$i" ;; \
-	  esac ; \
-	done ; \
-	echo $$f >>lneeded-list
-
-needed.awk: functions.def
-	@echo "# !Automatically generated from $(.CURDIR)/functions.def"\
-	  "- DO NOT EDIT!" >needed.awk
-	@grep '^DEF(' < $(.CURDIR)/functions.def \
-	    | sed -e '/DEF/s|DEF.\([^,]*\).*|/\1/ { printf "\1.o " }|' \
-	    >>needed.awk
-
-config.h: needed2.awk errors
-	@echo Generating $(.TARGET)
-	@echo "/* !Automatically generated from $(.CURDIR)/functions.def"\
-		"- DO NOT EDIT! */" >config.h
-	@awk -f needed2.awk <errors >>config.h
-
-needed2.awk: functions.def
-	@echo "# !Automatically generated from $(.CURDIR)/functions.def"\
-		"- DO NOT EDIT!" >needed2.awk
-	@grep '^DEFVAR(' < $(.CURDIR)/functions.def \
-		| sed -e '/DEFVAR/s|DEFVAR.\([^,]*\).*|/\1/ { printf "#ifndef NEED_\1\\n#define NEED_\1\\n#endif\\n" }|'  >>needed2.awk
-	@grep '^DEFFUNC(' < $(.CURDIR)/functions.def \
-		| sed -e '/DEFFUNC/s|DEFFUNC.\([^,]*\).*|/\1/ { printf "#ifndef NEED_\1\\n#define NEED_\1\\n#endif\\n" }|' >>needed2.awk
-
-dummy.o: dummy.c alloca-conf.h functions.def
-	@echo Generating $(.TARGET)
-	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $(.IMPSRC) 2>/dev/null
-
-errors: dummy.o
-	@-($(CC) -o dummy $(CFLAGS) $(LDFLAGS) dummy.o) >errors 2>&1 || true
+# XXX -- These files are generated during the PREREQ variable assignment.
+CLEANFILES+=	alloca-conf.h config.h dummy dummy.o errors lconfig.h \
+		lneeded-list needed-list needed.awk needed2.awk stamp-picdir
 
 .include <bsd.lib.mk>
