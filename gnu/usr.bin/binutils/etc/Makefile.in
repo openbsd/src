@@ -41,9 +41,15 @@ TEXIDIR = $(srcdir)/../texinfo
 INFOFILES = configure.info standards.info cfg-paper.info
 DVIFILES = configure.dvi standards.dvi cfg-paper.dvi
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 all:
 
-install:  $(srcdir)/configure.man
+install: $(INSTALL_MAN)
+
+install-man: $(srcdir)/configure.man
 	$(INSTALL_DATA) $(srcdir)/configure.man $(man1dir)/configure.1
 
 uninstall:

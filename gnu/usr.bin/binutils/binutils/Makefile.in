@@ -109,6 +109,10 @@ SRCONV_PROG=srconv sysdump coffdump
 
 MANPAGES= ar nm objdump ranlib size strings strip objcopy nlmconv
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 PROGS = $(SIZE_PROG) $(OBJDUMP_PROG) $(NM_PROG) $(AR_PROG) $(STRINGS_PROG) $(STRIP_PROG) $(RANLIB_PROG) $(DEMANGLER_PROG) $(OBJCOPY_PROG) @BUILD_NLMCONV@ @BUILD_SRCONV@ @BUILD_DLLTOOL@
 STAGESTUFF = $(PROGS) *.o
 # Files that can be generated, but should be in the distribution.
@@ -536,16 +540,10 @@ etags tags: TAGS
 TAGS: force
 	etags $(INCDIR)/*.h $(srcdir)/*.[hc] 
 
-install: all
+install: all $(INSTALL_MAN)
 	for i in $(PROGS) ; do \
 	  $(INSTALL_XFORM) $$i $(bindir)/`echo $$i | sed -e 's/.new//'` ; \
 	done
-	for i in $(MANPAGES) ; do \
-	  $(INSTALL_XFORM1) $(srcdir)/$$i.1 $(man1dir)/$$i.1 ; \
-	done
-	if [ x$(DEMANGLER_PROG) != x ]; then \
-	  $(INSTALL_XFORM1) $(DEMANGLER_PROG).1 $(man1dir)/$(DEMANGLER_PROG).1; \
-	fi
 	test -d $(tooldir) || mkdir $(tooldir)
 	test -d $(tooldir)/bin || mkdir $(tooldir)/bin
 	for i in $(TOOL_PROGS) ; do \
@@ -557,6 +555,14 @@ install: all
 		|| $(INSTALL_PROGRAM) $$i $(tooldir)/bin/$$j; \
 	  fi; \
 	done
+
+install-man:
+	for i in $(MANPAGES) ; do \
+	  $(INSTALL_XFORM1) $(srcdir)/$$i.1 $(man1dir)/$$i.1 ; \
+	done
+	if [ x$(DEMANGLER_PROG) != x ]; then \
+	  $(INSTALL_XFORM1) $(DEMANGLER_PROG).1 $(man1dir)/$(DEMANGLER_PROG).1; \
+	fi
 
 # This little path search is required because in the FSF net releases,
 # the info files are included in the source tree, and that may not be

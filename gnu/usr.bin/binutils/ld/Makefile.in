@@ -171,6 +171,10 @@ CXX_FOR_TARGET = ` \
 # install.
 LD_PROG	= ld.new
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 all: $(LD_PROG)
 .PHONY: all
 
@@ -918,9 +922,8 @@ TAGS:
 	etags -t $(srcdir)/*.[chly] *.[chly]
 
 
-install: 
+install: $(INSTALL_MAN)
 	$(INSTALL_XFORM) ld.new $(bindir)/ld
-	$(INSTALL_XFORM1) $(srcdir)/ld.1 $(man1dir)/ld.1
 	for f in ldscripts/*; do \
 	  $(INSTALL_DATA) $$f $(scriptdir)/$$f ; \
 	done
@@ -930,6 +933,9 @@ install:
 	  rm -f $(tooldir)/bin/ld; \
 	  ln $(bindir)/$$n $(tooldir)/bin/ld >/dev/null 2>/dev/null \
 	   || $(INSTALL_PROGRAM) ld.new $(tooldir)/bin/ld
+
+install-man:
+	$(INSTALL_XFORM1) $(srcdir)/ld.1 $(man1dir)/ld.1
 
 install-info: ld.info
 	if [ -r ld.info ]; then \

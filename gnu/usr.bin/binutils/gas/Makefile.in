@@ -448,7 +448,6 @@ maintainer-clean realclean: clean-here
 install: $(INSTALL_MAN)
 	srcroot=`cd $(srcroot); pwd`; export srcroot; \
 	$(INSTALL_XFORM) as.new $(bindir)/as; \
-	$(INSTALL_XFORM1) $(srcdir)/doc/as.1 $(man1dir)/as.1; \
 	test -d $(tooldir) || mkdir $(tooldir); \
 	test -d $(tooldir)/bin || mkdir $(tooldir)/bin; \
 	n=`echo as | sed '$(program_transform_name)'`; \
