@@ -1,0 +1,211 @@
+.\" $OpenBSD: packages-specs.7,v 1.1 2001/04/09 14:57:37 espie Exp $
+.\"
+.\" Copyright (c) 2001 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 9, 2001
+.Dt PACKAGES-SPECS 7
+.Os
+.Sh NAME
+.Nm packages-specs
+.Nd binary package names specifications
+.Sh DESCRIPTION
+Each package has a name consisting of at most three parts:
+.Bd -literal -offset indent
+stem-version[-flavors]
+.Ed
+.Pp
+The
+.Ar stem
+part identifies the package. 
+It may contain some dashes, but its form is mostly conventional. 
+For instance, japanese packages usually
+start with a
+.Sq ja
+prefix, e.g., 
+.Qq ja-kterm-6.2.0 .
+.Pp
+The
+.Ar version
+part starts at the first digit that follows a
+.Sq - ,
+and goes on up to the following
+.Sq - ,
+or to the end of the package name, if no flavor modifier is present.
+It is highly recommended that all packages have a version number.
+Normally, the version number directly matches the original software
+distribution version number, or release date.
+In case there are substantial changes in the
+.Ox 
+package, a patch level marker should be appended, e.g.,
+.Sq p1 ,
+.Sq p2 ...
+For example, assuming that the screen package for release 2.8 was
+named
+.Qq screen-2.9.8 
+and that an important security patch led to a newer package, 
+the new package would be called 
+.Qq screen-2.9.8p1 .
+Obviously, these specific markers are reserved for
+.Ox
+purposes.
+.Pp
+Flavored packages will also contain a list of flavors after the version
+identifier, in a canonical order determined by 
+.Ev FLAVORS
+in the corresponding port's 
+.Pa Makefile .
+For instance, kterm has an xaw3d flavor: 
+.Qq ja-kterm-xaw3d .
+.Pp
+Note that, to uniquely identify the version part, no flavor shall ever
+start with a digit.
+Usually, flavored packages are slightly different versions of the same
+package that offer very similar functionalities.
+.Sh CONFLICTS
+Most conflicts between packages are handled on a package name basis. Unless
+the packages have been specially prepared, it is
+normally not possible to install two packages with the same
+.Ar stem .
+.Pp
+Note that the
+.Ar stem
+ends at the 
+.Ar version
+part. So, for instance, 
+.Qq kdelibs-1.1.2
+and
+.Qq kdelibs-2.1.1
+conflict. 
+But
+.Qq openldap-2.0.7
+and
+.Qq openldap-client-2.0.7
+don't. 
+Neither do
+.Qq qt-1.45
+and
+.Qq qt2-3.0 .
+.Sh DEPENDENCIES
+Packages may depend on other packages, as specified by their port's
+Makefile.
+The
+.Ar directory,[-multi],[flavor...]
+part of the dependency is always used to obtain the default dependency for
+the given package (the package that will be installed if no package
+is found).
+The corresponding package name is also used as a package specification,
+unless a more specific specification has been given.
+.Pp
+Package specifications are extended package names, that may use 
+.Xr sh 1 
+-style wildcards, like
+.Sq *
+or
+.Sq ? .
+.Pp
+A specification such as
+.Qq ghostscript-*
+may be used to ask for any version of package ghostscript,
+or a more specific wildcard may be used, such as
+.Qq png-1.0.* .
+Version numbers may also include ranges, separated by commas, so for
+instance,
+.Qq foo-1.0.*,>=1.3,<1.5
+would match either foo-1.0.something, or any version of foo between 1.3
+and 1.5.
+.Pp
+If the flavor specification is left blank, any flavor will do.
+Note that most default package names don't contain flavor specification,
+which means that any flavor will do. For instance, in
+.Bd -literal -offset indent
+LIB_DEPENDS=aalib.1.2::graphics/aalib
+.Ed
+.Pp
+both 
+.Qq aalib-1.2 
+and 
+.Qq aalib-1.2-no_x11 
+will do.
+To restrict the specification to packages that match flavor 
+.Sq f ,
+append
+.Sq -f .
+To restrict the specification to packages that do not match flavor 
+.Sq f ,
+append
+.Sq -!f .
+In the preceding case, one may use
+.Bd -literal -offset indent
+LIB_DEPENDS=aalib.1.2:aalib-1.2-!no_x11:graphics/aalib
+.Ed
+.Pp
+to ensure the no_x11 flavor is not picked.
+.Sh DEPENDENCIES RESOLUTION
+Several packages may be specified for a dependency:
+.Qq foo|bar
+will match either package foo, or package bar.
+In the general case, each package holds a tree of dependencies.
+Resolution occurs at
+.Xr pkg_add 1
+time, and all dependencies are tracked only as far as needed.
+.Pp
+For instance, if package 
+.Qq foo 
+depends on either 
+.Qq bar 
+or 
+.Qq fuzz , 
+and 
+.Qq bar 
+depends
+on 
+.Qq toughluck ,
+.Xr pkg_add 1
+will first check whether 
+.Qq bar 
+or 
+.Qq fuzz
+is installed.
+If either is there, the 
+.Qq toughluck 
+dependency will never be examined.
+It would only be used in the case where neither
+.Qq bar
+nor
+.Qq fuzz
+are present, thus
+.Xr pkg_add 1
+would decide to bring in
+.Qq bar ,
+and so would check on
+.Qq toughluck .
+.Sh HISTORY
+Support for these package specifications first appeared in
+.Ox 2.9 .
+.Sh SEE ALSO
+.Xr pkg_add 1 ,
+.Xr bsd.port.mk 5 ,
+.Xr packages 7 ,
+.Xr ports 7
