@@ -1,4 +1,4 @@
-/*	$Id: cl.c,v 1.6 1995/12/01 19:10:47 deraadt Exp $ */
+/*	$Id: cl.c,v 1.7 1995/12/01 19:26:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -294,17 +294,18 @@ clattach(parent, self, aux)
 	sc->sc_cl[2].tx[1] = (void *)(((int)sc->sc_cl[2].tx[0]) + CL_BUFSIZE);
 	sc->sc_cl[3].tx[0] = (void *)(((int)sc->sc_cl[2].tx[1]) + CL_BUFSIZE);
 	sc->sc_cl[3].tx[1] = (void *)(((int)sc->sc_cl[3].tx[0]) + CL_BUFSIZE);
-#if 0
 	for (i = 0; i < CLCD_PORTS_PER_CHIP; i++) {
 		int j;
+#if 0
 		for (j = 0; j < 2 ; j++) {
-		sc->sc_cl[i].rxp[j] = (void *)kvtop(sc->sc_cl[i].rx[j]);
-printf("cl[%d].rxbuf[%d] %x p %x\n",
-	i, j, sc->sc_cl[i].rx[j], sc->sc_cl[i].rxp[j]);
-		sc->sc_cl[i].txp[j] = (void *)kvtop(sc->sc_cl[i].tx[j]);
-printf("cl[%d].txbuf[%d] %x p %x\n",
-	i, j, sc->sc_cl[i].tx[j], sc->sc_cl[i].txp[j]);
+			sc->sc_cl[i].rxp[j] = (void *)kvtop(sc->sc_cl[i].rx[j]);
+			printf("cl[%d].rxbuf[%d] %x p %x\n",
+			    i, j, sc->sc_cl[i].rx[j], sc->sc_cl[i].rxp[j]);
+			sc->sc_cl[i].txp[j] = (void *)kvtop(sc->sc_cl[i].tx[j]);
+			printf("cl[%d].txbuf[%d] %x p %x\n",
+			    i, j, sc->sc_cl[i].tx[j], sc->sc_cl[i].txp[j]);
 		}
+#endif
 #if 0
 		sc->sc_cl[i].cl_rxmode =
 			!(!((flags >> (i * CL_FLAG_BIT_PCH)) & 0x01));
@@ -315,7 +316,6 @@ printf("cl[%d].txbuf[%d] %x p %x\n",
 #endif
 		cl_initchannel(sc, i);
 	}
-#endif
 	/* enable interrupts */
 	sc->sc_ih_e.ih_fn = cl_rxintr;
 	sc->sc_ih_e.ih_arg = sc;
