@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.151 2002/09/17 16:09:49 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.152 2002/09/22 15:22:20 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -75,6 +75,7 @@ enum pfctl_iflookup_mode {
 struct node_if {
 	char			 ifname[IFNAMSIZ];
 	u_int8_t		 not;
+	u_int			 ifa_flags;
 	struct node_if		*next;
 };
 
@@ -93,6 +94,7 @@ struct node_host {
 	struct node_host	*next;
 	u_int32_t		 ifindex;	/* link-local IPv6 addrs */
 	char			*ifname;
+	u_int			 ifa_flags;
 };
 
 struct node_port {
@@ -182,7 +184,7 @@ int	symset(const char *, const char *);
 char *	symget(const char *);
 
 void	ifa_load(void);
-int	ifa_exists(char *);
+struct	node_host *ifa_exists(char *);
 struct	node_host *ifa_lookup(char *, enum pfctl_iflookup_mode);
 struct	node_host *ifa_pick_ip(struct node_host *, u_int8_t);
 
@@ -399,8 +401,23 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af {
 
 				expand_rule(&r, j, NULL, h, NULL, NULL, NULL,
 				    NULL, NULL, NULL);
-			}
 
+				if ((i->ifa_flags & IFF_LOOPBACK) == 0) {
+					memset(&r, 0, sizeof(r));
+
+					r.action = PF_DROP;
+					r.direction = PF_IN;
+					r.log = $2.log;
+					r.quick = $2.quick;
+					r.af = $4;
+
+					h = ifa_lookup(i->ifname,
+					    PFCTL_IFLOOKUP_HOST);
+
+					expand_rule(&r, NULL, NULL, h, NULL,
+					    NULL, NULL, NULL, NULL, NULL);
+				}
+			}
 		}
 		;
 
@@ -487,8 +504,8 @@ pfrule		: action dir logquick interface route af proto fromto
 				if ($5.string) {
 					strlcpy(r.rt_ifname, $5.string,
 					    IFNAMSIZ);
-					if (!ifa_exists(r.rt_ifname)) {
-						yyerror("unknown interface %s", 
+					if (ifa_exists(r.rt_ifname) == NULL) {
+						yyerror("unknown interface %s",
 						    r.rt_ifname);
 						YYERROR;
 					}
@@ -609,7 +626,9 @@ if_item_not	: '!' if_item			{ $$ = $2; $$->not = 1; }
 		| if_item			{ $$ = $1; }
 
 if_item		: STRING			{
-			if (!ifa_exists($1)) {
+			struct node_host *n;
+
+			if ((n = ifa_exists($1)) == NULL) {
 				yyerror("unknown interface %s", $1);
 				YYERROR;
 			}
@@ -617,6 +636,7 @@ if_item		: STRING			{
 			if ($$ == NULL)
 				err(1, "if_item: malloc");
 			strlcpy($$->ifname, $1, IFNAMSIZ);
+			$$->ifa_flags = n->ifa_flags;
 			$$->not = 0;
 			$$->next = NULL;
 		}
@@ -2589,6 +2609,7 @@ ifa_load(void)
 			err(1, "address: calloc");
 		n->af = ifa->ifa_addr->sa_family;
 		n->addr.addr_dyn = NULL;
+		n->ifa_flags = ifa->ifa_flags;
 #ifdef __KAME__
 		if (n->af == AF_INET6 &&
 		    IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr) &&
@@ -2639,7 +2660,7 @@ ifa_load(void)
 	freeifaddrs(ifap);
 }
 
-int
+struct node_host *
 ifa_exists(char *ifa_name)
 {
 	struct node_host *n;
@@ -2649,9 +2670,9 @@ ifa_exists(char *ifa_name)
 
 	for (n = iftab; n; n = n->next) {
 		if (n->af == AF_LINK && !strncmp(n->ifname, ifa_name, IFNAMSIZ))
-			return(1);
+			return(n);
 	}
-	return(0);
+	return (NULL);
 }
 
 struct node_host *
@@ -2683,7 +2704,7 @@ ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 				memcpy(&n->addr.addr, &p->bcast,
 				    sizeof(struct pf_addr));
 		} else
-			memcpy(&n->addr.addr, &p->addr.addr, 
+			memcpy(&n->addr.addr, &p->addr.addr,
 			    sizeof(struct pf_addr));
 		if (mode == PFCTL_IFLOOKUP_NET)
 			memcpy(&n->mask, &p->mask, sizeof(struct pf_addr));
