@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.11 1996/11/23 21:46:16 kstailey Exp $	*/
+/*	$OpenBSD: fd.c,v 1.12 1996/12/05 17:16:59 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.33.4.1 1996/06/12 20:52:25 pk Exp $	*/
 
 /*-
@@ -1634,21 +1634,23 @@ fdgetdisklabel(dev)
 	struct fd_softc *fd = fd_cd.cd_devs[unit];
 	struct disklabel *lp = fd->sc_dk.dk_label;
 	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
+	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(lp, sizeof(struct cpu_disklabel));
 
-	lp->d_type = DTYPE_FLOPPY;
 	lp->d_secsize = FDC_BSIZE;
 	lp->d_secpercyl = fd->sc_type->seccyl;
+	lp->d_ntracks = fd->sc_type->heads;	/* Go figure... */
 	lp->d_nsectors = fd->sc_type->sectrac;
 	lp->d_ncylinders = fd->sc_type->tracks;
-	lp->d_ntracks = fd->sc_type->heads;	/* Go figure... */
-	lp->d_rpm = 3600;	/* XXX like it matters... */
 
-	strncpy(lp->d_typename, "floppy", sizeof(lp->d_typename));
+	strncpy(lp->d_typename, "floppy disk", sizeof(lp->d_typename));
+	lp->d_type = DTYPE_FLOPPY;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+	lp->d_rpm = 300;	/* XXX like it matters... */
 	lp->d_interleave = 1;
+	lp->d_flags = D_REMOVABLE;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size = lp->d_secpercyl * lp->d_ncylinders;
@@ -1660,31 +1662,12 @@ fdgetdisklabel(dev)
 	lp->d_checksum = dkcksum(lp);
 
 	/*
-	 * Call the generic disklabel extraction routine.  If there's
-	 * not a label there, fake it.
+	 * Call the generic disklabel extraction routine.
 	 */
-	if (readdisklabel(dev, fdstrategy, lp, clp) != NULL) {
-		strncpy(lp->d_packname, "default label",
-		    sizeof(lp->d_packname));
-		/*
-		 * Reset the partition info; it might have gotten
-		 * trashed in readdisklabel().
-		 *
-		 * XXX Why do we have to do this?  readdisklabel()
-		 * should be safe...
-		 */
-		for (i = 0; i < MAXPARTITIONS; ++i) {
-			lp->d_partitions[i].p_offset = 0;
-			if (i == RAW_PART) {
-				lp->d_partitions[i].p_size =
-				    lp->d_secpercyl * lp->d_ncylinders;
-				lp->d_partitions[i].p_fstype = FS_BSDFFS;
-			} else {
-				lp->d_partitions[i].p_size = 0;
-				lp->d_partitions[i].p_fstype = FS_UNUSED;
-			}
-		}
-		lp->d_npartitions = RAW_PART + 1;
+	(void) readdisklabel(dev, fdstrategy, lp, clp);
+	if (errstring) {
+		printf("%s: %s\n", fd->sc_dv.dv_xname, errstring);
+		return;
 	}
 }
 
