@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.25 2000/04/23 21:42:40 aaron Exp $
+.\"	$OpenBSD: ed.1,v 1.26 2000/10/06 02:14:13 aaron Exp $
 .\"
 .Dd May 2, 1993
 .Dt ED 1
@@ -15,8 +15,7 @@
 .Sh DESCRIPTION
 .Nm
 is a line-oriented text editor.
-It is used to create, display, modify and otherwise manipulate text
-files.
+It is used to create, display, modify and otherwise manipulate text files.
 If invoked with a
 .Ar file
 argument, then a copy of
@@ -268,19 +267,16 @@ g/string/
 .Pp
 prints all lines containing
 .Em string .
-Regular expressions are also
-used by the
+Regular expressions are also used by the
 .Em s
 command for selecting old text to be replaced with new.
 .Pp
 In addition to a specifying string literals, regular expressions can
-represent
-classes of strings.
-Strings thus represented are said to be matched
-by the corresponding regular expression.
-If it is possible for a regular expression
-to match several strings in a line, then the leftmost longest match is
-the one selected.
+represent classes of strings.
+Strings thus represented are said to be matched by the
+corresponding regular expression.
+If it is possible for a regular expression to match several strings in
+a line, then the leftmost longest match is the one selected.
 .Pp
 The following symbols are used in constructing regular expressions:
 .Bl -tag -width Dsasdfsd
@@ -417,7 +413,12 @@ the string
 .Em bbb Ns No ),
 since a null match
 is the only leftmost match.
-.It Em \e{n,m\e} \e{n,\e} \e{n\e}
+.Sm off
+.It Xo Em \e{ No n,m
+.Em \e}\ \e{ No n, Em \e}\ 
+.Em \e{ No n Em \e}
+.Xc
+.Sm on
 Matches the single character regular expression or subexpression
 immediately preceding it at least
 .Em n
@@ -443,8 +444,7 @@ All
 .Nm
 commands are single characters, though some require additional parameters.
 If a command's parameters extend over several lines, then
-each line except for the last
-must be terminated with a backslash
+each line except for the last must be terminated with a backslash
 .Pq Ql \e .
 .Pp
 In general, at most one command is allowed per line.
@@ -462,7 +462,7 @@ and returning the editor to command mode.
 recognizes the following commands.
 The commands are shown together with
 the default address or address range supplied if none is
-specified (in parenthesis), and other possible arguments on the right.
+specified (in parentheses), and other possible arguments on the right.
 .Bl -tag -width Dxxs
 .It (.) Ns Em a
 Appends text to the buffer after the addressed line.
@@ -516,7 +516,7 @@ Sets the default filename to
 If
 .Em file
 is not specified, then the default unescaped filename is printed.
-.It (1,$) Ns Em g/re/command-list
+.It (1,$) Ns Em g Ns No /re/command-list
 Applies
 .Em command-list
 to each of the addressed lines matching a regular expression
@@ -546,7 +546,7 @@ A newline alone in
 is equivalent to a
 .Em p
 command.
-.It (1,$) Ns Em G/re/
+.It (1,$) Ns Em G Ns No /re/
 Interactively edits the addressed lines matching a regular expression
 .Em re Ns No .
 For each matching line,
@@ -662,11 +662,13 @@ the standard output of
 command below).
 The default filename is unchanged.
 The current address is set to the last line read.
-.It (.,.) Ns Em s Ns No /re/replacement/
-.It (.,.) Ns Em s Ns No /re/replacement/ Ns Em g
-.It (.,.) Ns Em s Ns No /re/replacement/ Ns Em n
-Replaces text in the addressed lines
-matching a regular expression
+.Sm off
+.It Xo (.,.) Em s No /re/replacement/ , \ (.,.)
+.Em s No /re/replacement/ Em g , No \ (.,.)
+.Em s No /re/replacement/ Em n
+.Xc
+.Sm on
+Replaces text in the addressed lines matching a regular expression
 .Em re
 with
 .Em replacement Ns No .
@@ -720,7 +722,7 @@ Newlines may be embedded in
 .Em replacement
 if they are escaped with a backslash
 .Pq Ql \e .
-.It Em (.,.) Ns Em s
+.It (.,.) Ns Em s
 Repeats the last substitution.
 This form of the
 .Em s
@@ -865,7 +867,7 @@ The current line is unchanged.
 .It Pa /tmp/ed.*
 buffer file
 .It Pa ed.hup
-file to which
+where
 .Nm
 attempts to write the buffer if the terminal hangs up
 .El
@@ -878,9 +880,13 @@ attempts to write the buffer if the terminal hangs up
 .Pp
 USD:12-13
 .Pp
-B. W. Kernighan and P. J. Plauger,
-.Em Software Tools in Pascal Ns No ,
-Addison-Wesley, 1981.
+.Rs
+.%A B. W. Kernighan
+.%A P. J. Plauger
+.%B Software Tools in Pascal
+.%O Addison-Wesley
+.%D 1981
+.Re
 .Sh LIMITATIONS
 .Nm
 processes
