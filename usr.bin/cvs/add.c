@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.12 2004/12/30 20:37:56 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.13 2005/01/24 17:42:26 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,19 +53,31 @@ int  cvs_add_file (CVSFILE *, void *);
 int
 cvs_add(int argc, char **argv)
 {
-	int i, ch;
-	char *kflag, *msg;
+	int i, ch, kflag;
+	char buf[16], *koptstr;
 	struct cvsroot *root;
 
-	kflag = msg = NULL;
+	kflag = RCS_KWEXP_DEFAULT;
+	cvs_msg = NULL;
 
 	while ((ch = getopt(argc, argv, "k:m:")) != -1) {
 		switch (ch) {
 		case 'k':
-			kflag = optarg;
+			koptstr = optarg;
+			kflag = rcs_kflag_get(koptstr);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expansion mode");
+				rcs_kflag_usage();
+				return (EX_USAGE);
+			}
+			printf("kopt = `%s'\n", koptstr);
 			break;
 		case 'm':
-			msg = optarg;
+			if ((cvs_msg = strdup(optarg)) == NULL) {
+				cvs_log(LP_ERRNO, "failed to copy message");
+				return (EX_DATAERR);
+			}
 			break;
 		default:
 			return (EX_USAGE);
@@ -74,7 +86,6 @@ cvs_add(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
-
 	if (argc == 0)
 		return (EX_USAGE);
 
@@ -90,8 +101,16 @@ cvs_add(int argc, char **argv)
 		    "or set the CVSROOT environment variable.");
 		return (EX_USAGE);
 	}
-	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
-		return (EX_PROTOCOL);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_connect(root) < 0)
+			return (EX_PROTOCOL);
+		if (kflag != RCS_KWEXP_DEFAULT) {
+			strlcpy(buf, "-k", sizeof(buf));
+			strlcat(buf, koptstr, sizeof(buf));
+			if (cvs_sendarg(root, buf, 0) < 0)
+				return (EX_PROTOCOL);
+		}
+	}
 
 	cvs_file_examine(cvs_files, cvs_add_file, NULL);
 

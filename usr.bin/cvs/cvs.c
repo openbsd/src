@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.36 2005/01/24 16:12:56 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.37 2005/01/24 17:42:26 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -96,8 +96,8 @@ static struct cvs_cmd {
 } cvs_cdt[] = {
 	{
 		CVS_OP_ADD, "add",      { "ad",  "new" }, cvs_add,
-		"[-m msg] file ...",
-		"",
+		"[-k opt] [-m msg] file ...",
+		"k:m:",
 		"Add a new file/directory to the repository",
 		NULL,
 	},
