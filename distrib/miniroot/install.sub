@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.240 2002/07/04 23:36:35 krw Exp $
+#	$OpenBSD: install.sub,v 1.241 2002/07/06 16:18:13 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -943,9 +943,9 @@ __EOT
 # $1 = list of files available in source directory or url.
 # $2 = source directory or url
 get_get_files_list () {
-	local _filelist=$1 _src=$2
+	local _files=$1 _src=$2
 
-	get_sets_list "$_file_list" "$_src"
+	get_sets_list "$_files" "$_src"
 
 	[ "$_sets" ] || return
 
