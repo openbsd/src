@@ -1,4 +1,4 @@
-.\" $OpenBSD: strsep.3,v 1.9 2001/06/14 20:38:38 aaron Exp $
+.\" $OpenBSD: strsep.3,v 1.10 2001/11/21 14:32:45 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
-.Fn strsep "char **stringp" "char *delim"
+.Fn strsep "char **stringp" "const char *delim"
 .Sh DESCRIPTION
 The
 .Fn strsep
