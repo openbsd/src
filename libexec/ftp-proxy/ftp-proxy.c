@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.38 2004/11/19 00:47:23 jmc Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.39 2005/01/19 20:58:59 millert Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -541,7 +541,7 @@ connect_port_backchannel(void)
 		 * getting one bound to port 20 - This is deliberately
 		 * not RFC compliant.
 		 */
-		bzero(&listen_sa.sin_addr, sizeof(struct in_addr));
+		bcopy(&src_addr, &listen_sa.sin_addr, sizeof(struct in_addr));
 		client_data_socket =  get_backchannel_socket(SOCK_STREAM,
 		    min_port, max_port, -1, 1, &listen_sa);
 		if (client_data_socket < 0) {
