@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.32 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.33 2003/08/11 20:10:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef lint
-char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1990 The Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.32 2003/06/03 02:56:15 millert Exp $";
+/*static const char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
+static const char rcsid[] = "$OpenBSD: rsh.c,v 1.33 2003/08/11 20:10:00 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -181,21 +181,16 @@ main(int argc, char *argv[])
 				*argv = "telnet";
 			execv(_PATH_TELNET, argv);
 		}
-		(void)fprintf(stderr, "rsh: can't exec %s.\n", _PATH_TELNET);
-		exit(1);
+		errx(1, "can't exec %s", _PATH_TELNET);
 	}
 
 	argc -= optind;
 	argv += optind;
 
-	if (geteuid()) {
-		(void)fprintf(stderr, "rsh: must be setuid root.\n");
-		exit(1);
-	}
-	if (!(pw = getpwuid(uid = getuid()))) {
-		(void)fprintf(stderr, "rsh: unknown user id.\n");
-		exit(1);
-	}
+	if (geteuid() != 0)
+		errx(1, "must be setuid root");
+	if (!(pw = getpwuid(uid = getuid())))
+		errx(1, "unknown user ID %u", uid);
 	if (!user)
 		user = pw->pw_name;
 
@@ -220,10 +215,8 @@ main(int argc, char *argv[])
 #endif
 	if (sp == NULL)
 		sp = getservbyname("shell", "tcp");
-	if (sp == NULL) {
-		(void)fprintf(stderr, "rsh: shell/tcp: unknown service.\n");
-		exit(1);
-	}
+	if (sp == NULL)
+		errx(1, "shell/tcp: unknown service");
 
 	(void) unsetenv("RSH");		/* no tricks with rcmd(3) */
 
@@ -244,11 +237,8 @@ try_connect:
 		if (rem < 0) {
 			use_kerberos = 0;
 			sp = getservbyname("shell", "tcp");
-			if (sp == NULL) {
-				(void)fprintf(stderr,
-				    "rsh: unknown service shell/tcp.\n");
-				exit(1);
-			}
+			if (sp == NULL)
+				errx(1, "unknown service shell/tcp");
 			if (errno == ECONNREFUSED)
 				warning("remote host doesn't support Kerberos");
 			if (errno == ENOENT)
@@ -256,11 +246,8 @@ try_connect:
 			goto try_connect;
 		}
 	} else {
-		if (doencrypt) {
-			(void)fprintf(stderr,
-			    "rsh: the -x flag requires Kerberos authentication.\n");
-			exit(1);
-		}
+		if (doencrypt)
+			errx("the -x flag requires Kerberos authentication");
 		rem = rcmd_af(&host, sp->s_port, pw->pw_name, user, args,
 		    &rfd2, PF_UNSPEC);
 	}
@@ -272,19 +259,15 @@ try_connect:
 	if (rem < 0)
 		exit(1);
 
-	if (rfd2 < 0) {
-		(void)fprintf(stderr, "rsh: can't establish stderr.\n");
-		exit(1);
-	}
+	if (rfd2 < 0)
+		errx(1, "can't establish stderr");
 	if (dflag) {
 		if (setsockopt(rem, SOL_SOCKET, SO_DEBUG, &one,
 		    sizeof(one)) < 0)
-			(void)fprintf(stderr, "rsh: setsockopt: %s.\n",
-			    strerror(errno));
+			warn("setsockopt");
 		if (setsockopt(rfd2, SOL_SOCKET, SO_DEBUG, &one,
 		    sizeof(one)) < 0)
-			(void)fprintf(stderr, "rsh: setsockopt: %s.\n",
-			    strerror(errno));
+			warn("setsockopt");
 	}
 
 	(void)seteuid(uid);
@@ -302,12 +285,8 @@ try_connect:
 		(void)signal(SIGTERM, sendsig);
 
 	if (!nflag) {
-		pid = fork();
-		if (pid < 0) {
-			(void)fprintf(stderr,
-			    "rsh: fork: %s.\n", strerror(errno));
-			exit(1);
-		}
+		if ((pid = fork()) < 0)
+			err(1, "fork");
 	}
 
 #ifdef KERBEROS
@@ -347,11 +326,8 @@ rewrite:	FD_ZERO(&rembits);
 			errx(1, "descriptor too large");
                 FD_SET(rem, &rembits);
 		if (select(rem + 1, 0, &rembits, 0, 0) < 0) {
-			if (errno != EINTR) {
-				(void)fprintf(stderr,
-				    "rsh: select: %s.\n", strerror(errno));
-				exit(1);
-			}
+			if (errno != EINTR)
+				err(1, "select");
 			goto rewrite;
 		}
 		if (!FD_ISSET(rem, &rembits))
@@ -388,11 +364,8 @@ done:
 	do {
 		FD_COPY(&readfrom, &ready);
 		if (select(MAX(rfd2, rem) + 1, &ready, 0, 0, 0) < 0) {
-			if (errno != EINTR) {
-				(void)fprintf(stderr,
-				    "rsh: select: %s.\n", strerror(errno));
-				exit(1);
-			}
+			if (errno != EINTR)
+				err(1, "select");
 			continue;
 		}
 		if (FD_ISSET(rfd2, &ready)) {
