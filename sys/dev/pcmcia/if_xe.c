@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.6 1999/08/08 21:44:43 niklas Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.7 1999/08/09 03:54:01 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -620,10 +620,8 @@ xe_pcmcia_manfid_ciscallback(tuple, arg)
 			*flagsp |= XEF_CE2;
 			break;
 		case 3:
-			/*
-			 * XXX Linux driver suggests this can be Mohawk if
-			 * there is no modem function on the card.
-			 */
+			if (!(*flagsp & XEF_MODEM))
+				*flagsp |= XEF_MOHAWK;
 			*flagsp |= XEF_CE3;
 			break;
 		case 4:
