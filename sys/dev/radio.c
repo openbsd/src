@@ -1,4 +1,4 @@
-/* $OpenBSD: radio.c,v 1.5 2002/01/10 18:38:24 mickey Exp $ */
+/* $OpenBSD: radio.c,v 1.6 2002/05/30 15:22:26 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/radioio.h>
 #include <sys/conf.h>
 
+#include <dev/audio_if.h>
 #include <dev/radio_if.h>
 #include <dev/radiovar.h>
 
@@ -60,20 +61,19 @@ struct cfdriver radio_cd = {
 int
 radioprobe(struct device *parent, void *match, void *aux)
 {
-	return (1);
+	struct audio_attach_args *sa = aux;
+	return (sa->type == AUDIODEV_TYPE_RADIO) ? 1 : 0;
 }
 
 void
 radioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct radio_softc *sc = (void *) self;
-	struct radio_attach_args *sa = aux;
-	struct radio_hw_if *hwp = sa->hwif;
-	void  *hdlp = sa->hdl;
+	struct audio_attach_args *sa = aux;
 
 	printf("\n");
-	sc->hw_if = hwp;
-	sc->hw_hdl = hdlp;
+	sc->hw_if = sa->hwif;
+	sc->hw_hdl = sa->hdl;
 	sc->sc_dev = parent;
 }
 
@@ -155,8 +155,9 @@ radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 struct device *
 radio_attach_mi(struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
 {
-	struct radio_attach_args arg;
+	struct audio_attach_args arg;
 
+	arg.type = AUDIODEV_TYPE_RADIO;
 	arg.hwif = rhwp;
 	arg.hdl = hdlp;
 	return (config_found(dev, &arg, radioprint));
