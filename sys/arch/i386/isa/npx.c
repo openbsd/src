@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.34 2004/07/21 18:39:58 kettenis Exp $	*/
+/*	$OpenBSD: npx.c,v 1.35 2004/10/21 20:58:07 kettenis Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -99,6 +99,8 @@
 
 int npxintr(void *);
 static int npxprobe1(struct isa_attach_args *);
+static int x86fpflags_to_siginfo(u_int32_t);
+
 
 struct npx_softc {
 	struct device sc_dev;
@@ -510,22 +512,10 @@ npxintr(arg)
 		 * Encode the appropriate code for detailed information on
 		 * this exception.
 		 */
-		if (addr->sv_87.sv_ex_sw & EN_SW_IE)
-			code = FPE_FLTINV;
-#ifdef notyet
-		else if (addr->sv_87.sv_ex_sw & EN_SW_DE)
-			code = FPE_FLTDEN;
-#endif
-		else if (addr->sv_87.sv_ex_sw & EN_SW_ZE)
-			code = FPE_FLTDIV;
-		else if (addr->sv_87.sv_ex_sw & EN_SW_OE)
-			code = FPE_FLTOVF;
-		else if (addr->sv_87.sv_ex_sw & EN_SW_UE)
-			code = FPE_FLTUND;
-		else if (addr->sv_87.sv_ex_sw & EN_SW_PE)
-			code = FPE_FLTRES;
+		if (i386_use_fxsave)
+			code = x86fpflags_to_siginfo(addr->sv_xmm.sv_ex_sw);
 		else
-			code = 0;		/* XXX unknown */
+			code = x86fpflags_to_siginfo(addr->sv_87.sv_ex_sw);
 		sv.sival_int = frame->if_eip;
 		trapsignal(p, SIGFPE, T_ARITHTRAP, code, sv);
 	} else {
@@ -547,6 +537,28 @@ npxintr(arg)
 	}
 
 	return (1);
+}
+
+static int
+x86fpflags_to_siginfo(u_int32_t flags)
+{
+        int i;
+        static int x86fp_siginfo_table[] = {
+                FPE_FLTINV, /* bit 0 - invalid operation */
+                FPE_FLTRES, /* bit 1 - denormal operand */
+                FPE_FLTDIV, /* bit 2 - divide by zero   */
+                FPE_FLTOVF, /* bit 3 - fp overflow      */
+                FPE_FLTUND, /* bit 4 - fp underflow     */
+                FPE_FLTRES, /* bit 5 - fp precision     */
+                FPE_FLTINV, /* bit 6 - stack fault      */
+        };
+
+        for (i=0;i < sizeof(x86fp_siginfo_table)/sizeof(int); i++) {
+                if (flags & (1 << i))
+                        return (x86fp_siginfo_table[i]);
+        }
+        /* punt if flags not set */
+        return (FPE_FLTINV);
 }
 
 /*
