@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.2 2004/02/09 01:56:18 henning Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.3 2004/02/17 15:44:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -138,7 +138,7 @@ up_attr_cmp(struct update_attr *a, struct update_attr *b)
 int
 up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 {
-	struct update_attr	*na;
+	struct update_attr	*na = NULL;
 	struct update_prefix	*np;
 
 	ENSURE(p != NULL);
