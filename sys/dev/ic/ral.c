@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.10 2005/02/19 09:45:16 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.11 2005/02/19 09:58:38 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1732,7 +1732,7 @@ ral_start(struct ifnet *ifp)
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
-			if (sc->txq.queued >= RAL_TX_RING_COUNT) {
+			if (sc->txq.queued >= RAL_TX_RING_COUNT - 1) {
 				IF_PREPEND(&ifp->if_snd, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
