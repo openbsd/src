@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.11 1996/12/14 15:35:26 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.12 1996/12/22 03:00:52 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.11 1996/12/14 15:35:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.12 1996/12/22 03:00:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -199,6 +199,7 @@ main(argc, argv)
 		err(1, "socket");
 
 	/* revoke privs */
+	seteuid(getuid());
 	setuid(getuid());
 
 	preload = 0;
