@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.6 1997/10/27 16:09:53 millert Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.7 1998/09/04 16:57:16 millert Exp $	*/
 /*	$NetBSD: devopen.c,v 1.1 1995/11/23 02:39:37 cgd Exp $	*/
 
 /*-
@@ -61,36 +61,8 @@ devopen(f, fname, file)
 	cp = (char *)fname;
 	ncp = namebuf;
 
-	/* look for a string like '5/rz0/vmunix' or '5/rz3f/vmunix */
-	if ((c = *cp) >= '0' && c <= '9') {
-		ctlr = c - '0';
-		/* skip the '/' */
-		if (*++cp != '/')
-			goto defdev;
-		cp++;
-		while ((c = *cp) != '\0') {
-			if (c == '/')
-				break;
-			if (c >= '0' && c <= '9') {
-				/* read unit number */
-				unit = c - '0';
-
-				/* look for a partition */
-				if ((c = *++cp) >= 'a' && c <= 'h') {
-					part = c - 'a';
-					c = *++cp;
-				}
-				if (c != '/')
-					goto defdev;
-				break;
-			}
-			if (ncp < namebuf + sizeof(namebuf) - 1)
-				*ncp++ = c;
-			cp++;
-		}
-		*ncp = '\0';
-	} else if (strchr(cp, '(')) {
-		/* expect a string like 'rz(0,0,0)vmunix' */
+	/* look for a string like 'disk(0,0,0)bsd' */
+	if (strchr(cp, '(')) {
 		while ((c = *cp) != '\0') {
 			if (c == '(') {
 				cp++;
