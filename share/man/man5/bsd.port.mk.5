@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.157 2005/03/11 23:03:58 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.158 2005/03/14 11:03:04 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1577,6 +1577,13 @@ with the default process limits.
 .It Ev WANTLIB
 Extra list of library specifications that a package will need.
 May include system and X11 libraries.
+.Pp
+As a special extension, 
+.Ev WANTLIB 
+may include absolute paths, e.g.,
+.Pa ${LOCALBASE}/lib/expat.=4
+to distinguish between base libraries and port libraries.
+Use with caution, this is very seldom needed.
 .It Ev WARNINGS
 User settings.
 If set to
