@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.2 1995/11/20 09:21:12 deraadt Exp $
+	$Id: i386b-nat.c,v 1.3 1995/11/23 15:56:20 deraadt Exp $
 */
 
 #include <sys/types.h>
@@ -31,9 +31,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "defs.h"
 #include "inferior.h"
 
-int tregmap[] = {tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI,
-		 tEIP, tEFLAGS, tCS, tSS, tDS, tES};
-
 void
 fetch_inferior_registers (regno)
      int regno;
@@ -43,7 +40,7 @@ fetch_inferior_registers (regno)
   ptrace (PT_GETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 
-  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers, NUM_REGS * 4);
+  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers, 4*NUM_REGS);
 
   registers_fetched ();
 }
@@ -54,7 +51,7 @@ store_inferior_registers (regno)
 {
   struct reg inferior_registers;
 
-  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)], NUM_REGS * 4);
+  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)], 4*NUM_REGS);
 
   ptrace (PT_SETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
@@ -349,20 +346,20 @@ fetch_kcore_registers(pcb)
 	if (target_read_memory(pcb->pcb_tss.tss_esp+4, regs, sizeof regs, 0))
 		error("Cannot read ebx, esi, and edi.");
 	for (i = 0, regno = 0; regno < 3; regno++)
-		supply_register(regno, &i);
-	supply_register(3, &regs[2]);
-	supply_register(4, &pcb->pcb_tss.tss_esp);
-	supply_register(5, &pcb->pcb_tss.tss_ebp);
-	supply_register(6, &regs[1]);
-	supply_register(7, &regs[0]);
-	supply_register(8, &regs[3]);
+		supply_register(regno, (char *)&i);
+	supply_register(3, (char *)&regs[2]);
+	supply_register(4, (char *)&pcb->pcb_tss.tss_esp);
+	supply_register(5, (char *)&pcb->pcb_tss.tss_ebp);
+	supply_register(6, (char *)&regs[1]);
+	supply_register(7, (char *)&regs[0]);
+	supply_register(8, (char *)&regs[3]);
 	for (i = 0, regno = 9; regno < 10; regno++)
-		supply_register(regno, &i);
+		supply_register(regno, (char *)&i);
 #if 0
 	i = 0x08;
-	supply_register(10, &i);
+	supply_register(10, (char *)&i);
 	i = 0x10;
-	supply_register(11, &i);
+	supply_register(11, (char *)&i);
 #endif
 	/* XXX 80387 registers? */
 }

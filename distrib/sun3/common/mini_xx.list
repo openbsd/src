@@ -1,0 +1,27 @@
+#
+# $NetBSD: mini_xx.list,v 1.1 1995/11/21 21:19:01 gwr Exp $
+# Build -static versions of some programs.
+#
+
+# These were re-linked with -static locally:
+
+COPY	${OBJDIR}/awk			usr/bin
+
+COPY	${OBJDIR}/grep			usr/bin
+LINK	  usr/bin/grep			usr/bin/egrep
+LINK	  usr/bin/grep			usr/bin/fgrep
+
+COPY	${OBJDIR}/more			usr/bin
+
+COPY	${OBJDIR}/tip			usr/bin
+
+COPY	${OBJDIR}/vi			usr/bin
+
+# These are normally -static so just copy:
+
+COPY	${DESTDIR}/usr/bin/tar		usr/bin
+
+COPY	${DESTDIR}/usr/bin/gzip		usr/bin
+LINK		   usr/bin/gzip		usr/bin/gunzip
+LINK		   usr/bin/gzip		usr/bin/gzcat
+

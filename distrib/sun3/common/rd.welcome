@@ -12,13 +12,12 @@ the source of the miniroot image to be on any of these:
 
 The easiest is loading from tape, which is done as follows:
 	mt -f /dev/nrst0 rewind
-	mt -f /dev/nrst0 fsf 1
-	dd bs=16k if=/dev/nrst0 of=/dev/rsd0b
+	mt -f /dev/nrst0 fsf 2
+	dd bs=32k if=/dev/nrst0 of=/dev/rsd0b
 (For help with other methods, please see the install notes.)
 
 To reboot using the swap partition, first use "halt",
 then at the PROM monitor prompt use a command like:
-	b sd(0,0,1)netbsd -s
-		 ^-- 1 selects the swap partition
+	b sd(,,1) -s
 
 To view this message again, type:  cat /.welcome

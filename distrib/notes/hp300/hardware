@@ -11,7 +11,7 @@ Here is a table of recommended HD partition sizes for a full install:
 	Anything else is up to you!
 
 NOTE:  The hp300 installation procedure utilizes a `miniroot' filesystem
-which is placed into the swap area of the disk.  The swap are must be
+which is placed into the swap area of the disk.  The swap area must be
 at least large enough to hold this miniroot image.
 
 The following HP hardware is supported:

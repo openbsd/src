@@ -11,6 +11,8 @@
 ./usr/include/machine/exec.h
 ./usr/include/machine/float.h
 ./usr/include/machine/frame.h
+./usr/include/machine/freebsd_machdep.h
+./usr/include/machine/gdt.h
 ./usr/include/machine/ieeefp.h
 ./usr/include/machine/limits.h
 ./usr/include/machine/linux_machdep.h
@@ -58,5 +60,8 @@
 ./usr/lib/libtermcap_pic.a
 ./usr/lib/libutil_pic.a
 ./usr/lib/scrt0.o
+./usr/share/man/cat2/i386_get_ioperm.0
 ./usr/share/man/cat2/i386_get_ldt.0
+./usr/share/man/cat2/i386_iopl.0
+./usr/share/man/cat2/i386_set_ioperm.0
 ./usr/share/man/cat2/i386_set_ldt.0

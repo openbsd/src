@@ -5,7 +5,7 @@
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libg++.so.2.0
 ./usr/lib/libgnumalloc.so.0.0
-./usr/lib/libi386.so.0.0
+./usr/lib/libi386.so.0.1
 ./usr/lib/libkvm.so.4.0
 ./usr/lib/libm.so.0.1
 ./usr/lib/libpcap.so.0.0

@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $Id: dot.hdprofile,v 1.1.1.1 1995/10/18 08:37:34 deraadt Exp $
+#       $Id: dot.hdprofile,v 1.2 1995/11/23 15:57:57 deraadt Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
@@ -44,6 +44,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	echo "Mounting filesystems..."
 	mount -a
+	mount -t kernfs /kern /kern
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'

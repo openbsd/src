@@ -27,7 +27,7 @@ calculated with the following formula:
 
 Controllers are numbered 0, 1, ... starting with the lowest select code.
 SCSI controllers and HP-IB controllers are counted separately.  Therefore,
-if you had a system with an internal HP-IB interface at select code 7,
+if you have a system with an internal HP-IB interface at select code 7,
 a fast HP-IB interface at select code 14, and a SCSI interface at select
 code 16, unit numers might be something like the following:
 
@@ -96,10 +96,10 @@ that it resides in a filesystem what is exported to the client.  See the
 manual pages on your server system if you need more information about
 exporting filesystems.
 
-You are now ready to SYS_INST.  During the client's self-test cycle, press
-the space bar a few times.  Shortly, you should see a menu of possible boot
-options appear.  Select the option corresponding to SYS_INST.  SYS_INST will
-load and prompt you for a command.
+You are now ready to load SYS_INST.  During the client's self-test cycle,
+press the space bar a few times.  Shortly, you should see a menu of possible
+boot options appear.  Select the option corresponding to SYS_INST.  SYS_INST
+will load and prompt you for a command.
 
 If this is a new NetBSD installation, you will need to place a disklabel
 on the disk.

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.2.2.1 1995/11/02 00:07:25 gwr Exp $
+#	$NetBSD: install.sh,v 1.4 1995/11/21 21:18:53 gwr Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -35,16 +35,13 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-VERSION=1.0A
+VERSION=1.1
+export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
-FILESYSTEMS="/tmp/filesystems"		# used thoughout
+FILESYSTEMS="/tmp/.filesystems"		# used thoughout
 FQDN=""					# domain name
 
 trap "umount /tmp > /dev/null 2>&1" 0
-
-#
-# Functions...
-#
 
 getresp() {
 	read resp
@@ -53,33 +50,84 @@ getresp() {
 	fi
 }
 
-getrootdisk() {
-	cat << \__getrootdisk_1
-
-The installation program needs to know which disk to consider
-the root disk.  Note the unit number may be different than
-the unit number you used in the standalone installation
-program.
-
-Available disks are:
-
-__getrootdisk_1
-	dmesg | grep "^rd" | grep "slave"
-	dmesg | grep "^sd" | grep "slave"
-	echo	""
-	echo -n	"Which disk is the root disk? "
-	getresp ""
-	if dmesg | grep "^$resp " | grep "slave" > /dev/null ; then
-		ROOTDISK="$resp"
-	else
-		echo ""
-		echo "The disk $resp does not exist."
-		ROOTDISK=""
-	fi
+isin() {
+# test the first argument against the remaining ones, return succes on a match
+	_a=$1; shift
+	while [ $# != 0 ]; do
+		if [ "$_a" = "$1" ]; then return 0; fi
+		shift
+	done
+	return 1
 }
 
-checkfordisklabel() {
-	disklabel -r $1 > /dev/null 2> /tmp/checkfordisklabel
+rmel() {
+# remove first argument from list formed by the remaining arguments
+	_a=$1; shift
+	while [ $# != 0 ]; do
+		if [ "$_a" != "$1" ]; then
+			echo "$1";
+		fi
+		shift
+	done
+}
+
+twiddle() {
+# spin the propeller so we don't get bored
+	while : ; do
+		sleep 1; echo -n "/";
+		sleep 1; echo -n "-";
+		sleep 1; echo -n "\\";
+		sleep 1; echo -n "|";
+	done > /dev/tty & echo $!
+}
+
+#
+# machine dependent section
+#
+
+can_read_dev() {
+	dd if=/dev/$1 of=/dev/null count=1 > /dev/null 2>&1
+}
+
+# List of all disks supported by the miniroot:
+ALLDISKS="sd0 sd2 xd0 xd1 xy0 xy1"
+md_get_diskdevs() {
+	# return available disk devices
+	for dev in $ALLDISKS
+	do
+		can_read_dev r${dev}c && echo $dev
+	done
+}
+
+md_get_cddevs() {
+	# return available CD-ROM devices
+	for dev in cd0 cd1
+	do
+		can_read_dev r${dev}c && echo $dev
+	done
+}
+
+md_get_ifdevs() {
+	# return available network interfaces
+	for dev in le0 ie0 ie1
+	do
+		(ifconfig $dev >/dev/null 2>&1) && echo $dev
+	done
+}
+
+md_installboot() {
+	# $1 is the root disk
+	echo -n "Installing boot block..."
+	cd /usr/mdec
+	cp -p ./ufsboot /mnt/ufsboot
+	sync ; sleep 1 ; sync
+	./installboot /mnt/ufsboot bootxx /dev/r${1}a
+	echo "done."
+}
+
+md_checkfordisklabel() {
+	# $1 is the disk to check
+	disklabel $1 > /dev/null 2> /tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
 		rval="1"
 	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
@@ -91,26 +139,105 @@ checkfordisklabel() {
 	rm -f /tmp/checkfordisklabel
 }
 
+md_labeldisk() {
+	# $1 is the disk to label
+	disklabel -e $1
+}
+
+# Note, while they might not seem machine-dependent, the
+# welcome banner and the punt message may contain information
+# and/or instructions specific to the type of machine.
+md_welcome_banner() {
+echo	"
+Welcome to the NetBSD/sun3 ${VERSION} installation program.
+" ; cat << \__welcome_banner_1
+
+This program is designed to help you install NetBSD on your system in a
+simple and rational way.  You'll be asked several questions, and it will
+be useful to have the installation notes and a calculator at hand.
+
+As with anything which modifies your disk's contents, this program can
+cause SIGNIFICANT data loss, and you are advised to make sure all your
+disks are backed up before beginning the installation process.
+
+Default answers are displyed in brackets after the questions.
+You can hit Control-C at any time to quit, but if you do so at a
+prompt, you may have to hit return.  Also, quitting in the middle of
+installation may leave your system in an inconsistent state.
+
+__welcome_banner_1
+}
+
+md_not_going_to_install() {
+cat << \__not_going_to_install_1
+
+OK, then.  Enter 'halt' or 'reboot' at the prompt,
+or proceed with manual installation commands.
+
+__not_going_to_install_1
+}
+
+md_congrats() {
+cat << \__congratulations_1
+
+CONGRATULATIONS!  You have successfully installed NetBSD!  To boot the
+installed system, enter 'reboot' at the command prompt.
+
+__congratulations_1
+}
+
+# Note: I don't use the MFS hack.  Just remount root instead.
+md_remount() {
+	# Make sure root was remounted (creates /etc/fstab)
+	if [ ! -f /etc/fstab ]
+	then
+		# This is normally done by .profile
+		sh /.remount
+	fi
+}
+
+# end of machine dependent section
+
+getrootdisk() {
+	cat << \__getrootdisk_1
+
+The installation program needs to know which disk will be
+the root disk of the system about to be installed.
+
+Available disks are:
+
+__getrootdisk_1
+	_DKDEVS=`md_get_diskdevs`
+	echo	"$_DKDEVS"
+	echo	""
+	echo -n	"Which disk is the root disk? "
+	getresp ""
+	if isin $resp $_DKDEVS ; then
+		ROOTDISK="$resp"
+	else
+		echo ""
+		echo "The disk $resp does not exist."
+		ROOTDISK=""
+	fi
+}
+
 labelmoredisks() {
 	cat << \__labelmoredisks_1
 
 You may label the following disks:
 
 __labelmoredisks_1
-	dmesg | grep "^rd" | grep "slave" | grep -v "${ROOTDISK} "
-	dmesg | grep "^sd" | grep "slave" | grep -v "${ROOTDISK} "
+	echo "$_DKDEVS"
 	echo	""
 	echo -n	"Label which disk? [done] "
 	getresp "done"
 	case "$resp" in
-		done)
+		"done")
 			;;
 
 		*)
-			if dmesg | grep "^$resp " | grep "slave" \
-			    > /dev/null ; then
-				# XXX CODE ME
-				echo "Yup, it exists."
+			if echo "$_DKDEVS" | grep "^$resp" > /dev/null ; then
+				md_labeldisk $resp
 			else
 				echo ""
 				echo "The disk $resp does not exist."
@@ -123,19 +250,13 @@ addhostent() {
 	# $1 - IP address
 	# $2 - symbolic name
 
-	# Create an entry in the hosts table.  If no host table
-	# exists, create one.  If the IP address already exists,
-	# replace it's entry.
-	if [ ! -f /tmp/hosts ]; then
-		echo "127.0.0.1 localhost" > /tmp/hosts
-	fi
+	# Create an entry in the hosts table.
+	# If the IP address already exists, replace it.
+	grep -v "^$1 " /etc/hosts > /tmp/hosts
+	echo "$1 $2 $2.$FQDN"    >> /tmp/hosts
 
-	if grep "^$1 " /tmp/hosts > /dev/null; then
-		grep -v "^$1 " /tmp/hosts > /tmp/hosts.new
-		mv /tmp/hosts.new /tmp/hosts
-	fi
-
-	echo "$1 $2 $2.$FQDN" >> /tmp/hosts
+	# Use it now.
+	cp /tmp/hosts /etc/hosts
 }
 
 addifconfig() {
@@ -157,7 +278,8 @@ You may configure the following network interfaces:
 
 __configurenetwork_1
 
-	dmesg | grep "^le" | grep "ipl"
+	_IFS=`md_get_ifdevs`
+	echo	$_IFS
 	echo	""
 	echo -n	"Configure which interface? [done] "
 	getresp "done"
@@ -166,9 +288,11 @@ __configurenetwork_1
 			;;
 
 		*)
-			if dmesg | grep "^$resp " | grep "^le" | grep "ipl" \
-			    > /dev/null ; then
+			if isin $resp $_IFS ; then
 				_interface_name=$resp
+
+				# Keep in the list in case it's misconfigured
+				# and the user want's to re-do it.
 
 				# Get IP address
 				resp=""		# force one iteration
@@ -181,7 +305,7 @@ __configurenetwork_1
 				# Get symbolic name
 				resp=""		# force one iteration
 				while [ "X${resp}" = X"" ]; do
-					echo -n "Symbolic name? "
+					echo -n "Symbolic (host) name? "
 					getresp ""
 					_interface_symname=$resp
 				done
@@ -283,7 +407,7 @@ __install_ftp_2
 		fi
 
 		_ftp_file=`echo ${resp} | awk '{print $1}'`
-		echo "get ${_ftp_file} |\"tar -zxvpf -\"" >> \
+		echo "get ${_ftp_file} |\"tar --unlink -zxvpf -\"" >> \
 		    /tmp/ftp-script.sh
 	done
 
@@ -314,7 +438,7 @@ install_common_nfs_cdrom() {
 	fi
 
 	# Extract file
-	cat $_common_filename | (cd /mnt; tar -zxvpf -)
+	cat $_common_filename | (cd /mnt; tar --unlink -zxvpf -)
 	echo "Extraction complete."
 }
 
@@ -322,11 +446,12 @@ install_cdrom() {
 	# Get the cdrom device info
 	cat << \__install_cdrom_1
 
-The following SCSI disk or disk-like devices are installed on your system;
-please select the CD-ROM device containing the installation media:
+The following CD-ROM devices are installed on your system; please select
+the CD-ROM device containing the installation media:
 
 __install_cdrom_1
-	dmesg | grep "^sd" | grep "rev"
+	_CDDEVS=`md_get_cddevs`
+	echo    "$_CDDEVS"
 	echo	""
 	echo -n	"Which is the CD-ROM with the installation media? [abort] "
 	getresp "abort"
@@ -337,8 +462,7 @@ __install_cdrom_1
 			;;
 
 		*)
-			if dmesg | grep "^$resp " | grep "slave" \
-			    > /dev/null ; then
+			if isin $resp $_CDDEVS ; then
 				_cdrom_drive=$resp
 			else
 				echo ""
@@ -534,14 +658,14 @@ __install_tape_2
 			1)
 				(
 					cd /mnt
-					dd if=$TAPE | tar -zxvpf -
+					dd if=$TAPE | tar --unlink -zxvpf -
 				)
 				;;
 
 			2)
 				(
 					cd /mnt
-					tar -zxvpf $TAPE
+					dd if=$TAPE | tar --unlink -xvpf -
 				)
 				;;
 
@@ -554,37 +678,38 @@ __install_tape_2
 	echo "Extraction complete."
 }
 
+get_timezone() {
+cat << \__get_timezone_1
+
+Select a time zone:
+
+__get_timezone_1
+	ls /mnt/usr/share/zoneinfo	# XXX
+	echo	""
+	if [ X"$TZ" = "X" ]; then
+		TZ=`ls -l /etc/timezone 2>/dev/null | awk -F/ '{print $NF}'`
+	fi
+	echo -n "What timezone are you in [$TZ]? "
+	getresp "$TZ"
+	case "$resp" in
+	"")
+		echo "Timezone defaults to GMT"
+		TZ="GMT"
+		;;
+	*)
+		TZ="$resp"
+		;;
+	esac
+	export TZ
+}
+
 #
 # End of functions.
 # Begin working
 #
 
-echo	""
-echo	"Welcome to the NetBSD ${VERSION} installation program."
-cat << \__welcome_banner_1
-
-This program is designed to help you put NetBSD on your hard disk,
-in a simple and rational way.  You'll be asked several questions,
-and it would probably be useful to have your disk's hardware
-manual, the installation notes, and a calculator handy.
-
-In particular, you will need to know some reasonably detailed
-information about your disk's geometry.  This program can determine
-some limited information about certain specific types of HP-IB disks.
-If you have SCSI disks, however, prior knowledge of disk geometry
-is absolutely essential.
-
-As with anything which modifies your hard disk's contents, this
-program can cause SIGNIFICANT data loss, and you are advised
-to make sure your hard drive is backed up before beginning the
-installation process.
-
-Default answers are displyed in brackets after the questions.
-You can hit Control-C at any time to quit, but if you do so at a
-prompt, you may have to hit return.  Also, quitting in the middle of
-installation may leave your system in an inconsistent state.
-
-__welcome_banner_1
+# Good {morning,afternoon,evening,night}.
+md_welcome_banner
 echo -n "Proceed with installation? [n] "
 getresp "n"
 case "$resp" in
@@ -592,27 +717,13 @@ case "$resp" in
 		echo	"Cool!  Let's get to it..."
 		;;
 	*)
-		cat << \__welcome_banner_2
-
-OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the
-machine has halted, power-cycle the system to load new boot code.
-
-__welcome_banner_2
+		md_not_going_to_install
 		exit
 		;;
 esac
 
-# Make sure root was remounted (creates /etc/fstab)
-if [ ! -f /etc/fstab ]
-then
-	echo "Need to remount root read/write first."
-	exit 1
-fi
-
-# Install the shadowed disktab file; lets us write to it for temporary
-# purposes without mounting the miniroot read-write.
-# XXX: I just go ahead and remount root. -gwr
-# XXX: cp /etc/disktab.shadow /tmp/disktab.shadow
+# Make our root read/write (or at least parts of it).
+md_remount
 
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
@@ -620,13 +731,13 @@ done
 
 # Make sure there's a disklabel there.  If there isn't, puke after
 # disklabel prints the error message.
-checkfordisklabel ${ROOTDISK}
-case $rval in
+md_checkfordisklabel ${ROOTDISK}
+case "$resp" in
 	1)
 		cat << \__disklabel_not_present_1
 
 FATAL ERROR: There is no disklabel present on the root disk!  You must
-label the disk with SYS_INST before continuing.
+label the disk using the RAMDISK kernel before continuing.
 
 __disklabel_not_present_1
 		exit
@@ -636,7 +747,7 @@ __disklabel_not_present_1
 		cat << \__disklabel_corrupted_1
 
 FATAL ERROR: The disklabel on the root disk is corrupted!  You must
-re-label the disk with SYS_INST before continuing.
+re-label the disk using the RAMDISK kernel before continuing.
 
 __disklabel_corrupted_1
 		exit
@@ -660,7 +771,6 @@ echo -n	"Do you wish to edit the root disklabel? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		disklabel -W ${ROOTDISK}
 		disklabel -e ${ROOTDISK}
 		;;
 
@@ -674,6 +784,7 @@ You will now be given the opportunity to place disklabels on any additional
 disks on your system.
 __disklabel_notice_2
 
+_DKDEVS=`rmel ${ROOTDISK} ${_DKDEVS}`
 resp="X"	# force at least one iteration
 while [ "X$resp" != X"done" ]; do
 	labelmoredisks
@@ -686,7 +797,7 @@ cat << \__get_filesystems_1
 
 You will now have the opportunity to enter filesystem information.
 You will be prompted for device name and mount point (full path,
-including the prepending '/' character).
+including the leading '/' character).
 
 Note that these do not have to be in any particular order.  You will
 be given the opportunity to edit the resulting 'fstab' file before
@@ -750,14 +861,19 @@ case "$resp" in
 esac
 
 # Loop though the file, place filesystems on each device.
-echo	"Creating filesystems..."
-(
-	while read line; do
-		_device_name=`echo $line | awk '{print $1}'`
-		newfs /dev/r${_device_name}
-		echo ""
-	done
-) < ${FILESYSTEMS}
+while read dev mnt
+do
+	echo -n	"Create filesystem on $dev? [y] "
+	getresp "n" < /dev/tty
+	case "$resp" in
+		y*|Y*)
+			newfs /dev/r${dev}
+			;;
+		*)
+			echo "skipped $dev"
+			;;
+	esac
+done < ${FILESYSTEMS}
 
 # Get network configuration information, and store it for placement in the
 # root filesystem later.
@@ -804,10 +920,30 @@ case "$resp" in
 			fi
 		fi
 
+		echo -n	"Enter IP address of primary nameserver: [none] "
+		getresp "none"
+		if [ "X${resp}" != X"none" ]; then
+			echo "domain $FQDN" > /tmp/resolv.conf
+			echo "nameserver $resp" >> /tmp/resolv.conf
+			echo "search $FQDN" >> /tmp/resolv.conf
+
+			echo -n "Would you like to use the nameserver now? [y] "
+			getresp "y"
+			case "$resp" in
+				y*|Y*)
+					cp /tmp/resolv.conf \
+					    /etc/resolv.conf
+					;;
+
+				*)
+					;;
+			esac
+		fi
+
 		echo ""
 		echo "The host table is as follows:"
 		echo ""
-		cat /tmp/hosts
+		cat /etc/hosts
 		echo ""
 		echo "You may want to edit the host table in the event that"
 		echo "you need to mount an NFS server."
@@ -815,7 +951,7 @@ case "$resp" in
 		getresp "n"
 		case "$resp" in
 			y*|Y*)
-				vi /tmp/hosts
+				vi /etc/hosts
 				;;
 
 			*)
@@ -885,38 +1021,36 @@ case "$resp" in
 		;;
 esac
 
-# Now that the 'real' fstab is configured, we munge it into a 'shadow'
-# fstab which we'll use for mounting and unmounting all of the target
-# filesystems relative to /mnt.  Mount all filesystems.
+# Now that the 'real' fstab is configured, create a temporary fstab
+# which we'll use for mounting and unmounting all of the target
+# filesystems relative to /mnt.  Save the original (our root).
+[ -f /etc/fstab.save ] || cp /etc/fstab /etc/fstab.save
+cp /etc/fstab.save /etc/fstab
 awk '{
 	if ($2 == "/")
 		printf("%s /mnt %s %s %s %s\n", $1, $3, $4, $5, $6)
 	else
 		printf("%s /mnt%s %s %s %s %s\n", $1, $2, $3, $4, $5, $6)
-}' < /tmp/fstab > /tmp/fstab.shadow
+}' < /tmp/fstab >> /etc/fstab
 
 echo	""
 
 # Must mount filesystems manually, one at a time, so we can make sure the
 # mount points exist.
 (
-	while read line; do
-		_dev=`echo $line | awk '{print $1}'`
-		_mp=`echo $line | awk '{print $2}'`
-		_fstype=`echo $line | awk '{print $3}'`
-		_opt=`echo $line | awk '{print $4}'`
-
+	while read _dev _mp _fstype _opt junk
+	do
 		# If not the root filesystem, make sure the mount
 		# point is present.
-		if [ "X{$_mp}" != X"/mnt" ]; then
+		if [ "X${_mp}" != X"/mnt" ]; then
 			mkdir -p $_mp
 		fi
 
 		# Mount the filesystem.  If the mount fails, exit
 		# with an error condition to tell the outer
-		# later to bail.
+		# layer to bail.
 		if ! mount -v -t $_fstype -o $_opt $_dev $_mp ; then
-			# error message displated by mount
+			# error message displayed by mount
 			exit 1
 		fi
 	done
@@ -935,37 +1069,71 @@ fi
 # Ask the user which media to load the distribution from.
 cat << \__install_sets_1
 
-It is now time to extract the installation sets onto the hard disk.
-Make sure The sets are either on a local device (i.e. tape, CD-ROM) or on a
-network server.
+It is now time to extract the installation sets onto the disk.
+Make sure The sets are either on a local device (i.e. tape, CD-ROM)
+or on a network server.
 
 __install_sets_1
-resp=""		# force at least one iteration
-while [ "X${resp}" = X"" ]; do
-	echo -n	"Install from (f)tp, (t)ape, (C)D-ROM, or (N)FS? [f] "
-	getresp "f"
+if [ -f /base.tar.gz ]; then
+	echo -n "Install from sets in the current root filesystem? [y] "
+	getresp "y"
 	case "$resp" in
-		f*|F*)
-			install_ftp
+		y*|Y*)
+			for _f in /*.tar.gz; do
+				echo -n "Install $_f ? [y]"
+				getresp "y"
+				case "$resp" in
+				y*|Y*)
+				     cat $_f | (cd /mnt; tar --unlink -zxvpf -)
+					_yup="TRUE"
+					;;
+				*)
+					;;
+				esac
+				echo "Extraction complete."
+			done
 			;;
-
-		t*|T*)
-			install_tape
-			;;
-
-		c*|C*)
-			install_cdrom
-			;;
-
-		n*|N*)
-			install_nfs
-			;;
-
 		*)
-			echo "Invalid response: $resp"
-			resp=""
+			_yup="FALSE"
 			;;
 	esac
+else
+	_yup="FALSE"
+fi
+
+# Go on prodding for alternate locations
+resp=""		# force at least one iteration
+while [ "X${resp}" = X"" ]; do
+	# If _yup is not FALSE, it means that we extracted sets above.
+	# If that's the case, bypass the menu the first time.
+	if [ X"$_yup" = X"FALSE" ]; then
+		echo -n	"Install from (f)tp, (t)ape, (C)D-ROM, or (N)FS? [f] "
+		getresp "f"
+		case "$resp" in
+			f*|F*)
+				install_ftp
+				;;
+
+			t*|T*)
+				install_tape
+				;;
+
+			c*|C*)
+				install_cdrom
+				;;
+
+			n*|N*)
+				install_nfs
+				;;
+
+			*)
+				echo "Invalid response: $resp"
+				resp=""
+				;;
+		esac
+	else
+		_yup="FALSE"	# So we'll ask next time
+	fi
 
 	# Give the user the opportunity to extract more sets.  They don't
 	# necessarily have to come from the same media.
@@ -983,43 +1151,55 @@ while [ "X${resp}" = X"" ]; do
 	esac
 done
 
+# Get timezone info
+get_timezone
+
 # Copy in configuration information and make devices in target root.
 (
 	cd /tmp
-	for file in fstab hostname.* hosts myname mygate; do
+	cp /etc/hosts hosts
+	for file in fstab hostname.* hosts myname mygate resolv.conf; do
 		if [ -f $file ]; then
-			echo "Copying $file..."
+			echo -n "Copying $file..."
 			cp $file /mnt/etc/$file
+			echo "done."
 		fi
 	done
 
-	echo -n "Making devices..."
-	cd /mnt/dev
-	sh MAKEDEV all
+	echo -n "Installing timezone link..."
+	rm -f /mnt/etc/localtime
+	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
 	echo "done."
 
-	echo "Copying kernel..."
+	echo -n "Making devices..."
+	pid=`twiddle`
+	cd /mnt/dev
+	sh MAKEDEV all
+	kill $pid
+	echo "done."
+
+	echo -n "Copying kernel..."
 	cp /netbsd /mnt/netbsd
+	echo "done."
+
+	md_installboot ${ROOTDISK}
 )
 
 # Unmount all filesystems and check their integrity.
-umount -a
+echo -n	"Syncing disks..."
+pid=`twiddle`
+sync; sleep 4; sync; sleep 2; sync; sleep 2
+kill $pid
+echo	"done."
+
+echo "Unmounting filesystems..."
+umount -va
+
 echo "Checking filesystem integrity..."
 fsck -pf
 
-# Install boot code on target disk.
-echo "Installing boot block..."
-disklabel -W ${ROOTDISK}
-disklabel -B ${ROOTDISK}
-
-cat << \__congratulations_1
-
-CONGRATULATIONS!  You have successfully installed NetBSD on your hard disk!
-To boot the installed system, enter halt at the command prompt.  Once the
-system has halted, power-cycle the machine in order to load new boot code.
-Make sure you boot from the disk.
-
-__congratulations_1
+# Pat on the back.
+md_congrats
 
 # ALL DONE!
-exit
+exit 0

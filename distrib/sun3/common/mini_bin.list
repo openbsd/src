@@ -1,5 +1,5 @@
 #
-#	$NetBSD: mini_bin.list,v 1.1.1.1 1995/10/08 23:07:48 gwr Exp $
+#	$NetBSD: mini_bin.list,v 1.2 1995/11/21 21:18:56 gwr Exp $
 #
 
 # miniroot files from /bin:
@@ -10,13 +10,13 @@
 COPY	${DESTDIR}/bin/cat		bin
 COPY	${DESTDIR}/bin/chmod		bin
 COPY	${DESTDIR}/bin/cp		bin
-# COPY	${DESTDIR}/bin/csh		bin
 COPY	${DESTDIR}/bin/date		bin
 COPY	${DESTDIR}/bin/dd		bin
 COPY	${DESTDIR}/bin/df		bin
 COPY	${DESTDIR}/bin/echo		bin
 COPY	${DESTDIR}/bin/ed		bin
 COPY	${DESTDIR}/bin/expr		bin
+COPY	${DESTDIR}/bin/hostname		bin
 COPY	${DESTDIR}/bin/kill		bin
 COPY	${DESTDIR}/bin/ln		bin
 COPY	${DESTDIR}/bin/ls		bin
@@ -31,6 +31,7 @@ COPY	${DESTDIR}/bin/rm		bin
 
 COPY	${DESTDIR}/bin/rmdir		bin
 COPY	${DESTDIR}/bin/sh		bin
+COPY	${DESTDIR}/bin/sleep		bin
 COPY	${DESTDIR}/bin/stty		bin
 COPY	${DESTDIR}/bin/sync		bin
 

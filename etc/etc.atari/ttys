@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.1.1.1 1995/03/30 05:44:08 leo Exp $
+#	$NetBSD: ttys,v 1.1.1.1.2.1 1995/11/21 07:21:35 leo Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -7,9 +7,9 @@
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty Pc"		vt200	off secure 
-ttye0	"/usr/libexec/getty Pc"		vt200	on secure 	# ite0 console
-ttye1	"/usr/libexec/getty Pc"		vt200	on secure 	# ite1
+console	"/usr/libexec/getty Pc"		vt220	off secure 
+ttye0	"/usr/libexec/getty Pc"		vt220	on secure 	# ite0 console
+ttye1	"/usr/libexec/getty Pc"		vt220	on secure 	# ite1
 ttyp0	none			network
 ttyp1	none			network
 ttyp2	none			network

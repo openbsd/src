@@ -1,16 +1,21 @@
-#	$NetBSD: miniroot.list,v 1.1.1.1 1995/10/08 23:07:48 gwr Exp $
+#	$NetBSD: miniroot.list,v 1.2 1995/11/21 21:19:05 gwr Exp $
+
+# These are scripts:
+COPY	${DESTDIR}/usr/bin/false	bin
+COPY	${DESTDIR}/usr/bin/true 	bin
 
 # From usr/mdec:
 COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec
 COPY	${DESTDIR}/usr/mdec/installboot	usr/mdec
 COPY	${DESTDIR}/usr/mdec/netboot	usr/mdec
+COPY	${DESTDIR}/usr/mdec/tapeboot	usr/mdec
 COPY	${DESTDIR}/usr/mdec/ufsboot	usr/mdec
 LINK		usr/mdec/ufsboot	ufsboot
-# XXX - How to do installboot?
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab  	etc
 COPY	${DESTDIR}/etc/group		etc
+COPY	${DESTDIR}/etc/hosts		etc
 COPY	${DESTDIR}/etc/master.passwd	etc
 COPY	${DESTDIR}/etc/passwd		etc
 COPY	${DESTDIR}/etc/protocols	etc
@@ -24,15 +29,9 @@ SPECIAL	cd dev; sh MAKEDEV std rd0 sd0 sd2 st0
 SPECIAL	/bin/rm dev/MAKEDEV
 SPECIAL	mkfifo dev/pipe
 
-# and the common installation tools
-COPY	${TOPDIR}/common/dot.cmnutils	.cmnutils
-
-# the disktab explanation file (XXX need this?)
-# COPY	${TOPDIR}/common/mr.disktab	etc/disktab.preinstall
-
 # and the miniroot installation tools
-COPY	${TOPDIR}/common/mr.instutils	.instutils
 COPY	${TOPDIR}/common/mr.profile	.profile
+COPY	${TOPDIR}/common/mr.remount	.remount
 COPY	${TOPDIR}/common/mr.termcap	usr/share/misc/termcap
 
 # and the "install" command

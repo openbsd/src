@@ -1,5 +1,5 @@
 #
-#	$NetBSD: miniroot.tree,v 1.1.1.1 1995/10/08 23:07:47 gwr Exp $
+#	$NetBSD: miniroot.tree,v 1.2 1995/11/21 21:19:07 gwr Exp $
 #
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -71,4 +71,21 @@ misc
 ..
 
 # ./usr
+..
+
+# ./var
+var
+
+# ./var/tmp
+tmp        mode=01777
+
+# ./var/tmp/vi.recover
+vi.recover	 mode=01777
+# ./var/tmp/vi.recover
+..
+
+# ./var/tmp
+..
+
+# ./var
 ..

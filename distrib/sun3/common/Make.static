@@ -1,0 +1,11 @@
+#
+# $NetBSD: Make.static,v 1.1 1995/11/21 21:18:51 gwr Exp $
+#
+# This is logically appended to some other makefile, i.e.
+# using:  make -f Makefile -f $(OUTDIR)/Make.static ...
+STRIP_CMD=strip
+
+${OUTDIR}/${PROG} : ${OBJS} ${LIBC} ${DPADD}
+	${CC} -static ${LDFLAGS} -o ${OUTDIR}/${PROG} ${OBJS} ${LDADD}
+	${STRIP_CMD} ${OUTDIR}/${PROG}
+

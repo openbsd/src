@@ -1,4 +1,4 @@
-There is no upgrade to release 1.0 for the NetBSD/mac68k architecture.
-This is impractical as there is no good, standard point to provide an
-upgrade path from.  It is hoped that there will be a good upgrade
-procedure for future releases.
+There is no upgrade to release 1.1 for the NetBSD/mac68k architecture.
+It is hoped that there will be a good upgrade procedure for future
+releases.  Please feel free to volunteer to help replace these
+installation tools.

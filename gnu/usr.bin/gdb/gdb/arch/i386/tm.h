@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.1.1.1 1995/10/18 08:40:06 deraadt Exp $
+	$Id: tm.h,v 1.2 1995/11/23 15:56:22 deraadt Exp $
 */
 
 /* Override number of expected traps from sysv. */
@@ -28,10 +28,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 /* Shared library code */
 #include "solib.h"
-
-/* We can't yet read %fs and %gs. */
-#undef NUM_REGS
-#define NUM_REGS 14
 
 /* We define our own fetch and store methods. */
 #define FETCH_INFERIOR_REGISTERS

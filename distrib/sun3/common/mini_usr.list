@@ -1,5 +1,5 @@
 #
-#	$NetBSD: mini_usr.list,v 1.1.1.1 1995/10/08 23:07:46 gwr Exp $
+#	$NetBSD: mini_usr.list,v 1.2 1995/11/21 21:19:00 gwr Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -12,31 +12,26 @@ LINK	mini_usr	bin/rcp
 
 # usr/sbin:
 
+LINK		mini_usr		usr/sbin/bad144
 LINK		mini_usr		usr/sbin/chown
 LINK		mini_usr		usr/sbin/chroot
 LINK		mini_usr		usr/sbin/eeprom
+LINK		mini_usr		usr/sbin/rdate
 LINK		mini_usr		usr/sbin/update
 
 # usr/bin:
 
+LINK		mini_usr		usr/bin/basename
+LINK		mini_usr		usr/bin/chflags
 LINK		mini_usr		usr/bin/chgrp
 LINK		mini_usr		usr/bin/cksum
 LINK		mini_usr		usr/bin/cmp
+LINK		mini_usr		usr/bin/cut
 LINK		mini_usr		usr/bin/ftp
-LINK		mini_usr		usr/bin/more
-LINK		mini_usr		usr/bin/printf
 LINK		mini_usr		usr/bin/rsh
 LINK		mini_usr		usr/bin/sed
 LINK		mini_usr		usr/bin/strings
 LINK		mini_usr		usr/bin/tftp
-LINK		mini_usr		usr/bin/tip
 
 SPECIAL	     rm mini_usr
-
-# These are linked statically, so just copy from ${DESTDIR}:
-
-COPY	${DESTDIR}/usr/bin/tar		usr/bin
-COPY	${DESTDIR}/usr/bin/gzip		usr/bin
-LINK		   usr/bin/gzip		usr/bin/gunzip
-LINK		   usr/bin/gzip		usr/bin/gzcat
 

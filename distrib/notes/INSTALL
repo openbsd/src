@@ -11,42 +11,70 @@ What is NetBSD?
 ---- -- ------
 
 NetBSD is a Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite
--derived system.  It is a fully functional UN*X-like system which runs
-on several architectures and is being ported to more.  NetBSD, as the
-name implies, is a creation of the members of the network community
+-derived Operating System.  It is a fully functional UN*X-like system
+which runs on many architectures and is being ported to more.  NetBSD, 
+as the name implies, is a creation of the members of the network community
 and without the net it's likely that this release wouldn't have come
 about.
 
-NetBSD 1.0 is a milestone release.  The hardest part of the 4.4BSD-Lite
-integration, the kernel, has been completed and has been running in
-"production use" for quite some time.  Also, NetBSD 1.0 is the first
-true multi-architecture release of NetBSD.  At the time of NetBSD 0.9,
-the i386 port was considered 'production quality' and the hp300 port was
-barely working.  The NetBSD 1.0 source supports nine architectures, and
-complete binary releases for most of them will be made available.
+NetBSD 1.1 is a evolutionary release which contains a over a year of
+changes to the kernel, user-level utilities, and documentation.
 
-NetBSD 1.0 supports many new and improved features, the most important
-relating to file systems.  New and improved versions of both the
-Berkeley Fast File System and the free implementation of the NFS
-protocol were provided, as part of the 4.4-Lite release.  The new
-versions include such improvements as support for 64-bit file sizes,
-for local files, and "lease" support for NFS, to improve performance.
-In addition to the file system improvements, many other parts of the
-system have been improved considerably.  For instance, the virtual
-memory code has substantially improved performance, and many of the
-kernel's interfaces have been cleaned up.
+Continuing the multi-platform tradition, NetBSD has added ports to
+atari and mvme68k based machines.  Kernel interfaces have continued to
+be refined, and now several subsystems and device drivers are shared
+among the different ports.  We can look for this trend to continue.
 
-Many new user programs have been added in NetBSD 1.0, as well,
+NetBSD 1.1 has significantly enhanced the binary emulation subsystem 
+(which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
+compatibility) and several kernel subsystems have been generalized
+to support this more readily.  The binary emulation strategy is 
+aimed at making the emulation as accurate as possible.
+
+NetBSD 1.1 is also the first release to see machine-independent disk
+striping.  The concatenated disk driver (ccd), which was previously
+supported only by the hp300 port, has been vastly improved.  Many
+bugs were fixed, and explicit references to device-dependent routines
+were removed and replaced by calls to the generic "vnode operation"
+routines.  In addition, several features were added, including partition
+support, dynamic configuration and unconfiguration via a user space system
+utility program, and virtually unlimiting the number of component devices.
+
+Many new user programs have been added in NetBSD 1.1, as well,
 bringing it closer to our goal of supplying a complete UN*X-like
-environment.  Additionally, support for shared libraries has been
-added, for most architectures, allowing a significant savings in both
-RAM consumption and disk space.
+environment. 
+
 
 #include "whatis"
 
 
 The Future of NetBSD:
 --- ------ -- ------
+
+The NetBSD Foundation was recently incorporated as a non-profit
+organization.  It's purpose is to encourage, foster and promote the
+free exchange of computer software, namely the NetBSD Operating
+System.  The corporation will allow for many things to be handled more
+smoothly than could be done with our previous informal organization.
+In particular, it provides the framework to deal with other parties
+that wish to become involved in the NetBSD Project.
+
+We believe that the NetBSD Foundation will help improve the quality 
+of NetBSD by:
+
+	* having a better organization to keep track of development
+	  efforts, including co-ordination with groups working in 
+	  related fields.
+
+	* providing a framework to receive donations of goods and
+          services and to own the resources necessary to run the
+          NetBSD Project.
+
+        * providing a better position from which to undertake
+          promotional activities.
+
+        * periodically organizing workshops for developers and other
+          interested people to discuss ongoing work.
 
 We hope to have regular releases of the full binary and source trees,
 but these are difficult to coordinate, especially with all of the
@@ -57,10 +85,8 @@ current practice of making the NetBSD-current development source
 available on a daily or nearly-daily basis.
 
 We intend to integrate free, positive changes from whatever sources
-will provide them, providing that they are well thought-out and increase
-the usability of the system.  This includes integrating the remainder of
-the 4.4BSD-Lite tape, as quickly as we can ensure that everything works
-properly.
+will provide them, providing that they are well thought-out and
+increase the usability of the system.
 
 Above all, we hope to create a stable and accessible system, and to be
 responsive to the needs and desires of NetBSD users, because it is for
@@ -124,7 +150,7 @@ distribution sets are as follows:
 		[ 7.7M gzipped, 32.0M uncompressed ]
 
 	ksrc11	This set contains the sources to the NetBSD 1.1
-		kernel, config(8), config.new(8) and dbsym(8).
+		kernel, config(8), config.old(8) and dbsym(8).
 		[ 4.5M gzipped, 20.8M uncompressed ]
 
 	ssrc11	This set contains the "share" sources, which include
@@ -162,7 +188,7 @@ or to actually extract the files contained in the set:
 
 In each of the source distribution set directories, there is a file
 named "CKSUMS" which contains the checksums of the files in that
-directory, as generated by the cksum(1) command.  You can use cksum to
+directory, as generated by the cksum(1) utility.  You can use cksum to
 check the integrity of the archives, if you suspect that one of the
 files is corrupt and have access to a cksum binary.
 
@@ -272,6 +298,14 @@ Without CVS, this project would be impossible to manage, so our hats
 go off to Brian Berliner, Jeff Polk, and the various other people
 who've had a hand in making CVS a useful tool.
 
+Alistair G. Crooks <agc@westley.demon.co.uk> has been producing tar 
+file snapshot reports for NetBSD-current users, a very valuable 
+service.
+
+Dave Burgess <burgess@cynjut.infonet.net> has been maintaining the
+386BSD/NetBSD/FreeBSD FAQ for quite some time, and deserves to be
+recognized for it.
+
 The following people (in alphabetical order) have made donations or
 loans of hardware and/or money, to support NetBSD development, and
 deserve credit for it:
@@ -279,10 +313,6 @@ deserve credit for it:
 (If you're not on that list and should be, tell us!  We probably were
 not able to get in touch with you, to verify that you wanted to be
 listed.)
-
-Dave Burgess <burgess@cynjut.infonet.net> has been maintaining the
-386BSD/NetBSD/FreeBSD FAQ for quite some time, and deserves to be
-recognized for it.
 
 Finally, we thank all of the people who've put sweat and tears into
 developing NetBSD since its inception in January, 1993.  (Obviously,

@@ -1,37 +1,38 @@
-NetBSD/mac68k 1.0 runs on several of the older Macintosh computers.
+NetBSD/mac68k 1.1 runs on several of the older Macintosh computers.
 4MB of RAM should be sufficient to boot and the system can probably
 be squeezed onto a 40MB hard disk by leaving off a package or two.
 To actually do much compiling or anything more interesting than
 booting, at least 8MB of RAM and more disk space is recommended.
-About 50MB will be necessary to install all of the NetBSD 1.0 binary
+About 50MB will be necessary to install all of the NetBSD 1.1 binary
 distribution (note that this does not count swap space!).  Much more
 disk space is required to install the source and objects as well (about
 another 105MB).
 
 Supported models:
-	Mac II
-	Mac IIx
-	Mac IIcx
-	Mac IIci
-	Mac SE/30
+	Mac II, Mac IIx, Mac IIcx, Mac IIci, Mac SE/30,
+	Mac IIsi, Mac IIvx, Mac IIvi, Performa 600
 
 Supported devices on all of the above systems include:
 	Internal SCSI bus and most SCSI tapes, hard drives, and CD-ROMs
-	Internal sound--enough to beep, anyway
+	Internal sound--enough to beep on some machines, anyway
 	Most basic NuBUS video cards (there have been some
 		problems with some 24-bit color cards)
 	Both internal serial ports
 	ADB keyboards and mice
+	Ethernet cards based on the Natl. Semiconductor 8390
+		(Asante, Apple, and a few others)  [problems
+		reported on the Performa 600, though].
 	
 Some systems will boot and are usable from an external terminal
 (serial tty or SL/IP):
-	Mac IIsi
-	Mac IIvx
+	LC III
+	Performa 550
 	possibly others
 
 What isn't supported, but often asked about:
-	Ethernet cards.  There is a driver that is very close to working
-		for a number of cards.  Contributions are very welcome.
 	68040-based Macs.  Work is in progress on getting a Quadra 700
 		running.  This requires a new scsi driver and a new
 		ethernet driver.
+	PowerPC-based Macs.  Work will begin on this, sometime soon.
+		It will be separate from this port, though.  The PowerPC
+		is a much different processor.

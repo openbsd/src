@@ -1,5 +1,5 @@
 #
-#	$NetBSD: mini_sbin.list,v 1.1.1.1 1995/10/08 23:07:50 gwr Exp $
+#	$NetBSD: mini_sbin.list,v 1.2 1995/11/21 21:18:57 gwr Exp $
 #
 
 # XXX - Need these?  ping, 
@@ -21,6 +21,7 @@ COPY	${DESTDIR}/sbin/mount_cd9660	sbin
 COPY	${DESTDIR}/sbin/mount_ffs	sbin
 LINK		   sbin/mount_ffs	sbin/mount_ufs
 
+COPY	${DESTDIR}/sbin/mount_kernfs	sbin
 COPY	${DESTDIR}/sbin/mount_nfs	sbin
 COPY	${DESTDIR}/sbin/newfs		sbin
 COPY	${DESTDIR}/sbin/ping		sbin

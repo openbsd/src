@@ -1,4 +1,4 @@
-#	$Id: list,v 1.1.1.1 1995/10/18 08:37:34 deraadt Exp $
+#	$Id: list,v 1.2 1995/11/23 15:58:01 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -31,6 +31,7 @@ LINK	instbin			sbin/mount_cd9660
 LINK	instbin			sbin/mount_ffs
 LINK	instbin			sbin/mount_msdos
 LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/mount_kernfs
 LINK	instbin			sbin/newfs
 LINK	instbin			sbin/ping
 LINK	instbin			sbin/reboot

@@ -1,4 +1,4 @@
-#	$NetBSD: Make.crunch,v 1.2 1995/10/13 16:38:20 gwr Exp $
+#	$NetBSD: Make.crunch,v 1.3 1995/11/21 21:18:48 gwr Exp $
 #
 # This is included by subdirectories building a crunched binary.
 # Assume the following are already defined:  TOP, CBIN
@@ -16,5 +16,5 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	strip ${CBIN}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen ${CRUNCHCONF}
+	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 

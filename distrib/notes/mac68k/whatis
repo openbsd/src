@@ -1,6 +1,3 @@
-NetBSD 1.0 is the first "real" release of NetBSD for the mac68k.
-Previous releases have been alpha or beta quality.  There is still a
-lot of work to be done, but this should be a usable system for a number
-of people.  Quite a few features are available: shared libraries, new
-file systems, binary compatibility with the other m68k ports for most
-binaries, SunOS compatibility, and numerous others.
+NetBSD 1.1 is the second "real" release of NetBSD for the mac68k.
+There is still a lot of work to be done and help is welcomed, but
+this should be a usable system for a number of people.

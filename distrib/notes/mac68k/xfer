@@ -1,7 +1,7 @@
 Installation is really only supported from the local Macintosh
 hard drive or from an AppleShare volume.  This means that you'll
 need at least enough room for the largest file that you will have
-to install.  This is the 6.2M base10 file.  There has been talk
+to install.  This is the 6.2M base11 file.  There has been talk
 of allowing an install from split files.  If you have the time,
 desire, and knowledge, please feel free to add that functionality.
 
@@ -9,10 +9,10 @@ If the install is being done from an AppleShare-mounted volume,
 the install utility must be in the same folder as the data files.
 
 There will be two images of each file.  One in "raw" Unix format
-and one in a binhex format.  Therefore, base10 and base10.hqx both
-contain the same information, but base10.hqx has been encoded in
+and one in a binhex format.  Therefore, base11 and base11.hqx both
+contain the same information, but base11.hqx has been encoded in
 binhex format.  Download the files; if necessary, decode them so
-you have all of the files as base10, etc10, etc.  This can be
+you have all of the files as base11, etc11, etc.  This can be
 accomplished from the .hqx files by using _Stuffit Expander_ or
 any one of a number of freeware and shareware Macintosh tools.
 
@@ -22,7 +22,7 @@ You will also need to collect the MacOS tools:
 	MacBSD Booter.
 
 These three are compacted and in binhex form as mkfs.cpt.hqx,
-installer.1.0.cpt.hqx, and booter.1.4.cpt.hqx, respectively.
+installer.1.0.cpt.hqx, and booter.1.9.cpt.hqx, respectively.
 
 Extract them as you would any other Macintosh applications.  The
 sources should be in the same place with "src" somewhere in the

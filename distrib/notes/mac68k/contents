@@ -1,8 +1,8 @@
-The mac68k-specific portion of the NetBSD 1.0 release is found in the
+The mac68k-specific portion of the NetBSD 1.1 release is found in the
 "mac68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-1.0/mac68k/
+.../NetBSD-1.1/mac68k/
 			binary/		mac68k binary distribution sets;
 					see below.
 
@@ -12,17 +12,17 @@ out as follows:
 			utils/		The mac68k installation utilities.
 
 The NetBSD/mac68k binary distribution sets contain the binaries which
-comprise the NetBSD 1.0 release for the mac68k.  There are eight binary
+comprise the NetBSD 1.1 release for the mac68k.  There are eight binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "mac68k/binary"
-subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
+subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
 
-	netbsd10 The NetBSD/mac68k 1.0 kernel binary.  You MUST
+	netbsd10 The NetBSD/mac68k 1.1 kernel binary.  You MUST
 		install this file.  It is the kernel that you need
 		to boot the system.
 		[ 307K gzipped, 610K uncompressed ]
 
-	base10	The NetBSD/mac68k 1.0 base binary distribution.  You
+	base11	The NetBSD/mac68k 1.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base NetBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -30,7 +30,7 @@ subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
 		everything described below.
 		[ 6.2M gzipped, 18.4M uncompressed ]
 
-	comp10	The NetBSD/mac68k Compiler tools.  All of the tools
+	comp11	The NetBSD/mac68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -41,7 +41,7 @@ subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
 		call and library manual pages.
 		[ 4.0M gzipped, 12.7M uncompressed ]
 
-	etc10	This distribution set contains the system
+	etc11	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -50,28 +50,28 @@ subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 50K gzipped, 280K uncompressed ]
 
-	games10	This set includes the games and their manual pages.
+	games11	This set includes the games and their manual pages.
 		[ 1.0M gzipped, 3.0M uncompressed ]
 
-	man10	This set includes all of the manual pages for the
+	man11	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 0.7M gzipped, 2.8M uncompressed ]
 
-	misc10	This set includes the system dictionaries (which are
+	misc11	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.6M gzipped, 5.7M uncompressed ]
 
-	text10	This set includes NetBSD's text processing tools,
+	text11	This set includes NetBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped, 2.9M uncompressed ]
 
-The mac68k security distribution set is named "secr10" and can be found
-in the "mac68k/security" subdirectory of the NetBSD 1.0 distribution
+The mac68k security distribution set is named "secr11" and can be found
+in the "mac68k/security" subdirectory of the NetBSD 1.1 distribution
 tree.  It contains the crypt libraries (for the DES encryption algorithm)
 and the binaries which depend on it.  It can only be found on those sites
 which carry the complete NetBSD distribution and that can legally obtain
