@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.10 1998/06/21 22:13:43 millert Exp $
+.\"	$OpenBSD: sha1.3,v 1.11 1999/04/18 23:31:01 wvdputte Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -164,7 +164,7 @@ SHA1Final(results, &sha);
 /* Print the digest as one long hex value */
 printf("0x");
 for (n = 0; n < 20; n++)
-	printf("%x", results[n]);
+	printf("%02x", results[n]);
 putchar('\\n');
 .Ed
 .Pp
@@ -174,7 +174,7 @@ SHA1_CTX sha;
 u_char output[41];
 char *buf = "abc";
 
-printf("0x%s", SHA1Data(buf, strlen(buf), output));
+printf("0x%s\n", SHA1Data(buf, strlen(buf), output));
 .Ed
 .Sh CAVEATS
 This implementation of SHA-1 has not been validated by NIST

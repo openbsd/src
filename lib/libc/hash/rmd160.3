@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.5 1998/06/21 22:13:42 millert Exp $
+.\"	$OpenBSD: rmd160.3,v 1.6 1999/04/18 23:31:01 wvdputte Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -167,7 +167,7 @@ RMD160Final(results, &rmd);
 /* Print the digest as one long hex value */
 printf("0x");
 for (n = 0; n < 20; n++)
-	printf("%x", results[n]);
+	printf("%02x", results[n]);
 putchar('\\n');
 .Ed
 .Pp
@@ -177,7 +177,7 @@ RMD160_CTX rmd;
 u_char output[41];
 char *buf = "abc";
 
-printf("0x%s", RMD160Data(buf, strlen(buf), output));
+printf("0x%s\n", RMD160Data(buf, strlen(buf), output));
 .Ed
 .Sh CAVEATS
 If a message digest is to be copied to a multi-byte type (ie:
