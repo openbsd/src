@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.38 2005/02/02 11:52:41 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.39 2005/02/03 22:10:14 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -539,8 +539,66 @@ for a remote repository.
 Create
 .Xr patch 1
 format diffs between releases.
-.It Ic release
-Indicate that a module is no longer in use.
+.It Xo Ic release
+.Op Fl d
+.Ar dir ...
+.Xc
+The
+.Ic release
+command indicates to
+.Nm
+that the working copy of a module is no longer in use and checks
+that non archived modifications in the base repository do exist.
+This command is not mandatory.
+Local directories could always be removed without using it, but
+in this case the handling of history information will no longer be
+correct (see the
+.Ic history
+command).
+.Pp
+The
+.Ic release
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl d Ar dir
+Remove the directory
+.Ar dir .
+Be aware that this option silently removes any directories that have
+been added to the local working copy without using the
+.Ic add
+command.
+.El
+.Pp
+For each file not being synchronized with the base repository,
+a single letter prefix is given to specify the state of the file.
+The possible prefixes are as follows:
+.Bl -tag -width "XXX"
+.It \&?
+The file is unknown to
+.Nm
+and is not in the list of files to ignore.
+Any new directories which have not been added with the
+.Ic add
+command are silently ignored as well as their content.
+.It A
+The file has been added with the
+.Ic add
+command, but has not been committed to the repository with the
+.Ic commit
+command.
+.It M
+The file has been locally modified; a more recent version might
+exist in the base repository.
+.It R
+The file has been removed with the
+.Ic remove
+command, but has not been committed to the repository with the
+.Ic commit
+command.
+.It U
+A more recent version of the file does exist but it is not
+locally up to date.
+.El
 .It Xo Ic remove
 .Op Fl flR
 .Op Ar file ...
