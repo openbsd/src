@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.16 2000/11/10 18:12:07 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.17 2000/11/11 00:45:38 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.99 2000/11/08 09:55:45 itojun Exp $	*/
 
 /*
@@ -252,6 +252,7 @@ void	 pinger __P((void));
 const char *pr_addr __P((struct sockaddr_in6 *));
 void	 pr_icmph __P((struct icmp6_hdr *, u_char *));
 void	 pr_iph __P((struct ip6_hdr *));
+void	 pr_suptypes __P((struct icmp6_nodeinfo *, size_t));
 void	 pr_nodeaddr __P((struct icmp6_nodeinfo *, int));
 int	 myechoreply __P((const struct icmp6_hdr *));
 int	 mynireply __P((const struct icmp6_nodeinfo *));
@@ -261,6 +262,7 @@ void	 pr_pack __P((u_char *, int, struct msghdr *));
 void	 pr_exthdrs __P((struct msghdr *));
 void	 pr_ip6opt __P((void *));
 void	 pr_rthdr __P((void *));
+int	 pr_bitrange __P((u_int32_t, int, int));
 void	 pr_retip __P((struct ip6_hdr *, u_char *));
 void	 summary __P((void));
 void	 tvsub __P((struct timeval *, struct timeval *));
@@ -308,15 +310,16 @@ main(argc, argv)
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 #ifndef IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwW")) != EOF)
+#define ADDOPTS
 #else
 #ifdef IPSEC_POLICY_IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwWP:")) != EOF)
+#define ADDOPTS	"P:"
 #else
-	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwWAE")) != EOF)
+#define ADDOPTS	"AE"
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
-	{
+	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwW" ADDOPTS)) != EOF) {
+#undef ADDOPTS
 		switch (ch) {
 		case 'a':
 		{
@@ -1082,7 +1085,8 @@ pinger()
 		icp->icmp6_type = ICMP6_NI_QUERY;
 		icp->icmp6_code = ICMP6_NI_SUBJ_FQDN;	/*empty*/
 		nip->ni_qtype = htons(NI_QTYPE_SUPTYPES);
-		nip->ni_flags = 0;	/* do not support compressed bitmap */
+		/* we support compressed bitmap */
+		nip->ni_flags = NI_SUPTYPE_FLAG_COMPRESS;
 
 		memcpy(nip->icmp6_ni_nonce, nonce, sizeof(nip->icmp6_ni_nonce));
 		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
@@ -1358,27 +1362,7 @@ pr_pack(buf, cc, mhdr)
 			printf("NodeInfo NOOP");
 			break;
 		case NI_QTYPE_SUPTYPES:
-			printf("NodeInfo Supported Qtypes");
-			if ((ni->ni_flags & NI_SUPTYPE_FLAG_COMPRESS) != 0) {
-				printf(", compressed bitmap");
-				break;
-			} else {
-				size_t clen;
-				u_int32_t v;
-				cp = (u_char *)(ni + 1);
-				clen = (size_t)(end - cp);
-				if (clen == 0 || clen > 8192 || clen % 4) {
-					printf(", invalid length(%lu)",
-					    (u_long)clen);
-					break;
-				}
-				printf(", bitmap = 0x");
-				for (dp = end - 4; dp >= cp; dp -= 4) {
-					memcpy(&v, dp, sizeof(v));
-					v = (u_int32_t)ntohl(v);
-					printf("%08x", v);
-				}
-			}
+			pr_suptypes(ni, end - (u_char *)ni);
 			break;
 		case NI_QTYPE_NODEADDR:
 			pr_nodeaddr(ni, end - (u_char *)ni);
@@ -1638,14 +1622,120 @@ pr_rthdr(void *extbuf)
 }
 #endif /* USE_RFC2292BIS */
 
+int
+pr_bitrange(v, s, ii)
+	u_int32_t v;
+	int s;
+	int ii;
+{
+	int off;
+	int i;
+
+	off = 0;
+	while (off < 32) {
+		/* shift till we have 0x01 */
+		if ((v & 0x01) == 0) {
+			if (ii > 1)
+				printf("-%u", s + off - 1);
+			ii = 0;
+			switch (v & 0x0f) {
+			case 0x00:
+				v >>= 4; off += 4; continue;
+			case 0x08:
+				v >>= 3; off += 3; continue;
+			case 0x04: case 0x0c:
+				v >>= 2; off += 2; continue;
+			default:
+				v >>= 1; off += 1; continue;
+			}
+		}
+
+		/* we have 0x01 with us */
+		for (i = 0; i < 32 - off; i++) {
+			if ((v & (0x01 << i)) == 0)
+				break;
+		}
+		if (!ii)
+			printf(" %u", s + off);
+		ii += i;
+		v >>= i; off += i;
+	}
+	return ii;
+}
+
+void
+pr_suptypes(ni, nilen)
+	struct icmp6_nodeinfo *ni; /* ni->qtype must be SUPTYPES */
+	size_t nilen;
+{
+	size_t clen;
+	u_int32_t v;
+	const u_char *cp, *end;
+	u_int16_t cur;
+	struct cbit {
+		u_int16_t words;	/*32bit count*/
+		u_int16_t skip;
+	} cbit;
+#define MAXQTYPES	(1 << 16)
+	size_t off;
+	int b;
+
+	cp = (u_char *)(ni + 1);
+	end = ((u_char *)ni) + nilen;
+	cur = 0;
+	b = 0;
+
+	printf("NodeInfo Supported Qtypes");
+	if (options & F_VERBOSE) {
+		if (ni->ni_flags & NI_SUPTYPE_FLAG_COMPRESS)
+			printf(", compressed bitmap");
+		else
+			printf(", raw bitmap");
+	}
+
+	while (cp < end) {
+		clen = (size_t)(end - cp);
+		if ((ni->ni_flags & NI_SUPTYPE_FLAG_COMPRESS) == 0) {
+			if (clen == 0 || clen > MAXQTYPES / 8 ||
+			    clen % sizeof(v)) {
+				printf("???");
+				return;
+			}
+		} else {
+			if (clen < sizeof(cbit) || clen % sizeof(v))
+				return;
+			memcpy(&cbit, cp, sizeof(cbit));
+			if (sizeof(cbit) + ntohs(cbit.words) * sizeof(v) > clen)
+				return;
+			cp += sizeof(cbit);
+			clen = ntohs(cbit.words) * sizeof(v);
+			if (cur + clen * 8 + (u_long)ntohs(cbit.skip) * 32 > MAXQTYPES)
+				return;
+		}
+
+		for (off = 0; off < clen; off += sizeof(v)) {
+			memcpy(&v, cp + off, sizeof(v));
+			v = (u_int32_t)ntohl(v);
+			b = pr_bitrange(v, (int)(cur + off * 8), b);
+		}
+		/* flush the remaining bits */
+		b = pr_bitrange(0, (int)(cur + off * 8), b);
+
+		cp += clen;
+		cur += clen * 8;
+		if ((ni->ni_flags & NI_SUPTYPE_FLAG_COMPRESS) != 0)
+			cur += ntohs(cbit.skip) * 32;
+	}
+}
 
 void
 pr_nodeaddr(ni, nilen)
 	struct icmp6_nodeinfo *ni; /* ni->qtype must be NODEADDR */
 	int nilen;
 {
-	struct in6_addr *ia6 = (struct in6_addr *)(ni + 1);
+	u_char *cp = (u_char *)(ni + 1);
 	char ntop_buf[INET6_ADDRSTRLEN];
+	int withttl = 0;
 
 	nilen -= sizeof(struct icmp6_nodeinfo);
 
@@ -1664,9 +1754,43 @@ pr_nodeaddr(ni, nilen)
 	putchar('\n');
 	if (nilen <= 0)
 		printf("  no address\n");
-	for (; nilen > 0; nilen -= sizeof(*ia6), ia6 += 1) {
-		printf("  %s\n",
-		       inet_ntop(AF_INET6, ia6, ntop_buf, sizeof(ntop_buf)));
+
+	/*
+	 * In icmp-name-lookups 05 and later, TTL of each returned address
+	 * is contained in the resposne. We try to detect the version
+	 * by the length of the data, but note that the detection algorithm
+	 * is incomplete. We assume the latest draft by default.
+	 */
+	if (nilen % (sizeof(u_int32_t) + sizeof(struct in6_addr)) == 0)
+		withttl = 1;
+	while (nilen > 0) {
+		u_int32_t ttl;
+
+		if (withttl) {
+			ttl = ntohl(*(u_int32_t *)cp); /* XXX: alignment? */
+			cp += sizeof(u_int32_t);
+			nilen -= sizeof(u_int32_t);
+		}
+
+		if (inet_ntop(AF_INET6, cp, ntop_buf, sizeof(ntop_buf)) ==
+		    NULL)
+			strncpy(ntop_buf, "?", sizeof(ntop_buf));
+		printf("  %s", ntop_buf);
+		if (withttl) {
+			if (ttl == 0xffffffff) {
+				/*
+				 * XXX: can this convention be applied to all
+				 * type of TTL (i.e. non-ND TTL)?
+				 */
+				printf("(TTL=infty)");
+			}
+			else
+				printf("(TTL=%u)", ttl);
+		}
+		putchar('\n');
+
+		nilen -= sizeof(struct in6_addr);
+		cp += sizeof(struct in6_addr);
 	}
 }
 

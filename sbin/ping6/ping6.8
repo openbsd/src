@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ping6.8,v 1.12 2000/08/13 20:17:00 itojun Exp $
-.\"     $KAME: ping6.8,v 1.27 2000/08/11 04:38:35 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.13 2000/11/11 00:45:38 itojun Exp $
+.\"	$KAME: ping6.8,v 1.31 2000/11/11 00:40:56 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -183,7 +183,7 @@ option.
 If
 .Ar preload
 is specified,
-.Nm ping
+.Nm
 sends that many packets as fast as possible before falling into its normal
 mode of behavior.
 Only the super-user may use this option.
@@ -341,7 +341,7 @@ during normal operations or from automated scripts.
 .\" If less than eight bytes of pad are specified, no round trip times are
 .\" given.
 .Sh DUPLICATE AND DAMAGED PACKETS
-.Nm Ping6
+.Nm
 will report duplicate and damaged packets.
 Duplicate packets should never occur when pinging a unicast address,
 and seem to be caused by
@@ -356,7 +356,7 @@ to the same request.
 .Pp
 Damaged packets are obviously serious cause for alarm and often
 indicate broken hardware somewhere in the
-.Nm ping
+.Nm
 packet's path
 .Pq in the network or in the hosts .
 .Sh TRYING DIFFERENT DATA PATTERNS
@@ -415,7 +415,7 @@ and non-zero if the arguments are incorrect or the host is not responding.
 .Re
 .Sh HISTORY
 The
-.Nm ping
+.Xr ping 8
 command appeared in
 .Bx 4.3 .
 The
