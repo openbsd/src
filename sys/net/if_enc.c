@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.11 1999/07/05 20:17:05 deraadt Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.12 1999/10/29 05:22:41 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -52,6 +52,8 @@
 #include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
+
+#include <netinet/ip_ipsp.h>
 #include <net/if_enc.h>
 
 #ifdef	INET
@@ -70,38 +72,54 @@ extern struct ifqueue nsintrq;
 #endif
 
 #include "bpfilter.h"
+#include "enc.h"
 
-struct ifnet encif;
+struct enc_softc encif[NENC];
 
 void	encattach __P((int));
 int	encoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    	       struct rtentry *));
 int	encioctl __P((struct ifnet *, u_long, caddr_t));
 void	encrtrequest __P((int, struct rtentry *, struct sockaddr *));
+void	encstart __P((struct ifnet *));
+
+extern int ifqmaxlen;
 
 void
 encattach(int nenc)
 {
-	bzero(&encif, sizeof(encif));
+    struct ifnet *ifp;
+    int i;
 
-	/* We only need one interface anyway under the new mode of operation */
-	encif.if_index = 0;
+    bzero(encif, NENC * sizeof(encif));
 
-	encif.if_softc = &encif;
-	sprintf(encif.if_xname, "enc0");
-	encif.if_list.tqe_next = NULL;
-	encif.if_mtu = ENCMTU;
-	encif.if_flags = 0;
-	encif.if_type = IFT_ENC;
-	encif.if_ioctl = encioctl;
-	encif.if_output = encoutput;
-	encif.if_hdrlen = ENC_HDRLEN;
-	encif.if_addrlen = 0;
-	if_attach(&encif);
+    for (i = 0; i < NENC; i++) {
+	ifp = &encif[i].sc_if;
+	sprintf(ifp->if_xname, "enc%d", i);
+	ifp->if_softc = &encif[i];
+	ifp->if_mtu = ENCMTU;
+	ifp->if_ioctl = encioctl;
+	ifp->if_output = encoutput;
+	ifp->if_start = encstart;
+	ifp->if_type = IFT_ENC;
+	ifp->if_snd.ifq_maxlen = ifqmaxlen;
+	ifp->if_hdrlen = ENC_HDRLEN;
+	if_attach(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&encif.if_bpf, &encif, DLT_ENC, ENC_HDRLEN);
+	bpfattach(&encif[i].sc_if.if_bpf, ifp, DLT_ENC, ENC_HDRLEN);
 #endif
+    }
+}
+
+/*
+ * Start output on the enc interface.
+ */
+void
+encstart(ifp)
+struct ifnet *ifp;
+{
+    /* XXX Code needed */
 }
 
 /*
@@ -114,99 +132,99 @@ register struct mbuf *m;
 struct sockaddr *dst;
 register struct rtentry *rt;
 {
-	register struct ifqueue *ifq = 0;
-	int s, isr;
+    register struct ifqueue *ifq = 0;
+    int s, isr;
 
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("encoutput(): no HDR");
+    if ((m->m_flags & M_PKTHDR) == 0)
+      panic("encoutput(): no HDR");
 
-	ifp->if_lastchange = time;
-	m->m_pkthdr.rcvif = ifp;
+    ifp->if_lastchange = time;
+    m->m_pkthdr.rcvif = ifp;
     
-	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
-		m_freem(m);
-		return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
-		    rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
-	}
+    if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
+	m_freem(m);
+	return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
+		rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
+    }
 
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
+    ifp->if_opackets++;
+    ifp->if_obytes += m->m_pkthdr.len;
 
-	switch (dst->sa_family) {
+    switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
-		ifq = &ipintrq;
-		isr = NETISR_IP;
-		break;
+	    ifq = &ipintrq;
+	    isr = NETISR_IP;
+	    break;
 #endif
 #ifdef NS
 	case AF_NS:
-		ifq = &nsintrq;
-		isr = NETISR_NS;
-		break;
+	    ifq = &nsintrq;
+	    isr = NETISR_NS;
+	    break;
 #endif
 #ifdef ISO
 	case AF_ISO:
-		ifq = &clnlintrq;
-		isr = NETISR_ISO;
-		break;
+	    ifq = &clnlintrq;
+	    isr = NETISR_ISO;
+	    break;
 #endif
 	default:
-		m_freem(m);
-		return (EAFNOSUPPORT);
-	}
-    
-	s = splimp();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
-		splx(s);
-		return (ENOBUFS);
-	}
-	
-	IF_ENQUEUE(ifq, m);
-	schednetisr(isr);
+	    m_freem(m);
+	    return (EAFNOSUPPORT);
+    }
 
-	/* Statistics */
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
+    s = splimp();
+    if (IF_QFULL(ifq)) {
+	IF_DROP(ifq);
+	m_freem(m);
 	splx(s);
-	return (0);
+	return (ENOBUFS);
+    }
+	
+    IF_ENQUEUE(ifq, m);
+    schednetisr(isr);
+
+    /* Statistics */
+    ifp->if_ipackets++;
+    ifp->if_ibytes += m->m_pkthdr.len;
+    splx(s);
+    return (0);
 }
 
 /* ARGSUSED */
 void
 encrtrequest(cmd, rt, sa)
-	int cmd;
-	struct rtentry *rt;
-	struct sockaddr *sa;
+int cmd;
+struct rtentry *rt;
+struct sockaddr *sa;
 {
-	if (rt)
-		rt->rt_rmx.rmx_mtu = ENCMTU;
+    if (rt)
+      rt->rt_rmx.rmx_mtu = ENCMTU;
 }
 
 /* ARGSUSED */
 int
 encioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+register struct ifnet *ifp;
+u_long cmd;
+caddr_t data;
 {
-	register struct ifaddr *ifa;
-	register int error = 0;
+    register struct ifaddr *ifa;
+    register int error = 0;
 
-	switch (cmd) {
+    switch (cmd) {
 	case SIOCSIFADDR:
-		/*
-		 * Everything else is done at a higher level.
-		 */
-		ifp->if_flags |= IFF_UP;
-		ifa = (struct ifaddr *) data;
-		break;
+	    /*
+	     * Everything else is done at a higher level.
+	     */
+	    ifp->if_flags |= IFF_UP;
+	    ifa = (struct ifaddr *) data;
+	    break;
 
 	default:
-		error = EINVAL;
-		break;
-	}
-	return (error);
+	    error = EINVAL;
+	    break;
+    }
+    return (error);
 }
