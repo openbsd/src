@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.55 2002/01/07 19:04:46 mickey Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.56 2002/02/01 10:10:03 art Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -66,8 +66,6 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
-
-#include <scsi/scsiconf.h>
 
 /* drive states stored in ata_drive_datas */
 enum atapi_drive_states {
