@@ -217,6 +217,9 @@ sparc_init_extra_frame_info (fromleaf, fi)
 	 than error().  */
       get_saved_register (buf, 0, 0, fi, FP_REGNUM, 0);
       fi->frame = extract_address (buf, REGISTER_RAW_SIZE (FP_REGNUM));
+
+      if (GDB_TARGET_IS_SPARC64 && (fi->frame & 1))
+	fi->frame += 2047;
     }
 
   /* Decide whether this is a function with a ``flat register window''
@@ -251,6 +254,9 @@ sparc_init_extra_frame_info (fromleaf, fi)
 	      /* Overwrite the frame's address with the value in %i7.  */
 	      get_saved_register (buf, 0, 0, fi, I7_REGNUM, 0);
 	      fi->frame = extract_address (buf, REGISTER_RAW_SIZE (I7_REGNUM));
+
+	      if (GDB_TARGET_IS_SPARC64 && (fi->frame & 1))
+		fi->frame += 2047;
 
 	      /* Record where the fp got saved.  */
 	      fi->fp_addr = fi->frame + fi->sp_offset + X_SIMM13 (insn);
@@ -1044,6 +1050,10 @@ sparc_pop_frame ()
 	 locals from the registers array, so we need to muck with the
 	 registers array.  */
       sp = fsr.regs[SP_REGNUM];
+
+      if (GDB_TARGET_IS_SPARC64 && (sp & 1))
+	sp += 2047;
+
       read_memory (sp, reg_temp, SPARC_INTREG_SIZE * 16);
 
       /* Restore the out registers.
@@ -1571,3 +1581,47 @@ _initialize_sparc_tdep ()
   tm_print_insn = print_insn_sparc;
   tm_print_insn_info.mach = TM_PRINT_INSN_MACH;  /* Selects sparc/sparclite */
 }
+
+/* Compensate for stack bias. Note that we currently don't handle
+   mixed 32/64 bit code. */
+    
+CORE_ADDR
+sparc64_read_sp (void)
+{
+  CORE_ADDR sp = read_register (SP_REGNUM);
+
+  if (sp & 1)
+    sp += 2047;
+  return sp;
+}
+
+CORE_ADDR
+sparc64_read_fp (void)
+{
+  CORE_ADDR fp = read_register (FP_REGNUM);
+
+  if (fp & 1)
+    fp += 2047;
+  return fp;
+}
+
+void
+sparc64_write_sp (CORE_ADDR val)
+{
+  CORE_ADDR oldsp = read_register (SP_REGNUM);
+  if (oldsp & 1)
+    write_register (SP_REGNUM, val - 2047);
+  else
+    write_register (SP_REGNUM, val);
+}
+
+void
+sparc64_write_fp (CORE_ADDR val)
+{
+  CORE_ADDR oldfp = read_register (FP_REGNUM);
+  if (oldfp & 1)
+    write_register (FP_REGNUM, val - 2047);
+  else
+    write_register (FP_REGNUM, val);
+}
+
