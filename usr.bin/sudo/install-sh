@@ -1,7 +1,7 @@
 #! /bin/sh
 
 ## (From INN-1.4, written by Rich Salz)
-##  $Revision: 1.4 $
+##  $Revision: 1.5 $
 ##  A script to install files and directories.
 
 PROGNAME=`basename $0`
@@ -16,7 +16,7 @@ MKDIR=mkdir
 MV=mv
 RM=rm
 STRIP=strip
-WHOAMI=whoami
+WHOAMI="echo root"
 
 ##  Some systems don't support -x, so we have to use -f.
 for d in /sbin /etc /usr/sbin /usr/etc; do
@@ -26,17 +26,16 @@ for d in /sbin /etc /usr/sbin /usr/etc; do
     fi
 done
 
-for d in /usr/bin /usr/ucb /usr/bsd; do
+for d in /usr/bin /bin /usr/ucb /usr/bsd; do
     if [ -f $d/whoami ]; then
 	WHOAMI=${d}/whoami
 	break
+    elif [ -f $d/id ]; then
+	WHOAMI=${d}/id | sed -n 's/^[^(]*(\([^)]*\)).*/\1/p'
     fi
 done
-if [ X"$WHOAMI" = X"" ]; then
-    WHOAMI=id | sed -n 's/^[^(]*(\([^)]*\)).*/\1/p'
-fi
 
-for d in /usr/ccs/bin /usr/bin; do
+for d in /usr/ccs/bin /usr/bin /bin; do
     if [ -f $d/strip ]; then
 	STRIP=${d}/strip
 	break

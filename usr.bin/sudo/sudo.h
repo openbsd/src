@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: sudo.h,v 1.182 2001/12/31 17:18:05 millert Exp $
+ * $Sudo: sudo.h,v 1.183 2002/01/13 18:28:09 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -111,8 +111,8 @@ struct sudo_user {
  * Used with set_perms()
  */
 #define PERM_ROOT                0x00
-#define PERM_USER                0x01
-#define PERM_FULL_USER           0x02
+#define PERM_FULL_ROOT           0x01
+#define PERM_USER                0x02
 #define PERM_SUDOERS             0x03
 #define PERM_RUNAS	         0x04
 

@@ -65,7 +65,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: logging.c,v 1.151 2001/12/14 23:33:38 millert Exp $";
+static const char rcsid[] = "$Sudo: logging.c,v 1.152 2002/01/13 18:27:25 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -494,7 +494,7 @@ send_mail(line)
 		endpwent();
 
 		/* Run mailer as root so user cannot kill it. */
-		set_perms(PERM_ROOT, 0);
+		set_perms(PERM_FULL_ROOT, 0);
 		execv(mpath, argv);
 		_exit(127);
 	    }

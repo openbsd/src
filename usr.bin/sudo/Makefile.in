@@ -34,7 +34,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.219 2002/01/08 15:00:17 millert Exp $
+# $Sudo: Makefile.in,v 1.222 2002/01/12 19:00:14 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -344,19 +344,25 @@ dist:
 bindist:
 	@mkdir tmp.`arch -l`
 	@mkdir tmp.`arch -l`/sudo-$(VERSION)
-	( cd tmp.`arch -l`/sudo-$(VERSION) ; \
+	( \
+	  tdir=tmp.`arch -l`/sudo-$(VERSION) ; \
 	  for i in $(BINFILES) ; do \
-	    if [ -f ../../$$i ]; then \
-	      cp ../../$$i . ; \
+	    if [ -f $$i ]; then \
+	      cp $$i $$tdir ; \
 	    elif [ -f $(srcdir)/$$i ]; then \
-	      cp $(srcdir)/$$i . ; \
+	      cp $(srcdir)/$$i $$tdir ; \
 	    else \
-	      cp ../../$(srcdir)/$$i . ; \
+	      echo cannot find $$i ; \
+	      exit 1 ; \
 	    fi ; \
 	  done ; \
-	  strip sudo ; \
-	  strip visudo ; \
-	  cd .. ; tar Ocf ../sudo-$(VERSION)-`arch -l`.tar sudo-$(VERSION) ; \
+	  cp $(srcdir)/INSTALL.binary $$tdir/INSTALL ; \
+	  sed -e 's/@_MANTYPE@/$(mantype)/g' -e 's/@_mansectsu@/$(mansectsu)/g' \
+	      -e 's/@_mansectform@/$(mansectform)/g' $(srcdir)/Makefile.binary \
+	      > $$tdir/Makefile ; \
 	)  
+	strip sudo
+	strip visudo
+	( cd tmp.`arch -l` && tar Ocf ../sudo-$(VERSION)-`arch -l`.tar sudo-$(VERSION) )
 	gzip --best sudo-$(VERSION)-`arch -l`.tar
 	rm -rf tmp.`arch -l`

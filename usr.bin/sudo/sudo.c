@@ -98,7 +98,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.313 2002/01/08 15:00:18 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.314 2002/01/13 18:29:23 millert Exp $";
 #endif /* lint */
 
 /*
@@ -254,6 +254,21 @@ main(argc, argv, envp)
 
     /* Validate the user but don't search for pseudo-commands. */
     validated = sudoers_lookup(pwflag);
+
+    /*
+     * If we have POSIX saved uids and the stay_setuid flag was not set,
+     * set the real, effective and saved uids to 0 and use set_perms_fallback()
+     * instead of set_perms_posix().
+     */
+#if defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
+    if (!def_flag(I_STAY_SETUID) && set_perms == set_perms_posix) {
+	if (setuid(0)) {
+	    perror("setuid(0)");
+	    exit(1);
+	}
+	set_perms = set_perms_fallback;
+    }
+#endif
 
     /*
      * Look up runas user passwd struct.  If we are given a uid then
