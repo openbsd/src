@@ -14,7 +14,7 @@ this.  You can:
    and tested version of the application for your hardware.
 
 If you purchased the OpenBSD CD-ROM you already have several popular
-``packages'', the ``ports'' collection, and most of the ``ports''
+``packages'', the ``ports'' collection, and some of the ``ports''
 source file releases.
 
 Instructions for installing applications from the various sources using
@@ -24,31 +24,11 @@ that may be modified by other applications.
 
 Installing applications from the CD-ROM package collection:
 
-	The OpenBSD CD-ROM ships with applications pre-built
-	for various hardware architectures.  The applications
-	and supported architectures are:
-
-			i386	sparc	amiga	m68k	alpha	mips
-  bash-2.01.1		yes	yes	yes	yes	yes	yes
-  emacs-20.2		yes	yes	yes	yes	yes	no
-  ghostscript-5.10	yes	no	no	no	no	no
-  gmake-3.76.1		yes	yes	yes	yes	yes	yes
-  id-utils-3.2		no	yes	yes	yes	yes	no
-  ircii-2.8.2-epic3.004	yes	yes	yes	yes	yes	yes
-  pine-3.96		yes	yes	yes	yes	yes	yes
-  screen-3.7.4		yes	yes	no	yes	yes	yes
-  tcsh-6.07.02		yes	yes	yes	yes	yes	yes
-  unzip-5.3.1		yes	yes	no	yes	yes	no
-
-	Note: If space becomes available other packages may be added
-	to the CD-ROM.  Check the packages directory on CD-ROM number
-	2 to see what packages are actually available for your hardware
-	architecture.
-
-	(the amiga is treated specially due to its 8k hardware pagesize
-	aka NBPG, it's very well possible amiga will run the other m68k
-	arch's binaries, but we make no guarantees at this point,
-	better safe than sorry).
+	The OpenBSD CD-ROM ships with several applications pre-built
+	for various hardware architectures.  The number of applications
+	vary according to available disk space.  Check the packages
+	directory on CD-ROM number 2 to see what packages are actually
+	available for your hardware architecture.
 
 	To install one or more of these packages you must
 	1) become the superuser (root)
@@ -71,17 +51,19 @@ Installing applications from the CD-ROM package collection:
 	``OpenBSD.sparc''.  ``sparc'' is the architecture.
 
 	Package names are usually the application name and version
-	with .tgz appended, e.g. pine-3.96.tgz
+	with .tgz appended, e.g. emacs-20.3.tgz
 
 Installing applications from the ftp.openbsd.org package collection:
 
-	The above packages, and others, have been placed on
-	ftp.openbsd.org in the directory pub/OpenBSD/OSREV/packages/<arch>/
-	where <arch> is the supported hardware architecture.  You may
-	want to peruse the directory for your architecture to see what
-	packages are available.  The packages are also on the OpenBSD FTP
-	mirror sites.  See http://www.openbsd.org/ftp.html for a list
-	of current ftp mirror sites.
+	All packages have been placed on ftp.openbsd.org in the directory
+	pub/OpenBSD/OSREV/packages/<arch>/ where <arch> is the supported
+	hardware architecture.  You may want to peruse the directory for
+	your architecture to see what packages are available.  The packages
+	are also on the OpenBSD FTP mirror sites.  See
+
+		http://www.openbsd.org/ftp.html
+
+	for a list of current ftp mirror sites.
 
 	Installation of a package is very easy.
 	1) become the superuser (root)
@@ -92,23 +74,44 @@ Installing applications from the ftp.openbsd.org package collection:
 
     $ su
     Password: <enter your root password>
-    {:-#-:} pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE/emacs-20.2.tgz
+    {:-#-:} pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE/emacs-20.3.tgz
 
 	Note: there are both USA and INTERNATIONAL versions of ssh and
 	pgp on the ftp server.  Be sure to grab the correct version.
-	The USA versions, ssh-usa-1.2.22.tgz and pgp-usa-2.6.3.tgz, use
+	The USA versions, ssh-usa-1.2.26.tgz and pgp-usa-2.6.3.tgz, use
 	RSAREF, a legal requirement for use within the United States due
 	to patent issues.
 
 	Packages available {:-include-:}:
 
-		bash-2.01.1.tgz               pine-3.96.tgz
-		emacs-20.2.tgz                screen-3.7.4.tgz    
-		ghostscript-5.10.tgz          ssh-intl-1.2.22.tgz 
-		gmake-3.76.1.tgz              ssh-usa-1.2.22.tgz  
-		ircii-2.8.2-epic3.004.tgz     tcsh-6.07.02.tgz    
-		pgp-intl-2.6.3.tgz            unzip-5.3.1.tgz
-		pgp-usa-2.6.3.tgz
+		ImageMagick-4.0.6.tgz		mpeg_lib-1.2.1.tgz
+		Xaw3d-1.3.tgz			netpipes-4.1.1-export.tgz
+		afm-1.0.tgz			nmh-0.27.tgz
+		bash-2.02.tgz			pgp-intl-2.6.3.tgz
+		bison-1.25.tgz			pgp-usa-2.6.3.tgz
+		bzip2-0.9.0b.tgz		pine-4.03.tgz
+		dejagnu-1.3.tgz			png-1.0.2.tgz
+		emacs-20.3.tgz			psutils-a4-1.17.tgz
+		enscript-1.6.1.tgz		psutils-letter-1.17.tgz
+		expect-5.26.tgz			screen-3.7.4.tgz
+		fetchmail-4.5.4.tgz		sharutils-4.2.tgz
+		ghostscript-5.10.tgz		ssh-intl-1.2.26.tgz
+		gimp-1.0.0.tgz			ssh-usa-1.2.26.tgz
+		glimpse-4.1.tgz			tar-1.12.tgz
+		gmake-3.76.1.tgz		tcl-8.0.2.tgz
+		gnuplot-3.5.tgz			tcsh-6.07.02.tgz
+		gtk+-1.0.5.tgz			teTeX-0.4.tgz
+		gv-3.5.8.tgz			tiff-3.4.tgz
+		id-utils-3.2.tgz		tk-8.0.2.tgz
+		idled-1.16.tgz			transfig-3.2.1.tgz
+		iozone-2.01.tgz			unzip-5.3.2.tgz
+		ircii-2.8.2-epic3.004.tgz	xcolors-1.3.tgz
+		ispell-3.1.20.tgz		xfig-3.2.2.tgz
+		jove-4.16.tgz			xntp3-5.93-export.tgz
+		jpeg-6b.tgz			xpaint-2.5.5.tgz
+		lesstif-0.86.0.tgz		xphoon-91.9.18.tgz
+		m4-1.4.tgz			xv-3.10a.tgz
+		mm-2.7.tgz
 
 	Note: these packages may not exist for all architectures; other
 	packages may be added.
