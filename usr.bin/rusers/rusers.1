@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rusers.1,v 1.10 2001/11/01 23:37:42 millert Exp $
+.\"	$OpenBSD: rusers.1,v 1.11 2001/11/06 20:51:19 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -42,7 +42,8 @@
 .Sh SYNOPSIS
 .Nm rusers
 .Op Fl al
-.Op Ar host ...
+.Op Fl h | Fl i | Fl u
+.Op Ar hosts ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -60,12 +61,18 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Print all machines responding even if no one is currently logged in.
+.It Fl h
+Sort alphabetically by hostname.
+.It Fl i
+Sort by idle time in ascending order.
 .It Fl l
 Print a long format listing.
 This includes the user name, host name,
 tty that the user is logged in to, the date and time the user
 logged in, the amount of time since the user typed on the keyboard,
 and the remote host they logged in from (if applicable).
+.It Fl u
+Sort by number of users logged in.
 .El
 .Sh DIAGNOSTICS
 .Bl -tag -width indent
@@ -93,8 +100,5 @@ The host may be down.
 .Sh HISTORY
 The
 .Nm
-command
-appeared in
+command appeared in
 .Tn SunOS .
-.Sh BUGS
-The sorting options are not implemented.

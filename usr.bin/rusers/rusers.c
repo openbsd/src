@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.17 2001/11/06 02:46:29 millert Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.18 2001/11/06 20:51:19 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -55,7 +55,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.17 2001/11/06 02:46:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.18 2001/11/06 20:51:19 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,30 +83,36 @@ static const char rcsid[] = "$OpenBSD: rusers.c,v 1.17 2001/11/06 02:46:29 mille
 #define LINE_WIDTH 8
 #define NAME_WIDTH 8
 
-int search_host(struct in_addr);
-void remember_host(char **);
+#define MAX_BROADCAST_SIZE 1400
+
+struct host_info {
+	u_int count;
+	u_int idle;
+	char *host;
+	rusers_utmp *users;
+} *hostinfo;
+
+void print_entry(struct host_info *);
 void fmt_idle(int, char *, size_t);
-void print_longline(int, u_int, char *, char *, char *, char *, int);
 void onehost(char *);
 void allhosts(void);
+void sorthosts(void);
 void alarmclock(int);
+char *estrndup(const char *, size_t);
+struct host_info *add_host(char *);
+int hcompare(const void *, const void *);
+int icompare(const void *, const void *);
+int ucompare(const void *, const void *);
 bool_t rusers_reply(char *, struct sockaddr_in *);
 bool_t rusers_reply_3(char *, struct sockaddr_in *);
 enum clnt_stat get_reply(int, in_port_t, u_long, struct rpc_msg *,
     struct rmtcallres *, bool_t (*)());
 __dead void usage(void);
 
-int longopt;
-int allopt;
+int aflag, hflag, iflag, lflag, uflag;
+u_int nentries, maxentries;
 long termwidth;
 extern char *__progname;
-
-struct host_list {
-	struct host_list *next;
-	struct in_addr addr;
-} *hosts;
-
-#define MAX_BROADCAST_SIZE 1400
 
 int
 main(int argc, char **argv)
@@ -115,18 +121,30 @@ main(int argc, char **argv)
 	char *cp, *ep;
 	int ch;
 	
-	while ((ch = getopt(argc, argv, "al")) != -1)
+	while ((ch = getopt(argc, argv, "ahilu")) != -1)
 		switch (ch) {
 		case 'a':
-			allopt++;
+			aflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
+			break;
+		case 'i':
+			iflag = 1;
 			break;
 		case 'l':
-			longopt++;
+			lflag = 1;
+			break;
+		case 'u':
+			uflag = 1;
 			break;
 		default:
 			usage();
 			/*NOTREACHED*/
 		}
+
+	if (hflag + iflag + uflag > 1)
+		usage();
 
 	if (isatty(STDOUT_FILENO)) {
 		if ((cp = getenv("COLUMNS")) != NULL && *cp != '\0') {
@@ -143,42 +161,44 @@ main(int argc, char **argv)
 			termwidth = 80;
 	}
 	setlinebuf(stdout);
-	if (argc == optind)
-		allhosts();
-	else {
+
+	if (argc == optind) {
+		if (hflag || iflag || uflag) {
+			puts("Collecting responses...");
+			allhosts();
+			sorthosts();
+		} else
+			allhosts();
+	} else {
 		for (; optind < argc; optind++)
 			(void) onehost(argv[optind]);
 	}
+
 	exit(0);
 }
 
-int
-search_host(struct in_addr addr)
+struct host_info *
+add_host(char *host)
 {
-	struct host_list *hp;
-	
-	if (!hosts)
-		return(0);
+	int i;
 
-	for (hp = hosts; hp != NULL; hp = hp->next) {
-		if (hp->addr.s_addr == addr.s_addr)
-			return(1);
+	for (i = 0; i < nentries; i++) {
+		/* Existing entry. */
+		if (strcmp(host, hostinfo[i].host) == 0)
+			return(NULL);
 	}
-	return(0);
-}
 
-void
-remember_host(char **ap)
-{
-	struct host_list *hp;
-
-	for (; *ap; ap++) {
-		if (!(hp = malloc(sizeof(struct host_list))))
+	/* New entry, allocate space if needed and store. */
+	if (nentries == maxentries) {
+		maxentries += 128;
+		hostinfo = realloc(hostinfo,
+		    sizeof(*hostinfo) * maxentries);
+		if (hostinfo == NULL)
 			err(1, NULL);
-		hp->addr.s_addr = *(in_addr_t *)*ap;
-		hp->next = hosts;
-		hosts = hp;
 	}
+	if ((hostinfo[nentries].host = strdup(host)) == NULL)
+		err(1, NULL);
+	return(&hostinfo[nentries++]);
 }
 
 void
@@ -217,82 +237,55 @@ fmt_idle(int idle, char *idle_time, size_t idle_time_len)
 	}
 }
 
-void
-print_longline(int ut_time, u_int idle, char *host, char *user, char *line,
-	       char *remhost, int remhostmax)
-{
-	char date[32], idle_time[64];
-	char remote[RUSERS_MAXHOSTLEN + 1];
-	int len;
-
-	strftime(date, sizeof(date), "%h %d %R", localtime((time_t *)&ut_time));
-	date[sizeof(date) - 1] = '\0';
-	fmt_idle(idle, idle_time, sizeof(idle_time));
-	len = termwidth -
-	    (MAX(strlen(user), NAME_WIDTH) + 1 + HOST_WIDTH + 1 + LINE_WIDTH +
-	    1 + strlen(date) + 1 + MAX(8, strlen(idle_time)) + 1 + 2);
-	if (len > 0 && *remhost != '\0')
-		snprintf(remote, sizeof(remote), "(%.*s)",
-		    MIN(len, remhostmax), remhost);
-	else
-		remote[0] = '\0';
-	len = HOST_WIDTH - MIN(HOST_WIDTH, strlen(host)) +
-	    LINE_WIDTH - MIN(LINE_WIDTH, strlen(line));
-	printf("%-*s %.*s:%.*s%-*s %-12s %8s %s\n",
-	    NAME_WIDTH, user, HOST_WIDTH, host, LINE_WIDTH, line,
-	    len, "", date, idle_time, remote);
-}
-
 bool_t
 rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 {
-	char user[RNUSERS_MAXUSERLEN + 1];
-	char utline[RNUSERS_MAXLINELEN + 1];
 	utmpidlearr *up = (utmpidlearr *)replyp;
+	struct host_info *entry;
 	struct hostent *hp;
-	char *host, *taddrs[2];
+	rusers_utmp *ut;
+	char *host;
 	int i;
 	
-	if (search_host(raddrp->sin_addr))
+	if (!aflag && up->uia_cnt == 0)
 		return(0);
 
-	if (!allopt && !up->uia_cnt)
-		return(0);
-	
 	hp = gethostbyaddr((char *)&raddrp->sin_addr,
 	    sizeof(struct in_addr), AF_INET);
-	if (hp) {
+	if (hp)
 		host = hp->h_name;
-		remember_host(hp->h_addr_list);
-	} else {
+	else
 		host = inet_ntoa(raddrp->sin_addr);
-		taddrs[0] = (char *)&raddrp->sin_addr;
-		taddrs[1] = NULL;
-		remember_host(taddrs);
+	if ((entry = add_host(host)) == NULL)
+		return(0);
+
+	if ((ut = malloc(up->uia_cnt * sizeof(*ut))) == NULL)
+		err(1, NULL);
+	entry->users = ut;
+	entry->count = up->uia_cnt;
+	entry->idle = UINT_MAX;
+	for (i = 0; i < up->uia_cnt; i++, ut++) {
+		ut->ut_user = estrndup(up->uia_arr[i]->ui_utmp.ut_name,
+		    RNUSERS_MAXUSERLEN);
+		ut->ut_line = estrndup(up->uia_arr[i]->ui_utmp.ut_line,
+		    RNUSERS_MAXLINELEN);
+		ut->ut_host = estrndup(up->uia_arr[i]->ui_utmp.ut_host,
+		    RNUSERS_MAXHOSTLEN);
+		ut->ut_time = up->uia_arr[i]->ui_utmp.ut_time;
+		ut->ut_idle = up->uia_arr[i]->ui_idle;
+		if (ut->ut_idle < entry->idle)
+			entry->idle = ut->ut_idle;
 	}
 	
-	if (!longopt)
-		printf("%-*.*s ", HOST_WIDTH, HOST_WIDTH, host);
-	
-	for (i = 0; i < up->uia_cnt; i++) {
-		/* NOTE: strncpy() used below for non-terminated strings. */
-		strncpy(user, up->uia_arr[i]->ui_utmp.ut_name,
-		    sizeof(user) - 1);
-		user[sizeof(user) - 1] = '\0';
-		if (longopt) {
-			strncpy(utline, up->uia_arr[i]->ui_utmp.ut_line,
-			    sizeof(utline) - 1);
-			utline[sizeof(utline) - 1] = '\0';
-			print_longline(up->uia_arr[i]->ui_utmp.ut_time,
-			    up->uia_arr[i]->ui_idle, host, user, utline,
-			    up->uia_arr[i]->ui_utmp.ut_host, RNUSERS_MAXHOSTLEN);
-		} else {
-			fputs(user, stdout);
-			putchar(' ');
+	if (!hflag && !iflag && !uflag) {
+		print_entry(entry);
+		for (i = 0, ut = entry->users; i < entry->count; i++, ut++) {
+			free(ut->ut_user);
+			free(ut->ut_line);
+			free(ut->ut_host);
 		}
+		free(entry->users);
 	}
-	if (!longopt)
-		putchar('\n');
 	
 	return(0);
 }
@@ -300,53 +293,52 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 bool_t
 rusers_reply_3(char *replyp, struct sockaddr_in *raddrp)
 {
-	char user[RUSERS_MAXUSERLEN + 1];
-	char utline[RUSERS_MAXLINELEN + 1];
 	utmp_array *up3 = (utmp_array *)replyp;
+	struct host_info *entry;
 	struct hostent *hp;
-	char *host, *taddrs[2];
+	rusers_utmp *ut;
+	char *host;
 	int i;
 	
-	if (search_host(raddrp->sin_addr))
-		return(0);
-
-	if (!allopt && !up3->utmp_array_len)
+	if (!aflag && !up3->utmp_array_len)
 		return(0);
 
 	hp = gethostbyaddr((char *)&raddrp->sin_addr,
 	    sizeof(struct in_addr), AF_INET);
-	if (hp) {
+	if (hp)
 		host = hp->h_name;
-		remember_host(hp->h_addr_list);
-	} else {
+	else
 		host = inet_ntoa(raddrp->sin_addr);
-		taddrs[0] = (char *)&raddrp->sin_addr;
-		taddrs[1] = NULL;
-		remember_host(taddrs);
+	if ((entry = add_host(host)) == NULL)
+		return(0);
+
+	if ((ut = malloc(up3->utmp_array_len * sizeof(*ut))) == NULL)
+		err(1, NULL);
+	entry->users = ut;
+	entry->count = up3->utmp_array_len;
+	entry->idle = UINT_MAX;
+	for (i = 0; i < up3->utmp_array_len; i++, ut++) {
+		ut->ut_user = estrndup(up3->utmp_array_val[i].ut_user,
+		    RUSERS_MAXUSERLEN);
+		ut->ut_line = estrndup(up3->utmp_array_val[i].ut_line,
+		    RUSERS_MAXLINELEN);
+		ut->ut_host = estrndup(up3->utmp_array_val[i].ut_host,
+		    RUSERS_MAXHOSTLEN);
+		ut->ut_time = up3->utmp_array_val[i].ut_time;
+		ut->ut_idle = up3->utmp_array_val[i].ut_idle;
+		if (ut->ut_idle < entry->idle)
+			entry->idle = ut->ut_idle;
 	}
 	
-	if (!longopt)
-		printf("%-*.*s ", HOST_WIDTH, HOST_WIDTH, host);
-	
-	for (i = 0; i < up3->utmp_array_len; i++) {
-		/* NOTE: strncpy() used below for non-terminated strings. */
-		strncpy(user, up3->utmp_array_val[i].ut_user,
-		    sizeof(user) - 1);
-		user[sizeof(user) - 1] = '\0';
-		if (longopt) {
-			strncpy(utline, up3->utmp_array_val[i].ut_line,
-			    sizeof(utline) - 1);
-			utline[sizeof(utline) - 1] = '\0';
-			print_longline(up3->utmp_array_val[i].ut_time,
-			    up3->utmp_array_val[i].ut_idle, host, user, utline,
-			    up3->utmp_array_val[i].ut_host, RUSERS_MAXHOSTLEN);
-		} else {
-			fputs(user, stdout);
-			putchar(' ');
+	if (!hflag && !iflag && !uflag) {
+		print_entry(entry);
+		for (i = 0, ut = entry->users; i < entry->count; i++, ut++) {
+			free(ut->ut_user);
+			free(ut->ut_line);
+			free(ut->ut_host);
 		}
+		free(entry->users);
 	}
-	if (!longopt)
-		putchar('\n');
 	
 	return(0);
 }
@@ -366,7 +358,7 @@ onehost(char *host)
 	if (hp == NULL)
 		errx(1, "unknown host \"%s\"", host);
 
-	/* try version 3 first */
+	/* Try version 3 first. */
 	rusers_clnt = clnt_create(host, RUSERSPROG, RUSERSVERS_3, "udp");
 	if (rusers_clnt == NULL) {
 		clnt_pcreateerror(__progname);
@@ -391,7 +383,7 @@ onehost(char *host)
 		exit(1);
 	}
 
-	/* fall back to version 2 */
+	/* Fall back to version 2. */
 	rusers_clnt = clnt_create(host, RUSERSPROG, RUSERSVERS_IDLE, "udp");
 	if (rusers_clnt == NULL) {
 		clnt_pcreateerror(__progname);
@@ -597,7 +589,7 @@ allhosts(void)
 		 */
 		timeout.it_value.tv_sec = 5;
 		timeout.it_value.tv_usec = 0;
-		for (;;) {
+		while (timerisset(&timeout.it_value)) {
 			FD_SET(sock[0], fds);
 			FD_SET(sock[1], fds);
 			setitimer(ITIMER_REAL, &timeout, NULL);
@@ -639,16 +631,153 @@ cleanup:
 }
 
 void
+print_entry(struct host_info *entry)
+{
+	char date[32], idle_time[64];
+	char remote[RUSERS_MAXHOSTLEN + 3];
+	struct rusers_utmp *ut;
+	int i, len;
+
+	if (!lflag)
+		printf("%-*.*s ", HOST_WIDTH, HOST_WIDTH, entry->host);
+
+	for (i = 0, ut = entry->users; i < entry->count; i++, ut++) {
+		if (lflag) {
+			strftime(date, sizeof(date), "%h %d %R",
+			    localtime((time_t *)&ut->ut_time));
+			date[sizeof(date) - 1] = '\0';
+			fmt_idle(ut->ut_idle, idle_time, sizeof(idle_time));
+			len = termwidth -
+			    (MAX(strlen(ut->ut_user), NAME_WIDTH) + 1 +
+			    HOST_WIDTH + 1 + LINE_WIDTH + 1 + strlen(date) +
+			    1 + MAX(8, strlen(idle_time)) + 1 + 2);
+			if (len > 0 && ut->ut_host[0] != '\0')
+				snprintf(remote, sizeof(remote), "(%.*s)",
+				    MIN(len, RUSERS_MAXHOSTLEN), ut->ut_host);
+			else
+				remote[0] = '\0';
+			len = HOST_WIDTH - MIN(HOST_WIDTH, strlen(entry->host)) +
+			    LINE_WIDTH - MIN(LINE_WIDTH, strlen(ut->ut_line));
+			printf("%-*s %.*s:%.*s%-*s %-12s %8s %s\n",
+			    NAME_WIDTH, ut->ut_user, HOST_WIDTH, entry->host,
+			    LINE_WIDTH, ut->ut_line, len, "", date,
+			    idle_time, remote);
+		} else {
+			fputs(ut->ut_user, stdout);
+			putchar(' ');
+		}
+	}
+	if (!lflag)
+		putchar('\n');
+}
+
+void
+sorthosts()
+{
+	int i;
+	int (*compar)(const void *, const void *);
+
+	if (hflag)
+		compar = hcompare;
+	else if (iflag)
+		compar = icompare;
+	else
+		compar = ucompare;
+	qsort(hostinfo, nentries, sizeof(*hostinfo), compar);
+
+	for (i = 0; i < nentries; i++)
+		print_entry(&hostinfo[i]);
+}
+
+int
+hcompare(const void *aa, const void *bb)
+{
+	const struct host_info *a = (struct host_info *)aa;
+	const struct host_info *b = (struct host_info *)bb;
+	int rval;
+
+	if ((rval = strcasecmp(a->host, b->host)) != 0)
+		return(rval);
+
+	if (a->idle < b->idle)
+		return(-1);
+	else if (a->idle > b->idle)
+		return(1);
+
+	if (a->count > b->count)
+		return(-1);
+	else if (a->count < b->count)
+		return(1);
+
+	return(0);
+}
+
+int
+icompare(const void *aa, const void *bb)
+{
+	const struct host_info *a = (struct host_info *)aa;
+	const struct host_info *b = (struct host_info *)bb;
+
+	if (a->idle < b->idle)
+		return(-1);
+	else if (a->idle > b->idle)
+		return(1);
+
+	if (a->count > b->count)
+		return(-1);
+	else if (a->count < b->count)
+		return(1);
+
+	return(strcasecmp(a->host, b->host));
+}
+
+int
+ucompare(const void *aa, const void *bb)
+{
+	const struct host_info *a = (struct host_info *)aa;
+	const struct host_info *b = (struct host_info *)bb;
+
+	if (a->count > b->count)
+		return(-1);
+	else if (a->count < b->count)
+		return(1);
+
+	if (a->idle < b->idle)
+		return(-1);
+	else if (a->idle > b->idle)
+		return(1);
+
+	return(strcasecmp(a->host, b->host));
+}
+
+void
 alarmclock(int signo)
 {
 
 	;		/* just interupt */
 }
 
+char *
+estrndup(const char *src, size_t len)
+{
+	char *dst, *end;
+
+	if ((end = memchr(src, '\0', len)) != NULL)
+		len = end - src;
+
+	if ((dst = malloc(len + 1)) == NULL)
+		err(1, NULL);
+	memcpy(dst, src, len);
+	dst[len] = '\0';
+
+	return(dst);
+}
+
 void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-la] [hosts ...]\n", __progname);
+	fprintf(stderr, "usage: %s [-al] [-h | -i | -u] [hosts ...]\n",
+	    __progname);
 	exit(1);
 }
