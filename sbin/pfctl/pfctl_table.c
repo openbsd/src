@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.38 2003/04/05 23:56:32 henning Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.39 2003/04/25 19:07:28 pvalchev Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -571,18 +571,19 @@ void
 pfctl_append_addr(char *addr, int net, int neg)
 {
 	char *p = NULL;
+	int rval;
 
 	if (net < 0 && !neg) {
 		append_addr(addr, 0);
 		return;
 	}
 	if (net >= 0 && !neg)
-		asprintf(&p, "%s/%d", addr, net);
+		rval = asprintf(&p, "%s/%d", addr, net);
 	else if (net < 0)
-		asprintf(&p, "!%s", addr);
+		rval = asprintf(&p, "!%s", addr);
 	else
-		asprintf(&p, "!%s/%d", addr, net);
-	if (p == NULL) {
+		rval = asprintf(&p, "!%s/%d", addr, net);
+	if (rval == -1 || p == NULL) {
 		radix_perror();
 		exit(1);
 	}
