@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.2 2000/04/13 00:36:42 csapuntz Exp $       */
+/*      $OpenBSD: neo.c,v 1.3 2000/04/14 03:56:50 csapuntz Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -51,6 +51,69 @@
 #include <dev/pci/neo-coeff.h>
 
 /* -------------------------------------------------------------------- */
+/* 
+ * As of 04/13/00, public documentation on the Neomagic 256 is not available.
+ * These comments were gleaned by looking at the driver carefully.
+ *
+ * The Neomagic 256 AV/ZX chips provide both video and audio capabilities
+ * on one chip. About 2-6 megabytes of memory are associated with
+ * the chip. Most of this goes to video frame buffers, but some is used for
+ * audio buffering
+ *
+ * Unlike most PCI audio chips, the Neomagic chip does not rely on DMA.
+ * Instead, the chip allows you to carve out two ring buffers out of its
+ * memory. However you carve this and how much you can carve seems to be
+ * voodoo. The algorithm is in nm_init.
+ *
+ * Most Neomagic audio chips use the AC-97 codec interface. However, there 
+ * seem to be a select few chips 256AV chips that do not support AC-97.
+ * This driver does not support them but there are rumors that it
+ * mgiht work with wss isa drivers. This might require some playing around
+ * with your BIOS.
+ *
+ * The Neomagic 256 AV/ZX have 2 PCI I/O region descriptors. Both of
+ * them describe a memory region. The frame buffer is the first region
+ * and the register set is the secodn region.
+ *
+ * The register manipulation logic is taken from the Linux driver,
+ * which is in the public domain.
+ *
+ * The Neomagic is even nice enough to map the AC-97 codec registers into
+ * the register space to allow direct manipulation. Watch out, accessing
+ * AC-97 registers on the Neomagic requires great delicateness, otherwise
+ * the thing will hang the PCI bus, rendering your system frozen.
+ *
+ * For one, it seems the Neomagic status register that reports AC-97
+ * readiness should NOT be polled more often than once each 1ms.
+ *
+ * Also, writes to the AC-97 register space may take order 40us to
+ * complete.
+ *
+ * Unlike many sound engines, the Neomagic does not support (as fas as
+ * we know :) the notion of interrupting every n bytes transferred,
+ * unlike many DMA engines.  Instead, it allows you to specify one
+ * location in each ring buffer (called the watermark). When the chip
+ * passes that location while playing, it signals an interrupt.
+ * 
+ * The ring buffer size is currently 16k. That is about 100ms of audio
+ * at 44.1khz/stero/16 bit. However, to keep the buffer full, interrupts
+ * are generated more often than that, so 20-40 interrupts per second
+ * should not be unexpected. Increasing BUFFSIZE should help minimize
+ * of glitches due to drivers that spend to much time looping at high
+ * privelege levels as well as the impact of badly written audio
+ * interface clients.
+ *
+ * TO-DO list:
+ *    neo_malloc/neo_free are still seriously broken.
+ *
+ *    Figure out interaction with video stuff (look at Xfree86 driver?)
+ *
+ *    Power management (neoactivate)
+ *
+ *    Fix detect of Neo devices that don't work this driver (see neo_attach)   
+ *
+ *    Figure out how to shrink that huge table neo-coeff.h
+ */
 
 #define	NM_BUFFSIZE	16384
 
@@ -191,7 +254,11 @@ struct audio_hw_if neo_hw_if = {
 	NULL,
 	neo_query_encoding,
 	neo_set_params,
+#if 1
 	neo_round_blocksize,
+#else
+	NULL,
+#endif
 	NULL,
 	NULL,
 	NULL,
