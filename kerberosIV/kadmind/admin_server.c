@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin_server.c,v 1.3 1997/12/15 17:56:21 art Exp $	*/
+/*	$OpenBSD: admin_server.c,v 1.4 1998/08/16 02:42:09 art Exp $	*/
 /* $KTH: admin_server.c,v 1.42 1997/12/04 19:31:39 assar Exp $ */
 
 /* 
@@ -250,6 +250,7 @@ kadm_listen(void)
     struct sockaddr_in peer;
     int addrlen;
     int pid;
+    int *temp;
 
     signal(SIGINT, doexit);
     signal(SIGTERM, doexit);
@@ -299,6 +300,14 @@ kadm_listen(void)
 		continue;
 	    }
 #ifndef DEBUG
+	    /* grow the pidarray before forking, so we can catch the errors */
+	    temp = realloc(pidarray, ++pidarraysize);
+	    if (temp == NULL) {
+	        krb_log("realloc: %s", error_message(errno));
+		close(peer_fd);
+	        continue;
+	    }
+	    pidarray = temp;
 	    /* if you want a sep daemon for each server */
 	    if ((pid = fork())) {
 		/* parent */
@@ -309,7 +318,6 @@ kadm_listen(void)
 		}
 		/* fork succeded: keep tabs on child */
 		close(peer_fd);
-		pidarray = realloc(pidarray, ++pidarraysize);
 		pidarray[pidarraysize-1] = pid;
 	    } else {
 		/* child */

@@ -1,5 +1,17 @@
-/*	$OpenBSD: kadm_stream.c,v 1.4 1997/12/12 10:02:47 art Exp $	*/
-/* $KTH: kadm_stream.c,v 1.11 1997/05/02 10:28:05 joda Exp $ */
+/*	$OpenBSD: kadm_stream.c,v 1.5 1998/08/16 02:42:06 art Exp $	*/
+/*	$KTH: kadm_stream.c,v 1.11 1997/05/02 10:28:05 joda Exp $	*/
+
+/*
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
+ *
+ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -71,9 +83,15 @@ vts_string(char *dat, u_char **st, int loc)
             			/* base pointer to the stream */
         			/* offset into the stream for current data */
 {
-    *st = (u_char *) realloc (*st, (unsigned) (loc + strlen(dat) + 1));
-    if (*st == NULL)
+    u_char *temp;
+
+    temp = (u_char *) realloc (*st, (unsigned) (loc + strlen(dat) + 1));
+    if (temp == NULL) {
+        free(*st);
 	return -1;
+    }
+    *st = temp;
+
     memcpy(*st + loc, dat, strlen(dat)+1);
     return strlen(dat)+1;
 }
@@ -86,8 +104,9 @@ vts_short(u_int16_t dat, u_char **st, int loc)
         			/* offset into the stream for current data */
 {
     unsigned char *p;
+
     p = realloc(*st, loc + 2);
-    if(p == NULL){
+    if (p == NULL) {
 	abort();
     }
     p[loc] = (dat >> 8) & 0xff;
@@ -103,7 +122,7 @@ vts_char(u_char dat, u_char **st, int loc)
         			/* offset into the stream for current data */
 {
     unsigned char *p = realloc(*st, loc + 1);
-    if(p == NULL){
+    if (p == NULL) {
 	abort();
     }
     p[loc] = dat;

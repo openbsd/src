@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkinit.c,v 1.1 1997/12/18 22:28:05 art Exp $	*/
+/*	$OpenBSD: rkinit.c,v 1.2 1998/08/16 02:42:10 art Exp $	*/
 /* $KTH: rkinit.c,v 1.19 1997/04/01 08:17:33 joda Exp $ */
 
 /*
@@ -47,6 +47,7 @@ getalladdrs (char *hostname, unsigned *count)
     struct hostent *hostent;
     struct in_addr **h;
     struct in_addr *addr;
+    struct in_addr *temp;
     unsigned naddr;
     unsigned maxaddr;
 
@@ -74,19 +75,23 @@ getalladdrs (char *hostname, unsigned *count)
 	 h++) {
 	if (naddr >= maxaddr) {
 	    maxaddr *= 2;
-	    addr = realloc (addr, sizeof(*addr) * maxaddr);
-	    if (addr == NULL) {
+	    temp = realloc (addr, sizeof(*addr) * maxaddr);
+	    if (temp == NULL) {
 		warnx ("out of memory");
+		free(addr);
 		return NULL;
 	    }
+	    addr = temp;
 	}
 	addr[naddr++] = **h;
     }
-    addr = realloc (addr, sizeof(*addr) * naddr);
-    if (addr == NULL) {
+    temp = realloc (addr, sizeof(*addr) * naddr);
+    if (temp == NULL) {
 	warnx ("out of memory");
+	free(addr);
 	return NULL;
     }
+    addr = temp;
     *count = naddr;
     return addr;
 }

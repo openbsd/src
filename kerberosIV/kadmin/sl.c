@@ -1,4 +1,4 @@
-/*	$OpenBSD: sl.c,v 1.2 1998/02/18 11:53:46 art Exp $	*/
+/*	$OpenBSD: sl.c,v 1.3 1998/08/16 02:42:07 art Exp $	*/
 /* $KTH: sl.c,v 1.15 1997/10/19 23:12:40 assar Exp $ */
 
 /*
@@ -168,14 +168,19 @@ sl_loop (SL_cmd *cmds, char *prompt)
 		p;
 		p = strtok_r (NULL, " \t", &foo)) {
 		if(count == max_count) {
+		    char **temp;
+
 		    max_count *= 2;
-		    ptr = realloc (ptr, max_count * sizeof(*ptr));
-		    if (ptr == NULL) {
+		    temp = realloc (ptr, max_count * sizeof(*ptr));
+		    if (temp == NULL) {
 			printf ("sl_loop: failed to allocate %u "
 				"bytes of memory\n",
 				(unsigned) max_count * sizeof(*ptr));
+
+			free(ptr);
 			return -1;
 		    }
+		    ptr = temp;
 		}
 		ptr[count++] = p;
 	    }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kerberos.c,v 1.13 1998/07/13 19:57:19 art Exp $	*/
+/*	$OpenBSD: kerberos.c,v 1.14 1998/08/16 02:42:11 art Exp $	*/
 /* $KTH: kerberos.c,v 1.70 1997/09/26 18:06:38 joda Exp $ */
 
 /*
@@ -575,8 +575,10 @@ add_port(struct port_spec **ports, int *num_ports, int port, int type)
 {
     struct port_spec *tmp;
     tmp = realloc(*ports, (*num_ports + 1) * sizeof(*tmp));
-    if(tmp == NULL)
+    if(tmp == NULL) {
+        free(*ports);
 	return ENOMEM;
+    }
     *ports = tmp;
     tmp[*num_ports].port = port;
     tmp[*num_ports].type = type;

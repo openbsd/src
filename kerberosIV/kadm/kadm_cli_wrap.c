@@ -1,5 +1,17 @@
-/*	$OpenBSD: kadm_cli_wrap.c,v 1.5 1997/12/15 17:56:17 art Exp $	*/
-/* $KTH: kadm_cli_wrap.c,v 1.22 1997/08/17 07:30:04 assar Exp $ */
+/*	$OpenBSD: kadm_cli_wrap.c,v 1.6 1998/08/16 02:42:05 art Exp $	*/
+/*	$KTH: kadm_cli_wrap.c,v 1.22 1997/08/17 07:30:04 assar Exp $	*/
+
+/*
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
+ *
+ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -239,6 +251,7 @@ kadm_cli_send(u_char *st_dat, int st_siz, u_char **ret_dat, int *ret_siz)
 				        * data */
     KTEXT_ST authent;	       /* the authenticator we will build */
     u_char *act_st;		       /* the pointer to the complete packet */
+    u_char *temp;
     u_char *priv_pak;	       /* private version of the packet */
     int priv_len;		       /* length of private packet */
     u_int32_t cksum;		       /* checksum of the packet */
@@ -293,14 +306,17 @@ kadm_cli_send(u_char *st_dat, int st_siz, u_char **ret_dat, int *ret_siz)
 	RET_N_FREE(retdat + krb_err_base);
     }
 
-    act_st = (u_char *) realloc(act_st,
+    temp = (u_char *) realloc(act_st,
 				act_len + authent.length + priv_len);
-    if (act_st == NULL) {
+    if (temp == NULL) {
 	clear_secrets();
 	free(priv_pak);
+	free(act_st);
 	priv_pak = NULL;
 	return KADM_NOMEM;
     }
+    act_st = temp;
+
     memcpy((char *)act_st + act_len, authent.dat, authent.length);
     memcpy((char *)act_st + act_len + authent.length, priv_pak, priv_len);
     free(priv_pak);
@@ -369,6 +385,7 @@ int kadm_change_pw_plain(unsigned char *newkey, char *password, char **pw_msg)
 {
     int stsize, retc;	       /* stream size and return code */
     u_char *send_st;	       /* send stream */
+    u_char *temp;
     u_char *ret_st;
     int ret_sz;
     int status;
@@ -387,9 +404,12 @@ int kadm_change_pw_plain(unsigned char *newkey, char *password, char **pw_msg)
 
     /* change key to stream */
 
-    send_st = realloc(send_st, stsize + 8);
-    if (send_st == NULL)
+    temp = realloc(send_st, stsize + 8);
+    if (temp == NULL) {
+        free(send_st);
 	return KADM_NOMEM;
+    }
+    send_st = temp;
 
     memcpy(send_st + stsize + 4, newkey, 4); /* yes, this is backwards */
     memcpy(send_st + stsize, newkey + 4, 4);
@@ -502,6 +522,7 @@ kadm_mod(Kadm_vals *vals1, Kadm_vals *vals2)
     u_char *st, *st2;	       /* st will hold the stream of values */
     int st_len, nlen;	       /* st2 the final stream with opcode */
     u_char *ret_st;
+    u_char *temp;
     int ret_sz;
 
     /* nlen is the length of second vals */
@@ -521,7 +542,13 @@ kadm_mod(Kadm_vals *vals1, Kadm_vals *vals2)
     st = NULL;
 
     nlen = vals_to_stream(vals2, &st);
-    st2 = (u_char *) realloc((char *) st2, (unsigned)(st_len + nlen));
+    temp = (u_char *) realloc((char *) st2, (unsigned)(st_len + nlen));
+    if (temp == NULL) {
+         free(st2);
+	 return KADM_NOMEM;
+    }
+    st2 = temp;
+        
     memcpy((char *) st2 + st_len, st, nlen); /* append st on */
     retc = kadm_cli_send(st2, st_len + nlen, &ret_st, &ret_sz);
 
