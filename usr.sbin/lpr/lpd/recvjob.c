@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.21 2002/06/08 01:53:43 millert Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.22 2002/06/19 01:24:14 deraadt Exp $	*/
 /*	$NetBSD: recvjob.c,v 1.14 2001/12/04 22:52:44 christos Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.21 2002/06/08 01:53:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.22 2002/06/19 01:24:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,8 @@ rcleanup(int signo)
 		do {
 			do
 				(void)unlink(dfname);
-			while (dfname[2]-- != 'A');
+			while (dfname[2]-- != 'A')
+				;
 			dfname[2] = 'z';
 		} while (dfname[0]-- != 'd');
 	}

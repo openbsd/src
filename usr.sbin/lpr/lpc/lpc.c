@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.14 2002/06/08 01:53:43 millert Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.15 2002/06/19 01:24:14 deraadt Exp $	*/
 /*	$NetBSD: lpc.c,v 1.11 2001/11/14 03:01:15 enami Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpc.c,v 1.14 2002/06/08 01:53:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpc.c,v 1.15 2002/06/19 01:24:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -285,6 +285,7 @@ help(int argc, char **argv)
 	}
 	while (--argc > 0) {
 		char *arg;
+
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
