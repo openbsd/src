@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.18 2000/08/17 14:37:53 brian Exp $
+# $OpenBSD: ppp.conf.sample,v 1.19 2001/07/02 12:24:44 brian Exp $
 #
 #################################################################
 
@@ -48,7 +48,7 @@ default:
 #  specified IP actually being correct, therefore, the other side can assign
 #  any IP numbers.
 #
-#  The forth arg to "set ifaddr" makes us send "0.0.0.0" as our requested
+#  The fourth arg to "set ifaddr" makes us send "0.0.0.0" as our requested
 #  IP number, forcing the peer to make the decision.
 #
 #  This entry also works with static IP numbers or when not in -auto mode.
@@ -334,7 +334,7 @@ dodgynet:
 #   # ppp -direct CHAPserver
 #
 #  Note:  We can supply a third field in ppp.secret specifying the IP address
-#         for that user.  We can even specify a forth field to specify the
+#         for that user.  We can even specify a fourth field to specify the
 #         ppp.link{up,down} label to use.
 #
 CHAPserver:
