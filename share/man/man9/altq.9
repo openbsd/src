@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.8 2002/11/25 13:18:08 henning Exp $
+.\"	$OpenBSD: altq.9,v 1.9 2002/12/02 15:05:23 mickey Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -60,7 +60,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-system is a framework to manage queueing disciplines on network
+system is a framework to manage queuing disciplines on network
 interfaces.
 .Nm
 introduces new macros to manipulate output queues.
@@ -77,13 +77,13 @@ enqueues a packet
 .Fa m
 to the queue
 .Fa ifq .
-The underlying queueing discipline may discard the packet.
+The underlying queuing discipline may discard the packet.
 .Fa error
 is set to 0 on success, or
 .Dv ENOBUFS
 if the packet is discarded.
 .Fa m
-will be freed by the device driver on success or by the queueing discipline on
+will be freed by the device driver on success or by the queuing discipline on
 failure so that the caller should not touch
 .Fa m
 after calling
@@ -106,7 +106,7 @@ under rate-limiting.
 .Pp
 .Fn IFQ_POLL
 returns the next packet without removing it from the queue.
-It is guaranteed by the underlying queueing discipline that
+It is guaranteed by the underlying queuing discipline that
 .Fn IFQ_DEQUEUE
 immediately after
 .Fn IFQ_POLL
@@ -127,7 +127,7 @@ Note that
 .Fn IFQ_DEQUEUE
 could still return
 .Dv NULL
-if the queueing discipline is non-work conserving.
+if the queuing discipline is non-work conserving.
 .Pp
 .Fn IFQ_SET_MAXLEN
 sets the queue length limit to the default FIFO queue.
@@ -208,7 +208,7 @@ macros looks like:
 The semantics of the enqueue operation is changed.
 In the new style,
 enqueue and packet drop are combined since they cannot be easily
-separated in many queueing disciplines.
+separated in many queuing disciplines.
 The new enqueue operation corresponds to the following macro that is
 written with the old macros.
 .Bd -literal
@@ -238,7 +238,7 @@ If the enqueue operation fails,
 is set to
 .Dv ENOBUFS .
 .Fa mbuf
-is freed by the queueing discipline.
+is freed by the queuing discipline.
 The caller should not touch mbuf after calling
 .Fn IFQ_ENQUEUE
 so that the caller may need to copy
@@ -384,7 +384,7 @@ A driver is supposed to call
 from transmission complete interrupts in order to trigger the next dequeue.
 .Ss Poll-and-dequeue operation
 If the code polls the packet at the head of the queue and actually uses
-the packet before dequeueing it, use
+the packet before dequeuing it, use
 .Fn IFQ_POLL
 and
 .Fn IFQ_DEQUEUE .
@@ -417,7 +417,7 @@ if called from outside of
 If the code uses
 .Fn IF_PREPEND ,
 you have to eliminate it since the prepend operation is not possible for many
-queueing disciplines.
+queuing disciplines.
 A common use of
 .Fn IF_PREPEND
 is to cancel the previous dequeue operation.
@@ -570,13 +570,13 @@ The dequeue operations looks like:
                                        |
 .Ed
 .Sh QUEUEING DISCIPLINES
-Queueing disciplines need to maintain
+Queuing disciplines need to maintain
 .Fa ifq_len
 .Po
 used by
 .Fn IFQ_IS_EMPTY
 .Pc .
-Queueing disciplines also need to guarantee the same mbuf is returned if
+Queuing disciplines also need to guarantee the same mbuf is returned if
 .Fn IFQ_DEQUEUE
 is called immediately after
 .Fn IFQ_POLL .
