@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.16 2003/07/21 19:54:47 mickey Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.17 2003/12/25 19:05:09 deraadt Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -58,7 +58,7 @@ static void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-d] [-s] [-r router] [-f bootparmsfile]\n",
+	fprintf(stderr, "usage: %s [-d] [-s] [-r router] [-f bootparamsfile]\n",
 	    __progname);
 	exit(1);
 }

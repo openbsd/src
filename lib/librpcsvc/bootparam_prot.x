@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam_prot.x,v 1.4 1997/08/19 07:54:46 niklas Exp $	*/
+/*	$OpenBSD: bootparam_prot.x,v 1.5 2003/12/25 19:05:09 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -30,7 +30,7 @@
  */
 
 /*
- * RPC for bootparms service.
+ * RPC for bootparams service.
  * There are two procedures:
  *   WHOAMI takes a net address and returns a client name and also a
  *	likely net address for routing
@@ -49,7 +49,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x 1.2 87/06/24 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: bootparam_prot.x,v 1.4 1997/08/19 07:54:46 niklas Exp $";
+%static char rcsid[] = "$OpenBSD: bootparam_prot.x,v 1.5 2003/12/25 19:05:09 deraadt Exp $";
 %#endif /* not lint */
 #endif
 
