@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.7 2004/05/30 08:17:18 grange Exp 
+#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.8 2004/08/09 19:57:23 otto Exp 
 #	OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
@@ -46,8 +46,6 @@
 # Terminal ports:
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	ttyc*	Cyclades serial ports
-# Call units:
-#	tun*	Network tunnel driver
 # Pseudo terminals:
 #	ptm	pty master device
 #	pty*	Set of 62 master pseudo terminals
@@ -94,6 +92,7 @@
 #	speaker	PC speaker
 #	ss*	SCSI scanners
 #	systrace*	System call tracing device
+#	tun*	Network tunnel driver
 #	tuner*	Tuner devices
 #	uk*	SCSI unknown devices
 #	wdt0	Watchdog timer
@@ -269,6 +268,10 @@ uk*)
 
 tuner*)
 	M tuner$U c 49 $(($(($U*2))+16)) 644
+	;;
+
+tun*)
+	M tun$U c 40 $U 600
 	;;
 
 systrace)
@@ -488,10 +491,6 @@ pty*)
 
 ptm)
 	M ptm c 81 0 666
-	;;
-
-tun*)
-	M tun$U c 40 $U 600
 	;;
 
 tty[0-7][0-9a-f])
