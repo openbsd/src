@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.96 2000/06/19 19:14:39 todd Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.97 2000/07/20 00:31:43 mickey Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1052,6 +1052,8 @@ arc
 ..
 hp300
 ..
+hppa
+..
 i386
 ..
 mac68k
@@ -1097,6 +1099,8 @@ arc
 ..
 hp300
 ..
+hppa
+..
 i386
 ..
 mac68k
@@ -1135,6 +1139,8 @@ arc
 ..
 hp300
 ..
+hppa
+..
 i386
 ..
 mac68k
@@ -1167,6 +1173,8 @@ amiga
 arc
 ..
 hp300
+..
+hppa
 ..
 i386
 ..
@@ -1211,6 +1219,8 @@ arc
 ..
 hp300
 ..
+hppa
+..
 i386
 ..
 mac68k
@@ -1254,6 +1264,8 @@ amiga
 arc
 ..
 hp300
+..
+hppa
 ..
 i386
 ..
@@ -1303,6 +1315,8 @@ arc
 ..
 hp300
 ..
+hppa
+..
 i386
 ..
 mac68k
@@ -1350,6 +1364,8 @@ amiga
 arc
 ..
 hp300
+..
+hppa
 ..
 i386
 ..
