@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.52 2002/06/19 07:22:46 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -81,13 +81,6 @@ struct fcrypt {
 };
 
 void	cryptoattach(int);
-
-int	cryptoopen(dev_t, int, int, struct proc *);
-int	cryptoclose(dev_t, int, int, struct proc *);
-int	cryptoread(dev_t, struct uio *, int);
-int	cryptowrite(dev_t, struct uio *, int);
-int	cryptoioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	cryptoselect(dev_t, int, struct proc *);
 
 int	cryptof_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	cryptof_write(struct file *, off_t *, struct uio *, struct ucred *);

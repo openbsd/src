@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.65 2002/07/10 22:08:47 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.66 2002/07/10 22:21:30 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -579,6 +579,8 @@ cdev_decl(wsmux);
 cdev_decl(svr4_net);
 
 cdev_decl(ksyms);
+
+cdev_decl(crypto);
 
 cdev_decl(systrace);
 
