@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxkivar.h,v 1.2 2001/10/24 15:09:28 brad Exp $	*/
+/*	$OpenBSD: emuxkivar.h,v 1.3 2001/11/26 18:16:02 mickey Exp $	*/
 /*	$NetBSD: emuxkivar.h,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -254,7 +254,7 @@ struct emuxki_softc {
 	struct ac97_codec_if	*codecif;
 	struct device		*sc_audev;
 
-	struct emuxki_voice	*pvoice, *rvoice;
+	struct emuxki_voice	*pvoice, *rvoice, *lvoice;
 };
 
 #endif				/* !_DEV_PCI_EMU10K1VAR_H_ */

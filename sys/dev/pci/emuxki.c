@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.5 2001/11/20 12:22:59 mickey Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.6 2001/11/26 18:16:02 mickey Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -1284,24 +1284,31 @@ emuxki_voice_new(struct emuxki_softc *sc, u_int8_t use)
 	struct emuxki_voice *voice;
 	int             s;
 
-	if ((voice = malloc(sizeof(*voice), M_DEVBUF, M_WAITOK)) == NULL)
-		return (NULL);
-	voice->sc = sc;
+	s = splaudio();
+	voice = sc->lvoice;
+	sc->lvoice = NULL;
+	splx(s);
+
+	if (!voice) {
+		if (!(voice = malloc(sizeof(*voice), M_DEVBUF, M_WAITOK)))
+			return (NULL);
+		voice->sc = sc;
+		voice->state = !EMU_VOICE_STATE_STARTED;
+		voice->stereo = EMU_VOICE_STEREO_NOTSET;
+		voice->b16 = 0;
+		voice->sample_rate = 0;
+		if (use & EMU_VOICE_USE_PLAY)
+			voice->dataloc.chan[0] = voice->dataloc.chan[0] = NULL;
+		else
+			voice->dataloc.source = EMU_RECSRC_NOTSET;
+		voice->buffer = NULL;
+		voice->blksize = 0;
+		voice->trigblk = 0;
+		voice->blkmod = 0;
+		voice->inth = NULL;
+		voice->inthparam = NULL;
+	}
 	voice->use = use;
-	voice->state = !EMU_VOICE_STATE_STARTED;
-	voice->stereo = EMU_VOICE_STEREO_NOTSET;
-	voice->b16 = 0;
-	voice->sample_rate = 0;
-	if (use & EMU_VOICE_USE_PLAY)
-		voice->dataloc.chan[0] = voice->dataloc.chan[0] = NULL;
-	else
-		voice->dataloc.source = EMU_RECSRC_NOTSET;
-	voice->buffer = NULL;
-	voice->blksize = 0;
-	voice->trigblk = 0;
-	voice->blkmod = 0;
-	voice->inth = NULL;
-	voice->inthparam = NULL;
 
 	s = splaudio();
 	LIST_INSERT_HEAD((&sc->voices), voice, next);
@@ -1313,17 +1320,23 @@ emuxki_voice_new(struct emuxki_softc *sc, u_int8_t use)
 void
 emuxki_voice_delete(struct emuxki_voice *voice)
 {
-	int             s;
+	struct emuxki_softc *sc;
+	struct emuxki_voice *lvoice;
+	int s;
 
 	if (voice->state & EMU_VOICE_STATE_STARTED)
 		emuxki_voice_halt(voice);
 
 	s = splaudio();
 	LIST_REMOVE(voice, next);
+	lvoice = sc->lvoice;
+	sc->lvoice = voice;
 	splx(s);
 
-	emuxki_voice_dataloc_destroy(voice);
-	free(voice, M_DEVBUF);
+	if (lvoice) {
+		emuxki_voice_dataloc_destroy(lvoice);
+		free(lvoice, M_DEVBUF);
+	}
 }
 
 int
