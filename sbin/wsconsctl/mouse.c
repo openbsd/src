@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.2 2001/06/30 02:12:57 mickey Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.3 2001/08/01 10:33:10 hugh Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -80,7 +80,7 @@ mouse_put_values(pre, fd)
 	if (field_by_value(mouse_field_tab, &samplerate)->flags & FLG_SET) {
 		tmp = samplerate;
 		if (ioctl(fd, WSMOUSEIO_SRATE, &tmp) < 0)
-			err(1, "WSMOUSEIO_SRES");
+			err(1, "WSMOUSEIO_SRATE");
 		pr_field(pre, field_by_value(mouse_field_tab, &tmp), " -> ");
 	}
 }
