@@ -1405,6 +1405,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/joystick.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/limits.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/linux_machdep.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/mouse.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/npx.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/param.ph
@@ -1419,6 +1420,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ptrace.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/rbus_machdep.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/reg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/reloc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/segments.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/setjmp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/signal.ph

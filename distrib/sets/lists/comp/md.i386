@@ -1,5 +1,9 @@
+./usr/bin/addr2line
+./usr/bin/gasp
 ./usr/bin/gdb
+./usr/bin/objcopy
 ./usr/bin/objdump
+./usr/bin/readelf
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
@@ -30,6 +34,7 @@
 ./usr/include/i386/joystick.h
 ./usr/include/i386/limits.h
 ./usr/include/i386/linux_machdep.h
+./usr/include/i386/loadfile_machdep.h
 ./usr/include/i386/mouse.h
 ./usr/include/i386/npx.h
 ./usr/include/i386/param.h
@@ -44,6 +49,7 @@
 ./usr/include/i386/ptrace.h
 ./usr/include/i386/rbus_machdep.h
 ./usr/include/i386/reg.h
+./usr/include/i386/reloc.h
 ./usr/include/i386/segments.h
 ./usr/include/i386/setjmp.h
 ./usr/include/i386/signal.h
@@ -61,6 +67,10 @@
 ./usr/include/i386/vmparam.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.3/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.3/2.95.3/cc1
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.3/2.95.3/cc1obj
@@ -129,7 +139,14 @@
 ./usr/lib/libutil_pic.a
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
-./usr/lib/scrt0.o
+./usr/libdata/ldscripts
+./usr/libdata/ldscripts/elf_i386.x
+./usr/libdata/ldscripts/elf_i386.xbn
+./usr/libdata/ldscripts/elf_i386.xn
+./usr/libdata/ldscripts/elf_i386.xr
+./usr/libdata/ldscripts/elf_i386.xs
+./usr/libdata/ldscripts/elf_i386.xu
+./usr/libdata/ldscripts/elf_i386.xz
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/umct.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/umidireg.ph
