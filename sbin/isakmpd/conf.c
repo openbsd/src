@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.50 2003/04/30 15:15:11 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.51 2003/05/14 18:11:18 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -417,6 +417,7 @@ conf_load_defaults (int tr)
   conf_set (tr, "General", "Retransmits", CONF_DFLT_RETRANSMITS, 0, 1);
   conf_set (tr, "General", "Exchange-max-time", CONF_DFLT_EXCH_MAX_TIME, 0, 1);
   conf_set (tr, "General", "Policy-file", CONF_DFLT_POLICY_FILE, 0, 1);
+  conf_set (tr, "General", "Pubkey-directory", CONF_DFLT_PUBKEY_DIR, 0, 1);
 
 #ifdef USE_X509
   conf_set (tr, "X509-certificates", "CA-directory", CONF_DFLT_X509_CA_DIR, 0,

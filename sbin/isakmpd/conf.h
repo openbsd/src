@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.21 2003/02/04 20:02:00 markus Exp $	*/
+/*	$OpenBSD: conf.h,v 1.22 2003/05/14 18:11:18 ho Exp $	*/
 /*	$EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 #define CONF_DFLT_X509_CERT_DIR        "/etc/isakmpd/certs/"
 #define CONF_DFLT_X509_PRIVATE_KEY     "/etc/isakmpd/private/local.key"
 #define CONF_DFLT_X509_CRL_DIR         "/etc/isakmpd/crls/"
-
+#define CONF_DFLT_PUBKEY_DIR           "/etc/isakmpd/pubkeys/"
 #define CONF_DFLT_KEYNOTE_CRED_DIR     "/etc/isakmpd/keynote/"
 
 #define CONF_DFLT_TAG_PHASE1_CONFIG    "Default-phase-1-configuration"
