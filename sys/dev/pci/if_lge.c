@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.1 2001/09/04 20:36:38 nate Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.2 2001/09/05 20:58:54 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -553,8 +553,7 @@ void lge_attach(parent, self, aux)
 #endif
 
 	DPRINTFN(5, ("pci_intr_map\n"));
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail;
 	}
