@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <stdio.h>
+#include "test.h"
 
 int
 main()
@@ -19,23 +20,12 @@ main()
 	DIR * dot_dir;
 	int found = 0;
 
-	if ((dot_dir = opendir(".")) != NULL) {
-		while ((file = readdir(dot_dir)) != NULL) {
-			if (strcmp("test_readdir", file->d_name) == 0) {
-				found = 1;
-			}
-		}
-		closedir(dot_dir);
-		if (found) {
-			printf("test_readdir PASSED\n");
-			exit(0);
-		} else {
-			printf("Couldn't find file test_readdir ERROR\n");
-		}
-	} else {
-		printf("opendir() ERROR\n");
-	}
-	printf("test_readdir FAILED\n");
-	exit(1);
+	CHECKen(dot_dir = opendir("."));
+	while ((file = readdir(dot_dir)) != NULL)
+		if (strcmp("test_readdir", file->d_name) == 0)
+			found = 1;
+	CHECKe(closedir(dot_dir));
+	ASSERT(found);
+	SUCCEED;
 }
 

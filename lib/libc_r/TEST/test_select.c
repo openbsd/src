@@ -1,32 +1,28 @@
 #include <pthread.h>
+#include <pthread_np.h>
 #include <stdio.h>
-#ifndef ultrix
 #include <sys/fcntl.h>
-#else /* ultrix */
-#include <fcntl.h>
-#endif /* !ultrix */
 #include <sys/types.h>
 #include <sys/time.h>
-#ifdef hpux
-#include <sys/file.h>
-#endif /* hpux */
 #include <errno.h>
+#include <unistd.h>
+#include "test.h"
 #define NLOOPS 1000
 
 int ntouts = 0;
 
 void *
-bg_routine(void *arg)
+bg_routine(arg)
+	void *arg;
 {
-  write(1,"bg routine running\n",19);
+  char dot = '.';
+  pthread_set_name_np(pthread_self(), "bg");
+  write(STDOUT_FILENO,"bg routine running\n",19);
   /*pthread_dump_state();*/
   while (1) {
     int n;
-    char dot;
-
-    dot = '.';
     pthread_yield();
-    write(1,&dot,1);
+    write(STDOUT_FILENO, &dot, sizeof dot);
     pthread_yield();
     n = NLOOPS;
     while (n-- > 0)
@@ -35,81 +31,68 @@ bg_routine(void *arg)
 }
 
 void *
-fg_routine(void *arg)
+fg_routine(arg)
+	void *arg;
 {
-  int flags, stat, nonblock_flag;
-  static struct timeval tout = { 0, 500000 };
+  int flags;
+  /* static struct timeval tout = { 0, 500000 }; */
+  int n;
+  fd_set r;
 
-#if 0
-#if defined(hpux) || defined(__alpha)
-  nonblock_flag = O_NONBLOCK;
-#else
-  nonblock_flag = FNDELAY;
-#endif
-  printf("fg_routine running\n");
-  flags = fcntl(0, F_GETFL, 0);
-  printf("stdin flags b4 anything = %x\n", flags);
-  stat = fcntl(0, F_SETFL, flags | nonblock_flag);
-  if (stat < 0) {
-    printf("fcntl(%x) => %d\n", nonblock_flag, errno);
-    printf("could not set nonblocking i/o on stdin [oldf %x, stat %d]\n",
-	   flags, stat);
-    exit(1);
-  }
-  printf("stdin flags = 0x%x after turning on %x\n", flags, nonblock_flag);
-#endif
+  pthread_set_name_np(pthread_self(), "fg");
+
+  flags = fcntl(STDIN_FILENO, F_GETFL);
+  CHECKr(fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK));
+
   while (1) {
-    int n;
-    fd_set r;
+    int maxfd;
 
     FD_ZERO(&r);
-    FD_SET(0,&r);
+    FD_SET(STDIN_FILENO,&r);
+    maxfd = STDIN_FILENO;
+
+    errno = 0;
     printf("select>");
-    n = select(1, &r, (fd_set*)0, (fd_set*)0, (struct timeval *)0);
-    if (n < 0) {
-      perror ("select");
-      exit(1);
-    } else if (n > 0) {
+    CHECKe(n = select(maxfd+1, &r, (fd_set*)0, (fd_set*)0,
+	(struct timeval *)0));
+
+    if (n > 0) {
       int nb;
       char buf[128];
 
       printf("=> select returned: %d\n", n);
-      while ((nb = read(0, buf, sizeof(buf)-1)) >= 0) {
+      while ((nb = read(STDIN_FILENO, buf, sizeof(buf)-1)) >= 0) {
 	buf[nb] = '\0';
 	printf("read %d: |%s|\n", nb, buf);
       }
-      printf("=> out of read loop: %d / %d\n", nb, errno);
-      if (nb < 0) {
-	if (errno != EWOULDBLOCK && errno != EAGAIN) {
-	  perror ("read");
-	  exit(1);
-	}
-      }
+      printf("=> out of read loop: len = %d / %s\n", nb, strerror(errno));
+      if (nb < 0)
+	ASSERTe(errno, == EWOULDBLOCK || errno == EAGAIN);
     } else
       ntouts++;
   }
 }
 
-main(int argc, char **argv)
+int
+main(argc, argv)
+	int argc;
+	char **argv;
 {
-  pthread_t bg_thread, fg_thread;
-  int junk;
+	pthread_t bg_thread, fg_thread;
+	int junk;
 
-  pthread_init();
-  setbuf(stdout,NULL);
-  setbuf(stderr,NULL);
-  if (argc > 1) {
-    if (pthread_create(&bg_thread, NULL, bg_routine, 0) < 0) {
-      printf("error: could not create bg thread\n");
-      exit(1);
-    }
-  }
-  if (pthread_create(&fg_thread, NULL, fg_routine, 0) < 0) {
-    printf("error: could not create fg thread\n");
-    exit(1);
-  }
-  printf("threads forked: bg=%lx fg=%lx\n", bg_thread, fg_thread);
-  /*pthread_dump_state();*/
-  printf("initial thread %lx joining fg...\n", pthread_self());
-  pthread_join(fg_thread, (void **)&junk);
+	setbuf(stdout,NULL);
+	setbuf(stderr,NULL);
+
+	CHECKr(pthread_create(&bg_thread, NULL, bg_routine, 0));
+	CHECKr(pthread_create(&fg_thread, NULL, fg_routine, 0));
+
+	printf("threads forked: bg=%p fg=%p\n", bg_thread, fg_thread);
+	/*pthread_dump_state();*/
+	/*
+	printf("initial thread %p joining fg...\n", pthread_self());
+	CHECKr(pthread_join(fg_thread, (void **)&junk));
+	*/
+	sleep(20);
+	SUCCEED;
 }

@@ -1,4 +1,4 @@
-/* ==== test_switch.c ============================================================
+/* ==== test_switch.c ========================================================
  * Copyright (c) 1993 by Chris Provenzano, proven@athena.mit.edu
  *
  * Description : Test context switch functionality.
@@ -28,18 +28,21 @@ void usage(void)
     errno = 0;
 }
 
-void* new_thread(void* arg)
+void *
+new_thread(arg)
+	void *arg;
 {
 	while(1) {
-		write (fd, (char *) arg, 1);
+		CHECKe(write (fd, (char *) arg, 1));
 		x[(char *)arg - buf] = 1;
 	}
-	fprintf(stderr, "Compiler error\n");
-	exit(1);
+	PANIC("while");
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+	int argc;
+	char **argv;
 {
 	pthread_t thread;
 	int count = 2;
@@ -74,18 +77,16 @@ main(int argc, char **argv)
 	      return(NOTOK);
 	    }
 
-	for (i = 0; i < count; i++) {
-		if (pthread_create(&thread, NULL, new_thread, (void*)(buf+i))) {
-			fprintf (stderr, "error creating new thread %ld\n", i);
-			exit (1);
-		}
-	}
-	sleep (2);
+	/* create the threads */
 	for (i = 0; i < count; i++)
-		if (x[i] == 0) {
-			fprintf (stderr, "thread %ld never ran\n", i);
-			return 1;
-		}
-	printf ("\n%s PASSED\n", argv[0]);
-	return 0;
+		CHECKr(pthread_create(&thread, NULL, new_thread, 
+		    (void*)(buf+i)));
+
+	/* give all threads a chance to run */
+	sleep (2);
+
+	for (i = 0; i < count; i++)
+		ASSERT(x[i]);	/* make sure each thread ran */
+
+	SUCCEED;
 }

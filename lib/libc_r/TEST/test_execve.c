@@ -12,13 +12,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <err.h>
 #include "test.h"
 
 extern char **environ;
 char *argv[] = {
 	"/bin/echo",
-	"This message should be displayed after the execve system call",
+	"This line should appear after the execve",
 	NULL
 };
 
@@ -34,23 +33,17 @@ main()
 	if (isatty(1)) {
 		char *ttynm;
 
-		ttynm = ttyname(1);
+		CHECKn(ttynm = ttyname(1));
 		printf("tty is %s\n", ttynm);
-		if ((fd = open(ttynm, O_RDWR)) < OK)
-			err(1, "%s", ttynm);
+		CHECKe(fd = open(ttynm, O_RDWR));
 	} else
-		errx(1, "stdout not a tty");
+		PANIC("stdout not a tty");
 
-	printf("This output is necessary to set the stdout fd to NONBLOCKING\n");
+	CHECKn(printf("This output is necessary to set the stdout fd to NONBLOCKING\n"));
 
 	/* do a dup2 */
-	dup2(fd, 1);
-	write(1, should_succeed, (size_t)strlen(should_succeed));
-#if i_understood_this
-	_thread_sys_write(1, should_fail, strlen(should_fail));
-#endif
-	if (execve(argv[0], argv, environ) < OK) 
-		err(1, "execve");
-
-	PANIC();
+	CHECKe(dup2(fd, 1));
+	CHECKe(write(1, should_succeed, (size_t)strlen(should_succeed)));
+	CHECKe(execve(argv[0], argv, environ));
+	DIE(errno, "execve %s", argv[0]);
 }

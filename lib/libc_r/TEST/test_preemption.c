@@ -15,29 +15,24 @@ void* new_thread(void * new_buf)
 {
 	int i;
 
-	printf("new_thread\n");
+	printf("yielding:");
 	for (i = 0; i < 10; i++) {
-		printf("yielding ");
+		printf(" %d", i);
 		fflush(stdout);
 		pthread_yield();
 	}
-	printf("yielded 10 times ok\n");
-	exit(0);
+	printf("\n");
+	SUCCEED;
 }
 
 int
 main()
 {
 	pthread_t thread;
-	int ret;
 
-	printf("test_preemption START\n");
+	CHECKr(pthread_create(&thread, NULL, new_thread, NULL));
 
-	if ((ret = pthread_create(&thread, NULL, new_thread, NULL)))
-		DIE(ret, "pthread_create");
-
-	while(1);
-	/* NOTREACHED */
-
-	return (1);
+	while(1)
+		;
+	PANIC("while");
 }

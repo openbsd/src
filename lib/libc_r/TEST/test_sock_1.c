@@ -17,143 +17,124 @@
 #include "test.h"
 #include <sched.h>
 #include <string.h>
+#include <stdlib.h>
 
 struct sockaddr_in a_sout;
 int success = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_attr_t attr;
 
-#define MESSAGE5 "This should be message #5"
-#define MESSAGE6 "This should be message #6"
+static int counter = 0;
 
-void * sock_connect(void* arg)
+void *
+sock_connect(arg)
+	void *arg;
 {
 	char buf[1024];
-	int fd, tmp;
-	int ret;
+	int fd;
 
 	/* Ensure sock_read runs first */
-	if ((ret = pthread_mutex_lock(&mutex))) 
-		DIE(ret, "sock_connect:pthread_mutex_lock()");
+	CHECKr(pthread_mutex_lock(&mutex));
 
 	a_sout.sin_addr.s_addr = htonl(0x7f000001); /* loopback */
+	CHECKe(fd = socket(AF_INET, SOCK_STREAM, 0));
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		DIE(errno, "sock_connect:socket()");
+	ASSERT(++counter == 2);
 
-	printf("This should be message #2\n");
-	if (connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0)
-		DIE(errno, "sock_connect:connect()");
+	/* connect to the socket */
+	CHECKe(connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)));
+	CHECKe(close(fd));
 
-	close(fd);
-		
-	if ((ret = pthread_mutex_unlock(&mutex)))
-		DIE(ret, "sock_connect:pthread_mutex_lock()");
+	CHECKr(pthread_mutex_unlock(&mutex));
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		DIE(ret, "sock_connect:socket()");
-
-	printf("This should be message #3\n");
-
-	if (connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0)
-		DIE(errno, "sock_connect:connect()");
+	CHECKe(fd = socket(AF_INET, SOCK_STREAM, 0));
+	ASSERT(++counter == 3);
+	CHECKe(connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)));
 
 	/* Ensure sock_read runs again */
 	pthread_yield();
-	pthread_yield();
-	pthread_yield();
-	pthread_yield();
-	if ((ret = pthread_mutex_lock(&mutex)))
-		DIE(ret, "sock_connect:pthread_mutex_lock()");
+	sleep(1);
 
-	if ((tmp = read(fd, buf, 1024)) <= 0)
-		DIE(errno, "sock_connect:read() == %d", tmp);
+	CHECKr(pthread_mutex_lock(&mutex));
+	CHECKe(read(fd, buf, 1024));
 
-	write(fd, MESSAGE6, sizeof(MESSAGE6));
-	printf("%s\n", buf);
-	close(fd);
+	write(fd, "6", 1);
+
+	ASSERT(++counter == atoi(buf));
+	CHECKe(close(fd));
 	success++;
-
-	if ((ret = pthread_mutex_unlock(&mutex)))
-		DIE(ret, "sock_connect:pthread_mutex_unlock()");
+	CHECKr(pthread_mutex_unlock(&mutex));
 
 	return(NULL);
 }
 
-extern struct fd_table_entry ** fd_table;
-void * sock_write(void* arg)
+void *
+sock_write(arg)
+	void *arg;
 {
 	int fd = *(int *)arg;
 
-	write(fd, MESSAGE5, sizeof(MESSAGE5));
+	CHECKe(write(fd, "5", 1));
 	return(NULL);
 }
 
-void * sock_accept(void* arg)
+void *
+sock_accept(arg)
+	void *arg;
 {
 	pthread_t thread;
 	struct sockaddr a_sin;
-	int a_sin_size, a_fd, fd, tmp;
+	int a_sin_size, a_fd, fd;
 	short port;
 	char buf[1024];
-	int ret;
 
 	port = 3276;
 	a_sout.sin_family = AF_INET;
 	a_sout.sin_port = htons(port);
 	a_sout.sin_addr.s_addr = INADDR_ANY;
 
-	if ((a_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
-		DIE(errno, "sock_accept:socket()");
+	CHECKe(a_fd = socket(AF_INET, SOCK_STREAM, 0));
 
-	while (bind(a_fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0) {
+	while (1) {
+		if(0 == bind(a_fd, (struct sockaddr *) &a_sout, sizeof(a_sout)))
+			break;
 		if (errno == EADDRINUSE) { 
 			a_sout.sin_port = htons((++port));
 			continue;
 		}
-		DIE(errno, "sock_accept:bind()");
+		DIE(errno, "bind");
 	}
+	CHECKe(listen(a_fd, 2));
 
-	if (listen(a_fd, 2)) 
-		DIE(errno, "sock_accept:listen()");
-		
-	a_sin_size = sizeof(a_sin);
-	printf("This should be message #1\n");
+	ASSERT(++counter == 1);
 
-	if ((ret = pthread_create(&thread, &attr, sock_connect, 
-	    (void *)0xdeadbeaf)))
-		DIE(ret, "sock_accept:pthread_create(sock_connect)");
-
-	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) 
-		DIE(errno, "sock_accept:accept()");
-	
-	if ((ret = pthread_mutex_lock(&mutex)))
-		DIE(ret, "sock_accept:pthread_mutex_lock()");
-
-	close(fd);
+	CHECKr(pthread_create(&thread, &attr, sock_connect, 
+	    (void *)0xdeadbeaf));
 
 	a_sin_size = sizeof(a_sin);
-	printf("This should be message #4\n");
-	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0)
-		DIE(errno, "sock_accept:accept()");
+	CHECKe(fd = accept(a_fd, &a_sin, &a_sin_size));
+	CHECKr(pthread_mutex_lock(&mutex));
+	CHECKe(close(fd));
 
-	if ((ret = pthread_mutex_unlock(&mutex)))
-		DIE(ret, "sock_accept:pthread_mutex_unlock()");
+	ASSERT(++counter == 4);
+
+	a_sin_size = sizeof(a_sin);
+	CHECKe(fd = accept(a_fd, &a_sin, &a_sin_size));
+	CHECKr(pthread_mutex_unlock(&mutex));
 
 	/* Setup a write thread */
-	if ((ret = pthread_create(&thread, &attr, sock_write, &fd)))
-		DIE(ret, "sock_accept:pthread_create(sock_write)");
-	if ((tmp = read(fd, buf, 1024)) <= 0)
-		DIE(errno, "sock_accept:read() == %d\n", tmp);
+	CHECKr(pthread_create(&thread, &attr, sock_write, &fd));
+	CHECKe(read(fd, buf, 1024));
 
-	printf("%s\n", buf);
-	close(fd);
+	ASSERT(++counter == atoi(buf));
 
-	if ((ret = pthread_mutex_lock(&mutex)))
-		DIE(ret, "sock_accept:pthread_mutex_lock()");
+	CHECKe(close(fd));
+
+	CHECKr(pthread_mutex_lock(&mutex));
 	success++;
-	if ((ret = pthread_mutex_unlock(&mutex)))
-		DIE(ret, "sock_accept:pthread_mutex_unlock()");
+	CHECKr(pthread_mutex_unlock(&mutex));
+
+	CHECKr(pthread_join(thread, NULL));
 	return(NULL);
 }
 
@@ -161,23 +142,19 @@ int
 main()
 {
 	pthread_t thread;
-	int ret;
 
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
 
-	if ((ret = pthread_attr_init(&attr))) 
-		DIE(ret, "main:pthread_attr_init()");
+	CHECKr(pthread_attr_init(&attr));
 #if 0
-	if ((ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO)))
-		DIE(ret, "main:pthread_attr_setschedpolicy()");
+	CHECKr(pthread_attr_setschedpolicy(&attr, SCHED_FIFO));
 #endif
-	if ((ret = pthread_create(&thread, &attr, sock_accept,
-	    (void *)0xdeadbeaf)))
-		DIE(ret, "main:pthread_create(sock_accept)");
+	CHECKr(pthread_create(&thread, &attr, sock_accept,
+	    (void *)0xdeadbeaf));
 
-	printf("initial thread %p going to sleep\n", pthread_self());
-	sleep(2);
-	printf("done sleeping. success = %d\n", success);
-	exit(success == 2?0:1);
+	CHECKr(pthread_join(thread, NULL));
+
+	ASSERT(success == 2);
+	SUCCEED;
 }

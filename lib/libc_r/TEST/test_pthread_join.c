@@ -8,6 +8,7 @@
  */
 
 #include <pthread.h>
+#include <unistd.h>
 #include <stdio.h>
 #include "test.h"
 
@@ -17,9 +18,10 @@ void* new_thread_1(void * new_buf)
 	int i;
 
 	sprintf((char *)new_buf, "New thread %%d stack at %p\n", &i);
-	pthread_yield();
+	pthread_yield();	/* (ensure parent can wait on live thread) */
+	sleep(1);
 	return(new_buf);
-	PANIC();
+	PANIC("return");
 }
 
 /* This thread doesn't yield so the creator has a dead thread to wait on */
@@ -29,7 +31,7 @@ void* new_thread_2(void * new_buf)
 
 	sprintf((char *)new_buf, "New thread %%d stack at %p\n", &i);
 	return(new_buf);
-	PANIC();
+	PANIC("return");
 }
 
 int
@@ -40,38 +42,23 @@ main()
 	int debug = 1;
 	int i = 0;
 
-	printf("Original thread stack at %p\n", &i);
-	if (pthread_create(&thread, NULL, new_thread_1, (void *)buf) == 0) {
-		if (pthread_join(thread, (void **)(&status)) == 0) {
-			if (debug) { printf(status, ++i); }
-		} else {
-			printf("ERROR: Joining with new thread #1.\n");
-			printf("FAILED: test_pthread_join\n");
-			exit(1);
-		} 
-	} else {
-		printf("ERROR: 	Creating new thread #1\n");
-		printf("FAILED: test_pthread_join\n");
-		exit(2);
-	}
+	if (debug)
+		printf("Original thread stack at %p\n", &i);
 
+	CHECKr(pthread_create(&thread, NULL, new_thread_1, (void *)buf));
+	CHECKr(pthread_join(thread, (void **)(&status)));
+	if (debug) 
+		printf(status, ++i);
 
 	/* Now have the created thread finishing before the join. */
-	if (pthread_create(&thread, NULL, new_thread_2, (void *)buf) == 0){
-		pthread_yield();
-		if (pthread_join(thread, (void **)(&status)) == 0) {
-			if (debug) { printf(status, ++i); }
-		} else {
-			printf("ERROR: Joining with new thread #2.\n");
-			printf("FAILED: test_pthread_join\n");
-			exit(1);
-		} 
-	} else {
-		printf("ERROR: 	Creating new thread #2\n");
-		printf("FAILED: test_pthread_join\n");
-		exit(2);
-	}
-	printf("test_pthread_join PASSED\n");
-	return(0);
+	CHECKr(pthread_create(&thread, NULL, new_thread_2, (void *)buf));
+	pthread_yield();
+	sleep(1); /* (ensure thread is dead) */
+	CHECKr(pthread_join(thread, (void **)(&status)));
+
+	if (debug)
+		printf(status, ++i);
+
+	SUCCEED;
 }
 

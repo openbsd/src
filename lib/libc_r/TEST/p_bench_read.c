@@ -34,8 +34,10 @@ main(int argc, char **argv)
 	struct timeval starttime, endtime;
 	char *infile = "/dev/null";
 	int count = 1000000;
+	double elapsed;
 	int debug = 0;
 	int size = 1;
+	int ignore = 1000;
 	int fd;
 	int i;
 
@@ -79,16 +81,19 @@ main(int argc, char **argv)
 	  return 1;
 	}
 
-	if (gettimeofday(&starttime, NULL)) {
-	  perror ("gettimeofday");
-	  return 1;
-	}
+	printf("read: "); 
+	fflush(stdout);
 
-	for (i = 0; i < count; i++) {
+	for (i = 0; i < count + ignore; i++) {
 		if (read(fd, word_ptr, size) < OK) {
 			printf("Error: read\n");
 			exit(0);
 		}
+		if (i == ignore)
+			if (gettimeofday(&starttime, NULL)) {
+			  perror ("gettimeofday");
+			  return 1;
+			}
 	}
 
 	if (gettimeofday(&endtime, NULL)) {
@@ -96,9 +101,9 @@ main(int argc, char **argv)
 	  return 1;
 	}
 
-	printf("%d reads of %s took %ld usecs.\n", count, infile,
-		(endtime.tv_sec - starttime.tv_sec) * 1000000 +
-		(endtime.tv_usec - starttime.tv_usec));
+	elapsed = (double)((endtime.tv_sec - starttime.tv_sec) * 1000000 +
+		(endtime.tv_usec - starttime.tv_usec)) / 1000000;
+	printf("%f sec/read\n", elapsed / count);
 
 	return 0;
 }

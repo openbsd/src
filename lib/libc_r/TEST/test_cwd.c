@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sys/param.h>
 #include <unistd.h>
+#include "test.h"
 
 int
 main(int argc, char **argv)
@@ -9,5 +10,5 @@ main(int argc, char **argv)
 
     printf("getcwd => %s\n", getcwd(wd, MAXPATHLEN));
     printf("getwd => %s\n", getwd(wd));
-    exit(0);
+    SUCCEED;
 }

@@ -7,219 +7,128 @@
  *      -Started coding this file.
  */
 
-#include <errno.h>
 #include <pthread.h>
+#include <pthread_np.h>
 #include <stdio.h>
 #include "test.h"
 
-
 int contention_variable;
 
-void * thread_contention(void * arg)
+void * 
+thread_contention(arg)
+	void *arg;
 {
-	pthread_mutex_t * mutex = arg;
+	pthread_mutex_t *mutex = arg;
 
-	if (pthread_mutex_lock(mutex)) {
-		printf("pthread_mutex_lock() ERROR\n");
-		pthread_exit(NULL);
-	}
-
-	if (contention_variable != 1) {
-		printf("contention_variable != 1 ERROR\n");
-		pthread_exit(NULL);
-	}
+	CHECKr(pthread_mutex_lock(mutex));
+	ASSERT(contention_variable == 1);
 	contention_variable = 2;
-	
-	if (pthread_mutex_unlock(mutex)) {
-		printf("pthread_mutex_unlock() ERROR\n");
-		pthread_exit(NULL);
-	}
+	CHECKr(pthread_mutex_unlock(mutex));
 	pthread_exit(NULL);
 }
 
-int test_contention_lock(pthread_mutex_t * mutex)
+void
+test_contention_lock(mutex)
+	pthread_mutex_t *mutex;
 {
 	pthread_t thread;
 
-	printf("test_contention_lock()\n");
-
-	if (pthread_mutex_lock(mutex)) {
-		printf("pthread_mutex_lock() ERROR\n");
-		return(NOTOK);
-	}
+	printf("  test_contention_lock()\n");
+	CHECKr(pthread_mutex_lock(mutex));
 	contention_variable = 0;
-
-	if (pthread_create(&thread, NULL, thread_contention, mutex)) {
-		printf("pthread_create() FAILED\n");
-		exit(2);
-	}
-
+	CHECKr(pthread_create(&thread, NULL, thread_contention, mutex));
+	pthread_set_name_np(thread, "cntntn");
 	pthread_yield();
-
 	contention_variable = 1;
-
-	if (pthread_mutex_unlock(mutex)) {
-		printf("pthread_mutex_unlock() ERROR\n");
-		return(NOTOK);
-	}
-
-	if (pthread_mutex_lock(mutex)) {
-		printf("pthread_mutex_lock() ERROR\n");
-		return(NOTOK);
-	}
-
-	if (contention_variable != 2) {
-		printf("contention_variable != 2 ERROR\n");
-		return(NOTOK);
-	}
-
-	if (pthread_mutex_unlock(mutex)) {
-		printf("pthread_mutex_unlock() ERROR\n");
-		return(NOTOK);
-	}
-
-	return(OK);
+	CHECKr(pthread_mutex_unlock(mutex));
+	CHECKr(pthread_mutex_lock(mutex));
+	ASSERT(contention_variable == 2);
+	CHECKr(pthread_mutex_unlock(mutex));
 }
 
-int test_nocontention_lock(pthread_mutex_t * mutex)
+void
+test_nocontention_lock(mutex)
+	pthread_mutex_t *mutex;
 {
-	printf("test_nocontention_lock()\n");
-	if (pthread_mutex_lock(mutex)) {
-		printf("pthread_mutex_lock() ERROR\n");
-		return(NOTOK);
-	}
-	if (pthread_mutex_unlock(mutex)) {
-		printf("pthread_mutex_unlock() ERROR\n");
-		return(NOTOK);
-	}
-	return(OK);
+	printf("  test_nocontention_lock()\n");
+	CHECKr(pthread_mutex_lock(mutex));
+	CHECKr(pthread_mutex_unlock(mutex));
 }
 
-int test_debug_double_lock(pthread_mutex_t * mutex)
+void
+test_debug_double_lock(mutex)
+	pthread_mutex_t *mutex;
 {
-	int ret;
-
-	printf("test_debug_double_lock()\n");
-	if (pthread_mutex_lock(mutex)) {
-		printf("pthread_mutex_lock() ERROR\n");
-		return(NOTOK);
-	}
-	if ((ret = pthread_mutex_lock(mutex)) != EDEADLK) {
-		DIE(ret, "test_debug_double_lock: pthread_mutex_lock");
-		printf("double lock error not detected ERROR\n");
-		return(NOTOK);
-	}
-	if (pthread_mutex_unlock(mutex)) {
-		printf("pthread_mutex_unlock() ERROR\n");
-		return(NOTOK);
-	}
-	return(OK);
+	printf("  test_debug_double_lock()\n");
+	CHECKr(pthread_mutex_lock(mutex));
+	ASSERTe(pthread_mutex_lock(mutex), == EDEADLK);
+	CHECKr(pthread_mutex_unlock(mutex));
 }
 
-int test_debug_double_unlock(pthread_mutex_t * mutex)
+void
+test_debug_double_unlock(mutex)
+	pthread_mutex_t *mutex;
 {
-	int ret;
-
-	printf("test_debug_double_unlock()\n");
-	if (pthread_mutex_lock(mutex)) {
-		printf("pthread_mutex_lock() ERROR\n");
-		return(NOTOK);
-	}
-	if (pthread_mutex_unlock(mutex)) {
-		printf("pthread_mutex_unlock() ERROR\n");
-		return(NOTOK);
-	}
-	if ((ret = pthread_mutex_unlock(mutex)) != EPERM) {
-		DIE(ret, "test_debug_double_unlock: mutex_unlock2");
-		printf("double unlock error not detected ERROR\n");
-		return(NOTOK);
-	}
-	return(OK);
+	printf("  test_debug_double_unlock()\n");
+	CHECKr(pthread_mutex_lock(mutex));
+	CHECKr(pthread_mutex_unlock(mutex));
+	ASSERTe(pthread_mutex_unlock(mutex), == EPERM);
 }
 
-int test_nocontention_trylock(pthread_mutex_t * mutex)
+void
+test_nocontention_trylock(mutex)
+	pthread_mutex_t *mutex;
 {
-	printf("test_nocontention_trylock()\n");
-	if (pthread_mutex_trylock(mutex)) {
-		printf("pthread_mutex_trylock() ERROR\n");
-		return(NOTOK);
-	}
-	if (pthread_mutex_unlock(mutex)) {
-		printf("pthread_mutex_unlock() ERROR\n");
-		return(NOTOK);
-	}
-	return(OK);
+	printf("  test_nocontention_trylock()\n");
+	CHECKr(pthread_mutex_trylock(mutex));
+	CHECKr(pthread_mutex_unlock(mutex));
 }
 
-int test_mutex_static(void)
+void
+test_mutex_static()
 {
 	pthread_mutex_t mutex_static = PTHREAD_MUTEX_INITIALIZER;
 
 	printf("test_mutex_static()\n");
-	if (test_nocontention_lock(&mutex_static) ||
-	  test_contention_lock(&mutex_static)) {
-		return(NOTOK);
-	}
-	return(OK);
+	test_nocontention_lock(&mutex_static);
+	test_contention_lock(&mutex_static);
 }
 
-int test_mutex_fast(void)
+void
+test_mutex_fast(void)
 {
 	pthread_mutex_t mutex_fast; 
 
 	printf("test_mutex_fast()\n");
-	if (pthread_mutex_init(&mutex_fast, NULL)) {
-		printf("pthread_mutex_init() ERROR\n");
-		return(NOTOK);
-	}
-	if (test_nocontention_lock(&mutex_fast) ||
-	  test_contention_lock(&mutex_fast)) {
-		return(NOTOK);
-	}
-	if (pthread_mutex_destroy(&mutex_fast)) {
-		printf("pthread_mutex_destroy() ERROR\n");
-		return(NOTOK);
-	}
-	return(OK);
+	CHECKr(pthread_mutex_init(&mutex_fast, NULL));
+	test_nocontention_lock(&mutex_fast);
+	test_contention_lock(&mutex_fast);
+	CHECKr(pthread_mutex_destroy(&mutex_fast));
 }
 
-int test_mutex_debug()
+void
+test_mutex_debug()
 {
 	pthread_mutexattr_t mutex_debug_attr; 
 	pthread_mutex_t mutex_debug; 
 
 	printf("test_mutex_debug()\n");
-	pthread_mutexattr_init(&mutex_debug_attr);
-	pthread_mutexattr_settype(&mutex_debug_attr, PTHREAD_MUTEX_ERRORCHECK);
-	if (pthread_mutex_init(&mutex_debug, &mutex_debug_attr)) {
-		printf("pthread_mutex_init() ERROR\n");
-		return(NOTOK);
-	}
-	if (test_nocontention_lock(&mutex_debug) ||
-	  test_contention_lock(&mutex_debug) ||
-	  test_debug_double_lock(&mutex_debug) ||
-	  test_debug_double_unlock(&mutex_debug)) {
-		return(NOTOK);
-	}
-	if (pthread_mutex_destroy(&mutex_debug)) {
-		printf("pthread_mutex_destroy() ERROR\n");
-		return(NOTOK);
-	}
-	return(OK);
+	CHECKr(pthread_mutexattr_init(&mutex_debug_attr));
+	CHECKr(pthread_mutexattr_settype(&mutex_debug_attr, 
+	    PTHREAD_MUTEX_ERRORCHECK));
+	CHECKr(pthread_mutex_init(&mutex_debug, &mutex_debug_attr));
+	test_nocontention_lock(&mutex_debug);
+	test_contention_lock(&mutex_debug);
+	test_debug_double_lock(&mutex_debug);
+	test_debug_double_unlock(&mutex_debug);
+	CHECKr(pthread_mutex_destroy(&mutex_debug));
 }
 
 int
 main()
 {
-
-	printf("test_pthread_mutex START\n");
-
-	if (test_mutex_static() || test_mutex_fast() || test_mutex_debug()) { 
-		printf("test_pthread_mutex FAILED\n");
-		exit(1);
-	}
-
-	printf("test_pthread_mutex PASSED\n");
-	exit(0);
+	test_mutex_static();
+	test_mutex_fast();
+	test_mutex_debug();
+	SUCCEED;
 }
-

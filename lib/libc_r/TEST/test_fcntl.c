@@ -1,32 +1,27 @@
 #include <stdio.h>
 #include <fcntl.h>
+#include "test.h"
 
 main()
 {
 	int flags, child;
 
-	if ((flags = fcntl(0, F_GETFL)) < 0) {
-		perror("fcntl 1st GETFL");
-	}
-	printf ("flags = %x\n", flags);
+	CHECKe(flags = fcntl(0, F_GETFL));
+	printf("flags = %x\n", flags);
 
-	switch(child = fork()) {
-	case -1:
-		printf("error during fork\n");
-		break;
+	CHECKe(child = fork());
+	switch(child) {
 	case 0: /* child */
-		execlp("test_create", "test_create", NULL);
-		break;
+		CHECKe(execlp("test_create", "test_create", NULL));
+		/* NOTREACHED */
 	default: /* parent */
-		wait(NULL);
+		CHECKe(wait(NULL));
 		break;
 	}
 		
 	while(1){
-	if ((flags = fcntl(0, F_GETFL)) < 0) {
-		perror("fcntl parent GETFL");
-	}
-	printf ("parent %d flags = %x\n", child, flags);
-	sleep(1);
+		CHECKe(flags = fcntl(0, F_GETFL));
+		printf ("parent %d flags = %x\n", child, flags);
+		sleep(1);
 	}
 }

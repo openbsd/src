@@ -1,13 +1,18 @@
 #include <setjmp.h>
+#include "test.h"
+
+int reached;
 
 main()
 {
-jmp_buf foo;
+	jmp_buf foo;
 
-if (setjmp(foo)) {
-	exit(0);
-}
-printf("Hi mom\n");
-longjmp(foo, 1);
-printf("Should never reach here\n");
+	reached = 0;
+	if (setjmp(foo)) {
+		ASSERT(reached);
+		SUCCEED;
+	}
+	reached = 1;
+	longjmp(foo, 1);
+	PANIC("longjmp");
 }

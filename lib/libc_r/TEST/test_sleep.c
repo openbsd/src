@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "test.h"
 
 const char buf[] = "abcdefghijklimnopqrstuvwxyz";
 int fd = 1;
@@ -36,14 +37,12 @@ main()
 	sleep(3);
 	printf("Done sleeping\n");
 
-	for(i = 0; i < count; i++) {
-		if (pthread_create(&thread[i], NULL, new_thread, (void *) i)) {
-			printf("error creating new thread %ld\n", i);
-		}
-	}
+	for(i = 0; i < count; i++)
+		CHECKr(pthread_create(&thread[i], NULL, new_thread, 
+		    (void *) i));
 
 	for (i = 0; i < count; i++)
-		pthread_join(thread[i], NULL);
+		CHECKr(pthread_join(thread[i], NULL));
 
-	return(0);
+	SUCCEED;
 }

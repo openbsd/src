@@ -11,113 +11,67 @@ char * dir_name = SRCDIR;
 char * fullname;
 
 /* Test fopen()/ftell()/getc() */
-int test_1(void)
+void
+test_1()
 {
 	struct stat statbuf;
-    FILE * fp;
+	FILE * fp;
 	int i;
 
-	if (stat(fullname, &statbuf) < OK) {
-		printf("ERROR: Couldn't stat %s\n", fullname);
-		return(NOTOK);
-	}
+	CHECKe(stat(fullname, &statbuf));
 
-	if ((fp = fopen(fullname, "r")) == NULL) {
-		printf("ERROR: Couldn't open %s\n", fullname);
-		return(NOTOK);
-	}
+	CHECKn((fp = fopen(fullname, "r")));
 
 	/* Get the entire file */
-	while ((i = getc(fp)) != EOF);
+	while ((i = getc(fp)) != EOF)
+		;
 
-	if (ftell(fp) != statbuf.st_size) {
-		printf("ERROR: ftell() and stat() don't agree.");
-		return(NOTOK);
-	}
+	ASSERT(ftell(fp) == statbuf.st_size);
 
-	if (fclose(fp) < OK) {
-		printf("ERROR: fclose() failed.");
-		return(NOTOK);
-	}
-	return(OK);
+	CHECKe(fclose(fp));
 }
 
 /* Test fopen()/fclose() */
-int test_2(void)
+void
+test_2()
 {
 	FILE *fp1, *fp2;
 
-	if ((fp1 = fopen(fullname, "r")) == NULL) {
-		printf("ERROR: Couldn't fopen %s\n", fullname);
-		return(NOTOK);
-	}
+	CHECKn(fp1 = fopen(fullname, "r"));
+	CHECKe(fclose(fp1));
 
-	if (fclose(fp1) < OK) {
-		printf("ERROR: fclose() failed.");
-		return(NOTOK);
-	}
+	CHECKn(fp2 = fopen(fullname, "r"));
+	CHECKe(fclose(fp2));
 
-	if ((fp2 = fopen(fullname, "r")) == NULL) {
-		printf("ERROR: Couldn't fopen %s\n", fullname);
-		return(NOTOK);
-	}
-
-	if (fclose(fp2) < OK) {
-		printf("ERROR: fclose() failed.");
-		return(NOTOK);
-	}
-
-	if (fp1 != fp2) {
-		printf("ERROR: FILE table leak.\n");
-		return(NOTOK);
-	}
-
-	return(OK);
+	ASSERT(fp1 == fp2);
 }
 
 /* Test sscanf()/sprintf() */
-int test_3(void)
+void
+test_3(void)
 {
-    char * str = "10 4.53";
+	char * str = "10 4.53";
 	char buf[64];
-    double d;
-    int    i;
+	double d;
+	int    i;
 
-    if (sscanf(str, "%d %lf", &i, &d) != 2) {
-		printf("ERROR: sscanf didn't parse input string correctly\n");
-		return(NOTOK);
-	}
+	ASSERT(sscanf(str, "%d %lf", &i, &d) == 2);
 
 	/* Should have a check */
 	sprintf(buf, "%d %2.2f", i, d);
-
-	if (strcmp(buf, str)) {
-		printf("ERROR: sscanf()/sprintf() didn't parse unparse correctly\n");
-		return(NOTOK);
-	}
-	return(OK);
+	ASSERT(strcmp(buf, str) == 0);
 }
 
 int
 main()
 {
 
-	printf("test_stdio_1 START\n");
+	CHECKn(fullname = malloc (strlen (dir_name) + strlen (base_name) + 2));
+	sprintf (fullname, "%s/%s", dir_name, base_name);
 
-	if ((fullname = malloc (strlen (dir_name) + strlen (base_name) + 2)) != NULL) {
-		sprintf (fullname, "%s/%s", dir_name, base_name);
-	} else {
-		perror ("malloc");
-		exit(1);
-	}
+	test_1();
+	test_2();
+	test_3();
 
-	if (test_1() || test_2() || test_3()) {
-		printf("test_stdio_1 FAILED\n");
-		exit(1);
-	}
-
-	printf("test_stdio_1 PASSED\n");
-	exit(0);
+	SUCCEED;
 }
-
-
