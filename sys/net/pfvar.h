@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.205 2004/12/04 07:49:48 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.206 2004/12/07 05:30:26 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -537,6 +537,10 @@ struct pf_rule {
 	u_int8_t		 tos;
 	u_int8_t		 anchor_relative;
 	u_int8_t		 anchor_wildcard;
+
+#define PF_FLUSH		0x01
+#define PF_FLUSH_GLOBAL		0x02
+	u_int8_t		 flush;
 };
 
 /* rule flags */
@@ -548,7 +552,6 @@ struct pf_rule {
 #define	PFRULE_NOSYNC		0x0010
 #define PFRULE_SRCTRACK		0x0020  /* track source states */
 #define PFRULE_RULESRCTRACK	0x0040  /* per rule */
-#define PFRULE_SRCTRACK_FLUSH	0x0080	/* flush for src_node->open_states */
 
 /* scrub flags */
 #define	PFRULE_NODF		0x0100
@@ -1219,7 +1222,8 @@ struct pfioc_table {
 	struct pfr_table	 pfrio_table;
 	void			*pfrio_buffer;
 	int			 pfrio_esize;
-	int			 pfrio_size;
+	int			 pfrio_size;	/* entries this transaction */
+	int			 pfrio_tsize;	/* total entries */
 	int			 pfrio_size2;
 	int			 pfrio_nadd;
 	int			 pfrio_ndel;
@@ -1444,12 +1448,12 @@ int	pfr_clr_tstats(struct pfr_table *, int, int *, int);
 int	pfr_set_tflags(struct pfr_table *, int, int, int, int *, int *, int);
 int	pfr_clr_addrs(struct pfr_table *, int *, int);
 int	pfr_insert_kentry(struct pfr_ktable *, struct pfr_addr *, long);
-int	pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
-	    int);
-int	pfr_del_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
-	    int);
-int	pfr_set_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
-	    int *, int *, int *, int);
+int	pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int, int *,
+	    int, u_int32_t *);
+int	pfr_del_addrs(struct pfr_table *, struct pfr_addr *, int, int, int *,
+	    int, u_int32_t *);
+int	pfr_set_addrs(struct pfr_table *, struct pfr_addr *, int, int, int *,
+	    int *, int *, int *, int, u_int32_t *);
 int	pfr_get_addrs(struct pfr_table *, struct pfr_addr *, int *, int);
 int	pfr_get_astats(struct pfr_table *, struct pfr_astats *, int *, int);
 int	pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *,

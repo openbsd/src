@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.307 2004/12/04 16:07:31 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.308 2004/12/07 05:30:27 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1963,8 +1963,13 @@ host's bandwidth.
 .Pp
 The optional
 .Ar flush
-keyword kills all existing states originating from hosts exceeding these
-limits.
+keyword kills all states created by the matching rule which originate
+from the host which exceeds these limits.
+The
+.Ar global
+modifier to the flush command kills all states originating from the
+offending host, regardless of which rule created the state.
+.Pp
 For example, the following rules will protect the webserver against
 hosts making more than 100 connections in 10 seconds.
 Any host which connects faster than this rate will have its address added
@@ -1974,7 +1979,7 @@ by the block rule.
 .Bd -literal -offset indent
 block quick from <bad_hosts>
 pass in on $ext_if to $webserver port www flags S/SA keep state \e
-	(max-src-conn-rate 100/10, overflow <bad_hosts> flush)
+	(max-src-conn-rate 100/10, overflow <bad_hosts> flush global)
 .Ed
 .Sh OPERATING SYSTEM FINGERPRINTING
 Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP

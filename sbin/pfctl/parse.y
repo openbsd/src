@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.462 2004/12/05 10:11:29 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.463 2004/12/07 05:30:26 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1613,9 +1613,7 @@ pfrule		: action dir logquick interface route af proto fromto
 						    "strlcpy");
 						YYERROR;
 					}
-					if (o->data.overload.flush)
-						r.rule_flag |=
-						    PFRULE_SRCTRACK_FLUSH;
+					r.flush = o->data.overload.flush;
 					break;
 				case PF_STATE_OPT_MAX_SRC_CONN:
 					if (r.max_src_conn) {
@@ -2807,7 +2805,10 @@ keep		: KEEP STATE state_opt_spec	{
 		;
 
 flush		: /* empty */			{ $$ = 0; }
-		| FLUSH				{ $$ = 1; }
+		| FLUSH				{ $$ = PF_FLUSH; }
+		| FLUSH	GLOBAL			{
+			$$ = PF_FLUSH | PF_FLUSH_GLOBAL;
+		}
 		;
 
 state_opt_spec	: '(' state_opt_list ')'	{ $$ = $2; }
