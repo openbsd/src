@@ -47,7 +47,7 @@
 
 typedef _BSD_VA_LIST_	va_list;
 
-#define	va_dcl	int va_alist;
+#define	va_dcl	int va_alist; ...
 
 #define	va_start(ap) \
 	ap = (char *)&va_alist

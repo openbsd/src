@@ -61,7 +61,7 @@
 #else /* gcc2 */
 #ifdef __GCC_NEW_VARARGS__	/* gcc 2.4.5 */
 #define va_alist __builtin_va_alist
-#define	va_dcl	int __builtin_va_alist;
+#define	va_dcl	int __builtin_va_alist; ...
 #else				/* gcc 2.3.3 */
 #define	va_dcl	int va_alist; ...
 #endif
