@@ -246,6 +246,8 @@ ANNOTATE_OBS = annotate.o
 # End of host and target-dependent makefile fragments
 
 FLAGS_TO_PASS = \
+	"infodir=$(infodir)" \
+	"bindif=$(bindir)" \
 	"prefix=$(prefix)" \
 	"exec_prefix=$(exec_prefix)" \
 	"against=$(against)" \

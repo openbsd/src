@@ -105,6 +105,8 @@ SUPPORT = COPYING Makefile $(DOCUMENTATION) ChangeLog
 THINGS_TO_TAR = $(SOURCES) $(SUPPORT)
 
 FLAGS_TO_PASS = \
+	"infodir=$(infodir)" \
+	"bindif=$(bindir)" \
 	"prefix=$(prefix)" \
 	"exec_prefix=$(exec_prefix)" \
 	"against=$(against)" \
