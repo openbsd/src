@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2002/07/31 02:30:29 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.61 2002/07/31 07:21:04 aaron Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -582,7 +582,7 @@ pmap_nxstack_account(struct pmap *pmap, vaddr_t va,
 	    va < VM_MAXUSER_ADDRESS && va >= VM_MAXUSER_ADDRESS - MAXSSIZ) {
 		struct trapframe *tf = curproc->p_md.md_regs;
 		struct vm_map *map = &curproc->p_vmspace->vm_map;
-if (pmap != pmap_kernel()) printf("nxpages=%d npte=%x opte=%x", pmap->pm_nxpages, npte & 0xfff, opte & 0xfff);
+
 		if (npte & PG_X && !(opte & PG_X)) {
 			if (++pmap->pm_nxpages == 1 &&
 			    pmap == vm_map_pmap(map)) {
@@ -596,7 +596,6 @@ if (pmap != pmap_kernel()) printf("nxpages=%d npte=%x opte=%x", pmap->pm_nxpages
 				pmap_update_pg(va);
 			}
 		}
-if (pmap != pmap_kernel()) printf("nxpages1=%d ", pmap->pm_nxpages);
 	}
 }
 
