@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.16 1998/07/13 00:23:12 marc Exp $
+.\"	$OpenBSD: options.4,v 1.17 1998/07/24 00:43:52 espie Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -714,8 +714,9 @@ These option set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
 .It Cd NTP
-Modify the scheduler code to add hooks neccessary for running an NTP
+Modify the scheduler code to add hooks necessary for running an NTP
 daemon.
+.Xr xntpd 8 is available as part of the port collection.
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
