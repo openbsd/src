@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.66 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.67 2004/01/06 18:01:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,7 +213,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 				/* reinit due? */
 				if (p->conf.reconf_action == RECONF_REINIT) {
 					bgp_fsm(p, EVNT_STOP);
-					p->StartTimer = time(NULL);
+					p->IdleHoldTimer = time(NULL);
 				}
 
 				/* deletion due? */
@@ -238,7 +238,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 				bgp_fsm(p, EVNT_TIMER_CONNRETRY);
 			if (timer_due(p->KeepaliveTimer))
 				bgp_fsm(p, EVNT_TIMER_KEEPALIVE);
-			if (timer_due(p->StartTimer))
+			if (timer_due(p->IdleHoldTimer))
 				bgp_fsm(p, EVNT_START);
 
 			/* set nextaction to the first expiring timer */
@@ -249,8 +249,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 				nextaction = p->HoldTimer;
 			if (p->KeepaliveTimer && p->KeepaliveTimer < nextaction)
 				nextaction = p->KeepaliveTimer;
-			if (p->StartTimer && p->StartTimer < nextaction)
-				nextaction = p->StartTimer;
+			if (p->IdleHoldTimer && p->IdleHoldTimer < nextaction)
+				nextaction = p->IdleHoldTimer;
 
 			/* are we waiting for a write? */
 			if (p->wbuf.queued > 0)
@@ -337,7 +337,7 @@ init_peers(void)
 	for (p = peers; p != NULL; p = p->next) {
 		if (p->state == STATE_NONE) {
 			change_state(p, STATE_IDLE, EVNT_NONE);
-			p->StartTimer = time(NULL);	/* start ASAP */
+			p->IdleHoldTimer = time(NULL);	/* start ASAP */
 		}
 	}
 }
@@ -355,7 +355,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			peer->HoldTimer = 0;
 			peer->KeepaliveTimer = 0;
 			peer->events = 0;
-			peer->StartTimer = 0;
+			peer->IdleHoldTimer = 0;
 
 			/* allocate read buffer */
 			peer->rbuf = calloc(1, sizeof(struct buf_read));
@@ -619,8 +619,8 @@ change_state(struct peer *peer, enum session_state state,
 		 * starttimerinterval needs to be exponentially increased
 		 */
 		peer->events = 0;
-		if (peer->StartTimerInterval == 0)
-			peer->StartTimerInterval = INTERVAL_START;
+		if (peer->IdleHoldTime == 0)
+			peer->IdleHoldTime = INTERVAL_IDLE_HOLD_INITIAL;
 		peer->holdtime = INTERVAL_HOLD_INITIAL;
 		peer->ConnectRetryTimer = 0;
 		peer->KeepaliveTimer = 0;
@@ -632,10 +632,9 @@ change_state(struct peer *peer, enum session_state state,
 		if (peer->state == STATE_ESTABLISHED)
 			session_down(peer);
 		if (event != EVNT_STOP) {
-			peer->StartTimer = time(NULL) +
-			    peer->StartTimerInterval;
-			if (peer->StartTimerInterval < UINT_MAX / 2)
-				peer->StartTimerInterval *= 2;
+			peer->IdleHoldTimer = time(NULL) + peer->IdleHoldTime;
+			if (peer->IdleHoldTime < UINT_MAX / 2)
+				peer->IdleHoldTime *= 2;
 		}
 		break;
 	case STATE_CONNECT:
@@ -652,7 +651,7 @@ change_state(struct peer *peer, enum session_state state,
 		break;
 	case STATE_ESTABLISHED:
 		peer->events = POLLIN;
-		peer->StartTimerInterval = INTERVAL_START;
+		peer->IdleHoldTime = INTERVAL_IDLE_HOLD_INITIAL;
 		session_up(peer);
 		break;
 	default:		/* something seriously fucked */
