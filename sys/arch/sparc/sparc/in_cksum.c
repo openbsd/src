@@ -66,19 +66,18 @@
 #define Asm		__asm __volatile
 #define ADD32		Asm("	ld [%2+28],%%i0; ld [%2+24],%%i1; 	\
 				ld [%2+20],%%i2; ld [%2+16],%%i3; 	\
-				ld [%2+12],%%i4; ld [%2+8],%%i5;	\
-				ld [%2+4],%%g3; ld [%2],%%g4;		\
 				addcc %0,%%i0,%0; addxcc %0,%%i1,%0;	\
+				ld [%2+12],%%i4; ld [%2+8],%%i5;	\
 				addxcc %0,%%i2,%0; addxcc %0,%%i3,%0;	\
+				ld [%2+4],%%i0; ld [%2],%%i1;		\
 				addxcc %0,%%i4,%0; addxcc %0,%%i5,%0;	\
-				addxcc %0,%%g3,%0; addxcc %0,%%g4,%0;	\
+				addxcc %0,%%i0,%0; addxcc %0,%%i1,%0;	\
 				addxcc %0,0,%0"				\
 				: "=r" (sum) : "0" (sum), "r" (w)	\
-				: "%i0", "%i1", "%i2", "%i3",		\
-				  "%i4", "%i5", "%g3", "%g4")
+				: "%i0", "%i1", "%i2", "%i3", "%i4", "%i5")
 #define ADD16		Asm("	ld [%2+12],%%i0; ld [%2+8],%%i1;	\
-				ld [%2+4],%%i2; ld [%2],%%i3;		\
 				addcc %0,%%i0,%0; addxcc %0,%%i1,%0;	\
+				ld [%2+4],%%i2; ld [%2],%%i3;		\
 				addxcc %0,%%i2,%0; addxcc %0,%%i3,%0;	\
 				addxcc %0,0,%0"				\
 				: "=r" (sum) : "0" (sum), "r" (w)	\
