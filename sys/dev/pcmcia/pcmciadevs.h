@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.45 2000/08/04 15:47:51 aaron Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.46 2000/08/30 20:53:50 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.39 2000/07/22 02:58:18 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.41 2000/08/30 20:53:19 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -407,8 +407,6 @@
 #define	PCMCIA_PRODUCT_TEAC_IDECARDII	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_LINKSYS_ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_2	PCMCIA_PRODUCT_INVALID
-#define	PCMCIA_CIS_LINKSYS_COMBO_ECARD_2	{ "Linksys", "Combo PCMCIA EthernetCard (EC2T)", "2.0", NULL }
-#define	PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD_2	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_COREGA_ETHER_PCC_T	{ "corega K.K.", "corega Ether PCC-T", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_ETHER_PCC_T	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_COREGA_ETHER_II_PCC_T	{ "corega K.K.", "corega EtherII PCC-T", NULL, NULL }
