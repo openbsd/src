@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.34 1997/05/17 00:06:36 millert Exp $
+#	$OpenBSD: install.sub,v 1.35 1997/05/18 23:12:02 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -473,7 +473,11 @@ configure_ifs() {
 
 	echo "Your network interface might require additional link-layer"
 	echo "directives (like \`link0'). If this is the case you can enter"
-	echo "these at the next prompt."
+	echo "these at the next prompt.  Values used by some drivers are:"
+	echo "    -link0            BNC"
+	echo "    link0 -link1      AUI"
+	echo "    link0 link1       UTP"
+	echo "But please keep in mind not all drivers use flags like this."
 	echo ""
 	echo -n "Additional link-layer arguments? [$_interface_extra] "
 	getresp "$_interface_extra"
