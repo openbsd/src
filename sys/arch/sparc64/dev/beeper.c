@@ -1,4 +1,4 @@
-/*	$OpenBSD: beeper.c,v 1.2 2002/02/19 04:14:02 jason Exp $	*/
+/*	$OpenBSD: beeper.c,v 1.3 2002/02/23 04:42:35 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -41,6 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -103,7 +104,6 @@ beeper_attach(parent, self, aux)
 	struct ebus_attach_args *ea = aux;
 
 	sc->sc_iot = ea->ea_bustag;
-	timeout_set(&sc->sc_to, beeper_stop, sc);
 
 	/* Use prom address if available, otherwise map it. */
 	if (ea->ea_nvaddrs)
@@ -118,6 +118,7 @@ beeper_attach(parent, self, aux)
 	}
 
 #if NPCKBD > 0
+	timeout_set(&sc->sc_to, beeper_stop, sc);
 	pckbd_hookup_bell(beeper_bell, sc);
 #endif
 	printf("\n");
