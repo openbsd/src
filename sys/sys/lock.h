@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.4 1997/11/07 10:25:42 niklas Exp $	*/
+/*	$OpenBSD: lock.h,v 1.5 1999/02/26 02:28:58 art Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -44,6 +44,12 @@
 
 #include <sys/simplelock.h>
 
+#if defined(UVM) /* XXXCDC: kill typedefs later? */
+typedef struct simplelock       simple_lock_data_t;
+typedef struct simplelock       *simple_lock_t;
+typedef struct lock             lock_data_t;
+typedef struct lock             *lock_t;
+#endif
 /*
  * The general lock structure.  Provides for multiple shared locks,
  * upgrading from shared to exclusive, and sleeping until the lock
