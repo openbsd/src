@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.89 2002/02/17 22:59:53 maja Exp $	*/
+/* $OpenBSD: machdep.c,v 1.90 2002/03/05 22:11:42 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -365,7 +365,7 @@ size_memory()
 int
 getcpuspeed()
 {
-	struct bugbrdid brdid;
+	struct mvmeprom_brdid brdid;
 	int speed = 0;
 	int i, c;
 	bugbrdid(&brdid);
@@ -382,7 +382,7 @@ getcpuspeed()
 int
 getscsiid()
 {
-	struct bugbrdid brdid;
+	struct mvmeprom_brdid brdid;
 	int scsiid = 0;
 	int i, c;
 	bugbrdid(&brdid);
@@ -1179,6 +1179,7 @@ haltsys:
 	} else {
 		doboot();
 	}
+
 	for (;;);  /* to keep compiler happy, and me from going crazy */
 	/*NOTREACHED*/
 }
@@ -2159,7 +2160,7 @@ void
 myetheraddr(cp)
 	u_char *cp;
 {
-	struct bugbrdid brdid;
+	struct mvmeprom_brdid brdid;
 
 	bugbrdid(&brdid);
 	bcopy(&brdid.etheraddr, cp, 6);
@@ -2319,8 +2320,7 @@ mvme_bootstrap()
 	extern struct consdev *cn_tab;
 	extern void set_tcfp __P((void));
 
-	struct bugbrdid brdid;
-	
+	struct mvmeprom_brdid brdid;
 	
 	/*
 	 * Must initialize p_addr before autoconfig or
@@ -2337,7 +2337,7 @@ mvme_bootstrap()
 
 	buginit(); /* init the bug routines */
 	bugbrdid(&brdid);
-	brdtyp = brdid.brdno;
+	brdtyp = brdid.model;
 
 	/* to support the M8120.  It's based off of MVME187 */
 	if (brdtyp == BRD_8120)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sclock.c,v 1.10 2002/01/14 21:34:39 miod Exp $ */
+/*	$OpenBSD: sclock.c,v 1.11 2002/03/05 22:11:37 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * 
@@ -90,7 +90,6 @@
 #include <machine/board.h>
 #include <machine/psl.h>
 #include <machine/autoconf.h>
-#include <machine/bugio.h>
 #include <machine/cpu.h>
 #include "pcctwo.h"
 #if NPCCTWO > 0 

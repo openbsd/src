@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.8 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: prom.h,v 1.9 2002/03/05 22:11:40 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -46,14 +46,17 @@
 #define MVMEPROM_DSKFMT		0x14
 #define MVMEPROM_DSKCTRL	0x15
 #define MVMEPROM_NETCTRL	0x1d
+#define MVMEPROM_OUTSTR		0x21
 #define MVMEPROM_OUTSTRCRLF	0x22
 #define MVMEPROM_WRITE		0x23
 #define MVMEPROM_WRITELN	0x24
+#define	MVMEPROM_OUTCRLF	0x26
 #define MVMEPROM_DELAY		0x43
 #define MVMEPROM_RTC_RD		0x53
 #define MVMEPROM_EXIT		0x63
 #define MVMEPROM_GETBRDID	0x70
 #define MVMEPROM_ENVIRON	0x71
+#define	MVMEPROM_FORKMPU	0x100
 
 #define NETCTRLCMD_GETETHER	1
 
@@ -161,7 +164,7 @@ struct mvmeprom_args {
 
 #define MVMEPROM_CALL(x)	\
 	__asm__ __volatile__ ( __CONCAT("or r9,r0,",__STRING(x)) ); \
-	__asm__ __volatile__ ("tb0 0,r0,496");
+	__asm__ __volatile__ ("tb0 0,r0,496")
 
 #define MVMEPROM_REG_DEVLUN	"r2"
 #define MVMEPROM_REG_CTRLLUN	"r3"

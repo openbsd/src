@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.4 2001/12/19 07:04:41 smurph Exp $ */
+/*	$OpenBSD: bussw.c,v 1.5 2002/03/05 22:11:37 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -40,7 +40,6 @@
 #include <sys/malloc.h>
 #include <machine/psl.h>
 #include <machine/autoconf.h>
-#include <machine/bugio.h>
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
 #include <machine/vmparam.h>

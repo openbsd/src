@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.16 2001/12/19 07:04:41 smurph Exp $ */
+/*	$OpenBSD: nvram.c,v 1.17 2002/03/05 22:11:37 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -95,7 +95,7 @@ nvrammatch(parent, vcf, args)
 	int ret;
 #endif
 	struct confargs *ca = args;
-	struct bugrtc rtc;
+	struct mvmeprom_time rtc;
 	ca->ca_vaddr = ca->ca_paddr;   /* map 1:1 */
 /*X*/	if (ca->ca_vaddr == (void *)-1)
 /*X*/		return (1);
