@@ -1,0 +1,98 @@
+#
+# RAMDISK kernel for the distribition ramdisk
+#
+
+machine		pmax mips		# machine type and subtype
+
+# generic mips support
+option		CPU_R3000		# R2000/R3000 support
+option		MIPS1			# R2000/R3000 support
+# support for specific models of decstation
+option	 	DS3100			# PMAX (kn01) decstation 2100, 3100
+option	 	DS5000_25		# MAXINE (kn02ca/xine)
+option	 	DS5000_100		# 3MIN (kn02ba/kmin)
+option	 	DS5000_200		# 3MAX (kn02)
+option	 	DS5000_240		# 3MAXPLUS (kn03)
+# timezone stuff
+option		TIMEZONE=0
+option		DST=0			# use daylight savings rules
+
+maxusers	4
+
+# standard system options
+option		SWAPPAGER		# swap pager (anonymous and swap space)
+option		VNODEPAGER		# vnode pager (mapped files)
+option		DEVPAGER		# device pager (mapped devices)
+# the usual stuff
+option		NATIVE_ELF		# elf is our native binary format
+# the usual filesystems
+option		FFS			# fast filesystem
+option		FIFO			# posix fifo support
+option		CD9660			# iso9660 cdrom filesystem
+option		MSDOSFS			# msdos filesystem
+option		KERNFS			# kernel data-structure filesystem
+# networking
+option		INET			# the networking stuff
+option		NFSCLIENT		# nfs client code
+
+option		RAMDISK_HOOKS
+option		MINIROOTSIZE=6144	# 3meg ramdisk
+
+config		bsd	root on rd0a swap on rd0b
+
+mainbus0	at root
+cpu*		at mainbus0
+# turbochannel bus
+tc*		at mainbus0		# all but PMAXes have a turbochannel
+cfb0		at tc?			# framebuffer (color)
+mfb0		at tc?			# framebuffer (mono)
+sfb0		at tc?
+le0		at tc?			# decstation 5000/200 baseboard 
+le*		at tc?			# other lance network interfaces
+# ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0)
+ioasic0         at tc?
+clock0          at ioasic? offset?	# rtc
+asc0            at ioasic? offset?	# system scsi subslot
+scc0		at ioasic? offset?
+le0		at ioasic? offset?	# tc onboard lance
+scc1		at ioasic? offset?	# not present on maxine
+# MAXINE-only ioasic baseboard devices and on-baseboard "options"
+xcfb0		at tc?			# tc framebuffer "option"
+dtop0		at ioasic0 offset?	# destop bus,  lk501 kbd,  mouse
+# 5000/200-only (aka 3MAX aka KN02) baseboard devices (tc but no ioasic)
+clock0		at mainbus0		# rtc
+dc0		at mainbus0
+le0		at tc?			# tc ether "option" on baseboard
+asc0		at tc?			# tc scsi  "option" on baseboard
+# for now, pretend this machine has an ioasic
+dc0		at ioasic? offset? 	# dc7083 four-port dz device
+# 2100/3100-only (aka PMAX aka KN01) baseboard devices.
+clock0		at mainbus0		# rtc
+pm0		at mainbus0		# 3100 onboard fb
+dc0		at mainbus0		# dc7083 four-port dz device
+le*		at mainbus0		# 3100 onboard lance
+sii0		at mainbus0		# onboard scsi
+# the scsi busses
+oldscsibus*	at sii?
+oldscsibus*	at asc?
+# scsi configuration for old 4.4bsd/pmax decstation scsi driver
+rz0		at oldscsibus? target ? drive ?
+rz1		at oldscsibus? target ? drive ?
+rz2		at oldscsibus? target ? drive ?
+rz3		at oldscsibus? target ? drive ?
+rz4		at oldscsibus? target ? drive ?
+rz5		at oldscsibus? target ? drive ?
+rz6		at oldscsibus? target ? drive ?
+tz0		at oldscsibus? target ? drive ?
+tz1		at oldscsibus? target ? drive ?
+
+led0		at mainbus0		# [23]100 back panel leds
+
+pseudo-device	loop		1
+#pseudo-device	sl		1	# serial-line ip ports
+#pseudo-device	ppp             1       # point ot point ip ports
+pseudo-device	rasterconsole	1 	# nb: raster console requires "fb"
+pseudo-device	fb		1	# up to 3 framebuffers
+#pseudo-device	bpfilter	16	# packet filter ports
+#pseudo-device	pty		64	# pseudo ptys
+pseudo-device	rd		1	# ramdisk

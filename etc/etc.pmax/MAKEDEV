@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.26 1998/10/15 21:24:53 art Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 1998/11/09 05:39:59 millert Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -118,6 +118,11 @@ all)
 	sh $this xfs0
 	sh $this fb0 fb1 fb2
        ;;
+
+raminst)
+	sh $this std
+	sh $this rz0 rz1 rz2 rz3 rz4 tz0 tz1 rd0 pty0
+	sh $this fb0 fb1 fb2
 
 std)
 	mknod console		c 0 0
@@ -288,6 +293,17 @@ vnd*)
 		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
 		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	done
+	umask 77
+	;;
+
+rd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	mknod rd${unit}a b 25 `expr $unit '*' 16 + 0`
+	mknod rd${unit}c b 25 `expr $unit '*' 16 + 2`
+	mknod rrd${unit}a c 92 `expr $unit '*' 16 + 0`
+	mknod rrd${unit}c c 92 `expr $unit '*' 16 + 2`
+	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chmod 640 rd${unit}[ac] rrd${unit}[ac]
 	umask 77
 	;;
 

@@ -37,6 +37,11 @@
 # four times `a' while `c' is always the entire disk. The
 # sum of `d', `e', and `f' is equal to `g' which is everything else.
 
+rdroot|ramdiskroot|RAM-disk root FS image:\
+	:ty=simulated:se#512:nc#24:nt#2:ns#128:\
+	:ta=4.2BSD:oa#0:pa#6144:fa#512:ba#4096\
+	:ob#0:pb#0:oc#0:pc#6144:
+
 simpleroot:\
 	:ty=winchester:\
 	:dt=SCSI:\

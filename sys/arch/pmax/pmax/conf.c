@@ -57,6 +57,8 @@ bdev_decl(tz);
 #include "ss.h"
 #include "uk.h"
 #include "ccd.h"
+#include "rd.h"
+bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -85,6 +87,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRZ,rz),		/* 22: ?? old SCSI disk */ /*XXX*/
 	bdev_notdef(),			/* 23: mscp */
 	bdev_disk_init(NCCD,ccd),	/* 24: concatenated disk driver */
+	bdev_disk_init(NRD,rd),		/* 25: ram disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -127,6 +130,7 @@ cdev_decl(cfb);
 cdev_decl(xcfb);
 #include "mfb.h"
 cdev_decl(mfb);
+cdev_decl(rd);
 dev_decl(filedesc,open);
 
 #ifdef XFS
@@ -259,6 +263,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),           /* 89: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 90: SCSI scanner */
 	cdev_gen_ipf(NIPF,ipl),		/* 91: ip filtering */
+	cdev_disk_init(NRD,rd),		/* 92: ram disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -385,6 +390,11 @@ static int chrtoblktbl[] =  {
 	/* 85 */	NODEV,
 	/* 86 */	NODEV,
 	/* 87 */	24,
+	/* 88 */	NODEV,
+	/* 89 */	NODEV,
+	/* 90 */	NODEV,
+	/* 91 */	NODEV,
+	/* 92 */	25,		/* rd */
 };
 
 /*
