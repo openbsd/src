@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.4 1997/04/11 17:24:21 gene Exp $
+#	$OpenBSD: inter.phone,v 1.5 1997/10/09 23:32:58 deraadt Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -175,8 +175,10 @@
 49:511:Hannover:Germany, Fed. Rep. of
 49:69:Frankfurt/Main:Germany, Fed. Rep. of
 49:711:Stuttgart:Germany, Fed. Rep. of
-49:89:Munich:Germany, Fed. Rep. of
+49:89:Munich (Muenchen):Germany, Fed. Rep. of
 49:911:Nuremberg:Germany, Fed. Rep. of
+49:721:Karlsruhe:Germany, Fed. Rep. of
+49:941:Regensburg:Germany, Fed. Rep. of
 51:14:Callao:Peru
 51:14:Lima:Peru
 51:54:Arequipa:Peru
