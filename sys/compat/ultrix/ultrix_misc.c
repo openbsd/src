@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.16 1995/10/07 06:28:02 mycroft Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.16.2.1 1995/10/18 06:46:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -381,8 +381,8 @@ ultrix_sys_open(p, v, retval)
 	int noctty;
 	int ret;
 	
-	/* convert mode into NetBSD mode */
-	l = SCARG(uap, mode);
+	/* convert open flags into NetBSD flags */
+	l = SCARG(uap, flags);
 	noctty = l & 0x8000;
 	r =	(l & (0x0001 | 0x0002 | 0x0008 | 0x0040 | 0x0200 | 0x0400 | 0x0800));
 	r |=	((l & (0x0004 | 0x1000 | 0x4000)) ? O_NONBLOCK : 0);

@@ -239,7 +239,7 @@ int	sys_fchflags	__P((struct proc *, void *, register_t *));
 int	sys_sync	__P((struct proc *, void *, register_t *));
 int	sys_kill	__P((struct proc *, void *, register_t *));
 int	compat_43_freebsd_sys_stat	__P((struct proc *, void *, register_t *));
-int	getppid	__P((struct proc *, void *, register_t *));
+int	sys_getppid	__P((struct proc *, void *, register_t *));
 int	compat_43_freebsd_sys_lstat	__P((struct proc *, void *, register_t *));
 int	sys_dup	__P((struct proc *, void *, register_t *));
 int	sys_pipe	__P((struct proc *, void *, register_t *));

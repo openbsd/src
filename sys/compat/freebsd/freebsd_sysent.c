@@ -95,7 +95,7 @@ struct sysent freebsd_sysent[] = {
 	{ 2, s(struct compat_43_freebsd_sys_stat_args),
 	    compat_43_freebsd_sys_stat },	/* 38 = ostat */
 	{ 0, 0,
-	    getppid },				/* 39 = getppid */
+	    sys_getppid },			/* 39 = getppid */
 	{ 2, s(struct compat_43_freebsd_sys_lstat_args),
 	    compat_43_freebsd_sys_lstat },	/* 40 = olstat */
 	{ 1, s(struct sys_dup_args),
