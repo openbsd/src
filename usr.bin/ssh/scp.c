@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.15 1999/11/12 17:10:51 markus Exp $
+ *	$Id: scp.c,v 1.16 1999/11/17 09:20:17 deraadt Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.15 1999/11/12 17:10:51 markus Exp $");
+RCSID("$Id: scp.c,v 1.16 1999/11/17 09:20:17 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -976,7 +976,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.15 1999/11/12 17:10:51 markus Exp $
+ *	$Id: scp.c,v 1.16 1999/11/17 09:20:17 deraadt Exp $
  */
 
 char *
@@ -1112,6 +1112,19 @@ updateprogressmeter(void)
 	errno = save_errno;
 }
 
+int
+foregroundproc()
+{
+	static pid_t pgrp = -1;
+	int ctty_pgrp;
+
+	if (pgrp == -1)
+		pgrp = getpgrp();
+
+	return((ioctl(STDOUT_FILENO, TIOCGPGRP, &ctty_pgrp) != -1 &&
+	    ctty_pgrp == pgrp));
+}
+
 void
 progressmeter(int flag)
 {
@@ -1129,6 +1142,9 @@ progressmeter(int flag)
 		lastupdate = start;
 		lastsize = 0;
 	}   
+	if (foregroundproc() == 0)
+		return;
+
 	(void)gettimeofday(&now, (struct timezone *)0);
 	cursize = statbytes;
 	if (totalbytes != 0) {
@@ -1145,10 +1161,10 @@ progressmeter(int flag)
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		"|%.*s%*s|", i,
+		    "|%.*s%*s|", i,
 "*****************************************************************************"
 "*****************************************************************************",
-                 barlength - i, "");
+		    barlength - i, "");
 	}
 
 	i = 0;
