@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 1995/09/12 19:40:27 thorpej Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1996/07/01 07:08:52 deraadt Exp $
 
 # yp sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/yp ${.CURDIR}/yp

@@ -1,9 +1,8 @@
-/*	$OpenBSD: yp_bind.c,v 1.3 1996/07/01 06:47:35 deraadt Exp $	 */
-/*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
+/*	$OpenBSD: yp_bind.c,v 1.4 1996/07/01 07:09:10 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
- * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
+ * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $";
+static char *rcsid = "$OpenBSD: yp_bind.c,v 1.4 1996/07/01 07:09:10 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
