@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.16 2004/08/27 15:44:38 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.17 2004/08/31 12:25:51 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -99,7 +99,7 @@ cvs_ent_open(const char *dir, int flags)
 	}
 	memset(ep, 0, sizeof(*ep));
 
-	ep->cef_path = strdup(dir);
+	ep->cef_path = strdup(entpath);
 	if (ep->cef_path == NULL) {
 		cvs_log(LP_ERRNO, "failed to copy Entries path");
 		free(ep);
