@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.8 2001/03/28 07:33:51 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.9 2001/08/23 08:18:57 miod Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -235,69 +235,6 @@ softclock()
 		timeout_list_unlock(s);
 		fn(arg);
 		timeout_list_lock(&s);
-	}
-	timeout_list_unlock(s);
-}
-
-/*
- * Legacy interfaces. timeout() and untimeout()
- *
- * Kill those when everything is converted. They are slow and use the
- * static pool (which causes (potential and real) problems).
- */
-
-void
-timeout(fn, arg, to_ticks)
-	void (*fn) __P((void *));
-	void *arg;
-	int to_ticks;
-{
-	struct timeout *to;
-	int s;
-
-	if (to_ticks <= 0)
-		to_ticks = 1;
-
-	/*
-	 * Get a timeout struct from the static list.
-	 */
-	timeout_list_lock(&s);
-
-	to = TAILQ_FIRST(&timeout_static);
-	if (to == NULL)
-		panic("timeout table full");
-	TAILQ_REMOVE(&timeout_static, to, to_list);
-
-	timeout_list_unlock(s);
-
-	timeout_set(to, fn, arg);
-	to->to_flags |= TIMEOUT_STATIC;
-	timeout_add(to, to_ticks);
-}
-
-void
-untimeout(fn, arg)
-	void (*fn) __P((void *));
-	void *arg;
-{
-	int s;
-	struct timeout *to;
-
-	timeout_list_lock(&s);
-	TAILQ_FOREACH(to, &timeout_todo, to_list) {
-		if (to->to_func == fn && to->to_arg == arg) {
-#ifdef DIAGNOSTIC
-			if ((to->to_flags & TIMEOUT_ONQUEUE) == 0)
-				panic("untimeout: not TIMEOUT_ONQUEUE");
-			if ((to->to_flags & TIMEOUT_STATIC) == 0)
-				panic("untimeout: not static");
-#endif
-			TAILQ_REMOVE(&timeout_todo, to, to_list);
-			to->to_flags &= ~TIMEOUT_ONQUEUE;
-			/* return it to the static pool */
-			TAILQ_INSERT_HEAD(&timeout_static, to, to_list);
-			break;
-		}
 	}
 	timeout_list_unlock(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.7 2001/03/15 16:47:50 csapuntz Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.8 2001/08/23 08:18:59 miod Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -54,10 +54,6 @@
  *      a timeout that has already happened.
  *
  * These functions may be called in interrupt context (anything below splhigh).
- *
- * XXX - the old timeout()/untimeout() API is kept for compatibility, you may
- *       not use the new API if there is a risk that the same function/argument
- *       pairs are mixed in the new and old API.
  */
 
 struct timeout {
