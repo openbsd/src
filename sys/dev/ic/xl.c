@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.19 2001/01/12 21:48:25 todd Exp $	*/
+/*	$OpenBSD: xl.c,v 1.20 2001/02/02 08:35:31 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1418,9 +1418,11 @@ void xl_txeoc(sc)
 			if (txstat & XL_TXSTATUS_UNDERRUN &&
 			    sc->xl_tx_thresh < XL_PACKET_SIZE) {
 				sc->xl_tx_thresh += XL_MIN_FRAMELEN;
+#ifdef notdef
 				printf("xl%d: tx underrun, increasing tx start"
 				    " threshold to %d\n", sc->xl_unit,
 				    sc->xl_tx_thresh);
+#endif
 			}
 			CSR_WRITE_2(sc, XL_COMMAND,
 			    XL_CMD_TX_SET_START|sc->xl_tx_thresh);
