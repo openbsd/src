@@ -78,10 +78,16 @@ devopen()
 		dptr = (struct dos_partition *)&iobuf[DOSPARTOFF];
 		sector = LABELSECTOR;
 		for (i = 0; i < NDOSPART; i++, dptr++)
-			if (dptr->dp_typ == DOSPTYP_386BSD) {
+			if (dptr->dp_typ == DOSPTYP_OPENBSD) {
 				sector = dptr->dp_start + LABELSECTOR;
 				break;
 			}
+		if (i >= NDOSPART)
+			for (i = 0; i < NDOSPART; i++, dptr++)
+				if (dptr->dp_typ == DOSPTYP_386BSD) {
+					sector = dptr->dp_start + LABELSECTOR;
+					break;
+				}
 		lp = &disklabel;
 		Bread(sector++, lp);
 		if (lp->d_magic != DISKMAGIC) {

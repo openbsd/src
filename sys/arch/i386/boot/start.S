@@ -62,7 +62,8 @@ LOADSZ		=	15	# size of unix boot
 PARTSTART	=	0x1be	# starting address of partition table
 NUMPART		=	4	# number of partitions in partition table
 PARTSZ		=	16	# each partition table entry is 16 bytes
-BSDPART		=	0xA5	# value of boot_ind, means bootable partition
+BSDPART		=	0xA6	# OpenBSD partition identification
+OLDBSDPART	=	0xA5	# 386/Net/FreeBSD partition identification
 BOOTABLE	=	0x80	# value of boot_ind, means bootable partition
 
 	.text	
@@ -179,6 +180,16 @@ again:
 	addl	$PARTSZ, %ebx
 	data32
 	loop	again
+again2:
+	addr32
+	movb    %es:4(%ebx), %al
+	cmpb	$OLDBSDPART, %al
+	data32
+	je	found
+	data32
+	addl	$PARTSZ, %ebx
+	data32
+	loop	again2
 	data32
 	movl	$enoboot, %esi
 	data32
@@ -378,6 +389,7 @@ endofcode:
 /* throw in a partition in case we are block0 as well */
 /* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
 	. = _C_LABEL(boot1) + PARTSTART
+startoflabel:
 	.byte	0x0,0,0,0,0,0,0,0
 	.long	0,0
 	.byte	0x0,0,0,0,0,0,0,0
