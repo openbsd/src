@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.72 2001/07/25 03:43:41 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.73 2001/07/25 04:59:33 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1989,7 +1989,8 @@ bridge_filter(sc, dir, ifp, eh, m)
 	}
 
 	/* Finally, we get to filter the packet! */
-	if (pf_test(dir, m->m_pkthdr.rcvif, &m) != PF_PASS)
+	m->m_pkthdr.rcvif = ifp;
+	if (pf_test(dir, ifp, &m) != PF_PASS)
 		goto dropit;
 
 	/* Rebuild the IP header */
