@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.36 2003/05/14 05:16:58 nate Exp $
+$OpenBSD: miidevs,v 1.37 2003/08/12 19:42:37 mickey Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -99,6 +99,7 @@ model AMD 79C873phy		0x0036 Am79C873 internal PHY
 
 /* Altima Communications PHYs */
 model xxALTIMA AC101		0x0021 AC101 10/100 media interface
+model xxALTIMA AC101L		0x0012 AC101L 10/100 media interface
 
 /* Broadcom Corp. PHYs */
 model xxBROADCOM BCM5400	0x0004 BCM5400 1000baseTX PHY
