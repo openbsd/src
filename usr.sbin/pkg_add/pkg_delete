@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.72 2004/11/11 11:23:04 espie Exp $
+# $OpenBSD: pkg_delete,v 1.73 2004/11/11 11:36:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -77,7 +77,7 @@ if ($opt_x && $state->{beverbose}) {
 
 if ($< && !$forced{nonroot}) {
 	if ($state->{not}) {
-		print "$0 should be run as root\n";
+		Warn "$0 should be run as root\n";
 	} else {
 		Fatal "$0 must be run as root";
 	}

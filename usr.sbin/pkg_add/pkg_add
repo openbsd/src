@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.101 2004/11/11 11:23:04 espie Exp $
+# $OpenBSD: pkg_add,v 1.102 2004/11/11 11:36:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -34,7 +34,6 @@ use OpenBSD::Add;
 use File::Copy;
 
 our %forced = ();
-our ($ftp_only, $cdrom_only);
 
 package main;
 
@@ -237,16 +236,6 @@ sub solve_dependencies
 	return @deps;
 }
 
-sub register_installation
-{
-	my ($dir, $dest, $plist) = @_;
-	mkdir($dest);
-	for my $i (info_names()) {
-		copy($dir.$i, $dest);
-	}
-	$plist->to_installation();
-}
-
 sub borked_installation
 {
 	my ($plist, $dir) = @_;
@@ -274,7 +263,7 @@ sub borked_installation
 	$plist->{name}->{name} = $borked;
 	$plist->{pkgdep} = [];
 	my $dest = installed_info($borked);
-	register_installation($dir, $dest, $plist);
+	OpenBSD::Add::register_installation($dir, $dest, $plist);
 	Fatal "Installation of $pkgname failed, partial installation recorded as $borked";
 }
 
@@ -341,78 +330,12 @@ sub collision_report($)
 	}
 }
 
-sub validate_plist($$)
-{
-	my ($plist, $destdir) = @_;
-
-	my $problems = 0;
-	my $pkgname = $plist->pkgname();
-	my $totsize = 0;
-
-	my $extra = $plist->{extrainfo};
-	if ($cdrom_only && ((!defined $extra) || $extra->{cdrom} ne 'yes')) {
-	    Warn "Package $pkgname is not for cdrom.\n";
-	    $problems++;
-	}
-	if ($ftp_only && ((!defined $extra) || $extra->{ftp} ne 'yes')) {
-	    Warn "Package $pkgname is not for ftp.\n";
-	    $problems++;
-	}
-
-	# check for collisions with existing stuff
-	my $colliding = [];
-	for my $item (@{$plist->{items}}) {
-		next unless $item->IsFile();
-		my $fname = $destdir.$item->fullname();
-		if (OpenBSD::Vstat::vexists($fname)) {
-			push(@$colliding, $fname);
-			$problems++;
-		}
-		$totsize += $item->{size} if defined $item->{size};
-		my $s = OpenBSD::Vstat::add($fname, $item->{size});
-		next unless defined $s;
-		if ($s->{ro}) {
-			Warn "Error: ", $s->{mnt}, " is read-only ($fname)\n";
-			$problems++;
-		}
-		if ($s->avail() < 0) {
-			Warn "Error: ", $s->{mnt}, " is not large enough ($fname)\n";
-			$problems++;
-		}
-	}
-	if (@$colliding > 0) {
-		collision_report($colliding);
-	}
-	Fatal "fatal issues" if $problems;
-	return $totsize;
-}
-
 sub do_script
 {
 	my ($plist, $name, $state, $args) = @_;
 	$state->{dir} = $plist->{dir};
 	return unless $plist->has($name);
 	$plist->get($name)->run($state, $args);
-}
-
-sub manpages_index
-{
-	my ($state) = @_;
-	return unless defined $state->{mandirs};
-	my $destdir = $state->{destdir};
-	require OpenBSD::Makewhatis;
-
-	while (my ($k, $v) = each %{$state->{mandirs}}) {
-		my @l = map { $destdir.$_ } @$v;
-		if ($state->{not}) {
-			print "Merging manpages in $destdir$k: ", join(@l), "\n";
-		} else {
-			eval { OpenBSD::Makewhatis::merge($destdir.$k, \@l); };
-			if ($@) {
-				print STDERR "Error in makewhatis: $@\n";
-			}
-		}
-	}
 }
 
 
@@ -449,7 +372,7 @@ sub really_add($$)
 	    }
 	    print "\n";
 	}
-	my $totsize = validate_plist($plist, $destdir);
+	my $totsize = OpenBSD::Add::validate_plist($plist, $state);
 
 	if (!defined $handle) {
 		Fatal "Archive in $pkgname broken";
@@ -525,7 +448,7 @@ sub really_add($$)
 			borked_installation($plist, $dir);
 		}
 		my $dest = installed_info($pkgname);
-		register_installation($dir, $dest, $plist);
+		OpenBSD::Add::register_installation($dir, $dest, $plist);
 		if (defined $handle->{solved_dependencies}) {
 			require OpenBSD::RequiredBy;
 
@@ -638,17 +561,6 @@ getopts('avnrxIL:f:B:A:P:Q:',
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
-if ($opt_P) {
-	if ($opt_P eq 'cdrom') {
-		$cdrom_only = 1;
-	}
-	elsif ($opt_P eq 'ftp') { 
-		$ftp_only = 1;
-	}
-	else {
-	    Fatal "bad option: -P $opt_P";
-	}
-}
 $opt_L = '/usr/local' unless defined $opt_L;
 
 my $state = new OpenBSD::Error;
@@ -663,6 +575,17 @@ if (defined $opt_Q and defined $opt_B) {
 }
 if (defined $opt_Q and defined $opt_r) {
 	Fatal "-r and -Q are incompatible options";
+}
+if ($opt_P) {
+	if ($opt_P eq 'cdrom') {
+		$state->{cdrom_only} = 1;
+	}
+	elsif ($opt_P eq 'ftp') { 
+		$state->{ftp_only} = 1;
+	}
+	else {
+	    Fatal "bad option: -P $opt_P";
+	}
 }
 if (defined $opt_Q) {
 	$state->{destdir} = $opt_Q;
@@ -693,7 +616,7 @@ if ($opt_x && !$state->{beverbose}) {
 
 if ($< && !$forced{nonroot}) {
 	if ($state->{not}) {
-		print "$0 should be run as root\n";
+		Warn "$0 should be run as root\n";
 	} else {
 		Fatal "$0 must be run as root";
 	}
@@ -711,7 +634,7 @@ while (my $pkg = shift @todo) {
 my $dielater = $@;
 
 OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
-manpages_index($state);
+OpenBSD::Add::manpages_index($state);
 OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 # delayed directory/user/group removal
 if (defined $state->{dirs_to_rm} or defined $state->{users_to_rm} or

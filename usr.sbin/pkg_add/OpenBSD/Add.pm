@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.10 2004/11/11 11:16:39 espie Exp $
+# $OpenBSD: Add.pm,v 1.11 2004/11/11 11:36:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -18,7 +18,84 @@ use strict;
 use warnings;
 
 package OpenBSD::Add;
+use OpenBSD::Error;
 
+sub manpages_index
+{
+	my ($state) = @_;
+	return unless defined $state->{mandirs};
+	my $destdir = $state->{destdir};
+	require OpenBSD::Makewhatis;
+
+	while (my ($k, $v) = each %{$state->{mandirs}}) {
+		my @l = map { $destdir.$_ } @$v;
+		if ($state->{not}) {
+			print "Merging manpages in $destdir$k: ", join(@l), "\n";
+		} else {
+			eval { OpenBSD::Makewhatis::merge($destdir.$k, \@l); };
+			if ($@) {
+				print STDERR "Error in makewhatis: $@\n";
+			}
+		}
+	}
+}
+
+sub register_installation
+{
+	my ($dir, $dest, $plist) = @_;
+	mkdir($dest);
+	for my $i (info_names()) {
+		copy($dir.$i, $dest);
+	}
+	$plist->to_installation();
+}
+
+sub validate_plist($$)
+{
+	my ($plist, $state) = @_;
+
+	my $destdir = $state->{destdir};
+	my $problems = 0;
+	my $pkgname = $plist->pkgname();
+	my $totsize = 0;
+
+	my $extra = $plist->{extrainfo};
+	if ($state->{cdrom_only} && ((!defined $extra) || $extra->{cdrom} ne 'yes')) {
+	    Warn "Package $pkgname is not for cdrom.\n";
+	    $problems++;
+	}
+	if ($state->{ftp_only} && ((!defined $extra) || $extra->{ftp} ne 'yes')) {
+	    Warn "Package $pkgname is not for ftp.\n";
+	    $problems++;
+	}
+
+	# check for collisions with existing stuff
+	my $colliding = [];
+	for my $item (@{$plist->{items}}) {
+		next unless $item->IsFile();
+		my $fname = $destdir.$item->fullname();
+		if (OpenBSD::Vstat::vexists($fname)) {
+			push(@$colliding, $fname);
+			$problems++;
+		}
+		$totsize += $item->{size} if defined $item->{size};
+		my $s = OpenBSD::Vstat::add($fname, $item->{size});
+		next unless defined $s;
+		if ($s->{ro}) {
+			Warn "Error: ", $s->{mnt}, " is read-only ($fname)\n";
+			$problems++;
+		}
+		if ($s->avail() < 0) {
+			Warn "Error: ", $s->{mnt}, " is not large enough ($fname)\n";
+			$problems++;
+		}
+	}
+	if (@$colliding > 0) {
+		collision_report($colliding);
+	}
+	Fatal "fatal issues" if $problems;
+	return $totsize;
+}
 # used by newuser/newgroup to deal with options.
 package OpenBSD::PackingElement;
 use OpenBSD::Error;
