@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.27 1999/11/07 05:31:53 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.28 1999/11/09 03:03:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.27 1999/11/07 05:31:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.28 1999/11/09 03:03:27 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -134,7 +134,7 @@ char    *daytime;               /* timenow in human readable form */
 void do_entry __P((struct conf_entry *));
 void PRS __P((int, char **));
 void usage __P((void));
-struct conf_entry *parse_file __P((void));
+struct conf_entry *parse_file __P((int *));
 char *missing_field __P((char *, char *));
 void dotrim __P((char *, int, int, int, uid_t, gid_t));
 int log_trim __P((char *));
@@ -156,13 +156,18 @@ main(argc, argv)
         char **argv;
 {
         struct conf_entry *p, *q;
-	int status;
+	char **pidfiles, **pf;
+	int status, listlen;
         
         PRS(argc, argv);
         if (needroot && getuid() && geteuid())
 		errx(1, "You must be root.");
-        p = q = parse_file();
+        p = q = parse_file(&listlen);
 	signal(SIGCHLD, child_killer);
+
+	pidfiles = calloc(sizeof(pid_t), listlen + 1);
+	if (pidfiles == NULL)
+		err(1, "calloc");
 
 	/* Step 1, rotate all log files */
         while (q) {
@@ -170,16 +175,27 @@ main(argc, argv)
                 q = q->next;
         }
 
-	/* Step 2, send a HUP to relevant processes */
-	/* XXX - should avoid HUP'ing the same process multiple times */
-	q = p;
-        while (q) {
-		if (q->flags & CE_ROTATED)
-			send_hup(q->pidfile);
+	/* Step 2, make a list of unique pid files */
+	for (q = p, pf = pidfiles; q; ) {
+		if (q->flags & CE_ROTATED) {
+			char **pftmp;
+
+			for (pftmp = pidfiles; pftmp < pf; pftmp++)
+				if (strcmp(*pftmp, q->pidfile) == 0)
+					break;
+			if (pftmp == pf)
+				*pf++ = q->pidfile;
+		}
                 q = q->next;
         }
 
-	/* Step 3, compress the log.0 file if configured to do so and free */
+	/* Step 3, send a HUP to relevant processes */
+	for (pf = pidfiles; *pf; pf++)
+		send_hup(*pf);
+	if (!noaction)
+		sleep(5);
+
+	/* Step 4, compress the log.0 file if configured to do so and free */
         while (p) {
 		if ((p->flags & CE_COMPACT) && (p->flags & CE_ROTATED))
 			compress_log(p->log);
@@ -318,7 +334,8 @@ usage()
  * to process
  */
 struct conf_entry *
-parse_file()
+parse_file(nentries)
+	int *nentries;
 {
         FILE    *f;
         char    line[BUFSIZ], *parse, *q;
@@ -335,12 +352,14 @@ parse_file()
 			err(1, "can't open %s", conf);
 	}
 
+	*nentries = 0;
         while (fgets(line, sizeof(line), f)) {
                 if ((line[0] == '\n') || (line[0] == '#'))
                         continue;
                 errline = strdup(line);
 		if (errline == NULL)
 			err(1, "strdup");
+		(*nentries)++;
                 if (!first) {
                         working = (struct conf_entry *) malloc(sizeof(struct conf_entry));
 			if (working == NULL)
