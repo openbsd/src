@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.12 2003/06/02 20:06:14 millert Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.13 2004/03/03 05:03:36 tedu Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1981, 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: badsect.c,v 1.12 2003/06/02 20:06:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: badsect.c,v 1.13 2004/03/03 05:03:36 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,26 +67,25 @@ static char rcsid[] = "$OpenBSD: badsect.c,v 1.12 2003/06/02 20:06:14 millert Ex
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
-union {
+static int chkuse(daddr_t, int);
+static void rdfs(daddr_t, int, char *);
+
+static union {
 	struct	fs fs;
 	char	fsx[SBSIZE];
 } ufs;
 #define sblock	ufs.fs
-union {
+static union {
 	struct	cg cg;
 	char	cgx[MAXBSIZE];
 } ucg;
 #define	acg	ucg.cg
-struct	fs *fs;
-int	fso, fsi;
-int	errs;
-long	dev_bsize = 1;
-
-char buf[MAXBSIZE];
-
-void	rdfs(daddr_t, int, char *);
-int	chkuse(daddr_t, int);
+static struct	fs *fs;
+static int	fsi;
+static int	errs;
+static long	dev_bsize = 1;
 
 int
 main(int argc, char *argv[])
@@ -102,22 +101,19 @@ main(int argc, char *argv[])
 		fprintf(stderr, "usage: badsect bbdir blkno [ blkno ]\n");
 		exit(1);
 	}
-	if (chdir(argv[1]) < 0 || stat(".", &stbuf) < 0) {
-		perror(argv[1]);
-		exit(2);
-	}
+	if (chdir(argv[1]) < 0 || stat(".", &stbuf) < 0) 
+		err(2, "%s", argv[1]);
+	
 	strlcpy(name, _PATH_DEV, sizeof name);
 	len = strlen(name);
-	if ((dirp = opendir(name)) == NULL) {
-		perror(name);
-		exit(3);
-	}
+	if ((dirp = opendir(name)) == NULL) 
+		err(3, "%s", name);
+	
 	while ((dp = readdir(dirp)) != NULL) {
 		strlcpy(&name[len], dp->d_name, sizeof name - len);
-		if (stat(name, &devstat) < 0) {
-			perror(name);
-			exit(4);
-		}
+		if (stat(name, &devstat) < 0) 
+			err(4, "%s", name);
+		
 		if (stbuf.st_dev == devstat.st_rdev &&
 		    S_ISBLK(devstat.st_mode))
 			break;
@@ -133,15 +129,13 @@ main(int argc, char *argv[])
 	name[len] = 'r';
 	strlcpy(&name[len+1], dp->d_name, sizeof name - (len+1));
 	closedir(dirp);
-	if (dp == NULL) {
-		printf("Cannot find dev 0%o corresponding to %s\n",
+	if (dp == NULL) 
+		err(5, "Cannot find dev 0%o corresponding to %s\n",
 			stbuf.st_rdev, argv[1]);
-		exit(5);
-	}
-	if ((fsi = open(name, 0)) < 0) {
-		perror(name);
-		exit(6);
-	}
+	
+	if ((fsi = open(name, 0)) < 0) 
+		err(6, "%s", name);
+	
 	fs = &sblock;
 	rdfs(SBOFF, SBSIZE, (char *)fs);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
@@ -151,7 +145,7 @@ main(int argc, char *argv[])
 			continue;
 		if (mknod(*argv, S_IFMT|S_IRUSR|S_IWUSR,
 		    dbtofsb(fs, number)) < 0) {
-			perror(*argv);
+			warn("%s", *argv);
 			errs++;
 		}
 	}
@@ -159,7 +153,7 @@ main(int argc, char *argv[])
 	exit(errs);
 }
 
-int
+static int
 chkuse(daddr_t blkno, int cnt)
 {
 	int cg;
@@ -167,19 +161,19 @@ chkuse(daddr_t blkno, int cnt)
 
 	fsbn = dbtofsb(fs, blkno);
 	if ((unsigned)(fsbn+cnt) > fs->fs_size) {
-		printf("block %d out of range of file system\n", blkno);
+		fprintf(stderr, "block %d out of range of file system\n", blkno);
 		return (1);
 	}
 	cg = dtog(fs, fsbn);
 	if (fsbn < cgdmin(fs, cg)) {
 		if (cg == 0 || (fsbn+cnt) > cgsblock(fs, cg)) {
-			printf("block %d in non-data area: cannot attach\n",
+			fprintf(stderr, "block %d in non-data area: cannot attach\n",
 				blkno);
 			return (1);
 		}
 	} else {
 		if ((fsbn+cnt) > cgbase(fs, cg+1)) {
-			printf("block %d in non-data area: cannot attach\n",
+			fprintf(stderr, "block %d in non-data area: cannot attach\n",
 				blkno);
 			return (1);
 		}
@@ -193,27 +187,25 @@ chkuse(daddr_t blkno, int cnt)
 	}
 	bn = dtogd(fs, fsbn);
 	if (isclr(cg_blksfree(&acg), bn))
-		printf("Warning: sector %d is in use\n", blkno);
+		fprintf(stderr, "Warning: sector %d is in use\n", blkno);
 	return (0);
 }
 
 /*
  * read a block from the file system
  */
-void
+static void
 rdfs(daddr_t bno, int size, char *bf)
 {
 	int n;
 
 	if (lseek(fsi, (off_t)bno * dev_bsize, SEEK_SET) < 0) {
-		printf("seek error: %lld\n", (long long)bno);
-		perror("rdfs");
-		exit(1);
+		fprintf(stderr, "seek error: %lld\n", (long long)bno);
+		err(1, "rdfs");
 	}
 	n = read(fsi, bf, size);
 	if (n != size) {
-		printf("read error: %lld\n", (long long)bno);
-		perror("rdfs");
-		exit(1);
+		fprintf(stderr, "read error: %lld\n", (long long)bno);
+		err(1, "rdfs");
 	}
 }
