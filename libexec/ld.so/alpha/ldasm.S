@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2001/06/13 08:42:03 art Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2001/09/24 21:37:06 art Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -69,7 +69,7 @@
 /* Not really a leaf... but we are special.  */
 LEAF_NOPROFILE(_dl_start, 0)
 	.set	noreorder
-	lda	sp, (-8 - ((AUX_entry + 1) * 8))(sp)
+	lda	sp, (-8 - ((AUX_entry) * 8))(sp)
 	br	pv, L1
 L1:
 	LDGP(pv)
@@ -97,10 +97,10 @@ L3:
 	sll	t3, 3, t3
 	addq	a3, t3, a4	/* envp */
 	mov	a4, s4
-	mov	t1, a5		/* dynamic */
+	mov	t1, a2		/* dynamic */
 	mov	a5, s5
-	lda	s2, 8(sp)
-	stq	s2, 0(sp)	/* dl_link */
+	lda	s2, 0(sp)
+	mov	s2, a3
 	CALL(_dl_boot_bind)
 	mov	s3, a0
 	mov	s4, a1
