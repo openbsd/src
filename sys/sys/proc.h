@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.10 1996/08/31 09:15:12 pefo Exp $	*/
+/*	$OpenBSD: proc.h,v 1.11 1996/11/24 01:39:23 kstailey Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -306,6 +306,7 @@ int	leavepgrp __P((struct proc *p));
 void	mi_switch __P((void));
 void	pgdelete __P((struct pgrp *pgrp));
 void	procinit __P((void));
+void	remrunqueue __P((struct proc *));
 void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
