@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.16 2004/07/07 16:55:08 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.17 2004/07/10 12:25:49 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -515,7 +515,6 @@ ehci_intr1(ehci_softc_t *sc)
 	if (!intrs)
 		return (0);
 
-	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
 	eintrs = intrs & sc->sc_eintrs;
 	DPRINTFN(7, ("ehci_intr: sc=%p intrs=0x%x(0x%x) eintrs=0x%x\n",
 		     sc, (u_int)intrs, EOREAD4(sc, EHCI_USBSTS),
@@ -523,6 +522,7 @@ ehci_intr1(ehci_softc_t *sc)
 	if (!eintrs)
 		return (0);
 
+	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
 	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
 	if (eintrs & EHCI_STS_IAA) {
