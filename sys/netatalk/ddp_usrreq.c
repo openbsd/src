@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp_usrreq.c,v 1.1 1997/07/23 03:39:54 denny Exp $	*/
+/*	$OpenBSD: ddp_usrreq.c,v 1.2 1997/07/24 00:25:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -105,7 +105,7 @@ ddp_usrreq( so, req, m, addr, rights )
     ddp = sotoddpcb( so );
 
     if ( req == PRU_CONTROL ) {
-	return( at_control( (int) m, (caddr_t) addr,
+	return( at_control( (u_long) m, (caddr_t) addr,
 		(struct ifnet *) rights, p ));
     }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.1 1997/07/23 03:39:51 denny Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.2 1997/07/24 00:25:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -78,7 +78,7 @@
 
 #include <dev/rndvar.h>
 
-int	at_control	__P(( int, caddr_t, struct ifnet *, struct proc * ));
+int	at_control	__P(( u_long, caddr_t, struct ifnet *, struct proc * ));
 static int at_scrub	__P(( struct ifnet *, struct at_ifaddr * ));
 static int at_ifinit	__P(( struct ifnet *, struct at_ifaddr *,
 				struct sockaddr_at * ));
@@ -99,7 +99,7 @@ static int aa_dosingleroute	__P((struct ifaddr *, struct at_addr *,
 
 int
 at_control( cmd, data, ifp, p )
-    int			cmd;
+    u_long		cmd;
     caddr_t		data;
     struct ifnet	*ifp;
     struct proc		*p;

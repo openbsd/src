@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.10 1997/06/14 05:49:41 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.11 1997/07/24 00:25:25 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ tcp_usrreq(so, req, m, nam, control)
 	int ostate;
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (long)m, (caddr_t)nam,
+		return (in_control(so, (u_long)m, (caddr_t)nam,
 			(struct ifnet *)control));
 	if (control && control->m_len) {
 		m_freem(control);
