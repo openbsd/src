@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.7 2000/10/17 19:20:36 jason Exp $
+.\"	$OpenBSD: mii.4,v 1.8 2001/03/11 02:51:01 aaron Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 .Nm mii
 .Nd IEEE 802.3 Media Independent Interface
 .Sh SYNOPSIS
+.Cd "amphy* at mii? phy ?"
+.Cd "brgphy* at mii? phy ?"
 .Cd "exphy* at mii? phy ?"
 .Cd "icsphy* at mii? phy ?"
 .Cd "inphy* at mii? phy ?"
@@ -51,11 +53,13 @@
 .Cd "mtdphy* at mii? phy ?"
 .Cd "nsphy* at mii? phy ?"
 .Cd "qsphy* at mii? phy ?"
+.Cd "rlphy* at mii? phy ?"
 .Cd "sqphy* at mii? phy ?"
 .Cd "tlphy* at mii? phy ?"
 .Cd "tqphy* at mii? phy ?"
 .Cd "txphy* at mii? phy ?"
 .Cd "ukphy* at mii? phy ?"
+.Cd "xmphy* at mii? phy ?"
 .Sh DESCRIPTION
 Media Independent Interface is an IEEE standard serial bus for
 connecting MACs (network controllers) to PHYs (physical media
@@ -86,6 +90,7 @@ These media types are valid media keywords for use with the
 program.
 .Sh SEE ALSO
 .Xr amphy 4 ,
+.Xr brgphy 4 ,
 .Xr exphy 4 ,
 .Xr icsphy 4 ,
 .Xr ifmedia 4 ,
@@ -96,9 +101,11 @@ program.
 .Xr netintro 4 ,
 .Xr nsphy 4 ,
 .Xr qsphy 4 ,
+.Xr rlphy 4 ,
 .Xr sqphy 4 ,
 .Xr tlphy 4 ,
 .Xr tqphy 4 ,
 .Xr txphy 4 ,
 .Xr ukphy 4 ,
+.Xr xmphy 4 ,
 .Xr ifconfig 8
