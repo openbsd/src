@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.31 2000/06/20 04:17:31 itojun Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.32 2000/12/30 22:56:23 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -147,7 +147,6 @@ struct ifnet *ifp;
     struct mbuf *m;
     int s;
 
-#ifndef IPSEC
     for (;;)
     {
         s = splimp();
@@ -160,145 +159,6 @@ struct ifnet *ifp;
         else
           m_freem(m);
     }
-#else /* IPSEC */
-    struct enc_softc *enc = ifp->if_softc;
-    int err = 0, protoflag;
-    struct mbuf *mp;
-    struct tdb *tdb;
-
-    /* If the interface is not setup, flush the queue */
-    if ((enc->sc_spi == 0) && (enc->sc_sproto == 0) &&
-	(enc->sc_dst.sa.sa_family != AF_INET) &&
-	(enc->sc_dst.sa.sa_family != AF_INET6))
-    {
-	DPRINTF(("%s: not initialized with SA\n", ifp->if_xname));
-
-	for (;;)
-	{
-	    s = splimp();
-            IF_DROP(&ifp->if_snd);
-	    IF_DEQUEUE(&ifp->if_snd, m);
-	    splx(s);
-	    if (m == NULL)
-	      return;
-	    else
-	      m_freem(m);
-	}
-
-	/* Unreachable */
-    }
-
-    /* Find what type of processing we need to do */
-    tdb = gettdb(enc->sc_spi, &(enc->sc_dst), enc->sc_sproto);
-    if (tdb == NULL)
-    {
-	DPRINTF(("%s: SA non-existant\n", ifp->if_xname));
-
-	/* Flush the queue */
-	for (;;)
-	{
-	    s = splimp();
-            IF_DROP(&ifp->if_snd);
-	    IF_DEQUEUE(&ifp->if_snd, m);
-	    splx(s);
-	    if (m == NULL)
-	      return;
-	    else
-	      m_freem(m);
-	}
-    }
-
-    /* See if we need to notify a key mgmt. daemon to setup SAs */
-    if (ntohl(enc->sc_spi) == SPI_LOCAL_USE)
-    {
-#ifdef notyet
-	/* XXX Currently unsupported */ 
-	if (tdb->tdb_satype != SADB_X_SATYPE_BYPASS)
-	  pfkeyv2_acquire(tdb, 0); /* No point checking for errors */
-#endif
-
-	/* Flush the queue */
-	for (;;)
-	{
-	    s = splimp();
-            IF_DROP(&ifp->if_snd);
-	    IF_DEQUEUE(&ifp->if_snd, m);
-	    splx(s);
-	    if (m == NULL)
-	      return;
-	    else
-	      m_freem(m);
-	}
-
-	/* Unreachable */
-    }
-
-    /* IPsec-process all packets in the queue */
-    for (;;)
-    {
-	/* Get a packet from the queue */
-	s = splimp();
-	IF_DEQUEUE(&ifp->if_snd, m);
-	splx(s);
-
-	if (m == NULL) /* Empty queue */
-	  return;
- 
-	/* Sanity check */
-	if ((m->m_flags & M_PKTHDR) == 0)
-	{
-	    m_freem(m);
-	    continue;
-	}
-
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
-
-	m->m_pkthdr.rcvif = ifp;
-	mp = NULL;
-
-	/* Encapsulate in etherip or ip-in-ip, depending on interface flag */
-	if (ifp->if_flags & IFF_LINK0)
-	  err = ipip_output(m, tdb, &mp, 0, 0); /* Last 2 args not used */
-	else
-	  err = etherip_output(m, tdb, &mp, 0, 0); /* Last 2 args not used */
-	if ((mp == NULL) || err)
-	{
-	    /* Just skip this frame */
-            IF_DROP(&ifp->if_snd);
-	    if (mp)
-	      m_freem(mp);
-	    continue;
-	}
-	else
-	{
-	    m = mp;
-	    mp = NULL;
-	}
-
-#ifdef INET
-	/* Fix header checksum for IPv4 */
-        if (tdb->tdb_dst.sa.sa_family == AF_INET)
-	{
-	    struct ip *ip;
-
-	    ip = mtod(m, struct ip *);
-	    ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-        }
-#endif
-
-	protoflag = tdb->tdb_dst.sa.sa_family;
-
-	/* IPsec packet processing -- skip encapsulation */
-	ipsp_process_packet(m, tdb, protoflag, 1);
-
-	/*
-	 * XXX
-	 * Should find a way to avoid bridging/routing-loops,
-	 * perhaps use some mbuf flag ?
-	 */
-    }
-#endif /* IPSEC */
 }
 
 int
@@ -308,35 +168,8 @@ register struct mbuf *m;
 struct sockaddr *dst;
 register struct rtentry *rt;
 {
-    int s;
-
-    if ((m->m_flags & M_PKTHDR) == 0)
-      panic("encoutput(): no HDR");
-
-    ifp->if_lastchange = time;
-    m->m_pkthdr.rcvif = ifp;
-    
-    if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE))
-    {
-	m_freem(m);
-	return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
-		rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
-    }
-
-    s = splimp();
-    if (IF_QFULL(&ifp->if_snd)) {
-	ifp->if_oerrors++;
-	m_freem(m);
-	splx(s);
-	return 0;
-    }
-
-    IF_ENQUEUE(&ifp->if_snd, m);
-    splx(s);
-
-    (ifp->if_start)(ifp);
-
-    return (0);
+    m_freem(m);
+    return 0;
 }
 
 /* ARGSUSED */
@@ -357,20 +190,6 @@ register struct ifnet *ifp;
 u_long cmd;
 caddr_t data;
 {
-#ifdef IPSEC
-    struct enc_softc *enc = (struct enc_softc *) ifp->if_softc;
-    struct ifsa *ifsa = (struct ifsa *) data;
-    struct proc *prc = curproc;             /* XXX */
-    struct tdb *tdb;
-    int s, error = 0;
-
-    /*
-     * enc0 does not allow binding of SAs, as it's used for all non-bound
-     * SAs.
-     */
-    if (ifp->if_softc == &encif[0])
-	return EOPNOTSUPP;
-
     switch (cmd) 
     {
 	case SIOCSIFADDR:
@@ -383,157 +202,9 @@ caddr_t data;
 	      ifp->if_flags &= ~IFF_RUNNING;
 	    break;
 
-	case SIOCGENCSA:
-	    ifsa->sa_spi = enc->sc_spi;
-	    ifsa->sa_proto = enc->sc_sproto;
-	    bcopy(&enc->sc_dst, &ifsa->sa_dst, enc->sc_dst.sa.sa_len);
-	    break;
-
-	case SIOCSENCCLEARSA:
-	    /* Check for superuser */
-	    if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
-	      break;
-
-	    if (ifsa->sa_proto == 0)
-	    {
-		/* Clear SA if requested */
-		if (enc->sc_sproto != 0)
-		{
-		    s = spltdb();
-		    tdb = gettdb(enc->sc_spi, &enc->sc_dst, enc->sc_sproto);
-		    if (tdb != NULL)
-		      tdb->tdb_interface = 0;
-		    splx(s);
-		}
-		
-		bzero(&enc->sc_dst, sizeof(union sockaddr_union));
-		enc->sc_spi = 0;
-		enc->sc_sproto = 0;
-		break;
-	    }
-
-	    s = spltdb();
-	    tdb = gettdb(ifsa->sa_spi, &ifsa->sa_dst, ifsa->sa_proto);
-	    if (tdb == NULL)
-	    {
-		splx(s);
-		error = ENOENT;
-		break;
-	    }
-
-	    tdb->tdb_interface = 0;
-	    splx(s);
-	    break;
-
-	case SIOCSENCSRCSA:
-	    /* Check for superuser */
-	    if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
-	      break;
-
-	    if (ifsa->sa_proto == 0)
-	    {
-		error = ENOENT;
-		break;
-	    }
-
-	    s = spltdb();
-	    tdb = gettdb(ifsa->sa_spi, &ifsa->sa_dst, ifsa->sa_proto);
-	    if (tdb == NULL)
-	    {
-		splx(s);
-		error = ENOENT;
-		break;
-	    }
-
-	    /* Is it already bound ? */
-	    if (tdb->tdb_interface)
-	    {
-		splx(s);
-		error = EEXIST;
-		break;
-	    }
-
-	    tdb->tdb_interface = (caddr_t) ifp;
-	    splx(s);
-	    break;
-
-	case SIOCSENCDSTSA:
-	    /* Check for superuser */
-	    if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
-	      break;
-
-	    /* Check for pre-existing TDB */
-	    if (enc->sc_sproto != 0)
-	    {
-		error = EEXIST;
-		break;
-	    }
-
-	    s = spltdb();
-
-	    if (ifsa->sa_proto != 0)
-	    {
-		tdb = gettdb(ifsa->sa_spi, &ifsa->sa_dst, ifsa->sa_proto);
-		if (tdb == NULL)
-		{
-		    splx(s);
-		    error = ENOENT;
-		    break;
-		}
-	    }
-	    else
-	    {
-		/* Clear SA if requested */
-		if (enc->sc_sproto != 0)
-		{
-		    tdb = gettdb(enc->sc_spi, &enc->sc_dst, enc->sc_sproto);
-		    if (tdb != NULL)
-		      tdb->tdb_interface = 0;
-		}
-
-		bzero(&enc->sc_dst, sizeof(enc->sc_dst));
-		enc->sc_spi = 0;
-		enc->sc_sproto = 0;
-
-		splx(s);
-		break;
-	    }
-
-#ifdef INET
-	    if ((ifsa->sa_dst.sa.sa_family == AF_INET) &&
-		(ifsa->sa_dst.sa.sa_len != sizeof(struct sockaddr_in)))
-	    {
-		splx(s);
-	    	error = EINVAL;
-		break;
-	    }
-#endif /* INET */
-
-#ifdef INET6
-	    if ((ifsa->sa_dst.sa.sa_family == AF_INET6) &&
-		(ifsa->sa_dst.sa.sa_len != sizeof(struct sockaddr_in6)))
-	    {
-		splx(s);
-		error = EINVAL;
-		break;
-	    }
-#endif /* INET6 */
-
-	    bcopy(&ifsa->sa_dst, &enc->sc_dst, ifsa->sa_dst.sa.sa_len);
-	    enc->sc_spi = ifsa->sa_spi;
-	    enc->sc_sproto = ifsa->sa_proto;
-	    tdb->tdb_interface = (caddr_t) ifp;
-
-	    splx(s);
-	    break;
-
 	default:
-	    error = EINVAL;
-	    break;
+	    return EINVAL;
     }
 
-    return (error);
-#else /* IPSEC */
-    return EOPNOTSUPP;
-#endif /* IPSEC */
+    return 0;
 }

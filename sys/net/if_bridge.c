@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.43 2000/12/12 03:41:22 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.44 2000/12/30 22:56:23 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -33,7 +33,7 @@
 
 #include "bridge.h"
 #include "bpfilter.h"
-#include "enc.h"
+#include "gif.h"
 
 #if NBRIDGE > 0
 
@@ -267,15 +267,11 @@ bridge_ioctl(ifp, cmd, data)
 					break;
 			}
 		}
-#if NENC > 0
-		else if (ifs->if_type == IFT_ENC) {
-			/* Can't bind enc0 to a bridge */
-			if (ifs->if_softc == &encif[0]) {
-				error = EINVAL;
-				break;
-			}
+#if NGIF > 0
+		else if (ifs->if_type == IFT_GIF) {
+		        /* Nothing needed */
 		}
-#endif /* NENC */
+#endif /* NGIF */
 		else {
 			error = EINVAL;
 			break;
@@ -801,7 +797,6 @@ bridge_output(ifp, m, sa, rt)
 				sc->sc_if.if_oerrors++;
 				continue;
 			}
-
 			if (LIST_NEXT(p, next) == LIST_END(&sc->sc_iflist)) {
 				used = 1;
 				mc = m;
