@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmdb.1,v 1.6 2002/03/18 17:13:31 espie Exp $
+.\"	$OpenBSD: pmdb.1,v 1.7 2002/06/05 18:30:59 fgsch Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -31,6 +31,7 @@
 .Nd debugger.
 .Sh SYNOPSIS
 .Nm pmdb
+.Op Fl c Ar core
 .Ar program Op Ar ...
 .Sh DESCRIPTION
 The
@@ -41,6 +42,9 @@ The only way to start
 .Nm
 at this moment is to specify the name of the program to be debugged and all
 its arguments on the command line.
+Optionally, 
+.Fl c
+can be used to specify a core file to examine.
 The program is controlled from a command line which usually gives the
 prompt "pmdb>".
 .Sh PROCESS STATES
@@ -119,13 +123,15 @@ Kills the process (if necessary) and exits
 Alias for
 .Ic quit .
 .El
-.Sh BUGS
-The command syntax is really poor and ad hoc at this moment. Most of the
-command names and arguments will change as soon as the command line interface
-is replaced.
+.Sh SEE ALSO
+.Xr core 5
 .Sh HISTORY
 The
 .Nm
 debugger was written because the author believed that
 .Xr gdb 1
 was too bloated and hairy to run on OpenBSD/sparc64.
+.Sh BUGS
+The command syntax is really poor and ad hoc at this moment. Most of the
+command names and arguments will change as soon as the command line interface
+is replaced.
