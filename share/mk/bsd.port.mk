@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.78 1999/03/14 15:19:05 rohee Exp $
+#	$OpenBSD: bsd.port.mk,v 1.79 1999/03/16 23:35:37 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.78 1999/03/14 15:19:05 rohee Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.79 1999/03/16 23:35:37 espie Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -459,6 +459,9 @@ PREFIX?=		${X11BASE}
 .else
 PREFIX?=		${LOCALBASE}
 .endif
+
+# where configuration files should go
+SYSCONFDIR?=	/etc
 # The following 4 lines should go away as soon as the ports are all updated
 .if defined(EXEC_DEPENDS)
 BUILD_DEPENDS+=	${EXEC_DEPENDS}
@@ -950,6 +953,7 @@ CONFIGURE_ENV+=		PATH=${PORTPATH}
 
 .if defined(GNU_CONFIGURE)
 CONFIGURE_ARGS+=	--prefix=${PREFIX}
+CONFIGURE_ARGS+=	--sysconfdir=${SYSCONFDIR}
 HAS_CONFIGURE=		yes
 .endif
 
