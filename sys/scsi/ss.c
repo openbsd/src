@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.31 1997/04/05 22:59:13 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.32 1997/04/05 23:34:20 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct quirkdata {
 #define SS_Q_REV_CONTRAST	0x0040 /* reverse contrast control in s/w */
 #define SS_Q_HALFTONE		0x0080 /* uses non-zero halftone */
 #define SS_Q_SET_RIF		0x0100 /* set RIF bit */
-#define SS_Q_PADDING_TYPE	0x0200 /* does not pad to byte boundary */
+#define SS_Q_PADDING_TYPE	0x0200 /* does not truncate to byte boundary */
 #define SS_Q_BIT_ORDERING	0x0400 /* needs non-zero bit ordering */
 	long window_descriptor_length;
 	u_int8_t brightness;
@@ -141,6 +141,15 @@ void	get_buffer_status __P((struct ss_softc *, struct buf *));
  */
 
 struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
+	{{T_SCANNER, T_FIXED,
+	 "ULTIMA  ", "A6000C PLUS     ", "    "}, {
+		 "Ultima A6000C",
+		 SS_Q_HALFTONE |
+		 SS_Q_PADDING_TYPE,
+		 0, 0, 0, 0, { 3, 0 }, 0, 0,
+		 ULTIMA_AC6000C,
+		 NULL, NULL, NULL
+	 }},
 	{{T_SCANNER, T_FIXED,
 	 "RICOH   ", "IS50            ", "    "}, {
 		 "Ricoh IS-50",
@@ -800,7 +809,7 @@ ss_set_window(ss, sio)
 	if (ss->quirkdata->quirks & SS_Q_PADDING_TYPE)
 		window_data.pad_type = ss->quirkdata->pad_type;
 	else
-		window_data.pad_type = 3; /* 3 = pad to byte boundary */
+		window_data.pad_type = 3; /* 3 = truncate to byte boundary */
 
 	if (ss->quirkdata->quirks & SS_Q_BIT_ORDERING)
 		_lto2l(ss->quirkdata->bit_ordering, window_data.bit_ordering);

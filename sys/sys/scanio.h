@@ -1,4 +1,4 @@
-/*	$OpenBSD: scanio.h,v 1.5 1997/03/11 03:53:55 kstailey Exp $	*/
+/*	$OpenBSD: scanio.h,v 1.6 1997/04/05 23:34:18 kstailey Exp $	*/
 /*	$NetBSD: scanio.h,v 1.1 1996/02/18 20:33:18 mycroft Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ struct scan_io {
 
 #define RICOH_IS410	1	/* Ricoh IS-410 */
 #define FUJITSU_M3096G	2	/* Fujitsu M3096G */
-#define HP_SCANJET_IIC	3	/* HP ScanJet IIc */
+#define HP_SCANJET_IIC	3	/* HP SCL scanners (ScanJet IIc, IIcx, ...) */
 #define RICOH_FS1	4	/* Ricoh FS1 */
 #define SHARP_JX600	5	/* Sharp JX600 */
 #define RICOH_IS50	6	/* Ricoh IS-50 */
@@ -109,5 +109,6 @@ struct scan_io {
 #define MUSTEK_12000CX	11	/* Mustek MFS12000CX */
 #define EPSON_ES300C	12	/* epson es300c */
 #define GENERIC_SCSI2	13	/* good luck 8c{)] */
+#define ULTIMA_AC6000C	14	/* Ultima A6000C */
 
 #endif /* _SYS_SCANIO_H */
