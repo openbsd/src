@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.82 2004/09/27 03:20:21 jaredy Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.83 2004/11/25 21:32:52 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -633,7 +633,7 @@ main(int argc, char *argv[])
 			else if (!strcmp(argv[i] + 1, "ipcomp"))
 				smsg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
 			else
-				errx(1, "invalid SA type %s", argv[i + 1]);
+				errx(1, "invalid SA type %s", argv[i] + 1);
 			i++;
 			continue;
 		}
