@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.c,v 1.2 2000/06/06 06:49:47 deraadt Exp $	*/
+/*	$OpenBSD: rijndael.c,v 1.3 2000/10/15 14:18:31 markus Exp $	*/
 
 /* This is an independent implementation of the encryption algorithm:   */
 /*                                                                      */
@@ -308,7 +308,7 @@ gen_tabs(void)
 	}
 
 	tab_gen = 1;
-};
+}
 
 #define star_x(x) (((x) & 0x7f7f7f7f) << 1) ^ ((((x) & 0x80808080) >> 7) * 0x1b)
 
@@ -401,7 +401,7 @@ rijndael_set_key(rijndael_ctx *ctx, const u4byte *in_key, const u4byte key_len,
 	}
 
 	return ctx;
-};
+}
 
 /* encrypt a block of text  */
 
@@ -446,7 +446,7 @@ rijndael_encrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 
 	out_blk[0] = b0[0]; out_blk[1] = b0[1];
 	out_blk[2] = b0[2]; out_blk[3] = b0[3];
-};
+}
 
 /* decrypt a block of text  */
 
@@ -492,4 +492,4 @@ rijndael_decrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 
 	out_blk[0] = b0[0]; out_blk[1] = b0[1];
 	out_blk[2] = b0[2]; out_blk[3] = b0[3];
-};
+}
