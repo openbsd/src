@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.104 2001/06/19 18:49:53 jasoni Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.105 2001/06/23 02:27:10 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -592,10 +592,27 @@ sendit:
 	if ((u_int16_t)ip->ip_len <= ifp->if_mtu) {
 		ip->ip_len = htons((u_int16_t)ip->ip_len);
 		ip->ip_off = htons((u_int16_t)ip->ip_off);
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, hlen);
+		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
+			m->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
+		else {
+			ip->ip_sum = 0;
+			ip->ip_sum = in_cksum(m, hlen);
+		}
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
+	}
+
+	/* Catch routing changes. */
+	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&
+	    !(ifp->if_capabilities & IFCAP_CSUM_TCPv4)) {
+		/* XXX Compute TCP checksum */
+		m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
+	}
+
+	if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT &&
+	    !(ifp->if_capabilities & IFCAP_CSUM_UDPv4)) {
+		/* XXX Compute UDP checksum */
+		m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
 	}
 
 	/*
@@ -659,8 +676,12 @@ sendit:
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = (struct ifnet *)0;
 		mhip->ip_off = htons((u_int16_t)mhip->ip_off);
-		mhip->ip_sum = 0;
-		mhip->ip_sum = in_cksum(m, mhlen);
+		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
+			m->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
+		else {
+			mhip->ip_sum = 0;
+			mhip->ip_sum = in_cksum(m, mhlen);
+		}
 		ipstat.ips_ofragments++;
 	}
 	/*
@@ -672,8 +693,12 @@ sendit:
 	m->m_pkthdr.len = hlen + firstlen;
 	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
 	ip->ip_off = htons((u_int16_t)(ip->ip_off | IP_MF));
-	ip->ip_sum = 0;
-	ip->ip_sum = in_cksum(m, hlen);
+	if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
+		m->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
+	else {
+		ip->ip_sum = 0;
+		ip->ip_sum = in_cksum(m, hlen);
+	}
 sendorfree:
 	for (m = m0; m; m = m0) {
 		m0 = m->m_nextpkt;
