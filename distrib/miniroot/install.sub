@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.241 2002/07/06 16:18:13 krw Exp $
+#	$OpenBSD: install.sub,v 1.242 2002/07/07 02:34:00 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -93,7 +93,6 @@ set_term() {
 	md_set_term
 }
 
-
 welcome_banner() {
 	cat << __EOT
 
@@ -138,31 +137,16 @@ typing '!foo', or escape to a shell by typing '!'.
 __EOT
 }
 
-not_going_to_install() {
-	cat << __EOT
-
-Enter 'halt' at the prompt to gracefully exit OpenBSD. You can then
-power cycle the machine and boot your original OS.
-__EOT
-}
-
-congrats() {
-	cat << __EOT
-
-CONGRATULATIONS! Your OpenBSD ${MODE} has been successfully completed!
-To boot the new system, enter halt at the command prompt. Once the
-system has halted, reset the machine and boot from the disk.
-__EOT
-
-	md_congrats
-}
-
-get_diskdevs() {
+get_dkdevs() {
 	bsort `sed -ne "${MDDISKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}" /var/run/dmesg.boot`
 }
 
 get_cddevs() {
 	bsort `sed -ne "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}" /var/run/dmesg.boot`
+}
+
+get_ifdevs() {
+	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge)[[:digit:]])' | cutword -t: 1
 }
 
 # Ask for a password, saving the input in $resp.
@@ -269,11 +253,6 @@ cutlast () {
 	eval echo \$\{$#\}
 }
 
-# return available network devices
-get_ifdevs() {
-	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge)[[:digit:]])' | cutword -t: 1
-}
-
 bsort() {
 	local _l _a=$1 _b
 
@@ -340,10 +319,10 @@ __EOT
 
 # $1 is the mountpoint the local directory will be relative to.
 # $2 is the default directory
-get_localdir() {
+get_setsdir() {
 	local _mp=$1 _dir=$2 _mounted
 	
-	local_sets_dir=
+	SETSDIR=
 
 	_mounted=`mount | sed -ne "/\(.*\)\/\(${_mp#/}\)\/*\(.*\) type.*/s//\/\3/p"`
 
@@ -368,7 +347,7 @@ __EOT
 		*)	if [ ! -d "${_mp}/${resp}" ]; then
 				echo "The directory '${resp}' does not exist."
 			elif list_has_sets "`ls -l ${_mp}/${resp}`" $THESETS; then
-				local_sets_dir=${_mp}/${resp}
+				SETSDIR=${_mp}/${resp}
 				return
 			else
 				cat << __EOT
@@ -411,13 +390,13 @@ getanotherdisk() {
 Now you can select another disk to initialize. (Do not re-select a disk
 you have already entered information for). Available disks are:
 
-$_DKDEVS
+$DKDEVS
 
 __EOT
 	ask "Which one?" done
 	if [ "$resp" = "done" ]; then
 		DISK=done
-	elif isin $resp $_DKDEVS ; then
+	elif isin $resp $DKDEVS ; then
 		DISK=$resp
 		makedev $resp || DISK=
 	else
@@ -429,10 +408,8 @@ __EOT
 getrootdisk() {
 	local _defdsk
 
-	_defdsk=`echo $_DKDEVS | cutlast`
-	if [ "$_defdsk" != "$_DKDEVS" ]; then
-		_defdsk=
-	fi
+	_defdsk=`echo $DKDEVS | cutlast`
+	[ "$_defdsk" = "$DKDEVS" ] || _defdsk=
 
 	cat << __EOT
 
@@ -441,11 +418,11 @@ Note the unit number may be different than the unit number you used in the
 boot program (especially on a machine with multiple disk controllers).
 Available disks are:
 
-$_DKDEVS
+$DKDEVS
 
 __EOT
 	ask "Which disk is the root disk?" "$_defdsk"
-	if isin $resp $_DKDEVS ; then
+	if isin $resp $DKDEVS ; then
 		ROOTDISK=$resp
 		makedev $resp || ROOTDISK=
 	else
@@ -507,8 +484,6 @@ do_selection_list() {
 configure_all_interfaces() {
 	local _ifsdone _ifs
 
-	_IFS=`get_ifdevs`
-
 	while : ; do
 		cat << __EOT
 
@@ -516,13 +491,13 @@ You may configure the following network interfaces (the interfaces
 marked with [X] have been successfully configured):
 
 __EOT
-		do_selection_list "$_IFS" "$_ifsdone" "Configure which interface?"
+		do_selection_list "$IFDEVS" "$_ifsdone" "Configure which interface?"
 
 		case $resp in
 		"done")	break	
 			;;
 		*)	_ifs=$resp
-			if isin $_ifs $_IFS ; then
+			if isin $_ifs $IFDEVS ; then
 				if configure_ifs $_ifs ; then
 					_ifsdone="$_ifs $_ifsdone"
 				fi
@@ -846,15 +821,15 @@ enable_network() {
 }
 
 # Do globbing on the selection and parse +/-, sets the global
-# _get_files appropriately.
+# GET_FILES appropriately.
 glob_selection() {
 	local _selection=$1 _src=$2
 	local _action _nomatch _f
 
-	# Change +/- into add/remove
+	# Change +/- into add/remove, but ignore bare '+' or '-'
 	_action=addel
 	case $_selection in
-	"")	return
+	""|+|-)	return
 		;;
 	+*)	_selection=${_selection#?}
 		;;
@@ -866,10 +841,10 @@ glob_selection() {
 	[ "$_selection" = "all" ] && _selection=*
 
 	set -o noglob
-	for _f in $_sets; do
+	for _f in $SETS; do
 		eval "case $_f in
 		$_selection)
-			_get_files=\`$_action $_f \$_get_files\`
+			GET_FILES=\`$_action $_f \$GET_FILES\`
 			_nomatch=false
 			;;
 		esac"
@@ -887,29 +862,29 @@ __EOT
 	fi
 }
 
-# Set global _sets to either
+# Set global SETS to either
 #     1) a list of sets found in both $1 and $THESETS, where
 #        $2 is the location that generated the list of files in $1.
 # or
 #     2) a list of .tgz or .tar.gz files found in $2
-get_sets_list () {
+get_sets () {
 	local _f _file_list=$1 _src=$2
 
-	_sets=
+	SETS=
 
 	for _f in $THESETS ; do
 		if [ "$_f" = "kernel" ]; then
 			if isin bsd $_file_list; then
-				_sets="$_sets bsd"
+				SETS="$SETS bsd"
 			fi
 		elif isin ${_f}${VERSION}.tar.gz $_file_list; then
-			_sets="$_sets ${_f}${VERSION}.tar.gz"
+			SETS="$SETS ${_f}${VERSION}.tar.gz"
 		elif isin ${_f}${VERSION}.tgz $_file_list; then
-			_sets="$_sets ${_f}${VERSION}.tgz"
+			SETS="$SETS ${_f}${VERSION}.tgz"
 		fi
 	done
 
-	if [ -z "$_sets" ]; then
+	if [ -z "$SETS" ]; then
 		cat << __EOT
 The directory
 
@@ -924,12 +899,12 @@ __EOT
 		# *.tar.gz and *.tgz are possible sets
 		for _f in $_file_list ; do
 			case $_f in
-			*.tar.gz|*.tgz)	_sets="$_sets ${_f}"
+			*.tar.gz|*.tgz)	SETS="$SETS ${_f}"
 			esac
 		done
 	fi
 
-	if [ -z "$_sets" ]; then
+	if [ -z "$SETS" ]; then
 		ask "There are no *.tar.gz or *.tgz files in ${_src}.\nSee a directory listing?" y
 		case $resp in
 		n*|N*)	return ;;
@@ -939,17 +914,17 @@ __EOT
 	fi
 }
 
-# Set global _get_files to the list of sets requested by the user.
+# Set global GET_FILES to the list of sets requested by the user.
 # $1 = list of files available in source directory or url.
 # $2 = source directory or url
-get_get_files_list () {
+get_get_files () {
 	local _files=$1 _src=$2
 
 	get_sets_list "$_files" "$_src"
 
-	[ "$_sets" ] || return
+	[ "$SETS" ] || return
 
-	_get_files=
+	GET_FILES=
 
 	cat << __EOT
 
@@ -959,12 +934,12 @@ base and bsd sets. Consult the installation notes if you are not sure
 which sets are required!
 __EOT
 	# Set the default list of files
-	for _f in $_sets ; do
-		# $_sets contains only .tgz and .tar.gz file names and 'bsd'.
+	for _f in $SETS ; do
+		# $SETS contains only .tgz and .tar.gz file names and 'bsd'.
 		case $_f in
 		base*|bsd|comp*|etc*|game*|man*|misc*)
-			if ! isin ${_f} ${_setsdone}; then
-				_get_files=`addel ${_f} ${_get_files}`
+			if ! isin ${_f} ${SETSDONE}; then
+				GET_FILES=`addel ${_f} ${GET_FILES}`
 			fi
 			;;
 		esac
@@ -979,24 +954,18 @@ all the sets, or 'done'. You may de-select a set by prepending a '-'
 to its name.
 
 __EOT
-		do_selection_list "$_sets" "$_get_files" "File Name?"
+		do_selection_list "$SETS" "$GET_FILES" "File Name?"
 
-		# Ignore a bare '-' or '+'
-		case $resp in
-		+|-)	continue
-			;;
-		done)	break
-			;;
-		esac
+		[ "$resp" = "done" ] && break
 
 		glob_selection "$resp" "$_src"
 	done
 }
 
-# Install the list of files in the global _get_files from the source
+# Install the list of files in the global GET_FILES from the source
 # named in $1. Display an error message for failed installs so the
 # user will know to try again.
-install_get_files_list () {
+install_get_files () {
 	local _f _src=$1
 
 	ask "Ready to ${MODE} sets?" y
@@ -1005,7 +974,7 @@ install_get_files_list () {
 	esac
 
 	echo
-	for _f in $_get_files ; do
+	for _f in $GET_FILES ; do
 		echo "Getting ${_f} ..."
 		case $_f in
 		*.tar.gz|*.tgz)
@@ -1018,7 +987,7 @@ install_get_files_list () {
 		if [ $? -ne 0 ]; then
 			echo "'${_f}' did not install correctly."
 		else
-			_setsdone=`addel ${_f} ${_setsdone}`
+			SETSDONE=`addel ${_f} ${SETSDONE}`
 		fi
 	done
 }
@@ -1053,7 +1022,7 @@ questions and then the files will be retrieved iteratively via ${_url_type}.
 
 __EOT
 	# Proxy the connections?
-	[ "$_proxy_host" ] || _proxy_host=none
+	: ${_proxy_host:=none}
 
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" "$_proxy_host"
 	if [ "$resp" = "none" ]; then
@@ -1084,7 +1053,8 @@ __EOT
 	fi
 
 	# Provide a list of possible servers
-	[ "$_ftp_getlist" ] || _ftp_getlist=y
+	: ${_ftp_getlist:=y}
+
 	ask "Do you want a list of potential ${_url_type} servers?" "$_ftp_getlist"
 	case $resp in
 	n*|N*)	_ftp_getlist=n
@@ -1152,30 +1122,25 @@ __EOT
 	done
 
 	if [ "$_url_type" = "ftp" ]; then
-		# Need default values even if we proxy ftp...
-		[ "$_ftp_server_login" ] || _ftp_server_login=anonymous
-		[ "$_ftp_server_password" ] || _ftp_server_password=root@`hostname`.$FQDN
-
 		# Get login name, setting IFS to nothing so trailing or
 		# embedded blanks are preserved!
 		_oifs=$IFS
 		IFS=
 		resp=
+		: ${_ftp_server_login:=anonymous}
 		while [ -z "$resp" ] ; do
 			ask "Login?" "$_ftp_server_login"
 			_ftp_server_login=$resp
 		done
 
 		# Get password unless anonymous
+		_ftp_server_password=root@`hostname`.$FQDN
 		if [ "$_ftp_server_login" != "anonymous" ]; then
 			resp=
 			while [ -z "$resp" ] ; do
 				askpass "Password (will not echo):"
-				_ftp_server_password=$resp
 			done
-		else
-			# only used by ftp_list_files()
-			_ftp_server_password=root@`hostname`.$FQDN
+			_ftp_server_password=$resp
 		fi
 		IFS=$_oifs
 	fi
@@ -1199,10 +1164,10 @@ __EOT
 		_file_list=`ftp -o - -V "${_url_base}/index.txt" | sed 's///'`
 	fi
 
-	get_get_files_list "$_file_list" "`eval echo \\$_${_url_type}_server_dir`"
+	get_get_files "$_file_list" "`eval echo \\$_${_url_type}_server_dir`"
 
 	# User may have selected no files
-	[ "$_get_files" ] || return
+	[ "$GET_FILES" ] || return
 
 	cat << __EOT
 
@@ -1210,7 +1175,7 @@ Fetching files via ${_url_type} may take a long time, especially over a slow
 network connection.
 __EOT
 
-	install_get_files_list "$_url_base"
+	install_get_files "$_url_base"
 }
 
 # $1 - mount point directory is relative to
@@ -1218,23 +1183,23 @@ __EOT
 install_mounted_fs() {
 	local _f
 
-	get_localdir "$1" "$2"
+	get_setsdir "$1" "$2"
 
-	[ -d "$local_sets_dir" ] || return
+	[ -d "$SETSDIR" ] || return
 
-	get_get_files_list "`ls -l ${local_sets_dir}`" "$local_sets_dir"
+	get_get_files "`ls -l ${SETSDIR}`" "$SETSDIR"
 
 	# User may have selected no files
-	[ "$_get_files" ] || return
+	[ "$GET_FILES" ] || return
 
-	install_get_files_list "file:$local_sets_dir"
+	install_get_files "file:$SETSDIR"
 }
 
 install_cdrom() {
 	local _drive _part _fstype _directory _n
 
 	# Get the cdrom device info
-	if [ -z "$_CDDEVS" ]; then
+	if [ -z "$CDDEVS" ]; then
 		echo "No CD-ROM devices are available."
 		return
 	fi
@@ -1245,17 +1210,17 @@ The following CD-ROM devices are installed on your system.
 Please make sure the CD is in the CD-ROM drive and select
 the device containing the CD with the installation sets:
 
-$_CDDEVS
+$CDDEVS
 
 __EOT
 
-	_drive=`echo $_CDDEVS | cutword 1`
+	_drive=`echo $CDDEVS | cutword 1`
 	ask "Which CD-ROM contains the installation media?" "$_drive"
 	case $resp in
 	abort)	echo "Aborting."
 		return
 		;;
-	*)	if isin $resp $_CDDEVS ; then
+	*)	if isin $resp $CDDEVS ; then
 			_drive=$resp
 		else
 			echo "\nThe CD-ROM $resp does not exist.\nAborting."
@@ -1339,7 +1304,7 @@ __EOT
 
 mount_a_disk() {
 	# Mount a disk on /mnt2. The set of disk devices to choose from
-	# is $_DKDEVS.
+	# is $DKDEVS.
 	# returns 0 on success, 1 on failure
 
 	local _drive _def_partition _partition_range _partition
@@ -1350,7 +1315,7 @@ mount_a_disk() {
 The following disk devices are installed on your system; please select
 the disk device containing the partition with the installation sets:
 
-$_DKDEVS
+$DKDEVS
 
 __EOT
 
@@ -1360,7 +1325,7 @@ __EOT
 	abort)	echo "Aborting."
 		return 1
 		;;
-	*)	if isin $resp $_DKDEVS ; then
+	*)	if isin $resp $DKDEVS ; then
 			_drive=$resp
 		else
 			echo "\nThe disk $resp does not exist.\nAborting."
@@ -1578,7 +1543,7 @@ __EOT
 	echo "Extraction complete."
 }
 
-get_timezone() {
+set_timezone() {
 	local _zoneroot=/mnt/usr/share/zoneinfo/ _zonepath
 
 	# If the timezone directory structure is not
@@ -1601,7 +1566,7 @@ __EOT
 		TZ=${TZ#${_zoneroot#/mnt}}
 	fi
 
-	[ "$TZ" ] || TZ=GMT
+	: ${TZ:=GMT}
 
 	while : ; do
 		_zonepath=$_zoneroot
@@ -1967,7 +1932,7 @@ __EOT
 		resp=none
 		if [ -f /tmp/mygate ]; then
 			resp=`cat /etc/mygate`
-			[ "$resp" ] || resp=none
+			: ${_resp:=none}
 		fi
 	fi
 	ask "Enter IP address of default route:" "$resp"
@@ -2056,8 +2021,7 @@ set_machdep_apertureallowed() {
 }
 
 finish_up() {
-	# Get timezone info
-	get_timezone
+	set_timezone
 
 	echo -n "Making all device nodes (by running /dev/MAKEDEV all) ..."
 	cd /mnt/dev
@@ -2065,7 +2029,7 @@ finish_up() {
 	echo "... done."
 	cd /
 
-	md_installboot ${ROOTDISK}
+	md_installboot $ROOTDISK
 
 	populateusrlocal
 
@@ -2073,15 +2037,20 @@ finish_up() {
 	[ -x /mnt/${MODE}.site ] && /mnt/usr/sbin/chroot /mnt /${MODE}.site
 
 	# Unmount filesystems, etc. Disable trap that would do same on exit.
-	# Do this manually rather than through the trap so md_congrats is
+	# Do this manually rather than through the trap so congrats is
 	# the last message printed.
 	trap - HUP INT QUIT TERM EXIT
 	cleanup_on_exit
 
 	# Pat on the back.
-	congrats
+	cat << __EOT
 
-	exit 0
+CONGRATULATIONS! Your OpenBSD ${MODE} has been successfully completed!
+To boot the new system, enter halt at the command prompt. Once the
+system has halted, reset the machine and boot from the disk.
+__EOT
+
+	md_congrats
 }
 
 # #######################################################################
@@ -2104,25 +2073,23 @@ export VERSION VERSION_MAJOR VERSION_MINOR
 dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /var/run/dmesg.boot
 
 # Scan /var/run/dmesg.boot for disks and cds
-_DKDEVS=`get_diskdevs`
-_CDDEVS=`get_cddevs`
+DKDEVS=`get_dkdevs`
+CDDEVS=`get_cddevs`
+IFDEVS=`get_ifdevs`
 
-# extra "site" set can be provided by person doing install or
-# upgrade.
+# extra "site" set can be provided by person doing install or upgrade.
 THESETS="base etc misc comp man game xbase xshare xfont xserv site $MDSETS"
 
 # Global variable using during sets installation
-local_sets_dir=
-_sets=
-_setsdone=
-_get_files=
+SETS=
+SETSDIR=
+SETSDONE=
+GET_FILES=
 
 # decide upon an editor
 if [ -z "$EDITOR" ] ; then
 	EDITOR=ed
-	if [ -x /usr/bin/vi ]; then
-		EDITOR=vi
-	fi
+	[ -x /usr/bin/vi ] && EDITOR=vi
 	export EDITOR
 fi
 
@@ -2150,7 +2117,11 @@ ask "roceed with ${MODE}?" n
 case $resp in
 y*|Y*)	echo "\nCool!  Let's get to it...\n"
 	;;
-*)	not_going_to_install
+*)	cat << __EOT
+
+Enter 'halt' at the prompt to gracefully exit OpenBSD. You can then
+power cycle the machine and boot your original OS.
+__EOT
 	exit
 	;;
 esac
