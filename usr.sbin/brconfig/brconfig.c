@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.6 1999/03/12 02:40:43 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.7 1999/03/12 23:19:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -76,10 +76,11 @@ void printb(char *, unsigned short, char *);
 #define	IFBABITS	"\020\1STATIC"
 
 void
-usage() {
-	fprintf(stderr, "brconfig -a\n");
+usage()
+{
+	fprintf(stderr, "usage: brconfig -a\n");
 	fprintf(stderr,
-	    "brconfig interface [up] [down] [add interface] [delete interface] ...\n");
+	    "usage: brconfig interface [up] [down] [add if] [del if] ...\n");
 }
 
 int
