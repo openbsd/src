@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.14 2004/09/29 12:16:55 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.15 2004/09/29 12:52:44 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -332,7 +332,7 @@ Conf7KL2:
 1:
 	PTR_ADDU t0, 32
 	bne	t0, t1, 1b
-	cache	IndexStoreTagS, -4(t0)
+	cache	IndexStoreTag_S, -4(t0)
 	sync
 
 	LA	t0, KSEG0_BASE
@@ -348,7 +348,7 @@ Conf7KL2:
 1:
 	PTR_ADDU t0, 32
 	bne	t0, t1, 1b
-	cache	IndexStoreTagS, -4(t0)
+	cache	IndexStoreTag_S, -4(t0)
 	sync
 
 3:
