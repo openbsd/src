@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.51 2000/10/26 00:41:25 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.52 2000/11/17 05:18:41 angelos Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -279,9 +279,9 @@ hifn_attach(parent, self, aux)
 		    hifn_newsession, hifn_freesession, hifn_process);
 		/*FALLTHROUGH*/
 	case HIFN_PUSTAT_ENA_1:
-		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC96,
+		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC,
 		    hifn_newsession, hifn_freesession, hifn_process);
-		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC96,
+		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC,
 		    NULL, NULL, NULL);
 		crypto_register(sc->sc_cid, CRYPTO_DES_CBC,
 		    NULL, NULL, NULL);
@@ -1150,8 +1150,8 @@ hifn_newsession(sidp, cri)
 		return (ENOMEM);
 
 	for (c = cri; c != NULL; c = c->cri_next) {
-		if (c->cri_alg == CRYPTO_MD5_HMAC96 ||
-		    c->cri_alg == CRYPTO_SHA1_HMAC96) {
+		if (c->cri_alg == CRYPTO_MD5_HMAC ||
+		    c->cri_alg == CRYPTO_SHA1_HMAC) {
 			if (mac)
 				return (EINVAL);
 			mac = 1;
@@ -1251,8 +1251,8 @@ hifn_process(crp)
 	crd2 = crd1->crd_next;
 
 	if (crd2 == NULL) {
-		if (crd1->crd_alg == CRYPTO_MD5_HMAC96 ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) {
+		if (crd1->crd_alg == CRYPTO_MD5_HMAC ||
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC) {
 			maccrd = crd1;
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
@@ -1266,8 +1266,8 @@ hifn_process(crp)
 			goto errout;
 		}
 	} else {
-		if ((crd1->crd_alg == CRYPTO_MD5_HMAC96 ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) &&
+		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
 			crd2->crd_alg == CRYPTO_3DES_CBC) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
@@ -1276,8 +1276,8 @@ hifn_process(crp)
 			enccrd = crd2;
 		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
 		    crd1->crd_alg == CRYPTO_3DES_CBC) &&
-		    (crd2->crd_alg == CRYPTO_MD5_HMAC96 ||
-			crd2->crd_alg == CRYPTO_SHA1_HMAC96) &&
+		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
+			crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
@@ -1331,7 +1331,7 @@ hifn_process(crp)
 		    HIFN_MAC_CMD_MODE_HMAC | HIFN_MAC_CMD_RESULT |
 		    HIFN_MAC_CMD_POS_IPSEC | HIFN_MAC_CMD_TRUNC;
 
-		if (maccrd->crd_alg == CRYPTO_MD5_HMAC96)
+		if (maccrd->crd_alg == CRYPTO_MD5_HMAC)
 			cmd->mac_masks |= HIFN_MAC_CMD_ALG_MD5;
 		else
 			cmd->mac_masks |= HIFN_MAC_CMD_ALG_SHA1;
@@ -1425,8 +1425,8 @@ hifn_callback(sc, cmd, macbuf)
 
 	if (macbuf != NULL) {
 		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
-			if (crd->crd_alg != CRYPTO_MD5_HMAC96 &&
-			    crd->crd_alg != CRYPTO_SHA1_HMAC96)
+			if (crd->crd_alg != CRYPTO_MD5_HMAC &&
+			    crd->crd_alg != CRYPTO_SHA1_HMAC)
 				continue;
 			m_copyback((struct mbuf *)crp->crp_buf,
 			    crd->crd_inject, 12, macbuf);

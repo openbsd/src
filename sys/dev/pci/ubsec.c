@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.33 2000/09/21 04:39:11 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.34 2000/11/17 05:18:41 angelos Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -183,8 +183,8 @@ ubsec_attach(parent, self, aux)
 	crypto_register(sc->sc_cid, CRYPTO_3DES_CBC,
 	    ubsec_newsession, ubsec_freesession, ubsec_process);
 	crypto_register(sc->sc_cid, CRYPTO_DES_CBC, NULL, NULL, NULL);
-	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC96, NULL, NULL, NULL);
-	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC96, NULL, NULL, NULL);
+	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, NULL, NULL, NULL);
+	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, NULL, NULL, NULL);
 
 	WRITE_REG(sc, BS_CTRL,
 	    READ_REG(sc, BS_CTRL) | BS_CTRL_MCR1INT | BS_CTRL_DMAERR |
@@ -383,8 +383,8 @@ ubsec_newsession(sidp, cri)
 		return (EINVAL);
 
 	for (c = cri; c != NULL; c = c->cri_next) {
-		if (c->cri_alg == CRYPTO_MD5_HMAC96 ||
-		    c->cri_alg == CRYPTO_SHA1_HMAC96) {
+		if (c->cri_alg == CRYPTO_MD5_HMAC ||
+		    c->cri_alg == CRYPTO_SHA1_HMAC) {
 			if (macini)
 				return (EINVAL);
 			macini = c;
@@ -457,7 +457,7 @@ ubsec_newsession(sidp, cri)
 		for (i = 0; i < macini->cri_klen / 8; i++)
 			macini->cri_key[i] ^= HMAC_IPAD_VAL;
 
-		if (macini->cri_alg == CRYPTO_MD5_HMAC96) {
+		if (macini->cri_alg == CRYPTO_MD5_HMAC) {
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, macini->cri_key,
 			    macini->cri_klen / 8);
@@ -478,7 +478,7 @@ ubsec_newsession(sidp, cri)
 		for (i = 0; i < macini->cri_klen / 8; i++)
 			macini->cri_key[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
 
-		if (macini->cri_alg == CRYPTO_MD5_HMAC96) {
+		if (macini->cri_alg == CRYPTO_MD5_HMAC) {
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, macini->cri_key,
 			    macini->cri_klen / 8);
@@ -598,8 +598,8 @@ ubsec_process(crp)
 	crd2 = crd1->crd_next;
 
 	if (crd2 == NULL) {
-		if (crd1->crd_alg == CRYPTO_MD5_HMAC96 ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) {
+		if (crd1->crd_alg == CRYPTO_MD5_HMAC ||
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC) {
 			maccrd = crd1;
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
@@ -611,8 +611,8 @@ ubsec_process(crp)
 			goto errout;
 		}
 	} else {
-		if ((crd1->crd_alg == CRYPTO_MD5_HMAC96 ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) &&
+		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
 			crd2->crd_alg == CRYPTO_3DES_CBC) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
@@ -620,8 +620,8 @@ ubsec_process(crp)
 			enccrd = crd2;
 		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
 		    crd1->crd_alg == CRYPTO_3DES_CBC) &&
-		    (crd2->crd_alg == CRYPTO_MD5_HMAC96 ||
-			crd2->crd_alg == CRYPTO_SHA1_HMAC96) &&
+		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
+			crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
@@ -672,7 +672,7 @@ ubsec_process(crp)
 	if (maccrd) {
 		macoffset = maccrd->crd_skip;
 
-		if (maccrd->crd_alg == CRYPTO_MD5_HMAC96)
+		if (maccrd->crd_alg == CRYPTO_MD5_HMAC)
 			q->q_ctx.pc_flags |= UBS_PKTCTX_AUTH_MD5;
 		else
 			q->q_ctx.pc_flags |= UBS_PKTCTX_AUTH_SHA1;
@@ -965,8 +965,8 @@ ubsec_callback(q)
 	}
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
-		if (crd->crd_alg != CRYPTO_MD5_HMAC96 &&
-		    crd->crd_alg != CRYPTO_SHA1_HMAC96)
+		if (crd->crd_alg != CRYPTO_MD5_HMAC &&
+		    crd->crd_alg != CRYPTO_SHA1_HMAC)
 			continue;
 		m_copyback((struct mbuf *)crp->crp_buf,
 		    crd->crd_inject, 12, (caddr_t)q->q_macbuf);
