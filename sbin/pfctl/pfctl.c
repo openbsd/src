@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.79 2002/06/12 22:27:05 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.80 2002/06/14 17:31:30 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -349,8 +349,8 @@ pfctl_kill_states(int dev, int opts)
 		freeaddrinfo(res[1]);
 
 	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "killed %d states from %d sources and %d \
-		    destinations\n", killed, sources, dests);
+		fprintf(stderr, "killed %d states from %d sources and %d "
+		    "destinations\n", killed, sources, dests);
 	return (0);
 }
 
