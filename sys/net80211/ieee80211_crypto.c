@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.2 2004/06/27 04:14:23 millert Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -113,13 +113,10 @@ static	u_int32_t ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len);
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
-
 	/*
 	 * Setup crypto support.
 	 */
 	ieee80211_crc_init();
-	ic->ic_iv = arc4random();
 }
 
 void
@@ -195,7 +192,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	if (txflag) {
 		kid = ic->ic_wep_txkey;
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
-		iv = ic->ic_iv;
+		iv = ic->ic_iv ? ic->ic_iv : arc4random();
 		/*
 		 * Skip 'bad' IVs from Fluhrer/Mantin/Shamir:
 		 * (B, 255, N) with 3 <= B < 8
