@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.33 1999/02/04 23:16:06 niklas Exp $
+#	$OpenBSD: NETTAN,v 1.34 1999/08/05 01:08:09 niklas Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -6,7 +6,7 @@
 machine		i386		# architecture, used by config; REQUIRED
 
 #include "../../../conf/GENERIC"
-#	$OpenBSD: NETTAN,v 1.33 1999/02/04 23:16:06 niklas Exp $
+#	$OpenBSD: NETTAN,v 1.34 1999/08/05 01:08:09 niklas Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -24,6 +24,7 @@ option		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
+option		KMEMSTATS	# collect malloc(9) statistics
 
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores
@@ -43,10 +44,11 @@ option		QUOTA		# UFS quotas
 #option		LFS		# log-structured file system
 option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
-#option		XFS		# xfs filesystem
+option		XFS		# xfs filesystem
 
-#option		TCP_SACK	# Selective Acknowledgements for TCP
+option		TCP_SACK	# Selective Acknowledgements for TCP
 #option		TCP_FACK	# Forward Acknowledgements for TCP
+#option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
   
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
@@ -62,9 +64,10 @@ option		PROCFS		# /proc
 option		UMAPFS		# NULLFS + uid and gid remapping
 option		UNION		# union file system
 
-#option		GATEWAY		# packet forwarding
+option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
 option		IPSEC		# IPsec
+#option		KEY		# PF_KEY (implied by IPSEC)
 #option		NS		# XNS
 #option		NSIP		# XNS tunneling over IP
 #option		IPX		# IPX+SPX
@@ -82,8 +85,9 @@ pseudo-device	bpfilter 8	# packet filter
 pseudo-device	sl	2	# CSLIP
 #pseudo-device	ppp	2	# PPP
 pseudo-device	ppp	8	# PPP	# NETTAN customization
+pseudo-device	sppp		# Sync PPP/HDLC
 pseudo-device	tun	2	# network tunneling over tty
-pseudo-device	enc	1	# encryption device
+pseudo-device	enc	1	# IPSEC needs the encapsulation interface
 #pseudo-device	strip	1	# Starmode Radio IP interface
 
 pseudo-device	pty	64	# pseudo-terminals
@@ -91,6 +95,7 @@ pseudo-device	tb	1	# tablet line discipline
 pseudo-device	vnd	4	# paging to files
 pseudo-device	ccd	4	# concatenated disk devices
 pseudo-device	ksyms	1	# kernel symbols device
+pseudo-device	bridge	2	# network bridging support
 
 option		BOOT_CONFIG	# add support for boot -c
 #endinclude
@@ -121,11 +126,6 @@ option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 option		COMPAT_LINUX	# binary compatibility with Linux
 option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		COMPAT_BSDOS	# binary compatibility with BSD/OS
-
-option		XFS		# xfs filesystem
-
-option		TCP_SACK	# Selective Acknowledgements for TCP
-option		TCP_FACK	# Forward Acknowledgements for TCP
 
 maxusers	32		# estimated number of users
 
@@ -171,14 +171,14 @@ pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 pccom1	at isa? port 0x2f8 irq 3
 pccom2	at isa? port 0x3e8 irq 5
 #pccom3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
-#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
+ast0	at isa? disable port 0x1a0 irq 5	# AST 4-port serial card
 #ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
-#pccom*	at ast? slave ?
+pccom*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 boca0	at isa? port 0x180 irq 12	# BOCA 8-port serial cards
 boca1	at isa? port 0x1c0 irq 12	# BOCA 8-port serial cards
 pccom*	at boca? slave ?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cars
+#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #pccom*	at rtfps? slave ?
 pccom*	at pcmcia? function ?		# PCMCIA modems/serial ports
 pccom*	at isapnp?
@@ -212,7 +212,6 @@ scsibus* at ahb?
 ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
-#scsibus0 at ahc?
 scsibus* at ahc?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
@@ -235,8 +234,6 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
 
-#sd0	at scsibus0 target 0 lun ?	# Conner 2GB
-#sd1	at scsibus0 target 2 lun ?	# Quantum Atlas 4GB
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
@@ -250,15 +247,26 @@ fd*	at fdc? drive ?
 
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
-wd*	at wdc? drive ?
+# IDE controllers
+pciide* at pci ? dev ? function ? flags 0x0000
 
-atapibus* at wdc?
-acd*	at atapibus? drive?
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
+wdc*	at pcmcia? function ?
+wdc*	at isapnp?
 
-wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+# IDE hard drives
+wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
 
+# ATAPI<->SCSI
+atapiscsi* at wdc? channel ?
+atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
+
+#wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+
+# Networking devices
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
 we*	at isapnp?
@@ -279,6 +287,7 @@ ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
 ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet
 fea*	at eisa? slot ?				# DEC DEFEA FDDI
+lmc*	at pci? dev ? function ?		# Lan Media Corp SSI/T3/HSSI
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet
 le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet
@@ -289,6 +298,8 @@ ep*	at pci? dev ? function ?		# 3C59x ethernet
 ne*	at pcmcia? function ?			# PCMCIA based NE2000 ethernet
 ep*	at pcmcia? function ?			# PCMCIA based 3C5xx ethernet
 sm*	at pcmcia? function ?			# PCMCIA based sm ethernet
+xe*	at pcmcia? function ?			# Xircom ethernet
+wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI
 xl*	at pci? dev ? function ?		# 3c9xx ethernet
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
@@ -297,18 +308,20 @@ tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
 mx*	at pci? dev ? function ?		# Macronix PMAC ethernet
 vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
+wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
+ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
 inphy*	at mii? phy ?				# Intel 82555 PHYs
-#icsphy*	at mii? phy ?				# ICS 1890 PHYs
-#lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
-#nsphy*	at mii? phy ?				# NS and compatible PHYs
+icsphy*	at mii? phy ?				# ICS 1890 PHYs
+#lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
+nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
-#mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
-#ukphy*	at mii? phy ?				# "unknown" PHYs
+#mtdphy*	at mii? phy ?			# Myson MTD972 PHYs
+ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# sound port driver
@@ -317,19 +330,25 @@ eap*	at pci? dev ? function ?		# Ensoniq AudioPCI S5016
 sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
 sb*	at isapnp?
+ess*	at isapnp?				# ESS Tech ES188[78], ES888
 wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
+wss*	at isapnp?
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis UltraSound (drq2 is record drq)
 ym*	at isapnp?
+mpu*	at isapnp?
 
 # OPL[23] FM syntheziers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at sb?
+opl*	at ess?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
 midi*	at sb?			# SB MPU401 port
 midi*	at opl?			# OPL FM synth
+midi*	at ym?
+midi*	at mpu?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -339,6 +358,7 @@ audio*  at sb?
 audio*  at gus?
 audio*  at pas?
 audio*  at sp?
+audio*	at ess?
 audio*  at wss?
 audio*  at ym?
 audio*  at eap?
@@ -349,6 +369,11 @@ bktr0   at pci? dev ? function ?
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 joy*	at isapnp?
+
+#wdt0	at pci? dev ? function ?	# Ind Computer Source PCI-WDT50x driver
+
+# crypto support
+#aeon*	at pci? dev ? function ?		# Aeon crypto card
 
 pseudo-device	pctr		1
 pseudo-device	sequencer	1
