@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.22 2002/06/13 02:19:27 jason Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.23 2002/07/31 16:47:50 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -106,7 +106,7 @@ ramdisk)
 _std(2, 3, 76, 7, 16)
 	M mouse		c 13 0 666
 	M fb		c 22 0 666
-	M openprom	c 70 0 644
+	M openprom	c 70 0 640 kmem
 	;;
 
 mouse*)
