@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.9 2003/10/26 15:34:16 drahn Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.10 2004/08/17 22:20:55 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -121,7 +121,7 @@ wi_obio_attach(parent, self, aux)
 
 	/* Establish the interrupt. */
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_NET,
-		wi_intr, psc, "wi_obio");
+		wi_intr, psc, sc->sc_dev.dv_xname);
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);

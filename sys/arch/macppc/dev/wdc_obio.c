@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.21 2004/03/17 18:57:07 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.22 2004/08/17 22:20:55 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -184,7 +184,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	chp->data32ioh = chp->cmd_ioh;
 
 	mac_intr_establish(parent, intr, IST_LEVEL, IPL_BIO, wdcintr, chp,
-	    "wdc_obio");
+	    sc->sc_wdcdev.sc_dev.dv_xname);
 
 	sc->sc_wdcdev.set_modes = wdc_obio_adjust_timing;
 	if (use_dma) {
