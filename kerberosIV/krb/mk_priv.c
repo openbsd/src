@@ -1,5 +1,5 @@
-/*	$OpenBSD: mk_priv.c,v 1.5 1997/12/12 05:30:27 art Exp $	*/
-/* $KTH: mk_priv.c,v 1.18 1997/04/01 08:18:37 joda Exp $ */
+/*	$OpenBSD: mk_priv.c,v 1.6 1998/05/18 00:53:51 art Exp $	*/
+/*	$KTH: mk_priv.c,v 1.20 1998/02/19 19:13:40 joda Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -111,7 +111,7 @@ krb_mk_priv(void *in, void *out, u_int32_t length,
     memcpy(p, in, length);
     p += length;
     
-    gettimeofday(&tv, NULL);
+    krb_kdctimeofday(&tv);
 
     *p++ =tv.tv_usec / 5000;
     

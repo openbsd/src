@@ -1,5 +1,5 @@
-/*	$OpenBSD: krb_locl.h,v 1.5 1998/03/25 21:50:14 art Exp $	*/
-/* $KTH: krb_locl.h,v 1.44 1997/10/28 15:37:40 bg Exp $ */
+/*	$OpenBSD: krb_locl.h,v 1.6 1998/05/18 00:53:49 art Exp $	*/
+/*	$KTH: krb_locl.h,v 1.48 1998/04/04 17:56:49 assar Exp $		*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -80,11 +80,6 @@
 
 /* --- */
 
-/* Globals! */
-extern int krb_debug;
-extern int krb_ap_req_debug;
-extern int krb_dns_debug;
-
 /* Utils */
 int
 krb_name_to_name __P((
@@ -111,7 +106,6 @@ kdc_reply_cred __P((
 void
 k_ricercar __P((char *name));
 
-
 /* used in rd_safe.c and mk_safe.c */
 void
 fixup_quad_cksum __P((
@@ -121,6 +115,9 @@ fixup_quad_cksum __P((
 	void *new_checksum,
 	void *old_checksum,
 	int little));
+
+void
+krb_kdctimeofday __P((struct timeval *tv));
 
 /* stuff from libroken*/
 

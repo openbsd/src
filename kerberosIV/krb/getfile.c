@@ -1,8 +1,8 @@
-/*	$OpenBSD: getfile.c,v 1.1 1997/12/12 05:30:22 art Exp $	*/
-/* $KTH: getfile.c,v 1.1 1997/12/05 09:04:10 joda Exp $ */
+/*	$OpenBSD: getfile.c,v 1.2 1998/05/18 00:53:43 art Exp $	*/
+/*	$KTH: getfile.c,v 1.2 1998/04/04 17:56:35 assar Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 

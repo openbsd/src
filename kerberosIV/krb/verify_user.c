@@ -1,5 +1,5 @@
-/*	$OpenBSD: verify_user.c,v 1.3 1997/12/12 05:30:34 art Exp $	*/
-/* $KTH: verify_user.c,v 1.8 1997/04/01 08:18:46 joda Exp $ */
+/*	$OpenBSD: verify_user.c,v 1.4 1998/05/18 00:54:03 art Exp $	*/
+/*	$KTH: verify_user.c,v 1.11 1997/12/24 14:32:38 assar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -46,13 +46,20 @@
  *
  * As a side effect, fresh tickets are obtained.
  *
+ * srvtab is where the key is found.
+ *
  * Returns zero if ok, a positive kerberos error or -1 for system
  * errors.
  */
 
 int
-krb_verify_user(char *name, char *instance, char *realm, char *password, 
-		int secure, char *linstance)
+krb_verify_user_srvtab(char *name, 
+		       char *instance, 
+		       char *realm, 
+		       char *password, 
+		       int secure, 
+		       char *linstance,
+		       char *srvtab)
 {
     int ret;
     ret = krb_get_pw_in_tkt(name, instance, realm,
@@ -101,7 +108,7 @@ krb_verify_user(char *name, char *instance, char *realm, char *password,
 	    return ret;
 	}
 	
-	ret = krb_rd_req(&ticket, linstance, phost, addr, &auth, "");
+	ret = krb_rd_req(&ticket, linstance, phost, addr, &auth, srvtab);
 	if(ret != KSUCCESS){
 	    dest_tkt();
 	    return ret;
@@ -110,3 +117,23 @@ krb_verify_user(char *name, char *instance, char *realm, char *password,
     return 0;
 }
 		
+/*
+ * Compat function without srvtab.
+ */
+
+int
+krb_verify_user(char *name,
+		char *instance,
+		char *realm,
+		char *password, 
+		int secure,
+		char *linstance)
+{
+    return krb_verify_user_srvtab (name,
+				   instance,
+				   realm,
+				   password,
+				   secure,
+				   linstance,
+				   "");
+}

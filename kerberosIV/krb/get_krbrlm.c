@@ -1,5 +1,5 @@
-/*	$OpenBSD: get_krbrlm.c,v 1.14 1998/02/25 15:51:10 art Exp $	*/
-/* $KTH: get_krbrlm.c,v 1.16 1997/05/02 01:26:22 assar Exp $ */
+/*	$OpenBSD: get_krbrlm.c,v 1.15 1998/05/18 00:53:41 art Exp $	*/
+/*	$KTH: get_krbrlm.c,v 1.20 1998/03/18 13:46:51 bg Exp $		*/
 
 /*
  * This source code is no longer held under any constraint of USA
@@ -73,6 +73,8 @@ krb_get_lrealm_f(char *r, int n, const char *fname)
     return ret;
 }
 
+static const char *no_default_realm = "NO.DEFAULT.REALM";
+
 int
 krb_get_lrealm(char *r, int n)
 {
@@ -91,24 +93,17 @@ krb_get_lrealm(char *r, int n)
     if (r[0] == '#')
 	return(KFAILURE);
     
-    /* If nothing else works try LOCALDOMAIN, if it exists */
+    /* When nothing else works try default realm */
     if (n == 1) {
-	char *t, hostname[MAXHOSTNAMELEN];
-	gethostname(hostname, sizeof(hostname));
-	t = krb_realmofhost(hostname);
-	if (t != NULL) {
-	    strcpy (r, t);
-	    return KSUCCESS;
-	}
-	t = strchr(hostname, '.');
-	if (t == 0)
-	    return KFAILURE;	/* No domain part, you loose */
+	char *t = krb_get_default_realm();
 
-	t++;			/* Skip leading dot and upcase the rest */
-	for (; *t != '\0'; t++, r++)
-	    *r = toupper(*t);
-	*r = 0;
-	return(KSUCCESS);
+	if (strcmp(t, no_default_realm) == 0)
+	    return KFAILURE;
+	    
+	strncpy (r, t, REALM_SZ - 1);
+	r[REALM_SZ - 1] = '\0';
+
+	return KSUCCESS;
     }
     else
 	return(KFAILURE);
@@ -118,10 +113,22 @@ krb_get_lrealm(char *r, int n)
 char *
 krb_get_default_realm(void)
 {
-    static char local_realm[REALM_SZ]; /* local kerberos realm */
-    if (krb_get_lrealm(local_realm, 1) != KSUCCESS){
-	strncpy(local_realm, "NO.DEFAULT.REALM", REALM_SZ);
-	local_realm[REALM_SZ-1] = '\0';
+    static char local_realm[REALM_SZ]; /* Local kerberos realm */
+
+    if (local_realm[0] == 0)
+    {
+	char *t, hostname[MAXHOSTNAMELEN];
+	
+	strncpy(local_realm, no_default_realm, sizeof(local_realm) - 1);
+	local_realm[sizeof(local_realm) - 1] = '\0';
+	
+	gethostname(hostname, sizeof(hostname));
+	t = krb_realmofhost(hostname);
+	if (t && strcmp(t, no_default_realm) != 0) {
+	    strncpy(local_realm, t, sizeof(local_realm) - 1);
+	    local_realm[sizeof(local_realm) - 1] = '\0';
+	}
     }
+
     return local_realm;
 }

@@ -1,8 +1,8 @@
-/*	$OpenBSD: name2name.c,v 1.2 1997/12/09 07:57:31 art Exp $	*/
-/* $KTH: name2name.c,v 1.15 1997/04/30 04:30:36 assar Exp $ */
+/*	$OpenBSD: name2name.c,v 1.3 1998/05/18 00:53:55 art Exp $	*/
+/*	$KTH: name2name.c,v 1.16 1998/01/19 15:28:38 joda Exp $		*/
 
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -57,9 +57,10 @@ krb_name_to_name(const char *host, char *phost, size_t phost_size)
       return 1;
     
     adr.s_addr = inet_addr(host);
-    hp = gethostbyname(host);
-    if (hp == NULL && adr.s_addr != INADDR_NONE)
+    if (adr.s_addr != INADDR_NONE)
 	hp = gethostbyaddr((char *)&adr, sizeof(adr), AF_INET);
+    else
+	hp = gethostbyname(host);
     if (hp == NULL)
 	tmp = host;
     else

@@ -1,5 +1,5 @@
-/*	$OpenBSD: get_ad_tkt.c,v 1.5 1998/03/25 21:50:10 art Exp $	*/
-/* $KTH: get_ad_tkt.c,v 1.16 1997/05/30 17:43:34 bg Exp $ */
+/*	$OpenBSD: get_ad_tkt.c,v 1.6 1998/05/18 00:53:38 art Exp $	*/
+/*	$KTH: get_ad_tkt.c,v 1.18 1998/02/19 19:13:29 joda Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -179,7 +179,7 @@ get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
 	    strcmp(cred.realm, realm))	/* not what we asked for */
 	    return INTK_ERR;	/* we need a better code here XXX */
 	
-	gettimeofday(&tv, NULL);
+	krb_kdctimeofday(&tv);
 	if (abs((int)(tv.tv_sec - cred.issue_date)) > CLOCK_SKEW) {
 	    return RD_AP_TIME; /* XXX should probably be better code */
 	}

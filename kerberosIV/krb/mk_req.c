@@ -1,8 +1,8 @@
-/*	$OpenBSD: mk_req.c,v 1.4 1997/12/12 05:30:28 art Exp $	*/
-/* $KTH: mk_req.c,v 1.17 1997/05/30 17:42:38 bg Exp $ */
+/*	$OpenBSD: mk_req.c,v 1.5 1998/05/18 00:53:53 art Exp $	*/
+/*	$KTH: mk_req.c,v 1.19 1998/02/19 19:13:51 joda Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -57,7 +57,7 @@ build_request(KTEXT req, char *name, char *inst, char *realm,
 
 
     /* Fill in the times on the request id */
-    gettimeofday(&tv, NULL);
+    krb_kdctimeofday(&tv);
 
     *p++ = tv.tv_usec / 5000; /* 5ms */
     

@@ -1,8 +1,8 @@
-/*	$OpenBSD: krb_get_in_tkt.c,v 1.4 1997/12/12 05:30:24 art Exp $	*/
-/* $KTH: krb_get_in_tkt.c,v 1.22 1997/08/23 15:49:11 joda Exp $ */
+/*	$OpenBSD: krb_get_in_tkt.c,v 1.5 1998/05/18 00:53:48 art Exp $	*/
+/*	$KTH: krb_get_in_tkt.c,v 1.25 1998/05/01 05:18:08 joda Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -167,9 +167,11 @@ krb_decode_as_rep(char *user, char *instance, char *realm,
 	return INTK_ERR;	/* we need a better code here XXX */
 
     now = time(NULL);
-    if (abs((int)(now - cred->issue_date)) > CLOCK_SKEW) {
+    if(getenv("KDC_TIMESYNC") && *getenv("KDC_TIMESYNC")) /* should it
+							     work like this? */
+	krb_set_kdc_time_diff(cred->issue_date - now);
+    else if (abs((int)(now - cred->issue_date)) > CLOCK_SKEW)
 	return RD_AP_TIME; /* XXX should probably be better code */
-    }
 
     return 0;
 }

@@ -1,8 +1,8 @@
-/*	$OpenBSD: mk_safe.c,v 1.5 1997/12/12 05:30:28 art Exp $	*/
-/* $KTH: mk_safe.c,v 1.21 1997/04/19 23:18:03 joda Exp $ */
+/*	$OpenBSD: mk_safe.c,v 1.6 1998/05/18 00:53:54 art Exp $	*/
+/*	$KTH: mk_safe.c,v 1.23 1998/02/19 19:14:02 joda Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -103,7 +103,7 @@ krb_mk_safe(void *in, void *out, u_int32_t length, des_cblock *key,
     memcpy(p, in, length);
     p += length;
     
-    gettimeofday(&tv, NULL);
+    krb_kdctimeofday(&tv);
 
     *p++ = tv.tv_usec/5000; /* 5ms */
     

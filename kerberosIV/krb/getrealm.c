@@ -1,5 +1,5 @@
-/*	$OpenBSD: getrealm.c,v 1.10 1998/02/25 15:51:15 art Exp $	*/
-/* $KTH: getrealm.c,v 1.26 1997/10/08 22:51:13 joda Exp $ */
+/*	$OpenBSD: getrealm.c,v 1.11 1998/05/18 00:53:44 art Exp $	*/
+/*	$KTH: getrealm.c,v 1.26 1997/10/08 22:51:13 joda Exp $		*/
 
 /*
  * This source code is no longer held under any constraint of USA
@@ -107,8 +107,9 @@ static FILE *
 open_krb_realms(void)
 {
     int i;
-    char file[128];
+    char file[MAXPATHLEN];
     FILE *res;
+
     for(i = 0; krb_get_krbrealms(i, file, sizeof(file)) == 0; i++)
 	if ((res = fopen(file, "r")) != NULL)
 	    return res;
@@ -192,7 +193,7 @@ krb_realmofhost(const char *host)
 	for (cp = ret_realm; *cp; cp++)
 	    *cp = toupper(*cp);
     } else {
-	krb_get_lrealm(ret_realm, 1);
+	strncpy(ret_realm, krb_get_default_realm(), REALM_SZ); /* Wild guess */
     }
     return ret_realm;
 }

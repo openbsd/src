@@ -1,5 +1,5 @@
-/*	$OpenBSD: realm_parse.c,v 1.3 1997/12/12 05:30:30 art Exp $	*/
-/* $KTH: realm_parse.c,v 1.10 1997/06/01 03:14:50 assar Exp $ */
+/*	$OpenBSD: realm_parse.c,v 1.4 1998/05/18 00:53:56 art Exp $	*/
+/*	$KTH: realm_parse.c,v 1.14 1997/12/15 17:19:13 assar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan

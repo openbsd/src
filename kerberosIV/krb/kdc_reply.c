@@ -1,8 +1,8 @@
-/*	$OpenBSD: kdc_reply.c,v 1.2 1997/12/09 07:57:22 art Exp $	*/
-/* $KTH: kdc_reply.c,v 1.9 1997/04/15 21:52:14 assar Exp $ */
+/*	$OpenBSD: kdc_reply.c,v 1.3 1998/05/18 00:53:46 art Exp $	*/
+/*	$KTH: kdc_reply.c,v 1.10 1998/03/19 15:45:28 joda Exp $		*/
 
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -116,6 +116,8 @@ kdc_reply_cipher(KTEXT reply, KTEXT cip)
 	p += strlen((char*)p) + 1; /* realm */
 	p += 4; /* time */
 	p += krb_get_int(p, &code, 4, little_endian);
+	if(code == 0)
+	    code = KFAILURE; /* things will go bad otherwise */
 	return code;
     }
     if(type != AUTH_MSG_KDC_REPLY)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tf_util.c,v 1.6 1998/02/25 15:51:44 art Exp $	*/
-/* $KTH: tf_util.c,v 1.25 1997/11/04 09:44:28 bg Exp $ */
+/*	$OpenBSD: tf_util.c,v 1.7 1998/05/18 00:54:00 art Exp $	*/
+/*	$KTH: tf_util.c,v 1.30 1998/04/22 13:10:15 joda Exp $	*/
 
 /*
  * This source code is no longer held under any constraint of USA
@@ -384,6 +384,9 @@ tf_put_pinst(char *inst)
  * EOF          - end of file encountered
  */
 
+#define MAGIC_TICKET_NAME "magic"
+#define MAGIC_TICKET_INST "time-diff"
+
 int
 tf_get_cred(CREDENTIALS *c)
 {
@@ -395,6 +398,7 @@ tf_get_cred(CREDENTIALS *c)
       krb_warning ("tf_get_cred called before tf_init.\n");
     return TKT_FIL_INI;
   }
+again:
   if ((k_errno = tf_gets(c->service, SNAME_SZ)) < 2)
     switch (k_errno) {
     case TOO_BIG:
@@ -445,6 +449,16 @@ tf_get_cred(CREDENTIALS *c)
     if (krb_debug)
       krb_warning ("tf_get_cred: failed tf_read.\n");
     return TKT_FIL_FMT;
+  }
+  if(strcmp(c->service, MAGIC_TICKET_NAME) == 0 &&
+     strcmp(c->instance, MAGIC_TICKET_INST) == 0) {
+      /* we found the magic `time diff' ticket; update the kdc time
+         differential, and then get the next ticket */
+      u_int32_t d;
+      
+      krb_get_int(c->ticket_st.dat, &d, 4, 0);
+      krb_set_kdc_time_diff(d);
+      goto again;
   }
   return KSUCCESS;
 }
@@ -631,6 +645,21 @@ tf_setup(CREDENTIALS *cred, char *pname, char *pinst)
 	tf_put_pinst(pinst) != KSUCCESS) {
 	tf_close();
 	return INTK_ERR;
+    }
+
+    if(krb_get_kdc_time_diff() != 0) {
+	/* Add an extra magic ticket containing the time differential
+           to the kdc. The first ticket defines which realm we belong
+           to, but since this ticket gets the same realm as the tgt,
+           this shouldn't be a problem */
+	CREDENTIALS magic;
+	des_cblock s = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	KTEXT_ST t;
+	int d = krb_get_kdc_time_diff();
+	krb_put_int(d, t.dat, 4);
+	t.length = 4;
+	tf_save_cred(MAGIC_TICKET_NAME, MAGIC_TICKET_INST, cred->realm, s, 
+		     cred->lifetime, 0, &t, cred->issue_date);
     }
 
     ret = tf_save_cred(cred->service, cred->instance, cred->realm, 

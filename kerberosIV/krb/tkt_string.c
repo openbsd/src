@@ -1,5 +1,5 @@
-/*	$OpenBSD: tkt_string.c,v 1.7 1998/02/25 15:51:46 art Exp $	*/
-/* $KTH: tkt_string.c,v 1.11 1997/10/24 10:18:07 assar Exp $ */
+/*	$OpenBSD: tkt_string.c,v 1.8 1998/05/18 00:54:02 art Exp $	*/
+/*	$KTH: tkt_string.c,v 1.13 1998/04/04 17:56:53 assar Exp $	*/
 
 /*
  * This source code is no longer held under any constraint of USA
