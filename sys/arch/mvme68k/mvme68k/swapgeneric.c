@@ -1,4 +1,4 @@
-/*	$Id: swapgeneric.c,v 1.2 1995/11/07 08:50:25 deraadt Exp $ */
+/*	$Id: swapgeneric.c,v 1.3 1995/11/30 22:53:00 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1994
@@ -41,6 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/conf.h>
+#include <machine/disklabel.h>
 
 int (*mountroot)() = NULL;	/* tells autoconf.c that we are "generic" */
 
@@ -48,6 +49,13 @@ dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
 
 struct	swdevt swdevt[] = {
-	{ makedev(7, 1), 0, 0 },	/* sd0b */
+	{ makedev(4, 0*MAXPARTITIONS+1), 0, 0 },	/* sd0b */
+	{ makedev(4, 1*MAXPARTITIONS+1), 0, 0 },	/* sd1b */
+	{ makedev(4, 2*MAXPARTITIONS+1), 0, 0 },	/* sd2b */
+	{ makedev(4, 3*MAXPARTITIONS+1), 0, 0 },	/* sd3b */
+	{ makedev(4, 4*MAXPARTITIONS+1), 0, 0 },	/* sd4b */
+	{ makedev(4, 5*MAXPARTITIONS+1), 0, 0 },	/* sd5b */
+	{ makedev(4, 6*MAXPARTITIONS+1), 0, 0 },	/* sd6b */
+	{ makedev(4, 7*MAXPARTITIONS+1), 0, 0 },	/* sd7b */
 	{ NODEV, 0, 0 }
 };
