@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1997/05/08 05:56:21 tholo Exp $
+#	$OpenBSD: Makefile,v 1.16 1997/05/08 06:02:35 tholo Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -17,7 +17,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
+REALIMAGE!=	echo /tmp/image.${PID}
 LISTFLOPPY=	${.CURDIR}/list_floppy
 
 all:	${FS}
@@ -60,12 +60,10 @@ bsd.rd:	${IMAGE} bsd rdsetroot
 	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
 
 bsd:
+	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config RAMDISK
+	cd ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK && \
+	    make clean && make depend && make
 	cp ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd bsd
-
-#	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config RAMDISK
-#	cd ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK && \
-#	    make clean && make depend && make
-#	cp ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
 
@@ -87,8 +85,8 @@ rd_teardown:
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 
-rdsetroot:	${TOP}/common/rdsetroot.c
-	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/common/rdsetroot.c
+rdsetroot:	${TOP}/rdsetroot.c
+	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/rdsetroot.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
