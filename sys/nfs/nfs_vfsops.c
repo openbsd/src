@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.37 2001/07/27 05:43:17 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.38 2001/11/14 23:37:33 mickey Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -286,7 +286,8 @@ nfs_mountroot()
 	/*
 	 * Create the root mount point.
 	 */
-	nfs_boot_getfh(&nd.nd_boot, "root", &nd.nd_root);
+	if (nfs_boot_getfh(&nd.nd_boot, "root", &nd.nd_root, -1))
+		panic("nfs_mountroot: root");
 	mp = nfs_mount_diskless(&nd.nd_root, "/", 0);
 	nfs_root(mp, &rootvp);
 	printf("root on %s\n", nd.nd_root.ndm_host);
@@ -341,38 +342,50 @@ nfs_mountroot()
 	 * If swapping to an nfs node:  (swdevt[0].sw_dev == NODEV)
 	 * Create a fake mount point just for the swap vnode so that the
 	 * swap file can be on a different server from the rootfs.
+	 *
+	 * Wait 5 retries, finally no swap is cool. -mickey
 	 */
-	nfs_boot_getfh(&nd.nd_boot, "swap", &nd.nd_swap);
-	mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0);
-	nfs_root(mp, &vp);
-	vfs_unbusy(mp, procp);
-	printf("swap on %s\n", nd.nd_swap.ndm_host);
+	error = nfs_boot_getfh(&nd.nd_boot, "swap", &nd.nd_swap, 5);
+	if (!error) {
+		mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0);
+		nfs_root(mp, &vp);
+		vfs_unbusy(mp, procp);
 
-	/*
-	 * Since the swap file is not the root dir of a file system,
-	 * hack it to a regular file.
-	 */
-	vp->v_type = VREG;
-	vp->v_flag = 0;
-	/* 
-	 * Next line is a hack to make swapmount() work on NFS swap files. 
-	 * XXX-smurph 
-	 */ 
-	swdevt[0].sw_dev = NETDEV;
-	/* end hack */
-	swdevt[0].sw_vp = vp;
+		/*
+		 * Since the swap file is not the root dir of a file system,
+		 * hack it to a regular file.
+		 */
+		vp->v_type = VREG;
+		vp->v_flag = 0;
 
-	/*
-	 * Find out how large the swap file is.
-	 */
-	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
-	if (error)
-		panic("nfs_mountroot: getattr for swap");
-	n = (long) (attr.va_size >> DEV_BSHIFT);
+		/* 
+		 * Next line is a hack to make swapmount() work on NFS swap files. 
+		 * XXX-smurph 
+		 */ 
+		swdevt[0].sw_dev = NETDEV;
+		/* end hack */
+		swdevt[0].sw_vp = vp;
+
+		/*
+		 * Find out how large the swap file is.
+		 */
+		error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
+		if (error)
+			printf("nfs_mountroot: getattr for swap\n");
+		n = (long) (attr.va_size >> DEV_BSHIFT);
+
+		printf("swap on %s\n", nd.nd_swap.ndm_host);
 #ifdef	DEBUG
-	printf("swap size: 0x%lx (blocks)\n", n);
+		printf("swap size: 0x%lx (blocks)\n", n);
 #endif
-	swdevt[0].sw_nblks = n;
+		swdevt[0].sw_nblks = n;
+		return (0);
+	}
+
+	printf("WARNING: no swap\n");
+	swdevt[0].sw_dev = NODEV;
+	swdevt[0].sw_vp = NULL;
+	swdevt[0].sw_nblks = 0;
 
 	return (0);
 }

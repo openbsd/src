@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.11 2001/06/27 05:45:00 nate Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.12 2001/11/14 23:37:33 mickey Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ krpc_portmap(sin,  prog, vers, portp)
 
 	sin->sin_port = htons(PMAPPORT);
 	error = krpc_call(sin, PMAPPROG, PMAPVERS,
-	    PMAPPROC_GETPORT, &m, NULL);
+	    PMAPPROC_GETPORT, &m, NULL, -1);
 	if (error) 
 		return error;
 
@@ -186,11 +186,12 @@ krpc_portmap(sin,  prog, vers, portp)
  * the address from whence the response came is saved there.
  */
 int
-krpc_call(sa, prog, vers, func, data, from_p)
+krpc_call(sa, prog, vers, func, data, from_p, retries)
 	struct sockaddr_in *sa;
 	u_int prog, vers, func;
 	struct mbuf **data;	/* input/output */
 	struct mbuf **from_p;	/* output */
+	int retries;
 {
 	struct socket *so;
 	struct sockaddr_in *sin;
@@ -330,8 +331,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	 * but delay each re-send by an increasing amount.
 	 * If the delay hits the maximum, start complaining.
 	 */
-	timo = 0;
-	for (;;) {
+	for (timo = 0; retries; retries--) {
 		/* Send RPC request (or re-send). */
 		m = m_copym(mhead, 0, M_COPYALL, M_WAIT);
 		if (m == NULL) {

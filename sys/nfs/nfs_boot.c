@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.11 1999/01/03 10:07:19 deraadt Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.12 2001/11/14 23:37:33 mickey Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -66,13 +66,14 @@ nfs_boot_init(nd, procp)
 	panic("nfs_boot_init: NFSCLIENT not enabled in kernel");
 }
 
-void
+int
 nfs_boot_getfh(bpsin, key, ndmntp)
 	struct sockaddr_in *bpsin;
 	char *key;
 	struct nfs_dlmount *ndmntp;
 {
 	/* can not get here */
+	return (EOPNOTSUPP);
 }
 
 #else
@@ -101,7 +102,7 @@ nfs_boot_getfh(bpsin, key, ndmntp)
 static int bp_whoami __P((struct sockaddr_in *bpsin,
 	struct in_addr *my_ip, struct in_addr *gw_ip));
 static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
-	struct sockaddr_in *mdsin, char *servname, char *path));
+	struct sockaddr_in *mdsin, char *servname, char *path, int retries));
 
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
@@ -252,11 +253,12 @@ nfs_boot_init(nd, procp)
 	return (0);
 }
 
-void
-nfs_boot_getfh(bpsin, key, ndmntp)
+int
+nfs_boot_getfh(bpsin, key, ndmntp, retries)
 	struct sockaddr_in *bpsin;	/* bootparam server */
 	char *key;			/* root or swap */
 	struct nfs_dlmount *ndmntp;	/* output */
+	int retries;
 {
 	char pathname[MAXPATHLEN];
 	char *sp, *dp, *endp;
@@ -269,23 +271,30 @@ nfs_boot_getfh(bpsin, key, ndmntp)
 	 * Get server:pathname for "key" (root or swap)
 	 * using RPC to bootparam/getfile
 	 */
-	error = bp_getfile(bpsin, key, sin, ndmntp->ndm_host, pathname);
-	if (error)
-		panic("nfs_boot: bootparam get %s: %d", key, error);
+	error = bp_getfile(bpsin, key, sin, ndmntp->ndm_host, pathname,
+	    retries);
+	if (error) {
+		printf("nfs_boot: bootparam get %s: %d\n", key, error);
+		return (error);
+	}
 
 	/*
 	 * Get file handle for "key" (root or swap)
 	 * using RPC to mountd/mount
 	 */
 	error = md_mount(sin, pathname, ndmntp->ndm_fh);
-	if (error)
-		panic("nfs_boot: mountd %s, error=%d", key, error);
+	if (error) {
+		printf("nfs_boot: mountd %s, error=%d\n", key, error);
+		return (error);
+	}
 
 	/* Set port number for NFS use. */
 	/* XXX: NFS port is always 2049, right? */
 	error = krpc_portmap(sin, NFS_PROG, NFS_VER2, &sin->sin_port);
-	if (error)
-		panic("nfs_boot: portmap NFS/v2, error=%d", error);
+	if (error) {
+		printf("nfs_boot: portmap NFS/v2, error=%d\n", error);
+		return (error);
+	}
 
 	/* Construct remote path (for getmntinfo(3)) */
 	dp = ndmntp->ndm_host;
@@ -296,6 +305,7 @@ nfs_boot_getfh(bpsin, key, ndmntp)
 		*dp++ = *sp++;
 	*dp = '\0';
 
+	return (0);
 }
 
 
@@ -358,7 +368,7 @@ bp_whoami(bpsin, my_ip, gw_ip)
 	bpsin->sin_port = htons(PMAPPORT);
 	from = NULL;
 	error = krpc_call(bpsin, PMAPPROG, PMAPVERS,
-			PMAPPROC_CALLIT, &m, &from);
+			PMAPPROC_CALLIT, &m, &from, -1);
 	if (error)
 		return error;
 
@@ -423,12 +433,13 @@ out:
  *	server pathname
  */
 static int
-bp_getfile(bpsin, key, md_sin, serv_name, pathname)
+bp_getfile(bpsin, key, md_sin, serv_name, pathname, retries)
 	struct sockaddr_in *bpsin;
 	char *key;
 	struct sockaddr_in *md_sin;
 	char *serv_name;
 	char *pathname;
+	int retries;
 {
 	struct mbuf *m;
 	struct sockaddr_in *sin;
@@ -451,7 +462,7 @@ bp_getfile(bpsin, key, md_sin, serv_name, pathname)
 
 	/* RPC: bootparam/getfile */
 	error = krpc_call(bpsin, BOOTPARAM_PROG, BOOTPARAM_VERS,
-			BOOTPARAM_GETFILE, &m, NULL);
+			BOOTPARAM_GETFILE, &m, NULL, retries);
 	if (error)
 		return error;
 
@@ -526,7 +537,7 @@ md_mount(mdsin, path, fhp)
 
 	/* Do RPC to mountd. */
 	error = krpc_call(mdsin, RPCPROG_MNT, RPCMNT_VER1,
-			RPCMNT_MOUNT, &m, NULL);
+			RPCMNT_MOUNT, &m, NULL, -1);
 	if (error)
 		return error;	/* message already freed */
 
