@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_dump.c,v 1.2 1996/03/04 15:59:00 mickey Exp $	*/
+/**//*	$OpenBSD: bpf_dump.c,v 1.3 1996/06/10 07:47:14 deraadt Exp $	*/
 /*	$NetBSD: bpf_dump.c,v 1.2 1995/03/06 19:09:55 mycroft Exp $	*/
 
 /*

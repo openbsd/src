@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.2 1996/03/04 15:59:32 mickey Exp $	*/
+/**//*	$OpenBSD: print-null.c,v 1.3 1996/06/10 07:47:44 deraadt Exp $	*/
 /*	$NetBSD: print-null.c,v 1.3 1995/03/06 19:11:24 mycroft Exp $	*/
 
 /*

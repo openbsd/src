@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.2 1996/03/04 15:59:48 mickey Exp $	*/
-/*	$NetBSD: version.c,v 1.2 1995/03/06 19:11:56 mycroft Exp $	*/
+/**//*	$OpenBSD: version.c,v 1.3 1996/06/10 07:48:00 deraadt Exp $	*/
+/*	$NetBSD: version.c,v 1.3 1996/05/20 00:41:20 fvdl Exp $	*/
 
-char version[] = "3.0.2";
+char version[] = "3.0.4";

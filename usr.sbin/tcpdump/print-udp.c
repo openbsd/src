@@ -1,5 +1,5 @@
-/*	$OpenBSD: print-udp.c,v 1.2 1996/03/04 15:59:41 mickey Exp $	*/
-/*	$NetBSD: print-udp.c,v 1.3 1995/03/06 19:11:36 mycroft Exp $	*/
+/**//*	$OpenBSD: print-udp.c,v 1.3 1996/06/10 07:47:52 deraadt Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.4 1996/05/20 00:41:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -55,7 +55,7 @@ static char rcsid[] =
 #include "addrtoname.h"
 #include "appletalk.h"
 
-#include "nfsv2.h"
+#include "nfs.h"
 #include "bootp.h"
 
 extern int packettype;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-wb.c,v 1.2 1996/03/04 15:59:42 mickey Exp $	*/
+/**//*	$OpenBSD: print-wb.c,v 1.3 1996/06/10 07:47:53 deraadt Exp $	*/
 /*	$NetBSD: print-wb.c,v 1.2 1995/03/06 19:11:37 mycroft Exp $	*/
 
 /*

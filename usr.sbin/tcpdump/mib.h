@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.2 1996/03/04 15:59:08 mickey Exp $	*/
+/**//*	$OpenBSD: mib.h,v 1.3 1996/06/10 07:47:22 deraadt Exp $	*/
 /*	$NetBSD: mib.h,v 1.2 1995/03/06 19:10:34 mycroft Exp $	*/
 
 /*

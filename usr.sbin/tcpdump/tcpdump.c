@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcpdump.c,v 1.2 1996/03/04 15:59:46 mickey Exp $	*/
-/*	$NetBSD: tcpdump.c,v 1.3 1995/04/24 13:27:48 cgd Exp $	*/
+/**//*	$OpenBSD: tcpdump.c,v 1.3 1996/06/10 07:47:58 deraadt Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.4.4.1 1996/06/05 18:07:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -21,35 +21,11 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-/*
- * Copyright (c) 1995 Sun Microsystems, Inc.
- * All rights reserved.
- * 
- * Permission is hereby granted, without written agreement and without
- * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, provided that the
- * above copyright notice and the following two paragraphs appear in
- * all copies of this software.
-
- * IN NO EVENT SHALL SUN MICROSYSTEMS, INC. BE LIABLE TO ANY PARTY FOR
- * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
- * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF
- * SUN MICROSYSTEMS, INC. HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
- * DAMAGE.
-
- * SUN MICROSYSTEMS, INC. SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
- * THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND SUN
- * MICROSYSTEMS, INC. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
- * UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-*/
 #ifndef lint
 char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994\nThe Regents of the University of California.  All rights reserved.\n";
 static  char rcsid[] =
-    "@(#)Header: tcpdump.c,v 1.93 94/06/10 17:01:44 mccanne Exp $ (LBL)";
+    "@(#)Header: tcpdump.c,v 1.93 94/06/10 17:01:44 mccanne Exp (LBL)";
 #endif
 
 /*
@@ -89,7 +65,6 @@ int xflag;			/* print packet in hex */
 int Oflag = 1;			/* run filter code optimizer */
 int Sflag;			/* print raw TCP sequence numbers */
 int packettype;
-int skipflag;			/* Print out SKIP packets */
 
 int dflag;			/* print filter code */
 
@@ -154,7 +129,7 @@ int
 main(int argc, char **argv)
 {
 	register int cnt, op;
-	u_long localnet, netmask;
+	u_int32_t localnet, netmask;
 	register char *cp, *infile, *cmdbuf, *device, *RFileName, *WFileName;
 	pcap_handler printer;
 	struct bpf_program fcode;
@@ -179,7 +154,7 @@ main(int argc, char **argv)
 		program_name = argv[0];
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "c:defF:i:klnNOpqr:s:StT:vw:xY")) != EOF)
+	while ((op = getopt(argc, argv, "c:defF:i:lnNOpqr:s:StT:vw:xY")) != EOF)
 		switch (op) {
 		case 'c':
 			cnt = atoi(optarg);
@@ -203,10 +178,6 @@ main(int argc, char **argv)
 
 		case 'i':
 			device = optarg;
-			break;
-
-		case 'k':
-			skipflag++;
 			break;
 
 		case 'l':
@@ -354,7 +325,7 @@ main(int argc, char **argv)
 		fflush(stderr);
 	}
 	if (pcap_loop(pd, cnt, printer, pcap_userdata) < 0) {
-		(void)fprintf(stderr, "%s: pcap_loop: %s\n",
+		(void)fprintf(stderr, "%s: pcap_loop %s\n",
 		    program_name, pcap_geterr(pd));
 		exit(1);
 	}

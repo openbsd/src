@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tftp.c,v 1.2 1996/03/04 15:59:40 mickey Exp $	*/
+/**//*	$OpenBSD: print-tftp.c,v 1.3 1996/06/10 07:47:51 deraadt Exp $	*/
 /*	$NetBSD: print-tftp.c,v 1.2 1995/03/06 19:11:35 mycroft Exp $	*/
 
 /*

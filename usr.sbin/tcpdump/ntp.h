@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.2 1996/03/04 15:59:11 mickey Exp $	*/
+/**//*	$OpenBSD: ntp.h,v 1.3 1996/06/10 07:47:25 deraadt Exp $	*/
 /*	$NetBSD: ntp.h,v 1.2 1995/03/06 19:10:41 mycroft Exp $	*/
 
 /* Header: ntp.h,v 1.2 93/11/12 21:43:36 mccanne Exp */
