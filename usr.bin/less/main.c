@@ -121,6 +121,7 @@ main(argc, argv)
 		scan_option("-E");
 		scan_option("-G");
 		scan_option("-L");
+		scan_option("-m");
 		s = lgetenv("MORE");
 	} else
 		s = lgetenv("LESS");

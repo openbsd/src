@@ -28,7 +28,6 @@ extern int sc_width;
 extern int so_s_width, so_e_width;
 extern int linenums;
 extern int hshift;
-extern int ismore;
 extern int sc_height;
 extern int jump_sline;
 extern IFILE curr_ifile;
@@ -47,8 +46,6 @@ static constant char m_proto[] =
   "?f%f .?m(%T %i of %m) ..?e(END) ?x- Next\\: %x.:?pB%pB\\%:byte %bB?s/%s...%t";
 static constant char M_proto[] =
   "?f%f .?n?m(%T %i of %m) ..?ltlines %lt-%lb?L/%L. :byte %bB?s/%s. .?e(END) ?x- Next\\: %x.:?pB%pB\\%..%t";
-static constant char more_proto[] =
-  "--More--.?e(END) ?x- Next\\: %x.:(?pB%pB\\%:byte %bB?s/%s..).%t";
 static constant char e_proto[] =
   "?f%f .?m(%T %i of %m) .?ltlines %lt-%lb?L/%L. .byte %bB?s/%s. ?e(END) :?pB%pB\\%..%t";
 static constant char h_proto[] =
@@ -70,7 +67,7 @@ static char *mp;
 	public void
 init_prompt()
 {
-	prproto[0] = save(ismore ? more_proto : s_proto);
+	prproto[0] = save(s_proto);
 	prproto[1] = save(m_proto);
 	prproto[2] = save(M_proto);
 	eqproto = save(e_proto);
