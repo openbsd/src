@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdreg.h,v 1.4 1996/09/09 06:17:29 downsj Exp $	*/
+/*	$OpenBSD: wdreg.h,v 1.5 1996/09/17 15:55:42 mickey Exp $	*/
 /*	$NetBSD: wdreg.h,v 1.13 1995/03/29 21:56:46 briggs Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@
 #define PHASE_ABORTED   0
 
 
-#ifdef _KERNEL
+#if	defined(_KERNEL) && !defined(_LOCORE)
 /*
  * read parameters command returns this:
  */
@@ -183,4 +183,4 @@ struct wdparams {
 	char	wdp_vendor5[1];
 	char	wdp_dmatiming;		/* DMA timing mode */
 };
-#endif /* _KERNEL */
+#endif /* _KERNEL && !_LOCORE*/
