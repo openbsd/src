@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.15 1999/01/28 04:58:30 fgsch Exp $
+#	$OpenBSD: files.pcmcia,v 1.16 1999/05/18 19:24:05 niklas Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -46,6 +46,11 @@ file	dev/pcmcia/if_sm_pcmcia.c		sm_pcmcia
 # MB8696x Ethernet Controllers (i.e. TDK LAK CD021BX)
 #attach	mbe at pcmcia with mbe_pcmcia
 #file	dev/pcmcia/if_mbe_pcmcia.c		mbe_pcmcia
+
+# Xircom Ethernet controllers
+device xe: ether, ifnet, mii
+attach xe at pcmcia with xe_pcmcia
+file dev/pcmcia/if_xe.c				xe_pcmcia
 
 # PCMCIA Floppy controller
 #attach	fdc at pcmcia with fdc_pcmcia
