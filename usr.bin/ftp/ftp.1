@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.45 2005/01/03 14:47:52 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.46 2005/01/03 15:01:34 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -680,10 +680,11 @@ and
 for the input filename
 .Pa .myfile .
 Spaces may be included in
-.Ar outpattern ,
-as in the example
+.Ar outpattern
+by quoting them,
+as in the following example:
 .Bd -literal -offset indent
-nmap $1 sed "s/  *$//" > $1
+nmap $1.$2 "$1 $2"
 .Ed
 .Pp
 Use the
