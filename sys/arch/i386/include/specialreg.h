@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.17 2003/12/18 23:46:20 tedu Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.18 2004/01/31 00:09:41 deraadt Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -114,8 +114,8 @@
 #define CPUID_MMX	0x00800000	/* has MMX instructions */
 #define CPUID_FXSR	0x01000000	/* has FXRSTOR instruction (Intel) */
 #define CPUID_EMMX	0x01000000	/* has extended MMX (Cyrix; obsolete) */
-#define CPUID_SIMD	0x02000000	/* has SIMD instructions (Intel) */
-#define CPUID_SIMD2	0x04000000	/* has SIMD instructions (Intel) #2 */
+#define CPUID_SSE	0x02000000	/* has SSE instructions */
+#define CPUID_SSE2	0x04000000	/* has SSE2 instructions  */
 #define CPUID_SS	0x08000000	/* self-snoop */
 #define CPUID_HTT	0x10000000	/* hyper-threading tech */
 #define CPUID_TM	0x20000000	/* thermal monitor (TCC) */

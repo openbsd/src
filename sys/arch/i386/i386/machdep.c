@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.265 2004/01/29 19:01:54 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.266 2004/01/31 00:09:41 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1071,8 +1071,8 @@ const struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_ACPI,	"ACPI" },
 	{ CPUID_MMX,	"MMX" },
 	{ CPUID_FXSR,	"FXSR" },
-	{ CPUID_SIMD,	"SIMD" },
-	{ CPUID_SIMD2,	"SIMD2" },
+	{ CPUID_SSE,	"SSE" },
+	{ CPUID_SSE2,	"SSE2" },
 	{ CPUID_SS,	"SS" },
 	{ CPUID_HTT,	"HTT" },
 	{ CPUID_TM,	"TM" },
@@ -1683,7 +1683,7 @@ amd_family6_setup(cpu_device, model, step)
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
 
-	if (cpu_feature & CPUID_SIMD2)
+	if (cpu_feature & CPUID_SSE2)
 		pagezero = sse2_pagezero;
 	else
 		pagezero = i686_pagezero;
@@ -1738,7 +1738,7 @@ intel686_cpu_setup(cpu_device, model, step)
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
 
-	if (cpu_feature & CPUID_SIMD2)
+	if (cpu_feature & CPUID_SSE2)
 		pagezero = sse2_pagezero;
 	else
 		pagezero = i686_pagezero;
