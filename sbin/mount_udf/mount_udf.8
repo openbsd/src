@@ -1,4 +1,4 @@
-.\" $OpenBSD: mount_udf.8,v 1.1 2005/03/29 18:28:49 pedro Exp $
+.\" $OpenBSD: mount_udf.8,v 1.2 2005/03/30 02:10:57 deraadt Exp $
 .\" Written by Pedro Martelletto <pedro@openbsd.org> in March 2005.
 .\" Public domain.
 .Dd March 29, 2005
@@ -9,14 +9,36 @@
 .Nd mount an UDF filesystem
 .Sh SYNOPSIS
 .Nm mount_udf
+.Op Fl o Ar options
 .Ar special node
 .Sh DESCRIPTION
 The
 .Nm
-command attaches an UDF filesystem residing on the device
+command attaches an (typically DVD) UDF filesystem residing on the
+device
 .Ar special
 to the global filesystem namespace at the location indicated by
 .Ar node .
+This command is invoked by
+.Xr mount 8
+when using the syntax
+.Bd -ragged -offset 4n
+.Nm mount Op options
+-t udf
+.Ar special Ar node
+.Ed
+.Pp
+The options are as follows:
+.Pp
+.Bl -tag -width Ds
+.It Fl o Ar options
+Options are specified with a
+.Fl o
+flag followed by a comma separated string of options.
+See the
+.Xr mount 8
+man page for possible options and their meanings.
+.El
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr fstab 5 ,
