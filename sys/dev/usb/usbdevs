@@ -1,6 +1,6 @@
-	$OpenBSD: usbdevs,v 1.5 1999/08/29 12:58:22 maja Exp $
-/*	$NetBSD: usbdevs,v 1.40 1999/08/28 10:00:56 augustss Exp $	*/
+	$OpenBSD: usbdevs,v 1.6 1999/09/27 17:52:03 fgsch Exp $	
 
+/* $NetBSD: usbdevs,v 1.45 1999/09/15 13:57:09 augustss Exp $ */
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,16 +42,18 @@
  * List of known USB vendors
  */
 
+vendor HP		0x03f0	Hewlett Packard
 vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak Corp.
 vendor CATC		0x0423	Computer Access Technology Corp.
 vendor GRAVIS		0x0428	Advanced Gravis Computer Tech. Ltd.
+vendor LEXMARK		0x043d	Lexmark International Inc.
 vendor NANAO		0x0440	NANAO Corp.
 vendor THRUST		0x044f	Thrustmaster
 vendor TI		0x0451  Texas Instruments
-vendor GENIUS		0x0458	KYE Systems Corp.
+vendor KYE		0x0458	KYE Systems Corp.
 vendor MICROSOFT	0x045e	Microsoft
-vendor KENSINGTON	0x0461	Primax Electronics
+vendor PRIMAX		0x0461	Primax Electronics
 vendor CHERRY		0x046a	Cherry Mikroschalter GmbH
 vendor LOGITECH		0x046d	Logitech Inc.
 vendor BTC		0x046e	Behavior Tech. Computer
@@ -65,21 +67,27 @@ vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor 3COM		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corp.
 vendor SHUTTLE		0x04e6	Shuttle Technology
+vendor CHICONY		0x04f2	Chicony Electronics Co., Ltd.
 vendor BROTHER		0x04f9	Brother Industries Corp.
-vendor JAZZ		0x04fa	Dallas Semiconductor
+vendor DALLAS		0x04fa	Dallas Semiconductor
+vendor BELKIN		0x050d	Belkin Components
 vendor KAWATSU		0x050f	Kawatsu Semiconductor, Inc.
+vendor APC		0x051d	American Power Conversion
 vendor AKS		0x0529	Fast Security AG
-vendor VISION		0x0533	Alcatel Mobile Phones
+vendor ANCHOR		0x0547	Anchor Chips Inc.
+vendor VISION		0x0553	VLSI Vision Ltd.
 vendor ATEN		0x0557	ATEN International Corp. Ltd.
 vendor PERACOM		0x0565	Peracom Networks Inc.
 vendor WACOM		0x056a	WACOM Corp. Ltd.
+vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
-vendor AGILER		0x056e	Elecom Corp. Ltd.
+vendor ELECOM		0x056e	Elecom Corp. Ltd.
 vendor ROCKFIRE		0x0583	Rockfire
 vendor IOMEGA		0x059b	Iomega Corp.
 vendor OMNIVISION	0x05a9	OmniVision
-vendor BELKIN		0x05ab	In-System Design
+vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
+vendor QTRONIX		0x05c7	Qtronix Corp
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor PIENGINEERING	0x05f3  P.I. Engineering
 vendor CHIC		0x05fe	Chic Technology
@@ -95,6 +103,10 @@ vendor INTEL		0x8086	Intel
  * List of known products.  Grouped by vendor.
  */
 
+/* HP products */
+product HP 4100C		0x0101	Scanjet 4100C
+product HP 6300C		0x0601	Scanjet 6300C
+
 /* NEC products */
 product NEC HUB			0x55aa	hub
 product NEC HUB_B		0x55ab	hub
@@ -108,24 +120,27 @@ product CATC ANDROMEDA		0x1237	Andromeda hub
 /* Gravis products */
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
+/* Lexmark products */
+product LEXMARK S2450		0x0009	Optra S 2450
+
 /* Thrustmaster products */
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
 
 /* Texas Intel products */
 product TI UTUSB41		0x1446	UT-USB41 hub
 
-/* Genius products */
-product GENIUS NICHE		0x0001	Niche mouse
-product GENIUS FLIGHT2000	0x1004	Flight 2000 joystick
+/* (KYE) Genius products */
+product KYE NICHE		0x0001	Niche mouse
+product KYE FLIGHT2000		0x1004	Flight 2000 joystick
 
 /* Microsoft products */
 product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
 product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
 
-/* Kensington products */
-product KENSINGTON COMFORT	0x4d01	Comfort
-product KENSINGTON MOUSEINABOX	0x4d02	Mouse-in-a-Box
+/* Primax products */
+product PRIMAX COMFORT		0x4d01	Comfort
+product PRIMAX MOUSEINABOX	0x4d02	Mouse-in-a-Box
 
 /* Cherry products */
 product CHERRY MY3000KBD	0x0001	My3000 keyboard
@@ -135,7 +150,8 @@ product CHERRY MY3000HUB	0x0003	My3000 hub
 product BTC BTC7932		0x6782	Keyboard with mouse port
 
 /* Philips products */
-product PHILIPS DSS		0x0101	DSS 350 Digital Speaker System
+product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
+product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
 
 /* Connectix products */
@@ -152,6 +168,7 @@ product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 
 /* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
+product CYPRESS THERMO		0x0002	thermometer
 
 /* Epson products */
 product EPSON PRINTER3		0x0003	ISD USB Smart Cable
@@ -165,17 +182,26 @@ product KONICA CAMERA		0x0720	Digital Color Camera
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
 
+/* Chicony products */
+product CHICONY KB8933		0x0001	KB-8933 keyboard
+
 /* Brother Industries products */
 product	BROTHER HL1050		0x0002	HL-1050 laser printer
 
-/* Jazz products */
-product JAZZ J6502		0x4201	J-6502 speakers
+/* Dallas Semiconductor products */
+product DALLAS J6502		0x4201	J-6502 speakers
 
 /* Kawatsu products */
 product KAWATSU MH4000P		0x0003	MiniHub 4000P
 
+/* American Power Conversion products */
+product APC UPSPRO500		0x0002	Back-UPS Pro 500
+
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
+
+/* Anchor products */
+product ANCHOR EZUSB		0x2131	EZUSB
 
 /* Vision products */
 product VISION VC6452V002	0x0002	VC6452V002 Camera
@@ -190,12 +216,15 @@ product PERACOM SERIAL1		0x0001	Serial Converter
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 
+/* e-TEK Labs products */
+product ETEK 1COM		0x8007	Serial port
+
 /* EIZO products */
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
 
 /* Agiler products */
-product AGILER MOUSE29UO	0x0002	mouse 29UO
+product ELECOM MOUSE29UO	0x0002	mouse 29UO
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
@@ -206,13 +235,18 @@ product IOMEGA ZIP100		0x0001	Zip 100
 /* OmniVision Technologies Inc. products */
 product OMNIVISION OV511	0x0511	OV511 Camera
 
-/* Belkin products */
-product BELKIN F5U002		0x0002	Parallel printer adapter
+/* In-System products */
+product INSYSTEM F5U002		0x0002	Parallel printer adapter
+
+/* Qtronix products */
+product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
-product LOGITECH USBPS2		0xc001	USB-PS/2 mouse
+product LOGITECH QUICKCAM	0x0801	QuickCam
+product LOGITECH N48		0xc001	N48 mouse
+product LOGITECH MBA47		0xc002	M-BA47 mouse
 
 /* P.I. Engineering products */
 product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
@@ -230,7 +264,12 @@ product MULTITECH ATLAS		0xf101	MT5634ZBA-USB modem
 product ADS ENET		0x0008	Ethernet adapter
 
 /* Entrega products */
+product ENTREGA 1S		0x0001	1S serial connector
+product ENTREGA 2S		0x0002	2S serial connector
+product ENTREGA 1S25		0x0003	1S25 serial connector
+product ENTREGA 4S		0x0004	4S serial connector
 product ENTREGA CENTRONICS	0x0006	Centronics connector
+product ENTREGA 1S9		0x0093	1S9 serial connector
 product ENTREGA SERIAL		0x8001	DB25 Serial connector
 
 /* PLX products */
