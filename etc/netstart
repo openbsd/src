@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.45 1998/10/28 19:17:10 millert Exp $
+#	$OpenBSD: netstart,v 1.46 1999/03/01 05:04:24 millert Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -89,8 +89,11 @@ route -n add -net 127 127.0.0.1 -reject
             read af name mask bcaddr extras
             read dt dtaddr
 
-	    # check to see if device should be configure by dhcp
-	    if [ "$af" = "dhcp" ]; then
+	    # $af can be either "up", "dhcp", or an address family.
+	    if [ "$af" = "up" ]; then
+		# The only one of these guaranteed to be set is $if
+		ifconfig $if $name $mask $bcaddr $extras up
+	    elif [ "$af" = "dhcp" ]; then
 		ifconfig $if $extras down
 		cmd="/sbin/dhclient $if";
 	    else
