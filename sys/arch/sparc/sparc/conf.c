@@ -85,14 +85,14 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 0 */
 	bdev_notdef(),			/* 1 */
 	bdev_notdef(),			/* 2 */
-	bdev_disk_init(NXY,xy),		/* 3: SMD disk */
+	bdev_disk_init(NXY,xy),		/* 3: XY SMD disk */
 	bdev_swap_init(1,sw),		/* 4 */
 	bdev_notdef(),			/* 5 */
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
-	bdev_disk_init(NXD,xd),		/* 10: SMD disk */
+	bdev_disk_init(NXD,xd),		/* 10: XD SMD disk */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
 	bdev_notdef(),			/* 12 */
 	bdev_notdef(),			/* 13 */
@@ -158,9 +158,13 @@ cdev_decl(fd);
 #undef	fdopen
 #include "cgthree.h"
 cdev_decl(cgthree);
+#include "cgfour.h"
+cdev_decl(cgfour);
 cdev_decl(cd);
 #include "cgsix.h"
 cdev_decl(cgsix);
+#include "cgeight.h"
+cdev_decl(cgeight);
 #include "audio.h"
 cdev_decl(audio);
 cdev_decl(openprom);
@@ -189,7 +193,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 6 */
 	cdev_swap_init(1,sw),		/* 7: /dev/drum (swap pseudo-device) */
 	cdev_notdef(),			/* 8 */
-	cdev_disk_init(NXY,xy),		/* 9: SMD disk */
+	cdev_disk_init(NXY,xy),		/* 9: XY SMD disk */
 	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11 */
 	cdev_tty_init(NZS,zs),		/* 12: zs serial */
@@ -219,10 +223,10 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 36 */
 	cdev_notdef(),			/* 37 */
 	cdev_notdef(),			/* 38 */
-	cdev_notdef(),			/* 39 */
+	cdev_fb_init(NCGFOUR,cgfour),	/* 39: /dev/cgfour */
 	cdev_notdef(),			/* 40 */
 	cdev_notdef(),			/* 41 */
-	cdev_disk_init(NXD,xd),		/* 42: SMD disk */
+	cdev_disk_init(NXD,xd),		/* 42: XD SMD disk */
 #ifdef COMPAT_SVR4
 	cdev_svr4_net_init(1,svr4_net),	/* 43: svr4 net pseudo-device */
 #else
@@ -250,7 +254,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 61 */
 	cdev_notdef(),			/* 62 */
 	cdev_notdef(),			/* 63 */
-	cdev_notdef(),			/* 64 */
+	cdev_fb_init(NCGEIGHT,cgeight),	/* 64: /dev/cgeight */
 	cdev_notdef(),			/* 65 */
 	cdev_notdef(),			/* 66 */
 	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
