@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.60 2004/06/04 18:04:21 otto Exp $ */
+/* $OpenBSD: user.c,v 1.61 2004/09/30 15:07:41 otto Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -948,7 +948,8 @@ adduser(char *login_name, user_t *up)
 	int		ptmpfd;
 	gid_t		gid;
 	int		cc;
-	int		i;
+	int		i, yp = 0;
+	FILE		*fp;
 
 	if (!valid_login(login_name)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
@@ -969,13 +970,31 @@ adduser(char *login_name, user_t *up)
 		(void) close(masterfd);
 		err(EXIT_FAILURE, "can't obtain pw_lock");
 	}
-	while ((cc = read(masterfd, buf, sizeof(buf))) > 0) {
+	if ((fp = fdopen(masterfd, "r")) == NULL) {
+		(void) close(masterfd);
+		(void) close(ptmpfd);
+		pw_abort();
+		err(EXIT_FAILURE, "can't fdopen `%s' for reading",
+		    _PATH_MASTERPASSWD);
+	}
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		cc = strlen(buf);
+		if (cc > 1 && buf[0] == '+' && buf[1] == ':') {
+			yp = 1;
+			continue;
+		}
 		if (write(ptmpfd, buf, (size_t)(cc)) != cc) {
-			(void) close(masterfd);
+			(void) fclose(fp);
 			(void) close(ptmpfd);
 			pw_abort();
 			err(EXIT_FAILURE, "short write to /etc/ptmp (not %d chars)", cc);
 		}
+	}
+	if (ferror(fp)) {
+		(void) fclose(fp);
+		(void) close(ptmpfd);
+		pw_abort();
+		err(EXIT_FAILURE, "read error on %s", _PATH_MASTERPASSWD);
 	}
 	/* if no uid was specified, get next one in [low_uid..high_uid] range */
 	sync_uid_gid = (strcmp(up->u_primgrp, "=uid") == 0);
@@ -1093,6 +1112,14 @@ adduser(char *login_name, user_t *up)
 		pw_abort();
 		err(EXIT_FAILURE, "can't add `%s'", buf);
 	}
+	if (yp) {
+		cc = snprintf(buf, sizeof(buf), "+:*::::::::\n");
+		if (write(ptmpfd, buf, (size_t) cc) != cc) {
+			(void) close(ptmpfd);
+			pw_abort();
+			err(EXIT_FAILURE, "can't add `%s'", buf);
+		}
+	}
 	if (up->u_flags & F_MKDIR) {
 		if (lstat(home, &st) == 0) {
 			(void) close(ptmpfd);
@@ -1122,7 +1149,7 @@ adduser(char *login_name, user_t *up)
 		errx(EXIT_FAILURE, "can't append `%s' to new groups", login_name);
 	}
 	(void) close(ptmpfd);
-	if (pw_mkdb(login_name, 0) < 0) {
+	if (pw_mkdb(yp ? NULL : login_name, 0) < 0) {
 		pw_abort();
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
