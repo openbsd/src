@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.12 2002/02/17 22:59:52 maja Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.13 2003/01/27 19:37:27 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1998/08/20 08:33:48 kleink Exp $	*/
 
 /*
@@ -50,62 +50,7 @@
  * Machine dependent constants for HP300
  */
 
-/*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
- * the number of pages from the beginning of the P0 region to the
- * beginning of the text and from the beginning of the P1 region to the
- * beginning of the stack respectively.
- *
- * NOTE: the ONLY reason that HIGHPAGES is 0x100 instead of UPAGES (3)
- * is for HPUX compatibility.  Why??  Because HPUX's debuggers
- * have the user's stack hard-wired at FFF00000 for post-mortems,
- * and we must be compatible...
- */
-#define	USRTEXT		8192
-#define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
-#define	LOWPAGES	0
-#define HIGHPAGES	(0x100000/NBPG)
-
-/*
- * Virtual memory related constants, all in bytes
- */
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(8*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		(64*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		MAXDSIZ			/* max stack size */
-#endif
-
-/*
- * Sizes of the system and user portions of the system page table.
- */
-#define	USRPTSIZE 	(1 * NPTEPG)	/* 4mb */
-
-/*
- * PTEs for mapping user space into the kernel for phyio operations.
- * One page is enough to handle 4Mb of simultaneous raw IO operations.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/*
- * PTEs for system V style shared memory.
- * This is basically slop for kmempt which we actually allocate (malloc) from.
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS	1024		/* 4mb */
-#endif
+#include <m68k/vmparam.h>
 
 /*
  * External IO space map size.
@@ -118,50 +63,10 @@
 #endif
 
 /*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP 		20
-
-/* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
-#define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFF000)
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
-
-/* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vsize_t)2)
-
-/* pcb base */
-#define	pcbb(p)		((u_int)(p)->p_addr)
-
-/*
  * Constants which control the way the VM system deals with memory segments.
  * The hp300 only has one physical memory segment.
  */
 #define	VM_PHYSSEG_MAX		1
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define	VM_PHYSSEG_NOADD
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
-
-/*
- * pmap-specific data stored in the vm_physmem[] array.
- */
-#define __HAVE_PMAP_PHYSSEG
-struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv table for this seg */
-	char *attrs;			/* page attributes for this seg */
-};
 
 #endif /* _HP300_VMPARAM_H_ */
