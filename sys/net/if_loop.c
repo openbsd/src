@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.7 1997/07/23 03:46:01 denny Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.8 1997/12/31 04:33:38 mickey Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ loopattach(n)
 	register int i;
 	register struct ifnet *ifp;
 
-	for (i = 0; i < NLOOP; i++) {
+	for (i = NLOOP; i--; ) {
 		ifp = &loif[i];
 		sprintf(ifp->if_xname, "lo%d", i);
 		ifp->if_softc = NULL;
