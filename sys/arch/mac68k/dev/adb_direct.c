@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.4 1997/04/07 01:22:15 briggs Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.5 1997/04/14 18:47:53 gene Exp $	*/
 /*  adb_direct.c 1.91 1/20/97 jpw */
 
 /*
@@ -1936,7 +1936,7 @@ set_adb_info(ADBSetInfoBlock * info, int adbAddr)
 
 }
 
-#ifdef HWDIRECT
+#ifndef MRG_ADB
 long
 mrg_adbintr(void)
 {
@@ -2163,7 +2163,7 @@ adb_prog_switch_disable(void)
         }
 }                               /* adb_prog_switch_disable */
 
-#ifdef HWDIRECT
+#ifndef MRG_ADB
 
 int 
 CountADBs(void)

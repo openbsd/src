@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.c,v 1.8 1997/04/03 03:53:27 briggs Exp $	*/
+/*	$OpenBSD: adbsys.c,v 1.9 1997/04/14 18:47:55 gene Exp $	*/
 /*	$NetBSD: adbsys.c,v 1.24 1997/01/13 07:01:23 scottr Exp $	*/
 
 /*-
@@ -183,8 +183,9 @@ adb_init()
 	}
 #endif
 
-#ifndef HWDIRECT		/* We don't care about ADB ROM driver if we are
-				 * using the HWDIRECT method for ADB/PRAM/RTC. */
+#ifdef MRG_ADB			/* We don't care about ADB ROM driver if we
+				 * aren't using the MRG_ADB method for
+				 * ADB/PRAM/RTC. */
 	if (!mrg_romready()) {
 		printf("adb: no ROM ADB driver in this kernel for this machine\n");
 		return;
@@ -206,10 +207,10 @@ adb_init()
 	/*
 	 * Initialize ADB
 	 *
-	 * If using HWDIRECT method to access ADB, then call
+	 * If not using MRG_ADB method to access ADB, then call
 	 * ADBReInit directly.  Otherwise use ADB AlternateInit()
 	 */
-#ifdef HWDIRECT
+#ifndef MRG_ADB
 	printf("adb: calling ADBReInit\n");
 	ADBReInit();
 #else

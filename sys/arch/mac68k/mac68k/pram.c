@@ -1,4 +1,4 @@
-/*	$OpenBSD: pram.c,v 1.5 1997/02/23 06:05:04 briggs Exp $	*/
+/*	$OpenBSD: pram.c,v 1.6 1997/04/14 18:48:06 gene Exp $	*/
 /*	$NetBSD: pram.c,v 1.11 1996/10/21 05:42:29 scottr Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 
 #include <arch/mac68k/mac68k/pram.h>
 #include <arch/mac68k/mac68k/macrom.h>
-#ifdef HWDIRECT
+#ifndef MRG_ADB
 #include <arch/mac68k/dev/adbvar.h>
 #endif
 
@@ -153,9 +153,9 @@ pram_settime(unsigned long time)
 	return setPramTime(time);
 }
 
-#ifdef HWDIRECT         /* These routines are defined here only
-                         * when the HWDIRECT method for accessing
-                         * the ADB/PRAM/RTC is enabled. */
+#ifndef MRG_ADB         /* These routines are defined here only
+                         * when the MRG_ADB method for accessing
+                         * the ADB/PRAM/RTC isn't enabled. */
 
 extern int adbHardware;         /* from newadb.c */
 
@@ -219,4 +219,4 @@ setPramTime(unsigned long time)
 
 }
 
-#endif  /* ifdef HWDIRECT */
+#endif  /* ifndef MRG_ADB */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.5 1997/02/23 06:04:55 briggs Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.6 1997/04/14 18:47:56 gene Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.5 1997/01/13 07:01:24 scottr Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ void	extdms_complete __P((void));
 void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 void	extdms_init __P((int));
 
-#ifdef HWDIRECT
+#ifndef MRG_ADB
 
 /* types of adb hardware that we (will eventually) support */
 #define ADB_HW_UNKNOWN		0x01	/* don't know */

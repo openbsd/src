@@ -1,4 +1,4 @@
-/*	$OpenBSD: macromasm.s,v 1.7 1997/04/05 15:29:13 briggs Exp $	*/
+/*	$OpenBSD: macromasm.s,v 1.8 1997/04/14 18:48:04 gene Exp $	*/
 /*	$NetBSD: macromasm.s,v 1.11 1996/05/25 14:45:37 briggs Exp $	*/
 
 /*-
@@ -125,8 +125,8 @@
 	.global _panic
 	.global _printf
 
-#ifndef HWDIRECT	/* These functions are NOT defined here if using the
-			 * HWDIRECT method of accessing the ADB/PRAM/RTC. 
+#ifdef MRG_ADB		/* These functions are defined here if using the
+			 * MRG_ADB method of accessing the ADB/PRAM/RTC. 
 			 * They are in adb_direct.c. */
 /*
  * Most of the following glue just takes C function calls, converts
@@ -222,7 +222,7 @@ _ADBOp:
 	movl	sp@(16), d0
 	.word 0xa07c
 	rts
-#endif /* ifndef HWDIRECT */
+#endif /* ifdef MRG_ADB */
 
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pramasm.s,v 1.3 1997/02/23 06:05:05 briggs Exp $	*/
+/*	$OpenBSD: pramasm.s,v 1.4 1997/04/14 18:48:08 gene Exp $	*/
 /*	$NetBSD: pramasm.s,v 1.4 1995/09/28 03:15:54 briggs Exp $	*/
 
 /*
@@ -47,8 +47,8 @@
  * that are defined later in this file.
  */
 
-#ifndef HWDIRECT	/* These routines are NOT defined at all
-                         * if using the HWDIRECT method for accessing
+#ifdef MRG_ADB		/* These routines are defined at all
+                         * if using the MRG_ADB method for accessing
                          * the ADB/PRAM/RTC. */
 
 	.text
@@ -147,8 +147,8 @@ _setPramTime:
 #else				/* The following routines are the hardware
 				 * specific routines for the machines that
 				 * use the II-like method to access the PRAM,
-				 * and are only defined when the HWDIRECT method
-				 * is used to access the PRAM. */
+				 * and are only defined when the MRG_ADB method
+				 * isn't used to access the PRAM. */
 
 /*
  *  The following are the C interface functions to RTC access functions
@@ -420,5 +420,5 @@ ragain:
 	bset	#0,a1@(0x0400)	| and return RTC data line to output
 	rts			| return to caller
 
-#endif 				/* ifdef HWDIRECT */
+#endif 				/* ifndef MRG_ADB */
 

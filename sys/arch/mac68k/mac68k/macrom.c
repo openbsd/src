@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.14 1997/04/14 02:10:21 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.15 1997/04/14 18:48:01 gene Exp $	*/
 /*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
 
 /*-
@@ -394,8 +394,8 @@ mrg_jkybdtaskpanic()	/* JKybdTask stopper */
 	panic("Agh!  Called JKybdTask!\n");
 }
 
-#ifndef HWDIRECT	/* mrg_adbintr and mrg_pmintr are not defined
-                         * here if we are using the HWDIRECT method to
+#ifdef MRG_ADB		/* mrg_adbintr and mrg_pmintr are not defined
+                         * here if we are using the MRG_ADB method to
 			 * access the ADB/PRAM/RTC. They are
 			 * defined in adb_direct.c */
 long
@@ -454,7 +454,7 @@ mrg_pmintr()	/* Call ROM PM Interrupt */
 	}
 	return(1);
 }
-#endif	/* ifndef HWDIRECT */
+#endif	/* ifdef MRG_ADB */
 
 
 void
@@ -1098,7 +1098,7 @@ setup_egret(void)
 #endif
 }
 
-#ifndef HWDIRECT
+#ifdef MRG_ADB
 static void     setup_pm __P((void));
 
 static void
@@ -1146,8 +1146,8 @@ mrg_initadbintr()
 			HwCfgFlags, HwCfgFlags2, HwCfgFlags3);
 	}
 
-#ifdef HWDIRECT		/* Extra Egret setup not required for the
-			 * HWDIRECT method. */
+#ifndef MRG_ADB		/* Extra Egret setup not required for the
+			 * MRG_ADB method. */
         printf("mrg: skipping egret setup\n");
 #else
 	/*
@@ -1440,7 +1440,7 @@ mrg_fixupROMBase(obase, nbase)
 #endif
 }   
 
-#ifndef HWDIRECT
+#ifdef MRG_ADB
 void
 ADBAlternateInit(void)
 {

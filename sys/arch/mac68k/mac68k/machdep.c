@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 1997/04/07 03:23:35 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 1997/04/14 18:47:59 gene Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -587,8 +587,8 @@ boot(howto)
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
 		via_shutdown();
-#ifdef HWDIRECT                 /* adb_poweroff is available only when
-                                 * the HWDIRECT ADB method is used. */
+#ifndef MRG_ADB                 /* adb_poweroff is available only when
+                                 * the MRG_ADB method isn't used.       */
                 adb_poweroff(); /* Shut down machines whose power functions
                                  * are accessed via modified ADB calls. */
 #endif

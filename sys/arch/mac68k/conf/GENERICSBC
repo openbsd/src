@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICSBC,v 1.5 1997/04/14 00:27:29 briggs Exp $
+#	$OpenBSD: GENERICSBC,v 1.6 1997/04/14 18:47:50 gene Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC
@@ -61,7 +61,7 @@ options		COMPAT_SUNOS
 options		ZS_CONSOLE_ABORT
 options		DISABLE_EXT_CACHE # Don't use IIci external cache
 options		DISABLE_ADB_WITH_SERIAL_CONSOLE
-options		HWDIRECT
+#options	MRG_ADB		  # Use ROM-based ADB driver
 
 config		bsd	swap generic
 options		GENERIC
