@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.19 2000/01/25 21:02:32 deraadt Exp $ */
+/*	$OpenBSD: cl.c,v 1.20 2000/03/26 23:31:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -33,7 +33,6 @@
 /* DMA mode still does not work!!! */
 
 #include <sys/param.h>
-#include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>

@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: syscon.c,v 1.1 1999/09/27 18:43:25 smurph Exp $ */
+/*	$OpenBSD: syscon.c,v 1.2 2000/03/26 23:32:00 deraadt Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include <sys/user.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
-#include <sys/callout.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>

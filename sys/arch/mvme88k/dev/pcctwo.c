@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.7 1999/09/27 18:43:24 smurph Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.8 2000/03/26 23:32:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -42,7 +42,6 @@
 #include <sys/user.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
-#include <sys/callout.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.1 1999/05/29 04:41:45 smurph Exp $ */
+/*	$OpenBSD: vx.c,v 1.2 2000/03/26 23:32:00 deraadt Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -31,7 +31,6 @@
  */  
 
 #include <sys/param.h>
-#include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
