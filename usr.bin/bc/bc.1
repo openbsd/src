@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.5 2003/09/26 13:47:16 otto Exp $
+.\"	$OpenBSD: bc.1,v 1.6 2003/10/18 19:57:10 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -120,8 +120,9 @@ while ( E ) S
 for ( E ; E ; E ) S
 null statement
 break
+continue
 quit
-a string of letters, enclosed in double quotes
+a string of characters, enclosed in double quotes
 .Ed
 .Pp
 Function definitions
@@ -136,7 +137,7 @@ define L ( L ,..., L ) {
 The sequence
 .Sq \e\<newline><whitespace>
 is ignored within numbers.
-The newline character may be part part of a string.
+A string may contain any character, except double quote.
 .Pp
 Functions in
 .Fl lm

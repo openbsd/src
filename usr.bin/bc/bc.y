@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.10 2003/09/30 18:46:11 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.11 2003/10/18 19:57:10 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.10 2003/09/30 18:46:11 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.11 2003/10/18 19:57:10 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -85,6 +85,7 @@ static int		breakstack[16];
 static int		breaksp = 0;
 static ssize_t		prologue;
 static ssize_t		epilogue;
+static bool		st_has_continue;
 static char		str_table[UCHAR_MAX][2];
 static int		sargc;
 static char		**sargv;
@@ -119,6 +120,7 @@ extern char *__progname;
 %token DEFINE BREAK QUIT LENGTH
 %token RETURN FOR IF WHILE SQRT
 %token SCALE IBASE OBASE AUTO
+%token CONTINUE ELSE
 
 %nonassoc EQUALS LESS_EQ GREATER_EQ UNEQUALS LESS GREATER
 %right <str> ASSIGN_OP
@@ -160,11 +162,13 @@ input_item	: semicolon_list NEWLINE
 				macro_char = reset_macro_char;
 				putchar('\n');
 				free_tree();
+				st_has_continue = false;
 			}
 		| function
 			{
 				putchar('\n');
 				free_tree();
+				st_has_continue = false;
 			}
 		| error NEWLINE
 			{
@@ -215,7 +219,12 @@ statement	: expression
 			}
 		| named_expression ASSIGN_OP expression
 			{
-				$$ = node($3, cs($2), $1.store, END_NODE);
+				if ($2[0] == '\0')
+					$$ = node($3, cs($2), $1.store,
+					    END_NODE);
+				else
+					$$ = node($1.load, $3, cs($2), $1.store,
+					    END_NODE);
 			}
 		| STRING
 			{
@@ -232,6 +241,18 @@ statement	: expression
 					    numnode(nesting -
 						breakstack[breaksp-1]),
 					    cs("Q"), END_NODE);
+				}
+			}
+		| CONTINUE
+			{
+				if (breaksp == 0) {
+					warning("continue not in for or while");
+					YYERROR;
+				} else {
+					st_has_continue = true;
+					$$ = node(numnode(nesting -
+					    breakstack[breaksp-1] - 1),
+					    cs("J"), END_NODE);
 				}
 			}
 		| QUIT
@@ -261,8 +282,15 @@ statement	: expression
 		     relational_expression SEMICOLON
 		     expression RPAR opt_statement pop_nesting
 			{
-				int n = node($10, $8, cs("s."), $6, $3,
-				    END_NODE);
+				ssize_t n;
+
+				if (st_has_continue)
+					n = node($10, cs("M"), $8, cs("s."),
+					    $6, $3, END_NODE);
+				else
+					n = node($10, $8, cs("s."), $6, $3,
+					    END_NODE);
+
 				emit_macro($3, n);
 				$$ = node($4, cs("s."), $6, $3, cs(" "),
 				    END_NODE);
@@ -276,7 +304,12 @@ statement	: expression
 		| WHILE LPAR alloc_macro relational_expression RPAR
 		      opt_statement pop_nesting
 			{
-				int n = node($6, $4, $3, END_NODE);
+				ssize_t n;
+
+				if (st_has_continue)
+					n = node($6, cs("M"), $4, $3, END_NODE);
+				else
+					n = node($6, $4, $3, END_NODE);
 				emit_macro($3, n);
 				$$ = node($4, $3, cs(" "), END_NODE);
 			}
@@ -304,10 +337,13 @@ alloc_macro	: /* empty */
 					fatal("nesting too deep");
 				breakstack[breaksp++] = nesting++;
 			}
+		;
+
 pop_nesting	: /* empty */
 			{
 				breaksp--;
 			}
+		;
 
 function	: function_header opt_parameter_list RPAR
 		  LBRACE NEWLINE opt_auto_define_list
@@ -332,6 +368,7 @@ function_header : DEFINE LETTER LPAR
 				breaksp = 0;
 				breakstack[breaksp] = 0;
 			}
+		;
 
 opt_parameter_list
 		: /* empty */
@@ -525,8 +562,12 @@ expression	: named_expression
 			}
 		| named_expression ASSIGN_OP expression
 			{
-				$$ = node($3, cs($2), cs("d"),
-				    $1.store, END_NODE);
+				if ($2[0] == '\0')
+					$$ = node($3, cs($2), cs("d"), $1.store,
+					    END_NODE);
+				else
+					$$ = node($1.load, $3, cs($2), cs("d"),
+					    $1.store, END_NODE);
 			}
 		| LENGTH LPAR expression RPAR
 			{
