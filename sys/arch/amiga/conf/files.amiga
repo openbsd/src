@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.31.2.2 1995/11/10 19:29:49 chopps Exp $
+#	$NetBSD: files.amiga,v 1.33 1996/01/28 19:57:47 chopps Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -161,7 +161,7 @@ file	arch/amiga/dev/wesc.c		wesc needs-flag
 # C= A4091
 device	afsc at zbus: scsi, siop
 device	aftsc at mainbus: scsi, siop
-file	arch/amiga/dev/afsc.c		afsc needs-flag
+file	arch/amiga/dev/afsc.c		afsc aftsc needs-flag
 
 # ncr 5380 controllers
 define	sci
