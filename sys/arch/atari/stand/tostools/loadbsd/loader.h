@@ -1,4 +1,4 @@
-/*	$NetBSD: loader.h,v 1.5 1995/08/29 20:35:16 leo Exp $	*/
+/*	$NetBSD: loader.h,v 1.6 1996/01/07 22:06:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -42,6 +42,10 @@
 
 #define __LDPGSZ	(8*1024)	/* Page size for NetBSD		*/
 
+#ifndef N_MAGIC
+#define	N_MAGIC(hdr)	(hdr.a_magic & 0xffff)
+#endif
+
 #define	TTRAM_BASE	0x1000000	/* Fastram always starts here	*/
 
 /*
@@ -54,29 +58,6 @@
 #define	ADDR_OSHEAD	((OSH**)0x4f2)	/* Pointer Os-header		*/
 
 #define	RAM_TOP_MAGIC	(0x1357bd13)	/* Magic nr. for ADDR_CHKRAMTOP	*/
-
-/*
- * These should match with the values NetBSD uses!
- */
-#define	ATARI_68000	1		/* 68000 CPU			*/
-#define	ATARI_68010	(1<<1)		/* 68010 CPU			*/
-#define	ATARI_68020	(1<<2)		/* 68020 CPU			*/
-#define	ATARI_68030	(1<<3)		/* 68030 CPU			*/
-#define	ATARI_68040	(1<<4)		/* 68040 CPU			*/
-#define	ATARI_TT	(1L<<11)	/* This is a TT030		*/
-#define	ATARI_FALCON	(1L<<12)	/* This is a Falcon		*/
-
-#define	ATARI_CLKBROKEN	(1<<16)		/* GEMDOS has faulty year base	*/
-
-#define	ATARI_ANYCPU	(0x1f)
-
-/*
- * Definitions for boothowto
- */
-#define	RB_AUTOBOOT	0x00
-#define	RB_ASKNAME	0x01
-#define	RB_SINGLE	0x02
-#define	RB_KDB		0x40
 
 /*
  * Sufficient but incomplete definition os Os-header
