@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.31 2000/06/19 07:22:59 fgsch Exp $
+#	$OpenBSD: files.pcmcia,v 1.32 2000/06/19 08:58:54 fgsch Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -46,7 +46,7 @@ file	dev/pcmcia/if_sm_pcmcia.c		sm_pcmcia
 #file	dev/pcmcia/if_mbe_pcmcia.c		mbe_pcmcia
 
 # Xircom Ethernet controllers
-device xe: ether, ifnet, mii
+device xe: ether, ifnet, mii, ifmedia
 attach xe at pcmcia with xe_pcmcia
 file dev/pcmcia/if_xe.c				xe_pcmcia
 
