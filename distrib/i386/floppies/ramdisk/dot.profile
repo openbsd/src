@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.5 1997/05/07 06:03:25 deraadt Exp $
+#       $OpenBSD: dot.profile,v 1.6 1997/05/11 21:04:17 tholo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -48,9 +48,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount the kern_fs so that we can examine the dmesg state
 	mount -t kernfs /kern /kern
-
-	# pull in the functions that people will use from the shell prompt.
-	. /.instutils
 
 	echo "Follow the installation directions to install or upgrade"
 	echo "the OpenBSD distribution sets."
