@@ -87,12 +87,9 @@ d_suidsafe=$define
 
 # cc is gcc so we can do better than -O
 # Allow a command-line override, such as -Doptimize=-g
-case ${ARCH} in
-m88k)
-   optimize='-O0'
-   ;;
-hppa)
-   optimize='-O0'
+case "${ARCH}-${osvers}" in
+hppa-3.3|m88k-*)
+   test "$optimize" || optimize='-O0'
    ;;
 *)
    test "$optimize" || optimize='-O2'
@@ -132,6 +129,7 @@ case "$openbsd_distribution" in
 		useshrplib=true
 		libperl=`. ./shlib_version; echo libperl.so.${major}.${minor}`
 	fi
+	usethreads=$define
 	;;
 esac
 
