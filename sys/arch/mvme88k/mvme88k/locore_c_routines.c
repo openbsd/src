@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.36 2003/10/02 10:20:12 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.37 2003/10/11 22:07:47 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -79,7 +79,7 @@ void vector_init(m88k_exception_vector_area *, unsigned *);
 #define DMT_HALF	2
 #define DMT_WORD	4
 
-static struct {
+const struct {
 	unsigned char    offset;
 	unsigned char    size;
 } dmt_en_info[16] = {
@@ -91,13 +91,6 @@ static struct {
 
 #ifdef DATA_DEBUG
 int data_access_emulation_debug = 0;
-static char *bytes[] =
-{
-   "____", "___x", "__x_", "__xx",
-   "_x__", "_x_x", "_xx_", "_xxx",
-   "x___", "x__x", "x_x_", "x_xx",
-   "xx__", "xx_x", "xxx_", "xxxx",
-};
 #define DAE_DEBUG(stuff) \
 	do { \
 		if (data_access_emulation_debug != 0) { \
@@ -108,25 +101,17 @@ static char *bytes[] =
 #define DAE_DEBUG(stuff)
 #endif
 
-void 
+void
 dae_print(unsigned *eframe)
 {
 	int x;
 	unsigned dmax, dmdx, dmtx;
-	static char *bytes[] =
-	{
-		"____", "___x", "__x_", "__xx",
-		"_x__", "_x_x", "_xx_", "_xxx",
-		"x___", "x__x", "x_x_", "x_xx",
-		"xx__", "xx_x", "xxx_", "xxxx",
-	};
 
-	if (!(eframe[EF_DMT0] & DMT_VALID))
+	if (!ISSET(eframe[EF_DMT0], DMT_VALID))
 		return;
 
 	for (x = 0; x < 3; x++) {
 		dmtx = eframe[EF_DMT0 + x * 3];
-
 		if (!ISSET(dmtx, DMT_VALID))
 			continue;
 
@@ -134,16 +119,15 @@ dae_print(unsigned *eframe)
 		dmax = eframe[EF_DMA0 + x * 3];
 
 		if (ISSET(dmtx, DMT_WRITE))
-			printf("[DMT%d=%x: st.%c %x to %x as [%s] %s %s]\n",
+			printf("[DMT%d=%x: st.%c %x to %x as %d %s %s]\n",
 			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
-			    bytes[DMT_ENBITS(dmtx)], 
+			    DMT_ENBITS(dmtx),
 			    dmtx & DMT_DOUB1 ? "double": "not double",
 			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
 		else
-			printf("[DMT%d=%x: ld.%c r%d <- %x as [%s] %s %s]\n",
+			printf("[DMT%d=%x: ld.%c r%d <- %x as %d %s %s]\n",
 			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
-			    DMT_DREGBITS(dmtx), dmax,
-			    bytes[DMT_ENBITS(dmtx)], 
+			    DMT_DREGBITS(dmtx), dmax, DMT_ENBITS(dmtx),
 			    dmtx & DMT_DOUB1 ? "double": "not double",
 			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
 	}
@@ -159,10 +143,9 @@ data_access_emulation(unsigned *eframe)
 	dmtx = eframe[EF_DMT0];
 	if (!ISSET(dmtx, DMT_VALID))
 		return;
-   
+
 	for (x = 0; x < 3; x++) {
 		dmtx = eframe[EF_DMT0 + x * 3];
-
 		if (!ISSET(dmtx, DMT_VALID) || ISSET(dmtx, DMT_SKIP))
 			continue;
 
@@ -171,16 +154,15 @@ data_access_emulation(unsigned *eframe)
 
       DAE_DEBUG(
 		if (ISSET(dmtx, DMT_WRITE))
-			printf("[DMT%d=%x: st.%c %x to %x as [%s] %s %s]\n",
+			printf("[DMT%d=%x: st.%c %x to %x as %d %s %s]\n",
 			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
-			    bytes[DMT_ENBITS(dmtx)], 
+			    DMT_ENBITS(dmtx),
 			    dmtx & DMT_DOUB1 ? "double": "not double",
 			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
 		else
-			printf("[DMT%d=%x: ld.%c r%d <- %x as [%s] %s %s]\n",
+			printf("[DMT%d=%x: ld.%c r%d <- %x as %d %s %s]\n",
 			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
-			    DMT_DREGBITS(dmtx), dmax,
-			    bytes[DMT_ENBITS(dmtx)], 
+			    DMT_DREGBITS(dmtx), dmax, DMT_ENBITS(dmtx),
 			    dmtx & DMT_DOUB1 ? "double": "not double",
 			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem")
 	);
@@ -240,7 +222,7 @@ data_access_emulation(unsigned *eframe)
 						do_store_word(dmax, dmdx,
 						    dmtx & DMT_DAS);
 						break;
-					} 
+					}
 				} else {
 					/* else it's a read */
 					switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
@@ -341,7 +323,7 @@ data_access_emulation(unsigned *eframe)
  * so don't call any other functions!
  *	XXX clean this - nivas
  */
-void 
+void
 vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 {
 	unsigned num;
@@ -406,20 +388,20 @@ unsigned int blocked_interrupts_mask;
 unsigned int m188_curspl[MAX_CPUS] = {0, 0, 0, 0};
 
 unsigned int int_mask_val[INT_LEVEL] = {
-	MASK_LVL_0, 
-	MASK_LVL_1, 
-	MASK_LVL_2, 
-	MASK_LVL_3, 
-	MASK_LVL_4, 
-	MASK_LVL_5, 
-	MASK_LVL_6, 
+	MASK_LVL_0,
+	MASK_LVL_1,
+	MASK_LVL_2,
+	MASK_LVL_3,
+	MASK_LVL_4,
+	MASK_LVL_5,
+	MASK_LVL_6,
 	MASK_LVL_7
 };
 
 /*
  * return next safe spl to reenable interrupts.
  */
-unsigned int 
+unsigned int
 safe_level(mask, curlevel)
 	unsigned mask;
 	unsigned curlevel;
@@ -439,7 +421,7 @@ void
 setlevel(unsigned int level)
 {
 	unsigned int mask;
-	int cpu = cpu_number(); 
+	int cpu = cpu_number();
 
 	mask = int_mask_val[level];
 
@@ -449,18 +431,18 @@ setlevel(unsigned int level)
 #if 0
 	mask &= ISR_SOFTINT_EXCEPT_MASK(cpu);
 	mask &= ~blocked_interrupts_mask;
-#endif 
+#endif
 
 	*int_mask_reg[cpu] = mask;
 #if 0
 	int_mask_shadow[cpu] = mask;
-#endif 
+#endif
 	m188_curspl[cpu] = level;
 }
 
 #endif  /* MVME188 */
 
-unsigned 
+unsigned
 getipl(void)
 {
 	unsigned curspl;
@@ -484,7 +466,7 @@ getipl(void)
 	return curspl;
 }
 
-unsigned 
+unsigned
 setipl(unsigned level)
 {
 	unsigned curspl;
@@ -536,10 +518,10 @@ simple_lock_init(lkp)
 	lkp->lock_data = 0;
 }
 
-int 
+int
 test_and_set(lock)
 	int *volatile lock;
-{   
+{
 #if 0
 	int oldlock = *lock;
 	if (*lock == 0) {
@@ -550,6 +532,6 @@ test_and_set(lock)
 	return *lock;
 	*lock = 1;
 	return 0;
-#endif 
+#endif
 }
 #endif
