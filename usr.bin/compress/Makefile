@@ -1,18 +1,18 @@
-#	$OpenBSD: Makefile,v 1.7 1997/07/06 20:24:48 mickey Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/07/06 20:42:15 mickey Exp $
 
 PROG=	compress
 SRCS=	main.c zopen.c gzopen.c
 MAN=	compress.1 zopen.3
 LINKS=	${BINDIR}/compress ${BINDIR}/uncompress \
 	${BINDIR}/compress ${BINDIR}/zcat \
-	${BINDIR}/compress ${BINDIR}/gzip \
-	${BINDIR}/compress ${BINDIR}/gunzip \
-	${BINDIR}/compress ${BINDIR}/gzcat
+#	${BINDIR}/compress ${BINDIR}/gzip \
+#	${BINDIR}/compress ${BINDIR}/gunzip \
+#	${BINDIR}/compress ${BINDIR}/gzcat
 MLINKS= compress.1 uncompress.1 \
 	compress.1 zcat.1 \
-	compress.1 gzip.1 \
-	compress.1 gunzip.1 \
-	compress.1 gzcat.1
+#	compress.1 gzip.1 \
+#	compress.1 gunzip.1 \
+#	compress.1 gzcat.1
 
 LDADD=-lz
 DPADD=${LIBZ}
