@@ -304,9 +304,3 @@ extern	char	*keyname();
 extern	char	*adjustname();
 extern	VOID	kdelete();
 extern	VOID	lchange();
-/*
- * Standard I/O.
- */
-extern	char	*strcpy();
-extern	char	*strcat();
-extern	char	*malloc();

@@ -4,7 +4,6 @@
 #include	"def.h"
 
 static	FILE	*ffp;
-extern	char	*getenv();
 char	*adjustname();
 
 #include <sys/types.h>
@@ -199,7 +198,6 @@ register char *fn;
 {
     register char *cp;
     static char fnb[NFILEN];
-    extern struct passwd *getpwnam();
     struct passwd *pwent;
 #ifdef	SYMBLINK
     struct stat statbuf;
@@ -322,7 +320,6 @@ char *suffix;
 {
 	register char	*file;
 	static char	home[NFILEN];
-	char		*getenv();
 
 	if ((file = getenv("HOME")) == NULL) goto notfound;
 	if (strlen(file)+7 >= NFILEN - 1) goto notfound;

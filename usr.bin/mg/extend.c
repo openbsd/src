@@ -18,7 +18,6 @@
 #endif
 #endif
 
-extern	char	*strncpy();
 extern	int rescan();
 
 /* insert a string, mainly for use from macros (created by selfinsert) */

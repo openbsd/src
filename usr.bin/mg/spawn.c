@@ -11,8 +11,6 @@
 char	*shellp	= NULL;			/* Saved "SHELL" program.	*/
 char	*shname = NULL;			/* Saved shell name		*/
 
-extern	char	*getenv();
-
 /*
  * On System V, we no gots job control, so always run
  * a subshell using fork/exec. Bound to "C-C", and used
@@ -23,11 +21,10 @@ extern	char	*getenv();
  */
 spawncli(f, n)
 {
-	extern char	*strrchr();
 	register int	pid;
 	register int	wpid;
-	register int	(*oqsig)();
-	register int	(*oisig)();
+	register void	(*oqsig)();
+	register void	(*oisig)();
 	int		status;
 	int		errp = FALSE;
 
@@ -85,7 +82,6 @@ spawncli(f, n)
  */
 attachtoparent(f, n)
 {
-	extern char	*strrchr();
 	register int	pid;
 	register int	wpid;
 	register int	(*oqsig)();

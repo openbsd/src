@@ -51,7 +51,6 @@ char kbdq;			/* char we've already read	*/
 ttopen()
 {
 	register char	*cp;
-	extern char	*getenv();
 
 	if (ttyactivep)
 		return;
