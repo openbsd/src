@@ -1,3 +1,4 @@
+/*	$OpenBSD: zs.c,v 1.10 1996/08/11 23:39:56 downsj Exp $	*/
 /*	$NetBSD: zs.c,v 1.37.4.1 1996/06/02 09:07:55 mrg Exp $ */
 
 /*
@@ -82,7 +83,7 @@
 #include <machine/remote-sl.h>
 #endif
 
-#define	ZSMAJOR	12		/* XXX */
+#define	ZSMAJOR		12	/* XXX */
 
 #define	ZS_KBD		2	/* XXX */
 #define	ZS_MOUSE	3	/* XXX */
@@ -347,7 +348,7 @@ zsattach(parent, dev, aux)
 		/*
 		 * Mouse: tell /dev/mouse driver how to talk to us.
 		 */
-		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
+		tp->t_ispeed = tp->t_ospeed = B1200;
 		tp->t_cflag = CS8;
 		ms_serial(tp, zsiopen, zsiclose);
 		ringsize = 128;
