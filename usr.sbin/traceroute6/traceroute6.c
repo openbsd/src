@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.33 2003/01/21 08:51:22 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.34 2003/01/21 08:55:14 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -692,8 +692,9 @@ main(argc, argv)
 		}
 	}
 #ifdef SO_SNDBUF
-	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
-	    sizeof(datalen)) < 0) {
+	i = datalen;
+	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&i,
+	    sizeof(i)) < 0) {
 		perror("setsockopt(SO_SNDBUF)");
 		exit(6);
 	}
