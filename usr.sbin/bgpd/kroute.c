@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.93 2004/04/27 04:38:12 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.94 2004/04/28 01:13:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -944,7 +944,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	r.mask.sin_addr.s_addr = htonl(0xffffffff << (32 - kroute->prefixlen));
 
 retry:
-	if (write(fd, &r, sizeof(r)) == -1) {	/* XXX never partial? */
+	if (write(fd, &r, sizeof(r)) == -1) {
 		switch (errno) {
 		case ESRCH:
 			if (r.hdr.rtm_type == RTM_CHANGE) {
