@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.27 2002/05/24 16:45:16 stevesk Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.28 2003/07/22 13:35:22 markus Exp $");
 
 #include "packet.h"
 #include "log.h"
@@ -65,14 +65,6 @@ auth_password(Authctxt *authctxt, const char *password)
 #ifdef KRB5
 	if (options.kerberos_authentication == 1) {
 		int ret = auth_krb5_password(authctxt, password);
-		if (ret == 1 || ret == 0)
-			return ret;
-		/* Fall back to ordinary passwd authentication. */
-	}
-#endif
-#ifdef KRB4
-	if (options.kerberos_authentication == 1) {
-		int ret = auth_krb4_password(authctxt, password);
 		if (ret == 1 || ret == 0)
 			return ret;
 		/* Fall back to ordinary passwd authentication. */
