@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.5 1996/07/31 12:21:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/07/31 17:44:23 deraadt Exp $
 #	$NetBSD: Makefile,v 1.10 1994/12/23 06:52:56 jtc Exp $
 
 PROG=	login
-SRCS=	login.c login_fbtab.c
+SRCS=	login.c
 #LDADD=	-lutil -lcrypt
 LDADD=	-lutil
 #DPADD=	${LIBUTIL} ${LIBCRYPT}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1996/07/31 12:21:44 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 1996/07/31 17:44:24 deraadt Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.4 1994/12/23 06:53:03 jtc Exp $	*/
 
 /*-
@@ -40,4 +40,3 @@
 
 #define	_PATH_HUSHLOGIN	".hushlogin"
 #define	_PATH_MOTDFILE	"/etc/motd"
-#define _PATH_FBTAB	"/etc/fbtab"

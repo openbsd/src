@@ -64,10 +64,12 @@
 #include <string.h>
 #include <errno.h>
 #include <dirent.h>
-#include "pathnames.h"
 
-void login_protect __P((char *, char *, int, uid_t, gid_t));
-void login_fbtab __P((char *tty, uid_t uid, gid_t gid));
+#include "util.h"
+
+#define _PATH_FBTAB	"/etc/fbtab"
+
+static void login_protect __P((char *, char *, int, uid_t, gid_t));
 
 #define	WSPACE		" \t\n"
 
@@ -113,7 +115,7 @@ login_fbtab(tty, uid, gid)
 /*
  * login_protect - protect one device entry
  */
-void
+static void
 login_protect(table, path, mask, uid, gid)
 	char	*table;
 	char	*path;
