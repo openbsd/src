@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.93 2003/01/22 18:16:34 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.94 2003/01/22 21:01:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -740,9 +740,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 		    ("pmap_enter: remapping 0x%x -> 0x%x\n", pte, pa));
 
 		pmap_pte_flush(pmap, va, pte);
-		if (wired && !(pte & PTE_PROT(TLB_WIRED)) == 0)
+		if (wired && !(pte & PTE_PROT(TLB_WIRED)))
 			pmap->pm_stats.wired_count++;
-		else if (!wired && (pte & PTE_PROT(TLB_WIRED)) != 0)
+		else if (!wired && (pte & PTE_PROT(TLB_WIRED)))
 			pmap->pm_stats.wired_count--;
 
 		if (PTE_PAGE(pte) == pa) {
