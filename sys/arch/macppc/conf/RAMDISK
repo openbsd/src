@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.8 2002/04/02 15:02:19 lebel Exp $
+#	$OpenBSD: RAMDISK,v 1.9 2002/04/05 15:40:11 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -96,9 +96,9 @@ gpio*		at macobio?		# GPIO, PMU interrupt router.
 gpio*		at gpio?		# GPIO, PMU interrupt router.
 aed*		at adb?			# ADB Event Device
 akbd*		at adb?			# ADB keyboard
-wskbd*		at akbd? console ?
+wskbd*		at akbd? console ? mux 1
 #ams*		at adb?			# ADB mouse
-#wsmouse*	at ams?			
+#wsmouse*	at ams? mux 0
 #abtn*		at adb?			# ADB button?
 #zsc*		at macobio?
 #zstty*		at zsc? channel ?
@@ -143,7 +143,7 @@ kue*		at uhub? port ?			# Kawasaki KL5KUSB101B
 aue*		at uhub? port ?			# USB EtherNet 
 
 wsdisplay*	at vgafb?
-wskbd*		at ukbd? console ?
+wskbd*		at ukbd? console ? mux 1
 
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?            
@@ -155,6 +155,7 @@ cd*		at scsibus? target ? lun ?
 pseudo-device	loop	1	# network loopback
 pseudo-device   bpfilter 1	# packet filter
 pseudo-device	rd	1	# ram disk
+pseudo-device   wsmux	2	# mouse & keyboard multiplexor
 
 # RAMDISK stuff
 option		MINIROOTSIZE=8192
