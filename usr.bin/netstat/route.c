@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.15 1997/06/29 21:46:06 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.16 1997/07/13 23:02:42 angelos Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.15 1997/06/29 21:46:06 millert Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.16 1997/07/13 23:02:42 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -232,10 +232,9 @@ pr_encaphdr()
 {
 	if (Aflag)
 		printf("%-*s ", PLEN, "Address");
-	printf("%-15s %-15s %-5s %-15s %-15s %-5s %-5s %-15s %-8s %s\n",
-	    "Source address", "Source mask", "Port", "Dest. address", 
-	    "Dest. mask", "Port", "Proto", "Tunnel exit",
-	    "SPI", "Use");
+	printf("%-30s %-5s %-30s %-5s %-5s %-26s\n",
+	    "Source address/netmask", "Port", "Destination address/netmask", 
+	    "Port", "Proto", "SA(Address/SPI/Proto)");
 }
 
 static struct sockaddr *
@@ -794,18 +793,32 @@ encap_print(rt)
 	register struct rtentry *rt;
 {
 	struct sockaddr_encap sen1, sen2, sen3;
+	u_char buffer[31];
+	int i;
 
 	bcopy(kgetsa(rt_key(rt)), &sen1, sizeof(sen1));
 	bcopy(kgetsa(rt_mask(rt)), &sen2, sizeof(sen2));
 	bcopy(kgetsa(rt->rt_gateway), &sen3, sizeof(sen3));
 
-	printf("%-15s ", inet_ntoa(sen1.sen_ip_src));
-	printf("%-15s %-5u ", inet_ntoa(sen2.sen_ip_src), sen1.sen_sport);
-	printf("%-15s ", inet_ntoa(sen1.sen_ip_dst));
-	printf("%-15s %-5u %-5u ", inet_ntoa(sen2.sen_ip_dst),
-	    sen1.sen_dport, sen1.sen_proto);
-	printf("%-15s %08x %-lu\n", inet_ntoa(sen3.sen_ipsp_dst),
-	    ntohl(sen3.sen_ipsp_spi), rt->rt_use);
+	bzero(buffer, 31);
+	strncpy(buffer, inet_ntoa(sen1.sen_ip_src), 15);
+	i = strlen(buffer);
+	strncpy(buffer + i, "/", 1);
+	i++;
+	strncpy(buffer + i, inet_ntoa(sen2.sen_ip_src), 15);
+
+	printf("%-30s %-5u ", buffer, sen1.sen_sport);
+
+	bzero(buffer, 31);
+	strncpy(buffer, inet_ntoa(sen1.sen_ip_dst), 15);
+	i = strlen(buffer);
+	strncpy(buffer + i, "/", 1);
+	i++;
+	strncpy(buffer + i, inet_ntoa(sen2.sen_ip_dst), 15);
+
+	printf("%-30s %-5u %-5u ", buffer, sen1.sen_dport, sen1.sen_proto);
+	printf("%s/%08x/%-lu\n", inet_ntoa(sen3.sen_ipsp_dst),
+	       ntohl(sen3.sen_ipsp_spi), sen3.sen_ipsp_sproto);
 }
 
 void
