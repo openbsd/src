@@ -391,10 +391,6 @@ static char *ssl_var_lookup_ssl_cert(pool *p, X509 *xs, char *var)
     return result;
 }
 
-#ifndef NID_uniqueIdentifier
-#define NID_uniqueIdentifier             102
-#endif
-
 static const struct {
     char *name;
     int   nid;
