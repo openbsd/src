@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.27 2002/02/16 04:36:32 smurph Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.28 2002/02/18 23:25:38 smurph Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -221,6 +221,9 @@ void *aux;
 	struct ahc_softc *ahc = (void *)self;
 	pcireg_t devconfig;
 	pcireg_t command;
+	
+	/* setup the PCI stuff */
+	ahc->dev_softc = pa;
 
 	/* 
 	 * We really don't allocate our softc, but 
@@ -401,8 +404,7 @@ void *aux;
 		break;
 	}
 
-	/* setup the PCI stuff */
-	ahc->dev_softc = pa;
+	/* setup the PCI interrupt */
 	ahc->platform_data->pci_intr_func = ahc_pci_intr;
 	
 	if(ahc_do_pci_config(ahc)){
