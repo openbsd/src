@@ -529,9 +529,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic6360reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic6360var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic7xxx.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic7xxx_93cx6.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic7xxx_inline.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic7xxx_openbsd.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic7xxxreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic7xxxvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/am7930reg.ph
@@ -656,6 +653,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/smc90cx6reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/smc91cxxreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/smc91cxxvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/smc93cx6var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/tcic2reg.ph
