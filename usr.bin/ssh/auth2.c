@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.9 2000/06/18 01:09:10 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.10 2000/06/18 04:05:02 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -54,6 +54,7 @@ RCSID("$OpenBSD: auth2.c,v 1.9 2000/06/18 01:09:10 markus Exp $");
 
 #include "dsa.h"
 #include "uidswap.h"
+#include "auth-options.h"
 
 /* import */
 extern ServerOptions options;
@@ -444,17 +445,36 @@ user_dsa_key_allowed(struct passwd *pw, Key *key)
 	found = key_new(KEY_DSA);
 
 	while (fgets(line, sizeof(line), f)) {
-		char *cp;
+		char *cp, *options = NULL;
 		linenum++;
 		/* Skip leading whitespace, empty and comment lines. */
 		for (cp = line; *cp == ' ' || *cp == '\t'; cp++)
 			;
 		if (!*cp || *cp == '\n' || *cp == '#')
 			continue;
+
 		bits = key_read(found, &cp);
-		if (bits == 0)
-			continue;
-		if (key_equal(found, key)) {
+		if (bits == 0) {
+			/* no key?  check if there are options for this key */
+			int quoted = 0;
+			options = cp;
+			for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
+				if (*cp == '\\' && cp[1] == '"')
+					cp++;	/* Skip both */
+				else if (*cp == '"')
+					quoted = !quoted;
+			}
+			/* Skip remaining whitespace. */
+			for (; *cp == ' ' || *cp == '\t'; cp++)
+				;
+			bits = key_read(found, &cp);
+			if (bits == 0) {
+				/* still no key?  advance to next line*/
+				continue;
+			}
+		}
+		if (key_equal(found, key) &&
+		    auth_parse_options(pw, options, linenum) == 1) {
 			found_key = 1;
 			debug("matching key found: file %s, line %ld",
 			    file, linenum);
