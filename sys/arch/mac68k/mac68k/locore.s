@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.12 1996/09/21 04:14:01 briggs Exp $	*/
-/*	$NetBSD: locore.s,v 1.65 1996/06/15 21:25:21 briggs Exp $	*/
+/*	$OpenBSD: locore.s,v 1.13 1996/10/14 01:20:38 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.68 1996/10/07 01:37:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -277,7 +277,7 @@ Lstkadj:
  */
 _fpfline:
 #if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
+	cmpl	#FPU_68040,_fputype	| 68040? (see fpu.c)
 	jne	Lfp_unimp		| no, skip FPSP
 	cmpw	#0x202c,sp@(6)		| format type 2?
 	jne	_illinst		| no, treat as illinst
@@ -299,7 +299,7 @@ Lfp_unimp:
 
 _fpunsupp:
 #if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
+	cmpl	#FPU_68040,_fputype	| 68040? (see fpu.c)
 	jne	Lfp_unsupp		| no, treat as illinst
 #ifdef FPSP
 	.globl	fpsp_unsupp
@@ -331,8 +331,8 @@ _fpfault:
 	movl	_curpcb,a0	| current pcb
 	lea	a0@(PCB_FPCTX),a0 | address of FP savearea
 	fsave	a0@		| save state
-#if defined(M68040) || defined(M68040)
-	cmpl	#MMU_68040, _mmutype	| if 68040, (060 ha!), etc...
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| if 68040, (060 ha!), etc...
 	jle	Lfptnull
 #endif
 	tstb	a0@		| null state frame?
@@ -885,15 +885,15 @@ start:
 	jne	Lstartnot040		| It's not an '040
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 
-	movl	#CACHE4_OFF,d0		| 68040 cache disable
+	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	movc	d0, cacr
 
-	movel	#0x0, d0
-	.word	0x4e7b, 0x0004		| Disable itt0
-	.word	0x4e7b, 0x0005		| Disable itt1
-	.word	0x4e7b, 0x0006		| Disable dtt0
-	.word	0x4e7b, 0x0007		| Disable dtt1
-	.word	0x4e7b, 0x0003		| Disable MMU
+	movql	#0, d0
+	.long	0x4e7b0004		| movc d0,itt0 ;Disable itt0
+	.long	0x4e7b0005		| movc d0,itt1 ;Disable itt1
+	.long	0x4e7b0006		| movc d0,dtt0 ;Disable dtt0
+	.long	0x4e7b0007		| movc d0,dtt1 ;Disable dtt1
+	.long	0x4e7b0003		| movc d0,tc   ;Disable MMU
 
 	movl	#0x0,sp@-		| Fake unenabled MMU
 	jra	do_bootstrap
@@ -1340,7 +1340,7 @@ Lsw2:
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
 
-	tstl	_fpu_type		| Do we have an fpu?
+	tstl	_fputype		| Do we have an fpu?
 	jeq	Lswnofpsave		| No?  Then don't attempt save.
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
@@ -1403,7 +1403,7 @@ Lcxswdone:
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
 
-	tstl	_fpu_type		| If we don't have an fpu,
+	tstl	_fputype		| If we don't have an fpu,
 	jeq	Lnofprest		|  don't try to restore it.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	tstb	a0@			| null state frame?
@@ -1436,7 +1436,7 @@ ENTRY(savectx)
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 
-	tstl	_fpu_type		| Do we have FPU?
+	tstl	_fputype		| Do we have FPU?
 	jeq	Lsavedone		| No?  Then don't save state.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
@@ -1721,7 +1721,7 @@ ENTRY(probeva)
 	.word	0xf548		| ptestw (a0)
 	moveq	#FC_USERD,d0		| restore DFC to user space
 	movc	d0,dfc
-	.word	0x4e7a,0x0805	| movec  MMUSR,d0
+	.long	0x4e7a0805	| movec  MMUSR,d0
 	rts
 
 /*
@@ -1824,9 +1824,22 @@ Lm68881rdone:
 	.globl	_doboot, _ROMBase
 _doboot:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
+
+#if defined(M68040)
+	cmpl	#MMU_68040, _mmutype	| Set in _getenvvars ONLY if 040.
+	jne	Ldobootnot040		| It's not an '040
+	.word	0xf4f8			| cpusha bc - push and invalidate caches
+
+	movl	#CACHE40_OFF,d0		| 68040 cache disable
+	movc	d0, cacr
+	jra	Ldoboot1
+Ldobootnot040:
+#endif
+
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
 
+Ldoboot1:
 	movl	_MacOSROMBase, _ROMBase	| Load MacOS ROMBase
 
 	movl	#0x90,a1		| offset of ROM reset routine
