@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.4 1999/05/02 03:41:45 mickey Exp $	*/
+/*	$OpenBSD: trap.h,v 1.5 1999/05/03 15:40:27 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -64,9 +64,6 @@
 #define	T_DATACC	26	/* 7100 */
 #define	T_DATAPID	27	/* 7100 */
 #define	T_DATALIGN	28	/* 7100 */
-
-#define	T_ICS_OVFL	30	/* SW: interrupt stack overflow */
-#define	T_KS_OVFL	31	/* SW: kernel stack overflow */
 
 #define	T_USER		0x20	/* user-mode flag or'ed with type */
 
