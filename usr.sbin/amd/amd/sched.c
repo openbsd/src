@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.4 2001/09/04 23:35:59 millert Exp $
+ *	$Id: sched.c,v 1.5 2002/05/26 02:49:50 deraadt Exp $
  */
 
 /*
@@ -53,7 +53,7 @@ extern int select_intr_valid;
 typedef struct pjob pjob;
 struct pjob {
 	qelem hdr;			/* Linked list */
-	int pid;			/* Process ID of job */
+	pid_t pid;			/* Process ID of job */
 	cb_fun cb_fun;			/* Callback function */
 	voidp cb_closure;		/* Closure for callback */
 	union wait w;			/* Status filled in by sigchld */
@@ -205,7 +205,7 @@ int sig;
 {
 	union wait w;
 	int save_errno = errno;
-	int pid;
+	pid_t pid;
 
 #ifdef SYS5_SIGNALS
 	if ((pid = wait(&w)) > 0) {
@@ -215,12 +215,12 @@ int sig;
 		pjob *p, *p2;
 
 		if (WIFSIGNALED(w))
-			plog(XLOG_ERROR, "Process %d exited with signal %d",
-				pid, w.w_termsig);
+			plog(XLOG_ERROR, "Process %d exited with signal %ld",
+				(long)pid, w.w_termsig);
 #ifdef DEBUG
 		else
-			dlog("Process %d exited with status %d",
-				pid, w.w_retcode);
+			dlog("Process %d exited with status %ld",
+				(long)pid, w.w_retcode);
 #endif /* DEBUG */
 
 		for (p = FIRST(pjob, &proc_wait_list);
@@ -234,7 +234,7 @@ int sig;
 		}
 
 #ifdef DEBUG
-		if (p) ; else dlog("can't locate task block for pid %d", pid);
+		if (p) ; else dlog("can't locate task block for pid %ld", (long)pid);
 #endif /* DEBUG */
 	}
 

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.4 2001/03/02 06:22:05 deraadt Exp $
+ *	$Id: util.c,v 1.5 2002/05/26 02:49:50 deraadt Exp $
  */
 
 /*
@@ -495,10 +495,10 @@ am_node *mp;
  *
  * TODO: Need a better strategy for handling errors
  */
-static int dofork(P_void);
-static int dofork()
+static pid_t dofork(P_void);
+static pid_t dofork()
 {
-	int pid;
+	pid_t pid;
 top:
 	pid = fork();
 
@@ -515,10 +515,10 @@ top:
 	return pid;
 }
 
-int background(P_void);
-int background()
+pid_t background(P_void);
+pid_t background()
 {
-	int pid = dofork();
+	pid_t pid = dofork();
 	if (pid == 0) {
 #ifdef DEBUG
 		dlog("backgrounded");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.3 1997/01/31 14:42:18 graichen Exp $	*/
+/*	$OpenBSD: am.h,v 1.4 2002/05/26 02:49:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -222,7 +222,7 @@ typedef struct mnt_map mnt_map;
 extern int atoi P((Const char *)); /* C */
 extern void am_mounted P((am_node*));
 extern void am_unmounted P((am_node*));
-extern int background(P_void);
+extern pid_t background(P_void);
 extern int bind_resv_port P((int, unsigned short*));
 extern int compute_mount_flags P((struct mntent *));
 extern int softclock(P_void);
@@ -279,7 +279,7 @@ extern int mkdirs P((char*, int));
 extern void mk_fattr P((am_node*, int));
 extern void mnt_free P((struct mntent*));
 extern int mount_auto_node P((char*, voidp));
-extern int mount_automounter P((int));
+extern int mount_automounter P((pid_t));
 extern int mount_exported(P_void);
 extern int mount_fs P((struct mntent*, int, caddr_t, int, MTYPE_TYPE));
 /*extern int mount_nfs_fh P((struct fhstatus*, char*, char*, char*, mntfs*));*/

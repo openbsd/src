@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.6 2001/09/05 23:24:21 millert Exp $
+ *	$Id: nfs_start.c,v 1.7 2002/05/26 02:49:50 deraadt Exp $
  */
 
 #include "am.h"
@@ -382,7 +382,7 @@ void unregister_amq(P_void)
 }
 
 int mount_automounter(ppid)
-int ppid;
+pid_t ppid;
 {
 	int so = socket(AF_INET, SOCK_DGRAM, 0);
 	SVCXPRT *amqp;

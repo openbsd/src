@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.5 2002/05/25 07:37:19 deraadt Exp $
+ *	$Id: xutil.c,v 1.6 2002/05/26 02:49:50 deraadt Exp $
  */
 
 #include "config.h"
@@ -158,7 +158,7 @@ extern struct mallinfo __mallinfo;
 		if (orig_mem_bytes == 0)
 			mem_bytes = orig_mem_bytes = __mallinfo.uordbytes;
 		else {
-			fprintf(logfp, "%s[%d]: ", __progname, mypid);
+			fprintf(logfp, "%s[%ld]: ", __progname, (long)mypid);
 			if (mem_bytes < __mallinfo.uordbytes) {
 				fprintf(logfp, "ALLOC: %d bytes",
 					__mallinfo.uordbytes - mem_bytes);
@@ -249,14 +249,14 @@ extern char **gargv;
 	case XLOG_STATS:	sev = "stats:"; break;
 	default:		sev = "hmm:  "; break;
 	}
-	fprintf(logfp, "%15.15s %s %s[%d]/%s ",
+	fprintf(logfp, "%15.15s %s %s[%ld]/%s ",
 		last_ctime+4, hostname,
 #if defined(DEBUG) && defined(PARANOID)
 		gargv[0],
 #else
 		__progname,
 #endif /* defined(DEBUG) && defined(PARANOID) */
-		mypid,
+		(long)mypid,
 		sev);
 }
 

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
- *	$Id: config.h,v 1.1.1.1 1995/10/18 08:47:21 deraadt Exp $
+ *	$Id: config.h,v 1.2 2002/05/26 02:49:50 deraadt Exp $
  */
 
 /*
@@ -82,7 +82,7 @@ extern time_t clock_valid;	/* Clock needs recalculating */
 
 extern char *progname;		/* "amd"|"mmd" */
 extern char hostname[];		/* "kiska" */
-extern int mypid;		/* Current process id */
+extern pid_t mypid;		/* Current process id */
 
 #ifdef HAS_SYSLOG
 extern int syslogging;		/* Really using syslog */

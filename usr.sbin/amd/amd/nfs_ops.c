@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.9 2002/02/13 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.10 2002/05/26 02:49:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.9 2002/02/13 22:32:33 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.10 2002/05/26 02:49:50 deraadt Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -811,7 +811,7 @@ am_node *mp;
 	if (mp->am_parent && mp->am_parent->am_path &&
 	    STREQ(mp->am_parent->am_mnt->mf_ops->fs_type, "direct")) {
 		struct stat stb;
-		int pid;
+		pid_t pid;
 		if ((pid = background()) == 0) {
 			if (lstat(mp->am_parent->am_path, &stb) < 0) {
 				plog(XLOG_ERROR, "lstat(%s) after unmount: %m", mp->am_parent->am_path);

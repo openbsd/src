@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.4 2002/05/25 07:37:19 deraadt Exp $
+ *	$Id: amd.c,v 1.5 2002/05/26 02:49:50 deraadt Exp $
  */
 
 #ifndef lint
@@ -76,7 +76,7 @@ char *arch = ARCH_REP;			/* Name of current architecture */
 char *endian = ARCH_ENDIAN;		/* Big or Little endian */
 char *wire;
 int foreground = 1;			/* This is the top-level server */
-int mypid;				/* Current process id */
+pid_t mypid;				/* Current process id */
 int immediate_abort;			/* Should close-down unmounts be retried */
 struct in_addr myipaddr;		/* (An) IP address of this host */
 serv_state amd_state;
@@ -145,16 +145,16 @@ int sig;
 	exit(0);
 }
 
-static int daemon_mode(P_void)
+static pid_t daemon_mode(P_void)
 {
-	int bgpid;
+	pid_t bgpid;
 
 	signal(SIGQUIT, parent_exit);
 	bgpid = background();
 
 	if (bgpid != 0) {
 		if (print_pid) {
-			printf("%d\n", bgpid);
+			printf("%ld\n", (long)bgpid);
 			fflush(stdout);
 		}
 		/*
@@ -197,7 +197,7 @@ int argc;
 char *argv[];
 {
 	char *domdot;
-	int ppid = 0;
+	pid_t ppid = 0;
 	int error;
 
 	/*
@@ -323,7 +323,7 @@ char *argv[];
 #endif /* DEBUG */
 	ppid = daemon_mode();
 
-	sprintf(pid_fsname, "%s:(pid%d)", hostname, mypid);
+	sprintf(pid_fsname, "%s:(pid%ld)", hostname, (long)mypid);
 
 	do_mapc_reload = clocktime() + ONE_HOUR;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.3 2001/03/02 06:22:01 deraadt Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.4 2002/05/26 02:49:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -176,9 +176,11 @@ char *opts;
 #define	SHORT_MOUNT_NAME
 #endif /* HOSTNAMESZ */
 #ifdef SHORT_MOUNT_NAME
-	sprintf(fs_hostname, "amd:%d", foreground ? mypid : getppid());
+	sprintf(fs_hostname, "amd:%ld",
+	    foreground ? (long)mypid : (long)getppid());
 #else
-	sprintf(fs_hostname, "pid%d@%s:%s", foreground ? mypid : getppid(), hostname, dir);
+	sprintf(fs_hostname, "pid%ld@%s:%s",
+	    foreground ? (long)mypid : (long)getppid(), hostname, dir);
 #endif /* SHORT_MOUNT_NAME */
 	nfs_args.hostname = fs_hostname;
 	nfs_args.flags |= NFSMNT_HOSTNAME;
