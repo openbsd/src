@@ -4,4 +4,3 @@ operator:*:2:5::0:0:System &:/operator:/sbin/nologin
 bin:*:3:7::0:0:Binaries Commands and Source,,,:/:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
-ingres:*:267:74::0:0:& Group:/usr/ingres:/sbin/nologin
