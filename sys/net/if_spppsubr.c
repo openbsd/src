@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.29 2005/03/24 16:37:52 claudio Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.30 2005/04/01 22:09:32 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1027,7 +1027,9 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 
 		if (going_up || going_down)
-			lcp.Close(sp);
+			if (!(sp->pp_flags & PP_CISCO))
+				lcp.Close(sp);
+
 		if (going_up && newmode == 0) {
 			/* neither auto-dial nor passive */
 			ifp->if_flags |= IFF_RUNNING;
