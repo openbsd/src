@@ -309,6 +309,14 @@
 ./usr/share/doc/usd/12.vi
 ./usr/share/doc/usd/13.ex
 ./usr/share/doc/usd/13.viref
+./usr/share/doc/usd/13.viref/Makefile
+./usr/share/doc/usd/13.viref/ex.cmd.roff
+./usr/share/doc/usd/13.viref/merge.awk
+./usr/share/doc/usd/13.viref/ref.so
+./usr/share/doc/usd/13.viref/set.opt.roff
+./usr/share/doc/usd/13.viref/spell.ok
+./usr/share/doc/usd/13.viref/vi.cmd.roff
+./usr/share/doc/usd/13.viref/vi.ref
 ./usr/share/doc/usd/14.jove
 ./usr/share/doc/usd/15.sed
 ./usr/share/doc/usd/15.sed/Makefile
