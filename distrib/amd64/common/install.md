@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2005/03/26 01:40:20 krw Exp $
+#	$OpenBSD: install.md,v 1.4 2005/03/26 19:27:11 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,49 +46,14 @@ MDSERIAL="com com tty0"
 ARCH=ARCH
 
 md_set_term() {
-	local _tables
+	local _tables="be br de dk es fr it jp no sf sg sv uk us"
 
-	ask_yn "Do you wish to select a keyboard encoding table?"
-	[[ $resp == n ]] && return
+	ask_yn "Are you using a USB keyboard?"
+	[[ $resp == n ]] && _tables="$_tables pt ru ua"
+	_tables=$(bsort $_tables)
 
-	while :; do
-		ask "Select your keyboard type: (P)C-AT/XT, (U)SB or 'done'" P
-		case $resp in
-		P*|p*)  _tables="be br de dk es fr it jp lt no pt ru sf sg sv ua uk us"
-			;;
-		U*|u*)	_tables="br de dk es fr it jp no sf sg sv uk us"
-			;;
-		done)	;;
-		*)	echo "'$resp' is not a valid keyboard type."
-			resp=
-			continue
-			;;
-		esac
-		break;
-	done
-
-	[ -z "$_tables" ] && return
-
-	while :; do
-		cat << __EOT
-The available keyboard encoding tables are:
-
-	${_tables}
-
-__EOT
-		ask "Table name? (or 'done')" us
-		case $resp in
-		done)	;;
-		*)	if kbd $resp ; then
-				echo $resp > /tmp/kbdtype
-			else
-				echo "'${resp}' is not a valid table name."
-				continue
-			fi
-			;;
-		esac
-		break;
-	done
+	ask_which "kbd(8) table" "best matches your keyboard" "$_tables" us
+	[[ $resp != @(done|us) ]] && kbd $resp && echo $resp >/tmp/kbdtype
 }
 
 md_installboot() {
