@@ -1,4 +1,4 @@
-.\"     $OpenBSD: kgdb.7,v 1.2 2001/08/24 14:40:29 aaron Exp $
+.\"     $OpenBSD: kgdb.7,v 1.3 2001/08/25 03:16:43 hugh Exp $
 .\"
 .\" Copyright (c) 2001 Hugh Graham
 .\"
@@ -36,9 +36,9 @@ kernel's internal debugger
 .Xr ddb 4 ,
 and have appropriate hardware available, a kernel with
 .Cm option KGDB
-to effect remote debugging with
+may be built to effect remote debugging with
 .Xr gdb 1
-may be built instead.
+instead.
 .Pp
 To prepare for debugging over serial line one would:
 .Pp
@@ -76,6 +76,7 @@ gdb info documents and online documentation.
 .Sh HISTORY
 The
 .Nm
-manual page was begrudgingly written by Hugh Graham.
+manual page was written by Hugh Graham, with subsequent modifications
+by Aaron Campbell.
 .Sh CAVEATS
 Not available on all architectures.
