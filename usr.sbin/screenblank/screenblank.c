@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.7 2001/11/02 16:32:20 deraadt Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.8 2001/11/17 00:02:34 deraadt Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ LIST_HEAD(ds_list, dev_stat) ds_list;
 extern	char *__progname;
 
 static	void add_dev __P((char *, int));
-static	void change_state __P((int));
+static	void change_state __P((int, int));
 static	void cvt_arg __P((char *, struct timeval *));
 static	void logpid __P((void));
 static	void sighandler __P((int));
@@ -151,7 +151,7 @@ main(argc, argv)
 
 	/* Ensure that the framebuffer is on. */
 	state = FBVIDEO_ON;
-	change_state(state);
+	change_state(state, 0);
 	tvp = &timo_on;
 
 	/*
@@ -195,7 +195,7 @@ main(argc, argv)
 		case FBVIDEO_ON:
 			if (!change) {
 				state = FBVIDEO_OFF;
-				change_state(state);
+				change_state(state, 0);
 				tvp = &timo_off;
 			}
 			break;
@@ -203,7 +203,7 @@ main(argc, argv)
 		case FBVIDEO_OFF:
 			if (change) {
 				state = FBVIDEO_ON;
-				change_state(state);
+				change_state(state, 0);
 				tvp = &timo_on;
 			}
 			break;
@@ -249,13 +249,14 @@ sighandler(sig)
 
 	/* Kill the pid file and re-enable the framebuffer before exit. */
 	(void)unlink(_PATH_SCREENBLANKPID);
-	change_state(FBVIDEO_ON);	/* XXX signal race */
+	change_state(FBVIDEO_ON, 1);
 	_exit(0);
 }
 
 static void
-change_state(state)
+change_state(state, sig)
 	int state;
+	int sig;
 {
 	struct dev_stat *dsp;
 	int fd;
@@ -265,8 +266,12 @@ change_state(state)
 		if (dsp->ds_isfb == 0)
 			continue;
 		if ((fd = open(dsp->ds_path, O_RDWR, 0)) < 0) {
-			if (errno == ENXIO)
-				exit(1);
+			if (errno == ENXIO) {
+				if (sig)
+					_exit(1);
+				else
+					exit(1);
+			}
 			warn("open: %s", dsp->ds_path);
 			continue;
 		}
