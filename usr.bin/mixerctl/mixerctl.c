@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.19 2005/02/02 08:08:33 otto Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.20 2005/02/07 14:29:10 millert Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -45,14 +45,17 @@
 #include <sys/audioio.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-void catstr(char *, char *, char *);
 struct field *findfield(char *);
+void adjlevel(char **, u_char *, int);
+void catstr(char *, char *, char *);
 void prfield(struct field *, char *, int);
 void rdfield(int, struct field *, char *);
 __dead void usage(void);
@@ -139,11 +142,38 @@ prfield(struct field *p, char *sep, int prvalset)
 }
 
 void
+adjlevel(char **p, u_char *olevel, int more)
+{
+	char *ep, *cp = *p;
+	long inc;
+	u_char level;
+
+	if (*cp != '+' && *cp != '-')
+		*olevel = 0;		/* absolute setting */
+
+	errno = 0;
+	inc = strtol(cp, &ep, 10);
+	if (*cp == '\0' || (*ep != '\0' && *ep != ',') ||
+	    (errno == ERANGE && (inc == LONG_MAX || inc == LONG_MIN)))
+		errx(1, "Bad number %s", cp);
+	if (*ep == ',' && !more)
+		errx(1, "Too many values");
+	*p = ep;
+
+	if (inc < AUDIO_MIN_GAIN - *olevel)
+		level = AUDIO_MIN_GAIN;
+	else if (inc > AUDIO_MAX_GAIN - *olevel)
+		level = AUDIO_MAX_GAIN;
+	else
+		level = *olevel + inc;
+	*olevel = level;
+}
+
+void
 rdfield(int fd, struct field *p, char *q)
 {
 	mixer_ctrl_t *m, oldval;
-	int v, v0, v1, mask;
-	int i;
+	int i, mask;
 	char *s;
 
 	oldval = *p->valp;
@@ -161,7 +191,7 @@ rdfield(int fd, struct field *p, char *q)
 		break;
 	case AUDIO_MIXER_SET:
 		mask = 0;
-		for (v = 0; q && *q; q = s) {
+		for (; q && *q; q = s) {
 			if ((s = strchr(q, ',')) != NULL)
 				*s++ = 0;
 			for (i = 0; i < p->infp->un.s.num_mem; i++)
@@ -176,53 +206,13 @@ rdfield(int fd, struct field *p, char *q)
 		break;
 	case AUDIO_MIXER_VALUE:
 		if (m->un.value.num_channels == 1) {
-			if (sscanf(q, "%d", &v) == 1) {
-				switch (*q) {
-				case '+':
-				case '-':
-					m->un.value.level[0] += v;
-					break;
-				default:
-					m->un.value.level[0] = v;
-					break;
-				}
-			} else
-				errx(1, "Bad number %s", q);
+			adjlevel(&q, &m->un.value.level[0], 0);
 		} else {
-			if (sscanf(q, "%d,%d", &v0, &v1) == 2) {
-				switch (*q) {
-				case '+':
-				case '-':
-					m->un.value.level[0] += v0;
-					break;
-				default:
-					m->un.value.level[0] = v0;
-					break;
-				}
-				s = strchr(q, ',') + 1;
-				switch (*s) {
-				case '+':
-				case '-':
-					m->un.value.level[1] += v1;
-					break;
-				default:
-					m->un.value.level[1] = v1;
-					break;
-				}
-			} else if (sscanf(q, "%d", &v) == 1) {
-				switch (*q) {
-				case '+':
-				case '-':
-					m->un.value.level[0] += v;
-					m->un.value.level[1] += v;
-					break;
-				default:
-					m->un.value.level[0] = v;
-					m->un.value.level[1] = v;
-					break;
-				}
-			} else
-				errx(1, "Bad numbers %s", q);
+			adjlevel(&q, &m->un.value.level[0], 1);
+			if (*q++ == ',')
+				adjlevel(&q, &m->un.value.level[1], 0);
+			else
+				m->un.value.level[1] = m->un.value.level[0];
 		}
 		break;
 	default:
