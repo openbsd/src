@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.22 2000/10/16 23:28:56 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.44 2000/10/14 08:45:18 angelos Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 2000/10/26 22:28:16 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.45 2000/10/24 13:29:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -783,7 +783,7 @@ conf_decode_base64 (u_int8_t *out, u_int32_t *len, u_char *buf)
 int
 conf_get_line (FILE *stream, char *buf, u_int32_t len)
 {
-  char c;
+  int c;
 
   while (len-- > 1)
     {
