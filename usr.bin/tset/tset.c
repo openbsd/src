@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.5 1998/04/25 04:30:39 millert Exp $	*/
+/*	$OpenBSD: tset.c,v 1.6 1998/10/16 18:51:21 millert Exp $	*/
 /*	$NetBSD: tset.c,v 1.4 1994/12/07 05:08:15 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: tset.c,v 1.5 1998/04/25 04:30:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: tset.c,v 1.6 1998/10/16 18:51:21 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -218,7 +218,8 @@ main(argc, argv)
 
 	if (Sflag) {
 		(void)printf("%s ", ttype);
-		wrtermcap(tcapbuf);
+		if (tcapbuf)
+			wrtermcap(tcapbuf);
 	}
 
 	if (sflag) {
@@ -228,14 +229,26 @@ main(argc, argv)
 		 */
 		if ((p = getenv("SHELL")) &&
 		    !strcmp(p + strlen(p) - 3, "csh")) {
-			p = "set noglob histchars="";\nsetenv TERM %s;\nsetenv TERMCAP '";
-			t = "';\nunset noglob histchars;\n";
+			if (tcapbuf)
+				p = "set noglob histchars="";\nsetenv TERM %s;\nsetenv TERMCAP ";
+			else
+				p = "set noglob histchars="";\nsetenv TERM %s;\n";
+			t = "unset noglob histchars;\n";
 		} else {
-			p = "TERM=%s;\nTERMCAP='";
-			t = "';\nexport TERMCAP TERM;\n";
+			if (tcapbuf) {
+				p = "TERM=%s;\nTERMCAP=";
+				t = "export TERMCAP TERM;\n";
+			} else {
+				p = "TERM=%s;\n";
+				t = "export TERMCAP;\n";
+			}
 		}
 		(void)printf(p, ttype);
-		wrtermcap(tcapbuf);
+		if (tcapbuf) {
+			putchar('\'');
+			wrtermcap(tcapbuf);
+			fputs("';\n", stdout);
+		}
 		(void)printf(t);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.5 1998/04/25 04:30:38 millert Exp $	*/
+/*	$OpenBSD: term.c,v 1.6 1998/10/16 18:51:21 millert Exp $	*/
 /*	$NetBSD: term.c,v 1.6 1994/12/07 05:08:12 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: term.c,v 1.5 1998/04/25 04:30:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: term.c,v 1.6 1998/10/16 18:51:21 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ found:	if ((p = getenv("TERMCAP")) != NULL && *p != '/')
 	}
 	if (rval == -1)
 		warnx("termcap: %s", strerror(errno ? errno : ENOENT));
-	*tcapbufp = tbuf;
+	*tcapbufp = *tbuf ? tbuf : NULL;
 	return (ttype);
 }
 
