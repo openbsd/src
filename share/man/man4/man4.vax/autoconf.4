@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autoconf.4,v 1.3 1999/06/05 13:18:37 aaron Exp $
+.\"	$OpenBSD: autoconf.4,v 1.4 2000/07/22 04:54:28 bjc Exp $
 .\"	$NetBSD: autoconf.4,v 1.3 1996/03/03 17:13:13 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -35,14 +35,14 @@
 .\"     from: @(#)autoconf.4	6.3 (Berkeley) 3/27/91
 .\"
 .Dd March 27, 1991
-.Dt AUTOCONF 4
+.Dt AUTOCONF 4 vax
 .Os
 .Sh NAME
 .Nm autoconf
 .Nd "diagnostics from the autoconfiguration code"
 .Sh DESCRIPTION
 When
-.Tn UNIX
+.Ox
 bootstraps it probes the innards of the machine
 on which it is running and
 locates controllers, drives, and other devices.
@@ -64,9 +64,7 @@ adaptors.  Devices which are not supported which
 are found in
 .Tn NEXUS
 slots are noted also.
-The Q-bus on the
-.Tn MICROVAX
-is configured in the same way as the
+The Q-bus, if present, is configured in the same way as the
 .Tn UNIBUS.
 .Pp
 .Tn MASSBUS
@@ -107,11 +105,11 @@ time, and any available device may be used.
 .Bl -diag
 .It cpu type %d not configured.
 You tried to boot
-.Tn UNIX
+.Ox
 on a
 .Tn CPU
 type which it doesn't (or at least this compiled version of
-.Tn UNIX
+.Ox
 doesn't)
 understand.
 .Pp
@@ -123,7 +121,7 @@ adapter was found in
 (the
 .Tn NEXUS
 slot number).
-.Tn UNIX
+.Ox
 will call it
 .Ql mba%d .
 .Pp
@@ -137,13 +135,13 @@ adapters will not be accessible.
 .Pp
 .It uba%d at tr%d.
 A
-.Tn UNIBUS
+.Tn UNIBUS or Q-bus
 adapter was found in
 .Ql tr%d
 (the
 .Tn NEXUS
 slot number).
-.Tn UNIX
+.Ox
 will call it
 .Ql uba%d .
 .Pp
@@ -154,7 +152,7 @@ interface was found in
 a
 .Tn NEXUS ,
 for which
-.Tn UNIX
+.Ox
 does not have a driver.
 .Pp
 .It ci unsupported (at tr %d).
@@ -164,7 +162,7 @@ interface was found in
 a
 .Tn NEXUS ,
 for which
-.Tn UNIX
+.Ox
 does not have a driver.
 .Pp
 .It mcr%d at tr%d.
@@ -173,12 +171,12 @@ A memory controller was found in
 (the
 .Tn NEXUS
 slot number).
-.Tn UNIX
+.Ox
 will call it
 .Ql mcr%d .
 .Pp
 .It 5 mcr's unsupported.
-.Tn UNIX
+.Ox
 supports only 4 memory controllers
 per
 .Tn CPU .
@@ -186,7 +184,7 @@ per
 .It mpm unsupported (at tr%d).
 Multi-port memory is unsupported
 in the sense that
-.Tn UNIX
+.Ox
 does not know how to poll it for
 .Tn ECC
 errors.
@@ -252,7 +250,7 @@ likely because it is broken, hung, or not the kind of device it is advertised
 to be.
 .Pp
 .It %s%d at %s%d slave %d.
-(For UNIBUS devices).
+(For UNIBUS or Q-bus devices).
 Which would look like
 .Dq Li up0 at sc0 slave 0 ,
 where
