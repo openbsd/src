@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.28 2003/09/26 06:58:04 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.29 2004/01/20 10:34:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -55,7 +55,7 @@
 
 #ifdef XFS
 #include <xfs/nxfs.h>
-#cdev_decl(xfs_dev);
+cdev_decl(xfs_dev);
 #endif
 #include "ksyms.h"
 
@@ -196,7 +196,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 49 */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
 #ifdef XFS
-	cde_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else
 	cdev_notdef(),			/* 51 */
 #endif
