@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/04/24 23:45:04 mickey Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/10/06 20:57:05 tholo Exp $
 #	from: @(#)Makefile	5.14 (Berkeley) 9/15/92
 
 MAN=	termcap.5
@@ -20,6 +20,7 @@ realinstall:
 	     ${DESTDIR}${BINDIR}/misc/termcap
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/map3270 \
 	     ${DESTDIR}${BINDIR}/misc/map3270
+	ln -fs ${BINDIR}/misc/termcap ${DESTDIR}/etc/termcap
 
 CLEANFILES+= fixed
 
