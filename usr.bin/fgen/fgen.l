@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.3 2002/06/11 05:58:27 nordin Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.4 2002/06/18 03:22:15 jason Exp $	*/
 /*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -674,7 +674,7 @@ struct fcode fcodes[] = {
 		{ "xwflip",			0x0252 },
 		{ "xwflips",			0x0253 },
 		{ "xwsplit",			0x0254 },
-		{ NULL, NULL }
+		{ NULL, 0 }
 };
 
 /*
@@ -1017,7 +1017,7 @@ main(argc, argv)
 		fheader->checksum += outbuf[i];
 	fheader->checksum = htons(fheader->checksum);
 
-	if ((outf = open(outfile, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == NULL)
+	if ((outf = open(outfile, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == -1)
 		err(1, "can out open %s for writing", outfile);
 
 	if (write(outf, outbuf, outpos) != outpos) {
