@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.57 2003/03/04 19:10:31 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.58 2003/03/04 19:11:37 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -267,8 +267,7 @@ userret(register struct proc *p, int pc, u_quad_t oticks)
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, pc,
-			    (int)(p->p_sticks - oticks) * psratio);
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
 	curpriority = p->p_priority;
