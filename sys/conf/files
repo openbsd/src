@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.27 1996/06/30 21:42:46 chuck Exp $
+#	$OpenBSD: files,v 1.28 1996/07/02 01:07:42 chuck Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -231,9 +231,6 @@ file net/raw_usrreq.c
 file net/route.c
 file net/rtsock.c
 file net/slcompress.c			sl | ppp | strip
-file netnatm/natm_pcb.c			natm
-file netnatm/natm_proto.c		natm
-file netnatm/natm.c			natm
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc
@@ -313,6 +310,9 @@ file netiso/tp_usrreq.c			iso | tpip
 file netiso/tuba_subr.c			iso | tuba
 file netiso/tuba_table.c		iso | tuba
 file netiso/tuba_usrreq.c		iso | tuba
+file netnatm/natm_pcb.c			natm
+file netnatm/natm_proto.c		natm
+file netnatm/natm.c			natm
 file netns/idp_usrreq.c			ns
 file netns/ns.c				ns
 file netns/ns_error.c			ns
