@@ -1,6 +1,6 @@
 The sparc-specific portion of the OpenBSD 2.1 release is found in the
-"sparc" subdirectory of the distribution.  That subdirectory is laid
-out as follows:
+"sparc" subdirectory of the distribution.  That subdirectory is organized
+as follows:
 
 .../2.1/sparc/
 		INSTALL.sparc	Installation notes; this file
@@ -28,22 +28,35 @@ out as follows:
 		X11		The X Windows distribution for OpenBSD/sparc
 
 
-In summary, there are two bootable sparc floppy images called "kc21.fs", 
-and "floppy21.fs".  The "kc21.fs" is a bootable install floppy which can 
-be used in conjunction with the "inst21.fs" or "upgr21.fs" floppy images 
-to install or upgrade OpenBSD to the current version.  It is also useful 
-for maintenance and disaster recovery.  The "floppy21.fs" image is a
-compressed ramdisk install floppy, which is a single floppy compressed
-version of what the "kc21.fs" and "inst21.fs" images do.  The "floppy21.fs"
-image has not received as much testing as the non-compressed images, and
-is provided as a convenience in hopes that it will work for most
-people.  The "floppy21.fs" image must be used for installation on 
-sun4m systems via floppy.  The kc21 and inst21 images will not work
-for sun4m due to the lack of sun4m floppy driver support. 
+Please note that there are multiple bootable images and kernels, intended
+to allow installing OpenBSD/sparc in a variety of situations without
+requiring a pre-existing working operating system.
 
-The miniroot.fs may be loaded onto the swap partition of an
-existing installation of OpenBSD, NetBSD, SunOS, or Solaris to allow
-installation or upgrade over the existing system.
+The "kc21.fs" image is a bootable floppy image, which is used in conjunction
+with "inst21.fs" or "upgr21.fs", to allow installing or upgrading systems
+with supported floppy disk drives (not Sun4m at this time).
+
+The "miniroot21.fs" is a small bootable root filesystem that can be used
+for installtion or upgrade where there is some means to copy the miniroot
+image into a swap or unused partition on the system, and also for diskless
+or netbooting.  This can be convenient if you have a exsting installation
+of OpenBSD, NetBSD, SunOS, or Solaris and wish to test or upgrade the
+existing system to OpenBSD.
+
+The "floppy21.fs" is a new bootable floppy image, with contents similar
+to a miniroot stored in a compressed kernel with pre-loaded ramdisk.  As
+of release time, this version has not received adequate testing and may
+not work reliably on many systems, but is provided as a convenience for
+for people installing on Sun4m systems where the other floppy installation
+method doesn't work due to lack of Sun4m floppy driver support.
+
+These bootable images are also useful as "failsafe" boots for system
+maintenance and disaster recovery.
+
+The kernel and boot images are provided for net booting installations.
+The OpenBSD bootblocks will work with the provided miniroot images,
+while Sun bootblocks require a separate kernel image and root filesystem.
+
 
 Bootable installation/upgrade floppies:
   
@@ -57,7 +70,8 @@ Bootable installation/upgrade floppies:
 
   upgr21.fs
 	This disk contains a file system, and has holds the utilities 
-	needed in order to upgrade a system to OpenBSD 2.1
+	needed in order to upgrade an existing OpenBSD (or NetBSD) system
+	to a minimal working OpenBSD 2.1 system.
 
   floppy21.fs
 	This disk contains a compressed ramdisk filesystem, and holds
@@ -68,19 +82,28 @@ Bootable installation/upgrade floppies:
 	swap partition of an existing OpenBSD, NetBSD, SunOS, or Solaris
 	installation to allow upgrading to OpenBSD 2.1
 
+
 The OpenBSD/sparc binary distribution sets contain the binaries which
 comprise the OpenBSD 2.1 release for the sparc.  There are seven binary
-distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "sparc/bins"
-subdirectory of the OpenBSD 2.1 distribution tree, and are as follows:
+distribution sets.  These binary distribution sets can be found in
+"sparc" subdirectory of the OpenBSD 2.1 distribution tree, and are as
+follows:
 
 	base21	The OpenBSD/sparc 2.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
-		base OpenBSD utilities that are necessary for the
-		system to run and be minimally functional.  It
-		includes shared library support, and excludes
-		everything described below.
+		base OpenBSD utilities that are necessary for the system
+		to run and be minimally functional.  It includes shared
+		library support, and excludes everything described below.
 		[ 13.1M gzipped, 41.7M uncompressed ]
+
+	etc21	This distribution set contains the system configuration
+		files that reside in /etc and in several other places.
+		This set MUST be installed if you are installing the
+		system from scratch, but should NOT be used if you are
+		upgrading.  (If you are upgrading, it's recommended that
+		you get a copy of this set and then CAREFULLY upgrade your
+		configuration files by hand.)
+		[ 95K gzipped, 460K uncompressed ]
 
 	comp21	The OpenBSD/sparc Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN.
@@ -92,15 +115,6 @@ subdirectory of the OpenBSD 2.1 distribution tree, and are as follows:
 		of the utilities it contains, as well as the system
 		call and library manual pages.
 		[ 8.7M gzipped, 28.8M uncompressed ]
-
-	etc21	This distribution set contains the system
-		configuration files that reside in /etc and in several
-		other places.  This set MUST be installed if you are
-		installing the system from scratch, but should NOT be
-		used if you are upgrading.  (If you are upgrading,
-		it's recommended that you get a copy of this set and
-		CAREFULLY upgrade your configuration files by hand.)
-		[ 95K gzipped, 460K uncompressed ]
 
 	game21	This set includes the games and their manual pages.
 		[ 2.9M gzipped, 7.3M uncompressed ]
