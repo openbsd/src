@@ -1,4 +1,4 @@
-#	$OpenBSD: M187,v 1.24 2003/12/25 21:02:46 miod Exp $
+#	$OpenBSD: M187,v 1.25 2003/12/27 23:58:08 miod Exp $
 
 machine mvme88k
 
@@ -43,9 +43,9 @@ vx0	at vmes0 addr 0xff780000 ipl 3 len 0x10000
 vx1	at vmes0 addr 0xff790000 ipl 3 len 0x10000
 vx2	at vmes0 addr 0xff7a0000 ipl 3 len 0x10000
 vx3	at vmes0 addr 0xff7b0000 ipl 3 len 0x10000
-ve0	at vmes0 addr 0xffff1200 ipl 1 len 0x100
-ve1	at vmes0 addr 0xffff1400 ipl 1 len 0x100
-ve2	at vmes0 addr 0xffff1600 ipl 1 len 0x100
+le0	at vmes0 addr 0xffff1200 ipl 1 len 0x100
+le1	at vmes0 addr 0xffff1400 ipl 1 len 0x100
+le2	at vmes0 addr 0xffff1600 ipl 1 len 0x100
 vs0	at vmes0 addr 0xffff9000 ipl 2 len 0x800
 vs1	at vmes0 addr 0xffff9800 ipl 2 len 0x800
 vs2	at vmes0 addr 0xffff4800 ipl 2 len 0x800

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.22 2003/12/26 10:41:41 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.23 2003/12/27 23:58:08 miod Exp $
 #
 maxpartitions 16
 
@@ -113,9 +113,8 @@ file	arch/mvme88k/dev/bugio.c
 attach ie at pcctwo: ifnet, ether
 file    arch/mvme88k/dev/if_ie.c			ie
 
-device ve: ether, ifnet, ifmedia
-attach ve at vmes
-file    arch/mvme88k/dev/if_ve.c			ve
+attach le at vmes
+file    arch/mvme88k/dev/if_le.c			le
 
 #device vp: ether, ifnet, ifmedia
 #attach vp at vmes
