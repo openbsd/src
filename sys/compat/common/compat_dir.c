@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_dir.c,v 1.3 2002/03/14 01:26:49 millert Exp $	*/
+/* 	$OpenBSD: compat_dir.c,v 1.4 2003/08/14 16:55:24 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2000 Constantine Sapuntzakis
@@ -48,12 +48,13 @@ readdir_with_callback(fp, off, nbytes, appendfunc, arg)
 	int (*appendfunc)(void *, struct dirent *, off_t);
 	void *arg;
 {
+	struct dirent *bdp;
 	caddr_t inp, buf;
 	int buflen;
 	struct uio auio;
 	struct iovec aiov;
 	int eofflag = 0;
-	u_long *cookiebuf = NULL, *cookie;
+	u_long *cookies = NULL, *cookiep;
 	int ncookies = 0;
 	int error, len, reclen;
 	off_t newoff = *off;
@@ -65,7 +66,7 @@ readdir_with_callback(fp, off, nbytes, appendfunc, arg)
 
 	vp = (struct vnode *)fp->f_data;
 
-	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
+	if (vp->v_type != VDIR)
 		return (EINVAL);
 
 	if ((error = VOP_GETATTR(vp, &va, fp->f_cred, curproc)) != 0)
@@ -88,57 +89,84 @@ again:
 	auio.uio_procp = curproc;
 	auio.uio_resid = buflen;
 	auio.uio_offset = newoff;
-	
+
+	if (cookies) {
+		free(cookies, M_TEMP);
+		cookies = NULL;
+	}
+
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &ncookies,
-	    &cookiebuf);
+	    &cookies);
 	if (error)
 		goto out;
 
-	if ((len = buflen - auio.uio_resid) == 0)
+	if ((len = buflen - auio.uio_resid) <= 0)
 		goto eof;	
 
-	if (cookiebuf == NULL) {
-		error = EPERM;
-		goto out;
-	}
-
-	cookie = cookiebuf;
+	cookiep = cookies;
 	inp = buf;
 
-	for (;
-	     len > 0;
-	     len -= reclen, inp += reclen, ++cookie) {
-		struct dirent *bdp = (struct dirent *)inp;
+	if (cookies) {
+		/*
+		 * When using cookies, the vfs has the option of reading from
+		 * a different offset than that supplied (UFS truncates the
+		 * offset to a block boundary to make sure that it never reads
+		 * partway through a directory entry, even if the directory
+		 * has been compacted).
+		 */
+		while (len > 0 && ncookies > 0 && *cookiep <= newoff) {
+			bdp = (struct dirent *)inp;
+			len -= bdp->d_reclen;
+			inp += bdp->d_reclen;
+			cookiep++;
+			ncookies--;
+		}
+	}
+
+	for (; len > 0; len -= reclen, inp += reclen) {
+		if (cookiep && ncookies == 0)
+			break;
+
+		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 
-		if (len < reclen) break;
-		if (reclen & 3)
-			panic("readdir_with_callback: bad reclen");
+		if (len < reclen)
+			break;
+
+		if (reclen & 3) {
+			error = EFAULT;
+			goto out;
+		}
 
 		/* Skip holes */
 		if (bdp->d_fileno != 0) {
-			if ((error = (*appendfunc) (arg, bdp, *cookie)) 
-			    != 0) {
+			if ((error = (*appendfunc) (arg, bdp,
+			    (cookiep) ? *cookiep : (newoff + reclen))) != 0) {
 				if (error == ENOMEM)
 					error = 0;
 				break;
 			}
 		}
 
-		newoff = *cookie;
+		if (cookiep) {
+			newoff = *cookiep++;
+			ncookies--;
+		} else
+			newoff += reclen;
 	}
 
 	if (len <= 0 && !eofflag)
 		goto again;
 
- eof:
- out:
-	if (error == 0) 
+eof:
+out:
+	if (error == 0)
 		*off = newoff;
 
+	if (cookies)
+		free(cookies, M_TEMP);
+
 	VOP_UNLOCK(vp, 0, curproc);
-	if (cookiebuf)
-		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return (error);
 }
