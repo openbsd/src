@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.3 1996/09/16 01:20:02 deraadt Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.4 1996/09/30 16:55:20 bitblt Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -100,5 +100,9 @@ if [ $append = 1 ]; then
 	rm -rf $DTMP
 else
 	mv $TMP $D
+	rm -rf $DTMP
 fi
 exit 0
+
+
+
