@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.2 1998/07/10 19:20:13 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.3 1998/07/13 02:27:41 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -114,9 +114,10 @@ static void	hme_reset_tx __P((struct hme_softc *sc));
 static void	hme_meminit __P((struct hme_softc *sc));
 
 static int	hme_put __P((struct hme_softc *sc, int idx, struct mbuf *m));
-
 static struct mbuf *hme_get __P((struct hme_softc *sc, int idx, int len));
 static void	hme_read __P((struct hme_softc *sc, int idx, int len));
+
+static void hme_mcreset __P((struct hme_softc *));
 
 struct cfattach hme_ca = {
 	sizeof (struct hme_softc), hmematch, hmeattach
@@ -151,18 +152,8 @@ hmeattach(parent, self, aux)
 	struct hme_softc *sc = (struct hme_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int pri;
-
-#if 0
-	/*
-	 * XXX We should check the prom env var 'local-mac-address?'
-	 * XXX If true, use the MAC address specific to the board, and if
-	 * XXX false, use the MAC address specific to the system.
-	 */
-
 	/* XXX the following declaration should be elsewhere */
 	extern void myetheraddr __P((u_char *));
-#endif
-
 
 	if (ca->ca_ra.ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
@@ -212,19 +203,14 @@ hmeattach(parent, self, aux)
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih);
 
-#if 1
 	/*
-	 * XXX Below should only be used if 'local-mac-address?' == true
+	 * Get MAC address from card if 'local-mac-address' property exists.
+	 * Otherwise, use the machine's builtin MAC.
 	 */
-	getprop(ca->ca_ra.ra_node, "local-mac-address",
-				sc->sc_arpcom.ac_enaddr,
-				sizeof(sc->sc_arpcom.ac_enaddr));
-#else
-	/*
-	 * XXX Below should only be used if 'local-mac-address?' == false
-	 */
-	myetheraddr(sc->sc_arpcom.ac_enaddr);
-#endif
+	if (getprop(ca->ca_ra.ra_node, "local-mac-address",
+			sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0) {
+		myetheraddr(sc->sc_arpcom.ac_enaddr);
+	}
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -412,7 +398,7 @@ hmeioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		sc->sc_promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
+		sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -455,9 +441,7 @@ hmeioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-#if 0
-			mc_reset(sc);
-#endif
+			hme_mcreset(sc);
 			error = 0;
 		}
 		break;
@@ -1490,4 +1474,61 @@ hme_read(sc, idx, len)
 	/* Pass the packet up, with the ether header sort-of removed. */
 	m_adj(m, sizeof(struct ether_header));
 	ether_input(ifp, eh, m);
+}
+
+/*
+ * Program the multicast receive filter.
+ */
+static void
+hme_mcreset(sc)
+	struct hme_softc *sc;
+{
+	struct arpcom *ac = &sc->sc_arpcom;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct hme_cr *cr = sc->sc_cr;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	u_int16_t hash[4];
+	u_int32_t crc;
+	int i, j;
+
+	if (ifp->if_flags & IFF_ALLMULTI) {
+		cr->htable3 = 0xffff;
+		cr->htable2 = 0xffff;
+		cr->htable1 = 0xffff;
+		cr->htable0 = 0xffff;
+	}
+	else if (ifp->if_flags & IFF_PROMISC) {
+		cr->rx_cfg |= CR_RXCFG_PMISC;
+	}
+	else {
+		cr->htable3 = cr->htable2 = cr->htable1 = cr->htable0 = 0;
+		hash[3] = hash[2] = hash[1] = hash[0] = 0;
+		crc = 0xffffffffU;
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+
+			for (i = 0; i < ETHER_ADDR_LEN; i++) {
+				u_int8_t octet = enm->enm_addrlo[i];
+
+				for (j = 0; j < 8; j++) {
+					u_int8_t bit;
+
+					bit = (octet << j) & 1;
+					crc >>= 1;
+					if ((bit ^ crc) & 1)
+						crc = crc ^ MC_POLY_LE;
+				}
+			}
+
+			crc >>=26;
+			hash[crc >> 4] |= 1 << (crc & 0x0f);
+			ETHER_NEXT_MULTI(step, enm);
+		}
+		cr->htable3 = hash[3];
+		cr->htable2 = hash[2];
+		cr->htable1 = hash[1];
+		cr->htable0 = hash[0];
+	}
 }
