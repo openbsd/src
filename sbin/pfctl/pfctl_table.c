@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.22 2003/01/18 11:46:06 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.23 2003/01/18 15:00:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -48,6 +48,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <assert.h>
@@ -69,6 +70,7 @@ static void	print_addrx(struct pfr_addr *, struct pfr_addr *, int);
 static void	print_astats(struct pfr_astats *, int);
 static void	radix_perror(void);
 static void	inactive_cleanup(void);
+static void	xprintf(int, char *, ...);
 
 static union {
 	caddr_t			 caddr;
@@ -86,11 +88,10 @@ static char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
 	{ "Out/Block:",	"Out/Pass:",	"Out/XPass:" }
 };
 
-
-#define DUMMY ((flags & PFR_FLAG_DUMMY)?" (dummy)":"")
 #define RVTEST(fct) do {				\
-		int rv = fct;				\
-		if (rv) {				\
+		if ((!(opts & PF_OPT_NOACTION) ||	\
+		    (opts & PF_OPT_DUMMYACTION)) &&	\
+		    (fct)) {				\
 			radix_perror();			\
 			return (1);			\
 		}					\
@@ -141,9 +142,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 		if (argc || file != NULL)
 			usage();
 		RVTEST(pfr_clr_tables(&ndel, flags));
-		if (!(opts & PF_OPT_QUIET))
-			fprintf(stderr, "%d tables deleted%s.\n", ndel,
-			    DUMMY);
+		xprintf(opts, "%d tables deleted", ndel);
 	} else if (!strcmp(command, "-s")) {
 		if (argc || file != NULL)
 			usage();
@@ -174,30 +173,24 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 			usage();
 		table.pfrt_flags = PFR_TFLAG_PERSIST;
 		RVTEST(pfr_add_tables(&table, 1, &nadd, flags));
-		if (!(opts & PF_OPT_QUIET))
-			fprintf(stderr, "%d table added%s.\n", nadd, DUMMY);
+		xprintf(opts, "%d table added", nadd);
 	} else if (!strcmp(command, "kill")) {
 		if (argc || file != NULL)
 			usage();
 		RVTEST(pfr_del_tables(&table, 1, &ndel, flags));
-		if (!(opts & PF_OPT_QUIET))
-			fprintf(stderr, "%d table deleted%s.\n", ndel, DUMMY);
+		xprintf(opts, "%d table deleted", ndel);
 	} else if (!strcmp(command, "flush")) {
 		if (argc || file != NULL)
 			usage();
 		RVTEST(pfr_clr_addrs(&table, &ndel, flags));
-		if (!(opts & PF_OPT_QUIET))
-			fprintf(stderr, "%d addresses deleted%s.\n", ndel,
-				DUMMY);
+		xprintf(opts, "%d addresses deleted", ndel);
 	} else if (!strcmp(command, "add")) {
 		load_addr(argc, argv, file, 0);
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
 		RVTEST(pfr_add_addrs(&table, buffer.addrs, size, &nadd,
 		    flags));
-		if (!(opts & PF_OPT_QUIET))
-			fprintf(stderr, "%d/%d addresses added%s.\n", nadd,
-			    size, DUMMY);
+		xprintf(opts, "%d/%d addresses added", nadd, size);
 		if (opts & PF_OPT_VERBOSE)
 			for (i = 0; i < size; i++)
 				if ((opts & PF_OPT_VERBOSE2) ||
@@ -210,9 +203,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 			flags |= PFR_FLAG_FEEDBACK;
 		RVTEST(pfr_del_addrs(&table, buffer.addrs, size, &nadd,
 		    flags));
-		if (!(opts & PF_OPT_QUIET))
-			fprintf(stderr, "%d/%d addresses deleted%s.\n", nadd,
-			    size, DUMMY);
+		xprintf(opts, "%d/%d addresses deleted", nadd, size);
 		if (opts & PF_OPT_VERBOSE)
 			for (i = 0; i < size; i++)
 				if ((opts & PF_OPT_VERBOSE2) ||
@@ -234,19 +225,14 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 			} else
 				grow_buffer(sizeof(struct pfr_addr), size2);
 		}
-		if (!(opts & PF_OPT_QUIET)) {
-			if (nadd)
-				fprintf(stderr, "%d addresses added%s.\n",
-				    nadd, DUMMY);
-			if (ndel)
-				fprintf(stderr, "%d addresses deleted%s.\n",
-				    ndel, DUMMY);
-			if (nchange)
-				fprintf(stderr, "%d addresses changed%s.\n",
-				    nchange, DUMMY);
-			if (!nadd && !ndel && !nchange)
-				fprintf(stderr, "no changes%s.\n", DUMMY);
-		}
+		if (nadd)
+			xprintf(opts, "%d addresses added", nadd);
+		if (ndel)
+			xprintf(opts, "%d addresses deleted", ndel);
+		if (nchange)
+			xprintf(opts, "%d addresses changed", nchange);
+		if (!nadd && !ndel && !nchange)
+			xprintf(opts, "no changes");
 		if (opts & PF_OPT_VERBOSE)
 			for (i = 0; i < size; i++)
 				if ((opts & PF_OPT_VERBOSE2) ||
@@ -291,8 +277,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 		}
 		RVTEST(pfr_tst_addrs(&table, buffer.addrs, size, &nmatch,
 		    flags));
-		if (!(opts & PF_OPT_QUIET))
-			printf("%d/%d addresses match.\n", nmatch, size);
+		xprintf(opts, "%d/%d addresses match", nmatch, size);
 		if (opts & PF_OPT_VERBOSE && !(opts & PF_OPT_VERBOSE2))
 			for (i = 0; i < size; i++)
 				if (buffer.addrs[i].pfra_fback == PFR_FB_MATCH)
@@ -309,9 +294,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 			usage();
 		flags |= PFR_FLAG_ADDRSTOO;
 		RVTEST(pfr_clr_tstats(&table, 1, &nzero, flags));
-		if (!(opts & PF_OPT_QUIET))
-			fprintf(stderr, "%d table/stats cleared%s.\n", nzero,
-			    DUMMY);
+		xprintf(opts, "%d table/stats cleared", nzero);
 	} else
 		assert(0);
 	return (0);
@@ -650,4 +633,21 @@ inactive_cleanup()
 {
 	if (inactive)
 		pfr_ina_begin(NULL, NULL, 0);
+}
+
+void
+xprintf(int opts, char *fmt, ...)
+{
+	va_list args;
+
+	if (opts & PF_OPT_QUIET)
+		return;
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	if (opts & PF_OPT_DUMMYACTION)
+		fprintf(stderr, " (dummy).\n");
+	else if (opts & PF_OPT_NOACTION)
+		fprintf(stderr, " (syntax only).\n");
+	else
+		fprintf(stderr, ".\n");
 }

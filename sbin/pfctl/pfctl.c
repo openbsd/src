@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.133 2003/01/15 20:53:36 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.134 2003/01/18 15:00:24 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1249,7 +1249,6 @@ main(int argc, char *argv[])
 	int ch;
 	int mode = O_RDONLY;
 	int opts = 0;
-	int dummy = 0;
 
 	if (argc < 2)
 		usage();
@@ -1366,8 +1365,9 @@ main(int argc, char *argv[])
 		} else {
 			mode = strchr("acdfkrz", ch) ? O_RDWR : O_RDONLY;
 			if (opts & PF_OPT_NOACTION) {
-				opts &= ~PF_OPT_NOACTION;
-				dummy = PF_OPT_NOACTION;
+				dev = open("/dev/pf", mode);
+				if (dev >= 0)
+					opts |= PF_OPT_DUMMYACTION;
 			}
 		}
 	} else if (argc != optind) {
@@ -1407,8 +1407,6 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (opts & PF_OPT_NOACTION)
-		mode = O_RDONLY;
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		dev = open("/dev/pf", mode);
 		if (dev == -1)
@@ -1462,7 +1460,7 @@ main(int argc, char *argv[])
 
 	if (tableopt != NULL || tblcmdopt != NULL) {
 		error = pfctl_command_tables(argc, argv, tableopt,
-		    tblcmdopt, rulesopt, opts | dummy);
+		    tblcmdopt, rulesopt, opts);
 		rulesopt = NULL;
 	}
 
