@@ -8416,22 +8416,14 @@ make_file_label (path, rev, rcs)
 	    else
 		wm = gmtime (&sb.st_mtime);
 	}
-	else
+	if (wm == NULL)
 	{
 	    time_t t = 0;
 	    wm = gmtime(&t);
 	}
 
-	if (wm)
-	{
-	    (void) tm_to_internet (datebuf, wm);
-	    (void) sprintf (label, "-L%s\t%s", path, datebuf);
-	}
-	else
-	{
-	    free(label);
-	    label = NULL;
-	}
+	(void) tm_to_internet (datebuf, wm);
+	(void) sprintf (label, "-L%s\t%s", path, datebuf);
     }
     return label;
 }
