@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.2 1999/08/13 08:09:26 fgsch Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.3 1999/08/13 08:55:57 fgsch Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ ohci_pci_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
 
 	r = ohci_init(sc);
 	if (r != USBD_NORMAL_COMPLETION) {
