@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.94 2003/05/03 18:57:40 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.95 2003/05/05 15:43:39 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -244,8 +244,8 @@ Show the contents of the state table.
 .It Fl s Ar info
 Show filter information (statistics and counters).
 .It Fl s Ar labels
-Show per-rule statistics (in terse format) of filter rules with labels,
-useful for accounting.
+Show per-rule statistics (label, evaluations, packets, bytes) of
+filter rules with labels, useful for accounting.
 .It Fl s Ar timeouts
 Show the current global timeouts.
 .It Fl s Ar memory
