@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.140 2005/03/07 16:43:54 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.141 2005/03/29 11:33:18 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -961,8 +961,6 @@ mmu_reservemon4m(kpmap)
 	int te;
 	unsigned int mmupcrsave;
 
-/*XXX-GCC!*/mmupcrsave = 0;
-
 	/*
 	 * XXX: although the Sun4M can handle 36 bits of physical
 	 * address space, we assume that all these page tables, etc
@@ -1666,7 +1664,6 @@ ctx_alloc(pm)
 	int gap_start, gap_end;
 	unsigned long va;
 
-/*XXX-GCC!*/gap_start=gap_end=0;
 #ifdef DEBUG
 	if (pm->pm_ctx)
 		panic("ctx_alloc pm_ctx");
