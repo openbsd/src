@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.c,v 1.3 2002/10/21 18:58:57 marc Exp $	*/
+/*	$OpenBSD: sigsuspend.c,v 1.4 2003/01/27 08:48:41 marc Exp $	*/
 /*
  * Copyright (c) 1998 Daniel M. Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -96,6 +96,7 @@ sighandler (int signo)
 	int save_errno = errno;
 	char buf[8192];
 	sigset_t set;
+	sigset_t tmp;
 	pthread_t self;
 
 	if ((signo >= 0) && (signo <= NSIG))
@@ -103,7 +104,11 @@ sighandler (int signo)
 
 	/*
 	 * If we are running on behalf of the suspender thread,
-	 * ensure that we have the correct mask set.
+	 * ensure that we have the correct mask set.   NOTE: per
+	 * POSIX the current signo will be part of the mask unless
+	 * SA_NODEFER was specified.   Since it isn't in this test
+	 * add the current signal to the original suspender_mask
+	 * before checking.
 	 */
 	self = pthread_self ();
 	if (self == suspender_tid) {
@@ -114,7 +119,9 @@ sighandler (int signo)
 			"signal %d (%s)\n", signo, strsignal(signo));
 		write(STDOUT_FILENO, buf, strlen(buf));
 		sigprocmask (SIG_SETMASK, NULL, &set);
-		ASSERT(set == suspender_mask);
+		tmp = suspender_mask;
+		sigaddset(&tmp, signo);
+		ASSERT(set == tmp);
 	} else {
 		snprintf(buf, sizeof buf,
 		    "  -> Main thread signal handler caught "
