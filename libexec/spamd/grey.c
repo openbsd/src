@@ -83,7 +83,7 @@ address_valid_v6(const char *a)
 int
 configure_pf(char **addrs, int count)
 {
-	static char *argv[11]= {"pfctl", "-p", "/dev/pf", "-q", "-t", 
+	static char *argv[11]= {"pfctl", "-p", "/dev/pf", "-q", "-t",
 	    "spamd-white", "-T", "replace", "-f" "-", NULL};
 	FILE *pf = NULL;
 	int i, pdes[2];
@@ -115,7 +115,7 @@ configure_pf(char **addrs, int count)
 			close(pdes[0]);
 		}
 		execvp(PATH_PFCTL, argv);
-		syslog_r(LOG_ERR, &sdata, "can't exec %s:%m", PATH_PFCTL); 
+		syslog_r(LOG_ERR, &sdata, "can't exec %s:%m", PATH_PFCTL);
 		_exit(1);
 	}
 
@@ -441,7 +441,7 @@ greywatcher(void)
 		 * updates db. has no access to pf.
 		 */
 		close(pfdev);
-		setproctitle("(%s update)", PATH_SPAMD_DB); 
+		setproctitle("(%s update)", PATH_SPAMD_DB);
 		greyreader();
 	} else {
 		/*
@@ -449,7 +449,7 @@ greywatcher(void)
 		 * pf whitelist table accordingly.
 		 */
 		fclose(grey);
-		setproctitle("(pf <spamd-white> update)"); 
+		setproctitle("(pf <spamd-white> update)");
 		greyscanner();
 	}
 	return(0);
