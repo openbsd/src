@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.16 1999/12/04 23:26:27 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.17 1999/12/09 20:20:56 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -216,7 +216,8 @@ The modifiers have the following meanings:
 The source IP address for the SA. This is necessary for incoming
 SAs to avoid source address spoofing between mutually
 suspicious hosts that have established SAs with us. For outgoing SAs,
-this field is not currently used, however it must still be specified.
+this field is used to fill in the source address when doing
+tunneling.
 .It dst
 The destination IP address for the SA.
 .It proxy
