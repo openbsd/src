@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.4 2001/03/30 01:35:21 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.5 2001/08/05 15:31:35 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -154,7 +154,7 @@ _dl_printf("md_reloc: plttable %x\n", plttable);
 		   !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 		     ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
 			
-			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
+			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 0);
 			if(!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s:"
 					" %s :can't resolve reference '%s'\n",
