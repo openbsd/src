@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2001/09/12 00:23:34 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2001/09/14 09:07:50 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -132,8 +132,6 @@ int	bufpages = 0;
 static caddr_t allocsys __P((caddr_t));
 static void identifycpu __P((void));
 static void initcpu __P((void));
-static void dumpmem __P((int *, int, int));
-static char *hexstr __P((int, int));
 static void reboot_sync __P((void));
 int  reboot2 __P((int, char *)); /* share with sunos_misc.c */
 
