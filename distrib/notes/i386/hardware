@@ -71,7 +71,8 @@ Supported hardware {:-include-:}:
 		Intel PIIX, PIIX3, and PIIX4
 		Intel 82801 (ICH/ICH0/ICH2)
 		OPTi 82C568, 82D568, and 82C621
-		Promise PDC20246, PDC20262, PDC20265/7
+		Promise PDC20246, PDC20262, PDC20265/7 (But not the Promise
+			RAID controllers)
 		Silicon Integrated Systems 5513 (5597/5598)
 		VIA Technologies VT82C586[A], VT82C596, VT82C686
 		(Other PCI IDE-compliant controllers should work, but
@@ -470,6 +471,8 @@ Supported hardware {:-include-:}:
 		NeoMagic 256AV/ZX [*] [+]
 		SoundBlaster ISA cards and 100% compatibles [*] [+]
 		SoundBlaster PCI128 [*] [+]
+		SoundBlaster Live! and PCI512 (EMU10k1) [*] [+]
+		Trident 4DWAVE-DX/NX and clones (SiS 7018, ALi M5451) [*] [+]
 		VIA VT82C686A SouthBridge integrated AC'97 audio [*] [+]
 		Yamaha OPL3-SA3 [*] [+]
 		Yamaha DS-XG [*] [+]
@@ -523,7 +526,6 @@ about:
 	Intel i82556 (EtherExpress PRO/100A) and i82596 (EtherExpress
 		PRO/10 PCI) Ethernet adapters
 	Hewlett-Packard PC-LAN+ (HP27xxx) Ethernet adapters
-	SoundBlaster Live! (EMU10k1) sound devices
 	Aureal Vortex sound cards
 	Winmodems
 	Infrared devices, such as commonly found on laptops
