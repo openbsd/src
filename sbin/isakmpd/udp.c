@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.6 1998/12/22 02:25:15 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.25 1998/12/22 02:23:42 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.7 1999/02/26 03:51:33 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.30 1999/02/25 11:39:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -46,6 +46,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "sysdep.h"
+
 #include "conf.h"
 #include "if.h"
 #include "isakmp.h"
@@ -70,7 +72,7 @@ struct udp_transport {
 static struct transport *udp_clone (struct udp_transport *,
 				    struct sockaddr_in *);
 static struct transport *udp_create (char *);
-static int udp_fd_set (struct transport *, fd_set *);
+static int udp_fd_set (struct transport *, fd_set *, int);
 static int udp_fd_isset (struct transport *, fd_set *);
 static void udp_handle_message (struct transport *);
 static struct transport *udp_make (struct sockaddr_in *);
@@ -120,12 +122,24 @@ udp_make (struct sockaddr_in *laddr)
   /* Make sure we don't get our traffic encrypted.  */
   sysdep_cleartext (s);
 
+  /*
+   * In order to have several bound specific address-port combinations
+   * with the same port SO_REUSEADDR is needed.
+   * If this is a wildcard socket and we are not listening there, but only
+   * sending from it make it is entirely reuseable with SO_REUSEPORT.
+   */
   on = 1;
-  /* XXX Is this redundant considering SO_REUSEPORT below?  */
-  if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (void *)&on, sizeof on) == -1)
+  if (setsockopt (s, SOL_SOCKET,
+		  (laddr->sin_addr.s_addr == INADDR_ANY
+		   && conf_get_str ("General", "Listen-on"))
+		  ? SO_REUSEPORT : SO_REUSEADDR,
+		  (void *)&on, sizeof on) == -1)
     {
       log_error ("udp_make: setsockopt (%d, %d, %d, %p, %d)", s, SOL_SOCKET,
-		 SO_REUSEADDR, &on, sizeof on);
+		 (laddr->sin_addr.s_addr == INADDR_ANY
+		   && conf_get_str ("General", "Listen-on"))
+		  ? SO_REUSEPORT : SO_REUSEADDR,
+		 &on, sizeof on);
       goto err;
     }
 
@@ -139,9 +153,8 @@ udp_make (struct sockaddr_in *laddr)
 
   memset (&t->dst, 0, sizeof t->dst);
   t->s = s;
-  t->transport.flags |= TRANSPORT_LISTEN;
-
   transport_add ((struct transport *)t);
+  t->transport.flags |= TRANSPORT_LISTEN;
   return (struct transport *)t;
 
 err:
@@ -164,7 +177,7 @@ udp_clone (struct udp_transport *u, struct sockaddr_in *raddr)
     return 0;
   u2 = (struct udp_transport *)t;
 
-  memcpy (t, u, sizeof *u);
+  memcpy (u2, u, sizeof *u);
   memcpy (&u2->dst, raddr, sizeof u2->dst);
   t->flags &= ~TRANSPORT_LISTEN;
 
@@ -200,6 +213,10 @@ static void
 udp_bind_if (struct ifreq *ifrp, void *arg)
 {
   in_port_t port = *(in_port_t *)arg;
+  in_addr_t if_addr = ((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr;
+  struct conf_list *listen_on;
+  struct conf_list_node *address;
+  struct in_addr addr;
 
   /*
    * Well UDP is an internet protocol after all so drop other ifreqs.
@@ -209,8 +226,42 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
       || ifrp->ifr_addr.sa_len != sizeof (struct sockaddr_in))
     return;
 
+  /*
+   * If we are explicit about what addresses we can listen to, be sure
+   * to respect that option.
+   * XXX This is quite wasteful redoing the list-run for every interface,
+   * but who cares?  This is not an operation that needs to be fast.
+   */
+  listen_on = conf_get_list ("General", "Listen-on");
+  if (listen_on)
+    {
+      for (address = TAILQ_FIRST (&listen_on->fields); address;
+	   address = TAILQ_NEXT (address, link))
+	{
+	  if (!inet_aton (address->field, &addr))
+	    {
+	      log_print ("udp_bind_if: invalid address %s in \"Listen-on\"",
+			 address->field);
+	      continue;
+	    }
+
+	  /* If found, take the easy way out.  */
+	  if (addr.s_addr == if_addr)
+	    break;
+	}
+
+      /*
+       * If address is zero then we did not find the address among the ones
+       * we should listen to.
+       * XXX We do not discover if we do not find our listen addresses...
+       * Maybe this should be the other way round.
+       */
+      if (!address)
+	return;
+    }
+
   /* XXX Deal with errors better.  */
-  udp_bind (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr, port);
+  udp_bind (if_addr, port);
 }
 
 /*
@@ -280,13 +331,16 @@ udp_init ()
   if_map (udp_bind_if, &port);
 
   /*
-   * Bind to INADDR_ANY in case of new addresses popping up.
+   * If we don't bind to specific addresses via the Listen-on configuration
+   * option, bind to INADDR_ANY in case of new addresses popping up.
    * XXX We should use packets coming in on this socket as a signal
    * to reprobe for new interfaces.
    */
   default_transport = udp_bind (INADDR_ANY, port);
   if (!default_transport)
     log_error ("udp_init: could not allocate default ISAKMP UDP port");
+  else if (conf_get_str ("General", "Listen-on"))
+    default_transport->flags &= ~TRANSPORT_LISTEN;
 
   transport_method_add (&udp_transport_vtbl);
 }
@@ -296,11 +350,15 @@ udp_init ()
  * as the number of file descriptors to check.
  */
 static int
-udp_fd_set (struct transport *t, fd_set *fds)
+udp_fd_set (struct transport *t, fd_set *fds, int bit)
 {
   struct udp_transport *u = (struct udp_transport *)t;
 
-  FD_SET (u->s, fds);
+  if (bit)
+    FD_SET (u->s, fds);
+  else
+    FD_CLR (u->s, fds);
+
   return u->s + 1;
 }
 
