@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.35 2004/01/01 01:11:10 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.36 2004/07/02 14:40:22 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -415,30 +415,16 @@ GLOBAL(spin_cpu)
 /*****************************************************************************/
 
 	data
-	.align 4096		/* SDT (segment descriptor table */
-GLOBAL(kernel_sdt)
-	space	(0x2000)	/* 8K - 4K phys, 4K virt*/
-GLOBAL(ret_addr)
-	word 0
-ASLOCAL(initialized_cpu_lock)
-	/* XMEM spin lock -- to count CPUs */
-	word 0
-ASLOCAL(initialized_cpus)
-	/* CPU counter to initialize */
-	word 0
-ASLOCAL(master_processor_chosen)
-	/* The first processor that XMEMs this becomes the master */
-	word 0
-ASLOCAL(inter_processor_lock)
-	/* XMEM spin lock -- controls access to master_processor_chosen */
-	word 0
+	.align NBPG
+GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
+	space	0x2000		/* 8K - 4K phys, 4K virt*/
 
-	.align 4096
+	.align NBPG
 GLOBAL(intstack)
-	space (INTSTACK_SIZE)	/* 16K, just to be safe */
+	space	INTSTACK_SIZE	/* 16K, just to be safe */
 ASGLOBAL(intstack_end)
 ASGLOBAL(slavestack)
-	space (NBPG)		/* 4K, small, interim stack */
+	space	NBPG		/* 4K, small, interim stack */
 ASGLOBAL(slavestack_end)
 
 /*
@@ -450,7 +436,7 @@ ASGLOBAL(slavestack_end)
  * we feel like doing that).
  * Should be page aligned.
  */
-	.align 4096
+	.align NBPG
 GLOBAL(idle_u)
 	space	UPAGES * NBPG
 
@@ -459,27 +445,31 @@ GLOBAL(idle_u)
  *
  * This must be page aligned
  */
-	.align	4096
+	.align	NBPG
 ASLOCAL(u0)
 	space	UPAGES * NBPG
 
-/*
- * UPAGES get mapped to kstack
- */
-
+/* UPAGES get mapped to kstack */
 ASGLOBAL(kstack)
 	word	UADDR
-
+GLOBAL(ret_addr)
+	word 0
+/* XMEM spin lock -- to count CPUs */
+ASLOCAL(initialized_cpu_lock)
+	word 0
+/* CPU counter to initialize */
+ASLOCAL(initialized_cpus)
+	word 0
+/* The first processor that XMEMs this becomes the master */
+ASLOCAL(master_processor_chosen)
+	word 0
+/* XMEM spin lock -- controls access to master_processor_chosen */
+ASLOCAL(inter_processor_lock)
+	word 0
 #if defined(DDB) || NKSYMS > 0
 GLOBAL(esym)
 	word 	0
 #endif /* DDB || NKSYMS > 0 */
-
-GLOBAL(intiobase)
-	word	0		| KVA of base of internal IO space
-GLOBAL(intiolimit)
-	word	0		| KVA of end of internal IO space
-
 GLOBAL(proc0paddr)
 	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
 
