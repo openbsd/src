@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.14 2003/01/06 14:19:40 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.15 2003/01/07 00:21:07 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -41,8 +41,6 @@
 #include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfvar.h>
-
-#include <crypto/sha1.h>
 
 #define ACCEPT_FLAGS(oklist)			\
 	do {					\
@@ -89,9 +87,6 @@ struct pfr_walktree {
 #define pfrw_workq	pfrw_1.pfrw1_workq
 #define pfrw_cnt	pfrw_free
 
-#define	PFR_HASH_BUCKETS	1024
-#define	PFR_HASH_BUCKET(hash)	((hash).pfrh_int32[1] & (PFR_HASH_BUCKETS-1))
-
 #define senderr(e)	do { rv = (e); goto _bad; } while (0)
 
 struct pool		 pfr_ktable_pl;
@@ -130,18 +125,11 @@ void			 pfr_destroy_ktable(struct pfr_ktable *);
 void			 pfr_destroy_ktables(struct pfr_ktableworkq *);
 int			 pfr_ktable_compare(struct pfr_ktable *,
 			    struct pfr_ktable *);
-struct pfr_ktable	*pfr_lookup_hash(union pfr_hash *);
 struct pfr_ktable	*pfr_lookup_table(struct pfr_table *);
-int			 pfr_match_addr(struct pf_addr *, struct pf_addr *,
-			    struct pf_addr *, sa_family_t);
-void			 pfr_update_stats(struct pf_addr *, struct pf_addr *,
-			    struct pf_addr *, sa_family_t, u_int64_t, int, int,
-			    int);
 
 RB_PROTOTYPE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
 RB_GENERATE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
 
-struct pfr_ktablehashq	 pfr_ktablehash[PFR_HASH_BUCKETS];
 struct pfr_ktablehead	 pfr_ktables;
 struct pfr_table	 pfr_nulltable;
 int			 pfr_ktable_cnt;
@@ -169,7 +157,7 @@ pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	kt = pfr_lookup_table(tbl);
-	if (kt == NULL)
+	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (ESRCH);
 	rv = pfr_enqueue_addrs(kt, &workq, ndel);
 	if (rv)
@@ -202,7 +190,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	kt = pfr_lookup_table(tbl);
-	if (kt == NULL)
+	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (ESRCH);
 	tmpkt = pfr_create_ktable(&pfr_nulltable, 0);
 	if (tmpkt == NULL)
@@ -265,7 +253,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	kt = pfr_lookup_table(tbl);
-	if (kt == NULL)
+	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (ESRCH);
 
 	bzero(&w, sizeof(w));
@@ -328,7 +316,7 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	kt = pfr_lookup_table(tbl);
-	if (kt == NULL)
+	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (ESRCH);
 	tmpkt = pfr_create_ktable(&pfr_nulltable, 0);
 	if (tmpkt == NULL)
@@ -444,7 +432,7 @@ pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 	ACCEPT_FLAGS(PFR_FLAG_REPLACE);
 	kt = pfr_lookup_table(tbl);
-	if (kt == NULL)
+	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (ESRCH);
 
 	for (i = 0; i < size; i++) {
@@ -479,7 +467,7 @@ pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 
 	ACCEPT_FLAGS(0);
 	kt = pfr_lookup_table(tbl);
-	if (kt == NULL)
+	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (ESRCH);
 	if (kt->pfrkt_cnt > *size) {
 		*size = kt->pfrkt_cnt;
@@ -516,7 +504,7 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC); /* XXX PFR_FLAG_CLSTATS disabled */
 	kt = pfr_lookup_table(tbl);
-	if (kt == NULL)
+	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (ESRCH);
 	if (kt->pfrkt_cnt > *size) {
 		*size = kt->pfrkt_cnt;
@@ -563,7 +551,7 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	kt = pfr_lookup_table(tbl);
-	if (kt == NULL)
+	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (ESRCH);
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
@@ -949,18 +937,20 @@ pfr_clr_tables(int *ndel, int flags)
 int
 pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 {
-	struct pfr_ktableworkq	 workq;
+	struct pfr_ktableworkq	 workq, changeq;
 	struct pfr_ktable	*p, *q, key;
 	int			 i, rv, s, xadd = 0;
 	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	SLIST_INIT(&workq);
+	SLIST_INIT(&changeq);
 	for (i = 0; i < size; i++) {
 		if (copyin(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t)))
 			senderr(EFAULT);
 		if (key.pfrkt_name[PF_TABLE_NAME_SIZE-1])
 			senderr(EINVAL);
+		key.pfrkt_flags = PFR_TFLAG_ACTIVE+PFR_TFLAG_PERSIST;
 		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p == NULL) {
 			p = pfr_create_ktable(&key.pfrkt_t, tzero);
@@ -969,19 +959,11 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 			SLIST_FOREACH(q, &workq, pfrkt_workq) {
 				if (!strcmp(p->pfrkt_name, q->pfrkt_name))
 					goto _skip;
-				if (!memcmp(&p->pfrkt_hash, &q->pfrkt_hash,
-				    sizeof(p->pfrkt_hash))) {
-					printf("pfr_add_tables: "
-					    "sha collision\n");
-					senderr(EEXIST);
-				}
 			}
 			SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
-			if (pfr_lookup_hash(&p->pfrkt_hash)) {
-				printf("pfr_add_tables: sha collision\n");
-				senderr(EEXIST);
-			}
 			xadd++;
+		} else if (!(p->pfrkt_flags & PFR_TFLAG_PERSIST)) {
+			SLIST_INSERT_HEAD(&changeq, p, pfrkt_workq);
 		}
 _skip:
 	}
@@ -989,6 +971,8 @@ _skip:
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
 		pfr_insert_ktables(&workq);
+		SLIST_FOREACH(p, &changeq, pfrkt_workq)
+			p->pfrkt_flags |= PFR_TFLAG_PERSIST;
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 	} else
@@ -1004,22 +988,27 @@ _bad:
 int
 pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 {
-	struct pfr_ktableworkq	 workq;
+	struct pfr_ktableworkq	 workq, changeq;
 	struct pfr_ktable	*p, *q, key;
 	int			 i, s, xdel = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	SLIST_INIT(&workq);
+	SLIST_INIT(&changeq);
 	for (i = 0; i < size; i++) {
 		if (copyin(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t)))
 			return (EFAULT);
 		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p != NULL) {
-			SLIST_FOREACH(q, &workq, pfrkt_workq)
+                        struct pfr_ktableworkq *queue;
+
+                        queue = (p->pfrkt_refcnt > 0) ? &changeq : &workq;
+			SLIST_FOREACH(q, queue, pfrkt_workq)
 				if (!strcmp(p->pfrkt_name, q->pfrkt_name))
 					goto _skip;
-			SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
-			xdel++;
+			SLIST_INSERT_HEAD(queue, p, pfrkt_workq);
+			if (queue == &workq)
+				xdel++;
 		}
 _skip:
 	}
@@ -1028,6 +1017,8 @@ _skip:
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
 		pfr_remove_ktables(&workq);
+		SLIST_FOREACH(p, &changeq, pfrkt_workq)
+			p->pfrkt_flags &= ~PFR_TFLAG_PERSIST;
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 	}
@@ -1135,62 +1126,11 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 	return (0);
 }
 
-int
-pfr_wrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap,
-    int *exists, int flags)
-{
-	union pfr_hash		hash;
-	struct pf_addr_wrap	w;
-	SHA1_CTX		sha1;
-
-	ACCEPT_FLAGS(0);
-	if (!*tbl->pfrt_name || tbl->pfrt_name[PF_TABLE_NAME_SIZE-1])
-		return (EINVAL);
-	SHA1Init(&sha1);
-	SHA1Update(&sha1, tbl->pfrt_name, strlen(tbl->pfrt_name));
-	SHA1Final(hash.pfrh_sha1, &sha1);
-
-	bzero(&w, sizeof(w));
-	bcopy(&hash, &w.v.a.addr, sizeof(w.v.a.addr));
-	w.v.a.mask.addr32[0] = PF_TABLE_MASK;
-	w.v.a.mask.addr32[1] = hash.pfrh_int32[4];
-	if (copyout(&w, wrap, sizeof(*wrap)))
-		return (EFAULT);
-
-	if (exists != NULL)
-		*exists = pfr_lookup_table(tbl) != NULL;
-	return (0);
-}
-
-int
-pfr_unwrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap, int flags)
-{
-	union pfr_hash		 hash;
-	struct pf_addr_wrap	 w;
-	struct pfr_ktable	*kt;
-
-	ACCEPT_FLAGS(0);
-	if (copyin(wrap, &w, sizeof(w)))
-		return (EFAULT);
-
-	if (w.v.a.mask.addr32[0] != PF_TABLE_MASK || w.v.a.mask.addr32[2] ||
-	    w.v.a.mask.addr32[3])
-		return (EINVAL);
-
-	bcopy(&w.v.a.addr, &hash, 16);
-	hash.pfrh_int32[4] = w.v.a.mask.addr32[1];
-	kt = pfr_lookup_hash(&hash);
-	if (kt == NULL)
-		return (ENOENT);
-	*tbl = kt->pfrkt_t;
-	return (0);
-}
-
 void
 pfr_insert_ktables(struct pfr_ktableworkq *workq)
 {
 	struct pfr_ktable	*p;
-	int			 s, n = 0;
+	int			 n = 0;
 
 	/* insert into tree */
 	SLIST_FOREACH(p, workq, pfrkt_workq) {
@@ -1198,14 +1138,6 @@ pfr_insert_ktables(struct pfr_ktableworkq *workq)
 		n++;
 	}
 	pfr_ktable_cnt += n;
-
-	SLIST_FOREACH(p, workq, pfrkt_workq) {
-		s = splsoftnet();
-		SLIST_INSERT_HEAD(pfr_ktablehash +
-		    PFR_HASH_BUCKET(p->pfrkt_hash),
-		    p, pfrkt_hashq);
-		splx(s);
-	}
 }
 
 void
@@ -1213,14 +1145,7 @@ pfr_remove_ktables(struct pfr_ktableworkq *workq)
 {
 	struct pfr_kentryworkq	 addrq;
 	struct pfr_ktable	*p;
-	int			 s, n = 0;
-
-	SLIST_FOREACH(p, workq, pfrkt_workq) {
-		s = splsoftnet();
-		SLIST_REMOVE(pfr_ktablehash + PFR_HASH_BUCKET(p->pfrkt_hash),
-		    p, pfr_ktable, pfrkt_hashq);
-		splx(s);
-	}
+	int			 n = 0;
 
 	SLIST_FOREACH(p, workq, pfrkt_workq) {
 		RB_REMOVE(pfr_ktablehead, &pfr_ktables, p);
@@ -1259,18 +1184,12 @@ struct pfr_ktable *
 pfr_create_ktable(struct pfr_table *tbl, long tzero)
 {
 	struct pfr_ktable	*kt;
-	SHA1_CTX		 sha1;
 
 	kt = pool_get(&pfr_ktable_pl, PR_NOWAIT);
 	if (kt == NULL)
 		return (NULL);
 	bzero(kt, sizeof(*kt));
 	kt->pfrkt_t = *tbl;
-
-	/* compute secure hash */
-	SHA1Init(&sha1);
-	SHA1Update(&sha1, kt->pfrkt_name, strlen(kt->pfrkt_name));
-	SHA1Final(kt->pfrkt_hash.pfrh_sha1, &sha1);
 
 	if (!rn_inithead((void **)&kt->pfrkt_ip4,
 	    offsetof(struct sockaddr_in, sin_addr) * 8) ||
@@ -1314,17 +1233,6 @@ pfr_ktable_compare(struct pfr_ktable *p, struct pfr_ktable *q)
 }
 
 struct pfr_ktable *
-pfr_lookup_hash(union pfr_hash *hash)
-{
-	struct pfr_ktable	*p;
-
-	SLIST_FOREACH(p, pfr_ktablehash+PFR_HASH_BUCKET(*hash), pfrkt_hashq)
-		if (!memcmp(p->pfrkt_hash.pfrh_sha1, hash->pfrh_sha1, 20))
-			return (p);
-	return (NULL);
-}
-
-struct pfr_ktable *
 pfr_lookup_table(struct pfr_table *tbl)
 {
 	/* struct pfr_ktable start like a struct pfr_table */
@@ -1338,26 +1246,18 @@ pfr_lookup_table(struct pfr_table *tbl)
  * are different.
  */
 int
-pfr_match_addr(struct pf_addr *a, struct pf_addr *m,
-    struct pf_addr *b, sa_family_t af)
+pfr_match_addr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af)
 {
-	union pfr_hash		 hash;
-	struct pfr_ktable	*kt;
 	struct pfr_kentry	*ke = NULL;
 	int			 match;
 
-	bcopy(a, &hash, 16);
-	hash.pfrh_int32[4] = m->addr32[1];
-	kt = pfr_lookup_hash(&hash);
-	if (kt == NULL)
-		return (0);
 	switch (af) {
 	case AF_INET:
-		pfr_sin.sin_addr.s_addr = b->addr32[0];
+		pfr_sin.sin_addr.s_addr = a->addr32[0];
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin, kt->pfrkt_ip4);
 		break;
 	case AF_INET6:
-		bcopy(&b, &pfr_sin6.sin6_addr, sizeof(pfr_sin6.sin6_addr));
+		bcopy(&a, &pfr_sin6.sin6_addr, sizeof(pfr_sin6.sin6_addr));
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin6, kt->pfrkt_ip6);
 		break;
 	}
@@ -1370,27 +1270,18 @@ pfr_match_addr(struct pf_addr *a, struct pf_addr *m,
 }
 
 void
-pfr_update_stats(struct pf_addr *a, struct pf_addr *m,
-    struct pf_addr *b, sa_family_t af, u_int64_t len,
-    int dir_out, int op_pass, int notrule)
+pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
+    u_int64_t len, int dir_out, int op_pass, int notrule)
 {
-	union pfr_hash		 hash;
-	struct pfr_ktable	*kt;
 	struct pfr_kentry	*ke = NULL;
-
-	bcopy(a, &hash, 16);
-	hash.pfrh_int32[4] = m->addr32[1];
-	kt = pfr_lookup_hash(&hash);
-	if (kt == NULL)
-		return;
 
 	switch (af) {
 	case AF_INET:
-		pfr_sin.sin_addr.s_addr = b->addr32[0];
+		pfr_sin.sin_addr.s_addr = a->addr32[0];
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin, kt->pfrkt_ip4);
 		break;
 	case AF_INET6:
-		bcopy(&b, &pfr_sin6.sin6_addr, sizeof(pfr_sin6.sin6_addr));
+		bcopy(&a, &pfr_sin6.sin6_addr, sizeof(pfr_sin6.sin6_addr));
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin6, kt->pfrkt_ip6);
 		break;
 	}
@@ -1404,5 +1295,47 @@ pfr_update_stats(struct pf_addr *a, struct pf_addr *m,
 	if (op_pass != PFR_OP_XPASS) {
 		ke->pfrke_packets[dir_out][op_pass]++;
 		ke->pfrke_bytes[dir_out][op_pass] += len;
+	}
+}
+
+struct pfr_ktable *
+pfr_attach_table(char *name)
+{
+	struct pfr_ktable *p, key;
+	struct pfr_ktableworkq workq;
+
+	bzero(&key, sizeof(key));
+	strlcpy(key.pfrkt_name, name, sizeof(key.pfrkt_name));
+	key.pfrkt_flags = PFR_TFLAG_ACTIVE;
+	p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
+	if (p == NULL) {
+		p = pfr_create_ktable(&key.pfrkt_t, time.tv_sec);
+		if (p == NULL)
+			return NULL;
+		SLIST_INIT(&workq);
+		SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
+		pfr_insert_ktables(&workq);
+	}
+	p->pfrkt_refcnt++;
+	return p;
+}
+
+void
+pfr_detach_table(struct pfr_ktable *kt)
+{
+	struct pfr_ktableworkq workq;
+
+	if (kt->pfrkt_refcnt <= 0)
+		printf("pfr_detach_table, refcount = %d\n",
+		    kt->pfrkt_refcnt);
+	else {
+		kt->pfrkt_refcnt--;
+		if (kt->pfrkt_refcnt == 0 &&
+		    !(kt->pfrkt_flags & PFR_TFLAG_PERSIST)) {
+			kt->pfrkt_flags &= ~PFR_TFLAG_ACTIVE;
+			SLIST_INIT(&workq);
+			SLIST_INSERT_HEAD(&workq, kt, pfrkt_workq);
+			pfr_remove_ktables(&workq);
+		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.279 2003/01/06 11:30:10 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.280 2003/01/07 00:21:07 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1479,23 +1479,19 @@ xhost		: '!' host			{
 host		: address
 		| STRING '/' number		{ $$ = host($1, $3); }
 		| PORTUNARY STRING PORTUNARY	{
-			struct pfr_table tbl;
-			int exists = 0;
-
 			if ($1 != PF_OP_LT || $3 != PF_OP_GT)
 				YYERROR;
+			if (strlen($2) >= PF_TABLE_NAME_SIZE) {
+				yyerror("table name '%s' too long");
+				YYERROR;
+			}
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "host: calloc");
-			$$->af = 0;
-			bzero(&tbl, sizeof(tbl));
-			strlcpy(tbl.pfrt_name, $2, sizeof(tbl.pfrt_name));
-			if (pfr_wrap_table(&tbl, &$$->addr, &exists, 0))
-				err(1, "pfr_wrap_table");
-			if (!exists)
-				fprintf(stderr, "warning: %s "
-				    "table is not currently defined\n",
-				    tbl.pfrt_name);
+			$$->addr.type = PF_ADDR_TABLE;
+			strlcpy($$->addr.v.tblname, $2, PF_TABLE_NAME_SIZE);
+			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 

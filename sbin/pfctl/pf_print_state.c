@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.17 2003/01/05 22:14:23 dhartmei Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.18 2003/01/07 00:21:08 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -62,17 +62,10 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af)
 {
 	char buf[48];
 
-	if (addr->v.a.mask.addr32[0] == PF_TABLE_MASK) {
-		struct pfr_table tbl = { "?" };
-
-		if (pfr_unwrap_table(&tbl, addr, 0))
-			printf("<0x%08X>", addr->v.a.addr.addr32[0]);
-		else
-			printf("<%s>", tbl.pfrt_name);
-		return;
-	}
 	if (addr->type == PF_ADDR_DYNIFTL)
 		printf("(%s)", addr->v.ifname);
+	else if (addr->type == PF_ADDR_TABLE)
+		printf("<%s>", addr->v.tblname);
 	else {
 		if (inet_ntop(af, &addr->v.a.addr, buf, sizeof(buf)) == NULL)
 			printf("?");

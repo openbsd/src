@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.128 2003/01/06 14:19:40 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.129 2003/01/07 00:21:07 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -244,6 +244,24 @@ struct pf_addr_dyn {
 #endif /* PF_INET6_ONLY */
 #endif /* PF_INET_INET6 */
 
+#define	PF_MISMATCHAW(aw, x, af, not)				\
+	(							\
+		(((aw)->type == PF_ADDR_NOROUTE &&		\
+		    pf_routable((x), (af))) ||			\
+		((aw)->type == PF_ADDR_TABLE &&			\
+		    !pfr_match_addr((aw)->p.tbl, (x), (af))) ||	\
+		((aw)->type == PF_ADDR_DYNIFTL &&		\
+		    ((aw)->p.dyn->undefined ||			\
+		    (!PF_AZERO(&(aw)->v.a.mask, (af)) &&	\
+		    !PF_MATCHA(0, &(aw)->v.a.addr,		\
+		    &(aw)->v.a.mask, (x), (af))))) ||		\
+		((aw)->type == PF_ADDR_ADDRMASK &&		\
+		    !PF_AZERO(&(aw)->v.a.mask, (af)) &&		\
+		    !PF_MATCHA(0, &(aw)->v.a.addr,		\
+		    &(aw)->v.a.mask, (x), (af)))) !=		\
+		(not)						\
+	)
+
 struct pf_rule_uid {
 	uid_t		 uid[2];
 	u_int8_t	 op;
@@ -452,10 +470,15 @@ struct pf_anchor {
 
 TAILQ_HEAD(pf_anchorqueue, pf_anchor);
 
-#define	PF_TABLE_MASK		0xCAFEBABE
+#define PFR_TFLAG_PERSIST       0x00000001
+#define PFR_TFLAG_CONST         0x00000002
+#define PFR_TFLAG_ACTIVE        0x00000004
+#define PFR_TFLAG_INACTIVE      0x00000008
+#define PFR_TFLAG_ALLMASK       0x0000000F
 
 struct pfr_table {
 	char			 pfrt_name[PF_TABLE_NAME_SIZE];
+	u_int32_t		 pfrt_flags;
 };
 
 enum { PFR_FB_NONE, PFR_FB_MATCH, PFR_FB_ADDED, PFR_FB_DELETED,
@@ -494,13 +517,10 @@ struct pfr_tstats {
 	u_int64_t	 pfrts_nomatch;
 	long		 pfrts_tzero;
 	int		 pfrts_cnt;
+	int		 pfrts_refcnt;
 };
 #define	pfrts_name	pfrts_t.pfrt_name
-
-union pfr_hash {
-	char		 pfrh_sha1[20];
-	u_int32_t	 pfrh_int32[5];
-};
+#define pfrts_flags	pfrts_t.pfrt_flags
 
 SLIST_HEAD(pfr_kentryworkq, pfr_kentry);
 struct pfr_kentry {
@@ -516,21 +536,20 @@ struct pfr_kentry {
 	u_int8_t		 pfrke_mark;
 };
 
-SLIST_HEAD(pfr_ktablehashq, pfr_ktable);
 SLIST_HEAD(pfr_ktableworkq, pfr_ktable);
 RB_HEAD(pfr_ktablehead, pfr_ktable);
 struct pfr_ktable {
 	struct pfr_tstats	 pfrkt_ts;
-	union pfr_hash		 pfrkt_hash;
 	RB_ENTRY(pfr_ktable)	 pfrkt_tree;
-	SLIST_ENTRY(pfr_ktable)	 pfrkt_hashq;
 	SLIST_ENTRY(pfr_ktable)	 pfrkt_workq;
 	struct radix_node_head	*pfrkt_ip4;
 	struct radix_node_head	*pfrkt_ip6;
 };
 #define pfrkt_t		pfrkt_ts.pfrts_t
 #define pfrkt_name	pfrkt_t.pfrt_name
+#define pfrkt_flags	pfrkt_t.pfrt_flags
 #define pfrkt_cnt	pfrkt_ts.pfrts_cnt
+#define pfrkt_refcnt	pfrkt_ts.pfrts_refcnt
 #define pfrkt_packets	pfrkt_ts.pfrts_packets
 #define pfrkt_bytes	pfrkt_ts.pfrts_bytes
 #define pfrkt_match	pfrkt_ts.pfrts_match
@@ -896,8 +915,6 @@ struct pfioc_table {
 #define	DIOCRGETASTATS	_IOWR('D', 71, struct pfioc_table)
 #define DIOCRCLRASTATS  _IOWR('D', 72, struct pfioc_table)
 #define	DIOCRTSTADDRS	_IOWR('D', 73, struct pfioc_table)
-#define	DIOCRWRAPTABLE	_IOWR('D', 74, struct pfioc_table)
-#define	DIOCRUNWRTABLE	_IOWR('D', 75, struct pfioc_table)
 
 
 #ifdef _KERNEL
@@ -921,12 +938,14 @@ extern struct pf_altqqueue	*pf_altqs_active;
 extern struct pf_altqqueue	*pf_altqs_inactive;
 extern struct pf_poolqueue	*pf_pools_active;
 extern struct pf_poolqueue	*pf_pools_inactive;
-extern void			 pf_dynaddr_remove(struct pf_addr_wrap *);
+extern int			 pf_tbladdr_setup(struct pf_addr_wrap *);
+extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
-				    u_int8_t);
+				    sa_family_t);
+extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
+extern void			 pf_dynaddr_remove(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern void			 pf_update_anchor_rules(void);
-extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
 extern struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 extern void			 pf_purge_timeout(void *);
@@ -963,10 +982,12 @@ int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af);
 void	pfr_initialize(void);
-int	pfr_match_addr(struct pf_addr *, struct pf_addr *,
-	    struct pf_addr *, sa_family_t);
-void	pfr_update_stats(struct pf_addr *, struct pf_addr *,
-	    struct pf_addr *, sa_family_t, u_int64_t, int, int, int);
+int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
+void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
+	    u_int64_t, int, int, int);
+struct pfr_ktable *
+	pfr_attach_table(char *);
+void	pfr_detach_table(struct pfr_ktable *);
 int	pfr_clr_tables(int *, int);
 int	pfr_add_tables(struct pfr_table *, int, int *, int);
 int	pfr_del_tables(struct pfr_table *, int, int *, int);

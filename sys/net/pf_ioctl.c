@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.44 2003/01/06 14:19:40 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.45 2003/01/07 00:21:07 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -364,6 +364,8 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 {
 	pf_dynaddr_remove(&rule->src.addr);
 	pf_dynaddr_remove(&rule->dst.addr);
+	pf_tbladdr_remove(&rule->src.addr);
+	pf_tbladdr_remove(&rule->dst.addr);
 	pf_empty_pool(&rule->rpool.list);
 	if (rulequeue != NULL)
 		TAILQ_REMOVE(rulequeue, rule, entries);
@@ -413,8 +415,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCRGETASTATS:
 		case DIOCRCLRASTATS:
 		case DIOCRTSTADDRS:
-		case DIOCRWRAPTABLE:
-		case DIOCRUNWRTABLE:
 			break;
 		default:
 			return (EPERM);
@@ -443,8 +443,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCRGETADDRS:
 		case DIOCRGETASTATS:
 		case DIOCRTSTADDRS:
-		case DIOCRWRAPTABLE:
-		case DIOCRUNWRTABLE:
 			break;
 		default:
 			return (EACCES);
@@ -571,6 +569,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pf_dynaddr_setup(&rule->src.addr, rule->af))
 			error = EINVAL;
 		if (pf_dynaddr_setup(&rule->dst.addr, rule->af))
+			error = EINVAL;
+		if (pf_tbladdr_setup(&rule->src.addr))
+			error = EINVAL;
+		if (pf_tbladdr_setup(&rule->dst.addr))
 			error = EINVAL;
 
 		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
@@ -792,6 +794,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (pf_dynaddr_setup(&newrule->src.addr, newrule->af))
 				error = EINVAL;
 			if (pf_dynaddr_setup(&newrule->dst.addr, newrule->af))
+				error = EINVAL;
+			if (pf_tbladdr_setup(&newrule->src.addr))
+				error = EINVAL;
+			if (pf_tbladdr_setup(&newrule->dst.addr))
 				error = EINVAL;
 
 			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
@@ -1461,6 +1467,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 #endif /* INET6 */
+		if (pp->addr.addr.addr.type != PF_ADDR_ADDRMASK &&
+		    pp->addr.addr.addr.type != PF_ADDR_DYNIFTL) {
+			error = EINVAL;
+			break;
+		}
 		pa = pool_get(&pf_pooladdr_pl, PR_NOWAIT);
 		if (pa == NULL) {
 			error = ENOMEM;
@@ -1537,6 +1548,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pca->action < PF_CHANGE_ADD_HEAD ||
 		    pca->action > PF_CHANGE_REMOVE) {
+			error = EINVAL;
+			break;
+		}
+		if (pca->addr.addr.addr.type != PF_ADDR_ADDRMASK &&
+		    pca->addr.addr.addr.type != PF_ADDR_DYNIFTL) {
 			error = EINVAL;
 			break;
 		}
@@ -1801,23 +1817,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		error = pfr_tst_addrs(&io->pfrio_table, io->pfrio_buffer,
 		    io->pfrio_size, &io->pfrio_nmatch, io->pfrio_flags);
-		break;
-	}
-
-	case DIOCRWRAPTABLE: {
-		struct pfioc_table *io = (struct pfioc_table *)addr;
-
-		error = pfr_wrap_table(&io->pfrio_table, io->pfrio_buffer,
-		    io->pfrio_exists ? &io->pfrio_exists : NULL,
-		    io->pfrio_flags);
-		break;
-	}
-
-	case DIOCRUNWRTABLE: {
-		struct pfioc_table *io = (struct pfioc_table *)addr;
-
-		error = pfr_unwrap_table(&io->pfrio_table, io->pfrio_buffer,
-		    io->pfrio_flags);
 		break;
 	}
 

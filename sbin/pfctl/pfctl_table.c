@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.11 2003/01/04 00:01:34 deraadt Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.12 2003/01/07 00:21:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -60,8 +60,8 @@
 extern void	 usage(void);
 static int	pfctl_table(int, char *[], char *, char *, char *, int);
 static void	grow_buffer(int, int);
-static void	print_table(struct pfr_table *);
-static void	print_tstats(struct pfr_tstats *);
+static void	print_table(struct pfr_table *, int);
+static void	print_tstats(struct pfr_tstats *, int);
 static void	load_addr(int, char *[], char *, int);
 static int	next_token(char [], FILE *);
 static void	append_addr(char *, int);
@@ -181,9 +181,11 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 		}
 		for (i = 0; i < size; i++)
 			if (opts & PF_OPT_VERBOSE)
-				print_tstats(buffer.tstats+i);
+				print_tstats(buffer.tstats+i,
+				    opts & PF_OPT_VERBOSE2);
 			else
-				print_table(buffer.tables+i);
+				print_table(buffer.tables+i,
+				    opts & PF_OPT_VERBOSE2);
 	} else if (!strcmp(*p, "create")) {
 		if (argc || file != NULL)
 			usage();
@@ -358,19 +360,25 @@ grow_buffer(int bs, int minsize)
 }
 
 void
-print_table(struct pfr_table *ta)
+print_table(struct pfr_table *ta, int all)
 {
-	printf("%s\n", ta->pfrt_name);
+	if (!all && !(ta->pfrt_flags & PFR_TFLAG_ACTIVE))
+		return;
+	printf("  %c%s\n", (ta->pfrt_flags & PFR_TFLAG_PERSIST)?'+':' ',
+	    ta->pfrt_name);
 }
 
 void
-print_tstats(struct pfr_tstats *ts)
+print_tstats(struct pfr_tstats *ts, int all)
 {
 	time_t	time = ts->pfrts_tzero;
 	int	dir, op;
 
-	printf("%s\n", ts->pfrts_name);
+	if (!all && !(ts->pfrts_flags & PFR_TFLAG_ACTIVE))
+		return;
+	print_table(&ts->pfrts_t, all);
 	printf("\tAddresses:   %d\n", ts->pfrts_cnt);
+	printf("\tReferences:  %d\n", ts->pfrts_refcnt);
 	printf("\tCleared:     %s", ctime(&time));
 	printf("\tEvaluations: [ NoMatch: %-18llu Match: %-18llu ]\n",
 	    ts->pfrts_nomatch, ts->pfrts_match);

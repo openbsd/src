@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.6 2003/01/04 00:01:34 deraadt Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.7 2003/01/07 00:21:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -335,48 +335,5 @@ pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		return (-1);
 	if (nmatch)
 		*nmatch = io.pfrio_nmatch;
-	return (0);
-}
-
-int
-pfr_wrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap,
-    int *exists, int flags)
-{
-	struct pfioc_table io;
-
-	if (tbl == NULL) {
-		errno = EINVAL;
-		return -1;
-	}
-	bzero(&io, sizeof io);
-	io.pfrio_flags = flags;
-	io.pfrio_table = *tbl;
-	io.pfrio_buffer = wrap;
-	io.pfrio_size = wrap ? 1 : 0;
-	io.pfrio_exists = exists ? 1 : 0;
-	if (ioctl(dev, DIOCRWRAPTABLE, &io))
-		return (-1);
-	if (exists)
-		*exists = io.pfrio_exists;
-	return (0);
-}
-
-int
-pfr_unwrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap, int flags)
-{
-	struct pfioc_table io;
-
-	if (wrap == NULL) {
-		errno = EINVAL;
-		return -1;
-	}
-	bzero(&io, sizeof io);
-	io.pfrio_flags = flags;
-	io.pfrio_buffer = wrap;
-	io.pfrio_size = 1;
-	if (ioctl(dev, DIOCRUNWRTABLE, &io))
-		return (-1);
-	if (tbl != NULL)
-		*tbl = io.pfrio_table;
 	return (0);
 }
