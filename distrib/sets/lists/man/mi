@@ -1873,6 +1873,7 @@
 ./usr/share/man/cat8/mvme68k/boot_mvme68k.0
 ./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/mvme88k
+./usr/share/man/cat8/mvme88k/installboot.0
 ./usr/share/man/cat8/mvmeppc
 ./usr/share/man/cat8/named-checkconf.0
 ./usr/share/man/cat8/named-checkzone.0
