@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.95 2004/07/11 09:47:22 deraadt Exp $
+$OpenBSD: usbdevs,v 1.96 2004/07/11 10:00:56 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -872,7 +872,7 @@ product INTEL TESTBOARD		0x9890	82930 test board
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
 /* Interpid Control Systems products */
-product INTREPIDCS VALUECAN	0x0601	ValueCAN CAN
+product INTREPIDCS VALUECAN	0x0601	ValueCAN
 product INTREPIDCS NEOVI	0x0701	NeoVI Blue
 
 /* I/O DATA products */
