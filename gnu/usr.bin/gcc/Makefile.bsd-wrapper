@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.8 1996/02/17 07:32:28 etheisen Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.9 1996/02/18 06:22:17 etheisen Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1
 MLINKS+=	gcc.1 cc.1
@@ -9,7 +9,7 @@ GPP_INC_DIR=	/usr/include/g++
 GNUCFLAGS=	CFLAGS="${CFLAGS} -DOPENBSD_NATIVE"
 CLEANFILES=	.gdbinit cp/.gdbinit *.info* bi-parser.c bi-parser.h \
 		c-parse.c c-parse.h c-parse.y cexp.c cp/parse.c cp/parse.h \
-		objc-parse.c
+		objc-parse.c objc-parse.y
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS} BISON=yacc LDFLAGS=${LDSTATIC}
