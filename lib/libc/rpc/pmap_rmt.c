@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.c,v 1.4 1996/08/10 04:31:23 deraadt Exp $	*/
+/*	$OpenBSD: pmap_rmt.c,v 1.5 1996/08/10 05:12:09 deraadt Exp $	*/
 /*	$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.4 1996/08/10 04:31:23 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.5 1996/08/10 05:12:09 deraadt Exp $";
 #endif
 
 /*
@@ -293,12 +293,13 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	r.xdr_results = xresults;
 	r.results_ptr = resultsp;
 	xdrmem_create(xdrs, outbuf, MAX_BROADCAST_SIZE, XDR_ENCODE);
-	if ((! xdr_callmsg(xdrs, &msg)) || (! xdr_rmtcall_args(xdrs, &a))) {
+	if (!xdr_callmsg(xdrs, &msg) || !xdr_rmtcall_args(xdrs, &a)) {
 		stat = RPC_CANTENCODEARGS;
 		goto done_broad;
 	}
 	outlen = (int)xdr_getpos(xdrs);
 	xdr_destroy(xdrs);
+
 	/*
 	 * Basic loop: broadcast a packet and wait a while for response(s).
 	 * The response timeout grows larger per iteration.
@@ -340,7 +341,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	try_again:
 		fromlen = sizeof(struct sockaddr);
 		inlen = recvfrom(sock, inbuf, UDPMSGSIZE, 0,
-			(struct sockaddr *)&raddr, &fromlen);
+		    (struct sockaddr *)&raddr, &fromlen);
 		if (inlen < 0) {
 			if (errno == EINTR)
 				goto try_again;
