@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.21 2001/06/25 22:17:35 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.22 2001/06/26 07:38:05 jasoni Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -560,7 +560,7 @@ help()
 	\t-i secs\t	Delay interval for lines sent, ports scanned\n\
 	\t-k		Keep inbound sockets open for multiple connects\n\
 	\t-l		Listen mode, for inbound connects\n\
-	\t-n		Surpress name/port resolutions\n\
+	\t-n		Suppress name/port resolutions\n\
 	\t-p		Specify local port for remote connects\n\
 	\t-r		Randomize remote ports\n\
 	\t-s addr\t	Local source address\n\
