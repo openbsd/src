@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 1997/09/07 14:05:21 kstailey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 1997/09/08 01:28:00 kstailey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -1533,7 +1533,7 @@ pmap_free_pages()
 	int bytes;
 
 	bytes = avail_end - avail_start;
-	return(sun3_btop(bytes));
+	return(m68k_btop(bytes));
 }
 
 /*
@@ -1590,7 +1590,7 @@ pmap_page_index(pa)
 	}
 #endif
 
-	return (sun3_btop(pa));
+	return (m68k_btop(pa));
 }
 
 
