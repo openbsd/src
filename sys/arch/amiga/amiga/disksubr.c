@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.11 1997/02/23 02:33:05 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.12 1997/04/10 08:52:52 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
@@ -506,46 +506,35 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-	struct partition *pp;
-	long maxsz, sz;
+#define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
-	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
-	if (bp->b_flags & B_RAW) {
-		maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
-		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-	} else {
-		maxsz = pp->p_size;
-		sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
-	}
-
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		if (bp->b_blkno == maxsz) {
-			/* 
-			 * trying to get one block beyond return EOF.
-			 */
+	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
+		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
-			return(0);
+			goto done;
 		}
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0 || bp->b_blkno < 0) {
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-			return(-1);
+			goto bad;
 		}
-		/* 
-		 * adjust count down
-		 */
-		if (bp->b_flags & B_RAW)
-			bp->b_bcount = sz << DEV_BSHIFT;
-		else
-			bp->b_bcount = sz * lp->d_secsize;
+		/* Otherwise, truncate request. */
+		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
-	/*
-	 * calc cylinder for disksort to order transfers with
-	 */
-	bp->b_cylin = (bp->b_blkno + pp->p_offset) / lp->d_secpercyl;
-	return(1);
+	/* Calculate cylinder for disksort to order transfers with.  */
+	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	    lp->d_secpercyl;
+	return (1);
+
+bad:
+	bp->b_flags |= B_ERROR;
+done:
+	return (0);
 }
 
 u_long
