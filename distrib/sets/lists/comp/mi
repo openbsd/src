@@ -559,6 +559,7 @@
 ./usr/include/dev/rndioctl.h
 ./usr/include/dev/rndvar.h
 ./usr/include/dev/sbus
+./usr/include/dev/sbus/asioreg.h
 ./usr/include/dev/sbus/bereg.h
 ./usr/include/dev/sbus/cs4231var.h
 ./usr/include/dev/sbus/lebuffervar.h

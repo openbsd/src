@@ -550,6 +550,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/rndioctl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/rndvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/asioreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/bereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/cs4231var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/lebuffervar.ph
