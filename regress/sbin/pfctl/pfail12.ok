@@ -3,4 +3,3 @@ stdin:2: rpool port only applies to tcp/udp
 stdin:2: skipping rule due to errors
 stdin:2: rule expands to no valid combination
 pfctl: Syntax error in file: pf rules not loaded
-pass in all flags S/SA 
