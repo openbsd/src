@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.7 2001/08/09 02:42:12 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.8 2001/09/15 20:44:52 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -57,6 +57,9 @@ dlopen(const char *libname, int how)
 	elf_object_t	*dynobj;
 	Elf_Dyn	*dynp;
 
+	if (libname == NULL) {
+		return NULL;
+	}
 	DL_DEB(("loading: %s\n", libname));
 
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO);
@@ -87,7 +90,7 @@ dlopen(const char *libname, int how)
 				continue;
 			}
 			libname = dynobj->dyn.strtab + dynp->d_un.d_val;
-			depobj = _dl_load_shlib(libname, dynobj, OBJTYPE_DLO);
+			depobj = _dl_load_shlib(libname, dynobj, OBJTYPE_LIB);
 			if (!depobj) {
 				_dl_exit(4);
 			}
@@ -119,8 +122,18 @@ dlsym(void *handle, const char *name)
 	elf_object_t	*object;
 	elf_object_t	*dynobj;
 	void		*retval;
-	const Elf_Sym	*sym = 0;
+	const Elf_Sym	*sym = NULL;
 
+	if (handle == NULL) {
+		object = _dl_objects;
+		retval = (void *)_dl_find_symbol(name, object, &sym, 1, 1);
+		if (sym != NULL) {
+			retval += sym->st_value;
+		} else {
+			_dl_errno = DL_NO_SYMBOL;
+		}
+		return retval;
+	}
 	object = (elf_object_t *)handle;
 	dynobj = _dl_objects;
 	while (dynobj && dynobj != object) {
@@ -132,7 +145,7 @@ dlsym(void *handle, const char *name)
 	}
 
 	retval = (void *)_dl_find_symbol(name, object, &sym, 1, 1);
-	if (retval) {
+	if (sym != NULL) {
 		retval += sym->st_value;
 	} else {
 		_dl_errno = DL_NO_SYMBOL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.17 2001/06/13 08:40:39 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.18 2001/09/15 20:44:52 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -234,6 +234,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 		const Elf_Sym  *sym;
 		Elf_Addr ooff;
 
+		sym = NULL;
 		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, 0, 0);
 		if (sym == NULL) {
 			_dl_printf("cannot find atexit, destructors will not be run!\n");
@@ -525,17 +526,17 @@ _dl_call_init(elf_object_t *object)
  * XXX We perform relocation of DTOR/CTOR. This is a ld bug problem
  * XXX that should be fixed.
  */
-	sym = 0;
+	sym = NULL;
 	ooff = _dl_find_symbol("__CTOR_LIST__", object, &sym, 1, 1);
-	if (sym) {
+	if (sym != NULL) {
 		int i = *(int *)(sym->st_value + ooff);
 		while(i--) {
 			*(int *)(sym->st_value + ooff + 4 + 4 * i) += ooff;
 		}
 	}
-	sym = 0;
+	sym = NULL;
 	ooff = _dl_find_symbol("__DTOR_LIST__", object, &sym, 1, 1);
-	if (sym) {
+	if (sym != NULL) {
 		int i = *(int *)(sym->st_value + ooff);
 		while(i--) {
 			*(int *)(sym->st_value + ooff + 4 + 4 * i) += ooff;
@@ -547,9 +548,9 @@ _dl_call_init(elf_object_t *object)
  * XXX but at the moment this functionality is not provided by the toolchain.
  * XXX Instead we rely on a symbol named '.init' and call it if it exists.
  */
-	sym = 0;
+	sym = NULL;
 	ooff = _dl_find_symbol(".init", object, &sym, 1, 1);
-	if (sym) {
+	if (sym != NULL) {
 		DL_DEB(("calling .init in '%s'\n",object->load_name));
 		(*(void(*)(void))(sym->st_value + ooff))();
 	}
