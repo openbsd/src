@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2001/05/04 22:48:59 aaron Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2001/05/10 01:33:35 millert Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -117,6 +117,7 @@ define	MMUID_425_T		MMUID_425_T
 define	MMUID_425_S		MMUID_425_S
 define	MMUID_433_T		MMUID_433_T
 define	MMUID_433_S		MMUID_433_S
+define	MMUID_425_E		MMUID_425_E
 
 define	MMUID_SHIFT		MMUID_SHIFT
 define	MMUID_MASK		MMUID_MASK
