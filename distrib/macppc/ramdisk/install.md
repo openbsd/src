@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.25 2004/05/24 15:47:00 tom Exp $
+#	$OpenBSD: install.md,v 1.26 2004/07/18 01:14:04 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ __EOT
 
 		return
 	fi
- 
+
 	# Manual MBR setup. The user is basically on their own. Give a few
 	# hints and let the user rip.
 	cat << __EOT
@@ -176,7 +176,7 @@ You must modify an existing partition to be of type "OpenBSD" and have the name
 MacOS tools before attempting to install OpenBSD.
 
 __EOT
-	
+
 	pdisk /dev/${_disk}c
 }
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.347 2004/07/18 00:46:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.348 2004/07/18 01:12:32 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -510,7 +510,7 @@ configure_ifs() {
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
-		_hn=/tmp/hostname.$_ifs 
+		_hn=/tmp/hostname.$_ifs
 
 		# Get symbolic name - will be used in DHCP requests.
 		ask "Symbolic (host) name for $_ifs?" "$(hostname -s)"
@@ -612,11 +612,11 @@ v4_config() {
 	if [[ -n $2 ]]; then
 		ifconfig $_ifs inet $2 delete
 		[[ $2 != "0.0.0.0" ]] && { _addr=$2; _mask=$3; }
-	fi	
+	fi
 
 	[[ -x /sbin/dhclient ]] && _prompt=" or 'dhcp'"
 	_prompt="IPv4 address for $_ifs? (or 'none'$_prompt)"
-	
+
 	ask_until "$_prompt" "$_addr"
 	case $resp in
 	none)	;;
