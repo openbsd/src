@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.30 1999/01/07 05:52:26 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.31 1999/01/07 06:05:05 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -635,8 +635,8 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 	    lin->sin_addr, lin->sin_port);
 	if (inp == NULL) {
 		++tcpstat.tcps_pcbhashmiss;
-		inp = in_pcblookup(&tcbtable, fin->sin_addr, fin->sin_port,
-		    lin->sin_addr, lin->sin_port, 0);
+		inp = in_pcblookup(&tcbtable, &fin->sin_addr, fin->sin_port,
+		    &lin->sin_addr, lin->sin_port, 0);
 	}
 	if (inp != NULL && (inp->inp_socket->so_state & SS_CONNECTOUT)) {
 		tir.ruid = inp->inp_socket->so_ruid;

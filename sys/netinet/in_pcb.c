@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.25 1999/01/07 05:44:31 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.26 1999/01/07 06:05:04 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -205,13 +205,13 @@ in_pcbbind(v, nam)
 			    (error = suser(p->p_ucred, &p->p_acflag)))
 				return (EACCES);
 			if (so->so_euid) {
-				t = in_pcblookup(table, zeroin_addr, 0,
-				    sin->sin_addr, lport, INPLOOKUP_WILDCARD);
+				t = in_pcblookup(table, &zeroin_addr, 0,
+				    &sin->sin_addr, lport, INPLOOKUP_WILDCARD);
 				if (t && (so->so_euid != t->inp_socket->so_euid))
 					return (EADDRINUSE);
 			}
-			t = in_pcblookup(table, zeroin_addr, 0,
-			    sin->sin_addr, lport, wild);
+			t = in_pcblookup(table, &zeroin_addr, 0,
+			    &sin->sin_addr, lport, wild);
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
 				return (EADDRINUSE);
 		}
@@ -269,8 +269,8 @@ portloop:
 					*lastport = first;
 				lport = htons(*lastport);
 			} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
-			    in_pcblookup(table, zeroin_addr, 0,
-			    inp->inp_laddr, lport, wild));
+			    in_pcblookup(table, &zeroin_addr, 0,
+			    &inp->inp_laddr, lport, wild));
 		} else {
 			/*
 			 * counting up
@@ -296,8 +296,8 @@ portloop:
 					*lastport = first;
 				lport = htons(*lastport);
 			} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
-			    in_pcblookup(table, zeroin_addr, 0,
-			    inp->inp_laddr, lport, wild));
+			    in_pcblookup(table, &zeroin_addr, 0,
+			    &inp->inp_laddr, lport, wild));
 		}
 	}
 	inp->inp_lport = lport;
@@ -630,15 +630,17 @@ in_rtchange(inp, errno)
 }
 
 struct inpcb *
-in_pcblookup(table, faddr, fport_arg, laddr, lport_arg, flags)
+in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 	struct inpcbtable *table;
-	struct in_addr faddr, laddr;
+	void *faddrp, *laddrp;
 	u_int fport_arg, lport_arg;
 	int flags;
 {
 	register struct inpcb *inp, *match = 0;
 	int matchwild = 3, wildcard;
 	u_int16_t fport = fport_arg, lport = lport_arg;
+	struct in_addr faddr = *(struct in_addr *)faddrp;
+	struct in_addr laddr = *(struct in_addr *)laddrp;
 
 	for (inp = table->inpt_queue.cqh_first;
 	    inp != (struct inpcb *)&table->inpt_queue;

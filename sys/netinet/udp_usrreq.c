@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.17 1998/12/31 11:16:55 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.18 1999/01/07 06:05:05 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -281,8 +281,8 @@ udp_input(m, va_alist)
 	    ip->ip_dst, uh->uh_dport);
 	if (inp == 0) {
 		++udpstat.udps_pcbhashmiss;
-		inp = in_pcblookup(&udbtable, ip->ip_src, uh->uh_sport,
-		    ip->ip_dst, uh->uh_dport, INPLOOKUP_WILDCARD);
+		inp = in_pcblookup(&udbtable, &ip->ip_src, uh->uh_sport,
+		    &ip->ip_dst, uh->uh_dport, INPLOOKUP_WILDCARD);
 		if (inp == 0) {
 			udpstat.udps_noport++;
 			if (m->m_flags & (M_BCAST | M_MCAST)) {

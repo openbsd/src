@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.22 1998/11/25 05:44:36 millert Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.23 1999/01/07 06:05:04 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -528,8 +528,8 @@ findpcb:
 	    ti->ti_dst, ti->ti_dport);
 	if (inp == 0) {
 		++tcpstat.tcps_pcbhashmiss;
-		inp = in_pcblookup(&tcbtable, ti->ti_src, ti->ti_sport,
-		    ti->ti_dst, ti->ti_dport, INPLOOKUP_WILDCARD);
+		inp = in_pcblookup(&tcbtable, &ti->ti_src, ti->ti_sport,
+		    &ti->ti_dst, ti->ti_dport, INPLOOKUP_WILDCARD);
 		/*
 		 * If the state is CLOSED (i.e., TCB does not exist) then
 		 * all data in the incoming segment is discarded.
