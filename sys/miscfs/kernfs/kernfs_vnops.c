@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.13 1997/11/06 05:58:38 csapuntz Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.14 1998/06/11 16:34:23 deraadt Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -530,6 +530,16 @@ int
 kernfs_setattr(v)
 	void *v;
 {
+	struct vop_setattr_args /* {
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	if (ap->a_vap->va_flags != VNOVAL)
+		return (EOPNOTSUPP);
+
 	/*
 	 * Silently ignore attribute changes.
 	 * This allows for open with truncate to have no

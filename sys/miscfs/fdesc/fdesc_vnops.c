@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.10 1997/11/06 05:58:33 csapuntz Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.11 1998/06/11 16:34:21 deraadt Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -617,6 +617,7 @@ fdesc_setattr(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct filedesc *fdp = ap->a_p->p_fd;
+	struct vattr *vap = ap->a_vap;
 	struct file *fp;
 	unsigned fd;
 	int error;
@@ -629,6 +630,8 @@ fdesc_setattr(v)
 		break;
 
 	case Fctty:
+		if (vap->va_flags != VNOVAL)
+			return (EOPNOTSUPP);
 		return (0);
 
 	default:
@@ -644,13 +647,16 @@ fdesc_setattr(v)
 	 * Can setattr the underlying vnode, but not sockets!
 	 */
 	switch (fp->f_type) {
+	case DTYPE_PIPE:
 	case DTYPE_VNODE:
 		error = VOP_SETATTR((struct vnode *) fp->f_data, ap->a_vap, ap->a_cred, ap->a_p);
 		break;
 
 	case DTYPE_SOCKET:
-	case DTYPE_PIPE:
-		error = 0;
+		if (vap->va_flags != VNOVAL)
+			error = EOPNOTSUPP;
+		else
+			error = 0;
 		break;
 
 	default:
