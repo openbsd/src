@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.6 1996/12/14 12:17:52 mickey Exp $	*/
+/*	$OpenBSD: df.c,v 1.7 1996/12/24 20:04:14 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.6 1996/12/14 12:17:52 mickey Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.7 1996/12/24 20:04:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,7 @@ main(argc, argv)
 				continue;
 			} else if (S_ISBLK(stbuf.st_mode)) {
 				if ((mntpt = getmntpt(*argv)) == 0) {
+					/* XXX can be DOS'd, not very important */
 					mntpt = mktemp(strdup("/tmp/df.XXXXXX"));
 					mdev.fspec = *argv;
 					if (mkdir(mntpt, DEFFILEMODE) != 0) {
