@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.123 1999/05/30 08:34:51 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.124 1999/07/24 22:46:32 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1459,7 +1459,7 @@ while [ "X${resp}" = X"" ]; do
 			;;
 		ffs)
 			_fstype="-t $resp"
-			_fsopts="ro"
+			_fsopts="async,ro"
 			;;
 		$_md_fstype)
 			_fstype="-t $resp"
@@ -1884,7 +1884,7 @@ local _fstab=$1
 	# Mount the filesystem.  If the mount fails, exit
 	# with an error condition to tell the outer
 	# later to bail.
-	if ! mount -v -t $_fstype -o $_opt $_dev $_mp ; then
+	if ! mount -v -t $_fstype -o async -o $_opt $_dev $_mp ; then
 		# error message displated by mount
 		exit 1
 	fi
