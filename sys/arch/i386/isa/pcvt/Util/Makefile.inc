@@ -5,7 +5,7 @@ ECHO	?=	echo
 BINDIR	=	/usr/sbin
 FONTDIR	=	/usr/share/misc/pcvtfonts
 LIBDIR	=	/usr/lib
-LIBMODE	=	644
+LIBMODE	=	444
 
 MAN3EXT	=	3
 MAN4EXT	=	4
