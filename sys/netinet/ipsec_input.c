@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.39 2001/05/27 03:37:23 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.40 2001/05/27 03:49:14 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -246,7 +246,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
  * filtering and other sanity checks on the processed packet.
  */
 int
-ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
+ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
+		      struct m_tag *mt)
 {
     int prot, af, sproto;
 
@@ -450,23 +451,32 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 
     /*
      * Record what we've done to the packet (under what SA it was
-     * processed).
+     * processed). If we've been passed an mtag, it means the packet
+     * was already processed by an ethernet/crypto combo card and
+     * thus has a tag attached with all the right information, but
+     * with a PACKET_TAG_IPSEC_IN_CRYPTO_DONE as opposed to
+     * PACKET_TAG_IPSEC_IN_DONE type; in that case, just change the type.
      */
-    mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE, sizeof(struct tdb_ident),
-		     M_NOWAIT);
-    if (mtag == NULL)
+    if (mt == NULL)
     {
-	m_freem(m);
-	IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
-	return ENOMEM;
+	mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE, sizeof(struct tdb_ident),
+			 M_NOWAIT);
+	if (mtag == NULL)
+	{
+	    m_freem(m);
+	    IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+	    return ENOMEM;
+	}
+
+	tdbi = (struct tdb_ident *)(mtag + 1);
+	bcopy(&tdbp->tdb_dst, &tdbi->dst, sizeof(union sockaddr_union));
+	tdbi->proto = tdbp->tdb_sproto;
+	tdbi->spi = tdbp->tdb_spi;
+
+	m_tag_prepend(m, mtag);
     }
-
-    tdbi = (struct tdb_ident *)(mtag + 1);
-    bcopy(&tdbp->tdb_dst, &tdbi->dst, sizeof(union sockaddr_union));
-    tdbi->proto = tdbp->tdb_sproto;
-    tdbi->spi = tdbp->tdb_spi;
-
-    m_tag_prepend(m, mtag);
+    else
+      mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
 
     if (sproto == IPPROTO_ESP)
     {
