@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 1999/02/23 21:18:27 marc Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.100 1999/02/24 22:05:13 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -630,7 +630,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, "Pentium Pro", 0, "Pentium II",
 				"Pentium Pro", "Pentium II", "Pentium II",
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium III", 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro"	/* Default */
 			},
 			NULL
@@ -731,7 +731,8 @@ struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_CMOV,	"CMOV" },
 	{ CPUID_MMX,	"MMX" },
 	{ CPUID_EMMX,	"EMMX" },
-	{ CPUID_3D,	"AMD3D" }
+	{ CPUID_3D,	"AMD3D" },
+	{ CPUID_MMX2,	"MMX2" }
 };
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.5 1998/05/25 06:52:38 downsj Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.6 1999/02/24 22:05:15 deraadt Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -109,6 +109,7 @@
 #define CPUID_MMX	0x00800000	/* has MMX instructions */
 #define CPUID_EMMX	0x01000000	/* has extended MMX (Cyrix) */
 #define CPUID_3D	0x80000000	/* has AMD-3D instructions (AMD) */
+#define CPUID_MMX2	0x02000000	/* has Intel MMX-2 instructions */
 
 /*
  * the following four 3-byte registers control the non-cacheable regions.
