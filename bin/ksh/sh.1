@@ -1,5 +1,5 @@
 '\" t
-.\"	$OpenBSD: sh.1,v 1.3 1997/08/05 21:49:56 grr Exp $
+.\"	$OpenBSD: sh.1,v 1.4 1998/03/18 03:04:56 marc Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -631,7 +631,9 @@ Search path for the \fBcd\fP built-in command.  Works the same way as
 \fBPATH\fP for those directories not beginning with \fB/\fP in \fBcd\fP
 commands.
 Note that if CDPATH is set and does not contain \fB.\fP nor an empty path,
-the current directory is not searched.
+the current directory is not searched.  Also, the \fBcd\fP built-in command
+will display the resulting directory when a match is found in any search path
+other than the than the empty path.
 .\"}}}
 .\"{{{  COLUMNS
 .IP \fBCOLUMNS\fP
@@ -1325,10 +1327,12 @@ Execute the built-in command \fIcommand\fP.
 .\"{{{  cd [-LP] [dir]
 .IP "\fBcd\fP [\fB\-LP\fP] [\fIdir\fP]"
 Set the working directory to \fIdir\fP.  If the parameter \fBCDPATH\fP
-is set, it lists the search path for the directory containing
-\fIdir\fP.  A null path means the current directory.  If \fIdir\fP is
-missing, the home directory \fB$HOME\fP is used.  If \fIdir\fP is
-\fB\-\fP, the previous working directory is used (see OLDPWD parameter).
+is set, it lists the search path for the directory containing \fIdir\fP.  A
+null path means the current directory. If \fIdir\fP is found in any
+component of the \fBCDPATH\fP search path other than the null path the name
+of the new working directory will be written to standard output. If
+\fIdir\fP is missing, the home directory \fB$HOME\fP is used.  If \fIdir\fP
+is \fB\-\fP, the previous working directory is used (see OLDPWD parameter).
 If \fB\-L\fP option (logical path) is used or if the \fBphysical\fP option
 (see \fBset\fP command below) isn't set, references to \fB..\fP in \fIdir\fP
 are relative to the path used get to the directory.
