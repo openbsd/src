@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.11 2002/06/20 04:27:11 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.12 2002/07/24 14:08:33 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -36,6 +36,7 @@
  */
 static LIST_HEAD(, undo_rec)	 undo_free;
 static int			 undo_free_num;
+static int			 nobound;
 
 /*
  * Global variables
@@ -191,6 +192,9 @@ undo_add_boundary(void)
 {
 	struct undo_rec *rec;
 
+	if (nobound)
+		return (TRUE);
+
 	rec = new_undo_record();
 	rec->type = BOUNDARY;
 
@@ -339,36 +343,13 @@ undo_add_delete(LINE *lp, int offset, int size)
 int
 undo_add_change(LINE *lp, int offset, int size)
 {
-	REGION reg;
-	struct undo_rec *rec;
-
 	if (undo_disable_flag)
 		return (TRUE);
-
-	reg.r_linep = lp;
-	reg.r_offset = offset;
-	reg.r_size = size;
-
-	rec = new_undo_record();
-	rec->pos = find_absolute_dot(lp, offset);
-	rec->type = CHANGE;
-	memmove(&rec->region, &reg, sizeof reg);
-
-	/*
-	 * Try to allocate a buffer for the changed data.
-	 */
-	do {
-		rec->content = malloc(size + 1);
-	} while ((rec->content == NULL) && drop_oldest_undo_record());
-
-	if (rec->content == NULL)
-		panic("Out of memory in undo change code");
-
-	region_get_data(&reg, rec->content, size);
-
-	if (!last_was_boundary())
-		undo_add_boundary();
-	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
+	undo_add_boundary();
+	nobound = 1;
+	undo_add_delete(lp, offset, size);
+	undo_add_insert(lp, offset, size);
+	nobound = 0;
 	undo_add_boundary();
 
 	return (TRUE);
@@ -410,11 +391,10 @@ undo_dump(void)
 		    "Record %d =>\t %s at %d ", num,
 		    (rec->type == DELETE) ? "DELETE":
 		    (rec->type == INSERT) ? "INSERT":
-		    (rec->type == CHANGE) ? "CHANGE":
 		    (rec->type == BOUNDARY) ? "----" : "UNKNOWN",
 		    rec->pos);
 
-		if (rec->type == DELETE || rec->type == CHANGE) {
+		if (rec->content) {
 			strlcat(buf, "\"", sizeof buf);
 			snprintf(tmp, sizeof tmp, "%.*s", rec->region.r_size,
 			    rec->content);
@@ -537,11 +517,6 @@ undo(int f, int n)
 			case DELETE:
 				region_put_data(ptr->content, 
 				    ptr->region.r_size);
-				break;
-			case CHANGE:
-				forwchar(0, ptr->region.r_size);
-				lreplace(ptr->region.r_size,
-				    ptr->content, 1);
 				break;
 			case BOUNDARY:
 				done = 1;
