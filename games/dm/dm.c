@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dm.c,v 1.6 1998/05/14 09:51:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dm.c,v 1.7 1998/05/14 09:58:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ play(args)
 read_config()
 {
 	FILE *cfp;
-	char lbuf[BUFSIZ], f1[40], f2[40], f3[40], f4[40], f5[40];
+	char lbuf[BUFSIZ], f1[41], f2[41], f3[41], f4[41], f5[41];
 
 	if (!(cfp = fopen(_PATH_CONFIG, "r")))
 		return;
