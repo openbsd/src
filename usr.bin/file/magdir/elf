@@ -1,4 +1,4 @@
-#	$OpenBSD: elf,v 1.10 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: elf,v 1.11 2004/10/20 17:23:34 grange Exp $
 
 #------------------------------------------------------------------------------
 # elf:  file(1) magic for ELF executables
@@ -16,6 +16,30 @@
 >4	byte		2		64-bit
 >5	byte		0		invalid byte order
 >5	byte		1		LSB
+# only for MIPS
+>>18	leshort		8
+# only for 32-bit
+>>>4	byte		1
+>>>>36	lelong&0xf0000000	0x00000000	MIPS-I
+>>>>36	lelong&0xf0000000	0x10000000	MIPS-II
+>>>>36	lelong&0xf0000000	0x20000000	MIPS-III
+>>>>36	lelong&0xf0000000	0x30000000	MIPS-IV
+>>>>36	lelong&0xf0000000	0x40000000	MIPS-V
+>>>>36	lelong&0xf0000000	0x60000000	MIPS32
+>>>>36	lelong&0xf0000000	0x70000000	MIPS64
+>>>>36	lelong&0xf0000000	0x80000000	MIPS32 rel2
+>>>>36	lelong&0xf0000000	0x90000000	MIPS64 rel2
+# only for 64-bit
+>>>4	byte		2
+>>>>48	lelong&0xf0000000	0x00000000	MIPS-I
+>>>>48	lelong&0xf0000000	0x10000000	MIPS-II
+>>>>48	lelong&0xf0000000	0x20000000	MIPS-III
+>>>>48	lelong&0xf0000000	0x30000000	MIPS-IV
+>>>>48	lelong&0xf0000000	0x40000000	MIPS-V
+>>>>48	lelong&0xf0000000	0x60000000	MIPS32
+>>>>48	lelong&0xf0000000	0x70000000	MIPS64 
+>>>>48	lelong&0xf0000000	0x80000000	MIPS32 rel2
+>>>>48	lelong&0xf0000000	0x90000000	MIPS64 rel2
 >>16	leshort		0		no file type,
 >>16	leshort		1		relocatable,
 >>16	leshort		2		executable,
@@ -32,9 +56,9 @@
 >>18	leshort		5		Motorola 88000 - invalid byte order,
 >>18	leshort		6		Intel 80486,
 >>18	leshort		7		Intel 80860,
->>18	leshort		8		MIPS RS3000_BE - invalid byte order,
+>>18	leshort		8		MIPS,
 >>18	leshort		9		Amdahl - invalid byte order,
->>18	leshort		10		MIPS RS3000_LE,
+>>18	leshort		10		MIPS (deprecated),
 >>18	leshort		11		RS6000 - invalid byte order,
 >>18	leshort		15		PA-RISC - invalid byte order,
 >>18	leshort		16		nCUBE,
@@ -50,6 +74,30 @@
 >>20	lelong		1		version 1
 >>36	lelong		1		MathCoPro/FPU/MAU Required
 >5	byte		2		MSB
+# only for MIPS
+>>18	beshort		8
+# only for 32-bit
+>>>4	byte		1
+>>>>36	belong&0xf0000000	0x00000000	MIPS-I
+>>>>36	belong&0xf0000000	0x10000000	MIPS-II
+>>>>36	belong&0xf0000000	0x20000000	MIPS-III
+>>>>36	belong&0xf0000000	0x30000000	MIPS-IV
+>>>>36	belong&0xf0000000	0x40000000	MIPS-V
+>>>>36	belong&0xf0000000	0x60000000	MIPS32
+>>>>36	belong&0xf0000000	0x70000000	MIPS64
+>>>>36	belong&0xf0000000	0x80000000	MIPS32 rel2
+>>>>36	belong&0xf0000000	0x90000000	MIPS64 rel2
+# only for 64-bit
+>>>4	byte		2
+>>>>48	belong&0xf0000000	0x00000000	MIPS-I
+>>>>48	belong&0xf0000000	0x10000000	MIPS-II
+>>>>48	belong&0xf0000000	0x20000000	MIPS-III
+>>>>48	belong&0xf0000000	0x30000000	MIPS-IV
+>>>>48	belong&0xf0000000	0x40000000	MIPS-V
+>>>>48	belong&0xf0000000	0x60000000	MIPS32
+>>>>48	belong&0xf0000000	0x70000000	MIPS64 
+>>>>48	belong&0xf0000000	0x80000000	MIPS32 rel2
+>>>>48	belong&0xf0000000	0x90000000	MIPS64 rel2
 >>16	beshort		0		no file type,
 >>16	beshort		1		relocatable,
 >>16	beshort		2		executable,
@@ -65,9 +113,9 @@
 >>18	beshort		5		Motorola 88000,
 >>18	beshort		6		Intel 80486 - invalid byte order,
 >>18	beshort		7		Intel 80860,
->>18	beshort		8		MIPS RS3000_BE,
+>>18	beshort		8		MIPS,
 >>18	beshort		9		Amdahl,
->>18	beshort		10		MIPS RS3000_LE - invalid byte order,
+>>18	beshort		10		MIPS (deprecated),
 >>18	beshort		11		RS6000,
 >>18	beshort		15		PA-RISC,
 >>18	beshort		16		nCUBE,
