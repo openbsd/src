@@ -218,6 +218,10 @@ struct hpux_sys_fstat_args {
 	syscallarg(struct hpux_stat *) sb;
 };
 
+struct hpux_sys_sigreturn_args {
+	syscallarg(struct hpuxsigcontext *) sigcntxp;
+};
+
 struct hpux_sys_sigvec_args {
 	syscallarg(int) signo;
 	syscallarg(struct sigvec *) nsv;
@@ -450,7 +454,7 @@ int	sys_dup2	__P((struct proc *, void *, register_t *));
 int	hpux_sys_fstat	__P((struct proc *, void *, register_t *));
 int	sys_select	__P((struct proc *, void *, register_t *));
 int	sys_fsync	__P((struct proc *, void *, register_t *));
-int	sys_sigreturn	__P((struct proc *, void *, register_t *));
+int	hpux_sys_sigreturn	__P((struct proc *, void *, register_t *));
 int	hpux_sys_sigvec	__P((struct proc *, void *, register_t *));
 int	hpux_sys_sigblock	__P((struct proc *, void *, register_t *));
 int	hpux_sys_sigsetmask	__P((struct proc *, void *, register_t *));

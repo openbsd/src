@@ -13,6 +13,7 @@
 #include <sys/syscallargs.h>
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_syscallargs.h>
+#include <machine/hpux_machdep.h>
 
 #define	s(type)	sizeof(type)
 
@@ -223,8 +224,8 @@ struct sysent hpux_sysent[] = {
 	    sys_nosys },			/* 101 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 102 = unimplemented */
-	{ 1, s(struct sys_sigreturn_args),
-	    sys_sigreturn },			/* 103 = sigreturn */
+	{ 1, s(struct hpux_sys_sigreturn_args),
+	    hpux_sys_sigreturn },		/* 103 = sigreturn */
 	{ 0, 0,
 	    sys_nosys },			/* 104 = unimplemented */
 	{ 0, 0,

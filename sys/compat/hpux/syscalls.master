@@ -1,9 +1,9 @@
-	$OpenBSD: syscalls.master,v 1.4 1996/08/25 12:19:51 deraadt Exp $
-;	$NetBSD: syscalls.master,v 1.9 1995/11/28 08:39:56 thorpej Exp $
+	$OpenBSD: syscalls.master,v 1.5 1997/03/26 08:11:09 downsj Exp $
+;	$NetBSD: syscalls.master,v 1.13 1997/03/16 03:48:04 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
-; NetBSD COMPAT_HPUX system call name/number "master" file.
+; OpenBSD COMPAT_HPUX system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
 ;
 ; Fields: number type [type-dependent ...]
@@ -41,6 +41,8 @@
 
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_syscallargs.h>
+
+#include <machine/hpux_machdep.h>
 
 0	NOARGS		{ int sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
@@ -160,7 +162,8 @@
 100	UNIMPL
 101	UNIMPL
 102	UNIMPL
-103	NOARGS		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
+103	STD		{ int hpux_sys_sigreturn(struct hpuxsigcontext \
+			    *sigcntxp); }
 104	UNIMPL
 105	UNIMPL
 106	UNIMPL

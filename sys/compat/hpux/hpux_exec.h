@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_exec.h,v 1.3 1996/08/02 20:34:54 niklas Exp $	*/
-/*	$NetBSD: hpux_exec.h,v 1.6 1995/11/28 08:39:45 thorpej Exp $	*/
+/*	$OpenBSD: hpux_exec.h,v 1.4 1997/03/26 08:11:07 downsj Exp $	*/
+/*	$NetBSD: hpux_exec.h,v 1.7 1997/03/16 10:16:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -82,31 +82,31 @@ struct hpux_exec {
 #define HPUX_MAGIC_DL		0x010d		/* dynamic load library */
 #define	HPUX_MAGIC_SHL		0x010e		/* shared library */
 
-#define HPUX__LDPGSZ		4096		/* align to this */
-#define HPUX__LDPGSHIFT		12		/* log2(HPUX__LDPGSZ) */
+#define HPUX_LDPGSZ		4096		/* align to this */
+#define HPUX_LDPGSHIFT		12		/* log2(HPUX_LDPGSZ) */
 
-#define	HPUX__SEGMENT_ROUND(x)						\
-	(((x) + HPUX__LDPGSZ - 1) & ~(HPUX__LDPGSZ - 1))
+#define	HPUX_SEGMENT_ROUND(x)						\
+	(((x) + HPUX_LDPGSZ - 1) & ~(HPUX_LDPGSZ - 1))
 
 #define	HPUX_TXTOFF(x, m)						\
 	((((m) == ZMAGIC) ||						\
 	  ((m) == HPUX_MAGIC_SHL) ||					\
 	  ((m) == HPUX_MAGIC_DL)) ?					\
-	  HPUX__LDPGSZ : HPUX_EXEC_HDR_SIZE)
+	  HPUX_LDPGSZ : HPUX_EXEC_HDR_SIZE)
 
 #define	HPUX_DATAOFF(x, m)						\
 	((((m) == ZMAGIC) ||						\
 	  ((m) == HPUX_MAGIC_SHL) ||					\
 	  ((m) == HPUX_MAGIC_DL)) ?					\
-	  (HPUX__LDPGSZ + HPUX__SEGMENT_ROUND((x).ha_text)) :		\
+	  (HPUX_LDPGSZ + HPUX_SEGMENT_ROUND((x).ha_text)) :		\
 	  (HPUX_EXEC_HDR_SIZE + (x).ha_text))
 
 #define	HPUX_PASOFF(x, m)						\
 	((((m) == ZMAGIC) ||						\
 	  ((m) == HPUX_MAGIC_SHL) ||					\
 	  ((m) == HPUX_MAGIC_DL)) ?					\
-	  (HPUX__LDPGSZ + HPUX__SEGMENT_ROUND((x).ha_text) +		\
-	    HPUX__SEGMENT_ROUND((x).ha_data)) :				\
+	  (HPUX_LDPGSZ + HPUX_SEGMENT_ROUND((x).ha_text) +		\
+	    HPUX_SEGMENT_ROUND((x).ha_data)) :				\
 	  (HPUX_EXEC_HDR_SIZE + (x).ha_text + (x).ha_data))
 
 #define	HPUX_SYMOFF(x, m)	(HPUX_PASOFF((x), (m)) + (x).ha_pascal)

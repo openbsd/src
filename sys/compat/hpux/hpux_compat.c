@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_compat.c,v 1.7 1997/02/23 21:40:55 downsj Exp $	*/
-/*	$NetBSD: hpux_compat.c,v 1.23 1996/01/06 12:44:11 thorpej Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.8 1997/03/26 08:11:04 downsj Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.30 1997/03/16 10:13:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -107,7 +107,7 @@ int bsdtohpuxerrnomap[NERR] = {
 /*80*/ BERR,BERR,  11
 };
 
-extern char hpux_sigcode[], hpux_esigcode[];
+extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
 extern char *hpux_syscallnames[];
 
@@ -1190,8 +1190,6 @@ hpux_sys_getaccess(p, v, retval)
 }
 
 /* hpux_to_bsd_uoff() is found in hpux_machdep.c */
-
-/* hpux_dumpu() is found in hpux_machdep.c */
 
 /*
  * Ancient HP-UX system calls.  Some 9.x executables even use them!
