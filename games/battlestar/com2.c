@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.12 2000/09/26 04:42:55 pjanzen Exp $	*/
+/*	$OpenBSD: com2.c,v 1.13 2003/05/19 08:49:09 pjanzen Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com2.c,v 1.12 2000/09/26 04:42:55 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com2.c,v 1.13 2003/05/19 08:49:09 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ wearit()
 	while (wordnumber <= wordcount && (wordtype[wordnumber] == OBJECT ||
 	    (wordtype[wordnumber] == NOUNS && wordvalue[wordnumber] != DOOR))) {
 		value = wordvalue[wordnumber];
-		if (objsht[value] == NULL)
+		if (value >= 0 && objsht[value] == NULL)
 			break;
 		switch (value) {
 
