@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.16 2003/01/18 23:40:57 deraadt Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.17 2003/06/02 11:47:11 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -56,8 +56,8 @@ In the following text,
 .Ar daemon
 is the process name of a network daemon process, and
 .Ar client
-is the name and/or address of a host requesting service.  Network daemon
-process names are specified in the inetd configuration file.
+is the name and/or address of a host requesting service.
+Network daemon process names are specified in the inetd configuration file.
 .Sh ACCESS CONTROL FILES
 The access control software consults two files.
 The search stops at the first match:
@@ -218,10 +218,10 @@ host names may be unavailable due to temporary name server problems.
 A network address will be unavailable when the software cannot figure out
 what type of network it is talking to.
 .\" .IP PARANOID
-.\" Matches any host whose name does not match its address.  When tcpd is
-.\" built with -DPARANOID (default mode), it drops requests from such
-.\" clients even before looking at the access control tables.  Build
-.\" without -DPARANOID when you want more control over such requests.
+.\" Matches any host whose name does not match its address.
+.\" When tcpd is built with -DPARANOID (default mode), it drops requests
+.\" from such clients even before looking at the access control tables.
+.\" Build without -DPARANOID when you want more control over such requests.
 .El
 .Sh OPERATORS
 .IP EXCEPT
@@ -503,6 +503,13 @@ On network firewall systems this trick can be carried even further.
 The typical network firewall only provides a limited set of services to
 the outer world. All other services can be "bugged" just like the above
 tftp example. The result is an excellent early-warning system.
+.Sh FILES
+.Bl -tag -width /etc/hosts.allow -compact
+.It Pa /etc/hosts.allow
+Access control table (allow list)
+.It Pa /etc/hosts.deny
+Access control table (deny list)
+.El
 .Sh DIAGNOSTICS
 An error is reported when a syntax error is found in a host access
 control rule; when the length of an access control rule exceeds the
@@ -511,17 +518,18 @@ terminated by a newline character; when the result of %<letter>
 expansion would overflow an internal buffer; when a system call fails
 that shouldn\'t.
 All problems are reported via the syslog daemon.
-.Sh FILES
-.Bl -tag -width /etc/hosts.allow -compact
-.It Pa /etc/hosts.allow
-Access control table (allow list)
-.It Pa /etc/hosts.deny
-Access control table (deny list)
-.El
 .Sh SEE ALSO
 .Xr tcpd 8 ,
 .Xr tcpdchk 8 ,
 .Xr tcpdmatch 8
+.Sh AUTHORS
+.Bd -unfilled -offset indent
+Wietse Venema (wietse@wzv.win.tue.nl)
+Department of Mathematics and Computing Science
+Eindhoven University of Technology
+Den Dolech 2, P.O. Box 513,
+5600 MB Eindhoven, The Netherlands
+.Ed
 .Sh BUGS
 If a name server lookup times out, the host name will not be available
 to the access control software, even though the host is registered.
@@ -531,12 +539,4 @@ netgroup lookups are case sensitive.
 .Pp
 The total length of an entry can be no more than 2047 characters long,
 including the final newline.
-.Sh AUTHORS
-.Bd -unfilled -offset indent
-Wietse Venema (wietse@wzv.win.tue.nl)
-Department of Mathematics and Computing Science
-Eindhoven University of Technology
-Den Dolech 2, P.O. Box 513,
-5600 MB Eindhoven, The Netherlands
-.Ed
 \" @(#) hosts_access.5 1.20 95/01/30 19:51:46
