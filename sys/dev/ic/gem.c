@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.32 2003/04/27 11:22:52 ho Exp $	*/
+/*	$OpenBSD: gem.c,v 1.33 2003/07/09 18:21:45 krw Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -201,6 +201,19 @@ gem_config(sc)
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
+	/*
+	 * Create the transmit buffer DMA maps.
+	 */
+	for (i = 0; i < GEM_NTXDESC; i++) {
+		if ((error = bus_dmamap_create(sc->sc_dmatag, MCLBYTES,
+		    GEM_NTXSEGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_txd[i].sd_map)) != 0) {
+			printf("%s: unable to create tx DMA map %d, "
+			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			goto fail_6;
+		}
+		sc->sc_txd[i].sd_mbuf = NULL;
+	}
 
 	/*
 	 * From this point forward, the attachment cannot fail.  A failure
@@ -332,6 +345,12 @@ gem_config(sc)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
+ fail_6:
+	for (i = 0; i < GEM_NTXDESC; i++) {
+		if (sc->sc_txd[i].sd_map != NULL)
+			bus_dmamap_destroy(sc->sc_dmatag,
+			    sc->sc_txd[i].sd_map);
+	}
  fail_5:
 	for (i = 0; i < GEM_NRXDESC; i++) {
 		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
@@ -454,14 +473,10 @@ gem_stop(struct ifnet *ifp, int disable)
 	 */
 	for (i = 0; i < GEM_NTXDESC; i++) {
 		sd = &sc->sc_txd[i];
-		if (sd->sd_map != NULL) {
+		if (sd->sd_mbuf != NULL) {
 			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
 			    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
-			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
-			sd->sd_map = NULL;
-		}
-		if (sd->sd_mbuf != NULL) {
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
 		}
@@ -1576,21 +1591,15 @@ gem_encap(sc, mhead, bixp)
 	bus_dmamap_t map;
 
 	cur = frag = *bixp;
-
-	if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, GEM_NTXDESC,
-	    MCLBYTES, 0, BUS_DMA_NOWAIT, &map) != 0) {
-		return (ENOBUFS);
-	}
+	map = sc->sc_txd[cur].sd_map;
 
 	if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, mhead,
 	    BUS_DMA_NOWAIT) != 0) {
-		bus_dmamap_destroy(sc->sc_dmatag, map);
 		return (ENOBUFS);
 	}
 
 	if ((sc->sc_tx_cnt + map->dm_nsegs) > (GEM_NTXDESC - 2)) {
 		bus_dmamap_unload(sc->sc_dmatag, map);
-		bus_dmamap_destroy(sc->sc_dmatag, map);
 		return (ENOBUFS);
 	}
 
@@ -1613,6 +1622,7 @@ gem_encap(sc, mhead, bixp)
 	}
 
 	sc->sc_tx_cnt += map->dm_nsegs;
+	sc->sc_txd[*bixp].sd_map = sc->sc_txd[cur].sd_map;
 	sc->sc_txd[cur].sd_map = map;
 	sc->sc_txd[cur].sd_mbuf = mhead;
 
@@ -1641,14 +1651,10 @@ gem_tint(sc, status)
 	cons = sc->sc_tx_cons;
 	while (cons != hwcons) {
 		sd = &sc->sc_txd[cons];
-		if (sd->sd_map != NULL) {
+		if (sd->sd_mbuf != NULL) {
 			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
 			    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
-			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
-			sd->sd_map = NULL;
-		}
-		if (sd->sd_mbuf != NULL) {
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
 		}
