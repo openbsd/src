@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.4 1996/07/22 03:35:42 downsj Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.5 1996/08/07 01:56:28 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -61,8 +61,8 @@ struct atapibus_softc {
 
 LIST_HEAD(pkt_free_list, atapi_command_packet) pkt_free_list;
 
-static void bswap __P((char *, int));
-static void btrim __P((char *, int));
+static __inline void bswap __P((char *, int));
+static __inline void btrim __P((char *, int));
 
 int atapi_error __P((struct atapi_command_packet *));
 void atapi_sense __P((struct atapi_command_packet *, u_int8_t, u_int8_t));
@@ -70,6 +70,8 @@ void at_print_addr __P((struct at_dev_link *, u_int8_t));
 
 int atapibusmatch __P((struct device *, void *, void *));
 void atapibusattach __P((struct device *, struct device *, void *));
+void atapi_fixquirk __P((struct at_dev_link *));
+int atapiprint __P((void *, char *));
 
 struct cfattach atapibus_ca = {
 	sizeof(struct atapibus_softc), atapibusmatch, atapibusattach
@@ -80,12 +82,30 @@ struct cfdriver atapibus_cd = {
 };
 
 
+/*
+ * ATAPI quirk table support.
+ */
+
+struct atapi_quirk_inquiry_pattern {
+	struct {
+		u_int8_t type;
+		u_int8_t rem;
+		char *product;
+		char *revision;
+	} pattern;
+	u_int8_t quirks;
+};
+
+struct atapi_quirk_inquiry_pattern atapi_quirk_inquiry_patterns[] = {
+	{{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
+	 "GCD-R580B", "1.00"}, ADEV_LITTLETOC},
+};
+
 int
 atapibusmatch(parent, match, aux)
         struct device *parent;
         void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct bus_link *ab_link = aux;
 
 	if (ab_link == NULL)
@@ -93,6 +113,56 @@ atapibusmatch(parent, match, aux)
 	if (ab_link->type != BUS)
 		return 0;
 	return 1;
+}
+
+void
+atapi_fixquirk(ad_link)
+	struct at_dev_link *ad_link;
+{
+	struct atapi_identify *id = &ad_link->id;
+	struct atapi_quirk_inquiry_pattern *finger;
+	int quirk, nquirks;
+
+	/*
+	 * Shuffle string byte order.
+	 * Mitsumi and NEC drives don't need this.
+	 */
+	if (((id->model[0] == 'N' && id->model[1] == 'E') ||
+	    (id->model[0] == 'F' && id->model[1] == 'X')) == 0)
+		bswap(id->model, sizeof(id->model));
+	bswap(id->serial_number, sizeof(id->serial_number));
+	bswap(id->firmware_revision, sizeof(id->firmware_revision));
+
+	/*
+	 * Clean up the model name, serial and
+	 * revision numbers.
+	 */
+	btrim(id->model, sizeof(id->model));
+	btrim(id->serial_number, sizeof(id->serial_number));
+	btrim(id->firmware_revision, sizeof(id->firmware_revision));
+
+	nquirks = sizeof(atapi_quirk_inquiry_patterns) /
+		    sizeof(struct atapi_quirk_inquiry_pattern);
+	for (quirk = 0; quirk < nquirks; quirk++) {
+		finger = &atapi_quirk_inquiry_patterns[quirk];
+
+		if ((id->config.device_type
+		    & ATAPI_DEVICE_TYPE_MASK) != finger->pattern.type)
+			continue;
+		if ((id->config.cmd_drq_rem & finger->pattern.rem) == 0)
+			continue;
+		if (strcmp(id->model, finger->pattern.product))
+			continue;
+		if (strcmp(id->firmware_revision, finger->pattern.revision))
+			continue;
+
+		break;
+	}
+
+	if (quirk < nquirks) {
+		/* Found a quirk entry for this drive. */
+		ad_link->quirks = finger->quirks;
+	}
 }
 
 int
@@ -128,37 +198,21 @@ atapiprint(aux, bus)
 	fixrem = (id->config.cmd_drq_rem & ATAPI_REMOVABLE) ?
 	    "removable" : "fixed";
 
-	/*
-	 * Shuffle string byte order.
-	 * Mitsumi and NEC drives don't need this.
-	 */
-	if (((id->model[0] == 'N' && id->model[1] == 'E') ||
-	    (id->model[0] == 'F' && id->model[1] == 'X')) == 0)
-		bswap(id->model, sizeof(id->model));
-
-	/*
-	 * XXX Poorly named... These appear to actually be in
-	 * XXX network byte order, so bswap() is a no-op on
-	 * XXX big-endian hosts.  Clean me up, please.
-	 */
-	bswap(id->serial_number, sizeof(id->serial_number));
-	bswap(id->firmware_revision, sizeof(id->firmware_revision));
-
-	/*
-	 * Clean up the model name, serial and
-	 * revision numbers.
-	 */
-	btrim(id->model, sizeof(id->model));
-	btrim(id->serial_number, sizeof(id->serial_number));
-	btrim(id->firmware_revision, sizeof(id->firmware_revision));
-
 	if (bus != NULL)
 		printf("%s", bus);
 
-	printf(" drive %d: <%s, %s, %s> ATAPI %d/%s %s",
-	    ad_link->drive, id->model, id->serial_number,
-	    id->firmware_revision,
-	    id->config.device_type & ATAPI_DEVICE_TYPE_MASK, dtype, fixrem);
+	if (id->serial_number[0]) {
+		printf(" drive %d: <%s, %s, %s> ATAPI %d/%s %s",
+	    	    ad_link->drive, id->model, id->serial_number,
+	    	    id->firmware_revision,
+	    	    (id->config.device_type & ATAPI_DEVICE_TYPE_MASK),
+		    dtype, fixrem);
+	} else {
+		printf(" drive %d: <%s, %s> ATAPI %d/%s %s",
+	    	    ad_link->drive, id->model, id->firmware_revision,
+	    	    (id->config.device_type & ATAPI_DEVICE_TYPE_MASK),
+		    dtype, fixrem);
+	}
 
 	return UNCONF;
 }
@@ -211,6 +265,9 @@ atapibusattach(parent, self, aux)
 			ad_link->bus = ab_link_proto;
 			bcopy(id, &ad_link->id, sizeof(*id));
 
+			/* Fix strings and look through the quirk table. */
+			atapi_fixquirk(ad_link);
+
 			/* Try to find a match. */
 			if (config_found(self, ad_link, atapiprint) == NULL)
 				free(ad_link, M_DEVBUF);
@@ -218,7 +275,7 @@ atapibusattach(parent, self, aux)
 	}
 }
 
-static void
+static __inline void
 bswap (buf, len)
 	char *buf;
 	int len;
@@ -226,10 +283,10 @@ bswap (buf, len)
 	u_int16_t *p = (u_int16_t *)(buf + len);
 
 	while (--p >= (u_int16_t *)buf)
-		*p = ntohs(*p);
-}   
+		*p = (*p & 0xff) << 8 | (*p >> 8 & 0xff);
+}
 
-static void
+static __inline void
 btrim (buf, len)
 	char *buf;
 	int len;
@@ -327,7 +384,7 @@ atapi_exec_io(ad_link, cmd, cmd_size, bp, flags)
 	pkt->bp = bp;
 	pkt->databuf = bp->b_data;
 	pkt->data_size = bp->b_bcount;
-	pkt->flags = bp->b_flags & (B_READ|B_WRITE) | (flags & 0xff) |
+	pkt->flags = (bp->b_flags & (B_READ|B_WRITE)) | (flags & 0xff) |
 	    (ad_link->flags & 0x0300);
 	pkt->drive = ad_link->drive;
 

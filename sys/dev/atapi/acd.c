@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.7 1996/08/06 22:41:00 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.8 1996/08/07 01:56:27 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -110,12 +110,25 @@ struct cfdriver acd_cd = {
 void	acdgetdisklabel __P((struct acd_softc *));
 int	acd_get_parms __P((struct acd_softc *, int));
 void	acdstrategy __P((struct buf *));
-void	acdstart __P((struct acd_softc *));
+void	acdstart __P((void *));
 int	acd_pause __P((struct acd_softc *, int));
 void	acdminphys __P((struct buf*));
 u_long	acd_size __P((struct acd_softc*, int));
-int	acddone __P((struct atapi_command_packet *));
-int	acd_get_mode __P((struct acd_softc *, struct atapi_mode_data *, int, int, int));
+int	acddone __P((void *));
+#ifndef XXX
+int	acdlock __P((struct acd_softc *));
+void	acdunlock __P((struct acd_softc *));
+int	acdopen __P((dev_t, int, int));
+int	acdclose __P((dev_t, int, int));
+int	acdread __P((dev_t, struct uio*));
+int	acdwrite __P((dev_t, struct uio*));
+int	acdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	acd_reset __P((struct acd_softc *));
+int	acdsize __P((dev_t));
+int	acddump __P((dev_t, daddr_t, caddr_t, size_t));
+#endif
+int	acd_get_mode __P((struct acd_softc *, struct atapi_mode_data *, int,
+	    int, int));
 int	acd_set_mode __P((struct acd_softc *, struct atapi_mode_data *, int));
 int	acd_setchan __P((struct acd_softc *, u_char, u_char, u_char, u_char));
 int	acd_play __P((struct acd_softc *, int, int));
@@ -123,10 +136,12 @@ int	acd_play_big __P((struct acd_softc *, int, int));
 int	acd_load_toc __P((struct acd_softc *, struct cd_toc *));
 int	acd_play_tracks __P((struct acd_softc *, int, int, int, int));
 int	acd_play_msf __P((struct acd_softc *, int, int, int, int, int, int));
-int	acd_read_subchannel __P((struct acd_softc *, int, int, int, struct cd_sub_channel_info *, int));
+int	acd_read_subchannel __P((struct acd_softc *, int, int, int,
+	    struct cd_sub_channel_info *, int));
 int	acd_read_toc __P((struct acd_softc *, int, int, void *, int));
-u_long	msf2lba __P((u_char, u_char, u_char ));
-
+static void lba2msf __P((u_int32_t, u_int8_t *, u_int8_t *, u_int8_t *));
+static __inline u_int32_t msf2lba __P((u_int8_t, u_int8_t, u_int8_t));
+static __inline void bswap __P((u_int8_t *, int));
 
 struct dkdriver acddkdriver = { acdstrategy };
 
@@ -139,7 +154,6 @@ acdmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct at_dev_link *sa = aux;
 
 #ifdef ATAPI_DEBUG_PROBE
@@ -147,12 +161,8 @@ acdmatch(parent, match, aux)
 	    sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK);
 #endif
 
-	/* XXX!!! */
 	if (((sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK) ==
-	    ATAPI_DEVICE_TYPE_CD) ||
-	   (((sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK) ==
-	    ATAPI_DEVICE_TYPE_DAD) &&
-	    (sa->id.config.cmd_drq_rem & ATAPI_REMOVABLE)))
+	    ATAPI_DEVICE_TYPE_CD) || (sa->quirks & ADEV_CDROM))
 		return 1;
 	return 0;
 }
@@ -311,7 +321,7 @@ acdopen(dev, flag, fmt)
 		ad_link->flags |= ADEV_OPEN;
 
 		/* Lock the pack in. */
-		if (error = atapi_prevent(ad_link, PR_PREVENT))
+		if ((error = atapi_prevent(ad_link, PR_PREVENT)) != 0)
 			goto bad;
 
 		if ((ad_link->flags & ADEV_MEDIA_LOADED) == 0) {
@@ -504,9 +514,10 @@ done:
  * cdstart() is called at splbio from cdstrategy and atapi_done
  */
 void
-acdstart(acd)
-	struct acd_softc *acd;
+acdstart(vp)
+	void *vp;
 {
+	struct acd_softc *acd = vp;
 	struct at_dev_link *ad_link;
 	struct buf *bp = 0;
 	struct buf *dp;
@@ -609,8 +620,10 @@ acdstart(acd)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		 if (atapi_exec_io(ad_link, &cmd, sizeof(cmd), bp, A_NOSLEEP))
+		 if (atapi_exec_io(ad_link, &cmd, sizeof(cmd), bp, A_NOSLEEP)) {
+		 	disk_unbusy(&acd->sc_dk, 0);
 			printf("%s: not queued", acd->sc_dev.dv_xname);
+		}
 	}
 }
 
@@ -636,12 +649,12 @@ acdwrite(dev, uio)
  * conversion between minute-seconde-frame and logical block adress
  * adresses format
  */
-void
+static void
 lba2msf (lba, m, s, f)
-	u_long lba;
-	u_char *m, *s, *f;
+	u_int32_t lba;
+	u_int8_t *m, *s, *f;
 {
-	u_long tmp;
+	u_int32_t tmp;
 	tmp = lba + CD_BLOCK_OFFSET;	/* offset of first logical frame */
 	tmp &= 0xffffff;		/* negative lbas use only 24 bits */
 	*m = tmp / (CD_SECS * CD_FRAMES);
@@ -650,11 +663,22 @@ lba2msf (lba, m, s, f)
 	*f = tmp % CD_FRAMES;
 }
 
-u_long
+static __inline u_int32_t
 msf2lba (m, s, f)
-	u_char m, s, f;
+	u_int8_t m, s, f;
 {
 	return (((m * CD_SECS) + s) * CD_FRAMES + f) - CD_BLOCK_OFFSET;
+}
+
+static __inline void
+bswap (buf, len)
+	u_int8_t *buf;
+	int len;
+{       
+	u_int16_t *p = (u_int16_t *)(buf + len);
+
+	while (--p >= (u_int16_t *)buf)
+		*p = (*p & 0xff) << 8 | (*p >> 8 & 0xff);
 }
 
 /*
@@ -694,7 +718,7 @@ acdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if (error = acdlock(acd))
+		if ((error = acdlock(acd)) != 0)
 			return error;
 		acd->flags |= CDF_LABELLING;
 
@@ -744,23 +768,31 @@ acdioctl(dev, cmd, addr, flag, p)
 		    len < sizeof(struct cd_sub_channel_header))
 			return EINVAL;
 
-		if (error = acd_read_subchannel(acd, args->address_format,
-		    				args->data_format, args->track,
-						&data, len))
+		error = acd_read_subchannel(acd, args->address_format,
+		    	args->data_format, args->track, &data, len);
+		if (error)
 			return error;
 		return copyout(&data, args->data, len);
 	}
 
+	/* XXX Remove endian dependency */
 	case CDIOREADTOCHEADER: {
 		struct ioc_toc_header hdr;
 
-		if (error = acd_read_toc(acd, 0, 0, &hdr, sizeof(hdr)))
+		error = acd_read_toc(acd, 0, 0, &hdr, sizeof(hdr));
+		if (error)
 			return error;
-		hdr.len = ntohs(hdr.len);
+		if (acd->ad_link->quirks & ADEV_LITTLETOC) {
+#if BYTE_ORDER == BIG_ENDIAN
+			bswap((u_int8_t *)&hdr.len, sizeof(hdr.len));
+#endif
+		} else
+			hdr.len = ntohs(hdr.len);
 		bcopy(&hdr, addr, sizeof(hdr));
 		return 0;
 	}
 
+	/* XXX Remove endian dependency */
 	case CDIOREADTOCENTRYS: {
 		struct ioc_read_toc_entry *te =
 				(struct ioc_read_toc_entry *)addr;
@@ -773,20 +805,30 @@ acdioctl(dev, cmd, addr, flag, p)
 		    len < sizeof(struct cd_toc_entry))
 			return EINVAL;
 
-		if (error = acd_read_toc(acd, te->address_format,
-		    			 te->starting_track, &toc,
-		    			 len + sizeof(struct ioc_toc_header)))
+		error = acd_read_toc(acd, te->address_format,
+		    te->starting_track, &toc,
+		    len + sizeof(struct ioc_toc_header));
+		if (error)
 			return error;
 
 		if (te->address_format == CD_LBA_FORMAT) {
 		    for (ntracks = th->ending_track - th->starting_track + 1;
 		         ntracks >= 0; ntracks--) {
 			toc.tab[ntracks].addr_type = CD_LBA_FORMAT;
-			(u_int32_t)(*toc.tab[ntracks].addr.addr) =
-				ntohl((u_int32_t)(*toc.tab[ntracks].addr.addr));
+			if (acd->ad_link->quirks & ADEV_LITTLETOC) {
+#if BYTE_ORDER == BIG_ENDIAN
+				bswap((u_int8_t*)&toc.tab[ntracks].addr.addr, sizeof(toc.tab[ntracks].addr.addr));
+#endif
+			} else
+				(u_int32_t)(*toc.tab[ntracks].addr.addr) = ntohl((u_int32_t)(*toc.tab[ntracks].addr.addr));
 		    }
 		}
-		th->len = ntohs(th->len);
+		if (acd->ad_link->quirks & ADEV_LITTLETOC) {
+#if BYTE_ORDER == BIG_ENDIAN
+				bswap((u_int8_t*)&th->len, sizeof(th->len));
+#endif
+		} else
+			th->len = ntohs(th->len);
 
 		len = min(len, th->len - sizeof(struct ioc_toc_header));
 		return copyout(toc.tab, te->data, len);
@@ -802,8 +844,9 @@ acdioctl(dev, cmd, addr, flag, p)
 	case CDIOCGETVOL: {
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct atapi_mode_data data;
-		if (error = acd_get_mode(acd, &data, ATAPI_AUDIO_PAGE,
-					   AUDIOPAGESIZE, 0))
+		error = acd_get_mode(acd, &data, ATAPI_AUDIO_PAGE,
+		    AUDIOPAGESIZE, 0);
+		if (error)
 			return error;
 		arg->vol[0] = data.page_audio.port[0].volume;
 		arg->vol[1] = data.page_audio.port[1].volume;
@@ -816,12 +859,14 @@ acdioctl(dev, cmd, addr, flag, p)
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct atapi_mode_data data, mask;
 
-		if (error = acd_get_mode(acd, &data, ATAPI_AUDIO_PAGE,
-					 AUDIOPAGESIZE, 0))
+		error = acd_get_mode(acd, &data, ATAPI_AUDIO_PAGE,
+		    AUDIOPAGESIZE, 0);
+		if (error)
 			return error;
 
-		if (error = acd_get_mode(acd, &mask, ATAPI_AUDIO_PAGE_MASK,
-					 AUDIOPAGESIZE, 0))
+		error = acd_get_mode(acd, &mask, ATAPI_AUDIO_PAGE_MASK,
+		    AUDIOPAGESIZE, 0);
+		if (error)
 			return error;
 
 		data.page_audio.port[0].volume = arg->vol[0] &
@@ -982,12 +1027,12 @@ acd_size(cd, flags)
 		return 0;
 	}
 
-	blksize = ntohl(rdcap.blksize);
+	blksize = _4btol((u_int8_t*)&rdcap.blksize);
 	if (blksize < 512)
 		blksize = 2048;	/* some drives lie ! */
 	cd->params.blksize = blksize;
 
-	size = ntohl(rdcap.size);
+	size = _4btol((u_int8_t*)&rdcap.size);
 	if (size < 100)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
@@ -1331,9 +1376,10 @@ acddump(dev, blkno, va, size)
 }
 
 int
-acddone(acp)
-	struct atapi_command_packet *acp;
+acddone(vp)
+	void *vp;
 {
+	struct atapi_command_packet *acp = vp;
 	struct at_dev_link *ad_link = acp->ad_link;
 	struct acd_softc *acd = ad_link->device_softc;
 

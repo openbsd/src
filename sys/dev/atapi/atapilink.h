@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapilink.h,v 1.4 1996/06/10 08:01:14 downsj Exp $	*/
+/*	$OpenBSD: atapilink.h,v 1.5 1996/08/07 01:56:29 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -29,8 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef ATAPI_DEBUG
-#undef ATAPI_DEBUG_PROBE
+/* #undef ATAPI_DEBUG */
+/* #undef ATAPI_DEBUG_PROBE */
 
 struct bus_link {
 	u_int8_t type;  
@@ -149,8 +149,11 @@ struct at_dev_link {
 #define ACAP_DRQ_INTR		0x0100	/* interrupt DRQ */
 #define ACAP_DRQ_ACCEL		0x0200	/* accelerated DRQ */
 #define ACAP_LEN 		0x0400	/* 16 bit commands */
-	void	(*start)();		/* device start routine */
-	int	(*done)();		/* device done routine */
+	u_int8_t quirks;		/* per-device oddities */
+#define ADEV_CDROM		0x01	/* device is a CD-ROM */
+#define ADEV_LITTLETOC		0x02	/* Audio TOC uses wrong byte order */
+	void	(*start) __P((void *));	/* device start routine */
+	int	(*done) __P((void *));	/* device done routine */
 };
 
 struct atapi_command_packet {
