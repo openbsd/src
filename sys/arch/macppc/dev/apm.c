@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.4 2002/03/14 03:15:55 millert Exp $	*/
+/*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -55,6 +55,7 @@
 #include <machine/apmvar.h>
 
 #include <macppc/dev/adbvar.h>
+#include <macppc/dev/adb_direct.h>
 #include <macppc/dev/pm_direct.h>
 
 #if defined(APMDEBUG)
@@ -75,10 +76,6 @@ void apmattach(struct device *, struct device *, void *);
 struct cfattach apm_ca = {
 	sizeof(struct apm_softc), apmmatch, apmattach
 };
-
-int apmopen(dev_t dev, int flag, int mode, struct proc *p);
-int apmclose(dev_t dev, int flag, int mode, struct proc *p);
-int apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p);
 
 struct cfdriver apm_cd = {
 	NULL, "apm", DV_DULL
@@ -274,14 +271,15 @@ apmioctl(dev, cmd, data, flag, p)
 
 		pm_battery_info(0, &batt);
 
-		power->ac_state = ((batt.flags & PMU_PWR_AC_PRESENT) ? APM_AC_ON : APM_AC_OFF);
-		power->battery_life = ((batt.cur_charge * 100) / batt.max_charge);
+		power->ac_state = ((batt.flags & PMU_PWR_AC_PRESENT) ?
+		    APM_AC_ON : APM_AC_OFF);
+		power->battery_life =
+		    ((batt.cur_charge * 100) / batt.max_charge);
 
-		/* XXX - If the battery is charging, return the minutes left until
-		 *       charging is complete.  This might cause problems as I don't
-		 *       think APM does this.. I don't have a machine to test with.
+		/*
+		 * If the battery is charging, return the minutes left until
+		 * charging is complete. apmd knows this.
 		 */
-
 
 		if (!(batt.flags & PMU_PWR_BATT_PRESENT)) {
 			power->battery_state = APM_BATT_UNKNOWN;
@@ -290,11 +288,12 @@ apmioctl(dev, cmd, data, flag, p)
 		} else if ((power->ac_state == APM_AC_ON) &&
 			   (batt.draw > 0)) {
 			power->minutes_left =
-				(((batt.max_charge - batt.cur_charge) * 3600) / batt.draw) / 60;
+			    (((batt.max_charge - batt.cur_charge) * 3600) /
+			    batt.draw) / 60;
 			power->battery_state = APM_BATT_CHARGING;
 		} else {
 			power->minutes_left = 
-			((batt.cur_charge * 3600) / (-batt.draw)) / 60;
+			    ((batt.cur_charge * 3600) / (-batt.draw)) / 60;
 
 			/* XXX - Arbitrary */
 			if (power->battery_life > 60) {
@@ -308,7 +307,6 @@ apmioctl(dev, cmd, data, flag, p)
 
 		break;
 		
-	
 	default:
 		error = ENOTTY;
 	}
