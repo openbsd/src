@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.22 2001/12/14 04:30:11 smurph Exp $   */
+/*   $OpenBSD: eh.S,v 1.23 2001/12/14 08:52:00 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -215,7 +215,6 @@
 
 #include "assym.h"
 #include <machine/asm.h>
-#include <machine/board.h>
 #include <machine/param.h>          /* CPU_ and BRD_ defines */
 #include <machine/trap.h>           /* for T_ defines */
 #include <machine/board.h>
