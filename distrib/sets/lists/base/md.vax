@@ -1827,6 +1827,6 @@
 ./usr/mdec/boot
 ./usr/mdec/hpboot
 ./usr/mdec/raboot
-./usr/mdec/rdboot
+./usr/mdec/hdboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
