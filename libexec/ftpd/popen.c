@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.6 1996/10/25 23:37:01 imp Exp $	*/
+/*	$OpenBSD: popen.c,v 1.7 1996/10/25 23:59:18 imp Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -94,10 +94,10 @@ ftpd_popen(program, type)
 		return (NULL);
 
 	/* break up string into pieces */
-	for (argc = 0, cp = program;argc < MAX_ARGV - 1; cp = NULL)
+	for (argc = 0, cp = program;argc < MAX_ARGV-1; cp = NULL)
 		if (!(argv[argc++] = strtok(cp, " \t\n")))
 			break;
-	argv[ MAX_ARGV - 1 ] = NULL;
+	argv[MAX_ARGV-1] = NULL;
 
 	/* glob each piece */
 	gargv[0] = argv[0];
@@ -107,10 +107,10 @@ ftpd_popen(program, type)
 
 		memset(&gl, 0, sizeof(gl));
 		if (glob(argv[argc], flags, NULL, &gl)) {
-			if (gargc < MAX_GARGV - 1)
+			if (gargc < MAX_GARGV-1)
 				gargv[gargc++] = strdup(argv[argc]);
 		} else
-			for (pop = gl.gl_pathv; *pop && gargc < MAX_GARGV - 1; pop++)
+			for (pop = gl.gl_pathv; *pop && gargc < MAX_GARGV-1; pop++)
 				gargv[gargc++] = strdup(*pop);
 		globfree(&gl);
 	}
