@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.69 2002/05/29 09:23:25 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.70 2002/06/19 08:45:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -80,37 +80,37 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp 
 #include <uvm/uvm_extern.h>
 
 struct nlist namelist[] = {
-#define X_UVMEXP	0
+#define X_UVMEXP	0		/* sysctl */
 	{ "_uvmexp" },
-#define	X_BOOTTIME	1
+#define	X_BOOTTIME	1		/* sysctl */
 	{ "_boottime" },
-#define X_NCHSTATS	2
+#define X_NCHSTATS	2		/* sysctl */
 	{ "_nchstats" },
-#define	X_INTRNAMES	3
-	{ "_intrnames" },
-#define	X_EINTRNAMES	4
-	{ "_eintrnames" },
-#define	X_INTRCNT	5
-	{ "_intrcnt" },
-#define	X_EINTRCNT	6
-	{ "_eintrcnt" },
-#define	X_KMEMSTAT	7
+#define	X_KMEMSTAT	3		/* sysctl */
 	{ "_kmemstats" },
-#define	X_KMEMBUCKETS	8
+#define	X_KMEMBUCKETS	4		/* sysctl */
 	{ "_bucket" },
-#define X_ALLEVENTS	9
-	{ "_allevents" },
-#define	X_FORKSTAT	10
+#define	X_FORKSTAT	5		/* sysctl */
 	{ "_forkstat" },
-#define X_POOLHEAD	11
-	{ "_pool_head" },
-#define X_NSELCOLL	12
+#define X_NSELCOLL	6		/* sysctl */
 	{ "_nselcoll" },
-#define X_END		13
+#define X_POOLHEAD	7		/* sysctl */
+	{ "_pool_head" },
+#define X_ALLEVENTS	8		/* no sysctl */
+	{ "_allevents" },
+#define	X_INTRNAMES	9		/* no sysctl */
+	{ "_intrnames" },
+#define	X_EINTRNAMES	10		/* no sysctl */
+	{ "_eintrnames" },
+#define	X_INTRCNT	11		/* no sysctl */
+	{ "_intrcnt" },
+#define	X_EINTRCNT	12		/* no sysctl */
+	{ "_eintrcnt" },
+#define X_END		13		/* no sysctl */
 #if defined(__i386__)
-#define	X_INTRHAND	(X_END)
+#define	X_INTRHAND	(X_END)		/* no sysctl */
 	{ "_intrhand" },
-#define	X_INTRSTRAY	(X_END+1)
+#define	X_INTRSTRAY	(X_END+1)	/* no sysctl */
 	{ "_intrstray" },
 #endif
 	{ "" },

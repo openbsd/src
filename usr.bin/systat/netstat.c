@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.22 2002/06/18 00:46:47 deraadt Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.23 2002/06/19 08:45:52 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.22 2002/06/18 00:46:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.23 2002/06/19 08:45:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -152,9 +152,9 @@ closenetstat(WINDOW *w)
 }
 
 static struct nlist namelist[] = {
-#define	X_TCBTABLE	0
+#define	X_TCBTABLE	0		/* no sysctl */
 	{ "_tcbtable" },
-#define	X_UDBTABLE	1
+#define	X_UDBTABLE	1		/* no sysctl */
 	{ "_udbtable" },
 	{ "" },
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.35 2002/06/18 23:41:32 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.36 2002/06/19 08:45:52 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.35 2002/06/18 23:41:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.36 2002/06/19 08:45:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,19 +84,18 @@ static char *rcsid = "$OpenBSD: pstat.c,v 1.35 2002/06/18 23:41:32 deraadt Exp $
 #include <unistd.h>
 
 struct nlist nl[] = {
-#define	V_MOUNTLIST	0
-	{ "_mountlist" },	/* address of head of mount list. */
-#define V_NUMV		1
-	{ "_numvnodes" },
-#define	FNL_NFILE	2
+#define	FNL_NFILE	0		/* sysctl */
 	{"_nfiles"},
-#define FNL_MAXFILE	3
+#define FNL_MAXFILE	1		/* sysctl */
 	{"_maxfiles"},
-#define TTY_NTTY	4
+#define TTY_NTTY	2		/* sysctl */
 	{"_tty_count"},
-#define TTY_TTYLIST	5
+#define V_NUMV		3		/* sysctl */
+	{ "_numvnodes" },
+#define	V_MOUNTLIST	4		/* no sysctl */
+	{ "_mountlist" },
+#define TTY_TTYLIST	5		/* no sysctl */
 	{"_ttylist"},
-#define NLMANDATORY TTY_TTYLIST	/* names up to here are mandatory */
 	{ "" }
 };
 
