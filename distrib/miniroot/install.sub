@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.234 2002/06/15 16:03:40 fgsch Exp $
+#	$OpenBSD: install.sub,v 1.235 2002/06/25 00:31:59 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -341,35 +341,48 @@ __EOT
 # $1 is the mountpoint the local directory will be relative to.
 # $2 is the default directory
 get_localdir() {
-	local _mp=$1 _dir=$2
-
+	local _mp=$1 _dir=$2 _mounted
+	
 	local_sets_dir=
+
+	_mounted=`mount | sed -ne "/\(.*\)\/\(${_mp#/}\)\/*\(.*\) type.*/s//\/\3/p"`
+
+	if [ -z "$_mounted" ]; then
+	    echo "No filesystems mounted at or below ${_mp}."
+	    return
+	fi
+
 	while : ; do
-		ask "Enter the pathname where the sets are stored (or abort)" "$_dir"
+		ask "Enter the pathname where the sets are stored (or '?')" "$_dir"
 		case $resp in
-		abort)	return;;
-		"")	continue;;
-		*)	;;
-		esac
+		"?")	cat << __EOT
+The following filesystems are mounted at or below ${_mp} and are therefore
+possible sources for ${MODE} sets:
 
-		_dir=$_mp/$resp
+${_mounted}
 
-		if [ ! -d "$_dir" ]; then
-			echo "The directory '${_dir}' does not exist"
-		elif list_has_sets "`ls -l ${_dir}`" $THESETS; then
-			local_sets_dir=$_dir
-			return
-		else
-			cat << __EOT
+__EOT
+			continue
+			;;
+		"")	;;
+		*)	if [ ! -d "${_mp}/${resp}" ]; then
+				echo "The directory '${resp}' does not exist."
+			elif list_has_sets "`ls -l ${_mp}/${resp}`" $THESETS; then
+				local_sets_dir=${_mp}/${resp}
+				return
+			else
+				cat << __EOT
 The directory
 
-	"$_dir"
+	"$resp"
 
 does not hold any OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets.
 __EOT
-		fi
+			fi
+			;;
+		esac
 
-		ask "Re-enter pathname?" y
+		ask "\nRe-enter pathname?" y
 		case $resp in
 		y*|Y*)	;;
 		*)	break
@@ -1287,7 +1300,7 @@ install_cdrom() {
 
 	# Get the cdrom device info
 	if [ -z "$_CDDEVS" ]; then
-		echo "No CD-ROM devices were found. Aborting."
+		echo "No CD-ROM devices are available."
 		return
 	fi
 
@@ -1730,81 +1743,63 @@ __EOT
 	return 1
 }
 
+# Ask the user for locations of sets, and then install whatever sets the
+# user selects from that location. Repeat as many times as the user
+# needs to get all desired sets.
 install_sets() {
-	local _yup=FALSE _have_nfs
+ 	cat << __EOT
 
-	# Can we do an NFS install?
-	[ -f /sbin/mount_nfs ] && _have_nfs=true
-
-	# Ask the user which media to load the distribution from.
-	cat << __EOT
-
-You must now specify where the ${MODE} sets you want to use are. They
-must either be on a local device (disk, tape, or CD-ROM), an
-accessible NFS filesystem or an accessible ftp or http network
-server. You will have the chance to repeat this step or to extract
-sets from several places, so you do not have to try to load all the
-sets in one try and can recover from some errors.
+You will now be asked for the location of the ${MODE} sets you want to
+use, and then which sets to actually use. These steps will repeat
+until you are satisfied that all the sets you want have been
+loaded. Thus you will be able to load sets from multiple locations,
+and you can recover from some errors.
 
 __EOT
 
-	if [ "$local_sets_dir" ]; then
-		install_mounted_fs "$local_sets_dir"
-		[ "$_setsdone" ] && _yup=TRUE
-	fi
+	while : ; do
+		cat << __EOT
+Sets can be located on a
 
-	# Go on prodding for alternate locations
-	resp=
-	while [ -z "$resp" ]; do
-		# If _yup is not FALSE, it means that we extracted sets above.
-		# If that's the case, bypass the menu the first time.
-		if [ "$_yup" = "FALSE" ]; then
-			echo -n	"Install from (f)tp, (h)ttp, (t)ape, (C)D-ROM"
-			[ "$_have_nfs" ] && echo -n ", (N)FS"
-			ask " or local (d)isk?"
-			case $resp in
-			d*|D*)	install_disk
-				resp=d
-				;;
-			f*|F*)	install_url ftp
-				resp=f
-				;;
-			h*|H*)	install_url http
-				resp=h
-				;;
-			t*|T*)	install_tape
-				resp=t
-				;;
-			c*|C*)	install_cdrom
-				resp=c
-				;;
-			n*|N*)	install_nfs
-				resp=n
-				;;
-			*)	echo "Invalid response: $resp"
-				resp=
+	(m)ounted filesystem
+	(c)drom, (d)isk or (t)ape device
+	(f)tp, (n)fs or (h)ttp server
+
+__EOT
+		ask "Where are the ${MODE} sets you want to use? (m, c, f, etc.)"
+
+		case $resp in
+		c*|C*)	install_cdrom
+			;;
+		d*|D*)	install_disk
+			;;
+		f*|F*)	install_url ftp
+			;;
+		h*|H*)	install_url http
+			;;
+		m*|M*)	install_mounted_fs /mnt
+			;;
+		n*|N*)	install_nfs
+			;;
+		t*|T*)	install_tape
+			;;
+		*)	echo "Invalid response: $resp"
+			;;
+		esac
+
+		# Give the user the opportunity to extract more sets.
+
+		ask "\nExtract more sets?" n
+		case $resp in
+		n*|N*)	# Perform sanity checks...
+			sane_install && break
+			ask "\nDo you want to extract more sets?" y
+			case $resp in 
+			n*|N*)	break
 				;;
 			esac
-		else
-			# So we'll ask next time
-			_yup=FALSE
-		fi
-
-		# Perform sanity checks...
-		if sane_install; then
-			# Give the user the opportunity to extract more sets. They
-			# don't necessarily have to come from the same media.
-			ask "\nExtract more sets?" n
-			case $resp in
-			y*|Y*)	
-				# Force loop to repeat
-				resp=
-				;;
-			esac
-		else
-			# Not sane, don't exit loop.
-			resp=
-		fi
+			;;
+		esac
 	done
 }
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.34 2002/04/29 01:38:06 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.35 2002/06/25 00:31:59 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -196,12 +196,6 @@ if [ -d /mnt/usr/X11R6/lib/X11 ]; then
 	done
 fi
 )
-
-ask "Are the upgrade sets on one of your normally mounted (local) filesystems?" y
-case $resp in
-y*|Y*)	get_localdir /mnt
-	;;
-esac
 
 # Install sets.
 install_sets $THESETS
