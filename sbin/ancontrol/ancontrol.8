@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ancontrol.8,v 1.20 2004/04/15 08:29:28 jmc Exp $
+.\"	$OpenBSD: ancontrol.8,v 1.21 2004/08/19 01:20:07 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu> All rights reserved.
@@ -43,11 +43,14 @@
 .Bk -words
 .Op Ar interface
 .Op Fl A
-.Op Fl N
-.Op Fl S
-.Op Fl I
-.Op Fl T
 .Op Fl C
+.Op Fl I
+.Op Fl N
+.Op Fl Q
+.Op Fl S
+.Op Fl T
+.Op Fl Z
+.Op Fl v Ar 1|2|3|4
 .Op Fl a Ar AP
 .Op Fl b Ar beacon period
 .Op Fl c Ar channel number
@@ -68,7 +71,6 @@
 .Op Fl r Ar RTS threshold
 .Op Fl s Ar 0|1|2|3
 .Op Fl t Ar 0|1|2|3|4
-.Op Fl v Ar 1|2|3|4
 .Op Fl W Ar 0|1|2
 .Ek
 .Sh DESCRIPTION
@@ -147,6 +149,16 @@ The beacon period can be anything between 20 and 976 milliseconds.
 The default is 100.
 .It Fl T
 Display the NIC's internal statistics counters.
+.It Fl Q
+If driver was compiled with option
+.Nm ANCACHE
+(default) then display the signal cache contents.
+A maximum of 16 station addresses are collected on the list
+with LRU expiration policy.
+Information such as MAC address, IP address and signal strength
+is collected from the most recent matching packet received.
+.It Fl Z
+Purge the signal cache contents (see above).
 .It Fl W Ar "0|1|2"
 Enable WEP.
 Use 0 for no WEP, 1 to enable full WEP, 2 for mixed cell.
