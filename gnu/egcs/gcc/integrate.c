@@ -38,6 +38,7 @@ Boston, MA 02111-1307, USA.  */
 #include "function.h"
 #include "toplev.h"
 #include "intl.h"
+#include "protector.h"
 
 #include "obstack.h"
 #define	obstack_chunk_alloc	xmalloc
@@ -2298,6 +2299,8 @@ integrate_decl_tree (let, level, map)
 	}
       /* These args would always appear unused, if not for this.  */
       TREE_USED (d) = 1;
+      if (flag_propolice_protection && TREE_CODE (d) == VAR_DECL)
+	DECL_INLINE (d) = 1;
 
       if (DECL_LANG_SPECIFIC (d))
 	copy_lang_decl (d);
