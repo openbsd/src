@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.16 2002/05/29 08:05:39 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.17 2002/05/29 18:40:21 deraadt Exp $	*/
 /*	$KAME: ndp.c,v 1.86 2002/05/26 01:16:10 itojun Exp $	*/
 
 /*
@@ -928,7 +928,7 @@ ifinfo(argc, argv)
 		/* NOTREACHED */
 	}
 	bzero(&nd, sizeof(nd));
-	strncpy(nd.ifname, ifname, sizeof(nd.ifname));
+	strlcpy(nd.ifname, ifname, sizeof(nd.ifname));
 	if (ioctl(s, SIOCGIFINFO_IN6, (caddr_t)&nd) < 0) {
  		err(1, "ioctl(SIOCGIFINFO_IN6)");
 		/* NOTREACHED */
@@ -1088,7 +1088,7 @@ rtrlist()
 		/* NOTREACHED */
 	}
 	bzero(&dr, sizeof(dr));
-	strcpy(dr.ifname, "lo0"); /* dummy */
+	strlcpy(dr.ifname, "lo0", sizeof(dr.ifname)); /* dummy */
 	if (ioctl(s, SIOCGDRLST_IN6, (caddr_t)&dr) < 0) {
  		err(1, "ioctl(SIOCGDRLST_IN6)");
 		/* NOTREACHED */
@@ -1247,7 +1247,7 @@ plist()
 		/* NOTREACHED */
 	}
 	bzero(&pr, sizeof(pr));
-	strcpy(pr.ifname, "lo0"); /* dummy */
+	strlcpy(pr.ifname, "lo0", sizeof(pr.ifname)); /* dummy */
 	if (ioctl(s, SIOCGPRLST_IN6, (caddr_t)&pr) < 0) {
  		err(1, "ioctl(SIOCGPRLST_IN6)");
 		/* NOTREACHED */
@@ -1416,7 +1416,7 @@ pfx_flush()
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
-	strcpy(dummyif, "lo0"); /* dummy */
+	strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
 	if (ioctl(s, SIOCSPFXFLUSH_IN6, (caddr_t)&dummyif) < 0)
  		err(1, "ioctl(SIOCSPFXFLUSH_IN6)");
 }
@@ -1429,7 +1429,7 @@ rtr_flush()
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
-	strcpy(dummyif, "lo0"); /* dummy */
+	strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
 	if (ioctl(s, SIOCSRTRFLUSH_IN6, (caddr_t)&dummyif) < 0)
  		err(1, "ioctl(SIOCSRTRFLUSH_IN6)");
 
@@ -1444,7 +1444,7 @@ harmonize_rtr()
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
-	strcpy(dummyif, "lo0"); /* dummy */
+	strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
 	if (ioctl(s, SIOCSNDFLUSH_IN6, (caddr_t)&dummyif) < 0)
  		err(1, "ioctl(SIOCSNDFLUSH_IN6)");
 
@@ -1469,7 +1469,7 @@ setdefif(ifname)
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
 
-	strcpy(ndifreq.ifname, "lo0"); /* dummy */
+	strlcpy(ndifreq.ifname, "lo0", sizeof(ndifreq.ifname)); /* dummy */
 	ndifreq.ifindex = ifindex;
 
 	if (ioctl(s, SIOCSDEFIFACE_IN6, (caddr_t)&ndifreq) < 0)
@@ -1488,7 +1488,7 @@ getdefif()
 		err(1, "socket");
 
 	memset(&ndifreq, 0, sizeof(ndifreq));
-	strcpy(ndifreq.ifname, "lo0"); /* dummy */
+	strlcpy(ndifreq.ifname, "lo0", sizeof(ndifreq.ifname)); /* dummy */
 
 	if (ioctl(s, SIOCGDEFIFACE_IN6, (caddr_t)&ndifreq) < 0)
  		err(1, "ioctl(SIOCGDEFIFACE_IN6)");
