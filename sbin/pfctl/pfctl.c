@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.208 2004/02/25 10:09:40 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.209 2004/02/26 15:43:51 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -707,7 +707,7 @@ pfctl_show_nat(int dev, int opts, char *anchorname, char *rulesetname)
 	struct pfioc_rule pr;
 	u_int32_t mnr, nr;
 	static int nattype[3] = { PF_NAT, PF_RDR, PF_BINAT };
-	int i;
+	int i, dotitle = opts & PF_OPT_SHOWALL;
 
 	if (*anchorname && !*rulesetname) {
 		struct pfioc_ruleset pr;
@@ -738,19 +738,6 @@ pfctl_show_nat(int dev, int opts, char *anchorname, char *rulesetname)
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
 	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
-	if (opts & PF_OPT_SHOWALL) {
-		for (i = 0; i < 3; i++) {
-			pr.rule.action = nattype[i];
-			if (ioctl(dev, DIOCGETRULES, &pr)) {
-				warn("DIOCGETRULES");
-				return (-1);
-			}
-			if (pr.nr > 0) {
-				pfctl_print_title("TRANSLATION RULES:");
-				break;
-			}
-		}
-	}
 	for (i = 0; i < 3; i++) {
 		pr.rule.action = nattype[i];
 		if (ioctl(dev, DIOCGETRULES, &pr)) {
@@ -768,6 +755,10 @@ pfctl_show_nat(int dev, int opts, char *anchorname, char *rulesetname)
 			    pr.ticket, nattype[i], anchorname,
 			    rulesetname) != 0)
 				return (-1);
+			if (dotitle) {
+				pfctl_print_title("TRANSLATION RULES:");
+				dotitle = 0;
+			}
 			print_rule(&pr.rule, opts & PF_OPT_VERBOSE2);
 			pfctl_print_rule_counters(&pr.rule, opts);
 			pfctl_clear_pool(&pr.rule.rpool);
@@ -806,11 +797,11 @@ pfctl_show_src_nodes(int dev, int opts)
 			len = psn.psn_len;
 		if (psn.psn_len == 0)
 			return (0);	/* no src_nodes */
-		else if (opts & PF_OPT_SHOWALL)
-			pfctl_print_title("SOURCE TRACKING NODES:");
 		len *= 2;
 	}
 	p = psn.psn_src_nodes;
+	if (psn.psn_len > 0 && (opts & PF_OPT_SHOWALL))
+		pfctl_print_title("SOURCE TRACKING NODES:");
 	for (i = 0; i < psn.psn_len; i += sizeof(*p)) {
 		print_src_node(p, opts);
 		p++;
@@ -872,7 +863,7 @@ pfctl_show_status(int dev, int opts)
 		warn("DIOCGETSTATUS");
 		return (-1);
 	}
-	if (opts && PF_OPT_SHOWALL)
+	if (opts & PF_OPT_SHOWALL)
 		pfctl_print_title("INFO:");
 	print_status(&status, opts);
 	return (0);
@@ -884,7 +875,7 @@ pfctl_show_timeouts(int dev, int opts)
 	struct pfioc_tm pt;
 	int i;
 
-	if (opts && PF_OPT_SHOWALL)
+	if (opts & PF_OPT_SHOWALL)
 		pfctl_print_title("TIMEOUTS:");
 	memset(&pt, 0, sizeof(pt));
 	for (i = 0; pf_timeouts[i].name; i++) {
