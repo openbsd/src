@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.10 2003/08/01 04:46:13 nate Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.11 2003/09/02 22:44:27 krw Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -44,7 +44,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>
@@ -71,11 +70,10 @@ struct cfdriver eephy_cd = {
 	NULL, "eephy", DV_DULL
 };
 
-int eephy_service(struct mii_softc *, struct mii_data *, int);
-void eephy_status(struct mii_softc *);
-static int	eephy_mii_phy_auto(struct mii_softc *, int);
+int	eephy_mii_phy_auto(struct mii_softc *, int);
+void	eephy_reset(struct mii_softc *);
+
 extern void	mii_phy_auto_timeout(void *);
-static void eephy_reset(struct mii_softc *);
 
 
 int
@@ -157,7 +155,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 #undef ADD
 }
 
-static void
+void
 eephy_reset(struct mii_softc *sc)
 {
 	u_int32_t reg;
@@ -417,7 +415,7 @@ eephy_status(struct mii_softc *sc)
 	}
 }
 
-static int
+int
 eephy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 {
 	int bmsr, i;
@@ -438,8 +436,8 @@ eephy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 	}
 
 	if (waitfor) {
-		/* Wait 500ms for it to complete. */
-		for (i = 0; i < 500; i++) {
+		/* Wait 5 seconds for it to complete. */
+		for (i = 0; i < 5000; i++) {
 			bmsr = PHY_READ(sc, E1000_SR) | PHY_READ(sc, E1000_SR);
 
 			if (bmsr & E1000_SR_AUTO_NEG_COMPLETE) {
@@ -465,7 +463,7 @@ eephy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 		sc->mii_flags |= MIIF_DOINGAUTO;
 		sc->mii_ticks = 0;
 		timeout_set(&sc->mii_phy_timo, mii_phy_auto_timeout, sc);
-		timeout_add(&sc->mii_phy_timo, hz >> 1);
+		timeout_add(&sc->mii_phy_timo, 5 * hz);
 	}
 	return (EJUSTRETURN);
 }
