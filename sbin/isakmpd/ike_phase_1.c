@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.25 2001/06/05 10:09:01 angelos Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.26 2001/06/05 10:50:55 angelos Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -970,7 +970,7 @@ ike_phase_1_recv_ID (struct message *msg)
 	{
 	  free (rid);
 	  log_print ("ike_phase_1_recv_ID: received remote ID other than "
-		     "expected %s", rs);
+		     "expected %s", p);
 	  return -1;
 	}
 
