@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.16 1997/04/10 22:52:18 deraadt Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.17 1997/07/03 17:46:53 deraadt Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.17 1996/10/21 22:34:04 thorpej Exp $	*/
 
 /*
@@ -1552,18 +1552,22 @@ ahc_handle_seqint(ahc, intstat)
 			targ_scratch &= 0x7f;
 			ahc->needwdtr &= ~targ_mask;
 			ahc->wdtrpending &= ~targ_mask;
+#if !(defined(__NetBSD__) || defined(__OpenBSD__)) || defined(DEBUG)
 			printf("%s:%c:%d: refuses WIDE negotiation.  Using "
 			       "8bit transfers\n", ahc_name(ahc),
 			       channel, target);
+#endif
 		} else if(ahc->sdtrpending & targ_mask){
 			/* note asynch xfers and clear flag */
 			targ_scratch &= 0xf0;
 			ahc->needsdtr &= ~targ_mask;
 			ahc->sdtrpending &= ~targ_mask;
+#if !(defined(__NetBSD__) || defined(__OpenBSD__)) || defined(DEBUG)
 			printf("%s:%c:%d: refuses synchronous negotiation. "
 			       "Using asynchronous transfers\n",
 			       ahc_name(ahc),
 			       channel, target);
+#endif
 		} else {
 			/*
 			 * Otherwise, we ignore it.
