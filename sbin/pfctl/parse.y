@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.168 2002/10/14 12:58:28 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.169 2002/10/16 09:00:06 mpech Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1548,9 +1548,7 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				    sizeof(binat.raddr.addr));
 				memcpy(&binat.rmask, &n->mask,
 				    sizeof(binat.rmask));
-				if (!PF_AZERO(&binat.smask, binat.af) &&
-				    !PF_AEQ(&binat.smask,
-				    &binat.rmask, binat.af)) {
+				if (PF_ANEQ(&binat.smask, &binat.rmask, binat.af)) {
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
