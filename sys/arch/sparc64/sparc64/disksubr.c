@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 2001/10/12 20:32:11 jason Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 2001/10/15 04:03:45 jason Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -53,6 +53,7 @@
 #endif
 
 #include <dev/sbus/sbusvar.h>
+#include "cd.h"
 
 static	char *disklabel_sun_to_bsd __P((char *, struct disklabel *));
 static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
@@ -65,6 +66,10 @@ dk_establish(struct disk *dk, struct device *dev)
 {
 	/* fix later */
 }
+
+#if NCD > 0
+extern void cdstrategy __P((struct buf *));
+#endif
 
 /*
  * Attempt to read a disk label from a device
@@ -109,8 +114,9 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	if (spoofonly)
 		return (NULL);
 
-#if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == 0)
+#if defined(CD9660) && (NCD > 0)
+	if ((strat == cdstrategy) &&
+	    (iso_disklabelspoof(dev, strat, lp) == NULL))
 		return (NULL);
 #endif
 
@@ -149,6 +155,10 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		return (NULL);
 	}
 
+#if defined(CD9660)
+	if (iso_disklabelspoof(dev, strat, lp) == NULL)
+		return (NULL);
+#endif
 	bzero(clp->cd_block, sizeof(clp->cd_block));
 	return ("no disk label");
 }
