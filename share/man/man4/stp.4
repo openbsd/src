@@ -1,0 +1,70 @@
+.\"	$OpenBSD: stp.4,v 1.1 2002/06/20 03:17:43 fgsch Exp $
+.\"	$NetBSD: nell.4,v 1.2 2002/03/29 16:23:50 wiz Exp $
+.\"
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Martin Husemann <martin@NetBSD.ORG>.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd June 20, 2002
+.Dt STP 4
+.Os
+.Sh NAME
+.Nm stp
+.Nd sbus pcmcia bridge
+.Sh SYNOPSIS
+.Cd "stp* at sbus? slot ? offset ?"
+.Sh DESCRIPTION
+The
+.Nm
+is a pcmcia bridge for the sbus. It is also known as STP4020, the name
+of the chipset used to implement it, and has SUN part number 501-2367.
+.Sh SEE ALSO
+.Xr pcmcia 4 ,
+.Xr sbus 4
+.Sh BUGS
+The driver provides a big-endian pcmcia bus, which is wrong in the
+.Ox
+context. Due to missing/incomplete documentation of the chipset it is not
+known for sure if the hardware has any byteswapping mode. For sparc64 systems
+this can easily be worked around in software, so this will be fixed. For
+sparc systems, the fix might impose a serious performance degration and is
+subject of further research.
+.\" .Pp
+.\" This means that currently some cards will work (because they are using 8 bit
+.\" access only), including com and ray cards. Most cards will not work. For
+.\" the wi driver, there is a hack to make it accept a big-endian bus. Be sure to
+.\" only use it if this is the only wi card in your system:
+.\" .Pp
+.\" .Cd "options WI_AT_BIGENDIAN_BUS_HACK"
+.\" .Cd "wi* at pcmcia? function ?"
