@@ -678,6 +678,7 @@ error 0 %s: no such user\n", user);
 		 "Sorry, you don't have read/write access to the history file");
 		error (1, save_errno, "%s", path);
 	    }
+	    parseopts();
 	}
     }
 
@@ -836,4 +837,47 @@ usage (cpp)
     for (; *cpp; cpp++)
 	(void) fprintf (stderr, *cpp);
     exit (EXIT_FAILURE);
+}
+
+parseopts()
+{
+    char path[PATH_MAX];
+    int save_errno;
+    char buf[1024];
+    char *p;
+    FILE *fp;
+
+    (void) sprintf (path, "%s/%s/%s", CVSroot, CVSROOTADM, CVSROOTADM_OPTIONS);
+    if ((fp = fopen(path, "r")) != NULL) {
+	while (fgets(buf, sizeof buf, fp) != NULL) {
+	    if (buf[0] == '#')
+		continue;
+	    p = strrchr(buf, '\n');
+	    if (p)
+		*p = '\0';
+
+	    if (!strncmp(buf, "tag=", 4)) {
+		RCS_citag = strdup(buf+4);
+	    } else if (!strncmp(buf, "umask=", 6)) {
+		int mode;
+
+		mode = strtol(buf+6, NULL, 8);
+		umask((mode_t)mode);
+	    }
+	    else if (!strncmp(buf, "dlimit=", 7)) {
+#ifdef __OpenBSD__
+#include <sys/resource.h>
+		struct rlimit rl;
+
+		if (getrlimit(RLIMIT_DATA, &rl) != -1) {
+			rl.rlim_cur = atoi(buf+7);
+			rl.rlim_cur *= 1024;
+
+			(void) setrlimit(RLIMIT_DATA, &rl);
+		}
+#endif /* __OpenBSD__ */
+	    }
+	}
+	fclose(fp);
+    }
 }
