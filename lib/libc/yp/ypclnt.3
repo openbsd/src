@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.15 2003/05/07 08:52:43 jmc Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.16 2003/07/07 15:46:37 jmc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -162,7 +162,7 @@ is returned and control given back to the user code.
 The
 .Nm ypclnt
 suite provides the following functionality:
-.Bl -tag -width Fn yp_match
+.Bl -tag -width "yperr_string()"
 .It Fn yp_match
 Provides the value associated with the given key.
 .It Fn yp_first
@@ -241,7 +241,6 @@ function should return non-zero when it no longer wishes to process
 key-value pairs, at which time
 .Fn yp_all
 returns a value of 0, and is called with the following arguments:
-.Pp
 .Bd -literal -offset indent
 int foreach (
 	int instatus,
