@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.44 2004/09/10 19:49:15 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.45 2004/10/14 07:40:29 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.44 2004/09/10 19:49:15 otto Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.45 2004/10/14 07:40:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -356,7 +356,8 @@ recalc:
 	 */
 	inodecramped = 0;
 	used *= sectorsize;
-	inospercg = roundup((mincpg * bpcg - used) / density, INOPB(&sblock));
+	inospercg = roundup(((int64_t)mincpg * bpcg - used) / density,
+	    INOPB(&sblock));
 	sblock.fs_ipg = inospercg;
 	while (inospercg > MAXIPG(&sblock)) {
 		inodecramped = 1;
@@ -376,8 +377,8 @@ recalc:
 			break;
 		}
 		mincpg = sblock.fs_cpg;
-		inospercg =
-		    roundup((mincpg * bpcg - used) / density, INOPB(&sblock));
+		inospercg = roundup(((int64_t)mincpg * bpcg - used) / density,
+		    INOPB(&sblock));
 		sblock.fs_ipg = inospercg;
 	}
 	if (inodecramped) {
@@ -420,13 +421,13 @@ recalc:
 	/*
 	 * Must ensure there is enough space for inodes.
 	 */
-	sblock.fs_ipg = roundup((sblock.fs_cpg * bpcg - used) / density,
-		INOPB(&sblock));
+	sblock.fs_ipg = roundup(((int64_t)sblock.fs_cpg * bpcg - used) /
+	    density, INOPB(&sblock));
 	while (sblock.fs_ipg > MAXIPG(&sblock)) {
 		inodecramped = 1;
 		sblock.fs_cpg -= mincpc;
-		sblock.fs_ipg = roundup((sblock.fs_cpg * bpcg - used) / density,
-			INOPB(&sblock));
+		sblock.fs_ipg = roundup(((int64_t)sblock.fs_cpg * bpcg - used) /
+		    density, INOPB(&sblock));
 	}
 	/*
 	 * Must ensure there is enough space to hold block map.
@@ -439,8 +440,8 @@ recalc:
 	while (CGSIZE(&sblock) > sblock.fs_bsize) {
 		mapcramped = 1;
 		sblock.fs_cpg -= mincpc;
-		sblock.fs_ipg = roundup((sblock.fs_cpg * bpcg - used) / density,
-			INOPB(&sblock));
+		sblock.fs_ipg = roundup(((int64_t)sblock.fs_cpg * bpcg - used) /
+		    density, INOPB(&sblock));
 	}
 	sblock.fs_fpg = (sblock.fs_cpg * sblock.fs_spc) / NSPF(&sblock);
 	if ((sblock.fs_cpg * sblock.fs_spc) % NSPB(&sblock) != 0) {
@@ -494,6 +495,8 @@ recalc:
 	sblock.fs_npsect = nphyssectors;
 	sblock.fs_postblformat = FS_DYNAMICPOSTBLFMT;
 	sblock.fs_sbsize = fragroundup(&sblock, sizeof(struct fs));
+	if (sblock.fs_sbsize > SBSIZE)
+		sblock.fs_sbsize = SBSIZE;
 	if (sblock.fs_ntrak == 1) {
 		sblock.fs_cpc = 0;
 		goto next;
@@ -514,8 +517,8 @@ recalc:
 		sblock.fs_rotbloff = sblock.fs_postbloff + postblsize;
 		totalsbsize += postblsize;
 	}
-	if (totalsbsize > SBSIZE ||
-	    sblock.fs_nsect > (1 << NBBY) * NSPB(&sblock)) {
+	if (totalsbsize > SBSIZE || fragroundup(&sblock, totalsbsize) > SBSIZE
+	    || sblock.fs_nsect > (1 << NBBY) * NSPB(&sblock)) {
 		printf("%s %s %d %s %d.%s",
 		    "Warning: insufficient space in super block for\n",
 		    "rotational layout tables with nsect", sblock.fs_nsect,
