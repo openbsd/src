@@ -1,8 +1,13 @@
----
+./dev/audio
+./dev/audioctl
+./dev/mixer
 ./dev/scan0
 ./dev/scan1
+./dev/sound
+./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/ldconfig
+./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/bin/ldd
 ./usr/include/alpha
@@ -1663,7 +1668,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/mtio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/param.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/pipe.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/poll.ph

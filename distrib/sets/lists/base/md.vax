@@ -1233,7 +1233,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/pciio.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/pipe.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/poll.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/pool.ph

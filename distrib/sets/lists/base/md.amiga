@@ -1,4 +1,3 @@
----
 ./dev/mouse
 ./dev/scan0
 ./sbin/binpatch
@@ -1699,7 +1698,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/mtio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/param.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/pipe.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/poll.ph

@@ -1349,6 +1349,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/mtio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/param.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/pipe.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/poll.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/pool.ph
