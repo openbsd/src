@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.21 2003/12/23 18:52:46 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.22 2003/12/23 19:13:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -348,12 +348,6 @@ rde_update_dispatch(struct imsg *imsg)
 		    &prefixlen)) == -1) {
 			rde_update_err(peer->conf.id, ERR_UPD_ATTRLIST);
 			return (-1);
-		}
-		/* XXX only for debugging. Used as debugger hook. */
-		if (prefixlen < 8 || prefixlen > 24) {
-			logit(LOG_DEBUG, "XXX XXX %s/%d\t[%d] {%d}\n",
-			    inet_ntoa(prefix), prefixlen, nlri_len,
-			    imsg->hdr.len - IMSG_HEADER_SIZE);
 		}
 		p += pos;
 		nlri_len -= pos;
