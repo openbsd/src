@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cy.4,v 1.5 2001/06/22 12:15:44 mpech Exp $
+.\"	$OpenBSD: cy.4,v 1.6 2002/09/09 00:08:58 art Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Herbert.
 .\" All rights reserved.
@@ -42,21 +42,16 @@ These boards are based around Cirrus Logic CD1400 communication controllers.
 The device minor numbers for this driver are encoded as follows:
 .Pp
 .Bd -literal
-    c c x x u u u u	- bits in the minor device number
+    d c c u u u u u	- bits in the minor device number
 
     bits    meaning
     ----    -------
-    uuuu    physical serial line (i.e., unit) to use
+    uuuuu   physical serial line (i.e., unit) to use
 		0-7 on a cyclom-8Y, 0-15 on a cyclom-16Y
 
-    xx      unused
+    cc      card number
 
-    cc      carrier control mode
-		00      complete hardware carrier control of the tty.
-			DCD must be high for the open(2) to complete.
-		01	reserved
-		10      carrier ignored until a high->low transition
-		11      carrier completed ignored
+    d       dialout flag
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
