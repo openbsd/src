@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.46 2002/03/13 00:24:21 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.47 2002/04/27 15:00:16 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4800,6 +4800,13 @@ ENTRY(snapshot)
  * and when returning a child to user mode after a fork(2).
  */
 ENTRY(proc_trampoline)
+	/* Reset interrupt level */
+	rd 	%psr, %o0
+	andn	%o0, PSR_PIL, %o0	! psr &= ~PSR_PIL;
+	wr	%o0, 0, %psr		! (void) spl0();
+	 nop				! psr delay; the next 2 instructions
+					! can safely be made part of the
+					! required 3 instructions psr delay
 	call	%l0			! re-use current frame
 	 mov	%l1, %o0
 
