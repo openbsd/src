@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.9 2002/06/26 11:29:55 espie Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.10 2002/06/30 13:04:36 itojun Exp $ */
 /*	$NetBSD: if_upl.c,v 1.15 2001/06/14 05:44:27 itojun Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -341,6 +341,7 @@ USB_ATTACH(upl)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
 #if defined(__NetBSD__) || defined(__FreeBSD__)

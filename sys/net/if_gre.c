@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.22 2002/06/10 23:06:55 itojun Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.23 2002/06/30 13:04:36 itojun Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -149,6 +149,7 @@ greattach(n)
 		sc->sc_if.if_flags |= IFF_LINK0;
 
 		if_attach(&sc->sc_if);
+		if_alloc_sadl(&sc->sc_if);
 
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_RAW,

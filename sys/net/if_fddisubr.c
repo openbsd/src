@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.28 2001/12/18 23:07:49 deraadt Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.29 2002/06/30 13:04:36 itojun Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -690,26 +690,13 @@ void
 fddi_ifattach(ifp)
 	register struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
-	register struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_FDDI;
 	ifp->if_addrlen = 6;
 	ifp->if_hdrlen = 21;
 	ifp->if_mtu = FDDIMTU;
 	ifp->if_output = fddi_output;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-#else
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
-#endif
-		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-		    sdl->sdl_family == AF_LINK) {
-			sdl->sdl_type = IFT_FDDI;
-			sdl->sdl_alen = ifp->if_addrlen;
-			bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
-			      LLADDR(sdl), ifp->if_addrlen);
-			break;
-		}
-	}
+	if_alloc_sadl(ifp);
+	bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
+	      LLADDR(ifp->if_sadl), ifp->if_addrlen);
 }

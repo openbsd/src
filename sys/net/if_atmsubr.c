@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.18 2001/12/18 23:07:49 deraadt Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.19 2002/06/30 13:04:35 itojun Exp $       */
 
 /*
  *
@@ -386,20 +386,8 @@ atm_ifattach(ifp)
 	ifp->if_mtu = ATMMTU;
 	ifp->if_output = atm_output;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-#elif defined(__FreeBSD__) || defined(__bsdi__)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)  {
-#endif
-
-		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-		    sdl->sdl_family == AF_LINK) {
-			sdl->sdl_type = IFT_ATM;
-			sdl->sdl_alen = ifp->if_addrlen;
+	if_alloc_sadl(ifp);
 #ifdef notyet /* if using ATMARP, store hardware address using the next line */
-			bcopy(ifp->hw_addr, LLADDR(sdl), ifp->if_addrlen);
+	bcopy(ifp->hw_addr, LLADDR(ifp->if_sadl), ifp->if_addrlen);
 #endif
-			break;
-		}
-	}
 }

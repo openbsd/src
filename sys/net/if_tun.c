@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.42 2002/06/06 21:34:16 provos Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.43 2002/06/30 13:04:36 itojun Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -152,6 +152,7 @@ tunattach(n)
 		ifp->if_ibytes = 0;
 		ifp->if_obytes = 0;
 		if_attach(ifp);
+		if_alloc_sadl(ifp);
 #if NBPFILTER > 0
 		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.11 2002/06/04 22:14:16 itojun Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.12 2002/06/30 13:04:36 itojun Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -102,6 +102,7 @@ faithattach(faith)
 		ifp->if_hdrlen = 0;
 		ifp->if_addrlen = 0;
 		if_attach(ifp);
+		if_alloc_sadl(ifp);
 #if NBPFILTER > 0
 		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.5 2002/05/29 07:54:58 itojun Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.6 2002/06/30 13:04:36 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -100,6 +100,7 @@ pflogattach(int npflog)
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 		ifp->if_hdrlen = PFLOG_HDRLEN;
 		if_attach(ifp);
+		if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
 		bpfattach(&pflogif[i].sc_if.if_bpf, ifp, DLT_PFLOG,

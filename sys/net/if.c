@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.61 2002/06/11 04:26:17 art Exp $	*/
+/*	$OpenBSD: if.c,v 1.62 2002/06/30 13:04:35 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -149,10 +149,7 @@ void
 if_attachsetup(ifp)
 	struct ifnet *ifp;
 {
-	unsigned int socksize, ifasize;
-	int namelen, masklen;
-	register struct sockaddr_dl *sdl;
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 	static int if_indexlim = 8;
 
 	ifp->if_index = ++if_index;
@@ -195,10 +192,41 @@ if_attachsetup(ifp)
 
 	if (ifp->if_snd.ifq_maxlen == 0)
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
+#ifdef ALTQ
+	ifp->if_snd.altq_type = 0;
+	ifp->if_snd.altq_disc = NULL;
+	ifp->if_snd.altq_flags &= ALTQF_CANTCHANGE;
+	ifp->if_snd.altq_tbr  = NULL;
+	ifp->if_snd.altq_ifp  = ifp;
+#endif
+
+	if (domains)
+		if_attachdomain1(ifp);
+}
+
+/*
+ * Allocate the link level name for the specified interface.  This
+ * is an attachment helper.  It must be called after ifp->if_addrlen
+ * is initialized, which may not be the case when if_attach() is
+ * called.
+ */
+void
+if_alloc_sadl(ifp)
+	struct ifnet *ifp;
+{
+	unsigned socksize, ifasize;
+	int namelen, masklen;
+	struct sockaddr_dl *sdl;
+	struct ifaddr *ifa;
 
 	/*
-	 * create a Link Level name for this device
+	 * If the interface already has a link name, release it
+	 * now.  This is useful for interfaces that can change
+	 * link types, and thus switch link names often.
 	 */
+	if (ifp->if_sadl != NULL)
+		if_free_sadl(ifp);
+
 	namelen = strlen(ifp->if_xname);
 #define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
 	masklen = _offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
@@ -215,6 +243,7 @@ if_attachsetup(ifp)
 	sdl->sdl_family = AF_LINK;
 	bcopy(ifp->if_xname, sdl->sdl_data, namelen);
 	sdl->sdl_nlen = namelen;
+	sdl->sdl_alen = ifp->if_addrlen;
 	sdl->sdl_index = ifp->if_index;
 	sdl->sdl_type = ifp->if_type;
 	ifnet_addrs[if_index] = ifa;
@@ -222,21 +251,38 @@ if_attachsetup(ifp)
 	ifa->ifa_rtrequest = link_rtrequest;
 	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
 	ifa->ifa_addr = (struct sockaddr *)sdl;
+	ifp->if_sadl = sdl;
 	sdl = (struct sockaddr_dl *)(socksize + (caddr_t)sdl);
 	ifa->ifa_netmask = (struct sockaddr *)sdl;
 	sdl->sdl_len = masklen;
 	while (namelen != 0)
 		sdl->sdl_data[--namelen] = 0xff;
-#ifdef ALTQ
-	ifp->if_snd.altq_type = 0;
-	ifp->if_snd.altq_disc = NULL;
-	ifp->if_snd.altq_flags &= ALTQF_CANTCHANGE;
-	ifp->if_snd.altq_tbr  = NULL;
-	ifp->if_snd.altq_ifp  = ifp;
-#endif
+}
 
-	if (domains)
-		if_attachdomain1(ifp);
+/*
+ * Free the link level name for the specified interface.  This is
+ * a detach helper.  This is called from if_detach() or from
+ * link layer type specific detach functions.
+ */
+void
+if_free_sadl(ifp)
+	struct ifnet *ifp;
+{
+	struct ifaddr *ifa;
+	int s;
+
+	ifa = ifnet_addrs[ifp->if_index];
+	if (ifa == NULL)
+		return;
+
+	s = splnet();
+	rtinit(ifa, RTM_DELETE, 0);
+	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+
+	ifp->if_sadl = NULL;
+
+	ifnet_addrs[ifp->if_index] = NULL;
+	splx(s);
 }
 
 void
@@ -421,7 +467,10 @@ if_detach(ifp)
 	/* Remove the interface from the list of all interfaces.  */
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
 
-	/* Deallocate private resources.  */
+	/*
+	 * Deallocate private resources.
+	 * XXX should consult refcnt and use IFAFREE
+	 */
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa;
 	    ifa = TAILQ_FIRST(&ifp->if_addrlist)) {
 		TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
@@ -432,6 +481,8 @@ if_detach(ifp)
 #endif
 		free(ifa, M_IFADDR);
 	}
+	ifp->if_sadl = NULL;
+	ifnet_addrs[ifp->if_index] = NULL;
 
 	free(ifp->if_addrhooks, M_TEMP);
 

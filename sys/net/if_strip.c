@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.19 2002/06/24 00:17:29 itojun Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.20 2002/06/30 13:04:36 itojun Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -369,6 +369,7 @@ stripattach(n)
 		sc->sc_if.if_timer = STRIP_WATCHDOG_INTERVAL;
 		IFQ_SET_READY(&sc->sc_if.if_snd);
 		if_attach(&sc->sc_if);
+		if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 #endif

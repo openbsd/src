@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.38 2002/06/23 23:55:04 itojun Exp $	*/
+/*	$OpenBSD: if.h,v 1.39 2002/06/30 13:04:35 itojun Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ struct ifnet {				/* and the entries */
 					/* timer routine */
 	void	(*if_watchdog)(struct ifnet *);
 	struct	ifaltq if_snd;		/* output queue (includes altq) */
+	struct sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 
 	void	*if_afdata[AF_MAX];
 };
@@ -541,6 +542,8 @@ int	ether_output(struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *);
 char	*ether_sprintf(u_char *);
 
+void	if_alloc_sadl(struct ifnet *);
+void	if_free_sadl(struct ifnet *);
 void	if_attach(struct ifnet *);
 void	if_attachdomain(void);
 void	if_attachtail(struct ifnet *);

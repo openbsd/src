@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.24 2002/06/10 17:33:28 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.25 2002/06/30 13:04:36 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ gifattach(n)
 		sc->gif_if.if_snd.ifq_maxlen = ifqmaxlen;
 		sc->gif_if.if_softc = sc;
 		if_attach(&sc->gif_if);
+		if_alloc_sadl(&sc->gif_if);
 
 #if NBPFILTER > 0
 		bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_NULL,

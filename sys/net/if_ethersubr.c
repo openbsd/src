@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.64 2002/06/10 22:48:09 chris Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.65 2002/06/30 13:04:36 itojun Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1033,8 +1033,6 @@ void
 ether_ifattach(ifp)
 	register struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
-	register struct sockaddr_dl *sdl;
 
 	/*
 	 * Any interface which provides a MAC address which is obviously
@@ -1059,16 +1057,10 @@ ether_ifattach(ifp)
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-		    sdl->sdl_family == AF_LINK) {
-			sdl->sdl_type = IFT_ETHER;
-			sdl->sdl_alen = ifp->if_addrlen;
-			bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
-			    LLADDR(sdl), ifp->if_addrlen);
-			break;
-		}
-	}
+
+	if_alloc_sadl(ifp);
+	bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
+	    LLADDR(ifp->if_sadl), ifp->if_addrlen);
 	LIST_INIT(&((struct arpcom *)ifp)->ac_multiaddrs);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -1088,6 +1080,8 @@ ether_ifdetach(ifp)
 		LIST_REMOVE(enm, enm_list);
 		free(enm, M_IFMADDR);
 	}
+
+	if_free_sadl(ifp);
 }
 
 #if 0

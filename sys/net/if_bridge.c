@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.98 2002/06/15 05:17:18 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.99 2002/06/30 13:04:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -212,6 +212,7 @@ bridgeattach(n)
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 		ifp->if_hdrlen = sizeof(struct ether_header);
 		if_attach(ifp);
+		if_alloc_sadl(ifp);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_if.if_bpf, ifp,
 		    DLT_EN10MB, sizeof(struct ether_header));

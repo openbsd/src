@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.6 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.7 2002/06/30 13:04:36 itojun Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -694,14 +694,7 @@ token_ifattach(ifp)
 #ifdef IFF_NOTRAILERS
 	ifp->if_flags |= IFF_NOTRAILERS;
 #endif
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-		    sdl->sdl_family == AF_LINK) {
-			sdl->sdl_type = IFT_ISO88025;
-			sdl->sdl_alen = ifp->if_addrlen;
-			bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
-			    LLADDR(sdl), ifp->if_addrlen);
-			break;
-		}
-	}
+	if_alloc_sadl(ifp);
+	bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
+	    LLADDR(ifp->if_sadl), ifp->if_addrlen);
 }
