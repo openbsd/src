@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,27 +37,26 @@
 
 #include "arla_local.h"
 
-RCSID("$KTH: adir.c,v 1.66.2.1 2001/06/04 22:16:34 ahltorp Exp $") ;
+RCSID("$arla: adir.c,v 1.73 2002/07/24 05:56:27 lha Exp $") ;
 
 /*
  *
  */
 
 static int
-get_fbuf_from_fid (VenusFid *fid, CredCacheEntry **ce,
-		   int *fd, fbuf *fbuf,
-		   FCacheEntry **centry,
-		   int open_flags, int fbuf_flags)
+get_fbuf_from_centry (CredCacheEntry **ce,
+		      int *fd, fbuf *fbuf,
+		      FCacheEntry **centry,
+		      int open_flags, int fbuf_flags)
 {
     int ret;
 
-    ret = fcache_get_data (centry, fid, ce);
+    ret = fcache_get_data (centry, ce, 0);
     if (ret)
 	return ret;
 
     ret = fcache_get_fbuf (*centry, fd, fbuf, open_flags, fbuf_flags);
     if (ret) {
-	fcache_release(*centry);
 	return ret;
     }
     return 0;
@@ -99,25 +98,23 @@ adir_lookup (FCacheEntry *centry, const char *name, VenusFid *file)
  */
 
 int
-adir_changefid (VenusFid *dir,
+adir_changefid (FCacheEntry **centry,
 		const char *name,
 		VenusFid *file,
 		CredCacheEntry **ce)
 {
-    FCacheEntry *centry;
     int ret;
     int fd;
     fbuf the_fbuf;
 
-    ret = get_fbuf_from_fid (dir, ce, &fd, &the_fbuf, &centry, O_RDWR, 
-			     FBUF_READ|FBUF_WRITE|FBUF_SHARED);
+    ret = get_fbuf_from_centry (ce, &fd, &the_fbuf, centry, O_RDWR, 
+				FBUF_READ|FBUF_WRITE|FBUF_SHARED);
     if (ret)
 	return ret;
 
     ret = fdir_changefid (&the_fbuf, name, file);
     fbuf_end (&the_fbuf);
     close (fd);
-    fcache_release (centry);
     return ret;
 }
 
@@ -126,23 +123,21 @@ adir_changefid (VenusFid *dir,
  */
 
 int
-adir_emptyp (VenusFid *dir,
+adir_emptyp (FCacheEntry **centry,
 	     CredCacheEntry **ce)
 {
-     FCacheEntry *centry;
      int ret;
      int fd;
      fbuf the_fbuf;
 
-     ret = get_fbuf_from_fid (dir, ce, &fd, &the_fbuf, &centry,
-			      O_RDONLY, FBUF_READ|FBUF_PRIVATE);
+     ret = get_fbuf_from_centry (ce, &fd, &the_fbuf, centry,
+				 O_RDONLY, FBUF_READ|FBUF_PRIVATE);
      if (ret)
 	 return ret;
 
      ret = fdir_emptyp (&the_fbuf);
      fbuf_end (&the_fbuf);
      close (fd);
-     fcache_release (centry);
      return ret;
 }
 
@@ -152,25 +147,23 @@ adir_emptyp (VenusFid *dir,
  */
 
 int
-adir_readdir (VenusFid *dir,
-	      void (*func)(VenusFid *, const char *, void *), 
+adir_readdir (FCacheEntry **centry,
+	      fdir_readdir_func func,
 	      void *arg,
 	      CredCacheEntry **ce)
 {
      int fd;
      fbuf the_fbuf;
-     FCacheEntry *centry;
      int ret;
 
-     ret = get_fbuf_from_fid (dir, ce, &fd, &the_fbuf, &centry,
-			      O_RDONLY, FBUF_READ|FBUF_PRIVATE);
+     ret = get_fbuf_from_centry (ce, &fd, &the_fbuf, centry,
+				 O_RDONLY, FBUF_READ|FBUF_PRIVATE);
      if (ret)
 	 return ret;
 
-     ret = fdir_readdir (&the_fbuf, func, arg, dir);
+     ret = fdir_readdir (&the_fbuf, func, arg, (*centry)->fid, NULL);
      fbuf_end (&the_fbuf);
      close (fd);
-     fcache_release (centry);
      return ret;
 }
 
@@ -195,7 +188,7 @@ adir_mkdir (FCacheEntry *dir,
 	return ret;
 
     ret = fdir_mkdir (&the_fbuf, dot, dot_dot);
-    fcache_update_length (dir, fbuf_len(&the_fbuf));
+    fcache_update_length (dir, fbuf_len(&the_fbuf), fbuf_len(&the_fbuf));
     fbuf_end (&the_fbuf);
     close (fd);
     return ret;
@@ -220,7 +213,7 @@ adir_creat (FCacheEntry *dir,
 	return ret;
 
     ret = fdir_creat (&the_fbuf, name, fid);
-    fcache_update_length (dir, fbuf_len(&the_fbuf));
+    fcache_update_length (dir, fbuf_len(&the_fbuf), fbuf_len(&the_fbuf));
     fbuf_end (&the_fbuf);
     close (fd);
     return ret;
@@ -244,7 +237,7 @@ adir_remove (FCacheEntry *dir,
 	return ret;
 
     ret = fdir_remove(&the_fbuf, name, NULL);
-    fcache_update_length (dir, fbuf_len(&the_fbuf));
+    fcache_update_length (dir, fbuf_len(&the_fbuf), fbuf_len(&the_fbuf));
     fbuf_end (&the_fbuf);
     close (fd);
     return ret;

@@ -33,7 +33,7 @@
 
 #define _KERNEL
 #include "arla_local.h"
-RCSID("$KTH: irix-subr.c,v 1.25 2000/10/14 19:58:09 map Exp $");
+RCSID("$arla: irix-subr.c,v 1.27 2002/03/06 21:57:00 tol Exp $");
 
 static long blocksize = 1024;	/* XXX */
 
@@ -52,7 +52,7 @@ flushbuf (void *vargs)
     args->last = NULL;
 }
 
-static void
+static int
 write_dirent(VenusFid *fid, const char *name, void *arg)
 {
      struct dirent64 dirent, *real;
@@ -72,9 +72,10 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
      args->off += real->d_reclen;
      real->d_off = args->off;
      args->last = real;
+     return 0;
 }
 
-Result
+int
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	  fcache_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)

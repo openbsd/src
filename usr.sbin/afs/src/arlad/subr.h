@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,7 +35,7 @@
  * Header with prototypes for OS-specific functions.
  */
 
-/* $KTH: subr.h,v 1.11 2000/10/14 19:58:13 map Exp $ */
+/* $arla: subr.h,v 1.13 2002/07/24 06:07:04 lha Exp $ */
 
 #ifndef _SUBR_H_
 #define _SUBR_H_
@@ -59,11 +59,11 @@ struct write_dirent_args {
 ino_t
 dentry2ino (const char *name, const VenusFid *fid, const FCacheEntry *parent);
 
-Result
+int
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	  fcache_cache_handle *, char *, size_t);
 
-Result
+int
 conv_dir_sub (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	      fcache_cache_handle *cache_handle,
 	      char *cache_name, size_t cache_name_sz,

@@ -37,7 +37,7 @@
 #define _INCLUDE_HPUX_SOURCE
 
 #include "arla_local.h"
-RCSID("$KTH: hpux-subr.c,v 1.26 2000/10/14 19:58:07 map Exp $");
+RCSID("$arla: hpux-subr.c,v 1.28 2002/03/06 21:56:59 tol Exp $");
 
 static long blocksize = 1024;	/* XXX */
 
@@ -63,7 +63,7 @@ flushbuf (void *vargs)
         (((sizeof(struct dirent)+ (strlen((dp)->d_name)+1)) +3) & ~3)
 #endif
 
-static void
+static int
 write_dirent(VenusFid *fid, const char *name, void *arg)
 {
      struct dirent dirent, *real;
@@ -86,9 +86,10 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
      real->d_off = args->off;
 #endif
      args->last = real;
+     return 0;
 }
 
-Result
+int
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	  fcache_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,11 +31,12 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: cmcb.h,v 1.3 2000/10/02 22:30:54 lha Exp $ */
+/* $arla: cmcb.h,v 1.5 2002/07/24 06:02:02 lha Exp $ */
 
 #ifndef _CMCB_H_
 #define _CMCB_H_
 
 void cmcb_init (void);
+void cmcb_reinit (void);
 
 #endif /* _CMCB_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,16 +39,16 @@
 #endif
 
 #include "arla_local.h"
-RCSID("$KTH: bsd-subr.c,v 1.55.2.1 2001/01/29 02:02:17 lha Exp $");
+RCSID("$arla: bsd-subr.c,v 1.61 2003/02/15 02:24:08 lha Exp $");
 
 #ifdef __linux__
-#include <xfs/xfs_dirent.h>
+#include <nnpfs/nnpfs_dirent.h>
 #else
-#define XFS_DIRENT_BLOCKSIZE 512
-#define xfs_dirent dirent
+#define NNPFS_DIRENT_BLOCKSIZE 512
+#define nnpfs_dirent dirent
 #endif
 
-static long blocksize = XFS_DIRENT_BLOCKSIZE;	/* XXX */
+static long blocksize = NNPFS_DIRENT_BLOCKSIZE;	/* XXX */
 
 /*
  * Write out all remaining data in `args'
@@ -59,7 +59,7 @@ flushbuf (void *vargs)
 {
     struct write_dirent_args *args = (struct write_dirent_args *)vargs;
     unsigned inc = blocksize - (args->ptr - args->buf);
-    struct xfs_dirent *last = (struct xfs_dirent *)args->last;
+    struct nnpfs_dirent *last = (struct nnpfs_dirent *)args->last;
 
     last->d_reclen += inc;
     if (write (args->fd, args->buf, blocksize) != blocksize)
@@ -72,10 +72,10 @@ flushbuf (void *vargs)
  * Write a dirent to the args buf in `arg' containg `fid' and `name'.
  */
 
-static void
+static int
 write_dirent(VenusFid *fid, const char *name, void *arg)
 {
-     struct xfs_dirent dirent, *real;
+     struct nnpfs_dirent dirent, *real;
      struct write_dirent_args *args = (struct write_dirent_args *)arg;
 
      dirent.d_namlen = strlen (name);
@@ -89,7 +89,7 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
 
      if (args->ptr + dirent.d_reclen > args->buf + blocksize)
 	  flushbuf (args);
-     real = (struct xfs_dirent *)args->ptr;
+     real = (struct nnpfs_dirent *)args->ptr;
 
      real->d_namlen = dirent.d_namlen;
      real->d_reclen = dirent.d_reclen;
@@ -102,9 +102,10 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
      args->ptr += real->d_reclen;
      args->off += real->d_reclen;
      args->last = real;
+     return 0;
 }
 
-Result
+int
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	  fcache_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)
@@ -133,8 +134,8 @@ dir_remove_name (FCacheEntry *e, const char *filename,
     char *buf;
     char *p;
     size_t len;
-    struct xfs_dirent *dp;
-    struct xfs_dirent *last_dp;
+    struct nnpfs_dirent *dp;
+    struct nnpfs_dirent *last_dp;
 
     fcache_extra_file_name (e, cache_name, cache_name_sz);
     fd = open (cache_name, O_RDWR, 0);
@@ -157,21 +158,28 @@ dir_remove_name (FCacheEntry *e, const char *filename,
     ret = ENOENT;
     for (p = buf = fbuf_buf (&fb); p < buf + len; p += dp->d_reclen) {
 
-	dp = (struct xfs_dirent *)p;
+	dp = (struct nnpfs_dirent *)p;
 
 	assert (dp->d_reclen > 0);
 
 	if (strcmp (filename, dp->d_name) == 0) {
 	    if (last_dp != NULL) {
+		size_t off1, off2;
 		unsigned len;
 
 		/*
-		 * It's not totally clear how large we can make
-		 * d_reclen without loosing.  Not making it larger
-		 * than DIRBLKSIZ seems safe.
+		 * d_reclen can be as largest (in worst case)
+		 * DIRBLKSIZ, and may not cause the entry to cross a
+		 * DIRBLKSIZ boundery.
 		 */
 		len = last_dp->d_reclen + dp->d_reclen;
-		if (len < DIRBLKSIZ)
+
+                off1 = (char *)last_dp - buf;
+                off2 = off1 + len;
+		off1 /= DIRBLKSIZ;
+		off2 /= DIRBLKSIZ;
+
+		if (len < DIRBLKSIZ && off1 == off2)
 		    last_dp->d_reclen = len;
 	    }
 	    dp->d_fileno = 0;

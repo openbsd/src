@@ -37,7 +37,7 @@
 
 #include "arla_local.h"
 #include <kafs.h>
-RCSID("$KTH: fprio.c,v 1.9 2000/10/02 22:31:43 lha Exp $");
+RCSID("$arla: fprio.c,v 1.12 2002/10/02 00:54:21 lha Exp $");
 
 /* Hashtable of entries by name */
 static Hashtab *fpriohashtab;
@@ -199,8 +199,10 @@ fprio_readin(char *file)
     if (f == NULL)
 	return -1;
 
-    while(fgets(line, sizeof(line)-1, f) != NULL) {
+    while(fgets(line, sizeof(line), f) != NULL) {
 	lineno++;
+
+	line[strcspn(line, "\n")] = '\0';
 
 	if (line[0] == '#')
 	    continue;
@@ -256,7 +258,7 @@ fprio_print_entry (void *ptr, void *arg)
 {
     struct fpriorityentry *n = (struct fpriorityentry *)ptr;
     const char *cell = cell_num2name(n->fid.Cell);
-    char *comment;
+    const char *comment;
 
     if (cell == NULL)  /* If we cant find the cell comment it out */
 	comment = "#";

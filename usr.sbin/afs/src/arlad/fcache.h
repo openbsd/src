@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,27 +35,27 @@
  * The interface for the file-cache.
  */
 
-/* $KTH: fcache.h,v 1.72.2.2 2001/10/02 16:13:07 jimmy Exp $ */
+/* $arla: fcache.h,v 1.97 2003/01/10 03:20:42 lha Exp $ */
 
 #ifndef _FCACHE_H_
 #define _FCACHE_H_
 
-#include <xfs/xfs_message.h>
+#include <nnpfs/nnpfs_message.h>
 #include <fcntl.h>
 #include <cred.h>
 #include <heap.h>
 
 /*
  * For each entry in the filecache we save the rights of NACCESS users.
- * The value should be the same as MAXRIGHTS from xfs_message.h
- * If it isn't you can get some very strange behavior from xfs, so don't
+ * The value should be the same as MAXRIGHTS from nnpfs_message.h
+ * If it isn't you can get some very strange behavior from nnpfs, so don't
  * even try. XXX
  */ 
 
 #define NACCESS MAXRIGHTS
 
 typedef struct {
-     xfs_pag_t cred;
+     nnpfs_pag_t cred;
      u_long access;
 } AccessEntry;
 
@@ -70,26 +70,27 @@ enum Access { ANONE   = 0x0,
 
 typedef struct {
     Bool valid;
-    xfs_cache_handle xfs_handle;
+    nnpfs_cache_handle nnpfs_handle;
 } fcache_cache_handle;
 
 typedef struct {
     struct Lock lock;		/* locking information for this entry */
     VenusFid fid;		/* The fid of the file for this entry */
     unsigned refcount;		/* reference count */
-    u_int32_t host;		/* the source of this entry */
-    size_t length;		/* length of our cached copy */
+    uint32_t host;		/* the source of this entry */
+    size_t length;		/* the cache usage size */
+    size_t wanted_length;	/* this much data should be fetched */
+    size_t fetched_length;	/* this much data has been fetched */
     AFSFetchStatus status;	/* Removed unused stuff later */
     AFSCallBack callback;	/* Callback to the AFS-server */
     AFSVolSync volsync;		/* Sync info for ro-volumes */
     AccessEntry acccache[NACCESS]; /* cache for the access rights */
-    u_int32_t anonaccess;	/* the access mask for system:anyuser */
+    uint32_t anonaccess;	/* the access mask for system:anyuser */
     unsigned index;		/* this is V%u */
     fcache_cache_handle handle;	/* handle */
     struct {
 	unsigned usedp : 1;	/* Is this entry used? */
 	unsigned attrp : 1;	/* Are the attributes in status valid? */
-	unsigned datap : 1;	/* Is the cache-file valid? */
 	unsigned attrusedp : 1;	/* Attr is used in the kernel */
 	unsigned datausedp : 1;	/* Data is used in the kernel */
 	unsigned extradirp : 1;	/* Has this directory been "converted"? */
@@ -108,6 +109,8 @@ typedef struct {
     Bool priority;		/* is the file worth keeping */
     int hits;			/* number of lookups */
     int cleanergen;		/* generation cleaner */
+    PollerEntry *poll;		/* poller entry */
+    uint32_t disco_id;		/* id in disconncted log */
 } FCacheEntry;
 
 /*
@@ -115,26 +118,16 @@ typedef struct {
  */
 
 struct fs_server_context {
-    ConnCacheEntry *conns[NMAXNSERVERS];
     int i;			/* current number being probed */
     int num_conns;		/* number in `conns' */
+    VolCacheEntry *ve;		/*  */
+    struct fs_server_entry {
+	ConnCacheEntry *conn;	/* rx connection to server */
+	int ve_ent;		/* entry in `ve' */
+    } conns[NMAXNSERVERS];
 };
 
 typedef struct fs_server_context fs_server_context;
-
-/*
- * This is magic cookie for the dump of the fcache.
- * It's supposed not to be able to be confused with an old-style
- * dump (with no header)
- */
-
-#define FCACHE_MAGIC_COOKIE	0xff1201ff
-
-/*
- * current version number of the dump file
- */
-
-#define FCACHE_VERSION		0x2
 
 /*
  * How far the cleaner will go went cleaning things up.
@@ -145,15 +138,15 @@ extern Bool fprioritylevel;
 void
 fcache_init (u_long alowvnodes,
 	     u_long ahighvnodes,
-	     u_long alowbytes,
-	     u_long ahighbytes,
+	     int64_t alowbytes,
+	     int64_t ahighbytes,
 	     Bool recover);
 
 int
 fcache_reinit(u_long alowvnodes,
 	      u_long ahighvnodes,
-	      u_long alowbytes,
-	      u_long ahighbytes);
+	      int64_t alowbytes,
+	      int64_t ahighbytes);
 
 void
 fcache_purge_volume (VenusFid fid);
@@ -162,22 +155,25 @@ void
 fcache_purge_host (u_long host);
 
 void
-fcache_purge_cred (xfs_pag_t cred, int32_t cell);
+fcache_purge_cred (nnpfs_pag_t cred, int32_t cell);
 
 void
 fcache_stale_entry (VenusFid fid, AFSCallBack callback);
 
+void
+fcache_invalidate_mp (void);
+
 int
 fcache_file_name (FCacheEntry *entry, char *s, size_t len);
+
+int
+fcache_conv_file_name (FCacheEntry *entry, char *s, size_t len);
 
 int
 fcache_dir_name (FCacheEntry *entry, char *s, size_t len);
 
 int
 fcache_extra_file_name (FCacheEntry *entry, char *s, size_t len);
-
-int
-fcache_create_file (FCacheEntry *entry);
 
 int
 fcache_open_file (FCacheEntry *entry, int flag);
@@ -192,7 +188,8 @@ int
 write_data (FCacheEntry *entry, AFSStoreStatus *status, CredCacheEntry *ce);
 
 int
-truncate_file (FCacheEntry *entry, off_t size, CredCacheEntry *ce);
+truncate_file (FCacheEntry *entry, off_t size,
+	       AFSStoreStatus *status, CredCacheEntry *ce);
 
 int
 write_attr (FCacheEntry *entry, const AFSStoreStatus *status,
@@ -249,7 +246,8 @@ int
 fcache_find (FCacheEntry **res, VenusFid fid);
 
 int
-fcache_get_data (FCacheEntry **res, VenusFid *fid, CredCacheEntry **ce);
+fcache_get_data (FCacheEntry **e, CredCacheEntry **ce,
+		 size_t wanted_length);
 
 int
 fcache_verify_attr (FCacheEntry *entry, FCacheEntry *parent_entry,
@@ -279,7 +277,7 @@ setacl(VenusFid fid, CredCacheEntry *ce,
 int
 getvolstat(VenusFid fid, CredCacheEntry *ce,
 	   AFSFetchVolumeStatus *volstat,
-	   char *volumename,
+	   char *volumename, size_t volumenamesz,
 	   char *offlinemsg,
 	   char *motd);
 
@@ -290,13 +288,13 @@ setvolstat(VenusFid fid, CredCacheEntry *ce,
 	   char *offlinemsg,
 	   char *motd);
 
-u_long
+int64_t
 fcache_highbytes(void);
 
-u_long
+int64_t
 fcache_usedbytes(void);
 
-u_long
+int64_t
 fcache_lowbytes(void);
 
 u_long
@@ -318,25 +316,28 @@ int
 fcache_giveup_all_callbacks (void);
 
 int
-fcache_reobtain_callbacks (void);
+fcache_reobtain_callbacks (struct nnpfs_cred *cred);
 
 /* XXX - this shouldn't be public, but getrights in inter.c needs it */
 int
 read_attr (FCacheEntry *, CredCacheEntry *);
 
 Bool
-findaccess (xfs_pag_t cred, AccessEntry *ae, AccessEntry **pos);
+findaccess (nnpfs_pag_t cred, AccessEntry *ae, AccessEntry **pos);
 
 void
 fcache_unused(FCacheEntry *entry);
 
 void
-fcache_update_length (FCacheEntry *entry, size_t len);
+fcache_update_length (FCacheEntry *entry, size_t len, size_t have_len);
+
+int
+init_fs_context (FCacheEntry *e,
+		 CredCacheEntry *ce,
+		 fs_server_context *context);
 
 ConnCacheEntry *
-find_first_fs (FCacheEntry *e,
-	       CredCacheEntry *ce,
-	       fs_server_context *context);
+find_first_fs (fs_server_context *context);
 
 ConnCacheEntry *
 find_next_fs (fs_server_context *context,
@@ -356,7 +357,7 @@ int
 fcache_get_fbuf (FCacheEntry *centry, int *fd, fbuf *fbuf,
 		 int open_flags, int fbuf_flags);
 
-u_long
+int64_t
 fcache_calculate_usage (void);
 
 const VenusFid *
@@ -365,12 +366,19 @@ fcache_realfid (const FCacheEntry *entry);
 void
 fcache_mark_as_mountpoint (FCacheEntry *entry);
 
-int
-collectstats_hostpart(u_int32_t *host, u_int32_t *part, int *n);
+const char *
+fcache_getdefsysname (void);
 
 int
-collectstats_getentry(u_int32_t host, u_int32_t part, u_int32_t type,
-		      u_int32_t items_slot, u_int32_t *count,
-		      int64_t *items_total, int64_t *total_time);
+fcache_addsysname (const char *sysname);
+
+int
+fcache_removesysname (const char *sysname);
+
+int
+fcache_setdefsysname (const char *sysname);
+
+int
+fs_probe (struct rx_connection *conn);
 
 #endif /* _FCACHE_H_ */

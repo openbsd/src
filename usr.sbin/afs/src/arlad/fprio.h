@@ -35,7 +35,7 @@
  * Our cache of volume information.
  */
 
-/* $KTH: fprio.h,v 1.6 2000/10/02 22:31:48 lha Exp $ */
+/* $arla: fprio.h,v 1.6 2000/10/02 22:31:48 lha Exp $ */
 
 #ifndef _FPRIO_
 #define _FPRIO_

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,18 +39,21 @@
 #include <parse_units.h>
 #include <getarg.h>
 
-RCSID("$KTH: arla.c,v 1.135.2.2 2001/09/14 13:26:31 lha Exp $") ;
+RCSID("$arla: arla.c,v 1.163 2003/06/10 16:25:07 lha Exp $") ;
 
 enum connected_mode connected_mode = CONNECTED;
 
 static void
 initrx (int port)
 {
-     int error;
+    int error;
 
-     error = rx_Init (htons(port));
-     if (error)
-	  arla_err (1, ADEBERROR, error, "rx_init");
+    if (port == 0)
+	port = afscallbackport;
+
+    error = rx_Init (htons(port));
+    if (error)
+	arla_err (1, ADEBERROR, error, "rx_init");
 }
 
 
@@ -63,10 +66,16 @@ store_state (void)
     cm_store_state ();
 }
 
+typedef enum { CONF_PARAM_INT, 
+	       CONF_PARAM_STR,
+	       CONF_PARAM_BOOL,
+	       CONF_PARAM_INT64
+} conf_type;
+
 struct conf_param {
     const char *name;
-    unsigned *val;
-    unsigned default_val;
+    conf_type type;
+    void *val;
 };
 
 /*
@@ -74,22 +83,20 @@ struct conf_param {
  */
 
 static struct units size_units[] = {
+    { "G", 1024 * 1024 * 1024 },
     { "M", 1024 * 1024 },
     { "k", 1024 },
     { NULL, 0 }
 };
 
 static void
-read_conffile(char *fname,
+read_conffile(const char *fname,
 	      struct conf_param *params)
 {
     FILE *fp;
     char buf[256];
     int lineno;
     struct conf_param *p;
-
-    for (p = params; p->name; ++p)
-	*(p->val) = p->default_val;
 
     arla_warnx (ADEBINIT, "read_conffile: %s", fname);
 
@@ -107,13 +114,12 @@ read_conffile(char *fname,
 	char *save = NULL;
 	char *n;
 	char *v;
-	unsigned val;
+	int64_t val;
 	char *endptr;
 
 	++lineno;
-	if (buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
-	if (buf[0] == '#')
+	buf[strcspn(buf, "\n")] = '\0';
+	if (buf[0] == '\0' || buf[0] == '#')
 	    continue;
 
 	n = strtok_r (buf, " \t", &save);
@@ -128,14 +134,7 @@ read_conffile(char *fname,
 	    continue;
 	}
 
-	val = parse_units(v, size_units, NULL);
-	if(val == (unsigned)-1) {
-	    val = strtol(v, &endptr, 0);
-	    if (endptr == v)
-		fprintf (stderr, "%s:%d: bad value `%s'\n",
-			 fname, lineno, v);
-	}
-	    
+    
 	for (p = params; p->name; ++p) {
 	    if (strcmp(n, p->name) == 0) {
 		partial_match = 1;
@@ -146,19 +145,70 @@ read_conffile(char *fname,
 		partial_param = p;
 	    }
 	}
-	if (partial_match == 1)
-	    *(partial_param->val) = val;
-	else if (partial_match == 0)
+	if (partial_match == 0) {
 	    fprintf (stderr, "%s:%d: unknown parameter `%s'\n",
 		     fname, lineno, n);
-	else
+	    continue;
+	} else if (partial_match != 1) {
 	    fprintf (stderr, "%s:%d: ambiguous parameter `%s'\n",
 		     fname, lineno, n);
+	    continue;
+	}
+
+	p = partial_param;
+
+	switch (p->type) {
+	case CONF_PARAM_INT:
+	case CONF_PARAM_INT64:
+
+	    val = parse_units(v, size_units, NULL);
+	    if(val == -1 || val < 0) {
+#ifdef HAVE_STRTOLL
+		val = strtoll(v, &endptr, 0);
+#else
+		val = strtol(v, &endptr, 0);
+#endif
+		if (*endptr != '\0')
+		    fprintf (stderr, "%s:%d: bad value `%s'\n",
+			     fname, lineno, v);
+	    }
+
+	    if (p->type == CONF_PARAM_INT)
+		    *((unsigned *)partial_param->val) = val;
+	    else if (p->type == CONF_PARAM_INT64)
+		    *((int64_t *)partial_param->val) = val;
+	    else
+		    abort();
+	    break;
+
+	case CONF_PARAM_STR:
+
+	    *((char **)partial_param->val) = strdup(v);
+	    
+	    break;
+
+	case CONF_PARAM_BOOL:
+
+	    if (strcasecmp(v, "yes") == 0 || strcasecmp(v, "true") == 0)
+		*((unsigned *)partial_param->val) = 1;
+	    else if (strcasecmp(v, "no") == 0 || strcasecmp(v, "false") == 0)
+		*((unsigned *)partial_param->val) = 0;
+	    else
+		fprintf (stderr, "%s:%d: bad boolean value `%s'\n",
+			 fname, lineno, v);
+	    break;
+	default:
+	    abort();
+	}
+
+
+
     }
     fclose(fp);
 }
 
-#if KERBEROS && !defined(HAVE_KRB_GET_ERR_TEXT)
+#ifdef HAVE_KRB4
+#ifndef HAVE_KRB_GET_ERR_TEXT
 
 #ifndef MAX_KRB_ERRORS
 #define MAX_KRB_ERRORS 256
@@ -173,31 +223,46 @@ krb_get_err_text(int code)
     return err_failure;
   return krb_err_txt[code];
 }
+
+#endif
 #endif
 
-static unsigned low_vnodes, high_vnodes, low_bytes, high_bytes;
-static unsigned numcreds, numconns, numvols, dynrootlevel;
+static unsigned low_vnodes	= ARLA_LOW_VNODES;
+static unsigned high_vnodes	= ARLA_HIGH_VNODES;
+static int64_t low_bytes	= ARLA_LOW_BYTES;
+static int64_t high_bytes	= ARLA_HIGH_BYTES;
+static unsigned numcreds	= ARLA_NUMCREDS;
+static unsigned numconns	= ARLA_NUMCONNS;
+static unsigned numvols		= ARLA_NUMVOLS;
+static unsigned dynrootlevel	= DYNROOT_DEFAULT;
+static char *conf_sysname	= NULL;	/* sysname from conf file */
+const char *argv_sysname	= NULL; /* sysname from argv */
+#ifdef KERBEROS
+const char *rxkad_level_string = "crypt";
+#endif
 
 static struct conf_param conf_params[] = {
-    {"low_vnodes",		&low_vnodes,	 ARLA_LOW_VNODES},
-    {"high_vnodes",		&high_vnodes,	 ARLA_HIGH_VNODES},
-    {"low_bytes",		&low_bytes,	 ARLA_LOW_BYTES},
-    {"high_bytes",		&high_bytes,	 ARLA_HIGH_BYTES},
-    {"numcreds",		&numcreds,	 ARLA_NUMCREDS},
-    {"numconns",		&numconns,	 ARLA_NUMCREDS},
-    {"numvols",			&numvols,	 ARLA_NUMVOLS},
-    {"fpriority",               &fprioritylevel, FPRIO_DEFAULT},
-    {"dynroot",                 &dynrootlevel,   DYNROOT_DEFAULT},
-    {NULL,			NULL,		 0}};
+    {"dynroot",			CONF_PARAM_BOOL,	&dynrootlevel},
+    {"fake_stat",		CONF_PARAM_BOOL,	&fake_stat},
+    {"fetch_block",		CONF_PARAM_INT,		&fetch_block_size},
+    {"low_vnodes",		CONF_PARAM_INT,		&low_vnodes},
+    {"high_vnodes",		CONF_PARAM_INT,		&high_vnodes},
+    {"low_bytes",		CONF_PARAM_INT64,	&low_bytes},
+    {"high_bytes",		CONF_PARAM_INT64,	&high_bytes},
+    {"numcreds",		CONF_PARAM_INT,		&numcreds},
+    {"numconns",		CONF_PARAM_INT,		&numconns},
+    {"numvols",			CONF_PARAM_INT,		&numvols},
+    {"sysname",			CONF_PARAM_STR,		&conf_sysname},
+#ifdef KERBEROS
+    {"rxkad-level",		CONF_PARAM_STR,		&rxkad_level_string},
+#endif
+    { NULL }
+};
 
-char *conf_file = ARLACONFFILE;
+const char *conf_file = ARLACONFFILE;
 char *log_file  = NULL;
 char *debug_levels = NULL;
 char *connected_mode_string = NULL;
-#ifdef KERBEROS
-char *rxkad_level_string = "auth";
-#endif
-const char *temp_sysname = NULL;
 char *root_volume;
 int cpu_usage;
 int version_flag;
@@ -205,6 +270,7 @@ int help_flag;
 int recover = 0;
 int dynroot_enable = 0;
 int cm_consistency = 0;
+int fake_stat = 0;
 
 /*
  * These are exported to other modules
@@ -279,25 +345,17 @@ set_connected_mode (const char *s)
  */
 
 int
-arla_init (int argc, char **argv)
+arla_init (void)
 {
     log_flags log_flags;
     char fpriofile[MAXPATHLEN];
-
-    if (temp_sysname == NULL)
-	temp_sysname = arla_getsysname ();
-
-    if (temp_sysname != NULL)
-        strlcpy(arlasysname, temp_sysname, SYSNAMEMAXLEN);
-
-#ifdef KERBEROS
-    conn_rxkad_level = parse_rxkad_level (rxkad_level_string);
-    if (conn_rxkad_level < 0)
-	errx (1, "bad rxkad level `%s'", rxkad_level_string);
-#endif
+    const char *temp_sysname;
 
     if (log_file == NULL)
 	log_file = default_log_file;
+
+    if (strcmp(log_file, "syslog") == 0)
+	log_file = "syslog:no-delay";
 
     log_flags = 0;
     if (cpu_usage)
@@ -322,6 +380,12 @@ arla_init (int argc, char **argv)
 
     read_conffile(conf_file, conf_params);
 
+#ifdef KERBEROS
+    conn_rxkad_level = parse_rxkad_level (rxkad_level_string);
+    if (conn_rxkad_level < 0)
+	errx (1, "bad rxkad level `%s'", rxkad_level_string);
+#endif
+
     if (cache_dir == NULL)
 	cache_dir = get_default_cache_dir();
 
@@ -330,6 +394,16 @@ arla_init (int argc, char **argv)
     if (chdir (cache_dir) < 0)
 	arla_err (1, ADEBERROR, errno, "chdir %s", cache_dir);
 
+
+    if (argv_sysname)
+	temp_sysname = argv_sysname;
+    else if (conf_sysname)
+	temp_sysname = conf_sysname;
+    else
+	temp_sysname = arla_getsysname ();
+
+    if (temp_sysname != NULL)
+	fcache_setdefsysname(temp_sysname);
 
     if (dynrootlevel || dynroot_enable)
 	dynroot_setenable (TRUE);
@@ -345,12 +419,16 @@ arla_init (int argc, char **argv)
 		connected_levels[connected_mode]);
     arla_warnx (ADEBINIT, "ports_init");
     ports_init ();
+    arla_warnx (ADEBINIT, "uae_init");
+    uae_init ();
     arla_warnx (ADEBINIT, "rx");
     initrx (client_port);
     arla_warnx (ADEBINIT, "conn_init numconns = %u", numconns);
     conn_init (numconns);
     arla_warnx (ADEBINIT, "cellcache");
     cell_init (0, arla_log_method);
+    arla_warnx (ADEBINIT, "poller");
+    poller_init();
     arla_warnx (ADEBINIT, "fprio");
     fprio_init(fpriofile);
     arla_warnx (ADEBINIT, "volcache numvols = %u", numvols);
@@ -370,9 +448,9 @@ arla_init (int argc, char **argv)
 
     arla_warnx (ADEBINIT,
 		"fcache low_vnodes = %u, high_vnodes = %u"
-		"low_bytes = %u, high_bytes = %u",
+		"low_bytes = %ld, high_bytes = %ld",
 		low_vnodes, high_vnodes,
-		low_bytes, high_bytes);
+		(long)low_bytes, (long)high_bytes);
     fcache_init (low_vnodes, high_vnodes,
 		 low_bytes, high_bytes, recover);
 

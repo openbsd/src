@@ -1,6 +1,14 @@
 #
-# $KTH: .gdbinit,v 1.5 2000/11/02 12:41:46 lha Exp $
+# $arla: .gdbinit,v 1.10 2002/04/10 08:56:33 lha Exp $
 #
+
+define memoryusage
+y
+printf "rx bytes: bytes: %d allocations: %d\n", rxi_Allocsize, rxi_Alloccnt
+printf "fcache: highvnode: %d usedvnode: %d\n", highvnodes, usedvnodes
+printf "conn: nconnections %d\n", nconnections
+printf "cred: ncredentials %d\n", ncredentials
+end
 
 
 define listfcachenodes
@@ -62,51 +70,72 @@ end
 
 define lwp_ps_internal
 set $lwp_ps_queue = $arg0
+set $bf = $arg1
 set $lwp_ps_counter = $lwp_ps_queue.count
 set $lwp_ps_foo = $lwp_ps_queue->head
 while $lwp_ps_counter != 0
-  printf " name: %s", (char *) $lwp_ps_foo->name
+  printf " name: %s   index: %d", (char *) $lwp_ps_foo->name, $lwp_ps_foo->index
   if $lwp_ps_foo == lwp_cpptr
     printf "                 RUNNING THREAD"
   end
   printf "\n"
-  printf "  eventlist:"
-  set $lwp_ps_envcnt = 0
-  while $lwp_ps_envcnt < $lwp_ps_foo->eventcnt
-    printf " %x",  $lwp_ps_foo->eventlist[$lwp_ps_envcnt]
-    set $lwp_ps_envcnt = $lwp_ps_envcnt + 1
+  if $bf == 0
+    printf "  eventlist:"
+    set $lwp_ps_envcnt = 0
+    while $lwp_ps_envcnt < $lwp_ps_foo->eventcnt
+      printf " %x",  $lwp_ps_foo->eventlist[$lwp_ps_envcnt]
+      set $lwp_ps_envcnt = $lwp_ps_envcnt + 1
+    end
+    printf "\n"
+    if $lwp_ps_foo == lwp_cpptr
+      printf "  fp: 0x%x\n", $fp
+      printf "  pc: 0x%x\n", $pc
+      printf "  pointers on topstack added for completeness\n"
+    end
+    printf "  fp: 0x%x\n",  ((int *)$lwp_ps_foo->context->topstack)[2]
+    printf "  pc: 0x%x\n",  ((int *)$lwp_ps_foo->context->topstack)[3]
+  else
+    set $foo = ((int *)$lwp_ps_foo->context->topstack)[2]
+    backfrom $foo $foo
   end
-  printf "\n"
-  if $lwp_ps_foo == lwp_cpptr
-    printf "  fp: 0x%x\n", $fp
-    printf "  pc: 0x%x\n", $pc
-    printf "  pointers on topstack added for completeness\n"
-  end
-  printf "  fp: 0x%x\n",  ((int *)$lwp_ps_foo->context->topstack)[2]
-  printf "  pc: 0x%x\n",  ((int *)$lwp_ps_foo->context->topstack)[3]
   set $lwp_ps_foo = $lwp_ps_foo->next
   set $lwp_ps_counter = $lwp_ps_counter - 1
 end
 end
 
-define lwp_ps
+define lwp_ps_int
+set $bf = $arg0
 echo Runnable[0]\n
-lwp_ps_internal runnable[0]
+lwp_ps_internal runnable[0] $bf
 echo Runnable[1]\n
-lwp_ps_internal runnable[1]
+lwp_ps_internal runnable[1] $bf
 echo Runnable[2]\n
-lwp_ps_internal runnable[2]
+lwp_ps_internal runnable[2] $bf
 echo Runnable[3]\n
-lwp_ps_internal runnable[3]
+lwp_ps_internal runnable[3] $bf
 echo Runnable[4]\n
-lwp_ps_internal runnable[4]
+lwp_ps_internal runnable[4] $bf
 echo Blocked\n
-lwp_ps_internal blocked
+lwp_ps_internal blocked $bf
+end
+
+define lwp_ps
+lwp_ps_int 0
 end
 
 document lwp_ps
 Print all processes, running or blocked
 end
+
+define lwp_backfrom_all
+lwp_ps_int 1
+end
+
+document lwp_backfrom_all
+Traces from all processes, running or blocked
+end
+
+
 
 define list_count
    set $count = 0
@@ -190,4 +219,23 @@ end
 
 document volume_check
 Check volcache consistency WRT fcache usage, too slow to use !
+end
+
+
+define conn_print
+set $num = 0
+while $num < connhtab->sz
+  set $current = connhtab->tab[$num]
+  while $current != 0
+     set $data = (ConnCacheEntry *)$current->ptr
+     print *$data
+     printf " Cuid: %lx/%lx\n", $data->connection.epoch, $data->connection.cid
+     set $current = $current->next
+  end
+  set $num = $num + 1
+end
+end
+
+document conn_print
+Print all entries on volcache cache
 end

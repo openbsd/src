@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -32,7 +32,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: kernel.c,v 1.27.2.1 2001/03/12 12:22:41 lha Exp $");
+RCSID("$arla: kernel.c,v 1.35 2003/01/10 17:33:44 tol Exp $");
 
 /*
  * The fd we use to talk with the kernel on.
@@ -74,24 +74,24 @@ kernel_usedworkers(void)
 static int
 process_message (int msg_length, char *msg)
 {
-     struct xfs_message_header *header;
-     char *p;
-     int cnt;
+    struct nnpfs_message_header *header;
+    char *p;
+    int cnt;
 
-     cnt = 0;
-     for (p = msg;
-	  msg_length > 0;
-	  p += header->size, msg_length -= header->size) {
-	 header = (struct xfs_message_header *)p;
-	 xfs_message_receive (kernel_fd, header, header->size);
-	 ++cnt;
-     }
-     if (cnt < sizeof(recv_count)/sizeof(recv_count[0]))
-	 ++recv_count[cnt];
-     else
-	 ++recv_count_overflow;
+    cnt = 0;
+    for (p = msg;
+	 msg_length > 0;
+	 p += header->size, msg_length -= header->size) {
+	header = (struct nnpfs_message_header *)p;
+	nnpfs_message_receive (kernel_fd, header, header->size);
+	++cnt;
+    }
+    if (cnt < sizeof(recv_count)/sizeof(recv_count[0]))
+	++recv_count[cnt];
+    else
+	++recv_count_overflow;
      
-     return 0;
+    return 0;
 }
 
 /* no threads available to handle messages */
@@ -103,6 +103,7 @@ static int overload = FALSE;
  */
 
 struct worker {
+    char name[10];
     char data[MAX_XMSG_SIZE];
     PROCESS pid;
     int  msg_length;
@@ -135,7 +136,7 @@ PROCESS version_pid;
 static void
 version_thread (void *foo)
 {
-    xfs_probe_version (kernel_fd, XFS_VERSION);
+    nnpfs_probe_version (kernel_fd, NNPFS_VERSION);
 }
 
 /*
@@ -163,14 +164,14 @@ tcp_open (const char *filename)
     }
 
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = 0x7f000001; /* 127.0.0.1 */
+    addr.sin_addr.s_addr = htonl(0x7f000001); /* 127.0.0.1 */
     addr.sin_port = htons(port);
     ret = connect (s, (struct sockaddr *)&addr, sizeof(addr));
     if (ret < 0) {
 	arla_warn (ADEBWARN, errno, "tcp_open: connect failed");
-	return ret;
+	return s;
     }
-    return ret;
+    return s;
 }
 
 static int
@@ -195,7 +196,7 @@ tcp_read (int fd, void *data, size_t len)
     slen = ntohl(slen);
     if (len < slen) {
 	arla_warnx (ADEBWARN, 
-		    "tcp_read: recv a too large messsage %d",
+		    "tcp_read: recv a too large message %d",
 		    slen);	
 	return -1;
     }
@@ -205,14 +206,23 @@ tcp_read (int fd, void *data, size_t len)
 static ssize_t
 tcp_write (int fd, const void *data, size_t len)
 {
+    int ret;
     int32_t slen = htonl(len);
     char out_len[4];
+
     memcpy (out_len, &slen, sizeof(len));
     if (send (fd, out_len, sizeof(len), 0) != sizeof(out_len)) {
 	arla_warn (ADEBWARN, errno, "tcp_write: failed to write length");
 	return -1;
     }
-    return send (fd, data, len, 0) == len ? len : -1;
+    ret = send (fd, data, len, 0);
+    if (ret != len) {
+	arla_warn (ADEBWARN, errno, "tcp_write: failed to write msg (%d)", 
+		   ret);
+	return -1;
+    }
+
+    return ret;
 }
 
 /*
@@ -272,7 +282,7 @@ null_write (int fd, const void *msg, size_t len)
  */ 
 
 struct kern_interface {
-    char *prefix;
+    const char *prefix;
     int (*open) (const char *filename);
     ssize_t (*read) (int fd, void *msg, size_t len);
     ssize_t (*write) (int fd, const void *msg, size_t len);
@@ -347,68 +357,70 @@ kernel_opendevice (const char *dev)
 void
 kernel_interface (struct kernel_args *args)
 {
-     int i;
+    int i;
 
-     assert (kernel_fd >= 0);
+    assert (kernel_fd >= 0);
 
-     workers = malloc (sizeof(*workers) * args->num_workers);
-     if (workers == NULL)
-	 arla_err (1, ADEBERROR, errno, "malloc %lu failed",
-		   (unsigned long)sizeof(*workers) * args->num_workers);
+    workers = malloc (sizeof(*workers) * args->num_workers);
+    if (workers == NULL)
+	arla_err (1, ADEBERROR, errno, "malloc %lu failed",
+		  (unsigned long)sizeof(*workers) * args->num_workers);
 
-     workers_high = args->num_workers;
-     workers_used = 0;
+    workers_high = args->num_workers;
+    workers_used = 0;
  
     for (i = 0; i < args->num_workers; ++i) {
-	 workers[i].busyp  = 0;
-	 workers[i].number = i;
-	 if (LWP_CreateProcess (sub_thread, WORKER_STACKSIZE, 1,
-				(char *)&workers[i],
-				"worker", &workers[i].pid))
-	     arla_errx (1, ADEBERROR, "CreateProcess of worker failed");
-     }
+	workers[i].busyp  = 0;
+	workers[i].number = i;
+	snprintf(workers[i].name, sizeof(workers[i].name), "worker %d", i);
 
-     if (LWP_CreateProcess (version_thread, WORKER_STACKSIZE, 1,
-			    NULL,
-			    "version", &version_pid))
-	 arla_errx (1, ADEBERROR, "CreateProcess of version thread failed");
+	if (LWP_CreateProcess (sub_thread, WORKER_STACKSIZE, 1,
+			       (char *)&workers[i],
+			       workers[i].name, &workers[i].pid))
+	    arla_errx (1, ADEBERROR, "CreateProcess of worker failed");
+    }
 
-     arla_warnx(ADEBKERNEL, "Arla: selecting on fd: %d", kernel_fd);
+    if (LWP_CreateProcess (version_thread, WORKER_STACKSIZE, 1,
+			   NULL,
+			   "version", &version_pid))
+	arla_errx (1, ADEBERROR, "CreateProcess of version thread failed");
 
-     for (;;) {
-	  fd_set readset;
-	  int ret;
+    arla_warnx(ADEBKERNEL, "Arla: selecting on fd: %d", kernel_fd);
+
+    for (;;) {
+	fd_set readset;
+	int ret;
 	  
-	  FD_ZERO(&readset);
-	  FD_SET(kernel_fd, &readset);
+	FD_ZERO(&readset);
+	FD_SET(kernel_fd, &readset);
 
-	  ret = IOMGR_Select (kernel_fd + 1, &readset, NULL, NULL, NULL); 
+	ret = IOMGR_Select (kernel_fd + 1, &readset, NULL, NULL, NULL); 
 
-	  if (ret < 0)
-	      arla_warn (ADEBKERNEL, errno, "select");
-	  else if (ret == 0)
-	      arla_warnx (ADEBKERNEL,
-			  "Arla: select returned with 0. strange.");
-	  else if (FD_ISSET(kernel_fd, &readset)) {
-	      for (i = 0; i < args->num_workers; ++i) {
-		  if (workers[i].busyp == 0) {
-		      ret = kern_read (kernel_fd, workers[i].data,
-				       sizeof(workers[i].data));
-		      if (ret <= 0) {
-			  arla_warn (ADEBWARN, errno, "read");
-		      } else {
-			  workers[i].msg_length = ret;
-			  LWP_SignalProcess (&workers[i]);
-		      }
-		      break;
-		  }
-	      }
-	      if (i == args->num_workers) {
-		  arla_warnx (ADEBWARN, "kernel: all %u workers busy",
-			      args->num_workers);
-		  overload = TRUE;
-		  LWP_WaitProcess(&overload);
-	      }
-	  }
-     }
+	if (ret < 0)
+	    arla_warn (ADEBKERNEL, errno, "select");
+	else if (ret == 0)
+	    arla_warnx (ADEBKERNEL,
+			"Arla: select returned with 0. strange.");
+	else if (FD_ISSET(kernel_fd, &readset)) {
+	    for (i = 0; i < args->num_workers; ++i) {
+		if (workers[i].busyp == 0) {
+		    ret = kern_read (kernel_fd, workers[i].data,
+				     sizeof(workers[i].data));
+		    if (ret <= 0) {
+			arla_warn (ADEBWARN, errno, "read");
+		    } else {
+			workers[i].msg_length = ret;
+			LWP_SignalProcess (&workers[i]);
+		    }
+		    break;
+		}
+	    }
+	    if (i == args->num_workers) {
+		arla_warnx (ADEBWARN, "kernel: all %u workers busy",
+			    args->num_workers);
+		overload = TRUE;
+		LWP_WaitProcess(&overload);
+	    }
+	}
+    }
 }

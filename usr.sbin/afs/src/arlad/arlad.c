@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,16 +33,19 @@
 
 #include <arla_local.h>
 #include <getarg.h>
-#include <arla-version.h>
-RCSID("$KTH: arlad.c,v 1.5.2.2 2001/07/26 02:05:26 assar Exp $");
+#include <vers.h>
+RCSID("$arla: arlad.c,v 1.21 2003/01/17 03:00:11 lha Exp $");
 
 #define KERNEL_STACKSIZE (16*1024)
 
 char *default_log_file = "syslog";
-int client_port = 4711;
+int client_port = 0;
 
 static char *pid_filename;
 
+#define _PATH_VAR_RUN "/var/run"
+#define _PATH_DEV_NNPFS0 "/dev/nnpfs0"
+#define _PATH_DEV_STDERR "/dev/stderr"
 
 /*
  *
@@ -54,7 +57,7 @@ write_pid_file (const char *progname)
 {
     FILE *fp;
 
-    asprintf (&pid_filename, "/var/run/%s.pid", progname);
+    asprintf (&pid_filename, _PATH_VAR_RUN "/%s.pid", progname);
     if (pid_filename == NULL)
 	return;
     fp = fopen (pid_filename, "w");
@@ -134,7 +137,7 @@ daemonify (void)
 }
 
 
-void
+static void
 arla_start (char *device_file, const char *cache_dir)
 {
     struct kernel_args kernel_args;
@@ -149,13 +152,13 @@ arla_start (char *device_file, const char *cache_dir)
     prctl(PR_SET_DUMPABLE, 1);
 #endif
 
-    xfs_message_init ();
+    nnpfs_message_init ();
     kernel_opendevice (device_file);
     
     kernel_args.num_workers = num_workers;
     
     if (LWP_CreateProcess (kernel_interface, KERNEL_STACKSIZE, 1,
-			       (char *)&kernel_args,
+			   (char *)&kernel_args,
 			   "Kernel-interface", &kernelpid))
 	arla_errx (1, ADEBERROR,
 		   "Cannot create kernel-interface process");
@@ -165,8 +168,8 @@ arla_start (char *device_file, const char *cache_dir)
     if (chroot (cache_dir) < 0)
 	arla_err (1, ADEBERROR, errno, "chroot %s", cache_dir);
 
-	if (chdir ("/") < 0)
-	    arla_err (1, ADEBERROR, errno, "chdir /");
+    if (chdir("/") < 0)
+	arla_err (1, ADEBERROR, errno, "chdir /");
 
     if (fork_flag)
 	kill(getppid(), SIGUSR1);
@@ -181,44 +184,46 @@ get_default_cache_dir (void)
     return ARLACACHEDIR;
 }
 
-char *device_file = "/dev/xfs0";
+char *device_file = _PATH_DEV_NNPFS0;
 
 static struct getargs args[] = {
-    {"conffile", 'c',	arg_string,	&conf_file,
-     "path to configuration file", "file"},
+    {"cache-dir", 0,	arg_string,	&cache_dir,
+     "cache directory",	"directory"},
     {"check-consistency", 'C', arg_flag, &cm_consistency,
      "if we want extra paranoid consistency checks", NULL },
-    {"log",	'l',	arg_string,	&log_file,
-     "where to write log (stderr (default), syslog, or path to file)", NULL},
+    {"cpu-usage", 0,	arg_flag,	&cpu_usage,
+     NULL, NULL},
+    {"conffile", 'c',	arg_string,	&conf_file,
+     "path to configuration file", "file"},
+    {"connected-mode", 0, arg_string,	&connected_mode_string,
+     "initial connected mode [conncted|fetch-only|disconnected]", NULL},
     {"debug",	0,	arg_string,	&debug_levels,
      "what to write in the log", NULL},
     {"device",	'd',	arg_string,	&device_file,
-     "the XFS device to use [/dev/xfs0]", "path"},
-    {"connected-mode", 0, arg_string,	&connected_mode_string,
-     "initial connected mode [conncted|fetch-only|disconnected]", NULL},
+     "the NNPFS device to use [/dev/nnpfs0]", "path"},
     {"dynroot", 'D', arg_flag,	&dynroot_enable,
      "if dynroot is enabled", NULL},
+    {"log",	'l',	arg_string,	&log_file,
+     "where to write log (stderr (default), syslog, or path to file)", NULL},
+    {"fake-mp",	  0,	arg_flag,	&fake_mp,
+     "enable fake mountpoints", NULL},
+    {"fake-stat",  0,	arg_flag,	&fake_stat,
+     "build stat info from afs rights", NULL},
     {"fork",	'n',	arg_negative_flag,	&fork_flag,
      "don't fork and demonize", NULL},
-#ifdef KERBEROS
-    {"rxkad-level", 'r', arg_string,	&rxkad_level_string,
-     "the rxkad level to use (clear, auth or crypt)", NULL},
-#endif
-    {"sysname",	 's',	arg_string,	&temp_sysname,
-     "set the sysname of this system", NULL},
-    {"root-volume",0,   arg_string,     &root_volume},
     {"port",	0,	arg_integer,	&client_port,
      "port number to use",	"number"},
     {"recover",	'z',	arg_negative_flag, &recover,
      "don't recover state",	NULL},
-    {"cache-dir", 0,	arg_string,	&cache_dir,
-     "cache directory",	"directory"},
+    {"root-volume",0,   arg_string,     &root_volume},
+#ifdef KERBEROS
+    {"rxkad-level", 'r', arg_string,	&rxkad_level_string,
+     "the rxkad level to use (clear, auth or crypt)", NULL},
+#endif
+    {"sysname",	 's',	arg_string,	&argv_sysname,
+     "set the sysname of this system", NULL},
     {"workers",	  0,	arg_integer,	&num_workers,
      "number of worker threads", NULL},
-    {"fake-mp",	  0,	arg_flag,	&fake_mp,
-     "enable fake mountpoints", NULL},
-    {"cpu-usage", 0,	arg_flag,	&cpu_usage,
-     NULL, NULL},
     {"version",	0,	arg_flag,	&version_flag,
      NULL, NULL},
     {"help",	0,	arg_flag,	&help_flag,
@@ -238,6 +243,9 @@ main (int argc, char **argv)
     int optind = 0;
     int ret;
 
+    tzset();
+    srand(time(NULL));
+
     if (getarg (args, sizeof(args)/sizeof(*args), argc, argv, &optind))
 	usage (1);
 
@@ -247,8 +255,10 @@ main (int argc, char **argv)
     if (help_flag)
 	usage (0);
 
-    if (version_flag)
-	errx (1, "%s", arla_version);
+    if (version_flag) {
+	print_version (NULL);
+	exit (0);
+    }
     
     if (argc > 0) {
 	device_file = *argv;
@@ -260,12 +270,12 @@ main (int argc, char **argv)
 	usage (1);
 
     if (!fork_flag)
-	default_log_file = "/dev/stderr";
+	default_log_file = _PATH_DEV_STDERR;
 
     if (fork_flag)
 	daemonify ();
 
-    ret = arla_init(argc, argv);
+    ret = arla_init();
     if (ret)
 	return ret;
 

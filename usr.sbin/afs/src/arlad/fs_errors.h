@@ -31,12 +31,17 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: fs_errors.h,v 1.10 2000/11/26 21:54:19 lha Exp $ */
+/* $arla: fs_errors.h,v 1.12 2003/03/06 00:39:29 lha Exp $ */
 
 #ifndef _FS_ERRORS_H_
 #define _FS_ERRORS_H_ 1
 
 #include <rx/rx.h>
+#include <uae.h>
+
+#if !defined(__GNUC__) && !defined(__attribute__)
+#define __attribute__(x)
+#endif
 
 #define VICE_SPECIAL_ERRORS	101
 
@@ -97,7 +102,7 @@ conv_to_arla_errno(int error)
     else if (error <= RX_MIN_ERROR && error >= RX_MAX_ERROR)
 	return ARLA_SPECIAL_RX_ERROR_ADD - error;    /* RX code are negative */
     else
-	return error;
+	return uae_error_to_errno(error);
 }
 
 #endif /* _FS_ERRORS_H_ */

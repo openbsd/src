@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,7 +38,7 @@
 
 #include "arla_local.h"
 #ifdef RCSID
-RCSID("$KTH: conn.c,v 1.61.2.3 2001/09/03 22:12:07 ahltorp Exp $") ;
+RCSID("$arla: conn.c,v 1.75 2003/06/10 04:23:20 lha Exp $") ;
 #endif
 
 #define CONNCACHESIZE 101
@@ -89,6 +89,9 @@ connhash (void *a)
     return c->cred + c->host + c->service + c->port + c->securityindex;
 }
 
+/* 2^MAX_RETRIES is the maximum number of seconds between probes */
+
+#define MAX_RETRIES 8
 
 /*
  * Add this entry again to the probe list but without restarting ntries.
@@ -102,15 +105,15 @@ re_probe (ConnCacheEntry *e)
 
     assert (e->probe != NULL);
 
-    if (e->probe_le != NULL)
-	listdel (connprobelist, e->probe_le);
-
     gettimeofday (&tv, NULL);
-    if (e->probe_le)
+    if (e->probe_le) {
+	listdel (connprobelist, e->probe_le);
 	e->probe_next = min(tv.tv_sec + (1 << e->ntries), e->probe_next);
-    else
+    } else
 	e->probe_next = tv.tv_sec + (1 << e->ntries);
-    ++e->ntries;
+
+    if (e->ntries <= MAX_RETRIES)
+	++e->ntries;
 
     for (item = listhead (connprobelist);
 	 item;
@@ -143,9 +146,7 @@ add_to_probe_list (ConnCacheEntry *e, int ntries)
  */
 
 #define PINGER_STACKSIZE (16*1024)
-#define PINGER_SLEEP 10
 
-#define MAX_RETRIES 5
 
 static PROCESS pinger_pid;
 
@@ -204,11 +205,14 @@ pinger (char *arg)
 		       "host: %s cell: %d port: %d",
 		       inet_ntoa(addr), e->cell, e->port);
 
-	if (e->probe && ((*(e->probe))(e->connection) == 0)) {
+	if (connected_mode == DISCONNECTED) {
+	    arla_warnx(ADEBCONN, "pinger: ignoring host in disconnected mode");
+	} else if (e->probe && ((*(e->probe))(e->connection) == 0)) {
 	    conn_alive (e);
-	} else if (e->ntries <= MAX_RETRIES) {
+	} else {
 	    re_probe (e);
 	}
+
 	conn_free (e);
     }
 }
@@ -344,10 +348,10 @@ get_free_connection (void)
 
 static ConnCacheEntry *
 new_connection (int32_t cell,
-		u_int32_t host,
-		u_int16_t port,
-		u_int16_t service,
-		xfs_pag_t cred,
+		uint32_t host,
+		uint16_t port,
+		uint16_t service,
+		nnpfs_pag_t cred,
 		int securityindex,
 		int (*probe)(struct rx_connection *),
 		struct rx_securityClass *securityobject)
@@ -385,16 +389,16 @@ new_connection (int32_t cell,
 
 static ConnCacheEntry *
 add_connection(int32_t cell,
-	       u_int32_t host,
-	       u_int16_t port,
-	       u_int16_t service,
+	       uint32_t host,
+	       uint16_t port,
+	       uint16_t service,
 	       int (*probe)(struct rx_connection *),
 	       CredCacheEntry *ce)
 {
     ConnCacheEntry *e;
     struct rx_securityClass *securityobj;
     int securityindex;
-    xfs_pag_t cred;
+    nnpfs_pag_t cred;
 
     if (ce) {
 	securityindex = ce->securityindex;
@@ -402,16 +406,14 @@ add_connection(int32_t cell,
 
 	switch (ce->type) {
 #ifdef KERBEROS
-	case CRED_KRB4 :
-	case CRED_KRB5 : {
-	    krbstruct *krbdata = (krbstruct *)ce->cred_data;
+	case CRED_KRB4 : {
+	    struct cred_rxkad *cred = (struct cred_rxkad *)ce->cred_data;
 	    
-	    securityobj = rxkad_NewClientSecurityObject(
-		conn_rxkad_level,
-		&krbdata->c.session,
-		krbdata->c.kvno,
-		krbdata->c.ticket_st.length,
-		krbdata->c.ticket_st.dat);
+	    securityobj = rxkad_NewClientSecurityObject(conn_rxkad_level,
+							cred->ct.HandShakeKey,
+							cred->ct.AuthHandle,
+							cred->ticket_len,
+							cred->ticket);
 	    break;
 	}
 #endif
@@ -445,9 +447,9 @@ add_connection(int32_t cell,
 
 static ConnCacheEntry *
 internal_get (int32_t cell,
-	      u_int32_t host,
-	      u_int16_t port,
-	      u_int16_t service,
+	      uint32_t host,
+	      uint16_t port,
+	      uint16_t service,
 	      int (*probe)(struct rx_connection *),
 	      CredCacheEntry *ce)
 {
@@ -485,6 +487,12 @@ internal_get (int32_t cell,
 	if (parent != NULL)
 	    e->parent = parent;
     }
+
+    /*
+     * Since we only probe the parent entry (ie noauth), we make sure
+     * the status from the parent entry is pushed down to the
+     * children.
+     */
     if(e->parent != NULL) {
 	e->flags.alivep = e->parent->flags.alivep;
     }
@@ -493,32 +501,32 @@ internal_get (int32_t cell,
 }
 
 /*
- * Dead servers don't exist.
+ * Return a connection to (cell, host, port, service, ce)
  */
 
 ConnCacheEntry *
 conn_get (int32_t cell,
-	  u_int32_t host,
-	  u_int16_t port,
-	  u_int16_t service,
+	  uint32_t host,
+	  uint16_t port,
+	  uint16_t service,
 	  int (*probe)(struct rx_connection *),
 	  CredCacheEntry *ce)
 {
     ConnCacheEntry *e = internal_get (cell, host, port, service, probe, ce);
-    ConnCacheEntry *parent = e;
 
-    if (e != NULL) {
-	if (e->parent != NULL)
-	    parent = e->parent;
-	if (e->flags.alivep) {
-	    ++e->refcount;
-	} else {
-	    e = NULL;
-	    add_to_probe_list (parent,
-			       min(parent->ntries, MAX_RETRIES));
-	}
-    }
+    ++e->refcount;
     return e;
+}
+
+/*
+ * Add a new reference to a connection
+ */
+
+void
+conn_ref(ConnCacheEntry *e)
+{
+    assert(e->refcount > 0);
+    e->refcount++;
 }
 
 /*
@@ -544,7 +552,7 @@ conn_free (ConnCacheEntry *e)
  */
 
 int32_t
-conn_host2cell (u_int32_t host, u_int16_t port, u_int16_t service)
+conn_host2cell (uint32_t host, uint16_t port, uint16_t service)
 {
     ConnCacheEntry *e;
     ConnCacheEntry key;
@@ -570,7 +578,8 @@ void
 conn_dead (ConnCacheEntry *e)
 {
     struct in_addr a;
-    const char *s;
+    char buf[10];
+    const char *port;
 
     assert (e->probe != NULL);
 
@@ -581,13 +590,14 @@ conn_dead (ConnCacheEntry *e)
     }
     add_to_probe_list (e, 0);
     a.s_addr = e->host;
-    s = ports_num2name (e->port);
-    if (s != NULL)
-	arla_warnx (ADEBWARN, "Lost connection to %s/%s",
-		    inet_ntoa(a), s);
-    else
-	arla_warnx (ADEBWARN, "Lost connection to %s/%d",
-		    inet_ntoa(a), e->port);
+    port = ports_num2name (e->port);
+    if (port == NULL) {
+	snprintf(buf, sizeof(buf), "%d", e->port);
+	port = buf;
+    }
+
+    arla_warnx (ADEBWARN, "Lost connection to %s/%s in cell %s",
+		inet_ntoa(a), port, cell_num2name (e->cell));
 }
 
 /*
@@ -609,6 +619,19 @@ conn_alive (ConnCacheEntry *e)
     e->flags.alivep = TRUE;
     if (e->parent != NULL)
 	e->parent->flags.alivep = TRUE;
+}
+
+/*
+ * Is this server known to be up?
+ */
+
+Bool
+conn_isalivep (ConnCacheEntry *e)
+{
+    if (e->parent != NULL)
+	e->flags.alivep = e->parent->flags.alivep;
+
+    return e->flags.alivep;
 }
 
 /*
@@ -643,7 +666,7 @@ conn_probe (ConnCacheEntry *e)
  */
 
 Bool
-conn_serverupp (u_int32_t host, u_int16_t port, u_int16_t service)
+conn_serverupp (uint32_t host, uint16_t port, uint16_t service)
 {
     ConnCacheEntry *e;
     ConnCacheEntry key;
@@ -701,7 +724,7 @@ conn_status (void)
 struct clear_state {
     clear_state_mask mask;
     int32_t cell;
-    xfs_pag_t cred;
+    nnpfs_pag_t cred;
     int securityindex;
 };
 
@@ -733,7 +756,7 @@ clear_cred (void *ptr, void *arg)
 
 void
 conn_clearcred(clear_state_mask mask,
-	       int32_t cell, xfs_pag_t cred, int securityindex)
+	       int32_t cell, nnpfs_pag_t cred, int securityindex)
 {
     struct clear_state s;
 
@@ -751,7 +774,7 @@ conn_clearcred(clear_state_mask mask,
 
 struct down_state {
     int32_t cell;
-    u_int32_t *hosts;
+    uint32_t *hosts;
     int len;
     int i;
     int flags;
@@ -796,7 +819,7 @@ host_down (void *ptr, void *arg)
  */
 
 void
-conn_downhosts(int32_t cell, u_int32_t *hosts, int *num, int flags)
+conn_downhosts(int32_t cell, uint32_t *hosts, int *num, int flags)
 {
     struct down_state s;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,12 +35,11 @@
  * Interface to directory handling routines
  */
 
-/* $KTH: adir.h,v 1.14.2.1 2001/06/04 22:16:35 ahltorp Exp $ */
+/* $arla: adir.h,v 1.18 2002/07/24 05:57:01 lha Exp $ */
 
 #ifndef _ADIR_H_
 #define _ADIR_H_
 
-#include "fs.h"
 #include "cred.h"
 #include "fcache.h"
 #include "fdir.h"
@@ -49,17 +48,17 @@ int
 adir_lookup (FCacheEntry *centry, const char *name, VenusFid *file);
 
 int
-adir_changefid (VenusFid *dir,
+adir_changefid (FCacheEntry **centry,
 		const char *name,
 		VenusFid *file,
 		CredCacheEntry **ce);
 
 int
-adir_emptyp (VenusFid *dir,
+adir_emptyp (FCacheEntry **centry,
 	     CredCacheEntry **ce);
 
-int adir_readdir (VenusFid *dir,
-		  void (*)(VenusFid *, const char *name, void *), 
+int adir_readdir (FCacheEntry **centry,
+		  fdir_readdir_func func,
 		  void *arg,
 		  CredCacheEntry **ce);
 

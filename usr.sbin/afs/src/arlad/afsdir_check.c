@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,7 +38,7 @@
 #include "arla_local.h"
 #include <getarg.h>
 
-RCSID("$KTH: afsdir_check.c,v 1.21.2.1 2001/10/03 23:36:00 assar Exp $");
+RCSID("$arla: afsdir_check.c,v 1.25 2002/07/24 05:57:41 lha Exp $");
 
 static int help_flag;
 static int verbose = 0;
@@ -75,7 +75,11 @@ getentry (DirPage0 *page0,
 
      page = (DirPage1 *)((char *)page0 +
 			 AFSDIR_PAGESIZE * (num / ENTRIESPERPAGE));
-     assert (page->header.pg_tag == htons(AFSDIRMAGIC));
+     if (page->header.pg_tag != htons(AFSDIRMAGIC)) {
+	 printf ("Bad magic (%d) != %d in directory\n",
+		 ntohs(page->header.pg_tag), AFSDIRMAGIC);
+	 exit (1);
+     }
      return &page->entry[num % ENTRIESPERPAGE];
 }
 
@@ -94,7 +98,7 @@ check_dir (const char *filename)
     unsigned page_entry_count;
     unsigned hash_entry_count;
     unsigned noverfill;
-    u_int8_t **my_bitmaps = NULL;
+    uint8_t **my_bitmaps = NULL;
 
     fd = open (filename, O_RDONLY | O_BINARY, 0);
     if (fd < 0)

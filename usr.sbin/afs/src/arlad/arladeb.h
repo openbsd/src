@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -32,7 +32,7 @@
  */
 
 /*
- * $KTH: arladeb.h,v 1.24.2.1 2001/04/30 00:02:15 lha Exp $
+ * $arla: arladeb.h,v 1.31 2002/12/06 04:58:00 lha Exp $
  */
 
 #ifndef _arladeb_h
@@ -65,13 +65,14 @@ extern struct units arla_deb_units[];
 #define ADEBWARN	0x08000000      /* don't ignore warning */
 #define ADEBERROR	0x10000000      /* don't ignore error */
 #define ADEBVLOG	0x20000000	/* venuslog output */
+#define ADEBINVALIDATOR	0x40000000	/* invalidator output */
 
 #define ARLA_DEFAULT_LOG (ADEBWARN | ADEBERROR)
 
 extern struct units arla_deb_units[];
 
-void arla_log(unsigned level, char *fmt, ...);
-void arla_loginit(char *log, log_flags flags);
+void arla_log(unsigned level, const char *fmt, ...);
+void arla_loginit(char *logname, log_flags flags);
 int arla_log_set_level (const char *s);
 void arla_log_set_level_num (unsigned level);
 void arla_log_get_level (char *s, size_t len);

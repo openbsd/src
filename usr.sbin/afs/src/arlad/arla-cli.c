@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,9 +34,9 @@
 #include <arla_local.h>
 #include <sl.h>
 #include <getarg.h>
-#include <arla-version.h>
+#include <vers.h>
 
-RCSID("$KTH: arla-cli.c,v 1.7 2000/12/04 22:45:19 lha Exp $");
+RCSID("$arla: arla-cli.c,v 1.35 2003/06/10 04:23:16 lha Exp $");
 
 char *default_log_file = "/dev/stderr";
 char *default_arla_cachedir = ".arlacache";
@@ -54,6 +54,7 @@ static int arla_chdir(int, char **);
 static int arla_ls(int, char **);
 static int arla_cat(int, char **);
 static int arla_cp(int, char **);
+static int arla_sleep(int, char **);
 static int arla_wc(int, char **);
 static int help(int, char **);
 static int arla_quit(int, char **);
@@ -64,10 +65,19 @@ static int arla_cred_status(int, char **);
 static int arla_fcache_status(int, char **);
 static int arla_cell_status (int, char **);
 static int arla_sysname(int, char**);
+static int arla_mkdir (int, char**);
+static int arla_rmdir (int, char**);
+static int arla_rm (int, char**);
+static int arla_put (int, char**);
+static int arla_get (int, char**);
 #ifdef RXDEBUG
 static int arla_rx_status(int argc, char **argv);
 #endif
 static int arla_flushfid(int argc, char **argv);
+
+static char *copy_dirname(const char *s);
+static char *copy_basename(const char *s);
+
 
 static SL_cmd cmds[] = {
     {"chdir", arla_chdir, "chdir directory"},
@@ -75,7 +85,13 @@ static SL_cmd cmds[] = {
     {"ls",    arla_ls, "ls"},
     {"cat",   arla_cat, "cat file"},
     {"cp",    arla_cp, "copy file"},
+    {"sleep", arla_sleep, "sleep seconds"},
     {"wc",    arla_wc, "wc file"},
+    {"mkdir", arla_mkdir, "mkdir dir"},
+    {"rmdir", arla_rmdir, "rmdir dir"},
+    {"rm",    arla_rm, "rm file"},
+    {"put",   arla_put, "put localfile [afsfile]"},
+    {"get",   arla_get, "get afsfile [localfile]"},
     {"help",  help, "help"},
     {"?"},
     {"checkservers", arla_checkserver, "poll servers are down"},
@@ -94,107 +110,55 @@ static SL_cmd cmds[] = {
     { NULL }
 };
 
-/* An emulation of kernel lookup, convert (startdir, fname) into
- * (startdir).  Strips away leading /afs, removes duobles slashes,
- * and resolves symlinks.
- * Return 0 for success, otherwise -1.
+/*
+ * Return a malloced copy of the dirname of `s'
  */
 
-static int
-walk (VenusFid *startdir, char *fname)
+static char *
+copy_dirname (const char *s)
 {
-     VenusFid cwd = *startdir;
-     char *base;
-     VenusFid file;
-     Result ret;
-     FCacheEntry *entry;
-     int error;
-     char symlink[MAXPATHLEN];
-     char store_name[MAXPATHLEN];
+    const char *p;
+    char *res;
 
-     strlcpy(store_name, fname, sizeof(store_name));
-     fname = store_name;
-
-     do {
-        /* set things up so that fname points to the remainder of the path,
-         * whereas base points to the whatever preceeds the first /
-         */
-        base = fname;
-        fname = strchr(fname, '/');
-        if (fname) {
-            /* deal with repeated adjacent / chars by eliminating the
-             * duplicates. 
-             */
-            while (*fname == '/') {
-                *fname = '\0';
-                fname++;
-            }
-        }
- 
-        /* deal with absolute pathnames first. */
-        if (*base == '\0') {
-            cwd = rootcwd;
-            if (fname) {
-                if (strncmp("afs",fname,3) == 0) {
-                    fname += 3;
-                }
-                continue;
-            } else {
-                break;
-            }
-	 }
-	 ret = cm_lookup (&cwd, base, &file, &ce, TRUE);
-	 if (ret.res) {
-	     arla_warn (ADEBWARN, ret.error, "lookup(%s)", base);
-	     return -1;
-	 }
-	 error = fcache_get_data (&entry, &file, &ce);
-	 if (error) {
-	     arla_warn (ADEBWARN, error, "fcache_get");
-	     return -1;
-	 }
-
-	 /* handle symlinks here */
-	 if (entry->status.FileType == TYPE_LINK) {
-	     int len;
-	     int fd;
-
-	     fd = fcache_open_file (entry, O_RDONLY);
-	     /* read the symlink and null-terminate it */
-	     if (fd < 0) {
-		 fcache_release(entry);
-		 arla_warn (ADEBWARN, errno, "fcache_open_file");
-		 return -1;
-	     }
-	     len = read (fd, symlink, sizeof(symlink));
-	     close (fd);
-	     if (len <= 0) {
-		 fcache_release(entry);
-		 arla_warnx (ADEBWARN, "cannot read symlink");
-		 return -1;
-	     }
-	     symlink[len] = '\0';
-	     /* if we're not at the end (i.e. fname is not null), take
-	      * the expansion of the symlink and append fname to it.
-	      */
-	     if (fname != NULL) {
-		 strlcat(symlink, "/", sizeof(symlink));
-		 strlcat(symlink, fname, sizeof(symlink));
-	     }
-	     strlcpy(store_name, symlink, sizeof(store_name));
-	     fname = store_name;
-	 } else {
-	     /* if not a symlink, just update cwd */
-	     cwd = file;
-	 }
-	 fcache_release(entry);
-
-	 /* the *fname condition below deals with a trailing / in a
-	  * path-name */
-     } while (fname != NULL && *fname);
-     *startdir = cwd;
-     return 0;
+    p = strrchr (s, '/');
+    if (p == NULL)
+	return strdup(".");
+    res = malloc (p - s + 1);
+    if (res == NULL)
+	return NULL;
+    memmove (res, s, p - s);
+    res[p - s] = '\0';
+    return res;
 }
+
+/*
+ * Return the basename of `s'.
+ * The result is malloc'ed.
+ */
+
+static char *
+copy_basename (const char *s)
+{
+     const char *p, *q;
+     char *res;
+
+     p = strrchr (s, '/');
+     if (p == NULL)
+	  p = s;
+     else
+	  ++p;
+     q = s + strlen (s);
+     res = malloc (q - p + 1);
+     if (res == NULL)
+	 return NULL;
+     memmove (res, p, q - p);
+     res[q - p] = '\0';
+     return res;
+}
+
+/*
+ *
+ */
 
 static int
 arla_quit (int argc, char **argv)
@@ -239,18 +203,19 @@ arla_chdir (int argc, char **argv)
 	return 0;
     }
 
-    if(walk (&cwd, argv[1]))
+    if(cm_walk (cwd, argv[1], &cwd))
 	printf ("walk %s failed\n", argv[1]);
     return 0;
 }
 
-static void
+static int
 print_dir (VenusFid *fid, const char *name, void *v)
 {
      printf("(%d, %d, %d, %d): %s\n", fid->Cell,
 	    fid->fid.Volume,
 	    fid->fid.Vnode,
 	    fid->fid.Unique, name);
+     return 0;
 }
 
 struct ls_context {
@@ -258,42 +223,47 @@ struct ls_context {
     CredCacheEntry *ce;
 };
 
-static void
+static int
 print_dir_long (VenusFid *fid, const char *name, void *v)
 {
-    Result res;
     int ret;
-    AFSFetchStatus status;
-    VenusFid realfid;
     AccessEntry *ae;
     struct ls_context *context = (struct ls_context *)v;
     char type;
     CredCacheEntry *ce = context->ce;
+    FCacheEntry *entry;
     VenusFid *dir_fid  = context->dir_fid;
     char timestr[20];
     struct tm *t;
     time_t ti;
 
     if (VenusFid_cmp(fid, dir_fid) == 0)
-	return;
+	return 0;
 
     ret = followmountpoint (fid, dir_fid, NULL, &ce);
     if (ret) {
 	printf ("follow %s: %d\n", name, ret);
-	return;
+	return 0;
     }
 
     /* Have we follow a mountpoint to ourself ? */
     if (VenusFid_cmp(fid, dir_fid) == 0)
-	return;
+	return 0;
 
-    res = cm_getattr (*fid, &status, &realfid, context->ce, &ae);
-    if (res.res) {
-	printf ("%s: %d\n", name, res.res);
-	return;
+    ret = fcache_get(&entry, *fid, context->ce);
+    if (ret) {
+	printf("%s: %d\n", name, ret);
+	return 0;
     }
 
-    switch (status.FileType) {
+    ret = cm_getattr (entry, context->ce, &ae);
+    if (ret) {
+	fcache_release(entry);
+	printf ("%s: %d\n", name, ret);
+	return 0;
+    }
+
+    switch (entry->status.FileType) {
     case TYPE_FILE :
 	type = '-';
 	break;
@@ -313,29 +283,31 @@ print_dir_long (VenusFid *fid, const char *name, void *v)
 	   fid->fid.Vnode,
 	   fid->fid.Unique);
 
-    ti = status.ClientModTime;
+    ti = entry->status.ClientModTime;
     t = localtime (&ti);
     strftime (timestr, sizeof(timestr), "%Y-%m-%d", t);
     printf ("%c%c%c%c%c%c%c%c%c%c %2d %6d %6d %8d %s ",
 	    type,
-	    status.UnixModeBits & 0x100 ? 'w' : '-',
-	    status.UnixModeBits & 0x080 ? 'r' : '-',
-	    status.UnixModeBits & 0x040 ? 'x' : '-',
-	    status.UnixModeBits & 0x020 ? 'w' : '-',
-	    status.UnixModeBits & 0x010 ? 'r' : '-',
-	    status.UnixModeBits & 0x008 ? 'x' : '-',
-	    status.UnixModeBits & 0x004 ? 'w' : '-',
-	    status.UnixModeBits & 0x002 ? 'r' : '-',
-	    status.UnixModeBits & 0x001 ? 'x' : '-',
-	    status.LinkCount,
-	    status.Owner,
-	    status.Group,
-	    status.Length,
+	    entry->status.UnixModeBits & 0x100 ? 'r' : '-',
+	    entry->status.UnixModeBits & 0x080 ? 'w' : '-',
+	    entry->status.UnixModeBits & 0x040 ? 'x' : '-',
+	    entry->status.UnixModeBits & 0x020 ? 'r' : '-',
+	    entry->status.UnixModeBits & 0x010 ? 'w' : '-',
+	    entry->status.UnixModeBits & 0x008 ? 'x' : '-',
+	    entry->status.UnixModeBits & 0x004 ? 'r' : '-',
+	    entry->status.UnixModeBits & 0x002 ? 'w' : '-',
+	    entry->status.UnixModeBits & 0x001 ? 'x' : '-',
+	    entry->status.LinkCount,
+	    entry->status.Owner,
+	    entry->status.Group,
+	    entry->status.Length,
 	    timestr);
 
-    printf ("v %d ", status.DataVersion);
+    printf ("v %d ", entry->status.DataVersion);
 
     printf ("%s\n", name);
+    fcache_release(entry);
+    return 0;
 }
 
 static int
@@ -348,6 +320,7 @@ arla_ls (int argc, char **argv)
     int error;
     int optind = 0;
     struct ls_context context;
+    FCacheEntry *entry;
 
     args[0].value = &l_flag;
 
@@ -357,10 +330,20 @@ arla_ls (int argc, char **argv)
     }
     context.dir_fid = &cwd;
     context.ce      = ce;
-    error = adir_readdir (&cwd, l_flag ? print_dir_long : print_dir,
+    error = fcache_get(&entry, cwd, ce);
+    if (error) {
+	printf ("fcache_get failed: %s\n", koerr_gettext(error));
+	return 0;
+    }
+
+    error = adir_readdir (&entry, l_flag ? print_dir_long : print_dir,
 			  &context, &ce);
-    if (error)
+    fcache_release(entry);
+    if (error) {
 	printf ("adir_readdir failed: %s\n", koerr_gettext(error));
+	return 0;
+    }
+    cwd = entry->fid;
     return 0;
 }
 
@@ -369,11 +352,11 @@ arla_sysname (int argc, char **argv)
 {
     switch (argc) {
     case 1:
-	printf("sysname: %s\n", arlasysname);
+	printf("sysname: %s\n", fcache_getdefsysname());
 	break;
     case 2:
-	strlcpy(arlasysname, argv[1], SYSNAMEMAXLEN);
-	printf("setting sysname to: %s\n", arlasysname);
+	fcache_setdefsysname(argv[1]);
+	printf("setting sysname to: %s\n", fcache_getdefsysname());
 	break;
     default:
 	printf("syntax: sysname <sysname>\n");
@@ -382,6 +365,329 @@ arla_sysname (int argc, char **argv)
     return 0;
 }
 
+static int
+arla_mkdir (int argc, char **argv)
+{
+    VenusFid fid;
+    int ret;
+    FCacheEntry *e;
+    char *dirname;
+    char *basename;
+    AFSStoreStatus store_attr;
+    VenusFid res;
+    AFSFetchStatus fetch_attr;
+    
+    if (argc != 2) {
+	printf ("usage: %s file\n", argv[0]);
+	return 0;
+    }
+    dirname = strdup(argv[1]);
+    if (dirname == NULL)
+	err(1, "strdup");
+    basename = strrchr(dirname, '/');
+    if (basename == NULL) {
+	printf ("%s: filename contains no /\n", argv[0]);
+	free(dirname);
+	return 0;
+    }
+    basename[0] = '\0';
+    basename++;
+
+    if(cm_walk (cwd, dirname, &fid) == 0) {
+
+	ret = fcache_get(&e, fid, ce);
+	if (ret) {
+	    printf ("fcache_get failed: %d\n", ret);
+	    free(dirname);
+	    return 0;
+	}
+
+	store_attr.Mask = 0;
+	store_attr.ClientModTime = 0;
+	store_attr.Owner = 0;
+	store_attr.Group = 0;
+	store_attr.UnixModeBits = 0;
+	store_attr.SegSize = 0;
+	ret = cm_mkdir(&e, basename, &store_attr, &res, &fetch_attr, &ce);
+	if (ret) {
+	    arla_warn (ADEBWARN, ret,
+		       "%s: cannot create directory `%s'",
+		       argv[0], argv[1]);
+	    fcache_release(e);
+	    free(dirname);
+	    return 1;
+	}
+
+	fcache_release(e);
+    }
+    free(dirname);
+    return 0;
+}
+
+static int
+arla_rmdir (int argc, char **argv)
+{
+    VenusFid fid;
+    int ret;
+    FCacheEntry *e;
+    char *dirname;
+    char *basename;
+    
+    if (argc != 2) {
+	printf ("usage: %s file\n", argv[0]);
+	return 0;
+    }
+    dirname = strdup(argv[1]);
+    if (dirname == NULL)
+	err(1, "strdup");
+    basename = strrchr(dirname, '/');
+    if (basename == NULL) {
+	printf ("%s: filename contains no /\n", argv[0]);
+	free(dirname);
+	return 0;
+    }
+    basename[0] = '\0';
+    basename++;
+
+    if(cm_walk (cwd, dirname, &fid) == 0) {
+
+	ret = fcache_get(&e, fid, ce);
+	if (ret) {
+	    printf ("fcache_get failed: %d\n", ret);
+	    free(dirname);
+	    return 0;
+	}
+
+	ret = cm_rmdir(&e, basename, &ce);
+	if (ret) {
+	    arla_warn (ADEBWARN, ret,
+		       "%s: cannot remove directory `%s'",
+		       argv[0], argv[1]);
+	    fcache_release(e);
+	    free(dirname);
+	    return 1;
+	}
+
+	fcache_release(e);
+    }
+    free(dirname);
+    return 0;
+}
+
+static int
+arla_rm (int argc, char **argv)
+{
+    VenusFid fid;
+    int ret;
+    FCacheEntry *e;
+    char *dirname;
+    char *basename;
+    
+    if (argc != 2) {
+	printf ("usage: %s file\n", argv[0]);
+	return 0;
+    }
+    dirname = copy_dirname(argv[1]);
+    if (dirname == NULL)
+	err(1, "copy_dirname");
+    basename = copy_basename(argv[1]);
+    if (basename == NULL)
+	err(1, "copy_basename");
+
+    if(cm_walk (cwd, dirname, &fid) == 0) {
+
+	ret = fcache_get(&e, fid, ce);
+	if (ret) {
+	    printf ("fcache_get failed: %d\n", ret);
+	    free(dirname);
+	    free(basename);
+	    return 0;
+	}
+
+	ret = cm_remove(&e, basename, &ce);
+	if (ret) {
+	    arla_warn (ADEBWARN, ret,
+		       "%s: cannot remove file `%s'",
+		       argv[0], argv[1]);
+	    fcache_release(e);
+	    free(dirname);
+	    free(basename);
+	    return 1;
+	}
+
+	fcache_release(e);
+    }
+    free(dirname);
+    free(basename);
+    return 0;
+}
+
+static int
+arla_put (int argc, char **argv)
+{
+    VenusFid dirfid;
+    VenusFid fid;
+    int ret;
+    FCacheEntry *e;
+    char *localname;
+    char *localbasename;
+    char *afsname;
+    char *afsbasename;
+    char *afsdirname;
+    AFSStoreStatus store_attr;
+    AFSFetchStatus fetch_attr;
+    int afs_fd;
+    int local_fd;
+    char buf[8192];
+    int write_ret;
+    CredCacheEntry *ce;
+    
+    if (argc != 2 && argc != 3) {
+	printf ("usage: %s localfile [afsfile]\n", argv[0]);
+	return 0;
+    }
+
+    localname = argv[1];
+
+    localbasename = copy_basename(localname);
+    if (localbasename == NULL)
+	err(1, "copy_basename");
+
+    if (argc == 3) {
+	afsname = argv[2];
+    } else {
+	afsname = localbasename;
+    }
+
+    afsdirname = copy_dirname(afsname);
+    if (afsdirname == NULL)
+	err(1, "copy_dirname");
+    afsbasename = copy_basename(afsname);
+    if (afsbasename == NULL)
+	err(1, "copy_basename");
+
+
+    printf("localbasename: *%s* afsname: *%s* afsdirname: *%s* afsbasename: *%s*\n",
+	   localbasename, afsname, afsdirname, afsbasename);
+
+    local_fd = open (localname, O_RDONLY, 0);
+
+    if (local_fd < 0) {
+	printf ("open %s: %s\n", localname, strerror(errno));
+	ret = 0;
+	goto out;
+    }
+
+    if(cm_walk (cwd, afsdirname, &dirfid))
+	goto out;
+
+    ce = cred_get (dirfid.Cell, getuid(), CRED_ANY);
+
+    ret = fcache_get(&e, dirfid, ce);
+    if (ret) {
+	printf ("fcache_get failed: %d\n", ret);
+	ret = 1;
+	goto out;
+    }
+
+    memset(&store_attr, 0, sizeof(store_attr));
+
+    ret = cm_create(&e, afsbasename, &store_attr, &fid, &fetch_attr, &ce);
+    if (ret) {
+	if (ret != EEXIST) {
+	    arla_warn (ADEBWARN, ret,
+		       "%s: cannot create file `%s'",
+		       argv[0], afsname);
+	    fcache_release(e);
+	    ret = 1;
+	    goto out;
+	} else {
+	    ret = cm_lookup (&e, afsbasename, &fid, &ce, 1);
+	    if (ret) {
+		arla_warn (ADEBWARN, ret,
+			   "%s: cannot open file `%s'",
+			   argv[0], afsname);
+		fcache_release(e);
+		ret = 1;
+		goto out;
+	    }
+	}
+    }
+    
+    fcache_release(e);
+
+    ret = fcache_get(&e, fid, ce);
+    if (ret) {
+	printf ("fcache_get failed: %d\n", ret);
+	ret = 1;
+	goto out;
+    }
+
+    ret = fcache_get_data (&e, &ce, 0);
+    if (ret) {
+	fcache_release(e);
+	printf ("fcache_get_data failed: %d\n", ret);
+	ret = 1;
+	goto out;
+    }
+    
+    afs_fd = fcache_open_file (e, O_WRONLY);
+
+    if (afs_fd < 0) {
+	fcache_release(e);
+	printf ("fcache_open_file failed: %d\n", errno);
+	ret = 0;
+	goto out;
+    }
+
+    ret = ftruncate(afs_fd, 0);
+    if (ret) {
+	fcache_release(e);
+	printf ("ftruncate failed: %d\n", errno);
+    }
+    
+    while ((ret = read (local_fd, buf, sizeof(buf))) > 0) {
+	write_ret = write (afs_fd, buf, ret);
+	if (write_ret < 0) {
+	    printf("write failed: %d\n", errno);
+	    ret = 1;
+	    goto out;
+	} else if (write_ret != ret) {
+	    printf("short write: %d should be %d\n", write_ret, ret);
+	    ret = 1;
+	    goto out;
+	}
+    }
+
+    close(afs_fd);
+    close(local_fd);
+
+    memset(&store_attr, 0, sizeof(store_attr));
+
+    ret = cm_close (e, NNPFS_WRITE, &store_attr, ce);
+    if (ret) {
+	arla_warn (ADEBWARN, ret,
+		   "%s: cannot close file `%s'",
+		   argv[0], afsname);
+	fcache_release(e);
+	ret = 1;
+	goto out;
+    }
+
+    fcache_release(e);
+
+ out:
+    free(localbasename);
+    free(afsdirname);
+    free(afsbasename);
+    return 0;
+}
+
+static int
+arla_get (int argc, char **argv)
+{
+    return 0;
+}
 
 static int
 arla_cat_et_wc (int argc, char **argv, int do_cat, int out_fd)
@@ -397,11 +703,17 @@ arla_cat_et_wc (int argc, char **argv, int do_cat, int out_fd)
 	printf ("usage: %s file\n", argv[0]);
 	return 0;
     }
-    fid = cwd;
-    if(walk (&fid, argv[1]) == 0) {
+    if(cm_walk (cwd, argv[1], &fid) == 0) {
 
-	ret = fcache_get_data (&e, &fid, &ce);
+	ret = fcache_get(&e, fid, ce);
 	if (ret) {
+	    printf ("fcache_get failed: %d\n", ret);
+	    return 0;
+	}
+
+	ret = fcache_get_data (&e, &ce, 0);
+	if (ret) {
+	    fcache_release(e);
 	    printf ("fcache_get_data failed: %d\n", ret);
 	    return 0;
 	}
@@ -461,6 +773,23 @@ arla_cp (int argc, char **argv)
 }
 
 static int
+arla_sleep(int argc, char **argv)
+{
+    struct timeval tv;
+
+    if (argc != 2) {
+	printf ("usage: %s <time>\n", argv[0]);
+	return 0;
+    }
+
+    tv.tv_sec = atoi(argv[1]);
+    tv.tv_usec = 0;
+    IOMGR_Select(0, NULL, NULL, NULL, &tv);
+
+    return 0;
+}
+
+static int
 arla_wc (int argc, char **argv)
 {
     return arla_cat_et_wc(argc, argv, 0, -1);
@@ -477,7 +806,7 @@ help (int argc, char **argv)
 static int
 arla_checkserver (int argc, char **argv)
 {
-    u_int32_t hosts[12];
+    uint32_t hosts[12];
     int num = sizeof(hosts)/sizeof(hosts[0]);
 
     conn_downhosts(cwd.Cell, hosts, &num, 0);
@@ -554,7 +883,7 @@ arla_rx_status(int argc, char **argv)
 #endif
 
 
-#ifdef KERBEROS
+#ifdef HAVE_KRB4
 
 static int
 get_cred(const char *princ, const char *inst, const char *krealm, 
@@ -573,16 +902,19 @@ get_cred(const char *princ, const char *inst, const char *krealm,
   return k_errno;
 }
 
-#endif /* KERBEROS */
+#endif /* HAVE_KRB4 */
 
 
-void
-arla_start (char *device_file, const char *cache_dir)
+static void
+arla_start (char *device_file, const char *cache_dir, int argc, char **argv)
 {
+    CredCacheEntry *ce;
     int error;
-#ifdef KERBEROS
+
+#ifdef HAVE_KRB4
     {
-	krbstruct krbdata;
+	struct cred_rxkad cred;
+	CREDENTIALS c;
 	int ret;
 	char *realm;
 	const char *this_cell = cell_getthiscell ();
@@ -593,24 +925,42 @@ arla_start (char *device_file, const char *cache_dir)
 		       "no db server for cell %s", this_cell);
 	realm = krb_realmofhost (db_server);
 	
-	ret = get_cred("afs", this_cell, realm, &krbdata.c);
+	ret = get_cred("afs", this_cell, realm, &c);
 	if (ret)
-	    ret = get_cred("afs", "", realm, &krbdata.c);
+	    ret = get_cred("afs", "", realm, &c);
 	
 	if (ret) {
 	    arla_warnx (ADEBWARN,
 			"getting ticket for %s: %s",
 			this_cell,
 			krb_get_err_text (ret));
-	} else if (cred_add_krb4(getuid(), getuid(), &krbdata.c) == NULL) {
-	    arla_warnx (ADEBWARN, "Could not insert tokens to arla");
-	}
+	    return;
+	} 
+	
+	memset(&cred, 0, sizeof(cred));
+
+	memcpy(&cred.ct.HandShakeKey, c.session, sizeof(cred.ct.AuthHandle));
+	cred.ct.AuthHandle = c.kvno;
+	cred.ct.ViceId = getuid();
+	cred.ct.BeginTimestamp = c.issue_date + 1;
+	cred.ct.EndTimestamp = krb_life_to_time(c.issue_date, c.lifetime);
+	
+	cred.ticket_len = c.ticket_st.length;
+	if (cred.ticket_len > sizeof(cred.ticket))
+	    arla_errx (1, ADEBERROR, "ticket too large");
+	memcpy(cred.ticket, c.ticket_st.dat, cred.ticket_len);
+
+	cred_add (getuid(), CRED_KRB4, 2, cell_name2num(cell_getthiscell()), 
+		  2, &cred, sizeof(cred), getuid());
+	
     }
-#endif
+#endif /* HAVE_KRB4 */
     
     ce = cred_get (cell_name2num(cell_getthiscell()), getuid(), CRED_ANY);
+
+    assert (ce != NULL);
     
-    xfs_message_init ();
+    nnpfs_message_init ();
     kernel_opendevice ("null");
     
     arla_warnx (ADEBINIT, "Getting root...");
@@ -619,8 +969,18 @@ arla_start (char *device_file, const char *cache_dir)
 	    arla_err (1, ADEBERROR, error, "getroot");
     cwd = rootcwd;
     arla_warnx(ADEBINIT, "arla loop started");
-    sl_loop(cmds, "arla> ");
+    error = 0;
+    if (argc > 0) {
+	error = sl_command(cmds, argc, argv);
+	if (error == -1)
+	    errx (1, "%s: Unknown command\n", argv[0]); 
+    } else {
+	sl_loop(cmds, "arla> ");
+    }
     store_state();
+    fcache_giveup_all_callbacks();
+    if (error)
+	exit(1);
 }
 
 char *
@@ -655,7 +1015,7 @@ static struct getargs args[] = {
     {"rxkad-level", 'r', arg_string,	&rxkad_level_string,
      "the rxkad level to use (clear, auth or crypt)", NULL},
 #endif
-    {"sysname",	 's',	arg_string,	&temp_sysname,
+    {"sysname",	 's',	arg_string,	&argv_sysname,
      "set the sysname of this system", NULL},
     {"root-volume",0,   arg_string,     &root_volume},
     {"port",	0,	arg_integer,	&client_port,
@@ -677,7 +1037,7 @@ static struct getargs args[] = {
 static void
 usage (int ret)
 {
-    arg_printusage (args, sizeof(args)/sizeof(*args), NULL, "[device]");
+    arg_printusage (args, sizeof(args)/sizeof(*args), NULL, "[command]");
     exit (ret);
 }
 
@@ -688,6 +1048,8 @@ main (int argc, char **argv)
     int ret;
 
     set_progname (argv[0]);
+    tzset();
+    srand(time(NULL));
 
     if (getarg (args, sizeof(args)/sizeof(*args), argc, argv, &optind))
 	usage (1);
@@ -698,19 +1060,23 @@ main (int argc, char **argv)
     if (help_flag)
 	usage (0);
 
-    if (version_flag)
-	errx (1, "%s", arla_version);
+    if (version_flag) {
+	print_version (NULL);
+	exit (0);
+    }
     
-    if (argc != 0)
-	usage (1);
-
     default_log_file = "/dev/stderr";
 
-    ret = arla_init(argc, argv);
+    ret = arla_init();
     if (ret)
 	return ret;
 
-    arla_start (NULL, cache_dir);
+    {
+	struct timeval tv = { 0, 10000} ;
+	IOMGR_Select(0, NULL, NULL, NULL, &tv);
+    }
+
+    arla_start (NULL, cache_dir, argc, argv);
     
     return 0;
 }

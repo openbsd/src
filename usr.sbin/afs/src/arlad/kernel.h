@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: kernel.h,v 1.8 2000/10/02 22:32:26 lha Exp $ */
+/* $arla: kernel.h,v 1.9 2002/07/24 06:04:29 lha Exp $ */
 
 #ifndef _KERNEL_H_
 #define _KERNEL_H_

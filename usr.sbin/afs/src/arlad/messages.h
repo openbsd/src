@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,36 +35,36 @@
  *
  */
 
-/* $KTH: messages.h,v 1.17 2001/01/07 18:32:49 lha Exp $ */
+/* $arla: messages.h,v 1.24 2002/09/07 10:43:22 lha Exp $ */
 
 #ifndef _MESSAGES_H_
 #define _MESSAGES_H_
 
-void xfs_message_init (void);
-int xfs_message_receive (int fd, struct xfs_message_header *h, u_int size);
+void nnpfs_message_init (void);
+int nnpfs_message_receive (int fd, struct nnpfs_message_header *h, u_int size);
 void break_callback (FCacheEntry *e);
 void install_attr (FCacheEntry *e, int flags);
 
 long afsfid2inode(const VenusFid *fid);
 
 int
-xfs_attr2afsstorestatus(struct xfs_attr *xa,
+nnpfs_attr2afsstorestatus(struct nnpfs_attr *xa,
 			AFSStoreStatus *storestatus);
 
 void
 update_fid(VenusFid oldfid, FCacheEntry *old_entry,
 	   VenusFid newfid, FCacheEntry *new_entry);
 
-enum { FCACHE2XFSNODE_ATTR = 1,
-       FCACHE2XFSNODE_RIGHT = 2 } ;
+enum { FCACHE2NNPFSNODE_LENGTH = 1 } ;	/* allow update of filedata */
 
-#define FCACHE2XFSNODE_ALL (FCACHE2XFSNODE_ATTR|FCACHE2XFSNODE_RIGHT)
+#define FCACHE2NNPFSNODE_NO_LENGTH	0
+#define FCACHE2NNPFSNODE_ALL		(FCACHE2NNPFSNODE_LENGTH)
 
 void
-fcacheentry2xfsnode (const VenusFid *fid,
+fcacheentry2nnpfsnode (const VenusFid *fid,
 		     const VenusFid *statfid, 
 		     AFSFetchStatus *status,
-		     struct xfs_msg_node *node,
+		     struct nnpfs_msg_node *node,
                      AccessEntry *ae,
 		     int flags);
 

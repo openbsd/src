@@ -1,47 +1,105 @@
-.\" Copyright (c) 2000 Kungliga Tekniska Högskolan
-.\" $KTH: arla.conf.5,v 1.1 2000/09/09 14:24:38 lha Exp $
+.\" Copyright (c) 2000 - 2003 Kungliga Tekniska Högskolan
+.\" $arla: arla.conf.5,v 1.16 2003/06/06 12:53:55 hin Exp $
 .Dd Sep 09, 2000
 .Dt afsd.conf 5
-.Os Arla
+.Os "The Arla Project"
 .Sh NAME
 .Nm afsd.conf
 .Nd
-configuration file for the arla afs implementation.
+configuration file for the arla AFS implementation.
 .Sh SYNOPSIS
 The default configuration file works very well in most cases.
 .Sh DESCRIPTION
 Most flags can be overridden by command line arguments to
 .Nm afsd .
 .Pp
-Supported flags:
+Each option can be of the type integer, string or boolean.
+.Pp
+Integer values can be written with suffix 
+.Sq K 
+(kilo, 1000),
+.Sq M
+(mega, 10000000)
+and
+.Sq G
+(giga, 10000000000) .
+.Pp
+Strings are written without quotes or spaces in the strings.
+.Pp
+Boolean values can be either of
+.Ar yes ,
+.Ar true ,
+.Ar no ,
+or
+.Ar false .
+.Pp
+Supported options:
 .Bl -tag -width Ds
-.It high_vnodes
-The upper limit of afsd's vnodes (think files and directories).
+.It dynroot
+Boolean value. Dynamic root, generates your
+.Pa /afs
+directory from 
+.Pa CellServDB or
+.Pa DynRootDB .
+Useful when you don't want to use your cell's root.afs.
+.It fake_stat
+Boolean value.
+If set, do not fetch real stat information where it can be expensive
+(i e across mountpoints), but make up some reasonable values.
+.It fetch_block
+Integer value.
+Determines the fetch/pre-fetch block size.
+This option will later be replaced by code to automagically tune this
+setting.
 .It low_vnodes
+Integer value.
 The number of used vnodes we try to keep in the cache. Any higher
 number of used nodes will trigger the cleaner thread.
 .It high_bytes
-The high watermark for files used by afsd.
+Integer value.
+The high watermark for files used by arlad.
 .It low_bytes
-The number of bytes we try to keep in the cache. Any higher number of
-bytes will trigger the cleaner thread.
+Integer value.
+The number of bytes we try to keep in the cache.
+Any higher number of bytes will trigger the cleaner thread.
 .It numcreds
-The number of credentials in afsd, both unauthenticated, and authenticated
-(like Kerberos V4 creds).
+Integer value.
+The maximum number of credentials kept in arla, both authenticated
+(like Kerberos V4 creds), and not.
 .It numconns
-The maximum connections afsd will have to all servers (fileserver and
-vldb-server).
+Integer value.
+The maximum total number of connections arla will keep to servers
+(fileserver and vldb-server).
 .It numvols
+Integer value.
 The number of volumes stored in cache.
-.It fpriority
-File priority, the describes how the cleaner process will clean out
-files when set to a non-zero value. You might lose files that you fell
-is important (and isn't marked with priority flag) when you are in
-disconnected mode. You might not want to set this since then you'll
-loose valuble diskspace for to `sticky' files.
+.It sysname
+String value.
+The sysname is possible to specify in the configuration file. It's
+overridden by the command line argument 
+.Ar --sysname=sysname
+to arlad.
+.It rxkad-level
+It can be one of:
+.Ar clear ,
+.Ar auth , 
+or
+.Ar crypt .
+It's the same as the command line argument.
+.It high_vnodes
+Integer value.
+The upper limit of arlad's vnodes (think files and directories).
 .El
+.Sh BUGS
+The parser that reads numbers doesn't support numbers larger than 2G
+for most platforms when used on the abbreviated form (3G, 3000M,
+etc).
+Write out the whole number (3000000000) and make sure you have a
+working
+.Fn strtoll .
 .Sh SEE ALSO
+.Xr AliasDB 5 ,
 .Xr CellServDB 5 ,
-.Xr TheseCells 5 ,
+.Xr DynRootDB 5 ,
 .Xr ThisCell 5 ,
 .Xr afsd 8

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,7 +35,7 @@
  * Our cache of volume information.
  */
 
-/* $KTH: volcache.h,v 1.28.2.2 2001/02/12 12:53:02 assar Exp $ */
+/* $arla: volcache.h,v 1.36 2002/05/15 22:31:16 lha Exp $ */
 
 #ifndef _VOLCACHE_
 #define _VOLCACHE_
@@ -51,7 +51,7 @@
 
 struct num_ptr {
     int32_t cell;
-    u_int32_t vol;
+    uint32_t vol;
     struct volcacheentry *ptr;
     int32_t type;
 };
@@ -72,7 +72,6 @@ struct volcacheentry {
     int32_t cell;
     unsigned refcount;		/* number of files refererring this */
     unsigned vol_refs;		/* number of volumes refing this */
-    time_t last_fetch;
     Listitem *li;
     VenusFid mp_fid;		/* pointing to this volume */
     VenusFid parent_fid;	/* .. of this volume */
@@ -80,26 +79,21 @@ struct volcacheentry {
     struct {
 	unsigned validp  : 1;
 	unsigned stablep : 1;
+	unsigned lookupp : 1;
+	unsigned waiting : 1;
     } flags;
     struct name_ptr name_ptr;
     struct num_ptr num_ptr[MAXTYPES];
+    time_t timeout;
+    int status[NMAXNSERVERS];
+};
+
+enum { VOLCACHE_NOVOL		= 1,	/* server claim there is no volume */
+       VOLCACHE_UNAVAILABLE	= 2,	/* server failed to respond */
+       VOLCACHE_CHECKED		= 4	/* error-condition already processed */
 };
 
 typedef struct volcacheentry VolCacheEntry;
-
-/*
- * This is magic cookie for the dump of the volcache.
- * It's supposed not to be able to be confused with an old-style
- * dump (with no header)
- */
-
-#define VOLCACHE_MAGIC_COOKIE	0x00120100
-
-/*
- * current version number of the dump file
- */
-
-#define VOLCACHE_VERSION	0x3
 
 const char *volcache_get_rootvolume (void);
 
@@ -113,7 +107,7 @@ int volcache_getbyname (const char *volname,
 			VolCacheEntry **e,
 			int *type);
 
-int volcache_getbyid (u_int32_t id,
+int volcache_getbyid (uint32_t id,
 		      int32_t cell,
 		      CredCacheEntry *ce,
 		      VolCacheEntry **e,
@@ -129,15 +123,26 @@ void volcache_volref (VolCacheEntry *e, VolCacheEntry *parent);
 
 void volcache_volfree (VolCacheEntry *e);
 
-void volcache_invalidate (u_int32_t id, int32_t cell);
+void volcache_invalidate (uint32_t id, int32_t cell);
 
 void volcache_invalidate_ve (VolCacheEntry *ve);
 
+void volcache_invalidate_all (void);
+
 int volume_make_uptodate (VolCacheEntry *e, CredCacheEntry *ce);
 
-Bool volcache_reliable (u_int32_t id, int32_t cell);
+Bool volume_downp (int error);
 
-int volcache_getname (u_int32_t id, int32_t cell, char *, size_t);
+void volcache_mark_down (VolCacheEntry *ve, int i, int error);
+
+void volcache_process_marks (VolCacheEntry *e);
+
+Bool volcache_reliablep_el (VolCacheEntry *ve, int i);
+Bool volcache_reliablep (uint32_t id, int32_t cell);
+
+int volcache_getname (uint32_t id, int32_t cell, char *, size_t);
+
+void volcache_reliable_el (VolCacheEntry *ve, int i);
 
 void volcache_status (void);
 
@@ -145,8 +150,10 @@ int
 volcache_store_state (void);
 
 int
-volcache_volid2bit (const VolCacheEntry *ve, u_int32_t volid);
+volcache_volid2bit (const VolCacheEntry *ve, uint32_t volid);
 
 enum { VOLCACHE_OLD = 120 };
+
+enum { VOLCACHE_TIMEOUT = 600 };
 
 #endif /* _VOLCACHE_ */

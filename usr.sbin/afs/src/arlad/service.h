@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: service.h,v 1.11 2000/10/06 23:50:58 lha Exp $ */
+/* $arla: service.h,v 1.12 2002/07/24 06:05:22 lha Exp $ */
 
 /*
  * Service IDs

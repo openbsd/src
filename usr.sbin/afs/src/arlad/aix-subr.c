@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 #define _KERNEL
 
 #include "arla_local.h"
-RCSID("$KTH: aix-subr.c,v 1.14 2000/10/14 19:58:04 map Exp $");
+RCSID("$arla: aix-subr.c,v 1.17 2002/07/24 05:58:07 lha Exp $");
 
 static long blocksize = 1024;
 
@@ -58,7 +58,7 @@ flushbuf (void *vargs)
         (((sizeof(struct dirent)+ (strlen(name)+1)) + \
 	  3) & ~3)
 
-static void
+static int
 write_dirent(VenusFid *fid, const char *name, void *arg)
 {
      struct dirent *real;
@@ -78,9 +78,10 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
      args->off += real->d_reclen;
      real->d_offset = args->off;
      args->last = real;
+     return 0;
 }
 
-Result
+int
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	  fcache_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)

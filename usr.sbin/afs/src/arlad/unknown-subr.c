@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -32,7 +32,12 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: unknown-subr.c,v 1.9 2000/10/14 19:58:15 map Exp $");
+
+#ifdef __CYGWIN32__
+#include <windows.h>
+#endif
+
+RCSID("$arla: unknown-subr.c,v 1.13 2003/01/10 03:05:49 lha Exp $");
 
 int
 dir_remove_name (FCacheEntry *e, const char *filename,
@@ -42,14 +47,16 @@ dir_remove_name (FCacheEntry *e, const char *filename,
     return 0;
 }
 
-
-Result
+int
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	  fcache_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)
 {
-     Result res;
+ 
+    assert (e->status.FileType == TYPE_DIR);
 
-     res.res = 0;
-     return res;
+    fcache_conv_file_name(e, cache_name, cache_name_sz);
+    
+    e->tokens |= NNPFS_DATA_R | NNPFS_OPEN_NR;
+    return 0;
 }

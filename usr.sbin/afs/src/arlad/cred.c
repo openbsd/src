@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,10 +33,16 @@
 
 /*
  * Cache of credentials
+ *
+ *   Each 'cred,type' pair is collected on a list where the head is in
+ *   the cell CRED_ROOT_CELL. This is to enable fast iterations over
+ *   all creds for a user (indexed on cred,type).
  */
 
 #include "arla_local.h"
-RCSID("$KTH: cred.c,v 1.33.2.2 2001/04/21 14:55:34 lha Exp $");
+RCSID("$arla: cred.c,v 1.42 2003/06/10 04:23:23 lha Exp $");
+
+#define CRED_ROOT_CELL	(-1)
 
 #define CREDCACHESIZE 101
 
@@ -53,6 +59,8 @@ static unsigned ncredentials;
 
 /* # of active credentials */
 static unsigned nactive_credentials;
+
+static void root_free(CredCacheEntry *);
 
 /*
  * Functions for handling entries into the credentials cache.
@@ -116,10 +124,13 @@ cred_init (unsigned nentries)
 }
 
 static CredCacheEntry *
-internal_get (long cell, xfs_pag_t cred, int type)
+internal_get (long cell, nnpfs_pag_t cred, int type)
 {
     CredCacheEntry *e;
     CredCacheEntry key;
+
+    if (cell == CRED_ROOT_CELL)
+	return NULL;
 
     key.cell = cell;
     key.type = type;
@@ -131,14 +142,54 @@ internal_get (long cell, xfs_pag_t cred, int type)
 	e = cred_add (cred, type, 0, cell, 0, NULL, 0, 0);
     }
 
-    if (e != NULL)
+    if (e != NULL) {
 	++e->refcount;
+	assert(e->cell != CRED_ROOT_CELL);
+    }
 
     return e;
 }
 
+struct list_pag {
+    int (*func)(CredCacheEntry *, void *);
+    void *arg;
+};
+
+static Bool
+list_pag_func(List *l, Listitem *li, void *arg)
+{
+    CredCacheEntry *e = listdata(li);
+    struct list_pag *d = arg;
+
+    return (d->func)(e, d->arg);
+}
+
+int
+cred_list_pag(nnpfs_pag_t cred, int type, 
+	      int (*func)(CredCacheEntry *, void *), 
+	      void *ptr)
+{
+    CredCacheEntry key, *root_e;
+    struct list_pag d;
+
+    key.cell = CRED_ROOT_CELL;
+    key.type = type;
+    key.cred = cred;
+
+    root_e = (CredCacheEntry *)hashtabsearch (credhtab, (void *)&key);
+    if (root_e == NULL)
+	return 0;
+
+    d.func = func;
+    d.arg = ptr;
+
+    listiter(root_e->pag.list, list_pag_func, &d);
+
+    return 0;
+}
+
 CredCacheEntry *
-cred_get (long cell, xfs_pag_t cred, int type)
+cred_get (long cell, nnpfs_pag_t cred, int type)
 {
     if (type == CRED_ANY) {
 	CredCacheEntry *e;
@@ -158,6 +209,10 @@ cred_get (long cell, xfs_pag_t cred, int type)
 static void
 recycle_entry (CredCacheEntry *ce)
 {
+    assert(ce->refcount == 0);
+
+    if (ce->cell != CRED_ROOT_CELL)
+	root_free(ce);
     if (!ce->flags.killme)
 	hashtabdel (credhtab, ce);
     if (ce->cred_data != NULL)
@@ -170,6 +225,8 @@ recycle_entry (CredCacheEntry *ce)
 void
 cred_free (CredCacheEntry *ce)
 {
+    assert (ce->cell != CRED_ROOT_CELL);
+
     --ce->refcount;
     if (ce->flags.killme && ce->refcount == 0)
 	recycle_entry (ce);
@@ -194,8 +251,68 @@ get_free_cred (void)
 	       "credcache: there was no way of getting a cred");
 }
 
+static void
+root_free(CredCacheEntry *e)
+{
+    CredCacheEntry key, *root_e;
+
+    assert(e->cell != CRED_ROOT_CELL);
+
+    if (e->pag.li == NULL)
+	return;
+
+    key.cell = CRED_ROOT_CELL;
+    key.type = e->type;
+    key.cred = e->cred;
+
+    root_e = (CredCacheEntry *)hashtabsearch (credhtab, (void *)&key);
+    assert(root_e);
+
+    listdel(root_e->pag.list, e->pag.li);
+    e->pag.li = NULL;
+
+    if (listemptyp(root_e->pag.list)) {
+	listfree(root_e->pag.list);
+	root_e->pag.list = NULL;
+	recycle_entry(root_e);
+    }
+}
+
+static void
+add_to_root_entry(CredCacheEntry *e)
+{
+    CredCacheEntry key, *root_e;
+
+    assert(e->cell != CRED_ROOT_CELL);
+
+    key.cell = CRED_ROOT_CELL;
+    key.type = e->type;
+    key.cred = e->cred;
+
+    root_e = (CredCacheEntry *)hashtabsearch (credhtab, (void *)&key);
+    if (root_e == NULL) {
+	root_e = get_free_cred ();
+
+	root_e->cell          = CRED_ROOT_CELL;
+	root_e->type          = e->type;
+	root_e->cred          = e->cred;
+	root_e->securityindex = -1;
+	root_e->expire        = 0;
+	root_e->cred_data     = NULL;
+	root_e->uid           = e->uid;
+	root_e->pag.list      = listnew();
+	if (root_e->pag.list == NULL)
+	    arla_errx (1, ADEBERROR, "add_to_root_entry: out of memory");
+
+	hashtabadd(credhtab, root_e);
+
+	++nactive_credentials;
+    }
+    e->pag.li = listaddhead (root_e->pag.list, e);
+}
+
 CredCacheEntry *
-cred_add (xfs_pag_t cred, int type, int securityindex, long cell,
+cred_add (nnpfs_pag_t cred, int type, int securityindex, long cell,
 	  time_t expire, void *cred_data, size_t cred_data_sz,
 	  uid_t uid)
 {
@@ -220,40 +337,20 @@ cred_add (xfs_pag_t cred, int type, int securityindex, long cell,
     e->expire        = expire;
     e->cred_data     = data;
     e->uid           = uid;
+    e->pag.li	     = NULL;
 
-    old = hashtabsearch (credhtab, e);
+    add_to_root_entry(e);
+
+    old = (CredCacheEntry *)hashtabsearch (credhtab, (void *)e);
     if (old != NULL)
-	recycle_entry (old);
+	cred_delete (old);
 
     hashtabadd (credhtab, e);
+
     ++nactive_credentials;
+
     return e;
 }
-
-#if KERBEROS
-CredCacheEntry *
-cred_add_krb4 (xfs_pag_t cred, uid_t uid, CREDENTIALS *c)
-{
-    CredCacheEntry *ce;
-    char *cellname;
-    int cellnum;
-
-    if (*c->instance == '\0')
-	cellname = strdup (c->realm);
-    else
-	cellname = strdup (c->instance);
-    if (cellname == NULL)
-	return NULL;
-    strlwr (cellname);
-    cellnum = cell_name2num(cellname);
-    free (cellname);
-    if (cellnum == -1)
-	return NULL;
-
-    ce = cred_add (cred, CRED_KRB4, 2, cellnum, -1, c, sizeof(*c), uid);
-    return ce;
-}
-#endif
 
 /*
  *
@@ -262,9 +359,12 @@ cred_add_krb4 (xfs_pag_t cred, uid_t uid, CREDENTIALS *c)
 void
 cred_delete (CredCacheEntry *ce)
 {
+    assert(ce->cell != CRED_ROOT_CELL);
+
     if (ce->refcount > 0) {
 	ce->flags.killme = 1;
 	hashtabdel (credhtab, ce);
+	root_free(ce);
     } else
 	recycle_entry (ce);
 }
@@ -280,11 +380,11 @@ cred_expire (CredCacheEntry *ce)
 
     if (cell_name != NULL)
 	arla_warnx (ADEBWARN,
-		    "Credentials for UID %u in cell %s has expired",
+		    "Credentials for UID %u in cell %s have expired",
 		    (unsigned)ce->uid, cell_name);
     else
 	arla_warnx (ADEBWARN,
-		    "Credentials for UID %u in cell unknown %ld has expired",
+		    "Credentials for UID %u in cell unknown %ld have expired",
 		    (unsigned)ce->uid, ce->cell);
 
     cred_delete (ce);
@@ -294,7 +394,10 @@ static Bool
 remove_entry (void *ptr, void *arg)
 {
     CredCacheEntry *ce = (CredCacheEntry *)ptr;
-    xfs_pag_t *cred = (xfs_pag_t *)arg;
+    nnpfs_pag_t *cred = (nnpfs_pag_t *)arg;
+
+    if (ce->cell == CRED_ROOT_CELL)
+	return FALSE;
 
     if (ce->cred == *cred)
 	cred_delete (ce);
@@ -302,7 +405,7 @@ remove_entry (void *ptr, void *arg)
 }
 
 void
-cred_remove (xfs_pag_t cred)
+cred_remove (nnpfs_pag_t cred)
 {
     hashtabforeach (credhtab, remove_entry, &cred);
 }

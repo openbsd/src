@@ -32,7 +32,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: solaris-subr.c,v 1.33 2000/10/27 07:44:18 lha Exp $");
+RCSID("$arla: solaris-subr.c,v 1.35 2002/03/06 21:57:02 tol Exp $");
 
 static long blocksize = DIRBUF;
 
@@ -62,7 +62,7 @@ flushbuf (void *vargs)
         (((sizeof(struct dirent64)+ (strlen(name)+1)) + \
 	  LARGEFILE_ALIGN) & ~LARGEFILE_ALIGN)
 
-static void
+static int
 write_dirent(VenusFid *fid, const char *name, void *arg)
 {
      struct dirent64 *real;
@@ -85,9 +85,10 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
      args->off += real->d_reclen;
      real->d_off = args->off;
      args->last = real;
+     return 0;
 }
 
-Result
+int
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	  fcache_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)

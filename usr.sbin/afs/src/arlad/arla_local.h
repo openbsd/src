@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 /*
  *  Include file for whole arlad
- *  $KTH: arla_local.h,v 1.61.2.3 2001/09/14 13:25:45 lha Exp $
+ *  $arla: arla_local.h,v 1.88 2003/06/10 16:26:19 lha Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -68,7 +68,6 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#include <sys/stat.h>
 #ifdef HAVE_SYS_IOCCOM_H
 #include <sys/ioccom.h>
 #endif
@@ -95,19 +94,22 @@
 
 #include <rx/rx.h>
 #include <rx/rx_null.h>
-#include <rx/rxgencon.h>
 
-#ifdef KERBEROS
+#ifdef HAVE_KRB4
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
+#endif
 #include <rxkad.h>
-#endif
 
-#ifdef USE_MMAPTIME
-#include <mmaptime.h>
-#endif
+#include <ifaddrs.h>
 
 #include <kafs.h>
+
+#include <uae.h>
 
 #include "log.h"
 
@@ -119,25 +121,30 @@
 #include "vldb.cs.h"
 #include "volcache.h"
 #include "fbuf.h"
+#include "bool.h"
 #include "hash.h"
+#include "heap.h"
 #include "afs_dir.h"
-#include "service.h"
 #include "ports.h"
 #include "conn.h"
+#include "poller.h"
 #include "fcache.h"
+#include "state.h"
 #include "inter.h"
 #include "cred.h"
 #include "adir.h"
 #include "service.h"
 #include "subr.h"
 #include "fprio.h"
-#include "bool.h"
+#include "disco.h"
+#include "stats.h"
 #include "kernel.h"
 #include "messages.h"
 #include "fs_errors.h"
 #include "arladeb.h"
 #include "ko.h"
-#include "xfs.h"
+#include "nnpfs.h"
+#include "afs_uuid.h"
 
 enum connected_mode { CONNECTED  = 0,
 		      FETCH_ONLY = 1,
@@ -146,15 +153,19 @@ enum connected_mode { CONNECTED  = 0,
 
 extern enum connected_mode connected_mode;
 
-#include "darla.h"
-#include "discon_log.h"
-#include "discon.h"
-#include "reconnect.h"
-
 #include "dynroot.h"
 
+#if 0
+#define assert_flag(e,f)	assert((e)->flags.f)
+#define assert_not_flag(e,f)	assert(!(e)->flags.f)
+#else
+#define assert_flag(e,f)	do { } while(0)
+#define assert_not_flag(e,f)	do { } while(0)
+#endif
+
 #define SYSNAMEMAXLEN 2048
-extern char arlasysname[SYSNAMEMAXLEN];
+extern char **sysnamelist;
+extern int sysnamenum;
 
 
 #define ARLA_NUMCONNS 200
@@ -167,7 +178,7 @@ extern char arlasysname[SYSNAMEMAXLEN];
 
 /* 
  * This should be a not used uid in the system, 
- * XFS_ANONYMOUSID may be good
+ * NNPFS_ANONYMOUSID may be good
  */
 
 #define ARLA_NO_AUTH_CRED 4
@@ -184,11 +195,8 @@ extern int afs_BusyWaitPeriod;	/* number of sec to wait on fs when VBUSY */
 void
 store_state (void);
 
-void
-arla_start (char *device_file, const char *cache_dir);
-
 int
-arla_init (int argc, char **argv);
+arla_init (void);
 
 char *
 get_default_cache_dir (void);
@@ -197,14 +205,14 @@ get_default_cache_dir (void);
 #define O_BINARY 0
 #endif
 
-extern char *conf_file;
+extern const char *conf_file;
 extern char *log_file;
 extern char *debug_levels;
 extern char *connected_mode_string;
 #ifdef KERBEROS
-extern char *rxkad_level_string;
+extern const char *rxkad_level_string;
 #endif
-extern const char *temp_sysname;
+extern const char *argv_sysname;
 extern char *root_volume;
 extern int cpu_usage;
 extern int version_flag;
@@ -212,5 +220,7 @@ extern int help_flag;
 extern int recover;
 extern int dynroot_enable;
 extern int cm_consistency;
+extern int fake_stat;
+extern int fetch_block_size;
 
 extern char *cache_dir;

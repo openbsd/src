@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -32,12 +32,12 @@
  */
 
 /*
- * $KTH: dynroot.h,v 1.2.2.1 2001/05/28 15:19:20 map Exp $
+ * $arla: dynroot.h,v 1.5 2002/07/23 15:24:24 lha Exp $
  */
 
 #define DYNROOT_DEFAULT 0
 
-int dynroot_fetch_vldbN (nvldbentry *entry);
+int dynroot_fetch_root_vldbN (nvldbentry *entry);
 
 Bool dynroot_isvolumep (int cell, const char *volume);
 

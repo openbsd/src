@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,7 +35,7 @@
  * Header for credetial cache
  */
 
-/* $KTH: cred.h,v 1.26 2000/10/02 22:31:15 lha Exp $ */
+/* $arla: cred.h,v 1.33 2003/06/10 16:21:11 lha Exp $ */
 
 #ifndef _CRED_H_
 #define _CRED_H_
@@ -43,50 +43,79 @@
 #include <sys/types.h>
 #include <time.h>
 #include <lock.h>
-#ifdef KERBEROS
+#ifdef HAVE_KRB4
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
-#endif /* KERBEROS */
+#endif /* HAVE_KRB4 */
 #include "bool.h"
-#include <xfs/xfs_message.h>
+#include <nnpfs/nnpfs_message.h>
 
 /* The cred-types we support */
 #define CRED_NONE     0
 #define CRED_KRB4     1
 #define CRED_KRB5     2
-#define CRED_MAX      CRED_KRB5
+#define CRED_GK_K5    3
+#define CRED_MAX      CRED_GK_K5
 #define CRED_ANY      (-1)
 
-#ifdef KERBEROS
-typedef struct {
-    CREDENTIALS c;
-} krbstruct;
-#endif
+struct cred_rxkad {
+    struct ClearToken ct;
+    size_t ticket_len;
+    unsigned char ticket[MAXKRB4TICKETLEN];
+};
+
+struct cred_rxgk {
+    int type;
+    union {
+	struct {
+	    int32_t kvno;
+	    int32_t enctype;
+	    size_t sessionkey_len;
+	    void *sessionkey;
+	    size_t ticket_len;
+	    void *ticket;
+	} k5;
+    } t;
+};
 
 typedef struct {
-    xfs_pag_t cred;
+    nnpfs_pag_t cred;
     uid_t uid;
     int type;
     int securityindex;
     long cell;
     time_t expire;
     void *cred_data;
+    void (*cred_free_func)(void *);
     struct {
 	unsigned killme : 1;
     } flags;
     unsigned refcount;
+    union {
+	List *list; 
+	Listitem *li;
+    } pag;
 } CredCacheEntry;
 
 void cred_init (unsigned nentries);
 
 CredCacheEntry *
-cred_get (long cell, xfs_pag_t cred, int type);
+cred_get (long cell, nnpfs_pag_t cred, int type);
+
+int
+cred_list_pag(nnpfs_pag_t, int, 
+	      int (*func)(CredCacheEntry *, void *),
+	      void *);
 
 void
 cred_free (CredCacheEntry *ce);
 
 CredCacheEntry *
-cred_add (xfs_pag_t cred, int type, int securityindex, long cell,
+cred_add (nnpfs_pag_t cred, int type, int securityindex, long cell,
 	  time_t expire, void *cred_data, size_t cred_data_sz,
 	  uid_t uid);
 
@@ -96,12 +125,8 @@ cred_delete (CredCacheEntry *ce);
 void
 cred_expire (CredCacheEntry *ce);
 
-#ifdef KERBEROS
-CredCacheEntry * cred_add_krb4 (xfs_pag_t cred, uid_t uid, CREDENTIALS *c);
-#endif
-
 void cred_status (void);
 
-void cred_remove (xfs_pag_t cred);
+void cred_remove (nnpfs_pag_t cred);
 
 #endif /* _CRED_H_ */

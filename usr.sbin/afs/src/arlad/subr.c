@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -32,7 +32,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: subr.c,v 1.7 2000/10/14 19:58:12 map Exp $");
+RCSID("$arla: subr.c,v 1.12 2002/09/07 10:43:30 lha Exp $");
 
 /*
  * come up with a good inode number for `name', `fid' in `parent'
@@ -64,7 +64,7 @@ dentry2ino (const char *name, const VenusFid *fid, const FCacheEntry *parent)
  * Assume `e' has valid data.
  */
 
-Result
+int
 conv_dir_sub (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	      fcache_cache_handle *cache_handle,
 	      char *cache_name, size_t cache_name_sz,
@@ -73,42 +73,37 @@ conv_dir_sub (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	      size_t blocksize)
 {
      struct write_dirent_args args;
-     Result res;
      int ret;
      int fd;
      fbuf the_fbuf;
 
      e->flags.extradirp = TRUE;
      fcache_extra_file_name (e, cache_name, cache_name_sz);
-     res.tokens = e->tokens |= XFS_DATA_R | XFS_OPEN_NR;
+     e->tokens |= NNPFS_DATA_R | NNPFS_OPEN_NR;
 
      args.fd = open (cache_name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
      if (args.fd == -1) {
-	  res.res = -1;
-	  res.error = errno;
-	  arla_warn (ADEBWARN, errno, "open %s", cache_name);
-	  return res;
+	  ret = errno;
+	  arla_warn (ADEBWARN, ret, "open %s", cache_name);
+	  return ret;
      }
      ret = fcache_fhget (cache_name, cache_handle);
 
      args.off  = 0;
      args.buf  = (char *)malloc (blocksize);
      if (args.buf == NULL) {
-	 arla_warn (ADEBWARN, errno, "malloc %u", (unsigned)blocksize);
-	 res.res = -1;
-	 res.error = errno;
+	 ret = errno;
+	 arla_warn (ADEBWARN, ret, "malloc %u", (unsigned)blocksize);
 	 close (args.fd);
-	 return res;
+	 return ret;
      }
 
      ret = fcache_get_fbuf (e, &fd, &the_fbuf,
 			    O_RDONLY, FBUF_READ|FBUF_PRIVATE);
      if (ret) {
-	 res.res = -1;
-	 res.error = ret;
 	 close (args.fd);
 	 free (args.buf);
-	 return res;
+	 return ret;
      }
      
      args.ptr  = args.buf;
@@ -116,7 +111,8 @@ conv_dir_sub (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
      args.e    = e;
      args.ce   = ce;
      
-     fdir_readdir (&the_fbuf, func, (void *)&args, &e->fid);
+     /* translate to local dir format, write in args.fd */
+     fdir_readdir (&the_fbuf, func, (void *)&args, e->fid, NULL);
 
      fbuf_end (&the_fbuf);
      close (fd);
@@ -124,8 +120,8 @@ conv_dir_sub (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
      if (args.last)
 	  (*flush_func) (&args);
      free (args.buf);
-     res.res = close (args.fd);
-     if (res.res)
-	  res.error = errno;
-     return res;
+     ret = close (args.fd);
+     if (ret)
+	  ret = errno;
+     return ret;
 }

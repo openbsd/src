@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,19 +39,20 @@
 
 #include <arla_local.h>
 
-RCSID("$KTH: dynroot.c,v 1.13.2.2 2001/05/28 15:19:20 map Exp $");
+RCSID("$arla: dynroot.c,v 1.25 2003/01/20 14:21:02 lha Exp $");
 
 struct create_entry {
     fbuf *thedir;	/* pointer to the fbuf that contains the dir */
     AFSFid fid;		/* the current fid */
     int len;		/* num of links in the dir */
+    int type;
 };
 
-#define DYNROOT_ROOTVOLUME 1
+#define DYNROOT_ROOTVOLUME 1		/* make sure that these */
+#define DYNROOT_ROOTVOLUME_STR "1"	/* two are the same */
 #define DYNROOT_ROOTDIR 1
 #define DYNROOT_UNIQUE 1
 
-static int32_t dynrootcell = 0;			/* this is the dynroocell */
 static Bool dynroot_enable  = 0;		/* is dynroot enabled ? */
 static unsigned long last_celldb_version = 0;	/* last version of celldb */
 
@@ -60,34 +61,38 @@ static unsigned long last_celldb_version = 0;	/* last version of celldb */
  */
 
 static int32_t
-cellnum2afs (int cellno)
+cellnum2afs (int cellno, int rw)
 {
-    return (cellno << 1) + 1;
+    if (rw)
+	return (cellno << 2) + 0x2;
+    else
+	return (cellno << 2) + 0x1;
 }
 
 static int
-afs2cellnum (int32_t afsvnode)
+afs2cellnum (int32_t afsvnode, int *rw)
 {
-    return (afsvnode - 1) >> 1;
+    if (afsvnode & 0x2)
+	*rw = 1;
+    else
+	*rw = 0;
+    return afsvnode >> 2;
 }
 
 /*
  * helper functions for dynroot_create_root that for
- * each `cell' creates a entry in the root directory.
+ * each `cell' with 'cellid' a entry in the root directory.
  */
 
 static int
-create_entry_func (const cell_entry *cell, void *arg)
+create_entry_func (const char *name, uint32_t cellid, int type, void *arg)
 {
     struct create_entry *entry = (struct create_entry *) arg;
     int ret;
 
-    if (!cell_dynroot(cell))
-	return 0;
+    entry->fid.Vnode = cellnum2afs (cellid, type & DYNROOT_ALIAS_READWRITE);
 
-    entry->fid.Vnode = cellnum2afs (cell->id);
-
-    ret = fdir_creat (entry->thedir, cell->name, entry->fid);
+    ret = fdir_creat (entry->thedir, name, entry->fid);
     if (ret)
 	return ret;
 
@@ -95,6 +100,38 @@ create_entry_func (const cell_entry *cell, void *arg)
 
     return 0;
 }
+
+/*
+ * Wrapper function for cell_foreach that takes a `cell' instead of a
+ * string and a cellid.
+ */
+
+static int
+create_cell_entry_func (const cell_entry *cell, void *arg)
+{
+    if (!cell_dynroot(cell))
+	return 0;
+    return create_entry_func(cell->name, cell->id, 
+			     DYNROOT_ALIAS_READONLY, arg);
+}
+
+/*
+ *
+ */
+
+static int
+create_alias_entry_func (const char *cellname, const char *alias, 
+			 int type, void *arg)
+{
+    cell_entry *cell;
+
+    cell = cell_get_by_name (cellname);
+    if (cell == NULL)
+	return 0;
+    return create_entry_func(alias, cell->id, type, arg);
+
+}
+
 
 /*
  * create the dynroot root directory in `fbuf', return number
@@ -121,7 +158,11 @@ dynroot_create_root (fbuf *fbuf, size_t *len)
     entry.fid.Unique	= DYNROOT_UNIQUE;
     entry.len = 0;
     
-    ret = cell_foreach (create_entry_func, &entry);
+    ret = cell_foreach (create_cell_entry_func, &entry);
+    if (ret)
+	return ret;
+
+    ret = cell_alias_foreach(create_alias_entry_func, &entry);
     if (ret)
 	return ret;
 
@@ -139,13 +180,14 @@ dynroot_create_symlink (fbuf *fbuf, int32_t vnode)
 {
     char name[MAXPATHLEN];
     cell_entry *cell;
-    int len, ret;
+    int len, ret, rw = 0;
 
-    cell = cell_get_by_id (afs2cellnum (vnode));
+    cell = cell_get_by_id (afs2cellnum (vnode, &rw));
     if (cell == NULL)
 	return ENOENT;
 
-    len = snprintf (name, sizeof(name), "#%s:root.cell.", cell->name);
+    len = snprintf (name, sizeof(name), "%c%s:root.cell.", 
+		    rw ? '%' : '#', cell->name);
     assert (len > 0 && len <= sizeof (name));
 
     ret = fbuf_truncate (fbuf, len);
@@ -166,7 +208,9 @@ dynroot_isvolumep (int cell, const char *volume)
 {
     assert (volume);
     
-    if (cell == 0 && strcmp (volume, "1") == 0)
+    if (cell == 0 &&
+	(strcmp (volume, "root.afs") == 0
+	 || strcmp (volume, DYNROOT_ROOTVOLUME_STR) == 0))
 	return TRUE;
 
     return FALSE;
@@ -177,14 +221,14 @@ dynroot_isvolumep (int cell, const char *volume)
  */
 
 int
-dynroot_fetch_vldbN (nvldbentry *entry)
+dynroot_fetch_root_vldbN (nvldbentry *entry)
 {
     memset (entry, 0, sizeof(*entry));
 
-    strlcpy(entry->name, "root.cell", sizeof(entry->name));
+    strlcpy(entry->name, "root.afs", sizeof(entry->name));
     entry->nServers = 0;
-    entry->volumeId[RWVOL] = DYNROOT_ROOTVOLUME;
-    entry->flags = VLF_RWEXISTS;
+    entry->volumeId[ROVOL] = DYNROOT_ROOTVOLUME;
+    entry->flags = VLF_ROEXISTS;
 
     return 0;
 }
@@ -196,7 +240,7 @@ dynroot_fetch_vldbN (nvldbentry *entry)
 
 static void
 dynroot_update_entry (FCacheEntry *entry, int32_t filetype,
-		      xfs_pag_t cred)
+		      nnpfs_pag_t cred)
 {
     struct timeval tv;
     AccessEntry *ae;
@@ -226,10 +270,10 @@ dynroot_update_entry (FCacheEntry *entry, int32_t filetype,
     entry->status.ServerModTime	= 0;
     entry->status.Group		= 0;
     entry->status.SyncCount	= 0;
-    entry->status.spare1	= 0;
-    entry->status.spare2	= 0;
-    entry->status.spare3	= 0;
-    entry->status.spare4	= 0;
+    entry->status.DataVersionHigh= 0;
+    entry->status.LockCount	= 0;
+    entry->status.LengthHigh	= 0;
+    entry->status.ErrorCode	= 0;
 
     gettimeofday (&tv, NULL);
 
@@ -259,8 +303,7 @@ dynroot_get_node (FCacheEntry *entry, CredCacheEntry *ce)
 
     rootnode = entry->fid.fid.Vnode == DYNROOT_ROOTDIR ? 1 : 0;
 
-    if (entry->flags.attrp &&
-	entry->flags.datap &&
+    if (entry->length != 0 &&
 	(!rootnode || last_celldb_version == cell_get_version()))
 	return 0;
 
@@ -289,21 +332,20 @@ dynroot_get_node (FCacheEntry *entry, CredCacheEntry *ce)
 	return ret;
     }
 
+    entry->flags.attrp = TRUE;
+
+    dynroot_update_entry (entry, rootnode ? TYPE_DIR : TYPE_LINK,
+			  ce->cred);
+
     entry->status.Length 	= dir.len;
-    entry->length	 	= dir.len;
+    fcache_update_length(entry, dir.len, dir.len);
 
     ret = fbuf_end (&dir);
     close(fd);
     if (ret)
 	return ret;
 
-    dynroot_update_entry (entry, rootnode ? TYPE_DIR : TYPE_LINK,
-			  ce->cred);
-
-    entry->flags.attrp = TRUE;
-    entry->flags.datap = TRUE;
-
-    entry->tokens |= XFS_ATTR_R|XFS_DATA_R;
+    entry->tokens |= NNPFS_ATTR_R|NNPFS_DATA_R;
 
     return 0;
 }
@@ -339,7 +381,7 @@ dynroot_is_dynrootp (FCacheEntry *entry)
     assert (entry);
 
     if (dynroot_enable &&
-	entry->fid.Cell == dynrootcell &&
+	entry->fid.Cell == DYNROOT_CELLID &&
 	entry->fid.fid.Volume == DYNROOT_ROOTVOLUME)
 	return TRUE;
 
@@ -374,7 +416,7 @@ dynroot_setenable (Bool enable)
 
 int32_t dynroot_cellid (void)
 {
-    return dynrootcell;
+    return DYNROOT_CELLID;
 }
 
 /*

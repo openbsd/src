@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -36,7 +36,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: cmcb.c,v 1.29 2000/11/28 01:50:44 lha Exp $") ;
+RCSID("$arla: cmcb.c,v 1.41 2003/03/06 00:38:47 lha Exp $") ;
 
 #include "cb.ss.h"
 
@@ -44,11 +44,22 @@ RCSID("$KTH: cmcb.c,v 1.29 2000/11/28 01:50:44 lha Exp $") ;
  * Create an instance of the callback service and start a server.
  */
 
+static afsUUID arla_client_uuid;
+
+void
+cmcb_reinit (void)
+{
+    if (afsUUID_create(&arla_client_uuid))
+	arla_errx(1, ADEBWARN, "Failed to create uuid for client");
+}
+
 void
 cmcb_init (void)
 {
      static struct rx_securityClass *nullSecObjP;
      static struct rx_securityClass *(securityObjects[1]);
+
+     cmcb_reinit ();
 
      nullSecObjP = rxnull_NewClientSecurityObject ();
      if (nullSecObjP == NULL)
@@ -68,34 +79,13 @@ cmcb_init (void)
  */
 
 int
-RXAFSCB_Probe (struct rx_call *a_rxCallP)
+SRXAFSCB_Probe (struct rx_call *a_rxCallP)
 {
      u_long host = rx_HostOf (rx_PeerOf (rx_ConnectionOf (a_rxCallP)));
      struct in_addr in_addr;
 
      in_addr.s_addr = host;
      arla_warnx (ADEBCALLBACK, "probe (%s)", inet_ntoa(in_addr));
-     return 0;
-}
-
-/*
- * Throw away all callbacks from the host in `a_rxCallP'.
- */
-
-int
-RXAFSCB_InitCallBackState (struct rx_call *a_rxCallP)
-{
-     u_long host = rx_HostOf (rx_PeerOf (rx_ConnectionOf (a_rxCallP)));
-     struct in_addr in_addr;
-
-     cm_check_consistency();
-
-     in_addr.s_addr = host;
-     arla_warnx (ADEBCALLBACK, "InitCallBackState (%s)", inet_ntoa(in_addr));
-     fcache_purge_host (host);
-
-     cm_check_consistency();
-
      return 0;
 }
 
@@ -108,18 +98,18 @@ RXAFSCB_InitCallBackState (struct rx_call *a_rxCallP)
  */
 
 int
-RXAFSCB_CallBack (struct rx_call *a_rxCallP,
-		  const AFSCBFids *a_fidArrayP,
-		  const AFSCBs *a_callBackArrayP)
+SRXAFSCB_CallBack (struct rx_call *a_rxCallP,
+		   const AFSCBFids *a_fidArrayP,
+		   const AFSCBs *a_callBackArrayP)
 {
      int i;
      long cell;
-     u_long host = rx_HostOf (rx_PeerOf (rx_ConnectionOf (a_rxCallP)));
+     uint32_t host = rx_HostOf (rx_PeerOf (rx_ConnectionOf (a_rxCallP)));
      struct in_addr in_addr;
 
      in_addr.s_addr = host;
      arla_warnx (ADEBCALLBACK, "callback (%s)", inet_ntoa(in_addr));
-     cell = conn_host2cell(host, afsport, FS_SERVICE_ID);
+     cell = poller_host2cell(host);
      if (cell == -1)
 	 arla_warnx (ADEBCALLBACK,
 		     "callback from unknown host: %s",
@@ -152,62 +142,235 @@ RXAFSCB_CallBack (struct rx_call *a_rxCallP,
 
 
 int
-RXAFSCB_GetLock(struct rx_call *a_rxCallP,
-		int32_t index,
-		AFSDBLock *lock)
+SRXAFSCB_GetLock(struct rx_call *a_rxCallP,
+		 int32_t index,
+		 AFSDBLock *lock)
 {
     return 1;
 }
 
 int
-RXAFSCB_GetCE(struct rx_call *a_rxCallP,
-	      int32_t index,
-	      AFSDBCacheEntry *dbentry)
+SRXAFSCB_GetCE(struct rx_call *a_rxCallP,
+	       int32_t index,
+	       AFSDBCacheEntry *dbentry)
 {
     return 1;
 }
 
 int
-RXAFSCB_XStatsVersion(struct rx_call *a_rxCallP,
-		      int32_t *version)
+SRXAFSCB_XStatsVersion(struct rx_call *a_rxCallP,
+		       int32_t *version)
 {
     return RXGEN_OPCODE;
 }
 
 int
-RXAFSCB_GetXStats(struct rx_call *a_rxCallP,
-		  int32_t client_version_num,
-		  int32_t collection_number,
-		  int32_t *server_version_number,
-		  int32_t *time,
-		  AFSCB_CollData *stats)
+SRXAFSCB_GetXStats(struct rx_call *a_rxCallP,
+		   int32_t client_version_num,
+		   int32_t collection_number,
+		   int32_t *server_version_number,
+		   int32_t *time,
+		   AFSCB_CollData *stats)
 {
     return RXGEN_OPCODE;
 }
 
-int
-RXAFSCB_InitCallBackState2(struct rx_call *a_rxCallP, interfaceAddr *addr)
+
+/*
+ * Throw away all callbacks from the `host'
+ */
+
+static void
+init_callback_state(uint32_t host)
 {
-    return RXGEN_OPCODE;
+    struct in_addr in_addr;
+    
+    cm_check_consistency();
+    
+    in_addr.s_addr = host;
+    arla_warnx (ADEBCALLBACK, "InitCallBackState (%s)", inet_ntoa(in_addr));
+    fcache_purge_host (host);
+    
+    cm_check_consistency();
+}
+
+/*
+ * Init the CallBack address in `addr'. Returns 0 or RXGEN_OPCODE.
+ */
+
+static int
+init_address(interfaceAddr *addr)
+{
+    struct ifaddrs *ifa, *ifa0;
+    int num_addr;
+
+    memset(addr, 0, sizeof(*addr));
+
+    addr->uuid = arla_client_uuid;
+    
+    if (getifaddrs(&ifa0) != 0)
+	return RXGEN_OPCODE;
+
+    num_addr = 0;
+
+    for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
+	if (ifa->ifa_addr == NULL)
+	    continue;
+
+#if IFF_LOOPBACK
+	if (ifa->ifa_flags & IFF_LOOPBACK)
+	    continue;
+#endif
+
+	switch (ifa->ifa_addr->sa_family) {
+	case AF_INET: {
+	    struct sockaddr_in *sin = (struct sockaddr_in *)ifa->ifa_addr;
+	    struct sockaddr_in *netmask = (struct sockaddr_in *)ifa->ifa_netmask;
+
+	    if (sin->sin_addr.s_addr == htonl(0x7f000001))
+		continue;
+
+	    addr->addr_in[num_addr] = sin->sin_addr.s_addr;
+	    if (netmask) {
+		addr->subnetmask[num_addr] = netmask->sin_addr.s_addr;
+	    } else {
+		/* dream up something */
+		addr->subnetmask[num_addr] = htonl(0xffffff00); 
+	    }
+
+	    addr->mtu[num_addr] = 1500; /* XXX */
+    
+	    num_addr++;
+	    break;
+	}
+	}
+
+	if (num_addr >= AFS_MAX_INTERFACE_ADDR)
+	    break;
+    }
+
+    freeifaddrs(ifa0);
+
+#if 0
+    /* fail if there was no good ipv4 addresses */
+    if (num_addr == 0)
+	return RXGEN_OPCODE;
+#endif
+
+    addr->numberOfInterfaces = num_addr;
+
+    return 0;
 }
 
 int
-RXAFSCB_WhoAreYou(struct rx_call *a_rxCallP,
-		  interfaceAddr *addr)
+SRXAFSCB_InitCallBackState (struct rx_call *a_rxCallP)
 {
-    return RXGEN_OPCODE;
+    u_long host = rx_HostOf (rx_PeerOf (rx_ConnectionOf (a_rxCallP)));
+
+    init_callback_state(host);
+     
+    return 0;
 }
 
 int
-RXAFSCB_InitCallBackState3(struct rx_call *a_rxCallP,
-			   const struct afsUUID *serverUuid)
+SRXAFSCB_InitCallBackState2 (struct rx_call *a_rxCallP, interfaceAddr *addr)
 {
-    return RXGEN_OPCODE;
+    u_long host = rx_HostOf (rx_PeerOf (rx_ConnectionOf (a_rxCallP)));
+
+    init_callback_state(host);
+
+    return init_address(addr);
 }
 
 int
-RXAFSCB_ProbeUUID(struct rx_call *a_rxCallP,
+SRXAFSCB_InitCallBackState3 (struct rx_call *a_rxCallP,
+			     const struct afsUUID *serverUuid)
+{
+    u_long host = rx_HostOf (rx_PeerOf (rx_ConnectionOf (a_rxCallP)));
+
+    init_callback_state(host);
+    
+    return 0;
+}
+
+int
+SRXAFSCB_WhoAreYou(struct rx_call *a_rxCallP,
+		   interfaceAddr *addr)
+{
+    return init_address(addr);
+}
+
+int
+SRXAFSCB_ProbeUUID(struct rx_call *a_rxCallP,
 		  const struct afsUUID *uuid)
 {
+    /* the the uuids are equal, we are the host belive we is */
+
+    if (afsUUID_equal(uuid, &arla_client_uuid))
+	return 0;
+    return 1;
+}
+
+int
+SRXAFSCB_GetCellServDB(struct rx_call *a_rxCallP,
+		       const int32_t cellIndex,
+		       char *cellName,
+		       serverList *cellHosts)
+{
     return RXGEN_OPCODE;
+}
+
+int
+SRXAFSCB_GetLocalCell(struct rx_call *a_rxCallP,
+		     char *cellName)
+{
+    strlcpy(cellName, cell_getthiscell(), AFSNAMEMAX);
+    return 0;
+}
+		      
+int
+SRXAFSCB_GetCacheConfig(struct rx_call *a_rxCallP,
+			const uint32_t callerVersion,
+			uint32_t *serverVersion,
+			uint32_t *configCount,
+			cacheConfig *config)
+{
+    *serverVersion = 0;
+    *configCount = 0;
+    config->len = 0;
+    config->val = NULL;
+
+    return RXGEN_OPCODE;
+}
+
+int
+SRXAFSCB_GetCellByNum(struct rx_call *call,
+		      const int32_t cellNumber,
+		      char *cellName,
+		      serverList *cellHosts)
+{
+    return RXGEN_OPCODE;
+}
+
+int
+SRXAFSCB_TellMeAboutYourself(struct rx_call *call,
+			     struct interfaceAddr *addr,
+			     Capabilities *capabilities)
+{
+    int ret;
+
+    memset(addr, 0, sizeof(*addr));
+
+    capabilities->len = 1;
+    capabilities->val = malloc(sizeof(capabilities->val[0]));
+    if (capabilities->val == NULL)
+	return ENOMEM;
+
+    capabilities->val[0] = 0x1; /* UAE */
+
+    ret = init_address(addr);
+    if (ret)
+	return ret;
+
+    return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -32,13 +32,13 @@
  */
 
 #include <arla_local.h>
-RCSID("$KTH: arladeb.c,v 1.24.2.2 2001/04/30 00:01:59 lha Exp $");
+RCSID("$arla: arladeb.c,v 1.29 2002/12/06 04:57:31 lha Exp $");
 
 Log_method* arla_log_method = NULL;
 Log_unit* arla_log_unit = NULL;
 
 void
-arla_log(unsigned level, char *fmt, ...)
+arla_log(unsigned level, const char *fmt, ...)
 {
     va_list args;
     
@@ -51,13 +51,13 @@ arla_log(unsigned level, char *fmt, ...)
 
 
 void
-arla_loginit(char *log, log_flags flags)
+arla_loginit(char *logname, log_flags flags)
 {
-    assert (log);
+    assert (logname);
     
-    arla_log_method = log_open("arla", log);
+    arla_log_method = log_open("arla", logname);
     if (arla_log_method == NULL)
-	errx (1, "arla_loginit: log_opened failed with log `%s'", log);
+	errx (1, "arla_loginit: log_opened failed with log `%s'", logname);
     arla_log_unit = log_unit_init (arla_log_method, "arla", arla_deb_units,
 				   ARLA_DEFAULT_LOG);
     if (arla_log_unit == NULL)

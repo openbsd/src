@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,23 +35,23 @@
  * Header for connection cache
  */
 
-/* $KTH: conn.h,v 1.24.2.2 2001/09/28 00:59:11 mattiasa Exp $ */
+/* $arla: conn.h,v 1.31 2002/09/07 10:42:57 lha Exp $ */
 
 #ifndef _CONN_H_
 #define _CONN_H_
 
 #include <stdio.h>
-#include <xfs/xfs_message.h>
+#include <nnpfs/nnpfs_message.h>
 #include <cred.h>
 
 struct conncacheentry {
-    u_int32_t host;		/* IP address of host */
-    u_int16_t port;		/* port number at host */
-    u_int16_t service;		/* RX service # */
+    uint32_t host;		/* IP address of host */
+    uint16_t port;		/* port number at host */
+    uint16_t service;		/* RX service # */
     int32_t cell;		/* cell of host */
     int securityindex;
     int (*probe)(struct rx_connection *);
-    xfs_pag_t cred;
+    nnpfs_pag_t cred;
     struct rx_connection *connection;
     struct {
 	unsigned alivep : 1;
@@ -82,7 +82,7 @@ void
 conn_init (unsigned nentries);
 
 ConnCacheEntry *
-conn_get (int32_t cell, u_int32_t host, u_int16_t port, u_int16_t service,
+conn_get (int32_t cell, uint32_t host, uint16_t port, uint16_t service,
 	  int (*probe)(struct rx_connection *),
 	  CredCacheEntry *ce);
 
@@ -96,29 +96,35 @@ void
 conn_probe (ConnCacheEntry *);
 
 void
+conn_ref (ConnCacheEntry *e);
+
+void
 conn_free (ConnCacheEntry *e);
 
 int32_t
-conn_host2cell (u_int32_t host, u_int16_t port, u_int16_t service);
+conn_host2cell (uint32_t host, uint16_t port, uint16_t service);
 
 Bool
-conn_serverupp (u_int32_t host, u_int16_t port, u_int16_t service);
+conn_serverupp (uint32_t host, uint16_t port, uint16_t service);
 
 void
 conn_status (void);
 
 void
 conn_clearcred (clear_state_mask mask,
-		int32_t cell, xfs_pag_t cred, int securityindex);
+		int32_t cell, nnpfs_pag_t cred, int securityindex);
 
 void
-conn_downhosts(int32_t cell, u_int32_t *hosts, int *num, int flags);
+conn_downhosts(int32_t cell, uint32_t *hosts, int *num, int flags);
 
 int
 conn_rtt_cmp (const void *v1, const void *v2);
 
 Bool
 host_downp (int error);
+
+Bool
+conn_isalivep (ConnCacheEntry *e);
 
 /*
  * Random factor to add to rtts when comparing them.
