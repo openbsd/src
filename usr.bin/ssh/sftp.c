@@ -24,7 +24,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.6 2001/02/07 22:27:18 djm Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.7 2001/02/08 00:04:52 markus Exp $");
 
 /* XXX: commandline mode */
 /* XXX: copy between two remote hosts (commandline) */
@@ -39,6 +39,10 @@ RCSID("$OpenBSD: sftp.c,v 1.6 2001/02/07 22:27:18 djm Exp $");
 #include "sftp-common.h"
 #include "sftp-client.h"
 #include "sftp-int.h"
+
+int use_ssh1 = 0;
+char *ssh_program = _PATH_SSH_PROGRAM;
+char *sftp_server = NULL;
 
 void
 connect_to_server(char **args, int *in, int *out, pid_t *sshpid)
@@ -72,8 +76,8 @@ connect_to_server(char **args, int *in, int *out, pid_t *sshpid)
 		close(*out);
 		close(c_in);
 		close(c_out);
-		execv(_PATH_SSH_PROGRAM, args);
-		fprintf(stderr, "exec: %s", strerror(errno));
+		execv(ssh_program, args);
+		fprintf(stderr, "exec: %s: %s\n", ssh_program, strerror(errno));
 		exit(1);
 	}
 
@@ -87,18 +91,24 @@ make_ssh_args(char *add_arg)
 	static char **args = NULL;
 	static int nargs = 0;
 	char debug_buf[4096];
-	int i;
+	int i, use_subsystem = 1;
+
+	/* no subsystem if protocol 1 or the server-spec contains a '/' */
+	if (use_ssh1 ||
+	    (sftp_server != NULL && strchr(sftp_server, '/') != NULL))
+		use_subsystem = 0;
 
 	/* Init args array */
 	if (args == NULL) {
-		nargs = 6;
+		nargs = use_subsystem ? 6 : 5;
 		i = 0;
 		args = xmalloc(sizeof(*args) * nargs);
 		args[i++] = "ssh";
-		args[i++] = "-oProtocol=2";
+		args[i++] = use_ssh1 ? "-oProtocol=1" : "-oProtocol=2";
+		if (use_subsystem)
+			args[i++] = "-s";
 		args[i++] = "-oForwardAgent=no";
 		args[i++] = "-oForwardX11=no";
-		args[i++] = "-s";
 		args[i++] = NULL;
 	}
 
@@ -112,7 +122,10 @@ make_ssh_args(char *add_arg)
 	}
 
 	/* Otherwise finish up and return the arg array */
-	make_ssh_args("sftp");
+	if (sftp_server != NULL)
+		make_ssh_args(sftp_server);
+	else
+		make_ssh_args("sftp");
 
 	/* XXX: overflow - doesn't grow debug_buf */
 	debug_buf[0] = '\0';
@@ -130,7 +143,7 @@ make_ssh_args(char *add_arg)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: sftp [-vC] [-osshopt=value] [user@]host\n");
+	fprintf(stderr, "usage: sftp [-1vC] [-osshopt=value] [user@]host\n");
 	exit(1);
 }
 
@@ -146,7 +159,7 @@ main(int argc, char **argv)
 
 	debug_level = compress_flag = 0;
 
-	while ((ch = getopt(argc, argv, "hCvo:")) != -1) {
+	while ((ch = getopt(argc, argv, "1hvCo:s:S:")) != -1) {
 		switch (ch) {
 		case 'C':
 			compress_flag = 1;
@@ -157,6 +170,17 @@ main(int argc, char **argv)
 		case 'o':
 			make_ssh_args("-o");
 			make_ssh_args(optarg);
+			break;
+		case '1':
+			use_ssh1 = 1;
+			if (sftp_server == NULL)
+				sftp_server = _PATH_SFTP_SERVER;
+			break;
+		case 's':
+			sftp_server = optarg;
+			break;
+		case 'S':
+			ssh_program = optarg;
 			break;
 		case 'h':
 		default:
