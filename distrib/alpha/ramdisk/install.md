@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.21 1998/03/29 19:57:51 millert Exp $
+#       $OpenBSD: install.md,v 1.22 1998/09/06 08:51:08 deraadt Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -101,7 +101,7 @@ md_get_cddevs() {
 
 md_get_ifdevs() {
         # return available network devices
-	md_get_msgbuf | egrep "(^e[dp][0-9] |^[dl]e[0-9] |fxp[0-9])" | sed -e 's/^ *//' -e 's/ .*//'
+	md_get_msgbuf | egrep "(^e[dp][0-9] |^xl[0-9] |^[dl]e[0-9] |fxp[0-9])" | sed -e 's/^ *//' -e 's/ .*//'
 }
 
 md_get_partition_range() {
