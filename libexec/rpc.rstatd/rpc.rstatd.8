@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.rstatd.8,v 1.5 1999/07/09 13:35:51 aaron Exp $
+.\"	$OpenBSD: rpc.rstatd.8,v 1.6 2000/01/23 03:05:40 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: rpc.rstatd.8,v 1.5 1999/07/09 13:35:51 aaron Exp $
+.\"	$OpenBSD: rpc.rstatd.8,v 1.6 2000/01/23 03:05:40 millert Exp $
 .\"
 .Dd June 7, 1993
 .Dt RPC.RSTATD 8
@@ -45,11 +45,9 @@
 .Sh DESCRIPTION
 .Nm rpc.rstatd
 is a server which returns performance statistics obtained from the kernel.
-These statistics are usually read using the
+Some of these statistics may be read using the
 .Xr rup 1
-command.  They are also used by the
-.Xr rpc.lockd 8
-server during crash recovery.
+command.
 The
 .Nm rpc.rstatd
 daemon is normally invoked by
@@ -60,5 +58,4 @@ uses an RPC protocol defined in
 .Pa /usr/include/rpcsvc/rstat.x .
 .Sh SEE ALSO
 .Xr rup 1 ,
-.Xr inetd 8 ,
-.Xr rpc.lockd 8
+.Xr inetd 8
