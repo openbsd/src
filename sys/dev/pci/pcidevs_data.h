@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.645 2003/06/26 23:16:37 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.646 2003/06/27 10:03:37 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5663,8 +5663,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ST2021 Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_4065A,
-	    "4065A",
+	    PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX,
+	    "40XX",
 	},
 	{
 	    PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_4018A,
