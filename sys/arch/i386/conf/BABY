@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.34 1998/06/23 05:59:41 deraadt Exp $
+#	$OpenBSD: BABY,v 1.35 1998/07/11 15:31:16 todd Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -15,7 +15,7 @@ option		GPL_MATH_EMULATE	# floating point emulation
 option		BUFCACHEPERCENT=20
 
 #option		DUMMY_NOPS	# speed hack; recommended
-#option		XSERVER
+#option		XSERVER		# diddle with console driver
 #option		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	64		# estimated number of users

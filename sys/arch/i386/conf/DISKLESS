@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.21 1998/06/23 05:59:42 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.22 1998/07/11 15:31:17 todd Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -19,7 +19,7 @@ option		GPL_MATH_EMULATE	# floating point emulation
 #option		EXTMEM_SIZE=... # size of extended memory
 
 #option		DUMMY_NOPS	# speed hack; recommended
-option		XSERVER
+option		XSERVER		# diddle with console driver
 
 maxusers	32		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by

@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.26 1998/02/08 21:58:36 tholo Exp $
+#	$OpenBSD: GANDALF,v 1.27 1998/07/11 15:31:18 todd Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -15,7 +15,7 @@ option		PCIVERBOSE	# verbose PCI device information
 option		EISAVERBOSE	# verbose EISA device information
 
 option		DUMMY_NOPS	# speed hack; recommended
-option		XSERVER
+option		XSERVER		# diddle with console driver
 #option		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users

@@ -1,4 +1,4 @@
-#	$OpenBSD: LAP,v 1.25 1998/06/23 05:59:46 deraadt Exp $
+#	$OpenBSD: LAP,v 1.26 1998/07/11 15:31:22 todd Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -17,7 +17,7 @@ option		I586_CPU
 #option		EXTMEM_SIZE=... # size of extended memory
 
 option		DUMMY_NOPS	# speed hack; recommended
-option		XSERVER
+option		XSERVER		# diddle with console driver
 
 maxusers	10		# estimated number of users
 #option		TIMEZONE=0	# time zone to adjust RTC time by

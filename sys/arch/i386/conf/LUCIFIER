@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.13 1998/06/23 05:59:47 deraadt Exp $
+#	$OpenBSD: LUCIFIER,v 1.14 1998/07/11 15:31:23 todd Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -11,7 +11,7 @@ option		I686_CPU
 
 option		VM86		# Virtual 8086 emulation
 option		USER_LDT	# user-settable LDT; used by WINE
-option		XSERVER
+option		XSERVER		# diddle with console driver
 
 #option		DUMMY_NOPS	# speed hack; recommended
 

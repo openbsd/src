@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.26 1998/06/23 05:59:48 deraadt Exp $
+#	$OpenBSD: NETTAN,v 1.27 1998/07/11 15:31:24 todd Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -98,7 +98,7 @@ option		GPL_MATH_EMULATE	# floating point emulation
 
 option		VM86		# Virtual 8086 emulation
 option		USER_LDT	# user-settable LDT; used by WINE
-option		XSERVER
+option		XSERVER		# diddle with console driver
 
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value

@@ -1,7 +1,7 @@
 #
 #	SARUMAN -- i486DX/50 EISA bus
 #
-#	$OpenBSD: SARUMAN,v 1.6 1997/09/26 16:45:32 kstailey Exp $
+#	$OpenBSD: SARUMAN,v 1.7 1998/07/11 15:31:27 todd Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -15,7 +15,7 @@ option		PCIVERBOSE	# verbose PCI device information
 #option		EISAVERBOSE	# verbose EISA device information
 
 option		DUMMY_NOPS	# speed hack; recommanded
-option		XSERVER
+option		XSERVER		# diddle with console driver
 #option		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users

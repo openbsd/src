@@ -1,4 +1,4 @@
-#	$OpenBSD: WALDORF,v 1.16 1998/06/23 05:59:52 deraadt Exp $
+#	$OpenBSD: WALDORF,v 1.17 1998/07/11 15:31:29 todd Exp $
 #
 #	WALDORF -- a 486 kernel config Applitron use for some gateway
 #		   machines (waldorf and neuro).
@@ -12,7 +12,7 @@ option		I586_CPU
 #option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		DUMMY_NOPS	# speed hack; recommended
-#option		XSERVER
+#option		XSERVER		# diddle with console driver
 #option		INSECURE	# insecure; allow /dev/mem writing for X
 #option		MACHINE_NONCONTIG
 

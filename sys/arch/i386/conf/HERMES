@@ -3,7 +3,7 @@
 #
 # This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
 #
-# $OpenBSD: HERMES,v 1.13 1997/11/04 23:35:49 kstailey Exp $
+# $OpenBSD: HERMES,v 1.14 1998/07/11 15:31:20 todd Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -11,7 +11,7 @@ makeoptions     CC="cc -Werror"
 
 option		I586_CPU	# CPU classes; at least one is REQUIRED
 
-option		XSERVER
+option		XSERVER		# diddle with console driver
 option		PPP_BSDCOMP,PPP_DEFLATE
 
 maxusers	16		# estimated number of users

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.71 1998/07/08 22:44:52 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.72 1998/07/11 15:31:19 todd Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -16,7 +16,7 @@ option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		VM86		# Virtual 8086 emulation
 #option		USER_LDT	# user-settable LDT; used by WINE
-option		XSERVER
+option		XSERVER		# diddle with console driver
 option		APERTURE	# in-kernel aperture driver for XFree86
 
 # Some BIOSes don't get the size of extended memory right.  If you

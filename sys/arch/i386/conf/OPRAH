@@ -1,4 +1,4 @@
-#	$OpenBSD: OPRAH,v 1.20 1998/02/22 22:04:21 niklas Exp $
+#	$OpenBSD: OPRAH,v 1.21 1998/07/11 15:31:25 todd Exp $
 #
 #	OPRAH -- Niklas Hallqvist's test machine
 #
@@ -11,7 +11,7 @@ option		I486_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		DUMMY_NOPS	# speed hack; recommended
-#option		XSERVER
+#option		XSERVER		# diddle with console driver
 
 maxusers	32		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
