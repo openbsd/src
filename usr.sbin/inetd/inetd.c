@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.114 2003/12/23 15:24:28 mpech Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.115 2004/01/06 19:45:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.114 2003/12/23 15:24:28 mpech Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.115 2004/01/06 19:45:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -429,17 +429,18 @@ main(int argc, char *argv[])
 	for (;;) {
 		int n, ctrl = -1;
 
+	    restart:
 		if (nsock == 0) {
 			(void) sigprocmask(SIG_BLOCK, &blockmask, NULL);
 			while (nsock == 0) {
-				if (wantretry || wantconfig || wantreap)
+				if (wantretry || wantconfig || wantreap || wantdie)
 					break;
 				sigsuspend(&emptymask);
 			}
 			(void) sigprocmask(SIG_SETMASK, &emptymask, NULL);
 		}
 
-		if (wantretry || wantconfig || wantreap || wantdie) {
+		while (wantretry || wantconfig || wantreap || wantdie) {
 			if (wantretry) {
 				doretry();
 				wantretry = 0;
@@ -454,7 +455,7 @@ main(int argc, char *argv[])
 			}
 			if (wantdie)
 				dodie();
-			continue;
+			goto restart;
 		}
 
 		if (readablen != allsockn) {
