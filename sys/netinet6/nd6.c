@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.46 2002/06/03 00:59:08 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.47 2002/06/07 17:04:19 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -456,7 +456,7 @@ nd6_timer(ignored_arg)
 				ln->ln_asked = 1;
 				ln->ln_state = ND6_LLINFO_PROBE;
 				ln->ln_expire = time_second +
-					ndi->retrans / 1000;
+					ND6_RETRANS_SEC(ndi->retrans);
 				nd6_ns_output(ifp, &dst->sin6_addr,
 					      &dst->sin6_addr,
 					      ln, 0);
@@ -1813,23 +1813,27 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	 * There is a neighbor cache entry, but no ethernet address
 	 * response yet.  Replace the held mbuf (if any) with this
 	 * latest one.
-	 *
-	 * XXX Does the code conform to rate-limiting rule?
-	 * (RFC 2461 7.2.2)
 	 */
 	if (ln->ln_state == ND6_LLINFO_NOSTATE)
 		ln->ln_state = ND6_LLINFO_INCOMPLETE;
 	if (ln->ln_hold)
 		m_freem(ln->ln_hold);
 	ln->ln_hold = m;
-	if (ln->ln_expire) {
-		if (ln->ln_asked < nd6_mmaxtries &&
-		    ln->ln_expire < time_second) {
-			ln->ln_asked++;
-			ln->ln_expire = time_second +
-			    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
-			nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
-		}
+	/*
+	 * If there has been no NS for the neighbor after entering the
+	 * INCOMPLETE state, send the first solicitation.
+	 * Technically this can be against the rate-limiting rule described in
+	 * Section 7.2.2 of RFC 2461 because the interval to the next scheduled
+	 * solicitation issued in nd6_timer() may be less than the specified
+	 * retransmission time.  This should not be a problem from a practical
+	 * point of view, because we'll typically see an immediate response
+	 * from the neighbor, which suppresses the succeeding solicitations. 
+	 */
+	if (ln->ln_expire && ln->ln_asked == 0) {
+		ln->ln_asked++;
+		ln->ln_expire = time_second +
+		    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
+		nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
 	}
 	return(0);
 	
