@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.115 2002/11/30 10:07:51 mickey Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.116 2002/12/05 14:10:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -687,11 +687,12 @@ print_status(struct pf_status *s)
 }
 
 void
-print_rule(struct pf_rule *r)
+print_rule(struct pf_rule *r, int verbose)
 {
 	int i, opts;
 
-	printf("@%d ", r->nr);
+	if (verbose)
+		printf("@%d ", r->nr);
 	if (r->action == PF_PASS)
 		printf("pass ");
 	else if (r->action == PF_DROP) {

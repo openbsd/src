@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.97 2002/12/05 12:26:55 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.98 2002/12/05 14:10:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -463,7 +463,8 @@ pfctl_show_rules(int dev, int opts, int format)
 		case 1:
 			if (pr.rule.label[0]) {
 				if (opts & PF_OPT_VERBOSE)
-					print_rule(&pr.rule);
+					print_rule(&pr.rule,
+					    opts & PF_OPT_VERBOSE2);
 				else
 					printf("%s ", pr.rule.label);
 				printf("%llu %llu %llu\n",
@@ -472,7 +473,7 @@ pfctl_show_rules(int dev, int opts, int format)
 			}
 			break;
 		default:
-			print_rule(&pr.rule);
+			print_rule(&pr.rule, opts & PF_OPT_VERBOSE2);
 			if (opts & PF_OPT_VERBOSE)
 				printf("[ Evaluations: %-8llu  Packets: %-8llu  "
 				    "Bytes: %-10llu  States: %-6u]\n\n",
@@ -694,7 +695,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 				err(1, "DIOCADDRULE");
 		}
 		if (pf->opts & PF_OPT_VERBOSE)
-			print_rule(r);
+			print_rule(r, pf->opts & PF_OPT_VERBOSE2);
 		pfctl_clear_pool(&r->rt_pool);
 	}
 	return (0);
