@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.14 2003/07/16 06:42:06 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.15 2003/08/11 07:35:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -56,7 +56,7 @@
 #include <hppa/dev/cpudevs.h>
 
 #define	STI_MEMSIZE	0x2000000
-#define	STI_ROMSIZE	0x30000
+#define	STI_ROMSIZE	0x8000
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
 
 #define	STI_INEG_REV	0x60
@@ -100,7 +100,7 @@ sti_sgc_probe(parent, match, aux)
 	void *match, *aux;
 {
 	struct confargs *ca = aux;
-	bus_space_handle_t ioh, romh;
+	bus_space_handle_t romh;
 	paddr_t rom;
 	u_int32_t id;
 	u_char devtype;
@@ -117,26 +117,13 @@ sti_sgc_probe(parent, match, aux)
 	if (ca->ca_type.iodc_sv_model != HPPA_FIO_SGC)
 		return 0;
 
-	if ((rv = bus_space_map(ca->ca_iot, ca->ca_hpa, STI_MEMSIZE, 0, &ioh))) {
-#ifdef STIDEBUG
-		printf("st: cannot map io space (%d)\n", rv);
-#endif
-		return 0;
-	}
-
 	rom = sti_sgc_getrom(ca);
 #ifdef STIDEBUG
 	printf ("sti: hpa=%x, rom=%x\n", ca->ca_hpa, rom);
 #endif
 
-	if (rom == ca->ca_hpa) {
-		romh = ioh;
-		romunmapped++;
-	}
-
 	/* if it does not map, probably part of the lasi space */
-	if (rom != ca->ca_hpa &&
-	    (rv = bus_space_map(ca->ca_iot, rom, IOMOD_HPASIZE, 0, &romh))) {
+	if ((rv = bus_space_map(ca->ca_iot, rom, STI_ROMSIZE, 0, &romh))) {
 #ifdef STIDEBUG
 		printf ("sti: cannot map rom space (%d)\n", rv);
 #endif
@@ -145,13 +132,12 @@ sti_sgc_probe(parent, match, aux)
 			romunmapped++;
 		} else {
 			/* in this case i have no freaking idea */
-			bus_space_unmap(ca->ca_iot, ioh,  STI_MEMSIZE);
 			return 0;
 		}
 	}
 
 #ifdef STIDEBUG
-	printf("sti: ioh=%x, romh=%x\n", ioh, romh);
+	printf("sti: romh=%x\n", romh);
 #endif
 
 	devtype = bus_space_read_1(ca->ca_iot, romh, 3);
@@ -178,16 +164,16 @@ sti_sgc_probe(parent, match, aux)
 		rv = 0;
 	}
 
-	if (ca->ca_type.iodc_sv_model == HPPA_FIO_SGC && id == STI_ID_FDDI) {
+	if (rv &&
+	    ca->ca_type.iodc_sv_model == HPPA_FIO_SGC && id == STI_ID_FDDI) {
 #ifdef STIDEBUG
 		printf("sti: not a graphics device\n");
 #endif
 		rv = 0;
 	}
 
-	bus_space_unmap(ca->ca_iot, ioh,  STI_MEMSIZE);
 	if (!romunmapped)
-		bus_space_unmap(ca->ca_iot, romh, IOMOD_HPASIZE);
+		bus_space_unmap(ca->ca_iot, romh, STI_ROMSIZE);
 	return (rv);
 }
 
@@ -198,13 +184,13 @@ sti_sgc_attach(parent, self, aux)
 {
 	struct sti_softc *sc = (void *)self;
 	struct confargs *ca = aux;
-	paddr_t addr;
+	paddr_t rom;
 	int rv;
 
-	addr = sti_sgc_getrom(ca);
+	rom = sti_sgc_getrom(ca);
 
 #ifdef STIDEBUG
-	printf("sti: hpa=%x, rom=%x\n", ca->ca_hpa, addr);
+	printf("sti: hpa=%x, rom=%x\n", ca->ca_hpa, rom);
 #endif
 	sc->memt = sc->iot = ca->ca_iot;
 
@@ -217,11 +203,11 @@ sti_sgc_attach(parent, self, aux)
 	}
 
 	/* if it does not map, probably part of the lasi space */
-	if (addr == ca->ca_hpa)
+	if (rom == ca->ca_hpa)
 		sc->romh = sc->ioh;
-	else if ((rv = bus_space_map(ca->ca_iot, addr, STI_ROMSIZE, 0, &sc->romh))) {
-		if ((addr & HPPA_IOBEGIN) == HPPA_IOBEGIN)
-			sc->romh = addr;
+	else if ((rv = bus_space_map(ca->ca_iot, rom, STI_ROMSIZE, 0, &sc->romh))) {
+		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN)
+			sc->romh = rom;
 		else {
 #ifdef STIDEBUG
 			printf (": cannot map rom space (%d)\n", rv);
