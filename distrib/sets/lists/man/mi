@@ -1814,6 +1814,7 @@
 ./usr/share/man/cat8/amd64/fdisk.0
 ./usr/share/man/cat8/amd64/installboot.0
 ./usr/share/man/cat8/amd64/kbd.0
+./usr/share/man/cat8/amd64/pxeboot.0
 ./usr/share/man/cat8/amd64/wsconscfg.0
 ./usr/share/man/cat8/amd64/wsconsctl.0
 ./usr/share/man/cat8/amd64/wsfontload.0
