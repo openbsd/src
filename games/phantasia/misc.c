@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2001/09/19 10:51:55 pjanzen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2003/03/11 04:47:39 david Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -574,7 +574,7 @@ allstatslist()
 /
 / DESCRIPTION:
 /	Return a string describing the player type.
-/	King, council, valar, supercedes other types.
+/	King, council, valar, supersedes other types.
 /	The first character of the string is '*' if the player
 /	has a crown.
 /	If 'shortflag' is TRUE, return a 3 character string.

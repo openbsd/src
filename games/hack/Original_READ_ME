@@ -1,4 +1,4 @@
-$OpenBSD: Original_READ_ME,v 1.2 2001/01/28 23:41:42 niklas Exp $
+$OpenBSD: Original_READ_ME,v 1.3 2003/03/11 04:47:39 david Exp $
 $NetBSD: Original_READ_ME,v 1.2 1995/03/23 08:29:10 cgd Exp $
 
 This is export hack, my first semester programming project.
@@ -42,7 +42,7 @@ hack.mon.c	Monsters, moving, attacking, etc.
 hack.do.c	drink, eat, read, wield, save, etc.
 hack.do1.c	zap, wear, remove, etc...
 hack.pri.c	stuff having to do with the screen, most of the terminal
-		independant stuff is in here.
+		independent stuff is in here.
 hack.lev.c	temp files and calling of mklev.
 
 Because of the peculiar restraints on our system, I make mklev (create

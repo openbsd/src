@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.13 2002/12/06 21:48:51 millert Exp $	*/
+/*	$OpenBSD: driver.c,v 1.14 2003/03/11 04:47:39 david Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  *  Hunt
@@ -128,7 +128,7 @@ again:
 			/*
 			 * Nothing was ready. We do some work now
 			 * to see if the simulation has any pending work
-			 * to do, and decide if we need to to block 
+			 * to do, and decide if we need to block 
 			 * indefinitely or just timeout.
 			 */
 			do {

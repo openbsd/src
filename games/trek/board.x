@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.x,v 1.2 2001/01/28 23:41:49 niklas Exp $	*/
+/*	$OpenBSD: board.x,v 1.3 2003/03/11 04:47:39 david Exp $	*/
 /*	$NetBSD: board.x,v 1.2 1995/04/22 10:58:30 cgd Exp $	*/
 
 # include	"trek.h"
@@ -16,7 +16,7 @@
 **	Three things are computed.  The first is the probability that
 **	the party takes over the Klingon.  This is dependent on the
 **	size of the party, the condition of the Klingon (for which
-**	the energy left is used, which is definately incorrect), and
+**	the energy left is used, which is definitely incorrect), and
 **	the number of losses that the boarding party sustains.  If too
 **	many of the boarding party are killed, the probability drops
 **	to zero.  The second quantity computed is the losses that the

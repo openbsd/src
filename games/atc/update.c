@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
+/*	$OpenBSD: update.c,v 1.5 2003/03/11 04:47:39 david Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: update.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.5 2003/03/11 04:47:39 david Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,7 @@ update(dummy)
 		}
 		if (pp->altitude > 9)
 			/* "this is impossible" */
-			loser(pp, "exceded flight ceiling.");
+			loser(pp, "exceeded flight ceiling.");
 		if (pp->altitude <= 0) {
 			for (i = 0; i < sp->num_airports; i++)
 				if (pp->xpos == sp->airport[i].x &&
