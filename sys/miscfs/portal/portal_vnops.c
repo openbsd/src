@@ -1,4 +1,5 @@
-/*	$NetBSD: portal_vnops.c,v 1.14 1995/10/07 06:28:55 mycroft Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.2 1996/02/27 07:59:43 niklas Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,10 +63,104 @@
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #include <sys/syscallargs.h>
-
 #include <miscfs/portal/portal.h>
 
 static int portal_fileid = PORTAL_ROOTFILEID+1;
+
+static void	portal_closefd __P((struct proc *, int));
+static int	portal_connect __P((struct socket *, struct socket *));
+
+int	portal_badop	__P((void *));
+int	portal_enotsupp	__P((void *));
+
+int	portal_lookup	__P((void *));
+#define	portal_create	portal_enotsupp
+#define	portal_mknod	portal_enotsupp
+int	portal_open	__P((void *));
+#define	portal_close	nullop
+#define	portal_access	nullop
+int	portal_getattr	__P((void *));
+int	portal_setattr	__P((void *));
+#define	portal_read	portal_enotsupp
+#define	portal_write	portal_enotsupp
+#define	portal_ioctl	portal_enotsupp
+#define	portal_select	portal_enotsupp
+#define	portal_mmap	portal_enotsupp
+#define	portal_fsync	nullop
+#define	portal_seek	nullop
+#define	portal_remove	portal_enotsupp
+int	portal_link	__P((void *));
+#define	portal_rename	portal_enotsupp
+#define	portal_mkdir	portal_enotsupp
+#define	portal_rmdir	portal_enotsupp
+int	portal_symlink	__P((void *));
+int	portal_readdir	__P((void *));
+#define	portal_readlink	portal_enotsupp
+int	portal_abortop	__P((void *));
+int	portal_inactive	__P((void *));
+int	portal_reclaim	__P((void *));
+#define	portal_lock	nullop
+#define	portal_unlock	nullop
+#define	portal_bmap	portal_badop
+#define	portal_strategy	portal_badop
+int	portal_print	__P((void *));
+#define	portal_islocked	nullop
+int	portal_pathconf	__P((void *));
+#define	portal_advlock	portal_enotsupp
+#define	portal_blkatoff	portal_enotsupp
+#define	portal_valloc	portal_enotsupp
+int	portal_vfree	__P((void *));
+#define	portal_truncate	portal_enotsupp
+#define	portal_update	portal_enotsupp
+#define	portal_bwrite	portal_enotsupp
+
+int (**portal_vnodeop_p) __P((void *));
+struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_lookup_desc, portal_lookup },		/* lookup */
+	{ &vop_create_desc, portal_create },		/* create */
+	{ &vop_mknod_desc, portal_mknod },		/* mknod */
+	{ &vop_open_desc, portal_open },		/* open */
+	{ &vop_close_desc, portal_close },		/* close */
+	{ &vop_access_desc, portal_access },		/* access */
+	{ &vop_getattr_desc, portal_getattr },		/* getattr */
+	{ &vop_setattr_desc, portal_setattr },		/* setattr */
+	{ &vop_read_desc, portal_read },		/* read */
+	{ &vop_write_desc, portal_write },		/* write */
+	{ &vop_ioctl_desc, portal_ioctl },		/* ioctl */
+	{ &vop_select_desc, portal_select },		/* select */
+	{ &vop_mmap_desc, portal_mmap },		/* mmap */
+	{ &vop_fsync_desc, portal_fsync },		/* fsync */
+	{ &vop_seek_desc, portal_seek },		/* seek */
+	{ &vop_remove_desc, portal_remove },		/* remove */
+	{ &vop_link_desc, portal_link },		/* link */
+	{ &vop_rename_desc, portal_rename },		/* rename */
+	{ &vop_mkdir_desc, portal_mkdir },		/* mkdir */
+	{ &vop_rmdir_desc, portal_rmdir },		/* rmdir */
+	{ &vop_symlink_desc, portal_symlink },		/* symlink */
+	{ &vop_readdir_desc, portal_readdir },		/* readdir */
+	{ &vop_readlink_desc, portal_readlink },	/* readlink */
+	{ &vop_abortop_desc, portal_abortop },		/* abortop */
+	{ &vop_inactive_desc, portal_inactive },	/* inactive */
+	{ &vop_reclaim_desc, portal_reclaim },		/* reclaim */
+	{ &vop_lock_desc, portal_lock },		/* lock */
+	{ &vop_unlock_desc, portal_unlock },		/* unlock */
+	{ &vop_bmap_desc, portal_bmap },		/* bmap */
+	{ &vop_strategy_desc, portal_strategy },	/* strategy */
+	{ &vop_print_desc, portal_print },		/* print */
+	{ &vop_islocked_desc, portal_islocked },	/* islocked */
+	{ &vop_pathconf_desc, portal_pathconf },	/* pathconf */
+	{ &vop_advlock_desc, portal_advlock },		/* advlock */
+	{ &vop_blkatoff_desc, portal_blkatoff },	/* blkatoff */
+	{ &vop_valloc_desc, portal_valloc },		/* valloc */
+	{ &vop_vfree_desc, portal_vfree },		/* vfree */
+	{ &vop_truncate_desc, portal_truncate },	/* truncate */
+	{ &vop_update_desc, portal_update },		/* update */
+	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+};
+struct vnodeopv_desc portal_vnodeop_opv_desc =
+	{ &portal_vnodeop_p, portal_vnodeop_entries };
 
 static void
 portal_closefd(p, fd)
@@ -93,13 +188,14 @@ portal_closefd(p, fd)
  * cnp is the name to locate in that directory...
  */
 int
-portal_lookup(ap)
+portal_lookup(v)
+	void *v;
+{
 	struct vop_lookup_args /* {
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
 		struct componentname * a_cnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct componentname *cnp = ap->a_cnp;
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
@@ -188,14 +284,15 @@ portal_connect(so, so2)
 }
 
 int
-portal_open(ap)
+portal_open(v)
+	void *v;
+{
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct socket *so = 0;
 	struct portalnode *pt;
 	struct proc *p = ap->a_p;
@@ -422,14 +519,15 @@ bad:;
 }
 
 int
-portal_getattr(ap)
+portal_getattr(v)
+	void *v;
+{
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
 	struct timeval tv;
@@ -470,14 +568,15 @@ portal_getattr(ap)
 }
 
 int
-portal_setattr(ap)
+portal_setattr(v)
+	void *v;
+{
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 
 	/*
 	 * Can't mess with the root vnode
@@ -492,34 +591,30 @@ portal_setattr(ap)
  * Fake readdir, just return empty directory.
  * It is hard to deal with '.' and '..' so don't bother.
  */
+/*ARGSUSED*/
 int
-portal_readdir(ap)
-	struct vop_readdir_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		struct ucred *a_cred;
-	} */ *ap;
+portal_readdir(v)
+	void *v;
+{
+	return (0);
+}
+
+/*ARGSUSED*/
+int
+portal_inactive(v)
+	void *v;
 {
 
 	return (0);
 }
 
 int
-portal_inactive(ap)
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
+portal_reclaim(v)
+	void *v;
 {
-
-	return (0);
-}
-
-int
-portal_reclaim(ap)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct portalnode *pt = VTOPORTAL(ap->a_vp);
 
 	if (pt->pt_arg) {
@@ -535,13 +630,15 @@ portal_reclaim(ap)
 /*
  * Return POSIX pathconf information applicable to special devices.
  */
-portal_pathconf(ap)
+int
+portal_pathconf(v)
+	void *v;
+{
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
 		register_t *a_retval;
-	} */ *ap;
-{
+	} */ *ap = v;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
@@ -573,35 +670,75 @@ portal_pathconf(ap)
  */
 /* ARGSUSED */
 int
-portal_print(ap)
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
+portal_print(v)
+	void *v;
 {
-
 	printf("tag VT_PORTAL, portal vnode\n");
 	return (0);
 }
 
-/*void*/
+/* ARGSUSED */
 int
-portal_vfree(ap)
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap;
+portal_vfree(v)
+	void *v;
 {
 
 	return (0);
 }
 
+int
+portal_link(v) 
+	void *v;
+{
+	struct vop_link_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;  
+		struct componentname *a_cnp;
+	} */ *ap = v;
+ 
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
+int
+portal_symlink(v)
+	void *v;
+{
+	struct vop_symlink_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+		char *a_target;
+	} */ *ap = v;
+  
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
+int
+portal_abortop(v)
+	void *v;
+{
+	struct vop_abortop_args /* {
+		struct vnode *a_dvp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+ 
+	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
+		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+	return (0);
+}
 
 /*
  * Portal vnode unsupported operation
  */
+/*ARGSUSED*/
 int
-portal_enotsupp()
+portal_enotsupp(v)
+	void *v;
 {
 
 	return (EOPNOTSUPP);
@@ -610,109 +747,12 @@ portal_enotsupp()
 /*
  * Portal "should never get here" operation
  */
+/*ARGSUSED*/
 int
-portal_badop()
+portal_badop(v)
+	void *v;
 {
 
 	panic("portal: bad op");
 	/* NOTREACHED */
 }
-
-/*
- * Portal vnode null operation
- */
-int
-portal_nullop()
-{
-
-	return (0);
-}
-
-#define portal_create ((int (*) __P((struct vop_create_args *)))portal_enotsupp)
-#define portal_mknod ((int (*) __P((struct  vop_mknod_args *)))portal_enotsupp)
-#define portal_close ((int (*) __P((struct  vop_close_args *)))nullop)
-#define portal_access ((int (*) __P((struct  vop_access_args *)))nullop)
-#define portal_read ((int (*) __P((struct  vop_read_args *)))portal_enotsupp)
-#define portal_write ((int (*) __P((struct  vop_write_args *)))portal_enotsupp)
-#define portal_ioctl ((int (*) __P((struct  vop_ioctl_args *)))portal_enotsupp)
-#define portal_select ((int (*) __P((struct vop_select_args *)))portal_enotsupp)
-#define portal_mmap ((int (*) __P((struct  vop_mmap_args *)))portal_enotsupp)
-#define portal_fsync ((int (*) __P((struct  vop_fsync_args *)))nullop)
-#define portal_seek ((int (*) __P((struct  vop_seek_args *)))nullop)
-#define portal_remove ((int (*) __P((struct vop_remove_args *)))portal_enotsupp)
-#define portal_link ((int (*) __P((struct  vop_link_args *)))portal_enotsupp)
-#define portal_rename ((int (*) __P((struct vop_rename_args *)))portal_enotsupp)
-#define portal_mkdir ((int (*) __P((struct  vop_mkdir_args *)))portal_enotsupp)
-#define portal_rmdir ((int (*) __P((struct  vop_rmdir_args *)))portal_enotsupp)
-#define portal_symlink \
-	((int (*) __P((struct  vop_symlink_args *)))portal_enotsupp)
-#define portal_readlink \
-	((int (*) __P((struct  vop_readlink_args *)))portal_enotsupp)
-#define portal_abortop ((int (*) __P((struct  vop_abortop_args *)))nullop)
-#define portal_lock ((int (*) __P((struct  vop_lock_args *)))nullop)
-#define portal_unlock ((int (*) __P((struct  vop_unlock_args *)))nullop)
-#define portal_bmap ((int (*) __P((struct  vop_bmap_args *)))portal_badop)
-#define portal_strategy \
-	((int (*) __P((struct  vop_strategy_args *)))portal_badop)
-#define portal_islocked ((int (*) __P((struct  vop_islocked_args *)))nullop)
-#define portal_advlock \
-	((int (*) __P((struct  vop_advlock_args *)))portal_enotsupp)
-#define portal_blkatoff \
-	((int (*) __P((struct  vop_blkatoff_args *)))portal_enotsupp)
-#define portal_valloc ((int(*) __P(( \
-		struct vnode *pvp, \
-		int mode, \
-		struct ucred *cred, \
-		struct vnode **vpp))) portal_enotsupp)
-#define portal_truncate \
-	((int (*) __P((struct  vop_truncate_args *)))portal_enotsupp)
-#define portal_update ((int (*) __P((struct vop_update_args *)))portal_enotsupp)
-#define portal_bwrite ((int (*) __P((struct vop_bwrite_args *)))portal_enotsupp)
-
-int (**portal_vnodeop_p)();
-struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, portal_lookup },		/* lookup */
-	{ &vop_create_desc, portal_create },		/* create */
-	{ &vop_mknod_desc, portal_mknod },		/* mknod */
-	{ &vop_open_desc, portal_open },		/* open */
-	{ &vop_close_desc, portal_close },		/* close */
-	{ &vop_access_desc, portal_access },		/* access */
-	{ &vop_getattr_desc, portal_getattr },		/* getattr */
-	{ &vop_setattr_desc, portal_setattr },		/* setattr */
-	{ &vop_read_desc, portal_read },		/* read */
-	{ &vop_write_desc, portal_write },		/* write */
-	{ &vop_ioctl_desc, portal_ioctl },		/* ioctl */
-	{ &vop_select_desc, portal_select },		/* select */
-	{ &vop_mmap_desc, portal_mmap },		/* mmap */
-	{ &vop_fsync_desc, portal_fsync },		/* fsync */
-	{ &vop_seek_desc, portal_seek },		/* seek */
-	{ &vop_remove_desc, portal_remove },		/* remove */
-	{ &vop_link_desc, portal_link },		/* link */
-	{ &vop_rename_desc, portal_rename },		/* rename */
-	{ &vop_mkdir_desc, portal_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, portal_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, portal_symlink },		/* symlink */
-	{ &vop_readdir_desc, portal_readdir },		/* readdir */
-	{ &vop_readlink_desc, portal_readlink },	/* readlink */
-	{ &vop_abortop_desc, portal_abortop },		/* abortop */
-	{ &vop_inactive_desc, portal_inactive },	/* inactive */
-	{ &vop_reclaim_desc, portal_reclaim },		/* reclaim */
-	{ &vop_lock_desc, portal_lock },		/* lock */
-	{ &vop_unlock_desc, portal_unlock },		/* unlock */
-	{ &vop_bmap_desc, portal_bmap },		/* bmap */
-	{ &vop_strategy_desc, portal_strategy },	/* strategy */
-	{ &vop_print_desc, portal_print },		/* print */
-	{ &vop_islocked_desc, portal_islocked },	/* islocked */
-	{ &vop_pathconf_desc, portal_pathconf },	/* pathconf */
-	{ &vop_advlock_desc, portal_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, portal_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, portal_valloc },		/* valloc */
-	{ &vop_vfree_desc, portal_vfree },		/* vfree */
-	{ &vop_truncate_desc, portal_truncate },	/* truncate */
-	{ &vop_update_desc, portal_update },		/* update */
-	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
-};
-struct vnodeopv_desc portal_vnodeop_opv_desc =
-	{ &portal_vnodeop_p, portal_vnodeop_entries };

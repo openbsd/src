@@ -1,4 +1,5 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.20 1995/06/18 14:47:22 cgd Exp $	*/
+/*	$OpenBSD: fdesc_vfsops.c,v 1.2 1996/02/27 07:51:40 niklas Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.21 1996/02/09 22:40:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +57,20 @@
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <miscfs/fdesc/fdesc.h>
+
+int	fdesc_mount __P((struct mount *, char *, caddr_t,
+			 struct nameidata *, struct proc *));
+int	fdesc_start __P((struct mount *, int, struct proc *));
+int	fdesc_unmount __P((struct mount *, int, struct proc *));
+int	fdesc_root __P((struct mount *, struct vnode **));
+int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
+			    struct proc *));
+int	fdesc_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	fdesc_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
+int	fdesc_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
+			  struct vnode **, int *, struct ucred **));
+int	fdesc_vptofh __P((struct vnode *, struct fid *));
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
@@ -133,7 +148,7 @@ fdesc_unmount(mp, mntflags, p)
 	 */
 	if (rootvp->v_usecount > 1)
 		return (EBUSY);
-	if (error = vflush(mp, rootvp, flags))
+	if ((error = vflush(mp, rootvp, flags)) != 0)
 		return (error);
 
 	/*
@@ -236,10 +251,13 @@ fdesc_statfs(mp, sbp, p)
 	return (0);
 }
 
+/*ARGSUSED*/
 int
-fdesc_sync(mp, waitfor)
+fdesc_sync(mp, waitfor, uc, p)
 	struct mount *mp;
 	int waitfor;
+	struct ucred *uc;
+	struct proc *p;
 {
 
 	return (0);
@@ -259,22 +277,27 @@ fdesc_vget(mp, ino, vpp)
 	return (EOPNOTSUPP);
 }
 
+
+/*ARGSUSED*/
 int
-fdesc_fhtovp(mp, fhp, setgen, vpp)
+fdesc_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	struct mount *mp;
 	struct fid *fhp;
-	int setgen;
+	struct mbuf *nam;
 	struct vnode **vpp;
+	int *exflagsp;
+	struct ucred **credanonp;
 {
+
 	return (EOPNOTSUPP);
 }
 
+/*ARGSUSED*/
 int
 fdesc_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-
 	return (EOPNOTSUPP);
 }
 

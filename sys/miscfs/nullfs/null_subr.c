@@ -1,4 +1,5 @@
-/*	$NetBSD: null_subr.c,v 1.4 1994/09/20 06:43:00 cgd Exp $	*/
+/*	$OpenBSD: null_subr.c,v 1.2 1996/02/27 07:58:02 niklas Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.5 1996/02/09 22:40:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,9 +67,15 @@
 LIST_HEAD(null_node_hashhead, null_node) *null_node_hashtbl;
 u_long null_node_hash;
 
+void	nullfs_init __P((void));
+static struct vnode *
+	null_node_find __P((struct mount *, struct vnode *));
+static int
+	null_node_alloc __P((struct mount *, struct vnode *, struct vnode **));
 /*
  * Initialise cache headers
  */
+void
 nullfs_init()
 {
 
@@ -133,9 +140,9 @@ null_node_alloc(mp, lowervp, vpp)
 	struct null_node *xp;
 	struct vnode *vp, *nvp;
 	int error;
-	extern int (**dead_vnodeop_p)();
+	extern int (**dead_vnodeop_p) __P((void *));
 
-	if (error = getnewvnode(VT_NULL, mp, null_vnodeop_p, &vp))
+	if ((error = getnewvnode(VT_NULL, mp, null_vnodeop_p, &vp)) != 0)
 		return (error);
 	vp->v_type = lowervp->v_type;
 
@@ -155,7 +162,7 @@ null_node_alloc(mp, lowervp, vpp)
 	 * check to see if someone else has beaten us to it.
 	 * (We could have slept in MALLOC.)
 	 */
-	if (nvp = null_node_find(lowervp)) {
+	if ((nvp = null_node_find(mp, lowervp)) != NULL) {
 		*vpp = nvp;
 
 		/* free the substructures we've allocated. */
@@ -234,7 +241,7 @@ null_node_create(mp, lowervp, newvpp)
 {
 	struct vnode *aliasvp;
 
-	if (aliasvp = null_node_find(mp, lowervp)) {
+	if ((aliasvp = null_node_find(mp, lowervp)) != NULL) {
 		/*
 		 * null_node_find has taken another reference
 		 * to the alias vnode.
@@ -256,7 +263,7 @@ null_node_create(mp, lowervp, newvpp)
 		/*
 		 * Make new vnode reference the null_node.
 		 */
-		if (error = null_node_alloc(mp, lowervp, &aliasvp))
+		if ((error = null_node_alloc(mp, lowervp, &aliasvp)) != 0)
 			return error;
 
 		/*

@@ -1,4 +1,5 @@
-/*	$NetBSD: union_subr.c,v 1.17 1995/10/05 06:26:12 mycroft Exp $	*/
+/*	$OpenBSD: union_subr.c,v 1.2 1996/02/27 08:09:00 niklas Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.18 1996/02/09 22:41:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -69,7 +70,17 @@
 static LIST_HEAD(unhead, union_node) unhead[NHASH];
 static int unvplock[NHASH];
 
-int
+static int union_list_lock __P((int));
+static void union_list_unlock __P((int));
+void union_updatevp __P((struct union_node *, struct vnode *, struct vnode *));
+static int union_relookup __P((struct union_mount *, struct vnode *,
+			       struct vnode **, struct componentname *,
+			       struct componentname *, char *, int));
+int union_vn_close __P((struct vnode *, int, struct ucred *, struct proc *));
+static void union_dircache_r __P((struct vnode *, struct vnode ***, int *));
+struct vnode *union_dircache __P((struct vnode *));
+
+void
 union_init()
 {
 	int i;
@@ -275,11 +286,10 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache)
 	int docache;
 {
 	int error;
-	struct union_node *un;
-	struct union_node **pp;
+	struct union_node *un = NULL;
 	struct vnode *xlowervp = NULLVP;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
-	int hash;
+	int hash = 0;
 	int vflag;
 	int try;
 
@@ -809,7 +819,6 @@ union_mkwhiteout(um, dvp, cnp, path)
 	char *path;
 {
 	int error;
-	struct vattr va;
 	struct proc *p = cnp->cn_proc;
 	struct vnode *wvp;
 	struct componentname cn;
@@ -861,7 +870,6 @@ union_vn_create(vpp, un, p)
 	int fmode = FFLAGS(O_WRONLY|O_CREAT|O_TRUNC|O_EXCL);
 	int error;
 	int cmode = UN_FILEMODE & ~p->p_fd->fd_cmask;
-	char *cp;
 	struct componentname cn;
 
 	*vpp = NULLVP;
@@ -887,7 +895,7 @@ union_vn_create(vpp, un, p)
 	cn.cn_consume = 0;
 
 	VREF(un->un_dirvp);
-	if (error = relookup(un->un_dirvp, &vp, &cn))
+	if ((error = relookup(un->un_dirvp, &vp, &cn)) != 0)
 		return (error);
 	vrele(un->un_dirvp);
 
@@ -915,10 +923,10 @@ union_vn_create(vpp, un, p)
 	vap->va_type = VREG;
 	vap->va_mode = cmode;
 	VOP_LEASE(un->un_dirvp, p, cred, LEASE_WRITE);
-	if (error = VOP_CREATE(un->un_dirvp, &vp, &cn, vap))
+	if ((error = VOP_CREATE(un->un_dirvp, &vp, &cn, vap)) != 0)
 		return (error);
 
-	if (error = VOP_OPEN(vp, fmode, cred, p)) {
+	if ((error = VOP_OPEN(vp, fmode, cred, p)) != 0) {
 		vput(vp);
 		return (error);
 	}

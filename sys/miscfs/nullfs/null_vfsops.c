@@ -1,4 +1,5 @@
-/*	$NetBSD: null_vfsops.c,v 1.9 1995/06/18 14:47:32 cgd Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.2 1996/02/27 07:58:03 niklas Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.10 1996/02/09 22:40:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +56,19 @@
 #include <sys/malloc.h>
 #include <miscfs/nullfs/null.h>
 
+int	nullfs_mount __P((struct mount *, char *, caddr_t,
+			  struct nameidata *, struct proc *));
+int	nullfs_start __P((struct mount *, int, struct proc *));
+int	nullfs_unmount __P((struct mount *, int, struct proc *));
+int	nullfs_root __P((struct mount *, struct vnode **));
+int	nullfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
+			     struct proc *));
+int	nullfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	nullfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int	nullfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	nullfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
+			   struct vnode **, int *, struct ucred **));
+int	nullfs_vptofh __P((struct vnode *, struct fid *));
 /*
  * Mount null layer
  */
@@ -88,7 +102,8 @@ nullfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	if (error = copyin(data, (caddr_t)&args, sizeof(struct null_args)))
+	error = copyin(data, (caddr_t)&args, sizeof(struct null_args));
+	if (error)
 		return (error);
 
 	/*
@@ -96,7 +111,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW|WANTPARENT|LOCKLEAF,
 		UIO_USERSPACE, args.target, p);
-	if (error = namei(ndp))
+	if ((error = namei(ndp)) != 0)
 		return (error);
 
 	/*
@@ -210,7 +225,7 @@ nullfs_unmount(mp, mntflags, p)
 #endif
 	if (nullm_rootvp->v_usecount > 1)
 		return (EBUSY);
-	if (error = vflush(mp, nullm_rootvp, flags))
+	if ((error = vflush(mp, nullm_rootvp, flags)) != 0)
 		return (error);
 
 #ifdef NULLFS_DIAGNOSTIC
@@ -354,8 +369,6 @@ nullfs_vptofh(vp, fhp)
 
 	return (EOPNOTSUPP);
 }
-
-int nullfs_init __P((void));
 
 struct vfsops null_vfsops = {
 	MOUNT_NULL,

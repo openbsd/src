@@ -1,4 +1,5 @@
-/*	$NetBSD: null.h,v 1.4 1995/03/29 22:08:24 briggs Exp $	*/
+/*	$OpenBSD: null.h,v 1.2 1996/02/27 07:58:01 niklas Exp $	*/
+/*	$NetBSD: null.h,v 1.5 1996/02/09 22:40:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,6 +71,9 @@ extern struct vnode *null_checkvp __P((struct vnode *vp, char *fil, int lno));
 #define	NULLVPTOLOWERVP(vp) (VTONULL(vp)->null_lowervp)
 #endif
 
-extern int (**null_vnodeop_p)();
+extern int (**null_vnodeop_p) __P((void *));
 extern struct vfsops null_vfsops;
+
+void nullfs_init __P((void));
+
 #endif /* _KERNEL */

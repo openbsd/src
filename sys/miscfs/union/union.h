@@ -1,4 +1,5 @@
-/*	$NetBSD: union.h,v 1.8 1995/05/30 18:55:28 mycroft Exp $	*/
+/*	$OpenBSD: union.h,v 1.2 1996/02/27 08:08:59 niklas Exp $	*/
+/*	$NetBSD: union.h,v 1.9 1996/02/09 22:41:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -127,6 +128,10 @@ extern void union_newsize __P((struct vnode *, off_t, off_t));
 #define	UPPERVP(vp) (VTOUNION(vp)->un_uppervp)
 #define OTHERVP(vp) (UPPERVP(vp) ? UPPERVP(vp) : LOWERVP(vp))
 
-extern int (**union_vnodeop_p)();
+extern int (**union_vnodeop_p) __P((void *));
 extern struct vfsops union_vfsops;
+
+void union_init __P((void));
+int union_freevp __P((struct vnode *));
+
 #endif /* _KERNEL */

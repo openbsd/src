@@ -1,4 +1,5 @@
-/*	$NetBSD: procfs_ctl.c,v 1.13 1995/08/13 09:06:02 mycroft Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.2 1996/02/27 08:03:35 niklas Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -49,6 +50,7 @@
 #include <sys/tty.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+#include <sys/signalvar.h>
 #include <sys/ptrace.h>
 #include <miscfs/procfs/procfs.h>
 
@@ -97,6 +99,8 @@ static vfs_namemap_t signames[] = {
 	{ "usr1",	SIGUSR1 },	{ "usr2",	SIGUSR2 },
 	{ 0 },
 };
+
+static int procfs_control __P((struct proc *, struct proc *, int));
 
 static int
 procfs_control(curp, p, op)

@@ -1,4 +1,5 @@
-/*	$NetBSD: fdesc.h,v 1.8 1995/03/29 22:08:11 briggs Exp $	*/
+/*	$OpenBSD: fdesc.h,v 1.2 1996/02/27 07:51:39 niklas Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.9 1996/02/09 22:40:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,9 +76,9 @@ struct fdescnode {
 #define	VTOFDESC(vp) ((struct fdescnode *)(vp)->v_data)
 
 extern dev_t devctty;
-extern int fdesc_init __P((void));
+extern void fdesc_init __P((void));
 extern int fdesc_root __P((struct mount *, struct vnode **));
 extern int fdesc_allocvp __P((fdntype, int, struct mount *, struct vnode **));
-extern int (**fdesc_vnodeop_p)();
+extern int (**fdesc_vnodeop_p) __P((void *));
 extern struct vfsops fdesc_vfsops;
 #endif /* _KERNEL */

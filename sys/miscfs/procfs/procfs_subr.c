@@ -1,4 +1,5 @@
-/*	$NetBSD: procfs_subr.c,v 1.13 1994/06/29 06:34:57 cgd Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.2 1996/02/27 08:03:37 niklas Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -113,7 +114,7 @@ loop:
 	}
 	pfsvplock |= PROCFS_LOCKED;
 
-	if (error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp))
+	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp)) != 0)
 		goto out;
 	vp = *vpp;
 
@@ -212,9 +213,10 @@ procfs_freevp(vp)
 }
 
 int
-procfs_rw(ap)
-	struct vop_read_args *ap;
+procfs_rw(v)
+	void *v;
 {
+	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
 	struct proc *curp = uio->uio_procp;
@@ -281,7 +283,7 @@ vfs_getuserstr(uio, buf, buflenp)
 		return (EMSGSIZE);
 	xlen = uio->uio_resid;
 
-	if (error = uiomove(buf, xlen, uio))
+	if ((error = uiomove(buf, xlen, uio)) != 0)
 		return (error);
 
 	/* allow multiple writes without seeks */

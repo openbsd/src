@@ -1,4 +1,5 @@
-/*	$NetBSD: null_vnops.c,v 1.4 1994/08/19 11:25:37 mycroft Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.2 1996/02/27 07:58:04 niklas Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.5 1996/02/09 22:40:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,6 +182,13 @@
 
 int null_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
 
+int	null_bypass __P((void *));
+int	null_getattr __P((void *));
+int	null_inactive __P((void *));
+int	null_reclaim __P((void *));
+int	null_print __P((void *));
+int	null_strategy __P((void *));
+int	null_bwrite __P((void *));
 /*
  * This is the 10-Apr-92 bypass routine.
  *    This version has been optimized for speed, throwing away some
@@ -207,13 +215,13 @@ int null_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
  *   problems on rmdir'ing mount points and renaming?)
  */ 
 int
-null_bypass(ap)
+null_bypass(v)
+	void *v;
+{
 	struct vop_generic_args /* {
 		struct vnodeop_desc *a_desc;
 		<other random data follows, presumably>
-	} */ *ap;
-{
-	extern int (**null_vnodeop_p)();  /* not extern, really "forward" */
+	} */ *ap = v;
 	register struct vnode **this_vp_p;
 	int error;
 	struct vnode *old_vps[VDESC_MAX_VPS];
@@ -319,16 +327,17 @@ null_bypass(ap)
  *  We handle getattr only to change the fsid.
  */
 int
-null_getattr(ap)
+null_getattr(v)
+	void *v;
+{
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int error;
-	if (error = null_bypass(ap))
+	if ((error = null_bypass(ap)) != NULL)
 		return (error);
 	/* Requires that arguments be restored. */
 	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
@@ -337,10 +346,8 @@ null_getattr(ap)
 
 
 int
-null_inactive(ap)
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
+null_inactive(v)
+	void *v;
 {
 	/*
 	 * Do nothing (and _don't_ bypass).
@@ -358,11 +365,12 @@ null_inactive(ap)
 }
 
 int
-null_reclaim(ap)
+null_reclaim(v)
+	void *v;
+{
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct null_node *xp = VTONULL(vp);
 	struct vnode *lowervp = xp->null_lowervp;
@@ -382,13 +390,15 @@ null_reclaim(ap)
 
 
 int
-null_print(ap)
+null_print(v)
+	void *v;
+{
 	struct vop_print_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	printf ("\ttag VT_NULLFS, vp=%x, lowervp=%x\n", vp, NULLVPTOLOWERVP(vp));
+	printf ("\ttag VT_NULLFS, vp=%x, lowervp=%x\n", (unsigned int) vp,
+		(unsigned int) NULLVPTOLOWERVP(vp));
 	return (0);
 }
 
@@ -399,11 +409,12 @@ null_print(ap)
  * This goes away with a merged VM/buffer cache.
  */
 int
-null_strategy(ap)
+null_strategy(v)
+	void *v;
+{
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
 	int error;
 	struct vnode *savedvp;
@@ -425,11 +436,12 @@ null_strategy(ap)
  * This goes away with a merged VM/buffer cache.
  */
 int
-null_bwrite(ap)
+null_bwrite(v)
+	void *v;
+{
 	struct vop_bwrite_args /* {
 		struct buf *a_bp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
 	int error;
 	struct vnode *savedvp;
@@ -447,19 +459,19 @@ null_bwrite(ap)
 /*
  * Global vfs data structures
  */
-int (**null_vnodeop_p)();
+int (**null_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc null_vnodeop_entries[] = {
-	{ &vop_default_desc, null_bypass },
+	{ &vop_default_desc,	null_bypass },
 
-	{ &vop_getattr_desc, null_getattr },
-	{ &vop_inactive_desc, null_inactive },
-	{ &vop_reclaim_desc, null_reclaim },
-	{ &vop_print_desc, null_print },
+	{ &vop_getattr_desc,	null_getattr },
+	{ &vop_inactive_desc,	null_inactive },
+	{ &vop_reclaim_desc,	null_reclaim },
+	{ &vop_print_desc,	null_print },
 
-	{ &vop_strategy_desc, null_strategy },
-	{ &vop_bwrite_desc, null_bwrite },
+	{ &vop_strategy_desc,	null_strategy },
+	{ &vop_bwrite_desc,	null_bwrite },
 
-	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
+	{ (struct vnodeop_desc*)NULL,	(int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc null_vnodeop_opv_desc =
 	{ &null_vnodeop_p, null_vnodeop_entries };

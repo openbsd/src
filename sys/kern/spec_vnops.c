@@ -1,4 +1,5 @@
-/*	$NetBSD: spec_vnops.c,v 1.26.2.1 1995/10/15 05:19:55 mycroft Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.2 1996/02/27 08:05:15 niklas Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.28 1996/02/09 22:40:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,6 +50,8 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
+#include <sys/cpu.h>
+
 #include <miscfs/specfs/specdev.h>
 
 /* symbolic sleep message strings for devices */
@@ -60,7 +63,7 @@ char	devout[] = "devout";
 char	devioc[] = "devioc";
 char	devcls[] = "devcls";
 
-int (**spec_vnodeop_p)();
+int (**spec_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -103,8 +106,8 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_vfree_desc, spec_vfree },		/* vfree */
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, spec_update },		/* update */
-	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
+	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, spec_vnodeop_entries };
@@ -113,13 +116,14 @@ struct vnodeopv_desc spec_vnodeop_opv_desc =
  * Trivial lookup routine that always fails.
  */
 int
-spec_lookup(ap)
+spec_lookup(v)
+	void *v;
+{
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 
 	*ap->a_vpp = NULL;
 	return (ENOTDIR);
@@ -129,14 +133,16 @@ spec_lookup(ap)
  * Open a special file.
  */
 /* ARGSUSED */
-spec_open(ap)
+int
+spec_open(v)
+	void *v;
+{
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *bvp, *vp = ap->a_vp;
 	dev_t bdev, dev = (dev_t)vp->v_rdev;
 	register int maj = major(dev);
@@ -197,9 +203,17 @@ spec_open(ap)
 		 * Do not allow opens of block devices that are
 		 * currently mounted.
 		 */
-		if (error = vfs_mountedon(vp))
+		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
 		return ((*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK, ap->a_p));
+	case VNON:
+	case VLNK:
+	case VDIR:
+	case VREG:
+	case VBAD:
+	case VFIFO:
+	case VSOCK:
+		break;
 	}
 	return (0);
 }
@@ -208,14 +222,16 @@ spec_open(ap)
  * Vnode op for read
  */
 /* ARGSUSED */
-spec_read(ap)
+int
+spec_read(v)
+	void *v;
+{
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
 		struct ucred *a_cred;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
@@ -223,7 +239,8 @@ spec_read(ap)
 	daddr_t bn, nextbn;
 	long bsize, bscale, ssize;
 	struct partinfo dpart;
-	int n, on, majordev, (*ioctl)();
+	int n, on, majordev;
+	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -293,14 +310,16 @@ spec_read(ap)
  * Vnode op for write
  */
 /* ARGSUSED */
-spec_write(ap)
+int
+spec_write(v)
+	void *v;
+{
 	struct vop_write_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
 		struct ucred *a_cred;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
@@ -308,7 +327,8 @@ spec_write(ap)
 	daddr_t bn;
 	long bsize, bscale, ssize;
 	struct partinfo dpart;
-	int n, on, majordev, (*ioctl)();
+	int n, on, majordev;
+	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -376,7 +396,10 @@ spec_write(ap)
  * Device ioctl operation.
  */
 /* ARGSUSED */
-spec_ioctl(ap)
+int
+spec_ioctl(v)
+	void *v;
+{
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
@@ -384,8 +407,7 @@ spec_ioctl(ap)
 		int  a_fflag;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	dev_t dev = ap->a_vp->v_rdev;
 	int maj = major(dev);
 
@@ -411,15 +433,17 @@ spec_ioctl(ap)
 }
 
 /* ARGSUSED */
-spec_select(ap)
+int
+spec_select(v)
+	void *v;
+{
 	struct vop_select_args /* {
 		struct vnode *a_vp;
 		int  a_which;
 		int  a_fflags;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register dev_t dev;
 
 	switch (ap->a_vp->v_type) {
@@ -437,14 +461,15 @@ spec_select(ap)
  */
 /* ARGSUSED */
 int
-spec_fsync(ap)
+spec_fsync(v)
+	void *v;
+{
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int  a_waitfor;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct buf *bp;
 	struct buf *nbp;
@@ -489,11 +514,13 @@ loop:
 /*
  * Just call the device strategy routine
  */
-spec_strategy(ap)
+int
+spec_strategy(v)
+	void *v;
+{
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
-	} */ *ap;
-{
+	} */ *ap = v;
 
 	(*bdevsw[major(ap->a_bp->b_dev)].d_strategy)(ap->a_bp);
 	return (0);
@@ -502,14 +529,16 @@ spec_strategy(ap)
 /*
  * This is a noop, simply returning what one has been given.
  */
-spec_bmap(ap)
+int
+spec_bmap(v)
+	void *v;
+{
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
 		daddr_t  a_bn;
 		struct vnode **a_vpp;
 		daddr_t *a_bnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = ap->a_vp;
@@ -522,20 +551,18 @@ spec_bmap(ap)
  * At the moment we do not do any locking.
  */
 /* ARGSUSED */
-spec_lock(ap)
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
+int
+spec_lock(v)
+	void *v;
 {
 
 	return (0);
 }
 
 /* ARGSUSED */
-spec_unlock(ap)
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
+int
+spec_unlock(v)
+	void *v;
 {
 
 	return (0);
@@ -545,14 +572,16 @@ spec_unlock(ap)
  * Device close routine
  */
 /* ARGSUSED */
-spec_close(ap)
+int
+spec_close(v)
+	void *v;
+{
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
 	int (*devclose) __P((dev_t, int, int, struct proc *));
@@ -592,7 +621,8 @@ spec_close(ap)
 		 * we must invalidate any in core blocks, so that
 		 * we can, for instance, change floppy disks.
 		 */
-		if (error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0))
+		error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0);
+		if (error)
 			return (error);
 		/*
 		 * We do not want to really close the device if it
@@ -619,26 +649,31 @@ spec_close(ap)
 /*
  * Print out the contents of a special device vnode.
  */
-spec_print(ap)
+int
+spec_print(v)
+	void *v;
+{
 	struct vop_print_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 
 	printf("tag VT_NON, dev %d, %d\n", major(ap->a_vp->v_rdev),
 		minor(ap->a_vp->v_rdev));
+	return 0;
 }
 
 /*
  * Return POSIX pathconf information applicable to special devices.
  */
-spec_pathconf(ap)
+int
+spec_pathconf(v)
+	void *v;
+{
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
 		register_t *a_retval;
-	} */ *ap;
-{
+	} */ *ap = v;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
@@ -669,14 +704,9 @@ spec_pathconf(ap)
  * Special device advisory byte-level locks.
  */
 /* ARGSUSED */
-spec_advlock(ap)
-	struct vop_advlock_args /* {
-		struct vnode *a_vp;
-		caddr_t  a_id;
-		int  a_op;
-		struct flock *a_fl;
-		int  a_flags;
-	} */ *ap;
+int
+spec_advlock(v)
+	void *v;
 {
 
 	return (EOPNOTSUPP);
@@ -685,7 +715,10 @@ spec_advlock(ap)
 /*
  * Special device failed operation
  */
-spec_ebadf()
+/*ARGSUSED*/
+int
+spec_ebadf(v)
+	void *v;
 {
 
 	return (EBADF);
@@ -694,7 +727,10 @@ spec_ebadf()
 /*
  * Special device bad operation
  */
-spec_badop()
+/*ARGSUSED*/
+int
+spec_badop(v)
+	void *v;
 {
 
 	panic("spec_badop called");

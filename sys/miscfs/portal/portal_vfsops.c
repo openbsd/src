@@ -1,4 +1,5 @@
-/*	$NetBSD: portal_vfsops.c,v 1.13 1995/06/18 14:47:35 cgd Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.2 1996/02/27 07:59:42 niklas Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,11 +63,24 @@
 #include <sys/un.h>
 #include <miscfs/portal/portal.h>
 
-int
+void	portal_init __P((void));
+int	portal_mount __P((struct mount *, char *, caddr_t,
+			  struct nameidata *, struct proc *));
+int	portal_start __P((struct mount *, int, struct proc *));
+int	portal_unmount __P((struct mount *, int, struct proc *));
+int	portal_root __P((struct mount *, struct vnode **));
+int	portal_quotactl __P((struct mount *, int, uid_t, caddr_t,
+			     struct proc *));
+int	portal_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	portal_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int	portal_vget __P((struct mount *, ino_t, struct vnode **));
+int	portal_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
+			   struct vnode **, int *, struct ucred **));
+int	portal_vptofh __P((struct vnode *, struct fid *));
+
+void
 portal_init()
 {
-
-	return (0);
 }
 
 /*
@@ -94,10 +108,11 @@ portal_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	if (error = copyin(data, (caddr_t) &args, sizeof(struct portal_args)))
+	error = copyin(data, (caddr_t) &args, sizeof(struct portal_args));
+	if (error)
 		return (error);
 
-	if (error = getsock(p->p_fd, args.pa_socket, &fp))
+	if ((error = getsock(p->p_fd, args.pa_socket, &fp)) != 0)
 		return (error);
 	so = (struct socket *) fp->f_data;
 	if (so->so_proto->pr_domain->dom_family != AF_UNIX)
@@ -170,7 +185,7 @@ portal_unmount(mp, mntflags, p)
 #endif
 	if (rootvp->v_usecount > 1)
 		return (EBUSY);
-	if (error = vflush(mp, rootvp, flags))
+	if ((error = vflush(mp, rootvp, flags)) != 0)
 		return (error);
 
 	/*
@@ -257,10 +272,13 @@ portal_statfs(mp, sbp, p)
 	return (0);
 }
 
+/*ARGSUSED*/
 int
-portal_sync(mp, waitfor)
+portal_sync(mp, waitfor, uc, p)
 	struct mount *mp;
 	int waitfor;
+	struct ucred *uc;
+	struct proc *p;
 {
 
 	return (0);
@@ -277,10 +295,13 @@ portal_vget(mp, ino, vpp)
 }
 
 int
-portal_fhtovp(mp, fhp, vpp)
+portal_fhtovp(mp, fhp, mb, vpp, what, anon)
 	struct mount *mp;
 	struct fid *fhp;
+	struct mbuf *mb;
 	struct vnode **vpp;
+	int *what;
+	struct ucred **anon;
 {
 
 	return (EOPNOTSUPP);
