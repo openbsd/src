@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.4 1997/04/27 13:01:28 downsj Exp $	*/
+/*	$OpenBSD: common.c,v 1.5 1997/10/07 23:39:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.4 1997/04/27 13:01:28 downsj Exp $";
+"$OpenBSD: common.c,v 1.5 1997/10/07 23:39:34 millert Exp $";
 
 static char sccsid[] = "@(#)common.c";
 
@@ -542,7 +542,7 @@ extern char *getusername(uid, file, opts)
 	/*
 	 * Try to avoid getpwuid() call.
 	 */
-	if (lastuid == uid && buf[0])
+	if (lastuid == uid && buf[0] && buf[0] != ':')
 		return(buf);
 
 	lastuid = uid;
@@ -581,7 +581,7 @@ extern char *getgroupname(gid, file, opts)
 	/*
 	 * Try to avoid getgrgid() call.
 	 */
-	if (lastgid == gid && buf[0])
+	if (lastgid == gid && buf[0] && buf[0] != ':')
 		return(buf);
 
 	lastgid = gid;
