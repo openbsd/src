@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.4 1996/04/08 00:57:41 jonathan Exp $	*/
+/*	$NetBSD: bt459.c,v 1.5 1996/10/13 13:13:50 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,7 +86,6 @@
 #include <sys/device.h>
 #include <sys/select.h>
 
-#include <machine/machConst.h>
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>

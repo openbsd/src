@@ -94,6 +94,9 @@
 #define FLT_MAX		3.40282347E+38F
 #define FLT_MIN		1.17549435E-38F
 #endif
+
+/* Stuff from the NetBSD mips tree TTTTT */
 #ifdef _KERNEL
-#define CLK_TCK		60		/* ticks per second */
+#define CLK_TCK         60              /* ticks per second */
 #endif
+/* End of stuff from the NetBSD mips tree TTTTT */

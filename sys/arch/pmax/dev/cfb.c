@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.18.4.2 1996/09/09 20:45:26 thorpej Exp $	*/
+/*	$NetBSD: cfb.c,v 1.24 1996/10/13 13:13:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,10 +93,11 @@
 #include <sys/device.h>
 #include <dev/tc/tcvar.h>
 
-#include <machine/machConst.h>
+#include <pmax/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <pmax/dev/cfbvar.h>		/* XXX dev/tc ? */
 
 #include <pmax/pmax/pmaxtype.h>
 
@@ -104,6 +105,7 @@
 #include <pmax/dev/fbreg.h>
 
 #include <machine/autoconf.h>
+
 
 #define PMAX	/* enable /dev/pm compatibility */
 
@@ -142,8 +144,6 @@ struct fbdriver cfb_driver = {
 int cfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
 extern void fbScreenInit __P((struct fbinfo *fi));
 
-void genConfigMouse(), genDeconfigMouse();
-void genKbdEvent(), genMouseEvent(), genMouseButtons();
 
 extern int pmax_boardtype;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.4 1996/05/19 01:16:18 jonathan Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.6 1996/10/13 03:39:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

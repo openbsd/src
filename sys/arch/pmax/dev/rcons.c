@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.9 1996/05/19 01:06:14 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.14 1996/10/13 13:14:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -73,7 +73,6 @@
 #include <dev/rcons/raster.h>
 #include <machine/fbvar.h>
 
-#include <machine/machConst.h>
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>
 
@@ -340,30 +339,32 @@ rconsioctl(dev, cmd, data, flag, p)
 }
 
 /* ARGSUSED */
-int
-rconsstop (tp, rw)
+int /* was void TTTTT */
+rconsstop(tp, rw)
 	struct tty *tp;
 	int rw;
 {
-	return (0);
+
 }
 
 /*ARGSUSED*/
 void
-rconsreset (tp, rw)
+rconsreset(tp, rw)
 	struct tty *tp;
 	int rw;
 {
+
 }
 
-/*ARGSUSED*/
+/* was ttpoll instead of ttselect TTTTT */
+
 int
-rconsselect(dev, which, p)
+rconspoll(dev, events, p)
 	dev_t dev;
-	int which;
+	int events;
 	struct proc *p;
 {
-	return (ttselect(dev, which, p));
+	return (ttselect(dev, events, p));
 }
 
 /*ARGSUSED*/

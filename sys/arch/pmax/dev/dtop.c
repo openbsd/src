@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.14.4.2 1996/06/16 17:17:14 mhitch Exp $	*/
+/*	$NetBSD: dtop.c,v 1.20 1996/10/13 13:13:55 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -114,8 +114,8 @@ SOFTWARE.
 
 #include <dev/cons.h>
 
+#include <pmax/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
-#include <machine/machConst.h>
 #include <machine/dc7085cons.h>
 
 #include <pmax/pmax/asic.h>
@@ -690,7 +690,7 @@ dtopparam(tp, t)
  * Stop output on a line.
  */
 /*ARGSUSED*/
-int
+void
 dtopstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -703,8 +703,6 @@ dtopstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-
-	return (0);
 }
 
 /*

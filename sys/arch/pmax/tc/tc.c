@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.9 1996/02/02 18:08:06 mycroft Exp $	*/
+/*	$NetBSD: tc.c,v 1.12 1996/10/13 03:40:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -178,7 +178,7 @@ void
 config_tcbus(parent, cputype, printfn)
      	struct device *parent;
 	int cputype;
-	int	printfn __P((void *, char *));
+	int	printfn __P((void *, const char *));
 
 {
 	struct tc_attach_args tc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21.4.1 1996/08/13 07:58:43 jonathan Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 1996/09/07 12:40:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,19 +46,19 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	ttselect	__P((dev_t, int, struct proc *));
-
 #include "vnd.h"
+bdev_decl(vnd);
 bdev_decl(sw);
 #include "rz.h"
 bdev_decl(rz);
 #include "tz.h"
 bdev_decl(tz);
 #include "sd.h"
+bdev_decl(sd);
 #include "st.h"
-#include "ss.h"
-#include "uk.h"
+bdev_decl(st);
 #include "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -87,14 +87,6 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRZ,rz),		/* 22: ?? old SCSI disk */ /*XXX*/
 	bdev_notdef(),			/* 23: mscp */
 	bdev_disk_init(NCCD,ccd),	/* 24: concatenated disk driver */
-
-	bdev_lkm_dummy(),		/* 25 */
-	bdev_lkm_dummy(),		/* 26 */
-	bdev_lkm_dummy(),		/* 27 */
-	bdev_lkm_dummy(),		/* 28 */
-	bdev_lkm_dummy(),		/* 29 */
-	bdev_lkm_dummy(),		/* 30 */
-
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -109,14 +101,29 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 dev_t	swapdev = makedev(4, 0);
 
 
+cdev_decl(cn);
 cdev_decl(sw);
+cdev_decl(random);
+cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 dev_type_read(mmrw);
 cdev_decl(mm);
 #include "pty.h"
+#define ptstty ptytty
+#define ptsioctl ptyioctl
+cdev_decl(pts);
+#define ptctty ptytty
+#define ptcioctl ptyioctl
+cdev_decl(ptc);
+cdev_decl(log);
 cdev_decl(fd);
+cdev_decl(sd);
+cdev_decl(st);
+cdev_decl(vnd);
+cdev_decl(ccd);
 #include "bpfilter.h"
+cdev_decl(bpf);
 #include "dtop.h"
 cdev_decl(dtop);
 #include "dc.h"
@@ -139,8 +146,12 @@ cdev_decl(xcfb);
 cdev_decl(mfb);
 dev_decl(filedesc,open);
 
+
 /* a framebuffer with an attached mouse: */
-/* open, close, ioctl, select, mmap */
+/* open, close, ioctl, poll, mmap */
+
+/* dev_init(c,n,select) in cdev_fbm_init(c,n) should be dev_init(c,n,poll) */
+/* see also dev/fb_userreq.c TTTTT */
 
 #define	cdev_fbm_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -151,7 +162,7 @@ dev_decl(filedesc,open);
 
 struct cdevsw	cdevsw[] =
 {
-	cdev_cn_init(1,cn),		/* 0: virtual console */  /* (dz?) */
+	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_swap_init(1,sw),		/* 1: /dev/drum (swap pseudo-device) */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
@@ -241,19 +252,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NRASTERCONSOLE,rcons), /* 85: rcons pseudo-dev */
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
-
-	cdev_lkm_dummy(),		/* 88 */
-	cdev_lkm_dummy(),		/* 89 */
-	cdev_lkm_init(NLKM,lkm),	/* 90: loadable module driver */
-	cdev_lkm_dummy(),		/* 91 */
-	cdev_lkm_dummy(),		/* 92 */
-	cdev_lkm_dummy(),		/* 93 */
-	cdev_lkm_dummy(),		/* 94 */
-	cdev_lkm_dummy(),		/* 95 */
-	cdev_lkm_dummy(),		/* 96 */
-	cdev_random_init(1,random),	/* 97 */
-	cdev_uk_init(NUK,uk),		/* 98: unknown SCSI */
-	cdev_ss_init(NSS,ss),           /* 99: SCSI scanner */
+	cdev_random_init(1,random),     /* 88: random data source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -397,4 +396,22 @@ chrtoblk(dev)
 	if (blkmaj == NODEV)
 		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
+}
+
+/*
+ * Convert a character device number to a block device number.
+ */
+dev_t
+blktochr(dev)
+        dev_t dev;
+{
+        int blkmaj = major(dev);
+        int i;
+
+        if (blkmaj >= nblkdev)
+                return (NODEV);
+        for (i = 0; i < sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]); i++)
+                if (blkmaj == chrtoblktbl[i])
+                        return (makedev(i, minor(dev)));
+        return (NODEV);
 }

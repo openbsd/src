@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.3.4.1 1996/05/30 04:07:39 mhitch Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.5 1996/10/06 06:29:51 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -105,7 +105,7 @@ int tc_checkslot __P((tc_addr_t slotbase, char *namep));
 
 extern int tc_findconsole __P((int preferred_slot));
 extern void config_tcbus __P((struct device *parent, int cputype,
-			      int printfn __P((void*, char*)) ));
+			      int printfn __P((void*, const char*)) ));
 
 
 #endif /* __MACHINE_TC_MACHDEP_H__*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.7 1995/09/13 19:36:04 jonathan Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.9 1996/10/13 03:39:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

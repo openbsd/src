@@ -102,6 +102,9 @@ struct pmap kernel_pmap_store;
 #define pmap_kernel()		(&kernel_pmap_store)
 #endif	/* _KERNEL */
 
-#endif	/* _PMAP_MACHINE_ */
+/* Stuff from the NetBSD mips tree TTTTT */
 #define pmax_trunc_seg(a) mips_trunc_seg(a)
 #define pmax_round_seg(a) mips_round_seg(a)
+/* End of stuff from the NetBSD mips tree TTTTT */
+
+#endif	/* _PMAP_MACHINE_ */

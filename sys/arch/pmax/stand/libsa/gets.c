@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.5 1995/01/18 06:53:56 mellon Exp $	*/
+/*	$NetBSD: gets.c,v 1.6 1996/09/30 01:14:39 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,5 +44,5 @@ char *
 gets(s)
 	char *s;
 {
-	return (callv->gets(s));
+	return ((callv->_gets)(s));
 }

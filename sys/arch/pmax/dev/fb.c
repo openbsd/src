@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.10.4.1 1996/08/13 08:32:18 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.18 1996/10/14 04:55:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/poll.h>
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -83,7 +84,7 @@
 #include <sys/conf.h>
 #include <machine/conf.h>
 
-#include <machine/machConst.h>
+#include <pmax/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>
@@ -115,9 +116,7 @@
  */
 
 /* qvss/pm compatible and old 4.4bsd/pmax driver functions */
-void fbKbdEvent(), fbMouseEvent(), fbMouseButtons();
-void fbBlitc __P((int c,  struct fbinfo *fi));
-void fbPutc __P((dev_t dev, int c));
+
 extern int pmax_boardtype;
 
 extern void fbScreenInit __P (( struct fbinfo *fi));

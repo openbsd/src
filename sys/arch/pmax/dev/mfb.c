@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.13.4.2 1996/09/09 20:07:04 thorpej Exp $	*/
+/*	$NetBSD: mfb.c,v 1.20 1996/10/13 13:13:59 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,13 +91,14 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/autoconf.h>
 #include <dev/tc/tcvar.h>
+#include <machine/autoconf.h>
 
-#include <machine/machConst.h>
+#include <pmax/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <pmax/dev/cfbvar.h>		/* XXX dev/tc ? */ 
 
 #include <pmax/pmax/pmaxtype.h>
 
@@ -120,7 +121,6 @@ extern int pmax_boardtype;
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
 static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
-extern void fbScreenInit __P((struct fbinfo *fia));
 
 void mfbPosCursor  __P((struct fbinfo *fi, int x, int y));
 
@@ -162,8 +162,6 @@ static u_char bt431_read_reg __P((bt431_regmap_t *regs, int regno));
 /*
  * old pmax-framebuffer hackery
  */
-void genConfigMouse(), genDeconfigMouse();
-void genKbdEvent(), genMouseEvent(), genMouseButtons();
 extern u_short defCursor[32];
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-asic-conf.c,v 1.5.4.1 1996/05/30 04:13:22 mhitch Exp $	*/
+/*	$NetBSD: ds-asic-conf.c,v 1.6 1996/05/29 06:29:05 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone

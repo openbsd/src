@@ -1,29 +1,32 @@
-#	$NetBSD: Makefile,v 1.4 1994/10/26 21:08:38 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1996/09/29 23:55:05 jonathan Exp $
+#	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
-#	@(#)Makefile	8.1 (Berkeley) 6/16/93
+# Makefile for pmax tags file and boot blocks
 
-# Makefile for pmax links, tags file
+NOPROG=	noprog
+NOMAN=	noman
 
-.include "../kern/Make.tags.inc"
+SUBDIR=	stand
 
-all:
-	@echo "make links or tags only"
+TPMAX=	../pmax/tags
+SPMAX=	../pmax/pmax/*.[ch] ../pmax/include/*.h \
+	../pmax/dev/*.[ch] ../pmax/tc/*.[ch]
+APMAX=	../pmax/pmax/*.S
 
-DIRS=	conf dev dist include pmax ultrix
+# Directories in which to place pmax tags links
+DPMAX=	dev tc include
 
-links::
-	-for i in ${DIRS}; do \
-	    (cd $$i && { rm -f tags; ln -s ${SYSTAGS} tags; }) done
-
-PMAX=	/sys/pmax/dev/*.[ch] /sys/pmax/include/*.[ch] \
-	/sys/pmax/pmax/*.[ch] /sys/pmax/ultrix/*.[ch]
-APMAX=	/sys/pmax/pmax/*.s
-
-tags::
-	-ctags -wdt ${COMM} ${PMAX}
-	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${APMAX} | \
+tags:	${COMM} ${SPMAX} ${SMIPS} ${APMAX} ${AMIPS}
+	-ctags -dtf ${TPMAX} ${COMM} ${SPMAX} ${SMIPS}
+	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${APMAX} ${AMIPS} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-		>> tags
-	sort -o tags tags
-	chown bin.wsrc tags
-	chmod 444 tags
+		>> ${TPMAX}
+	sort -o ${TPMAX} ${TPMAX}
+
+links:
+	-for i in ${DPMAX}; do \
+	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
+obj: _SUBDIRUSE
+
+.include <bsd.prog.mk>

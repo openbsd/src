@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: get,v 1.6.4.1 1996/08/13 07:55:50 jonathan Exp $
+#	$NetBSD: get,v 1.7 1996/10/06 06:46:34 jonathan Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.

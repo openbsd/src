@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.10 1996/04/10 16:33:44 jonathan Exp $	*/
+/*	$NetBSD: tz.c,v 1.14 1996/10/13 12:34:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tz.c	8.4 (Berkeley) 1/11/94
+ *	@(#)tz.c	8.5 (Berkeley) 6/2/95
  *
  * from: Header: /sprite/src/kernel/dev/RCS/devSCSITape.c,
  *	v 8.14 89/07/31 17:26:13 mendel Exp  SPRITE (Berkeley)
@@ -129,6 +129,9 @@ tzprobe(xxxsd)
 	register struct tz_softc *sc = &tz_softc[sd->sd_unit];
 	register int i;
 	ScsiInquiryData inqbuf;
+
+	if (sd->sd_unit >= NTZ)
+		return (0);
 
 	/* init some parameters that don't change */
 	sc->sc_sd = sd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.10.4.1 1996/05/30 04:10:36 mhitch Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.14 1996/10/13 03:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,7 +88,9 @@
 
 #if NDC > 0
 #include <machine/dc7085cons.h>
-#include <pmax/dev/dcvar.h>
+#include <pmax/dev/dc_cons.h>
+#include <pmax/dev/dc_ds_cons.h>
+#include <pmax/dev/dc_ioasic_cons.h>
 #endif
 
 #if NDTOP > 0
@@ -199,7 +201,9 @@ consinit()
 			}
 		}
 	}
-	/* we can't do anything until auto-configuration
+
+	/*
+	 * We can't do anything until auto-configuration
 	 * has run, and that requires kmalloc(), which
 	 * hasn't been initialized yet.  Just keep using
 	 * whatever the PROM vector gave us.
@@ -306,15 +310,38 @@ remcons:
 	/*
 	 * Configure a serial port as a remote console.
 	 */
+	switch (pmax_boardtype) {
+	case DS_PMAX:
+#if NDC > 0
+		if (kbd == 4)
+			cd.cn_dev = makedev(DCDEV, DCCOMM_PORT);
+		else
+			cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
+		dc_ds_consinit(cd.cn_dev);
+		return;
+#endif /* NDC */
+		break;
 
-	/* XXX serial drivers need to be rewritten to handle
-	 * init this early. Defer switching to non-PROM
-	 * driver until later.
+	case DS_3MAX:
+#if NDC > 0
+		cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
+		dc_ioasic_consinit(cd.cn_dev);
+		return;
+#endif /* NDC */
+		break;
+
+	}
+
+	/*
+	 * XXX
+	 * scc serial drivers need to be rewritten to handle init this early.
+	 * Defer switching to non-PROM driver until after serial device
+	 * is configured normally.
 	 */
 	pending_remcons = 1;
 	printf("Using PROM serial output until serial drivers initialized\n");
 
-	/* We never cahnged output; go back to using PROM input */
+	/* We never changed output; go back to using PROM input */
 	cd.cn_dev = makedev (0, 0);
 	cd.cn_getc = /*(int (*)(dev_t)) */ romgetc;
 }
@@ -322,6 +349,9 @@ remcons:
 
 /*
  * Configure a serial port as a remote console.
+ * Called by configure() to switch from PROM I/O when the serial
+ * device-driver cannot be set up as a serial console until
+ * autoconfiguration is done.  (i.e., only needed for scc serial driver.)
  */
 void
 xconsinit()
@@ -331,27 +361,6 @@ xconsinit()
 
 	pending_remcons = 0;
 	switch (pmax_boardtype) {
-	case DS_PMAX:
-#if NDC > 0
-		if (kbd == 4)
-			cd.cn_dev = makedev(DCDEV, DCCOMM_PORT);
-		else
-			cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
-		cd.cn_getc = dcGetc;
-		cd.cn_putc = dcPutc;
-		cd.cn_pri = CN_REMOTE;
-#endif /* NDC */
-		break;
-
-	case DS_3MAX:
-#if NDC > 0
-		cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
-		cd.cn_getc = dcGetc;
-		cd.cn_putc = dcPutc;
-		cd.cn_pri = CN_REMOTE;
-#endif /* NDC */
-		break;
-
 	case DS_3MIN:
 	case DS_3MAXPLUS:
 #if NSCC > 0

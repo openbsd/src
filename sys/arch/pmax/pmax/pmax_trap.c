@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.35.4.2 1996/06/16 17:26:29 mhitch Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.39 1996/10/13 03:39:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

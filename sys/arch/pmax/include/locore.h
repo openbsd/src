@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.2 1996/05/20 23:38:26 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.3 1996/10/13 21:37:35 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -58,32 +58,33 @@ extern int switch_exit __P((void)); /* XXX never really returns? */
  * only to print them by name in stack tracebacks
  */
 
-extern void mips_r2000_KernIntr __P(());
+extern void mips1_KernIntr __P((void));
 
-extern void mips_r2000_ConfigCache  __P((void));
-extern void mips_r2000_FlushCache  __P((void));
-extern void mips_r2000_FlushDCache  __P((vm_offset_t addr, vm_offset_t len));
-extern void mips_r2000_FlushICache  __P((vm_offset_t addr, vm_offset_t len));
-extern void mips_r2000_ForceCacheUpdate __P((void));
-extern void mips_r2000_SetPID   __P((int pid));
-extern void mips_r2000_TLBFlush __P((void));
-extern void mips_r2000_TLBFlushAddr   __P( /* XXX Really pte highpart ? */
+extern void mips1_ConfigCache  __P((void));
+extern void mips1_FlushCache  __P((void));
+extern void mips1_FlushDCache  __P((vm_offset_t addr, vm_offset_t len));
+extern void mips1_FlushICache  __P((vm_offset_t addr, vm_offset_t len));
+extern void mips1_ForceCacheUpdate __P((void));
+extern void mips1_SetPID   __P((int pid));
+extern void mips1_TLBFlush __P((void));
+extern void mips1_TLBFlushAddr   __P( /* XXX Really pte highpart ? */
 					  (vm_offset_t addr));
-extern void mips_r2000_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
-extern void mips_r2000_TLBWriteIndexed  __P((u_int index, u_int high,
+extern void mips1_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
+extern void mips1_TLBWriteIndexed  __P((u_int index, u_int high,
 					    u_int low));
 
-extern void mips_r4000_ConfigCache __P((void));
-extern void mips_r4000_FlushCache  __P((void));
-extern void mips_r4000_FlushDCache __P((vm_offset_t addr, vm_offset_t len));
-extern void mips_r4000_FlushICache __P((vm_offset_t addr, vm_offset_t len));
-extern void mips_r4000_ForceCacheUpdate __P((void));
-extern void mips_r4000_SetPID  __P((int pid));
-extern void mips_r4000_TLBFlush __P((void));
-extern void mips_r4000_TLBFlushAddr __P( /* XXX Really pte highpart ? */
+extern void mips3_KernIntr __P((void));
+extern void mips3_ConfigCache __P((void));
+extern void mips3_FlushCache  __P((void));
+extern void mips3_FlushDCache __P((vm_offset_t addr, vm_offset_t len));
+extern void mips3_FlushICache __P((vm_offset_t addr, vm_offset_t len));
+extern void mips3_ForceCacheUpdate __P((void));
+extern void mips3_SetPID  __P((int pid));
+extern void mips3_TLBFlush __P((void));
+extern void mips3_TLBFlushAddr __P( /* XXX Really pte highpart ? */
 					  (vm_offset_t addr));
-extern void mips_r4000_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
-extern void mips_r4000_TLBWriteIndexed __P((u_int index, u_int high,
+extern void mips3_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
+extern void mips3_TLBWriteIndexed __P((u_int index, u_int high,
 					    u_int low));
 
 /*

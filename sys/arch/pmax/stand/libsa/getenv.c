@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.5 1995/01/18 06:53:55 mellon Exp $	*/
+/*	$NetBSD: getenv.c,v 1.6 1996/09/30 01:14:41 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,5 +44,5 @@ char *
 getenv(s)
 	char *s;
 {
-	return (callv->getenv(s));
+	return ((callv->_getenv)(s));
 }

@@ -190,11 +190,9 @@ union cpuprid {
  */
 #define	enablertclock()
 
-#include <pmax/cpuregs.h> /* XXX */
-
+/* Stuff from the NetBSD mips tree TTTTT */
 #define CLKF_USERMODE(framep)   CLKF_USERMODE_R3K(framep)
 #define CLKF_BASEPRI(framep)    CLKF_BASEPRI_R3K(framep)
-
 
 #ifdef _KERNEL
 union   cpuprid cpu_id;
@@ -203,5 +201,6 @@ u_int   machDataCacheSize;
 u_int   machInstCacheSize;
 extern  struct intr_tab intr_tab[];
 #endif
+/* End of stuff from the NetBSD mips tree TTTTT */
 
 #endif /* _CPU_H_ */

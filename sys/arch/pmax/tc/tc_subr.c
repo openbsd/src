@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.1.4.4 1996/09/09 20:12:58 thorpej Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.9 1996/10/13 03:40:03 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -309,7 +309,7 @@ void
 config_tcbus(parent, cputype, printfn)
      	struct device *parent;
 	int cputype;
-	int	printfn __P((void *, char *));
+	int	printfn __P((void *, const char *));
 
 {
 	struct tcbus_attach_args tcb;

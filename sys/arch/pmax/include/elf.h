@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.h,v 1.3.4.1 1996/06/26 06:39:09 jtc Exp $	*/
+/*	$NetBSD: elf.h,v 1.4 1996/06/26 04:41:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Ted Lemon

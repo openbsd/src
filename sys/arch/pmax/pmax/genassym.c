@@ -1,5 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.9 1996/04/07 14:27:00 jonathan Exp $	*/
-
+/*	$OpenBSD: genassym.c,v 1.4 1996/12/22 15:18:29 graichen Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +34,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)genassym.c	8.2 (Berkeley) 9/23/93
+ *	from: @(#)genassym.c	8.2 (Berkeley) 9/23/93
+ *      $Id: genassym.c,v 1.4 1996/12/22 15:18:29 graichen Exp $
  */
 
-#include <stdio.h>
-#include <stddef.h>
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/map.h>
@@ -49,33 +48,27 @@
 
 #include <machine/reg.h>
 
-#define	def(N,V)	printf("#define\t%s %d\n", N, V)
-#define	defx(N,V)	printf("#define\t%s 0x%lx\n", N, V)
-#define	off(N,S,M)	def(N, (int)offsetof(S, M))
-
-int
 main()
 {
+	register struct proc *p = (struct proc *)0;
+	register struct user *up = (struct user *)0;
+	register struct vmmeter *vm = (struct vmmeter *)0;
+	register int size, s, n;
 
-	off("P_FORW", struct proc, p_forw);
-	off("P_BACK", struct proc, p_back);
-	off("P_PRIORITY", struct proc, p_priority);
-	off("P_ADDR", struct proc, p_addr);
-
-	off("P_UPTE", struct proc, p_md.md_upte);
-	off("U_PCB_REGS", struct user, u_pcb.pcb_regs);
-
-	off("U_PCB_FPREGS", struct user, u_pcb.pcb_regs[F0]);
-	off("U_PCB_CONTEXT", struct user, u_pcb.pcb_context);
-	off("U_PCB_ONFAULT", struct user, u_pcb.pcb_onfault);
-	off("U_PCB_SEGTAB", struct user, u_pcb.pcb_segtab);
-
-	defx("VM_MIN_ADDRESS", VM_MIN_ADDRESS);
-	defx("VM_MIN_KERNEL_ADDRESS", VM_MIN_KERNEL_ADDRESS);
-
-	off("V_SWTCH", struct vmmeter, v_swtch);
-
-	def("SIGILL", SIGILL);
-	def("SIGFPE", SIGFPE);
+	printf("#define\tP_FORW %d\n", &p->p_forw);
+	printf("#define\tP_BACK %d\n", &p->p_back);
+	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
+	printf("#define\tP_ADDR %d\n", &p->p_addr);
+	printf("#define\tP_UPTE %d\n", p->p_md.md_upte);
+	printf("#define\tU_PCB_REGS %d\n", up->u_pcb.pcb_regs);
+	printf("#define\tU_PCB_FPREGS %d\n", &up->u_pcb.pcb_regs[F0]);
+	printf("#define\tU_PCB_CONTEXT %d\n", &up->u_pcb.pcb_context);
+	printf("#define\tU_PCB_ONFAULT %d\n", &up->u_pcb.pcb_onfault);
+	printf("#define\tU_PCB_SEGTAB %d\n", &up->u_pcb.pcb_segtab);
+	printf("#define\tVM_MIN_ADDRESS 0x%x\n", VM_MIN_ADDRESS);
+	printf("#define\tVM_MIN_KERNEL_ADDRESS 0x%x\n", VM_MIN_KERNEL_ADDRESS);
+	printf("#define\tV_SWTCH %d\n", &vm->v_swtch);
+	printf("#define\tSIGILL %d\n", SIGILL);
+	printf("#define\tSIGFPE %d\n", SIGFPE);
 	exit(0);
 }

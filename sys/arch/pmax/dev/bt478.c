@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.4 1996/04/08 00:57:43 jonathan Exp $	*/
+/*	$NetBSD: bt478.c,v 1.6 1996/10/13 13:13:51 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,13 +62,14 @@
 #include <sys/device.h>
 #include <sys/select.h>
 
-#include <machine/machConst.h>
+#include <pmax/cpuregs.h>
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
 #include <pmax/dev/bt478.h>
+#include <pmax/dev/bt478var.h>
 #include <pmax/pmax/kn01.h>
 
 /*
@@ -76,23 +77,10 @@
  */
 
 
-int bt478init __P((struct fbinfo *fi));
 
-void bt478RestoreCursorColor __P((struct fbinfo *fi));
-/* qvss ioctl interface uses this */
+/* XXX qvss ioctl interface uses this */
 void bt478CursorColor __P((struct fbinfo *fi, unsigned int color[]));
 
-void bt478BlankCursor __P((struct fbinfo *fi));
-/*static*/ void bt478InitColorMap __P((struct fbinfo *fi));
-int bt478GetColorMap __P((struct fbinfo *fi, caddr_t bits,
-				   int index, int count));
-int bt478LoadColorMap __P((struct fbinfo *fi, caddr_t bits,
-				   int index, int count));
-
-
-
-extern int pmax_boardtype;
-extern u_short defCursor[32];
 
 static u_char	bg_RGB[3];	/* background color for the cursor */
 static u_char	fg_RGB[3];	/* foreground color for the cursor */

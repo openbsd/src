@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy.c,v 1.5 1995/01/18 06:53:59 mellon Exp $	*/
+/*	$NetBSD: strcpy.c,v 1.6 1996/09/30 01:14:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,5 +44,5 @@ char *
 strcpy(s1, s2)
 	char *s1, *s2;
 {
-	return (callv->strcpy(s1, s2));
+	return (callv->_strcpy(s1, s2));
 }

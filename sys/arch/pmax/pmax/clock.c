@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12.4.1 1996/05/30 04:10:34 mhitch Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 1996/10/13 03:39:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

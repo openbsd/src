@@ -1,4 +1,4 @@
-/*	$NetBSD: mfbreg.h,v 1.4.6.1 1996/08/13 08:03:52 jonathan Exp $	*/
+/*	$NetBSD: mfbreg.h,v 1.5 1996/08/22 04:37:41 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

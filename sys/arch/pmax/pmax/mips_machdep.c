@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.1 1996/05/19 00:31:57 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.6 1996/10/13 21:37:51 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -13,8 +13,12 @@
  * express or implied warranty.
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
+
 #include <pmax/cpu.h>		/* declaration of of cpu_id */
-#include <machine/locore.h>
+#include <pmax/locore.h>
+#include <machine/cpu.h>		/* declaration of of cpu_id */
 
 mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL, NULL, NULL,
@@ -22,42 +26,125 @@ mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL
 };
 
+/*
+ * Forward declarations
+ * XXX should be in a header file so each mips port can include it.
+ */
+extern void cpu_identify __P((void));
+extern void mips_vector_init __P((void));
 
+void mips1_vector_init __P((void));
+void mips3_vector_init __P((void));
+
+
+#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 /*
  * MIPS-I (r2000) locore-function vector.
  */
 mips_locore_jumpvec_t R2000_locore_vec =
 {
-	mips_r2000_ConfigCache,
-	mips_r2000_FlushCache,
-	mips_r2000_FlushDCache,
-	mips_r2000_FlushICache,
-	/*mips_r2000_FlushICache*/ mips_r2000_FlushCache,
-	mips_r2000_SetPID,
-	mips_r2000_TLBFlush,
-	mips_r2000_TLBFlushAddr,
-	mips_r2000_TLBUpdate,
-	mips_r2000_TLBWriteIndexed
+	mips1_ConfigCache,
+	mips1_FlushCache,
+	mips1_FlushDCache,
+	mips1_FlushICache,
+	/*mips1_FlushICache*/ mips1_FlushCache,
+	mips1_SetPID,
+	mips1_TLBFlush,
+	mips1_TLBFlushAddr,
+	mips1_TLBUpdate,
+	mips1_TLBWriteIndexed
 };
 
-#ifdef CPU_R4000
+void
+mips1_vector_init()
+{
+	extern char mips1_UTLBMiss[], mips1_UTLBMissEnd[];
+	extern char mips1_exception[], mips1_exceptionEnd[];
+
+	/*
+	 * Copy down exception vector code.
+	 */
+	if (mips1_UTLBMissEnd - mips1_UTLBMiss > 0x80)
+		panic("startup: UTLB code too large");
+	bcopy(mips1_UTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
+		mips1_UTLBMissEnd - mips1_UTLBMiss);
+	bcopy(mips1_exception, (char *)MACH_GEN_EXC_VEC,
+	      mips1_exceptionEnd - mips1_exception);
+
+	/*
+	 * Copy locore-function vector.
+	 */
+	bcopy(&R2000_locore_vec, &mips_locore_jumpvec,
+	      sizeof(mips_locore_jumpvec_t));
+
+	/*
+	 * Clear out the I and D caches.
+	 */
+	mips1_ConfigCache();
+	mips1_FlushCache();
+}
+#endif /* MIPS1 */
+
+
+#ifdef MIPS3		/* r4000 family (mips-III cpu) */
 /*
  * MIPS-III (r4000) locore-function vector.
  */
 mips_locore_jumpvec_t R4000_locore_vec =
 {
-	mips_r4000_ConfigCache,
-	mips_r4000_FlushCache,
-	mips_r4000_FlushDCache,
-	mips_r4000_FlushICache,
-	mips_r4000_ForceCacheUpdate,
-	mips_r4000_SetPID,
-	mips_r4000_TLBFlush,
-	mips_r4000_TLBFlushAddr,
-	mips_r4000_TLBUpdate,
-	mips_r4000_TLBWriteIndexed
+	mips3_ConfigCache,
+	mips3_FlushCache,
+	mips3_FlushDCache,
+	mips3_FlushICache,
+#if 0
+	 /*
+	  * No such vector exists, perhaps it was meant to be HitFlushDCache?
+	  */
+	mips3_ForceCacheUpdate,
+#else
+	mips3_FlushCache,
+#endif
+	mips3_SetPID,
+	mips3_TLBFlush,
+	mips3_TLBFlushAddr,
+	mips3_TLBUpdate,
+	mips3_TLBWriteIndexed
 };
-#endif	/* CPU_R4000 */
+
+void
+mips3_vector_init()
+{
+
+	/* TLB miss handler address and end */
+	extern char mips3_exception[], mips3_exceptionEnd[];
+
+	/* r4000 exception handler address and end */
+	extern char mips3_TLBMiss[], mips3_TLBMissEnd[];
+
+	/*
+	 * Copy down exception vector code.
+	 */
+	if (mips3_TLBMissEnd - mips3_TLBMiss > 0x80)
+		panic("startup: UTLB code too large");
+	bcopy(mips3_TLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
+	      mips3_TLBMissEnd - mips3_TLBMiss);
+
+	bcopy(mips3_exception, (char *)MACH_GEN_EXC_VEC,
+	      mips3_exceptionEnd - mips3_exception);
+
+	/*
+	 * Copy locore-function vector.
+	 */
+	bcopy(&R4000_locore_vec, &mips_locore_jumpvec,
+	      sizeof(mips_locore_jumpvec_t));
+
+	/*
+	 * Clear out the I and D caches.
+	 */
+	mips3_ConfigCache();
+	mips3_FlushCache();
+}
+#endif	/* MIPS3 */
 
 
 /*
@@ -75,76 +162,12 @@ mips_locore_jumpvec_t R4000_locore_vec =
  * init_main() function.
  */
 
-void
-r2000_vector_init()
-{
-	extern char MachUTLBMiss[], MachUTLBMissEnd[];
-	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
-
-	/*
-	 * Copy down exception vector code.
-	 */
-	if (MachUTLBMissEnd - MachUTLBMiss > 0x80)
-		panic("startup: UTLB code too large");
-	bcopy(MachUTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
-		MachUTLBMissEnd - MachUTLBMiss);
-	bcopy(mips_R2000_exception, (char *)MACH_GEN_EXC_VEC,
-	      mips_R2000_exceptionEnd - mips_R2000_exception);
-
-	/*
-	 * Copy locore-function vector.
-	 */
-	bcopy(&R2000_locore_vec, &mips_locore_jumpvec,
-	      sizeof(mips_locore_jumpvec_t));
-
-	/*
-	 * Clear out the I and D caches.
-	 */
-	mips_r2000_ConfigCache();
-	mips_r2000_FlushCache();
-}
-
-
-#ifdef CPU_R4000
-void
-r4000_vector_init()
-{
-
-	extern char MachUTLBMiss[], MachUTLBMissEnd[];
-	extern char mips_R4000_exception[], mips_R4000_exceptionEnd[];
-
-	/*
-	 * Copy down exception vector code.
-	 */
-	if (MachUTLBMissEnd - MachUTLBMiss > 0x80)
-		panic("startup: UTLB code too large");
-	bcopy(MachUTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
-	      MachUTLBMissEnd - MachUTLBMiss);
-
-	bcopy(mips_r4000_exception, (char *)MACH_GEN_EXC_VEC,
-	      mips_r4000_exceptionEnd - mips_r4000_exception);
-
-	/*
-	 * Copy locore-function vector.
-	 */
-	bcopy(&R4000_locore_vec, &mips_locore_jumpvec,
-	      sizeof(mips_locore_jumpvec_t));
-
-	/*
-	 * Clear out the I and D caches.
-	 */
-	mips_r4000_ConfigCache();
-	mips_r4000_FlushCache();
-}
-#endif
-
 /*
  * Initialize the hardware exception vectors, and the jump table used to
  * call locore cache and TLB management functions, based on the kind
  * of CPU the kernel is running on.
  */
-void
-mips_vector_init()
+void mips_vector_init()
 {
 	register caddr_t v;
 	extern char edata[], end[];
@@ -156,16 +179,19 @@ mips_vector_init()
 	/* Work out what kind of CPU and FPU are present. */
 	switch(cpu_id.cpu.cp_imp) {
 
+#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 	case MIPS_R2000:
 	case MIPS_R3000:
-	  	r2000_vector_init();
+	  	mips1_vector_init();
 		break;
+#endif /* MIPS1 */
 
-#ifdef CPU_R4000
+
+#ifdef MIPS3		/* r4000 family (mips-III cpu) */
 	case MIPS_R4000:
-	  	r4000_vector_init();
+	  	mips3_vector_init();
 		break;
-#endif CPU_R4000
+#endif /* MIPS3 */
 
 	default:
 		panic("Unconfigured or unsupported MIPS cpu\n");

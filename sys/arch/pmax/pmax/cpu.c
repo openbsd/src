@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5.4.1 1996/06/16 17:28:21 mhitch Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 1996/10/13 03:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -83,7 +83,7 @@ cpuattach(parent, dev, aux)
 static int
 cpuprint(aux, pnp)
 	void *aux;
-	const char *pnp;
+	char *pnp;
 {
 	register struct confargs *ca = aux;
 

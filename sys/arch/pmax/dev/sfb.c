@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.11.4.3 1996/09/09 20:47:40 thorpej Exp $	*/
+/*	$NetBSD: sfb.c,v 1.18 1996/10/13 13:14:01 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,17 +90,19 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
+#include <dev/tc/tcvar.h>
 
 #include <machine/autoconf.h>
-#include <dev/tc/tcvar.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <pmax/dev/sfbvar.h>		/* XXX dev/tc ? */
 
 
 #include <pmax/dev/bt459.h>
 #include <pmax/dev/sfbreg.h>
 
-#include <machine/machConst.h>
+#include <pmax/cpuregs.h>		/* mips cached->uncached */
+
 #include <pmax/pmax/pmaxtype.h>
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>

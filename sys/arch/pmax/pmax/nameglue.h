@@ -1,4 +1,4 @@
-/*	$NetBSD: nameglue.h,v 1.1 1995/08/10 05:29:11 jonathan Exp $	*/
+/*	$NetBSD: nameglue.h,v 1.3 1996/10/13 03:39:52 christos Exp $	*/
 
 /*
  * Use macros to glue names for "machine-independent" functions 

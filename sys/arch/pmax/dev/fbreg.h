@@ -1,4 +1,4 @@
-/*	$NetBSD: fbreg.h,v 1.5 1995/09/12 07:51:35 jonathan Exp $	*/
+/*	$NetBSD: fbreg.h,v 1.6 1996/09/21 03:25:20 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,9 +49,9 @@ struct fbuaccess {
 };
 
 struct pmax_fbtty {
-	/*int	initialized;		/* Set up yet? */
 	int	row, col;		/* Screen pos for glass tty */
-	void	(*KBDPutc)();		/* Send char to keyboard func */
+	void	(*KBDPutc) __P ((dev_t dev, int c));
+					/* Send char to keyboard func */
 	dev_t	kbddev;			/* Device for KBDPutc */
 };
 
@@ -76,9 +76,7 @@ extern void fbMouseButtons __P((MouseReport *, struct fbinfo *));
 extern void fbScroll __P((struct fbinfo *));
 extern void fbPutc __P((dev_t, int));
 extern void fbBlitc __P((int, struct fbinfo *));
-extern int kbdMapChar __P((int));
-extern void KBDReset __P((dev_t, void (*)(dev_t, int)));
-extern void MouseInit __P((dev_t, void (*)(dev_t, int), int (*)(dev_t)));
-extern int KBDGetc __P((void));
 extern int tb_kbdmouseconfig __P((struct fbinfo *fi));
 extern int fbmmap_fb __P((struct fbinfo *, dev_t, caddr_t, struct proc *));
+
+extern void init_pmaxfbu __P((struct fbinfo *fi));

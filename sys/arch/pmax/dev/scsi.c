@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.5 1996/04/07 22:53:55 jonathan Exp $	*/
+/*	$NetBSD: scsi.c,v 1.7 1996/10/13 03:39:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1996/02/01 22:32:19 mycroft Exp $
+#	$NetBSD: Makefile,v 1.8 1996/10/18 06:08:15 thorpej Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 DESTDIR=
@@ -98,8 +98,8 @@ clean cleandir:
 
 install:
 	./mkboot boot rzboot bootrz
-	install -o ${BINOWN} -g ${BINGRP} -m 444 rzboot ${DESTDIR}/usr/mdec
-	install -o ${BINOWN} -g ${BINGRP} -m 444 bootrz ${DESTDIR}/usr/mdec
+	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m 444 rzboot ${DESTDIR}/usr/mdec
+	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m 444 bootrz ${DESTDIR}/usr/mdec
 
 depend: ${SRCS}
 	mkdep ${INCPATH} ${DEFS} ${SRCS}

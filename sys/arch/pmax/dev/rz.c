@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.15.4.1 1996/06/16 17:20:48 mhitch Exp $	*/
+/*	$NetBSD: rz.c,v 1.20 1996/10/13 03:39:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,6 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/dkstat.h>		/* XXX */
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/malloc.h>
@@ -158,7 +157,6 @@ struct	rz_softc {
 #define	sc_copenpart	sc_dkdev.dk_copenmask	/* XXX compat */
 #define	sc_bshift	sc_dkdev.dk_blkshift	/* XXX compat */
 	char	sc_xname[8];		/* XXX external name */
-	u_int	sc_wpms;		/* average xfer rate in 16bit wds/sec */
 	struct	rzstats sc_stats;	/* statisic counts */
 	struct	buf sc_tab;		/* queue of pending operations */
 	struct	buf sc_buf;		/* buf for doing I/O */
@@ -216,6 +214,13 @@ static char legal_cmds[256] = {
 /*e0*/	0,  0,  0,  0,  0,  0,  0,  0,    0,  0,  0,  0,  0,  0,  0,  0,
 /*f0*/	0,  0,  0,  0,  0,  0,  0,  0,    0,  0,  0,  0,  0,  0,  0,  0,
 };
+
+/*
+ * Private forward declarations
+ */
+
+static	int rzready __P((register struct rz_softc *sc));
+static void rzlblkstrat __P((register struct buf *bp, register int bsize));
 
 /*
  * Test to see if the unit is ready and if not, try to make it ready.
@@ -431,9 +436,6 @@ rzprobe(xxxsd)
 			goto bad;
 		}
 	}
-
-	/* XXX Support old-style instrumentation for now. */
-	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);
 
 	/* Attach the disk. */
 	disk_attach(&sc->sc_dkdev);
@@ -663,14 +665,6 @@ rzstart(unit)
 				unit, bp->b_bcount);
 #endif
 		sc->sc_stats.rztransfers++;
-
-		/* XXX Support old-style instrumentation for now. */
-		if ((n = sc->sc_sd->sd_dk) >= 0) {
-			dk_busy |= 1 << n;
-			++dk_seek[n];
-			++dk_xfer[n];
-			dk_wds[n] += bp->b_bcount >> 6;
-		}
 	}
 
 
@@ -700,10 +694,6 @@ rzdone(unit, error, resid, status)
 		printf("rz%d: bp == NULL\n", unit);
 		return;
 	}
-
-	/* XXX Support old-style instrumentation for now. */
-	if (sd->sd_dk >= 0)
-		dk_busy &= ~(1 << sd->sd_dk);
 
 	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - resid));
 
@@ -936,10 +926,6 @@ rzopen(dev, flags, mode, p)
 		break;
 	}
 	sc->sc_openpart |= mask;
-
-	/* XXX Support old-style instrumentation for now. */
-	if (sc->sc_sd->sd_dk >= 0)
-		dk_wpms[sc->sc_sd->sd_dk] = sc->sc_wpms;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.14.4.1 1996/05/30 04:04:01 mhitch Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.20 1996/10/14 01:39:57 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -105,9 +105,9 @@ xcfb needs dtop device
 #include <sys/device.h>
 #include <dev/tc/tcvar.h>
 #include <machine/autoconf.h>
-#include <machine/machConst.h>
-#include <machine/pmioctl.h>
+#include <pmax/cpuregs.h>		/* mips cached->uncached */
 
+#include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
@@ -157,16 +157,6 @@ struct fbdriver xcfb_driver = {
 /*
  * Forward references.
  */
-extern void fbScreenInit __P((struct fbinfo *fi));
-
-
-void genKbdEvent(), genMouseEvent(), genMouseButtons();
-
-extern void dtopKBDPutc();
-extern void (*dtopDivertXInput)();
-extern void (*dtopMouseEvent)();
-extern void (*dtopMouseButtons)();
-extern int pmax_boardtype;
 extern u_short defCursor[32];
 
 
@@ -212,7 +202,7 @@ xcfbattach(parent, self, aux)
 {
 	struct tc_attach_args *ta = aux;
 
-	if (!xcfbinit(NULL, (caddr_t)ta->ta_addr, self->dv_unit, 0));
+	if (!xcfbinit(NULL, (caddr_t)ta->ta_addr, self->dv_unit, 0))
 		return;
 
 	/* no interrupts for XCFB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.8 1996/04/08 00:52:10 jonathan Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.9 1996/09/21 03:33:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,7 +137,7 @@ struct callback {
 	int	(*_console_init) __P((void));				/* 98 */
 	void	(*_halt) __P((int *v, int cnt));			/* 9c */
 	void	(*_showfault) __P((void));				/* a0 */
-	tcinfo	*(*_gettcinfo) __P(());					/* a4 */
+	tcinfo	*(*_gettcinfo) __P((void));	/*XXX* bogus proto */	/* a4 */
 	int	(*_execute_cmd) __P((char *cmd));			/* a8 */
 	void	(*_rex) __P((char cmd));				/* ac */
 	/* b0 to d4 reserved */

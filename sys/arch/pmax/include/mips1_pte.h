@@ -1,11 +1,13 @@
-/*	$NetBSD: if_levar.h,v 1.3 1996/05/07 01:23:36 thorpej Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.8 1996/10/13 09:54:43 jonathan Exp $	*/
 
-/*-
+/*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Ralph Campbell and Rick Macklem.
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department and Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,32 +37,61 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_lereg.h	8.1 (Berkeley) 6/10/93
+ * from: Utah Hdr: pte.h 1.11 89/09/03
+ *
+ *	@(#)pte.h	8.1 (Berkeley) 6/10/93
  */
-
-/* Local Area Network Controller for Ethernet (LANCE) registers */
-struct lereg1 {
-	volatile u_int16_t	ler1_rdp;	/* data port */
-	int16_t	pad0;
-#ifdef alpha /* Should be here for Alpha, shouldn't for pmax */
-	int32_t	pad1;
-#endif
-	volatile u_int16_t	ler1_rap;	/* register select port */
-	int16_t	pad2;
-#ifdef alpha  /* Should be here for Alpha, shouldn't for pmax */
-	int32_t	pad3;
-#endif
-};
 
 /*
- * Ethernet software status per interface.
- *
- * Each interface is referenced by a network interface structure,
- * arpcom.ac_if, which the routing code uses to locate the interface.
- * This structure contains the output queue for the interface, its address, ...
+ * R2000 hardware page table entry
  */
-struct le_softc {
-	struct	am7990_softc sc_am7990;	/* glue to MI code */
 
-	struct	lereg1 *sc_r1;		/* LANCE registers */
+#ifndef _LOCORE
+struct pte {
+#if BYTE_ORDER == BIG_ENDIAN
+unsigned int	pg_pfnum:20,		/* HW: core page frame number or 0 */
+		pg_n:1,			/* HW: non-cacheable bit */
+		pg_m:1,			/* HW: modified (dirty) bit */
+		pg_v:1,			/* HW: valid bit */
+		pg_g:1,			/* HW: ignore pid bit */
+		:4,
+		pg_swapm:1,		/* SW: page must be forced to swap */
+		pg_fod:1,		/* SW: is fill on demand (=0) */
+		pg_prot:2;		/* SW: access control */
+#endif
+#if BYTE_ORDER == LITTLE_ENDIAN
+unsigned int	pg_prot:2,		/* SW: access control */
+		pg_fod:1,		/* SW: is fill on demand (=0) */
+		pg_swapm:1,		/* SW: page must be forced to swap */
+		:4,
+		pg_g:1,			/* HW: ignore pid bit */
+		pg_v:1,			/* HW: valid bit */
+		pg_m:1,			/* HW: modified (dirty) bit */
+		pg_n:1,			/* HW: non-cacheable bit */
+		pg_pfnum:20;		/* HW: core page frame number or 0 */
+#endif
 };
+
+typedef union pt_entry {
+	unsigned int	pt_entry;	/* for copying, etc. */
+	struct pte	pt_pte;		/* for getting to bits by name */
+} pt_entry_t;	/* Mach page table entry */
+#endif /* _LOCORE */
+
+#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
+
+#define	PG_PROT		0x00000003
+#define PG_RW		0x00000000
+#define PG_RO		0x00000001
+#define PG_WIRED	0x00000002
+#define	PG_G		0x00000100
+#define	PG_V		0x00000200
+#define	PG_NV		0x00000000
+#define	PG_M		0x00000400
+#define	PG_N		0x00000800
+#define	PG_FRAME	0xfffff000
+#define PG_SHIFT	12
+#define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
+
+#define PTE_TO_PADDR(pte) ((unsigned)(pte) & PG_FRAME)
+#define PAGE_IS_RDONLY(pte,va) ((pte) & PG_RO)

@@ -5,13 +5,14 @@
 machine		pmax
 
 option		CPU_R3000
+option		MIPS1
 option		DS3100
 option		HZ=256
 option		NKMEMCLUSTERS=1024
 option		TIMEZONE=0
 option		DST=0
 
-maxusers	8
+maxusers	32
 
 option		SWAPPAGER
 option		VNODEPAGER
@@ -26,7 +27,7 @@ option		NFSCLIENT
 option		NFSSERVER
 option		KTRACE
 
-config		bsd	root on rz3a swap on rz3b dumps on rz3b
+config		bsd	root on rz0a swap on rz0b dumps on rz0b
 
 mainbus0	at root
 
@@ -42,7 +43,6 @@ rz1		at oldscsibus? target ? drive ?
 rz2		at oldscsibus? target ? drive ?
 rz3		at oldscsibus? target ? drive ?
 rz4		at oldscsibus? target ? drive ?
-rz5		at oldscsibus? target ? drive ?
 tz0		at oldscsibus? target ? drive ?
 tz1		at oldscsibus? target ? drive ?
 

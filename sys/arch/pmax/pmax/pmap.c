@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 1996/05/19 01:58:35 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 1996/10/13 03:39:53 christos Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -718,7 +718,7 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 }
 
-#ifdef CPU_R4000
+#ifdef MIPS3	/* r4000,r4400,r4600 */
 /*
  *	Return RO protection of page.
  */
@@ -789,7 +789,7 @@ pmap_page_cache(pa,mode)
 
 	splx(s);
 }
-#endif	/* CPU_R4000 */
+#endif	/* MIPS3 */	/* r4000,r4400,r4600 */
 
 
 /*

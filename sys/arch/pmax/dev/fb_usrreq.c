@@ -199,28 +199,39 @@ fbioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
+/* fbselect(dev, events, p) should be fbpoll(dev, events, p) */
+/* see also pmax/conf.c TTTTT */
+
+
 /*
- * Select on Digital-OS-compatible in-kernel input-event ringbuffer.
+ * Poll on Digital-OS-compatible in-kernel input-event ringbuffer.
  */
 int
-fbselect(dev, flag, p)
+fbselect(dev, events, p)
 	dev_t dev;
-	int flag;
+	int events;
 	struct proc *p;
 {
 	struct fbinfo *fi = fbcd.cd_devs[minor(dev)];
+	int revents = 0;
 
-	switch (flag) {
-	case FREAD:
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (fi->fi_fbu->scrInfo.qe.eHead !=
 		    fi->fi_fbu->scrInfo.qe.eTail)
-			return (1);
-		selrecord(p, &fi->fi_selp);
-		break;
+		 	revents |= (events & (POLLIN|POLLRDNORM));
+		else
+	  		selrecord(p, &fi->fi_selp);
 	}
 
-	return (0);
+	/* XXX mice are not writable, what to do for poll on write? */
+#ifdef notdef
+	if (events & (POLLOUT | POLLWRNORM))
+		revents |= events & (POLLOUT | POLLWRNORM);
+#endif
+
+	return (revents);
 }
+
 
 /*
  * Return the physical page number that corresponds to byte offset 'off'.

@@ -88,8 +88,8 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLSHIFT	11
-#define	MCLBYTES	(1 << MCLSHIFT)	/* enough for whole Ethernet packet */
+#define	MCLBYTES	2048		/* enough for whole Ethernet packet */
+#define	MCLSHIFT	10
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
