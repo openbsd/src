@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.18 2003/09/24 21:11:46 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.19 2003/09/26 15:55:22 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.18 2003/09/24 21:11:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.19 2003/09/26 15:55:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -223,8 +223,7 @@ main(int argc, char *argv[])
 		*p = '\0';
 		if (*addrp == '\0')
 			addrp = "<>";
-		if (from_user != NULL)
-			free(from_user);
+		free(from_user);
 		if ((from_user = strdup(addrp)) == NULL)
 			err(EX_TEMPFAIL, NULL);
 
