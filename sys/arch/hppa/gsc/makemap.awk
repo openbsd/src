@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.1 2003/02/16 01:42:49 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.2 2003/05/27 15:31:52 mickey Exp $
 #
 # Copyright (c) 2003, Miodrag Vallat.
 # All rights reserved.
@@ -210,9 +210,49 @@ $1 == "#define" || $1 == "#undef" {
 /};/ {
 	if (mapnum == 0) {
 		# Add 241 to the US map...
-		printf("    KC(241),\tKS_Delete,\n")
+		print "    KC(241),\tKS_Delete"
+		print $0
+		print "\nstatic const keysym_t pckbd_keydesc_precisionbook[] = {"
+		print "/*  pos      command\t\tnormal		shifted */"
+		print "    KC(7),   KS_Cmd_Screen0,\tKS_f1,"
+		print "    KC(15),  KS_Cmd_Screen1,\tKS_f2,"
+		print "    KC(23),  KS_Cmd_Screen2,\tKS_f3,"
+		print "    KC(31),  KS_Cmd_Screen3,\tKS_f4,"
+		print "    KC(39),  KS_Cmd_Screen4,\tKS_f5,"
+		print "    KC(47),  KS_Cmd_Screen5,\tKS_f6,"
+		print "    KC(55),  KS_Cmd_Screen6,\tKS_f7,"
+		print "    KC(63),  KS_Cmd_Screen7,\tKS_f8,"
+		print "    KC(71),  KS_Cmd_Screen8,\tKS_f9,"
+		print "    KC(79),  KS_Cmd_Screen9,\tKS_f10,"
+		print "    KC(86),  KS_Cmd_Screen10,\tKS_f11,"
+		print "    KC(94),  KS_Cmd_Screen11,\tKS_f12,"
+		print "    KC(8),   KS_Cmd_Debugger,\tKS_Escape,"
+		print "    KC(87),\t\t\tKS_Print_Screen,"
+		print "    KC(92),\t\t\tKS_backslash,\tKS_bar,"
+		print "    KC(96),\t\t\tKS_KP_Down,\tKS_KP_2,"
+		print "    KC(95),\t\t\tKS_Hold_Screen,"
+		print "    KC(97),\t\t\tKS_KP_Left,\tKS_KP_4,"
+		print "    KC(98),\t\t\tKS_Pause, /* Break */"
+		print "    KC(99),\t\t\tKS_KP_Up,\tKS_KP_8,"
+		print "    KC(100),\t\t\tKS_KP_Delete,\tKS_KP_Decimal,"
+		print "    KC(101),\t\t\tKS_KP_End,\tKS_KP_1,"
+		print "    KC(103),\t\t\tKS_KP_Insert,\tKS_KP_0,"
+		print "    KC(106),\t\t\tKS_KP_Right,\tKS_KP_6,"
+		print "    KC(109),\t\t\tKS_KP_Next,\tKS_KP_3,"
+		print "    KC(110),\t\t\tKS_KP_Home,\tKS_KP_7,"
+		print "    KC(111),\t\t\tKS_KP_Prior,\tKS_KP_9,"
+		print "    KC(20),\t\t\tKS_Caps_Lock,"
+		print "    KC(17),  KS_Cmd1,\t\tKS_Control_L,"
+		print "    KC(88),  KS_Cmd1,\t\tKS_Control_R,"
+		print "    KC(25),  KS_Cmd2,\t\tKS_Alt_L,"
+		print "    KC(57),  KS_Cmd2,\t\tKS_Alt_R,\tKS_Multi_key,"
+		print "    KC(139),\t\t\tKS_Meta_L,"
+		print "    KC(140),\t\t\tKS_Meta_R,"
 	}
 	mapnum++
+}
+/{0, 0, 0, 0}/ {
+	printf("\tKBD_MAP(KB_US | KB_MACHDEP,\tKB_US,\tpckbd_keydesc_precisionbook),\n");
 }
 {
 	print $0
