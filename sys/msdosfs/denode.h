@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.3 1996/02/29 10:46:45 niklas Exp $	*/
+/*	$OpenBSD: denode.h,v 1.4 1997/03/02 18:01:50 millert Exp $	*/
 /*	$NetBSD: denode.h,v 1.20 1996/02/09 19:13:39 christos Exp $	*/
 
 /*-
@@ -218,21 +218,18 @@ struct denode {
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
 #define	DETOV(de)	((de)->de_vnode)
 
-#define	DE_TIMES(dep) \
+#define	DETIMES(dep, acc, mod, cre) \
 	if ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) { \
-		if (((dep)->de_Attributes & ATTR_DIRECTORY) == 0) { \
-			if ((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95 \
-			    || (dep)->de_flag & DE_UPDATE) { \
-				unix2dostime(NULL, &(dep)->de_MDate, &(dep)->de_MTime); \
-				(dep)->de_Attributes |= ATTR_ARCHIVE; \
-			} \
-			if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
-				if ((dep)->de_flag & DE_ACCESS) \
-					unix2dostime(NULL, &(dep)->de_ADate, &(dep)->de_ATime); \
-				if ((dep)->de_flag & DE_CREATE) \
-					unix2dostime(NULL, &(dep)->de_CDate, &(dep)->de_CTime); \
-			} \
-			(dep)->de_flag |= DE_MODIFIED; \
+		(dep)->de_flag |= DE_MODIFIED; \
+		if ((dep)->de_flag & DE_UPDATE) { \
+			unix2dostime((mod), &(dep)->de_MDate, &(dep)->de_MTime); \
+			(dep)->de_Attributes |= ATTR_ARCHIVE; \
+		} \
+		if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
+			if ((dep)->de_flag & DE_ACCESS) \
+				unix2dostime((acc), &(dep)->de_ADate, &(dep)->de_ATime); \
+			if ((dep)->de_flag & DE_CREATE) \
+				unix2dostime((cre), &(dep)->de_CDate, &(dep)->de_CTime); \
 		} \
 		(dep)->de_flag &= ~(DE_UPDATE | DE_CREATE | DE_ACCESS); \
 	}
@@ -295,6 +292,7 @@ int	msdosfs_islocked	__P((void *));
 int	msdosfs_advlock		__P((void *));
 int	msdosfs_reallocblks	__P((void *));
 int	msdosfs_pathconf	__P((void *));
+int	msdosfs_update		__P((void *));
 
 /*
  * Internal service routine prototypes.

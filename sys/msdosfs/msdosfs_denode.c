@@ -1,5 +1,5 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.3 1996/02/29 10:46:51 niklas Exp $	*/
-/*	$NetBSD: msdosfs_denode.c,v 1.19 1996/02/09 19:13:43 christos Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.4 1997/03/02 18:01:54 millert Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.22 1996/10/13 04:16:31 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -169,7 +169,7 @@ deget(pmp, dirclust, diroffset, depp)
 
 #ifdef MSDOSFS_DEBUG
 	printf("deget(pmp %08x, dirclust %d, diroffset %x, depp %08x)\n",
-	       pmp, dirclust, diroffset, depp);
+	    pmp, dirclust, diroffset, depp);
 #endif
 
 	/*
@@ -296,61 +296,10 @@ deupdat(dep, waitfor)
 	struct denode *dep;
 	int waitfor;
 {
-	int error;
-	struct buf *bp;
-	struct direntry *dirp;
-	struct vnode *vp = DETOV(dep);
+	struct timespec ts;
 
-#ifdef MSDOSFS_DEBUG
-	printf("deupdat(): dep %08x\n", dep);
-#endif
-
-	/* If the time stamp needs updating, do it now. */
-	DE_TIMES(dep);
-
-	/*
-	 * If the modified bit is off, or this denode is from a readonly
-	 * filesystem, or the denode represents an open but unlinked file
-	 * then don't do anything. DOS directory entries that describe a
-	 * directory do not ever get updated.  This is the way dos treats
-	 * them.
-	 */
-	if ((dep->de_flag & DE_MODIFIED) == 0)
-		return (0);
-
-	dep->de_flag &= ~DE_MODIFIED;
-
-	if (dep->de_Attributes & ATTR_DIRECTORY)
-		panic("deupdat: directory");
-
-	if (vp->v_mount->mnt_flag & MNT_RDONLY ||
-	    dep->de_refcnt <= 0)
-		return (0);
-
-	/*
-	 * Read in the cluster containing the directory entry we want to
-	 * update.
-	 */
-	if ((error = readde(dep, &bp, &dirp)) != 0)
-		return (error);
-
-	/*
-	 * Copy the directory entry out of the denode into the cluster it
-	 * came from.
-	 */
-	DE_EXTERNALIZE(dirp, dep);
-
-	/*
-	 * Write the cluster back to disk.  If they asked for us to wait
-	 * for the write to complete, then use bwrite() otherwise use
-	 * bdwrite().
-	 */
-	error = 0;		/* note that error is 0 from above, but ... */
-	if (waitfor)
-		error = bwrite(bp);
-	else
-		bdwrite(bp);
-	return (error);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	return (VOP_UPDATE(DETOV(dep), &ts, &ts, waitfor));
 }
 
 /*

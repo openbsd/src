@@ -1,5 +1,5 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.5 1996/04/21 22:28:22 deraadt Exp $	*/
-/*	$NetBSD: msdosfs_vfsops.c,v 1.41 1996/03/20 00:45:40 thorpej Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.6 1997/03/02 18:01:59 millert Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.44 1996/12/22 10:10:32 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.

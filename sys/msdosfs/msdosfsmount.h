@@ -1,5 +1,5 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.4 1996/02/29 10:47:02 niklas Exp $	*/
-/*	$NetBSD: msdosfsmount.h,v 1.14 1996/02/09 19:13:56 christos Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.5 1997/03/02 18:02:02 millert Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.15 1996/12/22 10:31:41 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.

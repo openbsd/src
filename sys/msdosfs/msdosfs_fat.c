@@ -1,5 +1,5 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.3 1996/02/29 10:46:53 niklas Exp $	*/
-/*	$NetBSD: msdosfs_fat.c,v 1.22 1996/02/09 19:13:45 christos Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.4 1997/03/02 18:01:56 millert Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.24 1996/10/13 04:16:32 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -333,8 +333,8 @@ updatefats(pmp, bp, fatbn)
 	struct buf *bpn;
 
 #ifdef MSDOSFS_DEBUG
-	printf("updatefats(pmp %08x, bp %08x, fatbn %d)\n",
-	       pmp, bp, fatbn);
+	printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
+	    function, pmp, cluster, oldcontents, newcontents);
 #endif
 
 	/*
@@ -460,10 +460,10 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	u_long bn, bo, bsize, byteoffset;
 	struct buf *bp;
 
-	/*
-	 * printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
-	 *	  function, pmp, cluster, oldcontents, newcontents);
-	 */
+#if 0
+	 printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
+	     function, pmp, cluster, oldcontents, newcontents);
+#endif
 
 #ifdef DIAGNOSTIC
 	/*
@@ -552,7 +552,7 @@ fatchain(pmp, start, count, fillwith)
 	
 #ifdef MSDOSFS_DEBUG
 	printf("fatchain(pmp %08x, start %d, count %d, fillwith %d)\n",
-	       pmp, start, count, fillwith);
+	    pmp, start, count, fillwith);
 #endif
 	/*
 	 * Be sure the clusters are in the filesystem.
@@ -664,7 +664,7 @@ chainalloc(pmp, start, count, fillwith, retcluster, got)
 		return (error);
 #ifdef MSDOSFS_DEBUG
 	printf("clusteralloc(): allocated cluster chain at %d (%d clusters)\n",
-	       start, count);
+	    start, count);
 #endif
 	if (retcluster)
 		*retcluster = start;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.4 1996/04/19 16:10:00 niklas Exp $	*/
-/*	$NetBSD: msdosfs_lookup.c,v 1.26 1996/03/07 13:30:46 ws Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.5 1997/03/02 18:01:57 millert Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.30 1996/10/25 23:14:08 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -125,7 +125,7 @@ msdosfs_lookup(v)
 	wantparent = flags & (LOCKPARENT | WANTPARENT);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): vdp %08x, dp %08x, Attr %02x\n",
-	       vdp, dp, dp->de_Attributes);
+	    vdp, dp, dp->de_Attributes);
 #endif
 
 	/*
@@ -178,7 +178,7 @@ msdosfs_lookup(v)
 			if (vpid == vdp->v_id) {
 #ifdef MSDOSFS_DEBUG
 				printf("msdosfs_lookup(): cache hit, vnode %08x, file %s\n",
-				       vdp, dp->de_Name);
+				    vdp, dp->de_Name);
 #endif
 				return (0);
 			}
@@ -217,11 +217,11 @@ msdosfs_lookup(v)
 	case 1:
 		break;
 	case 2:
-		wincnt = winSlotCnt((u_char *)cnp->cn_nameptr,cnp->cn_namelen) + 1;
+		wincnt = winSlotCnt((u_char *)cnp->cn_nameptr, cnp->cn_namelen) + 1;
 		break;
 	case 3:
 		olddos = 0;
-		wincnt = winSlotCnt((u_char *)cnp->cn_nameptr,cnp->cn_namelen) + 1;
+		wincnt = winSlotCnt((u_char *)cnp->cn_nameptr, cnp->cn_namelen) + 1;
 		break;
 	}
 	if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
@@ -240,7 +240,7 @@ msdosfs_lookup(v)
 	
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): dos version of filename %s, length %d\n",
-	       dosfilename, cnp->cn_namelen);
+	    dosfilename, cnp->cn_namelen);
 #endif
 	/*
 	 * Search the directory pointed at by vdp for the name pointed at
@@ -335,7 +335,7 @@ msdosfs_lookup(v)
 				}
 #ifdef MSDOSFS_DEBUG
 				printf("msdosfs_lookup(): match blkoff %d, diroff %d\n",
-				       blkoff, diroff);
+				    blkoff, diroff);
 #endif
 				/*
 				 * Remember where this directory
@@ -379,9 +379,9 @@ notfound:;
 	 */
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): op %d, refcnt %d\n",
-	       nameiop, dp->de_refcnt);
+	    nameiop, dp->de_refcnt);
 	printf("               slotcount %d, slotoffset %d\n",
-	       slotcount, slotoffset);
+	    slotcount, slotoffset);
 #endif
 	if ((nameiop == CREATE || nameiop == RENAME) &&
 	    (flags & ISLASTCN) && dp->de_refcnt != 0) {
@@ -591,7 +591,7 @@ createde(dep, ddep, depp, cnp)
 	
 #ifdef MSDOSFS_DEBUG
 	printf("createde(dep %08x, ddep %08x, depp %08x, cnp %08x)\n",
-	       dep, ddep, depp, cnp);
+	    dep, ddep, depp, cnp);
 #endif
 
 	/*
@@ -606,8 +606,11 @@ createde(dep, ddep, depp, cnp)
 		diroffset = ddep->de_fndoffset + sizeof(struct direntry)
 		    - ddep->de_FileSize;
 		dirclust = de_clcount(pmp, diroffset);
-		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0)
+		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0) {
+			(void)detrunc(ddep, ddep->de_FileSize, 0, NOCRED, NULL);
 			return error;
+		}
+
 		/*
 		 * Update the size of the directory
 		 */
@@ -749,7 +752,7 @@ dosdirempty(dep)
 					brelse(bp);
 #ifdef MSDOSFS_DEBUG
 					printf("dosdirempty(): entry found %02x, %02x\n",
-					       dentp->deName[0], dentp->deName[1]);
+					    dentp->deName[0], dentp->deName[1]);
 #endif
 					return (0);	/* not empty */
 				}

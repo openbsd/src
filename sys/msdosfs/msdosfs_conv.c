@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.5 1996/03/02 00:54:54 niklas Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.6 1997/03/02 18:01:53 millert Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.17 1996/02/09 19:13:42 christos Exp $	*/
 
 /*-
@@ -105,15 +105,6 @@ unix2dostime(tsp, ddp, dtp)
 	u_long year;
 	u_long month;
 	u_short *months;
-	struct timespec ts;
-
-	/*
-	 * NULL means to read the current time.
-	 */
-	if (tsp == NULL) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		tsp = &ts;
-	}
 
 	/*
 	 * If the time from the last conversion is the same as now, then
@@ -217,10 +208,8 @@ dos2unixtime(dd, dt, tsp)
 		 */
 		month = (dd & DD_MONTH_MASK) >> DD_MONTH_SHIFT;
 		if (month == 0) {
-#if 0
 			printf("dos2unixtime(): month value out of range (%ld)\n",
-			       month);
-#endif
+			    month);
 			month = 1;
 		}
 		for (m = 0; m < month - 1; m++)
@@ -239,14 +228,14 @@ unix2dos[256] = {
 	0,    0,    0,    0,    0,    0,    0,    0,	/* 08-0f */
 	0,    0,    0,    0,    0,    0,    0,    0,	/* 10-17 */
 	0,    0,    0,    0,    0,    0,    0,    0,	/* 18-1f */
-	0,    0x21, 0,    0x23, 0x24, 0x25, 0x26, 0,	/* 20-27 */
-	0x28, 0x29, 0,    0,    0x2c, 0x2d, 0,    0,	/* 28-2f */
+	0,    0x21, 0,    0x23, 0x24, 0x25, 0x26, 0x27,	/* 20-27 */
+	0x28, 0x29, 0,    0,    0,    0x2d, 0,    0,	/* 28-2f */
 	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,	/* 30-37 */
-	0x38, 0x39, 0,    0x3b, 0,    0,    0,    0,	/* 38-3f */
+	0x38, 0x39, 0,    0,    0,    0,    0,    0,	/* 38-3f */
 	0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,	/* 40-47 */
 	0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,	/* 48-4f */
 	0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,	/* 50-57 */
-	0x58, 0x59, 0x5a, 0,    0,    0,    0,    0x5f,	/* 58-5f */
+	0x58, 0x59, 0x5a, 0,    0,    0,    0x5e, 0x5f,	/* 58-5f */
 	0x60, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,	/* 60-67 */
 	0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,	/* 68-6f */
 	0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,	/* 70-77 */
