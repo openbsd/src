@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.509 2002/05/14 21:27:20 jason Exp 
+ *		OpenBSD: pcidevs,v 1.510 2002/05/14 21:58:15 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7239,10 +7239,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Oxford",
 	},
 	{
-	    PCI_VENDOR_INVERTEX,
-	    "Invertex",
-	},
-	{
 	    PCI_VENDOR_AIRONET,
 	    "Aironet",
 	},
@@ -7253,6 +7249,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TITAN,
 	    "Titan",
+	},
+	{
+	    PCI_VENDOR_INVERTEX,
+	    "Invertex",
 	},
 	{
 	    PCI_VENDOR_BROADCOM,
@@ -7279,12 +7279,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "VMware",
 	},
 	{
-	    PCI_VENDOR_NDC,
-	    "National Datacomm Corp",
-	},
-	{
 	    PCI_VENDOR_SYBA,
 	    "Syba",
+	},
+	{
+	    PCI_VENDOR_NDC,
+	    "National Datacomm Corp",
 	},
 	{
 	    PCI_VENDOR_EUMITCOM,
@@ -7411,12 +7411,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "NetMos",
 	},
 	{
-	    PCI_VENDOR_ARC,
-	    "ARC Logic",
-	},
-	{
 	    PCI_VENDOR_CHRYSALIS,
 	    "Chrysalis-ITS",
+	},
+	{
+	    PCI_VENDOR_ARC,
+	    "ARC Logic",
 	},
 	{
 	    PCI_VENDOR_INVALID,
