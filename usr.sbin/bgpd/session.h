@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.31 2004/02/26 16:16:41 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.32 2004/03/01 16:49:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -192,4 +192,4 @@ int	pfkey_init(void);
 
 /* printconf.c */
 void	print_config(struct bgpd_config *, struct network_head *, struct peer *,
-	    struct filter_head *);
+	    struct filter_head *, struct mrt_head *);
