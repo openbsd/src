@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.61 2001/06/26 20:50:26 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.62 2001/06/26 20:56:36 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -162,15 +162,15 @@ struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct icmp *);
 void		*pull_hdr(struct ifnet *, struct mbuf *, int, int, void *, int,
 		    struct ip *, u_short *, u_short *);
-int		 pflog_packet(struct mbuf *, int, u_short, u_short, short,
+int		 pflog_packet(struct mbuf *, int, u_short, u_short,
 		    struct pf_rule *);
 
 #if NPFLOG > 0
-#define		 PFLOG_PACKET(x,a,b,c,d,e,f) \
+#define		 PFLOG_PACKET(x,a,b,c,d,e) \
 		do { \
 			HTONS((x)->ip_len); \
 			HTONS((x)->ip_off); \
-			pflog_packet(a,b,c,d,e,f); \
+			pflog_packet(a,b,c,d,e); \
 			NTOHS((x)->ip_len); \
 			NTOHS((x)->ip_off); \
 		} while (0)
@@ -356,7 +356,7 @@ tree_remove(struct pf_tree_node **p, struct pf_tree_key *key)
 
 int
 pflog_packet(struct mbuf *m, int af, u_short dir, u_short reason,
-    short nr, struct pf_rule *rm)
+    struct pf_rule *rm)
 {
 #if NBPFILTER > 0
         struct ifnet *ifn, *ifp = NULL;
@@ -377,7 +377,7 @@ pflog_packet(struct mbuf *m, int af, u_short dir, u_short reason,
 	else
 		strcpy(hdr.ifname, "unkn");
 
-	hdr.rnr = htons(nr);
+	hdr.rnr = htons(rm->nr);
 	hdr.reason = htons(reason);
 	hdr.dir = htons(dir);
 	hdr.action = htons(rm->action);
@@ -1280,7 +1280,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	/* XXX will log packet before rewrite */
 	if ((rm != NULL) && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, mnr, rm);
+		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, rm);
 
 	if ((rm != NULL) && (rm->action == PF_DROP_RST)) {
 		/* undo NAT/RST changes, if they have taken place */
@@ -1426,7 +1426,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	/* XXX will log packet before rewrite */
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, mnr, rm);
+		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);
@@ -1536,7 +1536,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	/* XXX will log packet before rewrite */
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, mnr, rm);
+		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);
@@ -2171,9 +2171,10 @@ done:
 		if (r == NULL) {
 			r0.ifp = ifp;
 			r0.action = action;
+			r0.nr = -1;
 			r = &r0;
 		}
-		PFLOG_PACKET(h, m, AF_INET, dir, reason, -1, r);
+		PFLOG_PACKET(h, m, AF_INET, dir, reason, r);
 	}
 	return (action);
 }
