@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcwd.c,v 1.9 2003/06/11 21:03:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getcwd.c,v 1.10 2005/01/05 19:48:08 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ getcwd(char *pt, size_t size)
 		}
 		ept = pt + size;
 	} else {
-		if ((pt = malloc(ptsize = 1024 - 4)) == NULL)
+		if ((pt = malloc(ptsize = MAXPATHLEN)) == NULL)
 			return (NULL);
 		ept = pt + ptsize;
 	}
@@ -82,13 +82,13 @@ getcwd(char *pt, size_t size)
 	*bpt = '\0';
 
 	/*
-	 * Allocate bytes (1024 - malloc space) for the string of "../"'s.
+	 * Allocate bytes for the string of "../"'s.
 	 * Should always be enough (it's 340 levels).  If it's not, allocate
 	 * as necessary.  Special * case the first stat, it's ".", not "..".
 	 */
-	if ((up = malloc(upsize = 1024 - 4)) == NULL)
+	if ((up = malloc(upsize = MAXPATHLEN)) == NULL)
 		goto err;
-	eup = up + MAXPATHLEN;
+	eup = up + upsize;
 	bup = up;
 	up[0] = '.';
 	up[1] = '\0';
@@ -133,8 +133,8 @@ getcwd(char *pt, size_t size)
 
 			if ((nup = realloc(up, upsize *= 2)) == NULL)
 				goto err;
+			bup = nup + (bup - up);
 			up = nup;
-			bup = up;
 			eup = up + upsize;
 		}
 		*bup++ = '.';
@@ -224,8 +224,7 @@ notfound:
 err:
 	if (ptsize)
 		free(pt);
-	if (up)
-		free(up);
+	free(up);
 	if (dir)
 		(void)closedir(dir);
 	return (NULL);
