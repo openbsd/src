@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.8 1997/01/01 20:14:03 graichen Exp $
+#	$OpenBSD: rc.local,v 1.9 1997/01/03 07:48:50 deraadt Exp $
 
 # site-specific startup actions, daemons
 # Add your local changes additions to this file
@@ -13,11 +13,7 @@ echo -n 'starting local daemons:'
 #	echo -n ' sshd';	/usr/local/sbin/sshd
 #fi
 
-#
-# you may also look at /etc/ttys on some architectures
-# (i386 for example) - there is an commented out example
-# how to start xdm via init 
-#
+# Alternatively, xdm smay be started in /etc/ttys.
 #if [ -x /usr/X11R6/bin/xdm ]; then
 #	echo -n ' xdm';		/usr/X11R6/bin/xdm
 #fi
