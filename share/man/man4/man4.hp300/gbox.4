@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gbox.4,v 1.1 2003/03/16 20:12:50 miod Exp $
+.\"	$OpenBSD: gbox.4,v 1.2 2003/03/18 15:44:02 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,21 +55,12 @@ The
 .Tn HP98700
 and
 .Tn HP98710
-are 4- and 8-bit color frame buffers,
+are 4-bit color frame buffers,
 also known as the Gatorbox.
-.Pp
-The term
-.Dq Gator
-will often be used, and it is not to be
-confused with
-.Dq Gator
-used in reference to an
-.Tn HP
-9837 or 200/237 machine.
-Also, the term
-.Dq Gatorbox
-is used for the 98700 alone, with the 98701 frame
-buffer memory or with the 98710 accelerator installed.
+They can be extended to 8-bit color with an
+.Tn HP98701
+frame buffer extension.
+The 98710 also has some acceleration features.
 .Pp
 The
 .Nm
