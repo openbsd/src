@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.18 2003/02/16 23:16:44 krw Exp $
+#	$OpenBSD: install.md,v 1.19 2003/03/02 16:09:55 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,12 +56,12 @@ to allow booting of OpenBSD.
 __EOT
 		;;
 
-	MBR)	echo "Installing boot in the msdos partition $_disk"
-		if mount -t msdos /dev/$_disk /mnt2 ; then
+	MBR)	echo "Installing boot in the msdos partition ${_disk}i"
+		if mount -t msdos /dev/${_disk}i /mnt2 ; then
 			cp /usr/mdec/ofwboot /mnt2
 			umount /mnt2
 		else
-			echo "Failed, you will not be able to boot from ${_disk}."
+			echo "Failed, you will not be able to boot from $_disk."
 		fi
 		;;
 	esac
