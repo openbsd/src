@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.50 1998/09/28 06:16:30 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.51 1998/10/16 16:50:16 marc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -593,43 +593,24 @@ pty*)
 	;;
 
 magma*)
-	if [ 0$unit -gt 3 ]
-	then
-		echo "bad unit for $i: $unit"
-		exit 127
-	fi
-	echo rm -f {tty,bpp}${unit}?
-	offset=`expr $unit \* 64`
-	n=0
-	while [ $n -lt 16 ]
-	do
-		name=$unit`hex $n`
-		mknod tty$name c 100 `add $offset $n`
-		n=`add $n 1`
-	done
-	mknod bpp${unit}0 c 101 `add $offset 0`
-	mknod bpp${unit}1 c 101 `add $offset 1`
-	;;
-
-magma*)
 	case $unit in
-	0)	offset=0  nam=m;;
-	1)	offset=16 nam=n;;
-	2)	offset=32 nam=o;;
-	3)	offset=48 nam=p;;
+	0)	nam=m;;
+	1)	nam=n;;
+	2)	nam=o;;
 	*)	echo "bad unit for $i: $unit"; exit 127;;
 	esac
-	echo rm -f bppm${unit}? tty${nam}?
+	rm -f bppm${unit}? tty${nam}?
 	offset=`expr $unit \* 64`
 	n=0
 	while [ $n -lt 16 ]
 	do
-		name=$unit`hex $n`
-		echo mknod tty$name c 100 `add $offset $n`
+		name=$nam`hex $n`
+		mknod tty$name c 100 `add $offset $n`
+		chown uucp.wheel tty$name
 		n=`add $n 1`
 	done
-	echo mknod bppm${unit} c 101 `add $offset 0`
-	echo mknod bppm${unit} c 101 `add $offset 1`
+	mknod bppm${unit}0 c 101 `add $offset 0`
+	mknod bppm${unit}1 c 101 `add $offset 1`
 	;;
 
 random|srandom|urandom|prandom|arandom)
