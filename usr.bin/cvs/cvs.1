@@ -1,6 +1,7 @@
-.\"	$OpenBSD: cvs.1,v 1.35 2005/01/28 23:41:31 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.36 2005/01/30 18:58:10 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
+.\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -338,10 +339,78 @@ only and disable recursive behaviour.
 Enable recursive behaviour.
 This is the default.
 .El
-.It Ic export
-Export sources from CVS;
-similar to
-.Ic checkout .
+.It Xo Ic export
+.Op Fl flNnR
+.Op Fl d Ar dir
+.Op Fl k Ar mode
+.Fl D Ar date \*(Ba
+.Fl r Ar rev
+.Ar module ...
+.Xc
+.Pp
+The
+.Ic export
+command extracts a copy of
+.Ar module
+without including the directories used for management by
+.Nm .
+This eases production of a software release.
+A date or a revision must be specified for the command to be valid,
+which ensures that later extractions can be reproduced with the same
+options as the release.
+.Pp
+The checked out module's files will be placed in a directory
+bearing the same name as the checked out module, by default.
+.Pp
+The
+.Ic export
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl D Ar date
+Export as of the latest revision no later than
+.Ar date .
+.It Fl d Ar dir
+Export in directory
+.Ar dir
+instead of the directory bearing the same name as the
+.Ar module .
+.It Fl f
+Force the use of the head revision if the specified
+tag or date is not found.
+This can be used in combination with
+.Fl D
+or
+.Fl r
+to ensure that the
+.Ic export
+command is valid.
+.It Fl k Ar mode
+Specify the keyword substitution mode: the
+.Fl k Ar v
+option is often used to avoid substitution of keywords during
+a release cycle.
+However, be aware that it does not handle an export containing
+binary files correctly.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl N
+If used in conjunction with the
+.Fl d
+option, files are placed in local directory
+.Ar module ,
+located in directory
+.Ar dir .
+.It Fl n
+Do not execute programs listed in the
+.Pa CVSROOT/modules
+file.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Fl r Ar rev
+Export from a particular symbolic or numerical revision.
+.El
 .Pp
 Aliases:
 .Ic ex ,
