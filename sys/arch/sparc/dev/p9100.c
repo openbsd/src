@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.12 2003/05/12 18:57:14 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.13 2003/05/16 18:40:32 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -374,6 +374,9 @@ p9100_ioctl(v, cmd, data, flags, p)
 	struct p9100_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
 	struct wsdisplay_cmap *cm;
+#if NTCTRL > 0
+	struct wsdisplay_param *dp;
+#endif
 	int error;
 
 	switch (cmd) {
@@ -408,6 +411,42 @@ p9100_ioctl(v, cmd, data, flags, p)
 			return (error);
 		p9100_loadcmap(sc, cm->index, cm->count);
 		break;
+
+#if NTCTRL > 0
+	case WSDISPLAYIO_GETPARAM:
+		dp = (struct wsdisplay_param *)data;
+
+		switch (dp->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			dp->min = 0;
+			dp->max = 255;
+			dp->curval = tadpole_get_brightness();
+			break;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			dp->min = 0;
+			dp->max = 1;
+			dp->curval = tadpole_get_video();
+			break;
+		default:
+			return (-1);
+		}
+		break;
+
+	case WSDISPLAYIO_SETPARAM:
+		dp = (struct wsdisplay_param *)data;
+
+		switch (dp->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			tadpole_set_brightness(dp->curval);
+			break;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			tadpole_set_video(dp->curval);
+			break;
+		default:
+			return (-1);
+		}
+		break;
+#endif	/* NTCTRL > 0 */
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:

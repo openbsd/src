@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrlvar.h,v 1.1 1999/09/07 02:58:50 jason Exp $	*/
+/*	$OpenBSD: tctrlvar.h,v 1.2 2003/05/16 18:40:32 miod Exp $	*/
 /*	$NetBSD: tctrlvar.h,v 1.1 1999/08/09 18:39:58 matt Exp $ */
 
 /*-
@@ -39,7 +39,10 @@
 #ifndef _SPARC_DEV_TCTRLVAR_H
 #define	_SPARC_DEV_TCTRLVAR_H
 
-extern void tadpole_powerdown(void);
-extern void tadpole_set_video(int enabled);
+void tadpole_powerdown(void);
+int tadpole_get_brightness(void);
+int tadpole_get_video(void);
+void tadpole_set_brightness(int value);
+void tadpole_set_video(int enabled);
 
 #endif /* _SPARC_DEV_TCTRLVAR_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.4 2002/04/30 01:12:29 art Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.5 2003/05/16 18:40:32 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -85,12 +85,15 @@ struct tctrl_softc {
 #define	TCTRL_SEND_RD_EXT_STATUS	0x0004
 #define	TCTRL_SEND_RD_EVENT_STATUS	0x0008
 #define	TCTRL_SEND_BITPORT_NOP		0x0010
+#define	TCTRL_SEND_BRIGHTNESS		0x0020
+#define	TCTRL_SEND_BRIGHTNESS_NOP	0x0040
 	enum { TCTRL_IDLE, TCTRL_ARGS,
 		TCTRL_ACK, TCTRL_DATA } sc_state;
 	u_int8_t sc_cmdbuf[16];
 	u_int8_t sc_rspbuf[16];
 	u_int8_t sc_bitport;
 	u_int8_t sc_tft_on;
+	u_int8_t sc_brightness;
 	u_int8_t sc_op;
 	u_int8_t sc_cmdoff;
 	u_int8_t sc_cmdlen;
@@ -107,6 +110,7 @@ void tctrl_write_data(struct tctrl_softc *, u_int8_t);
 u_int8_t tctrl_read_data(struct tctrl_softc *);
 int tctrl_intr(void *);
 void tctrl_setup_bitport(struct tctrl_softc *, int);
+void tctrl_setup_brightness(struct tctrl_softc *, int, int);
 void tctrl_process_response(struct tctrl_softc *);
 
 struct cfattach tctrl_ca = {
@@ -128,8 +132,8 @@ tctrl_match(parent, vcf, aux)
 
 	/*
 	 * Tadpole 3GX/3GS uses "uctrl" for the Tadpole Microcontroller
-	 * (who's interface is off the TS102 PCMCIA controller but there
-	 * exists a OpenProm for microcontroller interface).
+	 * (which is really part of the TS102 PCMCIA controller, but there
+	 * exists a distinct OpenProm node for the microcontroller interface).
 	 */
 	if (strcmp("uctrl", ra->ra_name))
 		return (0);
@@ -207,9 +211,14 @@ tctrl_attach(parent, self, aux)
 		printf("\n");
 	}
 
-	/* Get a current of the control bitport;
+	/*
+	 * Get a few status values.
 	 */
 	sc->sc_pending |= TCTRL_SEND_BITPORT_NOP;
+	do {
+		tctrl_intr(sc);
+	} while (sc->sc_state != TCTRL_IDLE);
+	sc->sc_pending |= TCTRL_SEND_BRIGHTNESS_NOP;
 	do {
 		tctrl_intr(sc);
 	} while (sc->sc_state != TCTRL_IDLE);
@@ -313,6 +322,12 @@ tctrl_intr(void *arg)
 		} else if (sc->sc_pending & TCTRL_SEND_BITPORT) {
 			sc->sc_pending &= ~TCTRL_SEND_BITPORT;
 			tctrl_setup_bitport(sc, 0);
+		} else if (sc->sc_pending & TCTRL_SEND_BRIGHTNESS_NOP) {
+			sc->sc_pending &= ~TCTRL_SEND_BRIGHTNESS_NOP;
+			tctrl_setup_brightness(sc, 0xff, 0);
+		} else if (sc->sc_pending & TCTRL_SEND_BRIGHTNESS) {
+			sc->sc_pending &= ~TCTRL_SEND_BRIGHTNESS;
+			tctrl_setup_brightness(sc, 0, sc->sc_brightness);
 		} 
 		if (sc->sc_cmdlen > 0) {
 			sc->sc_regs->intr =
@@ -378,6 +393,16 @@ tctrl_setup_bitport(struct tctrl_softc *sc, int nop)
 }
 
 void
+tctrl_setup_brightness(struct tctrl_softc *sc, int mask, int value)
+{
+	sc->sc_cmdbuf[0] = TS102_OP_CTL_TFT_BRIGHTNESS;
+	sc->sc_cmdbuf[1] = mask;
+	sc->sc_cmdbuf[2] = value;
+	sc->sc_cmdlen = 3;
+	sc->sc_rsplen = 2;
+}
+
+void
 tctrl_process_response(struct tctrl_softc *sc)
 {
 	switch (sc->sc_op) {
@@ -414,6 +439,8 @@ tctrl_process_response(struct tctrl_softc *sc)
 	case TS102_OP_CTL_BITPORT:
 		sc->sc_bitport = (sc->sc_rspbuf[0] & sc->sc_cmdbuf[1]) ^ sc->sc_cmdbuf[2];
 		break;
+	case TS102_OP_CTL_TFT_BRIGHTNESS:
+		sc->sc_brightness = sc->sc_rspbuf[0];
 	default:
 		break;
 	}
@@ -442,6 +469,43 @@ tadpole_powerdown(void)
 }
 
 void
+tadpole_set_brightness(int value)
+{
+	struct tctrl_softc *sc;
+	int s;
+
+	if (tctrl_cd.cd_devs == NULL
+	    || tctrl_cd.cd_ndevs == 0
+	    || tctrl_cd.cd_devs[0] == NULL) {
+		return;
+	}
+
+	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[0];
+	s = splhigh();
+	if (value != sc->sc_brightness) {
+		sc->sc_brightness = value;
+		sc->sc_pending |= TCTRL_SEND_BRIGHTNESS;
+		tctrl_intr(sc);
+	}
+	splx(s);
+}
+
+int
+tadpole_get_brightness()
+{
+	struct tctrl_softc *sc;
+
+	if (tctrl_cd.cd_devs == NULL
+	    || tctrl_cd.cd_ndevs == 0
+	    || tctrl_cd.cd_devs[0] == NULL) {
+		return 0;
+	}
+
+	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[0];
+	return sc->sc_brightness;
+}
+
+void
 tadpole_set_video(int enabled)
 {
 	struct tctrl_softc *sc;
@@ -465,6 +529,21 @@ tadpole_set_video(int enabled)
 		tctrl_intr(sc);
 	}
 	splx(s);
+}
+
+int
+tadpole_get_video()
+{
+	struct tctrl_softc *sc;
+
+	if (tctrl_cd.cd_devs == NULL
+	    || tctrl_cd.cd_ndevs == 0
+	    || tctrl_cd.cd_devs[0] == NULL) {
+		return 0;
+	}
+
+	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[0];
+	return sc->sc_tft_on;
 }
 
 void
