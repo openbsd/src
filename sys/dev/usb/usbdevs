@@ -1,5 +1,5 @@
-$OpenBSD: usbdevs,v 1.46 2002/06/21 00:32:34 art Exp $
-/* $NetBSD: usbdevs,v 1.240 2002/03/31 00:41:37 ichiro Exp $ */
+$OpenBSD: usbdevs,v 1.47 2002/07/04 05:49:28 nate Exp $
+/* $NetBSD: usbdevs,v 1.257 2002/06/20 09:20:36 augustss Exp $ */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -356,9 +356,10 @@ vendor HP2		0xf003	Hewlett Packard
 
 /* 3Com products */
 product 3COM HOMECONN		0x009d	HomeConnect Camera
+product 3COM 3CREB96		0x00a0	Bluetooth USB Adapter
 product 3COM 3C19250		0x03E8	3C19250 Ethernet
-product 3COM USR56K		0x3021	U.S.Robotics 56000
 product 3COM 3C460		0x11f8	HomeConnect 3C460
+product 3COM USR56K		0x3021	U.S.Robotics 56000
 product 3COM 3C460B		0x4601	HomeConnect 3C460B
 
 product 3COMUSR OFFICECONN	0x0082	3Com OfficeConnect Analog Modem
@@ -469,6 +470,7 @@ product ATI2 205		0xa001	USB Cable 205
 
 /* Atmel Comp. products */
 product ATMEL UHB124		0x3301	UHB124 hub
+product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
 product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
 
 /* Audio-Technica products */
@@ -655,15 +657,15 @@ product FTDI SERIAL_8U100AX	0x8372	Serial converter
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
+/* Genesys Logic products */
+product GENESYS GL641USB	0x0700	GL641USB CompactFlash
+
 /* Gravis products */
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
 /* GREENHOUSE products */
 product GREENHOUSE KANA21	0x0001	CF-writer/MP3 Player
 product GREENHOUSE2 USBKR100	0x8150	GH-USB100B Ethernet
-
-/* Genesys Logic products */
-product GENESYS GL641USB	0x0700	GL641USB CompactFlash
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
@@ -1112,9 +1114,12 @@ product	RAINBOW IKEY2000	0x1200	i-Key 2000
 product RATOC REXUSB60		0xb000	USB serial adapter REX-USB60
 
 /* Roland products */
+product	ROLAND SC8850		0x0003	RolandED SC-8850 MIDI
 product ROLAND UM1		0x0009	UM-1 MIDI I/F
+product ROLAND UA3		0x000f	EDIROL UA-3 USB audio I/F
 product ROLAND UM880N		0x0014	EDIROL UM-880 MIDI I/F (native)
 product ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
+product	ROLAND SD90		0x0016	EDIROL SD-90 STDIO Canvas MIDI
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
@@ -1189,12 +1194,14 @@ product SONY DRIVEV2		0x002b	Harddrive V2
 product SONY MSACUS1		0x002d	Memorystick MSAC-US1
 product SONY HANDYCAM		0x002e	Handycam
 product SONY MSC		0x0032	Sony MSC Memorystick Slot
+product SONY CLIE_35		0x0038	Clie v3.5
 product SONY PS2KEYBOARD	0x005c	PlayStation2 keyboard
 product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
 product SONY PS2MOUSE		0x0061	PlayStatoin2 mouse
-product SONY CLIE_35		0x0038	Sony Clie v3.5
-product SONY CLIE_40		0x0066	Sony Clie v4.0
-product SONY CLIE_40_MS		0x006d	Sony Clie v4.0 Memory Stick slot
+product SONY CLIE_40		0x0066	Clie v4.0
+product SONY CLIE_40_MS		0x006d	Clie v4.0 Memory Stick slot
+product SONY CLIE_41_MS		0x0099	Clie v4.1 Memory Stick slot
+product SONY CLIE_41		0x009a	Clie v4.1
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	Communicator
@@ -1273,6 +1280,7 @@ product VISION VC6452V002	0x0002	CPiA Camera
 /* Visioneer products */
 product VISIONEER 7600		0x0211	OneTouch 7600
 product VISIONEER 5300		0x0221	OneTouch 5300
+product VISIONEER 3000		0x0224	Scanport 3000
 product VISIONEER 6100		0x0231	OneTouch 6100
 product VISIONEER 6200		0x0311	OneTouch 6200
 product VISIONEER 8100		0x0321	OneTouch 8100
