@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 1996/04/18 11:51:15 deraadt Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.11 1996/04/20 21:59:44 deraadt Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1
 MLINKS+=	gcc.1 cc.1
@@ -25,16 +25,11 @@ config.status:
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
 		--prefix=/usr --gxx-include=${GPP_INC_DIR}
 
-# For now, we provide a prepped machine/limits.h through other means
-# and mustn't have GCC's variant as well, no matter how correct it is.
-# At some point we could make the port-provided limits.h file be
-# replaced by GCC's instead, as it really is a compiler-dependent file.
 install:	maninstall
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
 		infodir=${DESTDIR}/usr/share/info \
 		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
 		bindir=${DESTDIR}/usr/bin install
-		rm -f ${DESTDIR}/usr/lib/gcc-lib/`sh ${.CURDIR}/config.guess`/`sed 's/^[^"]*"\([^"]*\).*/\1/' ${.CURDIR}/version.c`/include/limits.h
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
 
 clean cleandir:
