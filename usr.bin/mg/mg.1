@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.21 2005/03/10 16:47:34 henning Exp $
+.\"	$OpenBSD: mg.1,v 1.22 2005/03/12 09:12:56 jmc Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -9,8 +9,7 @@
 .Sh SYNOPSIS
 .Nm mg
 .Op Ar options
-.Op Ar files
-.Op Ar ...
+.Op Ar file ...
 .Sh DESCRIPTION
 .Nm
 is intended to be a small, fast, and portable editor for
@@ -68,7 +67,8 @@ Open a new line at cursor position
 .It ^T
 transpose characters
 .It ^U
-Repeat next command 4 times (can be cascaded, ie. ^u^u^f will move 16 characters forward)
+Repeat next command 4 times
+(can be cascaded i.e. ^u^u^f will move 16 characters forward)
 .Pp
 .It ^K
 kill to end of line (placing into kill buffer)
@@ -77,7 +77,8 @@ yank kill buffer into current location
 .It ^@
 set mark
 .It ^W
-kill region (cuts from previously set mark to current location, into kill buffer)
+kill region
+(cuts from previously set mark to current location, into kill buffer)
 .It M-W
 copy region (into kill buffer)
 .Pp
