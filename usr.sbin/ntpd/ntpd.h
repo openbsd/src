@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.15 2004/07/07 03:15:37 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.16 2004/07/07 05:47:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -90,6 +90,7 @@ struct ntpd_conf {
 	TAILQ_HEAD(listen_addrs, listen_addr)	listen_addrs;
 	TAILQ_HEAD(ntp_peers, ntp_peer)		ntp_peers;
 	u_int8_t				opts;
+	u_int8_t				listen_all;
 };
 
 struct buf {

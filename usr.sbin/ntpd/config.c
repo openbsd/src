@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2004/07/07 03:53:14 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.6 2004/07/07 05:47:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -76,6 +76,10 @@ host(const char *s, u_int8_t *len)
 			fatal("host: strdup");
 		mask = 128;
 	}
+
+	if (!strcmp(s, "*"))
+		if ((h = calloc(1, sizeof(struct ntp_addr))) == NULL)
+			fatal(NULL);
 
 	/* IPv4 address? */
 	if (h == NULL)

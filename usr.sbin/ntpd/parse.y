@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2004/07/07 03:15:37 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2004/07/07 05:47:57 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -124,12 +124,17 @@ varset		: STRING '=' string		{
 		}
 		;
 
-conf_main	:  LISTEN ON address	{
+conf_main	: LISTEN ON address	{
 			struct listen_addr	*la;
 			struct ntp_addr		*h, *next;
 
 			for (h = $3; h != NULL; h = next) {
 				next = h->next;
+				if (h->ss.ss_family == AF_UNSPEC) {
+					conf->listen_all = 1;
+					free(h);
+					continue;
+				}
 				la = calloc(1, sizeof(struct listen_addr));
 				if (la == NULL)
 					fatal("listen on calloc");
@@ -144,9 +149,15 @@ conf_main	:  LISTEN ON address	{
 		| SERVER address	{
 			struct ntp_peer		*p;
 			struct ntp_addr		*h, *next;
-
-			for (h = $2; h != NULL; h = next) {			
+			
+			for (h = $2; h != NULL; h = next) {
 				next = h->next;
+				if (h->ss.ss_family != AF_INET &&
+				    h->ss.ss_family != AF_INET6) {
+					yyerror("IPv4 or IPv6 address "
+					    "or hostname expected");
+					YYERROR;
+				}
 				p = calloc(1, sizeof(struct ntp_peer));
 				if (p == NULL)
 					fatal("conf_main server calloc");
@@ -482,6 +493,8 @@ parse_config(char *filename, struct ntpd_conf *xconf)
 		TAILQ_REMOVE(&conf->ntp_peers, p, entry);
 		TAILQ_INSERT_TAIL(&xconf->ntp_peers, p, entry);
 	}
+
+	xconf->listen_all = conf->listen_all;
 
 	free(conf);
 
