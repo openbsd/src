@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.3 2004/01/29 13:21:10 mickey Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.4 2004/02/01 15:00:42 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -157,6 +157,8 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 	return (0);
 }
 
+#ifdef	PTRACE
+
 int
 process_write_regs(struct proc *p, struct reg *regs)
 {
@@ -235,3 +237,5 @@ process_set_pc(struct proc *p, caddr_t addr)
 
 	return (0);
 }
+
+#endif	/* PTRACE */
