@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.20 2004/08/11 04:29:13 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.21 2004/08/11 11:45:57 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -505,7 +505,7 @@ ehci_intr1(ehci_softc_t *sc)
 	/* In case the interrupt occurs before initialization has completed. */
 	if (sc == NULL) {
 #ifdef DIAGNOSTIC
-		printf("ehci_intr: sc == NULL\n");
+		printf("ehci_intr1: sc == NULL\n");
 #endif
 		return (0);
 	}
@@ -516,7 +516,7 @@ ehci_intr1(ehci_softc_t *sc)
 		return (0);
 
 	eintrs = intrs & sc->sc_eintrs;
-	DPRINTFN(7, ("ehci_intr: sc=%p intrs=0x%x(0x%x) eintrs=0x%x\n",
+	DPRINTFN(7, ("ehci_intr1: sc=%p intrs=0x%x(0x%x) eintrs=0x%x\n",
 		     sc, (u_int)intrs, EOREAD4(sc, EHCI_USBSTS),
 		     (u_int)eintrs));
 	if (!eintrs)
@@ -1015,7 +1015,7 @@ ehci_allocx(struct usbd_bus *bus)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
 #ifdef DIAGNOSTIC
 		if (xfer->busy_free != XFER_FREE) {
-			printf("uhci_allocx: xfer=%p not free, 0x%08x\n", xfer,
+			printf("ehci_allocx: xfer=%p not free, 0x%08x\n", xfer,
 			       xfer->busy_free);
 		}
 #endif
@@ -1130,7 +1130,7 @@ ehci_dump_sqtds(ehci_soft_qtd_t *sqtd)
 	stop = 0;
 	for (i = 0; sqtd && i < 20 && !stop; sqtd = sqtd->nextqtd, i++) {
 		ehci_dump_sqtd(sqtd);
-		stop = sqtd->qtd.qtd_next & EHCI_LINK_TERMINATE;
+		stop = sqtd->qtd.qtd_next & htole32(EHCI_LINK_TERMINATE);
 	}
 	if (sqtd)
 		printf("dump aborted, too many TDs\n");
@@ -1537,7 +1537,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 #endif
 	req = &xfer->request;
 
-	DPRINTFN(4,("ehci_root_ctrl_control type=0x%02x request=%02x\n",
+	DPRINTFN(4,("ehci_root_ctrl_start: type=0x%02x request=%02x\n",
 		    req->bmRequestType, req->bRequest));
 
 	len = UGETW(req->wLength);
@@ -1564,7 +1564,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		DPRINTFN(8,("ehci_root_ctrl_control wValue=0x%04x\n", value));
+		DPRINTFN(8,("ehci_root_ctrl_start: wValue=0x%04x\n", value));
 		switch(value >> 8) {
 		case UDESC_DEVICE:
 			if ((value & 0xff) != 0) {
@@ -1679,7 +1679,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
-		DPRINTFN(8, ("ehci_root_ctrl_control: UR_CLEAR_PORT_FEATURE "
+		DPRINTFN(8, ("ehci_root_ctrl_start: UR_CLEAR_PORT_FEATURE "
 			     "port=%d feature=%d\n",
 			     index, value));
 		if (index < 1 || index > sc->sc_noport) {
@@ -1699,11 +1699,11 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			EOWRITE4(sc, port, v &~ EHCI_PS_PP);
 			break;
 		case UHF_PORT_TEST:
-			DPRINTFN(2,("ehci_root_ctrl_transfer: clear port test "
+			DPRINTFN(2,("ehci_root_ctrl_start: clear port test "
 				    "%d\n", index));
 			break;
 		case UHF_PORT_INDICATOR:
-			DPRINTFN(2,("ehci_root_ctrl_transfer: clear port ind "
+			DPRINTFN(2,("ehci_root_ctrl_start: clear port ind "
 				    "%d\n", index));
 			EOWRITE4(sc, port, v &~ EHCI_PS_PIC);
 			break;
@@ -1771,7 +1771,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		totlen = len;
 		break;
 	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
-		DPRINTFN(8,("ehci_root_ctrl_transfer: get port status i=%d\n",
+		DPRINTFN(8,("ehci_root_ctrl_start: get port status i=%d\n",
 			    index));
 		if (index < 1 || index > sc->sc_noport) {
 			err = USBD_IOERROR;
@@ -1782,7 +1782,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			goto ret;
 		}
 		v = EOREAD4(sc, EHCI_PORTSC(index));
-		DPRINTFN(8,("ehci_root_ctrl_transfer: port status=0x%04x\n",
+		DPRINTFN(8,("ehci_root_ctrl_start: port status=0x%04x\n",
 			    v));
 		i = UPS_HIGH_SPEED;
 		if (v & EHCI_PS_CS)	i |= UPS_CURRENT_CONNECT_STATUS;
@@ -1822,7 +1822,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			EOWRITE4(sc, port, v | EHCI_PS_SUSP);
 			break;
 		case UHF_PORT_RESET:
-			DPRINTFN(5,("ehci_root_ctrl_transfer: reset port %d\n",
+			DPRINTFN(5,("ehci_root_ctrl_start: reset port %d\n",
 				    index));
 			if (EHCI_PS_IS_LOWSPEED(v)) {
 				/* Low speed device, give up ownership. */
@@ -1863,16 +1863,16 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 				 index, v));
 			break;
 		case UHF_PORT_POWER:
-			DPRINTFN(2,("ehci_root_ctrl_transfer: set port power "
+			DPRINTFN(2,("ehci_root_ctrl_start: set port power "
 				    "%d\n", index));
 			EOWRITE4(sc, port, v | EHCI_PS_PP);
 			break;
 		case UHF_PORT_TEST:
-			DPRINTFN(2,("ehci_root_ctrl_transfer: set port test "
+			DPRINTFN(2,("ehci_root_ctrl_start: set port test "
 				    "%d\n", index));
 			break;
 		case UHF_PORT_INDICATOR:
-			DPRINTFN(2,("ehci_root_ctrl_transfer: set port ind "
+			DPRINTFN(2,("ehci_root_ctrl_start: set port ind "
 				    "%d\n", index));
 			EOWRITE4(sc, port, v | EHCI_PS_PIC);
 			break;
@@ -2507,7 +2507,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	isread = req->bmRequestType & UT_READ;
 	len = UGETW(req->wLength);
 
-	DPRINTFN(3,("ehci_device_control type=0x%02x, request=0x%02x, "
+	DPRINTFN(3,("ehci_device_request: type=0x%02x, request=0x%02x, "
 		    "wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 		    UGETW(req->wIndex), len, addr,
@@ -2669,7 +2669,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	int len, isread, endpt;
 	int s;
 
-	DPRINTFN(2, ("ehci_device_bulk_transfer: xfer=%p len=%d flags=%d\n",
+	DPRINTFN(2, ("ehci_device_bulk_start: xfer=%p len=%d flags=%d\n",
 		     xfer, xfer->length, xfer->flags));
 
 	if (sc->sc_dying)
@@ -2677,7 +2677,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
-		panic("ehci_device_bulk_transfer: a request");
+		panic("ehci_device_bulk_start: a request");
 #endif
 
 	len = xfer->length;
@@ -2698,7 +2698,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 
 #ifdef EHCI_DEBUG
 	if (ehcidebug > 5) {
-		DPRINTF(("ehci_device_bulk_transfer: data(1)\n"));
+		DPRINTF(("ehci_device_bulk_start: data(1)\n"));
 		ehci_dump_sqh(sqh);
 		ehci_dump_sqtds(data);
 	}
@@ -2709,7 +2709,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	exfer->sqtdend = dataend;
 #ifdef DIAGNOSTIC
 	if (!exfer->isdone) {
-		printf("ehci_device_bulk_transfer: not done, ex=%p\n", exfer);
+		printf("ehci_device_bulk_start: not done, ex=%p\n", exfer);
 	}
 	exfer->isdone = 0;
 #endif
@@ -2726,9 +2726,9 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 
 #ifdef EHCI_DEBUG
 	if (ehcidebug > 10) {
-		DPRINTF(("ehci_device_bulk_transfer: data(2)\n"));
+		DPRINTF(("ehci_device_bulk_start: data(2)\n"));
 		delay(10000);
-		DPRINTF(("ehci_device_bulk_transfer: data(3)\n"));
+		DPRINTF(("ehci_device_bulk_start: data(3)\n"));
 		ehci_dump_regs(sc);
 #if 0
 		printf("async_head:\n");
