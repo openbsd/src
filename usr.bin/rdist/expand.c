@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.5 1998/06/26 21:21:10 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.6 1998/08/13 03:29:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: expand.c,v 6.18 1998/03/24 00:37:10 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: expand.c,v 1.5 1998/06/26 21:21:10 millert Exp $";
+"$OpenBSD: expand.c,v 1.6 1998/08/13 03:29:09 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)expand.c	5.2 (Berkeley) 3/28/86";
@@ -261,13 +261,13 @@ void expstr(s)
 			*tail = savec;
 		if (tp != NULL) {
 			for (; tp != NULL; tp = tp->n_next) {
-				(void) sprintf((char *)ebuf, 
-					       "%s%s%s", s, tp->n_name, tail);
+				(void) snprintf((char *)ebuf, sizeof ebuf,
+				    "%s%s%s", s, tp->n_name, tail);
 				expstr(ebuf);
 			}
 			return;
 		}
-		(void) sprintf((char *)ebuf, "%s%s", s, tail);
+		(void) snprintf((char *)ebuf, sizeof ebuf, "%s%s", s, tail);
 		expstr(ebuf);
 		return;
 	}
