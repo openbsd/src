@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stream.c,v 1.10 1998/02/09 06:29:08 tholo Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.11 2000/08/30 04:17:41 brad Exp $	 */
 /*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
 
 /*
@@ -145,18 +145,23 @@ show_ioc(str, ioc)
 	const char		*str;
 	struct svr4_strioctl	*ioc;
 {
-	u_char *ptr = (u_char *)malloc(ioc->len, M_TEMP, M_WAITOK);
+	u_char *ptr;
 	int error;
 
+	len = ioc->len;
+	if (len > 1024)
+		len = 1024;
+
+	ptr = (u_char *) malloc(len, M_TEMP, M_WAITOK);	
 	uprintf("%s cmd = %ld, timeout = %d, len = %d, buf = %p { ",
 	    str, ioc->cmd, ioc->timeout, ioc->len, ioc->buf);
 
-	if ((error = copyin(ioc->buf, ptr, ioc->len)) != 0) {
+	if ((error = copyin(ioc->buf, ptr, len)) != 0) {
 		free((char *) ptr, M_TEMP);
 		return error;
 	}
 
-	bufprint(ptr, ioc->len);
+	bufprint(ptr, len);
 
 	uprintf("}\n");
 
@@ -173,6 +178,9 @@ show_strbuf(str)
 	u_char *ptr = NULL;
 	int maxlen = str->maxlen;
 	int len = str->len;
+
+	if (maxlen > 8192)
+		maxlen = 8192;
 
 	if (maxlen < 0)
 		maxlen = 0;
@@ -489,8 +497,12 @@ si_listen(fp, fd, ioc, p)
 	if (st == NULL)
 		return EINVAL;
 
+	if (ioc->len > sizeof(lst))
+		return EINVAL;
+
 	if ((error = copyin(ioc->buf, &lst, ioc->len)) != 0)
 		return error;
+
 	if (lst.cmd != SVR4_TI_BIND_REQUEST) {
 		DPRINTF(("si_listen: bad request %ld\n", lst.cmd));
 		return EINVAL;
@@ -686,6 +698,9 @@ ti_getinfo(fp, fd, ioc, p)
 
 	bzero(&info, sizeof(info));
 
+	if (ioc->len > sizeof(info))
+		return EINVAL;
+
 	if ((error = copyin(ioc->buf, &info, ioc->len)) != 0)
 		return error;
 
@@ -734,6 +749,9 @@ ti_bind(fp, fd, ioc, p)
 		DPRINTF(("ti_bind: bad file descriptor\n"));
 		return EINVAL;
 	}
+
+	if (ioc->len > sizeof(bnd))
+		return EINVAL;
 
 	if ((error = copyin(ioc->buf, &bnd, ioc->len)) != 0)
 		return error;
@@ -1752,7 +1770,10 @@ svr4_sys_getmsg(p, v, retval)
 	case SVR4_TI_SENDTO_REQUEST:
 		DPRINTF(("getmsg: TI_SENDTO_REQUEST\n"));
 		if (ctl.maxlen > 36 && ctl.len < 36)
-		    ctl.len = 36;
+			ctl.len = 36;
+
+		if (ctl.len > sizeof(sc))
+			ctl.len = sizeof(sc);
 
 		if ((error = copyin(ctl.buf, &sc, ctl.len)) != 0)
 			return error;
