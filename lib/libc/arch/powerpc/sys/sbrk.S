@@ -33,7 +33,7 @@ PREFIX2(sbrk,break)
 	/* check for error */
 	cmpwi	0, 0
 	beq+	.L_sbrk_ok
-	b	PIC_PLT(_ASM_LABEL(cerror))
+	b	PIC_PLT(_ASM_LABEL(__cerror))
 
 	/* update, curbrk and return */
 .L_sbrk_ok:

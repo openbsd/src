@@ -2,7 +2,7 @@
 #include <machine/asm.h>
 
 	.text
-ENTRY(cerror)
+ASENTRY(__cerror)
 #if defined (PIC)
 	stwu	1, -16(1) 		/* follow the SVR4 ABI */
 	mflr	3			/* error value is in r0, use r3 */

@@ -35,7 +35,7 @@ PREFIX2(brk,break)
 	/* check for error */
 	cmpwi	0, 0
 	beq+	.L_brk_ok	/* OK so this is stupid but I haven't read b */
-	b	PIC_PLT(_ASM_LABEL(cerror))
+	b	PIC_PLT(_ASM_LABEL(__cerror))
 
 	/* update, curbrk and return */
 .L_brk_ok:
