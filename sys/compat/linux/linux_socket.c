@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.29 2003/01/21 08:05:11 niklas Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.30 2003/07/24 01:31:36 tedu Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1068,6 +1068,7 @@ linux_sendmsg(p, v, retval)
 		msg.msg_name = (struct sockaddr *)sa;
 		if ((error = copyout(&msg, nmsg, sizeof(struct msghdr))))
 			return (error);
+		lla.msg = nmsg;
 	}
 
 	SCARG(&bla, s) = lla.s;
@@ -1089,14 +1090,25 @@ linux_sendmsg(p, v, retval)
 		 * 0xffff, of course.
 		 */
 		level = SOL_SOCKET;
-		/* XXX should use stack gap! */
+		/*
+		 * XXX should use stack gap!
+		 * We don't because the control header is variable length
+		 * up to 2048 bytes, and there's only 512 bytes of gap.
+		 */
 		error = copyout(&level, &((struct cmsghdr *)control)->
 		    cmsg_level, sizeof(int));
 		if (error)
 			return error;
 	}
 done:
-	return sys_sendmsg(p, &bla, retval);
+	error = sys_sendmsg(p, &bla, retval);
+	/* replace level, just in case somebody cares. */
+	if (level == SOL_SOCKET) {
+		level = 1;
+		copyout(&level, &((struct cmsghdr *)control)->cmsg_level,
+		    sizeof(int));
+	}
+	return (error);
 }
 
 /*
