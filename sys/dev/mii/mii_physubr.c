@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.5 2000/08/26 20:04:17 nate Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.6 2000/08/28 05:24:05 jason Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.16 2000/03/15 20:34:43 thorpej Exp $	*/
 
 /*-
@@ -323,10 +323,8 @@ mii_phy_add_media(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
-	const char *sep = "";
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
 
 	if ((sc->mii_flags & MIIF_NOISOLATE) == 0)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
@@ -340,12 +338,10 @@ mii_phy_add_media(sc)
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_LOOP,
 			    sc->mii_inst), MII_MEDIA_10_T);
 #endif
-		PRINT("10baseT");
 	}
 	if (sc->mii_capabilities & BMSR_10TFDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, sc->mii_inst),
 		    MII_MEDIA_10_T_FDX);
-		PRINT("10baseT-FDX");
 	}
 	if (sc->mii_capabilities & BMSR_100TXHDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
@@ -355,12 +351,10 @@ mii_phy_add_media(sc)
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP,
 			    sc->mii_inst), MII_MEDIA_100_TX);
 #endif
-		PRINT("100baseTX");
 	}
 	if (sc->mii_capabilities & BMSR_100TXFDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
 		    MII_MEDIA_100_TX_FDX);
-		PRINT("100baseTX-FDX");
 	}
 	if (sc->mii_capabilities & BMSR_100T4) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, 0, sc->mii_inst),
@@ -370,15 +364,12 @@ mii_phy_add_media(sc)
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, IFM_LOOP,
 			    sc->mii_inst), MII_MEDIA_100_T4);
 #endif
-		PRINT("100baseT4");
 	}
 	if (sc->mii_capabilities & BMSR_ANEG) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst),
 		    MII_NMEDIA);	/* intentionally invalid index */
-		PRINT("auto");
 	}
 #undef ADD
-#undef PRINT
 }
 
 void
