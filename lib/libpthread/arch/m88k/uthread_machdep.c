@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.1 2004/02/27 22:19:46 deraadt Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.2 2004/03/02 23:41:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt
@@ -26,7 +26,7 @@
 #define ALIGNBYTES	7
 
 struct frame {
-	long	regs[30];
+	long	regs[28];	/* r4-r30, r1 */
 };
 
 /*
@@ -43,7 +43,7 @@ _thread_machdep_init(statep, base, len, entry)
 	struct frame *f;
 
 	f = (struct frame *)(((u_int32_t)base + len - sizeof *f) & ~ALIGNBYTES);
-	f->regs[29] = f->regs[27] = (u_int32_t)entry;
+	f->regs[27] = (u_int32_t)entry;		/* ``saved'' r1 */
 
 	statep->sp = (int)f;
 }
