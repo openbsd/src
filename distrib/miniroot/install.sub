@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.295 2003/04/17 19:15:49 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.296 2003/04/23 12:06:55 wilfried Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1514,10 +1514,11 @@ __EOT
 }
 
 # Create a /etc/fstab from /tmp/fstab. Ensure /etc/fstab
-#	1) contains only ffs filesystems
-#	2) contains only filesystems without the 'noauto' option
-#	3) contains no 'softdep' options
-#	4) mounts all filesystems relative to /mnt
+#	1) contains only filesystems we can mount
+#	2) contains no altroot filesystem
+#	3) contains only filesystems without the 'noauto' option
+#	4) contains no 'softdep' options
+#	5) mounts all filesystems relative to /mnt
 #
 # If no /etc/fstab is created, do not proceed with install/upgrade.
 munge_fstab() {
@@ -1529,9 +1530,9 @@ munge_fstab() {
 		\#*)	continue ;;
 		esac
 
-		# Skip noauto filesystems.
+		# Skip noauto and altroot filesystems.
 		case $_opt in
-		*noauto*) continue ;;
+		*noauto*|*xx*) continue ;;
 		esac
 
 		# Skip filesystems we can't mount.
