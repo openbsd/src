@@ -1,3 +1,4 @@
+/*	$OpenBSD: ffs.S,v 1.2 2001/08/20 20:15:29 jason Exp $	*/
 /*	$NetBSD: ffs.S,v 1.2 1998/11/26 19:32:10 eeh Exp $	*/
 
 /*

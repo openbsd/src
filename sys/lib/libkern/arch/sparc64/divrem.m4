@@ -1,3 +1,4 @@
+/*	$OpenBSD: divrem.m4,v 1.2 2001/08/20 20:15:29 jason Exp $	*/
 /*	$NetBSD: divrem.m4,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
 
 /*
