@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.7 2004/05/24 20:16:12 drahn Exp $ */
+/*	$OpenBSD: archdep.h,v 1.8 2004/08/09 13:44:19 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -30,7 +30,6 @@
 #define _MIPS_ARCHDEP_H_
 
 #include <link.h>
-#include <machine/reloc.h>
 
 #include "syscall.h"
 #include "resolve.h"
