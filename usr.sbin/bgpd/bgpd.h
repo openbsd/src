@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.56 2004/01/06 20:41:55 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.57 2004/01/06 23:14:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -149,7 +149,9 @@ enum imsg_type {
 	IMSG_CTL_END,
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_FIB_COUPLE,
-	IMSG_CTL_FIB_DECOUPLE
+	IMSG_CTL_FIB_DECOUPLE,
+	IMSG_CTL_NEIGHBOR_UP,
+	IMSG_CTL_NEIGHBOR_DOWN
 };
 
 struct imsg_hdr {

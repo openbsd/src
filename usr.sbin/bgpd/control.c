@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.11 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.12 2004/01/06 23:14:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -215,6 +215,34 @@ control_dispatch_msg(struct pollfd *pfd, int i)
 		case IMSG_CTL_FIB_COUPLE:
 		case IMSG_CTL_FIB_DECOUPLE:
 			imsg_compose_parent(imsg.hdr.type, 0, NULL, 0);
+			break;
+		case IMSG_CTL_NEIGHBOR_UP:
+			if (imsg.hdr.len == IMSG_HEADER_SIZE +
+			    sizeof(struct bgpd_addr)) {
+				addr = imsg.data;
+				p = getpeerbyip(addr->v4.s_addr);
+				if (p != NULL)
+					bgp_fsm(p, EVNT_START);
+				else
+					logit(LOG_CRIT, "IMSG_CTL_NEIGHBOR_UP "
+					    "with unknown neighbor");
+			} else
+				logit(LOG_CRIT, "got IMSG_CTL_NEIGHBOR_UP with "
+				    "wrong length");
+			break;
+		case IMSG_CTL_NEIGHBOR_DOWN:
+			if (imsg.hdr.len == IMSG_HEADER_SIZE +
+			    sizeof(struct bgpd_addr)) {
+				addr = imsg.data;
+				p = getpeerbyip(addr->v4.s_addr);
+				if (p != NULL)
+					bgp_fsm(p, EVNT_STOP);
+				else
+					logit(LOG_CRIT, "IMSG_CTL_NEIGHBOR_DOWN"
+					    " with unknown neighbor");
+			} else
+				logit(LOG_CRIT, "got IMSG_CTL_NEIGHBOR_DOWN "
+				    "with wrong length");
 			break;
 		default:
 			break;

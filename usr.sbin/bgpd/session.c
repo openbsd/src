@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.71 2004/01/06 21:48:19 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.72 2004/01/06 23:14:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,7 +54,6 @@ void	session_sighdlr(int);
 int	setup_listener(void);
 void	init_conf(struct bgpd_config *);
 void	init_peer(struct peer *);
-void	bgp_fsm(struct peer *, enum session_events);
 int	timer_due(time_t);
 void	start_timer_holdtime(struct peer *);
 void	start_timer_keepalive(struct peer *);
