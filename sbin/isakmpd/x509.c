@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.21 2000/02/01 02:46:19 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.32 2000/01/31 22:33:49 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.22 2000/02/07 01:32:54 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.33 2000/02/07 01:30:36 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -106,9 +106,10 @@ int
 x509_generate_kn (X509 *cert)
 {
   char *fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s\"\n";
+  char *ikey, *skey, *buf, isname[256], subname[256], *buf2;
+  char *fmt2 = "Authorizer: \"CN:%s\"\nLicensees: \"CN:%s\"\n";
   X509_NAME *issuer, *subject;
   struct keynote_deckey dc;
-  char *ikey, *skey, *buf;
   X509_STORE_CTX csc;
   X509_OBJECT obj;
   X509 *icert;
@@ -191,8 +192,7 @@ x509_generate_kn (X509 *cert)
 
   buf = calloc (strlen (fmt) + strlen (ikey) + strlen (skey), sizeof (char));
   if (buf == NULL)
-    log_fatal ("x509_generate_kn: "
-	       "failed to allocate memory for KeyNote credential");
+    log_fatal ("x509_generate_kn: failed to allocate memory for KeyNote credential");
 
   sprintf (buf, fmt, skey, ikey);
   free (ikey);
@@ -201,9 +201,26 @@ x509_generate_kn (X509 *cert)
   if (LK (kn_add_assertion, (keynote_sessid, buf, strlen (buf),
 			     ASSERT_FLAG_LOCAL)) == -1)
     {
-      printf("%d\n", keynote_errno);
       log_error ("x509_generate_kn: failed to add new KeyNote credential");
       free (buf);
+      return 0;
+    }
+
+  LC (X509_NAME_oneline, (issuer, isname, 256));
+  LC (X509_NAME_oneline, (subject, subname, 256));
+
+  buf2 = calloc(strlen (fmt2) + strlen (isname) + strlen (subname),
+		sizeof(char));
+  if (buf == NULL)
+    log_fatal ("x509_generate_kn: failed to allocate memory for KeyNote credential");
+
+  sprintf (buf2, fmt2, isname, subname);
+
+  if (LK (kn_add_assertion, (keynote_sessid, buf2, strlen(buf2),
+			     ASSERT_FLAG_LOCAL)) == -1)
+    {
+      log_error ("x509_generate_kn: failed to add new KeyNote credential");
+      free (buf2);
       return 0;
     }
 

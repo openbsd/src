@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.c,v 1.4 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: libcrypto.c,v 1.10 2000/01/31 22:33:46 niklas Exp $	*/
+/*	$OpenBSD: libcrypto.c,v 1.5 2000/02/07 01:32:54 niklas Exp $	*/
+/*	$EOM: libcrypto.c,v 1.11 2000/02/07 01:30:36 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -97,6 +97,7 @@ int (*lc_X509_verify_cert) (X509_STORE_CTX *);
 RSA *(*lc_d2i_RSAPrivateKey) (RSA **, unsigned char **, long);
 RSA *(*lc_d2i_RSAPublicKey) (RSA **, unsigned char **, long);
 X509 *(*lc_d2i_X509) (X509 **, unsigned char **, long);
+char *(*lc_X509_NAME_oneline) (X509_NAME *, char *, int);
 int (*lc_i2d_RSAPublicKey) (RSA *, unsigned char **);
 int (*lc_i2d_RSAPrivateKey) (RSA *, unsigned char **);
 int (*lc_i2d_X509) (X509 *, unsigned char **);
@@ -157,6 +158,7 @@ static struct dynload_script libcrypto_script[] = {
   SYMENTRY (X509_verify_cert),
   SYMENTRY (X509_STORE_get_by_subject),
   SYMENTRY (X509_OBJECT_free_contents),
+  SYMENTRY (X509_NAME_oneline),
   SYMENTRY (d2i_RSAPrivateKey),
   SYMENTRY (d2i_RSAPublicKey),
   SYMENTRY (d2i_X509),

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.28 2000/02/01 02:46:17 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.110 2000/01/31 22:33:45 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.29 2000/02/07 01:32:54 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.111 2000/02/07 01:30:35 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -107,9 +107,10 @@ extern struct sa *policy_isakmp_sa;
 static int
 check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 {
-  char *return_values[RETVALUES_NUM];
-  char *principal = NULL, *princ2;
+  char *return_values[RETVALUES_NUM], cn[259];
+  char *principal = NULL, *principal2 = NULL;
   struct keynote_deckey dc;
+  X509_NAME *subject;
   int result;
   RSA *key;
 
@@ -162,9 +163,9 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  LC (RSA_free, (key));
 	  return 0;
 	}
-      princ2 = calloc (strlen (principal) + strlen ("rsa-hex:") + 1,
-		       sizeof (char));
-      if (princ2 == NULL)
+      principal2 = calloc (strlen (principal) + strlen ("rsa-hex:") + 1,
+			   sizeof (char));
+      if (principal2 == NULL)
 	{
 	  log_print ("check_policy: failed to allocate memory for principal");
 	  free (principal);
@@ -172,12 +173,21 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  return 0;
 	}
 
-      strcpy (princ2, "rsa-hex:");
-      strcpy (princ2 + strlen ("rsa-hex:"), principal);
+      strcpy (principal2, "rsa-hex:");
+      strcpy (principal2 + strlen ("rsa-hex:"), principal);
       free (principal);
       LC (RSA_free, (key));
-      principal = princ2;
-      princ2 = NULL;
+      principal = principal2;
+      principal2 = NULL;
+
+      /* Generate a "CN:" principal */
+      subject = LC (X509_get_subject_name, (isakmp_sa->recv_cert));
+      if (subject)
+	{
+	  strcpy (cn, "CN:");
+	  LC (X509_NAME_oneline, (subject, cn + 3, 256));
+	  principal2 = cn;
+	}
       break;
 	
     /* XXX Eventually handle these.  */
@@ -207,9 +217,18 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
    */
   if (LK (kn_add_authorizer, (keynote_sessid, principal)) == -1)
     {
+      free (principal);
       log_print ("check_policy: kn_add_authorizer failed");
       return 0;
     }
+
+  if (principal2)
+    if (LK (kn_add_authorizer, (keynote_sessid, principal2)) == -1)
+      {
+	free (principal);
+      	log_print ("check_policy: kn_add_authorizer failed");
+      	return 0;
+      }
 
   /* Ask policy.  */
   result = LK (kn_do_query, (keynote_sessid, return_values, RETVALUES_NUM));
@@ -217,6 +236,10 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   /* Remove authorizer from the session.  */
   LK (kn_remove_authorizer, (keynote_sessid, principal));
   free (principal);
+
+  /* Remove "CN:" authorizer, if present */
+  if (principal2)
+          LK (kn_remove_authorizer, (keynote_sessid, principal2));
 
   /* Check what policy said.  */
   if (result < 0)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.h,v 1.4 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: libcrypto.h,v 1.10 2000/01/31 22:33:46 niklas Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.5 2000/02/07 01:32:54 niklas Exp $	*/
+/*	$EOM: libcrypto.h,v 1.11 2000/02/07 01:30:36 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -116,6 +116,7 @@ extern EVP_PKEY *(*lc_X509_get_pubkey) (X509 *);
 extern X509_NAME *(*lc_X509_get_subject_name) (X509 *);
 extern X509 *(*lc_X509_new) (void);
 extern int (*lc_X509_verify) (X509 *, EVP_PKEY *);
+extern char *(*lc_X509_NAME_oneline) (X509_NAME *, char *, int);
 extern int (*lc_X509_verify_cert) (X509_STORE_CTX *);
 extern RSA *(*lc_d2i_RSAPrivateKey) (RSA **, unsigned char **, long);
 extern RSA *(*lc_d2i_RSAPublicKey) (RSA **, unsigned char **, long);
