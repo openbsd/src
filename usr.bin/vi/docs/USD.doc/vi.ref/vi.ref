@@ -577,7 +577,7 @@ value in the recovery script.
 If the path of your system's
 .CO sendmail
 program (or whatever mailer you're using) is not
-.LI /usr/lib/sendmail ,
+.LI /usr/sbin/sendmail ,
 be sure to substitute the correct pathname for the
 .LI SENDMAIL
 value in the recovery script.
