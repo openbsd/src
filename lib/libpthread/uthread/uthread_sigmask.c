@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigmask.c,v 1.6 2003/01/27 22:22:30 marc Exp $	*/
+/*	$OpenBSD: uthread_sigmask.c,v 1.7 2003/07/08 00:17:19 marc Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -79,9 +79,6 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 			ret = -1;
 			break;
 		}
-
-		/* Increment the sequence number: */
-		curthread->sigmask_seqno++;
 
 		/*
 		 * Check  if there are pending signals for the running

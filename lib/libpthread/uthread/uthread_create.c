@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.18 2001/12/31 18:23:15 fgsch Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.19 2003/07/08 00:17:19 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -112,7 +112,6 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 
 			/* Initialise the thread for signals: */
 			new_thread->sigmask = curthread->sigmask;
-			new_thread->sigmask_seqno = 0;
 
 			/*
 			 * Set up new stack frame so that it 'returns' to
