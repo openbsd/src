@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.42 2004/06/22 23:01:55 tom Exp $
+.\"	$OpenBSD: fdisk.8,v 1.43 2004/06/26 11:45:40 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -146,7 +146,8 @@ In this mode,
 will completely overwrite the primary MBR and partition table, either
 using the default MBR template, or the one specified by the
 .Fl f
-flag. In the default template, partition number 3 will be configured as an
+flag.
+In the default template, partition number 3 will be configured as an
 .Ox
 partition spanning from cylinder 0, head 1, sector 1, and extending
 to the end of the disk.
@@ -160,8 +161,8 @@ The MBR code extends from offset 0x000 to the start of the partition table
 at offset 0x1BE.
 It is similar to the
 .Fl i
-flag, except the existing partition table is preserved. This
-is useful for writing new MBR code onto an existing drive, and is
+flag, except the existing partition table is preserved.
+This is useful for writing new MBR code onto an existing drive, and is
 equivalent to the DOS command
 .Dq FDISK /MBR .
 Note that this option will overwrite the NT disk signature, if present.
