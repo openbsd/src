@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.13 2005/02/06 10:35:54 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.14 2005/02/06 21:57:06 pedro Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -537,19 +537,21 @@ rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 
 	RTW_WBR(regs, RTW_9346CR, RTW_9346CR);
 
-	/* wait 2.5ms for completion */
-	for (i = 0; i < 25; i++) {
+	/* wait 10ms for completion */
+	for (i = 0; i < 50; i++) {
 		ecr = RTW_READ8(regs, RTW_9346CR);
 		if ((ecr & RTW_9346CR_EEM_MASK) == RTW_9346CR_EEM_NORMAL) {
 			RTW_DPRINTF(RTW_DEBUG_RESET,
-			    ("%s: recall EEPROM in %dus\n", dvname, i * 100));
-			return 0;
+			    ("%s: recall EEPROM in %dus\n", dvname, i * 200));
+			return (0);
 		}
 		RTW_RBR(regs, RTW_9346CR, RTW_9346CR);
-		DELAY(100);
+		DELAY(200);
 	}
-	printf("%s: recall EEPROM failed\n", dvname);
-	return ETIMEDOUT;
+
+	printf("%s: could not recall EEPROM in %dus\n", dvname, i * 200);
+
+	return (ETIMEDOUT);
 }
 
 int
