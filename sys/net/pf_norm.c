@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.21 2002/03/27 18:16:21 mickey Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.22 2002/04/20 10:13:57 fgsch Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -256,10 +256,10 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	if (frag == NULL) {
 		struct pf_tree_key key;
 
-		frag = pool_get(&pf_frag_pl, M_NOWAIT);
+		frag = pool_get(&pf_frag_pl, PR_NOWAIT);
 		if (frag == NULL) {
 			pf_flush_fragments();
-			frag = pool_get(&pf_frag_pl, M_NOWAIT);
+			frag = pool_get(&pf_frag_pl, PR_NOWAIT);
 			if (frag == NULL)
 				goto drop_fragment;
 		}
