@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fga.4,v 1.1 1999/07/25 23:05:53 jason Exp $
+.\"     $OpenBSD: fga.4,v 1.2 1999/07/25 23:43:18 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -80,6 +80,42 @@ is set to
 Toggling the switch when enabled, stops the kernel and starts the
 kernel debugger
 .Xr ddb 4 .
+.Sh IOCTLS
+The
+.Nm fga
+device responds to the following
+.Xr ioctl 2
+calls defined in <machine/fgaio.h>:
+.Bl -tag -width
+.It Dv FGAIOCSEM
+.Pq Li "struct fga_sem"
+Clear (release) the semaphore
+.Ar fgasem_num .
+The argument structure is defined as follows:
+.Bd -literal -offset indent
+struct fga_sem {
+        u_int8_t fgasem_num; /* semaphore number */
+	u_int8_t fgasem_val; /* semaphore value */
+};
+.Ed
+.It Dv FGAIOSSEM
+.Pq Li "struct fga_sem"
+Set (attempt to get) the semaphore
+.Ar fgasem_num .
+If successful,
+.Ar fgasem_val
+will have a value of 1, otherwise it will have a value of 0.
+.It Dv FGAIOCMBX
+.Pq Li "struct fga_sem"
+Clear (release) the mailbox
+.Ar fgasem_num .
+.It Dv FGAIOSMBX
+.Pq Li "struct fga_sem"
+Set (attempt to get) the mailbox
+.Ar fgasem_num .
+If successful,
+.Ar fgasem_val
+will have a value of 1, otherwise it will have a value of 0.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr ddb 4 ,
