@@ -9,9 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: sendmail.8,v 8.51 2002/05/24 15:42:13 ca Exp $
+.\"     $Sendmail: sendmail.8,v 8.51.2.1 2003/05/20 16:38:15 gshapiro Exp $
 .\"
-.Dd May 24, 2002
+.Dd May 20, 2003
 .Dt SENDMAIL 8
 .Os
 .Sh NAME
@@ -265,7 +265,7 @@ Process jobs in queue group called
 .Ar name
 only.
 .It Xo Fl q Ns Op Ar \&! Ns
-.Cm I Ar substr
+.Cm I Ns Ar substr
 .Xc
 Limit processed jobs to those containing
 .Ar substr
@@ -273,7 +273,7 @@ as a substring of the queue ID or not when
 .Em !\&
 is specified.
 .It Xo Fl q Ns Op Ar \&! Ns
-.Cm R Ar substr
+.Cm R Ns Ar substr
 .Xc
 Limit processed jobs to those containing
 .Ar substr
@@ -281,7 +281,7 @@ as a substring of one of the recipients or not when
 .Em !\&
 is specified.
 .It Xo Fl q Ns Op Ar \&! Ns
-.Cm S Ar substr
+.Cm S Ns Ar substr
 .Xc
 Limit processed jobs to those containing
 .Ar substr

@@ -9,9 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: smrsh.8,v 8.15 2001/01/24 00:40:47 gshapiro Exp $
+.\"     $Sendmail: smrsh.8,v 8.16.2.1 2003/07/08 01:33:03 gshapiro Exp $
 .\"
-.Dd April 25, 2002
+.Dd July 8, 2003
 .Dt SMRSH 8
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@ and
 .Dq &&
 to enable commands like:
 .Bd -literal -compact -offset "XXXX"
-.Qq "|exec /usr/local/bin/procmail -f- /etc/procmailrcs/user || exit 75"
+.Qq "|exec /usr/local/bin/filter || exit 75"
 .Ed
 .Pp
 Initial pathnames on programs are stripped,
@@ -93,9 +93,8 @@ all actually forward to
 .Pp
 System administrators should be conservative about populating
 the sm.bin directory.
-Reasonable additions are
-.Xr vacation 1 ,
-.Xr procmail ,
+For example, a reasonable additions is
+.Xr vacation 1
 and the like.
 No matter how brow-beaten you may be,
 never include any shell or shell-like program
@@ -109,6 +108,12 @@ in the sm.bin directory (using the
 .Dq #!
 syntax);
 it simply disallows execution of arbitrary programs.
+Also, including mail filtering programs such as
+.Xr procmail
+is a very bad idea.
+.Xr procmail
+allows users to run arbitrary programs in their
+.Xr procmailrc .
 .Sh FILES
 .Bl -tag -width "/usr/libexec/sm.bin" -compact
 .It Pa /usr/libexec/sm.bin

@@ -24,7 +24,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: vasprintf.c,v 1.26 2001/09/11 04:04:49 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: vasprintf.c,v 1.26.2.1 2003/06/03 02:14:09 ca Exp $")
 #include <stdlib.h>
 #include <errno.h>
 #include <sm/io.h>
