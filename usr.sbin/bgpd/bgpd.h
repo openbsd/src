@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.35 2003/12/26 16:37:04 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.36 2003/12/26 16:48:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -281,6 +281,7 @@ void		 logit(int, const char *, ...);
 void		 vlog(int, const char *, va_list);
 void		 log_peer_err(struct peer *, const char *, ...);
 void		 log_peer_errx(struct peer *, const char *, ...);
+void		 log_err(const char *, ...);
 void		 fatal(const char *, int);
 void		 fatal_ensure(const char *, int, const char *);
 void		 log_statechange(struct peer *, enum session_state,

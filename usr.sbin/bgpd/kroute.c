@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.29 2003/12/26 15:42:14 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.30 2003/12/26 16:48:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -81,12 +81,12 @@ kroute_init(void)
 {
 	int s, opt;
 
-	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) < 0)
-		fatal("route socket", errno);
+	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
+		return (-1);
 
 	/* not intrested in my own messages */
 	if (setsockopt(s, SOL_SOCKET, SO_USELOOPBACK, &opt, sizeof(opt)) == -1)
-		fatal("route setsockopt", errno);
+		return (-1);
 
 	pid = getpid();
 
