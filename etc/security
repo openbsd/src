@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.35 2000/04/16 20:46:22 millert Exp $
+#	$OpenBSD: security,v 1.36 2000/05/26 14:54:17 aaron Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -53,11 +53,11 @@ awk -F: '{
 			 printf("Login %s is off but still has a valid shell and alternate access files in\n\t home directory are still readable.\n",$1);
 	}
 	if ($3 == 0 && $1 != "root")
-		printf("Login %s has a user id of 0.\n", $1);
+		printf("Login %s has a user ID of 0.\n", $1);
 	if ($3 < 0)
-		printf("Login %s has a negative user id.\n", $1);
+		printf("Login %s has a negative user ID.\n", $1);
 	if ($4 < 0)
-		printf("Login %s has a negative group id.\n", $1);
+		printf("Login %s has a negative group ID.\n", $1);
 }' < $MP > $OUTPUT
 if [ -s $OUTPUT ] ; then
 	printf "\nChecking the $MP file:\n"
@@ -73,7 +73,7 @@ fi
 awk -F: '{ print $1 " " $3 }' $MP | sort -n +1 | tee $TMP1 |
 uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 if [ -s $TMP2 ] ; then
-	printf "\n$MP has duplicate user id's.\n"
+	printf "\n$MP has duplicate user ID's.\n"
         while read uid; do
                 grep -w $uid $TMP1
         done < $TMP2 | column
@@ -117,7 +117,7 @@ awk -F: '{
 	if (length($1) > 8)
 		printf("Group %s has more than 8 characters.\n", $1);
 	if ($3 !~ /[0-9]*/)
-		printf("Login %s has a negative group id.\n", $1);
+		printf("Login %s has a negative group ID.\n", $1);
 }' < $GRP > $OUTPUT
 if [ -s $OUTPUT ] ; then
 	printf "\nChecking the $GRP file:\n"
