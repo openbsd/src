@@ -78,6 +78,7 @@
 ./etc/ppp/ppp.linkdown.sample
 ./etc/ppp/ppp.linkup.sample
 ./etc/ppp/ppp.secret.sample
+./etc/primes
 ./etc/printcap
 ./etc/protocols
 ./etc/pwd.db
