@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.1 1999/02/26 17:52:12 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.2 1999/02/26 19:17:41 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -29,8 +29,8 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Jan 13, 1999
-.Dt BRIDGECTL 8
+.Dd Feb 26, 1999
+.Dt BRCONFIG 8
 .Os
 .Sh NAME
 .Nm brconfig
@@ -120,6 +120,10 @@ Remove the interface pn0 from the bridge bridge0.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr bridge 4
+.Sh HISTORY
+.Nm brconfig
+first appeared in
+.Ox 2.5 .
 .Sh AUTHOR
 The
 .Xr brconfig 8
@@ -128,7 +132,8 @@ command and the
 kernel interface were written by Jason L. Wright <jason@thought.net> as
 part of an undergraduate indenpendent study
 at the University of North Carolina at Greensboro.
-.Sh HISTORY
-.Nm brconfig
-first appeared in
-.Ox 2.5 .
+.Sh BUGS
+There are some Ethernet chipsets which will not work in a bridge
+configuration.  Some, like the Lite-On PNIC, have serious flaws when
+running in promiscuous mode, and others, like the TI ThunderLAN, receive
+their own transmissions, which makes the route learning code ineffective.
