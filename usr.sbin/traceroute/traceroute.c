@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.44 2002/06/02 06:42:29 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.45 2002/06/29 07:46:29 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.44 2002/06/02 06:42:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.45 2002/06/29 07:46:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -306,7 +306,8 @@ main(argc, argv)
 	struct hostent *hp;
 	struct protoent *pe;
 	struct sockaddr_in from, to;
-	int ch, i, lsrr, on, probe, seq, tos, ttl, ttl_flag, incflag = 1;
+	int ch, i, lsrr, on, probe, seq, tos, ttl;
+	int ttl_flag, incflag = 1, protoset = 0;
 	struct ip *ip;
 	u_int32_t tmprnd;
 	int sump = 0;
@@ -366,6 +367,9 @@ main(argc, argv)
 			lsrrlen += 4;
 			break;
 		case 'I':
+			if (protoset)
+				errx(1, "protocol already set with -P");
+			protoset = 1;
 			proto = IPPROTO_ICMP;
 			break;
 		case 'l':
@@ -382,13 +386,17 @@ main(argc, argv)
 			break;
 		case 'p':
 			port = atoi(optarg);
-			if (port < 1)
-				errx(1, "port must be >0.");
+			if (port < 1 || port > 65536)
+				errx(1, "port must be >0, <65536.");
 			break;
 		case 'P':
+			if (protoset)
+				errx(1, "protocol already set with -I");
+			protoset = 1;
 			proto = atoi(optarg);
-			if (proto < 1) {
+			if (proto < 1 || proto >= IPPROTO_MAX) {
 				struct protoent *pent;
+
 				pent = getprotobyname(optarg);
 				if (pent)
 					proto = pent->p_proto;
@@ -479,6 +487,7 @@ main(argc, argv)
 	ip = (struct ip *)outpacket;
 	if (lsrr != 0) {
 		u_char *p;
+
 		p = (u_char *)(ip + 1);
 		*p++ = IPOPT_NOP;
 		*p++ = IPOPT_LSRR;
