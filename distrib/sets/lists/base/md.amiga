@@ -284,7 +284,6 @@
 ./usr/sbin/grfconfig
 ./usr/sbin/iteconfig
 ./usr/sbin/loadkmap
-./usr/sbin/screenblank
 ./usr/sbin/videomode
 ./usr/share/keymaps
 ./usr/share/keymaps/amiga
