@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.in,v 1.7 2004/02/20 13:15:51 jmc Exp $
+.\"	$OpenBSD: vi.in,v 1.8 2004/02/20 20:05:05 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1201,6 +1201,7 @@ list	nolist	Tabs print as ^I; end of lines $
 magic	magic	. [ and * are special in scans
 number	nonu	Lines prefixed with line numbers
 paragraphs	para=IPLPPPQPP LIpplpipbp	Macros which start paragraphs
+ruler	noruler	Display a row/column ruler.
 sections	sect=NHSHH HUnhsh	Macros which start new sections
 shiftwidth	sw=8	Shift distance for <, >, \fB^D\fP and \fB^T\fR
 showmatch	nosm	Show matching \fB(\fP or \fB{\fP
