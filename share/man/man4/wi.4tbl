@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.39 2004/03/24 15:54:53 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.40 2004/03/24 18:46:37 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -212,6 +212,11 @@ Note that some of the PRISM-II adapters only work at 3.3V, hence
 support is required for those cards to set VCC correctly, even
 though they are really 16bit cards.
 .Pp
+USB support is still experimental and the device may stop functioning
+during normal use.
+Resetting the device by configuring the interface down and back up again will
+normally reactivate it.
+.Pp
 Several vendors sell PCI adapters built around the PLX Technology 9050
 or 9052 chip.
 The following such adapters are supported or expected to work:
@@ -401,3 +406,6 @@ HostAP mode doesn't support WDS or power saving.
 Clients attempting to use power saving mode may experience
 significant packet loss
 (disabling power saving on the client will fix this).
+.Pp
+Support for USB devices is buggy.
+HostAP mode and AP scanning are not current supported with USB devices.
