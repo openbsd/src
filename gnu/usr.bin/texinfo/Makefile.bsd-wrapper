@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.7 1996/02/02 07:23:19 etheisen Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.8 1996/07/20 09:05:10 deraadt Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -23,7 +23,9 @@ config.status:
 
 install:	maninstall
 	${FSFMAKE} prefix=${DESTDIR}/usr bindir=${DESTDIR}/usr/bin \
-	mandir= INSTALL_MAN= install
+	    mandir= INSTALL_MAN= install
+	sh ${.CURDIR}/util/gen-dir-node ${DESTDIR}/usr/share/info > \
+	    ${DESTDIR}/usr/share/info/dir
 
 clean cleandir:
 	rm -f $(CLEANFILES)
