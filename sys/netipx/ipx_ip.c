@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.c,v 1.18 2004/01/03 14:08:54 espie Exp $	*/
+/*	$OpenBSD: ipx_ip.c,v 1.19 2004/09/20 23:10:47 drahn Exp $	*/
 
 /*-
  *
@@ -264,7 +264,7 @@ ipxipoutput(ifp, m, dst, rt)
 	/* following clause not necessary on vax */
 	if (3 & (long)m->m_data) {
 		/* force longword alignment of ip hdr */
-		struct mbuf *m0 = m_gethdr(MT_HEADER, M_DONTWAIT);
+		struct mbuf *m0 = m_gethdr(M_DONTWAIT, MT_HEADER);
 		if (m0 == NULL) {
 			m_freem(m);
 			return (ENOBUFS);
