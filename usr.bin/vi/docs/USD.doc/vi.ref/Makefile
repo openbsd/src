@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2001/01/29 01:58:35 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 2004/01/12 18:11:46 millert Exp $
 
 
 DIR=	usd/13.viref
@@ -8,14 +8,14 @@ MACROS=	-me
 CLEANFILES+=vi.ref.txt index index.so
 
 paper.ps: vi.ref index.so
-	soelim vi.ref | ${TBL} | ${ROFF} > ${.TARGET}
+	soelim vi.ref | ${TBL} | ${ROFF} -U > ${.TARGET}
 
 vi.ref.txt: vi.ref index.so
-	soelim vi.ref | ${TBL} | groff ${MACROS} -Tascii > $@
+	soelim vi.ref | ${TBL} | groff -U ${MACROS} -Tascii > $@
 
 index.so: vi.ref
 	# Build index.so, side-effect of building the paper.
-	soelim vi.ref | ${TBL} | ${ROFF} > /dev/null
+	soelim vi.ref | ${TBL} | ${ROFF} -U > /dev/null
 	sed -e 's/MINUSSIGN/\\-/' \
 	    -e 's/DOUBLEQUOTE/""/' \
 	    -e "s/SQUOTE/'/" \
