@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar.c,v 1.5 1999/12/15 05:33:23 deraadt Exp $	*/
+/*	$OpenBSD: ar.c,v 1.6 2000/11/20 14:03:30 deraadt Exp $	*/
 /*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ar.c,v 1.5 1999/12/15 05:33:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ar.c,v 1.6 2000/11/20 14:03:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ main(argc, argv)
 	/* -t only valid with -Tv. */
 	if (options & AR_T && options & ~(AR_T|AR_TR|AR_V))
 		badoptions("-t");
-	/* -x only valid with -ouTv. */
+	/* -x only valid with -CouTv. */
 	if (options & AR_X && options & ~(AR_O|AR_U|AR_TR|AR_V|AR_X|AR_CC))
 		badoptions("-x");
 
@@ -242,6 +242,6 @@ usage()
 	(void)fprintf(stderr, "\tar -r [-cuTv] archive file ...\n");
 	(void)fprintf(stderr, "\tar -r [-abciuTv] position archive file ...\n");
 	(void)fprintf(stderr, "\tar -t [-Tv] archive [file ...]\n");
-	(void)fprintf(stderr, "\tar -x [-ouTv] archive [file ...]\n");
+	(void)fprintf(stderr, "\tar -x [-CouTv] archive [file ...]\n");
 	exit(1);
 }	
