@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.8 1996/05/14 18:24:21 mickey Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.9 1996/06/02 16:24:42 niklas Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2094,6 +2094,7 @@ out:
 /*
  * Convert a user file descriptor to a kernel file entry.
  */
+int
 getvnode(fdp, fd, fpp)
 	struct filedesc *fdp;
 	struct file **fpp;
