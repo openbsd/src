@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.81 2004/02/19 18:46:18 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.82 2004/03/02 22:55:55 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -542,12 +542,11 @@ identifycpu()
 	case MMU_68040:
 #ifdef FPSP
 		bcopy(&fpsp_tab, &fpvect_tab,
-				(&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
+		    (&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
 #endif
 		/* FALLTHROUGH */
 	case MMU_68060:
-		strlcat(cpu_model, "+MMU", sizeof cpu_model);
-		break;
+		/* FALLTHROUGH */
 #endif
 	case MMU_68030:
 		strlcat(cpu_model, "+MMU", sizeof cpu_model);
@@ -940,11 +939,7 @@ initvectors()
 		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
 						  "d"(m68060_pcr_init):"d0" );
 
-		/* bus/addrerr vectors */
-		vectab[2] = buserr60;
-		vectab[3] = addrerr4060;
 #if defined(M060SP)
-
 		/* integer support */
 		vectab[61] = intemu60/*(trapfun *)&I_CALL_TOP[128 + 0x00]*/;
 
