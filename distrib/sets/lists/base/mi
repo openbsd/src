@@ -830,7 +830,6 @@
 ./usr/libdata/perl5/OpenBSD/Error.pm
 ./usr/libdata/perl5/OpenBSD/Getopt.pm
 ./usr/libdata/perl5/OpenBSD/IdCache.pm
-./usr/libdata/perl5/OpenBSD/Logger.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis
 ./usr/libdata/perl5/OpenBSD/Makewhatis.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Check.pm
