@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.55 2002/03/08 08:34:03 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.56 2002/03/08 08:56:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -195,6 +195,8 @@ $start_zero_tf
 	stw	arg3, R%proc0paddr(t1)
 	ldil	L%proc0, t2
 	stw	arg3, R%proc0+P_ADDR(t2)
+	ldo	-TRAPFRAME_SIZEOF(sp), t3
+	stw	t3, R%proc0+P_MD(t2)
 
 	ldil	L%TFF_LAST, t1
 	stw	t1, TF_FLAGS-TRAPFRAME_SIZEOF(sp)
