@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.56 2003/01/06 17:19:16 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.57 2003/03/16 13:15:53 miod Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -187,14 +187,6 @@ target(all, adb)dnl
 target(all, iop, 0, 1)dnl
 target(all, pci)dnl
 twrget(all, wsmouse, wscons)dnl
-twrget(all, btw, bwtwo, 0)dnl
-twrget(all, ctw, cgtwo, 0)dnl
-twrget(all, ctr, cgthree, 0)dnl
-twrget(all, cfr, cgfour, 0)dnl
-twrget(all, csx, cgsix, 0)dnl
-twrget(all, ceg, cgeight, 0)dnl
-twrget(all, cfo, cgfourteen, 0)dnl
-target(all, tcx, 0)dnl
 twrget(all, grf_mac, grf, 0, 1, 2, 3)dnl
 target(all, par, 0)dnl
 twrget(all, amouse, mouse, 0, 1)dnl
@@ -562,22 +554,6 @@ __devitem(ite, ite*, terminal emulator interface to HP300 graphics devices)dnl
 __devitem({-hil-}, {-hil-}, HP300 HIL input devices)dnl
 __devitem(oppr, openprom)dnl
 _cdev(oppr, openprom, 70, 0)dnl
-__devitem(btw, bwtwo*)dnl
-_mcdev(btw, bwtwo*, bwtwo, {-major_btw_c-}, 666)dnl
-__devitem(ctw, cgtwo*)dnl
-_mcdev(ctw, cgtwo*, cgtwo, {-major_ctw_c-}, 666)dnl
-__devitem(ctr, cgthree*)dnl
-_mcdev(ctr, cgthree*, cgthree, {-major_ctr_c-}, 666)dnl
-__devitem(cfr, cgfour*)dnl
-_mcdev(cfr, cgfour*, cgfour, {-major_cfr_c-}, 666)dnl
-__devitem(csx, cgsix*)dnl
-_mcdev(csx, cgsix*, cgsix, {-major_csx_c-}, 666)dnl
-__devitem(ceg, cgeight*)dnl
-_mcdev(ceg, cgeight*, cgeight, {-major_ceg_c-}, 666)dnl
-__devitem(cfo, cgfourteen*)dnl
-_mcdev(cfo, cgfourteen*, cgfourteen, {-major_cfo_c-})dnl
-__devitem(tcx, tcx*)dnl
-_mcdev(tcx, tcx*, tcx, {-major_tcx_c-})dnl
 __devitem(cry, crypto, hardware crypto access driver)dnl
 _mkdev(cry, crypto, {-M crypto c major_cry_c-} 0)dnl
 __devitem(pf, pf*, Packet Filter)dnl
