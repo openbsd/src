@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.2 2005/02/18 19:57:54 damien Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.3 2005/02/19 12:11:40 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -100,8 +100,6 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	psc->sc_pc = pa->pa_pc;
 
-	printf("\n");
-
 	/* enable the appropriate bits in the PCI CSR */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
@@ -131,7 +129,7 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
 
 	ral_attach(sc);
 }
