@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.36 2003/07/02 00:21:17 avsm Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.37 2003/11/21 20:53:42 mickey Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.36 2003/07/02 00:21:17 avsm Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.37 2003/11/21 20:53:42 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -433,7 +433,8 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size,
 		volatile size_t siz;
 
 		if ((p = mmap(NULL, (size_t)size, PROT_READ, MAP_PRIVATE,
-		    from_fd, (off_t)0)) == MAP_FAILED) {
+		    from_fd, (off_t)0)) == MAP_FAILED ||
+		    madvise(p, size, MADV_SEQUENTIAL)) {
 			serrno = errno;
 			(void)unlink(to_name);
 			errx(EX_OSERR, "%s: %s", from_name, strerror(serrno));
@@ -509,10 +510,12 @@ compare(int from_fd, const char *from_name, size_t from_len, int to_fd,
 		remainder -= length;
 
 		if ((p1 = mmap(NULL, length, PROT_READ, MAP_PRIVATE,
-		    from_fd, from_off)) == MAP_FAILED)
+		    from_fd, from_off)) == MAP_FAILED ||
+		    madvise(p1, length, MADV_SEQUENTIAL))
 			err(EX_OSERR, "%s", from_name);
 		if ((p2 = mmap(NULL, length, PROT_READ, MAP_PRIVATE,
-		    to_fd, to_off)) == MAP_FAILED)
+		    to_fd, to_off)) == MAP_FAILED ||
+		    madvise(p2, length, MADV_SEQUENTIAL))
 			err(EX_OSERR, "%s", to_name);
 
 		dfound = memcmp(p1, p2, length);
