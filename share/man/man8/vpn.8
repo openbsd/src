@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.63 2002/05/23 09:30:35 mpech Exp $
+.\" $OpenBSD: vpn.8,v 1.64 2002/09/07 00:52:19 deraadt Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -52,9 +52,7 @@ Briefly, creating a VPN consists of the following steps:
 .Bl -enum -compact
 .It
 Choose a key exchange method: manual keyed, or automated via
-.Xr isakmpd 8
-or
-.Xr photurisd 8 .
+.Xr isakmpd 8 .
 .It
 For manual keying, create the Security Associations (SA), one for
 each endpoint.
@@ -67,15 +65,13 @@ daemon.
 Configure your firewall rules appropriately.
 .El
 .Ss Choosing a key exchange method
-There are currently three key exchange methods available:
+There are currently two key exchange methods available:
 .Pp
 .Bl -bullet -inset -compact
 .It
 manual (symmetric shared secret)
 .It
 .Xr isakmpd 8
-.It
-.Xr photurisd 8
 .El
 .Ss Enabling the Appropriate Kernel Operations
 Make sure that the following options and devices are enabled in the kernel:
@@ -259,10 +255,8 @@ and on the security gateway of subnet B:
 .Ed
 .Ss Configure and run the keying daemon [automated keying]
 Unless manual keying is used, both security gateways need to start
-either the
+the
 .Xr isakmpd 8
-or
-.Xr photurisd 8
 key management daemon.
 To make sure the daemon is properly configured
 to provide the required security services (typically, encryption and
@@ -279,9 +273,6 @@ by default.
 Only successfully IPsec-processed packets (from the
 .Xr enc 4
 interface), or key management packets (for
-.Xr photurisd 8 ,
-.Tn UDP
-packets with source and destination ports of 468, and for
 .Xr isakmpd 8 ,
 .Tn UDP
 packets with source and destination ports of 500) should be allowed to pass.
@@ -289,7 +280,7 @@ packets with source and destination ports of 500) should be allowed to pass.
 The
 .Xr pf.conf 5
 rules for a tunnel which uses encryption (the ESP IPsec protocol) and
-.Xr photurisd 8
+.Xr isakmpd 8
 on security gateway A might look like this:
 .Bd -literal
 gatewA = "192.168.1.254/32"
@@ -310,9 +301,9 @@ pass out proto esp from $gatewA to $gatewB
 pass in on enc0 from $netB to $netA
 pass out on enc0 from $netA to $netB
 
-# Passing in Photuris traffic from the security gateways
-pass in on ne0 proto udp from $gatewB port = 468 to $gatewA port = 468
-pass out on ne0 proto udp from $gatewA port = 468 to $gatewB port = 468
+# Passing in isakmpd(8) traffic from the security gateways
+pass in on ne0 proto udp from $gatewB port = 500 to $gatewA port = 500
+pass out on ne0 proto udp from $gatewA port = 500 to $gatewB port = 500
 .Ed
 .Pp
 If there are no other
@@ -676,22 +667,16 @@ To run with verbose debugging enabled, instead start with:
 .Ed
 .El
 .Sh FILES
-.Bl -tag -width /etc/photuris/photuris.conf -compact
+.Bl -tag -width /etc/isakmpd/isakmpd.conf -compact
 .It Pa /usr/share/ipsec/rc.vpn
 Sample VPN configuration file
 .It Pa /etc/isakmpd/isakmpd.conf
 .Xr isakmpd 8
 configuration file
-.It Pa /etc/photuris/photuris.conf
-.Xr photurisd 8
-configuration file
 .It Pa /etc/pf.conf
 Firewall configuration file
 .El
 .Sh BUGS
-.Xr photurisd 8
-can not be used in VPN mode unless both of the security gateway IP addresses
-lie within the network ranges being tunnelled.
 In situations where the gateway IPs are outside the tunnelled network
 range, such as when tunnelling private (RFC 1918) networks over the Internet,
 .Xr isakmpd 8
@@ -708,5 +693,4 @@ or manual keying must be used.
 .Xr ipsecadm 8 ,
 .Xr isakmpd 8 ,
 .Xr pfctl 8 ,
-.Xr photurisd 8 ,
 .Xr sysctl 8
