@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.10 2004/12/08 21:49:02 jfb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.11 2005/01/03 21:08:12 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -112,8 +112,10 @@ cvs_logmsg_open(const char *path)
 	}
 
 	bp = cvs_buf_alloc(128, BUF_AUTOEXT);
-	if (bp == NULL)
+	if (bp == NULL) {
+		(void)fclose(fp);
 		return (NULL);
+	}
 
 	/* lcont is used to tell if a buffer returned by fgets is a start
 	 * of line or just line continuation because the buffer isn't
@@ -130,11 +132,20 @@ cvs_logmsg_open(const char *path)
 			/* skip lines starting with the prefix */
 			continue;
 
-		cvs_buf_append(bp, lbuf, strlen(lbuf));
+		if (cvs_buf_append(bp, lbuf, strlen(lbuf)) < 0) {
+			cvs_buf_free(bp);
+			(void)fclose(fp);
+			return (NULL);
+		}
 
 		lcont = (lbuf[len - 1] == '\n') ? 0 : 1;
 	}
-	cvs_buf_putc(bp, '\0');
+	(void)fclose(fp);
+
+	if (cvs_buf_putc(bp, '\0') < 0) {
+		cvs_buf_free(bp);
+		return (NULL);
+	}
 
 	msg = (char *)cvs_buf_release(bp);
 
