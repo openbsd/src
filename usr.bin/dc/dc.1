@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.14 2003/11/04 08:10:06 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.15 2003/11/06 19:48:55 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -134,6 +134,21 @@ This is a shorthand for the sequence:
 x y / x y %
 .Ed
 The division and modulus operator is a non-portable extension.
+.It Ic a
+Pop the top value from the stack.
+If that value is a number, compute the integer part of the number modulo 256.
+If the result is zero, push an empty string.
+Otherwise push a one character string by interpreting the computed value
+as an
+.Tn ASCII
+character.
+.Pp
+If the top value is a string, push a string containing the first character
+of the original string.
+If the original string is empty, an empty string is pushed back.
+The
+.Ic a
+operator is a non-portable extension.
 .It Ic c
 All values on the stack are popped.
 .It Ic d
@@ -147,14 +162,14 @@ The initial input base is 10.
 .It Ic I
 Pushes the input base on the top of the stack.
 .It Ic J
-Pop the top value of the stack.
+Pop the top value from the stack.
 The recursion level is popped by that value and, following that,
 the input is skipped until the first occurrence of the
 .Ic M
 operator.
 The
 .Ic J
-operator is a non-portable extensions, used by the
+operator is a non-portable extension, used by the
 .Xr bc 1
 command.
 .It Ic K
@@ -190,6 +205,9 @@ The
 operator is a non-portable extensions, used by the
 .Xr bc 1
 command.
+.It Ic n
+The top value on the stack is popped and printed without a newline.
+This is a non-portable extension.
 .It Ic O
 Pushes the output base on the top of the stack.
 .It Ic o
@@ -327,6 +345,9 @@ since the string
 is written in an array that is later popped, to reveal the array that
 stored
 .Ql first .
+.It Ic #
+Skip the rest of the line.
+This is a non-portable extension.
 .El
 .Sh EXAMPLES
 An example which prints the first ten values of
