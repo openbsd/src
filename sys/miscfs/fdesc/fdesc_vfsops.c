@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vfsops.c,v 1.3 1997/10/06 15:19:01 csapuntz Exp $	*/
+/*	$OpenBSD: fdesc_vfsops.c,v 1.4 1997/10/06 21:04:42 deraadt Exp $	*/
 /*	$NetBSD: fdesc_vfsops.c,v 1.21 1996/02/09 22:40:07 christos Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	fmp->f_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
-	vfs_getnewfsid(mp);
+	getnewfsid(mp, makefstype(MOUNT_FDESC));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -131,10 +131,15 @@ fdesc_unmount(mp, mntflags, p)
 {
 	int error;
 	int flags = 0;
+	extern int doforce;
 	struct vnode *rootvp = VFSTOFDESC(mp)->f_root;
 
-	if (mntflags & MNT_FORCE) 
+	if (mntflags & MNT_FORCE) {
+		/* fdesc can never be rootfs so don't check for it */
+		if (!doforce)
+			return (EINVAL);
 		flags |= FORCECLOSE;
+	}
 
 	/*
 	 * Clear out buffer cache.  I don't think we
@@ -169,15 +174,27 @@ fdesc_root(mp, vpp)
 	struct vnode **vpp;
 {
 	struct vnode *vp;
-	struct proc *p = curproc;         /* XXX */
+
 	/*
 	 * Return locked reference to root.
 	 */
 	vp = VFSTOFDESC(mp)->f_root;
 	VREF(vp);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	VOP_LOCK(vp);
 	*vpp = vp;
 	return (0);
+}
+
+int
+fdesc_quotactl(mp, cmd, uid, arg, p)
+	struct mount *mp;
+	int cmd;
+	uid_t uid;
+	caddr_t arg;
+	struct proc *p;
+{
+
+	return (EOPNOTSUPP);
 }
 
 int
@@ -226,12 +243,11 @@ fdesc_statfs(mp, sbp, p)
 	sbp->f_files = lim + 1;		/* Allow for "." */
 	sbp->f_ffree = freefd;		/* See comments above */
 	if (sbp != &mp->mnt_stat) {
-		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	return (0);
 }
 
@@ -247,17 +263,46 @@ fdesc_sync(mp, waitfor, uc, p)
 	return (0);
 }
 
-#define fdesc_fhtovp ((int (*) __P((struct mount *, struct fid *, \
-	    struct mbuf *, struct vnode **, int *, struct ucred **)))eopnotsupp)
-#define fdesc_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
-	    struct proc *)))eopnotsupp)
-#define fdesc_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-	    size_t, struct proc *)))eopnotsupp)
-#define fdesc_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
-	    eopnotsupp)
-#define fdesc_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
- 
+/*
+ * Fdesc flat namespace lookup.
+ * Currently unsupported.
+ */
+int
+fdesc_vget(mp, ino, vpp)
+	struct mount *mp;
+	ino_t ino;
+	struct vnode **vpp;
+{
+
+	return (EOPNOTSUPP);
+}
+
+
+/*ARGSUSED*/
+int
+fdesc_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+	struct mount *mp;
+	struct fid *fhp;
+	struct mbuf *nam;
+	struct vnode **vpp;
+	int *exflagsp;
+	struct ucred **credanonp;
+{
+
+	return (EOPNOTSUPP);
+}
+
+/*ARGSUSED*/
+int
+fdesc_vptofh(vp, fhp)
+	struct vnode *vp;
+	struct fid *fhp;
+{
+	return (EOPNOTSUPP);
+}
+
 struct vfsops fdesc_vfsops = {
+	MOUNT_FDESC,
 	fdesc_mount,
 	fdesc_start,
 	fdesc_unmount,
@@ -269,6 +314,4 @@ struct vfsops fdesc_vfsops = {
 	fdesc_fhtovp,
 	fdesc_vptofh,
 	fdesc_init,
-	fdesc_sysctl
 };
-
