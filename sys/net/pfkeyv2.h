@@ -1,3 +1,5 @@
+/*	$OpenBSD: pfkeyv2.h,v 1.4 1997/11/07 08:29:53 niklas Exp $	*/
+
 /*
  * The author of this code is Angelos D. Keromytis, angelos@openbsd.org
  * 	(except when noted otherwise).

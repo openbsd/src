@@ -1,3 +1,4 @@
+/*	$OpenBSD: ip_ah_old.c,v 1.9 1997/11/07 08:27:29 niklas Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
