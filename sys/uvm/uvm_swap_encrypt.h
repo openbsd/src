@@ -31,6 +31,17 @@
 #ifndef _UVM_SWAP_ENCRYPT_H
 #define _UVM_SWAP_ENCRYPT_H
 
+#define SWPENC_ENABLE	0
+#define SWPENC_CREATED	1
+#define SWPENC_DELETED	2
+#define SWPENC_MAXID	3
+
+#define CTL_SWPENC_NAMES { \
+	{ "enable", CTLTYPE_INT }, \
+	{ "keyscreated", CTLTYPE_INT }, \
+	{ "keysdeleted", CTLTYPE_INT }, \
+}
+
 #define SWAP_KEY_EXPIRE (120 /*60 * 60*/)	/* time after that keys expire */
 #define SWAP_KEY_SIZE	4		/* 128-bit keys */
 
@@ -38,6 +49,9 @@ struct swap_key {
 	u_int32_t key[SWAP_KEY_SIZE];	/* secret key for swap range */
 	u_int16_t refcount;		/* pages that still need it */
 };
+
+int swap_encrypt_ctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			  struct proc *));
 
 void swap_encrypt __P((struct swap_key *,caddr_t, caddr_t, u_int64_t, size_t));
 void swap_decrypt __P((struct swap_key *,caddr_t, caddr_t, u_int64_t, size_t));

@@ -32,6 +32,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <dev/rndvar.h>
 #include <crypto/rijndael.h>
@@ -49,6 +50,48 @@ u_int uvm_swpkeyscreated = 0;
 u_int uvm_swpkeysdeleted = 0;
 
 int swap_encrypt_initalized = 0;
+
+int
+swap_encrypt_ctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case SWPENC_ENABLE: {
+		int doencrypt = uvm_doswapencrypt;
+		int result;
+
+		result = sysctl_int(oldp, oldlenp, newp, newlen, &doencrypt);
+		if (result)
+			return result;
+
+		/* Swap Encryption has been turned on, we need to
+		 * initalize state for swap devices that have been
+		 * added 
+		 */
+		if (doencrypt)
+			uvm_swap_initcrypt_all();
+		uvm_doswapencrypt = doencrypt;
+		return (0);
+	}
+	case SWPENC_CREATED:
+		return (sysctl_rdint(oldp, oldlenp, newp, uvm_swpkeyscreated));
+	case SWPENC_DELETED:
+		return (sysctl_rdint(oldp, oldlenp, newp, uvm_swpkeysdeleted));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
 
 void
 swap_key_create(struct swap_key *key)
