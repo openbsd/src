@@ -1,4 +1,4 @@
-$OpenBSD: cardbusdevs,v 1.3 2000/06/09 00:42:36 aaron Exp $
+$OpenBSD: cardbusdevs,v 1.4 2000/07/01 14:43:26 aaron Exp $
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
 /*
@@ -56,11 +56,13 @@ vendor INVALID		0xffff	INVALID VENDOR ID
 
 /* 3COM Products */
 
-product 3COM 3C575TX	0x5057	3c575 100Base-TX
-product 3COM 3C575BTX	0x5157  3c575B 100Base-TX
+product 3COM 3C575	0x5057	3C575 100Base-TX
+product 3COM 3CCFE575BT	0x5157  3CCFE575BT 100Base-TX
 product 3COM 3CCFE575CT	0x5257	3CCFE575CT 100Base-TX
-product 3COM 3CCFE656B	0x6562	3CCFE656B 100Base-TX
+product 3COM 3CCFEM656	0x6560	3CCFEM656 100Base-TX
+product 3COM 3CCFEM656B	0x6562	3CCFEM656B 100Base-TX
 product 3COM MODEM56	0x6563	56k Modem
+product 3COM 3CCFEM656C	0x6564	3CCFEM656C 100Base-TX
 
 /* Adaptec products */
 product ADP 1480        0x6075  APA-1480
