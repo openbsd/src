@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.17 2004/09/15 19:21:25 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.18 2004/09/18 20:01:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,8 +37,9 @@ void	sighdlr(int);
 void	usage(void);
 int	main(int, char *[]);
 int	check_child(pid_t, const char *);
-int	dispatch_imsg(void);
+int	dispatch_imsg(struct ntpd_conf *);
 void	ntpd_adjtime(double);
+void	ntpd_settime(double);
 
 volatile sig_atomic_t	 quit = 0;
 volatile sig_atomic_t	 reconfig = 0;
@@ -67,7 +68,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-d] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-d] [-f file] [-s]\n", __progname);
 	exit(1);
 }
 
@@ -81,8 +82,7 @@ main(int argc, char *argv[])
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 chld_pid = 0, pid;
 	char			*conffile;
-	int			 debug = 0;
-	int			 ch, nfds;
+	int			 ch, nfds, timeout = INFTIM;
 	int			 pipe_chld[2];
 
 	conffile = CONFFILE;
@@ -91,13 +91,16 @@ main(int argc, char *argv[])
 
 	log_init(1);		/* log to stderr until daemonized */
 
-	while ((ch = getopt(argc, argv, "df:")) != -1) {
+	while ((ch = getopt(argc, argv, "df:s")) != -1) {
 		switch (ch) {
 		case 'd':
-			debug = 1;
+			conf.debug = 1;
 			break;
 		case 'f':
 			conffile = optarg;
+			break;
+		case 's':
+			conf.settime = 1;
 			break;
 		default:
 			usage();
@@ -119,10 +122,12 @@ main(int argc, char *argv[])
 	}
 	endpwent();
 
-	log_init(debug);
-
-	if (!debug)
-		daemon(1, 0);
+	if (!conf.settime) {
+		log_init(conf.debug);
+		if (!conf.debug)
+			daemon(1, 0);
+	} else
+		timeout = 15 * 1000;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_chld) == -1)
 		fatal("socketpair");
@@ -149,11 +154,21 @@ main(int argc, char *argv[])
 		if (ibuf->w.queued)
 			pfd[PFD_PIPE].events |= POLLOUT;
 
-		if ((nfds = poll(pfd, 1, INFTIM)) == -1)
+		if ((nfds = poll(pfd, 1, timeout)) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
 				quit = 1;
 			}
+
+		if (nfds == 0 && conf.settime) {
+			log_debug("no reply received, skipping initial time"
+			    "setting");
+			conf.settime = 0;
+			timeout = INFTIM;
+			log_init(conf.debug);
+			if (!conf.debug)
+				daemon(1, 0);
+		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE].revents & POLLOUT))
 			if (msgbuf_write(&ibuf->w) < 0) {
@@ -163,7 +178,7 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && pfd[PFD_PIPE].revents & POLLIN) {
 			nfds--;
-			if (dispatch_imsg() == -1)
+			if (dispatch_imsg(&conf) == -1)
 				quit = 1;
 		}
 
@@ -213,7 +228,7 @@ check_child(pid_t pid, const char *pname)
 }
 
 int
-dispatch_imsg(void)
+dispatch_imsg(struct ntpd_conf *conf)
 {
 	struct imsg		 imsg;
 	int			 n, cnt;
@@ -243,6 +258,19 @@ dispatch_imsg(void)
 				fatal("invalid IMSG_ADJTIME received");
 			memcpy(&d, imsg.data, sizeof(d));
 			ntpd_adjtime(d);
+			break;
+		case IMSG_SETTIME:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
+				fatal("invalid IMSG_SETTIME received");
+			if (!conf->settime)
+				break;
+			memcpy(&d, imsg.data, sizeof(d));
+			ntpd_settime(d);
+			/* daemonize now */
+			log_init(conf->debug);
+			if (!conf->debug)
+				daemon(1, 0);
+			conf->settime = 0;
 			break;
 		case IMSG_HOST_DNS:
 			name = imsg.data;
@@ -277,4 +305,28 @@ ntpd_adjtime(double d)
 	log_info("adjusting local clock by %fs", d);
 	if (adjtime(&tv, NULL) == -1)
 		log_warn("adjtime failed");
+}
+
+void
+ntpd_settime(double d)
+{
+	struct timeval	tv, curtime;
+	char		buf[80];
+	time_t		tval;
+
+	d_to_tv(d, &tv);
+	if (gettimeofday(&curtime, NULL) == -1)
+		log_warn("gettimeofday");
+	curtime.tv_sec += tv.tv_sec;
+	curtime.tv_usec += tv.tv_usec;
+	if (curtime.tv_usec > 1000000) {
+		curtime.tv_sec++;
+		curtime.tv_usec -= 1000000;
+	}
+	if (settimeofday(&curtime, NULL) == -1)
+		log_warn("settimeofday");
+	tval = curtime.tv_sec;
+	strftime(buf, sizeof(buf), "%a %b %e %H:%M:%S %Z %Y",
+	    localtime(&tval));
+	log_info("set local clock to %s (offset %fs)", buf, d);
 }

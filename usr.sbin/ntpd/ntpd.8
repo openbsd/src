@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.5 2004/07/13 19:51:38 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.6 2004/09/18 20:01:38 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm ntpd
 .Bk -words
-.Op Fl d
+.Op Fl ds
 .Op Fl f Ar file
 .Ek
 .Sh DESCRIPTION
@@ -37,6 +37,10 @@ as described in RFC 2030,
 and the Network Time Protocol version 3,
 as described in RFC 1305.
 .Pp
+.Nm
+uses the
+.Xr adjtime 2 ,
+system call to correct the local system time without causing time jumps.
 .Nm
 is usually started at boot time, and can be enabled by
 setting the following in
@@ -71,6 +75,10 @@ Use
 as the configuration file,
 instead of the default
 .Pa /etc/ntpd.conf .
+.It Fl s
+Set the time immediately once at startup to allow for a large time correction,
+eleminating the need to run rdate before starting
+.Nm .
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ntpd.confXXX" -compact

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.37 2004/09/18 07:33:14 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.38 2004/09/18 20:01:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -109,8 +109,9 @@ struct ntp_peer {
 struct ntpd_conf {
 	TAILQ_HEAD(listen_addrs, listen_addr)	listen_addrs;
 	TAILQ_HEAD(ntp_peers, ntp_peer)		ntp_peers;
-	u_int8_t				opts;
 	u_int8_t				listen_all;
+	u_int8_t				settime;
+	u_int8_t				debug;
 	struct ntp_status			status;
 };
 
@@ -149,6 +150,7 @@ struct imsgbuf {
 enum imsg_type {
 	IMSG_NONE,
 	IMSG_ADJTIME,
+	IMSG_SETTIME,
 	IMSG_HOST_DNS
 };
 
@@ -200,6 +202,7 @@ void	 imsg_free(struct imsg *);
 /* ntp.c */
 pid_t	 ntp_main(int[2], struct ntpd_conf *);
 void	 ntp_adjtime(void);
+void	 ntp_settime(double);
 void	 ntp_host_dns(char *, u_int32_t);
 
 /* parse.y */
@@ -224,7 +227,7 @@ int	client_peer_init(struct ntp_peer *);
 int	client_addr_init(struct ntp_peer *);
 int	client_nextaddr(struct ntp_peer *);
 int	client_query(struct ntp_peer *);
-int	client_dispatch(struct ntp_peer *);
+int	client_dispatch(struct ntp_peer *, u_int8_t);
 
 /* util.c */
 double			gettime(void);

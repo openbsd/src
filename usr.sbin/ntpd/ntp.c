@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.32 2004/09/18 07:33:14 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.33 2004/09/18 20:01:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,6 +19,8 @@
 
 #include <sys/param.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
 #include <poll.h>
 #include <pwd.h>
 #include <signal.h>
@@ -56,7 +58,7 @@ ntp_sighdlr(int sig)
 pid_t
 ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 {
-	int			 nfds, i, j, idx_peers, timeout;
+	int			 nfds, i, j, idx_peers, timeout, nullfd;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt;
 	pid_t			 pid;
@@ -84,10 +86,20 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	if ((pw = getpwnam(NTPD_USER)) == NULL)
 		fatal(NULL);
 
+	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
+		fatal(NULL);
+
 	if (chroot(pw->pw_dir) == -1)
 		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
+
+	if (!nconf->debug) {
+		dup2(nullfd, STDIN_FILENO);
+		dup2(nullfd, STDOUT_FILENO);
+		dup2(nullfd, STDERR_FILENO);
+	}
+	close(nullfd);
 
 	setproctitle("ntp engine");
 
@@ -228,8 +240,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		for (; nfds > 0 && j < i; j++)
 			if (pfd[j].revents & POLLIN) {
 				nfds--;
-				if (client_dispatch(idx2peer[j - idx_peers]) ==
-				     -1)
+				if (client_dispatch(idx2peer[j - idx_peers],
+				    conf->settime) == -1)
 					ntp_quit = 1;
 			}
 	}
@@ -359,6 +371,13 @@ ntp_adjtime(void)
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		p->update.good = 0;
+}
+
+void
+ntp_settime(double offset)
+{
+	imsg_compose(ibuf_main, IMSG_SETTIME, 0, 0, &offset, sizeof(offset));
+	conf->settime = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.33 2004/09/14 22:01:28 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.34 2004/09/18 20:01:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -154,7 +154,7 @@ client_query(struct ntp_peer *p)
 }
 
 int
-client_dispatch(struct ntp_peer *p)
+client_dispatch(struct ntp_peer *p, u_int8_t settime)
 {
 	struct sockaddr_storage	 fsa;
 	socklen_t		 fsa_len;
@@ -251,6 +251,8 @@ client_dispatch(struct ntp_peer *p)
 	}
 
 	client_update(p);
+	if (settime)
+		ntp_settime(p->reply[p->shift].offset);
 
 	log_debug("reply from %s: offset %f delay %f, "
 	    "next query %ds", log_sockaddr((struct sockaddr *)&fsa),
