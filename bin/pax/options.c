@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.16 1997/03/02 09:46:47 tholo Exp $	*/
+/*	$OpenBSD: options.c,v 1.17 1997/03/26 01:14:13 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.16 1997/03/02 09:46:47 tholo Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.17 1997/03/26 01:14:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -609,12 +609,13 @@ tar_options(argc, argv)
 		switch(c) {
 		case 'b':
 			/*
-			 * specify blocksize
+			 * specify blocksize in 512-byte blocks
 			 */
 			if ((wrblksz = (int)str_offt(optarg)) <= 0) {
 				paxwarn(1, "Invalid block size %s", optarg);
 				tar_usage();
 			}
+			wrblksz *= 512;		/* XXX - check for int oflow */
 			break;
 		case 'c':
 			/*

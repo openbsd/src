@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.4 1996/12/09 12:02:17 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.5 1997/03/26 01:14:14 millert Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -83,9 +83,11 @@ extration.
 In addition to the flags mentioned above, any of the following
 flags may be used:
 .Bl -tag -width Ar
-.It Fl b Ar blocksize
-Set block size to use for archive.  Any multiple of 512 between
-10240 and 32256 may be used.
+.It Fl b Ar "blocking factor"
+Set blocking factor to use for archive,
+.Nm tar
+uses 512 byte blocks.  The blocking factor may not be larger
+than 63 (32256 bytes).
 .It Fl e
 Stop after first error.
 .It Fl f Ar archive
