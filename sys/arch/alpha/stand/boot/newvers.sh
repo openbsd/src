@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.5 1996/10/30 22:40:44 niklas Exp $
+#	$OpenBSD: newvers.sh,v 1.6 1997/05/04 20:31:41 millert Exp $
 #	$NetBSD: newvers.sh,v 1.3 1996/06/14 20:03:04 cgd Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -37,7 +37,7 @@
 #	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
 u=${USER-root} h=`hostname` t=`date`
-r=`head -1 $1 | awk ' { print $3 } '`
+r=`awk ' { print $3 ; exit } ' < $1`
 
 echo "char bootprog_name[] = \"OpenBSD/Alpha Secondary Boot\";" > vers.c
 echo "char bootprog_rev[] = \"${r}\";" >> vers.c
