@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.300 2000/08/06 22:30:45 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.301 2000/08/08 17:01:09 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -719,68 +719,68 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
 	    0,
-	    "Apple Computer",
-	    "PCI",
+	    "Apple",
+	    "Bandit",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GC,
 	    0,
-	    "Apple Computer",
-	    "PCI",
+	    "Apple",
+	    "GC",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_OHARE,
 	    0,
-	    "Apple Computer",
-	    "PCI",
+	    "Apple",
+	    "OHare",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_HEATHROW,
 	    0,
-	    "Apple Computer",
-	    "MACIO",
+	    "Apple",
+	    "Heathrow",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PADDINGTON,
 	    0,
-	    "Apple Computer",
-	    "MACIO",
+	    "Apple",
+	    "Paddington",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHETH,
 	    0,
-	    "Apple Computer",
-	    "PCI",
+	    "Apple",
+	    "Uni-North Ethernet",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH,
 	    0,
-	    "Apple Computer",
-	    "PCI",
+	    "Apple",
+	    "Uni-North",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_USB,
 	    0,
-	    "Apple Computer",
+	    "Apple",
 	    "USB",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHAGP,
 	    0,
-	    "Apple Computer",
-	    "AGP",
+	    "Apple",
+	    "Uni-North AGP",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC,
 	    0,
-	    "Apple Computer",
+	    "Apple",
 	    "GMAC",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO,
 	    0,
-	    "Apple Computer",
-	    "MACIO",
+	    "Apple",
+	    "Keylargo",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -2481,6 +2481,36 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "DS1",
 	},
 	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLEL,
+	    0,
+	    "Lava",
+	    "Parallel",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLEL2,
+	    0,
+	    "Lava",
+	    "Dual Parallel",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLEL2A,
+	    0,
+	    "Lava",
+	    "Dual Parallel",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLELB,
+	    0,
+	    "Lava",
+	    "Dual Parallel B",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_SERIAL,
+	    0,
+	    "Lava",
+	    "Dual Serial",
+	},
+	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
 	    0,
 	    "LeadTek Research",
@@ -2824,6 +2854,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_MARTH,
+	    0,
+	    "NEC",
+	    "I/O",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PKUG,
 	    0,
 	    "NEC",
 	    "I/O",
@@ -4569,6 +4605,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "US201",
 	},
 	{
+	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5610,
+	    0,
+	    "US Robotics",
+	    "3CP5610",
+	},
+	{
 	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V292PBC,
 	    0,
 	    "V3 Semiconductor",
@@ -5873,7 +5915,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_APPLE, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Apple Computer",
+	    "Apple",
 	    NULL,
 	},
 	{
@@ -8031,6 +8073,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_USR, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "US Robotics",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_PICTUREEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Picture Elements",
@@ -8100,6 +8148,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CMI, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "C-Media Electronics Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_LAVA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Lava",
 	    NULL,
 	},
 	{

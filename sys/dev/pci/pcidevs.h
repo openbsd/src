@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.300 2000/08/06 22:30:45 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.301 2000/08/08 17:01:09 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -150,7 +150,7 @@
 #define	PCI_VENDOR_DIVERSIFIED	0x1068		/* Diversified Technology */
 #define	PCI_VENDOR_MYLEX	0x1069		/* Mylex */
 #define	PCI_VENDOR_ATEN	0x106a		/* Aten Research */
-#define	PCI_VENDOR_APPLE	0x106b		/* Apple Computer */
+#define	PCI_VENDOR_APPLE	0x106b		/* Apple */
 #define	PCI_VENDOR_HYUNDAI	0x106c		/* Hyundai */
 #define	PCI_VENDOR_SEQUENT	0x106d		/* Sequent */
 #define	PCI_VENDOR_DFI	0x106e		/* DFI */
@@ -510,6 +510,7 @@
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
+#define	PCI_VENDOR_USR	0x12b9		/* US Robotics */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* NVidia/SGS-Thomson */
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal */
@@ -522,6 +523,7 @@
 #define	PCI_VENDOR_THREEWARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics Inc. */
+#define	PCI_VENDOR_LAVA	0x1407		/* Lava */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom */
@@ -710,17 +712,17 @@
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740C		/* 756 USB Host */
 
 /* Apple products */
-#define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI */
-#define	PCI_PRODUCT_APPLE_GC	0x0002		/* PCI */
-#define	PCI_PRODUCT_APPLE_OHARE	0x0007		/* PCI */
-#define	PCI_PRODUCT_APPLE_HEATHROW	0x0010		/* MACIO */
-#define	PCI_PRODUCT_APPLE_PADDINGTON	0x0017		/* MACIO */
-#define	PCI_PRODUCT_APPLE_UNINORTHETH	0x001e		/* PCI */
-#define	PCI_PRODUCT_APPLE_UNINORTH	0x001f		/* PCI */
+#define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit */
+#define	PCI_PRODUCT_APPLE_GC	0x0002		/* GC */
+#define	PCI_PRODUCT_APPLE_OHARE	0x0007		/* OHare */
+#define	PCI_PRODUCT_APPLE_HEATHROW	0x0010		/* Heathrow */
+#define	PCI_PRODUCT_APPLE_PADDINGTON	0x0017		/* Paddington */
+#define	PCI_PRODUCT_APPLE_UNINORTHETH	0x001e		/* Uni-North Ethernet */
+#define	PCI_PRODUCT_APPLE_UNINORTH	0x001f		/* Uni-North */
 #define	PCI_PRODUCT_APPLE_USB	0x0019		/* USB */
-#define	PCI_PRODUCT_APPLE_UNINORTHAGP	0x0020		/* AGP */
+#define	PCI_PRODUCT_APPLE_UNINORTHAGP	0x0020		/* Uni-North AGP */
 #define	PCI_PRODUCT_APPLE_GMAC	0x0021		/* GMAC */
-#define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* MACIO */
+#define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* Keylargo */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
@@ -1119,6 +1121,13 @@
 #define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
 #define	PCI_PRODUCT_LMC_DS1	0x0006		/* DS1 */
 
+/* Lava */
+#define	PCI_PRODUCT_LAVA_PARALLEL	0x8000		/* Parallel */
+#define	PCI_PRODUCT_LAVA_PARALLEL2	0x8001		/* Dual Parallel */
+#define	PCI_PRODUCT_LAVA_PARALLEL2A	0x8002		/* Dual Parallel */
+#define	PCI_PRODUCT_LAVA_PARALLELB	0x8003		/* Dual Parallel B */
+#define	PCI_PRODUCT_LAVA_SERIAL	0x0100		/* Dual Serial */
+
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
 
@@ -1200,6 +1209,7 @@
 #define	PCI_PRODUCT_NEC_USB	0x0035		/* USB */
 #define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
 #define	PCI_PRODUCT_NEC_MARTH	0x0074		/* I/O */
+#define	PCI_PRODUCT_NEC_PKUG	0x007d		/* I/O */
 
 /* NeoMagic */
 #define	PCI_PRODUCT_NEOMAGIC_NM2070	0x0001		/* Magicgraph NM2070 */
@@ -1594,6 +1604,9 @@
 
 /* ULSI Systems products */
 #define	PCI_PRODUCT_ULSI_US201	0x0201		/* US201 */
+
+/* US Rebotics */
+#define	PCI_PRODUCT_USR_3CP5610	0x1008		/* 3CP5610 */
 
 /* V3 Semiconductor products */
 #define	PCI_PRODUCT_V3_V292PBC	0x0292		/* V292PBC AMD290x0 Host-PCI */
