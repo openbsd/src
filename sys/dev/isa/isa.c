@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.34 1998/06/29 05:51:13 downsj Exp $	*/
+/*	$OpenBSD: isa.c,v 1.35 1998/07/28 13:26:48 csapuntz Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -122,6 +122,10 @@ isaattach(parent, self, aux)
 	sc->sc_dmat = iba->iba_dmat;
 #endif /* NISADMA > 0 */
 	sc->sc_ic = iba->iba_ic;
+
+#if NISAPNP > 0
+	isapnp_isa_attach_hook(sc);
+#endif
 
 #if NISADMA > 0
 	/*
