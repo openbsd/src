@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.3 2004/07/05 19:40:38 deraadt Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.4 2004/07/30 05:36:32 miod Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -135,7 +135,7 @@ hotplugclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct hotplug_event he;
 
-	while (hotplug_get_event(&he) == 1)
+	while (hotplug_get_event(&he) == 0)
 		;
 	opened = 0;
 	return (0);
