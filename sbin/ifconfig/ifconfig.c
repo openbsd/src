@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.21 1999/02/24 21:24:47 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.22 1999/02/24 21:26:03 deraadt Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.21 1999/02/24 21:24:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.22 1999/02/24 21:26:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -228,8 +228,9 @@ struct	cmd {
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
-	{ 0,		0,		0,		setifaddr },
-	{ 0,		0,		0,		setifdstaddr },
+	{ 0, /*src*/	0,		0,		setifaddr },
+	{ 0, /*dst*/	0,		0,		setifdstaddr },
+	{ 0, /*illegal*/0,		0,		NULL },	
 };
 
 void 	adjust_nsellength();
@@ -302,6 +303,7 @@ main(argc, argv)
 	register struct afswtch *rafp;
 	int aflag = 0;
 	int ifaliases = 0;
+	int i;
 
 	if (argc < 2) 
 		usage();
@@ -360,7 +362,11 @@ main(argc, argv)
 			if (strcmp(*argv, p->c_name) == 0)
 				break;
 		if (p->c_name == 0 && setaddr)
-			p++;	/* got src, do dst */
+			for (i = setaddr; i > 0; i--) {
+				p++;
+				if (p->c_func == NULL)
+					errx(1, "extra address not accepted");
+			}
 		if (p->c_func) {
 			if (p->c_parameter == NEXTARG) {
 				if (argv[1] == NULL)
@@ -620,6 +626,7 @@ setifdstaddr(addr, param)
 	char *addr;
 	int param;
 {
+	setaddr++;
 	(*afp->af_getaddr)(addr, DSTADDR);
 }
 
