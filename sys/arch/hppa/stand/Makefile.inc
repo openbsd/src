@@ -1,18 +1,18 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2003/03/28 22:40:47 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2003/04/30 06:02:27 mickey Exp $
 
 CFLAGS=${DEBUG} -Os -Wall -Werror
 CPPFLAGS+=-I${S} -I. -I${.CURDIR}
 SACFLAGS=-nostdinc -fno-builtin -D_STANDALONE -I${STANDIR}/libsa
-SACFLAGS+=-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-0
+SACFLAGS+=-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-1
 SACFLAGS+=-fno-stack-protector
 #DEBUGFLAGS=-DDEBUG
 #DEBUGFLAGS+=-DPDCDEBUG
 #DEBUGFLAGS+=-DLIFDEBUG
 #DEBUGFLAGS+=-DEXEC_DEBUG
 #DEBUGFLAGS+=-DALLOC_TRACE
-LINKADDR=0x700000
-LOADADDR=0x700000
-HEAP_LIMIT=0x7c0000
+LINKADDR=0x780000
+LOADADDR=0x780000
+HEAP_LIMIT=0x7f8000
 CLEANFILES+=	machine
 DEBUGLIBS=	no
 
