@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.4 1997/04/05 20:58:28 millert Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.5 1999/06/05 23:47:07 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -53,6 +53,15 @@
  * SOFTWARE.
  * -
  * --Copyright--
+ */
+
+/*
+ * %%% portions-copyright-cmetz-96
+ * Portions of this software are Copyright 1996-1998 by Craig Metz, All Rights
+ * Reserved. The Inner Net License Version 2 applies to these portions of
+ * the software.
+ * You should have received a copy of the license with this software. If
+ * you didn't get a copy, you may request one from <license@inner.net>.
  */
 
 /*
@@ -128,6 +137,43 @@ struct	protoent {
 #define	NO_DATA		4 /* Valid name, no data record of requested type */
 #define	NO_ADDRESS	NO_DATA		/* no address, look for MX record */
 
+/* Values for getaddrinfo() and getnameinfo() */
+#define AI_PASSIVE	1	/* socket address is intended for bind() */
+#define AI_CANONNAME	2	/* request for canonical name */
+#define AI_NUMERICHOST	4	/* don't ever try nameservice */
+
+#define NI_NUMERICHOST	1	/* return the host address, not the name */
+#define NI_NUMERICSERV	2	/* return the service address, not the name */
+#define NI_NOFQDN	4	/* return a short name if in the local domain */
+#define NI_NAMEREQD	8	/* fail if either host or service name is unknown */
+#define NI_DGRAM	16	/* look up datagram service instead of stream */
+
+#define NI_MAXHOST	MAXHOSTNAMELEN	/* max host name length returned by getnameinfo */
+#define NI_MAXSERV	32	/* max serv. name length returned by getnameinfo */
+
+#define EAI_BADFLAGS	-1	/* invalid value for ai_flags */
+#define EAI_NONAME	-2	/* name or service is not known */
+#define EAI_AGAIN	-3	/* temporary failure in name resolution */
+#define EAI_FAIL	-4	/* non-recoverable failure in name resolution */
+#define EAI_NODATA	-5	/* no address associated with name */
+#define EAI_FAMILY	-6	/* ai_family not supported */
+#define EAI_SOCKTYPE	-7	/* ai_socktype not supported */
+#define EAI_SERVICE	-8	/* service not supported for ai_socktype */
+#define EAI_ADDRFAMILY	-9	/* address family for name not supported */
+#define EAI_MEMORY	-10	/* memory allocation failure */
+#define EAI_SYSTEM	-11	/* system error (code indicated in errno) */
+
+struct addrinfo {
+	int ai_flags;		/* input flags */
+	int ai_family;		/* protocol family for socket */
+	int ai_socktype;	/* socket type */
+	int ai_protocol;	/* protocol for socket */
+	int ai_addrlen;		/* length of socket-address */
+	struct sockaddr *ai_addr; /* socket-address for socket */
+	char *ai_canonname;	/* canonical name for service location (iff req) */
+	struct addrinfo *ai_next; /* pointer to next in list */
+};
+
 __BEGIN_DECLS
 void		endhostent __P((void));
 void		endnetent __P((void));
@@ -153,6 +199,14 @@ void		sethostent __P((int));
 void		setnetent __P((int));
 void		setprotoent __P((int));
 void		setservent __P((int));
+
+int		getaddrinfo __P((const char *name, const char *service,
+		    const struct addrinfo *req, struct addrinfo **pai));
+void		freeaddrinfo __P((struct addrinfo *ai));
+int		getnameinfo __P((const struct sockaddr *sa, size_t addrlen,
+		    char *host, size_t hostlen, char *serv, size_t servlen,
+		    int flags));
+char		*gai_strerror __P((int ecode));
 __END_DECLS
 
 /* This is nec'y to make this include file properly replace the sun version. */
