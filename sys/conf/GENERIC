@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 1997/06/21 01:59:44 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.19 1997/06/23 02:34:37 gene Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -61,6 +61,8 @@ option		IPSEC		# IPsec
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
 option		IPFILTER	# IP packet filter for security
+option		PPP_BSDCOMP	# PPP BSD compression
+option		PPP_DEFLATE
 
 pseudo-device	loop	1	# network loopback
 pseudo-device	bpfilter 8	# packet filter
