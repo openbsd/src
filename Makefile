@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 1998/05/04 21:28:18 mickey Exp $
+#	$OpenBSD: Makefile,v 1.29 1998/05/11 07:43:12 niklas Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -126,7 +126,8 @@ cross-binutils-new:
 	    ${.CURDIR}/usr.bin/lorder/lorder.sh.gnm \
 	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder
 
-cross-binutils-old: cross-gas cross-ar cross-ld
+cross-binutils-old: cross-gas cross-ar cross-ld cross-strip cross-size \
+	cross-ranlib cross-nm
 
 cross-gas:
 	-mkdir -p ${CROSSDIR}/usr/obj
@@ -164,7 +165,6 @@ cross-ld:
 	ln -sf ${CROSSDIR}/usr/bin/ld \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/ld
 
-# Not yet tested for compatibility with any target
 cross-ar:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
@@ -178,6 +178,65 @@ cross-ar:
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/ar \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/ar
+
+cross-ranlib:
+	-mkdir -p ${CROSSDIR}/usr/obj
+	-mkdir -p ${CROSSDIR}/usr/bin
+	(cd usr.bin/ranlib; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} obj)
+	(cd usr.bin/ranlib; MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN=)
+	(cd usr.bin/ranlib; \
+	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN= install)
+	ln -sf ${CROSSDIR}/usr/bin/ranlib \
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/ranlib
+
+cross-strip:
+	-mkdir -p ${CROSSDIR}/usr/obj
+	-mkdir -p ${CROSSDIR}/usr/bin
+	(cd usr.bin/strip; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} obj)
+	(cd usr.bin/strip; \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} TARGET_MACHINE_ARCH=${TARGET} NOMAN=)
+	(cd usr.bin/strip; \
+	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} TARGET_MACHINE_ARCH=${TARGET} NOMAN= install)
+	ln -sf ${CROSSDIR}/usr/bin/strip \
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/strip
+
+cross-size:
+	-mkdir -p ${CROSSDIR}/usr/obj
+	-mkdir -p ${CROSSDIR}/usr/bin
+	(cd usr.bin/size; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} obj)
+	(cd usr.bin/size; MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} TARGET_MACHINE_ARCH=${TARGET} NOMAN=)
+	(cd usr.bin/size; \
+	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN= install)
+	ln -sf ${CROSSDIR}/usr/bin/size \
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/size
+
+cross-nm:
+	-mkdir -p ${CROSSDIR}/usr/obj
+	-mkdir -p ${CROSSDIR}/usr/bin
+	(cd usr.bin/nm; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} obj)
+	(cd usr.bin/nm; MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN=)
+	(cd usr.bin/nm; \
+	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN= install)
+	ln -sf ${CROSSDIR}/usr/bin/nm \
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/nm
 
 cross-gcc:
 	-mkdir -p ${CROSSDIR}/usr/obj
