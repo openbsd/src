@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.484 2002/01/21 17:37:04 nate Exp $
+	$OpenBSD: pcidevs,v 1.485 2002/01/23 18:08:13 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1038,7 +1038,10 @@ product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
 
 /* Creative Labs */
 product CREATIVELABS SBLIVE	0x0002	SoundBlaster Live
-product CREATIVELABS DIGIN	0x7002	SoundBlaster Digital Input
+product CREATIVELABS AUDIGY	0x0004	SoundBlaster Audigy
+product CREATIVELABS FIWIRE	0x4001	Firewire
+product CREATIVELABS DIGIN	0x7002	SoundBlaster Live Digital Input
+product CREATIVELABS AUDIGIN	0x7003	SoundBlaster Audigy Digital Input
 product CREATIVELABS EV1938	0x8938	Ectiva 1938
 
 /* Cyclades products */
