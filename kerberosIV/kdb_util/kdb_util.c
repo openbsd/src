@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb_util.c,v 1.4 1998/02/25 15:50:51 art Exp $	*/
+/*	$OpenBSD: kdb_util.c,v 1.5 1998/05/11 11:27:56 art Exp $	*/
 /* $KTH: kdb_util.c,v 1.36 1997/12/05 04:21:50 assar Exp $ */
 
 /*
@@ -195,6 +195,7 @@ add_file(void *db, FILE *file)
     char line[1024];
     unsigned long key[2]; /* yes, long */
     Principal pr;
+    char *format = NULL;
     
     char exp_date[64], mod_date[64];
     
@@ -209,13 +210,26 @@ add_file(void *db, FILE *file)
 	    break;
 	}
 	lineno++;
-	ret = sscanf(line, "%s %s %d %d %d %hd %lx %lx %s %s %s %s",
+
+	asprintf(&format, 
+	      "%%%ds %%%ds %%d %%d %%d %%hd %%lx %%lx %%%ds %%%ds %%%ds %%%ds",
+	      ANAME_SZ, INST_SZ, sizeof(exp_date), sizeof(mod_date),
+	      ANAME_SZ, INST_SZ);
+
+	if (format == NULL)
+	    err(1, "malloc");
+
+	ret = sscanf(line, format,
 		     pr.name, pr.instance,
 		     &life, &kkvno, &kvno,
 		     &pr.attributes,
 		     &key[0], &key[1],
 		     exp_date, mod_date,
 		     pr.mod_name, pr.mod_instance);
+
+	free(format);
+	format = NULL;
+
 	if(ret != 12){
 	    warnx("Line %d malformed (ignored)", lineno);
 	    continue;
