@@ -6,10 +6,10 @@
 4237809446b     ./.cvsignore
  430871781b     ./COPYING
 2637011133b     ./COPYING.LIB
-2171438995b     ./ChangeLog
+1664203382b     ./ChangeLog
 2525204523b     ./INSTALL/README
  104875702b     ./MAINTAINERS
-3913432140b     ./Makefile.in
+3026518559b     ./Makefile.in
 1935170490b     ./README
 3703830219b     ./config-ml.in
 2369773211b     ./config.guess
@@ -79,14 +79,14 @@
  787786243b     ./config/mt-v810
  771382916b     ./config/mt-x86pic
 1833360727b     ./configure
- 657713428b     ./configure.in
-  12174872b     ./contrib/ChangeLog
+1212521209b     ./configure.in
+ 469147624b     ./contrib/ChangeLog
  550196746b     ./contrib/compare_tests
 4189404415b     ./contrib/egcs_update
 1060321676b     ./contrib/gperf-2.7-19981006.pat
  904867939b     ./contrib/index-prop
 3040114942b     ./contrib/test_installed
-1570138983b     ./contrib/test_summary
+3431193217b     ./contrib/test_summary
 1176279968b     ./contrib/warn_summary
 2685065356b     ./etc/ChangeLog
 4027299794b     ./etc/Makefile.in
@@ -102,7 +102,7 @@
 2084857689b     ./gcc/BUGS
  430871781b     ./gcc/COPYING
 2637011133b     ./gcc/COPYING.LIB
-2874286902b     ./gcc/ChangeLog
+3852781311b     ./gcc/ChangeLog
 1908191848b     ./gcc/ChangeLog.0
 1942935930b     ./gcc/ChangeLog.lib
 3694162803b     ./gcc/FSFChangeLog
@@ -110,10 +110,9 @@
 2525829644b     ./gcc/FSFChangeLog.11
  551406095b     ./gcc/INSTALL
 2771840517b     ./gcc/LANGUAGES
-3946493862b     ./gcc/Makefile.in
+ 371517871b     ./gcc/Makefile.in
  406459598b     ./gcc/NEWS
 4077477563b     ./gcc/PROBLEMS
-3290228847b     ./gcc/PROJECTS
 2522016016b     ./gcc/README
  722850134b     ./gcc/README-bugs
 3310775363b     ./gcc/README-fixinc
@@ -130,7 +129,7 @@
  317578445b     ./gcc/README.gnat
 1427751232b     ./gcc/SERVICE
 4046804328b     ./gcc/TESTS.FLUNK
-1099327104b     ./gcc/acconfig.h
+2199018716b     ./gcc/acconfig.h
 4190083916b     ./gcc/aclocal.m4
   67062466b     ./gcc/alias.c
 4179046188b     ./gcc/assert.h
@@ -152,7 +151,7 @@
 1926476024b     ./gcc/c-parse.h
  340564841b     ./gcc/c-parse.in
 3783741055b     ./gcc/c-parse.y
-2540887742b     ./gcc/c-pragma.c
+  53358206b     ./gcc/c-pragma.c
 1262846233b     ./gcc/c-pragma.h
 2068306093b     ./gcc/c-tree.h
  193402159b     ./gcc/c-typeck.c
@@ -162,8 +161,8 @@
 1526067720b     ./gcc/cccp.c
 2374568197b     ./gcc/cexp.c
 1259037984b     ./gcc/cexp.y
-2131133980b     ./gcc/ch/ChangeLog
-2294310913b     ./gcc/ch/Make-lang.in
+ 957558882b     ./gcc/ch/ChangeLog
+3668056982b     ./gcc/ch/Make-lang.in
 3840952328b     ./gcc/ch/Makefile.in
  860743420b     ./gcc/ch/README
   72814584b     ./gcc/ch/actions.c
@@ -199,12 +198,12 @@
  272436253b     ./gcc/ch/tree.c
 2688980962b     ./gcc/ch/typeck.c
 4020668406b     ./gcc/ch/xtypeck.c
-3313651160b     ./gcc/collect2.c
+  49755031b     ./gcc/collect2.c
 1699818163b     ./gcc/collect2.h
 4294747890b     ./gcc/combine.c
 1434596660b     ./gcc/conditions.h
 1315260558b     ./gcc/config.guess
-3819817823b     ./gcc/config.in
+ 411742057b     ./gcc/config.in
 4106504689b     ./gcc/config/1750a/1750a.c
 3234129706b     ./gcc/config/1750a/1750a.h
 3095377682b     ./gcc/config/1750a/1750a.md
@@ -224,14 +223,14 @@
 2996218177b     ./gcc/config/a29k/xm-a29k.h
 2472430666b     ./gcc/config/a29k/xm-unix.h
 3742075344b     ./gcc/config/alpha/alpha-interix.h
-3620629353b     ./gcc/config/alpha/alpha.c
-4173459673b     ./gcc/config/alpha/alpha.h
+1957785425b     ./gcc/config/alpha/alpha.c
+3100261546b     ./gcc/config/alpha/alpha.h
  754462921b     ./gcc/config/alpha/alpha.md
  193538505b     ./gcc/config/alpha/alpha32.h
  795597665b     ./gcc/config/alpha/config-nt.sed
 3567833533b     ./gcc/config/alpha/crtbegin.asm
 1312076907b     ./gcc/config/alpha/crtend.asm
-2906452456b     ./gcc/config/alpha/elf.h
+3042700248b     ./gcc/config/alpha/elf.h
 2715664516b     ./gcc/config/alpha/lib1funcs.asm
 1763018017b     ./gcc/config/alpha/linux-ecoff.h
 3273041531b     ./gcc/config/alpha/linux-elf.h
@@ -247,7 +246,7 @@
 1500154793b     ./gcc/config/alpha/t-vms
 3660437230b     ./gcc/config/alpha/va_list.h
 1402142372b     ./gcc/config/alpha/vms-tramp.asm
-1583354418b     ./gcc/config/alpha/vms.h
+4010999121b     ./gcc/config/alpha/vms.h
 1904467114b     ./gcc/config/alpha/vxworks.h
 2487176671b     ./gcc/config/alpha/win-nt.h
 1758618093b     ./gcc/config/alpha/x-alpha
@@ -267,8 +266,8 @@
 2885119589b     ./gcc/config/arm/README-interworking
 1005732185b     ./gcc/config/arm/aof.h
 2774813096b     ./gcc/config/arm/aout.h
-3511586270b     ./gcc/config/arm/arm.c
-2841467095b     ./gcc/config/arm/arm.h
+3428460683b     ./gcc/config/arm/arm.c
+ 230148666b     ./gcc/config/arm/arm.h
 4135968481b     ./gcc/config/arm/arm.md
 2488881798b     ./gcc/config/arm/coff.h
 1087283327b     ./gcc/config/arm/ecos-elf.h
@@ -306,9 +305,9 @@
 1599844562b     ./gcc/config/arm/xm-linux.h
  639443881b     ./gcc/config/arm/xm-netbsd.h
 1103633380b     ./gcc/config/arm/xm-thumb.h
-2954994136b     ./gcc/config/c4x/c4x.c
-1160662455b     ./gcc/config/c4x/c4x.h
-2160508011b     ./gcc/config/c4x/c4x.md
+1681095721b     ./gcc/config/c4x/c4x.c
+2648849385b     ./gcc/config/c4x/c4x.h
+ 814641753b     ./gcc/config/c4x/c4x.md
 2962364141b     ./gcc/config/c4x/libgcc.S
 1295106107b     ./gcc/config/c4x/t-c4x
 1038140439b     ./gcc/config/c4x/xm-c4x.h
@@ -374,12 +373,12 @@
 3010444208b     ./gcc/config/i386/config-nt.sed
 1755486995b     ./gcc/config/i386/crtdll.h
 3943560803b     ./gcc/config/i386/cygwin.asm
-2195815684b     ./gcc/config/i386/cygwin.h
+1990906306b     ./gcc/config/i386/cygwin.h
   72827188b     ./gcc/config/i386/dgux.c
 2430932709b     ./gcc/config/i386/dgux.h
 3567816533b     ./gcc/config/i386/djgpp-rtems.h
-2201014363b     ./gcc/config/i386/djgpp.h
- 276323687b     ./gcc/config/i386/freebsd-elf.h
+1357324982b     ./gcc/config/i386/djgpp.h
+1265439821b     ./gcc/config/i386/freebsd-elf.h
  914300508b     ./gcc/config/i386/freebsd.h
 2875212455b     ./gcc/config/i386/gas.h
  456755261b     ./gcc/config/i386/gmon-sol2.c
@@ -464,13 +463,13 @@
 2348843648b     ./gcc/config/i386/udk.h
  524084667b     ./gcc/config/i386/unix.h
 2149794869b     ./gcc/config/i386/uwin.asm
-4182665502b     ./gcc/config/i386/uwin.h
+ 470472226b     ./gcc/config/i386/uwin.h
 1243186138b     ./gcc/config/i386/v3gas.h
 2327961737b     ./gcc/config/i386/vsta.h
 2176070711b     ./gcc/config/i386/vxi386.h
 2860761703b     ./gcc/config/i386/win-nt.h
 1626352388b     ./gcc/config/i386/win32.h
- 805351454b     ./gcc/config/i386/winnt.c
+3439334875b     ./gcc/config/i386/winnt.c
 3474740080b     ./gcc/config/i386/x-aix
  237037873b     ./gcc/config/i386/x-cygwin
  745721423b     ./gcc/config/i386/x-dgux
@@ -490,7 +489,7 @@
 4250296631b     ./gcc/config/i386/xm-bsd386.h
 2549976913b     ./gcc/config/i386/xm-cygwin.h
 2515568374b     ./gcc/config/i386/xm-dgux.h
-2734253502b     ./gcc/config/i386/xm-djgpp.h
+3764892052b     ./gcc/config/i386/xm-djgpp.h
 3045936467b     ./gcc/config/i386/xm-dos.h
 2787520086b     ./gcc/config/i386/xm-freebsd.h
 2990995265b     ./gcc/config/i386/xm-gnu.h
@@ -597,8 +596,8 @@
 1018776699b     ./gcc/config/m68k/m68k-coff.h
 3855098247b     ./gcc/config/m68k/m68k-none.h
 2991007317b     ./gcc/config/m68k/m68k-psos.h
-4219455700b     ./gcc/config/m68k/m68k.c
-1212893043b     ./gcc/config/m68k/m68k.h
+3428981823b     ./gcc/config/m68k/m68k.c
+2999475749b     ./gcc/config/m68k/m68k.h
 4037600769b     ./gcc/config/m68k/m68k.md
 3736322150b     ./gcc/config/m68k/m68kelf.h
 2590349266b     ./gcc/config/m68k/m68kemb.h
@@ -728,7 +727,7 @@
 3652751219b     ./gcc/config/mips/mips-5.h
 3997122313b     ./gcc/config/mips/mips.c
  828076041b     ./gcc/config/mips/mips.h
-3196047816b     ./gcc/config/mips/mips.md
+2095290633b     ./gcc/config/mips/mips.md
 3291569396b     ./gcc/config/mips/mips16.S
 3494806728b     ./gcc/config/mips/netbsd.h
 1852349798b     ./gcc/config/mips/news4.h
@@ -893,9 +892,9 @@
 1545361972b     ./gcc/config/rs6000/nt-ci.asm
 2111607652b     ./gcc/config/rs6000/nt-cn.asm
 3066888831b     ./gcc/config/rs6000/ntstack.asm
-3777018795b     ./gcc/config/rs6000/rs6000.c
-3891824145b     ./gcc/config/rs6000/rs6000.h
- 637994419b     ./gcc/config/rs6000/rs6000.md
+4104328768b     ./gcc/config/rs6000/rs6000.c
+2758875281b     ./gcc/config/rs6000/rs6000.h
+3698443742b     ./gcc/config/rs6000/rs6000.md
 4257252017b     ./gcc/config/rs6000/rtems.h
 1289418179b     ./gcc/config/rs6000/sol-c0.c
 1695016479b     ./gcc/config/rs6000/sol-ci.asm
@@ -958,7 +957,7 @@
 3270410192b     ./gcc/config/sparc/lynx.h
 2136616646b     ./gcc/config/sparc/netbsd.h
 2977280248b     ./gcc/config/sparc/openbsd.h
-1477975807b     ./gcc/config/sparc/pbd.h
+1461652436b     ./gcc/config/sparc/pbd.h
 1610828060b     ./gcc/config/sparc/rtems.h
 1463670426b     ./gcc/config/sparc/sol2-c1.asm
 3288323690b     ./gcc/config/sparc/sol2-ci.asm
@@ -969,14 +968,14 @@
 1699311045b     ./gcc/config/sparc/sol2.h
 2121730699b     ./gcc/config/sparc/sp64-aout.h
  824364328b     ./gcc/config/sparc/sp64-elf.h
-1237408065b     ./gcc/config/sparc/sparc.c
-3340109657b     ./gcc/config/sparc/sparc.h
+1107486931b     ./gcc/config/sparc/sparc.c
+1457594704b     ./gcc/config/sparc/sparc.h
 3183023071b     ./gcc/config/sparc/sparc.md
  703944495b     ./gcc/config/sparc/splet.h
 2679804272b     ./gcc/config/sparc/sun4gas.h
-1133758079b     ./gcc/config/sparc/sun4o3.h
+3455486806b     ./gcc/config/sparc/sun4o3.h
 3455986086b     ./gcc/config/sparc/sunos4.h
- 388063836b     ./gcc/config/sparc/sysv4.h
+1528721564b     ./gcc/config/sparc/sysv4.h
 2688036523b     ./gcc/config/sparc/t-elf
 1582758741b     ./gcc/config/sparc/t-halos
 3692140246b     ./gcc/config/sparc/t-linux64
@@ -1006,7 +1005,7 @@
  597536974b     ./gcc/config/spur/spur.md
 1910933143b     ./gcc/config/spur/xm-spur.h
 3683970223b     ./gcc/config/svr3.h
-3436946766b     ./gcc/config/svr4.h
+ 166319006b     ./gcc/config/svr4.h
  613804065b     ./gcc/config/t-freebsd
 1372994999b     ./gcc/config/t-gnu
 3050012299b     ./gcc/config/t-install-cpp
@@ -1077,28 +1076,28 @@
  802838955b     ./gcc/config/xm-std32.h
 4091214272b     ./gcc/config/xm-svr3.h
 1558379184b     ./gcc/config/xm-svr4.h
-4142288748b     ./gcc/configure
+1626194886b     ./gcc/configure
 1467935606b     ./gcc/configure.bat
 3600082583b     ./gcc/configure.frag
-3930360538b     ./gcc/configure.in
+ 457912228b     ./gcc/configure.in
 4241351077b     ./gcc/configure.lang
 1334832587b     ./gcc/convert.c
 1632185071b     ./gcc/convert.h
- 271941482b     ./gcc/cp/ChangeLog
+ 530548897b     ./gcc/cp/ChangeLog
    1903584b     ./gcc/cp/ChangeLog.1
 2546444747b     ./gcc/cp/ChangeLog.egcs
 3839226273b     ./gcc/cp/Make-lang.in
 3427663434b     ./gcc/cp/Makefile.in
-  97481068b     ./gcc/cp/NEWS
-3267881235b     ./gcc/cp/call.c
-1280503411b     ./gcc/cp/class.c
+ 138293205b     ./gcc/cp/NEWS
+4096973393b     ./gcc/cp/call.c
+3188304151b     ./gcc/cp/class.c
  929318629b     ./gcc/cp/config-lang.in
 2143071361b     ./gcc/cp/cp-tree.def
- 391671388b     ./gcc/cp/cp-tree.h
+  12905884b     ./gcc/cp/cp-tree.h
 3745672818b     ./gcc/cp/cvt.c
- 370773733b     ./gcc/cp/decl.c
+3666562341b     ./gcc/cp/decl.c
 1834949211b     ./gcc/cp/decl.h
- 441739383b     ./gcc/cp/decl2.c
+2401668416b     ./gcc/cp/decl2.c
 1993063104b     ./gcc/cp/errfn.c
 2851353127b     ./gcc/cp/error.c
  754102681b     ./gcc/cp/except.c
@@ -1115,13 +1114,13 @@
 1487179368b     ./gcc/cp/inc/new
 3630756522b     ./gcc/cp/inc/new.h
 3294064502b     ./gcc/cp/inc/typeinfo
- 872275003b     ./gcc/cp/init.c
+ 262435250b     ./gcc/cp/init.c
 2911540108b     ./gcc/cp/input.c
 1403991879b     ./gcc/cp/lang-options.h
 1591652675b     ./gcc/cp/lang-specs.h
 2347962417b     ./gcc/cp/lex.c
 2424823976b     ./gcc/cp/lex.h
- 188313848b     ./gcc/cp/method.c
+3717759972b     ./gcc/cp/method.c
  701335209b     ./gcc/cp/mpw-config.in
 4041177245b     ./gcc/cp/mpw-make.sed
  119869254b     ./gcc/cp/new.cc
@@ -1134,8 +1133,8 @@
  967651156b     ./gcc/cp/ptree.c
 1480301647b     ./gcc/cp/repo.c
 1422993980b     ./gcc/cp/rtti.c
-1426699726b     ./gcc/cp/search.c
-2695652045b     ./gcc/cp/semantics.c
+3484682230b     ./gcc/cp/search.c
+3374588244b     ./gcc/cp/semantics.c
 1746248077b     ./gcc/cp/sig.c
  779245834b     ./gcc/cp/spew.c
   73383706b     ./gcc/cp/tinfo.cc
@@ -1176,28 +1175,28 @@
 1515521889b     ./gcc/dwarf2.h
 2598393787b     ./gcc/dwarf2out.c
 3867635452b     ./gcc/dwarf2out.h
- 929365027b     ./gcc/dwarfout.c
+ 756593300b     ./gcc/dwarfout.c
  950151195b     ./gcc/dwarfout.h
  872252559b     ./gcc/dyn-string.c
 3812644023b     ./gcc/dyn-string.h
 3381131814b     ./gcc/eh-common.h
- 495738003b     ./gcc/emit-rtl.c
+1986987475b     ./gcc/emit-rtl.c
 1440444349b     ./gcc/enquire.c
 1842828913b     ./gcc/except.c
 2158248277b     ./gcc/except.h
 2261541831b     ./gcc/exgettext
  791151591b     ./gcc/explow.c
- 277845043b     ./gcc/expmed.c
-3625923167b     ./gcc/expr.c
+4138281934b     ./gcc/expmed.c
+1640773513b     ./gcc/expr.c
 3261810763b     ./gcc/expr.h
 1075776863b     ./gcc/extend.texi
-  13784081b     ./gcc/f/BUGS
- 993290785b     ./gcc/f/ChangeLog
+1127846544b     ./gcc/f/BUGS
+ 623242733b     ./gcc/f/ChangeLog
 4225493150b     ./gcc/f/ChangeLog.0
   89767993b     ./gcc/f/INSTALL
 3240533767b     ./gcc/f/Make-lang.in
 1081048037b     ./gcc/f/Makefile.in
-4107898720b     ./gcc/f/NEWS
+1011180712b     ./gcc/f/NEWS
  281424983b     ./gcc/f/README
 2710292864b     ./gcc/f/RELEASE-PREP
  217416175b     ./gcc/f/ansify.c
@@ -1210,10 +1209,10 @@
 2128697889b     ./gcc/f/bld-op.def
  535953754b     ./gcc/f/bld.c
  806295869b     ./gcc/f/bld.h
- 157967868b     ./gcc/f/bugs.texi
+ 689503380b     ./gcc/f/bugs.texi
  235013049b     ./gcc/f/bugs0.texi
 1558553523b     ./gcc/f/com-rt.def
- 658711581b     ./gcc/f/com.c
+  70432011b     ./gcc/f/com.c
 1897164499b     ./gcc/f/com.h
 1975190636b     ./gcc/f/config-lang.in
 3702808499b     ./gcc/f/config.j
@@ -1228,7 +1227,7 @@
 3980765198b     ./gcc/f/fini.c
 3358911103b     ./gcc/f/flags.j
 2954450194b     ./gcc/f/g77.1
-3584203418b     ./gcc/f/g77.texi
+2370700560b     ./gcc/f/g77.texi
 2960446521b     ./gcc/f/g77install.texi
  242801592b     ./gcc/f/g77spec.c
 1124705383b     ./gcc/f/glimits.j
@@ -1260,7 +1259,7 @@
 3829974116b     ./gcc/f/malloc.h
 2687881356b     ./gcc/f/name.c
 2439587488b     ./gcc/f/name.h
-2833330645b     ./gcc/f/news.texi
+ 423555745b     ./gcc/f/news.texi
 3453379674b     ./gcc/f/news0.texi
 2165020172b     ./gcc/f/output.j
 3852951627b     ./gcc/f/parse.c
@@ -1319,41 +1318,41 @@
  252823133b     ./gcc/f/tree.j
 3443401298b     ./gcc/f/type.c
 1269043734b     ./gcc/f/type.h
- 250624396b     ./gcc/f/version.c
+3967961011b     ./gcc/f/version.c
 1880947867b     ./gcc/f/version.h
  106965244b     ./gcc/f/where.c
 2325578298b     ./gcc/f/where.h
-2459191252b     ./gcc/final.c
+2259231538b     ./gcc/final.c
  750374191b     ./gcc/fix-header.c
 3072760907b     ./gcc/fixcpp
  851356889b     ./gcc/fixinc-nt.sed
-3134781445b     ./gcc/fixinc/Makefile.in
+ 489448684b     ./gcc/fixinc/Makefile.in
 2137562655b     ./gcc/fixinc/README
 1149682325b     ./gcc/fixinc/fixinc.dgux
 3961460258b     ./gcc/fixinc/fixinc.interix
 4036402473b     ./gcc/fixinc/fixinc.irix
 4278535406b     ./gcc/fixinc/fixinc.ptx
 2691944848b     ./gcc/fixinc/fixinc.sco
-1823873218b     ./gcc/fixinc/fixinc.svr4
-1638146321b     ./gcc/fixinc/fixinc.winnt
+2646868990b     ./gcc/fixinc/fixinc.svr4
+3500071236b     ./gcc/fixinc/fixinc.winnt
 2119627668b     ./gcc/fixinc/fixinc.wrap
 3531147889b     ./gcc/fixinc/fixinc.x86-linux-gnu
  656477185b     ./gcc/fixinc/fixincl.c
-1691303868b     ./gcc/fixinc/fixincl.sh
+4216141501b     ./gcc/fixinc/fixincl.sh
 1486812617b     ./gcc/fixinc/fixincl.tpl
-2110456988b     ./gcc/fixinc/fixincl.x
+3779204220b     ./gcc/fixinc/fixincl.x
 3096339196b     ./gcc/fixinc/genfixes
 3678653058b     ./gcc/fixinc/gnu-regex.c
  916937206b     ./gcc/fixinc/gnu-regex.h
 1738055537b     ./gcc/fixinc/hackshell.tpl
- 206110674b     ./gcc/fixinc/inclhack.def
- 844190877b     ./gcc/fixinc/inclhack.sh
-3186037375b     ./gcc/fixinc/inclhack.tpl
+1302984881b     ./gcc/fixinc/inclhack.def
+3280605784b     ./gcc/fixinc/inclhack.sh
+1859438286b     ./gcc/fixinc/inclhack.tpl
 1847384514b     ./gcc/fixinc/mkfixinc.sh
 1534809572b     ./gcc/fixinc/procopen.c
 3334153107b     ./gcc/fixinc/server.c
 2227780997b     ./gcc/fixinc/server.h
-2908974245b     ./gcc/fixincludes
+4186689920b     ./gcc/fixincludes
 1852958240b     ./gcc/fixproto
 1510998759b     ./gcc/flags.h
   14144180b     ./gcc/floatlib.c
@@ -1368,9 +1367,9 @@
  970542118b     ./gcc/gansidecl.h
 2917485219b     ./gcc/gbl-ctors.h
  765940785b     ./gcc/gcc.1
-1071958395b     ./gcc/gcc.c
+1879237475b     ./gcc/gcc.c
 3891935819b     ./gcc/gcc.hlp
- 382466446b     ./gcc/gcc.texi
+ 807024551b     ./gcc/gcc.texi
 3125776691b     ./gcc/gccspec.c
 2459769831b     ./gcc/gcov-io.h
  664852402b     ./gcc/gcov.c
@@ -1433,7 +1432,7 @@
  303295415b     ./gcc/gthr-solaris.h
  387661304b     ./gcc/gthr-vxworks.h
  157579409b     ./gcc/gthr.h
-3385064811b     ./gcc/haifa-sched.c
+ 332134332b     ./gcc/haifa-sched.c
 2043477270b     ./gcc/halfpic.c
  819272895b     ./gcc/halfpic.h
 2507465025b     ./gcc/hard-reg-set.h
@@ -1470,9 +1469,9 @@
  223588995b     ./gcc/intl/po2tbl.sed.in
 4175310706b     ./gcc/intl/textdomain.c
 2960721199b     ./gcc/intl/xopen-msg.sed
-2035127199b     ./gcc/invoke.texi
- 576916140b     ./gcc/java/ChangeLog
- 285616690b     ./gcc/java/Make-lang.in
+ 503742176b     ./gcc/invoke.texi
+2403749047b     ./gcc/java/ChangeLog
+1080111953b     ./gcc/java/Make-lang.in
 2987027027b     ./gcc/java/Makefile.in
 2541917855b     ./gcc/java/buffer.c
 4285191557b     ./gcc/java/buffer.h
@@ -1482,7 +1481,7 @@
  263606155b     ./gcc/java/constants.c
 2645981469b     ./gcc/java/convert.h
 3898411597b     ./gcc/java/decl.c
-1485359905b     ./gcc/java/except.c
+ 464463881b     ./gcc/java/except.c
  488529983b     ./gcc/java/expr.c
 2221104313b     ./gcc/java/gjavah.c
 3168623072b     ./gcc/java/java-except.h
@@ -1501,7 +1500,7 @@
 3601445887b     ./gcc/java/jcf.h
 4180971331b     ./gcc/java/jv-scan.c
 3995124880b     ./gcc/java/jvgenmain.c
- 107304642b     ./gcc/java/jvspec.c
+1366323083b     ./gcc/java/jvspec.c
 2610912080b     ./gcc/java/keyword.gperf
  566474720b     ./gcc/java/keyword.h
 1495202455b     ./gcc/java/lang-options.h
@@ -1512,11 +1511,11 @@
 2197076845b     ./gcc/java/mangle.c
 2568809376b     ./gcc/java/parse-scan.c
  753887653b     ./gcc/java/parse-scan.y
-1677513360b     ./gcc/java/parse.c
+2978497967b     ./gcc/java/parse.c
 4054432291b     ./gcc/java/parse.h
-3821352753b     ./gcc/java/parse.y
+4132497179b     ./gcc/java/parse.y
  154882617b     ./gcc/java/typeck.c
-1034625864b     ./gcc/java/verify.c
+ 820833694b     ./gcc/java/verify.c
  617116283b     ./gcc/java/xref.c
 1445939964b     ./gcc/java/xref.h
 2739979461b     ./gcc/java/zextract.c
@@ -1526,13 +1525,13 @@
  762307283b     ./gcc/lcm.c
  559083009b     ./gcc/libgcc1-test.c
 2942334943b     ./gcc/libgcc1.c
-1479691964b     ./gcc/libgcc2.c
+1307299979b     ./gcc/libgcc2.c
 2497915666b     ./gcc/limitx.h
 1045880008b     ./gcc/limity.h
 1454959977b     ./gcc/listing
 3367037234b     ./gcc/local-alloc.c
 4192241275b     ./gcc/longlong.h
-4017741286b     ./gcc/loop.c
+1286116962b     ./gcc/loop.c
 2355598769b     ./gcc/loop.h
 3636819710b     ./gcc/machmode.def
 1353109969b     ./gcc/machmode.h
@@ -1556,7 +1555,7 @@
 2333685510b     ./gcc/objc/objc-parse.y
 3294870779b     ./gcc/objc/objc-tree.def
 1567868913b     ./gcc/objc/objc.gperf
- 444738815b     ./gcc/optabs.c
+3694604057b     ./gcc/optabs.c
  593950303b     ./gcc/output.h
 1987145824b     ./gcc/patch-apollo-includes
  520971098b     ./gcc/pcp.h
@@ -1576,11 +1575,11 @@
 3514013187b     ./gcc/pself3.c
  163393634b     ./gcc/pself4.c
 2951530756b     ./gcc/pself5.c
-3042640299b     ./gcc/real.c
+1478179358b     ./gcc/real.c
 3281064342b     ./gcc/real.h
 2135251073b     ./gcc/recog.c
 1103677539b     ./gcc/recog.h
-3064353143b     ./gcc/reg-stack.c
+ 859782111b     ./gcc/reg-stack.c
  478552998b     ./gcc/regclass.c
 3534196113b     ./gcc/regmove.c
 1782287297b     ./gcc/regs.h
@@ -1612,7 +1611,7 @@
  430647095b     ./gcc/stupid.c
 4023966855b     ./gcc/sys-protos.h
  482558466b     ./gcc/sys-types.h
-3003974423b     ./gcc/system.h
+3935415693b     ./gcc/system.h
 1345810517b     ./gcc/testsuite/ChangeLog
 2118571163b     ./gcc/testsuite/README
 4258789052b     ./gcc/testsuite/README.g++
@@ -5447,10 +5446,10 @@
 4139263293b     ./gcc/typeclass.h
   17641651b     ./gcc/unprotoize.c
 2870166219b     ./gcc/unroll.c
- 305188006b     ./gcc/varasm.c
+3778597209b     ./gcc/varasm.c
  673114644b     ./gcc/varray.c
 3707241117b     ./gcc/varray.h
-2347208643b     ./gcc/version.c
+ 160771843b     ./gcc/version.c
 1040256635b     ./gcc/vmsconfig.com
  445093373b     ./gcc/xcoffout.c
 4059141961b     ./gcc/xcoffout.h
@@ -5555,7 +5554,7 @@
 2472500066b     ./libchill/writeable.c
 1972501079b     ./libchill/writerecord.c
  927204991b     ./libchill/xorps.c
- 325075618b     ./libf2c/ChangeLog
+4049452771b     ./libf2c/ChangeLog
 3129972362b     ./libf2c/Makefile.in
 3111321221b     ./libf2c/README
  308226469b     ./libf2c/TODO
@@ -5702,8 +5701,8 @@
 1536499154b     ./libf2c/libI77/Makefile.in
 1384146782b     ./libf2c/libI77/Notice
 3744878144b     ./libf2c/libI77/README.netlib
-3665157781b     ./libf2c/libI77/Version.c
-3999948185b     ./libf2c/libI77/backspace.c
+1836014404b     ./libf2c/libI77/Version.c
+1048680171b     ./libf2c/libI77/backspace.c
 1402319189b     ./libf2c/libI77/close.c
 3948477753b     ./libf2c/libI77/configure
 2121845408b     ./libf2c/libI77/configure.in
@@ -5732,7 +5731,7 @@
 1734468511b     ./libf2c/libI77/rewind.c
   20341661b     ./libf2c/libI77/rsfe.c
   27319661b     ./libf2c/libI77/rsli.c
-3452731953b     ./libf2c/libI77/rsne.c
+2441103295b     ./libf2c/libI77/rsne.c
 3949468975b     ./libf2c/libI77/sfe.c
 1382669245b     ./libf2c/libI77/sue.c
 1986314725b     ./libf2c/libI77/typesize.c
@@ -5811,8 +5810,8 @@
 1384146782b     ./libf2c/permission.netlib
   49125193b     ./libf2c/readme.netlib
 2637011133b     ./libiberty/COPYING.LIB
-2450362927b     ./libiberty/ChangeLog
-  96597117b     ./libiberty/Makefile.in
+1537877121b     ./libiberty/ChangeLog
+1266353413b     ./libiberty/Makefile.in
 4016047250b     ./libiberty/README
 2735281877b     ./libiberty/acconfig.h
 4130347236b     ./libiberty/alloca-conf.h
@@ -5829,15 +5828,15 @@
  169448073b     ./libiberty/clock.c
  876083662b     ./libiberty/concat.c
 1987387424b     ./libiberty/config.h-vms
- 846288685b     ./libiberty/config.in
+2697801398b     ./libiberty/config.in
 3328594913b     ./libiberty/config.table
 3500529335b     ./libiberty/config/mh-aix
 3476234501b     ./libiberty/config/mh-cxux7
 1235651640b     ./libiberty/config/mh-fbsd21
 2131807358b     ./libiberty/config/mh-windows
-3434358279b     ./libiberty/configure
+3518308570b     ./libiberty/configure
 3679856537b     ./libiberty/configure.bat
-2681780025b     ./libiberty/configure.in
+2017474005b     ./libiberty/configure.in
 3602665671b     ./libiberty/copysign.c
 2264740542b     ./libiberty/cplus-dem.c
 2375131771b     ./libiberty/fdmatch.c
@@ -5870,7 +5869,7 @@
 1572495658b     ./libiberty/random.c
 2669806012b     ./libiberty/rename.c
 2259647700b     ./libiberty/rindex.c
- 570467243b     ./libiberty/setenv.c
+4196068288b     ./libiberty/setenv.c
  749341367b     ./libiberty/sigsetmask.c
 2608485555b     ./libiberty/spaces.c
 2202950326b     ./libiberty/splay-tree.c
@@ -5899,9 +5898,9 @@
 1616442733b     ./libiberty/xatexit.c
 2523832509b     ./libiberty/xexit.c
 2377368504b     ./libiberty/xmalloc.c
- 226483871b     ./libiberty/xstrdup.c
+1724714742b     ./libiberty/xstrdup.c
 2509140929b     ./libiberty/xstrerror.c
- 640863794b     ./libio/ChangeLog
+3119390767b     ./libio/ChangeLog
 2390345359b     ./libio/Makefile.in
 2778177928b     ./libio/NEWS
 1839206347b     ./libio/PlotFile.cc
@@ -5924,7 +5923,7 @@
 2337390500b     ./libio/config/mtsafe.mt
 1967085932b     ./libio/config/netware.mt
 3613302931b     ./libio/config/sco4.mt
-4235167018b     ./libio/configure.in
+3532200497b     ./libio/configure.in
 2075241739b     ./libio/dbz/Makefile.in
 2356064683b     ./libio/dbz/README
 1278171427b     ./libio/dbz/altbytes
@@ -6114,7 +6113,7 @@
  883822692b     ./libio/testsuite/libio.tests/tiomanip.exp
 1658003010b     ./libio/testsuite/libio.tests/tiomisc.exp
 3206451440b     ./libio/testsuite/libio.tests/tstdiomisc.exp
-1004287900b     ./libobjc/ChangeLog
+3508895239b     ./libobjc/ChangeLog
 3006117638b     ./libobjc/Makefile.in
  638422313b     ./libobjc/NXConstStr.m
 1526865132b     ./libobjc/Object.m
@@ -6130,7 +6129,7 @@
 4111966841b     ./libobjc/encoding.c
 2195769577b     ./libobjc/gc.c
 1761713542b     ./libobjc/hash.c
-3159133732b     ./libobjc/init.c
+ 978848199b     ./libobjc/init.c
 1153982666b     ./libobjc/libobjc.def
 4072125181b     ./libobjc/libobjc_entry.c
 4260228535b     ./libobjc/linking.m
@@ -6239,7 +6238,7 @@
 1325247176b     ./libstdc++/stdexcept
 2171102846b     ./libstdc++/stdexcepti.cc
 3655692358b     ./libstdc++/stl.h
-3309383969b     ./libstdc++/stl/ChangeLog
+1912391678b     ./libstdc++/stl/ChangeLog
 1771543811b     ./libstdc++/stl/README
  337637047b     ./libstdc++/stl/algo.h
 1793430325b     ./libstdc++/stl/algobase.h
@@ -6281,7 +6280,7 @@
  364531500b     ./libstdc++/stl/slist.h
  772005731b     ./libstdc++/stl/stack
  963570706b     ./libstdc++/stl/stack.h
- 499771762b     ./libstdc++/stl/stl_algo.h
+1835781933b     ./libstdc++/stl/stl_algo.h
 2334578217b     ./libstdc++/stl/stl_algobase.h
 2862923138b     ./libstdc++/stl/stl_alloc.h
  131893617b     ./libstdc++/stl/stl_bvector.h
@@ -6301,7 +6300,7 @@
 3218206970b     ./libstdc++/stl/stl_multiset.h
  645310810b     ./libstdc++/stl/stl_numeric.h
   18446022b     ./libstdc++/stl/stl_pair.h
-4004595187b     ./libstdc++/stl/stl_queue.h
+ 864968925b     ./libstdc++/stl/stl_queue.h
 3312484350b     ./libstdc++/stl/stl_raw_storage_iter.h
 2384091075b     ./libstdc++/stl/stl_relops.h
 3568884211b     ./libstdc++/stl/stl_rope.h
@@ -6344,8 +6343,8 @@
  631859611b     ./libstdc++/testsuite/libstdc++.tests/test.exp
 3097225277b     ./libstdc++/valarray
  422203026b     ./libstdc++/valarray.cc
- 596091692b     ./ltconfig
-2821728822b     ./ltmain.sh
+4225874335b     ./ltconfig
+  23768362b     ./ltmain.sh
 4162842036b     ./missing
 4236112450b     ./mkinstalldirs
  902556840b     ./move-if-change
@@ -6353,11 +6352,11 @@
  422488038b     ./texinfo/ABOUT-NLS
 2274278886b     ./texinfo/AUTHORS
  430871781b     ./texinfo/COPYING
-1928258452b     ./texinfo/ChangeLog
+2696753879b     ./texinfo/ChangeLog
 3932743515b     ./texinfo/INSTALL
 1670374630b     ./texinfo/INTRODUCTION
-1190907033b     ./texinfo/Makefile.am
-  45561715b     ./texinfo/Makefile.in
+3694161176b     ./texinfo/Makefile.am
+2667709874b     ./texinfo/Makefile.in
 2456883787b     ./texinfo/NEWS
  939039628b     ./texinfo/README
 4194708969b     ./texinfo/README-alpha
@@ -6367,7 +6366,7 @@
 3892192340b     ./texinfo/acinclude.m4
 1818562438b     ./texinfo/aclocal.m4
 1315260558b     ./texinfo/config.guess
- 238297047b     ./texinfo/config.h.in
+3289883402b     ./texinfo/config.h.in
 3966557687b     ./texinfo/config.sub
 3820040802b     ./texinfo/configure
 1997226294b     ./texinfo/configure.in

@@ -249,6 +249,9 @@ extern int errno;
 #ifndef WEXITSTATUS
 #define WEXITSTATUS(S) (((S) & 0xff00) >> 8)
 #endif
+#ifndef WSTOPSIG
+#define WSTOPSIG WEXITSTATUS
+#endif
 
 
 
@@ -328,6 +331,10 @@ extern char *getwd ();
 
 #ifdef NEED_DECLARATION_SBRK
 extern char *sbrk ();
+#endif
+
+#ifdef NEED_DECLARATION_STRSTR
+extern char *strstr ();
 #endif
 
 #ifdef HAVE_STRERROR

@@ -2557,14 +2557,21 @@ verify_dominator (loop_number)
 	  && GET_CODE (PATTERN (insn)) != RETURN)
 	{
 	  rtx label = JUMP_LABEL (insn);
-	  int label_luid = INSN_LUID (label);
+	  int label_luid;
 
-	  if (! condjump_p (insn)
-	      && ! condjump_in_parallel_p (insn))
+	  /* If it is not a jump we can easily understand or for
+	     which we do not have jump target information in the JUMP_LABEL
+	     field (consider ADDR_VEC and ADDR_DIFF_VEC insns), then clear
+	     LOOP_NUMBER_CONT_DOMINATOR.  */
+	  if ((! condjump_p (insn)
+	       && ! condjump_in_parallel_p (insn))
+	      || label == NULL_RTX)
 	    {
 	      loop_number_cont_dominator[loop_number] = NULL_RTX;
 	      return;
 	    }
+
+	  label_luid = INSN_LUID (label);
 	  if (label_luid < INSN_LUID (loop_number_loop_cont[loop_number])
 	      && (label_luid
 		  > INSN_LUID (loop_number_cont_dominator[loop_number])))
@@ -4134,8 +4141,15 @@ strength_reduce (scan_start, end, loop_top, insn_count,
     n_extra_increment += bl->biv_count - 1;
 
   /* If the loop contains volatile memory references do not allow any
-     replacements to take place, since this could loose the volatile markers.  */
-  if (n_extra_increment  && ! loop_has_volatile)
+     replacements to take place, since this could loose the volatile
+     markers.
+
+     Disabled for the gcc-2.95 release.  There are still some problems with
+     giv recombination.  We have a patch from Joern which should fix those
+     problems.  But the patch is fairly complex and not really suitable for
+     the gcc-2.95 branch at this stage.  */
+  if (0 && n_extra_increment  && ! loop_has_volatile)
+
     {
       int nregs = first_increment_giv + n_extra_increment;
 
@@ -4740,7 +4754,13 @@ strength_reduce (scan_start, end, loop_top, insn_count,
 	  VARRAY_GROW (reg_iv_type, nregs);
 	  VARRAY_GROW (reg_iv_info, nregs);
 	}
+#if 0
+      /* Disabled for the gcc-2.95 release.  There are still some problems with
+	 giv recombination.  We have a patch from Joern which should fix those
+	 problems.  But the patch is fairly complex and not really suitable for
+	 the gcc-2.95 branch at this stage.  */
       recombine_givs (bl, loop_start, loop_end, unroll_p);
+#endif
 
       /* Reduce each giv that we decided to reduce.  */
 
@@ -8199,11 +8219,16 @@ loop_insn_first_p (insn, reference)
       if (p == reference || ! q)
         return 1;
 
+      /* Either of P or Q might be a NOTE.  Notes have the same LUID as the
+         previous insn, hence the <= comparison below does not work if
+	 P is a note.  */
       if (INSN_UID (p) < max_uid_for_loop
-	  && INSN_UID (q) < max_uid_for_loop)
-	return INSN_LUID (p) < INSN_LUID (q);
+	  && INSN_UID (q) < max_uid_for_loop
+	  && GET_CODE (p) != NOTE)
+	return INSN_LUID (p) <= INSN_LUID (q);
 
-      if (INSN_UID (p) >= max_uid_for_loop)
+      if (INSN_UID (p) >= max_uid_for_loop
+	  || GET_CODE (p) == NOTE)
 	p = NEXT_INSN (p);
       if (INSN_UID (q) >= max_uid_for_loop)
 	q = NEXT_INSN (q);

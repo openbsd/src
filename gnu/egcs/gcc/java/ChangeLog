@@ -1,3 +1,86 @@
+1999-06-29  Tom Tromey  <tromey@cygnus.com>
+
+	* jvspec.c (lang_specific_driver): Recognize --help.
+
+Fri Jun 25 13:35:19 1999  Alexandre Petit-Bianco  <apbianco@cygnus.com>
+
+	* parse.c: Rebuilt.
+
+	* parse.y (resolve_package): Fixed bogus return statement.
+	(patch_method_invocation): Resolve method invocation beginning with
+ 	a package name qualifier.
+
+	* parse.y (java_complete_lhs): When doing cross referencing, don't
+ 	try to keep file location on a WFL expanded as a CALL_EXPR.
+
+	* parse.y (finish_method_declaration): Insert a RETURN_EXPR when
+ 	compiling to class file a void method with an empty method body.
+  	As a side effect, the bytecode backend will generate the
+ 	appropriate `return' instruction.
+	
+	* parse.y (lookup_package_type_and_set_next): New function prototype.
+	(resolve_package): Search current and imported packages.
+	(lookup_package_type_and_set_next): New function.
+
+1999-06-25  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+        * Make-lang.in (java.stage1): Depend on stage1-start.
+        (java.stage2): Likewise for stage2-start.
+        (java.stage3): Likewise for stage3-start.
+        (java.stage4): Likewise for stage4-start.
+
+1999-06-22  Andrew Haley  <aph@cygnus.com>
+
+	* verify.c (verify_jvm_instructions): Check for pending blocks
+	before invalid PC test and opcode switch, not after.
+
+1999-06-21  Andrew Haley  <aph@cygnus.com>
+
+        * except.c (find_handler_in_range): The upper limit for exception
+        ranges is exclusive, not inclusive: (start <= pc < end).  
+        (link_handler): find child pointer which points to outer by
+        searching sibling list: previous code incorrectly assumed that
+        outer->outer->first_child must point to outer.
+        * verify.c (verify_jvm_instructions): FIXME added to code for
+        `athrow'.
+        (verify_jvm_instructions): Do not assume that the last block
+        processed in a subroutine is a block which ends with a `ret'
+        instruction.  With some control flows it is possible that the last
+        block ends with an `athrow'.
+
+Mon Jun 14 13:13:39 1999  Alexandre Petit-Bianco  <apbianco@cygnus.com>
+
+	* parse.y (qualify_ambiguous_name): Reorganized the post
+ 	evaluation of non WFL leading expression nodes.
+
+Fri Jun 11 21:37:18 1999  Alexandre Petit-Bianco  <apbianco@cygnus.com>
+
+	* parse.y (qualify_ambiguous_name): Handle ARRAY_REF after
+ 	CONVERT_EXPR.
+
+Thu Jun 10 22:26:17 1999  Alexandre Petit-Bianco  <apbianco@cygnus.com>
+
+	* parse.y (qualify_ambiguous_name): Handle qualified expression
+ 	beginning with a STRING_CST.
+
+Thu Jun 10 20:27:25 1999  Alexandre Petit-Bianco  <apbianco@cygnus.com>
+
+	* parse.y (register_fields): Set DECL_INITIAL on both
+ 	pre-initialized static and public fields.
+	(resolve_field_access): Static field access expressions to always
+ 	use pointer types.
+	(qualify_ambiguous_name): Work out buried CALL_EXPR for proper
+ 	qualification. CONVERT_EXPR to be resolved as an expression name.
+	(java_complete_lhs): Identify and access qualified final
+ 	initialized field in switch statement case expression.
+	(fold_constant_for_init): Pre-initialized field decl constant to
+ 	be folded.
+
+Mon Jun  7 16:09:51 1999  Alexandre Petit-Bianco  <apbianco@cygnus.com>
+
+	* parse.y (note_possible_classname): Mark returned node with
+ 	QUALIFIED_P only if the original class name contained a '/'.
+
 Sat Jun  5 11:46:59 1999  Anthony Green  <green@cygnus.com>
 
 	* Make-lang.in (gcjh): More parallel build fixes.

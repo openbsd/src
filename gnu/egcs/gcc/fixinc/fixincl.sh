@@ -6,7 +6,7 @@
 # files which are fixed to work correctly with ANSI C and placed in a
 # directory that GNU C will search.
 #
-# This script contains 104 fixup scripts.
+# This script contains 103 fixup scripts.
 #
 # See README-fixinc for more information.
 #
@@ -393,7 +393,7 @@ find . -name DONE -exec rm -f '{}' ';'
 
 echo 'Removing unneeded directories:'
 cd $LIB
-all_dirs=`find . -type d -print | sort -r`
+all_dirs=`find . -type d \! -name '.' -print | sort -r`
 for file in $all_dirs; do
   rmdir $LIB/$file > /dev/null 2>&1
 done

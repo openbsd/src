@@ -896,6 +896,22 @@ gen_lowpart_common (mode, x)
       r = REAL_VALUE_FROM_TARGET_SINGLE (i);
       return CONST_DOUBLE_FROM_REAL_VALUE (r, mode);
     }
+  else if (((HOST_FLOAT_FORMAT == TARGET_FLOAT_FORMAT
+	     && HOST_BITS_PER_WIDE_INT == BITS_PER_WORD)
+	    || flag_pretend_float)
+	   && GET_MODE_CLASS (mode) == MODE_FLOAT
+	   && GET_MODE_SIZE (mode) == UNITS_PER_WORD
+	   && GET_CODE (x) == CONST_INT
+	   && (sizeof (double) * HOST_BITS_PER_CHAR
+	       == HOST_BITS_PER_WIDE_INT))
+    {
+      REAL_VALUE_TYPE r;
+      HOST_WIDE_INT i;
+
+      i = INTVAL (x);
+      r = REAL_VALUE_FROM_TARGET_DOUBLE (&i);
+      return CONST_DOUBLE_FROM_REAL_VALUE (r, mode);
+    }
 #endif
 
   /* Similarly, if this is converting a floating-point value into a
@@ -1196,10 +1212,33 @@ operand_subword (op, i, validate_address, mode)
   /* If OP is a REG or SUBREG, we can handle it very simply.  */
   if (GET_CODE (op) == REG)
     {
-      /* If the register is not valid for MODE, return 0.  If we don't
-	 do this, there is no way to fix up the resulting REG later.  */
+      /* ??? There is a potential problem with this code.  It does not
+	 properly handle extractions of a subword from a hard register
+	 that is larger than word_mode.  Presumably the check for
+	 HARD_REGNO_MODE_OK catches these most of these cases.  */
+
+      /* If OP is a hard register, but OP + I is not a hard register,
+	 then extracting a subword is impossible.
+
+	 For example, consider if OP is the last hard register and it is
+	 larger than word_mode.  If we wanted word N (for N > 0) because a
+	 part of that hard register was known to contain a useful value,
+	 then OP + I would refer to a pseudo, not the hard register we
+	 actually wanted.  */
       if (REGNO (op) < FIRST_PSEUDO_REGISTER
-	  && ! HARD_REGNO_MODE_OK (REGNO (op) + i, word_mode))
+	  && REGNO (op) + i >= FIRST_PSEUDO_REGISTER)
+	return 0;
+
+      /* If the register is not valid for MODE, return 0.  Note we
+	 have to check both OP and OP + I since they may refer to
+	 different parts of the register file.
+
+	 Consider if OP refers to the last 96bit FP register and we want
+	 subword 3 because that subword is known to contain a value we
+	 needed.  */
+      if (REGNO (op) < FIRST_PSEUDO_REGISTER
+	  && (! HARD_REGNO_MODE_OK (REGNO (op), word_mode)
+	      || ! HARD_REGNO_MODE_OK (REGNO (op) + i, word_mode)))
 	return 0;
       else if (REGNO (op) >= FIRST_PSEUDO_REGISTER
 	       || (REG_FUNCTION_VALUE_P (op)

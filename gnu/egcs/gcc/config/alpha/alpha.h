@@ -157,14 +157,14 @@ extern enum alpha_fp_trap_mode alpha_fptm;
 
 /* This means that the processor is an EV5, EV56, or PCA56.  This is defined
    only in TARGET_CPU_DEFAULT.  */
-#define MASK_CPU_EV5	(1 << 29)
+#define MASK_CPU_EV5	(1 << 28)
 
 /* Likewise for EV6.  */
-#define MASK_CPU_EV6	(1 << 30)
+#define MASK_CPU_EV6	(1 << 29)
 
 /* This means we support the .arch directive in the assembler.  Only
    defined in TARGET_CPU_DEFAULT.  */
-#define MASK_SUPPORT_ARCH (1 << 31)
+#define MASK_SUPPORT_ARCH (1 << 30)
 #define TARGET_SUPPORT_ARCH	(target_flags & MASK_SUPPORT_ARCH)
 
 /* These are for target os support and cannot be changed at runtime.  */
@@ -2144,6 +2144,11 @@ literal_section ()						\
     }									      \
   }									      \
   while (0)
+
+/* To get unaligned data, we have to turn off auto alignment.  */
+#define UNALIGNED_SHORT_ASM_OP		".align 0\n\t.word"
+#define UNALIGNED_INT_ASM_OP		".align 0\n\t.long"
+#define UNALIGNED_DOUBLE_INT_ASM_OP	".align 0\n\t.quad"
 
 /* This is how to output an insn to push a register on the stack.
    It need not be very fast code.  */

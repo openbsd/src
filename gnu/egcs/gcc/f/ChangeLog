@@ -1,3 +1,22 @@
+Mon Jun 28 10:43:11 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* com.c (ffecom_prepare_expr_): A COMPLEX intrinsic needs
+	a temp even if -fno-f2c.
+
+	* version.c: Bump version.
+
+Fri Jun 25 11:06:32 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* bugs.texi: Describe K(5)=10*3 NAMELIST-read bug.
+
+Mon Jun 21 12:40:17 1999  Gerald Pfeifer  <pfeifer@dbai.tuwien.ac.at>
+ 
+	* g77.texi: Update links.
+
+Wed Jun 16 11:43:02 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* news.texi: Mention BACKSPACE fix to libg2c.
+
 Mon Jun  7 08:42:40 1999  Craig Burley  <craig@jcb-sc.com>
 
 	* Make-lang.in: Any target using libsubdir must depend

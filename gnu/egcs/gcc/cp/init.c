@@ -44,7 +44,7 @@ Boston, MA 02111-1307, USA.  */
 tree current_base_init_list, current_member_init_list;
 
 static void expand_aggr_vbase_init_1 PROTO((tree, tree, tree, tree));
-static void expand_aggr_vbase_init PROTO((tree, tree, tree, tree));
+static void construct_virtual_bases PROTO((tree, tree, tree, tree, tree));
 static void expand_aggr_init_1 PROTO((tree, tree, tree, tree, int));
 static void expand_default_init PROTO((tree, tree, tree, tree, int));
 static tree build_vec_delete_1 PROTO((tree, tree, tree, tree, tree,
@@ -55,11 +55,11 @@ static tree build_builtin_delete_call PROTO((tree));
 static int member_init_ok_or_else PROTO((tree, tree, const char *));
 static void expand_virtual_init PROTO((tree, tree));
 static tree sort_member_init PROTO((tree));
-static tree build_partial_cleanup_for PROTO((tree));
 static tree initializing_context PROTO((tree));
 static void expand_vec_init_try_block PROTO((tree));
 static void expand_vec_init_catch_clause PROTO((tree, tree, tree, tree));
 static tree build_java_class_ref PROTO((tree));
+static void expand_cleanup_for_base PROTO((tree, tree));
 
 /* Cache the identifier nodes for the magic field of a new cookie.  */
 static tree nc_nelts_field_id;
@@ -478,17 +478,6 @@ sort_base_init (t, rbase_ptr, vbase_ptr)
   *vbase_ptr = vbases;
 }
 
-/* Perform partial cleanups for a base for exception handling.  */
-
-static tree
-build_partial_cleanup_for (binfo)
-     tree binfo;
-{
-  return build_scoped_method_call
-    (current_class_ref, binfo, dtor_identifier,
-     build_expr_list (NULL_TREE, integer_zero_node));
-}
-
 /* Perform whatever initializations have yet to be done on the base
    class of the class variable.  These actions are in the global
    variable CURRENT_BASE_INIT_LIST.  Such an action could be
@@ -548,14 +537,13 @@ emit_base_init (t, immediately)
   sort_base_init (t, &rbase_init_list, &vbase_init_list);
   current_base_init_list = NULL_TREE;
 
+  /* First, initialize the virtual base classes, if we are
+     constructing the most-derived object.  */
   if (TYPE_USES_VIRTUAL_BASECLASSES (t))
     {
       tree first_arg = TREE_CHAIN (DECL_ARGUMENTS (current_function_decl));
-
-      expand_start_cond (first_arg, 0);
-      expand_aggr_vbase_init (t_binfo, current_class_ref, current_class_ptr,
-			      vbase_init_list);
-      expand_end_cond ();
+      construct_virtual_bases (t, current_class_ref, current_class_ptr,
+			       vbase_init_list, first_arg);
     }
 
   /* Now, perform initialization of non-virtual base classes.  */
@@ -593,18 +581,7 @@ emit_base_init (t, immediately)
 	  free_temp_slots ();
 	}
 
-      if (TYPE_NEEDS_DESTRUCTOR (BINFO_TYPE (base_binfo)))
-	{
-	  tree expr;
-
-	  /* All cleanups must be on the function_obstack.  */
-	  push_obstacks_nochange ();
-	  resume_temporary_allocation ();
-	  expr = build_partial_cleanup_for (base_binfo);
-	  pop_obstacks ();
-	  add_partial_entry (expr);
-	}
-
+      expand_cleanup_for_base (base_binfo, NULL_TREE);
       rbase_init_list = TREE_CHAIN (rbase_init_list);
     }
 
@@ -766,6 +743,39 @@ expand_virtual_init (binfo, decl)
   expand_expr_stmt (build_modify_expr (vtbl_ptr, NOP_EXPR, vtbl));
 }
 
+/* If an exception is thrown in a constructor, those base classes already
+   constructed must be destroyed.  This function creates the cleanup
+   for BINFO, which has just been constructed.  If FLAG is non-NULL,
+   it is a DECL which is non-zero when this base needs to be
+   destroyed.  */
+
+static void
+expand_cleanup_for_base (binfo, flag)
+     tree binfo;
+     tree flag;
+{
+  tree expr;
+
+  if (!TYPE_NEEDS_DESTRUCTOR (BINFO_TYPE (binfo)))
+    return;
+
+  /* All cleanups must be on the function_obstack.  */
+  push_obstacks_nochange ();
+  resume_temporary_allocation ();
+
+  /* Call the destructor.  */
+  expr = (build_scoped_method_call
+	  (current_class_ref, binfo, dtor_identifier,
+	   build_expr_list (NULL_TREE, integer_zero_node)));
+  if (flag)
+    expr = fold (build (COND_EXPR, void_type_node,
+			truthvalue_conversion (flag),
+			expr, integer_zero_node));
+
+  pop_obstacks ();
+  add_partial_entry (expr);
+}
+
 /* Subroutine of `expand_aggr_vbase_init'.
    BINFO is the binfo of the type that is being initialized.
    INIT_LIST is the list of initializers for the virtual baseclass.  */
@@ -788,36 +798,60 @@ expand_aggr_vbase_init_1 (binfo, exp, addr, init_list)
   free_temp_slots ();
 }
 
-/* Initialize this object's virtual base class pointers.  This must be
-   done only at the top-level of the object being constructed.
-
-   INIT_LIST is list of initialization for constructor to perform.  */
+/* Construct the virtual base-classes of THIS_REF (whose address is
+   THIS_PTR).  The object has the indicated TYPE.  The construction
+   actually takes place only if FLAG is non-zero.  INIT_LIST is list
+   of initialization for constructor to perform.  */
 
 static void
-expand_aggr_vbase_init (binfo, exp, addr, init_list)
-     tree binfo;
-     tree exp;
-     tree addr;
+construct_virtual_bases (type, this_ref, this_ptr, init_list, flag)
+     tree type;
+     tree this_ref;
+     tree this_ptr;
      tree init_list;
+     tree flag;
 {
-  tree type = BINFO_TYPE (binfo);
+  tree vbases;
+  tree result;
 
-  if (TYPE_USES_VIRTUAL_BASECLASSES (type))
+  /* If there are no virtual baseclasses, we shouldn't even be here.  */
+  my_friendly_assert (TYPE_USES_VIRTUAL_BASECLASSES (type), 19990621);
+
+  /* First set the pointers in our object that tell us where to find
+     our virtual baseclasses.  */
+  expand_start_cond (flag, 0);
+  result = init_vbase_pointers (type, this_ptr);
+  if (result)
+    expand_expr_stmt (build_compound_expr (result));
+  expand_end_cond ();
+
+  /* Now, run through the baseclasses, initializing each.  */ 
+  for (vbases = CLASSTYPE_VBASECLASSES (type); vbases;
+       vbases = TREE_CHAIN (vbases))
     {
-      tree result = init_vbase_pointers (type, addr);
-      tree vbases;
-
-      if (result)
-	expand_expr_stmt (build_compound_expr (result));
-
-      for (vbases = CLASSTYPE_VBASECLASSES (type); vbases;
-	   vbases = TREE_CHAIN (vbases))
-	{
-	  tree tmp = purpose_member (vbases, result);
-	  expand_aggr_vbase_init_1 (vbases, exp,
-				    TREE_OPERAND (TREE_VALUE (tmp), 0),
-				    init_list);
-	}
+      tree tmp = purpose_member (vbases, result);
+      
+      /* If there are virtual base classes with destructors, we need to
+	 emit cleanups to destroy them if an exception is thrown during
+	 the construction process.  These exception regions (i.e., the
+	 period during which the cleanups must occur) begin from the time
+	 the construction is complete to the end of the function.  If we
+	 create a conditional block in which to initialize the
+	 base-classes, then the cleanup region for the virtual base begins
+	 inside a block, and ends outside of that block.  This situation
+	 confuses the sjlj exception-handling code.  Therefore, we do not
+	 create a single conditional block, but one for each
+	 initialization.  (That way the cleanup regions always begin
+	 in the outer block.)  We trust the back-end to figure out
+	 that the FLAG will not change across initializations, and
+	 avoid doing multiple tests.  */
+      expand_start_cond (flag, 0);
+      expand_aggr_vbase_init_1 (vbases, this_ref,
+				TREE_OPERAND (TREE_VALUE (tmp), 0),
+				init_list);
+      expand_end_cond ();
+      
+      expand_cleanup_for_base (vbases, flag);
     }
 }
 
@@ -2180,21 +2214,21 @@ build_new_1 (exp)
       signature_error (NULL_TREE, true_type);
       return error_mark_node;
     }
+  
+  /* When we allocate an array, and the corresponding deallocation
+     function takes a second argument of type size_t, and that's the
+     "usual deallocation function", we allocate some extra space at
+     the beginning of the array to store the size of the array.
 
-#if 1
-  /* Get a little extra space to store a couple of things before the new'ed
-     array, if this isn't the default placement new.  */
+     Well, that's what we should do.  For backwards compatibility, we
+     have to do this whenever there's a two-argument array-delete
+     operator. 
 
+     FIXME: For -fnew-abi, we don't have to maintain backwards
+     compatibility and we should fix this.  */
   use_cookie = (has_array && TYPE_VEC_NEW_USES_COOKIE (true_type)
 		&& ! (placement && ! TREE_CHAIN (placement)
 		      && TREE_TYPE (TREE_VALUE (placement)) == ptr_type_node));
-#else
-  /* Get a little extra space to store a couple of things before the new'ed
-     array, if this is either non-placement new or new (nothrow).  */
-  
-  use_cookie = (has_array && TYPE_VEC_NEW_USES_COOKIE (true_type)
-		&& (! placement || nothrow));
-#endif
 
   if (use_cookie)
     {
