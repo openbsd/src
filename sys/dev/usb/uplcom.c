@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.18 2005/01/10 12:05:08 dlg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.19 2005/01/16 05:56:55 dlg Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ int	uplcomdebug = 0;
 
 #define	UPLCOM_SET_REQUEST	0x01
 #define	UPLCOM_SET_CRTSCTS	0x41
+#define	UPLCOM_HX_SET_CRTSCTS	0x61
 #define RSAQ_STATUS_CTS		0x80
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
@@ -118,6 +119,7 @@ struct	uplcom_softc {
 
 	u_char			sc_lsr;		/* Local status register */
 	u_char			sc_msr;		/* uplcom status register */
+	int			sc_type_hx;	/* HX variant */
 };
 
 /*
@@ -210,6 +212,7 @@ USB_ATTACH(uplcom)
 	USB_ATTACH_START(uplcom, sc, uaa);
 	usbd_device_handle dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
+	usb_device_descriptor_t *ddesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 
@@ -250,6 +253,25 @@ USB_ATTACH(uplcom)
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	/* get the device descriptor */
+	ddesc = usbd_get_device_descriptor(sc->sc_udev);
+	if (ddesc == NULL) {
+		printf("%s: failed to get device descriptor\n",
+		    USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
+		USB_ATTACH_ERROR_RETURN;
+	}
+
+	/*
+	 * The Linux driver suggest this will only be true for the HX
+	 * variants. The datasheets disagree.
+	 */
+	if (ddesc->bMaxPacketSize = 0x40) {
+		DPRINTF(("%s: Assuming HX variant\n", USBDEVNAME(sc->sc_dev)));
+		sc->sc_type_hx = 1;
+	} else
+		sc->sc_type_hx = 0;
 
 	/* get the (first/common) interface */
 	err = usbd_device2interface_handle(dev, UPLCOM_IFACE_INDEX,
@@ -547,7 +569,8 @@ uplcom_set_crtscts(struct uplcom_softc *sc)
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = UPLCOM_SET_REQUEST;
 	USETW(req.wValue, 0);
-	USETW(req.wIndex, UPLCOM_SET_CRTSCTS);
+	USETW(req.wIndex,
+	    (sc->sc_type_hx ? UPLCOM_HX_SET_CRTSCTS : UPLCOM_SET_CRTSCTS));
 	USETW(req.wLength, 0);
 
 	err = usbd_do_request(sc->sc_udev, &req, 0);
@@ -653,6 +676,8 @@ int
 uplcom_open(void *addr, int portno)
 {
 	struct uplcom_softc *sc = addr;
+	usb_device_request_t req;
+	usbd_status uerr;
 	int err;
 
 	if (sc->sc_dying)
@@ -671,6 +696,43 @@ uplcom_open(void *addr, int portno)
 				USBDEVNAME(sc->sc_dev), sc->sc_intr_number));
 					return (EIO);
 		}
+	}
+
+	if (sc->sc_type_hx == 1) {
+		/*
+		 * Undocumented (vendor unresponsive) - possibly changes
+		 * flow control semantics. It is needed for HX variant devices.
+		 */
+		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+		req.bRequest = UPLCOM_SET_REQUEST;
+		USETW(req.wValue, 2);
+		USETW(req.wIndex, 0x44);
+		USETW(req.wLength, 0);
+
+		uerr = usbd_do_request(sc->sc_udev, &req, 0);
+		if (uerr)
+			return (EIO);
+
+		/* Reset upstream data pipes */
+		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+		req.bRequest = UPLCOM_SET_REQUEST;
+		USETW(req.wValue, 8);
+		USETW(req.wIndex, 0);
+		USETW(req.wLength, 0);
+
+		uerr = usbd_do_request(sc->sc_udev, &req, 0);
+		if (uerr)
+			return (EIO);
+
+		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+		req.bRequest = UPLCOM_SET_REQUEST;
+		USETW(req.wValue, 9);
+		USETW(req.wIndex, 0);
+		USETW(req.wLength, 0);
+
+		uerr = usbd_do_request(sc->sc_udev, &req, 0);
+		if (uerr)
+			return (EIO);
 	}
 
 	return (0);
