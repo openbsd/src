@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.14 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.15 2004/04/25 15:50:35 markus Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -1711,7 +1711,7 @@ rtdelete(struct rt_entry *rt)
 	mask_sock.sin_addr.s_addr = rt->rt_mask;
 	masktrim(&mask_sock);
 	if (rt != (struct rt_entry *)rhead->rnh_deladdr(&dst_sock, &mask_sock,
-							rhead)) {
+							rhead, NULL)) {
 		msglog("rnh_deladdr() failed");
 	} else {
 		free(rt);
