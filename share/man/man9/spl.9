@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.10 2002/05/15 23:18:06 art Exp $
+.\"	$OpenBSD: spl.9,v 1.11 2002/05/20 22:21:13 art Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -207,4 +207,5 @@ The behavior of the
 function is controlled by the kern.splassert
 .Xr sysctl 8 .
 Set to 0 it disables error checking, set to 1 it prints an error message
-if error is detected, any other value causes a system panic on errors.
+if error is detected, 2 prints a message and stack traceback if possible,
+any other value causes a system panic on errors.
