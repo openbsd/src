@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.2 2003/02/12 01:42:31 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.3 2003/02/15 23:38:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -117,15 +117,9 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	struct hilkbd_softc *sc = (void *)self;
 	struct hil_attach_args *ha = aux;
 	struct wskbddev_attach_args a;
-	u_int8_t db, layoutcode;
+	u_int8_t layoutcode;
 
 	sc->sc_code = ha->ha_code;
-
-	/*
-	 * Put the keyboard in raw mode
-	 */
-	db = 0;
-	send_hil_cmd((struct hil_softc *)parent, HIL_WRITEKBDSADR, &db, 1, NULL);
 
 	/*
 	 * Determine the keyboard language configuration, but don't
@@ -190,15 +184,18 @@ hilkbd_set_leds(void *v, int leds)
 	if (changemask & WSKBD_LED_SCROLL)
 		send_hildev_cmd((struct hil_softc *)sc->sc_dev.dv_parent,
 		    sc->sc_code,
-		    (leds & WSKBD_LED_SCROLL) ? HIL_PROMPT1 : HIL_ACK1);
+		    (leds & WSKBD_LED_SCROLL) ? HIL_PROMPT1 : HIL_ACK1,
+		    NULL, NULL);
 	if (changemask & WSKBD_LED_NUM)
 		send_hildev_cmd((struct hil_softc *)sc->sc_dev.dv_parent,
 		    sc->sc_code,
-		    (leds & WSKBD_LED_NUM) ? HIL_PROMPT2 : HIL_ACK2);
+		    (leds & WSKBD_LED_NUM) ? HIL_PROMPT2 : HIL_ACK2,
+		    NULL, NULL);
 	if (changemask & WSKBD_LED_CAPS)
 		send_hildev_cmd((struct hil_softc *)sc->sc_dev.dv_parent,
 		    sc->sc_code,
-		    (leds & WSKBD_LED_CAPS) ? HIL_PROMPT3 : HIL_ACK3);
+		    (leds & WSKBD_LED_CAPS) ? HIL_PROMPT3 : HIL_ACK3,
+		    NULL, NULL);
 
 	sc->sc_ledstate = leds;
 }

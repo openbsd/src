@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilvar.h,v 1.1 2003/02/11 19:39:30 miod Exp $	*/
+/*	$OpenBSD: hilvar.h,v 1.2 2003/02/15 23:38:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -71,40 +71,40 @@
 #define NHILD		8		/* 7 actual + loop pseudo (dev 0) */
 
 struct hil_cb {
-	void (*cb_fn)(void *, u_int, u_char *);
+	void (*cb_fn)(void *, u_int, u_int8_t *);
 	void *cb_arg;
 };
 
 struct hil_softc {
-	struct	device sc_dev;
+	struct device	sc_dev;
 	bus_space_handle_t sc_bsh;
-	bus_space_tag_t sc_bst;
+	bus_space_tag_t	sc_bst;
 
-	u_char 	sc_cmddone;
-	u_char 	sc_cmdending;
-	u_char	sc_actdev;		/* current input device */
-	u_char	sc_cmddev;		/* device to perform command on */
-	u_char	sc_pollbuf[HILBUFSIZE];	/* interrupt time input buffer */
-	u_char	sc_cmdbuf[HILBUFSIZE];
-	u_char 	*sc_pollbp;		/* pointer into sc_pollbuf */
-	u_char	*sc_cmdbp;		/* pointer into sc_cmdbuf */
+	int		sc_cmddone;
+	int		sc_cmdending;
+	u_int		sc_actdev;	/* current input device */
+	u_int		sc_cmddev;	/* device to perform command on */
+	u_int8_t	sc_pollbuf[HILBUFSIZE];	/* interrupt time input buf */
+	u_int8_t	sc_cmdbuf[HILBUFSIZE];
+	u_int8_t	*sc_pollbp;	/* pointer into sc_pollbuf */
+	u_int8_t	*sc_cmdbp;	/* pointer into sc_cmdbuf */
 
-	u_char  sc_maxdev;		/* number of devices on loop */
-	u_char	sc_kbddev;		/* keyboard device id */
-	struct hil_cb sc_cb[NHILD];	/* interrupt dispatcher */
+	u_int		sc_maxdev;	/* number of devices on loop */
+	u_int		sc_kbddev;		/* keyboard device id */
+	struct hil_cb	sc_cb[NHILD];	/* interrupt dispatcher */
 };
 
 #ifdef _KERNEL
 
-void	send_hil_cmd(struct hil_softc *, u_char, u_char *, u_char, u_char *);
-void	send_hildev_cmd(struct hil_softc *, char, char);
+void	send_hil_cmd(struct hil_softc *, u_int, u_int8_t *, u_int, u_int8_t *);
+void	send_hildev_cmd(struct hil_softc *, u_int, u_int, u_int8_t *, u_int *);
 void	hil_set_poll(struct hil_softc *, int);
-int	hil_poll_data(struct hil_softc *, u_char *, u_char *);
+int	hil_poll_data(struct hil_softc *, u_int8_t *, u_int8_t *);
 
 void	hil_attach(struct hil_softc *);
 void	hil_attach_deferred(void *);
-void	hil_callback_register(struct hil_softc *, int,
-    void (*)(void *, u_int, u_char *), void *);
+void	hil_callback_register(struct hil_softc *, u_int,
+    void (*)(void *, u_int, u_int8_t *), void *);
 int	hil_intr(void *);
 int	hildevprint(void *, const char *);
 

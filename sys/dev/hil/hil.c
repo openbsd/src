@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.1 2003/02/11 19:40:20 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.2 2003/02/15 23:38:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -228,7 +228,7 @@ hil_attach_deferred(void *v)
 		int len;
 		const struct hildevice *hd;
 		
-		send_hildev_cmd(sc, id, HIL_IDENTIFY);
+		send_hildev_cmd(sc, id, HIL_IDENTIFY, NULL, NULL);
 
 		len = sc->sc_cmdbp - sc->sc_cmdbuf;
 		if (len == 0) {
@@ -272,7 +272,7 @@ hil_attach_deferred(void *v)
 }
 
 void
-hil_callback_register(struct hil_softc *sc, int hilid,
+hil_callback_register(struct hil_softc *sc, u_int hilid,
     void (*handler)(void *, u_int, u_int8_t *), void *arg)
 {
 #ifdef HILDEBUG
@@ -414,7 +414,7 @@ hilconfig(struct hil_softc *sc)
  * possible without blocking the clock (is this necessary?)
  */
 void
-send_hil_cmd(struct hil_softc *sc, u_int8_t cmd, u_int8_t *data, u_int8_t dlen,
+send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
     u_int8_t *rdata)
 {
 	u_int8_t status;
@@ -450,9 +450,8 @@ send_hil_cmd(struct hil_softc *sc, u_int8_t cmd, u_int8_t *data, u_int8_t dlen,
  * splvm (clock only interrupts) seems to be good enough in practice.
  */
 void
-send_hildev_cmd(sc, device, cmd)
-	struct hil_softc *sc;
-	char device, cmd;
+send_hildev_cmd(struct hil_softc *sc, u_int device, u_int cmd,
+    u_int8_t *outbuf, u_int *outlen)
 {
 	u_int8_t status, c;
 	int s = splvm();
@@ -489,6 +488,14 @@ send_hildev_cmd(sc, device, cmd)
 
 	sc->sc_cmddev = 0;
 
+	/*
+	 * Return the command response in the buffer if necessary
+	 */
+	if (outbuf != NULL && outlen != NULL) {
+		*outlen = min(*outlen, sc->sc_cmdbp - sc->sc_cmdbuf);
+		bcopy(sc->sc_cmdbuf, outbuf, *outlen);
+	}
+
 	pollon(sc);
 
 	splx(s);
@@ -500,7 +507,7 @@ send_hildev_cmd(sc, device, cmd)
 void
 polloff(struct hil_softc *sc)
 {
-	char db;
+	u_int8_t db;
 
 	/*
 	 * Turn off auto repeat
@@ -537,7 +544,7 @@ polloff(struct hil_softc *sc)
 void
 pollon(struct hil_softc *sc)
 {
-	char db;
+	u_int8_t db;
 
 	/*
 	 * Turn on auto polling
