@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popa3d.8,v 1.8 2003/06/12 12:59:52 jmc Exp $
+.\"	$OpenBSD: popa3d.8,v 1.9 2004/06/20 20:46:27 itojun Exp $
 .\"
 .\" Copyright (c) 2001-2003 Camiel Dobbelaar (cd@sentia.nl)
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Nd "Post Office Protocol (POP3) server"
 .Sh SYNOPSIS
 .Nm
-.Op Fl D | V
+.Op Fl DV46
 .Sh DESCRIPTION
 .Nm
 is a POP3 server.
@@ -77,6 +77,14 @@ also does quite a few checks to significantly reduce the impact of
 connection flood attacks.
 .It Fl V
 Show version information and exit.
+.It Fl 4
+In standalone mode
+.Pq Fl D ,
+listen to IPv4 only.
+.It Fl 6
+In standalone mode
+.Pq Fl D ,
+listen to IPv6 only.
 .Pp
 .El
 .Pp
