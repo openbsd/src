@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.8 2000/05/02 05:31:49 jason Exp $
+.\"	$OpenBSD: hifn.4,v 1.9 2000/05/04 02:27:45 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -38,17 +38,19 @@
 The
 .Nm
 driver supports various cards containing the Hi/fn 7751 chipset, such as
-.Bl -tag -width namenamenamename -offset indent
+.Bl -tag -width namenamenamena -offset indent
 .It Invertex AEON
-(no longer made)
+No longer being made.  Came as 128KB SRAM model, or 2MB DRAM model.
 .It Hi/fn 7751
-Reference board
+Reference board with 512KB SRAM.
 .It PowerCrypt
 See
-.Pa www.powercrypt.com
+.Pa www.powercrypt.com.
+Comes with 512KB SRAM.
 .It NetSec 7751
 See
-.Pa www.netsec.net
+.Pa www.netsec.net.
+Supports the most IPSEC sessions, with 1MB SRAM.
 .El
 .Pp
 The
