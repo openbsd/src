@@ -254,7 +254,7 @@ combined output file.
 
 =head1 OPTIONS AND ARGUMENTS
 
-This section describes the supported command line options. Minium
+This section describes the supported command line options. Minimum
 matching is supported.
 
 =over 4

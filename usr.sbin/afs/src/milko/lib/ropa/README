@@ -3,13 +3,13 @@ Ropa - callbacks
 
 Thoughts by Love <lha@stacken.kth.se>
 
-$Id: README,v 1.1 2000/09/11 14:41:16 art Exp $
+$Id: README,v 1.2 2001/10/24 10:23:53 dhartmei Exp $
 
 Design
 ======
 
 Think before doing. This isn't that simple. Figure out a way to do
-everything in O(1) but with minium memory requirement.
+everything in O(1) but with minimum memory requirement.
 
 What sizes should we optimize for ? Linked list might be used for
 small datasets.  W/o knowing anything, it seams many fids will have
