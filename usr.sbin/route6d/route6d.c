@@ -1,5 +1,5 @@
-/*	$OpenBSD: route6d.c,v 1.30 2002/06/09 02:15:54 deraadt Exp $	*/
-/*	$KAME: route6d.c,v 1.85 2002/06/07 16:39:41 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.31 2002/08/21 16:30:29 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.30 2002/06/09 02:15:54 deraadt Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.31 2002/08/21 16:30:29 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -732,6 +732,9 @@ ripsend(ifcp, sin6, flag)
 	struct	riprt *rrt;
 	struct	in6_addr *nh;	/* next hop */
 	int	maxrte;
+
+	if (qflag)
+		return;
 
 	if (ifcp == NULL) {
 		/*
