@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.3 2001/09/01 17:12:19 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.4 2001/09/04 15:06:15 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.34 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -34,16 +34,6 @@
  * UltraSPARC IIi and IIe `sabre' PCI controllers.
  */
 
-#ifdef DEBUG
-#define PDB_PROM	0x01
-#define PDB_BUSMAP	0x02
-#define PDB_INTR	0x04
-int psycho_debug = 0x0;
-#define DPRINTF(l, s)   do { if (psycho_debug & l) printf s; } while (0)
-#else
-#define DPRINTF(l, s)
-#endif
-
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -66,6 +56,17 @@ int psycho_debug = 0x0;
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
 #include <sparc64/sparc64/cache.h>
+
+#undef DEBUG
+#ifdef DEBUG
+#define PDB_PROM	0x01
+#define PDB_BUSMAP	0x02
+#define PDB_INTR	0x04
+int psycho_debug = 0x0;
+#define DPRINTF(l, s)   do { if (psycho_debug & l) printf s; } while (0)
+#else
+#define DPRINTF(l, s)
+#endif
 
 static pci_chipset_tag_t psycho_alloc_chipset __P((struct psycho_pbm *, int,
     pci_chipset_tag_t));
@@ -512,6 +513,11 @@ psycho_set_intr(sc, ipl, handler, mapper, clearer)
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
+
+	DPRINTF(PDB_INTR, (
+	    "; installing handler %p arg %p with number %x pil %u\n",
+	    ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil));
+
 	intr_establish(ipl, ih);
 	*(ih->ih_map) |= INTMAP_V;
 }
@@ -615,14 +621,25 @@ psycho_bus_a(arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
+	u_int64_t afsr, afar, bits;
+
+	afar = regs->psy_pcictl[0].pci_afar;
+	afsr = regs->psy_pcictl[0].pci_afsr;
+
+	bits = afsr & (PSY_PCIAFSR_PMA | PSY_PCIAFSR_PTA | PSY_PCIAFSR_PTRY |
+	    PSY_PCIAFSR_PPERR | PSY_PCIAFSR_SMA | PSY_PCIAFSR_STA |
+	    PSY_PCIAFSR_STRY | PSY_PCIAFSR_SPERR);
+
+	if (bits == 0)
+		return (0);
 
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
+	printf("%s: PCI bus A error AFAR %llx AFSR %llx\n",
+	    sc->sc_dev.dv_xname, afar, afsr);
 
-	panic("%s: PCI bus A error AFAR %llx AFSR %llx\n",
-	    sc->sc_dev.dv_xname, 
-	    (long long)regs->psy_ue_afar, (long long)regs->psy_ue_afsr);
+	regs->psy_pcictl[1].pci_afsr = bits;
 	return (1);
 }
 
@@ -632,14 +649,25 @@ psycho_bus_b(arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
+	u_int64_t afsr, afar, bits;
+
+	afar = regs->psy_pcictl[1].pci_afar;
+	afsr = regs->psy_pcictl[1].pci_afsr;
+
+	bits = afsr & (PSY_PCIAFSR_PMA | PSY_PCIAFSR_PTA | PSY_PCIAFSR_PTRY |
+	    PSY_PCIAFSR_PPERR | PSY_PCIAFSR_SMA | PSY_PCIAFSR_STA |
+	    PSY_PCIAFSR_STRY | PSY_PCIAFSR_SPERR);
+
+	if (bits == 0)
+		return (0);
 
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
+	printf("%s: PCI bus B error AFAR %llx AFSR %llx\n",
+	    sc->sc_dev.dv_xname, afar, afsr);
 
-	panic("%s: PCI bus B error AFAR %llx AFSR %llx\n",
-	    sc->sc_dev.dv_xname, 
-	    (long long)regs->psy_ue_afar, (long long)regs->psy_ue_afsr);
+	regs->psy_pcictl[1].pci_afsr = bits;
 	return (1);
 }
 
@@ -991,8 +1019,8 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 	ih->ih_number = ino | sc->sc_ign;
 
 	DPRINTF(PDB_INTR, (
-	    "; installing handler %p arg %p with ino %u pil %u\n",
-	    handler, arg, (u_int)ino, (u_int)ih->ih_pil));
+	    "; installing handler %p arg %p with number %x pil %u\n",
+	    ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil));
 
 	intr_establish(ih->ih_pil, ih);
 
