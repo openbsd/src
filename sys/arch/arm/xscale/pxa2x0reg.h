@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.13 2005/03/02 22:18:52 dlg Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.14 2005/03/30 13:37:34 dlg Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -232,7 +232,13 @@ struct pxa2x0_dma_desc {
 /* Power Manager */
 #define POWMAN_PMCR	0x00
 #define POWMAN_PSSR	0x04	/* Sleep Status register */
-#define  PSSR_RDH	 (1<<5)
+#define  PSSR_SSS	 (1<<0)		/* Software Sleep Status */
+#define  PSSR_BFS	 (1<<1)		/* Battery Fault Status */
+#define  PSSR_VFS	 (1<<2)		/* VCC Fault Status */
+#define  PSSR_STS	 (1<<3)		/* Standby Mode Status */
+#define  PSSR_PH	 (1<<4)		/* Peripheral Control Hold */
+#define  PSSR_RDH	 (1<<5)		/* Read Disable Hold */
+#define  PSSR_OTGPH	 (1<<6)		/* OTG Peripheral Control Hold */
 #define POWMAN_PSPR	0x08
 #define POWMAN_PWER	0x0c
 #define POWMAN_PRER	0x10
