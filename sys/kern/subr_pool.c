@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.26 2002/02/23 00:05:14 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.27 2002/02/23 02:52:56 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1911,15 +1911,17 @@ struct pool_allocator pool_allocator_nointr = {
  *  but we set PA_WANT on the allocator. When a page is returned to
  *  the allocator and PA_WANT is set pool_allocator_free will wakeup all
  *  sleeping pools belonging to this allocator. (XXX - thundering herd).
+ *  We also wake up the allocator in case someone without a pool (malloc)
+ *  is sleeping waiting for this allocator.
  */
 
 void *
 pool_allocator_alloc(struct pool *org, int flags)
 {
 	struct pool_allocator *pa = org->pr_alloc;
-	struct pool *pp, *start;
-	int s, freed;
+	int freed;
 	void *res;
+	int s;
 
 	do {
 		if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
@@ -1937,43 +1939,9 @@ pool_allocator_alloc(struct pool *org, int flags)
 				continue;
 			break;
 		}
-
-		/*
-		 * Drain all pools, except 'org', that use this allocator.
-		 * We do this to reclaim va space. pa_alloc is responsible
-		 * for waiting for physical memory.
-		 * XXX - we risk looping forever if start if someone calls
-		 *  pool_destroy on 'start'. But there is no other way to
-		 *  have potentially sleeping pool_reclaim, non-sleeping
-		 *  locks on pool_allocator and some stirring of drained
-		 *  pools in the allocator.
-		 * XXX - maybe we should use pool_head_slock for locking
-		 *  the allocators?
-		 */
-		freed = 0;
-
 		s = splvm();
 		simple_lock(&pa->pa_slock);
-		pp = start = TAILQ_FIRST(&pa->pa_list);
-		do {
-			TAILQ_REMOVE(&pa->pa_list, pp, pr_alloc_list);
-			TAILQ_INSERT_TAIL(&pa->pa_list, pp, pr_alloc_list);
-			if (pp == org)
-				continue;
-			simple_unlock(&pa->pa_list);
-			freed = pool_reclaim(pp)
-			simple_lock(&pa->pa_list);
-		} while ((pp = TAILQ_FIRST(&pa->pa_list)) != start && !freed);
-
-		if (!freed) {
-			/*
-			 * We set PA_WANT here, the caller will most likely
-			 * sleep waiting for pages (if not, this won't hurt
-			 * that much) and there is no way to set this in the
-			 * caller without violating locking order.
-			 */
-			pa->pa_flags |= PA_WANT;
-		}
+		freed = pool_allocator_drain(pa, org, 1);
 		simple_unlock(&pa->pa_slock);
 		splx(s);
 	} while (freed);
@@ -2000,8 +1968,56 @@ pool_allocator_free(struct pool *pp, void *v)
 			wakeup(pp);
 		}
 	}
+	wakeup(pa);
 	pa->pa_flags &= ~PA_WANT;
 	simple_unlock(&pa->pa_slock);
+}
+
+/*
+ * Drain all pools, except 'org', that use this allocator.
+ *
+ * Must be called at appropriate spl level and with the allocator locked.
+ *
+ * We do this to reclaim va space. pa_alloc is responsible
+ * for waiting for physical memory.
+ * XXX - we risk looping forever if start if someone calls
+ *  pool_destroy on 'start'. But there is no other way to
+ *  have potentially sleeping pool_reclaim, non-sleeping
+ *  locks on pool_allocator and some stirring of drained
+ *  pools in the allocator.
+ * XXX - maybe we should use pool_head_slock for locking
+ *  the allocators?
+ */
+int
+pool_allocator_drain(struct pool_allocator *pa, struct pool *org, int need)
+{
+	struct pool *pp, *start;
+	int freed;
+
+	freed = 0;
+
+	pp = start = TAILQ_FIRST(&pa->pa_list);
+	do {
+		TAILQ_REMOVE(&pa->pa_list, pp, pr_alloc_list);
+		TAILQ_INSERT_TAIL(&pa->pa_list, pp, pr_alloc_list);
+		if (pp == org)
+			continue;
+		simple_unlock(&pa->pa_list);
+		freed = pool_reclaim(pp)
+		simple_lock(&pa->pa_list);
+	} while ((pp = TAILQ_FIRST(&pa->pa_list)) != start && (freed < need));
+
+	if (!freed) {
+		/*
+		 * We set PA_WANT here, the caller will most likely
+		 * sleep waiting for pages (if not, this won't hurt
+		 * that much) and there is no way to set this in the
+		 * caller without violating locking order.
+		 */
+		pa->pa_flags |= PA_WANT;
+	}
+
+	return (freed);
 }
 
 void *

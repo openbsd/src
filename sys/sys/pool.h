@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.9 2002/02/23 01:12:26 art Exp $	*/
+/*	$OpenBSD: pool.h,v 1.10 2002/02/23 02:52:56 art Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -194,6 +194,9 @@ struct pool {
 extern struct pool_allocator pool_allocator_nointr;
 /* Standard pool allocator, provided here for reference. */
 extern struct pool_allocator pool_allocator_kmem;
+
+int		pool_allocator_drain(struct pool_allocator *, struct pool *,
+		    int);
 
 void		pool_init(struct pool *, size_t, u_int, u_int, int,
 		    const char *, struct pool_allocator *);
