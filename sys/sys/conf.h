@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.36 2000/04/09 21:07:46 matthieu Exp $	*/
+/*	$OpenBSD: conf.h,v 1.37 2000/07/03 19:22:37 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -362,6 +362,12 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev, 0 }
 
+/* open, close, read, write, ioctl, stop, tty, select, mmap */
+#define	cdev_wsdisplay_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap) }
+
 /* open, close, read, write, ioctl, select */
 #define	cdev_random_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
@@ -498,6 +504,10 @@ cdev_decl(tun);
 cdev_decl(random);
 
 cdev_decl(ipl);
+
+cdev_decl(wsdisplay);
+cdev_decl(wskbd);
+cdev_decl(wsmouse);
 
 #ifdef COMPAT_SVR4
 # define NSVR4_NET	1
