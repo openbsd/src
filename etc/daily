@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.24 1998/06/30 23:08:52 deraadt Exp $
+#	$OpenBSD: daily,v 1.25 1998/08/13 21:57:39 millert Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -29,7 +29,7 @@ fi
 
 if [ -d /var/tmp -a ! -h /var/tmp ]; then
 	cd /var/tmp && {
-	find . ! -name . -atime +7 -execdir rm -f -- {} \;
+	find . ! -name . ! -type d -atime +7 -execdir rm -f -- {} \;
 	find . ! -name . -type d -mtime +1 -execdir rmdir -- {} \; \
 	    >/dev/null 2>&1; }
 fi
