@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.6 2004/06/22 00:42:11 matthieu Exp $
+dnl	$OpenBSD: xfer,v 1.7 2005/03/18 13:27:56 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -42,8 +42,8 @@ Creating a PXE network bootable setup using OpenBSD or other Un*x-like system:
 OpenBSDXferShortPrelude
 
 
-OpenBSDXferBareTape(xbase xetc xfont xlink xserv xshare)
+OpenBSDXferBareTape(xbase xetc xfont xserv xshare)
 
-dnl OpenBSDXferNFS(noupgrade)
+dnl OpenBSDXferNFS
 dnl
-OpenBSDXferFFS(noupgrade)
+OpenBSDXferFFS
