@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.19 2001/10/09 00:03:03 drahn Exp $
+.\"	$OpenBSD: apm.4,v 1.20 2001/12/14 17:13:10 mickey Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -39,6 +39,13 @@ This is needed for some
 .Tn IBM
 laptops, the symptoms are
 hangs and freezes on suspend, stand by, and hibernation activities.
+.Pp
+The value of 0x20000 specifies to swap the bytes of the battery
+life estimation (the DX register) as given from the
+.Tn APM BIOS .
+This is needed for some
+.Tn SONY VAIO
+laptops, such as some 505 models.
 .Pp
 Configuration options:
 .Pp
