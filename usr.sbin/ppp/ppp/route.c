@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.16 2001/08/20 00:48:14 brian Exp $
+ * $OpenBSD: route.c,v 1.17 2001/09/04 22:12:46 brian Exp $
  */
 
 #include <sys/param.h>
@@ -747,7 +747,7 @@ rt_Set(struct bundle *bundle, int cmd, const struct ncprange *dst,
     if (ncpaddr_isdefault(gw)) {
       if (!quiet)
         log_Printf(LogERROR, "rt_Set: Cannot add a route with"
-                   " destination 0.0.0.0\n");
+                   " gateway 0.0.0.0\n");
       close(s);
       return result;
     } else {
