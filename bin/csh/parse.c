@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.7 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.8 2003/06/11 21:09:50 deraadt Exp $	*/
 /*	$NetBSD: parse.c,v 1.6 1995/03/21 09:03:10 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.7 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.8 2003/06/11 21:09:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,7 @@ static struct command
 static int aleft;
 extern int hleft;
 void
-alias(lex)
-    register struct wordent *lex;
+alias(struct wordent *lex)
 {
     jmp_buf osetexit;
 
@@ -95,8 +94,7 @@ alias(lex)
 }
 
 static void
-asyntax(p1, p2)
-    register struct wordent *p1, *p2;
+asyntax(struct wordent *p1, struct wordent *p2)
 {
     while (p1 != p2)
 	if (any(";&\n", p1->word[0]))
@@ -108,12 +106,10 @@ asyntax(p1, p2)
 }
 
 static void
-asyn0(p1, p2)
-    struct wordent *p1;
-    register struct wordent *p2;
+asyn0(struct wordent *p1, struct wordent *p2)
 {
-    register struct wordent *p;
-    register int l = 0;
+    struct wordent *p;
+    int l = 0;
 
     for (p = p1; p != p2; p = p->next)
 	switch (p->word[0]) {
@@ -148,13 +144,11 @@ asyn0(p1, p2)
 }
 
 static void
-asyn3(p1, p2)
-    struct wordent *p1;
-    register struct wordent *p2;
+asyn3(struct wordent *p1, struct wordent *p2)
 {
-    register struct varent *ap;
+    struct varent *ap;
     struct wordent alout;
-    register bool redid;
+    bool redid;
 
     if (p1 == p2)
 	return;
@@ -199,10 +193,9 @@ asyn3(p1, p2)
 }
 
 static struct wordent *
-freenod(p1, p2)
-    register struct wordent *p1, *p2;
+freenod(struct wordent *p1, struct wordent *p2)
 {
-    register struct wordent *retp = p1->prev;
+    struct wordent *retp = p1->prev;
 
     while (p1 != p2) {
 	xfree((ptr_t) p1->word);
@@ -225,9 +218,7 @@ freenod(p1, p2)
  *	syn0
  */
 struct command *
-syntax(p1, p2, flags)
-    register struct wordent *p1, *p2;
-    int     flags;
+syntax(struct wordent *p1, struct wordent *p2, int flags)
 {
 
     while (p1 != p2)
@@ -244,12 +235,10 @@ syntax(p1, p2, flags)
  *	syn1 & syntax
  */
 static struct command *
-syn0(p1, p2, flags)
-    struct wordent *p1, *p2;
-    int     flags;
+syn0(struct wordent *p1, struct wordent *p2, int flags)
 {
-    register struct wordent *p;
-    register struct command *t, *t1;
+    struct wordent *p;
+    struct command *t, *t1;
     int     l;
 
     l = 0;
@@ -312,12 +301,10 @@ syn0(p1, p2, flags)
  *	syn1a ; syntax
  */
 static struct command *
-syn1(p1, p2, flags)
-    struct wordent *p1, *p2;
-    int     flags;
+syn1(struct wordent *p1, struct wordent *p2, int flags)
 {
-    register struct wordent *p;
-    register struct command *t;
+    struct wordent *p;
+    struct command *t;
     int     l;
 
     l = 0;
@@ -353,13 +340,11 @@ syn1(p1, p2, flags)
  *	syn1b || syn1a
  */
 static struct command *
-syn1a(p1, p2, flags)
-    struct wordent *p1, *p2;
-    int     flags;
+syn1a(struct wordent *p1, struct wordent *p2, int flags)
 {
-    register struct wordent *p;
-    register struct command *t;
-    register int l = 0;
+    struct wordent *p;
+    struct command *t;
+    int l = 0;
 
     for (p = p1; p != p2; p = p->next)
 	switch (p->word[0]) {
@@ -394,13 +379,11 @@ syn1a(p1, p2, flags)
  *	syn2 && syn1b
  */
 static struct command *
-syn1b(p1, p2, flags)
-    struct wordent *p1, *p2;
-    int     flags;
+syn1b(struct wordent *p1, struct wordent *p2, int flags)
 {
-    register struct wordent *p;
-    register struct command *t;
-    register int l = 0;
+    struct wordent *p;
+    struct command *t;
+    int l = 0;
 
     for (p = p1; p != p2; p = p->next)
 	switch (p->word[0]) {
@@ -434,13 +417,11 @@ syn1b(p1, p2, flags)
  *	syn3 |& syn2
  */
 static struct command *
-syn2(p1, p2, flags)
-    struct wordent *p1, *p2;
-    int     flags;
+syn2(struct wordent *p1, struct wordent *p2, int flags)
 {
-    register struct wordent *p, *pn;
-    register struct command *t;
-    register int l = 0;
+    struct wordent *p, *pn;
+    struct command *t;
+    int l = 0;
     int     f;
 
     for (p = p1; p != p2; p = p->next)
@@ -485,14 +466,12 @@ static char RELPAR[] = {'<', '>', '(', ')', '\0'};
  *	KEYWORD = (@ exit foreach if set switch test while)
  */
 static struct command *
-syn3(p1, p2, flags)
-    struct wordent *p1, *p2;
-    int     flags;
+syn3(struct wordent *p1, struct wordent *p2, int flags)
 {
-    register struct wordent *p;
+    struct wordent *p;
     struct wordent *lp, *rp;
-    register struct command *t;
-    register int l;
+    struct command *t;
+    int l;
     Char  **av;
     int     n, c;
     bool    specp = 0;
@@ -664,10 +643,9 @@ again:
 }
 
 void
-freesyn(t)
-    register struct command *t;
+freesyn(struct command *t)
 {
-    register Char **v;
+    Char **v;
 
     if (t == 0)
 	return;

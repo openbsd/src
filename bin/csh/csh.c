@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.20 2003/06/02 23:32:06 millert Exp $	*/
+/*	$OpenBSD: csh.c,v 1.21 2003/06/11 21:09:50 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.20 2003/06/02 23:32:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.21 2003/06/11 21:09:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,14 +108,12 @@ static void	mailchk(void);
 static Char   **defaultpath(void);
 
 int
-main(argc, argv)
-    int     argc;
-    char  **argv;
+main(int argc, char *argv[])
 {
-    register Char *cp;
-    register char *tcp;
-    register int f;
-    register char **tempv;
+    Char *cp;
+    char *tcp;
+    int f;
+    char **tempv;
     struct sigaction oact;
     sigset_t sigset;
 
@@ -591,7 +589,7 @@ notty:
 }
 
 void
-untty()
+untty(void)
 {
     if (tpgrp > 0) {
 	(void) setpgid(0, opgrp);
@@ -600,12 +598,11 @@ untty()
 }
 
 void
-importpath(cp)
-    Char   *cp;
+importpath(Char *cp)
 {
-    register int i = 0;
-    register Char *dp;
-    register Char **pv;
+    int i = 0;
+    Char *dp;
+    Char **pv;
     int     c;
 
     for (dp = cp; *dp; dp++)
@@ -640,10 +637,9 @@ importpath(cp)
  * Source to the file which is the catenation of the argument names.
  */
 static int
-srccat(cp, dp)
-    Char   *cp, *dp;
+srccat(Char *cp, Char *dp)
 {
-    register Char *ep = Strspl(cp, dp);
+    Char *ep = Strspl(cp, dp);
     char   *ptr = short2str(ep);
 
     xfree((ptr_t) ep);
@@ -654,11 +650,9 @@ srccat(cp, dp)
  * Source to a file putting the file descriptor in a safe place (> 2).
  */
 static int
-srcfile(f, onlyown, flag)
-    char   *f;
-    bool    onlyown, flag;
+srcfile(char *f, bool onlyown, bool flag)
 {
-    register int unit;
+    int unit;
 
     if ((unit = open(f, O_RDONLY)) == -1)
 	return 0;
@@ -675,9 +669,7 @@ srcfile(f, onlyown, flag)
  */
 int     insource;
 static void
-srcunit(unit, onlyown, hflg)
-    register int unit;
-    bool    onlyown, hflg;
+srcunit(int unit, bool onlyown, bool hflg)
 {
     /* We have to push down a lot of state here */
     /* All this could go into a structure */
@@ -754,7 +746,7 @@ srcunit(unit, onlyown, hflg)
     if (setintr)
 	sigprocmask(SIG_SETMASK, &osigset, NULL);
     if (oSHIN >= 0) {
-	register int i;
+	int i;
 
 	/* We made it to the new state... free up its storage */
 	/* This code could get run twice but xfree doesn't care */
@@ -785,7 +777,7 @@ srcunit(unit, onlyown, hflg)
 }
 
 void
-rechist()
+rechist(void)
 {
     Char    buf[BUFSIZ], hbuf[BUFSIZ], *hfile;
     int     fp, ftmp, oldidfds;
@@ -830,7 +822,7 @@ rechist()
 }
 
 void
-goodbye()
+goodbye(void)
 {
     rechist();
 
@@ -851,7 +843,7 @@ goodbye()
 }
 
 void
-exitstat()
+exitstat(void)
 {
     Char *s;
 #ifdef PROF
@@ -871,8 +863,7 @@ exitstat()
  * in the event of a HUP we want to save the history
  */
 static void
-phup(sig)
-int sig;
+phup(int sig)
 {
     /* XXX sigh, everything after this is a signal race */
 
@@ -922,8 +913,7 @@ Char   *jobargv[2] = {STRjobs, 0};
  */
 /* ARGSUSED */
 void
-pintr(notused)
-	int notused;
+pintr(int notused)
 {
     int save_errno = errno;
 
@@ -932,8 +922,7 @@ pintr(notused)
 }
 
 void
-pintr1(wantnl)
-    bool    wantnl;
+pintr1(bool wantnl)
 {
     Char **v;
     sigset_t sigset, osigset;
@@ -993,8 +982,7 @@ pintr1(wantnl)
  */
 static struct command *savet = NULL;
 void
-process(catch)
-    bool    catch;
+process(bool catch)
 {
     jmp_buf osetexit;
     struct command *t = savet;
@@ -1128,12 +1116,9 @@ process(catch)
 
 void
 /*ARGSUSED*/
-dosource(v, t)
-    Char **v;
-    struct command *t;
-
+dosource(Char **v, struct command *t)
 {
-    register Char *f;
+    Char *f;
     bool    hflg = 0;
     Char    buf[BUFSIZ];
     char    sbuf[BUFSIZ];
@@ -1162,10 +1147,10 @@ dosource(v, t)
  * "You have mail."
  */
 static void
-mailchk()
+mailchk(void)
 {
-    register struct varent *v;
-    register Char **vp;
+    struct varent *v;
+    Char **vp;
     time_t  t;
     int     intvl, cnt;
     struct stat stb;
@@ -1206,9 +1191,7 @@ mailchk()
  * We write the home directory of the user back there.
  */
 int
-gethdir(home, len)
-    Char   *home;
-    int    len;
+gethdir(Char *home, int len)
 {
     Char   *h;
     struct passwd *pw;
@@ -1243,37 +1226,27 @@ gethdir(home, len)
 #define DESC(a) (*((int *) (a)) - (didfds && *((int *) a) >= FSHIN ? FSHIN : 0))
 
 static int
-readf(oreo, buf, siz)
-    void *oreo;
-    char *buf;
-    int siz;
+readf(void *oreo, char *buf, int siz)
 {
     return read(DESC(oreo), buf, siz);
 }
 
 
 static int
-writef(oreo, buf, siz)
-    void *oreo;
-    const char *buf;
-    int siz;
+writef(void *oreo, const char *buf, int siz)
 {
     return write(DESC(oreo), buf, siz);
 }
 
 static fpos_t
-seekf(oreo, off, whence)
-    void *oreo;
-    fpos_t off;
-    int whence;
+seekf(void *oreo, fpos_t off, int whence)
 {
     return lseek(DESC(oreo), off, whence);
 }
 
 
 static int
-closef(oreo)
-    void *oreo;
+closef(void *oreo)
 {
     return close(DESC(oreo));
 }
@@ -1283,9 +1256,7 @@ closef(oreo)
  * Print the visible version of a string.
  */
 int
-vis_fputc(ch, fp)
-    int ch;
-    FILE *fp;
+vis_fputc(int ch, FILE *fp)
 {
     char uenc[5];	/* 4 + NUL */
 
@@ -1304,7 +1275,7 @@ vis_fputc(ch, fp)
  * resting places, closing all other units.
  */
 void
-initdesc()
+initdesc(void)
 {
 
     didfds = 0;			/* 0, 1, 2 aren't set up */
@@ -1318,18 +1289,17 @@ initdesc()
 
 void
 #ifdef PROF
-done(i)
+done(int i)
 #else
-xexit(i)
+xexit(int i)
 #endif
-    int     i;
 {
     untty();
     _exit(i);
 }
 
 static Char **
-defaultpath()
+defaultpath(void)
 {
     char   *ptr;
     Char  **blk, **blkp;
@@ -1356,9 +1326,9 @@ defaultpath()
 }
 
 void
-printprompt()
+printprompt(void)
 {
-    register Char *cp;
+    Char *cp;
 
     if (!whyles) {
 	for (cp = value(STRprompt); *cp; cp++)

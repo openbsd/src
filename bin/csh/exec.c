@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.12 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.13 2003/06/11 21:09:50 deraadt Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-static char rcsid[] = "$OpenBSD: exec.c,v 1.12 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.13 2003/06/11 21:09:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,14 +106,12 @@ static int	iscommand(Char *);
 
 void
 /*ARGSUSED*/
-doexec(v, t)
-    Char **v;
-    struct command *t;
+doexec(Char **v, struct command *t)
 {
-    register Char *dp, **pv, **av, *sav;
-    register struct varent *pathv;
-    register bool slash;
-    register int hashval = 0, hashval1, i;
+    Char *dp, **pv, **av, *sav;
+    struct varent *pathv;
+    bool slash;
+    int hashval = 0, hashval1, i;
     Char   *blk[2];
     sigset_t sigset;
 
@@ -240,7 +238,7 @@ cont:
 }
 
 static void
-pexerr()
+pexerr(void)
 {
     /* Couldn't find the damn thing */
     if (expath) {
@@ -262,14 +260,12 @@ pexerr()
  * Also do shell scripts here.
  */
 static void
-texec(sf, st)
-    Char   *sf;
-    register Char **st;
+texec(Char *sf, Char **st)
 {
-    register char **t;
-    register char *f;
-    register struct varent *v;
-    register Char **vp;
+    char **t;
+    char *f;
+    struct varent *v;
+    Char **vp;
     Char   *lastsh[2];
     int     fd;
     unsigned char c;
@@ -358,9 +354,7 @@ texec(sf, st)
 
 /*ARGSUSED*/
 void
-execash(t, kp)
-    Char  **t;
-    register struct command *kp;
+execash(Char **t, struct command *kp)
 {
     int     saveIN, saveOUT, saveDIAG, saveSTD;
     int     oSHIN;
@@ -428,8 +422,7 @@ execash(t, kp)
 }
 
 void
-xechoit(t)
-    Char  **t;
+xechoit(Char **t)
 {
     if (adrof(STRecho)) {
 	(void) fflush(csherr);
@@ -440,13 +433,11 @@ xechoit(t)
 
 void
 /*ARGSUSED*/
-dohash(v, t)
-    Char **v;
-    struct command *t;
+dohash(Char **v, struct command *t)
 {
     DIR    *dirp;
-    register struct dirent *dp;
-    register int cnt;
+    struct dirent *dp;
+    int cnt;
     int     i = 0;
     struct varent *pathv = adrof(STRpath);
     Char  **pv;
@@ -480,18 +471,14 @@ dohash(v, t)
 
 void
 /*ARGSUSED*/
-dounhash(v, t)
-    Char **v;
-    struct command *t;
+dounhash(Char **v, struct command *t)
 {
     havhash = 0;
 }
 
 void
 /*ARGSUSED*/
-hashstat(v, t)
-    Char **v;
-    struct command *t;
+hashstat(Char **v, struct command *t)
 {
     if (hits + misses)
 	(void) fprintf(cshout, "%d hits, %d misses, %d%%\n",
@@ -502,10 +489,9 @@ hashstat(v, t)
  * Hash a command name.
  */
 static int
-hashname(cp)
-    register Char *cp;
+hashname(Char *cp)
 {
-    register long h = 0;
+    long h = 0;
 
     while (*cp)
 	h = hash(h, *cp++);
@@ -513,14 +499,13 @@ hashname(cp)
 }
 
 static int
-iscommand(name)
-    Char   *name;
+iscommand(Char *name)
 {
-    register Char **pv;
-    register Char *sav;
-    register struct varent *v;
-    register bool slash = any(short2str(name), '/');
-    register int hashval = 0, hashval1, i;
+    Char **pv;
+    Char *sav;
+    struct varent *v;
+    bool slash = any(short2str(name), '/');
+    int hashval = 0, hashval1, i;
 
     v = adrof(STRpath);
     if (v == 0 || v->vec[0] == 0 || slash)
@@ -574,9 +559,7 @@ cont:
  * This is a bit kludgy, but in the name of optimization...
  */
 static int
-executable(dir, name, dir_ok)
-    Char   *dir, *name;
-    bool    dir_ok;
+executable(Char *dir, Char *name, bool dir_ok)
 {
     struct stat stbuf;
     Char    path[MAXPATHLEN], *dp, *sp;
@@ -616,9 +599,7 @@ executable(dir, name, dir_ok)
  */
 /*ARGSUSED*/
 void
-dowhich(v, c)
-    register Char **v;
-    struct command *c;
+dowhich(Char **v, struct command *c)
 {
     struct wordent lex[3];
     struct varent *vp;
@@ -649,14 +630,11 @@ dowhich(v, c)
 }
 
 static int
-tellmewhat(lexp, str, len)
-    struct wordent *lexp;
-    Char *str;
-    int len;
+tellmewhat(struct wordent *lexp, Char *str, int len)
 {
-    register int i;
-    register struct biltins *bptr;
-    register struct wordent *sp = lexp->next;
+    int i;
+    struct biltins *bptr;
+    struct wordent *sp = lexp->next;
     bool    aliased = 0, found;
     Char   *s0, *s1, *s2, *cmd;
     Char    qc;
@@ -712,8 +690,8 @@ tellmewhat(lexp, str, len)
     sp->word = cmd = globone(sp->word, G_IGNORE);
 
     if ((i = iscommand(sp->word)) != 0) {
-	register Char **pv;
-	register struct varent *v;
+	Char **pv;
+	struct varent *v;
 	bool    slash = any(short2str(sp->word), '/');
 
 	v = adrof(STRpath);

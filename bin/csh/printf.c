@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.13 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.14 2003/06/11 21:09:50 deraadt Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.13 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.14 2003/06/11 21:09:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,12 +85,10 @@ static char **gargv;
 
 int
 #ifdef BUILTIN
-progprintf(argc, argv)
+progprintf(int argc, char *argv[])
 #else
-main(argc, argv)
+main(int argc, char *argv[])
 #endif
-	int argc;
-	char *argv[];
 {
 	static char *skip1, *skip2;
 	int ch, end, fieldwidth, precision;
@@ -222,9 +220,7 @@ next:		for (start = fmt;; ++fmt) {
 }
 
 static char *
-mklong(str, ch)
-	char *str;
-	int ch;
+mklong(char *str, int ch)
 {
 	static char *copy;
 	static int copysize;
@@ -252,11 +248,10 @@ mklong(str, ch)
 }
 
 static void
-escape(fmt)
-	register char *fmt;
+escape(char *fmt)
 {
-	register char *store;
-	register int value, c;
+	char *store;
+	int value, c;
 
 	for (store = fmt; (c = *fmt) != 0; ++fmt, ++store) {
 		if (c != '\\') {
@@ -316,7 +311,7 @@ escape(fmt)
 }
 
 static int
-getchr()
+getchr(void)
 {
 	if (!*gargv)
 		return ('\0');
@@ -324,7 +319,7 @@ getchr()
 }
 
 static char *
-getstr()
+getstr(void)
 {
 	if (!*gargv)
 		return ("");
@@ -333,8 +328,7 @@ getstr()
 
 static char *Number = "+-.0123456789";
 static int
-getint(ip)
-	int *ip;
+getint(int *ip)
 {
 	long val;
 
@@ -349,8 +343,7 @@ getint(ip)
 }
 
 static int
-getlong(lp)
-	long *lp;
+getlong(long *lp)
 {
 	long val;
 	char *ep;
@@ -385,7 +378,7 @@ getlong(lp)
 }
 
 static double
-getdouble()
+getdouble(void)
 {
 	if (!*gargv)
 		return ((double)0);
@@ -395,9 +388,9 @@ getdouble()
 }
 
 static int
-asciicode()
+asciicode(void)
 {
-	register int ch;
+	int ch;
 
 	ch = **gargv;
 	if (ch == '\'' || ch == '"')
@@ -407,7 +400,7 @@ asciicode()
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: printf format [arg ...]\n");
 }

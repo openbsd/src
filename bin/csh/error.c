@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.5 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: error.c,v 1.6 2003/06/11 21:09:50 deraadt Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.5 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.6 2003/06/11 21:09:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -323,7 +323,7 @@ void
 stderror(int id, ...)
 {
     va_list va;
-    register Char **v;
+    Char **v;
     int     flags = id & ERR_FLAGS;
 
     id &= ~ERR_FLAGS;

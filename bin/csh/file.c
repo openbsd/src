@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.14 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.15 2003/06/11 21:09:50 deraadt Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: file.c,v 1.14 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.15 2003/06/11 21:09:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,8 +106,7 @@ static int	 ignored(Char *);
 bool    filec = 0;
 
 static void
-setup_tty(on)
-    int     on;
+setup_tty(int on)
 {
     struct termios tchars;
 
@@ -134,7 +133,7 @@ setup_tty(on)
  * Move back to beginning of current line
  */
 static void
-back_to_col_1()
+back_to_col_1(void)
 {
     struct termios tty, tty_normal;
     sigset_t sigset, osigset;
@@ -156,10 +155,9 @@ back_to_col_1()
  * Push string contents back into tty queue
  */
 static void
-pushback(string)
-    Char   *string;
+pushback(Char *string)
 {
-    register Char *p;
+    Char *p;
     struct termios tty, tty_normal;
     sigset_t sigset, osigset;
     char    c;
@@ -184,9 +182,7 @@ pushback(string)
  * Always null terminate.
  */
 static void
-catn(des, src, count)
-    register Char *des, *src;
-    register int count;
+catn(Char *des, Char *src, int count)
 {
     while (--count >= 0 && *des)
 	des++;
@@ -201,9 +197,7 @@ catn(des, src, count)
  * and always null terminate.
  */
 static void
-copyn(des, src, count)
-    register Char *des, *src;
-    register int count;
+copyn(Char *des, Char *src, int count)
 {
     while (--count >= 0)
 	if ((*des++ = *src++) == 0)
@@ -212,8 +206,7 @@ copyn(des, src, count)
 }
 
 static  Char
-filetype(dir, file)
-    Char   *dir, *file;
+filetype(Char *dir, Char *file)
 {
     Char    path[MAXPATHLEN];
     struct stat statb;
@@ -249,11 +242,9 @@ static struct winsize win;
  * Print sorted down columns
  */
 static void
-print_by_column(dir, items, count)
-    Char   *dir, *items[];
-    int     count;
+print_by_column(Char *dir, Char *items[], int count)
 {
-    register int i, rows, r, c, maxwidth = 0, columns;
+    int i, rows, r, c, maxwidth = 0, columns;
 
     if (ioctl(SHOUT, TIOCGWINSZ, (ioctl_t) & win) < 0 || win.ws_col == 0)
 	win.ws_col = 80;
@@ -268,7 +259,7 @@ print_by_column(dir, items, count)
 	for (c = 0; c < columns; c++) {
 	    i = c * rows + r;
 	    if (i < count) {
-		register int w;
+		int w;
 
 		(void) fprintf(cshout, "%s", vis_str(items[i]));
 		(void) fputc(dir ? filetype(dir, items[i]) : ' ', cshout);
@@ -291,11 +282,10 @@ print_by_column(dir, items, count)
  *	home_directory_of_person/mumble
  */
 static Char *
-tilde(new, old)
-    Char   *new, *old;
+tilde(Char *new, Char *old)
 {
-    register Char *o, *p;
-    register struct passwd *pw;
+    Char *o, *p;
+    struct passwd *pw;
     static Char person[40];
 
     if (old[0] != '~') {
@@ -322,7 +312,7 @@ tilde(new, old)
  * Cause pending line to be printed
  */
 static void
-retype()
+retype(void)
 {
     struct termios tty;
 
@@ -332,7 +322,7 @@ retype()
 }
 
 static void
-beep()
+beep(void)
 {
     if (adrof(STRnobeep) == 0)
 	(void) write(SHOUT, "\007", 1);
@@ -343,8 +333,7 @@ beep()
  * print the recognized part of the string
  */
 static void
-print_recognized_stuff(recognized_part)
-    Char   *recognized_part;
+print_recognized_stuff(Char *recognized_part)
 {
     /* An optimized erasing of that silly ^[ */
     (void) fputc('\b', cshout);
@@ -376,10 +365,9 @@ print_recognized_stuff(recognized_part)
  * Should leave final slash (/) at end of dir.
  */
 static void
-extract_dir_and_name(path, dir, name)
-    Char   *path, *dir, *name;
+extract_dir_and_name(Char *path, Char *dir, Char *name)
 {
-    register Char *p;
+    Char *p;
 
     p = Strrchr(path, '/');
     if (p == NULL) {
@@ -393,12 +381,10 @@ extract_dir_and_name(path, dir, name)
 }
 
 static Char *
-getentry(dir_fd, looking_for_lognames)
-    DIR    *dir_fd;
-    int     looking_for_lognames;
+getentry(DIR *dir_fd, int looking_for_lognames)
 {
-    register struct passwd *pw;
-    register struct dirent *dirp;
+    struct passwd *pw;
+    struct dirent *dirp;
 
     if (looking_for_lognames) {
 	if ((pw = getpwent()) == NULL)
@@ -411,9 +397,7 @@ getentry(dir_fd, looking_for_lognames)
 }
 
 static void
-free_items(items, numitems)
-    Char **items;
-    int numitems;
+free_items(Char **items, int numitems)
 {
     int i;
 
@@ -436,14 +420,11 @@ free_items(items, numitems)
  * Perform a RECOGNIZE or LIST command on string "word".
  */
 static int
-tsearch(word, command, max_word_length)
-    Char   *word;
-    COMMAND command;
-    int     max_word_length;
+tsearch(Char *word, COMMAND command, int max_word_length)
 {
-    register DIR *dir_fd;
-    register int numitems = 0, ignoring = TRUE, nignored = 0;
-    register int name_length, looking_for_lognames;
+    DIR *dir_fd;
+    int numitems = 0, ignoring = TRUE, nignored = 0;
+    int name_length, looking_for_lognames;
     Char    tilded_dir[MAXPATHLEN], dir[MAXPATHLEN];
     Char    name[MAXNAMLEN + 1], extended_name[MAXNAMLEN + 1];
     Char   *entry;
@@ -542,15 +523,13 @@ again:				/* search for matches */
  * If we shorten it back to the prefix length, stop searching.
  */
 static int
-recognize(extended_name, entry, name_length, numitems)
-    Char   *extended_name, *entry;
-    int     name_length, numitems;
+recognize(Char *extended_name, Char *entry, int name_length, int numitems)
 {
     if (numitems == 1)		/* 1st match */
 	copyn(extended_name, entry, MAXNAMLEN);
     else {			/* 2nd & subsequent matches */
-	register Char *x, *ent;
-	register int len = 0;
+	Char *x, *ent;
+	int len = 0;
 
 	x = extended_name;
 	for (ent = entry; *x && *x == *ent++; x++, len++)
@@ -568,8 +547,7 @@ recognize(extended_name, entry, name_length, numitems)
  * it matches anything.
  */
 static int
-is_prefix(check, template)
-    register Char *check, *template;
+is_prefix(Char *check, Char *template)
 {
     do
 	if (*check == 0)
@@ -583,10 +561,9 @@ is_prefix(check, template)
  *  end of check, I.e., are it's suffix.
  */
 static int
-is_suffix(check, template)
-    Char   *check, *template;
+is_suffix(Char *check, Char *template)
 {
-    register Char *c, *t;
+    Char *c, *t;
 
     for (c = check; *c++;)
 	continue;
@@ -601,13 +578,10 @@ is_suffix(check, template)
 }
 
 int
-tenex(inputline, inputline_size)
-    Char   *inputline;
-    int     inputline_size;
+tenex(Char *inputline, int inputline_size)
 {
-    register int numitems, num_read;
+    int numitems, num_read;
     char    tinputline[BUFSIZ];
-
 
     setup_tty(ON);
 
@@ -615,8 +589,8 @@ tenex(inputline, inputline_size)
 	int     i;
 	static Char delims[] = {' ', '\'', '"', '\t', ';', '&', '<',
 	'>', '(', ')', '|', '^', '%', '\0'};
-	register Char *str_end, *word_start, last_Char, should_retype;
-	register int space_left;
+	Char *str_end, *word_start, last_Char, should_retype;
+	int space_left;
 	COMMAND command;
 
 	for (i = 0; i < num_read; i++)
@@ -672,11 +646,10 @@ tenex(inputline, inputline_size)
 }
 
 static int
-ignored(entry)
-    register Char *entry;
+ignored(Char *entry)
 {
     struct varent *vp;
-    register Char **cp;
+    Char **cp;
 
     if ((vp = adrof(STRfignore)) == NULL || (cp = vp->vec) == NULL)
 	return (FALSE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.12 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: dol.c,v 1.13 2003/06/11 21:09:50 deraadt Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dol.c,v 1.12 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: dol.c,v 1.13 2003/06/11 21:09:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,11 +101,10 @@ static void	 Dtestq(int);
  * argument list to command t.
  */
 void
-Dfix(t)
-    register struct command *t;
+Dfix(struct command *t)
 {
-    register Char **pp;
-    register Char *p;
+    Char **pp;
+    Char *p;
 
     if (noexec)
 	return;
@@ -126,8 +125,7 @@ Dfix(t)
  * $ substitute one word, for i/o redirection
  */
 Char   *
-Dfix1(cp)
-    register Char *cp;
+Dfix1(Char *cp)
 {
     Char   *Dv[2];
 
@@ -149,8 +147,7 @@ Dfix1(cp)
  * Subroutine to do actual fixing after state initialization.
  */
 static void
-Dfix2(v)
-    Char  **v;
+Dfix2(Char **v)
 {
     ginit();			/* Initialize glob's area pointers */
     Dvp = v;
@@ -167,11 +164,10 @@ Dfix2(v)
  * Pack up more characters in this word
  */
 static Char *
-Dpack(wbuf, wp)
-    Char   *wbuf, *wp;
+Dpack(Char *wbuf, Char *wp)
 {
-    register int c;
-    register int i = MAXWLEN - (wp - wbuf);
+    int c;
+    int i = MAXWLEN - (wp - wbuf);
 
     for (;;) {
 	c = DgetC(DODOL);
@@ -215,13 +211,13 @@ Dpack(wbuf, wp)
  * Rather, DgetC will return a DEOF when we hit the end-of-input.
  */
 static int
-Dword()
+Dword(void)
 {
-    register int c, c1;
+    int c, c1;
     Char    wbuf[BUFSIZ];
-    register Char *wp = wbuf;
-    register int i = MAXWLEN;
-    register bool dolflg;
+    Char *wp = wbuf;
+    int i = MAXWLEN;
+    bool dolflg;
     bool    sofar = 0, done = 0;
 
     while (!done) {
@@ -336,10 +332,9 @@ Dword()
  * QUOTEd so that it will not be recognized above.
  */
 static int
-DgetC(flag)
-    register int flag;
+DgetC(int flag)
 {
-    register int c;
+    int c;
 
 top:
     if ((c = Dpeekc) != '\0') {
@@ -384,8 +379,7 @@ static Char *nulvec[] = {0};
 static struct varent nulargv = {nulvec, STRargv, { NULL, NULL, NULL }, 0};
 
 static void
-dolerror(s)
-    Char   *s;
+dolerror(Char *s)
 {
     setname(vis_str(s));
     stderror(ERR_NAME | ERR_RANGE);
@@ -396,10 +390,10 @@ dolerror(s)
  * Ugh.
  */
 static void
-Dgetdol()
+Dgetdol(void)
 {
-    register Char *np;
-    register struct varent *vp = NULL;
+    Char *np;
+    struct varent *vp = NULL;
     Char    name[4 * MAXVARLEN + 1];
     int     c, sc;
     int     subscr = 0, lwb = 1, upb = 0;
@@ -569,7 +563,7 @@ Dgetdol()
 	else if (*np != '-')
 	    stderror(ERR_MISSING, '-');
 	else {
-	    register int i = upb;
+	    int i = upb;
 
 	    np++;
 	    if (Isdigit(*np)) {
@@ -626,9 +620,9 @@ eatbrac:
 }
 
 static void
-fixDolMod()
+fixDolMod(void)
 {
-    register int c;
+    int c;
 
     c = DgetC(0);
     if (c == ':') {
@@ -686,10 +680,9 @@ fixDolMod()
 }
 
 static void
-setDolp(cp)
-    register Char *cp;
+setDolp(Char *cp)
 {
-    register Char *dp;
+    Char *dp;
     int i;
 
     if (dolnmod == 0 || dolmcnt == 0) {
@@ -790,17 +783,16 @@ setDolp(cp)
 }
 
 static void
-unDredc(c)
-    int     c;
+unDredc(int c)
 {
 
     Dpeekrd = c;
 }
 
 static int
-Dredc()
+Dredc(void)
 {
-    register int c;
+    int c;
 
     if ((c = Dpeekrd) != '\0') {
 	Dpeekrd = 0;
@@ -817,8 +809,7 @@ Dredc()
 }
 
 static void
-Dtestq(c)
-    register int c;
+Dtestq(int c)
 {
 
     if (cmap(c, QUOTES))
@@ -832,14 +823,13 @@ Dtestq(c)
  */
 void
 /*ARGSUSED*/
-heredoc(term)
-    Char *term;
+heredoc(Char *term)
 {
-    register int c;
+    int c;
     Char   *Dv[2];
     Char    obuf[BUFSIZ], lbuf[BUFSIZ], mbuf[BUFSIZ];
     int     ocnt, lcnt, mcnt;
-    register Char *lbp, *obp, *mbp;
+    Char *lbp, *obp, *mbp;
     Char  **vp;
     bool    quoted;
     char   tmp[] = "/tmp/sh.XXXXXXXX";
