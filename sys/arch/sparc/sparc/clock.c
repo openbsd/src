@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 1995/10/08 11:44:59 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.26 1995/12/11 12:45:18 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -204,7 +204,7 @@ oclockattach(parent, self, aux)
 	printf("\n");
 
 	i7 = (volatile struct intersil7170 *) mapiodev(ra->ra_reg, 0,
-		sizeof(*i7), ca->ca_bustype);
+	    sizeof(*i7), ca->ca_bustype);
 
 	idp = &idprom;
 	h = idp->id_machine << 24;
@@ -258,7 +258,7 @@ eeprom_attach(parent, self, aux)
 
 	printf("\n");
 
-	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, sizeof(struct eeprom),
+	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, EEPROM_SIZE,
 	    ca->ca_bustype);
 
 	eeprom_nvram = 0;
@@ -324,8 +324,10 @@ clockattach(parent, self, aux)
 		 */
 		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, 2 * NBPG,
 		    ca->ca_bustype);
-		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
-		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl + NBPG, VM_PROT_READ, 1);
+		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl,
+		    VM_PROT_READ, 1);
+		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl + NBPG,
+		VM_PROT_READ, 1);
 		cl = (struct clockreg *)((int)cl + CLK_MK48T08_OFF);
 	} else {
 		/*
@@ -391,9 +393,8 @@ timerattach(parent, self, aux)
 	 * we have a fixed virtual address for the timer, to make
 	 * microtime() faster.
 	 */
-	if ((int)mapdev(ra->ra_reg, TIMERREG_VA, 0, sizeof(struct timerreg),
-	    ca->ca_bustype) != TIMERREG_VA)
-		panic("unable to map timer");
+	(void)mapdev(ra->ra_reg, TIMERREG_VA, 0, sizeof(struct timerreg),
+	    ca->ca_bustype);
 	timerok = 1;
 	/* should link interrupt handlers here, rather than compiled-in? */
 }

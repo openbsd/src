@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.8 1995/02/22 21:13:01 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.9 1995/12/11 12:45:16 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,10 +106,8 @@ auxregattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	auxio_reg = mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long),
-	    ca->ca_bustype);
-	if ((u_long)auxio_reg != AUXREG_VA)
-		panic("unable to map auxreg");
+	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long), ca->ca_bustype);
+	auxio_reg = AUXIO_REG;
 	printf("\n");
 #ifdef BLINK
 	blink((caddr_t)0);
