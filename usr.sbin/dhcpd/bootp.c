@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.4 2004/04/18 00:43:27 deraadt Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.5 2004/04/18 01:19:07 henning Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -135,7 +135,7 @@ bootp(struct packet *packet)
 		if (!host &&
 		    !(packet->shared_network->group->allow_bootp)) {
 			note("Ignoring BOOTP request from client %s via %s",
-			    print_hw_addr (packet->raw->htype,
+			    print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr),
 			    packet->raw->giaddr.s_addr ?
 			    inet_ntoa(packet->raw->giaddr) :
@@ -151,7 +151,7 @@ bootp(struct packet *packet)
 		if (!(packet->shared_network->group->dynamic_bootp)) {
 lose:
 			note("No applicable record for BOOTP host %s via %s",
-			    print_hw_addr (packet->raw->htype,
+			    print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr),
 			    packet->raw->giaddr.s_addr ?
 			    inet_ntoa(packet->raw->giaddr) :

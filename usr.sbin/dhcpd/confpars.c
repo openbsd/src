@@ -114,8 +114,8 @@ read_leases(void)
 	   could create severe network chaos. */
 	if ((cfile = fopen(path_dhcpd_db, "r")) == NULL) {
 		warn("Can't open lease database %s: %m -- %s",
-		      path_dhcpd_db,
-		      "check for failed database rewrite attempt!");
+		    path_dhcpd_db,
+		    "check for failed database rewrite attempt!");
 		warn("Please read the dhcpd.leases manual page if you.");
 		error("don't know what to do about this.");	}
 
@@ -262,7 +262,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 			   since there is no opportunity to declare it here. */
 			share->group->authoritative =
 				share->subnets->group->authoritative;
-			enter_shared_network (share);
+			enter_shared_network(share);
 		}
 		return 1;
 
@@ -367,8 +367,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		tree = parse_ip_addr_or_hostname(cfile, 0);
 		if (!tree)
 			return declaration;
-		group->options[DHO_DHCP_SERVER_IDENTIFIER] =
-			tree_cache (tree);
+		group->options[DHO_DHCP_SERVER_IDENTIFIER] = tree_cache(tree);
 		token = next_token(&val, cfile);
 		break;
 
@@ -559,7 +558,7 @@ void parse_host_declaration(cfile, group)
 	if (!host->group->options[DHO_HOST_NAME] &&
 	    host->group->use_host_decl_names) {
 		host->group->options[DHO_HOST_NAME] =
-			new_tree_cache ("parse_host_declaration");
+		    new_tree_cache("parse_host_declaration");
 		if (!host->group->options[DHO_HOST_NAME])
 			error("can't allocate a tree cache for hostname.");
 		host->group->options[DHO_HOST_NAME]->len =
@@ -574,7 +573,7 @@ void parse_host_declaration(cfile, group)
 			NULL;
 	}
 
-	enter_host (host);
+	enter_host(host);
 }
 
 /* class-declaration :== STRING LBRACE parameters declarations RBRACE
@@ -676,7 +675,7 @@ void parse_shared_net_declaration(cfile, group)
 				parse_warn("empty shared-network decl");
 				return;
 			}
-			enter_shared_network (share);
+			enter_shared_network(share);
 			return;
 		} else if (token == EOF) {
 			token = next_token(&val, cfile);
@@ -732,7 +731,7 @@ void parse_subnet_declaration(cfile, share)
 	iaddr.len = len;
 	subnet->netmask = iaddr;
 
-	enter_subnet (subnet);
+	enter_subnet(subnet);
 
 	if (!parse_lbrace(cfile))
 		return;
@@ -929,9 +928,8 @@ void parse_option_param(cfile, group)
 
 		/* Look up the option name hash table for the specified
 		   vendor. */
-		universe = ((struct universe *)
-			    hash_lookup (&universe_hash,
-					 (unsigned char *)vendor, 0));
+		universe = ((struct universe *)hash_lookup(&universe_hash,
+		    (unsigned char *)vendor, 0));
 		/* If it's not there, we can't parse the rest of the
 		   declaration. */
 		if (!universe) {
@@ -947,8 +945,8 @@ void parse_option_param(cfile, group)
 	}
 
 	/* Look up the actual option info... */
-	option = (struct option *)hash_lookup (universe->hash,
-					       (unsigned char *)val, 0);
+	option = (struct option *)hash_lookup(universe->hash,
+	    (unsigned char *)val, 0);
 
 	/* If we didn't get an option structure, it's an undefined option. */
 	if (!option) {
@@ -962,7 +960,7 @@ void parse_option_param(cfile, group)
 	}
 
 	/* Free the initial identifier token. */
-	free (vendor);
+	free(vendor);
 
 	/* Parse the option data... */
 	do {
@@ -982,29 +980,31 @@ void parse_option_param(cfile, group)
 					do {
 						token = next_token
 							(&val, cfile);
-						if (token != NUMBER
-						    && token != NUMBER_OR_NAME)
-							goto need_number;
-						convert_num (buf, val, 16, 8);
-						tree = tree_concat
-							(tree,
-							 tree_const (buf, 1));
-						token = peek_token
-							(&val, cfile);
+						if (token != NUMBER &&
+						    token != NUMBER_OR_NAME) {
+							parse_warn("expecting "
+							    "number.");
+							if (token != SEMI)
+								skip_to_semi(
+								    cfile);
+							return;
+						}
+						convert_num(buf, val, 16, 8);
+						tree = tree_concat(tree,
+						    tree_const(buf, 1));
+						token = peek_token(&val, cfile);
 						if (token == COLON)
-							token = next_token
-								(&val, cfile);
+							token = next_token(&val,
+							    cfile);
 					} while (token == COLON);
 				} else if (token == STRING) {
 					token = next_token(&val, cfile);
-					tree = tree_concat
-						(tree,
-						 tree_const ((unsigned char *)
-							     val,
-							     strlen(val)));
+					tree = tree_concat(tree,
+					    tree_const((unsigned char *)val,
+					    strlen(val)));
 				} else {
 					parse_warn("expecting string %s.",
-						    "or hexadecimal data");
+					    "or hexadecimal data");
 					skip_to_semi(cfile);
 					return;
 				}
@@ -1019,10 +1019,9 @@ void parse_option_param(cfile, group)
 						skip_to_semi(cfile);
 					return;
 				}
-				tree = tree_concat
-					(tree,
-					 tree_const ((unsigned char *)val,
-						     strlen(val)));
+				tree = tree_concat(tree,
+				    tree_const((unsigned char *)val,
+				    strlen(val)));
 				break;
 
 			case 'I': /* IP address or hostname. */
@@ -1036,55 +1035,63 @@ void parse_option_param(cfile, group)
 			case 'l':	/* Signed 32-bit integer... */
 				token = next_token(&val, cfile);
 				if (token != NUMBER) {
-				      need_number:
 					parse_warn("expecting number.");
 					if (token != SEMI)
 						skip_to_semi(cfile);
 					return;
 				}
-				convert_num (buf, val, 0, 32);
-				tree = tree_concat (tree, tree_const (buf, 4));
+				convert_num(buf, val, 0, 32);
+				tree = tree_concat(tree, tree_const (buf, 4));
 				break;
 			case 's':	/* Signed 16-bit integer. */
 			case 'S':	/* Unsigned 16-bit integer. */
 				token = next_token(&val, cfile);
-				if (token != NUMBER)
-					goto need_number;
-				convert_num (buf, val, 0, 16);
-				tree = tree_concat (tree, tree_const (buf, 2));
+				if (token != NUMBER) {
+					parse_warn("expecting number.");
+					if (token != SEMI)
+						skip_to_semi(cfile);
+					return;
+				}
+				convert_num(buf, val, 0, 16);
+				tree = tree_concat(tree, tree_const (buf, 2));
 				break;
 			case 'b':	/* Signed 8-bit integer. */
 			case 'B':	/* Unsigned 8-bit integer. */
 				token = next_token(&val, cfile);
-				if (token != NUMBER)
-					goto need_number;
-				convert_num (buf, val, 0, 8);
-				tree = tree_concat (tree, tree_const (buf, 1));
+				if (token != NUMBER) {
+					parse_warn("expecting number.");
+					if (token != SEMI)
+						skip_to_semi(cfile);
+					return;
+				}
+				convert_num(buf, val, 0, 8);
+				tree = tree_concat(tree, tree_const (buf, 1));
 				break;
 			case 'f': /* Boolean flag. */
 				token = next_token(&val, cfile);
 				if (!is_identifier (token)) {
 					parse_warn("expecting identifier.");
-				      bad_flag:
 					if (token != SEMI)
 						skip_to_semi(cfile);
 					return;
 				}
-				if (!strcasecmp (val, "true")
-				    || !strcasecmp (val, "on"))
+				if (!strcasecmp(val, "true")
+				    || !strcasecmp(val, "on"))
 					buf[0] = 1;
-				else if (!strcasecmp (val, "false")
-					 || !strcasecmp (val, "off"))
+				else if (!strcasecmp(val, "false")
+					 || !strcasecmp(val, "off"))
 					buf[0] = 0;
 				else {
 					parse_warn("expecting boolean.");
-					goto bad_flag;
+					if (token != SEMI)
+						skip_to_semi(cfile);
+					return;
 				}
-				tree = tree_concat (tree, tree_const (buf, 1));
+				tree = tree_concat(tree, tree_const (buf, 1));
 				break;
 			default:
 				warn("Bad format %c in parse_option_param.",
-				      *fmt);
+				    *fmt);
 				skip_to_semi(cfile);
 				return;
 			}
@@ -1217,7 +1224,8 @@ struct lease *parse_lease_declaration(cfile)
 					parse_semi(cfile);
 				} else {
 					lease.uid_len = 0;
-					lease.uid = parse_numeric_aggregate(cfile,
+					lease.uid =
+					    parse_numeric_aggregate(cfile,
 					    NULL, &lease.uid_len, ':', 16, 8);
 					if (!lease.uid) {
 						warn("no space for uid");

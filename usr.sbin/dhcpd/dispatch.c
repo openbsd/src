@@ -138,7 +138,7 @@ discover_interfaces(int state)
 			tmp->hw_address.hlen = foo->sdl_alen;
 			tmp->hw_address.htype = HTYPE_ETHER; /* XXX */
 			memcpy(tmp->hw_address.haddr,
-			    LLADDR (foo), foo->sdl_alen);
+			    LLADDR(foo), foo->sdl_alen);
 		} else if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct iaddr addr;
 
@@ -221,7 +221,8 @@ discover_interfaces(int state)
 		next = tmp->next;
 		if ((tmp->flags & INTERFACE_AUTOMATIC) &&
 		    state == DISCOVER_REQUESTED)
-			tmp->flags &= ~(INTERFACE_AUTOMATIC | INTERFACE_REQUESTED);
+			tmp->flags &=
+			    ~(INTERFACE_AUTOMATIC | INTERFACE_REQUESTED);
 		if (!tmp->ifp || !(tmp->flags & INTERFACE_REQUESTED)) {
 			if ((tmp->flags & INTERFACE_REQUESTED) != ir)
 				error("%s: not found", tmp->name);
@@ -287,11 +288,12 @@ setup_fallback(void)
 		error("Insufficient memory to record fallback interface.");
 	memset(fallback_interface, 0, sizeof *fallback_interface);
 	strlcpy(fallback_interface->name, "fallback", IFNAMSIZ);
-	fallback_interface->shared_network = new_shared_network("parse_statement");
+	fallback_interface->shared_network =
+	    new_shared_network("parse_statement");
 	if (!fallback_interface->shared_network)
 		error("No memory for shared subnet");
 	memset(fallback_interface->shared_network, 0,
-	    sizeof (struct shared_network));
+	    sizeof(struct shared_network));
 	fallback_interface->shared_network->name = "fallback-net";
 	return fallback_interface;
 }
@@ -502,9 +504,9 @@ interface_status(struct interface_info *ifinfo)
 		}
 	}
  inactive:
-	return(0);
+	return (0);
  active:
-	return(1);
+	return (1);
 }
 
 int

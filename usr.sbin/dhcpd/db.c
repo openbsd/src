@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.6 2004/04/18 00:43:27 deraadt Exp $	*/
+/*	$OpenBSD: db.c,v 1.7 2004/04/18 01:19:07 henning Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -112,7 +112,7 @@ write_lease(struct lease *lease)
 			if (errno)
 				++errors;
 		}
-		putc (';', db_file);
+		putc(';', db_file);
 	}
 
 	if (lease->flags & BOOTP_LEASE) {
