@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.15 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: exf.c,v 1.16 2002/02/18 23:56:10 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -868,7 +868,7 @@ file_write(sp, fm, tm, name, flags)
 	 * Note that this code is harmless if you're using libc 4.6.x.
 	 */
 	if (LF_ISSET(FS_APPEND) && lseek(fd, (off_t)0, SEEK_END) < 0) {
-		msgq(sp, M_SYSERR, name);
+		msgq(sp, M_SYSERR, "%s", name);
 		return (1);
 	}
 #endif
@@ -989,7 +989,7 @@ file_write(sp, fm, tm, name, flags)
 			*--s = '.';
 		}
 	}
-	msgq(sp, M_INFO, s);
+	msgq(sp, M_INFO, "%s", s)
 	if (nf)
 		FREE_SPACE(sp, p, 0);
 	return (0);
