@@ -1,5 +1,5 @@
-/*	$OpenBSD: parser.c,v 1.3 1996/03/08 22:01:03 niklas Exp $	*/
-/*	$NetBSD: parser.c,v 1.28 1996/03/05 21:04:00 christos Exp $	*/
+/*	$OpenBSD: parser.c,v 1.4 1996/05/21 21:13:04 deraadt Exp $	*/
+/*	$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.28 1996/03/05 21:04:00 christos Exp $";
+static char rcsid[] = "$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1281,6 +1281,13 @@ parsebackq: {
 						setprompt(2);
 					else
 						setprompt(0);
+					/*
+					 * If eating a newline, avoid putting
+					 * the newline into the new character
+					 * stream (via the STPUTC after the
+					 * switch).
+					 */
+					continue;
 				}
                                 if (c != '\\' && c != '`' && c != '$'
                                     && (!dblquote || c != '"'))
