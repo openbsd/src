@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.57 2001/05/30 12:29:03 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.58 2001/06/01 00:09:23 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -621,27 +621,9 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     if (mtag == NULL)
       MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto) + skip +
 	     rplen + ahx->authsize, M_XDATA, M_NOWAIT);
-    else
-    {
-#ifdef DEBUG
-	/*
-	 * Check that it has the proper length -- i.e., contains the
-	 * authenticator.
-	 */
-	if (mtag->m_tag_len != sizeof(struct tdb_ident) + ahx->authsize)
-	{
-	    m_freem(m);
-	    crypto_freereq(crp);
-	    DPRINTF(("ah_input(): tag had wrong length (%d, should be %d)\n",
-		     mtag->m_tag_len,
-		     sizeof(struct tdb_ident) + ahx->authsize));
-	    ahstat.ahs_crypto++;
-	    return EINVAL;
-	}
-#endif
-	MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto), M_XDATA,
-	       M_NOWAIT);
-    }
+    else /* Hash verification has already been done successfully */
+      MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto), M_XDATA,
+	     M_NOWAIT);
     if (tc == NULL)
     {
 	m_freem(m);
@@ -710,11 +692,11 @@ ah_input_cb(void *op)
     struct cryptodesc *crd;
     struct auth_hash *ahx;
     struct tdb_crypto *tc;
-    caddr_t ptr, authptr;
     struct cryptop *crp;
     struct m_tag *mtag;
     struct tdb *tdb;
     u_int8_t prot;
+    caddr_t ptr;
     int s, err;
 
     crp = (struct cryptop *) op;
@@ -780,13 +762,21 @@ ah_input_cb(void *op)
     m_copydata(m, skip + rplen, ahx->authsize, calc);
 
     /*
-     * If we have an mtag, it means we can get the authenticator off
-     * of it, as opposed to right after the tdb_crypto.
+     * If we have an mtag, we don't need to verify the authenticator --
+     * it has been verified by an IPsec-aware NIC.
      */
     if (mtag == NULL)
     {
 	ptr = (caddr_t) (tc + 1);
-	authptr = ptr + skip + rplen;
+
+	/* Verify authenticator */
+	if (bcmp(ptr + skip + rplen, calc, ahx->authsize))
+	{
+	    DPRINTF(("ah_input(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	    ahstat.ahs_badauth++;
+	    error = EACCES;
+	    goto baddone;
+	}
 
 	/* Fix the Next Protocol field */
 	((u_int8_t *) ptr)[protoff] = ((u_int8_t *) ptr)[skip];
@@ -796,21 +786,9 @@ ah_input_cb(void *op)
     }
     else
     {
-	authptr =  (caddr_t) (mtag + 1);
-	authptr += sizeof(struct tdb_crypto);
-
 	/* Fix the Next Protocol field */
 	m_copydata(m, skip, sizeof(u_int8_t), &prot);
 	m_copyback(m, protoff, sizeof(u_int8_t), &prot);
-    }
-
-    /* Verify authenticator */
-    if (bcmp(authptr, calc, ahx->authsize))
-    {
-	DPRINTF(("ah_input(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-	ahstat.ahs_badauth++;
-	error = EACCES;
-	goto baddone;
     }
 
     /* Record the beginning of the AH header */

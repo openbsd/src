@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.62 2001/05/30 12:29:04 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.63 2001/06/01 00:09:23 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -380,20 +380,6 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	    !bcmp(&tdbi->dst, &tdb->tdb_dst, sizeof(union sockaddr_union)))
 	  break;
     }
-#ifdef DEBUG
-    /*
-     * Check the the length of the tag is correct, i.e., it contains the
-     * authenticator.
-     */
-    if (mtag != NULL && mtag->m_tag_len != sizeof(struct tdb_ident) + alen)
-    {
-	m_freem(m);
-	DPRINTF(("esp_input(): bad tag length %d (should be %d)\n",
-		 mtag->m_tag_len, sizeof(struct tdb_ident) + alen));
-	espstat.esps_crypto++;
-	return EINVAL;
-    }
-#endif
 
     /* Get crypto descriptors */
     crp = crypto_getreq(esph && espx ? 2 : 1);
@@ -561,27 +547,29 @@ esp_input_cb(void *op)
 	goto baddone;
     }
 
-    /* If authentication was performed, check now */
-    if (esph)
+    /* If authentication was performed, check now. */
+    if (esph != NULL)
     {
-	/* Copy the authenticator from the packet */
-	m_copydata(m, m->m_pkthdr.len - esph->authsize, esph->authsize, aalg);
-
+        /*
+	 * If we have a tag, it means an IPsec-aware NIC did the verification
+	 * for us.
+	 */
 	if (mtag != NULL)
 	{
-		ptr = (caddr_t) (mtag + 1);
-		ptr += sizeof(struct tdb_ident);
-	}
-	else
-	  ptr = (caddr_t) (tc + 1);
+	    /* Copy the authenticator from the packet */
+	    m_copydata(m, m->m_pkthdr.len - esph->authsize, esph->authsize,
+		       aalg);
 
-	/* Verify authenticator */
-	if (bcmp(ptr, aalg, esph->authsize))
-	{
-	    DPRINTF(("esp_input_cb(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-	    espstat.esps_badauth++;
-	    error = EACCES;
-	    goto baddone;
+	    ptr = (caddr_t) (tc + 1);
+
+	    /* Verify authenticator */
+	    if (bcmp(ptr, aalg, esph->authsize))
+	    {
+		DPRINTF(("esp_input_cb(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		espstat.esps_badauth++;
+		error = EACCES;
+		goto baddone;
+	    }
 	}
 
 	/* Remove trailing authenticator */
