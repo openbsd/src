@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.282 2001/11/26 16:38:37 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.283 2001/11/30 00:17:02 nate Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -336,6 +336,7 @@ wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
 nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
+stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
 
 # Wireless network cards
