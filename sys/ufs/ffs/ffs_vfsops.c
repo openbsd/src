@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.24 1999/12/03 21:29:29 art Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.25 1999/12/06 06:59:36 art Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -341,6 +341,8 @@ ffs_mount(mp, path, data, ndp, p)
         (void)VFS_STATFS(mp, &mp->mnt_stat, p);
 
 success:
+	if ((mp->mnt_flag & MNT_SOFTDEP))
+		mp->mnt_flag &= ~MNT_ASYNC;
         if (path && (mp->mnt_flag & MNT_UPDATE)) {
                 /* Update clean flag after changing read-onlyness. */
                 fs = ump->um_fs;
