@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.46 2001/08/02 11:06:38 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.47 2001/08/07 22:57:15 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -346,6 +346,8 @@ struct	prochd {
 	struct	proc *ph_rlink;
 } qs[NQS];
 
+struct simplelock;
+
 struct proc *pfind __P((pid_t));	/* Find process by id. */
 struct pgrp *pgfind __P((pid_t));	/* Find process group by id. */
 
@@ -365,7 +367,9 @@ void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
 void	sleep __P((void *chan, int pri));
 void	uvm_swapin __P((struct proc *));  /* XXX: uvm_extern.h? */
-int	tsleep __P((void *chan, int pri, char *wmesg, int timo));
+int	ltsleep __P((void *chan, int pri, char *wmesg, int timo,
+	    volatile struct simplelock *));
+#define tsleep(chan, pri, wmesg, timo) ltsleep(chan, pri, wmesg, timo, NULL)
 void	unsleep __P((struct proc *));
 void    wakeup_n __P((void *chan, int));
 void    wakeup __P((void *chan));
