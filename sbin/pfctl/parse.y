@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.414 2003/08/28 19:27:32 kjell Exp $	*/
+/*	$OpenBSD: parse.y,v 1.415 2003/09/01 15:07:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4373,8 +4373,8 @@ invalid_redirect(struct node_host *nh, sa_family_t af)
 		struct node_host *n;
 
 		/* only tables are ok without an address family */
-		for(n = nh; n != NULL; n = n->next) {
-			if(n->addr.type != PF_ADDR_TABLE) {
+		for (n = nh; n != NULL; n = n->next) {
+			if (n->addr.type != PF_ADDR_TABLE) {
 				yyerror("address family not given and "
 				    "translation address expands to multiple "
 				    "address families");

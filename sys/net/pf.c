@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.388 2003/09/01 10:41:38 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.389 2003/09/01 15:08:39 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1584,7 +1584,7 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 	    rpool->cur->addr.p.dyn->undefined)
 		return (1);
 	if (rpool->cur->addr.type == PF_ADDR_TABLE) {
-	    	if ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_ROUNDROBIN)
+		if ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_ROUNDROBIN)
 			return (1); /* unsupported */
 	} else {
 		raddr = &rpool->cur->addr.v.a.addr;
