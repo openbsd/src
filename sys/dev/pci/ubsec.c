@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.48 2001/05/14 02:45:19 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.49 2001/05/14 16:51:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -305,7 +305,9 @@ int
 ubsec_feed(sc)
 	struct ubsec_softc *sc;
 {
+#ifdef UBSEC_DEBUG
 	static int max;
+#endif
 	struct ubsec_q *q;
 	struct ubsec_mcr *mcr;
 	int npkts, i, l;
@@ -327,13 +329,13 @@ ubsec_feed(sc)
 
 #ifdef UBSEC_DEBUG
 	printf("merging %d records\n", npkts);
-#endif
 
 	/* XXX temporary aggregation statistics reporting code */
 	if (max < npkts) {
 		max = npkts;
 		printf("%s: new max aggregate %d\n", sc->sc_dv.dv_xname, max);
 	}
+#endif
 
 	for (mcr2 = mcr, i = 0; i < npkts; i++) {
 		q = SIMPLEQ_FIRST(&sc->sc_queue);
