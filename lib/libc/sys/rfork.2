@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.20 2004/04/02 19:08:58 tedu Exp $
+.\"	$OpenBSD: rfork.2,v 1.21 2004/04/03 10:07:08 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -27,13 +27,18 @@
 .Fn rfork "int flags"
 .Sh DESCRIPTION
 The fork functions
-.Pf ( Xr fork 2 ,
-.Xr vfork 2
+.Po
+.Xr fork 2 ,
+.Xr vfork 2 ,
 and
-.Fn rfork )
+.Fn rfork
+.Pc
 create new processes.
-The new process (child process) is an exact copy of the calling process
-(parent process), except as outlined in the
+The new process
+.Pq child process
+is an exact copy of the calling process
+.Pq parent process ,
+except as outlined in the
 .Xr fork 2
 manual page.
 .Fn rfork
@@ -52,7 +57,6 @@ which controls which of these resources should be manipulated.
 They are defined in the header file
 .Aq Pa sys/param.h
 and are the logical OR of one or more of the following:
-.Pp
 .Bl -tag -width "RFNOWAIT"
 .It Dv RFNAMEG
 New Plan 9
@@ -93,13 +97,15 @@ Zero Plan 9
 .Sq env space .
 This is a Plan 9 specific flag, and not implemented.
 .It Dv RFCFDG
-Zero the child's file descriptor table (ie. start with a blank file
-descriptor table).
+Zero the child's file descriptor table
+.Pq i.e. start with a blank file descriptor table .
 May not be used in conjunction with
 .Dv RFFDG .
 .El
 .Sh RETURN VALUES
-The parent process returns the process ID (PID) of the child process.
+The parent process returns the process ID
+.Pq PID
+of the child process.
 The child process returns 0.
 The range of the process ID is defined in
 .Aq Pa sys/proc.h
