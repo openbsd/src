@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.168 2004/06/29 21:55:03 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.169 2004/08/06 21:49:10 pefo Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1107,6 +1107,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1164,6 +1166,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1206,6 +1210,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1242,6 +1248,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+sgi
 ..
 sparc
 ..
@@ -1290,6 +1298,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1327,6 +1337,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1363,6 +1375,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+sgi
 ..
 sparc
 ..
@@ -1414,6 +1428,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1456,6 +1472,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1492,6 +1510,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+sgi
 ..
 sparc
 ..
@@ -1540,6 +1560,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1577,6 +1599,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1613,6 +1637,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+sgi
 ..
 sparc
 ..
@@ -1666,6 +1692,8 @@ mvme88k
 ..
 mvmeppc
 ..
+sgi
+..
 sparc
 ..
 sparc64
@@ -1717,6 +1745,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+sgi
 ..
 sparc
 ..
