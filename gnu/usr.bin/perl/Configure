@@ -18,7 +18,7 @@
 # you may fetch it yourself from your nearest archive site.)
 #
 
-# $Id: Head.U,v 3.0.1.9 1997/02/28 15:02:09 ram Exp $
+# $Id: Configure,v 1.8 2001/05/24 18:34:43 millert Exp $
 #
 # Generated on Tue Mar 13 05:21:04 EET 2001 [metaconfig 3.0 PL70]
 # (with additional metaconfig patches by perlbug@perl.org)
@@ -2533,6 +2533,9 @@ EOM
 			;;
 		next*) osname=next ;;
 		nonstop-ux) osname=nonstopux ;;
+		openbsd) osname=openbsd
+			osvers="$3"
+			;;
 		POSIX-BC | posix-bc ) osname=posix-bc
 			osvers="$3"
 			;;
