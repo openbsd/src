@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.2 2001/07/01 22:09:09 angelos Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.3 2001/07/02 17:02:22 millert Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -75,7 +75,7 @@ Although in theory any IP address can be used on the inside,
 it is recommended that one of the network numbers assigned
 for this purpose in RFC 1918. These netblocks are:
 .Bd -literal
-10.0.0.0    - 10.255.255.255.255 (all of net 10, i.e., 10/8)
+10.0.0.0    - 10.255.255.255 (all of net 10, i.e., 10/8)
 172.16.0.0  - 172.31.255.255 (i.e, 172.16/12)
 192.168.0.0 - 192.168.255.255 (i.e., 192.168/16)
 .Ed
