@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.23 2000/06/23 16:23:26 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.24 2000/06/23 16:27:29 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ typedef struct {
 	struct Var_ *locals[LOCAL_SIZE];
 } SymTable;
 
-typedef LIST GSymT;
+typedef struct hash GSymT;
 /*-
  * The structure for an individual graph node. Each node has several
  * pieces of data associated with it.
@@ -314,6 +314,14 @@ typedef struct GNode {
 #define PREFIX	  	  "*" 	/* Common prefix */
 #define ARCHIVE	  	  "!" 	/* Archive in "archive(member)" syntax */
 #define MEMBER	  	  "%" 	/* Member in "archive(member)" syntax */
+#define LONGTARGET	".TARGET"
+#define LONGOODATE	".OODATE"
+#define LONGALLSRC	".ALLSRC"
+#define LONGIMPSRC	".IMPSRC"
+#define LONGPREFIX	".PREFIX"
+#define LONGARCHIVE	".ARCHIVE"
+#define LONGMEMBER	".MEMBER"
+
 
 #define FTARGET           "@F"  /* file part of TARGET */
 #define DTARGET           "@D"  /* directory part of TARGET */

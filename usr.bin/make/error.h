@@ -1,4 +1,4 @@
-/* $OpenBSD: error.h,v 1.1 1999/12/09 18:20:06 espie Exp $ */
+/* $OpenBSD: error.h,v 1.2 2000/06/23 16:27:29 espie Exp $ */
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -50,5 +50,9 @@ int eunlink __P((const char *));
 /* efree(x) works when x==NULL. STDC behavior, may need some different
  * definition for cross-builds on deficient systems */
 #define efree	free
+
+void *hash_alloc __P((size_t, void *));
+void hash_free __P((void *, size_t, void *));
+void *element_alloc __P((size_t, void *));
 
 #endif	/* ERROR_H */

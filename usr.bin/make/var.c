@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.37 2000/06/23 16:23:26 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.38 2000/06/23 16:27:29 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.37 2000/06/23 16:23:26 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.38 2000/06/23 16:27:29 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,10 +125,11 @@ static char rcsid[] = "$OpenBSD: var.c,v 1.37 2000/06/23 16:23:26 espie Exp $";
 #include    <stddef.h>
 #include    "make.h"
 #include    "buf.h"
+#include    "ohash.h"
+#include    "hashconsts.h"
 
 static SymTable *CTXT_GLOBAL, *CTXT_CMD, *CTXT_ENV;
 
-/* `Quick' index variants.  */
 static char *varnames[] = {
     TARGET,
     OODATE,
@@ -177,7 +178,6 @@ static GSymT	*VAR_ENV;	/* variables read from env */
 #define FIND_ENV  	0x4   /* look in the environment also */
 
 typedef struct Var_ {
-    char          *name;	/* the variable's name */
     BUFFER	  val;	    	/* its value */
     int	    	  flags;    	/* miscellaneous status flags */
 #define VAR_IN_USE	1   	    /* Variable's value currently being used.
@@ -186,6 +186,7 @@ typedef struct Var_ {
 				     * should be destroyed when done with
 				     * it. Used by Var_Parse for undefined,
 				     * modified variables */
+    char          name[1];	/* the variable's name */
 }  Var;
 
 /* Var*Pattern flags */
@@ -213,6 +214,10 @@ typedef struct {
 } VarREPattern;
 #endif
 
+static struct hash_info var_info = { 
+	offsetof(Var, name), 
+    NULL, hash_alloc, hash_free, element_alloc };
+static int quick_lookup __P((const char *, const char **, u_int32_t *));
 #define VarValue(v)	Buf_Retrieve(&((v)->val))
 static int VarCmp __P((void *, void *));
 static Var *VarFind __P((char *, SymTable *, int));
@@ -239,9 +244,9 @@ static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer, void *)
 static void VarPrintVar __P((void *));
 static Boolean VarUppercase __P((char *, Boolean, Buffer, void *));
 static Boolean VarLowercase __P((char *, Boolean, Buffer, void *));
-static char *context_name __P((GSymT *));
+static const char *context_name __P((GSymT *));
 static Var *new_var __P((char *, char *));
-static Var *getvar __P((Lst, char *));
+static Var *getvar __P((GSymT *, char *, const char *, u_int32_t));
 
 void
 SymTable_Init(ctxt)
@@ -262,6 +267,87 @@ SymTable_Destroy(ctxt)
 	    VarDelete(ctxt->locals[i]);
 }
 
+static int
+quick_lookup(name, end, pk)
+    const char *name;
+    const char **end;
+    u_int32_t *pk;
+{
+    size_t len;
+
+    *pk = hash_interval(name, end);
+    len = *end - name;
+	/* substitute short version for long local name */
+    switch (*pk % MAGICSLOTS) {		    /* MAGICSLOTS should be the    */
+    case K_LONGALLSRC % MAGICSLOTS:	    /* smallest constant yielding  */
+					    /* distinct case values        */
+	if (*pk == K_LONGALLSRC && strncmp(name, LONGALLSRC, len) == 0 &&
+	    len == strlen(LONGALLSRC))
+	    return ALLSRC_INDEX;
+	break;
+    case K_LONGARCHIVE % MAGICSLOTS:
+	if (*pk == K_LONGARCHIVE && strncmp(name, LONGARCHIVE, len) == 0 &&
+	    len == strlen(LONGARCHIVE))
+	    return ARCHIVE_INDEX;
+	break;
+    case K_LONGIMPSRC % MAGICSLOTS:
+	if (*pk == K_LONGIMPSRC && strncmp(name, LONGIMPSRC, len) == 0 &&
+	    len == strlen(LONGIMPSRC))
+	    return IMPSRC_INDEX;
+	break;
+    case K_LONGMEMBER % MAGICSLOTS:
+	if (*pk == K_LONGMEMBER && strncmp(name, LONGMEMBER, len) == 0 &&
+	    len == strlen(LONGMEMBER))
+	    return MEMBER_INDEX;
+	break;
+    case K_LONGOODATE % MAGICSLOTS:
+	if (*pk == K_LONGOODATE && strncmp(name, LONGOODATE, len) == 0 &&
+	    len == strlen(LONGOODATE))
+	    return OODATE_INDEX;
+	break;
+    case K_LONGPREFIX % MAGICSLOTS:
+	if (*pk == K_LONGPREFIX && strncmp(name, LONGPREFIX, len) == 0 &&
+	    len == strlen(LONGPREFIX))
+	    return PREFIX_INDEX;
+	break;
+    case K_LONGTARGET % MAGICSLOTS:
+	if (*pk == K_LONGTARGET && strncmp(name, LONGTARGET, len) == 0 &&
+	    len == strlen(LONGTARGET))
+	    return TARGET_INDEX;
+	break;
+    case K_TARGET % MAGICSLOTS:
+	if (name[0] == TARGET[0] && len == 1)
+	    return TARGET_INDEX;
+	break;
+    case K_OODATE % MAGICSLOTS:
+	if (name[0] == OODATE[0] && len == 1)
+	    return OODATE_INDEX;
+	break;
+    case K_ALLSRC % MAGICSLOTS:
+	if (name[0] == ALLSRC[0] && len == 1)
+	    return ALLSRC_INDEX;
+	break;
+    case K_IMPSRC % MAGICSLOTS:
+	if (name[0] == IMPSRC[0] && len == 1)
+	    return IMPSRC_INDEX;
+	break;
+    case K_PREFIX % MAGICSLOTS:
+	if (name[0] == PREFIX[0] && len == 1)
+	    return PREFIX_INDEX;
+	break;
+    case K_ARCHIVE % MAGICSLOTS:
+	if (name[0] == ARCHIVE[0] && len == 1)
+	    return ARCHIVE_INDEX;
+	break;
+    case K_MEMBER % MAGICSLOTS:
+	if (name[0] == MEMBER[0] && len == 1)
+	    return MEMBER_INDEX;
+	break;
+    default:
+	break;
+    }
+    return -1;
+}
 
 void 
 Varq_Set(idx, val, gn)
@@ -269,6 +355,9 @@ Varq_Set(idx, val, gn)
     char 	*val;
     GNode 	*gn;
 {
+    /* We only look for a variable in the given context since anything set
+     * here will override anything in a lower context, so there's not much
+     * point in searching them all just to save a bit of memory...  */
     Var *v = gn->context.locals[idx];
 
     if (v == NULL) {
@@ -326,7 +415,7 @@ Varq_Exists(idx, gn)
 }
 
 
-static char *
+static const char *
 context_name(ctxt)
     GSymT *ctxt;
 {
@@ -345,10 +434,9 @@ new_var(name, val)
     char *val;
 {
     Var *v;
+    const char *end = NULL;
 
-    v = (Var *)emalloc(sizeof(Var));
-
-    v->name = estrdup(name);
+    v = hash_create_entry(&var_info, name, &end);
 
     if (val != NULL) {
     	size_t len = strlen(val);
@@ -360,32 +448,14 @@ new_var(name, val)
     return v;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarCmp  --
- *	See if the given variable matches the named one. Used by getvar.
- *-----------------------------------------------------------------------
- */
-static int
-VarCmp(v, name)
-    void *v;		/* VAR structure to compare */
-    void *name;		/* name to look for */
-{
-    return strcmp((char *)name, ((Var *)v)->name);
-}
-
 static Var *
-getvar(l, n)
-    Lst 	l;
-    char 	*n;
+getvar(ctxt, name, end, k)
+    GSymT	*ctxt;
+    char 	*name;
+    const char	*end;
+    u_int32_t	k;
 {
-    LstNode ln;
-
-    ln = Lst_Find(l, VarCmp, n);
-    if (ln != NULL)
-    	return (Var *)Lst_Datum(ln);
-    else
-    	return NULL;
+    return hash_find(ctxt, hash_lookup_interval(ctxt, name, end, k));
 }
 
 /*-
@@ -414,42 +484,12 @@ VarFind(name, ctxt, flags)
 				 * environment/VAR_ENV context.  */
 {
     Var		  	*v;
+    const char		*end = NULL;
+    int 		idx;
+    u_int32_t		k;
 
-	/*
-	 * If the variable name begins with a '.', it could very well be one of
-	 * the local ones.  We check the name against all the local variables
-	 * and substitute the short version in for 'name' if it matches one of
-	 * them.
-	 */
-	if (*name == '.' && isupper((unsigned char) name[1]))
-		switch (name[1]) {
-		case 'A':
-			if (!strcmp(name, ".ALLSRC"))
-				name = ALLSRC;
-			if (!strcmp(name, ".ARCHIVE"))
-				name = ARCHIVE;
-			break;
-		case 'I':
-			if (!strcmp(name, ".IMPSRC"))
-				name = IMPSRC;
-			break;
-		case 'M':
-			if (!strcmp(name, ".MEMBER"))
-				name = MEMBER;
-			break;
-		case 'O':
-			if (!strcmp(name, ".OODATE"))
-				name = OODATE;
-			break;
-		case 'P':
-			if (!strcmp(name, ".PREFIX"))
-				name = PREFIX;
-			break;
-		case 'T':
-			if (!strcmp(name, ".TARGET"))
-				name = TARGET;
-			break;
-		}
+    idx = quick_lookup(name, &end, &k);
+
     /*
      * First look for the variable in the given context. If it's not there,
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
@@ -458,53 +498,30 @@ VarFind(name, ctxt, flags)
     if (ctxt == NULL)
     	v = NULL;
     else if (ctxt == CTXT_GLOBAL || ctxt == CTXT_CMD || ctxt == CTXT_ENV)
-	v = getvar((Lst)ctxt, name);
+	v = getvar((GSymT *)ctxt, name, end, k);
     else {
-    	v = NULL;
-    	if (name[1] == '\0')
-	    switch(name[0]) {
-	    	case '@':
-		    v = ctxt->locals[TARGET_INDEX];
-		    break;
-		case '?':
-		    v = ctxt->locals[OODATE_INDEX];
-		    break;
-		case '>':
-		    v = ctxt->locals[ALLSRC_INDEX];
-		    break;
-		case '<':
-		    v = ctxt->locals[IMPSRC_INDEX];
-		    break;
-		case '*':
-		    v = ctxt->locals[PREFIX_INDEX];
-		    break;
-		case '!':
-		    v = ctxt->locals[ARCHIVE_INDEX];
-		    break;
-		case '%':
-		    v = ctxt->locals[MEMBER_INDEX];
-		    break;
-		default:
-		    break;
-		}
+    	if (idx == -1)
+	    v = NULL;
+	else
+	    v = ctxt->locals[idx];
     }
     if (v != NULL)
     	return v;
 	    
     if ((flags & FIND_CMD) && ctxt != CTXT_CMD)
-	v = getvar(VAR_CMD, name);
+	v = getvar(VAR_CMD, name, end, k);
     if (v != NULL)
     	return v;
 
     if (!checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != CTXT_GLOBAL)
-	v = getvar(VAR_GLOBAL, name);
+	v = getvar(VAR_GLOBAL, name, end, k);
     if (v != NULL)
     	return v;
 
     if ((flags & FIND_ENV)) {
 	char *env;
 
-    	v = getvar(VAR_ENV, name);
+    	v = getvar(VAR_ENV, name, end, k);
 	if (v != NULL)
 	    return v;
 
@@ -513,7 +530,7 @@ VarFind(name, ctxt, flags)
     }
 
     if (checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != CTXT_GLOBAL) 
-	v = getvar(VAR_GLOBAL, name);
+	v = getvar(VAR_GLOBAL, name, end, k);
     return v;
 }
 
@@ -537,13 +554,22 @@ VarAdd(name, val, ctxt)
     char	*val;	/* value to set it to */
     GSymT	*ctxt;	/* context in which to set it */
 {
-    Var   *v;
+    Var   	*v;
+    const char 	*end = NULL;
+    int 	idx;
+    u_int32_t 	k;
 
     v = new_var(name, val);
 
     v->flags = 0;
 
-    Lst_AtFront(ctxt, v);
+    idx = quick_lookup(name, &end, &k);
+
+    if (idx != -1) {
+    	Parse_Error(PARSE_FATAL, "Trying to set dynamic variable %s",
+	    v->name);
+    } else
+	hash_insert(ctxt, hash_lookup_interval(ctxt, name, end, k), v);
     return v;
 }
 
@@ -565,7 +591,6 @@ VarDelete(vp)
     void *vp;
 {
     Var *v = (Var *) vp;
-    free(v->name);
     Buf_Destroy(&(v->val));
     free(v);
 }
@@ -590,19 +615,17 @@ Var_Delete(name, ctxt)
     char    	  *name;
     GSymT	  *ctxt;
 {
-    LstNode 	  ln;
+    Var *v;
+    u_int32_t k;
+    const char *end = NULL;
 
     if (DEBUG(VAR))
 	printf("%s:delete %s\n", context_name(ctxt), name);
+    (void)quick_lookup(name, &end, &k);
+    v = hash_remove(ctxt, hash_lookup_interval(ctxt, name, end, k));
 
-    ln = Lst_Find(ctxt, VarCmp, name);
-    if (ln != NULL) {
-	register Var 	  *v;
-
-	v = (Var *)Lst_Datum(ln);
-	Lst_Remove(ctxt, ln);
+    if (v != NULL)
 	VarDelete(v);
-    }
 }
 
 /*-
@@ -640,9 +663,9 @@ Var_Set(name, val, ctxt)
      * point in searching them all just to save a bit of memory...
      */
     v = VarFind(name, (SymTable *)ctxt, 0);
-    if (v == NULL) {
+    if (v == NULL)
 	(void)VarAdd(name, val, ctxt);
-    } else {
+    else {
 	Buf_Reset(&(v->val));
 	Buf_AddString(&(v->val), val);
 
@@ -2471,9 +2494,9 @@ Var_Init()
     VAR_GLOBAL = &global_vars;
     VAR_CMD = &cmd_vars;
     VAR_ENV = &env_vars;
-    Lst_Init(VAR_GLOBAL);
-    Lst_Init(VAR_CMD);
-    Lst_Init(VAR_ENV);
+    hash_init(VAR_GLOBAL, 10, &var_info);
+    hash_init(VAR_CMD, 5, &var_info);
+    hash_init(VAR_ENV, 5, &var_info);
     CTXT_GLOBAL = (SymTable *)VAR_GLOBAL;
     CTXT_CMD = (SymTable *)VAR_CMD;
     CTXT_ENV = (SymTable *)VAR_ENV;
@@ -2484,9 +2507,18 @@ void
 Var_End()
 {
 #ifdef CLEANUP
-    Lst_Destroy(VAR_GLOBAL, VarDelete);
-    Lst_Destroy(VAR_CMD, VarDelete);
-    Lst_Destroy(VAR_END, VarDelete);
+    Var *v;
+    unsigned int i;
+
+    for (v = hash_first(VAR_GLOBAL, &i); v != NULL; 
+	v = hash_next(VAR_GLOBAL, &i))
+	    VarDelete(v);
+    for (v = hash_first(VAR_CMD, &i); v != NULL; 
+	v = hash_next(VAR_CMD, &i))
+	    VarDelete(v);
+    for (v = hash_first(VAR_ENV, &i); v != NULL; 
+	v = hash_next(VAR_ENV, &i))
+	    VarDelete(v);
 #endif
 }
 
@@ -2511,6 +2543,11 @@ void
 Var_Dump(ctxt)
    GSymT	*ctxt;
 {
-    Lst_Every(ctxt, VarPrintVar);
+	Var *v;
+	unsigned int i;
+
+	for (v = hash_first(ctxt, &i); v != NULL; 
+	    v = hash_next(ctxt, &i))
+		VarPrintVar(v);
 }
 

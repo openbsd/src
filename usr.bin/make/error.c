@@ -1,4 +1,4 @@
-/* $OpenBSD: error.c,v 1.2 2000/01/08 19:07:13 millert Exp $ */
+/* $OpenBSD: error.c,v 1.3 2000/06/23 16:27:29 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,6 +108,32 @@ ecalloc(s1, s2)
 	return p;
 }
 
+/* Support routines for hash tables.  */
+void *
+hash_alloc(s, u)
+	size_t s;
+	void *u;
+{
+	return ecalloc(s, 1);
+}
+
+void
+hash_free(p, s, u)
+	void *p;
+	size_t s;
+	void *u;
+{
+	free(p);
+}
+
+void *
+element_alloc(s, u)
+	size_t s;
+	void *u;
+{
+	return emalloc(s);
+}
+	
 /*
  * enomem --
  *	die when out of memory.
