@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.3 1998/11/17 04:25:21 downsj Exp $	*/
+/*	$OpenBSD: adv.c,v 1.4 1998/11/17 06:08:15 downsj Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -721,10 +721,8 @@ adv_scsi_cmd(xs)
 	ccb->scsiq.q1.target_lun = sc_link->lun;
 	ccb->scsiq.q2.target_ix = ASC_TIDLUN_TO_IX(sc_link->target,
 						   sc_link->lun);
-#define offsetof(type, member) ((size_t)(&((type *)0)->member))
 	ccb->scsiq.q1.sense_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
 		ADV_CCB_OFF(ccb) + offsetof(struct adv_ccb, scsi_sense);
-#undef offsetof
 	ccb->scsiq.q1.sense_len = sizeof(struct scsi_sense_data);
 
 	/*
