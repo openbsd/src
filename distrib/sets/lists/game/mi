@@ -76,6 +76,8 @@
 ./usr/share/games/fortune/fortunes2.dat
 ./usr/share/games/fortune/limerick
 ./usr/share/games/fortune/limerick.dat
+./usr/share/games/fortune/recipes
+./usr/share/games/fortune/recipes.dat
 ./usr/share/games/fortune/startrek
 ./usr/share/games/fortune/startrek.dat
 ./usr/share/games/fortune/zippy

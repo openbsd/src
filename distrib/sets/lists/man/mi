@@ -1099,6 +1099,7 @@
 ./usr/share/man/cat4/hppa
 ./usr/share/man/cat4/hppa/asp.0
 ./usr/share/man/cat4/hppa/cpu.0
+./usr/share/man/cat4/hppa/dino.0
 ./usr/share/man/cat4/hppa/gsc.0
 ./usr/share/man/cat4/hppa/gsckbc.0
 ./usr/share/man/cat4/hppa/gsckbd.0
@@ -1526,6 +1527,7 @@
 ./usr/share/man/cat5/bridgename.if.0
 ./usr/share/man/cat5/bsd.port.mk.0
 ./usr/share/man/cat5/bsd.regress.mk.0
+./usr/share/man/cat5/changelist.0
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
 ./usr/share/man/cat5/cvs.0

@@ -4715,6 +4715,7 @@
 ./usr/share/man/cat3/ypclnt.0
 ./usr/share/man/cat3/yperr_string.0
 ./usr/share/man/cat3/ypprot_err.0
+./usr/share/man/cat3/zlib.0
 ./usr/share/man/cat9/FREE.0
 ./usr/share/man/cat9/FREF.0
 ./usr/share/man/cat9/FRELE.0
