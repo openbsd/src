@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.41 2001/07/04 22:16:32 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.42 2001/07/05 07:29:59 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -193,6 +193,7 @@ policy_callback (char *name)
   time_t tt;
   char *addr;
   static char mytimeofday[15];
+  X509_NAME *x509name;
 
   /* We use all these as a cache.  */
   static char *esp_present, *ah_present, *comp_present;
@@ -881,11 +882,37 @@ policy_callback (char *name)
 		  id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
 	  break;
 
-	case IPSEC_ID_DER_ASN1_DN: /* XXX -- not sure what's in this.  */
+	case IPSEC_ID_DER_ASN1_DN:
 	  remote_id_type = "ASN1 DN";
+
+	  remote_id = calloc (257, sizeof (char));
+	  if (!remote_id)
+	    {
+	      log_error ("policy_callback: calloc (%d, %d) failed", 257,
+			 sizeof (char));
+	      goto bad;
+	    }
+
+	  addr = id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
+	  x509name = LC (d2i_X509_NAME, (NULL, (unsigned char **) &addr,
+			 id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ));
+	  if (!x509name)
+	    {
+	      log_error ("policy_callback: failed to initialize DN");
+	      goto bad;
+	    }
+	  if (!LC (X509_NAME_oneline, (x509name, remote_id, 256)))
+	    {
+	      LOG_DBG ((LOG_POLICY, 50,
+		        "policy_callback: failed to decode name"));
+	      LC (X509_NAME_free, (x509name));
+	      goto bad;
+
+	    }
+	  LC (X509_NAME_free, (x509name));
 	  break;
 
-	case IPSEC_ID_DER_ASN1_GN: /* XXX -- not sure what's in this.  */
+	case IPSEC_ID_DER_ASN1_GN: /* XXX */
 	  remote_id_type = "ASN1 GN";
 	  break;
 
@@ -1158,8 +1185,33 @@ policy_callback (char *name)
 		      idremotesz);
 	      break;
 
-	    case IPSEC_ID_DER_ASN1_DN: /* XXX -- not sure what's in this.  */
+	    case IPSEC_ID_DER_ASN1_DN:
 	      remote_filter_type = "ASN1 DN";
+
+	      remote_filter = calloc (257, sizeof (char));
+	      if (!remote_filter)
+	        {
+		  log_error ("policy_callback: calloc (%d, %d) failed", 257,
+			     sizeof (char));
+		  goto bad;
+		}
+
+	      addr = idremote + ISAKMP_ID_DATA_OFF;
+	      x509name = LC (d2i_X509_NAME, (NULL, (unsigned char **) &addr,
+			     idremotesz - ISAKMP_ID_DATA_OFF));
+	      if (!x509name)
+	        {
+		  log_error ("policy_callback: failed to initialize DN");
+		  goto bad;
+		}
+	      if (!LC (X509_NAME_oneline, (x509name, remote_filter, 256)))
+	        {
+		  LOG_DBG ((LOG_POLICY, 50,
+			    "policy_callback: failed to decode name"));
+		  LC (X509_NAME_free, (x509name));
+		  goto bad;
+		}
+	      LC (X509_NAME_free, (x509name));
 	      break;
 
 	    case IPSEC_ID_DER_ASN1_GN: /* XXX -- not sure what's in this.  */
@@ -1454,8 +1506,33 @@ policy_callback (char *name)
 		      idlocalsz);
 	      break;
 
-	    case IPSEC_ID_DER_ASN1_DN: /* XXX -- not sure what's in this.  */
+	    case IPSEC_ID_DER_ASN1_DN:
 	      local_filter_type = "ASN1 DN";
+
+	      local_filter = calloc (257, sizeof (char));
+	      if (!local_filter)
+	        {
+		  log_error ("policy_callback: calloc (%d, %d) failed", 257,
+			     sizeof (char));
+		  goto bad;
+		}
+
+	      addr = idlocal + ISAKMP_ID_DATA_OFF;
+	      x509name = LC (d2i_X509_NAME, (NULL, (unsigned char **) &addr,
+			     idlocalsz - ISAKMP_ID_DATA_OFF));
+	      if (!x509name)
+	        {
+		  log_error ("policy_callback: failed to initialize DN");
+		  goto bad;
+		}
+	      if (!LC (X509_NAME_oneline, (x509name, local_filter, 256)))
+	        {
+		  LOG_DBG ((LOG_POLICY, 50,
+			    "policy_callback: failed to decode name"));
+		  LC (X509_NAME_free, (x509name));
+		  goto bad;
+		}
+	      LC (X509_NAME_free, (x509name));
 	      break;
 
 	    case IPSEC_ID_DER_ASN1_GN: /* XXX -- not sure what's in this.  */
