@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.6 2004/01/14 02:00:41 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.7 2004/02/21 00:47:42 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,8 +70,6 @@ struct umass_scsi_softc {
 	struct scsi_sense	sc_sense_cmd;
 };
 
-
-#define SHORT_INQUIRY_LENGTH    36 /* XXX */
 
 #define UMASS_SCSIID_HOST	0x00
 #define UMASS_SCSIID_DEVICE	0x01
@@ -222,24 +220,6 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 	    (sc_link->quirks & SDEV_NOMODESENSE)) {
 		xs->error = XS_TIMEOUT;
 		goto done;
-	}
-
-	if (cmd->opcode == START_STOP &&
-	    (sc->sc_quirks & UMASS_QUIRK_NO_START_STOP)) {
-		xs->error = XS_NOERROR;
-		goto done;
-	}
-
-	if (cmd->opcode == INQUIRY &&
-	    (sc->sc_quirks & UMASS_QUIRK_FORCE_SHORT_INQUIRY)) {
-			/*
-			 * Some drives wedge when asked for full inquiry
-			 * information.
-			 */
-		memcpy(&trcmd, cmd, sizeof(trcmd));
-		trcmd.bytes[4] = SHORT_INQUIRY_LENGTH;
-		cmd = &trcmd;
-		xs->datalen = SHORT_INQUIRY_LENGTH;
 	}
 
 	dir = DIR_NONE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.40 2004/01/14 02:00:41 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.41 2004/02/21 00:47:42 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -176,7 +176,6 @@ struct scsi_link {
 #define	SDEV_NOWIDE		0x0004	/* does not grok WDTR */
 #define	SDEV_NOTAGS		0x0008	/* lies about having tagged queueing */
 #define	SDEV_NOMODESENSE	0x0040	/* removable media/optical drives */
-#define	SDEV_NOSTARTUNIT	0x0080	/* do not issue start unit requests in sd.c */
 #define	SDEV_NOSYNCCACHE	0x0100	/* no SYNCHRONIZE_CACHE */
 #define	ADEV_NOSENSE		0x0200	/* No request sense - ATAPI */
 #define	ADEV_LITTLETOC		0x0400	/* little-endian TOC - ATAPI */

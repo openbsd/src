@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.66 2004/02/15 02:45:47 tedu Exp $	*/
+/*	$OpenBSD: sd.c,v 1.67 2004/02/21 00:47:42 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -218,12 +218,9 @@ sdattach(parent, self, aux)
 	 */
 	printf("\n");
 
-	if ((sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
-		error = scsi_start(sd->sc_link, SSS_START,
-				   scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
-				   SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
-	} else
-		error = 0;
+	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES_DEFAULT,
+	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
+	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
 	/* Fill in name struct for spoofed label */
 	viscpy(sd->name.vendor, sa->sa_inqbuf->vendor, 8);
@@ -392,19 +389,14 @@ sdopen(dev, flag, fmt, p)
 		error = scsi_test_unit_ready(sc_link,
 		    TEST_READY_RETRIES_DEFAULT,
 		    SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_IGNORE_NOT_READY);
-		if (error)
-			goto bad3;
+		    SCSI_IGNORE_MEDIA_CHANGE);
 
 		/* Start the pack spinning if necessary. */
-		if ((sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
-			error = scsi_start(sc_link, SSS_START,
-			    SCSI_IGNORE_ILLEGAL_REQUEST |
-			    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
-			if (error)
-				goto bad3;
-		}
+		if (error == EIO)
+			error = scsi_start(sc_link, SSS_START, 0);
+
+		if (error)
+			goto bad3;
 
 		sc_link->flags |= SDEV_OPEN;
 
@@ -1136,8 +1128,7 @@ sd_interpret_sense(xs)
 			 */
 			delay(1000000 * 5);	/* 5 seconds */
 			retval = SCSIRET_RETRY;
-		} else if ((sense->add_sense_code_qual == 0x2) &&
-		    (sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
+		} else if (sense->add_sense_code_qual == 0x2) {
 			if (sd->sc_link->flags & SDEV_REMOVABLE) {
 				printf(
 				"%s: removable disk stopped - not restarting\n",

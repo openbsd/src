@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.85 2004/02/07 22:39:16 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.86 2004/02/21 00:47:42 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -406,11 +406,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_AUTOSAVE},
-	/* Gives non-media hardware failure in response to start-unit command */
-	{{T_DIRECT, T_FIXED,
-	 "HITACHI", "DK515C",            "CP15"}, SDEV_NOSTARTUNIT},
-	{{T_DIRECT, T_FIXED,
-	 "HITACHI", "DK515C",            "CP16"}, SDEV_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
 	 "IBMRAID ", "0662S",            ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
@@ -438,9 +433,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "IOMEGA", "ZIP 250",		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM", "0661467",               "G"},    SDEV_NOMODESENSE},
-	/* Letting the motor run kills floppy drives and disks quit fast. */
-	{{T_DIRECT, T_REMOV,
-	 "TEAC", "FC-1",                 ""},     SDEV_NOSTARTUNIT},
         {{T_DIRECT, T_FIXED,
          "MICROP", "4421-07",		 ""},     SDEV_NOTAGS},
         {{T_DIRECT, T_FIXED,
@@ -462,10 +454,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* ATAPI device quirks */
         {{T_CDROM, T_REMOV,
          "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"}, ADEV_NOTUR},
-        {{T_CDROM, T_REMOV,
-         "BCD-16X", "", ""},                    SDEV_NOSTARTUNIT},
-        {{T_CDROM, T_REMOV,
-         "BCD-24X", "", ""},                    SDEV_NOSTARTUNIT},
         {{T_CDROM, T_REMOV,
          "CR-2801TE", "", "1.07"},              ADEV_NOSENSE},
         {{T_CDROM, T_REMOV,
