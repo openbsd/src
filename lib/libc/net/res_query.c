@@ -1,7 +1,11 @@
-/*-
+/*	$OpenBSD: res_query.c,v 1.8 1997/03/13 19:07:40 downsj Exp $	*/
+
+/*
+ * ++Copyright++ 1988, 1993
+ * -
  * Copyright (c) 1988, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
+ *    The Regents of the University of California.  All rights reserved.
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,12 +16,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ * 	This product includes software developed by the University of
+ * 	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -52,16 +56,23 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.7 1996/08/27 03:32:54 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.8 1997/03/13 19:07:40 downsj Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+
+#include <stdio.h>
 #include <netdb.h>
 #include <resolv.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -73,7 +84,7 @@ static char rcsid[] = "$OpenBSD: res_query.c,v 1.7 1996/08/27 03:32:54 deraadt E
 #define MAXPACKET	1024
 #endif
 
-char *__hostalias __P((const char *));
+const char *hostalias __P((const char *));
 int h_errno;
 
 /*
@@ -109,7 +120,7 @@ res_query(name, class, type, answer, anslen)
 #endif
 
 	n = res_mkquery(QUERY, name, class, type, NULL, 0, NULL,
-	    buf, sizeof(buf));
+			buf, sizeof(buf));
 	if (n <= 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
@@ -128,7 +139,6 @@ res_query(name, class, type, answer, anslen)
 		return (n);
 	}
 
-	hp = (HEADER *) answer;
 	if (hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
@@ -136,21 +146,21 @@ res_query(name, class, type, answer, anslen)
 			    ntohs(hp->ancount));
 #endif
 		switch (hp->rcode) {
-			case NXDOMAIN:
-				h_errno = HOST_NOT_FOUND;
-				break;
-			case SERVFAIL:
-				h_errno = TRY_AGAIN;
-				break;
-			case NOERROR:
-				h_errno = NO_DATA;
-				break;
-			case FORMERR:
-			case NOTIMP:
-			case REFUSED:
-			default:
-				h_errno = NO_RECOVERY;
-				break;
+		case NXDOMAIN:
+			h_errno = HOST_NOT_FOUND;
+			break;
+		case SERVFAIL:
+			h_errno = TRY_AGAIN;
+			break;
+		case NOERROR:
+			h_errno = NO_DATA;
+			break;
+		case FORMERR:
+		case NOTIMP:
+		case REFUSED:
+		default:
+			h_errno = NO_RECOVERY;
+			break;
 		}
 		return (-1);
 	}
@@ -161,9 +171,7 @@ res_query(name, class, type, answer, anslen)
  * Formulate a normal query, send, and retrieve answer in supplied buffer.
  * Return the size of the response on success, -1 on error.
  * If enabled, implement search rules until answer or unrecoverable failure
- * is detected.  Error number is left in h_errno.
- * Only useful for queries in the same name hierarchy as the local host
- * (not, for example, for host address-to-name lookups in domain in-addr.arpa).
+ * is detected.  Error code, if any, is left in h_errno.
  */
 int
 res_search(name, class, type, answer, anslen)
@@ -172,7 +180,7 @@ res_search(name, class, type, answer, anslen)
 	u_char *answer;		/* buffer to put answer */
 	int anslen;		/* size of answer */
 {
-	register char *cp, **domain;
+	register const char *cp, * const *domain;
 	HEADER *hp = (HEADER *) answer;
 	u_int dots;
 	int trailing_dot, ret, saved_herrno;
@@ -182,15 +190,11 @@ res_search(name, class, type, answer, anslen)
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
-
-	got_nodata = 0;
 	errno = 0;
 	h_errno = HOST_NOT_FOUND;	/* default, if we never query */
 	dots = 0;
-	for (cp = (char *)name; *cp; cp++) {
-		if (*cp == '.')
-			dots++;
-	}
+	for (cp = name; *cp; cp++)
+		dots += (*cp == '.');
 	trailing_dot = 0;
 	if (cp > name && *--cp == '.')
 		trailing_dot++;
@@ -206,7 +210,6 @@ res_search(name, class, type, answer, anslen)
 	 * 'as is'.  The threshold can be set with the "ndots" option.
 	 */
 	saved_herrno = -1;
-	tried_as_is = 0;
 	if (dots >= _res.ndots) {
 		ret = res_querydomain(name, NULL, class, type, answer, anslen);
 		if (ret > 0)
@@ -223,13 +226,17 @@ res_search(name, class, type, answer, anslen)
 	 */
 	if ((!dots && (_res.options & RES_DEFNAMES)) ||
 	    (dots && !trailing_dot && (_res.options & RES_DNSRCH))) {
-		for (domain = _res.dnsrch; *domain; domain++) {
-			int done = 0;
+		int done = 0;
+
+		for (domain = (const char * const *)_res.dnsrch;
+		     *domain && !done;
+		     domain++) {
 
 			ret = res_querydomain(name, *domain, class, type,
-			    answer, anslen);
+					      answer, anslen);
 			if (ret > 0)
 				return (ret);
+
 			/*
 			 * If no server present, give up.
 			 * If name isn't found in this domain,
@@ -266,20 +273,16 @@ res_search(name, class, type, answer, anslen)
 				/* anything else implies that we're done */
 				done++;
 			}
-			/*
-			 * if we got here for some reason other than DNSRCH,
+
+			/* if we got here for some reason other than DNSRCH,
 			 * we only wanted one iteration of the loop, so stop.
 			 */
 			if (!(_res.options & RES_DNSRCH))
-			        done++;
-
-			if (done)
-				break;
+				done++;
 		}
 	}
 
-	/*
-	 * if we have not already tried the name "as is", do that now.
+	/* if we have not already tried the name "as is", do that now.
 	 * note that we do this regardless of how many dots were in the
 	 * name or whether it ends with a dot.
 	 */
@@ -287,11 +290,9 @@ res_search(name, class, type, answer, anslen)
 		ret = res_querydomain(name, NULL, class, type, answer, anslen);
 		if (ret > 0)
 			return (ret);
-		saved_herrno = h_errno;
 	}
 
-	/*
-	 * if we got here, we didn't satisfy the search.
+	/* if we got here, we didn't satisfy the search.
 	 * if we did an initial full query, return that query's h_errno
 	 * (note that we wouldn't be here if that query had succeeded).
 	 * else if we ever got a nodata, send that back as the reason.
@@ -318,7 +319,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 	u_char *answer;		/* buffer to put answer */
 	int anslen;		/* size of answer */
 {
-	char nbuf[2*MAXDNAME+2];
+	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
 	int n;
 
@@ -329,7 +330,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 #ifdef DEBUG
 	if (_res.options & RES_DEBUG)
 		printf(";; res_querydomain(%s, %s, %d, %d)\n",
-			name, domain?domain:"<Nil>", class, type);
+		       name, domain?domain:"<Nil>", class, type);
 #endif
 	if (domain == NULL) {
 		/*
@@ -343,14 +344,13 @@ res_querydomain(name, domain, class, type, answer, anslen)
 		} else
 			longname = name;
 	} else
-		(void)sprintf(nbuf, "%.*s.%.*s",
-		    MAXDNAME, name, MAXDNAME, domain);
+		sprintf(nbuf, "%.*s.%.*s", MAXDNAME, name, MAXDNAME, domain);
 
 	return (res_query(longname, class, type, answer, anslen));
 }
 
-char *
-__hostalias(name)
+const char *
+hostalias(name)
 	register const char *name;
 {
 	register char *cp1, *cp2;
@@ -379,7 +379,7 @@ __hostalias(name)
 				break;
 			for (cp2 = cp1 + 1; *cp2 && !isspace(*cp2); ++cp2)
 				;
-			(void)strncpy(abuf, cp1, sizeof(abuf) - 1);
+			strncpy(abuf, cp1, sizeof(abuf) - 1);
 			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
 			fclose(fp);
 			return (abuf);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.3 1996/08/19 08:28:38 tholo Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.4 1997/03/13 19:07:23 downsj Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,11 +31,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 19, 1994
+.Dd March 13, 1997
 .Dt GETHOSTBYNAME 3
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm gethostbyname ,
+.Nm gethostbyname2 ,
 .Nm gethostbyaddr ,
 .Nm gethostent ,
 .Nm sethostent ,
@@ -47,6 +48,8 @@
 .Fd extern int h_errno;
 .Ft struct hostent *
 .Fn gethostbyname "const char *name"
+.Ft struct hostent *
+.Fn gethostbyname2 "const char *name" "int af"
 .Ft struct hostent *
 .Fn gethostbyaddr "const char *addr" "int len" "int type"
 .Ft struct hostent *
@@ -93,8 +96,7 @@ Official name of the host.
 .It Fa h_aliases
 A zero terminated array of alternate names for the host.
 .It Fa h_addrtype
-The type of address being returned; currently always
-.Dv AF_INET .
+The type of address being returned.
 .It Fa h_length
 The length, in bytes, of the address.
 .It Fa h_addr_list
@@ -104,6 +106,7 @@ Host addresses are returned in network byte order.
 The first address in
 .Fa h_addr_list ;
 this is for backward compatibility.
+.El
 .Pp
 When using the nameserver,
 .Fn gethostbyname
@@ -116,6 +119,14 @@ for an alias matching the input name.
 See
 .Xr hostname 7
 for the domain search procedure and the alias file format.
+.Pp
+.Fn Gethostbyname2
+is an advanced form of
+.Fn gethostbyname
+which allows lookups in address families other than
+.Dv AF_INET ,
+for example
+.Dv AF_INET6 .
 .Pp
 The
 .Fn sethostent
@@ -148,7 +159,8 @@ connection.
 .El
 .Sh DIAGNOSTICS
 Error return status from 
-.Fn gethostbyname
+.Fn gethostbyname ,
+.Fn gethostbyname2 ,
 and
 .Fn gethostbyaddr
 is indicated by return of a null pointer.
@@ -198,20 +210,6 @@ for example, a mail-forwarder may be registered for this domain.
 The
 .Fn gethostent
 function
-is defined, and
-.Fn sethostent
-and
-.Fn endhostent
-are redefined,
-when
-.Xr libc 3
-is built to use only the routines to lookup in
-.Pa /etc/hosts
-and not the name server.
-.Pp
-The
-.Fn gethostent
-function
 reads the next line of
 .Pa /etc/hosts ,
 opening the file if necessary.
@@ -225,7 +223,8 @@ If the
 .Fa stayopen
 argument is non-zero,
 the file will not be closed after each call to
-.Fn gethostbyname
+.Fn gethostbyname ,
+.Fn gethostbyname2 ,
 or
 .Fn gethostbyaddr .
 .Pp
@@ -252,4 +251,9 @@ These functions use static data storage;
 if the data is needed for future use, it should be
 copied before any subsequent calls overwrite it.
 Only the Internet
-address format is currently understood.
+address formats are currently understood.
+.Pp
+YP does not support any address families other than 
+.Dv AF_INET
+and uses
+the traditional database format.

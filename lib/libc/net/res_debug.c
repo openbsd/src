@@ -1,7 +1,11 @@
-/*-
+/*	$OpenBSD: res_debug.c,v 1.5 1997/03/13 19:07:37 downsj Exp $	*/
+
+/*
+ * ++Copyright++ 1985, 1990, 1993
+ * -
  * Copyright (c) 1985, 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
+ *    The Regents of the University of California.  All rights reserved.
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -48,63 +52,61 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  * -
+ * Portions Copyright (c) 1995 by International Business Machines, Inc.
+ *
+ * International Business Machines, Inc. (hereinafter called IBM) grants
+ * permission under its copyrights to use, copy, modify, and distribute this
+ * Software with or without fee, provided that the above copyright notice and
+ * all paragraphs of this notice appear in all copies, and that the name of IBM
+ * not be used in connection with the marketing of any product incorporating
+ * the Software or modifications thereof, without specific, written prior
+ * permission.
+ *
+ * To the extent it has a right to do so, IBM grants an immunity from suit
+ * under its patents, if any, for the use, sale or manufacture of products to
+ * the extent that such products are used for performing Domain Name System
+ * dynamic updates in TCP/IP networks by means of the Software.  No immunity is
+ * granted for any product per se or for any other function of any product.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", AND IBM DISCLAIMS ALL WARRANTIES,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE.  IN NO EVENT SHALL IBM BE LIABLE FOR ANY SPECIAL,
+ * DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER ARISING
+ * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE, EVEN
+ * IF IBM IS APPRISED OF THE POSSIBILITY OF SUCH DAMAGES.
  * --Copyright--
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.4 1996/09/15 09:31:18 tholo Exp $";
+#if 0
+static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.5 1997/03/13 19:07:37 downsj Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+
+#include <ctype.h>
+#include <netdb.h>
 #include <resolv.h>
 #include <stdio.h>
+#include <time.h>
+
+#include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
 
-void __fp_query();
+extern const char *_res_opcodes[];
+extern const char *_res_resultcodes[];
 
-char *_res_opcodes[] = {
-	"QUERY",
-	"IQUERY",
-	"CQUERYM",
-	"CQUERYU",	/* experimental */
-	"NOTIFY",	/* experimental */
-	"5",
-	"6",
-	"7",
-	"8",
-	"UPDATEA",
-	"UPDATED",
-	"UPDATEDA",
-	"UPDATEM",
-	"UPDATEMA",
-	"ZONEINIT",
-	"ZONEREF",
-};
-
-char *_res_resultcodes[] = {
-	"NOERROR",
-	"FORMERR",
-	"SERVFAIL",
-	"NXDOMAIN",
-	"NOTIMP",
-	"REFUSED",
-	"6",
-	"7",
-	"8",
-	"9",
-	"10",
-	"11",
-	"12",
-	"13",
-	"14",
-	"NOCHANGE",
-};
-
-static char *
+/* XXX: we should use getservbyport() instead. */
+static const char *
 dewks(wks)
 	int wks;
 {
@@ -200,7 +202,8 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 	 */
 	sflag = (_res.pfcode & pflag);
 	if (n = ntohs(cnt)) {
-		if ((!_res.pfcode) || ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
+		if ((!_res.pfcode) ||
+		    ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
 			fprintf(file, hs);
 		while (--n >= 0) {
 			if ((!_res.pfcode) || sflag) {
@@ -208,20 +211,21 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 			} else {
 				unsigned int dlen;
 				cp += __dn_skipname(cp, cp + MAXCDNAME);
-				cp += sizeof(u_int16_t);
-				cp += sizeof(u_int16_t);
-				cp += sizeof(u_int32_t);
+				cp += INT16SZ;
+				cp += INT16SZ;
+				cp += INT32SZ;
 				dlen = _getshort((u_char*)cp);
-				cp += sizeof(u_int16_t);
+				cp += INT16SZ;
 				cp += dlen;
 			}
 			if ((cp - msg) > len)
 				return (NULL);
 		}
-		if ((!_res.pfcode) || ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
+		if ((!_res.pfcode) ||
+		    ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
 			putc('\n', file);
 	}
-	return(cp);
+	return (cp);
 }
 
 void
@@ -268,7 +272,7 @@ __fp_nquery(msg, len, file)
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
 		return;
 
-#define TruncTest(x) if (x >= endMark) goto trunc
+#define TruncTest(x) if (x > endMark) goto trunc
 #define	ErrorTest(x) if (x == NULL) goto error
 
 	/*
@@ -276,9 +280,9 @@ __fp_nquery(msg, len, file)
 	 */
 	hp = (HEADER *)msg;
 	cp = msg + HFIXEDSZ;
-	endMark = cp + len;
+	endMark = msg + len;
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEADX) || hp->rcode) {
-		fprintf(file,";; ->>HEADER<<- opcode: %s, status: %s, id: %d",
+		fprintf(file, ";; ->>HEADER<<- opcode: %s, status: %s, id: %d",
 			_res_opcodes[hp->opcode],
 			_res_resultcodes[hp->rcode],
 			ntohs(hp->id));
@@ -287,22 +291,28 @@ __fp_nquery(msg, len, file)
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEADX))
 		putc(';', file);
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEAD2)) {
-		fprintf(file,"; flags:");
+		fprintf(file, "; flags:");
 		if (hp->qr)
-			fprintf(file," qr");
+			fprintf(file, " qr");
 		if (hp->aa)
-			fprintf(file," aa");
+			fprintf(file, " aa");
 		if (hp->tc)
-			fprintf(file," tc");
+			fprintf(file, " tc");
 		if (hp->rd)
-			fprintf(file," rd");
+			fprintf(file, " rd");
 		if (hp->ra)
-			fprintf(file," ra");
+			fprintf(file, " ra");
+		if (hp->unused)
+			fprintf(file, " UNUSED-BIT-ON");
+		if (hp->ad)
+			fprintf(file, " ad");
+		if (hp->cd)
+			fprintf(file, " cd");
 	}
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEAD1)) {
-		fprintf(file,"; Ques: %d", ntohs(hp->qdcount));
-		fprintf(file,", Ans: %d", ntohs(hp->ancount));
-		fprintf(file,", Auth: %d", ntohs(hp->nscount));
+		fprintf(file, "; Ques: %d", ntohs(hp->qdcount));
+		fprintf(file, ", Ans: %d", ntohs(hp->ancount));
+		fprintf(file, ", Auth: %d", ntohs(hp->nscount));
 		fprintf(file, ", Addit: %d", ntohs(hp->arcount));
 	}
 	if ((!_res.pfcode) || (_res.pfcode & 
@@ -314,10 +324,10 @@ __fp_nquery(msg, len, file)
 	 */
 	if (n = ntohs(hp->qdcount)) {
 		if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
-			fprintf(file,";; QUESTIONS:\n");
+			fprintf(file, ";; QUESTIONS:\n");
 		while (--n >= 0) {
 			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
-			fprintf(file,";;\t");
+				fprintf(file, ";;\t");
 			TruncTest(cp);
 			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
 				cp = p_cdnname(cp, msg, len, file);
@@ -372,7 +382,7 @@ __fp_nquery(msg, len, file)
 	return;
  trunc:
 	fprintf(file, "\n;; ...truncated\n");
-		return;
+	return;
  error:
 	fprintf(file, "\n;; ...malformed\n");
 }
@@ -411,6 +421,30 @@ __p_cdname(cp, msg, file)
 	return (p_cdnname(cp, msg, PACKETSZ, file));
 }
 
+
+/* Return a fully-qualified domain name from a compressed name (with
+   length supplied).  */
+
+const u_char *
+__p_fqnname(cp, msg, msglen, name, namelen)
+	const u_char *cp, *msg;
+	int msglen;
+	char *name;
+	int namelen;
+{
+	int n, newlen;
+
+	if ((n = dn_expand(msg, cp + msglen, cp, name, namelen)) < 0)
+		return (NULL);
+	newlen = strlen (name);
+	if (newlen == 0 || name[newlen - 1] != '.')
+		if (newlen+1 >= namelen)	/* Lack space for final dot */
+			return (NULL);
+		else
+			strcpy(name + newlen, ".");
+	return (cp + n);
+}
+
 /* XXX:	the rest of these functions need to become length-limited, too. (vix)
  */
 
@@ -420,18 +454,13 @@ __p_fqname(cp, msg, file)
 	FILE *file;
 {
 	char name[MAXDNAME];
-	int n;
+	const u_char *n;
 
-	if ((n = dn_expand(msg, cp + MAXCDNAME, cp, name, sizeof name)) < 0)
+	n = __p_fqnname(cp, msg, MAXCDNAME, name, sizeof name);
+	if (n == NULL)
 		return (NULL);
-	if (name[0] == '\0') {
-		putc('.', file);
-	} else {
-		fputs(name, file);
-		if (name[strlen(name) - 1] != '.')
-			putc('.', file);
-	}
-	return (cp + n);
+	fputs(name, file);
+	return (n);
 }
 
 /*
@@ -447,21 +476,27 @@ __p_rr(cp, msg, file)
 	const u_char *cp1, *cp2;
 	u_int32_t tmpttl, t;
 	int lcnt;
+	u_int16_t keyflags;
+	char rrname[MAXDNAME];		/* The fqdn of this RR */
+	char base64_key[MAX_KEY_BASE64];
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}
-	if ((cp = p_fqname(cp, msg, file)) == NULL)
+	cp = __p_fqnname(cp, msg, MAXCDNAME, rrname, sizeof rrname);
+	if (!cp)
 		return (NULL);			/* compression error */
-	type = _getshort(cp);
-	cp += sizeof(u_int16_t);
-	class = _getshort(cp);
-	cp += sizeof(u_int16_t);
-	tmpttl = _getlong(cp);
-	cp += sizeof(u_int32_t);
-	dlen = _getshort(cp);
-	cp += sizeof(u_int16_t);
+	fputs(rrname, file);
+	
+	type = _getshort((u_char*)cp);
+	cp += INT16SZ;
+	class = _getshort((u_char*)cp);
+	cp += INT16SZ;
+	tmpttl = _getlong((u_char*)cp);
+	cp += INT32SZ;
+	dlen = _getshort((u_char*)cp);
+	cp += INT16SZ;
 	cp1 = cp;
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_TTLID))
 		fprintf(file, "\t%lu", (u_long)tmpttl);
@@ -476,9 +511,9 @@ __p_rr(cp, msg, file)
 		switch (class) {
 		case C_IN:
 		case C_HS:
-			bcopy(cp, (char *)&inaddr, sizeof(inaddr));
+			bcopy(cp, (char *)&inaddr, INADDRSZ);
 			if (dlen == 4) {
-				fprintf(file,"\t%s", inet_ntoa(inaddr));
+				fprintf(file, "\t%s", inet_ntoa(inaddr));
 				cp += dlen;
 			} else if (dlen == 7) {
 				char *address;
@@ -486,11 +521,11 @@ __p_rr(cp, msg, file)
 				u_short port;
 
 				address = inet_ntoa(inaddr);
-				cp += sizeof(inaddr);
-				protocol = *cp;
-				cp += sizeof(u_char);
-				port = _getshort(cp);
-				cp += sizeof(u_int16_t);
+				cp += INADDRSZ;
+				protocol = *(u_char*)cp;
+				cp += sizeof (u_char);
+				port = _getshort((u_char*)cp);
+				cp += INT16SZ;
 				fprintf(file, "\t%s\t; proto %d, port %d",
 					address, protocol, port);
 			}
@@ -513,15 +548,27 @@ __p_rr(cp, msg, file)
 	case T_HINFO:
 	case T_ISDN:
 		cp2 = cp + dlen;
-		if (n = *cp++) {
-			fprintf(file,"\t%.*s", n, cp);
-			cp += n;
+		(void) fputs("\t\"", file);
+		if ((n = (unsigned char) *cp++) != 0) {
+			for (c = n; c > 0 && cp < cp2; c--) {
+				if (strchr("\n\"\\", *cp))
+					(void) putc('\\', file);
+				(void) putc(*cp++, file);
+			}
 		}
-		if ((cp < cp2) && (n = *cp++)) {
-			fprintf(file,"\t%.*s", n, cp);
-			cp += n;
-		} else if (type == T_HINFO)
+		putc('"', file);
+		if (cp < cp2 && (n = (unsigned char) *cp++) != 0) {
+			(void) fputs ("\t\"", file);
+			for (c = n; c > 0 && cp < cp2; c--) {
+				if (strchr("\n\"\\", *cp))
+					(void) putc('\\', file);
+				(void) putc(*cp++, file);
+			}
+			putc('"', file);
+		} else if (type == T_HINFO) {
+			(void) fputs("\"?\"", file);
 			fprintf(file, "\n;; *** Warning *** OS-type missing");
+		}
 		break;
 
 	case T_SOA:
@@ -532,18 +579,18 @@ __p_rr(cp, msg, file)
 		if ((cp = p_fqname(cp, msg, file)) == NULL)
 			return (NULL);
 		fputs(" (\n", file);
-		t = _getlong(cp);  cp += sizeof(u_int32_t);
+		t = _getlong((u_char*)cp);  cp += INT32SZ;
 		fprintf(file, "\t\t\t%lu\t; serial\n", (u_long)t);
-		t = _getlong(cp);  cp += sizeof(u_int32_t);
+		t = _getlong((u_char*)cp);  cp += INT32SZ;
 		fprintf(file, "\t\t\t%lu\t; refresh (%s)\n",
 			(u_long)t, __p_time(t));
-		t = _getlong(cp);  cp += sizeof(u_int32_t);
+		t = _getlong((u_char*)cp);  cp += INT32SZ;
 		fprintf(file, "\t\t\t%lu\t; retry (%s)\n",
 			(u_long)t, __p_time(t));
-		t = _getlong(cp);  cp += sizeof(u_int32_t);
+		t = _getlong((u_char*)cp);  cp += INT32SZ;
 		fprintf(file, "\t\t\t%lu\t; expire (%s)\n",
 			(u_long)t, __p_time(t));
-		t = _getlong(cp);  cp += sizeof(u_int32_t);
+		t = _getlong((u_char*)cp);  cp += INT32SZ;
 		fprintf(file, "\t\t\t%lu )\t; minimum (%s)",
 			(u_long)t, __p_time(t));
 		break;
@@ -551,14 +598,14 @@ __p_rr(cp, msg, file)
 	case T_MX:
 	case T_AFSDB:
 	case T_RT:
-		fprintf(file, "\t%d ", _getshort(cp));
+		fprintf(file, "\t%d ", _getshort((u_char*)cp));
 		cp += INT16SZ;
 		if ((cp = p_fqname(cp, msg, file)) == NULL)
 			return (NULL);
 		break;
 
 	case T_PX:
-		fprintf(file, "\t%d ", _getshort(cp));
+		fprintf(file, "\t%d ", _getshort((u_char*)cp));
 		cp += INT16SZ;
 		if ((cp = p_fqname(cp, msg, file)) == NULL)
 			return (NULL);
@@ -567,27 +614,92 @@ __p_rr(cp, msg, file)
 			return (NULL);
 		break;
 
-  	case T_TXT:
 	case T_X25:
+		cp2 = cp + dlen;
 		(void) fputs("\t\"", file);
-		cp2 = cp1 + dlen;
-		while (cp < cp2) {
-			if (n = (unsigned char) *cp++) {
-				for (c = n; c > 0 && cp < cp2; c--)
-					if ((*cp == '\n') || (*cp == '"')) {
-					    (void) putc('\\', file);
-					    (void) putc(*cp++, file);
-					} else
-					    (void) putc(*cp++, file);
+		if ((n = (unsigned char) *cp++) != 0) {
+			for (c = n; c > 0 && cp < cp2; c--) {
+				if (strchr("\n\"\\", *cp))
+					(void) putc('\\', file);
+				(void) putc(*cp++, file);
 			}
 		}
 		putc('"', file);
-  		break;
+		break;
+
+	case T_TXT:
+		(void) putc('\t', file);
+		cp2 = cp1 + dlen;
+		while (cp < cp2) {
+			putc('"', file);
+			if (n = (unsigned char) *cp++) {
+				for (c = n; c > 0 && cp < cp2; c--) {
+					if (strchr("\n\"\\", *cp))
+						(void) putc('\\', file);
+					(void) putc(*cp++, file);
+				}
+			}
+			putc('"', file);
+			if (cp < cp2)
+				putc(' ', file);
+		}
+		break;
 
 	case T_NSAP:
 		(void) fprintf(file, "\t%s", inet_nsap_ntoa(dlen, cp, NULL));
 		cp += dlen;
 		break;
+
+	case T_AAAA: {
+		char t[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+
+		fprintf(file, "\t%s", inet_ntop(AF_INET6, cp, t, sizeof t));
+		cp += dlen;
+		break;
+	    }
+
+	case T_LOC: {
+		char t[255];
+
+		fprintf(file, "\t%s", loc_ntoa(cp, t));
+		cp += dlen;
+		break;
+	    }
+
+	case T_NAPTR: {
+		u_int order, preference;
+
+		order = _getshort(cp);  cp += INT16SZ;
+		preference   = _getshort(cp);  cp += INT16SZ;
+		fprintf(file, "\t%u %u ",order, preference);
+		/* Flags */
+		n = *cp++;
+		fprintf(file,"\"%.*s\" ", (int)n, cp);
+		cp += n;
+		/* Service */
+		n = *cp++;
+		fprintf(file,"\"%.*s\" ", (int)n, cp);
+		cp += n;
+		/* Regexp */
+		n = *cp++;
+		fprintf(file,"\"%.*s\" ", (int)n, cp);
+		cp += n;
+		if ((cp = p_fqname(cp, msg, file)) == NULL)
+			return (NULL);
+		break;
+	    }
+
+	case T_SRV: {
+		u_int priority, weight, port;
+
+		priority = _getshort(cp);  cp += INT16SZ;
+		weight   = _getshort(cp);  cp += INT16SZ;
+		port     = _getshort(cp);  cp += INT16SZ;
+		fprintf(file, "\t%u %u %u ", priority, weight, port);
+		if ((cp = p_fqname(cp, msg, file)) == NULL)
+			return (NULL);
+		break;
+	    }
 
 	case T_MINFO:
 	case T_RP:
@@ -601,33 +713,33 @@ __p_rr(cp, msg, file)
 
 	case T_UINFO:
 		putc('\t', file);
-		fputs((char *) cp, file);
+		fputs((char *)cp, file);
 		cp += dlen;
 		break;
 
 	case T_UID:
 	case T_GID:
 		if (dlen == 4) {
-			fprintf(file,"\t%u", _getlong(cp));
-			cp += sizeof(int32_t);
+			fprintf(file, "\t%u", _getlong((u_char*)cp));
+			cp += INT32SZ;
 		}
 		break;
 
 	case T_WKS:
-		if (dlen < sizeof(u_int32_t) + 1)
+		if (dlen < INT32SZ + 1)
 			break;
-		bcopy(cp, (char *)&inaddr, sizeof(inaddr));
-		cp += sizeof(u_int32_t);
+		bcopy(cp, (char *)&inaddr, INADDRSZ);
+		cp += INT32SZ;
 		fprintf(file, "\t%s %s ( ",
 			inet_ntoa(inaddr),
 			deproto((int) *cp));
-		cp += sizeof(u_char);
+		cp += sizeof (u_char);
 		n = 0;
 		lcnt = 0;
 		while (cp < cp1 + dlen) {
 			c = *cp++;
 			do {
- 				if (c & 0200) {
+				if (c & 0200) {
 					if (lcnt == 0) {
 						fputs("\n\t\t\t", file);
 						lcnt = 5;
@@ -636,10 +748,76 @@ __p_rr(cp, msg, file)
 					putc(' ', file);
 					lcnt--;
 				}
- 				c <<= 1;
+				c <<= 1;
 			} while (++n & 07);
 		}
 		putc(')', file);
+		break;
+
+	case T_KEY:
+		putc('\t', file);
+		keyflags = _getshort(cp);
+		cp += 2;
+		fprintf(file,"0x%04x", keyflags );	/* flags */
+		fprintf(file," %u", *cp++);	/* protocol */
+		fprintf(file," %u (", *cp++);	/* algorithm */
+
+		n = b64_ntop(cp, (cp1 + dlen) - cp,
+			     base64_key, sizeof base64_key);
+		for (c = 0; c < n; ++c) {
+			if (0 == (c & 0x3F))
+				fprintf(file, "\n\t");
+			putc(base64_key[c], file);  /* public key data */
+		}
+
+		fprintf(file, " )");
+		if (n < 0)
+			fprintf(file, "\t; BAD BASE64");
+		fflush(file);
+		cp = cp1 + dlen;
+		break;
+
+	case T_SIG:
+	        type = _getshort((u_char*)cp);
+		cp += INT16SZ;
+		fprintf(file, " %s", p_type(type));
+		fprintf(file, "\t%d", *cp++);	/* algorithm */
+		/* Check label value and print error if wrong. */
+		n = *cp++;
+		c = dn_count_labels (rrname);
+		if (n != c)
+			fprintf(file, "\t; LABELS WRONG (%d should be %d)\n\t",
+				n, c);
+		/* orig ttl */
+		n = _getlong((u_char*)cp);
+		if (n != tmpttl)
+			fprintf(file, " %u", n);
+		cp += INT32SZ;
+		/* sig expire */
+		fprintf(file, " (\n\t%s",
+				     __p_secstodate(_getlong((u_char*)cp)));
+		cp += INT32SZ;
+		/* time signed */
+		fprintf(file, " %s", __p_secstodate(_getlong((u_char*)cp)));
+		cp += INT32SZ;
+		/* sig footprint */
+		fprintf(file," %u ", _getshort((u_char*)cp));
+		cp += INT16SZ;
+		/* signer's name */
+		cp = p_fqname(cp, msg, file);
+		n = b64_ntop(cp, (cp1 + dlen) - cp,
+			     base64_key, sizeof base64_key);
+		for (c = 0; c < n; c++) {
+			if (0 == (c & 0x3F))
+				fprintf (file, "\n\t");
+			putc(base64_key[c], file);		/* signature */
+		}
+		/* Clean up... */
+		fprintf(file, " )");
+		if (n < 0)
+			fprintf(file, "\t; BAD BASE64");
+		fflush(file);
+		cp = cp1+dlen;
 		break;
 
 #ifdef ALLOW_T_UNSPEC
@@ -660,7 +838,7 @@ __p_rr(cp, msg, file)
 #endif /* ALLOW_T_UNSPEC */
 
 	default:
-		fprintf(file,"\t?%d?", type);
+		fprintf(file, "\t?%d?", type);
 		cp += dlen;
 	}
 #if 0
@@ -669,11 +847,142 @@ __p_rr(cp, msg, file)
 	putc('\n', file);
 #endif
 	if (cp - cp1 != dlen) {
-		fprintf(file,";; packet size error (found %d, dlen was %d)\n",
+		fprintf(file, ";; packet size error (found %d, dlen was %d)\n",
 			cp - cp1, dlen);
 		cp = NULL;
 	}
 	return (cp);
+}
+
+/*
+ * Names of RR classes and qclasses.  Classes and qclasses are the same, except
+ * that C_ANY is a qclass but not a class.  (You can ask for records of class
+ * C_ANY, but you can't have any records of that class in the database.)
+ */
+const struct res_sym __p_class_syms[] = {
+	{C_IN,		"IN"},
+	{C_CHAOS,	"CHAOS"},
+	{C_HS,		"HS"},
+	{C_HS,		"HESIOD"},
+	{C_ANY,		"ANY"},
+	{C_IN, 		(char *)0}
+};
+
+/*
+ * Names of RR types and qtypes.  Types and qtypes are the same, except
+ * that T_ANY is a qtype but not a type.  (You can ask for records of type
+ * T_ANY, but you can't have any records of that type in the database.)
+ */
+const struct res_sym __p_type_syms[] = {
+	{T_A,		"A",		"address"},
+	{T_NS,		"NS",		"name server"},
+	{T_MD,		"MD",		"mail destination (deprecated)"},
+	{T_MF,		"MF",		"mail forwarder (deprecated)"},
+	{T_CNAME,	"CNAME",	"canonical name"},
+	{T_SOA,		"SOA",		"start of authority"},
+	{T_MB,		"MB",		"mailbox"},
+	{T_MG,		"MG",		"mail group member"},
+	{T_MR,		"MR",		"mail rename"},
+	{T_NULL,	"NULL",		"null"},
+	{T_WKS,		"WKS",		"well-known service (deprecated)"},
+	{T_PTR,		"PTR",		"domain name pointer"},
+	{T_HINFO,	"HINFO",	"host information"},
+	{T_MINFO,	"MINFO",	"mailbox information"},
+	{T_MX,		"MX",		"mail exchanger"},
+	{T_TXT,		"TXT",		"text"},
+	{T_RP,		"RP",		"responsible person"},
+	{T_AFSDB,	"AFSDB",	"DCE or AFS server"},
+	{T_X25,		"X25",		"X25 address"},
+	{T_ISDN,	"ISDN",		"ISDN address"},
+	{T_RT,		"RT",		"router"},
+	{T_NSAP,	"NSAP",		"nsap address"},
+	{T_NSAP_PTR,	"NSAP_PTR",	"domain name pointer"},
+	{T_SIG,		"SIG",		"signature"},
+	{T_KEY,		"KEY",		"key"},
+	{T_PX,		"PX",		"mapping information"},
+	{T_GPOS,	"GPOS",		"geographical position (withdrawn)"},
+	{T_AAAA,	"AAAA",		"IPv6 address"},
+	{T_LOC,		"LOC",		"location"},
+	{T_NXT,		"NXT",		"next valid name (unimplemented)"},
+	{T_EID,		"EID",		"endpoint identifier (unimplemented)"},
+	{T_NIMLOC,	"NIMLOC",	"NIMROD locator (unimplemented)"},
+	{T_SRV,		"SRV",		"server selection"},
+	{T_ATMA,	"ATMA",		"ATM address (unimplemented)"},
+	{T_IXFR,	"IXFR",		"incremental zone transfer"},
+	{T_AXFR,	"AXFR",		"zone transfer"},
+	{T_MAILB,	"MAILB",	"mailbox-related data (deprecated)"},
+	{T_MAILA,	"MAILA",	"mail agent (deprecated)"},
+	{T_UINFO,	"UINFO",	"user information (nonstandard)"},
+	{T_UID,		"UID",		"user ID (nonstandard)"},
+	{T_GID,		"GID",		"group ID (nonstandard)"},
+	{T_NAPTR,	"NAPTR",	"URN Naming Authority"},
+#ifdef ALLOW_T_UNSPEC
+	{T_UNSPEC,	"UNSPEC",	"unspecified data (nonstandard)"},
+#endif /* ALLOW_T_UNSPEC */
+	{T_ANY,		"ANY",		"\"any\""},
+	{0, 		NULL,		NULL}
+};
+
+int
+__sym_ston(syms, name, success)
+	const struct res_sym *syms;
+	char *name;
+	int *success;
+{
+	for (NULL; syms->name != 0; syms++) {
+		if (strcasecmp (name, syms->name) == 0) {
+			if (success)
+				*success = 1;
+			return (syms->number);
+		}
+	}
+	if (success)
+		*success = 0;
+	return (syms->number);		/* The default value. */
+}
+
+const char *
+__sym_ntos(syms, number, success)
+	const struct res_sym *syms;
+	int number;
+	int *success;
+{
+	static char unname[20];
+
+	for (NULL; syms->name != 0; syms++) {
+		if (number == syms->number) {
+			if (success)
+				*success = 1;
+			return (syms->name);
+		}
+	}
+
+	sprintf (unname, "%d", number);
+	if (success)
+		*success = 0;
+	return (unname);
+}
+
+
+const char *
+__sym_ntop(syms, number, success)
+	const struct res_sym *syms;
+	int number;
+	int *success;
+{
+	static char unname[20];
+
+	for (NULL; syms->name != 0; syms++) {
+		if (number == syms->number) {
+			if (success)
+				*success = 1;
+			return (syms->humanname);
+		}
+	}
+	sprintf(unname, "%d", number);
+	if (success)
+		*success = 0;
+	return (unname);
 }
 
 /*
@@ -683,48 +992,7 @@ const char *
 __p_type(type)
 	int type;
 {
-	static char nbuf[20];
-
-	switch (type) {
-	case T_A:	return "A";
-	case T_NS:	return "NS";
-	case T_CNAME:	return "CNAME";
-	case T_SOA:	return "SOA";
-	case T_MB:	return "MB";
-	case T_MG:	return "MG";
-	case T_MR:	return "MR";
-	case T_NULL:	return "NULL";
-	case T_WKS:	return "WKS";
-	case T_PTR:	return "PTR";
-	case T_HINFO:	return "HINFO";
-	case T_MINFO:	return "MINFO";
-	case T_MX:	return "MX";
-	case T_TXT:	return "TXT";
-	case T_RP:	return "RP";
-	case T_AFSDB:	return "AFSDB";
-	case T_X25:	return "X25";
-	case T_ISDN:	return "ISDN";
-	case T_RT:	return "RT";
-	case T_NSAP:	return "NSAP";
-	case T_NSAP_PTR: return "NSAP_PTR";
-	case T_SIG:	return "SIG";
-	case T_KEY:	return "KEY";
-	case T_PX:	return "PX";
-	case T_GPOS:	return "GPOS";
-	case T_AAAA:	return "AAAA";
-	case T_LOC:	return "LOC";
-	case T_AXFR:	return "AXFR";
-	case T_MAILB:	return "MAILB";
-	case T_MAILA:	return "MAILA";
-	case T_ANY:	return "ANY";
-	case T_UINFO:	return "UINFO";
-	case T_UID:	return "UID";
-	case T_GID:	return "GID";
-#ifdef ALLOW_T_UNSPEC
-	case T_UNSPEC:	return "UNSPEC";
-#endif /* ALLOW_T_UNSPEC */
-	default:	(void)sprintf(nbuf, "%d", type); return (nbuf);
-	}
+	return (__sym_ntos (__p_type_syms, type, (int *)0));
 }
 
 /*
@@ -734,14 +1002,7 @@ const char *
 __p_class(class)
 	int class;
 {
-	static char nbuf[20];
-
-	switch (class) {
-	case C_IN:	return "IN";
-	case C_HS:	return "HS";
-	case C_ANY:	return "ANY";
-	default:	(void)sprintf(nbuf, "%d", class); return (nbuf);
-	}
+	return (__sym_ntos (__p_class_syms, class, (int *)0));
 }
 
 /*
@@ -774,8 +1035,8 @@ __p_option(option)
 /*
  * Return a mnemonic for a time to live
  */
-char *
-__p_time(value)
+const char *
+p_time(value)
 	u_int32_t value;
 {
 	static char nbuf[40];
@@ -784,7 +1045,7 @@ __p_time(value)
 
 	if (value == 0) {
 		strcpy(nbuf, "0 secs");
-		return(nbuf);
+		return (nbuf);
 	}
 
 	secs = value % 60;
@@ -819,5 +1080,437 @@ __p_time(value)
 			*p++ = ' ';
 		(void)sprintf(p, "%d sec%s", PLURALIZE(secs));
 	}
-	return(nbuf);
+	return (nbuf);
+}
+
+/*
+ * routines to convert between on-the-wire RR format and zone file format.
+ * Does not contain conversion to/from decimal degrees; divide or multiply
+ * by 60*60*1000 for that.
+ */
+
+static unsigned int poweroften[10] = {1, 10, 100, 1000, 10000, 100000,
+				      1000000,10000000,100000000,1000000000};
+
+/* takes an XeY precision/size value, returns a string representation. */
+static const char *
+precsize_ntoa(prec)
+	u_int8_t prec;
+{
+	static char retbuf[sizeof "90000000.00"];
+	unsigned long val;
+	int mantissa, exponent;
+
+	mantissa = (int)((prec >> 4) & 0x0f) % 10;
+	exponent = (int)((prec >> 0) & 0x0f) % 10;
+
+	val = mantissa * poweroften[exponent];
+
+	(void) sprintf(retbuf, "%ld.%.2ld", val/100, val%100);
+	return (retbuf);
+}
+
+/* converts ascii size/precision X * 10**Y(cm) to 0xXY.  moves pointer. */
+static u_int8_t
+precsize_aton(strptr)
+	char **strptr;
+{
+	unsigned int mval = 0, cmval = 0;
+	u_int8_t retval = 0;
+	register char *cp;
+	register int exponent;
+	register int mantissa;
+
+	cp = *strptr;
+
+	while (isdigit(*cp))
+		mval = mval * 10 + (*cp++ - '0');
+
+	if (*cp == '.') {		/* centimeters */
+		cp++;
+		if (isdigit(*cp)) {
+			cmval = (*cp++ - '0') * 10;
+			if (isdigit(*cp)) {
+				cmval += (*cp++ - '0');
+			}
+		}
+	}
+	cmval = (mval * 100) + cmval;
+
+	for (exponent = 0; exponent < 9; exponent++)
+		if (cmval < poweroften[exponent+1])
+			break;
+
+	mantissa = cmval / poweroften[exponent];
+	if (mantissa > 9)
+		mantissa = 9;
+
+	retval = (mantissa << 4) | exponent;
+
+	*strptr = cp;
+
+	return (retval);
+}
+
+/* converts ascii lat/lon to unsigned encoded 32-bit number.  moves pointer. */
+static u_int32_t
+latlon2ul(latlonstrptr,which)
+	char **latlonstrptr;
+	int *which;
+{
+	register char *cp;
+	u_int32_t retval;
+	int deg = 0, min = 0, secs = 0, secsfrac = 0;
+
+	cp = *latlonstrptr;
+
+	while (isdigit(*cp))
+		deg = deg * 10 + (*cp++ - '0');
+
+	while (isspace(*cp))
+		cp++;
+
+	if (!(isdigit(*cp)))
+		goto fndhemi;
+
+	while (isdigit(*cp))
+		min = min * 10 + (*cp++ - '0');
+
+	while (isspace(*cp))
+		cp++;
+
+	if (!(isdigit(*cp)))
+		goto fndhemi;
+
+	while (isdigit(*cp))
+		secs = secs * 10 + (*cp++ - '0');
+
+	if (*cp == '.') {		/* decimal seconds */
+		cp++;
+		if (isdigit(*cp)) {
+			secsfrac = (*cp++ - '0') * 100;
+			if (isdigit(*cp)) {
+				secsfrac += (*cp++ - '0') * 10;
+				if (isdigit(*cp)) {
+					secsfrac += (*cp++ - '0');
+				}
+			}
+		}
+	}
+
+	while (!isspace(*cp))	/* if any trailing garbage */
+		cp++;
+
+	while (isspace(*cp))
+		cp++;
+
+ fndhemi:
+	switch (*cp) {
+	case 'N': case 'n':
+	case 'E': case 'e':
+		retval = ((unsigned)1<<31)
+			+ (((((deg * 60) + min) * 60) + secs) * 1000)
+			+ secsfrac;
+		break;
+	case 'S': case 's':
+	case 'W': case 'w':
+		retval = ((unsigned)1<<31)
+			- (((((deg * 60) + min) * 60) + secs) * 1000)
+			- secsfrac;
+		break;
+	default:
+		retval = 0;	/* invalid value -- indicates error */
+		break;
+	}
+
+	switch (*cp) {
+	case 'N': case 'n':
+	case 'S': case 's':
+		*which = 1;	/* latitude */
+		break;
+	case 'E': case 'e':
+	case 'W': case 'w':
+		*which = 2;	/* longitude */
+		break;
+	default:
+		*which = 0;	/* error */
+		break;
+	}
+
+	cp++;			/* skip the hemisphere */
+
+	while (!isspace(*cp))	/* if any trailing garbage */
+		cp++;
+
+	while (isspace(*cp))	/* move to next field */
+		cp++;
+
+	*latlonstrptr = cp;
+
+	return (retval);
+}
+
+/* converts a zone file representation in a string to an RDATA on-the-wire
+ * representation. */
+int
+loc_aton(ascii, binary)
+	const char *ascii;
+	u_char *binary;
+{
+	const char *cp, *maxcp;
+	u_char *bcp;
+
+	u_int32_t latit = 0, longit = 0, alt = 0;
+	u_int32_t lltemp1 = 0, lltemp2 = 0;
+	int altmeters = 0, altfrac = 0, altsign = 1;
+	u_int8_t hp = 0x16;	/* default = 1e6 cm = 10000.00m = 10km */
+	u_int8_t vp = 0x13;	/* default = 1e3 cm = 10.00m */
+	u_int8_t siz = 0x12;	/* default = 1e2 cm = 1.00m */
+	int which1 = 0, which2 = 0;
+
+	cp = ascii;
+	maxcp = cp + strlen(ascii);
+
+	lltemp1 = latlon2ul(&cp, &which1);
+
+	lltemp2 = latlon2ul(&cp, &which2);
+
+	switch (which1 + which2) {
+	case 3:			/* 1 + 2, the only valid combination */
+		if ((which1 == 1) && (which2 == 2)) { /* normal case */
+			latit = lltemp1;
+			longit = lltemp2;
+		} else if ((which1 == 2) && (which2 == 1)) { /* reversed */
+			longit = lltemp1;
+			latit = lltemp2;
+		} else {	/* some kind of brokenness */
+			return (0);
+		}
+		break;
+	default:		/* we didn't get one of each */
+		return (0);
+	}
+
+	/* altitude */
+	if (*cp == '-') {
+		altsign = -1;
+		cp++;
+	}
+    
+	if (*cp == '+')
+		cp++;
+
+	while (isdigit(*cp))
+		altmeters = altmeters * 10 + (*cp++ - '0');
+
+	if (*cp == '.') {		/* decimal meters */
+		cp++;
+		if (isdigit(*cp)) {
+			altfrac = (*cp++ - '0') * 10;
+			if (isdigit(*cp)) {
+				altfrac += (*cp++ - '0');
+			}
+		}
+	}
+
+	alt = (10000000 + (altsign * (altmeters * 100 + altfrac)));
+
+	while (!isspace(*cp) && (cp < maxcp)) /* if trailing garbage or m */
+		cp++;
+
+	while (isspace(*cp) && (cp < maxcp))
+		cp++;
+
+	if (cp >= maxcp)
+		goto defaults;
+
+	siz = precsize_aton(&cp);
+	
+	while (!isspace(*cp) && (cp < maxcp))	/* if trailing garbage or m */
+		cp++;
+
+	while (isspace(*cp) && (cp < maxcp))
+		cp++;
+
+	if (cp >= maxcp)
+		goto defaults;
+
+	hp = precsize_aton(&cp);
+
+	while (!isspace(*cp) && (cp < maxcp))	/* if trailing garbage or m */
+		cp++;
+
+	while (isspace(*cp) && (cp < maxcp))
+		cp++;
+
+	if (cp >= maxcp)
+		goto defaults;
+
+	vp = precsize_aton(&cp);
+
+ defaults:
+
+	bcp = binary;
+	*bcp++ = (u_int8_t) 0;	/* version byte */
+	*bcp++ = siz;
+	*bcp++ = hp;
+	*bcp++ = vp;
+	PUTLONG(latit,bcp);
+	PUTLONG(longit,bcp);
+	PUTLONG(alt,bcp);
+    
+	return (16);		/* size of RR in octets */
+}
+
+/* takes an on-the-wire LOC RR and formats it in a human readable format. */
+const char *
+loc_ntoa(binary, ascii)
+	const u_char *binary;
+	char *ascii;
+{
+	static char *error = "?";
+	register const u_char *cp = binary;
+
+	int latdeg, latmin, latsec, latsecfrac;
+	int longdeg, longmin, longsec, longsecfrac;
+	char northsouth, eastwest;
+	int altmeters, altfrac, altsign;
+
+	const int referencealt = 100000 * 100;
+
+	int32_t latval, longval, altval;
+	u_int32_t templ;
+	u_int8_t sizeval, hpval, vpval, versionval;
+    
+	char *sizestr, *hpstr, *vpstr;
+
+	versionval = *cp++;
+
+	if (versionval) {
+		sprintf(ascii, "; error: unknown LOC RR version");
+		return (ascii);
+	}
+
+	sizeval = *cp++;
+
+	hpval = *cp++;
+	vpval = *cp++;
+
+	GETLONG(templ, cp);
+	latval = (templ - ((unsigned)1<<31));
+
+	GETLONG(templ, cp);
+	longval = (templ - ((unsigned)1<<31));
+
+	GETLONG(templ, cp);
+	if (templ < referencealt) { /* below WGS 84 spheroid */
+		altval = referencealt - templ;
+		altsign = -1;
+	} else {
+		altval = templ - referencealt;
+		altsign = 1;
+	}
+
+	if (latval < 0) {
+		northsouth = 'S';
+		latval = -latval;
+	} else
+		northsouth = 'N';
+
+	latsecfrac = latval % 1000;
+	latval = latval / 1000;
+	latsec = latval % 60;
+	latval = latval / 60;
+	latmin = latval % 60;
+	latval = latval / 60;
+	latdeg = latval;
+
+	if (longval < 0) {
+		eastwest = 'W';
+		longval = -longval;
+	} else
+		eastwest = 'E';
+
+	longsecfrac = longval % 1000;
+	longval = longval / 1000;
+	longsec = longval % 60;
+	longval = longval / 60;
+	longmin = longval % 60;
+	longval = longval / 60;
+	longdeg = longval;
+
+	altfrac = altval % 100;
+	altmeters = (altval / 100) * altsign;
+
+	if ((sizestr = strdup(precsize_ntoa(sizeval))) == NULL)
+		sizestr = error;
+	if ((hpstr = strdup(precsize_ntoa(hpval))) == NULL)
+		hpstr = error;
+	if ((vpstr = strdup(precsize_ntoa(vpval))) == NULL)
+		vpstr = error;
+
+	sprintf(ascii,
+	      "%d %.2d %.2d.%.3d %c %d %.2d %.2d.%.3d %c %d.%.2dm %sm %sm %sm",
+		latdeg, latmin, latsec, latsecfrac, northsouth,
+		longdeg, longmin, longsec, longsecfrac, eastwest,
+		altmeters, altfrac, sizestr, hpstr, vpstr);
+
+	if (sizestr != error)
+		free(sizestr);
+	if (hpstr != error)
+		free(hpstr);
+	if (vpstr != error)
+		free(vpstr);
+
+	return (ascii);
+}
+
+
+/* Return the number of DNS hierarchy levels in the name. */
+int
+__dn_count_labels(name)
+	char *name;
+{
+	int i, len, count;
+
+	len = strlen(name);
+
+	for(i = 0, count = 0; i < len; i++) {
+		if (name[i] == '.')
+			count++;
+	}
+
+	/* don't count initial wildcard */
+	if (name[0] == '*')
+		if (count)
+			count--;
+
+	/* don't count the null label for root. */
+	/* if terminating '.' not found, must adjust */
+	/* count to include last label */
+	if (len > 0 && name[len-1] != '.')
+		count++;
+	return (count);
+}
+
+
+/* 
+ * Make dates expressed in seconds-since-Jan-1-1970 easy to read.  
+ * SIG records are required to be printed like this, by the Secure DNS RFC.
+ */
+char *
+__p_secstodate (secs)
+	unsigned long secs;
+{
+	static char output[15];		/* YYYYMMDDHHMMSS and null */
+	time_t clock = secs;
+	struct tm *time;
+	
+	time = gmtime(&clock);
+	time->tm_year += 1900;
+	time->tm_mon += 1;
+	sprintf(output, "%04d%02d%02d%02d%02d%02d",
+		time->tm_year, time->tm_mon, time->tm_mday,
+		time->tm_hour, time->tm_min, time->tm_sec);
+	return (output);
 }

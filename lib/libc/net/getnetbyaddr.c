@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getnetbyaddr.c,v 1.2 1996/08/19 08:28:42 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getnetbyaddr.c,v 1.3 1997/03/13 19:07:25 downsj Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
@@ -40,8 +40,8 @@ static char rcsid[] = "$OpenBSD: getnetbyaddr.c,v 1.2 1996/08/19 08:28:42 tholo 
 extern int _net_stayopen;
 
 struct netent *
-getnetbyaddr(net, type)
-	register long net;
+_getnetbyaddr(net, type)
+	register unsigned long net;
 	register int type;
 {
 	register struct netent *p;
