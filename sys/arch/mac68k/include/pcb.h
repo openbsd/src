@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 1997/11/30 06:12:32 gene Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.5 2003/02/24 01:13:11 miod Exp $	*/
 /*	$NetBSD: pcb.h,v 1.7 1996/05/05 06:17:51 briggs Exp $	*/
 
 /*
@@ -93,7 +93,6 @@ struct pcb
 	int	pcb_regs[12];	/* D2-D7, A2-A7 (+C) */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
-	int	pcb_exec[16];	/* exec structure for core dumps */
 };
 
 /* flags */
