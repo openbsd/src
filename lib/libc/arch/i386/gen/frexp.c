@@ -1,4 +1,4 @@
-/*	$OpenBSD: frexp.c,v 1.5 2003/06/02 20:18:30 millert Exp $	*/
+/*	$OpenBSD: frexp.c,v 1.6 2003/06/25 21:15:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,11 +34,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: frexp.c,v 1.5 2003/06/02 20:18:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: frexp.c,v 1.6 2003/06/25 21:15:04 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
+#include <math.h>
 
 /*
  * Split the given value into a fraction in the range [0.5, 1.0) and

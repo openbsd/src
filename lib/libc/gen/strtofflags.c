@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtofflags.c,v 1.2 2003/06/02 20:18:35 millert Exp $	*/
+/*	$OpenBSD: strtofflags.c,v 1.3 2003/06/25 21:15:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@ static const char rcsid[] =
   "$FreeBSD: src/lib/libc/gen/strtofflags.c,v 1.18 2000/06/17 11:09:24 joe Exp $";
 #else
 static const char rcsid[] =
-	"$OpenBSD: strtofflags.c,v 1.2 2003/06/02 20:18:35 millert Exp $";
+	"$OpenBSD: strtofflags.c,v 1.3 2003/06/25 21:15:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ static const char rcsid[] =
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 
 static const struct {
