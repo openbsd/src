@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.12 2000/05/01 19:34:22 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.13 2000/05/04 05:35:45 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -164,31 +164,23 @@ pchbattach(parent, self, aux)
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_RCC:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_RCC_ROSB4:
-		case PCI_PRODUCT_RCC_CNB20HE:
-		case PCI_PRODUCT_RCC_CNB20LE:
-		case PCI_PRODUCT_RCC_CMIC_HE:
-			bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    0x44);
+		bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
 
-			if (bdnum == 0)
-				break;
-			/*
-			 * This host bridge has a second PCI bus.
-			 * Configure it.
-			 */
-			printf(": has pci bus %d\n", bdnum);
-			neednl = 0;
-			pba.pba_busname = "pci";
-			pba.pba_iot = pa->pa_iot;
-			pba.pba_memt = pa->pa_memt;
-			pba.pba_dmat = pa->pa_dmat;
-			pba.pba_bus = bdnum;
-			pba.pba_pc = pa->pa_pc;
-			config_found(self, &pba, pchb_print);
+		if (bdnum == 0)
 			break;
-		}
+		/*
+		 * This host bridge has a second PCI bus.
+		 * Configure it.
+		 */
+		printf("\n");
+		neednl = 0;
+		pba.pba_busname = "pci";
+		pba.pba_iot = pa->pa_iot;
+		pba.pba_memt = pa->pa_memt;
+		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_bus = bdnum;
+		pba.pba_pc = pa->pa_pc;
+		config_found(self, &pba, pchb_print);
 		break;
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
