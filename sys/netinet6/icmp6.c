@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.c,v 1.18 2000/06/13 17:32:47 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.113 2000/06/12 09:24:41 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.19 2000/07/06 10:11:24 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.119 2000/07/03 14:16:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -109,10 +109,14 @@ struct icmp6stat icmp6stat;
 
 extern struct in6pcb rawin6pcb;
 extern struct timeval icmp6errratelim;
+static struct timeval icmp6errratelim_last;
+extern int icmp6errppslim;
+static int icmp6errpps_count = 0;
 extern int icmp6_nodeinfo;
 static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;
 
+static void icmp6_errcount __P((struct icmp6errstat *, int, int));
 static void icmp6_mtudisc_update __P((struct in6_addr *, struct icmp6_hdr *,
 				      struct mbuf *));
 static int icmp6_ratelimit __P((const struct in6_addr *, const int, const int));
@@ -139,6 +143,64 @@ icmp6_init()
 	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
 }
 
+static void
+icmp6_errcount(stat, type, code)
+	struct icmp6errstat *stat;
+	int type, code;
+{
+	switch(type) {
+	case ICMP6_DST_UNREACH:
+		switch (code) {
+		case ICMP6_DST_UNREACH_NOROUTE:
+			stat->icp6errs_dst_unreach_noroute++;
+			return;
+		case ICMP6_DST_UNREACH_ADMIN:
+			stat->icp6errs_dst_unreach_admin++;
+			return;
+		case ICMP6_DST_UNREACH_BEYONDSCOPE:
+			stat->icp6errs_dst_unreach_beyondscope++;
+			return;
+		case ICMP6_DST_UNREACH_ADDR:
+			stat->icp6errs_dst_unreach_addr++;
+			return;
+		case ICMP6_DST_UNREACH_NOPORT:
+			stat->icp6errs_dst_unreach_noport++;
+			return;
+		}
+		break;
+	case ICMP6_PACKET_TOO_BIG:
+		stat->icp6errs_packet_too_big++;
+		return;
+	case ICMP6_TIME_EXCEEDED:
+		switch(code) {
+		case ICMP6_TIME_EXCEED_TRANSIT:
+			stat->icp6errs_time_exceed_transit++;
+			return;
+		case ICMP6_TIME_EXCEED_REASSEMBLY:
+			stat->icp6errs_time_exceed_reassembly++;
+			return;
+		}
+		break;
+	case ICMP6_PARAM_PROB:
+		switch(code) {
+		case ICMP6_PARAMPROB_HEADER:
+			stat->icp6errs_paramprob_header++;
+			return;
+		case ICMP6_PARAMPROB_NEXTHEADER:
+			stat->icp6errs_paramprob_nextheader++;
+			return;
+		case ICMP6_PARAMPROB_OPTION:
+			stat->icp6errs_paramprob_option++;
+			return;
+		}
+		break;
+	case ND_REDIRECT:
+		stat->icp6errs_redirect++;
+		return;
+	}
+	stat->icp6errs_unknown++;
+}
+
 /*
  * Generate an error packet of type error in response to bad IP6 packet.
  */
@@ -154,6 +216,9 @@ icmp6_error(m, type, code, param)
 	int nxt;
 
 	icmp6stat.icp6s_error++;
+
+	/* count per-type-code statistics */
+	icmp6_errcount(&icmp6stat.icp6s_outerrhist, type, code);
 
 #ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, 0, sizeof(struct ip6_hdr), );
@@ -1633,6 +1698,10 @@ icmp6_reflect(m, off)
 	 * If there are extra headers between IPv6 and ICMPv6, strip
 	 * off that header first.
 	 */
+#ifdef DIAGNOSTIC
+	if (sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) > MHLEN)
+		panic("assumption failed in icmp6_reflect");
+#endif
 	if (off > sizeof(struct ip6_hdr)) {
 		size_t l;
 		struct ip6_hdr nip6;
@@ -1786,6 +1855,9 @@ icmp6_fasttimo()
 {
 
 	mld6_fasttimeo();
+
+	/* reset ICMPv6 pps limit */
+	icmp6errpps_count = 0;
 }
 
 static const char *
@@ -2022,6 +2094,8 @@ icmp6_redirect_output(m0, rt)
 	struct ifnet *outif = NULL;
 	struct sockaddr_in6 src_sa;
 
+	icmp6_errcount(&icmp6stat.icp6s_outerrhist, ND_REDIRECT, 0);
+
 	/* if we are not router, we don't send icmp6 redirect */
 	if (!ip6_forwarding || ip6_accept_rtadv)
 		goto fail;
@@ -2168,6 +2242,8 @@ nolladdropt:;
 	m->m_pkthdr.len = m->m_len = p - (u_char *)ip6;
 
 	/* just to be safe */
+	if (p - (u_char *)ip6 > maxlen)
+		goto noredhdropt;
 
     {
 	/* redirected header option */
@@ -2238,6 +2314,7 @@ nolladdropt:;
 	m->m_next = m0;
 	m->m_pkthdr.len = m->m_len + m0->m_len;
     }
+noredhdropt:;
 
 	if (IN6_IS_ADDR_LINKLOCAL(&sip6->ip6_src))
 		sip6->ip6_src.s6_addr16[1] = 0;
@@ -2286,6 +2363,14 @@ fail:
  * Returns 1 if the router SHOULD NOT send this icmp6 packet due to rate
  * limitation.
  *
+ * There are two limitations defined:
+ * - pps limit: ICMPv6 error packet cannot exceed defined packet-per-second.
+ *   we measure it every 0.2 second, since fasttimo works every 0.2 second.
+ * - rate limit: ICMPv6 error packet cannot appear more than once per
+ *   defined interval.
+ * In any case, if we perform rate limitation, we'll see jitter in the ICMPv6
+ * error packets.
+ *
  * XXX per-destination/type check necessary?
  */
 static int
@@ -2294,13 +2379,23 @@ icmp6_ratelimit(dst, type, code)
 	const int type;			/* not used at this moment */
 	const int code;			/* not used at this moment */
 {
-	static struct timeval icmp6errratelim_last;
+	int ret;
 
-	/*
-	 * ratecheck() returns true if it is okay to send.  We return
-	 * true if it is not okay to send.
-	 */
-	return (ratecheck(&icmp6errratelim_last, &icmp6errratelim) == 0);
+	ret = 0;	/*okay to send*/
+
+	/* PPS limit */
+	icmp6errpps_count++;
+	if (icmp6errppslim && icmp6errpps_count > icmp6errppslim / 5) {
+		/* The packet is subject to pps limit */
+		ret++;
+	}
+
+	if (!ratecheck(&icmp6errratelim_last, &icmp6errratelim)) {
+		/* The packet is subject to rate limit */
+		ret++;
+	}
+
+	return ret;
 }
 
 static struct rtentry *
@@ -2421,6 +2516,11 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&nd6_useloopback);
 	case ICMPV6CTL_NODEINFO:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &icmp6_nodeinfo);
+	case ICMPV6CTL_ERRPPSLIMIT:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &icmp6errppslim);
+	case ICMPV6CTL_ND6_MAXNUDHINT:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+				&nd6_maxnudhint);
 	default:
 		return ENOPROTOOPT;
 	}

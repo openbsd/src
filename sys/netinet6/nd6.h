@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.h,v 1.7 2000/05/19 13:55:17 itojun Exp $	*/
-/*	$KAME: nd6.h,v 1.21 2000/05/17 12:35:59 jinmei Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.8 2000/07/06 10:11:26 itojun Exp $	*/
+/*	$KAME: nd6.h,v 1.23 2000/06/04 12:54:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,6 +49,7 @@ struct	llinfo_nd6 {
 	u_long	ln_expire;	/* lifetime for NDP state transition */
 	short	ln_state;	/* reachability state */
 	short	ln_router;	/* 2^0: ND6 router bit */
+	int	ln_byhint;	/* # of times we made it reachable by UL hint */
 };
 
 #define ND6_LLINFO_NOSTATE	-2
@@ -230,6 +231,7 @@ extern int nd6_delay;
 extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
 extern int nd6_useloopback;
+extern int nd6_maxnudhint;
 extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;
@@ -277,7 +279,7 @@ void nd6_setmtu __P((struct ifnet *));
 void nd6_timer __P((void *));
 void nd6_purge __P((struct ifnet *));
 void nd6_free __P((struct rtentry *));
-void nd6_nud_hint __P((struct rtentry *, struct in6_addr *));
+void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,
 		     struct mbuf *, struct sockaddr *, u_char *));
 #if defined(__bsdi__) && _BSDI_VERSION >= 199802

@@ -1,10 +1,10 @@
-/*	$OpenBSD: ip6_var.h,v 1.9 2000/06/19 03:43:17 itojun Exp $	*/
-/*	$KAME: ip6_var.h,v 1.28 2000/03/09 00:46:12 itojun Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.10 2000/07/06 10:11:25 itojun Exp $	*/
+/*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -208,6 +208,9 @@ struct	ip6stat {
 	u_quad_t ip6s_sources_otherscope[16];
 	/* number of times that an deprecated address is chosen */
 	u_quad_t ip6s_sources_deprecated[16];
+
+	u_quad_t ip6s_forward_cachehit;
+	u_quad_t ip6s_forward_cachemiss;
 };
 
 #ifdef _KERNEL
@@ -225,10 +228,6 @@ extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
-#ifdef MAPPED_ADDR_ENABLED
-extern int	ip6_mapped_addr_on;
-#endif /* MAPPED_ADDR_ENABLED */
-
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
 extern int	ip6_maxfragpackets; /* Maximum packets in reassembly queue */

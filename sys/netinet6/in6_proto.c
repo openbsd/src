@@ -1,9 +1,10 @@
-/*	$OpenBSD: in6_proto.c,v 1.22 2000/06/18 17:32:48 itojun Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.23 2000/07/06 10:11:25 itojun Exp $	*/
+/*	$KAME: in6_proto.c,v 1.64 2000/06/20 16:20:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -299,7 +300,8 @@ u_long	rip6_recvspace = RIPV6RCVQ;
 /* ICMPV6 parameters */
 int	icmp6_rediraccept = 1;		/* accept and process redirects */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
-struct timeval icmp6errratelim = { 0, 1000 };	/* 1000usec = 1msec */
+struct timeval icmp6errratelim = { 0, 0 };	/* no ratelimit */
+int	icmp6errppslim = 100;		/* 100pps */
 int	icmp6_nodeinfo = 1;		/* enable/disable NI response */
 
 #ifdef TCP6
