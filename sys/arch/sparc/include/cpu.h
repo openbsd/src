@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2000/01/27 20:14:12 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 2000/02/21 21:05:58 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -144,12 +144,6 @@ extern int	want_ast;
  */
 #define	signotify(p)		(want_ast = 1)
 
-/*
- * Only one process may own the FPU state.
- *
- * XXX this must be per-cpu (eventually)
- */
-extern struct	proc *fpproc;		/* FPU owner */
 extern int	foundfpu;		/* true => we have an FPU */
 
 /*

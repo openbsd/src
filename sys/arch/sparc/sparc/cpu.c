@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.29 2000/02/21 17:08:36 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.30 2000/02/21 21:05:59 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -82,7 +82,6 @@ char	cpu_hotfix[40];
 extern char mainbus_model[];		/* from autoconf.c */
 
 int	foundfpu;			/* from machine/cpu.h */
-struct proc *fpproc;			/* XXX - should be in cpuinfo */
 
 /* The CPU configuration driver. */
 void cpu_attach __P((struct device *, struct device *, void *));
@@ -1328,25 +1327,27 @@ fsrtoname(impl, vers, fver, buf)
 void
 replacemul()
 {
-#ifdef notyet
-	extern void *_umulreplace, *_umulreplace_end;
-	extern void *_mulreplace, *_mulreplace_end;
+	extern char *_umulreplace, *_umulreplace_end;
+	extern char *_mulreplace, *_mulreplace_end;
 	extern char *_mul, *_umul;
 	int i, j, s;
+
+	return;
 
 	/*
 	 * Whack the slow sun4/sun4c umul/mul functions with
 	 * fast V8 ones
 	 */
 	s = splhigh();
-	for (i = 0; i < _umulreplace_end - _umulreplace; i += 4) {
-		j = ((int *)_umulreplace)[i];
-		pmap_writetext(_umul + (i<<2), j);
+	cpuinfo.cache_flush_all();
+	for (i = 0; i < _umulreplace_end - _umulreplace; i++) {
+		j = _umulreplace[i];
+		pmap_writetext(&_umul[i], j);
 	}
-	for (i = 0; i < _mulreplace_end - _mulreplace; i += 4) {
-		j = ((int *)_mulreplace)[i];
-		pmap_writetext(_mul + (i<<2), j);
+	for (i = 0; i < _mulreplace_end - _mulreplace; i++) {
+		j = _mulreplace[i];
+		pmap_writetext(&_mul[i], j);
 	}
+	cpuinfo.cache_flush_all();
 	splx(s);
-#endif
 }

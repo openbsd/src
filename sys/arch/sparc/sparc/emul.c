@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.1 1997/08/08 08:40:15 downsj Exp $	*/
+/*	$OpenBSD: emul.c,v 1.2 2000/02/21 21:05:59 art Exp $	*/
 /*	$NetBSD: emul.c,v 1.3 1997/07/29 09:42:01 fair Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ fixalign(p, tf)
 		uprintf("%c%d\n", REGNAME(code.i_asi.i_rs2));
 #endif
 #ifdef DIAGNOSTIC
-	if (op.bits.fl && p != fpproc)
+	if (op.bits.fl && p != cpuinfo.fpproc)
 		panic("fp align without being the FP owning process");
 #endif
 

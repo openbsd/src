@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 2000/02/15 16:32:41 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.45 2000/02/21 21:05:59 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -91,6 +91,7 @@
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 
 #if defined(UVM)
 #include <uvm/uvm.h>
@@ -502,9 +503,9 @@ setregs(p, pack, stack, retval)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (p == fpproc) {
+		if (p == cpuinfo.fpproc) {
 			savefpstate(fs);
-			fpproc = NULL;
+			cpuinfo.fpproc = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 		p->p_md.md_fpstate = NULL;

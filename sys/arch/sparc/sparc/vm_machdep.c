@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2000/02/21 14:51:20 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2000/02/21 21:05:59 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -419,7 +419,7 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (p1->p_md.md_fpstate) {
-		if (p1 == fpproc)
+		if (p1 == cpuinfo.fpproc)
 			savefpstate(p1->p_md.md_fpstate);
 		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
@@ -527,9 +527,9 @@ cpu_exit(p)
 	register struct fpstate *fs;
 
 	if ((fs = p->p_md.md_fpstate) != NULL) {
-		if (p == fpproc) {
+		if (p == cpuinfo.fpproc) {
 			savefpstate(fs);
-			fpproc = NULL;
+			cpuinfo.fpproc = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 	}
@@ -564,7 +564,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 	md_core.md_tf = *p->p_md.md_tf;
 	if (p->p_md.md_fpstate) {
-		if (p == fpproc)
+		if (p == cpuinfo.fpproc)
 			savefpstate(p->p_md.md_fpstate);
 		md_core.md_fpstate = *p->p_md.md_fpstate;
 	} else
