@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2004/04/05 14:24:45 aaron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2004/04/05 14:24:45 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,6 @@ main (argc,argv)
 	char    c;		/* non-descript character storage */
 
 	signal(SIGINT, getout);	/* trap interrupts */
-	initcurses();
 
 /* check user count */
 #if 0
@@ -119,6 +118,8 @@ main (argc,argv)
 
 	getarg(argc, argv);
 	args[acnt] = '\0';
+
+	initcurses();
 
 	/* check if restored game and save flag for later */
 	if ((rfl = rflag)) {
