@@ -1,0 +1,351 @@
+.\"     $OpenBSD: autoconf.9,v 1.1 2002/08/27 01:15:34 wcobb Exp $
+.\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
+.\"
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Gregory McGarry.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 25, 2002
+.Dt AUTOCONF 9
+.Os
+.Sh NAME
+.Nm autoconf
+.Nd autoconfiguration framework
+.Sh SYNOPSIS
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]sys/device.h\*[Gt]
+.Sh DESCRIPTION
+Autoconfiguration is the process of matching hardware devices with an
+appropriate device driver.
+In its most basic form, autoconfiguration consists of the recursive
+process of finding and attaching all devices on a bus, including other busses.
+.Pp
+The autoconfiguration framework supports
+.Em direct configuration
+where the bus driver can determine the devices present.
+.Pp
+The autoconfiguration framework also supports
+.Em indirect configuration
+where the drivers must probe the bus looking for the presence of a device.
+Direct configuration is preferred since it can find hardware regardless of
+the presence of proper drivers.
+.Pp
+The autoconfiguration process occurs at system bootstrap and is driven by a
+table generated from a
+.Do
+machine description
+.Dc
+file by
+.Xr config 8 .
+For a description of the
+.Xr config 8
+.Do
+device definition
+.Dc
+language, see
+.Xr config 9 .
+.Pp
+Each device must have a name consisting of an alphanumeric string that
+ends with a unit number.
+The unit number identifies an instance of the driver.
+Device data structures are allocated dynamically during autoconfiguration,
+giving a unique address for each instance.
+.Sh INITIALIZATION
+.nr nS 1
+.Ft "void"
+.Fn config_init "void"
+.nr nS 0
+.Pp
+The
+.Fn config_init
+function initializes autoconfiguration data structures.
+.Pp
+.Sh INDIRECT CONFIGURATION
+.nr nS 1
+.Ft "void *"
+.Fn config_search "cfmatch_t func" "struct device *parent" "void *aux"
+.Pp
+.Ft "void *"
+.Fn config_rootsearch "cfmatch_t func" "char *rootname" "void *aux"
+.nr nS 0
+.Pp
+The
+.Fn config_search
+function performs indirect configuration of physical devices by iterating
+over all potential children, calling the given function
+.Fa func
+for each one.
+.Pp
+The
+.Fn config_rootsearch
+function finds the root device identified by the string
+.Fa rootname ,
+in a manner similar to
+.Fn config_search ,
+except that there is no parent device.
+If
+.Fa func
+is NULL,
+.Pp
+.Fn config_search
+applies each child's match function instead.
+The argument
+.Fa parent
+is the pointer to the parent's device structure.
+The given
+.Fa aux
+argument describes the device that has been found and is simply passed
+on through
+.Fa func
+to the child.
+.Fn config_search
+returns a pointer to the best-matched child or NULL otherwise.
+.Pp
+The role of
+.Fa func
+is to call
+the match function for each device and call
+.Fn config_attach
+for any positive matches.
+.Bd -literal
+typedef int (*cfmatch_t)(struct device *parent, void *child, void *aux);
+.Ed
+.Pp
+If
+.Fa func
+is
+.Dv NULL ,
+then the parent should record the return value from
+.Fn config_search
+and call
+.Fn config_attach
+itself.
+.Pp
+Note that this function is designed so that it can be used to apply an
+arbitrary function to all potential children.
+In this case callers may choose to ignore the return value.
+.Sh DIRECT CONFIGURATION
+.nr nS 1
+.Ft "struct device *"
+.Fn config_found_sm "struct device *parent" "void *aux" "cfprint_t print" \
+                    "cfmatch_t submatch"
+.Pp
+.Ft "struct device *"
+.Fn config_found "struct device *parent" "void *aux" "cfprint_t print"
+.Pp
+.Ft "struct device *"
+.Fn config_rootfound "char *rootname" "void *aux"
+.nr nS 0
+.Pp
+The
+.Fn config_found_sm
+function performs direct configuration on a physical device.
+.Fn config_found_sm
+is called by the parent and in turn calls the
+.Fa submatch
+function to call the match function as determined by the configuration table.
+If
+.Fa submatch
+is NULL, the driver match functions are called directly.
+The argument
+.Fa parent
+is the pointer to the parent's device structure.
+The given
+.Fa aux
+argument describes the device that has been found.
+The
+.Em softc
+structure for the matched device will be allocated, and the appropriate
+driver attach function will be called.
+.Pp
+If the device is matched, the system prints the name of the child and
+parent devices, and then calls the
+.Fa print
+function to produce additional information if desired.
+If no driver takes a match, the same
+.Fa print
+function is called to complain.
+The print function is called with the
+.Fa aux
+argument and, if the matches failed, the full name (including unit
+number) of the parent device, otherwise NULL.
+.Pp
+.Bd -literal
+typedef int (*cfprint_t)(void *aux, const char *parentname);
+#define	QUIET	0		/* print nothing */
+#define	UNCONF	1		/* print " not configured" */
+#define	UNSUPP	2		/* print " not supported" */
+.Ed
+.Pp
+.Pp
+Two special strings,
+.Do
+not configured
+.Dc
+and
+.Do
+unsupported
+.Dc
+will be appended automatically to non-driver reports if the return
+value is
+.Dv UNCONF
+or
+.Dv UNSUPP
+respectively, otherwise the function should return the value
+.Dv QUIET .
+.Pp
+The
+.Fn config_found_sm
+function returns a pointer to the attached device's
+.Em softc
+structure if the device is attached, NULL otherwise.
+Most callers can ignore this value, since the system will already have
+printed a diagnostic.
+.Pp
+The
+.Fn config_found
+macro expands to
+.Fn config_found_sm "parent" "aux" "print" "submatch"
+with
+.Fa submatch
+set to
+.Dv NULL
+and is provided for compatibility with older drivers.
+.Pp
+The
+.Fn config_rootfound
+function performs the same operation on the root device identified
+by the
+.Fa rootname
+string.
+.Sh ATTACHING AND DETACHING DEVICES
+.nr nS 1
+.Ft "struct device *"
+.Fn config_attach "struct device *parent" "void *cf" "void *aux" \
+                  "cfprint_t print"
+.Pp
+.Ft "int"
+.Fn config_detach "struct device *dev" "int flags"
+.nr nS 0
+.Pp
+The
+.Fn config_attach
+function attaches a found device.
+Memory is allocated for the
+.Em softc
+structure and the driver's attach function is called according to the
+configuration table.
+If successful,
+.Fn config_attach
+returns the
+.Em softc .
+If unsuccessful, it returns
+.Dv NULL .
+.Pp
+The
+.Fn config_detach
+function is called by the parent to detach the child device.
+The second argument
+.Em flags
+contains detachment flags:
+.Pp
+.Bd -literal
+#define	DETACH_FORCE	0x01	/* Force detachment; hardware gone */
+#define	DETACH_QUIET	0x02	/* Don't print a notice */
+.Ed
+.Pp
+The
+.Fn config_detach
+function returns zero if successful and an error code otherwise.
+.Fn config_detach
+is always called from process context, allowing
+.Xr sleep 9
+to be called while the device detaches itself (to deal with processes
+which have a device open).
+.Sh DEVICE ACTIVATION/DEACTIVATION
+.nr nS 1
+.Ft "int"
+.Fn config_activate "struct device *dev"
+.Pp
+.Ft "int"
+.Fn config_deactivate "struct device *dev"
+.nr nS 0
+.Pp
+The
+.Fn config_activate
+function is called by the parent to activate the child device
+.Fa dev .
+It is called to activate resources and initialise other kernel
+subsystems (such as the network subsystem).
+.Fn config_activate
+is called from interrupt context after the device has been attached.
+.Pp
+The
+.Fn config_deactivate
+function is called by the parent to deactivate the child device
+.Fa dev .
+.Fn config_deactivate
+is called from interrupt context to immediately relinquish resources
+and notify dependent kernel subsystems that the device is about to be
+detached.
+At some later point,
+.Fn config_detach
+will be called to finalise the removal of the device.
+.Sh DEFERRED CONFIGURATION
+.nr nS 1
+.Ft "void"
+.Fn config_defer "struct device *dev" "void (*func)(struct device *)"
+.nr nS 0
+.Pp
+The
+.Fn config_defer
+function is called by the child to defer the remainder of its configuration
+until all its parent's devices have been attached.
+At this point, the function
+.Fa func
+is called with the argument
+.Fa dev .
+.Sh CODE REFERENCES
+The autoconfiguration framework itself is implemented within the file
+.Pa sys/kern/subr_autoconf.c .
+Data structures and function prototypes for the framework are located in
+.Pa sys/sys/device.h .
+.Sh SEE ALSO
+.Xr config 8 .
+.Sh HISTORY
+Autoconfiguration first appeared in
+.Bx 4.1 .
+The autoconfiguration framework was completely revised in
+.Bx 4.4 .
+The detach and activate/deactivate interfaces appeared in
+.Nx 1.5 .
