@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.4 1997/07/20 07:54:09 jdm Exp $	*/
+/*	$OpenBSD: last.c,v 1.5 1997/07/20 09:07:17 jdm Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.4 1997/07/20 07:54:09 jdm Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.5 1997/07/20 09:07:17 jdm Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,6 +101,7 @@ char	*ttyconv __P((char *));
 time_t	 dateconv __P((char *));
 int	 want __P((struct utmp *, int));
 void	 wtmp __P((void));
+void 	 checkargs __P((void));
 
 int
 main(argc, argv)
@@ -165,9 +166,52 @@ main(argc, argv)
 			addarg(USER_TYPE, *argv);
 		}
 	}
+	
+	checkargs();
 	wtmp();
 	exit(0);
 }
+
+/*
+ * checkargs --
+ * 	if snaptime is set, print warning if usernames, or -t or -h 
+ *	flags are also provided
+ */
+
+void
+checkargs()
+{
+   	ARG 	*step;
+	int 	ttyflag = 0;
+
+	if (!snaptime) 
+		return;
+	
+	if (!arglist)
+		return;
+
+	for (step = arglist; step; step = step->next)
+		switch (step->type) {
+		case HOST_TYPE:
+			(void)fprintf(stderr, "Warning: Ignoring hostname "
+				              "flag\n");
+			break;
+		case TTY_TYPE:
+			if (!ttyflag) { /* don't print this twice */ 
+				(void)fprintf(stderr, "Warning: Ignoring "
+						      "tty flag\n");
+				ttyflag = 1;
+			}
+			break;
+		case USER_TYPE:
+			(void)fprintf(stderr, "Warning: Ignoring "
+				              "username[s]\n");
+			break;
+		default:
+			/* PRINT NOTHING */
+		}
+}      
+
 
 /*
  * wtmp --
@@ -217,10 +261,9 @@ wtmp()
 					return;
 				/* 
 				 * don't print shutdown/reboot entries
-				 * unless flagged for and not in snapshot
-				 * mode
+				 * unless flagged for 
 				 */ 
-				if (!snaptime && want(bp, NO)) {
+				if (want(bp, NO)) {
 					ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n",
 					    UT_NAMESIZE, UT_NAMESIZE,
@@ -239,7 +282,7 @@ wtmp()
 			 */
 			if ((bp->ut_line[0] == '{' || bp->ut_line[0] == '|')
 			    && !bp->ut_line[1]) {
-				if (want(bp, NO) && !snaptime) {
+				if (want(bp, NO)) {
 					ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n",
 				    UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
@@ -266,7 +309,7 @@ wtmp()
 			 * or in snapshot mode and in snapshot range
 			 */
 			if (bp->ut_name[0] &&
-			    ((!snaptime && want(bp, YES)) ||
+			    ((want(bp, YES)) ||
 			     (bp->ut_time < snaptime && 
 			      (T->logout > snaptime || !T->logout ||
 			       T->logout < 0)))) {
@@ -327,6 +370,10 @@ want(bp, check)
 			bp->ut_line[3] = '\0';
 		else if (!strncmp(bp->ut_line, "uucp", sizeof("uucp") - 1))
 			bp->ut_line[4] = '\0';
+
+	if (snaptime) 		/* if snaptime is set, return NO */
+		return (NO);
+
 	if (!arglist)
 		return (YES);
 
@@ -344,7 +391,8 @@ want(bp, check)
 			if (!strncmp(step->name, bp->ut_name, UT_NAMESIZE))
 				return (YES);
 			break;
-	}
+		}
+
 	return (NO);
 }
 
@@ -445,7 +493,7 @@ ttyconv(arg)
 /* 
  * dateconv --
  * 	Convert the snapshot time in command line given in the format
- * 	[[CC]YY]MMDDhhmm[.SS]] to a time_t.
+ * 	[[CC]YY][MMDD]hhmm[.SS]] to a time_t.
  * 	Derived from atime_arg1() in usr.bin/touch/touch.c
  */
 time_t
@@ -463,7 +511,7 @@ dateconv(arg)
         if ((t = localtime(&timet)) == NULL)
                 err(1, "localtime");
 
-        /* [[CC]YY]MMDDhhmm[.SS] */
+        /* [[CC]YY][MMDD]hhmm[.SS] */
         if ((p = strchr(arg, '.')) == NULL)
                 t->tm_sec = 0; 		/* Seconds defaults to 0. */
         else {
@@ -511,7 +559,7 @@ dateconv(arg)
         timet = mktime(t);
         if (timet == -1)
 terr:           errx(1,
-        "out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
+        "out of range or illegal time specification: [[CC]YY][MMDD]hhmm[.SS]");
         return timet;
 }
 
