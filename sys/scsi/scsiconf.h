@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.22 2000/04/08 19:19:33 csapuntz Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.23 2000/07/06 03:37:10 mjacob Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 typedef	int			boolean;
 
 #include <sys/queue.h>
+#include <sys/timeout.h>
 #include <machine/cpu.h>
 #include <scsi/scsi_debug.h>
 
@@ -254,28 +255,33 @@ struct scsi_xfer {
 	int	req_sense_length;	/* Explicit request sense length */
 	u_int8_t status;		/* SCSI status */
 	struct	scsi_generic cmdstore;	/* stash the command in here */
+	/*
+	 * timeout structure for hba's to use for a command
+	 */
+	struct timeout stimeout;
 };
 
 /*
  * Per-request Flag values
  */
-#define	SCSI_NOSLEEP	0x0001	/* don't sleep */
-#define	SCSI_POLL	0x0002	/* poll for completion */
-#define	SCSI_AUTOCONF	0x0003	/* shorthand for SCSI_POLL | SCSI_NOSLEEP */
-#define	SCSI_USER	0x0004	/* Is a user cmd, call scsi_user_done	*/
-#define	ITSDONE		0x0008	/* the transfer is as done as it gets	*/
-#define	INUSE		0x0010	/* The scsi_xfer block is in use	*/
-#define	SCSI_SILENT	0x0020	/* don't announce NOT READY or MEDIA CHANGE */
-#define	SCSI_IGNORE_NOT_READY		0x0040	/* ignore NOT READY */
-#define	SCSI_IGNORE_MEDIA_CHANGE	0x0080	/* ignore MEDIA CHANGE */
-#define	SCSI_IGNORE_ILLEGAL_REQUEST	0x0100	/* ignore ILLEGAL REQUEST */
-#define	SCSI_RESET	0x0200	/* Reset the device in question		*/
-#define	SCSI_DATA_UIO	0x0400	/* The data address refers to a UIO	*/
-#define	SCSI_DATA_IN	0x0800	/* expect data to come INTO memory	*/
-#define	SCSI_DATA_OUT	0x1000	/* expect data to flow OUT of memory	*/
-#define	SCSI_TARGET	0x2000	/* This defines a TARGET mode op.	*/
-#define	SCSI_ESCAPE	0x4000	/* Escape operation			*/
-#define SCSI_URGENT     0x8000  /* Urgent operation (e.g., HTAG)        */
+#define	SCSI_NOSLEEP	0x00001	/* don't sleep */
+#define	SCSI_POLL	0x00002	/* poll for completion */
+#define	SCSI_AUTOCONF	0x00003	/* shorthand for SCSI_POLL | SCSI_NOSLEEP */
+#define	SCSI_USER	0x00004	/* Is a user cmd, call scsi_user_done	*/
+#define	ITSDONE		0x00008	/* the transfer is as done as it gets	*/
+#define	INUSE		0x00010	/* The scsi_xfer block is in use	*/
+#define	SCSI_SILENT	0x00020	/* don't announce NOT READY or MEDIA CHANGE */
+#define	SCSI_IGNORE_NOT_READY		0x00040	/* ignore NOT READY */
+#define	SCSI_IGNORE_MEDIA_CHANGE	0x00080	/* ignore MEDIA CHANGE */
+#define	SCSI_IGNORE_ILLEGAL_REQUEST	0x00100	/* ignore ILLEGAL REQUEST */
+#define	SCSI_RESET	0x00200	/* Reset the device in question		*/
+#define	SCSI_DATA_UIO	0x00400	/* The data address refers to a UIO	*/
+#define	SCSI_DATA_IN	0x00800	/* expect data to come INTO memory	*/
+#define	SCSI_DATA_OUT	0x01000	/* expect data to flow OUT of memory	*/
+#define	SCSI_TARGET	0x02000	/* This defines a TARGET mode op.	*/
+#define	SCSI_ESCAPE	0x04000	/* Escape operation			*/
+#define SCSI_URGENT     0x08000	/* Urgent operation (e.g., HTAG)        */
+#define	SCSI_PRIVATE	0xf0000	/* private to each HBA flags */
 
 /*
  * Escape op codes.  This provides an extensible setup for operations
