@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.4 1996/06/23 14:31:05 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.5 1996/07/02 06:37:52 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -109,10 +109,9 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "modload [-d] [-v] [-A <kernel>] [-e <entry]\n");
+	fprintf(stderr, "usage: modload [-d] [-v] [-A <kernel>] [-e <entry]\n");
 	fprintf(stderr,
-	    "[-p <postinstall>] [-o <output file>] <input file>\n");
+	    "\t[-p <postinstall>] [-o <output file>] <input file>\n");
 	exit(1);
 }
 

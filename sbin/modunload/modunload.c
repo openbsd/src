@@ -1,4 +1,4 @@
-/*	$OpenBSD: modunload.c,v 1.2 1996/06/21 11:39:17 mickey Exp $	*/
+/*	$OpenBSD: modunload.c,v 1.3 1996/07/02 06:37:55 deraadt Exp $	*/
 /*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
 
 /*
@@ -52,8 +52,8 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "modunload [-i <module id>] [-n <module name>]\n");
+	fprintf(stderr,
+	    "usage: modunload [-i <module id>] [-n <module name>]\n");
 	exit(1);
 }
 
