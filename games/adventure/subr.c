@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.5 2003/04/06 18:50:33 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.6 2003/04/07 18:19:37 millert Exp $	*/
 /*	$NetBSD: subr.c,v 1.2 1995/03/21 12:05:11 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subr.c,v 1.5 2003/04/06 18:50:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.6 2003/04/07 18:19:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -555,11 +555,11 @@ trsay()				/* 9030			*/
 {
 	int i;
 
-	if (*wd2 != 0)
-		strcpy(wd1, wd2);
+	if (wd2[0] != 0)
+		strlcpy(wd1, wd2, sizeof(wd1));
 	i = vocab(wd1, -1, 0);
 	if (i == 62 || i == 65 || i == 71 || i == 2025) {
-		*wd2 = 0;
+		wd2[0] = 0;
 		obj = 0;
 		return (2630);
 	}
@@ -833,7 +833,7 @@ trkill()				/* 9120				*/
 	rspeak(49);
 	verb = 0;
 	obj = 0;
-	getin(&wd1, &wd2);
+	getin(wd1, sizeof(wd1), wd2, sizeof(wd2));
 	if (!weq(wd1, "y") && !weq(wd1, "yes"))
 		return (2608);
 	pspeak(dragon, 1);

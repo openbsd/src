@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2003/04/06 18:50:33 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2003/04/07 18:19:37 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2003/04/06 18:50:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2003/04/07 18:19:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,12 +169,12 @@ l2600:		checkhints();		/* to 2600-2602		*/
 		wzdark = dark();	/* 2605			*/
 		if (knfloc > 0 && knfloc != loc)
 			knfloc = 1;
-		getin(&wd1, &wd2);
+		getin(wd1, sizeof(wd1), wd2, sizeof(wd2));
 		if (delhit) {		/* user typed a DEL	*/
 			delhit = 0;	/* reset counter	*/
 			/* pretend he's quitting */
-			strcpy(wd1, "quit");
-			*wd2 = 0;
+			strlcpy(wd1, "quit", sizeof(wd1));
+			wd2[0] = 0;
 		}
 l2608:		if ((foobar = -foobar) > 0)
 			foobar = 0;	/* 2608		*/
@@ -183,7 +183,7 @@ l2608:		if ((foobar = -foobar) > 0)
 		if (demo && turns >= SHORT)
 			done(1);	/* to 13000	*/
 
-		if (verb == say && *wd2 != 0)
+		if (verb == say && wd2[0] != 0)
 			verb = 0;
 		if (verb == say)
 			goto l4090;
@@ -280,16 +280,16 @@ l8:
 		default: bug(110);
 		}
 
-l2800:		strcpy(wd1, wd2);
-		*wd2 = 0;
+l2800:		strlcpy(wd1, wd2, sizeof(wd1));
+		wd2[0] = 0;
 		goto l2610;
 
 l4000:		verb = k;
 		spk = actspk[verb];
-		if (*wd2 != 0 && verb != say)
+		if (wd2[0] != 0 && verb != say)
 			goto l2800;
 		if (verb == say)
-			obj= *wd2;
+			obj = wd2[0];
 		if (obj != 0)
 			goto l4090;
 l4080:
@@ -644,7 +644,7 @@ l5000:
 		obj = k;
 		if (fixed[k] != loc && !here(k))
 			goto l5100;
-l5010:		if (*wd2 != 0)
+l5010:		if (wd2[0] != 0)
 			goto l2800;
 		if (verb != 0)
 			goto l4090;
@@ -678,7 +678,7 @@ l5140:		if (obj != rod || !here(rod2))
 			goto l5190;
 		obj = rod2;
 		goto l5010;
-l5190:		if ((verb == find || verb == invent) && *wd2 == 0)
+l5190:		if ((verb == find || verb == invent) && wd2[0] == 0)
 			goto l5010;
 		printf("I see no %s here\n", wd1);
 		goto l2012;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdr.h,v 1.9 2002/02/19 19:39:36 millert Exp $	*/
+/*	$OpenBSD: hdr.h,v 1.10 2003/04/07 18:19:37 millert Exp $	*/
 /*	$NetBSD: hdr.h,v 1.2 1995/03/21 12:05:02 cgd Exp $	*/
 
 /*-
@@ -70,7 +70,6 @@ extern char data_file[];	/* Virtual data file		*/
 #define FLUSHLF   while (next()!=LF)
 
 int     loc, newloc, oldloc, oldlc2, wzdark, gaveup, kq, k, k2;
-char   *wd1,*wd2;		/* the complete words		*/
 int     verb, obj, spk;
 extern int blklin;
 time_t  savet;
@@ -79,6 +78,8 @@ int     mxscor, latncy;
 #define SHORT 50		/* How short is a demo game?	*/
 
 #define MAXSTR  20		/* max length of user's words	*/
+char	wd1[MAXSTR];		/* the complete words		*/
+char	wd2[MAXSTR];
 
 #define HTSIZE  512		/* max number of vocab words	*/
 struct hashtab	{		/* hash table for vocabulary	*/
