@@ -2825,3 +2825,4 @@
 ./usr/include/skipjack.h
 ./usr/include/sys/pool.h
 ./usr/include/dev/pci/if_wbreg.h
+./usr/include/dev/ic/isp_openbsd.h
