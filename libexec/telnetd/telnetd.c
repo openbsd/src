@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.24 2000/10/06 10:55:00 hin Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.25 2000/10/10 15:14:55 millert Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,11 +45,12 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.24 2000/10/06 10:55:00 hin Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.25 2000/10/10 15:14:55 millert Exp $";
 #endif
 #endif /* not lint */
 
-#include "curses.h"
+#include <curses.h>
+#include <term.h>
 #include "telnetd.h"
 #include "pathnames.h"
 
@@ -763,21 +764,16 @@ _gettermname()
 terminaltypeok(s)
     char *s;
 {
-    char buf[1024];
 
     if (terminaltype == NULL)
 	return(1);
 
     /*
-     * tgetent() will return 1 if the type is known, and
-     * 0 if it is not known.  If it returns -1, it couldn't
-     * open the database.  But if we can't open the database,
-     * it won't help to say we failed, because we won't be
-     * able to verify anything else.  So, we treat -1 like 1.
+     * setupterm() will return OK if the type is known, and
+     * ERR if it is not known.
+     * We return 0 on success and 1 on failure.
      */
-    if (tgetent(buf, s) == 0)
-	return(0);
-    return(1);
+    return(setupterm(s, STDOUT_FILENO, NULL) == ERR);
 }
 
 #ifndef	MAXHOSTNAMELEN
