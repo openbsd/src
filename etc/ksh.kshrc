@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.9 2002/05/30 06:44:07 deraadt Exp $
+#	$OpenBSD: ksh.kshrc,v 1.10 2002/10/16 15:39:10 todd Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -92,8 +92,8 @@ case "$-" in
 	esac
 	# do we want window decorations?
 	if [ "$ILS" ]; then
-		ilabel () { print -n "${ILS}$*${ILE}"; }
-		label () { print -n "${WLS}$*${WLE}"; }
+		ilabel () { print -n "${ILS}$*${ILE}">/dev/tty; }
+		label () { print -n "${WLS}$*${WLE}">/dev/tty; }
 
 		alias stripe='label "$USER@$HOST ($tty) - $PWD"'
 		alias istripe='ilabel "$USER@$HOST ($tty)"'
