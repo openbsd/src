@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.4 1995/04/15 01:57:39 cgd Exp $	*/
+/*	$OpenBSD: umap_vnops.c,v 1.2 1996/02/26 07:20:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,20 +56,55 @@
 
 int umap_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
 
+int	umap_bypass	__P((void *));
+int	umap_getattr	__P((void *));
+int	umap_inactive	__P((void *));
+int	umap_reclaim	__P((void *));
+int	umap_print	__P((void *));
+int	umap_rename	__P((void *));
+int	umap_strategy	__P((void *));
+int	umap_bwrite	__P((void *));
+
+/*
+ * Global vfs data structures
+ */
+/*
+ * XXX - strategy, bwrite are hand coded currently.  They should
+ * go away with a merged buffer/block cache.
+ *
+ */
+int (**umap_vnodeop_p) __P((void *));
+struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
+	{ &vop_default_desc, umap_bypass },
+
+	{ &vop_getattr_desc, umap_getattr },
+	{ &vop_inactive_desc, umap_inactive },
+	{ &vop_reclaim_desc, umap_reclaim },
+	{ &vop_print_desc, umap_print },
+	{ &vop_rename_desc, umap_rename },
+
+	{ &vop_strategy_desc, umap_strategy },
+	{ &vop_bwrite_desc, umap_bwrite },
+
+	{ (struct vnodeop_desc*) NULL, (int(*) __P((void *))) NULL }
+};
+struct vnodeopv_desc umap_vnodeop_opv_desc =
+	{ &umap_vnodeop_p, umap_vnodeop_entries };
+
 /*
  * This is the 10-Apr-92 bypass routine.
  * See null_vnops.c:null_bypass for more details.
  */ 
 int
-umap_bypass(ap)
+umap_bypass(v)
+	void *v;
+{
 	struct vop_generic_args /* {
 		struct vnodeop_desc *a_desc;
 		<other random data follows, presumably>
-	} */ *ap;
-{
-	extern int (**umap_vnodeop_p)();  /* not extern, really "forward" */
+	} */ *ap = v;
 	struct ucred **credpp = 0, *credp = 0;
-	struct ucred *savecredp, *savecompcredp = 0;
+	struct ucred *savecredp = 0, *savecompcredp = 0;
 	struct ucred *compcredp = 0;
 	struct vnode **this_vp_p;
 	int error;
@@ -130,10 +165,9 @@ umap_bypass(ap)
 	 * Fix the credentials.  (That's the purpose of this layer.)
 	 */
 
-	if (descp->vdesc_cred_offset != VDESC_NO_OFFSET) {
-
-		credpp = VOPARG_OFFSETTO(struct ucred**, 
-		    descp->vdesc_cred_offset, ap);
+	if (descp->vdesc_cred_offset != VDESC_NO_OFFSET
+	    && *(credpp = VOPARG_OFFSETTO(struct ucred**, 
+		    descp->vdesc_cred_offset, ap)) != NOCRED ) {
 
 		/* Save old values */
 
@@ -159,10 +193,9 @@ umap_bypass(ap)
 	 * for speed.  If there is one, it better get mapped, too. 
 	 */
 
-	if (descp->vdesc_componentname_offset != VDESC_NO_OFFSET) {
-
-		compnamepp = VOPARG_OFFSETTO(struct componentname**, 
-		    descp->vdesc_componentname_offset, ap);
+	if (descp->vdesc_componentname_offset != VDESC_NO_OFFSET
+	   && (*(compnamepp = VOPARG_OFFSETTO(struct componentname**, 
+		    descp->vdesc_componentname_offset, ap)))->cn_cred != NOCRED ) {
 
 		savecompcredp = (*compnamepp)->cn_cred;
 		if (savecompcredp != NOCRED)
@@ -223,7 +256,8 @@ umap_bypass(ap)
 	/* 
 	 * Free duplicate cred structure and restore old one.
 	 */
-	if (descp->vdesc_cred_offset != VDESC_NO_OFFSET) {
+	if (descp->vdesc_cred_offset != VDESC_NO_OFFSET
+	    && *credpp != NOCRED) {
 		if (umap_bug_bypass && credp && credp->cr_uid != 0)
 			printf("umap_bypass: returning-user was %d\n",
 					credp->cr_uid);
@@ -237,7 +271,8 @@ umap_bypass(ap)
 		}
 	}
 
-	if (descp->vdesc_componentname_offset != VDESC_NO_OFFSET) {
+	if (descp->vdesc_componentname_offset != VDESC_NO_OFFSET
+	    && (*compnamepp)->cn_cred != NOCRED ) {
 		if (umap_bug_bypass && compcredp && compcredp->cr_uid != 0)
 			printf("umap_bypass: returning-component-user was %d\n", 
 				compcredp->cr_uid);
@@ -259,14 +294,15 @@ umap_bypass(ap)
  *  We handle getattr to change the fsid.
  */
 int
-umap_getattr(ap)
+umap_getattr(v)
+	void *v;
+{
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	uid_t uid;
 	gid_t gid;
 	int error, tmpid, nentries, gnentries;
@@ -331,11 +367,10 @@ umap_getattr(ap)
 	return (0);
 }
 
+/*ARGSUSED*/
 int
-umap_inactive(ap)
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
+umap_inactive(v)
+	void *v;
 {
 	/*
 	 * Do nothing (and _don't_ bypass).
@@ -348,11 +383,12 @@ umap_inactive(ap)
 }
 
 int
-umap_reclaim(ap)
+umap_reclaim(v)
+	void *v;
+{
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct umap_node *xp = VTOUMAP(vp);
 	struct vnode *lowervp = xp->umap_lowervp;
@@ -367,11 +403,12 @@ umap_reclaim(ap)
 }
 
 int
-umap_strategy(ap)
+umap_strategy(v)
+	void *v;
+{
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
 	int error;
 	struct vnode *savedvp;
@@ -387,11 +424,12 @@ umap_strategy(ap)
 }
 
 int
-umap_bwrite(ap)
+umap_bwrite(v)
+	void *v;
+{
 	struct vop_bwrite_args /* {
 		struct buf *a_bp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
 	int error;
 	struct vnode *savedvp;
@@ -408,18 +446,22 @@ umap_bwrite(ap)
 
 
 int
-umap_print(ap)
+umap_print(v)
+	void *v;
+{
 	struct vop_print_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	printf("\ttag VT_UMAPFS, vp=%x, lowervp=%x\n", vp, UMAPVPTOLOWERVP(vp));
+	printf("\ttag VT_UMAPFS, vp=%x, lowervp=%x\n", 
+	       (unsigned int) vp, (unsigned int) UMAPVPTOLOWERVP(vp));
 	return (0);
 }
 
 int
-umap_rename(ap)
+umap_rename(v)
+	void *v;
+{
 	struct vop_rename_args  /* {
 		struct vnode *a_fdvp;
 		struct vnode *a_fvp;
@@ -427,8 +469,7 @@ umap_rename(ap)
 		struct vnode *a_tdvp;
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int error;
 	struct componentname *compnamep;
 	struct ucred *compcredp, *savecompcredp;
@@ -469,28 +510,3 @@ umap_rename(ap)
 	return error;
 }
 
-/*
- * Global vfs data structures
- */
-/*
- * XXX - strategy, bwrite are hand coded currently.  They should
- * go away with a merged buffer/block cache.
- *
- */
-int (**umap_vnodeop_p)();
-struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
-	{ &vop_default_desc, umap_bypass },
-
-	{ &vop_getattr_desc, umap_getattr },
-	{ &vop_inactive_desc, umap_inactive },
-	{ &vop_reclaim_desc, umap_reclaim },
-	{ &vop_print_desc, umap_print },
-	{ &vop_rename_desc, umap_rename },
-
-	{ &vop_strategy_desc, umap_strategy },
-	{ &vop_bwrite_desc, umap_bwrite },
-
-	{ (struct vnodeop_desc*) NULL, (int(*)()) NULL }
-};
-struct vnodeopv_desc umap_vnodeop_opv_desc =
-	{ &umap_vnodeop_p, umap_vnodeop_entries };

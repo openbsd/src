@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.8 1995/06/18 14:47:44 cgd Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.2 1996/02/26 07:20:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,20 @@
 #include <sys/malloc.h>
 #include <miscfs/umapfs/umap.h>
 
+int	umapfs_mount __P((struct mount *, char *, caddr_t,
+			  struct nameidata *, struct proc *));
+int	umapfs_start __P((struct mount *, int, struct proc *));
+int	umapfs_unmount __P((struct mount *, int, struct proc *));
+int	umapfs_root __P((struct mount *, struct vnode **));
+int	umapfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
+			     struct proc *));
+int	umapfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	umapfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int	umapfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	umapfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
+			   struct vnode **, int *, struct ucred **));
+int	umapfs_vptofh __P((struct vnode *, struct fid *));
+
 /*
  * Mount umap layer
  */
@@ -70,7 +84,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	struct vnode *umapm_rootvp;
 	struct umap_mount *amp;
 	size_t size;
-	int error;
+	int error,i;
 
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount(mp = %x)\n", mp);
@@ -135,7 +149,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 
-#ifdef UMAP_DIAGNOSTIC
+#ifdef UMAPFS_DIAGNOSTIC
 	printf("umap_mount:nentries %d\n",args.nentries);
 	for (i = 0; i < args.nentries; i++)
 		printf("   %d maps to %d\n", amp->info_mapdata[i][0],
@@ -147,7 +161,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 
-#ifdef UMAP_DIAGNOSTIC
+#ifdef UMAPFS_DIAGNOSTIC
 	printf("umap_mount:gnentries %d\n",args.gnentries);
 	for (i = 0; i < args.gnentries; i++)
 		printf("	group %d maps to %d\n", 
@@ -211,7 +225,6 @@ umapfs_start(mp, flags, p)
 {
 
 	return (0);
-	/* return (VFS_START(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, flags, p)); */
 }
 
 /*
@@ -249,7 +262,7 @@ umapfs_unmount(mp, mntflags, p)
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
-	if (umapm_rootvp->v_usecount > 1)
+	if (umapm_rootvp->v_usecount > 1 && !(flags & FORCECLOSE))
 		return (EBUSY);
 	if (error = vflush(mp, umapm_rootvp, flags))
 		return (error);
@@ -306,7 +319,7 @@ umapfs_quotactl(mp, cmd, uid, arg, p)
 	struct proc *p;
 {
 
-	return (VFS_QUOTACTL(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, cmd, uid, arg, p));
+	return (EOPNOTSUPP);
 }
 
 int
@@ -371,7 +384,7 @@ umapfs_vget(mp, ino, vpp)
 	struct vnode **vpp;
 {
 	
-	return (VFS_VGET(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, ino, vpp));
+	return (EOPNOTSUPP);
 }
 
 int
@@ -383,7 +396,6 @@ umapfs_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
 	int *exflagsp;
 	struct ucred**credanonp;
 {
-
 	return (EOPNOTSUPP);
 }
 
@@ -392,11 +404,8 @@ umapfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-
 	return (EOPNOTSUPP);
 }
-
-int umapfs_init __P((void));
 
 struct vfsops umap_vfsops = {
 	MOUNT_UMAP,

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.6 1995/06/01 22:44:34 jtc Exp $	*/
+/*	$OpenBSD: umap_subr.c,v 1.2 1996/02/26 07:20:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,9 +66,15 @@
 LIST_HEAD(umap_node_hashhead, umap_node) *umap_node_hashtbl;
 u_long umap_node_hash;
 
+static u_long umap_findid __P((u_long, u_long [][2], int));
+static struct vnode *umap_node_find __P((struct mount *, struct vnode *));
+static int umap_node_alloc __P((struct mount *, struct vnode *,
+				struct vnode **));
+
 /*
  * Initialise cache headers
  */
+int
 umapfs_init()
 {
 
@@ -76,6 +82,7 @@ umapfs_init()
 	printf("umapfs_init\n");		/* printed during system boot */
 #endif
 	umap_node_hashtbl = hashinit(NUMAPNODECACHE, M_CACHE, &umap_node_hash);
+	return 0;
 }
 
 /*
@@ -191,9 +198,9 @@ umap_node_alloc(mp, lowervp, vpp)
 	struct umap_node *xp;
 	struct vnode *vp, *nvp;
 	int error;
-	extern int (**dead_vnodeop_p)();
+	extern int (**dead_vnodeop_p) __P((void *));
 
-	if (error = getnewvnode(VT_UMAP, mp, umap_vnodeop_p, &vp))
+	if ((error = getnewvnode(VT_UMAP, mp, umap_vnodeop_p, &vp)) != 0)
 		return (error);
 	vp->v_type = lowervp->v_type;
 
@@ -213,7 +220,7 @@ umap_node_alloc(mp, lowervp, vpp)
 	 * check to see if someone else has beaten us to it.
 	 * (We could have slept in MALLOC.)
 	 */
-	if (nvp = umap_node_find(lowervp)) {
+	if ((nvp = umap_node_find(mp, lowervp)) != NULL) {
 		*vpp = nvp;
 
 		/* free the substructures we've allocated. */
@@ -292,7 +299,7 @@ umap_node_create(mp, targetvp, newvpp)
 {
 	struct vnode *aliasvp;
 
-	if (aliasvp = umap_node_find(mp, targetvp)) {
+	if ((aliasvp = umap_node_find(mp, targetvp)) != NULL) {
 		/*
 		 * Take another reference to the alias vnode
 		 */
@@ -312,7 +319,7 @@ umap_node_create(mp, targetvp, newvpp)
 		/*
 		 * Make new vnode reference the umap_node.
 		 */
-		if (error = umap_node_alloc(mp, targetvp, &aliasvp))
+		if ((error = umap_node_alloc(mp, targetvp, &aliasvp)) != 0)
 			return (error);
 
 		/*
@@ -392,12 +399,12 @@ umap_mapids(v_mount, credp)
 	int i, unentries, gnentries;
 	uid_t uid;
 	gid_t gid;
-	u_long *usermap, *groupmap;
+	u_long (*usermap)[2], (*groupmap)[2];
 
 	unentries =  MOUNTTOUMAPMOUNT(v_mount)->info_nentries;
-	usermap =  &(MOUNTTOUMAPMOUNT(v_mount)->info_mapdata[0][0]);
+	usermap =  MOUNTTOUMAPMOUNT(v_mount)->info_mapdata;
 	gnentries =  MOUNTTOUMAPMOUNT(v_mount)->info_gnentries;
-	groupmap =  &(MOUNTTOUMAPMOUNT(v_mount)->info_gmapdata[0][0]);
+	groupmap =  MOUNTTOUMAPMOUNT(v_mount)->info_gmapdata;
 
 	/* Find uid entry in map */
 
@@ -424,14 +431,13 @@ umap_mapids(v_mount, credp)
 	/* Now we must map each of the set of groups in the cr_groups 
 		structure. */
 
-	i = 0;
-	while (credp->cr_groups[i] != 0) {
+	for ( i = 0 ; credp->cr_groups[i] != 0 ; i++ ) {
 		gid = (gid_t) umap_findid(credp->cr_groups[i],
 					groupmap, gnentries);
 
 		if (gid != -1)
-			credp->cr_groups[i++] = gid;
+			credp->cr_groups[i] = gid;
 		else
-			credp->cr_groups[i++] = NULLGROUP;
+			credp->cr_groups[i] = NULLGROUP;
 	}
 }
