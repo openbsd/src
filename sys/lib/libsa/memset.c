@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.c,v 1.2 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: memset.c,v 1.3 2003/08/08 03:36:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,10 +35,7 @@
 #include "stand.h"
 
 void *
-memset(s1, c, n)
-	void *s1;
-	int c;
-	size_t n;
+memset(void *s1, int c, size_t n)
 {
 	register char *p = s1;
 	while (n--)
