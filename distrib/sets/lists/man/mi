@@ -1300,6 +1300,7 @@
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
+./usr/share/man/cat4/mac68k/asc.0
 ./usr/share/man/cat4/mac68k/autoconf.0
 ./usr/share/man/cat4/mac68k/esp.0
 ./usr/share/man/cat4/mac68k/intro.0
@@ -1307,7 +1308,9 @@
 ./usr/share/man/cat4/mac68k/mainbus.0
 ./usr/share/man/cat4/mac68k/mc.0
 ./usr/share/man/cat4/mac68k/mem.0
+./usr/share/man/cat4/mac68k/ncrscsi.0
 ./usr/share/man/cat4/mac68k/obio.0
+./usr/share/man/cat4/mac68k/sbc.0
 ./usr/share/man/cat4/mac68k/sn.0
 ./usr/share/man/cat4/mac68k/zsc.0
 ./usr/share/man/cat4/mac68k/zstty.0
