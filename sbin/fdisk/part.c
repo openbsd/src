@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.25 2001/11/07 01:27:33 miod Exp $	*/
+/*	$OpenBSD: part.c,v 1.26 2001/11/14 16:42:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -245,7 +245,7 @@ PRT_make(partn, offset, reloff, prt)
 	tmp.ssect = partn->ssect;
 	tmp.scyl = (partn->scyl > 1023)? 1023: partn->scyl; 
 	tmp.ehead = partn->ehead;
-	tmp.esect = partn->ssect;
+	tmp.esect = partn->esect;
 	tmp.ecyl = (partn->ecyl > 1023)? 1023: partn->ecyl; 
 	if (!PRT_check_chs(partn) && PRT_check_chs(&tmp)) {
 		partn->shead = tmp.shead;
