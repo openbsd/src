@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.26 1998/01/07 00:34:57 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.27 1998/04/05 09:09:09 niklas Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -152,7 +152,7 @@ file	arch/amiga/dev/ite_et.c		grfet & ite
 # device defined in sys/conf/files
 # A2065, Ameristar ethernet cards
 attach	le at zbus with le_zbus
-file	arch/amiga/dev/if_le.c		le_zbus needs-flag
+file	arch/amiga/dev/if_le_zbus.c	le_zbus needs-flag
 
 # Hydra ethernet card
 device	ed:	ifnet, ether
