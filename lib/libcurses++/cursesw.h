@@ -7,15 +7,6 @@
 #include <etip.h>
 #include <stdio.h>
 #include <stdarg.h>
-#ifdef __MWERKS__
-/* This is a bogus check, stringstream is actually ANSI C++ standard,
- * but old compilers like GCC don't have it, and new compilers like Metrowerks
- * don't have strstream
- */
-#include <sstream>
-#else
-#include <strstream.h>
-#endif
 
 extern "C" {
 #  include   <curses.h>

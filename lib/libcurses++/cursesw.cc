@@ -45,43 +45,36 @@ bool NCursesWindow::b_initialized = FALSE;
 int
 NCursesWindow::scanw(const char* fmt, ...)
 {
-#if defined(__GNUG__)
-    va_list args;
-    va_start(args, fmt);
+    int result = ERR;
     char buf[BUFSIZ];
-    int result = wgetstr(w, buf);
-    if (result == OK) {
-	strstreambuf ss(buf, sizeof(buf));
-	result = ss.vscan(fmt, (_IO_va_list)args);
+
+    if (::wgetnstr(w, buf, sizeof(buf)) != ERR) {
+	va_list args;
+	va_start(args, fmt);
+	if (::vsscanf(buf, fmt, args) != -1)
+	    result = OK;
+	va_end(args);
     }
-    va_end(args);
     return result;
-#else
-    return ERR;
-#endif
 }
 
 
 int
 NCursesWindow::scanw(int y, int x, const char* fmt, ...)
 {
-#if defined(__GNUG__)
-    va_list args;
-    va_start(args, fmt);
+    int result = ERR;
     char buf[BUFSIZ];
-    int result = wmove(w, y, x);
-    if (result == OK) {
-	result = wgetstr(w, buf);
-	if (result == OK) {
-	    strstreambuf ss(buf, sizeof(buf));
-	    result = ss.vscan(fmt, (_IO_va_list)args);
+
+    if (::wmove(w, y, x) != ERR) {
+	if (::wgetnstr(w, buf, sizeof(buf)) != ERR) {
+	    va_list args;
+	    va_start(args, fmt);
+	    if (::vsscanf(buf, fmt, args) != -1)
+		result = OK;
+	    va_end(args);
 	}
     }
-    va_end(args);
     return result;
-#else
-    return ERR;
-#endif
 }
 
 
