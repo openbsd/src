@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.32 2000/10/09 22:21:41 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.33 2000/10/28 08:52:48 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -542,7 +542,7 @@ For
 specify that packets matching this flow must use IPsec, and establish
 SAs dynamically as needed. If no SAs are established, traffic is not
 allowed through.
-.It Fl acquire
+.It Fl dontacq
 For
 .Nm flow ,
 specify that packets matching this flow must use IPsec.
