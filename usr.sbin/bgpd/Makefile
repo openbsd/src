@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.13 2004/01/26 14:42:47 henning Exp $
+#	$OpenBSD: Makefile,v 1.14 2004/02/04 09:07:44 claudio Exp $
 
 .PATH:		${.CURDIR}/..
 
 PROG=	bgpd
 SRCS=	bgpd.c buffer.c session.c log.c parse.y config.c imsg.c \
 	rde.c rde_rib.c rde_decide.c rde_prefix.c mrt.c kroute.c \
-	control.c pfkey.c
+	control.c pfkey.c rde_update.c
 CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CLFAGS+= -Wmissing-declarations -Wredundant-decls
