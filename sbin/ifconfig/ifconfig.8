@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.35 2000/01/15 19:47:01 angelos Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.36 2000/01/15 20:11:14 angelos Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -145,6 +145,65 @@ for example,
 The following parameters may be set with
 .Nm ifconfig :
 .Bl -tag -width dest_addressxx
+.It Cm alias
+Establish an additional network address for this interface.
+This is sometimes useful when changing network numbers, and
+one wishes to accept packets addressed to the old interface.
+.It Fl alias
+Remove the specified network address alias.
+.It Cm arp
+Enable the use of the Address Resolution Protocol in mapping
+between network level addresses and link level addresses (default).
+This is currently implemented for mapping between
+.Tn DARPA
+Internet
+addresses and 10Mb/s Ethernet addresses.
+.It Fl arp
+Disable the use of the Address Resolution Protocol.
+.It Cm anycast
+(inet6 only)
+Set the IPv6 anycast address bit.
+.It Fl anycast
+(inet6 only)
+Clear the IPv6 anycast address bit.
+.It Cm broadcast Ar addr
+(inet only)
+Specify the address to use to represent broadcasts to the
+network.
+The default broadcast address is the address with a host part of all 1's.
+.It Cm clearsa
+Remove the binding between an SA and an
+.Xr enc 4
+interface, such as established with the
+.Cm srcsa
+or
+.Cm dstsa
+flags. If the all-zeroes SA is specified, the sending SA is cleared
+by default.
+.It Cm debug
+Enable driver dependent debugging code; usually, this turns on
+extra console error logging.
+.It Fl debug
+Disable driver dependent debugging code.
+.It Cm delete
+Remove the network address specified.
+This would be used if you incorrectly specified an alias, or it
+was no longer needed.
+If you have incorrectly set an NS address having the side effect
+of specifying the host portion, removing all NS addresses will
+allow you to respecify the host portion.
+.It Cm dest_address
+Specify the address of the correspondent on the other end
+of a point to point link.
+.It Cm down
+Mark an interface
+.Dq down .
+When an interface is marked
+.Dq down ,
+the system will not attempt to
+transmit messages through that interface.
+If possible, the interface will be reset to disable reception as well.
+This action does not automatically disable routes using the interface.
 .It Cm dstsa
 Bind an
 .Xr ipsec 4
@@ -180,86 +239,6 @@ part of the SA have to be set to zero). Only one SA may be bound to an
 interface at a time. SAs may not be bound to the
 .Dq enc0
 interface.
-.It Cm srcsa
-Similar to
-.Cm dstsa ,
-this operation binds an
-.Xr ipsec 4
-SA to an
-.Xr enc 4
-interface. The SAs bound via this operation are receiving SAs. Any
-packets received over one of these SAs, will be made to appear as if
-it arrived by the corresponding
-.Xr enc 4
-interface. If the interface is part of a bridge, the packets will be
-delivered to the bridge. Contrary to the
-.Cm dstsa
-flag, multiple SAs may be bound to an
-.Xr enc 4
-interface via this operation. Similar to the
-.Cm dstsa
-flag, no SAs may be bound to the
-.Dq enc0
-interface.
-.It Cm clearsa
-Remove the binding between an SA and an
-.Xr enc 4
-interface, such as established with the
-.Cm srcsa
-or
-.Cm dstsa
-flags. If the all-zeroes SA is specified, the sending SA is cleared
-by default.
-.It Cm alias
-Establish an additional network address for this interface.
-This is sometimes useful when changing network numbers, and
-one wishes to accept packets addressed to the old interface.
-.It Fl alias
-Remove the specified network address alias.
-.It Cm arp
-Enable the use of the Address Resolution Protocol in mapping
-between network level addresses and link level addresses (default).
-This is currently implemented for mapping between
-.Tn DARPA
-Internet
-addresses and 10Mb/s Ethernet addresses.
-.It Fl arp
-Disable the use of the Address Resolution Protocol.
-.It Cm anycast
-(inet6 only)
-Set the IPv6 anycast address bit.
-.It Fl anycast
-(inet6 only)
-Clear the IPv6 anycast address bit.
-.It Cm broadcast Ar addr
-(inet only)
-Specify the address to use to represent broadcasts to the
-network.
-The default broadcast address is the address with a host part of all 1's.
-.It Cm debug
-Enable driver dependent debugging code; usually, this turns on
-extra console error logging.
-.It Fl debug
-Disable driver dependent debugging code.
-.It Cm delete
-Remove the network address specified.
-This would be used if you incorrectly specified an alias, or it
-was no longer needed.
-If you have incorrectly set an NS address having the side effect
-of specifying the host portion, removing all NS addresses will
-allow you to respecify the host portion.
-.It Cm dest_address
-Specify the address of the correspondent on the other end
-of a point to point link.
-.It Cm down
-Mark an interface
-.Dq down .
-When an interface is marked
-.Dq down ,
-the system will not attempt to
-transmit messages through that interface.
-If possible, the interface will be reset to disable reception as well.
-This action does not automatically disable routes using the interface.
 .It Cm ipdst
 This is used to specify an Internet host who is willing to receive
 ip packets encapsulating NS packets bound for a remote network.
@@ -269,6 +248,15 @@ of the destination.
 IP encapsulation of
 .Tn CLNP
 packets is done differently.
+.It Cm link[0-2]
+Enable special processing of the link level of the interface.
+These three options are interface specific in actual effect; however,
+they are in general used to select special modes of operation. An example
+of this is to enable SLIP compression, or to select the connector type
+for some Ethernet cards.  Refer to the man page for the specific driver
+for more information.
+.It Fl link[0-2]
+Disable special processing at the link level with the specified interface.
 .It Cm media Ar type
 Set the media type of the interface to
 .Ar type .
@@ -354,11 +342,6 @@ There is some evidence that a number different from 1 may be useful
 for
 .Tn AFI
 37 type addresses.
-.It Cm range
-Under AppleTalk, set the interface to respond to a
-.Em netrange
-of the form startnet-endnet. AppleTalk uses this scheme instead of
-netmasks though OpenBSD implements it internally as a set of netmasks.
 .It Cm phase
 The argument following this specifies the version (phase) of the
 AppleTalk network attached to the interface. Values of 1 or 2 are permitted.
@@ -370,6 +353,32 @@ Set preferred lifetime for the address.
 Effect is similar to
 .Cm netmask ,
 but you can specify by prefix length by digits.
+.It Cm range
+Under AppleTalk, set the interface to respond to a
+.Em netrange
+of the form startnet-endnet. AppleTalk uses this scheme instead of
+netmasks though OpenBSD implements it internally as a set of netmasks.
+.It Cm srcsa
+Similar to
+.Cm dstsa ,
+this operation binds an
+.Xr ipsec 4
+SA to an
+.Xr enc 4
+interface. The SAs bound via this operation are receiving SAs. Any
+packets received over one of these SAs, will be made to appear as if
+it arrived by the corresponding
+.Xr enc 4
+interface. If the interface is part of a bridge, the packets will be
+delivered to the bridge. Contrary to the
+.Cm dstsa
+flag, multiple SAs may be bound to an
+.Xr enc 4
+interface via this operation. Similar to the
+.Cm dstsa
+flag, no SAs may be bound to the
+.Dq enc0
+interface.
 .It Cm tentative
 (inet6 only)
 Set the IPv6 tentative address bit.
@@ -398,15 +407,6 @@ Currently used by Internet protocols only.
 Disable the use of a
 .Dq trailer
 link level encapsulation.
-.It Cm link[0-2]
-Enable special processing of the link level of the interface.
-These three options are interface specific in actual effect; however,
-they are in general used to select special modes of operation. An example
-of this is to enable SLIP compression, or to select the connector type
-for some Ethernet cards.  Refer to the man page for the specific driver
-for more information.
-.It Fl link[0-2]
-Disable special processing at the link level with the specified interface.
 .It Cm up
 Mark an interface
 .Dq up .
