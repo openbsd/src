@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.8 2000/10/09 17:31:04 aaron Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.9 2000/11/29 21:18:14 aaron Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -361,6 +361,10 @@ pccbb_shutdown(void *arg)
 	pcireg_t command;
 
 	DPRINTF(("%s: shutdown\n", sc->sc_dev.dv_xname));
+
+	/* turn off power */
+	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+
 	bus_space_write_4(sc->sc_base_memt, sc->sc_base_memh, CB_SOCKET_MASK,
 	    0);
 
@@ -369,11 +373,6 @@ pccbb_shutdown(void *arg)
 	command &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 	    PCI_COMMAND_MASTER_ENABLE);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, command);
-
-	if (sc->sc_chipset == CB_TOPIC95B) {
-		pci_conf_write(sc->sc_pc, sc->sc_tag, TOPIC_SOCKET_CTRL, 0);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, TOPIC_SLOT_CTRL, 0);
-	}
 }
 
 void
