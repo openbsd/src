@@ -1478,6 +1478,7 @@
 ./usr/share/man/cat7/mm.0
 ./usr/share/man/cat7/ms.0
 ./usr/share/man/cat7/operator.0
+./usr/share/man/cat7/packages-specs.0
 ./usr/share/man/cat7/ports.0
 ./usr/share/man/cat7/re_format.0
 ./usr/share/man/cat7/securelevel.0
