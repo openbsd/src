@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.52 2001/07/01 19:48:43 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.53 2001/08/15 09:16:29 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -88,6 +88,11 @@ static int pre_shared_encode_hash (struct message *);
 static u_int8_t *sig_gen_skeyid (struct exchange *, size_t *);
 static int rsa_sig_decode_hash (struct message *);
 static int rsa_sig_encode_hash (struct message *);
+#endif
+
+#if defined (USE_RAWKEY)
+#define PUBKEY_DIR_DEFAULT "/etc/isakmpd/pubkeys"
+static int get_raw_key_from_file (int, u_int8_t *, size_t, RSA **);
 #endif
 
 static int ike_auth_hash (struct exchange *, u_int8_t *);
@@ -796,6 +801,13 @@ rsa_sig_decode_hash (struct message *msg)
     }
 #endif /* USE_DNSSEC */
 
+#if defined (USE_RAWKEY)
+  /* If we still have not found a key, try to read it from a file. */
+  if (!found)
+    if (get_raw_key_from_file (IKE_AUTH_RSA_SIG, id, id_len, &key) != -1)
+      found++;
+#endif
+
   if (!found)
     {
       log_print ("rsa_sig_decode_hash: no public key found");
@@ -1172,3 +1184,97 @@ ike_auth_hash (struct exchange *exchange, u_int8_t *buf)
 
   return 0;
 }
+
+#if defined (USE_RAWKEY)
+static int
+get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
+{
+  char filename[FILENAME_MAX];
+  char *rdir, *base, *addrstr = 0;
+  struct stat st;
+  FILE *fp;
+
+  if (type != IKE_AUTH_RSA_SIG) /* XXX More types? */
+    {
+      LOG_DBG ((LOG_NEGOTIATION, 20, "get_raw_key_from_file: "
+		"invalid auth type %d\n", type));
+      return -1;
+    }
+
+  *rsa = 0;
+
+  rdir = conf_get_str ("General", "Pubkey-directory");
+  if (!rdir)
+    rdir = PUBKEY_DIR_DEFAULT;
+
+  strncpy (filename, rdir, FILENAME_MAX - 1);
+  filename[FILENAME_MAX - 1] = '\0';
+  base = filename + strlen (filename) - 1;
+
+  switch (GET_ISAKMP_ID_TYPE (id))
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      if (id_len < sizeof (struct in_addr))
+	return -1;
+      util_ntoa (&addrstr, AF_INET, id + ISAKMP_ID_DATA_OFF);
+      if (!addrstr)
+	return -1;
+      strncat (filename, "/ipv4/", FILENAME_MAX - 1 - strlen (filename));
+      strncat (filename, addrstr, FILENAME_MAX - 1 - strlen (filename));
+      break;
+
+    case IPSEC_ID_IPV6_ADDR:
+      if (id_len < sizeof (struct in6_addr))
+	return -1;
+      util_ntoa (&addrstr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
+      if (!addrstr)
+	return -1;
+      strncat (filename, "/ipv6/", FILENAME_MAX - 1 - strlen (filename));
+      strncat (filename, addrstr, FILENAME_MAX - 1 - strlen (filename));
+      break;
+
+    case IPSEC_ID_FQDN:
+    case IPSEC_ID_USER_FQDN:
+      if (GET_ISAKMP_ID_TYPE (id) == IPSEC_ID_FQDN)
+	addrstr = "/fqdn/";
+      else
+	addrstr = "/ufqdn/";
+
+      strncat (filename, addrstr, FILENAME_MAX - 1 - strlen (filename));
+
+      /* Id is not NULL-terminated.  */
+      id_len -= ISAKMP_ID_DATA_OFF;
+      id_len = MIN (id_len, FILENAME_MAX - 1 - strlen (filename));
+      memcpy (base + strlen (addrstr), id + ISAKMP_ID_DATA_OFF, id_len);
+      *(base + strlen (addrstr) + id_len) = '\0';
+      addrstr = 0;
+      break;
+
+    default:
+      /* Unknown type.  */
+      LOG_DBG ((LOG_NEGOTIATION, 10, "get_raw_key_from_file: "
+		"unknown identity type %d\n", GET_ISAKMP_ID_TYPE (id)));
+      return -1;
+      break;
+    }
+
+  /* If the file does not exist, fail silently.  */
+  if (stat (filename, &st) == 0)
+    {
+      fp = fopen (filename, "r");
+      if (!fp)
+	{
+	  log_error ("get_raw_key_from_file: could not open \"%s\"", filename);
+	  goto out;
+	}
+      *rsa = LC (PEM_read_RSAPublicKey, (fp, NULL, NULL, NULL));
+      fclose (fp);
+    }
+  
+ out:
+  if (addrstr)
+    free (addrstr);
+
+  return (*rsa ? 0 : -1);
+}
+#endif /* USE_RAWKEY */

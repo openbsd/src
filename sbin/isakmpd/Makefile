@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2001/07/06 09:35:57 ho Exp $
+#	$OpenBSD: Makefile,v 1.42 2001/08/15 09:16:29 ho Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -51,9 +51,9 @@ OS=		openbsd
 
 # Compile-time configuration of otherwise optional features
 #FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug gmp
-#FEATURES+=	isakmp_cfg dnssec
+#FEATURES+=	rawkey isakmp_cfg dnssec
 FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug
-#FEATURES=
+FEATURES+=	rawkey
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
@@ -167,6 +167,11 @@ USE_LIBCRYPTO=	yes
 LDADD+=		-lkeynote -lm
 DPADD+=		${LIBKEYNOTE} ${LIBM}
 CFLAGS+=	-DUSE_KEYNOTE
+.endif
+
+.ifdef USE_RAWKEY
+USE_LIBCRYPTO=	yes
+CFLAGS+=	-DUSE_RAWKEY
 .endif
 
 .ifdef USE_LIBCRYPTO

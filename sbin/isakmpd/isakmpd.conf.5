@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.56 2001/08/02 09:55:38 ho Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.57 2001/08/15 09:16:30 ho Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -180,6 +180,13 @@ and setup SAs with eachother.
 Specifically this means replay
 protection will not be asked for, and errors that can occur when
 updating an SA with its parameters a 2nd time will be ignored.
+.It Em Pubkey-directory
+The directory in which
+.Nm
+looks for explicitly trusted public keys. The default is
+"/etc/isakmpd/pubkeys". Read
+.Xr isakmpd 8
+for the required naming convention of the files in here.
 .El
 .It Em Phase 1
 ISAKMP SA negotiation parameter root

@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.29 2001/07/20 18:07:11 mpech Exp $
+.\" $OpenBSD: isakmpd.8,v 1.30 2001/08/15 09:16:29 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -217,7 +217,7 @@ should take part in, or there will be a need to setup one.  In the former
 case, what is needed to be done varies depending on the actual Certificate
 Authority used, and is therefore not covered here, more than
 mentioning that
-.Xr openssl 8
+.Xr openssl 1
 needs to be used to create a certificate signing request that the
 CA understands.  The latter case however is described here:
 .Pp
@@ -306,10 +306,36 @@ on your local system.  Also carry over the CA cert
 and put it in
 .Pa /etc/isakmpd/ca/.
 .El
+.Pp
+It is also possible to store trusted public keys to make them directly
+usable by
+.Nm isakmpd .
+The keys should be saved in PEM format (see 
+.Xr openssl 1 )
+and named and stored after this easy formula:
+.Bl -tag -width for_ufqdn_identities
+.It For IPv4 identities
+/etc/isakmpd/pubkeys/ipv4/A.B.C.D
+.It For IPv6 identities
+/etc/isakmpd/pubkeys/ipv6/abcd:abcd::ab:bc
+.It For FQDN identities
+/etc/isakmpd/pubkeys/fqdn/foo.bar.org
+.It For UFQDN identities
+/etc/isakmpd/pubkeys/ufqdn/user@foo.bar.org
+.El
 .Sh BUGS
 The
 .Fl P
 flag does not do what we document, rather it does nothing.
+.Sh CAVEATS
+When storing a trusted public key for an IPv6 identity, the 
+.Em most efficient
+form of address representation, i.e "::" instead of ":0:0:0:",
+must be used or the matching will fail. 
+.Nm
+uses the output from
+.Xr getnameinfo 3
+for the address-to-name translation.
 .Sh FILES
 .Bl -tag -width /etc/isakmpd/private/local.
 .It Pa /etc/isakmpd/ca/
@@ -331,6 +357,9 @@ A local private key for certificate based authentication.  There has
 to be a certificate for this key in the certificate directory mentioned
 above.  The same mode requirements as
 .Nm isakmpd.conf .
+.It Pa /etc/isakmpd/pubkeys/
+Directory in which trusted public keys can be kept. The keys must be
+named after a fashion described above.
 .It Pa /var/run/isakmpd.pid
 The PID of the current daemon.
 .It Pa /var/run/isakmpd.fifo
@@ -351,7 +380,8 @@ and keynote policy configuration files.
 .Xr ipsec 4 ,
 .Xr isakmpd.conf 5 ,
 .Xr isakmpd.policy 5 ,
-.Xr openssl 8 ,
+.Xr getnameinfo 3 ,
+.Xr openssl 1 ,
 .Xr pcap 3 ,
 .Xr photurisd 8 ,
 .Xr ssl 8 ,
