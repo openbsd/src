@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.20 1999/08/04 19:18:13 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.21 1999/11/29 19:56:59 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/uio.h>
@@ -775,12 +776,21 @@ pollscan(p, pl, nfd, retval)
 	 * XXX: We need to implement the rest of the flags.
 	 */
 	for (i = 0; i < nfd; i++) {
+		/* Check the file descriptor. */
+		if (pl[i].fd < 0) {
+			pl[i].revents = 0;
+			continue;
+		}
+		if (pl[i].fd >= fdp->fd_nfiles) {
+			pl[i].revents = POLLNVAL;
+			n++;
+			continue;
+		}
+
 		fp = fdp->fd_ofiles[pl[i].fd];
 		if (fp == NULL) {
-			if (pl[i].events & POLLNVAL) {
-				pl[i].revents |= POLLNVAL;
-				n++;
-			}
+			pl[i].revents = POLLNVAL;
+			n++;
 			continue;
 		}
 		for (x = msk = 0; msk < 3; msk++) {
@@ -816,9 +826,11 @@ sys_poll(p, v, retval)
 	int timo, ncoll, i, s, error, error2;
 	extern int nselcoll, selwait;
 
-	/* XXX constrain; This may not match standards */
-	if (SCARG(uap, nfds) > p->p_fd->fd_nfiles)
-		SCARG(uap, nfds) = p->p_fd->fd_nfiles;
+	/* Standards say no more than MAX_OPEN; this is possibly better. */
+	if (SCARG(uap, nfds) > min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, 
+	    maxfiles))
+		return (EINVAL);
+
 	sz = sizeof(struct pollfd) * SCARG(uap, nfds);
 	
 	/* optimize for the default case, of a small nfds value */
