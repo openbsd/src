@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.2 2003/02/15 01:23:26 miod Exp $
+dnl	$OpenBSD: contents,v 1.3 2003/03/25 19:57:31 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -15,24 +15,24 @@ dnl				program
 
 		xxboot		The OpenBSD/MACHINE LIF boot block
 
-DistributionDescription(six)
+DistributionDescription(eight)
 
-OpenBSDbase(80.0,191.3)
+OpenBSDbase(81.5,202.1)
 
-OpenBSDcomp(22.5,68.3)
+OpenBSDcomp(22.0,69.8)
 
 OpenBSDetc(1.5,5.6,noupgrade)
 
-OpenBSDgame(7.7,16.4)
+OpenBSDgame(7.3,16.1)
 
-OpenBSDman(2.0,6.9)
+OpenBSDman(6.3,22.5)
 
-OpenBSDmisc(1.7,5.6)
-dnl
-dnl OpenBSDxbase
+OpenBSDmisc(1.9,6.2)
+
+OpenBSDxbase(82.2,163.3)
 dnl
 dnl OpenBSDxfont
 dnl
 dnl OpenBSDxserv
-dnl
-dnl OpenBSDxshare
+
+OpenBSDxshare(1.6,7.9)
