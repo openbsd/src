@@ -59,6 +59,7 @@ int m88k_function_number = 0;	/* Counter unique to each function */
 int m88k_fp_offset	= 0;	/* offset of frame pointer if used */
 int m88k_stack_size	= 0;	/* size of allocated stack (including frame) */
 int m88k_case_index;
+int m88k_first_vararg;
 
 rtx m88k_compare_reg;		/* cmp output pseudo register */
 rtx m88k_compare_op0;		/* cmpsi operand 0 */
@@ -1712,8 +1713,6 @@ output_label (label_number)
         |                caller's frame                |
         |==============================================|
         |     [caller's outgoing memory arguments]     |
-        |==============================================|
-        |  caller's outgoing argument area (32 bytes)  |
   sp -> |==============================================| <- ap
         |            [local variable space]            |
         |----------------------------------------------|
@@ -1729,8 +1728,6 @@ output_label (label_number)
         |==============================================|
         |     [callee's outgoing memory arguments]     |
         |==============================================|
-        | [callee's outgoing argument area (32 bytes)] |
-        |==============================================| <- sp
 
   Notes:
 
@@ -1787,15 +1784,11 @@ m88k_layout_frame ()
   if (write_symbols != NO_DEBUG && !TARGET_OCS_FRAME_POSITION)
     save_regs[1] = 1;
 
-  /* If there is a call, alloca is used, __builtin_alloca is used, or
-     a dynamic-sized object is defined, add the 8 additional words
-     for the callee's argument area.  The common denominator is that the
-     FP is required.  may_call_alloca only gets calls to alloca;
-     current_function_calls_alloca gets alloca and __builtin_alloca.  */
+  /* If there is a call, or we need a debug frame, r1 needs to be
+     saved as well.  */
   if (regs_ever_live[1] || frame_pointer_needed)
     {
       save_regs[1] = 1;
-      sp_size += REG_PARM_STACK_SPACE (0);
     }
 
   /* If we are producing PIC, save the addressing base register and r1.  */
@@ -1887,35 +1880,6 @@ null_prologue ()
 	  && nxregs == 0
 	  && m88k_stack_size == 0);
 }
-
-/* Determine if the current function has any references to the arg pointer.
-   This is done indirectly by examining the DECL_ARGUMENTS' DECL_RTL.
-   It is OK to return TRUE if there are no references, but FALSE must be
-   correct.  */
-
-static int
-uses_arg_area_p ()
-{
-  register tree parm;
-
-  if (current_function_decl == 0
-      || current_function_varargs || current_function_stdarg)
-    return 1;
-
-  for (parm = DECL_ARGUMENTS (current_function_decl);
-       parm;
-       parm = TREE_CHAIN (parm))
-    {
-      if (DECL_RTL (parm) == 0
-	  || GET_CODE (DECL_RTL (parm)) == MEM)
-	return 1;
-
-      if (DECL_INCOMING_RTL (parm) == 0
-	  || GET_CODE (DECL_INCOMING_RTL (parm)) == MEM)
-	return 1;
-    }
-  return 0;
-}
 
 void
 m88k_begin_prologue (stream, size)
@@ -1955,16 +1919,6 @@ void
 m88k_expand_prologue ()
 {
   m88k_layout_frame ();
-
-  if (TARGET_OPTIMIZE_ARG_AREA
-      && m88k_stack_size
-      && ! uses_arg_area_p ())
-    {
-      /* The incoming argument area is used for stack space if it is not
-	 used (or if -mno-optimize-arg-area is given).  */
-      if ((m88k_stack_size -= REG_PARM_STACK_SPACE (0)) < 0)
-	m88k_stack_size = 0;
-    }
 
   if (m88k_stack_size)
     emit_add (stack_pointer_rtx, stack_pointer_rtx, -m88k_stack_size);
@@ -2373,11 +2327,11 @@ output_function_profiler (file, labelno, name, savep)
 
   if (savep)
     {
-      fprintf (file, "\tsubu\t %s,%s,64\n", reg_names[31], reg_names[31]);
-      fprintf (file, "\tst.d\t %s,%s,32\n", reg_names[2], reg_names[31]);
-      fprintf (file, "\tst.d\t %s,%s,40\n", reg_names[4], reg_names[31]);
-      fprintf (file, "\tst.d\t %s,%s,48\n", reg_names[6], reg_names[31]);
-      fprintf (file, "\tst.d\t %s,%s,56\n", reg_names[8], reg_names[31]);
+      fprintf (file, "\tsubu\t %s,%s,32\n", reg_names[31], reg_names[31]);
+      fprintf (file, "\tst.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
+      fprintf (file, "\tst.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
+      fprintf (file, "\tst.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
+      fprintf (file, "\tst.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
     }
 
   ASM_GENERATE_INTERNAL_LABEL (label, "LP", labelno);
@@ -2411,11 +2365,11 @@ output_function_profiler (file, labelno, name, savep)
 
   if (savep)
     {
-      fprintf (file, "\tld.d\t %s,%s,32\n", reg_names[2], reg_names[31]);
-      fprintf (file, "\tld.d\t %s,%s,40\n", reg_names[4], reg_names[31]);
-      fprintf (file, "\tld.d\t %s,%s,48\n", reg_names[6], reg_names[31]);
-      fprintf (file, "\tld.d\t %s,%s,56\n", reg_names[8], reg_names[31]);
-      fprintf (file, "\taddu\t %s,%s,64\n", reg_names[31], reg_names[31]);
+      fprintf (file, "\tld.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
+      fprintf (file, "\tld.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
+      fprintf (file, "\tld.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
+      fprintf (file, "\tld.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
+      fprintf (file, "\taddu\t %s,%s,32\n", reg_names[31], reg_names[31]);
     }
 }
 
@@ -2443,21 +2397,21 @@ output_function_block_profiler (file, labelno)
 		 m88k_pound_sign, &block[1]);
   fprintf (file, "\tbcnd\t %sne0,%s,%s\n",
 		 m88k_pound_sign, reg_names[26], &label[1]);
-  fprintf (file, "\tsubu\t %s,%s,64\n", reg_names[31], reg_names[31]);
-  fprintf (file, "\tst.d\t %s,%s,32\n", reg_names[2], reg_names[31]);
-  fprintf (file, "\tst.d\t %s,%s,40\n", reg_names[4], reg_names[31]);
-  fprintf (file, "\tst.d\t %s,%s,48\n", reg_names[6], reg_names[31]);
-  fprintf (file, "\tst.d\t %s,%s,56\n", reg_names[8], reg_names[31]);
+  fprintf (file, "\tsubu\t %s,%s,32\n", reg_names[31], reg_names[31]);
+  fprintf (file, "\tst.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
+  fprintf (file, "\tst.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
+  fprintf (file, "\tst.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
+  fprintf (file, "\tst.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
   fputs ("\tbsr.n\t ", file);
   ASM_OUTPUT_LABELREF (file, "__bb_init_func");
   putc ('\n', file);
   fprintf (file, "\tor\t %s,%s,%slo16(%s)\n", reg_names[2], reg_names[27],
 		 m88k_pound_sign, &block[1]);
-  fprintf (file, "\tld.d\t %s,%s,32\n", reg_names[2], reg_names[31]);
-  fprintf (file, "\tld.d\t %s,%s,40\n", reg_names[4], reg_names[31]);
-  fprintf (file, "\tld.d\t %s,%s,48\n", reg_names[6], reg_names[31]);
-  fprintf (file, "\tld.d\t %s,%s,56\n", reg_names[8], reg_names[31]);
-  fprintf (file, "\taddu\t %s,%s,64\n", reg_names[31], reg_names[31]);
+  fprintf (file, "\tld.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
+  fprintf (file, "\tld.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
+  fprintf (file, "\tld.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
+  fprintf (file, "\tld.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
+  fprintf (file, "\taddu\t %s,%s,32\n", reg_names[31], reg_names[31]);
   ASM_OUTPUT_INTERNAL_LABEL (file, "LPY", labelno);
 }
 
@@ -2592,6 +2546,49 @@ m88k_function_arg_advance (args_so_far, mode, type, named)
   (*args_so_far) += (bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 }
 
+/* Perform any needed actions needed for a function that is receiving a
+   variable number of arguments.
+
+   CUM is as above.
+
+   MODE and TYPE are the mode and type of the current parameter.
+
+   PRETEND_SIZE is a variable that should be set to the amount of stack
+   that must be pushed by the prolog to pretend that our caller pushed
+   it.
+
+   Normally, this macro will push all remaining incoming registers on the
+   stack and set PRETEND_SIZE to the length of the registers pushed.  */
+
+void
+m88k_setup_incoming_varargs (cum, mode, type, pretend_size, no_rtl)
+     CUMULATIVE_ARGS *cum;
+     enum machine_mode mode;
+     tree type;
+     int *pretend_size;
+     int no_rtl;
+{
+  CUMULATIVE_ARGS next_cum;
+  tree fntype;
+  int stdarg_p;
+
+  if (no_rtl)
+    return;
+
+  fntype = TREE_TYPE (current_function_decl);
+  stdarg_p = (TYPE_ARG_TYPES (fntype) != 0
+	     && (TREE_VALUE (tree_last (TYPE_ARG_TYPES (fntype)))
+		 != void_type_node));
+
+  /* For varargs, we do not want to skip the dummp va_dcl argument.
+     For stdargs, we do want to skip the last named argument.  */
+  next_cum = *cum;
+  if (stdarg_p)
+    m88k_function_arg_advance(&next_cum, mode, type, 1);
+
+  m88k_first_vararg = next_cum;
+}
+
 /* Do what is necessary for `va_start'.  The argument is ignored;
    We look at the current function to determine if stdargs or varargs
    is used and fill in an initial va_list.  A pointer to this constructor
@@ -2599,54 +2596,61 @@ m88k_function_arg_advance (args_so_far, mode, type, named)
 
 struct rtx_def *
 m88k_builtin_saveregs (arglist)
-     tree arglist;
+     tree arglist ATTRIBUTE_UNUSED;
 {
   rtx valist, regblock, addr;
-  tree fntype = TREE_TYPE (current_function_decl);
-  int argadj = ((!(TYPE_ARG_TYPES (fntype) != 0
-		   && (TREE_VALUE (tree_last (TYPE_ARG_TYPES (fntype)))
-		       != void_type_node)))
-		? -UNITS_PER_WORD : 0) + UNITS_PER_WORD - 1;
-  int fixed, delta, regno;
+  tree fntype;
+  int stdarg_p;
+  int regcnt, offset;
+
+  regcnt = m88k_first_vararg < 8 ? 8 - m88k_first_vararg : 0;
+
+  fntype = TREE_TYPE (current_function_decl);
+  stdarg_p = (TYPE_ARG_TYPES (fntype) != 0
+             && (TREE_VALUE (tree_last (TYPE_ARG_TYPES (fntype)))
+                 != void_type_node));
 
   if (! CONSTANT_P (current_function_arg_offset_rtx))
     abort ();
 
-  fixed = (XINT (current_function_arg_offset_rtx, 0) + argadj) / UNITS_PER_WORD;
+  offset = XINT (current_function_arg_offset_rtx, 0);
+  if (m88k_first_vararg >= 8 && ! stdarg_p)
+    offset -= UNITS_PER_WORD;
 
   /* Allocate the va_list constructor */
-  valist = assign_stack_local (BLKmode, 4 * UNITS_PER_WORD, BITS_PER_WORD);
+  valist = assign_stack_local (BLKmode, 3 * UNITS_PER_WORD, BITS_PER_WORD);
   MEM_SET_IN_STRUCT_P (valist, 1);
   RTX_UNCHANGING_P (valist) = 1;
   RTX_UNCHANGING_P (XEXP (valist, 0)) = 1;
 
-  /* Store the argsize as the __va_arg member.  */
+  /* Store the __va_arg member.  */
   emit_move_insn (change_address (valist, SImode, XEXP (valist, 0)),
-		  GEN_INT (fixed));
+		  GEN_INT (m88k_first_vararg));
 
   /* Store the arg pointer in the __va_stk member.  */
   emit_move_insn (change_address (valist, Pmode,
 				  plus_constant (XEXP (valist, 0),
 						 UNITS_PER_WORD)),
 		  copy_to_reg (plus_constant (virtual_incoming_args_rtx,
-					      REG_PARM_STACK_SPACE
-						(current_function_decl))));
+					      offset)));
 
   /* Allocate the register space, and store it as the __va_reg member.  */
-  if (fixed < 8)
+  if (regcnt)
     {
-      if (fixed == 7)
+      int delta, regno;
+
+      if (regcnt == 1)
 	{
 	  regblock = assign_stack_local (BLKmode,
 					 UNITS_PER_WORD, BITS_PER_WORD);
-          delta = 0;
+	  delta = 0;
 	}
       else
 	{
-	  delta = (fixed & 1);
+	  delta = (regcnt & 1);
 	  regblock = assign_stack_local (BLKmode,
-					 (8 + delta - fixed) * UNITS_PER_WORD,
-					 -1);
+					 (regcnt + delta) * UNITS_PER_WORD,
+					 2 * BITS_PER_WORD);
 	}
 
       MEM_SET_IN_STRUCT_P (regblock, 1);
@@ -2664,12 +2668,13 @@ m88k_builtin_saveregs (arglist)
 				      plus_constant (XEXP (valist, 0),
 						     2 * UNITS_PER_WORD)),
 		      copy_to_reg (plus_constant (XEXP (regblock, 0),
-						  (delta - fixed) *
+						  (delta - m88k_first_vararg) *
 						  UNITS_PER_WORD)));
 
-      regno = 2 + fixed;
+      regno = 2 + m88k_first_vararg;
+      delta = regno & 1;
 
-      if (regno & 1)
+      if (delta)
 	{
 	  emit_move_insn (operand_subword (addr, 0, 1, BLKmode),
 			  gen_rtx_REG (word_mode, regno));
@@ -2680,10 +2685,11 @@ m88k_builtin_saveregs (arglist)
 	{
 	  emit_move_insn (change_address (addr, DImode,
 					  plus_constant (XEXP (addr, 0),
-							 (regno - (2 + fixed)) *
+							 delta *
 							 UNITS_PER_WORD)),
 			  gen_rtx_REG (DImode, regno));
 	  regno += 2;
+	  delta += 2;
 	}
     }
 
@@ -2691,13 +2697,13 @@ m88k_builtin_saveregs (arglist)
     {
       emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
 			 valist, ptr_mode,
-			 GEN_INT (4 * UNITS_PER_WORD), TYPE_MODE (sizetype),
+			 GEN_INT (3 * UNITS_PER_WORD), TYPE_MODE (sizetype),
 			 GEN_INT (MEMORY_USE_RW),
 			 TYPE_MODE (integer_type_node));
-      if (fixed < 8)
+      if (regcnt)
 	emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
 			   addr, ptr_mode,
-			   GEN_INT (UNITS_PER_WORD * (8 - fixed)),
+			   GEN_INT (UNITS_PER_WORD * regcnt),
 			   TYPE_MODE (sizetype),
 			   GEN_INT (MEMORY_USE_RW),
 			   TYPE_MODE (integer_type_node));

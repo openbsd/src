@@ -149,6 +149,7 @@ extern struct rtx_def *legitimize_operand ();
 extern struct rtx_def *m88k_function_arg ();
 extern void m88k_function_arg_advance ();
 extern struct rtx_def *m88k_builtin_saveregs ();
+extern void m88k_setup_incoming_varargs ();
 
 extern enum m88k_instruction classify_integer ();
 
@@ -943,7 +944,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    This space can either be allocated by the caller or be a part of the
    machine-dependent stack frame: `OUTGOING_REG_PARM_STACK_SPACE'
    says which.  */
-#define REG_PARM_STACK_SPACE(FNDECL) 32
+/* #define REG_PARM_STACK_SPACE(FNDECL) */
 
 /* Define this macro if REG_PARM_STACK_SPACE is defined but stack
    parameters don't skip the area specified by REG_PARM_STACK_SPACE.
@@ -1066,6 +1067,23 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 #define FUNCTION_ARG_BOUNDARY(MODE, TYPE) \
   (((TYPE) ? TYPE_ALIGN (TYPE) : GET_MODE_BITSIZE (MODE)) <= PARM_BOUNDARY \
     ? PARM_BOUNDARY : 2 * PARM_BOUNDARY)
+
+/* Perform any needed actions needed for a function that is receiving a
+   variable number of arguments.
+
+   CUM is as above.
+
+   MODE and TYPE are the mode and type of the current parameter.
+
+   PRETEND_SIZE is a variable that should be set to the amount of stack
+   that must be pushed by the prolog to pretend that our caller pushed
+   it.
+
+   Normally, this macro will push all remaining incoming registers on the
+   stack and set PRETEND_SIZE to the length of the registers pushed.  */
+
+#define SETUP_INCOMING_VARARGS(CUM,MODE,TYPE,PRETEND_SIZE,NO_RTL) \
+  m88k_setup_incoming_varargs (& (CUM), MODE, TYPE, & (PRETEND_SIZE), NO_RTL)
 
 /* Generate necessary RTL for __builtin_saveregs().
    ARGLIST is the argument list; see expr.c.  */
