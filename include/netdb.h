@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.21 2004/10/25 03:09:01 millert Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.22 2004/11/17 03:57:53 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -167,7 +167,6 @@ struct	protoent {
 #define NI_NOFQDN	4	/* return a short name if in the local domain */
 #define NI_NAMEREQD	8	/* fail if either host or service name is unknown */
 #define NI_DGRAM	16	/* look up datagram service instead of stream */
-#define NI_WITHSCOPEID	32	/* KAME hack: attach scopeid to host portion */
 
 #define NI_MAXHOST	MAXHOSTNAMELEN	/* max host name returned by getnameinfo */
 #define NI_MAXSERV	32	/* max serv. name length returned by getnameinfo */
