@@ -4191,6 +4191,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PDC20269",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20271,
+	    "PDC20271",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20276,
 	    "PDC20276",
 	},

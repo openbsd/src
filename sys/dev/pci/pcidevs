@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.538 2002/08/20 14:20:27 nate Exp $
+	$OpenBSD: pcidevs,v 1.539 2002/08/30 10:53:58 gluk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1913,6 +1913,7 @@ product PROMISE	PDC20267	0x4d30	PDC20267
 product PROMISE PDC20268	0x4d68	PDC20268
 product PROMISE PDC20268R	0x6268	PDC20268R
 product PROMISE PDC20269	0x4d69	PDC20269
+product PROMISE PDC20271	0x6269	PDC20271
 product PROMISE PDC20276	0x5275	PDC20276
 
 /* QLogic products */
