@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.165 2002/10/08 01:17:43 vincent Exp $	*/
+/*	$OpenBSD: parse.y,v 1.166 2002/10/11 12:46:05 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2414,7 +2414,7 @@ lgetc(FILE *fin)
 	int c, next;
 
 	if (parsebuf) {
-		/* Reading characters from the parse buffer, instead of input */
+		/* Read character from the parsebuffer instead of input. */
 		if (parseindex >= 0) {
 			c = parsebuf[parseindex++];
 			if (c != '\0')
@@ -2430,12 +2430,23 @@ lgetc(FILE *fin)
 	while ((c = getc(fin)) == '\\') {
 		next = getc(fin);
 		if (next != '\n') {
+			if (isspace(next))
+				yyerror("whitespace after \\");
 			ungetc(next, fin);
 			break;
 		}
 		yylval.lineno = lineno;
 		lineno++;
 	}
+	if (c == '\t' || c == ' ') {
+		/* Compress blanks to a single space. */
+		do {
+			c = getc(fin);
+		} while (c == '\t' || c == ' ');
+		ungetc(c, fin);
+		c = ' ';
+	}
+
 	return (c);
 }
 
@@ -2485,7 +2496,7 @@ yylex(void)
 
 top:
 	p = buf;
-	while ((c = lgetc(fin)) == ' ' || c == '\t')
+	while ((c = lgetc(fin)) == ' ')
 		;
 
 	yylval.lineno = lineno;
