@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.52 2002/09/06 19:50:05 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.53 2002/11/18 04:45:11 itojun Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.52 2002/09/06 19:50:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.53 2002/11/18 04:45:11 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -309,6 +309,8 @@ main(int argc, char *argv[])
 	int sump = 0;
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	size_t size = sizeof(max_ttl);
+	unsigned long l;
+	char *ep;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
@@ -332,9 +334,12 @@ main(int argc, char *argv[])
 			sump = 1;
 			break;
 		case 'f':
-			first_ttl = atoi(optarg);
-			if (first_ttl < 1 || first_ttl > max_ttl)
+			errno = 0;
+			ep = NULL;
+			l = strtoul(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l < 1 || l > max_ttl)
 				errx(1, "min ttl must be 1 to %d.", max_ttl);
+			first_ttl = (int)l;
 			break;
 		case 'c':
 			incflag = 0;
@@ -368,25 +373,35 @@ main(int argc, char *argv[])
 			ttl_flag++;
 			break;
 		case 'm':
-			max_ttl = atoi(optarg);
-			if (max_ttl < first_ttl || max_ttl > MAXTTL)
+			errno = 0;
+			ep = NULL;
+			l = strtoul(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l < first_ttl ||
+			    l > MAXTTL)
 				errx(1, "max ttl must be %d to %d.", first_ttl,
 				    MAXTTL);
+			max_ttl = (int)l;
 			break;
 		case 'n':
 			nflag++;
 			break;
 		case 'p':
-			port = atoi(optarg);
-			if (port < 1 || port > 65536)
+			errno = 0;
+			ep = NULL;
+			l = strtoul(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l <= 0 || l >= 65536)
 				errx(1, "port must be >0, <65536.");
+			port = (int)l;
 			break;
 		case 'P':
 			if (protoset)
 				errx(1, "protocol already set with -I");
 			protoset = 1;
-			proto = atoi(optarg);
-			if (proto < 1 || proto >= IPPROTO_MAX) {
+			errno = 0;
+			ep = NULL;
+			l = strtoul(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l < 1 ||
+			    l >= IPPROTO_MAX) {
 				struct protoent *pent;
 
 				pent = getprotobyname(optarg);
@@ -394,12 +409,16 @@ main(int argc, char *argv[])
 					proto = pent->p_proto;
 				else
 					errx(1, "proto must be >=1, or a name.");
-			}
+			} else
+				proto = (int)l;
 			break;
 		case 'q':
-			nprobes = atoi(optarg);
-			if (nprobes < 1)
+			errno = 0;
+			ep = NULL;
+			l = strtoul(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l < 1 || l > INT_MAX)
 				errx(1, "nprobes must be >0.");
+			nprobes = (int)l;
 			break;
 		case 'r':
 			options |= SO_DONTROUTE;
@@ -412,17 +431,23 @@ main(int argc, char *argv[])
 			source = optarg;
 			break;
 		case 't':
-			tos = atoi(optarg);
-			if (tos < 0 || tos > 255)
+			errno = 0;
+			ep = NULL;
+			l = strtoul(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l < 0 || l > 255)
 				errx(1, "tos must be 0 to 255.");
+			tos = (int)l;
 			break;
 		case 'v':
 			verbose++;
 			break;
 		case 'w':
-			waittime = atoi(optarg);
-			if (waittime <= 1)
+			errno = 0;
+			ep = NULL;
+			l = strtoul(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l <= 1 || l > INT_MAX)
 				errx(1, "wait must be >1 sec.");
+			waittime = (int)l;
 			break;
 		default:
 			usage();
@@ -451,8 +476,14 @@ main(int argc, char *argv[])
 			warnx("Warning: %s has multiple addresses; using %s",
 			    hostname, inet_ntoa(to.sin_addr));
 	}
-	if (*++argv)
-		datalen = atoi(*argv);
+	if (*++argv) {
+		errno = 0;
+		ep = NULL;
+		l = strtoul(*argv, &ep, 10);
+		if (errno || !*argv || *ep || datalen > INT_MAX)
+			errx(1, "datalen out of range");
+		datalen = (int)l;
+	}
 
 	switch (proto) {
 	case IPPROTO_UDP:
