@@ -1,4 +1,3 @@
-#	$OpenBSD: Makefile.inc,v 1.1 1996/03/09 01:33:34 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2003/01/16 22:19:37 mickey Exp $
 
 CC=${HOSTCC}
-DESTDIR=/
