@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.41 2004/09/01 21:06:17 millert Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.42 2004/11/18 17:12:33 millert Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -696,6 +696,8 @@ kernfs_read(v)
 	printf("kern_read %s\n", kt->kt_name);
 #endif
 
+	if (uio->uio_offset < 0)
+		return (EINVAL);
 	off = uio->uio_offset;
 #if 0
 	while (buf = strbuf,
@@ -705,8 +707,6 @@ kernfs_read(v)
 	    len = kernfs_xread(kt, off, &buf, sizeof(strbuf))) {
 		if ((error = uiomove(buf, len, uio)) != 0)
 			return (error);
-		if (off <= INT_MAX - len)
-			off += len;	/* XXX - should use quad */
 	}
 	return (0);
 }
