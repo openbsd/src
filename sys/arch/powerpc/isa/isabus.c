@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.9 1998/10/09 02:19:12 rahnds Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.10 1998/10/12 04:05:46 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -241,11 +241,6 @@ isabrprint(aux, pnp)
 
 int	imen = 0xffffffff;
 int	intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-struct {
-	int irq;
-	int o_imen;
-} pending_intr_stack[ICU_LEN];
-int pending_intr_index = 0;
 struct intrhand *intrhand[ICU_LEN];
 
 int fakeintr(void *a) {return 0;}
@@ -436,62 +431,32 @@ isa_do_pending_int()
 	int pcpl;
 	int hwpend;
 	int emsr, dmsr;
-	int oldsint;
 static int processing;
 
-	ppc_intr_disable();
-	if(processing) {
-		ppc_intr_enable();
+	if(processing)
 		return;
-	}
 
 	processing = 1;
+	__asm__ volatile("mfmsr %0" : "=r"(emsr));
+	dmsr = emsr & ~PSL_EE;
+	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = splhigh();		/* Turn off all */
-
-
-	while(ipending & 0xffff) {
-		pending_intr_index--;
-		vector = pending_intr_stack[pending_intr_index].irq;
-		if (pcpl & (1L << vector)) {
-			/* this, and presumably all lower pri, are blocked */
-			break;
-		}
-		cpl = pcpl | imen | intrmask[vector];
-#if 1
-		ppc_intr_enable();
-#endif
+	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
+	hwpend &= ((1L << ICU_LEN) - 1);
+	ipending &= ~hwpend;
+	imen &= ~hwpend;
+	while(hwpend) {
 		evirq[ICU_LEN].ev_count++;
-		evirq[ICU_LEN+vector].ev_count++;
+		vector = ffs(hwpend) - 1;
+		hwpend &= ~(1L << vector);
 		ih = intrhand[vector];
+		evirq[ICU_LEN+vector].ev_count++;
 		while(ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
-#if 1
-		ppc_intr_disable();
-#endif
-		imen = pending_intr_stack[pending_intr_index].o_imen;
-		ipending &= ~(1 << vector);
-
-		/* interrupt taken care of, reenable */
-		/* imen does not deal with spurious interrupts in any manner */
-		isa_outb(IO_ICU1 + 1, imen);
-		isa_outb(IO_ICU2 + 1, imen >> 8);
-#ifdef NO_SPECIAL_MASK_MODE
-		isa_outb(IO_ICU1, 0x20);
-		isa_outb(IO_ICU2, 0x20);
-#else
-		if(vector > 7) {
-			isa_outb(IO_ICU2, 0x60 | vector & 0x07);
-		}
-		isa_outb(IO_ICU1, 0x60 | (vector > 7 ? 2 : vector));
-#endif
-
 	}
-#if 1
-	ppc_intr_enable();
-#endif
 	if((ipending & SINT_CLOCK) & ~pcpl) {
 		ipending &= ~SINT_CLOCK;
 		softclock();
@@ -503,15 +468,13 @@ static int processing;
 		ipending &= ~SINT_NET;
 		softnet(pisr);
 	}
-#if 1
-	ppc_intr_disable();
-#endif
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 
+	isa_outb(IO_ICU1 + 1, imen);
+	isa_outb(IO_ICU2 + 1, imen >> 8);
+
+	__asm__ volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
-#if 1
-	ppc_intr_enable();
-#endif
 }
 
 /*
@@ -541,40 +504,17 @@ isabr_iointr(mask, cf)
 
 	o_imen = imen;
 	r_imen = 1 << isa_vector;
-	imen |= r_imen | intrmask[isa_vector];
+	imen |= r_imen;
 	isa_outb(IO_ICU1 + 1, imen);
 	isa_outb(IO_ICU2 + 1, imen >> 8);
 
 	if((pcpl & r_imen) != 0) {
-		if ((ipending & (1 << isa_vector)) == 0) {
-			ipending |= (1 << isa_vector);
-			pending_intr_stack[pending_intr_index].irq = isa_vector;
-			pending_intr_stack[pending_intr_index].o_imen = o_imen;
-			pending_intr_index++;
-
-			/*
-			evirq[isa_vector].ev_count++;
-			*/
-		} else {
-			evirq[7].ev_count++;
-		}
-
-#if 1
-		ppc_intr_enable();
-#endif
-	} else {
+		ipending |= r_imen;	/* Masked! Mark this as pending */
 		evirq[isa_vector].ev_count++;
-
-#if 1
-		/* dont mask other interrupts and yet,
-		 * we dont want to run end of interrupt processing
-		 * either 
-		 */
-		cpl = pcpl | r_imen;
-		ppc_intr_enable();
-#endif
-
+	}
+	else {
 		ih = intrhand[isa_vector];
+		evirq[isa_vector].ev_count++;
 		if(ih == NULL)
 			printf("isa: spurious interrupt %d\n", isa_vector);
 
@@ -583,25 +523,21 @@ isabr_iointr(mask, cf)
 			ih = ih->ih_next;
 		}
 		imen = o_imen;
-		/* interrupt taken care of, reenable */
-		isa_outb(IO_ICU1 + 1, imen);
-		isa_outb(IO_ICU2 + 1, imen >> 8);
+	}
+	isa_outb(IO_ICU1 + 1, imen);
+	isa_outb(IO_ICU2 + 1, imen >> 8);
 
 #ifdef NO_SPECIAL_MASK_MODE
-		isa_outb(IO_ICU1, 0x20);
-		isa_outb(IO_ICU2, 0x20);
+	isa_outb(IO_ICU1, 0x20);
+	isa_outb(IO_ICU2, 0x20);
 #else
-		if(isa_vector > 7) {
-			isa_outb(IO_ICU2, 0x60 | isa_vector & 0x07);
-		}
-		isa_outb(IO_ICU1, 0x60 | (isa_vector > 7 ? 2 : isa_vector));
+	if(isa_vector > 7) {
+		isa_outb(IO_ICU2, 0x60 | isa_vector & 0x07);
+	}
+	isa_outb(IO_ICU1, 0x60 | (isa_vector > 7 ? 2 : isa_vector));
 #endif
 
-	}
-	splx(pcpl);	/* allow other interrupts */
-#if 1
-	ppc_intr_disable();
-#endif
+	splx(pcpl);	/* Process pendings. */
 }
 
 
@@ -650,3 +586,4 @@ isabr_initicu()
 #endif
 	isa_outb(IO_ICU2, 0x0a);		/* Read IRR by default */
 }	       
+
