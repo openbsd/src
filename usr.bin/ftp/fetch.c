@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.26 2000/01/04 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.27 2000/01/09 05:14:38 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.26 2000/01/04 17:15:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.27 2000/01/09 05:14:38 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -779,9 +779,11 @@ int
 isurl(p)
 	const char *p;
 {
+
 	if (strncasecmp(p, FTP_URL, sizeof(FTP_URL) - 1) == 0 ||
 	    strncasecmp(p, HTTP_URL, sizeof(HTTP_URL) - 1) == 0 ||
-	    strncasecmp(p, FILE_URL, sizeof(FILE_URL) - 1) == 0)
-		return 1;
-	return 0;
+	    strncasecmp(p, FILE_URL, sizeof(FILE_URL) - 1) == 0 ||
+	    strstr(p, ":/"))
+		return (1);
+	return (0);
 }
