@@ -1,4 +1,4 @@
-/*	$OpenBSD: send_to_kdc.c,v 1.12 1998/07/07 19:07:01 art Exp $	*/
+/*	$OpenBSD: send_to_kdc.c,v 1.13 1998/08/16 20:48:39 art Exp $	*/
 /*	$KTH: send_to_kdc.c,v 1.54 1998/02/17 23:55:35 bg Exp $		*/
 
 /*
@@ -135,9 +135,14 @@ send_to_kdc(KTEXT pkt, KTEXT rpkt, char *realm)
             continue;
         no_host = 0;    /* found at least one */
 	while ((p = *(host->h_addr_list)++)) {
-	    hosts = realloc(hosts, sizeof(*hosts) * (n_hosts + 1));
-	    if (hosts == NULL)
+	    struct host *temp;
+
+	    temp = realloc(hosts, sizeof(*hosts) * (n_hosts + 1));
+	    if (temp == NULL) {
+	        free(hosts);
 		return SKDC_CANT;
+	    }
+	    hosts = temp;
 	    memset (&hosts[n_hosts].addr, 0, sizeof(hosts[n_hosts].addr));
 	    hosts[n_hosts].addr.sin_family = host->h_addrtype;
 	    hosts[n_hosts].addr.sin_port = htons(k_host->port);
