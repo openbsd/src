@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.4 1996/08/16 09:22:41 mickey Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.5 1996/09/19 06:01:44 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.4 1996/08/16 09:22:41 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.5 1996/09/19 06:01:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -350,18 +350,25 @@ getinfo(ifr)
 void
 printall()
 {
-	char inbuf[8192];
+	char *inbuf = NULL;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
-	int i;
+	int i, len = 8192;
 
-	ifc.ifc_len = sizeof(inbuf);
-	ifc.ifc_buf = inbuf;
 	getsock(af);
 	if (s < 0)
 		err(1, "socket");
-	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
-		err(1, "SIOCGIFCONF");
+	while (1) {
+		ifc.ifc_len = len;
+		ifc.ifc_buf = inbuf = realloc(inbuf, len);
+		if (inbuf == NULL)
+			err(1, "malloc");		
+		if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
+			err(1, "SIOCGIFCONF");
+		if (ifc.ifc_len + sizeof(ifreq) < len)
+			break;
+		len *= 2;
+	}
 	ifr = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len; ) {
@@ -379,6 +386,7 @@ printall()
 			continue;
 		status();
 	}
+	free(inbuf);
 }
 
 #define RIDADDR 0
