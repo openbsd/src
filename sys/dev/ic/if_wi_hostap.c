@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.11 2002/04/08 18:44:42 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.12 2002/04/11 15:34:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -656,31 +656,39 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 		return;
 	}
 
-	/* Check capinfo.
-	 * Check for ESS, not IBSS.
-	 * Check WEP/PRIVACY flags match.  XXX: WEP doesn't work for host AP.
-	 * Refuse stations requesting to be put on CF-polling list.
-	 */
-	if ((capinfo & (IEEE80211_CAPINFO_ESS | IEEE80211_CAPINFO_IBSS)) !=
-	    IEEE80211_CAPINFO_ESS ||
-	    (sc->wi_use_wep && !(capinfo & IEEE80211_CAPINFO_PRIVACY)) ||
-	    (!sc->wi_use_wep && (capinfo & IEEE80211_CAPINFO_PRIVACY)) ||
-	    (capinfo & (IEEE80211_CAPINFO_CF_POLLABLE |
-		IEEE80211_CAPINFO_CF_POLLREQ)) ==
-	    IEEE80211_CAPINFO_CF_POLLABLE) {
-
-		if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
-			printf("wihap_assoc_req: capinfo mismatch: "
-			    "capinfo=0x%x\n", capinfo);
-
-		status = IEEE80211_STATUS_CAPINFO;
-		goto fail;
-	}
-	sta->capinfo = capinfo;
-
 	/* Check supported rates against ours. */
 	if (wihap_check_rates(sta, rates, rates_len)<0) {
 		status = IEEE80211_STATUS_RATES;
+		goto fail;
+	}
+
+	/* Check capinfo.
+	 * Check for ESS, not IBSS.
+	 * Check WEP/PRIVACY flags match.
+	 * Refuse stations requesting to be put on CF-polling list.
+	 */
+	sta->capinfo = capinfo;
+	status = IEEE80211_STATUS_CAPINFO;
+	if ((capinfo & (IEEE80211_CAPINFO_ESS | IEEE80211_CAPINFO_IBSS)) !=
+	    IEEE80211_CAPINFO_ESS) {
+		if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf("wihap_assoc_req: capinfo mismatch: "
+			    "client using IBSS mode\n");
+		goto fail;
+
+	}
+	if ((sc->wi_use_wep && !(capinfo & IEEE80211_CAPINFO_PRIVACY)) ||
+	    (!sc->wi_use_wep && (capinfo & IEEE80211_CAPINFO_PRIVACY))) {
+		if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf("wihap_assoc_req: capinfo mismatch: client "
+			    "%susing WEP\n", sc->wi_use_wep ? "not " : "");
+		goto fail;
+	}
+	if ((capinfo & (IEEE80211_CAPINFO_CF_POLLABLE |
+	    IEEE80211_CAPINFO_CF_POLLREQ)) == IEEE80211_CAPINFO_CF_POLLABLE) {
+		if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf("wihap_assoc_req: capinfo mismatch: "
+			    "client requested CF polling\n");
 		goto fail;
 	}
 
