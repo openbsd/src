@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.1.1.1 1995/10/18 08:43:17 deraadt Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.2 1996/08/07 17:20:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -552,7 +552,7 @@ adelay(ms, dp)
 }
 #endif
 
-char	editedhost[32];
+char	editedhost[48];
 
 void
 edithost(pat)
