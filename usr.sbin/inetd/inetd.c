@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.85 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.86 2001/11/05 09:43:50 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.85 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.86 2001/11/05 09:43:50 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -180,7 +180,8 @@ void	reap __P((int));
 void	doreap __P((void));
 void	retry __P((int));
 void	doretry __P((void));
-void	goaway __P((int));
+void	die __P((int));
+void	dodie __P((void));
 
 int	 debug = 0;
 int	 nsock, maxsock;
@@ -286,9 +287,10 @@ struct biltin {
 	{ 0 }
 };
 
-sig_atomic_t wantretry;
-sig_atomic_t wantconfig;
-sig_atomic_t wantreap;
+volatile sig_atomic_t wantretry;
+volatile sig_atomic_t wantconfig;
+volatile sig_atomic_t wantreap;
+volatile sig_atomic_t wantdie;
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
@@ -430,9 +432,9 @@ main(argc, argv, envp)
 	sigaction(SIGHUP, &sa, NULL);
 	sa.sa_handler = reap;
 	sigaction(SIGCHLD, &sa, NULL);
-	sa.sa_handler = goaway;
+	sa.sa_handler = die;
 	sigaction(SIGTERM, &sa, NULL);
-	sa.sa_handler = goaway;
+	sa.sa_handler = die;
 	sigaction(SIGINT, &sa, NULL);
 	sa.sa_handler = SIG_IGN;
 	sigaction(SIGPIPE, &sa, &sapipe);
@@ -473,6 +475,9 @@ main(argc, argv, envp)
 		if (wantreap) {
 		    doreap();
 		    wantreap = 0;
+		}
+		if (wantdie) {
+		    dodie();
 		}
 		continue;
 	    }
@@ -524,7 +529,7 @@ main(argc, argv, envp)
 					continue;
 				}
 				if (ntohs(peer.sin_port) == 20) {
-					/* XXX ftp bounce */
+					/* ignore things that look like ftp bounce */
 					close(ctrl);
 					continue;
 				}
@@ -683,7 +688,7 @@ dg_badinput(sa)
 		case 0: case 127: case 255:
 			goto bad;
 		}
-		/* XXX check for subnet broadcast using getifaddrs(3) */
+		/* XXX should check for subnet broadcast using getifaddrs(3) */
 		break;
 	case AF_INET6:
 		in6 = &((struct sockaddr_in6 *)sa)->sin6_addr;
@@ -874,7 +879,7 @@ doconfig(void)
 				u_short port = htons(atoi(sep->se_service));
 
 				if (!port) {
-					/*XXX*/
+					/* XXX */
 					strncpy(protoname, sep->se_proto,
 						sizeof(protoname));
 					if (isdigit(protoname[strlen(protoname) - 1]))
@@ -929,7 +934,7 @@ doconfig(void)
 				u_short port = htons(atoi(sep->se_service));
 
 				if (!port) {
-					/*XXX*/
+					/* XXX */
 					strncpy(protoname, sep->se_proto,
 						sizeof(protoname));
 					if (isdigit(protoname[strlen(protoname) - 1]))
@@ -1028,12 +1033,16 @@ doretry(void)
 }
 
 void
-goaway(sig)
-	int sig;
+die(int sig)
+{
+	wantdie = 1;
+}
+
+void
+dodie(void)
 {
 	register struct servtab *sep;
 
-	/* XXX signal race walking sep list */
 	for (sep = servtab; sep; sep = sep->se_next) {
 		if (sep->se_fd == -1)
 			continue;
@@ -1045,13 +1054,13 @@ goaway(sig)
 		case AF_INET:
 		case AF_INET6:
 			if (sep->se_wait == 1 && isrpcservice(sep))
-				unregister_rpc(sep);	/* XXX signal race */
+				unregister_rpc(sep);
 			break;
 		}
 		(void)close(sep->se_fd);
 	}
 	(void)unlink(_PATH_INETDPID);
-	_exit(0);
+	exit(0);
 }
 
 int bump_nofile __P((void));
