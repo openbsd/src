@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.5 1999/06/07 07:17:46 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.6 1999/11/13 22:13:00 millert Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -117,7 +117,8 @@
 52	NOARGS		{ int sys_sigpending(void); }
 53	NOARGS		{ int sys_sigaltstack(struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
-54	NOARGS		{ int sys_ioctl(int fd, u_long com, caddr_t data); }
+54	STD		{ int bsdos_sys_ioctl(int fd, u_long com, \
+			    caddr_t data); }
 55	NOARGS		{ int sys_reboot(int opt); }
 56	NOARGS		{ int sys_revoke(char *path); }
 57	NOARGS		{ int sys_symlink(char *path, char *link); }
