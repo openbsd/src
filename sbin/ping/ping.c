@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.17 1997/05/29 15:55:34 kstailey Exp $	*/
+/*	$OpenBSD: ping.c,v 1.18 1997/06/01 21:19:08 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.17 1997/05/29 15:55:34 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.18 1997/06/01 21:19:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,9 +155,9 @@ int interval = 1;		/* interval between packets */
 /* timing */
 int timing;			/* flag to do timing */
 int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
-double tmin = 999999999.0;	/* minimum round trip time */
-double tmax = 0.0;		/* maximum round trip time */
-double tsum = 0.0;		/* sum of all times, for doing average */
+quad_t tmin = 999999999;	/* minimum round trip time in microsec */
+quad_t tmax = 0;		/* maximum round trip time in microsec */
+quad_t tsum = 0;		/* sum of all times in microsec, for doing average */
 
 #ifdef SIGINFO
 int reset_kerninfo;
@@ -324,6 +324,7 @@ main(argc, argv)
 		to->sin_family = hp->h_addrtype;
 		memcpy(&to->sin_addr, hp->h_addr, hp->h_length);
 		(void)strncpy(hnamebuf, hp->h_name, sizeof(hnamebuf) - 1);
+		hnamebuf[sizeof(hnamebuf) - 1] = '\0';
 		hostname = hnamebuf;
 	}
 
@@ -608,7 +609,7 @@ pr_pack(buf, cc, from)
 	struct ip *ip, *ip2;
 	struct timeval tv, tp;
 	char *pkttime;
-	double triptime;
+	quad_t triptime;
 	int hlen, hlen2, dupflag;
 
 	(void)gettimeofday(&tv, (struct timezone *)NULL);
@@ -638,8 +639,7 @@ pr_pack(buf, cc, from)
 #endif
 			memcpy(&tp, pkttime, sizeof (tp));
 			timersub(&tv, &tp, &tv);
-			triptime = ((double)tv.tv_sec) * 1000.0 +
-			    ((double)tv.tv_usec) / 1000.0;
+			triptime = (tv.tv_sec * 1000000) + tv.tv_usec;
 			tsum += triptime;
 			if (triptime < tmin)
 				tmin = triptime;
@@ -667,7 +667,9 @@ pr_pack(buf, cc, from)
 			   icp->icmp_seq);
 			(void)printf(" ttl=%d", ip->ip_ttl);
 			if (timing)
-				(void)printf(" time=%.3f ms", triptime);
+				(void)printf(" time=%d.%03d ms",
+				    (int)(triptime / 1000),
+				    (int)(triptime % 1000));
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
@@ -824,7 +826,7 @@ void
 summary(header)
 	int header;
 {
-	register int i;
+	quad_t	i;
 
 	(void)putchar('\r');
 	(void)fflush(stdout);
@@ -846,9 +848,11 @@ summary(header)
 	(void)putchar('\n');
 	if (nreceived && timing) {
 		/* Only display average to microseconds */
-		i = 1000.0 * tsum / (nreceived + nrepeats);
-		(void)printf("round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
-		    tmin, ((double)i) / 1000.0, tmax);
+		i = tsum / (nreceived + nrepeats);
+		(void)printf("round-trip min/avg/max = %d.%03d/%d.%03d/%d.%03d ms\n",
+		    (int)(tmin / 1000), (int)(tmin % 1000),
+		    (int)(i / 1000), (int)(i % 1000),
+		    (int)(tmax / 1000), (int)(tmax % 1000));
 	}
 }
 
@@ -909,16 +913,47 @@ pr_icmph(icp)
 			(void)printf("Destination Port Unreachable\n");
 			break;
 		case ICMP_UNREACH_NEEDFRAG:
-			(void)printf("frag needed and DF set\n");
+			if (icp->icmp_nextmtu != 0)
+				(void)printf("frag needed and DF set (MTU %d)\n",
+					icp->icmp_nextmtu);
+			else 
+				(void)printf("frag needed and DF set\n");
 			break;
 		case ICMP_UNREACH_SRCFAIL:
 			(void)printf("Source Route Failed\n");
 			break;
+		case ICMP_UNREACH_NET_UNKNOWN:
+			(void)printf("Network Unknown\n");
+			break;
+		case ICMP_UNREACH_HOST_UNKNOWN:
+			(void)printf("Host Unknown\n");
+			break;
+		case ICMP_UNREACH_ISOLATED:
+			(void)printf("Source Isolated\n");
+			break;
+		case ICMP_UNREACH_NET_PROHIB:
+			(void)printf("Dest. Net Administratively Prohibited\n");
+			break;
+		case ICMP_UNREACH_HOST_PROHIB:
+			(void)printf("Dest. Host Administratively Prohibited\n");
+			break;
+		case ICMP_UNREACH_TOSNET:
+			(void)printf("Destination Net Unreachable for TOS\n");
+			break;
+		case ICMP_UNREACH_TOSHOST:
+			(void)printf("Desination Host Unreachable for TOS\n");
+			break;
 		case ICMP_UNREACH_FILTER_PROHIB:
 			(void)printf("Route administratively prohibited\n");
 			break;
+		case ICMP_UNREACH_HOST_PRECEDENCE:
+			(void)printf("Host Precedence Violation\n");
+			break;
+		case ICMP_UNREACH_PRECEDENCE_CUTOFF:
+			(void)printf("Precedence Cutoff\n");
+			break;
 		default:
-			(void)printf("Dest Unreachable, Bad Code: %d\n",
+			(void)printf("Dest Unreachable, Unknown Code: %d\n",
 			    icp->icmp_code);
 			break;
 		}
@@ -952,7 +987,7 @@ pr_icmph(icp)
 			(void)printf("Redirect Type of Service and Host");
 			break;
 		default:
-			(void)printf("Redirect, Bad Code: %d", icp->icmp_code);
+			(void)printf("Redirect, Unknown Code: %d", icp->icmp_code);
 			break;
 		}
 		(void)printf("(New addr: 0x%08lx)\n",
@@ -967,6 +1002,16 @@ pr_icmph(icp)
 		(void)printf("Echo Request\n");
 		/* XXX ID + Seq + Data */
 		break;
+	case ICMP_ROUTERADVERT:
+		/* RFC1256 */
+		(void)printf("Router Discovery Advertisement\n");
+		(void)printf("(%d entries, lifetime %d seconds)\n",
+		    icp->icmp_num_addrs, icp->icmp_lifetime);
+		break;
+	case ICMP_ROUTERSOLICIT:
+		/* RFC1256 */
+		(void)printf("Router Discovery Solicitation\n");
+		break;
 	case ICMP_TIMXCEED:
 		switch(icp->icmp_code) {
 		case ICMP_TIMXCEED_INTRANS:
@@ -976,7 +1021,7 @@ pr_icmph(icp)
 			(void)printf("Frag reassembly time exceeded\n");
 			break;
 		default:
-			(void)printf("Time exceeded, Bad Code: %d\n",
+			(void)printf("Time exceeded, Unknown Code: %d\n",
 			    icp->icmp_code);
 			break;
 		}
@@ -987,8 +1032,17 @@ pr_icmph(icp)
 #endif
 		break;
 	case ICMP_PARAMPROB:
-		(void)printf("Parameter problem: pointer = 0x%02x\n",
-		    icp->icmp_hun.ih_pptr);
+		switch(icp->icmp_code) {
+		case ICMP_PARAMPROB_OPTABSENT:
+			(void)printf(
+			    "Parameter problem, required option absent: pointer = 0x%02x\n",
+			    icp->icmp_hun.ih_pptr);
+			break;
+		default:
+			(void)printf("Parameter problem: pointer = 0x%02x\n",
+			    icp->icmp_hun.ih_pptr);
+			break;
+		}
 #ifndef icmp_data
 		pr_retip(&icp->icmp_ip);
 #else
@@ -1018,11 +1072,11 @@ pr_icmph(icp)
 #endif
 #ifdef ICMP_MASKREPLY
 	case ICMP_MASKREPLY:
-		(void)printf("Address Mask Reply\n");
+		(void)printf("Address Mask Reply (Mask 0x%04x)\n", icp->icmp_mask);
 		break;
 #endif
 	default:
-		(void)printf("Bad ICMP type: %d\n", icp->icmp_type);
+		(void)printf("Unknown ICMP type: %d\n", icp->icmp_type);
 	}
 }
 
