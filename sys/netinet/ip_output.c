@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.129 2001/06/27 02:52:40 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.130 2001/06/27 03:49:53 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -848,7 +848,7 @@ ip_insertoptions(m, opt, phlen)
 		MGETHDR(n, M_DONTWAIT, MT_HEADER);
 		if (n == 0)
 			return (m);
-		M_COPY_HDR(n, m);
+		M_MOVE_HDR(n, m);
 		n->m_pkthdr.len += optlen;
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);

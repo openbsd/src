@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.16 2001/06/25 06:31:44 angelos Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.17 2001/06/27 03:49:53 angelos Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -260,7 +260,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 					m_freem(m);
 					return (ENOBUFS);
 				}
-				M_COPY_HDR(m0, m);
+				M_MOVE_HDR(m0, m);
 
 				m0->m_len = msiz + (inp->ip_hl << 2);
 				m0->m_data += max_linkhdr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.45 2001/06/27 01:36:02 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.46 2001/06/27 03:49:54 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2310,7 +2310,7 @@ ip6_splithdr(m, exthdrs)
 			m_freem(m);
 			return ENOBUFS;
 		}
-		M_COPY_PKTHDR(mh, m);
+		M_MOVE_PKTHDR(mh, m);
 		MH_ALIGN(mh, sizeof(*ip6));
 		m->m_len -= sizeof(*ip6);
 		m->m_data += sizeof(*ip6);

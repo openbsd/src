@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.46 2001/06/26 19:58:57 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.47 2001/06/27 03:49:54 angelos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -609,7 +609,7 @@ icmp6_input(mp, offp, proto)
 				m_freem(n0);
 				break;
 			}
-			M_COPY_PKTHDR(n, n0);
+			M_MOVE_PKTHDR(n, n0);
 			/*
 			 * Copy IPv6 and ICMPv6 only.
 			 */

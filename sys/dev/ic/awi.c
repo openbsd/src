@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.6 2001/06/24 04:31:06 fgsch Exp $	*/
+/*	$OpenBSD: awi.c,v 1.7 2001/06/27 03:49:52 angelos Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -1176,7 +1176,7 @@ awi_fix_rxhdr(sc, m0)
 					m_freem(m0);
 					return NULL;
 				}
-				M_COPY_PKTHDR(n, m0);
+				M_MOVE_PKTHDR(n, m0);
 				n->m_len = MHLEN;
 			} else {
 				MGET(n, M_DONTWAIT, MT_DATA);

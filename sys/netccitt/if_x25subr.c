@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_x25subr.c,v 1.8 2001/06/25 01:50:17 fgsch Exp $	*/
+/*	$OpenBSD: if_x25subr.c,v 1.9 2001/06/27 03:49:53 angelos Exp $	*/
 /*	$NetBSD: if_x25subr.c,v 1.13 1996/05/09 22:29:25 scottr Exp $	*/
 
 /*
@@ -345,7 +345,7 @@ x25_ifoutput(ifp, m0, dst, rt)
 		m = m_gethdr(M_NOWAIT, MT_HEADER);
 		if (m == 0)
 			senderr(ENOBUFS);
-		M_COPY_HDR(m, m0);
+		M_MOVE_HDR(m, m0);
 		m->m_pkthdr.len = plen;
 		m->m_next = m0;
 	}

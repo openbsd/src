@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.21 2001/06/25 01:50:17 fgsch Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.22 2001/06/27 03:49:53 angelos Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1288,7 +1288,7 @@ ppp_inproc(sc, m)
 	    }
 	}
 	if (m->m_flags & M_PKTHDR)
-		M_COPY_HDR(mp, m);
+		M_MOVE_HDR(mp, m);
 	cp = mtod(mp, u_char *);
 	cp[0] = adrs;
 	cp[1] = ctrl;

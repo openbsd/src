@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_inet.c,v 1.5 2001/06/25 01:50:17 fgsch Exp $	*/
+/*	$OpenBSD: tp_inet.c,v 1.6 2001/06/27 03:49:54 angelos Exp $	*/
 /*	$NetBSD: tp_inet.c,v 1.11 1996/03/16 23:13:49 christos Exp $	*/
 
 /*-
@@ -454,7 +454,7 @@ tpip_output_dg(m0, va_alist)
 		error = ENOBUFS;
 		goto bad;
 	}
-	M_COPY_HDR(m, m0);
+	M_MOVE_HDR(m, m0);
 	m->m_next = m0;
 	MH_ALIGN(m, sizeof(struct ip));
 	m->m_len = sizeof(struct ip);

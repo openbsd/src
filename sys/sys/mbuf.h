@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.47 2001/06/25 05:40:20 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.48 2001/06/27 03:49:55 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -410,10 +410,10 @@ void _sk_mclget(struct mbuf *, int);
 	)
 
 /*
- * Copy just m_pkthdr from from to to,
+ * Move just m_pkthdr from from to to,
  * remove M_PKTHDR and clean the tag for from.
  */
-#define M_COPY_HDR(to, from) { \
+#define M_MOVE_HDR(to, from) { \
 	(to)->m_pkthdr = (from)->m_pkthdr; \
 	(from)->m_flags &= ~M_PKTHDR; \
 	SLIST_INIT(&(from)->m_pkthdr.tags); \
@@ -439,12 +439,12 @@ void _sk_mclget(struct mbuf *, int);
 }
 
 /*
- * Copy mbuf pkthdr from from to to.
+ * MOVE mbuf pkthdr from from to to.
  * from must have M_PKTHDR set, and to must be empty.
  */
-#define	M_COPY_PKTHDR(to, from) { \
+#define	M_MOVE_PKTHDR(to, from) { \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
-	M_COPY_HDR((to), (from)); \
+	M_MOVE_HDR((to), (from)); \
 	(to)->m_data = (to)->m_pktdat; \
 }
 
@@ -456,7 +456,7 @@ void _sk_mclget(struct mbuf *, int);
 	{ (m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); }
 /*
  * As above, for mbufs allocated with m_gethdr/MGETHDR
- * or initialized by M_COPY_PKTHDR.
+ * or initialized by M_MOVE_PKTHDR.
  */
 #define	MH_ALIGN(m, len) \
 	{ (m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); }

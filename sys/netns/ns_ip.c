@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ip.c,v 1.13 2001/06/25 01:50:18 fgsch Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.14 2001/06/27 03:49:55 angelos Exp $	*/
 /*	$NetBSD: ns_ip.c,v 1.16 1996/05/09 22:29:40 scottr Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ nsipoutput(ifp, m, dst, rt)
 			m_freem(m);
 			return (ENOBUFS);
 		}
-		M_COPY_HDR(m0, m);
+		M_MOVE_HDR(m0, m);
 		MH_ALIGN(m0, sizeof (struct ip));
 		m0->m_flags = m->m_flags & M_COPYFLAGS;
 		m0->m_next = m;
