@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2001/05/09 15:31:28 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.16 2001/05/16 17:29:39 hugh Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -351,7 +351,7 @@ pmap_decpteref(pmap, pte)
 		return;
 	index = ((vaddr_t)pte - (vaddr_t)pmap->pm_p0br) >> PGSHIFT;
 
-	pte = (struct pte *)trunc_page(pte);
+	pte = (struct pte *)trunc_page((vaddr_t)pte);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
 		printf("pmap_decpteref: pmap %p pte %p index %d refcnt %d\n",
@@ -457,7 +457,6 @@ if(startpmapdebug)printf("pmap_release: pmap %p\n",pmap);
 #endif
 	extent_free(ptemap, (u_long)pmap->pm_p0br,
 	    USRPTSIZE * sizeof(struct pte), EX_WAITOK);
-	mtpr(0, PR_TBIA);
 }
 
 void
@@ -586,7 +585,6 @@ if(startpmapdebug)
 	ptp[5] = ptp[0] + 5;
 	ptp[6] = ptp[0] + 6;
 	ptp[7] = ptp[0] + 7;
-	mtpr(0, PR_TBIA);
 }
 
 void
@@ -650,7 +648,6 @@ if(startpmapdebug)
 		ptp[7] = ptp[0] + 7;
 		ptp += LTOHPN;
 	}
-	mtpr(0, PR_TBIA);
 }
 
 /*
@@ -704,6 +701,9 @@ if (startpmapdebug)
 			    (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		}
 
+		if (wired)
+			 newpte |= PG_W;
+
 		/*
 		 * Check if a pte page must be mapped in.
 		 */
@@ -744,14 +744,18 @@ if (startpmapdebug)
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
-	/* No mapping change. Can this happen??? */
-	if (newpte == oldpte) {
-		RECURSEEND;
-		mtpr(0, PR_TBIA); /* Always; safety belt */
-		return;
-	}
+	/* No mapping change. Not allowed to happen. */
+	if (newpte == oldpte)
+		panic("pmap_enter onto myself");
 
 	pv = pv_table + (p >> PGSHIFT);
+
+	/* wiring change? */
+	if (newpte == (oldpte | PG_W)) {
+		patch[i] |= PG_W; /* Just wiring change */
+		RECURSEEND;
+		return;
+	}
 
 	/* Changing mapping? */
 	oldpte &= PG_FRAME;
@@ -780,13 +784,10 @@ if (startpmapdebug)
 		}
 		splx(s);
 	} else {
-		/* No mapping change, just flush the TLB */
+		/* No mapping change, just flush the TLB; necessary? */
 		mtpr(0, PR_TBIA);
 	}
 	pmap->pm_stats.resident_count++;
-
-	if(wired) 
-		newpte |= PG_W;
 
 	if (access_type & VM_PROT_READ) {
 		pv->pv_attr |= PG_V;
@@ -856,7 +857,6 @@ if(startpmapdebug)
 		*pentry++ = (count>>VAX_PGSHIFT)|PG_V|
 		    (prot & VM_PROT_WRITE ? PG_KW : PG_KR);
 	}
-	mtpr(0,PR_TBIA);
 	return(virtuell+(count-pstart)+KERNBASE);
 }
 
