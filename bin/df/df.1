@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.19 1999/09/02 15:37:26 aaron Exp $
+.\"	$OpenBSD: df.1,v 1.20 2000/02/19 22:44:16 aaron Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -112,6 +112,8 @@ the specified type, a warning is issued and no information is given on
 that file system.
 .El
 .Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm df :
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
 If the environment variable
