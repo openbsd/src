@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.3 1999/02/09 06:36:26 smurph Exp $	*/
+/*	$OpenBSD: float.h,v 1.4 2001/01/14 20:25:24 smurph Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -35,8 +35,8 @@
  *	@(#)float.h	7.1 (Berkeley) 5/8/90
  */
 
-#ifndef _M88K_FLOAT_H_
-#define _M88K_FLOAT_H_
+#ifndef __M88K_FLOAT_H__
+#define __M88K_FLOAT_H__
 
 #include <sys/cdefs.h>
 
@@ -77,4 +77,4 @@ __END_DECLS
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
-#endif /* !_M88K_FLOAT_H_ */
+#endif __M88K_FLOAT_H__

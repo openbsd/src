@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 1999/09/27 20:46:17 smurph Exp $ */
+/*	$OpenBSD: cpu.h,v 1.7 2001/01/14 20:25:23 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -42,8 +42,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _CPU_H_
-#define _CPU_H_
+#ifndef __MACHINE_CPU_H__
+#define __MACHINE_CPU_H__
 
 /*
  * CTL_MACHDEP definitinos.
@@ -194,4 +194,4 @@ struct funcp {
 extern struct funcp mdfp;
 
 #endif /* _KERNEL */
-#endif /* _CPU_H_ */
+#endif __MACHINE_CPU_H__

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.2 2000/03/26 23:32:00 deraadt Exp $ */
+/*	$OpenBSD: vx.c,v 1.3 2001/01/14 20:25:22 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -84,7 +84,9 @@ struct vxsoftc {
    void              *sc_bppwait_pktp;
    struct intrhand   sc_ih_c;
    struct intrhand   sc_ih_s;
+#if defined(MVME187) || defined(MVME197)
    struct vme2reg    *sc_vme2;
+#endif
    int               sc_ipl;
    int               sc_vec;
    int               sc_flags;
@@ -214,7 +216,9 @@ void *aux;
    /* set up dual port memory and registers and init*/
    sc->vx_reg = (struct vxreg *)ca->ca_vaddr;
    sc->channel = (struct channel *)(ca->ca_vaddr + 0x0100);
+#if defined(MVME187) || defined(MVME197)
    sc->sc_vme2 = ca->ca_master;
+#endif 
    sc->sc_ipl = ca->ca_ipl; 
    sc->sc_vec = ca->ca_vec; 
    sc->board_addr = (unsigned int)ca->ca_vaddr;
@@ -1089,11 +1093,13 @@ struct vxsoftc *sc;
    int valid, i;
 	short  cmd;
 	u_char  port;
+#if defined(MVME187) || defined(MVME197)
    struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vme2;
 
    if (vme2->vme2_vbr & VME2_SYSFAIL){
       /* do something... print_dump(sc); */
    }
+#endif /* defined(MVME187) || defined(MVME197) */
    if (!cold) sc->sc_intrcnt.ev_count++;
    
    while (env_isvalid(get_status_head(sc))) {
@@ -1564,7 +1570,6 @@ bpp_send(struct vxsoftc *sc, void *pkt, int wait_flag)
    struct envelope *envp;
    struct init_packet init, *initp;
    struct packet *wpktp, *pktp, *testpktp;
-   struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vme2;
    unsigned long newenv;
    int i, s;
 

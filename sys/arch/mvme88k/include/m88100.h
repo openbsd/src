@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.4 1999/02/09 06:36:26 smurph Exp $ */
+/*	$OpenBSD: m88100.h,v 1.5 2001/01/14 20:25:24 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -31,8 +31,8 @@
  * M88100 flags
  */
 
-#ifndef _M88100_H_
-#define _M88100_H_
+#ifndef __MACHINE_M88100_H__
+#define __MACHINE_M88100_H__
 
 
 /*
@@ -67,4 +67,4 @@ struct dmt_reg {
 };
 #endif 
 
-#endif  _M88100_H_
+#endif __MACHINE_M88100_H__

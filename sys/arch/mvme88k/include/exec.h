@@ -1,6 +1,6 @@
-/*	$OpenBSD: exec.h,v 1.7 1999/05/29 04:41:45 smurph Exp $ */
-#ifndef _MACHINE_EXEC_H_
-#define _MACHINE_EXEC_H_ 
+/*	$OpenBSD: exec.h,v 1.8 2001/01/14 20:25:24 smurph Exp $ */
+#ifndef __MACHINE_EXEC_H__
+#define __MACHINE_EXEC_H__
 
 #define __LDPGSZ        4096
 
@@ -27,4 +27,4 @@ struct relocation_info_m88k {
 #define _KERN_DO_AOUT
 #define _KERN_DO_ELF
 
-#endif _MACHINE_EXEC_H_ 
+#endif __MACHINE_EXEC_H__

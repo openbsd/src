@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.5 2001/01/13 05:18:59 smurph Exp $ */
+/*	$OpenBSD: mmu.h,v 1.6 2001/01/14 20:25:24 smurph Exp $ */
 /*
  * Ashura Project
  */
@@ -9,8 +9,8 @@
  * @(#)mmu.h 1.22		 90/09/20 19:13:34
  */
 
-#ifndef	_MACHINE_MMU_
-#define	_MACHINE_MMU_
+#ifndef	__MACHINE_MMU_H__
+#define	__MACHINE_MMU_H__
 
 /* for m88k_pgbytes, m8kk_pgshift */
 #include <machine/vmparam.h> 
@@ -314,5 +314,5 @@ extern vm_offset_t kmapva;
 #define DMA_CACHE_INV		0x3
 extern void dma_cachectl(vm_offset_t, int, int);
 
-#endif
-/* endif _MACHINE_MMU_ */
+#endif __MACHINE_MMU_H__
+

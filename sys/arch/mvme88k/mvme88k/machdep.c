@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.23 2001/01/13 05:18:59 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.24 2001/01/14 20:25:25 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -145,10 +145,13 @@ volatile unsigned int *int_mask_reg[MAX_CPUS] = {
 	(volatile unsigned int *)IEN2_REG,
 	(volatile unsigned int *)IEN3_REG
 };
-#endif /* MVME188 */
+#endif 
 
+#if defined(MVME187) || defined(MVME197)
 u_char *int_mask_level = (u_char *)INT_MASK_LEVEL;
 u_char *int_pri_level = (u_char *)INT_PRI_LEVEL;
+#endif /* MVME188 */
+
 u_char *iackaddr;
 volatile u_char *pcc2intr_mask;
 volatile u_char *pcc2intr_ipl;
@@ -473,7 +476,8 @@ cpu_startup()
 	vm_size_t size;    
 	int base, residual;
 #if defined(UVM)
-	vaddr_t minaddr, maxaddr, uarea_pages;
+	vaddr_t minaddr, maxaddr, uarea_pages, addr;
+	extern char   *kernel_text, *etext;
 #else
 	vm_offset_t minaddr, maxaddr, uarea_pages;
 #endif 
@@ -725,13 +729,6 @@ cpu_startup()
 	/* 
 	 * Allocate map for external I/O XXX new code - smurph 
 	 */
-	/*   
-	 * IOMAP_MAP_START was used for the base address of this map, but
-	 * IOMAP_MAP_START == 0xEF000000, which is larger than a signed 
-	 * long (int on 88k). This causes rminit() to break when DIAGNOSTIC is 
-	 * defined, as it checks (long)addr < 0.  So as a workaround, I use 
-	 * 0x10000000 as a base address. XXX smurph
-	 */
 #if defined(UVM)
 	iomap_map = uvm_km_suballoc(kernel_map, &iomapbase, &maxaddr,
 				   IOMAP_SIZE, 0, FALSE, NULL);
@@ -758,6 +755,7 @@ cpu_startup()
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
+	
 	/*
 	 * Initialize timeouts
 	 */
@@ -845,21 +843,38 @@ register caddr_t v;
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
 	/*
-	 * Determine how many buffers to allocate (enough to
-	 * hold 5% of total physical memory, but at least 16).
-	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
+	 * Determine how many buffers to allocate.  We use 10% of the
+	 * first 2MB of memory, and 5% of the rest, with a minimum of 16
+	 * buffers.  We allocate 1/2 as many swap buffer headers as file
+	 * i/o buffers.
 	 */
-	if (bufpages == 0)
+	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = (physmem / 10) / CLSIZE;
+			bufpages = physmem / (10 * CLSIZE);
 		else
-			bufpages = (physmem / 20) / CLSIZE;
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) *
+			    BUFCACHEPERCENT / (100 * CLSIZE);
+	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
+
+	/* Restrict to at most 70% filled kvm */
+	if (nbuf >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 7 / 10) 
+		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+		    MAXBSIZE * 7 / 10;
+
+	/* More buffer pages than fits into the buffers is senseless.  */
+	if (bufpages > nbuf * MAXBSIZE / CLBYTES)
+		bufpages = nbuf * MAXBSIZE / CLBYTES;
+
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;  /* force even */
 		if (nswbuf > 256)

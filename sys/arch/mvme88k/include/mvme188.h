@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.1 1999/09/27 20:46:18 smurph Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.2 2001/01/14 20:25:24 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -43,8 +43,8 @@
  *
  */
 
-#ifndef	_MACHINE_MVME188_H
-#define	_MACHINE_MVME188_H
+#ifndef	__MACHINE_MVME188_H__
+#define	__MACHINE_MVME188_H__
 
 /*
  * Something to put append a 'U' to a long constant if it's C so that
@@ -394,6 +394,6 @@ void unblock_obio_interrupt(unsigned mask);
 #endif 
 #define M188_IACK        U(0xFFF85000)
 
-#endif	/* _MACHINE_MVME188_H */
+#endif	__MACHINE_MVME188_H__
 
 

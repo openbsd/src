@@ -1,4 +1,6 @@
-/*	$OpenBSD: bugio.h,v 1.6 1999/04/11 03:26:28 smurph Exp $ */
+/*	$OpenBSD: bugio.h,v 1.7 2001/01/14 20:25:23 smurph Exp $ */
+#ifndef __MACHINE_BUGIO_H__
+#define __MACHINE_BUGIO_H__
 #include "sys/cdefs.h"
 
 struct bugdisk_io {
@@ -94,3 +96,5 @@ int bugrtcrd	__P((struct bugrtc *));
 int bugreturn	__P((void));
 int bugbrdid	__P((struct bugbrdid *));
 int bugnetctrl	__P((struct bugniocall *));
+#endif __MACHINE_BUGIO_H__
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.5 2000/03/26 23:32:00 deraadt Exp $ */
+/*	$OpenBSD: vme.c,v 1.6 2001/01/14 20:25:22 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -452,7 +452,7 @@ vmesyscon_init(sc)
 
 	ctl = vme2->vme2_masterctl;
 	printf("%s: using BUG parameters\n", sc->sc_dev.dv_xname);
-   printf("%s: 1phys 0x%08x-0x%08x to VME 0x%08x-0x%08x master\n",
+	printf("%s: 1phys 0x%08x-0x%08x to VME 0x%08x-0x%08x master\n",
 	    sc->sc_dev.dv_xname,
 	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000,
 	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000);
@@ -473,7 +473,7 @@ vmesyscon_init(sc)
 }
 #endif /* NSYSCON */
 
-#if defined(MVME162) || defined(MVME167) || defined(MVME177) || defined (MVME187) || defined (MVME197)
+#if defined(MVME162) || defined(MVME167) || defined(MVME177) || defined(MVME188) || defined (MVME187) || defined (MVME197)
 
 /*
  * A32 accesses on the MVME1[6789]x require setting up mappings in

@@ -1,13 +1,17 @@
-#	$OpenBSD: RAMDISK,v 1.3 1999/09/27 21:21:15 smurph Exp $
+#	$OpenBSD: RAMDISK,v 1.4 2001/01/14 20:25:22 smurph Exp $
 
 machine		mvme88k 
 
 include "../../../conf/GENERIC"
 
-options		"M88000"	# support for 88K
-options		MVME187		# support for 187
-options		MVME188		# support for 188
-options		MVME197		# support for 197
+option		"M88000"	# support for 88K
+option		MVME187		# support for 187
+option		MVME188		# support for 188
+option		MVME197		# support for 197
+
+option		UVM		# use the UVM virtual memory system
+option		"NCPUS=1"	# number of CPUs supported (max 4)
+option		BUGMAP		# use the Bug ROM VME mappings
 
 maxusers	8
 

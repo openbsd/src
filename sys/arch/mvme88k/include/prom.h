@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.4 1999/05/29 04:41:45 smurph Exp $ */
+/*	$OpenBSD: prom.h,v 1.5 2001/01/14 20:25:24 smurph Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -30,6 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __MACHINE_PROM_H__
+#define __MACHINE_PROM_H__
 
 #define MVMEPROM_INCHR		0x00
 #define MVMEPROM_INSTAT		0x01
@@ -175,4 +177,4 @@ struct mvmeprom_args {
 #ifndef RB_NOSYM
 #define RB_NOSYM 0x400
 #endif
-
+#endif __MACHINE_PROM_H__

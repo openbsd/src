@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.5 1999/02/09 06:36:26 smurph Exp $ */
+/*	$OpenBSD: cdefs.h,v 1.6 2001/01/14 20:25:23 smurph Exp $ */
 /*	$NetBSD: cdefs.h,v 1.2 1995/03/23 20:10:48 jtc Exp $	*/
 
 /*
@@ -6,8 +6,8 @@
  * Public domain.
  */
 
-#ifndef	_MACHINE_CDEFS_H_
-#define	_MACHINE_CDEFS_H_
+#ifndef	__MACHINE_CDEFS_H__
+#define	__MACHINE_CDEFS_H__
 
 #ifdef __STDC__
 #define _C_LABEL(x)	_STRING(_ ## x)
@@ -33,4 +33,4 @@
 #endif
 #endif
 
-#endif /* !_MACHINE_CDEFS_H_ */
+#endif __MACHINE_CDEFS_H__

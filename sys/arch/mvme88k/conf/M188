@@ -1,4 +1,4 @@
-#	$OpenBSD: M188,v 1.1 1999/09/27 21:21:15 smurph Exp $
+#	$OpenBSD: M188,v 1.2 2001/01/14 20:25:22 smurph Exp $
 
 machine mvme88k
 
@@ -58,13 +58,13 @@ option		GATEWAY		# IP packet forwarding
 
 # Support for various kernel options
 
-#option		DIAGNOSTIC	# Add additional error checking code
+option		DIAGNOSTIC	# Add additional error checking code
 #option		"NKMEMCLUSTERS=512"	# Size of kernel malloc area
 
 # Misc. debuging options
 
 option		PANICWAIT	# Require keystroke to dump/reboot
-#option		DEBUG		# Add debugging statements
+option		DEBUG		# Add debugging statements
 option		DDB		# Kernel debugger
 #option		SYSCALL_DEBUG	# debug all syscalls.
 option		KTRACE		# debug all syscalls.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.9 1999/05/10 16:02:13 espie Exp $ */
+/*	$OpenBSD: endian.h,v 1.10 2001/01/14 20:25:23 smurph Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -29,10 +29,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MVME88K_ENDIAN_H_
-#define _MVME88K_ENDIAN_H_
+#ifndef __MVME88K_ENDIAN_H__
+#define __MVME88K_ENDIAN_H__
 
 #define BYTE_ORDER BIG_ENDIAN
 #include <sys/endian.h>
 
-#endif /* _MVME88K_ENDIAN_H_ */
+#endif __MVME88K_ENDIAN_H__
+

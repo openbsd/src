@@ -1,4 +1,4 @@
-#	$OpenBSD: M187,v 1.5 2001/01/13 05:18:57 smurph Exp $
+#	$OpenBSD: M187,v 1.6 2001/01/14 20:25:22 smurph Exp $
 
 machine mvme88k
 
@@ -11,6 +11,7 @@ option		TIMEZONE=300, DST=1
 option		"M88000"	# support for 88K
 option		MVME187		# support for 187
 option		"NCPUS=1"	# Number of cpus supported (max 4)
+option		UVM		# use the UVM virtual memory system
 
 option		BUGMAP		# use Bug Rom VME Mappings
 

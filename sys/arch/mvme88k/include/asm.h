@@ -25,8 +25,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef __M88K_ASM_H__
-#define __M88K_ASM_H__
+#ifndef __MACHINE_M88K_ASM_H__
+#define __MACHINE_M88K_ASM_H__
 
 #ifdef __STDC__
 #	define FUNC(NAME) _##NAME
@@ -324,4 +324,4 @@
 #define VME_CMMU_D3		0xFFF7F000 	/* MVME188 data CMMU 3 */
 #endif /* CMMU_DEFS */
 
-#endif /* __M88K_ASM_H__ */
+#endif __MACHINE_M88K_ASM_H__

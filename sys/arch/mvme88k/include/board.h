@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.6 1999/09/27 20:46:17 smurph Exp $ */
+/*	$OpenBSD: board.h,v 1.7 2001/01/14 20:25:23 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -42,8 +42,8 @@
  * thereof, and that both notices appear in supporting documentation.
  *
  */
-#ifndef _MACHINE_BOARD_H
-#define _MACHINE_BOARD_H
+#ifndef __MACHINE_BOARD_H__
+#define __MACHINE_BOARD_H__
 /*
  *      VME187 CPU board constants - derived from Luna88k
  */
@@ -118,6 +118,6 @@
 #include <machine/mvme188.h>
 #endif
 
-#endif /* _MACHINE_BOARD_H */
+#endif __MACHINE_BOARD_H__
 
 

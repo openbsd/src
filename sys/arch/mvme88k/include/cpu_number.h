@@ -28,21 +28,20 @@
 #define _M88K_CPU_NUMBER_
  
 #ifdef	KERNEL
+#ifndef ASSEMBLER
 #include <machine/param.h>
 extern unsigned number_cpus;
-#define cpu_number() 0
 
-#if 0 /* This seems to not work correctly. Hmm.... smurph */
-unsigned cpu_number(void);
-static inline unsigned cpu_number(void)
+static __inline__ unsigned cpu_number(void);
+
+static __inline__ unsigned cpu_number(void)
 {
-	unsigned cpu;
-   extern int cputyp;
+	register unsigned cpu;
+	extern int cputyp;
 	if (cputyp != CPU_188 || number_cpus == 1) return 0;
-   asm("ldcr %0, cr18" : "=r" (cpu));
-	asm("clr  %0, %0, 0<4>" : "=r" (cpu));
+	asm("ldcr %0, cr18" : "=r" (cpu));
 	return (cpu & 3);
 }
-#endif /* 0 */
+#endif /* ASSEMBLER */
 #endif /* KERNEL */
 #endif /* _M88K_CPU_NUMBER_ */

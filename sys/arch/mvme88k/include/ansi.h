@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.9 2000/03/03 00:54:53 todd Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.10 2001/01/14 20:25:23 smurph Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +34,8 @@
  *	from: @(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef	_ANSI_H_
-#define	_ANSI_H_
+#ifndef	__MACHINE_ANSI_H__
+#define	__MACHINE_ANSI_H__
 
 /*
  * Types which are fundamental to the implementation and may appear in
@@ -85,4 +85,4 @@
  */
 #define _BSD_OFF_T_	long long		/* file offset */
 
-#endif	/* _ANSI_H_ */
+#endif __MACHINE_ANSI_H__

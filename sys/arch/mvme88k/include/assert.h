@@ -1,4 +1,6 @@
-/*	$OpenBSD: assert.h,v 1.4 1999/02/09 06:36:25 smurph Exp $ */
+/*	$OpenBSD: assert.h,v 1.5 2001/01/14 20:25:23 smurph Exp $ */
+#ifndef __MACHINE_ASSERT_H__
+#define __MACHINE_ASSERT_H__
 #define assert(x) \
 ({\
 	if (!(x)) {\
@@ -7,3 +9,4 @@
 		panic("assertion"); \
 	} \
 })
+#endif __MACHINE_ASSERT_H__

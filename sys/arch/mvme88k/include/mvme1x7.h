@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme1x7.h,v 1.1 1999/09/27 20:46:18 smurph Exp $ */
+/*	$OpenBSD: mvme1x7.h,v 1.2 2001/01/14 20:25:24 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -43,8 +43,8 @@
  * thereof, and that both notices appear in supporting documentation.
  *
  */
-#ifndef _MACHINE_MVME1X7_H
-#define _MACHINE_MVME1X7_H
+#ifndef __MACHINE_MVME1X7_H__
+#define __MACHINE_MVME1X7_H__
 /*
  *      VME1x7 CPU board constants - derived from Luna88k
  */
@@ -100,6 +100,4 @@
 #define M187_IACK       U(0xFFFE0000)
 #define M197_IACK       U(0xFFF00100)
 
-#endif /* _MACHINE_MVME1X7_H */
-
-
+#endif __MACHINE_MVME1X7_H__

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2001/01/13 05:18:59 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 2001/01/14 20:25:25 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -96,7 +96,7 @@ extern int max_cpus;
  */
 #ifdef	DEBUG
    #define	STATIC
-
+   #define	DBG
 /*
  * conditional debugging
  */
@@ -130,7 +130,7 @@ extern int max_cpus;
    #define CD_CHKPM	0x2000000	/* check_pmap_consistency */
    #define CD_CHKM		0x4000000	/* check_map */
    #define CD_ALL		0x0FFFFFC
-int pmap_con_dbg = CD_FULL | CD_ALL;
+int pmap_con_dbg = CD_NORM;
 /*
 int pmap_con_dbg = CD_FULL| CD_NORM | CD_PROT | CD_BOOT | CD_CHKPV | CD_CHKPM | CD_CHKM;
 int pmap_con_dbg = CD_NORM;*/
@@ -170,8 +170,11 @@ STATIC kpdt_entry_t     kpdt_free;
 /*
  * Size of kernel page tables for mapping onboard IO space.
  */
-#define	OBIO_PDT_SIZE	(M88K_BTOP(OBIO_SIZE) * sizeof(pt_entry_t))
-
+#if defined(MVME188) && !(defined(MVME187) || defined(MVME197))
+#define	OBIO_PDT_SIZE	0
+#else
+#define	OBIO_PDT_SIZE	((cputyp == CPU_188) ? 0 : (M88K_BTOP(OBIO_SIZE) * sizeof(pt_entry_t)))
+#endif
 #define MAX_KERNEL_PDT_SIZE	(KERNEL_PDT_SIZE + OBIO_PDT_SIZE)
 
 /*
@@ -261,8 +264,7 @@ static vm_offset_t   pmap_phys_end  = (vm_offset_t) 0;
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	vm_physmem[bank_].pmseg.attrs[pg_] = (attr);			\
 })
-
-#endif 
+#endif /* !defined(MACHINE_NEW_NONCONTIG) */
 
 /*
  *	Locking and TLB invalidation primitives
@@ -1995,7 +1997,7 @@ pmap_release(register pmap_t p)
 {
    pmap_free_tables(p);
 #ifdef	DBG
-   DEBUG ((pmap_con_dbg & (CD_DESTR | CD_NORM)) == (CD_DESTR | CD_NORM))
+   if ((pmap_con_dbg & (CD_DESTR | CD_NORM)) == (CD_DESTR | CD_NORM))
    printf("(pmap_destroy :%x) ref_count = 0\n", curproc);
    /* unlink from list of pmap structs */
    p->prev->next = p->next;
@@ -2326,7 +2328,7 @@ pmap_remove(pmap_t map, vm_offset_t s, vm_offset_t e)
       return;
    }
 
-#if	DEBUG
+#ifdef DEBUG
    if ((pmap_con_dbg & (CD_RM | CD_NORM)) == (CD_RM | CD_NORM))
       printf("(pmap_remove :%x) map %x  s %x  e %x\n", curproc, map, s, e);
 #endif
@@ -2430,7 +2432,6 @@ pmap_remove_all(vm_offset_t phys)
          UNLOCK_PVH(phys);
          goto remove_all_Retry;
       }
-
       users = pmap->cpus_using;
       if (pmap == kernel_pmap) {
          kflush = 1;
@@ -2489,6 +2490,7 @@ pmap_remove_all(vm_offset_t phys)
        * Do not free any page tables,
        * leaves that for when VM calls pmap_collect().
        */
+
       simple_unlock(&pmap->lock);
       dbgcnt++;
    }
@@ -2579,7 +2581,6 @@ copy_on_write_Retry:
          UNLOCK_PVH(phys);
          goto copy_on_write_Retry;
       }
-
 
       users = pmap->cpus_using;
       if (pmap == kernel_pmap) {
@@ -3035,7 +3036,7 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
     *	the allocated entry later (if we no longer need it).
     */
    pv_e = PV_ENTRY_NULL;
-   Retry:
+Retry:
 
    PMAP_LOCK(pmap, spl);
 
@@ -3526,7 +3527,7 @@ pmap_collect(pmap_t pmap)
 
    CHECK_PMAP_CONSISTENCY ("pmap_collect");
 
-#if	DBG
+#ifdef	DBG
    if ((pmap_con_dbg & (CD_COL | CD_NORM)) == (CD_COL | CD_NORM))
       printf ("(pmap_collect :%x) pmap %x\n", curproc, pmap);
 #endif
@@ -3597,15 +3598,13 @@ pmap_collect(pmap_t pmap)
 
    PMAP_UNLOCK(pmap, spl);
 
-#if	DBG
+#ifdef	DBG
    if ((pmap_con_dbg & (CD_COL | CD_NORM)) == (CD_COL | CD_NORM))
       printf  ("(pmap_collect :%x) done \n", curproc);
 #endif
 
    CHECK_PMAP_CONSISTENCY("pmap_collect");
 } /* pmap collect() */
-
-
 
 /*
  *	Routine:	PMAP_ACTIVATE
@@ -3638,8 +3637,8 @@ pmap_activate(struct proc *p)
 		/*
 		 *	Lock the pmap to put this cpu in its active set.
 		 */
-		simple_lock(&pmap->lock);
 
+		simple_lock(&pmap->lock);
 		apr_data.bits = 0;
 		apr_data.field.st_base = M88K_BTOP(pmap->sdt_paddr); 
 		apr_data.field.wt = 0;
@@ -3674,7 +3673,6 @@ pmap_activate(struct proc *p)
 		SETBIT_CPUSET(my_cpu, &(pmap->cpus_using));
 
 		simple_unlock(&pmap->lock);
-
 	} else {
 
 		/*
@@ -4093,7 +4091,7 @@ pmap_clear_modify(vm_offset_t phys)
 
    SPLVM(spl);
 
-   clear_modify_Retry:
+clear_modify_Retry:
    pvl = PA_TO_PVH(phys);
    CHECK_PV_LIST (phys, pvl, "pmap_clear_modify");
    LOCK_PVH(phys);
@@ -4121,7 +4119,6 @@ pmap_clear_modify(vm_offset_t phys)
          UNLOCK_PVH(phys);
          goto clear_modify_Retry;
       }
-
       users = pmap->cpus_using;
       if (pmap == kernel_pmap) {
          kflush = 1;
@@ -4149,9 +4146,7 @@ pmap_clear_modify(vm_offset_t phys)
          pte++;
          va += M88K_PGBYTES;
       }
-
       simple_unlock(&pmap->lock);
-
       pvep = pvep->next;
    }
 
@@ -4274,7 +4269,6 @@ is_mod_Retry:
          ptep++;
       }
       simple_unlock(&pvep->pmap->lock);
-
       pvep = pvep->next;
    }
 
@@ -4344,7 +4338,7 @@ pmap_clear_reference(vm_offset_t phys)
 
    SPLVM(spl);
 
-   clear_reference_Retry:
+clear_reference_Retry:
    LOCK_PVH(phys);
    pvl = PA_TO_PVH(phys);
    CHECK_PV_LIST(phys, pvl, "pmap_clear_reference");
@@ -4369,7 +4363,6 @@ pmap_clear_reference(vm_offset_t phys)
          UNLOCK_PVH(phys);
          goto clear_reference_Retry;
       }
-
       users = pmap->cpus_using;
       if (pmap == kernel_pmap) {
          kflush = 1;
@@ -4399,7 +4392,6 @@ pmap_clear_reference(vm_offset_t phys)
       }
 
       simple_unlock(&pmap->lock);
-
       pvep = pvep->next;
    }
 
@@ -4477,7 +4469,6 @@ is_ref_Retry:
          UNLOCK_PVH(phys);
          goto is_ref_Retry;
       }
-
       ptep = pmap_pte(pvep->pmap, pvep->va);
       if (ptep == PT_ENTRY_NULL)
          panic("pmap_is_referenced: bad pv list entry.");
@@ -4491,7 +4482,6 @@ is_ref_Retry:
          ptep++;
       }
       simple_unlock(&pvep->pmap->lock);
-
       pvep = pvep->next;
    }
 
@@ -5645,7 +5635,7 @@ pmap_range_add(pmap_range_t *ranges, vm_offset_t start, vm_offset_t end)
 
    range->start = start;
 
-   start_overlaps:
+start_overlaps:
    assert((range->start <= start) && (start <= range->end));
 
    /* delete redundant ranges */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.5 1999/09/27 20:46:19 smurph Exp $ */
+/*	$OpenBSD: trap.h,v 1.6 2001/01/14 20:25:24 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -27,9 +27,8 @@
 /*
  * Trap codes 
  */
-
-#ifndef _M88K_TRAP_H 
-#define _M88K_TRAP_H  1
+#ifndef __MACHINE_TRAP_H__
+#define __MACHINE_TRAP_H__
 
 /*
  * Trap type values
@@ -73,5 +72,5 @@
 #define T_INT        28    /* interrupt exception */
 #define T_USER       29		/* user mode fault */
 
-#endif  _M88K_TRAP_H 
+#endif __MACHINE_TRAP_H__
 

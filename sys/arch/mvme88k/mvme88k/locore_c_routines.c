@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.6 1999/09/27 19:13:22 smurph Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.7 2001/01/14 20:25:25 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -421,7 +421,7 @@ setlevel(int level)
 {
    m88k_psr_type psr;
    register unsigned int mask;
-   register int cpu = 0; /* cpu_number(); */
+   register int cpu = cpu_number(); 
 
    mask = int_mask_val[level];
 
@@ -444,7 +444,7 @@ db_setlevel(int level)
 {
    m88k_psr_type psr;
    register unsigned int mask;
-   register int cpu = 0; /* cpu_number(); */
+   register int cpu = cpu_number(); 
 
    mask = int_mask_val[level];
 
@@ -483,7 +483,7 @@ unsigned spl(void)
    switch (cputyp) {
 #ifdef MVME188
       case CPU_188:
-         /*cpu = cpu_number();*/
+         cpu = cpu_number();
          curspl = m188_curspl[cpu];
          break;
 #endif /* MVME188 */
@@ -511,7 +511,7 @@ unsigned db_spl(void)
    switch (cputyp) {
    #ifdef MVME188
       case CPU_188:
-         /*cpu = cpu_number();*/
+         cpu = cpu_number();
          curspl = m188_curspl[cpu];
          break;
    #endif /* MVME188 */
@@ -551,7 +551,7 @@ unsigned setipl(unsigned level)
    switch (cputyp) {
 #ifdef MVME188
       case CPU_188:
-         /*cpu = cpu_number();*/
+         cpu = cpu_number();
          curspl = m188_curspl[cpu];
          setlevel(level);
          break;
@@ -588,7 +588,7 @@ unsigned db_setipl(unsigned level)
    switch (cputyp) {
 #ifdef MVME188
       case CPU_188:
-         /*cpu = cpu_number();*/
+         cpu = cpu_number();
          curspl = m188_curspl[cpu];
          db_setlevel(level);
          break;
@@ -639,5 +639,3 @@ __volatile int *lock;
    return 0;
 }
 #endif
-
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxreg.h,v 1.1 1999/05/29 04:41:45 smurph Exp $ */
+/*	$OpenBSD: vxreg.h,v 1.2 2001/01/14 20:25:23 smurph Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. All rights reserved.
@@ -214,7 +214,7 @@ struct termio {
 	volatile unsigned char  c_cc[VNCC];
 };
 
-struct sgttyb {      /* 6 bytes */
+struct vx_sgttyb {      /* 6 bytes */
 	volatile char  sg_ispeed;
 	volatile char  sg_ospeed;
 	volatile char  sg_erase;
@@ -276,7 +276,7 @@ struct packet {      /* 68 bytes */
 	union {
 		struct  termio  tio;
 		struct  termcb  tcb;
-		struct  sgttyb  sgt;
+		struct  vx_sgttyb  sgt;
 		struct  dl_info dl;
 		long    param;
 	} parameter_block;
