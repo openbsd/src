@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.3 2001/07/26 16:10:01 rees Exp $ */
+/* $Id: main.c,v 1.4 2001/07/27 14:13:08 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -51,8 +51,8 @@ such damages.
 void onintr(int sigraised);
 
 const char usage[] =
-"Usage: sectok [-1234hHf:s:]\n"
-"    1 - 4         : specify card reader number\n"
+"Usage: sectok [-0123hf:s:]\n"
+"    0 - 3         : specify card reader number\n"
 "    f script_file : run commands from the script file\n"
 "    s sleep_time  : set sleep between commands in the script\n"
 "    h             : this message\n"
@@ -68,6 +68,10 @@ char *av[];
 {
     int i, tc;
     char buf[256], *scriptfile = NULL, *tp, *tv[MAXTOKENS];
+
+    tp = getenv("SCPORT");
+    if (tp)
+	port = atoi(tp);
 
     while ((i = getopt(ac, av, "0123f:s:h")) != -1) {
 	switch (i) {

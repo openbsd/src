@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.15 2001/07/26 22:12:56 rees Exp $ */
+/* $Id: cyberflex.c,v 1.16 2001/07/27 14:13:08 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -423,16 +423,27 @@ int ls(int ac, char *av[])
 
 int acl(int ac, char *av[])
 {
-    int i, j, isdir, prno, rt, sw;
+    int i, j, xflag = 0, isdir, prno, rt, sw;
     unsigned char fid[2], buf[256], acl[8];
+    char *prin;
 
-    if (ac < 2) {
-	printf("usage: acl fid [ principal: r1 r2 ... ]\n");
+    optind = optreset = 1;
+
+    while ((i = getopt(ac, av, "x")) != -1) {
+	switch (i) {
+	case 'x':
+	    xflag = 1;
+	    break;
+	}
+    }
+
+    if (ac - optind < 1) {
+	printf("usage: acl [ -x ] fid [ principal: r1 r2 ... ]\n");
 	return -1;
     }
 
     /* Select the fid */
-    sectok_parse_fname(av[1], fid);
+    sectok_parse_fname(av[optind++], fid);
     sectok_apdu(fd, cla, 0xa4, 0, 0, 2, fid, sizeof buf, buf, &sw);
     if (!sectok_swOK(sw)) {
 	printf("Select: %s\n", sectok_get_sw(sw));
@@ -448,31 +459,39 @@ int acl(int ac, char *av[])
 	return -1;
     }
 
-    if (ac < 3) {
+    if (ac - optind < 1) {
 	/* No acl given; print acl and exit */
-	print_acl(isdir, acl);
+	if (xflag) {
+	    for (i = 0; i < 8; i++)
+		printf("%02x ", acl[i]);
+	    printf("\n");
+	} else
+	    print_acl(isdir, acl);
 	return 0;
     }
 
+    prin = av[optind++];
+
     /* strip trailing ':' */
-    av[2][strlen(av[2]) - 1] = '\0';
+    prin[strlen(prin) - 1] = '\0';
 
     /* Find principal */
     for (prno = 0; prno < 8; prno++)
-	if (!strcasecmp(av[2], principals[prno]))
+	if (!strcasecmp(prin, principals[prno]))
 	    break;
     if (prno >= 8) {
-	printf("unknown principal \"%s\"\n", av[2]);
+	printf("unknown principal \"%s\"\n", prin);
 	return -1;
     }
 
     /* Parse new rights */
     rt = 0;
-    for (i = 3; i < 11 && i < ac; i++) {
-	for (j = 0; j < 8; j++)
+    for (i = optind; i < optind + 8 && i < ac; i++) {
+	for (j = 0; j < 8; j++) {
 	    if ((d_rights[j] && !strcasecmp(av[i], d_rights[j]))
 		|| (f_rights[j] && !strcasecmp(av[i], f_rights[j])))
 		rt |= (1 << j);
+	}
     }
     acl[prno] = rt;
 
@@ -555,7 +574,7 @@ int jload(int ac, char *av[])
     int cont_size = 1152, inst_size = 1024;
     des_cblock tmp;
     des_key_schedule schedule;
-    static unsigned char acl[] = {0x5, 0, 0, 0xff, 0, 0, 0, 0};
+    static unsigned char acl[] = {0x81, 0, 0, 0xff, 0, 0, 0, 0};
 
     optind = optreset = 1;
 

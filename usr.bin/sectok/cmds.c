@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.13 2001/07/26 20:00:16 rees Exp $ */
+/* $Id: cmds.c,v 1.14 2001/07/27 14:13:08 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -68,7 +68,7 @@ struct {
 
     /* Cyberflex commands */
     { "ls", "[ -l ]", ls },
-    { "acl", "fid [ principal: r1 r2 ... ]", acl },
+    { "acl", "[ -x ] fid [ principal: r1 r2 ... ]", acl },
     { "create", "fid size", jcreate },
     { "delete", "fid", jdelete },
     { "jdefault", "[ -d ]", jdefault },
@@ -112,7 +112,7 @@ int help(int ac, char *av[])
     } else {
 	for (j = 1; j < ac; j++) {
 	    for (i = 0; dispatch_table[i].cmd; i++)
-		if (!strncmp(av[j], dispatch_table[i].cmd, strlen(av[0])))
+		if (!strncmp(av[j], dispatch_table[i].cmd, strlen(av[j])))
 		    break;
 	    if (dispatch_table[i].help)
 		printf("%s %s\n", dispatch_table[i].cmd, dispatch_table[i].help);
