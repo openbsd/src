@@ -1,4 +1,4 @@
-#	$OpenBSD: bcmp.S,v 1.6 1997/11/07 15:57:16 niklas Exp $
+/*	$OpenBSD: bcmp.S,v 1.7 1998/03/01 16:10:22 niklas Exp $	*/
 
 #include "DEFS.h"
 

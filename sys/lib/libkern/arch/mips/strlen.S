@@ -1,4 +1,4 @@
-#	$OpenBSD: strlen.S,v 1.4 1997/11/07 15:57:22 niklas Exp $
+/*	$OpenBSD: strlen.S,v 1.5 1998/03/01 16:10:37 niklas Exp $	*/
 
 #include "DEFS.h"
 
