@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.48 2005/02/06 15:02:47 jmc Exp $
+.\" $OpenBSD: ports.7,v 1.49 2005/03/02 20:52:07 pvalchev Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -83,6 +83,11 @@ rebuild the ports complete index,
 .It Ar mirror-maker
 see
 .Xr mirroring-ports 7 ,
+.It Ar pkglocatedb
+build a compressed
+.Xr pkg_mklocatedb 1
+database file and place it in
+.Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/ftp ,
 .It Ar print-index
 display the contents of the index in a user-friendly way,
 .It Ar search
