@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.13 2004/10/02 06:46:41 mcbride Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.14 2004/10/09 04:10:52 brad Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
 
 /*-
@@ -244,26 +244,14 @@ tlphy_service(struct mii_softc *self, struct mii_data *mii, int cmd)
 
 	case MII_TICK:
 		/*
+		 * XXX WHAT ABOUT CHECKING LINK ON THE BNC/AUI?!
+		 */
+
+		/*
 		 * If we're not currently selected, just return.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
 			return (0);
-
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return (0);
-
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * XXX WHAT ABOUT CHECKING LINK ON THE BNC/AUI?!
-		 */
 
 		if (mii_phy_tick(&sc->sc_mii) == EJUSTRETURN)
 			return (0);
