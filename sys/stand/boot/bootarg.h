@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootarg.h,v 1.5 1998/05/25 19:17:39 mickey Exp $	*/
+/*	$OpenBSD: bootarg.h,v 1.6 1998/08/07 05:24:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -32,7 +32,7 @@
  *
  */
 
-#define	BOOTARG_APIVER	(BAPIV_VECTOR)
+#define	BOOTARG_APIVER	(BAPIV_VECTOR|BAPIV_ENV)
 #define	BAPIV_ANCIENT	0x00000000	/* MD old i386 bootblocks */
 #define	BAPIV_VARS	0x00000001	/* MD structure w/ add info passed */
 #define	BAPIV_VECTOR	0x00000002	/* MI vector of MD structures passed */
