@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.3 2002/02/22 16:11:59 jason Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.4 2002/07/24 19:03:19 jason Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -55,21 +55,21 @@
 
 /* iommmu registers */
 struct iommureg {
-	u_int64_t	iommu_cr;	/* IOMMU control register */
-	u_int64_t	iommu_tsb;	/* IOMMU TSB base register */
-	u_int64_t	iommu_flush;	/* IOMMU flush register */
+	volatile u_int64_t	iommu_cr;	/* IOMMU control register */
+	volatile u_int64_t	iommu_tsb;	/* IOMMU TSB base register */
+	volatile u_int64_t	iommu_flush;	/* IOMMU flush register */
 };
 
 /* streaming buffer registers */
 struct iommu_strbuf {
-	u_int64_t	strbuf_ctl;	/* streaming buffer control reg */
-	u_int64_t	strbuf_pgflush;	/* streaming buffer page flush */
-	u_int64_t	strbuf_flushsync;/* streaming buffer flush sync */
+	volatile u_int64_t	strbuf_ctl;	/* streaming buffer control reg */
+	volatile u_int64_t	strbuf_pgflush;	/* streaming buffer page flush */
+	volatile u_int64_t	strbuf_flushsync;/* streaming buffer flush sync */
 };
 
 /* streaming buffer control register */
-#define STRBUF_EN	0x000000000000000001LL
-#define STRBUF_D	0x000000000000000002LL
+#define STRBUF_EN		0x000000000000000001LL
+#define STRBUF_D		0x000000000000000002LL
 
 /* control register bits */
 #define IOMMUCR_TSB1K		0x000000000000000000LL	/* Nummber of entries in IOTSB */
