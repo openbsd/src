@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.437 2004/02/03 19:29:50 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.438 2004/02/04 17:35:40 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3381,12 +3381,6 @@ filter_consistent(struct pf_rule *r)
 		    r->af == AF_INET ? "inet" : "inet6");
 		problems++;
 	}
-	if ((r->keep_state == PF_STATE_MODULATE || r->keep_state ==
-	    PF_STATE_SYNPROXY) && r->proto && r->proto != IPPROTO_TCP) {
-		yyerror("modulate/synproxy state can only be applied to "
-		    "TCP rules");
-		problems++;
-	}
 	if (r->allow_opts && r->action != PF_PASS) {
 		yyerror("allow-opts can only be specified for pass rules");
 		problems++;
@@ -3952,7 +3946,7 @@ expand_rule(struct pf_rule *r,
 	char			 match_tagname[PF_TAG_NAME_SIZE];
 	struct pf_pooladdr	*pa;
 	struct node_host	*h;
-	u_int8_t		 flags, flagset;
+	u_int8_t		 flags, flagset, keep_state;
 
 	if (strlcpy(label, r->label, sizeof(label)) >= sizeof(label))
 		errx(1, "expand_rule: strlcpy");
@@ -3963,6 +3957,7 @@ expand_rule(struct pf_rule *r,
 		errx(1, "expand_rule: strlcpy");
 	flags = r->flags;
 	flagset = r->flagset;
+	keep_state = r->keep_state;
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 	LOOP_THROUGH(struct node_proto, proto, protos,
@@ -4040,6 +4035,13 @@ expand_rule(struct pf_rule *r,
 		r->gid.gid[1] = gid->gid[1];
 		r->type = icmp_type->type;
 		r->code = icmp_type->code;
+
+		if ((keep_state == PF_STATE_MODULATE ||
+		    keep_state == PF_STATE_SYNPROXY) &&
+		    r->proto && r->proto != IPPROTO_TCP) 
+			r->keep_state = PF_STATE_NORMAL;
+		else 
+			r->keep_state = keep_state;
 
 		if (r->proto && r->proto != IPPROTO_TCP) {
 			r->flags = 0;
