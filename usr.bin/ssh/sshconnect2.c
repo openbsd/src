@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.11 2000/05/25 20:45:20 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.12 2000/05/31 09:20:38 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -71,7 +71,6 @@ void
 ssh_kex_dh(Kex *kex, char *host, struct sockaddr *hostaddr,
     Buffer *client_kexinit, Buffer *server_kexinit)
 {
-	int i;
 	int plen, dlen;
 	unsigned int klen, kout;
 	char *signature = NULL;
