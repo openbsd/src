@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.27 2001/07/09 07:04:58 deraadt Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.28 2001/08/25 19:52:05 heko Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.27 2001/07/09 07:04:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.28 2001/08/25 19:52:05 heko Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -354,7 +354,8 @@ install(from_name, to_name, fset, flags)
 			char backup[MAXPATHLEN];
 			(void)snprintf(backup, MAXPATHLEN, "%s%s", to_name,
 			    suffix);
-			if (rename(to_name, backup) < 0) {
+			/* It is ok for the target file not to exist. */
+			if (rename(to_name, backup) < 0 && errno != ENOENT) {
 				serrno = errno;
 				unlink(tempfile);
 				errx(EX_OSERR, "rename: %s to %s: %s", to_name,
@@ -662,8 +663,9 @@ create_newfile(path, sbp)
 
 	if (dobackup) {
 		(void)snprintf(backup, MAXPATHLEN, "%s%s", path, suffix);
-		if (rename(path, backup) < 0)
-			err(EX_OSERR, "rename: %s to %s", path, backup);
+		/* It is ok for the target file not to exist. */
+		if (rename(path, backup) < 0 && errno != ENOENT)
+			err(EX_OSERR, "rename: %s to %s (errno %d)", path, backup, errno);
 	} else
 		(void)unlink(path);
 
