@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.67 2003/07/26 04:14:56 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.68 2003/08/07 05:19:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -463,7 +463,14 @@ if (kdb_trap (type, va, frame))
 	if (trapnum != T_INTERRUPT)
 		splx(cpl);	/* process softints */
 
-	if (type & T_USER)
+	/*
+	 * in case we were interrupted from the syscall gate page
+	 * treat this as we were not realy running user code no more
+	 * for weird things start to happen on return to the userland
+	 * and also see a note in locore.S:TLABEL(all)
+	 */
+	if ((type & T_USER) &&
+	    (frame->tf_iioq_head & ~PAGE_MASK) != SYSCALLGATE)
 		userret(p, frame->tf_iioq_head, 0);
 }
 
