@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.15 2001/05/16 03:04:55 mickey Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.16 2001/07/17 18:19:48 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.15 2001/05/16 03:04:55 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.16 2001/07/17 18:19:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -286,7 +286,7 @@ extract()
 			if (vflag > 1)
 				ls_list(arcn, now, listf);
 			else {
-				(void)fputs(arcn->name, listf);
+				(void)safe_print(arcn->name, listf);
 				vfpart = 1;
 			}
 		}
@@ -490,7 +490,7 @@ wr_archive(arcn, is_app)
 			if (vflag > 1)
 				ls_list(arcn, now, listf);
 			else {
-				(void)fputs(arcn->name, listf);
+				(void)safe_print(arcn->name, listf);
 				vfpart = 1;
 			}
 		}
@@ -906,7 +906,7 @@ copy()
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, listf);
+			(void)safe_print(arcn->name, listf);
 			vfpart = 1;
 		}
 		++flcnt;

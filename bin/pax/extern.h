@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.19 2001/05/26 00:32:21 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.20 2001/07/17 18:19:49 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -169,6 +169,7 @@ int next_file __P((register ARCHD *));
  */
 void ls_list __P((register ARCHD *, time_t, FILE *));
 void ls_tty __P((register ARCHD *));
+void safe_print __P((char *, FILE *));
 u_long asc_ul __P((register char *, int, register int));
 int ul_asc __P((u_long, register char *, register int, register int));
 #ifndef LONG_OFF_T

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.11 2001/05/26 00:32:21 millert Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.12 2001/07/17 18:19:49 millert Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.11 2001/05/26 00:32:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.12 2001/07/17 18:19:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.11 2001/05/26 00:32:21 millert E
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vis.h>
 #include "pax.h"
 #include "extern.h"
 
@@ -98,7 +99,8 @@ ls_list(arcn, now, fp)
 	 * if not verbose, just print the file name
 	 */
 	if (!vflag) {
-		(void)fprintf(fp, "%s\n", arcn->name);
+		safe_print(arcn->name, fp);
+		(void)putc('\n', fp);
 		(void)fflush(fp);
 		return;
 	}
@@ -151,13 +153,17 @@ ls_list(arcn, now, fp)
 	/*
 	 * print name and link info for hard and soft links
 	 */
-	(void)fprintf(fp, "%s %s", f_date, arcn->name);
-	if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG))
-		(void)fprintf(fp, " == %s\n", arcn->ln_name);
-	else if (arcn->type == PAX_SLK)
-		(void)fprintf(fp, " => %s\n", arcn->ln_name);
-	else
-		(void)putc('\n', fp);
+	(void)fputs(f_date, fp);
+	(void)putc(' ', fp);
+	safe_print(arcn->name, fp);
+	if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG)) {
+		fputs(" == ", fp);
+		safe_print(arcn->ln_name, fp);
+	} else if (arcn->type == PAX_SLK) {
+		fputs(" => ", fp);
+		safe_print(arcn->ln_name, fp);
+	}
+	(void)putc('\n', fp);
 	(void)fflush(fp);
 	return;
 }
@@ -200,6 +206,32 @@ ls_tty(arcn)
 	strmode(arcn->sb.st_mode, f_mode);
 	tty_prnt("%s%s %s\n", f_mode, f_date, arcn->name);
 	return;
+}
+
+#ifdef __STDC__
+void
+safe_print(char *str, FILE *fp)
+#else
+void
+safe_print(str, fp)
+	char *str;
+	FILE *fp;
+#endif
+{
+	char visbuf[5];
+	char *cp;
+
+	/*
+	 * if printing to a tty, use vis(3) to print special characters.
+	 */
+	if (isatty(fileno(fp))) {
+		for (cp = str; *cp; cp++) {
+			(void)vis(visbuf, cp[0], VIS_CSTYLE, cp[1]);
+			(void)fputs(visbuf, fp);
+		}
+	} else {
+		(void)fputs(str, fp);
+	}
 }
 
 /*
