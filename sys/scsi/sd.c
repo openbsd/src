@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.73 2005/03/30 02:40:42 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.74 2005/04/05 02:01:50 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -358,19 +358,19 @@ sdopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct sd_softc *sd;
 	struct scsi_link *sc_link;
+	struct sd_softc *sd;
 	int unit, part;
-	int error;
+	int error = 0;
 
 	unit = SDUNIT(dev);
+	part = SDPART(dev);
+
 	sd = sdlookup(unit);
 	if (sd == NULL)
 		return (ENXIO);
 
 	sc_link = sd->sc_link;
-	part = SDPART(dev);
-
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, part));
@@ -387,13 +387,17 @@ sdopen(dev, flag, fmt, p)
 		 */
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			error = EIO;
-			goto bad3;
+			goto bad;
 		}
 	} else {
+		/* Use sd_interpret_sense() for sense errors. */
+		sc_link->flags |= SDEV_OPEN;
+
 		/* Check that it is still responding and ok. */
 		error = scsi_test_unit_ready(sc_link,
-		    TEST_READY_RETRIES_DEFAULT, SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE);
+		    TEST_READY_RETRIES_DEFAULT,
+		    (part == RAW_PART && fmt == S_IFCHR) ? SCSI_SILENT : 0 |
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 		/* Try to start the unit if it wasn't ready. */
 		if (error == EIO)
@@ -402,9 +406,7 @@ sdopen(dev, flag, fmt, p)
 			    SCSI_IGNORE_MEDIA_CHANGE);
 
 		if (error)
-			goto bad3;
-
-		sc_link->flags |= SDEV_OPEN;
+			goto bad;
 
 		/* Lock the pack in. */
 		if ((sc_link->flags & SDEV_REMOVABLE) != 0) {
@@ -414,23 +416,20 @@ sdopen(dev, flag, fmt, p)
 			if (error)
 				goto bad;
 		}
-
-		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-			sc_link->flags |= SDEV_MEDIA_LOADED;
-
-			/* Load the physical device parameters. */
-			if ((*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
-			    0) == SDGP_RESULT_OFFLINE) {
-				error = ENXIO;
-				goto bad2;
-			}
-			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
-
-			/* Load the partition info if not already loaded. */
-			sdgetdisklabel(dev, sd, sd->sc_dk.dk_label,
-			    sd->sc_dk.dk_cpulabel, 0);
-			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded\n"));
+		/* Load the physical device parameters. */
+		sc_link->flags |= SDEV_MEDIA_LOADED;
+		if ((*sd->sc_ops->sdo_get_parms)(sd, &sd->params, 0) ==
+		    SDGP_RESULT_OFFLINE) {
+			sc_link->flags &= ~SDEV_MEDIA_LOADED;
+			error = ENXIO;
+			goto bad;
 		}
+		SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
+
+		/* Load the partition info if not already loaded. */
+		sdgetdisklabel(dev, sd, sd->sc_dk.dk_label,
+		    sd->sc_dk.dk_cpulabel, 0);
+		SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded\n"));
 	}
 
 	/* Check that the partition exists. */
@@ -451,32 +450,25 @@ sdopen(dev, flag, fmt, p)
 		break;
 	}
 	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
-
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
-	sdunlock(sd);
-	device_unref(&sd->sc_dev);
-	return (0);
 
-bad2:
-	sc_link->flags &= ~SDEV_MEDIA_LOADED;
-
+	/* It's OK to fall through because dk_openmask is now non-zero. */
 bad:
 	if (sd->sc_dk.dk_openmask == 0) {
 		if ((sd->sc_link->flags & SDEV_REMOVABLE) != 0)
 			scsi_prevent(sc_link, PR_ALLOW,
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
-		sc_link->flags &= ~SDEV_OPEN;
+		sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 	}
 
-bad3:
 	sdunlock(sd);
 	device_unref(&sd->sc_dev);
 	return (error);
 }
 
 /*
- * close the device.. only called if we are the LAST occurence of an open
+ * Close the device. Only called if we are the last occurrence of an open
  * device.  Convenient now but usually a pain.
  */
 int
@@ -513,8 +505,9 @@ sdclose(dev, flag, fmt, p)
 
 		if ((sd->sc_link->flags & SDEV_REMOVABLE) != 0)
 			scsi_prevent(sd->sc_link, PR_ALLOW,
-			    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
-		sd->sc_link->flags &= ~(SDEV_OPEN|SDEV_MEDIA_LOADED);
+			    SCSI_IGNORE_ILLEGAL_REQUEST |
+			    SCSI_IGNORE_NOT_READY);
+		sd->sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 
 		if (sd->sc_link->flags & SDEV_EJECTING) {
 			scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0);

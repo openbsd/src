@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.76 2005/03/30 02:40:42 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.77 2005/04/05 02:01:50 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -311,7 +311,7 @@ cdzeroref(self)
 
 
 /*
- * open the device. Make sure the partition info is a up-to-date as can be.
+ * Open the device. Make sure the partition info is as up-to-date as can be.
  */
 int 
 cdopen(dev, flag, fmt, p)
@@ -319,28 +319,27 @@ cdopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct cd_softc *cd;
 	struct scsi_link *sc_link;
+	struct cd_softc *cd;
 	int unit, part;
-	int error;
+	int error = 0;
 
 	unit = CDUNIT(dev);
+	part = CDPART(dev);
+
 	cd = cdlookup(unit);
 	if (cd == NULL)
 		return (ENXIO);
 
 	sc_link = cd->sc_link;
-
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    cd_cd.cd_ndevs, CDPART(dev)));
+	    cd_cd.cd_ndevs, part));
 
 	if ((error = cdlock(cd)) != 0) {
 		device_unref(&cd->sc_dev);
 		return (error);
 	}
-
-	part = CDPART(dev);
 
 	if (cd->sc_dk.dk_openmask != 0) {
 		/*
@@ -351,7 +350,7 @@ cdopen(dev, flag, fmt, p)
 			if (part == RAW_PART && fmt == S_IFCHR)
 				goto out;
 			error = EIO;
-			goto bad3;
+			goto bad;
 		}
 	} else {
 		/*
@@ -361,53 +360,43 @@ cdopen(dev, flag, fmt, p)
 		 */
 		error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_CD,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
-		if (error) {
-			if (part == RAW_PART && fmt == S_IFCHR)
-				goto out;
-			else
-				goto bad3;
-		}
 			
-		/* Start the pack spinning if necessary. */
-		error = scsi_start(sc_link, SSS_START,
-		    SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
+		/* Start the cd spinning if necessary. */
+		if (error == EIO)
+			error = scsi_start(sc_link, SSS_START,
+			    SCSI_IGNORE_ILLEGAL_REQUEST |
+			    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
 		if (error) {
 			if (part == RAW_PART && fmt == S_IFCHR)
 				goto out;
 			else
-				goto bad3;
+				goto bad;
 		}
 
-		sc_link->flags |= SDEV_OPEN;
-
-		/* Lock the pack in. */
+		/* Lock the cd in. */
 		error = scsi_prevent(sc_link, PR_PREVENT,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		if (error)
 			goto bad;
 
-		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-			sc_link->flags |= SDEV_MEDIA_LOADED;
-
-			/* Load the physical device parameters. */
-			if (cd_get_parms(cd, 0) != 0) {
-				error = ENXIO;
-				goto bad2;
-			}
-			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
-
-			/* Fabricate a disk label. */
-			cdgetdisklabel(dev, cd, cd->sc_dk.dk_label,
-			    cd->sc_dk.dk_cpulabel, 0);
-			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated\n"));
+		/* Load the physical device parameters. */
+		sc_link->flags |= SDEV_MEDIA_LOADED;
+		if (cd_get_parms(cd, 0) != 0) {
+			sc_link->flags &= ~SDEV_MEDIA_LOADED;
+			error = ENXIO;
+			goto bad;
 		}
+		SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
+
+		/* Fabricate a disk label. */
+		cdgetdisklabel(dev, cd, cd->sc_dk.dk_label,
+		    cd->sc_dk.dk_cpulabel, 0);
+		SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated\n"));
 	}
 
 	/* Check that the partition exists. */
-	if (part != RAW_PART &&
-	    (part >= cd->sc_dk.dk_label->d_npartitions ||
+	if (part != RAW_PART && (part >= cd->sc_dk.dk_label->d_npartitions ||
 	    cd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
 		goto bad;
@@ -423,31 +412,25 @@ out:	/* Insure only one open at a time. */
 		break;
 	}
 	cd->sc_dk.dk_openmask = cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
-
+	sc_link->flags |= SDEV_OPEN;
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
-	cdunlock(cd);
-	device_unref(&cd->sc_dev);
-	return (0);
 
-bad2:
-	sc_link->flags &= ~SDEV_MEDIA_LOADED;
-
+	/* It's OK to fall through because dk_openmask is now non-zero. */	
 bad:
 	if (cd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
-		sc_link->flags &= ~SDEV_OPEN;
+		sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 	}
 
-bad3:
 	cdunlock(cd);
 	device_unref(&cd->sc_dev);
 	return (error);
 }
 
 /*
- * close the device.. only called if we are the LAST
- * occurence of an open device
+ * Close the device. Only called if we are the last occurrence of an open
+ * device.
  */
 int 
 cdclose(dev, flag, fmt, p)
