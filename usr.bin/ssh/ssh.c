@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.79 2000/12/27 11:51:54 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.80 2001/01/13 18:32:50 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -841,8 +841,7 @@ ssh_session(void)
 		}
 	}
 	/* Tell the packet module whether this is an interactive session. */
-	packet_set_interactive(interactive, options.keepalives);
-
+	packet_set_interactive(interactive);
 
 	/* Request authentication agent forwarding if appropriate. */
 	check_agent_present();
@@ -896,6 +895,8 @@ void
 ssh_session2_callback(int id, void *arg)
 {
 	int len;
+	int interactive = 0;
+
 	debug("client_init id %d arg %d", id, (int)arg);
 
 	if (no_shell_flag)
@@ -919,6 +920,7 @@ ssh_session2_callback(int id, void *arg)
 		packet_put_int(ws.ws_ypixel);
 		packet_put_cstring("");		/* XXX: encode terminal modes */
 		packet_send();
+		interactive = 1;
 		/* XXX wait for reply */
 	}
 	if (options.forward_x11 &&
@@ -929,6 +931,7 @@ ssh_session2_callback(int id, void *arg)
 		/* Request forwarding with authentication spoofing. */
 		debug("Requesting X11 forwarding with authentication spoofing.");
 		x11_request_forwarding_with_spoofing(id, proto, data);
+		interactive = 1;
 		/* XXX wait for reply */
 	}
 
@@ -953,6 +956,7 @@ ssh_session2_callback(int id, void *arg)
 	/* channel_callback(id, SSH2_MSG_OPEN_CONFIGMATION, client_init, 0); */
 done:
 	/* register different callback, etc. XXX */
+	packet_set_interactive(interactive);
 	client_set_session_ident(id);
 }
 

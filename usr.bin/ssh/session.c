@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.46 2001/01/04 22:41:03 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.47 2001/01/13 18:32:50 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -364,10 +364,6 @@ do_authenticated(struct passwd * pw)
 
 		case SSH_CMSG_EXEC_SHELL:
 		case SSH_CMSG_EXEC_CMD:
-			/* Set interactive/non-interactive mode. */
-			packet_set_interactive(have_pty || s->display != NULL,
-			    options.keepalives);
-
 			if (type == SSH_CMSG_EXEC_CMD) {
 				command = packet_get_string(&dlen);
 				debug("Exec command '%.500s'", command);
@@ -497,6 +493,8 @@ do_exec_no_pty(Session *s, const char *command, struct passwd * pw)
 	if (pid < 0)
 		packet_disconnect("fork failed: %.100s", strerror(errno));
 	s->pid = pid;
+	/* Set interactive/non-interactive mode. */
+	packet_set_interactive(s->display);
 #ifdef USE_PIPES
 	/* We are the parent.  Close the child sides of the pipes. */
 	close(pin[0]);
@@ -603,6 +601,7 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 	s->ptymaster = ptymaster;
 
 	/* Enter interactive session. */
+	packet_set_interactive(1);
 	if (compat20) {
 		session_set_fds(s, ptyfd, fdout, -1);
 	} else {

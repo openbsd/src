@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.42 2001/01/09 21:19:50 markus Exp $");
+RCSID("$OpenBSD: packet.c,v 1.43 2001/01/13 18:32:50 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -1230,9 +1230,12 @@ packet_not_very_much_data_to_write()
 /* Informs that the current session is interactive.  Sets IP flags for that. */
 
 void
-packet_set_interactive(int interactive, int keepalives)
+packet_set_interactive(int interactive)
 {
-	int on = 1;
+	static int called = 0;
+	if (called)
+		return;
+	called = 1;
 
 	/* Record that we are in interactive mode. */
 	interactive_mode = interactive;
@@ -1240,12 +1243,6 @@ packet_set_interactive(int interactive, int keepalives)
 	/* Only set socket options if using a socket.  */
 	if (!packet_connection_is_on_socket())
 		return;
-	if (keepalives) {
-		/* Set keepalives if requested. */
-		if (setsockopt(connection_in, SOL_SOCKET, SO_KEEPALIVE, (void *) &on,
-		    sizeof(on)) < 0)
-			error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
-	}
 	/*
 	 * IPTOS_LOWDELAY and IPTOS_THROUGHPUT are IPv4 only
 	 */

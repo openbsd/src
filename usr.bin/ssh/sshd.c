@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.149 2001/01/13 18:03:07 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.150 2001/01/13 18:32:51 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1060,6 +1060,12 @@ main(int ac, char **av)
 	linger.l_onoff = 1;
 	linger.l_linger = 5;
 	setsockopt(sock_in, SOL_SOCKET, SO_LINGER, (void *) &linger, sizeof(linger));
+
+	/* Set keepalives if requested. */
+	if (options.keepalives &&
+	    setsockopt(sock_in, SOL_SOCKET, SO_KEEPALIVE, (void *)&on,
+	    sizeof(on)) < 0)
+		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
 
 	/*
 	 * Register our connection.  This turns encryption off because we do
