@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.26 1999/10/07 21:48:34 angelos Exp $
+.\" $OpenBSD: ipsec.4,v 1.27 2000/01/10 22:51:12 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -347,6 +347,13 @@ The system does guarantee that it will succeed at establishing the
 required security associations.  In any case a properly configured
 key management daemon is required which listens to messages from the
 kernel.
+.Pp
+A list of all security associations in the kernel tables can be
+obtained via the kernfs file 
+.Aq Pa ipsec
+(typically in
+.Aq Pa /kernfs/ipsec
+).
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EINVAL]
