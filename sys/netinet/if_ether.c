@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.14 1999/05/16 00:34:40 ho Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.15 1999/07/18 21:36:40 ho Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -497,14 +497,25 @@ in_arpinput(m)
 		  	if (rt->rt_flags & RTF_PERMANENT_ARP) {
 				log(LOG_WARNING,
 				   "arp: attempt to overwrite permanent "
-				   "entry for %s by %s\n", inet_ntoa(isaddr),
-				   ether_sprintf(ea->arp_sha));
+				   "entry for %s by %s on %s\n", 
+				   inet_ntoa(isaddr),
+				   ether_sprintf(ea->arp_sha),
+				   (&ac->ac_if)->if_xname);
+				goto out;
+			} else if (rt->rt_ifp != &ac->ac_if) {
+			        log(LOG_WARNING,
+				   "arp: attemt to overwrite entry for %s "
+				   "on %s by %s on %s\n",
+				   inet_ntoa(isaddr), rt->rt_ifp->if_xname,
+				   ether_sprintf(ea->arp_sha),
+				   (&ac->ac_if)->if_xname);
 				goto out;
 			} else {
 				log(LOG_INFO,
-				   "arp info overwritten for %s by %s\n",
+				   "arp info overwritten for %s by %s on %s\n",
 			    	   inet_ntoa(isaddr), 
-				   ether_sprintf(ea->arp_sha));
+				   ether_sprintf(ea->arp_sha),
+				   (&ac->ac_if)->if_xname);
 				rt->rt_expire = 1; /* no longer static */
 			}
 		}
