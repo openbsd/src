@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.46 2001/08/11 10:13:32 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.47 2001/08/12 15:48:44 angelos Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -609,7 +609,11 @@ udp_init (void)
 
   default_transport = udp_bind ((struct sockaddr *)&dflt_stor);
   if (!default_transport)
-    log_error ("udp_init: could not allocate default IPv4 ISAKMP UDP port");
+    {
+      log_error ("udp_init: could not allocate default IPv4 ISAKMP UDP port");
+      return;
+    }
+
   LIST_INSERT_HEAD (&udp_listen_list,
 		    (struct udp_transport *)default_transport, link);
 
@@ -620,7 +624,10 @@ udp_init (void)
 
   default_transport6 = udp_bind ((struct sockaddr *)&dflt_stor);
   if (!default_transport6)
-    log_error ("udp_init: could not allocate default IPv6 ISAKMP UDP port");
+    {
+      log_error ("udp_init: could not allocate default IPv6 ISAKMP UDP port");
+      return;
+    }
   LIST_INSERT_HEAD (&udp_listen_list,
 		    (struct udp_transport *)default_transport6, link);
 }
