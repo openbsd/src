@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.70 2000/11/06 23:04:56 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.71 2000/11/06 23:13:26 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -562,6 +562,8 @@ main(int ac, char **av)
 
 	/* Disable rhosts authentication if not running as root. */
 	if (original_effective_uid != 0 || !options.use_privileged_port) {
+		debug("Rhosts Authentication methods disabled, "
+		    "originating port will not be trusted.");
 		options.rhosts_authentication = 0;
 		options.rhosts_rsa_authentication = 0;
 	}

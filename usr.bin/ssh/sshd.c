@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.132 2000/10/13 18:34:46 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.133 2000/11/06 23:13:27 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1051,6 +1051,8 @@ main(int ac, char **av)
 	 */
 	if (remote_port >= IPPORT_RESERVED ||
 	    remote_port < IPPORT_RESERVED / 2) {
+		debug("Rhosts Authentication methods disabled, "
+		    "originating port not trusted.");
 		options.rhosts_authentication = 0;
 		options.rhosts_rsa_authentication = 0;
 	}

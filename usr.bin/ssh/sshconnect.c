@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.79 2000/09/17 15:52:51 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.80 2000/11/06 23:13:26 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -244,7 +244,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 
 			/* Create a socket for connecting. */
 			sock = ssh_create_socket(original_real_uid,
-			    !anonymous && geteuid() == 0 && port < IPPORT_RESERVED,
+			    !anonymous && geteuid() == 0,
 			    ai->ai_family);
 			if (sock < 0)
 				continue;
