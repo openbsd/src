@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2003/07/12 04:08:33 jason Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/07/12 04:23:15 jason Exp $
 
 PROG=badfpreg
-CFLAGS+=-Wall
 NOMAN=
 SRCS=test.S main.c
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: goodfreg.c,v 1.1 2003/07/12 04:08:33 jason Exp $	*/
+/*	$OpenBSD: goodfreg.c,v 1.2 2003/07/12 04:23:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -71,6 +71,19 @@ void asm_stq_f48(struct fpquad *);
 void asm_stq_f52(struct fpquad *);
 void asm_stq_f56(struct fpquad *);
 void asm_stq_f60(struct fpquad *);
+
+int compare_regs(union fpregs *, union fpregs *);
+void dump_reg(union fpregs *);
+void dump_regs(union fpregs *, union fpregs *, union fpregs *);
+int compare_quads(struct fpquad *, struct fpquad *);
+void check_saves(union fpregs *, union fpregs *, union fpregs *);
+void c_stq(union fpregs *, int, struct fpquad *);
+void c_ldq(union fpregs *, int, struct fpquad *);
+void asm_ldq(int, struct fpquad *);
+void asm_stq(int, struct fpquad *);
+void check_reg(int, union fpregs *, union fpregs *, union fpregs *);
+void check_regs(union fpregs *, union fpregs *, union fpregs *);
+int main(void);
 
 int
 compare_regs(union fpregs *fr1, union fpregs *fr2)

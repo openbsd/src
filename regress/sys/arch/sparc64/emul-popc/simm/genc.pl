@@ -1,5 +1,5 @@
 #!/bin/perl
-#	$OpenBSD: genc.pl,v 1.3 2003/07/10 15:21:12 jason Exp $
+#	$OpenBSD: genc.pl,v 1.4 2003/07/12 04:22:02 jason Exp $
 #
 # Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 # All rights reserved.
@@ -58,4 +58,5 @@ for ($i = $lo; $i <= $hi; $i++) {
 	}
 	print "());\n";
 }
+print "\treturn (0);\n";
 print "}\n";

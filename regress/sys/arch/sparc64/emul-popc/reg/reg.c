@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.c,v 1.1 2003/07/10 15:19:55 jason Exp $	*/
+/*	$OpenBSD: reg.c,v 1.2 2003/07/12 04:22:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -27,6 +27,12 @@
  */
 #include <sys/types.h>
 #include <stdio.h>
+
+int64_t asm_popc(int64_t);
+int64_t c_popc(int64_t);
+int test_it(int64_t);
+int test_ones(void);
+int main(void);
 
 int64_t
 asm_popc(int64_t v)
