@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.296 2000/08/03 21:29:39 niklas Exp $
+	$OpenBSD: pcidevs,v 1.297 2000/08/04 17:45:41 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1444,6 +1444,7 @@ product SIS 5597VGA		0x0200	5597/5598 VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 85C596		0x0496	85C596
+product SIS SiS530		0x0530	SiS530 Host-PCI
 product SIS 85C601		0x0601	85C601 EIDE
 product SIS 620			0x0620  620 Host-PCI
 product SIS 900			0x0900	900 10/100BaseTX
