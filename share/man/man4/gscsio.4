@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gscsio.4,v 1.1 2004/05/23 18:40:57 grange Exp $
+.\"	$OpenBSD: gscsio.4,v 1.2 2004/05/23 22:24:28 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -30,7 +30,7 @@ System-on-Chip Super I/O module.
 The Super I/O (SIO) module incorporates one serial port, an infrared
 communication port, two ACCESS.bus interface (ACB) ports, system wakeup
 control (SWC), and a real-time clock (RTC).
-Only ACCESS.bus interface is supported now.
+Only the ACCESS.bus interface is currently supported.
 .Pp
 ACB is a two-wire synchronous serial interface compatible with the
 Philips'
@@ -41,7 +41,7 @@ framework.
 The
 .Nm
 driver
-programms ACB port to work with a standard
+programs the ACB port to work with a standard
 .Tn I2C
 frequency 100kHz.
 .Sh SEE ALSO
