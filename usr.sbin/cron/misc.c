@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 2001/02/20 02:03:19 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.11 2001/12/12 19:02:50 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.10 2001/02/20 02:03:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.11 2001/12/12 19:02:50 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -290,7 +290,8 @@ acquire_daemonlock(closeflag)
 	static	FILE	*fp = NULL;
 	char		buf[3*MAX_FNAME];
 	char		pidfile[MAX_FNAME];
-	int		fd, otherpid;
+	int		fd;
+	PID_T		otherpid;
 
 	if (closeflag && fp) {
 		fclose(fp);
@@ -318,10 +319,14 @@ acquire_daemonlock(closeflag)
 		if (flock(fd, LOCK_EX|LOCK_NB) < OK) {
 			int save_errno = errno;
 
-			fscanf(fp, "%d", &otherpid);
-			snprintf(buf, sizeof buf,
-			    "can't lock %s, otherpid may be %d: %s",
-			    pidfile, otherpid, strerror(save_errno));
+			if (fscanf(fp, "%d", &otherpid) == 1)
+				snprintf(buf, sizeof buf,
+				    "can't lock %s, otherpid may be %d: %s",
+				    pidfile, otherpid, strerror(save_errno));
+			else
+				snprintf(buf, sizeof buf,
+				    "can't lock %s, otherpid unknown: %s",
+				    pidfile, strerror(save_errno));
 			fprintf(stderr, "%s: %s\n", ProgramName, buf);
 			log_it("CRON", getpid(), "DEATH", buf);
 			exit(ERROR_EXIT);
