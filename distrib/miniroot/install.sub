@@ -1,5 +1,4 @@
-#!/bin/sh
-#	$OpenBSD: install.sub,v 1.215 2002/04/29 01:49:49 krw Exp $
+#	$OpenBSD: install.sub,v 1.216 2002/04/30 04:04:47 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
