@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.12 2003/06/20 16:53:15 deraadt Exp $	 */
+/* $OpenBSD: commands.c,v 1.13 2003/09/19 10:32:24 jmc Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -74,8 +74,8 @@ show_help(void)
 	    "These single-character commands are available:\n"
 	    "\n"
 	    "^L      - redraw screen\n"
-	    "q       - quit\n"
-	    "h or ?  - help; show this text\n", stdout);
+	    "h or ?  - help; show this text\n"
+	    "q       - quit\n", stdout);
 
 	/* not all commands are available with overstrike terminals */
 	if (overstrike) {
@@ -91,14 +91,13 @@ show_help(void)
 		    "I       - same as 'i'\n"
 		    "k       - kill processes; send a signal to a list of processes\n"
 		    "n or #  - change number of processes to display\n", stdout);
-#ifdef ORDER
 		fputs(
 		    "o       - specify sort order (size, res, cpu, time)\n",
 		    stdout);
-#endif
 		fputs(
 		    "r       - renice a process\n"
 		    "s       - change number of seconds to delay between updates\n"
+		    "S       - toggle the display of system processes\n"
 		    "u       - display processes for only one user (+ selects all users)\n"
 		    "\n\n", stdout);
 	}
