@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.regress.mk,v 1.8 2002/01/03 16:54:38 brad Exp $
+#	$OpenBSD: bsd.regress.mk,v 1.9 2002/02/17 01:10:15 marc Exp $
 # No man pages for regression tests.
 NOMAN=
 
@@ -36,6 +36,14 @@ REGRESSSKIPSLOW?=no
 
 .if (${REGRESSSKIPSLOW:L} == "yes") && defined(REGRESSSLOWTARGETS)
 REGRESSSKIPTARGETS+=${REGRESSSLOWTARGETS}
+.endif
+
+.if defined(REGRESSROOTTARGETS)
+ROOTUSER!=id -g
+SUDO?=
+. if (${ROOTUSER} != 0) && empty(SUDO)
+REGRESSSKIPTARGETS+=${REGRESSROOTTARGETS}
+. endif
 .endif
 
 REGRESSSKIPTARGETS?=
