@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.26 2001/08/05 23:18:20 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.27 2001/08/05 23:29:58 markus Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -479,8 +479,11 @@ congreet(int s)
 
 	bufsiz = sizeof(buf);
 	cp = buf;
-	while (bufsiz-- && (n = read(s, cp, 1)) == 1 && *cp != '\n' && *cp != '\r')
+	while (bufsiz-- && (n = read(s, cp, 1)) == 1 && *cp != '\n') {
+		if (*cp == '\r')
+			*cp = '\n';
 		cp++;
+	}
 	if (n < 0) {
 		if (errno != ECONNREFUSED)
 			error("read (%s): %s", c->c_name, strerror(errno));
@@ -493,7 +496,6 @@ congreet(int s)
 		return;
 	}
 	*cp = '\0';
-	fprintf(stderr, "# %s %s\n", c->c_name, buf);
 	if (c->c_keytype != KT_RSA1) {
 		int remote_major, remote_minor;
 		char remote_version[sizeof buf];
@@ -509,6 +511,7 @@ congreet(int s)
 			return;
 		}
 	}
+	fprintf(stderr, "# %s %s\n", c->c_name, chop(buf));
 	n = snprintf(buf, sizeof buf, "SSH-%d.%d-OpenSSH-keyscan\r\n",
 	    c->c_keytype == KT_RSA1? PROTOCOL_MAJOR_1 : PROTOCOL_MAJOR_2,
 	    c->c_keytype == KT_RSA1? PROTOCOL_MINOR_1 : PROTOCOL_MINOR_2);
