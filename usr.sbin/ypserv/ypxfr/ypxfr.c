@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.15 1997/02/09 09:49:37 maja Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.16 1997/04/12 00:12:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.15 1997/02/09 09:49:37 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.16 1997/04/12 00:12:58 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -450,6 +450,8 @@ char *argv[];
 	    cflag++;
 	    break;
 	  case 'd':
+	    if (strchr(optarg, '/'))	/* Ha ha, we are not listening */
+		break;
 	    domain = optarg;
 	    break;
 	  case 'f':
@@ -459,6 +461,8 @@ char *argv[];
 	    host = optarg;
 	    break;
 	  case 's':
+	    if (strchr(optarg, '/'))	/* Ha ha, we are not listening */
+		break;
 	    srcdomain = optarg;
 	    break;
 	  case 'C':
@@ -532,6 +536,7 @@ char *argv[];
 		}
 	};
 
+	/* XXX this is raceable if portmap has holes! */
 	if (status > 0) {
 		
 	        yplog("Check for reserved port on host: %s", host); 

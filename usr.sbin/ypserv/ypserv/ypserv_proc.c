@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.10 1997/03/30 20:51:21 maja Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.11 1997/04/12 00:12:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.10 1997/03/30 20:51:21 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.11 1997/04/12 00:12:57 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -105,6 +105,8 @@ ypproc_domain_2_svc(argp, rqstp)
 	static char domain_path[MAXPATHLEN];
 	struct stat finfo;
 
+	if (strchr(*argp, '/'))
+		goto bail;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
 	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
 				    (finfo.st_mode & S_IFDIR));
@@ -114,6 +116,7 @@ ypproc_domain_2_svc(argp, rqstp)
 	      TORF(ok), *argp, TORF(result));
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -132,6 +135,8 @@ ypproc_domain_nonack_2_svc(argp, rqstp)
 	static char domain_path[MAXPATHLEN];
 	struct stat finfo;
 
+	if (strchr(*argp, '/'))
+		goto bail;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
 	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
 				    (finfo.st_mode & S_IFDIR));
@@ -142,6 +147,7 @@ ypproc_domain_nonack_2_svc(argp, rqstp)
 	  *argp, TORF(result));
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -163,6 +169,8 @@ ypproc_match_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
+	if (strchr(argp->domain, '/'))
+		goto bail;
 	YPLOG(
 	  "match_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
@@ -170,6 +178,7 @@ ypproc_match_2_svc(argp, rqstp)
 	  argp->domain, argp->map, argp->key.keydat_len, argp->key.keydat_val);
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -197,12 +206,15 @@ ypproc_first_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
+	if (strchr(argp->domain, '/'))
+		goto bail;
 	YPLOG( "first_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
 	  TORF(ok), TORF(secure),
 	  argp->domain, argp->map);
 	
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -230,6 +242,8 @@ ypproc_next_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
+	if (strchr(argp->domain, '/'))
+		goto bail;
 	YPLOG(
 	  "next_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
@@ -237,6 +251,7 @@ ypproc_next_2_svc(argp, rqstp)
 	  argp->domain, argp->map, argp->key.keydat_len, argp->key.keydat_val);
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -270,27 +285,23 @@ ypproc_xfr_2_svc(argp, rqstp)
 	char	*ipadd;
 
 	bzero((char *)&res, sizeof(res));
-	
+
 	YPLOG("xfr_2: caller=[%s].%d, auth_ok=%s, domain=%s, tid=%d, prog=%d",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
 	  argp->map_parms.domain, argp->transid, argp->prog);
 	YPLOG("       ipadd=%s, port=%d, map=%s", inet_ntoa(caller->sin_addr),
 	  argp->port, argp->map_parms.map);
 
-	if (ntohs(caller->sin_port) >= IPPORT_RESERVED)
-		ok = FALSE;
-
-	if (!ok) {
+	if (strchr(argp->map_parms.domain, '/') ||
+	    ntohs(caller->sin_port) >= IPPORT_RESERVED) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
 
 	pid = vfork();
-
 	if (pid == -1) {
 		svcerr_systemerr(rqstp->rq_xprt);
 		return(NULL);
-		
 	}
 
 	if (pid == 0) {
@@ -356,11 +367,14 @@ ypproc_all_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
+	if (strchr(argp->domain, '/'))
+		goto bail;
 	YPLOG( "all_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
 	  TORF(ok), TORF(secure), argp->domain, argp->map);
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -405,11 +419,14 @@ ypproc_master_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
+	if (strchr(argp->domain, '/'))
+		goto bail;
 	YPLOG( "master_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
 	  TORF(ok), TORF(secure), argp->domain, argp->map);
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -453,11 +470,14 @@ ypproc_order_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
+	if (strchr(argp->domain, '/'))
+		goto bail;
 	YPLOG( "order_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
 	  TORF(ok), TORF(secure), argp->domain, argp->map);
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -493,11 +513,14 @@ ypproc_maplist_2_svc(argp, rqstp)
 	struct ypmaplist *m;
 	char  *map_name;
 
+	if (strchr(*argp, '/'))
+		goto bail;
 	YPLOG("maplist_2: caller=[%s].%d, auth_ok=%s, domain=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
 	  *argp);
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -597,6 +620,8 @@ ypproc_domain_1_svc(argp, rqstp)
 	static char domain_path[MAXPATHLEN];
 	struct stat finfo;
 
+	if (strchr(*argp, '/'))
+		goto bail;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
 	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
 				    (finfo.st_mode & S_IFDIR));
@@ -606,6 +631,7 @@ ypproc_domain_1_svc(argp, rqstp)
 	      TORF(ok), *argp, TORF(result));
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -624,6 +650,8 @@ ypproc_domain_nonack_1_svc(argp, rqstp)
 	static char domain_path[MAXPATHLEN];
 	struct stat finfo;
 
+	if (strchr(*argp, '/'))
+		goto bail;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
 	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
 				    (finfo.st_mode & S_IFDIR));
@@ -634,6 +662,7 @@ ypproc_domain_nonack_1_svc(argp, rqstp)
 	  *argp, TORF(result));
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -655,6 +684,8 @@ ypproc_match_1_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure;
 
+	if (strchr(argp->ypmatch_req_domain, '/'))
+		goto bail;
 	res.yp_resptype = YPMATCH_RESPTYPE;
 	res.ypmatch_resp_valptr = "";
 	res.ypmatch_resp_valsize = 0;
@@ -674,6 +705,7 @@ ypproc_match_1_svc(argp, rqstp)
 	  argp->ypmatch_req_keysize, argp->ypmatch_req_keyptr);
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -706,6 +738,8 @@ ypproc_first_1_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure;
 
+	if (strchr(argp->ypfirst_req_domain, '/'))
+		goto bail;
 	res.yp_resptype = YPFIRST_RESPTYPE;
 	res.ypfirst_resp_valptr  = res.ypfirst_resp_keyptr  = "";
 	res.ypfirst_resp_valsize = res.ypfirst_resp_keysize = 0;
@@ -723,6 +757,7 @@ ypproc_first_1_svc(argp, rqstp)
 	  argp->ypfirst_req_domain, argp->ypfirst_req_map);
 	
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -754,6 +789,8 @@ ypproc_next_1_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure;
 
+	if (strchr(argp->ypnext_req_domain, '/'))
+		goto bail;
 	res.yp_resptype = YPNEXT_RESPTYPE;
 	res.ypnext_resp_valptr  = res.ypnext_resp_keyptr  = "";
 	res.ypnext_resp_valsize = res.ypnext_resp_keysize = 0;
@@ -773,6 +810,7 @@ ypproc_next_1_svc(argp, rqstp)
 	  argp->ypnext_req_keysize, argp->ypnext_req_keyptr);
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -807,6 +845,8 @@ ypproc_poll_1_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure;
 
+	if (strchr(argp->yppoll_req_domain, '/'))
+		goto bail;
 	res.yp_resptype = YPPOLL_RESPTYPE;
 	res.yppoll_resp_domain = argp->yppoll_req_domain;
 	res.yppoll_resp_map = argp->yppoll_req_map;
@@ -825,6 +865,7 @@ ypproc_poll_1_svc(argp, rqstp)
 	  argp->yppoll_req_domain, argp->yppoll_req_map);
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -855,6 +896,8 @@ ypproc_push_1_svc(argp, rqstp)
 	pid_t	pid;
 	char	yppush_proc[] = YPPUSH_PROC;
 
+	if (strchr(argp->yppush_req_domain, '/'))
+		goto bail;
 	if (argp->yp_reqtype != YPPUSH_REQTYPE) {
 		return(NULL);
 	}
@@ -870,6 +913,7 @@ ypproc_push_1_svc(argp, rqstp)
 		ok = FALSE;
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -902,6 +946,8 @@ ypproc_pull_1_svc(argp, rqstp)
 	pid_t	pid;
 	char	ypxfr_proc[] = YPXFR_PROC;
 
+	if (strchr(argp->yppull_req_domain, '/'))
+		goto bail;
 	if (argp->yp_reqtype != YPPULL_REQTYPE) {
 		return(NULL);
 	}
@@ -917,6 +963,7 @@ ypproc_pull_1_svc(argp, rqstp)
 		ok = FALSE;
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
@@ -950,6 +997,8 @@ ypproc_get_1_svc(argp, rqstp)
 	pid_t	pid;
 	char	ypxfr_proc[] = YPXFR_PROC;
 
+	if (strchr(argp->ypget_req_domain, '/'))
+		goto bail;
 	if (argp->yp_reqtype != YPGET_REQTYPE) {
 		return(NULL);
 	}
@@ -966,6 +1015,7 @@ ypproc_get_1_svc(argp, rqstp)
 		ok = FALSE;
 
 	if (!ok) {
+bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
