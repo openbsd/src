@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.11 2005/03/18 22:11:08 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.12 2005/03/19 09:49:39 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -430,7 +430,7 @@ USB_ATTACH(ural)
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ural_rateset_11g;
 
 	/* set supported .11b and .11g channels (1 through 14) */
-	for (i = 1; i <= 11; i++) {
+	for (i = 1; i <= 14; i++) {
 		ic->ic_channels[i].ic_freq =
 		    ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
 		ic->ic_channels[i].ic_flags =
