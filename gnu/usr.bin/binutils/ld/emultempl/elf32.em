@@ -467,14 +467,15 @@ gld${EMULATION_NAME}_after_open ()
 	 linker will search.  That means that we want to use
 	 rpath_link, rpath, then the environment variable
 	 LD_LIBRARY_PATH (native only), then the linker script
-	 LIB_SEARCH_DIRS.  We do not search using the -L arguments.
+	 LIB_SEARCH_DIRS.  We look at the -L arguments to build
+	 search path.
 
 	 We search twice.  The first time, we skip objects which may
 	 introduce version mismatches.  The second time, we force
 	 their use.  See gld${EMULATION_NAME}_vercheck comment.  */
       for (force = 0; force < 2; force++)
 	{
-	  const char *lib_path;
+	  char *lib_path;
 	  size_t len;
 	  search_dirs_type *search;
 
@@ -484,20 +485,41 @@ gld${EMULATION_NAME}_after_open ()
 	  if (gld${EMULATION_NAME}_search_needed (command_line.rpath,
 						  l->name, force))
 	    break;
-	  if (command_line.rpath_link == NULL
+	  if (getenv("LD_RUN_PATH") != NULL
+	      && command_line.rpath_link == NULL
 	      && command_line.rpath == NULL)
 	    {
-	      lib_path = (const char *) getenv ("LD_RUN_PATH");
+	      lib_path = getenv ("LD_RUN_PATH");
 	      if (gld${EMULATION_NAME}_search_needed (lib_path, l->name,
 						      force))
+	        break;
+	    }
+	  len = strlen(search_head->name);
+	  lib_path = xstrdup(search_head->name);
+	  for (search = search_head->next; search != NULL;
+	       search = search->next)
+	    {
+	      size_t nlen;
+
+	      nlen = strlen(search->name);
+	      lib_path = xrealloc(lib_path, len + nlen + 2);
+	      lib_path[len] = ':';
+	      strcpy(lib_path + len + 1, search->name);
+	      len += nlen + 1;
+	     }
+	  if (gld${EMULATION_NAME}_search_needed (lib_path, l->name,
+	                                          force))
+	    {
+	        free(lib_path);
 		break;
 	    }
+	  free(lib_path);
 EOF
 if [ "x${host}" = "x${target}" ] ; then
   case " ${EMULATION_LIBPATH} " in
   *" ${EMULATION_NAME} "*)
 cat >>e${EMULATION_NAME}.c <<EOF
-	  lib_path = (const char *) getenv ("LD_LIBRARY_PATH");
+	  lib_path = getenv ("LD_LIBRARY_PATH");
 	  if (gld${EMULATION_NAME}_search_needed (lib_path, l->name, force))
 	    break;
 EOF
