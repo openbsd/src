@@ -1,4 +1,4 @@
-/*	$OpenBSD: ophandlers.c,v 1.3 1996/08/31 12:56:08 deraadt Exp $	*/
+/*	$OpenBSD: ophandlers.c,v 1.4 1996/08/31 13:12:12 deraadt Exp $	*/
 /*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ static	struct extabent opextab[] = {
 };
 
 #define BARF(str1, str2) {						\
-	snprintf(err_str, sizeof err_str "%s: %s", (str1), (str2));	\
+	snprintf(err_str, sizeof err_str, "%s: %s", (str1), (str2));	\
 	++eval;								\
 	return (err_str);						\
 };
