@@ -605,7 +605,7 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 			 * This is X11 asking if a type 3 keyboard is
 			 * really a type 3 keyboard.  Say yes.
 			 */
-			((struct okiockey *)data)->kio_entry = HOLE;
+			((struct okiockey *)data)->kio_entry = (u_char) HOLE;
 			return (0);
 		}
 		break;
