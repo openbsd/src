@@ -1673,6 +1673,17 @@
 ./usr/share/man/cat4/yds.0
 ./usr/share/man/cat4/ym.0
 ./usr/share/man/cat4/zaurus
+./usr/share/man/cat4/zaurus/autoconf.0
+./usr/share/man/cat4/zaurus/intro.0
+./usr/share/man/cat4/zaurus/kmem.0
+./usr/share/man/cat4/zaurus/lcd.0
+./usr/share/man/cat4/zaurus/mem.0
+./usr/share/man/cat4/zaurus/obio.0
+./usr/share/man/cat4/zaurus/pxagpio.0
+./usr/share/man/cat4/zaurus/pxaintc.0
+./usr/share/man/cat4/zaurus/pxaip.0
+./usr/share/man/cat4/zaurus/pxapcic.0
+./usr/share/man/cat4/zaurus/saost.0
 ./usr/share/man/cat4/zero.0
 ./usr/share/man/cat5
 ./usr/share/man/cat5/.rhosts.0
