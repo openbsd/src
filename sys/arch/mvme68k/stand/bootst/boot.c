@@ -1,3 +1,4 @@
+/*	$OpenBSD: boot.c,v 1.2 1997/04/22 16:02:20 gvf Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/10/17 22:58:14 gwr Exp $ */
 
 /*-
@@ -56,7 +57,7 @@ main()
 	char *cp, *file;
 	int	io, flag;
 
-	printf(">> BSD MVME%x tapeboot [%s]\n", bugargs.cputyp, version);
+	printf(">> OpenBSD MVME%x tapeboot [%s]\n", bugargs.cputyp, version);
 
 	parse_args(&file, &flag);
 	file = defname;	/* override */
