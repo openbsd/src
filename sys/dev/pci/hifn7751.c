@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.46 2000/08/15 14:22:44 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -175,8 +175,8 @@ hifn_attach(parent, self, aux)
         }
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(*sc->sc_dma), &kva,
 	    BUS_DMA_NOWAIT)) {
-		printf(": can't map dma buffers (%d bytes)\n",
-		    sizeof(*sc->sc_dma));
+		printf(": can't map dma buffers (%lu bytes)\n",
+		    (u_long)sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		goto fail_io1;
 	}
@@ -437,7 +437,7 @@ hifn_enable_crypto(sc, pciid)
 
 	if (encl != 0 && encl != HIFN_PUSTAT_ENA_0) {
 #ifdef HIFN_DEBUG
-		printf("%: Unknown encryption level\n",  sc->sc_dv.dv_xname);
+		printf("%s: Unknown encryption level\n", sc->sc_dv.dv_xname);
 #endif
 		return 1;
 	}
