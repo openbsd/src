@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.343 2003/05/10 23:32:48 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.344 2003/05/11 01:17:15 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2508,7 +2508,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (r->log) {
 #ifdef INET6
 		if (rewrite)
-			m_copyback(m, off, ICMP_MINLEN,
+			m_copyback(m, off, sizeof(struct icmp6_hdr),
 			    (caddr_t)pd->hdr.icmp6);
 #endif /* INET6 */
 		PFLOG_PACKET(ifp, h, m, af, direction, reason, a ? a : r);
@@ -2590,7 +2590,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 #ifdef INET6
 	/* copy back packet headers if we performed IPv6 NAT operations */
 	if (rewrite)
-		m_copyback(m, off, ICMP_MINLEN,
+		m_copyback(m, off, sizeof(struct icmp6_hdr),
 		    (caddr_t)pd->hdr.icmp6);
 #endif /* INET6 */
 
@@ -3325,7 +3325,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					pf_change_a6(saddr,
 					    &pd->hdr.icmp6->icmp6_cksum,
 					    &(*state)->gwy.addr, 0);
-					m_copyback(m, off, ICMP_MINLEN,
+					m_copyback(m, off,
+					    sizeof(struct icmp6_hdr),
 					    (caddr_t)pd->hdr.icmp6);
 					break;
 #endif /* INET6 */
@@ -3344,7 +3345,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					pf_change_a6(daddr,
 					    &pd->hdr.icmp6->icmp6_cksum,
 					    &(*state)->lan.addr, 0);
-					m_copyback(m, off, ICMP_MINLEN,
+					m_copyback(m, off,
+					    sizeof(struct icmp6_hdr),
 					    (caddr_t)pd->hdr.icmp6);
 					break;
 #endif /* INET6 */
@@ -3538,7 +3540,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 #endif /* INET */
 #ifdef INET6
 				case AF_INET6:
-					m_copyback(m, off, ICMP_MINLEN,
+					m_copyback(m, off,
+					    sizeof(struct icmp6_hdr),
 					    (caddr_t)pd->hdr.icmp6);
 					m_copyback(m, ipoff2, sizeof(h2_6),
 					    (caddr_t)&h2_6);
@@ -3599,7 +3602,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 #endif /* INET */
 #ifdef INET6
 				case AF_INET6:
-					m_copyback(m, off, ICMP_MINLEN,
+					m_copyback(m, off,
+					    sizeof(struct icmp6_hdr),
 					    (caddr_t)pd->hdr.icmp6);
 					m_copyback(m, ipoff2, sizeof(h2_6),
 					    (caddr_t)&h2_6);
@@ -3666,8 +3670,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			struct icmp6_hdr	iih;
 			struct pf_tree_node	key;
 
-			if (!pf_pull_hdr(m, off2, &iih, ICMP_MINLEN,
-			    NULL, NULL, pd2.af)) {
+			if (!pf_pull_hdr(m, off2, &iih,
+			    sizeof(struct icmp6_hdr), NULL, NULL, pd2.af)) {
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: ICMP error message too short "
 				    "(icmp6)\n"));
@@ -3697,11 +3701,11 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					    pd2.ip_sum, icmpsum,
 					    pd->ip_sum, 0, AF_INET6);
 				}
-				m_copyback(m, off, ICMP_MINLEN,
+				m_copyback(m, off, sizeof(struct icmp6_hdr),
 				    (caddr_t)pd->hdr.icmp6);
 				m_copyback(m, ipoff2, sizeof(h2_6),
 				    (caddr_t)&h2_6);
-				m_copyback(m, off2, ICMP_MINLEN,
+				m_copyback(m, off2, sizeof(struct icmp6_hdr),
 				    (caddr_t)&iih);
 			}
 
@@ -3746,7 +3750,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 #endif /* INET */
 #ifdef INET6
 				case AF_INET6:
-					m_copyback(m, off, ICMP_MINLEN,
+					m_copyback(m, off,
+					    sizeof(struct icmp6_hdr),
 					    (caddr_t)pd->hdr.icmp6);
 					m_copyback(m, ipoff2, sizeof(h2_6),
 					    (caddr_t)&h2_6);
