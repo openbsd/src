@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.4 1996/05/10 12:58:31 deraadt Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.5 1997/02/26 16:46:31 niklas Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.4 1996/05/10 12:58:31 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.5 1997/02/26 16:46:31 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -193,7 +193,7 @@ _kvm_vatop(kd, sta, va, pa)
 	
 	return (NBPG - offset);
 invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 

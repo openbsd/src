@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.3 1996/10/23 16:43:08 deraadt Exp $ */
+/*	$OpenBSD: kvm_proc.c,v 1.4 1997/02/26 16:46:33 niklas Exp $ */
 /*	$NetBSD: kvm_proc.c,v 1.16 1996/03/18 22:33:57 thorpej Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.3 1996/10/23 16:43:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.4 1997/02/26 16:46:33 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -779,7 +779,7 @@ kvm_doargv(kd, kp, nchr, info)
 	 * Pointers are stored at the top of the user stack.
 	 */
 	if (p->p_stat == SZOMB || 
-	    kvm_uread(kd, p, ps, (char *)&arginfo,
+	    kvm_uread(kd, p, (u_long)ps, (char *)&arginfo,
 		      sizeof(arginfo)) != sizeof(arginfo))
 		return (0);
 
@@ -838,7 +838,7 @@ kvm_uread(kd, p, uva, buf, len)
 
 		dp = _kvm_uread(kd, p, uva, &cnt);
 		if (dp == 0) {
-			_kvm_err(kd, 0, "invalid address (%x)", uva);
+			_kvm_err(kd, 0, "invalid address (%lx)", uva);
 			return (0);
 		}
 		cc = MIN(cnt, len);

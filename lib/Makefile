@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 1997/02/26 03:06:48 downsj Exp $
+#	$OpenBSD: Makefile,v 1.19 1997/02/26 16:46:25 niklas Exp $
 #	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
 SUBDIR=	csu libarch libc libcom_err libcompat libcurses libedit \
@@ -7,7 +7,8 @@ SUBDIR=	csu libarch libc libcom_err libcompat libcurses libedit \
 	liby libz
 
 # XXX Temporarely until all ports are able to use libkvm (leo)
-.if	(${MACHINE} == "amiga") || \
+.if	(${MACHINE} == "alpha") || \
+	(${MACHINE} == "amiga") || \
 	(${MACHINE} == "atari") || \
 	(${MACHINE} == "powerpc") || \
 	(${MACHINE} == "sun3")

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_arm32.c,v 1.1 1996/05/05 14:56:52 deraadt Exp $ */
+/*	$OpenBSD: kvm_arm32.c,v 1.2 1997/02/26 16:46:29 niklas Exp $ */
 /*	$NetBSD: kvm_arm32.c,v 1.2 1996/03/18 22:33:16 thorpej Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_arm32.c,v 1.1 1996/05/05 14:56:52 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_arm32.c,v 1.2 1997/02/26 16:46:29 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,7 +151,7 @@ _kvm_kvatop(kd, va, pa)
 	offset = va & PGOFSET;
 
 invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
@@ -201,6 +201,6 @@ _kvm_uvatop(kd, p, va, pa)
 	return (NBPG - offset);
 
 invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc.c,v 1.2 1996/05/05 14:57:50 deraadt Exp $ */
+/*	$OpenBSD: kvm_sparc.c,v 1.3 1997/02/26 16:46:34 niklas Exp $ */
 /*	$NetBSD: kvm_sparc.c,v 1.9 1996/04/01 19:23:03 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_sparc.c,v 1.2 1996/05/05 14:57:50 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_sparc.c,v 1.3 1997/02/26 16:46:34 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -299,7 +299,7 @@ _kvm_kvatop44c(kd, va, pa)
 		return (kd->nbpg - off);
 	}
 err:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
@@ -412,6 +412,6 @@ _kvm_kvatop4m(kd, va, pa)
 		return (kd->nbpg - off);
 	}
 err:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }

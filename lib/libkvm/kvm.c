@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.5 1997/01/17 07:11:59 millert Exp $ */
+/*	$OpenBSD: kvm.c,v 1.6 1997/02/26 16:46:28 niklas Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.5 1997/01/17 07:11:59 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.6 1997/02/26 16:46:28 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -869,7 +869,7 @@ kvm_read(kd, kva, buf, len)
 		errno = 0;
 		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
 			&& errno != 0) {
-			_kvm_err(kd, 0, "invalid address (%x)", kva);
+			_kvm_err(kd, 0, "invalid address (%lx)", kva);
 			return (0);
 		}
 		cc = read(kd->vmfd, buf, len);
@@ -939,7 +939,7 @@ kvm_write(kd, kva, buf, len)
 		errno = 0;
 		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
 			&& errno != 0) {
-			_kvm_err(kd, 0, "invalid address (%x)", kva);
+			_kvm_err(kd, 0, "invalid address (%lx)", kva);
 			return (0);
 		}
 		cc = write(kd->vmfd, buf, len);
