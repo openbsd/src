@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.17 2003/03/28 00:16:12 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.18 2003/03/29 02:34:17 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -46,6 +46,8 @@
 #include <scsi/scsi_message.h>
 
 #include <dev/ic/iha.h>
+
+/* #define IHA_DEBUG_STATE */
 
 struct cfdriver iha_cd = {
 	NULL, "iha", DV_DULL
@@ -268,12 +270,13 @@ iha_scsi_cmd(xs)
 			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 
 		if (error) {
+			sc_print_addr(xs->sc_link);
 			if (error == EFBIG)
-				printf("%s: buffer needs >%d dma segments\n",
-				    sc->sc_dev.dv_xname, IHA_MAX_SG_ENTRIES);
+				printf("buffer needs >%d dma segments\n",
+				    IHA_MAX_SG_ENTRIES);
 			else
-				printf("%s: error %d loading dma map\n",
-				    sc->sc_dev.dv_xname, error);
+				printf("error %d loading buffer dma map\n",
+				    error);
 
 			iha_append_free_scb(sc, pScb); 
 
@@ -1131,6 +1134,7 @@ iha_next_state(sc, iot, ioh)
 
 	default:
 #ifdef IHA_DEBUG_STATE
+		sc_print_addr(sc->HCS_ActScb->SCB_Xs->sc_link);
 		printf("[debug] -unknown state: %i-\n",
 		    sc->HCS_ActScb->SCB_NxtStat);
 #endif
@@ -1278,7 +1282,10 @@ iha_state_3(sc, iot, ioh)
 			break;
 
 		default:
+#ifdef IHA_DEBUG_STATE
+			sc_print_addr(pScb->SCB_Xs->sc_link);
 			printf("[debug] -s3- bad phase = %d\n", sc->HCS_Phase);
+#endif
 			iha_bad_seq(sc);
 			return (-1);
 		}
@@ -1928,7 +1935,9 @@ iha_msgin(sc, iot, ioh)
 			}
 			break;
 		default:
+#ifdef IHA_DEBUG_STATE
 			printf("[debug] iha_msgin: bad msg type: %d\n", msg);
+#endif
 			phase = iha_msgout_reject(sc, iot, ioh);
 			break;
 		}
@@ -2310,8 +2319,11 @@ iha_select(sc, iot, ioh, pScb, select_type)
 		break;
 
 	default:
+#ifdef IHA_DEBUG_STATE
+		sc_print_addr(pScb->SCB_Xs->sc_link);
 		printf("[debug] iha_select() - unknown select type = 0x%02x\n",
 		    select_type);
+#endif
 		return;
 	}
 
@@ -2462,8 +2474,8 @@ iha_done_scb(sc, pScb)
 			break;
 
 		case HOST_SPERR:
-			printf("%s: SCSI Parity error detected\n",
-			    sc->sc_dev.dv_xname);
+			sc_print_addr(xs->sc_link);
+			printf("SCSI Parity error detected\n");
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
@@ -2491,16 +2503,10 @@ iha_timeout(arg)
 {
 	struct iha_scsi_req_q *pScb = (struct iha_scsi_req_q *)arg;
 	struct scsi_xfer *xs = pScb->SCB_Xs;
-	struct iha_softc *sc;
 
-	if (xs == NULL)
-		printf("[debug] iha_timeout called with xs == NULL\n");
-
-	else {
-		sc = xs->sc_link->adapter_softc;
+	if (xs != NULL) {
 		sc_print_addr(xs->sc_link);
 		printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
-
 		iha_abort_xs(xs->sc_link->adapter_softc, xs, HOST_TIMED_OUT);
 	}
 }
@@ -2571,8 +2577,8 @@ iha_print_info(sc, target)
 	int rate;
 
 	printf("%s: target %d using %d bit ", sc->sc_dev.dv_xname, target,
-	    (period & PERIOD_WIDE_SCSI) ? 16 : 8);
-
+		(period & PERIOD_WIDE_SCSI) ? 16 : 8);
+ 
 	if ((period & PERIOD_SYOFS) == 0)
 		printf("async ");
 	else {
@@ -2585,7 +2591,7 @@ iha_print_info(sc, target)
 		printf("%d.%d MHz %d REQ/ACK offset ", rate / 1000000,
 		    (rate % 1000000 + 99999) / 100000, period & PERIOD_SYOFS);
 	}
-	
+
 	printf("xfers\n");
 }
 
