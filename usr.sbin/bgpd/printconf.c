@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.27 2004/08/13 14:03:20 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.28 2004/08/24 12:42:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -305,11 +305,11 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 		if (r->match.as.type == AS_ALL)
 			printf("AS %u ", r->match.as.as);
 		else if (r->match.as.type == AS_SOURCE)
-			printf("source-AS %u ", r->match.as.as);
+			printf("source-as %u ", r->match.as.as);
 		else if (r->match.as.type == AS_TRANSIT)
-			printf("transit-AS %u ", r->match.as.as);
+			printf("transit-as %u ", r->match.as.as);
 		else
-			printf("unfluffy-AS %u ", r->match.as.as);
+			printf("unfluffy-as %u ", r->match.as.as);
 	}
 
 	if (r->match.community.as != 0) {
