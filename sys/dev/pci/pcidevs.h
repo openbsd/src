@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.123 1999/02/26 13:56:43 jason Exp 
+ *	OpenBSD: pcidevs,v 1.124 1999/03/04 15:27:30 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -894,7 +894,7 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
-#define	PCI_PRODUCT_INTEL_82596	0x1226		/* 82596 */
+#define	PCI_PRODUCT_INTEL_82596	0x1226		/* EE Pro/10+ */
 #define	PCI_PRODUCT_INTEL_EEPRO100	0x1227		/* EE Pro 100 */
 #define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart */
 #define	PCI_PRODUCT_INTEL_82557	0x1229		/* 82557 */

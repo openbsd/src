@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.123 1999/02/26 13:56:43 jason Exp 
+ *	OpenBSD: pcidevs,v 1.124 1999/03/04 15:27:30 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1476,7 +1476,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82596,
 	    0,
 	    "Intel",
-	    "82596",
+	    "EE Pro/10+",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100,
