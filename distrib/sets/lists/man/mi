@@ -2058,6 +2058,7 @@
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pegasos
 ./usr/share/man/cat8/pegasos/MAKEDEV.0
+./usr/share/man/cat8/pegasos/boot_pegasos.0
 ./usr/share/man/cat8/pegasos/fdisk.0
 ./usr/share/man/cat8/pegasos/kbd.0
 ./usr/share/man/cat8/pegasos/wsconscfg.0
