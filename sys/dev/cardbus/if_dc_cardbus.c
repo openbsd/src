@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.16 2005/01/14 15:04:52 brad Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.17 2005/01/16 19:46:01 brad Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,13 +130,17 @@ dc_cardbus_attach(parent, self, aux)
 
 	dc_cardbus_setup(csc);
 
+	/* Get the eeprom width, but XIRCOM has no eeprom */
+	if (!(PCI_VENDOR(ca->ca_id) == PCI_VENDOR_XIRCOM &&
+	      PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_XIRCOM_X3201_3_21143))
+		dc_eeprom_width(sc);
+
 	switch (PCI_VENDOR(ca->ca_id)) {
 	case PCI_VENDOR_DEC:
 		if (PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_DEC_21142) {
 			sc->dc_type = DC_TYPE_21143;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_REDUCED_MII_POLL;
-			dc_eeprom_width(sc);
 			dc_read_srom(sc, sc->dc_romwidth);
 			dc_parse_21143_srom(sc);
 		}
@@ -166,8 +170,7 @@ dc_cardbus_attach(parent, self, aux)
 			sc->dc_type = DC_TYPE_AN983;
 			sc->dc_flags |= DC_TX_USE_TX_INTR|DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
-			dc_eeprom_width(sc);
-			dc_read_srom(sc, sc->dc_romwidth);
+			/* Don't read SROM for - auto-loaded on reset */
 		}
 		break;
 	default:

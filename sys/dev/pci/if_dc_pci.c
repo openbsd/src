@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.47 2005/01/14 15:04:52 brad Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.48 2005/01/16 19:46:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -289,6 +289,11 @@ void dc_pci_attach(parent, self, aux)
 	/* Need this info to decide on a chip type. */
 	sc->dc_revision = revision = PCI_REVISION(pa->pa_class);
 
+	/* Get the eeprom width, but PNIC has no eeprom */
+	if (!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LITEON &&
+	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LITEON_PNIC))
+		dc_eeprom_width(sc);
+
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_DEC:
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21140 ||
@@ -297,7 +302,6 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_type = DC_TYPE_21143;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_REDUCED_MII_POLL;
-			dc_eeprom_width(sc);
 			dc_read_srom(sc, sc->dc_romwidth);
 		}
 		break;
@@ -307,7 +311,6 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_type = DC_TYPE_21145;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_REDUCED_MII_POLL;
-			dc_eeprom_width(sc);
 			dc_read_srom(sc, sc->dc_romwidth);
 		}
 	case PCI_VENDOR_DAVICOM:
@@ -335,9 +338,8 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
+			/* Don't read SROM for - auto-loaded on reset */
 		}
-		dc_eeprom_width(sc);
-		dc_read_srom(sc, sc->dc_romwidth);
 		break;
 	case PCI_VENDOR_ADMTEK:
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AL981) {
@@ -346,7 +348,6 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
-			dc_eeprom_width(sc);
 			dc_read_srom(sc, sc->dc_romwidth);
 		}
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN983) {
@@ -356,7 +357,6 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
 			sc->dc_flags |= DC_64BIT_HASH;
 			sc->dc_pmode = DC_PMODE_MII;
-			dc_eeprom_width(sc);
 			/* Don't read SROM for - auto-loaded on reset */
 		}
 		break;
@@ -368,9 +368,7 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
-
-			dc_eeprom_width(sc);
-			dc_read_srom(sc, sc->dc_romwidth);
+			/* Don't read SROM for - auto-loaded on reset */
 		}
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98713) {
 			found = 1;
@@ -450,7 +448,6 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_INTR_ALWAYS;
 			sc->dc_flags |= DC_REDUCED_MII_POLL;
 			sc->dc_pmode = DC_PMODE_MII;
-			dc_eeprom_width(sc);
 			dc_read_srom(sc, sc->dc_romwidth);
 		}
 		break;
@@ -553,7 +550,6 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_srm_media |= IFM_ACTIVE | IFM_ETHER;
 	}
 #endif
-	dc_eeprom_width(sc);
 	dc_attach(sc);
 
 fail:
