@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.35 2001/05/29 01:01:51 angelos Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.36 2001/05/30 04:26:55 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -122,7 +122,7 @@ int txp_response __P((struct txp_softc *, u_int32_t, u_int16_t, u_int16_t,
     struct txp_rsp_desc **));
 void txp_rsp_fixup __P((struct txp_softc *, struct txp_rsp_desc *,
     struct txp_rsp_desc *));
-void txp_vlan_enable __P((struct txp_softc *));
+void txp_capabilities __P((struct txp_softc *));
 
 void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int txp_ifmedia_upd __P((struct ifnet *));
@@ -239,10 +239,6 @@ txp_attach(parent, self, aux)
 
 	txp_set_filter(sc);
 
-#if NVLAN > 0
-	txp_vlan_enable(sc);
-#endif
-
 	sc->sc_arpcom.ac_enaddr[0] = ((u_int8_t *)&p1)[1];
 	sc->sc_arpcom.ac_enaddr[1] = ((u_int8_t *)&p1)[0];
 	sc->sc_arpcom.ac_enaddr[2] = ((u_int8_t *)&p2)[3];
@@ -276,8 +272,10 @@ txp_attach(parent, self, aux)
 	ifp->if_watchdog = txp_watchdog;
 	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = TX_ENTRIES;
-	ifp->if_capabilities = IFCAP_IPSEC;
+	ifp->if_capabilities = 0;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	txp_capabilities(sc);
 
 	timeout_set(&sc->sc_tick, txp_tick, sc);
 
@@ -1839,20 +1837,13 @@ setit:
 }
 
 void
-txp_vlan_enable(sc)
+txp_capabilities(sc)
 	struct txp_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct txp_rsp_desc *rsp = NULL;
 	struct txp_ext_desc *ext;
 
-	/* Setup type filter */
-	if (txp_command(sc, TXP_CMD_VLAN_ETHER_TYPE_WRITE, ETHERTYPE_8021Q,
-	    0, 0, NULL, NULL, NULL, 1))
-		goto out;
-
-	/*
-	 * Try to enable VLAN offload capability
-	 */
 	if (txp_command2(sc, TXP_CMD_OFFLOAD_READ, 0, 0, 0, &rsp, 1))
 		goto out;
 
@@ -1860,10 +1851,47 @@ txp_vlan_enable(sc)
 		goto out;
 	ext = (struct txp_ext_desc *)(rsp + 1);
 
+	sc->sc_tx_capability = ext->ext_1 & 0xfffffffe;
+	sc->sc_rx_capability = ext->ext_2 & 0xfffffffe;
+
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_VLAN) {
+		sc->sc_tx_capability |= OFFLOAD_VLAN;
+		sc->sc_rx_capability |= OFFLOAD_VLAN;
+		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+	}
+#endif
+
+	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_IPSEC) {
+		sc->sc_tx_capability |= OFFLOAD_IPSEC;
+		sc->sc_rx_capability |= OFFLOAD_IPSEC;
+		ifp->if_capabilities |= IFCAP_IPSEC;
+	}
+
+#if 0
+	/* not supported, yet */
+	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_IPCKSUM) {
+		sc->sc_tx_capability |= OFFLOAD_IPCKSUM;
+		sc->sc_rx_capability |= OFFLOAD_IPCKSUM;
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4;
+	}
+
+	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_TCPCKSUM) {
+		sc->sc_tx_capability |= OFFLOAD_TCPCKSUM;
+		sc->sc_rx_capability |= OFFLOAD_TCPCKSUM;
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4;
+	}
+
+	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_UDPCKSUM) {
+		sc->sc_tx_capability |= OFFLOAD_UDPCKSUM;
+		sc->sc_rx_capability |= OFFLOAD_UDPCKSUM;
+		ifp->if_capabilities |= IFCAP_CSUM_UDPv4;
+	}
+#endif
+
 	if (txp_command(sc, TXP_CMD_OFFLOAD_WRITE, 0,
-	    (ext->ext_1 | OFFLOAD_VLAN) & rsp->rsp_par2,
-	    (ext->ext_2 | OFFLOAD_VLAN) & rsp->rsp_par3,
-	    NULL, NULL, NULL, 1))
+	    sc->sc_tx_capability, sc->sc_rx_capability, NULL, NULL, NULL, 1))
 		goto out;
 
 out:
