@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsi,v 1.1 1995/04/17 07:15:40 cgd Exp $
+#	$NetBSD: files.scsi,v 1.2 1996/02/18 20:32:40 mycroft Exp $
 #
 # Config.new file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that usee it must provide
@@ -19,6 +19,10 @@ device	sd at scsibus: disk
 file	scsi/sd.c			sd needs-flag
 device	st at scsibus: tape
 file	scsi/st.c			st needs-flag
+device	ss at scsibus: tape
+file	scsi/ss.c			ss needs-flag
+file	scsi/ss_mustek.c		ss
+file	scsi/ss_scanjet.c		ss
 device	su at scsibus: disk
 file	scsi/su.c			su needs-flag
 device	uk at scsibus: disk

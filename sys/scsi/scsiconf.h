@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.26 1996/01/12 22:43:31 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.28 1996/02/18 20:32:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -84,6 +84,8 @@ typedef	int			boolean;
  * scsi system to find the associated other parts.
  */
 
+struct buf;
+struct scsi_xfer;
 
 /*
  * These entrypoints are called by the high-end drivers to get services from
@@ -91,10 +93,10 @@ typedef	int			boolean;
  * these statically allocated.
  */
 struct scsi_adapter {
-	int		(*scsi_cmd)();
+	int		(*scsi_cmd) __P((struct scsi_xfer *));
 	void		(*scsi_minphys) __P((struct buf *));
-	int		(*open_target_lu)();
-	int		(*close_target_lu)();
+	int		(*open_target_lu) __P((void));
+	int		(*close_target_lu) __P((void));
 };
 
 /*
@@ -111,16 +113,18 @@ struct scsi_adapter {
  * of these statically allocated.
  */
 struct scsi_device {
-	int	(*err_handler)(); /* returns -1 to say err processing done */
-	void	(*start)();
-	int	(*async)();
+	int	(*err_handler) __P((struct scsi_xfer *));
+			/* returns -1 to say err processing done */
+	void	(*start) __P((void *));
+
+	int	(*async) __P((void));
 	/*
 	 * When called with `0' as the second argument, we expect status
 	 * back from the upper-level driver.  When called with a `1',
 	 * we're simply notifying the upper-level driver that the command
 	 * is complete and expect no status back.
 	 */
-	int	(*done)( /* struct scsi_xfer *, int */ );
+	int	(*done)  __P((struct scsi_xfer *, int));
 };
 
 /*
@@ -270,6 +274,7 @@ int scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, int));
 int scsi_prevent __P((struct scsi_link *, int, int));
 int scsi_start __P((struct scsi_link *, int, int));
 void scsi_done __P((struct scsi_xfer *));
+void scsi_user_done __P((struct scsi_xfer *));
 int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
 			int cmdlen, u_char *data_addr,
 			int datalen, int retries,
@@ -281,6 +286,9 @@ void sc_print_addr __P((struct scsi_link *));
 void show_scsi_xs __P((struct scsi_xfer *));
 void show_scsi_cmd __P((struct scsi_xfer *));
 void show_mem __P((u_char *, int));
+int scsi_probe_busses __P((int, int, int));
+void scsi_strvis __P((u_char *, u_char *, int));
+
 
 void lto3b __P((u_int32_t val, u_int8_t *bytes));
 u_int32_t _3btol __P((u_int8_t *bytes));
