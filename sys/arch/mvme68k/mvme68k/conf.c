@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1996/05/04 18:50:49 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.7 1996/05/27 21:58:36 chuck Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -89,6 +89,8 @@ bdev_decl(xd);
 bdev_decl(vnd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "rd.h"
+bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -97,11 +99,11 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 2 */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
-	bdev_tape_init(NST,st),		/* 5: SCSI tape */
-	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
-	bdev_notdef(),			/* 7 */
-	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
-	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
+	bdev_disk_init(NCCD,ccd),	/* 5: concatenated disk driver */
+	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
+	bdev_tape_init(NST,st),		/* 7: SCSI tape */
+	bdev_disk_init(NCD,cd),		/* 8: SCSI CD-ROM */
+	bdev_disk_init(NRD,rd),		/* 9: RAM disk - for install tape */
 	bdev_disk_init(NXD,xd),		/* 10: XD disk */
 	bdev_notdef(),			/* 11 */
 	bdev_notdef(),			/* 12 */
