@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.5 1998/08/23 00:57:14 millert Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.6 1998/10/06 18:09:50 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.5 1998/08/23 00:57:14 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.6 1998/10/06 18:09:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,10 @@ static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.5 1998/08/23 00:57:14 millert Exp
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "extern.h"
 
@@ -80,8 +84,16 @@ main(argc, argv)
 	char *argv[];
 {
 	DB *db;
+	struct rlimit rl;
 	int fd, ch, verbose = 0;
 	char *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
+
+	/* Increase our data size to the max if we can. */
+	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
+		rl.rlim_cur = rl.rlim_max;
+		if (setrlimit(RLIMIT_DATA, &rl) < 0)
+			warn("can't set rlimit data size");
+	}
 
 	while ((ch = getopt(argc, argv, "v")) != -1)
 		switch (ch) {
