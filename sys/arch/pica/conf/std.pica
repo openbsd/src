@@ -1,6 +1,0 @@
-#	$NetBSD: std.pmax,v 1.0 1995/04/28 03:10:41 jonathan Exp
-# standard pica info
-
-machine pica
-mainbus0 at root
-cpu* at mainbus0
