@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.72 2004/02/02 18:56:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.73 2004/02/02 19:14:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -660,7 +660,7 @@ rde_generate_updates(struct prefix *new, struct prefix *old)
 	 * On the other hand new may be UNREACH and then we should not
 	 * generate an update.
 	 */
-	if (old == NULL && (new == NULL || 
+	if (old == NULL && (new == NULL ||
 	    new->aspath->nexthop->state != NEXTHOP_REACH))
 		return;
 

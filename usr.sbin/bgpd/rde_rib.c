@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.30 2004/02/02 18:56:25 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.31 2004/02/02 19:14:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -899,7 +899,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
 		 * the active prefix changes it's state. In this case
 		 * we know that this is a withdrawl and so the second
 		 * prefix_evaluate() will generate no update because
-		 * the nexthop is unreachable or ineligible. 
+		 * the nexthop is unreachable or ineligible.
 		 */
 		if (p == p->prefix->active)
 			prefix_evaluate(NULL, p->prefix);
