@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.26 1998/09/11 12:06:54 fgsch Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.27 1998/09/16 21:16:19 deraadt Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ epconfig(sc, chipset, enaddr)
 		bcopy(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	}
 
-	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(" address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Vortex-based (3c59x pci,eisa) and Boomerang (3c900,3c515?) cards

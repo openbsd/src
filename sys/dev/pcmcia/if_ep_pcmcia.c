@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.9 1998/09/11 10:47:14 fgsch Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.10 1998/09/16 21:16:55 deraadt Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -346,7 +346,7 @@ ep_pcmcia_attach(parent, self, aux)
 	if (epp == NULL)
 		panic("ep_pcmcia_attach: impossible");
 
-	printf(": %s\n", epp->epp_name);
+	printf(": %s,", epp->epp_name);
 
 #ifdef notyet
 	sc->enable = ep_pcmcia_enable;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isapnp.c,v 1.3 1998/09/11 12:06:57 fgsch Exp $	*/
+/*	$OpenBSD: if_ep_isapnp.c,v 1.4 1998/09/16 21:16:37 deraadt Exp $	*/
 /*	$NetBSD: if_ep_isapnp.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -113,6 +113,8 @@ ep_isapnp_attach(parent, self, aux)
 	sc->sc_iot = iot = ia->ia_iot;
 	sc->sc_ioh = ioh = ia->ipa_io[0].h;
 	sc->bustype = EP_BUS_ISA;
+
+	printf(":");
 
 	/* Should look at ia->ia_devident... */
 	epconfig(sc, EP_CHIPSET_3C509, NULL);
