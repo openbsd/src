@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.13 2002/03/07 00:54:09 art Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.14 2002/03/17 04:50:57 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -58,7 +58,7 @@ dlopen(const char *libname, int how)
 	Elf_Dyn	*dynp;
 
 	if (libname == NULL) {
-		return NULL;
+		return _dl_objects;
 	}
 	DL_DEB(("dlopen: loading: %s\n", libname));
 
@@ -122,16 +122,6 @@ dlsym(void *handle, const char *name)
 	void		*retval;
 	const Elf_Sym	*sym = NULL;
 
-	if (handle == NULL) {
-		object = _dl_objects;
-		retval = (void *)_dl_find_symbol(name, object, &sym, 1, 1);
-		if (sym != NULL) {
-			retval += sym->st_value;
-		} else {
-			_dl_errno = DL_NO_SYMBOL;
-		}
-		return retval;
-	}
 	object = (elf_object_t *)handle;
 	dynobj = _dl_objects;
 	while (dynobj && dynobj != object) {
@@ -175,6 +165,9 @@ dlclose(void *handle)
 {
 	int retval;
 
+	if (handle == _dl_objects) {
+		return 0;
+	}
 	retval = _dl_real_close(handle);
 
 	if (_dl_debug_map->r_brk) {
