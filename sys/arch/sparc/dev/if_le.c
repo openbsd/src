@@ -412,7 +412,7 @@ lereset(dev)
 		ler2->ler2_tmd[i].tmd3 = 0;
 	}
 
-bzero((void *)&ler2->ler2_rbuf[0][0], (LERBUF + LETBUF) * LEMTU);
+	bzero((void *)&ler2->ler2_rbuf[0][0], (LERBUF + LETBUF) * LEMTU);
 	/* lance will stuff packet into receive buffer 0 next */
 	sc->sc_rmd = 0;
 
