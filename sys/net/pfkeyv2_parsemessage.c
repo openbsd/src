@@ -15,7 +15,18 @@ You should have received a copy of the license with this software. If
 you didn't get a copy, you may request one from <license@inner.net>.
 
 */
-#include <sys/osdep.h>
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/socketvar.h>
+#include <sys/proc.h>
+#include <net/route.h>
+#include <netinet/in.h>
 #include <net/pfkeyv2.h>
 
 #define BITMAP_SA                      (1 << SADB_EXT_SA)
@@ -216,7 +227,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
   if (!sadb_msg->sadb_msg_type)
     return EINVAL;
 
-  if (sadb_msg->sadb_msg_pid != OSDEP_CURRENTPID)
+  if (sadb_msg->sadb_msg_pid != curproc->p_pid)
     return EINVAL;
 
   if (sadb_msg->sadb_msg_errno) {

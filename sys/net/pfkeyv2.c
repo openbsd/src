@@ -15,7 +15,18 @@ You should have received a copy of the license with this software. If
 you didn't get a copy, you may request one from <license@inner.net>.
 
 */
-#include <sys/osdep.h>
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/socketvar.h>
+#include <sys/proc.h>
+#include <net/route.h>
+#include <netinet/in.h>
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
 
@@ -24,9 +35,9 @@ you didn't get a copy, you may request one from <license@inner.net>.
 
 struct pfkey_version {
   int protocol;
-  int (*create)(OSDEP_SOCKET *socket);
-  int (*release)(OSDEP_SOCKET *socket);
-  int (*send)(OSDEP_SOCKET *socket, void *message, int len);
+  int (*create)(struct socket *socket);
+  int (*release)(struct socket *socket);
+  int (*send)(struct socket *socket, void *message, int len);
 };
 
 static struct pfkey_version pfkeyv2_version;
@@ -40,7 +51,7 @@ static struct pfkey_version pfkeyv2_version;
 
 struct pfkeyv2_socket {
   struct pfkeyv2_socket *next;
-  OSDEP_SOCKET *socket;
+  struct socket *socket;
   int flags;
   uint32_t pid;
 };
@@ -70,7 +81,7 @@ static struct sadb_alg aalgs[] = {
 
 extern int pfkey_register(struct pfkey_version *version);
 int pfkey_unregister(struct pfkey_version *version);
-int pfkey_sendup(OSDEP_SOCKET *socket, OSDEP_PACKET *packet, int more);
+int pfkey_sendup(struct socket *socket, struct mbuf *packet, int more);
 int pfkeyv2_parsemessage(void *p, int len, void **headers);
 int pfkeyv2_acquire(void *);
 int pfkeyv2_init(void);
@@ -81,17 +92,27 @@ int pfkeyv2_expire(struct tdb *);
 #define PADUP(x) (((x) + sizeof(uint64_t) - 1) & ~(sizeof(uint64_t) - 1))
 
 static int
-pfkeyv2_create(OSDEP_SOCKET *socket)
+pfdatatopacket(void *data, int len, struct mbuf **packet)
+{
+  if (!(*packet = m_devget(data, len, 0, NULL, NULL)))
+    return ENOMEM;
+
+  return 0;
+}
+
+static int
+pfkeyv2_create(struct socket *socket)
 {
   struct pfkeyv2_socket *pfkeyv2_socket;
 
-  if (!(pfkeyv2_socket = OSDEP_MALLOC(sizeof(struct pfkeyv2_socket))))
-    return OSDEP_ERROR(ENOMEM);
+  if (!(pfkeyv2_socket = malloc(sizeof(struct pfkeyv2_socket), M_TEMP,
+				M_DONTWAIT)))
+    return ENOMEM;
 
   bzero(pfkeyv2_socket, sizeof(struct pfkeyv2_socket));
   pfkeyv2_socket->next = pfkeyv2_sockets;
   pfkeyv2_socket->socket = socket;
-  pfkeyv2_socket->pid = OSDEP_CURRENTPID;
+  pfkeyv2_socket->pid = curproc->p_pid;
 
   pfkeyv2_sockets = pfkeyv2_socket;
 
@@ -99,7 +120,7 @@ pfkeyv2_create(OSDEP_SOCKET *socket)
 }
 
 static int
-pfkeyv2_release(OSDEP_SOCKET *socket)
+pfkeyv2_release(struct socket *socket)
 {
   struct pfkeyv2_socket **pp;
 
@@ -120,7 +141,7 @@ pfkeyv2_release(OSDEP_SOCKET *socket)
     if (pfkeyv2_socket->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
       npromisc--;
 
-    OSDEP_FREE(pfkeyv2_socket);
+    free(pfkeyv2_socket, M_TEMP);
   }
 
   return 0;
@@ -357,13 +378,8 @@ export_address(void **p, struct sockaddr *sa)
 				    PADUP(SA_LEN(sa))) / sizeof(uint64_t);
 
   *p += sizeof(struct sadb_address);
-
   bcopy(sa, *p, SA_LEN(sa));
-
-#if !OSDEP_SALEN
   ((struct sockaddr *)*p)->sa_family = sa->sa_family;
-#endif /* !OSDEP_SALEN */
-
   *p += PADUP(SA_LEN(sa));
 }
 
@@ -428,11 +444,11 @@ import_key(struct ipsecinit *ii, struct sadb_key *sadb_key, int type)
 }
 
 static int
-pfkeyv2_sendmessage(void **headers, int mode, OSDEP_SOCKET *socket)
+pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket)
 {
   int i, j, rval;
   void *p, *buffer = NULL;
-  OSDEP_PACKET *packet;
+  struct mbuf *packet;
   struct pfkeyv2_socket *s;
 
   j = sizeof(struct sadb_msg);
@@ -441,8 +457,8 @@ pfkeyv2_sendmessage(void **headers, int mode, OSDEP_SOCKET *socket)
     if (headers[i])
       j += ((struct sadb_ext *)headers[i])->sadb_ext_len * sizeof(uint64_t);
 
-  if (!(buffer = OSDEP_MALLOC(j + sizeof(struct sadb_msg)))) {
-    rval = OSDEP_ERROR(ENOMEM);
+  if (!(buffer = malloc(j + sizeof(struct sadb_msg), M_TEMP, M_DONTWAIT))) {
+    rval = ENOMEM;
     goto ret;
   }
 
@@ -458,8 +474,8 @@ pfkeyv2_sendmessage(void **headers, int mode, OSDEP_SOCKET *socket)
       p += EXTLEN(headers[i]);
     }
 
-  if ((rval = OSDEP_DATATOPACKET(buffer + sizeof(struct sadb_msg),
-				 j, &packet)) != 0)
+  if ((rval = pfdatatopacket(buffer + sizeof(struct sadb_msg),
+			     j, &packet)) != 0)
     goto ret;
 
   switch(mode) {
@@ -473,16 +489,16 @@ pfkeyv2_sendmessage(void **headers, int mode, OSDEP_SOCKET *socket)
 			     (sizeof(struct sadb_msg) + j) / sizeof(uint64_t);
       ((struct sadb_msg *)buffer)->sadb_msg_seq = 0;
 
-      if ((rval = OSDEP_DATATOPACKET(buffer, sizeof(struct sadb_msg) + j,
-				    &packet)) != 0)
+      if ((rval = pfdatatopacket(buffer, sizeof(struct sadb_msg) + j,
+				 &packet)) != 0)
 	goto ret;
 
       for (s = pfkeyv2_sockets; s; s = s->next)
 	if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) && (s->socket != socket))
 	  pfkey_sendup(s->socket, packet, 1);
 
-      OSDEP_ZEROPACKET(packet);
-      OSDEP_FREEPACKET(packet);
+      m_zero(packet);
+      m_freem(packet);
       break;
 
     case PFKEYV2_SENDMESSAGE_REGISTERED:
@@ -490,7 +506,7 @@ pfkeyv2_sendmessage(void **headers, int mode, OSDEP_SOCKET *socket)
 	if (s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED)
 	  pfkey_sendup(s->socket, packet, 1);
     
-      OSDEP_FREEPACKET(packet);
+      m_freem(packet);
 
       bzero(buffer, sizeof(struct sadb_msg));
       ((struct sadb_msg *)buffer)->sadb_msg_version = PF_KEY_V2;
@@ -499,8 +515,8 @@ pfkeyv2_sendmessage(void **headers, int mode, OSDEP_SOCKET *socket)
 			     (sizeof(struct sadb_msg) + j) / sizeof(uint64_t);
       ((struct sadb_msg *)buffer)->sadb_msg_seq = 0;
 
-      if ((rval = OSDEP_DATATOPACKET(buffer, sizeof(struct sadb_msg) + j,
-				     &packet)) != 0)
+      if ((rval = pfdatatopacket(buffer, sizeof(struct sadb_msg) + j,
+				 &packet)) != 0)
 	goto ret;
 
       for (s = pfkeyv2_sockets; s; s = s->next)
@@ -508,20 +524,20 @@ pfkeyv2_sendmessage(void **headers, int mode, OSDEP_SOCKET *socket)
 	    (s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED))
 	  pfkey_sendup(s->socket, packet, 1);
 
-      OSDEP_FREEPACKET(packet);
+      m_freem(packet);
       break;
 
     case PFKEYV2_SENDMESSAGE_BROADCAST:
       for (s = pfkeyv2_sockets; s; s = s->next)
 	pfkey_sendup(s->socket, packet, 1);
 
-      OSDEP_FREEPACKET(packet);
+      m_freem(packet);
       break;
   }
 
 ret:
   bzero(buffer, j + sizeof(struct sadb_msg));
-  OSDEP_FREE(buffer);
+  free(buffer, M_TEMP);
   return rval;
 }
 
@@ -559,8 +575,8 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
   if (sa->tdb_dstid_len)
     i += PADUP(sa->tdb_dstid_len) + sizeof(struct sadb_ident);
 
-  if (!(p = OSDEP_MALLOC(i))) {
-    rval = OSDEP_ERROR(ENOMEM);
+  if (!(p = malloc(i, M_TEMP, M_DONTWAIT))) {
+    rval = ENOMEM;
     goto ret;
   }
 
@@ -615,7 +631,7 @@ ret:
 
 struct dump_state {
   struct sadb_msg *sadb_msg;
-  OSDEP_SOCKET *socket;
+  struct socket *socket;
 };
 
 #if 0 /* XXX Need to add a tdb_walk routine for this to work */
@@ -634,7 +650,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state)
       return rval;
     rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_UNICAST,
 			       dump_state->socket);
-    OSDEP_FREE(buffer);
+    free(buffer, M_TEMP);
     if (rval)
       return rval;
   }
@@ -644,7 +660,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state)
 #endif /* 0 */
 
 static int
-pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
+pfkeyv2_send(struct socket *socket, void *message, int len)
 {
   void *headers[SADB_EXT_MAX + 1];
   int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST, delflag = 0;
@@ -661,15 +677,16 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
       break;
 
   if (!pfkeyv2_socket) {
-    rval = OSDEP_ERROR(EINVAL);
+    rval = EINVAL;
     goto ret;
   }
 
   if (npromisc) {
-    OSDEP_PACKET *packet;
+    struct mbuf *packet;
 
-    if (!(freeme = OSDEP_MALLOC(sizeof(struct sadb_msg) + len))) {
-      rval = OSDEP_ERROR(ENOMEM);
+    if (!(freeme = malloc(sizeof(struct sadb_msg) + len, M_TEMP,
+			  M_DONTWAIT))) {
+      rval = ENOMEM;
       goto ret;
     }
 
@@ -678,23 +695,23 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
     ((struct sadb_msg *)freeme)->sadb_msg_type = SADB_X_PROMISC;
     ((struct sadb_msg *)freeme)->sadb_msg_len =
 			   (sizeof(struct sadb_msg) + len) / sizeof(uint64_t);
-    ((struct sadb_msg *)freeme)->sadb_msg_seq = OSDEP_CURRENTPID;
+    ((struct sadb_msg *)freeme)->sadb_msg_seq = curproc->p_pid;
 
     bcopy(message, freeme + sizeof(struct sadb_msg), len);
 
-    if ((rval = OSDEP_DATATOPACKET(freeme, sizeof(struct sadb_msg) + len,
-				   &packet)) != 0)
+    if ((rval = pfdatatopacket(freeme, sizeof(struct sadb_msg) + len,
+			       &packet)) != 0)
       goto ret;
 
     for (s = pfkeyv2_sockets; s; s = s->next)
       if (s->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
 	pfkey_sendup(s->socket, packet, 1);
 
-    OSDEP_ZEROPACKET(packet);
-    OSDEP_FREEPACKET(packet);
+    m_zero(packet);
+    m_freem(packet);
 
     bzero(freeme, sizeof(struct sadb_msg) + len);
-    OSDEP_FREE(freeme);
+    free(freeme, M_TEMP);
     freeme = NULL;
   }
 
@@ -740,8 +757,8 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
       if (sa.tdb_spi == 0)
 	goto ret;
 
-      if (!(freeme = OSDEP_MALLOC(sizeof(struct sadb_sa)))) {
-	rval = OSDEP_ERROR(ENOMEM);
+      if (!(freeme = malloc(sizeof(struct sadb_sa), M_TEMP, M_DONTWAIT))) {
+	rval = ENOMEM;
 	goto ret;
       }
 
@@ -826,7 +843,7 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
 
 	  rval = tdb_init(newsa, alg, &ii);
 	  if (rval) {
-	    rval = OSDEP_ERROR(EINVAL);
+	    rval = EINVAL;
 	    tdb_delete(freeme, 0);
 	    freeme = NULL;
 	    goto ret;
@@ -846,7 +863,7 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
 	      headers[SADB_EXT_IDENTITY_SRC] ||
 	      headers[SADB_EXT_IDENTITY_DST] ||
 	      headers[SADB_EXT_SENSITIVITY]) {
-	    rval = OSDEP_ERROR(EINVAL);
+	    rval = EINVAL;
 	    goto ret;
 	  }
 
@@ -869,7 +886,7 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
 
       if (((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_state !=
 	  SADB_SASTATE_MATURE) {
-	rval = OSDEP_ERROR(EINVAL);
+	rval = EINVAL;
 	goto ret;
       }
 
@@ -936,7 +953,7 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
 
 	rval = tdb_init(newsa, alg, &ii);
 	if (rval) {
-	  rval = OSDEP_ERROR(EINVAL);
+	  rval = EINVAL;
 	  tdb_delete(freeme, 0);
 	  freeme = NULL;
 	  goto ret;
@@ -985,8 +1002,8 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
 
       i = sizeof(struct sadb_supported) + sizeof(ealgs) + sizeof(aalgs);
 
-      if (!(freeme = OSDEP_MALLOC(i))) {
-	rval = OSDEP_ERROR(ENOMEM);
+      if (!(freeme = malloc(i, M_TEMP, M_DONTWAIT))) {
+	rval = ENOMEM;
 	goto ret;
       }
 
@@ -1033,7 +1050,7 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
         if (!(rval = netsec_sadb_walk(pfkeyv2_dump_walker, &dump_state, 1)))
 	  goto realret;
 */
-	if ((rval == OSDEP_ERROR(ENOMEM)) || (rval == OSDEP_ERROR(ENOBUFS)))
+	if ((rval == ENOMEM) || (rval == ENOBUFS))
 	  rval = 0;
       }
       break;
@@ -1288,9 +1305,9 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
 	
     case SADB_X_PROMISC:
       if (len >= 2 * sizeof(struct sadb_msg)) {
-	OSDEP_PACKET *packet;
+	struct mbuf *packet;
 
-	if ((rval = OSDEP_DATATOPACKET(message, len, &packet)) != 0)
+	if ((rval = pfdatatopacket(message, len, &packet)) != 0)
 	  goto ret;
 
 	for (s = pfkeyv2_sockets; s; s = s->next)
@@ -1300,10 +1317,10 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
 		pfkeyv2_socket->pid)))
 	    pfkey_sendup(s->socket, packet, 1);
 
-	OSDEP_FREEPACKET(packet);
+	m_freem(packet);
       } else {
 	if (len != sizeof(struct sadb_msg)) {
-	  rval = OSDEP_ERROR(EINVAL);
+	  rval = EINVAL;
 	  goto ret;
 	}
 
@@ -1322,14 +1339,14 @@ pfkeyv2_send(OSDEP_SOCKET *socket, void *message, int len)
       }
       break;
     default:
-      rval = OSDEP_ERROR(EINVAL);
+      rval = EINVAL;
       goto ret;
   }
 
 ret:
   if (rval < 0) {
-    if ((rval == OSDEP_ERROR(EINVAL)) || (rval == OSDEP_ERROR(ENOMEM)) ||
-	(rval == OSDEP_ERROR(ENOBUFS)))
+    if ((rval == EINVAL) || (rval == ENOMEM) ||
+	(rval == ENOBUFS))
       goto realret;
     for (i = 1; i <= SADB_EXT_MAX; i++)
       headers[i] = NULL;
@@ -1354,8 +1371,8 @@ ret:
 
 realret:
   if (freeme)
-    OSDEP_FREE(freeme);
-  OSDEP_FREE(message);
+    free(freeme, M_TEMP);
+  free(message, M_TEMP);
 
   return rval;
 }
@@ -1369,7 +1386,7 @@ pfkeyv2_acquire(void *os)
   void *p, *headers[SADB_EXT_MAX+1], *buffer;
 
   if (!nregistered) {
-    rval = OSDEP_ERROR(ESRCH);
+    rval = ESRCH;
     goto ret;
   }
 
@@ -1383,8 +1400,8 @@ pfkeyv2_acquire(void *os)
     i += PADUP(os->rekeysa->srcident.bytes) +
 	 PADUP(os->rekeysa->dstident.bytes);
 
-  if (!(p = OSDEP_MALLOC(i))) {
-    rval = OSDEP_ERROR(ENOMEM);
+  if (!(p = malloc(i, M_TEMP, M_DONTWAIT))) {
+    rval = ENOMEM;
     goto ret;
   }
 

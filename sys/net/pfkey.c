@@ -15,7 +15,21 @@ You should have received a copy of the license with this software. If
 you didn't get a copy, you may request one from <license@inner.net>.
 
 */
-#include <sys/osdep.h>
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/socketvar.h>
+#include <sys/proc.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <net/pfkeyv2.h>
+
+
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <net/raw_cb.h>
@@ -57,10 +71,10 @@ pfkey_register(struct pfkey_version *version)
   int rval;
 
   if ((version->protocol > PFKEY_PROTOCOL_MAX) || (version->protocol < 0))
-    return OSDEP_ERROR(EPROTONOSUPPORT);
+    return EPROTONOSUPPORT;
 
   if (pfkey_versions[version->protocol])
-    return OSDEP_ERROR(EADDRINUSE);
+    return EADDRINUSE;
 
   pfkey_versions[version->protocol] = version;
 
