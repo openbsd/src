@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.10 1997/10/25 05:09:58 millert Exp $
+.\" $OpenBSD: pppd.8,v 1.11 1997/11/13 23:55:31 millert Exp $
 .\" manual page [] for pppd 2.3
 .\" SH section heading
 .\" SS subsection heading
@@ -405,6 +405,7 @@ Terminal Ready) signal briefly when the connection is terminated and before
 executing the connect script.
 On Ultrix, this option implies hardware
 flow control, as for the \fBcrtscts\fR option.  
+.TP
 .B modem_chat
 Use the modem control lines during the chat script.  The default is
 to ignore the state of the CD (Carrier Detect) signal from the modem
