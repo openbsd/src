@@ -1,8 +1,8 @@
-/*	$OpenBSD: constants.c,v 1.5 1999/02/26 03:35:06 niklas Exp $	*/
-/*	$EOM: constants.c,v 1.6 1999/02/25 11:38:48 niklas Exp $	*/
+/*	$OpenBSD: constants.c,v 1.6 1999/04/19 19:54:53 niklas Exp $	*/
+/*	$EOM: constants.c,v 1.7 1999/04/02 00:57:31 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

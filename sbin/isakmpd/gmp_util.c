@@ -1,8 +1,9 @@
-/*	$OpenBSD: gmp_util.c,v 1.4 1999/02/26 03:40:05 niklas Exp $	*/
-/*	$EOM: gmp_util.c,v 1.2 1999/02/25 11:38:58 niklas Exp $	*/
+/*	$OpenBSD: gmp_util.c,v 1.5 1999/04/19 19:54:53 niklas Exp $	*/
+/*	$EOM: gmp_util.c,v 1.3 1999/04/02 00:57:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

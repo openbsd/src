@@ -1,8 +1,8 @@
-/*	$OpenBSD: attribute.c,v 1.6 1999/03/31 23:46:11 niklas Exp $	*/
-/*	$EOM: attribute.c,v 1.8 1999/03/31 23:31:27 niklas Exp $	*/
+/*	$OpenBSD: attribute.c,v 1.7 1999/04/19 19:54:53 niklas Exp $	*/
+/*	$EOM: attribute.c,v 1.9 1999/04/02 00:57:28 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

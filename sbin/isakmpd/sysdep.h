@@ -1,8 +1,8 @@
-/*	$OpenBSD: sysdep.h,v 1.5 1999/03/24 14:45:17 niklas Exp $	*/
-/*	$EOM: sysdep.h,v 1.14 1999/03/24 11:05:08 niklas Exp $	*/
+/*	$OpenBSD: sysdep.h,v 1.6 1999/04/19 19:54:54 niklas Exp $	*/
+/*	$EOM: sysdep.h,v 1.15 1999/04/02 00:58:08 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

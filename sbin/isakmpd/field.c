@@ -1,8 +1,8 @@
-/*	$OpenBSD: field.c,v 1.5 1999/02/26 03:38:56 niklas Exp $	*/
-/*	$EOM: field.c,v 1.8 1999/02/25 11:38:55 niklas Exp $	*/
+/*	$OpenBSD: field.c,v 1.6 1999/04/19 19:54:53 niklas Exp $	*/
+/*	$EOM: field.c,v 1.9 1999/04/02 00:57:37 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

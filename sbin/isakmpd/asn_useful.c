@@ -1,8 +1,9 @@
-/*	$OpenBSD: asn_useful.c,v 1.6 1999/02/26 03:32:50 niklas Exp $	*/
-/*	$EOM: asn_useful.c,v 1.10 1999/02/25 16:19:36 niklas Exp $	*/
+/*	$OpenBSD: asn_useful.c,v 1.7 1999/04/19 19:54:53 niklas Exp $	*/
+/*	$EOM: asn_useful.c,v 1.11 1999/04/02 00:57:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
