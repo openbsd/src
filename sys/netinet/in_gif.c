@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.8 2000/02/07 06:18:44 itojun Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.9 2000/05/25 01:22:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,12 +69,6 @@
 #include <machine/stdarg.h>
 
 #include <net/net_osdep.h>
-
-#if NGIF > 0
-int ip_gif_ttl = GIF_TTL;
-#else
-int ip_gif_ttl = 0;
-#endif
 
 #ifndef offsetof
 #define offsetof(s, e) ((int)&((s *)0)->e)

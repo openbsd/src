@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.h,v 1.1 1999/12/08 06:50:21 itojun Exp $	*/
+/*	$OpenBSD: in6_gif.h,v 1.2 2000/05/25 01:22:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,8 +31,6 @@
 
 #ifndef _NETINET6_IN6_GIF_H_
 #define _NETINET6_IN6_GIF_H_
-
-#define GIF_HLIM	30
 
 int in6_gif_input __P((struct mbuf **, int *, int));
 int in6_gif_output __P((struct ifnet *, int, struct mbuf *, struct rtentry *));

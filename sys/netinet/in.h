@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.38 2000/02/09 07:37:14 itojun Exp $	*/
+/*	$OpenBSD: in.h,v 1.39 2000/05/25 01:22:00 itojun Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -431,7 +431,9 @@ struct ip_mreq {
 #define IPCTL_IPPORT_HILASTAUTO	10
 #define	IPCTL_IPPORT_MAXQUEUE	11
 #define	IPCTL_ENCDEBUG		12
+#ifdef notdef	/*obsolete*/
 #define IPCTL_GIF_TTL		13	/* default TTL for gif encap packet */
+#endif
 #define IPCTL_IPSEC_ACL		14	/* ingress IPsec access control */
 #define IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT	15 /* new SA lifetime */
 #define IPCTL_IPSEC_REQUIRE_PFS 16
@@ -461,7 +463,7 @@ struct ip_mreq {
 	{ "porthilast", CTLTYPE_INT }, \
 	{ "maxqueue", CTLTYPE_INT }, \
 	{ "encdebug", CTLTYPE_INT }, \
-	{ "gifttl", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "ipsec-acl", CTLTYPE_INT }, \
 	{ "ipsec-invalid-life", CTLTYPE_INT }, \
 	{ "ipsec-pfs", CTLTYPE_INT }, \

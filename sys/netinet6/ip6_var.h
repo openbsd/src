@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.7 2000/03/22 03:50:35 itojun Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.8 2000/05/25 01:22:00 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.28 2000/03/09 00:46:12 itojun Exp $	*/
 
 /*
@@ -221,7 +221,6 @@ extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */
 extern int	ip6_forward_srcrt;	/* forward src-routed? */
-extern int	ip6_gif_hlim;		/* Hop limit for gif encap packet */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */

@@ -1,9 +1,10 @@
-/*	$OpenBSD: in6.h,v 1.12 2000/02/28 11:55:22 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.13 2000/05/25 01:22:00 itojun Exp $	*/
+/*	$KAME: in6.h,v 1.44 2000/05/24 08:50:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -231,10 +232,10 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
  */
 #ifdef _KERNEL
 #define IN6_ARE_ADDR_EQUAL(a, b)			\
-	(bcmp((a), (b), sizeof(struct in6_addr)) == 0)
+    (bcmp(&(a)->s6_addr[0], &(b)->s6_addr[0], sizeof(struct in6_addr)) == 0)
 #else
 #define IN6_ARE_ADDR_EQUAL(a, b)			\
-	(memcmp((a), (b), sizeof(struct in6_addr)) == 0)
+    (memcmp(&(a)->s6_addr[0], &(b)->s6_addr[0], sizeof(struct in6_addr)) == 0)
 #endif
 
 /*
@@ -529,7 +530,9 @@ struct in6_pktinfo {
 #define IPV6CTL_DAD_COUNT	16
 #define IPV6CTL_AUTO_FLOWLABEL	17
 #define IPV6CTL_DEFMCASTHLIM	18
+#ifdef notdef	/*obsolete*/
 #define IPV6CTL_GIF_HLIM	19	/* default HLIM for gif encap packet */
+#endif
 #define IPV6CTL_KAME_VERSION	20
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
@@ -557,7 +560,7 @@ struct in6_pktinfo {
 	{ "dad_count", CTLTYPE_INT }, \
 	{ "auto_flowlabel", CTLTYPE_INT }, \
 	{ "defmcasthlim", CTLTYPE_INT }, \
-	{ "gifhlim", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "kame_version", CTLTYPE_STRING }, \
 	{ "use_deprecated", CTLTYPE_INT }, \
 	{ "rr_prune", CTLTYPE_INT }, \

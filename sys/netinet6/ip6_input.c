@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.11 2000/05/19 20:12:10 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.12 2000/05/25 01:22:00 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.89 2000/05/19 19:59:05 itojun Exp $	*/
 
 /*
@@ -1285,9 +1285,6 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPV6CTL_DEFMCASTHLIM:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&ip6_defmcasthlim);
-	case IPV6CTL_GIF_HLIM:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_gif_hlim);
 	case IPV6CTL_KAME_VERSION:
 		return sysctl_rdstring(oldp, oldlenp, newp, __KAME_VERSION);
 	case IPV6CTL_USE_DEPRECATED:
