@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.2 1997/04/19 09:53:25 provos Exp $ */
+/* $OpenBSD: res_random.c,v 1.3 1997/04/19 10:07:01 provos Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -67,7 +67,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #define RU_OUT  180             /* Time after wich will be reseeded */
 #define RU_MAX	30000		/* Uniq cycle, avoid blackjack prediction */
@@ -89,8 +88,9 @@ static u_int16_t ru_a, ru_b;
 static u_int16_t ru_g;
 static u_int16_t ru_counter = 0;
 static u_int16_t ru_msb = 0;
-static time_t ru_reseed;
+static long ru_reseed;
 static u_int32_t tmp;                /* Storage for unused random */
+static struct timeval tv;
 
 static u_int32_t pmod __P((u_int32_t, u_int32_t, u_int32_t));
 static void res_initid __P((void));
@@ -171,7 +171,8 @@ res_initid()
 	ru_g = pmod(RU_GEN,j,RU_N);
 	ru_counter = 0;
 
-	ru_reseed = time(NULL) + RU_OUT;
+	gettimeofday(&tv, NULL);
+	ru_reseed = tv.tv_sec + RU_OUT;
 	ru_msb = ru_msb == 0x8000 ? 0 : 0x8000; 
 }
 
@@ -180,7 +181,8 @@ res_randomid()
 {
         int i, n;
 
-	if (ru_counter >= RU_MAX || time(NULL) > ru_reseed)
+	gettimeofday(&tv, NULL);
+	if (ru_counter >= RU_MAX || tv.tv_sec > ru_reseed)
 		res_initid();
 
 	if (!tmp)
@@ -211,6 +213,7 @@ main(int argc, char **argv)
 
 	printf("Generator: %d\n", ru_g);
 	printf("Seed: %d\n", ru_seed);
+	printf("Reseed at %ld\n", ru_reseed);
 	printf("Ru_X: %d\n", ru_x);
 	printf("Ru_A: %d\n", ru_a);
 	printf("Ru_B: %d\n", ru_b);
