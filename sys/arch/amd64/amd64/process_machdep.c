@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2004/02/01 15:00:42 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2004/07/10 18:56:59 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -139,6 +139,7 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 		fpusave_proc(p, 1);
 	} else {
 		u_int16_t cw;
+		u_int32_t mxcsr, mxcsr_mask;
 
 		/*
 		 * Fake a FNINIT.
@@ -146,10 +147,14 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 		 * save it temporarily.
 		 */
 		cw = frame->fx_fcw;
+		mxcsr = frame->fx_mxcsr;
+		mxcsr_mask = frame->fx_mxcsr_mask;
 		memset(frame, 0, sizeof(*regs));
 		frame->fx_fcw = cw;
 		frame->fx_fsw = 0x0000;
 		frame->fx_ftw = 0xff;
+		frame->fx_mxcsr = mxcsr;
+		frame->fx_mxcsr_mask = mxcsr_mask;
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 
