@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.40 2001/09/15 18:43:41 mickey Exp $	*/
+/*	$OpenBSD: compat.c,v 1.41 2001/11/17 19:37:53 deraadt Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ CompatInterrupt(signo)
 	}
 
     }
-    exit(signo);
+    _exit(signo);
 }
 
 /*-
