@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.11 1996/05/26 00:27:32 deraadt Exp $	*/
+/*	$OpenBSD: wss.c,v 1.12 1996/05/29 08:18:01 mickey Exp $	*/
 /*	$NetBSD: wss.c,v 1.13 1996/05/12 23:54:16 mycroft Exp $	*/
 
 /*
@@ -199,7 +199,11 @@ wssprobe(parent, match, aux)
     }
 
     if( !opti_snd_setup( OPTI_WSS, iobase, ia->ia_irq, ia->ia_drq ) )
+#ifdef DEBUG
        printf("ad_detect_A: could not setup OPTi chipset.\n");
+#else
+       ;
+#endif
 
     sc->sc_ad1848.sc_iobase = iobase;
 
