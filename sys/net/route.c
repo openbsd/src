@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.14 1999/07/05 20:17:05 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.15 1999/09/13 22:33:51 niklas Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -390,7 +390,7 @@ ifa_ifwithroute(flags, dst, gateway)
 	 * If the destination is a PF_KEY address, we'll look
 	 * for the existence of a encap interface number or address
 	 * in the options list of the gateway. By default, we'll return
-	 * encap0.
+	 * enc0.
 	 */
 	if (dst && (dst->sa_family == PF_KEY))
 		return encap_findgwifa(gateway);
