@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.61 2002/05/31 19:27:40 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.62 2002/06/02 16:11:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.61 2002/05/31 19:27:40 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.62 2002/06/02 16:11:41 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -142,7 +142,7 @@ STATIC void wi_txeof(struct wi_softc *, int);
 STATIC void wi_update_stats(struct wi_softc *);
 STATIC void wi_setmulti(struct wi_softc *);
 
-STATIC int wi_cmd(struct wi_softc *, int, int);
+STATIC int wi_cmd(struct wi_softc *, int, int, int, int);
 STATIC int wi_read_record(struct wi_softc *, struct wi_ltv_gen *);
 STATIC int wi_write_record(struct wi_softc *, struct wi_ltv_gen *);
 STATIC int wi_read_data(struct wi_softc *, int,
@@ -164,6 +164,9 @@ STATIC int wi_get_nwkey(struct wi_softc *, struct ieee80211_nwkey *);
 STATIC int wi_sync_media(struct wi_softc *, int, int);
 STATIC int wi_set_pm(struct wi_softc *, struct ieee80211_power *);
 STATIC int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
+
+STATIC int wi_get_debug(struct wi_softc *, struct wi_req *);
+STATIC int wi_set_debug(struct wi_softc *, struct wi_req *);
 
 int	wi_intr(void *);
 int	wi_attach(struct wi_softc *);
@@ -463,7 +466,6 @@ wi_rxeof(sc)
 {
 	struct ifnet		*ifp;
 	struct ether_header	*eh;
-	struct wi_frame		rx_frame;
 	struct mbuf		*m;
 	int			id;
 
@@ -471,134 +473,233 @@ wi_rxeof(sc)
 
 	id = CSR_READ_2(sc, WI_RX_FID);
 
-	/* First read in the frame header */
-	if (wi_read_data(sc, id, 0, (caddr_t)&rx_frame, sizeof(rx_frame))) {
-		ifp->if_ierrors++;
-		return;
-	}
+	if (sc->wi_procframe || sc->wi_debug.wi_monitor) {
+		struct wi_frame	*rx_frame;
+		int		datlen, hdrlen;
 
-	/*
-	 * Drop undecryptable or packets with receive errors here
-	 */
-	if (rx_frame.wi_status & htole16(WI_STAT_ERRSTAT)) {
-		ifp->if_ierrors++;
-		return;
-	}
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		ifp->if_ierrors++;
-		return;
-	}
-	MCLGET(m, M_DONTWAIT);
-	if (!(m->m_flags & M_EXT)) {
-		m_freem(m);
-		ifp->if_ierrors++;
-		return;
-	}
-
-	/* Align the data after the ethernet header */
-	m->m_data = (caddr_t) ALIGN(m->m_data + sizeof(struct ether_header))
-	    - sizeof(struct ether_header);
-
-	eh = mtod(m, struct ether_header *);
-	m->m_pkthdr.rcvif = ifp;
-
-	if (rx_frame.wi_status == htole16(WI_STAT_MGMT) &&  
-	    sc->wi_ptype == WI_PORTTYPE_AP) {
-
-		u_int16_t rxlen = letoh16(rx_frame.wi_dat_len);
-
-		if ((WI_802_11_OFFSET_RAW + rxlen + 2) > MCLBYTES) {
-			printf("%s: oversized mgmt packet received in "
-			    "hostap mode (wi_dat_len=%d, wi_status=0x%x)\n",
-			    sc->sc_dev.dv_xname,
-			    rxlen, letoh16(rx_frame.wi_status));
-			m_freem(m);
-			ifp->if_ierrors++;  
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			ifp->if_ierrors++;
 			return;
 		}
-
-		/* Put the whole header in there. */
-		bcopy(&rx_frame, mtod(m, void *), sizeof(struct wi_frame));
-		if (wi_read_data(sc, id, WI_802_11_OFFSET_RAW,
-		    mtod(m, caddr_t) + WI_802_11_OFFSET_RAW, rxlen + 2)) {
+		MCLGET(m, M_DONTWAIT);
+		if (!(m->m_flags & M_EXT)) {
 			m_freem(m);
-			if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
-				printf("wihap: failed to copy header\n");
 			ifp->if_ierrors++;
 			return;
 		}
 
-		m->m_pkthdr.len = m->m_len = WI_802_11_OFFSET_RAW + rxlen;
+		m->m_pkthdr.rcvif = ifp;
 
-		/* XXX: consider giving packet to bhp? */
-
-		wihap_mgmt_input(sc, &rx_frame, m);
-
-		return;
-	}
-
-	if (rx_frame.wi_status == htole16(WI_STAT_1042) ||
-	    rx_frame.wi_status == htole16(WI_STAT_TUNNEL) ||
-	    rx_frame.wi_status == htole16(WI_STAT_WMP_MSG)) {
-		if ((letoh16(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN) > MCLBYTES) {
-			printf(WI_PRT_FMT ": oversized packet received "
-			    "(wi_dat_len=%d, wi_status=0x%x)\n",
-			    WI_PRT_ARG(sc), letoh16(rx_frame.wi_dat_len),
-			    letoh16(rx_frame.wi_status));
+		if (wi_read_data(sc, id, 0, mtod(m, caddr_t),
+		    sizeof(struct wi_frame))) {
 			m_freem(m);
 			ifp->if_ierrors++;
 			return;
 		}
-		m->m_pkthdr.len = m->m_len =
-		    letoh16(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN;
 
-		bcopy((char *)&rx_frame.wi_dst_addr,
-		    (char *)&eh->ether_dhost, ETHER_ADDR_LEN);
-		bcopy((char *)&rx_frame.wi_src_addr,
-		    (char *)&eh->ether_shost, ETHER_ADDR_LEN);
-		bcopy((char *)&rx_frame.wi_type,
-		    (char *)&eh->ether_type, ETHER_TYPE_LEN);
+		rx_frame = mtod(m, struct wi_frame *);
 
-		if (wi_read_data(sc, id, WI_802_11_OFFSET, mtod(m, caddr_t) +
-		    sizeof(struct ether_header), m->m_len + 2)) {
-			ifp->if_ierrors++;
+		if (rx_frame->wi_status & htole16(WI_STAT_BADCRC)) {
 			m_freem(m);
+			ifp->if_ierrors++;
 			return;
 		}
+
+		switch ((letoh16(rx_frame->wi_status) & WI_STAT_MAC_PORT)
+		    >> 8) {
+		case 7:
+			switch (letoh16(rx_frame->wi_frame_ctl) &
+			    WI_FCTL_FTYPE) {
+			case WI_FTYPE_DATA:
+				hdrlen = WI_DATA_HDRLEN;
+				datlen = letoh16(rx_frame->wi_dat_len);
+				break;
+			case WI_FTYPE_MGMT:
+				hdrlen = WI_MGMT_HDRLEN;
+				datlen = letoh16(rx_frame->wi_dat_len);
+				break;
+			case WI_FTYPE_CTL:
+				hdrlen = WI_CTL_HDRLEN;
+				datlen = 0;
+				break;
+			default:
+				printf(WI_PRT_FMT ": received packet of "
+				    "unknown type on port 7\n", WI_PRT_ARG(sc));
+				m_freem(m);
+				ifp->if_ierrors++;
+				return;
+			}
+			break;
+		case 0:
+			hdrlen = WI_DATA_HDRLEN;
+			datlen = letoh16(rx_frame->wi_dat_len);
+			break;
+		default:
+			printf(WI_PRT_FMT ": received packet on invalid port "
+			    "(wi_status=0x%x)\n", WI_PRT_ARG(sc),
+			    letoh16(rx_frame->wi_status));
+			m_freem(m);
+			ifp->if_ierrors++;
+			return;
+		}
+
+		if ((hdrlen + datlen + 2) > MCLBYTES) {
+			m_freem(m);
+			ifp->if_ierrors++;
+			return;
+		}
+
+		if (wi_read_data(sc, id, hdrlen, mtod(m, caddr_t) + hdrlen,
+		    datlen + 2)) {
+			m_freem(m);
+			ifp->if_ierrors++;
+			return;
+		}
+
+		m->m_pkthdr.len = m->m_len = hdrlen + datlen;
 	} else {
-		if ((letoh16(rx_frame.wi_dat_len) +
-		    sizeof(struct ether_header)) > MCLBYTES) {
-			printf(WI_PRT_FMT ": oversized packet received "
-			    "(wi_dat_len=%d, wi_status=0x%x)\n",
-			    WI_PRT_ARG(sc), letoh16(rx_frame.wi_dat_len),
-			    letoh16(rx_frame.wi_status));
-			m_freem(m);
+		struct wi_frame rx_frame;
+
+		/* First read in the frame header */
+		if (wi_read_data(sc, id, 0, (caddr_t)&rx_frame,
+		    sizeof(rx_frame))) {
 			ifp->if_ierrors++;
 			return;
 		}
-		m->m_pkthdr.len = m->m_len =
-		    letoh16(rx_frame.wi_dat_len) + sizeof(struct ether_header);
 
-		if (wi_read_data(sc, id, WI_802_3_OFFSET,
-		    mtod(m, caddr_t), m->m_len + 2)) {
-			m_freem(m);
-			ifp->if_ierrors++;
-			return;
-		}
-	}
-
-	ifp->if_ipackets++;
-
-	if (sc->wi_ptype == WI_PORTTYPE_AP) {
 		/*
-		 * Give host AP code first crack at data packets.
-		 * If it decides to handle it (or drop it), it will return
-		 * a non-zero.  Otherwise, it is destined for this host.
+		 * Drop undecryptable or packets with receive errors here
 		 */
-		if (wihap_data_input(sc, &rx_frame, m))
+		if (rx_frame.wi_status & htole16(WI_STAT_ERRSTAT)) {
+			ifp->if_ierrors++;
 			return;
+		}
+
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			ifp->if_ierrors++;
+			return;
+		}
+		MCLGET(m, M_DONTWAIT);
+		if (!(m->m_flags & M_EXT)) {
+			m_freem(m);
+			ifp->if_ierrors++;
+			return;
+		}
+
+		/* Align the data after the ethernet header */
+		m->m_data = (caddr_t)ALIGN(m->m_data +
+		    sizeof(struct ether_header)) - sizeof(struct ether_header);
+
+		eh = mtod(m, struct ether_header *);
+		m->m_pkthdr.rcvif = ifp;
+
+		if (rx_frame.wi_status == htole16(WI_STAT_MGMT) &&  
+		    sc->wi_ptype == WI_PORTTYPE_AP) {
+
+			u_int16_t rxlen = letoh16(rx_frame.wi_dat_len);
+
+			if ((WI_802_11_OFFSET_RAW + rxlen + 2) > MCLBYTES) {
+				printf("%s: oversized mgmt packet received in "
+				    "hostap mode (wi_dat_len=%d, "
+				    "wi_status=0x%x)\n", sc->sc_dev.dv_xname,
+				    rxlen, letoh16(rx_frame.wi_status));
+				m_freem(m);
+				ifp->if_ierrors++;  
+				return;
+			}
+
+			/* Put the whole header in there. */
+			bcopy(&rx_frame, mtod(m, void *),
+			    sizeof(struct wi_frame));
+			if (wi_read_data(sc, id, WI_802_11_OFFSET_RAW,
+			    mtod(m, caddr_t) + WI_802_11_OFFSET_RAW,
+			    rxlen + 2)) {
+				m_freem(m);
+				if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
+					printf("wihap: failed to copy header\n");
+				ifp->if_ierrors++;
+				return;
+			}
+
+			m->m_pkthdr.len = m->m_len =
+			    WI_802_11_OFFSET_RAW + rxlen;
+
+			/* XXX: consider giving packet to bhp? */
+
+			wihap_mgmt_input(sc, &rx_frame, m);
+
+			return;
+		}
+
+		if (rx_frame.wi_status == htole16(WI_STAT_1042) ||
+		    rx_frame.wi_status == htole16(WI_STAT_TUNNEL) ||
+		    rx_frame.wi_status == htole16(WI_STAT_WMP_MSG)) {
+			if ((letoh16(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN) >
+			    MCLBYTES) {
+				printf(WI_PRT_FMT ": oversized packet received "
+				    "(wi_dat_len=%d, wi_status=0x%x)\n",
+				    WI_PRT_ARG(sc),
+				    letoh16(rx_frame.wi_dat_len),
+				    letoh16(rx_frame.wi_status));
+				m_freem(m);
+				ifp->if_ierrors++;
+				return;
+			}
+			m->m_pkthdr.len = m->m_len =
+			    letoh16(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN;
+
+			bcopy((char *)&rx_frame.wi_dst_addr,
+			    (char *)&eh->ether_dhost, ETHER_ADDR_LEN);
+			bcopy((char *)&rx_frame.wi_src_addr,
+			    (char *)&eh->ether_shost, ETHER_ADDR_LEN);
+			bcopy((char *)&rx_frame.wi_type,
+			    (char *)&eh->ether_type, ETHER_TYPE_LEN);
+
+			if (wi_read_data(sc, id, WI_802_11_OFFSET,
+			    mtod(m, caddr_t) + sizeof(struct ether_header),
+			    m->m_len + 2)) {
+				ifp->if_ierrors++;
+				m_freem(m);
+				return;
+			}
+		} else {
+			if ((letoh16(rx_frame.wi_dat_len) +
+			    sizeof(struct ether_header)) > MCLBYTES) {
+				printf(WI_PRT_FMT ": oversized packet received "
+				    "(wi_dat_len=%d, wi_status=0x%x)\n",
+				    WI_PRT_ARG(sc),
+				    letoh16(rx_frame.wi_dat_len),
+				    letoh16(rx_frame.wi_status));
+				m_freem(m);
+				ifp->if_ierrors++;
+				return;
+			}
+			m->m_pkthdr.len = m->m_len =
+			    letoh16(rx_frame.wi_dat_len) +
+			    sizeof(struct ether_header);
+
+			if (wi_read_data(sc, id, WI_802_3_OFFSET,
+			    mtod(m, caddr_t), m->m_len + 2)) {
+				m_freem(m);
+				ifp->if_ierrors++;
+				return;
+			}
+		}
+
+		ifp->if_ipackets++;
+
+		if (sc->wi_ptype == WI_PORTTYPE_AP) {
+			/*
+			 * Give host AP code first crack at data packets.
+			 * If it decides to handle it (or drop it), it will
+			 * return a non-zero.  Otherwise, it is destined for
+			 * this host.
+			 */
+			if (wihap_data_input(sc, &rx_frame, m))
+				return;
+		}
 	}
 
 #if NBPFILTER > 0
@@ -607,8 +708,11 @@ wi_rxeof(sc)
 		BPF_MTAP(ifp, m);
 #endif
 
-	/* Receive packet. */
-	ether_input_mbuf(ifp, m);
+	/* Receive packet unless in procframe or monitor mode. */
+	if (sc->wi_procframe || sc->wi_debug.wi_monitor)
+		m_freem(m);
+	else
+		ether_input_mbuf(ifp, m);
 
 	return;
 }
@@ -651,7 +755,7 @@ wi_inquire(xsc)
 		return;
 
 	s = splnet();
-	rv = wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS);
+	rv = wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS, 0, 0);
 	splx(s);
 	if (rv)
 		printf(WI_PRT_FMT ": wi_cmd failed with %d\n", WI_PRT_ARG(sc),
@@ -677,12 +781,17 @@ wi_update_stats(sc)
 
 	wi_read_data(sc, id, 0, (char *)&gen, 4);
 
-	if (gen.wi_type != WI_INFO_COUNTERS)
+	if (gen.wi_type == htole16(WI_INFO_SCAN_RESULTS)) {
+		sc->wi_scanbuf_len = letoh16(gen.wi_len);
+		wi_read_data(sc, id, 4, (char *)sc->wi_scanbuf,
+		    sc->wi_scanbuf_len * 2);
+		return;
+	} else if (gen.wi_type != htole16(WI_INFO_COUNTERS))
 		return;
 
 	/* Some card versions have a larger stats structure */
-	len = (gen.wi_len - 1 < sizeof(sc->wi_stats) / 4) ?
-	    gen.wi_len - 1 : sizeof(sc->wi_stats) / 4;
+	len = (letoh16(gen.wi_len) - 1 < sizeof(sc->wi_stats) / 4) ?
+	    letoh16(gen.wi_len) - 1 : sizeof(sc->wi_stats) / 4;
 
 	ptr = (u_int32_t *)&sc->wi_stats;
 
@@ -703,10 +812,12 @@ wi_update_stats(sc)
 }
 
 STATIC int
-wi_cmd(sc, cmd, val)
+wi_cmd(sc, cmd, val0, val1, val2)
 	struct wi_softc		*sc;
 	int			cmd;
-	int			val;
+	int			val0;
+	int			val1;
+	int			val2;
 {
 	int			i, s = 0;
 
@@ -717,9 +828,9 @@ wi_cmd(sc, cmd, val)
 		DELAY(10);
 	}
 
-	CSR_WRITE_2(sc, WI_PARAM0, val);
-	CSR_WRITE_2(sc, WI_PARAM1, 0);
-	CSR_WRITE_2(sc, WI_PARAM2, 0);
+	CSR_WRITE_2(sc, WI_PARAM0, val0);
+	CSR_WRITE_2(sc, WI_PARAM1, val1);
+	CSR_WRITE_2(sc, WI_PARAM2, val2);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
 	for (i = WI_TIMEOUT; i--; DELAY(10)) {
@@ -759,7 +870,7 @@ wi_reset(sc)
 	    (sc->wi_flags & WI_FLAGS_INITIALIZED))
 		return;
 
-	if (wi_cmd(sc, WI_CMD_INI, 0))
+	if (wi_cmd(sc, WI_CMD_INI, 0, 0, 0))
 		printf(WI_PRT_FMT ": init failed\n", WI_PRT_ARG(sc));
 	else
 		sc->wi_flags |= WI_FLAGS_INITIALIZED;
@@ -830,7 +941,7 @@ wi_read_record(sc, ltv)
 	}
 
 	/* Tell the NIC to enter record read mode. */
-	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_READ, ltv->wi_type))
+	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_READ, ltv->wi_type, 0, 0))
 		return(EIO);
 
 	/* Seek to the record. */
@@ -1004,7 +1115,7 @@ wi_write_record(sc, ltv)
 	if (ltv->wi_len > 1)
 		CSR_WRITE_RAW_2(sc, WI_DATA1, ptr, (ltv->wi_len-1) *2);
 
-	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_WRITE, ltv->wi_type))
+	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_WRITE, ltv->wi_type, 0, 0))
 		return(EIO);
 
 	return(0);
@@ -1122,7 +1233,7 @@ wi_alloc_nicmem(sc, len, id)
 {
 	int			i;
 
-	if (wi_cmd(sc, WI_CMD_ALLOC_MEM, len)) {
+	if (wi_cmd(sc, WI_CMD_ALLOC_MEM, len, 0, 0)) {
 		printf(WI_PRT_FMT ": failed to allocate %d bytes on NIC\n",
 		    WI_PRT_ARG(sc), len);
 		return(ENOMEM);
@@ -1320,6 +1431,7 @@ wi_ioctl(ifp, command, data)
 
 	switch(command) {
 	case SIOCSWAVELAN:
+	case SIOCSPRISM2DEBUG:
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
@@ -1404,12 +1516,14 @@ wi_ioctl(ifp, command, data)
 			error = EINVAL;
 			break;
 		}
-		if (wreq.wi_type == WI_RID_IFACE_STATS) {
+		switch (wreq.wi_type) {
+		case WI_RID_IFACE_STATS:
 			/* XXX native byte order */
 			bcopy((char *)&sc->wi_stats, (char *)&wreq.wi_val,
 			    sizeof(sc->wi_stats));
 			wreq.wi_len = (sizeof(sc->wi_stats) / 2) + 1;
-		} else if (wreq.wi_type == WI_RID_DEFLT_CRYPT_KEYS) {
+			break;
+		case WI_RID_DEFLT_CRYPT_KEYS:
 			/* For non-root user, return all-zeroes keys */
 			if (suser(p->p_ucred, &p->p_acflag))
 				bzero((char *)&wreq,
@@ -1417,11 +1531,29 @@ wi_ioctl(ifp, command, data)
 			else
 				bcopy((char *)&sc->wi_keys, (char *)&wreq,
 					sizeof(struct wi_ltv_keys));
-		} else {
-			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
-				error = EINVAL;
+			break;
+		case WI_RID_PROCFRAME:
+			wreq.wi_len = 2;
+			wreq.wi_val[0] = htole16(sc->wi_procframe);
+			break;
+		case WI_RID_PRISM2:
+			wreq.wi_len = 2;
+			wreq.wi_val[0] = htole16(sc->sc_firmware_type ==
+			    WI_LUCENT ? 0 : 1);
+			break;
+		case WI_RID_SCAN_RES:
+			if (sc->sc_firmware_type == WI_LUCENT) {
+				memcpy((char *)wreq.wi_val,
+				    (char *)sc->wi_scanbuf,
+				    sc->wi_scanbuf_len * 2);
+				wreq.wi_len = sc->wi_scanbuf_len;
 				break;
 			}
+		default:
+			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
+				error = EINVAL;
+			}
+			break;
 		}
 		error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
 		break;
@@ -1439,12 +1571,26 @@ wi_ioctl(ifp, command, data)
 			error = wi_mgmt_xmit(sc, (caddr_t)&wreq.wi_val,
 			    wreq.wi_len);
 			break;
+		case WI_RID_PROCFRAME:
+			sc->wi_procframe = letoh16(wreq.wi_val[0]);
+			error = 0;
+			break;
+		case WI_RID_SCAN_REQ:
+			error = 0;
+			if (sc->sc_firmware_type == WI_LUCENT)
+				wi_cmd(sc, WI_CMD_INQUIRE,
+				    WI_INFO_SCAN_RESULTS, 0, 0);
+			else
+				error = wi_write_record(sc,
+				    (struct wi_ltv_gen *)&wreq);
+			break;
 		case WI_RID_SYMBOL_DIVERSITY:
 		case WI_RID_ROAMING_MODE:
 		case WI_RID_CREATE_IBSS:
 		case WI_RID_MICROWAVE_OVEN:
 			/*
-			 * Check for features that may not be supported.
+			 * Check for features that may not be supported
+			 * (must be just before default case).
 			 */
 			if ((wreq.wi_type == WI_RID_SYMBOL_DIVERSITY &&
 			    !(sc->wi_flags & WI_FLAGS_HAS_DIVERSITY)) ||
@@ -1463,6 +1609,24 @@ wi_ioctl(ifp, command, data)
 			if (!error && (ifp->if_flags & IFF_UP))
 				wi_init(sc);
 		}
+		break;
+	case SIOCGPRISM2DEBUG:
+		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
+		if (error)
+			break;
+		if (!(ifp->if_flags & IFF_RUNNING) ||
+		    sc->sc_firmware_type == WI_LUCENT) {
+			error = EIO;
+			break;
+		}
+		error = wi_get_debug(sc, &wreq);
+		error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
+		break;
+	case SIOCSPRISM2DEBUG:
+		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
+		if (error)
+			break;
+		error = wi_set_debug(sc, &wreq);
 		break;
 	case SIOCG80211NWID:
 		if (ifp->if_flags & IFF_UP) {
@@ -1648,7 +1812,7 @@ wi_init(sc)
 	wi_setmulti(sc);
 
 	/* Enable desired port */
-	wi_cmd(sc, WI_CMD_ENABLE | sc->wi_portnum, 0);
+	wi_cmd(sc, WI_CMD_ENABLE | sc->wi_portnum, 0, 0, 0);
 
 	if (wi_alloc_nicmem(sc, ETHER_MAX_LEN + sizeof(struct wi_frame) + 8, &id))
 		printf(WI_PRT_FMT ": tx buffer allocation failed\n",
@@ -1951,7 +2115,7 @@ nextpkt:
 
 	m_freem(m0);
 
-	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id))
+	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id, 0, 0))
 		printf(WI_PRT_FMT ": wi_start: xmit failed\n", WI_PRT_ARG(sc));
 
 	ifp->if_flags |= IFF_OACTIVE;
@@ -1996,7 +2160,7 @@ wi_mgmt_xmit(sc, data, len)
 	wi_write_data(sc, id, WI_802_11_OFFSET_RAW, dptr,
 	    (len - sizeof(struct wi_80211_hdr)) + 2);
 
-	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id)) {
+	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id, 0, 0)) {
 		printf(WI_PRT_FMT ": wi_mgmt_xmit: xmit failed\n",
 		    WI_PRT_ARG(sc));
 		return(EIO);
@@ -2023,7 +2187,7 @@ wi_stop(sc)
 	ifp = &sc->arpcom.ac_if;
 
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
-	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0);
+	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0, 0, 0);
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 	ifp->if_timer = 0;
@@ -2459,4 +2623,147 @@ wi_set_ssid(ws, id, len)
 	ws->i_len = len;
 	memcpy(ws->i_nwid, id, len);
 	return (0);
+}
+
+STATIC int
+wi_get_debug(sc, wreq)
+	struct wi_softc		*sc;
+	struct wi_req		*wreq;
+{
+	int			error = 0;
+
+	wreq->wi_len = 1;
+
+	switch (wreq->wi_type) {
+	case WI_DEBUG_SLEEP:
+		wreq->wi_len++;
+		wreq->wi_val[0] = htole16(sc->wi_debug.wi_sleep);
+		break;
+	case WI_DEBUG_DELAYSUPP:
+		wreq->wi_len++;
+		wreq->wi_val[0] = htole16(sc->wi_debug.wi_delaysupp);
+		break;
+	case WI_DEBUG_TXSUPP:
+		wreq->wi_len++;
+		wreq->wi_val[0] = htole16(sc->wi_debug.wi_txsupp);
+		break;
+	case WI_DEBUG_MONITOR:
+		wreq->wi_len++;
+		wreq->wi_val[0] = htole16(sc->wi_debug.wi_monitor);
+		break;
+	case WI_DEBUG_LEDTEST:
+		wreq->wi_len += 3;
+		wreq->wi_val[0] = htole16(sc->wi_debug.wi_ledtest);
+		wreq->wi_val[1] = htole16(sc->wi_debug.wi_ledtest_param0);
+		wreq->wi_val[2] = htole16(sc->wi_debug.wi_ledtest_param1);
+		break;
+	case WI_DEBUG_CONTTX:
+		wreq->wi_len += 2;
+		wreq->wi_val[0] = htole16(sc->wi_debug.wi_conttx);
+		wreq->wi_val[1] = htole16(sc->wi_debug.wi_conttx_param0);
+		break;
+	case WI_DEBUG_CONTRX:
+		wreq->wi_len++;
+		wreq->wi_val[0] = htole16(sc->wi_debug.wi_contrx);
+		break;
+	case WI_DEBUG_SIGSTATE:
+		wreq->wi_len += 2;
+		wreq->wi_val[0] = htole16(sc->wi_debug.wi_sigstate);
+		wreq->wi_val[1] = htole16(sc->wi_debug.wi_sigstate_param0);
+		break;
+	case WI_DEBUG_CONFBITS:
+		wreq->wi_len += 2;
+		wreq->wi_val[0] = htole16(sc->wi_debug.wi_confbits);
+		wreq->wi_val[1] = htole16(sc->wi_debug.wi_confbits_param0);
+		break;
+	default:
+		error = EIO;
+		break;
+	}
+
+	return (error);
+}
+
+STATIC int
+wi_set_debug(sc, wreq)
+	struct wi_softc		*sc;
+	struct wi_req		*wreq;
+{
+	int				error = 0;
+	u_int16_t			cmd, param0 = 0, param1 = 0;
+
+	switch (wreq->wi_type) {
+	case WI_DEBUG_RESET:
+	case WI_DEBUG_INIT:
+	case WI_DEBUG_CALENABLE:
+		break;
+	case WI_DEBUG_SLEEP:
+		sc->wi_debug.wi_sleep = 1;
+		break;
+	case WI_DEBUG_WAKE:
+		sc->wi_debug.wi_sleep = 0;
+		break;
+	case WI_DEBUG_CHAN:
+		param0 = letoh16(wreq->wi_val[0]);
+		break;
+	case WI_DEBUG_DELAYSUPP:
+		sc->wi_debug.wi_delaysupp = 1;
+		break;
+	case WI_DEBUG_TXSUPP:
+		sc->wi_debug.wi_txsupp = 1;
+		break;
+	case WI_DEBUG_MONITOR:
+		sc->wi_debug.wi_monitor = 1;
+		break;
+	case WI_DEBUG_LEDTEST:
+		param0 = letoh16(wreq->wi_val[0]);
+		param1 = letoh16(wreq->wi_val[1]);
+		sc->wi_debug.wi_ledtest = 1;
+		sc->wi_debug.wi_ledtest_param0 = param0;
+		sc->wi_debug.wi_ledtest_param1 = param1;
+		break;
+	case WI_DEBUG_CONTTX:
+		param0 = letoh16(wreq->wi_val[0]);
+		sc->wi_debug.wi_conttx = 1;
+		sc->wi_debug.wi_conttx_param0 = param0;
+		break;
+	case WI_DEBUG_STOPTEST:
+		sc->wi_debug.wi_delaysupp = 0;
+		sc->wi_debug.wi_txsupp = 0;
+		sc->wi_debug.wi_monitor = 0;
+		sc->wi_debug.wi_ledtest = 0;
+		sc->wi_debug.wi_ledtest_param0 = 0;
+		sc->wi_debug.wi_ledtest_param1 = 0;
+		sc->wi_debug.wi_conttx = 0;
+		sc->wi_debug.wi_conttx_param0 = 0;
+		sc->wi_debug.wi_contrx = 0;
+		sc->wi_debug.wi_sigstate = 0;
+		sc->wi_debug.wi_sigstate_param0 = 0;
+		break;
+	case WI_DEBUG_CONTRX:
+		sc->wi_debug.wi_contrx = 1;
+		break;
+	case WI_DEBUG_SIGSTATE:
+		param0 = letoh16(wreq->wi_val[0]);
+		sc->wi_debug.wi_sigstate = 1;
+		sc->wi_debug.wi_sigstate_param0 = param0;
+		break;
+	case WI_DEBUG_CONFBITS:
+		param0 = letoh16(wreq->wi_val[0]);
+		param1 = letoh16(wreq->wi_val[1]);
+		sc->wi_debug.wi_confbits = param0;
+		sc->wi_debug.wi_confbits_param0 = param1;
+		break;
+	default:
+		error = EIO;
+		break;
+	}
+
+	if (error)
+		return (error);
+
+	cmd = WI_CMD_DEBUG | (wreq->wi_type << 8);
+	error = wi_cmd(sc, cmd, param0, param1, 0);
+
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.11 2002/04/26 19:20:27 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.12 2002/06/02 16:11:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -51,6 +51,7 @@ struct wi_softc	{
 	int			wi_tx_mgmt_id;
 	int			wi_flags;
 	int			wi_if_flags;
+	u_int16_t		wi_procframe;
 	u_int16_t		wi_ptype;
 	u_int16_t		wi_portnum;
 	u_int16_t		wi_max_data_len;
@@ -72,6 +73,8 @@ struct wi_softc	{
 	struct ieee80211_nwid	wi_ibss_name;
 
 	u_int8_t		wi_txbuf[1596];
+	u_int8_t		wi_scanbuf[1596];
+	u_int8_t		wi_scanbuf_len;
 	int			wi_use_wep;
 	int			wi_tx_key;
 	struct wi_ltv_keys	wi_keys;
@@ -85,6 +88,23 @@ struct wi_softc	{
 	u_int32_t		wi_icv;
 	int			wi_icv_flag;
 	int			wi_ibss_port;
+
+	struct {
+		u_int16_t		wi_sleep;
+		u_int16_t		wi_delaysupp;
+		u_int16_t		wi_txsupp;
+		u_int16_t		wi_monitor;
+		u_int16_t		wi_ledtest;
+		u_int16_t		wi_ledtest_param0;
+		u_int16_t		wi_ledtest_param1;
+		u_int16_t		wi_conttx;
+		u_int16_t		wi_conttx_param0;
+		u_int16_t		wi_contrx;
+		u_int16_t		wi_sigstate;
+		u_int16_t		wi_sigstate_param0;
+		u_int16_t		wi_confbits;
+		u_int16_t		wi_confbits_param0;
+	} wi_debug;
 };
 
 /* Values for wi_flags. */
