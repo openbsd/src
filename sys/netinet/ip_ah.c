@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.27 1999/12/06 07:14:35 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.28 1999/12/06 22:56:03 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -203,7 +203,17 @@ ah_input(m, va_alist)
 	return;
     }
 
+    if ((m = m_pullup(m, ipn.ip_hl << 2)) == 0)
+    {
+	ahstat.esps_hdrops++;
+	return;
+    }
+
     ipo = mtod(m, struct ip *);
+    ipo->ip_len = htons(m->m_pkthdr.len);
+    ipo->ip_sum = 0;
+    ipo->ip_sum = in_cksum(m, ipo->ip_hl << 2);
+
     if (ipo->ip_p == IPPROTO_IPIP)	/* IP-in-IP encapsulation */
     {
 	/* ipn will now contain the inner IP header */
