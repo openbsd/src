@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.225 2000/03/20 07:40:44 rahnds Exp $
+	$OpenBSD: pcidevs,v 1.226 2000/03/21 21:59:18 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -90,7 +90,7 @@ vendor OLIVETTI		0x102e	Olivetti
 vendor TOSHIBA		0x102f	Toshiba
 vendor TMCRESEARCH	0x1030	TMC Research
 vendor MIRO		0x1031	Miro Computer Products
-vendor COMPAQ2		0x1032	Compaq (2nd ID)
+vendor COMPAQ2		0x1032	Compaq(2)
 vendor NEC		0x1033	NEC
 vendor BURNDY		0x1034	Burndy
 vendor COMPCOMM		0x1035	Comp. & Comm. Research Lab
@@ -245,7 +245,7 @@ vendor MENTOR		0x10cc	Mentor ARC
 vendor ADVSYS		0x10cd	Advansys
 vendor RADIUS		0x10ce	Radius
 vendor CITICORP		0x10cf	Citicorp TTI
-vendor FUJITSU2		0x10d0	Fujitsu (2nd ID)
+vendor FUJITSU2		0x10d0	Fujitsu(2)
 vendor FUTUREPLUS	0x10d1	Future+ Systems
 vendor MOLEX		0x10d2	Molex
 vendor JABIL		0x10d3	Jabil Circuit
@@ -406,7 +406,7 @@ vendor MIRTRON		0x1175	Mitron Computer
 vendor SBE		0x1176	SBE
 vendor SILICONENG	0x1177	Silicon Engineering
 vendor ALFA		0x1178	Alfa
-vendor TOSHIBA2		0x1179	Toshiba (2nd ID)
+vendor TOSHIBA2		0x1179	Toshiba(2)
 vendor ATREND		0x117a	A-Trend Technology
 vendor ATTO		0x117c	Atto Technology
 vendor TR		0x117e	T/R Systems
@@ -418,7 +418,7 @@ vendor DATAWORLD	0x1185	Dataworld
 vendor DLINK		0x1186	D-Link Systems
 vendor ATL		0x1187	Advanced Techonoloy Labratories
 vendor SHIMA		0x1188	Shima Seiki Manufacturing
-vendor MATSUSHITA2	0x1189	Matsushita Electronics (2nd ID)
+vendor MATSUSHITA2	0x1189	Matsushita Electronics(2)
 vendor HILEVEL		0x118a	HiLevel Technology
 vendor COROLLARY	0x118c	Corrollary
 vendor BITFLOW		0x118d	BitFlow
@@ -436,11 +436,11 @@ vendor MINDSHARE	0x119a	Mind Share
 vendor OMEGA		0x119b	Omega Micro
 vendor ITI		0x119c	Information Technology Institute
 vendor BUG		0x119d	Bug Sapporo
-vendor FUJITSU3		0x119e	Fujitsu (3th ID)
+vendor FUJITSU3		0x119e	Fujitsu(3)
 vendor BULL		0x119f	Bull Hn Information Systems
 vendor CONVEX		0x11a0	Convex Computer
 vendor HAMAMATSU	0x11a1	Hamamatsu Photonics
-vendor SIERRA2		0x11a2	Sierra Research & Technology (2nd ID)
+vendor SIERRA2		0x11a2	Sierra Research & Technology(2)
 vendor BARCO		0x11a4	Barco
 vendor MICROUNITY	0x11a5	MicroUnity Systems Engineering
 vendor PUREDATA		0x11a6 	Pure Data
@@ -459,7 +459,7 @@ vendor BARR		0x11b3	Barr Systems
 vendor LEITECH		0x11b4	Leitch Technology
 vendor RADSTONE		0x11b5	Radstone Technology
 vendor UNITEDVIDEO	0x11b6	United Video
-vendor MOT2		0x11b7	Motorola (2nd ID)
+vendor MOT2		0x11b7	Motorola(2)
 vendor XPOINT		0x11b8	Xpoint Technologies
 vendor PATHLIGHT	0x11b9	Pathlight Technology
 vendor VIDEOTRON	0x11ba	VideoTron
@@ -468,7 +468,7 @@ vendor NETPERIPH	0x11bc	Network Peripherals
 vendor PINNACLE		0x11bd	Pinnacle Systems
 vendor IMI		0x11be	International Microcircuts
 vendor LUCENT		0x11c1  AT&T/Lucent
-vendor NEC2		0x11c3	NEC (2nd ID)
+vendor NEC2		0x11c3	NEC(2)
 vendor DOCTECH		0x11c4	Document Technologies
 vendor SHIVA		0x11c5	Shiva
 vendor DCMDATA		0x11c7	DCM Data Systems
@@ -505,7 +505,7 @@ vendor RISCOM		0x12aa	RISCom
 vendor ALTEON		0x12ae	Alteon
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
-vendor DIAMOND2		0x12eb	Diamond Multimedia (2nd ID)
+vendor DIAMOND2		0x12eb	Diamond Multimedia(2)
 vendor ADMTEK		0x1317	ADMtek
 vendor SIIG		0x131f	SIIG
 vendor LMC		0x1376	LAN Media Corp
@@ -515,25 +515,25 @@ vendor SUNDANCE		0x13f0	Sundance
 vendor CMI		0x13f6	C-Media Electronics Inc.
 vendor INVERTEX		0x14e1	Invertex
 vendor DELTA		0x1500	Delta
-vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd ID)
-vendor TEKRAM2		0x1de1	Tekram Technology (2nd ID)
+vendor SYMPHONY2	0x1c1c	Symphony Labs(2)
+vendor TEKRAM2		0x1de1	Tekram Technology(2)
 vendor 3DLABS		0x3d3d	3D Labs
-vendor AVANCE2		0x4005	Avance Logic (2nd ID)
+vendor AVANCE2		0x4005	Avance Logic(2)
 vendor ADDTRON		0x4033	Addtron
 vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
-vendor BUSLOGIC2	0x4b10	Buslogic (2nd ID)
+vendor BUSLOGIC2	0x4b10	Buslogic(2)
 vendor S3		0x5333	S3
-vendor NETPOWER2	0x5700	NetPower (2nd ID)
+vendor NETPOWER2	0x5700	NetPower(2)
 vendor C4T		0x6374	c't Magazin
 vendor QUANCM		0x8008	Quancm Electronic GmbH
 vendor INTEL		0x8086	Intel
-vendor TRIGEM2		0x8800	Trigem Computer (2nd ID)
-vendor WINBOND2		0x8c4a	Winbond (2nd ID)
+vendor TRIGEM2		0x8800	Trigem Computer(2)
+vendor WINBOND2		0x8c4a	Winbond(2)
 vendor COMPUTONE	0x8e0e	Computone
 vendor KTI		0x8e2e	KTI
 vendor ADP		0x9004	Adaptec
-vendor ADP2		0x9005	Adaptec (2nd ID)
+vendor ADP2		0x9005	Adaptec(2)
 vendor ATRONICS		0x907f	Atronics
 vendor ARC		0xedd8	ARC Logic
 vendor INVALID		0xffff	INVALID VENDOR ID
@@ -1357,7 +1357,7 @@ product SYMPHONY 82C565		0x0565	82C565 PCI-ISA
 /* Tekram Technology products (1st ID)*/
 product TEKRAM 	DC290		0xdc29	DC-290(M)
 
-/* Tekram Technology products (2nd ID) */
+/* Tekram Technology products(2) */
 product TEKRAM2	DC690C		0x690c	DC-690C
 
 /* Texas Instruments products */
@@ -1383,7 +1383,7 @@ product TI PERMEDIA2		0x3d07	3DLabs Permedia 2
 product TOSHIBA	R4X00		0x102f	R4x00 Host-PCI
 product TOSHIBA	TC35856F	0x0020	TC35856F ATM (Meteor)
 
-/* Toshiba (2nd ID) products */
+/* Toshiba(2) products */
 product TOSHIBA2 THB 		0x0601	Host-PCI
 product TOSHIBA2 ISA 		0x0602	PCI-ISA
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI
