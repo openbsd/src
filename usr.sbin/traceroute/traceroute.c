@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.54 2003/04/24 16:20:04 cloder Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.55 2003/04/25 02:12:19 cloder Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.54 2003/04/24 16:20:04 cloder Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.55 2003/04/25 02:12:19 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -254,7 +254,7 @@ static char rcsid[] = "$OpenBSD: traceroute.c,v 1.54 2003/04/24 16:20:04 cloder 
  */
 struct packetdata {
 	u_char seq;		/* sequence number of this packet */
-	u_char ttl;		/* ttl packet left with */
+	u_int8_t ttl;		/* ttl packet left with */
 	u_int32_t sec;		/* time packet left */
 	u_int32_t usec;
 };
@@ -267,7 +267,7 @@ int32_t usec_perturb;
 u_char packet[512], *outpacket;	/* last inbound (icmp) packet */
 
 int wait_for_reply(int, struct sockaddr_in *, struct timeval *);
-void send_probe(int, int, int, struct sockaddr_in *);
+void send_probe(int, u_int8_t, int, struct sockaddr_in *);
 int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
 void print(u_char *, int, struct sockaddr_in *);
 char *inetname(struct in_addr);
@@ -284,8 +284,8 @@ char *source = 0;
 char *hostname;
 
 int nprobes = 3;
-int max_ttl = IPDEFTTL;
-int first_ttl = 1;
+u_int8_t max_ttl = IPDEFTTL;
+u_int8_t first_ttl = 1;
 u_short ident;
 u_short port = 32768+666;	/* start udp dest port # for probe packets */
 u_char	proto = IPPROTO_UDP;
@@ -302,7 +302,7 @@ main(int argc, char *argv[])
 {
 	struct hostent *hp;
 	struct sockaddr_in from, to;
-	int ch, i, lsrr, on, probe, seq, tos, ttl;
+	int ch, i, lsrr, on, probe, seq, tos;
 	int ttl_flag, incflag = 1, protoset = 0;
 	struct ip *ip;
 	u_int32_t tmprnd;
@@ -311,6 +311,7 @@ main(int argc, char *argv[])
 	size_t size = sizeof(max_ttl);
 	unsigned long l;
 	char *ep;
+	u_int8_t ttl;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
@@ -338,8 +339,8 @@ main(int argc, char *argv[])
 			ep = NULL;
 			l = strtoul(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l < 1 || l > max_ttl)
-				errx(1, "min ttl must be 1 to %d.", max_ttl);
-			first_ttl = (int)l;
+				errx(1, "min ttl must be 1 to %u.", max_ttl);
+			first_ttl = (u_int8_t)l;
 			break;
 		case 'c':
 			incflag = 0;
@@ -378,9 +379,9 @@ main(int argc, char *argv[])
 			l = strtoul(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l < first_ttl ||
 			    l > MAXTTL)
-				errx(1, "max ttl must be %d to %d.", first_ttl,
+				errx(1, "max ttl must be %u to %u.", first_ttl,
 				    MAXTTL);
-			max_ttl = (int)l;
+			max_ttl = (u_int8_t)l;
 			break;
 		case 'n':
 			nflag++;
@@ -577,11 +578,11 @@ main(int argc, char *argv[])
 		inet_ntoa(to.sin_addr));
 	if (source)
 		fprintf(stderr, " from %s", source);
-	fprintf(stderr, ", %d hops max, %d byte packets\n", max_ttl, datalen);
+	fprintf(stderr, ", %u hops max, %d byte packets\n", max_ttl, datalen);
 	(void) fflush(stderr);
 
 	if (first_ttl > 1)
-		printf("Skipping %d intermediate hops\n", first_ttl - 1);
+		printf("Skipping %u intermediate hops\n", first_ttl - 1);
 
 	for (ttl = first_ttl; ttl <= max_ttl; ++ttl) {
 		in_addr_t lastaddr = 0;
@@ -591,7 +592,7 @@ main(int argc, char *argv[])
 		quad_t dt;
 		int loss;
 
-		printf("%2d ", ttl);
+		printf("%2u ", ttl);
 		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
@@ -621,7 +622,7 @@ main(int argc, char *argv[])
 				printf(" ms");
 				ip = (struct ip *)packet;
 				if (ttl_flag)
-					printf(" (%d)", ip->ip_ttl);
+					printf(" (%u)", ip->ip_ttl);
 				if (i == -2) {
 #ifndef ARCHAIC
 					ip = (struct ip *)packet;
@@ -760,7 +761,7 @@ dump_packet(void)
 }
 
 void
-send_probe(int seq, int ttl, int iflag, struct sockaddr_in *to)
+send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
 {
 	struct ip *ip = (struct ip *)outpacket;
 	u_char *p = (u_char *)(ip + 1);
