@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.79 2002/07/23 16:08:57 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.80 2002/07/31 05:03:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -618,8 +618,6 @@ pmap_create()
 	TAILQ_INIT(&pmap->pm_obj.memq);
 	pmap->pm_obj.uo_npages = 0;
 	pmap->pm_obj.uo_refs = 1;
-	pmap->pm_stats.wired_count = 0;
-	pmap->pm_stats.resident_count = 1;
 
 	if (pmap_sid_counter >= hppa_sid_max) {
 		/* collect some */
@@ -627,15 +625,19 @@ pmap_create()
 	} else
 		space = ++pmap_sid_counter;
 
-	pmap->pm_space = space;
-	pmap->pm_pid = (space + 1) << 1;
 	pmap->pm_pdir_pg = uvm_pagealloc(NULL, 0, NULL,
 	    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (!pmap->pm_pdir_pg)
 		panic("pmap_create: no pages");
+	pmap->pm_ptphint = NULL;
 	pmap->pm_pdir = VM_PAGE_TO_PHYS(pmap->pm_pdir_pg);
-
 	pmap_sdir_set(space, pmap->pm_pdir);
+
+	pmap->pm_space = space;
+	pmap->pm_pid = (space + 1) << 1;
+
+	pmap->pm_stats.resident_count = 1;
+	pmap->pm_stats.wired_count = 0;
 
 	return(pmap);
 }
