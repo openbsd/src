@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.23 2001/03/20 17:08:45 art Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.24 2001/03/20 17:11:05 art Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1074,9 +1074,9 @@ gotit:
 	cg_blks(fs, cgp, cylno)[cbtorpos(fs, bno)]--;
 	cg_blktot(cgp)[cylno]--;
 	fs->fs_fmod = 1;
-        blkno = cgp->cg_cgx * fs->fs_fpg + bno;
-        if (DOINGSOFTDEP(ITOV(ip)))
-                softdep_setup_blkmapdep(bp, fs, blkno);
+	blkno = cgp->cg_cgx * fs->fs_fpg + bno;
+	if (DOINGSOFTDEP(ITOV(ip)))
+		softdep_setup_blkmapdep(bp, fs, blkno);
         return (blkno);
 }
 
