@@ -23,7 +23,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.12 2000/04/26 21:35:37 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.13 2000/04/30 05:23:28 ericj Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -597,7 +597,6 @@ protoid_string(register const u_char *pi)
 char *
 llcsap_string(u_char sap)
 {
-	register char *cp;
 	register struct hnamemem *tp;
 	register u_int32_t i = sap;
 	char buf[sizeof("sap 00")];
@@ -609,12 +608,7 @@ llcsap_string(u_char sap)
 	tp->addr = i;
 	tp->nxt = newhnamemem();
 
-	cp = buf;
-	(void)strcpy(cp, "sap ");
-	cp += strlen(cp);
-	*cp++ = hex[sap >> 4 & 0xf];
-	*cp++ = hex[sap & 0xf];
-	*cp++ = '\0';
+	snprintf(buf, sizeof(buf), "sap %02x", sap & 0xff);
 	tp->name = savestr(buf);
 	return (tp->name);
 }

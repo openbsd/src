@@ -24,7 +24,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.17 2000/04/26 21:35:44 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.18 2000/04/30 05:23:28 ericj Exp $ (LBL)";
 #endif
 
 /*
@@ -151,7 +151,7 @@ main(int argc, char **argv)
 	else
 		program_name = argv[0];
 
-	if (abort_on_misalignment(ebuf) < 0)
+	if (abort_on_misalignment(ebuf, sizeof(ebuf)) < 0)
 		error("%s", ebuf);
 
 	opterr = 0;

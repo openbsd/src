@@ -18,10 +18,10 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/machdep.h,v 1.1 1996/12/12 16:22:51 bitblt Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/machdep.h,v 1.2 2000/04/30 05:23:28 ericj Exp $ (LBL)
  */
 #ifndef tcpdump_machdep_h
 #define tcpdump_machdep_h
 
-int abort_on_misalignment(char *);
+int abort_on_misalignment(char *, size_t);
 #endif
