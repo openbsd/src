@@ -1,4 +1,4 @@
-/*	$OpenBSD: nxbss.c,v 1.1 2002/07/26 01:20:44 deraadt Exp $	*/
+/*	$OpenBSD: nxbss.c,v 1.2 2002/07/26 23:30:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,11 +28,15 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/mman.h>
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
 
-u_int64_t buf[256];	/* assuming the testfly() will fit */
+#define PAD 64*1024
+#define TEST 256
+u_int64_t buf[PAD+TEST];	/* assuming the testfly() will fit */
 
 void
 testfly()
@@ -48,8 +52,10 @@ sigsegv(int sig)
 int
 main(void)
 {
+	void *p = &buf[PAD];
 	signal(SIGSEGV, sigsegv);
-	memcpy(buf, &testfly, sizeof(buf));
-	((void (*)(void))&buf)();
+
+	memcpy(p, &testfly, TEST);
+	((void (*)(void))p)();
 	exit(1);
 }
