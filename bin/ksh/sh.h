@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.13 2003/05/16 19:58:57 jsyn Exp $	*/
+/*	$OpenBSD: sh.h,v 1.14 2003/09/01 15:47:40 naddy Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -474,6 +474,7 @@ enum sh_flag {
 	FCOMMAND,	/* -c: (invocation) execute specified command */
 #ifdef EMACS
 	FEMACS,		/* emacs command editing */
+	FEMACSUSEMETA,	/* use 8th bit as meta */
 #endif
 	FERREXIT,	/* -e: quit on error */
 #ifdef EMACS

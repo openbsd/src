@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.18 2003/08/06 21:08:05 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.19 2003/09/01 15:47:40 naddy Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -141,6 +141,7 @@ const struct option options[] = {
 	{ (char *) 0, 	'c',	    OF_CMDLINE },
 #ifdef EMACS
 	{ "emacs",	  0,		OF_ANY },
+	{ "emacs-usemeta",  0,		OF_ANY }, /* non-standard */
 #endif
 	{ "errexit",	'e',		OF_ANY },
 #ifdef EMACS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.26 2003/08/27 14:56:11 fgsch Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.27 2003/09/01 15:47:40 naddy Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -25,7 +25,7 @@ static	Area	aedit;
 #define	CTRL(x)		((x) == '?' ? 0x7F : (x) & 0x1F)	/* ASCII */
 #define	UNCTRL(x)	((x) == 0x7F ? '?' : (x) | 0x40)	/* ASCII */
 #define	META(x)		((x) & 0x7f)
-#define	ISMETA(x)	(x_usemeta && ((x) & 0x80))
+#define	ISMETA(x)	(Flag(FEMACSUSEMETA) && ((x) & 0x80))
 
 
 /* values returned by keyboard functions */
@@ -101,7 +101,6 @@ static int	x_col;
 static int	x_displen;
 static int	x_arg;		/* general purpose arg */
 static int	x_arg_defaulted;/* x_arg not explicitly set; defaulted to 1 */
-static int	x_usemeta;	/* no 8-bit ascii, meta = ESC */
 
 static int	xlp_valid;
 /* end from 4.9 edit.h } */
@@ -1534,7 +1533,7 @@ x_init_emacs()
 	 */
 	locale = setlocale(LC_CTYPE, NULL);
 	if (locale == NULL || !strcmp(locale, "C") || !strcmp(locale, "POSIX"))
-		x_usemeta = 1;
+		Flag(FEMACSUSEMETA) = 1;
 }
 
 static void bind_if_not_bound(int p, int k, int func);
