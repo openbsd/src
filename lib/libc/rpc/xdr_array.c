@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_array.c,v 1.4 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: xdr_array.c,v 1.5 2002/07/29 23:00:36 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -45,6 +45,7 @@ static char *rcsid = "$OpenBSD: xdr_array.c,v 1.4 2001/09/15 13:51:01 deraadt Ex
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
@@ -71,11 +72,12 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 	u_int nodesize;
 
 	/* like strings, arrays are really counted arrays */
-	if (! xdr_u_int(xdrs, sizep)) {
+	if (!xdr_u_int(xdrs, sizep)) {
 		return (FALSE);
 	}
 	c = *sizep;
-	if ((c > maxsize) && (xdrs->x_op != XDR_FREE)) {
+	if ((c > maxsize && UINT_MAX/elsize < c) &&
+	    (xdrs->x_op != XDR_FREE)) {
 		return (FALSE);
 	}
 	nodesize = c * elsize;
@@ -143,7 +145,7 @@ xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
 
 	elptr = basep;
 	for (i = 0; i < nelem; i++) {
-		if (! (*xdr_elem)(xdrs, elptr)) {
+		if (!(*xdr_elem)(xdrs, elptr)) {
 			return(FALSE);
 		}
 		elptr += elemsize;
