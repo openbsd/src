@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.38 2001/06/25 19:15:42 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.39 2001/06/25 21:13:37 mickey Exp $
 #
 # PPC GENERIC config file
 #
@@ -50,10 +50,12 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 #adv*		at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 #ahc*		at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 #bha*		at pci? dev ? function ?	# BusLogic 9xx SCSI
+#ami*		at pci? dev ? function ?
 #pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 #pciide*	at pci? dev ? function ?
 macobio0	at pci? dev ? function ?
 gm*		at pci? dev ? function ?	# GMAC ethernet
+an*		at pci? dev ? function ?	# Cisco/Aironet
 
 exphy*		at mii? phy ?			# 3Com internal PHYs
 inphy*		at mii? phy ?			# Intel 82555 PHYs
