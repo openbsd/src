@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.34 2003/10/21 18:58:48 jmc Exp $	*/
+/*	$OpenBSD: an.c,v 1.35 2004/07/24 21:26:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -331,6 +331,7 @@ an_rxeof(sc)
 	}
 
 	m->m_pkthdr.rcvif = ifp;
+	m->m_data += ETHER_ALIGN;
 
 	eh = mtod(m, struct ether_header *);
 
@@ -688,7 +689,7 @@ an_read_record(sc, ltv)
 		an_swap16(&ltv->an_val[5], 6);
 		break;
 	case AN_RID_32BITS_CUM:
-		for (i = 0x60; i--; ) {
+		for (i = 0x60; i--;) {
 			u_int16_t t = ltv->an_val[i * 2] ^ ltv->an_val[i * 2 + 1];
 			ltv->an_val[i * 2] ^= t;
 			ltv->an_val[i * 2 + 1] ^= t;
@@ -964,7 +965,7 @@ an_promisc(sc, promisc)
 
 	/* Set RX mode. */
 	if (promisc &&
-	    !(sc->an_config.an_rxmode & AN_RXMODE_LAN_MONITOR_CURBSS) ) {
+	    !(sc->an_config.an_rxmode & AN_RXMODE_LAN_MONITOR_CURBSS)) {
 		sc->an_rxmode = sc->an_config.an_rxmode;
 		sc->an_config.an_rxmode |=
 		    AN_RXMODE_LAN_MONITOR_CURBSS;
@@ -1428,17 +1429,16 @@ SYSCTL_INT(_machdep, OID_AUTO, an_cache_iponly, CTLFLAG_RW,
  * strength in MAC (src) indexed cache.
  */
 void
-an_cache_store (sc, eh, m, rx_quality)
+an_cache_store(sc, eh, m, rx_quality)
 	struct an_softc *sc;
 	struct ether_header *eh;
 	struct mbuf *m;
 	unsigned short rx_quality;
 {
-	struct ip *ip = 0;
-	int i;
 	static int cache_slot = 0;	/* use this cache entry */
 	static int wrapindex = 0;       /* next "free" cache entry */
-	int saanp=0;
+	struct ip *ip = 0;
+	int i, saanp = 0;
 
 	/* filters:
 	 * 1. ip only
@@ -1449,8 +1449,7 @@ an_cache_store (sc, eh, m, rx_quality)
 	if ((ntohs(eh->ether_type) == 0x800))
 		saanp = 1;
 
-	/* filter for ip packets only
-	*/
+	/* filter for ip packets only */
 	if (sc->an_cache_iponly && !saanp)
 		return;
 
@@ -1473,7 +1472,7 @@ an_cache_store (sc, eh, m, rx_quality)
 	 * . var w_nextitem holds total number of entries already cached
 	 */
 	for(i = 0; i < sc->an_nextitem; i++)
-		if (!bcmp(eh->ether_shost , sc->an_sigcache[i].macsrc, 6))
+		if (!bcmp(eh->ether_shost, sc->an_sigcache[i].macsrc, 6))
 			/* Match!,
 			 * so we already have this entry, update the data
 			 */
@@ -1482,7 +1481,7 @@ an_cache_store (sc, eh, m, rx_quality)
 	/* did we find a matching mac address?
 	 * if yes, then overwrite a previously existing cache entry
 	 */
-	if (i < sc->an_nextitem )
+	if (i < sc->an_nextitem)
 		cache_slot = i;
 
 	/* else, have a new address entry,so
@@ -1495,7 +1494,7 @@ an_cache_store (sc, eh, m, rx_quality)
 		 * note: an_nextitem also holds number of entries
 		 * added in the cache table
 		 */
-		if ( sc->an_nextitem < MAXANCACHE ) {
+		if (sc->an_nextitem < MAXANCACHE) {
 			cache_slot = sc->an_nextitem;
 			sc->an_nextitem++;
 			sc->an_sigitems = sc->an_nextitem;
@@ -1527,7 +1526,7 @@ an_cache_store (sc, eh, m, rx_quality)
 	 */
 	if (saanp)
 		sc->an_sigcache[cache_slot].ipsrc = ip->ip_src.s_addr;
-	bcopy( eh->ether_shost, sc->an_sigcache[cache_slot].macsrc,  6);
+	bcopy(eh->ether_shost, sc->an_sigcache[cache_slot].macsrc, 6);
 
 	sc->an_sigcache[cache_slot].signal = rx_quality;
 }
