@@ -1,17 +1,20 @@
-# $OpenBSD: Makefile,v 1.6 2003/05/17 05:20:18 mho Exp $
+# $OpenBSD: Makefile,v 1.7 2003/05/17 20:07:23 mho Exp $
 
 KRB5DIR=	${.CURDIR}/../../kerberosV
+GENDIR=		${.CURDIR}/generated
 .include "Makefile.common.inc"
 
 LIB	= krb5
 
 .PATH:	${KRB5SRC}/lib
+.PATH:	${GENDIR}
 
 .include "Makefile.asn1.inc"
 .include "Makefile.hdb.inc"
 .include "Makefile.kafs.inc"
 .include "Makefile.roken.inc"
 .include "Makefile.krb5.inc"
+
 
 includes:
 	@test -d ${DESTDIR}/usr/include/kerberosV || \
@@ -32,7 +35,7 @@ includes:
 			-o ${BINOWN} -g $(BINGRP) $$i \
 			${DESTDIR}/usr/include/kerberosV; done; \
 		echo
-	@echo -n ${DIRKAFS}:; \
+	@echo -n ${DIR_KAFS}:; \
 	cd ${DIR_KAFS}; for i in ${HDR_KAFS}; do \
 		echo -n " $$i"; \
 		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
@@ -56,8 +59,8 @@ includes:
 			-o ${BINOWN} -g $(BINGRP) $$i \
 			${DESTDIR}/usr/include/kerberosV; done; \
 		echo
-	@echo -n ${.OBJDIR}:; \
-	cd ${.OBJDIR}; for i in ${HDR_OBJ}; do \
+	@echo -n ${GENDIR}:; \
+	cd ${GENDIR}; for i in ${HDR_GEN}; do \
 		echo -n " $$i"; \
 		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
 			${INSTALL} ${INSTALL_COPY} -m 444 \

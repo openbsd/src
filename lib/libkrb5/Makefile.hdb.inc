@@ -1,36 +1,38 @@
-# $OpenBSD: Makefile.hdb.inc,v 1.2 2003/05/17 05:20:18 mho Exp $
+# $OpenBSD: Makefile.hdb.inc,v 1.3 2003/05/17 20:07:23 mho Exp $
 
 DIR_HDB=	${KRB5SRC}/lib/hdb
 HDR_HDB=	hdb.h hdb-protos.h hdb-private.h
-HDR_OBJ+=	hdb_err.h hdb_asn1.h
+HDR_GEN+=	hdb_err.h hdb_asn1.h
 
-includes:	hdb_err.h hdb_asn1.h
+.PATH:	${KRB5SRC}/lib/hdb
 
-ASN1_SRC = asn1_Key.c asn1_Event.c asn1_HDBFlags.c asn1_hdb_entry.c \
-        asn1_Salt.c hdb_asn1.h asn1_GENERATION.c
+gen_files= \
+	hdb_asn1.h \
+	asn1_Key.c \
+	asn1_Event.c \
+	asn1_HDBFlags.c \
+	asn1_hdb_entry.c \
+        asn1_Salt.c \
+	asn1_GENERATION.c
 
-SRCS+=	${ASN1_SRC} \
-	keytab.c \
+gen_files+=\
+	hdb_err.h \
+	hdb_err.c
+
+SRCS+=	keytab.c \
 	hdb.c \
 	common.c \
 	db.c \
 	mkey.c \
 	ndbm.c \
 	print.c \
-	hdb_err.c \
-	hdb_err.h
+	${gen_files}
 
-${ASN1_SRC}:
-	asn1_compile ${KRB5SRC}/lib/hdb/hdb.asn1 hdb_asn1
-	for f in *.x; do mv $$f `echo $$f | sed s,.x$$,.c,g`; done
+CFLAGS+=	-I${KRB5SRC}/lib/hdb -I${KRB5SRC}/lib/asn1
 
-CLEANFILES+=	hdb_err.[ch] ${ASN1_SRC} \
-		hdb_asn1.[ch] ans1_files asn1.h asn1_files
+regen_hdb:
+	cd ${GENDIR}; compile_et ${KRB5SRC}/lib/hdb/hdb_err.et
+	cd ${GENDIR}; asn1_compile ${KRB5SRC}/lib/hdb/hdb.asn1 hdb_asn1; \
+		for f in *.x; do mv $$f `echo $$f | sed s,.x$$,.c,g`; done
 
-CFLAGS+=-I${KRB5SRC}/lib/hdb -I${KRB5SRC}/lib/asn1
-
-.PATH:	${KRB5SRC}/lib/hdb
-
-hdb_err.c hdb_err.h: ${KRB5SRC}/lib/hdb/hdb_err.et
-	compile_et ${KRB5SRC}/lib/hdb/hdb_err.et
-
+regen:		regen_hdb

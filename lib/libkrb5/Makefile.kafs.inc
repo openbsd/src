@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.kafs.inc,v 1.3 2003/05/17 05:20:18 mho Exp $
+# $OpenBSD: Makefile.kafs.inc,v 1.4 2003/05/17 20:07:23 mho Exp $
 
 DIR_KAFS=	${KRB5SRC}/lib/kafs
 HDR_KAFS=	kafs.h
@@ -24,4 +24,4 @@ MLINKS+=kafs.3 k_hasafs.3 \
 
 kafs_common.c:	${KRB5SRC}/lib/kafs/common.c
 	ln -sf ${KRB5SRC}/lib/kafs/common.c kafs_common.c
-
+CLEANFILES+=kafs_common.c

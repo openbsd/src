@@ -1,12 +1,10 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.3 2003/05/17 05:20:18 mho Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.4 2003/05/17 20:07:23 mho Exp $
 
-DIR_KRB5INC=${.CURDIR}/../../kerberosV/include
-DIR_KRB5LIB=${KRB5SRC}/lib/krb5
+DIR_KRB5INC=	${.CURDIR}/../../kerberosV/include
+DIR_KRB5LIB=	${KRB5SRC}/lib/krb5
 HDR_KRB5INC=	krb5-types.h
 HDR_KRB5LIB=	krb5.h krb5-protos.h krb5-private.h
-HDR_OBJ+=	krb5_err.h heim_err.h k524_err.h
-
-includes:	krb5_err.h heim_err.h k524_err.h
+HDR_GEN+=	krb5_err.h heim_err.h k524_err.h
 
 MAN+=	krb5.conf.5
 
@@ -134,6 +132,16 @@ MAN+=	krb5_unparse_name.3
 MAN+=	krb5_verify_user.3
 MLINKS+=krb5_verify_user.3 krb5_verify_user_lrealm.3
 
+.PATH:	${KRB5SRC}/lib/krb5
+
+gen_files= \
+	heim_err.h \
+	k524_err.h \
+	krb5_err.h \
+	heim_err.c \
+	k524_err.c \
+	krb5_err.c
+
 SRCS+=	add_et_list.c \
 	addr_families.c \
 	aname_to_localname.c \
@@ -226,24 +234,19 @@ SRCS+=	add_et_list.c \
 	write_message.c \
 	krb5_err.c \
 	heim_err.c \
-	k524_err.c
-
-CLEANFILES+=	krb5_err.[ch] heim_err.[ch] k524_err.[ch]
-
-.PATH:	${KRB5SRC}/lib/krb5
+	k524_err.c \
+	${gen_files}
 
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/ \
 	-I${KRB5SRC}/lib/asn1 -I../asn1 -I. \
 	-DSHA1_CTX=SHA_CTX
 
-krb5_err.c krb5_err.h:	${KRB5SRC}/lib/krb5/krb5_err.et
-	compile_et ${KRB5SRC}/lib/krb5/krb5_err.et
+regen_krb5:
+	cd ${GENDIR}; compile_et ${KRB5SRC}/lib/krb5/heim_err.et
+	cd ${GENDIR}; compile_et ${KRB5SRC}/lib/krb5/k524_err.et
+	cd ${GENDIR}; compile_et ${KRB5SRC}/lib/krb5/krb5_err.et
 
-heim_err.c heim_err.h:	${KRB5SRC}/lib/krb5/heim_err.et
-	compile_et ${KRB5SRC}/lib/krb5/heim_err.et
-
-k524_err.c k524_err.h:	${KRB5SRC}/lib/krb5/k524_err.et
-	compile_et ${KRB5SRC}/lib/krb5/k524_err.et
+regen:	regen_krb5
 
 # There is a warn.c both in lib/roken and lib/krb5.
 krb5_warn.c:
@@ -260,4 +263,3 @@ krb5_keytab.c:       ${KRB5SRC}/lib/krb5/keytab.c
 	ln -sf ${KRB5SRC}/lib/krb5/keytab.c krb5_keytab.c
 
 CLEANFILES+=krb5_net_{read,write}.c krb5_keytab.c
-
