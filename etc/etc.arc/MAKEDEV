@@ -1,11 +1,11 @@
 #!/bin/sh -
-#
-#	$OpenBSD: MAKEDEV,v 1.26 1998/09/15 10:23:22 pattonme Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 1998/09/25 10:40:58 todd Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
 # Device "make" file.  Valid arguments:
-#	all	makes all known devices
+#	all	makes all known devices, including local devices.
+#		Tries to make the ``standard'' number of each type.
 #	ramdisk	makes all devices for a ramdisk kernel
 #	std	standard devices
 #	local	configuration specific devices
@@ -14,14 +14,14 @@
 #	st*	SCSI tapes
 #
 # Disks:
-#	fd*	floppy disk drives
+#	fd*	Floppy disks
 #	sd*	SCSI disks
-#	wd*	IDE disks
-#	cd*	SCSI CD rom
-#	acd*	IDE CDROM.
+#	wd*	ISA "winchester" disk drives (ST506,IDE,ESDI,RLL,...)
+#	cd*	SCSI cdrom drives
+#	acd*	ISA ATAPI cdrom drives
 #	vnd*	"file" pseudo-disks
 #	rd*	"ramdisk" pseudo-disks
-#	ccd*	contatenated disk devices
+#	ccd*	concatenated disk devices
 #
 # Console ports:
 #	ttyC0	pccons
@@ -29,34 +29,50 @@
 # Pointing devices:
 #	pms*	PS/2 compatible mouse
 #
-# Terminal multiplexors:
+# Terminal ports:
 #	tty*	tty ports
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Printers:
-#	lpt*	centronics lpt
+#	lpt*	stock lp
 #
 # Call units:
 #
 # Special purpose devices:
-#	bpf*	packet filter
+#	bpf*	Berkeley Packet Filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	joy*	joystick driver
-#	*random	random data source
+#	*random	inkernal random data source
 #
 # Platform-specific devices:
 #
 
-PATH=/sbin:/bin/:/usr/bin:/usr/sbin
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+this=$0
 umask 77
 
+# default shell support functions
+add ()
+{
+	tmp=0
+	while [ "$1" ]
+	do
+		tmp=$(( $1 + $tmp ))
+		shift
+	done
+	echo $tmp
+}
+mult ()
+{
+	echo "$(( $1 * $2 ))"
+}
 hex ()
 {
 	case $1 in
-		[0-9]) echo -n $1 ;;
+		[0-9]) echo -n $1;;
 		10) echo -n a;;
 		11) echo -n b;;
 		12) echo -n c;;
@@ -65,18 +81,49 @@ hex ()
 		15) echo -n f;;
 	esac
 }
+trunc ()
+{
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg1="$1"
+	arg2="$2"
+	echo ${arg1#$arg2}
+}
+unt()
+{
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg1="$1"
+	tmp="${arg1#[a-z]*}"
+	while [ "$tmp" != "$arg1" ]
+	do
+		arg1=$tmp
+		tmp="${arg1#[a-z]*}"
+	done
+	tmp="${arg1%*[a-z]}"
+	while [ "$tmp" != "$arg1" ]
+	do
+		arg1=$tmp
+		tmp="${arg1%*[a-z]}"
+	done
+	echo $arg1
+}
 
 for i
 do
+
+unit=`unt $i`
+[ "$unit" ] || unit=0
+
 case $i in
 
 all)
-	sh MAKEDEV std fd fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 ss0
-	sh MAKEDEV ccd0 ccd1 ccd2
-	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 tty00 tty01 tty02 tty03 pty0 pty1
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh MAKEDEV ipl tun0 tun1 tun2
-	sh MAKEDEV ttyC0 lpt0 pms0 random uk0 uk1 local joy0 joy1
+	sh $this std fd fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 ss0
+	sh $this ccd0 ccd1 ccd2
+	sh $this vnd0 vnd1 vnd2 vnd3 tty00 tty01 tty02 tty03 pty0 pty1
+	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh $this ipl tun0 tun1 tun2
+	sh $this ttyC0 lpt0 pms0 random uk0 uk1 local joy0 joy1
 	;;
 
 joy*)
@@ -88,8 +135,8 @@ joy*)
 	;;
 
 ramdisk)
-	sh MAKEDEV std fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 
-	sh MAKEDEV tty00 tty01 ttyC0 lpt0 random rd0
+	sh $this std fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 
+	sh $this tty00 tty01 ttyC0 lpt0 random rd0
 	;;
 
 std)
@@ -394,10 +441,16 @@ random|srandom|urandom|prandom|arandom)
 	chown root.wheel random srandom urandom prandom arandom
 	chmod 644 random srandom urandom prandom arandom
 	;;
+xfs*)
+	rm -f xfs$unit
+	mknod xfs$unit c 51 $unit 
+	chmod 600 xfs$unit 
+	chown root.wheel xfs$unit
+	;;
 
 local)
 	umask 0
-	test -s MAKEDEV.local && sh MAKEDEV.local
+	test -s MAKEDEV.local && sh $this.local
 	;;
 
 *)
