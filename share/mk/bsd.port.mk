@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.60 1999/02/03 17:53:13 rohee Exp $
+#	$OpenBSD: bsd.port.mk,v 1.61 1999/02/17 13:00:42 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.60 1999/02/03 17:53:13 rohee Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.61 1999/02/17 13:00:42 espie Exp $$
 .if defined(NEED_VERSION)
 VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -1044,7 +1044,7 @@ checksum: fetch
 
 # Disable extract
 .if defined(NO_EXTRACT) && !target(extract)
-extract: checksum
+extract: 
 	@${TOUCH} ${TOUCH_FLAGS} ${EXTRACT_COOKIE}
 checksum: fetch
 	@${DO_NADA}
@@ -1443,7 +1443,7 @@ fetch:
 .endif
 
 .if !target(extract)
-extract: checksum ${EXTRACT_COOKIE}
+extract: ${EXTRACT_COOKIE}
 .endif
 
 .if !target(patch)
@@ -1466,8 +1466,8 @@ install: build ${INSTALL_COOKIE}
 package: install ${PACKAGE_COOKIE}
 .endif
 
-${EXTRACT_COOKIE}:
-	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-extract
+${EXTRACT_COOKIE}: 
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} checksum real-extract
 ${PATCH_COOKIE}:
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-patch
 ${CONFIGURE_COOKIE}:
