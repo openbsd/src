@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.42 2003/01/03 04:57:54 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.43 2003/03/31 23:04:07 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.42 2003/01/03 04:57:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.43 2003/03/31 23:04:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1285,7 +1285,7 @@ shell(argc, argv)
 		(void)signal(SIGINT, SIG_DFL);
 		(void)signal(SIGQUIT, SIG_DFL);
 		shell = getenv("SHELL");
-		if (shell == NULL)
+		if (shell == NULL || *shell == '\0')
 			shell = _PATH_BSHELL;
 		namep = strrchr(shell, '/');
 		if (namep == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.50 2002/06/04 10:13:23 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.51 2003/03/31 23:04:07 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.50 2002/06/04 10:13:23 mpech Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.51 2003/03/31 23:04:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ main(argc, argv)
 	ftpport = "ftp";
 	httpport = "http";
 	gateport = getenv("FTPSERVERPORT");
-	if (gateport == NULL)
+	if (gateport == NULL || *gateport == '\0')
 		gateport = "ftpgate";
 	doglob = 1;
 	interactive = 1;
@@ -137,7 +137,7 @@ main(argc, argv)
 	epsv4bad = 0;
 
 	/* Set default operation mode based on FTPMODE environment variable */
-	if ((cp = getenv("FTPMODE")) != NULL) {
+	if ((cp = getenv("FTPMODE")) != NULL && *cp != '\0') {
 		if (strcmp(cp, "passive") == 0) {
 			passivemode = 1;
 			activefallback = 0;
@@ -167,7 +167,7 @@ main(argc, argv)
 	}
 
 	cp = getenv("TERM");
-	dumb_terminal = (cp == NULL || !strcmp(cp, "dumb") ||
+	dumb_terminal = (cp == NULL || *cp == '\0' || !strcmp(cp, "dumb") ||
 	    !strcmp(cp, "emacs") || !strcmp(cp, "su"));
 	fromatty = isatty(fileno(stdin));
 	if (fromatty) {

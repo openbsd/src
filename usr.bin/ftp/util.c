@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.31 2002/11/08 03:30:17 fgsch Exp $	*/
+/*	$OpenBSD: util.c,v 1.32 2003/03/31 23:04:07 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.31 2002/11/08 03:30:17 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.32 2003/03/31 23:04:07 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -388,7 +388,7 @@ remglob(argv, doswitch, errbuf)
         if (ftemp == NULL) {
 		int len;
 
-		if ((cp = getenv("TMPDIR")) == NULL)
+		if ((cp = getenv("TMPDIR")) == NULL || *cp == '\0')
 		    cp = _PATH_TMP;
 		len = strlen(cp);
 		if (len + sizeof(TMPFILE) + (cp[len-1] != '/') > sizeof(temp)) {

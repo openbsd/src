@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.44 2003/03/10 06:20:10 itojun Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.45 2003/03/31 23:04:07 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.44 2003/03/10 06:20:10 itojun Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.45 2003/03/31 23:04:07 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -630,8 +630,10 @@ auto_fetch(argc, argv, outfile)
 	(void)signal(SIGINT, (sig_t)intr);
 	(void)signal(SIGPIPE, (sig_t)lostpeer);
 
-	ftpproxy = getenv(FTP_PROXY);
-	httpproxy = getenv(HTTP_PROXY);
+	if ((ftpproxy = getenv(FTP_PROXY)) != NULL && *ftpproxy == '\0')
+		ftpproxy = NULL;
+	if ((httpproxy = getenv(HTTP_PROXY)) != NULL && *httpproxy == '\0')
+		httpproxy = NULL;
 
 	/*
 	 * Loop through as long as there's files to fetch.
