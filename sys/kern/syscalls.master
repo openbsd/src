@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.58 2003/05/10 17:53:58 miod Exp $
+;	$OpenBSD: syscalls.master,v 1.59 2003/06/22 21:34:16 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -40,6 +40,8 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/poll.h>
+#include <sys/event.h>
+#include <xfs/xfs_pioctl.h>
 
 ; Reserved/unimplemented system calls in the range 0-150 inclusive
 ; are reserved for use in future Berkeley releases.
