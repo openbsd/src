@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.16 2003/06/24 18:45:30 tedu Exp $	*/
+/*	$OpenBSD: grep.c,v 1.17 2003/06/25 17:28:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -95,7 +95,7 @@ int	 first;		/* flag whether or not this is our first match */
 int	 tail;		/* lines left to print */
 int	 lead;		/* number of lines in leading context queue */
 int	 boleol;	/* At least one pattern has a bol or eol */
-int	 maxPatternLen;	/* Longest length of all patterns */
+size_t	 maxPatternLen;	/* Longest length of all patterns */
 
 extern char *__progname;
 
@@ -261,28 +261,28 @@ main(int argc, char *argv[])
 	}
 
 	while ((c = getopt_long(argc, argv, optstr,
-				long_options, (int *)NULL)) != -1) {
+				long_options, NULL)) != -1) {
 		switch (c) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			tmp = argv[optind - 1];
 			if (tmp[0] == '-' && tmp[1] == c && !tmp[2])
-				Aflag = Bflag = strtol(++tmp, (char **)NULL, 10);
+				Aflag = Bflag = strtol(++tmp, NULL, 10);
 			else
 				Aflag = Bflag = strtol(argv[optind] + 1,
-				    (char **)NULL, 10);
+				    NULL, 10);
 			break;
 		case 'A':
-			Aflag = strtol(optarg, (char **)NULL, 10);
+			Aflag = strtol(optarg, NULL, 10);
 			break;
 		case 'B':
-			Bflag = strtol(optarg, (char **)NULL, 10);
+			Bflag = strtol(optarg, NULL, 10);
 			break;
 		case 'C':
 			if (optarg == NULL)
 				Aflag = Bflag = 2;
 			else
-				Aflag = Bflag = strtol(optarg, (char **)NULL, 10);
+				Aflag = Bflag = strtol(optarg, NULL, 10);
 			break;
 		case 'E':
 			Fflag = Gflag = 0;

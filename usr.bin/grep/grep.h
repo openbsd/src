@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.6 2003/06/25 15:02:36 millert Exp $	*/
+/*	$OpenBSD: grep.h,v 1.7 2003/06/25 17:28:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -66,7 +66,8 @@ extern int	 Aflag, Bflag, Eflag, Fflag, Gflag, Hflag, Lflag, Pflag,
 		 Sflag, Rflag, Zflag,
 		 bflag, cflag, hflag, iflag, lflag, nflag, qflag, sflag,
 		 vflag, wflag, xflag;
-extern int	 binbehave, boleol, maxPatternLen;
+extern int	 binbehave, boleol;
+extern size_t	 maxPatternLen;
 
 extern int	 first, lead, matchall, patterns, tail;
 extern char    **pattern;
