@@ -6,7 +6,8 @@
 \fB#include <form.h>\fR
 .br
 FIELD *new_field(int height, int width, 
-                 int toprow, int leftcol, int offscreen, int nbuffers);
+                 int toprow, int leftcol, 
+                 int offscreen, int nbuffers);
 .br
 FIELD *dup_field(FIELD *field, int toprow, int leftcol);
 .br
@@ -17,11 +18,11 @@ int free_field(FIELD *field);
 .SH DESCRIPTION
 The function \fBnew_field\fR allocates a new field and initializes it from the
 parameters given: height, width, row of upper-left corner, column of upper-left
-corner, number off-screen rows, and number of working buffers.
+corner, number off-screen rows, and number of additional working buffers.
 
 The function \fBdup_field\fR duplicates a field at a new location.  Most
 attributes (including current contents, size, validation type, buffer count,
-growth threshold, justification, fireground, background, padd character,
+growth threshold, justification, foreground, background, pad character,
 options, and user pointer) are copied.  Field status and the field page bit are
 not copied.
 

@@ -7,19 +7,19 @@
 .br
 int set_field_init(FORM *form, void (*func)(FORM *));
 .br
-void (*)(FORM *) field_init(MWNU *form);
+void (*)(FORM *) field_init(const FORM *form);
 .br
 int set_field_term(FORM *form, void (*func)(FORM *));
 .br
-void (*)(FORM *) field_term(MWNU *form);
+void (*)(FORM *) field_term(const FORM *form);
 .br
 int set_form_init(FORM *form, void (*func)(FORM *));
 .br
-void (*)(FORM *) form_init(MWNU *form);
+void (*)(FORM *) form_init(const FORM *form);
 .br
 int set_form_term(FORM *form, void (*func)(FORM *));
 .br
-void (*)(FORM *) form_term(MWNU *form);
+void (*)(FORM *) form_term(const FORM *form);
 .br
 .SH DESCRIPTION
 These functions make it possible to set hook functions to be called at various

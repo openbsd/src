@@ -7,45 +7,72 @@
 .br
 int set_field_type(FIELD *field, FIELDTYPE *type, ...);
 .br
-FIELDTYPE *field_type(FIELD *field);
+FIELDTYPE *field_type(const FIELD *field);
 .br
-char *field_arg(FIELD *field);
+void *field_arg(const FIELD *field);
 .br
 .SH DESCRIPTION
 The function \fBset_field_type\fR declares a data type for a given form field.
 This is the type checked by validation functions.  The types are as follows:
 .TP 5
 TYPE_ALNUM
-Alphanumeric data.  Requires a third argument, a minimum field width.
+Alphanumeric data.  Requires a third \fBint\fR argument, a minimum field width.
 .TP 5
 TYPE_ALPHA
-Character data.  Requires a third argument, a minimum field width.
+Character data.  Requires a third \fBint\fR argument, a minimum field width.
 .TP 5
 TYPE_ENUM
-Accept one of a specified set of strings.  Requires a third (char **)
-argument pointing to a string list; a fourth flag argument to enable
-case-sensitivity; and a fifth flag argument specifying whether a partial
+Accept one of a specified set of strings.  Requires a third \fB(char **)\fR
+argument pointing to a string list; a fourth \fBint\fR flag argument to enable
+case-sensitivity; and a fifth \fBint\fR flag argument specifying whether a partial
 match must be a unique one (if this flag is off, a prefix matches the first
-of any set of more than one list elements with that prefix).
+of any set of more than one list elements with that prefix). Please notice
+that the string list is not copied, only a reference to it is stored in the
+field. So you should avoid to use a list that lives in automatic variables
+on the stack.
 .TP 5
 TYPE_INTEGER
 Integer data, parsable to an integer by \fBatoi(3)\fR.  Requires a third
-integer precision argument that sets zero-padding, a fourth argument 
-constraining minimum value, and a fifth constraining maximum value.
+\fBint\fR argument controlling the precision, a fourth \fBlong\fR argument 
+constraining minimum value, and a fifth \fBlong\fR constraining maximum value.
+If the maximum value is less or equal the minimum value, the range is simply
+ignored. On return the field buffer is formatted according to the \fBprintf\fR
+format specification ".*ld", where the '*' is replaced by the precision argument.
+For details of the precision handling see \fBprintf's\fR man-page.
 .TP 5
 TYPE_NUMERIC
-Numeric data (may have a decimal-point part).  Requires following
-arguments as for TYPE_INTEGER data.
+Numeric data (may have a decimal-point part). Requires a third
+\fBint\fR argument controlling the precision, a fourth \fBdouble\fR
+argument constraining minimum value, and a fifth \fBdouble\fR constraining 
+maximum value. If your system supports locale's, the decimal point character
+to be used must be the one specified by your locale.
+If the maximum value is less or equal the minimum value, the range is simply
+ignored. On return the field buffer is formatted according to the \fBprintf\fR
+format specification ".*f", where the '*' is replaced by the precision argument.
+For details of the precision handling see \fBprintf's\fR man-page.
 .TP 5
 TYPE_REGEXP
-Regular expression data.  Requires a regular expression third argument;
+Regular expression data.  Requires a regular expression \fB(char *)\fR third argument;
 the data is valid if the regular expression matches it.  Regular expressions
-are in the format of \fBregcomp\fR(3x) and \fBregexec\fR(3X).
+are in the format of \fBregcomp\fR(3x) and \fBregexec\fR(3X). Please notice
+that the regular expression must match the whole field. If you have for
+example an eight character wide field, a regular expression "^[0-9]*$" always
+means that you have to fill all eight positions with digits. If you want to
+allow fewer digits, you may use for example "^[0-9]* *$" which is good for
+trailing spaces (up to an empty field), or "^ *[0-9]* *$" which is good for
+leading and trailing spaces around the digits.
+.TP 5
+TYPE_IPV4
+An Internet Protocol Version 4 address. This requires no additional argument. It
+is checked whether or not the buffer has the form a.b.c.d, where a,b,c and d are
+numbers between 0 and 255. Trailing blanks in the buffer are ignored. The address
+itself is not validated. Please note that this is an ncurses extension. This
+field type may not be available in other curses implementations.
 
 It is possible to set up new programmer-defined field types.  See the
 \fBform_fieldtype\fR(3X) manual page.
 .SH RETURN VALUE
-The functions \fBfield_type\fR and \fB\field_argfR return \fBNULL\fR on
+The functions \fBfield_type\fR and \fBfield_arg\fR return \fBNULL\fR on
 error. The function \fBset_field_type\fR returns one of the following:
 .TP 5
 \fBE_OK\fR

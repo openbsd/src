@@ -7,13 +7,13 @@
 .br
 FORM *new_form(FIELD **fields);
 .br
-char *free_form(FORM *form);
+int free_form(FORM *form);
 .br
 .SH DESCRIPTION
 The function \fBnew_form\fR creates a new form connected to a specified field
 pointer array (which must be \fBNULL\fR-terminated).
 
-The function \fBfree_form\fR discomnnects \fIform\fR from its field array
+The function \fBfree_form\fR disconnects \fIform\fR from its field array
 and frees the storage allocated for the form.
 .SH RETURN VALUE
 The function \fBnew_form\fR returns \fBNULL\fR on error.

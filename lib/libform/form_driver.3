@@ -133,6 +133,9 @@ Clear to end of line from cursor.
 REQ_CLR_EOF
 Clear to end of field from cursor.
 .TP 5
+REQ_CLR_FIELD
+Clear the entire field.
+.TP 5
 REQ_OVL_MODE
 Enter overlay mode.
 .TP 5
@@ -181,18 +184,18 @@ Horizontal scroll the field backward half a line.
 REQ_VALIDATION
 Validate field.
 .TP
-REQ_PREV_CHOICE
-Display previous field choice.
-.TP
 REQ_NEXT_CHOICE
 Display next field choice.
+.TP
+REQ_PREV_CHOICE
+Display previous field choice.
 .PP
 If the second argument is a printable ASCII character, the driver places it
 in the current position in the current field.  If it is one of the forms
 requests listed above, that request is executed.
 .PP
 If the second argument is neither printable ASCII nor one of the above
-pre-defined form requests, the drive asumes it is an application-specific
+pre-defined form requests, the drive assumes it is an application-specific
 command and returns \fBE_UNKNOWN_COMMAND\fR.  Application-defined commands
 should be defined relative to \fBMAX_COMMAND\fR, the maximum value of these
 pre-defined requests.

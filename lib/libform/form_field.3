@@ -7,9 +7,9 @@
 .br
 int set_form_fields(FORM *form, FIELD **fields);
 .br
-FIELD **form_fields(FORM *form);
+FIELD **form_fields(const FORM *form);
 .br
-int field_count(FORM *form);
+int field_count(const FORM *form);
 .br
 int move_field(FIELD *field, int frow, int fcol);
 .br

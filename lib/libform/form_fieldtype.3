@@ -5,27 +5,31 @@
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-FIELDTYPE *new_fieldtype(int (*field_check)(FIELD *, char *),
-                         int (*char_check)(int, char *));
+FIELDTYPE *new_fieldtype(
+    bool (* const field_check)(FIELD *, const void *),
+    bool (* const char_check)(int, const void *));
 .br
 int free_fieldtype(FIELDTYPE *fieldtype);
 .br
-in set_fieldtype_arg(FIELDTYPE *fieldtype
-                     char *(*mak_arg)(va_list *),
-                     char *(*copy_arg)(char *),
-                     void (*free_arg)(char *));
+int set_fieldtype_arg(
+    FIELDTYPE *fieldtype,
+    void *(* const make_arg)(va_list *),
+    void *(* const copy_arg)(const void *),
+    void  (* const free_arg)(void *));
 .br
-in set_fieldtype_choice(FIELDTYPE *fieldtype
-                        int (*next_choice)(FIELD *, char *),
-                        int (*prev_choice)(FIELD *, char *));
+int set_fieldtype_choice(
+    FIELDTYPE *fieldtype
+    bool (* const next_choice)(FIELD *, const void *),
+    bool (* const prev_choice)(FIELD *, const void *));
 .br
-FIELDTYPE *link_fieldtype(FIELDYPE *type1, FIELDTYPE *type2);
-.br
+FIELDTYPE *link_fieldtype(FIELDTYPE *type1, 
+                          FIELDTYPE *type2);
+.br 
 .SH DESCRIPTION
 The function \fBnew_fieldtype\fR creates a new field type usable for data
 validation.  You supply it with \fIfield_check\fR, a predicate to check the
 validity of an entered data string whenever the user attempt to leave a field.
-Thhe (FIELD *) argument is passed in so the validation predicate can see the
+The (FIELD *) argument is passed in so the validation predicate can see the
 field's buffer, sizes and other attributes; the second argument is an
 argument-block structure, about which more below.
 
@@ -51,7 +55,7 @@ function allows forms programmers to define successor and predecessor functions
 for the field type.  These functions take the field pointer and an
 argument-block structure as arguments.
 .SH RETURN VALUE
-The character-pointer-valued routines return NULL on error.
+The pointer-valued routines return NULL on error.
 
 The integer-valued routines return one of the following codes on
 error:

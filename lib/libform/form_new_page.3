@@ -5,15 +5,15 @@
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-int set_new_page(FIELD *field, int justification);
+int set_new_page(FIELD *field, bool new_page_flag);
 .br
-int new_page(FIELD *field);
+bool new_page(const FIELD *field);
 .br
 .SH DESCRIPTION
-The function \fBset_new_page\fR marks the given field as the beginning of a 
-new page on its form.
+The function \fBset_new_page\fR sets or resets a flag marking the given field 
+as the beginning of a new page on its form.
 
-The function \fBne_page\fR is a predicate which tests if a given field marks
+The function \fBnew_page\fR is a predicate which tests if a given field marks
 a page beginning on its form.
 .SH RETURN VALUE
 The function \fBnew_page\fR returns \fBTRUE\fR or \fBFALSE\fR.

@@ -11,11 +11,11 @@ int form_opts_on(FORM *form, OPTIONS opts);
 .br
 int form_opts_off(FORM *form, OPTIONS opts);
 .br
-OPTIONS form_opts(FORM *form);
+OPTIONS form_opts(const FORM *form);
 .br
 .SH DESCRIPTION
 The function \fBset_form_opts\fR sets all the given form's option bits (form
-option bits may be logically-ored together).
+option bits may be logically-OR'ed together).
 
 The function \fBform_opts_on\fR turns on the given option bits, and leaves
 others alone.

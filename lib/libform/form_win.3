@@ -7,13 +7,13 @@
 .br
 int set_form_win(FORM *form, WINDOW *win);
 .br
-WINDOW *form_win(FORM *form);
+WINDOW *form_win(const FORM *form);
 .br
 int set_form_sub(FORM *form, WINDOW *sub);
 .br
-WINDOW *form_sub(FORM *form);
+WINDOW *form_sub(const FORM *form);
 .br
-int scale_form(FORM *form, int *rows, int *columns);
+int scale_form(const FORM *form, int *rows, int *columns);
 .br
 .SH DESCRIPTION
 Every form has an associated pair of \fBcurses\fR windows.  The form window
@@ -23,7 +23,7 @@ displays the items of the form that are currently available for selection.
 The first four functions get and set those windows.  It is not necessary to set
 either window; by default, the driver code uses \fBstdscr\fR for both.
 
-In the \fBset_\fR functions, window argument of \fBNULL\fR is treated as tbough
+In the \fBset_\fR functions, window argument of \fBNULL\fR is treated as though
 it were \fBstsdcr\fR.  A form argument of \fBNULL\fR is treated as a request
 to change the system default form window or subwindow.
 

@@ -5,17 +5,17 @@
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-int set_form_userptr(FORM *form, char *userptr);
+int set_form_userptr(FORM *form, const void *userptr);
 .br
-char form_userptr(FORM *form);
+const void* form_userptr(const FORM *form);
 .br
 .SH DESCRIPTION
 Every form and every form item has a field that can be used to hold
 application-specific data (that is, the form-driver code leaves it alone).
 These functions get and set the form user pointer field.
 .SH RETURN VALUE
-The function \fBform_userptr\fR returns \fBNULL\fR on error.  The function each
-function \fB\set_form_userptrfR returns one of the following:
+The function \fBform_userptr\fR returns \fBNULL\fR on error.
+The function \fBset_form_userptr\fR returns one of the following:
 .TP 5
 \fBE_OK\fR
 The routine succeeded.

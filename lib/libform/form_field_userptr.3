@@ -5,9 +5,9 @@
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-int set_field_userptr(FIELD *field, char *userptr);
+int set_field_userptr(FIELD *field, const void*userptr);
 .br
-char field_userptr(FIELD *field);
+const void *field_userptr(const FIELD *field);
 .br
 .SH DESCRIPTION
 Every form field has a field that can be used to hold application-specific data

@@ -5,9 +5,19 @@
  * If you develop a field type that might be of general use, please send
  * it back to the ncurses maintainers for inclusion in the next version.
  */
+/***************************************************************************
+*                                                                          *
+*  Author : Juergen Pfeifer, Juergen.Pfeifer@T-Online.de                   *
+*                                                                          *
+***************************************************************************/
 
 #include "form.priv.h"
+
+MODULE_ID("Id: fty_num.c,v 1.9 1997/04/19 17:26:38 juergen Exp $")
+
+#if HAVE_LOCALE_H
 #include <locale.h>
+#endif
 
 typedef struct {
   int    precision;
@@ -33,7 +43,11 @@ static void *Make_Numeric_Type(va_list * ap)
       argn->precision = va_arg(*ap,int);
       argn->low       = va_arg(*ap,double);
       argn->high      = va_arg(*ap,double);
+#if HAVE_LOCALE_H
       argn->L         = localeconv();
+#else
+      argn->L         = NULL;
+#endif
     }
   return (void *)argn;
 }
@@ -48,7 +62,7 @@ static void *Make_Numeric_Type(va_list * ap)
 +--------------------------------------------------------------------------*/
 static void *Copy_Numeric_Type(const void * argp)
 {
-  numericARG *ap  = (numericARG *)argp;
+  const numericARG *ap = (const numericARG *)argp;
   numericARG *new = (numericARG *)0;
 
   if (argp)
@@ -86,7 +100,7 @@ static void Free_Numeric_Type(void * argp)
 +--------------------------------------------------------------------------*/
 static bool Check_Numeric_Field(FIELD * field, const void * argp)
 {
-  numericARG *argn    = (numericARG *)argp;
+  const numericARG *argn = (const numericARG *)argp;
   double low          = argn->low;
   double high         = argn->high;
   int prec            = argn->precision;
@@ -106,7 +120,11 @@ static bool Check_Numeric_Field(FIELD * field, const void * argp)
 	  if (!isdigit(*bp)) break;
 	  bp++;
 	}
-      if (*bp==((L && L->decimal_point) ? *(L->decimal_point) : '.'))
+      if (*bp==(
+#if HAVE_LOCALE_H
+		(L && L->decimal_point) ? *(L->decimal_point) :
+#endif
+		'.'))
 	{
 	  bp++;
 	  while(*bp)
@@ -123,7 +141,7 @@ static bool Check_Numeric_Field(FIELD * field, const void * argp)
 	    {
 	      if (val<low || val>high) return FALSE;
 	    }
-	  sprintf(buf,"%.*f",prec,val);
+	  sprintf(buf,"%.*f",(prec>0?prec:0),val);
 	  set_field_buffer(field,0,buf);
 	  return TRUE;
 	}
@@ -144,14 +162,18 @@ static bool Check_Numeric_Field(FIELD * field, const void * argp)
 +--------------------------------------------------------------------------*/
 static bool Check_Numeric_Character(int c, const void * argp)
 {
-  numericARG *argn = (numericARG *)argp;
+  const numericARG *argn = (const numericARG *)argp;
   struct lconv* L  = argn->L;  
 
   return (isdigit(c)  || 
 	  c == '+'    || 
 	  c == '-'    || 
-	  c == ((L && L->decimal_point) ? *(L->decimal_point) : '.')
-	 ) ? TRUE : FALSE;
+	  c == (
+#ifdef HAVE_LOCALE_H
+		(L && L->decimal_point) ? *(L->decimal_point) :
+#endif
+		'.')
+	  ) ? TRUE : FALSE;
 }
 
 static FIELDTYPE typeNUMERIC = {

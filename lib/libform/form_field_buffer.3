@@ -5,13 +5,13 @@
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-int set_field_buffer(FIELD *field, int buf, char *value);
+int set_field_buffer(FIELD *field, int buf, const char *value);
 .br
-char *field_buffer(FIELD *field, int buffer);
+char *field_buffer(const FIELD *field, int buffer);
 .br
-int set_field_status(FIELD *field, int status);
+int set_field_status(FIELD *field, bool status);
 .br
-int field_status(FIELD *field);
+bool field_status(const FIELD *field);
 .br
 int set_max_field(FIELD *field, int max);
 .br

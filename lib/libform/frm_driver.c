@@ -1,23 +1,24 @@
-
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/*-----------------------------------------------------------------------------+
+|           The ncurses form library is  Copyright (C) 1995-1997               |
+|             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
+|                          All Rights Reserved.                                |
+|                                                                              |
+| Permission to use, copy, modify, and distribute this software and its        |
+| documentation for any purpose and without fee is hereby granted, provided    |
+| that the above copyright notice appear in all copies and that both that      |
+| copyright notice and this permission notice appear in supporting             |
+| documentation, and that the name of the above listed copyright holder(s) not |
+| be used in advertising or publicity pertaining to distribution of the        |
+| software without specific, written prior permission.                         | 
+|                                                                              |
+| THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD TO  |
+| THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FIT-  |
+| NESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR   |
+| ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RE- |
+| SULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, |
+| NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
+| THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
++-----------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------------------
   This is the core module of the form library. It contains the majority
@@ -64,6 +65,8 @@
 
 #include "form.priv.h"
 
+MODULE_ID("Id: frm_driver.c,v 1.20 1997/05/01 16:47:54 juergen Exp $")
+
 /*
 Some options that may effect compatibility in behavior to SVr4 forms,
 but they are here to allow a more intuitive and user friendly behaviour of
@@ -80,6 +83,8 @@ Perhaps at some time we will make this configurable at runtime.
 
 /* Implement a more user-friendly previous/next word behaviour */
 #define FRIENDLY_PREV_NEXT_WORD (1)
+/* Fix the wrong behaviour for forms with all fields inactive */
+#define FIX_FORM_INACTIVE_BUG (1)
 
 /*----------------------------------------------------------------------------
   Forward references to some internally used static functions
@@ -425,7 +430,6 @@ static bool Field_Grown(FIELD * field, int amount)
 
   if (field && Growable(field))
     {
-      FORM *form;
       bool single_line_field = Single_Line_Field(field);
       int old_buflen = Buffer_Length(field);
       int new_buflen;
@@ -434,105 +438,107 @@ static bool Field_Grown(FIELD * field, int amount)
       char *oldbuf  = field->buf;
       char *newbuf;
 
-      if ( (form = field->form) )
+      int growth;
+      FORM *form = field->form;
+      bool need_visual_update = ((form != (FORM *)0)      &&
+				 (form->status & _POSTED) &&
+				 (form->current==field));
+      
+      if (need_visual_update)
+	Synchronize_Buffer(form);
+      
+      if (single_line_field)
 	{
-	  bool need_visual_update = (form->status & _POSTED) &&
-	                            (form->current==field);
-	  int growth;
+	  growth = field->cols * amount;
+	  if (field->maxgrow)
+	    growth = Minimum(field->maxgrow - field->dcols,growth);
+	  field->dcols += growth;
+	  if (field->dcols == field->maxgrow)
+	    field->status &= ~_MAY_GROW;
+	}
+      else
+	{
+	  growth = (field->rows + field->nrow) * amount;
+	  if (field->maxgrow)
+	    growth = Minimum(field->maxgrow - field->drows,growth);
+	  field->drows += growth;
+	  if (field->drows == field->maxgrow)
+	    field->status &= ~_MAY_GROW;
+	}
+      /* drows, dcols changed, so we get really the new buffer length */
+      new_buflen = Buffer_Length(field);
+      newbuf=(char *)malloc((size_t)Total_Buffer_Size(field));
+      if (!newbuf)
+	{ /* restore to previous state */
+	  field->dcols = old_dcols;
+	  field->drows = old_drows;
+	  if (( single_line_field && (field->dcols!=field->maxgrow)) ||
+	      (!single_line_field && (field->drows!=field->maxgrow)))
+	    field->status |= _MAY_GROW;
+	  return FALSE;
+	}
+      else
+	{ /* Copy all the buffers. This is the reason why we can't
+	     just use realloc().
+	     */
+	  int i;
+	  char *old_bp;
+	  char *new_bp;
+	  
+	  field->buf = newbuf;
+	  for(i=0;i<=field->nbuf;i++)
+	    {
+	      new_bp = Address_Of_Nth_Buffer(field,i);
+	      old_bp = oldbuf + i*(1+old_buflen);
+	      memcpy(new_bp,old_bp,(size_t)old_buflen);
+	      if (new_buflen > old_buflen)
+		memset(new_bp + old_buflen,C_BLANK,
+		       (size_t)(new_buflen - old_buflen));
+	      *(new_bp + new_buflen) = '\0';
+	    }
 
 	  if (need_visual_update)
-	    Synchronize_Buffer(form);
-	  
-	  if (single_line_field)
-	    {
-	      growth = field->cols * amount;
-	      if (field->maxgrow)
-		growth = Minimum(field->maxgrow - field->dcols,growth);
-	      field->dcols += growth;
-	      if (field->dcols == field->maxgrow)
-		field->status &= ~_MAY_GROW;
+	    { 	      
+	      WINDOW *new_window = newpad(field->drows,field->dcols);
+	      if (!new_window)
+		{ /* restore old state */
+		  field->dcols = old_dcols;
+		  field->drows = old_drows;
+		  field->buf   = oldbuf;
+		  if (( single_line_field              && 
+			(field->dcols!=field->maxgrow)) ||
+		      (!single_line_field              && 
+		       (field->drows!=field->maxgrow)))
+		    field->status |= _MAY_GROW;
+		  free( newbuf );
+		  return FALSE;
+		}
+	      assert(form!=(FORM *)0);
+	      delwin(form->w);
+	      form->w = new_window;
+	      Set_Field_Window_Attributes(field,form->w);
+	      werase(form->w);
+	      Buffer_To_Window(field,form->w);
+	      untouchwin(form->w);
+	      wmove(form->w,form->currow,form->curcol);
 	    }
-	  else
-	    {
-	      growth = (field->rows + field->nrow) * amount;
-	      if (field->maxgrow)
-		growth = Minimum(field->maxgrow - field->drows,growth);
-	      field->drows += growth;
-	      if (field->drows == field->maxgrow)
-		field->status &= ~_MAY_GROW;
-	    }
-	  /* drows, dcols changed, so we get really the new buffer length */
-	  new_buflen = Buffer_Length(field);
-	  newbuf=(char *)malloc((size_t)Total_Buffer_Size(field));
-	  if (!newbuf)
-	    { /* restore to previous state */
-	      field->dcols = old_dcols;
-	      field->drows = old_drows;
-	      if (( single_line_field && (field->dcols!=field->maxgrow)) ||
-		  (!single_line_field && (field->drows!=field->maxgrow)))
-		field->status |= _MAY_GROW;
-	      return FALSE;
-	    }
-	  else
-	    { /* Copy all the buffers. This is the reason why we can't
-	         just use realloc().
-	       */
-	      int i;
-	      char *old_bp;
-	      char *new_bp;
 
-	      field->buf = newbuf;
-	      for(i=0;i<=field->nbuf;i++)
+	  free(oldbuf);
+	  /* reflect changes in linked fields */
+	  if (field != field->link)
+	    {
+	      FIELD *linked_field;
+	      for(linked_field = field->link;
+		  linked_field!= field;
+		  linked_field = linked_field->link)
 		{
-		  new_bp = Address_Of_Nth_Buffer(field,i);
-		  old_bp = oldbuf + i*(1+old_buflen);
-		  memcpy(new_bp,old_bp,(size_t)old_buflen);
-		  if (new_buflen > old_buflen)
-		    memset(new_bp + old_buflen,C_BLANK,
-			   (size_t)(new_buflen - old_buflen));
-		  *(new_bp + new_buflen + 1) = '\0';
+		  linked_field->buf   = field->buf;
+		  linked_field->drows = field->drows;
+		  linked_field->dcols = field->dcols;
 		}
-	      if (need_visual_update)
-		{ 
-		  WINDOW *new_window = newpad(field->drows,field->dcols);
-		  if (!new_window)
-		    { /* restore old state */
-		      field->dcols = old_dcols;
-		      field->drows = old_drows;
-		      field->buf   = oldbuf;
-		      if (( single_line_field              && 
-			   (field->dcols!=field->maxgrow)) ||
-			  (!single_line_field              && 
-			   (field->drows!=field->maxgrow)))
-			field->status |= _MAY_GROW;
-		      free( newbuf );
-		      return FALSE;
-		    }
-		  delwin(form->w);
-		  form->w = new_window;
-		  Set_Field_Window_Attributes(field,form->w);
-		  werase(form->w);
-		  Buffer_To_Window(field,form->w);
-		  untouchwin(form->w);
-		  wmove(form->w,form->currow,form->curcol);
-		}
-	      free(oldbuf);
-	      /* reflect changes in linked fields */
-	      if (field != field->link)
-		{
-		  FIELD *linked_field;
-		  for(linked_field = field->link;
-		      linked_field!= field;
-		      linked_field = linked_field->link)
-		    {
-		      linked_field->buf   = field->buf;
-		      linked_field->drows = field->drows;
-		      linked_field->dcols = field->dcols;
-		    }
-		}
-	      result = TRUE;
 	    }
-	}
+	  result = TRUE;
+	}	
     }
   return(result);
 }
@@ -696,7 +702,6 @@ static int Refresh_Current_Field(FORM * form)
 	  wsyncup(form->w);
 	}
     }
-  wrefresh(form->w);	/* Will this catch them all? --Toby. */
   untouchwin(form->w);
   return Position_Form_Cursor(form);
 }
@@ -873,8 +878,8 @@ static int Synchronize_Field(FIELD * field)
   if (!field)
     return(E_BAD_ARGUMENT);
 
-  if ((form=field->form) &&
-      Field_Really_Appears(field))
+  if (((form=field->form) != (FORM *)0)
+      && Field_Really_Appears(field))
     {
       if (field == form->current)
 	{ 
@@ -952,8 +957,8 @@ static int Synchronize_Attributes(FIELD * field)
   if (!field)
     return(E_BAD_ARGUMENT);
 
-  if ((form=field->form) &&
-      Field_Really_Appears(field))
+  if (((form=field->form) != (FORM *)0)
+      && Field_Really_Appears(field))
     {    
       if (form->current==field)
 	{
@@ -1159,6 +1164,7 @@ static int Set_Current_Field(FORM  *form, FIELD *newfield)
 
       form->current = field;
       form->w       = new_window;
+      form->status &= ~_WINDOW_MODIFIED;
       Set_Field_Window_Attributes(field,form->w);
 
       if (Has_Invisible_Parts(field))
@@ -2103,11 +2109,16 @@ static int Field_Editing(int (* const fct) (FORM *), FORM * form)
     }
   else
     {
-      if ((fct==FE_New_Line)                   && 
-	  (form->opts & O_NL_OVERLOAD)         &&
-	  First_Position_In_Current_Field(form) )
+      if (fct==FE_New_Line)
 	{
-	  res = Inter_Field_Navigation(FN_Next_Field,form);
+	  if ((form->opts & O_NL_OVERLOAD)         &&
+	      First_Position_In_Current_Field(form))
+	    {
+	      res = Inter_Field_Navigation(FN_Next_Field,form);
+	    }
+	  else
+	    /* FE_New_Line deals itself with the _WINDOW_MODIFIED flag */
+	    res = fct(form);
 	}
       else
 	{
@@ -2168,6 +2179,7 @@ static int FE_New_Line(FORM * form)
 	  wclrtoeol(form->w);
 	  form->currow++;
 	  form->curcol = 0;
+	  form->status |= _WINDOW_MODIFIED;
 	  return(E_OK);
 	}
     }
@@ -2197,6 +2209,7 @@ static int FE_New_Line(FORM * form)
 	  wmove(form->w,form->currow,form->curcol);
 	  winsertln(form->w);
 	  waddnstr(form->w,bp,(int)(t-bp));
+	  form->status |= _WINDOW_MODIFIED;
 	  return E_OK;
 	}
     }
@@ -3412,13 +3425,16 @@ static int Data_Entry(FORM * form, int c)
   int result = E_REQUEST_DENIED;
   bool End_Of_Field;
 
-  if (field->opts & O_EDIT)
+  if ( (field->opts & O_EDIT) 
+#if FIX_FORM_INACTIVE_BUG
+       && (field->opts & O_ACTIVE) 
+#endif
+       )
     {
-      if ( (form->currow==0) && 
-	   (form->curcol==0) && 
-	   (field->opts & O_BLANK) &&
-	  !(form->status & _FCHECK_REQUIRED) && 
-	  !(form->status & _WINDOW_MODIFIED) )
+      if ( (field->opts & O_BLANK) &&
+	   First_Position_In_Current_Field(form) &&
+	   !(form->status & _FCHECK_REQUIRED) && 
+	   !(form->status & _WINDOW_MODIFIED) )
 	werase(form->w);
 
       if (form->status & _OVLMODE)
@@ -3936,6 +3952,8 @@ int form_page(const FORM * form)
 |                    For dynamic fields this may grow the fieldbuffers if
 |                    the length of the value exceeds the current buffer
 |                    length. For buffer 0 only printable values are allowed.
+|                    For static fields, the value needs not to be zero ter-
+|                    minated. It is copied up to the length of the buffer.   
 |
 |   Return Values :  E_OK            - success
 |                    E_BAD_ARGUMENT  - invalid argument
@@ -3946,44 +3964,69 @@ int set_field_buffer(FIELD * field, int buffer, const char * value)
   char *s, *p;
   int res = E_OK;
   unsigned int len;
-  unsigned int vlen;
 
   if ( !field || !value || ((buffer < 0)||(buffer > field->nbuf)) )
     RETURN(E_BAD_ARGUMENT);
 
+  len  = Buffer_Length(field);
+
   if (buffer==0)
     {
       const char *v;
+      unsigned int i = 0;
 
-      for(v=value;*v;v++)
+      for(v=value; *v && (i<len); v++,i++)
 	{
 	  if (!isprint((unsigned char)*v))
 	    RETURN(E_BAD_ARGUMENT);
 	}
     }
 
-  len  = Buffer_Length(field);
-  vlen = strlen(value);
-  if ((vlen>len) && Growable(field))
+  if (Growable(field))
     {
-      if (!Field_Grown(field,
-	      (int)(1 + (vlen-len)/((field->rows+field->nrow)*field->cols))))
-	RETURN(E_SYSTEM_ERROR);
-    }
+      /* for a growable field we must assume zero terminated strings, because
+	 somehow we have to detect the length of what should be copied.
+      */
+      unsigned int vlen = strlen(value);
+      if (vlen > len)
+	{
+	  if (!Field_Grown(field,
+			   (int)(1 + (vlen-len)/((field->rows+field->nrow)*field->cols))))
+	    RETURN(E_SYSTEM_ERROR);
 
+	  /* in this case we also have to check, wether or not the remaining
+	     characters in value are also printable for buffer 0. */
+	  if (buffer==0)
+	    {
+	      unsigned int i;
+	  
+	      for(i=len; i<vlen; i++)
+		if (!isprint(value[i]))
+		  RETURN(E_BAD_ARGUMENT);
+	    }
+	  len = vlen;
+	}
+    }
+  
   p   = Address_Of_Nth_Buffer(field,buffer);
 
 #if HAVE_MEMCCPY
   s = memccpy(p,value,0,len);
 #else
-  for(s=(char *)value;*s && (s<value+len);s++) p[s-value]=*s;
-  if (s<value+len) p[s-value]=*s++; else s=0;
+  for(s=(char *)value; *s && (s < (value+len)); s++)
+    p[s-value] = *s;
+  if (s < (value+len))
+    p[s-value] = *s++; 
+  else 
+    s=(char *)0;
 #endif
 
   if (s) 
-    {
+    { /* this means, value was null terminated and not greater than the
+	 buffer. We have to pad with blanks */
       assert(len >= (unsigned int)(s-p));
-      memset(s,C_BLANK,len-(unsigned int)(s-p));
+      if (len > (unsigned int)(s-p))
+	memset(s,C_BLANK,len-(unsigned int)(s-p));
     }
 
   if (buffer==0)

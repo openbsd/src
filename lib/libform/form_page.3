@@ -5,13 +5,15 @@
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-int set_current_field(FORM *form, int page);
+int set_current_field(FORM *form, FIELD *field);
 .br
-FIELD *current_field(FORM *);
+FIELD *current_field(const FORM *);
 .br
 int set_form_page(FORM *form, int n);
 .br
-int form_page(FORM *form);
+int form_page(const FORM *form);
+.br
+int field_index(const FIELD *field);
 .br
 .SH DESCRIPTION
 The function \fBset_current field\fR sets the current field of the given
@@ -21,6 +23,10 @@ The function \fBset_form_page\fR sets the form's page number (goes to page
 \fIn\fR of the form).
 .PP
 The function \fBform_page\fR returns the form's current page number.
+.PP
+The function \fBfield_index\fR returns the index of the field in the
+field array of the form it is connected to. It returns \fBERR\fR if
+the argument is the null pointer or the field is not connected.
 .SH RETURN VALUE
 Except for \fBform_page\fR, each routine returns one of the following:
 .TP 5

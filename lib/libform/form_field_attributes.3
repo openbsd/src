@@ -7,15 +7,15 @@
 .br
 int set_field_fore(FIELD *field, chtype attr);
 .br
-chtype field_fore(FIELD *field);
+chtype field_fore(const FIELD *field);
 .br
 int set_field_back(FIELD *field, chtype attr);
 .br
-chtype field_back(FIELD *field);
+chtype field_back(const FIELD *field);
 .br
 int set_field_pad(FIELD *field, int pad);
 .br
-chtype field_pad(FIELD *field);
+chtype field_pad(const FIELD *field);
 .br
 .SH DESCRIPTION
 The function \fBset_field_fore\fR sets the foreground attribute of

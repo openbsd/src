@@ -5,10 +5,10 @@
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-int field_info(FIELD *field, int *rows, int *cols,
+int field_info(const FIELD *field, int *rows, int *cols,
               int *frow, int *fcol, int *nrow, int *nbuf);
 .br
-int dynamic_field_info(FIELD *field, int *rows, int *cols, *max);
+int dynamic_field_info(const FIELD *field, int *rows, int *cols, *max);
 .br
 .SH DESCRIPTION
 The function \fBfield_info\fR returns the sizes and other attributes passed in

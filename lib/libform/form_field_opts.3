@@ -11,11 +11,11 @@ int field_opts_on(FIELD *field, OPTIONS opts);
 .br
 int field_opts_off(FIELD *field, OPTIONS opts);
 .br
-OPTIONS field_opts(FIELD *field);
+OPTIONS field_opts(const FIELD *field);
 .br
 .SH DESCRIPTION
 The function \fBset_field_opts\fR sets all the given field's option bits (field
-option bits may be logically-ored together).
+option bits may be logically-OR'ed together).
 
 The function \fBfield_opts_on\fR turns on the given option bits, and leaves
 others alone.
@@ -58,7 +58,7 @@ O_STATIC
 Field buffers are fixed to field's original size.
 .TP 5
 O_PASSOK
-Validate field omly if modified by user.
+Validate field only if modified by user.
 .SH RETURN VALUE
 Except for \fBfield_opts\fR, each routine returns one of the following:
 .TP 5
