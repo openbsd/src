@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.35 2003/12/24 20:09:57 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.36 2003/12/24 21:14:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -112,10 +112,6 @@ setup_listener(void)
 		return (-1);
 	}
 	if (listen(fd, MAX_BACKLOG)) {
-		close(fd);
-		return (-1);
-	}
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
 		close(fd);
 		return (-1);
 	}
@@ -687,12 +683,6 @@ session_connect(struct peer *peer)
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
 		}
-
-	if (fcntl(peer->sock, F_SETFL, O_NONBLOCK) == -1) {
-		log_err(peer, "session_connect fcntl");
-		bgp_fsm(peer, EVNT_CON_OPENFAIL);
-		return (-1);
-	}
 
 	if (session_setup_socket(peer)) {
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
