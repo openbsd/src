@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.28 2004/12/12 05:17:40 dlg Exp $ */
+/*	$OpenBSD: uhub.c,v 1.29 2004/12/12 05:21:14 dlg Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -83,7 +83,6 @@ struct uhub_softc {
 };
 
 Static usbd_status uhub_explore(usbd_device_handle hub);
-Static usbd_status uhub_reset_device(usbd_device_handle, int);
 Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
 
 #if defined(__FreeBSD__)
@@ -212,7 +211,6 @@ USB_ATTACH(uhub)
 	dev->hub = hub;
 	dev->hub->hubsoftc = sc;
 	hub->explore = uhub_explore;
-	hub->reset_device = uhub_reset_device;
 	hub->hubdesc = hubdesc;
 
 	DPRINTFN(1,("usbhub_init_hub: selfpowered=%d, parent=%p, "
@@ -324,84 +322,6 @@ USB_ATTACH(uhub)
 	free(hub, M_USBDEV);
 	dev->hub = 0;
 	USB_ATTACH_ERROR_RETURN;
-}
-
-Static usbd_status
-uhub_reset_device(usbd_device_handle dev, int port)
-{
-	struct uhub_softc *sc = dev->hub->hubsoftc;
-	struct usbd_port *up;
-	int status, change;
-	int speed;
-	usbd_status err;
-
-	DPRINTFN(10, ("uhub_reset_device port=%d\n", port));
-
-	if (!sc->sc_running)
-		return (USBD_NOT_STARTED);
-
-	up = &dev->hub->ports[port-1];
-
-	/* Disconnect */
-	DPRINTF(("uhub_reset_device: disconnecting device on port %d\n", port));
-	usb_disconnect_port(up, USBDEV(sc->sc_dev));
-	usbd_clear_port_feature(dev, port, UHF_C_PORT_CONNECTION);
-
-	/* Wait for maximum device power up time. */
-	usbd_delay_ms(dev, USB_PORT_POWERUP_DELAY);
-
-	/* Reset port, which implies enabling it. */
-	err = usbd_reset_port(dev, port, &up->status);
-	if (err) {
-		printf("%s: port %d reset failed\n",
-		    USBDEVNAME(sc->sc_dev), port);
-		return(err);
-	}
-
-	/* connect */
-	err = usbd_get_port_status(dev, port, &up->status);
-	if (err) {
-		DPRINTF(("uhub_reset_device: get port status failed, "
-		    "error=%s\n", usbd_errstr(err)));
-		return (err);
-	}
-	status = UGETW(up->status.wPortStatus);
-	change = UGETW(up->status.wPortChange);
-
-	/* Figure out device speed */
-	if (status & UPS_HIGH_SPEED)
-		speed = USB_SPEED_HIGH;
-	else if (status & UPS_LOW_SPEED)
-		speed = USB_SPEED_LOW;
-	else
-		speed = USB_SPEED_FULL;
-	/* Get device info and set its address. */
-	err = usbd_new_device(USBDEV(sc->sc_dev), dev->bus, dev->depth + 1,
-	    speed, port, up);
-	/* XXX retry a few times? */
-	if (err) {
-		DPRINTFN(-1,("uhub_explore: usb_new_device failed, "
-		    "error=%s\n", usbd_errstr(err)));
-		/* Avoid addressing problems by disabling. */
-		/* usbd_reset_port(dev, port, &up->status); */
-
-		/*
-		 * The unit refused to accept a new address, or had
-		 * some other serious problem.  Since we cannot leave
-		 * at 0 we have to disable the port instead.
-		 */
-		printf("%s: device problem, disabling port %d\n",
-		    USBDEVNAME(sc->sc_dev), port);
-		usbd_clear_port_feature(dev, port, UHF_PORT_ENABLE);
-	} else {
-		/* The port set up succeeded, reset error count. */
-		up->restartcnt = 0;
-
-		if (up->device->hub)
-			up->device->hub->explore(up->device);
-	}
-
-	return (USBD_NORMAL_COMPLETION);
 }
 
 usbd_status
