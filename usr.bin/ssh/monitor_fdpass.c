@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_fdpass.c,v 1.1 2002/03/18 17:27:22 provos Exp $");
+RCSID("$OpenBSD: monitor_fdpass.c,v 1.2 2002/03/24 17:53:16 stevesk Exp $");
 
 #include <sys/uio.h>
 
@@ -38,7 +38,8 @@ mm_send_fd(int socket, int fd)
 	char tmp[CMSG_SPACE(sizeof(int))];
 	struct cmsghdr *cmsg;
 	struct iovec vec;
-	char ch;
+	char ch = '\0';
+	int n;
 
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = (caddr_t)tmp;
@@ -54,8 +55,12 @@ mm_send_fd(int socket, int fd)
 	msg.msg_iov = &vec;
 	msg.msg_iovlen = 1;
 
-	if (sendmsg(socket, &msg, 0) == -1)
-		fatal("%s: sendmsg(%d)", __FUNCTION__, fd);
+	if ((n = sendmsg(socket, &msg, 0)) == -1)
+		fatal("%s: sendmsg(%d): %s", __FUNCTION__, fd,
+		    strerror(errno));
+	if (n != 1)
+		fatal("%s: sendmsg: expected sent 1 got %d",
+		    __FUNCTION__, n);
 }
 
 int
@@ -66,6 +71,7 @@ mm_receive_fd(int socket)
 	struct cmsghdr *cmsg;
 	struct iovec vec;
 	char ch;
+	int fd, n;
 
 	memset(&msg, 0, sizeof(msg));
 	vec.iov_base = &ch;
@@ -75,12 +81,16 @@ mm_receive_fd(int socket)
 	msg.msg_control = tmp;
 	msg.msg_controllen = sizeof(tmp);
 
-	if (recvmsg(socket, &msg, 0) == -1)
-		fatal("%s: recvmsg", __FUNCTION__);
+	if ((n = recvmsg(socket, &msg, 0)) == -1)
+		fatal("%s: recvmsg: %s", __FUNCTION__, strerror(errno));
+	if (n != 1)
+		fatal("%s: recvmsg: expected received 1 got %d",
+		    __FUNCTION__, n);
 
 	cmsg = CMSG_FIRSTHDR(&msg);
 	if (cmsg->cmsg_type != SCM_RIGHTS)
 		fatal("%s: expected type %d got %d", __FUNCTION__,
 		    SCM_RIGHTS, cmsg->cmsg_type);
-	return (*(int *)CMSG_DATA(cmsg));
+	fd = (*(int *)CMSG_DATA(cmsg));
+	return fd;
 }
