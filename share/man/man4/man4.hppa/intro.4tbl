@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4tbl,v 1.8 2003/01/26 21:55:45 jason Exp $
+.\" $OpenBSD: intro.4tbl,v 1.9 2003/01/26 21:59:17 jason Exp $
 .\"
 .\" Copyright (c) 2002 Paul Weissmann
 .\" All rights reserved.
@@ -210,6 +210,8 @@ Most of I/O is still on external chips though.
 The RS-232 ports.
 .It Xr cpu 4
 The Central Processor itself, makes sure the machine does something useful.
+.It Xr harmony 4
+CS4215/AD1849 audio.
 .It Xr hil 4
 Human Interface Loop, sporting several input devices,
 e.g. keyboards, mice, tablets and such.

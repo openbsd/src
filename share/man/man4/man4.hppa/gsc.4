@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.7 2003/01/07 20:37:10 mickey Exp $
+.\"	$OpenBSD: gsc.4,v 1.8 2003/01/26 21:59:17 jason Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -71,16 +71,18 @@ drivers, sorted by driver name:
 .Bl -tag -width pcdisplay -offset indent
 .It Xr com 4
 RS-232 ports.
+.It Xr harmony 4
+CS4215/AD1849 audio.
 .It Xr hil 4
 Human Interface Loop, for HP-proprietary input devices like keyboard and mice.
 .It Xr ie 4
-Intel i82596 DX/CA 32-bit LAN coprocessor
+Intel i82596 DX/CA 32-bit LAN coprocessor.
 .It Xr lpt 4
 Centronics printer port.
-.It Xr pckbc 4
-PC-style keyboard controller.
 .It Xr osiop 4
 SCSI I/O processor.
+.It Xr pckbc 4
+PC-style keyboard controller.
 .El
 .Pp
 Some of these 
