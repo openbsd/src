@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.8 $"
+#ident "$Revision: 1.9 $"
 #endif
 
 #include "timedc.h"
@@ -86,22 +86,20 @@ void bytehostorder(struct tsp *);
 static int				/* difference in days from our time */
 daydiff(char *hostname)
 {
-	int i;
-	int trials;
+	struct sockaddr_in from;
 	struct timeval now;
 	struct pollfd pfd;
-	struct sockaddr_in from;
-	int fromlen;
 	unsigned long sec;
-
+	int i, fromlen;
+	int trials;
 
 	for (trials = 0; trials < 10; trials++) {
 		/* ask for the time */
 		sec = 0;
 		if (sendto(sock, &sec, sizeof(sec), 0,
-			   (struct sockaddr*)&dayaddr, sizeof(dayaddr)) < 0) {
+		    (struct sockaddr *)&dayaddr, sizeof(dayaddr)) < 0) {
 			perror("sendto(sock)");
-			return 0;
+			return (0);
 		}
 
 		for (;;) {
@@ -112,35 +110,35 @@ daydiff(char *hostname)
 				if (errno == EINTR)
 					continue;
 				perror("poll(date read)");
-				return 0;
+				return (0);
 			}
-			if (0 == i)
+			if (i == 0)
 				break;
 
 			fromlen = sizeof(from);
-			if (recvfrom(sock,&sec,sizeof(sec),0,
-				(struct sockaddr *)&from,&fromlen) < 0) {
+			if (recvfrom(sock, &sec, sizeof(sec), 0,
+			    (struct sockaddr *)&from, &fromlen) < 0) {
 				perror("recvfrom(date read)");
-				return 0;
+				return (0);
 			}
 
 			sec = ntohl(sec);
 			if (sec < BU) {
 				fprintf(stderr,
-					"%s says it is before 1970: %lu",
-					hostname, sec);
-				return 0;
+				    "%s says it is before 1970: %lu",
+				    hostname, sec);
+				return (0);
 			}
 			sec -= BU;
 
-			(void)gettimeofday(&now, (struct timezone*)0);
+			(void)gettimeofday(&now, (struct timezone *)NULL);
 			return (sec - now.tv_sec);
 		}
 	}
 
 	/* if we get here, we tried too many times */
 	fprintf(stderr,"%s will not tell us the date\n", hostname);
-	return 0;
+	return (0);
 }
 
 
@@ -170,11 +168,11 @@ clockdiff(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int measure_status;
-	extern int measure(u_long, u_long, char *, struct sockaddr_in*, int);
-	register int avg_cnt;
-	register long avg;
 	struct servent *sp;
+	register long avg;
+	register int avg_cnt;
+	extern int measure(u_long, u_long, char *, struct sockaddr_in *, int);
+	int measure_status;
 
 	if (argc < 2)  {
 		printf("Usage: clockdiff host ... \n");
@@ -187,12 +185,12 @@ clockdiff(argc, argv)
 	sp = getservbyname(DATE_PORT, DATE_PROTO);
 	if (!sp) {
 		(void)fprintf(stderr, "%s/%s is an unknown service\n",
-			      DATE_PORT, DATE_PROTO);
+		    DATE_PORT, DATE_PROTO);
 		dayaddr.sin_port = 0;
-	} else {
+	} else
 		dayaddr.sin_port = sp->s_port;
-	}
 
+	measure_status = 0;
 	while (argc > 1) {
 		argc--; argv++;
 		hp = gethostbyname(*argv);
@@ -205,7 +203,7 @@ clockdiff(argc, argv)
 		server.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, &server.sin_addr.s_addr, hp->h_length);
 		for (avg_cnt = 0, avg = 0; avg_cnt < 16; avg_cnt++) {
-			measure_status = measure(10000,100, *argv, &server, 1);
+			measure_status = measure(10000, 100, *argv, &server, 1);
 			if (measure_status != GOOD)
 				break;
 			avg += measure_delta;
@@ -219,7 +217,7 @@ clockdiff(argc, argv)
 			continue;
 		case NONSTDTIME:
 			printf("%s transmitts a non-standard time format\n",
-			       hp->h_name);
+			    hp->h_name);
 			continue;
 		case UNREACHABLE:
 			printf("%s is unreachable\n", hp->h_name);
@@ -234,28 +232,28 @@ clockdiff(argc, argv)
 		if (dayaddr.sin_port != 0) {
 			dayaddr.sin_family = hp->h_addrtype;
 			bcopy(hp->h_addr, &dayaddr.sin_addr.s_addr,
-			      hp->h_length);
+			    hp->h_length);
 			avg = daydiff(*argv);
 			if (avg > SECDAY) {
 				printf("time on %s is %ld days ahead %s\n",
-				       hp->h_name, avg/SECDAY, myname);
+				    hp->h_name, avg/SECDAY, myname);
 				continue;
 			} else if (avg < -SECDAY) {
 				printf("time on %s is %ld days behind %s\n",
-				       hp->h_name, -avg/SECDAY, myname);
+				    hp->h_name, -avg/SECDAY, myname);
 				continue;
 			}
 		}
 
 		if (measure_delta > 0) {
 			printf("time on %s is %d ms. ahead of time on %s\n",
-			       hp->h_name, measure_delta, myname);
+			    hp->h_name, measure_delta, myname);
 		} else if (measure_delta == 0) {
 			printf("%s and %s have the same time\n",
-			       hp->h_name, myname);
+			    hp->h_name, myname);
 		} else {
 			printf("time on %s is %d ms. behind time on %s\n",
-			       hp->h_name, -measure_delta, myname);
+			    hp->h_name, -measure_delta, myname);
 		}
 	}
 	return;
@@ -268,14 +266,14 @@ clockdiff(argc, argv)
 void
 msite(int argc, char *argv[])
 {
-	int cc;
 	struct sockaddr_in dest;
-	int i, length;
 	struct sockaddr_in from;
-	struct pollfd pfd;
 	struct tsp msg;
 	struct servent *srvp;
+	struct pollfd pfd;
 	char *tgtname;
+	int i, length;
+	int cc;
 
 	if (argc < 1) {
 		printf("Usage: msite [hostname]\n");
@@ -307,8 +305,7 @@ msite(int argc, char *argv[])
 		msg.tsp_vers = TSPVERSION;
 		bytenetorder(&msg);
 		if (sendto(sock, &msg, sizeof(struct tsp), 0,
-			   (struct sockaddr*)&dest,
-			   sizeof(struct sockaddr)) < 0) {
+		    (struct sockaddr *)&dest, sizeof(dest)) < 0) {
 			perror("sendto");
 			continue;
 		}
@@ -318,7 +315,7 @@ msite(int argc, char *argv[])
 		if (poll(&pfd, 1, 15 * 1000)) {
 			length = sizeof(from);
 			cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
-			      (struct sockaddr *)&from, &length);
+			    (struct sockaddr *)&from, &length);
 			if (cc < 0) {
 				perror("recvfrom");
 				continue;
@@ -330,11 +327,10 @@ msite(int argc, char *argv[])
 				    inet_ntoa(from.sin_addr));
 				continue;
 			}
- 			bytehostorder(&msg);
 			bytehostorder(&msg);
 			if (msg.tsp_type == TSP_ACK) {
 				printf("master timedaemon at %s is %s\n",
-				       tgtname, msg.tsp_name);
+				    tgtname, msg.tsp_name);
 			} else {
 				if (msg.tsp_type >= TSPTYPENUMBER)
 					printf("received unknown ack: %u\n",
@@ -367,9 +363,9 @@ quit()
 void
 testing(int argc, char *argv[])
 {
-	struct servent *srvp;
 	struct sockaddr_in sin;
 	struct tsp msg;
+	struct servent *srvp;
 
 	if (argc < 2)  {
 		printf("Usage: election host1 [host2 ...]\n");
@@ -401,8 +397,7 @@ testing(int argc, char *argv[])
 		(void)strncpy(msg.tsp_name, myname, sizeof(msg.tsp_name));
 		bytenetorder(&msg);
 		if (sendto(sock, &msg, sizeof(struct tsp), 0,
-			   (struct sockaddr*)&sin,
-			   sizeof(struct sockaddr)) < 0) {
+		    (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 			perror("sendto");
 		}
 	}
@@ -415,14 +410,13 @@ testing(int argc, char *argv[])
 void
 tracing(int argc, char *argv[])
 {
-	int onflag;
-	int length;
-	int cc;
-	struct pollfd pfd;
 	struct sockaddr_in dest;
 	struct sockaddr_in from;
 	struct tsp msg;
 	struct servent *srvp;
+	struct pollfd pfd;
+	int cc, length;
+	int onflag;
 
 	if (argc != 2) {
 		printf("Usage: tracing { on | off }\n");
@@ -453,7 +447,7 @@ tracing(int argc, char *argv[])
 	msg.tsp_vers = TSPVERSION;
 	bytenetorder(&msg);
 	if (sendto(sock, &msg, sizeof(struct tsp), 0,
-		   (struct sockaddr*)&dest, sizeof(struct sockaddr)) < 0) {
+	    (struct sockaddr *)&dest, sizeof(dest)) < 0) {
 		perror("sendto");
 		return;
 	}
@@ -499,7 +493,7 @@ priv_resources()
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) {
 		perror("opening socket");
-		return(-1);
+		return (-1);
 	}
 
 	bzero(&sin, sizeof sin);
@@ -507,15 +501,15 @@ priv_resources()
 	sin.sin_addr.s_addr = INADDR_ANY;
 	if (bindresvport(sock, &sin) < 0) {
 		fprintf(stderr, "all reserved ports in use\n");
-		(void) close(sock);
-		return(-1);
+		(void)close(sock);
+		return (-1);
 	}
 
 	sock_raw = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (sock_raw < 0)  {
 		perror("opening raw socket");
-		(void) close(sock);
-		return(-1);
+		(void)close(sock);
+		return (-1);
 	}
-	return(1);
+	return (1);
 }
