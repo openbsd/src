@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.3 1997/06/12 21:09:32 downsj Exp $	*/
+/*	$OpenBSD: ext2fs_dinode.h,v 1.4 2000/04/26 23:24:40 jasoni Exp $	*/
 /*	$NetBSD: ext2fs_dinode.h,v 1.1 1997/06/11 09:33:48 bouyer Exp $	*/
 
 /*
@@ -117,9 +117,12 @@ struct ext2fs_dinode {
 #define EXT2_UNRM		0x00000002	/* Undelete */
 #define EXT2_COMPR		0x00000004	/* Compress file */
 #define EXT2_SYNC		0x00000008	/* Synchronous updates */
-#define EXT2_IMMUTABLE	0x00000010	/* Immutable file */
+#define EXT2_IMMUTABLE		0x00000010	/* Immutable file */
 #define EXT2_APPEND		0x00000020	/* writes to file may only append */
 #define EXT2_NODUMP		0x00000040	/* do not dump file */
+
+/* Size of on-disk inode. */
+#define	EXT2_DINODE_SIZE	(sizeof(struct ext2fs_dinode))	/* 128 */
 
 /*
  * The e2di_blocks fields may be overlaid with other information for
@@ -130,4 +133,11 @@ struct ext2fs_dinode {
  */
 
 #define e2di_rdev		e2di_blocks[0]
-#define e2di_shortlink	e2di_blocks
+#define e2di_shortlink		e2di_blocks
+
+/*
+ * e2fs needs byte swapping on big-endian systems.  Use macros here to 
+ * aide in big-endian support.
+ */
+#define e2fs_iload(old, new) bcopy((old),(new),sizeof(struct ext2fs_dinode))
+#define e2fs_isave(old, new) bcopy((old),(new),sizeof(struct ext2fs_dinode))

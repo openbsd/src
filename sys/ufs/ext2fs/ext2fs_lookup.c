@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.6 1999/01/11 05:12:37 millert Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.7 2000/04/26 23:24:41 jasoni Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.1 1997/06/11 09:33:59 bouyer Exp $	*/
 
 /* 
@@ -797,8 +797,14 @@ ext2fs_direnter(ip, dvp, cnp)
 		panic("direnter: missing name");
 #endif
 	dp = VTOI(dvp);
-	newdir.e2d_ino = ip->i_number;
+	newdir.e2d_ino = h2fs32(ip->i_number);
 	newdir.e2d_namlen = cnp->cn_namelen;
+	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
+	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
+		newdir.e2d_type = inot2ext2dt(IFTODT(ip->i_ffs_mode));
+	} else {
+		newdir.e2d_type = 0;
+	};
 	bcopy(cnp->cn_nameptr, newdir.e2d_name, (unsigned)cnp->cn_namelen + 1);
 	newentrysize = EXT2FS_DIRSIZ(newdir.e2d_namlen);
 	if (dp->i_count == 0) {
@@ -968,7 +974,13 @@ ext2fs_dirrewrite(dp, ip, cnp)
 	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (char **)&ep, &bp);
 	if (error != 0)
 		return (error);
-	ep->e2d_ino = ip->i_number;
+	ep->e2d_ino = h2fs32(ip->i_number);
+	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
+	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
+		ep->e2d_type = inot2ext2dt(IFTODT(ip->i_ffs_mode));
+	} else {
+		ep->e2d_type = 0;
+	}
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);

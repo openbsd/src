@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.7 1999/08/17 14:20:46 art Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.8 2000/04/26 23:24:41 jasoni Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.1 1997/06/11 09:33:56 bouyer Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 #include <ufs/ext2fs/ext2fs_extern.h>
 
 static int ext2fs_indirtrunc __P((struct inode *, daddr_t, daddr_t,
-									daddr_t, int, long *));
+    				  daddr_t, int, long *));
 
 int
 ext2fs_init(vfsp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.6 2000/02/07 04:57:18 assar Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.7 2000/04/26 23:24:40 jasoni Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -54,6 +54,8 @@ struct vnode;
 struct vfsconf;
 struct mbuf;
 struct componentname;
+
+extern struct pool ext2fs_inode_pool;		/* memory pool for inodes */
 
 __BEGIN_DECLS
 
@@ -142,6 +144,7 @@ int ext2fs_makeinode __P((int, struct vnode *, struct vnode **,
                           struct componentname *cnp));
 int ext2fs_fsync __P((void *));
 int ext2fs_reclaim __P((void *));
+
 __END_DECLS
 
 #define IS_EXT2_VNODE(vp)   (vp->v_tag == VT_EXT2FS)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.4 1999/01/11 05:12:35 millert Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.5 2000/04/26 23:24:40 jasoni Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.1 1997/06/11 09:33:41 bouyer Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ ext2fs_blkpref(ip, lbn, indx, bap)
 	if (bap) {
 		for (i = indx; i >= 0 ; i--) {
 			if (bap[i]) {
-				return bap[i] + 1;
+				return fs2h32(bap[i]) + 1;
 			}
 		}
 	}
@@ -352,7 +352,8 @@ ext2fs_alloccg(ip, cg, bpref, size)
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nbfree == 0)
 		return (NULL);
-	error = bread(ip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
+	error = bread(ip->i_devvp, fsbtodb(fs, 
+	        fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
@@ -440,7 +441,8 @@ ext2fs_nodealloccg(ip, cg, ipref, mode)
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0)
 		return (NULL);
-	error = bread(ip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
+	error = bread(ip->i_devvp, fsbtodb(fs, 
+	        fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
@@ -512,7 +514,8 @@ ext2fs_blkfree(ip, bno)
 		ext2fs_fserr(fs, ip->i_e2fs_uid, "bad block");
 		return;
 	}
-	error = bread(ip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
+	error = bread(ip->i_devvp, fsbtodb(fs, 
+	        fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
@@ -560,7 +563,8 @@ ext2fs_vfree(v)
 		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
 			pip->i_dev, ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
-	error = bread(pip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
+	error = bread(pip->i_devvp, 
+	        fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
