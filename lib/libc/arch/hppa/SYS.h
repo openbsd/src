@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.2 1998/12/23 16:26:26 mickey Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.3 1999/02/01 07:56:14 d Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -65,8 +65,6 @@ __EXIT(p,x)
  * specially by the threaded library, these macros insert `_thread_sys_'
  * in front of their name. This avoids the need to #ifdef _THREAD_SAFE 
  * everywhere that the renamed function needs to be called.
- * The PASSTHRU macro is later used for system calls that don't need
- * wrapping. (XXX its a shame the loader can't do this aliasing)
  */
 #ifdef _THREAD_SAFE
 /*
@@ -77,7 +75,6 @@ __EXIT(p,x)
 # define RSYSCALL(x)	__RSYSCALL(_thread_sys_,x)
 # define PSEUDO(x,y)	__PSEUDO(_thread_sys_,x,y)
 /*# define SYSENTRY(x)	__ENTRY(_thread_sys_,x)*/
-/*# define PASSTHRU(x)	__PASSTHRU(_thread_sys_,x)*/
 #else _THREAD_SAFE
 /*
  * The non-threaded library defaults to traditional syscalls where

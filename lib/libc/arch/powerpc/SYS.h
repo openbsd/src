@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	8.1 (Berkeley) 6/4/93
- *      $Id: SYS.h,v 1.3 1998/12/23 05:39:45 rahnds Exp $ 
+ *      $Id: SYS.h,v 1.4 1999/02/01 07:56:14 d Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -80,6 +80,5 @@
 				PSEUDO_SUFFIX
 
 #define RSYSCALL(x)		PSEUDO(x,x)
-#define PASSTHRU(x)		ENTRY(x)	b _CONCAT(_thread_sys_,x)
 
 #endif /* _THREAD_SAFE */
