@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.264 2000/05/31 22:12:57 chris Exp $
+	$OpenBSD: pcidevs,v 1.265 2000/06/12 15:13:18 aaron Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -631,7 +631,7 @@ product ALI M3309		0x3309	M3309 MPEG Accelerator
 
 /* ADMtek products */
 product ADMTEK AL981		0x0981	AL981
-product ADMTEK AN985		0x0985	AN985
+product ADMTEK AN983		0x0985	AN983
 
 /* Adaptec products */
 product ADP AIC7810		0x1078	AIC-7810
