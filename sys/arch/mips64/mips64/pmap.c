@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 2004/09/21 05:54:31 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 2004/09/22 07:27:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,18 +38,16 @@
 #include <sys/shm.h>
 #endif
 
+#include <uvm/uvm.h>
+
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <machine/memconf.h>
-#include <machine/vmparam.h>
 #include <mips64/archtype.h>
-
-#include <uvm/uvm.h>
 
 extern void mem_zero_page(vaddr_t);
 
-/* flags for pv_entry */
 #define	PV_UNCACHED	0x0001		/* Page is mapped unchached */
 #define	PV_CACHED	0x0002		/* Page has been cached */
 #define	PV_ATTR_MOD	0x0004
@@ -67,7 +65,6 @@ struct pool pmap_pv_pool;
 int	pmap_pv_lowat = PMAP_PV_LOWAT;
 
 int	pmap_alloc_tlbpid(struct proc *);
-int	pmap_enter_pv(pmap_t, vaddr_t, vm_page_t, u_int *);
 int	pmap_page_alloc(vaddr_t *);
 void	pmap_page_cache(vm_page_t, int);
 void	pmap_remove_pv(pmap_t, vaddr_t, paddr_t);
@@ -114,9 +111,8 @@ struct {
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
 
-int pmapdebugflag = 0x0;
-#define pmapdebug pmapdebugflag
-#endif /* PMAPDEBUG */
+int pmapdebug = 0x0;
+#endif	/* PMAPDEBUG */
 
 
 struct pmap	kernel_pmap_store;
@@ -281,7 +277,7 @@ pmap_page_alloc(vaddr_t *ret)
 	pv = pg_to_pvh(pg);
 	va = PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg));
 	if ((pv->pv_flags & PV_CACHED) &&
-	   ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
+	    ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
 	pv->pv_va = va;
@@ -390,7 +386,7 @@ pmap_destroy(pmap)
 #ifdef PARANOIA
 			for (j = 0; j < NPTEPG; j++) {
 				if ((pte+j)->pt_entry)
-					panic("pmap_destroy: segmap not empty");
+					panic("pmap_release: segmap not empty");
 			}
 #endif
 			Mips_HitInvalidateDCache((vaddr_t)pte, PAGE_SIZE);
@@ -674,7 +670,7 @@ pmap_protect(pmap, sva, eva, prot)
 		/*
 		 * Change protection on every valid mapping within this segment.
 		 */
-		pte += (sva >> PGSHIFT) & (NPTEPG - 1);
+		pte += uvtopte(sva);
 		for (; sva < nssva; sva += NBPG, pte++) {
 			entry = pte->pt_entry;
 			if (!(entry & PG_V))
@@ -700,7 +696,7 @@ pmap_is_page_ro(pmap, va, entry)
 	vaddr_t va;
 	int	entry;
 {
-	return (entry & PG_RO);
+	return(entry & PG_RO);
 }
 
 /*
@@ -738,9 +734,10 @@ pmap_page_cache(pg,mode)
 				pte->pt_entry = entry;
 				tlb_update(pv->pv_va, entry);
 			}
-		} else {
+		}
+		else {
 			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va))) {
-				pte += (pv->pv_va >> PGSHIFT) & (NPTEPG - 1);
+				pte += uvtopte(pv->pv_va);
 				entry = pte->pt_entry;
 				if (entry & PG_V) {
 					entry = (entry & ~PG_CACHEMODE) | newmode;
@@ -801,27 +798,24 @@ pmap_enter(pmap, va, pa, prot, flags)
 	pg = PHYS_TO_VM_PAGE(pa);
 
 	if (pg != NULL) {
-		pv_entry_t pv;
+		pv_entry_t pv, npv;
 
 		pv = pg_to_pvh(pg);
-
-		/* Set page referenced/modified status based on flags */
-		if (flags & VM_PROT_WRITE)
-			pv->pv_flags |= PV_ATTR_MOD | PV_ATTR_REF;
-		else if (flags & VM_PROT_ALL)
-			pv->pv_flags |= PV_ATTR_REF;
 
 		if (!(prot & VM_PROT_WRITE)) {
 			npte = PG_ROPAGE;
 		} else {
-			if ((int64_t)va < 0) {
+			if ((int)va < 0) {
 				/*
 				 * Don't bother to trap on kernel writes,
 				 * just record page as dirty.
 				 */
 				npte = PG_RWPAGE;
+#if 0 /*XXX*/
+				pg->flags &= ~PG_CLEAN;
+#endif
 			} else {
-				if (pv->pv_flags & PV_ATTR_MOD) {
+				if (!(pg->flags & PG_CLEAN)) {
 					npte = PG_RWPAGE;
 				} else {
 					npte = PG_CWPAGE;
@@ -832,10 +826,105 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef PMAPDEBUG
 		stat_count(enter_stats.managed);
 #endif
+		/*
+		 * Enter the pmap and virtual address into the
+		 * physical to virtual map table.
+		 */
+
+#ifdef PMAPDEBUG
+		if (pmapdebug & PDB_ENTER) {
+			printf("pmap_enter: pv %x: was %x/%x/%x\n",
+			       pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
+		}
+#endif
+
+		if (pv->pv_pmap == NULL) {
+			/*
+			 * No entries yet, use header as the first entry
+			 */
+
+#ifdef PMAPDEBUG
+			if (pmapdebug & PDB_PVENTRY) {
+				printf("pmap_enter: first pv: pmap %x va %x pa %p\n",
+					pmap, va, pa);
+			}
+			stat_count(enter_stats.firstpv);
+#endif
+
+			Mips_SyncDCachePage(pv->pv_va);
+
+			pv->pv_va = va;
+			pv->pv_flags = PV_CACHED;
+			pv->pv_pmap = pmap;
+			pv->pv_next = NULL;
+		} else {
+			if (pv->pv_flags & PV_UNCACHED) {
+				npte = (npte & ~PG_CACHEMODE) | PG_UNCACHED;
+			} else if (CpuCacheAliasMask != 0) {
+			/*
+			 * There is at least one other VA mapping this page.
+			 * Check if they are cache index compatible. If not
+			 * remove all mappings, flush the cache and set page
+			 * to be mapped uncached. Caching will be restored
+			 * when pages are mapped compatible again. NOT!
+			 */
+				for (npv = pv; npv; npv = npv->pv_next) {
+					/*
+					 * Check cache aliasing incompatibility
+					 */
+					if (((npv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
+						printf("pmap_enter: uncached mapping for pa %p, va %p !=  %p.\n", pa, npv->pv_va, va);
+						pmap_page_cache(pg,PV_UNCACHED);
+						Mips_SyncCache();
+						pv->pv_flags &= ~PV_CACHED;
+						npte = (npte & ~PG_CACHEMODE) | PG_UNCACHED;
+						break;
+					}
+				}
+			}
+
+			/*
+			 * There is at least one other VA mapping this page.
+			 * Place this entry after the header.
+			 *
+			 * Note: the entry may already be in the table if
+			 * we are only changing the protection bits.
+			 */
+			for (npv = pv; npv; npv = npv->pv_next) {
+				if (pmap == npv->pv_pmap && va == npv->pv_va) {
+					goto fnd;
+				}
+			}
+
+#ifdef PMAPDEBUG
+			if (pmapdebug & PDB_PVENTRY) {
+				printf("pmap_enter: new pv: pmap %x va %x pa %p\n",
+					pmap, va, pa);
+			}
+#endif
+
+			/* can this cause us to recurse forever? */
+			npv = pmap_pv_alloc();
+			if (npv == NULL) {
+				panic("pmap_pv_alloc() failed");
+			}
+			npv->pv_va = va;
+			npv->pv_pmap = pmap;
+			npv->pv_next = pv->pv_next;
+			npv->pv_flags = pv->pv_flags;
+			pv->pv_next = npv;
+
+#ifdef PMAPDEBUG
+			if (!npv->pv_next)
+				stat_count(enter_stats.secondpv);
+#endif
+		fnd:
+			;
+		}
 	} else {
 		/*
 		 * Assumption: if it is not part of our managed memory
-		 * then it must be device memory which may be volatile.
+		 * then it must be device memory which may be volitile.
 		 */
 #ifdef PMAPDEBUG
 		stat_count(enter_stats.unmanaged);
@@ -848,20 +937,12 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 
 	if (pmap == pmap_kernel()) {
-		if (pg != NULL) {
-			if (pmap_enter_pv(pmap, va, pg, &npte) != 0) {
-				if (flags & PMAP_CANFAIL)
-					return ENOMEM;
-				panic("pmap_enter: pmap_enter_pv() failed");
-			}
-		}
-
 		pte = kvtopte(va);
 		npte |= vad_to_pfn(pa) | PG_ROPAGE | PG_G;
 		if (!(pte->pt_entry & PG_V)) {
 			pmap->pm_stats.resident_count++;
 		}
-		if ((pte->pt_entry & PG_V) && pa != pfn_to_pad(pte->pt_entry)) {
+		if (pa != pfn_to_pad(pte->pt_entry)) {
 			pmap_remove(pmap, va, va + NBPG);
 #ifdef PMAPDEBUG
 			stat_count(enter_stats.mchange);
@@ -873,7 +954,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		 */
 		pte->pt_entry = npte;
 		tlb_update(va, npte);
-		return 0;
+		return (KERN_SUCCESS);
 	}
 
 	/*
@@ -891,15 +972,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)nva;
 	}
 
-	if (pg != NULL) {
-		if (pmap_enter_pv(pmap, va, pg, &npte) != 0) {
-			if (flags & PMAP_CANFAIL)
-				return ENOMEM;
-			panic("pmap_enter: pmap_enter_pv() failed");
-		}
-	}
-
-	pte += (va >> PGSHIFT) & (NPTEPG - 1);
+	pte += uvtopte(va);
 
 	/*
 	 * Now validate mapping with desired protection/wiring.
@@ -907,6 +980,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * MIPS pages in a OpenBSD page.
 	 */
 	npte |= vad_to_pfn(pa);
+
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_ENTER) {
 		printf("pmap_enter: new pte %x", npte);
@@ -916,7 +990,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 #endif
 
-	if ((pte->pt_entry & PG_V) && pa != pfn_to_pad(pte->pt_entry)) {
+	if (pa != pfn_to_pad(pte->pt_entry)) {
 		pmap_remove(pmap, va, va + NBPG);
 #ifdef PMAPDEBUG
 		stat_count(enter_stats.mchange);
@@ -933,10 +1007,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 		/*
 		 *  If mapping a memory space address invalidate ICache.
 		 */
-		if (pg != NULL &&
-		    (prot & (VM_PROT_READ | VM_PROT_EXECUTE)) ==
-		    (VM_PROT_READ | VM_PROT_EXECUTE))
+		if (pg != NULL) {
 			Mips_InvalidateICachePage(va);
+		}
 	}
 
 	return 0;
@@ -958,11 +1031,10 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 
 	npte = vad_to_pfn(pa) | PG_G;
-	if (prot & VM_PROT_WRITE) {
+	if (prot & VM_PROT_WRITE)
 		npte |= PG_RWPAGE;
-	} else {
+	else
 		npte |= PG_ROPAGE;
-	}
 	pte = kvtopte(va);
 	pte->pt_entry = npte;
 	tlb_update(va, npte);
@@ -986,9 +1058,9 @@ pmap_kenter_cache(va, pa, prot, cache)
 
 	npte = vad_to_pfn(pa) | PG_G;
 	if (prot & VM_PROT_WRITE) {
-		npte |= PG_V | PG_M | cache;
+		npte |= PG_M | cache;
 	} else {
-		npte |= PG_V | PG_RO | cache;
+		npte |= PG_RO | cache;
 	}
 	pte = kvtopte(va);
 	pte->pt_entry = npte;
@@ -1053,14 +1125,12 @@ pmap_extract(pmap, va, pa)
 #endif
 
 	if (pmap == pmap_kernel()) {
-		if (va >= (long)KSEG0_BASE &&
-		    va < (long)(KSEG0_BASE + KSEG_SIZE)) {
+		if (va >= (long)KSEG0_BASE && va < (long)(KSEG0_BASE + KSEG_SIZE)) {
 			*pa = (long)KSEG0_TO_PHYS(va);
 		} else {
 #ifdef DIAGNOSTIC
 			if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end) {
-				printf("pmap_extract(%x, %x) -> ", pmap, va);
-				panic("pmap_extract");
+				panic("pmap_extract(%x, %x)", pmap, va);
 			}
 #endif
 			pte = kvtopte(va);
@@ -1073,7 +1143,7 @@ pmap_extract(pmap, va, pa)
 		if (!(pte = pmap_segmap(pmap, va)))
 			rv = FALSE;
 		else {
-			pte += (va >> PGSHIFT) & (NPTEPG - 1);
+			pte += uvtopte(va);
 			*pa = pfn_to_pad(pte->pt_entry);
 		}
 	}
@@ -1082,7 +1152,7 @@ pmap_extract(pmap, va, pa)
 
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW) {
-		printf("pmap_extract: rv %d pa %x\n", rv, *pa);
+		printf("pmap_extract: pa %x\n", *pa);
 	}
 #endif
 
@@ -1098,21 +1168,7 @@ pmap_prefer(foff, vap)
 	paddr_t foff;
 	vaddr_t *vap;
 {
-#if 1
-	vaddr_t va = *vap;
-	long d, m;
-
-	m = CpuCacheAliasMask;
-	if (m == 0)		/* m=0 => no cache aliasing */
-		return;
-
-	m = (m | (m - 1)) + 1;	/* Value from mask */
-	d = foff - va;
-	d &= (m - 1);
-	*vap = va + d;
-#else
-	*vap += (*vap ^ foff) & CpuCacheAliasMask;
-#endif
+	*vap += (foff - *vap) & (CpuCacheAliasMask | PAGE_MASK);
 }
 
 /*
@@ -1138,27 +1194,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	}
 #endif
 }
-
-#ifndef pmap_update
-/*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void
-pmap_update(pmap)
-	pmap_t pmap;
-{
-#ifdef PMAPDEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		printf("pmap_update()\n");
-	}
-#endif
-}
-#endif
 
 /*
  *	pmap_zero_page zeros the specified (machine independent) page.
@@ -1260,33 +1295,24 @@ boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
-	pv_entry_t pv;
-	boolean_t rv;
+#ifdef PMAPDEBUG
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+#endif
+	boolean_t rv = FALSE;
 
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW) {
-		paddr_t pa = VM_PAGE_TO_PHYS(pg);
 		printf("pmap_clear_modify(%x)\n", pa);
 	}
 #endif
-
-	/*
-	 * XXX - we should walk the pv list, and flush any dirty pages too.
-	 */
-	pv = pg_to_pvh(pg);
-	rv = (pv->pv_flags & PV_ATTR_MOD) != 0;
-	pv->pv_flags &= ~PV_ATTR_MOD;
-	return rv;
+	return(rv);
 }
 
 void
 pmap_set_modify(pg)
 	struct vm_page *pg;
 {
-	pv_entry_t pv;
-
-	pv = pg_to_pvh(pg);
-	pv->pv_flags |= PV_ATTR_MOD | PV_ATTR_REF;
+	pg->flags &= ~PG_CLEAN;
 }
 
 /*
@@ -1298,20 +1324,16 @@ boolean_t
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
-	pv_entry_t pv;
-	boolean_t rv;
+#ifdef PMAPDEBUG
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+#endif
 
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW) {
-		paddr_t pa = VM_PAGE_TO_PHYS(pg);
 		printf("pmap_clear_reference(%x)\n", pa);
 	}
 #endif
-
-	pv = pg_to_pvh(pg);
-	rv = (pv->pv_flags & PV_ATTR_REF) != 0;
-	pv->pv_flags &= ~PV_ATTR_REF;
-	return rv;
+	return(FALSE);
 }
 
 /*
@@ -1324,10 +1346,7 @@ boolean_t
 pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
-	pv_entry_t pv;
-
-	pv = pg_to_pvh(pg);
-	return (pv->pv_flags & PV_ATTR_REF) != 0;
+	return (FALSE);
 }
 
 /*
@@ -1340,10 +1359,7 @@ boolean_t
 pmap_is_modified(pg)
 	struct vm_page *pg;
 {
-	pv_entry_t pv;
-
-	pv = pg_to_pvh(pg);
-	return (pv->pv_flags & PV_ATTR_MOD) != 0;
+	return (FALSE);
 }
 
 paddr_t
@@ -1392,8 +1408,7 @@ pmap_alloc_tlbpid(p)
 		tlbpid_cnt = id + 1;
 		pmap->pm_tlbpid = id;
 		pmap->pm_tlbgen = tlbpid_gen;
-	}
-	else {
+	} else {
 		id = pmap->pm_tlbpid;
 	}
 
@@ -1411,111 +1426,6 @@ pmap_alloc_tlbpid(p)
 #endif
 
 	return (id);
-}
-
-/*
- * Enter the pmap and virtual address into the
- * physical to virtual map table.
- */
-int
-pmap_enter_pv(pmap, va, pg, npte)
-	pmap_t pmap;
-	vaddr_t va;
-	vm_page_t pg;
-	u_int *npte;
-{
-	pv_entry_t pv, npv;
-#ifdef PMAPDEBUG
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
-
-	pv = pg_to_pvh(pg);
-
-	if (pv->pv_pmap == NULL) {
-		/*
-		 * No entries yet, use header as the first entry
-		 */
-
-#ifdef PMAPDEBUG
-		if (pmapdebug & PDB_PVENTRY) {
-			printf("pmap_enter: first pv: pmap %x va %x pa %p\n",
-				pmap, va, pa);
-		}
-		stat_count(enter_stats.firstpv);
-#endif
-
-		Mips_SyncDCachePage(pv->pv_va);
-
-		pv->pv_va = va;
-		pv->pv_flags = PV_CACHED;
-		pv->pv_pmap = pmap;
-		pv->pv_next = NULL;
-	} else {
-		if (pv->pv_flags & PV_UNCACHED) {
-			*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
-		} else if (CpuCacheAliasMask != 0) {
-			/*
-			 * There is at least one other VA mapping this page.
-			 * Check if they are cache index compatible. If not
-			 * remove all mappings, flush the cache and set page
-			 * to be mapped uncached. Caching will be restored
-			 * when pages are mapped compatible again. NOT!
-			 */
-			for (npv = pv; npv; npv = npv->pv_next) {
-				/*
-				 * Check cache aliasing incompatibility
-				 */
-				if (((npv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
-#ifdef PMAPDEBUG
-					printf("pmap_enter: uncached mapping for pa %p, va %p !=  %p.\n",
-					    pa, npv->pv_va, va);
-#endif
-					pmap_page_cache(pg, PV_UNCACHED);
-					Mips_SyncCache();
-					pv->pv_flags &= ~PV_CACHED;
-					*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
-					break;
-				}
-			}
-		}
-
-		/*
-		 * There is at least one other VA mapping this page.
-		 * Place this entry after the header.
-		 *
-		 * Note: the entry may already be in the table if
-		 * we are only changing the protection bits.
-		 */
-		for (npv = pv; npv; npv = npv->pv_next) {
-			if (pmap == npv->pv_pmap && va == npv->pv_va) {
-				return 0;
-			}
-		}
-
-#ifdef PMAPDEBUG
-		if (pmapdebug & PDB_PVENTRY) {
-			printf("pmap_enter: new pv: pmap %x va %x pa %p\n",
-			    pmap, va, pa);
-		}
-#endif
-
-		/* can this cause us to recurse forever? */
-		npv = pmap_pv_alloc();
-		if (npv == NULL)
-			return ENOMEM;
-		npv->pv_va = va;
-		npv->pv_pmap = pmap;
-		npv->pv_next = pv->pv_next;
-		npv->pv_flags = pv->pv_flags;
-		pv->pv_next = npv;
-
-#ifdef PMAPDEBUG
-		if (!npv->pv_next)
-			stat_count(enter_stats.secondpv);
-#endif
-	}
-
-	return 0;
 }
 
 /*
@@ -1555,8 +1465,6 @@ pmap_remove_pv(pmap, va, pa)
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
 		npv = pv->pv_next;
 		if (npv) {
-			npv->pv_flags |=
-			    (pv->pv_flags & (PV_ATTR_MOD | PV_ATTR_REF));
 			*pv = *npv;
 			pmap_pv_free(npv);
 		} else {
@@ -1565,23 +1473,21 @@ pmap_remove_pv(pmap, va, pa)
 #ifdef PMAPDEBUG
 		stat_count(remove_stats.pvfirst);
 #endif
-	} else {
+	}
+	else {
 		for (npv = pv->pv_next; npv; pv = npv, npv = npv->pv_next) {
 #ifdef PMAPDEBUG
 			stat_count(remove_stats.pvsearch);
 #endif
 			if (pmap == npv->pv_pmap && va == npv->pv_va)
-				break;
+				goto fnd;
 		}
-		if (npv != NULL) {
-			pv->pv_next = npv->pv_next;
-			pmap_pv_free(npv);
-		} else {
 #ifdef DIAGNOSTIC
-			panic("pmap_remove_pv(%x, %x, %x) not found",
-			    pmap, va, pa);
+		panic("pmap_remove_pv(%x, %x, %x) not found\n", pmap, va, pa);
 #endif
-		}
+	fnd:
+		pv->pv_next = npv->pv_next;
+		pmap_pv_free(npv);
 	}
 }
 
