@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.5 2001/06/19 16:09:24 mickey Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.6 2001/06/23 21:24:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -60,7 +60,7 @@
 #define		AMI_INITTARG(i)	(((i) >> 16) & 0xff)
 #define		AMI_INITCHAN(i)	(((i) >> 24) & 0xff)
 #define	AMI_PCI_SIG	0xa0
-#define		AMI_SIGNATURE	0x11223344
+#define		AMI_SIGNATURE	0x3344
 #define	AMI_PCI_SGL	0xa4
 #define		AMI_SGL_LHC	0x00000299
 #define		AMI_SGL_HLC	0x00000199
@@ -127,11 +127,12 @@ ami_pci_match(parent, match, aux)
 		return (0);
 
 	for (pami = ami_pci_devices; pami->vendor; pami++) {
+		printf("%lx %lx\n", pci_conf_read(pa->pa_pc, pa->pa_tag, AMI_PCI_SIG) & 0xffff, AMI_SIGNATURE);
 		if (pami->vendor == PCI_VENDOR(pa->pa_id) &&
 		    pami->product == PCI_PRODUCT(pa->pa_id) &&
 		    (!pami->flags & AMI_CHECK_SIGN ||
-		     pci_conf_read(pa->pa_pc, pa->pa_tag, AMI_PCI_SIG) ==
-		     AMI_SIGNATURE))
+		     (pci_conf_read(pa->pa_pc, pa->pa_tag, AMI_PCI_SIG) &
+			  0xffff) == AMI_SIGNATURE))
 			return (1);
 	}
 	return (0);
