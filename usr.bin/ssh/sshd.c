@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.22 1999/10/05 22:18:52 markus Exp $");
+RCSID("$Id: sshd.c,v 1.23 1999/10/07 04:40:03 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -230,6 +230,7 @@ main(int ac, char **av)
   extern int optind;
   int opt, aux, sock_in, sock_out, newsock, i, pid, on = 1;
   int remote_major, remote_minor;
+  int silentrsa = 0;
   struct sockaddr_in sin;
   char buf[100]; /* Must not be larger than remote_version. */
   char remote_version[100]; /* Must be at least as big as buf. */
@@ -244,17 +245,11 @@ main(int ac, char **av)
   else
     av0 = av[0];
 
-  /* check if RSA support exists */
-  if (rsa_alive() == 0) {
-    log("no RSA support in libssl and libcrypto -- exiting.  See ssl(8)");
-    exit(1);
-  }
-
   /* Initialize configuration options to their default values. */
   initialize_server_options(&options);
 
   /* Parse command-line arguments. */
-  while ((opt = getopt(ac, av, "f:p:b:k:h:g:diq")) != EOF)
+  while ((opt = getopt(ac, av, "f:p:b:k:h:g:diqQ")) != EOF)
     {
       switch (opt)
 	{
@@ -266,6 +261,9 @@ main(int ac, char **av)
 	  break;
 	case 'i':
 	  inetd_flag = 1;
+	  break;
+	case 'Q':
+          silentrsa = 1;
 	  break;
 	case 'q':
 	  options.quiet_mode = 1;
@@ -303,6 +301,14 @@ main(int ac, char **av)
 	  exit(1);
 	}
     }
+
+  /* check if RSA support exists */
+  if (rsa_alive() == 0) {
+    if (silentrsa == 0)
+      printf("sshd: no RSA support in libssl and libcrypto -- exiting.  See ssl(8)\n");
+    log("no RSA support in libssl and libcrypto -- exiting.  See ssl(8)");
+    exit(1);
+  }
 
   /* Read server configuration options from the configuration file. */
   read_server_config(&options, config_file_name);
