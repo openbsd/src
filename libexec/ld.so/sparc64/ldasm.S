@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.17 2003/02/02 16:57:58 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.18 2003/05/30 01:13:53 drahn Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -384,3 +384,15 @@ _dl_sigprocmask:
 1:
 	retl
 	 clr %o0
+
+
+	.section ".text"
+	.align 4
+	.globl _dl_sysctl
+	.type _dl_sysctl,@function
+_dl_sysctl:
+	mov  SYS___sysctl | SYSCALL_G2RFLAG, %g1	! call sys_getdirentries
+	add %o7, 8, %g2					! just return on success
+	t ST_SYSCALL					! off to wonderland
+	retl
+	 sub %g0, %o0, %o0                      ! error: result = -errno

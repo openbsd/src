@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.25 2003/04/28 22:51:25 marc Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.26 2003/05/30 01:13:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -65,6 +65,7 @@ dlopen(const char *libname, int how)
 
 	_dl_thread_kern_stop();
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO);
+	_dl_link_sub(object, _dl_objects);
 	_dl_thread_kern_go();
 	if (object == 0)
 		return((void *)0);
@@ -93,6 +94,7 @@ dlopen(const char *libname, int how)
 			libname = dynobj->dyn.strtab + dynp->d_un.d_val;
 			_dl_thread_kern_stop();
 			depobj = _dl_load_shlib(libname, dynobj, OBJTYPE_LIB);
+			_dl_link_sub(depobj, dynobj);
 			_dl_thread_kern_go();
 			if (!depobj)
 				_dl_exit(4);

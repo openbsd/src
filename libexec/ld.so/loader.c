@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.55 2003/02/15 22:43:06 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.56 2003/05/30 01:13:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -37,6 +37,8 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/exec.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <nlist.h>
 #include <string.h>
 #include <link.h>
@@ -61,6 +63,7 @@ char *_dl_bindnow;
 char *_dl_traceld;
 char *_dl_debug;
 char *_dl_showmap;
+char *_dl_norandom;
 
 struct r_debug *_dl_debug_map;
 
@@ -98,6 +101,7 @@ void
 _dl_dopreload(char *paths)
 {
 	char		*cp, *dp;
+	elf_object_t	*shlib;
 
 	dp = paths = _dl_strdup(paths);
 	if (dp == NULL) {
@@ -106,11 +110,13 @@ _dl_dopreload(char *paths)
 	}
 
 	while ((cp = _dl_strsep(&dp, ":")) != NULL) {
-		if (_dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB) == 0) {
+		shlib = _dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB);
+		if (shlib == NULL) {
 			_dl_printf("%s: can't load library '%s'\n",
 			    _dl_progname, cp);
 			_dl_exit(4);
 		}
+		_dl_link_sub(shlib, _dl_objects);
 	}
 	_dl_free(paths);
 	return;
@@ -133,7 +139,8 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	elf_object_t *dynobj;
 	Elf_Phdr *phdp;
 	char *us = "";
-	int n;
+	unsigned int i;
+	int libcnt = 0;
 
 	/*
 	 * Get paths to various things we are going to use.
@@ -143,6 +150,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	_dl_bindnow = _dl_getenv("LD_BIND_NOW", envp);
 	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp);
 	_dl_debug = _dl_getenv("LD_DEBUG", envp);
+	_dl_norandom =  _dl_getenv("LD_NORANDOM", envp);
 
 	/*
 	 * Don't allow someone to change the search paths if he runs
@@ -207,7 +215,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * Examine the user application and set up object information.
 	 */
 	phdp = (Elf_Phdr *)dl_data[AUX_phdr];
-	for (n = 0; n < dl_data[AUX_phnum]; n++) {
+	for (i = 0; i < dl_data[AUX_phnum]; i++) {
 		if (phdp->p_type == PT_DYNAMIC) {
 			exe_obj = _dl_add_object(argv[0],
 			    (Elf_Dyn *)phdp->p_vaddr, dl_data, OBJTYPE_EXE,
@@ -227,23 +235,75 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * added along the tour.
 	 */
 	dynobj = _dl_objects;
-	while (dynobj) {
+	for (dynobj = _dl_objects; dynobj != NULL; dynobj = dynobj->next) {
 		DL_DEB(("examining: '%s'\n", dynobj->load_name));
+		libcnt = 0;
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
-			const char *libname;
-
-			if (dynp->d_tag != DT_NEEDED)
-				continue;
-			libname = dynobj->dyn.strtab;
-			libname += dynp->d_un.d_val;
-			DL_DEB(("needs: '%s'\n", libname));
-			if (_dl_load_shlib(libname, dynobj, OBJTYPE_LIB) == 0) {
-				_dl_printf("%s: can't load library '%s'\n",
-				    _dl_progname, libname);
-				_dl_exit(4);
+			if (dynp->d_tag == DT_NEEDED) {
+				libcnt++;
 			}
 		}
-		dynobj = dynobj->next;
+		if ( libcnt != 0) {
+			struct listent {
+				Elf_Dyn *dynp;
+				elf_object_t *dynobj;
+			} *liblist;
+			int *randomlist;
+
+			liblist = _dl_malloc(libcnt * sizeof(struct listent));
+			randomlist =  _dl_malloc(libcnt * sizeof(int));
+			if (liblist == NULL)
+				_dl_exit(5);
+
+			for (dynp = dynobj->load_dyn, i = 0;
+			    dynp->d_tag;
+			    dynp++) {
+				if (dynp->d_tag == DT_NEEDED) {
+					liblist[i++].dynp = dynp;
+				}
+
+			}
+			/* Randomize these */
+			for (i = 0; i < libcnt; i++)
+				randomlist[i] = i;
+
+			if (!_dl_norandom)
+				for (i = 1; i < libcnt; i++) {
+					unsigned int rnd;
+					int cur;
+
+					rnd = _dl_random();
+
+					rnd = rnd % (i+1);
+
+					cur = randomlist[rnd];
+					randomlist[rnd] = randomlist[i];
+					randomlist[i] = cur;
+				}
+
+			for (i = 0; i < libcnt; i++) {
+				elf_object_t *depobj;
+				const char *libname;
+
+				libname = dynobj->dyn.strtab;
+				libname +=
+				    liblist[randomlist[i]].dynp->d_un.d_val;
+				DL_DEB(("needs: '%s'\n", libname));
+				depobj = _dl_load_shlib(libname, dynobj,
+				    OBJTYPE_LIB);
+				if (depobj == 0) {
+					_dl_printf(
+					    "%s: can't load library '%s'\n",
+					    _dl_progname, libname);
+					_dl_exit(4);
+				}
+				liblist[i].dynobj = depobj;
+			}
+			for (i = 0; i < libcnt; i++) {
+				_dl_link_sub(liblist[i].dynobj, dynobj);
+			}
+			_dl_free(liblist);
+		}
 	}
 
 	/*
@@ -251,7 +311,8 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * so we can use the _dl_ code when serving dl.... calls.
 	 */
 	dynp = (Elf_Dyn *)((void *)_DYNAMIC);
-	dyn_obj = _dl_add_object(us, dynp, 0, OBJTYPE_LDR, dl_data[AUX_base], loff);
+	dyn_obj = _dl_add_object(us, dynp, 0, OBJTYPE_LDR, dl_data[AUX_base],
+	    loff);
 	dyn_obj->status |= STAT_RELOC_DONE;
 
 	/*

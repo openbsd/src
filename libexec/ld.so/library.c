@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.26 2003/02/02 16:57:58 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.27 2003/05/30 01:13:53 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -57,7 +57,6 @@
 		   (((X) & PF_X) ? PROT_EXEC : 0))
 
 static elf_object_t *_dl_tryload_shlib(const char *libname, int type);
-static void _dl_link_sub(elf_object_t *dep, elf_object_t *p);
 
 /*
  * _dl_match_file()
@@ -241,7 +240,6 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 
 	if (_dl_strchr(libname, '/')) {
 		object = _dl_tryload_shlib(libname, type);
-		_dl_link_sub(object, parent);
 		return(object);
 	}
 
@@ -263,7 +261,6 @@ again:
 				    sod.sod_minor, req_sod.sod_minor);
 			object = _dl_tryload_shlib(hint, type);
 			if (object != NULL) {
-				_dl_link_sub(object, parent);
 				_dl_free((char *)sod.sod_name);
 				return (object);
 			}
@@ -285,7 +282,6 @@ again:
 				    sod.sod_minor, req_sod.sod_minor);
 			object = _dl_tryload_shlib(hint, type);
 			if (object != NULL) {
-				_dl_link_sub(object, parent);
 				_dl_free((char *)sod.sod_name);
 				return (object);
 			}
@@ -303,7 +299,6 @@ again:
 			    sod.sod_minor, req_sod.sod_minor);
 		object = _dl_tryload_shlib(hint, type);
 		if (object != NULL) {
-			_dl_link_sub(object, parent);
 			_dl_free((char *)sod.sod_name);
 			return(object);
 		}
@@ -494,7 +489,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	return(object);
 }
 
-static void
+void
 _dl_link_sub(elf_object_t *dep, elf_object_t *p)
 {
 	struct dep_node *n;

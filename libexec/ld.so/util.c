@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2003/02/02 16:57:58 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2003/05/30 01:13:53 drahn Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -33,7 +33,9 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mman.h>
+#include <sys/sysctl.h>
 #include <string.h>
 #include "archdep.h"
 
@@ -121,3 +123,21 @@ _dl_free(void *p)
 	*t = (long)_dl_malloc_free;
 	_dl_malloc_free = p;
 }
+
+
+unsigned int
+_dl_random(void)   
+{
+	int mib[2];
+	unsigned int rnd;
+	size_t len;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ARND;
+	len = sizeof(rnd);
+	_dl_sysctl(mib, 2, &rnd, &len, NULL, 0);
+
+	return (rnd);
+}
+
+

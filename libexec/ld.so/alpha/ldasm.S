@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.12 2003/01/17 20:41:07 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.13 2003/05/30 01:13:53 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -305,3 +305,9 @@ LEAF_NOPROFILE(_dl_sigprocmask, 4)
 1:	mov	zero, v0
 	RET
 END(_dl_sigprocmask)
+
+LEAF_NOPROFILE(_dl_sysctl, 4)
+	ldiq	v0, SYS___sysctl
+	call_pal PAL_OSF1_callsys
+	RET
+END(_dl_sysctl)

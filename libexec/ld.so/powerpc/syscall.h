@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.14 2002/12/18 19:20:02 drahn Exp $ */
+/*	$OpenBSD: syscall.h,v 1.15 2003/05/30 01:13:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -332,4 +332,30 @@ _dl_sigprocmask (int how, const sigset_t *set, sigset_t *oset)
 
 	return 0;
 }
+static inline int
+_dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
+    size_t newlen)
+{
+	register int status __asm__ ("3");
+
+	__asm__ volatile ("mr    0,%1\n\t"
+	    "mr    3,%2\n\t"
+	    "mr    4,%3\n\t"
+	    "mr    5,%4\n\t"
+	    "mr    6,%5\n\t"
+	    "mr    7,%6\n\t"
+	    "mr    8,%7\n\t"
+	    "sc\n\t"
+	    "cmpwi   0, 0\n\t"
+	    "beq   1f\n\t"
+	    "li    3,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "r" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
+	    "r" (oldplen), "r" (newp), "r" (newlen)
+	    : "0", "3", "4", "5", "6", "7", "8");
+	return status;
+	
+}
+
 #endif /*__DL_SYSCALL_H__*/

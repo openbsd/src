@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2003/02/02 16:57:58 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.5 2003/05/30 01:13:53 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -206,6 +206,16 @@ _dl_fstat:
 	.type _dl_fcntl,@function
 _dl_fcntl:
 	mov	$SYS_fcntl, %eax
+	int	$0x80
+	jb	1f		 /* error: result = -errno */
+	ret
+
+	.section	".text"
+	.align		4
+	.global _dl_sysctl
+	.type _dl_sysctl,@function
+_dl_sysctl:
+	mov	$SYS___sysctl, %eax
 	int	$0x80
 	jb	1f		 /* error: result = -errno */
 	ret
