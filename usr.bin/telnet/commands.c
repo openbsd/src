@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.20 1999/01/04 07:55:05 art Exp $	*/
+/*	$OpenBSD: commands.c,v 1.21 1999/07/20 12:50:33 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ skey_calc(argc, argv)
 	int status;
 
 	if(argc != 3) {
-		printf("%s sequence challenge\n", argv[0]);
+		printf("usage: %s sequence challenge\n", argv[0]);
 		return 0;
 	}
 
@@ -2665,6 +2665,9 @@ static char
         encrypthelp[] = "turn on (off) encryption ('encrypt ?' for more)",
 #endif
 	zhelp[] =	"suspend telnet",
+#ifdef SKEY
+	skeyhelp[] =	"compute response to s/key challenge",
+#endif
 	shellhelp[] =	"invoke a subshell",
 	envhelp[] =	"change environment variables ('environ ?' for more)",
 	modestring[] = "try to enter line or character mode ('mode ?' for more)";
@@ -2703,7 +2706,7 @@ static Command cmdtab[] = {
 	{ "environ",	envhelp,	env_cmd,	0 },
 	{ "?",		helphelp,	help,		0 },
 #if	defined(SKEY)
-	{ "skey",	NULL,		skey_calc,	0 },
+	{ "skey",	skeyhelp,	skey_calc,	0 },
 #endif		
 	{ 0,		0,		0,		0 }
 };
