@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.14 2001/04/12 15:01:19 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.15 2001/04/12 22:40:12 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -253,20 +253,62 @@ struct txp_tx_desc {
 #define	TX_PFLAGS_VLANPRI_M	0x00300000	/* vlan priority mask */
 
 struct txp_rx_desc {
-	u_int8_t		rx_desctype:3,
-				rx_rcvtype:2,
-				rx_rsvdA:1,
-				rx_error:1,
-				rx_rsvdB:1;
+	volatile u_int8_t	rx_flags;	/* type/descriptor flags */
+	volatile u_int8_t	rx_numdesc;	/* number of descriptors */
+	volatile u_int16_t	rx_len;		/* frame length */
+	volatile u_int32_t	rx_vaddrlo;	/* virtual address, lo word */
+	volatile u_int32_t	rx_vaddrhi;	/* virtual address, hi word */
+	volatile u_int32_t	rx_stat;	/* status */
+	volatile u_int16_t	rx_filter;	/* filter status */
+	volatile u_int16_t	rx_hash;	/* hash status */
+	volatile u_int32_t	rx_vlan;	/* vlan tag/priority */
+};
 
-	u_int8_t		rx_num;
-	u_int16_t		rx_len;
-	u_int32_t		rx_addrlo;
-	u_int32_t		rx_addrhi;
-	u_int32_t		rx_stat;
-	u_int16_t		rx_filter;
-	u_int16_t		rx_ipsechash;
-	u_int32_t		rx_vlan;
+/* txp_rx_desc.rx_flags */
+#define	RX_FLAGS_TYPE_M		0x07		/* type mask */
+#define	RX_FLAGS_TYPE_FRAG	0x00		/* type: fragment */
+#define	RX_FLAGS_TYPE_DATA	0x01		/* type: data frame */
+#define	RX_FLAGS_TYPE_CMD	0x02		/* type: command frame */
+#define	RX_FLAGS_TYPE_OPT	0x03		/* type: options */
+#define	RX_FLAGS_TYPE_RX	0x04		/* type: command */
+#define	RX_FLAGS_TYPE_RESP	0x05		/* type: response */
+#define	RX_FLAGS_RCV_TYPE_M	0x18		/* rcvtype mask */
+#define	RX_FLAGS_RCV_TYPE_RX	0x00		/* rcvtype: receive */
+#define	RX_FLAGS_RCV_TYPE_RSP	0x08		/* rcvtype: response */
+#define	RX_FLAGS_ERROR		0x40		/* error in packet */
+
+/* txp_rx_desc.rx_stat (if rx_flags & RX_FLAGS_ERROR bit set) */
+#define	RX_ERROR_ADAPTER	0x00000000	/* adapter internal error */
+#define	RX_ERROR_FIFO		0x00000001	/* fifo underrun */
+#define	RX_ERROR_BADSSD		0x00000002	/* bad ssd */
+#define	RX_ERROR_RUNT		0x00000003	/* runt packet */
+#define	RX_ERROR_CRC		0x00000004	/* bad crc */
+#define	RX_ERROR_OVERSIZE	0x00000005	/* oversized packet */
+#define	RX_ERROR_ALIGN		0x00000006	/* alignment error */
+#define	RX_ERROR_DRIBBLE	0x00000007	/* dribble bit */
+
+/* txp_rx_desc.rx_stat (if rx_flags & RX_FLAGS_ERROR bit set) */
+#define	RX_STAT_PROTO_M		0x00000003	/* protocol mask */
+#define	RX_STAT_PROTO_UK	0x00000000	/* unknown protocol */
+#define	RX_STAT_PROTO_IPX	0x00000001	/* IPX */
+#define	RX_STAT_PROTO_IP	0x00000002	/* IP */
+#define	RX_STAT_PROTO_RSV	0x00000003	/* reserved */
+#define	RX_STAT_VLAN		0x00000004	/* vlan tag (in rxd) */
+#define	RX_STAT_IPFRAG		0x00000008	/* fragment, ipsec not done */
+#define	RX_STAT_IPSEC		0x00000010	/* ipsec decoded packet */
+#define	RX_STAT_IPCKSUMBAD	0x00000020	/* ip checksum failed */
+#define	RX_STAT_TCPCKSUMBAD	0x00000040	/* tcp checksum failed */
+#define	RX_STAT_UDPCKSUMBAD	0x00000080	/* udp checksum failed */
+#define	RX_STAT_IPCKSUMGOOD	0x00000100	/* ip checksum succeeded */
+#define	RX_STAT_TCPCKSUMGOOD	0x00000200	/* tcp checksum succeeded */
+#define	RX_STAT_UDPCKSUMGOOD	0x00000400	/* udp checksum succeeded */
+
+
+struct txp_rxbuf_desc {
+	volatile u_int32_t	rb_paddrlo;
+	volatile u_int32_t	rb_paddrhi;
+	volatile u_int32_t	rb_vaddrlo;
+	volatile u_int32_t	rb_vaddrhi;
 };
 
 struct txp_cmd_desc {
@@ -451,7 +493,8 @@ struct txp_hostvar {
 #define	STAT_HALTED			0x00000014
 
 #define	TX_ENTRIES			256
-#define	RX_ENTRIES			256
+#define	RX_ENTRIES			128
+#define	RXBUF_ENTRIES			256
 #define	CMD_ENTRIES			32
 #define	RSP_ENTRIES			32
 
@@ -511,12 +554,14 @@ struct txp_softc {
 	struct timeout		sc_tick_tmo;
 	struct ifmedia		sc_ifmedia;
 	struct txp_tx_ring	sc_txhir, sc_txlor;
+	struct txp_rxbuf_desc	*sc_rxbufs;
 	u_int16_t		sc_xcvr;
 	u_int16_t		sc_seq;
 	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
 	struct txp_dma_alloc	sc_rxhiring_dma, sc_rxloring_dma;
 	struct txp_dma_alloc	sc_txhiring_dma, sc_txloring_dma;
 	struct txp_dma_alloc	sc_cmdring_dma, sc_rspring_dma;
+	struct txp_dma_alloc	sc_rxbufring_dma;
 	int			sc_cold;
 };
 

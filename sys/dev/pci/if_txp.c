@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.14 2001/04/12 20:36:06 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.15 2001/04/12 22:40:12 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -119,6 +119,7 @@ void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int txp_ifmedia_upd __P((struct ifnet *));
 void txp_show_descriptor __P((void *));
 void txp_tx_reclaim __P((struct txp_softc *, struct txp_tx_ring *, u_int32_t));
+void txp_rxbuf_claim __P((struct txp_softc *));
 
 struct cfattach txp_ca = {
 	sizeof(struct txp_softc), txp_probe, txp_attach,
@@ -531,6 +532,7 @@ txp_intr(vsc)
 		claimed = 1;
 		WRITE_REG(sc, TXP_ISR, isr);
 
+		txp_rxbuf_claim(sc);
 		txp_tx_reclaim(sc, &sc->sc_txhir, hv->hv_tx_hi_desc_read_idx);
 		txp_tx_reclaim(sc, &sc->sc_txlor, hv->hv_tx_lo_desc_read_idx);
 
@@ -543,6 +545,49 @@ txp_intr(vsc)
 	txp_start(&sc->sc_arpcom.ac_if);
 
 	return (claimed);
+}
+
+void
+txp_rxbuf_claim(sc)
+	struct txp_softc *sc;
+{
+	struct txp_hostvar *hv = sc->sc_hostvar;
+	struct txp_rxbuf_desc *rbd;
+	struct mbuf *m;
+	u_int32_t i, end;
+
+	i = TXP_OFFSET2IDX(hv->hv_rx_buf_read_idx);
+	end = TXP_OFFSET2IDX(hv->hv_rx_buf_write_idx);
+
+	while (i != end) {
+		rbd = &sc->sc_rxbufs[i];
+
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			printf("%s: rxbuf alloc failed\n",
+			    sc->sc_dev.dv_xname);
+			break;
+		}
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
+			printf("%s: rxbuf cluster alloc failed\n",
+			    sc->sc_dev.dv_xname);
+			break;
+		}
+
+		printf("%s: rxbuf claim\n", i);
+
+		rbd->rb_vaddrlo = (u_int32_t)m;
+		rbd->rb_vaddrhi = 0;
+		rbd->rb_paddrlo = vtophys(m->m_data);
+		rbd->rb_paddrhi = 0;
+
+		if (++i == RXBUF_ENTRIES)
+			i = 0;
+	}
+
+	hv->hv_rx_buf_write_idx = TXP_IDX2OFFSET(i);
 }
 
 /*
@@ -705,10 +750,41 @@ txp_alloc_rings(sc)
 	sc->sc_rspring.size = RSP_ENTRIES * sizeof(struct txp_rsp_desc);
 	sc->sc_rspring.lastwrite = 0;
 
+	/* receive buffer ring */
+	if (txp_dma_malloc(sc, sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES,
+	    &sc->sc_rxbufring_dma)) {
+		printf(": can't allocate rx buffer ring\n");
+		goto bail_rspring;
+	}
+	bzero(sc->sc_rxbufring_dma.dma_vaddr, sc->sc_rxbufring_dma.dma_siz);
+	boot->br_rxbuf_lo = sc->sc_rxbufring_dma.dma_paddr & 0xffffffff;
+	boot->br_rxbuf_hi = sc->sc_rxbufring_dma.dma_paddr >> 32;
+	boot->br_rxbuf_siz = RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc);
+	sc->sc_rxbufs = (struct txp_rxbuf_desc *)sc->sc_rxbufring_dma.dma_vaddr;
+	for (i = 0; i < RXBUF_ENTRIES; i++) {
+		struct mbuf *m;
+
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			printf(": rxbuf allocation failed\n");
+			goto bail_rspring;
+		}
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			printf(": rxbuf cluster allocation failed\n");
+			m_freem(m);
+			goto bail_rspring;
+		}
+		sc->sc_rxbufs[i].rb_vaddrlo = (u_int32_t)m;
+		sc->sc_rxbufs[i].rb_vaddrhi = 0;
+		sc->sc_rxbufs[i].rb_paddrlo = vtophys(m->m_data);
+		sc->sc_rxbufs[i].rb_paddrhi = 0;
+	}
+
 	/* zero dma */
 	if (txp_dma_malloc(sc, sizeof(u_int32_t), &sc->sc_zero_dma)) {
 		printf(": can't allocate response ring\n");
-		goto bail_rspring;
+		goto bail_rxbufring;
 	}
 	bzero(sc->sc_zero_dma.dma_vaddr, sc->sc_zero_dma.dma_siz);
 	boot->br_zero_lo = sc->sc_zero_dma.dma_paddr & 0xffffffff;
@@ -751,6 +827,8 @@ txp_alloc_rings(sc)
 
 bail:
 	txp_dma_free(sc, &sc->sc_zero_dma);
+bail_rxbufring:
+	txp_dma_free(sc, &sc->sc_rxbufring_dma);
 bail_rspring:
 	txp_dma_free(sc, &sc->sc_rspring_dma);
 bail_cmdring:
@@ -915,11 +993,12 @@ txp_init(sc)
 
 	s = splimp();
 
-#if 0
 	txp_set_filter(sc);
-#endif
 
 	txp_command(sc, TXP_CMD_TX_ENABLE, 0, 0, 0, NULL, NULL, NULL, 1);
+#if 0
+	txp_command(sc, TXP_CMD_RX_ENABLE, 0, 0, 0, NULL, NULL, NULL, 1);
+#endif
 
 	WRITE_REG(sc, TXP_IER, TXP_INT_RESERVED | TXP_INT_SELF |
 	    TXP_INT_A2H_7 | TXP_INT_A2H_6 | TXP_INT_A2H_5 | TXP_INT_A2H_4 |
