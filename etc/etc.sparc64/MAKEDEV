@@ -4,10 +4,9 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.22 2002/06/13 02:19:27 jason Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.46 2002/05/16 16:18:44 provos Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.69 2002/06/13 02:23:03 jason Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
