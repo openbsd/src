@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.28 2001/04/09 12:34:38 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.29 2001/05/31 20:21:08 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1605,12 +1605,13 @@ keynote_cert_init (void)
 void *
 keynote_cert_get (u_int8_t *data, u_int32_t len)
 {
-  char *foo = calloc (len + 1, sizeof (char));
+  char *foo = malloc (len + 1);
 
   if (foo == NULL)
     return NULL;
 
   memcpy (foo, data, len);
+  foo[len] = '\0';
   return foo;
 }
 
@@ -1875,4 +1876,33 @@ keynote_cert_get_key (void *scert, void *keyp)
 
   LK (kn_remove_assertion, (keynote_sessid, sid));
   return *(RSA **)keyp == NULL ? 0 : 1;
+}
+
+void *
+keynote_cert_dup (void *cert)
+{
+  return strdup((char *)cert);
+}
+
+void
+keynote_serialize (void *cert, u_int8_t **data, u_int32_t *datalen)
+{
+  *datalen = strlen ((char *)cert) + 1;
+  *data = strdup (cert); /* So we allocate an extra character at the end... */
+  if (*data == NULL)
+    log_error ("keynote_serialize: malloc (%d) failed", *datalen);
+}
+
+/* From cert to printable */
+char *
+keynote_printable (void *cert)
+{
+  return strdup ((char *)cert);
+}
+
+/* From printable to cert */
+void *
+keynote_from_printable (char *cert)
+{
+  return strdup (cert);
 }
