@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.7 2002/09/04 07:26:53 itojun Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.8 2002/09/11 03:15:36 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -289,5 +289,5 @@ releaseopt:
 		in6p->in6p_outputopts = stickyopt;
 		m_freem(control);
 	}
-	return(error);
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.13 2002/05/29 07:54:59 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.14 2002/09/11 03:15:36 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -118,14 +118,14 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	 */
 	if (opts && (pi = opts->ip6po_pktinfo) &&
 	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr))
-		return(&pi->ipi6_addr);
+		return (&pi->ipi6_addr);
 
 	/*
 	 * If the source address is not specified but the socket(if any)
 	 * is already bound, use the bound address.
 	 */
 	if (laddr && !IN6_IS_ADDR_UNSPECIFIED(laddr))
-		return(laddr);
+		return (laddr);
 
 	/*
 	 * If the caller doesn't specify the source address but
@@ -138,9 +138,9 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 				       dst);
 		if (ia6 == 0) {
 			*errorp = EADDRNOTAVAIL;
-			return(0);
+			return (0);
 		}
-		return(&satosin6(&ia6->ia_addr)->sin6_addr);
+		return (&satosin6(&ia6->ia_addr)->sin6_addr);
 	}
 
 	/*
@@ -161,15 +161,15 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 		if (dstsock->sin6_scope_id < 0 ||
 		    if_index < dstsock->sin6_scope_id) {
 			*errorp = ENXIO; /* XXX: better error? */
-			return(0);
+			return (0);
 		}
 		ia6 = in6_ifawithscope(ifindex2ifnet[dstsock->sin6_scope_id],
 				       dst);
 		if (ia6 == 0) {
 			*errorp = EADDRNOTAVAIL;
-			return(0);
+			return (0);
 		}
-		return(&satosin6(&ia6->ia_addr)->sin6_addr);
+		return (&satosin6(&ia6->ia_addr)->sin6_addr);
 	}
 
 	/*
@@ -192,9 +192,9 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 			ia6 = in6_ifawithscope(ifp, dst);
 			if (ia6 == 0) {
 				*errorp = EADDRNOTAVAIL;
-				return(0);
+				return (0);
 			}
-			return(&satosin6(&ia6->ia_addr)->sin6_addr);
+			return (&satosin6(&ia6->ia_addr)->sin6_addr);
 		}
 	}
 
@@ -217,9 +217,9 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 			}
 			if (ia6 == 0) {
 				*errorp = EADDRNOTAVAIL;
-				return(0);
+				return (0);
 			}
-			return(&satosin6(&ia6->ia_addr)->sin6_addr);
+			return (&satosin6(&ia6->ia_addr)->sin6_addr);
 		}
 	}
 
@@ -279,19 +279,19 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 			if (ia6 == 0)
 				ia6 = ifatoia6(ifa_ifwithnet(sin6tosa(&sin6)));
 			if (ia6 == 0)
-				return(0);
-			return(&satosin6(&ia6->ia_addr)->sin6_addr);
+				return (0);
+			return (&satosin6(&ia6->ia_addr)->sin6_addr);
 		}
 #endif /* 0 */
 		if (ia6 == 0) {
 			*errorp = EHOSTUNREACH;	/* no route */
-			return(0);
+			return (0);
 		}
-		return(&satosin6(&ia6->ia_addr)->sin6_addr);
+		return (&satosin6(&ia6->ia_addr)->sin6_addr);
 	}
 
 	*errorp = EADDRNOTAVAIL;
-	return(0);
+	return (0);
 }
 
 /*
@@ -309,11 +309,11 @@ in6_selecthlim(in6p, ifp)
 	struct ifnet *ifp;
 {
 	if (in6p && in6p->in6p_hops >= 0)
-		return(in6p->in6p_hops);
+		return (in6p->in6p_hops);
 	else if (ifp)
-		return(ND_IFINFO(ifp)->chlim);
+		return (ND_IFINFO(ifp)->chlim);
 	else
-		return(ip6_defhlim);
+		return (ip6_defhlim);
 }
 #undef in6pcb
 #undef in6p_hops

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.63 2002/06/11 05:13:59 art Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.64 2002/09/11 03:15:36 itojun Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ in_baddynamic(port, proto)
 {
 
 	if (port < IPPORT_RESERVED/2 || port >= IPPORT_RESERVED)
-		return(0);
+		return (0);
 
 	switch (proto) {
 	case IPPROTO_TCP:

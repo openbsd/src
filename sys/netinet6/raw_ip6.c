@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.15 2002/07/20 23:00:33 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.16 2002/09/11 03:15:36 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -511,7 +511,7 @@ rip6_output(struct mbuf *m, ...)
 		RTFREE(optp->ip6po_route.ro_rt);
 	if (control)
 		m_freem(control);
-	return(error);
+	return (error);
 }
 
 /*
@@ -806,7 +806,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 		/*
 		 * stat: don't bother with a blocksize
 		 */
-		return(0);
+		return (0);
 	/*
 	 * Not supported.
 	 */
@@ -831,5 +831,5 @@ rip6_usrreq(so, req, m, nam, control, p)
 	}
 	if (m != NULL)
 		m_freem(m);
-	return(error);
+	return (error);
 }

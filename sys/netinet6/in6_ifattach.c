@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.29 2002/06/11 07:36:00 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.30 2002/09/11 03:15:36 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -351,7 +351,7 @@ in6_ifattach_linklocal(ifp, altifp)
 		if (get_ifid(ifp, altifp, &ifra.ifra_addr.sin6_addr) != 0) {
 			nd6log((LOG_ERR,
 			    "%s: no ifid available\n", ifp->if_xname));
-			return(-1);
+			return (-1);
 		}
 	}
 
@@ -391,7 +391,7 @@ in6_ifattach_linklocal(ifp, altifp)
 			    "configure a link-local address on %s "
 			    "(errno=%d)\n",
 			    ifp->if_xname, error));
-		return(-1);
+		return (-1);
 	}
 
 	/*
@@ -446,7 +446,7 @@ in6_ifattach_linklocal(ifp, altifp)
 	 */
 	if (nd6_prefix_lookup(&pr0) == NULL) {
 		if ((error = nd6_prelist_add(&pr0, NULL, NULL)) != 0)
-			return(error);
+			return (error);
 	}
 
 	return 0;
@@ -498,7 +498,7 @@ in6_ifattach_loopback(ifp)
 		nd6log((LOG_ERR, "in6_ifattach_loopback: failed to configure "
 		    "the loopback address on %s (errno=%d)\n",
 		    ifp->if_xname, error));
-		return(-1);
+		return (-1);
 	}
 
 	return 0;

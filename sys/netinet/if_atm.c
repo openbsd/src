@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.c,v 1.9 2002/06/09 16:26:10 itojun Exp $       */
+/*      $OpenBSD: if_atm.c,v 1.10 2002/09/11 03:15:36 itojun Exp $       */
 
 /*
  *
@@ -266,7 +266,7 @@ register struct atm_pseudohdr *desten;	/* OUT */
 
 	if (sdl->sdl_family == AF_LINK && sdl->sdl_alen == sizeof(*desten)) {
 		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
-		return(1);	/* ok, go for it! */
+		return (1);	/* ok, go for it! */
 	}
 
 	/*
@@ -277,6 +277,6 @@ register struct atm_pseudohdr *desten;	/* OUT */
 
 bad:
 	m_freem(m);
-	return(0);
+	return (0);
 }
 #endif /* INET */

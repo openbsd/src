@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.69 2002/06/09 14:38:39 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.70 2002/09/11 03:15:36 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -934,7 +934,7 @@ done:
 		RTFREE(ro_pmtu->ro_rt);
 	}
 
-	return(error);
+	return (error);
 
 freehdrs:
 	m_freem(exthdrs.ip6e_hbh);	/* m_freem will check if mbuf is 0 */
@@ -956,17 +956,17 @@ ip6_copyexthdr(mp, hdr, hlen)
 	struct mbuf *m;
 
 	if (hlen > MCLBYTES)
-		return(ENOBUFS); /* XXX */
+		return (ENOBUFS); /* XXX */
 
 	MGET(m, M_DONTWAIT, MT_DATA);
 	if (!m)
-		return(ENOBUFS);
+		return (ENOBUFS);
 
 	if (hlen > MLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
 	}
 	m->m_len = hlen;
@@ -974,7 +974,7 @@ ip6_copyexthdr(mp, hdr, hlen)
 		bcopy(hdr, mtod(m, caddr_t), hlen);
 
 	*mp = m;
-	return(0);
+	return (0);
 }
 
 /*
@@ -1000,7 +1000,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 	if (exthdrs->ip6e_hbh == 0) {
 		MGET(mopt, M_DONTWAIT, MT_DATA);
 		if (mopt == 0)
-			return(ENOBUFS);
+			return (ENOBUFS);
 		mopt->m_len = JUMBOOPTLEN;
 		optbuf = mtod(mopt, u_char *);
 		optbuf[1] = 0;	/* = ((JUMBOOPTLEN) >> 3) - 1 */
@@ -1024,7 +1024,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 			 * not fit even in an mbuf cluster.
 			 */
 			if (oldoptlen + JUMBOOPTLEN > MCLBYTES)
-				return(ENOBUFS);
+				return (ENOBUFS);
 
 			/*
 			 * As a consequence, we must always prepare a cluster
@@ -1039,7 +1039,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 				}
 			}
 			if (!n)
-				return(ENOBUFS);
+				return (ENOBUFS);
 			n->m_len = oldoptlen + JUMBOOPTLEN;
 			bcopy(mtod(mopt, caddr_t), mtod(n, caddr_t),
 			      oldoptlen);
@@ -1070,7 +1070,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 	/* finally, adjust the packet header length */
 	exthdrs->ip6e_ip6->m_pkthdr.len += JUMBOOPTLEN;
 
-	return(0);
+	return (0);
 #undef JUMBOOPTLEN
 }
 
@@ -1089,7 +1089,7 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 		n = m_copym(m0, sizeof(struct ip6_hdr),
 		    hlen - sizeof(struct ip6_hdr), M_DONTWAIT);
 		if (n == 0)
-			return(ENOBUFS);
+			return (ENOBUFS);
 		m->m_next = n;
 	} else
 		n = m;
@@ -1111,13 +1111,13 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 
 		MGET(mfrg, M_DONTWAIT, MT_DATA);
 		if (mfrg == 0)
-			return(ENOBUFS);
+			return (ENOBUFS);
 		mfrg->m_len = sizeof(struct ip6_frag);
 		*frghdrp = mtod(mfrg, struct ip6_frag *);
 		mlast->m_next = mfrg;
 	}
 
-	return(0);
+	return (0);
 }
 
 static int
@@ -1180,7 +1180,7 @@ ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup)
 		error = EHOSTUNREACH; /* XXX */
 
 	*mtup = mtu;
-	return(error);
+	return (error);
 }
 
 /*
@@ -1216,7 +1216,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 			switch (optname) {
 			case IPV6_PKTOPTIONS:
 				/* m is freed in ip6_pcbopts */
-				return(ip6_pcbopts(&inp->inp_outputopts6,
+				return (ip6_pcbopts(&inp->inp_outputopts6,
 				    m, so));
 			case IPV6_HOPOPTS:
 			case IPV6_DSTOPTS:
@@ -1597,7 +1597,7 @@ do { \
 		if (op == PRCO_SETOPT && *mp)
 			(void)m_free(*mp);
 	}
-	return(error);
+	return (error);
 }
 
 int
@@ -1617,7 +1617,7 @@ ip6_raw_ctloutput(op, so, level, optname, mp)
 	if (level != IPPROTO_IPV6) {
 		if (op == PRCO_SETOPT && *mp)
 			(void)m_free(*mp);
-		return(EINVAL);
+		return (EINVAL);
 	}
 
 	switch (optname) {
@@ -1673,7 +1673,7 @@ ip6_raw_ctloutput(op, so, level, optname, mp)
 	if (op == PRCO_SETOPT && m)
 		(void)m_free(m);
 
-	return(error);
+	return (error);
 }
 
 /*
@@ -1708,7 +1708,7 @@ ip6_pcbopts(pktopt, m, so)
 			free(opt, M_IP6OPT);
 		if (m)
 			(void)m_free(m);
-		return(0);
+		return (0);
 	}
 
 	/*  set options specified by user. */
@@ -1716,10 +1716,10 @@ ip6_pcbopts(pktopt, m, so)
 		priv = 1;
 	if ((error = ip6_setpktoptions(m, opt, priv)) != 0) {
 		(void)m_free(m);
-		return(error);
+		return (error);
 	}
 	*pktopt = opt;
-	return(0);
+	return (0);
 }
 
 /*
@@ -1750,7 +1750,7 @@ ip6_setmoptions(optname, im6op, m)
 			malloc(sizeof(*im6o), M_IPMOPTS, M_WAITOK);
 
 		if (im6o == NULL)
-			return(ENOBUFS);
+			return (ENOBUFS);
 		*im6op = im6o;
 		im6o->im6o_multicast_ifp = NULL;
 		im6o->im6o_multicast_hlim = ip6_defmcasthlim;
@@ -2000,7 +2000,7 @@ ip6_setmoptions(optname, im6op, m)
 		*im6op = NULL;
 	}
 
-	return(error);
+	return (error);
 }
 
 /*
@@ -2025,7 +2025,7 @@ ip6_getmoptions(optname, im6o, mp)
 			*ifindex = 0;
 		else
 			*ifindex = im6o->im6o_multicast_ifp->if_index;
-		return(0);
+		return (0);
 
 	case IPV6_MULTICAST_HOPS:
 		hlim = mtod(*mp, u_int *);
@@ -2034,7 +2034,7 @@ ip6_getmoptions(optname, im6o, mp)
 			*hlim = ip6_defmcasthlim;
 		else
 			*hlim = im6o->im6o_multicast_hlim;
-		return(0);
+		return (0);
 
 	case IPV6_MULTICAST_LOOP:
 		loop = mtod(*mp, u_int *);
@@ -2043,10 +2043,10 @@ ip6_getmoptions(optname, im6o, mp)
 			*loop = ip6_defmcasthlim;
 		else
 			*loop = im6o->im6o_multicast_loop;
-		return(0);
+		return (0);
 
 	default:
-		return(EOPNOTSUPP);
+		return (EOPNOTSUPP);
 	}
 }
 
@@ -2081,7 +2081,7 @@ ip6_setpktoptions(control, opt, priv)
 	struct cmsghdr *cm = 0;
 
 	if (control == 0 || opt == 0)
-		return(EINVAL);
+		return (EINVAL);
 
 	bzero(opt, sizeof(*opt));
 	opt->ip6po_hlim = -1; /* -1 means to use default hop limit */
@@ -2091,7 +2091,7 @@ ip6_setpktoptions(control, opt, priv)
 	 * in a single mbuf.
 	 */
 	if (control->m_next)
-		return(EINVAL);
+		return (EINVAL);
 
 	opt->ip6po_m = control;
 
@@ -2099,14 +2099,14 @@ ip6_setpktoptions(control, opt, priv)
 	    control->m_len -= CMSG_ALIGN(cm->cmsg_len)) {
 		cm = mtod(control, struct cmsghdr *);
 		if (cm->cmsg_len == 0 || cm->cmsg_len > control->m_len)
-			return(EINVAL);
+			return (EINVAL);
 		if (cm->cmsg_level != IPPROTO_IPV6)
 			continue;
 
 		switch (cm->cmsg_type) {
 		case IPV6_PKTINFO:
 			if (cm->cmsg_len != CMSG_LEN(sizeof(struct in6_pktinfo)))
-				return(EINVAL);
+				return (EINVAL);
 			opt->ip6po_pktinfo = (struct in6_pktinfo *)CMSG_DATA(cm);
 			if (opt->ip6po_pktinfo->ipi6_ifindex &&
 			    IN6_IS_ADDR_LINKLOCAL(&opt->ip6po_pktinfo->ipi6_addr))
@@ -2115,7 +2115,7 @@ ip6_setpktoptions(control, opt, priv)
 
 			if (opt->ip6po_pktinfo->ipi6_ifindex > if_index ||
 			    opt->ip6po_pktinfo->ipi6_ifindex < 0) {
-				return(ENXIO);
+				return (ENXIO);
 			}
 
 			/*
@@ -2138,11 +2138,11 @@ ip6_setpktoptions(control, opt, priv)
 				    (opt->ip6po_pktinfo->ipi6_ifindex &&
 				     (ia->ifa_ifp->if_index !=
 				      opt->ip6po_pktinfo->ipi6_ifindex))) {
-					return(EADDRNOTAVAIL);
+					return (EADDRNOTAVAIL);
 				}
 				ia6 = (struct in6_ifaddr *)ia;
 				if ((ia6->ia6_flags & (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) != 0) {
-					return(EADDRNOTAVAIL);
+					return (EADDRNOTAVAIL);
 				}
 
 				/*
@@ -2151,28 +2151,28 @@ ip6_setpktoptions(control, opt, priv)
 				 * node.
 				 */
 				if (IN6_IS_ADDR_MULTICAST(&opt->ip6po_pktinfo->ipi6_addr))
-					return(EADDRNOTAVAIL);
+					return (EADDRNOTAVAIL);
 			}
 			break;
 
 		case IPV6_HOPLIMIT:
 			if (cm->cmsg_len != CMSG_LEN(sizeof(int)))
-				return(EINVAL);
+				return (EINVAL);
 
 			bcopy(CMSG_DATA(cm), &opt->ip6po_hlim,
 			    sizeof(opt->ip6po_hlim));
 			if (opt->ip6po_hlim < -1 || opt->ip6po_hlim > 255)
-				return(EINVAL);
+				return (EINVAL);
 			break;
 
 		case IPV6_NEXTHOP:
 			if (!priv)
-				return(EPERM);
+				return (EPERM);
 
 			/* check if cmsg_len is large enough for sa_len */
 			if (cm->cmsg_len < sizeof(u_char) ||
 			    cm->cmsg_len < CMSG_LEN(*CMSG_DATA(cm)))
-				return(EINVAL);
+				return (EINVAL);
 
 			opt->ip6po_nexthop = (struct sockaddr *)CMSG_DATA(cm);
 
@@ -2180,16 +2180,16 @@ ip6_setpktoptions(control, opt, priv)
 
 		case IPV6_HOPOPTS:
 			if (cm->cmsg_len < CMSG_LEN(sizeof(struct ip6_hbh)))
-				return(EINVAL);
+				return (EINVAL);
 			opt->ip6po_hbh = (struct ip6_hbh *)CMSG_DATA(cm);
 			if (cm->cmsg_len !=
 			    CMSG_LEN((opt->ip6po_hbh->ip6h_len + 1) << 3))
-				return(EINVAL);
+				return (EINVAL);
 			break;
 
 		case IPV6_DSTOPTS:
 			if (cm->cmsg_len < CMSG_LEN(sizeof(struct ip6_dest)))
-				return(EINVAL);
+				return (EINVAL);
 
 			/*
 			 * If there is no routing header yet, the destination
@@ -2202,40 +2202,40 @@ ip6_setpktoptions(control, opt, priv)
 				    (struct ip6_dest *)CMSG_DATA(cm);
 				if (cm->cmsg_len !=
 				    CMSG_LEN((opt->ip6po_dest1->ip6d_len + 1) << 3));
-					return(EINVAL);
+					return (EINVAL);
 			}
 			else {
 				opt->ip6po_dest2 =
 				    (struct ip6_dest *)CMSG_DATA(cm);
 				if (cm->cmsg_len !=
 				    CMSG_LEN((opt->ip6po_dest2->ip6d_len + 1) << 3))
-					return(EINVAL);
+					return (EINVAL);
 			}
 			break;
 
 		case IPV6_RTHDR:
 			if (cm->cmsg_len < CMSG_LEN(sizeof(struct ip6_rthdr)))
-				return(EINVAL);
+				return (EINVAL);
 			opt->ip6po_rthdr = (struct ip6_rthdr *)CMSG_DATA(cm);
 			if (cm->cmsg_len !=
 			    CMSG_LEN((opt->ip6po_rthdr->ip6r_len + 1) << 3))
-				return(EINVAL);
+				return (EINVAL);
 			switch (opt->ip6po_rthdr->ip6r_type) {
 			case IPV6_RTHDR_TYPE_0:
 				if (opt->ip6po_rthdr->ip6r_segleft == 0)
-					return(EINVAL);
+					return (EINVAL);
 				break;
 			default:
-				return(EINVAL);
+				return (EINVAL);
 			}
 			break;
 
 		default:
-			return(ENOPROTOOPT);
+			return (ENOPROTOOPT);
 		}
 	}
 
-	return(0);
+	return (0);
 }
 
 /*
