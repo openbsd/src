@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.104 2004/09/28 02:10:03 jason Exp $
+#	$OpenBSD: GENERIC,v 1.105 2004/09/30 19:14:11 robert Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -46,6 +46,7 @@ fxp*	at pci?			# EtherExpress 10/100B ethernet
 xl*	at pci?			# 3C9xx ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
+rl*	at pci?			# RealTek 81[23]9 ethernet
 
 # PCI SCSI
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
@@ -265,6 +266,7 @@ amphy*	at mii?				# AMD AM79c873 PHYs
 iophy*	at mii?				# Intel 82553 PHYs
 inphy*	at mii?				# Intel 82555 PHYs
 lxtphy*	at mii?				# Level1 LXT970 PHYs
+rlphy*	at mii?				# RealTek 8139 internal PHYs
 ukphy*	at mii?				# Unknown PHYs
 
 bwtwo*		at sbus?		# bw2, sbus mono framebuffer
