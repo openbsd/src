@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.12 2001/06/18 22:19:04 deraadt Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.13 2001/10/11 03:06:32 millert Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers.c,v 1.12 2001/06/18 22:19:04 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.13 2001/10/11 03:06:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,7 +42,6 @@ static char rcsid[] = "$OpenBSD: rusers.c,v 1.12 2001/06/18 22:19:04 deraadt Exp
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <arpa/inet.h>
-#include <utmp.h>
 #include <stdlib.h>
 
 /*
@@ -100,9 +99,9 @@ int
 rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 {
 	int x, idle, i;
-	char date[32], idle_time[64], remote[UT_HOSTSIZE + 1];
+	char date[32], idle_time[64], remote[RNUSERS_MAXHOSTLEN + 1];
 	char local[HOST_WIDTH + LINE_WIDTH + 2];
-	char utline[UT_LINESIZE + 1];
+	char utline[RNUSERS_MAXLINELEN + 1];
 	struct hostent *hp;
 	utmpidlearr *up = (utmpidlearr *)replyp;
 	char *host, *tmp;
@@ -163,13 +162,13 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 		    sizeof(remote)-1);
 		remote[sizeof(remote) - 1] = '\0';
 		if (strlen(remote) != 0)
-			snprintf(remote, UT_HOSTSIZE + 1, "(%.16s)",
+			snprintf(remote, sizeof(remote), "(%.16s)",
 			    up->uia_arr[x]->ui_utmp.ut_host);
 
 		if (longopt) {
 			strncpy(local, host, sizeof(local));
 			strncpy(utline, up->uia_arr[x]->ui_utmp.ut_line,
-			    UT_LINESIZE);
+			    sizeof(utline) - 1);
 			utline[sizeof(utline) - 1] = '\0';
 			i = sizeof(local) - strlen(utline) - 2;
 			if (i < 0)
@@ -179,12 +178,12 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 			strlcat(local, utline, sizeof(local));
 
 			printf("%-*.*s %-*.*s %-12.12s %8s %.18s\n",
-			    NAME_WIDTH, UT_NAMESIZE,
+			    NAME_WIDTH, RNUSERS_MAXUSERLEN,
 			    up->uia_arr[x]->ui_utmp.ut_name,
 			    HOST_WIDTH+LINE_WIDTH+1, HOST_WIDTH+LINE_WIDTH+1,
 			    local, date, idle_time, remote);
 		} else
-			printf("%.*s ", UT_NAMESIZE,
+			printf("%.*s ", RNUSERS_MAXUSERLEN,
 			    up->uia_arr[x]->ui_utmp.ut_name);
 	}
 	if (!longopt)
