@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.12 2001/02/14 03:27:15 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.13 2001/06/15 17:43:46 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -121,8 +121,7 @@ findid(name)
 	char user[MAXLOGNAME], *p;
 	int i, j, n;
 
-	(void)strncpy(loginname, name, sizeof loginname-1);
-	loginname[sizeof loginname -1] = '\0';
+	strlcpy(loginname, name, sizeof loginname);
 	if ((fp = fopen(_PATH_ACCESS, "r")) == NULL) {
 		syslog(LOG_ERR, "%s: %m", _PATH_ACCESS);
 		err(1, "%s", _PATH_ACCESS);
@@ -224,6 +223,8 @@ main(argc, argv)
 
 	if ((name = strrchr(argv[0], '/')) == NULL)
 		name = argv[0];
+	else
+		name++;
 	s = getdtablesize();
 	for (fd = 3 ; fd < s ; fd++)
 		(void) close(fd);
