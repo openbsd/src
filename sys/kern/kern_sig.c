@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.25 1998/01/09 16:41:09 csapuntz Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.26 1998/02/20 14:46:18 niklas Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1001,6 +1001,7 @@ postsig(signum)
 	register sig_t action;
 	u_long code;
 	int mask, returnmask;
+	union sigval null_sigval;
 
 #ifdef DIAGNOSTIC
 	if (signum == 0)
@@ -1060,8 +1061,9 @@ postsig(signum)
 			code = ps->ps_code;
 			ps->ps_code = 0;
 		}
+		null_sigval.sival_ptr = 0;
 		(*p->p_emul->e_sendsig)(action, signum, returnmask, code,
-		    SI_USER, (union sigval *)0);
+		    SI_USER, null_sigval);
 	}
 }
 
