@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.34 1999/01/10 13:34:17 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.35 1999/01/11 01:37:13 niklas Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/errno.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
 #include <sys/mount.h>
 #include <sys/map.h>
 #include <sys/proc.h>
@@ -224,7 +225,7 @@ main(framep)
 	session0.s_count = 1;
 	session0.s_leader = p;
 
-	p->p_flag = P_INMEM | P_SYSTEM;
+	p->p_flag = P_INMEM | P_SYSTEM | P_NOCLDWAIT;
 	p->p_stat = SRUN;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_native;
@@ -377,7 +378,7 @@ main(framep)
 	siginit(p);
 
 	/* Create process 1 (init(8)). */
-	if (sys_fork(p, NULL, rval))
+	if (fork1(p, ISFORK, 0, rval))
 		panic("fork init");
 #ifdef cpu_set_init_frame			/* XXX should go away */
 	if (rval[1]) {
@@ -386,39 +387,25 @@ main(framep)
 		 */
 		initframep = framep;
 		start_init(curproc);
-		return 0;
+		return (0);
 	}
 #else
-	cpu_set_kpc(pfind(1), start_init, pfind(1));
+	cpu_set_kpc(pfind(rval[0]), start_init, pfind(rval[0]));
 #endif
 
-	/* Create process 2 (the pageout daemon). */
-	if (sys_fork(p, NULL, rval))
+	/* Create process 2, the pageout daemon kernel thread. */
+	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
 		panic("fork pager");
-#ifdef cpu_set_init_frame			/* XXX should go away */
-	if (rval[1]) {
-		/*
-		 * Now in process 2.
-		 */
-		start_pagedaemon(curproc);
-	}
-#else
-	cpu_set_kpc(pfind(2), start_pagedaemon, pfind(2));
-#endif
 
-	/* Create process 3 (the update daemon). */
-	if (sys_fork(p, NULL, rval))
+	/* Create process 3, the update daemon kernel thread. */
+	if (kthread_create(start_update, NULL, NULL, "update")) {
+#ifdef DIAGNOSTIC
 		panic("fork update");
-#ifdef cpu_set_init_frame			/* XXX should go away */
-	if (rval[1]) {
-		/*
-		 * Now in process 3.
-		 */
-		start_update(curproc);
-	}
-#else
-	cpu_set_kpc(pfind(3), start_update, pfind(3));
 #endif
+	}
+
+	/* Create any other deferred kernel threads. */
+	kthread_run_deferred_queue();
 
 	microtime(&rtv);
 	srandom((u_long)(rtv.tv_sec ^ rtv.tv_usec));
@@ -581,13 +568,6 @@ void
 start_pagedaemon(arg)
 	void *arg;
 {
-	struct proc *p = arg;
-
-	/*
-	 * Now in process 2.
-	 */
-	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
-	bcopy("pagedaemon", curproc->p_comm, sizeof ("pagedaemon"));
 	vm_pageout();
 	/* NOTREACHED */
 }
@@ -596,13 +576,6 @@ void
 start_update(arg)
 	void *arg;
 {
-	struct proc *p = arg;
-
-	/*
-	 * Now in process 3.
-	 */
-	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
-	bcopy("update", curproc->p_comm, sizeof ("update"));
-	sched_sync(p);
+	sched_sync(curproc);
 	/* NOTREACHED */
 }
