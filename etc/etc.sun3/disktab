@@ -1,4 +1,5 @@
 #
+#	$OpenBSD: disktab,v 1.5 1998/08/23 17:44:35 kstailey Exp $
 #	$NetBSD: disktab,v 1.3 1995/11/21 20:58:33 gwr Exp $
 #
 # Disk geometry and partition layout tables. 
@@ -30,13 +31,19 @@
 # All partition sizes reserve space for bad sector tables.
 # (5 cylinders needed for maintenance + replacement sectors)
 #
-# XXX - Would like :ba#4096:fa#512: but that panics...
-# Leave nc=16; adjust size using: ns
+wren7|Seagate Wren 7:\
+	:dt=SCSI:ty=winchester:\
+	:nc#1632:ns#52:nt#15:\
+	:se#512:\
+	:rm#3600:\
+	:pa#65520:oa#0:ta=4.2BSD:\
+	:pb#65520:ob#65520:tb=swap:\
+	:pc#1272960:oc#0:\
+	:pd#65520:od#131040:td=4.2BSD:\
+	:pg#1076400:og#196560:tg=4.2BSD:
+
 rdroot|ramdiskroot|RAM-disk root FS image:\
-	:ty=simulated:se#512:nc#16:nt#2:ns#16:\
-	:ta=4.2BSD:oa#0:pa#512:\
-	:ob#0:pb#0:oc#0:pc#512:
-miniroot|Installation root-on-swap FS image:\
-	:ty=simulated:se#512:ns#32:nt#8:nc#64:\
-	:ta=4.2BSD:oa#0:pa#16384:\
-	:ob#0:pb#0:oc#0:pc#16384:
+	:ty=ramdisk:se#512:nt#2:ns#128:nc#16:\
+	:pa#4046:oa#0:ta=4.2BSD:ba#4096:fa#512:\
+	:pb#0:ob#0:tb=swap:\
+	:pc#4046:oc#0:
