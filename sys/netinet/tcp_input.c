@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.86 2001/05/11 17:20:11 aaron Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.87 2001/05/12 18:35:17 aaron Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -439,7 +439,6 @@ tcp_input(m, va_alist)
 			ip_stripoptions(m, (struct mbuf *)0);
 			iphlen = sizeof(struct ip);
 #else
-			printf("extension headers are not allowed\n");
 			m_freem(m);
 			return;
 #endif
@@ -458,7 +457,6 @@ tcp_input(m, va_alist)
 			ipv6_stripoptions(m, iphlen);
 			iphlen = sizeof(struct ip6_hdr);
 #else
-			printf("extension headers are not allowed\n");
 			m_freem(m);
 			return;
 #endif
