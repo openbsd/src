@@ -32,8 +32,6 @@ CD-ROM Space permitted us to include a subset of the following packages
 for the most common architectures.  Please see the FTP sites if you find
 something you need missing.
 
-   ADMfzap-0.1.tgz         gsm-1.0.10.tgz             png-1.0.3.tgz
-
    9menu-1.5.tgz           9wm-1.1.tgz                ADMfzap-0.1.tgz
    ADMsmb-0.2.tgz          ADMsnmp-0.1.tgz            Business-CreditCard-0.21.tgz
    LPRng-3.6.12.tgz        Mesa-3.2.1.tgz             PGPlib.tgz
@@ -263,21 +261,21 @@ something you need missing.
 
 
 These and many other packages are also available via ftp at
-      ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/
+      ftp://ftp.openbsd.org/pub/OpenBSD/2.8/packages/
 If you do not find a package you want on the CD, please go look at your
 nearest FTP mirror site.
 
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
   # mount /dev/cd0a /cdrom
-  # pkg_add -v /cdrom/2.7/packages/i386/emacs-20.3.tgz
+  # pkg_add -v /cdrom/2.8/packages/i386/emacs-20.3.tgz
 or alternatively install them via FTP thus
-  # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/emacs-20.3.tgz
+  # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.8/packages/i386/emacs-20.3.tgz
 
 You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh!  ssh is
-included in all OpenBSD systems.  The implimentation is OpenSSH, which we we
-are the developers of.  Version 2.3.0 is included, and has support for both
-SSH1 and SSH2 protocols.  For more information, see
+included in all OpenBSD systems.  The implimentation is OpenSSH, which we are
+the developers of.  Version 2.3.0 is included, and has support for both SSH1
+and SSH2 protocols.  For more information, see
 	http://www.OpenSSH.com
 
 Significant efforts were made to centralize all system configuration in the
