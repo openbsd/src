@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.8 2003/12/24 21:14:22 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.9 2003/12/25 01:45:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -16,8 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 #include <sys/tree.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -40,6 +42,8 @@ struct kroute_node {
 
 int	kroute_msg(int, int, struct kroute *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
+void	get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
+int	kroute_fetchtable(void);
 
 RB_HEAD(kroute_tree, kroute_node)	kroute_tree, krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare);
@@ -48,6 +52,7 @@ RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare);
 u_int32_t		rtseq = 1;
 
 #define	F_BGPD_INSERTED		0x0001
+#define F_KERNEL		0x0002
 
 int
 kroute_init(void)
@@ -62,6 +67,8 @@ kroute_init(void)
 		fatal("route setsockopt", errno);
 
 	RB_INIT(&krt);
+
+	kroute_fetchtable();
 
 	return (s);
 }
@@ -221,3 +228,102 @@ kroute_shutdown(int fd)
 		if ((kr->flags & F_BGPD_INSERTED))
 			kroute_msg(fd, RTM_DELETE, &kr->r);
 }
+
+#define	ROUNDUP(a, size)	\
+    (((a) & ((size) - 1)) ? (1 + ((a) | ((size) - 1))) : (a))
+
+void
+get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
+{
+	int	i;
+
+	for (i = 0; i < RTAX_MAX; i++) {
+		if (addrs & (1 << i)) {
+			rti_info[i] = sa;
+			sa = (struct sockaddr *)((char *)(sa) +
+			    ROUNDUP(sa->sa_len, sizeof(long)));
+		} else
+			rti_info[i] = NULL;
+	}
+}
+
+int
+kroute_fetchtable(void)
+{
+	size_t			 len;
+	int			 mib[6];
+	char			*buf, *next, *lim;
+	struct rt_msghdr	*rtm;
+	struct sockaddr		*sa, *rti_info[RTAX_MAX];
+	struct sockaddr_in	*sa_in;
+	struct kroute_node	*kr;
+	in_addr_t		 ina;
+
+	mib[0] = CTL_NET;
+	mib[1] = AF_ROUTE;
+	mib[2] = 0;
+	mib[3] = AF_INET;
+	mib[4] = NET_RT_DUMP;
+	mib[5] = 0;
+
+	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
+		fatal("sysctl", errno);
+	if ((buf = malloc(len)) == NULL)
+		fatal("kroute_fetchtable", errno);
+	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1)
+		fatal("sysctl", errno);
+
+	lim = buf + len;
+	for (next = buf; next < lim; next += rtm->rtm_msglen) {
+		rtm = (struct rt_msghdr *)next;
+		sa = (struct sockaddr *)(rtm + 1);
+		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
+		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_DST]) == NULL)
+			continue;
+
+		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
+			fatal(NULL, errno);
+
+		kr->r.prefix = sa_in->sin_addr.s_addr;
+		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK]) !=
+		    NULL) {
+			kr->r.prefixlen =
+			    33 - ffs(ntohl(sa_in->sin_addr.s_addr));
+			if (sa_in->sin_addr.s_addr == 0 || kr->r.prefix == 0)
+				kr->r.prefixlen = 0;
+		} else if (rtm->rtm_flags & RTF_HOST)
+			kr->r.prefixlen = 32;
+		else {
+			/* classfull... */
+			ina = ntohl(kr->r.prefix);
+
+			if (ina >= 0xf0000000)		/* class E */
+				kr->r.prefixlen = 32;
+			else if (ina >= 0xe0000000)	/* class D */
+				kr->r.prefixlen = 4;
+			else if (ina >= 0xc0000000)	/* class C */
+				kr->r.prefixlen = 24;
+			else if (ina >= 0x80000000)	/* class B */
+				kr->r.prefixlen = 16;
+			else					/* class A */
+				kr->r.prefixlen = 8;
+		}
+
+		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_GATEWAY]) !=
+		    NULL)
+			kr->r.nexthop = sa_in->sin_addr.s_addr;
+
+		kr->flags = F_KERNEL;
+
+		log_kroute(LOG_CRIT, "add from kernel", &kr->r);
+
+		if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
+			logit(LOG_CRIT, "RB_INSERT failed!");
+			return (-1);
+		}
+	}
+
+	free(buf);
+	return (0);
+};
