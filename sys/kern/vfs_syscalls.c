@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.29 1997/11/17 06:00:52 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.30 1997/11/17 07:46:24 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2207,7 +2207,7 @@ sys_umask(p, v, retval)
 
 	fdp = p->p_fd;
 	*retval = fdp->fd_cmask;
-	fdp->fd_cmask = SCARG(uap, newmask) & ALLPERMS;
+	fdp->fd_cmask = SCARG(uap, newmask) & ACCESSPERMS;
 	return (0);
 }
 
