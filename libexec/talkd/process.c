@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.6 1996/07/02 04:07:59 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.7 1996/07/02 04:11:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.6 1996/07/02 04:07:59 deraadt Exp $";
+static char rcsid[] = "$Id: process.c,v 1.7 1996/07/02 04:11:15 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -217,7 +217,7 @@ find_user(name, tty)
 					if (!(statb.st_mode & S_IWGRP)) {
 						if (status == NOT_HERE)
 							status = PERMISSION_DENIED;
-					} else if (statb.st_atime - now < idle) {
+					} else if (now - statb.st_atime < idle) {
 						idle = now - statb.st_atime;
 						status = SUCCESS;
 						ubuf1 = ubuf;
