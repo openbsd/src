@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshpty.c,v 1.8 2003/02/03 08:56:16 markus Exp $");
+RCSID("$OpenBSD: sshpty.c,v 1.9 2003/05/24 09:30:40 djm Exp $");
 
 #include <util.h>
 #include "sshpty.h"
@@ -290,10 +290,10 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 			if (errno == EROFS &&
 			    (st.st_mode & (S_IRGRP | S_IROTH)) == 0)
 				debug("chmod(%.100s, 0%o) failed: %.100s",
-				    ttyname, mode, strerror(errno));
+				    ttyname, (u_int)mode, strerror(errno));
 			else
 				fatal("chmod(%.100s, 0%o) failed: %.100s",
-				    ttyname, mode, strerror(errno));
+				    ttyname, (u_int)mode, strerror(errno));
 		}
 	}
 }
