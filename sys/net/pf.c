@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.140 2001/08/28 00:02:43 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.141 2001/08/28 08:12:17 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -821,6 +821,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCADDRDR:
 		case DIOCCOMMITRDRS:
 		case DIOCCLRSTATES:
+		case DIOCCHANGERULE:
+		case DIOCCHANGENAT:
+		case DIOCCHANGERDR:
 		case DIOCSETTIMEOUT:
 			return EPERM;
 		}
