@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnvar.h,v 1.1 2001/06/25 23:04:46 jason Exp $	*/
+/*	$OpenBSD: lofnvar.h,v 1.2 2001/06/26 03:41:31 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -38,3 +38,17 @@ struct lofn_softc {
 	bus_space_tag_t		sc_st;
 	bus_dma_tag_t		sc_dmat;
 };
+
+#define	READ_REG(sc,r)		\
+    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, reg)
+#define	READ_REG_0(sc,r)	READ_REG((sc), (r) | LOFN_WIN_0)
+#define	READ_REG_1(sc,r)	READ_REG((sc), (r) | LOFN_WIN_1)
+#define	READ_REG_2(sc,r)	READ_REG((sc), (r) | LOFN_WIN_2)
+#define	READ_REG_3(sc,r)	READ_REG((sc), (r) | LOFN_WIN_3)
+
+#define	WRITE_REG(sc,r,v)	\
+    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, reg, val)
+#define	WRITE_REG_0(sc,r,v)	READ_REG((sc), (r) | LOFN_WIN_0, (v))
+#define	WRITE_REG_1(sc,r,v)	READ_REG((sc), (r) | LOFN_WIN_1, (v))
+#define	WRITE_REG_2(sc,r,v)	READ_REG((sc), (r) | LOFN_WIN_2, (v))
+#define	WRITE_REG_3(sc,r,v)	READ_REG((sc), (r) | LOFN_WIN_3, (v))
