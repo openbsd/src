@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.5,v 1.16 2003/06/21 23:14:23 jmc Exp $
+.\"	$OpenBSD: disklabel.5,v 1.17 2003/07/01 07:18:47 jmc Exp $
 .\"	$NetBSD: disklabel.5,v 1.3 1995/03/18 14:54:36 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
@@ -74,7 +74,7 @@ the
 .Dv DIOCWLABEL
 .Xr ioctl 2 ,
 which is done as needed by the
-.Em disklabel
+.Xr disklabel 8
 program, allows modification of the label sector.
 .Pp
 A copy of the in-core label for a disk can be obtained with the
@@ -115,7 +115,32 @@ of the label was changed directly or, if there is no physical label,
 to update the kernel's skeletal label if some variable affecting label
 generation has changed (e.g. the fdisk partition table).
 All of these operations are normally done using
-.Em disklabel .
+.Xr disklabel 8 .
+.Pp
+Note that when a disk has no real BSD disklabel the kernel creates a
+default label so that the disk can be used.
+This default label will include other partitions found on the disk if
+they are supported on your architecture.
+For example, on systems that support
+.Xr fdisk 8
+partitions the default label will also include DOS and Linux partitions.
+However, these entries are not dynamic, they are fixed at the time
+.Xr disklabel 8
+is run.
+That means that subsequent changes that affect non-OpenBSD
+partitions will not be present in the default label, though you
+may update them by hand.
+To see the default label, run
+.Xr disklabel 8
+with the
+.Fl d
+flag.
+You can then run
+.Xr disklabel 8
+with the
+.Fl e
+flag and paste any entries you want from the default label into the real
+one.
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr disklabel 8
