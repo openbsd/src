@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.85 2002/06/09 05:52:06 todd Exp $
+#	$OpenBSD: Makefile,v 1.86 2002/08/11 22:48:05 art Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -161,7 +161,7 @@ cross-includes:	cross-dirs
 	    ${MAKE} DESTDIR=${CROSSDIR} includes
 
 .if ${TARGET} == "macppc" || ${TARGET} == "alpha" || ${TARGET} == "hppa" || \
-    ${TARGET} == "sparc64"|| ${TARGET} == "mvmeppc"
+    ${TARGET} == "sparc64"|| ${TARGET} == "mvmeppc" || ${TARGET} == "sparc"
 cross-binutils: cross-binutils-new cross-binutils-links
 .else
 cross-binutils: cross-binutils-old cross-binutils-links
