@@ -25,46 +25,38 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: rpc.yppasswdd.8,v 1.2 1995/11/01 17:40:34 deraadt Exp $
+.\"	$Id: rpc.yppasswdd.8,v 1.3 1996/04/24 12:34:39 deraadt Exp $
 .\"
 .Dd July 3, 1994
-.Dt YPPASSWDD 8
-.Os NetBSD 0.9a
+.Dt RPC.YPPASSWDD 8
+.Os
 .Sh NAME
-.Nm yppasswd, rpc.yppasswdd
+.Nm rpc.yppasswdd
 .Nd YP update password file daemon
 .Sh SYNOPSIS
-.Nm /usr/sbin/rpc.yppasswdd
+.Nm rpc.yppasswdd
 .Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
 .Op Fl m Ar arg1 arg2 ... 
 .Sh DESCRIPTION
-.Nm Yppasswdd
+.Nm rpc.yppasswdd
 must be running on the YP master server to allow users to change information
-in the password file. If the user needs to change password this is normaly
-done with a program called
+in the password file. If the user needs to change his password this is
+normally done with a program called
 .Nm yppasswd .
-This program doesn't exists in NetBSD but is integrated into
-.Xr passwd 1 . 
-Forced usage of YP password change can be done with
+This program doesn't exists in OpenBSD but is integrated into
+.Xr passwd 1 .
+.Nm passwd
+will automatically determine which password database should
+be modified.
+To force a change of a YP password when a local one also exists, use
 .Nm passwd -y .
 .Pp
 Other user information can be changed with
 .Xr chpass 1 .
-
-Usage of the equivalent to
-.Nm yppasswd
-can be done with an
-.Ar y
-switch to
-.Nm passwd .
- handles changes in the passwd file. 
-is a fundamental part of the Network Information Service (NIS).
-This server provides information from YP maps to the YP clients
-on the network.
 .Pp
-IF the file
+If the file
 .Nm /var/yp/yppasswdd.log
 exists then messages will be written to the file.
 .Pp
@@ -90,6 +82,7 @@ man page for
 .It Pa /etc/master.passwd
 .El
 .Sh SEE ALSO
+.Xr yp 8 ,
 .Xr ypserv.acl 5 ,
 .Xr securenet 5 ,
 .Xr ypbind 1 
