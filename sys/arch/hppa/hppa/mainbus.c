@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.22 2002/02/11 21:12:59 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.23 2002/02/12 02:44:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -219,6 +219,8 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 
 	if (pmap_extract(pmap_kernel(), bsh, &bpa) && bpa != bsh)
 		uvm_km_free(kernel_map, sva, eva - sva);
+	else
+		bpa = bsh;	/* XXX assuming equ b-mapping been done */
 
 	if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
 		printf("bus_space_unmap: ps 0x%lx, size 0x%lx\n",
