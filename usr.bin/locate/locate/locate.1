@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.20 2003/09/02 18:50:06 jmc Exp $
+.\"	$OpenBSD: locate.1,v 1.21 2003/09/25 18:06:23 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.20 2003/09/02 18:50:06 jmc Exp $
+.\"	$Id: locate.1,v 1.21 2003/09/25 18:06:23 jmc Exp $
 .\"
 .Dd June 6, 1993
 .Dt LOCATE 1
@@ -110,7 +110,7 @@ of databases to be searched.
 may be a colon-separated list of databases.
 A single colon is a reference to the default database.
 .Pp
-$ locate -d $HOME/lib/mydb: foo
+.Dl $ locate -d $HOME/lib/mydb: foo
 .Pp
 will first search for the string
 .Dq foo
@@ -119,7 +119,7 @@ in
 and then in
 .Pa /var/db/locate.database .
 .Pp
-$ locate -d $HOME/lib/mydb::/cdrom/locate.database foo
+.Dl $ locate -d $HOME/lib/mydb::/cdrom/locate.database foo
 .Pp
 will first search for the string
 .Dq foo
@@ -130,15 +130,15 @@ and then in
 and then in
 .Pa /cdrom/locate.database .
 .Pp
-$ locate -d db1 -d db2 -d db3 pattern
+.Dl $ locate -d db1 -d db2 -d db3 pattern
 .Pp
 is the same as
 .Pp
-$ locate -d db1:db2:db3 pattern
+.Dl $ locate -d db1:db2:db3 pattern
 .Pp
 or
 .Pp
-$ locate -d db1:db2 -d db3 pattern
+.Dl $ locate -d db1:db2 -d db3 pattern
 .Pp
 If
 .Ql \-
@@ -148,10 +148,9 @@ name, standard input will be read instead.
 For example, you can compress your database
 and use:
 .Pp
-$ zcat database.gz | locate -d - pattern
+.Dl $ zcat database.gz | locate -d - pattern
 .Pp
-This might be useful on machines with a fast CPU, little RAM and slow
-I/O.
+This might be useful on machines with a fast CPU, little RAM and slow I/O.
 .Sy Note:
 You can only use
 .Em one
@@ -185,17 +184,18 @@ option was specified.
 .El
 .Sh FILES
 .Bl -tag -width /usr/libexec/locate.updatedb -compact
-.It Pa /var/db/locate.database
-locate database
-.It Pa /usr/libexec/locate.updatedb
-script to update the locate database
 .It Pa /etc/weekly
 script that starts the database rebuild
+.It Pa /usr/libexec/locate.updatedb
+script to update the locate database
+.It Pa /var/db/locate.database
+locate database
 .El
 .Sh SEE ALSO
 .Xr find 1 ,
 .Xr fnmatch 3 ,
-.Xr locate.updatedb 8
+.Xr locate.updatedb 8 ,
+.Xr weekly 8
 .Rs
 .%A Woods, James A.
 .%D 1983
@@ -217,7 +217,7 @@ This is because
 .Nm
 only reports files that are present in a periodically reconstructed
 database (typically rebuilt once a week by the
-.Pa /etc/weekly
+.Xr weekly 8
 script).
 Use
 .Xr find 1
@@ -236,7 +236,7 @@ group
 .Dq nobody ,
 or
 the world.
-e.g., if your home directory is not world-readable, your files will
+E.g., if your home directory is not world-readable, your files will
 .Em not
 appear in the database.
 .Pp

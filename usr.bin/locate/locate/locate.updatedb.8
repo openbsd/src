@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.updatedb.8,v 1.14 2003/02/03 17:46:57 jmc Exp $
+.\"	$OpenBSD: locate.updatedb.8,v 1.15 2003/09/25 18:06:23 jmc Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -77,14 +77,15 @@ A list of filesystem types to be traversed by
 .El
 .Sh FILES
 .Bl -tag -width /var/db/locate.database -compact
-.It Pa /var/db/locate.database
-default database
 .It Pa /etc/locate.rc
 configuration file
+.It Pa /var/db/locate.database
+default database
 .El
 .Sh SEE ALSO
 .Xr find 1 ,
-.Xr locate 1
+.Xr locate 1 ,
+.Xr weekly 8
 .Rs
 .%A Woods, James A.
 .%D 1983
