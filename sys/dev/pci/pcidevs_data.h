@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.415 2001/07/08 18:05:43 brad Exp 
+ *		OpenBSD: pcidevs,v 1.416 2001/07/17 21:18:37 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5852,7 +5852,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_RCC,
-	    "Reliance Computer",
+	    "ServerWorks",
 	},
 	{
 	    PCI_VENDOR_MUTOH,
