@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.133 2002/05/06 16:37:43 mickey Exp $
+#	$OpenBSD: files.pci,v 1.134 2002/05/15 21:33:22 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -305,6 +305,11 @@ file	dev/pci/lofn.c			lofn
 device	hifn: crypto
 attach	hifn at pci
 file	dev/pci/hifn7751.c		hifn
+
+# Hi/fn 7814/7851/7854
+device	nofn: crypto
+attach	nofn at pci
+file	dev/pci/nofn.c			nofn
 
 # Bluesteelnet (Broadcom) 5501/5601
 device	ubsec: crypto
