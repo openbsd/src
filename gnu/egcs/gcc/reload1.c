@@ -39,6 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #include "output.h"
 #include "real.h"
 #include "toplev.h"
+#include "protector.h"
 
 #if !defined PREFERRED_STACK_BOUNDARY && defined STACK_BOUNDARY
 #define PREFERRED_STACK_BOUNDARY STACK_BOUNDARY
@@ -2424,7 +2425,7 @@ alter_reg (i, from_reg)
       if (from_reg == -1)
 	{
 	  /* No known place to spill from => no slot to reuse.  */
-	  x = assign_stack_local (GET_MODE (regno_reg_rtx[i]), total_size,
+	  x = assign_stack_local_for_pseudo_reg (GET_MODE (regno_reg_rtx[i]), total_size,
 				  inherent_size == total_size ? 0 : -1);
 	  if (BYTES_BIG_ENDIAN)
 	    /* Cancel the  big-endian correction done in assign_stack_local.

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2000/02/12 15:29:06 espie Exp $
+#	$OpenBSD: Makefile,v 1.7 2002/12/02 09:00:22 miod Exp $
 
 NOPROG=	installboot
 MAN=installboot.8
@@ -39,6 +39,7 @@ INCPATH=	-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
 COPTIM=		-O -fomit-frame-pointer -fno-function-cse -Wa,-l -m68060 \
 		-Wa,-m68030
 CFLAGS=		${COPTIM} ${INCPATH} ${DEFS}
+CFLAGS+=	-fno-stack-protector
 COPTS+=		-Wall -Wstrict-prototypes
 
 BOOTBLOCKS=	xxboot # XXX  fdboot is too large at the moment.

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2001/08/20 19:55:33 jason Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2002/12/02 09:00:25 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.7 2000/08/20 14:57:16 mrg Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
@@ -13,6 +13,7 @@ BINDIR=		/usr/mdec
 CPPFLAGS+=	-D_STANDALONE -DSUN4U
 CPPFLAGS+=	-I.
 
+CFLAGS+=	-fno-stack-protector
 CFLAGS+=	-msoft-float
 .endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2002/07/24 04:11:10 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2002/12/02 09:00:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -36,6 +36,18 @@
 #include <sys/mman.h>
 #include <string.h>
 #include "archdep.h"
+
+/*
+ * Stack protector dummies.
+ * Ideally, a scheme to compile these stubs from libc should be used, but
+ * this would end up dragging too much code from libc here.
+ */
+long __guard[8] = {0,0,0,0,0,0,0,0};
+void
+stack_smash_handler(char func[], int damaged)
+{
+	_dl_exit(127);
+}
 
 /*
  * Static vars usable after bootstrapping.

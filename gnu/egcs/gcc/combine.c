@@ -3953,6 +3953,11 @@ simplify_rtx (x, op0_mode, last, in_dest)
 	 they are now checked elsewhere.  */
       if (GET_CODE (XEXP (x, 0)) == PLUS
 	  && CONSTANT_ADDRESS_P (XEXP (XEXP (x, 0), 1)))
+#ifndef FRAME_GROWS_DOWNWARD
+	if (! (flag_propolice_protection
+	       && XEXP (XEXP (x, 0), 0) == frame_pointer_rtx
+	       && GET_CODE (XEXP (XEXP (x, 0), 1)) == CONST_INT))
+#endif
 	return gen_binary (PLUS, mode,
 			   gen_binary (PLUS, mode, XEXP (XEXP (x, 0), 0),
 				       XEXP (x, 1)),

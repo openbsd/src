@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2001/02/03 03:22:47 art Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2002/12/02 09:00:22 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.8 1997/04/06 08:39:38 cgd Exp $
 
 .include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
@@ -20,3 +20,4 @@ CPPFLAGS+=		-D_STANDALONE
 
 XCPPFLAGS+=		-DHEAP_LIMIT="0x${HEAP_LIMIT}"
 
+CFLAGS+=		-fno-stack-protector

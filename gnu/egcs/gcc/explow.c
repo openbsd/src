@@ -473,6 +473,21 @@ memory_address (mode, x)
 	 in certain cases.  This is not necessary since the code
 	 below can handle all possible cases, but machine-dependent
 	 transformations can make better code.  */
+      if (flag_propolice_protection)
+	{
+#define FRAMEADDR_P(X) (GET_CODE (X) == PLUS				\
+			&& XEXP (X, 0) == virtual_stack_vars_rtx	\
+			&& GET_CODE (XEXP (X, 1)) == CONST_INT)
+	  rtx y;
+	  if (FRAMEADDR_P (x)) goto win;
+	  for (y=x; y!=0 && GET_CODE (y)==PLUS; y = XEXP (y, 0))
+	    {
+	      if (FRAMEADDR_P (XEXP (y, 0)))
+		XEXP (y, 0) = force_reg (GET_MODE (XEXP (y, 0)), XEXP (y, 0));
+	      if (FRAMEADDR_P (XEXP (y, 1)))
+		XEXP (y, 1) = force_reg (GET_MODE (XEXP (y, 1)), XEXP (y, 1));
+	    }
+	}
       LEGITIMIZE_ADDRESS (x, oldx, mode, win);
 
       /* PLUS and MULT can appear in special ways

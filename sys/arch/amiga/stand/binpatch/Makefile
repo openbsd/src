@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.5 2000/02/12 15:29:05 espie Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/12/02 09:00:22 miod Exp $
 #	$NetBSD: Makefile,v 1.6 1996/09/27 03:23:12 chopps Exp $
 
 .if ${MACHINE} == "amiga"
 PROG=binpatch
 BINDIR=/sbin
 LDFLAGS+=-static
+CFLAGS+=	-fno-stack-protector
 .else
 NOPROG=Yes
 .endif

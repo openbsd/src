@@ -4532,6 +4532,7 @@ simplify_plus_minus (code, mode, op0, op1)
   int n_ops = 2, input_ops = 2, input_consts = 0, n_consts = 0;
   int first = 1, negate = 0, changed;
   int i, j;
+  HOST_WIDE_INT fp_offset = 0;
 
   bzero ((char *) ops, sizeof ops);
   
@@ -4550,6 +4551,10 @@ simplify_plus_minus (code, mode, op0, op1)
 	switch (GET_CODE (ops[i]))
 	  {
 	  case PLUS:
+	    if (flag_propolice_protection
+		&& XEXP (ops[i], 0) == virtual_stack_vars_rtx
+		&& GET_CODE (XEXP (ops[i], 1)) == CONST_INT)
+	      fp_offset = INTVAL (XEXP (ops[i], 1));
 	  case MINUS:
 	    if (n_ops == 7)
 	      return 0;
@@ -4665,7 +4670,43 @@ simplify_plus_minus (code, mode, op0, op1)
 	j = negs[n_ops - 1], negs[n_ops - 1] = negs[i], negs[i] = j;
       }
 
-  /* Put a non-negated operand first.  If there aren't any, make all
+  if (flag_propolice_protection)
+    {
+      /* keep the addressing style of local variables
+	 as (plus (virtual_stack_vars_rtx) (CONST_int x))
+	 (1) inline function is expanded, (+ (+VFP c1) -c2)=>(+ VFP c1-c2)
+	 (2) the case ary[r-1], (+ (+VFP c1) (+r -1))=>(+ R (+r -1))
+      */
+      for (i = 0; i < n_ops; i++)
+#ifdef FRAME_GROWS_DOWNWARD
+	if (ops[i] == virtual_stack_vars_rtx)
+#else
+	if (ops[i] == virtual_stack_vars_rtx
+	    || ops[i] == frame_pointer_rtx)
+#endif
+	  {
+	    if (GET_CODE (ops[n_ops - 1]) == CONST_INT)
+	      {
+		HOST_WIDE_INT value = INTVAL (ops[n_ops - 1]);
+		if (n_ops < 3 || value >= fp_offset)
+		  {
+		    ops[i] = plus_constant (ops[i], value);
+		    n_ops--;
+		  }
+		else
+		  {
+		    if (n_ops+1 + n_consts > input_ops
+			|| (n_ops+1 + n_consts == input_ops && n_consts <= input_consts))
+		      return 0;
+		    ops[n_ops - 1] = GEN_INT (value-fp_offset);
+		    ops[i] = plus_constant (ops[i], fp_offset);
+		  }
+	      }
+	    break;
+	  }
+    }
+
+/* Put a non-negated operand first.  If there aren't any, make all
      operands positive and negate the whole thing later.  */
   for (i = 0; i < n_ops && negs[i]; i++)
     ;
@@ -6511,6 +6552,13 @@ cse_insn (insn, libcall_insn)
       if (SET_DEST (x) == pc_rtx
 	  && GET_CODE (SET_SRC (x)) == LABEL_REF)
 	;
+      else if (x->volatil) {
+	rtx x1 = SET_DEST (x);
+	if (GET_CODE (x1) == SUBREG && GET_CODE (SUBREG_REG (x1)) == REG)
+	  x1 = SUBREG_REG (x1);
+	make_new_qty (REGNO (x1));
+	qty_mode[REG_QTY (REGNO (x1))] = GET_MODE (x1);
+      }
 
       /* Don't count call-insns, (set (reg 0) (call ...)), as a set.
 	 The hard function value register is used only once, to copy to

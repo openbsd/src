@@ -772,6 +772,13 @@ int flag_instrument_function_entry_exit = 0;
 
 int flag_no_ident = 0;
 
+#ifdef STACK_PROTECTOR
+/* Nonzero means use propolice as a stack protection method */
+int flag_propolice_protection = 1;
+#else
+int flag_propolice_protection = 0;
+#endif
+
 /* Table of supported debugging formats.  */
 static struct
 {
@@ -979,7 +986,11 @@ lang_independent_options f_options[] =
   {"leading-underscore", &flag_leading_underscore, 1,
    "External symbols have a leading underscore" },
   {"ident", &flag_no_ident, 0,
-   "Process #ident directives"}
+   "Process #ident directives"},
+  {"stack-protector", &flag_propolice_protection, 1,
+   "Enables stack protection" },
+  {"no-stack-protector", &flag_propolice_protection, 0,
+   "Disables stack protection" },
 };
 
 #define NUM_ELEM(a)  (sizeof (a) / sizeof ((a)[0]))
@@ -1258,7 +1269,9 @@ lang_independent_options W_options[] =
   {"uninitialized", &warn_uninitialized, 1,
    "Warn about unitialized automatic variables"},
   {"inline", &warn_inline, 1,
-   "Warn when an inlined function cannot be inlined"}
+   "Warn when an inlined function cannot be inlined"},
+  {"stack-protector", &warn_stack_protector, 1,
+   "Warn when disabling stack protector for some reason"}
 };
 
 /* Output files for assembler code (real compiler output)
@@ -3646,6 +3659,8 @@ rest_of_compilation (decl)
 
       insns = get_insns ();
 
+      if (flag_propolice_protection) prepare_stack_protection ();
+  
       /* Dump the rtl code if we are dumping rtl.  */
 
       if (rtl_dump)
