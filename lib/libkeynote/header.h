@@ -1,4 +1,4 @@
-/* $OpenBSD: header.h,v 1.9 2004/06/25 05:06:49 msf Exp $ */
+/* $OpenBSD: header.h,v 1.10 2004/06/29 11:35:56 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -44,18 +44,4 @@ int sessid;
 
 #define SIG_PRINT_OFFSET      12
 #define SIG_PRINT_LENGTH      50
-
-/* Includes */
-#include <sys/types.h>
-
-#include <regex.h>
-#include <openssl/crypto.h>
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
-#include <openssl/sha.h>
-#include <openssl/md5.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
 #endif /* _HEADER_H_ */

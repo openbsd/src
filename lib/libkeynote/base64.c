@@ -1,5 +1,5 @@
-/* $OpenBSD: base64.c,v 1.10 2004/06/25 05:06:49 msf Exp $ */
-/* $OpenBSD: base64.c,v 1.10 2004/06/25 05:06:49 msf Exp $ */
+/* $OpenBSD: base64.c,v 1.11 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: base64.c,v 1.11 2004/06/29 11:35:56 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -23,11 +23,11 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "header.h"
 #include "keynote.h"
 
 int __b64_ntop(unsigned char const *, size_t, char *, size_t);

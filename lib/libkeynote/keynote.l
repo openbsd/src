@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.16 2004/06/25 05:06:49 msf Exp $ */
+/* $OpenBSD: keynote.l,v 1.17 2004/06/29 11:35:56 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -24,12 +24,12 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <regex.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "k.tab.h"
-#include "header.h"
 #include "keynote.h"
 #include "assertion.h"
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: sample-app.c,v 1.6 2004/06/25 05:06:49 msf Exp $ */
+/* $OpenBSD: sample-app.c,v 1.7 2004/06/29 11:35:56 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -22,10 +22,10 @@
 #include <sys/types.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <regex.h>
-#include "keynote.h"
+#include <keynote.h>
 
-#include "header.h"
 
 char policy_assertions[] = 
 "Authorizer: \"POLICY\"\n" \
