@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.17 1999/10/17 00:31:06 deraadt Exp $
+.\" $Id: sshd.8,v 1.18 1999/10/17 20:35:46 aaron Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -105,7 +105,8 @@ the client, and both sides exit.
 can be configured using command-line options or a configuration
 file.  Command-line options override values specified in the
 configuration file.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl b Ar bits
 Specifies the number of bits in the server key (default 768).
@@ -158,6 +159,8 @@ Specifies the port on which the server listens for connections
 .It Fl q
 Quiet mode.  Nothing is sent to the system log.  Normally the beginning,
 authentication, and termination of each connection is logged.
+.It Fl Q
+Do not print an error message if RSA support is missing.
 .El
 .Sh CONFIGURATION FILE
 .Nm
