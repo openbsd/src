@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.3 2004/08/10 07:48:45 mickey Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.4 2004/08/10 12:33:21 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -132,5 +132,6 @@ struct confargs {
 };
 
 int	badaddr(void *, u_int64_t);
+void	enaddr_aton(const char *, u_int8_t *);
 
 #endif /* _MACHINE_AUTOCONF_H_ */
