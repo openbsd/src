@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.140 2004/09/15 21:32:43 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.141 2004/09/18 07:21:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -548,7 +548,7 @@ $bsd_syscall
 	mfctl	eiem, r1
 	mtctl	r0, eiem
 	mtsp	r0, sr1
-	mfctl	pidr1, r28
+	mfctl	pidr1, ret0
 	ldi	HPPA_PID_KERNEL, t2
 	mtctl	t2, pidr1
 
