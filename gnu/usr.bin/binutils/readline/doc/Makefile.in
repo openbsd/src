@@ -20,7 +20,7 @@ srcdir = .
 
 prefix = /usr/local
 
-infodir = $(prefix)/info
+infodir = $(prefix)/share/info
 
 SHELL = /bin/sh
 

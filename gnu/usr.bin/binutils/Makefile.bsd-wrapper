@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 1998/04/01 04:30:14 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.23 1998/05/18 00:43:21 marc Exp $
 
 SUBDIRS=	libiberty opcodes bfd
 MAN=
@@ -42,10 +42,10 @@ config: .FORCE
 .ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
 .endif
-	sh ${.CURDIR}/configure --prefix=/usr --disable-gdbtk ${CF}
+	sh ${.CURDIR}/configure --prefix=/usr --infodir=/usr/share/info --disable-gdbtk ${CF}
 
 config.status:
-	sh ${.CURDIR}/configure --prefix=/usr --disable-gdbtk ${CF}
+	sh ${.CURDIR}/configure --prefix=/usr --infodir=/usr/share/info --disable-gdbtk ${CF}
 
 .ifdef NOMAN
 maninstall:
@@ -56,7 +56,7 @@ install: maninstall
 	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
 		bindir=${DESTDIR}/usr/bin INSTALL_MAN= SUBDIRS="${SUBDIRS}" \
 		ALL_MODULES="${ALL_MODULES}" INSTALL_MODULES="${INSTALL_MODULES}" \
-		install
+		install install-info
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi

@@ -40,7 +40,7 @@ man6dir = $(mandir)/man6
 man7dir = $(mandir)/man7
 man8dir = $(mandir)/man8
 man9dir = $(mandir)/man9
-infodir = $(prefix)/info
+infodir = $(prefix)/share/info
 includedir = $(prefix)/include
 
 SHELL = /bin/sh

@@ -80,7 +80,7 @@ subdirs=
 target_alias=NOTARGET
 target_makefile_frag=
 undefs=NOUNDEFS
-version="$Revision: 1.5 $"
+version="$Revision: 1.6 $"
 x11=default
 
 ### we might need to use some other shell than /bin/sh for running subshells
@@ -253,6 +253,9 @@ do
 		   fatal=yes
 		   ;;
 		esac
+		;;
+	--infodir*)
+		infodiroption="--infodir=$optarg"
 		;;
 	--tmpdir* | --tm*)
 		TMPDIR=$optarg
@@ -508,7 +511,7 @@ case "`grep '^# per\-host:' ${srcdir}/configure.in`" in
 	    eval exec ${config_shell} ${srcdir}/configure ${verbose} \
 		${buildopt} --host=${host_alias} --target=${target_alias} \
 		${prefixoption} ${tmpdiroption} ${exec_prefixoption} \
-		${srcdiroption} \
+		${srcdiroption} ${infodiroption} \
 		${program_prefixoption} ${program_suffixoption} \
 		${program_transform_nameoption} ${site_option} \
 		${withoptions} ${withoutoptions} \
@@ -1276,7 +1279,7 @@ if [ -z "${norecursion}" -a -n "${configdirs}" ] ; then
 ### The recursion line is here.
 			if [ ! -z "${recprog}" ] ; then
 	                        if eval ${config_shell} ${recprog} ${verbose} ${buildopt} --host=${host_alias} --target=${target_alias} \
-        	                        ${prefixoption} ${tmpdiroption} ${exec_prefixoption} \
+        	                        ${prefixoption} ${tmpdiroption} ${exec_prefixoption} ${infodiroption} \
                 	                ${srcdiroption} ${program_prefixoption} ${program_suffixoption} ${program_transform_nameoption} ${site_option} ${withoptions} ${withoutoptions} ${enableoptions} ${disableoptions} ${floating_pointoption} ${cache_file_option} ${removing} ${other_options} ${redirect} ; then
 	                                true
         	                else
