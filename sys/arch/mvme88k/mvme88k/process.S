@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.21 2003/08/13 08:52:44 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.22 2003/10/27 10:45:58 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -257,8 +257,7 @@ ASLOCAL(Lswnochg)
 	/* r2 = 1 : kernel ? user, r3 = address, r4 = size */
 	/* cmmu_flush_tlb(0, 0, 0xffff) */
 	bsr.n	_C_LABEL(md_cmmu_flush_tlb)
-	 or	r4, r0, 0xffff		/* cmmu_flush_tlb flushes entire tlb */
-					/* for sizes > 4096		     */
+	 sub	r4, r0, 1		/* flush entire va space */
 	addu	r31, r31,48
 	or.u	r10, r0,  hi16(_C_LABEL(curpcb))
 	ld	r10, r10,  lo16(_C_LABEL(curpcb))
