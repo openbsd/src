@@ -375,7 +375,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-f conffile] [-m markinterval] [-p logpath]\n");
+	    "usage: syslogd [-u] [-f conffile] [-m markinterval] [-p logpath]\n");
 	exit(1);
 }
 
