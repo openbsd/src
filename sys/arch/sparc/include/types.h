@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.12 2002/10/06 19:58:31 art Exp $	*/
+/*	$OpenBSD: types.h,v 1.13 2003/01/13 06:08:08 art Exp $	*/
 /*	$NetBSD: types.h,v 1.11 1996/12/10 23:19:38 pk Exp $	*/
 
 /*
@@ -55,9 +55,6 @@ typedef struct label_t {
 	int val[2];
 } label_t;
 #endif
-
-typedef	unsigned long	vm_offset_t;
-typedef	unsigned long	vm_size_t;
 
 typedef unsigned long	vaddr_t;
 typedef unsigned long	paddr_t;
