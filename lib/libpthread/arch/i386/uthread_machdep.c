@@ -1,11 +1,13 @@
-/*	 $OpenBSD: uthread_machdep.c,v 1.3 2003/01/24 20:58:23 marc Exp $	*/
+/*	 $OpenBSD: uthread_machdep.c,v 1.4 2004/02/21 22:55:20 deraadt Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
  * Machine-dependent thread state functions for OpenBSD/i386.
  */
 
-#include <machine/param.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
 #include <pthread.h>
 #include "pthread_private.h"
 
@@ -30,6 +32,28 @@ struct frame {
 
 #define copyreg(reg, lval) \
 	__asm__("mov %%" #reg ", %0" : "=g"(lval))
+
+static int _thread_machdep_osfxsr(void);
+
+static int
+_thread_machdep_osfxsr(void)
+{
+	int mib[] = { CTL_MACHDEP, CPU_OSFXSR };
+	static int sse = -1;
+	size_t len;
+	int val;
+
+	if (sse == -1) {
+		len = sizeof (val);
+		if (sysctl(mib, 2, &val, &len, NULL, 0) == -1)
+			return (0);
+		if (val)
+			sse = 1;
+		else
+			sse = 0;
+	}
+	return (sse);
+}
 
 /*
  * Given a stack and an entry function, initialise a state
@@ -65,23 +89,33 @@ _thread_machdep_init(struct _machdep_state* statep, void *base, int len,
  */
 #define	fldcw(addr)		__asm("fldcw %0"  : : "m" (*addr))
 #define	fnsave(addr)		__asm("fnsave %0" : "=m" (*addr))
-#define frstor(addr)		__asm("frstor %0" : : "m" (*addr))
+#define	fninit()		__asm("fninit")
+#define	frstor(addr)		__asm("frstor %0" : : "m" (*addr))
+#define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
+#define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
 #define	fwait()			__asm("fwait")
 
 void
 _thread_machdep_save_float_state(struct _machdep_state *ms)
 {
-	struct save87 *addr = &ms->fpreg;
+	union savefpu *addr = &ms->fpreg;
 
-	fnsave(addr);
+	if (_thread_machdep_osfxsr()) {
+		fxsave(&addr->sv_xmm);
+		fninit();
+	} else
+		fnsave(&addr->sv_87);
 	fwait();
 }
 
 void
 _thread_machdep_restore_float_state(struct _machdep_state *ms)
 {
-	struct save87 *addr = &ms->fpreg;
+	union savefpu *addr = &ms->fpreg;
 
-	frstor(addr);
+	if (_thread_machdep_osfxsr())
+		fxrstor(&addr->sv_xmm);
+	else
+		frstor(&addr->sv_87);
+		
 }
-
