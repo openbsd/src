@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.25 2004/12/01 23:03:51 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.26 2004/12/26 22:13:45 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -384,9 +384,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		lp->d_partitions[i].p_offset = 0;
 		lp->d_partitions[i].p_fstype = FS_UNUSED;
 	}
-	if (lp->d_partitions[RAW_PART].p_size == 0)
-		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
@@ -526,7 +524,11 @@ writedisklabel(dev, strat, lp, osdep)
 	 */
 	sbSigp = (u_int16_t *)bp->b_data;
 	if (*sbSigp == 0x4552) {
-		error = ENODEV;
+		/*
+		 * Read the partition map again, in case it has changed.
+		 */
+		if (readdisklabel(dev, strat, lp, osdep, 0) != NULL)
+			error = EINVAL;
 		goto done;
 	}
 	
