@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolv.h,v 1.15 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: resolv.h,v 1.16 2005/03/30 02:58:28 tedu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -134,7 +134,7 @@
 struct __res_state {
 	int	retrans;	 	/* retransmission time interval */
 	int	retry;			/* number of times to retransmit */
-	unsigned long	options;	/* option flags - see below. */
+	unsigned int	options;	/* option flags - see below. */
 	int	nscount;		/* number of name servers */
 	struct sockaddr_in
 		nsaddr_list[MAXNS];	/* address of name server */
@@ -142,7 +142,7 @@ struct __res_state {
 	unsigned short	id;		/* current message id */
 	char	*dnsrch[MAXDNSRCH+1];	/* components of domain to search */
 	char	defdname[256];		/* default domain (deprecated) */
-	unsigned long	pfcode;		/* RES_PRF_ flags - see below. */
+	unsigned int	pfcode;		/* RES_PRF_ flags - see below. */
 	unsigned ndots:4;		/* threshold for initial abs. query */
 	unsigned nsort:4;		/* number of elements in sort_list[] */
 	char	unused[3];
@@ -151,7 +151,8 @@ struct __res_state {
 		u_int32_t	mask;
 	} sort_list[MAXRESOLVSORT];
 	char    lookups[MAXDNSLUS];
-	char	pad[68];		/* on an i386 this means 512b total */
+	struct timespec	restimespec;
+	time_t	reschktime;
 };
 
 #if 1 /* INET6 */
@@ -337,6 +338,7 @@ int			dn_comp(const char *, unsigned char *, int,
 int			dn_expand(const unsigned char *, const unsigned char *, 
 			    const unsigned char *, char *, int);
 int			res_init(void);
+int			_res_init(int);
 unsigned int		res_randomid(void);
 int			res_query(const char *, int, int, unsigned char *, int)
 			__attribute__((__bounded__(__string__,4,5)));

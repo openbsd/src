@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.15 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.16 2005/03/30 02:58:28 tedu Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -56,7 +56,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.15 2005/03/25 13:24:12 otto Exp $";
+static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.16 2005/03/30 02:58:28 tedu Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,7 +94,7 @@ res_mkquery(int op,
 	int n;
 	u_char *dnptrs[20], **dpp, **lastdnptr;
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}

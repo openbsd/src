@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.19 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.20 2005/03/30 02:58:28 tedu Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -78,7 +78,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.19 2005/03/25 13:24:12 otto Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.20 2005/03/30 02:58:28 tedu Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -264,7 +264,7 @@ __fp_nquery(const u_char *msg, int len, FILE *file)
 	const HEADER *hp;
 	int n;
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
+	if (_res_init(0) == -1)
 		return;
 
 #define TruncTest(x) if (x > endMark) goto trunc
@@ -462,7 +462,7 @@ __p_rr(const u_char *cp, const u_char *msg, FILE *file)
 	char rrname[MAXDNAME];		/* The fqdn of this RR */
 	char base64_key[MAX_KEY_BASE64];
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sethostent.c,v 1.7 2005/03/25 13:24:12 otto Exp $";
+static char rcsid[] = "$OpenBSD: sethostent.c,v 1.8 2005/03/30 02:58:28 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -44,7 +44,7 @@ sethostent(int stayopen)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
+	if (_res_init(0) == -1)
 		return;
 	if (stayopen)
 		_resp->options |= RES_STAYOPEN | RES_USEVC;

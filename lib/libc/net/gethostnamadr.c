@@ -48,7 +48,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.60 2004/07/29 03:09:40 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.61 2005/03/30 02:58:28 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -479,7 +479,7 @@ gethostbyname(const char *name)
 	struct hostent *hp;
 	extern struct hostent *_gethtbyname2(const char *, int);
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
+	if (_res_init(0) == -1)
 		hp = _gethtbyname2(name, AF_INET);
 
 	else if (_resp->options & RES_USE_INET6) {
@@ -505,7 +505,7 @@ gethostbyname2(const char *name, int af)
 	extern struct hostent *_gethtbyname2(const char *, int);
 	extern struct hostent *_yp_gethtbyname(const char *);
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
+	if (_res_init(0) == -1)
 		return (_gethtbyname2(name, af));
 
 	switch (af) {
@@ -653,7 +653,7 @@ gethostbyaddr(const char *addr, int len, int af)
 	extern struct hostent *_gethtbyaddr(const char *, int, int);
 	extern struct hostent *_yp_gethtbyaddr(const char *);
 	
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		res = _gethtbyaddr(addr, len, af);
 		return (res);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.17 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.18 2005/03/30 02:58:28 tedu Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.17 2005/03/25 13:24:12 otto Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.18 2005/03/30 02:58:28 tedu Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -343,7 +343,7 @@ res_send(const u_char *buf, int buflen, u_char *ans, int anssiz)
 	int n;
 	u_int badns;	/* XXX NSMAX can't exceed #/bits in this var */
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		/* errno should have been set by res_init() in this case. */
 		return (-1);
 	}

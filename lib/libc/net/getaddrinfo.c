@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.51 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.52 2005/03/30 02:58:28 tedu Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ explore_fqdn(const struct addrinfo *pai, const char *hostname,
 		return 0;
 	}
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
+	if (_res_init(0) == -1)
 		strlcpy(lookups, "f", sizeof lookups);
 	else {
 		bcopy(_resp->lookups, lookups, sizeof lookups);
@@ -1525,7 +1525,7 @@ res_queryN(const char *name, struct res_target *target)
 	rcode = NOERROR;
 	ancount = 0;
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
 		free(buf);
 		return (-1);
@@ -1631,7 +1631,7 @@ res_searchN(const char *name, struct res_target *target)
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
@@ -1768,7 +1768,7 @@ res_querydomainN(const char *name, const char *domain,
 	const char *longname = nbuf;
 	size_t n, d;
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}

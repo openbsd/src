@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.31 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.32 2005/03/30 02:58:28 tedu Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.31 2005/03/25 13:24:12 otto Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.32 2005/03/30 02:58:28 tedu Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,6 +68,7 @@ static char rcsid[] = "$OpenBSD: res_init.c,v 1.31 2005/03/25 13:24:12 otto Exp 
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -131,6 +132,8 @@ void *__THREAD_NAME(_res_ext);
 struct __res_state_ext _res_ext;
 #endif /* INET6 */
 
+int __res_chktime = 30;
+
 /*
  * Set up default settings.  If the configuration file exist, the values
  * there will have precedence.  Otherwise, the server address is set to
@@ -155,6 +158,14 @@ struct __res_state_ext _res_ext;
 int
 res_init(void)
 {
+
+	return (_res_init(1));
+}
+
+int
+_res_init(int usercall)
+{
+	struct stat sb;
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 #ifdef INET6
 	struct __res_state_ext *_res_extp = _THREAD_PRIVATE(_res_ext, _res_ext,
@@ -175,6 +186,29 @@ res_init(void)
 #ifndef RFC1535
 	int dots;
 #endif
+
+	if (usercall == 0) {
+		if (_resp->options & RES_INIT &&
+		    _resp->reschktime >= time(NULL))
+			return (0);
+		_resp->reschktime = time(NULL) + __res_chktime;
+		if (stat(_PATH_RESCONF, &sb) != -1) {
+			if (timespeccmp(&sb.st_mtimespec,
+			    &_resp->restimespec, ==))
+				return (0);
+			else
+				_resp->restimespec = sb.st_mtimespec;
+		} else {
+			/*
+			 * Lost the file, in chroot?
+			 * Don' trash settings
+			 */
+			if (timespecisset(&_resp->restimespec))
+				return (0);
+		}
+	} else
+		_resp->reschktime = time(NULL) + __res_chktime;
+
 
 	/*
 	 * These three fields used to be statically initialized.  This made

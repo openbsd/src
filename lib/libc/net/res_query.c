@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.22 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.23 2005/03/30 02:58:28 tedu Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -56,7 +56,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.22 2005/03/25 13:24:12 otto Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.23 2005/03/30 02:58:28 tedu Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -111,7 +111,7 @@ res_query(const char *name,
 
 	hp->rcode = NOERROR;	/* default */
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
@@ -193,7 +193,7 @@ res_search(const char *name,
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
@@ -332,7 +332,7 @@ res_querydomain(const char *name,
 	const char *longname = nbuf;
 	int n;
 
-	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
+	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
