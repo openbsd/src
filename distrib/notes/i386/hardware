@@ -64,7 +64,10 @@ Supported devices {:-include-:}:
 			Kingston 21xx
 		AMD PCnet-based PCI Ethernet adapters, including:
 			BOCALANcard/PCI
-		AT&T StarLAN 10, EN100, and StarLAN Fiber
+		        AT&T StarLAN 10, EN100, and StarLAN Fiber
+		ASIX 88140A/88141 PCI Ethernet adapters, including:
+			CNet Pro110
+			Alfa Inc. GFC2204
 		3COM 3c501
 		3COM 3c503
 		3COM 3c505 [*]
