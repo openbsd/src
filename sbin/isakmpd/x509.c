@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.12 1999/07/17 21:54:39 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.17 1999/07/17 20:44:12 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.13 1999/08/26 22:28:15 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.21 1999/08/26 11:21:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -46,20 +46,24 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ssl/x509.h>
-#include <ssl/x509_vfy.h>
-#include <ssl/pem.h>
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#include <keynote.h>
+#endif /* USE_KEYNOTE || HAVE_DLOPEN */
 
 #include "sysdep.h"
 
 #include "conf.h"
+#include "dyn.h"
 #include "exchange.h"
 #include "hash.h"
 #include "ike_auth.h"
 #include "sa.h"
 #include "ipsec.h"
 #include "log.h"
+#include "policy.h"
 #include "x509.h"
+
+extern int keynote_sessid;
 
 /* 
  * X509_STOREs do not support subjectAltNames, so we have to build
@@ -71,8 +75,10 @@
  * our own hash table.  It also gets collisons if we have several certificates
  * only differing in subjectAltName.
  */
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
 static X509_STORE *x509_certs;
 static X509_STORE *x509_cas;
+#endif
 
 /* Initial number of bits used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -87,6 +93,107 @@ static LIST_HEAD (x509_list, x509_hash) *x509_tab;
 
 /* Works both as a maximum index and a mask.  */
 static int bucket_mask;
+
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+/*
+ * Given an X509 certificate, create a KeyNote assertion where
+ * Issuer/Subject -> Authorizer/Licensees,
+ */
+int
+x509_generate_kn (X509 *cert)
+{
+  char *fmt = "Authorizer: \"%s\"\nLicensees: \"%s\"\n";
+  X509_NAME *issuer, *subject;
+  struct keynote_deckey dc;
+  char *ikey, *skey, *buf;
+  X509_STORE_CTX csc;
+  X509 *icert;
+  STACK *sk;
+  RSA *key;
+
+  issuer = LC (X509_get_issuer_name, (cert));
+  subject = LC (X509_get_subject_name, (cert));
+
+  /* Missing or self-signed, ignore cert but don't report failure */
+  if (!issuer || !subject || LC (X509_name_cmp, (issuer, subject)))
+    return 1;
+
+  if (!x509_cert_get_key (cert, &key))
+    {
+      log_print ("x509_generate_kn: failed to get public key from cert");
+      return 0;
+    }
+
+  dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
+  dc.dec_key = (void *) key;
+  ikey = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
+			     KEYNOTE_PUBLIC_KEY));
+  if (LKV (keynote_errno) == ERROR_MEMORY)
+      log_fatal ("x509_generate_kn: failed to get memory for public key");
+  if (ikey == NULL)
+    {
+      return 0;
+      LC (RSA_free, (key));
+    }
+  LC (RSA_free, (key));
+
+  /* Now find issuer's certificate so we can get the public key */
+  LC (X509_STORE_CTX_init, (&csc, x509_cas, NULL, NULL));
+  sk = sk_new_null ();
+  icert = LC (X509_find_by_subject, (sk, issuer));
+  sk_free (sk);
+  LC (X509_STORE_CTX_cleanup, (&csc));
+
+  if (icert == NULL)
+    {
+      free(ikey);
+      log_print ("x509_generate_kn: "
+		 "missing certificates, cannot construct X509 chain");
+      return 0;
+    }
+
+  if (!x509_cert_get_key (icert, &key))
+    {
+      free (ikey);
+      log_print ("x509_generate_kn: failed to get public key from cert");
+      return 0;
+    }
+
+  dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
+  dc.dec_key = (void *) key;
+  skey = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
+			     KEYNOTE_PUBLIC_KEY));
+  if (LKV (keynote_errno) == ERROR_MEMORY)
+      log_fatal ("x509_generate_kn: failed to get memory for public key");
+  if (skey == NULL)
+    {
+      free (ikey);
+      LC (RSA_free, (key));
+      return 0;
+    }
+  LC (RSA_free, (key));
+
+  buf = calloc (strlen (fmt) + strlen (ikey) + strlen (skey), sizeof (char));
+  if (buf == NULL)
+    log_fatal ("x509_generate_kn: "
+	       "failed to allocate memory for KeyNote credential");
+
+  sprintf (buf, fmt, ikey, skey);
+  free (ikey);
+  free (skey);
+
+  if (LK (kn_add_assertion, (keynote_sessid, buf, strlen (buf),
+			     ASSERT_FLAG_LOCAL)) == -1)
+    {
+      log_error ("x509_generate_kn: failed to add new KeyNote credential");
+      free (buf);
+      return 0;
+    }
+
+  free (buf);
+  return 1;
+}
+#endif /* USE_KEYNOTE || HAVE_DLOPEN */
 
 u_int16_t
 x509_hash (u_int8_t *id, size_t len)
@@ -191,6 +298,7 @@ x509_hash_enter (X509 *cert)
 int
 x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   DIR *dir;
   struct dirent *file;
   BIO *certh;
@@ -227,7 +335,7 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       log_debug (LOG_CRYPTO, 60, "x509_read_from_dir: reading certificate %s",
 		 file->d_name);
 
-      certh = BIO_new (BIO_s_file ());
+      certh = LC (BIO_new, (LC (BIO_s_file, ())));
       if (!certh)
 	{
 	  log_error ("x509_read_from_dir: BIO_new (BIO_s_file ()) failed");
@@ -237,23 +345,25 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       strncpy (fullname + off, file->d_name, size);
       fullname[off + size] = 0;
 
-      if (BIO_read_filename (certh, fullname) == -1)
+      if (LC (BIO_read_filename, (certh, fullname)) == -1)
 	{
-	  BIO_free (certh);
-	  log_error ("x509_read_from_dir: BIO_read_filename () failed");
+	  LC (BIO_free, (certh));
+	  log_error ("x509_read_from_dir: "
+		     "BIO_read_filename (certh, \"%s\") failed",
+		     fullname);
 	  continue;
 	}
 
-      cert = PEM_read_bio_X509 (certh, NULL, NULL);
-      BIO_free (certh);
+      cert = LC (PEM_read_bio_X509, (certh, NULL, NULL));
+      LC (BIO_free, (certh));
       if (cert == NULL)
 	{
-	  log_error ("x509_read_from_dir: PEM_read_bio_X509 (%s) failed",
+	  log_error ("x509_read_from_dir: PEM_read_bio_X509 failed for %s",
 		     file->d_name);
 	  continue;
 	}
 
-      if (!X509_STORE_add_cert (ctx, cert))
+      if (!LC (X509_STORE_add_cert, (ctx, cert)))
 	{
 	  /*
 	   * This is actually expected if we have several certificates only
@@ -261,24 +371,28 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 	   * strange.  Consider multi-homed machines.
 	   */
 	  log_debug (LOG_CRYPTO, 50,
-		     "x509_read_from_dir: X509_STORE_add_cert (%s) failed",
+		     "x509_read_from_dir: X509_STORE_add_cert failed for %s",
 		     file->d_name);
 	}
 
       if (hash && !x509_hash_enter (cert))
-	log_print ("x509_read_from_dir: X509_hash_enter (%s) failed",
+	log_print ("x509_read_from_dir: x509_hash_enter (%s) failed",
 		   file->d_name);
     }
 
   closedir (dir);
 
   return 1;
+#else
+  return 0;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
 
 /* Initialize our databases and load our own certificates.  */
 int
 x509_cert_init (void)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   char *dirname;
 
   x509_hash_init ();
@@ -291,7 +405,7 @@ x509_cert_init (void)
       return 0;
     }
 
-  x509_certs = X509_STORE_new ();
+  x509_certs = LC (X509_STORE_new, ());
   if (!x509_certs)
     {
       log_print ("x509_cert_init: creating new X509_STORE failed");
@@ -312,7 +426,7 @@ x509_cert_init (void)
       return 0;
     }
 
-  x509_cas = X509_STORE_new ();
+  x509_cas = LC (X509_STORE_new, ());
   if (!x509_cas)
     {
       log_print ("x509_cert_init: creating new X509_STORE failed");
@@ -326,17 +440,30 @@ x509_cert_init (void)
     }
 
   return 1;
+#else
+  return 0;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
 
 void *
 x509_cert_get (u_int8_t *asn, u_int32_t len)
 {
+#ifndef USE_LIBCRYPTO
+  /*
+   * If we don't have a statically linked libcrypto, the dlopen must have
+   * succeeded for X.509 to be usable.
+   */ 
+  if (!libcrypto)
+    return 0;
+#endif
+
   return x509_from_asn (asn, len);
 }
 
 int
 x509_cert_validate (void *scert)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   X509_STORE_CTX csc;
   X509_NAME *issuer, *subject;
   X509 *cert = (X509 *)scert;
@@ -347,53 +474,76 @@ x509_cert_validate (void *scert)
    * Validate the peer certificate by checking with the CA certificates we
    * trust.
    */
-  X509_STORE_CTX_init (&csc, x509_cas, cert, NULL);
-  res = X509_verify_cert (&csc);
-  X509_STORE_CTX_cleanup (&csc);
+  LC (X509_STORE_CTX_init, (&csc, x509_cas, cert, NULL));
+  res = LC (X509_verify_cert, (&csc));
+  LC (X509_STORE_CTX_cleanup, (&csc));
 
   /* Return if validation succeeded or self-signed certs are not accepted.  */
   if (res || !conf_get_str ("X509-certificates", "Accept-self-signed"))
     return res;
 
-  issuer = X509_get_issuer_name (cert);
-  subject = X509_get_subject_name (cert);
+  issuer = LC (X509_get_issuer_name, (cert));
+  subject = LC (X509_get_subject_name, (cert));
   
-  if (!issuer || !subject || X509_name_cmp (issuer, subject))
+  if (!issuer || !subject || LC (X509_name_cmp, (issuer, subject)))
     return 0;
 
-  key = X509_get_pubkey (cert);
+  key = LC (X509_get_pubkey, (cert));
   if (!key)
     return 0;
 
-  if (X509_verify (cert, key) == -1)
+  if (LC (X509_verify, (cert, key)) == -1)
     return 0;
 
   return 1;
+#else
+  return 0;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
 
 int
 x509_cert_insert (void *scert)
 {
-  X509 *cert = X509_dup ((X509 *)scert);
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+  X509 *cert;
   int res;
 
+  cert = LC (X509_dup, ((X509 *)scert));
   if (!cert)
     {
       log_print ("x509_cert_insert: X509_dup failed");
       return 0;
     }
 
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#ifdef USE_KEYNOTE
+  if (x509_generate_kn (cert) == 0)
+#else
+  if (libkeynote && x509_generate_kn (cert) == 0)
+#endif
+    {
+      log_print ("x509_cert_insert: x509_generate_kn failed");
+      LC (X509_free, (cert));
+      return 0;
+    }
+#endif /* USE_KEYNOTE || HAVE_DLOPEN */
+
   res = x509_hash_enter (cert);
   if (!res)
-    X509_free (cert);
+    LC (X509_free, (cert));
 
   return res;
+#else
+  return 0;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
 
 void
 x509_cert_free (void *cert)
 {
-  X509_free ((X509 *)cert);
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+  LC (X509_free, ((X509 *)cert));
+#endif
 }
 
 /* Validate the BER Encoding of a RDNSequence in the CERT_REQ payload.  */
@@ -401,7 +551,8 @@ int
 x509_certreq_validate (u_int8_t *asn, u_int32_t len)
 {
   int res = 1;
-  /*  struct norm_type name = SEQOF ("issuer", RDNSequence);
+#if 0
+  struct norm_type name = SEQOF ("issuer", RDNSequence);
 
   if (!asn_template_clone (&name, 1)
       || (asn = asn_decode_sequence (asn, len, &name)) == 0)
@@ -409,7 +560,8 @@ x509_certreq_validate (u_int8_t *asn, u_int32_t len)
       log_print ("x509_certreq_validate: can not decode 'acceptable CA' info");
       res = 0;
     }
-    asn_free (&name); */
+  asn_free (&name);
+#endif
 
   /* XXX - not supported directly in SSL - later */
 
@@ -420,7 +572,8 @@ x509_certreq_validate (u_int8_t *asn, u_int32_t len)
 void *
 x509_certreq_decode (u_int8_t *asn, u_int32_t len)
 {
-  /* XXX This needs to be done later.
+#if 0
+  /* XXX This needs to be done later.  */
   struct norm_type aca = SEQOF ("aca", RDNSequence);
   struct norm_type *tmp;
   struct x509_aca naca, *ret;
@@ -459,7 +612,8 @@ x509_certreq_decode (u_int8_t *asn, u_int32_t len)
   return ret;
 
  fail:
- asn_free (&aca); */
+  asn_free (&aca);
+#endif
   return 0;
 }
 
@@ -482,32 +636,36 @@ x509_free_aca (void *blob)
 X509 *
 x509_from_asn (u_char *asn, u_int len)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   BIO *certh;
   X509 *scert = NULL;
 
-  certh = BIO_new (BIO_s_mem ());
+  certh = LC (BIO_new, (LC (BIO_s_mem, ())));
   if (!certh)
     {
-      log_error ("X509_from_asn: BIO_new (BIO_s_mem ()) failed");
+      log_error ("x509_from_asn: BIO_new (BIO_s_mem ()) failed");
       return NULL;
     }
 	  
-  if (BIO_write (certh, asn, len) == -1)
+  if (LC (BIO_write, (certh, asn, len)) == -1)
     {
-      log_error ("X509_from_asn: BIO_write failed\n");
+      log_error ("x509_from_asn: BIO_write failed\n");
       goto end;
     }
 
-  scert = d2i_X509_bio (certh, NULL);
+  scert = LC (d2i_X509_bio, (certh, NULL));
   if (!scert)
     {
-      log_print ("X509_from_asn: d2i_X509_bio failed\n");
+      log_print ("x509_from_asn: d2i_X509_bio failed\n");
       goto end;
     }
 
  end:
-  BIO_free (certh);
+  LC (BIO_free, (certh));
   return scert;
+#else
+  return NULL;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
 
 /*
@@ -560,7 +718,7 @@ x509_check_subjectaltname (u_char *id, u_int id_len, X509 *scert)
   if (!ret)
     {
       log_debug (LOG_CRYPTO, 50,
-		 "X509_check_subjectaltname: "
+		 "x509_check_subjectaltname: "
 		 "our ID type does not match X509 cert ID type");
       return 0;
     }
@@ -568,7 +726,7 @@ x509_check_subjectaltname (u_char *id, u_int id_len, X509 *scert)
   if (altlen != id_len || memcmp (altname, id, id_len) != 0)
     {
       log_debug (LOG_CRYPTO, 50,
-		 "X509_check_subjectaltname: "
+		 "x509_check_subjectaltname: "
 		 "our ID does not match X509 cert ID");
       return 0;
     }
@@ -584,6 +742,7 @@ int
 x509_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 		  u_int32_t *certlen)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   struct x509_aca *aca = data;
   X509 *scert;
   u_char *p;
@@ -595,7 +754,7 @@ x509_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
   /* We need our ID to find a certificate.  */
   if (!id)
     {
-      log_print ("X509_cert_obtain: ID is missing");
+      log_print ("x509_cert_obtain: ID is missing");
       return 0;
     }
 
@@ -605,46 +764,50 @@ x509_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 
   if (!x509_check_subjectaltname (id, id_len, scert))
     {
-      log_print ("X509_cert_obtain: subjectAltName does not match id");
+      log_print ("x509_cert_obtain: subjectAltName does not match id");
       free (*cert);
       return 0;
     }
 
-  *certlen = i2d_X509 (scert, NULL);
+  *certlen = LC (i2d_X509, (scert, NULL));
   p = *cert = malloc (*certlen);
   if (!p)
     {
-      log_error ("X509_cert_obtain: malloc (%d) failed", *certlen);
+      log_error ("x509_cert_obtain: malloc (%d) failed", *certlen);
       return 0;
     }
-  *certlen = i2d_X509 (scert, &p);
+  *certlen = LC (i2d_X509, (scert, &p));
 
   return 1;
+#else
+  return 0;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
 
 /* Returns a pointer to the subjectAltName information of X509 certificate.  */
 int
 x509_cert_subjectaltname (X509 *scert, u_int8_t **altname, u_int32_t *len)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   X509_EXTENSION *subjectaltname;
   u_int8_t *sandata;
   int extpos;
   int santype, sanlen;
 
-  extpos = X509_get_ext_by_NID (scert, NID_subject_alt_name, -1);
+  extpos = LC (X509_get_ext_by_NID, (scert, NID_subject_alt_name, -1));
   if (extpos == -1)
     {
-      log_print ("X509_cert_subjectaltname: "
+      log_print ("x509_cert_subjectaltname: "
 		 "certificate does not contain subjectAltName");
       return 0;
     }
 
-  subjectaltname = X509_get_ext (scert, extpos);
+  subjectaltname = LC (X509_get_ext, (scert, extpos));
 
   if (!subjectaltname || !subjectaltname->value
       || !subjectaltname->value->data || subjectaltname->value->length < 4)
     {
-      log_print ("X509_check_subjectaltname: "
+      log_print ("x509_check_subjectaltname: "
 		 "invalid subjectaltname extension");
       return 0;
     }
@@ -657,7 +820,7 @@ x509_cert_subjectaltname (X509 *scert, u_int8_t **altname, u_int32_t *len)
 
   if (sanlen + 4 != subjectaltname->value->length) 
     {
-      log_print ("X509_check_subjectaltname: subjectaltname invalid length");
+      log_print ("x509_check_subjectaltname: subjectaltname invalid length");
       return 0;
     }
   
@@ -665,6 +828,9 @@ x509_cert_subjectaltname (X509 *scert, u_int8_t **altname, u_int32_t *len)
   *altname = sandata;
 
   return santype;
+#else
+  return 0;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
 
 int
@@ -718,20 +884,24 @@ x509_cert_get_subject (void *scert, u_int8_t **id, u_int32_t *id_len)
 int
 x509_cert_get_key (void *scert, void *keyp)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   X509 *cert = scert;
   EVP_PKEY *key;
 
-  key = X509_get_pubkey (cert);
+  key = LC (X509_get_pubkey, (cert));
 
   /* Check if we got the right key type */
   if (key->type != EVP_PKEY_RSA)
     {
       log_print ("x509_cert_get_key: public key is not a RSA key");
-      X509_free (cert);
+      LC (X509_free, (cert));
       return 0;
     }
 
-  *(RSA **)keyp = RSAPublicKey_dup (key->pkey.rsa);
+  *(RSA **)keyp = LC (RSAPublicKey_dup, (key->pkey.rsa));
 
   return *(RSA **)keyp == NULL ? 0 : 1;
+#else
+  return 0;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
