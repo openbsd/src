@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.57 2003/12/02 01:52:32 mickey Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.58 2003/12/10 07:34:03 itojun Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1888,7 +1888,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 		}
 		
 		dstkva = uvm_pagermapin(tpps, npages, swmapflags);
-		if (dstkva == NULL) {
+		if (dstkva == 0) {
 			uvm_pagermapout(kva, npages);
 			uvm_swap_freepages(tpps, npages);
 			return (VM_PAGER_AGAIN);
