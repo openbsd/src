@@ -1,4 +1,4 @@
-/* $OpenBSD: growfs.c,v 1.2 2003/07/29 22:54:26 tedu Exp $ */
+/* $OpenBSD: growfs.c,v 1.3 2003/08/04 04:49:57 tedu Exp $ */
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.2 2003/07/29 22:54:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.3 2003/08/04 04:49:57 tedu Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -515,7 +515,7 @@ frag_adjust(daddr_t frag, int sign)
 	for (f = rounddown(frag, sblock.fs_frag);
 	    f < roundup(frag + 1, sblock.fs_frag); f++) {
 		/*
-		 * Count contiguos free fragments.
+		 * Count contiguous free fragments.
 		 */
 		if (isset(cg_blksfree(&acg), f))
 			fragsize++;
@@ -929,7 +929,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		 * relocate  all blocks as needed, so we relocate  the  whole
 		 * cylinder  group summary to a new group. We try to use  the
 		 * first complete new cylinder group just created. Within the
-		 * cylinder  group we allign the area immediately  after  the
+		 * cylinder  group we align the area immediately  after  the
 		 * cylinder  group  information location in order  to  be  as
 		 * close as possible to the original implementation of ffs.
 		 *
@@ -989,7 +989,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 			}
 			/*
 			 * Point  "d" to the last fragment of the  last
-			 * (incomplete) block of the clinder summary.
+			 * (incomplete) block of the cylinder summary.
 			 */
 			d++;
 			frag_adjust(d % sblock.fs_fpg, 1);
@@ -1933,9 +1933,9 @@ main(int argc, char **argv)
 		err(1, "%s", device);
 
 	/*
-	 * Try  to read a label and gess the slice if not  specified.  This
-	 * code  should guess the right thing and avaid to bother the  user
-	 * user with the task of specifying the option -v on vinum volumes.
+	 * Try  to read a label and guess the slice if not  specified.  This
+	 * code  should guess the right thing and avoid to bother the user
+	 * with the task of specifying the option -v on vinum volumes.
 	 */
 	cp = device + strlen(device)-1;
 	lp = get_disklabel(fsi);
@@ -2187,7 +2187,7 @@ usage(void)
 
 /* *********************************************************** updclst ***** */
 /*
- * This updates most paramters and the bitmap related to cluster. We have to
+ * This updates most parameters and the bitmap related to cluster. We have to
  * assume, that sblock, osblock, acg are set up.
  */
 static void
