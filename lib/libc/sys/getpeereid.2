@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeereid.2,v 1.5 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getpeereid.2,v 1.6 2003/11/27 14:31:24 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,12 @@
 .Sh DESCRIPTION
 .Fn getpeereid
 returns the effective user ID and group ID of the peer connected to
-the UNIX domain socket
-.Fa s .
+a UNIX domain socket (see
+.Xr unix 4 ) .
+The argument
+.Fa s
+must be of type
+.Dv SOCK_STREAM .
 .Pp
 One common use is for UNIX domain servers to determine the credentials
 of clients that have connected to it.
@@ -106,7 +110,8 @@ process address space.
 .Xr bind 2 ,
 .Xr getpeername 2 ,
 .Xr getsockname 2 ,
-.Xr socket 2
+.Xr socket 2 ,
+.Xr unix 4
 .Sh HISTORY
 The
 .Fn getpeereid
