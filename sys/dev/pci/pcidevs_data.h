@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.738 2004/05/21 20:29:44 marco Exp 
+ *	OpenBSD: pcidevs,v 1.739 2004/05/28 15:42:59 marco Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -661,10 +661,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2120S,
 	    "ASR-2120S",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACCERCSATA,
-	    "DELL CERC-SATA",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC364,
