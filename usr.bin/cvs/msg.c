@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.3 2004/09/25 12:22:54 jfb Exp $	*/
+/*	$OpenBSD: msg.c,v 1.4 2004/09/27 17:11:07 jfb Exp $	*/
 /*
  * Copyright (c) 2002 Matthieu Herrb
  * Copyright (c) 2001 Niels Provos <provos@citi.umich.edu>
@@ -224,5 +224,5 @@ cvsd_recvmsg(int fd, u_int *type, void *dst, size_t *len)
 
 	*type = msg.cm_type;
 
-	return (0);
+	return (1);
 }
