@@ -1375,7 +1375,8 @@ pmap_collect(pmap)
 	int s;
 
 #ifdef DEBUG
-	printf("pmap_collect(%x) ", pmap);
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_collect(%x) ", pmap);
 #endif
 
 	if (pmap != pmap_kernel())
