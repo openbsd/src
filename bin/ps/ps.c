@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.28 2002/06/08 22:41:46 art Exp $	*/
+/*	$OpenBSD: ps.c,v 1.29 2002/06/09 05:46:44 art Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.28 2002/06/08 22:41:46 art Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.29 2002/06/09 05:46:44 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -415,20 +415,12 @@ saveuser(ki)
 	struct usave *usp;
 
 	usp = &ki->ki_u;
-	if (kd != NULL && kvm_read(kd, (u_long)&KI_PROC(ki)->p_addr->u_stats,
-	    &pstats, sizeof(pstats)) == sizeof(pstats)) {
-		/*
-		 * The u-area might be swapped out, and we can't get
-		 * at it because we have a crashdump and no swap.
-		 * If it's here fill in these fields, otherwise, just
-		 * leave them 0.
-		 */
-		usp->u_start = pstats.p_start;
-		usp->u_ru = pstats.p_ru;
-		usp->u_cru = pstats.p_cru;
-		usp->u_valid = 1;
-	} else
-		usp->u_valid = 0;
+	usp->u_valid = KI_EPROC(ki)->e_pstats_valid;
+	if (!usp->u_valid)
+		return;
+	usp->u_start = KI_EPROC(ki)->e_pstats.p_start;
+	usp->u_ru = KI_EPROC(ki)->e_pstats.p_ru;
+	usp->u_cru = KI_EPROC(ki)->e_pstats.p_cru;
 }
 
 static int
