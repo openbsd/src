@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.81 2000/11/06 23:16:35 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.82 2000/11/29 13:51:27 provos Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -500,12 +500,10 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 	if (options.proxy_command != NULL && options.check_host_ip)
 		options.check_host_ip = 0;
 
-	if (options.check_host_ip) {
-		if (getnameinfo(hostaddr, hostaddr->sa_len, ntop, sizeof(ntop),
-		    NULL, 0, NI_NUMERICHOST) != 0)
-			fatal("check_host_key: getnameinfo failed");
-		ip = xstrdup(ntop);
-	}
+	if (getnameinfo(hostaddr, hostaddr->sa_len, ntop, sizeof(ntop),
+			NULL, 0, NI_NUMERICHOST) != 0)
+		fatal("check_host_key: getnameinfo failed");
+	ip = xstrdup(ntop);
 
 	/*
 	 * Store the host key from the known host file in here so that we can
@@ -569,10 +567,10 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			char prompt[1024];
 			char *fp = key_fingerprint(host_key);
 			snprintf(prompt, sizeof(prompt),
-			    "The authenticity of host '%.200s' can't be established.\n"
+			    "The authenticity of host '%.200s (%s)' can't be established.\n"
 			    "%s key fingerprint is %s.\n"
 			    "Are you sure you want to continue connecting (yes/no)? ",
-			    host, type, fp);
+			    host, ip, type, fp);
 			if (!read_yes_or_no(prompt, -1))
 				fatal("Aborted by user!\n");
 		}
@@ -648,8 +646,8 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		 */
 		break;
 	}
-	if (options.check_host_ip)
-		xfree(ip);
+
+	xfree(ip);
 }
 
 /*
