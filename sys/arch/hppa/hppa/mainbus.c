@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.49 2003/08/20 20:53:31 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.50 2003/08/20 21:44:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -31,6 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "power.h"
 
 #undef BTLBDEBUG
 
@@ -1010,9 +1011,11 @@ mbattach(parent, self, aux)
 	nca.ca_dmatag = &hppa_dmatag;
 	config_found(self, &nca, mbprint);
 
+#if NPOWER > 0
 	/* get some power */
 	nca.ca_name = "power";
 	config_found(self, &nca, mbprint);
+#endif
 
 	bzero (&nca, sizeof(nca));
 	nca.ca_name = "mainbus";
