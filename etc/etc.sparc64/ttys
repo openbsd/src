@@ -1,13 +1,14 @@
 #
-#	$OpenBSD: ttys,v 1.2 2002/01/17 22:30:25 drahn Exp $
+#	$OpenBSD: ttys,v 1.3 2002/01/31 22:49:58 jason Exp $
 #
 # name	getty				type	status		comments
 #
 console	"/usr/libexec/getty suncons"	sun	on  secure
 ttya	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyb	"/usr/libexec/getty std.9600"	unknown	off secure
-ttyc	"/usr/libexec/getty std.9600"	unknown	off secure
-ttyd	"/usr/libexec/getty std.9600"	unknown	off secure
+# sab0
+ttyh0	"/usr/libexec/getty std.9600"	unknown	off secure
+ttyh1	"/usr/libexec/getty std.9600"	unknown	off secure
 # magma0
 ttym0	"/usr/libexec/getty std.9600"	unknown	off secure
 ttym1	"/usr/libexec/getty std.9600"	unknown	off secure
