@@ -1,31 +1,31 @@
-.\"	$OpenBSD: dig.1,v 1.3 1998/02/03 00:29:23 millert Exp $
+.\"	$OpenBSD: dig.1,v 1.4 1998/03/09 06:39:52 d Exp $
 .\" $From: dig.1,v 8.1 1994/12/15 06:24:10 vixie Exp $
 .\"
 .\" ++Copyright++ 1993
 .\" -
 .\" Copyright (c) 1993
-.\"    The Regents of the University of California.  All rights reserved.
-.\" 
+.\" The Regents of the University of California. All rights reserved.
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
+.\" notice, this list of conditions and the following disclaimer.
 .\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
+.\" must display the following acknowledgement:
 .\" 	This product includes software developed by the University of
 .\" 	California, Berkeley and its contributors.
 .\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
-.\" 
+.\" may be used to endorse or promote products derived from this software
+.\" without specific prior written permission.
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
 .\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 .\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
 .\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -35,17 +35,17 @@
 .\" SUCH DAMAGE.
 .\" -
 .\" Portions Copyright (c) 1993 by Digital Equipment Corporation.
-.\" 
+.\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies, and that
 .\" the name of Digital Equipment Corporation not be used in advertising or
 .\" publicity pertaining to distribution of the document or software without
 .\" specific, written prior permission.
-.\" 
+.\"
 .\" THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
 .\" WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
-.\" OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+.\" OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL DIGITAL EQUIPMENT
 .\" CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
 .\" DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
 .\" PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
@@ -57,66 +57,124 @@
 .\" Distributed with 'dig' version 2.0 from University of Southern
 .\" California Information Sciences Institute (USC-ISI).
 .\"
-.\"       dig.1   2.0 (USC-ISI) 8/30/90
+.\" dig.1 2.0 (USC-ISI) 8/30/90
 .\"
 .\" Man page reformatted for this release by Andrew Cherenson
 .\" (arc@sgi.com)
 .\"
-.TH DIG 1 "August 30, 1990"
-.SH NAME
+.Dd August 30, 1990
+.Os OpenBSD
+.Dt dig 1
+.Sh NAME
 dig \- send domain name query packets to name servers
-.SH SYNOPSIS
-.B dig 
-.RI [ @\fIserver\fP ]
-.I domain
-.RI [ "<query-type>" ]
-.RI [ "<query-class>" ]
-.RI [ "+<query-option>" ]
-.RI [ "\-<dig-option>" ]
-.RI [ "%comment" ]
-.SH DESCRIPTION
-\fIDig\fP (domain information groper) is a flexible command line tool
+.Sh SYNOPSIS
+.Nm dig
+.Op Cm @ Ns Ar server
+.Ar domain
+.Op Ar query-type
+.Op Ar query-class
+.\" .Op Cm \&- Ns Ar dig-option
+.Op Fl f Ar file
+.Op Fl T Ar time
+.Op Fl p Ar port
+.Op Fl P Ns Op Ar ping-string
+.Op Fl t Ar query-type
+.Op Fl c Ar query-class
+.Op Fl envsav
+.Op Fl envset
+.Op Fl stick | Fl nostick
+.Oo
+.Cm + Ns Ar keyword Ns 
+.Oo
+.Cm \= Ns Ar value
+.Oc
+.Oc
+.Op Cm % Ns Ar comment
+.Nm dig
+.Op Cm @ Ns Ar server
+.Fl x Ar dot-notation-address
+.Op ...
+.Sh DESCRIPTION
+.Nm
+(domain information groper) is a flexible command line tool
 which can be used to gather information from the Domain
-Name System servers. \fIDig\fP has two modes: simple interactive mode
+Name System servers.
+.Nm
+has two modes: simple interactive mode
 which makes a single query, and batch which executes a query for
 each in a list of several query lines. All query options are
 accessible from the command line.
-.PP
-The usual simple use of \fIdig\fP will take the form:
-.sp 1
-	dig  @server  domain   query-type  query-class
-.sp 1
+.Pp
+The usual simple use of
+.Nm
+will take the form:
+.Bd -filled -offset indent 
+.Ic dig 
+.Cm @ Ns Ar server 
+.Ar domain 
+.Ar query-type 
+.Ar query-class
+.Ed
 where:
-.IP \fIserver\fP 
+.Bl -tag -width "query-class" -offset
+.It Ar server
 may be either a domain name or a dot-notation
-Internet address. If this optional field is omitted, \fIdig\fP
+Internet address. If this optional field is omitted,
+.Nm
 will attempt to use the default name server for your machine.
-.sp 1
-\fBNote:\fP If a domain name is specified, this will be resolved
+.Pp
+.Sy Note:
+If a domain name is specified, this will be resolved
 using the domain name system resolver (i.e., BIND). If your
-system does not support DNS,  you may \fIhave\fP to specify a
-dot-notation address.  Alternatively, if there is a server
-at your disposal somewhere,  all that is required is that
-/etc/resolv.conf be present and indicate where the default
-name servers  reside,  so that  \fIserver\fP itself can be
-resolved. See 
-.IR resolver (@FORMAT_EXT@)
-for information on /etc/resolv.conf.
-(WARNING: Changing /etc/resolv.conf will affect
-the standard  resolver library and  potentially several
+system does not support DNS, you may
+.Em have
+to specify a
+dot-notation address. Alternatively, if there is a server
+at your disposal somewhere, all that is required is that
+.Pa /etc/resolv.conf
+be present and indicate where the default
+name servers reside, so that 
+.Ar server
+itself can be
+resolved. See
+.Xr resolv.conf 5
+for information on
+.Pa /etc/resolv.conf .
+.Pp
+.Sy Warning:
+Changing
+.Pa /etc/resolv.conf
+will affect
+the standard resolver library and potentially several
 programs which use it.) As an option, the user may set the
-environment variable LOCALRES to name a file which is to
-be used instead of /etc/resolv.conf (LOCALRES is specific
-to the \fIdig\fP resolver and  not referenced by the standard
-resolver). If the LOCALRES variable is not set or the file
-is not readable then /etc/resolv.conf will be used.
-.IP \fIdomain\fP
+environment variable
+.Ev LOCALRES
+to name a file which is to
+be used instead of
+.Pa /etc/resolv.conf
+.Ev ( LOCALRES
+is specific
+to the
+.Nm
+resolver and not referenced by the standard
+resolver). If the
+.Ev LOCALRES
+variable is not set or the file
+is not readable then
+.Pa /etc/resolv.conf
+will be used.
+.It Ar domain
 is the domain name for which you are requesting information.
-See OPTIONS [-x] for convenient way to specify inverse address
+See
+.Sx "OTHER OPTIONS"
+.Fl ( x )
+for a convenient way to specify inverse address
 query.
-.IP \fIquery-type\fP 
+.It Ar query-type
 is the type of information (DNS query type) that
-you are requesting. If omitted, the default is "a" (T_A = address).
+you are requesting. If omitted, the default is
+.Dq Li a
+(T_A = address).
 The following types are recognized:
 .sp 1
 .ta \w'hinfoXX'u +\w'T_HINFOXX'u
@@ -133,9 +191,11 @@ txt	T_TXT	arbitrary number of strings
 .fi
 .sp 1
 (See RFC 1035 for the complete list.)
-.IP \fIquery-class\fP
+.It Ar query-class
 is the network class requested in the query. If
-omitted, the default is "in" (C_IN = Internet).
+omitted, the default is
+.Dq Li in
+(C_IN = Internet).
 The following classes are recognized:
 .sp 1
 .ta \w'hinfoXX'u +\w'T_HINFOXX'u
@@ -146,129 +206,204 @@ any	C_ANY	all/any class information
 .sp 1
 (See RFC 1035 for the complete list.)
 .sp 1
-\fBNote:\fP
-"Any" can be used to specify a class and/or a type of
-query. \fIDig\fP will parse the first occurrence of "any"
-to mean query-type = T_ANY. To specify query-class =
-C_ANY you must either specify "any" twice, or set
-query-class using "\-c" option (see below).
-.SH OTHER OPTIONS
-.IP "%ignored-comment"
-"%" is used to included an argument that is simply not
-parsed.  This may be useful  if running \fIdig\fP in batch
-mode. Instead of resolving every @server-domain-name in
-a list of queries, you can avoid the overhead of doing
+.Sy Note:
+.Dq Li any
+can be used to specify a class and/or a type of
+query.
+.Nm
+will parse the first occurrence of
+.Dq Li any
+to mean
+.Ar query-type
+= T_ANY. To specify
+.Ar query-class
+= C_ANY you must either specify
+.Dq Li any
+twice, or set
+query-class using
+.Fl c
+option (see below).
+.El
+.Sh OTHER OPTIONS
+.Bl -tag -width Ar -offset
+.It Cm % Ns ignored-comment
+.Dq Li %
+is used to included an argument that is simply not
+parsed. This may be useful if running
+.Nm
+in batch
+mode. Instead of resolving every 
+.Cm @ Ns Ar server-domain-name 
+in a list of queries, you can avoid the overhead of doing
 so, and still have the domain name on the command line
 as a reference. Example:
-.sp 1
-	dig  @128.9.0.32  %venera.isi.edu  mx  isi.edu
-.sp 1
-.IP "\-<dig option>"
-"\-" is used to specify an option which effects the
-operation of \fIdig\fP. The following options are currently
-available (although not guaranteed to be useful):
-.RS
-.IP "\-x \fIdot-notation-address\fP"
+.D1 Ic "dig @128.9.0.32 %venera.isi.edu mx isi.edu"
+.\" .It Cm \- Ns dig-option
+.\" .Dq Li \-
+.\" is used to specify an option which affects the
+.\" operation of
+.\" .Nm dig .
+.\" The following options are currently
+.\" available (although not guaranteed to be useful):
+.\" .Bl -tag -width Fl -offset
+.It Fl x Ar dot-notation-address
 Convenient form to specify inverse address mapping.
-Instead of "dig 32.0.9.128.in-addr.arpa" one can
-simply "dig -x 128.9.0.32".
-.IP "\-f \fIfile\fP"
-File for \fIdig\fP batch mode. The file contains a list
+Instead of
+.D1 Ic "dig 32.0.9.128.in-addr.arpa"
+one can
+simply
+.D1 Ic "dig -x 128.9.0.32"
+.It Fl f Ar file
+File for
+.Nm
+batch mode. The file contains a list
 of query specifications (\fIdig\fP command lines) which
 are to be executed successively. Lines beginning
 with ';', '#', or '\\n' are ignored. Other options
 may still appear on command line, and will be in
 effect for each batch query.
-.IP "\-T \fItime\fP"
+.It Fl T Ar time
 Time in seconds between start of successive
 queries when running in batch mode. Can be used
-to keep two or more batch \fIdig\fP commands running
+to keep two or more batch
+.Nm
+commands running
 roughly in sync. Default is zero.
-.IP "\-p \fIport\fP"  
+.It Fl p Ar port
 Port number. Query a name server listening to a
 non-standard port number. Default is 53.
-.IP "\-P[\fIping-string\fP]"
-After query returns, execute a 
-.IR ping (@SYS_OPS_EXT@)
+.It Fl P Ns Op Ar ping-string
+After query returns, execute a
+.Xr ping 1
 command
 for response time comparison. This rather
-unelegantly makes a call to the shell. The last
-three lines of statistics is printed for the
+inelegantly makes a call to the shell. The last
+three lines of statistics are printed for the
 command:
-.sp 1
-	ping \-s server_name 56 3
-.sp 1
-If the optional "ping string" is present, it
-replaces "ping \-s" in the shell command.
-.IP "\-t \fIquery-type\fP"
-Specify type of query. May specify either an
+.Dl ping -s server_name 56 3
+If the optional
+.Ar ping-string
+is present, it
+replaces
+.Dq Li "ping \-s"
+in the shell command.
+.It Fl t Ar query-type
+Specify the type of query. This may specify either an
 integer value to be included in the type field
 or use the abbreviated mnemonic as discussed
-above (i.e., mx  = T_MX).
-.IP "\-c \fIquery-class\fP"  
-Specify class of query. May specify either an
+above (i.e., mx = T_MX).
+.It Fl c Ar query-class
+Specify the class of query. This may specify either an
 integer value to be included in the class field
 or use the abbreviated mnemonic as discussed
 above (i.e., in = C_IN).
-.IP "\-envsav"
-This flag specifies that the \fIdig\fP environment
+.It Fl envsav
+This flag specifies that the
+.Nm
+environment
 (defaults, print options, etc.), after
 all of the arguments are parsed, should be saved
 to a file to become the default environment.
 Useful if you do not like the standard set of
 defaults and do not desire to include a
-large number of options each time \fIdig\fP is used.
+large number of options each time
+.Nm
+is used.
 The environment consists of resolver state
 variable flags, timeout, and retries as well as
-the flags detailing \fIdig\fP output (see below).
-If the shell environment variable LOCALDEF is set
+the flags detailing
+.Nm
+output (see below).
+If the shell environment variable
+.Ev LOCALDEF
+is set
 to the name of a file, this is where the default
-\fIdig\fP environment is saved. If not, the file
-"DiG.env" is created in the current working directory.
+.Nm
+environment is saved. If not, the file
+.Pa DiG.env
+is created in the current working directory.
 .sp 1
-\fBNote:\fP LOCALDEF is specific to the \fIdig\fP resolver,
+.Sy Note:
+.Ev LOCALDEF
+is specific to the
+.Nm
+resolver,
 and will not affect operation of the standard
 resolver library.
 .sp 1
-Each time \fIdig\fP is executed, it looks for "./DiG.env"
+Each time
+.Nm
+is executed, it looks for
+.Pa DiG.env
+int the working directory,
 or the file specified by the shell environment variable
-LOCALDEF. If such file exists and is readable, then the
-environment is restored from this file
+.Ev LOCALDEF .
+If the file exists and is readable, then the
+environment is restored from it
 before any arguments are parsed.
-.IP "\-envset"
+.It Fl envset
 This flag only affects
-batch query runs. When "\-envset" is
-specified on a line in a \fIdig\fP batch file,
-the \fIdig\fP environment after the arguments are parsed,
+batch query runs. When
+.Fl envset
+is
+specified on a line in a
+.Nm
+batch file, the
+.Nm
+environment after the arguments are parsed,
 becomes the default environment for the duration of
 the batch file, or until the next line which specifies
-"\-envset".
-.IP "\-[no]stick"
-This flag only affects batch query runs.
-It specifies that the \fIdig\fP environment (as read initially
-or set by "\-envset" switch) is to be restored before each query
-(line) in a \fIdig\fP batch file.
-The default "\-nostick" means that the \fIdig\fP environment
+.Fl envset .
+.It Fl stick | Fl nostick
+These flags only affects batch query runs.
+.Fl stick
+specifies that the
+.Nm
+environment (as read initially
+or set by
+.Fl envset
+switch) is to be restored before each query
+(line) in a
+.Nm
+batch file.
+The default
+.Fl nostick
+means that the
+.Nm
+environment
 does not stick, hence options specified on a single line
-in a \fIdig\fP batch file will remain in effect for
+in a
+.Nm
+batch file will remain in effect for
 subsequent lines (i.e. they are not restored to the
-"sticky" default).
-
-.RE
-.IP "+<query option>"
-"+" is used to specify an option to be changed in the
-query packet or to change \fIdig\fP output specifics. Many
-of these are the same parameters accepted by 
-.IR nslookup (@SYS_OPS_EXT@).
-If an option requires a parameter, the form is as
-follows:
-.sp 1
-	+keyword[=value]
-.sp 1
-Most keywords can be abbreviated.  Parsing of the "+"
-options  is very  simplistic \(em a value must not be
+.Dq sticky
+default).
+.\" .El
+.It Xo Cm + Ns Ar keyword Ns 
+.Op = Ns Ar value
+.Xc
+.Dq Li "+"
+is used to specify an option to be changed in the
+query packet or to change
+.Nm
+output specifics. Many
+of these are the same parameters accepted by
+.Xr nslookup 8 .
+.\" If an option requires a parameter, the form is as
+.\" follows:
+.\" .Bd -ragged -offset indent 
+.\" .Cm + Ns Ar keyword Ns 
+.\" .Oo
+.\" .Cm \= Ns Ar value
+.\" .Oc
+.\" .Ed
+.Pp
+Most keywords can be abbreviated. Parsing of the
+.Dq Li "+"
+options is very simplistic \(em a value must not be
 separated from its keyword by white space. The following
-keywords are currently available:
+.Ar keyword Ns
+s are currently available:
 .sp 1
 .nf
 .ta \w'domain=NAMEXX'u +\w'(deb)XXX'u
@@ -308,58 +443,90 @@ pfand=#		bitwise and print flags with #
 pfor=#		bitwise or print flags with #
 .fi
 .sp 1
-The retry and time options affect the retransmission strategy used by resolver 
+The 
+.Ar retry
+and 
+.Ar time
+keywords affect the retransmission strategy used by resolver
 library when sending datagram queries. The algorithm is as follows:
-.sp 1
-.in +5n
-.nf
+.Bd -literal -offset indent
 for i = 0 to retry \- 1
     for j = 1 to num_servers
 	send_query
 	wait((time * (2**i)) / num_servers)
     end
 end
-.fi
-.in -5n
-.sp 1
-(Note: \fIdig\fP always uses a value of 1 for num_servers.) 
-.SH DETAILS
-\fIDig\fP once required a slightly modified version of the BIND 
-.IR resolver (@LIB_NETWORK_EXT@)
-library.  BIND's resolver has (as of BIND 4.9) been augmented to work
-properly with \fIDig\fP.  Essentially, \fIDig\fP is a straight-forward
+.Ed
+.Pp
+.Sy Note:
+.Nm
+always uses a value of 1 for
+.Va num_servers .
+.Sh DETAILS
+.Nm
+once required a slightly modified version of the BIND
+.Xr resolver 3
+library. BIND's resolver has (as of BIND 4.9) been augmented to work
+properly with
+.Nm dig .
+Essentially,
+.Nm
+is a straight-forward
 (albeit not pretty) effort of parsing arguments and setting appropriate
-parameters.  \fIDig\fP uses resolver routines res_init(), res_mkquery(),
-res_send() as well as accessing _res structure. 
-.SH FILES
-.ta \w'/etc/resolv.confXX'u
-/etc/resolv.conf	initial domain name and name server 
-\./DiG.env		default save file for default options
-.br
-	addresses
-.SH ENVIRONMENT
-LOCALRES	file to use in place of /etc/resolv.conf
-.br
-LOCALDEF	default environment file
-.SH AUTHOR
-Steve Hotz 
+parameters.
+.Nm
+uses resolver routines
+.Fn res_init ,
+.Fn res_mkquery ,
+.Fn res_send
+as well as accessing the
+.Va _res
+structure.
+.Sh FILES
+.Bl -tag -width Pa -compact -offset indent
+.It Pa /etc/resolv.conf
+initial domain name and name server addresses
+.It Pa DiG.env		
+default save file for default options
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width Ev -compact -offset indent
+.It Ev LOCALRES
+file to use in place of
+.Pa /etc/resolv.conf
+.It Ev LOCALDEF
+default environment file
+.El
+.Sh AUTHOR
+Steve Hotz
 hotz@isi.edu
-.SH ACKNOWLEDGMENTS
-\fIDig\fP uses functions from 
-.IR nslookup (@SYS_OPS_EXT@)
+.Sh ACKNOWLEDGMENTS
+.Nm
+uses functions from
+.Xr nslookup 8
 authored by Andrew Cherenson.
-.SH BUGS
-\fIDig\fP has a serious case of "creeping featurism" -- the result of
-considering several potential uses during it's development.  It would
-probably benefit from a rigorous diet.  Similarly, the print flags
+.Sh BUGS
+.Nm
+has a serious case of
+.Dq creeping featurism
+\(em the result of
+considering several potential uses during it's development. It would
+probably benefit from a rigorous diet. Similarly, the print flags
 and granularity of the items they specify make evident their
 rather ad hoc genesis.
-.PP
-\fIDig\fP does not consistently exit nicely (with appropriate status)
-when a problem occurs somewhere in the resolver (NOTE: most of the common
-exit cases are handled).  This is particularly annoying when running in
-batch mode.  If it exits abnormally (and is not caught), the entire
-batch aborts; when such an event is trapped, \fIdig\fP simply
-continues with the next query.
-.SH SEE ALSO
-@INDOT@named(@SYS_OPS_EXT@),  resolver(@LIB_NETWORK_EXT@),  resolver(@FORMAT_EXT@),  nslookup(@SYS_OPS_EXT@)
+.Pp
+.Nm
+does not consistently exit nicely (with appropriate status)
+when a problem occurs somewhere in the resolver.
+.Sy ( Note:
+most of the common
+exit cases are handled). This is particularly annoying when running in
+batch mode. If the resolver exits abnormally (and is not caught), the entire
+batch aborts; when such an event is trapped,
+.Nm
+simply continues with the next query.
+.Sh SEE ALSO
+.Xr named 8 ,
+.Xr resolver 3 ,
+.Xr resolve.conf 5 ,
+.Xr nslookup 8
