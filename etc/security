@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.26 1998/02/25 16:00:29 millert Exp $
+#	$OpenBSD: security,v 1.27 1998/03/22 03:39:11 marc Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -224,6 +224,47 @@ if [ $umaskset = "no" -o -s $OUTPUT ] ; then
 	fi
 fi
 
+# A good .kshrc will not have a umask or path, that being set in .profile
+# check anyway.
+> $OUTPUT
+rhome=/root
+list="/etc/ksh.kshrc ${rhome}/.kshrc"
+for i in $list; do
+	if [ -s $i ] ; then
+		egrep umask $i |
+		awk '$2 % 100 < 20 \
+			{ print "Root umask is group writeable" } \
+		     $2 % 10 < 2 \
+			{ print "Root umask is other writeable" }' >> $OUTPUT
+		if egrep PATH= $i > /dev/null ; then
+			SAVE_PATH=$PATH
+			unset PATH
+			/bin/ksh << end-of-sh > /dev/null 2>&1
+				. $i
+				list=\`echo \$PATH | /usr/bin/sed -e 's/:/ /g'\`
+				/bin/ls -ldgT \$list > $TMP1
+end-of-sh
+			PATH=$SAVE_PATH
+			awk '{
+				if ($10 ~ /^\.$/) {
+					print "The root path includes .";
+					next;
+				}
+			    }
+			    $1 ~ /^d....w/ \
+		{ print "Root path directory " $10 " is group writeable." } \
+			    $1 ~ /^d.......w/ \
+		{ print "Root path directory " $10 " is other writeable." }' \
+			< $TMP1 >> $OUTPUT
+		fi
+
+	fi
+done
+if [ -s $OUTPUT ] ; then
+	printf "\nChecking root ksh paths, umask values:\n$list\n"
+	cat $OUTPUT
+fi
+
 # Root and uucp should both be in /etc/ftpusers.
 if egrep root /etc/ftpusers > /dev/null ; then
 	:
@@ -337,7 +378,7 @@ awk '$1 != $5 && $5 != "root" \
 
 # Files that should not be owned by someone else or writeable.
 list=".bashrc .cshrc .emacs .exrc .forward .klogin .login .logout \
-      .profile .tcshrc"
+      .profile .tcshrc .kshrc .xsession"
 awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do

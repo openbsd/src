@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.2 1996/12/16 03:49:50 kstailey Exp $
+#	$OpenBSD: ksh.kshrc,v 1.3 1998/03/22 03:39:10 marc Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh 
@@ -37,6 +37,7 @@ case "$-" in
 	#	install whoami.sh
 	USER=`whoami 2>/dev/null`
         USER=${USER:-`id | sed 's/^[^(]*(\([^)]*\)).*/\1/'`}
+	UID=`id -u`
 	case $UID in
 	0) PS1S='# ';;
 	esac
@@ -54,8 +55,6 @@ case "$-" in
 	tty=`tty`
 	tty=`basename $tty`
         TTY=${TTY:-$tty}
-	# console is the system console device
-	console=`sysctl machdep.console_device | cut -d' ' -f3`
  
 	set -o emacs
 
@@ -82,8 +81,8 @@ case "$-" in
 		;;
 	esac
 	case "$TERM" in
-	sun*)
-		# these are not as neat as their csh equivalents
+	sun*-s)
+		# sun console with status line
 		if [ "$tty" != "$console" ]; then
 			# ilabel
 			ILS='\033]L'; ILE='\033\\'
