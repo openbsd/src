@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.2 1999/07/20 23:41:37 niklas Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.3 1999/08/08 15:18:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -90,6 +90,9 @@ struct wi_softc	{
 	struct callout_handle	wi_stat_ch;
 #else
 	void			*sc_ih;
+	struct pcmcia_io_handle	sc_pcioh;
+	int			sc_io_window;
+	struct pcmcia_function	*sc_pf;
 #endif	/* __FreeBSD__ */
 };
 
