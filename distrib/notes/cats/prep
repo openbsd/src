@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2004/03/08 21:57:55 miod Exp $
+dnl	$OpenBSD: prep,v 1.6 2004/03/09 11:53:28 miod Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of ABLE Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -13,10 +13,12 @@ The board should be configured with jumpers LK12, LK13 and LK14 jumpers
 set to the 1-2 position. However, most boards have been factory shipped
 with those jumpers incorrectly set to the 2-3 position. These jumpers are
 located as a block of three jumpers, near the processor and the serial
-ports.
+ports. More information about this jumper change can be found at the
+following URL:
+  http://www.simtec.co.uk/products/EB110ATX/files/eb110atx-pcn001.html
 
 ** Note!
-    You will need ABLE version 1.94 or better in order to be able
+    You will need ABLE version 1.95 or better in order to be able
     to boot OpenBSD/MACHINE. Firmware updates are available from
     Simtec at the following URL:
       http://www.simtec.co.uk/products/EB110ATX/resources.html
