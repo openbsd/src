@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.9 2003/06/18 19:13:01 jason Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.10 2004/08/08 19:01:20 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -49,6 +49,8 @@ struct hme_softc {
 	int	sc_rev;			/* Card revision */
 
 	u_int32_t	sc_flags;	/* status flags	*/
+
+	short		sc_if_flags;
 
 	/*
 	 * RX/TX ring buffers, descriptors, and counters

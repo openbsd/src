@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.31 2004/05/31 01:51:30 mcbride Exp $	*/
+/*	$OpenBSD: hme.c,v 1.32 2004/08/08 19:01:20 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -239,6 +239,7 @@ hme_config(sc)
 	ifp->if_watchdog = hme_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	sc->sc_if_flags = ifp->if_flags;
 	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 
@@ -621,6 +622,7 @@ hme_init(sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
 	hme_start(ifp);
 }
@@ -1045,6 +1047,7 @@ hme_mii_statchg(dev)
 		v &= ~HME_MAC_TXCFG_FULLDPLX;
 		sc->sc_arpcom.ac_if.if_flags &= ~IFF_SIMPLEX;
 	}
+	sc->sc_if_flags = sc->sc_arpcom.ac_if.if_flags;
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 }
 
@@ -1123,12 +1126,15 @@ hme_ioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			hme_init(sc);
+			if (ifp->if_flags & IFF_UP)
+				hme_setladrf(sc);
+			else {
+				ifp->if_flags |= IFF_UP;
+				hme_init(sc);
+			}
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
@@ -1156,10 +1162,19 @@ hme_ioctl(ifp, cmd, data)
 			hme_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect hardware registers.
+			 * If setting debug or promiscuous mode, do not reset
+			 * the chip; for everything else, call hme_init()
+			 * which will trigger a reset.
 			 */
-			hme_init(sc);
+#define RESETIGN (IFF_CANTCHANGE | IFF_DEBUG)
+			if (ifp->if_flags == sc->sc_if_flags)
+				break;
+			if ((ifp->if_flags & (~RESETIGN))
+			    == (sc->sc_if_flags & (~RESETIGN)))
+				hme_setladrf(sc);
+			else
+				hme_init(sc);
+#undef RESETIGN
 		}
 #ifdef HMEDEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
@@ -1192,6 +1207,7 @@ hme_ioctl(ifp, cmd, data)
 		break;
 	}
 
+	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.42 2003/06/18 19:11:49 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.43 2004/08/08 19:01:20 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -248,6 +248,7 @@ hmeattach(parent, self, aux)
 	ifp->if_watchdog = hmewatchdog;
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, HME_TX_RING_SIZE);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -391,11 +392,15 @@ hmeioctl(ifp, cmd, data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			hmeinit(sc);
+			if (ifp->if_flags & IFF_UP)
+				hme_mcreset(sc);
+			else {
+				ifp->if_flags |= IFF_UP;
+				hmeinit(sc);
+			}
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif /* INET */
@@ -418,6 +423,7 @@ hmeioctl(ifp, cmd, data)
 		    }
 #endif /* NS */
 		default:
+			ifp->if_flags |= IFF_UP;
 			hmeinit(sc);
 			break;
 		}
@@ -441,11 +447,19 @@ hmeioctl(ifp, cmd, data)
 			hmeinit(sc);
 		} else {
 			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect hardware registers.
+			 * If setting debug or promiscuous mode, do not reset
+			 * the chip; for everything else, call hmeinit()
+			 * which will trigger a reset.
 			 */
-			hmestop(sc);
-			hmeinit(sc);
+#define RESETIGN (IFF_CANTCHANGE | IFF_DEBUG)
+			if (ifp->if_flags == sc->sc_if_flags)
+				break;
+			if ((ifp->if_flags & (~RESETIGN))
+			    == (sc->sc_if_flags & (~RESETIGN)))
+				hme_mcreset(sc);
+			else
+				hmeinit(sc);
+#undef RESETIGN
 		}
 		break;
 
@@ -471,6 +485,8 @@ hmeioctl(ifp, cmd, data)
 	default:
 		error = EINVAL;
 	}
+
+	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
@@ -610,6 +626,7 @@ hmeinit(sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
 }
 
@@ -1137,4 +1154,5 @@ hme_mii_statchg(self)
 		cr->tx_cfg &= ~CR_TXCFG_FULLDPLX;
 		sc->sc_arpcom.ac_if.if_flags &= ~IFF_SIMPLEX;
 	}
+	sc->sc_if_flags = sc->sc_arpcom.ac_if.if_flags;
 }
