@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ipcp.c,v 1.21 2000/02/27 01:38:26 brian Exp $
+ * $OpenBSD: ipcp.c,v 1.22 2000/03/03 21:52:57 brian Exp $
  *
  *	TODO:
  *		o Support IPADDRS properly
@@ -371,7 +371,8 @@ ipcp_Show(struct cmdargs const *arg)
 	          inet_ntoa(ipcp->peer_ip), vj2asc(ipcp->peer_compproto));
     prompt_Printf(arg->prompt, " My side:         %s, %s\n",
 	          inet_ntoa(ipcp->my_ip), vj2asc(ipcp->my_compproto));
-    prompt_Printf(arg->prompt, " Queued packets:  %d\n", ip_QueueLen(ipcp));
+    prompt_Printf(arg->prompt, " Queued packets:  %lu\n",
+                  (unsigned long)ip_QueueLen(ipcp));
   }
 
   if (ipcp->route) {

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: mbuf.c,v 1.10 2000/02/27 01:38:27 brian Exp $
+ * $OpenBSD: mbuf.c,v 1.11 2000/03/03 21:52:57 brian Exp $
  *
  */
 #include <sys/types.h>
@@ -112,8 +112,8 @@ m_get(size_t m_len, int type)
      */
     *mb = (struct mbucket *)malloc(BUCKET_CHUNK * size);
     if (*mb == NULL) {
-      log_Printf(LogALERT, "Failed to allocate memory (%u)\n",
-                 BUCKET_CHUNK * size);
+      log_Printf(LogALERT, "Failed to allocate memory (%lu)\n",
+                 (unsigned long)BUCKET_CHUNK * size);
       AbortProgram(EX_OSERR);
     }
     bp = &(*mb)->u.m;
@@ -354,7 +354,7 @@ m_enqueue(struct mqueue *queue, struct mbuf *bp)
     } else
       queue->last = queue->top = bp;
     queue->len++;
-    log_Printf(LogDEBUG, "m_enqueue: len = %d\n", queue->len);
+    log_Printf(LogDEBUG, "m_enqueue: len = %lu\n", (unsigned long)queue->len);
   }
 }
 

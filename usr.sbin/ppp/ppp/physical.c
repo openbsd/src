@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.20 2000/02/27 01:38:27 brian Exp $
+ *  $OpenBSD: physical.c,v 1.21 2000/03/03 21:52:57 brian Exp $
  *
  */
 
@@ -385,8 +385,8 @@ physical_DescriptorWrite(struct fdescriptor *d, struct bundle *bundle,
 
   if (p->out) {
     nw = physical_Write(p, MBUF_CTOP(p->out), p->out->m_len);
-    log_Printf(LogDEBUG, "%s: DescriptorWrite: wrote %d(%d) to %d\n",
-               p->link.name, nw, p->out->m_len, p->fd);
+    log_Printf(LogDEBUG, "%s: DescriptorWrite: wrote %d(%lu) to %d\n",
+               p->link.name, nw, (unsigned long)p->out->m_len, p->fd);
     if (nw > 0) {
       p->out->m_len -= nw;
       p->out->m_offset += nw;

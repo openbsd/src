@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: slcompress.c,v 1.11 2000/02/27 01:38:28 brian Exp $
+ * $OpenBSD: slcompress.c,v 1.12 2000/03/03 21:52:57 brian Exp $
  *
  *	Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
@@ -154,8 +154,8 @@ sl_compress_tcp(struct mbuf * m,
    * the caller has already made sure the packet is IP proto TCP).
    */
   if ((ip->ip_off & htons(0x3fff)) || m->m_len < 40) {
-    log_Printf(LogDEBUG, "??? 1 ip_off = %x, m_len = %d\n",
-	      ip->ip_off, m->m_len);
+    log_Printf(LogDEBUG, "??? 1 ip_off = %x, m_len = %lu\n",
+	      ip->ip_off, (unsigned long)m->m_len);
     log_DumpBp(LogDEBUG, "", m);
     return (TYPE_IP);
   }

@@ -2,7 +2,7 @@
  * The code in this file was written by Eivind Eklund <perhaps@yes.no>,
  * who places it in the public domain without restriction.
  *
- *	$OpenBSD: nat_cmd.c,v 1.3 2000/02/27 01:38:27 brian Exp $
+ *	$OpenBSD: nat_cmd.c,v 1.4 2000/03/03 21:52:57 brian Exp $
  */
 
 #include <sys/param.h>
@@ -383,8 +383,8 @@ nat_LayerPull(struct bundle *bundle, struct link *l, struct mbuf *bp,
 
   bp->m_len = ntohs(pip->ip_len);
   if (bp->m_len > MAX_MRU) {
-    log_Printf(LogWARN, "nat_LayerPull: Problem with IP header length (%d)\n",
-               bp->m_len);
+    log_Printf(LogWARN, "nat_LayerPull: Problem with IP header length (%lu)\n",
+               (unsigned long)bp->m_len);
     m_freem(bp);
     return NULL;
   }
