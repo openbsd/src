@@ -1,4 +1,4 @@
-/*	$OpenBSD: tgetstr.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: tgetstr.c,v 1.2 1997/12/16 03:23:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tgetstr.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tgetstr.c,v 1.2 1997/12/16 03:23:02 millert Exp $";
 #endif
 
 #include <string.h>
@@ -43,12 +43,13 @@ tgetstr(entry, area)
      const char *entry;
      char **area;
 {
-    struct xtoidx *p = _ti_findcap(entry);
+    struct xtoidx *p;
     char *s;
 
-    if (p != NULL && p->type != TYPE_STR)
+    if (area == NULL || *area == NULL)
 	return NULL;
-    if (p == NULL)
+    p = _ti_findcap(entry);
+    if (p == NULL || p->type != TYPE_STR)
 	return NULL;
     if ((s = cur_term->strs[p->idx]) == NULL)
 	return NULL;
