@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.28 2003/06/11 23:33:25 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.29 2003/09/26 17:03:22 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -29,7 +29,7 @@
  *
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -50,7 +50,6 @@
 #include "pathnames.h"
 #include "apm-proto.h"
 
-#define MAX(a,b) (a > b ? a : b)
 #define TRUE 1
 #define FALSE 0
 
@@ -70,10 +69,12 @@ void stand_by(int ctl_fd);
 void sigexit(int signo);
 void make_noise(int howmany);
 void do_etc_file(const char *file);
+void sockunlink(void);
 
 void
 sigexit(int signo)
 {
+	sockunlink();
 	_exit(1);
 }
 
@@ -166,12 +167,12 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 	return acon;
 }
 
-char *socketname;
+char socketname[MAXPATHLEN];
 
 void
 sockunlink(void)
 {
-	if (socketname)
+	if (socketname[0])
 		remove(socketname);
 }
 
@@ -199,7 +200,7 @@ bind_socket(const char *sockname)
 		error("cannot set socket mode/owner/group to 660/0/0", NULL);
 
 	listen(sock, 1);
-	socketname = strdup(sockname);
+	strlcpy(socketname, sockname, sizeof socketname);
 	atexit(sockunlink);
 
 	return sock;
