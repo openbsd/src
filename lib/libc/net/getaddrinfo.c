@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.16 2000/03/13 12:26:56 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.17 2000/03/16 14:08:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1545,6 +1545,7 @@ res_queryN(name, target)
 			return (n);
 		}
 		n = res_send(buf, n, answer, anslen);
+#if 0
 		if (n < 0) {
 #ifdef DEBUG
 			if (_res.options & RES_DEBUG)
@@ -1553,8 +1554,9 @@ res_queryN(name, target)
 			h_errno = TRY_AGAIN;
 			return (n);
 		}
+#endif
 
-		if (hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
+		if (n < 0 || hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
 			rcode = hp->rcode;	/* record most recent error */
 #ifdef DEBUG
 			if (_res.options & RES_DEBUG)
