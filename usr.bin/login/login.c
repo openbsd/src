@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.31 2000/08/24 20:05:07 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.32 2000/08/24 20:08:06 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.31 2000/08/24 20:05:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.32 2000/08/24 20:08:06 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -308,13 +308,14 @@ main(argc, argv)
 			rval = klogin(pwd, instance, localhost, p);
 			if (rval != 0 && rootlogin && pwd->pw_uid != 0)
 				rootlogin = 0;
-			if (rval == 0)
-				authok = 1;
-			else if (rval == 1) {
+			if (rval == 1) {
+				/* Fall back on password file. */
 				if (pwd->pw_uid != 0)
 					rootlogin = 0;
 				rval = pwcheck(username, p, salt, pwd->pw_passwd);
 			}
+			if (rval == 0)
+				authok = 1;
 #else
 			rval = pwcheck(username, p, salt, pwd->pw_passwd);
 #endif
