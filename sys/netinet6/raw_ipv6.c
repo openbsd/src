@@ -1,4 +1,4 @@
-/* $OpenBSD: raw_ipv6.c,v 1.8 1999/12/14 14:28:23 angelos Exp $ */
+/* $OpenBSD: raw_ipv6.c,v 1.9 1999/12/15 07:08:00 itojun Exp $ */
 /*
 %%% copyright-nrl-95
 This software is Copyright 1995-1998 by Randall Atkinson, Ronald Lee,
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.8 1999/12/14 14:28:23 angelos Exp $
+ *	$Id: raw_ipv6.c,v 1.9 1999/12/15 07:08:00 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -389,7 +389,8 @@ int rip6_output(struct mbuf *m, ...)
       M_PREPEND(m, sizeof(struct ip6_hdr), M_WAIT);
       ip6 = mtod(m, struct ip6_hdr *);
       ip6->ip6_flow = 0;  /* Or possibly user flow label, in host order. */
-      ip6->ip6_vfc = IPV6_VERSION;
+      ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+      ip6->ip6_vfc |= IPV6_VERSION;
       ip6->ip6_nxt = inp->inp_ipv6.ip6_nxt;
       bcopy(in6a, &ip6->ip6_src, sizeof(*in6a));
       ip6->ip6_dst = dst->sin6_addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.34 1999/12/09 20:22:03 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.35 1999/12/15 07:07:59 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -383,7 +383,8 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	    ip6.ip6_flow = 0;
 	    ip6.ip6_hlim = 0;
-	    ip6.ip6_vfc = IPV6_VERSION; /* This resets some bitfields */
+	    ip6.ip6_vfc &= ~IPV6_VERSION_MASK;
+	    ip6.ip6_vfc |= IPV6_VERSION;
 
 	    /* Include IPv6 header in authenticator computation */
 	    ahx->Update(&ctx, (unsigned char *) &ip6, sizeof(ip6));
@@ -924,7 +925,8 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	    ip6.ip6_flow = 0;
 	    ip6.ip6_hlim = 0;
-	    ip6.ip6_vfc = IPV6_VERSION; /* This resets some bitfields */
+	    ip6.ip6_vfc &= ~IPV6_VERSION_MASK;
+	    ip6.ip6_vfc |= IPV6_VERSION;
 
 	    /*
 	     * Note that here we assume that on output, the IPv6 header
