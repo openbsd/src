@@ -1,4 +1,4 @@
-/* $OpenBSD: smtpfilter.c,v 1.3 2001/12/07 18:45:33 mpech Exp $*/
+/* $OpenBSD: smtpfilter.c,v 1.4 2002/06/09 01:25:01 deraadt Exp $*/
 
 /*
  * smtpfilter, Filter for filtering headers during forwarding them between
@@ -147,7 +147,7 @@ int main( int argc, const char* const argv[] )
           }
     
         else
-          syslog( LOG_ERR, "unknown line containing %s: %s\n", MY_INSIDE_DOMAIN, line );
+          syslog( LOG_ERR, "unknown line containing %s: %s", MY_INSIDE_DOMAIN, line );
     }
 
     if( fputs( line, fp ) == EOF ) {
@@ -165,7 +165,7 @@ int main( int argc, const char* const argv[] )
     state = WEXITSTATUS( state );
 
   if( state != 0 && state != EX_NOUSER )
-    syslog( LOG_ERR, "sendmail exited with status %d\n", state );
+    syslog( LOG_ERR, "sendmail exited with status %d", state );
   
   return( state );
 }

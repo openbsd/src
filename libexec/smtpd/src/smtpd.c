@@ -1,4 +1,4 @@
-/* $OpenBSD: smtpd.c,v 1.12 2002/05/13 07:44:48 mpech Exp $*/
+/* $OpenBSD: smtpd.c,v 1.13 2002/06/09 01:24:59 deraadt Exp $*/
 
 /*
  * smtpd, Obtuse SMTP daemon, storing agent. does simple collection of
@@ -41,7 +41,7 @@
 
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$OpenBSD: smtpd.c,v 1.12 2002/05/13 07:44:48 mpech Exp $";
+char *obtuse_rcsid = "$OpenBSD: smtpd.c,v 1.13 2002/06/09 01:24:59 deraadt Exp $";
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -1157,7 +1157,7 @@ state_change(smtp_state state, int cmd, int status)
       return;
 
     default:
-      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad HELO status in change_state)!\n");
+      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad HELO status in change_state)!");
       abort();
     }
 #if EHLO_KLUDGE
@@ -1176,7 +1176,7 @@ state_change(smtp_state state, int cmd, int status)
       return;
 
     default:
-      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad EHLO status in change_state)!\n");
+      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad EHLO status in change_state)!");
       abort();
     }
 #endif
@@ -1194,7 +1194,7 @@ state_change(smtp_state state, int cmd, int status)
       reset_state(state);
       return;
     default:
-      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad MAIL status in change_state)!\n");
+      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad MAIL status in change_state)!");
       abort();
     }
   case RCPT:
@@ -1211,7 +1211,7 @@ state_change(smtp_state state, int cmd, int status)
       reset_state(state);
       return;
     default:
-      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad RCPT status in change_state)!\n");
+      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad RCPT status in change_state)!");
       abort();
     }
   case NOOP:
@@ -1219,7 +1219,7 @@ state_change(smtp_state state, int cmd, int status)
     case SUCCESS:
       return;
     default:
-      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad NOOP status in change_state)!\n");
+      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad NOOP status in change_state)!");
       abort();
     }
   case DATA:
@@ -1236,7 +1236,7 @@ state_change(smtp_state state, int cmd, int status)
       reset_state(state);
       return;
     default:
-      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad DATA status in change_state)!\n");
+      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad DATA status in change_state)!");
       abort();
     }
   case UNKNOWN:
@@ -1249,7 +1249,7 @@ state_change(smtp_state state, int cmd, int status)
       reset_state(state);
       return;
     default:
-      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad UNKNOWN status in change_state)!\n");
+      syslog(LOG_CRIT, "Hey, I shouldn't be here (Bad UNKNOWN status in change_state)!");
       abort();
     }
   case QUIT:
@@ -1268,7 +1268,7 @@ state_change(smtp_state state, int cmd, int status)
     /*
      * shouldn't get here on valid input. 
      */
-    syslog(LOG_CRIT, "Hey, I shouldn't be here (end of change_state)!\n");
+    syslog(LOG_CRIT, "Hey, I shouldn't be here (end of change_state)!");
     abort();
   }
 }
@@ -2091,7 +2091,7 @@ main(int argc, char **argv)
       break;
     case 'i':
       if (optarg[0] != '/') {
-	syslog(LOG_ERR, "The \"-i\" option requires an absolute pathname argument\n");
+	syslog(LOG_ERR, "The \"-i\" option requires an absolute pathname argument");
 	show_usage();
 	exit(EX_USAGE);
       }
@@ -2102,7 +2102,7 @@ main(int argc, char **argv)
       break;
     case 'c':
       if (optarg[0] != '/') {
-	syslog(LOG_ERR, "The \"-c\" option requires an absolute pathname argument\n");
+	syslog(LOG_ERR, "The \"-c\" option requires an absolute pathname argument");
 	show_usage();
 	exit(EX_USAGE);
       }
@@ -2128,7 +2128,7 @@ main(int argc, char **argv)
       break;
     case 'd':
       if (optarg[0] != '/') {
-	syslog(LOG_ERR, "%s, The \"-d\" option requires an absolute pathname argument\n", optarg);
+	syslog(LOG_ERR, "%s, The \"-d\" option requires an absolute pathname argument", optarg);
 	show_usage();
 	exit(EX_USAGE);
       }
@@ -2147,7 +2147,7 @@ main(int argc, char **argv)
 	   */
 	  user = getpwuid((uid_t) userid);
 	  if (user == NULL) {
-	    syslog(LOG_ERR, "Invalid uid argument for the \"-u\" option, no user found for uid %s\n", optarg);
+	    syslog(LOG_ERR, "Invalid uid argument for the \"-u\" option, no user found for uid %s", optarg);
 	    show_usage();
 	    exit(EX_USAGE);
 	  }
@@ -2159,7 +2159,7 @@ main(int argc, char **argv)
 	   */
 	  user = getpwnam(optarg);
 	  if (user == NULL) {
-	    syslog(LOG_ERR, "Invalid username argument for the \"-u\" option, no user found for name %s\n", optarg);
+	    syslog(LOG_ERR, "Invalid username argument for the \"-u\" option, no user found for name %s", optarg);
 	    show_usage();
 	    exit(EX_USAGE);
 	  }
@@ -2180,7 +2180,7 @@ main(int argc, char **argv)
 	   */
 	  group = getgrgid((gid_t) grpid);
 	  if (group == NULL) {
-	    syslog(LOG_ERR, "Invalid gid argument for the \"-g\" option, no group found for gid %s\n", optarg);
+	    syslog(LOG_ERR, "Invalid gid argument for the \"-g\" option, no group found for gid %s", optarg);
 	    show_usage();
 	    exit(EX_USAGE);
 	  }
@@ -2192,7 +2192,7 @@ main(int argc, char **argv)
 	   */
 	  group = getgrnam(optarg);
 	  if (group == NULL) {
-	    syslog(LOG_ERR, "Invalid groupname argument for the \"-g\" option, no group found for name %s\n", optarg);
+	    syslog(LOG_ERR, "Invalid groupname argument for the \"-g\" option, no group found for name %s", optarg);
 	    show_usage();
 	    exit(EX_USAGE);
 	  }
@@ -2206,19 +2206,19 @@ main(int argc, char **argv)
 
 	maxsize = strtol(optarg, &foo, 10);
 	if (*foo != '\0') {
-	  syslog(LOG_ERR, "The \"-s\" option requires a size argument\n");
+	  syslog(LOG_ERR, "The \"-s\" option requires a size argument");
 	  show_usage();
 	  exit(EX_USAGE);
 	}
 	if (maxsize <= 0) {
-	  syslog(LOG_ERR, "\"-s\" argument must be positive!\n");
+	  syslog(LOG_ERR, "\"-s\" argument must be positive!");
 	  show_usage();
 	  exit(EX_USAGE);
 	}
       }
       break;
     default:
-      syslog(LOG_ERR, "Unknown option \"-%c\"\n", opt);
+      syslog(LOG_ERR, "Unknown option \"-%c\"", opt);
       show_usage();
       exit(EX_USAGE);
       break;
@@ -2244,8 +2244,8 @@ main(int argc, char **argv)
        */
       user = getpwuid((uid_t) userid);
       if (user == NULL) {
-	syslog(LOG_ERR, "Eeek! I was compiled to run as uid %s, but no user found for uid %s\n", username, username);
-	syslog(LOG_ERR, "Please recompile me to use a valid user, or specify one with the \"-u\" option.\n");
+	syslog(LOG_ERR, "Eeek! I was compiled to run as uid %s, but no user found for uid %s", username, username);
+	syslog(LOG_ERR, "Please recompile me to use a valid user, or specify one with the \"-u\" option.");
 	exit(EX_CONFIG);
       }
       username = user->pw_name;
@@ -2256,8 +2256,8 @@ main(int argc, char **argv)
        */
       user = getpwnam(username);
       if (user == NULL) {
-	syslog(LOG_ERR, "Eeek! I was compiled to run as user \"%s\", but no user found for username \"%s\"\n", username, username);
-	syslog(LOG_ERR, "Please recompile me to use a valid user, or specify one with the \"-u\" option.\n");
+	syslog(LOG_ERR, "Eeek! I was compiled to run as user \"%s\", but no user found for username \"%s\"", username, username);
+	syslog(LOG_ERR, "Please recompile me to use a valid user, or specify one with the \"-u\" option.");
 	exit(EX_CONFIG);
       }
       username = user->pw_name;
@@ -2278,8 +2278,8 @@ main(int argc, char **argv)
        */
       group = getgrgid((gid_t) grpid);
       if (group == NULL) {
-	syslog(LOG_ERR, "Eeek! I was compiled to run as gid %s, but no group found for gid %s\n", groupname, groupname);
-	syslog(LOG_ERR, "Please recompile me to use a valid group, or specify one with the \"-g\" option.\n");
+	syslog(LOG_ERR, "Eeek! I was compiled to run as gid %s, but no group found for gid %s", groupname, groupname);
+	syslog(LOG_ERR, "Please recompile me to use a valid group, or specify one with the \"-g\" option.");
 	exit(EX_CONFIG);
       }
       groupname = group->gr_name;
@@ -2290,8 +2290,8 @@ main(int argc, char **argv)
        */
       group = getgrnam(groupname);
       if (group == NULL) {
-	syslog(LOG_ERR, "Eeek! I was compiled to run as group \"%s\", but no group found for groupname \"%s\"\n", groupname, groupname);
-	syslog(LOG_ERR, "Please recompile me to use a valid group, or specify one with the \"-g\" option.\n");
+	syslog(LOG_ERR, "Eeek! I was compiled to run as group \"%s\", but no group found for groupname \"%s\"", groupname, groupname);
+	syslog(LOG_ERR, "Please recompile me to use a valid group, or specify one with the \"-g\" option.");
 	exit(EX_CONFIG);
       }
       groupname = group->gr_name;
@@ -2301,17 +2301,17 @@ main(int argc, char **argv)
    * If we're here, we have a valid user and group to run as 
    */
   if (group == NULL || user == NULL) {
-    syslog(LOG_CRIT, "Didn't find a user or group, (Shouldn't happen)\n");
+    syslog(LOG_CRIT, "Didn't find a user or group, (Shouldn't happen)");
     abort();
   }
   if (user->pw_uid == 0) {
     syslog(LOG_CRIT, "Sorry, I don't want to run as root! It's a bad idea!");
-    syslog(LOG_CRIT, "Please recompile me to use a valid user, or specify one with the \"-u\" option.\n");
+    syslog(LOG_CRIT, "Please recompile me to use a valid user, or specify one with the \"-u\" option.");
     exit(EX_CONFIG);
   }
   if (group->gr_gid == 0) {
     syslog(LOG_CRIT, "Sorry, I don't want to run as group 0. It's a bad idea!");
-    syslog(LOG_CRIT, "Please recompile me to use a valid group, or specify one with the \"-g\" option.\n");
+    syslog(LOG_CRIT, "Please recompile me to use a valid group, or specify one with the \"-g\" option.");
     exit(EX_CONFIG);
   }
   if ( daemon_mode ) {
@@ -2555,7 +2555,7 @@ main(int argc, char **argv)
 	  exit(EX_CONFIG);
 	}
 	if (strcmp(tmp_he->h_name, peerinfo.my_clean_reverse_name) != 0) {
-	  syslog(LOG_CRIT, "CRITICAL - Suspicious characters in MY hostname! (for ip=%s) cleaned to %s.\n", peerinfo.peer_ok_addr, peerinfo.my_clean_reverse_name);
+	  syslog(LOG_CRIT, "CRITICAL - Suspicious characters in MY hostname! (for ip=%s) cleaned to %s.", peerinfo.peer_ok_addr, peerinfo.my_clean_reverse_name);
 	  syslog(LOG_CRIT, "CRITICAL - YOUR DNS IS EITHER COMPROMISED OR MISCONFIGURED! INVESTIGATE!");
 	  smtp_exit(EX_CONFIG);
 	}
