@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.30 2004/07/30 19:02:05 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.31 2004/08/02 08:35:00 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -129,7 +129,6 @@ Mode of operation:
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/board.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 

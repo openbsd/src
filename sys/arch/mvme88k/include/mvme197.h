@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme197.h,v 1.4 2003/09/16 20:52:19 miod Exp $ */
+/*	$OpenBSD: mvme197.h,v 1.5 2004/08/02 08:35:00 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -46,11 +46,6 @@
 #ifndef __MACHINE_MVME197_H__
 #define __MACHINE_MVME197_H__
 
-/*
- *      MVME197 CPU board constants - derived from Luna88k
- *      This file is included from <machine/board.h>
- */
-
 #define	FLASH_START	0xFF800000	/* start of flash memory area */
 #define	FLASH_SIZE	0x003FFFFF
 #define BUG197_START	0xFFF80000	/* start of BUG PROM (in OBIO) */
@@ -60,5 +55,7 @@
 #define M197_IMASK	0xFFF00065	/* interrupt mask level */
 #define M197_ISRC	0xFFF0006F	/* interrupt SRC */
 #define M197_IACK	0xFFF00100	/* interrupt ACK base */
+
+#include <machine/mvme1x7.h>
 
 #endif	/* __MACHINE_MVME197_H__ */

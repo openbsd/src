@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.152 2004/07/30 20:48:40 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.153 2004/08/02 08:35:00 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -71,7 +71,6 @@
 
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
 #include <machine/mmu.h>
-#include <machine/board.h>
 #include <machine/bug.h>
 #include <machine/bugio.h>
 #include <machine/cmmu.h>		/* CMMU stuff	*/
@@ -83,7 +82,16 @@
 #include <machine/reg.h>
 #include <machine/trap.h>
 #ifdef M88100
-#include <machine/m88100.h>		/* DMT_VALID	*/
+#include <machine/m88100.h>		/* DMT_VALID */
+#endif
+#ifdef MVME187
+#include <machine/mvme187.h>
+#endif
+#ifdef MVME197
+#include <machine/mvme197.h>
+#endif
+#ifdef MVME188
+#include <machine/mvme188.h>
 #endif
 
 #include <dev/cons.h>
@@ -351,6 +359,7 @@ size_memory()
 	/*
 	 * count it up.
 	 */
+#define	MAXPHYSMEM	0x30000000	/* 768MB */
 	max = (void *)MAXPHYSMEM;
 	for (look = (void *)Roundup(end, STRIDE); look < max;
 	    look = (int *)((unsigned)look + STRIDE)) {

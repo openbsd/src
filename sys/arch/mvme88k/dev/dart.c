@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.38 2004/07/31 22:26:27 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.39 2004/08/02 08:35:00 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -47,6 +47,7 @@
 
 #include <dev/cons.h>
 
+#include <machine/mvme188.h>
 #include <mvme88k/dev/sysconreg.h>
 #include <mvme88k/dev/dartreg.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.41 2004/08/01 17:18:05 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.42 2004/08/02 08:35:00 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -29,13 +29,16 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/board.h>		/* m188 bit defines	*/
 #include <machine/asm.h>		/* END_OF_VECTOR_LIST, etc.	*/
 #include <machine/asm_macro.h>		/* enable/disable interrupts	*/
 #include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/locore.h>
 #include <machine/prom.h>
 #include <machine/trap.h>
+
+#ifdef MVME188
+#include <machine/mvme188.h>
+#endif
 
 typedef struct {
 	unsigned word_one, word_two;

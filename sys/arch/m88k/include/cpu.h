@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 2004/07/24 15:05:05 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.4 2004/08/02 08:34:59 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -54,9 +54,12 @@
 
 #ifdef _KERNEL
 
-#include <machine/psl.h>
+#ifndef	MAX_CPUS
+#define	MAX_CPUS	4
+#endif
+
 #include <machine/pcb.h>
-#include <machine/board.h>
+#include <machine/psl.h>
 
 /*
  * definitions of cpu-dependent requirements

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme1x7.h,v 1.10 2003/09/16 20:52:19 miod Exp $ */
+/*	$OpenBSD: mvme1x7.h,v 1.11 2004/08/02 08:35:00 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -45,10 +45,6 @@
  */
 #ifndef __MACHINE_MVME1X7_H__
 #define __MACHINE_MVME1X7_H__
-
-/*
- *      VME1x7 CPU board constants - derived from Luna88k
- */
 
 #define OBIO_START	0xFFF00000	/* start of local IO */
 #define OBIO_SIZE	0x000EFFFF	/* size of obio space */

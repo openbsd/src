@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.34 2004/07/30 22:09:59 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.35 2004/08/02 08:35:00 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -77,7 +77,6 @@
 #include <sys/systm.h>
 
 #include <machine/asm.h>
-#include <machine/board.h>	/* for register defines */
 #include <machine/psl.h>
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
@@ -86,12 +85,14 @@
 
 #include "pcctwo.h"
 #if NPCCTWO > 0
+#include <machine/mvme1x7.h>
 #include <mvme88k/dev/pcctwovar.h>
 #include <mvme88k/dev/pcctworeg.h>
 #endif
 
 #include "syscon.h"
 #if NSYSCON > 0
+#include <machine/mvme188.h>
 #include <mvme88k/dev/sysconreg.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.38 2004/07/30 19:02:06 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.39 2004/08/02 08:35:00 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -45,6 +45,7 @@
 
 #include <mvme88k/dev/vme.h>
 #if NSYSCON > 0
+#include <machine/mvme188.h>
 #include <mvme88k/dev/sysconreg.h>
 #endif
 

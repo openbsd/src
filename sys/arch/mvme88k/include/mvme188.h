@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.18 2004/07/23 22:19:09 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.19 2004/08/02 08:35:00 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -350,11 +350,20 @@
 #define DART_OPRS		0xfff82038	/* output port set */
 #define DART_OPRR		0xfff8203c	/* output port reset */
 
-#ifndef _LOCORE
-
 /*
- * Externals
+ * HYPERmodule CMMU addresses
  */
+
+#define VME_CMMU_I0	0xfff7e000
+#define VME_CMMU_I1	0xfff7d000
+#define VME_CMMU_I2	0xfff7b000
+#define VME_CMMU_I3	0xfff77000
+#define VME_CMMU_D0	0xfff6f000
+#define VME_CMMU_D1	0xfff5f000
+#define VME_CMMU_D2	0xfff3f000
+#define VME_CMMU_D3	0xfff7f000
+
+#ifndef _LOCORE
 
 extern unsigned int m188_curspl[MAX_CPUS];
 extern unsigned int int_mask_val[INT_LEVEL];

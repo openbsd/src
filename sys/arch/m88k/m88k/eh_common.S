@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.3 2004/07/28 12:28:48 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.4 2004/08/02 08:34:59 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -207,7 +207,6 @@
 
 #include <machine/param.h>
 #include <machine/asm.h>
-#include <machine/board.h>
 #ifdef MVME188
 #include <machine/m8820x.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme187.h,v 1.5 2003/09/16 20:52:19 miod Exp $ */
+/*	$OpenBSD: mvme187.h,v 1.6 2004/08/02 08:35:00 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -45,10 +45,6 @@
  */
 #ifndef __MACHINE_MVME187_H__
 #define __MACHINE_MVME187_H__
-/*
- *      MVME187 CPU board constants - derived from Luna88k
- *      This file is included from <machine/board.h>
- */
 
 #define BUG187_START	0xFF800000	/* start of BUG PROM */
 #define BUG187_SIZE	0x003FFFFF	/* size of BUG PROM */
@@ -62,5 +58,7 @@
 #define M187_IMASK	0xFFF4203F	/* interrupt mask level */
 #define M187_ISRC	0x00000000	/* interrupt mask src (NULL) */
 #define M187_IACK	0xFFFE0000	/* interrupt ACK base */
+
+#include <machine/mvme1x7.h>
 
 #endif	/* __MACHINE_MVME187_H__ */

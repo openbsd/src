@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.57 2004/07/27 12:16:06 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.58 2004/08/02 08:35:00 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -34,6 +34,7 @@
 
 /* Single-processor SBC version (MVME187, MVME8120) */
 #ifdef MVME187
+#include <machine/mvme187.h>
 #define	PFSR_SAVE_187 \
 	or.u	TMP,  r0,   hi16(SBC_CMMU_I); \
 	ld	TMP2, TMP,  lo16(SBC_CMMU_I) + 0x108; \
@@ -47,6 +48,7 @@
 
 /* MVME188 version */
 #ifdef MVME188
+#include <machine/mvme188.h>
 #define	PFSR_SAVE_188 \
 	extu	TMP,  FLAGS, FLAG_CPU_FIELD_WIDTH<0>;	/* TMP = cpu# */ \
 	cmp	TMP2, TMP, 0x0;				/* CPU0 ? */ \

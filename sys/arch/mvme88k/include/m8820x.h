@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.13 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.14 2004/08/02 08:35:00 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -59,16 +59,3 @@
 #define CMMU_A12_MASK		(1 << 12)
 #define CMMU_A14_MASK		(1 << 14)
 #define CMMU_SRAM_MASK		((1 << 31) | (1 << 30))
-
-/*
- * HYPERmodule CMMU addresses
- */
-
-#define VME_CMMU_I0	0xfff7e000
-#define VME_CMMU_I1	0xfff7d000
-#define VME_CMMU_I2	0xfff7b000
-#define VME_CMMU_I3	0xfff77000
-#define VME_CMMU_D0	0xfff6f000
-#define VME_CMMU_D1	0xfff5f000
-#define VME_CMMU_D2	0xfff3f000
-#define VME_CMMU_D3	0xfff7f000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.12 2004/05/07 18:10:28 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.13 2004/08/02 08:35:00 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -34,9 +34,15 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+
+#ifdef MVME188
+#include <machine/mvme188.h>
+#endif
+#if defined(MVME187) || defined(MVME197)
+#include <machine/mvme1x7.h>
+#endif
 
 void	mainbus_attach(struct device *, struct device *, void *);
 int 	mainbus_match(struct device *, void *, void *);

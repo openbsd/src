@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.33 2004/07/31 13:38:32 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.34 2004/08/02 08:35:00 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -86,12 +86,15 @@
 #include <sys/simplelock.h>
 
 #include <machine/asm_macro.h>
-#include <machine/board.h>
 #include <machine/cpu_number.h>
 #include <machine/locore.h>
 
 #include <machine/cmmu.h>
 #include <machine/m8820x.h>
+#include <machine/mvme188.h>		/* VME_CMMU_ */
+#ifdef MVME187
+#include <machine/mvme187.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -234,6 +237,8 @@ struct m8820x_cmmu {
 /*
  * Structure for accessing MMUS properly
  */
+
+#define MAX_CMMUS	(2 * MAX_CPUS)		/* maximum cmmus on the board */
 
 struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS] =
 {

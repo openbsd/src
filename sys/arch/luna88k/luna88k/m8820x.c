@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.2 2004/05/07 18:06:39 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.3 2004/08/02 08:34:57 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -208,6 +208,8 @@ struct m8820x_cmmu {
 /*
  * Structure for accessing MMUS properly
  */
+
+#define MAX_CMMUS	(2 * MAX_CPUS)		/* maximum cmmus on the board */
 
 struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS] =
 {
