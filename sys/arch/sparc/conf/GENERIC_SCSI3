@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC_SCSI3,v 1.20 1998/04/30 06:12:55 jason Exp $
+#	$OpenBSD: GENERIC_SCSI3,v 1.21 1998/05/22 08:25:29 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -89,6 +89,11 @@ zs1	at obio0					# sun4m
 zs1	at obio0 addr 0xf0000000 level 12 flags 0x103	# sun4/200 and sun4/300
 zs1	at obio0 addr 0x00000000 level 12 flags 0x103	# sun4/100
 zs2	at obio0 addr 0xe0000000 level 12 flags 0x103	# sun4/300
+
+# Magma serial/parallel port devices
+magma*	at sbus? slot ? offset ?			# magma serial cards
+mtty*	at magma?
+mbpp*	at magma?
 
 #
 # Note the flags on the esp entries below, that work around

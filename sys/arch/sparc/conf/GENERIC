@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 1998/05/20 19:29:14 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.28 1998/05/22 08:25:27 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -94,6 +94,7 @@ zs1	at obio0 addr 0xf0000000 level 12 flags 0x103	# sun4/200 and sun4/300
 zs1	at obio0 addr 0x00000000 level 12 flags 0x103	# sun4/100
 zs2	at obio0 addr 0xe0000000 level 12 flags 0x103	# sun4/300
 
+# Magma serial/parallel port devices
 magma*	at sbus? slot ? offset ?			# magma serial cards
 mtty*	at magma?
 mbpp*	at magma?
