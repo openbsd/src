@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.37 2001/01/04 06:04:42 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.38 2001/01/31 09:59:51 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/msgbuf.h>
+#include <sys/dkstat.h>
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
@@ -232,10 +233,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	extern char ostype[], osrelease[], osversion[], version[];
 	extern int somaxconn, sominconn;
 	extern int usermount, nosuidcoredump;
+	extern long cp_time[CPUSTATES];
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF ||
-			      name[0] == KERN_MALLOCSTATS))
+	    name[0] == KERN_MALLOCSTATS))
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -362,6 +364,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_MALLOCSTATS:
 		return (sysctl_malloc(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+	case KERN_CPTIME:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &cp_time,
+		    sizeof(cp_time)));
 	default:
 		return (EOPNOTSUPP);
 	}
