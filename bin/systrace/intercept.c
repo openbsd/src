@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.13 2002/07/10 07:05:02 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.14 2002/07/10 13:46:13 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -503,7 +503,8 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 		err(1, "%s: getstring", __func__);
 
 	if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL)
-		err(1, "%s: getcwd", __func__);
+		if (name[0] != '/')
+			err(1, "%s: getcwd", __func__);
 
 	if (name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
