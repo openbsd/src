@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ultrix.8,v 1.14 2003/06/06 19:28:06 jmc Exp $
+.\"	$OpenBSD: compat_ultrix.8,v 1.15 2003/07/21 12:46:47 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -61,16 +61,12 @@ or even SunOS 4.x equivalents, and may require incompatible
 configuration files.
 .Sh SYSTEM CONFIGURATION FILES
 Set up resolv.conf and svc.conf as below:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It # mkdir -p /emul/ultrix/etc
-.br
-.It # cd /emul/ultrix/etc
-.br
-.It # egrep 'domain|nameserver' /etc/resolv.conf  > ./resolv.conf
-.br
-.It # cp -p /usr/share/samples/emul/ultrix/etc/*	./
-.El
+.Bd -literal -offset indent
+# mkdir -p /emul/ultrix/etc
+# cd /emul/ultrix/etc
+# egrep 'domain|nameserver' /etc/resolv.conf > ./resolv.conf
+# cp -p /usr/share/samples/emul/ultrix/etc/* ./
+.Ed
 .Ss /etc/resolv.conf
 The Ultrix resolver library only understands
 .Sy domain
