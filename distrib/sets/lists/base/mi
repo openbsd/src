@@ -825,6 +825,7 @@
 ./usr/libdata/perl5/Net/protoent.pm
 ./usr/libdata/perl5/Net/servent.pm
 ./usr/libdata/perl5/OpenBSD
+./usr/libdata/perl5/OpenBSD/Delete.pm
 ./usr/libdata/perl5/OpenBSD/Error.pm
 ./usr/libdata/perl5/OpenBSD/Getopt.pm
 ./usr/libdata/perl5/OpenBSD/IdCache.pm
