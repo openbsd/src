@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.6 1999/10/09 03:42:05 csapuntz Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.7 2000/02/01 17:01:48 fgsch Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -100,26 +100,28 @@ struct wdc_pcmcia_product {
 
 	{ /* PCMCIA_VENDOR_DIGITAL XXX */ 0x0100,
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
-	  0, { NULL, "Digital Mobile Media CD-ROM", NULL, NULL },
-	  },
+	  0, { NULL, "Digital Mobile Media CD-ROM", NULL, NULL }, },
 
-	{ PCMCIA_VENDOR_IBM,
-	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE,
-	  0, { NULL, "Portable CD-ROM Drive", NULL, NULL },
-	  },
+	{ PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
+	  0, { NULL, "Portable CD-ROM Drive", NULL, NULL }, },
 
-	{ PCMCIA_VENDOR_HAGIWARASYSCOM,
-	  -1,			/* XXX */
-	  WDC_PCMCIA_FORCE_16BIT_IO,
-	  { NULL, NULL, NULL, NULL },
-	  },
+	{ PCMCIA_VENDOR_HAGIWARASYSCOM, PCMCIA_PRODUCT_INVALID,	/* XXX */
+	  WDC_PCMCIA_FORCE_16BIT_IO, { NULL, NULL, NULL, NULL }, },
 
 	/* The TEAC IDE/Card II is used on the Sony Vaio */
-	{ PCMCIA_VENDOR_TEAC,
-	  PCMCIA_PRODUCT_TEAC_IDECARDII,
-	  WDC_PCMCIA_NO_EXTRA_RESETS,
-	  PCMCIA_CIS_TEAC_IDECARDII,
-	  },
+	{ PCMCIA_VENDOR_TEAC, PCMCIA_PRODUCT_TEAC_IDECARDII,
+	  WDC_PCMCIA_NO_EXTRA_RESETS, PCMCIA_CIS_TEAC_IDECARDII },
+
+	/*
+	 * EXP IDE/ATAPI DVD Card use with some DVD players.
+	 * Does not have a vendor ID or product ID.
+	 */
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  0, PCMCIA_CIS_EXP_EXPMULTIMEDIA },
+
+	/* Mobile Dock 2, which doesn't have vendor ID nor product ID */
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  0, PCMCIA_CIS_SHUTTLE_IDE_ATAPI },
 };
 
 struct wdc_pcmcia_disk_device_interface_args {
