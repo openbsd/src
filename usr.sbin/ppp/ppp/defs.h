@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: defs.h,v 1.16 2000/08/16 09:07:27 brian Exp $
+ * $OpenBSD: defs.h,v 1.17 2000/08/31 00:46:12 brian Exp $
  *
  *	TODO:
  */
@@ -102,7 +102,13 @@
 
 #define ROUNDUP(x) ((x) ? (1 + (((x) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
+#if defined(__NetBSD__) || __FreeBSD__ < 3
 extern void randinit(void);
+#else
+#define random arc4random
+#define randinit()
+#endif
+
 extern ssize_t fullread(int, void *, size_t);
 extern const char *mode2Nam(int);
 extern int Nam2mode(const char *);
