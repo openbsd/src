@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.3 1997/10/12 19:58:33 mickey Exp $	*/
+/*	$OpenBSD: clri.c,v 1.4 1997/10/12 20:07:46 deraadt Exp $	*/
 /*	$NetBSD: clri.c,v 1.9 1995/03/18 14:54:33 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)clri.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$OpenBSD: clri.c,v 1.3 1997/10/12 19:58:33 mickey Exp $";
+static char rcsid[] = "$OpenBSD: clri.c,v 1.4 1997/10/12 20:07:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,8 +134,7 @@ main(argc, argv)
 			err(1, "%s", fs);
 		(void)fsync(fd);
 
-		if (sbp->fs_inodefmt >= FS_44INODEFMT)
-		{
+		if (sbp->fs_inodefmt >= FS_44INODEFMT) {
 			/* update after each inode cleared */
 			sbp->fs_clean = 0;
 			if (lseek(fd, (off_t)(SBLOCK * DEV_BSIZE), SEEK_SET) < 0)
