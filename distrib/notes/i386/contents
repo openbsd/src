@@ -10,8 +10,8 @@ As well you may be interested in
 
 .../OSREV/tools/
 		miscellaneous i386 installation utilities like
-		rawrite.exe, gzip.exe, and pfdisk.exe; see
-		installation section, below.
+		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe; 
+		see installation section, below.
 
 
 OpenBSDfloppydesc({:-In addition,

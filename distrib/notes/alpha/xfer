@@ -44,6 +44,10 @@ If you have a floppy drive on your alpha:
 	will write the file system image (floppy{:--:}OSrev.fs) to a disk.
 	You can boot it using "boot dva0".
 
+	If you are using a NT to write the floppy image to
+	disk, you should use the "ntrw" utility, provided in
+	the "OSREV/tools" directory of the OpenBSD distribution, instead.  
+
 	Note that, when installing, the floppy can be write-protected (i.e.
 	read-only).
 

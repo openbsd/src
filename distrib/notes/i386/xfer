@@ -24,6 +24,10 @@ use the "rawrite" utility, provided in the "OSREV/tools" directory of
 the OpenBSD distribution.  It will write the file system image
 (floppy{:--:}OSrev.fs) to a disk.
 
+If you are using NT to write the floppy image to disk, you should
+use the "ntrw" utility, provided in the "OSREV/tools" directory of
+the OpenBSD distribution, instead
+
 Note that when installing, the floppy can be write-protected (i.e.
 read-only).
 

@@ -91,34 +91,42 @@ Installing applications from the ftp.openbsd.org package collection:
 
 	Packages available {:-include-:} (at least):
 
-		ImageMagick-4.0.6.tgz		mpeg_lib-1.2.1.tgz
-		Xaw3d-1.3.tgz			netpipes-4.1.1-export.tgz
-		afm-1.0.tgz			nmh-0.27.tgz
-		bash-2.02.tgz			pgp-intl-2.6.3.tgz
-		bison-1.25.tgz			pgp-usa-2.6.3.tgz
-		bzip2-0.9.0b.tgz		pine-4.03.tgz
-		dejagnu-1.3.tgz			png-1.0.2.tgz
-		emacs-20.3.tgz			psutils-a4-1.17.tgz
-		enscript-1.6.1.tgz		psutils-letter-1.17.tgz
-		expect-5.26.tgz			screen-3.7.4.tgz
-		fetchmail-4.5.4.tgz		sharutils-4.2.tgz
-		ghostscript-5.10.tgz		ssh-intl-1.2.26.tgz
-		gimp-1.0.0.tgz			ssh-usa-1.2.26.tgz
-		glimpse-4.1.tgz			tar-1.12.tgz
-		gmake-3.76.1.tgz		tcl-8.0.2.tgz
-		gnuplot-3.5.tgz			tcsh-6.07.02.tgz
-		gtk+-1.0.5.tgz			teTeX-0.4.tgz
-		gv-3.5.8.tgz			tiff-3.4.tgz
-		id-utils-3.2.tgz		tk-8.0.2.tgz
-		idled-1.16.tgz			transfig-3.2.1.tgz
-		iozone-2.01.tgz			unzip-5.3.2.tgz
-		ircii-2.8.2-epic3.004.tgz	xcolors-1.3.tgz
-		ispell-3.1.20.tgz		xfig-3.2.2.tgz
-		jove-4.16.tgz			xntp3-5.93-export.tgz
-		jpeg-6b.tgz			xpaint-2.5.5.tgz
-		lesstif-0.86.0.tgz		xphoon-91.9.18.tgz
-		m4-1.4.tgz			xv-3.10a.tgz
-		mm-2.7.tgz
+		ImageMagick-4.2.0.tgz		m4-1.4.tgz
+		Xaw3d-1.3.tgz			mm-2.7.tgz
+		aalib-1.2.tgz			mpeg_lib-1.2.1.tgz
+		afm-1.0.tgz			mpeg_play-2.4.tgz
+		autoconf-2.13.tgz		netpbm-19940301.tgz
+		bash-2.03.tgz			netpipes-4.1.1-export.tgz
+		bison-1.25.tgz			nmh-1.0.tgz
+		bzip2-0.9.0c.tgz		pgp-2.6.3-intl.tgz
+		compface-1.0.tgz		pgp-2.6.3-usa.tgz
+		cucipop-1.31.tgz		pine-4.10.tgz
+		dejagnu-1.3.tgz			png-1.0.3.tgz
+		egcs-1.1.2.tgz			psutils-1.17-a4.tgz
+		emacs-20.3.tgz			psutils-1.17-letter.tgz
+		enscript-1.6.1.tgz		screen-3.7.6.tgz
+		ethereal-0.5.1.tgz		sharutils-4.2.tgz
+		expect-5.28.tgz			sniffit-0.3.5.tgz
+		fetchmail-4.7.9.tgz		ssh-1.2.26-intl.tgz
+		freetype-1.2.tgz		ssh-1.2.26-usa.tgz
+		gettext-0.10.35.tgz		tar-1.12.tgz
+		ghostscript-5.10.tgz		tcl-8.0.5.tgz
+		gimp-1.1.4.tgz			tcsh-6.08.00.tgz
+		glib-1.2.1.tgz			teTeX-0.4.tgz
+		glimpse-4.1.tgz			tiff-3.4.tgz
+		gmake-3.77.tgz			tk-8.0.5.tgz
+		gnuplot-3.7.tgz			transfig-3.2.1.tgz
+		gtk+-1.2.1.tgz			unzip-5.40.tgz
+		gv-3.5.8.tgz			viewfax-2.3.tgz
+		id-utils-3.2.tgz		wget-1.5.3.tgz
+		idled-1.16.tgz			xcolors-1.3.tgz
+		iozone-2.01.tgz			xfig-3.2.2.tgz
+		ircii-2.8.2-epic3.004.tgz	xntp3-5.93e-export.tgz
+		ispell-3.1.20.tgz		xpaint-2.5.5.tgz
+		jove-4.16.tgz			xpdf-0.80.tgz
+		jpeg-6b.tgz			xphoon-91.9.18.tgz
+		lesstif-0.88.0.tgz		xspread-2.1.tgz
+		libslang-1.2.2.tgz		xv-3.10a.tgz
 
 	Note: these packages may not exist for all architectures; other
 	packages may be added.  Some packages are only available via

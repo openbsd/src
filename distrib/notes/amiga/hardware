@@ -8,8 +8,8 @@ won't be speedy.  X really isn't usable on a 4M system.)
 
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise,	with X,	needed,	with X
-	root (/)	20M	20M	15M	15M
-	user (/usr)	95M	130M	75M 	110M
+	root (/)	30M	30M	25M	25M
+	user (/usr)	120M    155M   100M     135M
 	swap		---- 1MB for every MB RAM ----
 			-- but the sum of swap and ---
 			- RAM should be at least 16 --
