@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.9 2005/02/16 15:23:33 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.10 2005/02/24 16:28:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -44,12 +44,9 @@
 #define	F_OSPFD_INSERTED	0x0001
 #define	F_KERNEL		0x0002
 #define	F_CONNECTED		0x0004
-#define	F_NEXTHOP		0x0008
 #define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
 #define	F_LONGER		0x0040
-#define	F_REJECT		0x0080
-#define	F_BLACKHOLE		0x0100
 
 /* buffer */
 struct buf {
@@ -98,9 +95,6 @@ enum imsg_type {
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_AREA,
 	IMSG_CTL_END,
-	IMSG_NEXTHOP_ADD,
-	IMSG_NEXTHOP_REMOVE,
-	IMSG_NEXTHOP_UPDATE,
 	IMSG_IFINFO,
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
@@ -294,14 +288,6 @@ struct kroute {
 	u_short		ifindex;
 };
 
-struct kroute_nexthop {
-	struct in_addr		nexthop;
-	u_int8_t		valid;
-	u_int8_t		connected;
-	struct in_addr		gateway;
-	struct kroute		kr;
-};
-
 struct kif {
 	u_short			 ifindex;
 	int			 flags;
@@ -418,9 +404,5 @@ int	kr_nexthop_add(struct in_addr);
 void	kr_nexthop_delete(struct in_addr);
 void	kr_show_route(struct imsg *);
 void	kr_ifinfo(char *);
-void	send_nexthop_update(struct kroute_nexthop *);
-
-/* ospfd.c */
-void	 send_nexthop_update(struct kroute_nexthop *);
 
 #endif	/* _OSPFD_H_ */

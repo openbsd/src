@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.4 2005/02/07 05:51:00 david Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.5 2005/02/24 16:28:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -320,9 +320,6 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 			log_debug("main_dispatch_ospfe: IMSG_CTL_RELOAD");
 			/* reconfig */
 			break;
-		case IMSG_CTL_SHOW_INTERFACE:
-			kr_show_route(&imsg);
-			break;
 		case IMSG_CTL_FIB_COUPLE:
 			kr_fib_couple();
 			break;
@@ -394,30 +391,6 @@ main_imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 	imsg_compose(ibuf_rde, type, 0, pid, -1, data, datalen);
 }
 
-
-void
-send_nexthop_update(struct kroute_nexthop *msg)
-{
-	char	*gw = NULL;
-
-	if (msg->gateway.s_addr)
-		if (asprintf(&gw, ": via %s",
-		    inet_ntoa(msg->gateway)) == -1) {
-			log_warn("send_nexthop_update");
-			main_quit = 1;
-		}
-
-	log_info("nexthop %s now %s%s%s", inet_ntoa(msg->nexthop),
-	    msg->valid ? "valid" : "invalid",
-	    msg->connected ? ": directly connected" : "",
-	    msg->gateway.s_addr ? gw : "");
-
-	free(gw);
-
-	if (imsg_compose(ibuf_rde, IMSG_NEXTHOP_UPDATE, 0, 0, -1,
-	    msg, sizeof(struct kroute_nexthop)) == -1)
-		main_quit = 1;
-}
 
 int
 check_file_secrecy(int fd, const char *fname)
