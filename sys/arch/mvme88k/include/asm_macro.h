@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.4 1999/02/09 06:36:25 smurph Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.5 1999/02/09 12:49:38 deraadt Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -24,23 +24,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * HISTORY
- * $Log: asm_macro.h,v $
- * Revision 1.4  1999/02/09 06:36:25  smurph
- * Added kernel support for user debugging.  Fixed file ID's
- *
- * Revision 1.3  1997/03/03 20:20:46  rahnds
- * Cleanup after import. This also seems to bring up the current version.
- *
- * Revision 1.1.1.1  1995/10/18 10:54:22  deraadt
- * initial 88k import; code by nivas and based on mach luna88k
- *
- * Revision 2.2  93/01/26  18:07:26  danner
- * 	Created.
- * 	[93/01/24            jfriedl]
- * 
  */
 
 #ifndef __M88K_ASM_MACRO_H__
