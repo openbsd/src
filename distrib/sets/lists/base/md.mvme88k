@@ -444,3 +444,4 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/history.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cs4281reg.ph

@@ -1672,3 +1672,4 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/ssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/history.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/cs4281reg.ph

@@ -2032,3 +2032,5 @@
 ./var/www/htdocs/manual/new_features_2_0.html
 ./var/www/htdocs/manual/win_compiling.html
 ./var/www/htdocs/manual/win_service.html
+./usr/share/man/cat4/clct.0
+./usr/share/man/cat4/maestro.0

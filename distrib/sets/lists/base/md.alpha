@@ -1689,3 +1689,4 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/readline/history.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/cs4281reg.ph

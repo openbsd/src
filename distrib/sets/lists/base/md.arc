@@ -500,3 +500,4 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/ssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/readline/history.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4281reg.ph

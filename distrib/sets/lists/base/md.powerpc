@@ -1749,3 +1749,4 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/readline/history.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/cs4281reg.ph

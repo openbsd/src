@@ -1,3 +1,4 @@
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cs4281reg.ph
 ./dev/scan0
 ./sbin/ldconfig
 ./usr/bin/c++filt
