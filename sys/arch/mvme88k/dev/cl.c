@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.34 2003/12/29 07:04:14 deraadt Exp $ */
+/*	$OpenBSD: cl.c,v 1.35 2004/01/02 23:37:17 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -44,9 +44,6 @@
 #include <dev/cons.h>
 
 #include <mvme88k/dev/clreg.h>
-
-#include "cl.h"
-#include "pcctwo.h"
 #include <mvme88k/dev/pcctworeg.h>
 
 #ifdef	DDB
@@ -70,9 +67,6 @@
 
 #define	CLCD_DO_POLLED_INPUT
 
-#ifdef DEBUG
-#undef DEBUG
-#endif
 struct cl_cons {
 	void	*cl_paddr;
 	struct clreg *volatile cl_vaddr;
@@ -199,15 +193,15 @@ struct cfdriver cl_cd = {
 
 #define CLCDBUF 80
 
+#ifdef	CLCD_DO_POLLED_INPUT
 int dopoll = 1;
+#endif
 
 #define CL_UNIT(x) (minor(x) >> 2)
 #define CL_CHANNEL(x) (minor(x) & 3)
-#define CL_TTY(x) (minor(x))
 
-struct tty *cltty(dev_t dev);
-
-struct tty *cltty(dev)
+struct tty *
+cltty(dev)
 	dev_t dev;
 {
 	int unit, channel;
@@ -343,7 +337,9 @@ clattach(parent, self, aux)
 	sc->sc_ih_r.ih_arg = sc;
 	sc->sc_ih_e.ih_wantframe = 0;
 	sc->sc_ih_r.ih_ipl = ca->ca_ipl;
+#ifdef CLCD_DO_POLLED_INPUT
 	dopoll = 0;
+#endif
 	intr_establish(PCC2_VECT + SRXEIRQ, &sc->sc_ih_e);
 	intr_establish(PCC2_VECT + SMOIRQ, &sc->sc_ih_m);
 	intr_establish(PCC2_VECT + STxIRQ, &sc->sc_ih_t);
