@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.21 2002/01/23 00:39:48 art Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.22 2002/02/12 18:36:53 provos Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -171,12 +171,14 @@ amap_alloc1(slots, padslots, waitf)
 	int slots, padslots, waitf;
 {
 	struct vm_amap *amap;
-	int totalslots = slots + padslots;
+	int totalslots;
 
 	amap = pool_get(&uvm_amap_pool, (waitf == M_WAITOK) ? PR_WAITOK : 0);
 	if (amap == NULL)
 		return(NULL);
 
+	totalslots = malloc_roundup((slots + padslots) * sizeof(int)) /
+	    sizeof(int);
 	simple_lock_init(&amap->am_l);
 	amap->am_ref = 1;
 	amap->am_flags = 0;
@@ -234,7 +236,8 @@ amap_alloc(sz, padsz, waitf)
 
 	amap = amap_alloc1(slots, padslots, waitf);
 	if (amap)
-		memset(amap->am_anon, 0, (slots + padslots) * sizeof(struct vm_anon *));
+		memset(amap->am_anon, 0,
+		    amap->am_maxslot * sizeof(struct vm_anon *));
 
 	UVMHIST_LOG(maphist,"<- done, amap = 0x%x, sz=%d", amap, sz, 0, 0);
 	return(amap);
@@ -286,7 +289,7 @@ amap_extend(entry, addsize)
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slotoff = entry->aref.ar_pageoff;
-	int slotmapped, slotadd, slotneed;
+	int slotmapped, slotadd, slotneed, slotalloc;
 #ifdef UVM_AMAP_PPREF
 	int *newppref, *oldppref;
 #endif
@@ -361,10 +364,11 @@ amap_extend(entry, addsize)
 	 */
 
 	amap_unlock(amap);	/* unlock in case we sleep in malloc */
+	slotalloc = malloc_roundup(slotneed * sizeof(int)) / sizeof(int);
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-		newppref = malloc(slotneed * sizeof(int), M_UVMAMAP, M_NOWAIT);
+		newppref = malloc(slotalloc *sizeof(int), M_UVMAMAP, M_NOWAIT);
 		if (newppref == NULL) {
 			/* give up if malloc fails */
 			free(amap->am_ppref, M_UVMAMAP);
@@ -372,9 +376,9 @@ amap_extend(entry, addsize)
 		}
 	}
 #endif
-	newsl = malloc(slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
-	newbck = malloc(slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
-	newover = malloc(slotneed * sizeof(struct vm_anon *),
+	newsl = malloc(slotalloc * sizeof(int), M_UVMAMAP, M_WAITOK);
+	newbck = malloc(slotalloc * sizeof(int), M_UVMAMAP, M_WAITOK);
+	newover = malloc(slotalloc * sizeof(struct vm_anon *),
 	    M_UVMAMAP, M_WAITOK);
 	amap_lock(amap);			/* re-lock! */
 	KASSERT(amap->am_maxslot < slotneed);
@@ -383,7 +387,7 @@ amap_extend(entry, addsize)
 	 * now copy everything over to new malloc'd areas...
 	 */
 
-	slotadded = slotneed - amap->am_nslot;
+	slotadded = slotalloc - amap->am_nslot;
 
 	/* do am_slots */
 	oldsl = amap->am_slots;
@@ -412,13 +416,14 @@ amap_extend(entry, addsize)
 		if ((slotoff + slotmapped) < amap->am_nslot)
 			amap_pp_adjref(amap, slotoff + slotmapped, 
 			    (amap->am_nslot - (slotoff + slotmapped)), 1);
-		pp_setreflen(newppref, amap->am_nslot, 1, slotadded);
+		pp_setreflen(newppref, amap->am_nslot, 1,
+		    slotneed - amap->am_nslot);
 	}
 #endif
 
 	/* update master values */
 	amap->am_nslot = slotneed;
-	amap->am_maxslot = slotneed;
+	amap->am_maxslot = slotalloc;
 
 	/* unlock */
 	amap_unlock(amap);
@@ -664,6 +669,8 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 		amap->am_slots[amap->am_nused] = lcv;
 		amap->am_nused++;
 	}
+	memset(&amap->am_anon[lcv], 0,
+	    (amap->am_maxslot - lcv) * sizeof(struct vm_anon *));
 
 	/*
 	 * drop our reference to the old amap (srcamap) and unlock.
