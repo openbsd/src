@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.5 2000/12/22 00:13:34 avsm Exp $
+.\"	$OpenBSD: uvm.9,v 1.6 2001/06/28 22:14:23 millert Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -152,7 +152,7 @@ and
 is
 .Dv UVM_UNKNOWN_OFFSET ,
 .Fn uvm_map
-does not use the machine-dependant
+does not use the machine-dependent
 .Dv PMAP_PREFER
 function.  If
 .Fa uoffset
@@ -543,7 +543,7 @@ at a new offset
 .Fa newoff .
 .Pp
 .Fn uvm_pagefree
-free's the physical page
+frees the physical page
 .Fa pg .
 .Pp
 .Fn uvm_pglistalloc
@@ -779,8 +779,8 @@ int nswapdev;   /* number of configured swap devices in system */
 int swpages;    /* number of PAGE_SIZE'ed swap pages */
 int swpginuse;  /* number of swap pages in use */
 int nswget;     /* number of times fault calls uvm_swap_get() */
-int nanon;      /* number total of anon's in system */
-int nfreeanon;  /* number of free anon's */
+int nanon;      /* number total of anons in system */
+int nfreeanon;  /* number of free anons */
 
 /* stat counters */
 int faults;             /* page fault count */

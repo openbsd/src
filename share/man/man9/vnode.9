@@ -103,7 +103,7 @@ The vnode lock may be held when sleeping.
 .Pp
 The 
 .Xr revoke 2 
-and forceable unmount features in BSD UNIX allows a
+and forcible unmount features in BSD UNIX allows a
 user to invalidate files and their associated vnodes at almost any
 time, even if there are active open files on it. While in a region of code
 protected by the vnode lock, the process is guaranteed that the vnode
