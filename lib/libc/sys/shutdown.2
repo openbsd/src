@@ -64,6 +64,9 @@ A 0 is returned if the call succeeds, -1 if it fails.
 .Sh ERRORS
 The call succeeds unless:
 .Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa how
+is not in the valid range of 0 - 2.
 .It Bq Er EBADF
 .Fa S
 is not a valid descriptor.

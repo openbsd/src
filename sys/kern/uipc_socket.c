@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.18 1997/11/11 18:22:49 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.19 1997/11/15 19:57:51 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -818,6 +818,8 @@ soshutdown(so, how)
 	register struct protosw *pr = so->so_proto;
 
 	how++;
+	if (how & ~(FREAD|FWRITE))
+		return (EINVAL);
 	if (how & FREAD)
 		sorflush(so);
 	if (how & FWRITE)
