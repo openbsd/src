@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1998/06/27 02:59:21 mickey Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/08/29 01:49:26 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
@@ -13,7 +13,7 @@ MAN=	boot.8
 MLINKS=	boot.8 boot.conf.8
 S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
-CLEANFILES+=	boot.lif
+CLEANFILES+=	boot.lif bsd
 
 LDADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
@@ -22,8 +22,15 @@ DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 
 all:	boot.lif
 
-boot.lif:	${PROG}
-	${MKBOOT} -v ${PROG} boot.lif
+.if exists(${.CURDIR}/../../compile/DISKLESS/bsd)
+diskless: ${.CURDIR}/../../compile/DISKLESS/bsd
+	cp ${.CURDIR}/../../compile/DISKLESS/bsd diskless
+ADDBOOT+=diskless
+.endif
+
+boot.lif:	${PROG} ${ADDBOOT}
+	${STRIP} ${PROG}
+	${MKBOOT} -v ${PROG} ${ADDBOOT} boot.lif
 
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
