@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.4 1999/11/20 04:11:11 millert Exp $
+#	$OpenBSD: ksh.kshrc,v 1.5 2000/01/27 02:36:06 millert Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh 
@@ -63,16 +63,6 @@ case "$-" in
 	# the PD ksh is not 100% compatible
 	case "$KSH_VERSION" in
 	*PD*)	# PD ksh
-		case "$TERM" in
-		pc3|pcvt*|xterm*)
-			# bind arrow keys
-			bind '^[['=prefix-2
-			bind '^XA'=up-history
-			bind '^XB'=down-history
-			bind '^XC'=forward-char
-			bind '^XD'=backward-char
-			;;
-		esac
 		;;
 	*)	# real ksh ?
 		[ -r $HOME/.functions ] && . $HOME/.functions
