@@ -1446,6 +1446,7 @@
 ./usr/share/man/cat4/txp.0
 ./usr/share/man/cat4/txphy.0
 ./usr/share/man/cat4/uaudio.0
+./usr/share/man/cat4/ubsa.0
 ./usr/share/man/cat4/ubsec.0
 ./usr/share/man/cat4/ucom.0
 ./usr/share/man/cat4/udp.0
@@ -1476,6 +1477,7 @@
 ./usr/share/man/cat4/uscanner.0
 ./usr/share/man/cat4/usscanner.0
 ./usr/share/man/cat4/uvisor.0
+./usr/share/man/cat4/uvscom.0
 ./usr/share/man/cat4/uyap.0
 ./usr/share/man/cat4/vax
 ./usr/share/man/cat4/vax/asc.0
