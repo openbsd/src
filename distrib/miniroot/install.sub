@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.260 2002/09/28 23:35:12 krw Exp $
+#	$OpenBSD: install.sub,v 1.261 2002/09/29 22:45:44 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -422,6 +422,9 @@ __EOT
 makedev() {
 	local _d=$1
 
+	# Don't need to make network interface devices.
+	isin $_d $IFDEVS && return
+
 	if [ ! -c /dev/r${_d}c ]; then
 		if [ -r /dev/MAKEDEV ]; then
 			(cd /dev; sh MAKEDEV $_d)
@@ -510,29 +513,17 @@ do_selection_list() {
 }
 
 configure_all_interfaces() {
-	local _ifsdone _ifs
+	local _IFDEVS=$IFDEVS _ifs
 
 	while : ; do
-		cat << __EOT
+		_IFDEVS=`rmel "$_ifs" $_IFDEVS`
 
-Available network interfaces ([X] == already configured) are:
+		ask_which "interface" "do you wish to initialize?" "$_IFDEVS" "`echo $_IFDEVS | cutword 1`"
 
-__EOT
-		do_selection_list "$IFDEVS" "$_ifsdone" "Configure which interface?"
+		[ "$resp" = "done" ] && break
 
-		case $resp in
-		"done")	break	
-			;;
-		*)	_ifs=$resp
-			if isin $_ifs $IFDEVS ; then
-				if configure_ifs $_ifs ; then
-					_ifsdone="$_ifs $_ifsdone"
-				fi
-			else
-				echo "Invalid response: '$resp' is not in list"
-			fi
-			;;
-		esac
+		_ifs=$resp
+		configure_ifs $_ifs || _ifs=
 	done
 }
 
@@ -562,7 +553,7 @@ configure_ifs() {
 	# Get IP address
 	resp=
 	while [ -z "$resp" ] ; do
-		ask "IP address${_dhcp_prompt}?" "$_if_ip"
+		ask "IP address for ${_if_name}${_dhcp_prompt}?" "$_if_ip"
 		if [ ! -x /sbin/dhclient -a "$resp" == "dhcp" ]; then
 			echo "DHCP is not supported."
 			resp=
