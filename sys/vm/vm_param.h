@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.22 2001/06/27 04:52:40 art Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.23 2001/08/02 11:06:38 art Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -119,7 +119,8 @@ typedef	int	boolean_t;
 #define	VM_PSSTRINGS	3		/* PSSTRINGS */
 #define VM_UVMEXP	4		/* struct uvmexp */
 #define VM_SWAPENCRYPT	5		/* int */
-#define	VM_MAXID	6		/* number of valid vm ids */
+#define VM_NKMEMPAGES	6		/* int - # kmem_map pages */
+#define	VM_MAXID	7		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -128,6 +129,7 @@ typedef	int	boolean_t;
 	{ "psstrings", CTLTYPE_STRUCT }, \
 	{ "uvmexp", CTLTYPE_STRUCT }, \
 	{ "swapencrypt", CTLTYPE_NODE }, \
+	{ "nkmempages", CTLTYPE_INT }, \
 }
 
 struct _ps_strings {

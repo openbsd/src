@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.36 2001/07/26 14:23:31 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.37 2001/08/02 11:06:38 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 
 static struct vm_map_intrsafe kmem_map_store;
 vm_map_t kmem_map = NULL;
+
+int nkmempages;
 
 struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];
@@ -451,6 +453,8 @@ kmeminit()
 #ifdef MALLOC_DEBUG
 	debug_malloc_init();
 #endif
+
+	nkmempages = npg;
 }
 
 /*
