@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2004/01/15 23:45:37 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 2005/01/09 22:27:07 espie Exp $
 
 LIB=		objc
 
@@ -13,7 +13,9 @@ GCCDIR= $(.CURDIR)/../../egcs/gcc
 GCCSRCDIR=${GCCDIR}
 .endif
 
-.if defined(OBJMACHINE)
+.if defined(MAKEOBJDIR)
+OBJDIR= ${MAKEOBJDIR}
+.elif defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
 .else
 OBJDIR=	obj

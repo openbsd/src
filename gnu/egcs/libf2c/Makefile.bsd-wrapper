@@ -1,10 +1,12 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2004/09/18 20:54:45 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2005/01/09 22:27:07 espie Exp $
 
 NOLINT=
 
 LIBIBERTY_INCLUDES=$(.CURDIR)/../../lib/libiberty/include
 EGCS_DIR= $(.CURDIR)/..
-.if defined(OBJMACHINE)
+.if defined(MAKEOBJDIR)
+OBJDIR=${MAKEOBJDIR}
+.elif defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
 .else
 OBJDIR=	obj
