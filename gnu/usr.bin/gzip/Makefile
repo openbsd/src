@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1999/02/24 23:33:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 1999/02/25 04:24:28 millert Exp $
 #	$NetBSD: Makefile,v 1.17 1995/10/24 22:18:34 jtc Exp $
 
 PROG=	gzip
@@ -20,12 +20,15 @@ LDSTATIC= ${STATIC}
 
 MAKEINFO=	makeinfo
 
-MLINKS+= gzip.1 gunzip.1 gzip.1 gzcat.1 gzip.1
+MLINKS+= gzip.1 gunzip.1 gzip.1 gzcat.1
 MLINKS+= zdiff.1 zcmp.1
+MLINKS+= zgrep.1 zegrep.1 zgrep.1 zfgrep.1
 #MLINKS+= gzip.1 uncompress.1
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gunzip
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gzcat
 LINKS+=	${BINDIR}/zdiff ${BINDIR}/zcmp
+LINKS+=	${BINDIR}/zgrep ${BINDIR}/zegrep
+LINKS+=	${BINDIR}/zgrep ${BINDIR}/zfgrep
 #LINKS+= ${BINDIR}/gzip ${BINDIR}/uncompress
 
 all:	gzip.info
@@ -42,10 +45,6 @@ afterinstall:
 	   ${.CURDIR}/zforce ${.CURDIR}/gzexe ${.CURDIR}/znew \
 	   ${.CURDIR}/zmore ${.CURDIR}/zdiff ${.CURDIR}/zgrep \
 	   ${DESTDIR}${BINDIR}
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	   ${.CURDIR}/zgrep ${DESTDIR}${BINDIR}/zegrep
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	   ${.CURDIR}/zgrep ${DESTDIR}${BINDIR}/zfgrep
 
 .if (${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "i386")
 match.o: ${.CURDIR}/match.S
