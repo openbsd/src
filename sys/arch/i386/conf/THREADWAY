@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.20 1997/09/24 08:40:03 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.21 1997/09/28 08:58:50 downsj Exp $
 #
 
 machine		i386
@@ -10,6 +10,7 @@ option		I586_CPU
 option		XSERVER
 option		PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
 option		NMBCLUSTERS=512
+option		APM_NOIDLE
 
 maxusers	32
 option		TIMEZONE=480
@@ -67,7 +68,7 @@ option		UNION
 option		INET
 option		IPSEC
 
-config		bsd root on wd0 swap on wd0 and wd1 and wd2
+config		bsd root on sd0 swap on sd0 and wd0
 
 mainbus0 at root
 
@@ -97,8 +98,8 @@ pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 de0	at pci? dev ? function ?
 
-ncr0	at pci? dev ? function ?	# NCR 538XX SCSI controllers
-scsibus0 at ncr0
+ahc*	at pci? dev ? function ?
+scsibus* at ahc?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -107,8 +108,6 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2
 fd*	at fdc? drive ?
-
-#cmdpci*	at pci? dev ? function ?
 
 wdc0	at isa? port 0x1f0 irq 14
 wdc1	at isa? port 0x170 irq 15
