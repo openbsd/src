@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.273 2001/09/01 04:03:09 nate Exp $
+#	$OpenBSD: GENERIC,v 1.274 2001/10/02 01:37:36 millert Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -96,8 +96,11 @@ umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
 ucom*	at umodem?
 uvisor*	at uhub? port ? configuration ?	# Handspring Visor
 ucom*	at uvisor?
-uftdi*	at uhub? port ?
+uftdi*	at uhub? port ?			# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
+uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
+ucom*   at uplcom? portno ? 
+
 uaudio* at uhub? port ? configuration ?	# USB Audio
 ulpt*	at uhub? port ? configuration ? # USB Printers
 ukbd*	at uhub? port ? configuration ?	# USB Keyboards
