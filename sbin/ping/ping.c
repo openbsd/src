@@ -115,6 +115,8 @@ int options;
 #define	F_SO_DONTROUTE	0x080
 #define	F_VERBOSE	0x100
 #define	F_SADDR		0x200
+#define	F_HDRINCL       0x400
+#define	F_TTL		0x800
 
 /* multicast options */
 int moptions;
@@ -135,7 +137,8 @@ struct sockaddr whereto;	/* who to ping */
 struct sockaddr_in whence;		/* Which interface we come from */
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
-u_char outpack[MAXPACKET];
+u_char outpackhdr[MAXPACKET];
+u_char *outpack = outpackhdr+sizeof(struct ip);
 char BSPACE = '\b';		/* characters written for flood */
 char DOT = '.';
 char *hostname;
@@ -176,25 +179,30 @@ main(argc, argv)
 	struct hostent *hp;
 	struct sockaddr_in *to;
 	struct protoent *proto;
-	struct in_addr ifaddr, saddr;
+	struct in_addr saddr;
 	register int i;
 	int ch, fdmask, hold, packlen, preload;
 	u_char *datap, *packet;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
-	u_char ttl, loop = 1;
+	u_char ttl = MAXTTL, loop = 1, df = 0;
+	int tos = 0;
 #ifdef IP_OPTIONS
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 #endif
 
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct timeval)];
-	while ((ch = getopt(argc, argv, "I:LRS:c:dfh:i:l:np:qrs:t:vw:")) != EOF)
+	while ((ch = getopt(argc, argv, "DI:LRS:c:dfh:i:l:np:qrs:T:t:vw:")) != EOF)
 		switch(ch) {
 		case 'c':
-			npackets = atoi(optarg);
+			npackets = strtol(optarg, 0, NULL);
 			if (npackets <= 0)
 				errx(1, "bad number of packets to transmit: %s",
 				    optarg);
+			break;
+		case 'D':
+			options |= F_HDRINCL;
+			df = -1;
 			break;
 		case 'd':
 			options |= F_SO_DEBUG;
@@ -206,12 +214,17 @@ main(argc, argv)
 			setbuf(stdout, (char *)NULL);
 			break;
 		case 'I':
-			if (inet_aton(optarg, &ifaddr) == 0)
-				errx(1, "bad interface address: %s", optarg);
-			moptions |= MULTICAST_IF;
+		case 'S':	/* deprecated */
+			if (inet_aton(optarg, &saddr) == 0) {
+				if ((hp = gethostbyname(optarg)) == NULL)
+					errx(1, "bad interface address: %s",
+					     optarg);
+				memcpy(&saddr, hp->h_addr, sizeof(saddr));
+			}
+			options |= F_SADDR;
 			break;
 		case 'i':		/* wait between sending packets */
-			interval = atoi(optarg);
+			interval = strtol(optarg, NULL, 0);
 			if (interval <= 0)
 				errx(1, "bad timing interval: %s", optarg);
 			options |= F_INTERVAL;
@@ -221,7 +234,7 @@ main(argc, argv)
 			loop = 0;
 			break;
 		case 'l':
-			preload = atoi(optarg);
+			preload = strtol(optarg, NULL, 0);
 			if (preload < 0)
 				errx(1, "bad preload value: %s", optarg);
 			break;
@@ -241,35 +254,32 @@ main(argc, argv)
 		case 'r':
 			options |= F_SO_DONTROUTE;
 			break;
-		case 'S':
-			if (inet_aton(optarg, &saddr) == 0) {
-				if ((hp = gethostbyname(optarg)) == NULL)
-					errx(1, "bad interface address: %s",
-					     optarg);
-				memcpy(&saddr, hp->h_addr, sizeof(saddr));
-			}
-			options |= F_SADDR;
-			break;
 		case 's':		/* size of packet to send */
-			datalen = atoi(optarg);
+			datalen = strtol(optarg, NULL, 0);
 			if (datalen <= 0)
 				errx(1, "bad packet size: %s", optarg);
 			if (datalen > MAXPACKET)
 				errx(1, "packet size too large: %s", optarg);
 			break;
+		case 'T':
+			options |= F_HDRINCL;
+			tos = strtoul(optarg, NULL, 0);
+			if (tos > 0xFF)
+				errx(1, "bad tos value: %s", optarg);
+			break;
 		case 't':
-			ttl = atoi(optarg);
+			options |= F_TTL;
+			ttl = strtol(optarg, NULL, 0);
 			if (ttl <= 0)
 				errx(1, "bad ttl value: %s", optarg);
 			if (ttl > 255)
 				errx(1, "ttl value too large: %s", optarg);
-			moptions |= MULTICAST_TTL;
 			break;
 		case 'v':
 			options |= F_VERBOSE;
 			break;
 		case 'w':
-			maxwait = atoi(optarg);
+			maxwait = strtol(optarg, NULL, 0);
 			if (maxwait <= 0)
 				errx(1, "bad maxwait value: %s", optarg);
 			break;
@@ -320,12 +330,17 @@ main(argc, argv)
 	hold = 1;
 
 	if (options & F_SADDR) {
-		memset(&whence, 0, sizeof(whence));
-		whence.sin_len = sizeof(whence);
-		whence.sin_family = AF_INET;
-		memcpy(&whence.sin_addr.s_addr, &saddr, sizeof(saddr));
-		if (bind(s, (struct sockaddr*)&whence, sizeof(whence)) < 0)
-			err(1, "bind");
+		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
+			moptions |= MULTICAST_IF;
+		else {
+			memset(&whence, 0, sizeof(whence));
+			whence.sin_len = sizeof(whence);
+			whence.sin_family = AF_INET;
+			memcpy(&whence.sin_addr.s_addr, &saddr, sizeof(saddr));
+			if (bind(s, (struct sockaddr*)&whence,
+			    sizeof(whence)) < 0)
+				err(1, "bind");
+		}
 	}
 
 	if (options & F_SO_DEBUG)
@@ -335,8 +350,36 @@ main(argc, argv)
 		(void)setsockopt(s, SOL_SOCKET, SO_DONTROUTE, (char *)&hold,
 		    sizeof(hold));
 
+	if (options & F_TTL) {
+		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr))) 
+		    moptions |= MULTICAST_TTL;
+		else
+		    options |= F_HDRINCL;
+	}
+
+	if (options & F_RROUTE && options & F_HDRINCL)
+		errx(1, "-R option and -D or -T, or -t to unicast destinations"
+		     " are incompatible");
+
+	if (options & F_HDRINCL) {
+		struct ip *ip = (struct ip*)outpackhdr;
+
+		setsockopt(s, IPPROTO_IP, IP_HDRINCL, &hold, sizeof(hold));
+		ip->ip_v = IPVERSION;
+		ip->ip_hl = sizeof(struct ip) >> 2;
+		ip->ip_tos = tos;
+		ip->ip_id = 0;  
+		ip->ip_off = (df?IP_DF:0);
+		ip->ip_ttl = ttl;
+		ip->ip_p = proto->p_proto;
+		ip->ip_src.s_addr = INADDR_ANY;
+		ip->ip_dst = to->sin_addr;
+	}
+
 	/* record route option */
 	if (options & F_RROUTE) {
+		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
+			errx(1, "record route not valid to multicast destinations");
 #ifdef IP_OPTIONS
 		rspace[IPOPT_OPTVAL] = IPOPT_RR;
 		rspace[IPOPT_OLEN] = sizeof(rspace)-1;
@@ -360,8 +403,8 @@ main(argc, argv)
 		       sizeof(ttl)) < 0)
 		err(1, "setsockopt IP_MULTICAST_TTL");
 	if ((moptions & MULTICAST_IF) &&
-	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &ifaddr,
-		       sizeof(ifaddr)) < 0)
+	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &saddr,
+		       sizeof(saddr)) < 0)
 		err(1, "setsockopt IP_MULTICAST_IF");
 
 	/*
@@ -466,6 +509,7 @@ pinger()
 	register struct icmp *icp;
 	register int cc;
 	int i;
+	char *packet = outpack;
 
 	icp = (struct icmp *)outpack;
 	icp->icmp_type = ICMP_ECHO;
@@ -485,8 +529,17 @@ pinger()
 	/* compute ICMP checksum here */
 	icp->icmp_cksum = in_cksum((u_short *)icp, cc);
 
-	i = sendto(s, (char *)outpack, cc, 0, &whereto,
-	    sizeof(struct sockaddr));
+	if (options & F_HDRINCL) {
+		struct ip *ip = (struct ip*)outpackhdr;
+
+		packet = (char*)ip;
+		cc += sizeof(struct ip);
+		ip->ip_len = cc;
+		ip->ip_sum = in_cksum((u_short *)outpackhdr, cc);
+	}
+
+	i = sendto(s, (char *)packet, cc, 0, &whereto,
+		   sizeof(struct sockaddr));
 
 	if (i < 0 || i != cc)  {
 		if (i < 0)
@@ -1027,6 +1080,8 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: ping [-dfLnqRrv] [-c count] [-I ifaddr] [ -S ifaddr ] [-i wait]\n\t[-l preload] [-p pattern] [-s packetsize] [-t ttl] [-w maxwait] host\n");
+	    "usage: ping [-DdfLnqRrv] [-c count] [-I ifaddr] [-i wait]\n"
+	    "\t[-l preload] [-p pattern] [-s packetsize] [-t ttl]"
+	    " [-w maxwait] host\n");
 	exit(1);
 }

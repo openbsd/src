@@ -78,6 +78,10 @@ Stop after sending (and receiving)
 .Ar count
 .Tn ECHO_RESPONSE
 packets.
+.It Fl D
+Set the
+.Dv Don't Fragment
+bit.
 .It Fl d
 Set the
 .Dv SO_DEBUG
@@ -96,6 +100,9 @@ Only the super-user may use this option.
 .Bf -emphasis
 This can be very hard on a network and should be used with caution.
 .Ef
+.It Fl I Ar ifaddr
+Specify the interface to transmit from on machines with multiple
+interfaces. For unicast and multicast pings.
 .It Fl i Ar wait
 Wait
 .Ar wait
@@ -143,9 +150,6 @@ If the host is not on a directly-attached network, an error is returned.
 This option can be used to ping a local host through an interface
 that has no route through it (e.g., after the interface was dropped by
 .Xr routed 8 ) .
-.It Fl S Ar ifaddr
-Specify the interface to transmit from on machines with multiple
-interfaces. For unicast pings.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.  
 The default is 56, which translates into 64
@@ -153,7 +157,19 @@ The default is 56, which translates into 64
 data bytes when combined
 with the 8 bytes of
 .Tn ICMP
-header data.
+header data. If the 
+.Fl D
+or
+.Fl T
+options are specified, or the
+.Fl t
+option to a unicast destination, a raw socket will be used and the 8 bytes of
+header data are included in
+.Ar packetsize .
+.It Fl T Ar tos
+Use the specified type of service.
+.It Fl t Ar ttl
+Use the specified time-to-live.
 .It Fl v
 Verbose output.
 .Tn ICMP
@@ -165,15 +181,11 @@ Specifies the number of seconds to wait for a response to a packet
 before transmitting the next one.  The default is 10.
 .El
 .Pp
-In addition, the following options may be used for multicast pings:
+In addition, the following option may be used for multicast pings:
 .Bl -tag -width Ds
-.It Fl I Ar ifaddr
-Transmit using the specified interface address.
 .It Fl L
 Disable the loopback, so the transmitting host doesn't see the ICMP
 requests.
-.It Fl t Ar ttl
-Use the specified time-to-live.
 .El
 .Pp
 When using
