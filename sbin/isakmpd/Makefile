@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2001/05/07 22:14:31 espie Exp $
+#	$OpenBSD: Makefile,v 1.36 2001/05/07 22:55:37 espie Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -142,7 +142,7 @@ SUBDIR+=	regress
 .endif
 
 .for FEATURE in ${FEATURES}
-.if exists(${.CURDIR}/features/${FEATURE})
+.if exists(features/${FEATURE})
 .include "features/${FEATURE}"
 .endif
 .endfor
