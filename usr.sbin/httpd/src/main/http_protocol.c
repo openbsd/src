@@ -1,3 +1,4 @@
+/*	$OpenBSD: http_protocol.c,v 1.20 2003/02/21 16:39:56 henning Exp $ */
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
