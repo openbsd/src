@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.13 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.14 2002/02/21 19:55:13 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -305,7 +305,7 @@ iommu_enter(va, pa)
 }
 
 /*
- * iommu_clear: clears mappings created by iommu_enter
+ * iommu_remove: clears mappings created by iommu_enter
  */
 void
 iommu_remove(va, len)
@@ -322,7 +322,7 @@ iommu_remove(va, len)
 #ifdef notyet
 #ifdef DEBUG
 		if ((sc->sc_ptes[atop(va - sc->sc_dvmabase)] & IOPTE_V) == 0)
-			panic("iommu_clear: clearing invalid pte at va 0x%x",
+			panic("iommu_remove: clearing invalid pte at va 0x%x",
 				va);
 #endif
 #endif
