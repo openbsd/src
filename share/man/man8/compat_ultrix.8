@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ultrix.8,v 1.13 2003/05/06 08:56:12 jmc Exp $
+.\"	$OpenBSD: compat_ultrix.8,v 1.14 2003/06/06 19:28:06 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -92,6 +92,8 @@ Create an
 .Pa /emul/ultrix/etc/svc.conf
 file specifying either
 local files or bind (DNS) lookups for all Ultrix name services.
+.Sh SEE ALSO
+.Xr resolv.conf 5
 .Sh BUGS
 RISC Ultrix YP(NIS) is known to not work.
 The Ultrix YP libraries have a consistent endian-ness bug.
@@ -116,5 +118,3 @@ in progress.
 .Pp
 A complete list of things which fail to work in Ultrix compatibility
 mode should be added here.
-.Sh SEE ALSO
-.Xr resolv.conf 5

@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.7 2003/02/14 18:01:24 millert Exp $
+.\" $OpenBSD: starttls.8,v 1.8 2003/06/06 19:28:06 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -27,13 +27,13 @@
 .Dt STARTTLS 8
 .Os
 .Sh NAME
-.Nm starttls 
+.Nm starttls
 .Nd ESMTP over TLS/SSL
 .Sh DESCRIPTION
 STARTTLS is an ESMTP option, defined in RFC 2487, which is used to conduct
 ESMTP transactions over TLS circuits.
 This is used to increase the security of mail server transactions.
-As of version 8.11, 
+As of version 8.11,
 .Xr sendmail 8
 has supported the use of TLS to protect ESMTP communications.
 .Pp
@@ -108,7 +108,7 @@ You may adjust the lifetime of the certificate via the
 parameter (one year in this example).
 .Pp
 Make sure to leave the private key files unencrypted, using the
-.Fl nodes 
+.Fl nodes
 option.
 Otherwise,
 .Xr sendmail 8
@@ -190,8 +190,7 @@ confCLIENT_CERT
 confCLIENT_KEY
 .El
 .Pp
-.Pp
-By default, the directory 
+By default, the directory
 .Pa /etc/mail/certs ,
 defined by CERT_DIR, is used to store certificates, and the server will
 use the same certificates both as a client (outgoing mail) and as a server
@@ -308,7 +307,7 @@ One use of public key cryptography is for strong authentication.
 We can use this authentication to selectively relay clients, including
 other mail servers and mobile clients like laptops.
 However, there have been some problems getting some mail clients to work using
-certificate-based authentication. 
+certificate-based authentication.
 Note that your clients will have to generate certificates and have them
 signed (for trust validation) by a CA (certificate authority) you also trust,
 if you configure your server to do client certificate checking.
@@ -386,7 +385,7 @@ Lastly, interoperability problems can appear between different implementations.
 .Xr ssl 8
 .Pp
 .Tn DARPA
-Internet Request for Comments 
+Internet Request for Comments
 .Tn RFC2487
 .Pp
 http://www.sendmail.org/~ca/email/starttls.html

@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: update.8,v 1.9 2003/06/04 16:24:45 deraadt Exp $
+.\"	$OpenBSD: update.8,v 1.10 2003/06/06 19:28:06 jmc Exp $
 .\"
 .Dd June 8, 1996
 .Dt UPDATE 8
@@ -49,13 +49,6 @@ process will do this in a staggered manner.
 .Xr fsck 8 ,
 .Xr init 8 ,
 .Xr sync 8
-.Sh BUGS
-It is possible on some systems, that a
-.Xr sync 8
-occurring simultaneously with a crash may cause
-file system damage.
-See
-.Xr fsck 8 .
 .Sh HISTORY
 An
 .Nm update
@@ -66,3 +59,10 @@ The
 .Nm update
 command was incorporated into the kernel in
 .Ox 1.2 .
+.Sh BUGS
+It is possible on some systems, that a
+.Xr sync 8
+occurring simultaneously with a crash may cause
+file system damage.
+See
+.Xr fsck 8 .

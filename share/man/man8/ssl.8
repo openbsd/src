@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ssl.8,v 1.41 2003/02/26 15:05:07 david Exp $
-.\" 
+.\"	$OpenBSD: ssl.8,v 1.42 2003/06/06 19:28:06 jmc Exp $
+.\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -11,7 +11,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -22,7 +22,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\" 
+.\"
 .Dd September 19, 2001
 .Dt SSL 8
 .Os
@@ -172,7 +172,7 @@ who will sign the key.
 One such CA is
 .Ar Thawte Certification
 which you can reach at
-.Ar http://www.thawte.com/.
+.Ar http://www.thawte.com/ .
 Thawte can currently sign RSA keys for you.
 A procedure is being worked out to allow for DSA keys.
 .Pp
@@ -192,7 +192,7 @@ with the
 .Ar -DSSL
 flag, enabling
 .Ar https
-transactions with your machine on port 443. 
+transactions with your machine on port 443.
 .Pp
 You will most likely want to generate a self-signed certificate in the
 manner above along with your certificate signing request to test your
@@ -202,7 +202,7 @@ Once your Certifying Authority returns the signed certificate to you,
 you can switch to using the new certificate by replacing the self-signed
 .Pa /etc/ssl/server.crt
 with the certificate signed by your Certifying Authority, and then
-restarting 
+restarting
 .Xr httpd 8
 .Sh USING SSL/TLS WITH SENDMAIL
 By default,
@@ -219,14 +219,6 @@ for information on configuring
 .Xr sendmail 8
 to use
 .Ar SSL/TLS .
-.Sh BUGS
-The world needs more
-.Ar DSA
-capable
-.Ar SSL
-and
-.Ar SSH
-services.
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr ssh 1 ,
@@ -247,7 +239,7 @@ the United States.
 .Ar RSA Data Security Inc (RSADSI)
 held the patent on the
 .Ar RSA
-algorithm in the United States, and because of this, free 
+algorithm in the United States, and because of this, free
 implementations of
 .Ar RSA
 were difficult to distribute and propagate.
@@ -301,7 +293,7 @@ buy their cryptographic code from
 .Ar RSADSI .
 Predictably,
 .Ar RSADSI
-would prefer that web browsers used their patented algorithm, and thus 
+would prefer that web browsers used their patented algorithm, and thus
 their libraries do not implement any
 .Ar non-RSA
 cipher and keying combination.
@@ -324,3 +316,11 @@ software and vendors.
 .Pp
 This document first appeared in
 .Ox 2.5 .
+.Sh BUGS
+The world needs more
+.Ar DSA
+capable
+.Ar SSL
+and
+.Ar SSH
+services.

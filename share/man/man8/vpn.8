@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.65 2003/05/10 21:53:04 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.66 2003/06/06 19:28:06 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -201,7 +201,7 @@ On the security gateway of subnet A:
 	
 	# ipsecadm flow -dst B_EXTERNAL_IP -proto esp
 	    -addr B_EXTERNAL_IP 255.255.255.255
-	          A_EXTERNAL_IP 255.255.255.255 
+	          A_EXTERNAL_IP 255.255.255.255
 	    -require -in -src A_EXTERNAL_IP
 	# ipsecadm flow -dst B_EXTERNAL_IP -proto esp
 	    -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
@@ -315,6 +315,16 @@ interface.
 Note that it is strongly encouraged that instead of detailed PF
 rules, the SPD (IPsec flow database) be utilized to specify security
 policy, if only to avoid filtering conflicts.
+.Sh FILES
+.Bl -tag -width /etc/isakmpd/isakmpd.conf -compact
+.It Pa /usr/share/ipsec/rc.vpn
+Sample VPN configuration file
+.It Pa /etc/isakmpd/isakmpd.conf
+.Xr isakmpd 8
+configuration file
+.It Pa /etc/pf.conf
+Firewall configuration file
+.El
 .Sh EXAMPLES
 .Ss Manual keying
 To create a manual keyed VPN between two class C networks using
@@ -666,21 +676,6 @@ To run with verbose debugging enabled, instead start with:
 # /sbin/isakmpd -d -DA=99
 .Ed
 .El
-.Sh FILES
-.Bl -tag -width /etc/isakmpd/isakmpd.conf -compact
-.It Pa /usr/share/ipsec/rc.vpn
-Sample VPN configuration file
-.It Pa /etc/isakmpd/isakmpd.conf
-.Xr isakmpd 8
-configuration file
-.It Pa /etc/pf.conf
-Firewall configuration file
-.El
-.Sh BUGS
-In situations where the gateway IPs are outside the tunnelled network
-range, such as when tunnelling private (RFC 1918) networks over the Internet,
-.Xr isakmpd 8
-or manual keying must be used.
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr enc 4 ,
@@ -694,3 +689,8 @@ or manual keying must be used.
 .Xr isakmpd 8 ,
 .Xr pfctl 8 ,
 .Xr sysctl 8
+.Sh BUGS
+In situations where the gateway IPs are outside the tunnelled network
+range, such as when tunnelling private (RFC 1918) networks over the Internet,
+.Xr isakmpd 8
+or manual keying must be used.
