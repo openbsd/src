@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.11 1996/10/19 10:02:49 niklas Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.12 1996/11/24 00:42:04 kstailey Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
 
 /*-
@@ -74,6 +74,12 @@
 #define TOCONS	0x01
 #define TOTTY	0x02
 #define TOLOG	0x04
+
+/*
+ * This is the size of the buffer that should be passed to ksnprintn().
+ * It's the length of a long in base 8, plus NULL.
+ */
+#define KSNPRINTN_BUFSIZE      (sizeof(long) * NBBY / 3 + 2)
 
 struct	tty *constty;			/* pointer to console "window" tty */
 
@@ -692,4 +698,75 @@ ksprintn(ul, base, lenp)
 	if (lenp)
 		*lenp = p - buf;
 	return (p);
+}
+
+
+/*
+ * Print a bitmask into the provided buffer, and return a pointer
+ * to that buffer.
+ */
+char *
+bitmask_snprintf(ul, p, buf, buflen)
+	u_long ul;
+	const char *p;
+	char *buf;
+	size_t buflen;
+{
+	char *bp, *q;
+	size_t left;
+	register int n;
+	int ch, tmp;
+	char snbuf[KSNPRINTN_BUFSIZE];
+
+	bp = buf;
+	bzero(buf, buflen);
+
+	/*
+	 * Always leave room for the trailing NULL.
+	 */
+	left = buflen - 1;
+
+	/*
+	 * Print the value into the buffer.  Abort if there's not
+	 * enough room.
+	 */
+	if (buflen < KSNPRINTN_BUFSIZE)
+		return (buf);
+
+	for (q = ksprintn(ul, *p++, NULL); /* , snbuf, sizeof(snbuf)); */
+	     (ch = *q--) != 0;) {
+		*bp++ = ch;
+		left--;
+	}
+
+	/*
+	 * If the value we printed was 0, or if we don't have room for
+	 * "<x>", we're done.
+	 */
+	if (ul == 0 || left < 3)
+		return (buf);
+
+#define PUTBYTE(b, c, l)	\
+	*(b)++ = (c);		\
+	if (--(l) == 0)		\
+		goto out;
+
+	for (tmp = 0; (n = *p++) != 0;) {
+		if (ul & (1 << (n - 1))) {
+			PUTBYTE(bp, tmp ? ',' : '<', left);
+				for (; (n = *p) > ' '; ++p) {
+					PUTBYTE(bp, n, left);
+				}
+				tmp = 1;
+		} else
+			for (; *p > ' '; ++p)
+				continue;
+	}
+	if (tmp)
+		*bp = '>';
+
+#undef PUTBYTE
+
+ out:
+	return (buf);
 }
