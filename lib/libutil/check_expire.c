@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_expire.c,v 1.6 2002/06/09 22:18:43 fgsch Exp $	*/
+/*	$OpenBSD: check_expire.c,v 1.7 2003/09/02 16:55:32 markus Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -120,6 +120,8 @@ login_check_expire(back, pwd, class, lastchance)
 		}
 		if (expire < 0) {
 			if (lastchance) {
+				struct passwd *npwd;
+
 				endpwent();
 
 				/*
@@ -128,12 +130,12 @@ login_check_expire(back, pwd, class, lastchance)
 				 * This will most certainly cause any
 				 * expired password to be dead, as well.
 				 */
-				pwd = pw_dup(pwd);
-				pwd->pw_change = 1;
-				p = pwd_update(pwd);
-				memset(pwd->pw_passwd, 0,
-				    strlen(pwd->pw_passwd));
-				free(pwd);
+				npwd = pw_dup(pwd);
+				npwd->pw_change = 1;
+				p = pwd_update(npwd);
+				memset(npwd->pw_passwd, 0,
+				    strlen(npwd->pw_passwd));
+				free(npwd);
 				if (p != NULL) {
 					fprintf(back, BI_VALUE " errormsg %s",
 					    auth_mkvalue(p));
