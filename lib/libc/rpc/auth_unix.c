@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: auth_unix.c,v 1.15 2002/01/02 23:00:10 deraadt Exp $";
+static char *rcsid = "$OpenBSD: auth_unix.c,v 1.16 2003/09/20 00:39:39 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -152,6 +152,9 @@ authunix_create(machname, uid, gid, len, aup_gids)
 #else
 	if ((au->au_origcred.oa_base = mem_alloc((u_int) len)) == NULL) {
 		(void)fprintf(stderr, "authunix_create: out of memory\n");
+		XDR_DESTROY(&xdrs);
+		free(au);
+		free(auth);
 		return (NULL);
 	}
 #endif
