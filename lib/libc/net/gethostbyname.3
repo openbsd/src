@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.4 1997/03/13 19:07:23 downsj Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.5 1997/04/26 22:06:38 michaels Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@
 .Ft void
 .Fn endhostent void
 .Ft void
-.Fn herror "char *string"
+.Fn herror "const char *string"
 .Sh DESCRIPTION
 The
 .Fn gethostbyname
@@ -153,6 +153,19 @@ function
 closes the
 .Tn TCP
 connection.
+.Pp
+The
+.Fn herror
+function prints an error message describing the failure.  If it's argument
+.Fa string
+is
+.Pf non Dv -NULL ,
+it is prepended to the message string and seperated from it by a colon
+and a space.  The error message is printed with a trailing newline.
+The contents of the error message is the same as that returned by 
+.Fn hstrerror
+with arrgument
+.Fa h_errno .
 .Sh FILES
 .Bl -tag -width /etc/hosts -compact
 .It Pa /etc/hosts
@@ -168,15 +181,6 @@ The external integer
 .Va h_errno
 may then be checked to see whether this is a temporary failure
 or an invalid or unknown host.
-The routine
-.Fn herror
-can be used to print an error message describing the failure.
-If its argument
-.Fa string
-is
-.Pf non Dv -NULL ,
-it is printed, followed by a colon and a space.
-The error message is printed with a trailing newline.
 .Pp
 The variable
 .Va h_errno
