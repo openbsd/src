@@ -1394,10 +1394,10 @@ postident:
 				l -= strlen(p);
 
 				/* o[1] is option length */
-				j = *++o / sizeof(struct in_addr) - 1;
+				j = o[1] / sizeof(struct in_addr) - 1;
 
 				/* q skips length and router pointer to data */
-				q = o + 2;
+				q = o + 1 + 2;
 				for ( ; j >= 0; j--)
 				{
 					memcpy(&addr, q, sizeof(addr));
@@ -1412,7 +1412,7 @@ postident:
 					l -= i + 1;
 					q += sizeof(struct in_addr); 
 				}
-				o += *o;
+				o += o[1];
 				break;
 
 			  default:
