@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.27 2001/02/21 23:24:30 csapuntz Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.28 2001/02/23 14:42:37 csapuntz Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -94,7 +94,6 @@ struct vnode {
 	int	v_usecount;			/* reference count of users */
 	int	v_writecount;			/* reference count of writers */
 	long	v_holdcnt;			/* page & buffer references */
-	daddr_t	v_lastr;			/* last read (read-ahead) */
 	u_long	v_id;				/* capability identifier */
 	struct	mount *v_mount;			/* ptr to vfs we are in */
 	int 	(**v_op) __P((void *));		/* vnode operations vector */
@@ -113,12 +112,7 @@ struct vnode {
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
 	struct	nqlease *v_lease;		/* Soft reference to lease */
-	daddr_t	v_lastw;			/* last write (write cluster) */
-	daddr_t	v_cstart;			/* start block of cluster */
-	daddr_t	v_lasta;			/* last allocation */
-	int	v_clen;				/* length of current cluster */
-	int	v_ralen;			/* Read-ahead length */
-	daddr_t	v_maxra;			/* last readahead block */
+
 	struct  simplelock v_interlock;		/* lock on usecount and flag */
 	struct  lock *v_vnlock;			/* used for non-locking fs's */
 #ifdef UVM

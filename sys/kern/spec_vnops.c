@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.15 1998/02/23 17:40:58 niklas Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.16 2001/02/23 14:42:39 csapuntz Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -53,6 +53,8 @@
 #include <sys/lockf.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#define v_lastr v_specinfo->si_lastr
 
 /* symbolic sleep message strings for devices */
 char	devopn[] = "devopn";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.5 1999/02/26 03:22:00 art Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.6 2001/02/23 14:42:39 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.1 1997/06/11 09:34:01 bouyer Exp $	*/
 
 /*-
@@ -128,9 +128,9 @@ ext2fs_read(v)
 		if (lblktosize(fs, nextlbn) >= ip->i_e2fs_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		else if (doclusterread)
-			error = cluster_read(vp,
+			error = cluster_read(vp, &ip->i_ci,
 				ip->i_e2fs_size, lbn, size, NOCRED, &bp);
-		else if (lbn - 1 == vp->v_lastr) {
+		else if (lbn - 1 == ip->i_ci.ci_lastr) {
 			int nextsize = fs->e2fs_bsize;
 			error = breadn(vp, lbn,
 				size, &nextlbn, &nextsize, 1, NOCRED, &bp);
@@ -138,7 +138,7 @@ ext2fs_read(v)
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		if (error)
 			break;
-		vp->v_lastr = lbn;
+		ip->i_ci.ci_lastr = lbn;
 
 		/*
 		 * We should only get non-zero b_resid when an I/O error
@@ -278,7 +278,7 @@ ext2fs_write(v)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->e2fs_bsize) {
 			if (doclusterwrite)
-				cluster_write(bp, ip->i_e2fs_size);
+				cluster_write(bp, &ip->i_ci, ip->i_e2fs_size);
 			else
 				bawrite(bp);
 		} else

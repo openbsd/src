@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.12 1999/11/13 03:48:09 angelos Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.13 2001/02/23 14:42:38 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -343,12 +343,12 @@ cd9660_read(v)
 		rablock = lbn + 1;
 		if (cd9660_doclusterread) {
 			if (lblktosize(imp, rablock) <= ip->i_size)
-				error = cluster_read(vp, (off_t)ip->i_size,
-						     lbn, size, NOCRED, &bp);
+				error = cluster_read(vp, &ip->i_ci,
+				    (off_t)ip->i_size, lbn, size, NOCRED, &bp);
 			else
 				error = bread(vp, lbn, size, NOCRED, &bp);
 		} else {
-			if (vp->v_lastr + 1 == lbn &&
+			if (ip->i_ci.ci_lastr + 1 == lbn &&
 			    lblktosize(imp, rablock) < ip->i_size) {
 				rasize = blksize(imp, ip, rablock);
 				error = breadn(vp, lbn, size, &rablock,
@@ -356,7 +356,7 @@ cd9660_read(v)
 			} else
 				error = bread(vp, lbn, size, NOCRED, &bp);
 		}
-		vp->v_lastr = lbn;
+		ip->i_ci.ci_lastr = lbn;
 		n = min(n, size - bp->b_resid);
 		if (error) {
 			brelse(bp);

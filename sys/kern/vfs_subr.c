@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.49 2001/02/21 23:24:30 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.50 2001/02/23 14:42:37 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
 #endif
+
 
 enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
@@ -426,7 +427,6 @@ getnewvnode(tag, mp, vops, vpp)
 		vp->v_flag &= ~VONFREELIST;
 
 		simple_unlock(&vnode_free_list_slock);
-		vp->v_lease = NULL;
 		if (vp->v_type != VBAD)
 			vgonel(vp, p);
 		else
@@ -442,13 +442,6 @@ getnewvnode(tag, mp, vops, vpp)
 		splx(s);
 #endif
 		vp->v_flag = 0;
-		vp->v_lastr = 0;
-		vp->v_ralen = 0;
-		vp->v_maxra = 0;
-		vp->v_lastw = 0;
-		vp->v_lasta = 0;
-		vp->v_cstart = 0;
-		vp->v_clen = 0;
 		vp->v_socket = 0;
 	}
 	vp->v_type = VNON;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.16 2000/11/21 21:49:57 provos Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.17 2001/02/23 14:42:39 csapuntz Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
@@ -126,15 +126,15 @@ READ(v)
 
 #ifdef LFS_READWRITE
 		(void)lfs_check(vp, lbn);
-		error = cluster_read(vp, ip->i_ffs_size, lbn, size, NOCRED,
-		    &bp);
+		error = cluster_read(vp, &ip->i_ci, ip->i_ffs_size, lbn, 
+		    size, NOCRED, &bp);
 #else
 		if (lblktosize(fs, nextlbn) >= ip->i_ffs_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		else if (doclusterread)
-			error = cluster_read(vp,
+			error = cluster_read(vp, &ip->i_ci,
 			    ip->i_ffs_size, lbn, size, NOCRED, &bp);
-		else if (lbn - 1 == vp->v_lastr) {
+		else if (lbn - 1 == ip->i_ci.ci_lastr) {
 			int nextsize = BLKSIZE(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
 			    size, &nextlbn, &nextsize, 1, NOCRED, &bp);
@@ -143,7 +143,7 @@ READ(v)
 #endif
 		if (error)
 			break;
-		vp->v_lastr = lbn;
+		ip->i_ci.ci_lastr = lbn;
 
 		/*
 		 * We should only get non-zero b_resid when an I/O error
@@ -288,7 +288,7 @@ WRITE(v)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->fs_bsize) {
 			if (doclusterwrite)
-				cluster_write(bp, ip->i_ffs_size);
+				cluster_write(bp, &ip->i_ci, ip->i_ffs_size);
 			else
 				bawrite(bp);
 		} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.7 1998/08/06 19:34:48 csapuntz Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.8 2001/02/23 14:42:39 csapuntz Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -47,6 +47,7 @@ struct specinfo {
 	struct  mount *si_mountpoint;
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
+	daddr_t si_lastr;
 };
 /*
  * Exported shorthand

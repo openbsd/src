@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.16 2001/02/21 23:24:30 csapuntz Exp $	*/
+/*	$OpenBSD: buf.h,v 1.17 2001/02/23 14:42:37 csapuntz Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -206,10 +206,6 @@ void	bremfree __P((struct buf *));
 void	bufinit __P((void));
 void	bdirty __P((struct buf *));
 int	bwrite __P((struct buf *));
-void	cluster_callback __P((struct buf *));
-int	cluster_read __P((struct vnode *, u_quad_t, daddr_t, long,
-			  struct ucred *, struct buf **));
-void	cluster_write __P((struct buf *, u_quad_t));
 struct buf *getblk __P((struct vnode *, daddr_t, int, int, int));
 struct buf *geteblk __P((int));
 struct buf *getnewbuf __P((int slpflag, int slptimeo));
@@ -258,6 +254,22 @@ buf_countdeps(struct buf *bp, int i)
         else
                 return (0);
 }
+
+struct cluster_info {
+	daddr_t	ci_lastr;			/* last read (read-ahead) */
+	daddr_t	ci_lastw;			/* last write (write cluster) */
+	daddr_t	ci_cstart;			/* start block of cluster */
+	daddr_t	ci_lasta;			/* last allocation */
+	int	ci_clen;				/* length of current cluster */
+	int	ci_ralen;			/* Read-ahead length */
+	daddr_t	ci_maxra;			/* last readahead block */
+};
+
+
+int	cluster_read __P((struct vnode *, struct cluster_info *,
+			  u_quad_t, daddr_t, long,
+			  struct ucred *, struct buf **));
+void	cluster_write __P((struct buf *, struct cluster_info *, u_quad_t));
 
 __END_DECLS
 #endif

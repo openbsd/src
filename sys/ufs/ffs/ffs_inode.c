@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.17 2001/02/21 23:24:31 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.18 2001/02/23 14:42:39 csapuntz Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -208,7 +208,9 @@ ffs_truncate(v)
 #else
 	vnode_pager_setsize(ovp, (u_long)length);
 #endif
-	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
+	oip->i_ci.ci_lasta = oip->i_ci.ci_clen 
+	    = oip->i_ci.ci_cstart = oip->i_ci.ci_lastw = 0;
+
 	if (DOINGSOFTDEP(ovp)) {
 		if (length > 0 || softdep_slowdown(ovp)) {
 			/*

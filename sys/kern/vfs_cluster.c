@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.18 2001/02/21 23:24:30 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.19 2001/02/23 14:42:38 csapuntz Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -50,13 +50,15 @@
 /*
  * Local declarations
  */
+void	cluster_callback __P((struct buf *));
 struct buf *cluster_newbuf __P((struct vnode *, struct buf *, long, daddr_t,
 	    daddr_t, long, int));
 struct buf *cluster_rbuild __P((struct vnode *, u_quad_t, struct buf *,
 	    daddr_t, daddr_t, long, int, long));
 void	    cluster_wbuild __P((struct vnode *, struct buf *, long,
 	    daddr_t, int, daddr_t));
-struct cluster_save *cluster_collectbufs __P((struct vnode *, struct buf *));
+struct cluster_save *cluster_collectbufs __P((struct vnode *, 
+	    struct cluster_info *, struct buf *));
 
 #ifdef DIAGNOSTIC
 /*
@@ -72,12 +74,12 @@ struct cluster_save *cluster_collectbufs __P((struct vnode *, struct buf *));
  * showed that the latter performed better from a system-wide point of view.
  */
 int	doclusterraz = 0;
-#define ISSEQREAD(vp, blk) \
+#define ISSEQREAD(ci, blk) \
 	(((blk) != 0 || doclusterraz) && \
-	 ((blk) == (vp)->v_lastr + 1 || (blk) == (vp)->v_lastr))
+	 ((blk) == (ci)->ci_lastr + 1 || (blk) == (ci)->ci_lastr))
 #else
-#define ISSEQREAD(vp, blk) \
-	((blk) != 0 && ((blk) == (vp)->v_lastr + 1 || (blk) == (vp)->v_lastr))
+#define ISSEQREAD(ci, blk) \
+	((blk) != 0 && ((blk) == (ci)->ci_lastr + 1 || (blk) == (ci)->ci_lastr))
 #endif
 
 /*
@@ -101,8 +103,9 @@ int	doclusterraz = 0;
  *	If either is NULL, then you don't have to do the I/O.
  */
 int
-cluster_read(vp, filesize, lblkno, size, cred, bpp)
+cluster_read(vp, ci, filesize, lblkno, size, cred, bpp)
 	struct vnode *vp;
+	struct cluster_info *ci;
 	u_quad_t filesize;
 	daddr_t lblkno;
 	long size;
@@ -128,7 +131,7 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 		 * Case 1, 2.
 		 */
 		flags |= B_ASYNC;
-		ioblkno = lblkno + (vp->v_ralen ? vp->v_ralen : 1);
+		ioblkno = lblkno + (ci->ci_ralen ? ci->ci_ralen : 1);
 		alreadyincore = incore(vp, ioblkno) != NULL;
 		bp = NULL;
 	} else {
@@ -150,9 +153,9 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 	 * but at smaller than the filesystem block size.
 	 */
 	rbp = NULL;
-	if (!ISSEQREAD(vp, lblkno)) {
-		vp->v_ralen = 0;
-		vp->v_maxra = lblkno;
+	if (!ISSEQREAD(ci, lblkno)) {
+		ci->ci_ralen = 0;
+		ci->ci_maxra = lblkno;
 	} else if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size <= filesize && 
 		   !alreadyincore &&
 		   !(error = VOP_BMAP(vp, ioblkno, NULL, &blkno, &num_ra)) &&
@@ -169,19 +172,19 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 			 * or are not using our readahead very rapidly.
 			 * In this case we scale back the window.
 			 */
-			if (!alreadyincore && ioblkno <= vp->v_maxra)
-				vp->v_ralen = max(vp->v_ralen >> 1, 1);
+			if (!alreadyincore && ioblkno <= ci->ci_maxra)
+				ci->ci_ralen = max(ci->ci_ralen >> 1, 1);
 			/*
 			 * There are more sequential blocks than our current
 			 * window allows, scale up.  Ideally we want to get
 			 * in sync with the filesystem maxcontig value.
 			 */
-			else if (num_ra > vp->v_ralen && lblkno != vp->v_lastr)
-				vp->v_ralen = vp->v_ralen ?
-					min(num_ra, vp->v_ralen << 1) : 1;
+			else if (num_ra > ci->ci_ralen && lblkno != ci->ci_lastr)
+				ci->ci_ralen = ci->ci_ralen ?
+					min(num_ra, ci->ci_ralen << 1) : 1;
 
-			if (num_ra > vp->v_ralen)
-				num_ra = vp->v_ralen;
+			if (num_ra > ci->ci_ralen)
+				num_ra = ci->ci_ralen;
 		}
 
 		if (num_ra)				/* case 2, 4 */
@@ -202,14 +205,14 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 			 * the previous conditional.
 			 */
 			if (num_ra) {
-				if (ioblkno <= vp->v_maxra)
-					vp->v_ralen = max(vp->v_ralen >> 1, 1);
-				else if (num_ra > vp->v_ralen &&
-					 lblkno != vp->v_lastr)
-					vp->v_ralen = vp->v_ralen ?
-						min(num_ra,vp->v_ralen<<1) : 1;
-				if (num_ra > vp->v_ralen)
-					num_ra = vp->v_ralen;
+				if (ioblkno <= ci->ci_maxra)
+					ci->ci_ralen = max(ci->ci_ralen >> 1, 1);
+				else if (num_ra > ci->ci_ralen &&
+					 lblkno != ci->ci_lastr)
+					ci->ci_ralen = ci->ci_ralen ?
+						min(num_ra,ci->ci_ralen<<1) : 1;
+				if (num_ra > ci->ci_ralen)
+					num_ra = ci->ci_ralen;
 			}
 			flags |= B_ASYNC;
 			if (num_ra)
@@ -256,7 +259,7 @@ skip_readahead:
 	if (rbp == NULL)
 		rbp = bp;
 	if (rbp)
-		vp->v_maxra = rbp->b_lblkno + (rbp->b_bcount / size) - 1;
+		ci->ci_maxra = rbp->b_lblkno + (rbp->b_bcount / size) - 1;
 
 	if (bp)
 		return(biowait(bp));
@@ -478,8 +481,9 @@ cluster_callback(bp)
  *	4.	end of a cluster - asynchronously write cluster
  */
 void
-cluster_write(bp, filesize)
+cluster_write(bp, ci, filesize)
         struct buf *bp;
+	struct cluster_info *ci;
 	u_quad_t filesize;
 {
         struct vnode *vp;
@@ -491,12 +495,12 @@ cluster_write(bp, filesize)
 
 	/* Initialize vnode to beginning of file. */
 	if (lbn == 0)
-		vp->v_lasta = vp->v_clen = vp->v_cstart = vp->v_lastw = 0;
+		ci->ci_lasta = ci->ci_clen = ci->ci_cstart = ci->ci_lastw = 0;
 
-        if (vp->v_clen == 0 || lbn != vp->v_lastw + 1 ||
-	    (bp->b_blkno != vp->v_lasta + btodb(bp->b_bcount))) {
+        if (ci->ci_clen == 0 || lbn != ci->ci_lastw + 1 ||
+	    (bp->b_blkno != ci->ci_lasta + btodb(bp->b_bcount))) {
 		maxclen = MAXBSIZE / vp->v_mount->mnt_stat.f_iosize - 1;
-		if (vp->v_clen != 0) {
+		if (ci->ci_clen != 0) {
 			/*
 			 * Next block is not sequential.
 			 *
@@ -506,16 +510,16 @@ cluster_write(bp, filesize)
 			 * cluster size, then push the previous cluster.
 			 * Otherwise try reallocating to make it sequential.
 			 */
-			cursize = vp->v_lastw - vp->v_cstart + 1;
+			cursize = ci->ci_lastw - ci->ci_cstart + 1;
 			if (((u_quad_t)(lbn + 1)) * bp->b_bcount != filesize ||
-			    lbn != vp->v_lastw + 1 || vp->v_clen <= cursize) {
+			    lbn != ci->ci_lastw + 1 || ci->ci_clen <= cursize) {
 				cluster_wbuild(vp, NULL, bp->b_bcount,
-				    vp->v_cstart, cursize, lbn);
+				    ci->ci_cstart, cursize, lbn);
 			} else {
 				struct buf **bpp, **endbp;
 				struct cluster_save *buflist;
 
-				buflist = cluster_collectbufs(vp, bp);
+				buflist = cluster_collectbufs(vp, ci, bp);
 				endbp = &buflist->bs_children
 				    [buflist->bs_nchildren - 1];
 				if (VOP_REALLOCBLKS(vp, buflist)) {
@@ -527,7 +531,7 @@ cluster_write(bp, filesize)
 						brelse(*bpp);
 					free(buflist, M_SEGMENT);
 					cluster_wbuild(vp, NULL, bp->b_bcount,
-					    vp->v_cstart, cursize, lbn);
+					    ci->ci_cstart, cursize, lbn);
 				} else {
 					/*
 					 * Succeeded, keep building cluster.
@@ -536,8 +540,8 @@ cluster_write(bp, filesize)
 					     bpp <= endbp; bpp++)
 						bdwrite(*bpp);
 					free(buflist, M_SEGMENT);
-					vp->v_lastw = lbn;
-					vp->v_lasta = bp->b_blkno;
+					ci->ci_lastw = lbn;
+					ci->ci_lasta = bp->b_blkno;
 					return;
 				}
 			}
@@ -551,36 +555,36 @@ cluster_write(bp, filesize)
 		    (VOP_BMAP(vp, lbn, NULL, &bp->b_blkno, &maxclen) ||
 		     bp->b_blkno == -1)) {
 			bawrite(bp);
-			vp->v_clen = 0;
-			vp->v_lasta = bp->b_blkno;
-			vp->v_cstart = lbn + 1;
-			vp->v_lastw = lbn;
+			ci->ci_clen = 0;
+			ci->ci_lasta = bp->b_blkno;
+			ci->ci_cstart = lbn + 1;
+			ci->ci_lastw = lbn;
 			return;
 		}
-                vp->v_clen = maxclen;
+                ci->ci_clen = maxclen;
                 if (maxclen == 0) {		/* I/O not contiguous */
-			vp->v_cstart = lbn + 1;
+			ci->ci_cstart = lbn + 1;
                         bawrite(bp);
                 } else {			/* Wait for rest of cluster */
-			vp->v_cstart = lbn;
+			ci->ci_cstart = lbn;
                         bdwrite(bp);
 		}
-	} else if (lbn == vp->v_cstart + vp->v_clen) {
+	} else if (lbn == ci->ci_cstart + ci->ci_clen) {
 		/*
 		 * At end of cluster, write it out.
 		 */
-		cluster_wbuild(vp, bp, bp->b_bcount, vp->v_cstart,
-		    vp->v_clen + 1, lbn);
-		vp->v_clen = 0;
-		vp->v_cstart = lbn + 1;
+		cluster_wbuild(vp, bp, bp->b_bcount, ci->ci_cstart,
+		    ci->ci_clen + 1, lbn);
+		ci->ci_clen = 0;
+		ci->ci_cstart = lbn + 1;
 	} else
 		/*
 		 * In the middle of a cluster, so just delay the
 		 * I/O for now.
 		 */
 		bdwrite(bp);
-	vp->v_lastw = lbn;
-	vp->v_lasta = bp->b_blkno;
+	ci->ci_lastw = lbn;
+	ci->ci_lasta = bp->b_blkno;
 }
 
 
@@ -741,20 +745,21 @@ redo:
  * Plus add one additional buffer.
  */
 struct cluster_save *
-cluster_collectbufs(vp, last_bp)
+cluster_collectbufs(vp, ci, last_bp)
 	struct vnode *vp;
+	struct cluster_info *ci;
 	struct buf *last_bp;
 {
 	struct cluster_save *buflist;
 	daddr_t	lbn;
 	int i, len;
 
-	len = vp->v_lastw - vp->v_cstart + 1;
+	len = ci->ci_lastw - ci->ci_cstart + 1;
 	buflist = malloc(sizeof(struct buf *) * (len + 1) + sizeof(*buflist),
 	    M_SEGMENT, M_WAITOK);
 	buflist->bs_nchildren = 0;
 	buflist->bs_children = (struct buf **)(buflist + 1);
-	for (lbn = vp->v_cstart, i = 0; i < len; lbn++, i++)
+	for (lbn = ci->ci_cstart, i = 0; i < len; lbn++, i++)
 		    (void)bread(vp, lbn, last_bp->b_bcount, NOCRED,
 			&buflist->bs_children[i]);
 	buflist->bs_children[i] = last_bp;

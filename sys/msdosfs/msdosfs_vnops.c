@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.22 2000/06/07 15:04:06 art Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.23 2001/02/23 14:42:38 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -469,7 +469,7 @@ msdosfs_read(v)
 			error = bread(pmp->pm_devvp, lbn, blsize, NOCRED, &bp);
 		} else {
 			rablock = lbn + 1;
-			if (vp->v_lastr + 1 == lbn &&
+			if (dep->de_lastr + 1 == lbn &&
 			    de_cn2off(pmp, rablock) < dep->de_FileSize)
 				error = breada(vp, de_cn2bn(pmp, lbn),
 				    pmp->pm_bpcluster, de_cn2bn(pmp, rablock),
@@ -477,7 +477,7 @@ msdosfs_read(v)
 			else
 				error = bread(vp, de_cn2bn(pmp, lbn),
 				    pmp->pm_bpcluster, NOCRED, &bp);
-			vp->v_lastr = lbn;
+			dep->de_lastr = lbn;
 		}
 		n = min(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {

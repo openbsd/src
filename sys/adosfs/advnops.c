@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.15 1998/08/21 23:03:16 csapuntz Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.16 2001/02/23 14:42:37 csapuntz Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -310,7 +310,6 @@ adosfs_read(v)
 		 */
 		error = bread(sp->a_vp, lbn * amp->secsperblk, amp->bsize,
 		    NOCRED, &bp);
-		sp->a_vp->v_lastr = lbn;
 
 		if (!IS_FFS(amp)) {
 			if (bp->b_resid > 0)
