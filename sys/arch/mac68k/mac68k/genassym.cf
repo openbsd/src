@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.10 2001/11/06 19:53:15 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.11 2001/11/17 21:35:12 mickey Exp $
 #	$NetBSD: genassym.cf,v 1.7 1998/01/06 08:46:16 thorpej Exp $
 
 #
@@ -54,13 +54,8 @@ include	<machine/reg.h>
 include	<machine/pte.h>
 
 struct	proc
-member	p_addr
 member	P_MD_REGS		p_md.md_regs
 member	P_MD_FLAGS		p_md.md_flags
-
-# interrupt/fault metering
-struct	uvmexp			UVMEXP_
-member	intrs
 
 export	USPACE
 export	PGSHIFT

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2001/11/06 19:53:16 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2001/11/17 21:35:12 mickey Exp $
 #	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $
 
 #
@@ -103,8 +103,6 @@ export	PROM_BASE
 
 # proc fields and values
 struct	proc
-member	p_vmspace
-member	p_addr
 member	p_flag
 member	P_MD_FLAGS		p_md.md_flags
 member	P_MD_REGS		p_md.md_regs

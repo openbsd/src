@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.14 2001/11/06 19:53:14 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.15 2001/11/17 21:35:12 mickey Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -113,16 +113,10 @@ export	MAXADDR
 
 # proc fields and values
 struct	proc
-member	p_vmspace
-member	p_addr
 member	P_MD_FLAGS		p_md.md_flags
 member	P_MD_REGS		p_md.md_regs
 
 export	SSLEEP
-
-# interrupt/fault metering
-struct	uvmexp			UVMEXP_
-member	intrs
 
 # PSL values
 export	PSL_S

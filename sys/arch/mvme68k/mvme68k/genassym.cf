@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.13 2001/11/06 19:53:15 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.14 2001/11/17 21:35:12 mickey Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -90,13 +90,8 @@ export	USRSTACK
 
 # proc fields and values
 struct	proc
-member	p_addr
 member	P_MD_FLAGS		p_md.md_flags
 member	P_MD_REGS		p_md.md_regs
-
-# interrupt/fault metering
-struct	uvmexp			UVMEXP_
-member	intrs
 
 # PSL values
 export	PSL_S
