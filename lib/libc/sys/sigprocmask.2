@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigprocmask.2,v 1.6 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: sigprocmask.2,v 1.7 2004/08/26 09:10:26 jmc Exp $
 .\"	$NetBSD: sigprocmask.2,v 1.6 1995/02/27 12:37:33 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -59,7 +59,7 @@ and the current mask.
 The function is specified by
 .Fa how
 using one of the following values from
-.Aq Pa signal.h :
+.Aq Pa sys/signal.h :
 .Bl -tag -width SIG_UNBLOCK
 .It Dv SIG_BLOCK
 The new mask is the union of the current mask and the specified
