@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_cmmu.c,v 1.9 2001/08/31 01:52:22 miod Exp $	*/
+/*	$OpenBSD: m197_cmmu.c,v 1.10 2001/09/28 20:46:42 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -322,11 +322,8 @@ m197_cmmu_cpu_number(void)
 }
 
 /**
- **	Funcitons that actually modify CMMU registers.
+ **	Functions that actually modify CMMU registers.
  **/
-#if !DDB
-static
-#endif
 void
 m197_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 {
@@ -337,9 +334,6 @@ m197_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
  * cmmu_cpu_lock should be held when called if read
  * the CMMU_SCR or CMMU_SAR.
  */
-#if !DDB
-static
-#endif
 unsigned
 m197_cmmu_remote_get(unsigned cpu, unsigned r, unsigned data)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.8 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: pcb.h,v 1.9 2001/09/28 20:46:39 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -49,7 +49,7 @@
 
 /*
  * This must always be an even number of words long so that our stack
- * will always be properly aligned (88k need 8 byte alignmet). Also,
+ * will always be properly aligned (88k need 8 byte alignment). Also,
  * place r14 on double word boundary so that we can use st.d while
  * saving the regs.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.12 2001/08/26 14:31:12 miod Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.13 2001/09/28 20:46:42 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -341,7 +341,7 @@ cmmu_cpu_number(void)
 }
 
 /**
- **	Funcitons that actually modify CMMU registers.
+ **	Functions that actually modify CMMU registers.
  **/
 
 void
@@ -719,7 +719,7 @@ cmmu_flush_data_cache(vm_offset_t physaddr, int size)
 /*
  * sync dcache (and icache too)
  */
-static void
+void
 cmmu_sync_cache(vm_offset_t physaddr, int size)
 {
    CMMU_LOCK;
@@ -739,7 +739,7 @@ cmmu_sync_cache(vm_offset_t physaddr, int size)
    CMMU_UNLOCK;
 }
 
-static void
+void
 cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
 {
    CMMU_LOCK;
@@ -759,7 +759,7 @@ cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
    CMMU_UNLOCK;
 }
 
-static void
+void
 cmmu_inval_cache(vm_offset_t physaddr, int size)
 {
    CMMU_LOCK;
