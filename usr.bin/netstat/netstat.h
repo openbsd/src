@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.5 1995/10/03 21:42:45 thorpej Exp $	*/
+/*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,11 +52,10 @@ int	tflag;		/* show i/f watchdog timers */
 int	interval;	/* repeat interval for i/f stats */
 
 char	*interface;	/* desired i/f for stats, or NULL for all i/fs */
-int	unit;		/* unit number for above */
 
 int	af;		/* address family */
 
-char	*prog;		/* program name */
+extern	char *__progname; /* program name, from crt0.o */
 
 
 int	kread __P((u_long addr, char *buf, int size));

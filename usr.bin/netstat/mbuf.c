@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.8 1995/10/03 21:42:41 thorpej Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: mbuf.c,v 1.8 1995/10/03 21:42:41 thorpej Exp $";
+static char *rcsid = "$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,11 +84,13 @@ mbpr(mbaddr)
 
 	if (nmbtypes != 256) {
 		fprintf(stderr,
-		    "%s: unexpected change to mbstat; check source\n", prog);
+		    "%s: unexpected change to mbstat; check source\n",
+		        __progname);
 		return;
 	}
 	if (mbaddr == 0) {
-		fprintf(stderr, "%s: mbstat: symbol not in namelist\n", prog);
+		fprintf(stderr, "%s: mbstat: symbol not in namelist\n",
+		    __progname);
 		return;
 	}
 	if (kread(mbaddr, (char *)&mbstat, sizeof (mbstat)))

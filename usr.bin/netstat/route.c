@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.14 1995/10/03 21:42:47 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: route.c,v 1.14 1995/10/03 21:42:47 thorpej Exp $";
+static char *rcsid = "$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -449,7 +449,6 @@ p_rtentry(rt)
 	register struct rtentry *rt;
 {
 	static struct ifnet ifnet, *lastif;
-	static char name[16];
 
 	p_sockaddr(kgetsa(rt_key(rt)), rt->rt_flags, WID_DST);
 	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, WID_GW);
@@ -462,10 +461,9 @@ p_rtentry(rt)
 	if (rt->rt_ifp) {
 		if (rt->rt_ifp != lastif) {
 			kget(rt->rt_ifp, ifnet);
-			kread((u_long)ifnet.if_name, name, 16);
 			lastif = rt->rt_ifp;
 		}
-		printf(" %.15s%d%s", name, ifnet.if_unit,
+		printf(" %.16s%s", ifnet.if_xname,
 			rt->rt_nodes[0].rn_dupedkey ? " =>" : "");
 	}
 	putchar('\n');

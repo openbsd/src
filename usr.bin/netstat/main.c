@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1995/10/03 21:42:40 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$NetBSD: main.c,v 1.8 1995/10/03 21:42:40 thorpej Exp $";
+static char *rcsid = "$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -204,10 +204,6 @@ main(argc, argv)
 	char *nlistf = NULL, *memf = NULL;
 	char buf[_POSIX2_LINE_MAX];
 
-	if (cp = rindex(argv[0], '/'))
-		prog = cp + 1;
-	else
-		prog = argv[0];
 	af = AF_UNSPEC;
 
 	while ((ch = getopt(argc, argv, "Aadf:ghI:iM:mN:np:rstuw:")) != EOF)
@@ -233,23 +229,17 @@ main(argc, argv)
 			else {
 				(void)fprintf(stderr,
 				    "%s: %s: unknown address family\n",
-				    prog, optarg);
+				    __progname, optarg);
 				exit(1);
 			}
 			break;
 		case 'g':
 			gflag = 1;
 			break;
-		case 'I': {
-			char *cp;
-
+		case 'I':
 			iflag = 1;
-			for (cp = interface = optarg; isalpha(*cp); cp++)
-				continue;
-			unit = atoi(cp);
-			*cp = '\0';
+			interface = optarg;
 			break;
-		}
 		case 'i':
 			iflag = 1;
 			break;
@@ -269,7 +259,7 @@ main(argc, argv)
 			if ((tp = name2protox(optarg)) == NULL) {
 				(void)fprintf(stderr,
 				    "%s: %s: unknown or uninstrumented protocol\n",
-				    prog, optarg);
+				    __progname, optarg);
 				exit(1);
 			}
 			pflag = 1;
@@ -322,15 +312,17 @@ main(argc, argv)
 	if (nlistf != NULL || memf != NULL)
 		setgid(getgid());
 
-	if ((kvmd = kvm_open(nlistf, memf, NULL, O_RDONLY, prog)) == NULL) {
-		fprintf(stderr, "%s: kvm_open: %s\n", prog, buf);
+	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
+	    buf)) == NULL) {
+		fprintf(stderr, "%s: kvm_open: %s\n", __progname, buf);
 		exit(1);
 	}
 	if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 		if (nlistf)
-			fprintf(stderr, "%s: %s: no namelist\n", prog, nlistf);
+			fprintf(stderr, "%s: %s: no namelist\n", __progname,
+			    nlistf);
 		else
-			fprintf(stderr, "%s: no namelist\n", prog);
+			fprintf(stderr, "%s: no namelist\n", __progname);
 		exit(1);
 	}
 	if (mflag) {
@@ -433,8 +425,7 @@ kread(addr, buf, size)
 {
 
 	if (kvm_read(kvmd, addr, buf, size) != size) {
-		/* XXX this duplicates kvm_read's error printout */
-		(void)fprintf(stderr, "%s: kvm_read %s\n", prog,
+		(void)fprintf(stderr, "%s: %s\n", __progname,
 		    kvm_geterr(kvmd));
 		return (-1);
 	}
@@ -506,12 +497,12 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", prog);
+"usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", __progname);
 	(void)fprintf(stderr,
-"       %s [-ghimnrs] [-f address_family] [-M core] [-N system]\n", prog);
+"       %s [-ghimnrs] [-f address_family] [-M core] [-N system]\n", __progname);
 	(void)fprintf(stderr,
-"       %s [-n] [-I interface] [-M core] [-N system] [-w wait]\n", prog);
+"       %s [-n] [-I interface] [-M core] [-N system] [-w wait]\n", __progname);
 	(void)fprintf(stderr,
-"       %s [-M core] [-N system] [-p protocol]\n", prog);
+"       %s [-M core] [-N system] [-p protocol]\n", __progname);
 	exit(1);
 }
