@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.23 2003/06/02 23:30:13 millert Exp $
+.\"	$OpenBSD: tty.4,v 1.24 2004/03/16 08:44:34 tedu Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -464,6 +464,11 @@ Not all serial ports may support this.
 Return the current state of the serial port as represented
 above in the integer pointed to by
 .Fa state .
+.El
+.Sh FILES
+.Bl -tag -width /dev/tty -compact
+.It Pa /dev/tty
+controlling terminal, if any
 .El
 .Sh SEE ALSO
 .Xr stty 1 ,
