@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.73 2001/07/28 23:25:49 art Exp $
+.\"	$OpenBSD: options.4,v 1.74 2001/08/06 21:45:02 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -567,21 +567,6 @@ See also
 .Xr sysctl 8
 and
 .Xr sysctl 3 .
-.It Cd option MACHINE_NONCONTIG
-This option changes part of the VM/pmap interface, to allow for
-non-contiguous memory.
-On some ports it is not an option.
-These ports typically only use one of the interfaces.
-.It Cd option RAM_DISK_HOOKS
-This option allows for some machine dependent functions to be called
-when the ramdisk driver is configured.
-This can result in automatically loading a ramdisk from floppy on open (among
-other things).
-.It Cd option RAM_DISK_IS_ROOT
-Forces the ramdisk to be the root device.
-This can only be overridden when the kernel is booted in the
-.Dq ask-for-root
-mode.
 .It Cd option CCDNBUF=integer
 The
 .Xr ccd 4
