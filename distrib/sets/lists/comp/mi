@@ -381,6 +381,7 @@
 ./usr/include/dev/pci/i82365_pcivar.h
 ./usr/include/dev/pci/if_devar.h
 ./usr/include/dev/pci/if_levar.h
+./usr/include/dev/pci/if_lgereg.h
 ./usr/include/dev/pci/if_lmc_types.h
 ./usr/include/dev/pci/if_lmcioctl.h
 ./usr/include/dev/pci/if_lmcvar.h
