@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2000/03/20 07:05:53 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 2000/03/23 03:52:55 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ static u_int nextavail;
 
 static struct mem_region *mem, *avail;
 
-#if 1
+#if 0
 void
 dump_avail()
 {
@@ -76,8 +76,15 @@ dump_avail()
 	struct mem_region *mp;
 	extern struct mem_region *avail;
 	
-	for (cnt = 0, mp = avail; mp->size; mp++) {
+	printf("memory %x\n", mem);
+	for (cnt = 0, mp = mem; mp->size; mp++) {
 		printf("memory region %x: start %x, size %x\n",
+				cnt, mp->size, mp->start);
+		cnt++;
+	}
+	printf("available %x\n", avail);
+	for (cnt = 0, mp = avail; mp->size; mp++) {
+		printf("avail region %x: start %x, size %x\n",
 				cnt, mp->size, mp->start);
 		cnt++;
 	}
@@ -312,6 +319,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	 * Get memory.
 	 */
 	(fw->mem_regions)(&mem, &avail);
+#if 0
 	/* work around repeated entries bug */
 	for (mp = mem; mp->size; mp++) {
 		if (mp[1].start == mp[0].start) {
@@ -323,6 +331,8 @@ pmap_bootstrap(kernelstart, kernelend)
 			} while ( mp[0+(i++)].size != 0);
 		}
 	}
+#endif
+	physmem = 0;
 	for (mp = mem; mp->size; mp++) {
 		physmem += btoc(mp->size);
 	}
@@ -410,8 +420,9 @@ avail_end = npgs * NBPG;
 	ptab_cnt = HTABENTS;
 #else /* HTABENTS */
 	ptab_cnt = 1024;
-	while ((HTABSIZE << 7) < ctob(physmem))
-	ptab_cnt <<= 1;
+	while ((HTABSIZE << 7) < ctob(physmem)) {
+		ptab_cnt <<= 1;
+	}
 #endif /* HTABENTS */
 
 	/*
