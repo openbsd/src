@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.20 2001/04/20 16:43:39 millert Exp $
+.\"	$OpenBSD: systat.1,v 1.21 2001/08/11 15:30:33 deraadt Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -336,40 +336,40 @@ Below the SWAPPING display and slightly to the left of the Interrupts
 display is a list of virtual memory statistics.
 The abbreviations are:
 .Bl -tag -compact -width XXXXXX -offset indent
-.It cow
-copy-on-write faults
-.It objlk
-object cache lookups
-.It objht
-object cache hits
+.It forks
+process forks
+.It fkppw
+forks where parent waits
+.It fksvm
+forks where vmspace is shared
+.It pwait
+fault had to wait on a page
+.It relck
+fault relock called
+.It rlkok
+fault relock is successful
+.It noram
+faults out of ram
+.It ndcpy
+number of times fault clears "need copy"
+.It fltcp
+number of times fault promotes with copy
 .It zfod
-pages zero filled on demand
-.It nzfod
-number of zfod's created
-.It %zfod
-percentage of zfod's used
-.It kern
-number of pages in use by kernel
-.It wire
-number of pages wired down
-.It act
-number of pages active
-.It inact
-number of pages inactive
-.It free
-number of pages free
-.It daefr
-pages freed by daemon
-.It prcfr
-pages freed by exiting processes
-.It react
-number of pages reactivated from free list
-.It scan
-scans in page out daemon
-.It hdrev
-revolutions of the hand in page out daemon
-.It intrn
-intransit blocking page faults
+fault promotes with zerofill
+.It cow
+number of times fault anon cow
+.It fmin
+min number of free pages
+.It ftarg
+target number of free pages
+.It itarg
+target number of inactive pages
+.It wired
+wired pages
+.It pdfre 
+pages daemon freed since boot
+.It pdscn
+pages daemon scanned since boot
 .El
 .Pp
 The
