@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.42 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.43 2003/12/10 22:57:12 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -43,8 +43,8 @@
 #if 0
 static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static const char rcsid[] = 
-    "$OpenBSD: ftpcmd.y,v 1.42 2003/06/02 19:38:24 millert Exp $";
+static const char rcsid[] =
+    "$OpenBSD: ftpcmd.y,v 1.43 2003/12/10 22:57:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ cmd
 			if ($2) {
 				if ($4) {
 					usedefault = 1;
-					reply(500,	
+					reply(500,
 					    "Illegal PORT rejected (range errors).");
 				} else if (portcheck &&
 				    ntohs(data_dest.su_sin.sin_port) < IPPORT_RESERVED) {
@@ -282,7 +282,7 @@ cmd
 				case TYPE_E:
 					reply(504, "Type E not implemented.");
 					break;
-	
+
 				case TYPE_I:
 					reply(200, "Type set to I.");
 					type = cmd_type;
@@ -290,11 +290,11 @@ cmd
 
 				case TYPE_L:
 					if (cmd_bytesz == 8) {
-					       reply(200,
-					       "Type set to L (byte size 8).");
-					       type = cmd_type;
+						reply(200,
+						    "Type set to L (byte size 8).");
+						    type = cmd_type;
 					} else
-					    reply(504, "Byte size must be 8.");
+						reply(504, "Byte size must be 8.");
 
 				}
 			}
@@ -410,7 +410,7 @@ cmd
 					free(fromname);
 					fromname = NULL;
 				} else {
-					reply(503, 
+					reply(503,
 					  "Bad sequence of commands.");
 				}
 			}
@@ -419,7 +419,7 @@ cmd
 		}
 	| ABOR check_login CRLF
 		{
-			if ($2) 
+			if ($2)
 				reply(225, "ABOR command successful.");
 		}
 	| CWD check_login CRLF
@@ -542,18 +542,19 @@ cmd
 	| SITE SP check_login IDLE CRLF
 		{
 			if ($3)
-			  reply(200,
-	       		    "Current IDLE time limit is %d seconds; max %d",
-				timeout, maxtimeout);
+				reply(200,
+				    "Current IDLE time limit is %d "
+				    "seconds; max %d",
+				    timeout, maxtimeout);
 		}
 	| SITE SP check_login IDLE SP NUMBER CRLF
 		{
 			if ($3) {
 				if ($6 < 30 || $6 > maxtimeout) {
-				reply(501,
-				    "Maximum IDLE time must be between "
-				    "30 and %d seconds",
-				    maxtimeout);
+					reply(501,
+					    "Maximum IDLE time must be between "
+					    "30 and %d seconds",
+					    maxtimeout);
 				} else {
 					timeout = $6;
 					(void) alarm((unsigned) timeout);
@@ -648,7 +649,7 @@ rcmd
 		{
 			restart_point = (off_t) 0;
 			if ($2 && $4) {
-				if (fromname)  
+				if (fromname)
 					free(fromname);
 				fromname = renamefrom($4);
 				if (fromname == NULL)
@@ -661,13 +662,14 @@ rcmd
 	| REST check_login SP byte_size CRLF
 		{
 			if ($2) {
-			    if (fromname) {
-				    free(fromname);
-				    fromname = NULL;
-			    }
-			    restart_point = $4;	/* XXX $4 is only "int" */
-			    reply(350, "Restarting at %qd. %s", restart_point,
-			       "Send STORE or RETRIEVE to initiate transfer.");
+				if (fromname) {
+					free(fromname);
+					fromname = NULL;
+				}
+				restart_point = $4;	/* XXX $4 is only "int" */
+				reply(350, "Restarting at %qd. %s",
+				    restart_point,
+				    "Send STORE or RETRIEVE to initiate transfer.");
 			}
 		}
 	;

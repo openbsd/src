@@ -1,4 +1,4 @@
-/*	$OpenBSD: logutmp.c,v 1.7 2003/07/07 03:18:11 deraadt Exp $	*/
+/*	$OpenBSD: logutmp.c,v 1.8 2003/12/10 22:57:12 deraadt Exp $	*/
 /*
  * Portions Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -69,7 +69,7 @@ ftpd_login(struct utmp *ut)
 	}
 	if ((topslot < 0) || ((fd < 0) &&
 	    (fd = open(_PATH_UTMP, O_RDWR|O_CREAT, 0644)) < 0))
-	    	return;
+		return;
 
 	/*
 	 * Now find a slot that's not in use...

@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.19 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.20 2003/12/10 22:57:12 deraadt Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -38,8 +38,8 @@
 #if 0
 static const char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static const char rcsid[] = 
-    "$OpenBSD: popen.c,v 1.19 2003/06/11 14:24:46 deraadt Exp $";
+static const char rcsid[] =
+    "$OpenBSD: popen.c,v 1.20 2003/12/10 22:57:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 

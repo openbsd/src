@@ -1,10 +1,10 @@
-/*	$OpenBSD: ftpd.c,v 1.151 2003/12/09 22:55:47 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.152 2003/12/10 22:57:12 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -69,8 +69,8 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.151 2003/12/09 22:55:47 deraadt Exp $";
+static const char rcsid[] =
+    "$OpenBSD: ftpd.c,v 1.152 2003/12/10 22:57:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1363,7 +1363,7 @@ dataconn(char *name, off_t size, char *mode)
 	file_size = size;
 	byte_count = 0;
 	if (size != (off_t) -1) {
-		(void) snprintf(sizebuf, sizeof(sizebuf), " (%qd bytes)", 
+		(void) snprintf(sizebuf, sizeof(sizebuf), " (%qd bytes)",
 				size);
 	} else
 		sizebuf[0] = '\0';
@@ -1410,7 +1410,7 @@ dataconn(char *name, off_t size, char *mode)
 			return (NULL);
 		}
 		if (portcheck && memcmp(fa, ha, alen) != 0) {
-			perror_reply(435, "Can't build data connection"); 
+			perror_reply(435, "Can't build data connection");
 			(void) close(pdata);
 			(void) close(s);
 			pdata = -1;
@@ -1436,8 +1436,8 @@ dataconn(char *name, off_t size, char *mode)
 		if (file == NULL) {
 			char hbuf[MAXHOSTNAMELEN], pbuf[10];
 
-			getnameinfo((struct sockaddr *)&data_source, 
-			    data_source.su_len, hbuf, sizeof(hbuf), pbuf, 
+			getnameinfo((struct sockaddr *)&data_source,
+			    data_source.su_len, hbuf, sizeof(hbuf), pbuf,
 			    sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV);
 			reply(425, "Can't create data socket (%s,%s): %s.",
 			    hbuf, pbuf, strerror(errno));
@@ -2505,9 +2505,9 @@ protounsupp:
 
 /*
  * 522 Protocol not supported (proto,...)
- * as we assume address family for control and data connections are the same, 
- * we do not return the list of address families we support - instead, we 
- * return the address family of the control connection.  
+ * as we assume address family for control and data connections are the same,
+ * we do not return the list of address families we support - instead, we
+ * return the address family of the control connection.
  */
 void
 epsv_protounsupp(const char *message)
