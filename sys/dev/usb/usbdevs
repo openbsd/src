@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.139 2005/03/09 04:49:00 deraadt Exp $
+$OpenBSD: usbdevs,v 1.140 2005/03/09 13:24:16 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1672,9 +1672,9 @@ product SUNTAC AS64LX		0x000b	U-Cable type A3
 product SUNTAC AS144L4		0x0011	U-Cable type A4
 
 /* Sun Microsystems products */
-product SUN KEYBOARD		0x0005	Type 6
+product SUN KEYBOARD		0x0005	Type 6 Keyboard
 /* XXX The above is a North American PC style keyboard possibly */
-product SUN MOUSE		0x0100	Type 6
+product SUN MOUSE		0x0100	Type 6 Mouse
 
 /* System TALKS, Inc. */
 product	SYSTEMTALKS SGCX2UL	0x1920	SGC-X2UL
