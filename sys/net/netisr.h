@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.15 2000/11/08 13:23:40 art Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.16 2001/09/23 10:44:10 mickey Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ void	ipintr __P((void));
 void	ip6intr __P((void));
 void	atintr __P((void));
 void	nsintr __P((void));
+void	ipxintr __P((void));
 void	clnlintr __P((void));
 void	natmintr __P((void));
 void	pppintr __P((void));
