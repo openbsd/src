@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.41 2001/07/18 16:20:24 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.42 2001/08/02 14:05:11 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -485,9 +485,7 @@ Set to
 in very rare cases, and during port creation.
 .It Ev FAKE_FLAGS
 Flags passed to ${MAKE_PROGRAM} on fake invocation.
-By default, DESTDIR=${WRKINST}.
-If CONFIGURE_STYLE involves gnu, adds AM_MAKEFLAGS='DESTDIR=${WRKINST}' to
-take automatic care of recent automaker recursive issues.
+By default, ${DESTDIRNAME}=${WRKINST}.
 .It Ev FETCH_CMD
 Command used to fetch distfiles for this port.
 Defaults to
@@ -1200,8 +1198,8 @@ For instance, a few ports may need supplementary stuff to be present (as
 it would be installed if the ports' dependencies were present).
 .Pp
 If {pre,do,post}-install overrides are present, they are used with some
-important changes: PREFIX is set to ${WRKINST}${PREFIX}, DESTDIR is set to
-${WRKINST}, and TRUEPREFIX is set to ${PREFIX}.
+important changes: PREFIX is set to ${WRKINST}${PREFIX}, ${DESTDIRNAME} 
+is set to ${WRKINST}, and TRUEPREFIX is set to ${PREFIX}.
 Essentially, old install targets work transparently, except for a need to
 change PREFIX to TRUEPREFIX for symbolic links and similar path lookups.
 Specific traditional post install work can be simply removed, as it will
@@ -1211,12 +1209,13 @@ texinfo's install-info).
 If no do-install override is present, the port is installed using
 .Bd -literal -indent offset
     env -i ${MAKE_ENV}
-    PREFIX=${WRKINST}${PREFIX} DESTDIR=${WRKINST} TRUEPREFIX=${PREFIX}
+    PREFIX=${WRKINST}${PREFIX} ${DESTDIRNAME}=${WRKINST} TRUEPREFIX=${PREFIX}
     ${MAKE_PROGRAM} ${FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
 .Ed
 .Pp
-Note that this does set both PREFIX and DESTDIR.
-If a port's Makefile both heeds DESTDIR, and references PREFIX explicitly,
+Note that this does set both PREFIX and ${DESTDIRNAME}.
+If a port's Makefile both heeds ${DESTDIRNAME}, 
+and references PREFIX explicitly,
 FAKE_FLAGS may rectify the problem by setting PREFIX=${PREFIX}
 (which will do the right thing, since ${PREFIX} is a
 .Xr make 1
