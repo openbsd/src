@@ -2,31 +2,16 @@
 This port is partly based on the NetBSD powerpc port by Wolfgang Solfrank.
 The NetBSD code was imported by Dale Rahn who also added support for ELF.
 
-The current shape of the PowerPC port is a result of a work performed by
-Per Fogelstrom, Opsycon AB. The work was sponsored by RTMX Inc, North
-Carolina, USA.
-
 A lot of code has been removed and a lot of new code has been added to
 create a monolithic kernel that uses OpenFirmware or any other boot plattform
 as little possible.
 
-The current kernel supports MCG Powerstack family of machines DT-604, MT-604,
-Series E, Powerstack Pro[234]000 and V.I Power.4e PowerPC 604 based VME board.
-More will come in the future. Openfirmware is required for all systems.
-Powerstack family machines with 603 processor will only work with certain
-versions of openfirmware, not the latest versions however, older versions.
+The current kernel supports PowerMac G4 and iMacs, additional machines
+may be supported to varying degrees.
 
-Support for Openfirmware drivers was reintroduced, in a manner which
-is compatible with "real" drivers.
-If done carefully OF drivers and hardware drivers can be mixed, if
-however a hardware driver is configured, then OF tries to access the 
-device, it can hang the system.
 
 TODO:
 	ptrace support finished (gdb can breakpoint, but not step)
-	fp (setround, getround, getmask, setmask, setsticky, getsticky)
 
 Dale
 rahnds@cvs.openbsd.org
-Per
-pefo@cvs.openbsd.org
