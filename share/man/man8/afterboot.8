@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.71 2002/02/19 01:19:02 deraadt Exp $
+.\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -157,10 +157,9 @@ ppp0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST>
         inet 203.3.131.108 --> 198.181.0.253 netmask 0xffff0000
 .Ed
 .Pp
-If you wish to turn on multicast routing, see the section titled
-.Dq Multicast routing.
-in
-.Pa /etc/netstart .
+See
+.Xr netstart 8
+for instructions on configuring multicast routing.
 .Pp
 See
 .Xr dhcp 8
@@ -839,6 +838,7 @@ boot time in the kernel image.
 .Xr mount 8 ,
 .Xr mtree 8 ,
 .Xr named 8 ,
+.Xr netstart 8 ,
 .Xr newaliases 8 ,
 .Xr rbootd 8 ,
 .Xr rc 8 ,
