@@ -544,6 +544,7 @@ mostlyclean distclean maintainer-clean
 @GLIBCPP_BUILD_VERSIONED_SHLIB_TRUE@libstdc++-symbol.ver:  ${glibcpp_srcdir}/@SYMVER_MAP@
 @GLIBCPP_BUILD_VERSIONED_SHLIB_TRUE@	@LN_S@  ${glibcpp_srcdir}/@SYMVER_MAP@ ./libstdc++-symbol.ver || true
 @GLIBCPP_BUILD_VERSIONED_SHLIB_FALSE@libstdc++-symbol.ver:
+@GLIBCPP_BUILD_VERSIONED_SHLIB_FALSE@	touch $@
 
 codecvt_members.cc: ${glibcpp_srcdir}/@CCODECVT_CC@
 	@LN_S@ ${glibcpp_srcdir}/@CCODECVT_CC@ . || true
