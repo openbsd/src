@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.25 2001/02/20 19:39:33 mickey Exp $	*/
+/*	$OpenBSD: be.c,v 1.26 2001/04/13 04:32:10 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -1075,28 +1075,23 @@ be_ifmedia_upd(ifp)
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_T4) {
 		bmcr |= PHY_BMCR_SPEED;
 		bmcr &= ~PHY_BMCR_DUPLEX;
-		printf("%s: selecting 100baseT4", sc->sc_dev.dv_xname);
 	}
 
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
 		bmcr |= PHY_BMCR_SPEED;
-		printf("%s: selecting 100baseTX", sc->sc_dev.dv_xname);
 	}
 
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T) {
 		bmcr &= ~PHY_BMCR_SPEED;
-		printf("%s: selecting 10baseT", sc->sc_dev.dv_xname);
 	}
 
 	if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
 		bmcr |= PHY_BMCR_DUPLEX;
 		sc->sc_br->tx_cfg |= BE_BR_TXCFG_FULLDPLX;
-		printf(" full-duplex\n");
 	}
 	else {
 		bmcr &= ~PHY_BMCR_DUPLEX;
 		sc->sc_br->tx_cfg &= ~BE_BR_TXCFG_FULLDPLX;
-		printf(" half-duplex\n");
 	}
 
 	be_tcvr_write(sc, PHY_BMCR, bmcr & (~PHY_BMCR_ISOLATE));
