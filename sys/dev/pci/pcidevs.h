@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.848 2005/03/27 17:08:11 brad Exp 
+ *	OpenBSD: pcidevs,v 1.849 2005/03/28 22:15:21 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -759,7 +759,9 @@
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100_HB	0x5833		/* Radeon IGP 9100 Host */
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100	0x5835		/* Radeon Mobility IGP 9100 */
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100_AGP	0x5838		/* Radeon IGP 9100 AGP */
+#define	PCI_PRODUCT_ATI_RADEON_RV280_PRO_2	0x5940		/* Radeon 9200 PRO 2nd */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_2	0x5941		/* Radeon 9200 2nd */
+#define	PCI_PRODUCT_ATI_RADEON_RV280_PRO	0x5960		/* Radeon 9200 PRO */
 #define	PCI_PRODUCT_ATI_RADEON_RV280	0x5961		/* Radeon 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_SE_2	0x5964		/* Radeon 9200 SE 2nd */
 #define	PCI_PRODUCT_ATI_RADEON_X300	0x5b60		/* Radeon X300 */
