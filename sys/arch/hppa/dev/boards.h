@@ -1,13 +1,13 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.4 1998/11/23 04:24:30 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.5 1998/11/30 21:12:35 mickey Exp 
  */
 
 #define	HPPA_BOARD_HP710	0x300
 #define	HPPA_BOARD_HP712_60	0x600
 #define	HPPA_BOARD_HP712_80	0x601
-#define	HPPA_BOARD_HP712_3	0x602
+#define	HPPA_BOARD_HP712_80i	0x602
 #define	HPPA_BOARD_HP712_100	0x605
 #define	HPPA_BOARD_HP715_33	0x311
 #define	HPPA_BOARD_HP715_50	0x310

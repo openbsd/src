@@ -1,14 +1,14 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.4 1998/11/23 04:24:30 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.5 1998/11/30 21:12:35 mickey Exp 
  */
 
 static const struct hppa_board_info hppa_knownboards[] = {
 	{ HPPA_BOARD_HP710,	"HP710",	"710 (Bushmaster)" },
 	{ HPPA_BOARD_HP712_60,	"HP712_60",	"712/60 (Gekko)" },
 	{ HPPA_BOARD_HP712_80,	"HP712_80",	"712/80 (Gekko)" },
-	{ HPPA_BOARD_HP712_3,	"HP712_3",	"712/?? (Gekko)" },
+	{ HPPA_BOARD_HP712_80i,	"HP712_80i",	"712/80i (Gekko)" },
 	{ HPPA_BOARD_HP712_100,	"HP712_100",	"712/100 (Gekko)" },
 	{ HPPA_BOARD_HP715_33,	"HP715_33",	"715/33 (Scorpio)" },
 	{ HPPA_BOARD_HP715_50,	"HP715_50",	"715/50 (Scorpio)" },

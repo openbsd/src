@@ -1,18 +1,18 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.4 1998/11/23 04:24:30 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.5 1998/11/30 21:12:35 mickey Exp 
  */
 
 static const struct hppa_mod_info hppa_knownmods[] = {
 	{HPPA_TYPE_CPU,	HPPA_CPU_HPPA11,	"PA-RISC 1.1" },
 	{HPPA_TYPE_MEMORY,	HPPA_MEMORY_ARCH,	"architected memory module" },
-	{HPPA_TYPE_MEMORY,	HPPA_MEMORY_PDEP,	"processor-dependent memory module" },
+	{HPPA_TYPE_MEMORY,	HPPA_MEMORY_PDEP,	"pdep memory module" },
 	{HPPA_TYPE_OTHER,	HPPA_OTHER_SPECFB,	"Spectograph frame buffer" },
 	{HPPA_TYPE_OTHER,	HPPA_OTHER_SPECCTL,	"Spectograph control" },
 	{HPPA_TYPE_BHA,	HPPA_BHA_DIO,	"DIO Bus Adapter" },
 	{HPPA_TYPE_BHA,	HPPA_BHA_SGC,	"SGC Bus Adapter" },
-	{HPPA_TYPE_BHA,	HPPA_BHA_GSC,	"GSC Bus AdapteR" },
+	{HPPA_TYPE_BHA,	HPPA_BHA_GSC,	"GSC Bus Adapter" },
 	{HPPA_TYPE_BHA,	HPPA_BHA_ASP,	"Core Bus Adapter (ASP)" },
 	{HPPA_TYPE_BHA,	HPPA_BHA_EISA,	"EISA Bus Adapter" },
 	{HPPA_TYPE_BHA,	HPPA_BHA_VME,	"VME Bus Adapter" },
