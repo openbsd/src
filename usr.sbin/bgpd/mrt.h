@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.10 2004/02/25 19:48:18 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.11 2004/07/03 17:19:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -244,56 +244,52 @@ enum mrt_type {
 };
 
 enum mrt_state {
-	MRT_STATE_STOPPED,
 	MRT_STATE_RUNNING,
 	MRT_STATE_OPEN,
-	MRT_STATE_CLOSE,
 	MRT_STATE_REOPEN,
-	MRT_STATE_TOREMOVE,
 	MRT_STATE_REMOVE
 };
 
-LIST_HEAD(mrt_config_head, mrt_config);
+struct mrt {
+	enum mrt_type		type;
+	u_int32_t		peer_id;
+	u_int32_t		group_id;
+	u_int32_t		queued;
+	int			fd;
+	TAILQ_HEAD(, buf)	bufs;
+	LIST_ENTRY(mrt)		entry;
+};
 
 struct mrt_config {
-	enum mrt_type		 type;
-	u_int32_t		 id;
-	u_int32_t		 peer_id;
-	u_int32_t		 group_id;
-	struct imsgbuf		*ibuf;
-	LIST_ENTRY(mrt_config)	 list;			/* used in the SE */
+	struct mrt		conf;
+	time_t			ReopenTimer;
+	time_t			ReopenTimerInterval;
+	enum mrt_state		state;
+	char			name[MRT_FILE_LEN];	/* base file name */
+	char			file[MRT_FILE_LEN];	/* actual file name */
 };
 
-struct mrt {
-	struct mrt_config	 conf;
-	time_t			 ReopenTimer;
-	time_t			 ReopenTimerInterval;
-	enum mrt_state		 state;
-	struct msgbuf		 msgbuf;
-	struct imsgbuf		*ibuf;
-	char			 name[MRT_FILE_LEN];	/* base file name */
-	char			 file[MRT_FILE_LEN];	/* actual file name */
-	LIST_ENTRY(mrt)		 list;			/* used in the parent */
-};
-
+#define	MRT2MC(x)	((struct mrt_config *)(x))
+#define	MRT_MAX_TIMEOUT	7200
 
 struct prefix;
 struct pt_entry;
 
 /* prototypes */
-int	mrt_dump_bgp_msg(struct mrt_config *, void *, u_int16_t,
-	    struct peer_config *, struct bgpd_config *);
-int	mrt_dump_state(struct mrt_config *, u_int16_t, u_int16_t,
-	    struct peer_config *, struct bgpd_config *);
-void	mrt_clear_seq(void);
-void	mrt_dump_upcall(struct pt_entry *, void *);
-void	mrt_init(struct imsgbuf *, struct imsgbuf *);
-void	mrt_abort(struct mrt *);
-int	mrt_queue(struct mrt_head *, struct imsg *);
-int	mrt_write(struct mrt *);
-int	mrt_select(struct mrt_head *, struct pollfd *, struct mrt **,
-	    int, int, int *);
-int	mrt_handler(struct mrt_head *);
-int	mrt_mergeconfig(struct mrt_head *, struct mrt_head *);
+int		 mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t,
+		     struct peer_config *, struct bgpd_config *);
+int		 mrt_dump_state(struct mrt *, u_int16_t, u_int16_t,
+		     struct peer_config *, struct bgpd_config *);
+void		 mrt_clear_seq(void);
+void		 mrt_dump_upcall(struct pt_entry *, void *);
+int		 mrt_write(struct mrt *);
+void		 mrt_clean(struct mrt *);
+void		 mrt_init(struct imsgbuf *, struct imsgbuf *);
+void		 mrt_close(struct mrt *);
+int		 mrt_timeout(struct mrt_head *);
+void		 mrt_reconfigure(struct mrt_head *);
+void		 mrt_handler(struct mrt_head *);
+struct mrt	*mrt_get(struct mrt_head *, struct mrt *);
+int		 mrt_mergeconfig(struct mrt_head *, struct mrt_head *);
 
 #endif

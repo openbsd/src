@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.32 2004/06/22 20:28:58 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.33 2004/07/03 17:19:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -34,17 +34,17 @@
 
 static u_int16_t	mrt_attr_length(struct attr_flags *);
 static int		mrt_attr_dump(void *, u_int16_t, struct attr_flags *);
-static int		mrt_dump_entry(struct mrt_config *, struct prefix *,
+static int		mrt_dump_entry(struct mrt *, struct prefix *,
 			    u_int16_t, struct peer_config *);
 static int		mrt_dump_header(struct buf *, u_int16_t, u_int16_t,
 			    u_int32_t);
-static int		mrt_open(struct mrt *);
+static int		mrt_open(struct mrt *, time_t);
 
 #define DUMP_BYTE(x, b)							\
 	do {								\
 		u_char		t = (b);				\
-		if (imsg_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump1: imsg_add error");		\
+		if (buf_add((x), &t, sizeof(t)) == -1) {		\
+			log_warnx("mrt_dump1: buf_add error");		\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -53,8 +53,8 @@ static int		mrt_open(struct mrt *);
 	do {								\
 		u_int16_t	t;					\
 		t = htons((s));						\
-		if (imsg_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump2: imsg_add error");		\
+		if (buf_add((x), &t, sizeof(t)) == -1) {		\
+			log_warnx("mrt_dump2: buf_add error");		\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -63,8 +63,8 @@ static int		mrt_open(struct mrt *);
 	do {								\
 		u_int32_t	t;					\
 		t = htonl((l));						\
-		if (imsg_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump3: imsg_add error");		\
+		if (buf_add((x), &t, sizeof(t)) == -1) {		\
+			log_warnx("mrt_dump3: buf_add error");		\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -72,14 +72,14 @@ static int		mrt_open(struct mrt *);
 #define DUMP_NLONG(x, l)						\
 	do {								\
 		u_int32_t	t = (l);				\
-		if (imsg_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump4: imsg_add error");		\
+		if (buf_add((x), &t, sizeof(t)) == -1) {		\
+			log_warnx("mrt_dump4: buf_add error");		\
 			return (-1);					\
 		}							\
 	} while (0)
 
 int
-mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen,
+mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
     struct peer_config *peer, struct bgpd_config *bgp)
 {
 	struct buf	*buf;
@@ -87,15 +87,14 @@ mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen,
 
 	len = pkglen + MRT_BGP4MP_HEADER_SIZE;
 
-	if ((buf = imsg_create(mrt->ibuf, IMSG_MRT_MSG, mrt->id,
-	    len + MRT_HEADER_SIZE)) == NULL) {
-		log_warnx("mrt_dump_bgp_msg: imsg_open error");
+	if ((buf = buf_open(len + MRT_HEADER_SIZE)) == NULL) {
+		log_warnx("mrt_dump_bgp_msg: buf_open error");
 		return (-1);
 	}
 
 	if (mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_MESSAGE,
 	    len) == -1) {
-		log_warnx("mrt_dump_bgp_msg: imsg_add error");
+		log_warnx("mrt_dump_bgp_msg: buf_add error");
 		return (-1);
 	}
 
@@ -106,21 +105,19 @@ mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen,
 	DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
 	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
 
-	if (imsg_add(buf, pkg, pkglen) == -1) {
-		log_warnx("mrt_dump_bgp_msg: imsg_add error");
+	if (buf_add(buf, pkg, pkglen) == -1) {
+		log_warnx("mrt_dump_bgp_msg: buf_add error");
 		return (-1);
 	}
 
-	if ((imsg_close(mrt->ibuf, buf)) == -1) {
-		log_warnx("mrt_dump_bgp_msg: imsg_close error");
-		return (-1);
-	}
+	TAILQ_INSERT_TAIL(&mrt->bufs, buf, entry);
+	mrt->queued++;
 
 	return (len + MRT_HEADER_SIZE);
 }
 
 int
-mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
+mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
     struct peer_config *peer, struct bgpd_config *bgp)
 {
 	struct buf	*buf;
@@ -128,15 +125,14 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
 
 	len = 4 + MRT_BGP4MP_HEADER_SIZE;
 
-	if ((buf = imsg_create(mrt->ibuf, IMSG_MRT_MSG, mrt->id,
-	    len + MRT_HEADER_SIZE)) == NULL) {
-		log_warnx("mrt_dump_bgp_state: imsg_open error");
+	if ((buf = buf_open(len + MRT_HEADER_SIZE)) == NULL) {
+		log_warnx("mrt_dump_bgp_state: buf_open error");
 		return (-1);
 	}
 
 	if (mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_STATE_CHANGE,
 	    len) == -1) {
-		log_warnx("mrt_dump_bgp_state: imsg_add error");
+		log_warnx("mrt_dump_bgp_state: buf_add error");
 		return (-1);
 	}
 
@@ -150,10 +146,8 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
 	DUMP_SHORT(buf, old_state);
 	DUMP_SHORT(buf, new_state);
 
-	if ((imsg_close(mrt->ibuf, buf)) == -1) {
-		log_warnx("mrt_dump_bgp_state: imsg_close error");
-		return (-1);
-	}
+	TAILQ_INSERT_TAIL(&mrt->bufs, buf, entry);
+	mrt->queued++;
 
 	return (len + MRT_HEADER_SIZE);
 }
@@ -232,7 +226,7 @@ mrt_attr_dump(void *p, u_int16_t len, struct attr_flags *a)
 }
 
 static int
-mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
+mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
     struct peer_config *peer)
 {
 	struct buf	*buf;
@@ -244,9 +238,8 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 	len = MRT_DUMP_HEADER_SIZE + attr_len;
 	pt_getaddr(p->prefix, &addr);
 
-	if ((buf = imsg_create(mrt->ibuf, IMSG_MRT_MSG, mrt->id,
-	    len + MRT_HEADER_SIZE)) == NULL) {
-		log_warnx("mrt_dump_entry: imsg_open error");
+	if ((buf = buf_open(len + MRT_HEADER_SIZE)) == NULL) {
+		log_warnx("mrt_dump_entry: buf_open error");
 		return (-1);
 	}
 
@@ -277,10 +270,8 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	if ((imsg_close(mrt->ibuf, buf)) == -1) {
-		log_warnx("mrt_dump_bgp_state: imsg_close error");
-		return (-1);
-	}
+	TAILQ_INSERT_TAIL(&mrt->bufs, buf, entry);
+	mrt->queued++;
 
 	return (len + MRT_HEADER_SIZE);
 }
@@ -296,7 +287,7 @@ mrt_clear_seq(void)
 void
 mrt_dump_upcall(struct pt_entry *pt, void *ptr)
 {
-	struct mrt_config	*mrtbuf = ptr;
+	struct mrt		*mrtbuf = ptr;
 	struct prefix		*p;
 
 	/*
@@ -325,6 +316,39 @@ mrt_dump_header(struct buf *buf, u_int16_t type, u_int16_t subtype,
 	return (0);
 }
 
+int
+mrt_write(struct mrt *mrt)
+{
+	struct buf	*b;
+	int		 r = 0;
+
+	while ((b = TAILQ_FIRST(&mrt->bufs)) &&
+	    (r = buf_write(mrt->fd, b)) == 1) {
+		TAILQ_REMOVE(&mrt->bufs, b, entry);
+		mrt->queued--;
+		buf_free(b);
+	}
+	if (r == -1) {
+		log_warn("mrt dump write");
+		mrt_clean(mrt);
+		return (-1);
+	}
+	return (0);
+}
+
+void
+mrt_clean(struct mrt *mrt)
+{
+	struct buf	*b;
+
+	close(mrt->fd);
+	while ((b = TAILQ_FIRST(&mrt->bufs))) {
+		TAILQ_REMOVE(&mrt->bufs, b, entry);
+		buf_free(b);
+	}
+	mrt->queued = 0;
+}
+
 static struct imsgbuf	*mrt_imsgbuf[2];
 
 void
@@ -334,339 +358,147 @@ mrt_init(struct imsgbuf *rde, struct imsgbuf *se)
 	mrt_imsgbuf[1] = se;
 }
 
-static int
-mrt_open(struct mrt *mrt)
+int
+mrt_open(struct mrt *mrt, time_t now)
 {
-	time_t	now;
+	enum imsg_type	type;
+	int		i;
 
-	now = time(NULL);
-	if (strftime(mrt->file, sizeof(mrt->file), mrt->name,
-		    localtime(&now)) == 0) {
+	mrt_close(mrt);
+	if (strftime(MRT2MC(mrt)->file, sizeof(MRT2MC(mrt)->file),
+	    MRT2MC(mrt)->name, localtime(&now)) == 0) {
 		log_warnx("mrt_open: strftime conversion failed");
-		mrt->msgbuf.fd = -1;
-		return (0);
+		mrt->fd = -1;
+		return (-1);
 	}
 
-	mrt->msgbuf.fd = open(mrt->file,
+	mrt->fd = open(MRT2MC(mrt)->file,
 	    O_WRONLY|O_NONBLOCK|O_CREAT|O_TRUNC, 0644);
-	if (mrt->msgbuf.fd == -1) {
-		log_warnx("mrt_open %s: %s",
-		    mrt->file, strerror(errno));
-		return (0);
+	if (mrt->fd == -1) {
+		log_warn("mrt_open %s", MRT2MC(mrt)->file);
+		return (1);
 	}
-	return (1);
-}
 
-static int
-mrt_close(struct mrt *mrt)
-{
-	/*
-	 * close the mrt filedescriptor but first ensure that the last
-	 * mrt message was written correctly. If not mrt_write needs to do
-	 * that the next time called.
-	 * To ensure this we need to fiddle around with internal msgbuf stuff.
-	 */
-	if (msgbuf_unbounded(&mrt->msgbuf))
-		return (0);
+	if (MRT2MC(mrt)->state == MRT_STATE_OPEN)
+		type = IMSG_MRT_OPEN;
+	else
+		type = IMSG_MRT_REOPEN;
 
-	if (mrt->msgbuf.fd != -1) {
-		close(mrt->msgbuf.fd);
-		mrt->msgbuf.fd = -1;
-	}
+	i = mrt->type == MRT_TABLE_DUMP ? 0 : 1;
+
+	if (imsg_compose_fdpass(mrt_imsgbuf[i], type, mrt->fd,
+	    mrt, sizeof(struct mrt)) == -1)
+		log_warn("mrt_close");
 
 	return (1);
 }
 
 void
-mrt_abort(struct mrt *mrt)
+mrt_close(struct mrt *mrt)
 {
+	if (mrt == NULL)
+		return;
 	/*
-	 * something failed horribly. Stop all dumping and go back to start
-	 * position. Retry after MRT_MIN_RETRY or ReopenTimerInterval. Which-
-	 * ever is bigger.
+	 * this function is normaly called twice. First because of a imsg 
+	 * form the child to inform the parent to close the fd. The second time
+	 * it is called after reconfigure when the mrt file gets removed.
+	 * In that case the parent must inform the child to close and remove
+	 * this mrt dump descriptor.
 	 */
-	msgbuf_clear(&mrt->msgbuf);
-	mrt_close(mrt);
-	mrt->state = MRT_STATE_STOPPED;
+	if (MRT2MC(mrt)->state == MRT_STATE_REMOVE)
+		if (imsg_compose(
+		    mrt_imsgbuf[mrt->type == MRT_TABLE_DUMP ? 0 : 1],
+		    IMSG_MRT_CLOSE, 0, mrt, sizeof(struct mrt)) == -1)
+			log_warn("mrt_close");
 
-	if (MRT_MIN_RETRY > mrt->ReopenTimerInterval)
-		mrt->ReopenTimer = MRT_MIN_RETRY + time(NULL);
-	else
-		mrt->ReopenTimer = mrt->ReopenTimerInterval + time(NULL);
+	if (mrt->fd == -1)
+		return;
+	close(mrt->fd);
+	mrt->fd = -1;
 }
 
 int
-mrt_queue(struct mrt_head *mrtc, struct imsg *imsg)
+mrt_timeout(struct mrt_head *mrt)
 {
-	struct buf	*wbuf;
 	struct mrt	*m;
-	ssize_t		 len;
-	int		 n;
+	time_t		 now;
+	int		 timeout = MRT_MAX_TIMEOUT;
 
-	if (imsg->hdr.type != IMSG_MRT_MSG && imsg->hdr.type != IMSG_MRT_END)
-		return (-1);
-
-	LIST_FOREACH(m, mrtc, list) {
-		if (m->conf.id != imsg->hdr.peerid)
-			continue;
-		if (m->state != MRT_STATE_RUNNING &&
-		    m->state != MRT_STATE_REOPEN)
-			return (0);
-
-		if (imsg->hdr.type == IMSG_MRT_END) {
-			m->state = MRT_STATE_CLOSE;
-			return (0);
-		}
-
-		len = imsg->hdr.len - IMSG_HEADER_SIZE;
-		wbuf = buf_open(len);
-		if (wbuf == NULL)
-			return (-1);
-		if (buf_add(wbuf, imsg->data, len) == -1) {
-			buf_free(wbuf);
-			return (-1);
-		}
-		if ((n = buf_close(&m->msgbuf, wbuf)) < 0) {
-			buf_free(wbuf);
-			return (-1);
-		}
-		return (n);
-	}
-	return (0);
-}
-
-int
-mrt_write(struct mrt *mrt)
-{
-	int	r;
-
-	if (mrt->state == MRT_STATE_REOPEN ||
-	    mrt->state == MRT_STATE_REMOVE)
-		r = msgbuf_writebound(&mrt->msgbuf);
-	else
-		r = msgbuf_write(&mrt->msgbuf);
-
-	switch (r) {
-	case 1:
-		/* only msgbuf_writebound returns 1 */
-		break;
-	case 0:
-		if (mrt->state == MRT_STATE_CLOSE && mrt->msgbuf.queued == 0) {
-			if (mrt_close(mrt) != 1) {
-				log_warnx("mrt_write: mrt_close failed");
-				mrt_abort(mrt);
-				return (0);
+	now = time(NULL);
+	LIST_FOREACH(m, mrt, entry) {
+		if (MRT2MC(m)->state == MRT_STATE_RUNNING &&
+		    MRT2MC(m)->ReopenTimerInterval != 0) {
+			if (MRT2MC(m)->ReopenTimer <= now) {
+				mrt_open(m, now);
+				MRT2MC(m)->ReopenTimer =
+				    now + MRT2MC(m)->ReopenTimerInterval;
 			}
-			mrt->state = MRT_STATE_STOPPED;
+			if (MRT2MC(m)->ReopenTimer - now < timeout)
+				timeout = MRT2MC(m)->ReopenTimer - now;
 		}
-		return (0);
-	case -1:
-		log_warnx("mrt_write: msgbuf_write: %s",
-		    strerror(errno));
-		mrt_abort(mrt);
-		return (0);
-	case -2:
-		log_warnx("mrt_write: msgbuf_write: %s",
-		    "connection closed");
-		mrt_abort(mrt);
-		return (0);
-	default:
-		fatalx("mrt_write: unexpected retval from msgbuf_write");
 	}
-
-	if (mrt_close(mrt) != 1) {
-		log_warnx("mrt_write: mrt_close failed");
-		mrt_abort(mrt);
-		return (0);
-	}
-
-	switch (mrt->state) {
-	case MRT_STATE_REMOVE:
-		/*
-		 * Remove request: free all left buffers and
-		 * remove the descriptor.
-		 */
-		msgbuf_clear(&mrt->msgbuf);
-		LIST_REMOVE(mrt, list);
-		free(mrt);
-		return (0);
-	case MRT_STATE_REOPEN:
-		if (mrt_open(mrt) == 0) {
-			mrt_abort(mrt);
-			return (0);
-		} else {
-			if (mrt->ReopenTimerInterval != 0)
-				mrt->ReopenTimer = time(NULL) +
-				    mrt->ReopenTimerInterval;
-			mrt->state = MRT_STATE_RUNNING;
-		}
-		break;
-	default:
-		break;
-	}
-	return (1);
+	return (timeout > 0 ? timeout : 0);
 }
 
-int
-mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
-    int start, int size, int *timeout)
+void
+mrt_reconfigure(struct mrt_head *mrt)
 {
 	struct mrt	*m, *xm;
 	time_t		 now;
-	int		 t;
 
 	now = time(NULL);
-	for (m = LIST_FIRST(mc); m != NULL; m = xm) {
-		xm = LIST_NEXT(m, list);
-		if (m->state == MRT_STATE_TOREMOVE) {
-			imsg_compose(m->ibuf, IMSG_MRT_END, 0,
-			    &m->conf, sizeof(m->conf));
-			if (mrt_close(m) == 0) {
-				m->state = MRT_STATE_REMOVE;
-				m->ReopenTimer = 0;
-			} else {
-				msgbuf_clear(&m->msgbuf);
-				LIST_REMOVE(m, list);
-				free(m);
+	for (m = LIST_FIRST(mrt); m != NULL; m = xm) {
+		xm = LIST_NEXT(m, entry);
+		if (MRT2MC(m)->state == MRT_STATE_OPEN ||
+		    MRT2MC(m)->state == MRT_STATE_REOPEN) {
+			if (mrt_open(m, now) == -1)
 				continue;
-			}
+			if (MRT2MC(m)->ReopenTimerInterval != 0)
+				MRT2MC(m)->ReopenTimer =
+				    now + MRT2MC(m)->ReopenTimerInterval;
+			MRT2MC(m)->state = MRT_STATE_RUNNING;
 		}
-		if (m->state == MRT_STATE_OPEN) {
-			switch (m->conf.type) {
-			case MRT_TABLE_DUMP:
-				m->ibuf = mrt_imsgbuf[0];
-				break;
-			case MRT_ALL_IN:
-			case MRT_ALL_OUT:
-			case MRT_UPDATE_IN:
-			case MRT_UPDATE_OUT:
-				m->ibuf = mrt_imsgbuf[1];
-				break;
-			default:
-				continue;
-			}
-			if (mrt_open(m) == 0) {
-				mrt_abort(m);
-				t = m->ReopenTimer - now;
-				if (*timeout > t)
-					*timeout = t;
-				continue;
-			}
-			if (m->ReopenTimerInterval != 0)
-				m->ReopenTimer = now + m->ReopenTimerInterval;
-			m->state = MRT_STATE_RUNNING;
-			imsg_compose(m->ibuf, IMSG_MRT_REQ, 0,
-			    &m->conf, sizeof(m->conf));
-		}
-		if (m->state == MRT_STATE_REOPEN) {
-			if (mrt_close(m) == 0) {
-				m->state = MRT_STATE_REOPEN;
-				continue;
-			}
-			if (mrt_open(m) == 0) {
-				mrt_abort(m);
-				t = m->ReopenTimer - now;
-				if (*timeout > t)
-					*timeout = t;
-				continue;
-			}
-			if (m->ReopenTimerInterval != 0)
-				m->ReopenTimer = now + m->ReopenTimerInterval;
-			m->state = MRT_STATE_RUNNING;
-		}
-		if (m->ReopenTimer != 0) {
-			t = m->ReopenTimer - now;
-			if (t <= 0 && (m->state == MRT_STATE_RUNNING ||
-			    m->state == MRT_STATE_STOPPED)) {
-				if (m->state == MRT_STATE_RUNNING) {
-					/* reopen file */
-					if (mrt_close(m) == 0) {
-						m->state = MRT_STATE_REOPEN;
-						continue;
-					}
-				}
-				if (mrt_open(m) == 0) {
-					mrt_abort(m);
-					t = m->ReopenTimer - now;
-					if (*timeout > t)
-						*timeout = t;
-					continue;
-				}
-				if (m->conf.type == MRT_TABLE_DUMP &&
-				    m->state == MRT_STATE_STOPPED) {
-					imsg_compose(mrt_imsgbuf[0],
-					    IMSG_MRT_REQ, 0,
-					    &m->conf, sizeof(m->conf));
-				}
-
-				m->state = MRT_STATE_RUNNING;
-				if (m->ReopenTimerInterval != 0) {
-					m->ReopenTimer = now +
-					    m->ReopenTimerInterval;
-					if (*timeout > m->ReopenTimerInterval)
-						*timeout = t;
-				}
-			}
-		}
-		if (m->msgbuf.queued > 0) {
-			if (m->msgbuf.fd == -1 ||
-			    m->state == MRT_STATE_STOPPED) {
-				log_warnx("mrt_select: orphaned buffer");
-				mrt_abort(m);
-				continue;
-			}
-			if (start < size) {
-				pfd[start].fd = m->msgbuf.fd;
-				pfd[start].events = POLLOUT;
-				mrt[start++] = m;
-			}
+		if (MRT2MC(m)->state == MRT_STATE_REMOVE) {
+			mrt_close(m);
+			LIST_REMOVE(m, entry);
+			free(m);
+			continue;
 		}
 	}
-	return (start);
 }
 
-int
+void
 mrt_handler(struct mrt_head *mrt)
 {
 	struct mrt	*m;
 	time_t		 now;
 
 	now = time(NULL);
-	LIST_FOREACH(m, mrt, list) {
-		if (m->state == MRT_STATE_RUNNING)
-			m->state = MRT_STATE_REOPEN;
-		if (m->conf.type == MRT_TABLE_DUMP) {
-			if (m->state == MRT_STATE_STOPPED) {
-				if (mrt_open(m) == 0) {
-					mrt_abort(m);
-					break;
-				}
-				imsg_compose(mrt_imsgbuf[0], IMSG_MRT_REQ, 0,
-				    &m->conf, sizeof(m->conf));
-				m->state = MRT_STATE_RUNNING;
-			}
+	LIST_FOREACH(m, mrt, entry) {
+		if (MRT2MC(m)->state == MRT_STATE_RUNNING &&
+		    (MRT2MC(m)->ReopenTimerInterval != 0 ||
+		     m->type == MRT_TABLE_DUMP)) {
+			if (mrt_open(m, now) == -1)
+				continue;
+			MRT2MC(m)->ReopenTimer =
+			    now + MRT2MC(m)->ReopenTimerInterval;
 		}
-		if (m->ReopenTimerInterval != 0)
-			m->ReopenTimer = now + m->ReopenTimerInterval;
 	}
-	return (0);
 }
 
-static u_int32_t	 max_id = 1;
-
-static struct mrt *
-getconf(struct mrt_head *c, struct mrt *m)
+struct mrt *
+mrt_get(struct mrt_head *c, struct mrt *m)
 {
 	struct mrt	*t;
 
-	LIST_FOREACH(t, c, list) {
-		if (t->conf.type != m->conf.type)
+	LIST_FOREACH(t, c, entry) {
+		if (t->type != m->type)
 			continue;
-		if (t->conf.type == MRT_TABLE_DUMP)
-			return t;
-		if (t->conf.peer_id == m->conf.peer_id &&
-		    t->conf.group_id == m->conf.group_id)
-			return t;
+		if (t->type == MRT_TABLE_DUMP)
+			return (t);
+		if (t->peer_id == m->peer_id &&
+		    t->group_id == m->group_id)
+			return (t);
 	}
 	return (NULL);
 }
@@ -676,33 +508,35 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 {
 	struct mrt	*m, *xm;
 
-	LIST_FOREACH(m, nconf, list)
-		if ((xm = getconf(xconf, m)) == NULL) {
+	LIST_FOREACH(m, nconf, entry) {
+		if ((xm = mrt_get(xconf, m)) == NULL) {
 			/* NEW */
-			if ((xm = calloc(1, sizeof(struct mrt))) == NULL)
+			if ((xm = calloc(1, sizeof(struct mrt_config))) == NULL)
 				fatal("mrt_mergeconfig");
-			memcpy(xm, m, sizeof(struct mrt));
-			msgbuf_init(&xm->msgbuf);
-			xm->conf.id = max_id++;
-			xm->state = MRT_STATE_OPEN;
-			LIST_INSERT_HEAD(xconf, xm, list);
+			memcpy(xm, m, sizeof(struct mrt_config));
+			xm->fd = -1;
+			MRT2MC(xm)->state = MRT_STATE_OPEN;
+			LIST_INSERT_HEAD(xconf, xm, entry);
 		} else {
 			/* MERGE */
-			if (strlcpy(xm->name, m->name, sizeof(xm->name)) >=
-			    sizeof(xm->name))
+			if (strlcpy(MRT2MC(xm)->name, MRT2MC(xm)->name,
+			    sizeof(MRT2MC(xm)->name)) >=
+			    sizeof(MRT2MC(xm)->name))
 				fatalx("mrt_mergeconfig: strlcpy");
-			xm->ReopenTimerInterval = m->ReopenTimerInterval;
-			xm->state = MRT_STATE_REOPEN;
+			MRT2MC(xm)->ReopenTimerInterval =
+			    MRT2MC(m)->ReopenTimerInterval;
+			MRT2MC(xm)->state = MRT_STATE_REOPEN;
 		}
+	}
 
-	LIST_FOREACH(xm, xconf, list)
-		if (getconf(nconf, xm) == NULL)
+	LIST_FOREACH(xm, xconf, entry)
+		if (mrt_get(nconf, xm) == NULL)
 			/* REMOVE */
-			xm->state = MRT_STATE_TOREMOVE;
+			MRT2MC(xm)->state = MRT_STATE_REMOVE;
 
 	/* free config */
 	while ((m = LIST_FIRST(nconf)) != NULL) {
-		LIST_REMOVE(m, list);
+		LIST_REMOVE(m, entry);
 		free(m);
 	}
 

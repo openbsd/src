@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.132 2004/06/25 20:08:46 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.133 2004/07/03 17:19:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -264,9 +264,9 @@ enum imsg_type {
 	IMSG_UPDATE_ERR,
 	IMSG_SESSION_UP,
 	IMSG_SESSION_DOWN,
-	IMSG_MRT_REQ,
-	IMSG_MRT_MSG,
-	IMSG_MRT_END,
+	IMSG_MRT_OPEN,
+	IMSG_MRT_REOPEN,
+	IMSG_MRT_CLOSE,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
 	IMSG_NEXTHOP_ADD,
@@ -551,6 +551,7 @@ struct buf	*buf_open(ssize_t);
 int		 buf_add(struct buf *, void *, ssize_t);
 void		*buf_reserve(struct buf *, ssize_t);
 int		 buf_close(struct msgbuf *, struct buf *);
+int		 buf_write(int, struct buf *);
 void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);

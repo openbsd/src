@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.116 2004/06/23 00:11:27 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.117 2004/07/03 17:19:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1573,44 +1573,44 @@ add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p)
 {
 	struct mrt	*m, *n;
 
-	LIST_FOREACH(m, mrtconf, list) {
+	LIST_FOREACH(m, mrtconf, entry) {
 		if (p == NULL) {
-			if (m->conf.peer_id != 0 || m->conf.group_id != 0)
+			if (m->peer_id != 0 || m->group_id != 0)
 				continue;
 		} else {
-			if (m->conf.peer_id != p->conf.id ||
-			    m->conf.group_id != p->conf.groupid)
+			if (m->peer_id != p->conf.id ||
+			    m->group_id != p->conf.groupid)
 				continue;
 		}
-		if (m->conf.type == type) {
+		if (m->type == type) {
 			yyerror("only one mrtdump per type allowed.");
 			return (-1);
 		}
 	}
 
-	if ((n = calloc(1, sizeof(struct mrt))) == NULL)
+	if ((n = calloc(1, sizeof(struct mrt_config))) == NULL)
 		fatal("add_mrtconfig");
 
-	n->conf.type = type;
-	n->msgbuf.fd = -1;
-	if (strlcpy(n->name, name, sizeof(n->name)) >= sizeof(n->name)) {
+	n->type = type;
+	if (strlcpy(MRT2MC(n)->name, name, sizeof(MRT2MC(n)->name)) >=
+	    sizeof(MRT2MC(n)->name)) {
 		yyerror("filename \"%s\" too long: max %u",
-		    name, sizeof(n->name) - 1);
+		    name, sizeof(MRT2MC(n)->name) - 1);
 		free(n);
 		return (-1);
 	}
-	n->ReopenTimerInterval = timeout;
+	MRT2MC(n)->ReopenTimerInterval = timeout;
 	if (p != NULL) {
 		if (curgroup == p) {
-			n->conf.peer_id = 0;
-			n->conf.group_id = p->conf.id;
+			n->peer_id = 0;
+			n->group_id = p->conf.id;
 		} else {
-			n->conf.peer_id = p->conf.id;
-			n->conf.group_id = 0;
+			n->peer_id = p->conf.id;
+			n->group_id = 0;
 		}
 	}
 
-	LIST_INSERT_HEAD(mrtconf, n, list);
+	LIST_INSERT_HEAD(mrtconf, n, entry);
 
 	return (0);
 }

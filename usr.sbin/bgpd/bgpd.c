@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.97 2004/06/20 18:35:11 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.98 2004/07/03 17:19:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -83,11 +83,11 @@ usage(void)
 	exit(1);
 }
 
-#define POLL_MAX		8
 #define PFD_PIPE_SESSION	0
 #define PFD_PIPE_ROUTE		1
 #define PFD_SOCK_ROUTE		2
-#define PFD_MRT_START		3
+#define POLL_MAX		3
+#define MAX_TIMEOUT		3600
 
 int
 main(int argc, char *argv[])
@@ -99,13 +99,13 @@ main(int argc, char *argv[])
 	struct filter_head	*rules_l;
 	struct network		*net;
 	struct filter_rule	*r;
-	struct mrt		*(mrt[POLL_MAX]), *m;
+	struct mrt		*m;
 	struct listen_addr	*la;
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
 	int			 debug = 0;
-	int			 ch, i, j, nfds, timeout;
+	int			 ch, nfds, timeout;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 	int			 pipe_s2r[2];
@@ -236,6 +236,8 @@ main(int argc, char *argv[])
 		free(la);
 	}
 
+	mrt_reconfigure(&mrt_l);
+
 	while (quit == 0) {
 		pfd[PFD_PIPE_SESSION].fd = ibuf_se.fd;
 		pfd[PFD_PIPE_SESSION].events = POLLIN;
@@ -247,10 +249,12 @@ main(int argc, char *argv[])
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
 		pfd[PFD_SOCK_ROUTE].fd = rfd;
 		pfd[PFD_SOCK_ROUTE].events = POLLIN;
-		i = PFD_MRT_START;
-		i = mrt_select(&mrt_l, pfd, mrt, i, POLL_MAX, &timeout);
 
-		if ((nfds = poll(pfd, i, INFTIM)) == -1)
+		timeout = mrt_timeout(&mrt_l);
+		if (timeout > MAX_TIMEOUT)
+			timeout = MAX_TIMEOUT;
+		
+		if ((nfds = poll(pfd, POLL_MAX, timeout * 1000)) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
 				quit = 1;
@@ -288,14 +292,6 @@ main(int argc, char *argv[])
 				quit = 1;
 		}
 
-		for (j = PFD_MRT_START; j < i && nfds > 0 ; j++) {
-			if (pfd[j].revents & POLLOUT) {
-				if (mrt_write(mrt[j]) < 0) {
-					log_warn("mrt write error");
-				}
-			}
-		}
-
 		if (reconfig) {
 			log_info("rereading config");
 			reconfigure(conffile, &conf, &mrt_l, &peer_l, rules_l);
@@ -329,7 +325,7 @@ main(int argc, char *argv[])
 		free(p);
 	}
 	while ((m = LIST_FIRST(&mrt_l)) != NULL) {
-		LIST_REMOVE(m, list);
+		LIST_REMOVE(m, entry);
 		free(m);
 	}
 
@@ -424,6 +420,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	    imsg_compose(&ibuf_rde, IMSG_RECONF_DONE, 0, NULL, 0) == -1)
 		return (-1);
 
+	/* mrt changes can be sent out of bound */
+	mrt_reconfigure(mrt_l);
 	return (0);
 }
 
@@ -431,6 +429,7 @@ int
 dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 {
 	struct imsg		 imsg;
+	struct mrt		 mrt;
 	int			 n;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -449,10 +448,14 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MRT_MSG:
-		case IMSG_MRT_END:
-			if (mrt_queue(mrt_l, &imsg) == -1)
-				log_warnx("mrt_queue failed.");
+		case IMSG_MRT_CLOSE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct mrt)) {
+				log_warnx("wrong imsg len");
+				break;
+			}
+			memcpy(&mrt, imsg.data, sizeof(struct mrt));
+			mrt_close(mrt_get(mrt_l, &mrt));
 			break;
 		case IMSG_KROUTE_CHANGE:
 			if (idx != PFD_PIPE_ROUTE)

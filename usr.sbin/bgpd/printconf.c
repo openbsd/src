@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.22 2004/06/20 18:35:12 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.23 2004/07/03 17:19:59 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -353,16 +353,17 @@ print_mrt(u_int32_t pid, u_int32_t gid, const char *prep)
 	if (xmrt_l == NULL)
 		return;
 
-	LIST_FOREACH(m, xmrt_l, list)
-		if ((gid != 0 && m->conf.group_id == gid) ||
-		    (m->conf.peer_id == pid && m->conf.group_id == gid)) {
-			if (m->ReopenTimerInterval == 0)
+	LIST_FOREACH(m, xmrt_l, entry)
+		if ((gid != 0 && m->group_id == gid) ||
+		    (m->peer_id == pid && m->group_id == gid)) {
+			if (MRT2MC(m)->ReopenTimerInterval == 0)
 				printf("%sdump %s %s\n", prep,
-				    mrt_type(m->conf.type), m->name);
+				    mrt_type(m->type), MRT2MC(m)->name);
 			else
 				printf("%sdump %s %s %d\n", prep,
-				    mrt_type(m->conf.type),
-				    m->name, m->ReopenTimerInterval);
+				    mrt_type(m->type),
+				    MRT2MC(m)->name,
+				    MRT2MC(m)->ReopenTimerInterval);
 		}
 }
 

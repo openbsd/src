@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.121 2004/06/24 23:15:58 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.122 2004/07/03 17:19:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,6 +35,7 @@
 
 #define	PFD_PIPE_MAIN		0
 #define PFD_PIPE_SESSION	1
+#define PFD_MRT_FILE		2
 
 void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
@@ -84,6 +85,7 @@ struct rde_peer		 peerdynamic;
 struct filter_head	*rules_l, *newrules;
 struct imsgbuf		 ibuf_se;
 struct imsgbuf		 ibuf_main;
+struct mrt		*mrt;
 
 void
 rde_sighdlr(int sig)
@@ -107,10 +109,9 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 {
 	pid_t			 pid;
 	struct passwd		*pw;
-	struct mrt		*m;
 	struct listen_addr	*la;
-	struct pollfd		 pfd[2];
-	int			 nfds;
+	struct pollfd		 pfd[3];
+	int			 nfds, i;
 
 	switch (pid = fork()) {
 	case -1:
@@ -153,10 +154,12 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 	imsg_init(&ibuf_main, pipe_m2r[1]);
 
 	/* main mrt list and listener list are not used in the SE */
-	while ((m = LIST_FIRST(mrt_l)) != NULL) {
-		LIST_REMOVE(m, list);
-		free(m);
+	while ((mrt = LIST_FIRST(mrt_l)) != NULL) {
+		LIST_REMOVE(mrt, entry);
+		free(mrt);
 	}
+	mrt = NULL;
+
 	while ((la = TAILQ_FIRST(config->listen_addrs)) != NULL) {
 		TAILQ_REMOVE(config->listen_addrs, la, entry);
 		free(la);
@@ -184,7 +187,14 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 		if (ibuf_se.w.queued > 0)
 			pfd[PFD_PIPE_SESSION].events |= POLLOUT;
 
-		if ((nfds = poll(pfd, 2, INFTIM)) == -1)
+		i = 2;
+		if (mrt && mrt->queued) {
+			pfd[PFD_MRT_FILE].fd = mrt->fd;
+			pfd[PFD_MRT_FILE].events = POLLOUT;
+			i++;
+		}
+				
+		if ((nfds = poll(pfd, i, INFTIM)) == -1)
 			if (errno != EINTR)
 				fatal("poll error");
 
@@ -207,6 +217,15 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 			nfds--;
 			rde_dispatch_imsg_session(&ibuf_se);
 		}
+
+		if (nfds > 0 && pfd[PFD_MRT_FILE].revents & POLLOUT) {
+			if (mrt_write(mrt) == -1) {
+				free(mrt);
+				mrt = NULL;
+			} else if (mrt->queued == 0)
+				close(mrt->fd);
+		}
+
 		rde_update_queue_runner();
 	}
 
@@ -334,8 +353,8 @@ void
 rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
-	struct mrt_config	 mrt;
 	struct filter_rule	*r;
+	struct mrt		*xmrt;
 	int			 n;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -400,18 +419,44 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 		case IMSG_NEXTHOP_UPDATE:
 			nexthop_update(imsg.data);
 			break;
-		case IMSG_MRT_REQ:
-			memcpy(&mrt, imsg.data, sizeof(mrt));
-			mrt.ibuf = &ibuf_main;
-			if (mrt.type == MRT_TABLE_DUMP) {
-				mrt_clear_seq();
-				pt_dump(mrt_dump_upcall, &mrt, AF_UNSPEC);
-				if (imsg_compose(&ibuf_main, IMSG_MRT_END,
-				    mrt.id, NULL, 0) == -1)
-					fatalx("imsg_compose error");
+		case IMSG_MRT_OPEN:
+		case IMSG_MRT_REOPEN:
+			if (imsg.hdr.len > IMSG_HEADER_SIZE +
+			    sizeof(struct mrt)) {
+				log_warnx("wrong imsg len");
+				break;
 			}
+
+			xmrt = calloc(1, sizeof(struct mrt));
+			if (xmrt == NULL)
+				fatal("rde_dispatch_imsg_parent");
+			memcpy(xmrt, imsg.data, sizeof(struct mrt));
+			TAILQ_INIT(&xmrt->bufs);
+
+			if ((xmrt->fd = imsg_get_fd(ibuf)) == -1)
+				log_warnx("expected to receive fd for mrt dump "
+				    "but didn't receive any");
+
+			/* tell parent to close fd */
+			if (imsg_compose(&ibuf_main, IMSG_MRT_CLOSE, 0,
+			    xmrt, sizeof(struct mrt)) == -1)
+				log_warn("rde_dispatch_imsg_parent: mrt close");
+
+			if (xmrt->type == MRT_TABLE_DUMP) {
+				/* do not dump if a other is still running */
+				if (mrt == NULL || mrt->queued == 0) {
+					free(mrt);
+					mrt = xmrt;
+					mrt_clear_seq();
+					pt_dump(mrt_dump_upcall, mrt,
+					    AF_UNSPEC);
+					break;
+				}
+			}
+			close(xmrt->fd);
+			free(xmrt);
 			break;
-		case IMSG_MRT_END:
+		case IMSG_MRT_CLOSE:
 			/* ignore end message because a dump is atomic */
 			break;
 		default:
@@ -850,7 +895,7 @@ rde_update_log(const char *message,
 
 	if (asprintf(&p, "%s/%u", log_addr(prefix), prefixlen) == -1)
 		p = NULL;
-	log_debug("neighbor %s (AS%u) %s %s/%u %s",
+	log_info("neighbor %s (AS%u) %s %s/%u %s",
 	    log_addr(&peer->conf.remote_addr), peer->conf.remote_as, message,
 	    p ? p : "out of memory", nexthop ? nexthop : "");
 
