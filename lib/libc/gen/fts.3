@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.14 1999/08/27 19:00:48 millert Exp $
+.\"	$OpenBSD: fts.3,v 1.15 1999/10/03 19:22:22 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -454,12 +454,6 @@ This option prevents
 .Nm
 from descending into directories that have a different device number
 than the file from which the descent began.
-.It Dv FTS_CHDIRROOT
-This option causes
-.Fn fts_read
-to change the current directory to the root of the hierarchy when
-starting a new one.  The default is to change to the original
-starting directory.
 .El
 .Pp
 The
