@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.24 2003/03/09 19:27:30 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.25 2003/03/13 21:20:42 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -936,7 +936,11 @@ main(int argc, char *argv[])
 				if (errno == EINTR)
 					continue;
 				err(1, "accept");
+			} else if (ntohs(lin.sin_port) >= IPPORT_RESERVED) {
+				close(conffd);
+				conffd = -1;
 			}
+				
 		}
 		if (conffd != -1 && FD_ISSET(conffd, fdsr)) {
 			do_config();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.7 2003/03/10 19:36:13 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.8 2003/03/13 21:20:42 beck Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -548,11 +548,12 @@ int
 configure_spamd(u_short dport, char *name, char *message,
     struct cidr **blacklists)
 {
+	int lport = IPPORT_RESERVED - 1;
 	struct sockaddr_in sin;
 	FILE* sdc;
 	int s;
 
-	s = socket(AF_INET, SOCK_STREAM, 0);
+	s = rresvport(&lport);
 	if (s == -1)
 		return(-1);
 	memset(&sin, 0, sizeof sin);
