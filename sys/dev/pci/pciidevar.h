@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.7 2002/03/14 04:30:34 millert Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.8 2004/09/24 07:38:38 grange Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_PCI_PCIIDEVAR_H_
+#define _DEV_PCI_PCIIDEVAR_H_
+
 /*
  * PCI IDE driver exported software structures.
  *
@@ -50,3 +53,5 @@ void	*pciide_machdep_compat_intr_establish(struct device *,
 void	pciide_machdep_compat_intr_disestablish(pci_chipset_tag_t pc,
 	    void *);
 #endif
+
+#endif	/* !_DEV_PCI_PCIIDEVAR_H_ */

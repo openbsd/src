@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.10 2003/09/28 21:01:43 grange Exp $	*/
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.11 2004/09/24 07:38:38 grange Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.5 2001/07/05 08:38:27 toshii Exp $ */
 
 /*
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _DEV_PCI_PCIIDE_PDC202XX_REG_H_
+#define _DEV_PCI_PCIIDE_PDC202XX_REG_H_
 
 /*
  * Registers definitions for PROMISE PDC20246/PDC20262 PCI IDE controller.
@@ -122,3 +125,5 @@ static int8_t pdc2xx_udma_mc[] = {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
 #define PDC268_DATA(chan)	(0x03 + IDEDMA_SCH_OFFSET * (chan))
 #define PDC268_CABLE		0x04
 #define PDC268_INTR		0x20
+
+#endif	/* !_DEV_PCI_PCIIDE_PDC202XX_REG_H_ */

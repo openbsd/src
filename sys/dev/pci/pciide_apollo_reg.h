@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_apollo_reg.h,v 1.8 2003/09/28 21:01:43 grange Exp $	*/
+/*	$OpenBSD: pciide_apollo_reg.h,v 1.9 2004/09/24 07:38:38 grange Exp $	*/
 /*	$NetBSD: pciide_apollo_reg.h,v 1.8 2001/01/05 18:04:43 bouyer Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _DEV_PCI_PCIIDE_APOLLO_REG_H_
+#define _DEV_PCI_PCIIDE_APOLLO_REG_H_
 
 /*
  * Registers definitions for VIA technologies's Apollo controllers (VT82V580VO,
@@ -103,3 +106,5 @@ static int8_t apollo_udma66_tim[] = {0x03, 0x03, 0x02, 0x01, 0x00};
 static int8_t apollo_udma33_tim[] = {0x03, 0x02, 0x00};
 static int8_t apollo_pio_set[] = {0x0a, 0x0a, 0x0a, 0x02, 0x02};
 static int8_t apollo_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
+
+#endif	/* !_DEV_PCI_PCIIDE_APOLLO_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_cmd_reg.h,v 1.8 2003/09/28 21:01:43 grange Exp $	*/
+/*	$OpenBSD: pciide_cmd_reg.h,v 1.9 2004/09/24 07:38:38 grange Exp $	*/
 /*	$NetBSD: pciide_cmd_reg.h,v 1.9 2000/08/02 20:23:46 bouyer Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _DEV_PCI_PCIIDE_CMD_REG_H_
+#define _DEV_PCI_PCIIDE_CMD_REG_H_
 
 /*
  * Registers definitions for CMD Technologies's PCI 064x IDE controllers.
@@ -106,3 +109,5 @@ static int8_t cmd0646_9_tim_udma[] = {0x03, 0x02, 0x01, 0x02, 0x01, 0x00};
  */
 static int8_t cmd0643_9_data_tim_pio[] = {0xA9, 0x57, 0x44, 0x32, 0x3F};
 static int8_t cmd0643_9_data_tim_dma[] = {0x87, 0x32, 0x3F};
+
+#endif	/* !_DEV_PCI_PCIIDE_CMD_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_hpt_reg.h,v 1.9 2003/09/28 21:01:43 grange Exp $	*/
+/*	$OpenBSD: pciide_hpt_reg.h,v 1.10 2004/09/24 07:38:38 grange Exp $	*/
 /*      $NetBSD: pciide_hpt_reg.h,v 1.4 2001/07/23 14:55:27 bouyer Exp $       */
 
 /*
@@ -31,6 +31,8 @@
  *
  */
 
+#ifndef _DEV_PCI_PCIIDE_HPT_REG_H_
+#define _DEV_PCI_PCIIDE_HPT_REG_H_
 
 /*
  * Register definitions for Highpoint PCI IDE controllers.
@@ -154,3 +156,5 @@ static u_int32_t hpt374_dma[] =
 static u_int32_t hpt374_udma[] =
 	{0x121882ea, 0x12148254, 0x120c8242, 0x128c8242, 0x12ac8242,
 	 0x12848242, 0x12808242};
+
+#endif	/* !_DEV_PCI_PCIIDE_HPT_REG_H_ */

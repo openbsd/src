@@ -27,6 +27,9 @@
  *
  */
 
+#ifndef _DEV_PCI_PCIIDE_ACARD_REG_H_
+#define _DEV_PCI_PCIIDE_ACARD_REG_H_
+
 #define ATP850_IDETIME(channel)	(0x40 + (channel) * 4)
 #define ATP860_IDETIME		0x40
 
@@ -60,3 +63,5 @@ static const u_int8_t acard_udma_conf[] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7};
 #define  ATP8x0_CTRL_EN(chan)	(0x00020000 << (chan))
 #define  ATP860_CTRL_INT	0x00010000
 #define  ATP860_CTRL_80P(chan)	(0x00000100 << (chan))
+
+#endif	/* !_DEV_PCI_PCIIDE_ACARD_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_amd_reg.h,v 1.7 2004/03/12 19:10:07 grange Exp $ 	*/
+/*	$OpenBSD: pciide_amd_reg.h,v 1.8 2004/09/24 07:38:38 grange Exp $ 	*/
 /*	$NetBSD: pciide_amd_reg.h,v 1.2 2000/07/06 15:08:11 bouyer Exp $	*/
 
 /*
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifndef _DEV_PCI_PCIIDE_AMD_REG_H_
+#define _DEV_PCI_PCIIDE_AMD_REG_H_
 
 /*
  * Registers definitions for AMD 756 PCI IDE controller.  Documentation
@@ -82,3 +85,5 @@ static const int8_t amd756_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
 
 static const int8_t amd756_udma_tim[] =
     {0x02, 0x01, 0x00, 0x04, 0x05, 0x06, 0x07};
+
+#endif	/* !_DEV_PCI_PCIIDE_AMD_REG_H_ */

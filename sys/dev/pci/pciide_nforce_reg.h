@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_nforce_reg.h,v 1.2 2003/12/12 13:00:38 grange Exp $	*/
+/*	$OpenBSD: pciide_nforce_reg.h,v 1.3 2004/09/24 07:38:38 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Alexander Yurchenko <grange@openbsd.org>
@@ -24,6 +24,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_PCI_PCIIDE_NFORCE_REG_H_
+#define _DEV_PCI_PCIIDE_NFORCE_REG_H_
 
 /* Configuration register */
 #define NFORCE_CONF		0x50
@@ -54,3 +57,5 @@
 /* Timing values */
 static u_int8_t nforce_pio[] = { 0xa8, 0x65, 0x42, 0x22, 0x20 };
 static u_int8_t nforce_udma[] = { 0x02, 0x01, 0x00, 0x04, 0x05, 0x06, 0x07 };
+
+#endif	/* !_DEV_PCI_PCIIDE_NFORCE_REG_H_ */

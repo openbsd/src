@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_acer_reg.h,v 1.6 2003/09/28 21:01:43 grange Exp $	*/
+/*	$OpenBSD: pciide_acer_reg.h,v 1.7 2004/09/24 07:38:38 grange Exp $	*/
 /*	$NetBSD: pciide_acer_reg.h,v 1.4 2001/07/26 20:02:22 bouyer Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _DEV_PCI_PCIIDE_ACER_REG_H_
+#define _DEV_PCI_PCIIDE_ACER_REG_H_
 
 /*  class code attribute register 1 (1 byte) */
 #define ACER_CCAR1	0x43
@@ -104,3 +107,5 @@ static int8_t acer_pio[] = {0x0c, 0x58, 0x44, 0x33, 0x31};
 #ifdef unused
 static int8_t acer_dma[] = {0x08, 0x33, 0x31};
 #endif
+
+#endif	/* !_DEV_PCI_PCIIDE_ACER_REG_H_ */

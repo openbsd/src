@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_piix_reg.h,v 1.8 2003/11/07 21:34:56 grange Exp $	*/
+/*	$OpenBSD: pciide_piix_reg.h,v 1.9 2004/09/24 07:38:38 grange Exp $	*/
 /*	$NetBSD: pciide_piix_reg.h,v 1.5 2001/01/05 15:29:40 bouyer Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _DEV_PCI_PCIIDE_PIIX_REG_H_
+#define _DEV_PCI_PCIIDE_PIIX_REG_H_
 
 /*
  * Registers definitions for Intel's PIIX series PCI IDE controllers.
@@ -131,3 +134,5 @@ static int8_t piix4_sct_udma[] = {0x00, 0x01, 0x02, 0x01, 0x02, 0x01};
 #define ICH_SATA_PCS_P1E	0x02 /* Port 1 enabled */
 #define ICH_SATA_PCS_P0P	0x10 /* Port 0 present */
 #define ICH_SATA_PCS_P1P	0x20 /* Port 1 present */
+
+#endif	/* !_DEV_PCI_PCIIDE_PIIX_REG_H_ */

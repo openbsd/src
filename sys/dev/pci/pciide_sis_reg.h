@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_sis_reg.h,v 1.5 2003/09/28 21:01:43 grange Exp $	*/
+/*	$OpenBSD: pciide_sis_reg.h,v 1.6 2004/09/24 07:38:38 grange Exp $	*/
 /*	$NetBSD: pciide_sis_reg.h,v 1.6 2000/05/15 08:46:01 bouyer Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _DEV_PCI_PCIIDE_SIS_REG_H_
+#define _DEV_PCI_PCIIDE_SIS_REG_H_
 
 /*
  * Registers definitions for SiS SiS5597/98 PCI IDE controller.
@@ -112,3 +115,5 @@ static const u_int32_t sis_dma133new_tim[] =
     {0x22196008, 0x0c0a3008, 0x05093008};
 static const u_int32_t sis_udma133new_tim[] =
     {0x9f4, 0x64a, 0x474, 0x254, 0x234, 0x224, 0x214};
+
+#endif	/* !_DEV_PCI_PCIIDE_SIS_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_natsemi_reg.h,v 1.5 2004/02/02 19:38:43 grange Exp $	*/
+/*	$OpenBSD: pciide_natsemi_reg.h,v 1.6 2004/09/24 07:38:38 grange Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -26,6 +26,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_PCI_PCIIDE_NATSEMI_REG_H_
+#define _DEV_PCI_PCIIDE_NATSEMI_REG_H_
 
 /*
  * Register definitions for National Semiconductor PC87415.  Definitions
@@ -128,3 +131,5 @@ const static u_int32_t scx200_dma66[] = { 0x000ffff3, 0x00035352, 0x00015151 };
 /* UDMA mode timings */
 const static u_int32_t scx200_udma33[] = { 0x00921250, 0x00911140, 0x00911030 };
 const static u_int32_t scx200_udma66[] = { 0x009436a1, 0x00933481, 0x00923261 };
+
+#endif	/* !_DEV_PCI_PCIIDE_NATSEMI_REG_H_ */

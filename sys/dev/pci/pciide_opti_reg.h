@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_opti_reg.h,v 1.2 2004/01/31 19:43:43 grange Exp $	*/
+/*	$OpenBSD: pciide_opti_reg.h,v 1.3 2004/09/24 07:38:38 grange Exp $	*/
 /*	$NetBSD: pciide_opti_reg.h,v 1.2 2000/06/07 20:42:53 scw Exp $	*/
 
 /*-
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_PCI_PCIIDE_OPTI_REG_H_
+#define _DEV_PCI_PCIIDE_OPTI_REG_H_
 
 /*
  * Register definitions for OPTi PCIIDE controllers based on
@@ -126,3 +129,5 @@ const static u_int8_t opti_tim_as[2][8] = {		/* Address Setup */
 const static u_int8_t opti_tim_em[8] = {		/* Enhanced Mode */
 	0, 0, 0, 1, 2, 0, 1 ,2
 };
+
+#endif	/* !_DEV_PCI_PCIIDE_OPTI_REG_H_ */
