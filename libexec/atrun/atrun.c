@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.6 1997/09/08 22:09:28 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -67,7 +67,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.6 1997/09/08 22:09:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -301,7 +301,9 @@ run_file(filename, uid, gid)
 		if (setegid(pentry->pw_gid) < 0 || setgid(pentry->pw_gid) < 0)
 			perr("Cannot change primary group");
 
-		setlogin(pentry->pw_name);
+		if (setlogin(pentry->pw_name) < 0)
+			perr("Cannot set login name");
+
 		if (seteuid(uid) < 0 || setuid(uid) < 0)
 			perr("Cannot set user id");
 
@@ -338,17 +340,20 @@ run_file(filename, uid, gid)
 
 		PRIV_START
 
-		if (chdir(pentry->pw_dir))
-			chdir("/");
-
 		if (initgroups(pentry->pw_name, pentry->pw_gid))
 			perr("Cannot init group list");
 
 		if (setegid(gid) < 0 || setgid(gid) < 0)
 			perr("Cannot change primary group");
 
+		if (setlogin(pentry->pw_name) < 0)
+			perr("Cannot set login name");
+
 		if (seteuid(uid) < 0 || setuid(uid) < 0)
 			perr("Cannot set user id");
+
+		if (chdir(pentry->pw_dir))
+			chdir("/");
 
 		execl(_PATH_SENDMAIL, "sendmail", "-F", "Atrun Service",
 		    "-odi", "-oem", "-t", (char *) NULL);
