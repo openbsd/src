@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.28 2003/11/13 17:19:40 drahn Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.29 2003/11/13 17:23:57 drahn Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -132,6 +132,8 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, adosfs_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
+
+int	(**adosfs_vnodeop_p)(void *);
 
 struct vnodeopv_desc adosfs_vnodeop_opv_desc =
 	{ &adosfs_vnodeop_p, adosfs_vnodeop_entries };
