@@ -1,4 +1,4 @@
-/* Top level of GNU C compiler
+/* RTL buffer overflow protection function for GNU C compiler
    Copyright (C) 1987, 88, 89, 92-7, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
@@ -35,6 +35,10 @@ extern void prepare_stack_protection  PARAMS ((int inlinable));
 
 extern int search_string_def PARAMS ((tree names));
 #endif
+
+/* examine whether the input contains frame pointer addressing */
+
+extern int contains_fp PARAMS ((rtx op));
 
 /* allocate a local variable in the stack area before character buffers
    to avoid the corruption of it */
