@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.63 2003/01/09 17:41:06 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.64 2003/01/10 10:51:48 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -235,6 +235,34 @@ Clear all the statistics of a table.
 .It Fl T Ar load
 Load only the table definitions from pf.conf.
 Used in "pfctl -Tl -f pf.conf".
+.El
+For the
+.Ar add
+.Ar delete
+.Ar replace
+and
+.Ar test
+commands, the list of addresses can be specified either directly on the command
+line and/or in an unformatted text file, using the
+.Fl f
+flag.
+#-starting comments are allowed in the text file.
+With theses commands, the
+.Fl v
+flag can also be used once or twice, in which case pfctl will print the
+detailed result of the operation for each individual address, prefixed by
+one of the following letter:
+.Bl -tag -width XXX -compact
+.It A
+The address/network has been added.
+.It C
+The address/network has been changed (negated).
+.It D
+The address/network has been deleted.
+.It M
+The address match (test operation only).
+.It X
+The address/network is duplicated and therefore ignored.
 .El
 .It Fl v
 Produce more verbose output.  A second use of
