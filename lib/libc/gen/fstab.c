@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fstab.c,v 1.13 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: fstab.c,v 1.14 2005/03/25 15:38:47 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ static int fstabscan(void);
 static int
 fstabscan(void)
 {
-	register char *cp;
+	char *cp;
 #define	MAXLINELENGTH	1024
 	static char line[MAXLINELENGTH];
 	char subline[MAXLINELENGTH];

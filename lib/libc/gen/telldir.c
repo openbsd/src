@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: telldir.c,v 1.5 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: telldir.c,v 1.6 2005/03/25 15:38:47 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -70,8 +70,8 @@ void __seekdir(DIR *, long);
 long
 telldir(const DIR *dirp)
 {
-	register int index;
-	register struct ddloc *lp;
+	int index;
+	struct ddloc *lp;
 
 	if ((lp = (struct ddloc *)malloc(sizeof(struct ddloc))) == NULL)
 		return (-1);
@@ -91,8 +91,8 @@ telldir(const DIR *dirp)
 void
 __seekdir(DIR *dirp, long loc)
 {
-	register struct ddloc *lp;
-	register struct ddloc **prevlp;
+	struct ddloc *lp;
+	struct ddloc **prevlp;
 	struct dirent *dp;
 
 	prevlp = &dd_hash[LOCHASH(loc)];

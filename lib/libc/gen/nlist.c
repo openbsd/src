@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.49 2004/09/15 19:00:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.50 2005/03/25 15:38:47 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ int	__aout_fdnlist(int, struct nlist *);
 int	__ecoff_fdnlist(int, struct nlist *);
 int	__elf_fdnlist(int, struct nlist *);
 #ifdef _NLIST_DO_ELF
-int	__elf_is_okay__(register Elf_Ehdr *ehdr);
+int	__elf_is_okay__(Elf_Ehdr *ehdr);
 #endif
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
@@ -67,11 +67,11 @@ int	__elf_is_okay__(register Elf_Ehdr *ehdr);
 int
 __aout_fdnlist(int fd, struct nlist *list)
 {
-	register struct nlist *p, *s;
-	register char *strtab;
-	register off_t symoff, stroff;
-	register u_long symsize;
-	register int nent, cc;
+	struct nlist *p, *s;
+	char *strtab;
+	off_t symoff, stroff;
+	u_long symsize;
+	int nent, cc;
 	int strsize, usemalloc = 0;
 	struct nlist nbuf[1024];
 	struct exec exec;
@@ -278,7 +278,7 @@ out:
 int
 __elf_is_okay__(Elf_Ehdr *ehdr)
 {
-	register int retval = 0;
+	int retval = 0;
 	/*
 	 * We need to check magic, class size, endianess,
 	 * and version before we look at the rest of the
@@ -302,11 +302,11 @@ __elf_is_okay__(Elf_Ehdr *ehdr)
 int
 __elf_fdnlist(int fd, struct nlist *list)
 {
-	register struct nlist *p;
-	register caddr_t strtab;
-	register Elf_Off symoff = 0, symstroff = 0;
-	register Elf_Word symsize = 0, symstrsize = 0;
-	register Elf_Sword nent, cc, i;
+	struct nlist *p;
+	caddr_t strtab;
+	Elf_Off symoff = 0, symstroff = 0;
+	Elf_Word symsize = 0, symstrsize = 0;
+	Elf_Sword nent, cc, i;
 	Elf_Sym sbuf[1024];
 	Elf_Sym *s;
 	Elf_Ehdr ehdr;

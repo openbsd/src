@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: psignal.c,v 1.6 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: psignal.c,v 1.7 2005/03/25 15:38:47 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -48,8 +48,8 @@ void
 psignal(unsigned int sig, const char *s)
 {
 	static char buf[NL_TEXTMAX];
-	register const char *c;
-	register int n;
+	const char *c;
+	int n;
 	struct iovec iov[4];
 	int niov = 0;
 

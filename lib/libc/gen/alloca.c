@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloca.c,v 1.4 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: alloca.c,v 1.5 2005/03/25 15:38:47 otto Exp $	*/
 
 /* alloca.c -- allocate automatically reclaimed memory
    (Mostly) portable public-domain implementation -- D A Gwyn
@@ -84,20 +84,20 @@ static header *last_alloca_header = NULL;	/* -> last alloca header.  */
 pointer
 alloca (size_t size)
 {
-  auto char probe;		/* Probes stack depth: */
-  register char *depth = ADDRESS_FUNCTION (probe);
+  char probe;		/* Probes stack depth: */
+  char *depth = ADDRESS_FUNCTION (probe);
 
   /* Reclaim garbage, defined as all alloca'd storage that
      was allocated from deeper in the stack than currently.  */
 
   {
-    register header *hp;	/* Traverses linked list.  */
+    header *hp;	/* Traverses linked list.  */
 
     for (hp = last_alloca_header; hp != NULL;)
       if ((STACK_DIRECTION > 0 && hp->h.deep > depth)
 	  || (STACK_DIRECTION < 0 && hp->h.deep < depth))
 	{
-	  register header *np = hp->h.next;
+	  header *np = hp->h.next;
 
 	  free ((pointer) hp);	/* Collect garbage.  */
 
@@ -115,7 +115,7 @@ alloca (size_t size)
   /* Allocate combined header + user data storage.  */
 
   {
-    register pointer new = malloc (sizeof (header) + size);
+    pointer new = malloc (sizeof (header) + size);
     /* Address of header.  */
 
     if (new == 0)

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getttyent.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: getttyent.c,v 1.8 2005/03/25 15:38:47 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ttyent.h>
@@ -45,7 +45,7 @@ static char *value(char *);
 struct ttyent *
 getttynam(const char *tty)
 {
-	register struct ttyent *t;
+	struct ttyent *t;
 
 	setttyent();
 	while ((t = getttyent()))
@@ -59,8 +59,8 @@ struct ttyent *
 getttyent(void)
 {
 	static struct ttyent tty;
-	register int c;
-	register char *p;
+	int c;
+	char *p;
 #define	MAXLINELENGTH	200
 	static char line[MAXLINELENGTH];
 
@@ -139,8 +139,8 @@ getttyent(void)
 static char *
 skip(char *p)
 {
-	register char *t;
-	register int c, q;
+	char *t;
+	int c, q;
 
 	for (q = 0, t = p; (c = *p) != '\0'; p++) {
 		if (c == '"') {

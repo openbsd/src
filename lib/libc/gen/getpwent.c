@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.32 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.33 2005/03/25 15:38:47 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -150,8 +150,8 @@ __ypexclude_free(void)
 static void
 __ypproto_set(void)
 {
-	register char *ptr;
-	register struct passwd *pw = &_pw_passwd;
+	char *ptr;
+	struct passwd *pw = &_pw_passwd;
 
 	/* make this the new prototype */
 	ptr = (char *)__yppbuf;
@@ -976,7 +976,7 @@ __initdb(void)
 static int
 __hashpw(DBT *key)
 {
-	register char *p, *t;
+	char *p, *t;
 	static u_int max;
 	static char *line;
 	DBT data;

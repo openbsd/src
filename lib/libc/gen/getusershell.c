@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getusershell.c,v 1.5 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: getusershell.c,v 1.6 2005/03/25 15:38:47 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -88,8 +88,8 @@ setusershell(void)
 static char **
 initshells(void)
 {
-	register char **sp, *cp;
-	register FILE *fp;
+	char **sp, *cp;
+	FILE *fp;
 	struct stat statb;
 
 	if (shells != NULL)

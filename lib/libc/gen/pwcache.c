@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pwcache.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: pwcache.c,v 1.8 2005/03/25 15:38:47 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,8 +50,8 @@ user_from_uid(uid_t uid, int nouser)
 	} c_uid[NCACHE];
 	static int pwopen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
-	register struct passwd *pw;
-	register struct ncache *cp;
+	struct passwd *pw;
+	struct ncache *cp;
 
 	cp = c_uid + (uid & MASK);
 	if (cp->uid != uid || !*cp->name) {

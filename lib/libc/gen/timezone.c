@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: timezone.c,v 1.8 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: timezone.c,v 1.9 2005/03/25 15:38:47 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -53,8 +53,7 @@ static char	czone[TZ_MAX_CHARS];		/* space for zone name */
 char *
 timezone(int zone, int dst)
 {
-	register char	*beg,
-			*end;
+	char	*beg, *end;
 
 	if ((beg = getenv("TZNAME"))) {		/* set in environment */
 		if ((end = strchr(beg, ','))) {	/* "PST,PDT" */
@@ -103,8 +102,8 @@ static struct zone {
 char *
 _tztab(int zone, int dst)
 {
-	register struct zone	*zp;
-	register char	sign;
+	struct zone	*zp;
+	char	sign;
 
 	for (zp = zonetab; zp->offset != -1;++zp)	/* static tables */
 		if (zp->offset == zone) {
