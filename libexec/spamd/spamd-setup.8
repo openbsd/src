@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.7 2003/03/02 22:38:56 deraadt Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.8 2003/03/03 20:17:40 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -97,9 +97,7 @@ The local file specified is added to the white-list.
 The arguments are processed in the order they are given and the resulting
 output is concatenated to build up a table for
 .Xr pf 4 .
-First, all of the addresses from the black-list are added.
-Then, all of the addresses from the white-list are removed.
-Then, the blacklist address, are sent to a running
+Then the blacklist addresses are sent to a running
 .Xr spamd 8
 along with the message spamd will give on mail rejection when
 a matching client connects.
