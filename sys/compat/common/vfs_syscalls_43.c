@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.24 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.25 2004/07/14 18:57:57 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -132,8 +132,11 @@ compat_43_sys_stat(p, v, retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
+	/* Don't let non-root see generation numbers (for NFS security) */
+	if (suser(p, 0))
+		sb.st_gen = 0;
 	cvtstat(&sb, &osb);
-	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	error = copyout(&osb, SCARG(uap, ub), sizeof(osb));
 	return (error);
 }
 
@@ -165,11 +168,13 @@ compat_43_sys_lstat(p, v, retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
+	/* Don't let non-root see generation numbers (for NFS security) */
+	if (suser(p, 0))
+		sb.st_gen = 0;
 	cvtstat(&sb, &osb);
-	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
+	error = copyout(&osb, SCARG(uap, ub), sizeof(osb));
 	return (error);
 }
-
 
 /*
  * Return status information about a file descriptor.
@@ -197,13 +202,16 @@ compat_43_sys_fstat(p, v, retval)
 	FREF(fp);
 	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	FRELE(fp);
-	cvtstat(&ub, &oub);
-	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
-		    sizeof (oub));
+	if (error == 0) {
+		/* Don't let non-root see generation numbers
+		   (for NFS security) */
+		if (suser(p, 0))
+			ub.st_gen = 0;
+		cvtstat(&ub, &oub);
+		error = copyout(&oub, SCARG(uap, sb), sizeof(oub));
+	}
 	return (error);
 }
-
 
 /*
  * Truncate a file given a file descriptor.

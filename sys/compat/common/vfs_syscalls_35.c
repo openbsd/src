@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_35.c,v 1.2 2004/07/14 18:00:48 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_35.c,v 1.3 2004/07/14 18:57:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -102,8 +102,11 @@ compat_35_sys_stat(struct proc *p, void *v, register_t *retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
+	/* Don't let non-root see generation numbers (for NFS security) */
+	if (suser(p, 0))
+		sb.st_gen = 0;
 	cvtstat(&sb, &osb);
-	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	error = copyout(&osb, SCARG(uap, ub), sizeof(osb));
 	return (error);
 }
 
@@ -131,8 +134,11 @@ compat_35_sys_lstat(struct proc *p, void *v, register_t *retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
+	/* Don't let non-root see generation numbers (for NFS security) */
+	if (suser(p, 0))
+		sb.st_gen = 0;
 	cvtstat(&sb, &osb);
-	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
+	error = copyout(&osb, SCARG(uap, ub), sizeof(osb));
 	return (error);
 }
 
@@ -159,10 +165,14 @@ compat_35_sys_fstat(struct proc *p, void *v, register_t *retval)
 	FREF(fp);
 	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	FRELE(fp);
-	cvtstat(&ub, &oub);
-	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
-		    sizeof (oub));
+	if (error == 0) {
+		/* Don't let non-root see generation numbers
+		   (for NFS security) */
+		if (suser(p, 0))
+			ub.st_gen = 0;
+		cvtstat(&ub, &oub);
+		error = copyout(&oub, SCARG(uap, sb), sizeof(oub));
+	}
 	return (error);
 }
 
