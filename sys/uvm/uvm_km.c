@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.42 2004/07/13 14:51:29 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.43 2004/08/24 03:58:14 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -936,7 +936,7 @@ uvm_km_putpage(void *v)
  * not zero filled.
  */
 
-int uvm_km_pages_lowat = 128; /* allocate more when reserve drops below this */
+int uvm_km_pages_lowat; /* allocate more when reserve drops below this */
 int uvm_km_pages_free; /* number of pages currently on free list */
 struct km_page {
 	struct km_page *next;
@@ -957,6 +957,12 @@ uvm_km_page_init(void)
 	struct km_page *page;
 	int i;
 
+	if (!uvm_km_pages_lowat) {
+		/* based on physmem, calculate a good value here */
+		uvm_km_pages_lowat = physmem / (PAGE_SIZE / 16);
+		if (uvm_km_pages_lowat < 128)
+			uvm_km_pages_lowat = 128;
+	}
 
 	for (i = 0; i < uvm_km_pages_lowat * 4; i++) {
 		page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
@@ -964,6 +970,10 @@ uvm_km_page_init(void)
 		uvm_km_pages_head = page;
 	}
 	uvm_km_pages_free = i;
+
+	/* tone down if really high */
+	if (uvm_km_pages_lowat > 512)
+		uvm_km_pages_lowat = 512;
 
 	kthread_create_deferred(uvm_km_createthread, NULL);
 }
