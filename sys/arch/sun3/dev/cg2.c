@@ -1,4 +1,4 @@
-/*	$OpenBSD: cg2.c,v 1.6 1997/01/16 04:03:43 kstailey Exp $	*/
+/*	$OpenBSD: cg2.c,v 1.7 2001/09/16 00:42:44 millert Exp $	*/
 /*	$NetBSD: cg2.c,v 1.7 1996/10/13 03:47:26 christos Exp $	*/
 
 /*
@@ -306,7 +306,8 @@ cg2getcmap(fb, cmap)
 {
 	struct cg2_softc *sc = fb->fb_private;
 	u_char red[CMSIZE], green[CMSIZE], blue[CMSIZE];
-	int error, start, count, ecount;
+	int error;
+	u_int start, count, ecount;
 	register u_int i;
 	register u_short *p;
 
@@ -348,7 +349,8 @@ cg2putcmap(fb, cmap)
 {
 	struct cg2_softc *sc = fb->fb_private;
 	u_char red[CMSIZE], green[CMSIZE], blue[CMSIZE];
-	int error, start, count, ecount;
+	int error;
+	u_int start, count, ecount;
 	register u_int i;
 	register u_short *p;
 

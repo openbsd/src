@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbio.h,v 1.2 1997/09/21 04:21:09 niklas Exp $	*/
+/*	$OpenBSD: fbio.h,v 1.3 2001/09/16 00:42:44 millert Exp $	*/
 /*	$NetBSD: fbio.h,v 1.3 1994/11/21 21:33:40 gwr Exp $	*/
 
 /*
@@ -105,8 +105,8 @@ struct fbinfo {
  * Color map I/O.
  */
 struct fbcmap {
-	int	index;		/* first element (0 origin) */
-	int	count;		/* number of elements */
+	u_int	index;		/* first element (0 origin) */
+	u_int	count;		/* number of elements */
 	u_char	*red;		/* red color map elements */
 	u_char	*green;		/* green color map elements */
 	u_char	*blue;		/* blue color map elements */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.24 2001/07/20 22:47:15 mickey Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.25 2001/09/16 00:42:44 millert Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -329,7 +329,8 @@ pppioctl(sc, cmd, data, flag, p)
     int flag;
     struct proc *p;
 {
-    int s, error, flags, mru, nb, npx;
+    int s, error, flags, mru, npx;
+    u_int nb;
     struct ppp_option_data *odp;
     struct compressor **cp;
     struct npioctl *npi;

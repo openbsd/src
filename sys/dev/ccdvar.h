@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdvar.h,v 1.4 1997/11/26 22:30:19 niklas Exp $	*/
+/*	$OpenBSD: ccdvar.h,v 1.5 2001/09/16 00:42:44 millert Exp $	*/
 /*	$NetBSD: ccdvar.h,v 1.11 1996/02/28 01:08:32 thorpej Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ struct ccddevice {
  */
 struct ccd_ioctl {
 	char	**ccio_disks;		/* pointer to component paths */
-	int	ccio_ndisks;		/* number of disks to concatenate */
+	u_int	ccio_ndisks;		/* number of disks to concatenate */
 	int	ccio_ileave;		/* interleave (DEV_BSIZE blocks) */
 	int	ccio_flags;		/* misc. information */
 	int	ccio_unit;		/* unit number: use varies */
@@ -185,7 +185,8 @@ struct ccd_softc {
 	int		 sc_cflags;		/* configuration flags */
 	size_t		 sc_size;		/* size of ccd */
 	int		 sc_ileave;		/* interleave */
-	int		 sc_nccdisks;		/* number of components */
+#define	CCD_MAXNDISKS	65536
+	u_int		 sc_nccdisks;		/* number of components */
 	struct ccdcinfo	 *sc_cinfo;		/* component info */
 	struct ccdiinfo	 *sc_itable;		/* interleave table */
 	struct ccdgeom   sc_geom;		/* pseudo geometry info */
