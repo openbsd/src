@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.6 1999/12/03 23:55:18 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.7 2000/11/20 14:07:06 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.6 1999/12/03 23:55:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.7 2000/11/20 14:07:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,6 +235,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: apply [-a magic] [-0123456789] command arguments ...\n");
+	    "usage: apply [-a magic] [-0123456789] [-d] command arguments [...]\n");
 	exit(1);
 }
