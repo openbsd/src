@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.1 2005/01/19 02:02:34 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.2 2005/01/19 15:56:44 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -27,6 +27,12 @@
 #include <zaurus/dev/zaurus_scoopreg.h>
 #include <zaurus/dev/zaurus_scoopvar.h>
 
+struct scoop_softc {
+	struct device sc_dev;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+};
+
 int	scoopmatch(struct device *, void *, void *);
 void	scoopattach(struct device *, struct device *, void *);
 
@@ -41,15 +47,15 @@ struct cfdriver scoop_cd = {
 /* GPIO pin/bit numbers for the Zaurus C3000. */
 #define SCOOP1_BACKLIGHT_ON     8
 
-struct scoop_softc *scoop0_sc;
-struct scoop_softc *scoop1_sc;
-int nscoopunits = 0;
+int	scoop_gpio_pin_read(struct scoop_softc *sc, int);
+void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
 
 
 int
-scoopmatch(struct device *parent, void *cf, void *aux)
+scoopmatch(struct device *parent, void *match, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
+	struct cfdata *cf = match;
 
 	if (pxa->pxa_addr == -1)
 		return 0;
@@ -59,9 +65,9 @@ scoopmatch(struct device *parent, void *cf, void *aux)
 	 * on other models we only find the first one.
 	 */
         if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X)
-	    	return (nscoopunits < 2);
+	    	return (cf->cf_unit < 2);
 
-	return (nscoopunits < 1);
+	return (cf->cf_unit == 0);
 }
 
 void
@@ -71,23 +77,16 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 	struct scoop_softc *sc = (struct scoop_softc *)self;
 	bus_size_t size;
 
-	nscoopunits++;
-
 	sc->sc_iot = pxa->pxa_iot;
 	size = pxa->pxa_size < SCOOP_SIZE ? SCOOP_SIZE : pxa->pxa_size;
 
 	if (bus_space_map(sc->sc_iot, pxa->pxa_addr, size, 0,
 	    &sc->sc_ioh) != 0) {
-		printf(": failed to map SCOOP%d\n", nscoopunits - 1);
+		printf(": failed to map %s\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	printf(": Onboard Peripheral Controller\n");
-
-	if (nscoopunits == 1)
-		scoop0_sc = sc;
-	else if (nscoopunits == 2)
-		scoop1_sc = sc;
 }
 
 int
@@ -116,8 +115,8 @@ scoop_backlight_on(int enable)
 {
 
 #if 0	/* XXX no effect. maybe the pin is incorrectly configured? */
-	if (scoop1_sc != (struct scoop_softc *)0)
-		scoop_gpio_pin_write(scoop1_sc, SCOOP1_BACKLIGHT_ON,
-		    enable);
+	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL)
+		scoop_gpio_pin_write(scoop_cd.cd_devs[1],
+		    SCOOP1_BACKLIGHT_ON, enable);
 #endif
 }
