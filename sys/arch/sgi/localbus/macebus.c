@@ -1,8 +1,8 @@
-/*	$OpenBSD: macebus.c,v 1.3 2004/08/10 08:07:35 mickey Exp $ */
+/*	$OpenBSD: macebus.c,v 1.4 2004/08/10 19:16:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -46,7 +46,7 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/ic/comvar.h>
- 
+
 #include <mips64/archtype.h>
 
 #include <machine/autoconf.h>
@@ -109,7 +109,7 @@ bus_space_handle_t crime_h;
 bus_space_handle_t mace_h;
 
 struct machine_bus_dma_tag mace_bus_dma_tag = {
-	NULL,			/* _cookie */ 
+	NULL,			/* _cookie */
 	_dmamap_create,
 	_dmamap_destroy,
 	_dmamap_load,
@@ -167,13 +167,13 @@ macebusscan(struct device *parent, void *child, void *args)
 	lba.ca_sys = cf->cf_loc[0];
 	if (cf->cf_loc[1] == -1) {
 		lba.ca_baseaddr = 0;
-	} else {    
+	} else {
 		lba.ca_baseaddr = cf->cf_loc[1];
 	}
 	if (cf->cf_loc[2] == -1) {
 		lba.ca_intr = 0;
 		lba.ca_nintr = 0;
-	} else {    
+	} else {
 		lba.ca_intr= cf->cf_loc[2];
 		lba.ca_nintr = 1;
 	}
@@ -231,7 +231,7 @@ macebusattach(parent, self, aux)
 
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_CPU_ERROR_STAT, 0);
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_MEM_ERROR_STAT, 0);
-	
+
 	mask = 0;
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, mask);
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_SOFT, 0);
@@ -290,13 +290,13 @@ macebusattach(parent, self, aux)
 		lba.ca_sys = cf->cf_loc[0];
 		if (cf->cf_loc[1] == -1) {
 			lba.ca_baseaddr = 0;
-		} else {    
+		} else {
 			lba.ca_baseaddr = cf->cf_loc[1];
 		}
 		if (cf->cf_loc[2] == -1) {
 			lba.ca_intr = 0;
 			lba.ca_nintr = 0;
-		} else {    
+		} else {
 			lba.ca_intr= cf->cf_loc[2];
 			lba.ca_nintr = 1;
 		}
@@ -453,7 +453,7 @@ static int fakeintr(void *a) {return 0;}
  *  interrupt was serviced.
  *  Interrupts are numbered from 1 and up where 1 maps to HW int 0.
  */
-void *   
+void *
 macebus_intr_establish(icp, irq, type, level, ih_fun, ih_arg, ih_what)
 	void *icp;
         u_long irq;	/* XXX pci_intr_handle_t compatible XXX */
@@ -470,12 +470,12 @@ extern int cold;
 
 static int initialized = 0;
 
-	if(!initialized) {
-/*INIT CODE HERE*/
+	if (!initialized) {
+		/*INIT CODE HERE*/
 		initialized = 1;
 	}
 
-	if(irq > 62 || irq < 1) {
+	if (irq > 62 || irq < 1) {
 		panic("intr_establish: illegal irq %d\n", irq);
 	}
 	irq -= 1;	/* Adjust for 1 being first (0 is no int) */
@@ -485,7 +485,7 @@ static int initialized = 0;
 	if (ih == NULL)
 		panic("intr_establish: can't malloc handler info");
 
-	if(type == IST_NONE || type == IST_PULSE)
+	if (type == IST_NONE || type == IST_PULSE)
 		panic("intr_establish: bogus type");
 
 	switch (intrtype[irq]) {
@@ -618,7 +618,7 @@ static volatile int processing;
 
 	/* Don't recurse... */
 	if (processing)
-		return;	
+		return;
 	processing = 1;
 
 /* XXX interrupt vulnerable when changing ipending */
@@ -638,7 +638,7 @@ static volatile int processing;
 		ih = intrhand[vector];
 		while (ih) {
 			ih->frame = &cf;
-			if((*ih->ih_fun)(ih->ih_arg)) {
+			if ((*ih->ih_fun)(ih->ih_arg)) {
 				ih->ih_count++;
 			}
 			ih = ih->ih_next;

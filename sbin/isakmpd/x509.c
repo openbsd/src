@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.94 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: x509.c,v 1.95 2004/08/10 19:21:01 deraadt Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -66,9 +66,9 @@
 #include "x509.h"
 
 static u_int16_t x509_hash(u_int8_t *, size_t);
-static void     x509_hash_init(void);
-static X509    *x509_hash_find(u_int8_t *, size_t);
-static int      x509_hash_enter(X509 *);
+static void	 x509_hash_init(void);
+static X509	*x509_hash_find(u_int8_t *, size_t);
+static int	 x509_hash_enter(X509 *);
 
 /*
  * X509_STOREs do not support subjectAltNames, so we have to build
@@ -89,14 +89,13 @@ static X509_STORE *x509_cas = 0;
 struct x509_hash {
 	LIST_ENTRY(x509_hash) link;
 
-	X509           *cert;
+	X509		*cert;
 };
 
-static
-LIST_HEAD(x509_list, x509_hash) * x509_tab = 0;
+static LIST_HEAD(x509_list, x509_hash) *x509_tab = 0;
 
 /* Works both as a maximum index and a mask.  */
-	static int      bucket_mask;
+static int	bucket_mask;
 
 #ifdef USE_POLICY
 /*
@@ -114,7 +113,7 @@ x509_generate_kn(int id, X509 *cert)
 		    "Conditions: %s >= \"%s\" && %s <= \"%s\";\n";
 	X509_NAME *issuer, *subject;
 	struct keynote_deckey dc;
-	X509_STORE_CTX  csc;
+	X509_STORE_CTX csc;
 	X509_OBJECT obj;
 	X509	*icert;
 	RSA	*key;
@@ -534,8 +533,8 @@ static X509 *
 x509_hash_find(u_int8_t *id, size_t len)
 {
 	struct x509_hash *cert;
-	u_int8_t      **cid;
-	u_int32_t      *clen;
+	u_int8_t	**cid;
+	u_int32_t	*clen;
 	int	n, i, id_found;
 
 	for (cert = LIST_FIRST(&x509_tab[x509_hash(id, len)]); cert;
@@ -575,11 +574,11 @@ x509_hash_find(u_int8_t *id, size_t len)
 static int
 x509_hash_enter(X509 *cert)
 {
-	u_int16_t       bucket = 0;
-	u_int8_t      **id;
-	u_int32_t      *len;
+	u_int16_t	bucket = 0;
+	u_int8_t	**id;
+	u_int32_t	*len;
 	struct x509_hash *certh;
-	int             n, i;
+	int	n, i;
 
 	if (!x509_cert_get_subjects(cert, &n, &id, &len)) {
 		log_print("x509_hash_enter: cannot retrieve subjects");
@@ -616,20 +615,20 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 #if defined (USE_PRIVSEP)
 	struct monitor_dirents *dir;
 #else
-	DIR            *dir;
+	DIR		*dir;
 #endif
-	FILE           *certfp;
-	X509           *cert;
+	FILE		*certfp;
+	X509		*cert;
 	struct stat	sb;
-	char            fullname[PATH_MAX];
-	int             fd, off, size;
+	char		fullname[PATH_MAX];
+	int		fd, off, size;
 
 	if (strlen(name) >= sizeof fullname - 1) {
 		log_print("x509_read_from_dir: directory name too long");
 		return 0;
 	}
 	LOG_DBG((LOG_CRYPTO, 40, "x509_read_from_dir: reading certs from %s",
-	     name));
+	    name));
 
 	dir = monitor_opendir(name);
 	if (!dir) {
@@ -695,7 +694,7 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 			 * certificates only differing in subjectAltName,
 			 * which is not an something that is strange.
 			 * Consider multi-homed machines.
-		         */
+			*/
 			LOG_DBG((LOG_CRYPTO, 50,
 			    "x509_read_from_dir: X509_STORE_add_cert failed "
 			    "for %s", file->d_name));
@@ -717,17 +716,17 @@ int
 x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
-	struct dirent  *file;
+	struct dirent	*file;
 #if defined (USE_PRIVSEP)
 	struct monitor_dirents *dir;
 #else
-	DIR            *dir;
+	DIR		*dir;
 #endif
-	FILE           *crlfp;
-	X509_CRL       *crl;
+	FILE		*crlfp;
+	X509_CRL	*crl;
 	struct stat	sb;
-	char            fullname[PATH_MAX];
-	int             fd, off, size;
+	char		fullname[PATH_MAX];
+	int		fd, off, size;
 
 	if (strlen(name) >= sizeof fullname - 1) {
 		log_print("x509_read_crls_from_dir: directory name too long");
@@ -802,7 +801,7 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		 * XXX certificate (chain) if these flags are set but there
 		 * XXX are no CRLs to check. The current workaround is to only
 		 * XXX set the flags if we actually loaded some CRL data.
-	         */
+		 */
 		X509_STORE_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
 	}
 
@@ -868,7 +867,7 @@ x509_crl_init(void)
 	 * XXX I'm not sure if the method to use CRLs in certificate validation
 	 * is valid for OpenSSL versions prior to 0.9.7. For now, simply do not
 	 * support it.
-         */
+	 */
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	char	*dirname;
 	dirname = conf_get_str("X509-certificates", "CRL-directory");
@@ -898,16 +897,16 @@ x509_cert_get(u_int8_t *asn, u_int32_t len)
 int
 x509_cert_validate(void *scert)
 {
-	X509_STORE_CTX  csc;
-	X509_NAME      *issuer, *subject;
-	X509           *cert = (X509 *) scert;
-	EVP_PKEY       *key;
-	int             res, err;
+	X509_STORE_CTX	csc;
+	X509_NAME	*issuer, *subject;
+	X509		*cert = (X509 *) scert;
+	EVP_PKEY	*key;
+	int		res, err;
 
 	/*
 	 * Validate the peer certificate by checking with the CA certificates
 	 * we trust.
-         */
+	 */
 	X509_STORE_CTX_init(&csc, x509_cas, cert, NULL);
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	/* XXX See comment in x509_read_crls_from_dir.  */
@@ -990,8 +989,8 @@ x509_cert_insert(int id, void *scert)
 static struct x509_hash *
 x509_hash_lookup(X509 *cert)
 {
-	int             i;
 	struct x509_hash *certh;
+	int	i;
 
 	for (i = 0; i <= bucket_mask; i++)
 		for (certh = LIST_FIRST(&x509_tab[i]); certh;
@@ -1015,7 +1014,7 @@ x509_cert_free(void *cert)
 int
 x509_certreq_validate(u_int8_t *asn, u_int32_t len)
 {
-	int             res = 1;
+	int	res = 1;
 #if 0
 	struct norm_type name = SEQOF("issuer", RDNSequence);
 
@@ -1156,10 +1155,9 @@ x509_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 int
 x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 {
-	X509_EXTENSION *subjectaltname;
-	u_int8_t       *sandata;
-	int             extpos;
-	int             santype, sanlen;
+	X509_EXTENSION	*subjectaltname;
+	u_int8_t	*sandata;
+	int		extpos, santype, sanlen;
 
 	extpos = X509_get_ext_by_NID(scert, NID_subject_alt_name, -1);
 	if (extpos == -1) {
@@ -1196,14 +1194,14 @@ int
 x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
     u_int32_t **id_len)
 {
-	X509           *cert = scert;
-	X509_NAME      *subject;
-	int             type;
-	u_int8_t       *altname;
-	u_int32_t       altlen;
-	u_int8_t       *buf = 0;
-	unsigned char  *ubuf;
-	int             i;
+	X509		*cert = scert;
+	X509_NAME	*subject;
+	int		type;
+	u_int8_t	*altname;
+	u_int32_t	altlen;
+	u_int8_t	*buf = 0;
+	unsigned char	*ubuf;
+	int		i;
 
 	*id = 0;
 	*id_len = 0;
@@ -1212,7 +1210,7 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 	 * XXX There can be a collection of subjectAltNames, but for now I
 	 * only return the subjectName and a single subjectAltName, if
 	 * present.
-         */
+	 */
 	type = x509_cert_subjectaltname(cert, &altname, &altlen);
 	if (!type) {
 		*cnt = 1;
@@ -1271,7 +1269,7 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 			/*
 			 * XXX I dislike the numeric constants, but I don't
 			 * know what we should use otherwise.
-		         */
+			 */
 			switch (altlen) {
 			case 4:
 				SET_ISAKMP_ID_TYPE(buf, IPSEC_ID_IPV4_ADDR);
@@ -1324,8 +1322,8 @@ fail:
 int
 x509_cert_get_key(void *scert, void *keyp)
 {
-	X509           *cert = scert;
-	EVP_PKEY       *key;
+	X509		*cert = scert;
+	EVP_PKEY	*key;
 
 	key = X509_get_pubkey(cert);
 
@@ -1349,7 +1347,7 @@ x509_cert_dup(void *scert)
 void
 x509_serialize(void *scert, u_int8_t **data, u_int32_t *datalen)
 {
-	u_int8_t       *p;
+	u_int8_t	*p;
 
 	*datalen = i2d_X509((X509 *)scert, NULL);
 	*data = p = malloc(*datalen);
@@ -1364,9 +1362,9 @@ x509_serialize(void *scert, u_int8_t **data, u_int32_t *datalen)
 char *
 x509_printable(void *cert)
 {
-	char           *s;
-	u_int8_t       *data;
-	u_int32_t       datalen, i;
+	char		*s;
+	u_int8_t	*data;
+	u_int32_t	datalen, i;
 
 	x509_serialize(cert, &data, &datalen);
 	if (!data)
@@ -1389,9 +1387,9 @@ x509_printable(void *cert)
 void *
 x509_from_printable(char *cert)
 {
-	u_int8_t       *buf;
-	int             plen, ret;
-	void           *foo;
+	u_int8_t	*buf;
+	int		plen, ret;
+	void		*foo;
 
 	plen = (strlen(cert) + 1) / 2;
 	buf = malloc(plen);
@@ -1416,10 +1414,9 @@ x509_from_printable(char *cert)
 char *
 x509_DN_string(u_int8_t *asn1, size_t sz)
 {
-	X509_NAME      *name;
-	u_int8_t       *p = asn1;
-	/* XXX Just a guess at a maximum length.  */
-	char            buf[256];
+	X509_NAME	*name;
+	u_int8_t	*p = asn1;
+	char		buf[256];	/* XXX Just a guess at a maximum length.  */
 
 	name = d2i_X509_NAME(NULL, &p, sz);
 	if (!name) {

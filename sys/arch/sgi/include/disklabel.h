@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.1 2004/08/06 21:12:19 pefo Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.2 2004/08/10 19:16:18 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou.
+ *	This product includes software developed by Christopher G. Demetriou.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *

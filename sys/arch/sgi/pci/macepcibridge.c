@@ -1,8 +1,8 @@
-/*	$OpenBSD: macepcibridge.c,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.2 2004/08/10 19:16:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -67,19 +67,19 @@ int	 pcibr_errintr(void *);
 pcitag_t pcibr_make_tag(void *, int, int, int);
 void	 pcibr_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
-int      pcibr_bus_maxdevs(void *, int);
+int	 pcibr_bus_maxdevs(void *, int);
 pcireg_t pcibr_conf_read(void *, pcitag_t, int);
-void     pcibr_conf_write(void *, pcitag_t, int, pcireg_t);
+void	 pcibr_conf_write(void *, pcitag_t, int, pcireg_t);
 
 int      pcibr_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *pcibr_intr_string(void *, pci_intr_handle_t);
 void     *pcibr_intr_establish(void *, pci_intr_handle_t,
-            int, int (*func)(void *), void *, char *);
+	    int, int (*func)(void *), void *, char *);
 void     pcibr_intr_disestablish(void *, void *);
 
 
 struct cfattach macepcibr_ca = {
-        sizeof(struct pcibr_softc), pcibrmatch, pcibrattach,
+	sizeof(struct pcibr_softc), pcibrmatch, pcibrattach,
 };
 
 struct cfdriver macepcibr_cd = {
@@ -259,7 +259,7 @@ pcibrprint(aux, pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
-	if(pnp)
+	if (pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
 	return(UNCONF);
@@ -391,14 +391,14 @@ pcibr_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	*ihp = -1;
 
-        if (pa->pa_intrpin == 0) {
-                /* No IRQ used. */
-                return 1;
-        }
-        if (pa->pa_intrpin > 4) {
-                printf("pcibr_intr_map: bad interrupt pin %d\n", pa->pa_intrpin);
-                return 1;
-        }
+	if (pa->pa_intrpin == 0) {
+		/* No IRQ used. */
+		return 1;
+	}
+	if (pa->pa_intrpin > 4) {
+		printf("pcibr_intr_map: bad interrupt pin %d\n", pa->pa_intrpin);
+		return 1;
+	}
 
 	pcibr_decompose_tag((void *)NULL, pa->pa_tag, &bus, &device, NULL);
 
@@ -506,7 +506,7 @@ pcib_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v)
 
 int
 pcib_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
-        int cacheable, bus_space_handle_t *bshp)
+	int cacheable, bus_space_handle_t *bshp)
 {
 	bus_addr_t bpa;
 	int error;
@@ -530,9 +530,9 @@ pcib_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 void
 pcib_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
-        bus_addr_t sva;
-        bus_size_t off, len;
-        bus_addr_t paddr;
+	bus_addr_t sva;
+	bus_size_t off, len;
+	bus_addr_t paddr;
 
 	/* should this verify that the proper size is freed? */
 	sva = trunc_page(bsh);
@@ -561,6 +561,6 @@ int
 pcib_space_region(bus_space_tag_t t, bus_space_handle_t bsh,
 	bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
-        *nbshp = bsh + offset;
-        return (0);
+	*nbshp = bsh + offset;
+	return (0);
 }

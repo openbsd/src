@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2004/08/10 18:47:22 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.5 2004/08/10 19:16:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -268,12 +268,12 @@ mips_init(int argc, int32_t *argv)
 	/*
 	 *  Figure out where we was booted from.
 	 */
-	if(argc > 1)
+	if (argc > 1)
 		arg0 = (char *)(long)argv[1];
 	else
 		arg0 = Bios_GetEnvironmentVariable("bootdev");
 
-	if(arg0 == 0)
+	if (arg0 == 0)
 		arg0 = "unknown";
 	makebootdev(arg0);
 
@@ -292,13 +292,13 @@ mips_init(int argc, int32_t *argv)
 
 	/*  Check any extra arguments which override.  */
 	for(i = 2; i < argc; i++) {
-		if(*((char *)(long)argv[i]) == '-') {
+		if (*((char *)(long)argv[i]) == '-') {
 			dobootopts((char *)(long)argv[i] + 1);
 		}
 	}
 
 	/* Check l3cache size and disable (hard) if non present. */
-	if(Bios_GetEnvironmentVariable("l3cache") != 0) {
+	if (Bios_GetEnvironmentVariable("l3cache") != 0) {
 		i = atoi(Bios_GetEnvironmentVariable("l3cache"), 10, NULL);
 		CpuTertiaryCacheSize = 1024 * 1024 * i;
 	} else {
@@ -318,7 +318,7 @@ mips_init(int argc, int32_t *argv)
 	 */
 	switch(sys_config.cpu[0].type) {
 	case MIPS_RM7000:
-		if(sys_config.cpu[0].vers_maj < 2) {
+		if (sys_config.cpu[0].vers_maj < 2) {
 			sys_config.cpu[0].tlbsize = 48;
 		} else {
 			sys_config.cpu[0].tlbsize = 64;
@@ -487,7 +487,7 @@ allocsys(caddr_t v)
 	/*
 	 * Clear allocated memory.
 	 */
-	if(start != 0) {
+	if (start != 0) {
 		bzero(start, v - start);
 	}
 
@@ -896,7 +896,7 @@ enaddr_aton(const char *s, u_int8_t *a)
 {
 	int i;
 
-	if(s != NULL) {
+	if (s != NULL) {
 		for(i = 0; i < 6; i++) {
 			a[i] = atoi(s, 16, &s);
 			if (*s == ':')
@@ -988,7 +988,7 @@ rm7k_perfcntr(cmd, arg1, arg2, arg3)
 
 	switch(cmd) {
 	case PCNT_FNC_SELECT:
-		if((arg1 & 0xff) > PCNT_SRC_MAX ||
+		if ((arg1 & 0xff) > PCNT_SRC_MAX ||
 		   (arg1 & ~(PCNT_CE|PCNT_UM|PCNT_KM|0xff)) != 0) {
 			result = EINVAL;
 			break;
@@ -1027,7 +1027,7 @@ rm7k_perfintr(trapframe)
 
 	printf("perfintr proc %p!\n", p);
 	cp0_setperfcount(cp0_getperfcount() & 0x7fffffff);
-	if(p != NULL) {
+	if (p != NULL) {
 		p->p_md.md_pc_spill++;
 	}
 }

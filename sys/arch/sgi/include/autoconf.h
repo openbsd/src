@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.5 2004/08/10 18:52:58 deraadt Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.6 2004/08/10 19:16:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -46,7 +46,7 @@
 #define MAX_CPUS	4
 
 struct sys_rec {
-        int     system_type;
+	int	system_type;
 	struct {
 		u_int16_t type;
 		u_int8_t  vers_maj;
@@ -61,16 +61,16 @@ struct sys_rec {
 		u_int32_t cfg_reg;
 		u_int32_t stat_reg;
 	} cpu[MAX_CPUS];
-        struct mips_bus_space local;
-        struct mips_bus_space isa_io;
-        struct mips_bus_space isa_mem;
-        struct mips_bus_space pci_io[2];
-        struct mips_bus_space pci_mem[2];
+	struct mips_bus_space local;
+	struct mips_bus_space isa_io;
+	struct mips_bus_space isa_mem;
+	struct mips_bus_space pci_io[2];
+	struct mips_bus_space pci_mem[2];
 
-        int     cons_baudclk;
-        struct mips_bus_space console_io;	/* for stupid map designs */
+	int	cons_baudclk;
+	struct mips_bus_space console_io;	/* for stupid map designs */
 	struct mips_bus_space *cons_iot;
-        bus_addr_t cons_ioaddr[8];		/* up to eight loclbus tty's */
+	bus_addr_t cons_ioaddr[8];		/* up to eight loclbus tty's */
 };
 
 extern struct sys_rec sys_config;
@@ -107,13 +107,13 @@ struct abus {
 #define	BUS_PLCHLDR	4		/* placeholder */
 #define	BUS_PCIBR	5		/* PCI bridge Bus */
 
-#define BUS_INTR_ESTABLISH(ca, a, b, c, d, e, f, h)                     \
+#define BUS_INTR_ESTABLISH(ca, a, b, c, d, e, f, h)			\
 	    (*(ca)->ca_bus->ab_intr_establish)((a),(b),(c),(d),(e),(f),(h))
-#define BUS_INTR_DISESTABLISH(ca)                                       \
+#define BUS_INTR_DISESTABLISH(ca)					\
 	    (*(ca)->ca_bus->ab_intr_establish)(ca)
-#define BUS_MATCHNAME(ca, name)                                         \
-	    (((ca)->ca_bus->ab_matchname) ?                             \
-	    (*(ca)->ca_bus->ab_matchname)((ca), (name)) :               \
+#define BUS_MATCHNAME(ca, name)						\
+	    (((ca)->ca_bus->ab_matchname) ?				\
+	    (*(ca)->ca_bus->ab_matchname)((ca), (name)) :		\
 	    -1)
 
 struct confargs {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2004/08/10 18:52:58 deraadt Exp $ */
+/*	$OpenBSD: intr.h,v 1.3 2004/08/10 19:16:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -172,16 +172,16 @@ splraise(int newcpl)
 	oldcpl = cpl;
 	cpl = oldcpl | newcpl;
 	__asm__ (" sync\n .set reorder\n");
-	return(oldcpl);
+	return (oldcpl);
 }
 
 static __inline void
 splx(int newcpl)
 {
 	cpl = newcpl;
-	if((ipending & ~newcpl) && (pending_hand != NULL)) {
-                (*pending_hand)();
-        }
+	if ((ipending & ~newcpl) && (pending_hand != NULL)) {
+		(*pending_hand)();
+	}
 }
 
 static __inline int
@@ -191,10 +191,10 @@ spllower(int newcpl)
 
 	oldcpl = cpl;
 	cpl = newcpl;
-	if((ipending & ~newcpl) && (pending_hand != NULL)) {
-                (*pending_hand)();
+	if ((ipending & ~newcpl) && (pending_hand != NULL)) {
+		(*pending_hand)();
 	}
-	return(oldcpl);
+	return (oldcpl);
 }
 
 /*
@@ -208,13 +208,13 @@ void set_sint(int pending);
  */
 
 struct intrhand {
-        struct  intrhand *ih_next;
-        int     (*ih_fun)(void *);
-        void    *ih_arg;
-        u_long  ih_count;
-        int     ih_level;
-        int     ih_irq;
-        char    *ih_what;
+	struct	intrhand *ih_next;
+	int	(*ih_fun)(void *);
+	void	*ih_arg;
+	u_long	ih_count;
+	int	ih_level;
+	int	ih_irq;
+	char	*ih_what;
 	void	*frame;
 };
 
@@ -226,8 +226,8 @@ struct intrhand {
 struct trap_frame;
 
 struct {
-        intrmask_t int_mask;
-        intrmask_t (*int_hand)(intrmask_t, struct trap_frame *);
+	intrmask_t int_mask;
+	intrmask_t (*int_hand)(intrmask_t, struct trap_frame *);
 } cpu_int_tab[NLOWINT];
 
 intrmask_t idle_mask;

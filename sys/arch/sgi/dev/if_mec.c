@@ -1,5 +1,5 @@
-/* $OpenBSD: if_mec.c,v 1.2 2004/08/10 13:47:45 pefo Exp $ */
-/* $NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.3 2004/08/10 19:16:17 deraadt Exp $ */
+/*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -944,7 +944,7 @@ mec_start(struct ifnet *ifp)
 		/* but also set TXINT bit on a half of TXDESC */
 		if (sc->sc_txpending == (MEC_NTXDESC / 2))
 			txd->txd_cmd |= MEC_TXCMD_TXINT;
-			
+
 		if (txs->txs_flags & MEC_TXS_TXDBUF)
 			txd->txd_cmd |= TXCMD_BUFSTART(MEC_TXDESCSIZE - buflen);
 		if (txs->txs_flags & MEC_TXS_TXDPTR1) {
@@ -993,7 +993,7 @@ mec_start(struct ifnet *ifp)
 		sc->sc_txdesc[sc->sc_txlast].txd_cmd |= MEC_TXCMD_TXINT;
 		MEC_TXCMDSYNC(sc, sc->sc_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-		
+
 		/* start TX */
 		bus_space_write_8(st, sh, MEC_TX_RING_PTR,
 		    MEC_NEXTTX(sc->sc_txlast));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 2004/08/10 18:52:58 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 2004/08/10 19:16:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -262,8 +262,8 @@ bus_space_copy_4(void *v, bus_space_handle_t h1, bus_size_t o1,
 #define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE 0x02		/* force write barrier */
 /* Compatibility defines */
-#define BUS_BARRIER_READ        BUS_SPACE_BARRIER_READ
-#define BUS_BARRIER_WRITE       BUS_SPACE_BARRIER_WRITE
+#define BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
+#define BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
 
 
 #define	BUS_DMA_WAITOK		0x00
@@ -275,9 +275,9 @@ bus_space_copy_4(void *v, bus_space_handle_t h1, bus_size_t o1,
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
-#define BUS_DMA_READ            0x100   /* mapping is device -> memory only */
-#define BUS_DMA_WRITE           0x200   /* mapping is memory -> device only */
-#define BUS_DMA_STREAMING       0x400   /* hint: sequential, unidirectional */
+#define BUS_DMA_READ		0x100   /* mapping is device -> memory only */
+#define BUS_DMA_WRITE		0x200   /* mapping is memory -> device only */
+#define BUS_DMA_STREAMING	0x400   /* hint: sequential, unidirectional */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

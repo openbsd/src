@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.7 2004/08/08 19:11:06 deraadt Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.8 2004/08/10 19:21:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -201,7 +201,7 @@ virtual_listen_lookup(struct sockaddr *addr)
 	struct udp_transport	 *u;
 
 	for (v = LIST_FIRST(&virtual_listen_list); v;
-	     v = LIST_NEXT(v, link)) {
+	    v = LIST_NEXT(v, link)) {
 		if (!(u = (struct udp_transport *)v->main))
 			if (!(u = (struct udp_transport *)v->encap)) {
 				log_print("virtual_listen_lookup: "
@@ -456,7 +456,7 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	listen_on = conf_get_list("General", "Listen-on");
 	if (listen_on) {
 		for (address = TAILQ_FIRST(&listen_on->fields); address;
-		     address = TAILQ_NEXT(address, link)) {
+		    address = TAILQ_NEXT(address, link)) {
 			if (text2sockaddr(address->field, 0, &addr)) {
 				log_print("virtual_bind_if: "
 				    "invalid address %s in \"Listen-on\"",

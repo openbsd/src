@@ -1,8 +1,8 @@
-/*	$OpenBSD: com_lbus.c,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: com_lbus.c,v 1.2 2004/08/10 19:16:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -75,17 +75,15 @@ com_localbus_probe(parent, match, aux)
 	}
 
 	iobase = (bus_addr_t)sys_config.cons_ioaddr[cf->cf_unit];
-	if(iobase == 0) {
+	if (iobase == 0) {
 		rv = 0;	/* Not present */
-	}
-	else {
+	} else {
 		iot = sys_config.cons_iot;
 		/* if it's in use as console, it's there. */
 		if (!(iobase == comconsaddr && !comconsattached)) {
 			bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh);
 			rv = comprobe1(iot, ioh);
-		}
-		else {
+		} else {
 			rv = 1;
 		}
 	}
