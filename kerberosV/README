@@ -4,6 +4,21 @@ This is experimental stuff, don't expect things to work correctly at this
 point. Please contact <hin@openbsd.org> if you have questions about the
 kerberosV stuff.
 
+To build this stuff, do the following:
+
+# cd /usr/src/kerberosV
+# make build
+
+To get a telnet client and server with kerberos5 support, do the following:
+
+# echo "KERBEROS5=Yes" >> /etc/mk.conf
+# cd /usr/src/lib/libtelnet
+# make ; make install
+# cd /usr/src/usr.bin/telnet
+# make ; make install
+# cd /usr/src/libexec/telnetd
+# make ; make install 
+
 
 
 Things todo, in no particular order:
