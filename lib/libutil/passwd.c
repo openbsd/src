@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.15 1997/11/17 22:46:03 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.16 1997/11/18 19:57:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.15 1997/11/17 22:46:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.16 1997/11/18 19:57:28 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,7 +48,9 @@ static char rcsid[] = "$OpenBSD: passwd.c,v 1.15 1997/11/17 22:46:03 millert Exp
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <pwd.h>
+#include <err.h>
 #include <errno.h>
 #include <paths.h>
 #include <signal.h>
@@ -96,7 +98,7 @@ read_line(fp, line, max)
 	char   *line;
 	int     max;
 {
-	char   *p, *c;
+	char   *p;
 	/* Read one line of config */
 	if (fgets(line, max, fp) == 0)
 		return 0;
@@ -266,7 +268,6 @@ pw_mkdb()
 {
 	int pstat;
 	pid_t pid;
-	char *lock;
 	struct stat sb;
 
 	/* A zero length passwd file is never ok */
@@ -350,6 +351,9 @@ pw_edit(notsetuid, filename)
 	char *p, *editor;
 	char *argp[] = {"sh", "-c", NULL, NULL};
 
+#ifdef __GNUC__
+	(void)&editor;
+#endif
 	if (!filename) {
 		filename = pw_lck;
 		if (!filename)
@@ -447,7 +451,7 @@ pw_copy(ffd, tfd, pw)
 				goto err;
 			continue;
 		}
-		(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
+		(void)fprintf(to, "%s:%s:%d:%d:%s:%d:%d:%s:%s:%s\n",
 		    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
 		    pw->pw_class, pw->pw_change, pw->pw_expire, pw->pw_gecos,
 		    pw->pw_dir, pw->pw_shell);
@@ -456,7 +460,7 @@ pw_copy(ffd, tfd, pw)
 			goto err;
 	}
 	if (!done)
-		(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
+		(void)fprintf(to, "%s:%s:%d:%d:%s:%d:%d:%s:%s:%s\n",
 		    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
 		    pw->pw_class, pw->pw_change, pw->pw_expire, pw->pw_gecos,
 		    pw->pw_dir, pw->pw_shell);
@@ -550,7 +554,7 @@ pw_scan(bp, pw, flags)
 				break;	
 		}
 
-	if (p = strsep(&bp, ":")) {			/* too many */
+	if ((p = strsep(&bp, ":"))) {			/* too many */
 fmt:		warnx("corrupted entry");
 		return (0);
 	}

@@ -65,6 +65,7 @@
 #include <string.h>
 #include <errno.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #include "util.h"
 
@@ -91,7 +92,7 @@ login_fbtab(tty, uid, gid)
 		return;
 
 	while (fgets(buf, sizeof(buf), fp)) {
-		if (cp = strchr(buf, '#'))
+		if ((cp = strchr(buf, '#')))
 			*cp = 0;	/* strip comment */
 		if ((cp = devname = strtok(buf, WSPACE)) == 0)
 			continue;	/* empty or comment */
