@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.215 2003/01/15 09:25:46 camield Exp $
+#	$OpenBSD: rc,v 1.216 2003/01/20 20:42:28 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -190,6 +190,11 @@ rm -f /dev/log
 if [ "X${named_flags}" != X"NO" -a "X${named_chroot}" != "X" ]; then
 	rm -f ${named_chroot}/dev/log
 	syslogd_flags="${syslogd_flags} -a ${named_chroot}/dev/log"
+fi
+if [ -d /var/empty ]; then
+	rm -f /var/empty/dev/log
+	mkdir -p -m 0555 /var/empty/dev
+	syslogd_flags="${syslogd_flags} -a /var/empty/dev/log"
 fi
 syslogd ${syslogd_flags}
 
