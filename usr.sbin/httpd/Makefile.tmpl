@@ -67,7 +67,7 @@
 ## ==================================================================
 
 #   safe environment
-SHELL           = /bin/sh
+SHELL           = @SHELL@
 
 #   paths to the source tree parts
 TOP             = .
@@ -79,14 +79,21 @@ AUX             = @AUX@
 CP              = cp
 LN              = ln
 RM              = rm -f
-TAR             = tar
 MKDIR           = $(TOP)/$(AUX)/mkdir.sh
 INSTALL         = $(TOP)/$(AUX)/install.sh -c
-INSTALL_PROGRAM = $(INSTALL) -s -m 755
-INSTALL_DSO     = $(INSTALL) -m 755
-INSTALL_SCRIPT  = $(INSTALL) -m 755
-INSTALL_DATA    = $(INSTALL) -m 644
+IFLAGS_PROGRAM  = @IFLAGS_PROGRAM@
+IFLAGS_CORE     = @IFLAGS_CORE@
+IFLAGS_DSO      = @IFLAGS_DSO@
+IFLAGS_SCRIPT   = @IFLAGS_SCRIPT@
+IFLAGS_DATA     = @IFLAGS_DATA@
+INSTALL_PROGRAM = $(INSTALL) $(IFLAGS_PROGRAM)
+INSTALL_CORE    = $(INSTALL) $(IFLAGS_CORE)
+INSTALL_DSO     = $(INSTALL) $(IFLAGS_DSO)
+INSTALL_SCRIPT  = $(INSTALL) $(IFLAGS_SCRIPT)
+INSTALL_DATA    = $(INSTALL) $(IFLAGS_DATA)
 PERL            = @PERL@
+TAR		= @TAR@
+TAROPT		= @TAROPT@
 
 #   installation name of Apache webserver
 TARGET          = @TARGET@
@@ -105,6 +112,9 @@ libexecdir      = @libexecdir@
 mandir          = @mandir@
 sysconfdir      = @sysconfdir@
 datadir         = @datadir@
+iconsdir        = @iconsdir@
+htdocsdir       = @htdocsdir@
+cgidir          = @cgidir@
 includedir      = @includedir@
 localstatedir   = @localstatedir@
 runtimedir      = @runtimedir@
@@ -127,6 +137,7 @@ suexec_safepath = @suexec_safepath@
 ssl = @ssl@
 
 #   some substituted configuration parameters
+conf_user        = @conf_user@
 conf_group       = @conf_group@
 conf_port        = @conf_port@
 conf_port_ssl    = @conf_port_ssl@
@@ -140,9 +151,11 @@ clean-support     = @clean_support@
 distclean-support = @distclean_support@
 
 #   `make certificate' parameters
-TYPE = test
+TYPE =
+ALGO =
 CRT  =
 KEY  =
+VIEW =
 
 #   forwarding arguments
 MFWD = root=$(root)
@@ -162,7 +175,9 @@ all: build
 build:
 	@echo "===> $(SRC)"
 	@$(MAKE) -f $(TOP)/$(MKF) $(MFLAGS) $(MFWD) build-std
-	@$(MAKE) -f $(TOP)/$(MKF) $(MFLAGS) $(MFWD) $(build-support)
+	@if [ "x$(build-support)" != "x" ]; then \
+	    $(MAKE) -f $(TOP)/$(MKF) $(MFLAGS) $(MFWD) $(build-support); \
+        fi
 	@$(MAKE) -f $(TOP)/$(MKF) $(MFLAGS) $(MFWD) build-certificate
 	@touch $(TOP)/$(SRC)/.apaci.build.ok
 	@echo "<=== $(SRC)"
@@ -188,8 +203,7 @@ build-support:
 			-DUSERDIR_SUFFIX=\"$(suexec_userdir)\" \
 			-DLOG_EXEC=\"$(suexec_logexec)\" \
 			-DDOC_ROOT=\"$(suexec_docroot)\" \
-			-DSAFE_PATH=\"$(suexec_safepath)\" \
-		' \
+			-DSAFE_PATH=\"$(suexec_safepath)\" ' \
 		suexec; \
 	fi; \
 	echo "<=== $(SRC)/support"
@@ -216,6 +230,11 @@ build-certificate:
 				echo "| and TYPE=existing when you're an admin who upgrades a server.       |"; \
 				echo "| (The default is TYPE=test)                                          |"; \
 				echo "|                                                                     |"; \
+				echo "| Additionally add ALGO=RSA (default) or ALGO=DSA to select           |"; \
+				echo "| the signature algorithm used for the generated certificate.         |"; \
+				echo "|                                                                     |"; \
+				echo "| Use 'make certificate VIEW=1' to display the generated data.        |"; \
+				echo "|                                                                     |"; \
 				echo "| Thanks for using Apache & mod_ssl.       Ralf S. Engelschall        |"; \
 				echo "|                                          rse@engelschall.com        |"; \
 				echo "|                                          www.engelschall.com        |"; \
@@ -225,16 +244,20 @@ build-certificate:
 	fi
 
 certificate:
-	@cd $(TOP)/$(SRC); $(MAKE) $(MFLAGS) certificate TYPE=$(TYPE) CRT=$(CRT) KEY=$(KEY)
+	@cd $(TOP)/$(SRC); $(MAKE) $(MFLAGS) certificate TYPE="$(TYPE)" ALGO="$(ALGO)" CRT="$(CRT)" KEY="$(KEY)" VIEW="$(VIEW)"
 
 ## ------------------------------------------------------------------
 ##                       Installation Targets
 ## ------------------------------------------------------------------
 
+#   indirection step to avoid conflict with INSTALL document 
+#   on case-insenstive filesystems, for instance on OS/2
+install: install-all
+
 #   the install target for installing the complete Apache
 #   package. This is implemented by running subtargets for the
 #   separate parts of the installation process.
-install:
+install-all:
 	@if [ ! -f $(TOP)/$(SRC)/.apaci.build.ok ]; then \
 		$(MAKE) -f $(TOP)/$(MKF) $(MFLAGS) $(MFWD) build; \
 	else \
@@ -275,7 +298,7 @@ install:
 
 #   the non-verbose variant for package maintainers
 install-quiet:
-	@$(MAKE) -f $(TOP)/$(MKF) $(MFLAGS) $(MFWD) QUIET=1 install
+	@$(MAKE) -f $(TOP)/$(MKF) $(MFLAGS) $(MFWD) QUIET=1 install-all
 
 #   create the installation tree
 install-mktree:
@@ -287,27 +310,47 @@ install-mktree:
 	$(MKDIR) $(root)$(mandir)/man8
 	$(MKDIR) $(root)$(sysconfdir)
 	$(MKDIR) $(root)$(sysconfdir)/ssl.crt
+	$(MKDIR) $(root)$(sysconfdir)/ssl.crl
 	$(MKDIR) $(root)$(sysconfdir)/ssl.csr
 	$(MKDIR) $(root)$(sysconfdir)/ssl.key
-	$(MKDIR) $(root)$(datadir)/htdocs
-	$(MKDIR) $(root)$(datadir)/icons
-	$(MKDIR) $(root)$(datadir)/cgi-bin
+	$(MKDIR) $(root)$(sysconfdir)/ssl.prm
+	$(MKDIR) $(root)$(htdocsdir)
+	$(MKDIR) $(root)$(iconsdir)
+	$(MKDIR) $(root)$(cgidir)
 	$(MKDIR) $(root)$(includedir)
+	$(MKDIR) $(root)$(includedir)/xml
 	$(MKDIR) $(root)$(runtimedir)
 	$(MKDIR) $(root)$(logfiledir)
 	$(MKDIR) $(root)$(proxycachedir)
+	-@if [ "x`$(AUX)/getuid.sh`" = "x0" ]; then \
+		echo "chown $(conf_user) $(root)$(proxycachedir)"; \
+		chown $(conf_user) $(root)$(proxycachedir); \
+		echo "chgrp $(conf_group) $(root)$(proxycachedir)"; \
+		chgrp $(conf_group) $(root)$(proxycachedir); \
+	fi
 	@echo "<=== [mktree]"
 
 #   install the server program and optionally corresponding
 #   shared object files.
 install-programs:
 	@echo "===> [programs: Installing Apache $(TARGET) program and shared objects]"
-	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/$(TARGET) $(root)$(sbindir)/$(TARGET)
+	-@if [ ".`grep '^[ 	]*AddModule.*mod_so\.o' $(TOP)/$(SRC)/Configuration.apaci`" != . ]; then \
+		echo "$(INSTALL_CORE) $(TOP)/$(SRC)/$(TARGET) $(root)$(sbindir)/$(TARGET)"; \
+		$(INSTALL_CORE) $(TOP)/$(SRC)/$(TARGET) $(root)$(sbindir)/$(TARGET); \
+		SHLIB_EXPORT_FILES="`grep '^SHLIB_EXPORT_FILES=' $(TOP)/$(SRC)/Makefile | sed -e 's:^.*=::'`"; \
+		if [ ".$${SHLIB_EXPORT_FILES}" != . ]; then \
+			$(CP) $(TOP)/$(SRC)/support/httpd.exp $(root)$(libexecdir)/; \
+			chmod 644 $(root)$(libexecdir)/httpd.exp; \
+		fi; \
+	else \
+		echo "$(INSTALL_PROGRAM) $(TOP)/$(SRC)/$(TARGET) $(root)$(sbindir)/$(TARGET)"; \
+		$(INSTALL_PROGRAM) $(TOP)/$(SRC)/$(TARGET) $(root)$(sbindir)/$(TARGET); \
+	fi
 	-@if [ ".`grep 'SUBTARGET=target_shared' $(TOP)/$(SRC)/Makefile`" != . ]; then \
 		SHLIB_SUFFIX_NAME="`grep '^SHLIB_SUFFIX_NAME=' $(TOP)/$(SRC)/Makefile | sed -e 's:^.*=::'`"; \
 		SHLIB_SUFFIX_LIST="`grep '^SHLIB_SUFFIX_LIST=' $(TOP)/$(SRC)/Makefile | sed -e 's:^.*=::'`"; \
-		echo "$(INSTALL_DSO) $(TOP)/$(SRC)/lib$(TARGET).ep $(root)$(libexecdir)/lib$(TARGET).ep"; \
-		$(INSTALL_DSO) $(TOP)/$(SRC)/lib$(TARGET).ep $(root)$(libexecdir)/lib$(TARGET).ep; \
+		echo "$(INSTALL_CORE) $(TOP)/$(SRC)/lib$(TARGET).ep $(root)$(libexecdir)/lib$(TARGET).ep"; \
+		$(INSTALL_CORE) $(TOP)/$(SRC)/lib$(TARGET).ep $(root)$(libexecdir)/lib$(TARGET).ep; \
 		echo "$(INSTALL_DSO) $(TOP)/$(SRC)/lib$(TARGET).$${SHLIB_SUFFIX_NAME} $(root)$(libexecdir)/lib$(TARGET).$${SHLIB_SUFFIX_NAME}"; \
 		$(INSTALL_DSO) $(TOP)/$(SRC)/lib$(TARGET).$${SHLIB_SUFFIX_NAME} $(root)$(libexecdir)/lib$(TARGET).$${SHLIB_SUFFIX_NAME}; \
 		if [ ".$${SHLIB_SUFFIX_LIST}" != . ]; then \
@@ -364,7 +407,7 @@ install-programs:
 install-support:
 	@echo "===> [support: Installing Apache support programs and scripts]"
 	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/ab $(root)$(sbindir)/ab
-	$(INSTALL_DATA) $(TOP)/$(SRC)/support/ab.1 $(root)$(mandir)/man1/ab.1
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/ab.8 $(root)$(mandir)/man8/ab.8
 	@if [ ".$(TARGET)" = .httpd ]; then \
 		apachectl='apachectl'; \
 	else \
@@ -375,8 +418,8 @@ install-support:
 		-e 's;HTTPD=.*;HTTPD=$(sbindir)/$(TARGET);' \
 		< $(TOP)/$(SRC)/support/apachectl > $(TOP)/$(SRC)/.apaci.install.tmp && \
 		$(INSTALL_SCRIPT) $(TOP)/$(SRC)/.apaci.install.tmp $(root)$(sbindir)/$${apachectl}; \
-	echo "$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.1 $(root)$(mandir)/man1/$${apachectl}.1"; \
-	$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.1 $(root)$(mandir)/man1/$${apachectl}.1
+	echo "$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8"; \
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8
 	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/htpasswd $(root)$(bindir)/htpasswd
 	$(INSTALL_DATA) $(TOP)/$(SRC)/support/htpasswd.1 $(root)$(mandir)/man1/htpasswd.1
 	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/htdigest $(root)$(bindir)/htdigest
@@ -412,47 +455,91 @@ install-support:
 	fi
 	@echo "<=== [support]"
 
+#   install the support programs and scripts for binary distribution
+install-binsupport:
+	@echo "===> [support: Installing Apache support programs and scripts for binary distribution]"
+	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/ab $(root)$(sbindir)/ab
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/ab.8 $(root)$(mandir)/man8/ab.8
+	@if [ ".$(TARGET)" = .httpd ]; then \
+		apachectl='apachectl'; \
+	else \
+		apachectl="$(TARGET)ctl"; \
+	fi; \
+	echo "$(INSTALL_SCRIPT) $(TOP)/$(SRC)/support/apachectl[*] $(root)$(sbindir)/$${apachectl}"; \
+	sed -e 's;PIDFILE=.*;PIDFILE=$(runtimedir)/$(TARGET).pid;' \
+		-e 's;HTTPD=.*;HTTPD=$(sbindir)/$(TARGET);' \
+		< $(TOP)/$(SRC)/support/apachectl > $(TOP)/$(SRC)/.apaci.install.tmp && \
+		$(INSTALL_SCRIPT) $(TOP)/$(SRC)/.apaci.install.tmp $(root)$(sbindir)/$${apachectl}; \
+	echo "$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8"; \
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8
+	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/htpasswd $(root)$(bindir)/htpasswd
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/htpasswd.1 $(root)$(mandir)/man1/htpasswd.1
+	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/htdigest $(root)$(bindir)/htdigest
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/htdigest.1 $(root)$(mandir)/man1/htdigest.1
+	@echo "$(INSTALL_SCRIPT) $(TOP)/$(SRC)/support/dbmmanage[*] $(root)$(bindir)/dbmmanage"; \
+	$(INSTALL_SCRIPT) $(TOP)/$(SRC)/support/dbmmanage $(root)$(bindir)/dbmmanage
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/dbmmanage.1 $(root)$(mandir)/man1/dbmmanage.1
+	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/logresolve $(root)$(sbindir)/logresolve
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/logresolve.8 $(root)$(mandir)/man8/logresolve.8
+	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/rotatelogs $(root)$(sbindir)/rotatelogs
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/rotatelogs.8 $(root)$(mandir)/man8/rotatelogs.8
+	@echo "$(INSTALL_SCRIPT) $(TOP)/$(SRC)/support/apxs[*] $(root)$(sbindir)/apxs"; \
+	$(INSTALL_SCRIPT) $(TOP)/$(SRC)/support/apxs $(root)$(sbindir)/apxs
+	$(INSTALL_DATA) $(TOP)/$(SRC)/support/apxs.8 $(root)$(mandir)/man8/apxs.8
+	-@if [ ".$(suexec)" = .1 ]; then \
+	    echo "$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/suexec $(root)$(sbindir)/suexec"; \
+	    $(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/suexec $(root)$(sbindir)/suexec; \
+	    echo "chown root $(root)$(sbindir)/suexec"; \
+	    chown root $(root)$(sbindir)/suexec; \
+	    echo "chmod 4711 $(root)$(sbindir)/suexec"; \
+	    chmod 4711 $(root)$(sbindir)/suexec; \
+	    echo "$(INSTALL_DATA) $(TOP)/$(SRC)/support/suexec.8 $(root)$(mandir)/man8/suexec.8"; \
+	    $(INSTALL_DATA) $(TOP)/$(SRC)/support/suexec.8 $(root)$(mandir)/man8/suexec.8; \
+	fi
+	@echo "<=== [support]"
+
 #   install the Apache C header files
 install-include:
 	@echo "===> [include: Installing Apache C header files]"
 	$(CP) $(TOP)/$(SRC)/include/*.h $(root)$(includedir)/
-	@osdir=`grep '^OSDIR=' $(TOP)/$(SRC)/Makefile.config | sed -e 's:^OSDIR=.*/os:os:'`; \
+	$(CP) $(TOP)/$(SRC)/lib/expat-lite/*.h $(root)$(includedir)/xml/
+	@osdir=`grep '^OSDIR=' $(TOP)/$(SRC)/Makefile.config | sed -e 's:^OSDIR=.*/os/:os/:'`; \
 		echo "$(CP) $(TOP)/$(SRC)/$${osdir}/os.h $(root)$(includedir)/"; \
 		$(CP) $(TOP)/$(SRC)/$${osdir}/os.h $(root)$(includedir)/; \
 		echo "$(CP) $(TOP)/$(SRC)/$${osdir}/os-inline.c $(root)$(includedir)/"; \
 		$(CP) $(TOP)/$(SRC)/$${osdir}/os-inline.c $(root)$(includedir)/
-	chmod 644 $(root)$(includedir)/*.h
+	chmod 644 $(root)$(includedir)/*.h $(root)$(includedir)/xml/*.h
 	@echo "<=== [include]"
 
 #   create an initial document root containing the Apache manual,
 #   icons and distributed CGI scripts.
 install-data:
 	@echo "===> [data: Installing initial data files]"
-	-@if [ -f $(root)$(datadir)/htdocs/index.html ]; then \
-		echo "[PRESERVING EXISTING DATA SUBDIR: $(root)$(datadir)/htdocs/]"; \
+	-@if [ -f $(root)$(htdocsdir)/index.html ]; then \
+		echo "[PRESERVING EXISTING DATA SUBDIR: $(root)$(htdocsdir)/]"; \
 	else \
-		echo "Copying tree $(TOP)/htdocs/ -> $(root)$(datadir)/htdocs/"; \
-		(cd $(TOP)/htdocs/ && $(TAR) -hcf - *) |\
-		(cd $(root)$(datadir)/htdocs/ && $(TAR) -xf -); \
-		find $(root)$(datadir)/htdocs/ -type d -exec chmod a+rx {} \; ; \
-		find $(root)$(datadir)/htdocs/ -type f -exec chmod a+r {} \; ; \
+		echo "Copying tree $(TOP)/htdocs/ -> $(root)$(htdocsdir)/"; \
+		(cd $(TOP)/htdocs/ && $(TAR) $(TAROPT) - *) |\
+		(cd $(root)$(htdocsdir)/ && $(TAR) -xf -); \
+		find $(root)$(htdocsdir)/ -type d -exec chmod a+rx {} \; ; \
+		find $(root)$(htdocsdir)/ -type f -exec chmod a+r {} \; ; \
 	fi
-	-@if [ -f $(root)$(datadir)/cgi-bin/printenv ]; then \
-		echo "[PRESERVING EXISTING DATA SUBDIR: $(root)$(datadir)/cgi-bin/]"; \
+	-@if [ -f $(root)$(cgidir)/printenv ]; then \
+		echo "[PRESERVING EXISTING DATA SUBDIR: $(root)$(cgidir)/]"; \
 	else \
 		for script in printenv test-cgi; do \
 			cat $(TOP)/cgi-bin/$${script} |\
 			sed -e 's;^#!/.*perl;#!$(PERL);' \
 			> $(TOP)/$(SRC)/.apaci.install.tmp; \
-			echo "$(INSTALL_DATA) $(TOP)/conf/$${script}[*] $(root)$(datadir)/cgi-bin/$${script}"; \
-			$(INSTALL_DATA) $(TOP)/$(SRC)/.apaci.install.tmp $(root)$(datadir)/cgi-bin/$${script}; \
+			echo "$(INSTALL_DATA) $(TOP)/conf/$${script}[*] $(root)$(cgidir)/$${script}"; \
+			$(INSTALL_DATA) $(TOP)/$(SRC)/.apaci.install.tmp $(root)$(cgidir)/$${script}; \
 		done; \
 	fi
-	@echo "Copying tree $(TOP)/icons/ -> $(root)$(datadir)/icons/"; \
-	(cd $(TOP)/icons/ && $(TAR) -hcf - *) |\
-	(cd $(root)$(datadir)/icons/ && $(TAR) -xf -); \
-	find $(root)$(datadir)/icons/ -type d -exec chmod a+rx {} \; ;\
-	find $(root)$(datadir)/icons/ -type f -exec chmod a+r {} \;
+	@echo "Copying tree $(TOP)/icons/ -> $(root)$(iconsdir)/"; \
+	(cd $(TOP)/icons/ && $(TAR) $(TAROPT) - *) |\
+	(cd $(root)$(iconsdir)/ && $(TAR) -xf -); \
+	find $(root)$(iconsdir)/ -type d -exec chmod a+rx {} \; ;\
+	find $(root)$(iconsdir)/ -type f -exec chmod a+r {} \;
 	@echo "<=== [data]"
 
 #   create the initial configuration by providing default files
@@ -481,21 +568,26 @@ install-config:
 			-e "s;logs/ssl_engine_log;$(logfiledir)/$${target_prefix}ssl_engine_log;" \
 			-e "s;logs/ssl_request_log;$(logfiledir)/$${target_prefix}ssl_request_log;" \
 			-e 's;@@ServerRoot@@/conf/ssl.crt;$(sysconfdir)/ssl.crt;' \
+			-e 's;@@ServerRoot@@/conf/ssl.crl;$(sysconfdir)/ssl.crl;' \
+			-e 's;@@ServerRoot@@/conf/ssl.csr;$(sysconfdir)/ssl.csr;' \
 			-e 's;@@ServerRoot@@/conf/ssl.key;$(sysconfdir)/ssl.key;' \
-			-e 's;@@ServerRoot@@/htdocs;$(datadir)/htdocs;' \
-			-e 's;@@ServerRoot@@/icons;$(datadir)/icons;' \
-			-e 's;@@ServerRoot@@/cgi-bin;$(datadir)/cgi-bin;' \
+			-e 's;@@ServerRoot@@/conf/ssl.prm;$(sysconfdir)/ssl.prm;' \
+			-e 's;@@ServerRoot@@/htdocs;$(htdocsdir);' \
+			-e 's;@@ServerRoot@@/icons;$(iconsdir);' \
+			-e 's;@@ServerRoot@@/cgi-bin;$(cgidir);' \
 			-e 's;@@ServerRoot@@/proxy;$(proxycachedir);' \
 			-e 's;@@ServerRoot@@;$(prefix);g' \
-			-e 's;logs/accept.lock;$(runtimedir)/$(TARGET).lock;' \
+			-e 's;httpd\.conf;$(TARGET).conf;' \
+			-e 's;logs/accept\.lock;$(runtimedir)/$(TARGET).lock;' \
 			-e 's;logs/apache_runtime_status;$(runtimedir)/$(TARGET).scoreboard;' \
-			-e 's;logs/httpd.pid;$(runtimedir)/$(TARGET).pid;' \
+			-e 's;logs/httpd\.pid;$(runtimedir)/$(TARGET).pid;' \
 			-e "s;logs/access_log;$(logfiledir)/$${target_prefix}access_log;" \
 			-e "s;logs/error_log;$(logfiledir)/$${target_prefix}error_log;" \
 			-e "s;logs/referer_log;$(logfiledir)/$${target_prefix}referer_log;" \
 			-e "s;logs/agent_log;$(logfiledir)/$${target_prefix}agent_log;" \
 			-e 's;conf/magic;$(sysconfdir)/magic;' \
-			-e 's;conf/mime.types;$(sysconfdir)/mime.types;' \
+			-e 's;conf/mime\.types;$(sysconfdir)/mime.types;' \
+			-e 's;User nobody;User $(conf_user);' \
 			-e 's;Group #-1;Group $(conf_group);' \
 			-e 's;Port 80;Port $(conf_port);' \
 			-e 's;Listen 80;Listen $(conf_port);' \
@@ -526,10 +618,14 @@ install-config:
 	-@if [ ".$(ssl)" = .1 ]; then \
 		echo "chmod 755 $(root)$(sysconfdir)/ssl.crt"; \
 		chmod 755 $(root)$(sysconfdir)/ssl.crt; \
+		echo "chmod 755 $(root)$(sysconfdir)/ssl.crl"; \
+		chmod 755 $(root)$(sysconfdir)/ssl.crl; \
 		echo "chmod 755 $(root)$(sysconfdir)/ssl.csr"; \
 		chmod 755 $(root)$(sysconfdir)/ssl.csr; \
 		echo "chmod 700 $(root)$(sysconfdir)/ssl.key"; \
 		chmod 700 $(root)$(sysconfdir)/ssl.key; \
+		echo "chmod 755 $(root)$(sysconfdir)/ssl.prm"; \
+		chmod 755 $(root)$(sysconfdir)/ssl.prm; \
 		if [ ! -f "$(root)$(sysconfdir)/ssl.crt/README.CRT" ]; then \
 			echo "$(INSTALL_DATA) $(TOP)/conf/ssl.crt/README.CRT $(root)$(sysconfdir)/ssl.crt/README.CRT"; \
 			$(INSTALL) $(TOP)/conf/ssl.crt/README.CRT $(root)$(sysconfdir)/ssl.crt/README.CRT; \
@@ -537,8 +633,14 @@ install-config:
 			$(INSTALL) $(TOP)/conf/ssl.crt/Makefile $(root)$(sysconfdir)/ssl.crt/Makefile; \
 			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.crt/ca-bundle.crt $(root)$(sysconfdir)/ssl.crt/ca-bundle.crt"; \
 			$(INSTALL) -m 400 $(TOP)/conf/ssl.crt/ca-bundle.crt $(root)$(sysconfdir)/ssl.crt/ca-bundle.crt; \
-			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.crt/snakeoil-ca.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-ca.crt"; \
-			$(INSTALL) -m 400 $(TOP)/conf/ssl.crt/snakeoil-ca.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-ca.crt; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.crt/snakeoil-ca-rsa.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-ca-rsa.crt"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.crt/snakeoil-ca-rsa.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-ca-rsa.crt; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.crt/snakeoil-ca-dsa.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-ca-dsa.crt"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.crt/snakeoil-ca-dsa.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-ca-dsa.crt; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.crt/snakeoil-rsa.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-rsa.crt"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.crt/snakeoil-rsa.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-rsa.crt; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.crt/snakeoil-dsa.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-dsa.crt"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.crt/snakeoil-dsa.crt $(root)$(sysconfdir)/ssl.crt/snakeoil-dsa.crt; \
 			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.crt/server.crt $(root)$(sysconfdir)/ssl.crt/server.crt"; \
 			$(INSTALL) -m 400 $(TOP)/conf/ssl.crt/server.crt $(root)$(sysconfdir)/ssl.crt/server.crt; \
 			if [ -f "$(TOP)/conf/ssl.crt/ca.crt" ]; then \
@@ -550,7 +652,7 @@ install-config:
 		fi; \
 		echo "Updating hash symlinks in $(root)$(sysconfdir)/ssl.crt/:"; \
 		SSL_PROGRAM="`grep '^SSL_PROGRAM=' $(TOP)/$(SRC)/Makefile.config | sed -e 's:^.*=::'`"; \
-		(cd $(root)$(sysconfdir)/ssl.crt/ && $(MAKE) $(MFLAGS) SSLEAY=$$SSL_PROGRAM); \
+		(cd $(root)$(sysconfdir)/ssl.crt/ && $(MAKE) $(MFLAGS) SSL_PROGRAM=$$SSL_PROGRAM); \
 		if [ ! -f "$(root)$(sysconfdir)/ssl.csr/README.CSR" ]; then \
 			echo "$(INSTALL_DATA) $(TOP)/conf/ssl.csr/README.CSR $(root)$(sysconfdir)/ssl.csr/README.CSR"; \
 			$(INSTALL) $(TOP)/conf/ssl.csr/README.CSR $(root)$(sysconfdir)/ssl.csr/README.CSR; \
@@ -559,11 +661,25 @@ install-config:
 		else \
 			echo "[PRESERVING EXISTING CSR FILES: $(root)$(sysconfdir)/ssl.csr/*]"; \
 		fi; \
+		if [ ! -f "$(root)$(sysconfdir)/ssl.crl/README.CRL" ]; then \
+			echo "$(INSTALL_DATA) $(TOP)/conf/ssl.crl/README.CRL $(root)$(sysconfdir)/ssl.crl/README.CRL"; \
+			$(INSTALL) $(TOP)/conf/ssl.crl/README.CRL $(root)$(sysconfdir)/ssl.crl/README.CRL; \
+			echo "$(INSTALL_DATA) $(TOP)/conf/ssl.crl/Makefile $(root)$(sysconfdir)/ssl.crl/Makefile"; \
+			$(INSTALL) $(TOP)/conf/ssl.crl/Makefile $(root)$(sysconfdir)/ssl.crl/Makefile; \
+		else \
+			echo "[PRESERVING EXISTING CRL FILES: $(root)$(sysconfdir)/ssl.crl/*]"; \
+		fi; \
 		if [ ! -f "$(root)$(sysconfdir)/ssl.key/README.KEY" ]; then \
 			echo "$(INSTALL_DATA) $(TOP)/conf/ssl.key/README.KEY $(root)$(sysconfdir)/ssl.key/README.KEY"; \
 			$(INSTALL) $(TOP)/conf/ssl.key/README.KEY $(root)$(sysconfdir)/ssl.key/README.KEY; \
-			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.key/snakeoil-ca.key $(root)$(sysconfdir)/ssl.key/snakeoil-ca.key"; \
-			$(INSTALL) -m 400 $(TOP)/conf/ssl.key/snakeoil-ca.key $(root)$(sysconfdir)/ssl.key/snakeoil-ca.key; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.key/snakeoil-ca-rsa.key $(root)$(sysconfdir)/ssl.key/snakeoil-ca-rsa.key"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.key/snakeoil-ca-rsa.key $(root)$(sysconfdir)/ssl.key/snakeoil-ca-rsa.key; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.key/snakeoil-ca-dsa.key $(root)$(sysconfdir)/ssl.key/snakeoil-ca-dsa.key"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.key/snakeoil-ca-dsa.key $(root)$(sysconfdir)/ssl.key/snakeoil-ca-dsa.key; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.key/snakeoil-rsa.key $(root)$(sysconfdir)/ssl.key/snakeoil-rsa.key"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.key/snakeoil-rsa.key $(root)$(sysconfdir)/ssl.key/snakeoil-rsa.key; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.key/snakeoil-dsa.key $(root)$(sysconfdir)/ssl.key/snakeoil-dsa.key"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.key/snakeoil-dsa.key $(root)$(sysconfdir)/ssl.key/snakeoil-dsa.key; \
 			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.key/server.key $(root)$(sysconfdir)/ssl.key/server.key"; \
 			$(INSTALL) -m 400 $(TOP)/conf/ssl.key/server.key $(root)$(sysconfdir)/ssl.key/server.key; \
 			if [ -f "$(TOP)/conf/ssl.key/ca.key" ]; then \
@@ -572,6 +688,16 @@ install-config:
 			fi; \
 		else \
 			echo "[PRESERVING EXISTING KEY FILES: $(root)$(sysconfdir)/ssl.key/*]"; \
+		fi; \
+		if [ ! -f "$(root)$(sysconfdir)/ssl.prm/README.PRM" ]; then \
+			echo "$(INSTALL_DATA) $(TOP)/conf/ssl.prm/README.PRM $(root)$(sysconfdir)/ssl.prm/README.PRM"; \
+			$(INSTALL) $(TOP)/conf/ssl.prm/README.PRM $(root)$(sysconfdir)/ssl.prm/README.PRM; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.prm/snakeoil-ca-dsa.prm $(root)$(sysconfdir)/ssl.prm/snakeoil-ca-dsa.prm"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.prm/snakeoil-ca-dsa.prm $(root)$(sysconfdir)/ssl.prm/snakeoil-ca-dsa.prm; \
+			echo "$(INSTALL_DATA) -m 400 $(TOP)/conf/ssl.prm/snakeoil-dsa.prm $(root)$(sysconfdir)/ssl.prm/snakeoil-dsa.prm"; \
+			$(INSTALL) -m 400 $(TOP)/conf/ssl.prm/snakeoil-dsa.prm $(root)$(sysconfdir)/ssl.prm/snakeoil-dsa.prm; \
+		else \
+			echo "[PRESERVING EXISTING PRM FILES: $(root)$(sysconfdir)/ssl.prm/*]"; \
 		fi; \
 	fi
 	@echo "<=== [config]"

@@ -1,0 +1,489 @@
+# Build wrapper for Apache 
+# $OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/09/29 06:42:44 beck Exp $
+
+# Our lndir is hacked; specify a full path to avoid potential conflicts
+# with the one installed with X11.
+LNDIR=          /usr/bin/lndir
+
+
+#   OpenBSD apache path layout.
+#<Layout OpenBSD>
+#    prefix:        /var/www
+#    exec_prefix:   /usr
+#    bindir:        /usr/bin
+#    sbindir:       /usr/sbin
+#    libexecdir:    /usr/lib/apache/modules
+#    mandir:        /usr/share/man
+#    sysconfdir:    /var/www/conf
+#    datadir:       /var/www
+#    iconsdir:      /var/www/icons
+#    htdocsdir:     /var/www/htdocs
+#    cgidir:        /var/www/cgi-bin
+#    includedir:    /usr/lib/apache/include
+#    localstatedir: /var/www
+#    runtimedir:    /var/www/logs
+#    logfiledir:    /var/www/logs
+#    proxycachedir: /var/www/proxy
+#</Layout>
+#
+
+WWWROOT= /var/www
+HTTPD_PREFIX=	/var/www
+HTTPD_BINDIR=	/usr/bin
+HTTPD_SBINDIR=	/usr/sbin
+HTTPD_LIBEXECDIR= /usr/lib/apache/modules
+HTTPD_CONFDIR=	/var/www/conf
+HTTPD_DATADIR=	/var/www
+HTTPD_LOGDIR=	/var/www/logs
+HTTPD_RUNDIR=	/var/www/logs
+HTTPD_HTDOCSDIR= /var/www/htdocs
+HTTPD_ICONSDIR=	/var/www/icons
+HTTPD_INCLUDEDIR=	/usr/lib/apache/include
+
+CONFIG_ARGS=	--with-layout=OpenBSD --enable-module=ssl
+
+# If you support dynamic loading, enable the so module
+.if ${MACHINE_ARCH} == "i386"
+CONFIG_ARGS+= --enable-module=so
+.endif
+.if ${MACHINE_ARCH} == "m68k"
+CONFIG_ARGS+= --enable-module=so
+.endif
+.if ${MACHINE_ARCH} == "sparc"
+CONFIG_ARGS+= --enable-module=so
+.endif
+.if ${MACHINE_ARCH} == "mips"
+CONFIG_ARGS+= --enable-module=so
+.endif
+
+
+PERLPATH= /usr/bin/perl
+
+MUNGEDFILES =	${.OBJDIR}/src/ap/Makefile \
+		${.OBJDIR}/src/include/ap_config_auto.h \
+		${.OBJDIR}/src/lib/expat-lite/Makefile \
+		${.OBJDIR}/src/lib/Makefile \
+		${.OBJDIR}/src/main/Makefile \
+		${.OBJDIR}/src/modules/standard/Makefile \
+		${.OBJDIR}/src/modules/ssl/Makefile \
+		${.OBJDIR}/src/modules/Makefile \
+		${.OBJDIR}/src/os/unix/Makefile \
+		${.OBJDIR}/src/regex/Makefile \
+		${.OBJDIR}/src/support/Makefile \
+		${.OBJDIR}/src/apaci \
+		${.OBJDIR}/src/Makefile ${.OBJDIR}/src/Makefile.config \
+		${.OBJDIR}/src/modules.c \
+		${.OBJDIR}/src/Configuration.apaci ${.OBJDIR}/Makefile \
+		${.OBJDIR}/config.status
+BINFILES= src/support/htdigest src/support/htpasswd \
+
+SBINFILES= \
+	src/httpd src/support/ab \
+	src/support/logresolve src/support/rotatelogs
+
+MAN1SRCS= \
+	src/support/dbmmanage.1 src/support/htdigest.1 src/support/htpasswd.1
+
+MAN8SRCS= \
+	src/support/ab.8 src/support/apachectl.8 src/support/logresolve.8 \
+	src/support/httpd.8 src/support/rotatelogs.8
+
+INCFILES= 	src/include/alloc.h \
+	src/include/util_script.h \
+	src/include/util_md5.h \
+	src/include/util_date.h \
+	src/include/scoreboard.h \
+	src/include/rfc1413.h \
+	src/include/multithread.h \
+	src/include/httpd.h \
+	src/include/http_vhost.h \
+	src/include/http_request.h \
+	src/include/http_protocol.h \
+	src/include/http_main.h \
+	src/include/http_log.h \
+	src/include/http_core.h \
+	src/include/http_config.h \
+	src/include/http_conf_globals.h \
+	src/include/hsregex.h \
+	src/include/fnmatch.h \
+	src/include/explain.h \
+	src/include/conf.h \
+	src/include/compat.h \
+	src/include/buff.h \
+	src/include/ap_mm.h \
+	src/include/ap_sha1.h \
+	src/include/ap_mmn.h \
+	src/include/ap_md5.h \
+	src/include/ap_hook.h \
+	src/include/ap_ctype.h \
+	src/include/ap_ctx.h \
+	src/include/ap_config_auto.h \
+	src/include/ap_config.h \
+	src/include/ap_compat.h \
+	src/include/ap.h \
+	src/include/util_uri.h 
+
+CONFFILES= \
+	conf/srm.conf-dist conf/access.conf-dist conf/httpd.conf-dist \
+	conf/mime.types conf/access.conf conf/httpd.conf \
+	conf/magic conf/srm.conf 
+
+HTDOCS= \
+	htdocs/apache_pb.gif htdocs/index.html htdocs/openbsdpower.gif \
+	htdocs/blowfish.jpg htdocs/bsd_small.gif htdocs/lock.gif \
+	htdocs/logo23.jpg htdocs/logo24.jpg htdocs/smalltitle.gif 
+
+CGIFILES= \
+	cgi-bin/printenv cgi-bin/test-cgi	
+
+MANUALFILES= \
+	manual/mod/core.html  \
+	manual/mod/directive-dict.html \
+	manual/mod/directives.html \
+	manual/mod/footer.html \
+	manual/mod/header.html \
+	manual/mod/index.html \
+	manual/mod/mod_access.html \
+	manual/mod/mod_actions.html \
+	manual/mod/mod_alias.html \
+	manual/mod/mod_asis.html \
+	manual/mod/mod_auth.html \
+	manual/mod/mod_auth_anon.html \
+	manual/mod/mod_auth_db.html \
+	manual/mod/mod_auth_dbm.html \
+	manual/mod/mod_auth_digest.html \
+	manual/mod/mod_autoindex.html \
+	manual/mod/mod_browser.html \
+	manual/mod/mod_cern_meta.html \
+	manual/mod/mod_so.html \
+	manual/mod/mod_cgi.html \
+	manual/mod/mod_cookies.html \
+	manual/mod/mod_digest.html \
+	manual/mod/mod_dir.html \
+	manual/mod/mod_dld.html \
+	manual/mod/mod_dll.html \
+	manual/mod/mod_env.html \
+	manual/mod/mod_example.html \
+	manual/mod/mod_expires.html \
+	manual/mod/mod_headers.html \
+	manual/mod/mod_imap.html \
+	manual/mod/mod_include.html \
+	manual/mod/mod_info.html \
+	manual/mod/mod_isapi.html \
+	manual/mod/mod_log_agent.html \
+	manual/mod/mod_log_common.html \
+	manual/mod/mod_log_config.html \
+	manual/mod/mod_log_referer.html \
+	manual/mod/mod_mime.html \
+	manual/mod/mod_ssl/index.html \
+	manual/mod/mod_ssl/ssl_compat.gfont000.gif \
+	manual/mod/mod_ssl/ssl_compat.html \
+	manual/mod/mod_ssl/ssl_compat.wml \
+	manual/mod/mod_ssl/ssl_cover.wml \
+	manual/mod/mod_ssl/ssl_cover_logo.jpg \
+	manual/mod/mod_ssl/ssl_cover_title.jpg \
+	manual/mod/mod_ssl/ssl_faq.gfont000.gif \
+	manual/mod/mod_ssl/ssl_faq.html \
+	manual/mod/mod_ssl/ssl_faq.wml \
+	manual/mod/mod_ssl/ssl_glossary.html \
+	manual/mod/mod_ssl/ssl_glossary.wml \
+	manual/mod/mod_ssl/ssl_howto.gfont000.gif \
+	manual/mod/mod_ssl/ssl_howto.html \
+	manual/mod/mod_ssl/ssl_howto.wml \
+	manual/mod/mod_ssl/ssl_intro.gfont000.gif \
+	manual/mod/mod_ssl/ssl_intro.html \
+	manual/mod/mod_ssl/ssl_intro.wml \
+	manual/mod/mod_ssl/ssl_intro_fig1.gif \
+	manual/mod/mod_ssl/ssl_intro_fig2.gif \
+	manual/mod/mod_ssl/ssl_intro_fig3.gif \
+	manual/mod/mod_ssl/ssl_overview.gfont000.gif \
+	manual/mod/mod_ssl/ssl_overview.html \
+	manual/mod/mod_ssl/ssl_overview.wml \
+	manual/mod/mod_ssl/ssl_overview_fig1.gif \
+	manual/mod/mod_ssl/ssl_reference.gfont000.gif \
+	manual/mod/mod_ssl/ssl_reference.html \
+	manual/mod/mod_ssl/ssl_reference.wml \
+	manual/mod/mod_ssl/ssl_template.head-chapter.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-1.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-2.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-3.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-4.gif \
+	manual/mod/mod_ssl/ssl_template.inc \
+	manual/mod/mod_ssl/ssl_template.head-num-5.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-6.gif \
+	manual/mod/mod_ssl/ssl_template.head-num-7.gif \
+	manual/mod/mod_ssl/ssl_template.imgdot-1x1-000000.gif \
+	manual/mod/mod_ssl/ssl_template.imgdot-1x1-transp.gif \
+	manual/mod/mod_ssl/ssl_template.navbut-next-n.gif \
+	manual/mod/mod_ssl/ssl_template.navbut-next-s.gif \
+	manual/mod/mod_ssl/ssl_template.navbut-prev-n.gif \
+	manual/mod/mod_ssl/ssl_template.navbut-prev-s.gif \
+	manual/mod/mod_ssl/ssl_template.title-abstract.gif \
+	manual/mod/mod_ssl/ssl_template.title-compat.gif \
+	manual/mod/mod_ssl/ssl_template.title-faq.gif \
+	manual/mod/mod_ssl/ssl_template.title-gloss.gif \
+	manual/mod/mod_ssl/ssl_template.title-howto.gif \
+	manual/mod/mod_ssl/ssl_template.title-intro.gif \
+	manual/mod/mod_ssl/ssl_template.title-over.gif \
+	manual/mod/mod_ssl/ssl_template.title-preface.gif \
+	manual/mod/mod_ssl/ssl_template.title-ref.gif \
+	manual/mod/mod_ssl/ssl_template.title-toc.gif \
+	manual/mod/mod_ssl/ssl_template.title-tutor.gif \
+	manual/mod/mod_mime_magic.html \
+	manual/mod/mod_mmap_static.html \
+	manual/mod/mod_negotiation.html \
+	manual/mod/mod_proxy.html \
+	manual/mod/mod_rewrite.html \
+	manual/mod/mod_setenvif.html \
+	manual/mod/mod_speling.html \
+	manual/mod/mod_status.html \
+	manual/mod/mod_unique_id.html \
+	manual/mod/mod_userdir.html \
+	manual/mod/mod_usertrack.html \
+	manual/mod/mod_vhost_alias.html \
+	manual/mod/mod_define.html \
+	manual/LICENSE \
+	manual/bind.html \
+	manual/cgi_path.html \
+	manual/content-negotiation.html \
+	manual/custom-error.html \
+	manual/dns-caveats.html \
+	manual/dso.html \
+	manual/ebcdic.html \
+	manual/env.html \
+	manual/footer.html \
+	manual/handler.html \
+	manual/header.html \
+	manual/index.html \
+	manual/install-tpf.html \
+	manual/install.html \
+	manual/invoking.html \
+	manual/keepalive.html \
+	manual/location.html \
+	manual/man-template.html \
+	manual/multilogs.html \
+	manual/new_features_1_0.html \
+	manual/new_features_1_1.html \
+	manual/new_features_1_2.html \
+	manual/new_features_1_3.html \
+	manual/process-model.html \
+	manual/readme-tpf.html \
+	manual/sections.html \
+	manual/sourcereorg.html \
+	manual/stopping.html \
+	manual/suexec.html \
+	manual/suexec_1_2.html \
+	manual/unixware.html \
+	manual/upgrading_to_1_3.html \
+	manual/windows.html \
+	manual/images/custom_errordocs.gif \
+	manual/images/home.gif \
+	manual/images/index.gif \
+	manual/images/mod_rewrite_fig1.fig \
+	manual/images/mod_rewrite_fig1.gif \
+	manual/images/mod_rewrite_fig2.fig \
+	manual/images/mod_rewrite_fig2.gif \
+	manual/images/sub.gif \
+	manual/images/apache_pb.gif \
+	manual/images/mod_ssl_sb.gif \
+	manual/images/openssl_ics.gif \
+	manual/misc/API.html \
+	manual/misc/fin_wait_2.html \
+	manual/misc/FAQ.html \
+	manual/misc/known_client_problems.html \
+	manual/misc/client_block_api.html \
+	manual/misc/compat_notes.html \
+	manual/misc/custom_errordocs.html \
+	manual/misc/descriptors.html \
+	manual/misc/HTTP_Features.tsv \
+	manual/misc/footer.html \
+	manual/misc/header.html \
+	manual/misc/howto.html \
+	manual/misc/index.html \
+	manual/misc/perf-bsd44.html \
+	manual/misc/nopgp.html \
+	manual/misc/perf-tuning.html \
+	manual/misc/perf-dec.html \
+	manual/misc/perf-hp.html \
+	manual/misc/security_tips.html \
+	manual/misc/perf.html \
+	manual/misc/vif-info.html \
+	manual/misc/windoz_keepalive.html \
+	manual/search/manual-index.cgi \
+	manual/vhosts/details.html \
+	manual/vhosts/details_1_2.html \
+	manual/vhosts/examples.html \
+	manual/vhosts/fd-limits.html \
+	manual/vhosts/footer.html \
+	manual/vhosts/header.html \
+	manual/vhosts/host.html \
+	manual/vhosts/index.html \
+	manual/vhosts/ip-based.html \
+	manual/vhosts/mass.html \
+	manual/vhosts/name-based.html \
+	manual/vhosts/vhosts-in-depth.html \
+	manual/vhosts/virtual-host.html
+		
+		
+ICONFILES= \
+	icons/README icons/a.gif icons/alert.black.gif \
+	icons/alert.red.gif icons/apache_pb.gif icons/back.gif \
+	icons/ball.gray.gif icons/ball.red.gif icons/binary.gif \
+	icons/binhex.gif icons/blank.gif icons/bomb.gif icons/box1.gif \
+	icons/box2.gif icons/broken.gif icons/burst.gif icons/c.gif \
+	icons/comp.blue.gif icons/comp.gray.gif icons/compressed.gif \
+	icons/continued.gif icons/dir.gif icons/dvi.gif icons/down.gif \
+	icons/f.gif icons/folder.gif icons/folder.open.gif \
+	icons/folder.sec.gif icons/forward.gif icons/generic.gif \
+	icons/generic.red.gif icons/generic.sec.gif \
+	icons/hand.right.gif icons/hand.up.gif icons/icon.sheet.gif \
+	icons/image1.gif icons/image2.gif icons/image3.gif \
+	icons/index.gif icons/layout.gif icons/left.gif icons/link.gif \
+	icons/movie.gif icons/p.gif icons/patch.gif icons/pdf.gif \
+	icons/pie0.gif icons/pie1.gif icons/pie2.gif icons/pie3.gif \
+	icons/pie4.gif icons/pie5.gif icons/pie6.gif icons/pie7.gif \
+	icons/pie8.gif icons/portal.gif icons/ps.gif icons/quill.gif \
+	icons/right.gif icons/screw1.gif icons/screw2.gif \
+	icons/script.gif icons/sound1.gif icons/sound2.gif \
+	icons/sphere1.gif icons/sphere2.gif icons/tar.gif \
+	icons/tex.gif icons/text.gif icons/transfer.gif \
+	icons/unknown.gif icons/up.gif icons/uu.gif \
+	icons/uuencoded.gif icons/world1.gif icons/world2.gif \
+	icons/small/README.txt icons/small/back.gif \
+	icons/small/binary.gif icons/small/binhex.gif \
+	icons/small/blank.gif icons/small/broken.gif \
+	icons/small/burst.gif icons/small/comp1.gif \
+	icons/small/comp2.gif icons/small/compressed.gif \
+	icons/small/continued.gif icons/small/dir.gif \
+	icons/small/dir2.gif icons/small/doc.gif \
+	icons/small/forward.gif icons/small/generic.gif \
+	icons/small/generic2.gif icons/small/generic3.gif \
+	icons/small/image.gif icons/small/image2.gif \
+	icons/small/index.gif icons/small/key.gif \
+	icons/small/movie.gif icons/small/patch.gif icons/small/ps.gif \
+	icons/small/rainbow.gif icons/small/sound.gif \
+	icons/small/sound2.gif icons/small/tar.gif \
+	icons/small/text.gif icons/small/transfer.gif \
+	icons/small/unknown.gif icons/small/uu.gif  
+
+
+.include <bsd.own.mk>
+
+all: 	prereq
+	cd ${.OBJDIR} && ${MAKE}
+
+
+prereq: ${.OBJDIR}/config.status
+
+${.OBJDIR}/config.status : ${.OBJDIR}/config.layout
+	cd ${.OBJDIR} && sh configure ${CONFIG_ARGS}
+
+.if !exists(${.OBJDIR}/config.layout)
+${.OBJDIR}/config.layout: ${.CURDIR}/config.layout
+	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
+.endif
+
+includes: prereq
+	@-for i in ${INCFILES}; do \
+		j=`basename $$i`; \
+		echo "Installing ${DESTDIR}${HTTPD_INCLUDEDIR}/$$j"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_INCLUDEDIR}; \
+	done
+
+install:
+	@-for i in ${BINFILES}; do \
+		j=`basename $$i`; \
+		echo "Installing ${DESTDIR}${HTTPD_BINDIR}/$$j"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 555 \
+		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_BINDIR}; \
+	done
+	@-for i in ${SBINFILES}; do \
+		j=`basename $$i`; \
+		echo "Installing ${DESTDIR}${HTTPD_SBINDIR}/$$j"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 555 \
+		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_SBINDIR}; \
+	done
+	@d=`mktemp -d /tmp/httpdXXXXXXXXXX`; \
+	echo "Installing ${DESTDIR}${HTTPD_BINDIR}/apxs"; \
+	j="sed -e 's;^#!/.*;#!${PERLPATH};' \
+		-e 's;\@prefix\@;${HTTPD_PREFIX};' \
+		-e 's;\@sbindir\@;${HTTPD_SBINDIR};' \
+		-e 's;\@libexecdir\@;${HTTPD_LIBEXECDIR};' \
+		-e 's;\@includedir\@;${HTTPD_INCLUDEDIR};' \
+		-e 's;\@sysconfdir\@;${HTTPD_CONFDIR};' \
+		< ${.OBJDIR}/src/support/apxs > $$d/apxs && \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 555 \
+		$$d/apxs ${DESTDIR}${HTTPD_SBINDIR}"; \
+		echo $$j; \
+		eval $$j; \
+	echo "Installing ${DESTDIR}${HTTPD_BINDIR}/apachectl"; \
+	j="sed -e 's;PIDFILE=.*;PIDFILE=${HTTPD_RUNDIR}/httpd.pid;' \
+		-e 's;HTTPD=.*;HTTPD=${HTTPD_SBINDIR}/httpd;' \
+		< ${.OBJDIR}/src/support/apachectl > $$d/apachectl && \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 555 \
+		$$d/apachectl ${DESTDIR}${HTTPD_SBINDIR}"; \
+		echo $$j; \
+		eval $$j; \
+	echo "Installing ${DESTDIR}${HTTPD_BINDIR}/dbmmanage"; \
+	j="sed -e 's;^#!/.*;#!${PERLPATH};' \
+		< ${.OBJDIR}/src/support/dbmmanage > $$d/dbmmanage && \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 555 \
+		$$d/dbmmanage ${DESTDIR}${HTTPD_BINDIR}"; \
+		echo $$j; \
+		eval $$j; \
+	rm -rf $$d
+	
+clean: prereq
+	cd ${.OBJDIR} && ${MAKE} clean
+
+cleandir: clean
+	cd ${.OBJDIR} && rm -f ${MUNGEDFILES}
+
+test:
+	# Nothing here so far...
+
+depend: prereq
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+distribution:
+	@-for i in ${CONFFILES}; do \
+		j=`dirname $$i`; \
+		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+		    ${.OBJDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+	done
+	@-for i in ${HTDOCS}; do \
+		j=`dirname $$i`; \
+		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+		    ${.OBJDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+	done
+	@-for i in ${MANUALFILES}; do \
+		j=`dirname $$i`; \
+		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+		    ${.OBJDIR}/htdocs/$$i ${DESTDIR}${WWWROOT}/htdocs/$$j/; \
+	done
+	@-for i in ${CGIFILES}; do \
+		j=`dirname $$i`; \
+		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 000 \
+		    ${.OBJDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+	done
+	@-for i in ${ICONFILES}; do \
+		j=`dirname $$i`; \
+		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+		    ${.OBJDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+	done
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+

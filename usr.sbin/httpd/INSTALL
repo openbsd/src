@@ -1,5 +1,5 @@
 
-  A P A C H E   I N S T A L L A T I O N
+  APACHE INSTALLATION
 
   NOTE: Windows users please read the documents README.NT and
         http://www.apache.org/docs/windows.html, (or the
@@ -29,7 +29,7 @@
      $ ./configure --prefix=PREFIX
      $ make
      $ make install
-     $ PREFIX/sbin/apachectl start
+     $ PREFIX/bin/apachectl start
 
      NOTE: PREFIX is not the string "PREFIX". Instead use the Unix
            filesystem path under which Apache should be installed. For
@@ -76,14 +76,14 @@
         under all operating systems therefore you cannot use the DSO mechanism
         on all platforms. And Apache currently has only limited built-in
         knowledge on how to compile shared objects because this is heavily
-        platform-dependend. The current state is this:
+        platform-dependent. The current state is this:
 
         o Out-of-the-box supported platforms are:
-           - Linux     - SunOS         - UnixWare    
-           - FreeBSD   - Solaris       - AIX         
-           - OpenBSD   - IRIX          - SCO         
-           - NetBSD    - HPUX        
-           - BSDI      - Digital Unix
+           - Linux     - SunOS         - UnixWare     - Mac OS X Server
+           - FreeBSD   - Solaris       - AIX          - Mac OS
+           - OpenBSD   - IRIX          - SCO          - OpenStep/Mach
+           - NetBSD    - HPUX          - ReliantUNIX  - DYNIX/ptx
+           - BSDI      - Digital Unix  - DGUX
 
         o Entirely unsupported platforms are:
            - Ultrix
@@ -159,6 +159,7 @@
                              [--with-perl=FILE]        [--suexec-uidmin=UID]
                              [--without-support]       [--suexec-gidmin=GID]
                              [--without-confadjust]    [--suexec-safepath=PATH]
+                             [--without-execstrip]
 
      Use the CC, OPTIM, CFLAGS, INCLUDES, LDFLAGS, LIBS, CFLAGS_SHLIB,
      LD_SHLIB, LDFLAGS_SHLIB, LDFLAGS_SHLIB_EXPORT, RANLIB, DEPS and TARGET
@@ -238,14 +239,15 @@
      to automatically include a simple third-party module to the Apache build
      process.
  
-     Use the --activate-module=FILE option to on-the-fly add an entry for an
-     existing module source file in the configuration file. FILE has to be a
-     valid path under src/modules/ of the Apache source tree, i.e. it already
-     has to be copied to this location before.  The module is automatically
-     enabled. Use this option to automatically include a complex third-party
-     module to the Apache build process where, for instance a module like
-     mod_perl or mod_php3 consisting of more than one file which are created by
-     a third-party configuration scheme.
+     Use the --activate-module=FILE option to add an entry for an existing
+     module source file into the configuration file on-the-fly. FILE has to be
+     a valid path beginning with "src/modules/", and the file has to have been
+     copied to this location in the Apache source tree before running
+     configure.  The module is automatically enabled. Use this option to
+     automatically include a complex third-party module to the Apache build
+     process where, for instance a module like mod_perl or mod_php3 consisting
+     of more than one file which are created by a third-party configuration
+     scheme.
  
      Use the --enable-module=NAME and --disable-module=NAME options to enable
      or disable a particular already distributed module from the Apache
@@ -324,7 +326,7 @@
      this way implicitly enables them itself). 
      
          Note 1: The --enable-shared option DOES NOT AUTOMATICALLY enable the
-                 module because there are variants like `--enable-shared=all'
+                 module because there are variants like `--enable-shared=max'
                  which should not imply `--enable-module=all'.  
 
          Note 2: Per default the DSO mechanism is globally disabled, i.e. no
@@ -369,6 +371,11 @@
      user/situation dependent adjustments to the config files (Group, Port,
      ServerAdmin, ServerName, etc.).  This is usually only interesting for
      vendor package maintainers who wants to force the keeping of defaults.
+
+     Use the --without-execstrip option to disable the stripping of
+     executables on installation. This can be important on some platforms in
+     combination with --enable-rule=SHARED_CORE or when Apache was built with
+     debugging symbols which shouldn't be lost.
  
      Use the --enable-suexec option to enable the suEXEC feature by building
      and installing the "suexec" support program. Use --suexec-caller=UID to
@@ -450,7 +457,7 @@
  
      Now you can fire up your Apache HTTP server by immediately running
  
-        $ PREFIX/sbin/apachectl start
+        $ PREFIX/bin/apachectl start
  
      and then you should be able to request your first document via URL
      http://localhost/ (when you built and installed Apache as root or at
@@ -458,7 +465,7 @@
      (when you built and installed Apache as a regular user). Then stop the
      server again by running: 
 
-        $ PREFIX/sbin/apachectl stop
+        $ PREFIX/bin/apachectl stop
  
   7. Customizing the package
      -----------------------

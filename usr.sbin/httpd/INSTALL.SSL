@@ -1,8 +1,8 @@
                        _             _ 
-   _ __ ___   ___   __| |    ___ ___| |  
-  | '_ ` _ \ / _ \ / _` |   / __/ __| |  
-  | | | | | | (_) | (_| |   \__ \__ \ |  mod_ssl - Apache Interface to SSLeay  
-  |_| |_| |_|\___/ \__,_|___|___/___/_|  http://www.engelschall.com/sw/mod_ssl/
+   _ __ ___   ___   __| |    ___ ___| |  mod_ssl
+  | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
+  | | | | | | (_) | (_| |   \__ \__ \ |  www.modssl.org
+  |_| |_| |_|\___/ \__,_|___|___/___/_|  ftp.modssl.org
                        |_____|         
   _____________________________________________________________________________
   
@@ -23,73 +23,86 @@
   Prerequisites
   _____________
 
-  To use mod_ssl you need at least the following two packages:
+  To use mod_ssl you need the following packages:
 
    o  Package:      Apache 
       Version:      1.3.x
-      Description:  Apache Group HTTP Server
+      Description:  The Apache Group HTTP Server
+      Reason:       The webserver base package on which all is based
       Homepage:     http://www.apache.org/
       Distribution: ftp://ftp.apache.org/apache/dist/
       Tarball:      apache_1.3.x.tar.gz
       Location:     SF, USA
       Author(s):    The Apache Group <apache@apache.org>
+      Type:         MANDATORY
 
    o  Package:      mod_ssl
-      Version:      2.2.x
-      Description:  Apache Interface to SSLeay
-      Homepage:     http://www.engelschall.com/sw/mod_ssl/
-      Distribution: ftp://ftp.engelschall.com/sw/mod_ssl/
-      Tarball:      mod_ssl-2.2.x-1.3.x.tar.gz
+      Version:      2.4.x
+      Description:  The Apache Interface to OpenSSL
+      Reason:       The interface module for Apache
+      Homepage:     http://www.modssl.org/
+      Distribution: ftp://ftp.modssl.org/source/
+      Tarball:      mod_ssl-2.4.x-1.3.x.tar.gz
       Location:     Zurich, Switzerland, Europe
       Author(s):    Ralf S. Engelschall <rse@engelschall.com>
+      Type:         MANDATORY
 
-  If you have the SSLeay package not already installed on your system you
-  additionally need the following package:
-
-   o  Package:      SSLeay
+   o  Package:      OpenSSL
       Version:      0.9.x
-      Description:  SSL Toolkit 
-      Homepage:     http://www.ssleay.org/
-      Distribution: ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/
-      Tarball:      SSLeay-0.9.x.tar.gz
-      Location:     Brisbane, Australia
-      Author(s):    Eric A. Young <eay@cryptsoft.com>
-                    Tim J. Hudson <tjh@cryptsoft.com>
-
-  And if you're an US-citizen then you usually need (because of patent
-  legalities; but check your personal organisation situation first because
-  there are exceptions) also the following package in conjunction with SSLeay:
+      Description:  The Open Source Toolkit for SSL/TLS
+      Reason:       The library which implements SSL/TLS
+      Homepage:     http://www.openssl.org/
+      Distribution: ftp://ftp.openssl.org/source/
+      Tarball:      openssl-0.9.x.tar.gz
+      Location:     Zurich, Switzerland, Europe
+      Author(s):    The OpenSSL Project <openssl@openssl.org>
+      Type:         MANDATORY 
 
    o  Package:      RSAref
       Version:      2.0
       Description:  RSA Reference Implementation
+      Reason:       Deprecated RSA library for US citizens
       Homepage:     -
-      Distribution: ftp://ftp.rsa.com/rsaref/ (read the README file there!)
+      Distribution: ftp://ftp.replay.com/pub/crypto/crypto/LIBS/rsa/
                     ftp://utopia.hacktic.nl/pub/replay/pub/crypto/LIBS/rsa/
+                    Or ask http://ftpsearch.lycos.com/ for "rsaref20.tar.Z" !!
       Tarball:      rsaref20.tar.Z
-      Location:     USA
+      Location:     Netherlands (because no longer distributed by RSA DSI)
       Author(s):    RSA DSI
+      Type:         OPTIONAL (only mandatory for US-citizens)
 
-  Finally you need the following auxiliary packages already installed (GZip
-  for unpacking the above tarballs and Perl when configuring SSLeay):
+   o  Package:      MM
+      Version:      1.0.x
+      Description:  Shared Memory Library
+      Reason:       The portable library for shared memory in Apache/EAPI
+      Homepage:     http://www.engelschall.com/sw/mm/
+      Distribution: http://www.engelschall.com/sw/mm/
+      Tarball:      mm-1.0.x.tar.gz
+      Location:     Zurich, Switzerland, Europe
+      Author(s):    Ralf S. Engelschall <rse@engelschall.com>
+      Type:         OPTIONAL
 
    o  Package:      GZip
       Version:      1.2.4
       Description:  The compression utility
+      Reason:       To unpack the above tarballs
       Homepage:     http://www.gnu.org/
       Distribution: ftp://ftp.gnu.org/pub/gnu/
       Tarball:      gzip-1.2.4.tar.Z
       Location:     USA
       Author(s):    Free Software Foundation (FSF)
+      Type:         MANDATORY
  
    o  Package:      Perl
       Version:      5.004 or 5.005
       Description:  The Practical Extraction and Reporting Language
+      Reason:       To configure OpenSSL and for APXS tool in Apache
       Homepage:     http://www.perl.com/
       Distribution: http://www.perl.com/CPAN/src/
       Tarball:      perl5.00x.tar.gz
       Location:     USA
       Author(s):    Larry Wall
+      Type:         MANDATORY
 
   Installation
   ____________
@@ -105,89 +118,111 @@
   OPTIONAL .. Command is optional and not really needed
 
   Now follow these steps:
+  (the syntax is for a Bourne-Shell style shell, when you're using a C-Shell
+  style shell you've to adjust the commands according to your shell's manual)
 
-   1. Make sure GZip and Perl are already installed and available through the
-      commands `gzip' and `perl' They are needed for unpacking the tarballs
-      and for configuring SSLeay.
+  1. Make sure GZip and Perl are already installed and available through the
+     commands `gzip' and `perl'. They are needed for unpacking the tarballs
+     and for configuring OpenSSL. When you've these packages still not
+     installed, do this first.
 
-   2. Extract the required packages:
+  2. Extract the required packages:
 
-      $ gzip -d -c apache_1.3.x.tar.gz | tar xvf -                         ALL
-      $ gzip -d -c mod_ssl-2.2.x-1.3.x.tar.gz | tar xvf -                  ALL
-      $ gzip -d -c SSLeay-0.9.x.tar.gz | tar xvf -                         ALL
+     $ gzip -d -c apache_1.3.x.tar.gz | tar xvf -                          ALL
+     $ gzip -d -c mod_ssl-2.4.x-1.3.x.tar.gz | tar xvf -                   ALL
+     $ gzip -d -c openssl-0.9.x.tar.gz | tar xvf -                         ALL
+     $ gzip -d -c mm-1.0.x.tar.gz | tar xvf -                         OPTIONAL
+     $ mkdir rsaref-2.0                                                     US
+     $ (cd rsaref-2.0; gzip -d -c ../rsaref20.tar.Z | tar xvf -)            US
 
-      $ mkdir rsaref-2.0                                                    US
-      $ (cd rsaref-2.0; gzip -d -c ../rsaref20.tar.Z | tar xvf -)           US
+  3. Configure and build the OpenSSL library: 
+     (When you're an US-citizen you have to build OpenSSL in conjunction with
+     the RSAref library. Others can ignore the first six commands, of course)
 
-   3. Configure and build the SSLeay library: 
-      (When you're an US-citizen you have to build SSLeay in conjunction with
-      the RSAref library. Others can ignore the first six commands, of course)
+     $ cd rsaref-2.0
+     $ cp -rp install/unix local                                            US
+     $ cd local                                                             US
+     $ make                                                                 US
+     $ mv rsaref.a librsaref.a                                              US
+     $ cd ../..                                                             US
 
-      $ cd rsaref-2.0
-      $ cp -rp install/unix local                                           US
-      $ cd local                                                            US
-      $ make                                                                US
-      $ mv rsaref.a librsaref.a                                             US
-      $ cd ../..                                                            US
+     NOTE: RSAref has some portability problems and nasty restrictions.
+           Especially it assumes that an `unsigned long int' represents a four
+           byte word. One result of this bad assumption is that it fails under
+           run-time (not compile-time) on platforms/CPUs, like Alphas, where
+           larger integer sizes are used by the compiler. For instance when
+           mod_ssl's `make certificate' command hangs, you get memory faults
+           or Apache hangs when connecting to it through HTTPS, this all
+           indicates that you ran into this portability problem.  
 
-      NOTE: RSAref has some portability problems. Especially it assumes that
-            an `unsigned long int' represents a four byte word. One result of
-            this bad assumption is that it fails under run-time (not
-            compile-time) on platforms/CPUs, like Alphas, where larger integer
-            sizes are used by the compiler. For instance when mod_ssl's `make
-            certificate' command hangs, you get memory faults or Apache hangs
-            when connecting to it through HTTPS, this all indicates that you
-            ran into this portability problem.  The solution is to replace the
-            `typedef unsigned long int UINT4' in rsaref-2.0/source/global.h,
-            line 26. The best is to use `typedef u_int32_t UINT4' when
-            `u_int32_t' is defined by your vendor include files. If not try to
-            use a standard type which is four bytes in length on your
-            platform, e.g. on Alphas `typedef unsigned int UINT4' works.
+           The solution is to replace the `typedef unsigned long int UINT4' in
+           rsaref-2.0/source/global.h, line 26. The best is to use `typedef
+           u_int32_t UINT4' when `u_int32_t' is defined by your vendor include
+           files. If not try to use a standard type which is four bytes in
+           length on your platform, e.g. on Alphas `typedef unsigned int
+           UINT4' works.
 
-      $ cd SSLeay-0.9.x                                                    ALL
-      $ make -f Makefile.ssl links                                         ALL
-      $ perl ./Configure gcc \                                             ALL
-             -DNO_IDEA \                                                    EU
-             -DRSAref -lRSAglue -L`pwd`/../rsaref-2.0/local/ -lrsaref       US
-      $ cp rsaref/rsaref.h include/                                         US
-      $ make                                                               ALL
-      $ make test                                                     OPTIONAL
-      $ cd ..                                                              ALL
+           Additionally with RSAref not all RSA functionality in OpenSSL will
+           be available. It'll still work for the requirements of mod_ssl, but
+           for instance the RSA OEAP functionality isn't supported by RSAref.
 
-      NOTE: SSLeay understands a lot more options on the `Configure'
-            command line. For instance you can (AND SHOULD!) replace the
-            generic `gcc' with your platform name (run `perl Configure'
-            without arguments to see a list of supported platforms) to get
-            maximum performance (because on some platforms assembler routines
-            are used instead of C variants) and platform correctness (some
-            platforms don't work with the generic `gcc' build variant).
-            Additionally you can add some command line options (like
-            `-DSSL_ALLOW_ENULL' for allowing Null encryptions, etc) to adjust
-            the SSLeay internals (see SSLeay's Makefile for details).
+     $ cd openssl-0.9.x                                                    ALL
+     $ sh config \                                                         ALL
+            no-idea \                                                       EU
+            -L`pwd`/../rsaref-2.0/local/ rsaref \                           US
+            -fPIC                                                     OPTIONAL
+     $ make                                                                ALL
+     $ make test                                                      OPTIONAL
+     $ cd ..                                                               ALL
 
-      NOTE: When your system already has SSLeay installed (for instance some
-            Linux distributions ship with SSLeay installed out-of-the-box) in
-            system locations you can ignore the SSLeay steps above, too.  Then
-            use `SSL_BASE=SYSTEM' instead of `SSL_BASE=../SSLeay-0.9.0b'
-            below.
+     NOTE: OpenSSL understands a lot more options on the `config'
+           command line. For instance you can add some command line options
+           (like `-DSSL_FORBID_ENULL' for not allowing Null encryptions, etc)
+           to adjust the OpenSSL internals (see OpenSSL's top-level Makefile
+           for details).
 
-      NOTE: When your system already has RSAref installed in system locations
-            you can ignore the RSAref-related steps above and then use
-            `RSAREF_BASE=SYSTEM' instead of `RSAREF_BASE=../rsaref-2.0/local'
-            above.
+     NOTE: When your system already has OpenSSL installed (for instance some
+           Linux distributions ship with OpenSSL installed out-of-the-box) in
+           system locations you can ignore the OpenSSL steps above, too.  Then
+           use `SSL_BASE=SYSTEM' instead of `SSL_BASE=../openssl-0.9.x' below
+           and mod_ssl will search for OpenSSL's binary, header and library
+           files in $PATH and system locations.
 
-      NOTE: You are STRONGLY ADVISES to use SSLeay 0.9.x and not any
-            0.8.x version. Because although Apache/mod_ssl compiles fine with
-            0.8.x versions there are known runtime problems with SSLeay 0.8.x.
-            Especially when transferring large files SSLeay 0.8.x fails
-            horrible. So, in your own interest: Use SSLeay 0.9.x, please!
-            BTW, TLS v1 support is also available with SSLeay 0.9.x only.
+     NOTE: When your system already has RSAref installed in system locations
+           you can ignore the RSAref-related steps above and then use
+           `RSAREF_BASE=SYSTEM' instead of `RSAREF_BASE=../rsaref-2.0/local/'
+           below.
 
-  4. Now apply the mod_ssl source extension and source patches to the Apache
+     NOTE: The -fPIC option builds OpenSSL with Position Independent Code
+           (PIC) which is only important when building mod_ssl as a
+           Dynamic Shared Object (DSO). Please notice, that you really
+           have to use -fPIC and not -fpic, as the latter will usually
+           cause the build to fail. See below for more details.
+
+  4. Optionally you now can build the MM Shared Memory library when you want
+     shared memory support in Apache/EAPI. For instance this allows mod_ssl to
+     use a high-performance RAM-based session cache instead of a disk-based
+     one.
+
+     $ cd mm-1.0.x                                                    OPTIONAL
+     $ ./configure --disable-shared                                   OPTIONAL
+     $ make                                                           OPTIONAL
+     $ cd ..                                                          OPTIONAL
+
+     NOTE: When your system already has MM installed in system locations
+           you can ignore the steps above and then use `EAPI_MM=SYSTEM'
+           instead of `EAPI_MM=../mm-1.0.x' below.
+
+     NOTE: Do not forget the --disable-shared option above. Else you've
+           to establish an explicit LD_LIBRARY_PATH which includes the
+           /path/to/mm-1.0.x/.libs/ directory or the compilation of Apache
+           will fail because the shared library cannot be found.
+
+  5. Now apply the mod_ssl source extension and source patches to the Apache
      source tree, configure the Apache sources and build Apache with mod_ssl
-     and SSLeay. 
+     and OpenSSL. 
      
-     Actually here you have three options :
+     Actually here you have three options: 
      (dependent on your situation and personal skill ;-)
 
      a) The All-In-One mod_ssl+APACI way [FOR JOE AVERAGE]:
@@ -197,43 +232,47 @@
         RSA_BASE variables but get no intermediate chance to add more
         third-party Apache modules (e.g. mod_perl, PHP3, etc).
 
-        $ cd mod_ssl-2.2.x-1.3.x                                           ALL
+        $ cd mod_ssl-2.4.x-1.3.x                                           ALL
         $ ./configure \                                                    ALL
               --with-apache=../apache_1.3.x \                              ALL
-              --with-ssleay=../SSLeay-0.9.x \                              ALL
-              --with-rsaref=../rsaref-2.0/local \                           US
+              --with-ssl=../openssl-0.9.x \                                ALL
+              --with-rsa=../rsaref-2.0/local \                              US
+              --with-mm=../mm-1.0.x \                                 OPTIONAL
               --with-crt=/path/to/your/server.crt \                   OPTIONAL
               --with-key=/path/to/your/server.key \                   OPTIONAL
               --prefix=/path/to/apache \                                   ALL
              [--enable-shared=ssl] \                                  OPTIONAL
              [--disable-rule=SSL_COMPAT] \                            OPTIONAL
              [--enable-rule=SSL_SDBM] \                               OPTIONAL
+             [--enable-rule=SSL_EXPERIMENTAL] \                       OPTIONAL
+             [--enable-rule=SSL_VENDOR] \                             OPTIONAL
              [...more APACI options...]                               OPTIONAL
         $ cd ..                                                            ALL
         $ cd apache_1.3.x                                                  ALL
         $ make                                                             ALL
         $ make certificate                                            OPTIONAL
         $ make install                                                     ALL
-        $ cd ..
+        $ cd ..                                                            ALL
 
         NOTE: The --enable-shared=ssl option enables the building of mod_ssl
               as a DSO `libssl.so'. Read the INSTALL and
               htdocs/manual/dso.html documents in the Apache source tree for
-              more information about DSO support in Apache. I strongly advise
+              more information about DSO support in Apache. We strongly advise
               ISPs and package maintainers to use the DSO facility for maximum
               flexibility with mod_ssl.  But notice that DSO is not supported
               by Apache on all platforms.
 
-              Additionally SSLeay has problems under DSO situations on some
+              Additionally OpenSSL has problems under DSO situations on some
               platforms. For instance under smart ix86 platforms like Linux
-              and FreeBSD when you compile a the standard SSLeay
+              and FreeBSD when you compile a the standard OpenSSL
               libcrypto.a/libssl.a libraries and link those to a mod_ssl DSO
               libssl.so all works fine.  While on other platforms like Solaris
-              2.6 on a SPARC SSLeay's code will dump core under run-time. When
-              this is the case for you, then try to recompile SSLeay with
-              Position Independent Code (PIC) by adding a `-fPIC' (for GCC) or
-              `-KPIC' (for SVR4-style compilers) to the platform configuration
-              line in SSLeay's `Configure' script.
+              2.6 on a SPARC OpenSSL's code will dump core under run-time.
+              When this is the case for you, then try to recompile OpenSSL
+              with Position Independent Code (PIC) by adding a `-fPIC' (for
+              GCC) or `-KPIC' (for SVR4-style compilers) to the platform
+              configuration line in OpenSSL's `Configure' script.  The the
+              -fPIC option above when you build OpenSSL.
 
         NOTE: The --disable-rule=SSL_COMPAT option disables the building of
               SSL compatibility code for older mod_ssl versions and other
@@ -245,6 +284,11 @@
               library is buggy or restricts the data size too dramatically
               (for SSL sessions to be cacheable the DBM library should allow
               more than 1KB of data to be stored under a particular key).
+
+        NOTE: The --enable-rule=SSL_EXPERIMENTAL and --enable-rule=SSL_VENDOR
+              options enable various experimental and vendor extension code.
+              Please read the src/Configuration.tmpl file inside the Apache
+              source tree for more details.
 
         NOTE: You either use `--with-crt'/`--with-key' or `make certificate'
               above - but never both. The `--with-crt'/`--with-key' options is
@@ -257,11 +301,11 @@
 
         You configure Apache manually and have the chance to configure and add
         third-party Apache modules like mod_perl, mod_php, mod_frontpage,
-        mod_dav, etc. But you have to provide the SSL_BASE and RSA_BASE
-        variables manually and either copy your existing certificate manually
-        to conf/ssl.crt/server.crt or use `make certificate':
+        mod_dav, etc. But you have to provide the SSL_BASE, RSA_BASE and
+        EAPI_MM variables manually and either copy your existing certificate
+        manually to conf/ssl.crt/server.crt or use `make certificate':
 
-        $ cd mod_ssl-2.2.x-1.3.x                                           ALL
+        $ cd mod_ssl-2.4.x-1.3.x                                           ALL
         $ ./configure \                                                    ALL
               --with-apache=../apache_1.3.x \                              ALL
               --with-crt=/path/to/your/server.crt \                   OPTIONAL
@@ -271,26 +315,42 @@
         [...Now add more Apache modules to the Apache source tree...] OPTIONAL
 
         $ cd apache_1.3.x                                                  ALL
-        $ SSL_BASE=../SSLeay-0.9.x \                                       ALL
+        $ SSL_BASE=../openssl-0.9.x \                                      ALL
           RSA_BASE=../rsaref-2.0/local \                                    US
+          EAPI_MM=../mm-1.0.x \                                       OPTIONAL
           ./configure \                                                    ALL
               --enable-module=ssl \                                        ALL
               --prefix=/path/to/apache \                                   ALL
              [--enable-shared=ssl] \                                  OPTIONAL
              [--disable-rule=SSL_COMPAT] \                            OPTIONAL
              [--enable-rule=SSL_SDBM] \                               OPTIONAL
+             [--enable-rule=SSL_EXPERIMENTAL] \                       OPTIONAL
+             [--enable-rule=SSL_VENDOR] \                             OPTIONAL
              [...more APACI options...]                               OPTIONAL
         $ make                                                             ALL
         $ make certificate                                            OPTIONAL
         $ make install                                                OPTIONAL
+        $ cd ..                                                            ALL
 
         NOTE: The optional --enable-shared=ssl option enables the building
               of mod_ssl as a DSO `libssl.so'. Read the INSTALL and
               htdocs/manual/dso.html documents in the Apache source tree for
-              more information about DSO support in Apache. I strongly advise
+              more information about DSO support in Apache. We strongly advise
               ISPs and package maintainers to use the DSO facility for maximum
               flexibility with mod_ssl.  But notice that DSO is not supported
               by Apache on all platforms.
+
+              Additionally OpenSSL has problems under DSO situations on some
+              platforms. For instance under smart ix86 platforms like Linux
+              and FreeBSD when you compile a the standard OpenSSL
+              libcrypto.a/libssl.a libraries and link those to a mod_ssl DSO
+              libssl.so all works fine.  While on other platforms like Solaris
+              2.6 on a SPARC OpenSSL's code will dump core under run-time.
+              When this is the case for you, then try to recompile OpenSSL
+              with Position Independent Code (PIC) by adding a `-fPIC' (for
+              GCC) or `-KPIC' (for SVR4-style compilers) to the platform
+              configuration line in OpenSSL's `Configure' script.  The the
+              -fPIC option above when you build OpenSSL.
 
         NOTE: The --disable-rule=SSL_COMPAT option disables the building of
               SSL compatibility code for older mod_ssl versions and other
@@ -303,6 +363,11 @@
               (for SSL sessions to be cacheable the DBM library should allow
               more than 1KB of data to be stored under a particular key).
 
+        NOTE: The --enable-rule=SSL_EXPERIMENTAL and --enable-rule=SSL_VENDOR
+              options enable various experimental and vendor extension code.
+              Please read the src/Configuration.tmpl file inside the Apache
+              source tree for more details.
+
      c) The poor mans way known from Apache 1.2 [FOR COMPATIBILITY]:
 
         You configure Apache manually by editing the src/Configuration file
@@ -310,11 +375,11 @@
         that this directly follows the steps you might be familiar with from
         Apache 1.2 and additionally you also have a chance to add more
         third-party Apache modules like mod_perl or mod_php because anything
-        is done manually. But you have to edit the SSL_BASE and RSA_BASE
-        variables manually and more important: you have to install the Apache
-        package manually, too. But feel free to be masochistic ;-)
+        is done manually. But you have to edit the SSL_BASE, RSA_BASE and
+        EAPI_MM variables manually and more important: you have to install the
+        Apache package manually, too. But feel free to be masochistic ;-)
 
-        $ cd mod_ssl-2.2.x-1.3.x                                           ALL
+        $ cd mod_ssl-2.4.x-1.3.x                                           ALL
         $ ./configure \                                                    ALL
               --with-apache=../apache_1.3.x \                              ALL
               --with-crt=/path/to/your/server.crt \                   OPTIONAL
@@ -328,29 +393,25 @@
         $ vi Configuration                                                 ALL
         [...edit the SSL_BASE variable...]                                 ALL
         [...edit the RSA_BASE variable...]                                  US
+        [...edit the EAPI_MM variable...]                                   US
         [...edit the `AddModule' line of libssl.a...]                      ALL
         $ ./Configure                                                      ALL
         $ make                                                             ALL
         $ make certificate                                            OPTIONAL
 
-        Up to this point it can be acceptable. But now the friendly world
-        stops. The remaining installation steps have to be done manually by
-        coping the various files to /path/to/apache, including your
+        Up to this point it can be acceptable, yeah? But now the friendly
+        world stops. The remaining installation steps have to be done manually
+        by coping the various files to /path/to/apache, including your
         certificate, etc. That's the price for staying with the good old
         days...
 
-  5. Try out Apache without SSL (only HTTP possible):
+  6. Try out Apache without SSL (only HTTP protocol possible):
 
      $ /path/to/apache/sbin/apachectl start                                ALL
      $ netscape http://<local-host-name>/                                  ALL
      $ /path/to/apache/sbin/apachectl stop                                 ALL
 
-     NOTE: Replace the `<local-host-name>' with the official name of your
-           host. Do not enter `localhost' here, because this name has to match
-           the Common Name (CN) of the Subject's Distinguished Name (DN)
-           inside your server certificate.
-
-  6. Try out Apache with SSL (HTTP and HTTPS possible):
+  7. Try out Apache with SSL (both HTTP and HTTPS protocol possible):
 
      $ /path/to/apache/sbin/apachectl startssl                             ALL
      $ netscape http://<local-host-name>/                                  ALL
@@ -367,24 +428,32 @@
            before you ask someone other for help. In the error logfile there
            should be a hint where to find the reason for the failure.
 
-  7. Finally you're advised to do the following:
+     NOTE: When you *re*install Apache many times, make sure you restart your
+           browsers between the tests if you created test or custom
+           certificates.  Else connections might fail because the browser
+           cached the certificate details of the previous installation.
 
-     o Read the mod_ssl documentation very carefully to
+  8. Finally you're advised to do the following:
+
+     o Read the mod_ssl user manual very carefully to
        understand the SSL-part of your Apache configuration:
 
-       $ netscape http://www.engelschall.com/sw/mod_ssl/docs/2.2/   (official)
+       $ netscape http://www.modssl.org/docs/2.4/                 (official)
        $ netscape http://localhost/manual/mod/mod_ssl/            (local copy)
        
-     o Adjust your Apache configuration to your personal requirements:
+     o Adjust your Apache configuration to your personal requirements.
+       The configuration is already pre-configured for SSL, but usually it has
+       to be tweaked a little bit more to fit the local situation. When you
+       had already a httpd.conf file, this one is preserved. Then look inside
+       /path/to/apache/etc/httpd.conf.default for the pre-configured SSL
+       configuration and take it over manually into httpd.conf.
 
        $ vi /path/to/apache/etc/httpd.conf
 
-     o Subscribe to the sw-mod-ssl support mailing list:
+     o Subscribe to the modssl-users@modssl.org support mailing list
+       with the provided web interface:
        
-       $ netscape http://www.engelschall.com/sw/mod_ssl/news/list.html
-       $ echo "subscribe sw-mod-ssl <addr>" | mutt -s '' majordomo@engelschall.com
-
-       NOTE: Replace `<addr>' with your official Email address!!
+       $ netscape http://www.modssl.org/news/list.html
 
   8. Bask in the glow ;-)
 
@@ -393,17 +462,17 @@
 
   Once you've built and installed Apache with mod_ssl as a DSO (libssl.so) you
   can easily upgrade this libssl.so file with a stand-alone built procedure as
-  long as the Extended API (EAPI) didn't change and you've SSLeay installed
+  long as the Extended API (EAPI) didn't change and you've OpenSSL installed
   somewhere. For this you can use the following procedure:
 
-    $ cd mod_ssl-2.2.x-1.3.x                                           ALL
-    $ ./configure \                                                    ALL
-          --with-apxs[=/path/to/apache/sbin/apxs] \                    ALL
-          --with-ssleay=/path/to/ssleay \                              ALL
-          --with-rsaref=/path/to/rsaref                                 US
-    $ make                                                             ALL
-    $ make install                                                     ALL
-    $ make distclean                                                   ALL
+    $ cd mod_ssl-2.4.x-1.3.x                                               ALL
+    $ ./configure \                                                        ALL
+          --with-apxs[=/path/to/apache/sbin/apxs] \                        ALL
+          --with-ssl=/path/to/openssl \                                    ALL
+          --with-rsa=/path/to/rsaref                                        US
+    $ make                                                                 ALL
+    $ make install                                                         ALL
+    $ make distclean                                                       ALL
 
   This will build mod_ssl locally inside the pkg.modssl/ directory and then
   upgrades your existing libssl.so file. This approach is also interesting for
@@ -422,25 +491,25 @@
   to adjust the steps with the help of the above detailed instructions, of
   course.
   
-  o Apache + mod_ssl/SSLeay + mod_perl/Perl
+  o Apache + mod_ssl/OpenSSL + mod_perl/Perl
     ---------------------------------------
 
     Prerequisites:
 
     o Apache should be installed to /path/to/apache
     o Perl is installed and `perl' is in $PATH
-    o SSLeay is installed under /path/to/ssleay
+    o OpenSSL is installed under /path/to/openssl
     o RSAref is not used in this example
 
     Steps:
 
     #   extract the packages
     $ gzip -d -c apache_1.3.x.tar.gz | tar xvf -
-    $ gzip -d -c mod_ssl-2.2.x-1.3.x.tar.gz | tar xvf -
+    $ gzip -d -c mod_ssl-2.4.x-1.3.x.tar.gz | tar xvf -
     $ gzip -d -c mod_perl-1.xx.tar.gz | tar xvf -
 
     #   apply mod_ssl to Apache source tree
-    $ cd mod_ssl-2.2.x-1.3.x
+    $ cd mod_ssl-2.4.x-1.3.x
     $ ./configure \
           --with-apache=../apache_1.3.x
     $ cd ..
@@ -460,7 +529,7 @@
 
     #   build/install Apache with mod_ssl and mod_perl
     $ cd apache_1.3.x
-    $ SSL_BASE=/path/to/ssleay 
+    $ SSL_BASE=/path/to/openssl 
       ./configure \
           --prefix=/path/to/apache \
           --enable-module=ssl \
@@ -473,17 +542,17 @@
 
     #   cleanup after work
     $ rm -rf mod_perl-1.xx
-    $ rm -rf mod_ssl-2.2.x-1.3.x
+    $ rm -rf mod_ssl-2.4.x-1.3.x
     $ rm -rf apache_1.3.x
 
-  o Apache + mod_ssl/SSLeay + PHP3/MySQL
-    ------------------------------------
+  o Apache + mod_ssl/OpenSSL + PHP3/MySQL
+    -------------------------------------
 
     Prerequisites:
 
     o Apache should be installed to /path/to/apache
     o MySQL is installed under /path/to/mysql
-    o SSLeay is installed under /path/to/ssleay
+    o OpenSSL is installed under /path/to/openssl
     o RSAref have not to be used
     o GNU Make is available as `gmake' in $PATH
    
@@ -491,11 +560,11 @@
 
     #   extract the packages
     $ gzip -d -c apache_1.3.x.tar.gz | tar xvf -
-    $ gzip -d -c mod_ssl-2.2.x-1.3.x.tar.gz | tar xvf -
+    $ gzip -d -c mod_ssl-2.4.x-1.3.x.tar.gz | tar xvf -
     $ gzip -d -c php-3.0.x.tar.gz | tar xvf -
 
     #   apply mod_ssl to Apache source tree
-    $ cd /mod_ssl-2.2.x-1.3.x
+    $ cd /mod_ssl-2.4.x-1.3.x
     $ ./configure \
           --with-apache=../apache_1.3.x
     $ cd ..
@@ -508,7 +577,7 @@
     
     #   configure PHP3 and apply it to the Apache source tree
     $ cd ../php-3.0.x
-    $ CFLAGS='-O2 -I/path/to/ssleay/include' \
+    $ CFLAGS='-O2 -I/path/to/openssl/include' \
       ./configure \
           --with-apache=../apache_1.3.x \
           --with-mysql=/path/to/mysql \
@@ -520,7 +589,7 @@
     
     #   build/install Apache with mod_ssl and PHP3
     $ cd apache_1.3.x
-    $ SSL_BASE=/path/to/ssleay \
+    $ SSL_BASE=/path/to/openssl \
       ./configure \
           --prefix=/path/to/apache \
           --enable-module=ssl \
@@ -533,6 +602,6 @@
     
     #   cleanup after work
     $ rm -rf php-3.0.x
-    $ rm -rf mod_ssl-2.2.x-1.3.x
+    $ rm -rf mod_ssl-2.4.x-1.3.x
     $ rm -rf apache_1.3.x
 
