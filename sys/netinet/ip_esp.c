@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.39 2000/03/30 06:17:56 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.40 2000/04/06 16:08:22 deraadt Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1086,7 +1086,6 @@ m_pad(struct mbuf *m, int n, int randompadding)
     register struct mbuf *m0, *m1;
     register int len, pad;
     caddr_t retval;
-    u_int8_t dat;
 	
     if (n <= 0)			/* no stupid arguments */
     {
@@ -1138,11 +1137,7 @@ m_pad(struct mbuf *m, int n, int randompadding)
     m->m_pkthdr.len += pad;
 
     if (randompadding)
-      for (len = 0; len < n; len++)
-      {
-	  get_random_bytes((void *) &dat, sizeof(u_int8_t));
-	  retval[len] = len + dat;
-      }
+	  get_random_bytes((void *) retval, n);
 
     return retval;
 }
