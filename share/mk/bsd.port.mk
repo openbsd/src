@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.62 1999/02/17 23:45:15 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.63 1999/02/17 23:52:56 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.62 1999/02/17 23:45:15 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.63 1999/02/17 23:52:56 marc Exp $$
 .if defined(NEED_VERSION)
 VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -640,6 +640,7 @@ PLIST?=		${PKGDIR}/PLIST.${ARCH}
 PLIST?=		${PKGDIR}/PLIST.noshared
 .else
 PLIST?=		${PKGDIR}/PLIST
+.endif
 .endif
 
 PKG_CMD?=		/usr/sbin/pkg_create
