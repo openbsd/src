@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.10 1997/07/06 07:27:59 downsj Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.11 2000/06/26 16:22:11 art Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -1299,7 +1299,7 @@ hpux_sys_alarm_6x(p, v, retval)
 	} */ *uap = v;
 	int s = splhigh();
 
-	untimeout(realitexpire, (caddr_t)p);
+	timeout_del(&p->p_realit_to);
 	timerclear(&p->p_realtimer.it_interval);
 	*retval = 0;
 	if (timerisset(&p->p_realtimer.it_value) &&
@@ -1312,7 +1312,7 @@ hpux_sys_alarm_6x(p, v, retval)
 	}
 	p->p_realtimer.it_value = time;
 	p->p_realtimer.it_value.tv_sec += SCARG(uap, deltat);
-	timeout(realitexpire, (caddr_t)p, hzto(&p->p_realtimer.it_value));
+	timeout_add(&p->p_realit_to, hzto(&p->p_realtimer.it_value));
 	splx(s);
 	return (0);
 }
