@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_create.c,v 1.7 1999/02/01 08:23:46 d Exp $
+ * $OpenBSD: uthread_create.c,v 1.8 1999/03/10 10:06:22 d Exp $
  */
 #include <errno.h>
 #include <stdlib.h>
@@ -39,6 +39,8 @@
 #include <sys/time.h>
 #ifdef _THREAD_SAFE
 #include <machine/reg.h>
+#include <pthread.h>
+#include "pthread_private.h"
 #include "thread_private.h"
 
 int
