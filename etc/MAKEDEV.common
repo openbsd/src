@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.7 2004/04/11 18:14:59 millert Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.8 2004/05/29 04:07:30 deraadt Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -174,7 +174,7 @@ dnl
 dnl XXX some arches use ramd, others ramdisk - needs to be fixed eventually
 __devitem(ramdisk, ramdisk, Ramdisk kernel devices,nothing)dnl
 dnl
-target(usb, usb, 0, 1)dnl
+target(usb, usb, 0, 1, 2, 3)dnl
 target(usb, urio, 0)dnl
 twrget(usb, uscan, uscanner, 0)dnl
 target(usb, uhid, 0, 1, 2, 3)dnl
