@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.237 2003/05/15 00:03:06 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.238 2003/05/15 08:38:47 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -540,7 +540,7 @@ will raise the TTL of all packets back up to the highest value seen on
 the connection.
 .It timeout modulation
 Modern TCP stacks will send a timestamp on every TCP packet and echo
-the other endpoints timestamp back to them.
+the other endpoint's timestamp back to them.
 Many operating systems will merely start the timestamp at zero when
 first booted, and increment it several times a second.
 The uptime of the host can be deduced by reading the timestamp and multiplying
