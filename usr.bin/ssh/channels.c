@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.75 2000/12/05 20:34:09 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.76 2000/12/19 22:43:44 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -1381,7 +1381,7 @@ channel_stop_listening()
 		switch (channels[i].type) {
 		case SSH_CHANNEL_AUTH_SOCKET:
 			close(channels[i].sock);
-			remove(channels[i].path);
+			unlink(channels[i].path);
 			channel_free(i);
 			break;
 		case SSH_CHANNEL_PORT_LISTENER:
