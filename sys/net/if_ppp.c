@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.38 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.39 2003/12/13 10:01:16 markus Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -167,6 +167,8 @@ static void	pppdumpm(struct mbuf *m0);
 #ifdef ALTQ
 static void	ppp_ifstart(struct ifnet *ifp);
 #endif
+int		ppp_clone_create(struct if_clone *, int);
+void		ppp_clone_destroy(struct ifnet *);
 
 /*
  * Some useful mbuf macros not in mbuf.h.
@@ -210,11 +212,9 @@ struct compressor *ppp_compressors[8] = {
 };
 #endif /* PPP_COMPRESS */
 
-int     ppp_clone_create(struct if_clone *, int);
-
 LIST_HEAD(, ppp_softc) ppp_softc_list;
 struct if_clone ppp_cloner =
-    IF_CLONE_INITIALIZER("ppp", ppp_clone_create, NULL);
+    IF_CLONE_INITIALIZER("ppp", ppp_clone_create, ppp_clone_destroy);
 
 /*
  * Called from boot code to establish ppp interfaces.
@@ -268,6 +268,28 @@ ppp_clone_create(ifc, unit)
     splx(s);
 
     return (0);
+}
+
+void
+ppp_clone_destroy(ifp)
+    struct ifnet *ifp;
+{
+    struct ppp_softc *sc = ifp->if_softc;
+    int s;
+
+    if (sc->sc_devp != NULL)
+	return;
+
+    s = splimp();
+    LIST_REMOVE(sc, sc_list);
+    splx(s);
+
+#if NBPFILTER > 0
+    bpfdetach(ifp);
+#endif
+    if_detach(ifp);
+
+    free(sc, M_DEVBUF);
 }
 
 /*

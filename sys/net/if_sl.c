@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.24 2003/12/12 12:54:57 hshoexer Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.25 2003/12/13 10:01:16 markus Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -184,10 +184,11 @@ static int slinit(struct sl_softc *);
 static struct mbuf *sl_btom(struct sl_softc *, int);
 
 int	sl_clone_create(struct if_clone *, int);
+void	sl_clone_destroy(struct ifnet *);
 
 LIST_HEAD(, sl_softc) sl_softc_list;
 struct if_clone sl_cloner =
-    IF_CLONE_INITIALIZER("sl", sl_clone_create, NULL);
+    IF_CLONE_INITIALIZER("sl", sl_clone_create, sl_clone_destroy);
 
 /*
  * Called from boot code to establish sl interfaces.
@@ -236,6 +237,28 @@ sl_clone_create(ifc, unit)
 	splx(s);
 
 	return (0);
+}
+
+void
+sl_clone_destroy(ifp)
+	struct ifnet *ifp;
+{
+	struct sl_softc *sc = ifp->if_softc;
+	int s;
+
+	if (sc->sc_ttyp != NULL)
+		return;
+
+	s = splimp();
+	LIST_REMOVE(sc, sc_list);
+	splx(s);
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
+
+	free(sc, M_DEVBUF);
 }
 
 static int
