@@ -1,5 +1,5 @@
-/*	$OpenBSD: isp_sbus.c,v 1.6 1999/03/17 21:50:12 deraadt Exp $	*/
-/* release_03_16_99A */
+/*	$OpenBSD: isp_sbus.c,v 1.7 1999/03/25 22:58:37 mjacob Exp $	*/
+/* release_03_25_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *

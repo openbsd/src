@@ -1,10 +1,10 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.2 1999/03/17 12:54:32 mjacob Exp $ */
-/* release_03_16_99 */
+/* 	$OpenBSD: isp_openbsd.c,v 1.3 1999/03/25 22:58:38 mjacob Exp $ */
+/* release_03_25_99 */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
  *---------------------------------------
- * Copyright (c) 1997, 1998, 1999 by Matthew Jacob
+ * Copyright (c) 1999 by Matthew Jacob
  * NASA/Ames Research Center
  * All rights reserved.
  *---------------------------------------
@@ -63,6 +63,7 @@ struct cfdriver isp_cd = {
 
 #define	FC_OPENINGS	RQUEST_QUEUE_LEN / (MAX_FC_TARG-1)
 #define	PI_OPENINGS	RQUEST_QUEUE_LEN / (MAX_TARGETS-1)
+#define	DTHR		1
 
 /*
  * Complete attachment of hardware, include subdevices.
@@ -93,6 +94,7 @@ isp_attach(isp)
 		isp->isp_osinfo._link.adapter_target =
 			((fcparam *)isp->isp_param)->isp_loopid;
 	} else {
+		isp->isp_osinfo.delay_throttle_count = DTHR;
 		isp->isp_osinfo._link.openings = PI_OPENINGS;
 		isp->isp_osinfo._link.adapter_buswidth = MAX_TARGETS;
 		/* We can set max lun width here */
@@ -125,7 +127,7 @@ isp_attach(isp)
 	 * The wathdog will, ridiculously enough, also enable Sync negotiation.
 	 */
 	isp->isp_dogactive = 1;
-	timeout(isp_watch, isp, 30 * hz);
+	timeout(isp_watch, isp, WATCH_INTERVAL * hz);
 
 	/*
 	 * And attach children (if any).
@@ -228,13 +230,11 @@ isp_poll(isp, xs, mswait)
 	return (1);
 }
 
-#define	DTHR	2
 
 static void
 isp_watch(arg)
 	void *arg;
 {
-	static int delay_throttle_count = DTHR;
 	int i;
 	struct ispsoftc *isp = arg;
 	ISP_SCSI_XFER_T *xs;
@@ -262,7 +262,9 @@ isp_watch(arg)
 		} else if (xs->timeout > -(2 * WATCH_INTERVAL * 1000)) {
 			continue;
 		}
-		delay_throttle_count = DTHR;
+		if (IS_SCSI(isp)) {
+			isp->isp_osinfo.delay_throttle_count = DTHR;
+		}
 		if (isp_control(isp, ISPCTL_ABORT_CMD, xs)) {
 			printf("%s: isp_watch failed to abort command\n",
 			    isp->isp_name);
@@ -271,8 +273,8 @@ isp_watch(arg)
 		}
 	}
 
-	if (delay_throttle_count) {
-		if (--delay_throttle_count == 0) {
+	if (isp->isp_osinfo.delay_throttle_count) {
+		if (--isp->isp_osinfo.delay_throttle_count == 0) {
 			sdparam *sdp = isp->isp_param;
 			for (i = 0; i < MAX_TARGETS; i++) {
 				sdp->isp_devparam[i].dev_flags |=
@@ -327,15 +329,34 @@ isp_async(isp, cmd, arg)
 		if (IS_SCSI(isp)) {
 			sdparam *sdp = isp->isp_param;
 			char *wt;
-			int ns, flags, tgt;
+			int mhz, flags, tgt, period;
 
 			tgt = *((int *) arg);
 
-			flags = sdp->isp_devparam[tgt].dev_flags;
-			if (flags & DPARM_SYNC) {
-				ns = sdp->isp_devparam[tgt].sync_period * 4;
+			flags = sdp->isp_devparam[tgt].cur_dflags;
+			period = sdp->isp_devparam[tgt].cur_period;
+			if ((flags & DPARM_SYNC) && period &&
+			    (sdp->isp_devparam[tgt].cur_offset) != 0) {
+				if (sdp->isp_lvdmode) {
+					switch (period) {
+					case 0xa:
+						mhz = 40;
+						break;
+					case 0xb:
+						mhz = 33;
+						break;
+					case 0xc:
+						mhz = 25;
+						break;
+					default:
+						mhz = 1000 / (period * 4);
+						break;
+					}
+				} else {
+					mhz = 1000 / (period * 4);
+				}
 			} else {
-				ns = 0;
+				mhz = 0;
 			}
 			switch (flags & (DPARM_WIDE|DPARM_TQING)) {
 			case DPARM_WIDE:
@@ -351,10 +372,10 @@ isp_async(isp, cmd, arg)
 				wt = "\n";
 				break;
 			}
-			if (ns) {
+			if (mhz) {
 				printf("%s: Target %d at %dMHz Max Offset %d%s",
-				    isp->isp_name, tgt, 1000 / ns,
-				    sdp->isp_devparam[tgt].sync_offset, wt);
+				    isp->isp_name, tgt, mhz,
+				    sdp->isp_devparam[tgt].cur_offset, wt);
 			} else {
 				printf("%s: Target %d Async Mode%s",
 				    isp->isp_name, tgt, wt);

@@ -1,10 +1,10 @@
-/*	$OpenBSD: isp_openbsd.h,v 1.2 1999/03/17 12:54:32 mjacob Exp $ */
-/* release_03_16_99 */
+/*	$OpenBSD: isp_openbsd.h,v 1.3 1999/03/25 22:58:38 mjacob Exp $ */
+/* release_03_25_99 */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  *
  *---------------------------------------
- * Copyright (c) 1997, 1998, 1999 by Matthew Jacob
+ * Copyright (c) 1999 by Matthew Jacob
  * NASA/Ames Research Center
  * All rights reserved.
  *---------------------------------------
@@ -63,13 +63,14 @@
 #include <vm/pmap.h>
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	1
+#define	ISP_PLATFORM_VERSION_MINOR	2
 
 #define	ISP_SCSI_XFER_T		struct scsi_xfer
 struct isposinfo {
 	struct device		_dev;
 	struct scsi_link	_link;
 	struct scsi_adapter	_adapter;
+	int8_t			delay_throttle_count;
 };
 
 #define	MAXISPREQUEST	64
@@ -167,7 +168,7 @@ struct isposinfo {
 
 #define	SYS_DELAY(x)		delay(x)
 
-#define	WATCH_INTERVAL	30
+#define	WATCH_INTERVAL	10
 
 extern void isp_attach __P((struct ispsoftc *));
 extern void isp_uninit __P((struct ispsoftc *));
@@ -268,7 +269,5 @@ isp2100_pdb_statename(pdb_state)
 
 #define	ISP_NO_FASTPOST_SCSI	1
 #define	ISP_NO_FASTPOST_FC	1
-
-#define	ISP_DISABLE_1080_SUPPORT	1
 
 #endif	/* _ISP_OPENBSD_H */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: isp_pci.c,v 1.5 1999/03/17 12:53:29 mjacob Exp $	*/
-/* release_03_16_99 */
+/*	$OpenBSD: isp_pci.c,v 1.6 1999/03/25 22:58:44 mjacob Exp $	*/
+/* release_03_25_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
