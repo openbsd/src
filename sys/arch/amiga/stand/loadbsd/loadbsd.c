@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.16.2.1 1995/10/20 11:01:16 chopps Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.16.2.2 1995/11/24 07:51:27 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -98,15 +98,21 @@ void warnx __P((const char *, ...));
  *		Add -n flag & option for non-contiguous memory.
  *		01/28/95 - Corrected -n on usage & help messages.
  *	2.11	03/12/95 - Check kernel size against chip memory size.
+ *	2.12	11/11/95 - Add -I option to inhibit synchronous transfer
+ *		11/12/95 - New kernel parameter version - to support passing
+ *		a kernel parameter data structure and support moving kernel
+ *		image to fastmem rather than chipmem.
  */
-static const char _version[] = "$VER: LoadBSD 2.11 (12.3.95)";
+static const char _version[] = "$VER: LoadBSD 2.12 (12.11.95)";
 
 /*
  * Kernel parameter passing version
  *	1:	first version of loadbsd
  *	2:	needs esym location passed in a4
+ *	3:	allow kernel image in fastmem rather than chipmem, and
+ *		passing kernel parameters in a data structure
  */
-#define KERNEL_PARAMETER_VERSION	2
+#define KERNEL_PARAMETER_VERSION	3
 
 #define MAXMEMSEG	16
 struct boot_memlist {
@@ -139,6 +145,7 @@ int p_flag;
 int t_flag;
 int reqmemsz;
 int S_flag;
+u_long I_flag;
 u_long cpuid;
 long eclock_freq;
 long amiga_flags;
@@ -173,7 +180,7 @@ main(argc, argv)
 	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
 		err(20, "can't open expansion library");
 
-	while ((ch = getopt(argc, argv, "aAbc:Dhkm:n:ptSV")) != EOF) {
+	while ((ch = getopt(argc, argv, "aAbc:DhI:km:n:ptSV")) != EOF) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;
@@ -215,6 +222,9 @@ main(argc, argv)
 				amiga_flags |= i << 1;
 			else
 				err(20, "-n option must be 0, 1, 2, or 3");
+			break;
+		case 'I':
+			I_flag = strtoul(optarg, NULL, 16);
 			break;
 		case 'h':
 			verbose_usage();
@@ -260,8 +270,11 @@ main(argc, argv)
 		ksize += e.a_syms + 4 + stringsz;
 	}
 
-	if (ksize >= cmemsz)
+	if (ksize >= cmemsz) {
+		printf("Kernel size %d exceeds Chip Memory of %d\n",
+		    ksize, cmemsz);
 		err(20, "Insufficient Chip Memory for kernel");
+	}
 	kp = (u_char *)malloc(ksize);
 	if (t_flag) {
 		for (i = 0; i < memlist.m_nseg; ++i) {
@@ -272,6 +285,7 @@ main(argc, argv)
 			    memlist.m_seg[i].ms_attrib,
 			    memlist.m_seg[i].ms_pri);
 		}
+		printf("kernel size: %d\n", ksize);
 	}
 	if (kp == NULL)
 		err(20, "failed malloc %d\n", ksize);
@@ -298,6 +312,15 @@ main(argc, argv)
 	kvers = (u_short *)(kp + e.a_entry - 2);
 	if (*kvers > KERNEL_PARAMETER_VERSION && *kvers != 0x4e73)
 		err(20, "newer loadbsd required: %d\n", *kvers);
+	if (*kvers > 2) {
+		printf("****************************************************\n");
+		printf("*** Notice:  this kernel has features which require\n");
+		printf("*** a newer version of loadbsd.  To allow the use of\n");
+		printf("*** any newer features or capabilities, you should\n");
+		printf("*** update your copy of loadbsd\n");
+		printf("****************************************************\n");
+		sleep(3);	/* even more time to see that message */
+	}
 	if ((cpuid & AFB_68020) == 0)
 		err(20, "cpu not supported");
 	/*
@@ -341,7 +364,7 @@ main(argc, argv)
 	 */
 	LoadView(NULL);		/* Don't do this if AGA active? */
 	startit(kp, ksize, e.a_entry, fmem, fmemsz, cmemsz, boothowto, esym,
-	    cpuid, eclock_freq, amiga_flags);
+	    cpuid, eclock_freq, amiga_flags, I_flag);
 	/*NOTREACHED*/
 }
 
@@ -520,6 +543,7 @@ start_super:
 	| d5:  AttnFlags (cpuid)
 	| d7:  boothowto
 	| a4:  esym location
+	| a2:  Inhibit sync flags
 	| All other registers zeroed for possible future requirements.
 
 	lea	pc@(_startit-.+2),sp	| make sure we have a good stack ***
@@ -535,6 +559,7 @@ start_super:
 	movel	a3@(36),d5		| cpuid
 	movel	a3@(40),d4		| E clock frequency
 	movel	a3@(44),d3		| Amiga flags
+	movel	a3@(48),a2		| Inhibit sync flags
 	subl	a5,a5			| target, load to 0
 
 	btst	#3,(ABSEXECBASE)@(0x129) | AFB_68040,SysBase->AttnFlags
@@ -579,7 +604,6 @@ L0:
 	moveq	#0,d2			| zero out unused registers
 	moveq	#0,d6			| (might make future compatibility
 	movel	d6,a1			|  would have known contents)
-	movel	d6,a2
 	movel	d6,a3
 	movel	d6,a5
 	movel	d6,a6
@@ -598,7 +622,7 @@ zero:	.long	0
 void
 usage()
 {
-	fprintf(stderr, "usage: %s [-abhkptADSV] [-c machine] [-m mem] [-n mode] kernel\n",
+	fprintf(stderr, "usage: %s [-abhkptADSV] [-c machine] [-m mem] [-n mode] [-I sync-inhibit] kernel\n",
 	    program_name);
 	exit(1);
 }
@@ -614,10 +638,13 @@ SYNOPSIS
 \t%s [-abhkptDSV] [-c machine] [-m mem] [-n flags] kernel
 OPTIONS
 \t-a  Boot up to multiuser mode.
+\t-A  Use AGA display mode, if available.
 \t-b  Ask for which root device.
 \t    Its possible to have multiple roots and choose between them.
 \t-c  Set machine type. [e.g 3000]
+\t-D  Enter debugger
 \t-h  This help message.
+\t-I  Inhibit sync negotiation. Option value is bit-encoded targets.
 \t-k  Reserve the first 4M of fast mem [Some one else
 \t    is going to have to answer what that it is used for].
 \t-m  Tweak amount of available memory, for finding minimum amount
@@ -629,12 +656,10 @@ OPTIONS
 \t    segment. The higher priority segment is usually faster
 \t    (i.e. 32 bit memory), but some people have smaller amounts
 \t    of 32 bit memory.
+\t-S  Include kernel symbol table.
 \t-t  This is a *test* option.  It prints out the memory
 \t    list information being passed to the kernel and also
 \t    exits without actually starting NetBSD.
-\t-S  Include kernel symbol table.
-\t-D  Enter debugger
-\t-A  Use AGA display mode, if available.
 \t-V  Version of loadbsd program.
 HISTORY
 \tThis version supports Kernel version 720 +\n",

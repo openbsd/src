@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.19 1995/10/05 12:36:07 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.19.2.1 1995/11/24 07:51:17 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -125,7 +125,7 @@ int sbic_init_wait = SBIC_INIT_WAIT;
  * was broken before.. now if you want this you get it for all drives
  * on sbic controllers.
  */
-int sbic_inhibit_sync = 0;
+u_char sbic_inhibit_sync[8];
 int sbic_enable_reselect = 1;
 int sbic_clock_override = 0;
 int sbic_no_dma = 0;
@@ -836,6 +836,10 @@ sbicinit(dev)
 	u_int my_id, i, s;
 	u_char csr;
 	struct sbic_acb *acb;
+	u_int inhibit_sync;
+
+	extern u_long scsi_nosync;
+	extern int shift_nosync;
 
 	regs = dev->sc_sbicp;
 
@@ -861,6 +865,20 @@ sbicinit(dev)
 
 	dev->sc_flags |= SBICF_ALIVE;
 	dev->sc_flags &= ~SBICF_SELECTED;
+
+	/* initialize inhibit array */
+	if (scsi_nosync) {
+		inhibit_sync = (scsi_nosync >> shift_nosync) & 0xff;
+		shift_nosync += 8;
+#ifdef DEBUG
+		if (inhibit_sync)
+			printf("%s: Inhibiting synchronous transfer %02x\n",
+				dev->sc_dev.dv_xname, inhibit_sync);
+#endif
+		for (i = 0; i < 8; ++i)
+			if (inhibit_sync & (1 << i))
+				sbic_inhibit_sync[i] = 1;
+	}
 
 	sbicreset(dev);
 }
@@ -1093,7 +1111,8 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 		 * handle drives that don't want to be asked
 		 * whether to go sync at all.
 		 */
-		if (sbic_inhibit_sync && dev->sc_sync[id].state == SYNC_START) {
+		if (sbic_inhibit_sync[id]
+		    && dev->sc_sync[id].state == SYNC_START) {
 #ifdef DEBUG
 			if (sync_debug)
 				printf("Forcing target %d asynchronous.\n", id);

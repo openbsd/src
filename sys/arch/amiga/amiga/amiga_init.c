@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.33.2.1 1995/11/10 16:09:54 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.33.2.2 1995/11/24 07:51:07 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -102,6 +102,9 @@ u_long boot_fphystart, boot_fphysize, boot_cphysize;
 
 static u_long boot_flags;
 
+u_long scsi_nosync;
+int shift_nosync;
+
 void *
 chipmem_steal(amount)
 	long amount;
@@ -158,11 +161,12 @@ alloc_z2mem(amount)
  */
 
 void
-start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
+start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	int id;
 	u_int fphystart, fphysize, cphysize;
 	char *esym_addr;
 	u_int flags;
+	u_long inh_sync;
 {
 	extern char end[];
 	extern void etext();
@@ -191,6 +195,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	if (flags & (3 << 1))
 		noncontig_enable = (flags >> 1) & 3;
 #endif
+	scsi_nosync = inh_sync;
 
 	/*
 	 * the kernel ends at end(), plus the cfdev structures we placed
@@ -742,6 +747,10 @@ kernel_reload_write(uio)
 		 * XXX - should check that image will fit in CHIP memory
 		 * XXX return an error if it doesn't
 		 */
+		if ((kernel_text_size + kernel_exec.a_data +
+		    kernel_exec.a_bss + kernel_symbol_size +
+		    kernel_image_magic_size()) > boot_cphysize)
+			return (EFBIG);
 		kernel_image = malloc(kernel_text_size + kernel_exec.a_data
 			+ kernel_exec.a_bss
 			+ kernel_symbol_size
@@ -812,7 +821,7 @@ kernel_reload_write(uio)
 		    kernel_load_ofs + kernel_image_magic_size(),
 		    kernel_exec.a_entry, boot_fphystart, boot_fphysize,
 		    boot_cphysize, kernel_symbol_esym, eclockfreq,
-		    boot_flags);
+		    boot_flags, scsi_nosync);
 		/*NOTREACHED*/
 		/*
 		 * XXX - kernel_reload() needs to verify that the

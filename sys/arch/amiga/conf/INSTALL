@@ -1,0 +1,221 @@
+#	$NetBSD: INSTALL,v 1.1.2.1 1995/11/24 18:56:13 chopps Exp $
+
+#
+# GENERIC AMIGA
+#
+# This configuration file contains all possible options
+#
+
+include "std.amiga"
+
+maxusers	8
+options		TIMEZONE=300, DST=1
+
+#
+# processors this kernel should support
+#
+options		"M68040"	# support for 040
+options		FPSP		# MC68040 floating point support
+options		"M68030"	# support for 030
+options		"M68020"	# support for 020/851
+options		FPCOPROC	# Support for MC6888[12] (Required)
+
+options		SWAPPAGER	# Pager for processes (Required)
+options		VNODEPAGER	# Pager for vnodes (Required)
+options		DEVPAGER	# Pager for devices (Required)
+
+#
+# Networking options
+#
+options		INET		# IP networking support (Required)
+#options	ISO		# ISO Networking support
+#options	TPIP		# ARGO TP networking support
+#options	CCITT		# CCITT X.25
+#options	NS		# Xerox XNS
+#options	EON		# ISO CLNL over IP
+#options	GATEWAY		# Packet forwarding
+#options	DIRECTED_BROADCAST	# Broadcast across subnets
+#options	NSIP		# XNS over IP
+
+#
+# File system related options
+#
+options		QUOTA		# Disk quotas for local disks
+options		NFSSERVER	# Network File System server side code
+options		NFSCLIENT	# Network File System client side code
+
+#
+# File systems
+#
+options		FFS		# Berkeley fast file system
+options		MFS		# Memory based filesystem
+options		PROCFS		# Process filesystem
+options		KERNFS		# Kernel parameter filesystem (Recommended)
+options		FDESC		# /dev/fd filesystem
+options		NULLFS		# Loopback filesystem
+options		FIFO		# FIFO operations on vnodes (Recommended)
+options		ADOSFS		# AmigaDOS file system
+options		"CD9660"	# ISO 9660 file system, with Rock Ridge
+#options	PORTAL		# Portal filesystem
+#options	MSDOSFS		# MS-DOS filesystem
+
+
+#
+# Compatability options for various existing systems
+#
+options		"COMPAT_10"	# compatability with older NetBSD release
+options		"COMPAT_09"	# compatability with older NetBSD release
+options		"COMPAT_43"	# 4.3 BSD compatible system calls
+#options		COMPAT_SUNOS	# Support to run Sun (m68k) executables
+options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+options		"COMPAT_NOMID"	# allow nonvalid machine id executables
+#options	COMPAT_HPUX	# HP300 compatability
+
+#
+# Support for System V IPC facilities.
+#
+options		SYSVSHM		# System V-like shared memory
+options		SYSVMSG		# System V-like messages
+options		SYSVSEM		# System V-like semaphores
+
+#
+# Support for various kernel options
+#
+options		GENERIC		# Mini-root boot support
+options		LKM		# Loadable kernel modules
+options		KTRACE		# Add kernel tracing system call
+options		DIAGNOSTIC	# Add additional error checking code
+options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
+
+#
+# Misc. debuging options
+#
+options		PANICWAIT	# Require keystroke to dump/reboot
+#options	DEBUG		# Add debugging statements
+#options		DDB		# Kernel debugger
+#options	SYSCALL_DEBUG	# debug all syscalls.
+#options	SCSIDEBUG	# Add SCSI debugging statements
+#options	KGDB		# Kernel debugger (KGDB) support
+#options	PANICBUTTON	# Forced crash via keypress (???)
+
+#
+# Amiga specific options
+#
+options		MACHINE_NONCONTIG # Non-contiguous memory support
+
+options		RETINACONSOLE	# enable code to allow retina to be console
+options		ULOWELLCONSOLE	# enable code to allow a2410 to be console
+options         CL5426CONSOLE   # Cirrus console
+
+options		GRF_ECS		# Enhanced Chip Set
+options		GRF_NTSC	# NTSC
+options		GRF_PAL		# PAL
+options		"GRF_A2024"	# Support for the A2024
+options		GRF_AGA		# AGA Chip Set
+options		GRF_CL5426	# Cirrus board support
+#options	"KFONT_8X11"	# 8x11 font
+
+# This is how you would tell the kernel the A2410 oscillator frequencies:
+# The used frequencies are the defaults, and don't need option setting
+#options	"ULOWELL_OSC1=36000000"
+#options	"ULOWELL_OSC2=66667000"
+
+# This is how you specify the blitting speed, higher values may speed up blits
+# a littel bit.  If you raise this value too much some trash may appear.
+# the commented version is the default.
+#options	RH_MEMCLK 61000000
+# this option enables the 64 bit sprite which doesn't seems to be work
+# for quite a few people.  E.g. The cursor sprite will turn to a block
+# when moved to the top of the screen in X.
+#options	RH_64BIT_SPRITE
+# enables fast scroll code appears to now work on 040 systems.
+#options	RETINA_SPEED_HACK
+
+grfcc0		at mainbus0		# custom chips
+grfrt0		at zbus0		# retina II
+grfrh0		at zbus0		# retina III
+grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
+grful0		at zbus0		# A2410
+grfcv0		at zbus0		# CyverVision 64
+
+grf0		at grfcc0
+grf1		at grfrt0
+grf2		at grfrh0
+grf3		at grfcl?
+grf4		at grful0
+grf5		at grfcv0
+
+ite0		at grf0			# terminal emulators for grf's
+ite1		at grf1			# terminal emulators for grf's
+ite2		at grf2			# terminal emulators for grf's
+ite3		at grf3			# terminal emulators for grf's
+ite4		at grf4			# terminal emulators for grf's
+
+msc0		at zbus0		# A2232 MSC multiport serial.
+mfc0		at zbus0		# MultiFaceCard I/O board
+mfcs0		at mfc0 unit 0		# MFC serial
+mfcs1		at mfc0 unit 1		# MFC serial
+#mfcp0		at mfc0 unit 0		# MFC parallel [not available yet]
+#mfc1		at zbus0		# MultiFaceCard 2nd I/O board
+#mfcs2		at mfc1 unit 0
+#mfcs3		at mfc1 unit 1
+#mfcp1		at mfc1 unit 0
+
+le0		at zbus0		# Lance ethernet.
+ed0		at zbus0		# dp8390 ethernet
+es0		at zbus0		# SMC 91C90 ethernet
+qn0		at zbus0		# quicknet ethernet
+ae0		at zbus0		# Ariadne ethernet
+bah0		at zbus0		# C= arcnet
+
+
+# scsi stuff, all possible
+gvpbus*		at zbus0
+gtsc0		at gvpbus?		# GVP series II scsi
+ahsc0		at mainbus0		# A3000 scsi
+atzsc0		at zbus0
+wstsc0		at zbus0		# Wordsync II scsi
+ivsc0		at zbus0		# IVS scsi
+mlhsc0		at zbus0		# Hacker scsi
+otgsc0		at zbus0		# 12 gauge scsi
+zssc0		at zbus0		# Zeus scsi
+mgnsc0		at zbus0		# Magnum scsi
+wesc0		at zbus0		# Warp Engine scsi
+idesc0		at mainbus0		# A4000 & A1200 IDE
+afsc0		at zbus0		# A4091 scsi
+aftsc0		at mainbus0		# A4000T scsi
+flsc0		at zbus0		# FastlaneZ3 scsi
+bzsc0		at zbus0		# Blizzard 1230 scsi
+
+scsibus*	at gtsc0
+scsibus*	at ahsc0
+scsibus*	at atzsc0
+scsibus*	at wstsc0
+scsibus*	at ivsc0
+scsibus*	at mlhsc0
+scsibus*	at otgsc0
+scsibus*	at zssc0
+scsibus*	at mgnsc0
+scsibus*	at wesc0
+scsibus*	at idesc0
+scsibus*	at afsc0
+scsibus*	at aftsc0
+scsibus*	at flsc0
+scsibus*	at bzsc0
+
+# each hard drive from low target to high
+# will configure to the next available sd unit number
+sd*	at scsibus? target ? lun ?	# scsi disks
+
+st*	at scsibus? target ? lun ?	# scsi tapes
+cd*	at scsibus? target ? lun ?	# scsi cd's
+
+pseudo-device	sl			# slip
+pseudo-device	ppp			# ppp
+pseudo-device	view 10			# views
+pseudo-device	pty 16			# pseudo terminals
+pseudo-device	loop			# network loopback
+#pseudo-device	bpfilter 2		# berkeley packet filters
+#pseudo-device	tun 2
+
+config	netbsd swap on generic

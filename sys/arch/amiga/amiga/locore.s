@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46 1995/10/09 04:33:52 chopps Exp $	*/
+/*	$NetBSD: locore.s,v 1.46.2.1 1995/11/24 07:51:10 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -725,6 +725,7 @@ start:
 
 	| save the passed parameters. `prepass' them on the stack for
 	| later catch by _start_c
+	movl	a2,sp@-			| pass sync inhibit flags
 	movl	d3,sp@-			| pass AGA mode
 	movl	a4,sp@-			| pass address of _esym
 	movl	d1,sp@-			| pass chipmem-size
@@ -776,7 +777,7 @@ Lstartnot040:
 
 /* let the C function initialize everything and enable the MMU */
 	jsr	_start_c
-	addl	#16,sp
+	addl	#28,sp
 
 /* set kernel stack, user SP, and initial pcb */
 	movl	_proc0paddr,a1		| proc0 kernel stack
@@ -1915,14 +1916,15 @@ Lreload1:
 	movel	sp@(28),a4		| esym
 	movel	sp@(32),d4		| eclockfreq
 	movel	sp@(36),d3		| AGA mode
+	movel	sp@(40),a2		| sync inhibit flags
 
 	movel	sp@(12),a6		| find entrypoint (a6)
 
-	movel	sp@(4),a2		| copy kernel to low chip memory
+	movel	sp@(4),a1		| copy kernel to low chip memory
 	movel	sp@(8),d2
 	movl	_CHIPMEMADDR,a3
 Lreload_copy:
-	movel	a2@+,a3@+
+	movel	a1@+,a3@+
 	subl	#4,d2
 	jcc	Lreload_copy
 
@@ -1945,7 +1947,6 @@ Lreload2:
 	moveq	#0,d2			| clear unused registers
 	moveq	#0,d6
 	subl	a1,a1
-	subl	a2,a2
 	subl	a3,a3
 	subl	a5,a5
 	jmp	a6@			| start new kernel

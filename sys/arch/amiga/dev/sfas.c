@@ -128,6 +128,9 @@ sfasinitialize(dev)
 	sfas_regmap_p	 rp;
 	u_int		*pte, page;
 	int		 i;
+	u_int		inhibit_sync;
+	extern u_long	scsi_nosync;
+	extern int	shift_nosync;
 
 	dev->sc_led_status = 0;
 
@@ -174,6 +177,14 @@ sfasinitialize(dev)
 	dev->sc_msg_out_len = 0;
 
 	dev->sc_flags = 0;
+
+	if (scsi_nosync) {
+		inhibit_sync = (scsi_nosync >> shift_nosync) & 0xff;
+		shift_nosync += 8;
+		for (i = 0; i < 8; ++i)
+			if (inhibit_sync & (1 << i))
+				sfas_inhibit_sync[i] = 1;
+	}
 
 	for(i=0; i<8; i++)
 		sfas_init_nexus(dev, &dev->sc_nexus[i]);

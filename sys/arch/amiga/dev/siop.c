@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.25 1995/09/29 13:52:04 chopps Exp $	*/
+/*	$NetBSD: siop.c,v 1.25.2.1 1995/11/24 07:51:23 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -520,6 +520,11 @@ void
 siopinitialize(sc)
 	struct siop_softc *sc;
 {
+	int i;
+	u_int inhibit_sync;
+	extern u_long scsi_nosync;
+	extern int shift_nosync;
+
 	/*
 	 * Need to check that scripts is on a long word boundary
 	 * and that DS is on a long word boundary.
@@ -545,6 +550,19 @@ siopinitialize(sc)
 	} else {
 		sc->sc_dcntl = 0xc0;		/* SCLK/3 */
 		sc->sc_tcp[0] = 3000 / sc->sc_clock_freq;
+	}
+
+	if (scsi_nosync) {
+		inhibit_sync = (scsi_nosync >> shift_nosync) & 0xff;
+		shift_nosync += 8;
+#ifdef DEBUG
+		if (inhibit_sync)
+			printf("%s: Inhibiting synchronous transfer %02x\n",
+				sc->sc_dev.dv_xname, inhibit_sync);
+#endif
+		for (i = 0; i < 8; ++i)
+			if (inhibit_sync & (1 << i))
+				siop_inhibit_sync[i] = 1;
 	}
 
 	siopreset (sc);
