@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.3 2002/06/04 19:09:45 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,16 +33,16 @@
 
 #include <sys/syscall.h>
 
-#include "/sys/compat/bsdos/bsdos_syscall.h"
-#include "/sys/compat/freebsd/freebsd_syscall.h"
-#include "/sys/compat/netbsd/netbsd_syscall.h"
-#include "/sys/compat/hpux/hpux_syscall.h"
-#include "/sys/compat/ibcs2/ibcs2_syscall.h"
-#include "/sys/compat/linux/linux_syscall.h"
-#include "/sys/compat/osf1/osf1_syscall.h"
-#include "/sys/compat/sunos/sunos_syscall.h"
-#include "/sys/compat/svr4/svr4_syscall.h"
-#include "/sys/compat/ultrix/ultrix_syscall.h"
+#include "../../sys/compat/bsdos/bsdos_syscall.h"
+#include "../../sys/compat/freebsd/freebsd_syscall.h"
+#include "../../sys/compat/netbsd/netbsd_syscall.h"
+#include "../../sys/compat/hpux/hpux_syscall.h"
+#include "../../sys/compat/ibcs2/ibcs2_syscall.h"
+#include "../../sys/compat/linux/linux_syscall.h"
+#include "../../sys/compat/osf1/osf1_syscall.h"
+#include "../../sys/compat/sunos/sunos_syscall.h"
+#include "../../sys/compat/svr4/svr4_syscall.h"
+#include "../../sys/compat/ultrix/ultrix_syscall.h"
 
 #define KTRACE
 #define NFSCLIENT
@@ -52,18 +52,18 @@
 #define SYSVSHM
 #define LFS
 #define NTP
-#include "/sys/kern/syscalls.c"
+#include "../../sys/kern/syscalls.c"
 
-#include "/sys/compat/bsdos/bsdos_syscalls.c"
-#include "/sys/compat/freebsd/freebsd_syscalls.c"
-#include "/sys/compat/netbsd/netbsd_syscalls.c"
-#include "/sys/compat/hpux/hpux_syscalls.c"
-#include "/sys/compat/ibcs2/ibcs2_syscalls.c"
-#include "/sys/compat/linux/linux_syscalls.c"
-#include "/sys/compat/osf1/osf1_syscalls.c"
-#include "/sys/compat/sunos/sunos_syscalls.c"
-#include "/sys/compat/svr4/svr4_syscalls.c"
-#include "/sys/compat/ultrix/ultrix_syscalls.c"
+#include "../../sys/compat/bsdos/bsdos_syscalls.c"
+#include "../../sys/compat/freebsd/freebsd_syscalls.c"
+#include "../../sys/compat/netbsd/netbsd_syscalls.c"
+#include "../../sys/compat/hpux/hpux_syscalls.c"
+#include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
+#include "../../sys/compat/linux/linux_syscalls.c"
+#include "../../sys/compat/osf1/osf1_syscalls.c"
+#include "../../sys/compat/sunos/sunos_syscalls.c"
+#include "../../sys/compat/svr4/svr4_syscalls.c"
+#include "../../sys/compat/ultrix/ultrix_syscalls.c"
 #undef KTRACE
 #undef NFSCLIENT
 #undef NFSSERVER
