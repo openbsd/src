@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.43 2001/03/22 05:26:35 jason Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.44 2001/03/23 02:15:23 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -577,6 +577,8 @@ ether_input(ifp, eh, m)
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
 
+	etype = ntohs(eh->ether_type);
+
 #if NBRIDGE > 0
 	/*
 	 * Tap the packet off here for a bridge, if configured and
@@ -585,18 +587,26 @@ ether_input(ifp, eh, m)
 	 * gets processed as normal.
 	 */
 	if (ifp->if_bridge) {
-		if (m->m_flags & M_PROTO1) {
+		if (m->m_flags & M_PROTO1)
 			m->m_flags &= ~M_PROTO1;
-			goto decapsulate;
+		else {
+			m = bridge_input(ifp, eh, m);
+			if (m == NULL)
+				return;
+			/* The bridge has determined it's for us. */
+			ifp = m->m_pkthdr.rcvif;
 		}
-		m = bridge_input(ifp, eh, m);
-		if (m == NULL)
-			return;
-		/* The bridge has determined it's for us. */
-		ifp = m->m_pkthdr.rcvif;
-		goto decapsulate;
 	}
 #endif
+
+#if NVLAN > 0
+	if (etype == ETHERTYPE_8021Q) {
+		if (vlan_input(eh, m) < 0)
+			ifp->if_data.ifi_noproto++;
+		return;
+       }
+#endif /* NVLAN > 0 */
+
 	/*
 	 * If packet is unicast and we're in promiscuous mode, make sure it
 	 * is for us.  Drop otherwise.
@@ -611,16 +621,6 @@ ether_input(ifp, eh, m)
 	}
 
 decapsulate:
-
-	etype = ntohs(eh->ether_type);
-
-#if NVLAN > 0
-	if (etype == ETHERTYPE_8021Q) {
-		if (vlan_input(eh, m) < 0)
-			ifp->if_data.ifi_noproto++;
-		return;
-       }
-#endif /* NVLAN > 0 */
 
 	switch (etype) {
 #ifdef INET
