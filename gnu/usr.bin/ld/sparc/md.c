@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.3 1995/12/30 08:13:58 deraadt Exp $
+ *	$Id: md.c,v 1.4 1996/08/22 01:24:21 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -312,7 +312,7 @@ md_init_header(hp, magic, flags)
 	struct exec	*hp;
 	int		magic, flags;
 {
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	N_SETMAGIC((*hp), magic, MID_MACHINE, flags);
 
 	/* TEXT_START depends on the value of outheader.a_entry.  */
@@ -337,7 +337,7 @@ int
 md_midcompat(hp)
 	struct exec *hp;
 {
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define SUN_M_SPARC	3
 	return (((md_swap_long(hp->a_midmag)&0x00ff0000) >> 16) == SUN_M_SPARC);
 #else
