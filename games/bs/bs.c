@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.11 2001/06/23 23:04:33 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.12 2002/02/18 06:45:26 deraadt Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: bs.c,v 1.11 2001/06/23 23:04:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bs.c,v 1.12 2002/02/18 06:45:26 deraadt Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* (setegid, random) */
@@ -126,7 +126,7 @@ typedef struct
     char hits;		/* how many times has this ship been hit? */
     char symbol;	/* symbol for game purposes */
     char length;	/* length of ship */
-    char x, y;		/* coordinates of ship start point */
+    signed char x, y;	/* coordinates of ship start point */
     unsigned char dir;	/* direction of `bow' */
     bool placed;	/* has it been placed on the board? */
 }
