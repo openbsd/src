@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_fault.c,v 1.9 1997/07/30 20:31:24 niklas Exp $	*/
+/*	$OpenBSD: vm_fault.c,v 1.10 1997/07/30 23:32:24 niklas Exp $	*/
 /*	$NetBSD: vm_fault.c,v 1.20 1997/02/18 13:39:33 mrg Exp $	*/
 
 /* 
@@ -320,8 +320,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 */
 			UNLOCK_MAP;
 			cnt.v_pageins++;
-			if (curproc)
-				curproc->p_addr->u_stats.p_ru.ru_majflt++;
+			curproc->p_addr->u_stats.p_ru.ru_majflt++;
 			rv = vm_pager_get(object->pager, m, TRUE);
 
 			/*
