@@ -1,4 +1,4 @@
-/* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
+/* $OpenBSD: sf16fmr2.c,v 1.4 2002/01/02 19:36:51 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -132,19 +132,20 @@ sf2r_probe(struct device *parent, void *self, void *aux)
 
 	if (!SF16FMR2_BASE_VALID(iobase)) {
 		printf("sf2r: configured iobase 0x%x invalid\n", iobase);
-		return 0;
+		return (0);
 	}
 
 	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
-		return 0;
+		return (0);
+
+	if (!sf2r_find(iot, ioh)) {
+		bus_space_unmap(iot, ioh, iosize);
+		return (0);
+	}
 
 	bus_space_unmap(iot, ioh, iosize);
-
-	if (!sf2r_find(iot, ioh))
-		return 0;
-
 	ia->ia_iosize = iosize;
-	return 1;
+	return (1);
 }
 
 void
@@ -162,8 +163,10 @@ sf2r_attach(struct device *parent, struct device *self, void *aux)
 
 	/* remap I/O */
 	if (bus_space_map(sc->tea.iot, ia->ia_iobase, ia->ia_iosize,
-			  0, &sc->tea.ioh))
-		panic("sf2rattach: bus_space_map() failed");
+			  0, &sc->tea.ioh)) {
+		printf(": bus_space_map() failed\n");
+		return;
+	}
 
 	sc->tea.offset = 0;
 
@@ -172,7 +175,7 @@ sf2r_attach(struct device *parent, struct device *self, void *aux)
 	sc->tea.write_bit = sf2r_write_bit;
 	sc->tea.read = sf2r_read_register;
 
-	printf(": SoundForte RadioLink SF16-FMR2");
+	printf(": SoundForte RadioLink SF16-FMR2\n");
 	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
 	sf2r_set_mute(sc);
 
