@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_hppa.c,v 1.4 2002/03/14 03:15:53 millert Exp $	*/
+/*	$OpenBSD: cmd_hppa.c,v 1.5 2002/04/29 00:13:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat
@@ -209,7 +209,7 @@ print_console()
 
 		/*
 		 * If the console could still not be identified, consider
-		 * it is a simplified encoding for teh default graphics
+		 * it is a simplified encoding for the default graphics
 		 * console. Hence port == 0, no need to check.
 		 */
 		if (port == 0)
@@ -330,15 +330,14 @@ set_serial(console, port, arg)
 	if (dot != NULL)
 		*dot++ = '\0';
 
+	speed = 0;
 	if (arg == NULL || *arg == '\0') {
-		speed = 0;	/* kill warning */
 		for (i = 0; i < NENTS(i_speeds); i++)
 			if (i_speeds[i] == 9600) {
 				speed = i;
 				break;
 			}
 	} else {
-		speed = 0;
 		for (i = 0; i < NENTS(c_speeds); i++)
 			if (strcmp(arg, c_speeds[i]) == 0) {
 				speed = i;
@@ -725,7 +724,7 @@ bus_walk(bus)
 
 				/*
 				 * If a GIO serial port is already registered,
-				 * registered as extra port...
+				 * register as extra port...
 				 */
 				first = 1;
 				for (j = 0; j < MAX_SERIALS; j++)
