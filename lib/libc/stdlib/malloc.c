@@ -59,9 +59,6 @@ static char *rcsid = "$NetBSD: malloc.c,v 1.6 1996/01/17 02:45:25 jtc Exp $";
 
 #define	NULL 0
 
-static void morecore();
-static int findbucket();
-
 /*
  * The overhead on a block is at least 4 bytes.  When free, this space
  * contains a pointer to the next free block, and the bottom two bits must
@@ -87,6 +84,9 @@ union	overhead {
 #define	ov_rmagic	ovu.ovu_rmagic
 #define	ov_size		ovu.ovu_size
 };
+
+static void morecore __P((int));
+static int findbucket __P((union overhead *, int));
 
 #define	MAGIC		0xef		/* magic # on accounting info */
 #define RMAGIC		0x5555		/* magic # on range info */
