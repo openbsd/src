@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.24 2002/01/07 17:08:28 mpech Exp $	*/
+/*	$OpenBSD: identd.c,v 1.25 2002/03/12 18:45:17 millert Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -196,13 +196,15 @@ main(argc, argv)
 			bind_address = optarg;
 			break;
 		case 'u':
-			if (isdigit(optarg[0])) {
-				set_uid = atoi(optarg);
-				break;
-			}
 			pwd = getpwnam(optarg);
-			if (!pwd)
-				ERROR1("no such user (%s) for -u option", optarg);
+			if (pwd == NULL && isdigit(optarg[0])) {
+				set_uid = atoi(optarg);
+				if ((pwd = getpwuid(set_uid)) == NULL)
+					break;
+			}
+			if (pwd == NULL)
+				ERROR1("no such user (%s) for -u option",
+				    optarg);
 			else {
 				set_uid = pwd->pw_uid;
 				if (setgid == 0)
@@ -210,7 +212,8 @@ main(argc, argv)
 			}
 			break;
 		case 'g':
-			if (isdigit(optarg[0])) {
+			grp = getgrnam(optarg);
+			if (grp == NULL && isdigit(optarg[0])) {
 				set_gid = atoi(optarg);
 				break;
 			}
