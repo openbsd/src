@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.28 1998/02/15 01:49:22 deraadt Exp $
+$OpenBSD: pcidevs,v 1.29 1998/02/23 23:55:23 millert Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -645,6 +645,7 @@ product COMPAQ NF3P		0xf130	NetFlex 3/P
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
+product CONTAQ SIO		0xc693	CY82C693U PCI-ISA Bridge (System I/O)
 
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI Bridge
