@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 1998/12/23 17:53:54 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.7 1999/02/25 17:27:57 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1992,1994 The University of Utah and
@@ -32,6 +32,7 @@
 #define	CPU_NINTS	32
 
 /* hardwired clock int line */
+#define	INT_NONE	(0)
 #define	INT_ITMR	(0x80000000)
 #define	INT_IO		(0x80000000)
 #define	INT_ALL		(0xffffffff)
@@ -55,9 +56,9 @@
  */
 #define __splhigh(splhval)	({					\
 	register u_int _ctl_r;						\
-	__asm __volatile("mfctl	%%cr15,%0\n\t"				\
-			 "mtctl	%1,%%cr15\n\t"				\
-			 "rsm %2, %%r0"					\
+	__asm __volatile("rsm %2, %%r0\n\t"				\
+			 "mfctl	%%cr15,%0\n\t"				\
+			 "mtctl	%1,%%cr15"				\
 			: "=r" (_ctl_r): "r" (splhval), "i" (PSW_I));	\
 	_ctl_r;								\
 })
@@ -90,9 +91,9 @@
 #define	splbio()	__spllow(INT_IO)
 #define	splimp()	__spllow(INT_IO)
 #define	spltty()	__spllow(INT_IO)
-#define	splclock()	__spllow(0)
-#define	splstatclock()	__spllow(0)
-#define	splhigh()	__splhigh(0)
+#define	splclock()	__spllow(INT_NONE)
+#define	splstatclock()	__spllow(INT_NONE)
+#define	splhigh()	__splhigh(INT_NONE)
 
 /* software interrupt register */
 extern u_int32_t sir;
