@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1.1.1 1997/06/24 21:28:12 provos Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1997/06/25 09:29:15 provos Exp $
 
 SUBDIR+=	mpn mpz mpf mpq
 
@@ -21,9 +21,10 @@ config.status:	Makefile.in configure
 
 install:
 	# Attempt to edit the info directory node
-	if $(SHELL) -c 'install-info --version' >/dev/null 2>&1; then \
+	if $(SHELL) -c 'install-info --version' >/dev/null 2>&1 ; then \
+		if [ -f $(DESTDIR)/usr/share/info/gmp.info ]; then \
 		install-info --remove --dir-file=$(DESTDIR)/usr/share/info/dir \
-		$(DESTDIR)/usr/share/info/gmp.info; \
+		$(DESTDIR)/usr/share/info/gmp.info; else true; fi \
 		else true; fi
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
 		infodir=${DESTDIR}/usr/share/info \
