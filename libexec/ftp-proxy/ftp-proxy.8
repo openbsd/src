@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.4 2001/08/22 05:41:03 beck Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.5 2001/08/22 15:17:28 beck Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -51,27 +51,31 @@ The proxy uses
 and expects to have the ftp control connection as described in
 .Xr services 5
 redirected to it via a pf rdr command.
+An example of how to do that is further down in this document.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
-Permit only anonymous ftp connections. The proxy will allow connections
-to log in to other sites as the user "ftp" or "anonymous" only. Any
-attempt to log in as another user will be blocked by the proxy.
+Permit only anonymous ftp connections.
+The proxy will allow connections to log in to other sites as the user
+"ftp" or "anonymous" only.
+Any attempt to log in as another user will be blocked by the proxy.
 .It Fl g Ar groupname
 specify the named group to drop group priviledges to, after doing pf lookups
-which require root. By default
+which require root.
+By default
 .Nm ftp-proxy
 uses the default group of the user it drops priviledge to.
 .It Fl u Ar username
 specify the named user to drop priviledge to, after doing pf lookups
-which require root priviledge. By default
+which require root priviledge.
+By default
 .Nm ftp-proxy
 does not drop priviledge and runs as root.
 .Pp 
 Running as root means that the source of data connections the proxy makes
-for PORT and EPRT will be the RFC mandated port 20. When
-running as a non-root user the source of the data connections from
+for PORT and EPRT will be the RFC mandated port 20.
+When running as a non-root user the source of the data connections from
 .Nm ftp-proxy
 will be chosen randomly from the range 
 .Nm minport
@@ -79,20 +83,23 @@ to
 .Nm maxport
 as described below.
 .It Fl n
-Activate network address translation mode. in this mode, the proxy
-will not attempt to proxy passive mode (PASV or EPSV) data connections,
-for this to work on a gateway you will need to be forwarding packets
-and doing network address translation to allow the outbound passive
-connections from the client to reach the server. See
+Activate network address translation mode.
+In this mode, the proxy will not attempt to proxy passive mode (PASV or EPSV)
+data connections, for this to work on a gateway you will need to be forwarding
+packets and doing network address translation to allow the outbound passive
+connections from the client to reach the server.
+See
 .Xr nat.conf 5
-for more details on nat. The proxy only ignores passive mode data connections
-when using this flag, it will still proxy PORT and EPRT mode data connections.
+for more details on nat.
+The proxy only ignores passive mode data connections when using this flag,
+it will still proxy PORT and EPRT mode data connections.
 Without this flag,
 .Nm ftp-proxy
 does not require any ip forwarding or NAT beyond the rdr necessary to
 capture the ftp control connection.
 .It Fl V
-Be verbose. With this option the proxy logs the control commands
+Be verbose.
+With this option the proxy logs the control commands
 sent by clients and the replies send by the servers to
 .Xr syslog 8
 .It Fl w
@@ -102,7 +109,8 @@ allowing connections to be allowed or denied based on the tcp wrapper's
 .Xr hosts.allow 5
 and
 .Xr hosts.deny 5
-files. The proxy does libwrap operations after determining the destination
+files.
+The proxy does libwrap operations after determining the destination
 of the captured control connection, so that tcp wrapper rules may
 be written based on the destination as well as the source of ftp connections.
 .It Fl r
@@ -111,32 +119,37 @@ By default the proxy does not look up hostnames for libwrap or logging
 purposes.
 .It Fl m Ar minport
 specify the lower end of the port range the proxy will use for all
-data connections it establishes. The default is
+data connections it establishes.
+The default is
 .Ev IPPORT_HIFIRSTAUTO
 defined in <netinet/in.h>
 as 49152.
 .It Fl M Ar maxport
 specify the upper end of the port range the proxy will use for the
-data connections it establishes. The default is
+data connections it establishes.
+The default is
 .Ev IPPORT_HILASTAUTO
 defined in <netinet/in.h>
 as 65535.
 .It Fl t Ar timeout
-specifies a timeout, in seconds. The proxy will exit
-and close open connections if it sees no data the duration of
-the timeout. The default is 0, which means the proxy will not time out.
+specifies a timeout, in seconds.
+The proxy will exit and close open connections if it sees no data the
+duration of the timeout.
+The default is 0, which means the proxy will not time out.
 .It Fl D Ar debuglevel
 specify a debug level, where the proxy emits verbose debug output
 into
 .Xr syslog 8
-at level LOG_DEBUG. meaningful values of debuglevel are 0-3, where 0
-is no debug output and 3 is lots of debug output, the default being 0.
+at level LOG_DEBUG.
+Meaningful values of debuglevel are 0-3, where 0 is no debug output and
+3 is lots of debug output, the default being 0.
 .El
 .Pp
 ftp-proxy is run from
 .Xr inetd 8
 and requires that ftp connections are redirected to it using an rdr
-rule. A typical way to do this would be to use a rule such as
+rule.
+A typical way to do this would be to use a rule such as
 .Pp
 rdr on xl0 from any to any port 21 -> 127.0.0.1 port 8081
 .Pp
@@ -160,16 +173,15 @@ in
 .Xr pfctl 8 ,
 .Xr syslogd 8
 .Sh BUGS
-.Pp
 Extended Passive mode (EPSV) is not supported by the proxy and will
 not work unless the proxy is run in network address translation mode.
 When not in network address translation mode, the proxy returns an error
 to the client, hopefully forcing the client to revert to Passive mode (PASV)
-which is supported. EPSV will work in network address translation mode,
-assuming a
+which is supported.
+EPSV will work in network address translation mode, assuming a
 .Xr nat.conf 5
 setup which allows the EPSV connections through to their destinations.
 .Pp
-IPv6 is not yet supported. This will have to wait for corresponding
-support from
+IPv6 is not yet supported.
+This will have to wait for corresponding support from
 .Xr pf 4 .
