@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.357 2004/11/28 04:15:09 krw Exp $
+#	$OpenBSD: install.sub,v 1.358 2005/02/13 06:57:59 david Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -634,7 +634,7 @@ v4_config() {
 
 	if ifconfig $_ifs | grep 'groups:.* dhcp' >/dev/null 2>&1; then
 		_addr=dhcp
-	else	
+	else
 		set -- $(v4_info $_ifs)
 		if [[ -n $2 ]]; then
 			_addr=$2; _mask=$3
