@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.18 2002/05/06 23:33:46 millert Exp $
+.\"	$OpenBSD: termios.4,v 1.19 2003/04/09 04:29:03 jmc Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -88,7 +88,7 @@ The grouping at a higher layer into sessions is to restrict
 the job control related signals and system calls to within processes
 resulting from a particular instance of a "login".
 Typically, a session is created when a user logs in, and the login terminal
-is setup to be the controlling terminal; all processes spawned from that
+is set up to be the controlling terminal; all processes spawned from that
 login shell are in the same session, and inherit the controlling
 terminal.
 A job control shell
@@ -197,7 +197,8 @@ terminal, write operations are allowed.
 Attempts by a process in a background process group to write to its
 controlling terminal will cause the process group to be sent a
 .Dv SIGTTOU
-signal unless one of the following special cases apply:  If
+signal unless one of the following special cases apply:
+If
 .Dv TOSTOP
 is not
 set, or if
@@ -748,7 +749,7 @@ and
 characters cannot be changed.
 The values for all the remaining characters can be set and are
 described later in the document under
-Special Control Characters.
+.Sx Special Control Characters .
 .Pp
 Special
 character functions associated with changeable special control characters
@@ -1445,7 +1446,7 @@ associated with the
 and
 .Dv SUSP
 characters
-are not be done.
+is not done.
 .Pp
 If
 .Dv XCASE

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.23 2002/11/30 19:36:58 nate Exp $
+.\"	$OpenBSD: usb.4,v 1.24 2003/04/09 04:29:03 jmc Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ The
 .Cm flags
 are used to specify if the devices on the
 .Tn USB
-bus should probed
+bus should be probed
 early in the boot process.
 If the
 .Cm flags
@@ -271,10 +271,10 @@ Any device-specific driver can attach to the device.
 If none is found, any device class specific driver can attach.
 .It
 If none is found, all configurations are iterated over.
-For each configuration all the interface are iterated over and interface
+For each configuration all the interfaces are iterated over and interface
 drivers can attach.
 If any interface driver attached in a certain
-configuration the iteration over configurations is stopped.
+configuration, the iteration over configurations is stopped.
 .It
 If still no drivers have been found, the generic
 .Tn USB
@@ -399,7 +399,7 @@ descriptors exactly follows the naming in the
 .Tn USB
 specification.
 Byte sized fields can be accessed directly, but word (16-bit)
-sized fields must be access by the
+sized fields must be accessed by the
 .Fn UGETW field
 and
 .Fn USETW field value
