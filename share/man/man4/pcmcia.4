@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.20 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.21 2002/06/20 02:47:07 deraadt Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 .Cd "pcic*   at pci? dev? function ?"
 .Cd "pcic*   at isapnp?
 .Cd "pcmcia* at pcic? controller ? socket ?"
+.Cd "stp*    at sbus? slot ? offset ?"
+.Cd "pcmcia* at stp? socket ?"
 .Cd "xx*     at pcmcia? function ?"
 .Sh INTRODUCTION
 The
@@ -103,6 +105,7 @@ The supported PCMCIA controllers are those that are i82365 compatible.
 .Xr isa 4 ,
 .Xr isapnp 4 ,
 .Xr pci 4 ,
+.Xr sbus 4 ,
 .Xr usb 4
 .Sh HISTORY
 The
