@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.22 2003/07/29 20:10:17 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.23 2003/07/30 15:47:54 millert Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: util.c,v 1.22 2003/07/29 20:10:17 millert Exp $";
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.23 2003/07/30 15:47:54 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -216,47 +216,31 @@ pfatal(const char *fmt, ...)
 }
 
 /*
- * Get a response from the user, somehow or other.
+ * Get a response from the user via /dev/tty
  */
 void
 ask(const char *fmt, ...)
 {
 	va_list	ap;
-	int	ttyfd;
-	ssize_t	r;
-	bool	tty2 = isatty(2);
+	ssize_t	nr;
+	static	int ttyfd = -1;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof buf, fmt, ap);
+	vfprintf(stdout, fmt, ap);
 	va_end(ap);
-	fflush(stderr);
-	write(2, buf, strlen(buf));
-	if (tty2) {
-		/* might be redirected to a file */
-		r = read(2, buf, sizeof buf);
-	} else if (isatty(1)) {	/* this may be new file output */
-		fflush(stdout);
-		write(1, buf, strlen(buf));
-		r = read(1, buf, sizeof buf);
-	} else if ((ttyfd = open(_PATH_TTY, O_RDWR)) >= 0 && isatty(ttyfd)) {
-		/* might be deleted or unwriteable */
-		write(ttyfd, buf, strlen(buf));
-		r = read(ttyfd, buf, sizeof buf);
-		close(ttyfd);
-	} else if (isatty(0)) {	/* this is probably patch input */
-		fflush(stdin);
-		write(0, buf, strlen(buf));
-		r = read(0, buf, sizeof buf);
-	} else {		/* no terminal at all--default it */
-		buf[0] = '\n';
-		r = 1;
+	fflush(stdout);
+	if (ttyfd < 0)
+		ttyfd = open(_PATH_TTY, O_RDONLY);
+	if (ttyfd >= 0) {
+		if ((nr = read(ttyfd, buf, sizeof(buf))) > 0 &&
+		    buf[nr - 1] == '\n')
+			buf[nr - 1] = '\0';
 	}
-	if (r <= 0)
-		buf[0] = 0;
-	else
-		buf[r] = '\0';
-	if (!tty2)
-		say(buf);
+	if (ttyfd < 0 || nr <= 0) {
+		/* no tty or error reading, pretend user entered 'return' */
+		putchar('\n');
+		buf[0] = '\0';
+	}
 }
 
 /*
