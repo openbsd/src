@@ -1185,7 +1185,7 @@ dumpsys()
 	int error;
 
 	/* Save registers. */
-	savectx(&dumppcb, 0);
+	savectx((struct user *)&dumppcb, 0);
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
