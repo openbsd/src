@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.82 2003/02/20 11:08:06 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.83 2003/02/20 22:09:27 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .Op Fl k Ar host
 .Op Fl s Ar modifier
 .Op Fl t Ar table
-.Op Fl T Ar command [addresses ...]
+.Op Fl T Ar command [address ...]
 .Op Fl x Ar level
 .Ek
 .Sh DESCRIPTION
@@ -233,7 +233,7 @@ Show all of the above.
 .El
 .It Fl t Ar table
 Specify the name of the table.
-.It Fl T Ar command [addresses ...]
+.It Fl T Ar command [address ...]
 Specify the command to apply to the table.
 Commands include:
 .Bl -tag -width "T Replace " -compact

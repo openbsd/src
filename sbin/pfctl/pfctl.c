@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.155 2003/02/20 11:08:06 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.156 2003/02/20 22:09:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -187,7 +187,7 @@ usage(void)
 	fprintf(stderr, "             ");
 	fprintf(stderr, "[-f file] [-F modifier] [-k host] [-s modifier]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-t table] [-T command [addresses ...]] [-x level]\n");
+	fprintf(stderr, "[-t table] [-T command [address ...]] [-x level]\n");
 	exit(1);
 }
 
