@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.5 1997/07/19 22:31:16 niklas Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.6 1997/07/23 23:34:46 niklas Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /* 
@@ -91,6 +91,13 @@ db_set_breakpoint(map, addr, count)
 	    db_printf("Already set.\n");
 	    return;
 	}
+
+#ifdef DB_VALID_BREAKPOINT
+	if (!DB_VALID_BREAKPOINT(addr)) {
+		db_printf("Not a valid address for a breakpoint.\n");
+		return;
+	}	
+#endif
 
 	bkpt = db_breakpoint_alloc();
 	if (bkpt == 0) {
@@ -210,10 +217,17 @@ db_set_temp_breakpoint(addr)
 {
 	db_breakpoint_t	bkpt;
 
+#ifdef DB_VALID_BREAKPOINT
+	if (!DB_VALID_BREAKPOINT(addr)) {
+		db_printf("Not a valid address for a breakpoint.\n");
+		return (0);
+	}	
+#endif
+
 	bkpt = db_breakpoint_alloc();
 	if (bkpt == 0) {
 	    db_printf("Too many breakpoints.\n");
-	    return 0;
+	    return (0);
 	}
 
 	bkpt->map = NULL;
