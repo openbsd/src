@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep-os.h,v 1.2 2001/01/28 22:38:49 niklas Exp $	*/
+/*	$OpenBSD: sysdep-os.h,v 1.3 2002/08/29 15:16:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -34,5 +34,12 @@
 #define KAME
 
 #include <netinet6/ipsec.h>
+
+#ifndef CPI_RESERVED_MAX
+#define CPI_RESERVED_MIN	1
+#define CPI_RESERVED_MAX	255
+#define CPI_PRIVATE_MIN		61440
+#define CPI_PRIVATE_MAX		65536
+#endif
 
 #endif /* _SYSDEP_OS_H_ */
