@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.297 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.298 2004/06/15 21:12:31 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1186,6 +1186,8 @@ cyrix3_cpu_setup(cpu_device, model, step)
 		if (val >= 0xC0000001) {
 			__asm __volatile("cpuid"
 			    : "=d" (val) : "a" (0xC0000001) : "cc");
+		} else {
+			val = 0;
 		}
 
 		/* Enable RNG if present and disabled */
