@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.77 2004/11/14 11:58:43 espie Exp $
+# $OpenBSD: pkg_delete,v 1.78 2004/11/14 13:20:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -29,12 +29,17 @@ use OpenBSD::PackageInfo;
 
 our %forced = ();
 
-our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I, $opt_x);
+our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I, $opt_x);
 
 $opt_v = 0;
 
 getopts('vcxDdnf:qpS:L:B:I',
-	{'v' => sub {++$opt_v;} });
+	{'v' => sub {++$opt_v;},
+	 'f' => sub { 
+	 		for my $o (split/,/, shift) { 
+				$forced{$o} = 1;
+			}
+	    	}});
 if ($opt_D) {
 	$opt_I = 1;
 }
@@ -52,10 +57,6 @@ if (defined $opt_p) {
 }
 if (defined $opt_d) {
 	Fatal "Option d is obsolete";
-}
-
-if ($opt_f) {
-	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
 
 my %done;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.120 2004/11/14 12:54:30 espie Exp $
+# $OpenBSD: pkg_add,v 1.121 2004/11/14 13:20:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -557,13 +557,15 @@ sub install_package
 	return ();
 }
 
-our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c);
+our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c);
 $opt_v = 0;
 getopts('aqcvnrxIL:f:B:A:P:Q:',
-	{'v' => sub {++$opt_v;} });
-if ($opt_f) {
-	%forced = map {($_, 1)} split(/,/, $opt_f);
-}
+	{'v' => sub {++$opt_v;},
+	 'f' => sub { 
+	 		for my $o (split/,/, shift) { 
+				$forced{$o} = 1;
+			}
+	    	}});
 $opt_L = '/usr/local' unless defined $opt_L;
 
 my $state = new OpenBSD::Error;
