@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbp2.c,v 1.4 2003/01/08 06:33:38 tdeval Exp $	*/
+/*	$OpenBSD: sbp2.c,v 1.5 2004/02/15 02:38:38 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -271,6 +271,7 @@ sbp2_print_data(struct p1212_data *data)
 			DPRINTF(("SBP2 Management Agent: 0x%08x\n", key->val));
 		break;
 	default:
+		break;
 	}
 }
 
@@ -284,6 +285,7 @@ sbp2_print_dir(struct p1212_dir *dir)
 		DPRINTF(("Logical Unit "));
 		break;
 	default:
+		break;
 	}
 }
 
