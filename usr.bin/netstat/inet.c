@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.12 1997/02/27 01:48:26 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.13 1997/06/15 13:47:27 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.12 1997/02/27 01:48:26 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.13 1997/06/15 13:47:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,9 +189,9 @@ tcp_stats(off, name)
 
 	p(tcps_sndtotal, "\t%d packet%s sent\n");
 	p2(tcps_sndpack,tcps_sndbyte,
-		"\t\t%d data packet%s (%d byte%s)\n");
+		"\t\t%d data packet%s (%qd byte%s)\n");
 	p2(tcps_sndrexmitpack, tcps_sndrexmitbyte,
-		"\t\t%d data packet%s (%d byte%s) retransmitted\n");
+		"\t\t%d data packet%s (%qd byte%s) retransmitted\n");
 	p2(tcps_sndacks, tcps_delack,
 		"\t\t%d ack-only packet%s (%d delayed)\n");
 	p(tcps_sndurg, "\t\t%d URG only packet%s\n");
@@ -199,20 +199,20 @@ tcp_stats(off, name)
 	p(tcps_sndwinup, "\t\t%d window update packet%s\n");
 	p(tcps_sndctrl, "\t\t%d control packet%s\n");
 	p(tcps_rcvtotal, "\t%d packet%s received\n");
-	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%d ack%s (for %d byte%s)\n");
+	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%d ack%s (for %qd byte%s)\n");
 	p(tcps_rcvdupack, "\t\t%d duplicate ack%s\n");
 	p(tcps_rcvacktoomuch, "\t\t%d ack%s for unsent data\n");
 	p2(tcps_rcvpack, tcps_rcvbyte,
-		"\t\t%d packet%s (%d byte%s) received in-sequence\n");
+		"\t\t%d packet%s (%qd byte%s) received in-sequence\n");
 	p2(tcps_rcvduppack, tcps_rcvdupbyte,
-		"\t\t%d completely duplicate packet%s (%d byte%s)\n");
+		"\t\t%d completely duplicate packet%s (%qd byte%s)\n");
 	p(tcps_pawsdrop, "\t\t%d old duplicate packet%s\n");
 	p2(tcps_rcvpartduppack, tcps_rcvpartdupbyte,
-		"\t\t%d packet%s with some dup. data (%d byte%s duped)\n");
+		"\t\t%d packet%s with some dup. data (%qd byte%s duped)\n");
 	p2(tcps_rcvoopack, tcps_rcvoobyte,
-		"\t\t%d out-of-order packet%s (%d byte%s)\n");
+		"\t\t%d out-of-order packet%s (%qd byte%s)\n");
 	p2(tcps_rcvpackafterwin, tcps_rcvbyteafterwin,
-		"\t\t%d packet%s (%d byte%s) of data after window\n");
+		"\t\t%d packet%s (%qd byte%s) of data after window\n");
 	p(tcps_rcvwinprobe, "\t\t%d window probe%s\n");
 	p(tcps_rcvwinupd, "\t\t%d window update packet%s\n");
 	p(tcps_rcvafterclose, "\t\t%d packet%s received after close\n");

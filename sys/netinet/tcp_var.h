@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.6 1997/06/06 11:22:18 deraadt Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.7 1997/06/15 13:47:28 deraadt Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -188,9 +188,9 @@ struct	tcpstat {
 
 	u_long	tcps_sndtotal;		/* total packets sent */
 	u_long	tcps_sndpack;		/* data packets sent */
-	u_long	tcps_sndbyte;		/* data bytes sent */
+	u_quad_t tcps_sndbyte;		/* data bytes sent */
 	u_long	tcps_sndrexmitpack;	/* data packets retransmitted */
-	u_long	tcps_sndrexmitbyte;	/* data bytes retransmitted */
+	u_quad_t tcps_sndrexmitbyte;	/* data bytes retransmitted */
 	u_long	tcps_sndacks;		/* ack-only packets sent */
 	u_long	tcps_sndprobe;		/* window probes sent */
 	u_long	tcps_sndurg;		/* packets sent with URG only */
@@ -199,25 +199,25 @@ struct	tcpstat {
 
 	u_long	tcps_rcvtotal;		/* total packets received */
 	u_long	tcps_rcvpack;		/* packets received in sequence */
-	u_long	tcps_rcvbyte;		/* bytes received in sequence */
+	u_quad_t tcps_rcvbyte;		/* bytes received in sequence */
 	u_long	tcps_rcvbadsum;		/* packets received with ccksum errs */
 	u_long	tcps_rcvbadoff;		/* packets received with bad offset */
 	u_long	tcps_rcvmemdrop;	/* packets dropped for lack of memory */
 	u_long	tcps_rcvshort;		/* packets received too short */
 	u_long	tcps_rcvduppack;	/* duplicate-only packets received */
-	u_long	tcps_rcvdupbyte;	/* duplicate-only bytes received */
+	u_quad_t tcps_rcvdupbyte;	/* duplicate-only bytes received */
 	u_long	tcps_rcvpartduppack;	/* packets with some duplicate data */
-	u_long	tcps_rcvpartdupbyte;	/* dup. bytes in part-dup. packets */
+	u_quad_t tcps_rcvpartdupbyte;	/* dup. bytes in part-dup. packets */
 	u_long	tcps_rcvoopack;		/* out-of-order packets received */
-	u_long	tcps_rcvoobyte;		/* out-of-order bytes received */
+	u_quad_t tcps_rcvoobyte;	/* out-of-order bytes received */
 	u_long	tcps_rcvpackafterwin;	/* packets with data after window */
-	u_long	tcps_rcvbyteafterwin;	/* bytes rcvd after window */
+	u_quad_t tcps_rcvbyteafterwin;	/* bytes rcvd after window */
 	u_long	tcps_rcvafterclose;	/* packets rcvd after "close" */
 	u_long	tcps_rcvwinprobe;	/* rcvd window probe packets */
 	u_long	tcps_rcvdupack;		/* rcvd duplicate acks */
 	u_long	tcps_rcvacktoomuch;	/* rcvd acks for unsent data */
 	u_long	tcps_rcvackpack;	/* rcvd ack packets */
-	u_long	tcps_rcvackbyte;	/* bytes acked by rcvd acks */
+	u_quad_t tcps_rcvackbyte;	/* bytes acked by rcvd acks */
 	u_long	tcps_rcvwinupd;		/* rcvd window update packets */
 	u_long	tcps_pawsdrop;		/* segments dropped due to PAWS */
 	u_long	tcps_predack;		/* times hdr predict ok for acks */
