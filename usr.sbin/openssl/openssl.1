@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.31 2004/01/25 20:27:37 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.32 2004/01/28 19:25:19 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -476,7 +476,7 @@ The input format.
 is binary format and
 .Ar PEM
 .Pq Privacy Enhanced Mail ,
-the default, is base64 encoded.
+the default, is base64-encoded.
 .Ar TXT
 is plain text.
 .It Fl length Ar number
@@ -492,9 +492,7 @@ The format of this file is described in the
 .Sx ASN1PARSE NOTES
 section below.
 .It Fl out Ar file
-Output file to place the
-.Em DER
-encoded data into.
+Output file to place the DER-encoded data into.
 If this option is not present, then no encoded data will be output.
 This is most useful when combined with the
 .Fl strparse
@@ -1696,11 +1694,7 @@ selection options were added in version 0.9.7.
 .Pp
 The
 .Nm crl
-command processes CRL files in
-.Ar DER
-or
-.Ar PEM
-format.
+command processes CRL files in DER or PEM format.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
@@ -1725,10 +1719,10 @@ option is not specified.
 .It Fl inform Ar DER | PEM
 This specifies the input format.
 .Ar DER
-format is a DER encoded CRL structure.
+format is a DER-encoded CRL structure.
 .Ar PEM
 .Pq the default
-is a base64 encoded version of the DER form with header and footer lines.
+is a base64-encoded version of the DER form with header and footer lines.
 .It Fl issuer
 Output the issuer name.
 .It Fl lastupdate
@@ -1758,16 +1752,11 @@ The PEM CRL format uses the header and footer lines:
 -----END X509 CRL-----
 .Ed
 .Sh CRL EXAMPLES
-Convert a CRL file from
-.Ar PEM
-to
-.Ar DER :
+Convert a CRL file from PEM to DER:
 .Pp
 .Dl $ openssl crl -in crl.pem -outform DER -out crl.der
 .Pp
-Output the text form of a
-.Ar DER
-encoded certificate:
+Output the text form of a DER-encoded certificate:
 .Pp
 .Dl $ openssl crl -in crl.der -inform DER -text -noout
 .Sh CRL BUGS
@@ -1799,23 +1788,21 @@ The options are as follows:
 .It Fl certfile Ar file
 Specifies a
 .Ar file
-containing one or more certificates in
-.Ar PEM
-format.
+containing one or more certificates in PEM format.
 All certificates in the file will be added to the PKCS#7 structure.
 This option can be used more than once to read certificates from multiple
 files.
 .It Fl in Ar file
 This specifies the input
 .Ar file
-to read a CRL from or standard input if this option is not specified.
+to read a CRL from, or standard input if this option is not specified.
 .It Fl inform Ar DER | PEM
 This specifies the CRL input format.
 .Ar DER
-format is a DER encoded CRL structure.
+format is a DER-encoded CRL structure.
 .Ar PEM
 .Pq the default
-is a base64 encoded version of the DER form with header and footer lines.
+is a base64-encoded version of the DER form with header and footer lines.
 .It Fl nocrl
 Normally, a CRL is included in the output file.
 With this option, no CRL is
@@ -1823,23 +1810,21 @@ included in the output file and a CRL is not read from the input file.
 .It Fl out Ar file
 Specifies the output
 .Ar file
-to write the PKCS#7 structure to or standard output by default.
+to write the PKCS#7 structure to, or standard output by default.
 .It Fl outform Ar DER | PEM
 This specifies the PKCS#7 structure output format.
 .Ar DER
-format is a DER encoded PKCS#7 structure.
+format is a DER-encoded PKCS#7 structure.
 .Ar PEM
 .Pq the default
-is a base64 encoded version of the DER form with header and footer lines.
+is a base64-encoded version of the DER form with header and footer lines.
 .El
 .Sh CRL2PKCS7 EXAMPLES
 Create a PKCS#7 structure from a certificate and CRL:
 .Pp
 .Dl $ openssl crl2pkcs7 -in crl.pem -certfile cert.pem -out p7.pem
 .Pp
-Create a PKCS#7 structure in
-.Ar DER
-format with no CRL from several
+Create a PKCS#7 structure in DER format with no CRL from several
 different certificates:
 .Bd -literal -offset indent
 $ openssl crl2pkcs7 -nocrl -certfile newcert.pem \e
@@ -1851,13 +1836,11 @@ just certificates and an optional CRL.
 .Pp
 This utility can be used to send certificates and CAs to Netscape as part of
 the certificate enrollment process.
-This involves sending the DER encoded output
+This involves sending the DER-encoded output
 as MIME type
 .Em application/x-x509-user-cert .
 .Pp
-The
-.Ar PEM
-encoded form with the header and footer lines removed can be used to
+The PEM-encoded form with the header and footer lines removed can be used to
 install user certificates and CAs in MSIE using the Xenroll control.
 .\"
 .\" DGST
@@ -2046,17 +2029,17 @@ The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input
 .Ar file
-to read parameters from or standard input if this option is not specified.
+to read parameters from, or standard input if this option is not specified.
 .It Fl inform Ar DER | PEM
 This specifies the input format.
 The argument
 .Ar DER
-uses an ASN1 DER encoded form compatible with the PKCS#3 DHparameter
+uses an ASN1 DER-encoded form compatible with the PKCS#3 DHparameter
 structure.
 The
 .Ar PEM
 form is the default format:
-it consists of the DER format base64 encoded with
+it consists of the DER format base64-encoded with
 additional header and footer lines.
 .It Fl noout
 This option inhibits the output of the encoded version of the parameters.
@@ -2107,8 +2090,7 @@ programs are retained for now, but may have different purposes in future
 versions of
 .Nm OpenSSL .
 .Sh DHPARAM NOTES
-.Ar PEM
-format DH parameters use the header and footer lines:
+PEM format DH parameters use the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN DH PARAMETERS-----
 -----END DH PARAMETERS-----
@@ -2185,9 +2167,7 @@ utility to read in an encrypted key with no encryption option can be used to
 remove the pass phrase from a key,
 or by setting the encryption options it can be use to add or change
 the pass phrase.
-These options can only be used with
-.Ar PEM
-format output files.
+These options can only be used with PEM format output files.
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -2199,13 +2179,13 @@ The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input
 .Ar file
-to read a key from or standard input if this option is not specified.
+to read a key from, or standard input if this option is not specified.
 If the key is encrypted, a pass phrase will be prompted for.
 .It Fl inform Ar DER | PEM
 This specifies the input format.
 The
 .Ar DER
-argument with a private key uses an ASN1 DER encoded form of an ASN.1
+argument with a private key uses an ASN1 DER-encoded form of an ASN.1
 SEQUENCE consisting of the values of version
 .Pq currently zero ,
 P, Q, G,
@@ -2217,8 +2197,8 @@ structure: it is an error if the key is not DSA.
 The
 .Ar PEM
 form is the default format:
-it consists of the DER format base64
-encoded with additional header and footer lines.
+it consists of the DER format base64-encoded with additional header and footer
+lines.
 In the case of a private key, PKCS#8 format is also accepted.
 .It Fl modulus
 This option prints out the value of the public key component of the key.
@@ -2262,17 +2242,13 @@ This option is automatically set if the input is a public key.
 Prints out the public/private key components and parameters.
 .El
 .Sh DSA NOTES
-The
-.Ar PEM
-private key format uses the header and footer lines:
+The PEM private key format uses the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN DSA PRIVATE KEY-----
 -----END DSA PRIVATE KEY-----
 .Ed
 .Pp
-The
-.Ar PEM
-public key format uses the header and footer lines:
+The PEM public key format uses the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN PUBLIC KEY-----
 -----END PUBLIC KEY-----
@@ -2349,13 +2325,13 @@ parameter is included, then this option will be ignored.
 This specifies the input format.
 The
 .Ar DER
-argument uses an ASN1 DER encoded form compatible with RFC 2459
+argument uses an ASN1 DER-encoded form compatible with RFC 2459
 .Pq PKIX
 DSS-Parms that is a SEQUENCE consisting of p, q and g, respectively.
 The
 .Ar PEM
 form is the default format:
-it consists of the DER format base64 encoded with additional header
+it consists of the DER format base64-encoded with additional header
 and footer lines.
 .It Fl noout
 This option inhibits the output of the encoded version of the parameters.
@@ -2388,8 +2364,7 @@ Multiple files can be specified, separated by a
 This option prints out the DSA parameters in human readable form.
 .El
 .Sh DSAPARAM NOTES
-.Ar PEM
-format DSA parameters use the header and footer lines:
+PEM format DSA parameters use the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN DSA PARAMETERS-----
 -----END DSA PARAMETERS-----
@@ -2435,7 +2410,7 @@ If the
 option is set, then base64 process the data on one line.
 .It Fl a
 Base64 process the data.
-This means that if encryption is taking place, the data is base64 encoded
+This means that if encryption is taking place, the data is base64-encoded
 after encryption.
 If decryption is set, then the input data is base64 decoded before
 being decrypted.
@@ -2950,10 +2925,10 @@ The options are as follows:
 .It Fl in Ar file
 This specifies the input
 .Ar file
-to read or standard input if this option is not specified.
+to read, or standard input if this option is not specified.
 .It Fl out Ar file
 Specifies the output
-.Ar file
+.Ar file ,
 or standard output by default.
 .It Fl toseq
 Normally, a Netscape certificate sequence will be input and the output
@@ -2974,9 +2949,7 @@ Create a Netscape certificate sequence:
 .Dl $ openssl nseq -in certs.pem -toseq -out nseq.pem
 .Ed
 .Sh NSEQ NOTES
-The
-.Em PEM
-encoded form uses the same headers and footers as a certificate:
+The PEM-encoded form uses the same headers and footers as a certificate:
 .Bd -unfilled -offset indent
 -----BEGIN CERTIFICATE-----
 -----END CERTIFICATE-----
@@ -2988,12 +2961,9 @@ certificates are sent to the browser:
 for example during certificate enrollment.
 It is used by the Netscape certificate server, for example.
 .Sh NSEQ BUGS
-This program needs a few more options:
-like allowing
-.Em DER
-or
-.Em PEM
-input and output files and allowing multiple certificate files to be used.
+This program needs a few more options,
+like allowing DER or PEM input and output files
+and allowing multiple certificate files to be used.
 .\"
 .\" OCSP
 .\"
@@ -3097,9 +3067,7 @@ This specifies the current issuer certificate.
 This option can be used multiple times.
 The certificate specified in
 .Ar file
-must be in
-.Ar PEM
-format.
+must be in PEM format.
 .It Fl no_cert_checks
 Don't perform any additional checks on the OCSP response signer's certificate.
 That is, do not make any checks to see if the signer's certificate is
@@ -3174,9 +3142,7 @@ and
 .Fl host
 options).
 .It Fl reqout Ar file , Fl respout Ar file
-Write out the
-.Ar DER
-encoded certificate request or response to
+Write out the DER-encoded certificate request or response to
 .Ar file .
 .It Fl serial Ar num
 Same as the
@@ -3557,56 +3523,22 @@ prints
 .Sh PKCS7
 .Nm openssl pkcs7
 .Bk -words
-.Op Fl inform Ar DER | PEM
-.Op Fl outform Ar DER | PEM
-.Op Fl in Ar file
-.Op Fl out Ar file
+.Op Fl noout
 .Op Fl print_certs
 .Op Fl text
-.Op Fl noout
 .Op Fl engine Ar id
+.Op Fl in Ar file
+.Op Fl inform Ar DER | PEM
+.Op Fl out Ar file
+.Op Fl outform Ar DER | PEM
 .Ek
 .Pp
 The
 .Nm pkcs7
-command processes PKCS#7 files in
-.Em DER
-or
-.Em PEM
-format.
+command processes PKCS#7 files in DER or PEM format.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-.Ar DER
-format is a DER encoded PKCS#7 v1.5 structure.
-.Ar PEM
-.Pq the default
-is a base64 encoded version of the DER form with header and footer lines.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl in Ar file
-This specifies the input
-.Ar file
-to read from or standard input if this option is not specified.
-.It Fl out Ar file
-Specifies the output
-.Ar file
-to write to or standard output by default.
-.It Fl print_certs
-Prints out any certificates or CRLs contained in the file.
-They are preceded by their subject and issuer names in one line format.
-.It Fl text
-Prints out certificate details in full rather than just subject and
-issuer names.
-.It Fl noout
-Don't output the encoded version of the PKCS#7 structure
-(or certificates if
-.Fl print_certs
-is set).
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -3615,12 +3547,39 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl in Ar file
+This specifies the input
+.Ar file
+to read from, or standard input if this option is not specified.
+.It Fl inform Ar DER | PEM
+This specifies the input format.
+.Ar DER
+format is a DER-encoded PKCS#7 v1.5 structure.
+.Ar PEM
+.Pq the default
+is a base64-encoded version of the DER form with header and footer lines.
+.It Fl noout
+Don't output the encoded version of the PKCS#7 structure
+(or certificates if
+.Fl print_certs
+is set).
+.It Fl out Ar file
+Specifies the output
+.Ar file
+to write to, or standard output by default.
+.It Fl outform Ar DER | PEM
+This specifies the output format; the options have the same meaning as the
+.Fl inform
+option.
+.It Fl print_certs
+Prints out any certificates or CRLs contained in the file.
+They are preceded by their subject and issuer names in a one-line format.
+.It Fl text
+Prints out certificate details in full rather than just subject and
+issuer names.
 .El
 .Sh PKCS7 EXAMPLES
-Convert a PKCS#7 file from
-.Em PEM
-to
-.Em DER :
+Convert a PKCS#7 file from PEM to DER:
 .Pp
 .Dl $ openssl pkcs7 -in file.pem -outform DER -out file.der
 .Pp
@@ -3628,9 +3587,7 @@ Output all certificates in a file:
 .Pp
 .Dl $ openssl pkcs7 -in file.pem -print_certs -out certs.pem
 .Sh PKCS7 NOTES
-The
-.Em PEM
-PKCS#7 format uses the header and footer lines:
+The PEM PKCS#7 format uses the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN PKCS7-----
 -----END PKCS7-----
@@ -3652,21 +3609,21 @@ They cannot currently parse, for example, the new CMS as described in RFC 2630.
 .Sh PKCS8
 .Nm openssl pkcs8
 .Bk -words
-.Op Fl topk8
-.Op Fl inform Ar DER | PEM
-.Op Fl outform Ar DER | PEM
-.Op Fl in Ar file
-.Op Fl passin Ar arg
-.Op Fl out Ar file
-.Op Fl passout Ar arg
-.Op Fl noiter
-.Op Fl nocrypt
-.Op Fl nooct
 .Op Fl embed
+.Op Fl nocrypt
+.Op Fl noiter
+.Op Fl nooct
 .Op Fl nsdb
-.Op Fl v2 Ar alg
-.Op Fl v1 Ar alg
+.Op Fl topk8
 .Op Fl engine Ar id
+.Op Fl in Ar file
+.Op Fl inform Ar DER | PEM
+.Op Fl out Ar file
+.Op Fl outform Ar DER | PEM
+.Op Fl passin Ar arg
+.Op Fl passout Ar arg
+.Op Fl v1 Ar alg
+.Op Fl v2 Ar alg
 .Ek
 .Pp
 The
@@ -3679,74 +3636,6 @@ and PKCS#12 algorithms.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl topk8
-Normally, a PKCS#8 private key is expected on input and a traditional format
-private key will be written.
-With the
-.Fl topk8
-option the situation is reversed:
-it reads a traditional format private key and writes a PKCS#8 format key.
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-If a PKCS#8 format key is expected on input,
-then either a
-.Em DER
-or
-.Em PEM
-encoded version of a PKCS#8 key will be expected.
-Otherwise the
-.Em DER
-or
-.Em PEM
-format of the traditional format private key is used.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl in Ar file
-This specifies the input
-.Ar file
-to read a key from or standard input if this option is not specified.
-If the key is encrypted, a pass phrase will be prompted for.
-.It Fl passin Ar arg
-The input file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
-.It Fl out Ar file
-This specifies the output
-.Ar file
-to write a key to or standard output by default.
-If any encryption options are set then a pass phrase will be prompted for.
-The output filename should
-.Em not
-be the same as the input filename.
-.It Fl passout Ar arg
-The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
-.It Fl nocrypt
-PKCS#8 keys generated or input are normally PKCS#8
-.Em EncryptedPrivateKeyInfo
-structures using an appropriate password based encryption algorithm.
-With this option an unencrypted
-.Em PrivateKeyInfo
-structure is expected or output.
-This option does not encrypt private keys at all and should only be used
-when absolutely necessary.
-Certain software such as some versions of Java code signing software used
-unencrypted private keys.
-.It Fl nooct
-This option generates RSA private keys in a broken format that some software
-uses.
-Specifically the private key should be enclosed in an OCTET STRING,
-but some software just includes the structure itself without the
-surrounding OCTET STRING.
 .It Fl embed
 This option generates DSA keys in a broken format.
 The DSA parameters are embedded inside the
@@ -3756,15 +3645,87 @@ In this form the OCTET STRING contains an ASN1 SEQUENCE consisting of
 two structures:
 a SEQUENCE containing the parameters and an ASN1 INTEGER containing
 the private key.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm pkcs8
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
+.It Fl in Ar file
+This specifies the input
+.Ar file
+to read a key from, or standard input if this option is not specified.
+If the key is encrypted, a pass phrase will be prompted for.
+.It Fl inform Ar DER | PEM
+This specifies the input format.
+If a PKCS#8 format key is expected on input,
+then either a
+DER- or PEM-encoded version of a PKCS#8 key will be expected.
+Otherwise the DER or PEM format of the traditional format private key is used.
+.It Fl nocrypt
+PKCS#8 keys generated or input are normally PKCS#8
+.Em EncryptedPrivateKeyInfo
+structures using an appropriate password-based encryption algorithm.
+With this option, an unencrypted
+.Em PrivateKeyInfo
+structure is expected or output.
+This option does not encrypt private keys at all and should only be used
+when absolutely necessary.
+Certain software such as some versions of Java code signing software use
+unencrypted private keys.
+.It Fl nooct
+This option generates RSA private keys in a broken format that some software
+uses.
+Specifically the private key should be enclosed in an OCTET STRING,
+but some software just includes the structure itself without the
+surrounding OCTET STRING.
 .It Fl nsdb
 This option generates DSA keys in a broken format compatible with Netscape
 private key databases.
 The
 .Em PrivateKey
 contains a SEQUENCE consisting of the public and private keys, respectively.
+.It Fl out Ar file
+This specifies the output
+.Ar file
+to write a key to, or standard output by default.
+If any encryption options are set, then a pass phrase will be prompted for.
+The output filename should
+.Em not
+be the same as the input filename.
+.It Fl outform Ar DER | PEM
+This specifies the output format; the options have the same meaning as the
+.Fl inform
+option.
+.It Fl passin Ar arg
+The input file password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl passout Ar arg
+The output file password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl topk8
+Normally, a PKCS#8 private key is expected on input and a traditional format
+private key will be written.
+With the
+.Fl topk8
+option the situation is reversed:
+it reads a traditional format private key and writes a PKCS#8 format key.
+.It Fl v1 Ar alg
+This option specifies a PKCS#5 v1.5 or PKCS#12 algorithm to use.
+A complete list of possible algorithms is included below.
 .It Fl v2 Ar alg
 This option enables the use of PKCS#5 v2.0 algorithms.
-Normally, PKCS#8 private keys are encrypted with the password based
+Normally, PKCS#8 private keys are encrypted with the password-based
 encryption algorithm called
 .Em pbeWithMD5AndDES-CBC ;
 this uses 56-bit DES encryption but it was the strongest encryption
@@ -3780,29 +3741,16 @@ then this doesn't matter.
 .Pp
 The
 .Ar alg
-argument is the encryption algorithm to use, valid values include
-.Ar des , des3
+argument is the encryption algorithm to use; valid values include
+.Ar des , des3 ,
 and
 .Ar rc2 .
 It is recommended that
 .Ar des3
 is used.
-.It Fl v1 Ar alg
-This option specifies a PKCS#5 v1.5 or PKCS#12 algorithm to use.
-A complete list of possible algorithms is included below.
-.It Fl engine Ar id
-Specifying an engine (by it's unique
-.Ar id
-string) will cause
-.Nm pkcs8
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .El
 .Sh PKCS8 NOTES
-The encrypted form of a
-.Em PEM
-encoded PKCS#8 file uses the following
+The encrypted form of a PEM-encoded PKCS#8 file uses the following
 headers and footers:
 .Bd -unfilled -offset indent
 -----BEGIN ENCRYPTED PRIVATE KEY-----
@@ -3816,25 +3764,22 @@ The unencrypted form uses:
 .Ed
 .Pp
 Private keys encrypted using PKCS#5 v2.0 algorithms and high iteration
-counts are more secure that those encrypted using the traditional
+counts are more secure than those encrypted using the traditional
 .Nm SSLeay
 compatible formats.
-So if additional security is considered, important the keys should be converted.
+So if additional security is considered important, the keys should be converted.
 .Pp
 The default encryption is only 56 bits because this is the encryption
-that most current implementations of PKCS#8 will support.
+that most current implementations of PKCS#8 support.
 .Pp
-Some software may use PKCS#12 password based encryption algorithms
+Some software may use PKCS#12 password-based encryption algorithms
 with PKCS#8 format private keys: these are handled automatically
 but there is no option to produce them.
 .Pp
 It is possible to write out
-.Em DER
-encoded encrypted private keys in PKCS#8 format because the encryption
+DER-encoded encrypted private keys in PKCS#8 format because the encryption
 details are included at an ASN1
-level whereas the traditional format includes them at a
-.Em PEM
-level.
+level whereas the traditional format includes them at a PEM level.
 .Sh PKCS#5 V1.5 AND PKCS#12 ALGORITHMS
 Various algorithms can be used with the
 .Fl v1
@@ -3855,7 +3800,7 @@ They use either 64-bit RC2 or 56-bit DES.
 .Pp
 .It Ar PBE-SHA1-RC4-128 | PBE-SHA1-RC4-40 | PBE-SHA1-3DES | PBE-SHA1-2DES
 .It Ar PBE-SHA1-RC2-128 | PBE-SHA1-RC2-40
-These algorithms use the PKCS#12 password based encryption algorithm and
+These algorithms use the PKCS#12 password-based encryption algorithm and
 allow strong encryption algorithms like triple DES or 128-bit RC2 to be used.
 .El
 .Sh PKCS8 EXAMPLES
@@ -3875,7 +3820,7 @@ $ openssl pkcs8 -in key.pem -topk8 -out enckey.pem \e
 	-v1 PBE-SHA1-3DES
 .Ed
 .Pp
-Read a DER unencrypted PKCS#8 format private key:
+Read a DER-unencrypted PKCS#8 format private key:
 .Pp
 .Dl "$ openssl pkcs8 -inform DER -nocrypt -in key.der -out key.pem"
 .Pp
@@ -3893,7 +3838,7 @@ algorithms are concerned.
 The format of PKCS#8 DSA
 .Pq and other
 private keys is not well documented:
-it is hidden away in PKCS#11 v2.01, section 11.9.;
+it is hidden away in PKCS#11 v2.01, section 11.9;
 .Nm OpenSSL Ns Li 's
 default DSA PKCS#8 private key format complies with this standard.
 .Sh PKCS8 BUGS
@@ -3910,41 +3855,41 @@ compatibility, several of the utilities use the old format at present.
 .Sh PKCS12
 .Nm "openssl pkcs12"
 .Bk -words
-.Op Fl export
-.Op Fl chain
-.Op Fl inkey Ar file
-.Op Fl certfile Ar file
-.Op Fl CApath Ar directory
-.Op Fl CAfile Ar file
-.Op Fl name Ar name
-.Op Fl caname Ar name
-.Op Fl in Ar file
-.Op Fl out Ar file
-.Op Fl noout
-.Op Fl nomacver
-.Op Fl nocerts
-.Op Fl clcerts
-.Op Fl cacerts
-.Op Fl nokeys
-.Op Fl info
 .Oo
-.Fl des | des3 | aes128 |
-.Fl aes192 | aes256
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
 .Oc
+.Op Fl cacerts
+.Op Fl certpbe
+.Op Fl chain
+.Op Fl clcerts
+.Op Fl descert
+.Op Fl export
+.Op Fl info
+.Op Fl keyex
+.Op Fl keypbe
+.Op Fl keysig
+.Op Fl maciter
+.Op Fl nocerts
 .Op Fl nodes
 .Op Fl noiter
-.Op Fl maciter
+.Op Fl nokeys
+.Op Fl nomacver
+.Op Fl noout
 .Op Fl twopass
-.Op Fl descert
-.Op Fl certpbe
-.Op Fl keypbe
-.Op Fl keyex
-.Op Fl keysig
-.Op Fl password Ar arg
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar directory
+.Op Fl caname Ar name
+.Op Fl certfile Ar file
+.Op Fl engine Ar id
+.Op Fl in Ar file
+.Op Fl inkey Ar file
+.Op Fl name Ar name
+.Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl password Ar arg
 .Op Fl rand Ar file ...
-.Op Fl engine Ar id
 .Ek
 .Pp
 The
@@ -3964,18 +3909,43 @@ option
 .Pq see below .
 .Sh PKCS12 PARSING OPTIONS
 .Bl -tag -width "XXXX"
+.It Xo
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
+.Xc
+Use AES, DES, or triple DES, respectively,
+to encrypt private keys before outputting.
+The default is triple DES.
+.It Fl cacerts
+Only output CA certificates
+.Pq not client certificates .
+.It Fl clcerts
+Only output client certificates
+.Pq not CA certificates .
 .It Fl in Ar file
 This specifies the
 .Ar file
 of the PKCS#12 file to be parsed.
 Standard input is used by default.
+.It Fl info
+Output additional information about the PKCS#12 file structure,
+algorithms used, and iteration counts.
+.It Fl nocerts
+No certificates at all will be output.
+.It Fl nodes
+Don't encrypt the private keys at all.
+.It Fl nokeys
+No private keys will be output.
+.It Fl nomacver
+Don't attempt to verify the integrity MAC before reading the file.
+.It Fl noout
+This option inhibits output of the keys and certificates to the output file
+version of the PKCS#12 file.
 .It Fl out Ar file
 The
 .Ar file
 to write certificates and private keys to, standard output by default.
-They are all written in
-.Em PEM
-format.
+They are all written in PEM format.
 .It Fl pass Ar arg , Fl passin Ar arg
 The PKCS#12 file
 .Pq i.e. input file
@@ -3992,33 +3962,6 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl noout
-This option inhibits output of the keys and certificates to the output file
-version of the PKCS#12 file.
-.It Fl clcerts
-Only output client certificates
-.Pq not CA certificates .
-.It Fl cacerts
-Only output CA certificates
-.Pq not client certificates .
-.It Fl nocerts
-No certificates at all will be output.
-.It Fl nokeys
-No private keys will be output.
-.It Fl info
-Output additional information about the PKCS#12 file structure,
-algorithms used and iteration counts.
-.It Xo
-.Fl des | des3 | aes128 |
-.Fl aes192 | aes256
-.Xc
-Use DES, triple DES, or AES, respectively,
-to encrypt private keys before outputting.
-The default is triple DES.
-.It Fl nodes
-Don't encrypt the private keys at all.
-.It Fl nomacver
-Don't attempt to verify the integrity MAC before reading the file.
 .It Fl twopass
 Prompt for separate integrity and encryption passwords: most software
 always assumes these are the same so this option will render such
@@ -4026,40 +3969,11 @@ PKCS#12 files unreadable.
 .El
 .Sh PKCS12 FILE CREATION OPTIONS
 .Bl -tag -width "XXXX"
-.It Fl export
-This option specifies that a PKCS#12 file will be created rather than
-parsed.
-.It Fl out Ar file
-This specifies
-.Ar file
-to write the PKCS#12 file to.
-Standard output is used by default.
-.It Fl in Ar file
-The
-.Ar file
-to read certificates and private keys from, standard input by default.
-They must all be in
-.Em PEM
-format.
-The order doesn't matter but one private key and its corresponding
-certificate should be present.
-If additional certificates are present, they will also be included
-in the PKCS#12 file.
-.It Fl inkey Ar file
-File to read private key from.
-If not present then a private key must be present in the input file.
-.It Fl name Ar friendlyname
-This specifies the
-.Qq friendly name
-for the certificate and private key.
-This name is typically displayed in list boxes by software importing the file.
-.It Fl certfile Ar file
-A file to read additional certificates from.
-.It Fl CApath Ar directory
-Directory of CAs
-.Pq PEM format .
 .It Fl CAfile Ar file
 File of CAs
+.Pq PEM format .
+.It Fl CApath Ar directory
+Directory of CAs
 .Pq PEM format .
 .It Fl caname Ar friendlyname
 This specifies the
@@ -4069,22 +3983,8 @@ This option may be used multiple times to specify names for all certificates
 in the order they appear.
 Netscape ignores friendly names on other certificates,
 whereas MSIE displays them.
-.It Fl pass Ar arg , Fl passout Ar arg
-The PKCS#12 file
-.Pq i.e. output file
-password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
-.It Fl passin Ar password
-Pass phrase source to decrypt any input private keys with.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
+.It Fl certfile Ar file
+A file to read additional certificates from.
 .It Fl chain
 If this option is present, then an attempt is made to include the entire
 certificate chain of the user certificate.
@@ -4097,14 +3997,29 @@ file unreadable by some
 software.
 By default, the private key is encrypted using triple DES and the
 certificate using 40-bit RC2.
-.It Fl keypbe Ar alg , Fl certpbe Ar alg
-These options allow the algorithm used to encrypt the private key and
-certificates to be selected.
-Although any PKCS#5 v1.5 or PKCS#12 algorithms can be selected,
-it is advisable to only use PKCS#12 algorithms.
-See the list in the
-.Sx PKCS12 NOTES
-section for more information.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm pkcs12
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
+.It Fl export
+This option specifies that a PKCS#12 file will be created rather than
+parsed.
+.It Fl in Ar file
+The
+.Ar file
+to read certificates and private keys from, standard input by default.
+They must all be in PEM format.
+The order doesn't matter but one private key and its corresponding
+certificate should be present.
+If additional certificates are present, they will also be included
+in the PKCS#12 file.
+.It Fl inkey Ar file
+File to read private key from.
+If not present, then a private key must be present in the input file.
 .It Fl keyex | keysig
 Specifies that the private key is to be used for key exchange or just signing.
 This option is only interpreted by MSIE and similar MS software.
@@ -4120,6 +4035,22 @@ Signing only keys can be used for S/MIME signing, authenticode
 and SSL client authentication;
 however, due to a bug only MSIE 5.0 and later support
 the use of signing only keys for SSL client authentication.
+.It Fl keypbe Ar alg , Fl certpbe Ar alg
+These options allow the algorithm used to encrypt the private key and
+certificates to be selected.
+Although any PKCS#5 v1.5 or PKCS#12 algorithms can be selected,
+it is advisable to only use PKCS#12 algorithms.
+See the list in the
+.Sx PKCS12 NOTES
+section for more information.
+.It Fl maciter
+This option is included for compatibility with previous versions; it used
+to be needed to use MAC iterations counts but they are now used by default.
+.It Fl name Ar friendlyname
+This specifies the
+.Qq friendly name
+for the certificate and private key.
+This name is typically displayed in list boxes by software importing the file.
 .It Fl nomaciter , noiter
 These options affect the iteration counts on the MAC and key algorithms.
 Unless you wish to produce files compatible with MSIE 4.0, you should leave
@@ -4139,9 +4070,27 @@ Most software supports both MAC and key iteration counts.
 MSIE 4.0 doesn't support MAC iteration counts, so it needs the
 .Fl nomaciter
 option.
-.It Fl maciter
-This option is included for compatibility with previous versions; it used
-to be needed to use MAC iterations counts but they are now used by default.
+.It Fl out Ar file
+This specifies
+.Ar file
+to write the PKCS#12 file to.
+Standard output is used by default.
+.It Fl pass Ar arg , Fl passout Ar arg
+The PKCS#12 file
+.Pq i.e. output file
+password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl passin Ar password
+Pass phrase source to decrypt any input private keys with.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
 .It Fl rand Ar file ...
 A file or files
 containing random data used to seed the random number generator,
@@ -4149,14 +4098,6 @@ or an EGD socket (see
 .Xr RAND_egd 3 ) .
 Multiple files can be specified separated by a
 .Sq \&: .
-.It Fl engine Ar id
-Specifying an engine (by it's unique
-.Ar id
-string) will cause
-.Nm pkcs12
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .El
 .Sh PKCS12 NOTES
 Although there are a large number of options,
@@ -4395,12 +4336,11 @@ The options are as follows:
 This specifies the input format.
 The
 .Ar DER
-argument uses an ASN1 DER encoded
-form compatible with the PKCS#10.
+argument uses an ASN1 DER-encoded form compatible with the PKCS#10.
 The
 .Ar PEM
 form is the default format:
-it consists of the DER format base64 encoded with additional header and
+it consists of the DER format base64-encoded with additional header and
 footer lines.
 .It Fl outform Ar DER | PEM
 This specifies the output format; the options have the same meaning as the
@@ -4475,9 +4415,7 @@ generates a DSA key using the parameters in the file
 .Ar file .
 .It Fl key Ar file
 This specifies the file to read the private key from.
-It also accepts PKCS#8 format private keys for
-.Em PEM
-format files.
+It also accepts PKCS#8 format private keys for PEM format files.
 .It Fl keyform Ar DER | PEM
 The format of the private key file specified in the
 .Fl key
@@ -4581,9 +4519,8 @@ SET OF, whereas the correct form does.
 .Pp
 It should be noted that very few CAs still require the use of this option.
 .It Fl newhdr
-Adds the word NEW to the
-.Em PEM
-file header and footer lines on the outputed request.
+Adds the word NEW to the PEM file header and footer lines
+on the outputed request.
 Some software
 .Pq Netscape certificate server
 and some CAs need this.
@@ -4953,9 +4890,7 @@ Sample configuration containing all field values:
 \& challengePassword              = A challenge password
 .Ed
 .Sh REQ NOTES
-The header and footer lines in the
-.Ar PEM
-format are normally:
+The header and footer lines in the PEM format are normally:
 .Bd -unfilled -offset indent
 -----BEGIN CERTIFICATE REQUEST-----
 -----END CERTIFICATE REQUEST-----
@@ -5105,12 +5040,12 @@ This specifies the input format.
 The
 .Ar DER
 argument
-uses an ASN1 DER encoded form compatible with the PKCS#1
+uses an ASN1 DER-encoded form compatible with the PKCS#1
 RSAPrivateKey or SubjectPublicKeyInfo format.
 The
 .Ar PEM
-form is the default format: it consists of the DER format base64
-encoded with additional header and footer lines.
+form is the default format: it consists of the DER format base64-encoded with
+additional header and footer lines.
 On input PKCS#8 format private keys are also accepted.
 The
 .Ar NET
@@ -5124,7 +5059,7 @@ option.
 .It Fl in Ar file
 This specifies the input
 .Ar file
-to read a key from or standard input if this
+to read a key from, or standard input if this
 option is not specified.
 If the key is encrypted, a pass phrase will be prompted for.
 .It Fl passin Ar arg
@@ -5166,9 +5101,7 @@ This means that using the
 utility to read in an encrypted key with no encryption option can be used
 to remove the pass phrase from a key, or by setting the encryption options
 it can be used to add or change the pass phrase.
-These options can only be used with
-.Ar PEM
-format output files.
+These options can only be used with PEM format output files.
 .It Fl text
 Prints out the various public or private key components in
 plain text, in addition to the encoded version.
@@ -5195,17 +5128,13 @@ thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
 .El
 .Sh RSA NOTES
-The
-.Em PEM
-private key format uses the header and footer lines:
+The PEM private key format uses the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN RSA PRIVATE KEY-----
 -----END RSA PRIVATE KEY-----
 .Ed
 .Pp
-The
-.Em PEM
-public key format uses the header and footer lines:
+The PEM public key format uses the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN PUBLIC KEY-----
 -----END PUBLIC KEY-----
@@ -5243,11 +5172,7 @@ To encrypt a private key using triple DES:
 .Pp
 .Dl $ openssl rsa -in key.pem -des3 -out keyout.pem
 .Pp
-To convert a private key from
-.Em PEM
-to
-.Em DER
-format:
+To convert a private key from PEM to DER format:
 .Pp
 .Dl $ openssl rsa -in key.pem -outform DER -out keyout.der
 .Pp
@@ -5297,12 +5222,12 @@ The options are as follows:
 .It Fl in Ar file
 This specifies the input
 .Ar file
-to read data from or standard input
+to read data from, or standard input
 if this option is not specified.
 .It Fl out Ar file
 Specifies the output
 .Ar file
-to write to or standard output by
+to write to, or standard output by
 default.
 .It Fl inkey Ar file
 The input key file, by default it should be an RSA private key.
@@ -6033,13 +5958,13 @@ The options are as follows:
 This specifies the input format.
 The
 .Ar DER
-argument uses an ASN1 DER encoded
+argument uses an ASN1 DER-encoded
 format containing session details.
 The precise format can vary from one version to the next.
 The
 .Ar PEM
 form is the default format: it consists of the DER
-format base64 encoded with additional header and footer lines.
+format base64-encoded with additional header and footer lines.
 .It Fl outform Ar DER | PEM
 This specifies the output format; the options have the same meaning as the
 .Fl inform
@@ -6113,9 +6038,7 @@ The timeout in seconds.
 This is the return code when an SSL client certificate is verified.
 .El
 .Sh SESS_ID NOTES
-The
-.Em PEM
-encoded session format uses the header and footer lines:
+The PEM-encoded session format uses the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN SSL SESSION PARAMETERS-----
 -----END SSL SESSION PARAMETERS-----
@@ -6216,9 +6139,7 @@ Verify signed mail.
 Expects a signed mail message on input and outputs the signed data.
 Both clear text and opaque signing is supported.
 .It Fl pk7out
-Takes an input message and writes out a
-.Em PEM
-encoded PKCS#7 structure.
+Takes an input message and writes out a PEM-encoded PKCS#7 structure.
 .It Fl in Ar file
 The input message to be encrypted or signed or the
 .Em MIME
@@ -6231,9 +6152,9 @@ The default is
 which reads an
 .Em S/MIME
 format message.
-.Em PEM
+.Ar PEM
 and
-.Em DER
+.Ar DER
 format change this to expect PEM and DER format PKCS#7 structures
 instead.
 This currently only affects the input format of the PKCS#7
@@ -6253,9 +6174,9 @@ The default is
 which writes an
 .Em S/MIME
 format message.
-.Em PEM
+.Ar PEM
 and
-.Em DER
+.Ar DER
 format change this to write PEM and DER format PKCS#7 structures
 instead.
 This currently only affects the output format of the PKCS#7
@@ -6361,9 +6282,7 @@ type multipart/signed is used.
 Allows additional certificates to be specified.
 When signing these will be included with the message.
 When verifying these will be searched for the signers' certificates.
-The certificates should be in
-.Em PEM
-format.
+The certificates should be in PEM format.
 .It Fl signer Ar file
 The signer's certificate when signing a message.
 If a message is being verified, then the signer's certificates will be
@@ -6555,7 +6474,7 @@ $ openssl smime -decrypt -in mail.msg -recip mycert.pem \e
 The output from Netscape form signing is a PKCS#7 structure with the
 detached signature format.
 You can use this program to verify the signature by line wrapping the
-base64 encoded structure and surrounding it with:
+base64-encoded structure and surrounding it with:
 .Bd -unfilled -offset indent
 -----BEGIN PKCS7-----
 -----END PKCS7-----
@@ -6703,14 +6622,14 @@ The options are as follows:
 .It Fl in Ar file
 This specifies the input
 .Ar file
-to read from or standard input if this option is not specified.
+to read from, or standard input if this option is not specified.
 Ignored if the
 .Fl key
 option is used.
 .It Fl out Ar file
 Specifies the output
 .Ar file
-to write to or standard output by default.
+to write to, or standard output by default.
 .It Fl key Ar keyfile
 Create an SPKAC file using the private key in
 .Ar keyfile .
@@ -6843,9 +6762,7 @@ A
 of trusted certificates.
 The
 .Ar file
-should contain multiple certificates in
-.Em PEM
-format concatenated together.
+should contain multiple certificates in PEM format, concatenated together.
 .It Fl untrusted Ar file
 A
 .Ar file
@@ -6896,9 +6813,7 @@ One or more
 to verify.
 If no certificate files are included, then an attempt is made to read
 a certificate from standard input.
-They should all be in
-.Em PEM
-format.
+They should all be in PEM format.
 .El
 .Sh VERIFY OPERATION
 The
@@ -7279,11 +7194,11 @@ option.
 .It Fl in Ar file
 This specifies the input
 .Ar file
-to read a certificate from or standard input if this option is not specified.
+to read a certificate from, or standard input if this option is not specified.
 .It Fl out Ar file
 This specifies the output
 .Ar file
-to write to or standard output by default.
+to write to, or standard output by default.
 .It Fl passin Ar arg
 The key password source.
 For more information about the format of
@@ -7385,7 +7300,7 @@ date.
 .It Fl dates
 Prints out the start and expiry dates of a certificate.
 .It Fl fingerprint
-Prints out the digest of the DER encoded version of the whole certificate
+Prints out the digest of the DER-encoded version of the whole certificate
 (see
 .Sx DIGEST OPTIONS ) .
 .It Fl C
@@ -7859,11 +7774,7 @@ Display the certificate SHA1 fingerprint:
 .Pp
 .Dl $ openssl x509 -sha1 -in cert.pem -noout -fingerprint
 .Pp
-Convert a certificate from
-.Em PEM
-to
-.Em DER
-format:
+Convert a certificate from PEM to DER format:
 .Pp
 .Dl "$ openssl x509 -in cert.pem -inform PEM -out cert.der -outform DER"
 .Pp
@@ -7895,9 +7806,7 @@ $ openssl x509 -in cert.pem -addtrust clientAuth \e
 	-setalias "Steve's Class 1 CA" -out trust.pem
 .Ed
 .Sh X509 NOTES
-The
-.Em PEM
-format uses the header and footer lines:
+The PEM format uses the header and footer lines:
 .Bd -unfilled -offset indent
 -----BEGIN CERTIFICATE-----
 -----END CERTIFICATE-----
@@ -7923,7 +7832,7 @@ it is more likely to display the majority of certificates correctly.
 .Pp
 The
 .Fl fingerprint
-option takes the digest of the DER encoded certificate.
+option takes the digest of the DER-encoded certificate.
 This is commonly called a
 .Qq fingerprint .
 Because of the nature of message digests, the fingerprint of a certificate
