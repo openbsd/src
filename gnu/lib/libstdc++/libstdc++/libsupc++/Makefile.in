@@ -138,6 +138,9 @@ ifGNUmake = @ifGNUmake@
 libio_la = @libio_la@
 libtool_VERSION = @libtool_VERSION@
 toplevel_srcdir = @toplevel_srcdir@
+GCC_SRCDIR=${toplevel_srcdir}/gcc
+LIBIBERTY_INCLUDES=${toplevel_srcdir}/include
+LIBIBERTY_SRCDIR=${toplevel_srcdir}/libiberty
 
 AUTOMAKE_OPTIONS = 1.3 cygnus
 MAINT_CHARSET = latin1
@@ -175,7 +178,7 @@ WARN_CXXFLAGS = \
 # Use common includes from acinclude.m4/GLIBCPP_EXPORT_INCLUDES
 GLIBCPP_INCLUDES = @GLIBCPP_INCLUDES@
 LIBSUPCXX_INCLUDES = @LIBSUPCXX_INCLUDES@
-GCC_INCLUDES = -I$(toplevel_srcdir)/gcc -I$(toplevel_srcdir)/include
+GCC_INCLUDES = -I$(GCC_SRCDIR) -I$(LIBIBERTY_INCLUDES)
 
 INCLUDES = \
 	$(GCC_INCLUDES) $(GLIBCPP_INCLUDES) $(LIBSUPCXX_INCLUDES)
@@ -568,14 +571,14 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 cxa_demangle.c:
 	rm -f $@
-	$(LN_S) $(toplevel_srcdir)/libiberty/cp-demangle.c $@
+	$(LN_S) $(LIBIBERTY_SRCDIR)/cp-demangle.c $@
 cxa_demangle.lo: cxa_demangle.c
 	$(LTCOMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
 cxa_demangle.o: cxa_demangle.c
 	$(C_COMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
 dyn-string.c:
 	rm -f $@
-	$(LN_S) $(toplevel_srcdir)/libiberty/dyn-string.c $@
+	$(LN_S) $(LIBIBERTY_SRCDIR)/dyn-string.c $@
 dyn-string.lo: dyn-string.c
 	$(LTCOMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
 dyn-string.o: dyn-string.c

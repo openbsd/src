@@ -136,6 +136,7 @@ ifGNUmake = @ifGNUmake@
 libio_la = @libio_la@
 libtool_VERSION = @libtool_VERSION@
 toplevel_srcdir = @toplevel_srcdir@
+GCC_SRCDIR=${toplevel_srcdir}/gcc
 
 AUTOMAKE_OPTIONS = 1.3 cygnus
 MAINT_CHARSET = latin1
@@ -679,31 +680,31 @@ ${target_builddir}/c++config.h: ${CONFIG_HEADER} \
 	    < ${CONFIG_HEADER} >> $@ ;\
 	echo "#endif // _CPP_CPPCONFIG_" >>$@
 
-${target_builddir}/gthr.h: ${toplevel_srcdir}/gcc/gthr.h stamp-${target_alias}
+${target_builddir}/gthr.h: $(GCC_SRCDIR)/gthr.h stamp-${target_alias}
 	sed -e '/^#/s/\(${uppercase}${uppercase}*\)/_GLIBCPP_\1/g' \
 	    -e 's,^#include "\(.*\)",#include <bits/\1>,g' \
-	    < ${toplevel_srcdir}/gcc/gthr.h > $@
+	    < $(GCC_SRCDIR)/gthr.h > $@
 
-${target_builddir}/gthr-single.h: ${toplevel_srcdir}/gcc/gthr-single.h \
+${target_builddir}/gthr-single.h: $(GCC_SRCDIR)/gthr-single.h \
 				  stamp-${target_alias}
 	sed -e 's/\(UNUSED\)/_GLIBCPP_\1/g' \
 	    -e 's/\(GCC${uppercase}*_H\)/_GLIBCPP_\1/g' \
-	    < ${toplevel_srcdir}/gcc/gthr-single.h > $@
+	    < $(GCC_SRCDIR)/gthr-single.h > $@
 
-${target_builddir}/gthr-posix.h: ${toplevel_srcdir}/gcc/gthr-posix.h \
+${target_builddir}/gthr-posix.h: $(GCC_SRCDIR)/gthr-posix.h \
 				   stamp-${target_alias}
 	sed -e 's/\(UNUSED\)/_GLIBCPP_\1/g' \
 	    -e 's/\(GCC${uppercase}*_H\)/_GLIBCPP_\1/g' \
 	    -e 's/\(${uppercase}*WEAK\)/_GLIBCPP_\1/g' \
-	    < ${toplevel_srcdir}/gcc/gthr-posix.h > $@
+	    < $(GCC_SRCDIR)/gthr-posix.h > $@
 
-${target_builddir}/gthr-default.h: ${toplevel_srcdir}/gcc/${glibcpp_thread_h} \
+${target_builddir}/gthr-default.h: $(GCC_SRCDIR)/${glibcpp_thread_h} \
 				   stamp-${target_alias}
 	sed -e 's/\(UNUSED\)/_GLIBCPP_\1/g' \
 	    -e 's/\(GCC${uppercase}*_H\)/_GLIBCPP_\1/g' \
 	    -e 's/\(${uppercase}*WEAK\)/_GLIBCPP_\1/g' \
 	    -e 's,^#include "\(.*\)",#include <bits/\1>,g' \
-	    < ${toplevel_srcdir}/gcc/${glibcpp_thread_h} > $@
+	    < $(GCC_SRCDIR)/${glibcpp_thread_h} > $@
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)${gxx_include_dir}
 	$(mkinstalldirs) $(DESTDIR)${gxx_include_dir}/${bits_builddir}
