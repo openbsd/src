@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2o.h,v 1.2 2001/06/27 02:38:01 mickey Exp $	*/
+/*	$OpenBSD: i2o.h,v 1.3 2001/06/27 03:39:17 mickey Exp $	*/
 /*	$NetBSD: i2o.h,v 1.3 2001/03/20 13:01:48 ad Exp $	*/
 
 /*-
@@ -81,6 +81,7 @@
 #define	I2O_CLASS_FLOPPY_CONTROLLER		0x70
 #define	I2O_CLASS_FLOPPY_DEVICE			0x71
 #define	I2O_CLASS_BUS_ADAPTER_PORT		0x80
+#define	I2O_CLASS_MASK				0xfff
 
 #define	I2O_CLASS_ANY				0xffffffff
 
@@ -262,6 +263,7 @@ struct i2o_hrt {
 struct i2o_lct_entry {
 	u_int16_t	entrysize;
 	u_int16_t	localtid;		/* Bits 0-12 only */
+#define	I2O_LCT_ENTRY_TID_MASK	0xfff
 	u_int32_t	changeindicator;
 	u_int32_t	deviceflags;
 	u_int16_t	classid;

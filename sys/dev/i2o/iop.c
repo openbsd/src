@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.12 2001/06/26 22:58:10 mickey Exp $	*/
+/*	$OpenBSD: iop.c,v 1.13 2001/06/27 03:39:18 mickey Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -640,10 +640,10 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 
 		le = sc->sc_lct->entry;
 		for (i = 0; i < sc->sc_nlctent; i++, le++) {
-			if ((letoh16(le->classid) & 4095) !=
+			if ((letoh16(le->classid) & I2O_CLASS_MASK) !=
 			    I2O_CLASS_BUS_ADAPTER_PORT)
 				continue;
-			tid = letoh32(le->localtid) & 4095;
+			tid = letoh32(le->localtid) & I2O_CLASS_MASK;
 
 			im = iop_msg_alloc(sc, NULL, IM_WAIT);
 
@@ -659,8 +659,8 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 			iop_msg_free(sc, im);
 #ifdef I2ODEBUG
 			if (rv != 0)
-				printf("%s: bus scan failed\n",
-				    sc->sc_dv.dv_xname);
+				printf("%s: bus scan failed, status =%d\n",
+				    sc->sc_dv.dv_xname, rv);
 #endif
 		}
 	} else if (chgind <= sc->sc_chgind) {
@@ -756,14 +756,15 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 
 	nent = sc->sc_nlctent;
 	for (i = 0, le = sc->sc_lct->entry; i < nent; i++, le++) {
-		sc->sc_tidmap[i].it_tid = letoh32(le->localtid) & 4095;
+		sc->sc_tidmap[i].it_tid =
+		    letoh32(le->localtid) & I2O_LCT_ENTRY_TID_MASK;
 
 		/* Ignore the device if it's in use. */
-		usertid = letoh32(le->usertid) & 4095;
+		usertid = letoh32(le->usertid) & I2O_LCT_ENTRY_TID_MASK;
 		if (usertid != I2O_TID_NONE && usertid != I2O_TID_HOST)
 			continue;
 
-		ia.ia_class = letoh16(le->classid) & 4095;
+		ia.ia_class = letoh16(le->classid) & I2O_CLASS_MASK;
 		ia.ia_tid = sc->sc_tidmap[i].it_tid;
 
 		/* Ignore uninteresting devices. */
@@ -1239,7 +1240,7 @@ iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
 	/* Detect errors; let partial transfers to count as success. */
 	if (ii == NULL && rv == 0) {
 		if (rf->reqstatus == I2O_STATUS_ERROR_PARTIAL_XFER &&
-		    letoh16(rf->detail) == I2O_DSC_UNKNOWN_ERROR)
+		    rf->detail == htole16(I2O_DSC_UNKNOWN_ERROR))
 			rv = 0;
 		else
 			rv = (rf->reqstatus != 0 ? EIO : 0);
