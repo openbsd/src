@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Tue May  2 04:50:00 MDT 2000
+From deraadt@do-not-reply.openbsd.org Wed Nov  1 15:46:46 MST 2000
 Return-Path: root
-Date: Tue May  2 04:50:00 MDT 2000
+Date: Wed Nov  1 15:46:46 MST 2000
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 2.7!  Secure by Default!
+Subject: Welcome to OpenBSD 2.8!  Secure by Default!
 
 This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
@@ -18,125 +18,252 @@ man page you are looking for easier.  The GNU "info" subsystem is also
 installed with further documentation resources; to read info pages type "info".
 (The info subsystem behaves like the popular emacs editor).
 
+Again, PLEASE READ THE MANUAL PAGES.  Our developers have spent countless
+hours improving them so that they are clear and precise.
+
 If you have installed the X11 packages during the install process, you can find
 further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are available
 for most architectures.  If you installed from a CD-ROM the packages
-are on the same CD-ROM you installed from in the directory 2.7/packages.
+are on the same CD-ROM you installed from in the directory 2.8/packages.
 
-CD-ROM Space permitted us to include the following packages for the most common
-architectures:
+CD-ROM Space permitted us to include a subset of the following packages
+for the most common architectures.  Please see the FTP sites if you find
+something you need missing.
 
    ADMfzap-0.1.tgz         gsm-1.0.10.tgz             png-1.0.3.tgz
-   ADMsmb-0.2.tgz          gtk+-1.2.7.tgz             pngcrush-1.4.1.tgz
-   ADMsnmp-0.1.tgz         gtkglarea-1.2.2.tgz        pop3gwd-1.2.tgz
-   CDDB-1.02.tgz           guavac-1.2.tgz             popa3d-0.4.tgz
-   MIME-Base64-2.11.tgz    gv-3.5.8.tgz               popclient-3.0b6.tgz
-   MPEG-MP3Info-0.71.tgz   ha-0.999b.tgz              poppassd-4.0.tgz
-   Mesa-3.0.tgz            hackdata.tgz               postfix-19991231-pl06.tgz
-   PGPlib.tgz              hexedit-1.1.0.tgz          postgresql-6.5.3.tgz
-   XPostitPlus-2.3.tgz     hoc-1.1.tgz                prc-tools-0.5.0.tgz
-   Xaw3d-1.5.tgz           hping-2.0b53.tgz           procmail-3.14.tgz
-   aalib-1.2.tgz           html-4.0b.tgz              proxy-suite-1.7.tgz
-   abuse-2.0.tgz           httptunnel-3.0.tgz         psutils-1.17-a4.tgz
-   ac3dec-0.5.6.tgz        icmpinfo-1.11.tgz          publicfile-0.52.tgz
-   adcomplain-3.49.tgz     id-utils-3.2d.tgz          qmail-1.03.tgz
-   afterstep-1.8.0.tgz     idiff-1.0.tgz              qmailanalog-0.70.tgz
-   apc-upsd.tgz            indent-2.2.2.tgz           queso-980922.tgz
-   arpcatch.tgz            info2html-1.1.tgz          remind-0.3.tgz
-   arpwatch-2.1a4.tgz      isic-0.05.tgz              rplay-3.3.0.tgz
-   asmail-0.50.tgz         iso12083-1993.tgz          rsync-2.4.1.tgz
-   aterm-0.3.6.tgz         iso8879-1986.tgz           rsynth-2.0.tgz
-   aub-2.0.5.tgz           ispell-3.1.20.tgz          rtty-3.2.tgz
-   autoconf-2.13.tgz       ja-kterm-6.2.0.tgz         rxp-1.1.tgz
-   automake-1.4.tgz        ja-less-3.32p2.48.tgz      rxvt-2.7.2.tgz
-   axe-6.1.2.tgz           ja-nkf-1.62.tgz            samba-2.0.6.tgz
-   bash-1.14.7-static.tgz  jbigkit-1.1.tgz            screen-3.9.5.tgz
-   bash-2.04-static.tgz    jed-0.99.10.tgz            sdd-1.22.tgz
-   beav-1.40-13.tgz        jive-1.1.tgz               serialmail-0.75.tgz
-   bibview-2.2.tgz         joe-2.8.tgz                setquota-0.1.tgz
-   bing-1.0.4.tgz          john-1.6.tgz               sharity-light-1.2.tgz
-   bison-1.27.tgz          jpeg-6b.tgz                sharutils-4.2.tgz
-   blackbox-0.51.3.1.tgz   jpilot-0.98.tgz            shtool-1.4.7.tgz
-   bladeenc-0.92.tgz       kaffe-1.0.5.tgz            slash-3.2.2-e8-x11.tgz
-   blast-1.0.tgz           kakasi-2.3.1.tgz           slash-3.2.2-e8.tgz
-   boehm-gc-4.12.tgz       lclint-2.4b.tgz            slirp-1.0c.tgz
-   bonnie-1.0.tgz          lesstif-0.89.9.tgz         slrn-0.9.6.2.tgz
-   bounix-1.21.tgz         lha-1.14f.tgz              smurflog-2.1.tgz
-   bricons-3.0.tgz         libIDL-0.6.5.tgz           snort-1.5.1.tgz
-   buffer-1.17.1.tgz       libaudiofile-0.1.9.tgz     socket-1.1.tgz
-   bulk_mailer-1.5.tgz     libghttp-1.0.4.tgz         sox-12.15.tgz
-   bvi-1.2.0.tgz           libgii-0.1.tgz             splitvt-1.6.3.tgz
-   bzip2-0.9.5d.tgz        libicq-0.33.tgz            squid-2.2.tgz
-   c2html-0.9.tgz          libident-0.22.tgz          star-1.2.tgz
-   calc-2.11.1t3.0.tgz     libnet-1.0.tgz             starlanes-1.2.2.tgz
-   catdoc-0.90b4.tgz       libnids-1.13.tgz           stat-1.3.tgz
-   cdrecord-1.6.1.tgz      libproplist-0.10.1.tgz     strobe-1.06.tgz
-   cfs-1.3.3.tgz           libslang-1.4.0.tgz         stunnel-3.8.tgz
-   cgichk-3.0.tgz          libtool-1.3.3.tgz          swisswatch-0.06.tgz
-   cgiparse-0.8e.tgz       libxml-1.0.0.tgz           tar-1.13.tgz
-   checkpassword-0.81.tgz  links-0.84.tgz             tcl-8.0.5.tgz
-   clog-1.6.tgz            linux_lib-2.6.1.tgz        tcl-8.3.0.tgz
-   cops-1.04.tgz           linuxdoc-1.1.tgz           tcpblast-1.0.tgz
-   crack-5.0.tgz           logsurfer-1.5.tgz          tcpflow-0.12.tgz
-   ctm.tgz                 lupe-0.07.tgz              tcpreplay-1.0.1.tgz
-   ctwm-3.5.tgz            lzo-1.06.tgz               tcptrace-5.2.1.tgz
-   curl-6.5.2.tgz          m4-1.4.tgz                 tcsh-6.09.00-static.tgz
-   daemontools-0.70.tgz    magicpoint-1.05a.tgz       teTeX_base-1.0.7.tgz
-   dante-1.1.1.tgz         malsync-1.6.tgz            teTeX_texmf-1.0.2.tgz
-   deco-3.8.3.tgz          mawk-1.3.3.tgz             tidy-13jan00.tgz
-   dejagnu-1.3.tgz         mess822-0.58.tgz           tiff-3.5.4.tgz
-   delay-1.4.tgz           metamail-2.7.tgz           tintin-1.5.6.tgz
-   detex-2.6.tgz           mgdiff-1.0.tgz             tircproxy-0.4.3.tgz
-   dgpsip-1.32.tgz         micq-0.4.5.tgz             tk-8.0.5.tgz
-   dialog-0.6z.tgz         mirror-2.9.tgz             tk-8.3.0.tgz
-   dot-forward-0.71.tgz    mm-1.0.12.tgz              tosha-0.6.tgz
-   dxpc-3.8.0.tgz          movemail-1.0.tgz           tracker-5.3.tgz
-   electricfence-2.0.5.tgz mp3cddb.tgz                trafshow-3.1.tgz
-   emacs-20.3-no_x11.tgz   mp3encode-1.10.tgz         transfig-3.2.3.tgz
-   emacs-20.3.tgz          mp3info-0.2.16.tgz         tvtwm-pl11.tgz
-   enscript-1.6.1.tgz      mpage-2.5-a4.tgz           ucspi-tcp-0.88.tgz
-   epic4-pre2.507.tgz      mpage-2.5-legal.tgz        unace-1.2b.tgz
-   es-0.9a1.tgz            mpage-2.5-us-letter.tgz    unzip-5.40.tgz
-   esound-0.2.16.tgz       mpeg_lib-1.3.1.tgz         usbutil-0.4.tgz
-   ethereal-0.8.7.tgz      mpeg_play-2.4.tgz          viewfax-2.3.tgz
-   expect-5.31.tgz         mpegaudio-3.9.tgz          viz-1.1.1.tgz
-   ezmlm-0.53.tgz          mpg123-0.59r.tgz           vrfy-99.05.22.tgz
-   fastforward-0.51.tgz    mrtg-2.8.12.tgz            waveplay-1.0.tgz
-   fetchmail-5.3.8.tgz     mtr-0.41.tgz               wdiff-0.5.tgz
-   figlet-2.2.tgz          mutt-1.0.1i-curses.tgz     weblint-1.020.tgz
-   firewalk-0.8.tgz        mysql-3.22.32.tgz          webmin-0.79.tgz
-   fltk-1.0.7.tgz          nbaudit-1.0.tgz            wget-1.5.3.tgz
-   flwm-0.25.tgz           ncftp-2.4.3.tgz            wide-dhcp-1.4.0.3.tgz
-   fping-1.20.tgz          nedit-5.0.2.tgz            windowmaker-0.62.1.tgz
-   fragrouter-1.6.tgz      nemesis-1.0.tgz            wmx-6pre1.tgz
-   freeciv-1.10.0.tgz      nessus-0.98.3.tgz          wterm-6.2.6.tgz
-   freefonts-0.10.tgz      netatalk-990130.tgz        xcoloredit-1.2.tgz
-   freetype-1.3.tgz        nethack-3.3.0-x11.tgz      xcolors-1.3.tgz
-   freeze-2.5.tgz          nethack-3.3.0.tgz          xemacs-20.4-mule.tgz
-   fxtv-0.48.tgz           netpipe-2.3.tgz            xfig-3.2.3a.tgz
-   gd-1.8.1.tgz            netpipes-4.1.1-export.tgz  xfm-1.3.2.tgz
-   gdbm-1.8.0.tgz          netris-0.5.tgz             xforms-0.88.tgz
-   getbdf-1.0.tgz          newsfetch-1.21.tgz         xkobo-1.11-harder.tgz
-   gettext-0.10.35.tgz     nmap-2.3b18.tgz            xkobo-1.11.tgz
-   ghostscript-5.50.tgz    nmapfe-0.9.5.tgz           xmahjongg-3.3.tgz
-   ghostview-1.5.tgz       nmh-1.0.4.tgz              xmysql-1.9.tgz
-   gicq-0.33.tgz           nsping-0.8.tgz             xmysqladmin-1.0.tgz
-   gif2png-2.3.2.tgz       nspmod-0.1.tgz             xntp3-5.93e-export.tgz
-   giflib-4.1.0.tgz        ntop-1.1.tgz               xpat2-1.04.tgz
-   gifsicle-1.17.tgz       nvi-m17n-1.79.19991117.tgz xpdf-0.90.tgz
-   gimp-1.1.17.tgz         otcl-1.0a4.tgz             xspread-2.1.tgz
-   glib-1.2.7.tgz          par-1.51.tgz               ytalk-3.1.1.tgz
-   gmake-3.78.1.tgz        pchar-1.1.1.tgz            zap-1.1.tgz
-   gnuls-4.0.tgz           php3-3.0.16.tgz            zoo-2.10.1.tgz
-   gnupg-1.0.1.tgz         pilot-link-0.9.3.tgz       zsh-3.0.7-static.tgz
-   gperf-2.7.19981006.tgz  pilot_makedoc-0.7.tgz      zsh-3.1.6-static.tgz
-   gracula-3.0.tgz         pkfonts300-1.0.tgz
-   gsl-0.3b.tgz            plor-0.3.2.tgz
+
+   9menu-1.5.tgz           9wm-1.1.tgz                ADMfzap-0.1.tgz
+   ADMsmb-0.2.tgz          ADMsnmp-0.1.tgz            Business-CreditCard-0.21.tgz
+   LPRng-3.6.12.tgz        Mesa-3.2.1.tgz             PGPlib.tgz
+   STk-3.1.1.tgz           Tktable-2.6.tgz            Wnn-data-4.2.tgz
+   Wnn-xwnmo-4.2.tgz       XPostitPlus-2.3.tgz        Xaw3d-1.5.tgz
+   aalib-1.2-no_x11.tgz    aalib-1.2.tgz              abiword-0.7.10.tgz
+   abook-0.4.10.tgz        abuse-2.0.tgz              ac3dec-0.5.6.tgz
+   adcomplain-3.52.tgz     afterstep-1.8.0.tgz        amanda-2.4.1p1.tgz
+   amaya-3.2.1.tgz         amaya-english-dict.tgz     amaya-french-dict.tgz
+   an-0.93.tgz             analog-4.11.tgz            antiword-0.30.tgz
+   apc-upsd.tgz            arpcatch.tgz               arping-0.94.tgz
+   arpwatch-2.1a4.tgz      asclock-1.0-breton.tgz     asclock-1.0-czech.tgz
+   asclock-1.0-dutch.tgz   asclock-1.0-english.tgz    asclock-1.0-french.tgz
+   asclock-1.0-german.tgz  asclock-1.0-hungarian.tgz  asclock-1.0-italian.tgz
+   asclock-1.0-norwegian.tgz asclock-1.0-portuguese.tgz asclock-1.0-spanish.tgz
+   asclock-1.0-swedish.tgz smail-0.56.tgz             aterm-0.4.0.tgz
+   aub-2.0.5.tgz           aumix-2.7.tgz              autoconf-2.13.tgz
+   automake-1.4.tgz        axe-6.1.2.tgz              base64-1.0.tgz
+   bash-2.04.tgz           bclock-1.0.tgz             beav-1.40-13.tgz
+   bfbtester-1.0.tgz       bibview-2.2.tgz            bind-9.0.0.tgz
+   bing-1.0.4.tgz          bison-1.27.tgz             bitchx-1.0c17.tgz
+   bk2site-1.1.5.tgz       blackbox-0.61.0.tgz        blast-1.0.tgz
+   bluefish-0.4.tgz        bnetd-0.4.19.tgz           bochs-2000_0325a-debugger.tgz
+   bochs-2000_0325a.tgz    boehm-gc-4.12.tgz          bonnie-1.0.tgz
+   bounix-1.21.tgz         bricons-3.0.tgz            buffer-1.17.1.tgz
+   bulk_mailer-1.13.tgz    bvi-1.2.0.tgz              bzip2-1.0.1.tgz
+   c2html-0.9.2.tgz        calc-2.11.1t3.0.tgz        catdoc-0.90b4.tgz
+   cdparanoia-3.a9.7.tgz   cdrdao-1.1.3.tgz           cdrecord-1.9.tgz
+   cfengine-1.4.12.tgz     cfs-1.3.3.tgz              cgichk-3.6.tgz
+   cgiparse-0.8e.tgz       cgoban-1.9.10.tgz          checkpassword-0.81.tgz
+   cidr-2.3.tgz            clog-1.6.tgz               common-1.0.6.tgz
+   connect4-3.2.tgz        conserver-5.21.tgz         cook-2.15.tgz
+   cops-1.04.tgz           courier-imap-1.1.tgz       ctm.tgz
+   ctwm-3.5.2.tgz          curl-7.3-kerberos.tgz      curl-7.3.tgz
+   cvs2cl-2.29.tgz         cvsup-bin-16.1-no_x11.tgz  cvsweb-1.103.1.33.tgz
+   cyrproxy-1.4.2.tgz      cyrus-sasl-1.5.24.tgz      d1489-1.4.tgz
+   daemontools-0.70.tgz    dante-1.1.2.tgz            db-3.1.17-java.tgz
+   db-3.1.17.tgz           ddd-3.2.1.tgz              deco-3.8.3.tgz
+   decss-0.0.6.tgz         dejagnu-1.3.tgz            dejagnu-19990614.tgz
+   delay-1.4.tgz           detex-2.6.tgz              dgpsip-1.32.tgz
+   dia-0.86.tgz            dialog-0.6z.tgz            djbdns-1.01.tgz
+   docbook-4.1.tgz         docbook-modular-1.57.tgz   dopewars-1.4.8.tgz
+   dot-forward-0.71.tgz    dsniff-2.2.tgz             dxpc-3.8.0.tgz
+   efax-0.9.tgz            electricfence-2.0.5.tgz    elm-2.4ME+66.tgz
+   elvis-2.1.4-no_x11.tgz  elvis-2.1.4.tgz            emacs-20.7-no_x11.tgz
+   emacs-20.7.tgz          emiclock-2.0.2.tgz         enlightenment-0.16.5.tgz
+   enscript-1.6.1.tgz      epic4-0.9.9.tgz            es-0.9b1.tgz
+   esound-0.2.20.tgz       eterm-0.8.10.tgz           ethereal-0.8.12.tgz
+   exim-3.16.tgz           expat-1.1.tgz              expect-5.32.1.tgz
+   ezmlm-0.53.tgz          fastforward-0.51.tgz       fastjar-0.90.tgz
+   fetchmail-5.5.3-kerberos.tgz fetchmail-5.5.3.tgz   figlet-2.2.tgz
+   firewalk-0.8.tgz        fltk-1.0.9.tgz             flwm-0.25.tgz
+   fnlib-0.5.tgz           fping-1.20.tgz             fragrouter-1.6.tgz
+   freebsd_lib-2.2.8.tgz   freeciv-1.11.4-gtk.tgz     freefonts-0.10.tgz
+   freetype-1.3.tgz        freeze-2.5.tgz             frodo-4.1a.tgz
+   fsv-0.9.tgz             fvwm95-2.0.43a.tgz         gAcc-0.7.2.tgz
+   gd-1.8.3-no_x11.tgz     gd-1.8.3.tgz               gdbm-1.8.0.tgz
+   gettext-0.10.35.tgz     ghostscript-5.50.tgz       ghostview-1.5.tgz
+   gif2png-2.3.3.tgz       giflib-4.1.0.tgz           gifsicle-1.21.tgz
+   gimp-1.1.27.tgz         glib-1.2.8.tgz             gmake-3.79.1.tgz
+   gnuchess-4.0.80.tgz     gnugo-2.6.tgz              gnuls-4.0.tgz
+   gnupg-1.0.4.tgz         gnushogi-1.2.3.tgz         gofer-2.30a.tgz
+   gperf-2.7.2.tgz         gqmpeg-0.6.3.tgz           gqview-0.8.2.tgz
+   gracula-3.0.tgz         gsl-0.6.tgz                gsm-1.0.10.tgz
+   gtar-1.13.17.tgz        gtk+-1.2.8.tgz             gtkglarea-1.2.2.tgz
+   gtkmm-1.2.1.tgz         guavac-1.2.tgz             guile-1.4.tgz
+   gv-3.5.8.tgz            ha-0.999b.tgz              hackdata.tgz
+   hevea-1.05.tgz          hexedit-1.1.0.tgz          hoc-1.1.tgz
+   hping-2.0b54.tgz        html-4.0b.tgz              http_load-17sep00.tgz
+   httptunnel-3.0.3.tgz    hypermail-2b30.tgz         icb-5.0.9.tgz
+   icecast-1.3.7.tgz       icmpinfo-1.11.tgz          icon_interp-9.3.2.tgz
+   icon_lib-9.3.3.tgz      id-utils-3.2d.tgz          idiff-1.0.tgz
+   imlib-1.9.8.1.tgz       indent-2.2.5.tgz           info2html-1.1.tgz
+   iozone-3.24.tgz         ipfm-0.10.4.tgz            irc-2.10.1.tgz
+   ircii-4.4Z.tgz          isearch-1.14.tgz           ish-1.11.tgz
+   isic-0.05.tgz           iso12083-1993.tgz          iso8879-1986.tgz
+   ispell-3.1.20.tgz       ispell-french-3.1.20.tgz   ispell-german-3.1.20.tgz
+   ja-Wnn-4.2.tgz          ja-Wnndict-4.2.tgz         ja-eterm-0.8.10.tgz
+   ja-fonts-gnu-1.2.tgz    ja-groff-1.10_0.99.tgz     ja-jvim-2.0r-wnn.tgz
+   ja-jvim-2.0r.tgz        ja-kinput2-3.0-wnn.tgz     ja-kterm-6.2.0-xaw3d.tgz
+   ja-kterm-6.2.0.tgz      ja-less-3.32p2.48.tgz      ja-nkf-1.62.tgz
+   ja-onew-wnn4-2.2.10.tgz ja-w3m-0.1.10.tgz          jadetex-2.20.tgz
+   jbigkit-1.2.tgz         jed-0.99.11-no_x11.tgz     jed-0.99.11.tgz
+   jftpgw-0.0.11.tgz       jive-1.1.tgz               joe-2.8.tgz
+   john-1.6.tgz            jpeg-6b.tgz                jpilot-0.98.1.tgz
+   kaffe-1.0.5.tgz         kakasi-2.3.1.tgz           kanjips.tgz
+   ko-Wnn-4.2.tgz          ko-Wnndict-4.2.tgz         l0phtcrack-2.52.tgz
+   larswm-7.0.8.tgz        lclint-2.5q.tgz            leafnode-1.9.17.tgz
+   lesstif-0.91.8.tgz      lftp-2.3.3.tgz             lha-1.14f.tgz
+   libart-2.3.3.tgz        libaudiofile-0.1.10.tgz    libghttp-1.0.7.tgz
+   libident-0.22.tgz       libnet-1.0.1b.tgz          libnids-1.14.tgz
+   libproplist-0.10.1.tgz  librep-0.12.4.tgz          libsigc++-1.0.1.tgz
+   libslang-1.4.2.tgz      libtool-1.3.5.tgz          libxml-2.2.4.tgz
+   links-0.92.tgz          linleech-2.2.1.tgz         linux_lib-2.6.1.tgz
+   linuxdoc-1.1.tgz        lmbench-1.1.tgz            logsurfer-1.5.tgz
+   lopster-0.9.4.tgz       lsof-4.51.1.tgz            lua-3.2.tgz
+   lupe-0.07.tgz           lzo-1.06.tgz               lzop-1.00.tgz
+   m4-1.4.tgz              magicpoint-1.07a.tgz       maildrop-1.2.tgz
+   malsync-1.6.tgz         mawk-1.3.3.tgz             mess822-0.58.tgz
+   metamail-2.7.tgz        mgdiff-1.0.tgz             mhash-0.8.2.tgz
+   mhonarc-2.4.6.tgz       micq-0.4.5.tgz             mirror-2.9.tgz
+   mkhybrid-1.12b5.1.tgz   mm-1.1.3.tgz               mod_perl-1.24.tgz
+   most-4.9.0.tgz          mouseclock-1.0.tgz         movemail-1.0.tgz
+   mp3cddb.tgz             mp3info-0.2.16.tgz         mtools-3.9.7.20000821.tgz
+   mpage-2.5-a4.tgz        mpage-2.5-legal.tgz        mpage-2.5-us_letter.tgz
+   mpeg_lib-1.3.1.tgz      mpeg_play-2.4.tgz          mrtg-2.8.12.tgz
+   mpg123-0.59r.tgz        mrtd-1.6.0a.tgz            mutt-1.2.5i-slang-imap-pop.tgz
+   mpack-1.5.tgz           mtr-0.42.tgz               mutt-1.2.5i-curses.tgz
+   mpegaudio-3.9.tgz       mysql-3.22.32-pth.tgz      mutt-1.2.5i-slang.tgz
+   mysql-3.22.32.tgz       nam-1.0a8.tgz              nano-0.9.19.tgz
+   nasm-0.98.tgz           nbaudit-1.0.tgz            ncftp-3.0.1.tgz
+   nedit-5.1.1.tgz         nemesis-1.1.tgz            nessus-1.0.5.tgz
+   netatalk-990130.tgz     nethack-3.3.0-x11.tgz      nethack-3.3.0.tgz
+   netpipe-2.4.tgz         netpipes-4.1.1-export.tgz  netris-0.5.tgz
+   newsfetch-1.21.tgz      nmap-2.54b6.tgz            nmapfe-0.9.5.tgz
+   nmh-1.0.4.tgz           nsping-0.8.tgz             nspmod-0.1.tgz
+   nte-1.7.0.tgz           ntop-1.1.tgz               nvi-m17n-1.79.19991117.tgz
+   ocaml-3.00.tgz          olvwm-4.2.tgz              openjade-1.3.tgz
+   openldap-2.0.6.tgz      opennap-0.36.tgz           otcl-1.0a5.tgz
+   p5-Apache-DBI-0.87.tgz  p5-AsciiDB-TagFile-1.05.tgz p5-CDDB-1.03.tgz
+   p5-Compress-LZO-1.00.tgz p5-Compress-Zlib-1.08.tgz p5-Crypt-SSLeay-0.17.tgz
+   p5-DBD-Pg-0.95.tgz      p5-DBI-1.14.tgz            p5-Date-Calc-4.3.tgz
+   p5-DateManip-5.39.tgz   p5-Digest-MD5-2.12.tgz     p5-File-Tail-0.97.tgz
+   p5-FreezeThaw-0.3.tgz   p5-GD-1.30-no_x11.tgz      p5-GD-1.30.tgz
+   p5-GD-Graph-1.33.tgz    p5-GD-Graph3d-0.54.tgz     p5-GD-TextUtil-0.80.tgz
+   p5-HTML-Base-0.6.tgz    p5-HTML-Parser-3.13.tgz    p5-HTML-Tagset-3.02.tgz
+   p5-MIME-Base64-2.11.tgz p5-MP3-Info-0.80.tgz       p5-Mail-POP3Client-2.6.tgz
+   p5-Mail-Tools-1.1401.tgz p5-Time-HiRes-1.20.tgz    p5-Time-TimeDate-1.10.tgz
+   p5-URI-1.09.tgz         p5-libnet-1.0703.tgz       p5-libwww-5.48.tgz
+   par-1.51.tgz            pccts-1.33r22.tgz          pchar-1.2.tgz
+   pcre-3.2.tgz            pdmenu-1.2.61.tgz          php3-3.0.16-mysql.tgz
+   php3-3.0.16-postgresql.tgz php3-3.0.16.tgz         php4-4.0.3pl1-mysql.tgz
+   php4-4.0.3pl1-postgresql.tgz php4-4.0.3pl1.tgz     piewm-1.0.tgz
+   pilot-link-0.9.3.tgz    pilot_makedoc-0.7.tgz      plor-0.3.2.tgz
+   png-1.0.8.tgz           pngcrush-1.5.1.tgz         pop3gwd-1.2.tgz
+   popa3d-0.4-apop.tgz     popa3d-0.4.tgz             popclient-3.0b6.tgz
+   poppassd-4.0.tgz        popt-1.5.tgz               postfix-19991231-pl09.tgz
+   postgresql-7.0.2-tcl.tgz postgresql-7.0.2.tgz      postgresql-docs-7.0.2.tgz
+   ppgen-1.0.tgz           prc-tools-0.5.0.tgz        procmail-3.15.tgz
+   proxy-suite-1.7.tgz     psutils-1.17-a4.tgz        pth-1.3.7.tgz
+   publicfile-0.52.tgz     python-1.6-tk-threads.tgz  python-1.6.tgz
+   qhacc-0.6.1a.tgz        qlwm-1.7.tgz               qmail-1.03.tgz
+   qmailanalog-0.70.tgz    qt2-2.1-gl.tgz             qt2-2.1.tgz
+   queso-980922.tgz        qvwm-1.1.8-imlib.tgz       qvwm-1.1.8-esound-imlib.tgz      
+   qvwm-1.1.8.tgz          radiusd-cistron-1.6.4.tgz  radiusd-lucent-2.1.tgz
+   radiusreport-0.3b6.tgz  rat-3.0.tgz                rc-1.6-editline.tgz
+   rc-1.6-readline.tgz     rc-1.6.tgz                 rclock-2.6.1.tgz
+   recode-3.5.tgz          relate.tgz                 remind-3.0.22.tgz
+   rio500-0.7.tgz          root-tail-0.0.6.tgz        rplay-3.3.0.tgz
+   rpm-3.0.4.tgz           rpm2cpio-1.0.tgz           rrdtool-1.0.25-tcl.tgz
+   rrdtool-1.0.25.tgz      rsync-2.4.6.tgz            rsynth-2.0.tgz
+   rtptools-1.9.tgz        rtty-3.2.tgz               ruby-1.4.6.tgz
+   rxp-1.2.tgz             rxvt-2.7.3.tgz             sablotron-0.44.tgz
+   sam-4.3-19980506.tgz    samba-2.0.7.tgz            scanlogd-2.1.tgz
+   screen-3.9.8.tgz        sdd-1.22.tgz               sdr-2.7e.tgz
+   serialmail-0.75.tgz     setquota-0.1.tgz           seyon-2.14b.tgz
+   sftp-0.8.1.tgz          sgmlformat-1.7.tgz         sharity-light-1.2.tgz
+   sharutils-4.2.1.tgz     shash-0.2.3-static.tgz     shash-0.2.3.tgz
+   shtool-1.5.1.tgz        slash-3.2.2-e8-x11.tgz     slash-3.2.2-e8.tgz
+   slirp-1.0c.tgz          slrn-0.9.6.2.tgz           smurflog-2.1.tgz
+   snort-1.6.3.tgz         socket-1.1.tgz             solid-pop3d-0.15-apop.tgz
+   solid-pop3d-0.15.tgz    sox-12.17.tgz              sp-1.2.1.tgz
+   spider-1.1.tgz          splitvt-1.6.3.tgz          squid-2.3.tgz
+   star-1.2.tgz            starlanes-1.2.2.tgz        stat-1.3.tgz
+   strobe-1.06.tgz         stunnel-3.8.tgz            surfraw-1.0.2.tgz
+   swatch-3.0.1.tgz        swig-1.3a5.tgz             swisswatch-0.06.tgz
+   t1lib-1.0.1.tgz         tcl-8.0.5.tgz              tcl-8.3.2.tgz
+   tclcl-1.0b9.tgz         tcpblast-1.0.tgz           tcpflow-0.12.tgz
+   tcplist-2.2.tgz         tcpreplay-1.0.1.tgz        tcptrace-5.2.1.tgz
+   tcs-19950325.tgz        tcsh-6.09.03.tgz           teTeX_base-1.0.7.tgz
+   teTeX_texmf-1.0.2.tgz   teknap-1.0.tgz             texi2html-1.52.tgz
+   thttpd-2.20.tgz         tidy-4aug00.tgz            tiff-3.5.5.tgz
+   tiff2png-0.81.tgz       tintin-1.5.6.tgz           tinyfugue-4.0s1.tgz
+   tircproxy-0.4.5.tgz     tk-8.0.5.tgz               tk-8.3.2.tgz
+   tkcron-2.12.tgz         tkcvs-6.0.tgz              tkinfo-2.5.tgz
+   tkrat-2.0b9.tgz         totd-1.1p4.tgz             tracker-5.3.tgz
+   trafd-3.0.1.tgz         trafshow-3.1.tgz           transfig-3.2.3c.tgz
+   transproxy-1.3.tgz      tvtwm-pl11.tgz             ucd-snmp-4.1.2.tgz
+   ucspi-tcp-0.88.tgz      ucspi-unix-0.34.tgz        unace-1.2b.tgz
+   unzip-5.41.tgz          urlview-0.9.tgz            usbutil-0.4.tgz
+   vat-4.0b2.tgz           vic-2.8ucl4.tgz            viewfax-2.3.tgz
+   vim-5.7-no_x11.tgz      viz-1.1.1.tgz              vnc-3.3.2r3.tgz
+   vrfy-99.05.22.tgz       vtun-2.3.tgz               w3m-0.1.10.tgz
+   w9wm-0.1.tgz            waveplay-1.0.tgz           wb-1.59.tgz
+   wbd-1.0ucl4.tgz         wdiff-0.5.tgz              webalizer-2.01.05.tgz
+   weblint-1.020.tgz       wget-1.5.3.tgz             wget-msgs-1.5.3-ru.tgz
+   whisker-1.4.tgz         whowatch-1.4.tgz           wily-0.13.41.tgz
+   windowmaker-0.62.1.tgz  wmbiff-0.2.tgz             wmx-6pre6.tgz
+   workman-1.3a.tgz        wterm-6.2.6.tgz            wwwcount-2.5.tgz
+   wwwoffle-2.5e.tgz       x2vnc-1.0.tgz              x2x-1.27.tgz
+   x48-0.4.0.tgz           xaniroc-1.02.tgz           xantfarm-1.16.tgz
+   xarchie-2.0.10.tgz      xasteroids-5.0.tgz         xbatt-1.2.1.tgz
+   xbill-2.0.tgz           xbl-1.0j.tgz               xblast-2.6b.tgz
+   xbmbrowser-5.1.tgz      xboard-4.0.7.tgz           xboing-2.4.tgz
+   xbreaky-0.0.4.tgz       xcb-2.3.tgz                xcd-1.6.tgz
+   xcdplayer-2.2.tgz       xcept-2.1.2.tgz            xchat-1.4.3.tgz
+   xchomp-pl1.tgz          xco-1.3.tgz                xcoloredit-1.2.tgz
+   xcolors-1.3.tgz         xcopilot-0.6.6.tgz         xcubes-5.5.2.tgz
+   xcyrillic-2.0.tgz       xd-8087.tgz                xdaliclock-2.11.tgz
+   xdeblock-1.0.tgz        xdelta-1.1.1.tgz           xdino-5.5.2.tgz
+   xdtm-2.5.8.tgz          xdu-3.0.tgz                xemacs-21.1.12-mule.tgz
+   xephem-3.2.3.tgz        xevil-1.5.tgz              xfce-3.4.4.tgz
+   xfed-1.0.tgz            xfedor-1.0.tgz             xfig-3.2.3a.tgz
+   xfm-1.4.2.tgz           xforms-0.88.tgz            xfstt-1.1.tgz
+   xgas-1.0.tgz            xglobe-0.5p1-qt2.tgz       xgolgo-1.0.tgz
+   xgrab-2.41.tgz          xjewel-1.6.tgz             xjig-2.4.tgz
+   xkeycaps-2.46.tgz       xkobo-1.11-harder.tgz      xkobo-1.11.tgz
+   xlbiff-3.0.tgz          xless-1.7.tgz              xlife-3.0.tgz
+   xloadimage-4.1.tgz      xlogout-1.1.tgz            xmahjongg-3.3.tgz
+   xmake-1.01.tgz          xmbdfed-4.4.tgz            xmine-1.0.3.tgz
+   xmix-2.1.tgz            xmj-1.0.tgz                xmmix-1.2.tgz
+   xmold-1.0.tgz           xmysql-1.9.tgz             xmysqladmin-1.0.tgz
+   xneko-4.4.tgz           xntp3-5.93e.tgz            xonix-1.4.tgz
+   xosview-1.7.4.tgz       xpaint-2.5.7.tgz           xpat2-1.04.tgz
+   xpdf-0.91.tgz           xpostit-3.3.1.tgz          xprompt-1.4.tgz
+   xroach-4.4.tgz          xruskb-1.13.0-motif.tgz    xruskb-1.13.0.tgz
+   xskat-3.3.tgz           xsol-2.1.1.tgz             xsoldier-0.96.tgz
+   xspread-3.1.1c.tgz      xtacy-1.14.tgz             xtar-1.4.tgz
+   xtattr-1.0.tgz          xterm-146.tgz              xtestpicture-1.1.tgz
+   xtimer-0.8089.tgz       xtoolwait-1.1.tgz          xtraceroute-0.8.14.tgz
+   xview-clients-3.2.1.tgz xview-config-3.2.1.tgz     xview-lib-3.2.1.tgz
+   xwpe-1.5.22a.tgz        xzoom-0.3.tgz              yafc-0.6.2.tgz
+   ytalk-3.1.1.tgz         zap-1.1.tgz                zebra-0.89.tgz
+   zh-Wnn-4.2.tgz          zh-Wnndict-4.2.tgz         zh-c2t-1.0.tgz
+   zh-cless-290.tgz        zh-crxvt-2.10-2.tgz        zh-xcin-2.3.04.tgz
+   zip-2.3.tgz             zoo-2.10.1.tgz             zsh-3.0.8.tgz
+
 
 These and many other packages are also available via ftp at
-	ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/
+      ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/
 If you do not find a package you want on the CD, please go look at your
 nearest FTP mirror site.
 
@@ -147,56 +274,11 @@ to install the emacs package for i386, execute
 or alternatively install them via FTP thus
   # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/emacs-20.3.tgz
 
-Other important packages which are not permitted on the CD (due to patents) are
-available on our FTP servers (as described above).  In particular, we provide
-the USA and international versions of PGP.  The filenames are:
-	pgp-intl-2.6.3-tgz
-	pgp-usa-2.6.3-tgz
-
-Two OpenBSD libraries (libssl and libcrypto, based on OpenSSL) implement many
-cryptographic functions which are used by OpenBSD programs like ssh, httpd, and
-isakmpd.  Due to patent licensing reasons, full versions of those libraries may
-not be included on the CD -- instead the base distribution contains libraries
-which have had a few troublesome routines removed -- the programs listed above
-will not be fully functional as a result.  Libraries which _include_ the
-troublesome routines are available and can be FTP installed, as long as you meet
-the follow (legal) criteria:
-  (1) Outside the USA, no restrictions apply. Use ssl27.tgz.
-  (2) Inside the USA, non-commercial entities may install sslUSA27.tgz.
-  (3) Commercial entities in the USA are left in the cold, due to how the
-      licences work.  (This is how the USA crypto export policy feels to the
-      rest of the world.)
-If you did not install the ssl package yet, it is easily installed at any time
-(see the afterboot(8) and ssl(8) manual pages).
-
-You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh!
-
-ssh is included in OpenBSD systems which have shared libraries (i386, sparc,
-mips, m68k), and relies on the ssl27.tgz package, which contains the
-patented RSA code.  This package is available on all our FTP servers, but NOT
-included on the CD. During the system install, this package was probably
-already installed (use pkg_info(1) to see if ssl27 or sslUSA27 are installed).
-
-As of OpenBSD 2.7, the provided ssh implementation (ie. OpenSSH) contains
-support for ssh 2.0 protocol.  This protocol uses the freely-useable DSA
-public key algorithm for key exchange instead of the patented RSA algorithm.
-Full DSA support is included in OpenBSD, and the server is started by default.
- ssh will therefore work fine as long as you connect to/from a server/client
-which also supports the 2.0 protocol.
-
-The RSA patent expires on September 21, 2000.  After this date, you may use
-either of the previously mentioned ssl27 packages in any environment,
-commercial or otherwise.  After that date, we recommend that you use the
-ssl27 package instead of the sslUSA27, not because there is any real outward
-difference between them, but we feel more comfortable with the quality of the
-non-USA code.
-
-On non-shared library systems (powerpc, m88k, alpha) you could install one
-of the ssh packages provided on the FTP sites:
-	ssh-intl-1.2.27.tgz
-	ssh-usa-1.2.27.tgz
-or you may see if the developer for that architecture has compiled a static
-version of OpenSSH.
+You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh!  ssh is
+included in all OpenBSD systems.  The implimentation is OpenSSH, which we we
+are the developers of.  Version 2.3.0 is included, and has support for both
+SSH1 and SSH2 protocols.  For more information, see
+	http://www.OpenSSH.com
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files
