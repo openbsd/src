@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.29 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.30 2004/12/22 18:48:56 millert Exp $	*/
 
 /*
  * Process and job control
@@ -18,7 +18,8 @@
 #include "sh.h"
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/times.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include "tty.h"
 
 /* Order important! */
@@ -71,8 +72,8 @@ struct job {
 	pid_t	pgrp;		/* process group of job */
 	pid_t	ppid;		/* pid of process that forked job */
 	INT32	age;		/* number of jobs started */
-	clock_t	systime;	/* system time used by job */
-	clock_t	usrtime;	/* user time used by job */
+	struct timeval systime;	/* system time used by job */
+	struct timeval usrtime;	/* user time used by job */
 	Proc	*proc_list;	/* process list */
 	Proc	*last_proc;	/* last process in list */
 	Coproc_id coproc_id;	/* 0 or id of coprocess output pipe */
@@ -101,7 +102,7 @@ static const char	*const lookup_msgs[] = {
 				"argument must be %job or process id",
 				(char *) 0
 			    };
-clock_t	j_systime, j_usrtime;	/* user and system time of last j_waitjed job */
+struct timeval	j_systime, j_usrtime;	/* user and system time of last j_waitjed job */
 
 static Job		*job_list;	/* job list */
 static Job		*last_job;
@@ -364,7 +365,8 @@ exchild(struct op *t, int flags,
 		 */
 		j->flags = (flags & XXCOM) ? JF_XXCOM
 			: ((flags & XBGND) ? 0 : (JF_FG|JF_USETTYMODE));
-		j->usrtime = j->systime = 0;
+		timerclear(&j->usrtime);
+		timerclear(&j->systime);
 		j->state = PRUNNING;
 		j->pgrp = 0;
 		j->ppid = procpid;
@@ -1080,7 +1082,7 @@ j_sigchld(int sig)
 	Proc		*p = NULL;
 	int		pid;
 	int		status;
-	struct tms	t0, t1;
+	struct rusage	ru0, ru1;
 
 	/* Don't wait for any processes if a job is partially started.
 	 * This is so we don't do away with the process group leader
@@ -1093,14 +1095,14 @@ j_sigchld(int sig)
 			return;
 		}
 
-	times(&t0);
+	getrusage(RUSAGE_CHILDREN, &ru0);
 	do {
 		pid = waitpid(-1, &status, (WNOHANG|WUNTRACED));
 
 		if (pid <= 0)	/* return if would block (0) ... */
 			break;	/* ... or no children or interrupted (-1) */
 
-		times(&t1);
+		getrusage(RUSAGE_CHILDREN, &ru1);
 
 		/* find job and process structures for this pid */
 		for (j = job_list; j != (Job *) 0; j = j->next)
@@ -1113,13 +1115,15 @@ found:
 			warningf(true, "bad process waited for (pid = %d)",
 				pid);
 			 */
-			t0 = t1;
+			ru0 = ru1;
 			continue;
 		}
 
-		j->usrtime += t1.tms_cutime - t0.tms_cutime;
-		j->systime += t1.tms_cstime - t0.tms_cstime;
-		t0 = t1;
+		timeradd(&j->usrtime, &ru1.ru_utime, &j->usrtime);
+		timersub(&j->usrtime, &ru0.ru_utime, &j->usrtime);
+		timeradd(&j->systime, &ru1.ru_stime, &j->systime);
+		timersub(&j->systime, &ru0.ru_stime, &j->systime);
+		ru0 = ru1;
 		p->status = status;
 #ifdef JOBS
 		if (WIFSTOPPED(status))

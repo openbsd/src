@@ -1,15 +1,15 @@
-/*	$OpenBSD: c_sh.c,v 1.24 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.25 2004/12/22 18:48:56 millert Exp $	*/
 
 /*
  * built-in Bourne commands
  */
 
 #include "sh.h"
-#include <sys/stat.h>	/* umask() */
-#include <sys/times.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
-static	char *clocktos(clock_t);
-
+static void p_time(struct shf *, int, struct timeval *, int, char *, char *);
 
 /* :, false and true */
 int
@@ -669,16 +669,36 @@ c_unset(char **wp)
 	return ret;
 }
 
+static void
+p_time(shf, posix, tv, width, prefix, suffix)
+	struct shf *shf;
+	int posix;
+	struct timeval *tv;
+	int width;
+	char *prefix;
+	char *suffix;
+{
+	if (posix)
+		shf_fprintf(shf, "%s%*ld.%02ld%s", prefix ? prefix : "",
+		    width, tv->tv_sec, tv->tv_usec / 10000, suffix);
+	else
+		shf_fprintf(shf, "%s%*ldm%ld.%02lds%s", prefix ? prefix : "",
+		    width, tv->tv_sec / 60, tv->tv_sec % 60,
+		    tv->tv_usec / 10000, suffix);
+}
+
 int
 c_times(char **wp)
 {
-	struct tms all;
+	struct rusage usage;
 
-	(void) times(&all);
-	shprintf("Shell: %8ss user ", clocktos(all.tms_utime));
-	shprintf("%8ss system\n", clocktos(all.tms_stime));
-	shprintf("Kids:  %8ss user ", clocktos(all.tms_cutime));
-	shprintf("%8ss system\n", clocktos(all.tms_cstime));
+	(void) getrusage(RUSAGE_SELF, &usage);
+	p_time(shl_stdout, 0, &usage.ru_utime, 0, NULL, " ");
+	p_time(shl_stdout, 0, &usage.ru_stime, 0, NULL, "\n");
+
+	(void) getrusage(RUSAGE_CHILDREN, &usage);
+	p_time(shl_stdout, 0, &usage.ru_utime, 0, NULL, " ");
+	p_time(shl_stdout, 0, &usage.ru_stime, 0, NULL, "\n");
 
 	return 0;
 }
@@ -693,13 +713,15 @@ timex(struct op *t, int f)
 #define TF_NOREAL	BIT(1)		/* don't report real time */
 #define TF_POSIX	BIT(2)		/* report in posix format */
 	int rv = 0;
-	struct tms t0, t1, tms;
-	clock_t t0t, t1t = 0;
+	struct rusage ru0, ru1, cru0, cru1;
+	struct timeval usrtime, systime, tv0, tv1;
 	int tf = 0;
-	extern clock_t j_usrtime, j_systime; /* computed by j_wait */
+	extern struct timeval j_usrtime, j_systime; /* computed by j_wait */
 	char opts[1];
 
-	t0t = times(&t0);
+	gettimeofday(&tv0, NULL);
+	getrusage(RUSAGE_SELF, &ru0);
+	getrusage(RUSAGE_CHILDREN, &cru0);
 	if (t->left) {
 		/*
 		 * Two ways of getting cpu usage of a command: just use t0
@@ -709,33 +731,45 @@ timex(struct op *t, int f)
 		 * pdksh tries to do the later (the j_usrtime hack doesn't
 		 * really work as it only counts the last job).
 		 */
-		j_usrtime = j_systime = 0;
+		timerclear(&j_usrtime);
+		timerclear(&j_systime);
 		if (t->left->type == TCOM)
 			t->left->str = opts;
 		opts[0] = 0;
 		rv = execute(t->left, f | XTIME);
 		tf |= opts[0];
-		t1t = times(&t1);
+		gettimeofday(&tv1, NULL);
+		getrusage(RUSAGE_SELF, &ru1);
+		getrusage(RUSAGE_CHILDREN, &cru1);
 	} else
 		tf = TF_NOARGS;
 
 	if (tf & TF_NOARGS) { /* ksh93 - report shell times (shell+kids) */
 		tf |= TF_NOREAL;
-		tms.tms_utime = t0.tms_utime + t0.tms_cutime;
-		tms.tms_stime = t0.tms_stime + t0.tms_cstime;
+		timeradd(&ru0.ru_utime, &cru0.ru_utime, &usrtime);
+		timeradd(&ru0.ru_stime, &cru0.ru_stime, &systime);
 	} else {
-		tms.tms_utime = t1.tms_utime - t0.tms_utime + j_usrtime;
-		tms.tms_stime = t1.tms_stime - t0.tms_stime + j_systime;
+		timersub(&ru1.ru_utime, &ru0.ru_utime, &usrtime);
+		timeradd(&usrtime, &j_usrtime, &usrtime);
+		timersub(&ru1.ru_stime, &ru0.ru_stime, &systime);
+		timeradd(&systime, &j_systime, &systime);
 	}
 
-	if (!(tf & TF_NOREAL))
-		shf_fprintf(shl_out,
-			tf & TF_POSIX ? "real %8s\n" : "%8ss real ",
-			clocktos(t1t - t0t));
-	shf_fprintf(shl_out, tf & TF_POSIX ? "user %8s\n" : "%8ss user ",
-		clocktos(tms.tms_utime));
-	shf_fprintf(shl_out, tf & TF_POSIX ? "sys  %8s\n" : "%8ss system\n",
-		clocktos(tms.tms_stime));
+	if (!(tf & TF_NOREAL)) {
+		timersub(&tv1, &tv0, &tv1);
+		if (tf & TF_POSIX)
+			p_time(shl_out, 1, &tv1, 5, "real ", "\n");
+		else
+			p_time(shl_out, 0, &tv1, 5, NULL, " real ");
+	}
+	if (tf & TF_POSIX)
+		p_time(shl_out, 1, &usrtime, 5, "user ", "\n");
+	else
+		p_time(shl_out, 0, &usrtime, 5, NULL, " user ");
+	if (tf & TF_POSIX)
+		p_time(shl_out, 1, &systime, 5, "sys  ", "\n");
+	else
+		p_time(shl_out, 0, &systime, 5, NULL, " system\n");
 	shf_flush(shl_out);
 
 	return rv;
@@ -772,30 +806,6 @@ timex_hook(struct op *t, char **volatile *app)
 	if (!wp[0])
 		t->str[0] |= TF_NOARGS;
 	*app = wp;
-}
-
-static char *
-clocktos(clock_t t)
-{
-	static char temp[22]; /* enough for 64 bit clock_t */
-	int i;
-	char *cp = temp + sizeof(temp);
-
-	/* note: posix says must use max precision, ie, if clk_tck is
-	 * 1000, must print 3 places after decimal (if non-zero, else 1).
-	 */
-	if (CLK_TCK != 100)	/* convert to 1/100'ths */
-	    t = (t < 1000000000/CLK_TCK) ?
-		    (t * 100) / CLK_TCK : (t / CLK_TCK) * 100;
-
-	*--cp = '\0';
-	for (i = -2; i <= 0 || t > 0; i++) {
-		if (i == 0)
-			*--cp = '.';
-		*--cp = '0' + (char)(t%10);
-		t /= 10;
-	}
-	return cp;
 }
 
 /* exec with no args - args case is taken care of in comexec() */
