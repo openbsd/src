@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.24 2004/12/30 17:56:16 pvalchev Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.25 2005/01/02 20:06:22 martin Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -154,8 +154,8 @@ scsibus* at mpt?
 #scsibus* at twe?
 #iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers
 #scsibus* at iha?
-#isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
-#scsibus* at isp?
+isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
+scsibus* at isp?
 #aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
 #scsibus* at aic?
 #ncr*	at pci?			# NCR 538XX SCSI controllers(old)

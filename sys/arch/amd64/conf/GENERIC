@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.47 2004/12/30 17:56:16 pvalchev Exp $
+#	$OpenBSD: GENERIC,v 1.48 2005/01/02 20:06:22 martin Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -210,8 +210,8 @@ scsibus* at ami?
 #scsibus* at cac?
 #iha*	at pci?				# Initio Ultra/UltraWide SCSI controllers
 #scsibus* at iha?
-#isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
-#scsibus* at isp?
+isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
+scsibus* at isp?
 #aic*	at pcmcia?			# PCMCIA Adaptec 152[02] SCSI
 #scsibus* at aic?
 #esp*	at pcmcia?			# PCMCIA based NCR 53C9X SCSI
