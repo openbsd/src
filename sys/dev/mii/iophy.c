@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.8 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.9 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -101,6 +101,10 @@ struct cfdriver iophy_cd = {
 int	iophy_service(struct mii_softc *, struct mii_data *, int);
 void	iophy_status(struct mii_softc *);
 
+const struct mii_phy_funcs iophy_funcs = {
+	iophy_service, iophy_status, mii_phy_reset,
+};
+
 int
 iophymatch(parent, match, aux)
 	struct device *parent;
@@ -134,12 +138,11 @@ iophyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = iophy_service;
-	sc->mii_status = iophy_status;
+	sc->mii_funcs = &iophy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsphy.c,v 1.9 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: qsphy.c,v 1.10 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: qsphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -103,6 +103,10 @@ int	qsphy_service(struct mii_softc *, struct mii_data *, int);
 void	qsphy_reset(struct mii_softc *);
 void	qsphy_status(struct mii_softc *);
 
+const struct mii_phy_funcs qsphy_funcs = {
+	qsphy_service, qsphy_status, qsphy_reset,
+};
+
 int
 qsphymatch(parent, match, aux)
 	struct device *parent;
@@ -132,12 +136,11 @@ qsphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = qsphy_service;
-	sc->mii_status = qsphy_status;
+	sc->mii_funcs = &qsphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	qsphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

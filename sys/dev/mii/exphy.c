@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.13 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.14 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -99,6 +99,10 @@ struct cfdriver exphy_cd = {
 int	exphy_service(struct mii_softc *, struct mii_data *, int);
 void	exphy_reset(struct mii_softc *);
 
+const struct mii_phy_funcs exphy_funcs = {
+	exphy_service, ukphy_status, exphy_reset,
+};
+
 int
 exphymatch(parent, match, aux)
 	struct device *parent;
@@ -153,8 +157,7 @@ exphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = exphy_service;
-	sc->mii_status = ukphy_status;
+	sc->mii_funcs = &exphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -169,7 +172,7 @@ exphyattach(parent, self, aux)
 	}
 	sc->mii_flags |= MIIF_NOISOLATE;
 
-	exphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphy.c,v 1.6 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.7 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -63,6 +63,10 @@ int	bmtphy_service(struct mii_softc *, struct mii_data *, int);
 void	bmtphy_status(struct mii_softc *);
 void	bmtphy_reset(struct mii_softc *);
 
+const struct mii_phy_funcs bmtphy_funcs = {
+	bmtphy_service, bmtphy_status, bmtphy_reset,
+};
+
 int
 bmtphymatch(parent, match, aux)
 	struct device *parent;
@@ -101,13 +105,12 @@ bmtphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = bmtphy_service;
-	sc->mii_status = bmtphy_status;
+	sc->mii_funcs = &bmtphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 	sc->mii_anegticks = 5;
 
-	bmtphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

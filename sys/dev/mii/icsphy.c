@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.12 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.13 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -104,6 +104,10 @@ int	icsphy_service(struct mii_softc *, struct mii_data *, int);
 void	icsphy_reset(struct mii_softc *);
 void	icsphy_status(struct mii_softc *);
 
+const struct mii_phy_funcs icsphy_funcs = {
+	icsphy_service, icsphy_status, icsphy_reset,
+};
+
 int
 icsphymatch(parent, match, aux)
 	struct device *parent;
@@ -154,12 +158,11 @@ icsphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = icsphy_service;
-	sc->mii_status = icsphy_status;
+	sc->mii_funcs = &icsphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	icsphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.7 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.8 2004/09/26 00:59:58 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -74,6 +74,10 @@ void	xmphy_status(struct mii_softc *);
 int	xmphy_mii_phy_auto(struct mii_softc *, int);
 extern void	mii_phy_auto_timeout(void *);
 
+const struct mii_phy_funcs xmphy_funcs = {
+	xmphy_service, xmphy_status, mii_phy_reset,
+};
+
 int xmphy_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
@@ -100,8 +104,7 @@ xmphy_attach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = xmphy_service;
-	sc->mii_status = xmphy_status;
+	sc->mii_funcs = &xmphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags |= MIIF_NOISOLATE | mii->mii_flags;
 	sc->mii_anegticks = 5;
@@ -111,7 +114,7 @@ xmphy_attach(parent, self, aux)
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
 	    BMCR_ISO);
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0, sc->mii_inst),
 	    XMPHY_BMCR_FDX);
@@ -169,7 +172,7 @@ xmphy_service(sc, mii, cmd)
 			(void) xmphy_mii_phy_auto(sc, 1);
 			break;
 		case IFM_1000_SX:
-			mii_phy_reset(sc);
+			PHY_RESET(sc);
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
 				PHY_WRITE(sc, XMPHY_MII_ANAR, XMPHY_ANAR_FDX);
 				PHY_WRITE(sc, XMPHY_MII_BMCR, XMPHY_BMCR_FDX);
@@ -223,7 +226,7 @@ xmphy_service(sc, mii, cmd)
 		if (reg & XMPHY_BMSR_LINK)
 			break;
 
-		mii_phy_reset(sc);
+		PHY_RESET(sc);
 		if (xmphy_mii_phy_auto(sc, 0) == EJUSTRETURN)
 			return(0);
 		break;

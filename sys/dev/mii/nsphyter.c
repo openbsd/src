@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.6 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.7 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.5 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -103,6 +103,10 @@ struct cfdriver nsphyter_cd = {
 int	nsphyter_service(struct mii_softc *, struct mii_data *, int);
 void	nsphyter_status(struct mii_softc *);
 
+const struct mii_phy_funcs nsphyter_funcs = {
+	nsphyter_service, nsphyter_status, mii_phy_reset,
+};
+
 int
 nsphytermatch(parent, match, aux)
 	struct device *parent;
@@ -139,12 +143,11 @@ nsphyterattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = nsphyter_service;
-	sc->mii_status = nsphyter_status;
+	sc->mii_funcs = &nsphyter_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

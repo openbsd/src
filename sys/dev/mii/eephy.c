@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.11 2003/09/02 22:44:27 krw Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.12 2004/09/26 00:59:58 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -75,6 +75,9 @@ void	eephy_reset(struct mii_softc *);
 
 extern void	mii_phy_auto_timeout(void *);
 
+const struct mii_phy_funcs eephy_funcs = {
+	eephy_service, eephy_status, eephy_reset,
+};
 
 int
 eephymatch(struct device *parent, void *match, void *aux)
@@ -111,8 +114,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = eephy_service;
-	sc->mii_status = eephy_status;
+	sc->mii_funcs = &eephy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 	sc->mii_anegticks = 10;
@@ -122,7 +124,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	    (PHY_READ(sc, E1000_ESSR) & E1000_ESSR_FIBER_LINK))
 		sc->mii_flags |= MIIF_HAVEFIBER;
 
-	eephy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
@@ -238,12 +240,12 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			if (sc->mii_flags & MIIF_DOINGAUTO) {
 				return (0);
 			}
-			eephy_reset(sc);
+			PHY_RESET(sc);
 			(void)eephy_mii_phy_auto(sc, 1);
 			break;
 
 		case IFM_1000_SX:
-			eephy_reset(sc);
+			PHY_RESET(sc);
 
 			PHY_WRITE(sc, E1000_CR,
 			    E1000_CR_FULL_DUPLEX | E1000_CR_SPEED_1000);
@@ -254,14 +256,14 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			if (sc->mii_flags & MIIF_DOINGAUTO)
 				return (0);
 
-			eephy_reset(sc);
+			PHY_RESET(sc);
 
 			/* TODO - any other way to force 1000BT? */
 			(void)eephy_mii_phy_auto(sc, 1);
 			break;
 
 		case IFM_100_TX:
-			eephy_reset(sc);
+			PHY_RESET(sc);
 
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
 				PHY_WRITE(sc, E1000_CR,
@@ -274,7 +276,7 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		case IFM_10_T:
-			eephy_reset(sc);
+			PHY_RESET(sc);
 
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
 				PHY_WRITE(sc, E1000_CR,
@@ -333,7 +335,7 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (reg & E1000_SR_LINK_STATUS)
 			break;
 
-		eephy_reset(sc);
+		PHY_RESET(sc);
 
 		if (eephy_mii_phy_auto(sc, 0) == EJUSTRETURN) {
 			return(0);

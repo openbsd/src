@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.13 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.14 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -104,6 +104,10 @@ int	nsphy_service(struct mii_softc *, struct mii_data *, int);
 void	nsphy_status(struct mii_softc *);
 void	nsphy_reset(struct mii_softc *);
 
+const struct mii_phy_funcs nsphy_funcs = {
+	nsphy_service, nsphy_status, nsphy_reset,
+};
+
 int
 nsphymatch(parent, match, aux)
 	struct device *parent;
@@ -134,13 +138,12 @@ nsphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = nsphy_service;
-	sc->mii_status = nsphy_status;
+	sc->mii_funcs = &nsphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 	sc->mii_anegticks = 5;
 
-	nsphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

@@ -118,6 +118,10 @@ int	tlphy_auto(struct tlphy_softc *, int);
 void	tlphy_acomp(struct tlphy_softc *);
 void	tlphy_status(struct mii_softc *);
 
+const struct mii_phy_funcs tlphy_funcs = {
+	tlphy_service, tlphy_status, mii_phy_reset,
+};
+
 int
 tlphymatch(parent, match, aux)
 	struct device *parent;
@@ -147,13 +151,12 @@ tlphyattach(parent, self, aux)
 
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;
-	sc->sc_mii.mii_service = tlphy_service;
-	sc->sc_mii.mii_status = tlphy_status;
+	sc->mii_funcs = &tlphy_funcs;
 	sc->sc_mii.mii_pdata = mii;
 	sc->sc_mii.mii_flags = mii->mii_flags;
 
 	sc->sc_mii.mii_flags &= ~MIIF_NOISOLATE;
-	mii_phy_reset(&sc->sc_mii);
+	PHY_RESET(&sc->sc_mii);
 	sc->sc_mii.mii_flags |= MIIF_NOISOLATE;
 
 	/*

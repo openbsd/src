@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.8 2002/10/20 16:46:28 henning Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.9 2004/09/26 00:59:58 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -102,6 +102,10 @@ void	dcphy_status(struct mii_softc *);
 int	dcphy_auto(struct mii_softc *, int);
 void	dcphy_reset(struct mii_softc *);
 
+const struct mii_phy_funcs dcphy_funcs = {
+	dcphy_service, dcphy_status, dcphy_reset,
+};
+
 int
 dcphy_match(parent, match, aux)
 	struct device *parent;
@@ -134,8 +138,7 @@ dcphy_attach(parent, self, aux)
 	printf(": internal PHY\n");
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = dcphy_service;
-	sc->mii_status = dcphy_status;
+	sc->mii_funcs = &dcphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -226,7 +229,7 @@ dcphy_service(sc, mii, cmd)
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
-			/*dcphy_reset(sc);*/
+			/*PHY_RESET(sc);*/
 			sc->mii_flags &= ~MIIF_DOINGAUTO;
 			(void) dcphy_auto(sc, 0);
 			break;
@@ -236,7 +239,7 @@ dcphy_service(sc, mii, cmd)
 			 */
 			return (EINVAL);
 		case IFM_100_TX:
-			dcphy_reset(sc);
+			PHY_RESET(sc);
 			DC_CLRBIT(dc_sc, DC_10BTCTRL, DC_TCTL_AUTONEGENBL);
 			mode |= DC_NETCFG_PORTSEL|DC_NETCFG_PCS|
 			    DC_NETCFG_SCRAMBLER;

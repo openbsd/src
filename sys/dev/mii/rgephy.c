@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.2 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.3 2004/09/26 00:59:58 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -85,6 +85,10 @@ void	rgephy_loop(struct mii_softc *);
 void	rgephy_load_dspcode(struct mii_softc *);
 int	rgephy_mii_model;
 
+const struct mii_phy_funcs rgephy_funcs = {
+	rgephy_service, rgephy_status, rgephy_reset,
+};
+
 int
 rgephymatch(parent, match, aux)
 	struct device *parent;
@@ -115,16 +119,15 @@ rgephyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_funcs = &rgephy_funcs;
 	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_rev = MII_REV(ma->mii_id2);
-	sc->mii_service = rgephy_service;
-	sc->mii_status = rgephy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags | MIIF_NOISOLATE;
 	sc->mii_ticks = 0; /* XXX */
 	sc->mii_anegticks = 5;
 
-	rgephy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 
@@ -170,7 +173,7 @@ rgephy_service(sc, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		rgephy_reset(sc);	/* XXX hardware bug work-around */
+		PHY_RESET(sc);	/* XXX hardware bug work-around */
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
@@ -340,7 +343,7 @@ rgephy_mii_phy_auto(mii)
 	struct mii_softc *mii;
 {
 	rgephy_loop(mii);
-	rgephy_reset(mii);
+	PHY_RESET(mii);
 
 	PHY_WRITE(mii, RGEPHY_MII_ANAR,
 	    BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA);

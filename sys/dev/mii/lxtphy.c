@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.10 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.11 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -104,6 +104,14 @@ int	lxtphy_service(struct mii_softc *, struct mii_data *, int);
 void	lxtphy_status(struct mii_softc *);
 void	lxtphy_reset(struct mii_softc *);
 
+const struct mii_phy_funcs lxtphy_funcs = {
+	lxtphy_service, lxtphy_status, lxtphy_reset,
+};
+
+const struct mii_phy_funcs lxtphy971_funcs = {
+	lxtphy_service, ukphy_status, lxtphy_reset,
+};
+
 int
 lxtphymatch(parent, match, aux)
 	struct device *parent;
@@ -136,22 +144,21 @@ lxtphyattach(parent, self, aux)
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1_LXT970) {
 		printf(": %s, rev. %d\n", MII_STR_xxLEVEL1_LXT970,
 		    MII_REV(ma->mii_id2));
-		sc->mii_status = lxtphy_status;
+		sc->mii_funcs = &lxtphy_funcs;
 	}
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1a &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1a_LXT971) {
 		printf(": %s, rev. %d\n", MII_STR_xxLEVEL1a_LXT971,
 		    MII_REV(ma->mii_id2));
-		sc->mii_status = ukphy_status;
+		sc->mii_funcs = &lxtphy971_funcs;
 	}
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = lxtphy_service;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	lxtphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

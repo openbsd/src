@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.15 2003/10/13 16:18:56 krw Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.16 2004/09/26 00:59:58 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -85,6 +85,10 @@ void	brgphy_loop(struct mii_softc *);
 void	brgphy_reset(struct mii_softc *);
 void	brgphy_load_dspcode(struct mii_softc *);
 
+const struct mii_phy_funcs brgphy_funcs = {            
+	brgphy_service, brgphy_status, brgphy_reset,          
+};
+
 int
 brgphy_probe(parent, match, aux)
 	struct device *parent;
@@ -138,16 +142,15 @@ brgphy_attach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_funcs = &brgphy_funcs;
 	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_rev = MII_REV(ma->mii_id2);
-	sc->mii_service = brgphy_service;
-	sc->mii_status = brgphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags | MIIF_NOISOLATE;
 	sc->mii_ticks = 0; /* XXX Should be zero. Should 0 in brgphy_reset?*/
 	sc->mii_anegticks = 5;
 
-	brgphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
@@ -196,7 +199,7 @@ brgphy_service(sc, mii, cmd)
 			break;
 
 		if (sc->mii_model != MII_MODEL_xxBROADCOM_BCM5701)
-			brgphy_reset(sc); /* XXX hardware bug work-around */
+			PHY_RESET(sc); /* XXX hardware bug work-around */
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
@@ -395,7 +398,7 @@ brgphy_mii_phy_auto(sc)
 	int ktcr = 0;
 
 	brgphy_loop(sc);
-	/* XXX need 'brgphy_reset(sc);'? Was done before getting here ... */
+	/* XXX need 'PHY_RESET(sc);'? Was done before getting here ... */
 	ktcr = BRGPHY_1000CTL_AFD|BRGPHY_1000CTL_AHD;
 	if (sc->mii_model == MII_MODEL_xxBROADCOM_BCM5701)
 		ktcr |= BRGPHY_1000CTL_MSE|BRGPHY_1000CTL_MSC;

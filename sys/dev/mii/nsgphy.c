@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.10 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.11 2004/09/26 00:59:58 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -80,8 +80,11 @@ void	nsgphy_status(struct mii_softc *);
 static int	nsgphy_mii_phy_auto(struct mii_softc *, int);
 extern void	mii_phy_auto_timeout(void *);
 
-int
+const struct mii_phy_funcs nsgphy_funcs = {
+	nsgphy_service, nsgphy_status, mii_phy_reset,
+};
 
+int
 nsgphymatch(parent, match, aux)
 	struct device *parent;
 	void *match;
@@ -121,13 +124,12 @@ nsgphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = nsgphy_service;
-	sc->mii_status = nsgphy_status;
+	sc->mii_funcs = &nsgphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 	sc->mii_anegticks = 10;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 		PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -268,7 +270,7 @@ nsgphy_service(sc, mii, cmd)
 		if (reg & NSGPHY_PHYSUP_LNKSTS)
 			break;
 
-		mii_phy_reset(sc);
+		PHY_RESET(sc);
 		if (nsgphy_mii_phy_auto(sc, 0) == EJUSTRETURN)
 			return(0);
 		break;
@@ -363,7 +365,7 @@ nsgphy_mii_phy_auto(mii, waitfor)
 	int bmsr, ktcr = 0, i;
 
 	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
-		mii_phy_reset(mii);
+		PHY_RESET(mii);
 		PHY_WRITE(mii, NSGPHY_MII_BMCR, 0);
 		DELAY(1000);
 		ktcr = PHY_READ(mii, NSGPHY_MII_1000CTL);

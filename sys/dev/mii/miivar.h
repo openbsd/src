@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.18 2004/08/02 21:53:31 brad Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.19 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -99,16 +99,11 @@ struct mii_data {
 };
 typedef struct mii_data mii_data_t;
 
-/*
- * This call is used by the MII layer to call into the PHY driver
- * to perform a `service request'.
- */
-typedef	int (*mii_downcall_t)(struct mii_softc *, struct mii_data *, int);
-
-/*
- * This is a call back into the PHY driver made by a `status request'.
- */
-typedef void (*mii_statusreq_t)(struct mii_softc *);
+struct mii_phy_funcs {
+	int (*pf_service)(struct mii_softc *, struct mii_data *, int);
+	void (*pf_status)(struct mii_softc *);
+	void (*pf_reset)(struct mii_softc *);
+};
 
 /*
  * Requests that can be made to the downcall.
@@ -134,8 +129,9 @@ struct mii_softc {
 	int mii_offset;			/* first PHY, second PHY, etc. */
 	int mii_inst;			/* instance for ifmedia */
 
-	mii_downcall_t mii_service;	/* our downcall */
-	mii_statusreq_t mii_status;	/* our status request fn */
+	/* Our PHY functions. */
+	const struct mii_phy_funcs *mii_funcs;
+
 	struct mii_data *mii_pdata;	/* pointer to parent's mii_data */
 
 	int mii_flags;			/* misc. flags; see below */
@@ -221,6 +217,15 @@ struct mii_media {
 #define	PHY_WRITE(p, r, v) \
 	(*(p)->mii_pdata->mii_writereg)((p)->mii_dev.dv_parent, \
 	    (p)->mii_phy, (r), (v))
+
+#define	PHY_SERVICE(p, d, o) \
+	(*(p)->mii_funcs->pf_service)((p), (d), (o))
+
+#define	PHY_STATUS(p) \
+	(*(p)->mii_funcs->pf_status)((p))
+
+#define	PHY_RESET(p) \
+	(*(p)->mii_funcs->pf_reset)((p))
 
 #define mii_phy_probe(x, y, z) \
 	mii_attach((x), (y), (z), MII_PHY_ANY, MII_OFFSET_ANY, 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acphy.c,v 1.1 2003/08/12 19:42:37 mickey Exp $	*/
+/*	$OpenBSD: acphy.c,v 1.2 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: acphy.c,v 1.13 2003/04/29 01:49:33 thorpej Exp $	*/
 
 /*
@@ -71,6 +71,10 @@ struct cfdriver acphy_cd = {
 int	acphy_service(struct mii_softc *, struct mii_data *, int);
 void	acphy_status(struct mii_softc *);
 
+const struct mii_phy_funcs acphy_funcs = {
+	acphy_service, acphy_status, mii_phy_reset,
+};
+
 int
 acphymatch(struct device *parent, void *match, void *aux)
 {
@@ -97,13 +101,12 @@ acphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = acphy_service;
-	sc->mii_status = acphy_status;
+	sc->mii_funcs = &acphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	/*
 	 * XXX Check MCR_FX_SEL to set MIIF_HAVE_FIBER?

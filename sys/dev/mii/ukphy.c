@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.11 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.12 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -98,6 +98,10 @@ struct cfdriver ukphy_cd = {
 
 int	ukphy_service(struct mii_softc *, struct mii_data *, int);
 
+const struct mii_phy_funcs ukphy_funcs = {
+	ukphy_service, ukphy_status, mii_phy_reset,
+};
+
 int
 ukphymatch(parent, match, aux)
 	struct device *parent;
@@ -127,8 +131,7 @@ ukphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = ukphy_service;
-	sc->mii_status = ukphy_status;
+	sc->mii_funcs = &ukphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -137,7 +140,7 @@ ukphyattach(parent, self, aux)
 	 */
 	sc->mii_flags |= MIIF_NOLOOP;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.10 2004/09/23 15:32:59 fgsch Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.11 2004/09/26 00:59:58 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -61,6 +61,10 @@ struct cfdriver rlphy_cd = {
 int	rlphy_service(struct mii_softc *, struct mii_data *, int);
 void	rlphy_reset(struct mii_softc *);
 
+const struct mii_phy_funcs rlphy_funcs = {
+	rlphy_service, ukphy_status, rlphy_reset,
+};
+
 int
 rlphymatch(parent, match, aux)
 	struct device *parent;
@@ -106,12 +110,11 @@ rlphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = rlphy_service;
-	sc->mii_status = ukphy_status;
+	sc->mii_funcs = &rlphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	rlphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

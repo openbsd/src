@@ -1,4 +1,4 @@
-/*	$OpenBSD: sqphy.c,v 1.9 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: sqphy.c,v 1.10 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: sqphy.c,v 1.17 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -103,6 +103,10 @@ struct cfdriver sqphy_cd = {
 int	sqphy_service(struct mii_softc *, struct mii_data *, int);
 void	sqphy_status(struct mii_softc *);
 
+const struct mii_phy_funcs sqphy_funcs = {
+	sqphy_service, sqphy_status, mii_phy_reset,
+};
+
 int
 sqphymatch(parent, match, aux)
 	struct device *parent;
@@ -145,12 +149,11 @@ sqphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = sqphy_service;
-	sc->mii_status = sqphy_status;
+	sc->mii_funcs = &sqphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

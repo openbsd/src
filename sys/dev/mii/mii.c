@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.12 2002/10/12 01:09:44 krw Exp $	*/
+/*	$OpenBSD: mii.c,v 1.13 2004/09/26 00:59:58 brad Exp $	*/
 /*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
@@ -271,7 +271,7 @@ mii_mediachg(mii)
 
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list)) {
-		rv = (*child->mii_service)(child, mii, MII_MEDIACHG);
+		rv = PHY_SERVICE(child, mii, MII_MEDIACHG);
 		if (rv)
 			return (rv);
 	}
@@ -289,7 +289,7 @@ mii_tick(mii)
 
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
-		(void) (*child->mii_service)(child, mii, MII_TICK);
+		(void) PHY_SERVICE(child, mii, MII_TICK);
 }
 
 /*
@@ -306,7 +306,7 @@ mii_pollstat(mii)
 
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
-		(void) (*child->mii_service)(child, mii, MII_POLLSTAT);
+		(void) PHY_SERVICE(child, mii, MII_POLLSTAT);
 }
 
 /*
@@ -320,5 +320,5 @@ mii_down(mii)
 
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
-		(void) (*child->mii_service)(child, mii, MII_DOWN);
+		(void) PHY_SERVICE(child, mii, MII_DOWN);
 }
