@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.48 2001/06/22 14:35:43 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.49 2001/08/06 20:50:25 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1165,7 +1165,6 @@ sdsize(dev)
 	return size;
 }
 
-#ifndef __BDEVSW_DUMP_OLD_TYPE
 /* #define SD_DUMP_NOT_TRUSTED if you just want to watch */
 static struct scsi_xfer sx;
 static int sddoingadump;
@@ -1287,19 +1286,6 @@ sddump(dev, blkno, va, size)
 	sddoingadump = 0;
 	return 0;
 }
-#else	/* __BDEVSW_DUMP_OLD_TYPE */
-int
-sddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return ENXIO;
-}
-#endif	/* __BDEVSW_DUMP_OLD_TYPE */
 
 /*
  * Copy up to len chars from src to dst, ignoring non-printables.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.18 2001/07/31 07:07:00 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.19 2001/08/06 20:50:28 miod Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -1100,7 +1100,6 @@ wdsize(dev)
 	return (size);
 }
 
-#ifndef __BDEVSW_DUMP_OLD_TYPE
 /* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
 static int wddoingadump = 0;
 static int wddumprecalibrated = 0;
@@ -1233,21 +1232,6 @@ again:
 	wddoingadump = 0;
 	return 0;
 }
-#else /* __BDEVSW_DUMP_NEW_TYPE */
-
-
-int
-wddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return ENXIO;
-}
-#endif /* __BDEVSW_DUMP_NEW_TYPE */
 
 #ifdef DKBAD
 /*
