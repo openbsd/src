@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.3 2004/09/14 23:08:44 henning Exp $ */
+/*	$OpenBSD: pftable.c,v 1.4 2004/11/02 17:00:52 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -142,6 +142,7 @@ pftable_add(const char *name)
 	bzero(pft, sizeof(*pft));
 	if (strlcpy(pft->name, name, sizeof(pft->name)) >= sizeof(pft->name)) {
 		log_warn("pf_table name too long");
+		free(pft);
 		return (-1);
 	}
 
