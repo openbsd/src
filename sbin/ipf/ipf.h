@@ -6,7 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ipf.h	1.12 6/5/96
- * $Id: ipf.h,v 1.6 1997/02/11 22:23:39 kstailey Exp $
+ * $DRId: ipf.h,v 2.0.1.1 1997/01/09 15:14:43 darrenr Exp $
  */
 
 #ifndef	SOLARIS

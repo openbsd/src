@@ -1,3 +1,4 @@
+/*	$OpenBSD: parse.c,v 1.9 1997/02/26 04:35:40 kstailey Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -32,9 +33,9 @@
 #include "ipf.h"
 #include <ctype.h>
 
-#ifndef	lint
+#if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: parse.c,v 1.8 1997/01/17 07:12:18 millert Exp $";
+static	char	rcsid[] = "$DRId: parse.c,v 2.0.1.2 1997/02/17 13:59:44 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -47,6 +48,8 @@ u_char	tcp_flags();
 struct	frentry	*parse();
 void	binprint(), printfr();
 int	addicmp(), extras(), hostmask(), ports(), icmpcode(), addkeep();
+int	to_interface();
+
 
 char	*proto = NULL;
 char	flagset[] = "FSRPAU";
@@ -75,6 +78,11 @@ char	*line;
 	u_char	ch;
 	int	i, cnt = 1;
 
+	while (*line && isspace(*line))
+		line++;
+	if (!*line)
+		return NULL;
+
 	bzero((char *)&fil, sizeof(fil));
 	fil.fr_mip.fi_v = 0xf;
 	fil.fr_ip.fi_v = 4;
@@ -95,15 +103,8 @@ char	*line;
 	cpp = cps;
 	if (**cpp == '@')
 		fil.fr_hits = atoi(*cpp++ + 1) + 1;
-	/*
-	 * does it start with one of the two possible first words ?
-	 */
-	if (strcasecmp("block",*cpp) && strcasecmp("pass",*cpp) &&
-	    strcasecmp("log",*cpp) && strcasecmp("count",*cpp)) {
-		(void)fprintf(stderr, "unknown keyword (%s)\n", *cpp);
-		return NULL;
-	}
-	if (**cpp == 'b') {
+
+	if (!strcasecmp("block", *cpp)) {
 		fil.fr_flags = FR_BLOCK;
 		if (!strncasecmp(*(cpp+1), "return-icmp", 11)) {
 			fil.fr_flags |= FR_RETICMP;
@@ -121,11 +122,11 @@ char	*line;
 			fil.fr_flags |= FR_RETRST;
 			cpp++;
 		}
-	} else if (**cpp == 'c')
+	} else if (!strcasecmp("count", *cpp)) {
 		fil.fr_flags = FR_ACCOUNT;
-	else if (**cpp == 'p') {
+	} else if (!strcasecmp("pass", *cpp)) {
 		fil.fr_flags = FR_PASS;
-	} else if (**cpp == 'l') {
+	} else if (!strcasecmp("log", *cpp)) {
 		fil.fr_flags = FR_LOG;
 		if (!strcasecmp(*(cpp+1), "body")) {
 			fil.fr_flags |= FR_LOGBODY;
@@ -135,14 +136,29 @@ char	*line;
 			fil.fr_flags |= FR_LOGFIRST;
 			cpp++;
 		}
+	} else {
+		/*
+		 * Doesn't start with one of the action words
+		 */
+		(void)fprintf(stderr, "unknown keyword (%s)\n", *cpp);
+		return NULL;
 	}
 	cpp++;
 
 	if (!strcasecmp("in", *cpp))
 		fil.fr_flags |= FR_INQUE;
-	else if (!strcasecmp("out", *cpp))
+	else if (!strcasecmp("out", *cpp)) {
 		fil.fr_flags |= FR_OUTQUE;
-	else {
+		if (fil.fr_flags & FR_RETICMP) {
+			(void)fprintf(stderr,
+				"Can only use return-icmp with 'in'\n");
+			return NULL;
+		} else if (fil.fr_flags & FR_RETRST) {
+			(void)fprintf(stderr,
+				"Can only use return-rst with 'in'\n");
+			return NULL;
+		}
+	} else {
 		(void)fprintf(stderr,
 			"missing 'in'/'out' keyword (%s)\n", *cpp);
 		return NULL;
@@ -164,6 +180,15 @@ char	*line;
 			fil.fr_flags |= FR_LOGFIRST;
 			cpp++;
 		}
+		if (!strcasecmp(*cpp, "or-block")) {
+			if (!(fil.fr_flags & FR_PASS)) {
+				(void)fprintf(stderr,
+					"or-block must be used with pass\n");
+				return NULL;
+			}
+			fil.fr_flags |= FR_LOGORBLOCK;
+			cpp++;
+		}
 	}
 
 	if (!strcasecmp("quick", *cpp)) {
@@ -172,7 +197,7 @@ char	*line;
 	}
 
 	*fil.fr_ifname = '\0';
-	if (!strcasecmp(*cpp, "on")) {
+	if (*cpp && !strcasecmp(*cpp, "on")) {
 		if (!*++cpp) {
 			(void)fprintf(stderr, "interface name missing\n");
 			return NULL;
@@ -191,16 +216,6 @@ char	*line;
 		}
 
 		if (*cpp) {
-#if SOLARIS
-			if (!strcasecmp(*cpp, "dup-to")  ||
-			    !strcasecmp(*cpp, "to") ||
-			    !strcasecmp(*cpp, "fastroute")) {
-				(void) fprintf(stderr,
-					"%s not supported under SunOS5\n",
-					*cpp);
-				return NULL;
-			}
-#endif
 			if (!strcasecmp(*cpp, "dup-to") && *(cpp + 1)) {
 				cpp++;
 				if (to_interface(&fil.fr_dif, *cpp))
@@ -218,7 +233,7 @@ char	*line;
 			}
 		}
 	}
-	if (!strcasecmp(*cpp, "tos")) {
+	if (*cpp && !strcasecmp(*cpp, "tos")) {
 		if (!*++cpp) {
 			(void)fprintf(stderr, "tos missing value\n");
 			return NULL;
@@ -228,7 +243,7 @@ char	*line;
 		cpp++;
 	}
 
-	if (!strcasecmp(*cpp, "ttl")) {
+	if (*cpp && !strcasecmp(*cpp, "ttl")) {
 		if (!*++cpp) {
 			(void)fprintf(stderr, "ttl missing hopcount value\n");
 			return NULL;
@@ -242,7 +257,7 @@ char	*line;
 	 * check for "proto <protoname>" only decode udp/tcp/icmp as protoname
 	 */
 	proto = NULL;
-	if (!strcasecmp(*cpp, "proto")) {
+	if (*cpp && !strcasecmp(*cpp, "proto")) {
 		if (!*++cpp) {
 			(void)fprintf(stderr, "protocol name missing\n");
 			return NULL;
@@ -282,6 +297,10 @@ char	*line;
 	 * get the from host and bit mask to use against packets
 	 */
 
+	if (!*cpp) {
+		fprintf(stderr, "missing source specification\n");
+		return NULL;
+	}
 	if (!strcasecmp(*cpp, "all")) {
 		cpp++;
 		if (!*cpp)
@@ -687,21 +706,21 @@ struct	frentry	*fr;
 	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 4) ||
 	       !strncasecmp(**cp, "frag", 3) || !strncasecmp(**cp, "no", 2) ||
 	       !strncasecmp(**cp, "short", 5))) {
-		if (***cp == 'n') {
+		if (***cp == 'n' || ***cp == 'N') {
 			notopt = 1;
 			(*cp)++;
 			continue;
-		} else if (***cp == 'i') {
+		} else if (***cp == 'i' || ***cp == 'I') {
 			if (!notopt)
 				fr->fr_ip.fi_fl |= FI_OPTIONS;
 			fr->fr_mip.fi_fl |= FI_OPTIONS;
 			goto nextopt;
-		} else if (***cp == 'f') {
+		} else if (***cp == 'f' || ***cp == 'F') {
 			if (!notopt)
 				fr->fr_ip.fi_fl |= FI_FRAG;
 			fr->fr_mip.fi_fl |= FI_FRAG;
 			goto nextopt;
-		} else if (***cp == 'o') {
+		} else if (***cp == 'o' || ***cp == 'O') {
 			if (!*(*cp + 1)) {
 				(void)fprintf(stderr,
 					"opt missing arguements\n");
@@ -711,7 +730,7 @@ struct	frentry	*fr;
 			if (!(opts = optname(cp, &secmsk)))
 				return -1;
 			oflags = FI_OPTIONS;
-		} else if (***cp == 's') {
+		} else if (***cp == 's' || ***cp == 'S') {
 			if (fr->fr_tcpf) {
 				(void) fprintf(stderr,
 				    "short cannot be used with TCP flags\n");
@@ -980,9 +999,9 @@ struct	frentry	*fp;
 		return -1;
 	}
 
-	if (***cp == 's')
+	if (***cp == 's' || ***cp == 'S')
 		fp->fr_flags |= FR_KEEPSTATE;
-	else if (***cp == 'f')
+	else if (***cp == 'f' || ***cp == 'F')
 		fp->fr_flags |= FR_KEEPFRAG;
 	(*cp)++;
 	return 0;
@@ -1057,7 +1076,6 @@ struct	frentry	*fp;
 	static	char	*pcmp1[] = { "*", "=", "!=", "<", ">", "<=", ">=",
 				    "<>", "><"};
 	struct	protoent	*p;
-	frdest_t	*fdp;
 	int	ones = 0, pr;
 	char	*s;
 	u_char	*t;
@@ -1098,6 +1116,8 @@ struct	frentry	*fp;
 			(void)printf("body ");
 		if (fp->fr_flags & FR_LOGFIRST)
 			(void)printf("first ");
+		if (fp->fr_flags & FR_LOGORBLOCK)
+			(void)printf("or-block ");
 	}
 	if (fp->fr_flags & FR_QUICK)
 		(void)printf("quick ");
