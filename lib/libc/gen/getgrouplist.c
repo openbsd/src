@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrouplist.c,v 1.5 1997/07/09 00:28:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: getgrouplist.c,v 1.6 1997/08/19 16:24:42 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -60,6 +60,10 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	/*
 	 * install primary group
 	 */
+	if (ngroups >= maxgroups) {
+		*grpcnt = ngroups;
+		return (-1);
+	}
 	groups[ngroups++] = agroup;
 
 	/*
@@ -68,6 +72,11 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	setgrent();
 	while ((grp = getgrent())) {
 		if (grp->gr_gid == agroup)
+			continue;
+		for (i = 0; i < ngroups; i++)
+			if (groups[i] == grp->gr_gid)
+				break;
+		if (groups[i] == grp->gr_gid)
 			continue;
 		for (i = 0; grp->gr_mem[i]; i++) {
 			if (!strcmp(grp->gr_mem[i], uname)) {
