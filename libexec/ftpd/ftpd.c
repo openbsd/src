@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.117 2002/01/23 20:59:05 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.118 2002/02/01 04:53:28 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.117 2002/01/23 20:59:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.118 2002/02/01 04:53:28 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -981,6 +981,21 @@ pass(passwd)
 			/* NOTREACHED */
 		}
 		free(dir);
+		free(pw->pw_dir);
+		pw->pw_dir = newdir;
+	}
+
+	/* make sure pw->pw_dir is big enough to hold "/" */
+	if (strlen(pw->pw_dir) < 1) {
+		char *newdir;
+
+		newdir = malloc(2);
+		if (newdir == NULL) {
+			perror_reply(421, "Local resource failure: malloc");
+			dologout(1);
+			/* NOTREACHED */
+		}
+		strlcpy(newdir, pw->pw_dir, 2);
 		free(pw->pw_dir);
 		pw->pw_dir = newdir;
 	}
