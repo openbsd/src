@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: state.h,v 1.5 1998/03/04 11:43:55 provos Exp $ */
+/* $Id: state.h,v 1.6 1998/05/13 10:01:12 niklas Exp $ */
 /*
  * state.h: 
  * state object
@@ -49,7 +49,7 @@
 /* Possible values of flags */
 #define IPSEC_OPT_ENC      0x001   /* Negotiate encryption */
 #define IPSEC_OPT_AUTH     0x002   /* Negotiate authentication */
-#define IPSEC_OPT_TUNNEL   0x004   /* Negotiate tunne mode */
+#define IPSEC_OPT_TUNNEL   0x004   /* Negotiate tunnel mode */
 #define IPSEC_OPT_REPLAY   0x100   /* Encryption with replay protection */
 #define IPSEC_OPT_ENC_AUTH 0x200   /* Encryption with authentication */
 #define IPSEC_OPT_XOR      0x400   /* Encryption with XOR */
