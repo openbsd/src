@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.26 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.27 2003/10/05 18:34:42 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -353,9 +353,15 @@ fbwscons_console_init(struct sunfb *sf, struct wsscreen_descr *wsc, int row,
 			/* assume last row */
 			sf->sf_ro.ri_crow = sf->sf_ro.ri_rows - 1;
 	} else {
+		/*
+		 * If we force the display row, this is because the screen
+		 * has been cleared or the font has been changed.
+		 * In this case, choose not to keep pointers to the PROM
+		 * cursor position, as the values are likely to be inaccurate
+		 * upon shutdown...
+		 */
+		sf->sf_crowp = sf->sf_ccolp = NULL;
 		sf->sf_ro.ri_crow = row;
-		if (sf->sf_crowp != NULL)
-			*sf->sf_crowp = row;
 	}
 
 	/*
