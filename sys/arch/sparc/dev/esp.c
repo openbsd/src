@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.22 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: esp.c,v 1.23 2005/03/02 16:42:37 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -107,6 +107,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
+#include <sys/malloc.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -150,6 +151,8 @@ struct scsi_device esp_dev = {
  */
 u_char	esp_read_reg(struct ncr53c9x_softc *, int);
 void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
+u_char	esp_rdreg1(struct ncr53c9x_softc *, int);
+void	esp_wrreg1(struct ncr53c9x_softc *, int, u_char);
 int	esp_dma_isintr(struct ncr53c9x_softc *);
 void	esp_dma_reset(struct ncr53c9x_softc *);
 int	esp_dma_intr(struct ncr53c9x_softc *);
@@ -172,6 +175,21 @@ struct ncr53c9x_glue esp_glue = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
+#if defined(SUN4C) || defined(SUN4M)
+struct ncr53c9x_glue esp_glue1 = {
+	esp_rdreg1,
+	esp_wrreg1,
+	esp_dma_isintr,
+	esp_dma_reset,
+	esp_dma_intr,
+	esp_dma_setup,
+	esp_dma_go,
+	esp_dma_stop,
+	esp_dma_isactive,
+	NULL,			/* gl_clear_latched_intr */
+};
+#endif
+
 int
 espmatch(parent, vcf, aux)
 	struct device *parent;
@@ -180,6 +198,14 @@ espmatch(parent, vcf, aux)
 	register struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
+
+#if defined(SUN4C) || defined(SUN4M)
+	if (ca->ca_bustype == BUS_SBUS) {
+		if (strcmp("SUNW,fas", ra->ra_name) == 0 ||
+		    strcmp("ptscII", ra->ra_name) == 0)
+			return (1);
+	}
+#endif
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
@@ -206,16 +232,12 @@ espattach(parent, self, aux)
 	struct esp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	struct bootpath *bp;
-	int dmachild = strncmp(parent->dv_xname, "dma", 3) == 0;
+	int dmachild;
+	unsigned int uid = 0;
 
 	/*
-	 * Set up glue for MI code early; we use some of it here.
-	 */
-	sc->sc_glue = &esp_glue;
-
-	/*
-	 * Make sure things are sane. I don't know if this is ever
-	 * necessary, but it seem to be in all of Torek's code.
+	 * If no interrupts properties, bail out: this might happen
+	 * on the Sparc X terminal.
 	 */
 	if (ca->ca_ra.ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
@@ -224,17 +246,6 @@ espattach(parent, self, aux)
 
 	esc->sc_pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", esc->sc_pri);
-
-	/*
-	 * Map my registers in, if they aren't already in virtual
-	 * address space.
-	 */
-	if (ca->ca_ra.ra_vaddr)
-		esc->sc_reg = (volatile u_char *) ca->ca_ra.ra_vaddr;
-	else {
-		esc->sc_reg = (volatile u_char *)
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
-	}
 
 	/* Other settings */
 	esc->sc_node = ca->ca_ra.ra_node;
@@ -252,32 +263,140 @@ espattach(parent, self, aux)
 	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
-	if (dmachild) {
-		esc->sc_dma = (struct dma_softc *)parent;
-		esc->sc_dma->sc_esp = esc;
-	} else {
-		/*
-		 * find the DMA by poking around the dma device structures
-		 *
-		 * What happens here is that if the dma driver has not been
-		 * configured, then this returns a NULL pointer. Then when the
-		 * dma actually gets configured, it does the opposing test, and
-		 * if the sc->sc_esp field in it's softc is NULL, then tries to
-		 * find the matching esp driver.
-		 */
-		esc->sc_dma = (struct dma_softc *)
-			getdevunit("dma", sc->sc_dev.dv_unit);
+#if defined(SUN4C) || defined(SUN4M)
+	if (ca->ca_bustype == BUS_SBUS &&
+	    strcmp("SUNW,fas", ca->ca_ra.ra_name) == 0) {
+		struct dma_softc *dsc;
 
 		/*
-		 * and a back pointer to us, for DMA
+		 * fas has 2 register spaces: DMA (lsi64854) and SCSI core
+		 * (ncr53c9x).
 		 */
-		if (esc->sc_dma)
-			esc->sc_dma->sc_esp = esc;
+		if (ca->ca_ra.ra_nreg != 2) {
+			printf(": expected 2 register spaces, found %d\n",
+			    ca->ca_ra.ra_nreg);
+			return;
+		}
+
+		/*
+		 * Allocate a softc for the DMA companion, which will not
+		 * get a regular attachment.
+		 */
+		dsc = malloc(sizeof(struct dma_softc), M_DEVBUF, M_NOWAIT);
+		if (dsc == NULL) {
+			printf(": could not allocate dma softc\n");
+			return;
+		}
+		bzero(dsc, sizeof(struct dma_softc));
+		strlcpy(dsc->sc_dev.dv_xname, sc->sc_dev.dv_xname,
+		    sizeof(dsc->sc_dev.dv_xname));
+		esc->sc_dma = dsc;
+
+		/*
+		 * Map DMA registers
+		 */
+		dsc->sc_regs = (struct dma_regs *)mapiodev(&ca->ca_ra.ra_reg[0],
+		    0, ca->ca_ra.ra_reg[0].rr_len);
+		if (dsc->sc_regs == NULL) {
+			printf(": could not map DMA registers\n");
+			return;
+		}
+		dsc->sc_rev = dsc->sc_regs->csr & D_DEV_ID;
+		dsc->sc_esp = esc;
+
+#ifdef SUN4M
+		/*
+		 * Get transfer burst size from PROM and plug it into the
+		 * controller registers. This is needed on the Sun4m; do
+		 * others need it too?
+		 */
+		if (CPU_ISSUN4M) {
+			int sbusburst;
+
+			sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+			if (sbusburst == 0)
+				sbusburst = SBUS_BURST_32 - 1;	/* 1 -> 16 */
+
+			dsc->sc_burst =
+			    getpropint(ca->ca_ra.ra_node, "burst-sizes", -1);
+			if (dsc->sc_burst == -1)
+				/* take SBus burst sizes */
+				dsc->sc_burst = sbusburst;
+
+			/* Clamp at parent's burst sizes */
+			dsc->sc_burst &= sbusburst;
+		}
+#endif	/* SUN4M */
+
+		/* indirect functions */
+		dma_setuphandlers(dsc);
+
+		/*
+		 * Map SCSI core registers
+		 */
+		esc->sc_reg = (volatile u_char *)mapiodev(&ca->ca_ra.ra_reg[1],
+		    0, ca->ca_ra.ra_reg[1].rr_len);
+		if (esc->sc_reg == NULL) {
+			printf(": could not map SCSI core registers\n");
+			return;
+		}
+
+		dmachild = 0;
+	} else
+#endif
+	{
+		/*
+		 * Map my registers in, if they aren't already in virtual
+		 * address space.
+		 */
+		if (ca->ca_ra.ra_vaddr)
+			esc->sc_reg = (volatile u_char *) ca->ca_ra.ra_vaddr;
 		else {
-			printf("\n");
-			panic("espattach: no dma found");
+			esc->sc_reg = (volatile u_char *)
+			    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
+		}
+
+		dmachild = strncmp(parent->dv_xname, "dma", 3) == 0;
+		if (dmachild) {
+			esc->sc_dma = (struct dma_softc *)parent;
+			esc->sc_dma->sc_esp = esc;
+		} else {
+			/*
+			 * Find the DMA by poking around the DMA device
+			 * structures.
+			 *
+			 * What happens here is that if the DMA driver has
+			 * not been configured, then this returns a NULL
+			 * pointer. Then when the DMA actually gets configured,
+			 * it does the opposite test, and if the sc->sc_esp
+			 * field in its softc is NULL, then tries to find the
+			 * matching esp driver.
+			 */
+			esc->sc_dma = (struct dma_softc *)
+			    getdevunit("dma", sc->sc_dev.dv_unit);
+
+			/*
+			 * ...and a back pointer to us, for DMA.
+			 */
+			if (esc->sc_dma)
+				esc->sc_dma->sc_esp = esc;
+			else {
+				printf("\n");
+				panic("espattach: no dma found");
+			}
 		}
 	}
+
+	/*
+	 * Set up glue for MI code.
+	 */
+#if defined(SUN4C) || defined(SUN4M)
+	if (ca->ca_bustype == BUS_SBUS &&
+	    strcmp("ptscII", ca->ca_ra.ra_name) == 0) {
+		sc->sc_glue = &esp_glue1;
+	} else
+#endif
+		sc->sc_glue = &esp_glue;
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -314,6 +433,11 @@ espattach(parent, self, aux)
 			sc->sc_cfg3 = 0;
 			NCR_WRITE_REG(sc, NCR_CFG3, sc->sc_cfg3);
 			sc->sc_rev = NCR_VARIANT_ESP200;
+
+			/* XXX spec says it's valid after power up or chip reset */
+			uid = NCR_READ_REG(sc, NCR_UID);
+			if (((uid & 0xf8) >> 3) == 0x0a) /* XXX */
+				sc->sc_rev = NCR_VARIANT_FAS366;
 		}
 	}
 
@@ -352,6 +476,7 @@ espattach(parent, self, aux)
 		break;
 
 	case NCR_VARIANT_ESP200:
+	case NCR_VARIANT_FAS366:
 		sc->sc_maxxfer = 16 * 1024 * 1024;
 		/* XXX - do actually set FAST* bits */
 		break;
@@ -368,7 +493,7 @@ espattach(parent, self, aux)
 	}
 #endif /* SUN4C || SUN4M */
 
-	/* and the interuppts */
+	/* and the interrupts */
 	esc->sc_ih.ih_fun = (void *) ncr53c9x_intr;
 	esc->sc_ih.ih_arg = sc;
 	intr_establish(esc->sc_pri, &esc->sc_ih, IPL_BIO, self->dv_xname);
@@ -392,11 +517,12 @@ espattach(parent, self, aux)
 		break;
 	}
 
+	/* Turn on target selection using the `dma' method */
+	if (sc->sc_rev != NCR_VARIANT_FAS366)
+		sc->sc_features |= NCR_F_DMASELECT;
+
 	/* Do the common parts of attachment. */
 	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
-
-	/* Turn on target selection using the `dma' method */
-	sc->sc_features |= NCR_F_DMASELECT;
 
 	bootpath_store(1, NULL);
 }
@@ -426,6 +552,30 @@ esp_write_reg(sc, reg, val)
 
 	esc->sc_reg[reg * 4] = v;
 }
+
+#if defined(SUN4C) || defined(SUN4M)
+u_char
+esp_rdreg1(sc, reg)
+	struct ncr53c9x_softc *sc;
+	int reg;
+{
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
+	return (esc->sc_reg[reg]);
+}
+
+void
+esp_wrreg1(sc, reg, val)
+	struct ncr53c9x_softc *sc;
+	int reg;
+	u_char val;
+{
+	struct esp_softc *esc = (struct esp_softc *)sc;
+	u_char v = val;
+
+	esc->sc_reg[reg] = v;
+}
+#endif
 
 int
 esp_dma_isintr(sc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmavar.h,v 1.5 2003/06/05 12:27:02 deraadt Exp $	*/
+/*	$OpenBSD: dmavar.h,v 1.6 2005/03/02 16:42:37 miod Exp $	*/
 /*	$NetBSD: dmavar.h,v 1.11 1996/11/27 21:49:53 pk Exp $ */
 
 /*
@@ -32,7 +32,6 @@ struct dma_softc {
 	struct dma_regs *sc_regs;		/* the registers */
 	int	sc_active;			/* DMA active ? */
 	u_int	sc_rev;				/* revision */
-	int	sc_node;			/* PROM node ID */
 	int	sc_burst;			/* DVMA burst size in effect */
 	caddr_t	sc_dvmakaddr;			/* DVMA cookies */
 	caddr_t	sc_dvmaaddr;			/*		*/
@@ -45,6 +44,7 @@ struct dma_softc {
 	int (*intr)(struct dma_softc *);	/* interrupt ! */
 	int (*setup)(struct dma_softc *, caddr_t *, size_t *, int, size_t *);
 	void (*go)(struct dma_softc *);
+	u_int	sc_dmactl;
 };
 
 #define DMACSR(sc)	(sc->sc_regs->csr)
@@ -59,3 +59,5 @@ struct dma_softc {
 #define DMA_ISACTIVE(r)		((r)->sc_active)
 #define DMA_SETUP(a, b, c, d, e)	(((a)->setup)(a, b, c, d, e))
 #define DMA_GO(r)		(((r)->go)(r))
+
+void	dma_setuphandlers(struct dma_softc *);

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.64 2004/10/11 15:20:46 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.65 2005/03/02 16:42:35 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -156,10 +156,12 @@ Supported devices {:-include-:}:
 	- on-board SCSI controller (sun4c, sun4m, and 4/300) (esp)
 	- SBus SCSI controllers (including 3rd party compatible boards) (esp)
 	- SBus cards containing both AMD Lance le and esp SCSI (esp)
+	- SBus SUNW,fas Ethernet+SCSI cards (esp) [*]
 	- VME "SUN-3"/"si" SCSI controller (interrupt driven DMA) (si)
 	- 4/110 "SCSI weird" on-board controller (polled DMA) (sw)
 	- QSP/ISP SCSI controllers (i.e. "PTI,ptisp", "ptisp", "SUNW,isp"
 	  and "QLGC,isp") (isp)
+	[*] Not supported in sun4c-class machines due to PROM limitations.
 
     * SMD and other disk controllers:
 	- Xylogics 7053 VME SMD disk controller (xd)
@@ -311,9 +313,6 @@ Hardware that we do NOT currently support, but get many questions about:
 	OpenBSD will not currently boot on some machines with multiple
 	processors. You must remove the extra CPUs.
     * SBus SUNW,bpp (parallel port)
-    * SBus FAS SCSI controllers
-	The FAS-only card is not supported. The HME+FAS card only supports
-	the HME part of the card.
     * SBus FDDI cards
 
 The supplied GENERIC kernel is the best attempt at a configuration that
