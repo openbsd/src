@@ -46,106 +46,72 @@
 #include <string.h>
 #include <paths.h>
 
- 
-
-#define SENO_EOL        0x00            /* End of Options, or placeholder */
-#define SENO_NOP        0x01            /* No Operation. Skip */
-#define SENO_NAME       0x02            /* tunnel name, NUL-terminated */
-#define SENO_TDB        0x03            /* tunnel descriptor block address */
-#define SENO_IFN        0x04            /* Encap interface number */
-#define SENO_IFIP4A     0x05            /* Encap interface IPv4 address */
-#define SENO_IPSA       0x06            /* Encap interface generic sockaddr */
-
-
-#define IFT_ENC 0x37
 #define INET
-
-
 #include "net/encap.h"
-
-/*
- * The numbers below are arbitrary. They have been chosen for their
- * mnemonic value. If sen_len is larger than what would be expected from
- * the length of the data that follow, then TLV-triplets follow the 
- * addresses containing system-depended information.
- */
-
 
 char buf[2048];
 
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
-	int sd;
+    struct sockaddr_encap *dst, *msk;
+    struct rt_msghdr *rtm;
+    int sd;
 
-	struct rt_msghdr *rtm;
-	struct sockaddr_encap *dst, *msk, *gw;
-	struct sockaddr_dl *dl;
-	u_char *opts;
+    if (argc != 8)
+      fprintf(stderr,
+	      "usage: %s isrc isrcmask idst idstmask proto sport dport\n",
+	      argv[0]), exit(1);
+	
+    sd = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
+    if (sd < 0)
+      perror("socket"), exit(1);
+	
+    rtm = (struct rt_msghdr *) (&buf[0]);
+    dst = (struct sockaddr_encap *) (&buf[sizeof(*rtm)]);
+    msk = (struct sockaddr_encap *) (&buf[sizeof(*rtm) + SENT_IP4_LEN]);
+	
+    rtm->rtm_version = RTM_VERSION;
+    rtm->rtm_type = RTM_DELETE;
+    rtm->rtm_index = 0;
+    rtm->rtm_pid = getpid();
+    rtm->rtm_addrs = RTA_DST | RTA_NETMASK /* | RTA_IFP */;
+    rtm->rtm_errno = 0;
+    rtm->rtm_flags = RTF_UP | RTF_STATIC;
+    rtm->rtm_inits = 0;
 
-	if (argc != 11)
-	  fprintf(stderr, "usage: %s isrc isrcmask idst idstmask odst spi fespah proto sport dport\n", argv[0]), exit(1);
-	
-	sd = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
-	if (sd < 0)
-	  perror("socket"), exit(1);
-	
-	rtm = (struct rt_msghdr *)(&buf[0]);
-	dst = (struct sockaddr_encap *)(&buf[sizeof (*rtm)]);
-	gw = (struct sockaddr_encap *)(&buf[sizeof (*rtm) + SENT_IP4_LEN]);
-	msk = (struct sockaddr_encap *)(&buf[sizeof (*rtm) + SENT_IP4_LEN + SENT_IPSP_LEN]);
-	
-	rtm->rtm_version = RTM_VERSION;
-	rtm->rtm_type = RTM_DELETE;
-	rtm->rtm_index = 0;
-	rtm->rtm_pid = getpid();
-	rtm->rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK /* | RTA_IFP */;
-	rtm->rtm_errno = 0;
-	rtm->rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
-	rtm->rtm_inits = 0;
-	
-	dst->sen_len = SENT_IP4_LEN;
-	dst->sen_family = AF_ENCAP;
-	dst->sen_type = SENT_IP4;
-	dst->sen_ip_src.s_addr = inet_addr(argv[1]);
-	dst->sen_ip_dst.s_addr = inet_addr(argv[3]);
-	dst->sen_proto = dst->sen_sport = dst->sen_dport = 0;
+    dst->sen_len = SENT_IP4_LEN;
+    dst->sen_family = AF_ENCAP;
+    dst->sen_type = SENT_IP4;
+    dst->sen_ip_src.s_addr = inet_addr(argv[1]);
+    dst->sen_ip_dst.s_addr = inet_addr(argv[3]);
+    dst->sen_proto = dst->sen_sport = dst->sen_dport = 0;
 
-	if (atoi(argv[8]) >= 0)
+    if (atoi(argv[5]) > 0)
+    {
+	dst->sen_proto = atoi(argv[5]);
+	msk->sen_proto = 0xff;
+
+	if (atoi(argv[6]) > 0)
 	{
-		dst->sen_proto = atoi(argv[8]);
-		msk->sen_proto = 0xff;
-		if (atoi(argv[8]) >= 0)
-		{
-			dst->sen_sport = atoi(argv[9]);
-			msk->sen_sport = 0xffff;
-		}
-		if (atoi(argv[10]) >= 0)
-		{
-			dst->sen_dport = atoi(argv[10]);
-			msk->sen_dport = 0xffff;
-		}
+	    dst->sen_sport = atoi(argv[6]);
+	    msk->sen_sport = 0xffff;
 	}
 
-	gw->sen_len = SENT_IPSP_LEN;
-	gw->sen_family = AF_ENCAP;
-	gw->sen_type = SENT_IPSP;
-	gw->sen_ipsp_dst.s_addr = inet_addr(argv[5]);
-	gw->sen_ipsp_spi = htonl(strtoul(argv[6], NULL, 16));
-	gw->sen_ipsp_sproto = atoi(argv[7]) == 1 ? IPPROTO_ESP : IPPROTO_AH;
+	if (atoi(argv[7]) > 0)
+	{
+	    dst->sen_dport = atoi(argv[7]);
+	    msk->sen_dport = 0xffff;
+	}
+    }
 
-	msk->sen_len = SENT_IP4_LEN;
-	msk->sen_family = AF_ENCAP;
-	msk->sen_type = SENT_IP4;
-	msk->sen_ip_src.s_addr = inet_addr(argv[2]);
-	msk->sen_ip_dst.s_addr = inet_addr(argv[4]);
+    msk->sen_len = SENT_IP4_LEN;
+    msk->sen_family = AF_ENCAP;
+    msk->sen_type = SENT_IP4;
+    msk->sen_ip_src.s_addr = inet_addr(argv[2]);
+    msk->sen_ip_dst.s_addr = inet_addr(argv[4]);
 
-	rtm->rtm_msglen = sizeof (*rtm) + dst->sen_len + gw->sen_len + msk->sen_len;
-	
-	if (write(sd, (caddr_t)buf, rtm->rtm_msglen) < 0)
-	  perror("write");
+    rtm->rtm_msglen = sizeof(*rtm) + dst->sen_len + msk->sen_len;
+
+    if (write(sd, (caddr_t) buf, rtm->rtm_msglen) < 0)
+      perror("write");
 }
-
-	
-	
