@@ -267,6 +267,16 @@ for machine in $build $host $target; do
 	tm_file=${cpu_type}/${cpu_type}.h
 	xm_file=${cpu_type}/xm-${cpu_type}.h
 	
+	# Common parts for openbsd systems
+	case $machine in
+	*-*-openbsd*)
+		tm_file=${cpu_type}/openbsd.h
+		# On OpenBSD systems, the headers are okay
+		fixincludes=Makefile.in
+		tmake_file=t-libc-ok
+		xmake_file=x-openbsd
+		;;
+	esac
 	case $machine in
 	# Support site-specific machine types.
 	*local*)
@@ -338,11 +348,7 @@ for machine in $build $host $target; do
  		fi
 		;;
 	alpha-*-openbsd*)
-		tm_file=alpha/openbsd.h
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
-		tmake_file=t-libc-ok
-		xmake_file=x-openbsd
+		# nothing special
 		;;
 	alpha*-dec-osf*)
 		if [[ x$stabs = xyes ]]
@@ -673,11 +679,9 @@ for machine in $build $host $target; do
 		;;
 	hppa*-*-openbsd*)
 		target_cpu_default=1
-		tm_file="${cpu_type}/openbsd.h"
 		xm_file="${cpu_type}/xm-openbsd.h"
 		tmake_file=pa/t-openbsd
 		use_collect2=yes
-		fixincludes=Makefile.in
 		;;
 	i370-*-mvs*)
 		;;
@@ -799,11 +803,7 @@ for machine in $build $host $target; do
 		tmake_file=t-netbsd
 		;;
 	i[[34567]]86-*-openbsd*)
-		tm_file=i386/openbsd.h
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
-		tmake_file=t-libc-ok
-		xmake_file=x-openbsd
+		# Nothing special
 		;;
 	i[[34567]]86-*-coff*)
 		tm_file=i386/i386-coff.h
@@ -1493,11 +1493,7 @@ for machine in $build $host $target; do
 		tmake_file=t-netbsd
 		;;
 	m68k-*-openbsd*)
-		tm_file=m68k/openbsd.h
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
-		tmake_file=t-libc-ok
-		xmake_file=x-openbsd
+		# Nothing special
 		;;
 	m68k-*-sysv3*)			# Motorola m68k's running system V.3
 		xm_file=m68k/xm-m68kv.h
@@ -1613,11 +1609,7 @@ for machine in $build $host $target; do
 		fi
 		;;
 	m88k-*-openbsd*)
-		tm_file=m88k/openbsd.h
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
 		tmake_file=m88k/t-openbsd
-		xmake_file=x-openbsd
 		;;
 	m88k-*-sysv3*)
 		tm_file=m88k/sysv3.h
@@ -1816,18 +1808,10 @@ for machine in $build $host $target; do
 		fi
 		;;
 	mips*el-*-openbsd*)  		    # MIPS running OpenBSD
-		tm_file=mips/openbsd-le.h
-		xmake_file=x-openbsd
-		tmake_file=t-libc-ok
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
+		tm_file=${cpu_type}/openbsd-le.h
 		;;
 	mips*-*-openbsd*)	    # MIPS big-endian running OpenBSD
-		tm_file=mips/openbsd-be.h
-		xmake_file=x-openbsd
-		tmake_file=t-libc-ok
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
+		tm_file=${cpu_type}/openbsd-be.h
 		;;
 	mips-sony-bsd* | mips-sony-newsos*)	# Sony NEWS 3600 or risc/news.
 		tm_file=mips/news4.h
@@ -2169,11 +2153,7 @@ for machine in $build $host $target; do
 		tmake_file=t-netbsd
 		;;
 	ns32k-*-openbsd*)
-		tm_file=ns32k/openbsd.h
-		tmake_file=t-libc-ok
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
-		xmake_file=x-openbsd
+		# Nothing special
 		;;
         pdp11-*-bsd)
 		tm_file="${tm_file} pdp11/2bsd.h"
@@ -2189,9 +2169,6 @@ for machine in $build $host $target; do
 		use_collect2=yes
 		;;
 	romp-*-openbsd*)
-		tm_file=romp/openbsd.h
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
 		xmake_file=romp/x-openbsd
 		;;
 	romp-*-mach*)
@@ -2199,10 +2176,7 @@ for machine in $build $host $target; do
 		use_collect2=yes
 		;;
 	powerpc-*-*bsd*)
-		tm_file=rs6000/openbsd.h
 	   tmake_file=rs6000/t-openbsd
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
 		xmake_file=rs6000/x-openbsd
 		;;
 	powerpc-*-sysv* | powerpc-*-elf*)
@@ -2418,11 +2392,7 @@ for machine in $build $host $target; do
 		tmake_file=t-netbsd
 		;;
 	sparc-*-openbsd*)
-		tm_file=sparc/openbsd.h
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
-		tmake_file=t-libc-ok
-		xmake_file=x-openbsd
+		# Nothing special
 		;;
 	sparc-*-bsd*)
 		tm_file=sparc/bsd.h
@@ -2595,11 +2565,7 @@ for machine in $build $host $target; do
 		float_format=vax
 		;;
 	vax-*-openbsd*)
-		tm_file=vax/openbsd.h
-		tmake_file="t-libc-ok vax/t-openbsd"
-		# On OpenBSD, the headers are already okay.
-		fixincludes=Makefile.in
-		xmake_file=x-openbsd
+		tmake_file="${tmake_file} vax/t-openbsd"
 		float_format=vax
 		;;
 	vax-*-ultrix*)			# vaxen running ultrix
