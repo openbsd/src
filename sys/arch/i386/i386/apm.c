@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.31 2000/01/31 19:48:58 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.32 2000/01/31 21:09:36 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -774,11 +774,13 @@ apmattach(parent, self, aux)
 	 */
 	if (ap->apm_detail & APM_32BIT_SUPPORTED) {
 
-		/* adjust code size limits */
-		if (ap->apm_code_len >= 0x10000)
-			ap->apm_code_len = 0xffff;
-		if (ap->apm_code16_len >= 0x10000)
-			ap->apm_code16_len = 0xffff;
+		/* truncate segments' limits to a page */
+		ap->apm_code_len -= (ap->apm_code32_base +
+		    ap->apm_code_len + 1) & 0xfff;
+		ap->apm_code16_len -= (ap->apm_code16_base +
+		    ap->apm_code16_len + 1) & 0xfff;
+		ap->apm_data_len -= (ap->apm_data_base +
+		    ap->apm_data_len + 1) & 0xfff;
 
 		apm_flags = ap->apm_detail;
 		apm_ep.seg = GSEL(GAPM32CODE_SEL,SEL_KPL);
