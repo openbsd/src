@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.28 2003/06/23 13:41:41 henning Exp $
+.\" $OpenBSD: authpf.8,v 1.29 2003/08/04 09:45:45 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -92,7 +92,7 @@ The following rules need to be added to the main ruleset
 in order to cause evaluation of any
 .Nm
 rules:
-.Bd -literal
+.Bd -literal -offset indent
 nat-anchor authpf
 rdr-anchor authpf
 binat-anchor authpf
@@ -309,7 +309,7 @@ can be used to fork the right shell.
 To make that happen,
 .Xr login.conf 5
 should have entries that look something like this:
-.Bd -literal
+.Bd -literal -offset indent
 shell-default:shell=/bin/csh
 
 default:\e
@@ -337,7 +337,8 @@ as their shell except for root who will get
 must be properly configured to detect and defeat network attacks.
 To that end, the following options should be added to
 .Xr sshd_config 5 :
-.Bd -literal
+.Bd -literal -offset indent
+Protocol 2
 ClientAliveInterval 15
 ClientAliveCountMax 3
 .Ed
