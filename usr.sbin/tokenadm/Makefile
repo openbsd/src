@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2000/12/20 02:08:08 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/07/18 21:18:51 david Exp $
 
 PROG=	tokenadm
 SRCS=	tokenadm.c init.c tokendb.c
@@ -19,7 +19,7 @@ BINMODE=500
 
 afterinstall:
 	for i in ${TOKENS} ; do \
-	    cd ${DESTDIR}/${BINDIR} && \
+	    cd ${DESTDIR}${BINDIR} && \
 	    rm -f $${i}adm && \
 	    ln ${PROG} $${i}adm ; \
 	done
