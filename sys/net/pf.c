@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.318 2003/02/12 03:02:23 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.319 2003/02/12 12:50:29 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1764,16 +1764,16 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 
 				tmp_nport = ((ntohs(dport) -
 				    ntohs(r->dst.port[0])) %
-				    (ntohs(r->rpool.proxy_port[1]) -
-				    ntohs(r->rpool.proxy_port[0]) + 1)) +
-				    ntohs(r->rpool.proxy_port[0]);
+				    (r->rpool.proxy_port[1] -
+				    r->rpool.proxy_port[0] + 1)) +
+				    r->rpool.proxy_port[0];
 
 				/* wrap around if necessary */
 				if (tmp_nport > 65535)
 					tmp_nport -= 65535;
 				*nport = htons((u_int16_t)tmp_nport);
 			} else if (r->rpool.proxy_port[0])
-				*nport = r->rpool.proxy_port[0];
+				*nport = htons(r->rpool.proxy_port[0]);
 			break;
 		}
 		default:
