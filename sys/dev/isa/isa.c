@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.15 1996/08/15 05:26:19 deraadt Exp $	*/
+/*	$OpenBSD: isa.c,v 1.16 1996/08/15 05:30:45 deraadt Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
@@ -137,6 +137,9 @@ isascan(parent, match)
 	struct cfdata *cf = dev->dv_cfdata;
 	struct isa_attach_args ia;
 	struct emap *io_map, *mem_map, *irq_map, *drq_map;
+
+	if (cf->cf_loc[6] == -1)	/* pnp device, scanned later */
+		return;
 
 	io_map = find_emap("io");
 	mem_map = find_emap("mem");
