@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi_wep.c,v 1.12 2004/11/23 21:12:23 fgsch Exp $	*/
+/*	$OpenBSD: awi_wep.c,v 1.13 2005/02/21 11:16:00 dlg Exp $	*/
 /*	$NetBSD: awi_wep.c,v 1.2 2000/07/04 14:47:58 onoe Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 #endif
 #include <net/if_media.h>
 #include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

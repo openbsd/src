@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.14 2005/01/27 17:04:55 millert Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.15 2005/02/21 11:16:00 dlg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
