@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.19 2002/05/01 19:21:28 mickey Exp $
+#	$OpenBSD: list,v 1.20 2003/03/15 00:23:36 miod Exp $
 
 COPY	${OBJDIR}/instbin			instbin
 LINK	instbin					bin/cat
@@ -17,9 +17,8 @@ LINK	instbin					bin/mt
 LINK	instbin					bin/mv
 LINK	instbin					bin/pwd
 LINK	instbin					bin/rm
-LINK	instbin					bin/sh
-LINK	bin/sh					bin/-sh
-LINK	bin/sh					bin/bash
+LINK	instbin					bin/ksh bin/sh
+ARGVLINK ksh					-sh
 LINK	instbin					bin/stty
 LINK	instbin					bin/sleep
 LINK	instbin					bin/sync
