@@ -488,10 +488,10 @@ static int SSL_sendwithtimeout(BUFF *fb, const char *buf, int len)
     struct timeval tv;
     int err = WSAEWOULDBLOCK;
     int rv;
-    int retry;
     int sock = fb->fd;
-    SSL *ssl;
     int retry;
+    SSL *ssl;
+
 
     ssl = ap_ctx_get(fb->ctx, "ssl");
 
