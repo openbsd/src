@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.12 1996/10/12 01:24:15 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.13 1997/06/25 18:07:57 kstailey Exp $	*/
 /*	$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.12 1996/10/12 01:24:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.13 1997/06/25 18:07:57 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ query(question)
 	FILE	*mytty;
 	time_t	firstprompt, when_answered;
 
-	firstprompt = time((time_t *)0);
+	firstprompt = time(NULL);
 
 	if ((mytty = fopen(_PATH_TTY, "r")) == NULL)
 		quit("fopen on %s fails: %s\n", _PATH_TTY, strerror(errno));
@@ -128,7 +128,7 @@ query(question)
 	if (signal(SIGALRM, sig) == SIG_IGN)
 		signal(SIGALRM, SIG_IGN);
 	(void) fclose(mytty);
-	when_answered = time((time_t *)0);
+	when_answered = time(NULL);
 	/*
 	 * Adjust the base for time estimates to ignore time we spent waiting
 	 * for operator input.

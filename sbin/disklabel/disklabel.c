@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.31 1997/05/21 16:02:33 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.32 1997/06/25 18:06:42 kstailey Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.31 1997/05/21 16:02:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.32 1997/06/25 18:06:42 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -253,7 +253,7 @@ main(argc, argv)
 			usage();
 #if NUMBOOT > 0
 		if (installboot && argc == 3)
-			makelabel(argv[2], (char *)0, &lab);
+			makelabel(argv[2], NULL, &lab);
 #endif
 		lp = makebootarea(bootarea, &lab, f);
 		if (!(t = fopen(argv[1], "r")))
@@ -270,7 +270,7 @@ main(argc, argv)
 	case WRITE:
 		if (argc < 2 || argc > 3)
 			usage();
-		makelabel(argv[1], argc == 3 ? argv[2] : (char *)0, &lab);
+		makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
 		lp = makebootarea(bootarea, &lab, f);
 		*lp = lab;
 		if (checklabel(lp) == 0)
@@ -284,7 +284,7 @@ main(argc, argv)
 		lp = readlabel(f);
 		tlab = *lp;
 		if (argc == 2)
-			makelabel(argv[1], (char *)0, &lab);
+			makelabel(argv[1], NULL, &lab);
 		lp = makebootarea(bootarea, &lab, f);
 		*lp = tlab;
 		if (checklabel(lp) == 0)
@@ -972,7 +972,7 @@ editit()
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	char *ed, *p;
 
-	if ((ed = getenv("EDITOR")) == (char *)0)
+	if ((ed = getenv("EDITOR")) == NULL)
 		ed = _PATH_VI;
 	p = (char *)malloc(strlen(ed) + 1 + strlen(tmpfil) + 1);
 	if (!p) {

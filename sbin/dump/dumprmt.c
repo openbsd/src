@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.6 1996/09/15 20:14:08 millert Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.7 1997/06/25 18:07:55 kstailey Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $	*/
 
 /*-
@@ -147,7 +147,7 @@ rmtgetconn()
 		tuser = pwd->pw_name;
 
 	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
-	    _PATH_RMT, (int *)0);
+	    _PATH_RMT, NULL);
 
 	size = ntrec * TP_BSIZE;
 	if (size > 60 * 1024)		/* XXX */

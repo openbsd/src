@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1997/01/15 23:41:46 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1997/06/25 18:12:16 kstailey Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/01/15 23:41:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/06/25 18:12:16 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,9 +288,9 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			printf("\n");
 		}
 	}
-	zlnhead = (struct zlncnt *)0;
-	duplist = (struct dups *)0;
-	muldup = (struct dups *)0;
+	zlnhead = NULL;
+	duplist = NULL;
+	muldup = NULL;
 	inocleanup();
 	if (fsmodified) {
 		(void)time(&sblock.fs_time);
