@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 2003/09/28 19:17:21 otto Exp $	*/
+/*	$OpenBSD: mem.c,v 1.3 2003/10/18 20:34:26 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: mem.c,v 1.2 2003/09/28 19:17:21 otto Exp $";
+static const char rcsid[] = "$OpenBSD: mem.c,v 1.3 2003/10/18 20:34:26 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/err.h>
@@ -37,7 +37,7 @@ new_number(void)
 	n->scale = 0;
 	n->number = BN_new();
 	if (n->number == NULL)
-		err(1, "cannot allocate number");
+		err(1, NULL);
 	return n;
 }
 
@@ -67,7 +67,7 @@ bmalloc(size_t sz)
 
 	p = malloc(sz);
 	if (p == NULL)
-		err(1, "malloc failed");
+		err(1, NULL);
 	return p;
 }
 
@@ -79,7 +79,7 @@ brealloc(void *p, size_t sz)
 	q = realloc(p, sz);
 	if (q == NULL) {
 		free(p);
-		err(1, "realloc failed");
+		err(1, NULL);
 	}
 	return q;
 }
@@ -91,7 +91,7 @@ bstrdup(const char *p)
 
 	q = strdup(p);
 	if (q == NULL)
-		err(1, "stdup failed");
+		err(1, NULL);
 	return q;
 }
 

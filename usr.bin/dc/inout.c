@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.5 2003/09/30 18:33:35 otto Exp $	*/
+/*	$OpenBSD: inout.c,v 1.6 2003/10/18 20:34:26 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: inout.c,v 1.5 2003/09/30 18:33:35 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inout.c,v 1.6 2003/10/18 20:34:26 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -260,7 +260,7 @@ get_digit(u_long num, int digits, u_int base)
 		p[1] = '\0';
 	} else {
 		if (asprintf(&p, "%0*lu", digits, num) == -1)
-			err(1, "cannot allocate string");
+			err(1, NULL);
 	}
 	return p;
 }
