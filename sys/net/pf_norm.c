@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.46 2003/01/01 16:07:45 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.47 2003/01/03 19:31:43 deraadt Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -826,7 +826,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	if (r == NULL)
 		return (PF_PASS);
 	else
-                r->packets++;
+		r->packets++;
 
 	/* Check for illegal packets */
 	if (hlen < (int)sizeof(struct ip))
@@ -1041,7 +1041,7 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	if (rm == NULL)
 		return (PF_PASS);
 	else
-                r->packets++;
+		r->packets++;
 
 	flags = th->th_flags;
 	if (flags & TH_SYN) {

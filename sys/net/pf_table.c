@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_table.c,v 1.10 2003/01/03 10:39:09 cedric Exp $ */
+/*	$OpenBSD: pf_table.c,v 1.11 2003/01/03 19:31:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -244,7 +244,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 {
 	struct pfr_ktable	*kt;
 	struct pfr_kentryworkq	 workq;
-	struct pfr_walktree      w;
+	struct pfr_walktree	 w;
 	struct pfr_kentry	*p;
 	struct pfr_addr		 ad;
 	int			 i, rv, s, xdel = 0;
@@ -275,7 +275,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 					PFR_FB_DELETED);
 			if (copyout(&ad, addr+i, sizeof(ad)))
 				senderr(EFAULT);
-                }
+		}
 		if (p != NULL) {
 			if (p->pfrke_mark)
 				continue;
@@ -563,7 +563,7 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 				PFR_FB_CLEARED : PFR_FB_NONE;
 			if (copyout(&ad, addr+i, sizeof(ad)))
 				senderr(EFAULT);
-                }
+		}
 		if (p != NULL) {
 			SLIST_INSERT_HEAD(&workq, p, pfrke_workq);
 			xzero++;
@@ -747,13 +747,13 @@ pfr_reset_feedback(struct pfr_addr *addr, int size)
 	struct pfr_addr	ad;
 	int		i;
 
-        for (i = 0; i < size; i++) {
-                if (copyin(addr+i, &ad, sizeof(ad)))
-                        break;
-                ad.pfra_fback = PFR_FB_NONE;
-                if (copyout(&ad, addr+i, sizeof(ad)))
+	for (i = 0; i < size; i++) {
+		if (copyin(addr+i, &ad, sizeof(ad)))
 			break;
-        }
+		ad.pfra_fback = PFR_FB_NONE;
+		if (copyout(&ad, addr+i, sizeof(ad)))
+			break;
+	}
 }
 
 void
@@ -1120,7 +1120,7 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 	}
 	if (nzero != NULL)
 		*nzero = xzero;
-        return (0);
+	return (0);
 }
 
 int
@@ -1261,9 +1261,9 @@ pfr_create_ktable(struct pfr_table *tbl, long tzero)
 	SHA1Final(kt->pfrkt_hash.pfrh_sha1, &sha1);
 
 	if (!rn_inithead((void **)&kt->pfrkt_ip4,
-	    8 * offsetof(struct sockaddr_in, sin_addr)) ||
+	    offsetof(struct sockaddr_in, sin_addr) * 8) ||
 	    !rn_inithead((void **)&kt->pfrkt_ip6,
-	    8 * offsetof(struct sockaddr_in6, sin6_addr))) {
+	    offsetof(struct sockaddr_in6, sin6_addr) * 8)) {
 		pfr_destroy_ktable(kt);
 		return (NULL);
 	}

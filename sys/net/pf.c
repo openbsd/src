@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.294 2003/01/02 01:56:56 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.295 2003/01/03 19:31:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1801,7 +1801,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		bport = nport = th->th_sport;
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(PF_OUT, ifp, IPPROTO_TCP,
-	            saddr, th->th_sport, daddr, th->th_dport,
+		    saddr, th->th_sport, daddr, th->th_dport,
 		    &naddr, &nport, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
@@ -1812,7 +1812,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		bport = nport = th->th_dport;
 		/* check incoming packet for BINAT/RDR */
 		if ((rdr = pf_get_translation(PF_IN, ifp, IPPROTO_TCP,
-	            saddr, th->th_sport, daddr, th->th_dport,
+		    saddr, th->th_sport, daddr, th->th_dport,
 		    &naddr, &nport, af)) != NULL) {
 			PF_ACPY(&baddr, daddr, af);
 			pf_change_ap(daddr, &th->th_dport, pd->ip_sum,
@@ -2054,7 +2054,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		bport = nport = uh->uh_sport;
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(PF_OUT, ifp, IPPROTO_UDP,
-	            saddr, uh->uh_sport, daddr, uh->uh_dport,
+		    saddr, uh->uh_sport, daddr, uh->uh_dport,
 		    &naddr, &nport, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
@@ -2065,7 +2065,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		bport = nport = uh->uh_dport;
 		/* check incoming packet for BINAT/RDR */
 		if ((rdr = pf_get_translation(PF_IN, ifp, IPPROTO_UDP,
-	            saddr, uh->uh_sport, daddr, uh->uh_dport,
+		    saddr, uh->uh_sport, daddr, uh->uh_dport,
 		    &naddr, &nport, af)) != NULL) {
 			PF_ACPY(&baddr, daddr, af);
 			pf_change_ap(daddr, &uh->uh_dport, pd->ip_sum,
@@ -2312,7 +2312,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(PF_OUT, ifp, pd->proto,
-	            saddr, 0, daddr, 0, &naddr, NULL, af)) != NULL) {
+		    saddr, 0, daddr, 0, &naddr, NULL, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			switch (af) {
 #ifdef INET
@@ -2333,7 +2333,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	} else {
 		/* check incoming packet for BINAT/RDR */
 		if ((rdr = pf_get_translation(PF_IN, ifp, pd->proto,
-	            saddr, 0, daddr, 0, &naddr, NULL, af)) != NULL) {
+		    saddr, 0, daddr, 0, &naddr, NULL, af)) != NULL) {
 			PF_ACPY(&baddr, daddr, af);
 			switch (af) {
 #ifdef INET
@@ -2520,7 +2520,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(PF_OUT, ifp, pd->proto,
-	            saddr, 0, daddr, 0, &naddr, NULL, af)) != NULL) {
+		    saddr, 0, daddr, 0, &naddr, NULL, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			switch (af) {
 #ifdef INET
@@ -2539,7 +2539,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	} else {
 		/* check incoming packet for BINAT/RDR */
 		if ((rdr = pf_get_translation(PF_IN, ifp, pd->proto,
-	            saddr, 0, daddr, 0, &naddr, NULL, af)) != NULL) {
+		    saddr, 0, daddr, 0, &naddr, NULL, af)) != NULL) {
 			switch (af) {
 #ifdef INET
 			case AF_INET:
@@ -2861,9 +2861,10 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	    (th->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)) ||
 	    /* broken tcp stacks do not set ack */
 	    (dst->state < TCPS_SYN_SENT)) {
-	    /* Many stacks (ours included) will set the ACK number in an
-	     * FIN|ACK if the SYN times out -- no sequence to ACK.
-	     */
+		/*
+		 * Many stacks (ours included) will set the ACK number in an
+		 * FIN|ACK if the SYN times out -- no sequence to ACK.
+		 */
 		ack = dst->seqlo;
 	}
 
