@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.5 1998/01/09 16:21:57 csapuntz Exp $	*/
+/*	$OpenBSD: namei.h,v 1.6 1998/01/09 20:16:48 csapuntz Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ struct nameidata {
 #define	DOWHITEOUT	0x040000      /* do whiteouts */
 #define	REQUIREDIR	0x080000      /* must be a directory */
 #define STRIPSLASHES    0x100000      /* strip trailing slashes */
-#define PARAMASK	0xfff00	/* mask of parameter descriptors */
+#define PARAMASK	0x1fff00      /* mask of parameter descriptors */
 /*
  * Initialization of an nameidata structure.
  */
