@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.13 1996/12/19 18:26:58 deraadt Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.14 1997/01/31 10:31:43 deraadt Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -644,6 +644,7 @@ ccdstrategy(bp)
 #endif
 	if ((cs->sc_flags & CCDF_INITED) == 0) {
 		bp->b_error = ENXIO;
+		bp->b_resid = bp->b_bcount;
 		bp->b_flags |= B_ERROR;
 		goto done;
 	}
