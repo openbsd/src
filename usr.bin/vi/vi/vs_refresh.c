@@ -779,6 +779,14 @@ vs_modeline(sp)
 	int ellipsis;
 	char *p, buf[20];
 
+	/*
+	 * It's possible that this routine will be called after sp->frp
+	 * has been set to NULL by file_end().  We return immediately
+	 * to avoid a SEGV.
+	 */
+	if (sp->frp == NULL)
+		return;
+
 	gp = sp->gp;
 
 	/*
