@@ -1,4 +1,4 @@
-/* $OpenBSD: openbsd.h,v 1.15 1999/02/17 12:52:36 espie Exp $	*/
+/* $OpenBSD: openbsd.h,v 1.16 1999/02/17 12:54:27 espie Exp $	*/
 
 /* common OpenBSD configuration. 
    All OpenBSD architectures include this file, which is intended as
@@ -266,7 +266,10 @@ do {									 \
 
 
 /* Storage layout 
- * -------------- */
-/* Use VTABLE_THUNKS always: we don't have to worry about binary
-   compatibility with older C++ code. */
-#define DEFAULT_VTABLE_THUNKS 1
+   -------------- */
+/* We don't have to worry about binary compatibility with older C++ code,
+   but there is a big known bug with vtable thunks which has not been
+	fixed yet, so DON'T activate it by default.
+ */
+/* #define DEFAULT_VTABLE_THUNKS 1 */
+
