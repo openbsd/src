@@ -1,4 +1,4 @@
-/* $OpenBSD: radio.c,v 1.4 2002/01/05 02:23:03 mickey Exp $ */
+/* $OpenBSD: radio.c,v 1.5 2002/01/10 18:38:24 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
@@ -33,6 +33,7 @@
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/fcntl.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/radioio.h>
@@ -126,17 +127,21 @@ radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 					(struct radio_info *)data);
 			break;
 	case RIOCSINFO:
+		if (!(flags & FWRITE))
+			return (EACCES);
 		if (sc->hw_if->set_info)
 			error = (sc->hw_if->set_info)(sc->hw_hdl,
 				(struct radio_info *)data);
 		break;
 	case RIOCSSRCH:
+		if (!(flags & FWRITE))
+			return (EACCES);
 		if (sc->hw_if->search)
 			error = (sc->hw_if->search)(sc->hw_hdl,
 					*(int *)data);
 		break;
 	default:
-		error = EINVAL;
+		error = (ENOTTY);
 	}
 
 	return (error);
