@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.5 2001/08/03 15:21:16 mpech Exp $
+.\"	$OpenBSD: gsc.4,v 1.6 2002/04/07 10:14:31 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -40,10 +40,67 @@
 .Cd "gsc* at asp?"
 .Cd "gsc* at wax?"
 .Sh DESCRIPTION
-This is Core bus for all HP9000/700 series workstations.
-(more to come)
+This is core I/O bus for all HP9000/700 series workstations. All I/O subsystems
+connect to this bus.
+The devices can be either on seperate chips, expansion
+cards or on an integrated megacell, like the LASI MBA.
+.Pp
+The
+.Tn GSC
+bus is a 32-bit wide, address and data multiplexed bus. In its "standard"
+implementation it has a maximum throughput of 160MB/s, the "2x" implementation
+reaches up to 250MB/s.
+Some HPPA CPUs directly attach to this bus, namely the PA7100LC and PA7300LC.
+.Pp
+As for the expansion cards, there appeared different form-factors, depending on
+bus-speed (standard or 2x) and specific models.
+The standard formfactor is the "EISA form-factor", cards that look like
+typical EISA cards with a different connector (100-pin female EBBL).
+The Series 712 have their own special type
+of GSC expansion cards, called the "GIO form-factor", which is quite small and
+mostly has only one VLSI chip on it (in most cases LASI/WAX).
+Newer systems sometimes feature the "HSC formfactor", that is a 1U-VME
+card-like expansion card with a 100-pin male pin+socket connector.
+Mixing cards with different speeds is supported but downgrades
+the performance of the whole I/O-subsystem. 
+.Pp
+.Sh SUPPORTED DEVICES
+The system includes machine-dependent
+.Tn GSC
+drivers, sorted by driver name:
+.Bl -tag -width pcdisplay -offset indent
+.It Xr com 4
+RS-232 ports.
+.It Xr hil 4
+Human Interface Loop, for HP-proprietary input devices like keyboard and mice.
+.It Xr ie 4
+Intel i82C596 DX/CA 32-bit Ethernet interfaces.
+.It Xr lpt 4
+Centronics printer port.
+.It Xr pckbc 4
+PC-style keyboard controller.
+.It Xr siop 4
+NCR 53C700/710 narrow, single-ended or 53C720 wide,
+differential SCSI I/O processor.
+.El
+.Pp
+Some of these 
+.Tn GSC
+devices also have
+.Tn PCI
+,
+.Tn EISA 
+or
+.Tn ISA 
+equivalents.
+These are listed in
+.Xr pci 4 ,
+.Xr eisa 4 ,
+or
+.Xr isa 4 ,
 .Sh SEE ALSO
 .Xr asp 4 ,
+.Xr cpu 4 ,
 .Xr intro 4 ,
 .Xr lasi 4
 .Sh HISTORY
