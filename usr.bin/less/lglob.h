@@ -24,8 +24,9 @@
 
 #include <glob.h>
 
+#define GLOB_FLAGS			(GLOB_NOCHECK|GLOB_BRACE|GLOB_TILDE)
 #define	DECL_GLOB_LIST(list)		glob_t list;  int i;
-#define	GLOB_LIST(filename,list)	glob(filename,GLOB_NOCHECK,0,&list)
+#define	GLOB_LIST(filename,list)	glob(filename,GLOB_FLAGS,0,&list)
 #define	GLOB_LIST_FAILED(list)		0
 #define	SCAN_GLOB_LIST(list,p)		i = 0;  i < list.gl_pathc;  i++
 #define	INIT_GLOB_LIST(list,p)		p = list.gl_pathv[i]
