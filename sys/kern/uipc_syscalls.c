@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.56 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.57 2004/01/06 04:18:18 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -75,8 +75,10 @@ sys_socket(p, v, retval)
 	struct file *fp;
 	int fd, error;
 
+	fdplock(fdp, p);
+
 	if ((error = falloc(p, &fp, &fd)) != 0)
-		return (error);
+		goto out;
 	fp->f_flag = FREAD|FWRITE;
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &socketops;
@@ -90,6 +92,8 @@ sys_socket(p, v, retval)
 		FILE_SET_MATURE(fp);
 		*retval = fd;
 	}
+out:
+	fdpunlock(fdp);
 	return (error);
 }
 
@@ -206,6 +210,7 @@ sys_accept(p, v, retval)
 	/* Take note if socket was non-blocking. */
 	nflag = (fp->f_flag & FNONBLOCK);
 
+	fdplock(p->p_fd, p);
 	if ((error = falloc(p, &fp, &tmpfd)) != 0) {
 		/*
 		 * Probably ran out of file descriptors. Put the
@@ -249,6 +254,7 @@ sys_accept(p, v, retval)
 	}
 	m_freem(nam);
 bad:
+	fdpunlock(p->p_fd);
 	splx(s);
 	FRELE(headfp);
 	return (error);
@@ -337,6 +343,8 @@ sys_socketpair(p, v, retval)
 			 SCARG(uap, protocol));
 	if (error)
 		goto free1;
+
+	fdplock(fdp, p);
 	if ((error = falloc(p, &fp1, &fd)) != 0)
 		goto free2;
 	sv[0] = fd;
@@ -364,7 +372,8 @@ sys_socketpair(p, v, retval)
 	if (error == 0) {
 		FILE_SET_MATURE(fp1);
 		FILE_SET_MATURE(fp2);
-		return (error);
+		fdpunlock(fdp);
+		return (0);
 	}
 free4:
 	fdremove(fdp, sv[1]);
@@ -377,6 +386,7 @@ free3:
 free2:
 	if (so2 != NULL)
 		(void)soclose(so2);
+	fdpunlock(fdp);
 free1:
 	if (so1 != NULL)
 		(void)soclose(so1);
@@ -931,8 +941,10 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	error = copyout((caddr_t)fds, (caddr_t)SCARG(uap, fdp),
 	    2 * sizeof (int));
 	if (error) {
+		fdplock(p->p_fd, p);
 		fdrelease(p, fds[0]);
 		fdrelease(p, fds[1]);
+		fdpunlock(p->p_fd);
 	}
 	return (error);
 }

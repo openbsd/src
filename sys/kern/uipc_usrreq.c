@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.24 2003/08/17 22:59:42 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.25 2004/01/06 04:18:18 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -656,6 +656,7 @@ unp_externalize(rights)
 #endif
 
 restart:
+	fdplock(p->p_fd, p);
 	if (error != 0) {
 		rp = ((struct file **)CMSG_DATA(cm));
 		for (i = 0; i < nfds; i++) {
@@ -696,6 +697,7 @@ restart:
 				 */
 				error = EMSGSIZE;
 			}
+			fdpunlock(p->p_fd);
 			goto restart;
 		}
 
@@ -726,6 +728,7 @@ restart:
 	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
 	rights->m_len = CMSG_SPACE(nfds * sizeof(int));
  out:
+	fdpunlock(p->p_fd);
 	free(fdp, M_TEMP);
 	return (error);
 }

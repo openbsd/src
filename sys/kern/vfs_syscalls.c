@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.107 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.108 2004/01/06 04:18:18 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -892,8 +892,10 @@ sys_open(p, v, retval)
 	struct flock lf;
 	struct nameidata nd;
 
+	fdplock(fdp, p);
+
 	if ((error = falloc(p, &fp, &indx)) != 0)
-		return (error);
+		goto out;
 
 	flags = FFLAGS(SCARG(uap, flags));
 	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
@@ -910,13 +912,13 @@ sys_open(p, v, retval)
 			dupfdopen(fdp, indx, p->p_dupfd, flags, error)) == 0) {
 			closef(fp, p);
 			*retval = indx;
-			return (0);
+			goto out;
 		}
 		if (error == ERESTART)
 			error = EINTR;
 		fdremove(fdp, indx);
 		closef(fp, p);
-		return (error);
+		goto out;
 	}
 	p->p_dupfd = 0;
 	vp = nd.ni_vp;
@@ -941,7 +943,7 @@ sys_open(p, v, retval)
 			/* closef will vn_close the file for us. */
 			fdremove(fdp, indx);
 			closef(fp, p);
-			return (error);
+			goto out;
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		fp->f_flag |= FHASLOCK;
@@ -964,13 +966,15 @@ sys_open(p, v, retval)
 			/* closef will close the file for us. */
 			fdremove(fdp, indx);
 			closef(fp, p);
-			return (error);
+			goto out;
 		}
 	}
 	VOP_UNLOCK(vp, 0, p);
 	*retval = indx;
 	FILE_SET_MATURE(fp);
-	return (0);
+out:
+	fdpunlock(fdp);
+	return (error);
 }
 
 /*
@@ -1052,8 +1056,11 @@ sys_fhopen(p, v, retval)
 	if ((flags & O_CREAT))
 		return (EINVAL);
 
-	if ((error = falloc(p, &fp, &indx)) != 0)
-		return (error);
+	fdplock(fdp, p);
+	if ((error = falloc(p, &fp, &indx)) != 0) {
+		fp = NULL;
+		goto bad;
+	}
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
 		goto bad;
@@ -1132,13 +1139,18 @@ sys_fhopen(p, v, retval)
 	VOP_UNLOCK(vp, 0, p);
 	*retval = indx;
 	FILE_SET_MATURE(fp);
+
+	fdpunlock(fdp);
 	return (0);
 
 bad:
-	fdremove(fdp, indx);
-	closef(fp, p);
-	if (vp != NULL)
-		vput(vp);
+	if (fp) {
+		fdremove(fdp, indx);
+		closef(fp, p);
+		if (vp != NULL)
+			vput(vp);
+	}
+	fdpunlock(fdp);
 	return (error);
 }
 

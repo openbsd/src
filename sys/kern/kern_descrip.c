@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.66 2003/12/02 01:40:18 millert Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.67 2004/01/06 04:18:18 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -223,15 +223,21 @@ restart:
 	if ((fp = fd_getfile(fdp, old)) == NULL)
 		return (EBADF);
 	FREF(fp);
+	fdplock(fdp, p);
 	if ((error = fdalloc(p, 0, &new)) != 0) {
 		FRELE(fp);
 		if (error == ENOSPC) {
 			fdexpand(p);
+			fdpunlock(fdp);
 			goto restart;
 		}
-		return (error);
+		goto out;
 	}
-	return (finishdup(p, fp, old, new, retval));
+	error = finishdup(p, fp, old, new, retval);
+
+out:
+	fdpunlock(fdp);
+	return (error);
 }
 
 /*
@@ -269,20 +275,26 @@ restart:
 		return (0);
 	}
 	FREF(fp);
+	fdplock(fdp, p);
 	if (new >= fdp->fd_nfiles) {
 		if ((error = fdalloc(p, new, &i)) != 0) {
 			FRELE(fp);
 			if (error == ENOSPC) {
 				fdexpand(p);
+				fdpunlock(fdp);
 				goto restart;
 			}
-			return (error);
+			goto out;
 		}
 		if (new != i)
 			panic("dup2: fdalloc");
 	}
 	/* finishdup() does FRELE */
-	return (finishdup(p, fp, old, new, retval));
+	error = finishdup(p, fp, old, new, retval);
+
+out:
+	fdpunlock(fdp);
+	return (error);
 }
 
 /*
@@ -321,16 +333,23 @@ restart:
 			error = EINVAL;
 			break;
 		}
+		fdplock(fdp, p);
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
 			if (error == ENOSPC) {
 				fdexpand(p);
 				FRELE(fp);
+				fdpunlock(fdp);
 				goto restart;
 			}
-			break;
 		}
 		/* finishdup will FRELE for us. */
-		return (finishdup(p, fp, fd, i, retval));
+		if (!error)
+			error = finishdup(p, fp, fd, i, retval);
+		else
+			FRELE(fp);
+
+		fdpunlock(fdp);
+		return (error);
 
 	case F_GETFD:
 		*retval = fdp->fd_ofileflags[fd] & UF_EXCLOSE ? 1 : 0;
@@ -577,12 +596,16 @@ sys_close(p, v, retval)
 	struct sys_close_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
-	int fd = SCARG(uap, fd);
+	int fd = SCARG(uap, fd), error;
 	struct filedesc *fdp = p->p_fd;
 
 	if (fd_getfile(fdp, fd) == NULL)
 		return (EBADF);
-	return (fdrelease(p, fd));
+	fdplock(fdp, p);
+	error = fdrelease(p, fd);
+	fdpunlock(fdp);
+
+	return (error);
 }
 
 /*
@@ -732,13 +755,6 @@ fdexpand(p)
 	u_int *newhimap, *newlomap;
 
 	/*
-	 * If it's already expanding just wait for that expansion to finish
-	 * and return and let the caller retry the operation.
-	 */
-	if (lockmgr(&fdp->fd_lock, LK_EXCLUSIVE|LK_SLEEPFAIL, NULL, p))
-		return;
-
-	/*
 	 * No space in current array.
 	 */
 	if (fdp->fd_nfiles < NDEXTENT)
@@ -789,8 +805,6 @@ fdexpand(p)
 	fdp->fd_ofiles = newofile;
 	fdp->fd_ofileflags = newofileflags;
 	fdp->fd_nfiles = nfiles;	
-
-	lockmgr(&fdp->fd_lock, LK_RELEASE, NULL, p);
 }
 
 /*
@@ -866,7 +880,7 @@ fdinit(struct proc *p)
 		if (newfdp->fd_fd.fd_rdir)
 			VREF(newfdp->fd_fd.fd_rdir);
 	}
-	lockinit(&newfdp->fd_fd.fd_lock, PLOCK, "fdexpand", 0, 0);
+	rw_init(&newfdp->fd_fd.fd_lock);
 
 	/* Create the file descriptor table. */
 	newfdp->fd_fd.fd_refcnt = 1;

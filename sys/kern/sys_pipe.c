@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.45 2003/10/03 16:38:01 miod Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.46 2004/01/06 04:18:18 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -111,6 +111,8 @@ sys_opipe(p, v, retval)
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
 
+	fdplock(fdp, p);
+
 	rpipe = pool_get(&pipe_pool, PR_WAITOK);
 	error = pipe_create(rpipe);
 	if (error != 0)
@@ -143,7 +145,10 @@ sys_opipe(p, v, retval)
 
 	FILE_SET_MATURE(rf);
 	FILE_SET_MATURE(wf);
+
+	fdpunlock(fdp);
 	return (0);
+
 free3:
 	fdremove(fdp, retval[0]);
 	closef(rf, p);
@@ -153,6 +158,7 @@ free2:
 free1:
 	if (rpipe != NULL)
 		(void)pipeclose(rpipe);
+	fdpunlock(fdp);
 	return (error);
 }
 
