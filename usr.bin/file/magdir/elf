@@ -40,6 +40,7 @@
 >>18	leshort		17		VPP500,
 >>18	leshort		18		SPARC32PLUS,
 >>18	leshort		20		PowerPC,
+>>18	leshort		43		Sparc64 - invalid byte order,
 >>18	leshort		75		VAX,
 >>18	leshort		0x9026		Alpha,
 >>20	lelong		0		invalid version
@@ -70,6 +71,7 @@
 >>18	beshort		17		VPP500,
 >>18	beshort		18		SPARC32PLUS,
 >>18	beshort		20		PowerPC,
+>>18	beshort		43		Sparc64,
 >>18	beshort		75		VAX - invalid byte order,
 >>18	beshort		0x9026		Alpha,
 >>20	belong		0		invalid version
