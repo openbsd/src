@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.17 2003/01/27 19:41:30 deraadt Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.18 2003/04/16 21:11:10 drahn Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -73,11 +73,9 @@
 #include <sys/stat.h>
 
 /*
- * The alpha and mips based ports define _NLIST_DO_AOUT although it doesn't
- * fully support a.out.
+ * if __ELF__ is defined, do not bother supporting AOUT.
  */
-#if defined(_NLIST_DO_AOUT) && !(defined(__alpha__) || defined(__mips__) || \
-    (defined(__sparc__) && defined(__ELF__)))
+#if defined(_NLIST_DO_AOUT) && !(defined(__ELF__))
 #define DO_AOUT
 #endif
 
@@ -218,7 +216,8 @@ struct nlist   *symbase;
 #define IS_GLOBAL_DEFINED(sp) \
 	(((sp)->n_type & N_EXT) && ((sp)->n_type & N_TYPE) != N_UNDF)
 
-#if defined(__sparc__) && !defined(__ELF__)
+#ifdef DO_AOUT
+#if defined(__sparc__)
 /* is the relocation entry dependent on a symbol? */
 #define IS_SYMBOL_RELOC(rp)   \
 	((rp)->r_extern || \
@@ -228,6 +227,7 @@ struct nlist   *symbase;
 /* is the relocation entry dependent on a symbol? */
 #define IS_SYMBOL_RELOC(rp)   \
 		  ((rp)->r_extern||(rp)->r_baserel||(rp)->r_jmptable)
+#endif
 #endif
 
 void            check_reloc(char *filename, struct relocation_info * relp);
