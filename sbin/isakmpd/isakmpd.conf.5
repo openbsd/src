@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.31 2000/03/18 22:55:59 aaron Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.32 2000/03/22 04:06:17 angelos Exp $
 .\" $EOM: isakmpd.conf.5,v 1.38 2000/01/31 08:39:44 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -140,7 +140,15 @@ by the initiator.
 .Bl -tag -width 12n
 .It Em Ca-directory
 A directory containing PEM certificates of certification authorities
-that we trust to sign other certificates.
+that we trust to sign other certificates.  Note that for a CA to be
+really trusted, it needs to be somehow referred to by policy, in
+.Xr isakmpd.policy 5 .
+The certificates in this directory are used for the actual X.509
+authentication and for cross-referencing policies that refer to
+Distinguished Names (DNs). Keeping a separate directory (as opposed
+to integrating policies and X.509 CA certificates) allows for maintenance
+of a list of "well known" CAs without actually having to trust all (or any)
+of them.
 .It Em Cert-directory
 A directory containing PEM certificates that we trust to be valid.
 These certificates are used in preference to those passed in messages and
