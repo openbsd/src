@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.5 1998/09/24 06:45:05 pjanzen Exp $	*/
+/*	$OpenBSD: bog.c,v 1.6 1999/07/31 18:13:30 pjanzen Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: bog.c,v 1.5 1998/09/24 06:45:05 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bog.c,v 1.6 1999/07/31 18:13:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -506,7 +506,7 @@ validword(word)
 	register char *q, *w;
 
 	j = word[0] - 'a';
-	if (dictseek(dictfp, dictindex[j].start, 0) < 0) {
+	if (dictseek(dictfp, dictindex[j].start, SEEK_SET) < 0) {
 		(void) fprintf(stderr, "Seek error\n");
 		cleanup();
 		exit(1);
@@ -546,7 +546,7 @@ checkdict()
 	prevch ='a';
 	qi = &wordpath[MAXWORDLEN + 1];
 
-	(void) dictseek(dictfp, 0L, 0);
+	(void) dictseek(dictfp, 0L, SEEK_SET);
 	while ((w = nextword(dictfp)) != NULL) {
 		if (wordlen < minlength)
 			continue;
@@ -573,7 +573,7 @@ checkdict()
 			 */
 			if (i != previndex + 1) {
 				if (dictseek(dictfp,
-				    dictindex[i].start, 0) < 0) {
+				    dictindex[i].start, SEEK_SET) < 0) {
 					warnx("seek error in checkdict()");
 					cleanup();
 					exit(1);
