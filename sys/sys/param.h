@@ -154,7 +154,11 @@
  * made larger without any effect on existing file systems; however making
  * it smaller make make some file systems unmountable.
  */
-#define	MAXBSIZE	16384 /* XXX MAXPHYS */
+#if defined(__i386__)
+#define	MAXBSIZE	32768		/* XXX MAXPHYS */
+#else
+#define	MAXBSIZE	MAXPHYS
+#endif
 #define MAXFRAG 	8
 
 /*
