@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.5 1999/12/05 21:46:13 angelos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.6 2000/01/27 08:06:38 angelos Exp $";
 #endif
 
 #include <time.h>
@@ -533,8 +533,7 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      sa.sadb_msg_version = PF_KEY_V2;
      sa.sadb_msg_type = SPI->flags & SPI_OWNER ? 
 	  SADB_UPDATE : SADB_ADD;
-     sa.sadb_msg_satype = !hmac ?
-	  SADB_X_SATYPE_AH_OLD : SADB_SATYPE_AH;
+     sa.sadb_msg_satype = SADB_SATYPE_AH;
      sa.sadb_msg_seq = pfkey_seq++;
      sa.sadb_msg_pid = pfkey_pid;
      iov[cnt].iov_base = &sa;
@@ -577,6 +576,8 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      sr.sadb_sa_encrypt = 0;
      if (SPI->flags & SPI_TUNNEL)
 	  sr.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
+     if (!hmac)
+	  sr.sadb_sa_flags |= SADB_X_SAFLAGS_NOREPLAY;
      sa.sadb_msg_len += sr.sadb_sa_len;
 
      iov[cnt].iov_base = &sr;
@@ -677,8 +678,7 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      sa.sadb_msg_version = PF_KEY_V2;
      sa.sadb_msg_type = SPI->flags & SPI_OWNER ?
 	  SADB_UPDATE : SADB_ADD;
-     sa.sadb_msg_satype = xf_enc->flags & ESP_OLD ?
-	  SADB_X_SATYPE_ESP_OLD : SADB_SATYPE_ESP;
+     sa.sadb_msg_satype = SADB_SATYPE_ESP;
      sa.sadb_msg_seq = pfkey_seq++;
      sa.sadb_msg_pid = pfkey_pid;
      iov[cnt].iov_base = &sa;
@@ -692,7 +692,11 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      sr.sadb_sa_auth = attauth ? xf_auth->kernel_id : 0;
      sr.sadb_sa_encrypt = xf_enc->kernel_id;
      if (xf_enc->flags & ESP_OLD)
+     {
 	  sr.sadb_sa_flags |= SADB_X_SAFLAGS_HALFIV;
+	  sr.sadb_sa_flags |= SADB_X_SAFLAGS_RANDOMPADDING;
+	  sr.sadb_sa_flags |= SADB_X_SAFLAGS_NOREPLAY;
+     }
      if (SPI->flags & SPI_TUNNEL)
 	  sr.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
      sa.sadb_msg_len += sr.sadb_sa_len;
