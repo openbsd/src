@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.118 2003/06/25 09:13:37 henning Exp $
+dnl	$OpenBSD: hardware,v 1.119 2003/06/27 10:14:15 henning Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -230,6 +230,15 @@ Supported hardware {:-include-:}:
 		    NetMos 2S1P (2 port serial and 1 port parallel)
 		    Boca Research Turbo Serial 654 PCI (4 port serial)
 		    Boca Research Turbo Serial 658 PCI (8 port serial)
+		    SUNIX 400x (1 port parallel)
+		    SUNIX 401x (2 port parallel)
+		    SUNIX 402x (1 port serial)
+		    SUNIX 403x (2 port serial)
+		    SUNIX 405x (4 port serial)
+		    SUNIX 406x (8 port serial)
+		    SUNIX 407x (2 port serial and 1 port parallel)
+		    SUNIX 408x (2 port serial and 2 port parallel)
+		    SUNIX 409x (4 port serial and 2 port parallel)
 	Ethernet Adapters
 		3Com 3c501 [A] [B] [C]
 		3Com 3c503 [B]
