@@ -1,4 +1,5 @@
-/* $OpenBSD: ftp-proxy.c,v 1.3 2001/08/19 05:50:50 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.4 2001/08/19 13:43:09 deraadt Exp $ */
+
 /*
  * Copyright (c) 1996-2001
  *	Obtuse Systems Corporation.  All rights reserved.
@@ -19,14 +20,14 @@
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL OBTUSE SYSTEMS CORPORATION OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *   
+ * 
  */
 
 /*
@@ -53,14 +54,14 @@
  * supports tcp wrapper lookups/access control with the -w flag using
  * the real destination address - the tcp wrapper stuff is done after
  * the real destination address is retreived from pf
- * 
+ *
  */
 
-/* 
+/*
  * TODO:
  * Plenty, this is very basic, with the idea to get it in clean first.
- * 
- * - Ipv6 and EPASV support 
+ *
+ * - Ipv6 and EPASV support
  * - Content filter support
  * - filename filter support
  * - per-user rules perhaps.
@@ -134,7 +135,6 @@ int AnonFtpOnly;
 int Verbose;
 int NatMode;
 
-
 char ClientName[NI_MAXHOST];
 char RealServerName[NI_MAXHOST];
 char OurName[NI_MAXHOST];
@@ -166,7 +166,7 @@ usage()
 	exit(EX_USAGE);
 }
 
-/* 
+/*
  * Check a connection against the tcpwrapper, log if we're going to
  * reject it, returns: 0 -> reject, 1 -> accept. We add in hostnames
  * if we are set to do reverse DNS, otherwise no.
@@ -181,30 +181,28 @@ check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 	struct request_info request;
 	int i;
 
-	request_init(&request, RQ_DAEMON, __progname, RQ_CLIENT_SIN, 
+	request_init(&request, RQ_DAEMON, __progname, RQ_CLIENT_SIN,
 	    client_sin, RQ_SERVER_SIN, server_sin, RQ_CLIENT_ADDR,
 	    inet_ntoa(client_sin->sin_addr), 0);
 
 	if (Use_Rdns) {
-
 		/*
 		 * We already looked these up, but we have to do it again
 		 * for tcp wrapper, to ensure that we get the DNS name, since
 		 * the tcp wrapper cares about these things, and we don't
 		 * want to pass in a printed address as a name.
 		 */
-		
 		if (Use_Rdns)  {
 			i = getnameinfo(
 			    (struct sockaddr *) &client_sin->sin_addr,
-			    sizeof(&client_sin->sin_addr), cname, 
+			    sizeof(&client_sin->sin_addr), cname,
 			    sizeof(cname), NULL, 0, NI_NAMEREQD);
 			if (i == -1)
 				strlcpy(cname, STRING_UNKNOWN, sizeof(cname));
 
 			i = getnameinfo(
-			    (struct sockaddr *)&server_sin->sin_addr, 
-			    sizeof(&server_sin->sin_addr), sname, 
+			    (struct sockaddr *)&server_sin->sin_addr,
+			    sizeof(&server_sin->sin_addr), sname,
 			    sizeof(sname), NULL, 0, NI_NAMEREQD);
 			if (i == -1)
 				strlcpy(sname, STRING_UNKNOWN, sizeof(sname));
@@ -217,7 +215,7 @@ check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 			strlcpy(sname, STRING_UNKNOWN, sizeof(sname));
 		}
 	}
-	
+
 	request_set(&request, RQ_SERVER_ADDR, inet_ntoa(server_sin->sin_addr),
 	    0);
 	request_set(&request, RQ_CLIENT_NAME, cname, RQ_SERVER_NAME, sname, 0);
@@ -234,7 +232,7 @@ double
 wallclock_time()
 {
 	struct timeval tv;
-	
+
 	gettimeofday(&tv,NULL);
 	return(tv.tv_sec + tv.tv_usec / 1e6);
 }
@@ -250,13 +248,13 @@ show_xfer_stats()
 	double delta;
 	size_t len;
 	int i;
-	
+
 	if (!Verbose)
 		return;
 
 	delta = wallclock_time() - xfer_start_time;
-	
-	if (delta < 0.001) 
+
+	if (delta < 0.001)
 		delta = 0.001;
 
 	if (client_data_bytes == 0 && server_data_bytes == 0) {
@@ -264,24 +262,23 @@ show_xfer_stats()
 		  "data transfer completed (no bytes transferred)");
 		return;
 	}
-	
+
 	len = sizeof(tbuf);
 
 	if (delta >= 60) {
 		int idelta;
-		
+
 		idelta = delta + 0.5;
 		if (idelta >= 60*60) {
 			i = snprintf(tbuf, len,
 			    "data transfer completed (%dh %dm %ds",
-			    idelta / (60*60), (idelta % (60*60)) / 60, 
+			    idelta / (60*60), (idelta % (60*60)) / 60,
 			    idelta % 60);
 			if (i >= len)
 				goto logit;
 			len -= i;
-				
 		} else {
-			i = snprintf(tbuf, len, 
+			i = snprintf(tbuf, len,
 			    "data transfer completed (%dm %ds", idelta / 60,
 			    idelta % 60);
 			if (i >= len)
@@ -297,7 +294,7 @@ show_xfer_stats()
 	}
 
 	if (client_data_bytes > 0) {
-		i = snprintf(&tbuf[strlen(tbuf)], len, 
+		i = snprintf(&tbuf[strlen(tbuf)], len,
 		    ", %d (%.1fKB/s) to server", client_data_bytes,
 		    (client_data_bytes / delta) / (double)1024);
 		if (i >= len)
@@ -312,56 +309,54 @@ show_xfer_stats()
 			goto logit;
 		len -= i;
 	}
-	strlcat(tbuf,")", len);
- logit:	
-	syslog(LOG_INFO,"%s",tbuf);
+	strlcat(tbuf, ")", len);
+ logit:
+	syslog(LOG_INFO, "%s", tbuf);
 }
 
 /*
  * Are we in PORT mode, PASV mode or unknown mode?
  */
 
-void 
-log_control_command (char * cmd, int client)
+void
+log_control_command (char *cmd, int client)
 {
 	/* log an ftp control command or reply */
-	char * logstring;
+	char *logstring;
 	int level = LOG_DEBUG;
 
-	if (!Verbose) 
+	if (!Verbose)
 		return;
 
 	/* don't log passwords */
-	if (strncasecmp(cmd,"pass ",5) == 0)
+	if (strncasecmp(cmd, "pass ", 5) == 0)
 		logstring = "PASS XXXX";
 	else
 		logstring = cmd;
 	if (client) {
 		/* log interesting stuff at LOG_INFO, rest at LOG_DEBUG */
-		if ((strncasecmp(cmd,"user ",5) == 0) || 
-		    (strncasecmp(cmd,"retr ",5) == 0) ||
-		    (strncasecmp(cmd,"cwd ",4) == 0) ||
-		    (strncasecmp(cmd,"stor ",5) == 0))
+		if ((strncasecmp(cmd, "user ", 5) == 0) ||
+		    (strncasecmp(cmd, "retr ", 5) == 0) ||
+		    (strncasecmp(cmd, "cwd ", 4) == 0) ||
+		    (strncasecmp(cmd, "stor " ,5) == 0))
 			level = LOG_INFO;
 	}
 	syslog(level, "%s %s", (client?"from client:":"server reply:"),
 	    logstring);
 }
 
-
 /*
  * set ourselves up for a new data connection. Direction is toward client if
  * "server" is 0, towards server otherwise.
  */
-
 int
 new_dataconn(int server)
 {
-	
+
 	/*
 	 * Close existing data conn.
 	 */
-	
+
 	if (client_listen_socket != -1) {
 		close(client_listen_socket);
 		client_listen_socket = -1;
@@ -380,30 +375,22 @@ new_dataconn(int server)
 		close(server_data_socket);
 		server_data_socket = -1;
 	}
-	
+
 	if (server) {
 		bzero (&server_listen_sa, sizeof(server_listen_sa));
-		
-		server_listen_socket = get_backchannel_socket(
-			SOCK_STREAM,
-			min_port,
-			max_port,
-			-1,
-			1,
-		&server_listen_sa);
-		
+		server_listen_socket = get_backchannel_socket(SOCK_STREAM,
+		    min_port, max_port, -1, 1, &server_listen_sa);
+
 		if (server_listen_socket == -1) {
-			syslog(LOG_INFO,"bind of server socket failed (%m)");
+			syslog(LOG_INFO, "bind of server socket failed (%m)");
 			exit(EX_OSERR);
 		}
 		if (listen(server_listen_socket, 5) != 0) {
-			syslog(LOG_INFO,"listen on server socket failed (%m)");
+			syslog(LOG_INFO, "listen on server socket failed (%m)");
 			exit(EX_OSERR);
 		}
-		
 	} else {
-		bzero(&client_listen_sa, sizeof(client_listen_sa)); 
-		
+		bzero(&client_listen_sa, sizeof(client_listen_sa));
 		client_listen_socket = get_backchannel_socket(SOCK_STREAM,
 		    min_port, max_port, -1, 1, &client_listen_sa);
 
@@ -426,16 +413,15 @@ do_client_cmd(struct csiob *client, struct csiob *server)
 {
 	int i,j,rv;
 	char tbuf[100];
-	char *sendbuf = NULL; 
+	char *sendbuf = NULL;
 
 	log_control_command((char *)client->line_buffer, 1);
-	
+
 	/* client->line_buffer is an ftp control command.
 	 * There is no reason for these to be very long.
 	 * In the interest of limiting buffer overrun attempts,
-	 * we catch them here. 
+	 * we catch them here.
 	 */
-	
 	if (strlen((char *)client->line_buffer) > 512) {
 		syslog(LOG_NOTICE, "excessively long control command");
 		exit(EX_DATAERR);
@@ -444,45 +430,40 @@ do_client_cmd(struct csiob *client, struct csiob *server)
 	/*
 	 * Check the client user provided if needed
 	 */
-
-	if (AnonFtpOnly && strncasecmp((char *)client->line_buffer,"user ",
+	if (AnonFtpOnly && strncasecmp((char *)client->line_buffer, "user ",
 	    strlen("user ")) == 0) {
-		char * cp;
+		char *cp;
+
 		cp = client->line_buffer + strlen("user ");
-		if ((strcasecmp(cp,"ftp\r\n") != 0) 
-		    && (strcasecmp(cp, "anonymous\r\n") != 0)) {
+		if ((strcasecmp(cp, "ftp\r\n") != 0) &&
+		    (strcasecmp(cp, "anonymous\r\n") != 0)) {
 			/*
-			 * this isn't anonymous - give the client an 
+			 * this isn't anonymous - give the client an
 			 * error before they send a password
 			 */
-			snprintf(tbuf, sizeof(tbuf), 
+			snprintf(tbuf, sizeof(tbuf),
 			    "500 Only anonymous ftp is allowed\r\n");
 			j = 0;
 			i = strlen(tbuf);
 			do {
 				rv = send(client->fd, tbuf + j, i - j, 0);
-				if (rv == -1 && errno != EAGAIN && 
+				if (rv == -1 && errno != EAGAIN &&
 				    errno != EINTR)
 					break;
 				else if (rv != -1)
 					j += rv;
 			} while (j >= 0 && j < i);
 			sendbuf = NULL;
-		} else 
+		} else
 			sendbuf = client->line_buffer;
-	} else if ((strncasecmp((char *)client->line_buffer,"eprt ", 
- 	    strlen("eprt ")) == 0)) { 
-		
-		/* Watch out for EPRT commands */
+	} else if ((strncasecmp((char *)client->line_buffer, "eprt ",
+ 	    strlen("eprt ")) == 0)) {
 
-		char *line = NULL; 
-		char *q, *p;
-		char *result[3];
-		char delim;
-		struct addrinfo hints;
-		struct addrinfo *res = NULL;
+		/* Watch out for EPRT commands */
+		char *line = NULL,  *q, *p, *result[3], delim;
+		struct addrinfo hints, *res = NULL;
 		unsigned long proto;
-		
+
 		j = 0;
 		line = strdup(client->line_buffer+strlen("eprt "));
 		if (line == NULL) {
@@ -520,41 +501,39 @@ do_client_cmd(struct csiob *client, struct csiob *server)
 		if (sizeof(client_listen_sa) < res->ai_addrlen)
 			goto parsefail;
 		memcpy(&client_listen_sa, res->ai_addr, res->ai_addrlen);
-		
-		debuglog(1,"client wants us to use %s:%u\n",
-		    inet_ntoa(client_listen_sa.sin_addr), 
+
+		debuglog(1, "client wants us to use %s:%u\n",
+		    inet_ntoa(client_listen_sa.sin_addr),
 		    htons(client_listen_sa.sin_port));
 
 		/*
 		 * Configure our own listen socket and tell the server about it
 		 */
-
 		new_dataconn(1);
-		
 		connection_mode = EPRT_MODE;
 
-		debuglog(1,"we want server to use %s:%u\n",
+		debuglog(1, "we want server to use %s:%u\n",
 		    inet_ntoa(server->sa.sin_addr),
-		    ntohs(server_listen_sa.sin_port));	 
+		    ntohs(server_listen_sa.sin_port));	
 
 		snprintf(tbuf, sizeof(tbuf), "EPRT |%d|%s|%u|\r\n", 1,
-		    inet_ntoa(server->sa.sin_addr), 
-		    ntohs(server_listen_sa.sin_port));		
-		debuglog(1,"to server(modified):  %s",tbuf);
+		    inet_ntoa(server->sa.sin_addr),
+		    ntohs(server_listen_sa.sin_port));
+		debuglog(1, "to server(modified):  %s", tbuf);
 		sendbuf = tbuf;
 		goto out;
 parsefail:
-		snprintf(tbuf, sizeof(tbuf), 
+		snprintf(tbuf, sizeof(tbuf),
 		    "500 Invalid argument, rejected\r\n");
 		sendbuf = NULL;
 		goto out;
-protounsupp: 
+protounsupp:
 		/* we only support AF_INET for now */
 		if (proto == 2)
-			snprintf(tbuf, sizeof(tbuf), 
+			snprintf(tbuf, sizeof(tbuf),
 			    "522 Protocol not supported, use (1)\r\n");
 		else
-			snprintf(tbuf, sizeof(tbuf), 
+			snprintf(tbuf, sizeof(tbuf),
 			    "501 Protocol not supported\r\n");
 		sendbuf = NULL;
 out:
@@ -563,37 +542,36 @@ out:
 		if (res)
 			freeaddrinfo(res);
 		if (sendbuf == NULL) {
-			debuglog(1, "to client(modified):  %s\n",tbuf);
+			debuglog(1, "to client(modified):  %s\n", tbuf);
 			i = strlen(tbuf);
 			do {
 				rv = send(client->fd, tbuf + j, i - j, 0);
-				if (rv == -1 && errno != EAGAIN && 
+				if (rv == -1 && errno != EAGAIN &&
 				    errno != EINTR)
 					break;
 				else if (rv != -1)
 					j += rv;
 			} while (j >= 0 && j < i);
 		}
-	} else if (!NatMode && (strncasecmp((char *)client->line_buffer,"epsv",
-	    strlen("epsv")) == 0)) { 
+	} else if (!NatMode && (strncasecmp((char *)client->line_buffer, "epsv",
+	    strlen("epsv")) == 0)) {
 
 		/*
 		 * If we aren't in NAT mode, deal with EPSV.
-		 * EPSV is a problem - Unliks PASV, the reply from the 
+		 * EPSV is a problem - Unliks PASV, the reply from the
 		 * server contains *only* a port, we can't modify the reply
 		 * to the client and get the client to connect to us without
 		 * resorting to using a dynamic rdr rule we have to add in
 		 * for the reply to this connection, and take away afterwards.
 		 * so this will wait until we have the right solution for rule
-		 * addtions/deletions in pf. 
+		 * addtions/deletions in pf.
 		 *
-		 * in the meantime we just tell the client we don't do it, 
+		 * in the meantime we just tell the client we don't do it,
 		 * and most clients should fall back to using PASV.
 		 */
-		
-		snprintf(tbuf, sizeof(tbuf), 
+		snprintf(tbuf, sizeof(tbuf),
 		    "500 EPSV command not understood\r\n");
-		debuglog(1, "to client(modified):  %s\n",tbuf);
+		debuglog(1, "to client(modified):  %s\n", tbuf);
 		j = 0;
 		i = strlen(tbuf);
 		do {
@@ -604,14 +582,14 @@ out:
 				j += rv;
 		} while (j >= 0 && j < i);
 		sendbuf = NULL;
-	} else if (strncasecmp((char *)client->line_buffer,"port ", 
-	    strlen("port ")) == 0) { 
+	} else if (strncasecmp((char *)client->line_buffer, "port ",
+	    strlen("port ")) == 0) {
 		unsigned int values[6];
 		int byte_number;
 		u_char *tailptr, ch;
 
-		debuglog(1,"Got a PORT command\n");
-		
+		debuglog(1, "Got a PORT command\n");
+
 		tailptr = &client->line_buffer[strlen("port ")];
 		byte_number = 0;
 		values[0] = 0;
@@ -645,30 +623,28 @@ out:
 			    "PORT command - session terminated");
 			exit(EX_DATAERR);
 		}
-		
-		client_listen_sa.sin_family = AF_INET;
-		client_listen_sa.sin_addr.s_addr = htonl((values[0] << 24) 
-		    | (values[1] << 16) | (values[2] <<  8) 
-		    | (values[3] <<  0));
 
-		client_listen_sa.sin_port = htons((values[4] << 8) 
-		    | values[5]);
-		debuglog(1,"client wants us to use %u.%u.%u.%u:%u\n",
+		client_listen_sa.sin_family = AF_INET;
+		client_listen_sa.sin_addr.s_addr = htonl((values[0] << 24) |
+		    (values[1] << 16) | (values[2] <<  8) |
+		    (values[3] <<  0));
+
+		client_listen_sa.sin_port = htons((values[4] << 8) |
+		    values[5]);
+		debuglog(1, "client wants us to use %u.%u.%u.%u:%u\n",
 		    values[0], values[1], values[2], values[3],
 		    (values[4] << 8) | values[5]);
-		
+
 		/*
 		 * Configure our own listen socket and tell the server about it
 		 */
-
 		new_dataconn(1);
-		
 		connection_mode = PORT_MODE;
-		
-		debuglog(1,"we want server to use %s:%u\n",
+
+		debuglog(1, "we want server to use %s:%u\n",
 		    inet_ntoa(server->sa.sin_addr),
-		    ntohs(server_listen_sa.sin_port));	 
-		
+		    ntohs(server_listen_sa.sin_port));	
+
 		snprintf(tbuf, sizeof(tbuf), "PORT %u,%u,%u,%u,%u,%u\r\n",
 			 ((u_char *)&server->sa.sin_addr.s_addr)[0],
 			 ((u_char *)&server->sa.sin_addr.s_addr)[1],
@@ -676,14 +652,14 @@ out:
 			 ((u_char *)&server->sa.sin_addr.s_addr)[3],
 			 ((u_char *)&server_listen_sa.sin_port)[0],
 			 ((u_char *)&server_listen_sa.sin_port)[1]);
-		
-		debuglog(1,"to server(modified):  %s",tbuf);
-		
+
+		debuglog(1, "to server(modified):  %s", tbuf);
+
 		sendbuf = tbuf;
 	} else
 		sendbuf = client->line_buffer;
-	
-	/* 
+
+	/*
 	 *send our (possibly modified) control command in sendbuf
 	 * on it's way to the server
 	 */
@@ -705,11 +681,10 @@ do_server_reply(struct csiob *server, struct csiob *client)
 {
 	int code, i, j, rv;
 	struct in_addr *iap;
-	char tbuf[100];
-	char *sendbuf;
-	
+	char tbuf[100], *sendbuf;
+
 	log_control_command((char *)server->line_buffer, 0);
-	
+
 	if (strlen((char *)server->line_buffer) > 512) {
 		/*
 		 * someone's playing games. Have a cow in the syslogs and
@@ -719,31 +694,29 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		syslog(LOG_NOTICE, "Long (> 512 bytes) ftp control reply");
 		exit(EX_DATAERR);
 	}
-	
+
 	/*
 	 * Watch out for "227 Entering Passive Mode ..." replies
 	 */
-	
 	code = atoi((char *)server->line_buffer);
 	if (code <= 0 || code > 999) {
-		syslog(LOG_INFO,"invalid server reply code %d", code);
+		syslog(LOG_INFO, "invalid server reply code %d", code);
 		exit(EX_DATAERR);
 	}
 	if (code == 227 && !NatMode) {
-		u_char ch;
-		u_char *tailptr;
-		int byte_number;
 		unsigned int values[6];
-		
+		u_char ch, *tailptr;
+		int byte_number;
+
 		debuglog(1, "Got a PASV reply\n");
-		debuglog(1, "{%s}\n",(char *)server->line_buffer);
-		
+		debuglog(1, "{%s}\n", (char *)server->line_buffer);
+
 		tailptr = strchr((char *)server->line_buffer,'(');
 		if (tailptr == NULL) {
 			syslog(LOG_NOTICE, "malformed 227 reply");
 			exit(EX_DATAERR);
 		}
-		
+
 		tailptr += 1;	/* Move past the open-parentheses */
 		byte_number = 0;
 		values[0] = 0;
@@ -768,62 +741,55 @@ do_server_reply(struct csiob *server, struct csiob *client)
 			}
 			tailptr += 1;
 		}
-		
+
 		/*
 		 * The PASV reply should be terminated by a closing
 		 * parentheses.
 		 */
-		
 		if (ch != ')') {
-			syslog(LOG_INFO,"malformed 227 reply, junk at end");
+			syslog(LOG_INFO, "malformed 227 reply, junk at end");
 			exit(EX_DATAERR);
 		}
 
 		/* we need the righr number of bytes for ipv4 and port here */
-		
 		if (byte_number != 5) {
 			syslog(LOG_NOTICE,
 			    "malformed 227 reply, missing bytes");
 			exit(EX_DATAERR);
 		}
-		
+
 		server_listen_sa.sin_family = AF_INET;
 		server_listen_sa.sin_addr.s_addr = htonl((values[0] << 24) |
 		    (values[1] << 16) | (values[2] <<  8) | (values[3] <<  0));
-		server_listen_sa.sin_port = htons((values[4] << 8) | 
+		server_listen_sa.sin_port = htons((values[4] << 8) |
 		    values[5]);
 
-		debuglog(1,"server wants us to use %s:%u\n",
+		debuglog(1, "server wants us to use %s:%u\n",
 		    inet_ntoa(server_listen_sa.sin_addr), (values[4] << 8) |
 		    values[5]);
-		
+
 		new_dataconn(0);
-		
 		connection_mode = PASV_MODE;
-		
 		iap = &(server->sa.sin_addr);
-		
-		debuglog(1,"we want client to use %s:%u\n", inet_ntoa(*iap),
+
+		debuglog(1, "we want client to use %s:%u\n", inet_ntoa(*iap),
 		    htons(client_listen_sa.sin_port));
-		
+
 		snprintf(tbuf, sizeof(tbuf),
 		    "227 Entering Passive Mode (%u,%u,%u,%u,%u,%u\r\n",
 		    ((u_char *)iap)[0], ((u_char *)iap)[1],
 		    ((u_char *)iap)[2], ((u_char *)iap)[3],
 		    ((u_char *)&client_listen_sa.sin_port)[0],
 		    ((u_char *)&client_listen_sa.sin_port)[1]);
-		
-		debuglog(1, "to client(modified):  %s\n",tbuf);
-		
+		debuglog(1, "to client(modified):  %s\n", tbuf);
 		sendbuf = tbuf;
-	} else 
+	} else
 		sendbuf = server->line_buffer;
 
-	/* 
-	 *send our (possibly modified) control command in sendbuf
+	/*
+	 * send our (possibly modified) control command in sendbuf
 	 * on it's way to the client
 	 */
-
 	j = 0;
 	i = strlen(sendbuf);
 	do {
@@ -843,7 +809,7 @@ main(int argc, char **argv)
 	struct timeval tv;
 	long timeout_seconds = 0;
 	struct sigaction new_sa, old_sa;
-	int sval, ch, salen, flags, i; 
+	int sval, ch, salen, flags, i;
 	int use_tcpwrapper = 0;
 	int one = 1;
 
@@ -887,33 +853,31 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
-	
 
-	if (max_port < min_port) 
+	if (max_port < min_port)
 		usage();
 
 	openlog(__progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
-	
+
 	setlinebuf(stdout);
 	setlinebuf(stderr);
-	
+
 	memset(&client_iob, 0, sizeof(client_iob));
 	memset(&server_iob, 0, sizeof(server_iob));
-	
-	if (get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1) 
+
+	if (get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
 		exit(EX_PROTOCOL);
-	
+
 	/*
-	 * We check_host after get_proxy_env so that checks are done 
+	 * We check_host after get_proxy_env so that checks are done
 	 * against the original destination endpoint, not the endpoint
 	 * of our side of the rdr. This allows the use of tcpwrapper
 	 * rules to restrict destinations as well as sources of connections
 	 * for ftp.
 	 */
-
-	if (Use_Rdns) 
+	if (Use_Rdns)
 		flags = NI_NUMERICHOST | NI_NUMERICSERV;
-	else 
+	else
 		flags = 0;
 
 	i = getnameinfo((struct sockaddr *)&client_iob.sa,
@@ -923,83 +887,77 @@ main(int argc, char **argv)
 	if (i == -1) {
 		syslog (LOG_ERR, "getnameinfo failed (%m)");
 		exit(EX_OSERR);
-	}	
+	}
 
-	i = getnameinfo((struct sockaddr *)&real_server_sa, 
+	i = getnameinfo((struct sockaddr *)&real_server_sa,
 	    sizeof(real_server_sa), RealServerName, sizeof(RealServerName),
 	    NULL, 0, flags);
 
 	if (i == -1) {
 		syslog (LOG_ERR, "getnameinfo failed (%m)");
 		exit(EX_OSERR);
-	}	
+	}
 
 	if (use_tcpwrapper && !check_host(&client_iob.sa, &real_server_sa))
 		exit(EX_NOPERM);
 
 	client_iob.fd = 0;
-	
-	
-	/*  Check to see if we have a timeout defined, if so, 
-	 * set a timeout for this select call to that value, so 
+
+	/*  Check to see if we have a timeout defined, if so,
+	 * set a timeout for this select call to that value, so
 	 * we may time out if don't see any data in timeout
-	 * seconds. 
+	 * seconds.
 	 */
-	
 	tv.tv_sec = timeout_seconds;
-	tv.tv_usec = 0;	
-	
+	tv.tv_usec = 0;
 	timeout_seconds=tv.tv_sec;
-	
-	
+
 	debuglog(1, "client is %s:%u\n", ClientName,
 	    ntohs(client_iob.sa.sin_port));
-	
+
 	debuglog(1, "target server is %s:%u\n", RealServerName,
 	    ntohs(real_server_sa.sin_port));
-	
+
 	server_iob.fd = get_backchannel_socket(SOCK_STREAM, min_port, max_port,
 	    -1,	1, &server_iob.sa);
-		
+
 	if (connect(server_iob.fd, (struct sockaddr *)&real_server_sa,
 	    sizeof(real_server_sa)) != 0) {
 		syslog(LOG_INFO, "Can't connect to %s:%u (%m)", RealServerName,
 		    ntohs(real_server_sa.sin_port));
 		exit(EX_NOHOST);
 	}
-	
+
 	/*
 	 * Now that we are connected to the real server, get the name
 	 * of our end of the server socket so we know our IP address
-	 * from the real server's perspective.  
+	 * from the real server's perspective.
 	 */
-
-	i = getnameinfo((struct sockaddr *)&client_iob.sa, 
+	i = getnameinfo((struct sockaddr *)&client_iob.sa,
 	    sizeof(client_iob.sa), OurName, sizeof(OurName), NULL, 0, flags);
-	
+
 	salen = sizeof(server_iob.sa);
 	getsockname(server_iob.fd, (struct sockaddr *)&server_iob.sa, &salen);
-	
+
 	debuglog(1, "our end of socket to server is %s:%u\n", OurName,
 	    ntohs(server_iob.sa.sin_port));
-	
-	/* ignore sigpipe */
-	
+
+	/* ignore SIGPIPE */
+	bzero(&new_sa, sizeof(new_sa));
 	new_sa.sa_handler = SIG_IGN;
 	(void)sigemptyset(&new_sa.sa_mask);
 	new_sa.sa_flags = SA_RESTART;
-
 	if (sigaction(SIGPIPE, &new_sa, &old_sa) != 0) {
-		syslog(LOG_ERR,"sigaction failed (%m)");
+		syslog(LOG_ERR, "sigaction failed (%m)");
 		exit(EX_OSERR);
 	}
-	
+
 	if (setsockopt(client_iob.fd, SOL_SOCKET, SO_OOBINLINE, (char *)&one,
 	    sizeof(one)) == -1) {
-		syslog(LOG_NOTICE,"Can't set SO_OOBINLINE (%m) - exiting");
+		syslog(LOG_NOTICE, "Can't set SO_OOBINLINE (%m) - exiting");
 		exit(EX_OSERR);
 	}
-		    
+
 	client_iob.line_buffer_size = STARTBUFSIZE;
 	client_iob.line_buffer = malloc(client_iob.line_buffer_size);
 	client_iob.io_buffer_size = STARTBUFSIZE;
@@ -1010,11 +968,10 @@ main(int argc, char **argv)
 	client_iob.who = "client";
 	client_iob.send_oob_flags = 0;
 	client_iob.real_sa = client_iob.sa;
-	
-	
+
 	server_iob.line_buffer_size = STARTBUFSIZE;
 	server_iob.line_buffer = malloc(server_iob.line_buffer_size);
-	server_iob.io_buffer_size = STARTBUFSIZE; 
+	server_iob.io_buffer_size = STARTBUFSIZE;
 	server_iob.io_buffer = malloc(server_iob.io_buffer_size);
 	server_iob.next_byte = 0;
 	server_iob.io_buffer_len = 0;
@@ -1023,14 +980,12 @@ main(int argc, char **argv)
 	server_iob.send_oob_flags = MSG_OOB;
 	server_iob.real_sa = real_server_sa;
 
-	if (client_iob.line_buffer == NULL  ||  client_iob.io_buffer == NULL
-	     || server_iob.line_buffer == NULL || server_iob.io_buffer == NULL)
-	    {	
+	if (client_iob.line_buffer == NULL || client_iob.io_buffer == NULL ||
+	    server_iob.line_buffer == NULL || server_iob.io_buffer == NULL) {
 		syslog (LOG_NOTICE,  "Insufficient memory (malloc failed)");
 		exit(EX_UNAVAILABLE);
-	    }
-	
-	
+	}
+
 	while (client_iob.alive || server_iob.alive) {
 		fd_set fds;
 
@@ -1040,72 +995,71 @@ main(int argc, char **argv)
 		 * many open files for FD_SETSIZE - we deal here only
 		 * with one ftp connection
 		 */
-		
-		debuglog(3,"client is %s, server is %s\n",
-			client_iob.alive ? "alive" : "dead",
-			server_iob.alive ? "alive" : "dead");
+		debuglog(3, "client is %s, server is %s\n",
+		    client_iob.alive ? "alive" : "dead",
+		    server_iob.alive ? "alive" : "dead");
 
 		FD_ZERO(&fds);
-		
-		if (client_iob.alive && telnet_getline(&client_iob, 
+
+		if (client_iob.alive && telnet_getline(&client_iob,
 		    &server_iob)) {
 			debuglog(3, "client line buffer is \"%s\"\n",
 			    (char *)client_iob.line_buffer);
-			if (client_iob.line_buffer[0] != '\0') 
+			if (client_iob.line_buffer[0] != '\0')
 				do_client_cmd(&client_iob, &server_iob);
 		} else if (server_iob.alive && telnet_getline(&server_iob,
 		    &client_iob)) {
-			debuglog(3,"server line buffer is \"%s\"\n",
+			debuglog(3, "server line buffer is \"%s\"\n",
 			    (char *)server_iob.line_buffer);
-			if (server_iob.line_buffer[0] != '\0') 
+			if (server_iob.line_buffer[0] != '\0')
 				do_server_reply(&server_iob, &client_iob);
 		} else {
 			if (client_iob.alive) {
 				FD_SET(client_iob.fd, &fds);
-				if (client_listen_socket >= 0) 
+				if (client_listen_socket >= 0)
 					FD_SET(client_listen_socket, &fds);
 				if (client_data_socket >= 0)
 					FD_SET(client_data_socket, &fds);
 			}
 			if (server_iob.alive) {
-				FD_SET(server_iob.fd, &fds); 
+				FD_SET(server_iob.fd, &fds);
 				if (server_listen_socket >= 0)
 					FD_SET(server_listen_socket, &fds);
-				if (server_data_socket >= 0) 
+				if (server_data_socket >= 0)
 					FD_SET(server_data_socket, &fds);
 			}
-			
 			tv.tv_sec = timeout_seconds;
-			tv.tv_usec = 0;	
+			tv.tv_usec = 0;
 
 		doselect:
 			switch (sval = select(FD_SETSIZE, &fds, NULL, NULL,
 			    (tv.tv_sec == 0) ? NULL : &tv)) {
 			case 0:
-				/* 
-				 * This proxy has timed out. Expire it 
-				 * quietly with an obituary in the syslogs 
+				/*
+				 * This proxy has timed out. Expire it
+				 * quietly with an obituary in the syslogs
 				 * for any passing mourners.
 				 */
-				syslog(LOG_INFO, 
+				syslog(LOG_INFO,
 				   "timeout, no data for %ld seconds",
 				   timeout_seconds);
-				exit(EX_OK); 
+				exit(EX_OK);
 				break;
-				
+
 			case -1:
-				if (errno == EINTR  || errno == EAGAIN)
+				if (errno == EINTR || errno == EAGAIN)
 					goto doselect;
 				syslog(LOG_NOTICE,
 				    "select failed (%m) - exiting");
 				exit(EX_OSERR);
 				break;
-				
+
 			default:
 				if (client_data_socket >= 0 &&
 				    FD_ISSET(client_data_socket,&fds)) {
 					int rval;
-					debuglog(3,"xfer client to server\n");
+
+					debuglog(3, "xfer client to server\n");
 					rval = xfer_data("client to server",
 					    client_data_socket,
 					    server_data_socket,
@@ -1119,14 +1073,14 @@ main(int argc, char **argv)
 						close(server_data_socket);
 						server_data_socket = -1;
 						show_xfer_stats();
-					} else 
+					} else
 						client_data_bytes += rval;
 				}
 				if (server_data_socket >= 0 &&
 				    FD_ISSET(server_data_socket,&fds)) {
 					int rval;
-					
-					debuglog(3,"xfer server to client\n");
+
+					debuglog(3, "xfer server to client\n");
 					rval = xfer_data("server to client",
 					    server_data_socket,
 					    client_data_socket,
@@ -1140,23 +1094,21 @@ main(int argc, char **argv)
 						close(server_data_socket);
 						server_data_socket = -1;
 						show_xfer_stats();
-					} else 
+					} else
 						server_data_bytes += rval;
 				}
 				if (server_listen_socket >= 0 &&
 				    FD_ISSET(server_listen_socket,&fds)) {
 					struct sockaddr_in listen_sa;
-					
+
 					/*
-					 * We are about to accept a 
+					 * We are about to accept a
 					 * connection from the server.
 					 * This is a PORT or EPRT data
 					 * connection.
 					 */
-					
-					debuglog(2,
-					    "server listen socket ready\n");
-					
+					debuglog(2, "server listen socket ready\n");
+
 					if (server_data_socket >= 0) {
 						shutdown(server_data_socket,2);
 						close(server_data_socket);
@@ -1184,26 +1136,26 @@ main(int argc, char **argv)
 					salen = 1;
 
 					listen_sa.sin_family = AF_INET;
-					
+
 					bzero(&listen_sa.sin_addr,
 					    sizeof(struct in_addr));
-					
-					debuglog(2,"setting sin_addr to %s\n",
+
+					debuglog(2, "setting sin_addr to %s\n",
 					    inet_ntoa(client_iob.sa.sin_addr));
-					
+
 					listen_sa.sin_port = htons(20);
 					salen = 1;
 					setsockopt(client_data_socket,
 					    SOL_SOCKET, SO_REUSEADDR, &salen,
 					    sizeof(salen));
-					if (bind(client_data_socket, 
-					     (struct sockaddr *)&listen_sa,
-					     sizeof(listen_sa)) < 0) {
+					if (bind(client_data_socket,
+					    (struct sockaddr *)&listen_sa,
+					    sizeof(listen_sa)) < 0) {
 						syslog(LOG_NOTICE,
 						    "bind to 20 failed (%m)");
 						exit(EX_OSERR);
 					}
-					
+
 					if (connect(client_data_socket,
 					    (struct sockaddr *)
 					    &client_listen_sa,
@@ -1220,17 +1172,16 @@ main(int argc, char **argv)
 				    FD_ISSET(client_listen_socket,&fds)) {
 					struct sockaddr_in listen_sa;
 					int salen;
-					
+
 					/*
 					 * We are about to accept a
 					 * connection from the client.
 					 * This is a PASV data
-					 * connection. 
+					 * connection.
 					 */
-					
 					debuglog(2,
 					    "client listen socket ready\n");
-					
+
 					if (server_data_socket >= 0) {
 						shutdown(server_data_socket,2);
 						close(server_data_socket);
@@ -1242,16 +1193,16 @@ main(int argc, char **argv)
 						client_data_socket = -1;
 					}
 					salen = sizeof(listen_sa);
-					client_data_socket = 
+					client_data_socket =
 					    accept(client_listen_socket,
 					    (struct sockaddr *)&listen_sa,
 					    &salen);
 					if (client_data_socket < 0) {
-						syslog(LOG_NOTICE, 
+						syslog(LOG_NOTICE,
 						   "accept failed (%m)");
 						exit(EX_OSERR);
 					}
-					
+
 					close(client_listen_socket);
 					client_listen_socket = -1;
 					memset(&listen_sa, 0,
@@ -1281,29 +1232,28 @@ main(int argc, char **argv)
 				    FD_ISSET(client_iob.fd,&fds)) {
 					client_iob.data_available = 1;
 				}
-				
+
 				if (server_iob.alive &&
 				    FD_ISSET(server_iob.fd,&fds)) {
 					server_iob.data_available = 1;
 				}
-				
+
 			}
 		}
-		
+
 		if (client_iob.got_eof) {
-			shutdown(server_iob.fd,1);
-			shutdown(client_iob.fd,0);
+			shutdown(server_iob.fd, 1);
+			shutdown(client_iob.fd, 0);
 			client_iob.got_eof = 0;
 			client_iob.alive = 0;
 		}
-		
+
 		if (server_iob.got_eof) {
-			shutdown(client_iob.fd,1);
-			shutdown(server_iob.fd,0);
+			shutdown(client_iob.fd, 1);
+			shutdown(server_iob.fd, 0);
 			server_iob.got_eof = 0;
 			server_iob.alive = 0;
 		}
-		
 	}
 	exit(EX_OK);
 }

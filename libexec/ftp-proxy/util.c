@@ -1,4 +1,5 @@
-/* $OpenBSD: util.c,v 1.1 2001/08/19 04:11:12 beck Exp $ */ 
+/* $OpenBSD: util.c,v 1.2 2001/08/19 13:43:09 deraadt Exp $ */ 
+
 /*
  * Copyright (c) 1996-2001
  *	Obtuse Systems Corporation.  All rights reserved.
@@ -30,12 +31,11 @@
  *
  */
 
-
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
+#include <netinet/in.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <net/if.h>
@@ -64,25 +64,21 @@ int Use_Rdns;
 void
 debuglog(int debug_level, const char *fmt, ...)
 {
-    va_list ap;
-    va_start(ap,fmt);
+	va_list ap;
+	va_start(ap,fmt);
 
-    if (Debug_Level >= debug_level)  {
-	vsyslog(LOG_DEBUG, fmt, ap);
-    }
+	if (Debug_Level >= debug_level)
+		vsyslog(LOG_DEBUG, fmt, ap);
 }
-
 
 int
 get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,	
     struct sockaddr_in *client_sa_ptr)
 {
-	struct pf_natlook  natlook;
-	struct pf_natlook  *natlookp;
-	char * client;
+	struct pf_natlook natlook, *natlookp;
+	char *client;
 	int slen, fd;
-	
-	
+
 	slen = sizeof(*real_server_sa_ptr);
 	if (getsockname(connected_fd, (struct sockaddr *)real_server_sa_ptr,
 	    &slen) != 0) {
@@ -95,12 +91,10 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 		syslog(LOG_ERR,"getpeername failed (%m)");
 		return(-1);
 	}
-	
-	
+
 	/*
 	 * Build up the pf natlook structure.
 	 */
-	
 	memset((void *)&natlook, 0, sizeof(natlook));
 	natlook.saddr = client_sa_ptr->sin_addr.s_addr;
 	natlook.daddr = real_server_sa_ptr->sin_addr.s_addr;
@@ -108,39 +102,37 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 	natlook.sport = client_sa_ptr->sin_port;
 	natlook.dport = real_server_sa_ptr->sin_port;
 	natlook.direction = PF_OUT;
-	
+
 	/*
 	 * Open the pf device and lookup the mapping pair to find
-	 * the original address we were supposed to connect to. 
+	 * the original address we were supposed to connect to.
 	 */
-	
 	client = strdup(inet_ntoa(client_sa_ptr->sin_addr));
 	if (client == NULL) {
 		errno = ENOMEM;
 		return(-1);
 	}
-	
+
 	fd = open("/dev/pf", O_RDWR);
 	if (fd == -1) {
 		syslog(LOG_ERR, "Can't open /dev/pf (%m)");
 		exit(EX_UNAVAILABLE);
 	}
-		
+
 	natlookp = &natlook;
 	if (ioctl(fd, DIOCNATLOOK, natlookp) == -1) {
 		syslog(LOG_INFO,
-		    "pf nat lookup failed (%m), connection from %s:%hu", 
+		    "pf nat lookup failed (%m), connection from %s:%hu",
 		    client, ntohs(client_sa_ptr->sin_port));
 		close(fd);
 		return(-1);
 	}
 	close(fd);
-	
+
 	/*
-	 * Now jam the original address and port back into the into 
-	 * destination sockaddr_in for the proxy to deal with. 
+	 * Now jam the original address and port back into the into
+	 * destination sockaddr_in for the proxy to deal with.
 	 */
-	
 	memset((void *)real_server_sa_ptr, 0, sizeof(struct sockaddr_in));
 	real_server_sa_ptr->sin_port = natlookp->rdport;
 	real_server_sa_ptr->sin_addr.s_addr = natlookp->rdaddr;
@@ -156,19 +148,16 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
  * A unit of data is as much as we get with a single read(2) call.
  *
  */
-
 int
 xfer_data(const char *what_read,int from_fd, int to_fd, struct in_addr from,
     struct in_addr to)
 {
+	int rlen, offset, xerrno, mark, flags = 0;
 	char tbuf[4096];
-	int rlen, offset, xerrno;
-	int mark, flags;
-	
+
 	/*
 	 * Are we at the OOB mark?
 	 */
-	
 	if (ioctl(from_fd, SIOCATMARK, &mark) < 0) {
 		xerrno = errno;
 		syslog(LOG_ERR,"can't ioctl(SIOCATMARK) socket from %s (%m)",
@@ -176,11 +165,8 @@ xfer_data(const char *what_read,int from_fd, int to_fd, struct in_addr from,
 		errno = xerrno;
 		return(-1);
 	}
-	
-	if (mark) 
+	if (mark)
 		flags = MSG_OOB;	/* Yes - at the OOB mark */
-	else
-		flags = 0;
 
 snarf:
 	rlen = recv(from_fd,tbuf,sizeof(tbuf), flags);
@@ -190,7 +176,7 @@ snarf:
 		rlen = recv(from_fd,tbuf,sizeof(tbuf), flags);
 	}
 	if (rlen == 0) {
-		debuglog(3, "xfer_data - eof on read socket"); 
+		debuglog(3, "xfer_data - eof on read socket");
 		return(0);
 	} else if (rlen == -1) {
 		if (errno == EAGAIN || errno == EINTR)
@@ -202,8 +188,8 @@ snarf:
 		return(-1);
 	} else {
 		offset = 0;
-		debuglog(3, "xfer got %d bytes from socket\n",rlen);
-		
+		debuglog(3, "xfer got %d bytes from socket\n", rlen);
+
 		while (offset < rlen) {
 			int wlen;
 		fling:
@@ -228,94 +214,86 @@ snarf:
 	}
 }
 
-
-/* 
+/*
  * get_backchannel_socket gets us a socket bound somewhere in a
  * particular range of ports
  */
-
 int
 get_backchannel_socket(int type, int min_port, int max_port, int start_port,
     int direction, struct sockaddr_in *sap)
 {
 	int count;
-	
+
 	/*
 	 * Make sure that direction is 'defined' and that min_port is not
 	 * greater than max_port.
 	 */
-	
-	/* by default we go up by one port until we find one */
 	if (direction != -1)
-		direction = 1; 
-	
+		direction = 1;
+
+	/* by default we go up by one port until we find one */
 	if (min_port > max_port) {
 		errno = EINVAL;
 		return(-1);
 	}
-	
+
 	count = 1 + max_port - min_port;
-	
+
 	/*
-	 * pick a port we can bind to from within the range we want. 
+	 * pick a port we can bind to from within the range we want.
 	 * If the caller specifies -1 as the starting port number then
 	 * we pick one somewhere in the range to try.
 	 * This is an optimization intended to speedup port selection and
-	 * has NOTHING to do with security. 
+	 * has NOTHING to do with security.
 	 */
-	
 	if (start_port == -1)
 		start_port = (arc4random() % count) + min_port;
-	
+
 	if (start_port < min_port || start_port > max_port) {
 		errno = EINVAL;
 		return(-1);
 	}
-	
+
 	while (count-- > 0) {
-		int one;
-		int fd;
+		int one, fd;
 		struct sockaddr_in sa;
-		
+
 		fd = socket(AF_INET, type, 0);
-		
+
 		sa.sin_family = AF_INET;
-		if (sap == NULL) 
+		if (sap == NULL)
 			sa.sin_addr.s_addr = INADDR_ANY;
 		else
 			sa.sin_addr.s_addr = sap->sin_addr.s_addr;
-		
+
 		/*
 		 * Indicate that we want to reuse a port if it happens that the
 		 * port in question was a listen port recently.
 		 */
-		
 		one = 1;
-		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, 
+		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one,
 		    sizeof(one))  == -1)
 			return(-1);
 
 		sa.sin_port = htons(start_port);
-		
+
 		if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) == 0) {
-			if (sap != NULL) 
+			if (sap != NULL)
 				*sap = sa;
 			return(fd);
 		}
 
-		if (errno != EADDRINUSE) 
+		if (errno != EADDRINUSE)
 			return(-1);
-		
+
 		/* if it's in use, try the next port */
-		
 		close(fd);
 
 		start_port += direction;
-		if (start_port < min_port) 
+		if (start_port < min_port)
 			start_port = max_port;
-		else if (start_port > max_port) 
+		else if (start_port > max_port)
 			start_port = min_port;
-		
 	}
 	errno = EAGAIN;
 	return(-1);
