@@ -45,7 +45,7 @@
  *	Skipover, skipto adapted for VAX from skip() and skipx() on the PDP-11
  *	(from Ken Greer).  The names are more mnemonic.
  *
- *	Sindex adapted for VAX from indexs() on the PDP-11 (thanx to Ralph
+ *	Sindex adapted for VAX from indexs() on the PDP-11 (thanks to Ralph
  *	Guggenheim).  The name has changed to be more like the index()
  *	and rindex() functions from Bell Labs; the return value (pointer
  *	rather than integer) has changed partly for the same reason,
