@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $Id: put.c,v 1.8 1997/07/26 19:42:44 millert Exp $
+ * $OpenBSD: put.c,v 1.9 1997/07/27 21:36:04 millert Exp $
  */
 
 #include <stdio.h>

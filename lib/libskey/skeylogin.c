@@ -6,12 +6,16 @@
  *          John S. Walden <jsw@thumper.bellcore.com>
  *          Scott Chasin <chasin@crimelab.com>
  *
+ * Modifications:
+ *          Todd C. Miller <Todd.Miller@courtesan.com>
+ *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.18 1997/07/27 21:20:27 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.19 1997/07/27 21:36:05 millert Exp $
  */
 
 #include <sys/param.h>
+#include <sys/file.h>
 #ifdef	QUOTA
 #include <sys/quota.h>
 #endif
@@ -254,7 +258,7 @@ skeyverify(mp, response)
 	struct tm *tm;
 	char tbuf[27];
 	char *cp;
-	int oldpri;
+	int i, rval;
 
 	time(&now);
 	tm = localtime(&now);
@@ -279,18 +283,25 @@ skeyverify(mp, response)
 	f(fkey);
 
 	/*
-	 * In order to make the window of update as short as possible
-	 * we must do the comparison here and if OK write it back
-	 * other wise the same password can be used twice to get in
-	 * to the system
+	 * Obtain an exclusive lock on the key file so the same password
+	 * cannot be used twice to get in to the system.
 	 */
-	oldpri = getpriority(PRIO_PROCESS, 0);
-	(void)setpriority(PRIO_PROCESS, 0, -4);
+	for (i = 0; i < 300; i++) {
+		if ((rval = flock(fileno(mp->keyfile), LOCK_EX|LOCK_NB)) == 0 ||
+		    errno != EWOULDBLOCK)
+			break;
+		usleep(100000);			/* Sleep for 0.1 seconds */
+	}
+	if (rval == -1) {			/* Can't get exclusive lock */
+		warn("flock");  /* XXX */
+		errno = EAGAIN;
+		return(-1);
+	}
 
-	/* reread the file record NOW */
+	/* Reread the file record NOW */
 	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
 	if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf) {
-		(void)setpriority(PRIO_PROCESS, 0, oldpri);
+		(void)flock(fileno(mp->keyfile), LOCK_UN);
 		(void)fclose(mp->keyfile);
 		return(-1);
 	}
@@ -307,7 +318,7 @@ skeyverify(mp, response)
 	/* Do actual comparison */
 	if (memcmp(filekey, fkey, SKEY_BINKEY_SIZE) != 0){
 		/* Wrong response */
-		(void)setpriority(PRIO_PROCESS, 0, oldpri);
+		(void)flock(fileno(mp->keyfile), LOCK_UN);
 		(void)fclose(mp->keyfile);
 		return(1);
 	}
@@ -329,9 +340,9 @@ skeyverify(mp, response)
 			      mp->logname, skey_get_algorithm(), mp->n,
 			      mp->seed, mp->val, tbuf);
 
+	(void)flock(fileno(mp->keyfile), LOCK_UN);
 	(void)fclose(mp->keyfile);
 	
-	(void)setpriority(PRIO_PROCESS, 0, oldpri);
 	return(0);
 }
 
