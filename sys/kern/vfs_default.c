@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.11 2001/11/29 15:51:48 art Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.12 2001/11/30 05:45:33 csapuntz Exp $  */
 
 /*
  *    Portions of this code are:
@@ -690,9 +690,7 @@ loopdone:
 		error = biowait(mbp);
 	}
 	s = splbio();
-	if (mbp->b_vp != NULL) {
-		brelvp(mbp);
-	}
+	(void) buf_cleanout(mbp);
 	pool_put(&bufpool, mbp);
 	splx(s);
 	uvm_pagermapout(kva, npages);
@@ -971,8 +969,8 @@ genfs_putpages(v)
 	s = splbio();
 	if (mbp->b_vp) {
 		vwakeup(mbp->b_vp);
-		brelvp(mbp);
 	}
+	buf_cleanout(mbp);
 	pool_put(&bufpool, mbp);
 	splx(s);
 	uvm_pagermapout(kva, npages);

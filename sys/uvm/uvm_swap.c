@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.44 2001/11/28 19:28:15 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.45 2001/11/30 05:45:33 csapuntz Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.52 2001/05/26 16:32:47 chs Exp $	*/
 
 /*
@@ -1503,9 +1503,7 @@ sw_reg_iodone(bp)
 	/*
 	 * disassociate this buffer from the vnode (if any).
 	 */
-	if (vbp->vb_buf.b_vp != NULL) {
-		brelvp(&vbp->vb_buf);
-	}
+	(void) buf_cleanout(&vbp->vb_buf);
 
 	/*
 	 * kill vbp structure
@@ -2030,11 +2028,10 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * now dispose of the buf
 	 */
 	s = splbio();
-	if (bp->b_vp)
-		brelvp(bp);
-
 	if (write && bp->b_vp)
 		vwakeup(bp->b_vp);
+
+	(void) buf_cleanout(bp);
 	pool_put(&bufpool, bp);
 	splx(s);
 

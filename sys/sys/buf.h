@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.35 2001/11/27 06:21:37 art Exp $	*/
+/*	$OpenBSD: buf.h,v 1.36 2001/11/30 05:45:33 csapuntz Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -265,6 +265,8 @@ buf_countdeps(struct buf *bp, int i, int islocked)
 int	cluster_read __P((struct vnode *, struct cluster_info *,
 	    u_quad_t, daddr_t, long, struct ucred *, struct buf **));
 void	cluster_write __P((struct buf *, struct cluster_info *, u_quad_t));
+
+int buf_cleanout(struct buf *bp);
 
 __END_DECLS
 #endif

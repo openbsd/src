@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.26 2001/11/29 01:59:19 art Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.27 2001/11/30 05:45:33 csapuntz Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.48 2001/06/23 20:47:44 chs Exp $	*/
 
 /*
@@ -877,8 +877,8 @@ freed:
 		if (write && (bp->b_flags & B_AGE) != 0) {
 			vwakeup(bp->b_vp);
 		}
-		brelvp(bp);
 	}
+	(void) buf_cleanout(bp);
 	pool_put(&bufpool, bp);
 	splx(s);
 }

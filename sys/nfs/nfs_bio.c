@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.28 2001/11/29 12:24:28 art Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.29 2001/11/30 05:45:33 csapuntz Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -867,9 +867,7 @@ loopdone:
 		error = biowait(mbp);
 	}
 	s = splbio();
-	if (mbp->b_vp != NULL) {
-		brelvp(mbp);
-	}
+	(void) buf_cleanout(mbp);
 	pool_put(&bufpool, mbp);
 	splx(s);
 	uvm_pagermapout(kva, npages);
@@ -1118,8 +1116,8 @@ nfs_putpages(v)
 	s = splbio();
 	if (mbp->b_vp) {
 		vwakeup(mbp->b_vp);
-		brelvp(mbp);
 	}
+	(void) buf_cleanout(mbp);
 	pool_put(&bufpool, mbp);
 	splx(s);
 
