@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.3,v 1.16 2002/07/01 07:48:50 pjanzen Exp $
+.\"	$OpenBSD: vis.3,v 1.17 2003/02/24 01:27:09 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nm strvisx
 .Nd visually encode characters
 .Sh SYNOPSIS
+.Fd #include <stdlib.h>
 .Fd #include <vis.h>
 .Ft char *
 .Fn vis "char *dst" "char c" "int flag" "char nextc"
