@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.480 2005/02/27 15:08:39 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.481 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -992,6 +992,8 @@ pf_purge_expired_state(struct pf_state *cur)
 	pf_normalize_tcp_cleanup(cur);
 	pfi_detach_state(cur->u.s.kif);
 	TAILQ_REMOVE(&state_updates, cur, u.s.entry_updates);
+	if (cur->tag)
+		pf_tag_unref(cur->tag);
 	pool_put(&pf_state_pl, cur);
 	pf_status.fcounters[FCNT_STATE_REMOVALS]++;
 	pf_status.states--;
@@ -3003,6 +3005,10 @@ cleanup:
 			return (PF_DROP);
 		} else
 			*sm = s;
+		if (tag > 0) {
+			pf_tag_ref(tag);
+			s->tag = tag;
+		}
 		if ((th->th_flags & (TH_SYN|TH_ACK)) == TH_SYN &&
 		    r->keep_state == PF_STATE_SYNPROXY) {
 			s->src.state = PF_TCPS_PROXY_SRC;
@@ -3303,6 +3309,10 @@ cleanup:
 			return (PF_DROP);
 		} else
 			*sm = s;
+		if (tag > 0) {
+			pf_tag_ref(tag);
+			s->tag = tag;
+		}
 	}
 
 	/* copy back packet headers if we performed NAT operations */
@@ -3589,6 +3599,10 @@ cleanup:
 			return (PF_DROP);
 		} else
 			*sm = s;
+		if (tag > 0) {
+			pf_tag_ref(tag);
+			s->tag = tag;
+		}
 	}
 
 #ifdef INET6
@@ -3857,6 +3871,10 @@ cleanup:
 			return (PF_DROP);
 		} else
 			*sm = s;
+		if (tag > 0) {
+			pf_tag_ref(tag);
+			s->tag = tag;
+		}
 	}
 
 	return (PF_PASS);
@@ -5863,6 +5881,9 @@ done:
 		DPFPRINTF(PF_DEBUG_MISC,
 		    ("pf: dropping packet with ip options\n"));
 	}
+
+	if (s && s->tag)
+		pf_tag_packet(m, pf_get_tag(m), s->tag);
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {

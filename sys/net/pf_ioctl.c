@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.138 2005/01/05 18:11:55 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -699,6 +699,18 @@ void
 pf_tag2tagname(u_int16_t tagid, char *p)
 {
 	return (tag2tagname(&pf_tags, tagid, p));
+}
+
+void
+pf_tag_ref(u_int16_t tag)
+{
+	struct pf_tagname *t;
+
+	TAILQ_FOREACH(t, &pf_tags, entries)
+		if (t->tag == tag)
+			break;
+	if (t != NULL)
+		t->ref++;
 }
 
 void

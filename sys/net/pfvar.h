@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.212 2005/01/30 00:02:30 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -686,6 +686,7 @@ struct pf_state {
 	u_int32_t	 packets[2];
 	u_int32_t	 bytes[2];
 	u_int32_t	 creatorid;
+	u_int16_t	 tag;
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
@@ -1538,6 +1539,7 @@ extern struct pfi_statehead	pfi_statehead;
 
 u_int16_t	pf_tagname2tag(char *);
 void		pf_tag2tagname(u_int16_t, char *);
+void		pf_tag_ref(u_int16_t);
 void		pf_tag_unref(u_int16_t);
 int		pf_tag_packet(struct mbuf *, struct pf_tag *, int);
 u_int32_t	pf_qname2qid(char *);
