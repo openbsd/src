@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ze.c,v 1.1 2000/04/27 03:14:43 bjc Exp $	*/
+/*	$OpenBSD: if_ze.c,v 1.2 2001/05/20 14:19:43 hugh Exp $	*/
 /*      $NetBSD: if_ze.c,v 1.3 2000/01/24 02:54:03 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -50,6 +50,7 @@
 #include <machine/nexus.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
+#include <machine/sid.h>
 
 #include <arch/vax/if/sgecreg.h>
 #include <arch/vax/if/sgecvar.h>
@@ -119,7 +120,11 @@ zeattach(parent, self, aux)
 	 */
 	ea = (int *)vax_map_physmem(NISA_ROM, 1);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		sc->sc_ac.ac_enaddr[i] = (ea[i] >> 8) & 0377;
+		if (vax_boardtype == VAX_BTYP_660)
+			sc->sc_ac.ac_enaddr[i] = (ea[i] >> 24) & 0377;
+		else
+			sc->sc_ac.ac_enaddr[i] = (ea[i] >> 8) & 0377;
+
 	vax_unmap_physmem((vaddr_t)ea, 1);
 
 	scb_vecalloc(SGECVEC, (void (*)(void *)) sgec_intr, sc, SCB_ISTACK);
