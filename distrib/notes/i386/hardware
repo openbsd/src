@@ -29,8 +29,8 @@ Supported devices {:-include-:}:
 			PCI to PCI bridge.
 		Adaptec AIC-7770-based SCSI host adapters (including the
 			Adaptec AHA-274x, AHA-284x families).
-		AdvanSys PCI SCSI host adapters (including ABP-940 and
-			ASB-3940 families)
+		AdvanSys PCI SCSI host adapters (including ABP-940, ASB-3940
+			and ASB-3950 families)
 		WD-7000 SCSI host adapters.
 		Buslogic 54x (Adaptec AHA-154x clones; driver on kcadp floppy)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
