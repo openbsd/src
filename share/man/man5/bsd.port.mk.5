@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.111 2003/07/18 18:23:18 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.112 2003/07/18 18:35:11 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -85,13 +85,6 @@ Essentially invoke
 env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} \e
 	-f ${MAKE_FILE} ${ALL_TARGET}
 .Ed
-.It Ar cdrom-packages
-If ${PERMIT_PACKAGE_CDROM} is set to
-.Sq Yes ,
-copies built packages into ${CDROM_PACKAGES}, using
-hard links if possible.
-See also
-.Ev BULK .
 .It Ar checkpatch
 Debugging version of the
 .Ar patch
@@ -132,7 +125,7 @@ Clean distfiles.
 .It Va install
 Uninstall package.
 .It Va package
-Remove package file.
+Remove package file (and copies in ${CDROM_PACKAGES} and ${FTP_PACKAGES}).
 .It Va sub
 With
 .Va install
@@ -220,13 +213,6 @@ See
 .Ev PATCH_FILES ,
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
-.It Ar ftp-packages
-If ${PERMIT_PACKAGE_FTP} is set to
-.Sq Yes ,
-copies built packages into ${FTP_PACKAGES}, using
-hard links if possible.
-See also
-.Ev BULK .
 .It Ar install
 Install the package after building.
 See the description of THE FAKE FRAMEWORK
@@ -270,6 +256,14 @@ among others) and invoking
 for each package in the
 .Ev MULTI_PACKAGES
 list.
+If ${PERMIT_PACKAGE_FTP} is set to
+.Sq Yes ,
+copies built packages into ${FTP_PACKAGES}, using
+hard links if possible.
+If ${PERMIT_PACKAGE_CDROM} is set to
+.Sq Yes ,
+copies built packages into ${CDROM_PACKAGES}, using
+hard links if possible.
 .It Ar patch
 Apply distribution and
 .Ox
@@ -495,9 +489,7 @@ If set to
 .Sq Yes ,
 successful package builds and installations will clean
 their working directories, after invoking
-.Ar ftp-packages ,
-.Ar cdrom-packages ,
-and any other targets mentioned in BULK_TARGETS.
+any targets mentioned in BULK_TARGETS.
 See
 .Ev BULK_COOKIES_DIR ,
 .Ev BIN_PACKAGES ,
@@ -512,9 +504,7 @@ Flags to pass to build each target in
 .It Ev BULK_TARGETS
 Targets to run after each bulk package build before cleaning up the
 working directory.
-Defaults to
-.Ar ftp-packages ,
-.Ar cdrom-packages .
+Empty defaults.
 .It Ev BZIP2
 Name of the bzip2 binary.
 .It Ev CATEGORIES
@@ -533,7 +523,7 @@ is set.
 User settings.
 Base location where packages suitable for a CDROM (see
 PERMIT_PACKAGE_CDROM) will be placed
-(default: ${PORTSDIR}/cdrom-packages/${ARCH})
+(default: ${PKGREPOSITORYBASE}/cdrom)
 .It Ev CDROM_SITE
 Path to a local database that holds distribution files (usually a CD-ROM
 or other similar media), used to retrieve distribution files before going
@@ -828,7 +818,7 @@ See
 User settings.
 Base location where packages suitable for ftp (see
 PERMIT_PACKAGE_FTP) will be placed
-(default: ${PORTSDIR}/ftp-packages/${ARCH})
+(default: ${PKGREPOSITORYBASE}/ftp)
 .It Ev FULLPKGNAME
 Full name of the main created package, taking flavors into account.
 Defaults to ${PKGNAME}${FLAVOR_EXT}.
@@ -1041,8 +1031,6 @@ Always
 Revision number of
 .Ox
 (read-only).
-.It Ev PACKAGES
-Base location for packages built (default: ${PORTSDIR}/packages/${ARCH}).
 .It Ev PACKAGING
 Defined while building packages, read-only.
 See the description of FLAVORS AND MULTI_PACKAGES for a detailed explanation.
@@ -1144,6 +1132,12 @@ Path to package installation records.
 Defaults to
 .Pa /var/db/pkg .
 User settings.
+.It Ev PKGREPOSITORY
+User settings.
+Location for packages built (default ${PKGREPOSITORYBASE}/all)
+.It Ev PKGREPOSITORYBASE
+User settings.
+Base location for packages built (default ${PORTSDIR}/packages/${ARCH}).
 .It Ev PORTHOME
 Setting of env variable
 .Ev HOME
@@ -1460,10 +1454,12 @@ Specification used for populating ${WRKINST} at the start of
 Use
 .Ar pre-fake
 if this is incomplete.
-.It Pa ${PORTSDIR}/cdrom-packages/${MACHINE_ARCH}
+.It Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/cdrom
 Default setup of ${CDROM_PACKAGES}.
-.It Pa ${PORTSDIR}/ftp-packages/${MACHINE_ARCH}
+.It Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/ftp
 Default setup of ${FTP_PACKAGES}.
+.It Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/all
+Default setup of ${PKGREPOSITORY}.
 .It Pa ${PORTSDIR}/bulk/${MACHINE_ARCH}
 Default setup of ${BULK_COOKIES_DIR}.
 .It Pa ${PORTSDIR}/mystuff
@@ -1472,6 +1468,10 @@ All depend targets will look there after the normal lookup fails.
 .El
 .Sh OBSOLETE TARGETS
 .Bl -tag -width do-configure
+.It Ar cdrom-packages , ftp-packages
+Links are now created during the
+.Ar package
+target.
 .It Ar {pre,do}-extract
 Don't override.
 Set
@@ -1637,6 +1637,9 @@ creates the whole
 hierarchy under ${WRKOBJDIR}, so
 .Ev OBJMACHINE
 is no longer useful.
+.It Ev PACKAGES
+Base location for packages built, renamed
+.Ev PKGREPOSITORYBASE .
 .It Ev PATCH_SITES
 .Ev PATCHFILES
 used to be retrieved from a separate site list.
