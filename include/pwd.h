@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.4 1997/02/14 23:28:47 provos Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.5 1997/02/16 20:54:28 provos Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -72,10 +72,6 @@
 #define _PASSWORD_NOGID		0x02	/* flag for no specified gid. */
 #define _PASSWORD_NOCHG		0x04	/* flag for no specified change. */
 #define _PASSWORD_NOEXP		0x08	/* flag for no specified expire. */
-
-#define _PASSWORD_OLD		1	/* Old Unix style passwords */
-#define _PASSWORD_NSALT		2	/* Use extended salt + DES */
-#define _PASSWORD_BLF		3	/* Adaptable Blowfish hash */
 
 #endif
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: blf.h,v 1.2 1997/02/14 18:42:10 provos Exp $ */
+/* $OpenBSD: blf.h,v 1.3 1997/02/16 20:54:26 provos Exp $ */
 /*
  * Blowfish - a fast block cipher designed by Bruce Schneier
  *
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Theo de Raadt.
+ *      This product includes software developed by Niels Provos.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -59,17 +59,17 @@ typedef struct BlowfishContext {
 void Blowfish_encipher __P((blf_ctx *, u_int32_t *, u_int32_t *));
 void Blowfish_decipher __P((blf_ctx *, u_int32_t *, u_int32_t *));
 void Blowfish_initstate __P((blf_ctx *));
-void Blowfish_expand0state __P((blf_ctx *, u_int8_t *, u_int16_t));
-void    Blowfish_expandstate
-        __P((blf_ctx *, u_int8_t *, u_int16_t, u_int8_t *, u_int16_t));
+void Blowfish_expand0state __P((blf_ctx *, const u_int8_t *, u_int16_t));
+void Blowfish_expandstate
+    __P((blf_ctx *, const u_int8_t *, u_int16_t, const u_int8_t *, u_int16_t));
 
 /* Standard Blowfish */
 
-void blf_key __P((blf_ctx *, u_int8_t *, u_int16_t));
+void blf_key __P((blf_ctx *, const u_int8_t *, u_int16_t));
 void blf_enc __P((blf_ctx *, u_int32_t *, u_int16_t));
 void blf_dec __P((blf_ctx *, u_int32_t *, u_int16_t));
 
 /* Converts u_int8_t to u_int32_t */
-u_int32_t Blowfish_stream2word __P((u_int8_t *, u_int16_t , u_int16_t *));
+u_int32_t Blowfish_stream2word __P((const u_int8_t *, u_int16_t , u_int16_t *));
 
 #endif
