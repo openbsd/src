@@ -1753,6 +1753,7 @@
 ./usr/share/man/cat8/login_krb5.0
 ./usr/share/man/cat8/login_lchpass.0
 ./usr/share/man/cat8/login_passwd.0
+./usr/share/man/cat8/login_radius.0
 ./usr/share/man/cat8/login_reject.0
 ./usr/share/man/cat8/login_skey.0
 ./usr/share/man/cat8/login_snk.0
