@@ -1,3 +1,5 @@
+/*	$OpenBSD: mod_so.c,v 1.8 2002/08/15 16:06:11 henning Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -298,9 +300,9 @@ static const char *load_module(cmd_parms *cmd, void *dummy,
      * we do a restart (or shutdown) this cleanup will cause the
      * shared object to be unloaded.
      */
-    ap_register_cleanup(cmd->pool, modi, 
+/*    ap_register_cleanup(cmd->pool, modi, 
 		     (void (*)(void*))unload_module, ap_null_cleanup);
-
+*/
     /* 
      * Finally we need to run the configuration process for the module
      */
