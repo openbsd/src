@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.2 1996/06/23 14:29:54 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.3 1996/08/30 01:06:34 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: badsect.c,v 1.2 1996/06/23 14:29:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: badsect.c,v 1.3 1996/08/30 01:06:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,6 +126,14 @@ main(argc, argv)
 		    S_ISBLK(devstat.st_mode))
 			break;
 	}
+
+	/*
+	 * we've found the block device, but since the filesystem 
+	 * is mounted, we must write to the raw (character) device
+	 * instead.
+	 */
+	name[5] = 'r';
+	strcpy(&name[6], dp->d_name);
 	closedir(dirp);
 	if (dp == NULL) {
 		printf("Cannot find dev 0%o corresponding to %s\n",
