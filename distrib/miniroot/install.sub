@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.244 2002/07/12 00:07:33 krw Exp $
+#	$OpenBSD: install.sub,v 1.245 2002/07/12 01:25:44 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -297,28 +297,6 @@ bsort() {
 	fi
 }
 
-# return true when the list $1 contains a set also in one of $2 ... $n
-list_has_sets() {
-	local _list=$1 _f
-
-	shift
-	for _f; do
-		if isin ${_f}${VERSION}.tar.gz $_list; then
-			return 0
-		fi
-		# Try for stupid msdos convention
-		if isin ${_f}${VERSION}.tgz $_list; then
-			return 0
-		fi
-		# Special check for kernel
-		if [ "$_f" = "kernel" ] && isin bsd $_list; then
-			return 0
-		fi
-	done
-
-	return 1
-}
-
 # log in via ftp to host $1 as user $2 with password $3
 # and return a list of all files in the directory $4 on stdout
 ftp_list_files() {
@@ -357,20 +335,11 @@ __EOT
 			continue
 			;;
 		"")	;;
-		*)	if [ ! -d "${_mp}/${resp}" ]; then
-				echo "The directory '${resp}' does not exist."
-			elif list_has_sets "`ls -l ${_mp}/${resp}`" $THESETS; then
+		*)	if [ -d "${_mp}/${resp}" ]; then
 				SETSDIR=${_mp}/${resp}
 				return
-			else
-				cat << __EOT
-The directory
-
-	"$resp"
-
-does not hold any OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets.
-__EOT
 			fi
+			echo "The directory '${resp}' does not exist."
 			;;
 		esac
 
