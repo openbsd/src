@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.69 2001/09/29 23:26:07 art Exp $
+#	$OpenBSD: files.isa,v 1.70 2001/09/30 00:37:17 art Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -61,7 +61,9 @@ file	dev/isa/hsq.c			hsq
 # 8250/16[45]50-based "com" ports
 attach	com at isa with com_isa
 file	dev/isa/com_isa.c		com_isa
+
 attach	com at commulti with com_commulti
+file	dev/isa/com_commulti.c		com_commulti
 
 # Cyclades Cyclom multiport serial cards
 attach	cy at isa with cy_isa

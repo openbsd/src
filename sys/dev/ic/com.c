@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.69 2001/09/30 00:11:57 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.70 2001/09/30 00:37:17 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -109,20 +109,8 @@ bdev_decl(com);
 
 static u_char tiocm_xxx2mcr __P((int));
 
-/*
- * XXX the following two cfattach structs should be different, and possibly
- * XXX elsewhere.
- */
-int	comprobe __P((struct device *, void *, void *));
-void	comattach __P((struct device *, struct device *, void *));
 void	compwroff __P((struct com_softc *));
 void	com_raisedtr __P((void *));
-
-#if NCOM_COMMULTI
-struct cfattach com_commulti_ca = {
-	sizeof(struct com_softc), comprobe, comattach
-};
-#endif
 
 struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
@@ -276,81 +264,6 @@ comprobeHAYESP(hayespioh, sc)
 	return 1;
 }
 #endif
-
-int
-comprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int iobase;
-	int rv = 1;
-
-#if NCOM_COMMULTI
-	if (1) {
-		struct cfdata *cf = match;
-		struct commulti_attach_args *ca = aux;
-
-		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
-			return (0);
-
-		iot = ca->ca_iot;
-		iobase = ca->ca_iobase;
-		ioh = ca->ca_ioh;
-	} else
-#endif
-		return(0);			/* This cannot happen */
-
-#ifdef KGDB
-	if (iobase == com_kgdb_addr)
-		goto out;
-#endif
-	/* if it's in use as console, it's there. */
-	if (iobase == comconsaddr && !comconsattached)
-		goto out;
-
-	rv = comprobe1(iot, ioh);
-out:
-	return (rv);
-}
-
-void
-comattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct com_softc *sc = (void *)self;
-	int iobase;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct commulti_attach_args *ca = aux;
-#ifdef COM_HAYESP
-	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
-	int	*hayespp;
-#endif
-
-	/*
-	 * XXX should be broken out into functions for isa attach and
-	 * XXX for commulti attach, with a helper function that contains
-	 * XXX most of the interesting stuff.
-	 */
-	sc->sc_hwflags = 0;
-	sc->sc_swflags = 0;
-	iobase = ca->ca_iobase;
-	iot = ca->ca_iot;
-	ioh = ca->ca_ioh;
-
-	if (ca->ca_noien)
-		SET(sc->sc_hwflags, COM_HW_NOIEN);
-
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
-	sc->sc_iobase = iobase;
-	sc->sc_frequency = COM_FREQ;
-
-	com_attach_subr(sc);
-}
 
 void
 com_attach_subr(sc)
