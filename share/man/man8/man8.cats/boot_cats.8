@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_cats.8,v 1.3 2004/02/17 19:33:41 jmc Exp $
+.\"	$OpenBSD: boot_cats.8,v 1.4 2004/03/08 22:05:12 miod Exp $
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat.
 .\" All rights reserved.
@@ -112,3 +112,14 @@ default system kernel
 .Xr reboot 8 ,
 .Xr savecore 8 ,
 .Xr shutdown 8
+.Sh CAVEATS
+.Tn ABLE
+is not able to access or boot off
+.Ox
+FFS partitions on some disks.
+This can be helped by forcing smaller disk access, by setting the
+.Em ide.multi-limit
+nvram variable to a small integer value.
+A value of
+.Ar 1
+ought to work in all cases.
