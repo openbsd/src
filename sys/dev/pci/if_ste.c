@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.26 2004/10/30 15:48:15 canacar Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.27 2004/11/21 18:04:09 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -723,7 +723,7 @@ void ste_txeoc(sc)
 			ste_init(sc);
 
 			if (txstat & STE_TXSTATUS_UNDERRUN &&
-			    sc->ste_tx_thresh < STE_PACKET_SIZE) {
+			    sc->ste_tx_thresh < ETHER_MAX_DIX_LEN) {
 				sc->ste_tx_thresh += STE_MIN_FRAMELEN;
 				printf("%s: tx underrun, increasing tx"
 				    " start threshold to %d bytes\n",
@@ -731,7 +731,7 @@ void ste_txeoc(sc)
 			}
 			CSR_WRITE_2(sc, STE_TX_STARTTHRESH, sc->ste_tx_thresh);
 			CSR_WRITE_2(sc, STE_TX_RECLAIM_THRESH,
-			    (STE_PACKET_SIZE >> 4));
+			    (ETHER_MAX_DIX_LEN >> 4));
 		}
 		ste_init(sc);
 		CSR_WRITE_2(sc, STE_TX_STATUS, txstat);
@@ -958,6 +958,7 @@ void ste_attach(parent, self, aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, STE_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	sc->ste_tx_thresh = STE_TXSTART_THRESH;
 
@@ -1015,7 +1016,7 @@ int ste_newbuf(sc, c, m)
 	c->ste_mbuf = m_new;
 	c->ste_ptr->ste_status = 0;
 	c->ste_ptr->ste_frag.ste_addr = vtophys(mtod(m_new, vaddr_t));
-	c->ste_ptr->ste_frag.ste_len = 1536 | STE_FRAG_LAST;
+	c->ste_ptr->ste_frag.ste_len = (ETHER_MAX_DIX_LEN + ETHER_VLAN_ENCAP_LEN) | STE_FRAG_LAST;
 
 	return(0);
 }
@@ -1117,13 +1118,13 @@ void ste_init(xsc)
 	ste_init_tx_list(sc);
 
 	/* Set the TX freethresh value */
-	CSR_WRITE_1(sc, STE_TX_DMABURST_THRESH, STE_PACKET_SIZE >> 8);
+	CSR_WRITE_1(sc, STE_TX_DMABURST_THRESH, ETHER_MAX_DIX_LEN >> 8);
 
 	/* Set the TX start threshold for best performance. */
 	CSR_WRITE_2(sc, STE_TX_STARTTHRESH, sc->ste_tx_thresh);
 
 	/* Set the TX reclaim threshold. */
-	CSR_WRITE_1(sc, STE_TX_RECLAIM_THRESH, (STE_PACKET_SIZE >> 4));
+	CSR_WRITE_1(sc, STE_TX_RECLAIM_THRESH, (ETHER_MAX_DIX_LEN >> 4));
 
 	/* Set up the RX filter. */
 	CSR_WRITE_1(sc, STE_RX_MODE, STE_RXMODE_UNICAST);
@@ -1176,6 +1177,10 @@ void ste_init(xsc)
 	/* Enable interrupts. */
 	CSR_WRITE_2(sc, STE_ISR, 0xFFFF);
 	CSR_WRITE_2(sc, STE_IMR, STE_INTRS);
+
+	/* Accept VLAN length packets */
+	CSR_WRITE_2(sc, STE_MAX_FRAMELEN,
+	    ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	ste_ifmedia_upd(ifp);
 
