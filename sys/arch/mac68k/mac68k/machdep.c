@@ -1788,6 +1788,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACQ605, "Quadra", " 605", MACH_CLASSQ, &romvecs[9]},
 	{MACH_MACC610, "Centris", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ610, "Quadra", " 610 ", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACC660AV, "Centris", " 660AV ", MACH_CLASSQ, &romvecs[7]},
 	{MACH_MACQ840AV, "Quadra", " 840AV ", MACH_CLASSQ, &romvecs[7]},
 
@@ -1805,7 +1806,9 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACPB210, "PowerBook", " 210 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB230, "PowerBook", " 230 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB250, "PowerBook", " 250 ", MACH_CLASSPB, &romvecs[5]},
-	{MACH_MACPB270, "PowerBook", " 270 ", MACH_CLASSPB, &romvecs[10]},
+	{MACH_MACPB270, "PowerBook", " 270 ", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB280, "PowerBook", " 280 ", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB280C, "PowerBook", " 280C ", MACH_CLASSPB, &romvecs[5]},
 
 /* The Performas... */
 	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
@@ -2049,6 +2052,7 @@ setmachdep()
 		VIA2 = 1;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
+		mac68k_machine.sonic = 1;
 		mac68k_machine.scsi96 = 1;
 		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
