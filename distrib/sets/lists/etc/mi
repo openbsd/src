@@ -110,6 +110,8 @@
 ./etc/sudoers
 ./etc/sysctl.conf
 ./etc/syslog.conf
+./etc/systrace/usr_sbin_lpd
+./etc/systrace/usr_sbin_named
 ./etc/ttys
 ./etc/weekly
 ./root/.cshrc
