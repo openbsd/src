@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2001/05/29 01:20:44 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.11 2001/06/02 16:49:18 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -185,17 +185,14 @@ chiptotime(sec, min, hour, day, mon, year)
 void
 resettodr()
 {
-	struct timeval curtime;
-	#if 0
+	struct timeval curtime = time;
 	if (time_write != NULL) {
-		curtime = time;
 		curtime.tv_sec -= tz.tz_minuteswest * 60;
 		if (tz.tz_dsttime) {
 			curtime.tv_sec += 3600;
 		}
-		(*time_write)(time.tv_sec);
+		(*time_write)(curtime.tv_sec);
 	}
-	#endif
 }
 
 void
