@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.92 2004/12/14 19:03:16 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.93 2005/01/29 16:59:45 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -228,9 +228,9 @@ message_free(struct message *msg)
 	LOG_DBG((LOG_MESSAGE, 20, "message_free: freeing %p", msg));
 	if (!msg)
 		return;
-	if (msg->orig && msg->orig != (u_int8_t *) msg->iov[0].iov_base)
-		free(msg->orig);
 	if (msg->iov) {
+		if (msg->orig && msg->orig != (u_int8_t *)msg->iov[0].iov_base)
+			free(msg->orig);
 		for (i = 0; i < msg->iovlen; i++)
 			if (msg->iov[i].iov_base)
 				free(msg->iov[i].iov_base);
@@ -251,12 +251,14 @@ message_free(struct message *msg)
 		TAILQ_REMOVE(&msg->post_send, TAILQ_FIRST(&msg->post_send),
 		    link);
 
-	/* If we are on the send queue, remove us from there.  */
-	if (msg->flags & MSG_IN_TRANSIT)
-		TAILQ_REMOVE(msg->transport->vtbl->get_queue(msg), msg, link);
+	if (msg->transport) {
+		/* If we are on the send queue, remove us from there.  */
+		if (msg->flags & MSG_IN_TRANSIT)
+			TAILQ_REMOVE(msg->transport->vtbl->get_queue(msg),
+			    msg, link);
 
-	if (msg->transport)
 		transport_release(msg->transport);
+	}
 
 	if (msg->isakmp_sa)
 		sa_release(msg->isakmp_sa);
