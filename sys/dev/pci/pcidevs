@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.154 1999/06/28 18:30:04 jason Exp $
+$OpenBSD: pcidevs,v 1.155 1999/06/28 19:28:36 ho Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -182,7 +182,7 @@ vendor SUN		0x108e	Sun Microsystems
 vendor SYSTEMSOFT	0x108f	Systemsoft
 vendor ENCORE		0x1090	Encore Computer
 vendor INTERGRAPH	0x1091	Intergraph
-vendor DIAMOND		0x1092	Diamond Computer Systems
+vendor DIAMOND		0x1092	Diamond Multimedia
 vendor NATIONALINST	0x1093	National Instruments
 vendor FICOMP		0x1094	First Int'l Computers
 vendor CMDTECH		0x1095	CMD Technology
@@ -503,6 +503,7 @@ vendor RISCOM		0x12aa	RISCom
 vendor ALTEON		0x12ae	Alteon
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
+vendor DIAMOND2		0x12eb	Diamond Multimedia (2nd ID)
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
 vendor INVERTEX		0x14e1	Invertex
@@ -840,6 +841,8 @@ product DELTA RHINEII		0x1320	RhineII
 /* Diamond products */
 product DIAMOND VIPER		0x9001	Viper/PCI
 product DIAMOND MONSTER		0x0001	Monster
+
+product DIAMOND2 MX300		0x0002	Monster Sound MX300
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID		0xa400	SmartCache/Raid
