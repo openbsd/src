@@ -112,8 +112,9 @@ boolean_t	 pmap_clear_reference __P((struct vm_page *));
 #endif
 
 void		 pmap_collect __P((pmap_t));
-void		 pmap_copy __P((pmap_t,
-		    pmap_t, vaddr_t, vsize_t, vaddr_t));
+#if !defined(pmap_copy)
+void		 pmap_copy __P((pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t));
+#endif
 void		 pmap_copy_page __P((paddr_t, paddr_t));
 struct pmap 	 *pmap_create __P((void));
 void		 pmap_destroy __P((pmap_t));
