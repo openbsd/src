@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.13 1998/11/04 22:36:41 aaron Exp $
+.\"	$OpenBSD: telnet.1,v 1.14 1998/11/11 23:01:46 aaron Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -319,7 +319,6 @@ Only enough of each command to uniquely identify it need be typed
 and
 .Ic display
 commands).
-.Pp
 .Bl -tag -width "mode type"
 .It Ic auth Ar argument Op Ar ... 
 The
@@ -363,7 +362,7 @@ The
 command manipulates the information sent through the
 .Dv TELNET ENCRYPT
 option.
-..Pp
+.Pp
 Valid arguments for the encrypt command are as follows:
 .Bl -tag -width Ar
 .It Ic disable Ar type Ic [input|output]
@@ -624,7 +623,6 @@ An end-of-file (in command mode) will also close a session and exit.
 Sends one or more special character sequences to the remote host.
 The following are the arguments which may be specified
 (more than one argument may be specified at a time):
-.Pp
 .Bl -tag -width escape
 .It Ic abort
 Sends the
