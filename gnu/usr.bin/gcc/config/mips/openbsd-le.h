@@ -13,9 +13,6 @@
 /* We settle for little endian for now */
 #define TARGET_ENDIAN_DEFAULT 0
 
-/* Target uses ELF object format */
-#define OBJECT_FORMAT_ELF
-
 /* Provide a LINK_SPEC appropriate for OpenBSD.  Here we provide support
    for the special GCC options -static, -assert, and -nostdlib.  */
 /* We also need to control dynamic stuff like dynamic loader etc */
