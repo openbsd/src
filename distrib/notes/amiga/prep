@@ -5,9 +5,9 @@ of AmigaDOS so we will provide instructions for its use.
 
 Preparing your hard disk with HDToolBox:
 
-	If you intend to use a harddisk larger than 4 Gb, or partitions 
+	If you intend to use a hard disk larger than 4 Gb, or partitions 
 	larger than 2Gb be advised to either get HDToolBox for AmigaDOS 3.5 
-	or a third party harddisk preparation tool (such as HdInstTools) 
+	or a third party hard disk preparation tool (such as HdInstTools) 
 	from Aminet, together with the appropriate patches from 
 	www.amiga.com to let AmigaDOS see the full size of the drive.
 
@@ -40,8 +40,8 @@ Preparing your hard disk with HDToolBox:
 
 	This should be done as the HDToolBox manual describes.  One thing
 	to note is that if you are not using a Commodore controller you
-	will need to specify the device your SCSI controller uses e.g.
-	if you have a Warp Engine you would:
+	will need to specify the device your hard disk controller uses
+	e.g. if you have a Warp Engine you would:
 
 		from cli,
 			hdtoolbox warpdrive.device
