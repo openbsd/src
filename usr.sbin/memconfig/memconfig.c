@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.9 2003/09/26 16:09:27 deraadt Exp $ */
+/* $OpenBSD: memconfig.c,v 1.10 2003/12/04 03:08:26 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
@@ -39,8 +39,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct
-{
+struct {
 	char	*name;
 	int		val;
 	int		kind;
@@ -128,7 +127,7 @@ static struct mem_range_desc *
 mrgetall(int memfd, int *nmr)
 {
 	struct mem_range_desc	*mrd;
-	struct mem_range_op		mro;
+	struct mem_range_op	mro;
 
 	mro.mo_arg[0] = 0;
 	if (ioctl(memfd, MEMRANGE_GET, &mro))
@@ -150,16 +149,11 @@ mrgetall(int memfd, int *nmr)
 
 
 static void
-listfunc(memfd, argc, argv)
-	int	 memfd;
-	int	 argc;
-	char	*argv[];
+listfunc(int memfd, int argc, char *argv[])
 {
+	int	nd, i, j, ch, showall = 0;
 	struct mem_range_desc	*mrd;
-	int			 nd, i, j;
-	int			 ch;
-	int			 showall = 0;
-	char			*owner;
+	char	*owner;
 
 	owner = NULL;
 	while ((ch = getopt(argc, argv, "ao:")) != -1)
@@ -171,7 +165,6 @@ listfunc(memfd, argc, argv)
 			if (!(owner = strdup(optarg)))
 				errx(1, "out of memory");
 			break;
-		case '?':
 		default:
 			help("list");
 		}
@@ -196,21 +189,18 @@ listfunc(memfd, argc, argv)
 }
 
 static void
-setfunc(memfd, argc, argv)
-	int	 memfd;
-	int	 argc;
-	char	*argv[];
+setfunc(int memfd, int argc, char *argv[])
 {
 	struct mem_range_desc	 mrd;
 	struct mem_range_op	 mro;
-	int			 i;
-	int			 ch;
-	char			*ep;
+	int	 i, ch;
+	char	*ep;
 
 	mrd.mr_base = 0;
 	mrd.mr_len = 0;
 	mrd.mr_flags = 0;
 	strlcpy(mrd.mr_owner, "user", sizeof mrd.mr_owner);
+
 	while ((ch = getopt(argc, argv, "b:l:o:")) != -1)
 		switch(ch) {
 		case 'b':
@@ -229,8 +219,6 @@ setfunc(memfd, argc, argv)
 				help("set");
 			strlcpy(mrd.mr_owner, optarg, sizeof mrd.mr_owner);
 			break;
-
-		case '?':
 		default:
 			help("set");
 		}
@@ -262,16 +250,12 @@ setfunc(memfd, argc, argv)
 }
 
 static void
-clearfunc(memfd, argc, argv)
-	int	 memfd;
-	int	 argc;
-	char	*argv[];
+clearfunc(int memfd, int argc, char *argv[])
 {
 	struct mem_range_desc	 mrd, *mrdp;
 	struct mem_range_op      mro;
-	int			 i, nd;
-	int			 ch;
-	char			*ep, *owner;
+	int	i, nd, ch;
+	char	*ep, *owner;
 
 	mrd.mr_base = 0;
 	mrd.mr_len = 0;
@@ -295,7 +279,6 @@ clearfunc(memfd, argc, argv)
 				errx(1, "out of memory");
 			break;
 
-		case '?':
 		default:
 			help("clear");
 		}
@@ -314,7 +297,8 @@ clearfunc(memfd, argc, argv)
 
 				mro.mo_desc = mrdp + i;
 				if (ioctl(memfd, MEMRANGE_SET, &mro))
-					warn("couldn't clear range owned by '%s'", owner);
+					warn("couldn't clear range owned by '%s'",
+					    owner);
 			}
 		}
 	} else if ((mrd.mr_base != 0) && (mrd.mr_len != 0)) {
@@ -329,17 +313,13 @@ clearfunc(memfd, argc, argv)
 }
 
 static void
-helpfunc(memfd, argc, argv)
-	int	 memfd;
-	int	 argc;
-	char	*argv[];
+helpfunc(int memfd, int argc, char *argv[])
 {
 	help(argv[1]);
 }
 
 static void
-help(what)
-	char	*what;
+help(char *what)
 {
 	int	 i;
 
