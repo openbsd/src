@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.8 1997/08/31 07:54:18 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.9 1997/09/02 20:51:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -84,10 +84,10 @@ bios_time_date(int f, register u_int8_t *b)
 {
 	__asm __volatile(DOINT(0x1a) "\n\t"
 		       "setc %b0\n\t"
-		       "movb %%ch, 0(%1)\n\t"
-		       "movb %%cl, 1(%1)\n\t"
-		       "movb %%dh, 2(%1)\n\t"
-		       "movb %%dl, 3(%1)\n\t"
+		       "movb %%ch, 0(%2)\n\t"
+		       "movb %%cl, 1(%2)\n\t"
+		       "movb %%dh, 2(%2)\n\t"
+		       "movb %%dl, 3(%2)\n\t"
 		       : "=a" (f)
 		       : "0" (f), "p" (b) : "%ecx", "%edx", "cc");
 	if (f & 0xff)
