@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.80 2003/04/29 15:55:17 jason Exp $
+#	$OpenBSD: GENERIC,v 1.81 2003/05/01 23:34:03 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -59,10 +59,22 @@ ubsec*		at pci? dev ? function ?	# Broadcom 580[125]/582[012]
 
 # PCI sound
 autri*		at pci? dev ? function ? flags 0x0000	# Trident 4D WAVE
-eap*		at pci? dev ? function ?	# Ensoniq
-midi*		at autri?
+eap*		at pci? dev ? function ?	# Ensoniq AudioPCI S5016
+eso*		at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+
+# Sound support
+audio*		at audioce?
+audio*		at audiocs?
 audio*		at autri?
 audio*		at eap?
+audio*		at eso?
+
+# OPL[23] FM synthesizers
+opl*		at eso?
+
+# MIDI support
+midi*		at autri?
+midi*		at opl?
 
 # USB bridges
 ohci*	at pci? dev ? function ?
@@ -103,8 +115,7 @@ wsmouse* at pms?				#   generic mouse
 pmsi*	at pckbc?				#  ps2 "intelli"mouse
 wsmouse* at pmsi?				#   generic mouse
 
-audioce*	at ebus?
-audio*		at audioce?
+audioce*	at ebus?			# ebus cs4231
 
 # parallel ports
 lpt*	at ebus?
@@ -211,7 +222,6 @@ cgthree*	at sbus? slot ? offset ?	# cg3, sbus color framebuffer
 wsdisplay*	at cgthree?
 
 audiocs*	at sbus? slot ? offset ?
-audio*		at audiocs?
 
 asio*		at sbus? slot ? offset ?	# Aurora 210SJ
 com*		at asio?
