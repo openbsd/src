@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.1 1999/07/28 20:41:36 jakob Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.2 1999/09/21 20:54:58 jakob Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -71,10 +71,10 @@ void esp_print(register const u_char *bp, register u_int len,
 	ip = (const struct ip *)bp2;
 	esp = (const struct esp_hdr *)bp;
 
-	(void)printf("esp %s > %s spi 0x%08X seq %d",
+	(void)printf("esp %s > %s spi 0x%08X seq %d len %d",
 		     ipaddr_string(&ip->ip_src),
 		     ipaddr_string(&ip->ip_dst),
-		     ntohl(esp->esp_spi), ntohl(esp->esp_seq));
+		     ntohl(esp->esp_spi), ntohl(esp->esp_seq), len);
 
 }
 
@@ -96,9 +96,9 @@ ah_print(register const u_char *bp, register u_int len,
 	ip = (const struct ip *)bp2;
 	ah = (const struct ah_hdr *)bp;
 
-	(void)printf("ah %s > %s spi 0x%08X seq %d",
+	(void)printf("ah %s > %s spi 0x%08X seq %d len %d",
 		     ipaddr_string(&ip->ip_src),
 		     ipaddr_string(&ip->ip_dst),
-		     ntohl(ah->ah_spi), ntohl(ah->ah_seq));
+		     ntohl(ah->ah_spi), ntohl(ah->ah_seq), len);
 
 }
