@@ -7,7 +7,11 @@ SUBDIR+= gnu
 
 SUBDIR+= sys
 
+.include <bsd.own.mk>	# for NOMAN, if it's there.
+
+.if defined(KERBEROS)
 SUBDIR+= kerberosIV
+.endif
 
 .if exists(regress)
 .ifmake !(install)
@@ -18,8 +22,6 @@ regression-tests:
 	@echo Running regression tests...
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
-
-.include <bsd.own.mk>	# for NOMAN, if it's there.
 
 #beforeinstall:
 #	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
@@ -34,7 +36,9 @@ build:
 	${MAKE} cleandir
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+.if defined(KERBEROS)
 	(cd ${.CURDIR}/kerberosIV && ${MAKE} build)
+.endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 
 .include <bsd.subdir.mk>
