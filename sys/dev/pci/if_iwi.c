@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.16 2004/12/04 19:19:24 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.17 2004/12/04 19:40:37 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -1008,6 +1008,16 @@ iwi_intr(void *arg)
 
 	DPRINTFN(8, ("INTR!0x%08x\n", r));
 
+	if (r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)) {
+		printf("%s: fatal error\n", sc->sc_dev.dv_xname);
+		iwi_stop(&sc->sc_ic.ic_if, 1);
+	}
+
+	if (r & IWI_INTR_FW_INITED) {
+		if (!(r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)))
+			wakeup(sc);
+	}
+
 	if (r & IWI_INTR_RX_TRANSFER)
 		iwi_rx_intr(sc);
 
@@ -1016,16 +1026,6 @@ iwi_intr(void *arg)
 
 	if (r & IWI_INTR_TX1_TRANSFER)
 		iwi_tx_intr(sc);
-
-	if (r & IWI_INTR_FW_INITED) {
-		if (!(r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)))
-			wakeup(sc);
-	}
-
-	if (r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)) {
-		printf("%s: fatal error\n", sc->sc_dev.dv_xname);
-		iwi_stop(&sc->sc_ic.ic_if, 1);
-	}
 
 	/* Acknowledge interrupts */
 	CSR_WRITE_4(sc, IWI_CSR_INTR, r);
@@ -1112,17 +1112,18 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	desc->hdr.flags = IWI_HDR_FLAG_IRQ;
 	desc->cmd = IWI_DATA_CMD_TX;
 	desc->len = htole16(m->m_pkthdr.len);
-	desc->flags = IWI_DATA_FLAG_NEED_ACK;
+	desc->flags = IEEE80211_IS_MULTICAST(wh->i_addr1) ? 0 :
+	    IWI_DATA_FLAG_NEED_ACK;
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
 		desc->wep_txkey = ic->ic_wep_txkey;
 	} else
 		desc->flags |= IWI_DATA_FLAG_NO_WEP;
-#if 0
+
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		desc->flags |= IWI_DATA_FLAG_SHPREAMBLE;
-#endif
+
 	bcopy(wh, &desc->wh, sizeof (struct ieee80211_frame));
 	desc->nseg = htole32(buf->map->dm_nsegs);
 	for (i = 0; i < buf->map->dm_nsegs; i++) {
@@ -1220,13 +1221,15 @@ iwi_get_table0(struct iwi_softc *sc, u_int32_t *tbl)
 {
 	u_int32_t size, buf[128];
 
-	if (!(sc->flags & IWI_FLAG_FW_INITED))
-		return ENOTTY;
+	if (!(sc->flags & IWI_FLAG_FW_INITED)) {
+		bzero(buf, sizeof buf);
+		return copyout(buf, tbl, sizeof buf);
+	}
 
-	size = CSR_READ_4(sc, IWI_CSR_TABLE0_SIZE);
+	size = min(CSR_READ_4(sc, IWI_CSR_TABLE0_SIZE), 128 - 1);
 	CSR_READ_REGION_4(sc, IWI_CSR_TABLE0_BASE, &buf[1], size);
 
-	return copyout(buf, tbl, size * sizeof (u_int32_t));
+	return copyout(buf, tbl, sizeof buf);
 }
 
 int
@@ -1235,7 +1238,7 @@ iwi_get_radio(struct iwi_softc *sc, int *ret)
 	int val;
 
 	val = (CSR_READ_4(sc, IWI_CSR_IO) & IWI_IO_RADIO_ENABLED) ? 1 : 0;
-	return copyout(&val, ret, sizeof (int));
+	return copyout(&val, ret, sizeof val);
 }
 
 int
@@ -1338,7 +1341,7 @@ iwi_stop_master(struct iwi_softc *sc)
 int
 iwi_reset(struct iwi_softc *sc)
 {
-	int ntries;
+	int i, ntries;
 
 	iwi_stop_master(sc);
 
@@ -1365,6 +1368,11 @@ iwi_reset(struct iwi_softc *sc)
 
 	CSR_WRITE_4(sc, IWI_CSR_CTL, CSR_READ_4(sc, IWI_CSR_CTL) |
 	    IWI_CTL_INIT);
+
+	/* clear NIC memory */
+	CSR_WRITE_4(sc, IWI_CSR_AUTOINC_ADDR, 0);
+	for (i = 0; i < 0xc000; i++)
+		CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, 0);
 
 	return 0;
 }
