@@ -1,4 +1,4 @@
-.\"     $OpenBSD: spif.4,v 1.1 1999/02/04 03:45:48 jason Exp $
+.\"     $OpenBSD: spif.4,v 1.2 1999/02/04 04:08:55 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Os
 .Sh NAME
 .Nm spif
-.Nd SPARC Serial/Parallel Interface
+.Nd SPARC (spiffy) Serial/Parallel Interface
 .Sh SYNOPSIS
 .Cd "spif* at sbus? slot ? offset ?                " Pq "sun4c/sun4m"
 .Cd "stty* at spif?                                " Pq "sun4c/sun4m"
@@ -43,6 +43,7 @@
 The 
 .Nm spif
 driver provides support for the Sun Serial/Parallel Interface card
+(Sun part number 501-1931)
 based around the
 Cirrus Logic CD180 octal serial controller
 and the
@@ -73,13 +74,13 @@ well as automatic hardware (RTS/CTS) flow control.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "spif%d: ccr timeout"
-A timeout occured while writing to one the registers.
+A timeout occured while writing to one of the CD180 registers.
 .It "stty%d-%d: fifo overflow"
 Incoming characters were discarded because the driver's interrupt
 routine could not read them fast enough from the card.
 .It "stty%d-%d: ring overflow"
 Incoming characters were discarded because the application
-in control of the device did not read its input fast enough.
+in control of the device did not read the input fast enough.
 .El
 .Sh FILES
 .Bl -tag -width /dev/tty[jkl][0-7] -compact
