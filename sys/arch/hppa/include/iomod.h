@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.6 1999/04/20 19:36:32 mickey Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.7 2000/04/24 14:24:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -124,47 +124,44 @@
 struct pagezero {
 	/* [0x000] Initialize Vectors */
 	int	ivec_special;		/* must be zero */
-					/* powerfail recovery software */
-	int	(*ivec_mempf)__P((void));
-					/* exec'd after Transfer Of Control */
-	int	(*ivec_toc)__P((void));
+	int	(*ivec_mempf)__P((void)); /* powerfail recovery software */
+	int	(*ivec_toc)__P((void));	/* exec'd after Transfer Of Control */
 	u_int	ivec_toclen;		/* bytes of ivec_toc code */
-					/* exec'd after Rendezvous Signal */
-	int	(*ivec_rendz)__P((void));
+	int	(*ivec_rendz)__P((void)); /* exec'd after Rendezvous Signal */
 	u_int	ivec_mempflen;		/* bytes of ivec_mempf code */
 	int	ivec_resv[10];		/* (reserved) must be zero */
 
 	/* [0x040] Processor Dependent */
 	union	{
-		int	pd_Resv1[112];	/* (reserved) processor dependent */
+		u_int	pd_Resv1[112];	/* (reserved) processor dependent */
 		struct	{		/* Viper-specific data */
-			int	v_Resv1[39];
+			u_int	v_Resv1[39];
 			u_int	v_Ctrlcpy;	/* copy of Viper `vi_control' */
-			int	v_Resv2[72];
+			u_int	v_Resv2[72];
 		} pd_Viper;
 	} pz_Pdep;
 
 	/* [0x200] Reserved */
-	int	resv1[84];		/* (reserved) */
+	u_int	resv1[84];		/* (reserved) */
 
 	/* [0x350] Memory Configuration */
-	int	memc_cont;		/* bytes of contiguous valid memory */
-	int	memc_phsize;		/* bytes of valid physical memory */
-	int	memc_adsize;		/* bytes of SPA space used by PDC */
-	int	memc_resv;		/* (reserved) */
+	u_int	memc_cont;		/* bytes of contiguous valid memory */
+	u_int	memc_phsize;		/* bytes of valid physical memory */
+	u_int	memc_adsize;		/* bytes of SPA space used by PDC */
+	u_int	memc_resv;		/* (reserved) */
 
 	/* [0x360] Miscellaneous */
 	struct boot_err mem_be[8];	/* boot errors (see above) */
-	int	mem_free;		/* first free phys. memory location */
+	u_int	mem_free;		/* first free phys. memory location */
 	struct iomod *mem_hpa;		/* HPA of CPU */
 	int	(*mem_pdc)__P((void));	/* PDC entry point */
 	u_int	mem_10msec;		/* # of Interval Timer ticks in 10msec*/
 
 	/* [0x390] Initial Memory Module */
 	struct iomod *imm_hpa;		/* HPA of Initial Memory module */
-	int	imm_soft_boot;		/* 0 == hard boot, 1 == soft boot */
-	int	imm_spa_size;		/* bytes of SPA in IMM */
-	int	imm_max_mem;		/* bytes of mem in IMM (<= spa_size) */
+	u_int	imm_soft_boot;		/* 0 == hard boot, 1 == soft boot */
+	u_int	imm_spa_size;		/* bytes of SPA in IMM */
+	u_int	imm_max_mem;		/* bytes of mem in IMM (<= spa_size) */
 
 	/* [0x3A0] Boot Console/Display, Device, and Keyboard */
 	struct pz_device mem_cons;	/* description of console device */
@@ -172,10 +169,10 @@ struct pagezero {
 	struct pz_device mem_kbd;	/* description of keyboard device */
 
 	/* [0x430] Reserved */
-	int	resv2[116];		/* (reserved) */
+	u_int	resv2[116];		/* (reserved) */
 
 	/* [0x600] Processor Dependent */
-	int	pd_resv2[128];		/* (reserved) processor dependent */
+	u_int	pd_resv2[128];		/* (reserved) processor dependent */
 };
 #define	v_ctrlcpy	pz_Pdep.pd_Viper.v_Ctrlcpy
 
@@ -269,14 +266,14 @@ struct iomod {
 	u_int	io_eir;		/* (WO) interrupt CPU; set bits in EIR CR */
 	u_int	io_eim;		/* (WO) External Interrupt Message address */
 	u_int	io_dc_rw;	/* write address of IODC to read IODC data */
-	int	io_ii_rw;	/* read/clear external intrpt msg (bit-26) */
+	u_int	io_ii_rw;	/* read/clear external intrpt msg (bit-26) */
 	caddr_t	io_dma_link;	/* pointer to "next quad" in DMA chain */
 	u_int	io_dma_command;	/* (RO) chain command to exec on "next quad" */
 	caddr_t	io_dma_address;	/* (RO) start of DMA */
-	int	io_dma_count;	/* (RO) number of bytes remaining to xfer */
+	u_int	io_dma_count;	/* (RO) number of bytes remaining to xfer */
 	caddr_t	io_flex;	/* (WO) HPA flex addr, LSB: bus master flag */
 	caddr_t	io_spa;		/* (WO) SPA space; 0-20:addr, 24-31:iodc_spa */
-	int	resv1[2];	/* (reserved) */
+	u_int	resv1[2];	/* (reserved) */
 	u_int	io_command;	/* (WO) module commands (see below) */
 	u_int	io_status;	/* (RO) error returns (see below) */
 	u_int	io_control;	/* memory err logging (bit-9), bc forwarding */
@@ -287,20 +284,20 @@ struct iomod {
 	u_int	sub_mask_clr;	/* ignore intrpts on sub-channel (bitmask) */
 	u_int	sub_mask_set;	/* service intrpts on sub-channel (bitmask) */
 	u_int	diagnostic;	/* diagnostic use (reserved) */
-	int	resv2[2];	/* (reserved) */
+	u_int	resv2[2];	/* (reserved) */
 	caddr_t	nmi_address;	/* address to send data to when NMI detected */
 	caddr_t	nmi_data;	/* NMI data to be sent */
-	int	resv3[3];	/* (reserved) */
+	u_int	resv3[3];	/* (reserved) */
 	u_int	io_mem_low;	/* bottom of memory address range */
 	u_int	io_mem_high;	/* top of memory address range */
 	u_int	io_io_low;	/* bottom of I/O HPA address Range */
 	u_int	io_io_high;	/* top of I/O HPA address Range */
 
-	int	priv_trs[160];	/* TRSes (Type-dependent Reg Sets) */
+	u_int	priv_trs[160];	/* TRSes (Type-dependent Reg Sets) */
 
-	int	priv_hvrs[320];	/* HVRSes (HVERSION-dependent Register Sets) */
+	u_int	priv_hvrs[320];	/* HVRSes (HVERSION-dependent Register Sets) */
 
-	int	hvrs[512];	/* HVRSes (HVERSION-dependent Register Sets) */
+	u_int	hvrs[512];	/* HVRSes (HVERSION-dependent Register Sets) */
 };
 #endif	/* !_LOCORE */
 
