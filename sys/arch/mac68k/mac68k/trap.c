@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 1998/03/05 05:00:47 gene Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 1998/03/05 05:06:09 gene Exp $	*/
 /*	$NetBSD: trap.c,v 1.46 1997/04/07 22:54:44 scottr Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ int mmupid = -1;
 #endif
 
 /* trap() and syscall() only called from locore */
-void	trap __P((int, unsigned, register unsigned, struct frame));
+void	trap __P((int, unsigned, unsigned, struct frame));
 void	syscall __P((register_t, struct frame));
 
 static inline void userret __P((struct proc *p, struct frame *fp,
@@ -139,7 +139,7 @@ static inline void userret __P((struct proc *p, struct frame *fp,
 #if defined(M68040)
 static int	writeback __P((struct frame *, int));
 #if DEBUG
-static void dumpssw __P((register u_short));
+static void dumpssw __P((u_short));
 static void dumpwb __P((int, u_short, u_int, u_int));
 #endif
 #endif
@@ -668,8 +668,8 @@ writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
 {
-	register struct fmt7 *f = &fp->f_fmt7;
-	register struct proc *p = curproc;
+	struct fmt7 *f = &fp->f_fmt7;
+	struct proc *p = curproc;
 	int err = 0;
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
@@ -752,8 +752,8 @@ writeback(fp, docachepush)
 		 * Writeback #1.
 		 * Position the "memory-aligned" data and write it out.
 		 */
-		register u_int wb1d = f->f_wb1d;
-		register int off;
+		u_int wb1d = f->f_wb1d;
+		int off;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
@@ -900,7 +900,7 @@ writeback(fp, docachepush)
 #ifdef DEBUG
 static void
 dumpssw(ssw)
-	register u_short ssw;
+	u_short ssw;
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -932,7 +932,7 @@ dumpwb(num, s, a, d)
 	u_short s;
 	u_int a, d;
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	vm_offset_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
@@ -957,9 +957,9 @@ syscall(code, frame)
 	register_t code;
 	struct frame frame;
 {
-	register caddr_t params;
-	register struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	struct sysent *callp;
+	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
 	register_t args[8], rval[2];
