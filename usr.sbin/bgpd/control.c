@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.12 2004/01/06 23:14:58 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.13 2004/01/09 13:14:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -179,6 +179,15 @@ control_dispatch_msg(struct pollfd *pfd, int i)
 		log_err("control_dispatch_msg: fd %d: not found", pfd->fd);
 		return (0);
 	}
+
+	if (pfd->revents & POLLOUT)
+		if (msgbuf_write(&c->ibuf.w) < 0) {
+			control_close(pfd->fd);
+			return (1);
+		}
+
+	if (!(pfd->revents & POLLIN))
+		return (0);
 
 	if (imsg_read(&c->ibuf) <= 0) {
 		control_close(pfd->fd);
