@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.5 2001/12/08 02:24:06 art Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.6 2002/01/02 17:13:25 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -295,43 +295,6 @@ static int processing;
 	__asm__ volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
 }
-#if 0
-u_int32_t ppc_console_iomem=0;
-u_int32_t ppc_console_addr=0;
-u_int32_t ppc_console_qhandle=0;
-u_int32_t ppc_console_serfreq;
-
-void
-ofwtrysercon(char *name, int qhandle)
-{
-/* for serial we want regs field */
-	int regs[4];
-	int freq;
-	int regn;
-	if ((regn = OF_getprop(qhandle, "reg", &regs[0], sizeof regs)) >= 0) {
-
-		if (regs[1] == 0x3f8) {
-			/* found preferred console */
-			ppc_console_addr = regs[1];
-			ppc_console_qhandle = qhandle;
-			ppc_console_iomem=0; /* 0 means io, 1 means mem */
-		}
-		if ((regs[1] == 0x2e8) && (ppc_console_addr == 0)) {
-			/* found nonpreferred console */
-			ppc_console_addr = regs[1];
-			ppc_console_qhandle = qhandle;
-			ppc_console_iomem=0; /* 0 means io, 1 means mem */
-		}
-	}
-	if ((OF_getprop(qhandle, "clock-frequency", &freq, sizeof regs)) >= 0) {
-		/* MCG value for this does not agree with PC value,
-		 * but works correctly (while PC value does not),
-		 * does VI set this correctly???
-		 */
-		ppc_console_serfreq=freq;
-	}
-}
-#endif
 
 #include <dev/pci/pcivar.h>
 #include <arch/macppc/pci/vgafb_pcivar.h>
@@ -346,17 +309,6 @@ ofw_make_tag(cpv, bus, dev, fnc)
         return (bus << 16) | (dev << 11) | (fnc << 8);
 }
 
-#if 0
-/* XXX */
-void
-ofwenablepcimemio(char *name, int qhandle)
-{
-	/* THIS PROBABLY IS A MAJOR HACK
-	 * AND IT WOULD PREVENT ofdisk and ofnet from working 
-	 * on MCG, VI machines.
-	 */
-}
-#endif
 #define       OFW_PCI_PHYS_HI_BUSMASK         0x00ff0000
 #define       OFW_PCI_PHYS_HI_BUSSHIFT        16
 #define       OFW_PCI_PHYS_HI_DEVICEMASK      0x0000f800
@@ -388,9 +340,43 @@ struct usb_kbd_ihandles {
 	int ihandle;
 };
 
+void of_display_console(void);
 
 void
 ofwconprobe()
+{
+	char type[32];
+	int stdout_node;
+
+	stdout_node = OF_instance_to_package(OF_stdout);
+
+	/* handle different types of console */
+
+	bzero(type, sizeof(type));
+	if (OF_getprop(stdout_node,  "device_type", type, sizeof(type)) == -1) {
+		return; /* XXX */
+	}
+	if (strcmp(type, "display") == 0) {
+		of_display_console();
+		return;
+	}
+	if (strcmp(type, "serial") == 0) {
+		/* serial console not supported, forcing to screen for now */
+		OF_stdout = OF_open("screen");
+		OF_stdin = OF_open("keyboard");
+
+		/* cross fingers that this works. */
+		of_display_console();
+		return;
+	}
+
+	return;
+}
+	
+
+
+void
+of_display_console()
 {
 #if NVGAFB_PCI > 0
 	char name[32];
