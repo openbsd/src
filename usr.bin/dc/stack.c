@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack.c,v 1.5 2003/11/04 08:10:06 otto Exp $	*/
+/*	$OpenBSD: stack.c,v 1.6 2003/11/26 19:30:52 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: stack.c,v 1.5 2003/11/04 08:10:06 otto Exp $";
+static const char rcsid[] = "$OpenBSD: stack.c,v 1.6 2003/11/26 19:30:52 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -352,22 +352,10 @@ frame_retrieve(const struct stack *stack, size_t index)
 {
 	struct array *a;
 
+	if (stack->sp == -1)
+		return NULL;
 	a = stack->stack[stack->sp].array;
 	if (a == NULL)
 		a = stack->stack[stack->sp].array = array_new();
 	return array_retrieve(a, index);
 }
-
-/*
-void
-frame_free(struct stack *stack)
-{
-	struct array *a;
-
-	a = stack->stack[stack->sp].array;
-	if (a != NULL) {
-		array_free(a);
-		stack->stack[stack->sp].array = NULL;
-	}
-}
-*/
