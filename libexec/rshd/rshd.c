@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.27 1998/07/10 18:22:54 millert Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.28 1998/07/12 08:46:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -387,11 +387,10 @@ doit(fromp)
 			}
 		}
 		hostname = strncpy(hostnamebuf, hostname,
-				   sizeof(hostnamebuf) - 1);
+		    sizeof(hostnamebuf) - 1);
 	} else
 		errorhost = hostname = strncpy(hostnamebuf,
-					       inet_ntoa(fromp->sin_addr),
-					       sizeof(hostnamebuf) - 1);
+		    inet_ntoa(fromp->sin_addr), sizeof(hostnamebuf) - 1);
 
 	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 #ifdef	KERBEROS
