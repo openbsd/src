@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.150 1999/06/14 06:50:22 deraadt Exp $
+$OpenBSD: pcidevs,v 1.151 1999/06/21 09:33:29 maja Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -603,6 +603,7 @@ product ALI M5229		0x5229	M5229 UDMA IDE
 product ALI M5237		0x5237	M5237 USB Host
 product ALI M5243		0x5243	M5243 AGP/PCI-PCI
 product ALI M7101		0x7101	M7101 Power Management
+product ALI M3309		0x3309	M3309 MPEG Accelerator
 
 /* Adaptec products */
 product ADP AIC7810		0x1078	AIC-7810
