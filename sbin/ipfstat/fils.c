@@ -1,4 +1,4 @@
-/*    $OpenBSD: fils.c,v 1.15 1999/07/08 00:02:26 deraadt Exp $    */
+/*    $OpenBSD: fils.c,v 1.16 1999/07/08 00:05:21 deraadt Exp $    */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -51,7 +51,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fils.c,v 1.15 1999/07/08 00:02:26 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: fils.c,v 1.16 1999/07/08 00:05:21 deraadt Exp $";
 #endif
 
 #define	F_IN	0
@@ -92,7 +92,7 @@ char *argv[];
 	char	*name = NULL, *device = IPL_NAME;
 	int	c, fd;
 
-	while ((c = getopt(argc, argv, "AafhIinosvd:M:N:")) != -1)
+	while ((c = getopt(argc, argv, "AafhIinosvd:M:")) != -1)
 	{
 		switch (c)
 		{
@@ -128,9 +128,6 @@ char *argv[];
 			break;
 		case 'v' :
 			opts |= OPT_VERBOSE;
-			break;
-		case 'N':
-			nlistf = optarg;
 			break;
 		case 'M':
 			memf = optarg;

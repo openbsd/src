@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipfstat.8,v 1.15 1999/07/08 00:02:26 deraadt Exp $
+.\"     $OpenBSD: ipfstat.8,v 1.16 1999/07/08 00:05:21 deraadt Exp $
 .Dd June 13, 1999
 .Dt IPFSTAT 8
 .Os
@@ -10,7 +10,6 @@
 .Op Fl aAfhIinosv
 .Op Fl d Ar device
 .Op Fl M Ar core
-.Op Fl N Ar system
 .Sh DESCRIPTION
 By default,
 .Nm
@@ -62,9 +61,6 @@ filter list details. For use in combination with
 .Fl i .
 .It Fl n
 Show the rule number for each rule as it is printed.
-.It Fl N Ar system
-Extract the name list from the specified system instead of the default
-.Pa /bsd .
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the default
@@ -79,8 +75,6 @@ Turn verbose mode on. Displays more debugging information.
 .El
 .Sh FILES
 .Bl -tag -width /dev/ipstate -compact
-.It Pa /bsd
-default system
 .It Pa /dev/kmem
 default kernel memory
 .It Pa /dev/ipl
