@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.37 2003/11/20 10:53:59 jmc Exp $
+.\"	$OpenBSD: systrace.1,v 1.38 2004/01/07 21:15:42 sturm Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm systrace
 .Bk -words
-.Op Fl AaitUu
+.Op Fl AaeitUu
 .Op Fl c Ar uid:gid
 .Op Fl d Ar policydir
 .Op Fl f Ar file
@@ -86,7 +86,12 @@ The created policy functions as a base that can be refined.
 .It Fl a
 Enables automatic enforcement of configured policies.
 An operation not covered by policy is denied and logged via
-.Xr syslog 3 .
+.Xr syslog 3 ,
+or to
+.Em stderr
+if the
+.Fl e
+flag is specified.
 .It Fl c Ar uid:gid
 Specifies the
 .Va uid
@@ -99,6 +104,11 @@ root privilege.
 .It Fl d Ar policydir
 Specifies an alternative location for the user's directory from
 which policies are loaded and to which changed policies are stored.
+.It Fl e
+Specifies to log to
+.Em stderr
+instead of
+.Xr syslog 3 .
 .It Fl f Ar file
 The policies specified in
 .Ar file
@@ -221,8 +231,7 @@ the specified regular expression.
 By appending the
 .Va log
 statement to a rule, a matching system call and its arguments
-is logged to
-.Xr syslog 3 .
+are logged.
 This is useful, for example, to log all invocations of the
 .Va execve
 system call.

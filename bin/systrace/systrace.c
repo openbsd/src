@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.47 2003/10/18 19:26:00 jmc Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.48 2004/01/07 21:15:43 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <syslog.h>
@@ -60,11 +61,13 @@ int allow = 0;			/* Allow all and generate */
 int userpolicy = 1;		/* Permit user defined policies */
 int noalias = 0;		/* Do not do system call aliasing */
 int iamroot = 0;		/* Set if we are running as root */
+int logstderr = 0;		/* Log to STDERR instead of syslog */
 char cwd[MAXPATHLEN];		/* Current working directory */
 char home[MAXPATHLEN];		/* Home directory of user */
 char username[MAXLOGNAME];	/* Username: predicate match and expansion */
 
 static void child_handler(int);
+static void log_msg(int, const char *, ...);
 static void usage(void);
 static int requestor_start(char *);
 
@@ -240,7 +243,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 
  out:
 	if (dolog)
-		syslog(LOG_WARNING, "%s user: %s, prog: %s",
+		log_msg(LOG_WARNING, "%s user: %s, prog: %s",
 		    action < ICPOLICY_NEVER ? "permit" : "deny",
 		    ipid->username, output);
 
@@ -313,7 +316,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	}
  out:
 	if (dolog)
-		syslog(LOG_WARNING, "%s user: %s, prog: %s",
+		log_msg(LOG_WARNING, "%s user: %s, prog: %s",
 		    action < ICPOLICY_NEVER ? "permit" : "deny",
 		    ipid->username, output);
 
@@ -404,6 +407,24 @@ child_handler(int sig)
 		;
 
 	errno = s;
+}
+
+static void
+log_msg(int priority, const char *fmt, ...)
+{
+	char buf[_POSIX2_LINE_MAX];
+	extern char *__progname;
+	va_list ap;
+
+	va_start(ap, fmt);
+
+	if (logstderr) {
+		vsnprintf(buf, sizeof(buf), fmt, ap);
+		fprintf(stderr, "%s: %s\n", __progname, buf);
+	} else
+		vsyslog(priority, fmt, ap);
+
+	va_end(ap);
 }
 
 static void
@@ -526,7 +547,7 @@ main(int argc, char **argv)
 	uid_t cr_uid;
 	gid_t cr_gid;
 
-	while ((c = getopt(argc, argv, "c:aAituUd:g:f:p:")) != -1) {
+	while ((c = getopt(argc, argv, "c:aAeituUd:g:f:p:")) != -1) {
 		switch (c) {
 		case 'c':
 			setcredentials = 1;
@@ -540,6 +561,9 @@ main(int argc, char **argv)
 			break;
 		case 'd':
 			policypath = optarg;
+			break;
+		case 'e':
+			logstderr = 1;
 			break;
 		case 'A':
 			if (automatic)
