@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.9 1997/02/28 04:03:48 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.10 1997/03/02 07:32:15 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -302,10 +302,11 @@ ip_output(m0, va_alist)
 		return ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT, NULL);
 
 no_encap:
+		/* This is for possible future use, don't move or delete */
 		if (re->re_rt)
 			RTFREE(re->re_rt);
 	}
-#endif IPSEC
+#endif /* IPSEC */
 
 	/*
 	 * Route packet.
