@@ -30,10 +30,10 @@ restricted.
 
 Many new user programs have been added in OpenBSD 2.0, as well,
 bringing it closer to our goal of supplying a complete UN*X-like
-environment. Tools like perl and ksh are standard, 
+environment. Tools like perl and ksh are standard, as are numerous
+other useful tools.
 
 #include "whatis"
-
 
 Sources of OpenBSD:
 -------------------
@@ -51,7 +51,8 @@ The OpenBSD 2.0 release is organized in the following way:
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures that OpenBSD
-2.0 has a binary distribution for.
+2.0 has a binary distribution for.  (That is described further along in
+this document).
 
 The source distribution sets can be found in subdirectories of the
 "source" subdirectory of the distribution tree.  They contain the 
@@ -111,36 +112,30 @@ their output to the "CKSUMS" or "MD5" file.
 
 #include "contents"
 
-
 OpenBSD System Requirements and Supported Devices:
 --------------------------------------------------
 
 #include "hardware"
-
 
 Getting the OpenBSD System on to Useful Media:
 ----------------------------------------------
 
 #include "xfer"
 
-
 Preparing your System for OpenBSD Installation:
 -----------------------------------------------
 
 #include "prep"
-
 
 Installing the OpenBSD System:
 ------------------------------
 
 #include "install"
 
-
 Upgrading a previously-installed OpenBSD System:
 ------------------------------------------------
 
 #include "upgrade"
-
 
 Using online OpenBSD documentation:
 -----------------------------------

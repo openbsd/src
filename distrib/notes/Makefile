@@ -9,8 +9,7 @@ TARG=	INSTALL.$M
 SRC=	$(.CURDIR)/INSTALL
 DEP=	$(SRC) $(.CURDIR)/mirrors $(.CURDIR)/$M/whatis $(.CURDIR)/$M/contents \
 	$(.CURDIR)/$M/hardware $(.CURDIR)/$M/xfer $(.CURDIR)/$M/prep \
-	$(.CURDIR)/$M/install $(.CURDIR)/$M/upgrade $(.CURDIR)/donations \
-	$(.CURDIR)/legal.common $(.CURDIR)/$M/legal
+	$(.CURDIR)/$M/install $(.CURDIR)/$M/upgrade $(.CURDIR)/donations
 
 all:	$(TARG)
 
