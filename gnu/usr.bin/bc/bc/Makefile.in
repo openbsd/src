@@ -64,7 +64,7 @@ RANLIB = @RANLIB@
 VERSION = @VERSION@
 YACC = @YACC@
 
-bin_PROGRAMS = bc
+bin_PROGRAMS = gnubc
 
 bc_SOURCES = main.c bc.y scan.l execute.c load.c storage.c util.c global.c
 
@@ -119,7 +119,7 @@ OBJECTS = $(bc_OBJECTS)
 all: Makefile $(PROGRAMS) $(HEADERS)
 
 .SUFFIXES:
-.SUFFIXES: .S .c .l .o .s .y
+.SUFFIXES: .S .c .o .s
 $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && $(AUTOMAKE) --gnu --include-deps bc/Makefile
 
@@ -175,15 +175,15 @@ maintainer-clean-compile:
 bc: $(bc_OBJECTS) $(bc_DEPENDENCIES)
 	@rm -f bc
 	$(LINK) $(bc_LDFLAGS) $(bc_OBJECTS) $(bc_LDADD) $(LIBS)
-.y.c:
-	$(YACC) $(YFLAGS) $< && mv y.tab.c $*.c
-	if test -f y.tab.h; then \
-	if cmp -s y.tab.h $*.h; then rm -f y.tab.h; else mv y.tab.h $*.h; fi; \
-	else :; fi
+#.y.c:
+#	$(YACC) $(YFLAGS) $< && mv y.tab.c $*.c
+#	if test -f y.tab.h; then \
+#	if cmp -s y.tab.h $*.h; then rm -f y.tab.h; else mv y.tab.h $*.h; fi; \
+#	else :; fi
 bc.h: bc.c
 
-.l.c:
-	$(LEX) $(LFLAGS) $< && mv $(LEX_OUTPUT_ROOT).c $@
+#.l.c:
+#	$(LEX) $(LFLAGS) $< && mv $(LEX_OUTPUT_ROOT).c $@
 
 tags: TAGS
 
