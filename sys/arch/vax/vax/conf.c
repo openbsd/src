@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 2000/10/09 23:11:57 bjc Exp $ */
+/*	$OpenBSD: conf.c,v 1.22 2000/10/31 02:30:57 hugh Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -148,7 +148,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 16: was: KDB50/RA?? */
 	bdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 18: vnode disk driver */
-	bdev_disk_init(NHD,hd),	/* 19: VS3100 ST506 disk */
+	bdev_disk_init(NHD,hd),		/* 19: VS3100 ST506 disk */
 	bdev_disk_init(NSD,sd),		/* 20: SCSI disk */
 	bdev_tape_init(NST,st),		/* 21: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 22: SCSI CD-ROM */
@@ -498,7 +498,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 55: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 56: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 57: tunnel filter */
-	cdev_disk_init(NHD,hd),	/* 58: HDC9224/RD?? */
+	cdev_disk_init(NHD,hd),		/* 58: HDC9224/RD?? */
 	cdev_disk_init(NSD,sd),		/* 59: SCSI disk */
 	cdev_tape_init(NST,st),		/* 60: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 61: SCSI CD-ROM */

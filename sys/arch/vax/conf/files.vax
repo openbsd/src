@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.15 2000/10/24 02:20:21 hugh Exp $
+#	$OpenBSD: files.vax,v 1.16 2000/10/31 02:30:56 hugh Exp $
 #       $NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -125,6 +125,10 @@ major	{hd = 19}
 device	ry: disk
 attach	ry at hdc
 major	{ry = 24}
+
+# RAM Disk for install floppy
+file arch/vax/vax/rd_root.c		ramdisk_hooks
+major	{rd = 23}
 
 #
 # Machine-independent SCSI driver.
