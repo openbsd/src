@@ -17,7 +17,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $Id: options.h,v 1.2 1996/11/17 16:34:01 millert Exp $
+ *  $Id: options.h,v 1.3 1996/12/15 19:19:40 millert Exp $
  */
 
 #ifndef _SUDO_OPTIONS_H
@@ -33,7 +33,7 @@
 
 /*#define FQDN			/* expect fully qualified hosts in sudoers */
 #define LOGGING SLOG_SYSLOG	/* log via SLOG_SYSLOG, SLOG_FILE, SLOG_BOTH */
-#define LOGFAC LOG_LOCAL2	/* syslog facility for sudo to use */
+#define LOGFAC LOG_AUTHPRIV	/* syslog facility for sudo to use */
 #define MAXLOGFILELEN 80	/* max chars per log line (for line wrapping) */
 /*#define NO_ROOT_SUDO		/* root is not allowed to use sudo */
 #define ALERTMAIL "root"	/* user that gets sudo mail */
