@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.4 1996/05/10 18:39:12 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/05/10 20:03:38 deraadt Exp $
 
-CFLAGS+=-I${.CURDIR}/../../include -O2
+CFLAGS+=-I${.OBJDIR} -O2 -fomit-frame-pointer
 
 OBJS=bugcrt.o
 
-CLEANFILES+=a.out
+CLEANFILES+=a.out machine
 
-all:	${OBJS}
+all:	machine ${OBJS}
 
 bugcrt.o: bugcrt.c
 	${CC} ${CFLAGS} -c ${.ALLSRC}
@@ -16,5 +16,8 @@ bugcrt.o: bugcrt.c
 install:
 
 lint tags:
+
+machine:
+	rm -f machine; ln -s ${.CURDIR}/../../include machine
 
 .include <bsd.prog.mk>
