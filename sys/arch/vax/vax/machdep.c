@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.61 2002/09/21 13:42:43 hugh Exp $ */
+/* $OpenBSD: machdep.c,v 1.62 2002/11/08 01:33:28 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -387,30 +387,32 @@ sys_sigreturn(p, v, retval)
 	} *uap = v;
 	struct trapframe *scf;
 	struct sigcontext *cntx;
+	struct sigcontext ksc;
 
 	scf = p->p_addr->u_pcb.framep;
 	cntx = SCARG(uap, sigcntxp);
 
-	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
-		return EINVAL;
+	if (copyin((caddr_t)cntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
+		return (EINVAL);
+
 	/* Compatibility mode? */
-	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((cntx->sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (cntx->sc_ps & PSL_CM)) {
+	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
+	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
+	    (ksc.sc_ps & PSL_CM)) {
 		return (EINVAL);
 	}
-	if (cntx->sc_onstack & 01)
+	if (ksc.sc_onstack & 01)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
-    p->p_sigmask = cntx->sc_mask & ~sigcantmask;
+	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 
-	scf->fp = cntx->sc_fp;
-	scf->ap = cntx->sc_ap;
-	scf->pc = cntx->sc_pc;
-	scf->sp = cntx->sc_sp;
-	scf->psl = cntx->sc_ps;
+	scf->fp = ksc.sc_fp;
+	scf->ap = ksc.sc_ap;
+	scf->pc = ksc.sc_pc;
+	scf->sp = ksc.sc_sp;
+	scf->psl = ksc.sc_ps;
 	return (EJUSTRETURN);
 }
 
