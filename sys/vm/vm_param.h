@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.16 1999/11/25 08:41:36 art Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.17 1999/11/25 08:44:07 art Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -93,10 +93,14 @@ typedef	int	boolean_t;
 
 /*
  *	All references to the size of a page should be done with PAGE_SIZE
- *	or PAGE_SHIFT.  The fact they are variables is hidden here so that
- *	we can easily make them constant if we so desire.
+ *	or PAGE_SHIFT.
+ *	We allow them to be constants in MD code, but when necessary
+ *      (especially in LKMs) they will still be variables.
  */
 #if !defined(PAGE_SIZE) || defined(_LKM)
+/*
+ * We undef those here to avoid problmes with LKMs.
+ */
 #undef PAGE_SIZE
 #undef PAGE_MASK
 #undef PAGE_SHIFT
