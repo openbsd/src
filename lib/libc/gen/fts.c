@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.27 2001/05/31 23:30:48 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.28 2001/08/03 22:23:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.27 2001/05/31 23:30:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.28 2001/08/03 22:23:48 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -431,6 +431,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 	if (p->fts_level == FTS_ROOTLEVEL) {
 		if (FCHDIR(sp, sp->fts_rfd)) {
 			SET(FTS_STOP);
+			sp->fts_cur = p;
 			return (NULL);
 		}
 	} else if (p->fts_flags & FTS_SYMFOLLOW) {
@@ -439,12 +440,14 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 			(void)close(p->fts_symfd);
 			errno = saved_errno;
 			SET(FTS_STOP);
+			sp->fts_cur = p;
 			return (NULL);
 		}
 		(void)close(p->fts_symfd);
 	} else if (!(p->fts_flags & FTS_DONTCHDIR) &&
 	    fts_safe_changedir(sp, p->fts_parent, -1, "..")) {
 		SET(FTS_STOP);
+		sp->fts_cur = p;
 		return (NULL);
 	}
 	p->fts_info = p->fts_errno ? FTS_ERR : FTS_DP;
