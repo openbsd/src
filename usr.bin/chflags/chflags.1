@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.8 1999/12/09 00:39:50 aaron Exp $
+.\"	$OpenBSD: chflags.1,v 1.9 1999/12/15 16:08:23 aaron Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -96,22 +96,27 @@ uappnd	set the user append-only flag (owner or super-user only)
 uchg	set the user immutable flag (owner or super-user only)
 .Ed
 .Pp
+An immutable file may not be changed, moved, or deleted.
+An append-only file is immutable except that data may be appended to it.
+.Pp
 Putting the letters
 .Dq no
-before an option causes the flag to be turned off.
+before a flag name causes the flag to be turned off.
 For example:
 .Bd -literal -offset indent compact
 nouchg	the immutable bit should be cleared
 .Ed
 .Pp
 The
+superuser-settable
 .Dq sappnd
 and
 .Dq schg
-system flags may be set at any time, but normally may only be unset when the
-system is in single-user mode (see
-.Xr init 8
-for details).
+flags can be set at any time, but may only be cleared when the system is
+running at security level 0 or -1 (insecure or permanently insecure mode,
+respectively).
+The securelevel is normally set to 0, for example, when
+running in single-user mode.
 .Pp
 Symbolic links do not have flags, so unless the
 .Fl H
