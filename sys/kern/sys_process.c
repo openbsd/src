@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.21 2002/03/12 14:37:40 art Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.22 2002/04/10 17:31:59 fgsch Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -121,13 +121,19 @@ sys_ptrace(p, v, retval)
 			return (EINVAL);
 
 		/*
-		 *	(2) it's already being traced, or
+		 *	(2) it's a system process
+		 */
+		if (ISSET(t->p_flag, P_SYSTEM))
+			return (EPERM);
+
+		/*
+		 *	(3) it's already being traced, or
 		 */
 		if (ISSET(t->p_flag, P_TRACED))
 			return (EBUSY);
 
 		/*
-		 *	(3) it's not owned by you, or the last exec
+		 *	(4) it's not owned by you, or the last exec
 		 *	    gave us setuid/setgid privs (unless
 		 *	    you're root), or...
 		 * 
@@ -143,7 +149,7 @@ sys_ptrace(p, v, retval)
 			return (error);
 
 		/*
-		 *	(4) ...it's init, which controls the security level
+		 *	(5) ...it's init, which controls the security level
 		 *	    of the entire system, and the system was not
 		 *          compiled with permanently insecure mode turned
 		 *	    on.
