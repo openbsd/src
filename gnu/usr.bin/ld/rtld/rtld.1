@@ -55,7 +55,35 @@ proceeds to resolve external references from both the main program and
 all objects loaded. A mechanism is provided for initialisation routines
 to be called, on a per-object basis, giving a shared object an opportunity
 to perform any extra set-up, before execution of the program proper begins.
-This is useful for C++ libraries that contain static constructors.
+.Nm
+looks for a symbol named
+.Em .init
+in each object's symbol table. If present, this symbol is assumed to
+represent a C-function declared as
+.Ft void
+.Fn .init "void" ,
+which is then called. Similarly, a
+.Ft void
+.Fn .fini "void"
+function is called just before an object is unloaded from the process
+address space as a result of calling
+.Xr dlclose 3 .
+Note that while an object's
+.Em .init
+is always called, whether the object is loaded automatically at program
+startup or programatically by using
+.Xr dlopen 3 ,
+the
+.Em .fini
+function is called only on
+.Sq last Xr dlclose 3 .
+.Pp
+This mechanism is exploited by the system-supplied C++ constructor
+initialization code located in
+.Pa /usr/lib/c++rt.o .
+This file should be included in the list of object-code files passed to
+.Xr ld 1
+when building a shared C++ library.
 .Pp
 .Nm
 is itself a shared object that is initially loaded by the startup module
@@ -100,7 +128,7 @@ utility, in which the full path specification of the shared objects can be
 looked up by hashing on the 3-tuple
 .Ao
 library-name, major-version-number, minor-version-number
-.Ac \&.
+.Ac Ns \&.
 .Pp
 .Nm
 recognises a number of environment variables that can be used to modify
@@ -173,11 +201,16 @@ non-standard filesystem layout.
 .El
 .Pp
 .Sh FILES
-/var/run/ld.so.hints
+.Bl -tag -width /var/run/ld.so.hintsXXX -compact
+.It Pa /var/run/ld.so.hints
+library location hints built by
+.Xr ldconfig 8
+.El
 .Pp
 .Sh SEE ALSO
-.Xr ld 1
-.Xr ldconfig 8
+.Xr ld 1 ,
+.Xr ldconfig 8 ,
 .Xr link 5
 .Sh HISTORY
-The shared library model employed first appeared in SunOS 4.0
+The shared library model employed first appeared in SunOS 4.0.
+
