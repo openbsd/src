@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.17 2002/07/28 01:39:14 krw Exp $
+# 	$OpenBSD: RAMDISK,v 1.18 2002/12/04 17:32:30 nate Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -42,6 +42,7 @@ ebus*	at pci?
 
 hme*	at pci? dev ? function ?
 gem*	at pci? dev ? function ?
+ti*	at pci? dev ? function ?
 dc*	at pci? dev ? function ?
 
 auxio*	at ebus?

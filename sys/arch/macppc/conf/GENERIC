@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.37 2002/11/22 05:10:30 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.38 2002/12/04 17:32:30 nate Exp $g
 #
 # PPC GENERIC config file
 #
@@ -60,6 +60,7 @@ hme*		at pci? dev ? function ?	# HME ethernet
 dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
 xl*		at pci? dev ? function ?	# 3C9xx ethernet
 em*		at pci? dev ? function ?	# Intel Pro/1000 ethernet
+ti*		at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
 an*		at pci? dev ? function ?	# Cisco/Aironet
 wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
 iop*		at pci? dev ? function ?	# I2O processor
