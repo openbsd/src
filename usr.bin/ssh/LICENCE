@@ -142,7 +142,7 @@ OpenSSH contains no GPL code.
      * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 6)
-    Two components of the ssh source code are under a 4-clause BSD license,
+    One component of the ssh source code is under a 4-clause BSD license,
     held by the University of California, since we pulled these parts from
     original Berkeley code.  The Regents of the University of California
     have declared that term 3 is no longer enforceable on their source code,
