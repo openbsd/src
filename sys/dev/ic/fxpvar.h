@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.14 2003/09/26 21:43:31 miod Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.15 2004/04/26 02:35:12 mcbride Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -46,10 +46,10 @@
 #define FXP_NTXCB	128
 
 /*
- * Number of receive frame area buffers. These are large so chose
- * wisely.
+ * Minimum and maximum number of receive frame area buffers. 
  */
-#define FXP_NRFABUFS	64
+#define FXP_NRFABUFS_MIN	4
+#define FXP_NRFABUFS_MAX	64	/* These are large so choose wisely. */
 
 /*
  * NOTE: Elements are ordered for optimal cacheline behavior, and NOT
@@ -95,6 +95,7 @@ struct fxp_softc {
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
 	int eeprom_size;		/* size of serial EEPROM */
 	int not_82557;			/* yes if we are 82558/82559 */
+	int rx_bufs;			/* how many rx buffers allocated? */
 	void *sc_sdhook;		/* shutdownhook */
 	void *sc_powerhook;		/* powerhook */
 	struct fxp_txsw txs[FXP_NTXCB];
@@ -104,7 +105,7 @@ struct fxp_softc {
 	bus_dma_segment_t sc_cb_seg;
 	int sc_cb_nseg;
 	struct fxp_ctrl *sc_ctrl;
-	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS];
+	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS_MAX];
 	int sc_rxfree;
 };
 
