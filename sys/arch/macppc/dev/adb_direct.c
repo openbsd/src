@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.10 2003/11/03 06:43:02 david Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.11 2004/05/28 23:50:58 drahn Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /*
@@ -806,18 +806,24 @@ adb_soft_intr(void)
 				print_single(adbInbound[adbInHead].data);
 			}
 #endif
+		/*
+		 * Remove the packet from the queue before calling
+                 * the completion routine, so that the completion
+                 * routine can reentrantly process the queue.  For
+                 * example, this happens when polling is turned on
+                 * by entering the debuger by keystroke.
+                 */
+		s = splhigh();
+		adbInCount--;
+		if (++adbInHead >= ADB_QUEUE)
+			adbInHead = 0;
+		splx(s);
 
 		/* call default completion routine if it's valid */
 		if (comprout) {
 			((int (*)(u_char *, u_char *, int)) comprout)
 			    (buffer, compdata, cmd);
 		}
-
-		s = splhigh();
-		adbInCount--;
-		if (++adbInHead >= ADB_QUEUE)
-			adbInHead = 0;
-		splx(s);
 
 	}
 }
