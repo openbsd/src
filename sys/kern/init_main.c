@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.77 2001/09/17 19:17:30 gluk Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.78 2001/09/29 20:09:34 gluk Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -366,6 +366,11 @@ main(framep)
 	/* Start the scheduler */
 	scheduler_start();
 
+	/* Initialize signal state for process 0. */
+	signal_init();
+	p->p_sigacts = &sigacts0;
+	siginit(p);
+
 	dostartuphooks();
 
 	/* Configure root/swap devices */
@@ -394,11 +399,6 @@ main(framep)
 	 */
 	p->p_stats->p_start = runtime = mono_time = boottime = time;
 	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
-
-	/* Initialize signal state for process 0. */
-	signal_init();
-	p->p_sigacts = &sigacts0;
-	siginit(p);
 
 	/* Create process 1 (init(8)). */
 	if (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, rval))
