@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.24 2002/09/06 18:33:16 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.25 2002/12/03 22:33:50 fgsch Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.24 2002/09/06 18:33:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.25 2002/12/03 22:33:50 fgsch Exp $";
 #endif /* not lint */
 
 /*
@@ -471,6 +471,7 @@ print_entry(sdl, sin, rtm)
 	char *host;
 	extern int h_errno;
 	struct hostent *hp;
+	char ifname[IF_NAMESIZE];
 
 	if (nflag == 0)
 		hp = gethostbyaddr((caddr_t)&(sin->sin_addr),
@@ -489,6 +490,8 @@ print_entry(sdl, sin, rtm)
 		ether_print(LLADDR(sdl));
 	else
 		(void)printf("(incomplete)");
+	if (if_indextoname(sdl->sdl_index, ifname) != NULL)
+		printf(" on %s", ifname);
 	if (rtm->rtm_flags & RTF_PERMANENT_ARP)
 		(void)printf(" permanent");
 	if (rtm->rtm_rmx.rmx_expire == 0)
