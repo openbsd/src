@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.18 1999/12/20 05:42:03 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.19 2000/01/13 04:46:18 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -149,7 +149,9 @@ and
 .Fl proto2 .
 .It flow
 Create a flow determining which packets are routed via which Security
-Association. Allowed modifiers are:
+Association, or (for ingress flows) which packets may be received over
+an incoming SA.
+Allowed modifiers are:
 .Fl dst ,
 .Fl spi ,
 .Fl proto ,
@@ -158,14 +160,16 @@ Association. Allowed modifiers are:
 .Fl sport ,
 .Fl dport ,
 .Fl delete ,
+.Fl ingress ,
 and
 .Fl bypass .
 The
 .Xr netstat 1
-command shows the existing flows.  A 
+command shows the existing egress (outbound) flows.  A 
 .Nm bypass
 flow is used to specify a flow for which IPSec processing will be
-bypassed, i.e packets will not be processed by any SAs.  For
+bypassed, i.e packets will not be processed by any SAs.
+For
 .Nm bypass
 flows, additional modifiers are restricted to:
 .Fl addr ,
@@ -177,9 +181,10 @@ and
 These flows always have SPI 0, destination 0.0.0.0 and protocol 0.
 .It bind
 Associate an incoming Security Association with an outgoing Security
-Association. When a socket receives packets secured by the incoming
-SA all responses will be processed by the outgoing SA. Allowed modifiers
-are:
+Association.
+When a socket receives packets secured by the incoming SA all
+responses will be processed by the outgoing SA.
+Allowed modifiers are:
 .Fl dst ,
 .Fl spi ,
 .Fl proto ,
@@ -381,12 +386,28 @@ Instead of a number, a valid service name that appears in
 can be used.
 .It delete
 Instead of creating a flow, an existing flow is deleted.
+.It ingress
+For
+.Nm flow ,
+create or delete an
+.Nm ingress
+flow.
+An SA's
+.Nm ingress
+flows specify the types of packets that may be accepted over that SA,
+if the sysctl variable
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
+.It net.inet.ip.ipsec-acl
+.El
+is set to any non-zero value.
 .It bypass
 For
 .Nm flow ,
 create or delete a
 .Nm bypass
-flow.  Packets matching this flow will not be processed by IPSec.  For
+flow.
+Packets matching this flow will not be processed by IPSec.
+For
 .Nm flush ,
 only flush SAs of type bypass.
 .It ah
@@ -415,7 +436,7 @@ Setup a SA which uses new esp with 3des encryption and HMAC-SHA1
 authentication:
 .Bd -literal
 ipsecadm new esp -enc 3des -auth sha1 -spi 1001 -dst 169.20.12.2 \e\ 
-	-src 169.20.12.3.342 \e\ 
+	-src 169.20.12.3 \e\ 
 	-key 638063806380638063806380638063806380638063806380 \e\ 
 	-authkey 1234123412341234123412341234123412341234
 .Ed
@@ -429,7 +450,21 @@ ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 \e\
 Setup a flow using the above SA:
 .Bd -literal
 ipsecadm flow -dst 169.20.12.2 -spi 1001 -proto ah \e\ 
-	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0.0
+	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0
+.Ed
+.Pp
+Setup an inbound SA:
+.Bd -literal
+ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\
+	-src 169.20.12.2 \e\
+	-key abadbeef15deadbeefabadbeef15deadbeefabadbeef15deadbeef \e\
+	-authkey 12349876432167890192837465098273
+.Ed
+.Pp
+Setup an ingress flow on for the inbound SA:
+.Bd -literal
+ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\
+	-dst 10.10.32.1 -spi 1002 -proto esp -ingress
 .Ed
 .Pp
 Setup a bypass flow:

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.29 2000/01/09 22:53:40 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.30 2000/01/13 04:46:18 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -205,6 +205,7 @@ usage()
 	    "\t  -bypass\t\t\t create/delete a bypass flow\n"
 	    "\t  -sport\t\t\t source port for flow\n"
 	    "\t  -dport\t\t\t destination port for flow\n"
+	    "\t  -ingress\t\t\t flow is ingress access control entry\n"
 	    "\t  -[ah|esp|oldah|oldesp|ip4]\t to flush a particular protocol\n"
 	    "\talso: dst2, spi2, proto2\n"
 	);
@@ -214,7 +215,7 @@ int
 main(int argc, char **argv)
 {
     int auth = 0, enc = 0, klen = 0, alen = 0, mode = ESP_NEW, i = 0;
-    int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
+    int proto = IPPROTO_ESP, proto2 = IPPROTO_AH, ingress = 0;
     int dport = -1, sport = -1, tproto = -1, setmask = 0;
     u_int32_t spi = SPI_RESERVED_MIN, spi2 = SPI_RESERVED_MIN;
     union sockaddr_union *src, *dst, *dst2, *osrc, *odst, *osmask;
@@ -810,7 +811,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "bypass") && iscmd(mode, FLOW) && !bypass)
+	if (!strcmp(argv[i] + 1, "bypass") && iscmd(mode, FLOW))
 	{
 	    /* Setup everything for a bypass flow */
 	    bypass = 1;
@@ -883,6 +884,13 @@ main(int argc, char **argv)
 	    osrc->sin.sin_port = sport;
 	    osmask->sin.sin_port = 0xffff;
 	    i++;
+	    continue;
+	}
+
+	if (!strcmp(argv[i] + 1, "ingress") && iscmd(mode, FLOW))
+	{
+	    sa.sadb_sa_flags |= SADB_X_SAFLAGS_INGRESS_FLOW;
+	    ingress = 1;
 	    continue;
 	}
 
@@ -1205,6 +1213,12 @@ main(int argc, char **argv)
     if ((iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) && !dst2set)
     {
 	fprintf(stderr, "%s: no destination address2 specified\n", argv[0]);
+	exit(1);
+    }
+
+    if (bypass && ingress)
+    {
+	fprintf(stderr,	"%s: cannot specify \"-bypass\" and \"-ingress\" simultaneously\n", argv[0]);
 	exit(1);
     }
 
