@@ -29,11 +29,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_setprio.c,v 1.2 1999/01/06 05:29:26 d Exp $
+ * $OpenBSD: uthread_setprio.c,v 1.3 1999/01/17 23:57:16 d Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
+#include <sched.h>
 #include "pthread_private.h"
 
 int
@@ -53,5 +54,35 @@ pthread_setprio(pthread_t pthread, int prio)
 
 	/* Return the error status: */
 	return (ret);
+}
+
+int
+pthread_getschedparam(thread, policy, param)
+	pthread_t thread;
+	int *policy;
+	struct sched_param *param;
+{
+	int ret = 0;
+	
+	if ((ret = _find_thread(thread)) == 0) {
+		if (policy)
+			*policy = SCHED_RR;
+		if (param) 
+			param->sched_priority = thread->pthread_priority;
+	}
+	return (ret);
+}
+
+int
+pthread_setschedparam(thread, policy, param)
+	pthread_t thread;
+	int policy;
+	const struct sched_param *param;
+{
+
+	if (policy == SCHED_RR)
+		return pthread_setprio(thread, param->sched_priority);
+	else
+		return (EINVAL);
 }
 #endif
