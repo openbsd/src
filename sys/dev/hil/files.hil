@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hil,v 1.1 2003/02/11 19:39:30 miod Exp $
+#	$OpenBSD: files.hil,v 1.2 2003/02/12 01:43:31 miod Exp $
 #
 # Configuration file for machine-independent HIL code.
 #
@@ -11,6 +11,6 @@ attach	hilkbd at hil
 file	dev/hil/hilkbd.c	hilkbd	needs-flag
 file	dev/hil/hilkbdmap.c	hilkbd
 
-#device	hilms: wsmousedev
-#attach	hilms at hil
-#file	dev/hil/hilms.c		hilms	needs-flag
+device	hilms: wsmousedev
+attach	hilms at hil
+file	dev/hil/hilms.c		hilms	needs-flag
