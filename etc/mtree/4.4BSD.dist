@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.83 1999/09/30 21:39:19 beck Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.84 1999/09/30 21:41:52 beck Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -230,7 +230,7 @@ modules		gname=bin uname=root mode=0755
 include		gname=bin uname=root mode=0755
 
 # ./usr/lib/apache/include/xml
-modules		gname=bin uname=root mode=0755
+xml		gname=bin uname=root mode=0755
 # ./usr/lib/apache/include/xml
 ..
 
