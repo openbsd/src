@@ -1495,7 +1495,7 @@ filename_completion_function (text, state)
       FREE (users_dirname);
 
       filename = savestring (text);
-      filename_len = strlen(filename);
+      filename_len = strlen(filename) + 1;
       if (*text == 0)
 	text = ".";
       dirname = savestring (text);
