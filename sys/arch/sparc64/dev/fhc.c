@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.1 2004/09/22 21:44:45 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.2 2004/09/23 16:26:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -63,14 +63,6 @@ fhc_attach(struct fhc_softc *sc)
 	getprop(sc->sc_node, "ranges", sizeof(struct fhc_range),
 	    &sc->sc_nrange, (void **)&sc->sc_range);
 
-#if 0
-	for (node = 0; node < sc->sc_nrange; node++)
-	        printf("%d: cs %08x co %08x ps %08x po %08x sz %08x\n",
-	            node, sc->sc_range[node].cspace,
-		    sc->sc_range[node].coffset, sc->sc_range[node].pspace,
-		    sc->sc_range[node].poffset, sc->sc_range[node].size);
-#endif
-
 	node0 = firstchild(sc->sc_node);
 	for (node = node0; node; node = nextsibling(node)) {
 		struct fhc_attach_args fa;
@@ -87,17 +79,7 @@ fhc_attach(struct fhc_softc *sc)
 		getprop(node, "reg", sizeof(struct fhc_reg),
 		    &fa.fa_nreg, (void **)&fa.fa_reg);
 
-#if 0
-		printf("%s registers:\n", fa.fa_name);
-		for (i = 0; i < fa.fa_nreg; i++) {
-			printf(" %d slot 0x%x offset 0x%x size 0x%x\n", i,
-			    fa.fa_reg[i].fbr_slot,
-			    fa.fa_reg[i].fbr_offset,
-			    fa.fa_reg[i].fbr_size);
-		}
-
 		(void)config_found(&sc->sc_dv, (void *)&fa, fhc_print);
-#endif
 
 		if (fa.fa_name != NULL)
 			free(fa.fa_name, M_DEVBUF);
@@ -188,8 +170,7 @@ _fhc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t addr,
 		paddr += sc->sc_range[i].poffset;
 		paddr |= ((bus_addr_t)sc->sc_range[i].pspace << 32); 
 
-		printf("[fhc %llx]", (unsigned long long)paddr);
-		return ((*t->parent->sparc_bus_map)(t, t0, paddr,
+		return ((*t->parent->sparc_bus_map)(t->parent, t0, paddr,
 		    size, flags, hp));
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: central.c,v 1.1 2004/09/22 21:31:51 jason Exp $	*/
+/*	$OpenBSD: central.c,v 1.2 2004/09/23 16:26:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -193,7 +193,7 @@ _central_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t addr,
 		paddr = offset - sc->sc_range[i].coffset;
 		paddr += sc->sc_range[i].poffset;
 		paddr |= ((bus_addr_t)sc->sc_range[i].pspace << 32);
-		return ((*t->parent->sparc_bus_map)(t, t0, paddr,
+		return ((*t->parent->sparc_bus_map)(t->parent, t0, paddr,
 		    size, flags, hp));
 	}
 

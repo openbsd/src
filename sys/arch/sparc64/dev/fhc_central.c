@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc_central.c,v 1.1 2004/09/22 21:44:45 jason Exp $	*/
+/*	$OpenBSD: fhc_central.c,v 1.2 2004/09/23 16:26:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -67,17 +67,9 @@ fhc_central_attach(parent, self, aux)
 {
 	struct fhc_softc *sc = (struct fhc_softc *)self;
 	struct central_attach_args *ca = aux;
-	int i;
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_bt = ca->ca_bustag;
-
-	for (i = 0; i < ca->ca_nreg; i++) {
-		printf("\n r%d slot %08x offset %08x size %08x\n", i,
-		    ca->ca_reg[i].cbr_slot,
-		    ca->ca_reg[i].cbr_offset,
-		    ca->ca_reg[i].cbr_size);
-	}
 
 	if (central_bus_map(sc->sc_bt, ca->ca_reg[0].cbr_slot,
 	    ca->ca_reg[0].cbr_offset, ca->ca_reg[0].cbr_size, 0,
