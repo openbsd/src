@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.14 1997/04/14 04:23:23 tholo Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.15 1997/06/14 06:10:36 tholo Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -402,7 +402,8 @@ bdwrite(bp)
 	}
 
 	/* If this is a tape block, write the block now. */
-	if (bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
+	if (major(bp->b_dev) < nblkdev &&
+	    bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
 		bawrite(bp);
 		return;
 	}
