@@ -1,6 +1,7 @@
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
+ * $OpenBSD: uthread_poll.c,v 1.2 1999/01/08 05:09:22 d Exp $
  */
 #include <unistd.h>
 #include <errno.h>
