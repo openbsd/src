@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.38 2002/03/14 01:26:51 millert Exp $	*/
+/*	$OpenBSD: audio.c,v 1.39 2002/06/16 01:36:22 mickey Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -137,6 +137,7 @@ void	audio_calcwater(struct audio_softc *);
 static __inline int audio_sleep_timo(int *, char *, int);
 static __inline int audio_sleep(int *, char *);
 static __inline void audio_wakeup(int *);
+void	audio_selwakeup(struct audio_softc *sc, int play);
 int	audio_drain(struct audio_softc *);
 void	audio_clear(struct audio_softc *);
 static __inline void audio_pint_silence(struct audio_softc *, struct audio_ringbuffer *, u_char *, int);
@@ -201,6 +202,18 @@ struct cfattach audio_ca = {
 struct cfdriver audio_cd = {
 	NULL, "audio", DV_DULL
 };
+
+void filt_audiowdetach(struct knote *kn);
+int filt_audiowrite(struct knote *kn, long hint); 
+        
+struct filterops audiowrite_filtops =
+	{ 1, NULL, filt_audiowdetach, filt_audiowrite};  
+
+void filt_audiordetach(struct knote *kn);
+int filt_audioread(struct knote *kn, long hint); 
+        
+struct filterops audioread_filtops =
+	{ 1, NULL, filt_audiordetach, filt_audioread};  
 
 int
 audioprobe(parent, match, aux)
@@ -1780,6 +1793,25 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	return (error);
 }
 
+void
+audio_selwakeup(struct audio_softc *sc, int play)
+{
+	struct selinfo *si;
+
+	si = play? &sc->sc_wsel : &sc->sc_rsel;
+
+	audio_wakeup(play? &sc->sc_wchan : &sc->sc_rchan);
+	selwakeup(si);
+	if (sc->sc_async_audio)
+		psignal(sc->sc_async_audio, SIGIO);
+	KNOTE(&si->si_note, 0);
+}
+
+#define	AUDIO_FILTREAD(sc) ((sc->sc_mode & AUMODE_PLAY) ? \
+    sc->sc_pr.stamp > sc->sc_wstamp : sc->sc_rr.used > sc->sc_rr.usedlow)
+#define	AUDIO_FILTWRITE(sc) \
+    (sc->sc_mode & AUMODE_RECORD || sc->sc_pr.used <= sc->sc_pr.usedlow)
+
 int
 audio_select(dev, rw, p)
 	dev_t dev;
@@ -1788,28 +1820,25 @@ audio_select(dev, rw, p)
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
-	int s = splaudio();
+	int rv, s = splaudio();
 
 	DPRINTF(("audio_select: rw=0x%x mode=%d\n", rw, sc->sc_mode));
 
 	switch (rw) {
 
 	case FREAD:
-		if ((sc->sc_mode & AUMODE_PLAY) ?
-		    sc->sc_pr.stamp > sc->sc_wstamp : 
-		    sc->sc_rr.used > sc->sc_rr.usedlow) {
-			splx(s);
+		rv = AUDIO_FILTREAD(sc);
+		splx(s);
+		if (rv)
 			return (1);
-		}
 		selrecord(p, &sc->sc_rsel);
 		break;
 
 	case FWRITE:
-		if (sc->sc_mode & AUMODE_RECORD ||
-		    sc->sc_pr.used <= sc->sc_pr.usedlow) {
-			splx(s);
+		rv = AUDIO_FILTWRITE(sc);
+		splx(s);
+		if (rv)
 			return (1);
-		}
 		selrecord(p, &sc->sc_wsel);
 		break;
 	}
@@ -2089,25 +2118,13 @@ audio_pint(v)
 
 	DPRINTFN(2, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
                      sc->sc_mode, cb->pause, cb->used, cb->usedlow));
-	if ((sc->sc_mode & AUMODE_PLAY) && !cb->pause) {
-		if (cb->used <= cb->usedlow) {
-			audio_wakeup(&sc->sc_wchan);
-			selwakeup(&sc->sc_wsel);
-			if (sc->sc_async_audio) {
-				DPRINTFN(3, ("audio_pint: sending SIGIO %p\n", 
-                                             sc->sc_async_audio));
-				psignal(sc->sc_async_audio, SIGIO);
-			}
-		}
-	}
+	if ((sc->sc_mode & AUMODE_PLAY) && !cb->pause &&
+	    cb->used <= cb->usedlow)
+		audio_selwakeup(sc, 1);
 
 	/* Possible to return one or more "phantom blocks" now. */
-	if (!sc->sc_full_duplex && sc->sc_rchan) {
-		audio_wakeup(&sc->sc_rchan);
-		selwakeup(&sc->sc_rsel);
-		if (sc->sc_async_audio)
-			psignal(sc->sc_async_audio, SIGIO);
-	}
+	if (!sc->sc_full_duplex && sc->sc_rchan)
+		audio_selwakeup(sc, 0);
 }
 
 /*
@@ -2197,10 +2214,7 @@ audio_rint(v)
 		}
 	}
 
-	audio_wakeup(&sc->sc_rchan);
-	selwakeup(&sc->sc_rsel);
-	if (sc->sc_async_audio)
-		psignal(sc->sc_async_audio, SIGIO);
+	audio_selwakeup(sc, 0);
 }
 
 int
@@ -3029,3 +3043,70 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 	return (error);
 }
 #endif
+
+int
+audiokqfilter(dev, kn)
+	dev_t	dev;
+	struct knote *kn;
+{
+	int unit = AUDIOUNIT(dev);
+	struct audio_softc *sc = audio_cd.cd_devs[unit];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_note;
+		kn->kn_fop = &audioread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &sc->sc_wsel.si_note;
+		kn->kn_fop = &audiowrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+	kn->kn_hook = (void *)sc;
+
+	s = splaudio();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
+void
+filt_audiordetach(struct knote *kn)
+{
+	struct audio_softc *sc = (struct audio_softc *)kn->kn_hook;
+	int s = splaudio();
+
+	SLIST_REMOVE(&sc->sc_rsel.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_audioread(struct knote *kn, long hint)
+{
+	struct audio_softc *sc = (struct audio_softc *)kn->kn_hook;
+
+	return AUDIO_FILTREAD(sc);
+}
+
+void
+filt_audiowdetach(struct knote *kn)
+{
+	struct audio_softc *sc = (struct audio_softc *)kn->kn_hook;
+	int s = splaudio();
+
+	SLIST_REMOVE(&sc->sc_wsel.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_audiowrite(struct knote *kn, long hint)
+{
+	struct audio_softc *sc = (struct audio_softc *)kn->kn_hook;
+
+	return AUDIO_FILTWRITE(sc);
+}
