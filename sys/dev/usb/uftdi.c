@@ -1,5 +1,5 @@
-/*	$OpenBSD: uftdi.c,v 1.8 2002/07/25 02:18:10 nate Exp $ 	*/
-/*	$NetBSD: uftdi.c,v 1.10 2002/05/08 18:10:19 scw Exp $	*/
+/*	$OpenBSD: uftdi.c,v 1.9 2002/07/29 03:01:48 nate Exp $ 	*/
+/*	$NetBSD: uftdi.c,v 1.12 2002/07/18 14:44:10 scw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -425,7 +425,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	struct uftdi_softc *sc = vsc;
 	usb_device_request_t req;
 	usbd_status err;
-	int rate, data;
+	int rate, data, flow;
 
 	DPRINTF(("uftdi_param: sc=%p\n", sc));
 
@@ -517,6 +517,24 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	DPRINTFN(2,("uftdi_param: reqtype=0x%02x req=0x%02x value=0x%04x "
 		    "index=0x%04x len=%d\n", req.bmRequestType, req.bRequest,
 		    UGETW(req.wValue), UGETW(req.wIndex), UGETW(req.wLength)));
+	err = usbd_do_request(sc->sc_udev, &req, NULL);
+	if (err)
+		return (EIO);
+
+	if (ISSET(t->c_cflag, CRTSCTS)) {
+		flow = FTDI_SIO_RTS_CTS_HS;
+		USETW(req.wValue, 0);
+	} else if (ISSET(t->c_iflag, IXON|IXOFF)) {
+		flow = FTDI_SIO_XON_XOFF_HS;
+		USETW2(req.wValue, t->c_cc[VSTOP], t->c_cc[VSTART]);
+	} else {
+		flow = FTDI_SIO_DISABLE_FLOW_CTRL;
+		USETW(req.wValue, 0);
+	}
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = FTDI_SIO_SET_FLOW_CTRL;
+	USETW2(req.wIndex, flow, portno);
+	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
 		return (EIO);
