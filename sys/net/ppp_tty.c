@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.4 1996/05/10 12:31:13 deraadt Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.5 1996/07/25 14:20:51 joshd Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.6 1996/05/07 02:40:51 thorpej Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ static void	ppplogchar __P((struct ppp_softc *, int));
 /* This is a NetBSD-1.0 or later kernel. */
 #define CCOUNT(q)	((q)->c_cc)
 
+#define PPP_LOWAT     100     /* Process more output when < LOWAT on queue */
 #define	PPP_HIWAT	400	/* Don't start a new packet if HIWAT on que */
 
 /*
@@ -500,11 +501,179 @@ pppasyncstart(sc)
     register struct ppp_softc *sc;
 {
     register struct tty *tp = (struct tty *) sc->sc_devp;
+    register struct mbuf *m;
+    register int len;
+    register u_char *start, *stop, *cp;
+    int n, ndone, done, idle;
+    struct mbuf *m2;
     int s;
-
+                
+    idle = 0;
+    while (CCOUNT(&tp->t_outq) < PPP_HIWAT) {
+        /*
+         * See if we have an existing packet partly sent.
+         * If not, get a new packet and start sending it.
+         */
+        m = sc->sc_outm;
+        if (m == NULL) {
+            /*
+             * Get another packet to be sent.
+             */
+            m = ppp_dequeue(sc); 
+            if (m == NULL) {
+                idle = 1;
+                break;
+            }
+ 
+            /*
+             * The extra PPP_FLAG will start up a new packet, and thus
+             * will flush any accumulated garbage.  We do this whenever
+             * the line may have been idle for some time.
+             */
+            if (CCOUNT(&tp->t_outq) == 0) {
+                ++sc->sc_stats.ppp_obytes;
+                (void) putc(PPP_FLAG, &tp->t_outq);
+            }
+   
+            /* Calculate the FCS for the first mbuf's worth. */
+            sc->sc_outfcs = pppfcs(PPP_INITFCS, mtod(m, u_char *), m->m_len);
+            sc->sc_if.if_lastchange = time;
+        }  
+        
+        for (;;) {
+            start = mtod(m, u_char *);
+            len = m->m_len;
+            stop = start + len;
+            while (len > 0) {    
+                /*
+                 * Find out how many bytes in the string we can
+                 * handle without doing something special.
+                 */
+                for (cp = start; cp < stop; cp++)
+                    if (ESCAPE_P(*cp))
+                        break;
+                n = cp - start;
+                if (n) {
+                    /* NetBSD (0.9 or later), 4.3-Reno or similar. */
+                    ndone = n - b_to_q(start, n, &tp->t_outq);
+                    len -= ndone;
+                    start += ndone;
+                    sc->sc_stats.ppp_obytes += ndone;
+   
+                    if (ndone < n)
+                        break;  /* packet doesn't fit */
+                }
+                /*
+                 * If there are characters left in the mbuf,
+                 * the first one must be special.
+                 * Put it out in a different form.
+                 */
+                if (len) {
+                    s = spltty();
+                    if (putc(PPP_ESCAPE, &tp->t_outq))
+                        break;
+                    if (putc(*start ^ PPP_TRANS, &tp->t_outq)) {
+                        (void) unputc(&tp->t_outq);
+                        splx(s);
+                        break;
+                    }
+                    splx(s);   
+                    sc->sc_stats.ppp_obytes += 2;
+                    start++;
+                    len--;
+                }
+            }
+                    
+            /*
+             * If we didn't empty this mbuf, remember where we're up to.
+             * If we emptied the last mbuf, try to add the FCS and closing
+             * flag, and if we can't, leave sc_outm pointing to m, but with
+             * m->m_len == 0, to remind us to output the FCS and flag later.
+             */
+            done = len == 0;
+            if (done && m->m_next == NULL) {
+                u_char *p, *q;
+                int c;
+                u_char endseq[8];
+                    
+                /*
+                 * We may have to escape the bytes in the FCS.  
+                 */
+                p = endseq;
+                c = ~sc->sc_outfcs & 0xFF;
+                if (ESCAPE_P(c)) {
+                    *p++ = PPP_ESCAPE;
+                    *p++ = c ^ PPP_TRANS;
+                } else
+                    *p++ = c;
+                c = (~sc->sc_outfcs >> 8) & 0xFF;
+                if (ESCAPE_P(c)) {
+                    *p++ = PPP_ESCAPE;
+                    *p++ = c ^ PPP_TRANS;
+                } else
+                    *p++ = c;
+                *p++ = PPP_FLAG;
+             
+                /*
+                 * Try to output the FCS and flag.  If the bytes
+                 * don't all fit, back out. 
+                 */
+                s = spltty();
+                for (q = endseq; q < p; ++q)
+                    if (putc(*q, &tp->t_outq)) {
+                        done = 0;
+                        for (; q > endseq; --q)
+                            unputc(&tp->t_outq);
+                        break;
+                    }
+                splx(s);
+                if (done)
+                    sc->sc_stats.ppp_obytes += q - endseq;
+            }
+                    
+            if (!done) {
+                /* remember where we got to */
+                m->m_data = start;
+                m->m_len = len;
+                break;
+            }
+                
+            /* Finished with this mbuf; free it and move on. */
+            MFREE(m, m2);
+            m = m2;
+            if (m == NULL) {
+                /* Finished a packet */
+                break;
+            }
+            sc->sc_outfcs = pppfcs(sc->sc_outfcs, mtod(m, u_char *), m->m_len);
+        }
+                        
+        /*
+         * If m == NULL, we have finished a packet.
+         * If m != NULL, we've either done as much work this time
+         * as we need to, or else we've filled up the output queue.
+         */
+        sc->sc_outm = m;
+        if (m)
+            break;  
+    }
+                
+    /* Call pppstart to start output again if necessary. */
     s = spltty();
     pppstart(tp);
-    splx(s);
+             
+    /*          
+     * This timeout is needed for operation on a pseudo-tty,   
+     * because the pty code doesn't call pppstart after it has
+     * drained the t_outq.
+     */
+    if (!idle && (sc->sc_flags & SC_TIMEOUT) == 0) {
+        timeout(ppp_timeout, (void *) sc, 1);
+        sc->sc_flags |= SC_TIMEOUT;
+    }
+         
+    splx(s);            
+          
 }
 
 /*
@@ -530,187 +699,34 @@ pppasyncctlp(sc)
  * Start output on async tty interface.  Get another datagram
  * to send from the interface queue and start sending it.
  * Called at spltty or higher.
- */
+ */   
 int
 pppstart(tp)
     register struct tty *tp;
 {
     register struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
-    register struct mbuf *m;
-    register int len;
-    register u_char *start, *stop, *cp;
-    int n, ndone, done, idle;
-    struct mbuf *m2;
-
-    if (((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0)
-	|| sc == NULL || tp != (struct tty *) sc->sc_devp) {
-	if (tp->t_oproc != NULL)
-	    (*tp->t_oproc)(tp);
-	return 0;
-    }
-
-    idle = 0;
-    while (CCOUNT(&tp->t_outq) < PPP_HIWAT) {
-	/*
-	 * See if we have an existing packet partly sent.
-	 * If not, get a new packet and start sending it.
-	 */
-	m = sc->sc_outm;
-	if (m == NULL) {
-	    /*
-	     * Get another packet to be sent.
-	     */
-	    m = ppp_dequeue(sc);
-	    if (m == NULL) {
-		idle = 1;
-		break;
-	    }
-
-	    /*
-	     * The extra PPP_FLAG will start up a new packet, and thus
-	     * will flush any accumulated garbage.  We do this whenever
-	     * the line may have been idle for some time.
-	     */
-	    if (CCOUNT(&tp->t_outq) == 0) {
-		++sc->sc_stats.ppp_obytes;
-		(void) putc(PPP_FLAG, &tp->t_outq);
-	    }
-
-	    /* Calculate the FCS for the first mbuf's worth. */
-	    sc->sc_outfcs = pppfcs(PPP_INITFCS, mtod(m, u_char *), m->m_len);
-	    sc->sc_if.if_lastchange = time;
-	}
-
-	for (;;) {
-	    start = mtod(m, u_char *);
-	    len = m->m_len;
-	    stop = start + len;
-	    while (len > 0) {
-		/*
-		 * Find out how many bytes in the string we can
-		 * handle without doing something special.
-		 */
-		for (cp = start; cp < stop; cp++)
-		    if (ESCAPE_P(*cp))
-			break;
-		n = cp - start;
-		if (n) {
-		    /* NetBSD (0.9 or later), 4.3-Reno or similar. */
-		    ndone = n - b_to_q(start, n, &tp->t_outq);
-		    len -= ndone;
-		    start += ndone;
-		    sc->sc_stats.ppp_obytes += ndone;
-
-		    if (ndone < n)
-			break;	/* packet doesn't fit */
-		}
-		/*
-		 * If there are characters left in the mbuf,
-		 * the first one must be special..
-		 * Put it out in a different form.
-		 */
-		if (len) {
-		    if (putc(PPP_ESCAPE, &tp->t_outq))
-			break;
-		    if (putc(*start ^ PPP_TRANS, &tp->t_outq)) {
-			(void) unputc(&tp->t_outq);
-			break;
-		    }
-		    sc->sc_stats.ppp_obytes += 2;
-		    start++;
-		    len--;
-		}
-	    }
-
-	    /*
-	     * If we didn't empty this mbuf, remember where we're up to.
-	     * If we emptied the last mbuf, try to add the FCS and closing
-	     * flag, and if we can't, leave sc_outm pointing to m, but with
-	     * m->m_len == 0, to remind us to output the FCS and flag later.
-	     */
-	    done = len == 0;
-	    if (done && m->m_next == NULL) {
-		u_char *p, *q;
-		int c;
-		u_char endseq[8];
-
-		/*
-		 * We may have to escape the bytes in the FCS.
-		 */
-		p = endseq;
-		c = ~sc->sc_outfcs & 0xFF;
-		if (ESCAPE_P(c)) {
-		    *p++ = PPP_ESCAPE;
-		    *p++ = c ^ PPP_TRANS;
-		} else
-		    *p++ = c;
-		c = (~sc->sc_outfcs >> 8) & 0xFF;
-		if (ESCAPE_P(c)) {
-		    *p++ = PPP_ESCAPE;
-		    *p++ = c ^ PPP_TRANS;
-		} else
-		    *p++ = c;
-		*p++ = PPP_FLAG;
-
-		/*
-		 * Try to output the FCS and flag.  If the bytes
-		 * don't all fit, back out.
-		 */
-		for (q = endseq; q < p; ++q)
-		    if (putc(*q, &tp->t_outq)) {
-			done = 0;
-			for (; q > endseq; --q)
-			    unputc(&tp->t_outq);
-			break;
-		    }
-		sc->sc_stats.ppp_obytes += q - endseq;
-	    }
-
-	    if (!done) {
-		/* remember where we got to */
-		m->m_data = start;
-		m->m_len = len;
-		break;
-	    }
-
-	    /* Finished with this mbuf; free it and move on. */
-	    MFREE(m, m2);
-	    m = m2;
-	    if (m == NULL) {
-		/* Finished a packet */
-		break;
-	    }
-	    sc->sc_outfcs = pppfcs(sc->sc_outfcs, mtod(m, u_char *), m->m_len);
-	}
-
-	/*
-	 * Here we have either finished a packet (m == NULL)
-	 * or filled up the output queue (m != NULL).
-	 */
-	sc->sc_outm = m;
-	if (m)
-	    break;
-    }
-
+        
     /*
      * If there is stuff in the output queue, send it now.
      * We are being called in lieu of ttstart and must do what it would.
      */
     if (tp->t_oproc != NULL)
-	(*tp->t_oproc)(tp);
+        (*tp->t_oproc)(tp);
 
     /*
-     * This timeout is needed for operation on a pseudo-tty,
-     * because the pty code doesn't call pppstart after it has
-     * drained the t_outq.
+     * If the transmit queue has drained and the tty has not hung up
+     * or been disconnected from the ppp unit, then tell if_ppp.c that
+     * we need more output.
      */
-    if (!idle && (sc->sc_flags & SC_TIMEOUT) == 0) {
-	timeout(ppp_timeout, (void *) sc, 1);
-	sc->sc_flags |= SC_TIMEOUT;
+    if (CCOUNT(&tp->t_outq) < PPP_LOWAT
+        && !((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0)
+        && sc != NULL && tp == (struct tty *) sc->sc_devp) {
+        ppp_restart(sc);
     }
-
+ 
     return 0;
-}
+}  
+
 
 /*
  * Timeout routine - try to start some more output.
@@ -777,7 +793,6 @@ pppinput(c, tp)
     if (sc == NULL || tp != (struct tty *) sc->sc_devp)
 	return 0;
 
-    s = spltty();		/* should be unnecessary */
     ++tk_nin;
     ++sc->sc_stats.ppp_ibytes;
 
@@ -809,6 +824,7 @@ pppinput(c, tp)
 	}
     }
 
+    s = spltty();
     if (c & 0x80)
 	sc->sc_flags |= SC_RCV_B7_1;
     else
@@ -818,6 +834,7 @@ pppinput(c, tp)
     else
 	sc->sc_flags |= SC_RCV_EVNP;
 
+    splx(s);
     if (sc->sc_flags & SC_LOG_RAWIN)
 	ppplogchar(sc, c);
 
@@ -834,6 +851,7 @@ pppinput(c, tp)
 	 */
 	if (sc->sc_flags & (SC_FLUSH | SC_ESCAPED)
 	    || (ilen > 0 && sc->sc_fcs != PPP_GOODFCS)) {
+	    s = spltty();
 	    sc->sc_flags |= SC_PKTLOST;	/* note the dropped packet */
 	    if ((sc->sc_flags & (SC_FLUSH | SC_ESCAPED)) == 0){
 		if (sc->sc_flags & SC_DEBUG)
@@ -854,8 +872,8 @@ pppinput(c, tp)
 		sc->sc_if.if_ierrors++;
 		sc->sc_stats.ppp_ierrors++;
 		sc->sc_flags |= SC_PKTLOST;
+	        splx(s);
 	    }
-	    splx(s);
 	    return 0;
 	}
 
@@ -876,25 +894,27 @@ pppinput(c, tp)
 	sc->sc_mc->m_next = NULL;
 
 	ppppktin(sc, m, sc->sc_flags & SC_PKTLOST);
-	sc->sc_flags &= ~SC_PKTLOST;
+        if (sc->sc_flags & SC_PKTLOST) {
+            s = spltty();
+	    sc->sc_flags &= ~SC_PKTLOST;
+	    splx(s);
+	}
 
 	pppgetm(sc);
-	splx(s);
 	return 0;
     }
 
     if (sc->sc_flags & SC_FLUSH) {
 	if (sc->sc_flags & SC_LOG_FLUSH)
 	    ppplogchar(sc, c);
-	splx(s);
 	return 0;
     }
 
     if (c < 0x20 && (sc->sc_rasyncmap & (1 << c))) {
-	splx(s);
 	return 0;
     }
 
+    s = spltty();
     if (sc->sc_flags & SC_ESCAPED) {
 	sc->sc_flags &= ~SC_ESCAPED;
 	c ^= PPP_TRANS;
@@ -903,6 +923,7 @@ pppinput(c, tp)
 	splx(s);
 	return 0;
     }
+    splx(s);
 
     /*
      * Initialize buffer on first octet received.
@@ -993,9 +1014,11 @@ pppinput(c, tp)
 
  flush:
     if (!(sc->sc_flags & SC_FLUSH)) {
+	s = spltty();
 	sc->sc_if.if_ierrors++;
 	sc->sc_stats.ppp_ierrors++;
 	sc->sc_flags |= SC_FLUSH;
+	splx(s);
 	if (sc->sc_flags & SC_LOG_FLUSH)
 	    ppplogchar(sc, c);
     }

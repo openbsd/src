@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.7 1996/05/10 12:31:10 deraadt Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.8 1996/07/25 14:20:50 joshd Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.31 1996/05/07 02:40:36 thorpej Exp $	*/
 
 /*
@@ -91,6 +91,10 @@
 #include <sys/time.h>
 #include <sys/malloc.h>
 
+#if NetBSD1_0 && defined(i386)
+#include <machine/psl.h>
+#endif
+
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
@@ -119,13 +123,16 @@
 #include <net/if_pppvar.h>
 #include <machine/cpu.h>
 
+#if NetBSD1_0
+#define splsoftnet    splnet
+#endif
+
 #ifdef PPP_COMPRESS
 #define PACKETPTR	struct mbuf *
 #include <net/ppp-comp.h>
 #endif
 
 static void	ppp_requeue __P((struct ppp_softc *));
-static void	ppp_outpkt __P((struct ppp_softc *));
 static void	ppp_ccp __P((struct ppp_softc *, struct mbuf *m, int rcvd));
 static void	ppp_ccp_closed __P((struct ppp_softc *));
 static void	ppp_inproc __P((struct ppp_softc *, struct mbuf *));
@@ -200,6 +207,19 @@ pppattach()
 	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
 #endif
     }
+
+#if NetBSD1_0 && defined(i386)
+    /*
+     * XXX kludge to fix the bug in the i386 interrupt handling code,
+     * where software interrupts could be taken while hardware
+     * interrupts were blocked.
+     */
+    if ((imask[IPL_TTY] & (1 << SIR_NET)) == 0) {
+      imask[IPL_TTY] |= (1 << SIR_NET);
+      intr_calculatemasks();
+    }
+#endif
+
 }
 
 /*
@@ -839,36 +859,150 @@ ppp_requeue(sc)
 }
 
 /*
+ * Transmitter has finished outputting some stuff;
+ * remember to call sc->sc_start later at splsoftnet.
+ */
+void
+ppp_restart(sc)
+    struct ppp_softc *sc;
+{
+    int s = splimp();
+
+    sc->sc_flags &= ~SC_TBUSY;
+    schednetisr(NETISR_PPP);
+    splx(s);
+}
+
+
+/*
  * Get a packet to send.  This procedure is intended to be called at
- * spltty or splimp, so it takes little time.  If there isn't a packet
- * waiting to go out, it schedules a software interrupt to prepare a
- * new packet; the device start routine gets called again when a
- * packet is ready.
+ * splsoftnet, since it may involve time-consuming operations such as
+ * applying VJ compression, packet compression, address/control and/or
+ * protocol field compression to the packet.
  */
 struct mbuf *
 ppp_dequeue(sc)
     struct ppp_softc *sc;
 {
-    struct mbuf *m;
+    struct mbuf *m, *mp;
+    u_char *cp;
+    int address, control, protocol;
     int s = splhigh();
-
-    m = sc->sc_togo;
-    if (m) {
-	/*
-	 * Had a packet waiting - send it.
-	 */
-	sc->sc_togo = NULL;
-	sc->sc_flags |= SC_TBUSY;
-	splx(s);
-	return m;
-    }
+  
     /*
-     * Remember we wanted a packet and schedule a software interrupt.
+     * Grab a packet to send: first try the fast queue, then the
+     * normal queue.
      */
-    sc->sc_flags &= ~SC_TBUSY;
-    schednetisr(NETISR_PPP);
-    splx(s);
-    return NULL;
+    IF_DEQUEUE(&sc->sc_fastq, m);
+    if (m == NULL)   
+	IF_DEQUEUE(&sc->sc_if.if_snd, m);
+    if (m == NULL)
+    {   splx(s);
+        return NULL;
+    }
+  
+    ++sc->sc_stats.ppp_opackets;
+
+    /*
+     * Extract the ppp header of the new packet.
+     * The ppp header will be in one mbuf.  
+     */
+    cp = mtod(m, u_char *);
+    address = PPP_ADDRESS(cp);
+    control = PPP_CONTROL(cp);
+    protocol = PPP_PROTOCOL(cp);
+    
+    switch (protocol) {
+    case PPP_IP:
+#ifdef VJC
+        /*
+         * If the packet is a TCP/IP packet, see if we can compress it.
+         */
+        if ((sc->sc_flags & SC_COMP_TCP) && sc->sc_comp != NULL) {
+            struct ip *ip;
+            int type;
+    
+            mp = m;
+            ip = (struct ip *) (cp + PPP_HDRLEN);
+            if (mp->m_len <= PPP_HDRLEN) {
+                mp = mp->m_next;
+                if (mp == NULL) 
+                    break;
+                ip = mtod(mp, struct ip *);
+            }
+            /* this code assumes the IP/TCP header is in one non-shared
+mbuf */
+            if (ip->ip_p == IPPROTO_TCP) {
+                type = sl_compress_tcp(mp, ip, sc->sc_comp,
+                                       !(sc->sc_flags & SC_NO_TCP_CCID));
+                switch (type) {
+                case TYPE_UNCOMPRESSED_TCP:
+                    protocol = PPP_VJC_UNCOMP;
+                    break;
+                case TYPE_COMPRESSED_TCP:
+                    protocol = PPP_VJC_COMP;
+                    cp = mtod(m, u_char *);
+                    cp[0] = address;    /* header has moved */
+                    cp[1] = control;
+                    cp[2] = 0;
+                    break;
+                }
+                cp[3] = protocol;       /* update protocol in PPP header */
+            }
+        }
+#endif  /* VJC */
+        break;
+                
+#ifdef PPP_COMPRESS
+    case PPP_CCP:
+        ppp_ccp(sc, m, 0);
+        break;
+#endif  /* PPP_COMPRESS */
+    }
+                                       
+#ifdef PPP_COMPRESS
+    if (protocol != PPP_LCP && protocol != PPP_CCP
+        && sc->sc_xc_state && (sc->sc_flags & SC_COMP_RUN)) {
+        struct mbuf *mcomp = NULL;
+        int slen, clen;
+                    
+        slen = 0;
+        for (mp = m; mp != NULL; mp = mp->m_next)
+            slen += mp->m_len;
+        clen = (*sc->sc_xcomp->compress)
+            (sc->sc_xc_state, &mcomp, m, slen,
+             (sc->sc_flags & SC_CCP_UP? sc->sc_if.if_mtu: 0));
+        if (mcomp != NULL) {
+            m_freem(m);
+            m = mcomp;
+            cp = mtod(m, u_char *);
+            protocol = cp[3];
+        }       
+    }
+#endif  /* PPP_COMPRESS */
+        
+    /*
+     * Compress the address/control and protocol, if possible.
+     */
+    if (sc->sc_flags & SC_COMP_AC && address == PPP_ALLSTATIONS &&
+        control == PPP_UI && protocol != PPP_ALLSTATIONS &&
+        protocol != PPP_LCP) {
+        /* can compress address/control */
+        m->m_data += 2;
+        m->m_len -= 2; 
+    }               
+    if (sc->sc_flags & SC_COMP_PROT && protocol < 0xFF) {
+        /* can compress protocol */
+        if (mtod(m, u_char *) == cp) {
+            cp[2] = cp[1];      /* move address/control up */
+            cp[1] = cp[0];
+        }
+        ++m->m_data;
+        --m->m_len;
+    }
+    splx(s);        
+    return m;
+                
 }
 
 /*
@@ -878,150 +1012,33 @@ void
 pppintr()
 {
     struct ppp_softc *sc;
-    int i, s;
+    int i, s, s2;
     struct mbuf *m;
-
+            
     sc = ppp_softc;
+    s = splsoftnet(); 
     for (i = 0; i < NPPP; ++i, ++sc) {
-	if (!(sc->sc_flags & SC_TBUSY) && sc->sc_togo == NULL
-	    && (sc->sc_if.if_snd.ifq_head || sc->sc_fastq.ifq_head))
-	    ppp_outpkt(sc);
-	for (;;) {
-	    s = splhigh();
-	    IF_DEQUEUE(&sc->sc_rawq, m);
-	    splx(s);
-	    if (m == NULL)
-		break;
-	    ppp_inproc(sc, m);
-	}
+        if (!(sc->sc_flags & SC_TBUSY)
+            && (sc->sc_if.if_snd.ifq_head || sc->sc_fastq.ifq_head)) {
+            s2 = splimp();
+            sc->sc_flags |= SC_TBUSY;
+            splx(s2);
+            (*sc->sc_start)(sc);
+        }
+        for (;;) {
+            s2 = splimp();
+            IF_DEQUEUE(&sc->sc_rawq, m);
+            splx(s2);
+            if (m == NULL)
+                break;
+            ppp_inproc(sc, m);
+        }
     }
+    splx(s);
+ 
 }
 
-/*
- * Grab another packet off a queue and apply VJ compression,
- * packet compression, address/control and/or protocol compression
- * if enabled.  Should be called at splsoftnet.
- */
-static void
-ppp_outpkt(sc)
-    struct ppp_softc *sc;
-{
-    struct mbuf *m, *mp;
-    u_char *cp;
-    int address, control, protocol;
 
-    /*
-     * Grab a packet to send: first try the fast queue, then the
-     * normal queue.
-     */
-    IF_DEQUEUE(&sc->sc_fastq, m);
-    if (m == NULL)
-	IF_DEQUEUE(&sc->sc_if.if_snd, m);
-    if (m == NULL)
-	return;
-
-    ++sc->sc_stats.ppp_opackets;
-
-    /*
-     * Extract the ppp header of the new packet.
-     * The ppp header will be in one mbuf.
-     */
-    cp = mtod(m, u_char *);
-    address = PPP_ADDRESS(cp);
-    control = PPP_CONTROL(cp);
-    protocol = PPP_PROTOCOL(cp);
-
-    switch (protocol) {
-    case PPP_IP:
-#ifdef VJC
-	/*
-	 * If the packet is a TCP/IP packet, see if we can compress it.
-	 */
-	if ((sc->sc_flags & SC_COMP_TCP) && sc->sc_comp != NULL) {
-	    struct ip *ip;
-	    int type;
-
-	    mp = m;
-	    ip = (struct ip *) (cp + PPP_HDRLEN);
-	    if (mp->m_len <= PPP_HDRLEN) {
-		mp = mp->m_next;
-		if (mp == NULL)
-		    break;
-		ip = mtod(mp, struct ip *);
-	    }
-	    /* this code assumes the IP/TCP header is in one non-shared mbuf */
-	    if (ip->ip_p == IPPROTO_TCP) {
-		type = sl_compress_tcp(mp, ip, sc->sc_comp,
-				       !(sc->sc_flags & SC_NO_TCP_CCID));
-		switch (type) {
-		case TYPE_UNCOMPRESSED_TCP:
-		    protocol = PPP_VJC_UNCOMP;
-		    break;
-		case TYPE_COMPRESSED_TCP:
-		    protocol = PPP_VJC_COMP;
-		    cp = mtod(m, u_char *);
-		    cp[0] = address;	/* header has moved */
-		    cp[1] = control;
-		    cp[2] = 0;
-		    break;
-		}
-		cp[3] = protocol;	/* update protocol in PPP header */
-	    }
-	}
-#endif	/* VJC */
-	break;
-
-#ifdef PPP_COMPRESS
-    case PPP_CCP:
-	ppp_ccp(sc, m, 0);
-	break;
-#endif	/* PPP_COMPRESS */
-    }
-
-#ifdef PPP_COMPRESS
-    if (protocol != PPP_LCP && protocol != PPP_CCP
-	&& sc->sc_xc_state && (sc->sc_flags & SC_COMP_RUN)) {
-	struct mbuf *mcomp = NULL;
-	int slen, clen;
-
-	slen = 0;
-	for (mp = m; mp != NULL; mp = mp->m_next)
-	    slen += mp->m_len;
-	clen = (*sc->sc_xcomp->compress)
-	    (sc->sc_xc_state, &mcomp, m, slen,
-	     (sc->sc_flags & SC_CCP_UP? sc->sc_if.if_mtu: 0));
-	if (mcomp != NULL) {
-	    m_freem(m);
-	    m = mcomp;
-	    cp = mtod(m, u_char *);
-	    protocol = cp[3];
-	}
-    }
-#endif	/* PPP_COMPRESS */
-
-    /*
-     * Compress the address/control and protocol, if possible.
-     */
-    if (sc->sc_flags & SC_COMP_AC && address == PPP_ALLSTATIONS &&
-	control == PPP_UI && protocol != PPP_ALLSTATIONS &&
-	protocol != PPP_LCP) {
-	/* can compress address/control */
-	m->m_data += 2;
-	m->m_len -= 2;
-    }
-    if (sc->sc_flags & SC_COMP_PROT && protocol < 0xFF) {
-	/* can compress protocol */
-	if (mtod(m, u_char *) == cp) {
-	    cp[2] = cp[1];	/* move address/control up */
-	    cp[1] = cp[0];
-	}
-	++m->m_data;
-	--m->m_len;
-    }
-
-    sc->sc_togo = m;
-    (*sc->sc_start)(sc);
-}
 
 #ifdef PPP_COMPRESS
 /*
@@ -1068,7 +1085,7 @@ ppp_ccp(sc, m, rcvd)
     case CCP_TERMACK:
 	/* CCP must be going down - disable compression */
 	if (sc->sc_flags & SC_CCP_UP) {
-	    s = splhigh();
+	    s = splimp();
 	    sc->sc_flags &= ~(SC_CCP_UP | SC_COMP_RUN | SC_DECOMP_RUN);
 	    splx(s);
 	}
@@ -1084,7 +1101,7 @@ ppp_ccp(sc, m, rcvd)
 		    && (*sc->sc_xcomp->comp_init)
 			(sc->sc_xc_state, dp + CCP_HDRLEN, slen - CCP_HDRLEN,
 			 sc->sc_unit, 0, sc->sc_flags & SC_DEBUG)) {
-		    s = splhigh();
+		    s = splimp();
 		    sc->sc_flags |= SC_COMP_RUN;
 		    splx(s);
 		}
@@ -1095,7 +1112,7 @@ ppp_ccp(sc, m, rcvd)
 			(sc->sc_rc_state, dp + CCP_HDRLEN, slen - CCP_HDRLEN,
 			 sc->sc_unit, 0, sc->sc_mru,
 			 sc->sc_flags & SC_DEBUG)) {
-		    s = splhigh();
+		    s = splimp();
 		    sc->sc_flags |= SC_DECOMP_RUN;
 		    sc->sc_flags &= ~(SC_DC_ERROR | SC_DC_FERROR);
 		    splx(s);
@@ -1152,7 +1169,7 @@ ppppktin(sc, m, lost)
     struct mbuf *m;
     int lost;
 {
-    int s = splhigh();
+    int s = splimp();
 
     if (lost)
 	m->m_flags |= M_ERRMARK;
@@ -1198,7 +1215,7 @@ ppp_inproc(sc, m)
 
     if (m->m_flags & M_ERRMARK) {
 	m->m_flags &= ~M_ERRMARK;
-	s = splhigh();
+	s = splimp();
 	sc->sc_flags |= SC_VJ_RESET;
 	splx(s);
     }
@@ -1230,7 +1247,7 @@ ppp_inproc(sc, m)
 	     */
 	    if (sc->sc_flags & SC_DEBUG)
 		printf("%s: decompress failed %d\n", ifp->if_xname, rv);
-	    s = splhigh();
+	    s = splimp();
 	    sc->sc_flags |= SC_VJ_RESET;
 	    if (rv == DECOMP_ERROR)
 		sc->sc_flags |= SC_DC_ERROR;
@@ -1261,7 +1278,7 @@ ppp_inproc(sc, m)
 	 */
 	if (sc->sc_comp)
 	    sl_uncompress_tcp(NULL, 0, TYPE_ERROR, sc->sc_comp);
-	s = splhigh();
+	s = splimp();
 	sc->sc_flags &= ~SC_VJ_RESET;
 	splx(s);
     }
@@ -1417,7 +1434,7 @@ ppp_inproc(sc, m)
     /*
      * Put the packet on the appropriate input queue.
      */
-    s = splhigh();
+    s = splimp();
     if (IF_QFULL(inq)) {
 	IF_DROP(inq);
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slcompress.c,v 1.4 1996/04/21 22:28:46 deraadt Exp $	*/
+/*	$OpenBSD: slcompress.c,v 1.5 1996/07/25 14:20:52 joshd Exp $	*/
 /*	$NetBSD: slcompress.c,v 1.15 1996/03/15 02:28:12 paulus Exp $	*/
 
 /*
@@ -478,9 +478,17 @@ sl_uncompress_tcp_core(buf, buflen, total_len, type, comp, hdrp, hlenp)
 		cs = &comp->rstate[comp->last_recv = ip->ip_p];
 		comp->flags &=~ SLF_TOSS;
 		ip->ip_p = IPPROTO_TCP;
-		hlen = ip->ip_hl;
-		hlen += ((struct tcphdr *)&((int32_t *)ip)[hlen])->th_off;
-		hlen <<= 2;
+                /*
+                 * Calculate the size of the TCP/IP header and make sure that
+                 * we don't overflow the space we have available for it.
+                 */
+                hlen = ip->ip_hl << 2;
+                if (hlen + sizeof(struct tcphdr) > buflen)
+                        goto bad;
+                hlen += ((struct tcphdr *)&((char *)ip)[hlen])->th_off << 2;
+                if (hlen > MAX_HDR || hlen > buflen)
+                        goto bad;
+
 		BCOPY(ip, &cs->cs_ip, hlen);
 		cs->cs_hlen = hlen;
 		INCR(sls_uncompressedin)
