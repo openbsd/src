@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.7 1997/01/27 23:21:13 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.8 1997/08/31 20:42:21 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -480,7 +480,11 @@ sys_ioctl(p, v, retval)
 	case FIOSETOWN:
 		tmp = *(int *)data;
 		if (fp->f_type == DTYPE_SOCKET) {
-			((struct socket *)fp->f_data)->so_pgid = tmp;
+			struct socket *so = (struct socket *)fp->f_data;
+
+			so->so_pgid = tmp;
+			so->so_siguid = p->p_cred->p_ruid;
+			so->so_sigeuid = p->p_ucred->cr_uid;
 			error = 0;
 			break;
 		}

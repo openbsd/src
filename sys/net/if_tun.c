@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.19 1997/07/29 07:18:20 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.20 1997/08/31 20:42:32 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -84,7 +84,9 @@
 struct tun_softc {
 	u_short	tun_flags;		/* misc flags */
 	struct	ifnet tun_if;		/* the interface */
-	int	tun_pgrp;		/* the process group - if any */
+	pid_t	tun_pgid;		/* the process group - if any */
+	uid_t	tun_siguid;		/* uid for process that set tun_pgid */
+	uid_t	tun_sigeuid;		/* euid for process that set tun_pgid */
 	struct	selinfo	tun_rsel;	/* read select */
 	struct	selinfo	tun_wsel;	/* write select (not used) */
 };
@@ -228,7 +230,7 @@ tunclose(dev, flag, mode, p)
 		}
 		splx(s);
 	}
-	tp->tun_pgrp = 0;
+	tp->tun_pgid = 0;
 	selwakeup(&tp->tun_rsel);
 		
 	TUNDEBUG(("%s: closed\n", ifp->if_xname));
@@ -331,7 +333,6 @@ tun_output(ifp, m0, dst, rt)
 {
 	struct tun_softc *tp = ifp->if_softc;
 	struct tunnel_header *th;
-	struct proc	*p;
 	int		s;
 
 	TUNDEBUG(("%s: tun_output\n", ifp->if_xname));
@@ -371,12 +372,9 @@ tun_output(ifp, m0, dst, rt)
 		tp->tun_flags &= ~TUN_RWAIT;
 		wakeup((caddr_t)tp);
 	}
-	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgrp) {
-		if (tp->tun_pgrp > 0)
-			gsignal(tp->tun_pgrp, SIGIO);
-		else if ((p = pfind(-tp->tun_pgrp)) != NULL)
-			psignal(p, SIGIO);
-	}
+	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
+		csignal(tp->tun_pgid, SIGIO,
+		    tp->tun_siguid, tp->tun_sigeuid);
 	selwakeup(&tp->tun_rsel);
 	return 0;
 }
@@ -446,10 +444,12 @@ tunioctl(dev, cmd, data, flag, p)
 		splx(s);
 		break;
 	case TIOCSPGRP:
-		tp->tun_pgrp = *(int *)data;
+		tp->tun_pgid = *(int *)data;
+		tp->tun_siguid = p->p_cred->p_ruid;
+		tp->tun_sigeuid = p->p_ucred->cr_uid;
 		break;
 	case TIOCGPGRP:
-		*(int *)data = tp->tun_pgrp;
+		*(int *)data = tp->tun_pgid;
 		break;
 	default:
 		splx(s);

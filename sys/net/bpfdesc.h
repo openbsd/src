@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.2 1997/02/24 13:33:56 niklas Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.3 1997/08/31 20:42:30 deraadt Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,8 @@ struct bpf_d {
 	int		bd_async;	/* non-zero if packet reception should generate signal */
 	int		bd_sig;		/* signal to send upon packet reception */
 	pid_t		bd_pgid;	/* process or group id for signal */
+	uid_t		bd_siguid;	/* uid for process that set pgid */
+	uid_t		bd_sigeuid;	/* euid for process that set pgid */
 #if BSD < 199103
 	u_char		bd_selcoll;	/* true if selects collide */
 	int		bd_timedout;

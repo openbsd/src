@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.6 1997/02/01 21:49:36 deraadt Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.7 1997/08/31 20:42:01 deraadt Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -156,6 +156,7 @@ int sigprop[NSIG + 1] = {
 int	coredump __P((struct proc *p));
 void	execsigs __P((struct proc *p));
 void	gsignal __P((int pgid, int sig));
+void	csignal __P((pid_t pgid, int signum, uid_t uid, uid_t euid));
 int	issignal __P((struct proc *p));
 void	pgsignal __P((struct pgrp *pgrp, int sig, int checkctty));
 void	postsig __P((int sig));

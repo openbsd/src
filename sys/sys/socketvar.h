@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.10 1997/02/28 04:04:13 angelos Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.11 1997/08/31 20:42:02 deraadt Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -71,6 +71,8 @@ struct socket {
 	short	so_timeo;		/* connection timeout */
 	u_short	so_error;		/* error affecting connection */
 	pid_t	so_pgid;		/* pgid for signals */
+	uid_t	so_siguid;		/* uid of process who set so_pgid */
+	uid_t	so_sigeuid;		/* euid of process who set so_pgid */
 	u_long	so_oobmark;		/* chars to oob mark */
 /*
  * Variables for socket buffering.

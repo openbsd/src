@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.16 1997/08/31 06:29:35 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.17 1997/08/31 20:42:24 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1060,11 +1060,6 @@ void
 sohasoutofband(so)
 	register struct socket *so;
 {
-	struct proc *p;
-
-	if (so->so_pgid < 0)
-		gsignal(-so->so_pgid, SIGURG);
-	else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
-		psignal(p, SIGURG);
+	csignal(so->so_pgid, SIGURG, so->so_siguid, so->so_sigeuid);
 	selwakeup(&so->so_rcv.sb_sel);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.16 1997/02/01 21:49:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.17 1997/08/31 20:42:18 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -481,6 +481,46 @@ killpg1(cp, signum, pgid, all)
 		}
 	}
 	return (nfound ? 0 : ESRCH);
+}
+
+#define CANDELIVER(uid, euid, p) \
+	(euid == 0 || \
+	(uid) == (p)->p_cred->p_ruid || \
+	(uid) == (p)->p_cred->p_svuid || \
+	(uid) == (p)->p_ucred->cr_uid || \
+	(euid) == (p)->p_cred->p_ruid || \
+	(euid) == (p)->p_cred->p_svuid || \
+	(euid) == (p)->p_ucred->cr_uid)
+
+/*
+ * Deliver signum to pgid, but first check uid/euid against each
+ * process and see if it is permitted.
+ */
+void
+csignal(pgid, signum, uid, euid)
+	pid_t pgid;
+	int signum;
+	uid_t uid, euid;
+{
+	struct pgrp *pgrp;
+	struct proc *p;
+
+	if (pgid == 0)
+		return;
+	if (pgid < 0) {
+		pgid = -pgid;
+		if ((pgrp = pgfind(pgid)) == NULL)
+			return;
+		for (p = pgrp->pg_members.lh_first; p;
+		    p = p->p_pglist.le_next)
+			if (CANDELIVER(uid, euid, p))
+				psignal(p, signum);
+	} else {
+		if ((p = pfind(pgid)) == NULL)
+			return;
+		if (CANDELIVER(uid, euid, p))
+			psignal(p, signum);
+	}
 }
 
 /*

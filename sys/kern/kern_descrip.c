@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.13 1997/08/21 05:17:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.14 1997/08/31 20:42:15 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
+#include <sys/ucred.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
@@ -251,8 +252,11 @@ sys_fcntl(p, v, retval)
 
 	case F_SETOWN:
 		if (fp->f_type == DTYPE_SOCKET) {
-			((struct socket *)fp->f_data)->so_pgid =
-			    (long)SCARG(uap, arg);
+			struct socket *so = (struct socket *)fp->f_data;
+
+			so->so_pgid = (long)SCARG(uap, arg);
+			so->so_siguid = p->p_cred->p_ruid;
+			so->so_sigeuid = p->p_ucred->cr_uid;
 			return (0);
 		}
 		if ((long)SCARG(uap, arg) <= 0) {

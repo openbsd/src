@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.2 1997/02/24 14:19:59 niklas Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.3 1997/08/31 20:42:23 deraadt Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/file.h>
+#include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -112,6 +113,8 @@ soo_ioctl(fp, cmd, data, p)
 
 	case SIOCSPGRP:
 		so->so_pgid = *(int *)data;
+		so->so_siguid = p->p_cred->p_ruid;
+		so->so_sigeuid = p->p_ucred->cr_uid;
 		return (0);
 
 	case SIOCGPGRP:

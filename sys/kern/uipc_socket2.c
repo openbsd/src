@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.5 1997/02/21 08:45:00 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.6 1997/08/31 20:42:26 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -315,20 +315,14 @@ sowakeup(so, sb)
 	register struct socket *so;
 	register struct sockbuf *sb;
 {
-	struct proc *p;
-
 	selwakeup(&sb->sb_sel);
 	sb->sb_flags &= ~SB_SEL;
 	if (sb->sb_flags & SB_WAIT) {
 		sb->sb_flags &= ~SB_WAIT;
 		wakeup((caddr_t)&sb->sb_cc);
 	}
-	if (so->so_state & SS_ASYNC) {
-		if (so->so_pgid < 0)
-			gsignal(-so->so_pgid, SIGIO);
-		else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
-			psignal(p, SIGIO);
-	}
+	if (so->so_state & SS_ASYNC)
+		csignal(so->so_pgid, SIGIO, so->so_siguid, so->so_sigeuid);
 }
 
 /*
