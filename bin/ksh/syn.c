@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.9 1998/06/25 19:02:20 millert Exp $	*/
+/*	$OpenBSD: syn.c,v 1.10 1998/10/09 16:21:36 millert Exp $	*/
 
 /*
  * shell parser (C version)
@@ -567,10 +567,10 @@ function_body(name, ksh_func)
 	if ((t->left = get_command(CONTIN)) == (struct op *) 0) {
 		/* create empty command so foo(): will work */
 		t->left = newtp(TCOM);
-		t->args = (char **) alloc(sizeof(char *), ATEMP);
-		t->args[0] = (char *) 0;
-		t->vars = (char **) alloc(sizeof(char *), ATEMP);
-		t->vars[0] = (char *) 0;
+		t->left->args = (char **) alloc(sizeof(char *), ATEMP);
+		t->left->args[0] = (char *) 0;
+		t->left->vars = (char **) alloc(sizeof(char *), ATEMP);
+		t->left->vars[0] = (char *) 0;
 	}
 	if (!old_func_parse)
 		e->flags &= ~EF_FUNC_PARSE;
