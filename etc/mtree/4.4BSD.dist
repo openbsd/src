@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.162 2004/02/26 05:22:42 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.163 2004/04/21 15:58:24 miod Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1043,11 +1043,17 @@ cat1
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1064,10 +1070,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1100,11 +1102,17 @@ cat3
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1121,10 +1129,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1142,11 +1146,17 @@ cat4
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1163,10 +1173,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1179,11 +1185,17 @@ cat5
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1195,15 +1207,11 @@ mvme88k
 ..
 mvmeppc
 ..
+pegasos
+..
 sparc
 ..
 sparc64
-..
-amd64
-..
-pegasos
-..
-cats
 ..
 vax
 ..
@@ -1226,11 +1234,17 @@ cat8
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1247,10 +1261,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1263,11 +1273,17 @@ cat9
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1284,10 +1300,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1300,11 +1312,17 @@ ps1
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1321,10 +1339,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1350,11 +1364,17 @@ ps3
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1371,10 +1391,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1392,11 +1408,17 @@ ps4
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1413,10 +1435,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1429,11 +1447,17 @@ ps5
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1450,10 +1474,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1476,11 +1496,17 @@ ps8
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1497,10 +1523,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1513,11 +1535,17 @@ ps9
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1534,10 +1562,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1550,11 +1574,17 @@ man1
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1571,10 +1601,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1602,11 +1628,17 @@ man4
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1623,10 +1655,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..
@@ -1654,11 +1682,17 @@ man8
 
 alpha
 ..
+amd64
+..
+cats
+..
 hp300
 ..
 hppa
 ..
 i386
+..
+luna88k
 ..
 mac68k
 ..
@@ -1675,10 +1709,6 @@ pegasos
 sparc
 ..
 sparc64
-..
-amd64
-..
-cats
 ..
 vax
 ..

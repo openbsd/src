@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.101 2004/03/31 19:13:04 mickey Exp $
+#	$OpenBSD: Makefile,v 1.102 2004/04/21 15:58:21 miod Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -132,7 +132,7 @@ ${CROSSDIRS}:
 			echo ${TARGET} ;;\
 		amiga|hp300|mac68k|mvme68k) \
 			echo m68k ;;\
-		mvme88k) \
+		luna88k|mvme88k) \
 			echo m88k ;;\
 		macppc|mvmeppc|pegasos) \
 			echo powerpc ;;\
