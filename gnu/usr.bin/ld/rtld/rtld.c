@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.40 1995/10/09 09:24:59 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.42 1996/01/09 00:02:28 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -177,8 +177,7 @@ static struct ld_entry	ld_entry = {
        void		binder_entry __P((void));
        long		binder __P((jmpslot_t *));
 static int		load_subs __P((struct so_map *));
-static struct so_map	*map_object __P((char *, struct sod *,
-					 struct so_map *));
+static struct so_map	*map_object __P((struct sod *, struct so_map *));
 static struct so_map	*alloc_link_map __P((	char *, struct sod *,
 						struct so_map *, caddr_t,
 						struct _dynamic *));
@@ -371,24 +370,22 @@ load_subs(smp)
 
 		while (next) {
 			struct so_map	*newmap;
-			char *name;
 
 			sodp = (struct sod *)(LM_LDBASE(smp) + next);
-			name = (char *)(sodp->sod_name + LM_LDBASE(smp));
 
-			if ((newmap = map_object(name, sodp, smp)) == NULL) {
+			if ((newmap = map_object(sodp, smp)) == NULL) {
 				if (!ld_tracing) {
 					char *fmt = sodp->sod_library ?
 						"%s: lib%s.so.%d.%d" :
 						"%s: %s";
-					err(1, fmt, main_progname, name,
+					err(1, fmt, main_progname,
+						sodp->sod_name+LM_LDBASE(smp),
 						sodp->sod_major,
 						sodp->sod_minor);
 				}
 				newmap = alloc_link_map(NULL, sodp, smp, 0, 0);
 			}
 			LM_PRIVATE(newmap)->spd_refcount++;
-			LM_PARENT(newmap) = smp;
 			next = sodp->sod_next;
 		}
 	}
@@ -418,7 +415,9 @@ ld_trace(smp)
 		if ((sodp = smp->som_sod) == NULL)
 			continue;
 
-		name = sodp->sod_name + LM_LDBASE(LM_PARENT(smp));
+		name = (char *)sodp->sod_name;
+		if (LM_PARENT(smp))
+			name += (long)LM_LDBASE(LM_PARENT(smp));
 
 		if ((path = smp->som_path) == NULL)
 			path = "not found";
@@ -525,11 +524,11 @@ alloc_link_map(path, sodp, parent, addr, dp)
  * in link map SMP.
  */
 static struct so_map *
-map_object(name, sodp, smp)
-	char		*name;
+map_object(sodp, smp)
 	struct sod	*sodp;
 	struct so_map	*smp;
 {
+	char		*name;
 	struct _dynamic	*dp;
 	char		*path, *ipath;
 	int		fd;
@@ -538,6 +537,10 @@ map_object(name, sodp, smp)
 	int		usehints = 0;
 	struct so_map	*p;
 
+	name = (char *)sodp->sod_name;
+	if (smp)
+		name += (long)LM_LDBASE(smp);
+
 	if (sodp->sod_library) {
 		usehints = 1;
 again:
@@ -545,7 +548,7 @@ again:
 		    LD_PATHS(smp->som_dynamic) == 0) {
 			ipath = NULL;
 		} else {
-			ipath =  LM_PATHS(smp);
+			ipath = LM_PATHS(smp);
 			add_search_path(ipath);
 		}
 
@@ -1113,7 +1116,8 @@ maphints()
 		return;
 	}
 
-	if (hheader->hh_version != LD_HINTS_VERSION_1) {
+	if (hheader->hh_version != LD_HINTS_VERSION_1 &&
+	    hheader->hh_version != LD_HINTS_VERSION_2) {
 		munmap(addr, hsize);
 		close(hfd);
 		hheader = (struct hints_header *)-1;
@@ -1158,7 +1162,8 @@ hinthash(cp, vmajor, vminor)
 		k = (((k << 1) + (k >> 14)) ^ (*cp++)) & 0x3fff;
 
 	k = (((k << 1) + (k >> 14)) ^ (vmajor*257)) & 0x3fff;
-	k = (((k << 1) + (k >> 14)) ^ (vminor*167)) & 0x3fff;
+	if (hheader->hh_version == LD_HINTS_VERSION_1)
+		k = (((k << 1) + (k >> 14)) ^ (vminor*167)) & 0x3fff;
 
 	return k;
 }
@@ -1301,7 +1306,7 @@ preload(paths)
 		sodp->sod_library = 0;
 		sodp->sod_major = sodp->sod_minor = 0;
 
-		if ((nsmp = map_object(cp, sodp, 0)) == NULL) {
+		if ((nsmp = map_object(sodp, 0)) == NULL) {
 			errx(1, "preload: %s: cannot map object", cp);
 		}
 		LM_PRIVATE(nsmp)->spd_refcount++;
@@ -1337,95 +1342,71 @@ static int dlerrno;
 void
 build_sod(name, sodp)
 	char		*name;
-	struct	sod	*sodp;
+	struct sod	*sodp;
 {
-	unsigned int	number;
 	unsigned int	tuplet;
-	unsigned int	strange = 0;
 	int		major, minor;
-	char		*realname, *tok, *tok1;
+	char		*realname, *tok, *etok, *cp;
 
 	/* default is an absolute or relative path */
-	sodp->sod_name = (long)strdup(name);	/* strtok is destructive */
+	sodp->sod_name = (long)strdup(name);    /* strtok is destructive */
 	sodp->sod_library = 0;
 	sodp->sod_major = sodp->sod_minor = 0;
+
 	/* asking for lookup? */
-	if (strncmp((char *)sodp->sod_name, "lib", 3) == NULL) {
-		/* skip over 'lib' */
-		tok = (char *)sodp->sod_name + 3;
-		/* dot guardian */
-		if((strchr(tok, '.') != NULL) && (*(tok+strlen(tok)-1)!='.')) {
-			tok = strtok(tok, ".");
-			/* default */
-			major = minor = -1;
+	if (strncmp((char *)sodp->sod_name, "lib", 3) != 0)
+		return;
+
+	/* skip over 'lib' */
+	cp = (char *)sodp->sod_name + 3;
+
+	/* dot guardian */
+	if ((strchr(cp, '.') == NULL) || (*(cp+strlen(cp)-1) == '.'))
+		return;
+
+	/* default */
+	major = minor = -1;
+
+	/* loop through name - parse skipping name */
+	for (tuplet = 0; (tok = strsep(&cp, ".")) != NULL; tuplet++) {
+		switch (tuplet) {
+		case 0:
 			/* removed 'lib' and extensions from name */
 			realname = tok;
-			/* loop through name - parse skipping name */
-			for(tuplet=1;((tok=strtok(NULL,"."))!=NULL);tuplet++) {
-				switch (tuplet) {
-					/* 'so' extension */
-					case 1:
-						if(strcmp(tok, "so") != NULL)
-							strange = 1;
-						break;
-					/* major ver extension */
-					case 2:
-						for(tok1=tok;
-						    (*tok1 != '\0');
-						    tok1++) {
-							if(isdigit(*tok1))
-								number = 1;
-							else {
-								number = 0;
-								break;
-							}
-						}
-						if(number)
-							major = atoi(tok);
-						else {
-							major = 0;
-							strange = 1;
-						}
-						break;
-					/* minor ver extension */
-					case 3:
-						for(tok1=tok;
-						    (*tok1 != '\0');
-						    tok1++) {
-							if(isdigit(*tok1))
-								number = 1;
-							else {
-								number = 0;
-								break;
-							}
-						}
-						if(number)
-							minor = atoi(tok);
-						else {
-							minor = 0;
-							strange = 1;
-						}
-						break;
-					/* if we get here, it must be weird */
-					default:
-						strange = 1;
-				} /* end switch */
-			} /* end for */
-			/* normal */
-			if(!strange) {
-				free((char *)sodp->sod_name);
-				sodp->sod_name = (long)strdup(realname);
-				sodp->sod_library = 1;
-				sodp->sod_major = major;
-				sodp->sod_minor = minor;
-			}
-			/* strange */
-			else {
-				free((char *)sodp->sod_name);
-				sodp->sod_name = (long)strdup(name);
-			}
-		} /* end if dots */
-	}  /* end if lookup */
+			break;
+		case 1:
+			/* 'so' extension */
+			if (strcmp(tok, "so") != 0)
+				goto backout;
+			break;
+		case 2:
+			/* major version extension */
+			major = strtol(tok, &etok, 10);
+			if (*tok == '\0' || *etok != '\0')
+				goto backout;
+			break;
+		case 3:
+			/* minor version extension */
+			minor = strtol(tok, &etok, 10);
+			if (*tok == '\0' || *etok != '\0')
+				goto backout;
+			break;
+		/* if we get here, it must be weird */
+		default:
+			goto backout;
+		}
+	}
+	cp = (char *)sodp->sod_name;
+	sodp->sod_name = (long)strdup(realname);
+	free(cp);
+	sodp->sod_library = 1;
+	sodp->sod_major = major;
+	sodp->sod_minor = minor;
+	return;
+
+backout:
+	free((char *)sodp->sod_name);
+	sodp->sod_name = (long)strdup(name);
 }
 
 static void *
@@ -1451,7 +1432,7 @@ __dlopen(name, mode)
 
 	build_sod(name, sodp);
 
-	if ((smp = map_object((char *)sodp->sod_name, sodp, 0)) == NULL) {
+	if ((smp = map_object(sodp, 0)) == NULL) {
 #ifdef DEBUG
 xprintf("%s: %s\n", name, strerror(errno));
 #endif
