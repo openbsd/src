@@ -161,6 +161,10 @@ setting
 .Fa sa_handler
 to
 .Dv SIG_DFL .
+Alternately, if the
+.Dv SA_RESETHAND
+flag is set the default action will be reinstated when the signal
+is first posted.
 The defaults are process termination, possibly with core dump;
 no action; stopping the process; or continuing the process.
 See the signal list below for each signal's default action.
