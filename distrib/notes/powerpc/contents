@@ -13,20 +13,57 @@ As well you may be interested in
 		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe; 
 		see installation section, below.
 
-For the imac systems, no floppy image is available, for now it
-is necessary to bootstrap the system from an existing BSD or unix system.
+There are several ways to boot a supported PowerPC Macintosh system into
+the OpenBSD installer.  Unfortunately they all currently require some
+limited knowledge of Open Firmware commands.  Examples are provided below
+for common configurations.
 
-At this time the bootloader and kernel must initally be loaded from
-the network.  To load the network bootloader and install kernel from
-the openfirmware prompt type "boot enet:,ofwboot /bsd.rd".  This
-assumes that that a machine is configured with bootp/tftp/nfs to make
-the kernel and bootloader available.
+To access Open Firmware:
+Upon booting, simultaneously hold down the Command, Option, O and F
+keys until you are presented with a > prompt at which you can enter
+commands, such as the "boot" command or others that allow you to view the
+structure of the device tree. (cd /devalias, .properties)
 
-To boot from CD, use "boot cd:,ofwboot /OSREV/powerpc/bsd.rd"
+Typical boot commands can be used by entering them at the Open Firmware
+prompt and pressing enter/return.
+
+To netboot from a pre-configured bootp/tftp/nfs server containing the
+"ofwboot" and "bsd.rd" files at the root directory of the tftp server:
+
+	boot enet:,ofwboot /bsd.rd
+
+To boot from a HFS formatted CD containing the "ofwboot", "bsd.rd" and all
+other installation files at the root directory of the CD:
+
+	boot cd:,ofwboot /OSREV/powerpc/bsd.rd
+
+Post-install, you will need to boot into OpenBSD from a hard drive, and
+may need to reboot to Mac OS if you have it installed on another drive
+connected to the system.  Typical commands for this are as follows:
+
+To boot to an OpenBSD system installed on an ATA drive configured 
+as a slave and connected to the same bus as the CD/DVD drive on a Power
+Macintosh G4 (Tower):
+	
+	boot ide1:,ofwboot /bsd
+
+To reboot to Mac OS:
+
+	boot boot hd:,\\:tbxi
+
+Typically, substituting the device alias (devalias) will allow for easy to
+understand device selection.  Typical examples from a Power Macintosh G4
+(Tower):
+
+ultra0 = hd = master device, primary ATA bus (factory-installed drive)
+ultra1 = slave device, primary ATA bus
+ide0 = cd = master device, secondary ATA bus (CD/DVD drive)
+ide1 = slave device, secondary ATA bus (Zip drive, if installed)
+enet = motherboard ethernet device
 
 NOTE:
 The powerpc port does not currently support sharing the disk with MacOS
-This is an important fact on the imac which does not support more than
+This is an important fact on the iMac which does not support more than
 one disk.
 
 DistributionDescription

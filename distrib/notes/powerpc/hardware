@@ -1,26 +1,23 @@
-OpenBSD/MACHINE OSREV runs on iMac and possibly some other G3 and
-first generation G4 Macintosh systems. Older Adb based system are
-unlikely to work. This is partially firmware issues and partially
-driver issues.
+OpenBSD/MACHINE OSREV runs on iMac and possibly some other G3 and G4 Power
+Macintosh systems.  Older ADB-based systems are unlikely to work.  This is
+partially due to firmware issues and partially drive issues.
 
-Has been tested on iMac Rev A 233Mhz and Rev C 333Mhz machines, and on
-450MHz mono-processor G4 machines.  Some success has been reported on
-a PowerBook, however this is not well supported.
+Has been tested on iMac Rev A/233MHz and Rev C/333MHz machines as well as
+several Power Macintosh G4 systems (single and dual processor).  Some
+success has been reported on a PowerBook, however this is not well
+supported.
 
-This version will likely not work on any of the B&W G3 or newer G4
-machines (bi-processor and Cube).  Some code has been rewritten to
-work better on the B&W G3, but never has been retested. Hardware
-availability is currently limiting development on those systems.
+Some code has been written to work better on the B&W G3, but has never
+been retested.  Hardware availability is currently limiting development on
+these systems.
 
 Supported devices {:-include-:}:
 
-	IDE hard disk controllers. iMac and G4 supported, other mac
-		onboard possibly.   
+	IDE hard disk controllers. iMac supported, other mac onboard possibly.
 	SCSI host adapters:
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
 
 	VGA, SVGA Display Adapters. 
-		An unaccelerated 8 bits per pixel X Server is available.
 
 	Serial ports:
 		None.
@@ -29,17 +26,17 @@ Supported devices {:-include-:}:
 		[OPENFIRMWARE SUPPORT]
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 		Znyx ZX34X
-		Onboard iMac and G4 10-100Mbs Ethernet.
+		Onboard iMac 10-100Mbs Ethernet, 100Mbs untested.
 
 	Tape drives:
 		SCSI Tape drives
 
 	CD-ROM drives:
 		SCSI CD-ROM drives
-		Atapi CD-ROM and DVD-ROM (for reading CD-ROMs only)
-		drives. 
+		Atapi CD-ROM drives
+
 	Mice:
-		USB Mices. 
+		NONE
 
 	Sound Cards:
 		NONE
