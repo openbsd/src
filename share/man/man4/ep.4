@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ep.4,v 1.3 1998/09/27 20:37:05 deraadt Exp $
+.\"	$OpenBSD: ep.4,v 1.4 1998/09/27 20:47:13 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -45,8 +45,15 @@ The
 .Nm ep
 device driver supports the 3Com Etherlink III family of ethernet cards.
 This includes, among others,
-the 3c509 (ISA), 3c579 (EISA), 3c589 (PCMCIA), and 3c590, 3c595,
-3c900, and 3c905 (all PCI).
+the 3c509 (ISA), 3c579 (EISA), 3c589 (PCMCIA), and 3c590, 3c595.
+.Pp
+Other models of 3Com hardware are supported by the
+.Xr xl 4 ,
+.Xr ec 4 ,
+and
+.Xr eg 4
+drivers.
+.Pp
 Various models of these cards come with a different assortment of
 connectors:
 .Pp
