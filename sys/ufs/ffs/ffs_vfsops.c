@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.64 2004/01/25 20:02:52 tedu Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.65 2004/06/04 08:06:05 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ struct pool ffs_ino_pool;
 int
 ffs_mountroot()
 {
-	extern struct vnode *rootvp;
 	struct fs *fs;
 	struct mount *mp;
 	struct proc *p = curproc;	/* XXX */
@@ -630,7 +629,6 @@ ffs_mountfs(devvp, mp, p)
 	int32_t *lp;
 	size_t strsize;
 	struct ucred *cred;
-	extern struct vnode *rootvp;
 	u_int64_t maxfilesize;					/* XXX */
 
 	dev = devvp->v_rdev;
