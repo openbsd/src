@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.16 1997/10/17 15:03:24 weingart Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.17 1997/10/19 22:48:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -422,5 +422,7 @@ ENTRY(bootbuf)
 	popl	%edx		/* Device */
 	popl	%eax		/* Partition - Not used, overwritten */
 	prot2real		/* Switch */
+	addr32
+	data32
 	ljmp $0x7c0, $0x000
 
