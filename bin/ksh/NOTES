@@ -1,4 +1,4 @@
-$OpenBSD: NOTES,v 1.7 1999/06/15 01:18:33 millert Exp $
+$OpenBSD: NOTES,v 1.8 2003/02/26 03:53:35 david Exp $
 
 General features of at&t ksh88 that are not (yet) in pdksh:
     - exported aliases and functions (not in ksh93).
@@ -9,7 +9,7 @@ General features of at&t ksh88 that are not (yet) in pdksh:
     - doesn't have posix file globbing (eg, [[:alpha:]], etc.).
     - use of an `agent' to execute unreadable/setuid/setgid shell scripts
       (don't ask).
-    - read/select aren't hooked in to the the command line editor
+    - read/select aren't hooked in to the command line editor
     - the last command of a pipeline is not run in the parent shell
 
 Known bugs (see also BUG-REPORTS and PROJECTS files):

@@ -435,7 +435,7 @@ instead of multiply and divide operations is:
 A BIT SHIFTING EXAMPLE
 
 Lets apply this to our example above (L-CHS = 1000,10,50 and
-P-CHS = 2000, 5, 50) and access the same sector at at L-CHS
+P-CHS = 2000, 5, 50) and access the same sector at L-CHS
 2,4,3.
 
      Pcylinder = 4 = ( 2 * 2 ) + ( 4 / 5 )
