@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.3 2000/05/02 20:18:05 espie Exp $
+.\" $OpenBSD: packages.7,v 1.4 2000/05/15 09:38:12 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -188,17 +188,17 @@ packages).
 .Pp
 Packages that are distinct but rely on a common subset of files usually
 install a basic 
-.Qs common
+.Qq common
 package that holds those files, and is not useful as a stand-alone package.
 .Sh PACKAGE NAMING
 Most package names follow the pattern 
-.Qs name-version-flavor , 
+.Qq name-version-flavor , 
 where 
-.Qs name
+.Qq name
 is the actual package name, 
-.Qs version 
+.Qq version 
 is the version number, and 
-.Qs flavor
+.Qq flavor
 denotes some options that were used when creating the package.
 .Pp
 Packages with the same name will usually not coexist peacefully, as
