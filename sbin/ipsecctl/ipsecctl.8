@@ -1,6 +1,19 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.4 2005/04/05 07:14:00 jmc Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.5 2005/04/06 14:11:21 hshoexer Exp $
 .\"
-.\" The following requests are required for all man pages.
+.\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
 .Dd April 5, 2005
 .Dt IPSECCTL 8
 .Os
@@ -8,7 +21,6 @@
 .Nm ipsecctl
 .Nd control flows for IPsec
 .Sh SYNOPSIS
-.\" For a program:  program [-abc] file ...
 .Nm ipsecctl
 .Op Fl Fhnsv
 .Op Fl f Ar file
