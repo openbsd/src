@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifndef GDB_TARGET_IS_SPARC64
 #define GDB_TARGET_IS_SPARC64 1
-#define
+#endif
 
 #include "sparc/tm-sparc.h"
 
