@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.20 1996/09/22 09:49:58 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.21 1996/09/29 22:11:50 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -619,7 +619,7 @@ user(name)
 		char *myskey, *skey_keyinfo __P((char *name));
 
 		myskey = skey_keyinfo(name);
-		reply(331, "Password [%s] for %s required.",
+		reply(331, "Password [ %s ] for %s required.",
 		    myskey ? myskey : "error getting challenge", name);
 	} else
 #endif
