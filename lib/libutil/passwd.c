@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.27 2001/08/16 18:24:32 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.28 2001/08/26 03:28:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.27 2001/08/16 18:24:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.28 2001/08/26 03:28:30 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -273,9 +273,9 @@ pw_lock(retries)
 }
 
 int
-pw_mkdb(username, secureonly)
+pw_mkdb(username, flags)
 	char *username;
-	int secureonly;
+	int flags;
 {
 	int pstat, ac;
 	pid_t pid;
@@ -295,9 +295,9 @@ pw_mkdb(username, secureonly)
 	av[ac++] = "pwd_mkdb";
 	av[ac++] = "-d";
 	av[ac++] = pw_dir;
-	if (secureonly)
+	if (flags & _PASSWORD_SECUREONLY)
 		av[ac++] = "-s";
-	else
+	else if (!(flags & _PASSWORD_OMITV7))
 		av[ac++] = "-p";
 	if (username) {
 		av[ac++] = "-u";

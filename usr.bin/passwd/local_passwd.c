@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.19 2001/08/18 19:58:46 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.20 2001/08/26 03:28:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.19 2001/08/18 19:58:46 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.20 2001/08/26 03:28:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ local_passwd(uname, authenticated)
 	sigset_t fullset;
 	time_t period;
 	int pfd, tfd = -1;
-	int secureonly = 0;
+	int pwflags = _PASSWORD_OMITV7;
 	char *s = NULL;
 
 	if (!(pw = getpwnam(uname))) {
@@ -107,7 +107,7 @@ local_passwd(uname, authenticated)
 		if (pw->pw_change != 0)
 			pw->pw_change = 0;
 		else
-			secureonly = 1;
+			pwflags = _PASSWORD_SECUREONLY;
 	}
 
 	/* Drop user's real uid and block all signals to avoid a DoS. */
@@ -161,7 +161,7 @@ local_passwd(uname, authenticated)
 
 	/* Update master.passwd file and rebuild spwd.db. */
 	pw_copy(pfd, tfd, pw);
-	if (pw_mkdb(uname, secureonly) < 0)
+	if (pw_mkdb(uname, pwflags) < 0)
 		pw_error(NULL, 0, 1);
 
 	return(0);

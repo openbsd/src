@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.11 2001/02/13 14:48:40 pjanzen Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.12 2001/08/26 03:28:30 millert Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -74,6 +74,10 @@
 #define _PASSWORD_NOGID		0x02	/* flag for no specified gid. */
 #define _PASSWORD_NOCHG		0x04	/* flag for no specified change. */
 #define _PASSWORD_NOEXP		0x08	/* flag for no specified expire. */
+
+/* Flags for pw_mkdb(3) */
+#define	_PASSWORD_SECUREONLY	0x01	/* only generate spwd.db file */
+#define	_PASSWORD_OMITV7	0x02	/* don't generate v7 passwd file */
 
 #endif
 
