@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.24 2003/05/05 09:36:03 jmc Exp $
+.\"	$OpenBSD: ahc.4,v 1.25 2003/05/05 09:51:30 miod Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -40,22 +40,11 @@ For VL cards:
 For EISA cards:
 .Cd "ahc*	at eisa? slot ?"
 .Pp
-For one or more VL/EISA cards:
-.Cd "controller eisa0"
-.Cd "controller ahc0"
-.Pp
 For PCI cards:
 .Cd "ahc*	at pci? dev ? function ?"
 .Pp
-For one or more PCI cards:
-.Cd "controller pci0"
-.Cd "controller ahc0"
-.Pp
 For SCSI buses:
 .Cd "scsibus* at ahc?"
-.Pp
-For one or more SCSI buses:
-.Cd "controller scsibus0 at ahc0"
 .Sh DESCRIPTION
 This driver provides access to the
 .Tn SCSI
