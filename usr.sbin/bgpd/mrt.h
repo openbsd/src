@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.9 2004/01/18 00:44:44 deraadt Exp $ */
+/*	$OpenBSD: mrt.h,v 1.10 2004/02/25 19:48:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -237,10 +237,10 @@ enum MRT_BGP_TYPES {
 enum mrt_type {
 	MRT_NONE,
 	MRT_TABLE_DUMP,
-	MRT_FILTERED_IN,
 	MRT_ALL_IN,
-	MRT_SESSION_IN,
-	MRT_SESSION_OUT
+	MRT_ALL_OUT,
+	MRT_UPDATE_IN,
+	MRT_UPDATE_OUT
 };
 
 enum mrt_state {
@@ -253,11 +253,15 @@ enum mrt_state {
 	MRT_STATE_REMOVE
 };
 
+LIST_HEAD(mrt_config_head, mrt_config);
+
 struct mrt_config {
 	enum mrt_type		 type;
 	u_int32_t		 id;
 	u_int32_t		 peer_id;
-	struct msgbuf		*msgbuf;
+	u_int32_t		 group_id;
+	struct imsgbuf		*ibuf;
+	LIST_ENTRY(mrt_config)	 list;			/* used in the SE */
 };
 
 struct mrt {
@@ -269,7 +273,7 @@ struct mrt {
 	struct imsgbuf		*ibuf;
 	char			 name[MRT_FILE_LEN];	/* base file name */
 	char			 file[MRT_FILE_LEN];	/* actual file name */
-	LIST_ENTRY(mrt)		 list;
+	LIST_ENTRY(mrt)		 list;			/* used in the parent */
 };
 
 
@@ -277,7 +281,7 @@ struct prefix;
 struct pt_entry;
 
 /* prototypes */
-int	mrt_dump_bgp_msg(struct mrt_config *, void *, u_int16_t, int,
+int	mrt_dump_bgp_msg(struct mrt_config *, void *, u_int16_t,
 	    struct peer_config *, struct bgpd_config *);
 int	mrt_dump_state(struct mrt_config *, u_int16_t, u_int16_t,
 	    struct peer_config *, struct bgpd_config *);

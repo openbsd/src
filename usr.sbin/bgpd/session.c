@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.119 2004/02/21 15:45:14 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.120 2004/02/25 19:48:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,8 +92,7 @@ int			 csock = -1;
 struct imsgbuf		 ibuf_rde;
 struct imsgbuf		 ibuf_main;
 
-int			 mrt_flagall = 0;
-struct mrt_config	 mrt_allin;
+struct mrt_config_head	 mrt_l;
 
 void
 session_sighdlr(int sig)
@@ -196,6 +195,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 	imsg_init(&ibuf_main, pipe_m2s[1]);
 	TAILQ_INIT(&ctl_conns);
 	csock = control_listen();
+	LIST_INIT(&mrt_l);
 
 	while (session_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
@@ -644,6 +644,8 @@ void
 change_state(struct peer *peer, enum session_state state,
     enum session_events event)
 {
+	struct mrt_config	*mrt;
+
 	switch (state) {
 	case STATE_IDLE:
 		/*
@@ -692,10 +694,15 @@ change_state(struct peer *peer, enum session_state state,
 	}
 
 	log_statechange(peer, state, event);
-	if (mrt_flagall == 1)
-		mrt_dump_state(&mrt_allin, peer->state, state,
-		    &peer->conf, conf);
-	/* XXX mrt dump per peer */
+	LIST_FOREACH(mrt, &mrt_l, list) {
+		if (mrt->type != MRT_ALL_IN && mrt->type != MRT_ALL_OUT)
+			continue;
+		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+		    mrt->peer_id == peer->conf.id ||
+		    mrt->group_id == peer->conf.groupid)
+			mrt_dump_state(mrt, peer->state, state,
+			    &peer->conf, conf);
+	}
 	peer->state = state;
 }
 
@@ -885,10 +892,11 @@ session_tcp_established(struct peer *peer)
 void
 session_open(struct peer *p)
 {
-	struct msg_open	 msg;
-	struct buf	*buf;
-	u_int16_t	 len;
-	int		 errs = 0, n;
+	struct msg_open		 msg;
+	struct buf		*buf;
+	struct mrt_config	*mrt;
+	u_int16_t		 len;
+	int			 errs = 0, n;
 
 	len = MSGSIZE_OPEN_MIN;
 
@@ -918,6 +926,16 @@ session_open(struct peer *p)
 	errs += buf_add(buf, &msg.optparamlen, sizeof(msg.optparamlen));
 
 	if (errs == 0) {
+		LIST_FOREACH(mrt, &mrt_l, list) {
+			if (mrt->type != MRT_ALL_OUT)
+				continue;
+			if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+			    mrt->peer_id == p->conf.id ||
+			    mrt->group_id == p->conf.groupid)
+				mrt_dump_bgp_msg(mrt, buf->buf, len,
+				    &p->conf, conf);
+		}
+
 		if ((n = buf_close(&p->wbuf, buf)) == -1) {
 			log_peer_warn(&p->conf, "session_open buf_close");
 			buf_free(buf);
@@ -938,6 +956,7 @@ session_keepalive(struct peer *peer)
 {
 	struct msg_header	 msg;
 	struct buf		*buf;
+	struct mrt_config	*mrt;
 	ssize_t			 len;
 	int			 errs = 0, n;
 
@@ -961,6 +980,15 @@ session_keepalive(struct peer *peer)
 		return;
 	}
 
+	LIST_FOREACH(mrt, &mrt_l, list) {
+		if (mrt->type != MRT_ALL_OUT)
+			continue;
+		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+		    mrt->peer_id == peer->conf.id ||
+		    mrt->group_id == peer->conf.groupid)
+			mrt_dump_bgp_msg(mrt, buf->buf, len, &peer->conf, conf);
+	}
+
 	if ((n = buf_close(&peer->wbuf, buf)) == -1) {
 		log_peer_warn(&peer->conf, "session_keepalive buf_close");
 		buf_free(buf);
@@ -978,6 +1006,7 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 	struct peer		*p;
 	struct msg_header	 msg;
 	struct buf		*buf;
+	struct mrt_config	*mrt;
 	ssize_t			 len;
 	int			 errs = 0, n;
 
@@ -1007,6 +1036,15 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 		return;
 	}
 
+	LIST_FOREACH(mrt, &mrt_l, list) {
+		if (mrt->type != MRT_ALL_OUT && mrt->type != MRT_UPDATE_OUT)
+			continue;
+		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+		    mrt->peer_id == p->conf.id ||
+		    mrt->group_id == p->conf.groupid)
+			mrt_dump_bgp_msg(mrt, buf->buf, len, &p->conf, conf);
+	}
+
 	if ((n = buf_close(&p->wbuf, buf)) == -1) {
 		log_peer_warn(&p->conf, "session_update: buf_close");
 		buf_free(buf);
@@ -1024,6 +1062,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 {
 	struct msg_header	 msg;
 	struct buf		*buf;
+	struct mrt_config	*mrt;
 	ssize_t			 len;
 	int			 errs = 0, n;
 
@@ -1050,6 +1089,15 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 		return;
+	}
+
+	LIST_FOREACH(mrt, &mrt_l, list) {
+		if (mrt->type != MRT_ALL_OUT)
+			continue;
+		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+		    mrt->peer_id == peer->conf.id ||
+		    mrt->group_id == peer->conf.groupid)
+			mrt_dump_bgp_msg(mrt, buf->buf, len, &peer->conf, conf);
 	}
 
 	if ((n = buf_close(&peer->wbuf, buf)) == -1) {
@@ -1199,10 +1247,11 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 int
 parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 {
-	u_char		*p;
-	u_char		 one = 0xff;
-	int		 i;
-	u_int16_t	 olen;
+	struct mrt_config	*mrt;
+	u_char			*p;
+	u_char			 one = 0xff;
+	int			 i;
+	u_int16_t		 olen;
 
 	/* caller MUST make sure we are getting 19 bytes! */
 	p = data;
@@ -1274,9 +1323,15 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		    type, 1);
 		return (-1);
 	}
-	if (mrt_flagall == 1)
-		mrt_dump_bgp_msg(&mrt_allin, data, *len, 0, &peer->conf, conf);
-	/* XXX mrt dump per peer */
+	LIST_FOREACH(mrt, &mrt_l, list) {
+		if (mrt->type != MRT_ALL_IN && (mrt->type != MRT_UPDATE_IN ||
+		    *type != UPDATE))
+			continue;
+		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+		    mrt->peer_id == peer->conf.id ||
+		    mrt->group_id == peer->conf.groupid)
+			mrt_dump_bgp_msg(mrt, data, *len, &peer->conf, conf);
+	}
 	return (0);
 }
 
@@ -1420,7 +1475,8 @@ void
 session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 {
 	struct imsg		 imsg;
-	struct mrt_config	 mrt;
+	struct mrt_config	 xmrt;
+	struct mrt_config	*mrt;
 	struct peer_config	*pconf;
 	struct peer		*p, *next;
 	u_char			*data;
@@ -1497,18 +1553,24 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			log_info("SE reconfigured");
 			break;
 		case IMSG_MRT_REQ:
-			memcpy(&mrt, imsg.data, sizeof(mrt));
-			mrt.msgbuf = &ibuf_main.w;
-			if (mrt.type == MRT_ALL_IN) {
-				mrt_flagall = 1;
-				memcpy(&mrt_allin, &mrt, sizeof(mrt_allin));
-			}
+			if ((mrt = calloc(1, sizeof(struct mrt_config))) ==
+			    NULL)
+				fatal("session_dispatch_imsg");
+			memcpy(mrt, imsg.data, sizeof(struct mrt_config));
+			mrt->ibuf = &ibuf_main;
+			LIST_INSERT_HEAD(&mrt_l, mrt, list);
 			break;
 		case IMSG_MRT_END:
-			memcpy(&mrt, imsg.data, sizeof(mrt));
-			if (mrt.type == MRT_ALL_IN) {
-				mrt_flagall = 0;
-				bzero(&mrt_allin, sizeof(mrt_allin));
+			memcpy(&xmrt, imsg.data, sizeof(struct mrt_config));
+			LIST_FOREACH(mrt, &mrt_l, list) {
+				if (mrt->type != xmrt.type)
+					continue;
+				if (mrt->peer_id == xmrt.peer_id &&
+				    mrt->group_id == xmrt.group_id) {
+					LIST_REMOVE(mrt, list);
+					free(mrt);
+					break;
+				}
 			}
 			break;
 		case IMSG_CTL_KROUTE:

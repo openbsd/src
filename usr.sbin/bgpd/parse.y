@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.59 2004/02/25 14:25:22 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.60 2004/02/25 19:48:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -64,7 +64,7 @@ int	 yylex(void);
 struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
-int		 add_mrtconfig(enum mrt_type, char *, time_t);
+int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *);
 int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers *,
 		    struct filter_match *, struct filter_set *);
@@ -100,7 +100,7 @@ typedef struct {
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
-%token	DUMP MSG IN TABLE
+%token	DUMP TABLE IN OUT
 %token	LOG
 %token	TCP MD5SIG PASSWORD KEY
 %token	ALLOW DENY MATCH
@@ -110,7 +110,7 @@ typedef struct {
 %token	SET LOCALPREF MED NEXTHOP PREPEND
 %token	ERROR
 %token	<v.string>		STRING
-%type	<v.number>		number optnumber yesno
+%type	<v.number>		number optnumber yesno inout
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.u8>			action quick direction
@@ -213,24 +213,6 @@ conf_main	: AS number		{
 			else
 				YYERROR;
 		}
-		| DUMP MSG STRING IN STRING optnumber	{
-			int action;
-
-			if (!strcmp($3, "all"))
-				action = MRT_ALL_IN;
-			else if (!strcmp($3, "filtered"))
-				action = MRT_FILTERED_IN;
-			else {
-				yyerror("unknown mrt msg dump type");
-				YYERROR;
-			}
-			if (add_mrtconfig(action, $5, $6) == -1)
-				YYERROR;
-		}
-		| DUMP TABLE STRING optnumber		{
-			if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4) == -1)
-				YYERROR;
-		}
 		| NETWORK address '/' number		{
 			struct network	*n;
 
@@ -244,6 +226,31 @@ conf_main	: AS number		{
 			n->net.prefixlen = $4;
 			TAILQ_INSERT_TAIL(netconf, n, network_l);
 		}
+		| DUMP TABLE STRING optnumber		{
+			if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4, NULL) == -1)
+				YYERROR;
+		}
+		| mrtdump
+		;
+
+mrtdump		: DUMP STRING inout STRING optnumber	{
+			int action;
+
+			if (!strcmp($2, "all"))
+				action = $3 ? MRT_ALL_IN : MRT_ALL_OUT;
+			else if (!strcmp($2, "updates"))
+				action = $3 ? MRT_UPDATE_IN : MRT_UPDATE_OUT;
+			else {
+				yyerror("unknown mrt msg dump type");
+				YYERROR;
+			}
+			if (add_mrtconfig(action, $4, $5, curpeer) == -1)
+				YYERROR;
+		}
+		;
+
+inout		: IN		{ $$ = 1; }
+		| OUT		{ $$ = 0; }
 		;
 
 address		: STRING		{
@@ -426,6 +433,7 @@ peeropts	: REMOTEAS number	{
 			memcpy(&curpeer->conf.attrset, &$1,
 			    sizeof(curpeer->conf.attrset));
 		}
+		| mrtdump
 		;
 
 filterrule	: action quick direction filter_peer filter_match filter_set
@@ -692,12 +700,12 @@ lookup(char *s)
 		{ "md5sig",		MD5SIG},
 		{ "med",		MED},
 		{ "min",		YMIN},
-		{ "msg",		MSG},
 		{ "multihop",		MULTIHOP},
 		{ "neighbor",		NEIGHBOR},
 		{ "network",		NETWORK},
 		{ "nexthop",		NEXTHOP},
 		{ "on",			ON},
+		{ "out",		OUT},
 		{ "passive",		PASSIVE},
 		{ "password",		PASSWORD},
 		{ "prefix",		PREFIX},
@@ -1131,11 +1139,19 @@ new_group(void)
 }
 
 int
-add_mrtconfig(enum mrt_type type, char *name, time_t timeout)
+add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p)
 {
 	struct mrt	*m, *n;
 
 	LIST_FOREACH(m, mrtconf, list) {
+		if (p == NULL) {
+			if (m->conf.peer_id != 0 || m->conf.group_id != 0)
+				continue;
+		} else {
+			if (m->conf.peer_id != p->conf.id ||
+			    m->conf.group_id != p->conf.groupid)
+				continue;
+		}
 		if (m->conf.type == type) {
 			yyerror("only one mrtdump per type allowed.");
 			return (-1);
@@ -1154,6 +1170,10 @@ add_mrtconfig(enum mrt_type type, char *name, time_t timeout)
 		return (-1);
 	}
 	n->ReopenTimerInterval = timeout;
+	if (p != NULL) {
+		n->conf.peer_id = p->conf.id;
+		n->conf.group_id = p->conf.groupid;
+	}
 
 	LIST_INSERT_HEAD(mrtconf, n, list);
 

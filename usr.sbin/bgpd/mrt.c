@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.26 2004/02/19 13:54:58 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.27 2004/02/25 19:48:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -28,15 +28,9 @@
 
 #include "bgpd.h"
 #include "rde.h"
-#include "session.h"	/* needed for MSGSIZE_HEADER et al. */
+#include "session.h"
 
 #include "mrt.h"
-
-/*
- * XXX These functions break the imsg encapsulation.
- * XXX The imsg API is way to basic, we need something like
- * XXX imsg_create(), imsg_add(), imsg_close() ...
- */
 
 static u_int16_t	mrt_attr_length(struct attr_flags *);
 static int		mrt_attr_dump(void *, u_int16_t, struct attr_flags *);
@@ -49,9 +43,8 @@ static int		mrt_open(struct mrt *);
 #define DUMP_BYTE(x, b)							\
 	do {								\
 		u_char		t = (b);				\
-		if (buf_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump1: buf_add error");		\
-			buf_free((x));					\
+		if (imsg_add((x), &t, sizeof(t)) == -1) {		\
+			log_warnx("mrt_dump1: imsg_add error");		\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -60,9 +53,8 @@ static int		mrt_open(struct mrt *);
 	do {								\
 		u_int16_t	t;					\
 		t = htons((s));						\
-		if (buf_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump2: buf_add error");		\
-			buf_free((x));					\
+		if (imsg_add((x), &t, sizeof(t)) == -1) {		\
+			log_warnx("mrt_dump2: imsg_add error");		\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -71,9 +63,8 @@ static int		mrt_open(struct mrt *);
 	do {								\
 		u_int32_t	t;					\
 		t = htonl((l));						\
-		if (buf_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump3: buf_add error");		\
-			buf_free((x));					\
+		if (imsg_add((x), &t, sizeof(t)) == -1) {		\
+			log_warnx("mrt_dump3: imsg_add error");		\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -81,41 +72,30 @@ static int		mrt_open(struct mrt *);
 #define DUMP_NLONG(x, l)						\
 	do {								\
 		u_int32_t	t = (l);				\
-		if (buf_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump4: buf_add error");		\
-			buf_free((x));					\
+		if (imsg_add((x), &t, sizeof(t)) == -1) {		\
+			log_warnx("mrt_dump4: imsg_add error");		\
 			return (-1);					\
 		}							\
 	} while (0)
 
 int
-mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen, int type,
+mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen,
     struct peer_config *peer, struct bgpd_config *bgp)
 {
 	struct buf	*buf;
-	struct imsg_hdr	 hdr;
-	int		 i, n;
 	u_int16_t	 len;
 
-	len = pkglen + MRT_BGP4MP_HEADER_SIZE + (type > 0 ? MSGSIZE_HEADER : 0);
+	len = pkglen + MRT_BGP4MP_HEADER_SIZE;
 
-	hdr.len = len + IMSG_HEADER_SIZE + MRT_HEADER_SIZE;
-	hdr.type = IMSG_MRT_MSG;
-	hdr.peerid = mrt->id;
-	buf = buf_open(hdr.len);
-	if (buf == NULL) {
-		log_warnx("mrt_dump_bgp_msg: buf_open error");
-		return (-1);
-	}
-	if (buf_add(buf, &hdr, sizeof(hdr)) == -1) {
-		log_warnx("mrt_dump_bgp_msg: buf_add error");
-		buf_free(buf);
+	if ((buf = imsg_create(mrt->ibuf, IMSG_MRT_MSG, mrt->id,
+	    len + MRT_HEADER_SIZE)) == NULL) {
+		log_warnx("mrt_dump_bgp_msg: imsg_open error");
 		return (-1);
 	}
 
-	if (mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_MESSAGE, len) ==
-	    -1) {
-		log_warnx("mrt_dump_bgp_msg: buf_add error");
+	if (mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_MESSAGE,
+	    len) == -1) {
+		log_warnx("mrt_dump_bgp_msg: imsg_add error");
 		return (-1);
 	}
 
@@ -126,27 +106,17 @@ mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen, int type,
 	DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
 	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
 
-	/* bgp header was chopped off so glue a new one together. */
-	if (type > 0) {
-		for (i = 0; i < MSGSIZE_HEADER_MARKER; i++)
-			DUMP_BYTE(buf, 0xff);
-		DUMP_SHORT(buf, pkglen + MSGSIZE_HEADER);
-		DUMP_BYTE(buf, type);
-	}
-
-	if (buf_add(buf, pkg, pkglen) == -1) {
-		log_warnx("mrt_dump_bgp_msg: buf_add error");
-		buf_free(buf);
+	if (imsg_add(buf, pkg, pkglen) == -1) {
+		log_warnx("mrt_dump_bgp_msg: imsg_add error");
 		return (-1);
 	}
 
-	if ((n = buf_close(mrt->msgbuf, buf)) < 0) {
-		log_warnx("mrt_dump_bgp_msg: buf_close error");
-		buf_free(buf);
+	if ((imsg_close(mrt->ibuf, buf)) == -1) {
+		log_warnx("mrt_dump_bgp_msg: imsg_close error");
 		return (-1);
 	}
 
-	return (n);
+	return (len + MRT_HEADER_SIZE);
 }
 
 int
@@ -154,28 +124,19 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
     struct peer_config *peer, struct bgpd_config *bgp)
 {
 	struct buf	*buf;
-	struct imsg_hdr	 hdr;
-	int		 n;
 	u_int16_t	 len;
 
 	len = 4 + MRT_BGP4MP_HEADER_SIZE;
-	hdr.len = len + IMSG_HEADER_SIZE + MRT_HEADER_SIZE;
-	hdr.type = IMSG_MRT_MSG;
-	hdr.peerid = mrt->id;
-	buf = buf_open(hdr.len);
-	if (buf == NULL) {
-		log_warnx("mrt_dump_bgp_msg: buf_open error");
-		return (-1);
-	}
-	if (buf_add(buf, &hdr, sizeof(hdr)) == -1) {
-		log_warnx("mrt_dump_bgp_msg: buf_add error");
-		buf_free(buf);
+
+	if ((buf = imsg_create(mrt->ibuf, IMSG_MRT_MSG, mrt->id,
+	    len + MRT_HEADER_SIZE)) == NULL) {
+		log_warnx("mrt_dump_bgp_state: imsg_open error");
 		return (-1);
 	}
 
 	if (mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_STATE_CHANGE,
 	    len) == -1) {
-		log_warnx("mrt_dump_bgp_msg: buf_add error");
+		log_warnx("mrt_dump_bgp_state: imsg_add error");
 		return (-1);
 	}
 
@@ -189,14 +150,12 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
 	DUMP_SHORT(buf, old_state);
 	DUMP_SHORT(buf, new_state);
 
-	if ((n = buf_close(mrt->msgbuf, buf)) < 0) {
-		log_warnx("mrt_dump_bgp_msg: buf_close error");
-		buf_free(buf);
+	if ((imsg_close(mrt->ibuf, buf)) == -1) {
+		log_warnx("mrt_dump_bgp_state: imsg_close error");
 		return (-1);
 	}
 
-	return (n);
-
+	return (len + MRT_HEADER_SIZE);
 }
 
 static u_int16_t
@@ -278,24 +237,14 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 {
 	struct buf	*buf;
 	void		*bptr;
-	struct imsg_hdr	 hdr;
 	u_int16_t	 len, attr_len;
-	int		 n;
 
 	attr_len = mrt_attr_length(&p->aspath->flags);
 	len = MRT_DUMP_HEADER_SIZE + attr_len;
 
-	hdr.len = len + IMSG_HEADER_SIZE + MRT_HEADER_SIZE;
-	hdr.type = IMSG_MRT_MSG;
-	hdr.peerid = mrt->id;
-	buf = buf_open(hdr.len);
-	if (buf == NULL) {
-		log_warnx("mrt_dump_entry: buf_open error");
-		return (-1);
-	}
-	if (buf_add(buf, &hdr, sizeof(hdr)) == -1) {
-		log_warnx("mrt_dump_entry: buf_add error");
-		buf_free(buf);
+	if ((buf = imsg_create(mrt->ibuf, IMSG_MRT_MSG, mrt->id,
+	    len + MRT_HEADER_SIZE)) == NULL) {
+		log_warnx("mrt_dump_entry: imsg_open error");
 		return (-1);
 	}
 
@@ -326,13 +275,12 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	if ((n = buf_close(mrt->msgbuf, buf)) < 0) {
-		log_warnx("mrt_dump_entry: buf_close error");
-		buf_free(buf);
+	if ((imsg_close(mrt->ibuf, buf)) == -1) {
+		log_warnx("mrt_dump_bgp_state: imsg_close error");
 		return (-1);
 	}
 
-	return (n);
+	return (len + MRT_HEADER_SIZE);
 }
 
 static u_int16_t sequencenum = 0;
@@ -583,10 +531,12 @@ mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
 		if (m->state == MRT_STATE_OPEN) {
 			switch (m->conf.type) {
 			case MRT_TABLE_DUMP:
-			case MRT_FILTERED_IN:
 				m->ibuf = mrt_imsgbuf[0];
 				break;
 			case MRT_ALL_IN:
+			case MRT_ALL_OUT:
+			case MRT_UPDATE_IN:
+			case MRT_UPDATE_OUT:
 				m->ibuf = mrt_imsgbuf[1];
 				break;
 			default:
@@ -709,11 +659,10 @@ getconf(struct mrt_head *c, struct mrt *m)
 	LIST_FOREACH(t, c, list) {
 		if (t->conf.type != m->conf.type)
 			continue;
-		if (t->conf.type == MRT_TABLE_DUMP ||
-		    t->conf.type == MRT_ALL_IN ||
-		    t->conf.type == MRT_FILTERED_IN)
+		if (t->conf.type == MRT_TABLE_DUMP)
 			return t;
-		if (t->conf.peer_id == m->conf.peer_id)
+		if (t->conf.peer_id == m->conf.peer_id &&
+		    t->conf.group_id == m->conf.group_id)
 			return t;
 	}
 	return (NULL);
@@ -727,8 +676,7 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 	LIST_FOREACH(m, nconf, list)
 		if ((xm = getconf(xconf, m)) == NULL) {
 			/* NEW */
-			if ((xm = calloc(1, sizeof(struct mrt))) ==
-			    NULL)
+			if ((xm = calloc(1, sizeof(struct mrt))) == NULL)
 				fatal("mrt_mergeconfig");
 			memcpy(xm, m, sizeof(struct mrt));
 			msgbuf_init(&xm->msgbuf);
