@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.221 2001/08/18 16:15:39 aaron Exp $
+#	$OpenBSD: files,v 1.222 2001/08/18 22:05:21 jason Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -68,6 +68,10 @@ define	wsrasteremulops
 define	pcdisplayops
 file	dev/ic/pcdisplay_subr.c		pcdisplayops
 file	dev/ic/pcdisplay_chars.c	pcdisplayops
+
+# Mostek time-of-day clock and NVRAM
+define	mk48txx
+file	dev/ic/mk48txx.c		mk48txx
 
 # VGA graphics
 device	vga: wsemuldisplaydev, pcdisplayops
