@@ -387,6 +387,7 @@ ALL_64_EMULATIONS = \
 	eelf64btsmip.o \
 	eelf64btsmip_obsd.o \
 	eelf64ltsmip.o \
+	eelf64ltsmip_obsd.o \
 	eelf64hppa.o \
 	eelf64mmix.o \
 	emmo.o \
@@ -843,6 +844,10 @@ eelf64ltsmip.c: $(srcdir)/emulparams/elf64ltsmip.sh \
   $(srcdir)/emulparams/elf64btsmip.sh $(srcdir)/emulparams/elf32bmipn32.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf64ltsmip "$(tdir_elf64ltsmip)"
+eelf64ltsmip_obsd.c: $(srcdir)/emulparams/elf64ltsmip_obsd.sh \
+  $(srcdir)/emulparams/elf32bmipn32.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf64ltsmip_obsd "$(tdir_elf64ltsmip_obsd)"
 eelf_i386.c: $(srcdir)/emulparams/elf_i386.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf_i386 "$(tdir_elf_i386)"

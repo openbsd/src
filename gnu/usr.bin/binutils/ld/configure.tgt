@@ -429,7 +429,7 @@ mips*el-*-netbsd*)	targ_emul=elf32lmip
 mips*-*-netbsd*)	targ_emul=elf32bmip
 			targ_extra_emuls="elf32lmip"
 			;;
-mips64*el-*-openbsd*)	targ_emul=elf64ltsmip
+mips64*el-*-openbsd*)	targ_emul=elf64ltsmip_obsd
 			targ_extra_emuls="elf32ltsmipn32 elf32btsmipn32 elf32ltsmip elf32btsmip elf64btsmip"
 			;;
 mips64*-*-openbsd*)	targ_emul=elf64btsmip_obsd
