@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.16 2004/12/10 18:47:38 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.17 2004/12/13 17:09:01 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -548,6 +548,7 @@ cvs_resp_modtime(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_updated(struct cvsroot *root, int type, char *line)
 {
+	int ret;
 	mode_t fmode;
 	char path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
 	BUF *fbuf;
@@ -555,6 +556,7 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	struct cvs_ent *ep;
 	struct timeval tv[2];
 
+	ret = 0;
 	STRIP_SLASH(line);
 
 	/* read the remote path of the file */
@@ -596,11 +598,13 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 
 	cvs_ent_close(entfile);
 
-	fbuf = cvs_recvfile(root, &fmode);
-	if (fbuf == NULL)
+	if ((fbuf = cvs_recvfile(root, &fmode)) == NULL)
 		return (-1);
-
-	cvs_buf_write(fbuf, path, fmode);
+	if (cvs_buf_write(fbuf, path, fmode) < 0) {
+		cvs_buf_free(fbuf);
+		return (-1);
+	}
+	cvs_buf_free(fbuf);
 
 	if (cvs_modtime != CVS_DATE_DMSEC) {
 		tv[0].tv_sec = (long)cvs_modtime;
@@ -613,19 +617,19 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 
 	/* now see if there is a checksum */
 	if (cvs_fcksum != NULL) {
-		if (cvs_cksum(path, cksum_buf, sizeof(cksum_buf)) < 0) {
-		}
-
-		if (strcmp(cksum_buf, cvs_fcksum) != 0) {
+		if (cvs_cksum(path, cksum_buf, sizeof(cksum_buf)) < 0)
+			ret = -1;
+		else if (strcmp(cksum_buf, cvs_fcksum) != 0) {
 			cvs_log(LP_ERR, "checksum error on received file");
 			(void)unlink(line);
+			ret = -1;
 		}
 
 		free(cvs_fcksum);
 		cvs_fcksum = NULL;
 	}
 
-	return (0);
+	return (ret);
 }
 
 
