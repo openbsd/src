@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.23 2005/01/14 16:57:58 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.24 2005/02/01 18:51:04 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -356,11 +356,26 @@ cvs_ent_parse(const char *entry)
 	else
 		entp->ce_type = CVS_ENT_NONE;
 
+	entp->ce_status = CVS_ENT_REG;
 	entp->ce_name = fields[1];
 
 	if (entp->ce_type == CVS_ENT_FILE) {
-		rcsnum_aton(fields[2], NULL, entp->ce_rev);
-		entp->ce_mtime = cvs_datesec(fields[3], CVS_DATE_CTIME, 0);
+		if (*fields[2] == '-') {
+			entp->ce_status = CVS_ENT_REMOVED;
+			sp = fields[2] + 1;
+		} else {
+			sp = fields[2];
+			if (strcmp(fields[2], "0") == 0)
+				entp->ce_status = CVS_ENT_ADDED;
+		}
+		rcsnum_aton(sp, NULL, entp->ce_rev);
+
+		if (strcmp(fields[3], CVS_DATE_DUMMY) == 0)
+			entp->ce_mtime = CVS_DATE_DMSEC;
+		else
+			entp->ce_mtime = cvs_datesec(fields[3],
+			    CVS_DATE_CTIME, 0);
+
 		entp->ce_opts = fields[4];
 		entp->ce_tag = fields[5];
 	}

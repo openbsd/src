@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.43 2005/01/24 16:12:56 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.44 2005/02/01 18:51:04 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -192,19 +192,24 @@ struct cvsroot {
 #define CVS_ENT_FILE    1
 #define CVS_ENT_DIR     2
 
+#define CVS_ENT_REG      0
+#define CVS_ENT_ADDED    1
+#define CVS_ENT_REMOVED  2
+
 
 #define CVS_ENTF_SYNC   0x01    /* contents of disk and memory match */
 #define CVS_ENTF_WR     0x02    /* file is opened for writing too */
 
 
 struct cvs_ent {
-	char    *ce_buf;
-	u_int    ce_type;
-	char    *ce_name;
-	RCSNUM  *ce_rev;
-	time_t   ce_mtime;
-	char    *ce_opts;
-	char    *ce_tag;
+	char      *ce_buf;
+	u_int16_t  ce_type;
+	u_int16_t  ce_status;
+	char      *ce_name;
+	RCSNUM    *ce_rev;
+	time_t     ce_mtime;
+	char      *ce_opts;
+	char      *ce_tag;
 	TAILQ_ENTRY(cvs_ent) ce_list;
 };
 
