@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.1 2002/02/19 06:55:41 jason Exp $
+.\"	$OpenBSD: sbus.4,v 1.2 2002/02/19 06:59:37 deraadt Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,9 +49,9 @@
 These
 .Nm
 attachments are specific to the
-.Nx Ns /sparc
+OpenBSD/sparc
 and
-.Nx Ns /sparc64
+OpenBSD/sparc64
 ports.
 .Sh DESCRIPTION
 .Nm
@@ -63,58 +63,58 @@ on-board peripherals and extension boards. The
 specifications define the bus protocol as well as the electrical and
 mechanical properties of the extension slots.
 .Sh HARDWARE
-.Nx
+.Ox
 includes machine-independent
 .Nm
 drivers, sorted by device type and driver name:
 .Ss SCSI interfaces
 .Bl -tag -width xxxxxxxx -offset indent
-.It esp
+.It Xr esp 4
 NCR53c94 and compatible
 .Tn SCSI
 interfaces.
-.It isp
+.It Xr isp 4
 Qlogic
 .Tn SCSI
 interfaces.
 .El
 .Ss Network interfaces
 .Bl -tag -width xxxxxxxx -offset indent
-.It le
+.It Xr le 4
 .Tn Lance
 7990 series
 .Tn Ethernet
 interfaces.
-.It hme
+.It Xr hme 4
 .Dq Happy Meal
 .Tn Ethernet
 interfaces.
-.It en
+.It Xr en 4
 Midway-based Efficient Networks Inc. and Adaptec ATM interfaces.
-.It be
+.It Xr be 4
 .Dq Big Mac
 .Tn Ethernet
 board.
-.It qe
+.It Xr qe 4
 Quad Ethernet Controller
 board.
 .El
 .Ss Bridges
 .Bl -tag -width xxxxxxxx -offset indent
-.It xbox
+.It Xr xbox 4
 an
 .Nm Sbus
 expansion box.
 .El
 .Ss Graphics devices
 .Bl -tag -width xxxxxxxx -offset indent
-.It bwtwo
+.It Xr bwtwo 4
 framebuffer device.
-.It cgthree
+.It Xr cgthree 4
 framebuffer device.
-.It cgsix
+.It Xr cgsix 4
 framebuffer device.
-.It tcx
+.It Xr tcx 4
 framebuffer device.
 .El
 .Sh SEE ALSO
