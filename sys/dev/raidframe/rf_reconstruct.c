@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.9 2000/08/08 16:07:45 peter Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.10 2001/01/02 09:06:26 peter Exp $	*/
 /*	$NetBSD: rf_reconstruct.c,v 1.26 2000/06/04 02:05:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -460,7 +460,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 
 		badDisk = &raidPtr->Disks[row][col];
 
-		proc = raidPtr->engine_thread;
+		proc = raidPtr->recon_thread;
 
 		/* This device may have been opened successfully the 
 		   first time. Close it before trying to open it again.. */
