@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.111 2003/11/21 11:57:03 djm Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.112 2003/11/23 23:18:45 djm Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -785,7 +785,7 @@ int
 main(int ac, char **av)
 {
 	char dotsshdir[MAXPATHLEN], comment[1024], *passphrase1, *passphrase2;
-	char out_file[PATH_MAX], *reader_id = NULL;
+	char out_file[MAXPATHLEN], *reader_id = NULL;
 	char *resource_record_hostname = NULL;
 	Key *private, *public;
 	struct passwd *pw;
