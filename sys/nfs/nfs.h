@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.6 1996/12/17 03:46:37 dm Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.7 1998/05/25 09:12:26 deraadt Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -428,7 +428,7 @@ struct nfsrv_descript {
 	struct mbuf		*nd_nam;	/* and socket addr */
 	struct mbuf		*nd_nam2;	/* return socket addr */
 	caddr_t			nd_dpos;	/* Current dissect pos */
-	int			nd_procnum;	/* RPC # */
+	unsigned int		nd_procnum;	/* RPC # */
 	int			nd_stable;	/* storage type */
 	int			nd_flag;	/* nd_flag */
 	int			nd_len;		/* Length of this write */
