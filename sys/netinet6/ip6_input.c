@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_input.c,v 1.21 2001/02/07 11:43:53 itojun Exp $	*/
-/*	$KAME: ip6_input.c,v 1.170 2001/02/07 07:50:02 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.22 2001/02/08 14:51:22 itojun Exp $	*/
+/*	$KAME: ip6_input.c,v 1.172 2001/02/08 11:18:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -187,9 +187,14 @@ ip6_init2(dummy)
 #endif
 
 	/* nd6_timer_init */
-	timeout(nd6_timer, (caddr_t)0, hz);
+	bzero(&nd6_timer_ch, sizeof(nd6_timer_ch));
+	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
+	timeout_add(&nd6_timer_ch, hz);
+
 	/* router renumbering prefix list maintenance */
-	timeout(in6_rr_timer, (caddr_t)0, hz);
+	bzero(&in6_rr_timer_ch, sizeof(in6_rr_timer_ch));
+	timeout_set(&in6_rr_timer_ch, in6_rr_timer, (caddr_t)0);
+	timeout_add(&in6_rr_timer_ch, hz);
 }
 
 /*
@@ -207,24 +212,6 @@ ip6intr()
 		splx(s);
 		if (m == 0)
 			return;
-#ifndef PULLDOWN_TEST
-		/*
-		 * KAME requirement: make sure mbuf is packed well
-		 */
-
-		if (m->m_next) {
-			int l;
-			if (m->m_pkthdr.len > MCLBYTES)
-				l = MCLBYTES;
-			else
-				l = m->m_pkthdr.len;
-			if (l > m->m_len) {
-				m = m_pullup2(m, l);
-				if (!m)
-					continue;
-			}
-		}
-#endif
 		ip6_input(m);
 	}
 }
@@ -1275,7 +1262,7 @@ ip6_get_prevhdr(m, off)
 		while (len < off) {
 			ip6e = (struct ip6_ext *)(mtod(m, caddr_t) + len);
 
-			switch(nxt) {
+			switch (nxt) {
 			case IPPROTO_FRAGMENT:
 				len += sizeof(struct ip6_frag);
 				break;

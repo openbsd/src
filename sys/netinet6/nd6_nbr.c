@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.12 2001/02/07 11:43:54 itojun Exp $	*/
-/*	$KAME: nd6_nbr.c,v 1.57 2001/02/07 08:18:21 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.13 2001/02/08 14:51:23 itojun Exp $	*/
+/*	$KAME: nd6_nbr.c,v 1.58 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -42,6 +42,7 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -954,6 +955,7 @@ struct dadq {
 	int dad_ns_ocount;	/* NS sent so far */
 	int dad_ns_icount;
 	int dad_na_icount;
+	struct timeout dad_timer_ch;
 };
 
 static struct dadq_head dadq;
@@ -978,16 +980,9 @@ nd6_dad_starttimer(dp, ticks)
 	int ticks;
 {
 
-#ifdef __NetBSD__
-	callout_reset(&dp->dad_timer_ch, ticks,
-	    (void (*) __P((void *)))nd6_dad_timer, (void *)dp->dad_ifa);
-#else
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	dp->dad_timer =
-#endif
-	timeout((void (*) __P((void *)))nd6_dad_timer, (void *)dp->dad_ifa,
-	    ticks);
-#endif
+	timeout_set(&dp->dad_timer_ch, (void (*) __P((void *)))nd6_dad_timer,
+	    (void *)dp->dad_ifa);
+	timeout_add(&dp->dad_timer_ch, ticks);
 }
 
 static void
@@ -995,15 +990,7 @@ nd6_dad_stoptimer(dp)
 	struct dadq *dp;
 {
 
-#ifdef __NetBSD__
-	callout_stop(&dp->dad_timer_ch);
-#else
-	untimeout((void (*) __P((void *)))nd6_dad_timer, (void *)dp->dad_ifa
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		, dp->dad_timer
-#endif
-		);
-#endif
+	timeout_del(&dp->dad_timer_ch);
 }
 
 /*
@@ -1062,6 +1049,7 @@ nd6_dad_start(ifa, tick)
 		return;
 	}
 	bzero(dp, sizeof(*dp));
+	bzero(&dp->dad_timer_ch, sizeof(dp->dad_timer_ch));
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
 	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),

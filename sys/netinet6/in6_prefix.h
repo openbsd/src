@@ -1,9 +1,10 @@
-/*	$OpenBSD: in6_prefix.h,v 1.2 2000/02/04 18:13:36 itojun Exp $	*/
+/*	$OpenBSD: in6_prefix.h,v 1.3 2001/02/08 14:51:22 itojun Exp $	*/
+/*	$KAME: in6_prefix.h,v 1.9 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998 and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/timeout.h>
 
 struct rr_prefix {
 	struct ifprefix	rp_ifpr;
@@ -84,4 +87,5 @@ LIST_HEAD(rr_prhead, rr_prefix);
 extern struct rr_prhead rr_prefix;
 
 void in6_rr_timer __P((void *));
+extern struct timeout in6_rr_timer_ch;
 int delete_each_prefix  __P((struct rr_prefix *rpp, u_char origin));

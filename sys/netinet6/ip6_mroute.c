@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.8 2000/11/10 15:33:11 provos Exp $	*/
-/*	$KAME: ip6_mroute.c,v 1.33 2000/10/19 02:23:43 jinmei Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.9 2001/02/08 14:51:22 itojun Exp $	*/
+/*	$KAME: ip6_mroute.c,v 1.37 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -53,6 +53,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -221,6 +222,8 @@ static int add_m6if __P((struct mif6ctl *));
 static int del_m6if __P((mifi_t *));
 static int add_m6fc __P((struct mf6cctl *));
 static int del_m6fc __P((struct mf6cctl *));
+
+static struct timeout expire_upcalls_ch;
 
 /*
  * Handle MRT setsockopt commands to modify the multicast routing tables.
@@ -410,7 +413,8 @@ ip6_mrouter_init(so, m, cmd)
 
 	pim6 = 0;/* used for stubbing out/in pim stuff */
 
-	timeout(expire_upcalls, (caddr_t)NULL, EXPIRE_TIMEOUT);
+	timeout_set(&expire_upcalls_ch, expire_upcalls, NULL);
+	timeout_add(&expire_upcalls_ch, EXPIRE_TIMEOUT);
 
 #ifdef MRT6DEBUG
 	if (mrt6debug)
@@ -472,7 +476,7 @@ ip6_mrouter_done()
 
 	pim6 = 0; /* used to stub out/in pim specific code */
 
-	untimeout(expire_upcalls, (caddr_t)NULL);
+	timeout_del(&expire_upcalls_ch);
 
 	/*
 	 * Free all multicast forwarding cache entries.
@@ -1239,7 +1243,8 @@ expire_upcalls(unused)
 		}
 	}
 	splx(s);
-	timeout(expire_upcalls, (caddr_t)NULL, EXPIRE_TIMEOUT);
+	timeout_set(&expire_upcalls_ch, expire_upcalls, NULL);
+	timeout_add(&expire_upcalls_ch, EXPIRE_TIMEOUT);
 }
 
 /*

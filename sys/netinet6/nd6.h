@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.h,v 1.10 2001/02/07 11:43:54 itojun Exp $	*/
-/*	$KAME: nd6.h,v 1.42 2001/02/06 09:14:39 jinmei Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.11 2001/02/08 14:51:22 itojun Exp $	*/
+/*	$KAME: nd6.h,v 1.46 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,6 +39,7 @@
 #endif
 
 #include <sys/queue.h>
+#include <sys/timeout.h>
 
 struct	llinfo_nd6 {
 	struct	llinfo_nd6 *ln_next;
@@ -239,6 +240,8 @@ extern struct nd_prhead nd_prefix;
 extern int nd6_debug;
 
 #define nd6log(x)	do { if (nd6_debug) log x; } while (0)
+
+extern struct timeout nd6_timer_ch;
 
 /* nd6_rtr.c */
 extern struct ifnet *nd6_defifp;  /* XXXYYY */

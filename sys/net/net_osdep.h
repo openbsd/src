@@ -1,5 +1,5 @@
-/*	$OpenBSD: net_osdep.h,v 1.4 2001/02/06 01:31:57 itojun Exp $	*/
-/*	$KAME: net_osdep.h,v 1.33 2001/01/31 09:36:16 jinmei Exp $	*/
+/*	$OpenBSD: net_osdep.h,v 1.5 2001/02/08 14:51:21 itojun Exp $	*/
+/*	$KAME: net_osdep.h,v 1.36 2001/02/08 10:21:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,9 +56,9 @@
  *		      note that cloned routes from an interface direct route
  *		      still remain.
  *	NetBSD: official release versions (the latest is 1.5 as of Jan. 2001)
- *              have no side effects.  KAME for NetBSD has the same effects
- *              as of BSDI.
- *      OpenBSD: no side effects.
+ *		have no side effects.  KAME for NetBSD has the same effects
+ *		as of BSDI.
+ *	OpenBSD: no side effects.
  *
  * - privileged process
  *	NetBSD, FreeBSD 3
@@ -108,6 +108,8 @@
  *		timeout() is non-void, must keep returned value for untimeout()
  *	NetBSD 1.5
  *		timeout() is obsoleted, use callout_xx (sys/callout.h)
+ *	OpenBSD 2.8
+ *		timeout_{add,set,del} is encouraged (sys/timeout.h)
  * - sysctl
  *	NetBSD, OpenBSD
  *		foo_sysctl()
@@ -141,7 +143,8 @@
  * - struct ifnet for loopback interface
  *	BSDI3: struct ifnet loif;
  *	BSDI4: struct ifnet *loifp;
- *	NetBSD, OpenBSD, FreeBSD2: struct ifnet loif[NLOOP];
+ *	NetBSD, OpenBSD 2.8, FreeBSD2: struct ifnet loif[NLOOP];
+ *	OpenBSD 2.9: struct ifnet *lo0ifp;
  *
  *	odd thing is that many of them refers loif as ifnet *loif,
  *	not loif[NLOOP], from outside of if_loop.c.

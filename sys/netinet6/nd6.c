@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.c,v 1.22 2001/02/07 11:43:54 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.110 2001/02/06 09:14:38 jinmei Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.23 2001/02/08 14:51:22 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.114 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,6 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -109,6 +110,10 @@ static struct sockaddr_in6 all1_sa;
 
 static void nd6_slowtimo __P((void *));
 
+struct timeout nd6_slowtimo_ch;
+struct timeout nd6_timer_ch;
+extern struct timeout in6_tmpaddrtimer_ch;
+
 void
 nd6_init()
 {
@@ -131,7 +136,8 @@ nd6_init()
 	nd6_init_done = 1;
 
 	/* start timer */
-	timeout(nd6_slowtimo, (caddr_t)0, ND6_SLOWTIMER_INTERVAL * hz);
+	timeout_set(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
+	timeout_add(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz);
 }
 
 void
@@ -376,14 +382,15 @@ nd6_timer(ignored_arg)
 	void	*ignored_arg;
 {
 	int s;
-	register struct llinfo_nd6 *ln;
-	register struct nd_defrouter *dr;
-	register struct nd_prefix *pr;
+	struct llinfo_nd6 *ln;
+	struct nd_defrouter *dr;
+	struct nd_prefix *pr;
 	long time_second = time.tv_sec;
 	
 	s = splnet();
 
-	timeout(nd6_timer, (caddr_t)0, nd6_prune * hz);
+	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
+	timeout_add(&nd6_timer_ch, nd6_prune * hz);
 
 	ln = llinfo_nd6.ln_next;
 	/* XXX BSD/OS separates this code -- itojun */
@@ -740,7 +747,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	struct sockaddr_in6 *addr;
 	struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 	int i;
 
 #define IFADDR6(a) ((((struct in6_ifaddr *)(a))->ia_addr).sin6_addr)
@@ -1729,10 +1736,11 @@ nd6_slowtimo(ignored_arg)
     void *ignored_arg;
 {
 	int s = splnet();
-	register int i;
-	register struct nd_ifinfo *nd6if;
+	int i;
+	struct nd_ifinfo *nd6if;
 
-	timeout(nd6_slowtimo, (caddr_t)0, ND6_SLOWTIMER_INTERVAL * hz);
+	timeout_set(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
+	timeout_add(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz);
 	for (i = 1; i < if_index + 1; i++) {
 		if (!nd_ifinfo || i >= nd_ifinfo_indexlim)
 			continue;
@@ -1755,14 +1763,14 @@ nd6_slowtimo(ignored_arg)
 #define senderr(e) { error = (e); goto bad;}
 int
 nd6_output(ifp, origifp, m0, dst, rt0)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct ifnet *origifp;
 	struct mbuf *m0;
 	struct sockaddr_in6 *dst;
 	struct rtentry *rt0;
 {
-	register struct mbuf *m = m0;
-	register struct rtentry *rt = rt0;
+	struct mbuf *m = m0;
+	struct rtentry *rt = rt0;
 	struct sockaddr_in6 *gw6 = NULL;
 	struct llinfo_nd6 *ln = NULL;
 	int error = 0;
