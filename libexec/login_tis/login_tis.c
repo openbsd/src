@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.1 2004/09/28 15:02:01 millert Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.2 2005/01/04 18:24:33 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -633,7 +633,7 @@ tis_authorize(struct tis_connection *tc, const char *user,
 	*obuf = '\0';
 	/* class is not used by authsrv (it is effectively a comment) */
 	len = snprintf(buf, sizeof(buf), "authenticate %s %s", user, class);
-	if (len >= sizeof(buf)) {
+	if (len == -1 || len >= sizeof(buf)) {
 		syslog(LOG_ERR, "user/class too large");
 		resp = error;
 	} else if (tis_send(tc, buf, len) < 0)
@@ -673,7 +673,7 @@ tis_verify(struct tis_connection *tc, const char *response, char *ebuf)
 
 	ebuf[0] = '\0';
 	len = snprintf(buf, sizeof(buf), "response '%s'", response);
-	if (len >= sizeof(buf)) {
+	if (len == -1 || len >= sizeof(buf)) {
 		syslog(LOG_ERR, "response too large");
 		return (-1);
 	}
