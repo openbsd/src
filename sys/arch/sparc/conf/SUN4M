@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.58 2003/07/16 15:18:07 millert Exp $
+#	$OpenBSD: SUN4M,v 1.59 2004/01/27 01:12:09 mickey Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -75,6 +75,8 @@ mbpp*	at magma?
 spif*	at sbus?					# spif serial cards
 stty*	at spif?
 sbpp*	at spif?
+
+bpp*	at sbus?					# parallel port
 
 # SUNW,xbox SBus Expansion Subsystem
 xbox*	at sbus?					# SBus Expansion box
