@@ -1,8 +1,9 @@
-/*	$OpenBSD: yp_bind.c,v 1.2 1996/05/22 02:08:35 deraadt Exp $	 */
+/*	$OpenBSD: yp_bind.c,v 1.3 1996/07/01 06:47:35 deraadt Exp $	 */
 /*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
 
 /*
- * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
+ * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
+ * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,10 +68,12 @@ _yp_dobind(dom, ypdb)
 	struct ypbind_resp ypbr;
 	struct timeval  tv;
 	struct sockaddr_in clnt_sin;
+	struct ypbind_binding *bn;
 	int             clnt_sock, fd, gpid;
 	CLIENT         *client;
 	int             new = 0, r;
 	int             count = 0;
+	u_short		port;
 
 	/*
 	 * test if YP is running or not
@@ -128,14 +131,16 @@ again:
 		if (flock(fd, LOCK_EX | LOCK_NB) == -1 &&
 		    errno == EWOULDBLOCK) {
 			struct iovec    iov[2];
-			struct ypbind_resp ybr;
 			u_short         ypb_port;
-			struct ypbind_binding *bn;
 
-			iov[0].iov_base = (caddr_t) & ypb_port;
+			/*
+			 * we fetch the ypbind port number, but do
+			 * nothing with it.
+			 */
+			iov[0].iov_base = (caddr_t) &ypb_port;
 			iov[0].iov_len = sizeof ypb_port;
-			iov[1].iov_base = (caddr_t) & ybr;
-			iov[1].iov_len = sizeof ybr;
+			iov[1].iov_base = (caddr_t) &ypbr;
+			iov[1].iov_len = sizeof ypbr;
 
 			r = readv(fd, iov, 2);
 			if (r != iov[0].iov_len + iov[1].iov_len) {
@@ -143,23 +148,8 @@ again:
 				ysd->dom_vers = -1;
 				goto again;
 			}
-			(void)memset(&ysd->dom_server_addr, 0,
-			    sizeof ysd->dom_server_addr);
-			ysd->dom_server_addr.sin_len =
-			    sizeof(struct sockaddr_in);
-			ysd->dom_server_addr.sin_family = AF_INET;
-			bn = &ybr.ypbind_resp_u.ypbind_bindinfo;
-			memcpy(&ysd->dom_server_addr.sin_port,
-			    &bn->ypbind_binding_port,
-			    sizeof(ysd->dom_server_addr.sin_port));
-				
-			memcpy(&ysd->dom_server_addr.sin_addr,
-			    &bn->ypbind_binding_addr,
-			    sizeof(ysd->dom_server_addr.sin_addr));
-
-			ysd->dom_server_port = ysd->dom_server_addr.sin_port;
 			(void)close(fd);
-			goto gotit;
+			goto gotdata;
 		} else {
 			/* no lock on binding file, YP is dead. */
 			(void)close(fd);
@@ -170,7 +160,6 @@ again:
 	}
 trynet:
 	if (ysd->dom_vers == -1 || ysd->dom_vers == 0) {
-		struct ypbind_binding *bn;
 		(void)memset(&clnt_sin, 0, sizeof clnt_sin);
 		clnt_sin.sin_len = sizeof(struct sockaddr_in);
 		clnt_sin.sin_family = AF_INET;
@@ -185,6 +174,17 @@ trynet:
 				free(ysd);
 			return YPERR_YPBIND;
 		}
+		if (ntohs(clnt_sin.sin_port) >= IPPORT_RESERVED) {
+			/*
+			 * YP was not running, but someone has registered
+			 * ypbind with portmap -- this simply means YP is
+			 * not running.
+			 */
+			clnt_destroy(client);
+			if (new)
+				free(ysd);
+			return YPERR_YPBIND;
+		}
 		tv.tv_sec = _yplib_timeout;
 		tv.tv_usec = 0;
 		r = clnt_call(client, YPBINDPROC_DOMAIN, xdr_domainname,
@@ -193,19 +193,32 @@ trynet:
 			if (new == 0 || count)
 				fprintf(stderr,
 		    "YP server for domain %s not responding, still trying\n",
-					dom);
+				    dom);
 			count++;
 			clnt_destroy(client);
 			ysd->dom_vers = -1;
 			goto again;
 		}
 		clnt_destroy(client);
-
+gotdata:
+		bn = &ypbr.ypbind_resp_u.ypbind_bindinfo;
+		memcpy(&port, &bn->ypbind_binding_port, sizeof port);
+		if (ntohs(port) >= IPPORT_RESERVED) {
+			/*
+			 * This is bullshit -- the ypbind wants me to
+			 * communicate to an insecure ypserv.  We are
+			 * within rights to syslog this as an attack,
+			 * but for now we'll simply ignore it; real YP
+			 * is obviously not running.
+			 */
+			if (new)
+				free(ysd);
+			return YPERR_YPBIND;
+		}
 		(void)memset(&ysd->dom_server_addr, 0, 
 		    sizeof ysd->dom_server_addr);
 		ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
 		ysd->dom_server_addr.sin_family = AF_INET;
-		bn = &ypbr.ypbind_resp_u.ypbind_bindinfo;
 		memcpy(&ysd->dom_server_addr.sin_port,
 		    &bn->ypbind_binding_port,
 		    sizeof(ysd->dom_server_addr.sin_port));
@@ -213,7 +226,6 @@ trynet:
 		    &bn->ypbind_binding_addr,
 		    sizeof(ysd->dom_server_addr.sin_addr.s_addr));
 		ysd->dom_server_port = ysd->dom_server_addr.sin_port;
-gotit:
 		ysd->dom_vers = YPVERS;
 		(void)strcpy(ysd->dom_domain, dom);
 	}
@@ -276,5 +288,4 @@ yp_unbind(dom)
 		}
 		ypbp = ypb;
 	}
-	return;
 }
