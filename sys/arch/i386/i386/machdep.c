@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.252 2003/12/11 01:09:47 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.253 2003/12/14 23:11:28 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -681,7 +681,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_486, 
 			{
 				"486DX", "486DX", "486SX", "486DX2", "486SL",
-				"486SX2", 0, "486DX2 W/B Enhanced",
+				"486SX2", 0, "486DX2 W/B",
 				"486DX4", 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
@@ -691,10 +691,10 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				"Pentium (P5 A-step)", "Pentium (P5)",
+				"Pentium (A-step)", "Pentium (P5)",
 				"Pentium (P54C)", "Pentium (P24T)",
 				"Pentium/MMX", "Pentium", 0,
-				"Pentium (P54C)", "Pentium/MMX (Tillamook)",
+				"Pentium (P54C)", "Pentium/MMX",
 				0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
 			},
@@ -704,15 +704,15 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				"Pentium Pro (A-step)", "Pentium Pro", 0,
-				"Pentium II (Klamath)", "Pentium Pro",
-				"Pentium II/Celeron (Deschutes)",
-				"Celeron (Mendocino)",
-				"Pentium III (Katmai)",
-				"Pentium III (Coppermine)",
+				"Pentium Pro", "Pentium Pro", 0,
+				"Pentium II", "Pentium Pro",
+				"Pentium II/Celeron",
+				"Celeron",
+				"Pentium III",
+				"Pentium III",
 				"Pentium M",
-				"Pentium III Xeon (Cascades)",
-				"Pentium III (Tualatin)", 0, 0,
+				"Pentium III Xeon",
+				"Pentium III", 0, 0,
 				0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
@@ -797,14 +797,14 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_686,
 			{
 				0, "Athlon Model 1", "Athlon Model 2",
-				"Duron Model 3 (Spitfire)",
-				"Athlon Model 4 (Thunderbird)",
-				0, "Athlon XP Model 6 (Palomino)",
-				"Duron Model 7 (Morgan)", 
-				"Athlon XP Model 8 (Thoroughbred)",
-				0, "Athlon XP Model 10 (Barton)",
+				"Duron Model 3",
+				"Athlon Model 4",
+				0, "Athlon XP Model 6",
+				"Duron Model 7", 
+				"Athlon XP Model 8",
+				0, "Athlon XP Model 10",
 				0, 0, 0, 0, 0,
-				"K7 (Athlon)"		/* Default */
+				"K7"		/* Default */
 			},
 			NULL
 		},
@@ -870,9 +870,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				0, 0, "6x86 (M1)", 0, "GXm", 0, 0, 0, 0, 0,
+				0, 0, "6x86", 0, "GXm", 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0,
-				"M1 class"	/* Default */
+				"586 class"	/* Default */
 			},
 			cyrix6x86_cpu_setup
 		},
@@ -880,9 +880,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				"6x86MX (M2)", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"6x86MX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0,
-				"M2 class"	/* Default */
+				"686 class"	/* Default */
 			},
 			NULL
 		} }
@@ -1013,7 +1013,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, "Geode GX1", 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0,
-				"M1 class"	/* Default */
+				"586 class"	/* Default */
 			},
 			natsem6x86_cpu_setup
 		} }
