@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: pty.c,v 1.17 2000/12/12 22:50:21 ho Exp $");
+RCSID("$OpenBSD: pty.c,v 1.18 2000/12/13 06:36:05 deraadt Exp $");
 
 #include <util.h>
 #include "pty.h"
@@ -270,13 +270,13 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 	 * Change owner and mode of the tty as required.
 	 * Warn but continue if filesystem is read-only and the uids match.
 	 */
-	if (stat (ttyname, &st))
+	if (stat(ttyname, &st))
 		fatal("stat(%.100s) failed: %.100s", ttyname,
 		    strerror(errno));
 
 	if (st.st_uid != pw->pw_uid || st.st_gid != gid) {
-		if (chown (ttyname, pw->pw_uid, gid) < 0) {
-			if ((errno == EROFS) && (st.st_uid == pw->pw_uid))
+		if (chown(ttyname, pw->pw_uid, gid) < 0) {
+			if (errno == EROFS && st.st_uid == pw->pw_uid)
 				error("chown(%.100s, %d, %d) failed: %.100s",
 				      ttyname, pw->pw_uid, gid, 
 				      strerror(errno));
@@ -288,9 +288,9 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 	}
 
 	if ((st.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO)) != mode) {
-		if (chmod (ttyname, mode) < 0) {
-			if ((errno == EROFS) &&
-			    ((st.st_mode & (S_IRGRP | S_IROTH)) == 0))
+		if (chmod(ttyname, mode) < 0) {
+			if (errno == EROFS &&
+			    (st.st_mode & (S_IRGRP | S_IROTH)) == 0)
 				error("chmod(%.100s, 0%o) failed: %.100s",
 				      ttyname, mode, strerror(errno));
 			else
