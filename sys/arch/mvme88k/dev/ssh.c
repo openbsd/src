@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.21 2004/01/02 23:48:01 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.22 2004/01/04 01:14:04 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -52,6 +52,8 @@
 #include <machine/autoconf.h>
 #include <machine/cmmu.h>
 #include <machine/pmap.h>
+#include <machine/bugio.h>
+#include <machine/prom.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -216,9 +218,23 @@ sshmatch(pdp, vcf, args)
 	 * For some reason, if the SCSI hardware is not ``warmed'' by the
 	 * BUG (netboot or boot from external SCSI controller), badvaddr()
 	 * will always fail, although the hardware is there.
+	 * Since the BUG will do the right thing, we'll defer a dummy read
+	 * from the controller and retry.
 	 */
 	if (brdtyp == BRD_187 || brdtyp == BRD_197) {
-		/* do something to enable the controller??? */
+		struct mvmeprom_dskio dio;
+		char buf[MVMEPROM_BLOCK_SIZE];
+
+#ifdef DEBUG
+		printf("sshmatch: trying to warm up controller\n");
+#endif
+		bzero(&dio, sizeof dio);
+		dio.pbuffer = buf;
+		dio.blk_cnt = 1;
+		bugdiskrd(&dio);
+
+		if (badvaddr((vaddr_t)IIOV(ca->ca_vaddr), 4) == 0)
+			return (1);
 	}
 
 	return (0);
