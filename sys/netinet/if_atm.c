@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.c,v 1.2 1996/06/21 21:35:19 chuck Exp $       */
+/*      $OpenBSD: if_atm.c,v 1.3 1996/06/26 04:17:08 chuck Exp $       */
 
 /*
  *
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
+ *      This product includes software developed by Charles D. Cranor and 
  *	Washington University.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -61,6 +61,11 @@
 #include <netinet/ip.h>
 #include <netinet/if_atm.h>
 
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif
+
+
 #define SDL(s) ((struct sockaddr_dl *)s)
 
 /*
@@ -77,6 +82,12 @@ atm_rtrequest(req, rt, sa)
 	struct sockaddr *sa;
 {
 	register struct sockaddr *gate = rt->rt_gateway;
+	struct atm_pseudoioctl api;
+#ifdef NATM
+	struct sockaddr_in *sin;
+	struct natmpcb *npcb = NULL;
+	struct atm_pseudohdr *aph;
+#endif
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 
 	if (rt->rt_flags & RTF_GATEWAY)   /* link level requests only */
@@ -119,14 +130,34 @@ atm_rtrequest(req, rt, sa)
 		if (rt->rt_ifp->if_ioctl == NULL) panic("atm null ioctl");
 #endif
 
+#ifdef NATM
+		/*
+		 * let native ATM know we are using this VCI/VPI
+		 * (i.e. reserve it)
+		 */
+		sin = (struct sockaddr_in *) rt_key(rt);
+		if (sin->sin_family != AF_INET)
+			goto failed;
+		aph = (struct atm_pseudohdr *) LLADDR(SDL(gate));
+		npcb = npcb_add(NULL, rt->rt_ifp, ATM_PH_VCI(aph), 
+						ATM_PH_VPI(aph));
+		if (npcb == NULL) 
+			goto failed;
+		npcb->npcb_flags |= NPCB_IP;
+		npcb->ipaddr.s_addr = sin->sin_addr.s_addr;
+		/* XXX: move npcb to llinfo when ATM ARP is ready */
+		rt->rt_llinfo = (caddr_t) npcb;
+		rt->rt_flags |= RTF_LLINFO;
+#endif
 		/*
 		 * let the lower level know this circuit is active
 		 */
+		bcopy(LLADDR(SDL(gate)), &api.aph, sizeof(api.aph));
+		api.asock = NULL;
 		if (rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMENA, 
-				LLADDR(SDL(gate))) != 0) {
+							(caddr_t)&api) != 0) {
 			printf("atm: couldn't add VC\n");
-			/* XXX: do we need to do anything else to recover? */
-			break;
+			goto failed;
 		}
 
 		SDL(gate)->sdl_type = rt->rt_ifp->if_type;
@@ -134,13 +165,40 @@ atm_rtrequest(req, rt, sa)
 
 		break;
 
+failed:
+#ifdef NATM
+		if (npcb) {
+			npcb_free(npcb, NPCB_DESTROY);
+			rt->rt_llinfo = NULL;
+			rt->rt_flags &= ~RTF_LLINFO;
+		}
+#endif
+		rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
+			rt_mask(rt), 0, (struct rtentry **) 0);
+		break;
+
 	case RTM_DELETE:
 
+#ifdef NATM
+		/*
+		 * tell native ATM we are done with this VC
+		 */
+
+		if (rt->rt_flags & RTF_LLINFO) {
+			npcb_free((struct natmpcb *)rt->rt_llinfo, 
+								NPCB_DESTROY);
+			rt->rt_llinfo = NULL;
+			rt->rt_flags &= ~RTF_LLINFO;
+		}
+#endif
 		/*
 		 * tell the lower layer to disable this circuit
 		 */
-		(void)rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMDIS,
-				LLADDR(SDL(gate)));
+
+		bcopy(LLADDR(SDL(gate)), &api.aph, sizeof(api.aph));
+		api.asock = NULL;
+		(void)rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMDIS, 
+							(caddr_t)&api);
 
 		break;
 	}
