@@ -1,4 +1,5 @@
 #!/bin/sh
+# $OpenBSD: config.sh.OpenBSD,v 1.2 1996/08/20 08:21:52 downsj Exp $
 #
 # This file was produced by running the Configure script. It holds all the
 # definitions figured out by Configure. Should you modify one of these values,
@@ -9,6 +10,16 @@
 # Configuration time: Sun Aug 18 18:11:40 PDT 1996
 # Configured by: downsj
 # Target system: openbsd threadway 1.2 threadway#36 i386 
+
+#
+# NOTE:  This script does run time substitions when being used by Configure!
+#
+
+case "`machine`" in
+"alpha")	_dynaload=0;;
+"arc")		_dynaload=0;;
+*)		_dynaload=1;;
+esac
 
 Author=''
 Date='$Date'
@@ -89,9 +100,15 @@ d_cuserid='undef'
 d_dbl_dig='define'
 d_difftime='define'
 d_dirnamlen='define'
-d_dlerror='define'
-d_dlopen='define'
-d_dlsymun='define'
+if [ $_dynaload ]; then
+	d_dlerror='define'
+	d_dlopen='define'
+	d_dlsymun='define'
+else
+	d_dlerror='undef'
+	d_dlopen='undef'
+	d_dlsymun='undef'
+fi
 d_dosuid='undef'
 d_dup2='define'
 d_eofnblk='define'
@@ -209,7 +226,7 @@ d_strctcpy='define'
 d_strerrm='strerror(e)'
 d_strerror='define'
 d_strxfrm='define'
-d_suidsafe='undef'
+d_suidsafe='define'
 d_symlink='define'
 d_syscall='define'
 d_sysconf='define'
@@ -241,9 +258,15 @@ db_hashtype='u_int32_t'
 db_prefixtype='size_t'
 defvoidused='15'
 direntrytype='struct dirent'
-dlext='so'
-dlsrc='dl_dlopen.xs'
-dynamic_ext='DB_File Fcntl FileHandle POSIX SDBM_File Safe Socket'
+if [ $_dynaload ]; then
+	dlext='so'
+	dlsrc='dl_dlopen.xs'
+	dynamic_ext='DB_File Fcntl FileHandle POSIX SDBM_File Safe Socket'
+else
+	dlext=''
+	dlsrc=''
+	dynamic_ext=''
+fi
 eagain='EAGAIN'
 echo='echo'
 egrep='egrep'
@@ -467,7 +490,11 @@ troff=''
 uidtype='uid_t'
 uname='uname'
 uniq='uniq'
-usedl='define'
+if [ $_dynaload ]; then
+	usedl='define'
+else
+	usedl='undef'
+fi
 usemymalloc='n'
 usenm='true'
 useposix='true'
