@@ -1,0 +1,14 @@
+scrub all fragment reassemble 
+scrub in all fragment reassemble 
+scrub all fragment reassemble 
+pass all 
+block drop in all 
+block drop out all 
+block drop all 
+pass in all 
+pass out all 
+pass on lo0 all 
+block drop on lo0 all 
+pass in proto udp all keep state 
+pass out proto udp all keep state 
+pass out on lo0 proto tcp from any to any port = smtp keep state 
