@@ -1,4 +1,4 @@
-/* $OpenBSD: socket3.c,v 1.1 2002/10/10 00:45:20 marc Exp $ */
+/* $OpenBSD: socket3.c,v 1.2 2002/10/12 19:02:51 marc Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /* Test blocking/non-blocking mode inheritance on accept */
@@ -100,10 +100,10 @@ sock_accept(void *arg)
 	CHECKe(close(STDIN_FILENO));
 	accept_sa_size = sizeof accept_sa;
 	CHECKe(accept_fd = accept(listen_fd, &accept_sa, &accept_sa_size));
+	/* verify O_NONBLOCK on the accepted fd */
 	flags = fcntl(accept_fd, F_GETFL);
 	printf("accept_fd = %d, flags = %x\n", accept_fd, flags);
-	/* XXX the above should abort if flags & O_NOBLOCK is zero */
-	/* ASSERT(flags & O_NONBLOCK); */
+	ASSERT(flags & O_NONBLOCK);
 	CHECKe(close(listen_fd));
 	CHECKe(close(accept_fd));
 	CHECKr(pthread_join(connect_thread, NULL));
