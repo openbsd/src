@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.11 1997/08/08 21:46:50 niklas Exp $	*/
+/*	$OpenBSD: xd.c,v 1.12 1998/03/01 08:42:19 johns Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -1575,8 +1575,8 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 int
 xdc_piodriver(xdcsc, iorqno, freeone)
 	struct xdc_softc *xdcsc;
-	char    iorqno;
-	int     freeone;
+	int    iorqno;   
+	int    freeone;
 
 {
 	int     nreset = 0;
