@@ -1,0 +1,19 @@
+Before you start you should familiarize yourself with the ARCS setup
+and how to run programs from the Command monitor prompt.
+
+If you're installing OpenBSD/sgi for the first time it's a very good
+idea to look at the partition sizes of disk you intend installing OpenBSD on.
+Changing the size of partitions after you've installed is difficult. If
+you do not have a spare bootable disk, it may be simpler to re-install
+OpenBSD again from scratch.
+
+Assuming a classic partition scheme with root (`/') and /usr filesystems,
+a comfortable size for the OpenBSD root filesystem partition (a) is about
+64Mb. The install will take ~30Mb of that. However it has shown that 256M
+is not a bad choice when more packages are to be installed. A good initial
+size for the swap (b) partition is twice the amount of physical memory in
+your machine or at least 128M. A minimum /usr partition (e) is ~256M but
+with that you will likely run into trouble later. A minimum size of 1G is
+recommended. A full binary installation, without X11 or any other additional
+software, takes about 170M in `/usr'.
+

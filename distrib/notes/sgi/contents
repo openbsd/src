@@ -1,0 +1,34 @@
+dnl	$OpenBSD: contents,v 1.1 2004/08/20 17:53:09 pefo Exp $
+TopPart
+
+OpenBSDdistsets
+
+OpenBSDbsd
+
+OpenBSDrd
+
+DistributionDescription(ten)
+
+OpenBSDbase(39580390,108206080,shared)
+
+OpenBSDcomp(24762610,77844480,shared)
+
+OpenBSDetc(1644585,7024640)
+
+OpenBSDgame(2761912,6256640)
+
+OpenBSDman(7202111,27484160)
+
+OpenBSDmisc(2154743,7413760)
+
+OpenBSDxbase(8688529,23316480)
+
+OpenBSDxetc(500550,3020800)
+
+OpenBSDxfont(33473489,40878080)
+
+dnl Do not list xserv, on purpose. No X11 support yet.
+dnl OpenBSDxserv(6682003,15800320)
+dnl
+dnl OpenBSDxshare(1660865,9687040)
+

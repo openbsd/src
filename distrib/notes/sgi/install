@@ -1,0 +1,95 @@
+dnl	$OpenBSD: install,v 1.1 2004/08/20 17:53:09 pefo Exp $
+OpenBSDInstallPrelude
+
+There are several ways to install OpenBSD onto a disk. The easiest way
+in terms of preliminary setup is to use the OpenBSD ramdisk kernel that
+can be booted via BOOTP. Booting from CD is not yet supported.
+
+
+Installing using the OpenBSD ramdisk kernel.
+
+The ramdisk kernel is a self-contained OpenBSD filesystem including all
+utilities necessary to install OpenBSD on a local disk, embedded in a
+GENERIC kernel image. It is distributed as a plain ELF executable file
+designed to be loaded into the system by the ARCS firmware.
+
+Booting the ramdisk kernel can be done from the ARCS graphic console
+although it might be more convenient to use the serial console since
+the kernel currently only supports the serial console. Some systems
+come with the serial console but sometimes this must be changed.
+
+To change to serial console, go into the ARCS Maintenance console. When
+the system starts up, press the ESC key or use the the mouse and click
+the STOP FOR MAINTENANCE button. Once in the System maintenance meny,
+select '5' to go into the Command monitor.
+
+To switch the console to serial mode, change the console nvironment
+variable:
+
+> setenv console d
+
+and reboot the system. A serial console at 9600B8N1 and nno flow control
+should be attached to the serial port marked (1).
+
+When the message:
+        To perform system maintenance instead, press <Esc>
+is displayed, press the ESCAPE key to get into maintenance mode. Again,
+select '5' to get to the Command monitor.
+
+To be able to boot, a bootp/dhcpd server needs to be set up. To find out
+the ethernet address for your system, use the 'printenv' command from the
+Command monitor. See the value of the eaddr variable. See the dhcpd(8)
+man page for information on how to set up the dhcp server to respond to
+a bootp client.
+
+Loading the ramdisk kernel into your system is done with the appropriate
+ARCS boot command on Your system. Usually this is done by typing in the
+following string at the ARCS prompt:
+
+	bootp()/bsd.rd
+
+to boot from Your TFTP server.
+
+This will cause the ramdisk kernel to be booted. After the initial probe
+messages you'll will see the question:
+
+TBD.
+
+The script will do most of the work of transferring the system from the
+tar files onto your disk. You will frequently be asked for confirmation
+before the script proceeds with each phase of the installation process.
+Occasionally, you'll have to provide a piece of information such as the
+name of the disk you want to install on or IP addresses and domain names
+you want to assign.
+
+The installation script goes through the following phases:
+
+	- determination of the disk to install OpenBSD on
+	- checking of the OpenBSD partition information on the disk
+	- creating and mounting the OpenBSD filesystems
+	- setup of IP configuration
+	- extraction of the distribution tar files
+	- installation of kernel and the bootable kernel
+
+The installation program will guide you through the installation. There is
+one area of complexity that you should be careful about and that is to
+correctly answer the question about the disks previous history. If the
+disk have an MBR record in the beginning of the disk it has o be wiped
+because PMON does not know about how to find the OpenBSD partition. Just
+read the instructions and answer the question correctly.
+
+
+
+OpenBSDFTPInstall
+
+OpenBSDHTTPInstall
+
+OpenBSDCDROMInstall
+
+OpenBSDNFSInstall
+
+OpenBSDCommonFS
+
+OpenBSDCommonURL
+
+OpenBSDCongratulations

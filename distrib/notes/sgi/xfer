@@ -1,0 +1,15 @@
+dnl	$OpenBSD: xfer,v 1.1 2004/08/20 17:53:09 pefo Exp $
+Installation is supported from several media types, including:
+
+	CD-ROM
+	FFS partitions
+	FTP
+	HTTP
+
+
+OpenBSDXferShortPrelude
+
+
+OpenBSDXferBareTape
+
+OpenBSDXferFFS
