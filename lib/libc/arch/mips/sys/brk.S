@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.3 1996/07/30 20:27:57 pefo Exp $	*/
+/*	$OpenBSD: brk.S,v 1.4 1996/08/12 23:03:00 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: brk.S,v 1.3 1996/07/30 20:27:57 pefo Exp $")
+	ASMSTR("$Id: brk.S,v 1.4 1996/08/12 23:03:00 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -53,15 +53,18 @@ minbrk:	.word	_C_LABEL(end)
 LEAF(brk)
 	.set	reorder
 	lw	v0, minbrk
-	bgeu	a0, v0, _C_LABEL(_brk)
+	bltu	a0, v0, 1f
+	la	t9, _brk
+	jr	t9
+1:
 	move	a0, v0		# dont allow break < minbrk
 	li	v0, SYS_break
 	syscall
-	bne	a3, zero, 1f
+	bne	a3, zero, 2f
 	sw	a0, curbrk
 	move	v0, zero
 	j	ra
-1:
+2:
 	la	t9, _C_LABEL(cerror)
 	jr	t9
 END(brk)
