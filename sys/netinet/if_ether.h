@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.11 2000/02/10 05:49:28 jason Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.12 2000/03/07 18:15:47 chris Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -49,6 +49,21 @@ struct ether_addr {
  */
 #define	ETHER_ADDR_LEN	6
 
+/*
+ * The number of bytes in the type field.
+ */
+#define ETHER_TYPE_LEN	2
+
+/*
+ * The number of bytes in the trailing CRC field.
+ */
+#define ETHER_CRC_LEN	4
+
+/*
+ * The length of the combined header.
+ */
+#define ETHER_HDR_LEN	(ETHER_ADDR_LEN*2+ETHER_TYPE_LEN)
+
 struct	ether_header {
 	u_int8_t  ether_dhost[ETHER_ADDR_LEN];
 	u_int8_t  ether_shost[ETHER_ADDR_LEN];
@@ -59,9 +74,11 @@ struct	ether_header {
 #define	ETHERTYPE_IP		0x0800	/* IP protocol */
 #define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
 #define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
+#define	ETHERTYPE_8021Q		0x8100	/* IEEE 802.1Q VLAN tagging */
 #define	ETHERTYPE_IPV6		0x86DD	/* IPv6 protocol */
 #define	ETHERTYPE_PPPOEDISC	0x8863	/* PPP Over Ethernet Discovery Stage */
 #define	ETHERTYPE_PPPOE		0x8864	/* PPP Over Ethernet Session Stage */
+#define	ETHERTYPE_LOOPBACK	0x9000	/* used to test interfaces */
 
 /*
  * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
