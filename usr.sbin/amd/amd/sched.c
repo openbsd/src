@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.10 2003/10/30 16:04:06 millert Exp $	*/
+/*	$OpenBSD: sched.c,v 1.11 2004/03/15 08:54:54 djm Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.10 2003/10/30 16:04:06 millert Exp $
+ *	$Id: sched.c,v 1.11 2004/03/15 08:54:54 djm Exp $
  */
 
 /*
@@ -224,7 +224,8 @@ sigchld(int sig)
 		}
 
 #ifdef DEBUG
-		if (p) ; else dlog("can't locate task block for pid %ld", (long)pid);
+		if (p == NULL)
+			dlog("can't locate task block for pid %ld", (long)pid);
 #endif /* DEBUG */
 	}
 
