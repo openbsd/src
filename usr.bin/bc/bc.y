@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.6 2003/09/26 19:26:16 deraadt Exp $	*/
+/*	$OpenBSD: bc.y,v 1.7 2003/09/28 07:45:55 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.6 2003/09/26 19:26:16 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.7 2003/09/28 07:45:55 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -79,7 +79,7 @@ static __dead void	usage(void);
 
 static size_t		instr_sz = 0;
 static struct tree	*instructions = NULL;
-static size_t		current = 0;
+static ssize_t		current = 0;
 static int		macro_char = '0';
 static int		reset_macro_char = '0';
 static int		nesting = 0;
@@ -592,7 +592,7 @@ grow(void)
 	}
 }
 
-static int
+static ssize_t
 cs(const char *str)
 {
 	grow();
@@ -601,7 +601,7 @@ cs(const char *str)
 	return current++;
 }
 
-static int
+static ssize_t
 as(const char *str)
 {
 	grow();
