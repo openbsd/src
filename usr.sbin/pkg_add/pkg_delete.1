@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.15 2004/12/09 18:58:25 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.16 2004/12/27 22:54:25 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -70,6 +70,8 @@ These include:
 .Bl -tag -width "dependenciesXX"
 .It Ar ambiguous
 delete all packages matching ambiguous package specifications.
+.It Ar baddepend
+force the deletion of packages even if they reference inexistent dependencies.
 .It Ar dependencies
 also delete the whole set of packages that depends upon the requested packages.
 .It Ar nonroot

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.83 2004/12/27 22:44:29 espie Exp $
+# $OpenBSD: pkg_delete,v 1.84 2004/12/27 22:54:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -174,7 +174,7 @@ eval {
 # and finally, handle the removal
 { do {
 	$removed = 0;
-	for my $pkgname (@realnames) {
+	DELETE: for my $pkgname (@realnames) {
 		next if $done{$pkgname};
 		unless (is_installed($pkgname)) {
 			print "$pkgname was not installed\n";
@@ -182,8 +182,19 @@ eval {
 			$removed++;
 			next;
 		}
-		if (OpenBSD::RequiredBy->new($pkgname)->list() > 0) {
-			next;
+		my $r = OpenBSD::RequiredBy->new($pkgname);
+		if ($r->list() > 0) {
+			if ($forced{baddepend}) {
+				for my $p ($r->list()) {
+					if ($done{$p}) {
+						$r->delete($p);
+					} else {
+						next DELETE;
+					}
+				}
+			} else {
+				next;
+			}
 		}
 		if (!OpenBSD::ProgressMeter::set_header($pkgname)) {
 			print $opt_n ? "Pretending to delete " : "Deleting ", 
