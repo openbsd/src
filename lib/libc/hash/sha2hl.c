@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: sha2hl.c,v 1.1 2003/05/08 23:34:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sha2hl.c,v 1.2 2003/05/09 16:46:31 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -18,6 +18,7 @@ static const char rcsid[] = "$OpenBSD: sha2hl.c,v 1.1 2003/05/08 23:34:55 miller
 #include <sha2.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 static const char hex[]="0123456789abcdef";
