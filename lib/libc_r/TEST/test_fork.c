@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_fork.c,v 1.8 2000/10/04 05:50:58 d Exp $	*/
+/*	$OpenBSD: test_fork.c,v 1.9 2001/03/13 00:09:10 d Exp $	*/
 /*
  * Copyright (c) 1994 by Chris Provenzano, proven@athena.mit.edu
  *
@@ -17,11 +17,18 @@
 
 
 void *
+empty(void *arg)
+{
+
+	return (void *)0x12345678;
+}
+
+void *
 sleeper(void *arg)
 {
 
 	pthread_set_name_np(pthread_self(), "slpr");
-	sleep(4);
+	sleep(10);
 	PANIC("sleeper timed out");
 }
 
@@ -57,7 +64,14 @@ main()
 		/* Our pid should change */
 		ASSERT(getpid() != parent_pid);
 		/* Our sleeper thread should have disappeared */
+		printf("sleeper should have disappeared\n");
 		ASSERT(ESRCH == pthread_join(sleeper_thread, &result));
+		printf("sleeper disappeared correctly\n");
+		/* Test starting another thread */
+		CHECKr(pthread_create(&sleeper_thread, NULL, empty, NULL));
+		sleep(1);
+		CHECKr(pthread_join(sleeper_thread, &result));
+		ASSERT(result == (void *)0x12345678);
 		printf("child ok\n");
 		_exit(0);
 		PANIC("child _exit");
