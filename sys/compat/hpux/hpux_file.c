@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_file.c,v 1.10 2002/02/14 22:57:18 pvalchev Exp $	*/
+/*	$OpenBSD: hpux_file.c,v 1.11 2002/02/16 15:45:04 miod Exp $	*/
 /*	$NetBSD: hpux_file.c,v 1.5 1997/04/27 21:40:48 thorpej Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ hpux_sys_fcntl(p, v, retval)
 	case HPUXF_SETLK:
 		if (fp->f_type != DTYPE_VNODE) {
 			error = EBADF;
-			goto aout;
+			goto out;
 		}
 
 		vp = (struct vnode *)fp->f_data;
@@ -269,7 +269,7 @@ hpux_sys_fcntl(p, v, retval)
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&hfl,
 		    sizeof (hfl));
 		if (error)
-			goto bad;
+			goto out;
 
 		fl.l_start = hfl.hl_start;
 		fl.l_len = hfl.hl_len;
@@ -321,7 +321,7 @@ hpux_sys_fcntl(p, v, retval)
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&hfl,
 		    sizeof (hfl));
 		if (error)
-			goto bad;
+			goto out;
 
 		fl.l_start = hfl.hl_start;
 		fl.l_len = hfl.hl_len;
@@ -333,7 +333,7 @@ hpux_sys_fcntl(p, v, retval)
 
 		if ((error =
 		    VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX)))
-			goto bad;
+			goto out;
 
 		hfl.hl_start = fl.l_start;
 		hfl.hl_len = fl.l_len;
@@ -377,7 +377,7 @@ hpux_sys_fcntl(p, v, retval)
 		if (mode & O_EXCL)
 			*retval |= HPUXFEXCL;
 	}
-bad:
+out:
 	FRELE(fp);
 	return (error);
 }
