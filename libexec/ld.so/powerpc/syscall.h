@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.18 2003/12/03 17:00:15 drahn Exp $ */
+/*	$OpenBSD: syscall.h,v 1.19 2004/01/12 02:21:21 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -47,16 +47,16 @@ static off_t	_dl_lseek(int, off_t, int);
  *  any dynamic address resolving has been done.
  */
 
-static inline int
+static inline void
 _dl_exit(int status)
 {
-	register int __status __asm__ ("3");
+	register int __status;
 
-	__asm__ volatile ("mr  0,%1\n\t"
+	__asm__ volatile ("li  0,%1\n\t"
 	    "mr  3,%2\n\t"
 	    "sc"
 	    : "=r" (__status)
-	    : "r" (SYS_exit), "r" (status) : "0", "3");
+	    : "I" (SYS_exit), "r" (status) : "0", "3");
 
 	while (1)
 		;
@@ -65,9 +65,9 @@ _dl_exit(int status)
 static inline int
 _dl_open(const char* addr, int flags)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "sc\n\t"
@@ -75,8 +75,9 @@ _dl_open(const char* addr, int flags)
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_open), "r" (addr), "r" (flags)
+	    : "I" (SYS_open), "r" (addr), "r" (flags)
 	    : "0", "3", "4" );
 	return status;
 }
@@ -84,17 +85,18 @@ _dl_open(const char* addr, int flags)
 static inline int
 _dl_close(int fd)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "sc\n\t"
 	    "cmpwi   0, 0\n\t"
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_close), "r" (fd)
+	    : "I" (SYS_close), "r" (fd)
 	    : "0", "3");
 	return status;
 }
@@ -102,9 +104,9 @@ _dl_close(int fd)
 static inline ssize_t
 _dl_write(int fd, const char* buf, size_t len)
 {
-	register ssize_t status __asm__ ("3");
+	register ssize_t status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "mr    5,%4\n\t"
@@ -113,8 +115,9 @@ _dl_write(int fd, const char* buf, size_t len)
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_write), "r" (fd), "r" (buf), "r" (len)
+	    : "I" (SYS_write), "r" (fd), "r" (buf), "r" (len)
 	    : "0", "3", "4", "5" );
 	return status;
 }
@@ -122,9 +125,9 @@ _dl_write(int fd, const char* buf, size_t len)
 static inline ssize_t
 _dl_read(int fd, const char* buf, size_t len)
 {
-	register ssize_t status __asm__ ("3");
+	register ssize_t status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "mr    5,%4\n\t"
@@ -133,8 +136,9 @@ _dl_read(int fd, const char* buf, size_t len)
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_read), "r" (fd), "r" (buf), "r" (len)
+	    : "I" (SYS_read), "r" (fd), "r" (buf), "r" (len)
 	    : "0", "3", "4", "5");
 	return status;
 }
@@ -153,9 +157,9 @@ _dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 static inline int
 _dl_munmap(const void* addr, size_t len)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "sc\n\t"
@@ -163,8 +167,9 @@ _dl_munmap(const void* addr, size_t len)
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_munmap), "r" (addr), "r" (len)
+	    : "I" (SYS_munmap), "r" (addr), "r" (len)
 	    : "0", "3", "4");
 	return status;
 }
@@ -172,9 +177,9 @@ _dl_munmap(const void* addr, size_t len)
 static inline int
 _dl_mprotect(const void *addr, size_t size, int prot)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "mr    5,%4\n\t"
@@ -183,8 +188,9 @@ _dl_mprotect(const void *addr, size_t size, int prot)
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_mprotect), "r" (addr), "r" (size), "r" (prot)
+	    : "I" (SYS_mprotect), "r" (addr), "r" (size), "r" (prot)
 	    : "0", "3", "4", "5");
 	return status;
 }
@@ -192,9 +198,9 @@ _dl_mprotect(const void *addr, size_t size, int prot)
 static inline int
 _dl_stat(const char *addr, struct stat *sb)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "sc\n\t"
@@ -202,8 +208,9 @@ _dl_stat(const char *addr, struct stat *sb)
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_stat), "r" (addr), "r" (sb)
+	    : "I" (SYS_stat), "r" (addr), "r" (sb)
 	    : "0", "3", "4");
 	return status;
 }
@@ -211,9 +218,9 @@ _dl_stat(const char *addr, struct stat *sb)
 static inline int
 _dl_fstat(int fd, struct stat *sb)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "sc\n\t"
@@ -221,8 +228,9 @@ _dl_fstat(int fd, struct stat *sb)
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_fstat), "r" (fd), "r" (sb)
+	    : "I" (SYS_fstat), "r" (fd), "r" (sb)
 	    : "0", "3", "4");
 	return status;
 }
@@ -230,9 +238,9 @@ _dl_fstat(int fd, struct stat *sb)
 static inline int
 _dl_fcntl(int fd, int cmd, int flag)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "mr    5,%4\n\t"
@@ -242,7 +250,7 @@ _dl_fcntl(int fd, int cmd, int flag)
 	    "li    3,-1\n\t"
 	    "1:"
 	    : "=r" (status)
-	    : "r" (SYS_fcntl), "r" (fd), "r" (cmd), "r"(flag)
+	    : "I" (SYS_fcntl), "r" (fd), "r" (cmd), "r"(flag)
 	    : "0", "3", "4", "5");
 	return status;
 }
@@ -250,9 +258,9 @@ _dl_fcntl(int fd, int cmd, int flag)
 static inline int
 _dl_getdirentries(int fd, char *buf, int nbytes, long *basep)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "mr    5,%4\n\t"
@@ -262,8 +270,9 @@ _dl_getdirentries(int fd, char *buf, int nbytes, long *basep)
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_getdirentries), "r" (fd), "r" (buf), "r"(nbytes),
+	    : "I" (SYS_getdirentries), "r" (fd), "r" (buf), "r"(nbytes),
 	    "r" (basep)
 	    : "0", "3", "4", "5", "6");
 	return status;
@@ -272,16 +281,17 @@ _dl_getdirentries(int fd, char *buf, int nbytes, long *basep)
 static inline int
 _dl_issetugid(void)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "sc\n\t"
 	    "cmpwi   0, 0\n\t"
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS_issetugid)
+	    : "I" (SYS_issetugid)
 	    : "0", "3");
 	return status;
 }
@@ -321,9 +331,9 @@ static inline int
 _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
     size_t newlen)
 {
-	register int status __asm__ ("3");
+	register int status;
 
-	__asm__ volatile ("mr    0,%1\n\t"
+	__asm__ volatile ("li    0,%1\n\t"
 	    "mr    3,%2\n\t"
 	    "mr    4,%3\n\t"
 	    "mr    5,%4\n\t"
@@ -335,8 +345,9 @@ _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
 	    "beq   1f\n\t"
 	    "li    3,-1\n\t"
 	    "1:"
+	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "r" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
+	    : "I" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
 	    "r" (oldplen), "r" (newp), "r" (newlen)
 	    : "0", "3", "4", "5", "6", "7", "8");
 	return status;
