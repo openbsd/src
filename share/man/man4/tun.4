@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.6 1998/10/31 23:17:42 espie Exp $
+.\"	$OpenBSD: tun.4,v 1.7 1998/11/04 16:45:57 mickey Exp $
 .Dd March 10, 1996
 .Dt TUN 4
 .Os OpenBSD 1.2
@@ -334,9 +334,6 @@ or MTU, for
 .Ql m .
 (The MTU must not be less than 1; attempts to set it so return
 .Er EIO . )
-.Pp
-This interface is useful for command-line reconfiguration, such as
-setting the interface type at boot time, with 
 .Sh SEE ALSO
 .Xr netintro 4 ,
 .Xr inet 4
