@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.5 2002/03/26 00:57:46 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -161,33 +161,8 @@ hil*)
 	for U in 0 1 2 3 4 5 6 7
 	do
 		M hil$U c 14 $U
-		if [ -f /usr/sbin/hilinfo ]
-		then
-			case `/usr/sbin/hilinfo -t hil$U` in
-			mouse)
-				if [ ! -f locator ]
-				then
-					MKlist="$MKlist;ln hil$U locator"
-					RMlist="$RMlist locator"
-				fi
-				;;
-			keyboard)
-				if [ ! -f keyboard ]
-				then
-					MKlist="$MKlist;ln hil$U keyboard"
-					RMlist="$RMlist keyboard"
-				fi
-				;;
-			*)
-				;;
-			esac
-		fi
 	done
-	if [ ! -f /usr/sbin/hilinfo ]
-	then
-		MKlist="$MKlist;ln hil1 keyboard"
-		MKlist="$MKlist;ln hil3 locator"
-		RMlist="$RMlist keyboard locator"
-	fi
-#	echo "hil: use MAKEDEV.hpux to make HP-UX names for devices"
+	MKlist="$MKlist;ln hil1 keyboard"
+	MKlist="$MKlist;ln hil3 locator"
+	RMlist="$RMlist keyboard locator"
 	;;
