@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_table.c,v 1.2 2002/12/30 02:37:27 henning Exp $ */
+/*      $OpenBSD: pf_table.c,v 1.3 2002/12/30 13:34:55 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -881,8 +881,10 @@ pfr_clr_tables(int *ndel, int flags)
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	SLIST_INIT(&workq);
-	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables)
+	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
 		SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
+		xdel++;
+	}
 
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
