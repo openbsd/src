@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdmatch.8,v 1.13 2003/06/03 21:09:01 deraadt Exp $
+.\"	$OpenBSD: tcpdmatch.8,v 1.14 2003/07/08 13:47:28 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -27,7 +27,8 @@
 .Dt TCPDMATCH 8
 .Os
 .Sh NAME
-tcpdmatch \- tcp wrapper oracle
+.Nm tcpdmatch
+.Nd tcp wrapper oracle
 .Sh SYNOPSIS
 .Nm tcpdmatch
 .Op Fl d
@@ -147,23 +148,17 @@ To predict how
 .Xr tcpd 8
 would handle a telnet request from the local system:
 .Pp
-.Bd -unfilled -offset indent
-$ tcpdmatch telnetd localhost
-.Ed
+.Dl $ tcpdmatch telnetd localhost
 .Pp
 The same request, pretending that hostname lookup failed:
 .Pp
-.Bd -unfilled -offset indent
-$ tcpdmatch telnetd 127.0.0.1
-.Ed
+.Dl $ tcpdmatch telnetd 127.0.0.1
 .Pp
 To predict what
 .Xr tcpd 8
 would do when the client name does not match the client address:
 .Pp
-.Bd -unfilled -offset indent
-$ tcpdmatch telnetd paranoid
-.Ed
+.Dl $ tcpdmatch telnetd paranoid
 .\" .Pp
 .\" On some systems, daemon names have no `in.' prefix, or
 .\" .Nm tcpdmatch\
@@ -181,4 +176,4 @@ Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513,
 5600 MB Eindhoven, The Netherlands
 .Ed
-\" @(#) tcpdmatch.8 1.5 96/02/11 17:01:35
+.\" @(#) tcpdmatch.8 1.5 96/02/11 17:01:35

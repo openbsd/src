@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpd.8,v 1.17 2003/06/03 21:09:00 deraadt Exp $
+.\"	$OpenBSD: tcpd.8,v 1.18 2003/07/08 13:47:28 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -88,7 +88,7 @@ For details, see the
 manual page.
 .Sh HOST NAME VERIFICATION
 The authentication scheme of some protocols
-.Pf ( Xr rsh 1 )
+.Pq Xr rsh 1
 relies on host names.
 Some implementations believe the host name that they get from any random
 name server; other implementations are more careful but use a flawed algorithm.
@@ -173,13 +173,11 @@ service, perform the following edits on the
 .Xr inetd 8
 configuration file,
 .Pa /etc/inetd.conf :
-.Pp
 .Bd -unfilled -offset indent
 finger  stream  tcp  nowait  nobody  /usr/libexec/fingerd  fingerd
 .Ed
 .Pp
 becomes:
-.Pp
 .Bd -unfilled -offset indent
 finger  stream  tcp  nowait  nobody  /usr/libexec/tcpd     fingerd
 .Ed
@@ -204,13 +202,12 @@ or otherwise), edit the
 configuration file so that it specifies an absolute path name for the process
 name field.
 For example:
-.Pp
 .Bd -unfilled
     ntalk  dgram  udp  wait  root  /usr/libexec/tcpd  /usr/local/lib/ntalkd
 .Ed
 .Pp
 Only the last component
-.Pf ( Nm ntalkd )
+.Pq Nm ntalkd
 of the pathname will be used for access control and logging.
 .Sh SEE ALSO
 .Xr hosts_access 5 ,
@@ -224,7 +221,7 @@ Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513,
 5600 MB Eindhoven, The Netherlands
 .Ed
-\" @(#) tcpd.8 1.5 96/02/21 16:39:16
+.\" @(#) tcpd.8 1.5 96/02/21 16:39:16
 .Sh BUGS
 Some UDP (and RPC) daemons linger around for a while after they have
 finished their work, in case another request comes in.
