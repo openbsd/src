@@ -306,13 +306,13 @@ main(int argc, char *argv[])
     int enableonly = 0;
     int pctonly = 0;
     int messages = 0;
-    fd_set devfds;
-    fd_set selcopy;
+    fd_set *devfdsp, *selfdsp;
     struct apm_event_info apmevent;
     int suspends, standbys, resumes;
     int noacsleep = 0;
     struct timeval tv = {TIMO, 0}, stv;
     const char *sockname = sockfile;
+    int fdsn;
 
     while ((ch = getopt(argc, argv, "qadsepmf:t:S:")) != -1)
 	switch(ch) {
@@ -385,21 +385,28 @@ main(int argc, char *argv[])
 
     sock_fd = bind_socket(sockname);
 
-    FD_ZERO(&devfds);
-    FD_SET(ctl_fd, &devfds);
-    FD_SET(sock_fd, &devfds);
+    fdsn = howmany(MAX(ctl_fd, sock_fd)+1, NFDBITS) * sizeof(fd_mask);
+    if ((devfdsp = (fd_set *)malloc(fdsn)) == NULL)
+	err(1, "malloc");
+    if ((selfdsp = (fd_set *)malloc(fdsn)) == NULL)
+	err(1, "malloc");
+    memset(devfdsp, 0, fdsn);
+    FD_SET(ctl_fd, devfdsp);
+    FD_SET(sock_fd, devfdsp);
     
-    for (selcopy = devfds, errno = 0, stv = tv; 
-	 (ready = select(MAX(ctl_fd,sock_fd)+1, &selcopy, 0, 0, &stv)) >= 0 ||
-	     errno == EINTR;
-	 selcopy = devfds, errno = 0, stv = tv) {
-	if (errno == EINTR)
+    for (;;) {
+	stv = tv;
+	memmove(selfdsp, devfdsp, fdsn);
+
+	ready = select(MAX(ctl_fd,sock_fd)+1, selfdsp, 0, 0, &stv);
+	if (ready == -1 && errno != EINTR)
 	    continue;
+
 	if (ready == 0) {
 	    /* wakeup for timeout: take status */
 	    power_status(ctl_fd, 0, 0);
 	}
-	if (FD_ISSET(ctl_fd, &selcopy)) {
+	if (FD_ISSET(ctl_fd, selfdsp)) {
 	    suspends = standbys = resumes = 0;
 	    while (ioctl(ctl_fd, APM_IOC_NEXTEVENT, &apmevent) == 0) {
 		syslog(LOG_DEBUG, "apmevent %04x index %d", apmevent.type,
@@ -447,7 +454,7 @@ main(int argc, char *argv[])
 	}
 	if (ready == 0)
 	    continue;
-	if (FD_ISSET(sock_fd, &selcopy)) {
+	if (FD_ISSET(sock_fd, selfdsp)) {
 	    switch (handle_client(sock_fd, ctl_fd)) {
 	    case NORMAL:
 		break;
