@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2001/09/18 14:27:32 jason Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/09/18 15:29:22 jason Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -33,9 +33,9 @@ all ${IMAGE}:
 # mix config is not needed.
 all:	${BSD_RD}
 
-${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
+${BSD_RD}: ${CBIN} ${IMAGE} bsd elfrdsetroot
 	cp bsd ${BSD_RD}
-	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
+	${.OBJDIR}/elfrdsetroot ${BSD_RD} < ${IMAGE}
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
@@ -60,8 +60,8 @@ rd_teardown:
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 
-rdsetroot:	${TOP}/common/rdsetroot.c
-	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/common/rdsetroot.c
+elfrdsetroot:	${TOP}/../common/elfrdsetroot.c
+	${HOSTCC} -DDEBUG -o elfrdsetroot ${TOP}/../common/elfrdsetroot.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -86,7 +86,7 @@ do_files:
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	*.o *.lo *.c bsd ${BSD_RD} \
-	rdsetroot
+	elfrdsetroot
 
 beforeinstall:
 	cp ${BSD.RD} cd${REV}.fs ${DESTDIR}/snapshot
