@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.6 1997/11/14 03:46:00 deraadt Exp $
+.\"	$Id: inetd.8,v 1.7 1998/11/08 00:21:30 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -45,7 +45,7 @@
 .Op Fl R Ar rate
 .Op Ar configuration file
 .Sh DESCRIPTION
-.Nm Inetd
+.Nm inetd
 should be run at boot time by
 .Pa /etc/rc
 (see
@@ -78,7 +78,9 @@ file which, by default, is
 .Pa /etc/inetd.conf .
 There must be an entry for each field of the configuration
 file, with entries for each field separated by a tab or
-a space.  Comments are denoted by a ``#'' at the beginning
+a space.  Comments are denoted by a
+.Dq #
+at the beginning
 of a line.  There must be an entry for each field.  The
 fields of the configuration file are as follows:
 .Pp
@@ -92,8 +94,7 @@ server program
 server program arguments
 .Ed
 .Pp
-To specify an 
-.Em Sun-RPC 
+To specify a Sun-RPC
 based service, the entry would contain these fields.
 .Pp
 .Bd -unfilled -offset indent -compact
@@ -106,7 +107,7 @@ server program
 server program arguments
 .Ed
 .Pp
-For Internet services, the first field of the line may also have a host
+For internet services, the first field of the line may also have a host
 address specifier prefixed to it, separated from the service name by a
 colon.  If this is done, the string before the colon in the first field
 indiciates what local address
@@ -114,7 +115,8 @@ indiciates what local address
 should use when listening for that service. Multiple local addresses
 can be specified on the same line, separated by commas. Numeric IP
 addresses in dotted-quad notation can be used as well as symbolic
-hostnames. Symbolic hostnames are looked up using gethostbyname().
+hostnames. Symbolic hostnames are looked up using
+.Fn gethostbyname .
 If a hostname has multiple address mappings, inetd creates a socket
 to listen on each address.
 .Pp
@@ -123,7 +125,7 @@ The single character
 indicates
 .Dv INADDR_ANY ,
 meaning
-.Sq all local addresses .
+.Dq all local addresses .
 To avoid repeating an address that occurs frequently, a line with a
 host address specifier and colon, but no further fields, causes the
 host address specifier to be remembered and used for all further lines
@@ -147,8 +149,7 @@ name
 .Em must
 be the official name of the service (that is, the first entry in
 .Pa /etc/services ) . 
-When used to specify a
-.Em Sun-RPC
+When used to specify a Sun-RPC
 based service, this field is a valid RPC service name in
 the file
 .Pa /etc/rpc . 
@@ -179,7 +180,7 @@ Examples might be
 .Dq tcp
 or
 .Dq udp .
-Rpc based services are specified with the 
+RPC based services are specified with the 
 .Dq rpc/tcp
 or 
 .Dq rpc/udp 
@@ -205,13 +206,13 @@ on a socket and eventually time out, the server is said to be
 and should use a
 .Dq wait
 entry.
-.Xr Comsat 8
+.Xr comsat 8
 .Pq Xr biff 1
 and
 .Xr talkd 8
 are both examples of the latter type of
 datagram server.
-.Xr Tftpd 8
+.Xr tftpd 8
 is an exception; it is a datagram server that establishes pseudo-connections.
 It must be listed as
 .Dq wait
@@ -254,7 +255,7 @@ entry should contain the user name of the user as whom the server
 should run.  This allows for servers to be given less permission
 than root. An optional group name can be specified by appending a dot to
 the user name followed by the group name. This allows for servers to run with
-a different (primary) group id than specified in the password file. If a group
+a different (primary) group ID than specified in the password file. If a group
 is specified and user is not root, the supplementary groups associated with
 that user will still be set.
 .Pp
@@ -278,7 +279,7 @@ word
 .Dq internal
 should take the place of this entry.
 .Pp
-.Nm Inetd
+.Nm inetd
 provides several
 .Dq trivial
 services internally by use of
@@ -292,17 +293,17 @@ routines within itself.  These services are
 .Dq time
 (machine readable time,
 in the form of the number of seconds since midnight, January
-1, 1900).  All of these services are tcp based.  For
+1, 1900).  All of these services are TCP based.  For
 details of these services, consult the appropriate
 .Tn RFC
 from the Network Information Center.
 .Pp
-.Nm Inetd
+.Nm inetd
 rereads its configuration file when it receives a hangup signal,
 .Dv SIGHUP .
 Services may be added, deleted or modified when the configuration file
 is reread.
-.Nm Inetd
+.Nm inetd
 creates a file
 .Em /var/run/inetd.pid
 that contains its process identifier.
@@ -328,8 +329,6 @@ The
 .Nm
 command appeared in
 .Bx 4.3 .
-Support for
-.Em Sun-RPC 
+Support for Sun-RPC
 based services is modeled after that
-provided by
-.Em Sun-OS 4.1 .
+provided by SunOS 4.1.

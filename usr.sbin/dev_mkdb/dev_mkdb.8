@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)dev_mkdb.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: dev_mkdb.8,v 1.1.1.1 1995/10/18 08:47:31 deraadt Exp $
+.\"	$Id: dev_mkdb.8,v 1.2 1998/11/08 00:21:28 aaron Exp $
 .\"
 .Dd June 6, 1993
 .Os
@@ -53,19 +53,25 @@ which contains the names of all of the character and block special
 files in the
 .Dq Pa /dev
 directory, using the file type and the 
-.Fa st_rdev
+.Va st_rdev
 field as the key.
 .Pp
-Keys are a structure containing a mode_t followed by a dev_t,
-with any padding zero'd out.
-The former is the type of the file (st_mode & S_IFMT),
-the latter is the st_rdev field.
+Keys are a structure containing a
+.Tn mode_t
+followed by a
+.Tn dev_t ,
+with any padding zeroed out.
+The former is the type of the file
+.Pq st_mode & S_IFMT ,
+the latter is the
+.Va st_rdev
+field.
 .Sh FILES
 .Bl -tag -width /var/run/dev.db -compact
 .It Pa /dev
-Device directory.
+device directory
 .It Pa /var/run/dev.db
-Database file.
+database file
 .El
 .Sh SEE ALSO
 .Xr ps 1 ,

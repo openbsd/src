@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)amd.8	5.10 (Berkeley) 4/19/94
-.\"	$Id: amd.8,v 1.5 1998/06/15 17:56:12 mickey Exp $
+.\"	$Id: amd.8,v 1.6 1998/11/08 00:21:26 aaron Exp $
 .\"
 .Dd April, 19, 1994
 .Dt AMD 8
@@ -70,14 +70,14 @@
 .Oc
 .Ar ...
 .Sh DESCRIPTION
-.Nm Amd
+.Nm amd
 is a daemon that automatically mounts filesystems
 whenever a file or directory
 within that filesystem is accessed.
 Filesystems are automatically unmounted when they
 appear to be quiescent.
 .Pp
-.Nm Amd
+.Nm amd
 operates by attaching itself as an
 .Tn NFS
 server to each of the specified
@@ -119,16 +119,18 @@ the log messages will be sent to the system log daemon by
 Normalize hostnames.
 The name referred to by ${rhost} is normalized relative to the
 host database before being used.  The effect is to translate
-aliases into ``official'' names.
+aliases into
+.Dq official
+names.
 .It Fl p
 Print
 .Em PID .
-Outputs the process-id of
+Outputs the process ID of
 .Nm amd
 to standard output where it can be saved into a file.
 .It Fl r
 Restart existing mounts.
-.Nm Amd
+.Nm amd
 will scan the mount file table to determine which filesystems
 are currently mounted.  Whenever one of these would have
 been auto-mounted,
@@ -169,7 +171,7 @@ list chosen from: fatal, error, user, warn, info, map, stats, all.
 .It Fl D Ar option
 Select from a variety of debug options.  Prefixing an
 option with the string
-.Em no
+.Dq no
 reverses the effect of that option.  Options are cumulative.
 The most useful option is
 .Ar all .
@@ -215,12 +217,12 @@ number of process context switches.
 A weird imagination is most useful to gain full advantage of all
 the features.
 .Sh SEE ALSO
+.Xr hostname 1 ,
 .Xr amq 8 ,
 .Xr fsinfo 8 ,
-.Xr hostname 1 ,
 .Xr mk-amd-map 8 ,
 .Xr mount 8 ,
-.Xr umount 8 .
+.Xr umount 8
 .Rs
 .%T Amd \- The 4.4 BSD Automounter
 .Re

@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)amq.8	8.3 (Berkeley) 4/18/94
-.\"	$Id: amq.8,v 1.1.1.1 1995/10/18 08:47:13 deraadt Exp $
+.\"	$Id: amq.8,v 1.2 1998/11/08 00:21:26 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt AMQ 8
@@ -56,7 +56,7 @@
 .Op Ar directory
 .Ar ...
 .Sh DESCRIPTION
-.Nm Amq
+.Nm amq
 provides a simple way of determining the current state of the
 .Xr amd 8
 program.
@@ -93,7 +93,7 @@ Request the automounter to unmount the named filesystems
 instead of providing information about them.  Unmounts are requested,
 not forced.  They merely cause the mounted filesystem to timeout,
 which will be picked up by
-.Xr amd Ns \'s
+.Nm amd Ns \'s
 main scheduler thus causing the normal timeout action to be taken.
 .It Fl v
 Request the automounter to provide version information.  This is a subset
@@ -109,10 +109,10 @@ trigger a mount request for it.
 .Bl -tag -width Ds
 .It Pa amq.x
 .Tn RPC
-protocol description.
+protocol description
 .El
 .Sh CAVEATS
-.Nm Amq
+.Nm amq
 uses a Sun registered
 .Tn RPC
 program number (300019 decimal) which may not
@@ -125,5 +125,5 @@ database.
 .An Jan-Simon Pendry
 <jsp@doc.ic.ac.uk>, Department of Computing, Imperial College, London, UK.
 .\" .Sh HISTORY
-.\" .Nm Amq
+.\" .Nm amq
 .\" .At

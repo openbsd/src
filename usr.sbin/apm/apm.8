@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: apm.8,v 1.4 1998/10/29 18:21:44 mickey Exp $
+.\"	$Id: apm.8,v 1.5 1998/11/08 00:21:26 aaron Exp $
 .\"
 .Dd March 18, 1996
 .Dt APM 8
@@ -58,8 +58,9 @@ With no flags,
 .Nm
 displays the current power management state in verbose form.
 .Pp
-Available command-line flags are:
-.Bl -tag -width indent -compact
+Available options are as follows:
+.Pp
+.Bl -tag -width indent
 .It Fl z
 Put the system into suspend (deep sleep) mode.
 .It Fl S
@@ -97,17 +98,20 @@ This command does not wait for positive confirmation that the requested
 mode has been entered; to do so would mean the command does not return
 until the system resumes from its sleep state.
 .Sh FILES
-.Pa /var/run/apmdev
-is the default UNIX-domain socket used for communication with
-.Xr apm 8 .
+.Bl -tag -width /var/run/apmdev -compact
+.It Pa /var/run/apmdev
+default Unix domain socket used for communication with
+.Xr apm 8
+.El
+.Pp
 The
 .Fl f
 flag may be used to specify an alternate socket name.
 The protection modes on this socket govern which users may access the
 APM functions.
 .Sh SEE ALSO
-.Xr apmd 8 ,
-.Xr apm 4 .
+.Xr apm 4 ,
+.Xr apmd 8
 .Sh REFERENCES
 Advanced Power Management (APM) BIOS Interface Specification (revision
 1.1), Intel Corporation and Microsoft Corporation

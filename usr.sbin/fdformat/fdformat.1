@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdformat.1,v 1.5 1998/03/10 04:51:07 millert Exp $
+.\"	$OpenBSD: fdformat.1,v 1.6 1998/11/08 00:21:29 aaron Exp $
 .\"
 .\" Copyright (C) 1993, 1994 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -47,15 +47,15 @@
 .Bq Fl t Ar steps_per_track
 .Ar device_name
 .Sh DESCRIPTION
-.Nm Fdformat
+.Nm fdformat
 formats a floppy disk at device
 .Ar device_name .
-.Ar Device_name
+.Ar device_name
 should be a character device; it may be given either with a full path
 name of a raw device node for a floppy disk drive
-.Pq e.\ g. Pa /dev/rfd0c ,
+.Pq e.g. Pa /dev/rfd0c ,
 or default name in an abbreviated form
-.Pq e.\ g. Em fd0 .
+.Pq e.g. Em fd0 .
 Note that any geometry constraints of the device node
 .Pq minor device number
 are meaningless, since they're overridden by
@@ -96,21 +96,21 @@ Unless
 has been specified, a single letter is printed to standard output
 to inform the user about the progress of work.
 First, an
-.Sq Em F
+.Dq F
 is printed when the track(s) is being formatted, then a
-.Sq Em V
+.Dq V
 while it's being verified, and if an error has been detected, it
 will finally change to
-.Sq Em E .
+.Dq E .
 .Pp
 An exit status of 0 is returned upon successful operation. Exit status
 1 is returned on any errors during floppy formatting, and an exit status
-of 2 reflects invalid arguments given to the program (along with an
+of 2 reflects invalid arguments given to the program (along with
 appropriate information written to diagnostic output).
 .Sh SEE ALSO
-.Xr fdc 4 .
+.Xr fdc 4
 .Sh HISTORY
-.Nm Fdformat
+.Nm fdformat
 was developed for 386BSD 0.1 and upgraded to the new
 .Xr fd 4
 floppy disk driver. It later became part of

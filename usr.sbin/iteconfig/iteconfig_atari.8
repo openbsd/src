@@ -49,7 +49,7 @@
 .Op Fl y Ar offset
 .Op Ar color ...
 .Sh DESCRIPTION
-.Nm Iteconfig
+.Nm iteconfig
 is used to modify or examine the attributes of the
 .Tn Atari's
 console bell and bitmapped console display.
@@ -64,48 +64,48 @@ The following flags are interpreted by
 .It Fl i
 After processing all other arguments,
 print information about the console's state.
-.It Fl f
+.It Fl f Ar file
 Open and use the terminal named by
 .Ar file
 rather than the default console
-.Nm "/dev/ttye0".
-.It Fl v
+.Pa /dev/ttye0 .
+.It Fl v Ar volume
 Set the volume of the console bell to
 .Ar volume ,
 which must be between 0 and 63, inclusive.
-.It Fl p
+.It Fl p Ar pitch
 Set the pitch of the console bell to
 .Ar pitch ,
 which must be between 10 and 1399.
-.It Fl t
+.It Fl t Ar msec
 Set the duration of the beep to
 .Ar msec 
 milliseconds which must be between 1 and 5000 (5 seconds).
-.It Fl w
+.It Fl w Ar width
 Set the width of the console display to
 .Ar width
 pixel columns.
-.Ar Width
+.Ar width
 must be a positive integer.
-.It Fl h
+.It Fl h Ar height
 Set the height of the console display to
 .Ar height
 pixel rows.
-.Ar Height 
+.Ar height 
 must be a positive integer.
-.It Fl d
+.It Fl d Ar depth
 Set the number of bitplanes the console view should use to
 .Ar depth .
 For example, if
 .Ar depth
 is 3 then 8 colors will be used.
-.It Fl x
+.It Fl x Ar offset
 Set the horizontal offset of the console view on the monitor to
 .Ar offset
 pixel columns.  The horizontal offset may be a positive or a
 negative integer, positive being an offset to the right, negative
 to the left.
-.It Fl y
+.It Fl y Ar offset
 Set the vertical offset of the console view on the monitor to
 .Ar offset
 pixel rows.  The vertical offset may be a positive or a negative
@@ -129,7 +129,7 @@ formats:
 .Ar GG ,
 and
 .Ar BB
-are taken to be eight-bit values specifying the
+are taken to be 8-bit values specifying the
 intensities of the red, green and blue components, respectively,
 of the color to be used.  For example, 
 .Li 0xff0000
@@ -140,7 +140,7 @@ is white, and
 is dark cyan.
 .It Ar 0xGG
 .Ar GG
-is taken to be an eight-bit value specifying the intensity
+is taken to be an 8-bit value specifying the intensity
 of grey to be used.  A value of
 .Li 0x00
 is black, a value of
@@ -148,10 +148,10 @@ is black, a value of
 is white, and a value of
 .Li 0x80
 is a grey
-approximately half way in between.
+approximately halfway in-between.
 .It Ar 0xM
 .Ar M
-is taken to be the one-bit monochrome value to be used.
+is taken to be the 1-bit monochrome value to be used.
 A value of
 .Li 0x1
 is black, and a value of

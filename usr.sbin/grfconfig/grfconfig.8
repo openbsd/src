@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grfconfig.8,v 1.3 1997/09/18 22:03:45 niklas Exp $
+.\"	$OpenBSD: grfconfig.8,v 1.4 1998/11/08 00:21:29 aaron Exp $
 .\"	$NetBSD: grfconfig.8,v 1.4 1997/07/29 17:40:47 veego Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,9 @@ num clk wid hi dep hbs hss hse ht vbs vss vse vt flags
 .Pp
 .Bl -tag -width indent
 .It Ar num
-The mode number or 'c' for the console mode.
+The mode number or
+.Dq c
+for the console mode.
 .It Ar clk
 The pixel clock in Hz.
 .It Ar wid
@@ -93,26 +95,26 @@ The vertical timing paramters for the mode in line values.  All the
 values are relative to the end of vertical blank (beginning of the displayed
 area).
 .It Ar flags
-By default every mode uses negative horizontal and vertical sync pulses,
+By default every mode uses negative horizontal and vertical sync pulses;
 it is non-interlaced and does not use scandoubling.
 .Pp
-.Bl -tag -width sync-on-green -offset indent
+.Bl -tag -width sync-on-green -offset indent -compact
 .It default
-Use the default flags: -hsync -vsync
+use the default flags: -hsync -vsync
 .It doublescan
-Doublescan mode
+doublescan mode
 .It interlace
-Interlace mode 
+interlace mode 
 .It +hsync
-Positive horizontal sync pulses
+positive horizontal sync pulses
 .It -hsync
-Negative horizontal sync pulses
+negative horizontal sync pulses
 .It +vsync
-Positive vertical sync pulses
+positive vertical sync pulses
 .It -vsync
-Negative vertical sync pulses
+negative vertical sync pulses
 .It sync-on-green
-Composite sync on green
+composite sync on green
 .Pp
 .El
 .Pp
@@ -200,6 +202,11 @@ hbe and vbe are computed in the grf drivers.
 .Pp
 .Sh BUGS
 .Nm
-can not set the modes for /dev/grf1, /dev/grf2 and /dev/grf4
-and it will not work for /dev/grf0.
+cannot set the modes for
+.Pa /dev/grf1 ,
+.Pa /dev/grf2 ,
+or
+.Pa /dev/grf4
+and it will not work for
+.Pa /dev/grf0 .
 

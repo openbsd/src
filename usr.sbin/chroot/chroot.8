@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chroot.8	5.3 (Berkeley) 3/16/91
-.\"	$Id: chroot.8,v 1.1.1.1 1995/10/18 08:47:29 deraadt Exp $
+.\"	$Id: chroot.8,v 1.2 1998/11/08 00:21:28 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt CHROOT 8
@@ -47,13 +47,13 @@ The
 .Nm chroot
 command changes its root directory to the supplied directory
 .Ar newroot
-and exec's
+and executes
 .Ar command ,
 if supplied, or an interactive copy of your shell.
 .Pp
 Note,
 .Ar command
-or the shell are run as your real-user-id.
+or the shell are run as your real user ID.
 .Sh ENVIRONMENT
 The following environment variable is referenced by
 .Nm chroot :
@@ -63,7 +63,7 @@ If set,
 the string specified by
 .Ev SHELL
 is interpreted as the name of
-the shell to exec.
+the shell to execute.
 If the variable
 .Ev SHELL
 is not set,
@@ -77,5 +77,5 @@ is used.
 .Sh HISTORY
 The
 .Nm
-command
+command is
 .Ud

@@ -11,7 +11,7 @@
 .Sh NAME
 .Nm ctm_smail, ctm_rmail
 .Nd send and receive
-.Nm ctm
+.Xr ctm 1
 deltas via mail
 .Sh SYNOPSIS
 .Nm ctm_smail
@@ -112,11 +112,11 @@ without the
 .Fl p
 flag.
 Deltas will not be applied if they do not match the
-.Li .ctm_status
+.Pa .ctm_status
 file in
 .Ar basedir
 (or if
-.Li .ctm_status
+.Pa .ctm_status
 does not exist).
 .It Fl D
 Delete deltas after successful application by
@@ -252,9 +252,9 @@ and
 directories and
 .Pa /ctm/log
 file are writable by user
-.Em daemon
+.Dq daemon
 or group
-.Em wheel ) :
+.Dq wheel ) :
 .Bd -literal -offset indent
 receiver-dude: "|ctm_rmail -p /ctm/tmp -d /ctm/deltas -l /ctm/log"
 owner-receiver-dude: real_dude@wherever.you.like
@@ -289,8 +289,7 @@ source recipients would be able to generate a fake delta, and they're such
 nice folk that they wouldn't even think of it! :-)
 .Pp
 Even this possibility could be removed by using cryptographic signatures.
-A possible future enhancement would be to use
-.Nm PGP
+A possible future enhancement would be to use PGP
 to provide a secure wrapper.
 .\" This next request is for sections 1, 6, 7 & 8 only
 .Sh ENVIRONMENT
@@ -301,14 +300,14 @@ and
 must be in your
 .Ev PATH .
 .Sh FILES
-.Bl -tag -width indent
+.Bl -tag -width BASEDIR/.ctm_status -compact
 .It Pa PIECEDIR/*
-Pieces of deltas waiting for the rest.
+pieces of deltas waiting for the rest
 .It Pa DELTADIR/*
-Completed deltas.
+completed deltas
 .It Pa BASEDIR/.ctm_status
-File containing name and number of the next delta to be applied to this
-source tree.
+file containing name and number of the next delta to be applied to this
+source tree
 .\" This next request is for sections 1, 6, 7 & 8 only
 .\"     (command return values (to shell) and fprintf/stderr type diagnostics)
 .Sh DIAGNOSTICS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iostat.8,v 1.8 1998/09/05 17:41:48 deraadt Exp $
+.\"	$OpenBSD: iostat.8,v 1.9 1998/11/08 00:21:30 aaron Exp $
 .\"	$NetBSD: iostat.8,v 1.10 1996/10/25 18:21:57 scottr Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -51,10 +51,10 @@ statistics
 .Op Fl w Ar wait
 .Op Ar drives
 .Sh DESCRIPTION
-.Nm Iostat
+.Nm iostat
 displays kernel
 .Tn I/O
-statistics on terminal, disk and cpu operations.  By default,
+statistics on terminal, disk and CPU operations.  By default,
 .Nm iostat
 displays one line of statistics averaged over the machine's run time.
 The use of 
@@ -82,7 +82,7 @@ If no
 .Ar wait
 interval is specified, the default is 1 second.
 .It Fl C
-Show cpu statistics.  This is enabled by default unless the
+Show CPU statistics.  This is enabled by default unless the
 .Fl d, 
 .Fl D,
 or 
@@ -91,7 +91,7 @@ flags are used.
 .It Fl d
 Show disk statistics.  This is the default.  Displays kilobytes per
 transfer, number of transfers, and megabytes transferred.  Use of this
-flag disables display of cpu and tty statistics.
+flag disables display of CPU and tty statistics.
 .It Fl D
 Show alternate disk statistics.  Displays kilobytes transfered, number of 
 transfers, and time spent in transfers.  Use of this flag disables the
@@ -121,7 +121,7 @@ If no repeat
 is specified, the default is infinity.
 .El
 .Pp
-.Nm Iostat
+.Nm iostat
 displays its information in the following format:
 .Bl -tag -width flag
 .It tty
@@ -165,23 +165,23 @@ Seconds spent in disk activity
 .It cpu
 .Bl -tag -width indent -compact
 .It \&us
-% of cpu time in user mode
+% of CPU time in user mode
 .It \&ni
-% of cpu time in user mode running niced processes
+% of CPU time in user mode running niced processes
 .It \&sy
-% of cpu time in system mode
+% of CPU time in system mode
 .It \&in
-% of cpu time processing interrupts
+% of CPU time processing interrupts
 .It \&id
-% of cpu time in idle mode
+% of CPU time in idle mode
 .El
 .El
 .Sh FILES
 .Bl -tag -width /dev/mem -compact
 .It Pa /bsd
-Default kernel namelist.
+default kernel namelist
 .It Pa /dev/mem
-Default memory file.
+default memory file
 .El
 .Sh SEE ALSO
 .Xr fstat 1 ,
@@ -192,5 +192,7 @@ Default memory file.
 .Xr pstat 8 ,
 .Xr vmstat 8
 .Pp
-The sections starting with ``Interpreting system activity'' in
+The sections starting with
+.Dq Interpreting system activity
+in
 .%T "Installing and Operating 4.3BSD" .

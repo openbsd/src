@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.4 1998/09/22 01:40:30 weingart Exp $
+.\"	$OpenBSD: adduser.8,v 1.5 1998/11/08 00:21:25 aaron Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -25,33 +25,39 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $From: adduser.8,v 1.12 1996/08/28 17:54:13 adam Exp $
-
 .Dd Jan, 9, 1995
 .Dt ADDUSER 8
 .Os OpenBSD
 .Sh NAME
 .Nm adduser
 .Nd command for adding new users
-
 .Sh SYNOPSIS
 .Nm adduser
-    [-batch username [group[,group]...] [fullname] [password]]
-    [-check_only] [-config_create] [-dotdir dotdir] 
-    [-e|-encrypt method] [-group login_group] [-h|-help] 
-    [-home home] [-message message_file] [-noconfig] 
-    [-shell shell] [-s|-silent|-q|-quiet]
-    [-uid_start uid_start] [-uid_end uid_end]
-    [-v|-verbose]
-
+.Op Fl batch Ar username No [group[,group]...] [fullname] [password]
+.Op Fl check_only
+.Op Fl config_create
+.Op Fl dotdir Ar dotdir
+.Op Fl e | encrypt_method
+.Op Fl group Ar login_group
+.Op Fl h | help
+.Op Fl home Ar home
+.Op Fl message Ar message_file
+.Op Fl noconfig
+.Op Fl shell Ar shell
+.Op Fl s | silent | q | quiet
+.Op Fl uid_start Ar uid_start
+.Op Fl uid_end Ar uid_end
+.Op Fl v | verbose
 .Sh DESCRIPTION
-.Nm Adduser 
-is a simple program for adding new users. Adduser first performs consistency
+.Nm adduser 
+is a simple program for adding new users.
+.Nm adduser
+first performs consistency
 checks on the passwd, group, and shell databases. It creates passwd/group
-entries, a HOME-directory, dotfiles for a new user, and sends him or her a
+entries, a HOME directory, dotfiles for a new user, and sends him or her a
 welcome message at the discretion of the person creating the account.
-
 .Sh RESTRICTIONS
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds
 .It Sy username
 Login names should contain only lowercase characters or digits. They should be
 no longer than 8 characters (see 
@@ -70,29 +76,32 @@ you can define an alias in
 .Pa /etc/aliases .
 .It Sy fullname
 This should contain the user's firstname and surname.  The 
-.Ql Pa \:
+.Dq \&:
 is not permitted.
 .It Sy shell
 Only valid entries from the 
 .Xr shells 5
-database or entries corresponding to sliplogin and pppd are permitted.
+database or entries corresponding to
+.Xr sliplogin 8
+and
+.Xr pppd 8
+are permitted.
 .It Sy uid_start
-This value is the start of the range where free uid values are
+This value is the start of the range where free UID values are
 searched for.  This value must be less than the value of uid_end.
 The default value is 1000 or as configured in the configuration file.
 .It Sy uid_end
-This value is the end of the range where free uid values are
+This value is the end of the range where free UID values are
 searched for.  This value must be more than the value of uid_start.
 The default value is 32000 or as configured in the configuration file.
 .It Sy gid/login group
-This value is generated automatically, but it can be specified at the
+This value is generated automatically, but can be specified at the
 discretion of the person invoking the program. 
 .It Sy password
 If not empty, the password is encrypted according to 
 .Xr passwd.conf 5 .
 If empty, the account will be automatically disabled to prevent spurious
 access to it.
-.
 .El
 .\" .Sh UNIQUE GROUP
 .\" Perhaps you're missing what *can* be done with this scheme that falls apart
@@ -111,130 +120,140 @@ access to it.
 .\" I have been using this model for almost 10 years and found that it works
 .\" for most situations, and has never gotten in the way.  (Rod Grimes)
 .Sh CONFIGURATION
-Adduser follows these steps to extract its configuration
+.Nm adduser
+follows these steps to extract its configuration
 information:
+.Pp
 .Bl -tag -width Ds -compact
 .It Sy 1.
 Read internal variables.
 .It Sy 2.
-Read configuration file (/etc/adduser.conf)
+Read configuration file
+.Po Ns Pa /etc/adduser.conf
+.Pc .
 .It Sy 3.
-Parse command-line options
+Parse command-line options.
 .El
-
+.Pp
 The adduser.conf format is explained within that file and is quite
 straightforward.
-
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Sy -batch username [group[,group]...] [fullname] [password]
 Enter batch mode in which multiple users are specified on the command-line
 in a compact format.
-
 .It Sy -check_only
-Check the passwd, group, shells databases for consistency and problems
+Check the passwd, group, and shells databases for consistency and problems
 then exit without performing any other operation.
-
 .It Sy -create_config
 Create or edit default configuration information and message file before 
 proceeding with the normal interactive adduser procedure.
-
 .It Sy -dotdir Ar directory
 Copy files from 
 .Ar directory 
-into the HOME-directory of new users.  Files named in the fashion of
-.Ql Pa dot.foo
+into the HOME directory of new users.  Files named in the fashion of
+.Dq Pa dot.foo
 will be renamed to 
-.Ql Pa .foo .
+.Dq Pa .foo .
 By default, all files are made writable and readable by 
 their owner.
 .\" don't allow group or world to write files and allow only owner
 .\" to read/execute/write .rhost, .Xauthority, .kermrc, .netrc, Mail,
 .\" prv, iscreen, term.
-
 .It Sy -encrypt,-e Ar method
 Encrypt local passwords using
 .Ar method
 of encryption as described in 
 .Xr passwd.conf 5 .
-
 .It Sy -group Ar login_group
 Specify the default login group.  A value of 
 .Ar USER
 means that the username is to be used as the login group.
-
 .It Sy -help,-h,-?
 Print a summary of options and exit.
-
 .It Sy -home Ar partition
 Specify the default home partition where all users' home directories
 are to be located.
-
 .It Sy -message Ar file
 Send new users a welcome message from
 .Ar file .
 Specifying a value of
-.Ar no
+.Dq no
 for
 .Ar file
 causes no message to be sent to new users.
-
 .It Sy -noconfig
 Do not read the default configuration file.
-
 .It Sy -shell Ar shell 
 Specify the default shell for new users.
-
 .It Sy -silent,-s,-quiet,-q
 Causes the program to print fewer warnings, questions, and bug reports. 
-
 .It Sy -uid Ar uid
-Use uid's from 
+Use UIDs from 
 .Ar uid
-up when automatically generating uid's.
-
+up when automatically generating UIDs.
 .It Sy -verbose,-v
 Causes the program to print many warnings and questions.
 This option is recommended for novice users.
-
 .\" .Sh FORMAT
 .\" .Bl -tag -width Ds -compact
 .\" .Ql Pa #
 .\" is a comment.  
-
 .\" .P
 .\" .It Sy config file
-.\" .Nm Adduser
+.\" .Nm adduser
 .\" reads and writes this file. 
 .\" See /etc/adduser.conf for more details.
 .\" .It Sy message file
 .\" Eval variables in this file. See /etc/adduser.message for more
 .\" details.
 .\" .El
-
 .Sh EXAMPLES
-.Pp
 $ adduser
 .Pp
-Start adduser in interactive mode.
-
+Start
+.Nm adduser
+in interactive mode.
 .Pp
 $ adduser -batch falken guest,staff,beer 'Prof. Falken' joshua
 .Pp
-Create user 'falken' and  login group 'falken'. Invite user 
-falken into groups guest, staff and beer. Realname (fullname) 
-is 'Prof. Falken'. Password is 'joshua' (don't use such a password!). Create
-the HOME directory '/home/falken' and copy all files and directories 
-from /usr/share/skel to /home/falken. Send user falken 
+Create user
+.Dq falken
+and
+login group
+.Dq falken .
+Invite user 
+.Dq falken
+into groups
+.Dq guest ,
+.Dq staff ,
+and
+.Dq beer .
+Realname (fullname) 
+is
+.Dq Prof. Falken .
+Password is
+.Dq joshua
+(don't use such a password!).
+Create the HOME directory
+.Pa /home/falken
+and copy all files and directories 
+from
+.Pa /usr/share/skel
+to
+.Pa /home/falken .
+Send user falken 
 a welcome message.
-
 .Pp
 $ adduser -uid_start 5000 -group guest -message no -batch vehlefanz
 .Pp
-Create user 'vehlefanz' in login group guest. Start the free
+Create user
+.Dq vehlefanz
+in login group
+.Dq guest .
+Start the free
 UID search at 5000. No other groups, no realname, no password.
 Do not send a welcome message.
-
 .Sh FILES
 .Bl -tag -width /etc/master.passwdxx -compact
 .It Pa /etc/master.passwd
@@ -252,24 +271,21 @@ skeletal login directory
 .It Pa /var/log/adduser
 logfile for adduser
 .El
-
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr finger 1 ,
 .Xr passwd 1 ,
 .Xr setlogin 2 ,
 .Xr aliases 5 ,
+.Xr group 5 ,
 .Xr passwd 5 ,
 .Xr passwd.conf 5 ,
-.Xr group 5 ,
 .Xr shells 5 ,
 .Xr adduser_proc 8 ,
 .Xr pwd_mkdb 8 ,
 .Xr vipw 8 ,
 .Xr yp 8
-
 .\" .Sh BUGS
-
 .Sh HISTORY
 This
 .Nm

@@ -30,14 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bad144.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: bad144.8,v 1.2 1996/07/08 22:09:45 ccappuc Exp $
+.\"	$Id: bad144.8,v 1.3 1998/11/08 00:21:27 aaron Exp $
 .\"
 .Dd June 6, 1993
 .Dt BAD144 8
 .Os BSD 4
 .Sh NAME
 .Nm bad144
-.Nd read/write dec standard 144 bad sector information
+.Nd read/write DEC standard 144 bad sector information
 .Sh SYNOPSIS
 .Nm bad144
 .Op Fl c
@@ -56,7 +56,7 @@
 .Ar disk
 .Op Ar bad ...
 .Sh DESCRIPTION
-.Nm Bad144
+.Nm bad144
 can be used to inspect the information stored on a disk that is used by
 the disk drivers to implement bad sector forwarding.
 .Pp
@@ -74,15 +74,16 @@ the new replacement sectors are cleared.
 Forces an attempt to copy the old sector to the replacement,
 and may be useful when replacing an unreliable sector.
 .It Fl f
-For a RP06, RM03, RM05, Fujitsu Eagle,
+For an RP06, RM03, RM05, Fujitsu Eagle,
 or
 .Tn SMD
 disk on a Massbus, the
 .Fl f
-option may be used to mark the new bad sectors as ``bad''
+option may be used to mark the new bad sectors as
+.Dq bad
 by reformatting them as unusable sectors.
-This option is
-.Em required unless
+This option is required
+.Em unless
 the sectors have already been marked bad,
 or the system will not be notified that it should use the replacement sector.
 This option may be used while running multiuser; it is no longer necessary
@@ -100,7 +101,7 @@ standard 144, as follows.
 The bad sector information is located in the first 5 even numbered sectors
 of the last track of the disk pack.  There are five identical copies of
 the information, described by the
-.Ar dkbad
+.Va dkbad
 structure.
 .Pp
 Replacement sectors are allocated starting with the first sector before
@@ -111,7 +112,9 @@ sector to which it corresponds.
 The bad sectors must be listed in ascending order.
 .Pp
 The bad sector information and replacement sectors are conventionally
-only accessible through the ``c'' file system partition of the disk.  If
+only accessible through the
+.Dq c
+file system partition of the disk.  If
 that partition is used for a file system, the user is responsible for
 making sure that it does not overlap the bad sector information or any
 replacement sectors.
@@ -132,17 +135,17 @@ struct dkbad {
 .Ed
 .Pp
 Unused slots in the
-.Ar bt_bad
+.Va bt_bad
 array are filled with all bits set, a putatively
 illegal value.
 .Pp
-.Nm Bad144
+.Nm bad144
 is invoked by giving a device name (e.g. hk0, hp1, etc.).
 With no optional arguments
 it reads the first sector of the last track
 of the corresponding disk and prints out the bad sector information.
 It issues a warning if the bad sectors are out of order.
-.Nm Bad144
+.Nm bad144
 may also be invoked with a serial number for the pack and a list
 of bad sectors.
 It will write the supplied information into all copies

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmgroup.8,v 1.2 1998/07/16 16:48:24 millert Exp $
+.\"	$OpenBSD: rmgroup.8,v 1.3 1998/11/08 00:21:25 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -33,15 +33,17 @@
 .Nm rmgroup
 .Nd delete a Unix group
 .Sh SYNOPSIS
-.Nm 
+.Nm
 .Ar group
 .Sh DESCRIPTION
 .Nm 
-delete a Unix group from group database. 
+deletes the specified Unix
+.Ar group
+from group database. 
 .Nm 
-do not delete the system groups wheel, daemon, kmem, sys, tty,
+will not delete the system groups wheel, daemon, kmem, sys, tty,
 operator, bin, nogroup, nobody,
-and not groups with gid 0.
+or groups with gid 0. Do not delete these groups.
 .Sh SEE ALSO
 .Xr group 5 ,
 .Xr adduser 8 ,

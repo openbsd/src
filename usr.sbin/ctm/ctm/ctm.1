@@ -10,7 +10,7 @@
 .\"
 .\" CTM and ctm(1) by <phk@login.dknet.dk>
 .\"
-.\" $Id: ctm.1,v 1.2 1997/09/14 01:02:22 deraadt Exp $
+.\" $Id: ctm.1,v 1.3 1998/11/08 00:21:28 aaron Exp $
 .\"
 .Dd Mar 25, 1995
 .Os
@@ -24,15 +24,15 @@
 .Op Fl b Ar basedir
 .Op Fl T Ar tmpdir
 .Op Fl V Ar level
-.Ar file Op ...
+.Ar file Op Ar ...
 .Sh DESCRIPTION
-.Nm Ctm
+.Nm ctm
 was originally
 .Dq Cvs Through eMail ,
 but now instead it seems more fitting to call it
 .Dq Current Through eMail .
 
-.Nm Ctm
+.Nm ctm
 is now meant to be the definitive way to make and apply a delta between
 two versions of a directory tree.
 
@@ -40,22 +40,21 @@ There are two parts to this, making the delta and applying it.  These are two
 entirely different things.
 
 .Ss Usage
-
 To apply a CTM delta, you pass it to the
 .Nm ctm
 command.  You can pass a CTM delta on stdin, or you can give the
 filename as an argument.  If you do the latter, you make life a lot
-easier for your self, since the program can accept gzip'ed files and
+easier for yourself, since the program can accept gzip'ed files and
 since it will not have to make a temporary copy of your file.  You can
 specify multiple deltas at one time, they will be proccessed one at a
 time.  Deltas that are already applied will be ignored.
-
+.Pp
 The
 .Nm ctm
 command runs in a number of passes.  It will process the entire
 input file in each pass, before commencing with the next pass.
-
-Before working one a file
+.Pp
+Before working on a file
 .Ar name
 .Nm ctm
 first checks for the existence of the file
@@ -63,124 +62,99 @@ first checks for the existence of the file
 If this file exists,
 .Nm ctm
 works on it instead.
-
+.Pp
 Pass 1 will validate that the input file is OK.  The syntax, the data
 and the global MD5 checksum will be checked.  If any of these fail,
 .Nm ctm
 will never be able to do anything with the file, so it will simply
 reject it.
-
+.Pp
 Pass 2 will validate that the directory tree is in the state expected by
 the CTM delta.  This is done by looking for files and directories which
-should/should not exists and by checking the MD5 checksums of files.  
-
+should/should not exist and by checking the MD5 checksums of files.  
+.Pp
 Pass 3 will actually apply the delta.
-
-.Nm Ctm
+.Pp
+.Nm ctm
 will extract the file hierarchy below its working directory.  Absolute
 filenames or filenames containing references through
-.Sq \&.
-and
-.Sq \&.\&.
+.Dq \&.
+or
+.Dq \&.\&.
 are explicitly prohibited as a security measure.
-
+.Pp
 .Ss Options
-
-.Bl -tag -width indent -compact
-
+.Bl -tag -width indent
 .It Fl b Ar basedir
 Prepend the path
 .Ar basedir
 on every filename.
-
 .It Fl c
 Check it out, don't do anything.
-
 .It Fl F
 Force.
-
 .It Fl p
 Less paranoid.
-
 .It Fl P
 Paranoid.
-
 .It Fl q
 Tell us less.
-
 .It Fl T Ar tmpdir
 Put temporary files under
 .Ar tmpdir .
-
 .It Fl u
 Set modification time of created and modified files to the CTM delta
 creation time.
-
 .It Fl v
 Tell us more.
-
 .It Fl V Ar level
 Tell us more.
-.Ar Level
+.Ar level
 is the level of verbosity.
-
 .El
-
 .Sh ENVIRONMENT
 .Ev TMPDIR,
-if set to a pathname, will cause ctm to use that pathname
+if set to a pathname, will cause
+.Nm ctm
+to use that pathname
 as the location of temporary file.
 See
-.Xr tempnam 3 ,
+.Xr tempnam 3
 for more details on this.
 The same effect may be achieved with the
 .Fl T
 flag.
-
 .Sh FILES
-
 .Pa .ctm_status
-contains the sequence number of the last CTM delta applied.  Changing
+contains the sequence number of the last CTM delta applied; changing
 or removing this file will greatly confuse
 .Nm ctm .
-
 .Sh EXAMPLES
-
 .Bd -literal
-
 cd ~cvs
 /usr/sbin/ctm ~ctm/cvs-*
-
 .Ed
-
 .Sh DIAGNOSTICS
-
-Numerous messages, hopefully self-explaining.  The
+Numerous messages, hopefully self-explanatory.  The
 .Dq noise level
 can be adjusted with the
 .Fl q
 and
 .Fl v
 options.
-
 .Sh SEE ALSO
-.Xr ctm 5 ,
-.Xr ctm_rmail 1
-
+.Xr ctm_rmail 1 ,
+.Xr ctm 5
 .Sh HISTORY
-
 Initial trials ran during the FreeBSD 1.1.5, and many bugs and 
 methods were hashed out.
-
 The
 .Nm ctm
 command appeared in FreeBSD 2.1.
-
 .Sh AUTHORS
-
 The CTM system has been designed and implemented by
 Poul-Henning Kamp
 .Aq phk@FreeBSD.org .
-
-Joerg Wunsch wrote this man-page.
-.Aq joerg@FreeBSD.org .
+Joerg Wunsch
+.Aq joerg@FreeBSD.org
+wrote this man page.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chown.8,v 1.2 1997/01/26 05:54:28 downsj Exp $
+.\"	$OpenBSD: chown.8,v 1.3 1998/11/08 00:21:27 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,8 @@
 .Oc
 .Op Fl f
 .Op Fl h
-.Ar owner Op Ar :group
-.Ar file ...
+.Ar ownerof Op Ar :group
+.Ar file Op Ar ...
 .Nm chown
 .Oo
 .Fl R
@@ -57,9 +57,9 @@
 .Op Fl f
 .Op Fl h
 .Ar :group
-.Ar file ...
+.Ar file Op Ar ...
 .Sh DESCRIPTION
-.Nm Chown
+.Nm chown
 sets the user ID and/or the group ID of the specified files.
 .Pp
 The options are as follows:
@@ -109,7 +109,9 @@ and
 operands are both optional, however, one must be specified.
 If the
 .Ar group
-operand is specified, it must be preceded by a colon (``:'') character.
+operand is specified, it must be preceded by a colon
+.Pq Sq \&:
+character.
 .Pp
 The
 .Ar owner
@@ -127,12 +129,16 @@ obvious security reasons.
 .Pp
 The
 .Nm chown
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh COMPATIBILITY
 Previous versions of the
 .Nm chown
-utility used the dot (``.'') character to distinguish the group name.
-This has been changed to be a colon (``:'') character so that user and
+utility used the dot
+.Pq Sq \&.
+character to distinguish the group name.
+This has been changed to be a colon
+.Pq Sq \&:
+character so that user and
 group names may contain the dot character.
 .Sh SEE ALSO
 .Xr chgrp 1 ,

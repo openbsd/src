@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.6 1998/07/13 02:04:44 jason Exp $
+.\"	$OpenBSD: eeprom.8,v 1.7 1998/11/08 00:21:29 aaron Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 .Oc ...
 .Oc
 .Sh DESCRIPTION
-.Nm Eeprom
+.Nm eeprom
 provides an interface for displaying and changing the contents of the
 EEPROM or OpenProm.  Without any arguments,
 .Nm eeprom
@@ -74,7 +74,7 @@ will list all of the known fields and their corresponding values.
 When given the name of a specific field,
 .Nm eeprom
 will display that value or set it if the field name is followed by
-.Sq =
+.Dq =
 and a value.  Only the super-user may modify the contents of the EEPROM
 or OpenProm.
 .Pp
@@ -83,7 +83,7 @@ The options are as follows:
 .It Fl
 Commands are taken from stdin and displayed on stdout.
 .It Fl c
-.Nm Eeprom
+.Nm eeprom
 will fix incorrect checksum values and exit.  This flag is quietly ignored
 on systems with an OpenProm.
 .It Fl f Ar device
@@ -144,15 +144,15 @@ If true, the system will use the boot device stored in
 .Pa bootdev .
 .It bootdev
 Specifies the default boot device in the form cc(x,x,x), where
-.Sq cc
+.Dq cc
 is a combination of two letters such as
-.Sq sd
+.Dq sd
 or
-.Sq le
+.Dq le
 and each
-.Sq x
+.Dq x
 is a hexadecimal number between 0 and ff, less the prepending
-.Sq 0x .
+.Dq 0x .
 .It kbdtype
 This value is
 .Dq 0
@@ -232,7 +232,7 @@ If true, enables the use of the bitmap stored in
 .Pa oem-logo
 rather than the default Sun logo.
 .It oem-banner
-A string to use at power up, rather than the default Sun banner.
+A string to use at power-up, rather than the default Sun banner.
 .It oem-banner?
 If true, enables the use of the banner stored in
 .Pa oem-banner 
@@ -243,25 +243,25 @@ A string of five comma separated fields in the format
 The first field is the baud rate.  The second field is the
 number of data bits.  The third field is the parity; acceptable values
 for parity are
-.Sq n
+.Dq n
 (none),
-.Sq e
+.Dq e
 (even),
-.Sq o
+.Dq o
 (odd),
-.Sq m
+.Dq m
 (mark), and
-.Sq s
+.Dq s
 (space).  The
 fourth field is the number of stop bits.  The fifth field is the
-.Sq handshake
+.Dq handshake
 field; acceptable values are
-.Sq -
+.Dq -
 (none),
-.Sq h
-(rts/cts), and
-.Sq s
-(xon/xoff).
+.Dq h
+(RTS/CTS), and
+.Dq s
+(XON/XOFF).
 .It ttya-rts-dtr-off
 If true, the system will ignore RTS/DTR.
 .It ttya-ignore-cd
@@ -351,7 +351,7 @@ The date parser isn't very intelligent.
 .Sh FILES
 .Bl -tag -width "/dev/openprom  "
 .It /dev/eeprom
-The EEPROM device on systems with an EEPROM.
+the EEPROM device on systems with an EEPROM
 .It /dev/openprom
-The OpenProm device on systems with an OpenProm.
+the OpenProm device on systems with an OpenProm
 .El

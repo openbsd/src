@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grfinfo.1,v 1.1 1997/02/03 05:10:57 downsj Exp $
+.\"	$OpenBSD: grfinfo.1,v 1.2 1998/11/08 00:21:29 aaron Exp $
 .\"	$NetBSD: grfinfo.1,v 1.1 1997/01/31 23:06:53 carrel Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,9 +62,10 @@ Display only the type, even if an error occurs.
 .Sh DIAGNOSTICS
 The
 .Nm grfinfo
-utility exits 0 on success, and >0 if an error occurs.  If the
+utility exits 0 on success or >0 if an error occurred.  If the
 .Fl t
 option is used and an error occurs, no error message is displayed, and the
-type is displayed as "none".
+type is displayed as
+.Dq none .
 .Sh SEE ALSO
 .Xr grf 4
