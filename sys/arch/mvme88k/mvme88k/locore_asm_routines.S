@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.19 2002/01/21 19:59:19 miod Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.20 2002/01/21 20:35:51 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -568,9 +568,9 @@ ENTRY(copyinstr)
 	or.u	r6,   r0,   hi16(.Lcisflt)
 	or	r6,   r6,   lo16(.Lcisflt)
 	st	r6,   r7,   PCB_ONFAULT
+	or	r6,   r0,   0
 	bcnd	lt0,  CNT,   .Lcisflt
 	bcnd	eq0,  CNT,   .Lcistoolong
-	or	r6,   r0,   0
 1:
 #ifdef ERRATA__XXX_USR
 	NOP
@@ -591,6 +591,8 @@ ENTRY(copyinstr)
 	or	r2,   r0, ENAMETOOLONG	/* overflow */
 
 .Lcisnull:
+	bcnd	eq0,r6, .Lcisdone	/* do not attempt to clear last byte */
+					/* if we did not write to the string */
 	subu	r6,   r6, 1
 	st.b	r0, DEST, r6		/* clear last byte */
 	br.n	.Lcisdone
@@ -608,8 +610,7 @@ ENTRY(copyinstr)
 	jmp	r1
 .Lcisflt:
 	or	r2, r0, EFAULT		/* return fault */
-	bcnd	eq0,r6, .Lcisdone	/* do not attempt to clear last byte */
-	br	.Lcisnull		/* if we faulted on first write */
+	br	.Lcisnull
 
 #undef SRC
 #undef DEST

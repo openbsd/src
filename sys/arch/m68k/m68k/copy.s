@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.s,v 1.12 2002/01/21 19:48:54 miod Exp $	*/
+/*	$OpenBSD: copy.s,v 1.13 2002/01/21 20:35:49 miod Exp $	*/
 /*	$NetBSD: copy.s,v 1.30 1998/03/04 06:39:14 thorpej Exp $	*/
 
 /*-
@@ -262,6 +262,8 @@ Lcisloop:
 Lcistoolong:
 	moveq	#ENAMETOOLONG,d0	| ran out of space
 Lcisnull:
+	cmpl	sp@(8),a1		| do not attempt to clear last byte
+	beq	Lcisdone		| if we faulted on first write
 	subql	#1, a1
 	clrb	a1@+			| clear last byte
 Lcisdone:
@@ -276,8 +278,6 @@ Lcisexit:
 	rts
 Lcisfault:
 	moveq	#EFAULT,d0
-	cmpl	sp@(8),a1		| do not attempt to clear last byte
-	beq	Lcisdone		| if we faulted on first write
 	bra	Lcisnull
 
 /*
