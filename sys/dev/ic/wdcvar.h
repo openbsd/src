@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.4 1999/10/29 01:15:15 deraadt Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.5 1999/11/17 01:22:56 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -44,7 +44,11 @@ struct channel_queue {  /* per channel queue (may be shared) */
 	TAILQ_HEAD(xferhead, wdc_xfer) sc_xfer;
 };
 
+struct channel_softc_vtbl;
+
 struct channel_softc { /* Per channel data */
+	struct channel_softc_vtbl  *_vtbl;
+
 	/* Our location */
 	int channel;
 	/* Our controller's softc */
@@ -73,6 +77,57 @@ struct channel_softc { /* Per channel data */
 	 */
 	struct channel_queue *ch_queue;
 };
+
+/*
+ * Disk Controller register definitions.
+ */
+#define _WDC_REGMASK 7
+#define _WDC_AUX 8
+#define _WDC_RDONLY  16
+#define _WDC_WRONLY  32
+enum wdc_regs { 		
+	wdr_error = _WDC_RDONLY | 1,
+	wdr_precomp = _WDC_WRONLY | 1,
+	wdr_features = _WDC_WRONLY | 1,
+	wdr_seccnt = 2,
+	wdr_ireason = 2,
+	wdr_sector = 3,
+	wdr_cyl_lo = 4,
+	wdr_cyl_hi = 5,
+	wdr_sdh = 6,
+	wdr_status = _WDC_RDONLY | 7,
+	wdr_command = _WDC_WRONLY | 7,
+	wdr_altsts = _WDC_RDONLY | _WDC_AUX,
+	wdr_ctlr = _WDC_WRONLY | _WDC_AUX
+};
+
+struct channel_softc_vtbl {
+	u_int8_t (*read_reg)(struct channel_softc *, enum wdc_regs reg);
+	void (*write_reg)(struct channel_softc *, enum wdc_regs reg, 
+	    u_int8_t var);
+	
+	void (*read_raw_multi_2)(struct channel_softc *, 
+	    void *data, unsigned int nbytes);
+	void (*write_raw_multi_2)(struct channel_softc *,
+	    void *data, unsigned int nbytes);
+
+	void (*read_raw_multi_4)(struct channel_softc *,
+	    void *data, unsigned int nbytes);
+	void (*write_raw_multi_4)(struct channel_softc *,
+	    void *data, unsigned int nbytes);
+};
+
+
+#define CHP_READ_REG(chp, a)  ((chp)->_vtbl->read_reg)(chp, a)
+#define CHP_WRITE_REG(chp, a, b)  ((chp)->_vtbl->write_reg)(chp, a, b)
+#define CHP_READ_RAW_MULTI_2(chp, a, b)  \
+        ((chp)->_vtbl->read_raw_multi_2)(chp, a, b)
+#define CHP_WRITE_RAW_MULTI_2(chp, a, b)  \
+        ((chp)->_vtbl->write_raw_multi_2)(chp, a, b)
+#define CHP_READ_RAW_MULTI_4(chp, a, b)  \
+	((chp)->_vtbl->read_raw_multi_4)(chp, a, b)
+#define CHP_WRITE_RAW_MULTI_4(chp, a, b)  \
+	((chp)->_vtbl->write_raw_multi_4)(chp, a, b)
 
 struct wdc_softc { /* Per controller state */
 	struct device sc_dev;

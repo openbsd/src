@@ -69,10 +69,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif /* WDCDEBUG */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -203,8 +199,7 @@ _wdc_ata_bio_start(chp, xfer)
 			panic("_wdc_ata_bio_start: bad state");
 		}
 		xfer->c_intr = wdc_ata_ctrl_intr;
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | (xfer->drive << 4));
+		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY) != 0)
 			goto timeout;
 		wdccommandshort(chp, xfer->drive, WDCC_RECAL);
@@ -294,7 +289,7 @@ again:
 				return;
 			}
 			/* Initiate command */
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			CHP_WRITE_REG(chp, wdr_sdh, 
 			    WDSD_IBM | (xfer->drive << 4));
 			if (wait_for_ready(chp, ata_delay) < 0)
 				goto timeout;
@@ -316,8 +311,7 @@ again:
 			    WDCC_READ : WDCC_WRITE;
 		}
 		/* Initiate command! */
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | (xfer->drive << 4));
+		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
 		if (wait_for_ready(chp, ata_delay) < 0)
 			goto timeout;
 		wdccommand(chp, xfer->drive, cmd, cyl,

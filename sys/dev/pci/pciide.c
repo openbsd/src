@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.13 1999/11/03 01:02:56 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.14 1999/11/17 01:22:56 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -42,10 +42,6 @@
  * 5/16/94" from the PCI SIG.
  *
  */
-
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif
 
 #define DEBUG_DMA   0x01
 #define DEBUG_XFERS  0x02

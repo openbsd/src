@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.9 1999/10/09 07:14:00 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.10 1999/11/17 01:22:55 csapuntz Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -65,10 +65,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif /* WDCDEBUG */
 
 #if 0
 #include "rnd.h"

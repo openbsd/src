@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.13 1999/10/29 16:40:22 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.14 1999/11/17 01:22:56 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -72,10 +72,6 @@
  *   
  */
 
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif /* WDCDEBUG */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -90,13 +86,6 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
-
-#ifndef __BUS_SPACE_HAS_STREAM_METHODS
-#define bus_space_write_multi_stream_2	bus_space_write_multi_2
-#define bus_space_write_multi_stream_4	bus_space_write_multi_4
-#define bus_space_read_multi_stream_2	bus_space_read_multi_2
-#define bus_space_read_multi_stream_4	bus_space_read_multi_4
-#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 #include <dev/ata/atavar.h>
 #include <dev/ata/atareg.h>
@@ -138,6 +127,155 @@ int wdc_nxfer = 0;
 #define WDCDEBUG_PRINT(args, level)
 #endif
 
+
+u_int8_t wdc_default_read_reg __P((struct channel_softc *, enum wdc_regs));
+void wdc_default_write_reg __P((struct channel_softc *, enum wdc_regs, u_int8_t));
+void wdc_default_read_raw_multi_2 __P((struct channel_softc *, 
+    void *, unsigned int));
+void wdc_default_write_raw_multi_2 __P((struct channel_softc *, 
+    void *, unsigned int));
+void wdc_default_read_raw_multi_4 __P((struct channel_softc *, 
+    void *, unsigned int));
+void wdc_default_write_raw_multi_4 __P((struct channel_softc *, 
+    void *, unsigned int));
+
+struct channel_softc_vtbl wdc_default_vtbl = {
+	wdc_default_read_reg,
+	wdc_default_write_reg,
+	wdc_default_read_raw_multi_2,
+	wdc_default_write_raw_multi_2,
+	wdc_default_read_raw_multi_4,
+	wdc_default_write_raw_multi_4
+};
+
+u_int8_t
+wdc_default_read_reg(chp, reg)
+	struct channel_softc *chp;
+	enum wdc_regs reg;
+{
+#ifdef DIAGNOSTIC	
+	if (reg & _WDC_WRONLY) {
+		printf ("wdc_default_read_reg: reading from a write-only register %d\n", reg);
+	}
+#endif
+
+	if (reg & _WDC_AUX) 
+		return (bus_space_read_1(chp->ctl_iot, chp->ctl_ioh,
+		    reg & _WDC_REGMASK));
+	else
+		return (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+		    reg & _WDC_REGMASK));
+}
+
+void
+wdc_default_write_reg(chp, reg, val)
+	struct channel_softc *chp;
+	enum wdc_regs reg;
+	u_int8_t val;
+{
+#ifdef DIAGNOSTIC	
+	if (reg & _WDC_RDONLY) {
+		printf ("wdc_default_write_reg: writing to a read-only register %d\n", reg);
+	}
+#endif
+
+	if (reg & _WDC_AUX) 
+		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh,
+		    reg & _WDC_REGMASK, val);
+	else
+		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
+		    reg & _WDC_REGMASK, val);
+}
+
+
+void
+wdc_default_read_raw_multi_2(chp, data, nbytes)
+	struct channel_softc *chp;
+	void *data;
+	unsigned int nbytes;
+{
+	if (data == NULL) {
+		int i;
+
+		for (i = 0; i < nbytes; i += 2) {
+			bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, 0);
+		}
+
+		return;
+	}
+
+	bus_space_read_raw_multi_2(chp->cmd_iot, chp->cmd_ioh, 0, 
+	    data, nbytes);
+	return;
+}
+
+
+void
+wdc_default_write_raw_multi_2(chp, data, nbytes)
+	struct channel_softc *chp;
+	void *data;
+	unsigned int nbytes;
+{
+	if (data == NULL) {
+		int i;
+
+		for (i = 0; i < nbytes; i += 2) {
+			bus_space_write_2(chp->cmd_iot, chp->cmd_ioh, 0, 0);
+		}
+
+		return;
+	}
+
+	bus_space_write_raw_multi_2(chp->cmd_iot, chp->cmd_ioh, 0, 
+	    data, nbytes);
+	return;
+}
+
+
+void
+wdc_default_write_raw_multi_4(chp, data, nbytes)
+	struct channel_softc *chp;
+	void *data;
+	unsigned int nbytes;
+{
+	if (data == NULL) {
+		int i;
+
+		for (i = 0; i < nbytes; i += 4) {
+			bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, 0, 0);
+		}
+
+		return;
+	}
+
+	bus_space_write_raw_multi_4(chp->cmd_iot, chp->cmd_ioh, 0, 
+	    data, nbytes);
+	return;
+}
+
+
+void
+wdc_default_read_raw_multi_4(chp, data, nbytes)
+	struct channel_softc *chp;
+	void *data;
+	unsigned int nbytes;
+{
+	if (data == NULL) {
+		int i;
+
+		for (i = 0; i < nbytes; i += 4) {
+			bus_space_read_4(chp->cmd_iot, chp->cmd_ioh, 0);
+		}
+
+		return;
+	}
+
+	bus_space_read_raw_multi_4(chp->cmd_iot, chp->cmd_ioh, 0, 
+	    data, nbytes);
+	return;
+}
+
+
 int
 wdprint(aux, pnp)
 	void *aux;
@@ -167,16 +305,14 @@ void
 wdc_disable_intr(chp)
 	struct channel_softc *chp;
 {
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-			  WDCTL_IDS);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
 }
 
 void
 wdc_enable_intr(chp)
 	struct channel_softc *chp;
 {
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-			  WDCTL_4BIT);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
 }
 
 int
@@ -185,8 +321,7 @@ wdc_select_drive(chp, drive, howlong)
 	int drive;
 	int howlong;
 {
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | (drive << 4));
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
 	
 	delay(1);
 
@@ -225,20 +360,21 @@ wdcprobe(chp)
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
 
+	if (!chp->_vtbl)
+		chp->_vtbl = &wdc_default_vtbl;
+
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
 	 */
 
 	if (chp->wdc == NULL ||
 	    (chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM);
+		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM);
 		delay(10);
-		st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | 0x10);
+		st0 = CHP_READ_REG(chp, wdr_status);
+		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | 0x10);
 		delay(10);
-		st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+		st1 = CHP_READ_REG(chp, wdr_status);
 
 		WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
@@ -253,17 +389,14 @@ wdcprobe(chp)
 	}
 
 	/* assert SRST, wait for reset to complete */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM);
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM);
 	delay(10);
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_RST | WDCTL_IDS); 
+	CHP_WRITE_REG(chp,wdr_ctlr, WDCTL_RST | WDCTL_IDS); 
 	DELAY(1000);
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_IDS);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
 	delay(1000);
-	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
+	(void) CHP_READ_REG(chp, wdr_error);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
 	delay(10);
 
 	ret_value = __wdcwait_reset(chp, ret_value);
@@ -284,14 +417,13 @@ wdcprobe(chp)
 	for (drive = 0; drive < 2; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | (drive << 4));
+		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
 		delay(10);
 		/* Save registers contents */
-		sc = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
-		sn = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector);
-		cl = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo);
-		ch = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
+		sc = CHP_READ_REG(chp, wdr_seccnt);
+		sn = CHP_READ_REG(chp, wdr_sector);
+		cl = CHP_READ_REG(chp, wdr_cyl_lo);
+		ch = CHP_READ_REG(chp, wdr_cyl_hi);
 
 		WDCDEBUG_PRINT(("%s:%d:%d: after reset, sc=0x%x sn=0x%x "
 		    "cl=0x%x ch=0x%x\n",
@@ -333,6 +465,8 @@ wdcattach(chp)
 		return;
 	}
 #endif
+	if (!chp->_vtbl)
+		chp->_vtbl = &wdc_default_vtbl;
 
 	if (wdcprobe(chp) == 0) {
 		/* If no drives, abort attach here. */
@@ -382,25 +516,19 @@ wdcattach(chp)
 			 * Test registers writability (Error register not
 			 * writable, but cyllo is), then try an ATA command.
 			 */
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-			    WDSD_IBM | (i << 4));
+			CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (i << 4));
 			delay(10);
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
-			    wd_error, 0x58);
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
-			    wd_cyl_lo, 0xa5);
-			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-			        wd_error == 0x58) ||
-			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-				wd_cyl_lo) != 0xa5) {
+			CHP_WRITE_REG(chp, wdr_features, 0x58);
+			CHP_WRITE_REG(chp, wdr_cyl_lo, 0xa5);
+			if ((CHP_READ_REG(chp, wdr_error) == 0x58) ||
+			    (CHP_READ_REG(chp, wdr_cyl_lo) != 0xa5)) {
 				WDCDEBUG_PRINT(("%s:%d:%d: register "
 				    "writability failed\n",
 				    chp->wdc->sc_dev.dv_xname,
 				    chp->channel, i), DEBUG_PROBE);
 				    chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
 			}
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-			    WDSD_IBM | (i << 4));
+			CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (i << 4));
 			delay(100);
 			if (wait_for_ready(chp, 10000) != 0) {
 				WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
@@ -409,8 +537,7 @@ wdcattach(chp)
 				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
 				continue;
 			}
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
-			    wd_command, WDCC_RECAL);
+			CHP_WRITE_REG(chp, wdr_command, WDCC_RECAL);
 			if (wait_for_ready(chp, 10000) != 0) {
 				WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
 				    chp->wdc->sc_dev.dv_xname,
@@ -491,8 +618,8 @@ wdcattach(chp)
 		 */
 		for (i = 1; i >= 0; i--) {
 			if (chp->ch_drive[i].drive_flags & DRIVE) {
-				bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
-				    wd_sdh, WDSD_IBM | (i << 4));
+				CHP_WRITE_REG(chp,
+				    wdr_sdh, WDSD_IBM | (i << 4));
 				if (wait_for_unbusy(chp, 10000) < 0)
 					printf("%s:%d:%d: device busy\n",
 					    chp->wdc->sc_dev.dv_xname,
@@ -545,7 +672,7 @@ wdcstart(chp)
 		panic("wdcstart: channel waiting for irq\n");
 #endif
 	if (chp->wdc->cap & WDC_CAPABILITY_HWLOCK)
-		if (!(*chp->wdc->claim_hw)(chp, 0))
+		if (!(chp->wdc->claim_hw)(chp, 0))
 			return;
 
 	WDCDEBUG_PRINT(("wdcstart: xfer %p channel %d drive %d\n", xfer,
@@ -619,17 +746,13 @@ wdcreset(chp, verb)
 {
 	int drv_mask1, drv_mask2;
 
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM); /* master */
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_RST | WDCTL_IDS);
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM); /* master */
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_RST | WDCTL_IDS);
 	delay(1000);
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_IDS);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
 	delay(2000);
-	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_4BIT);
+	(void) CHP_READ_REG(chp,wdr_error);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
 
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
 	drv_mask1 |= (chp->ch_drive[1].drive_flags & DRIVE) ? 0x02:0x00;
@@ -660,14 +783,12 @@ __wdcwait_reset(chp, drv_mask)
 
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM); /* master */
+		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM); /* master */
 		delay(10);
-		st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | 0x10); /* slave */
+		st0 = CHP_READ_REG(chp, wdr_status);
+		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | 0x10); /* slave */
 		delay(10);
-		st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+		st1 = CHP_READ_REG(chp, wdr_status);
 
 		if ((drv_mask & 0x01) == 0) {
 			/* no master */
@@ -726,25 +847,18 @@ wdcwait(chp, mask, bits, timeout)
 
 	for (;;) {
 #ifdef TEST_ALTSTS
-		chp->ch_status = status =
-		    bus_space_read_1(chp->ctl_iot, chp->ctl_ioh, 
-				     wd_aux_altsts);
+		chp->ch_status = status = CHP_READ_REG(chp, wdr_altsts);
 #else
-		chp->ch_status = status =
-		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, 
-				     wd_status);
+		chp->ch_status = status = CHP_READ_REG(chp, wdr_status);
 #endif
 		if (status == 0xff && (chp->ch_flags & WDCF_ONESLAVE)) {
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-			    WDSD_IBM | 0x10);
+			CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | 0x10);
 #ifdef TEST_ALTSTS
 			chp->ch_status = status = 
-			    bus_space_read_1(chp->ctl_iot, chp->ctl_ioh,
-				wd_aux_altsts);
+			    CHP_READ_REG(chp, wdr_altsts);
 #else
 			chp->ch_status = status = 
-			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-				wd_status);
+			    CHP_READ_REG(chp, wdr_status);
 #endif
 		}
 		if ((status & WDCS_BSY) == 0 && (status & mask) == bits) 
@@ -752,8 +866,7 @@ wdcwait(chp, mask, bits, timeout)
 		if (++time > timeout) {
 			WDCDEBUG_PRINT(("wdcwait: timeout, status %x "
 			    "error %x\n", status,
-			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-				wd_error)),
+			    CHP_READ_REG(chp, wdr_error)),
 			    DEBUG_STATUSX | DEBUG_STATUS); 
 			return -1;
 		}
@@ -761,11 +874,10 @@ wdcwait(chp, mask, bits, timeout)
 	}
 #ifdef TEST_ALTSTS
 	/* Acknowledge any pending interrupts */
-	bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+	CHP_READ_REG(chp, wdr_status);
 #endif
 	if (status & WDCS_ERR) {
-		chp->ch_error = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-		    wd_error);
+		chp->ch_error = CHP_READ_REG(chp, wdr_error);
 		WDCDEBUG_PRINT(("wdcwait: error %x\n", chp->ch_error),
 			       DEBUG_STATUSX | DEBUG_STATUS);
 	}
@@ -1015,10 +1127,8 @@ wdc_output_bytes(drvp, bytes, buflen)
 	if (drvp->drive_flags & DRIVE_CAP32) {
 		roundlen = len & ~3;
 
-		bus_space_write_raw_multi_4(chp->data32iot,
-		    chp->data32ioh, wd_data,
-		    (void *)((u_int8_t *)bytes + off), 
-		    roundlen);
+		CHP_WRITE_RAW_MULTI_4(chp, 
+		    (void *)((u_int8_t *)bytes + off), roundlen);
 
 		off += roundlen;
 		len -= roundlen;
@@ -1027,10 +1137,8 @@ wdc_output_bytes(drvp, bytes, buflen)
 	if (len > 0) {
 		roundlen = (len + 1) & ~0x1;
 
-		bus_space_write_raw_multi_2(chp->cmd_iot,
-		    chp->cmd_ioh, wd_data,
-		    (void *)((u_int8_t *)bytes + off), 
-		    roundlen);
+	        CHP_WRITE_RAW_MULTI_2(chp,
+		    (void *)((u_int8_t *)bytes + off), roundlen);
 	}
 
 	return;
@@ -1049,10 +1157,8 @@ wdc_input_bytes(drvp, bytes, buflen)
 	if (drvp->drive_flags & DRIVE_CAP32) {
 		roundlen = len & ~3;
 
-		bus_space_read_raw_multi_4(chp->data32iot,
-		    chp->data32ioh, wd_data,
-		    (void *)((u_int8_t *)bytes + off), 
-		    roundlen);
+		CHP_READ_RAW_MULTI_4(chp,
+		    (void *)((u_int8_t *)bytes + off), roundlen);
 
 		off += roundlen;
 		len -= roundlen;
@@ -1061,10 +1167,8 @@ wdc_input_bytes(drvp, bytes, buflen)
 	if (len > 0) {
 		roundlen = (len + 1) & ~0x1;
 
-		bus_space_read_raw_multi_2(chp->cmd_iot,
-		    chp->cmd_ioh, wd_data,
-		    (void *)((u_int8_t *)bytes + off), 
-		    roundlen);
+		CHP_READ_RAW_MULTI_2(chp,
+		    (void *)((u_int8_t *)bytes + off), roundlen);
 	}
 
 	return;
@@ -1245,8 +1349,7 @@ __wdccommand_start(chp, xfer)
 	 * For resets, we don't really care to make sure that
 	 * the bus is free
 	 */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | (drive << 4));
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
 
 	if (wdc_c->r_command != ATAPI_SOFT_RESET) {
 		if (wdcwait(chp, wdc_c->r_st_bmask, wdc_c->r_st_bmask,
@@ -1324,20 +1427,15 @@ __wdccommand_done(chp, xfer)
 	wdc_c->flags |= AT_DONE;
 	if (wdc_c->flags & AT_READREG && (wdc_c->flags & (AT_ERROR | AT_DF))
 								== 0) {
-		wdc_c->r_head = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-						 wd_sdh);
-		wdc_c->r_cyl = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-						wd_cyl_hi) << 8;
-		wdc_c->r_cyl |= bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-						 wd_cyl_lo);
-		wdc_c->r_sector = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-						   wd_sector);
-		wdc_c->r_count = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-						  wd_seccnt);
-		wdc_c->r_error = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-						  wd_error);
-		wdc_c->r_precomp = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-						    wd_precomp);
+		wdc_c->r_head = CHP_READ_REG(chp, wdr_sdh);
+		wdc_c->r_cyl = CHP_READ_REG(chp, wdr_cyl_hi) << 8;
+		wdc_c->r_cyl |= CHP_READ_REG(chp, wdr_cyl_lo);
+		wdc_c->r_sector = CHP_READ_REG(chp, wdr_sector);
+		wdc_c->r_count = CHP_READ_REG(chp, wdr_seccnt);
+		wdc_c->r_error = CHP_READ_REG(chp, wdr_error);
+		wdc_c->r_precomp = wdc_c->r_error; 
+		/* XXX CHP_READ_REG(chp, wdr_precomp); - precomp
+		   isn't a readable register */
 	}
 	if (xfer->c_flags & C_POLL) {
 		wdc_enable_intr(chp);
@@ -1373,19 +1471,17 @@ wdccommand(chp, drive, command, cylin, head, sector, count, precomp)
 	    DEBUG_FUNCS);
 
 	/* Select drive, head, and addressing mode. */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | (drive << 4) | head);
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4) | head);
 
-	/* Load parameters. wd_features(ATA/ATAPI) = wd_precomp(ST506) */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_precomp,
-	    precomp);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo, cylin);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi, cylin >> 8);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector, sector);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt, count);
+	/* Load parameters. wdr_features(ATA/ATAPI) = wdr_precomp(ST506) */
+	CHP_WRITE_REG(chp, wdr_precomp, precomp);
+	CHP_WRITE_REG(chp, wdr_cyl_lo, cylin);
+	CHP_WRITE_REG(chp, wdr_cyl_hi, cylin >> 8);
+	CHP_WRITE_REG(chp, wdr_sector, sector);
+	CHP_WRITE_REG(chp, wdr_seccnt, count);
 
 	/* Send command. */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_command, command);
+	CHP_WRITE_REG(chp, wdr_command, command);
 	return;
 }
 
@@ -1405,10 +1501,8 @@ wdccommandshort(chp, drive, command)
 	    DEBUG_FUNCS);
 
 	/* Select drive. */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | (drive << 4));
-
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_command, command);
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+	CHP_WRITE_REG(chp, wdr_command, command);
 }
 
 /* Add a command to the queue and start controller. Must be called at splbio */
@@ -1528,11 +1622,7 @@ wdcbit_bucket(chp, size)
 	struct channel_softc *chp; 
 	int size;
 {
-
-	for (; size >= 2; size -= 2)
-		(void)bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wd_data);
-	if (size)
-		(void)bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_data);
+	CHP_READ_RAW_MULTI_2(chp, NULL, size);
 }
 
 #ifndef __OpenBSD__

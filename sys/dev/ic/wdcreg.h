@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcreg.h,v 1.1 1999/07/18 21:25:16 csapuntz Exp $     */
+/*      $OpenBSD: wdcreg.h,v 1.2 1999/11/17 01:22:56 csapuntz Exp $     */
 /*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
@@ -39,27 +39,9 @@
  *	@(#)wdreg.h	7.1 (Berkeley) 5/9/91
  */
 
-/*
- * Disk Controller register definitions.
- */
-
-/* offsets of registers in the 'regular' register region */
-#define	wd_data		0	/* data register (R/W - 16 bits) */
-#define	wd_error	1	/* error register (R) */
-#define	wd_precomp	1	/* write precompensation (W) */
-#define	wd_features	1	/* features (W), same as wd_precomp */
-#define	wd_seccnt	2	/* sector count (R/W) */
-#define	wd_ireason	2	/* interrupt reason (R/W) (for atapi) */
-#define	wd_sector	3	/* first sector number (R/W) */
-#define	wd_cyl_lo	4	/* cylinder address, low byte (R/W) */
-#define	wd_cyl_hi	5	/* cylinder address, high byte (R/W) */
-#define	wd_sdh		6	/* sector size/drive/head (R/W) */
-#define	wd_command	7	/* command register (W)	*/
-#define	wd_status	7	/* immediate status (R)	*/
-
-/* offsets of registers in the auxiliary register region */
-#define	wd_aux_altsts	0	/* alternate fixed disk status (R) */
-#define	wd_aux_ctlr	0	/* fixed disk controller control (W) */
+/* 
+ * Controller register (wdr_ctlr)
+ */ 
 #define  WDCTL_4BIT	 0x08	/* use four head bits (wd1003) */
 #define  WDCTL_RST	 0x04	/* reset the controller */
 #define  WDCTL_IDS	 0x02	/* disable controller interrupts */
@@ -178,4 +160,5 @@
 #define PHASE_DATAOUT   WDCS_DRQ
 #define PHASE_COMPLETED (WDCI_IN | WDCI_CMD)
 #define PHASE_ABORTED   0
+
 

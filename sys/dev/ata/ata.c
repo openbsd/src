@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.3 1999/11/05 04:32:03 csapuntz Exp $      */
+/*      $OpenBSD: ata.c,v 1.4 1999/11/17 01:22:55 csapuntz Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -28,10 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif /* WDCDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
