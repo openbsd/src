@@ -1,4 +1,4 @@
-.\" $OpenBSD: ssh-agent.1,v 1.17 2000/11/10 05:10:40 aaron Exp $
+.\" $OpenBSD: ssh-agent.1,v 1.18 2000/11/15 19:55:29 markus Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,12 +42,12 @@
 .Nd authentication agent
 .Sh SYNOPSIS
 .Nm ssh-agent
-.Op Fl c Li | Fl s
-.Op Fl k
-.Oo
 .Ar command
-.Op Ar args ...
-.Oc
+.Ar args ...
+.Nm ssh-agent
+.Op Fl c Li | Fl s
+.Nm ssh-agent
+.Fl k
 .Sh DESCRIPTION
 .Nm
 is a program to hold private keys used for public key authentication
