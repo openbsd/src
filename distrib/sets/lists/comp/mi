@@ -607,9 +607,6 @@
 ./usr/include/dev/std/sbp2var.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
-./usr/include/dev/sun/event_var.h
-./usr/include/dev/sun/kbd_tables.h
-./usr/include/dev/sun/kbd_xlate.h
 ./usr/include/dev/sun/sunkbdreg.h
 ./usr/include/dev/sun/sunkbdvar.h
 ./usr/include/dev/sun/uperfio.h
