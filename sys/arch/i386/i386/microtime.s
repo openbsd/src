@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.5 1996/04/28 21:11:19 tholo Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.6 1996/04/28 22:29:06 mickey Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <machine/asm.h>
 #include <dev/isa/isareg.h>
 #include <i386/isa/timerreg.h>
+#include "rnd.h"
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)
@@ -48,7 +49,7 @@
 #ifndef HZ
 ENTRY(microtime)
 
-#if defined(I586_CPU) && defined(NTP)
+#if defined(I586_CPU) && (defined(NTP) || NRND)
 	movl	_pentium_mhz, %ecx
 	testl	%ecx, %ecx
 	jne	pentium_microtime
@@ -138,7 +139,7 @@ common_microtime:
 
 	ret
 
-#if defined(I586_CPU) && defined(NTP)
+#if defined(I586_CPU) && (defined(NTP) || NRND)
 	.align	2, 0x90
 pentium_microtime:
 	cli
