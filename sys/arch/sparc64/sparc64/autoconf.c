@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.18 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.19 2002/01/25 23:54:40 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1467,6 +1467,7 @@ static struct {
 	{ "ide",	BUSCLASS_PCI,		"pciide" },
 	{ "disk",	BUSCLASS_NONE,		"wd" },
 	{ "cmdk",	BUSCLASS_NONE,		"wd" },
+	{ "pci108e,1101.1", BUSCLASS_NONE,	"gem" },
 	{ "network",	BUSCLASS_NONE,		"hme" },
 	{ "ethernet",	BUSCLASS_NONE,		"dc" },
 	{ "SUNW,fas",	BUSCLASS_NONE,		"esp" },
