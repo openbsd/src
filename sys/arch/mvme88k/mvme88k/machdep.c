@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.130 2004/01/12 23:55:12 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.131 2004/01/13 17:15:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -880,6 +880,11 @@ sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(tf->tf_r[31] - fsize);
+
+	/* make sure the frame is aligned on a 8 byte boundary */
+	if (((vaddr_t)fp & 0x07) != 0)
+		fp = (struct sigframe *)((vaddr_t)fp & ~0x07);
+
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (unsigned)fp);
 

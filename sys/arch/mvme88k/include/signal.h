@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.11 2004/01/12 23:55:10 miod Exp $ */
+/*	$OpenBSD: signal.h,v 1.12 2004/01/13 17:15:07 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -51,9 +51,6 @@ struct  sigcontext {
         int     sc_mask;                /* signal mask to restore */
 	/* begin machine dependent portion */
 	struct reg sc_regs;
-
-	/* XXX this structure needs to be a multiple of 8 bytes for now */
-	int	sc_pad;
 };
 
 #endif /* __MACHINE_SIGNAL_H__ */
