@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.2 1996/06/10 11:21:28 niklas Exp $	*/
+/*	$OpenBSD: inp.c,v 1.3 1996/06/25 23:06:38 deraadt Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: inp.c,v 1.2 1996/06/10 11:21:28 niklas Exp $";
+static char rcsid[] = "$OpenBSD: inp.c,v 1.3 1996/06/25 23:06:38 deraadt Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -241,7 +241,7 @@ char *filename;
     using_plan_a = FALSE;
     if ((ifp = fopen(filename, "r")) == Nullfp)
 	pfatal2("can't open file %s", filename);
-    if ((tifd = creat(TMPINNAME, 0666)) < 0)
+    if ((tifd = open(TMPINNAME, O_EXCL|O_CREAT|O_WRONLY, 0666)) < 0)
 	pfatal2("can't open file %s", TMPINNAME);
     while (fgets(buf, sizeof buf, ifp) != Nullch) {
 	if (revision != Nullch && !found_revision && rev_in_string(buf))

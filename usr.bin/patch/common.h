@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.2 1996/06/10 11:21:26 niklas Exp $ */
+/*	$OpenBSD: common.h,v 1.3 1996/06/25 23:06:36 deraadt Exp $ */
 
 #define DEBUGGING
 
@@ -29,6 +29,7 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/types.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <signal.h>
