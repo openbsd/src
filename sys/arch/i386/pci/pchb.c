@@ -56,6 +56,15 @@
 #define PCISET_BRIDGE_NUMBER(reg)	(((reg) >> 8) & 0xff)
 #define PCISET_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
 
+/* XXX should be in dev/ic/i82424{reg.var}.h */
+#define I82424_CPU_BCTL_REG		0x53
+#define I82424_PCI_BCTL_REG		0x54
+
+#define I82424_BCTL_CPUMEM_POSTEN	0x01
+#define I82424_BCTL_CPUPCI_POSTEN	0x02
+#define I82424_BCTL_PCIMEM_BURSTEN	0x01
+#define I82424_BCTL_PCI_BURSTEN		0x02
+
 int	pchbmatch __P((struct device *, void *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
 
@@ -68,6 +77,7 @@ struct cfattach pchb_ca = {
 struct cfdriver pchb_cd = {
 	NULL, "pchb", DV_DULL
 };
+
 
 int
 pchbmatch(parent, match, aux)
@@ -127,6 +137,16 @@ pchbattach(parent, self, aux)
 				pba.pba_pc = pa->pa_pc;
 				config_found(self, &pba, pchb_print);
 				break;
+			}
+			break;
+		case PCI_PRODUCT_INTEL_CDC:
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    I82424_CPU_BCTL_REG);
+			if (bcreg & I82424_BCTL_CPUPCI_POSTEN) {
+				bcreg &= ~I82424_BCTL_CPUPCI_POSTEN;
+				pci_conf_write(pa->pa_pc, pa->pa_tag,
+				    I82424_CPU_BCTL_REG, bcreg);
+				printf(": disabled CPU-PCI write posting\n");
 			}
 			break;
 		default:
