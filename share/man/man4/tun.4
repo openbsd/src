@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.23 2003/03/09 18:51:36 deraadt Exp $
+.\"	$OpenBSD: tun.4,v 1.24 2003/03/10 02:37:34 mdw Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -70,7 +70,7 @@ a ``collision'' is counted, and
 .Er ENOBUFS
 is returned.
 .Pp
-In additional to the usual network interface
+In addition to the usual network interface
 ioctl commands described in
 .Xr netintro 4 ,
 the following special commands defined in
@@ -80,7 +80,7 @@ are supported:
 .Bl -tag -width indent -compact
 .It Dv TUNGIFINFO (struct tuninfo)
 .It Dv TUNSIFINFO (struct tuninfo)
-can be used to get or set the interface characteristics.
+Can be used to get or set the interface characteristics.
 .Bd -literal
 /* iface info */
 struct tuninfo {
@@ -90,6 +90,7 @@ struct tuninfo {
         u_int   baudrate;
 };
 .Ed
+.Pp
 .Va flags
 sets the interface flags, and
 can include one or more of
@@ -114,9 +115,9 @@ This sets the interface media address header type.
 .It Dv TUNSIFMODE Fa int *flags
 Can be used to just set the interface flags.
 .It Dv FIONBIO Fa int *flag
-can be to use to set non-blocking I/O.
+Can be used to set non-blocking I/O.
 .It Dv FIOASYNC Fa int *flag
-can be used to cause signal
+Can be used to cause signal
 .Dv SIGIO
 to be sent when a packet can be read.
 .It Dv TIOCSPGRP Fa int *pgpp
@@ -148,20 +149,20 @@ If a
 .Xr write 2
 call fails,
 .Xr errno 2
-is set to one of
+is set to one of:
 .Bl -tag -width Er
 .It Bq Eq EMSGSIZE
 The packet supplied was too small or too large.
 The maximum sized packet allowed is currently 16384 bytes.
 .It Bq Eq ENOBUFS
-The were no mbufs, or
+There were no mbufs, or
 the queue for the outgoing protocol is full.
 .It Bq Eq EAFNOSUPPORT
 The address family specified in the tunnel header was not
 recognized.
 .El
 .Pp
-Ioctl commands may fail with
+Ioctl commands may fail with:
 .Bl -tag -width Er
 .It Bq EBUSY
 .Dv TUNSIFMODE
@@ -179,7 +180,7 @@ Unrecognized ioctl command.
 .Pp
 A
 .Xr read 2
-call may fail because of
+call may fail because of:
 .Bl -tag -width Er
 .It Bq Eq EHOSTDOWN
 The device is not ready.
@@ -191,7 +192,7 @@ interface address assigned to it, such as via
 Non-blocking I/O was selected and no packets were available.
 .El
 .Pp
-An attempt to send a packet out via the interface may fail with
+An attempt to send a packet out via the interface may fail with:
 .Bl -tag -width Er
 .It Bq Eq EHOSTDOWN
 The device is not ready.
@@ -201,8 +202,8 @@ interface address assigned to it, such as via
 .Dv SIOCSIFADDR .
 .El
 .Sh SEE ALSO
-.Xr intro 4
-.Xr inet 4
+.Xr intro 4 ,
+.Xr inet 4 ,
 .Xr netintro 4 ,
 .Xr ifconfig 8
 .Sh BUGS
@@ -211,4 +212,3 @@ There is no way to set TUN_STAYUP.
 .Dv TUNSIFINFO
 does no checking on
 .Va flags .
-
