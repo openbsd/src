@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.14 1996/09/18 22:03:38 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.15 1996/10/12 21:09:04 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -434,7 +434,7 @@ bpf*)
 	;;
 
 ttyB*)
-	unit=`expr $i : '...\(.*\)'`
+	unit=`expr $i : '....\(.*\)'`
 	rm -f ttyB$unit cuaB$unit
 	mknod ttyB$unit c 32 $unit
 	mknod cuaB$unit c 32 `expr $unit + 128`
