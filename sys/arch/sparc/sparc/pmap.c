@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 1999/11/11 12:30:36 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.41 1999/11/12 21:02:50 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -164,9 +164,20 @@ int	pmapdebug = 0;
 #endif
 
 /*
+ * Internal helpers.
+ */
+static __inline struct pvlist *pvhead __P((int));
+static __inline struct pvlist *pvalloc __P((void));
+static __inline void pvfree __P((struct pvlist *));
+
+static __inline int *pt1_alloc __P((void));
+static __inline int *pt23_alloc __P((void));
+static __inline void pt1_free __P((int *));
+static __inline void pt23_free __P((int *));
+
+/*
  * Given a page number, return the head of its pvlist.
  */
-static struct pvlist *pvhead __P((int));
 static __inline struct pvlist *
 pvhead(pnum)
 	int pnum;
@@ -178,6 +189,50 @@ pvhead(pnum)
 		return NULL;
 
 	return &vm_physmem[bank].pmseg.pv_head[off];
+}
+
+/*
+ * Wrappers around some memory allocation.
+ * XXX - the plan is to make them non-sleeping.
+ */
+
+static __inline struct pvlist *
+pvalloc()
+{
+	return malloc(sizeof(struct pvlist), M_VMPVENT, M_WAITOK);
+}
+
+static __inline void
+pvfree(pv)
+	struct pvlist *pv;
+{
+	free(pv, M_VMPVENT);
+}
+
+static __inline int *
+pt1_alloc()
+{
+	return malloc(SRMMU_L1SIZE * sizeof(int), M_VMPMAP, M_WAITOK);
+}
+
+static __inline void
+pt1_free(pt)
+	int *pt;
+{
+	free(pt, M_VMPMAP);
+}
+
+static __inline int *
+pt23_alloc()
+{
+	return malloc(SRMMU_L2SIZE * sizeof(int), M_VMPMAP, M_WAITOK);
+}
+
+static __inline void
+pt23_free(pt)
+	int *pt;
+{
+	free(pt, M_VMPMAP);
 }
 
 /*
@@ -2051,7 +2106,7 @@ pv_unlink4_4c(pv, pm, va)
 			pv->pv_va = npv->pv_va;
 			pv->pv_flags &= ~PV_NC;
 			pv->pv_flags |= npv->pv_flags & PV_NC;
-			FREE(npv, M_VMPVENT);
+			pvfree(npv);
 		} else {
 			/*
 			 * No mappings left; we still need to maintain
@@ -2073,7 +2128,7 @@ pv_unlink4_4c(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		FREE(npv, M_VMPVENT);
+		pvfree(npv);
 	}
 	if (pv->pv_flags & PV_ANC && (pv->pv_flags & PV_NC) == 0) {
 		/*
@@ -2144,7 +2199,8 @@ pv_link4_4c(pv, pm, va, nc)
 			}
 		}
 	}
-	MALLOC(npv, struct pvlist *, sizeof *npv, M_VMPVENT, M_WAITOK);
+	npv = pvalloc();
+
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
@@ -2363,7 +2419,7 @@ pv_unlink4m(pv, pm, va)
 			pv->pv_va = npv->pv_va;
 			pv->pv_flags &= ~PV_C4M;
 			pv->pv_flags |= (npv->pv_flags & PV_C4M);
-			FREE(npv, M_VMPVENT);
+			pvfree(npv);
 		} else {
 			/*
 			 * No mappings left; we still need to maintain
@@ -2385,7 +2441,7 @@ pv_unlink4m(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		FREE(npv, M_VMPVENT);
+		pvfree(npv);
 	}
 	if ((pv->pv_flags & (PV_C4M|PV_ANC)) == (PV_C4M|PV_ANC)) {
 		/*
@@ -2433,7 +2489,7 @@ retry:
 	 * We do the malloc early so that we catch all changes that happen
 	 * during the (possible) sleep.
 	 */
-	MALLOC(mpv, struct pvlist *, sizeof *npv, M_VMPVENT, M_WAITOK);
+	mpv = pvalloc();
 	if (pv->pv_pmap == NULL) {
 		/*
 		 * XXX - remove this printf some day when we know that
@@ -3434,13 +3490,11 @@ pmap_pinit(pm)
 		 * need to explicitly mark them as invalid (a null
 		 * rg_seg_ptps pointer indicates invalid for the 4m)
 		 */
-		urp = malloc(SRMMU_L1SIZE * sizeof(int), M_VMPMAP, M_WAITOK);
-#ifdef DEBUG
-		if ((u_int) urp % (SRMMU_L1SIZE * sizeof(int)))
-			panic("pmap_pinit: malloc() not giving aligned memory");
-#endif
+		urp = pt1_alloc();
 		pm->pm_reg_ptps = urp;
 		pm->pm_reg_ptps_pa = VA2PA(urp);
+
+		/* Invalidate user mappings */
 		for (i = 0; i < NUREG; i++)
 			setpgt4m(&pm->pm_reg_ptps[i], SRMMU_TEINVALID);
 
@@ -3549,7 +3603,7 @@ if (pmapdebug) {
 				panic("pmap_release: releasing kernel");
 			ctx_free(pm);
 		}
-		free(pm->pm_reg_ptps, M_VMPMAP);
+		pt1_free(pm->pm_reg_ptps);
 		pm->pm_reg_ptps = NULL;
 		pm->pm_reg_ptps_pa = 0;
 	}
@@ -4114,7 +4168,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		if (pm->pm_ctx)
 			tlb_flush_segment(vr, vs); 	/* Paranoia? */
 		setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
-		free(pte0, M_VMPMAP);
+		pt23_free(pte0);
 		sp->sg_pte = NULL;
 
 		if (--rp->rg_nsegmap == 0) {
@@ -4123,7 +4177,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 			free(rp->rg_segmap, M_VMPMAP);
 			rp->rg_segmap = NULL;
-			free(rp->rg_seg_ptps, M_VMPMAP);
+			pt23_free(rp->rg_seg_ptps);
 		}
 	}
 }
@@ -4306,7 +4360,7 @@ pmap_page_protect4_4c(pa, prot)
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
-			FREE(pv, M_VMPVENT);
+			pvfree(pv);
 		if ((pv = npv) == NULL)
 			break;
 	}
@@ -4638,7 +4692,7 @@ pmap_page_protect4m(pa, prot)
 			if (pm->pm_ctx)
 				tlb_flush_segment(vr, vs);
 			setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
-			free(sp->sg_pte, M_VMPMAP);
+			pt23_free(sp->sg_pte);
 			sp->sg_pte = NULL;
 
 			if (--rp->rg_nsegmap == 0) {
@@ -4647,14 +4701,14 @@ pmap_page_protect4m(pa, prot)
 				setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 				free(rp->rg_segmap, M_VMPMAP);
 				rp->rg_segmap = NULL;
-				free(rp->rg_seg_ptps, M_VMPMAP);
+				pt23_free(rp->rg_seg_ptps);
 			}
 		}
 
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
-			FREE(pv, M_VMPVENT);
+			pvfree(pv);
 		if ((pv = npv) == NULL)
 			break;
 	}
@@ -5072,7 +5126,7 @@ sretry:
 		/* definitely a new mapping */
 		int size = NPTESG * sizeof *pte;
 
-		pte = malloc(size, M_VMPMAP, M_WAITOK);
+		pte = (int *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
 		if (sp->sg_pte != NULL) {
 printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			free(pte, M_VMPMAP);
@@ -5387,15 +5441,14 @@ printf("pmap_enu4m: segment filled during sleep\n");	/* can this happen? */
 rgretry:
 	if (rp->rg_seg_ptps == NULL) {
 		/* Need a segment table */
-		int size, i, *ptd;
+		int i, *ptd;
 
-		size = SRMMU_L2SIZE * sizeof(long);
-		ptd = malloc(size, M_VMPMAP, M_WAITOK);
+		ptd = pt23_alloc();
 		if (rp->rg_seg_ptps != NULL) {
 #ifdef DEBUG
 printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 #endif
-			free(ptd, M_VMPMAP);
+			pt23_free(ptd);
 			goto rgretry;
 		}
 
@@ -5411,12 +5464,12 @@ printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 sretry:
 	if ((pte = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
-		int i, size = SRMMU_L3SIZE * sizeof(*pte);
+		int i;
 
-		pte = malloc(size, M_VMPMAP, M_WAITOK);
+		pte = pt23_alloc();
 		if (sp->sg_pte != NULL) {
 printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
-			free(pte, M_VMPMAP);
+			pt23_free(pte);
 			goto sretry;
 		}
 
