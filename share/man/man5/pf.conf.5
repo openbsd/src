@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.318 2004/12/21 02:00:36 mjc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.319 2004/12/22 00:59:26 david Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2580,7 +2580,7 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "limit" ( limit-item | "{" limit-list "}" ) ] |
                  [ "loginterface" ( interface-name | "none" ) ] |
                  [ "block-policy" ( "drop" | "return" ) ] |
-		 [ "state-policy" ( "if-bound" | "group-bound" |
+                 [ "state-policy" ( "if-bound" | "group-bound" |
                  "floating" ) ]
                  [ "require-order" ( "yes" | "no" ) ]
                  [ "fingerprints" filename ] |
@@ -2716,10 +2716,10 @@ tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
 state-opts     = state-opt [ [ "," ] state-opts ]
 state-opt      = ( "max" number | "no-sync" | timeout |
                  "source-track" [ ( "rule" | "global" ) ] |
-		 "max-src-nodes" number | "max-src-states" number |
-		 "max-src-conn" number |
-		 "max-src-conn-rate" number "/" number |
-		 "overload" "<" string ">" [ "flush" ] |
+                 "max-src-nodes" number | "max-src-states" number |
+                 "max-src-conn" number |
+                 "max-src-conn-rate" number "/" number |
+                 "overload" "<" string ">" [ "flush" ] |
                  "if-bound" | "group-bound" | "floating" )
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
