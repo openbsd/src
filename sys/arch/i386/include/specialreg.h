@@ -55,6 +55,34 @@
 #define	CR0_CD	0x40000000	/* Cache Disable */
 
 /*
+ * The info below was gleaned from:
+   C) Copyright 1993, 1994 By Harald Feldmann Revision 04, Nov 3rd 1994.
+       Hamarsoft's 86BUGS list, (C)
+   1993/94 By Hamarsoft (R) The 86BUGS list, distributed...
+   http://powderkeg.stanford.edu/~rho/8LIST04.LST - size 106K - 23 Mar 95
+*/
+/*
+ * Bits in the EDX register after doing an "cpuid" instruction with %eax == 1
+ */
+#define       ID1_FPU 0x01    /* has builtin fpu */
+#define       ID1_V86 0x02    /* has v86 extensions */
+#define       ID1_IOB 0x04    /* has io breakpoints */
+#define       ID1_4MB 0x08    /* has 4Meg pages */
+#define       ID1_TSC 0x10    /* has TSC */
+#define       ID1_MSR 0x20    /* has "Model Specific Registers" */
+#define       ID1_MCE 0x80    /* has Machine Check Exceptions */
+
+/*
+ * We also need bits in cr4 (??)
+ */
+#define       CR4_MCE 0x40    /* enable machine check */
+#define       CR4_4MB 0x10    /* enable 4MB pages */
+#define       CR4_IOB 0x08    /* enable io breakpoints (value is 0x02 [reserved])
+#define       CR4_TSC 0x04    /* disable user RDTSC */
+#define       CR4_PVI 0x02    /* enable virt intr in protected mode */
+#define       CR4_VVI 0x01    /* enable virt intr in v86 mode */
+
+/*
  * Cyrix 486 DLC special registers, accessable as IO ports.
  */
 #define CCR0	0xc0		/* configuration control register 0 */
