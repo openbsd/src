@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: bktr.4,v 1.12 2004/03/14 08:47:00 mickey Exp $
+.\" $OpenBSD: bktr.4,v 1.13 2004/03/15 16:35:27 mickey Exp $
 .\" $FreeBSD: /c/ncvs/src/share/man/man4/bktr.4,v 1.9.2.5 2001/03/06 19:08:09 ru Exp $
 .\"
 .Dd January 28, 1998
@@ -45,7 +45,7 @@
 .Cd "option BKTR_ALLOC_PAGES=nnn"
 .Cd "option BKTR_SYSTEM_DEFAULT=XXX"
 .Cd "option BKTR_OVERRIDE_CARD=nnn"
-.Cd "option BKTR_OVERRIDE_MSP=nnn"
+.Cd "option BKTR_OVERRIDE_MSP=n"
 .Cd "option BKTR_OVERRIDE_TUNER=nnn"
 .Sh DESCRIPTION
 The
@@ -102,10 +102,75 @@ One of these options can be used to set the default video format for the driver.
 This fixed random hangs and lockups with the VideoLogic Captivator PCI card.
 .It Cd option BKTR_OVERRIDE_CARD=nnn
 Select a specific card (overrides autodetection).
-.It Cd option BKTR_OVERRIDE_MSP=nnn
-Select a specific MSP audio chip (overrides autodetection).
+`nnn' is set to one of he names listed and explained below.
+.Pp
+.Bl -tag -compact -width 28n
+.It ASKEY_DYNALINK_MAGIC_TVIEW
+Askey/Dynalink Magic TView
+.It AVER_MEDIA
+AverMedia
+.It FLYVIDEO
+Animation Technologies FlyVideo
+.It HAUPPAUGE
+Hauppauge Wincast TV and WinTV
+.It IMS_TURBO
+IMS TV Turbo
+.It INTEL
+Intel Smart Video Recorder III
+.It IO_GV
+I/O DATA GV-BCTV2/PCI
+.It KISS
+KISS TV/FM PCI
+.It LEADTEK
+Leadtek Winfast TV 2000
+.It MIRO
+Miro PC TV
+.It OSPREY
+MMAC Osprey
+.It NEC_PK
+NEC PK-UG-X017
+.It STB
+STB TV PCI Television Tuner
+.It TERRATVPLUS
+Terratec TerraTVplus
+.It VIDEO_HIGHWAY_XTREME
+Video Highway XTreme
+.It ZOLTRIX
+Zoltrix TV
+.El
+.It Cd option BKTR_OVERRIDE_MSP=n
+Specifies whether the MSP3400C chip is present (overrides autodetection).
 .It Cd option BKTR_OVERRIDE_TUNER=nnn
 Select a specific tuner (overrides autodetection).
+`nnn' is set to an integer from 1 to 13 take from the following table:
+.Pp
+.Bl -tag -compact -width 22n
+.It TEMIC_NTSC
+Temic 4032FY5
+.It TEMIC_PAL
+Temic 4002FH5
+.It TEMIC_SECAM
+Temic 4002FN5
+.It PHILIPS_NTSC
+Philips FI1236
+.It PHILIPS_PAL
+Philips FM1216
+.It PHILIPS_SECAM
+Philips FI1216MF
+.It TEMIC_PALI
+Temic 4062FY5
+.It PHILIPS_PALI
+Philips FI1246
+.It PHILIPS_FR1236_NTSC
+Philips FR1236 MK2
+.It PHILIPS_FR1216_PAL
+Philips FM1216
+.It PHILIPS_FR1236_SECAM
+Philips FM1216MF
+.It ALPS_TSCH5
+Apls TSCH5 NTSC
+.It ALPS_TSBH1
+Apls TSBH1 NTSC
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
