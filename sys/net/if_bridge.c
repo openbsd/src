@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.81 2001/12/15 08:40:56 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.82 2002/01/01 22:39:45 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1415,11 +1415,33 @@ bridge_broadcast(sc, ifp, eh, m)
 			mc = m;
 			used = 1;
 		} else {
-			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
-			if (mc == NULL) {
+			struct mbuf *m1, *m2, *mx;
+
+			m1 = m_copym2(m, 0, sizeof(struct ether_header),
+			    M_DONTWAIT);
+			if (m1 == NULL) {
 				sc->sc_if.if_oerrors++;
 				continue;
 			}
+			m2 = m_copym2(m, sizeof(struct ether_header),
+			    M_COPYALL, M_DONTWAIT);
+			if (m2 == NULL) {
+				sc->sc_if.if_oerrors++;
+				continue;
+			}
+
+			for (mx = m1; mx->m_next != NULL; mx = mx->m_next)
+				;
+			mx->m_next = m2;
+
+			if (m1->m_flags & M_PKTHDR) {
+				int len = 0;
+
+				for (mx = m1; mx != NULL; mx = mx->m_next)
+					len += mx->m_len;
+				m1->m_pkthdr.len = len;
+			}
+			mc = m1;
 		}
 
 #if NPF > 0
