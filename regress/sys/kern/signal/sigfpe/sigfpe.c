@@ -1,3 +1,5 @@
+/* Placed in the public domain by Todd C. Miller on April 30, 2002 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -11,7 +13,6 @@ __dead void usage(void);
 /*
  * Check signal(SIGFPE, SIG_IGN) for overflow and divide by zero.
  */
-
 int
 main(int argc, char **argv)
 {
