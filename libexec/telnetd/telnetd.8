@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.30 2003/06/02 19:38:25 millert Exp $
+.\"	$OpenBSD: telnetd.8,v 1.31 2003/06/07 21:55:43 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@ protocol server
 .Op Fl X Ar authtype
 .Op Fl a Ar authmode
 .Op Fl g Ar gettyent
-.Op Fl r Ns Ar lowpty-highpty
+.Op Fl r Ar lowpty-highpty
 .Op Fl u Ar len
 .Op Fl debug
 .Op Fl L Ar /bin/login
@@ -123,13 +123,13 @@ by any of the existing authentication mechanisms,
 and is thus the same as specifying
 .Fl a
 .Cm valid .
-.It otp
-Only allow Kerberos authenticated connections (as with
-.Fl a
-.Cm user )
-and also logins with one-time passwords (OTPs).
-This option will call login with an option so that only OTPs are accepted.
-The user can of course still type secret information at the prompt.
+.\" .It otp
+.\" Only allow Kerberos authenticated connections (as with
+.\" .Fl a
+.\" .Cm user )
+.\" and also logins with one-time passwords (OTPs).
+.\" This option will call login with an option so that only OTPs are accepted.
+.\" The user can of course still type secret information at the prompt.
 .It none
 This is the default state.
 Kerberos authentication information is not required.
