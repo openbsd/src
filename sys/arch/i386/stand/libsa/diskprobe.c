@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.15 1998/04/18 07:39:50 deraadt Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.16 1999/05/20 12:56:40 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -95,7 +95,7 @@ floppyprobe()
 }
 
 
-/* Probe for all BIOS floppies */
+/* Probe for all BIOS hard disks */
 static void
 hardprobe()
 {
@@ -238,7 +238,7 @@ dump_diskinfo()
 	}
 }
 
-/* Find BIOS protion on given BIOS disk
+/* Find BIOS portion on given BIOS disk
  * XXX - Use dklookup() instead.
  */
 bios_diskinfo_t *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.29 1999/05/06 15:33:57 mickey Exp $	*/
+/*	$OpenBSD: systm.h,v 1.30 1999/05/20 12:56:40 aaron Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@
  * It can only be decreased by process 1 (/sbin/init).
  *
  * Security levels are as follows:
- *   -1	permannently insecure mode - always run system in level 0 mode.
+ *   -1	permanently insecure mode - always run system in level 0 mode.
  *    0	insecure mode - immutable and append-only flags make be turned off.
  *	All devices may be read or written subject to permission modes.
  *    1	secure mode - immutable and append-only flags may not be changed;
