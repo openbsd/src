@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.75 2004/12/23 17:24:03 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.76 2005/04/05 17:37:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -105,7 +105,7 @@ enum capa_codes {
 };
 
 struct msg_header {
-	u_char			 marker[16];
+	u_char			 marker[MSGSIZE_HEADER_MARKER];
 	u_int16_t		 len;
 	u_int8_t		 type;
 };
