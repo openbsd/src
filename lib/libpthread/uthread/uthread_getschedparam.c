@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_getschedparam.c,v 1.2 1999/11/25 07:01:36 d Exp $	*/
+/*	$OpenBSD: uthread_getschedparam.c,v 1.3 2002/01/19 23:42:40 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -49,7 +49,8 @@ pthread_getschedparam(pthread_t pthread, int *policy, struct sched_param *param)
 	/* Find the thread in the list of active threads: */
 	else if ((ret = _find_thread(pthread)) == 0) {
 		/* Return the threads base priority and scheduling policy: */
-		param->sched_priority = pthread->base_priority;
+		param->sched_priority =
+		    PTHREAD_BASE_PRIORITY(pthread->base_priority);
 		*policy = pthread->attr.sched_policy;
 	}
 
