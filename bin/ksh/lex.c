@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.30 2004/12/22 18:57:28 otto Exp $	*/
+/*	$OpenBSD: lex.c,v 1.31 2004/12/29 06:59:42 deraadt Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1251,10 +1251,14 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 			case 'n':	/* '\' 'n' newline */
 				strbuf[0] = '\n';
 				strbuf[1] = '\0';
+				totlen = 0;	/* reset for prompt re-print */
+				sp = cp + 1;
 				break;
 			case 'r':	/* '\' 'r' return */
 				strbuf[0] = '\r';
 				strbuf[1] = '\0';
+				totlen = 0;	/* reset for prompt re-print */
+				sp = cp + 1;
 				break;
 			case 's':	/* '\' 's' basename $0 */
 				strlcpy(strbuf, kshname, sizeof strbuf);
