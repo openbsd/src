@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2004/01/28 17:43:01 deraadt Exp $	
+#	$OpenBSD: Makefile,v 1.5 2004/01/29 08:50:09 mickey Exp $	
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64" ||\
     ${MACHINE} == "alpha" || ${MACHINE} == "pegasos"
@@ -13,7 +13,7 @@ NOPROG=yes
 .endif
 
 MAN=	wsmoused.8 
-MANSUBDIR=	i386 amd64 alpha pegosos
+MANSUBDIR=	i386 amd64 alpha pegasos
 
 .include <bsd.prog.mk>
 
