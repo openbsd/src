@@ -1,61 +1,160 @@
-.TH IPNAT 1
-.SH NAME
-ipnat \- user interface to the NAT
-.SH SYNOPSIS
-.B ipnat
-[
-.B \-lnrsvCF
-]
-.B \-f
-<filename>
-.SH DESCRIPTION
-.PP
-\fBipnat\fP opens the filename given (treating "\-" as stdin) and parses the
-file for a set of rules which are to be added or removed from the IP NAT.
-.PP
-Each rule processed by \fBipnat\fP
-is added to the kernels internal lists if there are no parsing problems.
-Rules are added to the end of the internal lists, matching the order in
-which they appear when given to \fBipnat\fP.
-.SH OPTIONS
-.TP
-.B \-C
-delete all entries in the current NAT listing (NAT rules)
-.TP
-.B \-F
-delete all active entries in the current NAT table (currently active
-NAT mappings)
-.TP
-.B \-l
-Show the list of current NAT table entry mappings.
-.TP
-.B \-n
-This flag (no-change) prevents \fBipf\fP from actually making any ioctl
-calls or doing anything which would alter the currently running kernel.
-.TP
-.B \-s
-Retrieve and display NAT statistics
-.TP
-.B \-r
-Remove matching NAT rules rather than add them to the internal lists
-.TP
-.B \-v
-Turn verbose mode on.  Displays information relating to rule processing.
-.DT
-.SH FILES
-\fI/usr/share/ipf\fP -- sample configuration files.
-.br
-/dev/ipnat
-.SH SEE ALSO
-ipf(1), ipftest(1), ipf(4), ipl(4), ipnat(4), ipf(5), ipnat(5), ipfstat(8), ip
-mon(8)
+.Dd October 10, 1998
+.Dt IPNAT 1
+.Os
+.Sh NAME
+.Nm ipnat
+.Nd User interface to the NAT
+.Sh SYNOPSIS
+.Nm ipnat
+.Op Fl CFlnrsv
+.Op Fl f Ar filename
+.Sh DESCRIPTION
+.Nm ipnat
+provides control over the kernel's network address translation (NAT). The NAT remaps IP addresses from one range to another. In other words, when properly configured on a gateway, the NAT provides internet access to connected computers lacking officially assigned IP addresses. It is discussed in RFC 1631.
+.Pp
+Options are as follows:
+.Bl -tag -width Ds
+.It Fl C
+Delete all entries in the NAT list.
+.It Fl F
+Flush all active mappings from the NAT table. 
+.It Fl l
+Display the current entries and mappings.
+.It Fl n
+Do not alter the NAT table.
+.It Fl r
+Remove, rather than add, entries specified in the rule list. 
+.It Fl s
+Display statistics.
+.It Fl v
+Verbosity, displays detailed information pertaining to rule processing. 
+.El
+.Pp
+Certain configuration requirements must be met before
+.Nm ipnat
+will work. These are listed in
+.Pa /usr/share/ipf/nat.2 .
+.Pp
+.Nm ipnat
+operates on a list of rules, specified by 
+.Ar filename .
+This file is typically 
+.Pa /etc/ipnat.rules ;
+stdin is represented by "\-". Each rule is parsed, then sequentially added to
+the kernel's internal NAT list. Like 
+.Xr ipf 1 ,
+if an entry contradicts another previously added, the newer will take precedence. 
+.Pp
+Comments (beginning with a ``#'') and blank lines are ignored as
+.Nm ipnat
+parses the file. Entries may be separated by spaces or tabs. Each rule must begin with either
+.Em map
+or
+.Em rdr .  
+.Pp
+.Em map 
+tells the NAT how a range of addresses should be translated. The entries use the following format:
+.Pp
+.Bd -unfilled -offset indent -compact
+map ifname internal/mask -> external/mask options
+.Ed
+.Pp
+The
+.Em ifname 
+field is the interface to which packets are sent. A gateway with a PPP link would probably use ``ppp0'' or ``tun0'', while an ethernet connection would instead have the name of its device. 
+.Pp
+The address range of the LAN goes in the
+.Em internal
+field. This is usually one of the three blocks of address space the Internet Assigned Numbers Authority has allocated for private networks (RFC 1597):
+.Pp
+.Bd -unfilled -offset indent -compact
+10.0.0.0    - 10.255.255.255
+172.16.0.0  - 172.16.255.255
+192.168.0.0 - 192.168.255.255
+.Ed
+.Pp
+The
+.Em external
+address is the offically assigned IP number of the gateway or network.
+.Pp
+.Em mask
+is the netmask of the address. This mask is 32 bits long, and is divided into four 8 bit numbers.
+.Pp
+.Bd -unfilled -offset indent -compact
+11111111.0.0.0				Class A - 8 bits set.
+11111111.11111111.0.0 		Class B - 16 bits set.
+11111111.11111111.11111111.0	Class C - 24 bits set.
+.Ed
+.Pp
+The number of bits set in the mask is placed following the IP address.
+.Pp
+Both
+.Em internal 
+and 
+.Em external
+may be an actual IP address, a hostname, or the name of an interface. If it is a network number, however, a problem may arise. For example:
+.Pp
+.Bd -unfilled -offset indent -compact
+map ppp0 10.0.0.0/8 -> 209.1.2.0/24
+.Ed
+.Pp
+16,000,000 IP addresses are being squeezed into an address space of only 254. This is solved by the
+.Em portmap 
+option, which remaps ports instead of IP addresses. The protocol is specified by following the option with either
+.Em tcp , 
+.Em udp ,
+.Em tcp/udp ,
+or 
+.Em tcpudp
+(the last two have the same effect). The syntax to assign a range of ports is ``portnumber:portnumber''. This looks like:
+.Pp
+.Bd -unfilled -offset indent -compact 
+map ppp0 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000
+map ppp0 10.0.0.0/8 -> 209.1.2.0/24
+.Ed 
+.Pp
+That will cut the number down from ~16,000,000 addresses short to only 527,566.
+.Pp
+.Em rdr
+tells the NAT how to redirect incoming packets. It is useful if one wishes to redirect a connection through a proxy, or to another box on the private network. The format of this directive is:
+.Pp
+rdr ifname external/mask port service -> internal port service protocol
+.Pp
+This setup is best described by an example of an actual entry:
+.Pp
+.Bd -unfilled -offset indent -compact
+rdr xl0 0.0.0.0/0 port 25 -> 204.213.176.10 port smtp 
+.Ed
+.Pp
+This redirects all smtp packets received on xl0 to 204.213.176.10, port 25. A netmask is not needed on the
+.Em internal
+address; it is always 32. The 
+.Em external
+and 
+.Em internal
+fields, similar to the
+.Em map
+directive, may be actual addresses, hostnames, or interfaces. Likewise, the 
+.Em service
+field may be the name of a service, or a port number. The 
+.Em protocol
+of the service may be selected by appending 
+.Em tcp , 
+.Em udp ,
+.Em tcp/udp ,
+or
+.Em tcpudp
+(the last two have the same effect) to the end of the line. TCP is the default.
+.Sh FILES
+.Bl -tag -width /usr/share/ipf/nat.1 -compact
+.It Pa /dev/ipnat
+.It Pa /usr/share/ipf/nat.1
+Example rules.
+.It Pa /usr/share/ipf/nat.2
+System requirements for use of the NAT.
+.It Pa /etc/ipnat.rules
+Actual rule list.
+.Sh SEE ALSO
+.Xr ipnat 4 .
 .br
 http://coombs.anu.edu.au/ipfilter/
-.SH DIAGNOSTICS
-.PP
-Needs to be run as root for the address translation list to actually
-be affected inside the kernel.
-.SH BUGS
-.PP
-If you find any, please send email to me at darrenr@pobox.com
-
