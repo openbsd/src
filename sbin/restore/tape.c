@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.16 2000/09/14 22:38:19 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.17 2001/01/09 03:26:06 angelos Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -636,6 +636,9 @@ skipfile()
  * When an allocated block is found it is passed to the fill function;
  * when an unallocated block (hole) is found, a zeroed buffer is passed
  * to the skip function.
+ *
+ * For some block types (TS_BITS, TS_CLRI), the c_addr map is not meaningful
+ * and no blocks should be skipped.
  */
 void
 getfile(fill, skip)
@@ -648,6 +651,7 @@ getfile(fill, skip)
 	static char clearedbuf[MAXBSIZE];
 	char buf[MAXBSIZE / TP_BSIZE][TP_BSIZE];
 	char junk[TP_BSIZE];
+	int noskip = (spcl.c_type == TS_BITS || spcl.c_type == TS_CLRI);
 
 	if (spcl.c_type == TS_END)
 		panic("ran off end of tape\n");
@@ -658,7 +662,7 @@ getfile(fill, skip)
 	gettingfile++;
 loop:
 	for (i = 0; i < spcl.c_count; i++) {
-		if (spcl.c_addr[i]) {
+		if (noskip || spcl.c_addr[i]) {
 			readtape(&buf[curblk++][0]);
 			if (curblk == fssize / TP_BSIZE) {
 				(*fill)((char *)buf, size > TP_BSIZE ?
@@ -678,7 +682,7 @@ loop:
 		}
 		if ((size -= TP_BSIZE) <= 0) {
 			for (i++; i < spcl.c_count; i++)
-				if (spcl.c_addr[i])
+				if (noskip || spcl.c_addr[i])
 					readtape(junk);
 			break;
 		}
@@ -1068,8 +1072,6 @@ good:
 		 */
 		buf->c_inumber = 0;
 		buf->c_dinode.di_size = buf->c_count * TP_BSIZE;
-		for (i = 0; i < buf->c_count; i++)
-			buf->c_addr[i]++;
 		break;
 
 	case TS_TAPE:
@@ -1148,10 +1150,21 @@ accthdr(header)
 	fprintf(stderr, "\n");
 newcalc:
 	blks = 0;
-	if (header->c_type != TS_END)
+	switch (header->c_type) {
+
+	case TS_BITS:
+	case TS_CLRI:
+		blks = header->c_count;
+		break;
+
+	case TS_END:
+		break;
+
+	default:
 		for (i = 0; i < header->c_count; i++)
 			if (header->c_addr[i] != 0)
 				blks++;
+	}
 	predict = blks;
 	blksread = 0;
 	prevtype = header->c_type;
