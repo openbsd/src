@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.25 2003/02/07 23:28:18 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.26 2003/04/03 17:16:32 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.25 2003/02/07 23:28:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.26 2003/04/03 17:16:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,11 +169,12 @@ verify(tempname, pw)
 		line++;
 		if (!buf[0] || buf[0] == '#')
 			continue;
-		if (!(p = strchr(buf, '\n'))) {
+		if ((p = strchr(buf, '\n')) != NULL)
+			*p = '\0';
+		else if (!feof(fp)) {
 			warnx("line %u too long", line);
 			goto bad;
 		}
-		*p = '\0';
 		for (ep = list;; ++ep) {
 			if (!ep->prompt) {
 				warnx("unrecognized field on line %u", line);
