@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.15 1997/09/08 19:42:28 niklas Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.16 1998/04/04 17:13:17 niklas Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -739,8 +739,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		 * some nice variables for pmap to use
 		 */
 		RELOC(amigahwaddr, vm_offset_t) = RELOC(DRCCADDR, u_int);
-		RELOC(namigahwpg, u_int) =
-		    NDRCCPG + NDRCIAPG + RELOC(NZTWOMEMPG, u_int);
 	} else 
 #endif
 	{
@@ -766,16 +764,17 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		 * some nice variables for pmap to use
 		 */
 		RELOC(amigahwaddr, vm_offset_t) = RELOC(CHIPMEMADDR, u_int);
-		RELOC(namigahwpg, u_int) =
-		    NCHIPMEMPG + NCIAPG + NZTWOROMPG + RELOC(NZTWOMEMPG, u_int);
 	}
+
+	/* Tell pmap how much of the kernel_map to reserve */
+	RELOC(namigahwpg, u_int) = ptextra;
 
 	/*
 	 * set this before copying the kernel, so the variable is updated in
 	 * the `real' place too. protorp[0] is already preset to the
 	 * CRP setting.
 	 */
-	(RELOC(protorp[1], u_int)) = RELOC(Sysseg_pa, u_int);	/* + segtable address */
+	RELOC(protorp[1], u_int) = RELOC(Sysseg_pa, u_int);	/* + segtable address */
 
 	/*
 	 * copy over the kernel (and all now initialized variables)
