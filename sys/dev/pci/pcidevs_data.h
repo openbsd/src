@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.348 2000/11/20 21:40:29 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.349 2000/11/21 03:03:51 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -787,6 +787,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alteon",
 	    "Acenic",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENICT,
+	    0,
+	    "Alteon",
+	    "Acenic Copper",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
@@ -3409,6 +3415,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "GA620",
+	},
+	{
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T,
+	    0,
+	    "Netgear",
+	    "GA620T",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,

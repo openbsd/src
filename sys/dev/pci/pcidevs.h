@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.348 2000/11/20 21:40:29 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.349 2000/11/21 03:03:51 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -718,6 +718,7 @@
 
 /* Alteon products */
 #define	PCI_PRODUCT_ALTEON_ACENIC	0x0001		/* Acenic */
+#define	PCI_PRODUCT_ALTEON_ACENICT	0x0002		/* Acenic Copper */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE */
@@ -1314,6 +1315,7 @@
 
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 */
+#define	PCI_PRODUCT_NETGEAR_GA620T	0x630a		/* GA620T */
 
 /* Network Security Technologies, Inc. */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
