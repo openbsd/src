@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.19 2004/05/19 02:32:35 tedu Exp $ */
+/*	$OpenBSD: apprentice.c,v 1.20 2004/09/25 09:19:35 otto Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -46,7 +46,7 @@
 #endif
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: apprentice.c,v 1.19 2004/05/19 02:32:35 tedu Exp $")
+FILE_RCSID("@(#)$Id: apprentice.c,v 1.20 2004/09/25 09:19:35 otto Exp $")
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -285,7 +285,7 @@ apprentice_file(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 	private const char hdr[] =
 		"cont\toffset\ttype\topcode\tmask\tvalue\tdesc";
 	FILE *f;
-	char line[BUFSIZ+1];
+	char line[BUFSIZ];
 	int lineno;
 	int errs = 0;
 
@@ -310,7 +310,7 @@ apprentice_file(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 		(void)fprintf(stderr, "%s\n", hdr);
 
 	/* parse it */
-	for (lineno = 1; fgets(line, BUFSIZ, f) != NULL; lineno++) {
+	for (lineno = 1; fgets(line, sizeof(line), f) != NULL; lineno++) {
 		if (line[0]=='#')	/* comment, do not parse */
 			continue;
 		if (strlen(line) <= (unsigned)1) /* null line, garbage, etc */
