@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.308 2000/09/01 09:04:42 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.309 2000/09/04 13:13:18 itojun Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1141,6 +1141,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Brooktree",
 	    "BT878 (2nd device)",
+	},
+	{
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT8474,
+	    0,
+	    "Brooktree",
+	    "Bt8474 Multichannel HDLC Controller",
 	},
 	{
 	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC,
