@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.12 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.13 2004/01/10 21:02:54 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,20 +74,6 @@ buf_reserve(struct buf *buf, ssize_t len)
 int
 buf_close(struct msgbuf *msgbuf, struct buf *buf)
 {
-	int	n;
-
-	/* first try to write out directly */
-	if (msgbuf->queued == 0) {
-		if ((n = buf_write(msgbuf->sock, buf)) < 0)
-			return (n);
-
-		if (n == 1) {		/* all data written out */
-			buf_free(buf);
-			return (0);
-		}
-	}
-
-	/* we have to queue */
 	buf_enqueue(msgbuf, buf);
 	return (1);
 }
@@ -154,19 +140,16 @@ msgbuf_write(struct msgbuf *msgbuf)
 	 * we MUST return and NOT try to write out stuff from later buffers -
 	 * the socket might have become writeable again
 	 */
-	struct buf	*buf, *next;
+	struct buf	*buf;
 	int		 n;
 
-	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL; buf = next) {
-		next = TAILQ_NEXT(buf, entries);
-		if ((n = buf_write(msgbuf->sock, buf)) < 0)
-			return (n);
+	buf = TAILQ_FIRST(&msgbuf->bufs);
+	if ((n = buf_write(msgbuf->sock, buf)) < 0)
+		return (n);
 
-		if (n == 1)	/* everything written out */
-			buf_dequeue(msgbuf, buf);
-		else
-			return (0);
-	}
+	if (n == 1)	/* everything written out */
+		buf_dequeue(msgbuf, buf);
+
 	return (0);
 }
 
