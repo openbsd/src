@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.79 2004/01/14 08:42:23 kjc Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.80 2004/02/10 17:53:37 henning Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -165,7 +165,7 @@ print_altq(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw,
 
 	printf("altq on %s ", a->ifname);
 
-	switch(a->scheduler) {
+	switch (a->scheduler) {
 	case ALTQT_CBQ:
 		if (!print_cbq_opts(a))
 			printf("cbq ");
@@ -487,9 +487,12 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 	minidle = -((double)opts->maxpktsize * (double)nsPerByte);
 
 	/* scale parameters */
-	maxidle = ((maxidle * 8.0) / nsPerByte) * pow(2.0, (double)RM_FILTER_GAIN);
-	offtime = (offtime * 8.0) / nsPerByte * pow(2.0, (double)RM_FILTER_GAIN);
-	minidle = ((minidle * 8.0) / nsPerByte) * pow(2.0, (double)RM_FILTER_GAIN);
+	maxidle = ((maxidle * 8.0) / nsPerByte) *
+	    pow(2.0, (double)RM_FILTER_GAIN);
+	offtime = (offtime * 8.0) / nsPerByte *
+	    pow(2.0, (double)RM_FILTER_GAIN);
+	minidle = ((minidle * 8.0) / nsPerByte) *
+	    pow(2.0, (double)RM_FILTER_GAIN);
 
 	maxidle = maxidle / 1000.0;
 	offtime = offtime / 1000.0;
@@ -497,10 +500,10 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 
 	opts->minburst = minburst;
 	opts->maxburst = maxburst;
-	opts->ns_per_byte = (u_int) nsPerByte;
-	opts->maxidle = (u_int) fabs(maxidle);
+	opts->ns_per_byte = (u_int)nsPerByte;
+	opts->maxidle = (u_int)fabs(maxidle);
 	opts->minidle = (int)minidle;
-	opts->offtime = (u_int) fabs(offtime);
+	opts->offtime = (u_int)fabs(offtime);
 
 	return (0);
 }

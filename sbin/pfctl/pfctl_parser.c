@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.191 2004/02/10 09:27:01 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.192 2004/02/10 17:53:37 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -254,7 +254,7 @@ geticmpcodebynumber(u_int8_t type, u_int8_t code, sa_family_t af)
 		}
 	} else {
 		for (i=0; i < (sizeof (icmp6_code) /
-		   sizeof(icmp6_code[0])); i++) {
+		    sizeof(icmp6_code[0])); i++) {
 			if (type == icmp6_code[i].type &&
 			    code == icmp6_code[i].code)
 				return (&icmp6_code[i]);
@@ -658,7 +658,7 @@ print_rule(struct pf_rule *r, int verbose)
 			ic6 = geticmpcodebynumber(r->return_icmp6 >> 8,
 			    r->return_icmp6 & 255, AF_INET6);
 
-			switch(r->af) {
+			switch (r->af) {
 			case AF_INET:
 				printf(" return-icmp");
 				if (ic == NULL)
@@ -1021,7 +1021,8 @@ ifa_load(void)
 		if (n->af == AF_INET6 &&
 		    IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)
 		    ifa->ifa_addr)->sin6_addr) &&
-		    ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_scope_id == 0) {
+		    ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_scope_id ==
+		    0) {
 			struct sockaddr_in6	*sin6;
 
 			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
@@ -1058,7 +1059,7 @@ ifa_load(void)
 				memcpy(&n->bcast, &((struct sockaddr_in6 *)
 				    ifa->ifa_broadaddr)->sin6_addr.s6_addr,
 				    sizeof(struct in6_addr));
-			if(ifa->ifa_dstaddr != NULL)
+			if (ifa->ifa_dstaddr != NULL)
 				 memcpy(&n->peer, &((struct sockaddr_in6 *)
 				    ifa->ifa_dstaddr)->sin6_addr.s6_addr,
 				    sizeof(struct in6_addr));

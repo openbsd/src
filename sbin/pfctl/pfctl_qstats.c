@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.26 2004/02/05 18:06:12 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.27 2004/02/10 17:53:37 henning Exp $ */
 
 /*
  * Copyright (c) Henning Brauer <henning@openbsd.org>
@@ -84,7 +84,7 @@ int
 pfctl_show_altq(int dev, int opts, int verbose2)
 {
 	struct pf_altq_node	*root = NULL, *node;
-	int nodes; 
+	int			 nodes;
 
 
 	if ((nodes = pfctl_update_qstats(dev, &root)) < 0)
@@ -249,12 +249,13 @@ pfctl_print_altq_node(int dev, const struct pf_altq_node *node, unsigned level,
 		pfctl_print_altq_nodestat(dev, node);
 
 	if (opts & PF_OPT_DEBUG)
-		printf("  [ qid=%u ifname=%s ifbandwidth=%s ]\n", node->altq.qid,
-		    node->altq.ifname, rate2str((double)(node->altq.ifbandwidth)));
+		printf("  [ qid=%u ifname=%s ifbandwidth=%s ]\n",
+		    node->altq.qid, node->altq.ifname,
+		    rate2str((double)(node->altq.ifbandwidth)));
 
 	for (child = node->children; child != NULL;
 	    child = child->next)
-		pfctl_print_altq_node(dev, child, level+1, opts);
+		pfctl_print_altq_node(dev, child, level + 1, opts);
 }
 
 void
