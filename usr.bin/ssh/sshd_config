@@ -26,18 +26,24 @@ RhostsRSAAuthentication yes
 #
 # Changed RSAAuthentication to no/bg
 RSAAuthentication no
-#
-# To enable tunneled clear text passwords, change to yes here!
+
+# To disable tunneled clear text passwords, change to no here!
 PasswordAuthentication yes
 PermitEmptyPasswords no
+
+# To change Kerberos options
+#KerberosAuthentication no
 #KerberosOrLocalPasswd yes
+#AFSTokenPassing no
+#KerberosTicketCleanup no
 
 # Kerberos TGT Passing does only work with the AFS kaserver
 #KerberosTgtPassing yes
 
-# AllowHosts *.our.com friend.other.com
-# DenyHosts lowsecurity.theirs.com *.evil.org evil.org
-
 # XXX implement these
 #UseLogin no
 #CheckMail no
+
+# AllowHosts *.our.com friend.other.com
+# DenyHosts lowsecurity.theirs.com *.evil.org evil.org
+
