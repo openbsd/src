@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: get_myaddress.c,v 1.6 1997/01/22 08:52:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: get_myaddress.c,v 1.7 1997/01/22 18:50:40 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -63,15 +63,15 @@ get_myaddress(addr)
 	char *inbuf = NULL;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
-	int len = 8192, slop;
+	int len, inbuflen = 8192, slop;
 	int loopback = 0, gotit = 0;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		return (-1);
 	}
 	while (1) {
-		ifc.ifc_len = len;
-		ifc.ifc_buf = inbuf = realloc(inbuf, len);
+		ifc.ifc_len = inbuflen;
+		ifc.ifc_buf = inbuf = realloc(inbuf, inbuflen);
 		if (inbuf == NULL) {
 			close(s);
 			return (-1);
@@ -81,9 +81,9 @@ get_myaddress(addr)
 			free(inbuf);
 			return (-1);
 		}
-		if (ifc.ifc_len + sizeof(ifreq) < len)
+		if (ifc.ifc_len + sizeof(ifreq) < inbuflen)
 			break;
-		len *= 2;
+		inbuflen *= 2;
 	}
 again:
 	ifr = ifc.ifc_req;
