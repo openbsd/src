@@ -1,3 +1,4 @@
+.\" $OpenBSD: wscons.4,v 1.2 2000/09/17 00:53:35 aaron Exp $
 .\" $NetBSD: wscons.4,v 1.11 2000/04/13 11:14:42 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,16 +39,16 @@
 .Nm wscons
 .Nd console access
 .Sh SYNOPSIS
-.Cd options WSEMUL_SUN
-.Cd options WSEMUL_VT100
-.Cd options WSEMUL_NO_DUMB
-.Cd options \&"WSEMUL_DEFAULT=\e"xxx\e""
-.Cd options WS_KERNEL_FG=WSCOL_XXX
-.Cd options WS_KERNEL_BG=WSCOL_XXX
-.Cd options WSDISPLAY_COMPAT_PCVT
-.Cd options WSDISPLAY_COMPAT_SYSCONS
-.Cd options WSDISPLAY_COMPAT_USL
-.Cd options WSDISPLAY_COMPAT_RAWKBD
+.Cd option WSEMUL_SUN
+.Cd option WSEMUL_VT100
+.Cd option WSEMUL_NO_DUMB
+.Cd option \&"WSEMUL_DEFAULT=\e"xxx\e""
+.Cd option WS_KERNEL_FG=WSCOL_XXX
+.Cd option WS_KERNEL_BG=WSCOL_XXX
+.Cd option WSDISPLAY_COMPAT_PCVT
+.Cd option WSDISPLAY_COMPAT_SYSCONS
+.Cd option WSDISPLAY_COMPAT_USL
+.Cd option WSDISPLAY_COMPAT_RAWKBD
 
 .Cd "wsdisplay* at ..."
 .Cd "wskbd*     at ... mux N"
@@ -58,64 +59,69 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for machine independent access to the console.
+driver provides support for machine-independent access to the console.
 .Pp
 .Nm
 is made of a number of cooperating modules, in particular
 .Bl -bullet
 .It
-hardware support for display adapters, keyboards and mice, see
+Hardware support for display adapters, keyboards and mice; see
 .Xr wsdisplay 4 ,
-.Xr wskbd 4 , and
-.Xr wsmouse 4
+.Xr wskbd 4 ,
+and
+.Xr wsmouse 4 .
 .It
-input event multiplexor, see
-.Xr wsmux 4
+Input event multiplexor; see
+.Xr wsmux 4 .
 .It
-terminal emulation modules (see below), and
+Terminal emulation modules (see below).
 .It
-compatibility options to support control operations and other low-level
-behaviour of existing terminal drivers (see below)
+Compatibility options to support control operations and other low-level
+behaviour of existing terminal drivers (see below).
 .El
-.Pp
-.Em Terminal emulations:
+.Ss Terminal emulations
 .Nm
-does not define an own set of terminal control sequences and special keyboard
+does not define its own set of terminal control sequences and special keyboard
 codes in terms of
 .Xr termcap 5 .
-Instead a
+Instead, a
 .Dq terminal emulation
 is assigned to each virtual screen when the screen is created (see
 .Xr wsconscfg 8 ).
 Different terminal emulations can be active at the same time on one display.
+.Pp
 The following choices are available:
 .Bl -tag -width xxxxxx
 .It dumb
 This minimal terminal support is available unless the kernel option
-.Cd options WSEMUL_NO_DUMB
-was specified at build time. No control sequences are supported besides
-the ASCII control characters. The cursor is not addressable. Only ASCII
-keyboard codes will be delivered, cursor and functions keys do not work.
+.Cd option WSEMUL_NO_DUMB
+was specified at build time.
+No control sequences are supported besides the ASCII control characters.
+The cursor is not addressable.
+Only ASCII keyboard codes will be delivered, cursor and functions keys
+do not work.
 .It sun
 The
 .Dq sun
 console emulation is available if
-.Cd options WSEMUL_SUN
-was specified at kernel build time. It supports the control sequences of
+.Cd option WSEMUL_SUN
+was specified at kernel build time.
+It supports the control sequences of
 .Tn SUN
 machine consoles and delivers its keyboard codes for function and
 keypad keys (as far as present on the actually used keyboard).
 This emulation is sufficient for full-screen applications.
 .It vt100
 is available with the kernel compile option
-.Cd options WSEMUL_VT100 .
+.Cd option WSEMUL_VT100 .
 It provides the most commonly used functions of
 .Tn DEC VT100
 terminals with some extensions introduced by the
 .Tn DEC VT220
 and
 .Tn DEC VT320
-models. The features of the original
+models.
+The features of the original
 .Tn VT100
 which are not or not completely implemented are:
 .Bl -bullet
@@ -138,8 +144,9 @@ The
 font is approximated by the ISO-latin-1 font, though there are
 subtle differences.
 .It
-The actual rendering quality depends on the underlying graphics hardware
-driver. Characters might be missing in the available fonts and be
+The actual rendering quality depends on the underlying graphics
+hardware driver.
+Characters might be missing in the available fonts and be
 substituted by more or less fitting replacements.
 .Pp
 Depending on the keyboard used, not all function keys might be available.
@@ -168,7 +175,8 @@ emulator.
 The
 .Va WSEMUL_DEFAULT
 kernel option allows to select one of the described terminal options
-as default choice. The default gets into effect in kernel startup, i.e.
+as default choice.
+The default gets into effect in kernel startup, i.e.,
 for the operating system console or additional screens allocated
 through the
 .Va WSDISPLAY_DEFAULTSCREENS
@@ -183,7 +191,8 @@ these options allow to run X servers or other programs using low-level
 console driver functions which were written specifically for other
 console drivers to run on
 .Nx
-systems. The options are in particular:
+systems.
+The options are in particular:
 .Bl -tag -width xxxxxxxx
 .It Cd WSDISPLAY_COMPAT_USL
 Support the protocol for switches between multiple virtual screens on
@@ -200,7 +209,8 @@ driver to make X servers work.
 .It Cd WSDISPLAY_COMPAT_SYSCONS
 Emulates enough of the i386 FreeBSD
 .Dq syscons
-driver to make X servers work. Useful with FreeBSD binary emulation.
+driver to make X servers work.
+Useful with FreeBSD binary emulation.
 .El
 .Pp
 Linux/i386 X servers do usually run if the first two options are
@@ -215,11 +225,11 @@ driver entry points, symlinks are a helpful measure.)
 .Pp
 .Em Other options:
 .Bl -tag -width xxxxxxxx
-.It Cd options WS_KERNEL_FG=WSCOL_XXX ,
-.It Cd options WS_KERNEL_BG=WSCOL_XXX ,
-.It Cd options \&WS_KERNEL_COLATTR="(WSATTR_XXX | WSATTR_YYY)"
+.It Cd option WS_KERNEL_FG=WSCOL_XXX ,
+.It Cd option WS_KERNEL_BG=WSCOL_XXX ,
+.It Cd option \&WS_KERNEL_COLATTR="(WSATTR_XXX | WSATTR_YYY)"
 and
-.It Cd options \&WS_KERNEL_MONOATTR="(WSATTR_XXX | WSATTR_YYY)"
+.It Cd option \&WS_KERNEL_MONOATTR="(WSATTR_XXX | WSATTR_YYY)"
 allow to make console output originating from the kernel appear differently
 than output from user level programs (via
 .Pa /dev/console
@@ -230,7 +240,8 @@ device like
 .Dq WS_KERNEL_FG
 and
 .Dq WS_KERNEL_BG
-set the foreground / background used on color displays. The
+set the foreground / background used on color displays.
+The
 .Dq WSCOL_XXX
 arguments are colors as defined in
 .Pa /usr/include/wscons/wsdisplayvar.h .
@@ -239,19 +250,21 @@ and
 .Dq WS_KERNEL_MONOATTR
 are additional attribute flags used on color or monochrome displays,
 respectively.
-The arguments are defined in the same header file. Whether the attributes
+The arguments are defined in the same header file.
+Whether the attributes
 are supported or not depends on the actually used graphics adapter.
 These options are ignored by the
 .Dq dumb
 terminal emulation.
-.It Cd options WSCOMPAT_USL_SYNCTIMEOUT=nnn
+.It Cd option WSCOMPAT_USL_SYNCTIMEOUT=nnn
 The virtual screen switching protocol enabled by
 .Dq WSDISPLAY_COMPAT_USL
 uses a somewhat complex handshake protocol to pass control to user programs
-as X servers controlling a virtual screen. To avoid a non-responsive
-application to lock the whole console system a screen switch will be rolled
-back if the user application does not respond to a screen switch request
-within some time. This option allows to set this timeout (in seconds),
+as X servers controlling a virtual screen.
+To avoid a non-responsive application to lock the whole console system a
+screen switch will be rolled back if the user application does not respond
+to a screen switch request within some time.
+This option allows to set this timeout (in seconds),
 the default value is 5 seconds.
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.6 2000/07/02 15:59:14 aaron Exp $
+.\" $OpenBSD: vlan.4,v 1.7 2000/09/17 00:53:35 aaron Exp $
 .\"
 .Dd January 9, 2000
 .Dt VLAN 4
@@ -32,7 +32,7 @@ Frame headers which normally contain the destination host, source host, and
 protocol, are altered with additional information.
 After the source host,
 a 32-bit 802.1Q header is included, with 16 bits for the ether type (0x8100), 3
-bits for the priority field (not used in this implementation), 1 bit for 
+bits for the priority field (not used in this implementation), 1 bit for
 the canonical field (always 0), and 12 bits for the vlan identifier.
 Following the vlan header is the actual ether type for the frame and length
 information.
@@ -48,13 +48,13 @@ line in the system config file.
 interfaces support the following unique
 .Xr ioctl 2 Ns s :
 .Bl -tag -width aaa
-.It SIOCSETVLAN: 
+.It SIOCSETVLAN:
 Set the vlan tag and parent for a given vlan interface.
-.It SIOCGETVLAN: 
+.It SIOCGETVLAN:
 Get the vlan tag and parent for a given vlan interface.
 .Pp
 .El
-The operation mode can be given as 
+The operation mode can be given as
 .Bl -tag -width bbb
 .It link0
 The parent interface supports VLAN tagging/untagging in hardware,
@@ -88,7 +88,7 @@ Some Ethernet chips (notably the Intel 82558 and 82559) automatically
 discard frames that are larger then 1514 bytes.
 All Ethernet
 chips sporting this sort of feature should allow for it to be turned off.
-Optimally, upon loading, the chip's driver would do this (The 
+Optimally, upon loading, the chip's driver would do this (The
 .Xr fxp 4
 driver currently does for the Intel 82558/82559 chips.)
 Refer to the hardware manual for your Ethernet chip to determine
