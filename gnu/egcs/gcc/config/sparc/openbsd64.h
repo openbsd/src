@@ -53,6 +53,10 @@ Boston, MA 02111-1307, USA.  */
    %{assert*} \
    %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
 
+/* For profiled binaries we have to change the memory model.  */
+#undef CC1_SPEC
+#define CC1_SPEC "%{p*:-mcmodel=medlow} %{p:-mcmodel=medlow}"
+
 /* As an elf system, we need crtbegin/crtend stuff.  */
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC "\
