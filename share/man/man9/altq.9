@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.3 2001/07/12 12:38:29 itojun Exp $
+.\"	$OpenBSD: altq.9,v 1.4 2001/07/12 12:41:42 itojun Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -376,7 +376,7 @@ If the code polls the packet at the head of the queue and actually uses
 the packet before dequeueing it, use
 .Fn IFQ_POLL
 and
-IFQ_DEQUEUE .
+.Fn IFQ_DEQUEUE .
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
@@ -398,12 +398,10 @@ It is guaranteed that
 immediately after
 .Fn IFQ_POLL
 returns the same packet.
-.Po
-They need to be guarded by 
+Note that they need to be guarded by
 .Fn splimp
 if called from outside of
-.Fn if_start
-.Pc .
+.Fn if_start .
 .Ss Eliminating IF_PREPEND
 If the code uses
 .Fn IF_PREPEND ,
