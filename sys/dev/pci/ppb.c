@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.7 1998/01/20 18:40:36 niklas Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.8 1998/03/10 08:31:56 deraadt Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ ppbattach(parent, self, aux)
 	pba.pba_memt = pa->pa_memt;
 	pba.pba_dmat = pa->pa_dmat;
 	pba.pba_pc = pc;
+	pba.pba_flags = pa->pa_flags;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
