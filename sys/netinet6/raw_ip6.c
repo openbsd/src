@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.17 2002/09/11 03:27:30 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.18 2003/05/27 22:52:17 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -418,7 +418,11 @@ rip6_output(struct mbuf *m, ...)
 		code = icmp6->icmp6_code;
 	}
 
-	M_PREPEND(m, sizeof(*ip6), M_WAIT);
+	M_PREPEND(m, sizeof(*ip6), M_DONTWAIT);
+	if (!m) {
+		error = ENOBUFS;
+		goto bad;
+	}
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	/*

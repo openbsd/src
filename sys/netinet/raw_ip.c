@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.27 2003/02/15 16:43:10 markus Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.28 2003/05/27 22:52:17 itojun Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -204,7 +204,9 @@ rip_output(struct mbuf *m, ...)
 			m_freem(m);
 			return (EMSGSIZE);
 		}
-		M_PREPEND(m, sizeof(struct ip), M_WAIT);
+		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
+		if (!m)
+			return (ENOBUFS);
 		ip = mtod(m, struct ip *);
 		ip->ip_tos = 0;
 		ip->ip_off = 0;
