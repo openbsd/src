@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.21 1997/11/26 22:30:20 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.22 1997/12/12 20:22:35 niklas Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -119,6 +119,12 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
+#ifdef __GNUC__
+#define INLINE static __inline
+#else
+#define INLINE
+#endif
+
 /*
  * Overridable value telling how many kvm spaces of MAXBSIZE we need for
  * component I/O operations.
@@ -142,6 +148,11 @@ int ccddebug = 0x00;
 
 #define	ccdunit(x)	DISKUNIT(x)
 
+struct ccdseg {
+	caddr_t		cs_sgaddr;	/* scatter/gather segment addresses */
+	long		cs_sglen;	/* scatter/gather segment lengths */
+};
+
 struct ccdbuf {
 	struct buf	cb_buf;		/* new I/O buf */
 	struct buf	*cb_obp;	/* ptr. to original I/O buf */
@@ -157,16 +168,8 @@ struct ccdbuf {
 	 * in ccdstart.
 	 */
 	int		cb_sgcnt;	/* scatter/gather segment count */
-	caddr_t		cb_sgaddr[MAXBSIZE / CLBYTES];
-					/* scatter/gather segment addresses */
-	long		cb_sglen[MAXBSIZE / CLBYTES];
-					/* scatter/gather segment lengths */
+	struct ccdseg	*cb_sg;		/* scatter/gather segments */
 };
-
-#define	getccdbuf()		\
-	((struct ccdbuf *)malloc(sizeof(struct ccdbuf), M_DEVBUF, M_WAITOK))
-#define putccdbuf(cbp)		\
-	free((caddr_t)(cbp), M_DEVBUF)
 
 #define CCDLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
@@ -189,6 +192,8 @@ void	ccdgetdisklabel __P((dev_t));
 void	ccdmakedisklabel __P((struct ccd_softc *));
 int	ccdlock __P((struct ccd_softc *));
 void	ccdunlock __P((struct ccd_softc *));
+INLINE struct ccdbuf *getccdbuf __P((void));
+INLINE void putccdbuf __P((struct ccdbuf *));
 
 #ifdef DEBUG
 void	printiinfo __P((struct ccdiinfo *));
@@ -207,6 +212,27 @@ static vm_map_t ccdmap;
  * XXX should we fallback to old I/O policy instead when out of ccd kvm?
  */
 static int ccd_need_kvm = 0;
+
+/*
+ * Manage the ccd buffer structures.
+ */
+INLINE struct ccdbuf *
+getccdbuf()
+{
+	struct ccdbuf *cbp;
+
+	cbp = malloc(sizeof(struct ccdbuf), M_DEVBUF, M_WAITOK);
+	cbp->cb_sg = malloc(DEV_BSIZE / CLBYTES, M_DEVBUF, M_WAITOK);
+	return (cbp);
+}
+
+INLINE void
+putccdbuf(cbp)
+	struct ccdbuf *cbp;
+{
+	free((caddr_t)cbp->cb_sg, M_DEVBUF);
+	free((caddr_t)cbp, M_DEVBUF);
+}
 
 /*
  * Called by main() during pseudo-device attachment.  All we need
@@ -951,13 +977,13 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 #ifdef DEBUG
 		if (ccddebug & CCDB_IO)
 			printf("ccdbuffer: sg %d (%p/%x) off %x\n",
-			    cbp->cb_sgcnt, addr, bcount, old_bcount);
+			    cbp->cb_sg->cs_sgcnt, addr, bcount, old_bcount);
 #endif
 		pagemove(addr, nbp->b_data + old_bcount,
 		    roundup(bcount, CLBYTES));
 		nbp->b_bufsize += roundup(bcount, CLBYTES);
-		cbp->cb_sgaddr[cbp->cb_sgcnt] = addr;
-		cbp->cb_sglen[cbp->cb_sgcnt] = bcount;
+		cbp->cb_sg[cbp->cb_sgcnt].cs_sgaddr = addr;
+		cbp->cb_sg[cbp->cb_sgcnt].cs_sglen = bcount;
 		cbp->cb_sgcnt++;
 	}
 
@@ -1046,11 +1072,12 @@ ccdiodone(vbp)
 #ifdef DEBUG
 			if (ccddebug & CCDB_IO)
 				printf("ccdiodone: sg %d (%p/%x) off %x\n", i,
-				    cbp->cb_sgaddr[i], cbp->cb_sglen[i], off);
+				    cbp->cb_sg[i].cs_sgaddr,
+				    cbp->cb_sg[i].cs_sglen, off);
 #endif
-			pagemove(vbp->b_data + off, cbp->cb_sgaddr[i],
-			    roundup(cbp->cb_sglen[i], CLBYTES));
-			off += cbp->cb_sglen[i];
+			pagemove(vbp->b_data + off, cbp->cb_sg[i].cs_sgaddr,
+			    roundup(cbp->cb_sg[i].cs_sglen, CLBYTES));
+			off += cbp->cb_sg[i].cs_sglen;
 		}
 
 	if (!old_io) {
