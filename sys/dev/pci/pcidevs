@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.685 2003/10/28 11:30:07 grange Exp $
+	$OpenBSD: pcidevs,v 1.686 2003/10/31 03:49:10 drahn Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -122,6 +122,7 @@ vendor	ALI		0x10b9	Acer Labs
 vendor	MITSUBISHIELEC	0x10ba	Mitsubishi Electronics
 vendor	SURECOM		0x10bd	Surecom Technology
 vendor	NEOMAGIC	0x10c8	Neomagic
+vendor MENTOR           0x10cc  Mentor ARC
 vendor	ADVSYS		0x10cd	Advansys
 vendor	MOLEX		0x10d2	Molex
 vendor	MACRONIX	0x10d9	Macronix
@@ -1467,6 +1468,10 @@ product MATROX PROD_G100_SD	0xff01	MGA Produktiva G100 SD
 product MATROX MYST_G200_SD	0xff02	MGA Mystique G200 SD
 product MATROX MILL_G200_SG	0xff03	MGA Millennium G200 SG
 product MATROX MARV_G200_SD	0xff04	MGA Marvel G200 SD
+
+/* Mentor */
+product MENTOR PCI0660         0x0660  MENTOR Host-PCI
+product MENTOR PCI0661         0x0661  MENTOR PCI-PCI
 
 /* Mitsubishi Electronics */
 product MITSUBISHIELEC GUI	0x0304	GUI Accel
