@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.20 2000/05/29 07:28:54 angelos Exp $
+.\"	$OpenBSD: config.8,v 1.21 2000/05/31 02:24:44 aaron Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -65,7 +65,8 @@ allows editing of the kernel binary specified by
 Furthermore, devices may be enabled, disabled, or modified without
 recompiling, by editing the kernel executable using the
 .Fl e
-option.  Similarily, you can do the same editing at boot-time, using
+option.
+Similarily, you can do the same editing at boot-time, using
 the in-kernel editor, as described in
 .Xr boot_config 8 ) .
 .Pp
@@ -210,11 +211,13 @@ include the following:
 .Pp
 .Bl -tag -offset indent -width indent
 .It machine Ar var
-Required.  Specifies the machine architecture.
+Required.
+Specifies the machine architecture.
 .It include Ar file
 Include another configuration file.
 .It option Ar name
-Set a kernel option.  Kernel options may take either the form
+Set a kernel option.
+Kernel options may take either the form
 .Ar NAME
 or the form
 .Ar NAME=value .
@@ -222,22 +225,26 @@ These options are passed to the compiler with the
 .Fl D
 flag.
 .It rmoption Ar name
-Delete a previously set option.  This is useful when including another
-kernel configuration file.  A typical use is to include the
+Delete a previously set option.
+This is useful when including another kernel configuration file.
+A typical use is to include the
 .Va GENERIC
 kernel provided with each release and remove options that are
 unwanted, thus allowing for automatic inclusion of new device
 drivers.
 .It maxusers Ar number
-Required.  Used to size various system tables and maximum operating conditions
-in an approximate fashion.  Multiple instances of this keyword may be
-specified.  The number provided in the last instance will be used, and
-warnings will be printed for each duplicate value.  This is convenient
-when used with the
+Required.
+Used to size various system tables and maximum operating conditions
+in an approximate fashion.
+Multiple instances of this keyword may be specified.
+The number provided in the last instance will be used, and
+warnings will be printed for each duplicate value.
+This is convenient when used with the
 .Va include
 directive.
 .It config Ar bsd root on "dev [swap on dev [and dev ...]] [dump on dev [and dev ...]]"
-Required.  Specifies the swap and dump devices which the system should use.
+Required.
+Specifies the swap and dump devices which the system should use.
 .It config Ar bsd swap generic
 Otherwise, if generic is specified, the system follows generic routines to
 device what should happen.
