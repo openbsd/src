@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.26 2001/06/26 21:57:35 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.27 2001/06/26 23:06:53 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -174,13 +174,12 @@ main(argc, argv)
 
 	if (lflag) {
 		int connfd;
-	
-		if ((s = local_listen(host, uport, hints)) < 0)
-			errx(1, NULL);
-
 		ret = 0;
+
 		/* Allow only one connection at a time, but stay alive */
 		for (;;) {
+			if ((s = local_listen(host, uport, hints)) < 0)
+				errx(1, NULL);
 			/*
 			 * For UDP, we will use recvfrom() initially
 			 * to wait for a caller, then use the regular
@@ -211,6 +210,8 @@ main(argc, argv)
 
 			readwrite(connfd);
 			close(connfd);
+			close(s);
+
 			if (!kflag)
 				break;
 		}
