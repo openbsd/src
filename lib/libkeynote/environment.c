@@ -1,4 +1,4 @@
-/*  $OpenBSD: environment.c,v 1.9 1999/10/26 22:31:38 angelos Exp $ */
+/* $OpenBSD: environment.c,v 1.10 2000/05/18 07:58:45 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -1034,6 +1034,10 @@ kn_get_licensees(int sessid, int assertid)
 	keynote_errno = ERROR_NOTFOUND;
 	return (struct keynote_keylist *) NULL;
     }
+
+    if (as->as_keylist == NULL)
+      if (keynote_parse_keypred(as, 1) != RESULT_TRUE)
+	return (struct keynote_keylist *) NULL;
 
     return (struct keynote_keylist *) as->as_keylist;
 }

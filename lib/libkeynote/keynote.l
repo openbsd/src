@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.8 2000/02/18 13:36:13 angelos Exp $ */
+/* $OpenBSD: keynote.l,v 1.9 2000/05/18 07:58:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -526,7 +526,7 @@ keynote_evaluate_assertion(struct assertion *as)
 
 /* 
  * Parse/evaluate a key predicate field. 
- * Store keys in key predicate as keylist in as->as_keylist, if third
+ * Store keys in key predicate as keylist in as->as_keylist, if second
  * argument is true.
  */
 int
@@ -581,7 +581,9 @@ keynote_parse_keypred(struct assertion *as, int record)
 		keynote_used_variable = 0;
 		as->as_internalflags |= ASSERT_IFLAG_WEIRDLICS;
 	    }
-	    
+
+	    if (as->as_keylist)
+              keynote_keylist_free(as->as_keylist);
 	    as->as_keylist = keynote_keypred_keylist;
 	    keynote_keypred_keylist = (struct keylist *) NULL;
 	    return RESULT_TRUE;
