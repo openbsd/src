@@ -21,9 +21,9 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.10 1999/01/20 06:47:05 millert Exp $
+#	$OpenBSD: sendbug.sh,v 1.11 1999/02/04 00:04:26 millert Exp $
 
-# The version of this send-pr.
+# The version of this sendbug.
 VERSION=3.97
 
 # The submitter-id for your site.
@@ -252,22 +252,6 @@ if [ -n "$USER_GNATS_SITE" ] && [ "$USER_GNATS_SITE" != "$GNATS_SITE" ]; then
   GNATS_ADDR=$USER_GNATS_SITE-gnats
 fi
 
-if [ "$SUBMITTER" = "unknown" -a -z "$REQUEST_ID" -a -z "$IN_FILE" ]; then
-  cat << '__EOF__'
-It seems that send-pr is not installed with your unique submitter-id.
-You need to run
-
-          install-sid YOUR-SID
-
-where YOUR-SID is the identification code you received with `send-pr'.
-`send-pr' will automatically insert this value into the template field
-`>Submitter-Id'.  If you've downloaded `send-pr' from the Net, use `net'
-for this value.  If you do not know your id, run `send-pr --request-id' to 
-get one from your support site.
-__EOF__
-  exit 1
-fi
-
 #if [ -r "$DATADIR/gnats/$GNATS_SITE" ]; then
 #  CATEGORIES=`grep -v '^#' $DATADIR/gnats/$GNATS_SITE | sort`
 #else
@@ -355,12 +339,12 @@ else
   else
     for file in $TEMP $REF ; do
       cat  > $file << '__EOF__'
-SEND-PR: -*- send-pr -*-
-SEND-PR: Lines starting with `SEND-PR' will be removed automatically, as
-SEND-PR: will all comments (text enclosed in `<' and `>').
-SEND-PR: 
-SEND-PR: Choose from the following categories:
-SEND-PR:
+SENDBUG: -*- sendbug -*-
+SENDBUG: Lines starting with `SENDBUG' will be removed automatically, as
+SENDBUG: will all comments (text enclosed in `<' and `>').
+SENDBUG: 
+SENDBUG: Choose from the following categories:
+SENDBUG:
 __EOF__
 
       # Format the categories so they fit onto lines.
@@ -370,10 +354,10 @@ __EOF__
 	c=`expr 61 / $l`
 	if [ $c -eq 0 ]; then c=1; fi
 	echo "$CATEGORIES" | \
-        awk 'BEGIN {printf "SEND-PR: "; i = 0 }
+        awk 'BEGIN {printf "SENDBUG: "; i = 0 }
           { printf ("%-'$l'.'$l's", $0);
-	    if ((++i % '$c') == 0) { printf "\nSEND-PR: " } }
-            END { printf "\nSEND-PR:\n"; }' >> $file
+	    if ((++i % '$c') == 0) { printf "\nSENDBUG: " } }
+            END { printf "\nSENDBUG:\n"; }' >> $file
 
       cat >> $file << __EOF__
 To: $GNATS_ADDR
@@ -381,7 +365,7 @@ Subject:
 From: $FROM
 Cc: $CC
 Reply-To: $REPLYTO
-X-send-pr-version: $VERSION
+X-sendbug-version: $VERSION
 
 
 >Submitter-Id:	$SUBMITTER
@@ -421,7 +405,7 @@ __EOF__
   else
     ed -s $TEMP << '__EOF__'
 /^Subject/s/^Subject:.*/Subject: request for a customer id/
-/^>Category/s/^>Category:.*/>Category: send-pr/
+/^>Category/s/^>Category:.*/>Category: sendbug/
 w
 q
 __EOF__
@@ -548,7 +532,7 @@ done
 #
 # /^>Originator:/s;$ORIGINATOR;;
 sed  -e "
-/^SEND-PR:/d
+/^SENDBUG:/d
 /^>Organization:/,/^>[A-Za-z-]*:/s;$ORGANIZATION_C;;
 /^>Confidential:/s;<.*>;;
 /^>Synopsis:/s;$SYNOPSIS_C;;
