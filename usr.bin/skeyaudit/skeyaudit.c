@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.4 1997/07/23 06:31:17 millert Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.5 1997/07/23 07:02:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -92,13 +92,12 @@ main(argc, argv)
 			left = key.n - 1;
 			break;
 		case -1:	/* File error */
-			/* XXX - _PATH_SKEYFILE should be in paths.h? */
-			warnx("cannot open /etc/skeykeys");
+			warnx("cannot open %s", _PATH_SKEYKEYS);
 			break;
 		case 1:		/* Unknown user */
-			warnx("%s is not listed in /etc/skeykeys", name);
+			warnx("%s is not listed in %s", name, _PATH_SKEYKEYS);
 	}
-	(void)fclose(mp->keyfile);
+	(void)fclose(key.keyfile);
 
 	/* Run sendmail as user not root */
 	seteuid(getuid());
