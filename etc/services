@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.33 2001/06/23 23:29:30 hin Exp $
+#	$OpenBSD: services,v 1.34 2001/06/25 01:08:04 hin Exp $
 #
 # Network services, Internet style
 #
@@ -217,7 +217,6 @@ kerberos_master	751/udp		kerberos-master	# Kerberos authentication
 kerberos_master	751/tcp		kerberos-master # Kerberos authentication
 krb_prop	754/tcp				# Kerberos slave propagation
 krbupdate	760/tcp		kreg		# BSD Kerberos registration
-kpasswd		761/tcp		kpwd		# BSD Kerberos `passwd'
 kpop		1109/tcp			# Pop with Kerberos
 eklogin		2105/tcp			# Kerberos encrypted rlogin
 rkinit		2108/tcp			# Kerberos remote kinit
