@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.82 2004/05/19 17:50:52 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.83 2004/05/21 23:10:49 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -602,7 +602,7 @@ remove_stale_rulesets(void)
 
 				memset(&pr, 0, sizeof(pr));
 				snprintf(pr.anchor, sizeof(pr.anchor),
-				    "%s:%s", anchorname, prs.name);
+				    "%s/%s", anchorname, prs.name);
 				pr.rule.action = action[i];
 				if ((ioctl(dev, DIOCBEGINRULES, &pr) ||
 				    ioctl(dev, DIOCCOMMITRULES, &pr)) &&
@@ -623,7 +623,7 @@ static int
 change_filter(int add, const char *luser, const char *ipsrc)
 {
 	char	*pargv[13] = {
-		"pfctl", "-p", "/dev/pf", "-q", "-a", "anchor:ruleset",
+		"pfctl", "-p", "/dev/pf", "-q", "-a", "anchor/ruleset",
 		"-D", "user_ip=X", "-D", "user_id=X", "-f",
 		"file", NULL
 	};
@@ -637,7 +637,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		goto error;
 	}
 
-	if (asprintf(&rsn, "%s:%s", anchorname, rulesetname) == -1)
+	if (asprintf(&rsn, "%s/%s", anchorname, rulesetname) == -1)
 		goto no_mem;
 	if (asprintf(&fdpath, "/dev/fd/%d", dev) == -1)
 		goto no_mem;

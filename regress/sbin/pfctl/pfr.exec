@@ -1,6 +1,6 @@
 #!/bin/ksh
 D=`dirname $1`
-A='regress:regress'
+A='regress'
 pfctl -a $A -FT 2>/dev/null
 pfctl -a $A -Fr 2>/dev/null
 pfctl -a $A -Fn 2>/dev/null

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.177 2004/02/24 21:09:06 mcbride Exp $
+# $OpenBSD: Makefile,v 1.178 2004/05/21 23:10:49 dhartmei Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -7,14 +7,14 @@
 # pfsetup: set up lo1 and perform more tests
 # pfr: table tests
 # pfsimple: just check wether pfctl accepts a given ruleset, not checking output
-# pfload: load ruleset into anchor regress:regress and verify pfctl -vvsr
+# pfload: load ruleset into anchor regress and verify pfctl -vvsr
 # pfopt: as target pf, but supply extra command line options
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50
 PFTESTS+=51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73
 PFTESTS+=74 75 76 77 78 79 80 81 82 83 84 85 86
-PFFAIL=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
+PFFAIL=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 27
 PFFAIL+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48
 PFSIMPLE=1 2
 PFSETUP=1 2 3 4
@@ -113,19 +113,19 @@ PFLOAD_TARGETS+=pfload${n}
 PFLOAD_UPDATES+=pfload${n}-update
 
 pfload${n}:
-	${SUDO} pfctl -a regress:regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -a regress:regress -gvvsn; \
-	${SUDO} pfctl -a regress:regress -gvvsr) | \
+	${SUDO} pfctl -a regress -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} pfctl -a regress -gvvsn; \
+	${SUDO} pfctl -a regress -gvvsr) | \
 	    diff -u ${.CURDIR}/pf${n}.loaded /dev/stdin
-	${SUDO} pfctl -a regress:regress -Fn >/dev/null 2>&1
-	${SUDO} pfctl -a regress:regress -Fr >/dev/null 2>&1
+	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
 
 pfload${n}-update:
-	${SUDO} pfctl -a regress:regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -a regress:regress -gvvsn; \
-	${SUDO} pfctl -a regress:regress -gvvsr) > ${.CURDIR}/pf${n}.loaded
-	${SUDO} pfctl -a regress:regress -Fn >/dev/null 2>&1
-	${SUDO} pfctl -a regress:regress -Fr >/dev/null 2>&1
+	${SUDO} pfctl -a regress -f - < ${.CURDIR}/pf${n}.in
+	(${SUDO} pfctl -a regress -gvvsn; \
+	${SUDO} pfctl -a regress -gvvsr) > ${.CURDIR}/pf${n}.loaded
+	${SUDO} pfctl -a regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -a regress -Fr >/dev/null 2>&1
 
 .endfor
 

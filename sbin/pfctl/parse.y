@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.453 2004/05/19 17:50:50 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.454 2004/05/21 23:10:48 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -305,7 +305,6 @@ TAILQ_HEAD(loadanchorshead, loadanchors)
 struct loadanchors {
 	TAILQ_ENTRY(loadanchors)	 entries;
 	char				*anchorname;
-	char				*rulesetname;
 	char				*filename;
 };
 
@@ -4931,8 +4930,8 @@ pfctl_load_anchors(int dev, int opts, struct pfr_buffer *trans)
 
 	TAILQ_FOREACH(la, &loadanchorshead, entries) {
 		if (opts & PF_OPT_VERBOSE)
-			fprintf(stderr, "\nLoading anchor %s:%s from %s\n",
-			    la->anchorname, la->rulesetname, la->filename);
+			fprintf(stderr, "\nLoading anchor %s from %s\n",
+			    la->anchorname, la->filename);
 		if (pfctl_rules(dev, la->filename, opts, la->anchorname,
 		    trans) == -1)
 			return (-1);

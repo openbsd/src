@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.122 2004/05/21 08:03:29 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.123 2004/05/21 23:10:47 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -310,7 +310,7 @@ pf_find_ruleset(const char *path)
 {
 	struct pf_anchor	*anchor;
 
-	while (*path == ':')
+	while (*path == '/')
 		path++;
 	if (!*path)
 		return (&pf_main_ruleset);
@@ -329,13 +329,13 @@ pf_find_or_create_ruleset(const char *path)
 	struct pf_ruleset	*ruleset;
 	struct pf_anchor	*anchor, *dup, *parent = NULL;
 
-	while (*path == ':')
+	while (*path == '/')
 		path++;
 	ruleset = pf_find_ruleset(path);
 	if (ruleset != NULL)
 		return (ruleset);
 	strlcpy(p, path, sizeof(p));
-	while (parent == NULL && (q = strrchr(p, ':')) != NULL) {
+	while (parent == NULL && (q = strrchr(p, '/')) != NULL) {
 		*q = 0;
 		if ((ruleset = pf_find_ruleset(p)) != NULL) {
 			parent = ruleset->anchor;
@@ -349,7 +349,7 @@ pf_find_or_create_ruleset(const char *path)
 	strlcpy(p, path, sizeof(p));
 	if (!*q)
 		return (NULL);
-	while ((r = strchr(q, ':')) != NULL || *q) {
+	while ((r = strchr(q, '/')) != NULL || *q) {
 		if (r != NULL)
 			*r = 0;
 		if (!*q || strlen(q) >= PF_ANCHOR_NAME_SIZE ||
@@ -366,7 +366,7 @@ pf_find_or_create_ruleset(const char *path)
 		if (parent != NULL) {
 			strlcpy(anchor->path, parent->path,
 			    sizeof(anchor->path));
-			strlcat(anchor->path, ":", sizeof(anchor->path));
+			strlcat(anchor->path, "/", sizeof(anchor->path));
 		}
 		strlcat(anchor->path, anchor->name, sizeof(anchor->path));
 		if ((dup = RB_INSERT(pf_anchor_global, &pf_anchors, anchor)) !=
@@ -442,7 +442,7 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 	r->anchor_wildcard = 0;
 	if (!name[0])
 		return (0);
-	if (name[0] == ':')
+	if (name[0] == '/')
 		strlcpy(path, name + 1, sizeof(path));
 	else {
 		/* relative path */
@@ -451,12 +451,12 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 			path[0] = 0;
 		else
 			strlcpy(path, s->anchor->path, sizeof(path));
-		while (name[0] == '.' && name[1] == '.' && name[2] == ':') {
+		while (name[0] == '.' && name[1] == '.' && name[2] == '/') {
 			if (!path[0]) {
 				printf("pf_anchor_setup: .. beyond root\n");
 				return (1);
 			}
-			if ((p = strrchr(path, ':')) != NULL)
+			if ((p = strrchr(path, '/')) != NULL)
 				*p = 0;
 			else
 				path[0] = 0;
@@ -464,10 +464,10 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 			name += 3;
 		}
 		if (path[0])
-			strlcat(path, ":", sizeof(path));
+			strlcat(path, "/", sizeof(path));
 		strlcat(path, name, sizeof(path));
 	}
-	if ((p = strrchr(path, ':')) != NULL && !strcmp(p, ":*")) {
+	if ((p = strrchr(path, '/')) != NULL && !strcmp(p, "/*")) {
 		r->anchor_wildcard = 1;
 		*p = 0;
 	}
@@ -489,7 +489,7 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 	if (r->anchor == NULL)
 		return (0);
 	if (!r->anchor_relative) {
-		strlcpy(pr->anchor_call, ":", sizeof(pr->anchor_call));
+		strlcpy(pr->anchor_call, "/", sizeof(pr->anchor_call));
 		strlcat(pr->anchor_call, r->anchor->path,
 		    sizeof(pr->anchor_call));
 	} else {
@@ -502,10 +502,10 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 			strlcpy(a, rs->anchor->path, sizeof(a));
 		strlcpy(b, r->anchor->path, sizeof(b));
 		for (i = 1; i < r->anchor_relative; ++i) {
-			if ((p = strrchr(a, ':')) == NULL)
+			if ((p = strrchr(a, '/')) == NULL)
 				p = a;
 			*p = 0;
-			strlcat(pr->anchor_call, "..:",
+			strlcat(pr->anchor_call, "../",
 			    sizeof(pr->anchor_call));
 		}
 		if (strncmp(a, b, strlen(a))) {
@@ -516,7 +516,7 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 		    sizeof(pr->anchor_call));
 	}
 	if (r->anchor_wildcard)
-		strlcat(pr->anchor_call, ":*", sizeof(pr->anchor_call));
+		strlcat(pr->anchor_call, "/*", sizeof(pr->anchor_call));
 	return (0);
 }
 
