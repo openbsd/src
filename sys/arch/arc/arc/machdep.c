@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 1997/04/19 17:19:44 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 1997/05/01 15:15:29 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.25 1997/04/19 17:19:44 pefo Exp $
+ *      $Id: machdep.c,v 1.26 1997/05/01 15:15:29 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -220,7 +220,7 @@ mips_init(argc, argv, envv)
 		}
 		arc_bus_io.bus_base = PICA_V_ISA_IO;
 		arc_bus_mem.bus_base = PICA_V_ISA_MEM;
-		CONADDR = PICA_SYS_COM1;
+		CONADDR = 0;
 
 		/*
 		 * Set up interrupt handling and I/O addresses.
@@ -343,6 +343,7 @@ mips_init(argc, argv, envv)
 	 */
 	if (boothowto & RB_MINIROOT) {
 		boothowto |= RB_DFLTROOT;
+		bios_load_miniroot(NULL, sysend);
 		sysend += mfs_initminiroot(sysend);
 	}
 #endif
