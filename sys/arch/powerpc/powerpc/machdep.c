@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2001/02/12 06:26:30 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2001/02/15 04:11:11 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -507,12 +507,16 @@ cpu_startup()
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
 #ifdef UVM
-		pg = uvm_pagealloc(NULL, 0, NULL, 0);
-		if (pg == NULL)
-			panic("cpu_startup: not enough memory for"
-				" buffer cache");
-		pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				VM_PROT_READ|VM_PROT_WRITE);
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
+			if (pg == NULL)
+				panic("cpu_startup: not enough memory for"
+					" buffer cache");
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+					VM_PROT_READ|VM_PROT_WRITE);
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
 #else
 		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize,
 		    FALSE);
