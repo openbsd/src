@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.9 1999/07/20 16:38:57 jakob Exp $	*/
+/*	$OpenBSD: util.h,v 1.10 2000/04/30 18:44:44 millert Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -59,7 +59,8 @@
  * opendev() specific operation flags.
  */
 #define OPENDEV_PART	0x01		/* Try to open the raw partition. */
-#define OPENDEV_DRCT	0x02		/* Try to open the device directly. */
+#define OPENDEV_DRCT	0x02		/* Obsolete (now default behavior). */
+#define OPENDEV_BLCK	0x04		/* Open block, not character device. */
 
 __BEGIN_DECLS
 char   *fparseln __P((FILE *, size_t *, size_t *, const char[3], int));
