@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.22 2002/12/15 18:58:50 margarida Exp $
+.\"	$OpenBSD: pf.4,v 1.23 2002/12/22 02:04:00 mcbride Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -66,26 +66,67 @@ commands:
 Starts the packet filter.
 .It Dv DIOCSTOP
 Stops the packet filter.
+.It Dv DIOCBEGINADDRS  Fa "u_int32_t"
+Clears the buffer address pool
+and returns ticket for subsequent DIOCADDADDR, DIOCADDRULE and
+DIOCCHANGERULE calls.
+.It Dv DIOCADDADDR  Fa "struct pfioc_pooladdr"
+.Bd -literal
+struct pfioc_pooladdr {
+	u_int32_t		action;
+	u_int32_t		ticket;
+	u_int32_t		nr;
+	u_int32_t		r_num;
+	u_int8_t		r_action;
+	u_int8_t		r_last;
+	u_int8_t		af;
+	char			anchor[PF_ANCHOR_NAME_SIZE];
+	char			ruleset[PF_RULESET_NAME_SIZE];
+	struct pf_pooladdr	addr;
+};
+.Ed
+.Pp
+Adds pool address
+.Va addr
+to the buffer address pool to be used in the following
+DIOCADDRULE or DIOCCHANGERULE call. All other members of the structure
+are ignored.
 .It Dv DIOCBEGINRULES  Fa "u_int32_t"
-Clears the inactive filter ruleset, returns ticket for subsequent
+Clears the inactive ruleset for the type of rule indicated by
+.Va rule.action
+and returns ticket for subsequent
 DIOCADDRULE and DIOCCOMMITRULES calls.
 .It Dv DIOCADDRULE     Fa "struct pfioc_rule"
 .Bd -literal
 struct pfioc_rule {
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
-	struct pf_rule	 rule;
+	u_int32_t	action;
+	u_int32_t	ticket;
+	u_int32_t	pool_ticket;
+	u_int32_t	nr;
+	char		anchor[PF_ANCHOR_NAME_SIZE];
+	char		ruleset[PF_RULESET_NAME_SIZE];
+	struct pf_rule	rule;
 };
 .Ed
 .Pp
-Adds filter
+Adds
 .Va rule
 at the end of the inactive filter ruleset.
 Requires
 .Va ticket
-obtained through preceding DIOCBEGINRULES call.
+obtained through preceding DIOCBEGINRULES call, and
+.Va pool_ticket
+obtained through DIOCBEGINADDRS call. DIOCADDADDR must also be called if
+any pool addresses are required.
+The optional
+.Va anchor
+and
+.Va ruleset
+names indicate the anchor and ruleset in which to append the rule.
 .Va nr
-is ignored.
+and
+.Va action
+are ignored.
 .It Dv DIOCCOMMITRULES Fa "u_int32_t"
 Switch inactive to active filter ruleset.
 Requires
@@ -104,42 +145,31 @@ number
 using
 .Va ticket
 obtained through a preceding DIOCGETRULES call.
-.It Dv DIOCBEGINNATS   Fa "u_int32_t"
-.It Dv DIOCADDNAT      Fa "struct pfioc_nat"
-.Bd -literal
-struct pfioc_nat {
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
-	struct pf_nat	 nat;
-};
-.Ed
-.It Dv DIOCCOMMITNATS  Fa "u_int32_t"
-.It Dv DIOCGETNATS     Fa "struct pfioc_nat"
-.It Dv DIOCGETNAT      Fa "struct pfioc_nat"
-.It Dv DIOCBEGINBINATS Fa "u_int32_t"
-.It Dv DIOCADDBINAT    Fa "struct pfioc_binat"
-.Bd -literal
-struct pfioc_binat {
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
-	struct pf_binat	 binat;
-};
-.Ed
-.It Dv DIOCCOMMITBINATS Fa "u_int32_t"
-.It Dv DIOCGETBINATS   Fa "struct pfioc_binat"
-.It Dv DIOCGETBINAT    Fa "struct pfioc_binat"
-.It Dv DIOCBEGINRDRS   Fa "u_int32_t"
-.It Dv DIOCADDRDR      Fa "struct pfioc_rdr"
-.Bd -literal
-struct pfioc_rdr {
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
-	struct pf_rdr	 rdr;
-};
-.Ed
-.It Dv DIOCCOMMITRDRS  Fa "u_int32_t"
-.It Dv DIOCGETRDRS     Fa "struct pfioc_rdr"
-.It Dv DIOCGETRDR      Fa "struct pfioc_rdr"
+.It Dv DIOCGETADDRS    Fa "struct pfioc_pooladdr"
+Returns
+.Va ticket
+for subsequent DIOCGETADDR calls and
+.Va nr
+of pool addresses in the rule specified with
+.Va r_action ,
+.Va r_num ,
+.Va anchor
+and
+.Va ruleset .
+.It Dv DIOCGETADDR     Fa "struct pfioc_pooladdr"
+Returns pool address
+.Va addr
+number
+.Va nr
+from the rule specified with
+.Va r_action ,
+.Va r_num ,
+.Va anchor
+and
+.Va ruleset
+using
+.Va ticket
+obtained through a preceding DIOCGETADDRS call.
 .It Dv DIOCCLRSTATES
 Clears the state table.
 .It Dv DIOCADDSTATE    Fa "struct pfioc_state"
@@ -215,7 +245,7 @@ enum	{ PF_DEBUG_NONE=0, PF_DEBUG_URGENT=1, PF_DEBUG_MISC=2 };
 .Bd -literal
 struct pfioc_states {
 	int	ps_len;
-        union {
+	union {
 		caddr_t psu_buf;
 		struct pf_state *psu_states;
 	} ps_u;
@@ -223,46 +253,44 @@ struct pfioc_states {
 #define ps_states	ps_u.psu_states
 };
 .Ed
-.It Dv DIOCCHANGERULE  Fa "struct pfioc_changerule"
-Adds or removes a filter rule in the active filter ruleset.
+.It Dv DIOCCHANGERULE  Fa "struct pfioc_rule"
+Adds or removes the
+.Va rule
+in the ruleset specified by
+.Va rule.action .
 .Bd -literal
-struct pfioc_changerule {
-	u_int32_t	 action;
-	struct pf_rule	 oldrule;
-	struct pf_rule	 newrule;
-};
-
 enum	{ PF_CHANGE_ADD_HEAD=1, PF_CHANGE_ADD_TAIL=2,
 	  PF_CHANGE_ADD_BEFORE=3, PF_CHANGE_ADD_AFTER=4,
-	  PF_CHANGE_REMOVE=5 };
+	  PF_CHANGE_REMOVE=5, PF_CHANGE_GET_TICKET=6 };
 .Ed
-.It Dv DIOCCHANGENAT   Fa "struct pfioc_changenat"
-Adds or removes a nat rule in the active nat ruleset.
-.Bd -literal
-struct pfioc_changenat {
-	u_int32_t	 action;
-	struct pf_nat	 oldnat;
-	struct pf_nat	 newnat;
-};
-.Ed
-.It Dv DIOCCHANGEBINAT   Fa "struct pfioc_changebinat"
-Adds or removes a binat rule in the active binat ruleset.
-.Bd -literal
-struct pfioc_changebinat {
-	u_int32_t	action;
-	struct pf_binat	oldbinat;
-	struct pf_binat	newbinat;
-};
-.Ed
-.It Dv DIOCCHANGERDR   Fa "struct pfioc_changerdr"
-Adds or removes a rdr rule in the active rdr ruleset.
-.Bd -literal
-struct pfioc_changerdr {
-	u_int32_t	 action;
-	struct pf_rdr	 oldrdr;
-	struct pf_rdr	 newrdr;
-};
-.Ed
+.Pp
+The type of operation to be performed is indicated by
+.Va action .
+.Pp
+.Va ticket
+must be set to the value obtained with PF_CHANGE_GET_TICKET
+for all actions except PF_CHANGE_GET_TICKET.
+.Va pool_ticket
+must be set to the value obtained with the DIOCBEGINADDRS call
+for all actions except PF_CHANGE_REMOVE and PF_CHANGE_GET_TICKET.
+.Pp
+.Va anchor
+and
+.Va ruleset
+indicate which anchor and ruleset the operation applies to.
+.Va nr
+indicates the rule number against which PF_CHANGE_ADD_BEFORE,
+PF_CHANGE_ADD_AFTER or PF_CHANGE_REMOVE actions are applied.
+.Pp
+.It Dv DIOCCHANGEADDR  Fa "struct pfioc_addr"
+Adds or removes a pool address
+.Va addr
+from a rule specified with
+.Va r_action ,
+.Va r_num ,
+.Va anchor
+and
+.Va ruleset .
 .It Dv DIOCSETTIMEOUT  Fa "struct pfioc_tm"
 .Bd -literal
 struct pfioc_tm {
@@ -338,7 +366,7 @@ main(int argc, char *argv[])
 	nl.proto		= IPPROTO_TCP;
 	nl.direction		= PF_IN;
 
-        if (ioctl(dev, DIOCNATLOOK, &nl))
+	if (ioctl(dev, DIOCNATLOOK, &nl))
 		err(1, "DIOCNATLOOK");
 
 	printf("internal host ");
