@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.49 2001/11/06 18:41:10 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.50 2001/11/11 22:30:56 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ struct	proc {
 	fixpt_t	p_pctcpu;	 /* %cpu for this process during p_swtime */
 	void	*p_wchan;	 /* Sleep address. */
 	struct	timeout p_sleep_to;/* timeout for tsleep() */
-	char	*p_wmesg;	 /* Reason for sleep. */
+	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
 	int	p_schedflags;	 /* PSCHED_* flags */
@@ -367,7 +367,7 @@ void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
 void	sleep __P((void *chan, int pri));
 void	uvm_swapin __P((struct proc *));  /* XXX: uvm_extern.h? */
-int	ltsleep __P((void *chan, int pri, char *wmesg, int timo,
+int	ltsleep __P((void *chan, int pri, const char *wmesg, int timo,
 	    volatile struct simplelock *));
 #define tsleep(chan, pri, wmesg, timo) ltsleep(chan, pri, wmesg, timo, NULL)
 void	unsleep __P((struct proc *));

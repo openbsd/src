@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.39 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.40 2001/11/11 22:30:56 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -344,7 +344,7 @@ int
 ltsleep(ident, priority, wmesg, timo, interlock)
 	void *ident;
 	int priority, timo;
-	char *wmesg;
+	const char *wmesg;
 	volatile struct simplelock *interlock;
 {
 	struct proc *p = curproc;
