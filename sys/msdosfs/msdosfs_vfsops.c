@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.11 1997/11/09 23:15:12 millert Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.12 1997/11/10 21:17:29 provos Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.44 1996/12/22 10:10:32 cgd Exp $	*/
 
 /*-
@@ -119,10 +119,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			if (vfs_busy(mp, 0, 0, p))
-				return (EBUSY);
 			error = vflush(mp, NULLVP, flags);
-			vfs_unbusy(mp, p);
 		}
 		if (!error && (mp->mnt_flag & MNT_RELOAD))
 			/* not yet implemented */
@@ -504,8 +501,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		pmp->pm_fmod = 1;
 	mp->mnt_data = (qaddr_t)pmp;
         mp->mnt_stat.f_fsid.val[0] = (long)dev;
-        mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_MSDOS);
-	mp->mnt_flag |= MNT_LOCAL;
+        mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 #ifdef QUOTA
 	/*
 	 * If we ever do quotas for DOS filesystems this would be a place
@@ -519,7 +515,8 @@ msdosfs_mountfs(devvp, mp, p, argp)
 
 	return (0);
 
-error_exit:;
+error_exit:
+	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
 	(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
