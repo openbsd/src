@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.17 2003/01/10 16:09:19 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.18 2003/01/11 21:50:57 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -451,22 +451,30 @@ append_addr(char *s, int test)
 	char		 buf[BUF_SIZE], *p, *q, *r;
 	struct addrinfo *res, *ai, hints;
 	int		 not = 0, net = -1, rv;
+	struct in_addr	 ina;
 
 	for (r = s; *r == '!'; r++)
 		not = !not;
-	bzero(&hints, sizeof(hints));
-	hints.ai_socktype = SOCK_DGRAM;
-	if (strlen(s) >= BUF_SIZE) {
-		fprintf(stderr, "%s: address too long (%ld bytes)\n",
-		    __progname, (long)strlen(s));
-		exit(1);
-	}
 	if (strlcpy(buf, r, sizeof(buf)) >= sizeof(buf))
-		errx(1, "append_addr: strlcpy");
+		errx(1, "address too long");
 	p = strrchr(buf, '/');
 	if (test && (not || p))
-		fprintf(stderr, "%s: illegal test address: \"%s\"\n",
-		    __progname, s);
+		errx(1, "illegal test address");
+
+	memset(&ina, 0, sizeof(struct in_addr));
+	if ((net = inet_net_pton(AF_INET, buf, &ina, sizeof(&ina))) > -1) {
+		if (test && net != 32)
+			errx(1, "illegal test address");
+		if (size >= msize)
+			grow_buffer(sizeof(struct pfr_addr), 0);
+		buffer.addrs[size].pfra_ip4addr.s_addr = ina.s_addr;
+		buffer.addrs[size].pfra_not = not;
+		buffer.addrs[size].pfra_net = net;
+		buffer.addrs[size].pfra_af = AF_INET;
+		size++;
+		return;
+	}
+
 	if (p) {
 		net = strtol(p+1, &q, 0);
 		if (!q || *q) {
@@ -476,6 +484,9 @@ append_addr(char *s, int test)
 		}
 		*p++ = '\0';
 	}
+
+	bzero(&hints, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM;
 	rv = getaddrinfo(buf, NULL, &hints, &res);
 	if (rv) {
 		fprintf(stderr, "%s: illegal address: \"%s\"\n", __progname,
