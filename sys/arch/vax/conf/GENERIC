@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 2000/04/27 05:47:14 bjc Exp $
+#	$OpenBSD: GENERIC,v 1.16 2000/10/11 06:01:05 bjc Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -65,6 +65,8 @@ dz0		at vsbus0 csr 0x25000000 # VS4000/90 serial line
 #hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
 ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
+asc0        at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
+asc0        at vsbus0 csr 0x26000080 # VS4000/90 SCSI-ctlr
 #smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 
@@ -126,6 +128,7 @@ mt*		at mscpbus? drive?	# MSCP tape
 #hdc0		at vsbus0		# The strange builtin MFM controller
 
 # SCSI devices
+scsibus*	at asc?
 scsibus*	at ncr?
 
 sd*		at scsibus? target? lun?
@@ -135,10 +138,10 @@ ch*		at scsibus? target? lun?
 ss*		at scsibus? target? lun?
 uk*		at scsibus? target? lun?
 
-# VAXstation graphics support
-#wsdisplay0	at smg0
+# Workstation console
+#wscons*	at smg?
+
 #wsdisplay0	at clr0
 #wsdisplay0	at qd0
 #wsdisplay0	at qv0
 #lkc0		at dz0
-

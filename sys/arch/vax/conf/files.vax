@@ -44,6 +44,7 @@ file	arch/vax/vax/ctu.c		vax750 | mem_cmi
 device	vsbus { csr }
 attach	vsbus at mainbus
 file	arch/vax/vsa/vsbus.c		vsbus
+file	arch/vax/vsa/vsbus_dma.c		vsbus
 
 # DEC SGEC Second Generation Ethernet Controller
 define  sgec
@@ -326,6 +327,11 @@ file	arch/vax/vax/disksubr.c		disk | tape
 file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
 file	arch/vax/uba/uba_dma.c		uba
+
+# builtin NCR53C95 SCSI Controller on VAXstation 4000 VLC/60/9x
+device asc: scsi, ncr53c9x
+attach asc at vsbus with asc_vsbus
+file   arch/vax/vsa/asc_vsbus.c        asc needs-flag
 
 include "compat/ultrix/files.ultrix"
 #include "compat/vax1k/files.vax1k"
