@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.24 2002/06/04 00:09:08 deraadt Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.25 2002/06/08 23:32:16 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -700,6 +700,13 @@ sk_ioctl(ifp, command, data)
 			sk_init(sc_if);
 			break;
 		}
+		break;
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > SK_JUMBO_MTU)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+		sk_init(sc_if);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
