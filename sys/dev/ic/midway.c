@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.5 1996/06/28 02:31:09 chuck Exp $	*/
-/*	(sync'd to midway.c 1.54)	*/
+/*	$OpenBSD: midway.c,v 1.6 1996/06/29 19:59:40 chuck Exp $	*/
+/*	(sync'd to midway.c 1.55)	*/
 
 /*
  *
@@ -626,7 +626,7 @@ done_probe:
     return;
   }
   for (lcv = 0 ; lcv < sc->en_nrx ; lcv++) {
-    sc->rxslot[lcv].rxso = NULL;
+    sc->rxslot[lcv].rxhand = NULL;
     sc->rxslot[lcv].oth_flags = ENOTHER_FREE;
     bzero(&sc->rxslot[lcv].indma, sizeof(sc->rxslot[lcv].indma));
     bzero(&sc->rxslot[lcv].q, sizeof(sc->rxslot[lcv].q));
@@ -998,14 +998,14 @@ int on;
     if (slot == sc->en_nrx)
       return(ENOSPC);
     sc->rxvc2slot[vci] = slot;
-    sc->rxslot[slot].rxso = NULL;
+    sc->rxslot[slot].rxhand = NULL;
     oldmode = sc->rxslot[slot].mode;
     newmode = (flags & ATM_PH_AAL5) ? MIDV_AAL5 : MIDV_NOAAL;
     sc->rxslot[slot].mode = MIDV_SETMODE(oldmode, newmode);
     sc->rxslot[slot].atm_vci = vci;
     sc->rxslot[slot].atm_flags = flags;
     sc->rxslot[slot].oth_flags = 0;
-    sc->rxslot[slot].rxso = pi->asock;
+    sc->rxslot[slot].rxhand = pi->rxhand;
     if (sc->rxslot[slot].indma.ifq_head || sc->rxslot[slot].q.ifq_head)
       panic("en_rxctl: left over mbufs on enable");
     en_loadvc(sc, vci);		/* does debug printf for us */
@@ -1027,7 +1027,7 @@ int on;
   EN_WRITE(sc, MID_VC(vci), (newmode | (oldmode & MIDV_INSERVICE)));
 		/* halt in tracks, be careful to preserve inserivce bit */
   DELAY(27);
-  sc->rxslot[slot].rxso = NULL;
+  sc->rxslot[slot].rxhand = NULL;
   sc->rxslot[slot].mode = newmode;
 
   /* if stuff is still going on we are going to have to drain it out */
@@ -2035,6 +2035,7 @@ void *arg;
 	/* do something with this mbuf */
 	if (sc->rxslot[slot].oth_flags & ENOTHER_DRAIN) {  /* drain? */
 	  m_freem(m);
+	  vci = sc->rxslot[slot].atm_vci;
 	  if (sc->rxslot[slot].indma.ifq_head == NULL &&
 		sc->rxslot[slot].q.ifq_head == NULL &&
 		(EN_READ(sc, MID_VC(vci)) & MIDV_INSERVICE) == 0 &&
@@ -2052,11 +2053,11 @@ void *arg;
 	  ATM_PH_VPI(&ah) = 0;
 	  ATM_PH_SETVCI(&ah, sc->rxslot[slot].atm_vci);
 #ifdef EN_DEBUG
-	  printf("%s: rx%d: rxvci%d: atm_input, mbuf 0x%x, len %d, sok 0x%x\n", 
+	  printf("%s: rx%d: rxvci%d: atm_input, mbuf 0x%x, len %d, hand 0x%x\n",
 		sc->sc_dev.dv_xname, slot, sc->rxslot[slot].atm_vci, m,
-		EN_DQ_LEN(drq), sc->rxslot[slot].rxso);
+		EN_DQ_LEN(drq), sc->rxslot[slot].rxhand);
 #endif
-	  atm_input(&sc->enif, &ah, m, sc->rxslot[slot].rxso);
+	  atm_input(&sc->enif, &ah, m, sc->rxslot[slot].rxhand);
 	}
 
       }
