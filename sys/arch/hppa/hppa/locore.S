@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.56 2002/03/08 08:56:11 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.57 2002/03/12 07:35:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2230,6 +2230,7 @@ $spstrcpy_loop
 	comb,=	ret1, arg1, $spstrcpy_exit
 	stbs,ma	t1, 1(sr2, arg3)
 	comb,<>,n r0, t1, $spstrcpy_loop
+	nop
 
 $spstrcpy_exit
 	/* reset fault handler */
