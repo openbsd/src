@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_gc.c,v 1.13 2003/12/23 20:10:45 brad Exp $	*/
+/*	$OpenBSD: uthread_gc.c,v 1.14 2004/04/06 03:56:39 marc Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -132,8 +132,10 @@ _thread_gc(pthread_addr_t arg)
 				 * Point to the stack structure that must
 				 * be freed outside the locks:
 				 */
-				if (pthread->stack != NULL)
+				if (pthread->stack != NULL) {
 					p_stack = pthread->stack;
+					pthread->stack = NULL;
+				}
 
 				/*
 				 * Point to the thread structure that must
