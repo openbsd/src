@@ -161,3 +161,5 @@ char *FascistCheck (char *password, char *path, char **strings);
 
 void
 random_password(char *pw, size_t len, u_int32_t *low, u_int32_t *high);
+
+extern char *__progname;

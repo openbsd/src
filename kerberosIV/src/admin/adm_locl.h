@@ -96,4 +96,6 @@
 #define des_new_random_key des_random_key
 #endif
 
+extern char *__progname;
+
 #endif /*  __adm_locl_h */

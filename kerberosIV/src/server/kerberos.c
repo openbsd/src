@@ -119,6 +119,8 @@ static char local_realm[REALM_SZ];
 static int max_age = -1;
 static int pause_int = -1;
 
+extern char *__progname;
+
 /*
  * Print usage message and exit.
  */
