@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus.h,v 1.1 1997/02/26 05:38:12 gene Exp $ */
+/*      $OpenBSD: bus.h,v 1.2 1997/04/05 16:22:06 briggs Exp $ */
 /*	$NetBSD: bus.h,v 1.6 1997/02/24 05:55:14 scottr Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ typedef u_long bus_size_t;
 typedef int	bus_space_tag_t;
 typedef u_long	bus_space_handle_t;
 
+/* in machdep.c */
 int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				int, bus_space_handle_t *));
 void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
@@ -65,6 +66,8 @@ int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 	    bus_space_handle_t *bshp));
 void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
+int	bus_space_bad_addr __P((bus_space_tag_t tag, bus_space_handle_t hand,
+				bus_size_t offset, int byte_size));
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 1997/04/05 15:29:10 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 1997/04/05 16:22:07 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -882,6 +882,42 @@ straytrap(pc, evec)
 int    *nofault;
 
 int badaddr __P((caddr_t));
+
+int
+bus_space_bad_addr(t, h, o, sz)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	int			sz;
+{
+	register int i;
+	label_t faultbuf;
+
+#ifdef lint
+	i = *addr;
+	if (i)
+		return (0);
+#endif
+	nofault = (int *) &faultbuf;
+	if (setjmp((label_t *) nofault)) {
+		nofault = (int *) 0;
+		return (1);
+	}
+	switch (sz) {
+	default:
+	case 1:
+		i = bus_space_read_1(t, h, o);
+		break;
+	case 2:
+		i = bus_space_read_2(t, h, o);
+		break;
+	case 4:
+		i = bus_space_read_4(t, h, o);
+		break;
+	}
+	nofault = (int *) 0;
+	return (0);
+}
 
 int
 badaddr(addr)
