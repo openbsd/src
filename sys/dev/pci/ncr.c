@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.20 1996/11/28 23:28:08 niklas Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.21 1996/11/30 21:54:53 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.48 1996/10/25 21:33:33 cgd Exp $	*/
 
 /**************************************************************************
@@ -3654,10 +3654,10 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->sc_link.device       = &ncr_dev;
 	np->sc_link.flags	 = 0;
 
-#if defined(__NetBSD__)
-	config_found(self, &np->sc_link, scsiprint);
-#elif defined(__OpenBSD__)
+#if defined(__OpenBSD__)
 	config_found(self, &np->sc_link, ncr_print);
+#elif defined(__NetBSD__)
+	config_found(self, &np->sc_link, scsiprint);
 #else /* !__NetBSD__ */
 #if (__FreeBSD__ >= 2)
 	scbus = scsi_alloc_bus();
