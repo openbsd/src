@@ -1,4 +1,6 @@
 KeyNote-Version: 2
+Comment: $OpenBSD: policy,v 1.1 1999/07/18 09:33:13 niklas Exp $
+Comment: $EOM: policy,v 1.1 1999/07/18 09:25:34 niklas Exp $
 Comment: This policy essentially accepts everything
 Authorizer: "POLICY"
 Conditions: app_domain == "IPsec policy" -> "true";
