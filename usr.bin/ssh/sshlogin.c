@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshlogin.c,v 1.7 2003/06/12 07:57:38 markus Exp $");
+RCSID("$OpenBSD: sshlogin.c,v 1.8 2004/06/21 17:36:31 avsm Exp $");
 
 #include <util.h>
 #include <utmp.h>
@@ -83,7 +83,7 @@ get_last_login_time(uid_t uid, const char *logname,
  * systems were more standardized.
  */
 void
-record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
+record_login(pid_t pid, const char *tty, const char *user, uid_t uid,
     const char *host, struct sockaddr * addr, socklen_t addrlen)
 {
 	int fd;
@@ -93,7 +93,7 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 
 	/* Construct an utmp/wtmp entry. */
 	memset(&u, 0, sizeof(u));
-	strncpy(u.ut_line, ttyname + 5, sizeof(u.ut_line));
+	strncpy(u.ut_line, tty + 5, sizeof(u.ut_line));
 	u.ut_time = time(NULL);
 	strncpy(u.ut_name, user, sizeof(u.ut_name));
 	strncpy(u.ut_host, host, sizeof(u.ut_host));
@@ -111,7 +111,7 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 
 		/* Update lastlog. */
 		ll.ll_time = time(NULL);
-		strncpy(ll.ll_line, ttyname + 5, sizeof(ll.ll_line));
+		strncpy(ll.ll_line, tty + 5, sizeof(ll.ll_line));
 		strncpy(ll.ll_host, host, sizeof(ll.ll_host));
 		fd = open(lastlog, O_RDWR);
 		if (fd >= 0) {
@@ -125,9 +125,9 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 
 /* Records that the user has logged out. */
 void
-record_logout(pid_t pid, const char *ttyname)
+record_logout(pid_t pid, const char *tty)
 {
-	const char *line = ttyname + 5;	/* /dev/ttyq8 -> ttyq8 */
+	const char *line = tty + 5;	/* /dev/ttyq8 -> ttyq8 */
 	if (logout(line))
 		logwtmp(line, "", "");
 }

@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_fdpass.c,v 1.4 2002/06/26 14:50:04 deraadt Exp $");
+RCSID("$OpenBSD: monitor_fdpass.c,v 1.5 2004/06/21 17:36:31 avsm Exp $");
 
 #include <sys/uio.h>
 
@@ -32,7 +32,7 @@ RCSID("$OpenBSD: monitor_fdpass.c,v 1.4 2002/06/26 14:50:04 deraadt Exp $");
 #include "monitor_fdpass.h"
 
 void
-mm_send_fd(int socket, int fd)
+mm_send_fd(int sock, int fd)
 {
 	struct msghdr msg;
 	char tmp[CMSG_SPACE(sizeof(int))];
@@ -55,7 +55,7 @@ mm_send_fd(int socket, int fd)
 	msg.msg_iov = &vec;
 	msg.msg_iovlen = 1;
 
-	if ((n = sendmsg(socket, &msg, 0)) == -1)
+	if ((n = sendmsg(sock, &msg, 0)) == -1)
 		fatal("%s: sendmsg(%d): %s", __func__, fd,
 		    strerror(errno));
 	if (n != 1)
@@ -64,7 +64,7 @@ mm_send_fd(int socket, int fd)
 }
 
 int
-mm_receive_fd(int socket)
+mm_receive_fd(int sock)
 {
 	struct msghdr msg;
 	char tmp[CMSG_SPACE(sizeof(int))];
@@ -82,7 +82,7 @@ mm_receive_fd(int socket)
 	msg.msg_control = tmp;
 	msg.msg_controllen = sizeof(tmp);
 
-	if ((n = recvmsg(socket, &msg, 0)) == -1)
+	if ((n = recvmsg(sock, &msg, 0)) == -1)
 		fatal("%s: recvmsg: %s", __func__, strerror(errno));
 	if (n != 1)
 		fatal("%s: recvmsg: expected received 1 got %ld",

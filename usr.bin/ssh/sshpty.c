@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshpty.c,v 1.11 2004/01/11 21:55:06 deraadt Exp $");
+RCSID("$OpenBSD: sshpty.c,v 1.12 2004/06/21 17:36:31 avsm Exp $");
 
 #include <util.h>
 #include "sshpty.h"
@@ -52,18 +52,18 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 /* Releases the tty.  Its ownership is returned to root, and permissions to 0666. */
 
 void
-pty_release(const char *ttyname)
+pty_release(const char *tty)
 {
-	if (chown(ttyname, (uid_t) 0, (gid_t) 0) < 0)
-		error("chown %.100s 0 0 failed: %.100s", ttyname, strerror(errno));
-	if (chmod(ttyname, (mode_t) 0666) < 0)
-		error("chmod %.100s 0666 failed: %.100s", ttyname, strerror(errno));
+	if (chown(tty, (uid_t) 0, (gid_t) 0) < 0)
+		error("chown %.100s 0 0 failed: %.100s", tty, strerror(errno));
+	if (chmod(tty, (mode_t) 0666) < 0)
+		error("chmod %.100s 0666 failed: %.100s", tty, strerror(errno));
 }
 
 /* Makes the tty the process's controlling tty and sets it to sane modes. */
 
 void
-pty_make_controlling_tty(int *ttyfd, const char *ttyname)
+pty_make_controlling_tty(int *ttyfd, const char *tty)
 {
 	int fd;
 
@@ -93,9 +93,9 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 	if (ioctl(*ttyfd, TIOCSCTTY, NULL) < 0)
 		error("ioctl(TIOCSCTTY): %.100s", strerror(errno));
 #endif /* TIOCSCTTY */
-	fd = open(ttyname, O_RDWR);
+	fd = open(tty, O_RDWR);
 	if (fd < 0)
-		error("%.100s: %.100s", ttyname, strerror(errno));
+		error("%.100s: %.100s", tty, strerror(errno));
 	else
 		close(fd);
 
@@ -124,7 +124,7 @@ pty_change_window_size(int ptyfd, int row, int col,
 }
 
 void
-pty_setowner(struct passwd *pw, const char *ttyname)
+pty_setowner(struct passwd *pw, const char *tty)
 {
 	struct group *grp;
 	gid_t gid;
@@ -146,33 +146,33 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 	 * Warn but continue if filesystem is read-only and the uids match/
 	 * tty is owned by root.
 	 */
-	if (stat(ttyname, &st))
-		fatal("stat(%.100s) failed: %.100s", ttyname,
+	if (stat(tty, &st))
+		fatal("stat(%.100s) failed: %.100s", tty,
 		    strerror(errno));
 
 	if (st.st_uid != pw->pw_uid || st.st_gid != gid) {
-		if (chown(ttyname, pw->pw_uid, gid) < 0) {
+		if (chown(tty, pw->pw_uid, gid) < 0) {
 			if (errno == EROFS &&
 			    (st.st_uid == pw->pw_uid || st.st_uid == 0))
 				debug("chown(%.100s, %u, %u) failed: %.100s",
-				    ttyname, (u_int)pw->pw_uid, (u_int)gid,
+				    tty, (u_int)pw->pw_uid, (u_int)gid,
 				    strerror(errno));
 			else
 				fatal("chown(%.100s, %u, %u) failed: %.100s",
-				    ttyname, (u_int)pw->pw_uid, (u_int)gid,
+				    tty, (u_int)pw->pw_uid, (u_int)gid,
 				    strerror(errno));
 		}
 	}
 
 	if ((st.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO)) != mode) {
-		if (chmod(ttyname, mode) < 0) {
+		if (chmod(tty, mode) < 0) {
 			if (errno == EROFS &&
 			    (st.st_mode & (S_IRGRP | S_IROTH)) == 0)
 				debug("chmod(%.100s, 0%o) failed: %.100s",
-				    ttyname, (u_int)mode, strerror(errno));
+				    tty, (u_int)mode, strerror(errno));
 			else
 				fatal("chmod(%.100s, 0%o) failed: %.100s",
-				    ttyname, (u_int)mode, strerror(errno));
+				    tty, (u_int)mode, strerror(errno));
 		}
 	}
 }
