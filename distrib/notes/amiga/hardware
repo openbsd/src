@@ -8,16 +8,22 @@ won't be speedy.  X really isn't usable on a 4M system.)
 
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise,	with X,	needed,	with X
-	root (/)	30M	30M	25M	25M
-	user (/usr)	120M    155M   100M     135M
+	root (/)	 30M	 30M	25M	 25M
+	user (/usr)	210M    245M   140M     175M
+	/usr/local      depends on what extra software you want
 	swap		---- 1MB for every MB RAM ----
 			-- but the sum of swap and ---
 			- RAM should be at least 16 --
 
-As you may note the recommended size of /usr is 20M greater than
+As you may note the recommended size of /usr is 70M greater than
 needed. This is to leave room for a kernel source and compile tree
 as you will probably want to compile your own kernel. (GENERIC is
 large and bulky to accommodate all people).
+
+Starting with OpenBSD 2.7, you should be able to leave /usr mounted ro
+on production machines, and use a separate /usr/local partition for
+packages.
+
 
 If you only have 4M of fast memory, you should make your swap partition
 larger, as your system will be doing much more swapping.
