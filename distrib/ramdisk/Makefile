@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.2 1997/05/14 21:52:59 deraadt Exp $
-#	$OpenBSD: Makefile,v 1.2 1997/05/14 21:52:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/05/15 06:57:21 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/05/15 06:57:21 niklas Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -22,6 +22,7 @@ REALIMAGE!=	echo /tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	4096
 NEWFSOPTS?=	-m 0 -c 64 -i 8192
+NEWFS_WILL_FAIL?=false
 CRUNCHGENOPTS?=
 KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../miniroot
@@ -58,7 +59,8 @@ ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} ${DISKTYPE}
-	newfs -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
+	newfs -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE} || \
+	    ${NEWFS_WILL_FAIL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
