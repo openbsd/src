@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.5 1997/11/06 05:59:26 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.6 1998/01/09 20:38:05 csapuntz Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -119,20 +119,35 @@ loop:
 /*
  * Insert the inode into the hash table, and return it locked.
  */
-void
+int
 ufs_ihashins(ip)
 	struct inode *ip;
 {
+	struct inode *curip;
 	struct proc *p = curproc;		/* XXX */
 	struct ihashhead *ipp;
+	dev_t  dev = ip->i_dev;
+	ino_t  inum = ip->i_number;
 
 	/* lock the inode, then put it on the appropriate hash list */
 	lockmgr(&ip->i_lock, LK_EXCLUSIVE, (struct simplelock *)0, p);
- 
+
 	simple_lock(&ufs_ihash_slock);
-	ipp = INOHASH(ip->i_dev, ip->i_number);
+
+	for (curip = INOHASH(dev, inum)->lh_first; curip; 
+	     curip = curip->i_hash.le_next) {
+		if (inum == curip->i_number && dev == curip->i_dev) {
+		        simple_unlock(&ufs_ihash_slock);
+			lockmgr(&ip->i_lock, LK_RELEASE, (struct simplelock *)0, p);
+			return (EEXIST);
+		}
+	}
+
+	ipp = INOHASH(dev, inum);
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	simple_unlock(&ufs_ihash_slock);
+
+	return (0);
 }
 
 /*
@@ -143,6 +158,10 @@ ufs_ihashrem(ip)
 	struct inode *ip;
 {
 	simple_lock(&ufs_ihash_slock);
+
+	if (ip->i_hash.le_prev == NULL)
+		return;
+
 	LIST_REMOVE(ip, i_hash);
  #ifdef DIAGNOSTIC
 	ip->i_hash.le_next = NULL;
