@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.9 2000/05/18 07:58:46 angelos Exp $ */
+/* $OpenBSD: keynote.l,v 1.10 2000/05/18 08:31:02 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -674,7 +674,16 @@ keynote_evaluate_authorizer(struct assertion *as, int flag)
 }
 
 /*
- * Parse a private key.
+ * Exportable front-end to keynote_get_private_key().
+ */
+char *
+kn_get_string(char *buf)
+{
+    return keynote_get_private_key(buf);
+}
+
+/*
+ * Parse a private key -- actually, it can deal with any kind of string.
  */
 char *
 keynote_get_private_key(char *buf)

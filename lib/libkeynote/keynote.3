@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.23 2000/05/17 05:38:19 angelos Exp $
+.\" $OpenBSD: keynote.3,v 1.24 2000/05/18 08:31:02 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -114,6 +114,8 @@ struct keynote_keylist
 .Fn kn_verify_assertion "char *assertion" "int len"
 .Ft void
 .Fn kn_free_key "struct keynote_deckey *"
+.Ft char *
+.Fn kn_get_string "char *"
 .Fd Link options: -lkeynote -lm -lcrypto
 .Sh DESCRIPTION
 For more details on
@@ -825,7 +827,12 @@ if the assertion contained a syntactic error, or the cryptographic
 algorithm was not supported.
 .Pp
 .Fn kn_free_key
-frees the key.
+frees a cryptographic key.
+.Pp
+.Fn kn_get_string
+parses the argument, treating it as a
+.Xr keynote 4
+(quoted) string. This is useful for parsing key files.
 .Pp
 .Sh FILES
 .Bl -tag -width libkeynote.a -compact
