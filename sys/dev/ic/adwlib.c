@@ -1882,7 +1882,7 @@ ADW_SCSI_REQ_Q	*scsiq;
 	ADW_CCB		*ccb;
 	long		req_size;
 	u_int32_t	req_paddr;
-	ADW_CARRIER	*new_carrp/*, *ccb_carr;
+	ADW_CARRIER	*new_carrp, *new_freep/*, *ccb_carr;
 	int		i*/;
 
 
@@ -1902,11 +1902,14 @@ ADW_SCSI_REQ_Q	*scsiq;
 	 * Allocate a carrier ensuring at least one carrier always
 	 * remains on the freelist and initialize fields.
 	 */
-	if ((new_carrp = sc->carr_freelist) == NULL) {
+	new_carrp = sc->carr_freelist;
+        new_freep = adw_carrier_phys_kv( sc, 
+					 ASC_GET_CARRP( new_carrp->next_vpa) );
+
+	if (new_freep == NULL) {
 		return ADW_BUSY;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(new_carrp->next_vpa));
+	sc->carr_freelist = new_freep;
 	sc->carr_pending_cnt++;
 
 	/*
