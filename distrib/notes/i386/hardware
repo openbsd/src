@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.122 2003/08/01 15:28:03 nate Exp $
+dnl	$OpenBSD: hardware,v 1.123 2003/08/05 15:34:33 couderc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -723,7 +723,7 @@ Supported hardware {:-include-:}:
 		    AVer Media TV/FM
 		Hardware monitoring sensors, including: [G]
 		    National Semiconductor LM78, LM78-J, LM79
-		    Winbond W83697HF, W83627HF, W83781D, W83782D
+		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
 		    VIA VT82C686A
 		    ITE IT8705F, IT8712F
 		    SiS SiS950
