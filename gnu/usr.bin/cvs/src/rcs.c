@@ -3831,7 +3831,7 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 	if (info != NULL)
 	{
 	    /* If the size of `devtype' changes, fix the sscanf call also */
-	    char devtype[16];
+	    char devtype[16+1];
 
 	    if (sscanf (info->data, "%16s %lu",
 			devtype, &devnum_long) < 2)

@@ -164,7 +164,7 @@ apply_complete()
 	return;
 	}
 
-    i = fscanf(fp, "%20s %d %c", class, &dn, junk);
+    i = fscanf(fp, "%19s %d %c", class, &dn, junk);
     fclose(fp);
     if (i != 2)
 	{
@@ -294,7 +294,7 @@ read_piece(char *input_file)
 	    char *s;
 	    int fd = -1;
 
-	    if (sscanf(line, "CTM_MAIL BEGIN %30s %d %d %c",
+	    if (sscanf(line, "CTM_MAIL BEGIN %29s %d %d %c",
 		    delta, &pce, &npieces, junk) != 3)
 		continue;
 

@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.7 1997/07/25 20:12:21 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.8 1998/05/14 21:16:51 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -556,11 +556,11 @@ ataddr_string(u_short atnet, u_char athost)
 		while (fgets(line, sizeof(line), fp)) {
 			if (line[0] == '\n' || line[0] == 0 || line[0] == '#')
 				continue;
-			if (sscanf(line, "%d.%d.%d %s", &i1, &i2, &i3,
+			if (sscanf(line, "%d.%d.%d %255s", &i1, &i2, &i3,
 				     nambuf) == 4)
 				/* got a hostname. */
 				i3 |= ((i1 << 8) | i2) << 8;
-			else if (sscanf(line, "%d.%d %s", &i1, &i2,
+			else if (sscanf(line, "%d.%d %255s", &i1, &i2,
 					nambuf) == 3)
 				/* got a net name */
 				i3 = (((i1 << 8) | i2) << 8) | 255;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.11 1998/05/11 01:34:50 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.12 1998/05/14 21:16:42 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -155,7 +155,7 @@ file(name)
 	args[4] = &arg[4][0];
 	retval = 0;
 	while (fgets(line, 100, fp) != NULL) {
-		i = sscanf(line, "%50s %50s %50s %50s %50s", arg[0], arg[1], arg[2],
+		i = sscanf(line, "%49s %49s %49s %49s %49s", arg[0], arg[1], arg[2],
 		    arg[3], arg[4]);
 		if (i < 2) {
 			warnx("bad line: %s", line);
