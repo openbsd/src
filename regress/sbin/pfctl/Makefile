@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.60 2003/01/06 11:36:04 mcbride Exp $
+# $OpenBSD: Makefile,v 1.61 2003/01/14 14:43:31 cedric Exp $
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46
@@ -7,6 +7,7 @@ PFSIMPLE=1 2
 PFSETUP=1
 PFLOAD=1 2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 23 24 25 26 27 28 29
 PFLOAD+=30 31 32 33 34 35 36 38 39 40 43 44
+PFTABLE=1 2 3 4 5 6 7 8 9
 
 .for n in ${PFFAIL}
 REGRESS_TARGETS+=pfail${n}
@@ -51,6 +52,16 @@ pfload${n}:
 	${SUDO} pfctl -a regress:regress -Fr >/dev/null 2>&1
 
 .endfor
+
+.for n in ${PFTABLE}
+REGRESS_TARGETS+=pfr${n}
+
+pfr${n}:
+	${SUDO} /bin/ksh ${.CURDIR}/pfr.exec ${.CURDIR}/pfr${n}.in | \
+	    diff -u ${.CURDIR}/pfr${n}.ok /dev/stdin
+
+.endfor
+
 
 .ifdef DO_PFSETUP
 .for n in ${PFSETUP}

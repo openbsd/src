@@ -1,0 +1,61 @@
+# create
+1 table added.
+# add -n  1.1.1.1 1.1.1.2 1.1.1.3
+3/3 addresses added (dummy).
+# add -nf-
+3/3 addresses added (dummy).
+# add -nqv
+A  1.1.1.1
+A  1.1.1.2
+A  1.1.1.3
+# add -nqvv
+A  1.1.1.1
+A  1.1.1.2
+A  1.1.1.3
+# add
+3/3 addresses added.
+# delete -n  1.1.1.1 1.1.1.2 1.1.1.4
+2/3 addresses deleted (dummy).
+# delete -nf-
+2/3 addresses deleted (dummy).
+# delete -nqv
+D  1.1.1.1
+D  1.1.1.2
+# delete -nqvv
+D  1.1.1.1
+D  1.1.1.2
+   1.1.1.4
+# delete
+2/3 addresses deleted.
+# replace -n  1.1.1.1 1.1.1.2 1.1.1.3
+2 addresses added (dummy).
+# replace -nf-
+2 addresses added (dummy).
+# replace -nqv
+A  1.1.1.1
+A  1.1.1.2
+# replace -nqvv
+A  1.1.1.1
+A  1.1.1.2
+   1.1.1.3
+# replace
+2 addresses added.
+# test
+3/3 addresses match.
+# test
+2/3 addresses match.
+# zero
+1 table/stats cleared.
+# show
+   1.1.1.1
+   1.1.1.2
+   1.1.1.3
+# flush
+3 addresses deleted.
+# show
+# table
+regress
+# table -v
+-pa--	regress
+# kill
+1 table deleted.

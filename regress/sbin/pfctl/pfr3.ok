@@ -1,0 +1,60 @@
+# create
+1 table added.
+# add -n  10 10.11 10.11.12 10.11.12.13
+4/4 addresses added (dummy).
+# add -nf-
+4/4 addresses added (dummy).
+# add -nqv
+A  10.0.0.0/8
+A  10.11.0.0/16
+A  10.11.12.0/24
+A  10.11.12.13
+# add -nqvv
+A  10.0.0.0/8
+A  10.11.0.0/16
+A  10.11.12.0/24
+A  10.11.12.13
+# add
+4/4 addresses added.
+# delete -n  10.11.0.0/16 10.11.12.0/24
+2/2 addresses deleted (dummy).
+# delete -nf-
+2/2 addresses deleted (dummy).
+# delete -nqv
+D  10.11.0.0/16
+D  10.11.12.0/24
+# delete -nqvv
+D  10.11.0.0/16
+D  10.11.12.0/24
+# delete
+2/2 addresses deleted.
+# replace -n  10.0/8 172.16.0/12 192.168.0/16
+2 addresses added (dummy).
+1 addresses deleted (dummy).
+# replace -nf-
+2 addresses added (dummy).
+1 addresses deleted (dummy).
+# replace -nqv
+A  172.16.0.0/12
+A  192.168.0.0/16
+D  10.11.12.13
+# replace -nqvv
+   10.0.0.0/8
+A  172.16.0.0/12
+A  192.168.0.0/16
+D  10.11.12.13
+# replace
+2 addresses added.
+1 addresses deleted.
+# test
+3/3 addresses match.
+# test
+0/1 addresses match.
+# test
+1/2 addresses match.
+# table
+regress
+# table -v
+-pa--	regress
+# kill
+1 table deleted.

@@ -1,0 +1,97 @@
+# create
+1 table added.
+# add -n  1.2.3.4 ::1 1.2.3.4 ::1
+2/4 addresses added (dummy).
+# add -nf-
+2/4 addresses added (dummy).
+# add -nqv
+A  1.2.3.4
+A  ::1
+X  1.2.3.4
+X  ::1
+# add -nqvv
+A  1.2.3.4
+A  ::1
+X  1.2.3.4
+X  ::1
+# add
+2/4 addresses added.
+# add -n  1.2.3.4 ::1 1.2.3.4 ::1
+0/4 addresses added (dummy).
+# add -nf-
+0/4 addresses added (dummy).
+# add -nqv
+# add -nqvv
+   1.2.3.4
+   ::1
+   1.2.3.4
+   ::1
+# add
+0/4 addresses added.
+# delete -n  1.2.3.4 ::1 1.2.3.4 ::1
+2/4 addresses deleted (dummy).
+# delete -nf-
+2/4 addresses deleted (dummy).
+# delete -nqv
+D  1.2.3.4
+D  ::1
+X  1.2.3.4
+X  ::1
+# delete -nqvv
+D  1.2.3.4
+D  ::1
+X  1.2.3.4
+X  ::1
+# delete
+2/4 addresses deleted.
+# delete -n  1.2.3.4 ::1 1.2.3.4 ::1
+0/4 addresses deleted (dummy).
+# delete -nf-
+0/4 addresses deleted (dummy).
+# delete -nqv
+# delete -nqvv
+   1.2.3.4
+   ::1
+   1.2.3.4
+   ::1
+# delete
+0/4 addresses deleted.
+# replace -n  1.2.3.4 ::1 1.2.3.4 ::1
+2 addresses added (dummy).
+# replace -nf-
+2 addresses added (dummy).
+# replace -nqv
+A  1.2.3.4
+A  ::1
+X  1.2.3.4
+X  ::1
+# replace -nqvv
+A  1.2.3.4
+A  ::1
+X  1.2.3.4
+X  ::1
+# replace
+2 addresses added.
+# replace -n  1.2.3.4 ::1 1.2.3.4 ::1
+no changes (dummy).
+# replace -nf-
+no changes (dummy).
+# replace -nqv
+X  1.2.3.4
+X  ::1
+# replace -nqvv
+   1.2.3.4
+   ::1
+X  1.2.3.4
+X  ::1
+# replace
+no changes.
+# show
+   1.2.3.4
+   ::1
+# table
+regress
+# table -v
+-pa--	regress
+# kill
+1 table deleted.

@@ -1,0 +1,41 @@
+#!/bin/ksh
+pfctl -t regress -qTk 2>&1 || exit 1
+echo "# create"
+pfctl -t regress -Tc 2>&1 || exit 1
+for LINE in `sed -e "s/ /_/g" $1`; do 
+	RESULT=`echo $LINE | awk '{split($1,a,"_");print a[1]}'`
+	case $RESULT in
+		pass|fail) ;;
+		*) continue ;;
+	esac
+	CMD=`echo $LINE | awk '{split($1,a,"_");print a[2]}'` 
+	ARGSX=`echo $LINE | awk '{split($1,a,"_");for(i=3;a[i];i++)print a[i]}'`
+	ARGS=""
+	for ARG in $ARGSX; do ARGS="$ARGS $ARG"; done
+	if [ "$RESULT" = "pass" ]; then case $CMD in
+	a*|d*|r*)
+		echo "# $CMD -n $ARGS"
+		pfctl -t regress -nT $CMD $ARGS 2>&1 || exit 1
+		echo "# $CMD -nf-"
+		echo "# test\n" $ARGSX | pfctl -t regress -nT $CMD -f- \
+			2>&1 || exit 1
+		echo "# $CMD -nqv"
+		pfctl -t regress -nqvT $CMD $ARGS 2>&1 || exit 1
+		echo "# $CMD -nqvv"
+		pfctl -t regress -nqvvT $CMD $ARGS 2>&1 || exit 1
+		;;
+	esac fi
+	if [ "$RESULT" = "pass" ]; then
+		echo "# $CMD"
+		pfctl -t regress -T $CMD $ARGS 2>&1 || exit 1
+	else
+		echo "# $CMD"
+		pfctl -t regress -T $CMD $ARGS 2>&1 && exit 1
+	fi
+done
+echo "# table"
+pfctl -sT | grep regress 2>&1 || exit 1
+echo "# table -v"
+pfctl -vsT | grep regress 2>&1 || exit 1
+echo "# kill"
+pfctl -t regress -Tk 2>&1 || exit 1

@@ -1,0 +1,22 @@
+# create
+1 table added.
+# add -n  localhost
+2/2 addresses added (dummy).
+# add -nf-
+2/2 addresses added (dummy).
+# add -nqv
+A  ::1
+A  127.0.0.1
+# add -nqvv
+A  ::1
+A  127.0.0.1
+# add
+2/2 addresses added.
+# add
+pfctl: illegal address: "invalid$host"
+# table
+regress
+# table -v
+-pa--	regress
+# kill
+1 table deleted.

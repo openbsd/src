@@ -1,0 +1,4 @@
+# invalid addresses
+fail add 1.2.3.4.5
+fail add 10.1.2.3/33
+fail add :80

@@ -1,0 +1,152 @@
+# create
+1 table added.
+# add -n  1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
+6/6 addresses added (dummy).
+# add -nf-
+6/6 addresses added (dummy).
+# add -nqv
+A  1.1.1.1
+A !1.1.1.2
+A  10.10.0.0/16
+A !10.11.0.0/16
+A  ::1
+A !::2
+# add -nqvv
+A  1.1.1.1
+A !1.1.1.2
+A  10.10.0.0/16
+A !10.11.0.0/16
+A  ::1
+A !::2
+# add
+6/6 addresses added.
+# show
+   1.1.1.1
+  !1.1.1.2
+   10.10.0.0/16
+  !10.11.0.0/16
+   ::1
+  !::2
+# replace -n  1.1.1.1 !1.1.1.2 !!1.1.1.3 !!!1.1.1.4
+2 addresses added (dummy).
+4 addresses deleted (dummy).
+# replace -nf-
+2 addresses added (dummy).
+4 addresses deleted (dummy).
+# replace -nqv
+A  1.1.1.3
+A !1.1.1.4
+D !::2
+D  ::1
+D !10.11.0.0/16
+D  10.10.0.0/16
+# replace -nqvv
+   1.1.1.1
+  !1.1.1.2
+A  1.1.1.3
+A !1.1.1.4
+D !::2
+D  ::1
+D !10.11.0.0/16
+D  10.10.0.0/16
+# replace
+2 addresses added.
+4 addresses deleted.
+# show
+   1.1.1.1
+  !1.1.1.2
+   1.1.1.3
+  !1.1.1.4
+# replace -n  fe80::/16 !fe81::/16 !!fe82::/16 !!!fe83::/16
+4 addresses added (dummy).
+4 addresses deleted (dummy).
+# replace -nf-
+4 addresses added (dummy).
+4 addresses deleted (dummy).
+# replace -nqv
+A  fe80::/16
+A !fe81::/16
+A  fe82::/16
+A !fe83::/16
+D !1.1.1.4
+D  1.1.1.3
+D !1.1.1.2
+D  1.1.1.1
+# replace -nqvv
+A  fe80::/16
+A !fe81::/16
+A  fe82::/16
+A !fe83::/16
+D !1.1.1.4
+D  1.1.1.3
+D !1.1.1.2
+D  1.1.1.1
+# replace
+4 addresses added.
+4 addresses deleted.
+# show
+   fe80::/16
+  !fe81::/16
+   fe82::/16
+  !fe83::/16
+# replace -n  10 !10.10 10.10.10 !10.10.10.10
+4 addresses added (dummy).
+4 addresses deleted (dummy).
+# replace -nf-
+4 addresses added (dummy).
+4 addresses deleted (dummy).
+# replace -nqv
+A  10.0.0.0/8
+A !10.10.0.0/16
+A  10.10.10.0/24
+A !10.10.10.10
+D !fe83::/16
+D  fe82::/16
+D !fe81::/16
+D  fe80::/16
+# replace -nqvv
+A  10.0.0.0/8
+A !10.10.0.0/16
+A  10.10.10.0/24
+A !10.10.10.10
+D !fe83::/16
+D  fe82::/16
+D !fe81::/16
+D  fe80::/16
+# replace
+4 addresses added.
+4 addresses deleted.
+# add -n  fe80::/16 !fe80:fe80::/32 fe80:fe80:fe80::/48
+3/3 addresses added (dummy).
+# add -nf-
+3/3 addresses added (dummy).
+# add -nqv
+A  fe80::/16
+A !fe80:fe80::/32
+A  fe80:fe80:fe80::/48
+# add -nqvv
+A  fe80::/16
+A !fe80:fe80::/32
+A  fe80:fe80:fe80::/48
+# add
+3/3 addresses added.
+# show
+   10.0.0.0/8
+  !10.10.0.0/16
+   10.10.10.0/24
+  !10.10.10.10
+   fe80::/16
+  !fe80:fe80::/32
+   fe80:fe80:fe80::/48
+# test
+2/2 addresses match.
+# test
+0/3 addresses match.
+# test
+1/2 addresses match.
+# table
+regress
+# table -v
+-pa--	regress
+# kill
+1 table deleted.

@@ -1,0 +1,14 @@
+# create
+1 table added.
+# add
+pfctl: illegal address: "1.2.3.4.5"
+# add
+pfctl: illegal netmask: "33"
+# add
+pfctl: illegal address: ":80"
+# table
+regress
+# table -v
+-pa--	regress
+# kill
+1 table deleted.
