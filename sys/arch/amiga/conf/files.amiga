@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.20 1997/03/26 18:25:37 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.21 1997/05/13 16:07:23 niklas Exp $
 #	$NetBSD: files.amiga,v 1.51 1996/12/16 16:17:31 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -71,6 +71,11 @@ device	grfcc: grfbus
 attach	grfcc at mainbus
 file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
 file	arch/amiga/dev/ite_cc.c		grfcc & ite
+
+# RAM disk
+pseudo-device	rd
+file	dev/ramdisk.c			rd needs-flag
+file	arch/amiga/dev/rd_root.c	ramdisk_hooks
 
 pseudo-device	view
 file	arch/amiga/dev/view.c		view | grfcc needs-count
@@ -331,6 +336,7 @@ major	{vnd = 6}
 major	{cd = 7}
 major	{ccd = 8}
 major	{acd = 15}
+major	{rd = 16}
 
 # Compatibility modules
 
