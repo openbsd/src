@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.4 1997/07/15 13:42:05 kstailey Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.5 2000/06/04 23:06:17 aaron Exp $	*/
 /*	$NetBSD: keyboard.c,v 1.2 1995/01/20 08:51:59 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: keyboard.c,v 1.4 1997/07/15 13:42:05 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: keyboard.c,v 1.5 2000/06/04 23:06:17 aaron Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -110,7 +110,7 @@ keyboard()
                                 clrtoeol();
                                 continue;
                         }
-			if (col >= sizeof(line)) {
+			if (col >= sizeof(line) - 1) {
 				/* line too long */
 				beep();
 				continue;
