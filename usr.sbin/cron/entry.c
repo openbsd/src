@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: entry.c,v 1.3 1996/12/14 20:20:42 millert Exp $";
+static char rcsid[] = "$Id: entry.c,v 1.4 1996/12/16 18:40:53 deraadt Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -256,7 +256,7 @@ load_entry(file, error_func, pw, envp)
 		goto eof;
 	}
 	if (!env_get("SHELL", e->envp)) {
-		sprintf(envstr, "SHELL=%s", _PATH_BSHELL);
+		snprintf(envstr, sizeof envstr, "SHELL=%s", _PATH_BSHELL);
 		if ((tenvp = env_set(e->envp, envstr))) {
 			e->envp = tenvp;
 		} else {
@@ -265,7 +265,7 @@ load_entry(file, error_func, pw, envp)
 		}
 	}
 	if (!env_get("HOME", e->envp)) {
-		sprintf(envstr, "HOME=%s", pw->pw_dir);
+		snprintf(envstr, sizeof envstr, "HOME=%s", pw->pw_dir);
 		if ((tenvp = env_set(e->envp, envstr))) {
 			e->envp = tenvp;
 		} else {
@@ -282,7 +282,7 @@ load_entry(file, error_func, pw, envp)
 			goto eof;
 		}
 	}
-	sprintf(envstr, "%s=%s", "LOGNAME", pw->pw_name);
+	snprintf(envstr, sizeof envstr, "%s=%s", "LOGNAME", pw->pw_name);
 	if ((tenvp = env_set(e->envp, envstr))) {
 		e->envp = tenvp;
 	} else {
@@ -290,7 +290,7 @@ load_entry(file, error_func, pw, envp)
 		goto eof;
 	}
 #if defined(BSD)
-	sprintf(envstr, "%s=%s", "USER", pw->pw_name);
+	snprintf(envstr, sizeof envstr, "%s=%s", "USER", pw->pw_name);
 	if ((tenvp = env_set(e->envp, envstr))) {
 		e->envp = tenvp;
 	} else {
