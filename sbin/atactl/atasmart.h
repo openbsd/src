@@ -1,4 +1,4 @@
-/*	$OpenBSD: atasmart.h,v 1.2 2002/06/15 10:59:06 gluk Exp $	*/
+/*	$OpenBSD: atasmart.h,v 1.3 2004/01/16 22:41:52 grange Exp $	*/
 
 /*
  * Copyright (c) 2002 Alexander Yurchenko <grange@rt.mipt.ru>
@@ -48,7 +48,7 @@ struct attribute {
 	u_int16_t status;	/* Status flags */
 	u_int8_t  value;	/* Attribute value */
 	u_int8_t  raw[8];	/* Vendor specific */
-} __attribute__((packed));
+} __packed;
 
 /* read data sector */
 struct smart_read {
