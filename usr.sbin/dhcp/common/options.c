@@ -579,11 +579,13 @@ char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 				for (; dp < data + len; dp++) {
 					if (!isascii (*dp) ||
 					    !isprint (*dp)) {
-						snprintf (op, opleft, "\\%03o",
-							 *dp);
-						op += 4;
-						opleft -= 4;
-						
+						if (dp + 1 != data + len ||
+						    *dp != 0) {
+							snprintf(op, opleft,
+							    "\\%03o", *dp);
+							op += 4;
+							opleft -= 4;
+						}
 					} else if (*dp == '"' ||
 						   *dp == '\'' ||
 						   *dp == '$' ||
