@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.12 2003/06/16 01:09:02 deraadt Exp $	 */
+/* $OpenBSD: screen.c,v 1.13 2003/06/16 17:24:44 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -40,6 +40,7 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
