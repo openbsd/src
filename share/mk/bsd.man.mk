@@ -16,8 +16,8 @@ NROFF?=		nroff
 	.cat7 .cat8 .cat9
 
 .9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3.cat3 .2.cat2 .1.cat1:
-	@echo "nroff -mandoc ${.IMPSRC} > ${.TARGET}"
-	@nroff -mandoc ${.IMPSRC} > ${.TARGET} || ( rm -f ${.TARGET} ; false )
+	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
+	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 .if defined(MAN) && !empty(MAN)
 MANALL=	${MAN:S/.1$/.cat1/g:S/.2$/.cat2/g:S/.3$/.cat3/g:S/.4$/.cat4/g:S/.5$/.cat5/g:S/.6$/.cat6/g:S/.7$/.cat7/g:S/.8$/.cat8/g:S/.9$/.cat9/g}
@@ -33,8 +33,9 @@ MCOMPRESSSUFFIX= .gz
 maninstall:
 .if defined(MANALL)
 	@for page in ${MANALL}; do \
-		dir=${DESTDIR}${MANDIR}`expr $$page : '.*\.cat\([1-9]\)'`; \
-		instpage=$${dir}${MANSUBDIR}/`expr \`basename $$page\` : '\(.*\)\.cat[1-9]'`.0${MCOMPRESSSUFFIX}; \
+		dir=${DESTDIR}${MANDIR}$${page##*.cat}; \
+		base=$${page##*/}; \
+		instpage=$${dir}${MANSUBDIR}/$${base%.*}.0${MCOMPRESSSUFFIX}; \
 		if [ X"${MCOMPRESS}" = X ]; then \
 			echo ${MINSTALL} $$page $$instpage; \
 			${MINSTALL} $$page $$instpage; \
@@ -52,12 +53,12 @@ maninstall:
 	while test $$# -ge 2; do \
 		name=$$1; \
 		shift; \
-		dir=${DESTDIR}${MANDIR}`expr $$name : '.*\.\(.*\)'`; \
-		l=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0${MCOMPRESSSUFFIX}; \
+		dir=${DESTDIR}${MANDIR}$${name##*.}; \
+		l=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
 		name=$$1; \
 		shift; \
-		dir=${DESTDIR}${MANDIR}`expr $$name : '.*\.\(.*\)'`; \
-		t=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0${MCOMPRESSSUFFIX}; \
+		dir=${DESTDIR}${MANDIR}$${name##*.}; \
+		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
 		echo $$t -\> $$l; \
 		rm -f $$t; \
 		ln $$l $$t; \
