@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.12 2002/01/14 21:34:41 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.13 2003/09/16 20:52:19 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -46,117 +46,101 @@
 #ifndef	__MACHINE_MVME188_H__
 #define	__MACHINE_MVME188_H__
 
-/*
- * Something to put append a 'U' to a long constant if it's C so that
- * it'll be unsigned in both ANSI and traditional.
- */
-#ifndef UDEFINED
-#if defined(_LOCORE)
-#define U(num)	num
-#else
-#if defined(__STDC__)
-#define U(num)	num ## U
-#else
-#define U(num)	num/**/U
-#endif
-#endif
-#endif
+#define VME_CMMU_I0	0xFFF7E000 	/* MVME188 code CMMU 0 */
+#define VME_CMMU_I1	0xFFF7D000 	/* MVME188 code CMMU 1 */
+#define VME_CMMU_I2	0xFFF7B000 	/* MVME188 code CMMU 2 */
+#define VME_CMMU_I3	0xFFF77000 	/* MVME188 code CMMU 3 */
+#define VME_CMMU_D0	0xFFF6F000 	/* MVME188 data CMMU 0 */
+#define VME_CMMU_D1	0xFFF5F000 	/* MVME188 data CMMU 1 */
+#define VME_CMMU_D2	0xFFF3F000 	/* MVME188 data CMMU 2 */
+#define VME_CMMU_D3	0xFFF7F000 	/* MVME188 data CMMU 3 */
 
-#define VME_CMMU_I0	U(0xFFF7E000) 	/* MVME188 code CMMU 0 */
-#define VME_CMMU_I1	U(0xFFF7D000) 	/* MVME188 code CMMU 1 */
-#define VME_CMMU_I2	U(0xFFF7B000) 	/* MVME188 code CMMU 2 */
-#define VME_CMMU_I3	U(0xFFF77000) 	/* MVME188 code CMMU 3 */
-#define VME_CMMU_D0	U(0xFFF6F000) 	/* MVME188 data CMMU 0 */
-#define VME_CMMU_D1	U(0xFFF5F000) 	/* MVME188 data CMMU 1 */
-#define VME_CMMU_D2	U(0xFFF3F000) 	/* MVME188 data CMMU 2 */
-#define VME_CMMU_D3	U(0xFFF7F000) 	/* MVME188 data CMMU 3 */
-
-#define MVME188_EPROM		U(0xFFC00000)
-#define MVME188_EPROM_SIZE	U(0x00080000)
-#define MVME188_SRAM		U(0xFFE00000)
-#define MVME188_SRAM_SIZE	U(0x00020000)
-#define MVME188_UTILITY		U(0xFF000000)
-#define MVME188_UTILITY_SIZE	U(0x01000000)
-#define UTIL_START		U(0xFFC00000)  /* start of MVME188 utility space */
-#define UTIL_SIZE		U(0x003FFFFF)  /* size of MVME188 utility space */
+#define MVME188_EPROM		0xFFC00000
+#define MVME188_EPROM_SIZE	0x00080000
+#define MVME188_SRAM		0xFFE00000
+#define MVME188_SRAM_SIZE	0x00020000
+#define MVME188_UTILITY		0xFF000000
+#define MVME188_UTILITY_SIZE	0x01000000
+#define UTIL_START		0xFFC00000  /* start of MVME188 utility space */
+#define UTIL_SIZE		0x003FFFFF  /* size of MVME188 utility space */
 
 /*
  * MVME188 declarations for hardware level device registers and such.
  */
 
 /* base address for the interrupt control registers */
-#define INTR_CONTROL_BASE	U(0xfff84000)
-#define VMEA24SPACE	U(0xEEC00000) 	/*  VMEA24 master addr space (4 Meg) */
+#define INTR_CONTROL_BASE	0xfff84000
+#define VMEA24SPACE	0xEEC00000 	/*  VMEA24 master addr space (4 Meg) */
 
 /* per-processor interrupt enable registers */
-#define MVME188_IEN0	U(0xFFF84004)	/* interrupt enable CPU 0 */
-#define MVME188_IEN1	U(0xFFF84008)	/* interrupt enable CPU 1 */
-#define MVME188_IEN2	U(0xFFF84010)	/* interrupt enable CPU 2 */
-#define MVME188_IEN3	U(0xFFF84020)	/* interrupt enable CPU 3 */
+#define MVME188_IEN0	0xFFF84004	/* interrupt enable CPU 0 */
+#define MVME188_IEN1	0xFFF84008	/* interrupt enable CPU 1 */
+#define MVME188_IEN2	0xFFF84010	/* interrupt enable CPU 2 */
+#define MVME188_IEN3	0xFFF84020	/* interrupt enable CPU 3 */
 
 /* same as above */
-#define IEN0_REG	U(0xfff84004)
-#define IEN1_REG	U(0xfff84008)
-#define IEN2_REG	U(0xfff84010)
-#define IEN3_REG	U(0xfff84020)
+#define IEN0_REG	0xfff84004
+#define IEN1_REG	0xfff84008
+#define IEN2_REG	0xfff84010
+#define IEN3_REG	0xfff84020
 
-#define IENALL_REG	U(0xfff8403c)
+#define IENALL_REG	0xfff8403c
 
-#define MVME188_IST	U(0xFFF84040) 	/* interrupt status register */
-#define IST_REG		U(0xfff84040)	/* same as above */
+#define MVME188_IST	0xFFF84040 	/* interrupt status register */
+#define IST_REG		0xfff84040	/* same as above */
 
-#define MVME188_SETSWI	U(0xFFF84080) 	/* generate soft interrupt */
-#define MVME188_CLRSWI	U(0xFFF84084) 	/* reset soft interrupt */
-#define MVME188_ISTATE	U(0xFFF84088) 	/* HW interrupt status */
-#define MVME188_CLRINT	U(0xFFF8408C) 	/* reset HW interrupt */
+#define MVME188_SETSWI	0xFFF84080 	/* generate soft interrupt */
+#define MVME188_CLRSWI	0xFFF84084 	/* reset soft interrupt */
+#define MVME188_ISTATE	0xFFF84088 	/* HW interrupt status */
+#define MVME188_CLRINT	0xFFF8408C 	/* reset HW interrupt */
 
 /* same as above */
-#define SETSWI_REG	U(0xfff84080)	/* SETSWI register addr */
-#define CLRSWI_REG	U(0xfff84084)	/* CLRSWI register addr */
-#define ISTATE_REG	U(0xfff84088)
-#define CLRINT_REG	U(0xfff8408C)
+#define SETSWI_REG	0xfff84080	/* SETSWI register addr */
+#define CLRSWI_REG	0xfff84084	/* CLRSWI register addr */
+#define ISTATE_REG	0xfff84088
+#define CLRINT_REG	0xfff8408C
 
-#define MVME188_GCSR	U(0xFFF86000)	/* 188 global control and status reg */
-#define MVME188_UCSR	U(0xFFF87000)	/* 188 utility control and status reg */
-#define MVME188_BASAD	U(0xFFF87004)	/* 188 base address reg */
-#define MVME188_GLBRES	U(0xFFF8700C)	/* 188 global reset reg */
+#define MVME188_GCSR	0xFFF86000	/* 188 global control and status reg */
+#define MVME188_UCSR	0xFFF87000	/* 188 utility control and status reg */
+#define MVME188_BASAD	0xFFF87004	/* 188 base address reg */
+#define MVME188_GLBRES	0xFFF8700C	/* 188 global reset reg */
 
-#define GCSR_BASE	U(0xfff86000)
+#define GCSR_BASE	0xfff86000
 #define GLOBAL0		GCSR_BASE + 0x01
 #define GLOBAL1		GCSR_BASE + 0x03
 #define GLOBAL2		GCSR_BASE + 0x05
 #define GLOBAL3		GCSR_BASE + 0x07
-#define GLB0		U(0xfff86001)
-#define GLB1		U(0xfff86003)
-#define GLB2		U(0xfff86005)
-#define GLB3		U(0xfff86007)
-#define M188_SYSCON	U(0x00000040)
-#define UCSR_REG	U(0xfff87000)
-#define GLBRES_REG	U(0xfff8700C)
+#define GLB0		0xfff86001
+#define GLB1		0xfff86003
+#define GLB2		0xfff86005
+#define GLB3		0xfff86007
+#define M188_SYSCON	0x00000040
+#define UCSR_REG	0xfff87000
+#define GLBRES_REG	0xfff8700C
 
-#define MVME188_CCSR	U(0xFFF88000)	/* 188 CPU board control status reg */
-#define MVME188_ERROR	U(0xFFF88004)	/* 188 Mbus fault reg */
-#define MVME188_PCNFA	U(0xFFF88008)	/* 188 Pbus A decoder reg */
-#define MVME188_PCNFB	U(0xFFF8800C)	/* 188 Pbus B decoder reg */
-#define MVME188_EXTAD	U(0xFFF88010)	/* 188 A24 master A24-A31 addr reg */
-#define MVME188_WHOAMI	U(0xFFF88018)	/* 188 whoami reg */
-#define MVME188_WMAD	U(0xFFF88020)	/* 188 write mbus addr decoder reg */
-#define MVME188_RMAD	U(0xFFF88024)	/* 188 read mbus addr decoder reg */
-#define MVME188_WVAD	U(0xFFF88028)	/* 188 write vmebus addr decoder reg */
-#define MVME188_RVAD	U(0xFFF8802C)	/* 188 read vmebus adds decoder reg */
+#define MVME188_CCSR	0xFFF88000	/* 188 CPU board control status reg */
+#define MVME188_ERROR	0xFFF88004	/* 188 Mbus fault reg */
+#define MVME188_PCNFA	0xFFF88008	/* 188 Pbus A decoder reg */
+#define MVME188_PCNFB	0xFFF8800C	/* 188 Pbus B decoder reg */
+#define MVME188_EXTAD	0xFFF88010	/* 188 A24 master A24-A31 addr reg */
+#define MVME188_WHOAMI	0xFFF88018	/* 188 whoami reg */
+#define MVME188_WMAD	0xFFF88020	/* 188 write mbus addr decoder reg */
+#define MVME188_RMAD	0xFFF88024	/* 188 read mbus addr decoder reg */
+#define MVME188_WVAD	0xFFF88028	/* 188 write vmebus addr decoder reg */
+#define MVME188_RVAD	0xFFF8802C	/* 188 read vmebus adds decoder reg */
 
 /* duplicates of above */
-#define CCSR_REG	U(0xfff88000)
-#define ERROR_REG	U(0xfff88004)	/* ERROR register addr */
-#define PCNFA_REG	U(0xfff88008)
-#define PCNFB_REG	U(0xfff8800c)
-#define EXTAD_REG	U(0xfff88010)
-#define EXTAM_REG	U(0xfff88014)
-#define WHOAMI_REG	U(0xfff88018)	/* WHOAMI register addr */
-#define WMAD_REG	U(0xfff88020)
-#define RMAD_REG	U(0xfff88024)
-#define WVAD_REG	U(0xfff88028)
-#define RVAD_REG	U(0xfff8802c)
+#define CCSR_REG	0xfff88000
+#define ERROR_REG	0xfff88004	/* ERROR register addr */
+#define PCNFA_REG	0xfff88008
+#define PCNFB_REG	0xfff8800c
+#define EXTAD_REG	0xfff88010
+#define EXTAM_REG	0xfff88014
+#define WHOAMI_REG	0xfff88018	/* WHOAMI register addr */
+#define WMAD_REG	0xfff88020
+#define RMAD_REG	0xfff88024
+#define WVAD_REG	0xfff88028
+#define RVAD_REG	0xfff8802c
 
 #define MAD_MDS		0x07	/* 188 MAD Device Select bits */
 
@@ -192,22 +176,23 @@
  * processor dependend code section
  * main goal is to concentrate HW dependencies into a few lines
  */
-#define ISR_LOW_SOFTINT_MASK(cpu)	(1<<cpu)
-#define ISR_HIGH_SOFTINT_MASK(cpu)	(1<<(cpu + 24))
+#define ISR_LOW_SOFTINT_MASK(cpu)	(1 << (cpu))
+#define ISR_HIGH_SOFTINT_MASK(cpu)	(1 << ((cpu) + 24))
 #define ISR_LOW_SOFTMASK		0xf
-#define ISR_HIGH_SOFTMASK		(0xf<<24)
-#define ISR_SOFTINT_EXCEPT_MASK(cpu)	(ISR_LOW_SOFTINT_MASK(cpu) | ISR_HIGH_SOFTINT_MASK(cpu) | 0xf0fffff0)
-#define ISR_CLOCKINT_MASK		(1<<IEN_CIOI_LOG)
+#define ISR_HIGH_SOFTMASK		(0xf << 24)
+#define ISR_SOFTINT_EXCEPT_MASK(cpu) \
+	(ISR_LOW_SOFTINT_MASK(cpu) | ISR_HIGH_SOFTINT_MASK(cpu) | 0xf0fffff0)
+#define ISR_CLOCKINT_MASK		(1 << IEN_CIOI_LOG)
 
-#define ISR_RESET_NMI			*(int *volatile)MVME188_CLRINT = 1<<CLRINT_CLRABRTI_LOG
-#define ISR_RESET_SYSFAIL		*(int *volatile)MVME188_CLRINT = 1<<CLRINT_CLRSFI_LOG
-#define ISR_RESET_ACFAIL		*(int *volatile)MVME188_CLRINT = 1<<CLRINT_CLRACFI_LOG
+#define ISR_RESET_NMI			*(int *volatile)MVME188_CLRINT = 1 << CLRINT_CLRABRTI_LOG
+#define ISR_RESET_SYSFAIL		*(int *volatile)MVME188_CLRINT = 1 << CLRINT_CLRSFI_LOG
+#define ISR_RESET_ACFAIL		*(int *volatile)MVME188_CLRINT = 1 << CLRINT_CLRACFI_LOG
 #define ISR_RESET_LOW_SOFTINT(cpu)	*(int *)MVME188_CLRSWI = ISR_LOW_SOFTINT_MASK(cpu)
-#define ISR_RESET_HIGH_SOFTINT(cpu)	*(int *)MVME188_CLRSWI = (1<<(cpu + MAX_CPUS))
+#define ISR_RESET_HIGH_SOFTINT(cpu)	*(int *)MVME188_CLRSWI = (1 << (cpu + MAX_CPUS))
 #define ISR_DETERMINE_LOW_SOFTINT(cpu)	*(unsigned int *volatile)MVME188_IST & ISR_LOW_SOFTINT_MASK(cpu)
 #define ISR_DETERMINE_HIGH_SOFTINT(cpu)	*(unsigned int *volatile)MVME188_IST & ISR_HIGH_SOFTINT_MASK(cpu)
 #define ISR_GENERATE_LOW_SOFTINT(cpu)	*((unsigned int *volatile)MVME188_SETSWI) = ISR_LOW_SOFTINT_MASK(cpu)
-#define ISR_GENERATE_HIGH_SOFTINT(cpu)	*((unsigned int *volatile)MVME188_SETSWI) = (1<<(cpu + MAX_CPUS))
+#define ISR_GENERATE_HIGH_SOFTINT(cpu)	*((unsigned int *volatile)MVME188_SETSWI) = (1 << (cpu + MAX_CPUS))
 #define ISR_RESET_MACHINE		*((unsigned *volatile) MVME188_GLBRES) = 1
 #define ISR_GET_CURRENT_MASK(cpu)	*int_mask_reg[cpu] & *(int *volatile)MVME188_IST
 
@@ -226,40 +211,40 @@
 
 /* the following codes are the INT exception enable and status bits. */
 /* Refer to MVME188 RISC Microcomputer User's Manual, 4-10. */
-#define ABRT_BIT		U(0x80000000)	/* 31 */
-#define ACF_BIT			U(0x40000000)	/* 30 */
-#define ARBTO_BIT		U(0x20000000)	/* 29 */
-#define DTI_BIT			U(0x10000000)	/* 28 */
-#define SWI7_BIT		U(0x08000000)	/* 27 */
-#define SWI6_BIT		U(0x04000000)	/* 26 */
-#define SWI5_BIT		U(0x02000000)	/* 25 */
-#define SWI4_BIT		U(0x01000000)	/* 24 */	   
-#define IRQ7_BIT		U(0x00800000)	/* 23 */
-#define CIOI_BIT		U(0x00200000)	/* 21 */
-#define SF_BIT			U(0x00100000)	/* 20 */
-#define IRQ6_BIT		U(0x00080000)	/* 19 */
-#define DI_BIT			U(0x00020000)	/* 17 */
-#define SIGHPI_BIT		U(0x00010000)	/* 16 */
-#define IRQ5_BIT		U(0x00004000)	/* 14 */
-#define IRQ4_BIT		U(0x00001000)	/* 12 */
-#define IRQ3_BIT		U(0x00000400)	/* 10 */
-#define LMI_BIT			U(0x00000100)	/* 08 */
-#define SIGLPI_BIT		U(0x00000080)	/* 07 */
-#define IRQ2_BIT		U(0x00000040)	/* 06 */
-#define IRQ1_BIT		U(0x00000010)	/* 04 */
-#define SWI3_BIT		U(0x00000008)	/* 03 */
-#define SWI2_BIT		U(0x00000004)	/* 02 */
-#define SWI1_BIT		U(0x00000002)	/* 01 */
-#define SWI0_BIT		U(0x00000001)	/* 00 */
+#define ABRT_BIT		0x80000000	/* 31 */
+#define ACF_BIT			0x40000000	/* 30 */
+#define ARBTO_BIT		0x20000000	/* 29 */
+#define DTI_BIT			0x10000000	/* 28 */
+#define SWI7_BIT		0x08000000	/* 27 */
+#define SWI6_BIT		0x04000000	/* 26 */
+#define SWI5_BIT		0x02000000	/* 25 */
+#define SWI4_BIT		0x01000000	/* 24 */
+#define IRQ7_BIT		0x00800000	/* 23 */
+#define CIOI_BIT		0x00200000	/* 21 */
+#define SF_BIT			0x00100000	/* 20 */
+#define IRQ6_BIT		0x00080000	/* 19 */
+#define DI_BIT			0x00020000	/* 17 */
+#define SIGHPI_BIT		0x00010000	/* 16 */
+#define IRQ5_BIT		0x00004000	/* 14 */
+#define IRQ4_BIT		0x00001000	/* 12 */
+#define IRQ3_BIT		0x00000400	/* 10 */
+#define LMI_BIT			0x00000100	/* 08 */
+#define SIGLPI_BIT		0x00000080	/* 07 */
+#define IRQ2_BIT		0x00000040	/* 06 */
+#define IRQ1_BIT		0x00000010	/* 04 */
+#define SWI3_BIT		0x00000008	/* 03 */
+#define SWI2_BIT		0x00000004	/* 02 */
+#define SWI1_BIT		0x00000002	/* 01 */
+#define SWI0_BIT		0x00000001	/* 00 */
 
 /*
  * masks and offsets for IST
  * These are a combination of the above
  */
-#define HW_FAILURE_MASK		U(0xE0100000)	/* hardware irq bits */
-#define SOFT_INTERRUPT_MASK	U(0x0F00000F)	/* software irq bits */
-#define VME_INTERRUPT_MASK	U(0x00885450)   /* vme irq bits */
-#define OBIO_INTERRUPT_MASK	U(0x10330180)	/* on board I/O */
+#define HW_FAILURE_MASK		0xE0100000	/* hardware irq bits */
+#define SOFT_INTERRUPT_MASK	0x0F00000F	/* software irq bits */
+#define VME_INTERRUPT_MASK	0x00885450	/* vme irq bits */
+#define OBIO_INTERRUPT_MASK	0x10330180	/* on board I/O */
 
 #define HW_FAILURE_ACF		ACF_BIT		/* AC failure */
 #define HW_FAILURE_ABRTO	ARBTO_BIT	/* Arbiter timeout */
@@ -283,14 +268,14 @@
 #define MASK_LVL_4 (LVL7 | LVL6 | LVL5)    
 #define MASK_LVL_5 (LVL7 | LVL6)
 #define MASK_LVL_6 (LVL7)
-#define MASK_LVL_7 U(0x00000000) /* all ints disabled */
+#define MASK_LVL_7 0x00000000 /* all ints disabled */
 
 /* these are the various Z8536 CIO counter/timer registers */
-#define CIO_BASE		U(0xfff83000)
-#define CIO_PORTC		U(0xfff83000)
-#define CIO_PORTB		U(0xfff83004)
-#define CIO_PORTA		U(0xfff83008)
-#define CIO_CTRL		U(0xfff8300c)
+#define CIO_BASE		0xfff83000
+#define CIO_PORTC		0xfff83000
+#define CIO_PORTB		0xfff83004
+#define CIO_PORTA		0xfff83008
+#define CIO_CTRL		0xfff8300c
 
 #define CIO_MICR		0x00	/* Master interrupt control register */
 #define CIO_MICR_MIE		0x80
@@ -345,37 +330,37 @@
 #define CIO_IP			0x20	/* CTC Interrupt pending */
 
 /* these are the DART read registers */
-#define DART_BASE		U(0xfff82000)
-#define DART_MRA		U(0xfff82000)	/* mode A */
-#define DART_SRA		U(0xfff82004)	/* status A */
-#define DART_RBA		U(0xfff8200c)	/* receive buffer A */
-#define DART_IPCR		U(0xfff82010)	/* input port change */
-#define DART_ISR		U(0xfff82014)	/* interrupt status */
-#define DART_CUR		U(0xfff82018)	/* count upper */
-#define DART_CLR		U(0xfff8201c)	/* count lower */
-#define DART_MR1B		U(0xfff82020)	/* mode B */
-#define DART_SRB		U(0xfff82024)	/* status B */
-#define DART_RBB		U(0xfff8202c)	/* receive buffer B */
-#define DART_IVR		U(0xfff82030)	/* interrupt vector */
-#define DART_INP		U(0xfff82034)	/* input port */
-#define DART_STARTC		U(0xfff82038)	/* start counter cmd */
-#define DART_STOPC		U(0xfff8203c)	/* stop counter cmd */
+#define DART_BASE		0xfff82000
+#define DART_MRA		0xfff82000	/* mode A */
+#define DART_SRA		0xfff82004	/* status A */
+#define DART_RBA		0xfff8200c	/* receive buffer A */
+#define DART_IPCR		0xfff82010	/* input port change */
+#define DART_ISR		0xfff82014	/* interrupt status */
+#define DART_CUR		0xfff82018	/* count upper */
+#define DART_CLR		0xfff8201c	/* count lower */
+#define DART_MR1B		0xfff82020	/* mode B */
+#define DART_SRB		0xfff82024	/* status B */
+#define DART_RBB		0xfff8202c	/* receive buffer B */
+#define DART_IVR		0xfff82030	/* interrupt vector */
+#define DART_INP		0xfff82034	/* input port */
+#define DART_STARTC		0xfff82038	/* start counter cmd */
+#define DART_STOPC		0xfff8203c	/* stop counter cmd */
 
 /* these are the DART write registers */
-#define DART_CSRA		U(0xfff82004)	/* clock select A */
-#define DART_CRA		U(0xfff82008)	/* command A */
-#define DART_TBA		U(0xfff8200c)	/* transmit buffer A */
-#define DART_ACR		U(0xfff82010)	/* auxiliary control */
-#define DART_IMR		U(0xfff82014)	/* interrupt mask reg*/
-#define DART_CTUR		U(0xfff82018)	/* counter/timer MSB */
-#define DART_CTLR		U(0xfff8201c)	/* counter/timer LSB */
-#define DART_MRB		U(0xfff82020)	/* mode B */
-#define DART_CSRB		U(0xfff82024)	/* clock select B */
-#define DART_CRB		U(0xfff82028)	/* command B */
-#define DART_TBB		U(0xfff8202c)	/* transmit buffer B */
-#define DART_OPCR		U(0xfff82034)	/* output port config*/
-#define DART_OPRS		U(0xfff82038)	/* output port set */
-#define DART_OPRR		U(0xfff8203c)	/* output port reset */
+#define DART_CSRA		0xfff82004	/* clock select A */
+#define DART_CRA		0xfff82008	/* command A */
+#define DART_TBA		0xfff8200c	/* transmit buffer A */
+#define DART_ACR		0xfff82010	/* auxiliary control */
+#define DART_IMR		0xfff82014	/* interrupt mask reg*/
+#define DART_CTUR		0xfff82018	/* counter/timer MSB */
+#define DART_CTLR		0xfff8201c	/* counter/timer LSB */
+#define DART_MRB		0xfff82020	/* mode B */
+#define DART_CSRB		0xfff82024	/* clock select B */
+#define DART_CRB		0xfff82028	/* command B */
+#define DART_TBB		0xfff8202c	/* transmit buffer B */
+#define DART_OPCR		0xfff82034	/* output port config*/
+#define DART_OPRS		0xfff82038	/* output port set */
+#define DART_OPRR		0xfff8203c	/* output port reset */
 
 #ifndef _LOCORE
 
@@ -390,9 +375,9 @@ extern unsigned int *volatile int_mask_reg[MAX_CPUS];
 
 #endif 
 
-#define M188_IACK		U(0xFFF85000)
+#define M188_IACK		0xFFF85000
 #define M188_IVEC		0x40	/* vector returned upon MVME188 int */
 
-#endif /* __MACHINE_MVME188_H__ */
+#endif	/* __MACHINE_MVME188_H__ */
 
 

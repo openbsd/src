@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.23 2003/01/14 03:20:14 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.24 2003/09/16 20:52:19 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -221,10 +221,6 @@
 /* REGister OFFset into the E.F. (exception frame) */
 #define REG_OFF(reg_num)  ((reg_num) * 4) /* (num * sizeof(register int))  */
 #define GENREG_OFF(num)	(REG_OFF(EF_R0 + (num))) /* GENeral REGister OFFset */
-
-#define GENERAL_BREATHING_ROOM	/* arbitrarily */ 200
-#define KERNEL_STACK_BREATHING_ROOM 	\
-	(GENERAL_BREATHING_ROOM + SIZEOF_STRUCT_PCB + SIZEOF_STRUCT_UTHREAD)
 
 /*
  * Some registers used during the setting up of the new exception frame.

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.111 2003/09/16 20:46:11 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.112 2003/09/16 20:52:22 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -126,7 +126,6 @@ void consinit(void);
 vm_offset_t size_memory(void);
 vm_offset_t memsize187(void);
 int getcpuspeed(void);
-int getscsiid(void);
 void identifycpu(void);
 void save_u_area(struct proc *, vm_offset_t);
 void load_u_area(struct proc *);
@@ -160,9 +159,16 @@ unsigned int *volatile int_mask_reg[MAX_CPUS] = {
 };
 #endif 
 
+#if defined(MVME187) || defined(MVME197)
+volatile vm_offset_t obiova;
+#ifdef MVME187
 volatile vm_offset_t bugromva;
 volatile vm_offset_t sramva;
-volatile vm_offset_t obiova;
+#endif
+#ifdef MVME197
+volatile vm_offset_t flashva;
+#endif
+#endif
 #ifdef MVME188
 volatile vm_offset_t utilva;
 #endif
@@ -520,14 +526,11 @@ cpu_startup()
 	 */
 	uarea_pages = UADDR;
 	uvm_map(kernel_map, (vaddr_t *)&uarea_pages, USPACE,
-		NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
-						     UVM_PROT_NONE,
-						     UVM_INH_NONE,
-						     UVM_ADV_NORMAL, 0));
-	if (uarea_pages != UADDR) {
-		printf("uarea_pages %x: UADDR not free\n", uarea_pages);
-		panic("bad UADDR");
-	}
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+	        UVM_ADV_NORMAL, 0));
+	if (uarea_pages != UADDR)
+		panic("uarea_pages %x: UADDR not free\n", uarea_pages);
 	
 	/* 
 	 * Grab machine dependant memory spaces
@@ -540,48 +543,58 @@ cpu_startup()
 		 */
 		sramva = SRAM_START;
 		uvm_map(kernel_map, (vaddr_t *)&sramva, SRAM_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
-							     UVM_PROT_NONE,
-							     UVM_INH_NONE,
-							     UVM_ADV_NORMAL, 0));
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		        UVM_ADV_NORMAL, 0));
+		if (sramva != SRAM_START)
+			panic("sramva %x: SRAM not free\n", sramva);
 
-		if (sramva != SRAM_START) {
-			printf("sramva %x: SRAM not free\n", sramva);
-			panic("bad sramva");
-		}
-#endif 
-#ifdef MVME197
-	case BRD_197:
-#endif 
-#if defined(MVME187) || defined(MVME197)
 		/*
 		 * Grab the BUGROM space that we hardwired in pmap_bootstrap
 		 */
-		bugromva = BUGROM_START;
-
-		uvm_map(kernel_map, (vaddr_t *)&bugromva, BUGROM_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
-							     UVM_PROT_NONE,
-							     UVM_INH_NONE,
-							     UVM_ADV_NORMAL, 0));
-		if (bugromva != BUGROM_START) {
-			printf("bugromva %x: BUGROM not free\n", bugromva);
-			panic("bad bugromva");
-		}
+		bugromva = BUG187_START;
+		uvm_map(kernel_map, (vaddr_t *)&bugromva, BUG187_SIZE,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		        UVM_ADV_NORMAL, 0));
+		if (bugromva != BUG187_START)
+			panic("bugromva %x: BUGROM not free\n", bugromva);
 		
 		/*
 		 * Grab the OBIO space that we hardwired in pmap_bootstrap
 		 */
 		obiova = OBIO_START;
 		uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
-							     UVM_PROT_NONE,
-							     UVM_INH_NONE,
-							     UVM_ADV_NORMAL, 0));
-		if (obiova != OBIO_START) {
-			printf("obiova %x: OBIO not free\n", obiova);
-			panic("bad OBIO");
-		}
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		        UVM_ADV_NORMAL, 0));
+		if (obiova != OBIO_START)
+			panic("obiova %x: OBIO not free\n", obiova);
+		break;
+#endif 
+#ifdef MVME197
+	case BRD_197:
+		/*
+		 * Grab the FLASH space that we hardwired in pmap_bootstrap
+		 */
+		flashva = FLASH_START;
+		uvm_map(kernel_map, (vaddr_t *)&flashva, FLASH_SIZE,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		        UVM_ADV_NORMAL, 0));
+		if (flashva != FLASH_START)
+			panic("flashva %x: FLASH not free\n", flashva);
+		
+		/*
+		 * Grab the OBIO space that we hardwired in pmap_bootstrap
+		 */
+		obiova = OBIO_START;
+		uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO_SIZE,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		        UVM_ADV_NORMAL, 0));
+		if (obiova != OBIO_START)
+			panic("obiova %x: OBIO not free\n", obiova);
 		break;
 #endif 
 #ifdef MVME188
@@ -591,14 +604,11 @@ cpu_startup()
 		 */
 		utilva = MVME188_UTILITY;
 		uvm_map(kernel_map, (vaddr_t *)&utilva, MVME188_UTILITY_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
-							     UVM_PROT_NONE,
-							     UVM_INH_NONE,
-							     UVM_ADV_NORMAL, 0));
-		if (utilva != MVME188_UTILITY) {
-			printf("utilva %x: UTILITY area not free\n", utilva);
-			panic("bad utilva");
-		}
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		        UVM_ADV_NORMAL, 0));
+		if (utilva != MVME188_UTILITY)
+			panic("utilva %x: UTILITY area not free\n", utilva);
 		break;
 #endif
 	}
@@ -609,9 +619,8 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)))
+	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE,
+	      UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_NORMAL, 0)))
 		panic("cpu_startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;
 
@@ -654,19 +663,19 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 	
 	/*
 	 * Allocate map for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/* 
 	 * Allocate map for external I/O.
 	 */
 	iomap_map = uvm_km_suballoc(kernel_map, &iomapbase, &maxaddr,
-				   IOMAP_SIZE, 0, FALSE, NULL);
+	    IOMAP_SIZE, 0, FALSE, NULL);
 
 	iomap_extent = extent_create("iomap", iomapbase,
 	    iomapbase + IOMAP_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);

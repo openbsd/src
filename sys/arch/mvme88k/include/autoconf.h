@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.10 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.11 2003/09/16 20:52:19 miod Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -57,11 +57,6 @@ struct confargs {
 #define BUS_VMEL      5
 #define BUS_SYSCON    6
 #define BUS_BUSSWITCH 7
-
-int always_match(struct device *, struct cfdata *, void *);
-
-#define DEVICE_UNIT(device) (device->dv_unit)
-#define CFDATA_LOC(cfdata) (cfdata->cf_loc)
 
 /* the following are from the prom/bootblocks */
 extern void	*bootaddr;	/* PA of boot device */

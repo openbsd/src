@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.17 2003/01/13 20:12:16 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.18 2003/09/16 20:52:19 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -37,18 +37,13 @@ void set_cpu_number(unsigned number);
 void doboot(void);
 int db_are_interrupts_disabled(void);
 
-void fubail(void);
-void subail(void);
-
 int guarded_access(unsigned char *volatile address,
     unsigned len, u_char *vec);
 
 /* locore_c_routines.c */
 
-#ifdef M88100
 void dae_print(unsigned *eframe);
 void data_access_emulation(unsigned *eframe);
-#endif 
 
 unsigned getipl(void);
 
@@ -65,36 +60,26 @@ void dosoftint(void);
 void MY_info(struct trapframe *f, caddr_t p, int flags, char *s);
 void MY_info_done(struct trapframe *f, int flags);
 void mvme_bootstrap(void);
-#ifdef MVME187
 void m187_ext_int(u_int v, struct m88100_saved_state *eframe);
-#endif
-#ifdef MVME188
 void m188_reset(void);
 void m188_ext_int(u_int v, struct m88100_saved_state *eframe);
 unsigned int safe_level(unsigned mask, unsigned curlevel);
-#endif
-#ifdef MVME197
 void m197_ext_int(u_int v, struct m88100_saved_state *eframe);
-#endif
 
 /* eh.S */
 
 struct proc;
 void proc_do_uret(struct proc *);
-#ifdef M88100
 void sigsys(void);
 void sigtrap(void);
 void stepbpt(void);
 void userbpt(void);
 void syscall_handler(void);
-#endif 
-#ifdef M88110
 void m88110_sigsys(void);
 void m88110_sigtrap(void);
 void m88110_stepbpt(void);
 void m88110_userbpt(void);
 void m88110_syscall_handler(void);
-#endif 
 
 /* process.S */
 void savectx(struct pcb *);

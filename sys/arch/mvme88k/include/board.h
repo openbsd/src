@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.15 2002/06/04 00:09:08 deraadt Exp $ */
+/*	$OpenBSD: board.h,v 1.16 2003/09/16 20:52:19 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -48,31 +48,18 @@
  *      VME187 CPU board constants - derived from Luna88k
  */
 
-/*
- * Something to put append a 'U' to a long constant if it's C so that
- * it'll be unsigned in both ANSI and traditional.
- */
-#if defined(_LOCORE)
-#define U(num)	num
-#elif defined(__STDC__)
-#define U(num)	num ## U
-#else
-#define U(num)	num/**/U
-#endif
-#define UDEFINED
-
 #define MAX_CPUS	4	/* no. of CPUs */
 #define MAX_CMMUS	8	/* 2 CMMUs per CPU - 1 data and 1 code */
 
-#define SYSV_BASE	U(0x00000000)	/* system virtual base */
+#define SYSV_BASE	0x00000000	/* system virtual base */
 
-#define MAXU_ADDR	U(0x40000000)	/* size of user virtual space */
-#define MAXPHYSMEM	U(0x10000000)	/* max physical memory */
+#define MAXU_ADDR	0x40000000	/* size of user virtual space */
+#define MAXPHYSMEM	0x10000000	/* max physical memory */
 
-#define VMEA16		U(0xFFFF0000)	/* VMEbus A16 */
-#define VMEA16_SIZE	U(0x0000EFFF)	/* VMEbus A16 size */
-#define VMEA32D16    	U(0xFF000000)	/* VMEbus A32/D16 */
-#define VMEA32D16_SIZE	U(0x007FFFFF)	/* VMEbus A32/D16 size */
+#define VMEA16		0xFFFF0000	/* VMEbus A16 */
+#define VMEA16_SIZE	0x0000EFFF	/* VMEbus A16 size */
+#define VMEA32D16    	0xFF000000	/* VMEbus A32/D16 */
+#define VMEA32D16_SIZE	0x007FFFFF	/* VMEbus A32/D16 size */
 
 
 /* These need to be here because of the way m18x_cmmu.c 
@@ -81,17 +68,17 @@
 
 #ifndef CMMU_DEFS
 #define CMMU_DEFS
-#define SBC_CMMU_I	U(0xFFF77000) 	/* Single Board Computer code CMMU */
-#define SBC_CMMU_D	U(0xFFF7F000) 	/* Single Board Computer data CMMU */
+#define SBC_CMMU_I	0xFFF77000 	/* Single Board Computer code CMMU */
+#define SBC_CMMU_D	0xFFF7F000 	/* Single Board Computer data CMMU */
 
-#define VME_CMMU_I0	U(0xFFF7E000) 	/* MVME188 code CMMU 0 */
-#define VME_CMMU_I1	U(0xFFF7D000) 	/* MVME188 code CMMU 1 */
-#define VME_CMMU_I2	U(0xFFF7B000) 	/* MVME188 code CMMU 2 */
-#define VME_CMMU_I3	U(0xFFF77000) 	/* MVME188 code CMMU 3 */
-#define VME_CMMU_D0	U(0xFFF6F000) 	/* MVME188 data CMMU 0 */
-#define VME_CMMU_D1	U(0xFFF5F000) 	/* MVME188 data CMMU 1 */
-#define VME_CMMU_D2	U(0xFFF3F000) 	/* MVME188 data CMMU 2 */
-#define VME_CMMU_D3	U(0xFFF7F000) 	/* MVME188 data CMMU 3 */
+#define VME_CMMU_I0	0xFFF7E000 	/* MVME188 code CMMU 0 */
+#define VME_CMMU_I1	0xFFF7D000 	/* MVME188 code CMMU 1 */
+#define VME_CMMU_I2	0xFFF7B000 	/* MVME188 code CMMU 2 */
+#define VME_CMMU_I3	0xFFF77000 	/* MVME188 code CMMU 3 */
+#define VME_CMMU_D0	0xFFF6F000 	/* MVME188 data CMMU 0 */
+#define VME_CMMU_D1	0xFFF5F000 	/* MVME188 data CMMU 1 */
+#define VME_CMMU_D2	0xFFF3F000 	/* MVME188 data CMMU 2 */
+#define VME_CMMU_D3	0xFFF7F000 	/* MVME188 data CMMU 3 */
 #endif /* CMMU_DEFS */
 
 /* These are the hardware exceptions. */
@@ -124,5 +111,3 @@
 #endif
 
 #endif /* __MACHINE_BOARD_H__ */
-
-

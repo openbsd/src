@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme1x7.h,v 1.9 2001/12/19 05:06:26 smurph Exp $ */
+/*	$OpenBSD: mvme1x7.h,v 1.10 2003/09/16 20:52:19 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -45,55 +45,33 @@
  */
 #ifndef __MACHINE_MVME1X7_H__
 #define __MACHINE_MVME1X7_H__
+
 /*
  *      VME1x7 CPU board constants - derived from Luna88k
  */
 
-/*
- * Something to put append a 'U' to a long constant if it's C so that
- * it'll be unsigned in both ANSI and traditional.
- */
-#ifndef UDEFINED
-#if defined(_LOCORE)
-#define U(num)	num
-#else
-#if defined(__STDC__)
-#define U(num)	num ## U
-#else
-#define U(num)	num/**/U
-#endif
-#endif
-#endif
+#define OBIO_START	0xFFF00000	/* start of local IO */
+#define OBIO_SIZE	0x000EFFFF	/* size of obio space */
 
-#define BUGROM_START	U(0xFF800000)	/* start of BUG PROM */
-#define BUGROM_SIZE	U(0x003FFFFF)	/* size of BUG PROM */
-#define SRAM_START	U(0xFFE00000)	/* start of sram used by bug */
-#define SRAM_SIZE	U(0x0001FFFF)	/* size of sram */
-#define OBIO_START	U(0xFFF00000)	/* start of local IO */
-#define OBIO_SIZE	U(0x000EFFFF)	/* size of obio space */
-#define UTIL_START	U(0xFFC00000)  /* start of MVME188 utility space */
-#define UTIL_SIZE	U(0x003FFFFF)  /* size of MVME188 utility space */
+#define INT_PRI_LEVEL	0xFFF4203E	/* interrupt priority level */
+#define INT_MASK_LEVEL	0xFFF4203F	/* interrupt mask level */
 
-#define INT_PRI_LEVEL	U(0xFFF4203E)	/* interrupt priority level */
-#define INT_MASK_LEVEL	U(0xFFF4203F)	/* interrupt mask level */
+#define LOCAL_IO_DEVS	0xFFF00000	/* local IO devices */
 
-#define LOCAL_IO_DEVS	U(0xFFF00000)	/* local IO devices */
+#define MEM_CTLR	0xFFF43000	/* MEMC040 mem controller */
+#define SCC_ADDR	0xFFF45000 	/* Cirrus Chip */
+#define LANCE_ADDR	0xFFF46000 	/* 82596CA */
+#define SCSI_ADDR	0xFFF47000 	/* NCR 710 address */
+#define NCR710_SIZE	0x00000040 	/* NCR 710 size */
+#define MK48T08_ADDR	0xFFFC0000 	/* BBRAM, TOD */
 
-#define UTIL_ADDR	U(0xFFC02000)	/* PCCchip2 Regs */
-#define MEM_CTLR	U(0xFFF43000)	/* MEMC040 mem controller */
-#define SCC_ADDR	U(0xFFF45000) 	/* Cirrus Chip */
-#define LANCE_ADDR	U(0xFFF46000) 	/* 82596CA */
-#define SCSI_ADDR	U(0xFFF47000) 	/* NCR 710 address */
-#define NCR710_SIZE	U(0x00000040) 	/* NCR 710 size */
-#define MK48T08_ADDR	U(0xFFFC0000) 	/* BBRAM, TOD */
+#define TOD_CAL_CTL	0xFFFC1FF8 	/* calendar control register */
+#define TOD_CAL_SEC	0xFFFC1FF9 	/* seconds */
+#define TOD_CAL_MIN	0xFFFC1FFA 	/* minutes */
+#define TOD_CAL_HOUR	0xFFFC1FFB 	/* hours */
+#define TOD_CAL_DOW	0xFFFC1FFC 	/* Day Of the Week */
+#define TOD_CAL_DAY	0xFFFC1FFD 	/* days */
+#define TOD_CAL_MON	0xFFFC1FFE 	/* months */
+#define TOD_CAL_YEAR	0xFFFC1FFF 	/* years */
 
-#define TOD_CAL_CTL	U(0xFFFC1FF8) 	/* calendar control register */
-#define TOD_CAL_SEC	U(0xFFFC1FF9) 	/* seconds */
-#define TOD_CAL_MIN	U(0xFFFC1FFA) 	/* minutes */
-#define TOD_CAL_HOUR	U(0xFFFC1FFB) 	/* hours */
-#define TOD_CAL_DOW	U(0xFFFC1FFC) 	/* Day Of the Week */
-#define TOD_CAL_DAY	U(0xFFFC1FFD) 	/* days */
-#define TOD_CAL_MON	U(0xFFFC1FFE) 	/* months */
-#define TOD_CAL_YEAR	U(0xFFFC1FFF) 	/* years */
-
-#endif /* __MACHINE_MVME1X7_H__ */
+#endif	/* __MACHINE_MVME1X7_H__ */

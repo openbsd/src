@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.20 2002/03/14 01:26:39 millert Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.21 2003/09/16 20:52:22 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -61,7 +61,6 @@
 #include <sys/types.h>
 #include <sys/simplelock.h>
 #include <machine/cmmu.h>
-#include <machine/cpus.h>
 #include <machine/cpu_number.h>
 
 /* 
@@ -73,7 +72,6 @@
 struct simplelock cmmu_cpu_lock;
 unsigned cache_policy = /*CACHE_INH*/ 0;
 unsigned cpu_sets[MAX_CPUS];
-unsigned number_cpus = 0;
 unsigned master_cpu = 0;
 int      max_cpus, max_cmmus;
 int      cpu_cmmu_ratio;

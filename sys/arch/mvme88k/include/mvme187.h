@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme187.h,v 1.4 2001/12/19 05:06:26 smurph Exp $ */
+/*	$OpenBSD: mvme187.h,v 1.5 2003/09/16 20:52:19 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -46,32 +46,21 @@
 #ifndef __MACHINE_MVME187_H__
 #define __MACHINE_MVME187_H__
 /*
- *      VME187 CPU board constants - derived from Luna88k
- *      This file is include from <machine/board.h>
+ *      MVME187 CPU board constants - derived from Luna88k
+ *      This file is included from <machine/board.h>
  */
 
-/*
- * Something to put append a 'U' to a long constant if it's C so that
- * it'll be unsigned in both ANSI and traditional.
- */
-#ifndef UDEFINED
-#if defined(_LOCORE)
-#	define U(num)	num
-#else
-#  if defined(__STDC__)
-#	define U(num)	num ## U
-#  else
-#	define U(num)	num/**/U
-#  endif
-#endif
-#endif
+#define BUG187_START	0xFF800000	/* start of BUG PROM */
+#define BUG187_SIZE	0x003FFFFF	/* size of BUG PROM */
+#define SRAM_START	0xFFE00000	/* start of sram used by bug */
+#define SRAM_SIZE	0x0001FFFF	/* size of sram */
 
-#define SBC_CMMU_I	U(0xFFF77000) 	/* Single Board Computer code CMMU */
-#define SBC_CMMU_D	U(0xFFF7F000) 	/* Single Board Computer data CMMU */
+#define SBC_CMMU_I	0xFFF77000	/* Single Board Computer code CMMU */
+#define SBC_CMMU_D	0xFFF7F000	/* Single Board Computer data CMMU */
 
-#define M187_ILEVEL	U(0xFFF4203E)	/* interrupt priority level */
-#define M187_IMASK	U(0xFFF4203F)	/* interrupt mask level */
-#define M187_ISRC	U(0x00000000)	/* interrupt mask src (NULL) */
-#define M187_IACK	U(0xFFFE0000)	/* interrupt ACK base */
+#define M187_ILEVEL	0xFFF4203E	/* interrupt priority level */
+#define M187_IMASK	0xFFF4203F	/* interrupt mask level */
+#define M187_ISRC	0x00000000	/* interrupt mask src (NULL) */
+#define M187_IACK	0xFFFE0000	/* interrupt ACK base */
 
-#endif __MACHINE_MVME187_H__
+#endif	/* __MACHINE_MVME187_H__ */

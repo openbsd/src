@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme197.h,v 1.3 2001/12/19 05:06:26 smurph Exp $ */
+/*	$OpenBSD: mvme197.h,v 1.4 2003/09/16 20:52:19 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -45,30 +45,20 @@
  */
 #ifndef __MACHINE_MVME197_H__
 #define __MACHINE_MVME197_H__
-/*
- *      VME187 CPU board constants - derived from Luna88k
- *      This file is include from <machine/board.h>
- */
 
 /*
- * Something to put append a 'U' to a long constant if it's C so that
- * it'll be unsigned in both ANSI and traditional.
+ *      MVME197 CPU board constants - derived from Luna88k
+ *      This file is included from <machine/board.h>
  */
-#ifndef UDEFINED
-#if defined(_LOCORE)
-#	define U(num)	num
-#else
-#  if defined(__STDC__)
-#	define U(num)	num ## U
-#  else
-#	define U(num)	num/**/U
-#  endif
-#endif
-#endif
 
-#define M197_ILEVEL	U(0xFFF00064)	/* interrupt priority level */
-#define M197_IMASK	U(0xFFF00065)	/* interrupt mask level */
-#define M197_ISRC	U(0xFFF0006F)	/* interrupt SRC */
-#define M197_IACK	U(0xFFF00100)	/* interrupt ACK base */
+#define	FLASH_START	0xFF800000	/* start of flash memory area */
+#define	FLASH_SIZE	0x003FFFFF
+#define BUG197_START	0xFFF80000	/* start of BUG PROM (in OBIO) */
+#define BUG197_SIZE	0x0003FFFF
 
-#endif __MACHINE_MVME197_H__
+#define M197_ILEVEL	0xFFF00064	/* interrupt priority level */
+#define M197_IMASK	0xFFF00065	/* interrupt mask level */
+#define M197_ISRC	0xFFF0006F	/* interrupt SRC */
+#define M197_IACK	0xFFF00100	/* interrupt ACK base */
+
+#endif	/* __MACHINE_MVME197_H__ */
