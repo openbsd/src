@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.13 2004/05/04 21:25:27 deraadt Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.14 2004/09/16 09:35:24 claudio Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -232,6 +232,7 @@ struct lease_state {
 	struct in_addr giaddr;
 	u_int8_t hops;
 	u_int8_t offer;
+	struct hardware haddr;
 };
 
 #define	ROOT_GROUP	0
@@ -717,8 +718,7 @@ int can_receive_unicast_unconfigured(struct interface_info *);
 void maybe_setup_fallback(void);
 
 /* dispatch.c */
-extern struct interface_info *interfaces,
-	*dummy_interfaces, *fallback_interface;
+extern struct interface_info *interfaces;
 extern struct protocol *protocols;
 extern int quiet_interface_discovery;
 extern void (*bootp_packet_handler)(struct interface_info *,

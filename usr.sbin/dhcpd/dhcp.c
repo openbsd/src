@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.12 2004/05/24 06:22:45 henning Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.13 2004/09/16 09:35:24 claudio Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -560,13 +560,11 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 		to.sin_addr = raw.giaddr;
 		to.sin_port = server_port;
 
-		if (fallback_interface) {
-			result = send_packet(fallback_interface, &raw,
-			    outgoing.packet_length, from, &to, &hto);
-			if (result == -1)
-				warn("send_fallback: %m");
-			return;
-		}
+		result = send_packet(packet->interface, &raw,
+		    outgoing.packet_length, from, &to, packet->haddr);
+		if (result == -1)
+			warn("send_fallback: %m");
+		return;
 	} else {
 		to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 		to.sin_port = client_port;
@@ -830,6 +828,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	state->bootp_flags = packet->raw->flags;
 	state->hops = packet->raw->hops;
 	state->offer = offer;
+	memcpy(&state->haddr, packet->haddr, sizeof state->haddr);
 
 	/* Figure out what options to send to the client: */
 
@@ -1216,14 +1215,12 @@ dhcp_reply(struct lease *lease)
 		to.sin_addr = raw.giaddr;
 		to.sin_port = server_port;
 
-		if (fallback_interface) {
-			result = send_packet(fallback_interface, &raw,
-			    packet_length,raw.siaddr, &to, NULL);
+		result = send_packet(state->ip, &raw,
+		    packet_length, raw.siaddr, &to, &state->haddr);
 
-			free_lease_state(state, "dhcp_reply fallback 1");
-			lease->state = NULL;
-			return;
-		}
+		free_lease_state(state, "dhcp_reply gateway");
+		lease->state = NULL;
+		return;
 
 	/* If the client is RENEWING, unicast to the client using the
 	   regular IP stack.  Some clients, particularly those that
@@ -1244,14 +1241,6 @@ dhcp_reply(struct lease *lease)
 	    state->offer == DHCPACK) {
 		to.sin_addr = raw.ciaddr;
 		to.sin_port = client_port;
-
-		if (fallback_interface) {
-			result = send_packet(fallback_interface, &raw,
-			    packet_length, raw.siaddr, &to, NULL);
-			free_lease_state(state, "dhcp_reply fallback 2");
-			lease->state = NULL;
-			return;
-		}
 
 	/* If it comes from a client that already knows its address
 	   and is not requesting a broadcast response, and we can

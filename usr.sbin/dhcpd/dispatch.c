@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.11 2004/09/15 22:12:50 deraadt Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.12 2004/09/16 09:35:24 claudio Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -48,7 +48,7 @@
 /* Most boxes has less than 16 interfaces, so this might be a good guess.  */
 #define INITIAL_IFREQ_COUNT 16
 
-struct interface_info *interfaces, *dummy_interfaces, *fallback_interface;
+struct interface_info *interfaces;
 struct protocol *protocols;
 struct timeout *timeouts;
 static struct timeout *free_timeouts;
@@ -229,10 +229,6 @@ discover_interfaces(int state)
 			else
 				last->next = tmp->next;
 
-			/* Remember the interface in case we need to know
-			   about it later. */
-			tmp->next = dummy_interfaces;
-			dummy_interfaces = tmp;
 			continue;
 		}
 		last = tmp;
