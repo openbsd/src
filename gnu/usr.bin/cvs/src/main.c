@@ -889,7 +889,7 @@ parseopts()
 
 			(void) setrlimit(RLIMIT_DATA, &rl);
 		}
-#endif /* __OpenBSD__ */
+#endif /* BSD */
 	    }
 	}
 	fclose(fp);
