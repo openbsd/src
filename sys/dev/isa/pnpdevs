@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.84 1999/07/22 00:18:22 todd Exp $
+#	$OpenBSD: pnpdevs,v 1.85 1999/07/22 00:27:55 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -416,8 +416,10 @@ joy		AZT3001	# AZT1008 PnP SOUND DEVICE (GAME PORT)
 joy		CSC0001	# AW35/Pro gameport
 joy		CSC000F	# CS4236B
 joy		CSC0101	# On Board Audio Chip
-joy		CTL7001	# Creative SB16 PnP joy
-joy		CTL7002	# Creative SB AWE64 PnP
+#joy		CTL7001	# Creative SB16 PnP joy (PNPB02F)
+joy		CTL7002	# Creative SB AWE64 PnP (PNPB02F.. but some miss it)
+#joy		CTL7005	# Creative ViBRA16X PnP (PNPB02F)
+#joy		ENS2020	# ENSONIQ SoundscapeVIVO (PNPB02F)
 joy		ESS0001	# ESS ES1869 Plug and Play AudioD
 joy		ESS0005	# ESS ES1878 Plug and Play AudioD
 joy		OPT0001	# OPTi Audio 16
