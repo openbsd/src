@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.26 1998/11/12 16:33:37 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.27 1998/11/12 20:40:03 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -22,19 +22,19 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "PNP80F6", "ep" },
 	{ "PNP80F7", "ep" },
 	{ "PNP80F8", "ep" },
-	{ "PNP8123", "ed" },
-	{ "PNP8124", "ed" },
-	{ "PNP8125", "ed" },
-	{ "PNP8126", "ed" },
-	{ "PNP8127", "ed" },
-	{ "PNP8128", "ed" },
-	{ "PNP812A", "ed" },
-	{ "PNP81C3", "ed" },
-	{ "PNP81C4", "ed" },
-	{ "PNP81C5", "ed" },
-	{ "PNP81C6", "ed" },
-	{ "PNP81C7", "ed" },
-	{ "PNP81C8", "ed" },
+	{ "PNP8123", "we" },
+	{ "PNP8124", "we" },
+	{ "PNP8125", "we" },
+	{ "PNP8126", "we" },
+	{ "PNP8127", "we" },
+	{ "PNP8128", "we" },
+	{ "PNP812A", "we" },
+	{ "PNP81C3", "we" },
+	{ "PNP81C4", "we" },
+	{ "PNP81C5", "we" },
+	{ "PNP81C6", "we" },
+	{ "PNP81C7", "we" },
+	{ "PNP81C8", "we" },
 	{ "PNP8200", "le" },
 	{ "PNP8231", "le" },
 	{ "PNP828C", "le" },
@@ -62,6 +62,8 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "USR0006", "pccom" },
 	{ "SUP1380", "com" },
 	{ "SUP1380", "pccom" },
+	{ "SUP1381", "com" },
+	{ "SUP1381", "pccom" },
 	{ "GVC5000", "com" },
 	{ "GVC5000", "pccom" },
 	{ "ADS7150", "sb" },
@@ -76,7 +78,7 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "@@@1001", "ym" },
 	{ "YMH0021", "ym" },
 	{ "ESS1868", "sb" },
-	{ "SMC8416", "ed" },
+	{ "SMC8416", "we" },
 	{ "@P@1001", "joy" },
 	{ "@@@1980", "ne" },
 	{ NULL, NULL, }
