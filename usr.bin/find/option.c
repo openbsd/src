@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.7 1997/11/13 08:30:34 deraadt Exp $	*/
+/*	$OpenBSD: option.c,v 1.8 1997/11/28 09:39:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: option.c,v 1.7 1997/11/13 08:30:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: option.c,v 1.8 1997/11/28 09:39:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,8 +58,8 @@ static OPTION options[] = {
 	{ "(",		N_OPENPAREN,	c_openparen,	O_ZERO },
 	{ ")",		N_CLOSEPAREN,	c_closeparen,	O_ZERO },
 	{ "-a",		N_AND,		NULL,		O_NONE },
-	{ "-and",	N_AND,		NULL,		O_NONE },
 	{ "-amin",	N_AMIN,		c_amin,		O_ARGV },
+	{ "-and",	N_AND,		NULL,		O_NONE },
 	{ "-atime",	N_ATIME,	c_atime,	O_ARGV },
 	{ "-cmin",	N_CMIN,		c_cmin,		O_ARGV },
 	{ "-ctime",	N_CTIME,	c_ctime,	O_ARGV },
@@ -73,9 +73,9 @@ static OPTION options[] = {
 	{ "-inum",	N_INUM,		c_inum,		O_ARGV },
 	{ "-links",	N_LINKS,	c_links,	O_ARGV },
 	{ "-ls",	N_LS,		c_ls,		O_ZERO },
-	{ "-mmin",	N_MMIN,		c_mmin,		O_ARGV },
 	{ "-maxdepth",	N_MAXDEPTH,	c_maxdepth,	O_ARGV },
 	{ "-mindepth",	N_MINDEPTH,	c_mindepth,	O_ARGV },
+	{ "-mmin",	N_MMIN,		c_mmin,		O_ARGV },
 	{ "-mount",	N_XDEV,		c_xdev,		O_ZERO },
 	{ "-mtime",	N_MTIME,	c_mtime,	O_ARGV },
 	{ "-name",	N_NAME,		c_name,		O_ARGV },
