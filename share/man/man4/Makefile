@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 1999/08/23 19:51:22 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.78 1999/09/15 19:31:46 deraadt Exp $
 #	$NetBSD: Makefile,v 1.22.4.2 1996/07/18 00:51:10 jtc Exp $
 
 MAN=	atalk.4 atapiscsi.4 audio.4 adv.4 ahc.4 ax.4 bpf.4 bridge.4 ccd.4 \
@@ -23,6 +23,7 @@ MLINKS+=vnd.4 svnd.4
 MLINKS+=isapnp.4 pnp.4
 MLINKS+=adv.4 adw.4
 MLINKS+=adv.4 advansys.4
+MLINKS+=pcmcia.4 pcic.4
 SUBDIR=	man4.alpha man4.amiga man4.arc man4.arm32 man4.atari man4.hp300 \
 	man4.i386 man4.mac68k man4.pc532 man4.pmax man4.powerpc man4.sparc \
 	man4.sun3 man4.vax
