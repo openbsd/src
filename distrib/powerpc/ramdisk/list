@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.3 1997/12/02 02:30:29 deraadt Exp $
+#	$OpenBSD: list,v 1.4 1998/04/06 20:27:31 pefo Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -29,7 +29,8 @@ LINK	instbin			bin/sync
 LINK	instbin			bin/test bin/[
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/fdisk
-LINK	instbin			sbin/fsck sbin/fsck_ffs
+LINK	instbin			sbin/fsck
+LINK	instbin			sbin/fsck_ffs
 LINK	instbin			sbin/reboot sbin/halt
 LINK	instbin			sbin/ifconfig
 LINK	instbin			sbin/init
@@ -41,7 +42,7 @@ LINK	instbin			sbin/mount_msdos
 LINK	instbin			sbin/mount_nfs
 LINK	instbin			sbin/mount_kernfs
 LINK	instbin			sbin/mount_ext2fs
-LINK	instbin			sbin/newfs sbin/mount_mfs
+LINK	instbin			sbin/newfs
 LINK	instbin			sbin/ping
 LINK	instbin			sbin/restore
 LINK	instbin			sbin/route
@@ -60,11 +61,7 @@ LINK	instbin			usr/bin/tip
 LINK	instbin			usr/sbin/chat
 LINK	instbin			usr/sbin/chown usr/sbin/chgrp
 LINK	instbin			usr/sbin/pppd
-SYMLINK ../../instbin		usr/sbin/chown usr/bin/chgrp
-SYMLINK ../../instbin		usr/bin/ftp
-SYMLINK ../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
-SYMLINK ../../instbin		usr/bin/sed
-SYMLINK ../../instbin		usr/bin/build usr/bin/vi
+SYMLINK ../../instbin           usr/bin/build usr/bin/vi
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
@@ -74,13 +71,19 @@ SPECIAL	/bin/rm dev/MAKEDEV
 # we need the contents of /usr/mdec
 COPY	${DESTDIR}/usr/mdec/ofwboot	usr/mdec/ofwboot
 COPY	${DESTDIR}/usr/mdec/mbr		usr/mdec/mbr
-COPY	${DESTDIR}/usr/mdec/msdos5mb.gz	usr/mdec/msdos5mb.gz
+COPY	${DESTDIR}/usr/mdec/msdos1mb.gz	usr/mdec/msdos1mb.gz
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
 COPY	${DESTDIR}/etc/protocols	etc/protocols
 COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+COPY	${DESTDIR}/etc/disktab		etc/disktab
+SYMLINK	/tmp/disktab.shadow		etc/disktab      
+SYMLINK	/tmp/fstab.shadow		etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/hosts			etc/hosts
+
 
 COPYDIR	${DESTDIR}/etc/ppp		etc/ppp
 
@@ -92,7 +95,9 @@ COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes
 COPY	dot.profile			.profile
 COPY	dot.instutils			.instutils
 COPY	install.md			install.md
-COPY	${CURDIR}/../../miniroot/install.sh		install
+COPY	install.sh			install
+#COPY	${CURDIR}/../../miniroot/install.sh		install
 COPY	${CURDIR}/../../miniroot/upgrade.sh		upgrade
-SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
+SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/install.sub > install.sub
+#SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
 SPECIAL	chmod 755 install

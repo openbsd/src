@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 1997/10/15 14:09:04 pefo Exp $
+#	$OpenBSD: install.md,v 1.3 1998/04/06 20:27:29 pefo Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@ md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
 	fi
-	echo -n "Specify terminal type [pc3]: "
-	getresp "pc3"
+	echo -n "Specify terminal type [vt100]: "
+	getresp "vt100"
 	TERM="$resp"
 	export TERM
 }
@@ -101,13 +101,16 @@ md_native_fsopts() {
 md_init_mbr() {
 	# $1 is the disk to init
 	echo
-	echo "You will now be asked if you want to initialize the disk with a 5Mb"
+	echo "You will now be asked if you want to initialize the disk with a 1Mb"
 	echo "MSDOS partition. This is the recomended setup and will allow you to"
 	echo "store the boot and other interesting things here."
+	echo
 	echo "If you want to have a different setup, exit 'install' now and do"
-	echo "the MBR initialization by hand using the 'fdisk' program. You may"
-	echo "also use any vendor specific program to set up the disk. Consult"
-	echo "your PowerPC system manuals for doing setup this way."
+	echo "the MBR initialization by hand using the 'fdisk' program."
+	echo
+	echo "If you choose to manually setup the MSDOS partition, "
+	echo "consult your PowerPC OpenFirmware manual -and- the"
+	echo "PowerPC BSD Installation Guide for doing setup this way."
 	echo
 	echo -n "Do you want to init the MBR and the MSDOS partition? [y]"
 	getresp "y"
@@ -118,15 +121,21 @@ md_init_mbr() {
 		echo
 		echo "A MBR record with an OpenBSD usable partition table will now be copied"
 		echo "to your disk. Unless you have special requirements you will not need"
-		echo "to edit this MBR. After the MBR is copied an empty 5Mb MSDOS partition"
+		echo "to edit this MBR. After the MBR is copied an empty 1Mb MSDOS partition"
 		echo "will be created on the disk. You *MUST* setup the OpenBSD disklabel"
-		echo "to have a partition covering this MSDOS partition."
+		echo "to have a partition include this MSDOS partition."
+		echo "You will have an opportunity to do this shortly."
+		echo
 		echo "You will probably see a few '...: no disk label' messages"
 		echo "It's completly normal. The disk has no label yet."
 		echo "This will take a minute or two..."
 		sleep 2
+		echo -n "Creating Master Boot Record (MBR)..."
 		dd if=/usr/mdec/mbr of=/dev/r$1c >/dev/null 2>&1
-		gunzip < /usr/mdec/msdos5mb.gz | dd of=/dev/r$1c bs=512 seek=32 >/dev/null 2>&1
+		echo "..done."
+		echo -n "Copying 1MB MSDOS partition to disk..."
+		gunzip < /usr/mdec/msdos1mb.gz | dd of=/dev/r$1c bs=512 seek=1 >/dev/null 2>&1
+		echo "..done."
 	;;
 	esac
 }
@@ -137,12 +146,13 @@ md_checkfordisklabel() {
 
 	echo
 	echo "Power.4e systems need a MBR and MSDOS partition on the boot disk."
-	echo "This is necessary because the OpenFirmware doesn't know nothing"
-	echo "about OpenBSD and have to boot the system from a BSD partition."
-	echo "Install will put a boot program with the name 'ofwboot' in there"
-	echo "that you later should use to boot OpenBSD."
+	echo "This is necessary because the OpenFirmware doesn't know about"
+	echo "OpenBSD, or how to boot the system from a BSD partition."
 	echo
-	echo -n "Have you initialized a MSDOS partition with OpenFirmware? [n]"
+	echo "Install will put a boot program with the name 'ofwboot' "
+	echo "that you will configure OpenFirmware to use when booting OpenBSD."
+	echo
+	echo -n "Have you initialized a MSDOS partition using OpenFirmware? [n]"
 	getresp "n"
 	case "$resp" in
 	n*|N*)
@@ -151,8 +161,9 @@ md_checkfordisklabel() {
 		echo
 		echo "You may keep your current setup if you want to be able to use any"
 		echo "already loaded OS. However you will be asked to prepare an empty"
-		echo "partition for OpenBSD later. There must also be ~0.5Mb free space"
+		echo "partition for OpenBSD later. There must also be at least ~0.5Mb free space"
 		echo "in the boot partition to hold the OpenBSD kernel boot."
+		echo
 		echo "Also note that the boot partition must be included as partition"
 		echo "'i' in the OpenBSD disklabel."
 		echo
@@ -189,10 +200,13 @@ md_prep_fdisk()
 	_disk=$1
 	echo
 	echo "This disk has not previously been used with OpenBSD. You may share"
-	echo "this disk with other operating systems." Anyhow, to be able to boot"
-	echo "the system you will need a small DOS partition in the begining of
-	echo "the disk to hold the kernel boot. This has been taken care of if"
-	echo "you choosed to do that initialization just before."
+	echo "this disk with other operating systems. However, to be able to boot"
+	echo "the system you will need a small DOS partition in the begining of"
+	echo "the disk to hold the kernel boot. OpenFirmware understands"
+	echo "how to read an MSDOS style format from the disk."
+	echo
+	echo "This DOS style partitioning has been taken care of if"
+	echo "you choosed to do that initialization earlier in the install."
 	echo
 	echo "WARNING: Wrong information in the BIOS partition table might"
 	echo "render the disk unusable."
@@ -211,26 +225,30 @@ md_prep_fdisk()
 		echo
 		cat << \__md_prep_fdisk_1
 
-An OpenBSD partition should have type 166 (A6), and should be the only
-partition marked as active. Also make sure that the size of the partition
+An OpenBSD partition should have type (i.d.) of 166 (A6), and should be the
+only partition marked as active. Also make sure that the size of the partition
 to be used by OpenBSD is correct, otherwise OpenBSD disklabel installation
-will fail. Furthermore, the partitions must NOT overlap each others. fdisk
-will be started in update mode, and you will be able to add this information
-as needed.  If you make a mistake, exit fdisk without storing the new
+will fail. Furthermore, the partitions must NOT overlap each others.
+
+The fdisk utility will be started update mode (interactive.)
+You will be able to add / modify this information as needed.
+If you make a mistake, simply exit fdisk without storing the new
 information, and you will be allowed to start over.
 __md_prep_fdisk_1
+		echo
 		echo -n "Press [Enter] to continue "
 		getresp ""
 
-		fdisk -u ${_disk}
+		fdisk -e ${_disk}
 
 		echo
 		echo "The new partition information is:"
 		fdisk ${_disk}
 
 		echo
-		echo "Is this information correct (if not, you will be permitted to "
-		echo -n "edit it again)? [n] "
+		echo "(You will be permitted to edit this information again.)"
+		echo "-------------------------------------------------------"
+		echo -n "Is the above information correct? [n] "
 		getresp "n"
 
 		case "$resp" in
@@ -239,6 +257,7 @@ __md_prep_fdisk_1
 		esac
 	done
 
+	echo
 	echo "Please take note of the offset and size of the OpenBSD partition"
 	echo "*AND* the MSDOS partitions you may want to access from OpenBSD."
 	echo "At least the MSDOS partition used for booting must be accessible"
@@ -279,11 +298,10 @@ md_prep_disklabel()
 	# display example
 	cat << \__md_prep_disklabel_1
 
-Here is an example of what the partition information may look like once
-you have entered the disklabel editor. Disk partition sizes and offsets
-are in sector (most likely 512 bytes) units. You may set these size/offset
-pairs on cylinder boundaries (the number of sector per cylinder is given
-in the `sectors/cylinder' entry, which is not shown here).
+Disk partition sizes and offsets are in sector (most likely 512 bytes) units.
+You may set these size/offset pairs on cylinder boundaries 
+     (the number of sector per cylinder is given in )
+     (the `sectors/cylinder' entry, which is not shown here)
 Also, you *must* make sure that the 'i' partition points at the MSDOS
 partition that will be used for booting. The 'c' partition shall start
 at offset 0 and include the entire disk. This is most likely correct when
@@ -291,7 +309,7 @@ you see the default label in the editor.
 
 Do not change any parameters except the partition layout and the label name.
 
-[Example]
+   [Here is an example of what the partition information may look like.]
 10 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
   a:   120832    10240    4.2BSD     1024  8192    16   # (Cyl.   11*- 142*)
@@ -314,9 +332,6 @@ __md_prep_disklabel_1
 }
 
 md_copy_kernel() {
-	#echo -n "Copying kernel..."
-	#cp -p /bsd /mnt/bsd
-	#echo "done."
 }
 
 md_welcome_banner() {
@@ -387,3 +402,4 @@ system has halted, reset the machine and boot from the disk.
 
 __congratulations_1
 }
+
