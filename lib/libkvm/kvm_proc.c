@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.11 2001/12/05 01:01:58 art Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.12 2001/12/13 08:16:00 hugh Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.11 2001/12/05 01:01:58 art Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.12 2001/12/13 08:16:00 hugh Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -103,8 +103,8 @@ static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.11 2001/12/05 01:01:58 art Exp $"
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_amap.h>
-#include <machine/pmap.h>
 #include <machine/vmparam.h>
+#include <machine/pmap.h>
 
 #include <sys/sysctl.h>
 
