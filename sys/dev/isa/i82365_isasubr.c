@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.12 2000/06/20 17:56:24 millert Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.13 2000/07/03 02:59:24 aaron Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -194,7 +194,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	struct pcic_handle *h = (struct pcic_handle *)pch;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
 	isa_chipset_tag_t ic = sc->intr_est;
-	int irq, ist;
+	int irq, ist, reg;
 	void *ih;
 
 	if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
@@ -202,20 +202,21 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	else if (pf->cfe->flags & PCMCIA_CFE_IRQPULSE)
 		ist = IST_PULSE;
 	else
-		ist = IST_LEVEL;
+		ist = IST_EDGE;
 
 	irq = pcic_intr_find(sc, ist);
 	if (!irq)
 		return (NULL);
 
+	h->ih_irq = irq;
+	reg = pcic_read(h, PCIC_INTR);
+	reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
+	pcic_write(h, PCIC_INTR, reg | irq);
+
 	ih = isa_intr_establish(ic, irq, ist, ipl, fct, arg,
 	    h->pcmcia->dv_xname);
 	if (!ih)
 		return (NULL);
-
-	h->ih_irq = irq;
-	pcic_write(h, PCIC_INTR,
-	    (pcic_read(h, PCIC_INTR) & ~PCIC_INTR_IRQ_MASK) | irq);
 
 	printf(" irq %d", irq);
 	return (ih);
@@ -233,11 +234,11 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 
 	h->ih_irq = 0;
 
+	isa_intr_disestablish(ic, ih);
+
 	reg = pcic_read(h, PCIC_INTR);
 	reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
 	pcic_write(h, PCIC_INTR, reg);
-
-	isa_intr_disestablish(ic, ih);
 }
 
 int
