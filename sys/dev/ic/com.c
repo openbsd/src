@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.75 2001/10/02 23:39:27 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.76 2001/10/05 21:01:10 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ struct cfdriver com_cd = {
 };
 
 int	comdefaultrate = TTYDEF_SPEED;
+int	comconsinit;
 int	comconsaddr;
 int	comconsattached;
 bus_space_tag_t comconsiot;
@@ -1482,6 +1483,63 @@ cominit(iot, ioh, rate)
 	stat = bus_space_read_1(iot, ioh, com_iir);
 	splx(s);
 }
+
+void  
+comcnprobe(cp)
+	struct consdev *cp;  
+{
+	/* XXX NEEDS TO BE FIXED XXX */
+#if defined(arc)
+	bus_space_tag_t iot = &arc_bus_io;
+#elif defined(hppa)
+	bus_space_tag_t iot = &hppa_bustag;
+#else
+	bus_space_tag_t iot = 0;
+#endif
+	bus_space_handle_t ioh;
+	int found;
+
+	if(CONADDR == 0) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
+
+	comconsiot = iot;
+	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh)) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
+	found = comprobe1(iot, ioh);
+	bus_space_unmap(iot, ioh, COM_NPORTS);
+	if (!found) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
+
+	/* locate the major number */
+	for (commajor = 0; commajor < nchrdev; commajor++)
+		if (cdevsw[commajor].d_open == comopen)
+			break;
+
+	/* initialize required fields */
+	cp->cn_dev = makedev(commajor, CONUNIT);
+	cp->cn_pri = CN_NORMAL;
+}
+
+void
+comcninit(cp)
+	struct consdev *cp;
+{
+
+	comconsaddr = CONADDR;
+
+	if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS, 0, &comconsioh))
+		panic("comcninit: mapping failed");
+
+	cominit(comconsiot, comconsioh, comdefaultrate);
+	comconsinit = 0;
+}
+
 
 int
 comcnattach(iot, iobase, rate, frequency, cflag)

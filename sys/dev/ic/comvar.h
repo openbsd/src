@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.29 2001/09/30 15:20:59 art Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.30 2001/10/05 21:01:11 mickey Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ void	compoll		__P((void *));
 
 struct consdev;
 int	comcnattach	__P((bus_space_tag_t, int, int, int, tcflag_t));
+void	comcnprobe	__P((struct consdev *));
 void	comcninit	__P((struct consdev *));
 int	comcngetc	__P((dev_t));
 void	comcnputc	__P((dev_t, int));
@@ -167,7 +168,6 @@ int	com_kgdb_attach	__P((bus_space_tag_t, int, int, int, tcflag_t));
 int	kgdbintr __P((void *));
 #endif
 
-int comcnattach __P((bus_space_tag_t, int, int, int, tcflag_t));
 void com_attach_subr __P((struct com_softc *));
 
 extern int comdefaultrate;
