@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.256 2002/12/16 23:36:14 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.257 2002/12/17 11:29:04 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -36,6 +36,10 @@
 #include <netinet/icmp6.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
+#include <altq/altq.h>
+#include <altq/altq_cbq.h>
+#include <altq/altq_priq.h>
+#include <altq/altq_hfsc.h>
 
 #include <stdio.h>
 #include <stdlib.h>

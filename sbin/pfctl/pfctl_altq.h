@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.h,v 1.6 2002/12/07 19:52:33 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.h,v 1.7 2002/12/17 11:29:04 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -27,59 +27,18 @@
  * SUCH DAMAGE.
  */
 
-/*
- * misc defines needed by pfctl(8) for altq
- * (copied from altq headers until we find a better way...)
- */
-#ifndef ALTQT_NONE
-/* altq discipline type */
-#define	ALTQT_NONE		0	/* reserved */
-#define	ALTQT_CBQ		1	/* cbq */
-#define	ALTQT_WFQ		2	/* wfq */
-#define	ALTQT_AFMAP		3	/* afmap */
-#define	ALTQT_FIFOQ		4	/* fifoq */
-#define	ALTQT_RED		5	/* red */
-#define	ALTQT_RIO		6	/* rio */
-#define	ALTQT_LOCALQ		7	/* local use */
-#define	ALTQT_HFSC		8	/* hfsc */
-#define	ALTQT_CDNR		9	/* traffic conditioner */
-#define	ALTQT_BLUE		10	/* blue */
-#define	ALTQT_PRIQ		11	/* priority queue */
-#define	ALTQT_MAX		12	/* should be max discipline type + 1 */
-#endif
-
-#ifndef CBQCLF_RED
-/* class flags shoud be same as class flags in rm_class.h */
-#define	CBQCLF_RED		0x0001	/* use RED */
-#define	CBQCLF_ECN		0x0002  /* use RED/ECN */
-#define	CBQCLF_RIO		0x0004  /* use RIO */
-#define	CBQCLF_FLOWVALVE	0x0008	/* use flowvalve (aka penalty-box) */
-#define	CBQCLF_CLEARDSCP	0x0010  /* clear diffserv codepoint */
-#define	CBQCLF_BORROW		0x0020  /* borrow from parent */
-
-/* class flags only for root class */
-#define	CBQCLF_WRR		0x0100	/* weighted-round robin */
-#define	CBQCLF_EFFICIENT	0x0200  /* work-conserving */
-
-/* class flags for special classes */
-#define	CBQCLF_ROOTCLASS	0x1000	/* root class */
-#define	CBQCLF_DEFCLASS		0x2000	/* default class */
-#define	CBQCLF_CTLCLASS		0x4000	/* control class */
-#define	CBQCLF_CLASSMASK	0xf000	/* class mask */
-#endif
-
-#ifndef REDF_ECN4
-/* red flags */
-#define	REDF_ECN4		0x01	/* use packet marking for IPv4 pkts */
-#define	REDF_ECN6		0x02	/* use packet marking for IPv6 pkts */
-#define	REDF_ECN		(REDF_ECN4 | REDF_ECN6)
-#define	REDF_FLOWVALVE		0x04	/* use flowvalve (aka penalty-box) */
-#endif
-
 #ifndef DEFAULT_PRIORITY
 #define DEFAULT_PRIORITY	1
 #define DEFAULT_QLIMIT		50
 #endif
+
+/*
+ * generalized service curve used for admission control
+ */
+struct segment {
+	LIST_ENTRY(segment)	_next;
+	double			x, y, d, m;
+};
 
 struct pf_altq_node {
 	struct pf_altq		 altq;
