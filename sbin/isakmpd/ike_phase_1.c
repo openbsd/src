@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.10 2000/01/27 18:07:16 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.13 2000/01/27 17:14:17 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.11 2000/01/30 09:20:57 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.15 2000/01/30 07:09:26 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -1140,11 +1140,11 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 
     case IKE_ATTR_LIFE_TYPE:
     case IKE_ATTR_LIFE_DURATION:
-      if (!strcmp (conf_get_str (xf->field, "Life"), "ANY"))
+      life_conf = conf_get_list (xf->field, "Life");
+      if (life_conf && !strcmp (conf_get_str (xf->field, "Life"), "ANY"))
 	return 0;
 	
       rv = 1;
-      life_conf = conf_get_list (xf->field, "Life");
       if (!life_conf)
 	{
 	  /* Life attributes given, but not in our policy.  */
