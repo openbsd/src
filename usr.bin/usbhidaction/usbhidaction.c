@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.5 2004/09/14 22:59:26 deraadt Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.6 2004/10/27 18:16:57 jaredy Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -261,7 +261,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				freecommands(cmds);
 				return (NULL);
 			} else {
-				errx(1, "config file `%s', line %d,"
+				errx(1, "config file `%s', line %d"
 				    ", syntax error: %s", conf, line, buf);
 			}
 		}
@@ -281,13 +281,13 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				if (isdemon) {
 					syslog(LOG_WARNING,
 					    "config file `%s', line %d, "
-					    "bad value: %s\n",
+					    "bad value: %s",
 					    conf, line, value);
 					freecommands(cmds);
 					return (NULL);
 				} else {
 					errx(1, "config file `%s', line %d, "
-					    "bad value: %s\n",
+					    "bad value: %s",
 					    conf, line, value);
 				}
 			}
@@ -354,12 +354,12 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		}
 		if (isdemon) {
 			syslog(LOG_WARNING, "config file `%s', line %d, HID "
-			    "item not found: `%s'\n", conf, line, name);
+			    "item not found: `%s'", conf, line, name);
 			freecommands(cmds);
 			return (NULL);
 		} else {
 			errx(1, "config file `%s', line %d, HID item "
-			    "not found: `%s'\n", conf, line, name);
+			    "not found: `%s'", conf, line, name);
 		}
 
 	foundhid:
