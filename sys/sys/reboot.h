@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.h,v 1.8 1997/06/22 22:05:58 downsj Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.9 1998/03/18 12:10:14 pefo Exp $	*/
 /*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
 
 /*
@@ -54,7 +54,8 @@
 #define	RB_MINIROOT	0x0200	/* mini-root present in memory at boot time */
 #define	RB_CONFIG	0x0400	/* change configured devices */
 #define	RB_TIMEBAD	0x0800	/* don't call resettodr() in boot() */
-#define RB_POWERDOWN	0x1000	/* attempt to power down machine */
+#define	RB_POWERDOWN	0x1000	/* attempt to power down machine */
+#define	RB_SERCONS	0x2000	/* use serial console if available */
 
 /*
  * Constants for converting boot-style device number to type,
