@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.15 2003/01/15 06:30:35 art Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.16 2003/07/04 14:47:28 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -161,7 +161,6 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#define BKTR_DEBUG
 #ifdef BKTR_DEBUG
 int bktr_debug = 1;
 #define DPR(x)	(bktr_debug ? printf x : 0)
