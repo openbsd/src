@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.48 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.49 2001/11/28 14:13:06 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1311,21 +1311,6 @@ pmap_kenter_pa(va, pa, prot)
 {
 	pmap_enter_c_pv(pmap_kernel(), va, pa, prot, PMAP_WIRED,
 		PMAP_CACHE_DEFAULT, KERN_MAP_PV);
-}
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter_c_pv(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED,
-				PMAP_CACHE_DEFAULT, KERN_MAP_PV);
-	}
 }
 
 void pmap_remove_pvl( struct pmap *pm, vm_offset_t va, vm_offset_t endva,

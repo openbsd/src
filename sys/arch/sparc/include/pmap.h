@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.23 2001/08/19 15:36:27 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.24 2001/11/28 14:13:06 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -357,7 +357,6 @@ void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 #define		pmap_is_modified	pmap_is_modified4_4c
 #define		pmap_is_referenced	pmap_is_referenced4_4c
 #define		pmap_kenter_pa		pmap_kenter_pa4_4c
-#define		pmap_kenter_pgs		pmap_kenter_pgs4_4c
 #define		pmap_kremove		pmap_kremove4_4c
 #define		pmap_page_protect	pmap_page_protect4_4c
 #define		pmap_protect		pmap_protect4_4c
@@ -374,7 +373,6 @@ void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 #define		pmap_is_modified	pmap_is_modified4m
 #define		pmap_is_referenced	pmap_is_referenced4m
 #define		pmap_kenter_pa		pmap_kenter_pa4m
-#define		pmap_kenter_pgs		pmap_kenter_pgs4m
 #define		pmap_kremove		pmap_kremove4m
 #define		pmap_page_protect	pmap_page_protect4m
 #define		pmap_protect		pmap_protect4m
@@ -411,7 +409,6 @@ extern void		(*pmap_changeprot_p) __P((pmap_t, vaddr_t,
 #define		pmap_is_modified	(*pmap_is_modified_p)
 #define		pmap_is_referenced	(*pmap_is_referenced_p)
 #define		pmap_kenter_pa		(*pmap_kenter_pa_p)
-#define		pmap_kenter_pgs		(*pmap_kenter_pgs_p)
 #define		pmap_kremove		(*pmap_kremove_p)
 #define		pmap_page_protect	(*pmap_page_protect_p)
 #define		pmap_protect		(*pmap_protect_p)

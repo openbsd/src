@@ -127,7 +127,6 @@ vaddr_t		 pmap_growkernel __P((vaddr_t));
 void		 pmap_init __P((void));
 
 void		 pmap_kenter_pa __P((vaddr_t, paddr_t, vm_prot_t));
-void		 pmap_kenter_pgs __P((vaddr_t, struct vm_page **, int));
 void		 pmap_kremove __P((vaddr_t, vsize_t));
 #if !defined(pmap_is_modified)
 boolean_t	 pmap_is_modified __P((struct vm_page *));

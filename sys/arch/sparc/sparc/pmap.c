@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.98 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.99 2001/11/28 14:13:06 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -540,7 +540,6 @@ boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
 boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));
 void		(*pmap_kenter_pa_p) __P((vaddr_t, paddr_t, vm_prot_t));
-void		(*pmap_kenter_pgs_p) __P((vaddr_t, struct vm_page **, int));
 void		(*pmap_kremove_p) __P((vaddr_t, vsize_t));
 void		(*pmap_page_protect_p) __P((struct vm_page *, vm_prot_t));
 void		(*pmap_protect_p) __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
@@ -2664,7 +2663,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	pmap_is_modified_p 	=	pmap_is_modified4_4c;
 	pmap_is_referenced_p	=	pmap_is_referenced4_4c;
 	pmap_kenter_pa_p	=	pmap_kenter_pa4_4c;
-	pmap_kenter_pgs_p	=	pmap_kenter_pgs4_4c;
 	pmap_kremove_p		=	pmap_kremove4_4c;
 	pmap_page_protect_p	=	pmap_page_protect4_4c;
 	pmap_protect_p		=	pmap_protect4_4c;
@@ -2978,7 +2976,6 @@ pmap_bootstrap4m(void)
 	pmap_is_modified_p 	=	pmap_is_modified4m;
 	pmap_is_referenced_p	=	pmap_is_referenced4m;
 	pmap_kenter_pa_p	=	pmap_kenter_pa4m;
-	pmap_kenter_pgs_p	=	pmap_kenter_pgs4m;
 	pmap_kremove_p		=	pmap_kremove4m;
 	pmap_page_protect_p	=	pmap_page_protect4m;
 	pmap_protect_p		=	pmap_protect4m;
@@ -5216,20 +5213,6 @@ pmap_kenter_pa4_4c(va, pa, prot)
 }
 
 void
-pmap_kenter_pgs4_4c(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter4_4c(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-                               VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-	}
-}
-
-void
 pmap_kremove4_4c(va, len)
 	vaddr_t va;
 	vsize_t len;
@@ -5557,50 +5540,6 @@ pmap_kenter_pa4m(va, pa, prot)
 
 	ctx = getcontext4m();
 	pmap_enk4m(pmap_kernel(), va, prot, TRUE, pv, pteproto);
-	setcontext(ctx);
-}
-
-void
-pmap_kenter_pgs4m(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i, pteproto, pte, ctx;
-	struct pvlist *pv;
-
-	/*
-	 * The pages will always be "normal" so they can always be
-	 * cached.
-	 */
-	pteproto = SRMMU_PG_C |	SRMMU_TEPTE | PPROT_N_RX;
-#if 0
-	/*
-	 * XXX - make the pages read-only until we know what protection they
-	 *       should have.
-	 */
-	| ((prot & VM_PROT_WRITE) ? PPROT_WRITE : 0);
-#endif
-
-	/*
-	 * We can do even nastier stuff here. We happen to know that the
-	 * pte's are contig in the kernel (don't have to worry about
-	 * segment/region boundaries).
-	 */
-	ctx = getcontext4m();
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		int pnum;
-		paddr_t pa;
-
-		pa = VM_PAGE_TO_PHYS(pgs[i]);
-		pnum = atop(pa);
-
-		pte = pteproto | (pnum << SRMMU_PPNSHIFT) |
-			PMAP_T2PTE_SRMMU(pa);
-		pv = pvhead(pnum);
-		pmap_enk4m(pmap_kernel(), va, VM_PROT_READ /* XXX */,
-			   TRUE, pv, pte);
-	}
 	setcontext(ctx);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.25 2001/11/28 13:47:37 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.26 2001/11/28 14:13:06 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2047,35 +2047,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 }
 
 /*
- * pmap_kenter_pgs:		[ INTERFACE ]
- *
- *	Enter a va -> pa mapping for the array of vm_page's into the
- *	kernel pmap without any physical->virtual tracking, starting
- *	at address va, for npgs pages.
- *
- *	Note: no locking is necessary in this function.
- */
-void
-pmap_kenter_pgs(vaddr_t va, vm_page_t *pgs, int npgs)
-{
-	int i;
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_kenter_pgs(%lx, %p, %d)\n",
-		    va, pgs, npgs);
-#endif
-
-	for (i = 0; i < npgs; i++)
-		pmap_kenter_pa(va + (PAGE_SIZE * i),
-		    VM_PAGE_TO_PHYS(pgs[i]),
-		    VM_PROT_READ|VM_PROT_WRITE);
-}
-
-/*
  * pmap_kremove:		[ INTERFACE ]
  *
- *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
+ *	Remove a mapping entered with pmap_kenter_pa()
  *	starting at va, for size bytes (assumed to be page rounded).
  */
 void
