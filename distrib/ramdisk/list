@@ -1,0 +1,69 @@
+#	$OpenBSD: list,v 1.1 1997/05/14 20:44:35 deraadt Exp $
+#	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
+
+SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/instbin	instbin
+LINK	instbin			bin/cat
+LINK	instbin			bin/chmod
+LINK	instbin			bin/cp
+LINK	instbin			bin/dd
+LINK	instbin			bin/df
+LINK	instbin			bin/ed
+LINK	instbin			bin/expr
+LINK	instbin			bin/hostname
+LINK	instbin			bin/ln
+LINK	instbin			bin/ls
+LINK	instbin			bin/kill
+LINK	instbin			bin/mkdir
+LINK	instbin			bin/mt
+LINK	instbin			bin/mv
+LINK	instbin			bin/pax bin/tar bin/cpio
+LINK	instbin			bin/rm
+LINK	instbin			bin/pdksh bin/sh
+LINK	instbin			bin/stty
+LINK	instbin			bin/sleep
+LINK	instbin			bin/sync
+LINK	instbin			bin/test bin/[
+LINK	instbin			sbin/fsck_ffs sbin/fsck
+LINK	instbin			sbin/reboot sbin/halt
+LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/init
+LINK	instbin			sbin/mknod
+LINK	instbin			sbin/mount
+LINK	instbin			sbin/mount_cd9660
+LINK	instbin			sbin/mount_ffs
+LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/mount_kernfs
+LINK	instbin			sbin/newfs sbin/mount_mfs
+LINK	instbin			sbin/ping
+LINK	instbin			sbin/route
+LINK	instbin			sbin/slattach
+LINK	instbin			sbin/umount
+SYMLINK	../../instbin		usr/bin/chflags
+SYMLINK	../../instbin		usr/sbin/chown usr/bin/chgrp
+SYMLINK	../../instbin		usr/sbin/chroot
+SYMLINK	../../instbin		usr/bin/ftp
+SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+SYMLINK	../../instbin		usr/bin/sed
+
+# `internal' crunchgen links
+ARGVLINK mount_ffs	ffs
+ARGVLINK mount_nfs	nfs
+ARGVLINK mount_cd9660	cd9660
+ARGVLINK pdksh		-sh
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group		etc/group
+COPY	${DESTDIR}/etc/protocols	etc/protocols
+COPY	${DESTDIR}/etc/services		etc/services
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+### COPY	${DESTDIR}/etc/virc		etc/virc
+
+# and the installation scripts
+COPY	${CURDIR}/../miniroot/install.sub		install.sub
+COPY	${CURDIR}/../miniroot/install.sh		install
+COPY	${CURDIR}/../miniroot/upgrade.sh		upgrade
+SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../miniroot/install.sub > install.sub
+SPECIAL	chmod 755 install upgrade
