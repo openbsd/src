@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/14 12:54:22 downsj Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/08/16 09:43:08 downsj Exp $
 
 LIB=	common
 
@@ -9,7 +9,7 @@ SRCS=	apci.c autoconf.c cons.c ct.c dca.c dcm.c dnkbd.c \
 	ite_subr.c ite_tc.c ite_hy.c kbd.c kbdconf.c machdep.c \
 	nhpib.c prf.c scsi.c sd.c version.c
 
-CFLAGS= -O3 -msoft-float -I${.CURDIR}/../include \
+CFLAGS= -O2 -msoft-float -I${.CURDIR}/../include \
 	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. -DCD9660_DUMMYLABEL
 
 ${OBJS}:	${.CURDIR}/../Makefile.inc

@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.2 1997/09/14 12:54:29 downsj Exp $
+#	$OpenBSD: Makefile,v 1.3 1999/08/16 09:43:11 downsj Exp $
 
 PROG=	uboot
 
 NOMAN=
 
-CFLAGS= -O3 -msoft-float -I${.CURDIR}/../include \
+CFLAGS= -O2 -msoft-float -I${.CURDIR}/../include \
 	-I${.CURDIR}/../libsa -I${.CURDIR}/../.. -I${.CURDIR}/../../.. \
 	-I${.CURDIR}/../../../..
 
@@ -14,29 +14,24 @@ AFLAGS=	-x assembler-with-cpp -traditional-cpp -I${.CURDIR}/../include \
 
 SRCS=	srt0.S uboot.c tgets.c netio.c clock.c conf.c
 
-LIBS=	${LIBCOMMON} ${LIBSA} ${LIBZ} ${LIBKERN}
+LIBS=	${LIBCOMMON} ${LIBSAZ} ${LIBZ} ${LIBKERN}
 
 ${OBJS}:	${.CURDIR}/../Makefile.inc
 
-CLEANFILES+=	uboot.lif uboot.raw
+CLEANFILES+=	uboot.lif
 
 uboot.lif:	uboot
 	${MKBOOT_PROG} uboot $@
-
-uboot.raw:	uboot
-	${STRIPBOOT_PROG} uboot $@
 
 uboot:	${OBJS} ${LIBS}
 	${LD} -N -T ${RELOC} -e begin ${OBJS} ${LIBS} -o $@
 	@size $@
 	@echo $@ total size should not exceed 1044480 bytes
 
-install:	uboot.lif uboot.raw ${MKBOOT_PROG}
+install:	uboot.lif ${MKBOOT_PROG}
 	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} \
 	    ${DESTDIR}/usr/mdec/rbootd
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 uboot.lif \
-	    ${DESTDIR}/usr/mdec
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 uboot.raw \
 	    ${DESTDIR}/usr/mdec
 	rm -f ${DESTDIR}/usr/mdec/hdboot
 	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/hdboot

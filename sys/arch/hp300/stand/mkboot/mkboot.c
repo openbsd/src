@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.1 1997/07/14 08:14:53 downsj Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.2 1999/08/16 09:43:10 downsj Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 static char rcsid[] = "$NetBSD: mkboot.c,v 1.5 1994/10/26 07:27:45 cgd Exp $";
 #endif
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.1 1997/07/14 08:14:53 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.2 1999/08/16 09:43:10 downsj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -156,7 +156,7 @@ main(argc, argv)
 		exit(1);
 	}
 	/* clear possibly unused directory entries */
-	strncpy(lifd[1].dir_name, "	     ", 10);
+	bcopy("          ", lifd[1].dir_name, 10);
 	lifd[1].dir_type = -1;
 	lifd[1].dir_addr = 0;
 	lifd[1].dir_length = 0;
@@ -165,7 +165,7 @@ main(argc, argv)
 	lifd[7] = lifd[6] = lifd[5] = lifd[4] = lifd[3] = lifd[2] = lifd[1];
 	/* record volume info */
 	lifv.vol_id = VOL_ID;
-	strncpy(lifv.vol_label, "BOOT43", 6);
+	bcopy("BOOT44", lifv.vol_label, 6);
 	lifv.vol_addr = btolifs(LIF_DIRSTART);
 	lifv.vol_oct = VOL_OCT;
 	lifv.vol_dirsize = btolifs(LIF_DIRSIZE);
@@ -174,7 +174,7 @@ main(argc, argv)
 	lseek(to, LIF_FILESTART, 0);
 	putfile(from1, to);
 	n = btolifs(ld.count + sizeof(ld));
-	strcpy(lifd[0].dir_name, lifname(n1));
+	bcopy(lifname(n1), lifd[0].dir_name, 10);
 	lifd[0].dir_type = DIR_TYPE;
 	lifd[0].dir_addr = btolifs(LIF_FILESTART);
 	lifd[0].dir_length = n;
@@ -187,7 +187,7 @@ main(argc, argv)
 		lseek(to, LIF_FILESTART+lifstob(n), 0);
 		putfile(from2, to);
 		n = btolifs(ld.count + sizeof(ld));
-		strcpy(lifd[1].dir_name, lifname(n2));
+		bcopy(lifname(n2), lifd[1].dir_name, 10);
 		lifd[1].dir_type = DIR_TYPE;
 		lifd[1].dir_addr = lifv.vol_length;
 		lifd[1].dir_length = n;
@@ -201,7 +201,7 @@ main(argc, argv)
 		lseek(to, LIF_FILESTART+lifstob(lifd[0].dir_length+n), 0);
 		putfile(from3, to);
 		n = btolifs(ld.count + sizeof(ld));
-		strcpy(lifd[2].dir_name, lifname(n3));
+		bcopy(lifname(n3), lifd[2].dir_name, 10);
 		lifd[2].dir_type = DIR_TYPE;
 		lifd[2].dir_addr = lifv.vol_length;
 		lifd[2].dir_length = n;
@@ -296,7 +296,7 @@ lifname(str)
 	static char lname[10] = "SYS_XXXXX";
 	register int i;
 
-	for (i = 4; i < 9; i++) {
+	for (i = 4; i < 10; i++) {
 		if (islower(*str))
 			lname[i] = toupper(*str);
 		else if (isalnum(*str) || *str == '_')
@@ -306,7 +306,7 @@ lifname(str)
 		str++;
 	}
 	for ( ; i < 10; i++)
-		lname[i] = '\0';
+		lname[i] = ' ';
 	return(lname);
 }
 

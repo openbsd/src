@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1997/09/14 12:54:20 downsj Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1999/08/16 09:43:07 downsj Exp $
 #	$NetBSD: Makefile.inc,v 1.7 1997/05/12 07:43:18 thorpej Exp $
 
 BINDIR=			/usr/mdec
@@ -53,6 +53,19 @@ LIBSAOBJDIR=		${LIBSADIR}
 .endif
 
 LIBSA=			${LIBSAOBJDIR}/libsa.a
+
+### Figure out what to use for libsaz
+LIBSAZDIR=		${.CURDIR}/../libsaz
+
+.if exists(${LIBSAZDIR}/obj.${MACHINE})
+LIBSAZOBJDIR=		${LIBSAZDIR}/obj.${MACHINE}
+.elif exists(${LIBSAZDIR}/obj)
+LIBSAZOBJDIR=		${LIBSAZDIR}/obj
+.else
+LIBSAZOBJDIR=		${LIBSAZDIR}
+.endif
+
+LIBSAZ=			${LIBSAZOBJDIR}/libsaz.a
 
 ### Figure out what to use for libz
 LIBZDIR=		${.CURDIR}/../libz
