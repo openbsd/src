@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.5 1998/02/16 09:23:06 deraadt Exp $	*/
+/*	$OpenBSD: du.c,v 1.6 2000/04/16 04:21:34 ericj Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.5 1998/02/16 09:23:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.6 2000/04/16 04:21:34 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ main(argc, argv)
 	if (cflag)
 		(void)printf("%ld\ttotal\n",
 		    howmany(totalblocks, blocksize));
-	exit(0);
+	exit(rval);
 }
 
 typedef struct _ID {
