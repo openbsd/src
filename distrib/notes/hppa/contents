@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.6 2004/03/27 23:33:09 miod Exp $
+dnl	$OpenBSD: contents,v 1.7 2004/06/02 00:25:32 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -16,9 +16,9 @@ dnl	installboot	The OpenBSD/MACHINE boot loader installation program
 
 DistributionDescription(nine)
 
-OpenBSDbase(82.7,203.3)
+OpenBSDbase(82.7,203.3,shared)
 
-OpenBSDcomp(22.6,70.9)
+OpenBSDcomp(22.6,70.9,shared)
 
 OpenBSDetc(1.6,6.4)
 
