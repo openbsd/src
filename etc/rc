@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.157 2000/10/27 06:36:35 deraadt Exp $
+#	$OpenBSD: rc,v 1.158 2000/12/30 06:35:17 angelos Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -60,6 +60,7 @@ fi
 for dev in 0 1 2 3; do
 	if [ -f /etc/raid$dev.conf ]; then
 		raidctl -c /etc/raid$dev.conf raid$dev
+		raidctl -v -P raid$dev
 	fi
 done
 
