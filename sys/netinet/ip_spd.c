@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.29 2001/06/26 19:01:27 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.30 2001/06/26 19:49:29 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -669,90 +669,84 @@ ipsp_clear_acquire(struct tdb *tdb)
 	struct ifqueue *ifq;
 	int s;
 
-	while ((ipa = ipsp_pending_acquire(&tdb->tdb_dst)) != NULL) {
-		/* Retransmit */
-		if (ipa->ipa_packet) {
-			switch (ipa->ipa_info.sen_type) {
+	ipa = ipsec_get_acquire(tdb->tdb_seq);
+	if (ipa == NULL)
+		return;
+
+	/* Just delete and return if no pending packet. */
+	if (ipa->ipa_packet == NULL) {
+		ipsp_delete_acquire(ipa);
+		return;
+	}
+
+	/* Retransmit last packet. */
+	switch (ipa->ipa_info.sen_type) {
 #ifdef INET
-			case SENT_IP4:
-			{
-				struct ip *ip;
+	case SENT_IP4:
+	{
+		struct ip *ip;
 
-				switch (ipa->ipa_info.sen_direction) {
-				case IPSP_DIRECTION_OUT:
-					ip = mtod(ipa->ipa_packet,
-					    struct ip *);
+		switch (ipa->ipa_info.sen_direction) {
+		case IPSP_DIRECTION_OUT:
+			ip = mtod(ipa->ipa_packet, struct ip *);
 
-					if (ipa->ipa_packet->m_len <
-					    sizeof(struct ip))
-						break;
+			if (ipa->ipa_packet->m_len < sizeof(struct ip))
+				break;
 
-					/*
-					 * Same as in ip_output() --
-                                         * massage the header.
-					 */
-					ip->ip_len =
-					    htons((u_short) ip->ip_len);
-					ip->ip_off =
-					    htons((u_short) ip->ip_off);
-					ipa->ipa_packet->m_flags &=
-					    ~(M_MCAST | M_BCAST);
+			 /* Same as in ip_output() -- massage the header. */
+			ip->ip_len = htons((u_short) ip->ip_len);
+			ip->ip_off = htons((u_short) ip->ip_off);
 
-					ipsp_process_packet(ipa->ipa_packet,
-					    tdb, AF_INET, 0);
-					ipa->ipa_packet = NULL;
-					break;
-
-				case IPSP_DIRECTION_IN:
-					ifq = &ipintrq;
-					s = splimp();
-					if (IF_QFULL(ifq)) {
-						IF_DROP(ifq);
-						splx(s);
-						break;
-					}
-					IF_ENQUEUE(ifq, ipa->ipa_packet);
-					ipa->ipa_packet = NULL;
-					schednetisr(NETISR_IP);
-					splx(s);
-					break;
-				}
-			}
+			ipsp_process_packet(ipa->ipa_packet, tdb, AF_INET, 0);
+			ipa->ipa_packet = NULL;
 			break;
+
+		case IPSP_DIRECTION_IN:
+			ifq = &ipintrq;
+			s = splimp();
+			if (IF_QFULL(ifq)) {
+				IF_DROP(ifq);
+				splx(s);
+				break;
+			}
+			IF_ENQUEUE(ifq, ipa->ipa_packet);
+			ipa->ipa_packet = NULL;
+			schednetisr(NETISR_IP);
+			splx(s);
+			break;
+		}
+	}
+	break;
 #endif /* INET */
 
 #ifdef INET6
-			case SENT_IP6:
-				switch (ipa->ipa_info.sen_ip6_direction) {
-				case IPSP_DIRECTION_OUT:
-					ipa->ipa_packet->m_flags &=
-					    ~(M_BCAST | M_MCAST);
-					ipsp_process_packet(ipa->ipa_packet,
-					    tdb, AF_INET6, 0);
-					ipa->ipa_packet = NULL;
-					break;
+	case SENT_IP6:
+		switch (ipa->ipa_info.sen_ip6_direction) {
+		case IPSP_DIRECTION_OUT:
+			ipsp_process_packet(ipa->ipa_packet, tdb, AF_INET6, 0);
+			ipa->ipa_packet = NULL;
+			break;
 
-				case IPSP_DIRECTION_IN:
-					ifq = &ip6intrq;
-					s = splimp();
-					if (IF_QFULL(ifq)) {
-						IF_DROP(ifq);
-						splx(s);
-						break;
-					}
-					IF_ENQUEUE(ifq, ipa->ipa_packet);
-					ipa->ipa_packet = NULL;
-					schednetisr(NETISR_IPV6);
-					splx(s);
-					break;
-				}
+		case IPSP_DIRECTION_IN:
+			ifq = &ip6intrq;
+			s = splimp();
+			if (IF_QFULL(ifq)) {
+				IF_DROP(ifq);
+				splx(s);
 				break;
-#endif /* INET6 */
 			}
+			IF_ENQUEUE(ifq, ipa->ipa_packet);
+			ipa->ipa_packet = NULL;
+			schednetisr(NETISR_IPV6);
+			splx(s);
+			break;
 		}
-
-		ipsp_delete_acquire(ipa);
+		break;
+#endif /* INET6 */
 	}
+
+	/* Delete. */
+	ipsp_delete_acquire(ipa);
 }
 
 /*
