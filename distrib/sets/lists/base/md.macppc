@@ -609,6 +609,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto
+./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/arc4.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/castsb.ph

@@ -1641,6 +1641,7 @@
 ./usr/sbin/rwhod
 ./usr/sbin/sa
 ./usr/sbin/sendmail
+./usr/sbin/sensorsd
 ./usr/sbin/sesd
 ./usr/sbin/setencstat
 ./usr/sbin/setextattr
@@ -2532,6 +2533,7 @@
 ./usr/share/zoneinfo/Antarctica/Mawson
 ./usr/share/zoneinfo/Antarctica/McMurdo
 ./usr/share/zoneinfo/Antarctica/Palmer
+./usr/share/zoneinfo/Antarctica/Rothera
 ./usr/share/zoneinfo/Antarctica/South_Pole
 ./usr/share/zoneinfo/Antarctica/Syowa
 ./usr/share/zoneinfo/Antarctica/Vostok
@@ -3090,6 +3092,7 @@
 ./usr/share/zoneinfo/posix/Antarctica/Mawson
 ./usr/share/zoneinfo/posix/Antarctica/McMurdo
 ./usr/share/zoneinfo/posix/Antarctica/Palmer
+./usr/share/zoneinfo/posix/Antarctica/Rothera
 ./usr/share/zoneinfo/posix/Antarctica/South_Pole
 ./usr/share/zoneinfo/posix/Antarctica/Syowa
 ./usr/share/zoneinfo/posix/Antarctica/Vostok
@@ -3649,6 +3652,7 @@
 ./usr/share/zoneinfo/right/Antarctica/Mawson
 ./usr/share/zoneinfo/right/Antarctica/McMurdo
 ./usr/share/zoneinfo/right/Antarctica/Palmer
+./usr/share/zoneinfo/right/Antarctica/Rothera
 ./usr/share/zoneinfo/right/Antarctica/South_Pole
 ./usr/share/zoneinfo/right/Antarctica/Syowa
 ./usr/share/zoneinfo/right/Antarctica/Vostok

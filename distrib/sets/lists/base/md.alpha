@@ -663,6 +663,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto
+./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/arc4.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/castsb.ph

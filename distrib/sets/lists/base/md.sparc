@@ -100,6 +100,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto
+./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/arc4.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/castsb.ph

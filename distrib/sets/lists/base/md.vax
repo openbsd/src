@@ -42,6 +42,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto
+./usr/libdata/perl5/site_perl/vax-openbsd/crypto/arc4.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/castsb.ph

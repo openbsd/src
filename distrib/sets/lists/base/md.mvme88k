@@ -533,6 +533,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto
+./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/arc4.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/castsb.ph

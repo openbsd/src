@@ -600,6 +600,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/com_err.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/cpio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/arc4.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/castsb.ph

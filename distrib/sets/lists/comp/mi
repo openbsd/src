@@ -57,6 +57,7 @@
 ./usr/include/com_err.h
 ./usr/include/cpio.h
 ./usr/include/crypto
+./usr/include/crypto/arc4.h
 ./usr/include/crypto/blf.h
 ./usr/include/crypto/cast.h
 ./usr/include/crypto/castsb.h

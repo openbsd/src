@@ -1611,6 +1611,7 @@
 ./usr/share/man/cat5/rpc.0
 ./usr/share/man/cat5/rtadvd.conf.0
 ./usr/share/man/cat5/securenet.0
+./usr/share/man/cat5/sensorsd.conf.0
 ./usr/share/man/cat5/services.0
 ./usr/share/man/cat5/shells.0
 ./usr/share/man/cat5/skey.0
@@ -1986,6 +1987,7 @@
 ./usr/share/man/cat8/scsi.0
 ./usr/share/man/cat8/security.0
 ./usr/share/man/cat8/sendmail.0
+./usr/share/man/cat8/sensorsd.0
 ./usr/share/man/cat8/sesd.0
 ./usr/share/man/cat8/setencstat.0
 ./usr/share/man/cat8/setextattr.0
