@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.9 1997/08/31 21:34:18 deraadt Exp $	*/
+/*	$OpenBSD: eval.c,v 1.10 1997/12/20 15:39:13 deraadt Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.9 1997/08/31 21:34:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.10 1997/12/20 15:39:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -240,22 +240,14 @@ register int td;
 		if (argc > 3) {
 			int k;
 			for (n = argc - 1; n > 3; n--) {
-				k = strlen(rquote);
-				while (k--)
-					putback(rquote[k]);
+				pbstr(rquote);
 				pbstr(argv[n]);
-				k = strlen(lquote);
-				while (k--)
-					putback(lquote[k]);
+				pbstr(lquote);
 				putback(COMMA);
 			}
-			k = strlen(rquote);
-			while (k--)
-				putback(rquote[k]);
+			pbstr(rquote);
 			pbstr(argv[3]);
-			k = strlen(lquote);
-			while (k--)
-				putback(lquote[k]);
+			pbstr(lquote);
 		}
 		break;
 
@@ -494,13 +486,9 @@ char *name;
 	register ndptr p;
 
 	if ((p = lookup(name)) != nil && p->defn != null) {
-		int n = strlen(rquote);
-		while (n--)
-			putback(rquote[n]);
+		pbstr(rquote);
 		pbstr(p->defn);
-		n = strlen(lquote);
-		while (n--)
-			putback(lquote[n]);
+		pbstr(lquote);
 	}
 }
 
