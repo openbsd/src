@@ -1,4 +1,4 @@
-OpenBSD/alpha requires the SRM console.  Some alphas come with
+OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the ARC firmware instead (this is what Windows NT uses).  It is
 fairly simple to replace the ARC firmware with the SRM version.
 You can get replacement firmware either from a firmware update
@@ -38,7 +38,7 @@ Acquiring and updating firmware:
 Using the SRM console:
     This is not intended to be an exhaustive guide on using the
     SRM firmware console.  It should, however, give you enough
-    information to boot OpenBSD/alpha.
+    information to boot OpenBSD/MACHINE.
 
     To see a list of devices connected to your alpha, you can
     use the "show device" command.  For booting the devices you
@@ -83,6 +83,17 @@ is system-specific.  The procedure for most common hardware is:
 
 See your owner's manual for more details on how to set your machine
 to use a serial console.
+
+Note that some MACHINE computers currently *require* a serial console
+and can't be used from a regular keyboard/display console, even though
+the motherboard has appropriate connectors.
+The following MACHINE models fall in this category:
+	- TurboChannel MACHINE computers listed above
+	- Personal Workstation (Miata)
+
+If booting using the regular console aborts with ``not configured to use display
+&& keyboard console'', then you need to use a serial console. If your machine
+was not listed in the list above, please report this on alpha@openbsd.org.
 
 
 Alpha-related URL's:
