@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.43 2001/11/07 22:32:29 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -185,9 +185,9 @@ char  *pmap_modify_list;
 
 #define PV_ENTRY_NULL	((pv_entry_t) 0)
 
-static struct simplelock *pv_lock_table; /* array */
+struct simplelock *pv_lock_table; /* array */
 
-static pv_entry_t pv_head_table; /* array of entries, one per page */
+pv_entry_t pv_head_table; /* array of entries, one per page */
 
 #define	PMAP_MANAGED(pa) (pmap_initialized &&			\
 			 vm_physseg_find(atop((pa)), NULL) != -1)
@@ -302,8 +302,8 @@ boolean_t   pmap_initialized = FALSE;/* Has pmap_init completed? */
 
 #ifdef DEBUG
 
-static void check_pv_list __P((vm_offset_t, pv_entry_t, char *));
-static void check_pmap_consistency __P((char *));
+void check_pv_list __P((vm_offset_t, pv_entry_t, char *));
+void check_pmap_consistency __P((char *));
 
    #define CHECK_PV_LIST(phys,pv_h,who) \
 	if (pmap_con_dbg & CD_CHKPV) check_pv_list(phys,pv_h,who)
@@ -337,9 +337,11 @@ void pmap_remove_range __P((pmap_t, vm_offset_t, vm_offset_t));
 void pmap_copy_on_write __P((vm_offset_t));
 void pmap_expand __P((pmap_t, vm_offset_t));
 void cache_flush_loop __P((int, vm_offset_t, int));
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 /*
- * Rooutine:	FLUSH_ATC_ENTRY
+ * Routine:	FLUSH_ATC_ENTRY
  *
  * Function:
  *	Flush atc(TLB) which maps given virtual address, in the CPUs which
@@ -1186,16 +1188,16 @@ pmap_bootstrap(vm_offset_t load_start,
 	v = (c)virt; \
     	if ((p = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL) \
     		pmap_expand_kmap(virt, (VM_PROT_READ|VM_PROT_WRITE)|(CACHE_GLOBAL << 16)); \
-	virt += ((n)*NBPG); \
+	virt += ((n) * PAGE_SIZE); \
 })
 
 	virt = *virt_start;
 
-	SYSMAP(caddr_t, vmpte , vmmap, 1);
-	SYSMAP(struct msgbuf *, msgbufmap ,msgbufp, btoc(MSGBUFSIZE));
-
+	SYSMAP(caddr_t, vmpte, vmmap, 1);
 	vmpte->pfn = -1;
 	vmpte->dtype = DT_INVALID;
+
+	SYSMAP(struct msgbuf *, msgbufmap, msgbufp, btoc(MSGBUFSIZE));
 
 	*virt_start = virt;
 
