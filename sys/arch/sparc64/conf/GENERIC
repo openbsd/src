@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.11 2001/08/22 13:54:56 art Exp $
+#	$OpenBSD: GENERIC,v 1.12 2001/08/22 21:52:01 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -27,6 +27,8 @@ pci*	at psycho?				# Ultra 5
 pci*	at ppb?
 ppb*	at pci? dev ? function ?
 ebus*	at pci?
+
+#hme*	at pci? dev ? function ?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -83,3 +85,8 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*		at scsibus? target ? lun ?	# SCSI changer devices
 ss*		at scsibus? target ? lun ?	# SCSI scanners
 uk*		at scsibus? target ? lun ?	# unknown SCSI devices
+
+# Media Independent Interface (mii) drivers)
+nsphy*	at mii? phy ?				# NS and compatible PHYs
+qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
+ukphy*	at mii? phy ?				# Unknown PHYs
