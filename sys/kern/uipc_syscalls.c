@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.26 1999/06/11 18:10:24 provos Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.27 1999/06/15 17:46:32 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -844,14 +844,14 @@ sys_pipe(p, v, retval)
 	register struct sys_pipe_args /* {
 		syscallarg(int *) fdp;
 	} */ *uap = v;
-	int error;
-	int fds[2];
+	int error, fds[2];
+	register_t rval[2];
 
-	if ((error = sys_opipe(p, v, retval)) == -1)
+	if ((error = sys_opipe(p, v, rval)) == -1)
 		return (error);
 	
-	fds[0] = retval[0];
-	fds[1] = retval[1];
+	fds[0] = rval[0];
+	fds[1] = rval[1];
 	error = copyout((caddr_t)fds, (caddr_t)SCARG(uap, fdp),
 	    2 * sizeof (int));
 	if (error) {
