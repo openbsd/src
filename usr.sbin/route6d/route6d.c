@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.38 2003/08/22 08:26:39 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.39 2003/10/31 00:30:19 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.38 2003/08/22 08:26:39 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.39 2003/10/31 00:30:19 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -1066,7 +1066,7 @@ riprecv(void)
 	struct	rip6 *rp;
 	struct	netinfo6 *np, *nq;
 	struct	riprt *rrt;
-	int	len, nn, need_trigger, idx;
+	ssize_t	len, nn, need_trigger, idx;
 	char	buf[4 * RIP6_MAXMTU];
 	time_t	t;
 	struct msghdr m;
@@ -1107,6 +1107,11 @@ riprecv(void)
 	}
 	if (idx && IN6_IS_ADDR_LINKLOCAL(&fsock.sin6_addr))
 		SET_IN6_LINKLOCAL_IFINDEX(fsock.sin6_addr, idx);
+
+	if (len < sizeof(struct rip6)) {
+		trace(1, "Packet too short\n");
+		return;
+	}
 
 	nh = fsock.sin6_addr;
 	nn = (len - sizeof(struct rip6) + sizeof(struct netinfo6)) /
