@@ -1,4 +1,4 @@
-/*	$OpenBSD: getNAME.c,v 1.12 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: getNAME.c,v 1.13 2003/07/03 17:49:17 avsm Exp $	*/
 /*	$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-static char rcsid[] = "$OpenBSD: getNAME.c,v 1.12 2003/06/02 19:38:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: getNAME.c,v 1.13 2003/07/03 17:49:17 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,11 +155,10 @@ getfrom(char *pathname)
 				break;
 		}
 		if (i != 0)
-			strncat(linbuf, " ", sizeof(linbuf) - strlen(linbuf)
-			    - 1);
+			strlcat(linbuf, " ", sizeof(linbuf));
 		i++;
 		trimln(headbuf);
-		strncat(linbuf, headbuf, sizeof(linbuf) - strlen(linbuf) - 1);
+		strlcat(linbuf, headbuf, sizeof(linbuf));
 		/* change the \- into (N) - */
 		if ((s = strstr(linbuf, "\\-")) != NULL) {
 			strlcpy(savebuf, s+1, sizeof savebuf);
@@ -172,8 +171,7 @@ getfrom(char *pathname)
 				*s++ = ' ';
 				*s++ = '\0';
 			}
-			strncat(linbuf, savebuf, sizeof(linbuf) -
-			    strlen(linbuf) - 1);
+			strlcat(linbuf, savebuf, sizeof(linbuf));
 		}
 	}
 	if (intro)
@@ -207,8 +205,7 @@ newman:
 				break;
 		}
 		if (i != 0)
-			strncat(linbuf, " ", sizeof(linbuf) - strlen(linbuf)
-			    - 1);
+			strlcat(linbuf, " ", sizeof(linbuf));
 		i++;
 		trimln(headbuf);
 		for (loc = strchr(headbuf, ' '); loc; loc = strchr(loc, ' '))
@@ -217,8 +214,7 @@ newman:
 			else
 				loc++;
 		if (headbuf[0] != '.') {
-			strncat(linbuf, headbuf, sizeof(linbuf) -
-			    strlen(linbuf) - 1);
+			strlcat(linbuf, headbuf, sizeof(linbuf));
 		} else {
 			/*
 			 * Get rid of quotes in macros.
@@ -244,21 +240,16 @@ newman:
 			 */
 			if (headbuf[1] == 'N' && headbuf[2] == 'd') {
 				if ((t = strchr(name, '.')) != NULL) {
-					strncat(linbuf, "(", sizeof(linbuf) -
-					    strlen(linbuf) - 1);
-					strncat(linbuf, t+1, sizeof(linbuf) -
-					    strlen(linbuf) - 1);
-					strncat(linbuf, ") ", sizeof(linbuf) -
-					    strlen(linbuf) - 1);
+					size_t len = strlen(linbuf);
+					snprintf(linbuf+len, sizeof(linbuf)-len,
+					    "(%s)", t+1);
 				}
-				strncat(linbuf, "- ", sizeof(linbuf) -
-				    strlen(linbuf) - 1);
+				strlcat(linbuf, "- ", sizeof(linbuf));
 			}
 			/*
 			 * Skip over macro names.
 			 */
-			strncat(linbuf, &headbuf[4], sizeof(linbuf) -
-			    strlen(linbuf) - 1);
+			strlcat(linbuf, &headbuf[4], sizeof(linbuf));
 		}
 	}
 	if (intro)
