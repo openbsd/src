@@ -81,7 +81,10 @@ Boston, MA 02111-1307, USA.  */
   do						\
     {						\
       builtin_define ("__OpenBSD__");		\
+      builtin_define ("__unix__");		\
+      builtin_define ("__ANSI_COMPAT");		\
       builtin_assert ("system=unix");		\
+      builtin_assert ("system=bsd");		\
       builtin_assert ("system=OpenBSD");	\
     }						\
   while (0)
@@ -100,6 +103,7 @@ Boston, MA 02111-1307, USA.  */
   do						\
     {						\
       builtin_define ("_LP64");			\
+      builtin_define ("__LP64__");		\
     }						\
   while (0)
 

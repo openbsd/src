@@ -39,8 +39,6 @@ Boston, MA 02111-1307, USA.  */
   do						\
     {						\
     	OPENBSD_OS_CPP_BUILTINS_ELF();		\
-	builtin_define ("__unix__");		\
-	builtin_assert ("system=bsd");		\
     }						\
   while (0)
 

@@ -44,11 +44,8 @@ Boston, MA 02111-1307, USA.  */
 /* run-time target specifications */
 #define TARGET_OS_CPP_BUILTINS()		\
     do {					\
-	builtin_define ("__OpenBSD__");		\
-	builtin_define ("__ANSI_COMPAT");	\
-	builtin_define ("__unix__");		\
-	builtin_define ("__ELF__");		\
-	builtin_assert ("system=unix");		\
+	OPENBSD_OS_CPP_BUILTINS_ELF();		\
+	OPENBSD_OS_CPP_BUILTINS_LP64();		\
     } while (0)
 
 /* Layout of source language data types.  */

@@ -33,16 +33,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Run-time target specifications. */
 #undef TARGET_OS_CPP_BUILTINS
-#define TARGET_OS_CPP_BUILTINS()				\
-  do								\
-    {								\
-	builtin_define_std ("__ELF__");				\
-	builtin_define_std ("__ANSI_COMPAT");			\
-	builtin_define_std ("__unix__");			\
-	builtin_define_std ("__OpenBSD__");			\
-	builtin_assert ("system=OpenBSD");			\
-	builtin_assert ("system=unix");				\
-    }								\
+#define TARGET_OS_CPP_BUILTINS()		\
+  do						\
+    {						\
+	OPENBSD_OS_CPP_BUILTINS_ELF();		\
+    }						\
   while (0)
 
 

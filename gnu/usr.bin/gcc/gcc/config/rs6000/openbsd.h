@@ -25,11 +25,13 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
-      OPENBSD_OS_CPP_BUILTINS_ELF();		\
-      builtin_define ("__powerpc__");		\
-      builtin_define ("__unix__");		\
-      builtin_assert ("cpu=powerpc");		\
-      builtin_assert ("machine=powerpc");	\
+	OPENBSD_OS_CPP_BUILTINS_ELF();		\
+	builtin_define ("__PPC");		\
+	builtin_define ("__PPC__");		\
+	builtin_define ("__powerpc");		\
+	builtin_define ("__powerpc__");		\
+	builtin_assert ("cpu=powerpc");		\
+	builtin_assert ("machine=powerpc");	\
     }						\
   while (0)
 
