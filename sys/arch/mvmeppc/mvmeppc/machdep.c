@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2004/06/24 22:35:56 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.47 2004/11/17 20:26:02 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -44,16 +44,14 @@
 #include <sys/signalvar.h>
 #include <sys/reboot.h>
 #include <sys/syscallargs.h>
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
 #include <sys/syslog.h>
 #include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 
-#include <uvm/uvm_extern.h>
-
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
 #include <net/netisr.h>
 
 #include <machine/bat.h>
@@ -63,8 +61,13 @@
 #include <machine/trap.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/conf.h>
 #include <machine/pio.h>
 #include <machine/prom.h>
+
+#include <dev/cons.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -77,7 +80,6 @@ void initppc(u_int, u_int, char *);
 void dumpsys(void);
 int lcsplx(int);
 void myetheraddr(u_char *);
-void nameinterrupt(int, char *);
 
 /*
  * Global variables used here and there
@@ -89,26 +91,20 @@ struct proc *fpuproc;
 extern struct user *proc0paddr;
 
 /* 
- *  XXX this is to fake out the console routines, while 
- *  booting. New and improved! :-) smurph
+ * This is to fake out the console routines, while booting.
  */
-#include <dev/cons.h>
-
-int  bootcnprobe(struct consdev *);
-int  bootcninit(struct consdev *);
-void bootcnputc(dev_t, char);
-int  bootcngetc(dev_t);
-extern void nullcnpollc(dev_t, int);
+cons_decl(boot);
 #define bootcnpollc nullcnpollc
+
 static struct consdev bootcons = {
-	(void (*))NULL, 
-	(void (*))NULL, 
+	NULL, 
+	NULL, 
 	bootcngetc, 
-	(void (*))bootcnputc,
+	bootcnputc,
 	bootcnpollc,
-   (void (*))NULL,
-   makedev(14,0), 
-   1
+	NULL,
+	makedev(14, 0), 
+	CN_NORMAL,
 };
 
 /* 
@@ -323,6 +319,9 @@ initppc(startkernel, endkernel, args)
 	initmsgbuf(msgbuf_addr, MSGBUFSIZE);
 
 #ifdef DDB
+#ifdef notyet
+	db_machine_init();
+#endif
 	ddb_init();
 #endif
 	
@@ -469,7 +468,6 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 	ppc_malloc_ok = 1;
-	devio_malloc_safe = 1;
 	
 	printf("avail mem = %ld (%ldK)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free) / 1024);
@@ -484,10 +482,10 @@ cpu_startup()
 	/*
 	 * Set up early mappings
 	 */
+	devio_malloc_safe = 1;
 	nvram_map();
 	prep_bus_space_init();	
 }
-	
 
 /*
  * Allocate space for system data structures.
@@ -516,11 +514,11 @@ allocsys(v)
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-	/* Restrict to at most 70% filled kvm */
-	if (nbuf * MAXBSIZE >
-	    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+	/* Restrict to at most 35% filled kvm */
+	if (nbuf >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 35 / 100)
 		nbuf = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) /
-		    MAXBSIZE * 7 / 10;
+		    MAXBSIZE * 35 / 100;
 
 	/* More buffer pages than fits into the buffers is senseless.  */
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
@@ -632,7 +630,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->fixreg[1] = (int)fp;
 	tf->lr = (int)catcher;
 	tf->fixreg[3] = (int)sig;
-	tf->fixreg[4] = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : NULL;
+	tf->fixreg[4] = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : 0;
 	tf->fixreg[5] = (int)&fp->sf_sc;
 	tf->srr0 = p->p_sigcode;
 
@@ -855,144 +853,6 @@ ppc_intr_setup(intr_establish_t *establish, intr_disestablish_t *disestablish)
 
 vaddr_t ppc_kvm_stolen = VM_KERN_ADDRESS_SIZE;
 
-#if 0
-/* BUS functions */
-int
-bus_space_map(t, bpa, size, cacheable, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
-{
-	int error;
-	
-	if  (POWERPC_BUS_TAG_BASE(t) == 0) {
-		/* if bus has base of 0 fail. */
-		return 1;
-	}
-	bpa |= POWERPC_BUS_TAG_BASE(t);
-	if ((error = extent_alloc_region(devio_ex, bpa, size, EX_NOWAIT |
-		(ppc_malloc_ok ? EX_MALLOCOK : 0))))
-	{
-		return error;
-	}
-	if ((bpa >= 0x80000000) && ((bpa+size) < 0x90000000)) {
-		if (segment8_mapped) {
-			*bshp = bpa;
-			return 0;
-		}
-	}
-	if (error  = bus_mem_add_mapping(bpa, size, cacheable, bshp)) {
-		if (extent_free(devio_ex, bpa, size, EX_NOWAIT | 
-			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
-		{
-			printf("bus_space_map: pa 0x%x, size 0x%x\n",
-				bpa, size);
-			printf("bus_space_map: can't free region\n");
-		}
-	}
-	return 0;
-}
-bus_addr_t bus_space_unmap_p(bus_space_tag_t t, bus_space_handle_t bsh,
-			  bus_size_t size);
-void bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
-			  bus_size_t size);
-bus_addr_t
-bus_space_unmap_p(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-	bus_addr_t paddr;
-
-	pmap_extract(pmap_kernel(), bsh, &paddr);
-	bus_space_unmap((t), (bsh), (size));
-	return paddr ;
-}
-void
-bus_space_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-	bus_addr_t sva;
-	bus_size_t off, len;
-	bus_addr_t bpa;
-
-	/* should this verify that the proper size is freed? */
-	sva = trunc_page(bsh);
-	off = bsh - sva;
-	len = size+off;
-
-	uvm_km_free_wakeup(phys_map, sva, len);
-#if 0
-	pmap_extract(pmap_kernel(), sva, &bpa);
-	if (extent_free(devio_ex, bpa, size, EX_NOWAIT | 
-		(ppc_malloc_ok ? EX_MALLOCOK : 0)))
-	{
-		printf("bus_space_map: pa 0x%x, size 0x%x\n",
-			bpa, size);
-		printf("bus_space_map: can't free region\n");
-	}
-#endif
-	pmap_remove(vm_map_pmap(phys_map), sva, sva+len);
-	pmap_update(vm_map_pmap(phys_map));
-}
-
-int
-bus_mem_add_mapping(bpa, size, cacheable, bshp)
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
-{
-	bus_addr_t vaddr;
-	bus_addr_t spa, epa;
-	bus_size_t off;
-	int len;
-
-	spa = trunc_page(bpa);
-	epa = bpa + size;
-	off = bpa - spa;
-	len = size+off;
-
-#if 0
-	if (epa <= spa) {
-		panic("bus_mem_add_mapping: overflow");
-	}
-#endif
-	if (ppc_malloc_ok == 0) { 
-		bus_size_t alloc_size;
-
-		/* need to steal vm space before kernel vm is initialized */
-		alloc_size = trunc_page(size + NBPG);
-
-		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
-		ppc_kvm_stolen -= alloc_size;
-		if (ppc_kvm_stolen > PPC_SEGMENT_LENGTH) {
-			panic("ppc_kvm_stolen, out of space");
-		}
-	} else {
-		vaddr = uvm_km_valloc_wait(phys_map, len);
-	}
-	*bshp = vaddr + off;
-#ifdef DEBUG_BUS_MEM_ADD_MAPPING
-	printf("mapping %x size %x to %x vbase %x\n", 
-		bpa, size, *bshp, spa);
-#endif
-	for (; len > 0; len -= NBPG) {
-		pmap_kenter_cache(vaddr, spa,
-			VM_PROT_READ | VM_PROT_WRITE,
-			cacheable ? PMAP_CACHE_WT : PMAP_CACHE_DEFAULT);
-		spa += NBPG;
-		vaddr += NBPG;
-	}
-	return 0;
-}
-
-#endif /* 0 */
-
 void *
 mapiodev(pa, len)
 	paddr_t pa;
@@ -1043,132 +903,12 @@ unmapiodev(kva, p_size)
 
 	uvm_km_free_wakeup(phys_map, vaddr, size);
 
-	for (; size > 0; size -= NBPG) {
+	for (; size > 0; size -= PAGE_SIZE) {
 		pmap_remove(pmap_kernel(), vaddr,  vaddr+PAGE_SIZE-1);
 		vaddr += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 }
-
-#if 0
-
-/*
- * probably should be ppc_space_copy
- */
-
-#define _CONCAT(A,B) A ## B
-#define __C(A,B)	_CONCAT(A,B)
-
-#define BUS_SPACE_COPY_N(BYTES,TYPE) 					\
-void 									\
-__C(bus_space_copy_,BYTES)(v, h1, o1, h2, o2, c)			\
-	void *v;							\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
-{									\
-	TYPE val;							\
-	TYPE *src, *dst;						\
-	int i;								\
-									\
-	src = (TYPE *) (h1+o1);						\
-	dst = (TYPE *) (h2+o2);						\
-									\
-	if (h1 == h2 && o2 > o1) {					\
-		for (i = c; i > 0; i--) {				\
-			dst[i] = src[i];				\
-		}							\
-	} else {							\
-		for (i = 0; i < c; i++) {				\
-			dst[i] = src[i];				\
-		}							\
-	}								\
-}
-BUS_SPACE_COPY_N(1,u_int8_t)
-BUS_SPACE_COPY_N(2,u_int16_t)
-BUS_SPACE_COPY_N(4,u_int32_t)
-
-#define BUS_SPACE_SET_REGION_N(BYTES,TYPE)				\
-void									\
-__C(bus_space_set_region_,BYTES)(v, h, o, val, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	TYPE val;							\
-	bus_size_t c;							\
-{									\
-	TYPE *dst;							\
-	int i;								\
-									\
-	dst = (TYPE *) (h+o);						\
-	for (i = 0; i < c; i++) {					\
-		dst[i] = val;						\
-	}								\
-}
-
-BUS_SPACE_SET_REGION_N(1,u_int8_t)
-BUS_SPACE_SET_REGION_N(2,u_int16_t)
-BUS_SPACE_SET_REGION_N(4,u_int32_t)
-
-#define BUS_SPACE_READ_RAW_MULTI_N(BYTES,SHIFT,TYPE)			\
-void									\
-__C(bus_space_read_raw_multi_,BYTES)(bst, h, o, dst, size)		\
-	bus_space_tag_t bst;						\
-	bus_space_handle_t h;						\
-	bus_addr_t o;							\
-	u_int8_t *dst;							\
-	bus_size_t size;						\
-{									\
-	TYPE *src;							\
-	TYPE *rdst = (TYPE *)dst;					\
-	int i;								\
-	int count = size >> SHIFT;					\
-									\
-	src = (TYPE *)(h+o);						\
-	for (i = 0; i < count; i++) {					\
-		rdst[i] = *src;						\
-		__asm__("eieio");					\
-	}								\
-}
-BUS_SPACE_READ_RAW_MULTI_N(1,0,u_int8_t)
-BUS_SPACE_READ_RAW_MULTI_N(2,1,u_int16_t)
-BUS_SPACE_READ_RAW_MULTI_N(4,2,u_int32_t)
-
-#define BUS_SPACE_WRITE_RAW_MULTI_N(BYTES,SHIFT,TYPE)			\
-void									\
-__C(bus_space_write_raw_multi_,BYTES)(bst, h, o, src, size)		\
-	bus_space_tag_t bst;						\
-	bus_space_handle_t h;						\
-	bus_addr_t o;							\
-	const u_int8_t *src;						\
-	bus_size_t size;						\
-{									\
-	int i;								\
-	TYPE *dst;							\
-	TYPE *rsrc = (TYPE *)src;					\
-	int count = size >> SHIFT;					\
-									\
-	dst = (TYPE *)(h+o);						\
-	for (i = 0; i < count; i++) {					\
-		*dst = rsrc[i];						\
-		__asm__("eieio");					\
-	}								\
-}
-
-BUS_SPACE_WRITE_RAW_MULTI_N(1,0,u_int8_t)
-BUS_SPACE_WRITE_RAW_MULTI_N(2,1,u_int16_t)
-BUS_SPACE_WRITE_RAW_MULTI_N(4,2,u_int32_t)
-
-int
-bus_space_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
-{
-	*nbshp = bsh + offset;
-	return (0);
-}
-
-#endif /* 0 */
 
 /* bcopy(), error on fault */
 int
@@ -1188,35 +928,4 @@ kcopy(from, to, size)
 	curproc->p_addr->u_pcb.pcb_onfault = oldh;
 
 	return 0;
-}
-void
-nameinterrupt(replace, newstr)
-	int replace;
-	char *newstr;
-{
-#define NENTRIES 66
-	char intrname[NENTRIES][30];
-	char *p, *src;
-	int i;
-	extern char intrnames[];
-	extern char eintrnames[];
-
-	if (replace >= NENTRIES) {
-		return;
-	}
-	src = intrnames;
-
-	for (i = 0; i < NENTRIES; i++) {
-		src += strlcpy(intrname[i], src, 30);
-		src+=1; /* skip the NUL */
-	}
-
-	strlcat(intrname[replace], "/", sizeof intrname[replace]);
-	strlcat(intrname[replace], newstr, sizeof intrname[replace]);
-
-	p = intrnames;
-	for (i = 0; i < NENTRIES; i++) {
-		p += strlcpy(p, intrname[i], eintrnames - p);
-		p += 1; /* skip the NUL */
-	}
 }
