@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.11 1998/11/25 00:30:26 espie Exp $	*/
+/*	$OpenBSD: patch.c,v 1.12 1999/08/31 21:29:19 espie Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.11 1998/11/25 00:30:26 espie Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.12 1999/08/31 21:29:19 espie Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -68,6 +68,7 @@ char **argv;
     int hunk = 0;
     int failed = 0;
     int failtotal = 0;
+    int patch_seen = 0;
     int i;
 
     setbuf(stderr, serrbuf);
@@ -144,6 +145,7 @@ char **argv;
 	there_is_another_patch();
 	reinitialize_almost_everything()
     ) {					/* for each patch in patch file */
+	patch_seen = TRUE;
 
 	if (outname == Nullch)
 	    outname = savestr(filearg[0]);
@@ -338,6 +340,8 @@ char **argv;
 	}
 	set_signals(1);
     }
+    if (!patch_seen)
+    	failtotal++;
     my_exit(failtotal);
     /* NOTREACHED */
 }
