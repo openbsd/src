@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: misc.c,v 1.2 1996/11/01 23:27:37 millert Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.3 1996/12/17 02:17:09 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -267,7 +267,7 @@ acquire_daemonlock(closeflag)
 		if ((-1 == (fd = open(pidfile, O_RDWR|O_CREAT, 0644)))
 		    || (NULL == (fp = fdopen(fd, "r+")))
 		    ) {
-			sprintf(buf, "can't open or create %s: %s",
+			snprintf(buf, sizeof buf, "can't open or create %s: %s",
 				pidfile, strerror(errno));
 			fprintf(stderr, "%s: %s\n", ProgramName, buf);
 			log_it("CRON", getpid(), "DEATH", buf);
@@ -278,7 +278,8 @@ acquire_daemonlock(closeflag)
 			int save_errno = errno;
 
 			fscanf(fp, "%d", &otherpid);
-			sprintf(buf, "can't lock %s, otherpid may be %d: %s",
+			snprintf(buf, sizeof buf,
+				"can't lock %s, otherpid may be %d: %s",
 				pidfile, otherpid, strerror(save_errno));
 			fprintf(stderr, "%s: %s\n", ProgramName, buf);
 			log_it("CRON", getpid(), "DEATH", buf);
