@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.4 2001/08/17 13:58:21 krw Exp $
+#	$OpenBSD: list,v 1.5 2001/08/23 02:37:02 krw Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -84,9 +84,9 @@ COPY	${CURDIR}/../common/termcap.vt		usr/share/misc/termcap
 #COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes
 
 # and the installation tools
-SPECIAL sed -e '/^#[ 	].*$/d' < ${CURDIR}/../common/dot.profile	 > .profile
-SPECIAL sed -e '/^#[ 	].*$/d' < ${CURDIR}/../common/install.md	 > install.md
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../../miniroot/upgrade.sh > upgrade
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../../miniroot/install.sh > install
-SPECIAL sed -e '/^#[ 	].*$/d' -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../../miniroot/install.sub > install.sub
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../common/dot.profile	 > .profile
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/../common/install.md	 > install.md
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../../miniroot/upgrade.sh > upgrade
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../../miniroot/install.sh > install
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../../miniroot/install.sub > install.sub
 SPECIAL	chmod 755 install upgrade
