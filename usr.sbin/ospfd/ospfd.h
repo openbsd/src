@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.21 2005/03/26 11:06:49 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.22 2005/03/26 13:35:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -482,7 +482,7 @@ void		 kr_dispatch_msg(int, short, void *);
 int		 kr_nexthop_add(struct in_addr);
 void		 kr_nexthop_delete(struct in_addr);
 void		 kr_show_route(struct imsg *);
-void		 kr_ifinfo(char *);
+void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *);
 
 u_int8_t	mask2prefixlen(in_addr_t);

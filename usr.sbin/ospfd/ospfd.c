@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.12 2005/03/26 11:04:28 henning Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.13 2005/03/26 13:35:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -338,10 +338,12 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 			kr_show_route(&imsg);
 			break;
 		case IMSG_CTL_IFINFO:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + IFNAMSIZ)
-				log_warnx("IFINFO request with wrong len");
+			if (imsg.hdr.len == IMSG_HEADER_SIZE)
+				kr_ifinfo(NULL, imsg.hdr.pid);
+			else if (imsg.hdr.len == IMSG_HEADER_SIZE + IFNAMSIZ)
+				kr_ifinfo(imsg.data, imsg.hdr.pid);
 			else
-				kr_ifinfo(imsg.data);
+				log_warnx("IFINFO request with wrong len");
 			break;
 		default:
 			log_debug("main_dispatch_ospfe: error handling imsg %d",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.11 2005/03/26 11:06:49 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.12 2005/03/26 13:35:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -311,16 +311,17 @@ kr_show_route(struct imsg *imsg)
 }
 
 void
-kr_ifinfo(char *ifname)
+kr_ifinfo(char *ifname, pid_t pid)
 {
 	struct kif_node	*kif;
 
 	RB_FOREACH(kif, kif_tree, &kit)
-		if (!strcmp(ifname, kif->k.ifname)) {
-			main_imsg_compose_ospfe(IMSG_CTL_IFINFO, 0,
-			    &kif->k, sizeof(kif->k));
-			return;
+		if (ifname == NULL || !strcmp(ifname, kif->k.ifname)) {
+			main_imsg_compose_ospfe(IMSG_CTL_IFINFO,
+			    pid, &kif->k, sizeof(kif->k));
 		}
+	
+	main_imsg_compose_ospfe(IMSG_CTL_END, pid, NULL, 0);
 }
 
 /* rb-tree compare */
