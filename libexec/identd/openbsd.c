@@ -1,5 +1,5 @@
 /*
-**	$Id: openbsd.c,v 1.1 1996/07/25 09:47:22 deraadt Exp $
+**	$Id: openbsd.c,v 1.2 1996/07/25 09:47:46 deraadt Exp $
 **
 ** netbsd.c		Low level kernel access functions for NetBSD
 **
@@ -176,7 +176,7 @@ int k_getuid(faddr, fport, laddr, lport, uid)
   int *uid;
 {
   long addr;
-  struct socket *sockp;
+  struct socket *sockp, sock;
   int i, mib[2];
   struct ucred ucb;
   
@@ -217,6 +217,12 @@ int k_getuid(faddr, fport, laddr, lport, uid)
       lport);
   
   if (!sockp)
+    return -1;
+
+  if (!getbuf(sockp, &sock, sizeof sock, "socket"))
+    return -1;
+
+  if ((sock.so_state & SS_CONNECTOUT) == 0)
     return -1;
 
   /*
