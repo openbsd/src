@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.32 2002/06/28 00:34:54 smurph Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.33 2002/06/29 23:53:33 miod Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -451,6 +451,8 @@ ahc_pci_map_registers(ahc)
 			 * Do a quick test to see if memory mapped
 			 * I/O is functioning correctly.
 			 */
+			ahc->tag = iot;
+			ahc->bsh = ioh;
 			if (ahc_inb(ahc, HCNTRL) == 0xFF) {
 				/* nope, use I/O mapping */
                                 ioh_valid = 0;
@@ -542,7 +544,7 @@ ahc_do_pci_config(ahc)
 	if (error != 0)
 		return (error);
 
-	/* Remeber how the card was setup in case there is no SEEPROM */
+	/* Remember how the card was setup in case there is no SEEPROM */
 	if ((ahc_inb(ahc, HCNTRL) & POWRDN) == 0) {
 		ahc_pause(ahc);
 		if ((ahc->features & AHC_ULTRA2) != 0)
