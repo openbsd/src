@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss_isa.c,v 1.2 1999/01/24 15:58:54 mickey Exp $	*/
+/*	$OpenBSD: wss_isa.c,v 1.3 2000/03/28 14:07:42 espie Exp $	*/
 /*	$NetBSD: wss_isa.c,v 1.1 1998/01/19 22:18:24 augustss Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ wssfind(parent, sc, ia)
     struct isa_attach_args *ia;
 {
     static u_char interrupt_bits[12] = {
-	-1, -1, -1, -1, -1, -1, -1, 0x08, -1, 0x10, 0x18, 0x20
+	-1, -1, -1, -1, -1, 0x0, -1, 0x08, -1, 0x10, 0x18, 0x20
     };
     static u_char dma_bits[4] = {1, 2, 0, 3};
     
