@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.2 1998/10/29 17:47:45 mickey Exp $
+$OpenBSD: cpudevs,v 1.3 1998/10/30 19:06:06 mickey Exp $
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -50,7 +50,8 @@ board	HP715S_50	0x314	715S/50 (Scorpio (4XXs up))
 board	HP715_75	0x316	715/75 (Scorpio)
 
 #board	HP720		0x200	720 (Cobra)
-board	HP725		0xFFF	725 (Scorpio ?)
+board	HP725		0x318	725/50 (Scorpio)
+#board	HP725		0xFFF	725 (Scorpio ?)
 
 #board	HP730		0x202	730 (King Cobra)
 #board	HP735		0x203	735 (Hardball)
@@ -108,7 +109,7 @@ type	bha	11	bus adaptor
 type	multi	12	Multiple-Type I/O
 type	faulty	31	broken
 
-cpu	HP7100LC	4	PA-RISC 7100LC
+cpu	HPPA11	4	PA-RISC 1.1
 
 memory	ARCH	0x8	architected memory module
 memory	PDEP	0x9	processor-dependent memory module
@@ -119,7 +120,7 @@ other	SPECCTL	0x49	Spectograph control
 bha	DIO	0x03	DIO Bus Adapter
 bha	SGC	0x05	SGC Bus Adapter
 bha	GSC	0x07	GSC Bus AdapteR
-bha	ASP	0x70	Core Bus Adapter (ASP/Hardball)
+bha	ASP	0x70	Core Bus Adapter (ASP)
 bha	EISA	0x76	EISA Bus Adapter
 bha	VME	0x78	VME Bus Adapter
 bha	LASI	0x81	LASI Bus Adapter
