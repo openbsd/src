@@ -1,7 +1,7 @@
-/*	$OpenBSD: config.h,v 1.2 1996/06/26 05:35:29 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.3 1996/10/26 21:50:30 tholo Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
-/* $Header: /home/cvs/src/usr.bin/lex/config.h,v 1.2 1996/06/26 05:35:29 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/config.h,v 1.3 1996/10/26 21:50:30 tholo Exp $ */
 
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
@@ -13,7 +13,7 @@
 #define STDC_HEADERS 1
 
 /* Define if you have the <malloc.h> header file.  */
-#define HAVE_MALLOC_H 1
+/* #undef HAVE_MALLOC_H */
 
 /* Define if you have the <string.h> header file.  */
 #define HAVE_STRING_H 1
