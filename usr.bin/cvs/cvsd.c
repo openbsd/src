@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.11 2004/11/25 18:30:12 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.12 2004/11/28 15:12:17 pat Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -860,6 +860,7 @@ int
 cvsd_set(int what, ...)
 {
 	char *str;
+	int error = 0;
 	va_list vap;
 
 	str = NULL;
@@ -872,6 +873,7 @@ cvsd_set(int what, ...)
 		str = strdup(va_arg(vap, char *));
 		if (str == NULL) {
 			cvs_log(LP_ERRNO, "failed to set string");
+			va_end(vap);
 			return (-1);
 		}
 	}
@@ -886,8 +888,7 @@ cvsd_set(int what, ...)
 		if (cvsd_sock_path != NULL)
 			free(cvsd_sock_path);
 		cvsd_sock_path = str;
-		if (cvsd_sock_open() < 0)
-			return (-1);
+		error = cvsd_sock_open();
 		break;
 	case CVSD_SET_USER:
 		if (cvsd_user != NULL)
@@ -917,12 +918,13 @@ cvsd_set(int what, ...)
 		break;
 	default:
 		cvs_log(LP_ERR, "invalid field to set");
-		return (-1);
+		error = -1;
+		break;
 	}
 
 	va_end(vap);
 
-	return (0);
+	return (error);
 }
 
 

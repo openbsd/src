@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.4 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: conf.y,v 1.5 2004/11/28 15:12:17 pat Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -504,16 +504,16 @@ yyerror(const char *fmt, ...)
 	char *nfmt;
 	va_list vap;
 
-	va_start(vap, fmt);
-
 	if (asprintf(&nfmt, "%s:%d: %s", conf_file, yylval.lineno, fmt) == -1) {
 		cvs_log(LP_ERRNO, "failed to allocate message buffer");
 		return (-1);
 	}
+
+	va_start(vap, fmt);
 	cvs_vlog(LP_ERR, nfmt, vap);
+	va_end(vap);
 
 	free(nfmt);
-	va_end(vap);
 	return (0);
 
 }

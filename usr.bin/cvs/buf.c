@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.3 2004/09/27 13:29:27 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.4 2004/11/28 15:12:17 pat Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -341,13 +341,13 @@ cvs_buf_fappend(BUF *b, const char *fmt, ...)
 	va_list vap;
 
 	va_start(vap, fmt);
-
 	ret = vasprintf(&str, fmt, vap);
+	va_end(vap);
+
 	if (ret == -1) {
 		cvs_log(LP_ERRNO, "failed to format data");
 		return (-1);
 	}
-	va_end(vap);
 
 	ret = cvs_buf_append(b, str, ret);
 	free(str);
