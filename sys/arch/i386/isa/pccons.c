@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.30 1996/10/16 12:46:30 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.31 1996/12/05 04:40:26 tholo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -108,11 +108,12 @@ static struct video_state {
 	u_char	state;		/* parser state */
 #define	VSS_ESCAPE	1
 #define	VSS_EBRACE	2
-#define	VSS_EPARAM	3
+#define VSS_EBRACEQ	3
+#define	VSS_EPARAM	4
 	char	so;		/* in standout mode? */
 	char	color;		/* color or mono display */
-	char	at;		/* normal attributes */
-	char	so_at;		/* standout attributes */
+	char	at, save_at;	/* normal attributes */
+	char	so_at, save_so;	/* standout attributes */
 } vs;
 
 struct pc_softc {
@@ -1137,6 +1138,59 @@ sput(cp, n)
 						goto maybe_scroll;
 				}
 				break;
+			case VSS_EBRACEQ: {
+				char *col;
+
+				switch (c) {
+				case 'D':
+					break;
+				case 'E':
+					break;
+				case 'F':
+					col = &vs.at;
+do_fg:
+					*col = (*col & 0xf0) | (vs.cx & 0x0f);
+					break;
+				case 'G':
+					col = &vs.at;
+do_bg:
+					*col = (*col & 0x0f) | ((vs.cx & 0x0f) << 4);
+					break;
+				case 'H':
+					col = &vs.so_at;
+					goto do_fg;
+				case 'I':
+					col = &vs.so_at;
+					goto do_bg;
+				case 'J':
+					break;
+				case 'K':
+					break;
+				case 'k':
+					break;
+				case 'l':
+					break;
+				case 'M':
+					break;
+				case 'R':
+					vs.at = vs.save_at;
+					vs.so_at = vs.save_so;
+					break;
+				case 'S':
+					vs.save_at = vs.at;
+					vs.save_so = vs.so_at;
+					break;
+				default:
+					if ((c >= '0') && (c <= '9')) {
+						vs.cx *= 10;
+						vs.cx += c - '0';
+					} else
+						vs.state = 0;
+					break;
+				}
+				vs.state = 0;
+				break;
+			}
 			default: /* VSS_EBRACE or VSS_EPARAM */
 				switch (c) {
 					int pos;
@@ -1393,6 +1447,19 @@ sput(cp, n)
 						break;
 					}
 					vs.state = 0;
+					break;
+				case '_': /* set cursor type */
+					if (vs.cx == 2)
+						vs.cx = 14;
+					else if (vs.cx)
+						vs.cx = 1;
+					else
+						vs.cx = 12;
+					cursor_shape = (vs.cx << 8) | 13;
+					set_cursor_shape();
+					break;
+				case '=':
+					vs.state = VSS_EBRACEQ;
 					break;
 					
 				default: /* Only numbers valid here */
