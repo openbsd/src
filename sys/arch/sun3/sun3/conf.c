@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 1997/02/04 23:25:03 kstailey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 1997/02/22 21:09:15 kstailey Exp $	*/
 /*	$NetBSD: conf.c,v 1.51 1996/11/04 16:16:09 gwr Exp $	*/
 
 /*-
@@ -149,7 +149,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 49: (chat) */
 	cdev_notdef(),			/* 50: (chut) */
 	cdev_notdef(),			/* 51: (chut) */
-	cdev_notdef(),			/* 52: RAM disk - for install tape */
+	cdev_disk_init(NRD,rd),		/* 52: RAM disk - for install tape */
 	cdev_notdef(),			/* 53: (hd - N/A) */
 	cdev_notdef(),			/* 54: (fd - N/A) */
 	cdev_notdef(),			/* 55: cgthree */

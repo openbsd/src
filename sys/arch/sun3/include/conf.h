@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.6 1997/02/04 23:25:04 kstailey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.7 1997/02/22 21:09:16 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1996 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 bdev_decl(rd);
-/* no cdev for rd */
+cdev_decl(rd);
 
 /* swap device (required) */
 bdev_decl(sw);
