@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2003/06/02 23:27:53 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2004/01/29 10:57:09 miod Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.7 2003/06/02 23:27:53 millert Exp $
+ *      $Id: autoconf.c,v 1.8 2004/01/29 10:57:09 miod Exp $
  */
 
 /*
@@ -92,12 +92,7 @@ cpu_configure()
 	(void)splhigh();	/* To be really sure.. */
 	calc_delayconst();
 
-	/*
-	if(system_type == OFWMACH) {
-		ofrootfound();
-	}
-	*/
-	if(config_rootfound("mainbus", "mainbus") == 0)
+	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 	(void)spl0();
 
@@ -260,7 +255,7 @@ getdisk(str, len, defpart, devp)
 				printf(" %s", dv->dv_xname); 
 #endif
 		}
-		printf("\n");
+		printf(" halt\n");
 	}
 	return (dv);
 }
@@ -277,6 +272,10 @@ parsedisk(str, len, defpart, devp)
 
 	if (len == 0)
 		return (NULL);
+
+	if (len == 4 && strcmp(str, "halt") == 0)
+		boot(RB_HALT);
+
 	cp = str + len - 1;
 	c = *cp;
 	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
