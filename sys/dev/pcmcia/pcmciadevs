@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.48 2001/02/14 17:46:29 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.49 2001/03/13 06:44:03 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -279,8 +279,9 @@ vendor PLANET			-1	Planet
 vendor PLANEX			-1	Planex
 vendor PREMAX			-1	Premax
 vendor RPTI			-1	RPTI
-vendor SVEC			-1	SVEC/Hawking
+vendor SARAMNCOM		-1	SaramNcom Co.,Ltd.
 vendor SHUTTLE			-1	Shuttle
+vendor SVEC			-1	SVEC/Hawking
 vendor TEAC			-1	TEAC
 vendor YEDATA			-1	Y-E DATA
 vendor ZOOM			-1	Zoom
@@ -331,3 +332,4 @@ product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" }
 product SHUTTLE IDE_ATAPI	{ "SHUTTLE&spTECHNOLOGY&spLTD.", "PCCARD-IDE/ATAPI&spAdapter", NULL, NULL }
 product ZOOM AIR4000		{ "Zoom", "Air-4000", NULL, NULL }
 product TAMARACK NE2000		{ "TAMARACK", "Ethernet", NULL, NULL }
+product SARAMNCOM NS_1100M	{ "NANOSPEED", "HFA384x/IEEE", NULL, NULL }
