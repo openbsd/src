@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.60 2004/09/15 23:33:41 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.61 2004/11/25 11:05:10 claudio Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -164,6 +164,7 @@ get_ifa(char *cp, int n)
 
 	return (NULL);
 }
+struct iaddr defaddr = { 4 };
 
 /* ARGSUSED */
 void
@@ -202,6 +203,8 @@ routehandler(struct protocol *p)
 		if ((a.len = sizeof(struct in_addr)) > sizeof(a.iabuf))
 			error("king bula sez: len mismatch");
 		memcpy(a.iabuf, &((struct sockaddr_in *)sa)->sin_addr, a.len);
+		if (addr_eq(a, defaddr))
+			break;
 
 		for (l = ifi->client->active; l != NULL; l = l->next)
 			if (addr_eq(a, l->address))
@@ -211,7 +214,6 @@ routehandler(struct protocol *p)
 			break;
 
 		goto die;
-		break;
 	case RTM_DELADDR:
 		ifam = (struct ifa_msghdr *)rtm;
 		if (ifam->ifam_index != ifi->index)
