@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgets.3,v 1.13 2002/04/05 01:44:38 aaron Exp $
+.\"	$OpenBSD: fgets.3,v 1.14 2002/07/20 18:30:23 pvalchev Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,7 +128,7 @@ string is too long if it does not contain a newline:
 	char buf[1024], *p;
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		if ((p = strchr(buf, '\en')) != NULL) {
+		if ((p = strchr(buf, '\en')) == NULL) {
 			fprintf(stderr, "input line too long.\en");
 			exit(1);
 		}
