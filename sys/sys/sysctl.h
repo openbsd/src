@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.60 2002/12/17 23:11:31 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.61 2003/01/13 06:04:16 art Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -179,7 +179,8 @@ struct ctlname {
 #define KERN_USERASYMCRYPTO	60	/* int: usercrypto */
 #define	KERN_SEMINFO		61	/* struct: SysV struct seminfo */
 #define	KERN_SHMINFO		62	/* struct: SysV struct shminfo */
-#define	KERN_MAXID		63	/* number of valid kern ids */
+#define KERN_INTRCNT		63	/* node: interrupt counters */
+#define	KERN_MAXID		64	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -245,6 +246,7 @@ struct ctlname {
 	{ "userasymcrypto", CTLTYPE_INT }, \
 	{ "seminfo", CTLTYPE_STRUCT }, \
 	{ "shminfo", CTLTYPE_STRUCT }, \
+	{ "intrcnt", CTLTYPE_NODE }, \
 }
 
 /*
@@ -308,6 +310,21 @@ struct kinfo_proc {
 	        rlim_t	e_maxrss;
 	} kp_eproc;
 };
+
+/*
+ * KERN_INTR_CNT
+ */
+#define KERN_INTRCNT_NUM	1	/* int: # intrcnt */
+#define KERN_INTRCNT_CNT	2	/* node: intrcnt */
+#define KERN_INTRCNT_NAME	3	/* node: names */
+#define KERN_INTRCNT_MAXID	4
+
+#define CTL_KERN_INTRCNT_NAMES { \
+	{ 0, 0 }, \
+	{ "nintrcnt", CTLTYPE_INT }, \
+	{ "intrcnt", CTLTYPE_NODE }, \
+	{ "intrname", CTLTYPE_NODE }, \
+}
 
 /*
  * CTL_FS identifiers

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.76 2002/12/17 23:11:31 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.77 2003/01/13 06:04:16 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -93,6 +93,7 @@ extern  long numvnodes;
 
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
+int sysctl_intrcnt(int *, u_int, void *, size_t *);
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -267,6 +268,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		case KERN_SYSVIPC_INFO:
 		case KERN_SEMINFO:
 		case KERN_SHMINFO:
+		case KERN_INTRCNT:
 			break;
 		default:
 			return (ENOTDIR);	/* overloaded */
@@ -476,6 +478,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_sysvshm(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
+	case KERN_INTRCNT:
+		return (sysctl_intrcnt(name + 1, namelen - 1, oldp, oldlenp));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1443,3 +1447,41 @@ sysctl_sysvipc(name, namelen, where, sizep)
 	return (error ? error : ret);
 }
 #endif /* SYSVMSG || SYSVSEM || SYSVSHM */
+
+int
+sysctl_intrcnt(int *name, u_int namelen, void *oldp, size_t *oldlenp)
+{
+	extern int intrcnt[], eintrcnt[];
+	extern char intrnames[], eintrnames[];
+	char *intrname;
+	int nintr, i;
+
+	nintr = (off_t)(eintrcnt - intrcnt);
+
+	if (name[0] != KERN_INTRCNT_NUM) {
+		if (namelen != 2)
+			return (ENOTDIR);
+		if (name[1] < 0 || name[1] >= nintr)
+			return (EINVAL);
+		i = name[1];
+	}
+
+	switch (name[0]) {
+	case KERN_INTRCNT_NUM:
+		return (sysctl_rdint(oldp, oldlenp, NULL, nintr));
+		break;
+	case KERN_INTRCNT_CNT:
+		return (sysctl_rdint(oldp, oldlenp, NULL, intrcnt[i]));
+	case KERN_INTRCNT_NAME:
+		intrname = intrnames;
+		while (i > 0) {
+			intrname += strlen(intrname) + 1;
+			i--;
+			if (intrname > eintrnames)
+				return (EINVAL);
+		}
+		return (sysctl_rdstring(oldp, oldlenp, NULL, intrname));
+	default:
+		return (EOPNOTSUPP);
+	}
+}
