@@ -189,7 +189,7 @@ lwres_getaddrsbyname(lwres_context_t *ctx, const char *name,
 	target_length = strlen(name);
 	if (target_length >= sizeof(target_name))
 		return (LWRES_R_FAILURE);
-	strcpy(target_name, name); /* strcpy is safe */
+	strlcpy(target_name, name, sizeof(target_name));
 
 	/*
 	 * Set up our request and render it to a buffer.
@@ -411,7 +411,7 @@ lwres_getrdatabyname(lwres_context_t *ctx, const char *name,
 	target_length = strlen(name);
 	if (target_length >= sizeof(target_name))
 		return (LWRES_R_FAILURE);
-	strcpy(target_name, name); /* strcpy is safe */
+	strlcpy(target_name, name, sizeof(target_name));
 
 	/*
 	 * Set up our request and render it to a buffer.

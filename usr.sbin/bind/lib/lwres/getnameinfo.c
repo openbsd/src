@@ -175,11 +175,11 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 		snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
 		if ((strlen(numserv) + 1) > servlen)
 			ERR(ENI_MEMORY);
-		strcpy(serv, numserv);
+		strlcpy(serv, numserv, servlen);
 	} else {
 		if ((strlen(sp->s_name) + 1) > servlen)
 			ERR(ENI_MEMORY);
-		strcpy(serv, sp->s_name);
+		strlcpy(serv, sp->s_name, servlen);
 	}
 
 #if 0
@@ -235,7 +235,7 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 #endif
 		if (strlen(numaddr) + 1 > hostlen)
 			ERR(ENI_MEMORY);
-		strcpy(host, numaddr);
+		strlcpy(host, numaddr, hostlen);
 	} else {
 		switch (family) {
 		case AF_INET:
@@ -264,7 +264,7 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 			}
 			if ((strlen(by->realname) + 1) > hostlen)
 				ERR(ENI_MEMORY);
-			strcpy(host, by->realname);
+			strlcpy(host, by->realname, hostlen);
 		} else {
 			if (flags & NI_NAMEREQD)
 				ERR(ENI_NOHOSTNAME);
@@ -274,7 +274,7 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 				ERR(ENI_NOHOSTNAME);
 			if ((strlen(numaddr) + 1) > hostlen)
 				ERR(ENI_MEMORY);
-			strcpy(host, numaddr);
+			strlcpy(host, numaddr, hostlen);
 		}
 	}
 	result = SUCCESS;

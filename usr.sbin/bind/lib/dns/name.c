@@ -1808,7 +1808,7 @@ dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
 			if (count == 0)
 				count = 256;
 			nlen--;
-			len = sprintf(num, "%u", count);	/* XXX */
+			len = snprintf(num, sizeof(num), "%u", count);
 			INSIST(len <= 4);
 			bytes = count / 8;
 			if (count % 8 != 0)
@@ -1961,7 +1961,7 @@ dns_name_tofilenametext(dns_name_t *name, isc_boolean_t omit_final_dot,
 			if (count == 0)
 				count = 256;
 			nlen--;
-			len = sprintf(num, "%u", count);	/* XXX */
+			len = snprintf(num, sizeof(num), "%u", count);
 			INSIST(len <= 4);
 			bytes = count / 8;
 			if (count % 8 != 0)

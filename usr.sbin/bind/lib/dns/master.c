@@ -530,7 +530,7 @@ genname(char *name, int it, char *buffer, size_t length) {
 				isc_textregion_consume(&r, 1);
 				continue;
 			}
-			strcpy(fmt, "%d");
+			strlcpy(fmt, "%d", sizeof(fmt));
 			/* Get format specifier. */
 			if (*name == '{' ) {
 				n = sscanf(name, "{%d,%u,%1[doxX]}",

@@ -826,8 +826,8 @@ default_journal(dns_zone_t *zone) {
 		journal = isc_mem_allocate(zone->mctx, len);
 		if (journal == NULL)
 			return (ISC_R_NOMEMORY);
-		strcpy(journal, zone->masterfile);
-		strcat(journal, ".jnl");
+		strlcpy(journal, zone->masterfile, len);
+		strlcat(journal, ".jnl", len);
 	} else {
 		journal = NULL;
 	}

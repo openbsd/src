@@ -192,13 +192,15 @@ lwres_resetaddr(lwres_addr_t *addr) {
 static char *
 lwres_strdup(lwres_context_t *ctx, const char *str) {
 	char *p;
+	size_t len;
 
 	REQUIRE(str != NULL);
 	REQUIRE(strlen(str) > 0);
 
-	p = CTXMALLOC(strlen(str) + 1);
+	len = strlen(str) + 1;
+	p = CTXMALLOC(len);
 	if (p != NULL)
-		strcpy(p, str);
+		strlcpy(p, str, len);
 
 	return (p);
 }

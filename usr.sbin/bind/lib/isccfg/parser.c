@@ -2771,9 +2771,9 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 			char buf[64];
 			int i;
 
-			strcpy(buf, s);
+			strlcpy(buf, s, sizeof(buf));
 			for (i = 0; i < 3; i++) {
-				strcat(buf, ".0");
+				strlcat(buf, ".0", sizeof(buf));
 				if (inet_pton(AF_INET, buf, &in4a) == 1) {
 					isc_netaddr_fromin(na, &in4a);
 					return (ISC_R_SUCCESS);

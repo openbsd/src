@@ -145,7 +145,7 @@ lwres_getipnodebyname(const char *name, int af, int flags, int *error_num) {
 
 		u.const_name = name;
 		if (v4 == 1 && af == AF_INET6) {
-			strcpy(mappedname, "::ffff:");
+			strlcpy(mappedname, "::ffff:", sizeof(mappedname));
 			lwres_net_ntop(AF_INET, (char *)&in4,
 				       mappedname + sizeof("::ffff:") - 1,
 				       sizeof(mappedname) - sizeof("::ffff:")
@@ -533,7 +533,6 @@ copyandmerge(struct hostent *he1, struct hostent *he2, int af, int *error_num)
 	struct hostent *he = NULL;
 	int addresses = 1;	/* NULL terminator */
 	int names = 1;		/* NULL terminator */
-	int len = 0;
 	char **cpp, **npp;
 
 	/*
@@ -642,11 +641,9 @@ copyandmerge(struct hostent *he1, struct hostent *he2, int af, int *error_num)
 	npp = he->h_aliases;
 	cpp = (he1 != NULL) ? he1->h_aliases : he2->h_aliases;
 	while (*cpp != NULL) {
-		len = strlen (*cpp) + 1;
-		*npp = malloc(len);
+		*npp = strdup(*cpp);
 		if (*npp == NULL)
 			goto cleanup2;
-		strcpy(*npp, *cpp);
 		npp++;
 		cpp++;
 	}
@@ -654,11 +651,9 @@ copyandmerge(struct hostent *he1, struct hostent *he2, int af, int *error_num)
 	/*
 	 * Copy hostname.
 	 */
-	he->h_name = malloc(strlen((he1 != NULL) ?
-			    he1->h_name : he2->h_name) + 1);
+	he->h_name = strdup((he1 != NULL) ? he1->h_name : he2->h_name);
 	if (he->h_name == NULL)
 		goto cleanup2;
-	strcpy(he->h_name, (he1 != NULL) ? he1->h_name : he2->h_name);
 
 	/*
 	 * Set address type and length.

@@ -1357,6 +1357,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 	isc_logchannel_t *channel;
 	isc_logchannellist_t *category_channels;
 	isc_result_t result;
+	size_t len;
 
 	REQUIRE(lctx == NULL || VALID_CONTEXT(lctx));
 	REQUIRE(category != NULL);
@@ -1570,16 +1571,17 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				 * It wasn't in the duplicate interval,
 				 * so add it to the message list.
 				 */
+				len = strlen(lctx->buffer) + 1;
 				new = isc_mem_get(lctx->mctx,
-						  sizeof(isc_logmessage_t) +
-						  strlen(lctx->buffer) + 1);
+				                  sizeof(isc_logmessage_t)
+						  + len);
 				if (new != NULL) {
 					/*
 					 * Put the text immediately after
 					 * the struct.  The strcpy is safe.
 					 */
 					new->text = (char *)(new + 1);
-					strcpy(new->text, lctx->buffer);
+					strlcpy(new->text, lctx->buffer, len);
 
 					if (isc_time_now(&new->time) !=
 					    ISC_R_SUCCESS)

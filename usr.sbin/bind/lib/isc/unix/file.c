@@ -147,12 +147,12 @@ isc_file_template(const char *path, const char *templet, char *buf,
 
 		strncpy(buf, path, s - path + 1);
 		buf[s - path + 1] = '\0';
-		strcat(buf, templet);
+		strlcat(buf, templet, buflen);
 	} else {
 		if ((strlen(templet) + 1) > buflen)
 			return (ISC_R_NOSPACE);
 
-		strcpy(buf, templet);
+		strlcpy(buf, templet, buflen);
 	}
 
 	return (ISC_R_SUCCESS);
@@ -310,6 +310,6 @@ isc_file_absolutepath(const char *filename, char *path, size_t pathlen) {
 		return (result);
 	if (strlen(path) + strlen(filename) + 1 > pathlen)
 		return (ISC_R_NOSPACE);
-	strcat(path, filename);
+	strlcat(path, filename, pathlen);
 	return (ISC_R_SUCCESS);
 }

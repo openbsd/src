@@ -97,7 +97,7 @@ isc_dir_read(isc_dir_t *dir) {
 	if (sizeof(dir->entry.name) <= strlen(entry->d_name))
 	    return (ISC_R_UNEXPECTED);
 
-	strcpy(dir->entry.name, entry->d_name);
+	strlcpy(dir->entry.name, entry->d_name, sizeof(dir->entry.name));
 
 	/*
 	 * Some dirents have d_namlen, but it is not portable.
@@ -177,7 +177,7 @@ isc_dir_current(char *dirname, size_t length, isc_boolean_t end_sep) {
 		if (strlen(dirname) + 1 == length)
 			result = ISC_R_NOSPACE;
 		else if (dirname[1] != '\0')
-			strcat(dirname, "/");
+			strlcat(dirname, "/", length);
 	}
 
 	return (result);

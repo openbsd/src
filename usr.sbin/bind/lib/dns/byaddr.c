@@ -100,7 +100,7 @@ dns_byaddr_createptrname(isc_netaddr_t *address, isc_boolean_t nibble,
 				*cp++ = hex_digits[(bytes[i] >> 4) & 0x0f];
 				*cp++ = '.';
 			}
-			strcpy(cp, "ip6.int.");
+			strlcpy(cp, "ip6.int.", textname + sizeof(textname) - cp);
 		} else {
 			cp = textname;
 			*cp++ = '\\';
@@ -112,7 +112,7 @@ dns_byaddr_createptrname(isc_netaddr_t *address, isc_boolean_t nibble,
 				*cp++ = hex_digits[(bytes[i+1] >> 4) & 0x0f];
 				*cp++ = hex_digits[bytes[i+1] & 0x0f];
 			}
-			strcpy(cp, "].ip6.arpa.");
+			strlcpy(cp, "].ip6.arpa.", textname + sizeof(textname) - cp);
 		}
 	} else
 		return (ISC_R_NOTIMPLEMENTED);
