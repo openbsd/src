@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.55 2003/10/14 08:22:31 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.56 2003/12/08 10:05:31 dhartmei Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -245,20 +245,6 @@ ip6_input(m)
 		goto bad;
 	}
 
-#if NPF > 0 
-        /*
-         * Packet filter
-         */
-	odst = ip6->ip6_dst;
-	if (pf_test6(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
-		goto bad;
-	if (m == NULL)
-		return;
-
-	ip6 = mtod(m, struct ip6_hdr *);
-	srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
-#endif
-
 	ip6stat.ip6s_nxthist[ip6->ip6_nxt]++;
 
 	/*
@@ -333,6 +319,20 @@ ip6_input(m)
 			goto bad;
 		}
 	}
+
+#if NPF > 0 
+        /*
+         * Packet filter
+         */
+	odst = ip6->ip6_dst;
+	if (pf_test6(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
+		goto bad;
+	if (m == NULL)
+		return;
+
+	ip6 = mtod(m, struct ip6_hdr *);
+	srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
+#endif
 
 	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
 		ip6->ip6_src.s6_addr16[1]
