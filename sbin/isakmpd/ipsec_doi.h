@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec_doi.h,v 1.3 1998/11/17 11:10:14 niklas Exp $	*/
-/*	$EOM: ipsec_doi.h,v 1.8 1998/08/02 20:12:02 niklas Exp $	*/
+/*	$OpenBSD: ipsec_doi.h,v 1.4 1999/03/24 14:59:20 niklas Exp $	*/
+/*	$EOM: ipsec_doi.h,v 1.9 1999/03/06 12:44:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -42,5 +42,8 @@
 
 /* The SPI size of all IPSEC protocols.  XXX Correct?  */
 #define IPSEC_SPI_SIZE 4
+
+/* The low limit if valid SPI values.  */
+#define IPSEC_SPI_LOW 0x100
 
 #endif /* _IPSEC_DOI_H_ */
