@@ -5,37 +5,55 @@
 .Nm vnode
 .Nd an overview of vnodes
 .Sh DESCRIPTION
-The vnode is the kernel object that corresponds to a file (actually,
-a file, a directory, a fifo, a domain socket, a symlink, or a device).
+A vnode is an object that speaks the UNIX file interface (open,
+read, write, close, readdir, etc.). Vnodes can represent files, 
+directories, FIFOs, domain sockets, block devices, character devices.
 .Pp
-Each vnode has a set of methods corresponding to file operations
-(vop_open, vop_read, vop_write, vop_rename, vop_mkdir, vop_close).
-These methods are implemented by the individual file systems and
-are dispatched through function pointers.
+Each vnode has a set of methods which start with string 'VOP_'. These
+methods include VOP_OPEN, VOP_READ, VOP_WRITE, VOP_RENAME, VOP_CLOSE,
+VOP_MKDIR. Many of these methods correspond closely to the equivalent
+file system call--open, read, write, rename, etc. Each file system (FFS,
+NFS, etc.) provides implementations for these methods.
 .Pp
-In addition, the VFS has functions for maintaining a pool of vnodes,
-associating vnodes with mount points, and associating vnodes with buffers.
-The individual file systems cannot override these functions.
-As such, individual file systems cannot allocate their own vnodes.
+The Virtual File System (VFS) library maintains a pool of vnodes. File systems
+cannot allocate their own vnodes; they must use the functions provided
+by the VFS to create and manage vnodes.
+.Ss Vnode state
 .Pp
-In general, the contents of a struct vnode should not be examined or
-modified by the users of vnode methods.
-There are some rather common exceptions detailed later in this document.
+Vnodes have a reference count which corresponds to the number of kernel
+objects that hold references to the vnode. A positive reference count keeps
+the vnode off of the free list, which prevents the vnode from being recycled
+to refer to a different file.
 .Pp
-The vast majority of the vnode functions CANNOT be called from interrupt
-context.
+Vnodes that refer to a valid file and have a reference count of 1 or
+greater are "active". When a vnodes reference count drops to zero, it
+is "inactivated" and becomes "inactive". Inactive vnodes are placed on the
+free list, to be re-used to represent other files.
+.Pp
+Before a struct vnode can be re-used to refer to another file, it must
+be cleaned out of all information pertaining to the old file. A vnode that
+doesn't refer to any file is called a "reclaimed" vnode.
+.Pp
+The VFS may "reclaim" a vnode with a positive reference count.
+This is done when the underlying file is revoked, as happens with the
+revoke system call or through a forceable unmount. Such a vnode is given
+to the dead file system, which returns errors for most operations.
+The vnode will not be re-used for another file until its reference count
+hits zero.
+.Pp
+There are three states then for a vnode: active, inactive, and reclaimed.
+All transitions are meaningful except reclaimed to inactive.
 .Ss Vnode pool
-All the vnodes in the kernel are allocated out of a shared pool.
 The
 .Xr getnewvnode 9 
-system call returns a fresh vnode from the vnode
-pool.
+system call returns a fresh active vnode from the vnode
+pool assigned to the file system specified in its arguments.
 The vnode returned has a reference count (v_usecount) of 1.
 .Pp
 The 
 .Xr vref 9 
-call increments the reference count on the vnode.
-The
+call increments the reference count on the vnode. It may only be
+on a vnode with reference count of 1 or greater. The
 .Xr vrele 9
 and 
 .Xr vput 9 
@@ -44,57 +62,25 @@ In addition, the
 .Xr vput 9
 call also releases the vnode lock.
 .Pp
-When a vnode's reference count becomes zero, the vnode pool places it
-a pool of free vnodes, eligible to be assigned to a different file. 
-The vnode pool calls the 
-.Xr vop_inactive 9 
-method to inform the file system that the reference count has reached zero.
-.Pp
-When placed in the pool of free vnodes, the vnode is not otherwise altered.
-In fact, it can often be retrieved before it is reassigned to a different file.
-This is useful when the system closes a file and opens it again in rapid
-succession.
-The 
-.Xr vget 9 
-call is used to revive the vnode.
-Note, callers should ensure the vnode
-they get back has not been reassigned to a different file.
-.Pp
-When the vnode pool decides to reclaim the vnode to satisfy a getnewvnode
-request, it calls the 
-.Xr vop_reclaim 9 
-method.
-File systems often use this method to free any file-system specific data they
-attach to the vnode.
-.Pp
-A file system can force a vnode with a reference count of zero 
-to be reclaimed earlier by calling the
-.Xr vrecycle 9
-call.
 The
-.Xr vrecycle 9
-call is a null operation if the reference count is greater than zero.
+.Xr vget 9
+call, when used on an inactive vnode, will make the vnode "active"
+by bumping the reference count to one. When called on an active vnode,
+vget increases the reference count by one. However, if the vnode
+is being reclaimed concurrently, then vget will fail and return an error.
 .Pp
-The 
+The
 .Xr vgone 9 
 and 
 .Xr vgonel 9 
-calls will force the pool to reclaim
-the vnode even if it has a non-zero reference count.
-If the vnode had a non-zero reference count, the vnode is then assigned
-an operations vector corresponding to the "dead" file system.
-In this operations vector, most operations return errors.
-.Ss Vnode locks 
-Note to beginners: locks don't actually prevent memory from being read
-or overwritten.
-Instead, they are an object that, where used, allows only one piece of code
-to proceed through the locked section.
-If you do not surround a stretch of code with a lock, it can and probably
-will eventually be executed simultaneously with other stretches of code
-(including stretches ).
-Chances are the results will be unexpected and disappointing to both the
-user and you.
+orchestrate the reclamation of a vnode. They can be called on both
+active and inactive vnodes.
 .Pp
+While transitioning a vnode to the "reclaimed" state, the VFS will call
+.Xr vop_reclaim 9 
+method. File systems use this method to free any file-system specific data
+they attached to the vnode.
+.Ss Vnode locks 
 The vnode actually has three different types of lock: the vnode lock,
 the vnode interlock, and the vnode reclamation lock (VXLOCK).
 .Ss The vnode lock
@@ -108,13 +94,8 @@ a given file when there are multiple concurrent requests on the same file.
 Many file system functions require that you hold the vnode lock on entry.
 The vnode lock may be held when sleeping.
 .Pp
-The 
-.Xr revoke 2 
-and forcible unmount features in BSD UNIX allows a
-user to invalidate files and their associated vnodes at almost any
-time, even if there are active open files on it.
-While in a region of code protected by the vnode lock, the process is
-guaranteed that the vnode will not be reclaimed or invalidated.
+A vnode will not be reclaimed as long as the vnode lock is held by some 
+other process.
 .Pp
 The vnode lock is a multiple-reader or single-writer lock.
 An exclusive vnode lock may be acquired multiple times by the same
@@ -127,13 +108,10 @@ Many file systems rely on it to prevent race conditions in updating file
 system specific data structures (as opposed to having their own locks). 
 .Pp
 The implementation of the vnode lock is the responsibility of the individual
-file systems.
-Not all file system implement it.
+file systems. Not all file system implement it.
 .Pp
 To prevent deadlocks, when acquiring locks on multiple vnodes, the lock
 of parent directory must be acquired before the lock on the child directory.
-.Pp
-Interrupt handlers must not acquire vnode locks.
 .Ss Vnode interlock
 The vnode interlock (vp->v_interlock) is a spinlock.
 It is useful on multi-processor systems for acquiring a quick exclusive
@@ -213,15 +191,6 @@ and v_synclist.
 Any accesses to these field should be protected by splbio,
 unless you are certain that there is no chance an interrupt handler
 will modify them.
-.Pp
-A vnode will only be reassigned to another file when its reference count
-reaches zero and the vnode lock is freed.
-.Pp
-A vnode will not be reclaimed as long as the vnode lock is held.
-If the vnode reference count drops to zero while a process is holding
-the vnode lock, the vnode MAY be queued for reclamation.
-Increasing the reference count from 0 to 1 while holding the lock will
-most likely cause intermittent kernel panics.
 .Sh HISTORY
 This document first appeared in
 .Ox 2.9 .
