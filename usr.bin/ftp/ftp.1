@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.18 1998/04/13 00:58:15 millert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.19 1998/06/12 12:12:52 d Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -1097,9 +1097,13 @@ then the equivalent of
 .Ic "mget file"
 is performed.
 .Pp
-If the directory component of
+If no
+.Fl o
+option is specified, and
+the directory component of
 .Ic file
 contains no globbing characters,
+then
 it is stored in the current directory as the
 .Xr basename 1
 of
