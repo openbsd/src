@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.7 2004/02/10 18:49:10 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.8 2004/02/17 08:26:47 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -767,13 +767,24 @@ pfi_lookup_if(const char *name)
 int
 pfi_skip_if(const char *filter, struct pfi_kif *p, int f)
 {
+	int	n;
+
 	if ((p->pfik_flags & PFI_IFLAG_GROUP) && !(f & PFI_FLAG_GROUP))
 		return (1);
 	if ((p->pfik_flags & PFI_IFLAG_INSTANCE) && !(f & PFI_FLAG_INSTANCE))
 		return (1);
 	if (filter == NULL || !*filter)
 		return (0);
-	return strncmp(p->pfik_name, filter, strlen(filter));
+	if (!strcmp(p->pfik_name, filter))
+		return (0);	/* exact match */
+	n = strlen(filter);
+	if (n < 1 || n >= IFNAMSIZ)
+		return (1);	/* sanity check */
+	if (filter[n-1] >= '0' && filter[n-1] <= '9')
+		return (1);	/* only do exact match in that case */
+	if (strncmp(p->pfik_name, filter, n))
+		return (1);	/* prefix doesn't match */
+	return (p->pfik_name[n] < '0' || p->pfik_name[n] > '9');
 }
 
 /* from pf_print_state.c */
@@ -820,7 +831,7 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 		}
 	} else {
 		switch (dyn->pfid_acnt6) {
-		case (0):
+		case 0:
 			return (0);
 		case 1:
 			if (PF_AZERO(&dyn->pfid_mask6, AF_INET6));
