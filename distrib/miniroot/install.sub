@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.350 2004/07/25 03:33:04 krw Exp $
+#	$OpenBSD: install.sub,v 1.351 2004/08/09 18:08:50 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1733,7 +1733,7 @@ __EOT
 ROOTDISK=
 ROOTDEV=
 
-VERSION=35
+VERSION=36
 
 VNAME="$(( $VERSION / 10 )).$(( $VERSION % 10 ))"
 SETDIR="$VNAME/$ARCH"
