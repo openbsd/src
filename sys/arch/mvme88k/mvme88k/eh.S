@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.33 2003/08/21 20:45:43 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.34 2003/09/01 20:06:02 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -590,22 +590,22 @@ GLOBAL(bugtrap)
 	DONE(DEBUG_BUGCALL_BIT)
 
 GLOBAL(sigsys)
-	PREP("sigsys", 0, DEBUG_SIGSYS_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("sigsys", 501, DEBUG_SIGSYS_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_SIGSYS, r30)
 	DONE(DEBUG_SIGSYS_BIT)
 
 GLOBAL(sigtrap)
-	PREP("sigtrap", 0, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("sigtrap", 510, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_SIGTRAP, r30)
 	DONE(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(stepbpt)
-	PREP("stepbpt", 0, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("stepbpt", 504, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_STEPBPT, r30)
 	DONE(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(userbpt)
-	PREP("userbpt", 0, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("userbpt", 511, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_USERBPT, r30)
 	DONE(DEBUG_SIGTRAP_BIT)
 
@@ -2317,22 +2317,22 @@ GLOBAL(m88110_bugtrap)
 	DONE(DEBUG_BUGCALL_BIT)
 
 GLOBAL(m88110_sigsys)
-	PREP2("sigsys", 0, DEBUG_SIGSYS_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("sigsys", 501, DEBUG_SIGSYS_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_SIGSYS, r30)
 	DONE(DEBUG_SIGSYS_BIT)
 
 GLOBAL(m88110_sigtrap)
-	PREP2("sigtrap", 0, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("sigtrap", 510, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_SIGTRAP, r30)
 	DONE(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(m88110_stepbpt)
-	PREP2("sigtrap", 0, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("stepbpt", 504, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_STEPBPT, r30)
 	DONE(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(m88110_userbpt)
-	PREP2("sigtrap", 0, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("userbpt", 511, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_USERBPT, r30)
 	DONE(DEBUG_SIGTRAP_BIT)
 
