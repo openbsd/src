@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.1 2004/08/06 20:56:03 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.2 2004/08/07 14:48:26 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -227,8 +227,8 @@ Conf5K:					# R5000 type, check for L2 cache
 	srl	t1, CF_5_SS_AL
 
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
-	li	t1, CF_5_SE			# Set SE in conf
-	or	v0, t1				# Update config register
+	li	t3, CF_5_SE			# Set SE in conf
+	or	v0, t3				# Update config register
 	li	t6, 512*1024			# 512k per 'click'.
 	sll	t6, t1
 
@@ -257,8 +257,8 @@ Conf52K:					# R5200 type, check for L2 cache
 	srl	t1, CF_52_SS_AL
 
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
-	li	t1, CF_5_SE			# Set SE in conf
-	or	v0, t1				# Update config register
+	li	t3, CF_5_SE			# Set SE in conf
+	or	v0, t3				# Update config register
 	li	t6, 512*1024			# 512k per 'click'.
 	lw	t3, CpuExternalCacheOn		# Check if disabled
 	bnez	t3, ConfResult			# No use it.
