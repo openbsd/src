@@ -1,3 +1,99 @@
+Thu May 23 16:56:48 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* h8300.h (add.l): Undo Apr 5th change.  The manual I had
+	was incorrect.
+
+Mon May  6 23:38:22 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* h8300.h (START): Remove.
+	(MEMRELAX): Define.  Mark absolute memory operands in mov.b, mov.w
+	and mov.l insns that can be relaxed.
+
+Tue Apr 30 18:30:58 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* i386.h: Remove Abs32 from lcall.
+
+Mon Apr 22 17:09:23 1996  Doug Evans  <dje@blues.cygnus.com>
+
+	* sparc.h (SPARC_OPCODE_ARCH_V9_P): New macro.
+	(SLCPOP): New macro.
+	Mark X,Y opcode letters as in use.
+
+Thu Apr 11 17:28:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* sparc.h (F_FLOAT, F_FBR): Define.
+
+Fri Apr  5 16:55:34 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* h8300.h (ABS8MEM): Renamed from ABSMOV.  Remove ABSMOV
+	from all insns.
+	(ABS8SRC,ABS8DST): Add ABS8MEM.
+	(add.l): Fix reg+reg variant.
+	(eepmov.w): Renamed from eepmovw.
+	(ldc,stc): Fix many cases.
+
+Sun Mar 31 13:30:03 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* sparc.h (SPARC_OPCODE_ARCH_MASK): New macro.
+
+Thu Mar  7 15:08:23 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* sparc.h (O): Mark operand letter as in use.
+
+Tue Feb 20 20:46:21 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* sparc.h (sparc_{encode,decode}_sparclet_cpreg): Declare.
+	Mark operand letters uU as in use.
+
+Mon Feb 19 01:59:08 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* sparc.h (sparc_opcode_arch_val): Add SPARC_OPCODE_ARCH_SPARCLET.
+	(sparc_opcode_arch): Delete member `conflicts'.  Add `supported'.
+	(SPARC_OPCODE_SUPPORTED): New macro.
+	(SPARC_OPCODE_CONFLICT_P): Rewrite.
+	(F_NOTV9): Delete.
+
+Fri Feb 16 12:23:34 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* sparc.h (sparc_opcode_lookup_arch) Make return type in
+	declaration consistent with return type in definition.
+
+Wed Feb 14 18:14:11 1996  Alan Modra  <alan@spri.levels.unisa.edu.au>
+
+	* i386.h (i386_optab): Remove Data32 from pushf and popf.
+
+Thu Feb  8 14:27:21 1996  James Carlson <carlson@xylogics.com>
+
+	* i386.h (i386_regtab): Add 80486 test registers.
+
+Mon Feb  5 18:35:46 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* i960.h (I_HX): Define.
+	(i960_opcodes): Add HX instruction.
+
+Mon Jan 29 12:43:39 1996  Ken Raeburn  <raeburn@cygnus.com>
+
+	* i386.h: Fix waiting forms of finit, fstenv, fsave, fstsw, fstcw,
+	and fclex.
+
+Wed Jan 24 22:36:59 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* sparc.h (enum sparc_opcode_arch_val): Replaces sparc_architecture.
+	(SPARC_OPCODE_CONFLICT_P): Renamed from ARCHITECTURES_CONFLICT_P.
+	(bfd_* defines): Delete.
+	(sparc_opcode_archs): Replaces architecture_pname.
+	(sparc_opcode_lookup_arch): Declare.
+	(NUMOPCODES): Delete.
+
+Mon Jan 22 08:24:32 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* sparc.h (enum sparc_architecture): Add v9a.
+	(ARCHITECTURES_CONFLICT_P): Update.
+
+Thu Dec 28 13:27:53 1995  John Hassey  <hassey@rtp.dg.com>
+
+	* i386.h: Added Pentium Pro instructions.
+
 Thu Nov  2 22:59:22 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* m68k.h: Document new 'W' operand place.
@@ -178,8 +274,11 @@ Thu Jul 28 19:28:07 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 
 Tue Jul 26 17:48:05 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 
-	* i960.h (I_CX2): New instruction category.
-	(i960_opcodes): Put eshro and sysctl in I_CX2 category.
+	* i960.h (I_CX2): New instruction category.  It includes
+	instructions available on Cx and Jx processors.
+	(I_JX): New instruction category, for JX-only instructions.
+	(i960_opcodes): Put eshro and sysctl in I_CX2 category.  Added
+	Jx-only instructions, in I_JX category.
 
 Wed Jul 13 18:43:47 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 

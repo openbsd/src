@@ -1,3 +1,9 @@
+Tue Jan 30 14:10:46 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	From Ronald F. Guilmette <rfg@monkeys.com>:
+	* Makefile.in (libbfd.h): Depend upon proto.str.
+	(libcoff.h, bfd.h): Likewise.
+
 Fri Nov  3 14:46:48 1995  Fred Fish  <fnf@cygnus.com>
 
 	* Makefile.in (SRCDOC, SRCPROT, core.texi, bfd.h):  Use corefile.c, 

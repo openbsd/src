@@ -3654,6 +3654,18 @@ Tue Jul 26 17:38:01 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 	* coff-i960.c (howto_rellong, howto_iprmed, howto_optcall): Use
 	HOWTO macro.
 
+	* cpu-i960.c (JX): Define as bfd_mach_i960_jx.
+	(scan_960_mach): Recognize jx machine.
+	(MAX_ARCH): Define to be JX.
+	(compatible): Add JX row to array.
+	(arch_info_struct): Add JX entry.
+
+	* archures.c (bfd_mach_i960_jx): New macro.
+	* bfd-in2.h: Regenerated.
+
+	* coffcode.h (coff_set_arch_mach_hook): For F_I960JX, set machine
+	to bfd_mach_i960_jx.
+	(coff_set_flags): For bfd_mach_i960_jx, set F_I960JX.
 
 Tue Jul 26 11:04:00 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
 

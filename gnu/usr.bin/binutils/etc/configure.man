@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
-.\" Copyright (c) 1991, 1992 Cygnus Support
+.\" Copyright (c) 1991, 1992, 1996 Cygnus Support
 .\" written by K. Richard Pixley
-.TH configure 1 "2 February 1993" "cygnus support" "Cygnus Support"
+.TH configure 1 "29 March 1996" "cygnus support" "Cygnus Support"
 .de BP
 .sp
 .ti \-.2i
@@ -9,7 +9,7 @@
 ..
 
 .SH NAME
-configure \(em\& prepare source code to be built
+configure \- prepare source code to be built
 
 .SH SYNOPSIS
 configure HOST [--target=TARGET] [--srcdir=DIR] [--rm]

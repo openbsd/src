@@ -169,7 +169,7 @@ NAME(lynx,swap_std_reloc_out) (abfd, g, natptr)
     }
 
   /* now the fun stuff */
-  if (abfd->xvec->header_byteorder_big_p != false)
+  if (bfd_header_big_endian (abfd))
     {
       natptr->r_index[0] = r_index >> 16;
       natptr->r_index[1] = r_index >> 8;
@@ -255,7 +255,7 @@ NAME(lynx,swap_ext_reloc_out) (abfd, g, natptr)
 
 
   /* now the fun stuff */
-  if (abfd->xvec->header_byteorder_big_p != false)
+  if (bfd_header_big_endian (abfd))
     {
       natptr->r_index[0] = r_index >> 16;
       natptr->r_index[1] = r_index >> 8;
@@ -418,20 +418,16 @@ doit:
   count = reloc_size / each_size;
 
 
-  reloc_cache = (arelent *) malloc (count * sizeof (arelent));
+  reloc_cache = (arelent *) bfd_malloc (count * sizeof (arelent));
   if (!reloc_cache && count != 0)
-    {
-    nomem:
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   memset (reloc_cache, 0, count * sizeof (arelent));
 
   relocs = (PTR) bfd_alloc (abfd, reloc_size);
   if (!relocs && reloc_size != 0)
     {
       free (reloc_cache);
-      goto nomem;
+      return false;
     }
 
   if (bfd_read (relocs, 1, reloc_size, abfd) != reloc_size)
@@ -496,10 +492,7 @@ NAME(lynx,squirt_out_relocs) (abfd, section)
   natsize = each_size * count;
   native = (unsigned char *) bfd_zalloc (abfd, natsize);
   if (!native)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   generic = section->orelocation;
 

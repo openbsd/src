@@ -141,13 +141,10 @@ bfd_check_format_matches (abfd, format, matching)
   if (matching)
     {
       matching_vector =
-	(char **) malloc (sizeof (char *) *
-			  (_bfd_target_vector_entries + 1));
+	(char **) bfd_malloc (sizeof (char *) *
+			      (_bfd_target_vector_entries + 1));
       if (!matching_vector)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return false;
-	}
+	return false;
       matching_vector[0] = NULL;
       *matching = matching_vector;
     }

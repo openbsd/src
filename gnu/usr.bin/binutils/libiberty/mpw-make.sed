@@ -18,7 +18,7 @@ INCLUDES = -i : -i {INCDIR}: -i {INCDIR}:mpw: -i ::extra-include: -i "{s}"\
 # Remove dependency on needed-list, which we don't use.
 /DO_ALSO =/s/needed-list//
 
-/INCDIR=/s/"{srcdir}":/"{topsrcdir}"/
+/INCDIR=/s/"{srcdir}"{MULTISRCTOP}::/"{topsrcdir}"/
 
 # Whack out the COMPILE.c trickiness.
 /^COMPILE.c /,/^$/d

@@ -21,6 +21,7 @@ srcdir = @srcdir@
 
 prefix = @prefix@
 
+program_transform_name = @program_transform_name@
 exec_prefix = @exec_prefix@
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
@@ -54,11 +55,22 @@ CFLAGS = @CFLAGS@
 MAKEINFO = makeinfo
 RANLIB = @RANLIB@
 
+ALLLIBS = @ALLLIBS@
+
+PICFLAG = @PICFLAG@
+SHLIB = @SHLIB@
+SHLIB_CC = @SHLIB_CC@
+SHLIB_CFLAGS = @SHLIB_CFLAGS@
+COMMON_SHLIB = @COMMON_SHLIB@
+SHLIB_DEP = @SHLIB_DEP@
+SHLINK = @SHLINK@
+
+SONAME = lib`echo $(SHLIB) | sed -e 's,^\.\./bfd/,,' -e 's/^lib//' | sed '$(program_transform_name)'`
+
 INCDIR = $(srcdir)/../include
 BFDDIR = $(srcdir)/../bfd
 CSEARCH = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR)
 DEP = mkdep
-
 
 TARGETLIB = libopcodes.a
 
@@ -88,15 +100,15 @@ FLAGS_TO_PASS = \
 ALL_CFLAGS = $(CSEARCH) @HDEFINES@ $(CFLAGS)
 
 .c.o:
+	if [ -n "$(PICFLAG)" ]; then \
+	  $(CC) -c $(PICFLAG) $(ALL_CFLAGS) $< -o pic/$@; \
+	else true; fi
 	$(CC) -c $(ALL_CFLAGS) $<
 
 # C source files that correspond to .o's.
 CFILES = i386-dis.c z8k-dis.c m68k-dis.c mips-dis.c ns32k-dis.c ppc-dis.c
 
-STAGESTUFF = $(TARGETLIB) $(OFILES)
-
-all: $(TARGETLIB) 
-
+all: $(ALLLIBS)
 
 .NOEXPORT:
 
@@ -115,7 +127,72 @@ $(TARGETLIB): $(OFILES)
 	 $(AR) $(AR_FLAGS) $(TARGETLIB) $(OFILES)
 	 $(RANLIB) $(TARGETLIB)
 
+LIBIBERTY_LISTS = ../libiberty/required-list ../libiberty/needed-list
+BFD_PICLIST = @BFD_PICLIST@
+
+stamp-piclist: Makefile $(LIBIBERTY_LISTS) $(BFD_PICLIST)
+	rm -f tpiclist
+	if [ -n "$(PICFLAG)" ]; then \
+	  echo $(OFILES) | sed -e 's,\([^ ][^ ]*\),pic/\1,g' > tpiclist; \
+	else \
+	  echo $(OFILES) > tpiclist; \
+	fi
+	if [ "$(COMMON_SHLIB)" = "yes" ]; then \
+	  lobjs=`cat $(LIBIBERTY_LISTS)`; \
+	  if [ -n "$(PICFLAG)" ]; then \
+	    lobjs=`echo $$lobjs | sed -e 's,\([^ ][^ ]*\),pic/\1,g'`; \
+	  fi; \
+	  lobjs=`echo $$lobjs | sed -e 's,\([^ ][^ ]*\),../libiberty/\1,g'`; \
+	  echo $$lobjs >> tpiclist; \
+	  sed -e 's,\([^ ][^ ]*\),../bfd/\1,g' $(BFD_PICLIST) >> tpiclist; \
+	else true; fi
+	$(srcdir)/../move-if-change tpiclist piclist
+	touch stamp-piclist
+
+piclist: stamp-piclist ; @true
+
+$(SHLIB): stamp-picdir $(OFILES) piclist $(SHLIB_DEP)
+	rm -f $(SHLIB)
+	$(SHLIB_CC) $(SHLIB_CFLAGS) -o $(SHLIB) `cat piclist`
+
+$(SHLINK): $(SHLIB)
+	ts=lib`echo $(SHLIB) | sed -e 's,^\.\./bfd/,,' -e 's/^lib//' | sed -e '$(program_transform_name)'`; \
+	if [ "$(COMMON_SHLIB)" = "yes" ]; then \
+	  ts=../bfd/$$ts; \
+	fi; \
+	if [ "$$ts" != "$(SHLIB)" ]; then \
+	  rm -f $$ts; \
+	  ln -sf `echo $(SHLIB) | sed -e 's,^\.\./bfd/,,'` $$ts; \
+	else true; fi
+	rm -f $(SHLINK)
+	ln -sf `echo $(SHLIB) | sed -e 's,^\.\./bfd/,,'` $(SHLINK)
+
+# This target creates libTARGET-opcodes.so.VERSION as a symlink to
+# libopcodes.so.VERSION.  It is used on SunOS, which does not have SONAME.
+stamp-tshlink: $(SHLIB)
+	tf=lib`echo $(SHLIB) | sed -e 's,\.\./bfd/,,' -e 's/^lib//' | sed '$(program_transform_name)'`; \
+	if [ "$(COMMON_SHLIB)" = "yes" ]; then \
+	  tf=../bfd/$$tf; \
+	fi; \
+	if [ "$$tf" != "$(SHLIB)" ]; then \
+	  rm -f $$tf; \
+	  ln -sf $(SHLIB) $$tf; \
+	else true; fi
+	if [ "$(COMMON_SHLIB)" = "yes" ]; then \
+	  tf=lib`echo $(TARGETLIB) | sed -e 's/^lib//' | sed '$(program_transform_name)'`; \
+	  if [ "$$tf" != "$(TARGETLIB)" ]; then \
+	    rm -f $$tf; \
+	    ln -sf $(TARGETLIB) $$tf; \
+	  else true; fi; \
+	else true; fi
+	touch stamp-tshlink
+
+$(OFILES): stamp-picdir
+
 disassemble.o: disassemble.c $(INCDIR)/dis-asm.h
+	if [ -n "$(PICFLAG)" ]; then \
+	  $(CC) -c @archdefs@ $(PICFLAG) $(ALL_CFLAGS) $(srcdir)/disassemble.c -o pic/disassemble.o; \
+	else true; fi
 	$(CC) -c @archdefs@ $(ALL_CFLAGS) $(srcdir)/disassemble.c
 
 a29k-dis.o: a29k-dis.c $(INCDIR)/dis-asm.h $(INCDIR)/opcode/a29k.h
@@ -147,13 +224,14 @@ tags etags: TAGS
 TAGS: force
 	etags $(INCDIR)/*.h $(srcdir)/*.h $(srcdir)/*.c
 
-MOSTLYCLEAN = *.o core *.E *.p *.ip config.log
+MOSTLYCLEAN = *.o core *.E *.p *.ip config.log pic/*.o
 mostlyclean:
 	rm -rf $(MOSTLYCLEAN)
 clean:
-	rm -f *.a $(MOSTLYCLEAN)
+	rm -f *.a $(MOSTLYCLEAN) $(SHLIB) $(SHLINK) piclist stamp-piclist
 distclean: clean
-	rm -rf Makefile config.status TAGS config.cache config.h
+	rm -rf Makefile config.status TAGS config.cache config.h stamp-h \
+	       pic stamp-picdir
 clobber realclean maintainer-clean: distclean
 
 # Mark everything as depending on config.status, since the timestamp on
@@ -179,9 +257,24 @@ roll:
 #
 force:
 
-install:
-	$(INSTALL_DATA) $(TARGETLIB) $(libdir)/libopcodes.a
-	$(RANLIB) $(libdir)/libopcodes.a
+install: $(ALLLIBS)
+	for f in $(ALLLIBS); do \
+	  if [ "$$f" = "stamp-tshlink" ]; then \
+	    continue; \
+	  fi; \
+	  tf=lib`echo $$f | sed -e 's,^\.\./bfd/,,' -e 's/^lib//' | sed '$(program_transform_name)'`; \
+	  rm -f $(libdir)/$$tf; \
+	  if [ "$$f" = "$(SHLINK)" ]; then \
+	    ts=lib`echo $(SHLIB) | sed -e 's,^\.\./bfd/,,' -e 's/^lib//' | sed '$(program_transform_name)'`; \
+	    ln -sf $$ts $(libdir)/$$tf; \
+	  elif [ "$$f" = "$(SHLIB)" ]; then \
+	    $(INSTALL_PROGRAM) $$f $(libdir)/$$tf; \
+	  else \
+	    $(INSTALL_DATA) $$f $(libdir)/$$tf; \
+	    $(RANLIB) $(libdir)/$$tf; \
+	    chmod a-x $(libdir)/$$tf; \
+	  fi; \
+	done
 
 Makefile: Makefile.in config.status
 	CONFIG_FILES=Makefile CONFIG_HEADERS= $(SHELL) ./config.status
@@ -190,12 +283,17 @@ config.h: stamp-h ; @true
 stamp-h: config.in config.status
 	CONFIG_FILES= CONFIG_HEADERS=config.h:config.in $(SHELL) ./config.status
 
-config.status : configure $(srcdir)/../bfd/configure.host $(srcdir)/../bfd/config.bfd
+config.status: configure $(srcdir)/../bfd/configure.host $(srcdir)/../bfd/config.bfd $(srcdir)/../bfd/VERSION
 	$(SHELL) config.status --recheck
 
 dep: $(CFILES)
 	mkdep $(CFLAGS) $?
 
+stamp-picdir:
+	if [ -n "$(PICFLAG)" ] && [ ! -d pic ]; then \
+	  mkdir pic; \
+	else true; fi
+	touch stamp-picdir
 
 # What appears below is generated by a hacked mkdep using gcc -MM.
 

@@ -1,5 +1,8 @@
 /*** coff information for M68K */
 
+#ifndef GNU_COFF_M68K_H
+#define GNU_COFF_M68K_H 1
+
 /********************** FILE HEADER **********************/
 
 struct external_filehdr {
@@ -215,3 +218,4 @@ struct external_reloc {
 
 #define RELSZ sizeof(struct external_reloc)
 
+#endif /* GNU_COFF_M68K_H */

@@ -187,6 +187,7 @@ static struct output_fns *format = &formats[FORMAT_DEFAULT];
 
 static int do_demangle = 0;	/* Pretty print C++ symbol names.  */
 static int external_only = 0;	/* print external symbols only */
+static int defined_only = 0;	/* Print defined symbols only */
 static int no_sort = 0;		/* don't sort; print syms in order found */
 static int print_debug_syms = 0;	/* print debugger-only symbols too */
 static int print_armap = 0;	/* describe __.SYMDEF data in archive files.  */
@@ -243,6 +244,7 @@ static struct option long_options[] =
   {"size-sort", no_argument, &sort_by_size, 1},
   {"stats", no_argument, &show_stats, 1},
   {"target", required_argument, 0, 200},
+  {"defined-only", no_argument, &defined_only, 1},
   {"undefined-only", no_argument, &undefined_only, 1},
   {"version", no_argument, &show_version, 1},
   {0, no_argument, 0, 0}
@@ -261,6 +263,7 @@ Usage: %s [-aABCDgnopPrsuvV] [-t radix] [--radix=radix] [--target=bfdname]\n\
        [--numeric-sort] [--no-sort] [--reverse-sort] [--size-sort]\n\
        [--undefined-only] [--portability] [-f {bsd,sysv,posix}]\n\
        [--format={bsd,sysv,posix}] [--demangle] [--no-demangle] [--dynamic]\n\
+       [--defined-only]\n\
        [--version] [--help]\n\
        [file...]\n",
 	   program_name);
@@ -928,6 +931,7 @@ filter_symbols (abfd, dynamic, minisyms, symcount, size)
 	keep = bfd_is_und_section (sym->section);
       else if (external_only)
 	keep = ((sym->flags & BSF_GLOBAL) != 0
+		|| (sym->flags & BSF_WEAK) != 0
 		|| bfd_is_und_section (sym->section)
 		|| bfd_is_com_section (sym->section));
       else
@@ -943,6 +947,13 @@ filter_symbols (abfd, dynamic, minisyms, symcount, size)
 	  && (bfd_is_abs_section (sym->section)
 	      || bfd_is_und_section (sym->section)))
 	keep = 0;
+
+      if (keep
+	  && defined_only)
+	{
+	  if (bfd_is_und_section (sym->section))
+	    keep = 0;
+	}
 
       if (keep)
 	{
@@ -1331,6 +1342,8 @@ print_symdef_entry (abfd)
 	  everprinted = true;
 	}
       elt = bfd_get_elt_at_index (abfd, idx);
+      if (elt == NULL)
+	bfd_fatal ("bfd_get_elt_at_index");
       if (thesym->name != (char *) NULL)
 	{
 	  print_symname ("%s", thesym->name, abfd);

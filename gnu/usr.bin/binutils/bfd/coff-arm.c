@@ -1,4 +1,4 @@
-/* BFD back-end for Intel arm COFF files.
+/* BFD back-end for ARM COFF files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -435,14 +435,20 @@ armcoff_little_vec =
   "coff-arm-little",
 #endif
   bfd_target_coff_flavour,
-  false,			/* data byte order is little */
-  false,			/* header byte order is little */
+  BFD_ENDIAN_LITTLE,		/* data byte order is little */
+  BFD_ENDIAN_LITTLE,		/* header byte order is little */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
+#ifndef COFF_WITH_PE
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+#else
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* section flags */
+   | SEC_LINK_ONCE | SEC_LINK_DUPLICATES),
+#endif
+
 #ifdef TARGET_UNDERSCORE
   TARGET_UNDERSCORE,		/* leading underscore */
 #else
@@ -492,14 +498,20 @@ armcoff_big_vec =
   "coff-arm-big",
 #endif
   bfd_target_coff_flavour,
-  true,				/* data byte order is big */
-  true,				/* header byte order is big */
+  BFD_ENDIAN_BIG,		/* data byte order is big */
+  BFD_ENDIAN_BIG,		/* header byte order is big */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
+#ifndef COFF_WITH_PE
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+#else
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* section flags */
+   | SEC_LINK_ONCE | SEC_LINK_DUPLICATES),
+#endif
+
 #ifdef TARGET_UNDERSCORE
   TARGET_UNDERSCORE,		/* leading underscore */
 #else

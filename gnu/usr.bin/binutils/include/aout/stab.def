@@ -1,5 +1,5 @@
 /* Table of DBX symbol codes for the GNU system.
-   Copyright (C) 1988, 1991 Free Software Foundation, Inc.
+   Copyright (C) 1988, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ __define_stab (N_BSLINE, 0x48, "BSLINE")
 /* Sun's source-code browser stabs.  ?? Don't know what the fields are.
    Supposedly the field is "path to associated .cb file".  THIS VALUE
    OVERLAPS WITH N_BSLINE!  */
-__define_stab (N_BROWS, 0x48, "BROWS")
+__define_stab_duplicate (N_BROWS, 0x48, "BROWS")
 
 /* GNU Modula-2 definition module dependency.  Value is the modification time
    of the definition file.  Other is non-zero if it is imported with the
@@ -110,7 +110,7 @@ __define_stab(N_FLINE, 0x4C, "FLINE")
 /* GNU C++ exception variable.  Name is variable name.  */
 __define_stab (N_EHDECL, 0x50, "EHDECL")
 /* Modula2 info "for imc":  name,,0,0,0  according to Ultrix V4.0.  */
-__define_stab (N_MOD2, 0x50, "MOD2")
+__define_stab_duplicate (N_MOD2, 0x50, "MOD2")
 
 /* GNU C++ `catch' clause.  Value is its address.  Desc is nonzero if
    this entry is immediately followed by a CAUGHT stab saying what exception

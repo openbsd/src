@@ -1,7 +1,46 @@
-Thu Nov 16 16:02:09 1995  Ken Raeburn  <raeburn@cygnus.com>
+Tue Mar 26 16:55:08 1996  Jeffrey A Law  (law@cygnus.com)
 
-	* binutils-all/ar.exp: Switch "verbose -log" to send_output plus
-	verbose.
+	* binutils-all/objcopy.exp: No longer expect adjust-sectin-vma
+	test to fail for hppa*-*-proelf*.
+
+Mon Mar 11 08:25:14 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* binutils-all/objdump.exp: Look for "$CODE$", not just "CODE".
+
+Wed Jan 31 11:55:13 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* binutils-all/objcopy.exp: Expect adjust-section-vma tests to
+	fail for hppa*-*-proelf* targets.
+
+Thu Jan 25 13:53:04 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils-all/objdump.exp: Update for objdump -h format change.
+	* binutils-all/objcopy.exp: Likewise.
+
+Mon Jan 15 18:14:14 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils-all/objcopy.exp: Use the lma, not the vma, when testing
+	address adjustments.
+
+Fri Dec 15 16:31:55 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils-all/objdump.exp: Update objdump -i test for current
+	objdump output.
+
+Mon Nov 27 15:15:09 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils-all/objcopy.exp: Correct fail calls to always use the
+	same string as the pass call.
+
+Wed Nov 22 13:18:58 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lib/utils-lib.exp (prune_system_crud): Discard -g -O warnings
+	from native compilers on OSF/1 and SunOS.
+
+Fri Nov 17 10:36:09 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lib/utils-lib.exp (default_binutils_compiler: Change error
+	message to say compilation rather than assembly.
 
 Wed Nov 15 18:34:42 1995  Ken Raeburn  <raeburn@cygnus.com>
 

@@ -54,7 +54,6 @@ typedef enum ieee_record
   ieee_section_type_enum = 0xe6,
   ieee_section_alignment_enum = 0xe7,
   ieee_external_symbol_enum = 0xe8,
-  ieee_attribute_record_enum = 0xf1c9,
   ieee_comma = 0x90,
   ieee_external_reference_enum = 0xe9,
   ieee_set_current_section_enum = 0xe5,
@@ -107,14 +106,22 @@ typedef enum ieee_record
   ieee_mau_size_enum = 0xe2c6,
   ieee_m_value_enum = 0xe2cd,
   ieee_section_base_address_enum = 0xe2cc,
+  ieee_asn_record_enum = 0xe2ce,
   ieee_section_offset_enum = 0xe2d2,
   ieee_value_starting_address_enum = 0xe2c7,
   ieee_assign_value_to_variable_enum = 0xe2d7,
   ieee_set_current_pc_enum = 0xe2d0,
   ieee_value_record_enum = 0xe2c9,
-ieee_nn_record = 0xf0,
+  ieee_nn_record = 0xf0,
+  ieee_at_record_enum = 0xf1,
+  ieee_ty_record_enum = 0xf2,
+  ieee_attribute_record_enum = 0xf1c9,
+  ieee_atn_record_enum = 0xf1ce,
+  ieee_external_reference_info_record_enum = 0xf1d8,
   ieee_weak_external_reference_enum= 0xf4,
-  ieee_repeat_data_enum = 0xf7
+  ieee_repeat_data_enum = 0xf7,
+  ieee_bb_record_enum = 0xf8,
+  ieee_be_record_enum = 0xf9
 } ieee_record_enum_type;
 		 
 

@@ -11,7 +11,7 @@ resource 'vers' (1)  {
 	0,
 	verUs,
 	VERSION_STRING,
-	VERSION_STRING  " (c) 1986-95 FSF, Inc. "
+	VERSION_STRING  " (C) 1986-95 FSF, Inc."
 };
 
 resource 'vers' (2, purgeable)  {
@@ -21,7 +21,7 @@ resource 'vers' (2, purgeable)  {
 	0,
 	verUs,
 	VERSION_STRING,
-	"binutils " /* fill in major/minor versions */ "for MPW"
+	"binutils " VERSION_STRING " for MPW"
 };
 
 #ifdef WANT_CFRG

@@ -175,4 +175,33 @@ typedef struct elf_internal_dyn {
 #define Elf32_Internal_Dyn Elf_Internal_Dyn
 #define Elf64_Internal_Dyn Elf_Internal_Dyn
 
+/* This structure is used to describe how sections should be assigned
+   to program segments.  */
+
+struct elf_segment_map
+{
+  /* Next program segment.  */
+  struct elf_segment_map *next;
+  /* Program segment type.  */
+  unsigned long p_type;
+  /* Program segment flags.  */
+  unsigned long p_flags;
+  /* Program segment physical address.  */
+  bfd_vma p_paddr;
+  /* Whether the p_flags field is valid; if not, the flags are based
+     on the section flags.  */
+  unsigned int p_flags_valid : 1;
+  /* Whether the p_paddr field is valid; if not, the physical address
+     is based on the section lma values.  */
+  unsigned int p_paddr_valid : 1;
+  /* Whether this segment includes the file header.  */
+  unsigned int includes_filehdr : 1;
+  /* Whether this segment includes the program headers.  */
+  unsigned int includes_phdrs : 1;
+  /* Number of sections (may be 0).  */
+  unsigned int count;
+  /* Sections.  Actual number of elements is in count field.  */
+  asection *sections[1];
+};
+
 #endif /* _ELF_INTERNAL_H */

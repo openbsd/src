@@ -1,4 +1,4 @@
-/* BFD back-end for Intel arm PECOFF files.
+/* BFD back-end for ARM PECOFF files.
    Copyright 1995 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -28,5 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define COFF_OBJ_WITH_PE
 #define COFF_WITH_PE
 #define PCRELOFFSET true
+#define COFF_LONG_SECTION_NAMES
 
 #include "coff-arm.c"

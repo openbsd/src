@@ -99,12 +99,12 @@ static const template i386_optab[] = {
 {"cmc", 0, 0xf5, _, NoModrm, { 0, 0, 0} },
 {"lahf", 0, 0x9f, _, NoModrm, { 0, 0, 0} },
 {"sahf", 0, 0x9e, _, NoModrm, { 0, 0, 0} },
-{"pushf", 0, 0x9c, _, NoModrm|Data32, { 0, 0, 0} },
-{"popf", 0, 0x9d, _, NoModrm|Data32, { 0, 0, 0} },
 {"pushfl", 0, 0x9c, _, NoModrm|Data32, { 0, 0, 0} },
 {"popfl", 0, 0x9d, _, NoModrm|Data32, { 0, 0, 0} },
 {"pushfw", 0, 0x9c, _, NoModrm|Data16, { 0, 0, 0} },
 {"popfw", 0, 0x9d, _, NoModrm|Data16, { 0, 0, 0} },
+{"pushf", 0, 0x9c, _, NoModrm, { 0, 0, 0} },
+{"popf", 0, 0x9d, _, NoModrm, { 0, 0, 0} },
 {"stc", 0, 0xf9, _, NoModrm, { 0, 0, 0} },
 {"std", 0, 0xfd, _, NoModrm, { 0, 0, 0} },
 {"sti", 0, 0xfb, _, NoModrm, { 0, 0, 0} },
@@ -263,7 +263,7 @@ static const template i386_optab[] = {
 {"call", 1, 0xff, 2, Modrm|Data32, { Reg|Mem|JumpAbsolute, 0, 0} },
 {"callw", 1, 0xff, 2, Modrm|Data16, { Reg|Mem|JumpAbsolute, 0, 0} },
 #define CALL_FAR_IMMEDIATE 0x9a
-{"lcall", 2, 0x9a, _, JumpInterSegment, { Imm16, Abs32|Imm32, 0} },
+{"lcall", 2, 0x9a, _, JumpInterSegment, { Imm16, Imm32, 0} },
 {"lcall", 1, 0xff, 3, Modrm|Data32, { Mem, 0, 0} },
 {"lcallw", 1, 0xff, 3, Modrm|Data16, { Mem, 0, 0} },
 
@@ -690,28 +690,28 @@ static const template i386_optab[] = {
 
 /* processor control */
 {"fninit", 0, 0xdbe3, _, NoModrm, { 0, 0, 0} },
-{"finit", 0, 0xdbe3, _, NoModrm, { 0, 0, 0} },
+{"finit", 0, 0x9bdbe3, _, NoModrm, { 0, 0, 0} },
 {"fldcw", 1, 0xd9, 5, Modrm, { Mem, 0, 0} },
 {"fnstcw", 1, 0xd9, 7, Modrm, { Mem, 0, 0} },
-{"fstcw", 1, 0xd9, 7, Modrm, { Mem, 0, 0} },
+{"fstcw", 1, 0x9bd9, 7, Modrm, { Mem, 0, 0} },
 {"fnstsw", 1, 0xdfe0, _, NoModrm, { Acc, 0, 0} },
 {"fnstsw", 1, 0xdd, 7, Modrm, { Mem, 0, 0} },
 {"fnstsw", 0, 0xdfe0, _, NoModrm, { 0, 0, 0} },
-{"fstsw", 1, 0xdfe0, _, NoModrm, { Acc, 0, 0} },
-{"fstsw", 1, 0xdd, 7, Modrm, { Mem, 0, 0} },
-{"fstsw", 0, 0xdfe0, _, NoModrm, { 0, 0, 0} },
+{"fstsw", 1, 0x9bdfe0, _, NoModrm, { Acc, 0, 0} },
+{"fstsw", 1, 0x9bdd, 7, Modrm, { Mem, 0, 0} },
+{"fstsw", 0, 0x9bdfe0, _, NoModrm, { 0, 0, 0} },
 {"fnclex", 0, 0xdbe2, _, NoModrm, { 0, 0, 0} },
-{"fclex", 0, 0xdbe2, _, NoModrm, { 0, 0, 0} },
+{"fclex", 0, 0x9bdbe2, _, NoModrm, { 0, 0, 0} },
 /*
  We ignore the short format (287) versions of fstenv/fldenv & fsave/frstor
  instructions;  i'm not sure how to add them or how they are different.
  My 386/387 book offers no details about this.
 */
 {"fnstenv", 1, 0xd9, 6, Modrm, { Mem, 0, 0} },
-{"fstenv", 1, 0xd9, 6, Modrm, { Mem, 0, 0} },
+{"fstenv", 1, 0x9bd9, 6, Modrm, { Mem, 0, 0} },
 {"fldenv", 1, 0xd9, 4, Modrm, { Mem, 0, 0} },
 {"fnsave", 1, 0xdd, 6, Modrm, { Mem, 0, 0} },
-{"fsave", 1, 0xdd, 6, Modrm, { Mem, 0, 0} },
+{"fsave", 1, 0x9bdd, 6, Modrm, { Mem, 0, 0} },
 {"frstor", 1, 0xdd, 4, Modrm, { Mem, 0, 0} },
 
 {"ffree", 1, 0xddc0, _, ShortForm, { FloatReg, 0, 0} },
@@ -757,6 +757,40 @@ static const template i386_optab[] = {
 {"rdmsr", 0, 0x0f32, _, NoModrm, { 0, 0, 0} },
 {"cmpxchg8b", 1, 0x0fc7, 1, Modrm, { Mem, 0, 0} },
 
+/* Pentium Pro extensions */
+{"rdpmc", 0, 0x0f33, _, NoModrm, { 0, 0, 0} },
+
+{"cmovo",  2, 0x0f40, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovno", 2, 0x0f41, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovb",  2, 0x0f42, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovae", 2, 0x0f43, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmove",  2, 0x0f44, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovne", 2, 0x0f45, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovbe", 2, 0x0f46, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmova",  2, 0x0f47, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovs",  2, 0x0f48, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovns", 2, 0x0f49, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovp",  2, 0x0f4a, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovnp", 2, 0x0f4b, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovl",  2, 0x0f4c, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovge", 2, 0x0f4d, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovle", 2, 0x0f4e, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+{"cmovg",  2, 0x0f4f, _, W|Modrm|ReverseRegRegmem, { WordReg|WordMem, WordReg, 0} },
+
+{"fcmovb", 2, 0xdac0, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fcmove", 2, 0xdac8, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fcmovbe",2, 0xdad0, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fcmovu", 2, 0xdad8, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fcmovnb", 2, 0xdbc0, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fcmovne", 2, 0xdbc8, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fcmovnbe",2, 0xdbd0, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fcmovnu", 2, 0xdbd8, _, ShortForm, { FloatReg, FloatAcc, 0} },
+
+{"fcomi",  2, 0xdbf0, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fucomi", 2, 0xdbe8, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fcomip", 2, 0xdff0, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fucomip",2, 0xdfe8, _, ShortForm, { FloatReg, FloatAcc, 0} },
+
 {"", 0, 0, 0, 0, { 0, 0, 0} }	/* sentinel */
 };
 #undef _
@@ -789,6 +823,7 @@ static const reg_entry i386_regtab[] = {
   {"dr0", Debug, 0},   {"dr1", Debug, 1},   {"dr2", Debug, 2},
   {"dr3", Debug, 3},   {"dr6", Debug, 6},   {"dr7", Debug, 7},
   /* test registers */
+  {"tr3", Test, 3}, {"tr4", Test, 4}, {"tr5", Test, 5},
   {"tr6", Test, 6}, {"tr7", Test, 7},
   /* float registers */
   {"st(0)", FloatReg|FloatAcc, 0},

@@ -1407,7 +1407,7 @@ _bfd_final_link_relocate (howto, input_bfd, input_section, contents, address,
   bfd_vma relocation;
 
   /* Sanity check the address.  */
-  if (address > input_section->_cooked_size)
+  if (address > input_section->_raw_size)
     return bfd_reloc_outofrange;
 
   /* This function assumes that we are dealing with a basic relocation
@@ -1872,7 +1872,11 @@ ENUMX
 ENUMX
   BFD_RELOC_SPARC_GLOB_JMP
 ENUMX
-  BFD_RELOC_SPARC_LO7
+  BFD_RELOC_SPARC_7
+ENUMX
+  BFD_RELOC_SPARC_6
+ENUMX
+  BFD_RELOC_SPARC_5
 ENUMDOC
   Some relocations we're using for SPARC V9 -- subject to change.
 
@@ -1973,6 +1977,14 @@ ENUMX
 ENUMEQX
   BFD_RELOC_MIPS_GPREL32
   BFD_RELOC_GPREL32
+ENUMX
+  BFD_RELOC_MIPS_GOT_HI16
+ENUMX
+  BFD_RELOC_MIPS_GOT_LO16
+ENUMX
+  BFD_RELOC_MIPS_CALL_HI16
+ENUMX
+  BFD_RELOC_MIPS_CALL_LO16
 ENUMDOC
   MIPS ELF relocations.
 
@@ -2050,6 +2062,38 @@ ENUMX
   BFD_RELOC_PPC_RELATIVE
 ENUMX
   BFD_RELOC_PPC_LOCAL24PC
+ENUMX
+  BFD_RELOC_PPC_EMB_NADDR32
+ENUMX
+  BFD_RELOC_PPC_EMB_NADDR16
+ENUMX
+  BFD_RELOC_PPC_EMB_NADDR16_LO
+ENUMX
+  BFD_RELOC_PPC_EMB_NADDR16_HI
+ENUMX
+  BFD_RELOC_PPC_EMB_NADDR16_HA
+ENUMX
+  BFD_RELOC_PPC_EMB_SDAI16
+ENUMX
+  BFD_RELOC_PPC_EMB_SDA2I16
+ENUMX
+  BFD_RELOC_PPC_EMB_SDA2REL
+ENUMX
+  BFD_RELOC_PPC_EMB_SDA21
+ENUMX
+  BFD_RELOC_PPC_EMB_MRKREF
+ENUMX
+  BFD_RELOC_PPC_EMB_RELSEC16
+ENUMX
+  BFD_RELOC_PPC_EMB_RELST_LO
+ENUMX
+  BFD_RELOC_PPC_EMB_RELST_HI
+ENUMX
+  BFD_RELOC_PPC_EMB_RELST_HA
+ENUMX
+  BFD_RELOC_PPC_EMB_BIT_FLD
+ENUMX
+  BFD_RELOC_PPC_EMB_RELSDA
 ENUMDOC
   Power(rs6000) and PowerPC relocations.
 
@@ -2256,12 +2300,9 @@ bfd_generic_get_relocated_section_contents (abfd, link_info, link_order, data,
   if (reloc_size < 0)
     goto error_return;
 
-  reloc_vector = (arelent **) malloc ((size_t) reloc_size);
+  reloc_vector = (arelent **) bfd_malloc ((size_t) reloc_size);
   if (reloc_vector == NULL && reloc_size != 0)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      goto error_return;
-    }
+    goto error_return;
 
   /* read in the section */
   if (!bfd_get_section_contents (input_bfd,

@@ -1,3 +1,68 @@
+Thu May 16 15:49:22 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* sh.h (R_SH_CODE, R_SH_DATA, R_SH_LABEL): Define.
+
+Tue May  7 00:36:39 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* internal.h (R_JMPL2): Renamed from R_JMPL_B8 to be
+	consistent with other similar relocs.
+
+	* internal.h (H8/300 specific relocs): Add comments better
+	explaining what each reloc is used for.
+	(R_MOV16B1, R_MOV16B2): Renamed from R_MOVB1 and R_MOVB2.
+	(R_MOV24B1, R_MOV24B2): Renamed from R_MOVLB1 and R_MOVLB2.
+	(R_MOVL1, R_MOVL2): New relocs.
+	
+Fri May  3 13:01:12 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* internal.h (R_PCRWORD_B): Define for the h8300 relaxing
+	linker.
+
+Wed May  1 19:21:03 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* internal.h (SCNNMLEN): Define.
+	(struct internal_scnhdr): Use SCNNMLEN for s_name field.
+
+Fri Mar 29 13:41:25 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* pe.h: Define IMAGE_COMDAT codes.
+
+Wed Mar 27 17:29:42 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* arm.h (union external_auxent): Add x_checksum, x_associated, and
+	x_comdat fields to x_scn struct.
+	* i386.h (union external_auxent): Likewise.
+	* powerpc.h (union external_auxent): Likewise.
+	* internal.h (union internal_auxent): Likewise.
+
+Thu Mar 21 16:25:57 1996  David Mosberger-Tang  <davidm@azstarnet.com>
+
+	* ecoff.h (struct ecoff_find_line): Add caching fields.
+
+Thu Mar 14 15:22:44 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* internal.h (R_MEM_INDIRECT): New reloc for the h8300.
+ 
+Fri Feb  9 10:44:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* aux-coff.h: Rename from aux.h, to avoid problems on hapless DOS
+	systems which think that aux is a com port.
+
+Mon Feb  5 18:35:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* i960.h (F_I960HX): Define.
+
+Wed Jan 31 13:11:54 1996  Richard Henderson  <rth@tamu.edu>
+
+	* aux.h: New file.
+	* internal.h, m68k.h: Protect against multiple inclusion.
+
+Wed Nov 22 13:48:39 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ecoff.h (_RCONST, STYP_RCONST, RELOC_SECTION_RCONST): Define.
+	(NUM_RELOC_SECTIONS): Update.
+	* symconst.h (scRConst): Define.
+
 Tue Nov 14 18:54:29 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* internal.h (C_NT_WEAK): Define.
@@ -153,6 +218,10 @@ Wed Nov 23 22:43:38 1994  Steve Chamberlain  (sac@jonny.cygnus.com)
 
 	* sh.h (SH_ARCH_MAGIC_BIG, SH_ARCH_MAGIC_LITTLE): New.
 	(SHBADMAG): Changed to suit.
+
+Tue Jul 26 17:46:08 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* i960.h (F_I960JX): New macro.
 
 Wed Jul  6 00:48:57 1994  Peter Schauer  (pes@regent.e-technik.tu-muenchen.de)
 

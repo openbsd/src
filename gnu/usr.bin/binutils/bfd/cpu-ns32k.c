@@ -1,5 +1,5 @@
 /* BFD support for the ns32k architecture.
-   Copyright (C) 1990, 1991, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 94, 95, 1996 Free Software Foundation, Inc.
    Almost totally rewritten by Ian Dall from initial work
    by Andrew Cagney.
 
@@ -22,39 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
-
-long ns32k_get_displacement PARAMS ((bfd_byte *buffer, long offset, long size));
-int ns32k_put_displacement PARAMS ((long value, bfd_byte *buffer, long offset, long size));
-long ns32k_get_immediate PARAMS ((bfd_byte *buffer, long offset, long size));
-int ns32k_put_immediate  PARAMS ((long value, bfd_byte *buffer, long offset, long size));
-bfd_reloc_status_type
-  ns32k_reloc_disp PARAMS ((bfd *abfd, arelent *reloc_entry,
-		   struct symbol_cache_entry *symbol,
-		   PTR data,
-		   asection *input_section,
-		   bfd *output_bfd,
-		   char **error_message));
-bfd_reloc_status_type
-  ns32k_reloc_imm  PARAMS ((bfd *abfd,
-		   arelent *reloc_entry,
-		   struct symbol_cache_entry *symbol,
-		   PTR data,
-		   asection *input_section,
-		   bfd *output_bfd,
-		   char **error_message));
-bfd_reloc_status_type ns32k_final_link_relocate  PARAMS ((reloc_howto_type *howto,
-			     bfd *input_bfd,
-			     asection *input_section,
-			     bfd_byte *contents,
-			     bfd_vma address,
-			     bfd_vma value,
-			     bfd_vma addend ));
-bfd_reloc_status_type ns32k_relocate_contents  PARAMS ((reloc_howto_type *howto,
-							bfd *input_bfd,
-							bfd_vma relocation,
-							bfd_byte *location));
-
-int bfd_default_scan_num_mach();
+#include "ns32k.h"
 
 #define N(machine, printable, d, next)  \
 {  32, 32, 8, bfd_arch_ns32k, machine, "ns32k",printable,3,d,bfd_default_compatible,bfd_default_scan, next, }
@@ -79,7 +47,7 @@ ns32k_sign_extend(value, bits)
 }
 
 long
-ns32k_get_displacement(buffer, offset, size)
+_bfd_ns32k_get_displacement(buffer, offset, size)
      bfd_byte *buffer;
      long offset;
      long size;
@@ -106,7 +74,7 @@ ns32k_get_displacement(buffer, offset, size)
 }
 
 int
-ns32k_put_displacement(value, buffer, offset, size)
+_bfd_ns32k_put_displacement(value, buffer, offset, size)
      long value;
      bfd_byte *buffer;
      long offset;
@@ -145,7 +113,7 @@ ns32k_put_displacement(value, buffer, offset, size)
 }
 
 long
-ns32k_get_immediate(buffer, offset, size)
+_bfd_ns32k_get_immediate (buffer, offset, size)
      bfd_byte *buffer;
      long offset;
      long size;
@@ -167,7 +135,7 @@ ns32k_get_immediate(buffer, offset, size)
 }
 
 int
-ns32k_put_immediate (value, buffer, offset, size)
+_bfd_ns32k_put_immediate (value, buffer, offset, size)
      long value;
      bfd_byte *buffer;
      long offset;
@@ -622,8 +590,8 @@ space consuming.  For each target:
 /* Relocate a given location using a given value and howto.  */
 
 bfd_reloc_status_type
-do_ns32k_reloc_contents ( howto, input_bfd, relocation, location, get_data,
-			 put_data)
+_bfd_do_ns32k_reloc_contents ( howto, input_bfd, relocation, location,
+			      get_data, put_data)
      reloc_howto_type *howto;
      bfd *input_bfd;
      bfd_vma relocation;
@@ -797,8 +765,8 @@ do_ns32k_reloc_contents ( howto, input_bfd, relocation, location, get_data,
 }
 
 bfd_reloc_status_type
-ns32k_reloc_disp(abfd, reloc_entry, symbol, data, input_section, output_bfd,
-		 error_message)
+_bfd_ns32k_reloc_disp (abfd, reloc_entry, symbol, data, input_section,
+		       output_bfd, error_message)
      bfd *abfd;
      arelent *reloc_entry;
      struct symbol_cache_entry *symbol;
@@ -807,11 +775,15 @@ ns32k_reloc_disp(abfd, reloc_entry, symbol, data, input_section, output_bfd,
      bfd *output_bfd;
      char **error_message;
 {
-  return do_ns32k_reloc(abfd, reloc_entry, symbol, data, input_section, output_bfd, error_message, ns32k_get_displacement, ns32k_put_displacement);
+  return do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section,
+			 output_bfd, error_message,
+			 _bfd_ns32k_get_displacement,
+			 _bfd_ns32k_put_displacement);
 }
 
 bfd_reloc_status_type
-ns32k_reloc_imm (abfd, reloc_entry, symbol, data, input_section, output_bfd, error_message)
+_bfd_ns32k_reloc_imm (abfd, reloc_entry, symbol, data, input_section,
+		      output_bfd, error_message)
      bfd *abfd;
      arelent *reloc_entry;
      struct symbol_cache_entry *symbol;
@@ -820,11 +792,14 @@ ns32k_reloc_imm (abfd, reloc_entry, symbol, data, input_section, output_bfd, err
      bfd *output_bfd;
      char **error_message;
 {
-  return do_ns32k_reloc(abfd, reloc_entry, symbol, data, input_section, output_bfd, error_message, ns32k_get_immediate, ns32k_put_immediate);
+  return do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section,
+			 output_bfd, error_message, _bfd_ns32k_get_immediate,
+			 _bfd_ns32k_put_immediate);
 }
 
 bfd_reloc_status_type
-ns32k_final_link_relocate (howto, input_bfd, input_section, contents, address, value, addend )
+_bfd_ns32k_final_link_relocate (howto, input_bfd, input_section, contents,
+				address, value, addend)
      reloc_howto_type *howto;
      bfd *input_bfd;
      asection *input_section;
@@ -863,6 +838,6 @@ ns32k_final_link_relocate (howto, input_bfd, input_section, contents, address, v
 	relocation -= address;
     }
 
-  return ns32k_relocate_contents (howto, input_bfd, relocation,
-				  contents + address);
+  return _bfd_ns32k_relocate_contents (howto, input_bfd, relocation,
+				       contents + address);
 }

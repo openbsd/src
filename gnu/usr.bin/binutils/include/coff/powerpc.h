@@ -175,6 +175,9 @@ union external_auxent {
     char x_scnlen[4];	           /* section length                  */
     char x_nreloc[2];	           /* # relocation entries            */
     char x_nlinno[2];	           /* # line numbers                  */
+    char x_checksum[4];		   /* section COMDAT checksum	      */
+    char x_associated[2];	   /* COMDAT associated section index */
+    char x_comdat[1];		   /* COMDAT selection number	      */
   } x_scn;
 };
 

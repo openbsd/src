@@ -1,5 +1,5 @@
 /* opncls.c -- open and close a BFD.
-   Copyright (C) 1990 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1990 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -55,10 +55,7 @@ _bfd_new_bfd ()
 
   nbfd = (bfd *)bfd_zmalloc (sizeof (bfd));
   if (!nbfd)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return 0;
-    }
+    return 0;
 
   if (_bfd_chunksize <= 0)
     {
@@ -146,10 +143,8 @@ bfd_openr (filename, target)
   const bfd_target *target_vec;
 
   nbfd = _bfd_new_bfd();
-  if (nbfd == NULL) {
-    bfd_set_error (bfd_error_no_memory);
+  if (nbfd == NULL)
     return NULL;
-  }
 
   target_vec = bfd_find_target (target, nbfd);
   if (target_vec == NULL) {
@@ -223,10 +218,8 @@ bfd_fdopenr (filename, target, fd)
 
   nbfd = _bfd_new_bfd();
 
-  if (nbfd == NULL) {
-    bfd_set_error (bfd_error_no_memory);
+  if (nbfd == NULL)
     return NULL;
-  }
 
   target_vec = bfd_find_target (target, nbfd);
   if (target_vec == NULL) {
@@ -234,13 +227,13 @@ bfd_fdopenr (filename, target, fd)
     return NULL;
   }
 #if defined(VMS) || defined(__GO32__) || defined (WINGDB)
-  nbfd->iostream = (char *)fopen(filename, FOPEN_RB);
+  nbfd->iostream = (PTR)fopen(filename, FOPEN_RB);
 #else
   /* (O_ACCMODE) parens are to avoid Ultrix header file bug */
   switch (fdflags & (O_ACCMODE)) {
-  case O_RDONLY: nbfd->iostream = (char *) fdopen (fd, FOPEN_RB);   break;
-  case O_WRONLY: nbfd->iostream = (char *) fdopen (fd, FOPEN_RUB);  break;
-  case O_RDWR:   nbfd->iostream = (char *) fdopen (fd, FOPEN_RUB);  break;
+  case O_RDONLY: nbfd->iostream = (PTR) fdopen (fd, FOPEN_RB);   break;
+  case O_WRONLY: nbfd->iostream = (PTR) fdopen (fd, FOPEN_RUB);  break;
+  case O_RDWR:   nbfd->iostream = (PTR) fdopen (fd, FOPEN_RUB);  break;
   default: abort ();
   }
 #endif
@@ -266,6 +259,7 @@ bfd_fdopenr (filename, target, fd)
 				
   if (! bfd_cache_init (nbfd))
     return NULL;
+  nbfd->opened_once = true;
 
   return nbfd;
 }
@@ -294,10 +288,7 @@ bfd_openstreamr (filename, target, stream)
 
   nbfd = _bfd_new_bfd ();
   if (nbfd == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   target_vec = bfd_find_target (target, nbfd);
   if (target_vec == NULL)
@@ -306,7 +297,7 @@ bfd_openstreamr (filename, target, stream)
       return NULL;
     }
 
-  nbfd->iostream = (char *) stream;
+  nbfd->iostream = (PTR) stream;
   nbfd->filename = filename;
   nbfd->direction = read_direction;
 				
@@ -350,10 +341,8 @@ bfd_openw (filename, target)
      reclaim it correctly. */
 
   nbfd = _bfd_new_bfd();
-  if (nbfd == NULL) {
-    bfd_set_error (bfd_error_no_memory);
+  if (nbfd == NULL)
     return NULL;
-  }
 
   target_vec = bfd_find_target (target, nbfd);
   if (target_vec == NULL) return NULL;
@@ -537,10 +526,8 @@ bfd_create (filename, templ)
      bfd *templ;
 {
   bfd *nbfd = _bfd_new_bfd();
-  if (nbfd == (bfd *)NULL) {
-    bfd_set_error (bfd_error_no_memory);
+  if (nbfd == (bfd *)NULL)
     return (bfd *)NULL;
-  }
   nbfd->filename = filename;
   if(templ) {
     nbfd->xvec = templ->xvec;
@@ -568,7 +555,12 @@ bfd_alloc_by_size_t (abfd, size)
      bfd *abfd;
      size_t size;
 {
-  return obstack_alloc(&(abfd->memory), size);
+  PTR ret;
+
+  ret = obstack_alloc (&(abfd->memory), size);
+  if (ret == NULL)
+    bfd_set_error (bfd_error_no_memory);
+  return ret;
 }
 
 void
@@ -584,7 +576,12 @@ PTR
 bfd_alloc_finish (abfd)
      bfd *abfd;
 {
-  return obstack_finish(&(abfd->memory));
+  PTR ret;
+
+  ret = obstack_finish (&(abfd->memory));
+  if (ret == NULL)
+    bfd_set_error (bfd_error_no_memory);
+  return ret;
 }
 
 PTR

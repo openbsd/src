@@ -1,6 +1,58 @@
+Fri May 31 17:28:05 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mips.h (Elf_External_Options, Elf_Internal_Options): Define.
+	(bfd_mips_elf_swap_options_in): Declare.
+	(bfd_mips_elf_swap_options_out): Declare.
+	(ODK_*): Define.
+	(Elf64_External_RegInfo, Elf64_Internal_RegInfo): Define.
+	(bfd_mips_elf64_swap_reginfo_in): Declare.
+	(bfd_mips_elf64_swap_reginfo_out): Declare.
+
+Thu May 30 12:35:57 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mips.h (E_MIPS_ARCH_4): Define.
+
+Wed May 29 15:35:33 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mips.h (Elf64_Mips_External_Rel): Define.
+	(Elf64_Mips_Internal_Rel): Define.
+	(Elf64_Mips_External_Rela, Elf64_Mips_Internal_Rela): Define.
+	(RSS_*): Define.
+
+Mon Apr 22 18:26:30 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* sparc.h (R_SPARC_[56]): Always define.
+
+Mon Feb 19 01:55:56 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* sparc.h (R_SPARC_{PLT32,HIPLT22,LOPLT10,PCPLT32,PCPLT22,
+	PCPLT10,5,6}): Don't define ifdef SPARC64_OLD_RELOCS.
+
+Tue Feb  6 11:33:58 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* sparc.h (enum sparc_elf_reloc_type): Define.
+
+Wed Jan 17 09:09:16 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* common.h: Define EM_SPARC32PLUS.
+	* sparc.h: New file.
+
+Thu Jan 11 16:27:34 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* ppc.h (SHF_EXCLUDE, SHT_ORDERED): New fields from the abi.
+
+Thu Nov 30 16:47:18 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* internal.h (struct elf_segment_map): Add includes_filehdr and
+	includes_phdrs fields.
+
+Tue Nov 28 16:58:10 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* internal.h (struct elf_segment_map): Define.
+
 Tue Oct 31 15:19:36 1995  Fred Fish  <fnf@cygnus.com>
 
-	* arc.h, common.h, dwarf.h, external.h, hppa.h, internal.h,
+	* common.h, dwarf.h, external.h, hppa.h, internal.h,
 	mips.h, ppc.h:  Protect against multiple inclusions.
 
 Thu Sep 21 13:51:58 1995  Michael Meissner  <meissner@tiktok.cygnus.com>

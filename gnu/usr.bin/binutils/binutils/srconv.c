@@ -326,7 +326,7 @@ wr_un (ptr, sfile, first, nsecs)
   un.spare1 = 0;
 
 
-#if 0
+#if 1
   un.nsections = ptr->nsections - 1;	/*  Don't count the abs section */
 #else
   /*NEW - only count sections with size */
@@ -385,9 +385,9 @@ wr_hd (p)
     {
     case bfd_arch_h8300:
       hd.au = 8;
-      hd.si = 32;
+      hd.si = 0;
       hd.afl = 2;
-      hd.spcsz = 0;
+      hd.spcsz = 32;
       hd.segsz = 0;
       hd.segsh = 0;
       hd.cpu = "H8300H";
@@ -395,9 +395,9 @@ wr_hd (p)
       break;
     case bfd_arch_sh:
       hd.au = 8;
-      hd.si = 32;
+      hd.si = 0;
       hd.afl = 4;
-      hd.spcsz = 0;
+      hd.spcsz = 32;
       hd.segsz = 0;
       hd.segsh = 0;
       hd.cpu = "SH";
@@ -1230,9 +1230,10 @@ wr_du (p, sfile, n)
   int j;
   unsigned int *lowest = (unsigned *) nints (p->nsections);
   unsigned int *highest = (unsigned *) nints (p->nsections);
-  du.spare = 0;
   du.format = abfd->flags & EXEC_P ? 0 : 1;
   du.optimized = 0;
+  du.stackfrmt = 0;
+  du.spare = 0;
   du.unit = n;
   du.sections = p->nsections - 1;
   du.san = (int *) xcalloc (sizeof (int), du.sections);
@@ -1713,11 +1714,15 @@ int scount = 0;
 	{
 	  sc.contents = CONTENTS_CODE;
 	}
+#if 0
       /* NEW */
       if (sc.length) {
+#endif
 	sysroff_swap_sc_out (file, &sc);
 	scount++;
+#if 0
       }
+#endif
     }
 return scount;
 }

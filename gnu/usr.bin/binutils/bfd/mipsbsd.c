@@ -392,8 +392,8 @@ const bfd_target aout_mips_little_vec =
 {
   "a.out-mips-little",		/* name */
   bfd_target_aout_flavour,
-  false,			/* target byte order (little) */
-  false,			/* target headers byte order (little) */
+  BFD_ENDIAN_LITTLE,		/* target byte order (little) */
+  BFD_ENDIAN_LITTLE,		/* target headers byte order (little) */
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
@@ -431,8 +431,8 @@ const bfd_target aout_mips_big_vec =
 {
   "a.out-mips-big",		/* name */
   bfd_target_aout_flavour,
-  true,				/* target byte order (big) */
-  true,				/* target headers byte order (big) */
+  BFD_ENDIAN_BIG,		/* target byte order (big) */
+  BFD_ENDIAN_BIG,		/* target headers byte order (big) */
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),

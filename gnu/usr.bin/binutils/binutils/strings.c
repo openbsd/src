@@ -112,7 +112,7 @@ static void print_strings PARAMS ((char *filename, FILE *stream,
 				  int magiccount, char *magic));
 static void usage PARAMS ((FILE *stream, int status));
 
-void
+int
 main (argc, argv)
      int argc;
      char **argv;
@@ -231,7 +231,7 @@ main (argc, argv)
   if (files_given == false)
     usage (stderr, 1);
 
-  exit (exit_status);
+  return (exit_status);
 }
 
 /* Scan section SECT of the file ABFD, whose printable name is FILE.

@@ -1,5 +1,5 @@
 /* BFD PowerPC CPU definition
-   Copyright (C) 1994 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -103,7 +103,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     false, /* not the default */
     powerpc_compatible, 
     bfd_default_scan,
-    &arch_info_struct[0]
+    0
   }
 };
 
@@ -120,5 +120,5 @@ const bfd_arch_info_type bfd_powerpc_arch =
     true, /* the default */
     powerpc_compatible, 
     bfd_default_scan,
-    0
+    &arch_info_struct[0]
   };

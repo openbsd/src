@@ -1,5 +1,5 @@
 /* BFD back-end for archive files (libraries).
-   Copyright 1990, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.  Mostly Gumby Henkel-Wallace's fault.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -187,10 +187,7 @@ _bfd_generic_mkarchive (abfd)
 			      bfd_zalloc (abfd, sizeof (struct artdata)));
 
   if (bfd_ardata (abfd) == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   bfd_ardata (abfd)->cache = NULL;
   bfd_ardata (abfd)->archive_head = NULL;
@@ -251,15 +248,7 @@ bfd *
 _bfd_create_empty_archive_element_shell (obfd)
      bfd *obfd;
 {
-  bfd *nbfd;
-
-  nbfd = _bfd_new_bfd_contained_in (obfd);
-  if (nbfd == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
-  return nbfd;
+  return _bfd_new_bfd_contained_in (obfd);
 }
 
 /*
@@ -310,10 +299,7 @@ _bfd_add_bfd_to_archive_cache (arch_bfd, filepos, new_elt)
 					    sizeof (struct ar_cache)));
 
   if (new_cache == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   new_cache->ptr = filepos;
   new_cache->arelt = new_elt;
@@ -369,10 +355,17 @@ PTR
 _bfd_generic_read_ar_hdr (abfd)
      bfd *abfd;
 {
-#ifndef errno
-  extern int errno;
-#endif
+  return _bfd_generic_read_ar_hdr_mag (abfd, (const char *) NULL);
+}
 
+/* Alpha ECOFF uses an optional different ARFMAG value, so we have a
+   variant of _bfd_generic_read_ar_hdr which accepts a magic string.  */
+
+PTR
+_bfd_generic_read_ar_hdr_mag (abfd, mag)
+     bfd *abfd;
+     const char *mag;
+{
   struct ar_hdr hdr;
   char *hdrp = (char *) &hdr;
   unsigned int parsed_size;
@@ -389,7 +382,9 @@ _bfd_generic_read_ar_hdr (abfd)
 	bfd_set_error (bfd_error_no_more_archived_files);
       return NULL;
     }
-  if (strncmp (hdr.ar_fmag, ARFMAG, 2))
+  if (strncmp (hdr.ar_fmag, ARFMAG, 2) != 0
+      && (mag == NULL
+	  || strncmp (hdr.ar_fmag, mag, 2) != 0))
     {
       bfd_set_error (bfd_error_malformed_archive);
       return NULL;
@@ -430,10 +425,7 @@ _bfd_generic_read_ar_hdr (abfd)
 
       allocptr = bfd_zalloc (abfd, allocsize);
       if (allocptr == NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return NULL;
-	}
+	return NULL;
       filename = (allocptr
 		  + sizeof (struct areltdata)
 		  + sizeof (struct ar_hdr));
@@ -473,10 +465,7 @@ _bfd_generic_read_ar_hdr (abfd)
     {
       allocptr = bfd_zalloc (abfd, allocsize);
       if (allocptr == NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return NULL;
-	}
+	return NULL;
     }
 
   ared = (struct areltdata *) allocptr;
@@ -541,23 +530,13 @@ _bfd_get_elt_at_filepos (archive, filepos)
   return NULL;
 }
 
-/*
-FUNCTION
-	bfd_get_elt_at_index
+/* Return the BFD which is referenced by the symbol in ABFD indexed by
+   INDEX.  INDEX should have been returned by bfd_get_next_mapent.  */
 
-SYNOPSIS
-	bfd *bfd_get_elt_at_index(bfd *archive, int index);
-
-DESCRIPTION
-	Return the BFD which is referenced by the symbol in @var{archive}
-	indexed by @var{index}.  @var{index} should have been returned by
-	<<bfd_get_next_mapent>> (q.v.).
-
-*/
 bfd *
-bfd_get_elt_at_index (abfd, index)
+_bfd_generic_get_elt_at_index (abfd, index)
      bfd *abfd;
-     int index;
+     symindex index;
 {
   carsym *entry;
 
@@ -654,10 +633,7 @@ bfd_generic_archive_p (abfd)
 			      bfd_zalloc (abfd, sizeof (struct artdata)));
 
   if (bfd_ardata (abfd) == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   bfd_ardata (abfd)->first_file_filepos = SARMAG;
   bfd_ardata (abfd)->cache = NULL;
@@ -685,9 +661,11 @@ bfd_generic_archive_p (abfd)
       bfd *first;
 
       /* This archive has a map, so we may presume that the contents
-	 are object files.  Make sure that the first file in the
-	 archive can be recognized as an object file for this target.
-	 If not, assume that this is the wrong format.
+	 are object files.  Make sure that if the first file in the
+	 archive can be recognized as an object file, it is for this
+	 target.  If not, assume that this is the wrong format.  If
+	 the first file is not an object file, somebody is doing
+	 something weird, and we permit it so that ar -t will work.
 
 	 This is done because any normal format will recognize any
 	 normal archive, regardless of the format of the object files.
@@ -700,22 +678,13 @@ bfd_generic_archive_p (abfd)
 
 	  first->target_defaulted = false;
 	  fail = false;
-	  if (! bfd_check_format (first, bfd_object))
-	    fail = true;
-	  else if (first->xvec != abfd->xvec)
+	  if (bfd_check_format (first, bfd_object)
+	      && first->xvec != abfd->xvec)
 	    {
-	      bfd_set_error (bfd_error_wrong_format);
-	      fail = true;
-	    }
-	  if (fail)
-	    {
-	      bfd_error_type err;
-
-	      err = bfd_get_error ();
 	      (void) bfd_close (first);
 	      bfd_release (abfd, bfd_ardata (abfd));
 	      abfd->tdata.aout_ar_data = tdata_hold;
-	      bfd_set_error (err);
+	      bfd_set_error (bfd_error_wrong_format);
 	      return NULL;
 	    }
 
@@ -766,10 +735,7 @@ do_slurp_bsd_armap (abfd)
 
   raw_armap = (bfd_byte *) bfd_zalloc (abfd, parsed_size);
   if (raw_armap == (bfd_byte *) NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   if (bfd_read ((PTR) raw_armap, 1, parsed_size, abfd) != parsed_size)
     {
@@ -799,10 +765,7 @@ do_slurp_bsd_armap (abfd)
 					  (ardata->symdef_count
 					   * sizeof (carsym)));
   if (!ardata->symdefs)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   for (counter = 0, set = ardata->symdefs;
        counter < ardata->symdef_count;
@@ -880,20 +843,14 @@ do_slurp_coff_armap (abfd)
 
   ardata->symdefs = (carsym *) bfd_zalloc (abfd, carsym_size + stringsize + 1);
   if (ardata->symdefs == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   carsyms = ardata->symdefs;
   stringbase = ((char *) ardata->symdefs) + carsym_size;
 
   /* Allocate and read in the raw offsets. */
   raw_armap = (int *) bfd_alloc (abfd, ptrsize);
   if (raw_armap == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      goto release_symdefs;
-    }
+    goto release_symdefs;
   if (bfd_read ((PTR) raw_armap, 1, ptrsize, abfd) != ptrsize
       || bfd_read ((PTR) stringbase, 1, stringsize, abfd) != stringsize)
     {
@@ -1025,7 +982,6 @@ bfd_slurp_bsd_armap_f2 (abfd)
   raw_armap = (bfd_byte *) bfd_zalloc (abfd, mapdata->parsed_size);
   if (raw_armap == NULL)
     {
-      bfd_set_error (bfd_error_no_memory);
     byebye:
       bfd_release (abfd, (PTR) mapdata);
       return false;
@@ -1063,10 +1019,7 @@ bfd_slurp_bsd_armap_f2 (abfd)
 					  (ardata->symdef_count
 					   * BSD_SYMDEF_SIZE));
   if (!ardata->symdefs)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   for (counter = 0, set = ardata->symdefs;
        counter < ardata->symdef_count;
@@ -1127,7 +1080,6 @@ _bfd_slurp_extended_name_table (abfd)
 	bfd_zalloc (abfd, namedata->parsed_size);
       if (bfd_ardata (abfd)->extended_names == NULL)
 	{
-	  bfd_set_error (bfd_error_no_memory);
 	byebye:
 	  bfd_release (abfd, (PTR) namedata);
 	  return false;
@@ -1201,10 +1153,7 @@ normalize (abfd, file)
 
   copy = (char *) bfd_alloc (abfd, last - first + 1);
   if (copy == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   memcpy (copy, first, last - first);
   copy[last - first] = 0;
@@ -1324,10 +1273,7 @@ _bfd_construct_extended_name_table (abfd, trailing_slash, tabloc, tablen)
 
   *tabloc = bfd_zalloc (abfd, total_namelen);
   if (*tabloc == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   *tablen = total_namelen;
   strptr = *tabloc;
@@ -1403,10 +1349,7 @@ bfd_ar_hdr_from_filesystem (abfd, filename)
   ared = (struct areltdata *) bfd_zalloc (abfd, sizeof (struct ar_hdr) +
 					  sizeof (struct areltdata));
   if (ared == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
   hdr = (struct ar_hdr *) (((char *) ared) + sizeof (struct areltdata));
 
   /* ar headers are space padded, not null padded! */
@@ -1773,15 +1716,15 @@ _bfd_compute_and_write_armap (arch, elength)
     elength += sizeof (struct ar_hdr);
   elength += elength % 2;
 
-  map = (struct orl *) malloc (orl_max * sizeof (struct orl));
+  map = (struct orl *) bfd_malloc (orl_max * sizeof (struct orl));
   if (map == NULL)
-    goto no_memory_return;
+    goto error_return;
 
   /* We put the symbol names on the arch obstack, and then discard
      them when done.  */
   first_name = bfd_alloc (arch, 1);
   if (first_name == NULL)
-    goto no_memory_return;
+    goto error_return;
 
   /* Drop all the files called __.SYMDEF, we're going to make our
      own */
@@ -1812,9 +1755,9 @@ _bfd_compute_and_write_armap (arch, elength)
 		  if (syms_max > 0)
 		    free (syms);
 		  syms_max = storage;
-		  syms = (asymbol **) malloc ((size_t) syms_max);
+		  syms = (asymbol **) bfd_malloc ((size_t) syms_max);
 		  if (syms == NULL)
-		    goto no_memory_return;
+		    goto error_return;
 		}
 	      symcount = bfd_canonicalize_symtab (current, syms);
 	      if (symcount < 0)
@@ -1839,11 +1782,11 @@ _bfd_compute_and_write_armap (arch, elength)
 		      if (orl_count == orl_max)
 			{
 			  orl_max *= 2;
-			  new_map = ((struct orl *)
-				     realloc ((PTR) map,
-					      orl_max * sizeof (struct orl)));
+			  new_map =
+			    ((struct orl *)
+			     bfd_realloc (map, orl_max * sizeof (struct orl)));
 			  if (new_map == (struct orl *) NULL)
-			    goto no_memory_return;
+			    goto error_return;
 
 			  map = new_map;
 			}
@@ -1853,10 +1796,10 @@ _bfd_compute_and_write_armap (arch, elength)
 					     bfd_alloc (arch,
 							sizeof (char *)));
 		      if (map[orl_count].name == NULL)
-			goto no_memory_return;
+			goto error_return;
 		      *(map[orl_count].name) = bfd_alloc (arch, namelen + 1);
 		      if (*(map[orl_count].name) == NULL)
-			goto no_memory_return;
+			goto error_return;
 		      strcpy (*(map[orl_count].name), syms[src_count]->name);
 		      (map[orl_count]).pos = (file_ptr) current;
 		      (map[orl_count]).namidx = stridx;
@@ -1886,9 +1829,6 @@ _bfd_compute_and_write_armap (arch, elength)
     bfd_release (arch, first_name);
 
   return ret;
-
- no_memory_return:
-  bfd_set_error (bfd_error_no_memory);
 
  error_return:
   if (syms_max > 0)

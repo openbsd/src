@@ -5,6 +5,7 @@
 #define __GNU_STAB__
 
 #define __define_stab(NAME, CODE, STRING) NAME=CODE,
+#define __define_stab_duplicate(NAME, CODE, STRING) NAME=CODE,
 
 enum __stab_debug_code
 {

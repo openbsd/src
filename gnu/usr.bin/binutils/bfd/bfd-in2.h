@@ -1,5 +1,5 @@
 /* Main header file for the bfd library -- portable access to object files.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 ** NOTE: bfd.h and bfd-in2.h are GENERATED files.  Don't change them;
@@ -125,7 +125,9 @@ typedef long int file_ptr;
 #else
 #ifdef __GNUC__
 #define BFD_HOST_64_BIT long long
-#endif /* defined (__GNUC__) */
+#else /* ! defined (__GNUC__) */
+ #error No 64 bit integer type available
+#endif /* ! defined (__GNUC__) */
 #endif /* ! BFD_HOST_64BIT_LONG */
 #endif /* ! defined (BFD_HOST_64_BIT) */
 
@@ -235,6 +237,10 @@ typedef enum bfd_format {
    writing out an a.out object the symbols not be hashed to eliminate
    duplicates.  */
 #define BFD_TRADITIONAL_FORMAT 0x400
+
+/* This flag indicates that the BFD contents are actually cached in
+   memory.  If this is set, iostream points to a bfd_in_memory struct.  */
+#define BFD_IN_MEMORY 0x800
 
 /* symbols and relocation */
 
@@ -324,10 +330,15 @@ typedef struct _symbol_info
   symvalue value;
   char type;
   CONST char *name;            /* Symbol name.  */
-  char stab_other;             /* Unused. */
-  short stab_desc;             /* Info for N_TYPE.  */
-  CONST char *stab_name;
+  unsigned char stab_type;     /* Stab type.  */
+  char stab_other;             /* Stab other. */
+  short stab_desc;             /* Stab desc.  */
+  CONST char *stab_name;       /* String for stab type.  */
 } symbol_info;
+
+/* Get the name of a stabs type code.  */
+
+extern const char *bfd_get_stab_name PARAMS ((int));
 
 /* Hash table routines.  There is no way to free up a hash table.  */
 
@@ -464,6 +475,12 @@ extern int bfd_stat PARAMS ((bfd *abfd, struct stat *));
 #define bfd_get_format(abfd) ((abfd)->format)
 #define bfd_get_target(abfd) ((abfd)->xvec->name)
 #define bfd_get_flavour(abfd) ((abfd)->xvec->flavour)
+#define bfd_big_endian(abfd) ((abfd)->xvec->byteorder == BFD_ENDIAN_BIG)
+#define bfd_little_endian(abfd) ((abfd)->xvec->byteorder == BFD_ENDIAN_LITTLE)
+#define bfd_header_big_endian(abfd) \
+  ((abfd)->xvec->header_byteorder == BFD_ENDIAN_BIG)
+#define bfd_header_little_endian(abfd) \
+  ((abfd)->xvec->header_byteorder == BFD_ENDIAN_LITTLE)
 #define bfd_get_file_flags(abfd) ((abfd)->flags)
 #define bfd_applicable_file_flags(abfd) ((abfd)->xvec->object_flags)
 #define bfd_applicable_section_flags(abfd) ((abfd)->xvec->section_flags)
@@ -481,6 +498,10 @@ extern int bfd_stat PARAMS ((bfd *abfd, struct stat *));
 #define bfd_get_symbol_leading_char(abfd) ((abfd)->xvec->symbol_leading_char)
 
 #define bfd_set_cacheable(abfd,bool) (((abfd)->cacheable = (boolean)(bool)), true)
+
+extern boolean bfd_record_phdr
+  PARAMS ((bfd *, unsigned long, boolean, flagword, boolean, bfd_vma,
+	   boolean, boolean, unsigned int, struct sec **));
 
 /* Byte swapping routines.  */
 
@@ -584,6 +605,7 @@ extern boolean bfd_elf64_size_dynamic_sections
   PARAMS ((bfd *, const char *, const char *, boolean,
 	   struct bfd_link_info *, struct sec **));
 extern void bfd_elf_set_dt_needed_name PARAMS ((bfd *, const char *));
+extern const char *bfd_elf_get_dt_soname PARAMS ((bfd *));
 
 /* SunOS shared library support routines for the linker.  */
 
@@ -597,7 +619,9 @@ extern boolean bfd_sunos_size_dynamic_sections
 
 /* Linux shared library support routines for the linker.  */
 
-extern boolean bfd_linux_size_dynamic_sections
+extern boolean bfd_i386linux_size_dynamic_sections
+  PARAMS ((bfd *, struct bfd_link_info *));
+extern boolean bfd_m68klinux_size_dynamic_sections
   PARAMS ((bfd *, struct bfd_link_info *));
 
 /* mmap hacks */
@@ -641,7 +665,19 @@ extern boolean bfd_xcoff_record_link_assignment
 extern boolean bfd_xcoff_size_dynamic_sections
   PARAMS ((bfd *, struct bfd_link_info *, const char *, const char *,
 	   unsigned long, unsigned long, unsigned long, boolean,
-	   int, boolean, struct sec **));
+	   int, boolean, boolean, struct sec **));
+
+/* Externally visible COFF routines.  */
+
+#if defined(__STDC__) || defined(ALMOST_STDC)
+struct internal_syment;
+union internal_auxent;
+#endif
+
+extern boolean bfd_coff_get_syment
+  PARAMS ((bfd *, struct symbol_cache_entry *, struct internal_syment *));
+extern boolean bfd_coff_get_auxent
+  PARAMS ((bfd *, struct symbol_cache_entry *, int, union internal_auxent *));
 
 /* And more from the source.  */
 void 
@@ -840,7 +876,7 @@ typedef struct sec
            sections. */
 #define SEC_COFF_SHARED_LIBRARY 0x800
 
-         /* The section is a common section (symbols may be defined
+         /* The section contains common symbols (symbols may be defined
            multiple times, the value of a symbol is the amount of
            space it requires, and the largest symbol value is the one
            used).  Most targets have exactly one of these (which we
@@ -859,7 +895,58 @@ typedef struct sec
            memory if appropriate.  */
 #define SEC_IN_MEMORY 0x20000
 
+         /* The contents of this section are to be excluded by the
+	    linker for executable and shared objects unless those
+	    objects are to be further relocated.  */
+#define SEC_EXCLUDE 0x40000
+
+	 /* The contents of this section are to be sorted by the
+	   based on the address specified in the associated symbol
+	   table.  */
+#define SEC_SORT_ENTRIES 0x80000
+
+	 /* When linking, duplicate sections of the same name should be
+	   discarded, rather than being combined into a single section as
+	   is usually done.  This is similar to how common symbols are
+	   handled.  See SEC_LINK_DUPLICATES below.  */
+#define SEC_LINK_ONCE 0x100000
+
+	 /* If SEC_LINK_ONCE is set, this bitfield describes how the linker
+	   should handle duplicate sections.  */
+#define SEC_LINK_DUPLICATES 0x600000
+
+	 /* This value for SEC_LINK_DUPLICATES means that duplicate
+	   sections with the same name should simply be discarded. */
+#define SEC_LINK_DUPLICATES_DISCARD 0x0
+
+	 /* This value for SEC_LINK_DUPLICATES means that the linker
+	   should warn if there are any duplicate sections, although
+	   it should still only link one copy.  */
+#define SEC_LINK_DUPLICATES_ONE_ONLY 0x200000
+
+	 /* This value for SEC_LINK_DUPLICATES means that the linker
+	   should warn if any duplicate sections are a different size.  */
+#define SEC_LINK_DUPLICATES_SAME_SIZE 0x400000
+
+	 /* This value for SEC_LINK_DUPLICATES means that the linker
+	   should warn if any duplicate sections contain different
+	   contents.  */
+#define SEC_LINK_DUPLICATES_SAME_CONTENTS 0x600000
+
 	 /*  End of section flags.  */
+
+	 /* Some internal packed boolean fields.  */
+
+	 /* See the vma field.  */
+	unsigned int user_set_vma : 1;
+
+	 /* Whether relocations have been processed.  */
+	unsigned int reloc_done : 1;
+
+	 /* A mark flag used by some of the linker backends.  */
+	unsigned int linker_mark : 1;
+
+	 /* End of internal packed boolean fields.  */
 
         /*  The virtual memory address of the section - where it will be
            at run time.  The symbols are relocated against this.  The
@@ -869,7 +956,6 @@ typedef struct sec
 	    target and various flags).  */
 
    bfd_vma vma;
-   boolean user_set_vma;
 
         /*  The load address of the section - where it would be in a
            rom image; really only used for writing section header
@@ -970,7 +1056,6 @@ typedef struct sec
 
    bfd *owner;
 
-   boolean reloc_done;
 	  /* A symbol which points at this section only */
    struct symbol_cache_entry *symbol;
    struct symbol_cache_entry **symbol_ptr_ptr;
@@ -1078,11 +1163,22 @@ enum bfd_architecture
 #define bfd_mach_i960_mc        4
 #define bfd_mach_i960_xa        5
 #define bfd_mach_i960_ca        6
+#define bfd_mach_i960_jx	 7
+#define bfd_mach_i960_hx        8
 
   bfd_arch_a29k,       /* AMD 29000 */
   bfd_arch_sparc,      /* SPARC */
-#define bfd_mach_sparc		1
-#define bfd_mach_sparc64	2
+#define bfd_mach_sparc			1
+ /* The difference between v8plus and v9 is that v9 is a true 64 bit env.  */
+#define bfd_mach_sparc_sparclet	2
+#define bfd_mach_sparc_sparclite	3
+#define bfd_mach_sparc_v8plus		4
+#define bfd_mach_sparc_v8plusa		5  /* with ultrasparc add'ns */
+#define bfd_mach_sparc_v9		6
+#define bfd_mach_sparc_v9a		7  /* with ultrasparc add'ns */
+ /* Nonzero if MACH has the v9 instruction set.  */
+#define bfd_mach_sparc_v9_p(mach) \
+  ((mach) >= bfd_mach_sparc_v8plus && (mach) <= bfd_mach_sparc_v9a)
   bfd_arch_mips,       /* MIPS Rxxxx */
   bfd_arch_i386,       /* Intel 386 */
   bfd_arch_we32k,      /* AT&T WE32xxx */
@@ -1480,7 +1576,9 @@ relocation types already defined. */
   BFD_RELOC_SPARC_WDISP16,
   BFD_RELOC_SPARC_WDISP19,
   BFD_RELOC_SPARC_GLOB_JMP,
-  BFD_RELOC_SPARC_LO7,
+  BFD_RELOC_SPARC_7,
+  BFD_RELOC_SPARC_6,
+  BFD_RELOC_SPARC_5,
 
 /* Alpha ECOFF relocations.  Some of these treat the symbol or "addend"
 in some special way.
@@ -1555,6 +1653,10 @@ to compensate for the borrow when the low bits are added. */
   BFD_RELOC_MIPS_GOT16,
   BFD_RELOC_MIPS_CALL16,
 #define BFD_RELOC_MIPS_GPREL32 BFD_RELOC_GPREL32
+  BFD_RELOC_MIPS_GOT_HI16,
+  BFD_RELOC_MIPS_GOT_LO16,
+  BFD_RELOC_MIPS_CALL_HI16,
+  BFD_RELOC_MIPS_CALL_LO16,
 
 /* i386/elf relocations */
   BFD_RELOC_386_GOT32,
@@ -1595,6 +1697,22 @@ to compensate for the borrow when the low bits are added. */
   BFD_RELOC_PPC_JMP_SLOT,
   BFD_RELOC_PPC_RELATIVE,
   BFD_RELOC_PPC_LOCAL24PC,
+  BFD_RELOC_PPC_EMB_NADDR32,
+  BFD_RELOC_PPC_EMB_NADDR16,
+  BFD_RELOC_PPC_EMB_NADDR16_LO,
+  BFD_RELOC_PPC_EMB_NADDR16_HI,
+  BFD_RELOC_PPC_EMB_NADDR16_HA,
+  BFD_RELOC_PPC_EMB_SDAI16,
+  BFD_RELOC_PPC_EMB_SDA2I16,
+  BFD_RELOC_PPC_EMB_SDA2REL,
+  BFD_RELOC_PPC_EMB_SDA21,
+  BFD_RELOC_PPC_EMB_MRKREF,
+  BFD_RELOC_PPC_EMB_RELSEC16,
+  BFD_RELOC_PPC_EMB_RELST_LO,
+  BFD_RELOC_PPC_EMB_RELST_HI,
+  BFD_RELOC_PPC_EMB_RELST_HA,
+  BFD_RELOC_PPC_EMB_BIT_FLD,
+  BFD_RELOC_PPC_EMB_RELSDA,
 
 /* The type of reloc used to build a contructor table - at the moment
 probably a 32 bit wide absolute relocation, but the target can choose.
@@ -1725,6 +1843,10 @@ typedef struct symbol_cache_entry
 	 /* Symbol is from dynamic linking information.  */
 #define BSF_DYNAMIC	   0x8000
 
+        /* The symbol denotes a data object.  Used in ELF, and perhaps
+          others someday.  */
+#define BSF_OBJECT	   0x10000
+
   flagword flags;
 
 	 /* A pointer to the section to which this symbol is
@@ -1784,8 +1906,10 @@ struct _bfd
        includes `<<bfd.h>>', IOSTREAM has been declared as a "char
        *", and MTIME as a "long".  Their correct types, to which they
        are cast when used, are "FILE *" and "time_t".    The iostream
-       is the result of an fopen on the filename. */
-    char *iostream;
+       is the result of an fopen on the filename.  However, if the
+       BFD_IN_MEMORY flag is set, then iostream is actually a pointer
+       to a bfd_in_memory struct.  */
+    PTR iostream;
 
      /* Is the file descriptor being cached?  That is, can it be closed as
        needed, and re-opened when accessed later?  */
@@ -1898,6 +2022,7 @@ struct _bfd
       struct ieee_data_struct *ieee_data;
       struct ieee_ar_data_struct *ieee_ar_data;
       struct srec_data_struct *srec_data;
+      struct ihex_data_struct *ihex_data;
       struct tekhex_data_struct *tekhex_data;
       struct elf_obj_tdata *elf_obj_data;
       struct nlm_obj_tdata *nlm_obj_data;
@@ -1912,6 +2037,7 @@ struct _bfd
       struct osf_core_struct *osf_core_data;
       struct cisco_core_struct *cisco_core_data;
       struct versados_data_struct *versados_data;
+      struct netbsd_core_struct *netbsd_core_data;
       PTR any;
       } tdata;
   
@@ -2088,9 +2214,6 @@ boolean
 bfd_set_archive_head PARAMS ((bfd *output, bfd *new_head));
 
 bfd *
-bfd_get_elt_at_index PARAMS ((bfd *archive, int index));
-
-bfd *
 bfd_openr_next_archived_file PARAMS ((bfd *archive, bfd *previous));
 
 CONST char *
@@ -2134,11 +2257,14 @@ enum bfd_flavour {
   bfd_target_oasys_flavour,
   bfd_target_tekhex_flavour,
   bfd_target_srec_flavour,
+  bfd_target_ihex_flavour,
   bfd_target_som_flavour,
   bfd_target_os9k_flavour,
   bfd_target_versados_flavour,
   bfd_target_msdos_flavour
 };
+
+enum bfd_endian { BFD_ENDIAN_BIG, BFD_ENDIAN_LITTLE, BFD_ENDIAN_UNKNOWN };
 
  /* Forward declaration.  */
 typedef struct bfd_link_info _bfd_link_info;
@@ -2147,8 +2273,8 @@ typedef struct bfd_target
 {
   char *name;
   enum bfd_flavour flavour;
-  boolean byteorder_big_p;
-  boolean header_byteorder_big_p;
+  enum bfd_endian byteorder;
+  enum bfd_endian header_byteorder;
   flagword object_flags;       
   flagword section_flags;
   char symbol_leading_char;
@@ -2243,6 +2369,7 @@ CAT(NAME,_truncate_arname),\
 CAT(NAME,_write_armap),\
 CAT(NAME,_read_ar_hdr),\
 CAT(NAME,_openr_next_archived_file),\
+CAT(NAME,_get_elt_at_index),\
 CAT(NAME,_generic_stat_arch_elt),\
 CAT(NAME,_update_armap_timestamp)
   boolean  (*_bfd_slurp_armap) PARAMS ((bfd *));
@@ -2257,6 +2384,8 @@ CAT(NAME,_update_armap_timestamp)
                               int stridx));
   PTR (*_bfd_read_ar_hdr_fn) PARAMS ((bfd *));
   bfd *    (*openr_next_archived_file) PARAMS ((bfd *arch, bfd *prev));
+#define bfd_get_elt_at_index(b,i) BFD_SEND(b, _bfd_get_elt_at_index, (b,i))
+  bfd *    (*_bfd_get_elt_at_index) PARAMS ((bfd *, symindex));
   int      (*_bfd_stat_arch_elt) PARAMS ((bfd *, struct stat *));
   boolean  (*_bfd_update_armap_timestamp) PARAMS ((bfd *));
 

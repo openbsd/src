@@ -116,10 +116,7 @@ cisco_core_file_p (abfd)
     ((struct cisco_core_struct *)
      bfd_zmalloc (sizeof (struct cisco_core_struct)));
   if (abfd->tdata.cisco_core_data == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   switch ((crashreason) bfd_get_32 (abfd, crashinfo.reason))
     {
@@ -202,10 +199,7 @@ cisco_core_file_p (abfd)
 
   asect = (asection *) bfd_zmalloc (sizeof (asection));
   if (asect == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      goto error_return;
-    }
+    goto error_return;
   asect->name = ".reg";
   asect->flags = SEC_HAS_CONTENTS;
   /* This can be bigger than the real size.  Set it to the size of the whole
@@ -221,10 +215,7 @@ cisco_core_file_p (abfd)
      We call it .data.  */
   asect = (asection *) bfd_zmalloc (sizeof (asection));
   if (asect == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      goto error_return;
-    }
+    goto error_return;
   asect->name = ".data";
   asect->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
   /* The size of memory is the size of the core file itself.  */
@@ -277,8 +268,8 @@ const bfd_target cisco_core_vec =
   {
     "trad-core",
     bfd_target_unknown_flavour,
-    true,			/* target byte order */
-    true,			/* target headers byte order */
+    BFD_ENDIAN_BIG,		/* target byte order */
+    BFD_ENDIAN_BIG,		/* target headers byte order */
     (HAS_RELOC | EXEC_P |	/* object flags */
      HAS_LINENO | HAS_DEBUG |
      HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),

@@ -23,7 +23,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* setting up for a PE environment stolen directly from the i386 structure */
 #define E_FILNMLEN	18	/* # characters in a file name		*/
 
-#define PPC
+#define PPC_PE
 
 #define TARGET_LITTLE_SYM   bfd_powerpcle_pei_vec
 #define TARGET_LITTLE_NAME "pei-powerpcle"
@@ -35,6 +35,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define COFF_IMAGE_WITH_PE
 #define COFF_WITH_PE
+
+#define COFF_LONG_SECTION_NAMES
 
 /* FIXME: Verify PCRELOFFSET is always false */
 

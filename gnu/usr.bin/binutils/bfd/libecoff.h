@@ -1,5 +1,5 @@
 /* BFD ECOFF object file private structure.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -71,6 +71,9 @@ struct ecoff_backend_data
   /* Do final adjustments to filehdr and aouthdr.  */
   boolean (*adjust_headers) PARAMS ((bfd *, struct internal_filehdr *,
 				     struct internal_aouthdr *));
+  /* Read an element from an archive at a given file position.  This
+     is needed because OSF/1 3.2 uses a weird archive format.  */
+  bfd *(*get_elt_at_filepos) PARAMS ((bfd *, file_ptr));
 };
 
 /* This is the target specific information kept for ECOFF files.  */
@@ -126,6 +129,10 @@ typedef struct ecoff_tdata
 
   /* True if this BFD was written by the backend linker.  */
   boolean linker;
+
+  /* True if a warning that multiple global pointer values are
+     needed in the output binary was issued already.  */
+  boolean issued_multiple_gp_warning;
 
   /* Used by find_nearest_line entry point.  The structure could be
      included directly in this one, but there's no point to wasting
@@ -197,6 +204,14 @@ struct ecoff_section_tdata
      section, and the entry for any reloc that is not PC relative is
      zero.  */
   long *offsets;
+
+  /* When producing an executable (i.e., final, non-relocatable link)
+     on the Alpha, we may need to use multiple global pointer values
+     to span the entire .lita section.  In essence, we allow each
+     input .lita section to have its own gp value.  To support this,
+     we need to keep track of the gp values that we picked for each
+     input .lita section . */
+  bfd_vma gp;
 };
 
 /* An accessor macro for the ecoff_section_tdata structure.  */
@@ -272,6 +287,7 @@ extern boolean _bfd_ecoff_write_armap
 #define _bfd_ecoff_read_ar_hdr _bfd_generic_read_ar_hdr
 #define _bfd_ecoff_openr_next_archived_file \
   bfd_generic_openr_next_archived_file
+#define _bfd_ecoff_get_elt_at_index _bfd_generic_get_elt_at_index
 #define _bfd_ecoff_generic_stat_arch_elt bfd_generic_stat_arch_elt
 #define _bfd_ecoff_update_armap_timestamp bfd_true
 

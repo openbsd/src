@@ -147,7 +147,7 @@ proc default_binutils_compile { cc flags source object } {
     } else {
 	send_log "$exec_output\n"
 	verbose "$exec_output"
-	perror "$source: assembly failed"
+	perror "$source: compilation failed"
 	return 0
     }
 }
@@ -179,6 +179,12 @@ if ![string length [info proc prune_system_crud]] {
 	# This is from sun4's.  Do it for all machines for now.
 	# The "\\1" is to try to preserve a "\n" but only if necessary.
 	regsub -all "(^|\n)(ld.so: warning:\[^\n\]*\n?)+" $text "\\1" text
+
+	# This happens when compiling on Alpha OSF/1 with cc -g -O.
+	regsub -all "(^|\n)(\n*uopt: Warning: file not optimized; use -g3 if both optimization and debug wanted\n?)+" $text "\\1" text
+
+	# This happens on SunOS with cc -g -O.
+	regsub -all "(^|\n)(cc: Warning: -O conflicts with -g. -O turned off.\n?)+" $text "\\1" text
 
 	# It might be tempting to get carried away and delete blank lines, etc.
 	# Just delete *exactly* what we're ask to, and that's it.

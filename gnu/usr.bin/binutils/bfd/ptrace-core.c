@@ -84,10 +84,8 @@ ptrace_unix_core_file_p (abfd)
   rawptr = (struct trad_core_struct *)
 		bfd_zalloc (abfd, sizeof (struct trad_core_struct));
 
-  if (rawptr == NULL) {
-    bfd_set_error (bfd_error_no_memory);
+  if (rawptr == NULL)
     return 0;
-  }
   
   abfd->tdata.trad_core_data = rawptr;
 
@@ -97,23 +95,14 @@ ptrace_unix_core_file_p (abfd)
      them separately.  */
 
   core_stacksec (abfd) = (asection *) bfd_zalloc (abfd, sizeof (asection));
-  if (core_stacksec (abfd) == NULL) {
-  loser:
-    bfd_set_error (bfd_error_no_memory);
-    free ((void *)rawptr);
-    return 0;
-  }
+  if (core_stacksec (abfd) == NULL)
+    return NULL;
   core_datasec (abfd) = (asection *) bfd_zalloc (abfd, sizeof (asection));
-  if (core_datasec (abfd) == NULL) {
-  loser1:
-    free ((void *)core_stacksec (abfd));
-    goto loser;
-  }
+  if (core_datasec (abfd) == NULL)
+    return NULL;
   core_regsec (abfd) = (asection *) bfd_zalloc (abfd, sizeof (asection));
-  if (core_regsec (abfd) == NULL) {
-    free ((void *)core_datasec (abfd));
-    goto loser1;
-  }
+  if (core_regsec (abfd) == NULL)
+    return NULL;
 
   core_stacksec (abfd)->name = ".stack";
   core_datasec (abfd)->name = ".data";
@@ -197,8 +186,8 @@ const bfd_target ptrace_core_vec =
   {
     "trad-core",
     bfd_target_unknown_flavour,
-    true,			/* target byte order */
-    true,			/* target headers byte order */
+    BFD_ENDIAN_UNKNOWN,		/* target byte order */
+    BFD_ENDIAN_UNKNOWN,		/* target headers byte order */
     (HAS_RELOC | EXEC_P |	/* object flags */
      HAS_LINENO | HAS_DEBUG |
      HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),

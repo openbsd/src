@@ -174,10 +174,7 @@ hppabsd_core_core_file_p (abfd)
   coredata = (struct hppabsd_core_struct *)
     bfd_zalloc (abfd, sizeof (struct hppabsd_core_struct));
   if (!coredata)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   /* Make the core data and available via the tdata part of the BFD.  */
   abfd->tdata.hppabsd_core_data = coredata;
@@ -262,8 +259,8 @@ const bfd_target hppabsd_core_vec =
   {
     "hppabsd-core",
     bfd_target_unknown_flavour,
-    true,			/* target byte order */
-    true,			/* target headers byte order */
+    BFD_ENDIAN_BIG,		/* target byte order */
+    BFD_ENDIAN_BIG,		/* target headers byte order */
     (HAS_RELOC | EXEC_P |	/* object flags */
      HAS_LINENO | HAS_DEBUG |
      HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),

@@ -11,7 +11,7 @@ CC_MPW_C = C -d MPW_C -d ALMOST_STDC -d ANSI_PROTOTYPES -d MPW -mc68020 -model f
 
 CC_SC = SC -d ALMOST_STDC -d ANSI_PROTOTYPES -d MPW -mc68020 -model far -b -i '' -i :
 
-CC_MWC68K = MWC68K -d MPW -i "{topsrcdir}"include:mpw:sys: -sym on
+CC_MWC68K = MWC68K -d MPW -enum int -mpw_chars -sym on -w off -mc68020 -model far
 
 CC_PPCC = PPCC -d powerc=1 -d pascal= -d ALMOST_STDC -d ANSI_PROTOTYPES -d MPW -w
 
@@ -50,11 +50,13 @@ SEGFLAG_PPC = -d dumdum_
 
 AR_LIB = Lib
 
-AR_MWLINK68K = MWLink68K
+AR_MWLINK68K = MWLink68K -xm library
 
 AR_PPCLINK = PPCLink -xm library
 
 AR_MWLINKPPC = MWLinkPPC -xm library
+
+AR_AR = ar
 
 AR_FLAGS = -o
 
@@ -66,7 +68,7 @@ RANLIB_RANLIB = ranlib
 
 CC_LD_LINK = Link -w -d -model far {CC_LD_TOOL_FLAGS}
 
-CC_LD_MWLINK68K = MWLink68K -w -d -model far {CC_LD_TOOL_FLAGS} -sym on
+CC_LD_MWLINK68K = MWLink68K -w {CC_LD_TOOL_FLAGS} -sym on -model far
 
 CC_LD_PPCLINK = PPCLink -main __start -outputformat xcoff
 
@@ -101,6 +103,16 @@ EXTRALIBS_C = \Option-d
 	"{Libraries}"Runtime.o \Option-d
 	"{Libraries}"Interface.o \Option-d
 	"{Libraries}"ToolLibs.o
+
+EXTRALIBS_MWC68K = \Option-d
+	"{CLibraries}"StdClib.o \Option-d
+	"{CLibraries}"Math.o \Option-d
+	"{CLibraries}"CSANELib.o \Option-d
+	"{Libraries}"Stubs.o \Option-d
+	"{Libraries}"Runtime.o \Option-d
+	"{Libraries}"Interface.o \Option-d
+	"{Libraries}"ToolLibs.o \Option-d
+	"{MW68KLibraries}MPW ANSI (4i) C.68K.Lib"
 
 EXTRALIBS_PPC = \Option-d
 	"{PPCLibraries}"StdCRuntime.o \Option-d

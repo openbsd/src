@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS
@@ -50,6 +50,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* -mips3 code.  */
 #define E_MIPS_ARCH_3		0x20000000
+
+/* -mips4 code.  */
+#define E_MIPS_ARCH_4		0x30000000
 
 /* Processor specific section indices.  These sections do not actually
    exist.  Symbols with a st_shndx field corresponding to one of these
@@ -100,14 +103,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Section contains register usage information.  */
 #define SHT_MIPS_REGINFO	0x70000006
 
-/* Section contains miscellaneous options (used on Irix).  */
+/* Section contains miscellaneous options.  */
 #define SHT_MIPS_OPTIONS	0x7000000d
 
-/* DWARF debugging section (used on Irix 6).  */
+/* DWARF debugging section.  */
 #define SHT_MIPS_DWARF		0x7000001e
 
-/* Events section.  This appears on Irix 6.  I don't know what it
-   means.  */
+/* Events section.  */
 #define SHT_MIPS_EVENTS		0x70000021
 
 /* A section of type SHT_MIPS_LIBLIST contains an array of the
@@ -294,5 +296,181 @@ extern void bfd_mips_elf32_swap_reginfo_out
 #define STO_INTERNAL		0x01
 #define STO_HIDDEN		0x02
 #define STO_PROTECTED		0x03
+
+/* The 64-bit MIPS ELF ABI uses an usual reloc format.  Each
+   relocation entry specifies up to three actual relocations, all at
+   the same address.  The first relocation which required a symbol
+   uses the symbol in the r_sym field.  The second relocation which
+   requires a symbol uses the symbol in the r_ssym field.  If all
+   three relocations require a symbol, the third one uses a zero
+   value.  */
+
+/* An entry in a 64 bit SHT_REL section.  */
+
+typedef struct
+{
+  /* Address of relocation.  */
+  unsigned char r_offset[8];
+  /* Symbol index.  */
+  unsigned char r_sym[4];
+  /* Special symbol.  */
+  unsigned char r_ssym[1];
+  /* Third relocation.  */
+  unsigned char r_type3[1];
+  /* Second relocation.  */
+  unsigned char r_type2[1];
+  /* First relocation.  */
+  unsigned char r_type[1];
+} Elf64_Mips_External_Rel;
+
+typedef struct
+{
+  /* Address of relocation.  */
+  bfd_vma r_offset;
+  /* Symbol index.  */
+  unsigned long r_sym;
+  /* Special symbol.  */
+  unsigned char r_ssym;
+  /* Third relocation.  */
+  unsigned char r_type3;
+  /* Second relocation.  */
+  unsigned char r_type2;
+  /* First relocation.  */
+  unsigned char r_type;
+} Elf64_Mips_Internal_Rel;
+
+/* An entry in a 64 bit SHT_RELA section.  */
+
+typedef struct
+{
+  /* Address of relocation.  */
+  unsigned char r_offset[8];
+  /* Symbol index.  */
+  unsigned char r_sym[4];
+  /* Special symbol.  */
+  unsigned char r_ssym[1];
+  /* Third relocation.  */
+  unsigned char r_type3[1];
+  /* Second relocation.  */
+  unsigned char r_type2[1];
+  /* First relocation.  */
+  unsigned char r_type[1];
+  /* Addend.  */
+  unsigned char r_addend[8];
+} Elf64_Mips_External_Rela;
+
+typedef struct
+{
+  /* Address of relocation.  */
+  bfd_vma r_offset;
+  /* Symbol index.  */
+  unsigned long r_sym;
+  /* Special symbol.  */
+  unsigned char r_ssym;
+  /* Third relocation.  */
+  unsigned char r_type3;
+  /* Second relocation.  */
+  unsigned char r_type2;
+  /* First relocation.  */
+  unsigned char r_type;
+  /* Addend.  */
+  bfd_signed_vma r_addend;
+} Elf64_Mips_Internal_Rela;
+
+/* Values found in the r_ssym field of a relocation entry.  */
+
+/* No relocation.  */
+#define RSS_UNDEF	0
+
+/* Value of GP.  */
+#define RSS_GP		1
+
+/* Value of GP in object being relocated.  */
+#define RSS_GP0		2
+
+/* Address of location being relocated.  */
+#define RSS_LOC		3
+
+/* A SHT_MIPS_OPTIONS section contains a series of options, each of
+   which starts with this header.  */
+
+typedef struct
+{
+  /* Type of option.  */
+  unsigned char kind[1];
+  /* Size of option descriptor, including header.  */
+  unsigned char size[1];
+  /* Section index of affected section, or 0 for global option.  */
+  unsigned char section[2];
+  /* Information specific to this kind of option.  */
+  unsigned char info[4];
+} Elf_External_Options;
+
+typedef struct
+{
+  /* Type of option.  */
+  unsigned char kind;
+  /* Size of option descriptor, including header.  */
+  unsigned char size;
+  /* Section index of affected section, or 0 for global option.  */
+  unsigned short section;
+  /* Information specific to this kind of option.  */
+  unsigned long info;
+} Elf_Internal_Options;
+
+/* MIPS ELF option header swapping routines.  */
+extern void bfd_mips_elf_swap_options_in
+  PARAMS ((bfd *, const Elf_External_Options *, Elf_Internal_Options *));
+extern void bfd_mips_elf_swap_options_out
+  PARAMS ((bfd *, const Elf_Internal_Options *, Elf_External_Options *));
+
+/* Values which may appear in the kind field of an Elf_Options
+   structure.  */
+
+/* Undefined.  */
+#define ODK_NULL	0
+
+/* Register usage and GP value.  */
+#define ODK_REGINFO	1
+
+/* Exception processing information.  */
+#define ODK_EXCEPTIONS	2
+
+/* Section padding information.  */
+#define ODK_PAD		3
+
+/* In the 32 bit ABI, an ODK_REGINFO option is just a Elf32_Reginfo
+   structure.  In the 64 bit ABI, it is the following structure.  The
+   info field of the options header is not used.  */
+
+typedef struct
+{
+  /* Mask of general purpose registers used.  */
+  unsigned char ri_gprmask[4];
+  /* Padding.  */
+  unsigned char ri_pad[4];
+  /* Mask of co-processor registers used.  */
+  unsigned char ri_cprmask[4][4];
+  /* GP register value for this object file.  */
+  unsigned char ri_gp_value[8];
+} Elf64_External_RegInfo;
+
+typedef struct
+{
+  /* Mask of general purpose registers used.  */
+  unsigned long ri_gprmask;
+  /* Padding.  */
+  unsigned long ri_pad;
+  /* Mask of co-processor registers used.  */
+  unsigned long ri_cprmask[4];
+  /* GP register value for this object file.  */
+  bfd_vma ri_gp_value;
+} Elf64_Internal_RegInfo;
+
+/* MIPS ELF reginfo swapping routines.  */
+extern void bfd_mips_elf64_swap_reginfo_in
+  PARAMS ((bfd *, const Elf64_External_RegInfo *, Elf64_Internal_RegInfo *));
+extern void bfd_mips_elf64_swap_reginfo_out
+  PARAMS ((bfd *, const Elf64_Internal_RegInfo *, Elf64_External_RegInfo *));
 
 #endif /* _ELF_MIPS_H */

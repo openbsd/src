@@ -52,6 +52,30 @@ static boolean coff_i960_adjust_symndx
 
 #define COFF_LONG_FILENAMES
 
+/* This is just like the usual CALC_ADDEND, but it includes the
+   section VMA for PC relative relocs.  */
+#ifndef CALC_ADDEND
+#define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)                \
+  {                                                             \
+    coff_symbol_type *coffsym = (coff_symbol_type *) NULL;      \
+    if (ptr && bfd_asymbol_bfd (ptr) != abfd)                   \
+      coffsym = (obj_symbols (abfd)                             \
+                 + (cache_ptr->sym_ptr_ptr - symbols));         \
+    else if (ptr)                                               \
+      coffsym = coff_symbol_from (abfd, ptr);                   \
+    if (coffsym != (coff_symbol_type *) NULL                    \
+        && coffsym->native->u.syment.n_scnum == 0)              \
+      cache_ptr->addend = 0;                                    \
+    else if (ptr && bfd_asymbol_bfd (ptr) == abfd               \
+             && ptr->section != (asection *) NULL)              \
+      cache_ptr->addend = - (ptr->section->vma + ptr->value);   \
+    else                                                        \
+      cache_ptr->addend = 0;                                    \
+    if (ptr && (reloc.r_type == 25 || reloc.r_type == 27))	\
+      cache_ptr->addend += asect->vma;				\
+  }
+#endif
+
 #define CALLS	 0x66003800	/* Template for 'calls' instruction	*/
 #define BAL	 0x0b000000	/* Template for 'bal' instruction	*/
 #define BAL_MASK 0x00ffffff
@@ -212,10 +236,7 @@ coff_i960_relocate (abfd, reloc_entry, symbol, data, input_section,
 	    ((PTR) bfd_zalloc (abfd,
 			       sizeof (struct coff_section_tdata)));
 	  if (osec->used_by_bfd == NULL)
-	    {
-	      bfd_set_error (bfd_error_no_memory);
-	      return bfd_reloc_overflow;
-	    }
+	    return bfd_reloc_overflow;
 	}
       coff_section_data (output_bfd, osec)->tdata = (PTR) syms;
     }
@@ -290,12 +311,9 @@ coff_i960_start_final_link (abfd, info)
   if (! info->relocateable)
     return true;
 
-  esym = (bfd_byte *) malloc (symesz);
+  esym = (bfd_byte *) bfd_malloc (symesz);
   if (esym == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   if (bfd_seek (abfd, obj_sym_filepos (abfd), SEEK_SET) != 0)
     return false;
@@ -495,10 +513,14 @@ coff_i960_relocate_section (output_bfd, info, input_bfd, input_section,
 	}
 
       if (! done)
-	rstat = _bfd_final_link_relocate (howto, input_bfd, input_section,
-					  contents,
-					  rel->r_vaddr - input_section->vma,
-					  val, addend);
+	{
+	  if (howto->pc_relative)
+	    addend += input_section->vma;
+	  rstat = _bfd_final_link_relocate (howto, input_bfd, input_section,
+					    contents,
+					    rel->r_vaddr - input_section->vma,
+					    val, addend);
+	}
 
       switch (rstat)
 	{
@@ -577,8 +599,8 @@ const bfd_target icoff_little_vec =
 {
   "coff-Intel-little",		/* name */
   bfd_target_coff_flavour,
-  false,			/* data byte order is little */
-  false,			/* header byte order is little */
+  BFD_ENDIAN_LITTLE,		/* data byte order is little */
+  BFD_ENDIAN_LITTLE,		/* header byte order is little */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
@@ -621,8 +643,8 @@ const bfd_target icoff_big_vec =
 {
   "coff-Intel-big",		/* name */
   bfd_target_coff_flavour,
-  false,			/* data byte order is little */
-  true,				/* header byte order is big */
+  BFD_ENDIAN_LITTLE,		/* data byte order is little */
+  BFD_ENDIAN_BIG,		/* header byte order is big */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #undef TARGET_IS_BIG_ENDIAN_P
 
 #define	TARGET_PAGE_SIZE	4096
-#define	SEGMENT_SIZE	4096
+#define	SEGMENT_SIZE	TARGET_PAGE_SIZE
 
 #define	DEFAULT_ARCH	bfd_arch_i386
 #define MACHTYPE_OK(mtype) ((mtype) == M_386_NETBSD || (mtype) == M_UNKNOWN)

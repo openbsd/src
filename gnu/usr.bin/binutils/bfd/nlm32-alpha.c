@@ -428,7 +428,7 @@ nlm_alpha_read_reloc (abfd, sym, secp, rel)
   r_vaddr = bfd_h_get_64 (abfd, (bfd_byte *) ext.r_vaddr);
   r_symndx = bfd_h_get_32 (abfd, (bfd_byte *) ext.r_symndx);
 
-  BFD_ASSERT (abfd->xvec->header_byteorder_big_p == false);
+  BFD_ASSERT (bfd_little_endian (abfd));
 
   r_type = ((ext.r_bits[0] & RELOC_BITS0_TYPE_LITTLE)
 	    >> RELOC_BITS0_TYPE_SH_LITTLE);
@@ -631,10 +631,7 @@ nlm_alpha_read_import (abfd, sym)
   sym -> symbol.the_bfd = abfd;
   name = bfd_alloc (abfd, symlength + 1);
   if (name == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   if (bfd_read (name, symlength, 1, abfd) != symlength)
     return false;
   name[symlength] = '\0';
@@ -648,10 +645,7 @@ nlm_alpha_read_import (abfd, sym)
   nlm_relocs = ((struct nlm_relent *)
 		bfd_alloc (abfd, rcount * sizeof (struct nlm_relent)));
   if (!nlm_relocs)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   sym -> relocs = nlm_relocs;
   sym -> rcnt = 0;
   while (sym -> rcnt < rcount)
@@ -759,7 +753,7 @@ nlm_alpha_write_import (abfd, sec, rel)
   bfd_h_put_64 (abfd, r_vaddr, (bfd_byte *) ext.r_vaddr);
   bfd_h_put_32 (abfd, r_symndx, (bfd_byte *) ext.r_symndx);
 
-  BFD_ASSERT (abfd->xvec->header_byteorder_big_p == false);
+  BFD_ASSERT (bfd_little_endian (abfd));
 
   ext.r_bits[0] = ((r_type << RELOC_BITS0_TYPE_SH_LITTLE)
 		   & RELOC_BITS0_TYPE_LITTLE);

@@ -1,5 +1,5 @@
 /* BFD library support routines for the i960 architecture.
-   Copyright (C) 1990, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -75,6 +75,10 @@ scan_960_mach (ap, string)
     machine = bfd_mach_i960_ka_sa;
   else if (string[0] == 's' && string[1] == 'a')
     machine = bfd_mach_i960_ka_sa;
+  else if (string[0] == 'j' && string[1] == 'x')
+    machine = bfd_mach_i960_jx;
+  else if (string[0] == 'h' && string[1] == 'x')
+    machine = bfd_mach_i960_hx;
   else
     return false;
   if (machine == ap->mach)   return true;
@@ -96,6 +100,7 @@ compatible (a,b)
   /* The i960 has distinct subspecies which may not interbreed:
 	CORE CA          
 	CORE KA KB MC XA
+	CORE HX JX
      Any architecture on the same line is compatible, the one on
      the right is the least restrictive.  
      
@@ -108,19 +113,21 @@ compatible (a,b)
 #define MC 	bfd_mach_i960_mc    /*4*/
 #define XA 	bfd_mach_i960_xa    /*5*/
 #define CA 	bfd_mach_i960_ca    /*6*/
-#define MAX_ARCH ((int)CA)
-
-
+#define JX	bfd_mach_i960_jx    /*7*/
+#define HX	bfd_mach_i960_hx    /*8*/
+#define MAX_ARCH ((int)HX)
 
   static CONST unsigned long matrix[MAX_ARCH+1][MAX_ARCH+1] = 
     {
-      { ERROR,	CORE,	KA,	KB,	MC,	XA,	CA },
-      { CORE,	CORE,	KA,	KB,	MC,	XA,	CA },
-      { KA,	KA,	KA,	KB,	MC,	XA,	ERROR },
-      { KB,	KB,	KB,	KB,	MC,	XA,	ERROR },
-      { MC,	MC,	MC,	MC,	MC,	XA,	ERROR },
-      { XA,	XA,	XA,	XA,	XA,	XA,	ERROR },
-      { CA,	CA,	ERROR,	ERROR,	ERROR,	ERROR,	CA },
+      { ERROR,	CORE,	KA,	KB,	MC,	XA,	CA,	JX,	HX },
+      { CORE,	CORE,	KA,	KB,	MC,	XA,	CA,	JX,	HX },
+      { KA,	KA,	KA,	KB,	MC,	XA,	ERROR,	ERROR,	ERROR},
+      { KB,	KB,	KB,	KB,	MC,	XA,	ERROR, 	ERROR,	ERROR},
+      { MC,	MC,	MC,	MC,	MC,	XA,	ERROR,	ERROR,	ERROR},
+      { XA,	XA,	XA,	XA,	XA,	XA,	ERROR,	ERROR,	ERROR},
+      { CA,	CA,	ERROR,	ERROR,	ERROR,	ERROR,	CA,	ERROR,	ERROR},
+      { JX,	JX,	ERROR,	ERROR,	ERROR,	ERROR,	ERROR,  JX,	HX },
+      { HX,	HX,	ERROR,	ERROR,	ERROR,	ERROR,	ERROR,	HX,	HX },
     };
 
 
@@ -140,16 +147,15 @@ int bfd_default_scan_num_mach();
 #define N(a,b,d,n) \
 { 32, 32, 8,bfd_arch_i960,a,"i960",b,3,d,compatible,scan_960_mach,n,}
 
-#define LAST 0
-
-
 static const bfd_arch_info_type arch_info_struct[] = 
 { 
   N(bfd_mach_i960_ka_sa,"i960:ka_sa",false, &arch_info_struct[1]),
   N(bfd_mach_i960_kb_sb,"i960:kb_sb",false, &arch_info_struct[2]),
   N(bfd_mach_i960_mc,   "i960:mc",   false, &arch_info_struct[3]),
   N(bfd_mach_i960_xa,   "i960:xa",   false, &arch_info_struct[4]),
-  N(bfd_mach_i960_ca,   "i960:ca",   false, LAST),
+  N(bfd_mach_i960_ca,   "i960:ca",   false, &arch_info_struct[5]),
+  N(bfd_mach_i960_jx,   "i960:jx",   false, &arch_info_struct[6]),
+  N(bfd_mach_i960_hx,	"i960:hx",   false, 0),
 };
 
 const bfd_arch_info_type bfd_i960_arch =

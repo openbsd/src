@@ -92,6 +92,7 @@ bfd_h8_disassemble (addr, info, hmode)
   int rd = 0;
   int rdisp = 0;
   int abs = 0;
+  int bit = 0;
   int plen = 0;
   static boolean init = 0;
   struct h8_opcode *q = h8_opcodes;
@@ -243,7 +244,7 @@ bfd_h8_disassemble (addr, info, hmode)
 	      else if (looking_for & L_3)
 		{
 		  plen = 3;
-		  abs = thisnib;
+		  bit = thisnib;
 		}
 	      else if (looking_for & L_2)
 		{
@@ -279,9 +280,12 @@ bfd_h8_disassemble (addr, info, hmode)
 			  fprintf (stream, ",");
 
 
-			if (x & (IMM|KBIT|DBIT))
+			if (x & L_3)
 			  {
-			
+			    fprintf (stream, "#0x%x", (unsigned) bit);
+			  }
+			else if (x & (IMM|KBIT|DBIT))
+			  {
 			    fprintf (stream, "#0x%x", (unsigned) abs);
 			  }
 			else if (x & REG)
@@ -318,7 +322,7 @@ bfd_h8_disassemble (addr, info, hmode)
 			    fprintf (stream, "@%s", pregnames[rn]);
 			  }
 
-			else if (x & (ABS|ABSJMP|ABSMOV))
+			else if (x & (ABS|ABSJMP|ABS8MEM))
 			  {
 			    fprintf (stream, "@0x%x:%d", (unsigned) abs, plen);
 			  }

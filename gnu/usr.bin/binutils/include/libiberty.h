@@ -38,6 +38,10 @@ extern int fdmatch PARAMS ((int fd1, int fd2));
 
 extern long get_run_time PARAMS ((void));
 
+/* Choose a temporary directory to use for scratch files.  */
+
+extern char *choose_temp_base PARAMS ((void));
+
 /* Allocate memory filled with spaces.  Allocates using malloc.  */
 
 extern const char *spaces PARAMS ((int count));
@@ -114,6 +118,10 @@ extern PTR xmalloc ();
    xmalloc.  */
 
 extern PTR xrealloc ();
+
+/* Copy a string into a memory buffer without fail.  */
+
+extern char *xstrdup PARAMS ((const char *));
 
 /* hex character manipulation routines */
 

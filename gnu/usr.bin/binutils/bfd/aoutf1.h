@@ -105,6 +105,11 @@ sunos_32_set_arch_mach
       machine = 0;
       break;
 
+    case M_SPARCLET:
+      arch = bfd_arch_sparc;
+      machine = bfd_mach_sparc_sparclet;
+      break;
+
     case M_386:
     case M_386_DYNIX:
       arch = bfd_arch_i386;
@@ -185,7 +190,15 @@ aout_32_sunos4_write_object_contents
 	}
       break;
     case bfd_arch_sparc:
-      N_SET_MACHTYPE (*execp, M_SPARC);
+      switch (bfd_get_mach (abfd))
+	{
+	case bfd_mach_sparc_sparclet:
+	  N_SET_MACHTYPE (*execp, M_SPARCLET);
+	  break;
+	default:
+	  N_SET_MACHTYPE (*execp, M_SPARC);
+	  break;
+	}
       break;
     case bfd_arch_i386:
       N_SET_MACHTYPE (*execp, M_386);
@@ -568,10 +581,7 @@ sunos4_core_file_p (abfd)
 
   mergem = (struct mergem *) bfd_zalloc (abfd, core_size + sizeof (struct mergem));
   if (mergem == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return 0;
-    }
+    return 0;
 
   extcore = mergem->external_core;
 
@@ -611,7 +621,6 @@ sunos4_core_file_p (abfd)
   if (core_stacksec (abfd) == NULL)
     {
     loser:
-      bfd_set_error (bfd_error_no_memory);
       bfd_release (abfd, (char *) mergem);
       return 0;
     }

@@ -136,6 +136,7 @@ print_insn_alpha(pc, info)
 	  if ((insn->i & OPERATE_FORMAT_MASK)
 	      == (given & OPERATE_FORMAT_MASK))
 	    {
+	      int opcode = OPCODE(given);
 	      int optype = OP_OPTYPE(given);
 	      if (OP_OPTYPE(insn->i) == optype)
 		{
@@ -144,8 +145,8 @@ print_insn_alpha(pc, info)
 
 		  if (OP_IS_CONSTANT(given))
 		    {
-		      if ((optype == 0x20)	/* bis R31, lit, Ry */
-			  && (ra == 31))
+		      if ((opcode == 0x11) && (optype == 0x20)
+			  && (ra == 31))	  /* bis R31, lit, Ry */
 			{
 			  func (stream, "mov\t0x%x, %s",
 				LITERAL(given), alpha_regs[RC(given)] );
@@ -167,9 +168,9 @@ print_insn_alpha(pc, info)
 		  } else {		/* not constant */
 		    int rb, rc;
 		    rb = RB(given); rc = RC(given);
-		    switch(optype)
+		    switch ((opcode << 8) | optype)
 		      {
-		      case 0x09:			/* subl */
+		      case 0x1009:			/* subl */
 			if (ra == 31)
 			  {
 			    func (stream, "negl\t%s, %s",
@@ -177,7 +178,7 @@ print_insn_alpha(pc, info)
 			    found = 1;
 			  }
 			break;
-		      case 0x29:			/* subq */
+		      case 0x1029:			/* subq */
 			if (ra == 31)
 			  {
 			    func (stream, "negq\t%s, %s",
@@ -185,7 +186,7 @@ print_insn_alpha(pc, info)
 			    found = 1;
 			  }
 			break;
-		      case 0x20:			/* bis */
+		      case 0x1120:			/* bis */
 			if (ra == 31)
 			  {
 			    if (ra == rb)		/* ra=R31, rb=R31 */
@@ -201,7 +202,8 @@ print_insn_alpha(pc, info)
 			  }
 			else
 			  func (stream, "or\t%s, %s, %s",
-				alpha_regs[ra], alpha_regs[rb], alpha_regs[rc]);
+				alpha_regs[ra], alpha_regs[rb],
+				alpha_regs[rc]);
 			found = 1;
 			break;
 
@@ -221,8 +223,8 @@ print_insn_alpha(pc, info)
 	  break;
 
 	case FLOAT_FORMAT_CODE:
-	  if ((insn->i & OPERATE_FORMAT_MASK)
-	      == (given & OPERATE_FORMAT_MASK))
+	  if ((insn->i & FLOAT_FORMAT_MASK)
+	      == (given & FLOAT_FORMAT_MASK))
 	    {
 	      int ra, rb, rc;
 	      ra = RA(given); rb = RB(given); rc = RC(given);
@@ -231,7 +233,7 @@ print_insn_alpha(pc, info)
 		case 0x20:		/* cpys */
 		  if (ra == 31)
 		    {
-		      if (ra == rb)
+		      if (rb == 31)
 			{
 			  if (rc == 31)
 			    func (stream, "fnop");
@@ -239,15 +241,13 @@ print_insn_alpha(pc, info)
 			    func (stream, "fclr\tf%d", rc);
 			}
 		      else
-			func (stream, "fmov\tf%d, f%d", rb, rc);
+			func (stream, "fabs\tf%d, f%d", rb, rc);
 		      found = 1;
 		    }
-		  else
+		  else if (ra == rb)
 		    {
-		      if (ra == 31) {
-			func (stream, "fabs\tf%d, f%d", rb, rc);
-			found = 1;
-		      }
+		      func (stream, "fmov\tf%d, f%d", rb, rc);
+		      found = 1;
 		    }
 		  break;
 		case 0x21:		/* cpysn */

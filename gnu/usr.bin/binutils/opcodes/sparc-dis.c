@@ -1,5 +1,5 @@
 /* Print SPARC instructions.
-   Copyright 1989, 1991, 1992, 1993, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 91-93, 1995, 1996 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,6 +20,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "dis-asm.h"
 #include "libiberty.h"
 #include <string.h>
+
+/* Bitmask of v9 architectures.  */
+#define MASK_V9 ((1 << SPARC_OPCODE_ARCH_V9) \
+		 | (1 << SPARC_OPCODE_ARCH_V9A))
+/* 1 if INSN is for v9 only.  */
+#define V9_ONLY_P(insn) (! ((insn)->architecture & ~MASK_V9))
+/* 1 if INSN is for v9.  */
+#define V9_P(insn) (((insn)->architecture & MASK_V9) != 0)
 
 /* For faster lookup, after insns are sorted they are hashed.  */
 /* ??? I think there is room for even more improvement.  */
@@ -80,7 +88,8 @@ static char *v9_priv_reg_names[] =
 #define X_LDST_I(i) (((i) >> 13) & 1)
 #define X_ASI(i) (((i) >> 5) & 0xff)
 #define X_RS2(i) (((i) >> 0) & 0x1f)
-#define X_IMM13(i) (((i) >> 0) & 0x1fff)
+#define X_IMM(i,n) (((i) >> 0) & ((1 << (n)) - 1))
+#define X_SIMM(i,n) SEX (X_IMM ((i), (n)), (n))
 #define X_DISP22(i) (((i) >> 0) & 0x3fffff)
 #define X_IMM22(i) X_DISP22 (i)
 #define X_DISP30(i) (((i) >> 0) & 0x3fffffff)
@@ -167,11 +176,13 @@ is_delayed_branch (insn)
   return 0;
 }
 
-/* Nonzero of opcode table has been initialized.  */
-static int opcodes_initialized = 0;
-
 /* extern void qsort (); */
 static int compare_opcodes ();
+
+/* Records current mask of SPARC_OPCODE_ARCH_FOO values, used to pass value
+   to compare_opcodes.  */
+static unsigned int current_arch_mask;
+static int compute_arch_mask ();
 
 /* Print one instruction from MEMADDR on INFO->STREAM.
 
@@ -181,23 +192,29 @@ static int compare_opcodes ();
    displacement to that register, or it is an `add' or `or' instruction
    on that register.  */
 
-static int
-print_insn (memaddr, info, sparc64_p)
+int
+print_insn_sparc (memaddr, info)
      bfd_vma memaddr;
      disassemble_info *info;
-     int sparc64_p;
 {
   FILE *stream = info->stream;
   bfd_byte buffer[4];
   unsigned long insn;
   register unsigned int i;
   register struct opcode_hash *op;
+  /* Nonzero of opcode table has been initialized.  */
+  static int opcodes_initialized = 0;
+  /* bfd mach number of last call.  */
+  static unsigned long current_mach = 0;
 
-  if (!opcodes_initialized)
+  if (!opcodes_initialized
+      || info->mach != current_mach)
     {
-      qsort ((char *) sparc_opcodes, NUMOPCODES,
+      current_arch_mask = compute_arch_mask (info->mach);
+      qsort ((char *) sparc_opcodes, sparc_num_opcodes,
 	     sizeof (sparc_opcodes[0]), compare_opcodes);
-      build_hash_table (sparc_opcodes, opcode_hash_table, NUMOPCODES);
+      build_hash_table (sparc_opcodes, opcode_hash_table, sparc_num_opcodes);
+      current_mach = info->mach;
       opcodes_initialized = 1;
     }
 
@@ -222,14 +239,8 @@ print_insn (memaddr, info, sparc64_p)
     {
       CONST struct sparc_opcode *opcode = op->opcode;
 
-      /* If the current architecture isn't sparc64, skip sparc64 insns.  */
-      if (!sparc64_p
-	  && opcode->architecture == v9)
-	continue;
-
-      /* If the current architecture is sparc64, skip sparc32 only insns.  */
-      if (sparc64_p
-	  && (opcode->flags & F_NOTV9))
+      /* If the insn isn't supported by the current architecture, skip it.  */
+      if (! (opcode->architecture & current_arch_mask))
 	continue;
 
       if ((opcode->match & insn) == opcode->match
@@ -255,6 +266,10 @@ print_insn (memaddr, info, sparc64_p)
 
 	  if (X_RS1 (insn) != X_RD (insn)
 	      && strchr (opcode->args, 'r') != 0)
+	      /* Can't do simple format if source and dest are different.  */
+	      continue;
+	  if (X_RS2 (insn) != X_RD (insn)
+	      && strchr (opcode->args, 'O') != 0)
 	      /* Can't do simple format if source and dest are different.  */
 	      continue;
 
@@ -315,6 +330,7 @@ print_insn (memaddr, info, sparc64_p)
 		    break;
 
 		  case '2':
+		  case 'O':
 		    reg (X_RS2 (insn));
 		    break;
 
@@ -371,9 +387,18 @@ print_insn (memaddr, info, sparc64_p)
 					    & ((int) X_IMM22 (insn) << 10)));
 		    break;
 
-		  case 'i':
+		  case 'i':	/* 13 bit immediate */
+		  case 'I':	/* 11 bit immediate */
+		  case 'j':	/* 10 bit immediate */
 		    {
-		      int imm = SEX (X_IMM13 (insn), 13);
+		      int imm;
+
+		      if (*s == 'i')
+		        imm = X_SIMM (insn, 13);
+		      else if (*s == 'I')
+			imm = X_SIMM (insn, 11);
+		      else
+			imm = X_SIMM (insn, 10);
 
 		      /* Check to see whether we have a 1+i, and take
 			 note of that fact.
@@ -392,26 +417,11 @@ print_insn (memaddr, info, sparc64_p)
 		    }
 		    break;
 
-		  case 'I':	/* 11 bit immediate.  */
-		  case 'j':	/* 10 bit immediate.  */
+		  case 'X':	/* 5 bit unsigned immediate */
+		  case 'Y':	/* 6 bit unsigned immediate */
 		    {
-		      int imm;
+		      int imm = X_IMM (insn, *s == 'X' ? 5 : 6);
 
-		      if (*s == 'I')
-			imm = SEX (X_IMM13 (insn), 11);
-		      else
-			imm = SEX (X_IMM13 (insn), 10);
-
-		      /* Check to see whether we have a 1+i, and take
-			 note of that fact.
-			 
-			 Note: because of the way we sort the table,
-			 we will be matching 1+i rather than i+1,
-			 so it is OK to assume that i is after +,
-			 not before it.  */
-		      if (found_plus)
-			imm_added_to_rs1 = 1;
-		      
 		      if (imm <= 9)
 			(info->fprintf_func) (stream, "%d", imm);
 		      else
@@ -588,6 +598,19 @@ print_insn (memaddr, info, sparc64_p)
 		  case 'y':
 		    (*info->fprintf_func) (stream, "%%y");
 		    break;
+
+		  case 'u':
+		  case 'U':
+		    {
+		      int val = *s == 'U' ? X_RS1 (insn) : X_RD (insn);
+		      char *name = sparc_decode_sparclet_cpreg (val);
+
+		      if (name)
+			(*info->fprintf_func) (stream, "%s", name);
+		      else
+			(*info->fprintf_func) (stream, "%%cpreg(%d)", val);
+		      break;
+		    }
 		  }
 	      }
 	  }
@@ -638,7 +661,7 @@ print_insn (memaddr, info, sparc64_p)
 		      (*info->fprintf_func) (stream, "\t! ");
 		      info->target = 
 			(0xFFFFFFFF & (int) X_IMM22 (prev_insn) << 10)
-			| SEX (X_IMM13 (insn), 13);
+			| X_SIMM (insn, 13);
 		      (*info->print_address_func) (info->target, info);
 		      info->insn_type = dis_dref;
 		      info->data_size = 4;  /* FIXME!!! */
@@ -664,8 +687,37 @@ print_insn (memaddr, info, sparc64_p)
     }
 
   info->insn_type = dis_noninsn;	/* Mark as non-valid instruction */
-  (*info->fprintf_func) (stream, "%#8x", insn);
+  (*info->fprintf_func) (stream, "unknown");
   return sizeof (buffer);
+}
+
+/* Given BFD mach number, return a mask of SPARC_OPCODE_ARCH_FOO values.  */
+
+static int
+compute_arch_mask (mach)
+     unsigned long mach;
+{
+  switch (mach)
+    {
+    case 0 :
+    case bfd_mach_sparc :
+      return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V8);
+    case bfd_mach_sparc_sparclet :
+      return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_SPARCLET);
+    case bfd_mach_sparc_sparclite :
+      /* sparclites insns are recognized by default (because that's how
+	 they've always been treated, for better or worse).  Kludge this by
+	 indicating generic v8 is also selected.  */
+      return (SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_SPARCLITE)
+	      | SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V8));
+    case bfd_mach_sparc_v8plus :
+    case bfd_mach_sparc_v9 :
+      return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V9);
+    case bfd_mach_sparc_v8plusa :
+    case bfd_mach_sparc_v9a :
+      return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V9A);
+    }
+  abort ();
 }
 
 /* Compare opcodes A and B.  */
@@ -679,6 +731,24 @@ compare_opcodes (a, b)
   unsigned long int match0 = op0->match, match1 = op1->match;
   unsigned long int lose0 = op0->lose, lose1 = op1->lose;
   register unsigned int i;
+
+  /* If one (and only one) insn isn't supported by the current architecture,
+     prefer the one that is.  If neither are supported, but they're both for
+     the same architecture, continue processing.  Otherwise (both unsupported
+     and for different architectures), prefer lower numbered arch's (fudged
+     by comparing the bitmasks).  */
+  if (op0->architecture & current_arch_mask)
+    {
+      if (! (op1->architecture & current_arch_mask))
+	return -1;
+    }
+  else
+    {
+      if (op1->architecture & current_arch_mask)
+	return 1;
+      else if (op0->architecture != op1->architecture)
+	return op0->architecture - op1->architecture;
+    }
 
   /* If a bit is set in both match and lose, there is something
      wrong with the opcode table.  */
@@ -720,10 +790,6 @@ compare_opcodes (a, b)
 	return x1 - x0;
     }
 
-  /* Put non-sparc64 insns ahead of sparc64 ones.  */
-  if ((op0->architecture == v9) != (op1->architecture == v9))
-    return (op0->architecture == v9) - (op1->architecture == v9);
-
   /* They are functionally equal.  So as long as the opcode table is
      valid, we can put whichever one first we want, on aesthetic grounds.  */
 
@@ -739,12 +805,14 @@ compare_opcodes (a, b)
      better have the same opcode.  This is a sanity check on the table.  */
   i = strcmp (op0->name, op1->name);
   if (i)
+    {
       if (op0->flags & F_ALIAS) /* If they're both aliases, be arbitrary. */
-	  return i;
+	return i;
       else
-	  fprintf (stderr,
-		   "Internal error: bad sparc-opcode.h: \"%s\" == \"%s\"\n",
-		   op0->name, op1->name);
+	fprintf (stderr,
+		 "Internal error: bad sparc-opcode.h: \"%s\" == \"%s\"\n",
+		 op0->name, op1->name);
+    }
 
   /* Fewer arguments are preferred.  */
   {
@@ -837,20 +905,4 @@ build_hash_table (table, hash_table, num_opcodes)
 	    min_count, max_count, (double) total / HASH_SIZE);
   }
 #endif
-}
-
-int
-print_insn_sparc (memaddr, info)
-     bfd_vma memaddr;
-     disassemble_info *info;
-{
-  return print_insn (memaddr, info, 0);
-}
-
-int
-print_insn_sparc64 (memaddr, info)
-     bfd_vma memaddr;
-     disassemble_info *info;
-{
-  return print_insn (memaddr, info, 1);
 }

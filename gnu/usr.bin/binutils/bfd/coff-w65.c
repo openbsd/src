@@ -146,13 +146,13 @@ h8300_reloc16_estimate(abfd, input_section, reloc, shrink, link_info)
 
   switch (reloc->howto->type)
     {     
-    case R_MOVB2:
+    case R_MOV16B2:
     case R_JMP2:
       shrink+=2;
       break;
 
       /* Thing is a move one byte */
-    case R_MOVB1:
+    case R_MOV16B1:
       value = bfd_coff_reloc16_get_value(reloc, link_info, input_section);
 
       if (value >= 0xff00)
@@ -234,10 +234,10 @@ h8300_reloc16_estimate(abfd, input_section, reloc, shrink, link_info)
 
 /* Reloc types
    large		small
-   R_MOVB1		R_MOVB2		mov.b with 16bit or 8 bit address
+   R_MOV16B1		R_MOV16B2	mov.b with 16bit or 8 bit address
    R_JMP1		R_JMP2		jmp or pcrel branch
    R_JMPL1		R_JMPL_B8	24jmp or pcrel branch
-   R_MOVLB1		R_MOVLB2	24 or 8 bit reloc for mov.b
+   R_MOV24B1		R_MOV24B2	24 or 8 bit reloc for mov.b
 
 */
 
@@ -408,8 +408,8 @@ bfd_target w65_vec =
 {
   "coff-w65",			/* name */
   bfd_target_coff_flavour,
-  false,			/* data byte order is big */
-  false,			/* header byte order is big */
+  BFD_ENDIAN_LITTLE,		/* data byte order is little */
+  BFD_ENDIAN_LITTLE,		/* header byte order is little */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |

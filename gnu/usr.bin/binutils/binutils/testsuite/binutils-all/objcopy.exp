@@ -1,4 +1,4 @@
-#   Copyright (C) 1994 Free Software Foundation, Inc.
+#   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,7 +88,8 @@ if ![string match "" $got] then {
     send_log "$line\n"
     verbose $line
     if ![string match $line "S0130000746D706469722F636F70792E7372656397\r"] {
-	fail "objcopy -O srec (bad header)"
+	send_log "bad header\n"
+	fail "objcopy -O srec"
     } else {
 	while {[gets $file line] != -1 \
 	       && [regexp "^S\[123\]\[0-9a-fA-F\]+\r$" $line]} {
@@ -99,16 +100,19 @@ if ![string match "" $got] then {
 	send_log "$line\n"
 	verbose $line
 	if ![regexp "^S\[789\]\[0-9a-fA-F\]+\r$" $line] then {
-	    fail "objcopy -O srec (bad trailer)"
+	    send_log "bad trailer\n"
+	    fail "objcopy -O srec"
 	} else {
 	    if {[gets $file line] != -1} then {
+		send_log "garbage at end\n"
 		send_log "$line\n"
 		verbose $line
-		fail "objcopy -O srec (garbage at end)"
+		fail "objcopy -O srec"
 	    } else {
 		set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f tmpdir/copy.srec"]
 		if ![regexp "file format srec" $got] then {
-		    fail "objcopy -O srec (objdump failed)"
+		    send_log "objdump failed\n"
+		    fail "objcopy -O srec"
 		} else {
 		    pass "objcopy -O srec"
 		}
@@ -138,7 +142,8 @@ if ![regexp "start address (\[0-9a-fA-FxX\]+)" $got all origstart] then {
 	    fail "objcopy --set-start"
 	} else {
 	    if {$srecstart != 0x7654} then {
-		fail "objcopy --set-start ($srecstart != 0x7654)"
+		send_log "$srecstart != 0x7654\n"
+		fail "objcopy --set-start"
 	    } else {
 		pass "objcopy --set-start"
 	    }
@@ -154,7 +159,8 @@ if ![regexp "start address (\[0-9a-fA-FxX\]+)" $got all origstart] then {
 	    fail "objcopy --adjust-start"
 	} else {
 	    if {$srecstart != $origstart + 0x123} then {
-		fail "objcopy --adjust-start ($srecstart != $origstart + 0x123)"
+		send_log "$srecstart != $origstart + 0x123\n"
+		fail "objcopy --adjust-start"
 	    } else {
 		pass "objcopy --adjust-start"
 	    }
@@ -163,7 +169,7 @@ if ![regexp "start address (\[0-9a-fA-FxX\]+)" $got all origstart] then {
 }
 
 # Test adjusting the overall VMA, and adjusting the VMA of a
-# particular section.  We again only test this when # generating S
+# particular section.  We again only test this when generating S
 # records.
 
 set low ""
@@ -171,14 +177,17 @@ set lowname ""
 
 set headers [binutils_run $OBJDUMP "$OBJDUMPFLAGS -h tmpdir/bintest.o"]
 
-set headers_regexp "SECTION\[ 	0-9\]+\\\[(\[^\]\]*)\\\]\[^\n\r\]*size\[ 	\]*(\[0-9a-fA-F\]+)\[ 	\]*vma\[ 	\]*(\[0-9a-fA-F\]+)(.*)"
+set headers_regexp "\[ 	0-9\]+(\[^ 	\]+)\[ 	\]*(\[0-9a-fA-F\]+)\[ 	\]+\[0-9a-fA-F\]+\[ 	\]+(\[0-9a-fA-F\]+)\[ 	\]+\[0-9a-fA-F\]+\[ 	\]+2\[*\]\[*\]\[0-9\]+(.*)"
 
 set got $headers
 while {[regexp $headers_regexp $got all name size vma rest]} {
     set vma 0x$vma
-    if {$low == "" || $vma < $low} then {
-        set low $vma
-	set lowname $name
+    set size 0x$size
+    if {$size != 0} {
+	if {$low == "" || $vma < $low} {
+            set low $vma
+	    set lowname $name
+	}
     }
     set got $rest
 }
@@ -191,16 +200,18 @@ if {$low == "" || $origstart == ""} then {
         fail "objcopy --adjust-vma"
     } else {
 	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -fh tmpdir/copy.srec"]
-	set want "file format srec.*start address\[ 	\]*(\[0-9a-fA-FxX\]+).*vma\[ 	\]*(\[0-9a-fA-F\]+)"
+	set want "file format srec.*start address\[ 	\]*(\[0-9a-fA-FxX\]+).*sec1\[ 	\]+\[0-9a-fA-F\]+\[ 	\]+(\[0-9a-fA-F\]+)"
 	if ![regexp $want $got all start vma] then {
 	    fail "objcopy --adjust-vma"
 	} else {
 	    set vma 0x$vma
 	    if {$vma != $low + 0x123} then {
-		fail "objcopy --adjust-vma ($vma != $low + 0x123)"
+		send_log "$vma != $low + 0x123\n"
+		fail "objcopy --adjust-vma"
 	    } else {
 		if {$start != $origstart + 0x123} then {
-		    fail "objcopy --adjust-vma ($start != $origstart + 0x123)"
+		    send_log "$start != $origstart + 0x123\n"
+		    fail "objcopy --adjust-vma"
 		} else {
 		    pass "objcopy --adjust-vma"
 		}
@@ -223,13 +234,14 @@ if {$low == "" || $origstart == ""} then {
 	fail "objcopy --adjust-section-vma +"
     } else {
 	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -h tmpdir/copy.srec"]
-	set want "file format srec.*SECTION\[ 	\]*0\[^\n\r\]*vma\[ 	\]*(\[0-9a-fA-F\]+)"
+	set want "file format srec.*sec1\[ 	\]+\[0-9a-fA-F\]+\[ 	\]+(\[0-9a-fA-F\]+)"
 	if ![regexp $want $got all vma] then {
 	    fail "objcopy --adjust-section-vma +"
 	} else {
 	    set vma 0x$vma
 	    if {$vma != $low + 4} then {
-		fail "objcopy --adjust-section-vma + ($vma != $low + 4)"
+		send_log "$vma != $low + 4\n"
+		fail "objcopy --adjust-section-vma +"
 	    } else {
 		pass "objcopy --adjust-section-vma +"
 	    }
@@ -242,13 +254,14 @@ if {$low == "" || $origstart == ""} then {
 	fail "objcopy --adjust-section-vma ="
     } else {
 	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -h tmpdir/copy.srec"]
-	set want "file format srec.*SECTION\[ 	\]*0\[^\n\r\]*vma\[ 	\]*(\[0-9a-fA-F\]+)"
+	set want "file format srec.*sec1\[ 	\]+\[0-9a-fA-F\]+\[ 	\]+(\[0-9a-fA-F\]+)"
 	if ![regexp $want $got all vma] then {
 	    fail "objcopy --adjust-section-vma ="
 	} else {
 	    set vma 0x$vma
 	    if {$vma != $low + 4} then {
-		fail "objcopy --adjust-section-vma = ($vma != $low + 4)"
+		send_log "$vma != $low + 4\n"
+		fail "objcopy --adjust-section-vma ="
 	    } else {
 		pass "objcopy --adjust-section-vma ="
 	    }

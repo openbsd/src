@@ -103,4 +103,9 @@ struct generic_write_global_symbol_info
 extern boolean _bfd_generic_link_write_global_symbol
   PARAMS ((struct generic_link_hash_entry *, PTR));
 
+/* Generic link hash table entry creation routine.  */
+struct bfd_hash_entry *_bfd_generic_link_hash_newfunc
+  PARAMS ((struct bfd_hash_entry *, struct bfd_hash_table *,
+           const char *));
+
 #endif

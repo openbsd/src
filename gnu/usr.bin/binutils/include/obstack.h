@@ -1,5 +1,5 @@
 /* obstack.h - object stack macros
-   Copyright (C) 1988, 89, 90, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1988, 89, 90, 91, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU Library General Public License as published by the
@@ -174,11 +174,13 @@ extern int _obstack_begin (struct obstack *, int, int,
 			    void *(*) (), void (*) ());
 extern int _obstack_begin_1 (struct obstack *, int, int,
 			      void *(*) (), void (*) (), void *);
+extern int _obstack_memory_used (struct obstack *);
 #else
 extern void _obstack_newchunk ();
 extern void _obstack_free ();
 extern int _obstack_begin ();
 extern int _obstack_begin_1 ();
+extern int _obstack_memory_used ();
 #endif
 
 #ifdef __STDC__
@@ -218,6 +220,7 @@ void * obstack_base (struct obstack *obstack);
 void * obstack_next_free (struct obstack *obstack);
 int obstack_alignment_mask (struct obstack *obstack);
 int obstack_chunk_size (struct obstack *obstack);
+int obstack_memory_used (struct obstack *obstack);
 
 #endif /* __STDC__ */
 
@@ -267,6 +270,8 @@ int obstack_chunk_size (struct obstack *obstack);
 #define obstack_1grow_fast(h,achar) (*((h)->next_free)++ = achar)
 
 #define obstack_blank_fast(h,n) ((h)->next_free += (n))
+
+#define obstack_memory_used(h) _obstack_memory_used (h)
 
 #if defined (__GNUC__) && defined (__STDC__)
 #if __GNUC__ < 2

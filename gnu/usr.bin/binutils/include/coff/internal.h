@@ -1,6 +1,9 @@
 /* Internal format of COFF object file data structures, for GNU BFD.
    This file is part of BFD, the Binary File Descriptor library.  */
 
+#ifndef GNU_COFF_INTERNAL_H
+#define GNU_COFF_INTERNAL_H 1
+
 /* First, make "signed char" work, even on old compilers. */
 #ifndef signed
 #ifndef __STDC__
@@ -256,9 +259,12 @@ struct internal_aouthdr
 #define C_ESTAT         (0x90)
 
 /********************** SECTION HEADER **********************/
+
+#define SCNNMLEN (8)
+
 struct internal_scnhdr
 {
-  char s_name[8];		/* section name			*/
+  char s_name[SCNNMLEN];	/* section name			*/
   bfd_vma s_paddr;		/* physical address, aliased s_nlib */
   bfd_vma s_vaddr;		/* virtual address		*/
   bfd_vma s_size;		/* section size			*/
@@ -454,6 +460,9 @@ union internal_auxent
     long x_scnlen;		/* section length */
     unsigned short x_nreloc;	/* # relocation entries */
     unsigned short x_nlinno;	/* # line numbers */
+    unsigned long x_checksum;	/* section COMDAT checksum for PE */
+    unsigned short x_associated; /* COMDAT associated section index for PE */
+    unsigned char x_comdat;	/* COMDAT selection number for PE */
   }      x_scn;
 
   struct
@@ -582,17 +591,65 @@ struct internal_reloc
 #define R_JUMPTARG	0x20	/* strange 29k 00xx00xx reloc */
 
 
-#define R_MOVB1    	0x41	/* Special h8 16bit or 8 bit reloc for mov.b 	*/
-#define R_MOVB2 	0x42	/* Special h8 opcode for 8bit which could be 16 */
-#define R_JMP1     	0x43	/* Special h8 16bit jmp which could be pcrel 	*/
-#define R_JMP2 		0x44	/* a branch which used to be a jmp 		*/
+/* This reloc identifies mov.b instructions with a 16bit absolute
+   address.  The linker tries to turn insns with this reloc into
+   an absolute 8-bit address.  */
+#define R_MOV16B1    	0x41
+
+/* This reloc identifies mov.b instructions which had a 16bit
+   absolute address which have been shortened into a 8-bit
+   absolute address.  */
+#define R_MOV16B2 	0x42
+
+/* This reloc identifies jmp insns with a 16bit target address;
+   the linker tries to turn these insns into bra insns with
+   an 8bit pc-relative target.  */
+#define R_JMP1     	0x43
+
+/* This reloc identifies a bra with an 8-bit pc-relative
+   target that was formerlly a jmp insn with a 16bit target.  */
+#define R_JMP2 		0x44
+
+/* ??? */
 #define R_RELLONG_NEG  	0x45
 
-#define R_JMPL1     	0x46	/* Special h8 24bit jmp which could be pcrel 	*/
-#define R_JMPL_B8	0x47	/* a 8 bit pcrel which used to be a jmp  */
+/* This reloc identifies jmp insns with a 24bit target address;
+   the linker tries to turn these insns into bra insns with
+   an 8bit pc-relative target.  */
+#define R_JMPL1     	0x46
 
-#define R_MOVLB1    	0x48	/* Special h8 24bit or 8 bit reloc for mov.b 	*/
-#define R_MOVLB2 	0x49	/* Special h8 opcode for 8bit which could be 24 */
+/* This reloc identifies a bra with an 8-bit pc-relative
+   target that was formerlly a jmp insn with a 24bit target.  */
+#define R_JMPL2		0x47
+
+/* This reloc identifies mov.b instructions with a 24bit absolute
+   address.  The linker tries to turn insns with this reloc into
+   an absolute 8-bit address.  */
+
+#define R_MOV24B1    	0x48
+
+/* This reloc identifies mov.b instructions which had a 24bit
+   absolute address which have been shortened into a 8-bit
+   absolute address.  */
+#define R_MOV24B2 	0x49
+
+/* An h8300 memory indirect jump/call.  Forces the address of the jump/call
+   target into the function vector (in page zero), and the address of the
+   vector entry to be placed in the jump/call instruction.  */
+#define R_MEM_INDIRECT	0x4a
+
+/* This reloc identifies a 16bit pc-relative branch target which was
+   shortened into an 8bit pc-relative branch target.  */
+#define R_PCRWORD_B	0x4b
+
+/* This reloc identifies mov.[wl] instructions with a 32/24 bit
+   absolute address; the linker may turn this into a mov.[wl]
+   insn with a 16bit absolute address.  */
+#define R_MOVL1    	0x4c
+
+/* This reloc identifies mov.[wl] insns which formerlly had
+   a 32/24bit absolute address and how have a 16bit absolute address.  */
+#define R_MOVL2 	0x4d
 
 /* Z8k modes */
 #define R_IMM16   0x01		/* 16 bit abs */
@@ -637,3 +694,4 @@ struct internal_reloc
 
 #define R_W65_DP       10  /* direct page 8 bits only   */
 
+#endif /* GNU_COFF_INTERNAL_H */

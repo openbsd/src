@@ -32,10 +32,7 @@ nlm_mkobject (abfd)
   nlm_tdata (abfd) =
     (struct nlm_obj_tdata *) bfd_zalloc (abfd, sizeof (struct nlm_obj_tdata));
   if (nlm_tdata (abfd) == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return (false);
-    }
+    return (false);
 
   if (nlm_architecture (abfd) != bfd_arch_unknown)
     bfd_default_set_arch_mach (abfd, nlm_architecture (abfd),

@@ -1,3 +1,164 @@
+Wed Jun  5 16:57:45 1996  Richard Henderson  <rth@tamu.edu>
+
+	* xmalloc.c: Declare sbrk.
+
+Sat May  4 05:08:45 1996  Peter Schauer  (pes@regent.e-technik.tu-muenchen.de)
+
+	* alloca-norm.h:  Add SPARCworks cc compatible __builtin_alloca
+	declaration.
+
+Mon Apr 22 18:41:49 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* xstrerror.c: Include <stdio.h>.
+
+Sun Apr 21 11:55:12 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* Makefile.in (CFILES): Add atexit.c.
+
+Sun Apr 21 09:50:09 1996  Stephen L Moshier  (moshier@world.std.com)
+
+	* choose-temp.c: Include sys/types.h before sys/file.h for sco3.2v5.
+
+Wed Apr 17 11:17:55 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* choose-temp.c: Don't #include sys/file.h ifdef NO_SYS_FILE_H.
+	#include <stdio.h>
+	* config/mt-vxworks5 (HDEFINES): Define NO_SYS_FILE_H.
+
+Tue Apr 16 11:27:16 1996  Jeffrey A Law  (law@cygnus.com)
+
+        * Makefile.in (lneeded-list): If alloca.o is needed, so is xmalloc.o.
+	Reverts Feb 8, 1995 change.
+
+Mon Apr 15 12:53:26 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* choose-temp.c: New file.
+	* Makefile.in (CFILES): Add choose-temp.c.
+	(REQUIRED_OFILES): Add choose-temp.o.
+
+Sat Apr 13 14:19:30 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* floatformat.c (floatformat_to_double):  Don't bias exponent when
+	handling zero's, denorms or NaNs.
+
+Thu Apr 11 13:36:56 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* floatformat.c (floatformat_to_double):  Fix bugs with handling
+	numbers with fractions < 32 bits.
+
+Mon Apr  8 14:48:34 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config.table: Permit --enable-shared to specify a list of
+	directories.
+
+Tue Mar 19 22:02:07 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* cplus-dem.c (demangle_template): Fix for non-mangled pointer
+	arguments.
+
+Fri Mar  8 17:24:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: If srcdir is `.' and with_target_subdir is not
+	`.', then set MULTISRCTOP before calling config-ml.in.
+
+Thu Mar  7 13:37:10 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw.c (mpw_open): Add debugging output option.
+
+Wed Mar  6 17:36:03 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* cplus-dem.c (demangle_template): Fix for address-of-extern arguments.
+
+Tue Feb 27 12:00:50 1996  Raymond Jou  <rjou@mexican.cygnus.com>
+
+	* mpw.c (mpwify_filename): Change 6 to 5 in
+	strncmp (unixname, "/tmp/", 5).
+	
+Tue Feb 20 10:55:53 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* cplus-dem.c (demangle_template): Initialize is_bool.  Correctly
+	handle 0 as a pointer value parameter.
+
+Mon Feb  5 16:41:44 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (all): Depend upon required-list.
+	(required-list): New target.
+	(clean): Remove required-list.
+
+Wed Jan 31 10:19:41 1996  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* win32.c: Deleted.
+	* config.table (i386-*-win32): Deleted.
+	* config/mh-i386win32: Deleted.
+
+Thu Jan 18 11:34:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* cplus-dem.c (cplus_demangle_opname): Change opname parameter to
+	const char *.
+	(cplus_mangle_opname): Change return type and opname parameter to
+	const char *.  Don't cast return value.
+
+Tue Jan 16 12:13:11 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw.c: Include Timer.h, in order to get m68k Microseconds trap
+	definition.
+
+Wed Jan  3 13:15:04 1996  Fred Fish  <fnf@cygnus.com>
+
+	* obstack.c: Update copyright to 1996.
+	(_obstack_memory_used): Define new function.  Called via
+	obstack_memory_used macro.
+
+Thu Dec 28 11:39:40 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* xstrdup.c: New file.
+	* Makefile.in (CFILES): Add xstrdup.c.
+	(REQUIRED_OFILES): Add xstrdup.o.
+	(xstrdup.o): New target.
+
+Mon Dec 11 18:18:52 1995  Mike Stump  <mrs@cygnus.com>
+
+	* atexit.c: New stub to provide atexit on systems that have
+	on_exit, like SunOS 4.1.x systems.
+	* functions.def (on_exit, atexit): Ditto.
+
+Mon Dec 11 15:42:14 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw.c (mpw_abort): Remove decl.
+	(mpw_access): Move debugging printf.
+
+Sat Dec  2 01:25:23 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config.table: Consistently use ${host} rather than ${xhost} or
+	${target}.
+	* configure.in: Don't bother to set ${xhost} before calling
+	config.table.
+
+Tue Nov 28 14:16:57 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.in (.c.o): Use test instead of the left bracket, to
+	avoid problems with some versions of make.
+
+Tue Nov 28 11:45:17 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed: Fix INCDIR edit to work with Nov 14 change.
+
+Tue Nov 21 11:26:34 1995  Fred Fish  <fnf@rtl.cygnus.com>
+
+	* config/mh-hpux: Remove.  It was only used to define EXTRA_OFILES,
+	which was set to just alloca.o, which is now automatically marked
+	as needed by the autoconfiguration process.
+
+Tue Nov 21 14:15:06 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config.table: Check ${with_cross_host} rather than comparing
+	${host} and ${target}.
+
+Thu Nov 16 14:34:42 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: If with_target_subdir is empty, set xhost to
+	${host} rather than ${target} before calling config.table.
+
 Tue Nov 14 01:38:30 1995  Doug Evans  <dje@canuck.cygnus.com>
 
 	* Makefile.in (MULTITOP): Deleted.

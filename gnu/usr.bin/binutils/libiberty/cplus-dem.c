@@ -1,5 +1,5 @@
 /* Demangler for GNU C++ 
-   Copyright 1989, 1991, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1989, 1991, 1994, 1995, 1996 Free Software Foundation, Inc.
    Written by James Clark (jjc@jclark.uucp)
    Rewritten by Fred Fish (fnf@cygnus.com) for ARM and Lucid demangling
    
@@ -323,7 +323,7 @@ consume_count (type)
 
 int
 cplus_demangle_opname (opname, result, options)
-     char *opname;
+     const char *opname;
      char *result;
      int options;
 {
@@ -450,9 +450,9 @@ cplus_demangle_opname (opname, result, options)
    If OPTIONS & DMGL_ANSI == 1, return the ANSI name;
    if OPTIONS & DMGL_ANSI == 0, return the old GNU name.  */
 
-char *
+const char *
 cplus_mangle_opname (opname, options)
-     char *opname;
+     const char *opname;
      int options;
 {
   int i;
@@ -464,7 +464,7 @@ cplus_mangle_opname (opname, options)
       if (strlen (optable[i].out) == len
 	  && (options & DMGL_ANSI) == (optable[i].flags & DMGL_ANSI)
 	  && memcmp (optable[i].out, opname, len) == 0)
-	return ((char *)optable[i].in);
+	return optable[i].in;
     }
   return (0);
 }
@@ -907,6 +907,7 @@ demangle_template (work, mangled, tname, trawname)
 	  is_real = 0;
 	  is_integral = 0;
           is_char = 0;
+	  is_bool = 0;
 	  done = 0;
 	  /* temp is initialized in do_type */
 	  success = do_type (work, mangled, &temp);
@@ -1060,7 +1061,24 @@ demangle_template (work, mangled, tname, trawname)
 		  success = 0;
 		  break;
 		}
-	      string_appendn (tname, *mangled, symbol_len);
+	      if (symbol_len == 0)
+		string_appendn (tname, "0", 1);
+	      else
+		{
+		  char *p = xmalloc (symbol_len + 1), *q;
+		  strncpy (p, *mangled, symbol_len);
+		  p [symbol_len] = '\0';
+		  q = cplus_demangle (p, work->options);
+		  string_appendn (tname, "&", 1);
+		  if (q)
+		    {
+		      string_append (tname, q);
+		      free (q);
+		    }
+		  else
+		    string_append (tname, p);
+		  free (p);
+		}
 	      *mangled += symbol_len;
 	    }
 	}
@@ -1184,7 +1202,7 @@ DESCRIPTION
 	On exit, it points to the next token after the mangled class on
 	success, or the first unconsumed token on failure.
 
-	If the constRUCTOR or DESTRUCTOR flags are set in WORK, then
+	If the CONSTRUCTOR or DESTRUCTOR flags are set in WORK, then
 	we are demangling a constructor or destructor.  In this case
 	we prepend "class::class" or "class::~class" to DECLP.
 

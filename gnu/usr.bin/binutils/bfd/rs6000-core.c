@@ -201,10 +201,7 @@ rs6000coff_core_p (abfd)
   /* maybe you should alloc space for the whole core chunk over here!! FIXMEmgo */
   tmpptr = (char*)bfd_zalloc (abfd, sizeof (Rs6kCorData));
   if (!tmpptr)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
       
   set_tdata (abfd, tmpptr);
 
@@ -213,11 +210,8 @@ rs6000coff_core_p (abfd)
 
   /* .stack section. */
   if ((core_stacksec (abfd) = (asection*) bfd_zalloc (abfd, sizeof (asection)))
-       == NULL)  {
-    bfd_set_error (bfd_error_no_memory);
-    /* bfd_release (abfd, ???? ) */
+       == NULL)
     return NULL;
-  }
   core_stacksec (abfd)->name = ".stack";
   core_stacksec (abfd)->flags = SEC_ALLOC + SEC_LOAD + SEC_HAS_CONTENTS;
   core_stacksec (abfd)->_raw_size = coredata.c_size;
@@ -226,11 +220,8 @@ rs6000coff_core_p (abfd)
 
   /* .reg section for GPRs and special registers. */
   if ((core_regsec (abfd) = (asection*) bfd_zalloc (abfd, sizeof (asection)))
-       == NULL)  {
-    bfd_set_error (bfd_error_no_memory);
-    /* bfd_release (abfd, ???? ) */
+       == NULL)
     return NULL;
-  }
   core_regsec (abfd)->name = ".reg";
   core_regsec (abfd)->flags = SEC_HAS_CONTENTS;
   core_regsec (abfd)->_raw_size = (32 + NUM_OF_SPEC_REGS) * 4;
@@ -240,11 +231,8 @@ rs6000coff_core_p (abfd)
 
   /* .reg2 section for FPRs (floating point registers). */
   if ((core_reg2sec (abfd) = (asection*) bfd_zalloc (abfd, sizeof (asection)))
-       == NULL)  {
-    bfd_set_error (bfd_error_no_memory);
-    /* bfd_release (abfd, ???? ) */
+       == NULL)
     return NULL;
-  }
   core_reg2sec (abfd)->name = ".reg2";
   core_reg2sec (abfd)->flags = SEC_HAS_CONTENTS;
   core_reg2sec (abfd)->_raw_size = 8 * 32;			/* 32 FPRs. */
@@ -253,11 +241,8 @@ rs6000coff_core_p (abfd)
   	(char*)&coredata.SAVE_FIELD.fpr[0] - (char*)&coredata;
 
   if ((core_ldinfosec (abfd) = (asection*) bfd_zalloc (abfd, sizeof (asection)))
-       == NULL)  {
-    bfd_set_error (bfd_error_no_memory);
-    /* bfd_release (abfd, ???? ) */
+       == NULL)
     return NULL;
-  }
   core_ldinfosec (abfd)->name = ".ldinfo";
   core_ldinfosec (abfd)->flags = SEC_HAS_CONTENTS;
   /* To actually find out how long this section is in this particular
@@ -280,10 +265,7 @@ rs6000coff_core_p (abfd)
     {
       asection *sec = (asection *) bfd_zalloc (abfd, sizeof (asection));
       if (sec == NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return NULL;
-	}
+	return NULL;
       sec->name = ".data";
       sec->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
       sec->_raw_size = coredata.CORE_DATA_SIZE_FIELD;

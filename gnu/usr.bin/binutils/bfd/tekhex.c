@@ -335,10 +335,7 @@ find_chunk (abfd, vma)
 	bfd_alloc (abfd, sizeof (struct data_struct));
 
       if (!sname || !d)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return NULL;
-	}
+	return NULL;
 
       memset (d->chunk_init, 0, CHUNK_MASK + 1);
       memset (d->chunk_data, 0, CHUNK_MASK + 1);
@@ -399,10 +396,7 @@ first_phase (abfd, type, src)
 	  char *n = bfd_alloc (abfd, len + 1);
 
 	  if (!n)
-	    {
-	      bfd_set_error (bfd_error_no_memory);
-	      abort();		/* FIXME */
-	    }
+	    abort();		/* FIXME */
 	  memcpy (n, sym, len + 1);
 	  section = bfd_make_section (abfd, n);
 	}
@@ -431,10 +425,7 @@ first_phase (abfd, type, src)
 		char type = (*src);
 
 		if (!new)
-		  {
-		    bfd_set_error (bfd_error_no_memory);
-		    abort();	/* FIXME */
-		  }
+		  abort();	/* FIXME */
 		new->symbol.the_bfd = abfd;
 		src++;
 		abfd->symcount++;
@@ -444,10 +435,7 @@ first_phase (abfd, type, src)
 		len = getsym (sym, &src);
 		new->symbol.name = bfd_alloc (abfd, len + 1);
 		if (!new->symbol.name)
-		  {
-		    bfd_set_error (bfd_error_no_memory);
-		    abort();	/* FIXME */
-		  }
+		  abort();	/* FIXME */
 		memcpy ((char *) (new->symbol.name), sym, len + 1);
 		new->symbol.section = section;
 		if (type <= '4')
@@ -545,10 +533,7 @@ tekhex_mkobject (abfd)
   tdata_type *tdata = (tdata_type *) bfd_alloc (abfd, sizeof (tdata_type));
 
   if (!tdata)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   abfd->tdata.tekhex_data = tdata;
   tdata->type = 1;
   tdata->head = (tekhex_data_list_type *) NULL;
@@ -925,10 +910,7 @@ tekhex_make_empty_symbol (abfd)
   (tekhex_symbol_type *) bfd_zalloc (abfd, sizeof (struct tekhex_symbol_struct));
 
   if (!new)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
   new->symbol.the_bfd = abfd;
   new->prev = (struct tekhex_symbol_struct *) NULL;
   return &(new->symbol);
@@ -999,8 +981,8 @@ const bfd_target tekhex_vec =
 {
   "tekhex",			/* name */
   bfd_target_tekhex_flavour,
-  true,				/* target byte order */
-  true,				/* target headers byte order */
+  BFD_ENDIAN_UNKNOWN,		/* target byte order */
+  BFD_ENDIAN_UNKNOWN,		/* target headers byte order */
   (EXEC_P |			/* object flags */
    HAS_SYMS | HAS_LINENO | HAS_DEBUG | HAS_RELOC | HAS_LOCALS |
    WP_TEXT | D_PAGED),

@@ -45,7 +45,7 @@ symbolic_link='ln -s'
 
 Makefile=Makefile
 Makefile_in=Makefile.in
-arguments=$*
+arguments=
 build_alias=
 cache_file=
 cache_file_option=
@@ -80,7 +80,7 @@ subdirs=
 target_alias=NOTARGET
 target_makefile_frag=
 undefs=NOUNDEFS
-version="$Revision: 1.1.1.1 $"
+version="$Revision: 1.1.1.2 $"
 x11=default
 
 ### we might need to use some other shell than /bin/sh for running subshells
@@ -137,19 +137,27 @@ do
 	case $option in
 	--*=*)
 		optarg=`echo $option | sed -e 's/^[^=]*=//'`
+		arguments="$arguments $option"
 		;;
 # These options have mandatory values.  Since we didn't find an = sign,
 # the value must be in the next argument
-	--b* | --cache* | --ex* | --ho* | --pre* | --program-p* | --program-s* | --program-t* | --si* | --sr* | --ta* | --tm* | --x-*)
+	--bu* | --cache* | --ex* | --ho* | --pre* | --program-p* | --program-s* | --program-t* | --si* | --sr* | --ta* | --tm* | --x-* | --bi* | --sb* | --li* | --da* | --sy* | --sh* | --lo* | --in* | --ol* | --ma*)
 		optarg=$1
 		shift
+		arguments="$arguments $option=$optarg"
+		;;
+	--v)
+		arguments="$arguments -v"
+		;;
+	--*)
+		arguments="$arguments $option"
 		;;
 	esac
 
 # Now, process the options
 	case $option in
 
-	--build* | --b*)
+	--build* | --bu*)
 		case "$build_alias" in
 		"") build_alias=$optarg ;;
 		*) echo '***' Can only configure for one build machine at a time.  1>&2
@@ -172,8 +180,8 @@ do
 		esac
 
 		enableopt=`echo ${option} | sed 's:^--::;s:=.*$::;s:-:_:g'`
-		eval $enableopt="$optarg"
-		enableoptions="$enableoptions $option"
+		eval "$enableopt='$optarg'"
+		enableoptions="$enableoptions '$option'"
 		;;
 	--exec-prefix* | --ex*)
 		exec_prefix=$optarg
@@ -195,6 +203,7 @@ do
 		;;
 	--nfp | --nf*)
 		floating_point=no
+		floating_pointoption="--nfp"
 		;;
 	--norecursion | --no*)
 		norecursion=yes
@@ -277,6 +286,9 @@ do
 		;;
 	--x-i* | --x-l*) other_options="$other_options $orig_option"
 		;;
+	--bi* | --sb* | --li* | --da* | --sy* | --sh* | --lo* | --in* | --ol* | --ma*)
+		# These options were added to autoconf for emacs.
+		;;
 	--*)
 		echo "configure: Unrecognized option: \"$orig_option\"; use --help for usage." >&2
 		exit 1
@@ -353,6 +365,8 @@ case "${fatal}" in
 			;;
 		*)
 			host_alias=$undefs
+			arguments="--host=$host_alias $arguments"
+			undefs=NOUNDEFS
 			;;
 		esac
 	esac
@@ -367,6 +381,7 @@ case "${fatal}" in
 			;;
 		*)
 			target_alias=$undefs
+			arguments="--target=$target_alias $arguments"
 			;;
 		esac
 	esac
@@ -497,7 +512,7 @@ case "`grep '^# per\-host:' ${srcdir}/configure.in`" in
 		${program_prefixoption} ${program_suffixoption} \
 		${program_transform_nameoption} ${site_option} \
 		${withoptions} ${withoutoptions} \
-		${enableoptions} ${disableoptions} \
+		${enableoptions} ${disableoptions} ${floating_pointoption} \
 		${cache_file_option} ${removing} ${other_options} ${redirect}
 	  else
 	    echo '***' There is no configure script present though. 1>&2
@@ -675,12 +690,51 @@ s/\\\n//g
   rm -f Makefile.cc
 fi
 
+# Generate a default definition for YACC.  This is used if the makefile can't
+# locate bison or byacc in objdir.
+
+for prog in 'bison -y' byacc yacc
+do
+  set dummy $prog; tmp=$2
+  IFS="${IFS= 	}"; save_ifs="$IFS"; IFS="${IFS}:"
+  for dir in $PATH; do
+    test -z "$dir" && dir=.
+    if test -f $dir/$tmp; then
+      DEFAULT_YACC="$prog"
+      break
+    fi
+  done
+  IFS="$save_ifs"
+
+  test -n "$DEFAULT_YACC" && break
+done
+
+# Generate a default definition for LEX.  This is used if the makefile can't
+# locate flex in objdir.
+
+for prog in flex lex
+do
+  set dummy $prog; tmp=$2
+  IFS="${IFS= 	}"; save_ifs="$IFS"; IFS="${IFS}:"
+  for dir in $PATH; do
+    test -z "$dir" && dir=.
+    if test -f $dir/$tmp; then
+      DEFAULT_LEX="$prog"
+      break
+    fi
+  done
+  IFS="$save_ifs"
+
+  test -n "$DEFAULT_LEX" && break
+done
+
 if [ "${build}" != "${host}" ]; then
   # If we are doing a Canadian Cross, in which the host and build systems
   # are not the same, we set reasonable default values for the tools.
 
   tools="AR AR_FOR_TARGET AS AS_FOR_TARGET BISON CC_FOR_BUILD"
-  tools="${tools} CC_FOR_TARGET CXX_FOR_TARGET HOST_PREFIX"
+  tools="${tools} CC_FOR_TARGET CXX_FOR_TARGET"
+  tools="${tools} DLLTOOL DLLTOOL_FOR_TARGET HOST_PREFIX"
   tools="${tools} HOST_PREFIX_1 LD LD_FOR_TARGET LEX MAKEINFO NM"
   tools="${tools} NM_FOR_TARGET RANLIB RANLIB_FOR_TARGET"
 
@@ -709,6 +763,8 @@ s/\\\n//g
   CC_FOR_BUILD=${CC_FOR_BUILD-gcc}
   CC_FOR_TARGET=${CC_FOR_TARGET-${target_alias}-gcc}
   CXX_FOR_TARGET=${CXX_FOR_TARGET-${target_alias}-gcc}
+  DLLTOOL=${DLLTOOL-${host_alias}-dlltool}
+  DLLTOOL_FOR_TARGET=${DLLTOOL_FOR_TARGET-${target_alias}-dlltool}
   HOST_PREFIX=${build_alias}-
   HOST_PREFIX_1=${build_alias}-
   LD=${LD-${host_alias}-ld}
@@ -761,6 +817,7 @@ s/\\\n//g
   export AS
   export AR
   export CC_FOR_BUILD
+  export DLLTOOL
   export LD
   export NM
   export RANLIB
@@ -784,6 +841,18 @@ fi
 
 export CC
 export CXX
+
+case "$host" in
+	*go32*)
+	    enable_gdbtk=no ;;
+esac
+
+# Determine whether gdb needs tk/tcl or not.
+if [ "$enable_gdbtk" != "no" ]; then
+	GDB_TK="all-tcl all-tk"
+else
+	GDB_TK=""
+fi
 
 for subdir in . ${subdirs} ; do
 
@@ -1049,12 +1118,15 @@ EOF
 			s%^CXX[ 	]*=.*$%CXX = ${CXX}%
 			}" \
 		    -e "s:^SHELL[	 ]*=.*$:SHELL = ${config_shell}:" \
+		    -e "s:^GDB_TK[	 ]*=.*$:GDB_TK = ${GDB_TK}:" \
                     -e "s:^srcdir[ 	]*=.*$:srcdir = ${makesrcdir}:" \
                     -e "s///" \
                     -e "s:^program_prefix[ 	]*=.*$:program_prefix = ${program_prefix}:" \
                     -e "s:^program_suffix[ 	]*=.*$:program_suffix = ${program_suffix}:" \
                     -e "s:^program_transform_name[ 	]*=.*$:program_transform_name = ${program_transform_name}:" \
                     -e "s:^tooldir[ 	]*=.*$:tooldir = ${tooldir}:" \
+		    -e "s:^DEFAULT_YACC[	 ]*=.*$:DEFAULT_YACC = ${DEFAULT_YACC}:" \
+		    -e "s:^DEFAULT_LEX[	 ]*=.*$:DEFAULT_LEX = ${DEFAULT_LEX}:" \
                     ${subdir}/Makefile.tem >> ${Makefile}
 
 	    # If this is a Canadian Cross, preset the values of many more
@@ -1202,7 +1274,7 @@ if [ -z "${norecursion}" -a -n "${configdirs}" ] ; then
 			if [ ! -z "${recprog}" ] ; then
 	                        if eval ${config_shell} ${recprog} ${verbose} ${buildopt} --host=${host_alias} --target=${target_alias} \
         	                        ${prefixoption} ${tmpdiroption} ${exec_prefixoption} \
-                	                ${srcdiroption} ${program_prefixoption} ${program_suffixoption} ${program_transform_nameoption} ${site_option} ${withoptions} ${withoutoptions} ${enableoptions} ${disableoptions} ${cache_file_option} ${removing} ${other_options} ${redirect} ; then
+                	                ${srcdiroption} ${program_prefixoption} ${program_suffixoption} ${program_transform_nameoption} ${site_option} ${withoptions} ${withoutoptions} ${enableoptions} ${disableoptions} ${floating_pointoption} ${cache_file_option} ${removing} ${other_options} ${redirect} ; then
 	                                true
         	                else
 					echo Configure in `pwd` failed, exiting. 1>&2

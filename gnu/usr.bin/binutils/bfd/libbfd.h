@@ -1,6 +1,6 @@
 /* libbfd.h -- Declarations used by bfd library *implementation*.
    (This include file is not for users of the library.)
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 ** NOTE: libbfd.h is a GENERATED file.  Don't change it; instead,
@@ -36,6 +36,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    do casts, and casting to the left of assignment isn't portable.  */
 #define set_tdata(bfd, v) ((bfd)->tdata.any = (PTR) (v))
 
+/* If BFD_IN_MEMORY is set for a BFD, then the iostream fields points
+   to an instance of this structure.  */
+
+struct bfd_in_memory
+{
+  /* Size of buffer.  */
+  bfd_size_type size;
+  /* Buffer holding contents of BFD.  */
+  bfd_byte *buffer;
+};
+
 /* tdata for an archive.  For an input archive, cache
    needs to be free()'d.  For an output archive, symdefs do.  */
 
@@ -70,16 +81,16 @@ struct areltdata {
 
 #define arelt_size(bfd) (((struct areltdata *)((bfd)->arelt_data))->parsed_size)
 
-char *bfd_zmalloc PARAMS ((bfd_size_type size));
+extern PTR bfd_malloc PARAMS ((size_t));
+extern PTR bfd_realloc PARAMS ((PTR, size_t));
+extern PTR bfd_zmalloc PARAMS ((size_t));
 
 extern bfd_error_handler_type _bfd_error_handler;
 
-/* These routines allocate and free things on the BFD's obstack.  Note
-   that realloc can never occur in place.  */
+/* These routines allocate and free things on the BFD's obstack.  */
 
 PTR	bfd_alloc PARAMS ((bfd *abfd, size_t size));
 PTR	bfd_zalloc PARAMS ((bfd *abfd, size_t size));
-PTR	bfd_realloc PARAMS ((bfd *abfd, PTR orig, size_t size));
 void	bfd_alloc_grow PARAMS ((bfd *abfd, PTR thing, size_t size));
 PTR	bfd_alloc_finish PARAMS ((bfd *abfd));
 PTR	bfd_alloc_by_size_t PARAMS ((bfd *abfd, size_t wanted));
@@ -101,6 +112,7 @@ extern boolean _bfd_construct_extended_name_table
 boolean	_bfd_write_archive_contents PARAMS ((bfd *abfd));
 boolean _bfd_compute_and_write_armap PARAMS ((bfd *, unsigned int elength));
 bfd *_bfd_get_elt_at_filepos PARAMS ((bfd *archive, file_ptr filepos));
+extern bfd *_bfd_generic_get_elt_at_index PARAMS ((bfd *, symindex));
 bfd * _bfd_new_bfd PARAMS ((void));
 
 boolean	bfd_false PARAMS ((bfd *ignore));
@@ -129,6 +141,8 @@ boolean	coff_write_armap PARAMS ((bfd *arch, unsigned int elength,
 				   struct orl *map, unsigned int orl_count, int stridx));
 
 extern PTR _bfd_generic_read_ar_hdr PARAMS ((bfd *));
+
+extern PTR _bfd_generic_read_ar_hdr_mag PARAMS ((bfd *, const char *));
 
 bfd *	bfd_generic_openr_next_archived_file PARAMS ((bfd *archive,
 						     bfd *last_file));
@@ -192,6 +206,8 @@ extern boolean _bfd_nocore_core_file_matches_executable_p
 #define _bfd_noarchive_read_ar_hdr bfd_nullvoidptr
 #define _bfd_noarchive_openr_next_archived_file \
   ((bfd *(*) PARAMS ((bfd *, bfd *))) bfd_nullvoidptr)
+#define _bfd_noarchive_get_elt_at_index \
+  ((bfd *(*) PARAMS ((bfd *, symindex))) bfd_nullvoidptr)
 #define _bfd_noarchive_generic_stat_arch_elt bfd_generic_stat_arch_elt
 #define _bfd_noarchive_update_armap_timestamp bfd_false
 
@@ -208,6 +224,7 @@ extern boolean _bfd_archive_bsd_construct_extended_name_table
 #define _bfd_archive_bsd_read_ar_hdr _bfd_generic_read_ar_hdr
 #define _bfd_archive_bsd_openr_next_archived_file \
   bfd_generic_openr_next_archived_file
+#define _bfd_archive_bsd_get_elt_at_index _bfd_generic_get_elt_at_index
 #define _bfd_archive_bsd_generic_stat_arch_elt \
   bfd_generic_stat_arch_elt
 extern boolean _bfd_archive_bsd_update_armap_timestamp PARAMS ((bfd *));
@@ -225,6 +242,7 @@ extern boolean _bfd_archive_coff_construct_extended_name_table
 #define _bfd_archive_coff_read_ar_hdr _bfd_generic_read_ar_hdr
 #define _bfd_archive_coff_openr_next_archived_file \
   bfd_generic_openr_next_archived_file
+#define _bfd_archive_coff_get_elt_at_index _bfd_generic_get_elt_at_index
 #define _bfd_archive_coff_generic_stat_arch_elt \
   bfd_generic_stat_arch_elt
 #define _bfd_archive_coff_update_armap_timestamp bfd_true
@@ -329,6 +347,11 @@ extern long _bfd_generic_read_minisymbols
 extern asymbol *_bfd_generic_minisymbol_to_symbol
   PARAMS ((bfd *, boolean, const PTR, asymbol *));
 
+/* Find the nearest line using .stab/.stabstr sections.  */
+extern boolean _bfd_stab_section_find_nearest_line
+  PARAMS ((bfd *, asymbol **, asection *, bfd_vma, boolean *, const char **,
+	   const char **, unsigned int *, PTR *));
+
 /* A routine to create entries for a bfd_link_hash_table.  */
 extern struct bfd_hash_entry *_bfd_link_hash_newfunc
   PARAMS ((struct bfd_hash_entry *entry,
@@ -360,6 +383,8 @@ extern boolean _bfd_generic_link_add_symbols_collect
 extern boolean _bfd_generic_link_add_archive_symbols
   PARAMS ((bfd *, struct bfd_link_info *,
 	   boolean (*checkfn) (bfd *, struct bfd_link_info *, boolean *)));
+
+
 
 /* Forward declaration to avoid prototype errors.  */
 typedef struct bfd_link_hash_entry _bfd_link_hash_entry;
@@ -399,6 +424,20 @@ extern bfd_reloc_status_type _bfd_final_link_relocate
 /* Relocate a particular location by a howto and a value.  */
 extern bfd_reloc_status_type _bfd_relocate_contents
   PARAMS ((reloc_howto_type *, bfd *, bfd_vma, bfd_byte *));
+
+/* Link stabs in sections in the first pass.  */
+
+extern boolean _bfd_link_section_stabs
+  PARAMS ((bfd *, PTR *, asection *, asection *, PTR *));
+
+/* Write out the .stab section when linking stabs in sections.  */
+
+extern boolean _bfd_write_section_stabs
+  PARAMS ((bfd *, asection *, PTR *, bfd_byte *));
+
+/* Write out the .stabstr string table when linking stabs in sections.  */
+
+extern boolean _bfd_write_stab_strings PARAMS ((bfd *, PTR *));
 
 /* Create a string table.  */
 extern struct bfd_strtab_hash *_bfd_stringtab_init PARAMS ((void));
@@ -472,6 +511,9 @@ extern boolean _bfd_ecoff_locate_line
 extern boolean _bfd_ecoff_get_accumulated_pdr PARAMS ((PTR, bfd_byte *));
 extern boolean _bfd_ecoff_get_accumulated_sym PARAMS ((PTR, bfd_byte *));
 extern boolean _bfd_ecoff_get_accumulated_ss PARAMS ((PTR, bfd_byte *));
+
+extern bfd_vma _bfd_get_gp_value PARAMS ((bfd *));
+extern void _bfd_set_gp_value PARAMS ((bfd *, bfd_vma));
 
 /* And more follows */
 
@@ -583,7 +625,9 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_SPARC_WDISP16",
   "BFD_RELOC_SPARC_WDISP19",
   "BFD_RELOC_SPARC_GLOB_JMP",
-  "BFD_RELOC_SPARC_LO7",
+  "BFD_RELOC_SPARC_7",
+  "BFD_RELOC_SPARC_6",
+  "BFD_RELOC_SPARC_5",
   "BFD_RELOC_ALPHA_GPDISP_HI16",
   "BFD_RELOC_ALPHA_GPDISP_LO16",
   "BFD_RELOC_ALPHA_LITERAL",
@@ -598,6 +642,10 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_MIPS_LITERAL",
   "BFD_RELOC_MIPS_GOT16",
   "BFD_RELOC_MIPS_CALL16",
+  "BFD_RELOC_MIPS_GOT_HI16",
+  "BFD_RELOC_MIPS_GOT_LO16",
+  "BFD_RELOC_MIPS_CALL_HI16",
+  "BFD_RELOC_MIPS_CALL_LO16",
   "BFD_RELOC_386_GOT32",
   "BFD_RELOC_386_PLT32",
   "BFD_RELOC_386_COPY",
@@ -632,6 +680,22 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_PPC_JMP_SLOT",
   "BFD_RELOC_PPC_RELATIVE",
   "BFD_RELOC_PPC_LOCAL24PC",
+  "BFD_RELOC_PPC_EMB_NADDR32",
+  "BFD_RELOC_PPC_EMB_NADDR16",
+  "BFD_RELOC_PPC_EMB_NADDR16_LO",
+  "BFD_RELOC_PPC_EMB_NADDR16_HI",
+  "BFD_RELOC_PPC_EMB_NADDR16_HA",
+  "BFD_RELOC_PPC_EMB_SDAI16",
+  "BFD_RELOC_PPC_EMB_SDA2I16",
+  "BFD_RELOC_PPC_EMB_SDA2REL",
+  "BFD_RELOC_PPC_EMB_SDA21",
+  "BFD_RELOC_PPC_EMB_MRKREF",
+  "BFD_RELOC_PPC_EMB_RELSEC16",
+  "BFD_RELOC_PPC_EMB_RELST_LO",
+  "BFD_RELOC_PPC_EMB_RELST_HI",
+  "BFD_RELOC_PPC_EMB_RELST_HA",
+  "BFD_RELOC_PPC_EMB_BIT_FLD",
+  "BFD_RELOC_PPC_EMB_RELSDA",
   "BFD_RELOC_CTOR",
   "BFD_RELOC_ARM_PCREL_BRANCH",
   "BFD_RELOC_ARM_IMMEDIATE",

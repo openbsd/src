@@ -77,7 +77,7 @@ print_insn_arg (d, l, pc, info)
 
     case 'i':
     case 'u':
-      (*info->fprintf_func) (info->stream, "%d",
+      (*info->fprintf_func) (info->stream, "0x%x",
 			(l >> OP_SH_IMMEDIATE) & OP_MASK_IMMEDIATE);
       break;
 
@@ -214,7 +214,7 @@ _print_insn_mips (memaddr, word, info)
   /* Build a hash table to shorten the search time.  */
   if (! init)
     {
-      int i;
+      unsigned int i;
 
       for (i = 0; i <= OP_MASK_OP; i++)
 	{

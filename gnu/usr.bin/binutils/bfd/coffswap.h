@@ -1,5 +1,5 @@
 /* Generic COFF swapping routines, for BFD.
-   Copyright 1990, 1991, 1992, 1993, 1995 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -397,6 +397,13 @@ coff_swap_aux_in (abfd, ext1, type, class, indx, numaux, in1)
 	  in->x_scn.x_scnlen = GET_SCN_SCNLEN(abfd, ext);
 	  in->x_scn.x_nreloc = GET_SCN_NRELOC(abfd, ext);
 	  in->x_scn.x_nlinno = GET_SCN_NLINNO(abfd, ext);
+
+	  /* PE defines some extra fields; we zero them out for
+             safety.  */
+	  in->x_scn.x_checksum = 0;
+	  in->x_scn.x_associated = 0;
+	  in->x_scn.x_comdat = 0;
+
 	  return;
 	}
       break;
@@ -407,7 +414,7 @@ coff_swap_aux_in (abfd, ext1, type, class, indx, numaux, in1)
   in->x_sym.x_tvndx = bfd_h_get_16(abfd, (bfd_byte *) ext->x_sym.x_tvndx);
 #endif
 
-  if (class == C_BLOCK || ISFCN (type) || ISTAG (class))
+  if (class == C_BLOCK || class == C_FCN || ISFCN (type) || ISTAG (class))
     {
       in->x_sym.x_fcnary.x_fcn.x_lnnoptr = GET_FCN_LNNOPTR (abfd, ext);
       in->x_sym.x_fcnary.x_fcn.x_endndx.l = GET_FCN_ENDNDX (abfd, ext);
@@ -507,7 +514,7 @@ coff_swap_aux_out (abfd, inp, type, class, indx, numaux, extp)
   bfd_h_put_16(abfd, in->x_sym.x_tvndx , (bfd_byte *) ext->x_sym.x_tvndx);
 #endif
 
-  if (class == C_BLOCK || ISFCN (type) || ISTAG (class))
+  if (class == C_BLOCK || class == C_FCN || ISFCN (type) || ISTAG (class))
     {
       PUT_FCN_LNNOPTR(abfd,  in->x_sym.x_fcnary.x_fcn.x_lnnoptr, ext);
       PUT_FCN_ENDNDX(abfd,  in->x_sym.x_fcnary.x_fcn.x_endndx.l, ext);
@@ -780,9 +787,13 @@ coff_swap_scnhdr_out (abfd, in, out)
     PUTHALF(abfd, scnhdr_int->s_nlnno, (bfd_byte *) scnhdr_ext->s_nlnno);
   else
     {
-      (*_bfd_error_handler) ("%s: line number overflow: 0x%lx > 0xffff",
+      char buf[sizeof (scnhdr_int->s_name) + 1];
+
+      memcpy (buf, scnhdr_int->s_name, sizeof (scnhdr_int->s_name));
+      buf[sizeof (scnhdr_int->s_name)] = '\0';
+      (*_bfd_error_handler) ("%s: %s: line number overflow: 0x%lx > 0xffff",
 			     bfd_get_filename (abfd),
-			     scnhdr_int->s_nlnno);
+			     buf, scnhdr_int->s_nlnno);
       bfd_set_error (bfd_error_file_truncated);
       PUTHALF (abfd, 0xffff, (bfd_byte *) scnhdr_ext->s_nlnno);
       ret = 0;
@@ -791,9 +802,13 @@ coff_swap_scnhdr_out (abfd, in, out)
     PUTHALF(abfd, scnhdr_int->s_nreloc, (bfd_byte *) scnhdr_ext->s_nreloc);
   else
     {
-      (*_bfd_error_handler) ("%s: reloc overflow: 0x%lx > 0xffff",
+      char buf[sizeof (scnhdr_int->s_name) + 1];
+
+      memcpy (buf, scnhdr_int->s_name, sizeof (scnhdr_int->s_name));
+      buf[sizeof (scnhdr_int->s_name)] = '\0';
+      (*_bfd_error_handler) ("%s: %s: reloc overflow: 0x%lx > 0xffff",
 			     bfd_get_filename (abfd),
-			     scnhdr_int->s_nreloc);
+			     buf, scnhdr_int->s_nreloc);
       bfd_set_error (bfd_error_file_truncated);
       PUTHALF (abfd, 0xffff, (bfd_byte *) scnhdr_ext->s_nreloc);
       ret = 0;

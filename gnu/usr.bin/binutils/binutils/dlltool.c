@@ -160,6 +160,43 @@
 
  */
 
+/* .idata section description
+
+   The .idata section is the import table.  It is a collection of several
+   subsections used to keep the pieces for each dll together: .idata$[234567].
+   IE: Each dll's .idata$2's are catenated together, each .idata$3's, etc.
+
+   .idata$2 = Import Directory Table
+   = array of IMAGE_IMPORT_DESCRIPTOR's.
+
+	DWORD   Characteristics;      - pointer to .idata$4
+	DWORD   TimeDateStamp;        - currently always 0
+	DWORD   ForwarderChain;       - currently always 0
+	DWORD   Name;                 - pointer to dll's name
+	PIMAGE_THUNK_DATA FirstThunk; - pointer to .idata$5
+
+   .idata$3 = null terminating entry for .idata$2.
+
+   .idata$4 = Import Lookup Table
+   = array of array of pointers to hint name table.
+   There is one for each dll being imported from, and each dll's set is
+   terminated by a trailing NULL.
+
+   .idata$5 = Import Address Table
+   = array of array of pointers to hint name table.
+   There is one for each dll being imported from, and each dll's set is
+   terminated by a trailing NULL.
+   Initially, this table is identical to the Import Lookup Table.  However,
+   at load time, the loader overwrites the entries with the address of the
+   function.
+
+   .idata$6 = Hint Name Table
+   = Array of { short, asciz } entries, one for each imported function.
+   The `short' is the function's ordinal number.
+
+   .idata$7 = dll name (eg: "kernel32.dll"). (.idata$6 for ppc)
+*/
+
 #define PAGE_SIZE 4096
 #define PAGE_MASK (-PAGE_SIZE)
 #include "bfd.h"
@@ -185,7 +222,9 @@
 #endif
 #endif
 
-
+#ifdef HAVE_VFORK_H
+#include <vfork.h>
+#endif
 
 char *as_name = "as";
 
@@ -237,10 +276,27 @@ unsigned char i386_jtab[] = { 0xff, 0x25, 0x00, 0x00, 0x00, 0x00, 0x90, 0x90};
 unsigned char arm_jtab[] = { 0x00, 0xc0, 0x9f, 0xe5,
                              0x00, 0xf0, 0x9c, 0xe5,
 			        0,     0,   0,    0};
-/* If I understand what is going on here, this will need more for ppc
-   support, but this lets the program start. Kim Knuttila (krk@cygnus.com) */
 
-unsigned char ppc_jtab[] = { 0xff, 0x25, 0x00, 0x00, 0x00, 0x00, 0x90, 0x90};
+/* This is the glue sequence for PowerPC PE. There is a  */
+/* tocrel16-tocdefn reloc against the first instruction. */
+/* We also need a IMGLUE reloc against the glue function */
+/* to restore the toc saved by the third instruction in  */
+/* the glue. */
+unsigned char ppc_jtab[] = 
+{ 
+  0x00, 0x00, 0x62, 0x81, /* lwz r11,0(r2)               */
+                          /*   Reloc TOCREL16 __imp_xxx  */
+  0x00, 0x00, 0x8B, 0x81, /* lwz r12,0(r11)              */
+  0x04, 0x00, 0x41, 0x90, /* stw r2,4(r1)                */
+  0xA6, 0x03, 0x89, 0x7D, /* mtctr r12                   */
+  0x04, 0x00, 0x4B, 0x80, /* lwz r2,4(r11)               */
+  0x20, 0x04, 0x80, 0x4E  /* bctr                        */
+};
+
+/* the glue instruction, picks up the toc from the stw in */
+/* the above code: "lwz r2,4(r1)"                         */
+bfd_vma ppc_glue_insn = 0x80410004;
+
 
 char outfile[PATHMAX];
 struct mac
@@ -282,7 +338,7 @@ mtable[]
   {
 #define MPPC 2
     "ppc", ".byte", ".short", ".long", ".asciz", "#", "jmp *", ".global", ".space", ".align\t2",".align\t4","pe-powerpcle",bfd_arch_powerpc,
-   ppc_jtab,sizeof(ppc_jtab),2,
+   ppc_jtab,sizeof(ppc_jtab),0,
   }
   ,
 {    0}
@@ -1112,6 +1168,7 @@ typedef struct
   int id;
   const char *name;
   int flags;
+  int align;
   asection *sec;
   asymbol *sym;
   asymbol **sympp;
@@ -1120,6 +1177,8 @@ typedef struct
 } sinfo;
 
 
+#ifndef DLLTOOL_PPC
+
 #define TEXT 0
 #define DATA 1
 #define BSS 2
@@ -1127,20 +1186,54 @@ typedef struct
 #define IDATA5 4
 #define IDATA4 5
 #define IDATA6 6
+#define PDATA 7
+#define RDATA 8
+
 #define NSECS 7
+
 
 static sinfo secdata[NSECS] = 
 {
-  { TEXT, ".text", SEC_CODE | SEC_HAS_CONTENTS},
-  { DATA, ".data", SEC_DATA},
-  { BSS,".bss" },
-  { IDATA7, ".idata$7",SEC_HAS_CONTENTS},
-  { IDATA5, ".idata$5",  SEC_HAS_CONTENTS},
-  { IDATA4, ".idata$4",  SEC_HAS_CONTENTS},
-  { IDATA6,".idata$6",  SEC_HAS_CONTENTS}
-
-
+  { TEXT,   ".text",    SEC_CODE | SEC_HAS_CONTENTS, 3},
+  { DATA,   ".data",    SEC_DATA,                    2},
+  { BSS,    ".bss",     0,                           2},
+  { IDATA7, ".idata$7", SEC_HAS_CONTENTS,            2},
+  { IDATA5, ".idata$5", SEC_HAS_CONTENTS,            2},
+  { IDATA4, ".idata$4", SEC_HAS_CONTENTS,            2},
+  { IDATA6, ".idata$6", SEC_HAS_CONTENTS,            1}
 };
+
+#else 
+
+/* Sections numbered to make the order the same as other PowerPC NT    */
+/* compilers. This also keeps funny alignment thingies from happening. */
+#define TEXT   0
+#define PDATA  1
+#define RDATA  2
+#define IDATA5 3
+#define IDATA4 4
+#define IDATA6 5
+#define IDATA7 6
+#define DATA   7
+#define BSS    8
+
+#define NSECS 9
+
+static sinfo secdata[NSECS] = 
+{
+  { TEXT,   ".text",    SEC_CODE | SEC_HAS_CONTENTS, 3},
+  { PDATA,  ".pdata",   SEC_HAS_CONTENTS,            2},
+  { RDATA,  ".rdata",   SEC_HAS_CONTENTS,            2},
+  { IDATA5, ".idata$5", SEC_HAS_CONTENTS,            2},
+  { IDATA4, ".idata$4", SEC_HAS_CONTENTS,            2},
+  { IDATA6, ".idata$6", SEC_HAS_CONTENTS,            1},
+  { IDATA7, ".idata$7", SEC_HAS_CONTENTS,            2},
+  { DATA,   ".data",    SEC_DATA,                    2},
+  { BSS,    ".bss",     0,                           2}
+};
+
+#endif
+
 /*
 This is what we're trying to make
 
@@ -1164,11 +1257,25 @@ __imp_GetFileVersionInfoSizeW@8:
 ID2:	.short	2
 	.asciz	"GetFileVersionInfoSizeW"
 
+
+For the PowerPC, here's the variation on the above scheme:
+
+# Rather than a simple "jmp *", the code to get to the dll function 
+# looks like:
+         .text
+         lwz	r11,[tocv]__imp_function_name(r2)
+#		   RELOC: 00000000 TOCREL16,TOCDEFN __imp_function_name
+         lwz	r12,0(r11)
+	 stw	r2,4(r1)
+	 mtctr	r12
+	 lwz	r2,4(r11)
+	 bctr
 */
 
-static char *make_label (prefix, name)
-const char *prefix;
-const char *name;
+static char *
+make_label (prefix, name)
+     const char *prefix;
+     const char *name;
 {
   int len = strlen (ASM_PREFIX) + strlen (prefix) + strlen (name);
   char *copy = xmalloc (len +1 );
@@ -1177,10 +1284,11 @@ const char *name;
   strcat (copy, name);
   return copy;
 }
+
 static bfd *
 make_one_lib_file (exp, i)
-export_type *exp;
-int i;
+     export_type *exp;
+     int i;
 {
   if (0)
     {
@@ -1235,7 +1343,22 @@ int i;
       asymbol *iname;
       asymbol *iname_lab;
       asymbol **iname_lab_pp;
-      asymbol *ptrs[NSECS+3+1]; /* one symbol for each section, 2 extra + a null */
+      asymbol **iname_pp;
+
+      /* Extra Symbols for PPC */
+#ifdef DLLTOOL_PPC
+#define EXTRA 2     
+#else
+#define EXTRA 0
+#endif
+
+      asymbol *function_name; /* ".." functionName */
+      asymbol **fn_pp;
+      asymbol *toc_symbol;    /* The .toc symbol */
+      asymbol **toc_pp;
+
+      /* one symbol for each section, 2 extra + a null */
+      asymbol *ptrs[NSECS+3+EXTRA+1];
 
       char *outname = xmalloc (10);
       int oidx = 0;
@@ -1243,7 +1366,8 @@ int i;
       abfd = bfd_openw (outname, HOW_BFD_TARGET);
       if (!abfd)
 	{
-	  fprintf (stderr, "%s: bfd_open failed open output file %s\n", program_name, outname);
+	  fprintf (stderr, "%s: bfd_open failed open output file %s\n", 
+		   program_name, outname);
 	  exit (1);
 	}
 
@@ -1251,6 +1375,7 @@ int i;
       bfd_set_arch_mach (abfd, HOW_BFD_ARCH, 0);
 
 
+      /* First make symbols for the sections */
       for (i = 0; i < NSECS; i++)
 	{
 	  sinfo *si = secdata + i;
@@ -1260,8 +1385,10 @@ int i;
 	  bfd_set_section_flags (abfd, 
 				 si->sec,
 				 si->flags);
+	  
+	  bfd_set_section_alignment(abfd, si->sec, si->align);
 	  si->sec->output_section = si->sec;
-	  si->sym =  bfd_make_empty_symbol(abfd);
+	  si->sym = bfd_make_empty_symbol(abfd);
 	  si->sym->name = si->sec->name;
 	  si->sym->section = si->sec;
 	  si->sym->flags = BSF_LOCAL;
@@ -1274,16 +1401,23 @@ int i;
 
       exp_label = bfd_make_empty_symbol(abfd);
       exp_label->name = make_label ("",exp->name);
-      exp_label->section = secdata[TEXT].sec;
+
+      /* On PowerPC, the function name points to a descriptor in the
+	 rdata section, the first element of which is a pointer to the
+	 code (..function_name), and the second points to the .toc
+      */
+      if (machine == MPPC)
+	exp_label->section = secdata[RDATA].sec;
+      else
+	exp_label->section = secdata[TEXT].sec;
+
       exp_label->flags = BSF_GLOBAL;
       exp_label->value = 0;
 
       ptrs[oidx++] = exp_label;
 
       iname = bfd_make_empty_symbol(abfd);
-
       iname->name = make_label ("__imp_", exp->name);
-
       iname->section = secdata[IDATA5].sec;
       iname->flags = BSF_GLOBAL;
       iname->value = 0;
@@ -1297,9 +1431,34 @@ int i;
       iname_lab->value = 0;
 
 
+      iname_pp = ptrs + oidx;
       ptrs[oidx++] = iname;
+
       iname_lab_pp = ptrs + oidx;
       ptrs[oidx++] = iname_lab;
+
+#ifdef DLLTOOL_PPC
+      /* The symbol refering to the code (.text) */
+      function_name = bfd_make_empty_symbol(abfd);
+      function_name->name = make_label ("..", exp->name);
+      function_name->section = secdata[TEXT].sec;
+      function_name->flags = BSF_GLOBAL;
+      function_name->value = 0;
+
+      fn_pp = ptrs + oidx;
+      ptrs[oidx++] = function_name;
+
+      /* The .toc symbol */
+      toc_symbol = bfd_make_empty_symbol(abfd);
+      toc_symbol->name = make_label (".", "toc");
+      toc_symbol->section = (asection *)&bfd_und_section;
+      toc_symbol->flags = BSF_GLOBAL;
+      toc_symbol->value = 0;
+
+      toc_pp = ptrs + oidx;
+      ptrs[oidx++] = toc_symbol;
+#endif
+
       ptrs[oidx] = 0;
 
       for (i = 0; i < NSECS; i++)
@@ -1323,8 +1482,23 @@ int i;
 	      rpp[1] = 0;
 	      rel->address = HOW_JTAB_ROFF;
 	      rel->addend = 0;
-	      rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
-	      rel->sym_ptr_ptr = secdata[IDATA5].sympp;
+
+	      if (machine == MPPC)
+		{
+#if 1
+		  rel->howto = bfd_reloc_type_lookup (abfd, 
+						      BFD_RELOC_16_GOTOFF);
+#else
+		  rel->howto = bfd_reloc_type_lookup (abfd, 
+						      BFD_RELOC_PPC_TOC16);
+#endif
+		  rel->sym_ptr_ptr = iname_pp;
+		}
+	      else
+		{
+		  rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
+		  rel->sym_ptr_ptr = secdata[IDATA5].sympp;
+		}
 	      sec->orelocation = rpp;
 	      sec->reloc_count = 1;
 	      break;
@@ -1333,7 +1507,6 @@ int i;
 	      /* An idata$4 or idata$5 is one word long, and has an
 		 rva to idata$6 */
 	  
-
 	      si->data = xmalloc (4);
 	      si->size = 4;
 
@@ -1386,6 +1559,115 @@ int i;
 	      sec->orelocation = rpp;
 	      sec->reloc_count = 1;
 	      break;
+
+	    case PDATA:
+	      {
+		/* The .pdata section is 5 words long. */
+		/* Think of it as:                     */
+		/* struct                              */
+		/* {                                   */
+		/*   bfd_vma BeginAddress,     [0x00]  */
+		/*           EndAddress,       [0x04]  */
+		/*	     ExceptionHandler, [0x08]  */
+		/*	     HandlerData,      [0x0c]  */
+		/*	     PrologEndAddress; [0x10]  */
+		/* };                                  */
+
+		/* So this pdata section setups up this as a glue linkage to
+		   a dll routine. There are a number of house keeping things
+		   we need to do:
+
+		   1. In the name of glue trickery, the ADDR32 relocs for 0, 
+		      4, and 0x10 are set to point to the same place: 
+		      "..function_name". 
+		   2. There is one more reloc needed in the pdata section. 
+		      The actual glue instruction to restore the toc on 
+		      return is saved as the offset in an IMGLUE reloc.
+		      So we need a total of four relocs for this section.
+
+		   3. Lastly, the HandlerData field is set to 0x03, to indicate
+		      that this is a glue routine.
+		*/
+		arelent *imglue, *ba_rel, *ea_rel, *pea_rel;
+
+		/* alignment must be set to 2**2 or you get extra stuff */
+		bfd_set_section_alignment(abfd, sec, 2);
+
+		si->size = 4 * 5;
+		si->data =xmalloc(4 * 5);
+		memset (si->data, 0, si->size);
+		rpp = xmalloc (sizeof (arelent *) * 5);
+		rpp[0] = imglue  = xmalloc (sizeof (arelent));
+		rpp[1] = ba_rel  = xmalloc (sizeof (arelent));
+		rpp[2] = ea_rel  = xmalloc (sizeof (arelent));
+		rpp[3] = pea_rel = xmalloc (sizeof (arelent));
+		rpp[4] = 0;
+
+		/* stick the toc reload instruction in the glue reloc */
+		bfd_put_32(abfd, ppc_glue_insn, (char *) &imglue->address);
+
+		imglue->addend = 0;
+		imglue->howto = bfd_reloc_type_lookup (abfd, 
+						       BFD_RELOC_32_GOTOFF);
+		imglue->sym_ptr_ptr = fn_pp;
+
+		ba_rel->address = 0;
+		ba_rel->addend = 0;
+		ba_rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
+		ba_rel->sym_ptr_ptr = fn_pp;
+
+		bfd_put_32(abfd, 0x18, si->data + 0x04);
+		ea_rel->address = 4;
+		ea_rel->addend = 0;
+		ea_rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
+		ea_rel->sym_ptr_ptr = fn_pp;
+
+		/* mark it as glue */
+		bfd_put_32(abfd, 0x03, si->data + 0x0c);
+
+		/* mark the prolog end address */
+		bfd_put_32(abfd, 0x0D, si->data + 0x10);
+		pea_rel->address = 0x10;
+		pea_rel->addend = 0;
+		pea_rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
+		pea_rel->sym_ptr_ptr = fn_pp;
+
+		sec->orelocation = rpp;
+		sec->reloc_count = 4;
+		break;
+	      }
+	    case RDATA:
+	      /* Each external function in a PowerPC PE file has a two word
+		 descriptor consisting of:
+		 1. The address of the code.
+		 2. The address of the appropriate .toc
+	         We use relocs to build this.
+	      */
+
+	      si->size = 8;
+	      si->data =xmalloc(8);
+	      memset (si->data, 0, si->size);
+
+	      rpp = xmalloc (sizeof (arelent *) * 3);
+	      rpp[0] = rel = xmalloc (sizeof (arelent));
+	      rpp[1] = xmalloc (sizeof (arelent));
+	      rpp[2] = 0;
+
+	      rel->address = 0;
+	      rel->addend = 0;
+	      rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
+	      rel->sym_ptr_ptr = fn_pp;
+
+	      rel = rpp[1];
+
+	      rel->address = 4;
+	      rel->addend = 0;
+	      rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
+	      rel->sym_ptr_ptr = toc_pp;
+
+	      sec->orelocation = rpp;
+	      sec->reloc_count = 2;
+	      break;
 	    }
 	}
 
@@ -1395,8 +1677,10 @@ int i;
 	for (i = 0; i < NSECS; i++)
 	  {
 	    sinfo *si = secdata + i;
+
 	    bfd_set_section_size (abfd, si->sec, si->size);
 	    bfd_set_section_vma (abfd, si->sec, vma);
+
 /*	    vma += si->size;*/
 	  }
       }
@@ -1404,6 +1688,7 @@ int i;
       for (i = 0; i < NSECS; i++)
 	{
 	  sinfo *si = secdata + i;
+
 	  if (i == IDATA5 && no_idata5)
 	    continue;
 
@@ -1424,8 +1709,7 @@ int i;
 }
 
 
-static 
-bfd *
+static bfd *
 make_head()
 {
   FILE *  f = fopen ("dh.s", FOPEN_WT);
@@ -1477,14 +1761,10 @@ make_head()
   return  bfd_openr ("dh.o", HOW_BFD_TARGET);  
 }
 
-static 
-bfd * make_tail()
+static bfd * 
+make_tail()
 {
   FILE *  f = fopen ("dt.s", FOPEN_WT);
-  fprintf (f, "\t.section	.idata$7\n");
-  fprintf (f, "\t%s\t__%s_iname\n", ASM_GLOBAL, imp_name_lab);
-  fprintf (f, "__%s_iname:\t%s\t\"%s\"\n",
-	   imp_name_lab, ASM_TEXT, dll_name);
 
   if (!no_idata4) 
     {
@@ -1496,6 +1776,36 @@ bfd * make_tail()
       fprintf (f, "\t.section	.idata$5\n");
       fprintf (f, "\t%s\t0\n", ASM_LONG);
     }
+
+#ifdef DLLTOOL_PPC
+  /* Normally, we need to see a null descriptor built in idata$3 to
+     act as the terminator for the list. The ideal way, I suppose,
+     would be to mark this section as a comdat type 2 section, so
+     only one would appear in the final .exe (if our linker supported
+     comdat, that is) or cause it to be inserted by something else (say
+     crt0)
+  */
+
+  fprintf (f, "\t.section	.idata$3\n");
+  fprintf (f, "\t%s\t0\n", ASM_LONG);
+  fprintf (f, "\t%s\t0\n", ASM_LONG);
+  fprintf (f, "\t%s\t0\n", ASM_LONG);
+  fprintf (f, "\t%s\t0\n", ASM_LONG);
+  fprintf (f, "\t%s\t0\n", ASM_LONG);
+#endif
+
+#ifdef DLLTOOL_PPC
+  /* Other PowerPC NT compilers use idata$6 for the dllname, so I
+     do too. Original, huh? */
+  fprintf (f, "\t.section	.idata$6\n");
+#else
+  fprintf (f, "\t.section	.idata$7\n");
+#endif
+
+  fprintf (f, "\t%s\t__%s_iname\n", ASM_GLOBAL, imp_name_lab);
+  fprintf (f, "__%s_iname:\t%s\t\"%s\"\n",
+	   imp_name_lab, ASM_TEXT, dll_name);
+
   fclose (f);
 
   sprintf (outfile, "-o dt.o dt.s");
@@ -1707,17 +2017,18 @@ static void
 fill_ordinals (d_export_vec)
      export_type **d_export_vec;
 {
-  int lowest = 0;
-
+  int lowest = -1;
   int i;
   char *ptr;
+  int size = 65536;
+
   qsort (d_export_vec, d_nfuncs, sizeof (export_type *), pfunc);
 
   /* fill in the unset ordinals with ones from our range */
 
-  ptr = (char *) malloc (65536);
+  ptr = (char *) malloc (size);
 
-  memset (ptr, 0, 65536);
+  memset (ptr, 0, size);
 
   /* Mark in our large vector all the numbers that are taken */
   for (i = 0; i < d_nfuncs; i++)
@@ -1725,17 +2036,26 @@ fill_ordinals (d_export_vec)
       if (d_export_vec[i]->ordinal != -1)
 	{
 	  ptr[d_export_vec[i]->ordinal] = 1;
-	  if (lowest == 0)
-	    lowest = d_export_vec[i]->ordinal;
+	  if (lowest == -1 || d_export_vec[i]->ordinal < lowest)
+	    {
+	      lowest = d_export_vec[i]->ordinal;
+	    }
 	}
     }
 
+  /* Start at 1 for compatibility with MS toolchain.  */
+  if (lowest == -1)
+    lowest = 1;
+
+  /* Now fill in ordinals where the user wants us to choose. */
   for (i = 0; i < d_nfuncs; i++)
     {
       if (d_export_vec[i]->ordinal == -1)
 	{
-	  int j;
-	  for (j = lowest; j < 65536; j++)
+	  register int j;
+
+	  /* First try within or after any user supplied range. */
+	  for (j = lowest; j < size; j++)
 	    if (ptr[j] == 0)
 	      {
 		ptr[j] = 1;
@@ -1743,7 +2063,8 @@ fill_ordinals (d_export_vec)
 		goto done;
 	      }
 
-	  for (j = 1; j < lowest; j++)
+	  /* Then try before the range. */
+	  for (j = lowest; j >0; j--)
 	    if (ptr[j] == 0)
 	      {
 		ptr[j] = 1;
@@ -1751,7 +2072,6 @@ fill_ordinals (d_export_vec)
 		goto done;
 	      }
 	done:;
-
 	}
     }
 
@@ -1761,12 +2081,11 @@ fill_ordinals (d_export_vec)
 
   qsort (d_export_vec, d_nfuncs, sizeof (export_type *), pfunc);
 
-
-  /* Work out the lowest ordinal number */
-  if (d_export_vec[0])
-    d_low_ord = d_export_vec[0]->ordinal;
+  /* Work out the lowest and highest ordinal numbers.  */
   if (d_nfuncs) 
     {
+      if (d_export_vec[0])
+	d_low_ord = d_export_vec[0]->ordinal;
       if (d_export_vec[d_nfuncs-1])
 	d_high_ord = d_export_vec[d_nfuncs-1]->ordinal;
     }

@@ -1,9 +1,19 @@
 #!/bin/sh
 #
 # install - install a program, script, or datafile
-# This comes from X11R5.
+# This comes from X11R5 (mit/util/scripts/install.sh).
 #
-# $XConsortium: install.sh,v 1.2 89/12/18 14:47:22 jim Exp $
+# Copyright 1991 by the Massachusetts Institute of Technology
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation, and that the name of M.I.T. not be used in advertising or
+# publicity pertaining to distribution of the software without specific,
+# written prior permission.  M.I.T. makes no representations about the
+# suitability of this software for any purpose.  It is provided "as is"
+# without express or implied warranty.
 #
 # This script is compatible with the BSD install script, but was written
 # from scratch.
@@ -27,7 +37,7 @@ stripprog="${STRIPPROG-strip}"
 rmprog="${RMPROG-rm}"
 mkdirprog="${MKDIRPROG-mkdir}"
 
-tranformbasename=""
+transformbasename=""
 transform_arg=""
 instcmd="$mvprog"
 chmodcmd="$chmodprog 0755"

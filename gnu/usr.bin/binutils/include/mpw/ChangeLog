@@ -1,3 +1,16 @@
+Tue Feb 27 12:23:04 1996  Raymond Jou  <rjou@mexican.cygnus.com>
+
+	* mpw.h (HAVE_VPRINTF): Add and define to have the value 1.
+
+Fri Dec 29 14:40:46 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw.h (HAVE_STDLIB_H, etc): Define to have the value 1.
+	(HAVE_FCNTL_H): Define.
+
+Mon Dec 11 15:39:06 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw.h (open, access): Define as mpw_open and mpw_access.
+
 Thu Nov  9 15:38:37 1995  Stan Shebs  <shebs@andros.cygnus.com>
 
 	* mpw.h: Include unix.h if USE_MW_HEADERS, otherwise include

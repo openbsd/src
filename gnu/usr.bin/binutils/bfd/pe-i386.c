@@ -26,5 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define COFF_OBJ_WITH_PE
 #define COFF_WITH_PE
 #define PCRELOFFSET true
-#define TARGET_UNDERSCORE 1
+#define TARGET_UNDERSCORE '_'
+#define COFF_LONG_SECTION_NAMES
+
 #include "coff-i386.c"

@@ -138,7 +138,9 @@ struct i960_opcode {
 #define I_KX	0x10	/* 80960Kx instruction		*/
 #define I_MIL	0x20	/* Military instruction		*/
 #define I_CASIM	0x40	/* CA simulator instruction	*/
-#define I_CX2	0x80	/* other Cx instructions	*/
+#define I_CX2	0x80	/* Cx/Jx/Hx instructions	*/
+#define I_JX	0x100	/* Jx/Hx instruction		*/
+#define I_HX	0x200	/* Hx instructions		*/
 
 /******************************************************************************
  *
@@ -438,11 +440,66 @@ const struct i960_opcode i960_opcodes[] = {
 	{ R_3(0x659),	"sysctl",	I_CX2,	REG,	3, { RSL,RSL,RL } },
 
 
+	/* Jx extensions.  */
+	{ R_3(0x780),	"addono",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x790),	"addog",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7a0),	"addoe",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7b0),	"addoge",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7c0),	"addol",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7d0),	"addone",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7e0),	"addole",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7f0),	"addoo",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x781),	"addino",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x791),	"addig",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7a1),	"addie",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7b1),	"addige",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7c1),	"addil",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7d1),	"addine",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7e1),	"addile",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7f1),	"addio",	I_JX,	REG,	3, { RSL,RSL,RS } },
 
+	{ R_2D(0x5ad),	"bswap",	I_JX,	REG,	2, { RSL, RS, 0 } },
 
+	{ R_2(0x594),	"cmpob",	I_JX,	REG,	2, { RSL,RSL, 0 } },
+	{ R_2(0x595),	"cmpib",	I_JX,	REG,	2, { RSL,RSL, 0 } },
+	{ R_2(0x596),	"cmpos",	I_JX,	REG,	2, { RSL,RSL, 0 } },
+	{ R_2(0x597),	"cmpis",	I_JX,	REG,	2, { RSL,RSL, 0 } },
 
+	{ R_3(0x784),	"selno",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x794),	"selg",		I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7a4),	"sele",		I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7b4),	"selge",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7c4),	"sell",		I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7d4),	"selne",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7e4),	"selle",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7f4),	"selo",		I_JX,	REG,	3, { RSL,RSL,RS } },
 
+	{ R_3(0x782),	"subono",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x792),	"subog",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7a2),	"suboe",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7b2),	"suboge",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7c2),	"subol",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7d2),	"subone",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7e2),	"subole",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7f2),	"suboo",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x783),	"subino",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x793),	"subig",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7a3),	"subie",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7b3),	"subige",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7c3),	"subil",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7d3),	"subine",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7e3),	"subile",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_3(0x7f3),	"subio",	I_JX,	REG,	3, { RSL,RSL,RS } },
 
+	{ R_3(0x65c),	"dcctl",	I_JX,	REG,	3, { RSL,RSL,RL } },
+	{ R_3(0x65b),	"icctl",	I_JX,	REG,	3, { RSL,RSL,RS } },
+	{ R_2D(0x658),	"intctl",	I_JX,	REG,	2, { RSL, RS, 0 } },
+	{ R_0(0x5b4),	"intdis",	I_JX,	REG,	0, {   0,  0, 0 } },
+	{ R_0(0x5b5),	"inten",	I_JX,	REG,	0, {   0,  0, 0 } },
+	{ R_0(0x65d),	"halt",		I_JX,	REG,	0, {   0,  0, 0 } },
+
+	/* Hx extensions.  */
+	{ 0xac000000,	"dcinva",	I_HX,	MEM1,	1, {   M,  0, 0 } },
 
 	/* END OF TABLE */
 

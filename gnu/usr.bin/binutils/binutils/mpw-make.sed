@@ -1,14 +1,13 @@
 # Sed commands to finish translating the binutils Unix makefile into MPW syntax.
 
-# Define undefined makefile variables.
+# Add a rule.
 /^#### .*/a\
 \
-BUILD_NLMCONV = \
-BUILD_SRCONV = \
-SYSINFO_PROG = \
-BUILD_DLLTOOL = \
-\
 "{o}"underscore.c.o \\Option-f "{o}"underscore.c\
+
+# Comment out any alias settings.
+/^host_alias =/s/^/#/
+/^target_alias =/s/^/#/
 
 # Whack out unused host define bits.
 /HDEFINES/s/@HDEFINES@//
@@ -18,6 +17,13 @@ BUILD_DLLTOOL = \
 /BUILD_DLLTOOL/s/@BUILD_DLLTOOL@//
 
 /UNDERSCORE/s/@UNDERSCORE@/{UNDERSCORE}/
+
+# Don't need this.
+/@HLDFLAGS@/s/@HLDFLAGS@//
+
+# Point at the libraries directly.
+/@BFDLIB@/s/@BFDLIB@/::bfd:libbfd.o/
+/@OPCODES@/s/@OPCODES@/::opcodes:libopcodes.o/
 
 # Whack out target makefile fragment.
 /target_makefile_fragment/s/target_makefile_fragment@//
@@ -36,6 +42,10 @@ BUILD_DLLTOOL = \
 
 /^{[A-Z]*_PROG}/s/$/ "{s}"mac-binutils.r/
 /{[A-Z]*_PROG}\.r/s/{[A-Z]*_PROG}\.r/mac-binutils.r/
+
+# There are auto-generated references to BFD .h files that are not
+# in the objdir (like bfd.h) but are in the source dir.
+/::bfd:lib/s/::bfd:lib\([a-z]*\)\.h/{BFDDIR}:lib\1.h/g
 
 # Fix the locations of generated files.
 /config/s/"{s}"config\.h/"{o}"config.h/g
@@ -65,6 +75,33 @@ BUILD_DLLTOOL = \
 
 # Fix an over-eagerness.
 /echo.*WARNING.*This file/s/'.*'/' '/
+
+# Add a "stamps" target.
+$a\
+stamps \\Option-f stamp-under\
+
+/^install \\Option-f /,/^$/c\
+install \\Option-f  all install-only\
+\
+install-only \\Option-f\
+	If "`Exists "{prefix}"`" == ""\
+		Echo "{prefix}" does not exist, cannot install anything\
+		Exit 1\
+	End If\
+	If "`Exists "{bindir}"`" == ""\
+		NewFolder "{bindir}"\
+	End If\
+	# Need to copy all the tools\
+	For prog in {PROGS}\
+		Set progname `echo {prog} | sed -e 's/.new//'`\
+		Duplicate -y :{prog} "{bindir}"{progname}\
+	End For\
+
+
+/true/s/ ; @true$//
+
+# dot files are trouble, remove them and their actions.
+/^\.dep/,/^$/d
 
 # Remove un-useful targets.
 /^Makefile \\Option-f/,/^$/d

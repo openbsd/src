@@ -63,7 +63,7 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_arm
     case bfd_arch_arm:
-      if (abfd->xvec->byteorder_big_p)
+      if (bfd_big_endian (abfd))
 	disassemble = print_insn_big_arm;
       else
 	disassemble = print_insn_little_arm;
@@ -114,7 +114,7 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_mips
     case bfd_arch_mips:
-      if (abfd->xvec->byteorder_big_p)
+      if (bfd_big_endian (abfd))
 	disassemble = print_insn_big_mips;
       else
 	disassemble = print_insn_little_mips;
@@ -122,7 +122,7 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_powerpc
     case bfd_arch_powerpc:
-      if (abfd->xvec->byteorder_big_p)
+      if (bfd_big_endian (abfd))
 	disassemble = print_insn_big_powerpc;
       else
 	disassemble = print_insn_little_powerpc;
@@ -135,7 +135,7 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_sh
     case bfd_arch_sh:
-      if (abfd->xvec->byteorder_big_p)
+      if (bfd_big_endian (abfd))
 	disassemble = print_insn_sh;
       else
 	disassemble = print_insn_shl;
@@ -143,10 +143,7 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_sparc
     case bfd_arch_sparc:
-      if (bfd_get_mach (abfd) == bfd_mach_sparc64)
-	disassemble = print_insn_sparc64;
-      else
-	disassemble = print_insn_sparc;
+      disassemble = print_insn_sparc;
       break;
 #endif
 #ifdef ARCH_w65

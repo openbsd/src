@@ -194,6 +194,7 @@ libbfd.h: $(srcdir)/../libbfd-in.h	\
 	$(srcdir)/../cpu-i960.c		\
 	$(srcdir)/../archures.c		\
 	$(srcdir)/../elfcode.h		\
+	$(srcdir)/proto.str		\
 	$(MKDOC)
 	cat $(srcdir)/../libbfd-in.h >libbfd.h 
 	$(MKDOC) -i -f $(srcdir)/proto.str  < $(srcdir)/../init.c >>libbfd.h
@@ -207,7 +208,8 @@ libbfd.h: $(srcdir)/../libbfd-in.h	\
 	$(MKDOC) -i -f $(srcdir)/proto.str  < $(srcdir)/../elfcode.h >>libbfd.h
 
 libcoff.h: $(srcdir)/../libcoff-in.h	\
-	$(srcdir)/../coffcode.h \
+	$(srcdir)/../coffcode.h		\
+	$(srcdir)/proto.str		\
 	$(MKDOC)
 	cat $(srcdir)/../libcoff-in.h >libcoff.h
 	$(MKDOC) -i -f $(srcdir)/proto.str  < $(srcdir)/../coffcode.h >>libcoff.h
@@ -225,6 +227,7 @@ bfd.h: $(srcdir)/../bfd-in.h 		\
 	$(srcdir)/../corefile.c		\
 	$(srcdir)/../targets.c		\
 	$(srcdir)/../format.c		\
+	$(srcdir)/proto.str		\
 	$(MKDOC)
 	cat $(srcdir)/../bfd-in.h >bfd.h
 	$(MKDOC) -f $(srcdir)/proto.str<$(srcdir)/../init.c >>bfd.h

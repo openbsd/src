@@ -11,7 +11,6 @@ srcname="-liberty library"
 files="alloca-norm.h"
 links="alloca-conf.h"
 
-xhost=${target}
 . ${srcdir}/config.table
 host_makefile_frag=${frag}
 
@@ -57,6 +56,15 @@ if [ -n "${with_target_subdir}" ] ; then
   case ${srcdir} in
   .)
     if [ "${with_target_subdir}" != "." ] ; then
+
+      # Set MULTISRCTOP to the value we need if we are not doing
+      # multilib.  This will be overridden if --enable-multilib was
+      # used.
+      sed -e "s:^MULTISRCTOP[ 	]*=.*$:MULTISRCTOP = ../:" \
+	${Makefile} > Makefile.tem
+      rm -f ${Makefile}
+      mv Makefile.tem ${Makefile}
+
       . ${srcdir}/${with_multisrctop}../../config-ml.in
     else
       . ${srcdir}/${with_multisrctop}../config-ml.in

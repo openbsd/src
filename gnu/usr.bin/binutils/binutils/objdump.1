@@ -1,4 +1,4 @@
-.\" Copyright (c) 1991 Free Software Foundation
+.\" Copyright (c) 1991, 1996 Free Software Foundation
 .\" See section COPYING for conditions for redistribution
 .TH objdump 1 "5 November 1991" "cygnus support" "GNU Development Tools"
 .de BP
@@ -21,6 +21,7 @@ objdump \- display information from object files.
 .RB " | " "\-\-target="\c
 .I bfdname\c
 \&\|] 
+.RB "[\|" \-\-debugging "\|]" 
 .RB "[\|" \-d | \-\-disassemble "\|]" 
 .RB "[\|" \-D | \-\-disassemble-all "\|]" 
 .RB "[\|" \-f | \-\-file\-headers "\|]"
@@ -42,6 +43,7 @@ objdump \- display information from object files.
 .RB "[\|" \-R | \-\-dynamic\-reloc "\|]" 
 .RB "[\|" \-s | \-\-full\-contents "\|]"
 .RB "[\|" \-S | \-\-source "\|]"
+.RB "[\|" \-\-show\-raw\-insn "\|]" 
 .RB "[\|" \-\-stabs "\|]"
 .RB "[\|" \-t | \-\-syms "\|]" 
 .RB "[\|" \-T | \-\-dynamic\-syms "\|]" 
@@ -124,6 +126,12 @@ file in the format produced by Oasys compilers.  You can list the
 formats available with the `\|\c
 .B \-i\c
 \|' option.
+
+.TP
+.B \-\-debugging
+Display debugging information.  This attempts to parse debugging
+information stored in the file and print it out using a C like syntax.
+Only certain types of debugging information have been implemented.
 
 .TP
 .B \-d
@@ -238,6 +246,11 @@ Display source code intermixed with disassembly, if possible.  Implies
 \fB-d\fP.
 
 .TP
+.B \-\-show-raw-insn
+When disassembling instructions, print the instruction in hex as well as
+in symbolic form.  Not all targets handle this correctly yet.
+
+.TP
 .B \-\-stabs
 Display the contents of the .stab, .stab.index, and .stab.excl
 sections from an ELF file.  This is only useful on systems (such as
@@ -320,7 +333,7 @@ The GNU Binary Utilities\c
 .BR nm "(" 1 ")."
 
 .SH COPYING
-Copyright (c) 1991 Free Software Foundation, Inc.
+Copyright (c) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 .PP
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice

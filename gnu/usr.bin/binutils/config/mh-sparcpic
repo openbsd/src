@@ -1,1 +1,1 @@
-PICFLAG=-fpic
+PICFLAG=-fPIC

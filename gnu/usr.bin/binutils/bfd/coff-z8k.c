@@ -242,8 +242,8 @@ const bfd_target z8kcoff_vec =
 {
   "coff-z8k",			/* name */
   bfd_target_coff_flavour,
-  true,				/* data byte order is big */
-  true,				/* header byte order is big */
+  BFD_ENDIAN_BIG,		/* data byte order is big */
+  BFD_ENDIAN_BIG,		/* header byte order is big */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |

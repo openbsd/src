@@ -1,5 +1,5 @@
 /* Define a target vector and some small routines for a variant of a.out.
-   Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -353,6 +353,9 @@ MY_bfd_final_link (abfd, info)
 #ifndef	MY_openr_next_archived_file
 #define	MY_openr_next_archived_file	bfd_generic_openr_next_archived_file
 #endif
+#ifndef MY_get_elt_at_index
+#define MY_get_elt_at_index		_bfd_generic_get_elt_at_index
+#endif
 #ifndef	MY_generic_stat_arch_elt
 #define	MY_generic_stat_arch_elt	bfd_generic_stat_arch_elt
 #endif
@@ -554,11 +557,11 @@ const bfd_target MY(vec) =
   TARGETNAME,		/* name */
   bfd_target_aout_flavour,
 #ifdef TARGET_IS_BIG_ENDIAN_P
-  true,				/* target byte order (big) */
-  true,				/* target headers byte order (big) */
+  BFD_ENDIAN_BIG,		/* target byte order (big) */
+  BFD_ENDIAN_BIG,		/* target headers byte order (big) */
 #else
-  false,			/* target byte order (little) */
-  false,			/* target headers byte order (little) */
+  BFD_ENDIAN_LITTLE,		/* target byte order (little) */
+  BFD_ENDIAN_LITTLE,		/* target headers byte order (little) */
 #endif
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |

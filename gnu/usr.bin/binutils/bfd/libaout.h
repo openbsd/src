@@ -1,5 +1,5 @@
 /* BFD back-end data structures for a.out (and similar) files.
-   Copyright 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -192,14 +192,14 @@ struct internal_exec
 };
 
 /* Magic number is written 
-< MSB        >
+< MSB          >
 3130292827262524232221201918171615141312111009080706050403020100
-< FLAGS      >< MACHINE TYPE ><  MAGIC NUMBER		       >
+< FLAGS        >< MACHINE TYPE ><  MAGIC NUMBER                >
 */
 /* Magic number for NetBSD is
-<MSB         >
+<MSB           >
 3130292827262524232221201918171615141312111009080706050403020100
-< FLAGS    ><                  ><  MAGIC NUMBER                >
+< FLAGS    >< MACHINE TYPE     ><  MAGIC NUMBER                >
 */
 
 enum machine_type {
@@ -221,6 +221,7 @@ enum machine_type {
   M_68K4K_NETBSD = 136,	/* NetBSD/m68k4k binary */
   M_532_NETBSD = 137,	/* NetBSD/ns32k binary */
   M_SPARC_NETBSD = 138,	/* NetBSD/sparc binary */
+  M_SPARCLET = 142,	/* SPARClet */
   M_MIPS1 = 151,        /* MIPS R2000/R3000 binary */
   M_MIPS2 = 152,        /* MIPS R4000/R6000 binary */
   M_HP200 = 200,	/* HP 200 (68010) BSD binary */
@@ -544,11 +545,6 @@ NAME(aout,final_link) PARAMS ((bfd *, struct bfd_link_info *,
 boolean
 NAME(aout,bfd_free_cached_info) PARAMS ((bfd *));
 
-/* Prototypes for functions in stab-syms.c. */
-
-CONST char *
-aout_stab_name PARAMS ((int code));
-
 /* A.out uses the generic versions of these routines... */
 
 #define	aout_32_get_section_contents	_bfd_generic_get_section_contents
@@ -587,26 +583,22 @@ aout_stab_name PARAMS ((int code));
   									      \
 	if (bfd_get_outsymbols (abfd) != (asymbol **) NULL		      \
 	    && bfd_get_symcount (abfd) != 0) 				      \
-	    {								      \
-	      if (bfd_seek (abfd, (file_ptr)(N_SYMOFF(*execp)), SEEK_SET)     \
-		  != 0)							      \
-	        return false;						      \
+	  {								      \
+	    if (bfd_seek (abfd, (file_ptr)(N_SYMOFF(*execp)), SEEK_SET) != 0) \
+	      return false;						      \
 									      \
-	      if (! NAME(aout,write_syms)(abfd)) return false;		      \
+	    if (! NAME(aout,write_syms)(abfd)) return false;		      \
+	  }								      \
 									      \
-	      if (bfd_seek (abfd, (file_ptr)(N_TRELOFF(*execp)), SEEK_SET)    \
-		  != 0)							      \
-	        return false;						      \
+	if (bfd_seek (abfd, (file_ptr)(N_TRELOFF(*execp)), SEEK_SET) != 0)    \
+	  return false;						      	      \
+	if (!NAME(aout,squirt_out_relocs) (abfd, obj_textsec (abfd)))         \
+	  return false;						      	      \
 									      \
-	      if (!NAME(aout,squirt_out_relocs) (abfd, obj_textsec (abfd)))   \
-		return false;						      \
-	      if (bfd_seek (abfd, (file_ptr)(N_DRELOFF(*execp)), SEEK_SET)    \
-		  != 0)							      \
-	        return false;						      \
-									      \
-	      if (!NAME(aout,squirt_out_relocs)(abfd, obj_datasec (abfd)))    \
-		return false;						      \
-	    }								      \
+	if (bfd_seek (abfd, (file_ptr)(N_DRELOFF(*execp)), SEEK_SET) != 0)    \
+	  return false;						      	      \
+	if (!NAME(aout,squirt_out_relocs)(abfd, obj_datasec (abfd)))          \
+	  return false;						      	      \
       }									      
 #endif
 

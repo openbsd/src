@@ -585,8 +585,8 @@ const bfd_target a29kcoff_big_vec =
 {
   "coff-a29k-big",		/* name */
   bfd_target_coff_flavour,
-  true,				/* data byte order is big */
-  true,				/* header byte order is big */
+  BFD_ENDIAN_BIG,		/* data byte order is big */
+  BFD_ENDIAN_BIG,		/* header byte order is big */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |

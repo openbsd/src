@@ -162,10 +162,7 @@ versados_mkobject (abfd)
     {
       tdata_type *tdata = (tdata_type *) bfd_alloc (abfd, sizeof (tdata_type));
       if (tdata == NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return false;
-	}
+	return false;
       abfd->tdata.versados_data = tdata;
       tdata->symbols = NULL;
       VDATA (abfd)->alert = 0x12345678;
@@ -554,6 +551,9 @@ versados_scan (abfd)
 
   VDATA (abfd)->strings = bfd_alloc (abfd, VDATA (abfd)->stringlen);
 
+  if ((VDATA (abfd)->symbols == NULL && abfd->symcount > 0)
+      || (VDATA (abfd)->strings == NULL && VDATA (abfd)->stringlen > 0))
+    return false;
 
   /* Actually fill in the section symbols,
      we stick them at the end of the table */
@@ -596,20 +596,34 @@ versados_object_p (abfd)
   struct ext_vheader ext;
   unsigned char len;
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET))
+  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
     return NULL;
 
+  if (bfd_read (&len, 1, 1, abfd) != 1)
+    {
+      if (bfd_get_error () != bfd_error_system_call)
+	bfd_set_error (bfd_error_wrong_format);
+      return NULL;
+    }
 
-  bfd_read (&len, 1, 1, abfd);
-  if (bfd_read (&ext.type, 1, len, abfd) != len
-      || ext.type != '1')
+  if (bfd_read (&ext.type, 1, len, abfd) != len)
+    {
+      if (bfd_get_error () != bfd_error_system_call)
+	bfd_set_error (bfd_error_wrong_format);
+      return NULL;
+    }
+
+  /* We guess that the language field will never be larger than 10.
+     In sample files, it is always either 0 or 1.  Checking for this
+     prevents confusion with Intel Hex files.  */
+  if (ext.type != VHEADER
+      || ext.lang > 10)
     {
       bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
 
-  /* ok, looks like a record, build the tdata and read 
-     in.. */
+  /* OK, looks like a record, build the tdata and read in.  */
 
   if (!versados_mkobject (abfd)
       || !versados_scan (abfd))
@@ -859,8 +873,8 @@ const bfd_target versados_vec =
 {
   "versados",			/* name */
   bfd_target_versados_flavour,
-  true,				/* target byte order */
-  true,				/* target headers byte order */
+  BFD_ENDIAN_BIG,		/* target byte order */
+  BFD_ENDIAN_BIG,		/* target headers byte order */
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),

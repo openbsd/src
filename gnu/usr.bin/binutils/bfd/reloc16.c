@@ -1,5 +1,5 @@
 /* 8 and 16 bit COFF relocation functions, for BFD.
-   Copyright 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -55,7 +55,8 @@ bfd_coff_reloc16_get_value (reloc, link_info, input_section)
      base of the section.  To relocate, we find where the section will
      live in the output and add that in */
 
-  if (bfd_is_und_section (symbol->section))
+  if (bfd_is_und_section (symbol->section)
+      || bfd_is_com_section (symbol->section))
     {
       struct bfd_link_hash_entry *h;
 
@@ -64,8 +65,9 @@ bfd_coff_reloc16_get_value (reloc, link_info, input_section)
 	 we convert this stuff to use a specific final_link function
 	 and change the interface to bfd_relax_section to not require
 	 the generic symbols.  */
-      h = bfd_link_hash_lookup (link_info->hash, bfd_asymbol_name (symbol),
-				false, false, true);
+      h = bfd_wrapped_link_hash_lookup (input_section->owner, link_info,
+					bfd_asymbol_name (symbol),
+					false, false, true);
       if (h != (struct bfd_link_hash_entry *) NULL
 	  && (h->type == bfd_link_hash_defined
 	      || h->type == bfd_link_hash_defweak))
@@ -158,12 +160,9 @@ bfd_coff_reloc16_relax_section (abfd, i, link_info, again)
   if (reloc_size < 0)
     return false;
 
-  reloc_vector = (arelent **) malloc (reloc_size);
+  reloc_vector = (arelent **) bfd_malloc (reloc_size);
   if (!reloc_vector && reloc_size > 0)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   /* Get the relocs and think about them */
   reloc_count =
@@ -230,12 +229,9 @@ bfd_coff_reloc16_get_relocated_section_contents(in_abfd,
     return NULL;
   
   
-  reloc_vector = (arelent **)malloc((size_t) reloc_size);
+  reloc_vector = (arelent **) bfd_malloc((size_t) reloc_size);
   if (!reloc_vector && reloc_size != 0)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
   
   reloc_count = bfd_canonicalize_reloc (input_bfd, 
 					input_section,

@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF" files.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    FIXME: Can someone provide a transliteration of this name into ASCII?
    Using the following chars caused a compiler warning on HIUX (so I replaced
    them with octal escapes), and isn't useful without an understanding of what
@@ -67,10 +67,7 @@ xcoff_mkobject (abfd)
     ((struct xcoff_tdata *)
      bfd_zalloc (abfd, sizeof (struct xcoff_tdata)));
   if (abfd->tdata.xcoff_obj_data == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   coff = coff_data (abfd);
   coff->symbols = (coff_symbol_type *) NULL;
   coff->conversion_table = (unsigned int *) NULL;
@@ -97,6 +94,7 @@ xcoff_copy_private_bfd_data (ibfd, obfd)
      bfd *obfd;
 {
   struct xcoff_tdata *ix, *ox;
+  asection *sec;
 
   if (ibfd->xvec != obfd->xvec)
     return true;
@@ -104,14 +102,26 @@ xcoff_copy_private_bfd_data (ibfd, obfd)
   ox = xcoff_data (obfd);
   ox->full_aouthdr = ix->full_aouthdr;
   ox->toc = ix->toc;
-  if (ix->toc_section == NULL)
-    ox->toc_section = NULL;
+  if (ix->sntoc == 0)
+    ox->sntoc = 0;
   else
-    ox->toc_section = ix->toc_section->output_section;
-  if (ix->entry_section == NULL)
-    ox->entry_section = NULL;
+    {
+      sec = coff_section_from_bfd_index (ibfd, ix->sntoc);
+      if (sec == NULL)
+	ox->sntoc = 0;
+      else
+	ox->sntoc = sec->output_section->target_index;
+    }
+  if (ix->snentry == 0)
+    ox->snentry = 0;
   else
-    ox->entry_section = ix->entry_section->output_section;
+    {
+      sec = coff_section_from_bfd_index (ibfd, ix->snentry);
+      if (sec == NULL)
+	ox->snentry = 0;
+      else
+	ox->snentry = sec->output_section->target_index;
+    }
   ox->text_align_power = ix->text_align_power;
   ox->data_align_power = ix->data_align_power;
   ox->modtype = ix->modtype;
@@ -661,6 +671,10 @@ struct xcoff_ar_hdr
    bfd_false)
 #define xcoff_truncate_arname bfd_dont_truncate_arname
 
+/* We can use the standard get_elt_at_index routine.  */
+
+#define xcoff_get_elt_at_index _bfd_generic_get_elt_at_index
+
 /* XCOFF archives do not have a timestamp.  */
 
 #define xcoff_update_armap_timestamp bfd_true
@@ -709,10 +723,7 @@ xcoff_slurp_armap (abfd)
   sz = strtol (hdr.size, (char **) NULL, 10);
   contents = (bfd_byte *) bfd_alloc (abfd, sz);
   if (contents == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   if (bfd_read ((PTR) contents, 1, sz, abfd) != sz)
     return false;
 
@@ -728,10 +739,7 @@ xcoff_slurp_armap (abfd)
   bfd_ardata (abfd)->symdefs = ((carsym *)
 				bfd_alloc (abfd, c * sizeof (carsym)));
   if (bfd_ardata (abfd)->symdefs == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   /* After the count comes a list of four byte file offsets.  */
   for (i = 0, arsym = bfd_ardata (abfd)->symdefs, p = contents + 4;
@@ -788,10 +796,7 @@ xcoff_archive_p (abfd)
     (struct artdata *) bfd_zalloc (abfd, sizeof (struct artdata));
 
   if (bfd_ardata (abfd) == (struct artdata *) NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   bfd_ardata (abfd)->first_file_filepos = strtol (hdr.firstmemoff,
 						  (char **) NULL, 10);
@@ -802,10 +807,7 @@ xcoff_archive_p (abfd)
 
   bfd_ardata (abfd)->tdata = bfd_zalloc (abfd, SIZEOF_AR_FILE_HDR);
   if (bfd_ardata (abfd)->tdata == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   memcpy (bfd_ardata (abfd)->tdata, &hdr, SIZEOF_AR_FILE_HDR);
 
@@ -836,10 +838,7 @@ xcoff_read_ar_hdr (abfd)
   namlen = strtol (hdr.namlen, (char **) NULL, 10);
   hdrp = bfd_alloc (abfd, SIZEOF_AR_HDR + namlen + 1);
   if (hdrp == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
   memcpy (hdrp, &hdr, SIZEOF_AR_HDR);
   if (bfd_read ((char *) hdrp + SIZEOF_AR_HDR, 1, namlen, abfd) != namlen)
     return NULL;
@@ -847,10 +846,7 @@ xcoff_read_ar_hdr (abfd)
 
   ret = (struct areltdata *) bfd_alloc (abfd, sizeof (struct areltdata));
   if (ret == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
   ret->arch_header = (char *) hdrp;
   ret->parsed_size = strtol (hdr.size, (char **) NULL, 10);
   ret->filename = (char *) hdrp + SIZEOF_AR_HDR;
@@ -1062,10 +1058,7 @@ xcoff_write_archive_contents (abfd)
     }
   offsets = (file_ptr *) bfd_alloc (abfd, count * sizeof (file_ptr));
   if (offsets == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   if (bfd_seek (abfd, SIZEOF_AR_FILE_HDR, SEEK_SET) != 0)
     return false;
@@ -1118,10 +1111,7 @@ xcoff_write_archive_contents (abfd)
 	      sub->arelt_data = ((struct areltdata *)
 				 bfd_alloc (sub, sizeof (struct areltdata)));
 	      if (sub->arelt_data == NULL)
-		{
-		  bfd_set_error (bfd_error_no_memory);
-		  return false;
-		}
+		return false;
 	    }
 
 	  arch_eltdata (sub)->parsed_size = s.st_size;
@@ -1373,8 +1363,8 @@ const bfd_target
   "aixcoff-rs6000",		/* name */
 #endif
   bfd_target_coff_flavour,	
-  true,				/* data byte order is big */
-  true,				/* header byte order is big */
+  BFD_ENDIAN_BIG,		/* data byte order is big */
+  BFD_ENDIAN_BIG,		/* header byte order is big */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG | DYNAMIC |
@@ -1407,7 +1397,7 @@ const bfd_target
      BFD_JUMP_TABLE_RELOCS (coff),
      BFD_JUMP_TABLE_WRITE (coff),
      BFD_JUMP_TABLE_LINK (_bfd_xcoff),
-     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+     BFD_JUMP_TABLE_DYNAMIC (_bfd_xcoff),
 
   COFF_SWAP_TABLE,
 };

@@ -1,3 +1,42 @@
+Tue Mar 26 14:10:41 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mh-go32 (CFLAGS): Define.
+
+Thu Mar 14 19:20:54 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mh-necv4: New file.
+
+Thu Feb 15 13:07:43 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mh-cxux (CC): New variable.
+	(CFLAGS, LDFLAGS): Remove.
+	* mh-ncrsvr43 (CC): New variable.
+	(CFLAGS): Remove.
+	* mh-solaris (CFLAGS): Remove.
+
+	* mh-go32: Remove most variable settings, since they presumed a
+	Canadian Cross, which is now handled correctly by the configure
+	script.
+
+	* mh-sparcpic (PICFLAG): Set to -fPIC, not -fpic.
+
+Mon Feb 12 14:53:39 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* mh-m68kpic, mt-m68kpic: New files.
+
+Thu Feb  1 14:15:42 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-mh-mpw (CC_MWC68K): Add options similar to those used
+	in CC_MWCPPC, and -mc68020 -model far.
+	(AR_MWLINK68K): Add -xm library.
+	(AR_AR): Define.
+	(CC_LD_MWLINK68K): Remove -d.
+	(EXTRALIBS_MWC68K): Define.
+
+Thu Jan 25 16:05:33 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mh-ncrsvr43 (CFLAGS): Remove -Hnocopyr.
+
 Tue Nov  7 15:41:30 1995  Stan Shebs  <shebs@andros.cygnus.com>
 
 	* mpw-mh-mpw (CC_MWC68K, CC_MWCPPC): Remove unused include path.

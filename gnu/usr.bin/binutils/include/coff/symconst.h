@@ -84,6 +84,7 @@
 #define scXData         24      /* exception handling data */
 #define scPData         25      /* Procedure section */
 #define scFini          26      /* .fini section */
+#define scRConst	27	/* .rconst section */
 #define scMax		32
 
 

@@ -32,6 +32,8 @@ struct external_filehdr {
 #define	F_I960CA	(0x5000)
 #define	F_I960KA	(0x6000)
 #define	F_I960SA	(0x6000)
+#define F_I960JX	(0x7000)
+#define F_I960HX	(0x8000)
 
 
 /** i80960 Magic Numbers

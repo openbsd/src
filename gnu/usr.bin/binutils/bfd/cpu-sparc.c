@@ -1,5 +1,5 @@
 /* BFD support for the SPARC architecture.
-   Copyright 1992, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -21,7 +21,108 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
-static const bfd_arch_info_type sparc_arch_info = 
+/* Don't mix 32 bit and 64 bit files.  */
+
+static const bfd_arch_info_type *
+sparc_compatible (a, b)
+     const bfd_arch_info_type *a;
+     const bfd_arch_info_type *b;
+{
+  if (a->bits_per_word != b->bits_per_word)
+    return NULL;
+
+  return bfd_default_compatible (a, b);
+}
+
+static const bfd_arch_info_type arch_info_struct[] =
+{
+  {
+    32,	/* bits in a word */
+    32,	/* bits in an address */
+    8,	/* bits in a byte */
+    bfd_arch_sparc,
+    bfd_mach_sparc_sparclet,
+    "sparc",
+    "sparc:sparclet",
+    3,
+    false,
+    sparc_compatible, 
+    bfd_default_scan,
+    &arch_info_struct[1],
+  },
+  {
+    32,	/* bits in a word */
+    32,	/* bits in an address */
+    8,	/* bits in a byte */
+    bfd_arch_sparc,
+    bfd_mach_sparc_sparclite,
+    "sparc",
+    "sparc:sparclite",
+    3,
+    false,
+    sparc_compatible, 
+    bfd_default_scan,
+    &arch_info_struct[2],
+  },
+  {
+    32,	/* bits in a word */
+    32,	/* bits in an address */
+    8,	/* bits in a byte */
+    bfd_arch_sparc,
+    bfd_mach_sparc_v8plus,
+    "sparc",
+    "sparc:v8plus",
+    3,
+    false,
+    sparc_compatible, 
+    bfd_default_scan,
+    &arch_info_struct[3],
+  },
+  {
+    32,	/* bits in a word */
+    32,	/* bits in an address */
+    8,	/* bits in a byte */
+    bfd_arch_sparc,
+    bfd_mach_sparc_v8plusa,
+    "sparc",
+    "sparc:v8plusa",
+    3,
+    false,
+    sparc_compatible, 
+    bfd_default_scan,
+    &arch_info_struct[4],
+  },
+  {
+    64,	/* bits in a word */
+    64,	/* bits in an address */
+    8,	/* bits in a byte */
+    bfd_arch_sparc,
+    bfd_mach_sparc_v9,
+    "sparc",
+    "sparc:v9",
+    3,
+    false,
+    sparc_compatible, 
+    bfd_default_scan,
+    &arch_info_struct[5],
+  },
+  {
+    64,	/* bits in a word */
+    64,	/* bits in an address */
+    8,	/* bits in a byte */
+    bfd_arch_sparc,
+    bfd_mach_sparc_v9a,
+    "sparc",
+    "sparc:v9a",
+    3,
+    false,
+    sparc_compatible, 
+    bfd_default_scan,
+    0,
+  }
+};
+
+const bfd_arch_info_type bfd_sparc_arch =
   {
     32,	/* bits in a word */
     32,	/* bits in an address */
@@ -32,23 +133,7 @@ static const bfd_arch_info_type sparc_arch_info =
     "sparc",
     3,
     true, /* the default */
-    bfd_default_compatible, 
+    sparc_compatible, 
     bfd_default_scan,
-    0,
-  };
-
-const bfd_arch_info_type bfd_sparc_arch =
-  {
-    64,	/* bits in a word */
-    64,	/* bits in an address */
-    8,	/* bits in a byte */
-    bfd_arch_sparc,
-    bfd_mach_sparc64,
-    "sparc",
-    "sparc64",
-    3,
-    false,
-    bfd_default_compatible, 
-    bfd_default_scan,
-    &sparc_arch_info,
+    &arch_info_struct[0],
   };

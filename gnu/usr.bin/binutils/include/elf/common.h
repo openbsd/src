@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1992, 1993, 1994, 1996 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -85,6 +85,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define EM_SPARC64     11	/* SPARC v9 (not official) 64-bit */
 
 #define EM_PARISC      15	/* HPPA */
+
+#define EM_SPARC32PLUS 18	/* Sun's "v8plus" */
+
 #define EM_PPC	       20	/* PowerPC */
 
 /* If it is necessary to assign new unofficial EM_* values, please pick large

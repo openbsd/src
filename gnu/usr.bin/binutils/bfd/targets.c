@@ -1,5 +1,5 @@
 /* Generic target-file-type support for the BFD library.
-   Copyright 1990, 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -145,11 +145,14 @@ DESCRIPTION
 .  bfd_target_oasys_flavour,
 .  bfd_target_tekhex_flavour,
 .  bfd_target_srec_flavour,
+.  bfd_target_ihex_flavour,
 .  bfd_target_som_flavour,
 .  bfd_target_os9k_flavour,
 .  bfd_target_versados_flavour,
 .  bfd_target_msdos_flavour
 .};
+.
+.enum bfd_endian { BFD_ENDIAN_BIG, BFD_ENDIAN_LITTLE, BFD_ENDIAN_UNKNOWN };
 .
 .{* Forward declaration.  *}
 .typedef struct bfd_link_info _bfd_link_info;
@@ -168,11 +171,11 @@ of a file.
 
 The order of bytes within the data area of a file.
 
-.  boolean byteorder_big_p;
+.  enum bfd_endian byteorder;
 
 The order of bytes within the header parts of a file.
 
-.  boolean header_byteorder_big_p;
+.  enum bfd_endian header_byteorder;
 
 A mask of all the flags which an executable may have set -
 from the set <<NO_FLAGS>>, <<HAS_RELOC>>, ...<<D_PAGED>>.
@@ -308,6 +311,7 @@ The general target vector.
 .CAT(NAME,_write_armap),\
 .CAT(NAME,_read_ar_hdr),\
 .CAT(NAME,_openr_next_archived_file),\
+.CAT(NAME,_get_elt_at_index),\
 .CAT(NAME,_generic_stat_arch_elt),\
 .CAT(NAME,_update_armap_timestamp)
 .  boolean  (*_bfd_slurp_armap) PARAMS ((bfd *));
@@ -322,6 +326,8 @@ The general target vector.
 .                              int stridx));
 .  PTR (*_bfd_read_ar_hdr_fn) PARAMS ((bfd *));
 .  bfd *    (*openr_next_archived_file) PARAMS ((bfd *arch, bfd *prev));
+.#define bfd_get_elt_at_index(b,i) BFD_SEND(b, _bfd_get_elt_at_index, (b,i))
+.  bfd *    (*_bfd_get_elt_at_index) PARAMS ((bfd *, symindex));
 .  int      (*_bfd_stat_arch_elt) PARAMS ((bfd *, struct stat *));
 .  boolean  (*_bfd_update_armap_timestamp) PARAMS ((bfd *));
 .
@@ -476,11 +482,13 @@ extern const bfd_target b_out_vec_big_host;
 extern const bfd_target b_out_vec_little_host;
 extern const bfd_target bfd_elf32_big_generic_vec;
 extern const bfd_target bfd_elf32_bigmips_vec;
+extern const bfd_target bfd_elf64_bigmips_vec;
 extern const bfd_target bfd_elf32_hppa_vec;
 extern const bfd_target bfd_elf32_i386_vec;
 extern const bfd_target bfd_elf32_i860_vec;
 extern const bfd_target bfd_elf32_little_generic_vec;
 extern const bfd_target bfd_elf32_littlemips_vec;
+extern const bfd_target bfd_elf64_littlemips_vec;
 extern const bfd_target bfd_elf32_m68k_vec;
 extern const bfd_target bfd_elf32_m88k_vec;
 extern const bfd_target bfd_elf32_powerpc_vec;
@@ -502,6 +510,7 @@ extern const bfd_target som_vec;
 extern const bfd_target i386aout_vec;
 extern const bfd_target i386bsd_vec;
 extern const bfd_target i386dynix_vec;
+extern const bfd_target i386freebsd_vec;
 extern const bfd_target i386os9k_vec;
 extern const bfd_target i386coff_vec;
 extern const bfd_target bfd_powerpc_pe_vec;
@@ -521,8 +530,10 @@ extern const bfd_target i860coff_vec;
 extern const bfd_target icoff_big_vec;
 extern const bfd_target icoff_little_vec;
 extern const bfd_target ieee_vec;
+extern const bfd_target m68kaux_coff_vec;
 extern const bfd_target m68kcoff_vec;
 extern const bfd_target m68kcoffun_vec;
+extern const bfd_target m68klinux_vec;
 extern const bfd_target m68klynx_aout_vec;
 extern const bfd_target m68klynx_coff_vec;
 extern const bfd_target m68knetbsd_vec;
@@ -537,6 +548,7 @@ extern const bfd_target nlm32_powerpc_vec;
 extern const bfd_target pc532netbsd_vec;
 extern const bfd_target oasys_vec;
 extern const bfd_target pc532machaout_vec;
+extern const bfd_target ppcboot_vec;
 extern const bfd_target riscix_vec;
 extern const bfd_target pmac_xcoff_vec;
 extern const bfd_target rs6000coff_vec;
@@ -559,6 +571,9 @@ extern const bfd_target symbolsrec_vec;
 
 /* binary is always included.  */
 extern const bfd_target binary_vec;
+
+/* ihex is always included.  */
+extern const bfd_target ihex_vec;
 
 /* All of the xvecs for core files.  */
 extern const bfd_target aix386_core_vec;
@@ -603,11 +618,17 @@ const bfd_target * const bfd_target_vector[] = {
 	   the file even if we don't recognize the machine type.  */
 	&bfd_elf32_big_generic_vec,
 	&bfd_elf32_bigmips_vec,
+#ifdef BFD64
+	&bfd_elf64_bigmips_vec,
+#endif
 	&bfd_elf32_hppa_vec,
 	&bfd_elf32_i386_vec,
 	&bfd_elf32_i860_vec,
 	&bfd_elf32_little_generic_vec,
 	&bfd_elf32_littlemips_vec,
+#ifdef BFD64
+	&bfd_elf64_littlemips_vec,
+#endif
 	&bfd_elf32_m68k_vec,
 	&bfd_elf32_m88k_vec,
 	&bfd_elf32_sparc_vec,
@@ -647,6 +668,7 @@ const bfd_target * const bfd_target_vector[] = {
 	&i386aout_vec,
 	&i386bsd_vec,
 	&i386coff_vec,
+	&i386freebsd_vec,
 	&i860coff_vec,
 	&bfd_powerpc_pe_vec,
 	&bfd_powerpcle_pe_vec,
@@ -680,6 +702,11 @@ const bfd_target * const bfd_target_vector[] = {
 	&ieee_vec,
 	&m68kcoff_vec,
 	&m68kcoffun_vec,
+#if 0
+	/* Since a.out files lack decent magic numbers, no way to recognize
+	   which kind of a.out file it is.  */
+	&m68klinux_vec,
+#endif
 	&m68klynx_aout_vec,
 	&m68klynx_coff_vec,
 	&m68knetbsd_vec,
@@ -712,6 +739,7 @@ const bfd_target * const bfd_target_vector[] = {
 	&pmac_xcoff_vec,
 #endif
 	&rs6000coff_vec,
+	&ppcboot_vec,
 	&shcoff_vec,
 	&shlcoff_vec,
 	&sparclynx_aout_vec,
@@ -733,6 +761,8 @@ const bfd_target * const bfd_target_vector[] = {
 	&tekhex_vec,
 /* Likewise for binary output.  */
 	&binary_vec,
+/* Likewise for ihex.  */
+	&ihex_vec,
 
 /* Add any required traditional-core-file-handler.  */
 
@@ -856,10 +886,8 @@ bfd_target_list ()
   name_ptr = name_list = (CONST char **)
     bfd_zmalloc ((vec_length + 1) * sizeof (char **));
 
-  if (name_list == NULL) {
-    bfd_set_error (bfd_error_no_memory);
+  if (name_list == NULL)
     return NULL;
-  }
 
   for (target = &bfd_target_vector[0]; *target != NULL; target++)
     *(name_ptr++) = (*target)->name;

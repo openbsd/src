@@ -1,5 +1,5 @@
 /* obstack.c - subroutines used implicitly by object stack macros
-   Copyright (C) 1988, 89, 90, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1988, 89, 90, 91, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU Library General Public License as published by the
@@ -373,6 +373,20 @@ obstack_free (h, obj)
   else if (obj != 0)
     /* obj is not in any of the chunks! */
     abort ();
+}
+
+int
+_obstack_memory_used (h)
+     struct obstack *h;
+{
+  register struct _obstack_chunk* lp;
+  register int nbytes = 0;
+
+  for (lp = h->chunk; lp != 0; lp = lp->prev)
+    {
+      nbytes += lp->limit - (char *) lp;
+    }
+  return nbytes;
 }
 
 #if 0

@@ -64,11 +64,11 @@ const bfd_target TARGET_BIG_SYM =
   /* flavour: general indication about file */
   bfd_target_nlm_flavour,
 
-  /* byteorder_big_p: data is big endian */
-  true,
+  /* byteorder: data is big endian */
+  BFD_ENDIAN_BIG,
 
-  /* header_byteorder_big_p: header is also big endian */
-  true,
+  /* header_byteorder: header is also big endian */
+  BFD_ENDIAN_BIG,
 
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
@@ -150,11 +150,11 @@ const bfd_target TARGET_LITTLE_SYM =
   /* flavour: general indication about file */
   bfd_target_nlm_flavour,
 
-  /* byteorder_big_p: data is big endian */
-  false,		/* Nope -- this one's little endian */
+  /* byteorder: data is little endian */
+  BFD_ENDIAN_LITTLE,
 
-  /* header_byteorder_big_p: header is also big endian */
-  false,		/* Nope -- this one's little endian */
+  /* header_byteorder: header is also little endian */
+  BFD_ENDIAN_LITTLE,
 
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS

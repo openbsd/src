@@ -46,42 +46,48 @@ map_over_list (arch, function, list)
      void (*function) PARAMS ((bfd *, bfd *));
      struct list *list;
 {
-  bfd            *head;
+  bfd *head;
 
-  if (list == 0) {
-    for (head = arch->next; head; head = head->next){
-      function (head, (bfd *) NULL);
-    }
-  }
-  else {
-    /*
-      This may appear to be a baroque way of accomplishing what we want.
-      however we have to iterate over the filenames in order to notice where
-      a filename is requested but does not exist in the archive.  Ditto
-      mapping over each file each time -- we want to hack multiple
-      references.
-      */
-    struct list *ptr = list;
-
-    for (ptr = list; ptr; ptr=ptr->next)
+  if (list == NULL)
     {
-      boolean         found = false;
-      bfd *prev = arch;
-      for (head = arch->next; head; head = head->next) 
-      {
-	if ((head->filename != NULL) &&
-	    (!strcmp(ptr->name, head->filename))) 
-	{
-	  found = true;
-	  function(head, prev);
+      bfd *next;
 
+      head = arch->next;
+      while (head != NULL)
+	{
+	  next = head->next;
+	  function (head, (bfd *) NULL);
+	  head = next;
 	}
-	prev = head;
-      }
-      if (!found)
-       fprintf(stderr, "No entry %s in archive.\n", ptr->name);
     }
-  }
+  else
+    {
+      struct list *ptr;
+
+      /* This may appear to be a baroque way of accomplishing what we
+	 want.  however we have to iterate over the filenames in order
+	 to notice where a filename is requested but does not exist in
+	 the archive.  Ditto mapping over each file each time -- we
+	 want to hack multiple references.  */
+      for (ptr = list; ptr; ptr = ptr->next)
+	{
+	  boolean found = false;
+	  bfd *prev = arch;
+
+	  for (head = arch->next; head; head = head->next) 
+	    {
+	      if (head->filename != NULL
+		  && strcmp (ptr->name, head->filename) == 0)
+		{
+		  found = true;
+		  function (head, prev);
+		}
+	      prev = head;
+	    }
+	  if (! found)
+	    fprintf (stderr, "No entry %s in archive.\n", ptr->name);
+	}
+    }
 }
 
 
@@ -205,8 +211,8 @@ ar_addlib_doer (abfd, prev)
      bfd *prev;
 {
   /* Add this module to the output bfd */
-  
-  prev->next = abfd->next;
+  if (prev != NULL)
+    prev->next = abfd->next;
   abfd->next = obfd->archive_head;
   obfd->archive_head = abfd;
 }

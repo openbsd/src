@@ -1,5 +1,5 @@
 /* BFD library -- caching of file descriptors.
-   Copyright 1990, 1991, 1992, 1994 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -235,7 +235,8 @@ boolean
 bfd_cache_close (abfd)
      bfd *abfd;
 {
-  if (abfd->iostream == NULL)
+  if (abfd->iostream == NULL
+      || (abfd->flags & BFD_IN_MEMORY) != 0)
     return true;
 
   return bfd_cache_delete (abfd);
@@ -272,20 +273,23 @@ bfd_open_file (abfd)
     {
     case read_direction:
     case no_direction:
-      abfd->iostream = (char *) fopen (abfd->filename, FOPEN_RB);
+      abfd->iostream = (PTR) fopen (abfd->filename, FOPEN_RB);
       break;
     case both_direction:
     case write_direction:
       if (abfd->opened_once == true)
 	{
-	  abfd->iostream = (char *) fopen (abfd->filename, FOPEN_RUB);
+	  abfd->iostream = (PTR) fopen (abfd->filename, FOPEN_RUB);
 	  if (abfd->iostream == NULL)
-	    abfd->iostream = (char *) fopen (abfd->filename, FOPEN_WUB);
+	    abfd->iostream = (PTR) fopen (abfd->filename, FOPEN_WUB);
 	}
       else
 	{
-	  /*open for creat */
-	  abfd->iostream = (char *) fopen (abfd->filename, FOPEN_WB);
+	  /* Create the file.  Unlink it first, for the convenience of
+             operating systems which worry about overwriting running
+             binaries.  */
+	  unlink (abfd->filename);
+	  abfd->iostream = (PTR) fopen (abfd->filename, FOPEN_WB);
 	  abfd->opened_once = true;
 	}
       break;
@@ -319,6 +323,9 @@ FILE *
 bfd_cache_lookup_worker (abfd)
      bfd *abfd;
 {
+  if ((abfd->flags & BFD_IN_MEMORY) != 0)
+    abort ();
+
   if (abfd->my_archive) 
     abfd = abfd->my_archive;
 

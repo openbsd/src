@@ -87,8 +87,7 @@ bfd_coff_generic_reloc (abfd, reloc_entry, symbol, data, input_section,
      char **error_message;
 {
   if (output_bfd != (bfd *) NULL
-      && (symbol->flags & BSF_SECTION_SYM) == 0
-      && reloc_entry->addend == 0)
+      && (symbol->flags & BSF_SECTION_SYM) == 0)
     {
       reloc_entry->address += input_section->output_offset;
       return bfd_reloc_ok;
@@ -186,28 +185,8 @@ rtype2howto (cache_ptr, dst)
 
 #define SWAP_IN_RELOC_OFFSET	bfd_h_get_32
 #define SWAP_OUT_RELOC_OFFSET	bfd_h_put_32
-/* This is just like the standard one, except that we don't set up an
-   addend for relocs against global symbols (otherwise linking objects
-   created by -r fails), and we add in the reloc offset at the end.  */
-#define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)                \
-  {                                                             \
-    coff_symbol_type *coffsym = (coff_symbol_type *) NULL;      \
-    if (ptr && bfd_asymbol_bfd (ptr) != abfd)                   \
-      coffsym = (obj_symbols (abfd)                             \
-                 + (cache_ptr->sym_ptr_ptr - symbols));         \
-    else if (ptr)                                               \
-      coffsym = coff_symbol_from (abfd, ptr);                   \
-    if (coffsym != (coff_symbol_type *) NULL                    \
-        && coffsym->native->u.syment.n_scnum == 0)              \
-      cache_ptr->addend = 0;                                    \
-    else if (ptr && bfd_asymbol_bfd (ptr) == abfd               \
-             && ptr->section != (asection *) NULL               \
-	     && (ptr->flags & BSF_GLOBAL) == 0)			\
-      cache_ptr->addend = - (ptr->section->vma + ptr->value);   \
-    else                                                        \
-      cache_ptr->addend = 0;                                    \
-    cache_ptr->addend += reloc.r_offset;			\
-  }
+#define CALC_ADDEND(abfd, ptr, reloc, cache_ptr) \
+  cache_ptr->addend = reloc.r_offset;
 
 /* Clear the r_spare field in relocs.  */
 #define SWAP_OUT_RELOC_EXTRA(abfd,src,dst) \
@@ -237,8 +216,8 @@ const bfd_target
   "coff-sparc",			/* name */
 #endif
   bfd_target_coff_flavour,
-  true,			/* data byte order is big */
-  true,			/* header byte order is big */
+  BFD_ENDIAN_BIG,	/* data byte order is big */
+  BFD_ENDIAN_BIG,	/* header byte order is big */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |

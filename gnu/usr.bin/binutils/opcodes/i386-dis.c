@@ -1,5 +1,5 @@
 /* Print i386 instructions for GDB, the GNU debugger.
-   Copyright (C) 1988, 1989, 1991, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1988, 89, 91, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -348,23 +348,23 @@ struct dis386 dis386[] = {
   { "outsb",	indirDX, Xb },
   { "outsS",	indirDX, Xv },
   /* 70 */
-  { "jo",		Jb },
+  { "jo",	Jb },
   { "jno",	Jb },
-  { "jb",		Jb },
+  { "jb",	Jb },
   { "jae",	Jb },
-  { "je",		Jb },
+  { "je",	Jb },
   { "jne",	Jb },
   { "jbe",	Jb },
-  { "ja",		Jb },
+  { "ja",	Jb },
   /* 78 */
-  { "js",		Jb },
+  { "js",	Jb },
   { "jns",	Jb },
-  { "jp",		Jb },
+  { "jp",	Jb },
   { "jnp",	Jb },
-  { "jl",		Jb },
+  { "jl",	Jb },
   { "jnl",	Jb },
   { "jle",	Jb },
-  { "jg",		Jb },
+  { "jg",	Jb },
   /* 80 */
   { GRP1b },
   { GRP1S },
@@ -524,7 +524,7 @@ struct dis386 dis386_twobyte[] = {
   /* 08 */
   { "invd" },
   { "wbinvd" },
-  { "(bad)" },  { "(bad)" },  
+  { "(bad)" },  { "ud2a" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   /* 10 */
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
@@ -546,17 +546,17 @@ struct dis386 dis386_twobyte[] = {
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   /* 30 */
-  { "wrmsr" },  { "rdtsc" },  { "rdmsr" },  { "(bad)" },  
+  { "wrmsr" },  { "rdtsc" },  { "rdmsr" },  { "rdpmc" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   /* 38 */
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   /* 40 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "cmovo", Gv,Ev }, { "cmovno", Gv,Ev }, { "cmovb", Gv,Ev }, { "cmovae", Gv,Ev },
+  { "cmove", Gv,Ev }, { "cmovne", Gv,Ev }, { "cmovbe", Gv,Ev }, { "cmova", Gv,Ev },
   /* 48 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "cmovs", Gv,Ev }, { "cmovns", Gv,Ev }, { "cmovp", Gv,Ev }, { "cmovnp", Gv,Ev },
+  { "cmovl", Gv,Ev }, { "cmovge", Gv,Ev }, { "cmovle", Gv,Ev }, { "cmovg", Gv,Ev },  
   /* 50 */
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
@@ -639,7 +639,7 @@ struct dis386 dis386_twobyte[] = {
   { "movzbS", Gv, Eb },
   { "movzwS", Gv, Ew },  
   /* b8 */
-  { "(bad)" },
+  { "ud2b" },
   { "(bad)" },
   { GRP8 },
   { "btcS", Ev, Gv },  
@@ -685,6 +685,44 @@ struct dis386 dis386_twobyte[] = {
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
 };
 
+static const unsigned char onebyte_has_modrm[256] = {
+  1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,
+  1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,
+  1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,
+  1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,1,1,0,0,0,0,0,1,0,1,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  1,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,
+  1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1
+};
+
+static const unsigned char twobyte_has_modrm[256] = {
+  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
 static char obuf[100];
 static char *obufp;
 static char scratchbuf[100];
@@ -707,6 +745,9 @@ static char *names8[] = {
 };
 static char *names_seg[] = {
   "%es","%cs","%ss","%ds","%fs","%gs","%?","%?",
+};
+static char *index16[] = {
+  "bx+si","bx+di","bp+si","bp+di","si","di","bp","bx"
 };
 
 struct dis386 grps[][8] = {
@@ -993,7 +1034,8 @@ print_insn_i386 (pc, info)
   int enter_instruction;
   char *first, *second, *third;
   int needcomma;
-  
+  unsigned char need_modrm;
+
   struct dis_private priv;
   bfd_byte *inbuf = priv.the_buffer;
 
@@ -1058,20 +1100,22 @@ print_insn_i386 (pc, info)
     {
       FETCH_DATA (info, codep + 2);
       dp = &dis386_twobyte[*++codep];
+      need_modrm = twobyte_has_modrm[*codep];
     }
   else
-    dp = &dis386[*codep];
+    {
+      dp = &dis386[*codep];
+      need_modrm = onebyte_has_modrm[*codep];
+    }
   codep++;
 
-  /* Fetch the mod/reg/rm byte.  FIXME: We should be only fetching
-     this if we need it.  As it is, this code loses if there is a
-     one-byte instruction (without a mod/reg/rm byte) at the end of
-     the address space.  */
-
-  FETCH_DATA (info, codep + 1);
-  mod = (*codep >> 6) & 3;
-  reg = (*codep >> 3) & 7;
-  rm = *codep & 7;
+  if (need_modrm)
+    {
+      FETCH_DATA (info, codep + 1);
+      mod = (*codep >> 6) & 3;
+      reg = (*codep >> 3) & 7;
+      rm = *codep & 7;
+    }
 
   if (dp->name == NULL && dp->bytemode1 == FLOATCODE)
     {
@@ -1270,10 +1314,10 @@ struct dis386 float_reg[][8] = {
   },
   /* da */
   {
-    { "(bad)" },
-    { "(bad)" },
-    { "(bad)" },
-    { "(bad)" },
+    { "fcmovb",	ST, STi },
+    { "fcmove",	ST, STi },
+    { "fcmovbe",ST, STi },
+    { "fcmovu",	ST, STi },
     { "(bad)" },
     { FGRPda_5 },
     { "(bad)" },
@@ -1281,13 +1325,13 @@ struct dis386 float_reg[][8] = {
   },
   /* db */
   {
-    { "(bad)" },
-    { "(bad)" },
-    { "(bad)" },
-    { "(bad)" },
+    { "fcmovnb",ST, STi },
+    { "fcmovne",ST, STi },
+    { "fcmovnbe",ST, STi },
+    { "fcmovnu",ST, STi },
     { FGRPdb_4 },
-    { "(bad)" },
-    { "(bad)" },
+    { "fucomi",	ST, STi },
+    { "fcomi",	ST, STi },
     { "(bad)" },
   },
   /* dc */
@@ -1330,8 +1374,8 @@ struct dis386 float_reg[][8] = {
     { "(bad)" },
     { "(bad)" },
     { FGRPdf_4 },
-    { "(bad)" },
-    { "(bad)" },
+    { "fucomip",ST, STi },
+    { "fcomip", ST, STi },
     { "(bad)" },
   },
 };
@@ -1459,7 +1503,7 @@ putop (template)
 	  *obufp++ = *p;
 	  break;
 	case 'C':		/* For jcxz/jecxz */
-	  if (aflag == 0)
+	  if (aflag)
 	    *obufp++ = 'e';
 	  break;
 	case 'N':
@@ -1509,8 +1553,7 @@ OP_indirE (bytemode)
      int bytemode;
 {
   oappend ("*");
-  OP_E (bytemode);
-  return (0);
+  return OP_E (bytemode);
 }
 
 int
@@ -1518,19 +1561,10 @@ OP_E (bytemode)
      int bytemode;
 {
   int disp;
-  int havesib;
-  int base;
-  int index;
-  int scale;
-  int havebase;
-  
+
   /* skip mod/rm byte */
   codep++;
-  
-  havesib = 0;
-  havebase = 0;
-  disp = 0;
-  
+
   if (mod == 3)
     {
       switch (bytemode)
@@ -1551,85 +1585,107 @@ OP_E (bytemode)
 	  oappend ("<bad dis table>");
 	  break;
 	}
-      return (0);
+      return 0;
     }
-  
+
+  disp = 0;
   append_prefix ();
-  if (rm == 4)
+
+  if (aflag) /* 32 bit address mode */
     {
-      havesib = 1;
+      int havesib;
+      int havebase;
+      int base;
+      int index;
+      int scale;
+
+      havesib = 0;
       havebase = 1;
-      FETCH_DATA (the_info, codep + 1);
-      scale = (*codep >> 6) & 3;
-      index = (*codep >> 3) & 7;
-      base = *codep & 7;
-      codep++;
-    }
-  
-  switch (mod)
-    {
-    case 0:
-      switch (rm)
+      base = rm;
+
+      if (base == 4)
 	{
-	case 4:
-	  /* implies havesib and havebase */
-	  if (base == 5) {
-	    havebase = 0;
-	    disp = get32 ();
-	  }
+	  havesib = 1;
+	  FETCH_DATA (the_info, codep + 1);
+	  scale = (*codep >> 6) & 3;
+	  index = (*codep >> 3) & 7;
+	  base = *codep & 7;
+	  codep++;
+	}
+
+      switch (mod)
+	{
+	case 0:
+	  if (base == 5)
+	    {
+	      havebase = 0;
+	      disp = get32 ();
+	    }
 	  break;
-	case 5:
+	case 1:
+	  FETCH_DATA (the_info, codep + 1);
+	  disp = *(char *)codep++;
+	  break;
+	case 2:
 	  disp = get32 ();
 	  break;
-	default:
-	  havebase = 1;
-	  base = rm;
-	  break;
 	}
-      break;
-    case 1:
-      FETCH_DATA (the_info, codep + 1);
-      disp = *(char *)codep++;
-      if (rm != 4)
+
+      if (mod != 0 || base == 5)
 	{
-	  havebase = 1;
-	  base = rm;
-	}
-      break;
-    case 2:
-      disp = get32 ();
-      if (rm != 4)
-	{
-	  havebase = 1;
-	  base = rm;
-	}
-      break;
-    }
-  
-  if (mod != 0 || rm == 5 || (havesib && base == 5))
-    {
-      sprintf (scratchbuf, "0x%x", disp);
-      oappend (scratchbuf);
-    }
-  
-  if (havebase || havesib) 
-    {
-      oappend ("(");
-      if (havebase)
-	oappend (names32[base]);
-      if (havesib) 
-	{
-	  if (index != 4) 
-	    {
-	      sprintf (scratchbuf, ",%s", names32[index]);
-	      oappend (scratchbuf);
-	    }
-	  sprintf (scratchbuf, ",%d", 1 << scale);
+	  sprintf (scratchbuf, "0x%x", disp);
 	  oappend (scratchbuf);
 	}
-      oappend (")");
+
+      if (havebase || (havesib && (index != 4 || scale != 0)))
+	{
+	  oappend ("(");
+	  if (havebase)
+	    oappend (names32[base]);
+	  if (havesib)
+	    {
+	      if (index != 4)
+		{
+		  sprintf (scratchbuf, ",%s", names32[index]);
+		  oappend (scratchbuf);
+		}
+	      sprintf (scratchbuf, ",%d", 1 << scale);
+	      oappend (scratchbuf);
+	    }
+	  oappend (")");
+	}
     }
-  return (0);
+  else
+    { /* 16 bit address mode */
+      switch (mod)
+	{
+	case 0:
+	  if (rm == 6)
+	    disp = (short) get16 ();
+	  break;
+	case 1:
+	  FETCH_DATA (the_info, codep + 1);
+	  disp = *(char *)codep++;
+	  break;
+	case 2:
+	  disp = (short) get16 ();
+	  break;
+	}
+
+      if (mod != 0 || rm == 6)
+	{
+	  sprintf (scratchbuf, "0x%x", disp);
+	  oappend (scratchbuf);
+	}
+
+      if (mod != 0 || rm != 6)
+	{
+	  oappend ("(");
+	  oappend (index16[rm]);
+	  oappend (")");
+	}
+    }
+  return 0;
 }
 
 int
@@ -1883,7 +1939,9 @@ OP_OFF (bytemode)
      int bytemode;
 {
   int off;
-  
+
+  append_prefix ();
+
   if (aflag)
     off = get32 ();
   else

@@ -893,8 +893,7 @@ void
 internal ()
 {
   int c = count ();
-  struct op *new = malloc (sizeof (struct
-				   op) * c);
+  struct op *new = xmalloc (sizeof (struct op) * c);
   struct op *p = opt;
   memcpy (new, p, c * sizeof (struct op));
 
@@ -953,7 +952,7 @@ gas ()
   struct op *p = opt;
   int idx = 0;
   char *oldname = "";
-  struct op *new = malloc (sizeof (struct op) * c);
+  struct op *new = xmalloc (sizeof (struct op) * c);
 
   memcpy (new, p, c * sizeof (struct op));
 

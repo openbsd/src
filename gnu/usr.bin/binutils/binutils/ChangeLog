@@ -1,7 +1,844 @@
-Thu Nov 16 17:30:11 1995  Ken Raeburn  <raeburn@cygnus.com>
+Thu Jun  6 13:56:14 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* README: Add notes on how to build if you don't have ar.
+
+	* Makefile.in: Remove old incorrect setting of CC.
+
+Tue Jun  4 10:52:49 1996  Tom Tromey  <tromey@csk3.cygnus.com>
+
+	* Makefile.in (install): Don't check to see if tooldir exists.
+	Make $(tooldir) and $(tooldir)/bin.
+
+Mon Jun  3 17:40:23 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* strings.c (main): Make main an int function, not void.
+
+Fri May 31 13:59:24 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* nm.c (filter_symbols): Check for BSF_WEAK as well as
+	BSF_GLOBAL.
+	* objcopy.c (filter_symbols): Likewise.
+
+Wed May  8 16:57:20 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objcopy.c (copy_object): Make clear that it is only a warning
+	when the output file can not represent the architecture.
+
+Fri May  3 11:30:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (disassemble_data): Don't refer to bytes past the end
+	of data.
+
+Wed Apr 24 14:10:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* rddbg.c (read_symbol_stabs_debugging_info): Move call to
+	free_saved_stabs outside the loop over the symbols.
+
+Tue Apr 23 12:56:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (compare_symbols): Sort symbols whose names start with
+ 	`.' after other symbols.  If no other decision can be made, sort
+	symbols by name.
+
+Thu Apr 18 16:02:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* dep-in.sed: Substitute $(BFDDIR) for @BFDDIR@.
+	* Makefile.in: Rebuild dependencies.
+	(dep.sed): Substitute $(BFDDIR) for @BFDDIR@.
+
+Tue Apr 16 13:50:22 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* rdcoff.c: New file.
+	* rddbg.c (read_debugging_info): Read COFF symbols if COFF flavour
+	and no stabs were found.
+	* budbg.h (parse_coff): Declare.
+	* Makefile.in: Rebuild dependencies.
+	(CFILES): Add rdcoff.c.
+	(DEBUG_OBJS): Add rdcoff.o.
+
+Mon Apr 15 15:55:01 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* nlmconv.c (choose_temp_base{,_try}): Delete, in libiberty now.
+	(link_inputs): Update call to choose_temp_base.
+
+Mon Apr  8 14:40:05 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Permit --enable-shared to specify a list of
+	directories.
+	* configure: Rebuild.
+
+Fri Mar 29 16:11:33 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (dump_section_header): Print the SEC_LINK_ONCE flag
+	and the SEC_LINK_DUPLICATES field.
+
+Fri Mar 29 11:35:55 1996  J.T. Conklin  (jtc@lisa.cygnus.com)
+
+	* nlmconv.1: Changed to be recognized by catman -w on Solaris.
+
+Thu Mar 28 14:17:02 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* wrstabs.c (stab_enum_type): Set buf before using it.
+
+Fri Mar 22 15:49:08 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stabs.c (struct stab_handle): Add field abfd.
+	(start_stab): Add abfd parameter.
+	(parse_stab_string): Skip the symbol leading char when searching
+	for the value of a global symbol.
+	* budbg.h (start_stab): Update declaration.
+	* rddbg.c (read_section_stabs_debugging_info): Pass abfd to
+	start_stab.
+	(read_symbol_stabs_debugging_info): Likewise.
+
+Thu Mar 21 12:40:48 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* wrstabs.c (stab_function_type): Output an empty typedef for an
+	unused argument, rather than making up a meaningless name.
+	(stab_variable): Use N_RSYM for a DEBUG_REGISTER variable.
+
+	* ieee.c (struct ieee_info): Add global_vars field.
+	(parse_ieee_be): When ending the global typedef block, copy the
+	variables into info->global_vars.
+	(parse_ieee_atn): Don't require an NN record for a pmisc ATN.
+	(ieee_read_reference): Search the global variables after the local
+	variables.
+
+Wed Mar 20 18:08:19 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* objdump.c (disassemble_data): Make sure sym_name is always set.
+	(dump_section_header): Always put a space after the section name.
+	(dump_bfd_header): Terminate output with newline.
+
+Wed Mar 20 16:35:20 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* wrstabs.c: New file.
+	* budbg.h (write_stabs_in_sections_debugging_info): Declare.
+	* objcopy.c (write_debugging_info): For COFF or ELF, output stabs
+	in sections.
+	* Makefile.in: Rebuild dependencies.
+	(CFILES): Add wrstabs.c.
+	(WRITE_DEBUG_OBJS): New variable.
+	($(OBJCOPY_PROG)): Use $(WRITE_DEBUG_OBJS), not $(DEBUG_OBJS).
+	($(STRIP_PROG)): Likewise.
+
+	* stabs.c (parse_stab_members): Make type stub detection more like
+	gdb.
+
+	* ieee.c (struct ieee_handle): Add fields complex_float_index and
+	complex_double_index.
+	(ieee_complex_type): Cache type index in complex_float_index and
+	complex_double_index, depending upon size.  Set size on type stack
+	to size * 2.
+
+	* ieee.c (ieee_empty_type): Use builtin_unknown, not 0.
+	(ieee_void_type): Use builtin_void, not 1.
+
+	* ieee.c (parse_ieee_ty): Handle 'V' type code.
+	(parse_ieee_atn): Don't require two numbers for type 10.
+
+	* ieee.c (parse_ieee_be): Add one to offset at end of function or
+	block.
+
+	* ieee.c (struct ieee_block): Add field skip.
+	(parse_ieee_bb): Don't call debug_record_function for __XRYCPP
+	function, and set skip field.
+	(parse_ieee_be): Don't call debug_end_function if skip is set.
+
+	* debug.c (struct debug_handle): Add fields current_write_lineno
+	and current_write_lineno_index.
+	(debug_write): Initialize current_write_lineno and
+	current_write_lineno_index for each unit.  Call
+	debug_write_linenos rather than writing out the line numbers
+	directly.
+	(debug_write_function): Call debug_write_linenos.
+	(debug_write_block): Likewise.
+	(debug_write_linenos): New static function.
+
+	* debug.c (debug_write_type): For DEBUG_KIND_FUNCTION, push return
+	type before arguments.
+
+Mon Mar 18 18:05:33 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Add AC_FUNC_VFORK.
+	* configure, config.in: Rebuild.
+	* dlltool.c, nlmconv.c: Include <vfork.h> if HAVE_VFORK_H is
+	defined.
+
+	* stabs.c (parse_stab_range_type): A complex type is defined as a
+	subrange of itself with the high bound zero.
+	* ieee.c (ieee_complex_type): Don't crash on sizes of 12 or 16.
+
+Tue Mar 12 12:09:43 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c (ieee_write_undefined_tag): Switch to global_types even
+	if it is not empty.
+	(ieee_tag_type): For an enum, look through info->enums.
+
+	* configure: Rebuild with autoconf 2.8.
+
+	* debug.c (debug_type_samep): Don't loop endlessly in
+	DEBUG_KIND_ENUM case.  From Eric Baur <ecb@nexen.com>.
+
+Mon Mar 11 12:35:03 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* rddbg.c (read_section_stabs_debugging_info): Call save_stab for
+	each stab entry, call stab_context on an error, and call
+	free_saved_stabs before rturning.
+	(read_symbol_stabs_debugging_info): Likewise.
+	(SAVE_STABS_COUNT): Define.
+	(struct saved_stab): Define.
+	(saved_stabs, saved_stabs_index): New static variables.
+	(save_stab, stab_context, free_saved_stabs): New static functios.
+
+	* objdump.c (stab_name): Remove.
+	(struct stab_print): Remove.
+	(stab_print): Remove.
+	(dump_stabs): Don't initialize stab_name.
+	(print_section_stabs): Call bfd_get_stab_name rather than using
+	the stab_name array.
+
+Tue Feb 27 19:52:01 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* prdbg.c (pr_int_constant): Initialize info correctly.
+	(pr_float_constant): Likewise.
+
+Mon Feb 26 18:11:37 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed: Update to handle shared library support.
+
+Sat Feb 24 11:21:49 1996  Alan Modra  <alan@spri.levels.unisa.edu.au>:
+
+	* Makefile.in ($(OBJDUMP_PROG)): Search $(BFDLIB) before
+	$(OPCODES).
+
+Thu Feb 15 12:44:45 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Don't tamper with LDFLAGS.  Call AC_PROG_CC before
+	configure.host.
+	* configure: Rebuild.
+
+	* configure.in: Substitute RPATH_ENVVAR.
+	* configure: Rebuild.
+	* Makefile.in (RPATH_ENVVAR): New variable.
+	(check): Use $(RPATH_ENVVAR) rather than LD_LIBRARY_PATH.
+
+	* objcopy.c (smart_rename): Rather than doing chmod then chown, do
+	chmod without setuid, then chown, then chmod with setuid.
+
+Wed Feb 14 16:46:42 1996  Martin Anantharaman  <martin@mail.imech.uni-duisburg.de>
+
+	* arsup.c (map_over_list): Reindent.  Don't assume that the
+	function does not delete the BFD.
+	(ar_addlib_doer): Don't set prev->next if prev is NULL.
+
+Wed Feb 14 15:12:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c (ieee_regno_to_genreg): Convert register numbers for m68k
+	and i960.
+	(ieee_genreg_to_regno): Likewise.
+
+Mon Feb 12 14:19:59 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c: Extensive changes to write code to put types in the
+	global type block when possible, to output ranges for all memory
+	occupied by the module, and to improve efficiency.
+
+	* debug.c (struct debug_handle): Remove class_mark field.  Add
+	id_list and compare_list fields.
+	(struct debug_class_id): Define.
+	(struct debug_type_compare_list): Define.
+	(debug_write): Initialize info->id_list
+	(debug_write_name): Remove reference to info->class_mark.
+	(debug_write_type): Get id for all structs and classes.  Simplify
+	test for whether struct has already been written.
+	(debug_write_class_type): Get id for all classes.  Simplify test
+	for whether class has already been written.
+	(debug_write_block): Don't write out blocks other than the top
+	level block if they have no local variables.
+	(debug_set_class_id): New static function.
+	(debug_type_samep): New static function.
+	(debug_class_type_samep): New static function.
+	* prdbg.c (pr_start_struct_type): Always print id.
+	(pr_start_class_type): Likewise.
+	(pr_tag_type): Likewise.
+
+	* stabs.c (struct stab_handle): Add syms and symcount fields.
+	(start_stab): Add syms and symcount parameters.  Change all
+	callers.
+	(parse_stab_string): Look up global variables in the symbol table
+	to get the right value.
+	* budbg.h (start_stab): Update declaration.
+	* rddbg.c (read_section_stabs_debugging_info): Add syms and
+	symcount parameters.  Change all callers.
+
+	* stabs.c (parse_stab_array_type): If the index type is 0, use
+	int.
+
+Wed Feb  7 14:17:45 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c (ieee_start_compilation_unit): Clear modified and
+	modified_alloc fields of info.
+
+	* configure.in: Check for --enable-shared.  Substitute new
+	variables BFDLIB and OPCODES.
+	* configure: Rebuild.
+	* Makefile.in (BFDLIB): Set to @BFDLIB@.
+	(OPCODES): Set to @OPCODES@.
+
+Mon Feb  5 16:18:42 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	Support for building bfd and opcodes as shared libraries, based on
+	patches from Alan Modra <alan@spri.levels.unisa.edu.au>:
+	* configure.in (HLDFLAGS): New substitution.
+	* configure: Rebuild.
+	* Makefile.in (HLDFLAGS): New variable.  Make all links use
+	$(HLDFLAGS) before $(CFLAGS) and $(LDFLAGS).
+	(BFDLIB_DEP): New variable.  Replace all occurrences of $(BFD) as
+	a dependency with $(BFDLIB_DEP).  Remove $(BFD) as a dependency if
+	there is also a dependency on $(ADDL_DEPS).
+	(BFDLIB): Rename from BFD; change all uses; set to -L../bfd -lbfd.
+	(OPCODES_DEP): New variable.  Replace all occurrends of $(OPCODES)
+	as a dependency with $(OPCODES_DEP).
+	(OPCODES): Set to -L../opcodes -lopcodes.
+	(ADDL_DEPS): New variable.  Replace all occurrences of
+	$(ADDL_LIBS) as a dependency with $(ADDL_DEPS).
+	(check): Set LD_LIBRARY_PATH in the environment.
+	(config.status): Depend upon BFD configure.host and config.bfd.
+
+Fri Feb  2 17:02:59 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* objdump.c: #include stdarg.h or varargs.h.
+	(objdump_print_value): Change FILE* arg to struct disassemble_info*.
+	All callers updated.  Use fprintf_func.
+	(objdump_print_address): Consistently use fprintf_func.
+	(objdump_sprintf): New function.
+	(disassemble_data): Print insn into a buffer, print raw insn ourselves,
+	then print insn mnemonic.
+
+Fri Feb  2 16:48:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Regenerate.
+
+Thu Feb  1 09:38:18 1996  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* configure.in (i[3-6]86-*-win32): Becomes i[3-6]86-*-cygwin32.
+	(powerpc*-*-cygwin32): New.
+	* configure: Regenerated.
+
+Wed Jan 31 13:22:03 1996  Richard Henderson  <rth@tamu.edu>
+
+	* Makefile.in (distclean): Remove $(DEMANGLER_PROG).1.
+
+Mon Jan 29 17:36:29 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	Based on patches from H J Lu <hjl@zoom.com>:
+	* objcopy.c (remove_leading_char): New static variable.
+	(OPTION_REMOVE_LEADING_CHAR): Define.
+	(copy_usage): Mention --remove-leading-char.
+	(filter_symbols): If remove_leading_char, and the first character
+	of a global symbol matches the symbol leading char of the BFD,
+	remove the first character.
+	(copy_object): Filter the symbols if remove_leading_char is set.
+	(copy_main): Handle --remove-leading-char.
+	* binutils.texi, objcopy.1: Document --remove-leading-char.
+
+Sat Jan 27 15:40:13 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* objdump.c (fprintf): Add prototype to avoid compiler warning on
+	SunOS.
+
+Fri Jan 26 11:53:42 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils.texi (nm): Improve documentation on symbol types.
+	(objdump): Reference the stabs manual from the discussion of the
+	--stabs option.
+
+Thu Jan 25 11:21:46 1996  Raymond Jou  <rjou@mexican.cygnus.com>
+
+	* mpw-make.sed: Add a "stamps" target.
+
+Thu Jan 25 13:51:44 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (dump_headers, dump_section_header): Change objdump -h
+	output to be simpler and to include section file offsets.
+
+Wed Jan 24 12:06:05 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stabs.c (parse_stab_members): Don't adjust voffset.
+
+	* ieee.c (ieee_read_cxx_class): Don't multiply voffset by 4.
+	(struct ieee_write_type): Add name field.
+	(struct ieee_type_class): Remove name field.  Change all uses to
+	use new name field in type instead.
+	(struct ieee_name_type): Likewise.
+	(ieee_start_struct_type): Initialize name field of type.
+	(ieee_start_class_type): Don't initialize classdef entry of tag.
+	(ieee_class_method_var): Don't adjust voffset.
+	(ieee_end_class_type): Likewise.
+	(ieee_tag_type): Initialize new name field of type.
+	(ieee_typdef): Set name after copying in type information.
+
+	* debug.c (VOFFSET_STATIC_METHOD): Define as -1, not 1.
+
+	* ieee.c (struct ieee_modified_type): Define.
+	(struct ieee_handle): Add modified and modified_alloc fields.
+	(ieee_get_modified_info): New static function.
+	(ieee_pointer_type): Cache type index.
+	(ieee_const_type): Likewise.
+	(ieee_volatile_type): Likewise.
+
+	* ieee.c (ieee_define_named_type): When creating a tag for an
+	anonymous struct, copy the name into memory.
+	(ieee_tag_type): Likewise.
+	* debug.c (debug_write_type): Only check and set id field for an
+	unnamed object.
+	(debug_write_class_type): Likewise.
+
+	* ieee.c: Various changes to write out types for functions and
+	references, and to not write out unnecessary function types.
+
+	* ieee.c (struct ieee_var): Remove variable field.  Add kind
+	field, and define some enum constants for it.
+	(parse_ieee_ty): Set kind field of variable for 'x' and 'X' types.
+	(parse_ieee_atn): Make an indirect slot for an external variable,
+	although we otherwise don't record it.  Set kind field rather than
+	variable field of pvar.
+	(ieee_read_cxx_class): Try to get the type of a static member.
+	(ieee_read_reference): Check kind field rather than variable
+	field.
+
+Tue Jan 23 15:54:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c: Various changes to handle reading C++ reference type
+	information.
+
+	* debug.h (enum debug_var_kind): Add DEBUG_VAR_ILLEGAL.
+	(enum debug_parm_kind): Add DEBUG_PARM_ILLEGAL.
+	* debug.c (debug_get_parameter_types): Handle DEBUG_KIND_FUNCTION.
+
+	* ieee.c: Various changes to write out definitions of C++ classes.
+
+	* debug.c (debug_append_filename): Remove.
+	* debug.h (debug_append_filename): Don't declare.
+
+	* stabs.c (struct stab_handle): Remove last_type field.  Add
+	so_string and so_value fields.
+	(finish_stab): Call stab_emit_pending_vars before calling
+	debug_end_function.  Don't warn about pending variables.
+	(parse_stab): Accumulate N_SO strings until a non N_SO symbol is
+	seen, rather than calling debug_append_filename.  Call
+	stab_emit_pending_vars before calling debug_end_function.  Don't
+	set info->last_type.
+
+Tue Jan 23 09:53:54 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* objdump.c (disassemble_data): Handle unknown endianness.
+	Pass fprintf to INIT_DISASSEMBLE_INFO.
+
+Mon Jan 22 16:46:43 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	Add new option --show-raw-insn.
+	* objdump.c (show_raw_insn): New global.
+	(usage): Update.
+	(long_options): Update.
+	(disassemble_data): Set disasm_info.flags if --show-raw-insn.
+
+	* objdump.c (disassemble_data): Set new arch,mach,endian fields in
+	disasm_info.
+
+Mon Jan 22 19:29:36 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c: Extensive changes to pass a single info argument around
+	in the reading routines, rather than several arguments.  Add code
+	to read C++ debugging records.
+
+	* debug.h (debug_get_type_size): Declare.
+	(debug_get_field_name): Declare.
+	(debug_get_field_bitpos): Declare.
+	(debug_get_field_bitsize): Declare.
+	(debug_get_field_visibility): Declare.
+	(debug_get_field_physname): Declare.
+	* debug.c (debug_get_real_type): Handle DEBUG_KIND_TAGGED.
+	(debug_get_type_size): New function.
+	(debug_get_field_name): New function.
+	(debug_get_field_bitpos): New function.
+	(debug_get_field_bitsize): New function.
+	(debug_get_field_visibility): New function.
+	(debug_get_field_physname): New function.
+	(debug_write_type): Make sure we pass the real kind, not INDIRECT,
+	to tag_type.  Pass the name recursively for INDIRECT.
+
+Fri Jan 19 12:31:57 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* debug.h (struct debug_write_fns): Remove ellipsis_type.  Add int
+	and boolean parameters to function_type.  Add boolean parameter to
+	method_type.
+	(debug_make_ellipsis_type): Don't declare.
+	(debug_make_function_type): Add debug_type * and boolean
+	parameters.  Change all callers.
+	(debug_make_method_type): Add boolean parameter.  Change all
+	callers.
+	(debug_get_parameter_types): Add boolean * parameter.  Change all
+	callers.
+	(debug_get_target_type): Declare.
+	* debug.c (struct debug_function_type): Add fields arg_types and
+	varargs.
+	(struct debug_method_type): Add field varargs.
+	(debug_ellipsis_type, ELLIPSIS_P): Remove.
+	(debug_make_ellipsis_type): Remove.
+	(debug_make_function_type): Add arg_types and varargs parameters.
+	(debug_make_method_type): Add varargs parameter.
+	(debug_get_parameter_types): Add pvarargs parameter.
+	(debug_get_target_type): New function.
+	(debug_write_type): In case DEBUG_KIND_FUNCTION, push argument
+	types and pass count to function_type.  In DEBUG_KIND_METHOD, use
+	a signed int for the count, don't call ellipsis_type, and pass
+	varargs to method_type.
+	* stabs.c (struct stab_demangle_info): Add varargs field.
+	(stab_demangle_argtypes): Add pvarargs parameter.  Change all
+	callers.
+	(stab_demangle_args): Likewise.
+	(stab_demangle_type): In case 'F', pick up argument types.
+	* prdbg.c (pr_ellipsis_type): Remove.
+	(pr_function_type): Add argcount and varargs parameters.
+	(pr_method_type): Add varargs parameter.
+	* ieee.c (ieee_ellipsis_type): Remove.
+	(ieee_function_type): Add argcount and varargs parameters.
+	(ieee_method_type): Add varargs parameter.  Remove most of
+	function body, and just call ieee_function_type.
+
+	* stabs.c: Include "demangle.h".  Added several new static
+	functions not listed below to demangle argument types; they are
+	all called via stab_demangle_argtypes.
+	(finish_stab): If the kind of an undefined tag is
+	DEBUG_KIND_ILLEGAL, use DEBUG_KIND_STRUCT instead.  Warn if there
+	are any pending variable.
+	(parse_stab): Don't close the function when the block depth goes
+	to zero.  Pass value to debug_end_function.
+	(parse_stab_string): In case 'T', pass the name to
+	parse_stab_type.
+	(parse_stab_type): In case 'x', use stab_find_tagged_type.  In
+	case '#', handle functions with variable numbers of arguments.
+	(parse_stab_struct_type): Add tagname parameter.  Change all
+	callers.
+	(parse_stab_members): Add tagname and typenums parameters.  Change
+	all callers.  If the type of a method is a stub, call
+	parse_stab_argtypes to demangle the argument types and get the
+	physical name of the function.
+	(parse_stab_argtypes): New static function.
+	(stab_record_variable): For a DEBUG_GLOBAL or DEBUG_STATIC
+	variable, call debug_record_variable immediately.
+	(stab_find_tagged_type): New static function.
+
+	* debug.h (enum debug_type_kind): Add DEBUG_KIND_ILLEGAL.
+	(struct debug_write_fns): Add field ellipsis_type.  Add id
+	parameter to start_struct_type, start_class_type, and tag_type.
+	(debug_make_ellipsis_type): Declare.
+	(debug_find_named_type): Declare.
+	(debug_get_type_kind): Declare.
+	(debug_get_return_type): Declare.
+	(debug_get_parameter_types): Declare.
+	(debug_get_fields): Declare.
+	(debug_get_field_type): Declare.
+	* debug.c (struct debug_handle): Add fields class_id and base_id.
+	(struct debug_class_type): Add field id.
+	(struct debug_method_variant): Rename argtypes to physname.
+	Change all uses.
+	(debug_ellipsis_type): New static variable.
+	(ELLIPSIS_P): New macro.
+	(debug_make_ellipsis_type): New function.
+	(debug_make_method_variant): Rename argtypes to physname.
+	(debug_make_static_method_variant): Likewise.
+	(debug_name_type): Always put types in the global namespace.
+	(debug_find_named_type): New function.
+	(debug_find_tagged_type): Treat DEBUG_KIND_ILLEGAL specially,
+	rather than DEBUG_KIND_VOID.
+	(debug_get_real_type): New static function.
+	(debug_get_type_kind): New function.
+	(debug_get_return_type): New function.
+	(debug_get_parameter_types): New function.
+	(debug_get_fields): New function.
+	(debug_get_field_type): New function.
+	(debug_write): Initialize base_id.
+	(debug_write_type): Pass new id argument to tag_type.  Handle
+	DEBUG_KIND_ILLEGAL.  Use id for	DEBUG_KIND_STRUCT and
+	DEBUG_KIND_UNION.  Handle ellipsis for method arguments.
+	(debug_write_class_type): Don't dereference kclass if it is NULL.
+	Use id.
+	* prdbg.c (pr_fns): Add pr_ellipsis_type.
+	(pr_ellipsis_type): New static function.
+	(pr_pointer_type): If this is a pointer to an array, parenthesize
+	it correctly.
+	(pr_start_struct_type): Add id parameter.
+	(pr_start_class_type): Likewise.
+	(pr_tag_type): Likewise.
+	(pr_fix_visibility): Add the visibility to the top of the stack,
+	not the second element on the stack.
+	(pr_struct_field): Pop the stack before calling pr_fix_visibility.
+	(pr_class_static_member): Likewise.
+	(pr_class_start_method): Don't push a type, just set the method
+	name in the type on the top of the stack.
+	(pr_class_end_method): Don't pop the stack.
+	(pr_class_method_variant): Rename argtypes parameter to physname.
+	Append const and volatile rather than prepending them.  Add a
+	space after the physname.
+	(pr_class_static_method_variant): Likewise.
+	* ieee.c (ieee_fns): Add ieee_ellipsis_type.
+	(ieee_define_named_type): Use DEBUG_KIND_ILLEGAL rather than
+	DEBUG_KIND_VOID.
+	(write_ieee_debugging_info): Likewise.
+	(ieee_typdef): Likewise.
+	(ieee_ellipsis_type): New static function.
+	(ieee_start_struct_type): Add id parameter.
+	(ieee_start_class_type): Likewise.
+	(ieee_tag_type): Likewise.
+	(ieee_class_method_variant): Rename name to physname.
+	(ieee_class_static_method_variant): Likewise.
+
+	* Makefile.in (DEBUG_OBJS): Remove prdbg.o.
+	($(OBJDUMP_PROG)): Depend upon, and link against, prdbg.o.
+
+Thu Jan 18 17:35:06 1996  Kim Knuttila  <krk@cygnus.com>
+
+	* dlltool.c (make_tail): Changed the order of the sections to avoid
+	an alignment problem.
+
+Wed Jan 17 14:23:00 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* srconv.c (wr_du): Set du.stackfrmt to 0.
+	(wr_un, wr_sc): Emit all sections, even those with 0 size.
+
+Tue Jan 16 16:15:49 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* srconv.c (wr_hd): Space size within segment was being
+	stored in segment identifier field.
+
+Tue Jan 16 12:07:25 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-config.in (BUILD_NLMCONV, BUILD_SRCONV, SYSINFO_PROG,
+	BUILD_DLLTOOL): Put definitions for these into makefile when
+	configuring, instead of always clearing in mpw-make.sed.
+	* mpw-make.sed: Edit out any host_alias or target_alias settings,
+	fix pathname to BFD internal include files, remove dependency
+	calculation rules.
+
+Thu Jan 11 17:31:38 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* objdump.c (dump_section_header): Add new section flags
+	SEC_{EXCLUDE,SORT_ENTRIES}.
+
+Thu Jan 11 11:45:34 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objcopy.c (filter_symbols): NULL terminate the output symbols.
+	(copy_object): Allocate space for a possible extra NULL pointer.
+
+	* debug.c (debug_make_undefined_tagged_type): Make sure we are
+	given a kind of type we can handle.
+	(debug_write_type): Handle undefined enums and structs.
+	(debug_write_class_type): Handle undefined classes.
+	* prdbg.c (pr_enum_type): Handle an undefined enum.
+	* ieee.c (ieee_enum_type): Likewise.
+
+Wed Jan 10 15:33:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in: Updated dependencies.
+	(ALLOCA, MALLOC): Remove variables.
+	(ADDL_LIBS): Remove $(MALLOC) from definition.
+	* alloca.c, gmalloc.c: Remove.
+
+Mon Jan  8 18:02:29 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c: Add global function write_ieee_debugging_info and a
+	bunch of static functions and structs used to write out IEEE
+	debugging information.
+	* budbg.h (write_ieee_debugging_info): Declare.
+
+	* ieee.c (struct ieee_type): Add pslot field.
+	(enum builtin_types): Define.
+	(ieee_builtin_type): For a pointer, return a pointer to the named
+	type.  Use enum values rather than numbers.
+	(ieee_alloc_type): New static function.
+	(ieee_read_type_index): Use ieee_alloc_type.
+	(parse_ieee_bb): Likewise.
+	(parse_ieee_ty): Likewise.  Use ieee_builtin_type for array range,
+	rather than making a new integer type.  Store the new type in the
+	slot, if there is one.
+	(parse_ieee_atn): Treat ATN10 as defining a register variable.
+	(ieee_regno_to_genreg): Rename from ieee_regno_to_gen.  Change all
+	callers.
+	(ieee_genreg_to_regno): New static function.
+
+	* stabs.c (parse_stab_type): Add new typename parameter.  Change
+	all callers.
+	(parse_stab_range_type): Add new typename parameter.  Change all
+	callers.
+
+	* debug.h (struct debug_write_fns): Add tag parameter to
+	enum_type, start_struct_type, and start_class_type.
+	* debug.c (debug_write_type): Pass any tag name to
+	start_struct_type, debug_write_class_type, and enum_type.  If
+	DEBUG_KIND_TAGGED, pass the name in the recursive call.
+	(debug_write_class_type): Accept a new tag parameter, and pass it
+	to start_class_type.
+	* prdbg.c (pop_type): Don't remove '+' character.
+	(pr_enum_type): Accept and use tag parameter.
+	(pr_start_struct_type): Likewise.
+	(pr_start_class_type): Likewise.
+	(pr_class_baseclass): Adjust algorithm used to find where to put
+	the baseclass name.
+	(pr_tag): Don't bother to insert the tag name.
+
+	* objcopy.c: Include budbg.h.
+	(convert_debugging): New static variable.
+	(OPTION_DEBUGGING): Define.
+	(copy_options): Add "debugging".
+	(copy_usage): Mention --debugging.
+	(is_strip_section): Skip debugging sections if convert_debugging.
+	(setup_section, copy_section): Likewise.
+	(filter_symbols): Skip debugging symbols if convert_debugging.
+	(copy_object): If convert_debugging, read and write debugging
+	information.
+	(write_debugging_info): New static function.
+	(copy_main): Handle --debugging.
+	* Makefile.in (DEBUG_OBJS): New variable.
+	($(OBJCOPY_PROG)): Depend upon and link against $(DEBUG_OBJS).
+	($(STRIP_PROG)): Likewise.
+	(OBJDUMP_OBJS): Remove variable.
+	($(OBJDUMP_PROG)): Use objdump.o $(DEBUG_OBJS) rather than
+	$(OBJDUMP_OBJS).
+	* binutils.texi, objcopy.1: Document --debugging.
+
+Thu Jan  4 16:31:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c: New file with code to read IEEE debugging information.
+	* budbg.h (parse_ieee): Declare.
+	* rddbg.c (read_debugging_info): Handle IEEE flavour files.
+	(read_ieee_debugging_info): New static function.
+	* Makefile.in: Rebuild dependencies.
+	(CFILES): Add ieee.c.
+	(OBJDUMP_OBJS): Add ieee.o.
+
+	* bucomm.h (xrealloc): Change type of first parameter from char *
+	to PTR.
+
+Tue Jan  2 17:44:07 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in: Add targets to automatically rebuild dependencies.
+	Remove targets which just listed dependencies of .o files.
+	(DEP): New variable.
+	(HFILES, GENERATED_HFILES): New variables.
+	(CFILES, GENERATED_CFILES): New variables.
+	(underscore.c): Don't do anything, just depend upon stamp-under.
+	(stamp-under): New target; do what underscore.c used to do.
+	(nlmconv.o): Depend upon sym.h and ecoff.h.
+	(.dep, .dep1, dep.sed, dep, dep-in): New targets.
+	(stage1, stage2, stage3, against, comparison): Remove.
+	(de-stage1, de-stage2, de-stage3): Remove.
+	(clean, distclean): Remove stamp-under and dep.sed.
+	* dep-in.sed: New file.
+
+	Implement generic debugging support.  Implement a stabs reader and
+	a generic printer.
+	* budbg.h, debug.c, debug.h, prdbg.c, rddbg.c, stabs.c: New files.
+	* objdump.c: Include "debug.h" and "budbg.h".
+	(dump_debugging): New global variable.
+	(usage): Mention --debugging.
+	(long_options): Add "debugging".
+	(display_bfd): Handle --debugging.
+	* Makefile.in (OBJDUMP_OBJS): New variable.
+	($(OBJDUMP_PROG)): Use $(OBJDUMP_OBJS).
+	* binutils.texi, objdump.1: Document --debugging.
+
+Sat Dec 30 09:59:51 1995  Jeffrey A Law  (law@cygnus.com)
+
+	* nm.c ( long_options): Add "--defined-only" option.
+	(usage): Update for new "--defined-only" option.
+	(filter_symbols): Handle "--defined-only".
+
+Fri Dec 29 16:04:56 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* arparse.y: Include "bucomm.h", not <sysdep.h>.
+	* nlmheader.y: Don't include "sysdep.h".
+
+Tue Dec 26 18:23:18 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* nm.c (print_symdef_entry): Check return value of
+	bfd_get_elt_at_index.
+
+Sat Dec 23 11:03:16 1995  Michael Meissner  <meissner@tiktok.cgynsu.com>
+
+	* configure.in (DLLTOOL_DEFS): Build dlltool for PowerPC if target
+	is powerpc*-*-win* in addition to powerpc*-*-*pe*.
+
+Fri Dec 15 16:30:57 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (endian_string): New static function.
+	(display_target_list): Use it.
+	* nlmconv.c (main): Use new bfd_big_endian macro.
+
+Fri Dec 15 07:51:34 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+	* dlltool.c (fill_ordinals): Start from 1 if no other instructions
+ 	given.
+
+Tue Dec 12 12:05:21 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (clean): Remove $(DEMANGLER_PROG).1.  From Ronald
+	F. Guilmette <rfg@monkeys.com>.
+
+Mon Dec 11 14:33:05 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mac-binutils.r: Fix copyright and version strings.
+
+	* Makefile.in (version): Remove, no longer used.
+
+Fri Dec  1 14:41:56 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed (install, install-only): Edit in Mac-specific
+	install procedure.
+
+Thu Nov 30 20:26:02 1995  Kim Knuttila  <krk@cygnus.com>
+
+	* dlltool.c (ppc_jtab): The binary glue for PowerPC dll linkage,
+	including the return instruction.
+	sinfo: added a preferred alignment field.
+	(secdata): section data for the PowerPC version.
+	(make_one_lib_file): More symbols, More sections (pdata, rdata)
+	(make_tail): Use idata$6 instead of idata$7 for ppc. Also added a 
+	NULL idata$3 descriptor (temporary).
+
+Tue Nov 28 17:23:44 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* dlltool.c (fill_ordinals): Don't reference d_export_vec if
+	there are no exported functions.
+
+Mon Nov 27 13:05:59 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Regenerate with autoconf 2.7.
+
+Wed Nov 22 13:17:15 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* dlltool.c (fill_ordinals): Start assigning ordinals at 1.
+
+	* Makefile.in (EXPECT): Use $$r, not $${rootme}.
+	(check): Set r, not rootme.
+
+Tue Nov 21 18:04:09 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Use BFD_NEED_DECLARATION.
+	* acconfig.h: Put NEED_DECLARATION_FPRINTF in @TOP@ section.
+	* configure, config.in: Rebuild with autoconf 2.6.
+
+Fri Nov 17 10:34:37 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (CC_FOR_TARGET): Use @host@ and @target@, not
+	$(host_canonical) and $(target_canonical).
+
+Thu Nov 16 03:39:20 1995  Ken Raeburn  <raeburn@cygnus.com>
 
 	Version 2.6 released.
-	* Makefile.in (VERSION): Updated to 2.6.
+	* Makefile.in (VERSION): Update to 2.6.
 
 Wed Nov 15 12:14:17 1995  Ian Lance Taylor  <ian@cygnus.com>
 

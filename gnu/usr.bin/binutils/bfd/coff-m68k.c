@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola 68000 COFF binaries.
-   Copyright 1990, 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -32,8 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (2)
 
+#ifndef COFF_PAGE_SIZE
 /* The page size is a guess based on ELF.  */
 #define COFF_PAGE_SIZE 0x2000
+#endif
 
 /* Clean up namespace.  */
 #define m68kcoff_howto_table	_bfd_m68kcoff_howto_table
@@ -158,8 +160,8 @@ const bfd_target
   "coff-m68k",			/* name */
 #endif
   bfd_target_coff_flavour,
-  true,				/* data byte order is big */
-  true,				/* header byte order is big */
+  BFD_ENDIAN_BIG,		/* data byte order is big */
+  BFD_ENDIAN_BIG,		/* header byte order is big */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |

@@ -23,7 +23,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define E_FILENMLEN     18
 
-#define PPC
+#define PPC_PE
 
 #define TARGET_LITTLE_SYM   bfd_powerpcle_pe_vec
 #define TARGET_LITTLE_NAME "pe-powerpcle"
@@ -33,6 +33,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define COFF_OBJ_WITH_PE
 #define COFF_WITH_PE
+
+#define COFF_LONG_SECTION_NAMES
 
 /* FIXME: verify PCRELOFFSET is always false */
 

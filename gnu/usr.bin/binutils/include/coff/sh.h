@@ -249,5 +249,18 @@ struct external_reloc {
    must be aligned.  */
 #define R_SH_ALIGN	29		/* .align pseudo-op */
 
+/* The CODE and DATA reloc types are used for aligning load and store
+   instructions.  The assembler will generate a CODE reloc before a
+   block of instructions.  It will generate a DATA reloc before data.
+   A section should be processed assuming it contains data, unless a
+   CODE reloc is seen.  The only relevant pieces of information in the
+   CODE and DATA relocs are the section and the address.  The symbol
+   and offset are meaningless.  */
+#define R_SH_CODE	30		/* start of code */
+#define R_SH_DATA	31		/* start of data */
 
-
+/* The LABEL reloc type is used for aligning load and store
+   instructions.  The assembler will generate a LABEL reloc for each
+   label within a block of instructions.  This permits the linker to
+   avoid swapping instructions which are the targets of branches.  */
+#define R_SH_LABEL	32		/* label */

@@ -38,6 +38,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <assert.h>
 #include <getopt.h>
 
+#ifdef HAVE_VFORK_H
+#include <vfork.h>
+#endif
+
 /* Internal BFD NLM header.  */
 #include "libnlm.h"
 #include "nlmconv.h"
@@ -136,9 +140,6 @@ static void default_mangle_relocs PARAMS ((bfd *, asection *, arelent ***,
 					   long *, char *,
 					   bfd_size_type));
 static char *link_inputs PARAMS ((struct string_list *, char *));
-static const char *choose_temp_base_try PARAMS ((const char *,
-						 const char *));
-static void choose_temp_base PARAMS ((void));
 static int pexecute PARAMS ((char *, char *[]));
 
 #ifdef NLMCONV_I386
@@ -342,7 +343,7 @@ main (argc, argv)
   if (output_format == NULL)
     output_format = select_output_format (bfd_get_arch (inbfd),
 					  bfd_get_mach (inbfd),
-					  inbfd->xvec->byteorder_big_p);
+					  bfd_big_endian (inbfd));
 
   assert (output_format != NULL);
 
@@ -2146,7 +2147,7 @@ link_inputs (inputs, ld)
   if (ld == NULL)
     ld = (char *) LD_NAME;
 
-  choose_temp_base ();
+  temp_filename = choose_temp_base ();
 
   unlink_on_exit = xmalloc (strlen (temp_filename) + 3);
   sprintf (unlink_on_exit, "%s.O", temp_filename);
@@ -2184,59 +2185,6 @@ link_inputs (inputs, ld)
     }
 
   return unlink_on_exit;
-}
-
-/* Choose a temporary file name.  Stolen from gcc.c.  */
-
-static const char *
-choose_temp_base_try (try, base)
-     const char *try;
-     const char *base;
-{
-  const char *rv;
-
-  if (base)
-    rv = base;
-  else if (try == NULL)
-    rv = NULL;
-  else if (access (try, R_OK | W_OK) != 0)
-    rv = NULL;
-  else
-    rv = try;
-  return rv;
-}
-
-static void
-choose_temp_base ()
-{
-  const char *base = NULL;
-  int len;
-
-  base = choose_temp_base_try (getenv ("TMPDIR"), base);
-  base = choose_temp_base_try (getenv ("TMP"), base);
-  base = choose_temp_base_try (getenv ("TEMP"), base);
-
-#ifdef P_tmpdir
-  base = choose_temp_base_try (P_tmpdir, base);
-#endif
-
-  base = choose_temp_base_try ("/usr/tmp", base);
-  base = choose_temp_base_try ("/tmp", base);
-
-  /* If all else fails, use the current directory! */  
-  if (base == NULL)
-    base = "./";
-
-  len = strlen (base);
-  temp_filename = xmalloc (len + sizeof("/ccXXXXXX") + 1);
-  strcpy (temp_filename, base);
-  if (len > 0 && temp_filename[len-1] != '/')
-    temp_filename[len++] = '/';
-  strcpy (temp_filename + len, "ccXXXXXX");
-
-  mktemp (temp_filename);
-  if (*temp_filename == '\0')
-    abort ();
 }
 
 /* Execute a job.  Stolen from gcc.c.  */

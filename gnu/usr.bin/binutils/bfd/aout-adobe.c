@@ -202,10 +202,8 @@ aout_adobe_callback (abfd)
     /* Fix the name, if it is a sprintf'd name.  */
     if (sect->name == try_again) {
       newname = (char *) bfd_zalloc(abfd, strlen (sect->name));
-      if (newname == NULL) {
-	bfd_set_error (bfd_error_no_memory);
+      if (newname == NULL)
 	return 0;
-      }
       strcpy (newname, sect->name);
       sect->name = newname;
     }
@@ -256,10 +254,8 @@ aout_adobe_mkobject (abfd)
   struct bout_data_struct *rawptr;
 
   rawptr = (struct bout_data_struct *) bfd_zalloc (abfd, sizeof (struct bout_data_struct));
-  if (rawptr == NULL) {
-      bfd_set_error (bfd_error_no_memory);
+  if (rawptr == NULL)
       return false;
-    }
 
   abfd->tdata.bout_data = rawptr;
   exec_hdr (abfd) = &rawptr->e;
@@ -494,8 +490,8 @@ const bfd_target a_out_adobe_vec =
 {
   "a.out.adobe",		/* name */
   bfd_target_aout_flavour,
-  true,				/* data byte order is unknown (big assumed) */
-  true,				/* hdr byte order is big */
+  BFD_ENDIAN_BIG,		/* data byte order is unknown (big assumed) */
+  BFD_ENDIAN_BIG,		/* hdr byte order is big */
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT ),

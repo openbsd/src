@@ -44,6 +44,16 @@
 /COREFILE/s/@COREFILE@//
 /COREFLAG/s/@COREFLAG@//
 
+# No PIC foolery in this environment.
+/@ALLLIBS@/s/@ALLLIBS@/{TARGETLIB}/
+/@PICLIST@/s/@PICLIST@//
+/@PICFLAG@/s/@PICFLAG@//
+/^{OFILES} \\Option-f stamp-picdir/,/^$/d
+
+# Remove the pic trickery from the default build rule.
+/^\.c\.o \\Option-f /,/End If/c\
+.c.o \\Option-f .c
+
 # MPW Make doesn't know about $<.
 /"{o}"targets.c.o \\Option-f "{s}"targets.c Makefile/,/^$/c\
 "{o}"targets.c.o \\Option-f "{s}"targets.c Makefile\
@@ -53,3 +63,8 @@
 "{o}"archures.c.o \\Option-f "{s}"archures.c Makefile\
 	{CC} {ALL_CFLAGS} {TDEFAULTS} "{s}"archures.c -o "{o}"archures.c.o
 
+# Remove the .h rebuilding rules, we don't currently have a doc subdir,
+# or a way to build the prototype-hacking tool that's in it.
+/^"{srcdir}"bfd-in2.h \\Option-f /,/^$/d
+/^"{srcdir}"libbfd.h \\Option-f /,/^$/d
+/^"{srcdir}"libcoff.h \\Option-f /,/^$/d

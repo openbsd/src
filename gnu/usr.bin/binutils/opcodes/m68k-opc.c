@@ -1,5 +1,5 @@
 /* Opcode table for m680[01234]0/m6888[12]/m68851.
-   Copyright 1989, 1991, 1992, 1993, 1994, 1995 Free Software Foundation.
+   Copyright 1989, 91, 92, 93, 94, 95, 1996 Free Software Foundation.
 
 This file is part of GDB, GAS, and the GNU binutils.
 
@@ -187,7 +187,7 @@ const struct m68k_opcode m68k_opcodes[] =
 
 {"bgnd",	one(0045372),		one(0177777), "", cpu32 },
 
-{"bkpt",	one(0044110),		one(0177770), "ts", m68020up | cpu32 },
+{"bkpt",	one(0044110),		one(0177770), "ts", m68010up },
 
 {"braw",	one(0060000),		one(0177777), "BW", m68000up },
 {"bral",	one(0060377),		one(0177777), "BL", m68020up | cpu32 },

@@ -1,5 +1,5 @@
 /* MPW-Unix compatibility library.
-   Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or
@@ -31,13 +31,15 @@ Boston, MA 02111-1307, USA.  */
 #include <Types.h>
 #include <Files.h>
 
+#include <Timer.h>
+
 /* Initialize to 0 at first, then set to errno_max() later.  */
 
 int sys_nerr = 0;
 
-int DebugPI = 0;
+/* Debug flag for pathname hacking.  Set this to one and rebuild. */
 
-void mpw_abort (void);
+int DebugPI = 0;
 
 void
 mpwify_filename(char *unixname, char *macname)
@@ -54,7 +56,7 @@ mpwify_filename(char *unixname, char *macname)
   /* Abs Unix path to abs Mac path. */
   if (*unixname == '/')
     {
-      if (strncmp (unixname, "/tmp/", 6) == 0)
+      if (strncmp (unixname, "/tmp/", 5) == 0)
 	{
 	  /* A temporary name, make a more Mac-flavored tmpname. */
 	  /* A better choice would be {Boot}Trash:foo, but that would
@@ -667,11 +669,24 @@ int
 mpw_open (char *filename, int arg2, int arg3)
 {
 #undef open
-
+  int fd, errnum = 0;
   char tmpname[256];
 
   mpwify_filename (filename, tmpname);
-  return open (tmpname, arg2);
+  fd = open (tmpname, arg2);
+  errnum = errno;
+
+  if (DebugPI)
+    {
+      fprintf (stderr, "# open (%s, %d, %d)", tmpname, arg2, arg3);
+      fprintf (stderr, " -> %d", fd);
+      if (fd == -1)
+	fprintf (stderr, " (errno is %d)", errnum);
+      fprintf (stderr, "\n");
+    }
+  if (fd == -1)
+    errno = errnum;
+  return fd;
 }
 
 int
@@ -684,8 +699,6 @@ mpw_access (char *filename, unsigned int cmd)
   char tmpname[256];
 
   mpwify_filename (filename, tmpname);
-  if (DebugPI)
-    fprintf (stderr, "# mpw_access (%s, %d)", tmpname, cmd);
   if (cmd & R_OK || cmd & X_OK)
     {
       rslt = stat (tmpname, &st);
@@ -703,6 +716,7 @@ mpw_access (char *filename, unsigned int cmd)
     }
   if (DebugPI)
     {
+      fprintf (stderr, "# mpw_access (%s, %d)", tmpname, cmd);
       fprintf (stderr, " -> %d", rslt);
       if (rslt != 0)
 	fprintf (stderr, " (errno is %d)", errnum);

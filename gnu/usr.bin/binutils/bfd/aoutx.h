@@ -1,5 +1,5 @@
 /* BFD semi-generic back-end for a.out binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -120,6 +120,7 @@ DESCRIPTION
 #define KEEPIT udata.i
 
 #include <string.h>		/* For strchr and friends */
+#include <ctype.h>
 #include "bfd.h"
 #include <sysdep.h>
 #include "bfdlink.h"
@@ -193,9 +194,9 @@ reloc_howto_type howto_table_ext[] =
   HOWTO(RELOC_LO10,   0,  2, 	10, false, 0, complain_overflow_dont,0,"LO10",     false, 0,0x000003ff, false),
   HOWTO(RELOC_SFA_BASE,0, 2, 	32, false, 0, complain_overflow_bitfield,0,"SFA_BASE", false, 0,0xffffffff, false),
   HOWTO(RELOC_SFA_OFF13,0,2, 	32, false, 0, complain_overflow_bitfield,0,"SFA_OFF13",false, 0,0xffffffff, false),
-  HOWTO(RELOC_BASE10, 0,  2, 	16, false, 0, complain_overflow_bitfield,0,"BASE10",   false, 0,0x0000ffff, false),
+  HOWTO(RELOC_BASE10, 0,  2, 	10, false, 0, complain_overflow_dont,0,"BASE10",   false, 0,0x000003ff, false),
   HOWTO(RELOC_BASE13, 0,  2,	13, false, 0, complain_overflow_bitfield,0,"BASE13",   false, 0,0x00001fff, false),
-  HOWTO(RELOC_BASE22, 0,  2,	0,  false, 0, complain_overflow_bitfield,0,"BASE22",   false, 0,0x00000000, false),
+  HOWTO(RELOC_BASE22, 10, 2,	22, false, 0, complain_overflow_bitfield,0,"BASE22",   false, 0,0x003fffff, false),
   HOWTO(RELOC_PC10,   0,  2,	10, true,  0, complain_overflow_dont,0,"PC10",	false, 0,0x000003ff, true),
   HOWTO(RELOC_PC22,   10,  2,	22, true,  0, complain_overflow_signed,0,"PC22", false, 0,0x003fffff, true),
   HOWTO(RELOC_JMP_TBL,2,  2, 	30, true,  0, complain_overflow_signed,0,"JMP_TBL", 	false, 0,0x3fffffff, false),
@@ -430,10 +431,8 @@ NAME(aout,some_aout_object_p) (abfd, execp, callback_to_real_object_p)
   const bfd_target *result;
 
   rawptr = (struct aout_data_struct  *) bfd_zalloc (abfd, sizeof (struct aout_data_struct ));
-  if (rawptr == NULL) {
-    bfd_set_error (bfd_error_no_memory);
+  if (rawptr == NULL)
     return 0;
-  }
 
   oldrawptr = abfd->tdata.aout_data;
   abfd->tdata.aout_data = rawptr;
@@ -599,7 +598,8 @@ NAME(aout,some_aout_object_p) (abfd, execp, callback_to_real_object_p)
         the default text start (obj_textsec(abfd)->vma) and
         (obj_textsec(abfd)->vma) + text size.  This is not just a mach
         issue.  Many kernels are loaded at non standard addresses.  */
-      if (abfd->iostream
+      if (abfd->iostream != NULL
+	  && (abfd->flags & BFD_IN_MEMORY) == 0
 	  && (fstat(fileno((FILE *) (abfd->iostream)), &stat_buf) == 0)
 	  && ((stat_buf.st_mode & 0111) != 0))
 	abfd->flags |= EXEC_P;
@@ -644,10 +644,8 @@ NAME(aout,mkobject) (abfd)
   /* Use an intermediate variable for clarity */
   rawptr = (struct aout_data_struct *)bfd_zalloc (abfd, sizeof (struct aout_data_struct ));
 
-  if (rawptr == NULL) {
-    bfd_set_error (bfd_error_no_memory);
+  if (rawptr == NULL)
     return false;
-  }
 
   abfd->tdata.aout_data = rawptr;
   exec_hdr (abfd) = &(rawptr->e);
@@ -694,8 +692,11 @@ NAME(aout,machine_type) (arch, machine, unknown)
   case bfd_arch_sparc:
     if (machine == 0
 	|| machine == bfd_mach_sparc
-	|| machine == bfd_mach_sparc64)
+	|| machine == bfd_mach_sparc_sparclite
+	|| machine == bfd_mach_sparc_v9)
       arch_flags = M_SPARC;
+    else if (machine == bfd_mach_sparc_sparclet)
+      arch_flags = M_SPARCLET;
     break;
 
   case bfd_arch_m68k:
@@ -1239,12 +1240,9 @@ aout_get_external_symbols (abfd)
 	 later on.  If we put them on the obstack it might not be
 	 possible to free them.  */
       syms = ((struct external_nlist *)
-	      malloc ((size_t) count * EXTERNAL_NLIST_SIZE));
+	      bfd_malloc ((size_t) count * EXTERNAL_NLIST_SIZE));
       if (syms == (struct external_nlist *) NULL && count != 0)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return false;
-	}
+	return false;
 
       if (bfd_seek (abfd, obj_sym_filepos (abfd), SEEK_SET) != 0
 	  || (bfd_read (syms, 1, exec_hdr (abfd)->a_syms, abfd)
@@ -1279,12 +1277,9 @@ aout_get_external_symbols (abfd)
 	return false;
       strings = (char *) obj_aout_string_window (abfd).data;
 #else
-      strings = (char *) malloc ((size_t) stringsize + 1);
+      strings = (char *) bfd_malloc ((size_t) stringsize + 1);
       if (strings == NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return false;
-	}
+	return false;
 
       /* Skip space for the string count in the buffer for convenience
 	 when using indexes.  */
@@ -1414,6 +1409,10 @@ translate_from_native_sym_flags (abfd, cache_ptr)
     case N_SETD: case N_SETD | N_EXT:
     case N_SETB: case N_SETB | N_EXT:
       {
+	/* This code is no longer needed.  It used to be used to make
+           the linker handle set symbols, but they are now handled in
+           the add_symbols routine instead.  */
+#if 0
 	asection *section;
 	arelent_chain *reloc;
 	asection *into_section;
@@ -1435,10 +1434,7 @@ translate_from_native_sym_flags (abfd, cache_ptr)
 
 	    copy = bfd_alloc (abfd, strlen (cache_ptr->symbol.name) + 1);
 	    if (copy == NULL)
-	      {
-		bfd_set_error (bfd_error_no_memory);
-		return false;
-	      }
+	      return false;
 
 	    strcpy (copy, cache_ptr->symbol.name);
 	    section = bfd_make_section (abfd, copy);
@@ -1448,10 +1444,7 @@ translate_from_native_sym_flags (abfd, cache_ptr)
 
 	reloc = (arelent_chain *) bfd_alloc (abfd, sizeof (arelent_chain));
 	if (reloc == NULL)
-	  {
-	    bfd_set_error (bfd_error_no_memory);
-	    return false;
-	  }
+	  return false;
 
 	/* Build a relocation entry for the constructor.  */
 	switch (cache_ptr->type & N_TYPE)
@@ -1495,6 +1488,24 @@ translate_from_native_sym_flags (abfd, cache_ptr)
 	section->_raw_size += BYTES_IN_WORD;
 
 	reloc->relent.howto = CTOR_TABLE_RELOC_HOWTO(abfd);
+
+#endif /* 0 */
+
+	switch (cache_ptr->type & N_TYPE)
+	  {
+	  case N_SETA:
+	    cache_ptr->symbol.section = bfd_abs_section_ptr;
+	    break;
+	  case N_SETT:
+	    cache_ptr->symbol.section = obj_textsec (abfd);
+	    break;
+	  case N_SETD:
+	    cache_ptr->symbol.section = obj_datasec (abfd);
+	    break;
+	  case N_SETB:
+	    cache_ptr->symbol.section = obj_bsssec (abfd);
+	    break;
+	  }
 
 	cache_ptr->symbol.flags |= BSF_CONSTRUCTOR;
       }
@@ -1573,8 +1584,9 @@ translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
       /* This case occurs, e.g., for the *DEBUG* section of a COFF
 	 file.  */
       (*_bfd_error_handler)
-	("%s: can not represent section `%s' in a.out object file format",
-	 bfd_get_filename (abfd), bfd_get_section_name (abfd, sec));
+	("%s: can not represent section for symbol `%s' in a.out object file format",
+	 bfd_get_filename (abfd), 
+	 cache_ptr->name != NULL ? cache_ptr->name : "*unknown*");
       bfd_set_error (bfd_error_nonrepresentable_section);
       return false;
     }
@@ -1662,10 +1674,7 @@ NAME(aout,make_empty_symbol) (abfd)
   aout_symbol_type  *new =
     (aout_symbol_type *)bfd_zalloc (abfd, sizeof (aout_symbol_type));
   if (!new)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
   new->symbol.the_bfd = abfd;
 
   return &new->symbol;
@@ -1744,12 +1753,9 @@ NAME(aout,slurp_symbol_table) (abfd)
 
   cached_size = (obj_aout_external_sym_count (abfd)
 		 * sizeof (aout_symbol_type));
-  cached = (aout_symbol_type *) malloc (cached_size);
+  cached = (aout_symbol_type *) bfd_malloc (cached_size);
   if (cached == NULL && cached_size != 0)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   if (cached_size != 0)
     memset (cached, 0, cached_size);
 
@@ -1983,7 +1989,7 @@ NAME(aout,swap_std_reloc_out) (abfd, g, natptr)
       {
 	/* Whoops, looked like an abs symbol, but is really an offset
 	   from the abs section */
-	r_index = 0;
+	r_index = N_ABS;
 	r_extern = 0;
        }
       else
@@ -2002,7 +2008,7 @@ NAME(aout,swap_std_reloc_out) (abfd, g, natptr)
     }
 
   /* now the fun stuff */
-  if (abfd->xvec->header_byteorder_big_p != false) {
+  if (bfd_header_big_endian (abfd)) {
       natptr->r_index[0] = r_index >> 16;
       natptr->r_index[1] = r_index >> 8;
       natptr->r_index[2] = r_index;
@@ -2062,7 +2068,7 @@ NAME(aout,swap_ext_reloc_out) (abfd, g, natptr)
   if (bfd_is_abs_section (bfd_get_section (sym)))
     {
       r_extern = 0;
-      r_index = 0;
+      r_index = N_ABS;
     }
   else if ((sym->flags & BSF_SECTION_SYM) == 0)
     {
@@ -2081,7 +2087,7 @@ NAME(aout,swap_ext_reloc_out) (abfd, g, natptr)
     }
 
   /* now the fun stuff */
-  if (abfd->xvec->header_byteorder_big_p != false) {
+  if (bfd_header_big_endian (abfd)) {
     natptr->r_index[0] = r_index >> 16;
     natptr->r_index[1] = r_index >> 8;
     natptr->r_index[2] = r_index;
@@ -2158,7 +2164,7 @@ NAME(aout,swap_ext_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
   cache_ptr->address = (GET_SWORD (abfd, bytes->r_address));
 
   /* now the fun stuff */
-  if (abfd->xvec->header_byteorder_big_p != false) {
+  if (bfd_header_big_endian (abfd)) {
     r_index =  (bytes->r_index[0] << 16)
 	     | (bytes->r_index[1] << 8)
 	     |  bytes->r_index[2];
@@ -2214,7 +2220,7 @@ NAME(aout,swap_std_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
   cache_ptr->address = bfd_h_get_32 (abfd, bytes->r_address);
 
   /* now the fun stuff */
-  if (abfd->xvec->header_byteorder_big_p != false) {
+  if (bfd_header_big_endian (abfd)) {
     r_index =  (bytes->r_index[0] << 16)
       | (bytes->r_index[1] << 8)
 	|  bytes->r_index[2];
@@ -2302,19 +2308,15 @@ NAME(aout,slurp_reloc_table) (abfd, asect, symbols)
 
   count = reloc_size / each_size;
 
-  reloc_cache = (arelent *) malloc ((size_t) (count * sizeof (arelent)));
+  reloc_cache = (arelent *) bfd_malloc ((size_t) (count * sizeof (arelent)));
   if (reloc_cache == NULL && count != 0)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   memset (reloc_cache, 0, count * sizeof (arelent));
 
-  relocs = malloc ((size_t) reloc_size);
+  relocs = bfd_malloc ((size_t) reloc_size);
   if (relocs == NULL && reloc_size != 0)
     {
       free (reloc_cache);
-      bfd_set_error (bfd_error_no_memory);
       return false;
     }
 
@@ -2367,15 +2369,14 @@ NAME(aout,squirt_out_relocs) (abfd, section)
   unsigned int count = section->reloc_count;
   size_t natsize;
 
-  if (count == 0) return true;
+  if (count == 0 || section->orelocation == NULL)
+    return true;
 
   each_size = obj_reloc_entry_size (abfd);
   natsize = each_size * count;
   native = (unsigned char *) bfd_zalloc (abfd, natsize);
-  if (!native) {
-    bfd_set_error (bfd_error_no_memory);
+  if (!native)
     return false;
-  }
 
   generic = section->orelocation;
 
@@ -2508,7 +2509,7 @@ NAME(aout,get_symbol_info) (ignore_abfd, symbol, ret)
   if (ret->type == '?')
     {
       int type_code = aout_symbol(symbol)->type & 0xff;
-      CONST char *stab_name = aout_stab_name(type_code);
+      const char *stab_name = bfd_get_stab_name (type_code);
       static char buf[10];
 
       if (stab_name == NULL)
@@ -2517,6 +2518,7 @@ NAME(aout,get_symbol_info) (ignore_abfd, symbol, ret)
 	  stab_name = buf;
 	}
       ret->type = '-';
+      ret->stab_type = type_code;
       ret->stab_other = (unsigned)(aout_symbol(symbol)->other & 0xff);
       ret->stab_desc = (unsigned)(aout_symbol(symbol)->desc & 0xffff);
       ret->stab_name = stab_name;
@@ -2742,12 +2744,10 @@ NAME(aout,find_nearest_line)
     adata (abfd).line_buf = buf = NULL;
   else
     {
-      adata (abfd).line_buf = buf = (char *) malloc (filelen + funclen + 2);
-      if (adata (abfd).line_buf == NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return false;
-	}
+      buf = (char *) bfd_malloc (filelen + funclen + 3);
+      adata (abfd).line_buf = buf;
+      if (buf == NULL)
+	return false;
     }
 
   if (main_file_name != NULL)
@@ -2854,10 +2854,7 @@ NAME(aout,link_hash_newfunc) (entry, table, string)
     ret = ((struct aout_link_hash_entry *)
 	   bfd_hash_allocate (table, sizeof (struct aout_link_hash_entry)));
   if (ret == (struct aout_link_hash_entry *) NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return (struct bfd_hash_entry *) ret;
-    }
+    return (struct bfd_hash_entry *) ret;
 
   /* Call the allocation method of the superclass.  */
   ret = ((struct aout_link_hash_entry *)
@@ -2897,10 +2894,7 @@ NAME(aout,link_hash_table_create) (abfd)
   ret = ((struct aout_link_hash_table *)
 	 bfd_alloc (abfd, sizeof (struct aout_link_hash_table)));
   if (ret == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return (struct bfd_link_hash_table *) NULL;
-    }
+    return (struct bfd_link_hash_table *) NULL;
   if (! NAME(aout,link_hash_table_init) (ret, abfd,
 					 NAME(aout,link_hash_newfunc)))
     {
@@ -3207,8 +3201,7 @@ aout_link_add_symbols (abfd, info)
   else
     copy = true;
 
-  if ((abfd->flags & DYNAMIC) != 0
-      && aout_backend_info (abfd)->add_dynamic_symbols != NULL)
+  if (aout_backend_info (abfd)->add_dynamic_symbols != NULL)
     {
       if (! ((*aout_backend_info (abfd)->add_dynamic_symbols)
 	     (abfd, info, &syms, &sym_count, &strings)))
@@ -3224,10 +3217,7 @@ aout_link_add_symbols (abfd, info)
 			 ((size_t) sym_count
 			  * sizeof (struct aout_link_hash_entry *))));
   if (sym_hash == NULL && sym_count != 0)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   obj_aout_sym_hashes (abfd) = sym_hash;
 
   add_one_symbol = aout_backend_info (abfd)->add_one_symbol;
@@ -3403,6 +3393,37 @@ aout_link_add_symbols (abfd, info)
 
   return true;
 }
+
+/* A hash table used for header files with N_BINCL entries.  */
+
+struct aout_link_includes_table
+{
+  struct bfd_hash_table root;
+};
+
+/* A linked list of totals that we have found for a particular header
+   file.  */
+
+struct aout_link_includes_totals
+{
+  struct aout_link_includes_totals *next;
+  bfd_vma total;
+};
+
+/* An entry in the header file hash table.  */
+
+struct aout_link_includes_entry
+{
+  struct bfd_hash_entry root;
+  /* List of totals we have found for this file.  */
+  struct aout_link_includes_totals *totals;
+};
+
+/* Look up an entry in an the header file hash table.  */
+
+#define aout_link_includes_lookup(table, string, create, copy) \
+  ((struct aout_link_includes_entry *) \
+   bfd_hash_lookup (&(table)->root, (string), (create), (copy)))
 
 /* During the final link step we need to pass around a bunch of
    information, so we do it in an instance of this structure.  */
@@ -3419,6 +3440,8 @@ struct aout_final_link_info
   file_ptr symoff;
   /* String table.  */
   struct bfd_strtab_hash *strtab;
+  /* Header file hash table.  */
+  struct aout_link_includes_table includes;
   /* A buffer large enough to hold the contents of any section.  */
   bfd_byte *contents;
   /* A buffer large enough to hold the relocs of any section.  */
@@ -3429,6 +3452,8 @@ struct aout_final_link_info
   struct external_nlist *output_syms;
 };
 
+static struct bfd_hash_entry *aout_link_includes_newfunc
+  PARAMS ((struct bfd_hash_entry *, struct bfd_hash_table *, const char *));
 static boolean aout_link_input_bfd
   PARAMS ((struct aout_final_link_info *, bfd *input_bfd));
 static boolean aout_link_write_symbols
@@ -3453,6 +3478,38 @@ static boolean aout_link_reloc_link_order
   PARAMS ((struct aout_final_link_info *, asection *,
 	   struct bfd_link_order *));
 
+/* The function to create a new entry in the header file hash table.  */
+
+static struct bfd_hash_entry *
+aout_link_includes_newfunc (entry, table, string)
+     struct bfd_hash_entry *entry;
+     struct bfd_hash_table *table;
+     const char *string;
+{
+  struct aout_link_includes_entry *ret =
+    (struct aout_link_includes_entry *) entry;
+
+  /* Allocate the structure if it has not already been allocated by a
+     subclass.  */
+  if (ret == (struct aout_link_includes_entry *) NULL)
+    ret = ((struct aout_link_includes_entry *)
+	   bfd_hash_allocate (table,
+			      sizeof (struct aout_link_includes_entry)));
+  if (ret == (struct aout_link_includes_entry *) NULL)
+    return (struct bfd_hash_entry *) ret;
+
+  /* Call the allocation method of the superclass.  */
+  ret = ((struct aout_link_includes_entry *)
+	 bfd_hash_newfunc ((struct bfd_hash_entry *) ret, table, string));
+  if (ret)
+    {
+      /* Set local fields.  */
+      ret->totals = NULL;
+    }
+
+  return (struct bfd_hash_entry *) ret;
+}
+
 /* Do the final link step.  This is called on the output BFD.  The
    INFO structure should point to a list of BFDs linked through the
    link_next field which can be used to find each BFD which takes part
@@ -3467,6 +3524,7 @@ NAME(aout,final_link) (abfd, info, callback)
      void (*callback) PARAMS ((bfd *, file_ptr *, file_ptr *, file_ptr *));
 {
   struct aout_final_link_info aout_info;
+  boolean includes_hash_initialized = false;
   register bfd *sub;
   bfd_size_type trsize, drsize;
   size_t max_contents_size;
@@ -3485,6 +3543,14 @@ NAME(aout,final_link) (abfd, info, callback)
   aout_info.output_bfd = abfd;
   aout_info.contents = NULL;
   aout_info.relocs = NULL;
+  aout_info.symbol_map = NULL;
+  aout_info.output_syms = NULL;
+
+  if (! bfd_hash_table_init_n (&aout_info.includes.root,
+			       aout_link_includes_newfunc,
+			       251))
+    goto error_return;
+  includes_hash_initialized = true;
 
   /* Figure out the largest section size.  Also, if generating
      relocateable output, count the relocs.  */
@@ -3587,20 +3653,17 @@ NAME(aout,final_link) (abfd, info, callback)
     goto error_return;
 
   /* Allocate buffers to hold section contents and relocs.  */
-  aout_info.contents = (bfd_byte *) malloc (max_contents_size);
-  aout_info.relocs = (PTR) malloc (max_relocs_size);
-  aout_info.symbol_map = (int *) malloc (max_sym_count * sizeof (int *));
+  aout_info.contents = (bfd_byte *) bfd_malloc (max_contents_size);
+  aout_info.relocs = (PTR) bfd_malloc (max_relocs_size);
+  aout_info.symbol_map = (int *) bfd_malloc (max_sym_count * sizeof (int *));
   aout_info.output_syms = ((struct external_nlist *)
-			   malloc ((max_sym_count + 1)
-				   * sizeof (struct external_nlist)));
+			   bfd_malloc ((max_sym_count + 1)
+				       * sizeof (struct external_nlist)));
   if ((aout_info.contents == NULL && max_contents_size != 0)
       || (aout_info.relocs == NULL && max_relocs_size != 0)
       || (aout_info.symbol_map == NULL && max_sym_count != 0)
       || aout_info.output_syms == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      goto error_return;
-    }
+    goto error_return;
 
   /* If we have a symbol named __DYNAMIC, force it out now.  This is
      required by SunOS.  Doing this here rather than in sunos.c is a
@@ -3638,6 +3701,19 @@ NAME(aout,final_link) (abfd, info, callback)
      whether we have already handled it.  */
   for (sub = info->input_bfds; sub != (bfd *) NULL; sub = sub->link_next)
     sub->output_has_begun = false;
+
+  /* Mark all sections which are to be included in the link.  This
+     will normally be every section.  We need to do this so that we
+     can identify any sections which the linker has decided to not
+     include.  */
+  for (o = abfd->sections; o != NULL; o = o->next)
+    {
+      for (p = o->link_order_head; p != NULL; p = p->next)
+	{
+	  if (p->type == bfd_indirect_link_order)
+	    p->u.indirect.section->linker_mark = true;
+	}
+    }
 
   have_link_order_relocs = false;
   for (o = abfd->sections; o != (asection *) NULL; o = o->next)
@@ -3721,6 +3797,11 @@ NAME(aout,final_link) (abfd, info, callback)
       free (aout_info.output_syms);
       aout_info.output_syms = NULL;
     }
+  if (includes_hash_initialized)
+    {
+      bfd_hash_table_free (&aout_info.includes.root);
+      includes_hash_initialized = false;
+    }
 
   /* Finish up any dynamic linking we may be doing.  */
   if (aout_backend_info (abfd)->finish_dynamic_link != NULL)
@@ -3752,6 +3833,8 @@ NAME(aout,final_link) (abfd, info, callback)
     free (aout_info.symbol_map);
   if (aout_info.output_syms != NULL)
     free (aout_info.output_syms);
+  if (includes_hash_initialized)
+    bfd_hash_table_free (&aout_info.includes.root);
   return false;
 }
 
@@ -3787,16 +3870,25 @@ aout_link_input_bfd (finfo, input_bfd)
     return false;
 
   /* Relocate and write out the sections.  These functions use the
-     symbol map created by aout_link_write_symbols.  */
-  if (! aout_link_input_section (finfo, input_bfd,
-				 obj_textsec (input_bfd),
-				 &finfo->treloff,
-				 exec_hdr (input_bfd)->a_trsize)
-      || ! aout_link_input_section (finfo, input_bfd,
-				    obj_datasec (input_bfd),
-				    &finfo->dreloff,
-				    exec_hdr (input_bfd)->a_drsize))
-    return false;
+     symbol map created by aout_link_write_symbols.  The linker_mark
+     field will be set if these sections are to be included in the
+     link, which will normally be the case.  */
+  if (obj_textsec (input_bfd)->linker_mark)
+    {
+      if (! aout_link_input_section (finfo, input_bfd,
+				     obj_textsec (input_bfd),
+				     &finfo->treloff,
+				     exec_hdr (input_bfd)->a_trsize))
+	return false;
+    }
+  if (obj_datasec (input_bfd)->linker_mark)
+    {
+      if (! aout_link_input_section (finfo, input_bfd,
+				     obj_datasec (input_bfd),
+				     &finfo->dreloff,
+				     exec_hdr (input_bfd)->a_drsize))
+	return false;
+    }
 
   /* If we are not keeping memory, we don't need the symbols any
      longer.  We still need them if we are keeping memory, because the
@@ -3870,6 +3962,7 @@ aout_link_write_symbols (finfo, input_bfd)
   sym_end = sym + sym_count;
   sym_hash = obj_aout_sym_hashes (input_bfd);
   symbol_map = finfo->symbol_map;
+  memset (symbol_map, 0, sym_count * sizeof *symbol_map);
   for (; sym < sym_end; sym++, sym_hash++, symbol_map++)
     {
       const char *name;
@@ -3880,6 +3973,16 @@ aout_link_write_symbols (finfo, input_bfd)
       bfd_vma val = 0;
       boolean copy;
 
+      /* We set *symbol_map to 0 above for all symbols.  If it has
+         already been set to -1 for this symbol, it means that we are
+         discarding it because it appears in a duplicate header file.
+         See the N_BINCL code below.  */
+      if (*symbol_map == -1)
+	continue;
+
+      /* Initialize *symbol_map to -1, which means that the symbol was
+         not copied into the output file.  We will change it later if
+         we do copy the symbol over.  */
       *symbol_map = -1;
 
       type = bfd_h_get_8 (input_bfd, sym->e_type);
@@ -3911,6 +4014,11 @@ aout_link_write_symbols (finfo, input_bfd)
 	     in the hash table, provided we first check that it is an
 	     external symbol. */
 	  h = *sym_hash;
+
+	  /* Use the name from the hash table, in case the symbol was
+             wrapped.  */
+	  if (h != NULL)
+	    name = h->root.root.string;
 
 	  /* If this is an indirect or warning symbol, then change
 	     hresolve to the base symbol.  We also change *sym_hash so
@@ -4127,6 +4235,112 @@ aout_link_write_symbols (finfo, input_bfd)
 		{
 		  pass = false;
 		  continue;
+		}
+	    }
+
+	  /* An N_BINCL symbol indicates the start of the stabs
+	     entries for a header file.  We need to scan ahead to the
+	     next N_EINCL symbol, ignoring nesting, adding up all the
+	     characters in the symbol names, not including the file
+	     numbers in types (the first number after an open
+	     parenthesis).  */
+	  if (type == N_BINCL)
+	    {
+	      struct external_nlist *incl_sym;
+	      int nest;
+	      struct aout_link_includes_entry *incl_entry;
+	      struct aout_link_includes_totals *t;
+
+	      val = 0;
+	      nest = 0;
+	      for (incl_sym = sym + 1; incl_sym < sym_end; incl_sym++)
+		{
+		  int incl_type;
+
+		  incl_type = bfd_h_get_8 (input_bfd, incl_sym->e_type);
+		  if (incl_type == N_EINCL)
+		    {
+		      if (nest == 0)
+			break;
+		      --nest;
+		    }
+		  else if (incl_type == N_BINCL)
+		    ++nest;
+		  else if (nest == 0)
+		    {
+		      const char *s;
+
+		      s = strings + GET_WORD (input_bfd, incl_sym->e_strx);
+		      for (; *s != '\0'; s++)
+			{
+			  val += *s;
+			  if (*s == '(')
+			    {
+			      /* Skip the file number.  */
+			      ++s;
+			      while (isdigit ((unsigned char) *s))
+				++s;
+			      --s;
+			    }
+			}
+		    }
+		}
+
+	      /* If we have already included a header file with the
+                 same value, then replace this one with an N_EXCL
+                 symbol.  */
+	      copy = ! finfo->info->keep_memory;
+	      incl_entry = aout_link_includes_lookup (&finfo->includes,
+						      name, true, copy);
+	      if (incl_entry == NULL)
+		return false;
+	      for (t = incl_entry->totals; t != NULL; t = t->next)
+		if (t->total == val)
+		  break;
+	      if (t == NULL)
+		{
+		  /* This is the first time we have seen this header
+                     file with this set of stabs strings.  */
+		  t = ((struct aout_link_includes_totals *)
+		       bfd_hash_allocate (&finfo->includes.root,
+					  sizeof *t));
+		  if (t == NULL)
+		    return false;
+		  t->total = val;
+		  t->next = incl_entry->totals;
+		  incl_entry->totals = t;
+		}
+	      else
+		{
+		  int *incl_map;
+
+		  /* This is a duplicate header file.  We must change
+                     it to be an N_EXCL entry, and mark all the
+                     included symbols to prevent outputting them.  */
+		  type = N_EXCL;
+
+		  nest = 0;
+		  for (incl_sym = sym + 1, incl_map = symbol_map + 1;
+		       incl_sym < sym_end;
+		       incl_sym++, incl_map++)
+		    {
+		      int incl_type;
+
+		      incl_type = bfd_h_get_8 (input_bfd, incl_sym->e_type);
+		      if (incl_type == N_EINCL)
+			{
+			  if (nest == 0)
+			    {
+			      *incl_map = -1;
+			      break;
+			    }
+			  --nest;
+			}
+		      else if (incl_type == N_BINCL)
+			++nest;
+		      else if (nest == 0)
+			*incl_map = -1;
+		    }
 		}
 	    }
 	}
@@ -4434,8 +4648,8 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
   check_dynamic_reloc = aout_backend_info (output_bfd)->check_dynamic_reloc;
 
   BFD_ASSERT (obj_reloc_entry_size (input_bfd) == RELOC_STD_SIZE);
-  BFD_ASSERT (input_bfd->xvec->header_byteorder_big_p
-	      == output_bfd->xvec->header_byteorder_big_p);
+  BFD_ASSERT (input_bfd->xvec->header_byteorder
+	      == output_bfd->xvec->header_byteorder);
 
   relocateable = finfo->info->relocateable;
   syms = obj_aout_external_syms (input_bfd);
@@ -4469,7 +4683,7 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
 	int r_length;
 	unsigned int howto_idx;
 
-	if (input_bfd->xvec->header_byteorder_big_p)
+	if (bfd_header_big_endian (input_bfd))
 	  {
 	    r_index   =  ((rel->r_index[0] << 16)
 			  | (rel->r_index[1] << 8)
@@ -4523,7 +4737,7 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
 		  asection *output_section;
 
 		  /* Change the r_extern value.  */
-		  if (output_bfd->xvec->header_byteorder_big_p)
+		  if (bfd_header_big_endian (output_bfd))
 		    rel->r_type[0] &=~ RELOC_STD_BITS_EXTERN_BIG;
 		  else
 		    rel->r_type[0] &=~ RELOC_STD_BITS_EXTERN_LITTLE;
@@ -4588,7 +4802,7 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
 		}
 
 	      /* Write out the new r_index value.  */
-	      if (output_bfd->xvec->header_byteorder_big_p)
+	      if (bfd_header_big_endian (output_bfd))
 		{
 		  rel->r_index[0] = r_index >> 16;
 		  rel->r_index[1] = r_index >> 8;
@@ -4696,16 +4910,19 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
 	    {
 	      const char *name;
 
-	      name = strings + GET_WORD (input_bfd, syms[r_index].e_strx);
+	      if (h != NULL)
+		name = h->root.root.string;
+	      else
+		name = strings + GET_WORD (input_bfd, syms[r_index].e_strx);
 	      if (! ((*finfo->info->callbacks->undefined_symbol)
 		     (finfo->info, name, input_bfd, input_section, r_addr)))
 		return false;
 	    }
 
 	  r = MY_final_link_relocate (howto,
-					input_bfd, input_section,
-					contents, r_addr, relocation,
-					(bfd_vma) 0);
+				      input_bfd, input_section,
+				      contents, r_addr, relocation,
+				      (bfd_vma) 0);
 	}
 
       if (r != bfd_reloc_ok)
@@ -4719,7 +4936,9 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
 	      {
 		const char *name;
 
-		if (r_extern)
+		if (h != NULL)
+		  name = h->root.root.string;
+		else if (r_extern)
 		  name = strings + GET_WORD (input_bfd,
 					     syms[r_index].e_strx);
 		else
@@ -4773,8 +4992,8 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
   check_dynamic_reloc = aout_backend_info (output_bfd)->check_dynamic_reloc;
 
   BFD_ASSERT (obj_reloc_entry_size (input_bfd) == RELOC_EXT_SIZE);
-  BFD_ASSERT (input_bfd->xvec->header_byteorder_big_p
-	      == output_bfd->xvec->header_byteorder_big_p);
+  BFD_ASSERT (input_bfd->xvec->header_byteorder
+	      == output_bfd->xvec->header_byteorder);
 
   relocateable = finfo->info->relocateable;
   syms = obj_aout_external_syms (input_bfd);
@@ -4798,7 +5017,7 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 
       r_addr = GET_SWORD (input_bfd, rel->r_address);
 
-      if (input_bfd->xvec->header_byteorder_big_p)
+      if (bfd_header_big_endian (input_bfd))
 	{
 	  r_index  = ((rel->r_index[0] << 16)
 		      | (rel->r_index[1] << 8)
@@ -4838,7 +5057,7 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 		  asection *output_section;
 
 		  /* Change the r_extern value.  */
-		  if (output_bfd->xvec->header_byteorder_big_p)
+		  if (bfd_header_big_endian (output_bfd))
 		    rel->r_type[0] &=~ RELOC_EXT_BITS_EXTERN_BIG;
 		  else
 		    rel->r_type[0] &=~ RELOC_EXT_BITS_EXTERN_LITTLE;
@@ -4916,7 +5135,7 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 		}
 
 	      /* Write out the new r_index value.  */
-	      if (output_bfd->xvec->header_byteorder_big_p)
+	      if (bfd_header_big_endian (output_bfd))
 		{
 		  rel->r_index[0] = r_index >> 16;
 		  rel->r_index[1] = r_index >> 8;
@@ -5080,16 +5299,19 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 	    {
 	      const char *name;
 
-	      name = strings + GET_WORD (input_bfd, syms[r_index].e_strx);
+	      if (h != NULL)
+		name = h->root.root.string;
+	      else
+		name = strings + GET_WORD (input_bfd, syms[r_index].e_strx);
 	      if (! ((*finfo->info->callbacks->undefined_symbol)
 		     (finfo->info, name, input_bfd, input_section, r_addr)))
 		return false;
 	    }
 
 	  r = MY_final_link_relocate (howto_table_ext + r_type,
-					input_bfd, input_section,
-					contents, r_addr, relocation,
-					r_addend);
+				      input_bfd, input_section,
+				      contents, r_addr, relocation,
+				      r_addend);
 	  if (r != bfd_reloc_ok)
 	    {
 	      switch (r)
@@ -5101,10 +5323,12 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 		  {
 		    const char *name;
 
-		    if (r_extern
-			|| r_type == RELOC_BASE10
-			|| r_type == RELOC_BASE13
-			|| r_type == RELOC_BASE22)
+		    if (h != NULL)
+		      name = h->root.root.string;
+		    else if (r_extern
+			     || r_type == RELOC_BASE10
+			     || r_type == RELOC_BASE13
+			     || r_type == RELOC_BASE22)
 		      name = strings + GET_WORD (input_bfd,
 						 syms[r_index].e_strx);
 		    else
@@ -5164,8 +5388,9 @@ aout_link_reloc_link_order (finfo, o, p)
 
       BFD_ASSERT (p->type == bfd_symbol_reloc_link_order);
       r_extern = 1;
-      h = aout_link_hash_lookup (aout_hash_table (finfo->info),
-				 pr->u.name, false, false, true);
+      h = ((struct aout_link_hash_entry *)
+	   bfd_wrapped_link_hash_lookup (finfo->output_bfd, finfo->info,
+					 pr->u.name, false, false, true));
       if (h != (struct aout_link_hash_entry *) NULL
 	  && h->indx >= 0)
 	r_index = h->indx;
@@ -5225,7 +5450,7 @@ aout_link_reloc_link_order (finfo, o, p)
 	r_length = howto->size;
 
 	PUT_WORD (finfo->output_bfd, p->offset, srel.r_address);
-	if (finfo->output_bfd->xvec->header_byteorder_big_p)
+	if (bfd_header_big_endian (finfo->output_bfd))
 	  {
 	    srel.r_index[0] = r_index >> 16;
 	    srel.r_index[1] = r_index >> 8;
@@ -5270,10 +5495,7 @@ aout_link_reloc_link_order (finfo, o, p)
 	  size = bfd_get_reloc_size (howto);
 	  buf = (bfd_byte *) bfd_zmalloc (size);
 	  if (buf == (bfd_byte *) NULL)
-	    {
-	      bfd_set_error (bfd_error_no_memory);
-	      return false;
-	    }
+	    return false;
 	  r = MY_relocate_contents (howto, finfo->output_bfd,
 				      pr->addend, buf);
 	  switch (r)
@@ -5311,7 +5533,7 @@ aout_link_reloc_link_order (finfo, o, p)
     {
       PUT_WORD (finfo->output_bfd, p->offset, erel.r_address);
 
-      if (finfo->output_bfd->xvec->header_byteorder_big_p)
+      if (bfd_header_big_endian (finfo->output_bfd))
 	{
 	  erel.r_index[0] = r_index >> 16;
 	  erel.r_index[1] = r_index >> 8;

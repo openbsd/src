@@ -10,8 +10,15 @@
    <sys/wait.h> defines, since our code does not use waitpid().  We
    also fail to declare wait() and waitpid().  */   
 
+#ifndef	WIFEXITED
 #define WIFEXITED(w)	(((w)&0377) == 0)
+#endif
+
+#ifndef	WIFSIGNALED
 #define WIFSIGNALED(w)	(((w)&0377) != 0177 && ((w)&~0377) == 0)
+#endif
+
+#ifndef	WIFSTOPPED
 #ifdef IBM6000
 
 /* Unfortunately, the above comment (about being compatible in all Unix 
@@ -24,15 +31,33 @@
 #else
 #define WIFSTOPPED(w)	(((w)&0377) == 0177)
 #endif
+#endif
 
+#ifndef	WEXITSTATUS
 #define WEXITSTATUS(w)	(((w) >> 8) & 0377) /* same as WRETCODE */
+#endif
+
+#ifndef	WTERMSIG
 #define WTERMSIG(w)	((w) & 0177)
+#endif
+
+#ifndef	WSTOPSIG
 #define WSTOPSIG	WEXITSTATUS
+#endif
 
 /* These are not defined in POSIX, but are used by our programs.  */
 
 #define WAITTYPE	int
 
+#ifndef	WCOREDUMP
 #define WCOREDUMP(w)	(((w)&0200) != 0)
+#endif
+
+#ifndef	WSETEXIT
 #define WSETEXIT(w,status) ((w) = (0 | ((status) << 8)))
+#endif
+
+#ifndef	WSETSTOP
 #define WSETSTOP(w,sig)	   ((w) = (0177 | ((sig) << 8)))
+#endif
+

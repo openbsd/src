@@ -152,6 +152,14 @@ extern struct bfd_link_hash_entry *bfd_link_hash_lookup
   PARAMS ((struct bfd_link_hash_table *, const char *, boolean create,
 	   boolean copy, boolean follow));
 
+/* Look up an entry in the main linker hash table if the symbol might
+   be wrapped.  This should only be used for references to an
+   undefined symbol, not for definitions of a symbol.  */
+
+extern struct bfd_link_hash_entry *bfd_wrapped_link_hash_lookup
+  PARAMS ((bfd *, struct bfd_link_info *, const char *, boolean, boolean,
+	   boolean));
+
 /* Traverse a link hash table.  */
 extern void bfd_link_hash_traverse
   PARAMS ((struct bfd_link_hash_table *,
@@ -177,6 +185,11 @@ struct bfd_link_info
   boolean symbolic;
   /* true if shared objects should be linked directly, not shared.  */
   boolean static_link;
+  /* true if the output file should be in a traditional format.  This
+     is equivalent to the setting of the BFD_TRADITIONAL_FORMAT flag
+     on the output file, but may be checked when reading the input
+     files.  */
+  boolean traditional_format;
   /* Which symbols to strip.  */
   enum bfd_link_strip strip;
   /* Which local symbols to discard.  */
@@ -201,10 +214,16 @@ struct bfd_link_info
   /* Hash table of symbols to keep.  This is NULL unless strip is
      strip_some.  */
   struct bfd_hash_table *keep_hash;
-  /* Hash table of symbols to report back via notice_callback.  If
-     this is NULL no symbols are reported back.  */
+  /* true if every symbol should be reported back via the notice
+     callback.  */
+  boolean notice_all;
+  /* Hash table of symbols to report back via the notice callback.  If
+     this is NULL, and notice_all is false, then no symbols are
+     reported back.  */
   struct bfd_hash_table *notice_hash;
-
+  /* Hash table of symbols which are being wrapped (the --wrap linker
+     option).  If this is NULL, no symbols are being wrapped.  */
+  struct bfd_hash_table *wrap_hash;
   /* If a base output file is wanted, then this points to it */
   PTR base_file;
 };
@@ -278,12 +297,13 @@ struct bfd_link_callbacks
 				  boolean constructor,
 				  const char *name, bfd *abfd, asection *sec,
 				  bfd_vma value));
-  /* A function which is called when there is a reference to a warning
+  /* A function which is called to issue a linker warning.  For
+     example, this is called when there is a reference to a warning
      symbol.  WARNING is the warning to be issued.  SYMBOL is the name
-     of the symbol which triggered the warning; it may be NULL.  ABFD,
-     SECTION and ADDRESS identify the location which trigerred the
-     warning; either ABFD or SECTION or both may be NULL if the
-     location is not known.  */
+     of the symbol which triggered the warning; it may be NULL if
+     there is none.  ABFD, SECTION and ADDRESS identify the location
+     which trigerred the warning; either ABFD or SECTION or both may
+     be NULL if the location is not known.  */
   boolean (*warning) PARAMS ((struct bfd_link_info *,
 			      const char *warning, const char *symbol,
 			      bfd *abfd, asection *section,

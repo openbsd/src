@@ -59,6 +59,13 @@
 #define IMAGE_SCN_MEM_NOT_PAGED              0x08000000  /* Section is not pageable.               */
 #define IMAGE_SCN_MEM_SHARED                 0x10000000  /* Section is shareable.                  */
 
+/* COMDAT selection codes.  */
+
+#define IMAGE_COMDAT_SELECT_NODUPLICATES     (1) /* Warn if duplicates.  */
+#define IMAGE_COMDAT_SELECT_ANY		     (2) /* No warning.  */
+#define IMAGE_COMDAT_SELECT_SAME_SIZE	     (3) /* Warn if different size.  */
+#define IMAGE_COMDAT_SELECT_EXACT_MATCH	     (4) /* Warn if different.  */
+#define IMAGE_COMDAT_SELECT_ASSOCIATIVE	     (5) /* Base on other section.  */
 
 /* Magic values that are true for all dos/nt implementations */
 #define DOSMAGIC       0x5a4d  

@@ -1,5 +1,5 @@
 /* BFD back-end for linux flavored i386 a.out binaries.
-   Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define	TARGET_PAGE_SIZE	4096
 #define ZMAGIC_DISK_BLOCK_SIZE 1024
-#define	SEGMENT_SIZE	4096
+#define	SEGMENT_SIZE TARGET_PAGE_SIZE
 #define TEXT_START_ADDR	0x0
 #define N_SHARED_LIB(x) 0
 #define BYTES_IN_WORD 4
@@ -221,10 +221,7 @@ linux_link_hash_table_create (abfd)
   ret = ((struct linux_link_hash_table *)
 	 bfd_alloc (abfd, sizeof (struct linux_link_hash_table)));
   if (ret == (struct linux_link_hash_table *) NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return (struct bfd_link_hash_table *) NULL;
-    }
+    return (struct bfd_link_hash_table *) NULL;
   if (! NAME(aout,link_hash_table_init) (&ret->root, abfd,
 					 linux_link_hash_newfunc))
     {
@@ -441,7 +438,7 @@ linux_tally_symbols (h, data)
       name = h->root.root.root.string + sizeof NEEDS_SHRLIB - 1;
       p = strrchr (name, '_');
       if (p != NULL)
-	alloc = (char *) malloc (strlen (name) + 1);
+	alloc = (char *) bfd_malloc (strlen (name) + 1);
 
       if (p == NULL || alloc == NULL)
 	(*_bfd_error_handler) ("Output file requires shared library `%s'\n",
@@ -544,7 +541,7 @@ linux_tally_symbols (h, data)
    are required.  */
 
 boolean
-bfd_linux_size_dynamic_sections (output_bfd, info)
+bfd_i386linux_size_dynamic_sections (output_bfd, info)
      bfd *output_bfd;
      struct bfd_link_info *info;
 {
@@ -587,10 +584,7 @@ bfd_linux_size_dynamic_sections (output_bfd, info)
       s->_raw_size = 8 + linux_hash_table (info)->fixup_count * 8;
       s->contents = (bfd_byte *) bfd_alloc (output_bfd, s->_raw_size);
       if (s->contents == NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return false;
-	}
+	return false;
       memset (s->contents, 0, (size_t) s->_raw_size);
     }
 

@@ -1,5 +1,5 @@
 /* bucomm.h -- binutils common include file.
-   Copyright (C) 1992, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -98,6 +98,6 @@ void mode_string PARAMS ((unsigned long mode, char *buf));
 /* libiberty */
 PTR xmalloc PARAMS ((size_t));
 
-PTR xrealloc PARAMS ((char *, size_t));
+PTR xrealloc PARAMS ((PTR, size_t));
 
 #endif /* _BUCOMM_H */

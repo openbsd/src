@@ -1,5 +1,5 @@
 /* objcopy.c -- copy object file from input to output, optionally massaging it.
-   Copyright (C) 1991, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -20,8 +20,9 @@
 #include "bfd.h"
 #include "progress.h"
 #include "bucomm.h"
-#include <getopt.h>
+#include "getopt.h"
 #include "libiberty.h"
+#include "budbg.h"
 #include <sys/stat.h>
 
 static flagword parse_flags PARAMS ((const char *));
@@ -36,6 +37,7 @@ static boolean is_strip_section PARAMS ((bfd *, asection *));
 static unsigned int filter_symbols
   PARAMS ((bfd *, asymbol **, asymbol **, long));
 static void mark_symbols_used_in_relocations PARAMS ((bfd *, asection *, PTR));
+static boolean write_debugging_info PARAMS ((bfd *, PTR, long *, asymbol ***));
 
 #define nonfatal(s) {bfd_nonfatal(s); status = 1; return;}
 
@@ -132,6 +134,14 @@ struct section_add
 
 static struct section_add *add_sections;
 
+/* Whether to convert debugging information.  */
+
+static boolean convert_debugging = false;
+
+/* Whether to remove the leading character from global symbol names.  */
+
+static boolean remove_leading_char = false;
+
 /* 150 isn't special; it's just an arbitrary non-ASCII char value.  */
 
 #define OPTION_ADD_SECTION 150
@@ -139,10 +149,12 @@ static struct section_add *add_sections;
 #define OPTION_ADJUST_VMA (OPTION_ADJUST_START + 1)
 #define OPTION_ADJUST_SECTION_VMA (OPTION_ADJUST_VMA + 1)
 #define OPTION_ADJUST_WARNINGS (OPTION_ADJUST_SECTION_VMA + 1)
-#define OPTION_GAP_FILL (OPTION_ADJUST_WARNINGS + 1)
+#define OPTION_DEBUGGING (OPTION_ADJUST_WARNINGS + 1)
+#define OPTION_GAP_FILL (OPTION_DEBUGGING + 1)
 #define OPTION_NO_ADJUST_WARNINGS (OPTION_GAP_FILL + 1)
 #define OPTION_PAD_TO (OPTION_NO_ADJUST_WARNINGS + 1)
-#define OPTION_SET_SECTION_FLAGS (OPTION_PAD_TO + 1)
+#define OPTION_REMOVE_LEADING_CHAR (OPTION_PAD_TO + 1)
+#define OPTION_SET_SECTION_FLAGS (OPTION_REMOVE_LEADING_CHAR + 1)
 #define OPTION_SET_START (OPTION_SET_SECTION_FLAGS + 1)
 #define OPTION_STRIP_UNNEEDED (OPTION_SET_START + 1)
 
@@ -180,6 +192,7 @@ static struct option copy_options[] =
   {"adjust-section-vma", required_argument, 0, OPTION_ADJUST_SECTION_VMA},
   {"adjust-warnings", no_argument, 0, OPTION_ADJUST_WARNINGS},
   {"byte", required_argument, 0, 'b'},
+  {"debugging", no_argument, 0, OPTION_DEBUGGING},
   {"discard-all", no_argument, 0, 'x'},
   {"discard-locals", no_argument, 0, 'X'},
   {"format", required_argument, 0, 'F'}, /* Obsolete */
@@ -193,6 +206,7 @@ static struct option copy_options[] =
   {"output-format", required_argument, 0, 'O'},	/* Obsolete */
   {"output-target", required_argument, 0, 'O'},
   {"pad-to", required_argument, 0, OPTION_PAD_TO},
+  {"remove-leading-char", no_argument, 0, OPTION_REMOVE_LEADING_CHAR},
   {"remove-section", required_argument, 0, 'R'},
   {"set-section-flags", required_argument, 0, OPTION_SET_SECTION_FLAGS},
   {"set-start", required_argument, 0, OPTION_SET_START},
@@ -226,15 +240,16 @@ Usage: %s [-vVSgxX] [-I bfdname] [-O bfdname] [-F bfdname] [-b byte]\n\
        [-R section] [-i interleave] [--interleave=interleave] [--byte=byte]\n\
        [--input-target=bfdname] [--output-target=bfdname] [--target=bfdname]\n\
        [--strip-all] [--strip-debug] [--strip-unneeded] [--discard-all]\n\
-       [--discard-locals] [--remove-section=section] [--gap-fill=val]\n",
+       [--discard-locals] [--debugging] [--remove-section=section]\n",
 	   program_name);
   fprintf (stream, "\
-       [--pad-to=address] [--set-start=val] [--adjust-start=incr]\n\
+       [--gap-fill=val] [--pad-to=address]\n\
+       [--set-start=val] [--adjust-start=incr]\n\
        [--adjust-vma=incr] [--adjust-section-vma=section{=,+,-}val]\n\
        [--adjust-warnings] [--no-adjust-warnings]\n\
        [--set-section-flags=section=flags] [--add-section=sectionname=filename]\n\
        [--keep-symbol symbol] [-K symbol] [--strip-symbol symbol] [-N symbol]\n\
-       [--verbose] [--version] [--help]\n\
+       [--remove-leading-char] [--verbose] [--version] [--help]\n\
        in-file [out-file]\n");
   list_supported_targets (program_name, stream);
   exit (exit_status);
@@ -392,7 +407,8 @@ is_strip_section (abfd, sec)
       && (strip_symbols == strip_debug
 	  || strip_symbols == strip_unneeded
 	  || strip_symbols == strip_all
-	  || discard_locals == locals_all))
+	  || discard_locals == locals_all
+	  || convert_debugging))
     return true;
 
   if (! sections_removed)
@@ -420,15 +436,25 @@ filter_symbols (abfd, osyms, isyms, symcount)
       flagword flags = sym->flags;
       int keep;
 
+      if (remove_leading_char
+	  && ((flags & BSF_GLOBAL) != 0
+	      || (flags & BSF_WEAK) != 0
+	      || bfd_is_und_section (bfd_get_section (sym))
+	      || bfd_is_com_section (bfd_get_section (sym)))
+	  && bfd_asymbol_name (sym)[0] == bfd_get_symbol_leading_char (abfd))
+	bfd_asymbol_name (sym) = bfd_asymbol_name (sym) + 1;
+
       if ((flags & BSF_KEEP) != 0)		/* Used in relocation.  */
 	keep = 1;
       else if ((flags & BSF_GLOBAL) != 0	/* Global symbol.  */
+	       || (flags & BSF_WEAK) != 0
 	       || bfd_is_und_section (bfd_get_section (sym))
 	       || bfd_is_com_section (bfd_get_section (sym)))
 	keep = strip_symbols != strip_unneeded;
       else if ((flags & BSF_DEBUGGING) != 0)	/* Debugging symbol.  */
 	keep = (strip_symbols != strip_debug
-		&& strip_symbols != strip_unneeded);
+		&& strip_symbols != strip_unneeded
+		&& ! convert_debugging);
       else			/* Local symbol.  */
 	keep = (strip_symbols != strip_unneeded
 		&& (discard_locals != locals_all
@@ -443,6 +469,8 @@ filter_symbols (abfd, osyms, isyms, symcount)
       if (keep)
 	to[dst_count++] = sym;
     }
+
+  to[dst_count] = NULL;
 
   return dst_count;
 }
@@ -503,7 +531,8 @@ copy_object (ibfd, obfd)
   if (!bfd_set_arch_mach (obfd, bfd_get_arch (ibfd),
 			  bfd_get_mach (ibfd)))
     {
-      fprintf (stderr, "Output file cannot represent architecture %s\n",
+      fprintf (stderr,
+	       "Warning: Output file cannot represent architecture %s\n",
 	       bfd_printable_arch_mach (bfd_get_arch (ibfd),
 					bfd_get_mach (ibfd)));
     }
@@ -660,6 +689,7 @@ copy_object (ibfd, obfd)
   else
     {
       long symsize;
+      PTR dhandle = NULL;
 
       symsize = bfd_get_symtab_upper_bound (ibfd);
       if (symsize < 0)
@@ -674,11 +704,16 @@ copy_object (ibfd, obfd)
 	  nonfatal (bfd_get_filename (ibfd));
 	}
 
+      if (convert_debugging)
+	dhandle = read_debugging_info (ibfd, isympp, symcount);
+
       if (strip_symbols == strip_debug 
 	  || strip_symbols == strip_unneeded
 	  || discard_locals != locals_undef
 	  || strip_specific_list != NULL
-	  || sections_removed)
+	  || sections_removed
+	  || convert_debugging
+	  || remove_leading_char)
 	{
 	  /* Mark symbols used in output relocations so that they
 	     are kept, even if they are local labels or static symbols.
@@ -691,8 +726,17 @@ copy_object (ibfd, obfd)
 	  bfd_map_over_sections (ibfd,
 				 mark_symbols_used_in_relocations,
 				 (PTR)isympp);
-	  osympp = (asymbol **) xmalloc (symcount * sizeof (asymbol *));
+	  osympp = (asymbol **) xmalloc ((symcount + 1) * sizeof (asymbol *));
 	  symcount = filter_symbols (ibfd, osympp, isympp, symcount);
+	}
+
+      if (convert_debugging && dhandle != NULL)
+	{
+	  if (! write_debugging_info (obfd, dhandle, &symcount, &osympp))
+	    {
+	      status = 1;
+	      return;
+	    }
 	}
     }
 
@@ -976,7 +1020,8 @@ setup_section (ibfd, isection, obfdarg)
       && (strip_symbols == strip_debug
 	  || strip_symbols == strip_unneeded
 	  || strip_symbols == strip_all
-	  || discard_locals == locals_all))
+	  || discard_locals == locals_all
+	  || convert_debugging))
     return;
 
   p = find_section_list (bfd_section_name (ibfd, isection), false);
@@ -1087,7 +1132,8 @@ copy_section (ibfd, isection, obfdarg)
       && (strip_symbols == strip_debug
 	  || strip_symbols == strip_unneeded
 	  || strip_symbols == strip_all
-	  || discard_locals == locals_all))
+	  || discard_locals == locals_all
+	  || convert_debugging))
     {
       return;
     }
@@ -1264,6 +1310,75 @@ mark_symbols_used_in_relocations (ibfd, isection, symbolsarg)
     free (relpp);
 }
 
+/* Write out debugging information.  */
+
+static boolean
+write_debugging_info (obfd, dhandle, symcountp, symppp)
+     bfd *obfd;
+     PTR dhandle;
+     long *symcountp;
+     asymbol ***symppp;
+{
+  if (bfd_get_flavour (obfd) == bfd_target_ieee_flavour)
+    return write_ieee_debugging_info (obfd, dhandle);
+
+  if (bfd_get_flavour (obfd) == bfd_target_coff_flavour
+      || bfd_get_flavour (obfd) == bfd_target_elf_flavour)
+    {
+      bfd_byte *syms, *strings;
+      bfd_size_type symsize, stringsize;
+      asection *stabsec, *stabstrsec;
+
+      if (! write_stabs_in_sections_debugging_info (obfd, dhandle, &syms,
+						    &symsize, &strings,
+						    &stringsize))
+	return false;
+
+      stabsec = bfd_make_section (obfd, ".stab");
+      stabstrsec = bfd_make_section (obfd, ".stabstr");
+      if (stabsec == NULL
+	  || stabstrsec == NULL
+	  || ! bfd_set_section_size (obfd, stabsec, symsize)
+	  || ! bfd_set_section_size (obfd, stabstrsec, stringsize)
+	  || ! bfd_set_section_alignment (obfd, stabsec, 2)
+	  || ! bfd_set_section_alignment (obfd, stabstrsec, 0)
+	  || ! bfd_set_section_flags (obfd, stabsec,
+				   (SEC_HAS_CONTENTS
+				    | SEC_READONLY
+				    | SEC_DEBUGGING))
+	  || ! bfd_set_section_flags (obfd, stabstrsec,
+				      (SEC_HAS_CONTENTS
+				       | SEC_READONLY
+				       | SEC_DEBUGGING)))
+	{
+	  fprintf (stderr, "%s: can't create debugging section: %s\n",
+		   bfd_get_filename (obfd), bfd_errmsg (bfd_get_error ()));
+	  return false;
+	}
+
+      /* We can get away with setting the section contents now because
+         the next thing the caller is going to do is copy over the
+         real sections.  We may someday have to split the contents
+         setting out of this function.  */
+      if (! bfd_set_section_contents (obfd, stabsec, syms, (file_ptr) 0,
+				      symsize)
+	  || ! bfd_set_section_contents (obfd, stabstrsec, strings,
+					 (file_ptr) 0, stringsize))
+	{
+	  fprintf (stderr, "%s: can't set debugging section contents: %s\n",
+		   bfd_get_filename (obfd), bfd_errmsg (bfd_get_error ()));
+	  return false;
+	}
+
+      return true;
+    }
+
+  fprintf (stderr,
+	   "%s: don't know how to write debugging information for %s\n",
+	   bfd_get_filename (obfd), bfd_get_target (obfd));
+  return false;
+}
+
 /* The number of bytes to copy at once.  */
 #define COPY_BUF 8192
 
@@ -1341,9 +1456,20 @@ smart_rename (from, to)
       ret = rename (from, to);
       if (ret == 0)
 	{
-	  /* Try to preserve the permission bits and ownership of TO.  */
-	  chmod (to, s.st_mode & 07777);
-	  chown (to, s.st_uid, s.st_gid);
+	  /* Try to preserve the permission bits and ownership of TO.
+             First get the mode right except for the setuid bit.  Then
+             change the ownership.  Then fix the setuid bit.  We do
+             the chmod before the chown because if the chown succeeds,
+             and we are a normal user, we won't be able to do the
+             chmod afterward.  We don't bother to fix the setuid bit
+             first because that might introduce a fleeting security
+             problem, and because the chown will clear the setuid bit
+             anyhow.  We only fix the setuid bit if the chown
+             succeeds, because we don't want to introduce an
+             unexpected setuid file owned by the user running objcopy.  */
+	  chmod (to, s.st_mode & 0777);
+	  if (chown (to, s.st_uid, s.st_gid) >= 0)
+	    chmod (to, s.st_mode & 07777);
 	}
       else
 	{
@@ -1689,6 +1815,9 @@ copy_main (argc, argv)
 	case OPTION_ADJUST_WARNINGS:
 	  adjust_warn = true;
 	  break;
+	case OPTION_DEBUGGING:
+	  convert_debugging = true;
+	  break;
 	case OPTION_GAP_FILL:
 	  {
 	    bfd_vma gap_fill_vma;
@@ -1711,6 +1840,9 @@ copy_main (argc, argv)
 	case OPTION_PAD_TO:
 	  pad_to = parse_vma (optarg, "--pad-to");
 	  pad_to_set = true;
+	  break;
+	case OPTION_REMOVE_LEADING_CHAR:
+	  remove_leading_char = true;
 	  break;
 	case OPTION_SET_SECTION_FLAGS:
 	  {

@@ -72,11 +72,14 @@ _bfd_elf_create_got_section (abfd, info)
       && ! _bfd_elf_link_record_dynamic_symbol (info, h))
     return false;
 
+  elf_hash_table (info)->hgot = h;
+
   /* The first three global offset table entries are reserved.  */
   s->_raw_size += 3 * 4;
 
   return true;
 }
+
 
 /* Create dynamic sections when linking against a dynamic object.  */
 
@@ -163,6 +166,7 @@ _bfd_elf_create_dynamic_sections (abfd, info)
 
   return true;
 }
+
 
 /* Record a new dynamic symbol.  We record the dynamic symbols as we
    read the input files, since we need to have a list of all of them
@@ -202,3 +206,172 @@ _bfd_elf_link_record_dynamic_symbol (info, h)
 
   return true;
 }
+
+/* Create a special linker section, or return a pointer to a linker section already created  */
+
+elf_linker_section_t *
+_bfd_elf_create_linker_section (abfd, info, which, defaults)
+     bfd *abfd;
+     struct bfd_link_info *info;
+     enum elf_linker_section_enum which;
+     elf_linker_section_t *defaults;
+{
+  bfd *dynobj = elf_hash_table (info)->dynobj;
+  elf_linker_section_t *lsect;
+
+  /* Record the first bfd section that needs the special section */
+  if (!dynobj)
+    dynobj = elf_hash_table (info)->dynobj = abfd;
+
+  /* If this is the first time, create the section */
+  lsect = elf_linker_section (dynobj, which);
+  if (!lsect)
+    {
+      asection *s;
+
+      lsect = (elf_linker_section_t *)
+	bfd_alloc (dynobj, sizeof (elf_linker_section_t));
+
+      *lsect = *defaults;
+      elf_linker_section (dynobj, which) = lsect;
+      lsect->which = which;
+      lsect->hole_written_p = false;
+
+      /* See if the sections already exist */
+      lsect->section = s = bfd_get_section_by_name (dynobj, lsect->name);
+      if (!s)
+	{
+	  lsect->section = s = bfd_make_section (dynobj, lsect->name);
+
+	  if (s == NULL)
+	    return (elf_linker_section_t *)0;
+
+	  bfd_set_section_flags (dynobj, s, defaults->flags);
+	  bfd_set_section_alignment (dynobj, s, lsect->alignment);
+	}
+      else if (bfd_get_section_alignment (dynobj, s) < lsect->alignment)
+	bfd_set_section_alignment (dynobj, s, lsect->alignment);
+
+      s->_raw_size = align_power (s->_raw_size, lsect->alignment);
+
+      /* Is there a hole we have to provide?  If so check whether the segment is
+	 too big already */
+      if (lsect->hole_size)
+	{
+	  lsect->hole_offset = s->_raw_size;
+	  s->_raw_size += lsect->hole_size;
+	  if (lsect->hole_offset > lsect->max_hole_offset)
+	    {
+	      (*_bfd_error_handler) ("%s: Section %s is already to large to put hole of %ld bytes in",
+				     bfd_get_filename (abfd),
+				     lsect->name,
+				     (long)lsect->hole_size);
+
+	      bfd_set_error (bfd_error_bad_value);
+	      return (elf_linker_section_t *)0;
+	    }
+	}
+
+#ifdef DEBUG
+      fprintf (stderr, "Creating section %s, current size = %ld\n",
+	       lsect->name, (long)s->_raw_size);
+#endif
+
+      if (lsect->sym_name)
+	{
+	  struct elf_link_hash_entry *h = NULL;
+#ifdef DEBUG
+	  fprintf (stderr, "Adding %s to section %s\n",
+		   lsect->sym_name,
+		   lsect->name);
+#endif
+	  h = (struct elf_link_hash_entry *)
+	    bfd_link_hash_lookup (info->hash, lsect->sym_name, false, false, false);
+
+	  if ((h == NULL || h->root.type == bfd_link_hash_undefined)
+	      && !(_bfd_generic_link_add_one_symbol (info,
+						     abfd,
+						     lsect->sym_name,
+						     BSF_GLOBAL,
+						     s,
+						     ((lsect->hole_size)
+						      ? s->_raw_size - lsect->hole_size + lsect->sym_offset
+						      : lsect->sym_offset),
+						     (const char *) NULL,
+						     false,
+						     get_elf_backend_data (abfd)->collect,
+						     (struct bfd_link_hash_entry **) &h)))
+	    return (elf_linker_section_t *)0;
+
+	  if ((defaults->which != LINKER_SECTION_SDATA)
+	      && (defaults->which != LINKER_SECTION_SDATA2))
+	    h->elf_link_hash_flags |= ELF_LINK_HASH_DEF_DYNAMIC;
+
+	  h->type = STT_OBJECT;
+	  lsect->sym_hash = h;
+
+	  if (info->shared
+	      && ! _bfd_elf_link_record_dynamic_symbol (info, h))
+	    return (elf_linker_section_t *)0;
+	}
+    }
+
+  /* Find the related sections if they have been created */
+  if (lsect->bss_name && !lsect->bss_section)
+    lsect->bss_section = bfd_get_section_by_name (dynobj, lsect->bss_name);
+
+  if (lsect->rel_name && !lsect->rel_section)
+    lsect->rel_section = bfd_get_section_by_name (dynobj, lsect->rel_name);
+
+  return lsect;
+}
+
+
+/* Find a linker generated pointer with a given addend and type.  */
+
+elf_linker_section_pointers_t *
+_bfd_elf_find_pointer_linker_section (linker_pointers, addend, which)
+     elf_linker_section_pointers_t *linker_pointers;
+     bfd_signed_vma addend;
+     elf_linker_section_enum_t which;
+{
+  for ( ; linker_pointers != NULL; linker_pointers = linker_pointers->next)
+    {
+      if (which == linker_pointers->which && addend == linker_pointers->addend)
+	return linker_pointers;
+    }
+
+  return (elf_linker_section_pointers_t *)0;
+}
+
+
+/* Make the .rela section corresponding to the generated linker section.  */
+
+boolean
+_bfd_elf_make_linker_section_rela (dynobj, lsect, alignment)
+     bfd *dynobj;
+     elf_linker_section_t *lsect;
+     int alignment;
+{
+  if (lsect->rel_section)
+    return true;
+
+  lsect->rel_section = bfd_get_section_by_name (dynobj, lsect->rel_name);
+  if (lsect->rel_section == NULL)
+    {
+      lsect->rel_section = bfd_make_section (dynobj, lsect->rel_name);
+      if (lsect->rel_section == NULL
+	  || ! bfd_set_section_flags (dynobj,
+				      lsect->rel_section,
+				      (SEC_ALLOC
+				       | SEC_LOAD
+				       | SEC_HAS_CONTENTS
+				       | SEC_IN_MEMORY
+				       | SEC_READONLY))
+	  || ! bfd_set_section_alignment (dynobj, lsect->rel_section, alignment))
+	return false;
+    }
+
+  return true;
+}
+

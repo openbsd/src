@@ -63,36 +63,30 @@ proc long_filenames { } {
 	return
     }
 
-    send_log "cd tmpdir; $AR x artest.a\n"
-    verbose "cd tmpdir; $AR x artest.a"
+    verbose -log "cd tmpdir; $AR x artest.a"
     catch "exec /bin/sh -c \"cd tmpdir; $AR x artest.a\"" exec_output
     set exec_output [prune_system_crud $host_triplet $exec_output]
     if ![string match "" $exec_output] {
-	send_log "$exec_output\n"
-	verbose $exec_output
+	verbose -log $exec_output
 	fail $testname
 	return
     }
 
     if ![file exists tmpdir/$n1] {
-	send_log "tmpdir/$n1 does not exist\n"
-	verbose "tmpdir/$n1 does not exist"
+	verbose -log "tmpdir/$n1 does not exist"
 	fail $testname
 	return
     }
     if ![file exists tmpdir/$n2] {
-	send_log "tmpdir/$n2 does not exist\n"
-	verbose "tmpdir/$n2 does not exist"
+	verbose -log "tmpdir/$n2 does not exist"
 	fail $testname
 	return
     }
 
     set f [open tmpdir/$n1 r]
     if { [gets $f line] == -1 || $line != "first" } {
-	send_log "tmpdir/$n1 contents:\n"
-	verbose "tmpdir/$n1 contents:"
-	send_log "$line\n"
-	verbose "$line"
+	verbose -log "tmpdir/$n1 contents:"
+	verbose -log "$line"
 	close $f
 	fail $testname
 	return
@@ -101,10 +95,8 @@ proc long_filenames { } {
 
     set f [open tmpdir/$n2 r]
     if { [gets $f line] == -1 || $line != "second" } {
-	send_log "tmpdir/$n2 contents:\n"
-	verbose "tmpdir/$n2 contents:"
-	send_log "$line\n"
-	verbose "$line"
+	verbose -log "tmpdir/$n2 contents:"
+	verbose -log "$line"
 	close $f
 	fail $testname
 	return

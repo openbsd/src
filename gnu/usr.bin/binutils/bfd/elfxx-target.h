@@ -1,5 +1,5 @@
 /* Target definitions for NN-bit ELF
-   Copyright 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -40,7 +40,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define bfd_elfNN_minisymbol_to_symbol	_bfd_elf_minisymbol_to_symbol
 #define bfd_elfNN_get_dynamic_symtab_upper_bound _bfd_elf_get_dynamic_symtab_upper_bound
 #define bfd_elfNN_get_lineno		_bfd_elf_get_lineno
+#ifndef bfd_elfNN_get_reloc_upper_bound
 #define bfd_elfNN_get_reloc_upper_bound _bfd_elf_get_reloc_upper_bound
+#endif
 #define bfd_elfNN_get_symbol_info	_bfd_elf_get_symbol_info
 #define bfd_elfNN_get_symtab		_bfd_elf_get_symtab
 #define bfd_elfNN_get_symtab_upper_bound _bfd_elf_get_symtab_upper_bound
@@ -67,10 +69,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 #ifndef elf_backend_want_plt_sym
 #define elf_backend_want_plt_sym 0
-#endif
-
-#ifndef elf_backend_want_hdr_in_seg
-#define elf_backend_want_hdr_in_seg 0
 #endif
 
 #define bfd_elfNN_bfd_debug_info_start	bfd_void
@@ -101,7 +99,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 #ifndef bfd_elfNN_bfd_print_private_bfd_data
 #define bfd_elfNN_bfd_print_private_bfd_data \
-  _bfd_generic_bfd_print_private_bfd_data
+  _bfd_elf_print_private_bfd_data
 #endif
 #ifndef bfd_elfNN_bfd_merge_private_bfd_data
 #define bfd_elfNN_bfd_merge_private_bfd_data \
@@ -145,6 +143,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define bfd_elfNN_bfd_link_split_section _bfd_generic_link_split_section
 #endif
 
+#ifndef elf_symbol_leading_char
+#define elf_symbol_leading_char 0
+#endif
+
+#ifndef elf_info_to_howto
+#define elf_info_to_howto 0
+#endif
+
 #ifndef elf_info_to_howto_rel
 #define elf_info_to_howto_rel 0
 #endif
@@ -155,6 +161,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifndef elf_backend_collect
 #define elf_backend_collect false
+#endif
+#ifndef elf_backend_type_change_ok
+#define elf_backend_type_change_ok false
 #endif
 
 #ifndef elf_backend_sym_is_global
@@ -214,8 +223,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef elf_backend_final_write_processing
 #define elf_backend_final_write_processing	0
 #endif
-#ifndef elf_backend_create_program_headers
-#define elf_backend_create_program_headers	0
+#ifndef elf_backend_additional_program_headers
+#define elf_backend_additional_program_headers	0
+#endif
+#ifndef elf_backend_modify_segment_map
+#define elf_backend_modify_segment_map	0
 #endif
 #ifndef elf_backend_ecoff_debug_swap
 #define elf_backend_ecoff_debug_swap	0
@@ -227,6 +239,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifndef ELF_MACHINE_ALT2
 #define ELF_MACHINE_ALT2 0
+#endif
+
+#ifndef elf_backend_size_info
+#define elf_backend_size_info _bfd_elfNN_size_info
 #endif
 
 extern const struct elf_size_info _bfd_elfNN_size_info;
@@ -242,6 +258,7 @@ static CONST struct elf_backend_data elfNN_bed =
   ELF_MACHINE_CODE,		/* elf_machine_code */
   ELF_MAXPAGESIZE,		/* maxpagesize */
   elf_backend_collect,
+  elf_backend_type_change_ok,
   elf_info_to_howto,
   elf_info_to_howto_rel,
   elf_backend_sym_is_global,
@@ -263,15 +280,15 @@ static CONST struct elf_backend_data elfNN_bed =
   elf_backend_finish_dynamic_sections,
   elf_backend_begin_write_processing,
   elf_backend_final_write_processing,
-  elf_backend_create_program_headers,
+  elf_backend_additional_program_headers,
+  elf_backend_modify_segment_map,
   elf_backend_ecoff_debug_swap,
   ELF_MACHINE_ALT1,
   ELF_MACHINE_ALT2,
-  &_bfd_elfNN_size_info,
+  &elf_backend_size_info,
   elf_backend_want_got_plt,
   elf_backend_plt_readonly,
-  elf_backend_want_plt_sym,
-  elf_backend_want_hdr_in_seg,
+  elf_backend_want_plt_sym
 };
 
 #ifdef TARGET_BIG_SYM
@@ -283,11 +300,11 @@ const bfd_target TARGET_BIG_SYM =
   /* flavour: general indication about file */
   bfd_target_elf_flavour,
 
-  /* byteorder_big_p: data is big endian */
-  true,
+  /* byteorder: data is big endian */
+  BFD_ENDIAN_BIG,
 
-  /* header_byteorder_big_p: header is also big endian */
-  true,
+  /* header_byteorder: header is also big endian */
+  BFD_ENDIAN_BIG,
 
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS |
@@ -295,11 +312,11 @@ const bfd_target TARGET_BIG_SYM =
   
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY |
-   SEC_CODE | SEC_DATA | SEC_DEBUGGING),
+   SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_EXCLUDE | SEC_SORT_ENTRIES),
 
    /* leading_symbol_char: is the first char of a user symbol
       predictable, and if so what is it */
-   0,
+  elf_symbol_leading_char,
 
   /* ar_pad_char: pad character for filenames within an archive header
      FIXME:  this really has nothing to do with ELF, this is a characteristic
@@ -367,11 +384,11 @@ const bfd_target TARGET_LITTLE_SYM =
   /* flavour: general indication about file */
   bfd_target_elf_flavour,
 
-  /* byteorder_big_p: data is big endian */
-  false,		/* Nope -- this one's little endian */
+  /* byteorder: data is little endian */
+  BFD_ENDIAN_LITTLE,
 
-  /* header_byteorder_big_p: header is also big endian */
-  false,		/* Nope -- this one's little endian */
+  /* header_byteorder: header is also little endian */
+  BFD_ENDIAN_LITTLE,
 
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS |
@@ -379,11 +396,11 @@ const bfd_target TARGET_LITTLE_SYM =
   
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY |
-   SEC_CODE | SEC_DATA | SEC_DEBUGGING),
+   SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_EXCLUDE | SEC_SORT_ENTRIES),
 
    /* leading_symbol_char: is the first char of a user symbol
       predictable, and if so what is it */
-   0,
+  elf_symbol_leading_char,
 
   /* ar_pad_char: pad character for filenames within an archive header
      FIXME:  this really has nothing to do with ELF, this is a characteristic

@@ -1,5 +1,15 @@
 -*- text -*-
 
+Changes since binutils 2.6
+
+* Added --enable-shared and --enable-commonbfdlib options to configure.
+
+* Added --debugging argument to objdump and objcopy.
+
+* Added --defined-only argument to nm.
+
+* Added --remove-leading-char argument to objcopy.
+
 Changes since binutils 2.5
 
 * Added -N/--strip-symbol and -K/--keep-symbol arguments to strip and objcopy.

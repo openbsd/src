@@ -1,3 +1,10 @@
+Mon Mar 11 12:15:52 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stab.def: Use __define_stab_duplicate rather than __define_stab
+	for duplicate entries N_BROWS and N_MOD2.
+	* stab_gnu.h (__define_stab_duplicate): Define before including
+	stab.def.
+
 Fri Oct 27 17:47:16 1995  Niklas Hallqvist  <niklas@appli.se>
 
 	* aout64.h, host.h, hp300hpux.h, sun4.h: Changed PAGE_SIZE to

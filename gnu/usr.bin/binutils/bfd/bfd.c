@@ -1,5 +1,5 @@
 /* Generic BFD library interface and support routines.
-   Copyright (C) 1990, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -44,8 +44,10 @@ CODE_FRAGMENT
 .       includes `<<bfd.h>>', IOSTREAM has been declared as a "char
 .       *", and MTIME as a "long".  Their correct types, to which they
 .       are cast when used, are "FILE *" and "time_t".    The iostream
-.       is the result of an fopen on the filename. *}
-.    char *iostream;
+.       is the result of an fopen on the filename.  However, if the
+.       BFD_IN_MEMORY flag is set, then iostream is actually a pointer
+.       to a bfd_in_memory struct.  *}
+.    PTR iostream;
 .
 .    {* Is the file descriptor being cached?  That is, can it be closed as
 .       needed, and re-opened when accessed later?  *}
@@ -158,6 +160,7 @@ CODE_FRAGMENT
 .      struct ieee_data_struct *ieee_data;
 .      struct ieee_ar_data_struct *ieee_ar_data;
 .      struct srec_data_struct *srec_data;
+.      struct ihex_data_struct *ihex_data;
 .      struct tekhex_data_struct *tekhex_data;
 .      struct elf_obj_tdata *elf_obj_data;
 .      struct nlm_obj_tdata *nlm_obj_data;
@@ -172,6 +175,7 @@ CODE_FRAGMENT
 .      struct osf_core_struct *osf_core_data;
 .      struct cisco_core_struct *cisco_core_data;
 .      struct versados_data_struct *versados_data;
+.      struct netbsd_core_struct *netbsd_core_data;
 .      PTR any;
 .      } tdata;
 .  
@@ -341,7 +345,19 @@ bfd_errmsg (error_tag)
   extern int errno;
 #endif
   if (error_tag == bfd_error_system_call)
-    return strerror (errno);
+    {
+      const char *errmsg;
+
+      errmsg = strerror (errno);
+      if (errmsg == NULL)
+	{
+	  static char buf[32];
+
+	  sprintf (buf, "Error %d", errno);
+	  errmsg = buf;
+	}
+      return errmsg;
+    }
 
   if ((((int)error_tag <(int) bfd_error_no_error) ||
        ((int)error_tag > (int)bfd_error_invalid_error_code)))
@@ -412,6 +428,8 @@ _bfd_default_error_handler (const char *s, ...)
 
   if (_bfd_error_program_name != NULL)
     fprintf (stderr, "%s: ", _bfd_error_program_name);
+  else
+    fprintf (stderr, "BFD: ");
 
   va_start (p, s);
 
@@ -435,6 +453,8 @@ _bfd_default_error_handler (va_alist)
 
   if (_bfd_error_program_name != NULL)
     fprintf (stderr, "%s: ", _bfd_error_program_name);
+  else
+    fprintf (stderr, "BFD: ");
 
   va_start (p);
 
@@ -747,6 +767,9 @@ bfd_get_size (abfd)
   FILE *fp;
   struct stat buf;
 
+  if ((abfd->flags & BFD_IN_MEMORY) != 0)
+    return ((struct bfd_in_memory *) abfd->iostream)->size;
+
   fp = bfd_cache_lookup (abfd);
   if (0 != fstat (fileno (fp), &buf))
     return 0;
@@ -806,6 +829,39 @@ bfd_set_gp_size (abfd, i)
     ecoff_data (abfd)->gp_size = i;
   else if (abfd->xvec->flavour == bfd_target_elf_flavour)
     elf_gp_size (abfd) = i;
+}
+
+/* Get the GP value.  This is an internal function used by some of the
+   relocation special_function routines on targets which support a GP
+   register.  */
+
+bfd_vma
+_bfd_get_gp_value (abfd)
+     bfd *abfd;
+{
+  if (abfd->format == bfd_object)
+    {
+      if (abfd->xvec->flavour == bfd_target_ecoff_flavour)
+	return ecoff_data (abfd)->gp;
+      else if (abfd->xvec->flavour == bfd_target_elf_flavour)
+	return elf_gp (abfd);
+    }
+  return 0;
+}
+
+/* Set the GP value.  */
+
+void
+_bfd_set_gp_value (abfd, v)
+     bfd *abfd;
+     bfd_vma v;
+{
+  if (abfd->format != bfd_object)
+    return;
+  if (abfd->xvec->flavour == bfd_target_ecoff_flavour)
+    ecoff_data (abfd)->gp = v;
+  else if (abfd->xvec->flavour == bfd_target_elf_flavour)
+    elf_gp (abfd) = v;
 }
 
 /*
@@ -1044,5 +1100,49 @@ bfd_get_relocated_section_contents (abfd, link_info, link_order, data,
   return (*fn) (abfd, link_info, link_order, data, relocateable, symbols);
 }
 
+/* Record information about an ELF program header.  */
 
+boolean
+bfd_record_phdr (abfd, type, flags_valid, flags, at_valid, at,
+		 includes_filehdr, includes_phdrs, count, secs)
+     bfd *abfd;
+     unsigned long type;
+     boolean flags_valid;
+     flagword flags;
+     boolean at_valid;
+     bfd_vma at;
+     boolean includes_filehdr;
+     boolean includes_phdrs;
+     unsigned int count;
+     asection **secs;
+{
+  struct elf_segment_map *m, **pm;
 
+  if (bfd_get_flavour (abfd) != bfd_target_elf_flavour)
+    return true;
+
+  m = ((struct elf_segment_map *)
+       bfd_alloc (abfd,
+		  (sizeof (struct elf_segment_map)
+		   + (count - 1) * sizeof (asection *))));
+  if (m == NULL)
+    return false;
+
+  m->next = NULL;
+  m->p_type = type;
+  m->p_flags = flags;
+  m->p_paddr = at;
+  m->p_flags_valid = flags_valid;
+  m->p_paddr_valid = at_valid;
+  m->includes_filehdr = includes_filehdr;
+  m->includes_phdrs = includes_phdrs;
+  m->count = count;
+  if (count > 0)
+    memcpy (m->sections, secs, count * sizeof (asection *));
+
+  for (pm = &elf_tdata (abfd)->segment_map; *pm != NULL; pm = &(*pm)->next)
+    ;
+  *pm = m;
+
+  return true;
+}

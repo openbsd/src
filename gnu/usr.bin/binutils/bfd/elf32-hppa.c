@@ -215,7 +215,7 @@ static reloc_howto_type * elf_hppa_reloc_type_lookup
 static boolean elf32_hppa_set_section_contents
   PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
 
-static void elf_info_to_howto
+static void elf32_hppa_info_to_howto
   PARAMS ((bfd *, arelent *, Elf32_Internal_Rela *));
 
 static boolean elf32_hppa_backend_symbol_table_processing
@@ -575,10 +575,7 @@ elf32_hppa_stub_hash_newfunc (entry, table, string)
 	   bfd_hash_allocate (table,
 			      sizeof (struct elf32_hppa_stub_hash_entry)));
   if (ret == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   /* Call the allocation method of the superclass.  */
   ret = ((struct elf32_hppa_stub_hash_entry *)
@@ -630,10 +627,7 @@ elf32_hppa_args_hash_newfunc (entry, table, string)
 	   bfd_hash_allocate (table,
 			      sizeof (struct elf32_hppa_args_hash_entry)));
   if (ret == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   /* Call the allocation method of the superclass.  */
   ret = ((struct elf32_hppa_args_hash_entry *)
@@ -659,10 +653,7 @@ elf32_hppa_link_hash_table_create (abfd)
   ret = ((struct elf32_hppa_link_hash_table *)
 	 bfd_alloc (abfd, sizeof (struct elf32_hppa_link_hash_table)));
   if (ret == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      _bfd_elf_link_hash_newfunc))
     {
@@ -841,6 +832,9 @@ elf32_hppa_relocate_section (output_bfd, info, input_bfd, input_section,
 
 	  indx = r_symndx - symtab_hdr->sh_info;
 	  h = elf_sym_hashes (input_bfd)[indx];
+	  while (h->root.type == bfd_link_hash_indirect
+		 || h->root.type == bfd_link_hash_warning)
+	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 	  if (h->root.type == bfd_link_hash_defined
 	      || h->root.type == bfd_link_hash_defweak)
 	    {
@@ -1175,7 +1169,7 @@ elf32_hppa_set_section_contents (abfd, section, location, offset, count)
 /* Translate from an elf into field into a howto relocation pointer.  */
 
 static void
-elf_info_to_howto (abfd, cache_ptr, dst)
+elf32_hppa_info_to_howto (abfd, cache_ptr, dst)
      bfd *abfd;
      arelent *cache_ptr;
      Elf32_Internal_Rela *dst;
@@ -1357,12 +1351,9 @@ elf32_hppa_bfd_final_link_relocate (howto, input_bfd, output_bfd,
 	len = strlen (sym_name) + 1;
 	if (is_local)
 	  len += 9;
-	new_name = malloc (len);
+	new_name = bfd_malloc (len);
 	if (!new_name)
-	  {
-	    bfd_set_error (bfd_error_no_memory);
-	    return bfd_reloc_notsupported;
-	  }
+	  return bfd_reloc_notsupported;
 	strcpy (new_name, sym_name);
 
 	/* Local symbols have unique IDs.  */
@@ -1404,12 +1395,9 @@ elf32_hppa_bfd_final_link_relocate (howto, input_bfd, output_bfd,
 
 	    len = strlen (new_name);
 	    len += 23;
-	    stub_name = malloc (len);
+	    stub_name = bfd_malloc (len);
 	    if (!stub_name)
-	      {
-		bfd_set_error (bfd_error_no_memory);
-		return bfd_reloc_notsupported;
-	      }
+	      return bfd_reloc_notsupported;
 	    elf32_hppa_name_of_stub (caller_args, callee_args,
 				     location, value, stub_name);
 	    strcat (stub_name, new_name);
@@ -1688,12 +1676,9 @@ elf32_hppa_link_output_symbol_hook (abfd, info, name, sym, section)
   if (ELF_ST_BIND (sym->st_info) == STB_LOCAL)
     len += 9;
 
-  new_name = malloc (len);
+  new_name = bfd_malloc (len);
   if (new_name == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   strcpy (new_name, name);
   if (ELF_ST_BIND (sym->st_info) == STB_LOCAL)
@@ -1787,10 +1772,7 @@ add_entry_to_symext_chain (abfd, arg_reloc, sym_idx, symext_root, symext_last)
   /* Allocate memory and initialize this entry.  */
   symextP = (symext_chainS *) bfd_alloc (abfd, sizeof (symext_chainS) * 2);
   if (!symextP)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      abort();			/* FIXME */
-    }
+    abort();			/* FIXME */
 
   symextP[0].entry = ELF32_PARISC_SX_WORD (PARISC_SXT_SYMNDX, sym_idx);
   symextP[0].next = &symextP[1];
@@ -1830,10 +1812,7 @@ elf_hppa_tc_make_sections (abfd, symext_root)
   symextn_contents = (bfd_byte *) bfd_zalloc (abfd,
 					      symextn_sec->_raw_size);
   if (!symextn_contents)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      abort();			/* FIXME */
-    }
+    abort();			/* FIXME */
 
   /* Fill in the contents of the symbol extension chain.  */
   for (i = 0, symextP = symext_root; symextP; symextP = symextP->next, ++i)
@@ -1871,10 +1850,7 @@ elf32_hppa_backend_symbol_table_processing (abfd, esyms,symcnt)
   /* Allocate a buffer of the appropriate size for the symextn section.  */
   symextn_hdr->contents = bfd_zalloc(abfd,symextn_hdr->sh_size);
   if (!symextn_hdr->contents)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   /* Read in the symextn section.  */
   if (bfd_seek (abfd, symextn_hdr->sh_offset, SEEK_SET) == -1)
@@ -1889,7 +1865,7 @@ elf32_hppa_backend_symbol_table_processing (abfd, esyms,symcnt)
     {
       symext_entryS se =
 	ELF32_PARISC_SX_GET (abfd,
-			     (symextn_hdr->contents
+			     ((unsigned char *)symextn_hdr->contents
 			      + i * ELF32_PARISC_SX_SIZE));
       unsigned int se_value = ELF32_PARISC_SX_VAL (se);
       unsigned int se_type = ELF32_PARISC_SX_TYPE (se);
@@ -1949,12 +1925,9 @@ elf32_hppa_read_symext_info (input_bfd, symtab_hdr, args_hash_table, local_syms)
       return true;
     }
 
-  contents = (bfd_byte *) malloc ((size_t) symextn_sec->_raw_size);
+  contents = (bfd_byte *) bfd_malloc ((size_t) symextn_sec->_raw_size);
   if (contents == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   /* How gross.  We turn off SEC_HAS_CONTENTS for the input symbol extension
      sections to keep the generic ELF/BFD code from trying to do anything
@@ -2012,10 +1985,9 @@ elf32_hppa_read_symext_info (input_bfd, symtab_hdr, args_hash_table, local_syms)
 						      symtab_hdr->sh_link,
 	 			        local_syms[current_index].st_name);
 	      len = strlen (sym_name) + 10;
-	      new_name = malloc (len);
+	      new_name = bfd_malloc (len);
 	      if (new_name == NULL)
 		{
-		  bfd_set_error (bfd_error_no_memory);
 		  free (contents);
 		  return false;
 		}
@@ -2503,10 +2475,7 @@ elf32_hppa_build_stubs (stub_bfd, info)
   size = bfd_section_size (stub_bfd, stub_sec);
   stub_sec->contents = (unsigned char *) bfd_zalloc (stub_bfd, size);
   if (stub_sec->contents == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   table = elf32_hppa_hash_table(info)->stub_hash_table;
   table->location = stub_sec->contents;
 
@@ -2540,12 +2509,9 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
 
   /* Create and initialize the stub hash table.  */
   stub_hash_table = ((struct elf32_hppa_stub_hash_table *)
-		     malloc (sizeof (struct elf32_hppa_stub_hash_table)));
+		     bfd_malloc (sizeof (struct elf32_hppa_stub_hash_table)));
   if (!stub_hash_table)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      goto error_return;
-    }
+    goto error_return;
 
   if (!elf32_hppa_stub_hash_table_init (stub_hash_table, stub_bfd,
 					elf32_hppa_stub_hash_newfunc))
@@ -2553,12 +2519,9 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
 
   /* Likewise for the argument location hash table.  */
   args_hash_table = ((struct elf32_hppa_args_hash_table *)
-		     malloc (sizeof (struct elf32_hppa_args_hash_table)));
+		     bfd_malloc (sizeof (struct elf32_hppa_args_hash_table)));
   if (!args_hash_table)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      goto error_return;
-    }
+    goto error_return;
 
   if (!elf32_hppa_args_hash_table_init (args_hash_table,
 					elf32_hppa_args_hash_newfunc))
@@ -2578,12 +2541,10 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
      we need to read in the local symbols in parallel and save them for
      later use; so hold pointers to the local symbols in an array.  */
   all_local_syms
-    = (Elf_Internal_Sym **) malloc (sizeof (Elf_Internal_Sym *) * bfd_count);
+    = (Elf_Internal_Sym **) bfd_malloc (sizeof (Elf_Internal_Sym *)
+					* bfd_count);
   if (all_local_syms == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      goto error_return;
-    }
+    goto error_return;
   memset (all_local_syms, 0, sizeof (Elf_Internal_Sym *) * bfd_count);
 
   /* Walk over all the input BFDs adding entries to the args hash table
@@ -2600,11 +2561,10 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
       /* We need an array of the local symbols attached to the input bfd.
 	 Unfortunately, we're going to have to read & swap them in.  */
       local_syms
-	= (Elf_Internal_Sym *)malloc (symtab_hdr->sh_info
-				      * sizeof (Elf_Internal_Sym));
+	= (Elf_Internal_Sym *) bfd_malloc (symtab_hdr->sh_info
+					   * sizeof (Elf_Internal_Sym));
       if (local_syms == NULL)
 	{
-	  bfd_set_error (bfd_error_no_memory);
 	  for (i = 0; i < bfd_count; i++)
 	    if (all_local_syms[i])
 	      free (all_local_syms[i]);
@@ -2614,11 +2574,10 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
       all_local_syms[index] = local_syms;
 
       ext_syms
-	= (Elf32_External_Sym *)malloc (symtab_hdr->sh_info
-					* sizeof (Elf32_External_Sym));
+	= (Elf32_External_Sym *) bfd_malloc (symtab_hdr->sh_info
+					     * sizeof (Elf32_External_Sym));
       if (ext_syms == NULL)
 	{
-	  bfd_set_error (bfd_error_no_memory);
 	  for (i = 0; i < bfd_count; i++)
 	    if (all_local_syms[i])
 	      free (all_local_syms[i]);
@@ -2703,10 +2662,11 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
 
 	  /* Allocate space for the external relocations.  */
 	  external_relocs
-	    = (Elf32_External_Rela *) malloc (section->reloc_count * sizeof (Elf32_External_Rela));
+	    = ((Elf32_External_Rela *)
+	       bfd_malloc (section->reloc_count
+			   * sizeof (Elf32_External_Rela)));
 	  if (external_relocs == NULL)
 	    {
-	      bfd_set_error (bfd_error_no_memory);
 	      for (i = 0; i < bfd_count; i++)
 		if (all_local_syms[i])
 		  free (all_local_syms[i]);
@@ -2716,10 +2676,10 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
 
 	  /* Likewise for the internal relocations.  */
 	  internal_relocs
-	    = (Elf_Internal_Rela *) malloc (section->reloc_count * sizeof (Elf_Internal_Rela));
+	    = ((Elf_Internal_Rela *)
+	       bfd_malloc (section->reloc_count * sizeof (Elf_Internal_Rela)));
 	  if (internal_relocs == NULL)
 	    {
-	      bfd_set_error (bfd_error_no_memory);
 	      free (external_relocs);
 	      for (i = 0; i < bfd_count; i++)
 		if (all_local_syms[i])
@@ -2816,10 +2776,9 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
 
 		  /* Tack on an ID so we can uniquely identify this local
 		     symbol in the stub or arg info hash tables.  */
-		  new_name = malloc (strlen (sym_name) + 10);
+		  new_name = bfd_malloc (strlen (sym_name) + 10);
 		  if (new_name == 0)
 		    {
-		      bfd_set_error (bfd_error_bad_value);
 		      free (internal_relocs);
 		      for (i = 0; i < bfd_count; i++)
 			if (all_local_syms[i])
@@ -2903,11 +2862,9 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
 		  len = strlen (sym_name);
 		  len += 23;
 
-		  stub_name = malloc (len);
+		  stub_name = bfd_malloc (len);
 		  if (!stub_name)
 		    {
-		      bfd_set_error (bfd_error_no_memory);
-
 		      /* Because sym_name was mallocd above for local
 			 symbols.  */
 		      if (r_index < symtab_hdr->sh_info)
@@ -2950,7 +2907,6 @@ elf32_hppa_size_stubs (stub_bfd, output_bfd, link_info)
 						       stub_name, true, true);
 		      if (stub_hash == NULL)
 			{
-			  bfd_set_error (bfd_error_no_memory);
 			  free (stub_name);
 			  free (internal_relocs);
 			  for (i = 0; i < bfd_count; i++)
@@ -3004,6 +2960,7 @@ error_return:
 
 /* Symbol extension stuff.  */
 #define bfd_elf32_set_section_contents		elf32_hppa_set_section_contents
+#define elf_info_to_howto			elf32_hppa_info_to_howto
 #define elf_backend_symbol_table_processing \
   elf32_hppa_backend_symbol_table_processing
 #define elf_backend_begin_write_processing \

@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 */
 #define DONTDECLARE_MALLOC
 #include "bfd.h"
-#include <sysdep.h>
+#include "bucomm.h"
 #include "arsup.h"
 extern int verbose;
 %}

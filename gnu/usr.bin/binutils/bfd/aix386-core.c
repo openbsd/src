@@ -94,10 +94,7 @@ aix386_core_file_p (abfd)
 
   mergem = (struct mergem *)bfd_zalloc (abfd, sizeof (struct mergem));
   if (mergem == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return 0;
-    }
+    return 0;
 
   core = &mergem->internal_core;
 
@@ -118,7 +115,6 @@ aix386_core_file_p (abfd)
   if (core_regsec (abfd) == NULL)
     {
     loser:
-      bfd_set_error (bfd_error_no_memory);
       bfd_release (abfd, (char *)mergem);
       return 0;
     }
@@ -251,8 +247,8 @@ const bfd_target aix386_core_vec =
   {
     "aix386-core",
     bfd_target_unknown_flavour,
-    true,			/* target byte order */
-    true,			/* target headers byte order */
+    BFD_ENDIAN_BIG,		/* target byte order */
+    BFD_ENDIANG_BIG,		/* target headers byte order */
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT),

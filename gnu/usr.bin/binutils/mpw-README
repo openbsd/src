@@ -54,6 +54,17 @@ One option that may be especially useful is "-v", which shows you what
 tools and options are being used; unlike MPW C, GCC directs assembly
 and linking in addition to compilation.
 
+To find standard include files you can set the variable GCCIncludes:
+
+	set GCCIncludes MyDisk:MyIncludes:
+	export GCCIncludes
+
+GCCIncludes is similar to MPW's CIncludes or CW's MWCIncludes.  In
+order to use MPW's usual include files, just say:
+
+	set GCCIncludes "{CIncludes}"
+	export GCCIncludes
+
 The assembler ("as") and linker ("ld") are faithful ports of their
 Unix counterparts.  Similarly, the binutils "ar", "cplusfilt", "nm",
 "objcopy", "objdump", "ranlib", "size", "strings", and "strip" are all
@@ -89,19 +100,26 @@ configure and build scripts assume to be available.  These tools
 (and their versions, if relevant) are as follows:
 
 	byacc tool
-	flex (2.3.7) tool
+	flex (2.3.7) tool (and Flex.skel file)
 	forward-include script
 	MoveIfChange script
+	mpw-touch script
+	mpw-true script
+	null-command script
 	open-brace script
 	sed (1.13) tool
 	tr-7to8 script
+	true script
 
 The scripts are in the sources, under utils:mpw:. You must arrange to
 get the other tools yourself (they are readily available from the
-"usual" net sites, and are also on many CDROMS).  You may put them
-in your usual Tools or Scripts directories, or keep them in a separate
-directories.  We prefer to make a directory called "buildtools" and
-we put this in our UserStartup:
+"usual" net sites, and are also on many CDROMS).  In addition, there
+will usually be a set of these available at ftp.cygnus.com, in pub/mac.
+
+You may put the build tools in your usual Tools or Scripts
+directories, or keep them in a separate directories.  We prefer to
+make a directory called "buildtools" and we put this in our
+UserStartup:
 
 	set Commands "{Boot}Cygnus:buildtools:,{Commands}"
 
@@ -196,7 +214,7 @@ file, by substituting constant values.  If you need to do this,
 contact shebs@cygnus.com for details.
 
 <Gestalt.h> is missing from {CIncludes} in the MPW version that comes
-with CW 7.
+with CW 7.  You can just copy the one in CW7's {MWCIncludes}.
 
 KNOWN BUGS
 

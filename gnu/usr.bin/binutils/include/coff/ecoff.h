@@ -53,6 +53,7 @@
 #define _COMMENT ".comment"
 #define _LIBLIST ".liblist"
 #define _DYNAMIC ".dynamic"
+#define _RCONST	".rconst"
 
 /* ECOFF uses some additional section flags.  */
 #define STYP_RDATA	     0x100
@@ -77,6 +78,7 @@
 
 /* extended section types */
 #define STYP_COMMENT	 0x2100000
+#define STYP_RCONST	 0x2200000
 #define STYP_XDATA	 0x2400000
 #define STYP_PDATA	 0x2800000
 
@@ -104,8 +106,9 @@
 #define RELOC_SECTION_FINI     12
 #define RELOC_SECTION_LITA     13
 #define RELOC_SECTION_ABS      14
+#define RELOC_SECTION_RCONST   15
 
-#define NUM_RELOC_SECTIONS     15
+#define NUM_RELOC_SECTIONS     16
 
 /********************** STABS **********************/
 
@@ -349,6 +352,18 @@ struct ecoff_find_line
   /* FDR table, sorted by address: */
   long fdrtab_len;
   struct ecoff_fdrtab_entry *fdrtab;
+
+  /* Cache entry for most recently found line information.  The sect
+     field is NULL if this cache does not contain valid information.  */
+  struct
+    {
+      asection *sect;
+      bfd_vma start;
+      bfd_vma stop;
+      const char *filename;
+      const char *functionname;
+      unsigned int line_num;
+    } cache;
 };
 
 /********************** SWAPPING **********************/

@@ -15,6 +15,10 @@ run the ``configure'' script here, e.g.:
 	./configure 
 	make
 
+To install them (by default in /usr/local/bin, /usr/local/lib, etc),
+then do:
+	make install
+
 If the configure script can't determine your type of computer, give it
 the name as an argument, for instance ``./configure sun4''.  You can
 use the script ``config.sub'' to test whether a name is recognized; if
@@ -37,11 +41,10 @@ A similar example using csh:
 See etc/cfg-paper.texi, etc/configure.texi, and/or the README files in
 various subdirectories, for more details.
 
-Much of the code and documentation enclosed, and this file, is
-copyright 1993 by the Free Software Foundation, Inc.  See the file
-COPYING or COPYING.LIB in the various directories, for a description of
-the GNU General Public License terms under which you can copy the
-files.
+Much of the code and documentation enclosed is copyright by
+the Free Software Foundation, Inc.  See the file COPYING or
+COPYING.LIB in the various directories, for a description of the
+GNU General Public License terms under which you can copy the files.
 
 REPORTING BUGS: Again, see gdb/README, gas/README, etc., for info on where and
 how to report problems.

@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS Extended-Coff files.
-   Copyright 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -396,12 +396,12 @@ mips_ecoff_bad_format_hook (abfd, filehdr)
     case MIPS_MAGIC_BIG:
     case MIPS_MAGIC_BIG2:
     case MIPS_MAGIC_BIG3:
-      return abfd->xvec->byteorder_big_p;
+      return bfd_big_endian (abfd);
 
     case MIPS_MAGIC_LITTLE:
     case MIPS_MAGIC_LITTLE2:
     case MIPS_MAGIC_LITTLE3:
-      return abfd->xvec->byteorder_big_p == false;
+      return bfd_little_endian (abfd);
 
     default:
       return false;
@@ -423,7 +423,7 @@ mips_ecoff_swap_reloc_in (abfd, ext_ptr, intern)
   const RELOC *ext = (RELOC *) ext_ptr;
 
   intern->r_vaddr = bfd_h_get_32 (abfd, (bfd_byte *) ext->r_vaddr);
-  if (abfd->xvec->header_byteorder_big_p != false)
+  if (bfd_header_big_endian (abfd))
     {
       intern->r_symndx = (((int) ext->r_bits[0]
 			   << RELOC_BITS0_SYMNDX_SH_LEFT_BIG)
@@ -500,7 +500,7 @@ mips_ecoff_swap_reloc_out (abfd, intern, dst)
     }
 
   bfd_h_put_32 (abfd, intern->r_vaddr, (bfd_byte *) ext->r_vaddr);
-  if (abfd->xvec->header_byteorder_big_p != false)
+  if (bfd_header_big_endian (abfd))
     {
       ext->r_bits[0] = r_symndx >> RELOC_BITS0_SYMNDX_SH_LEFT_BIG;
       ext->r_bits[1] = r_symndx >> RELOC_BITS1_SYMNDX_SH_LEFT_BIG;
@@ -761,6 +761,7 @@ mips_gprel_reloc (abfd,
      char **error_message;
 {
   boolean relocateable;
+  bfd_vma gp;
   bfd_vma relocation;
   unsigned long val;
   unsigned long insn;
@@ -794,15 +795,16 @@ mips_gprel_reloc (abfd,
      BFD.  If we can't find it, we're stuck.  We cache it in the ECOFF
      target data.  We don't need to adjust the symbol value for an
      external symbol if we are producing relocateable output.  */
-  if (ecoff_data (output_bfd)->gp == 0
+  gp = _bfd_get_gp_value (output_bfd);
+  if (gp == 0
       && (relocateable == false
 	  || (symbol->flags & BSF_SECTION_SYM) != 0))
     {
       if (relocateable != false)
 	{
 	  /* Make up a value.  */
-	  ecoff_data (output_bfd)->gp =
-	    symbol->section->output_section->vma + 0x4000;
+	  gp = symbol->section->output_section->vma + 0x4000;
+	  _bfd_set_gp_value (output_bfd, gp);
 	}
       else
 	{
@@ -824,7 +826,8 @@ mips_gprel_reloc (abfd,
 		  name = bfd_asymbol_name (*sym);
 		  if (*name == '_' && strcmp (name, "_gp") == 0)
 		    {
-		      ecoff_data (output_bfd)->gp = bfd_asymbol_value (*sym);
+		      gp = bfd_asymbol_value (*sym);
+		      _bfd_set_gp_value (output_bfd, gp);
 		      break;
 		    }
 		}
@@ -833,7 +836,8 @@ mips_gprel_reloc (abfd,
 	  if (i >= count)
 	    {
 	      /* Only get the error once.  */
-	      ecoff_data (output_bfd)->gp = 4;
+	      gp = 4;
+	      _bfd_set_gp_value (output_bfd, gp);
 	      *error_message =
 		(char *) "GP relative relocation when _gp not defined";
 	      return bfd_reloc_dangerous;
@@ -864,7 +868,7 @@ mips_gprel_reloc (abfd,
      an external symbol.  */
   if (relocateable == false
       || (symbol->flags & BSF_SECTION_SYM) != 0)
-    val += relocation - ecoff_data (output_bfd)->gp;
+    val += relocation - gp;
 
   insn = (insn &~ 0xffff) | (val & 0xffff);
   bfd_put_32 (abfd, insn, (bfd_byte *) data + reloc_entry->address);
@@ -1190,8 +1194,8 @@ mips_relocate_section (output_bfd, info, input_bfd, input_section,
   boolean got_lo;
   struct internal_reloc lo_int_rel;
 
-  BFD_ASSERT (input_bfd->xvec->header_byteorder_big_p
-	      == output_bfd->xvec->header_byteorder_big_p);
+  BFD_ASSERT (input_bfd->xvec->header_byteorder
+	      == output_bfd->xvec->header_byteorder);
 
   /* We keep a table mapping the symndx found in an internal reloc to
      the appropriate section.  This is faster than looking up the
@@ -1204,10 +1208,7 @@ mips_relocate_section (output_bfd, info, input_bfd, input_section,
 				      (NUM_RELOC_SECTIONS
 				       * sizeof (asection *))));
       if (!symndx_to_section)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return false;
-	}
+	return false;
 
       symndx_to_section[RELOC_SECTION_NONE] = NULL;
       symndx_to_section[RELOC_SECTION_TEXT] =
@@ -1240,7 +1241,7 @@ mips_relocate_section (output_bfd, info, input_bfd, input_section,
 
   sym_hashes = ecoff_data (input_bfd)->sym_hashes;
 
-  gp = ecoff_data (output_bfd)->gp;
+  gp = _bfd_get_gp_value (output_bfd);
   if (gp == 0)
     gp_undefined = true;
   else
@@ -1359,7 +1360,8 @@ mips_relocate_section (output_bfd, info, input_bfd, input_section,
 		      int_rel.r_vaddr - input_section->vma)))
 		return false;
 	      /* Only give the error once per link.  */
-	      ecoff_data (output_bfd)->gp = gp = 4;
+	      gp = 4;
+	      _bfd_set_gp_value (output_bfd, gp);
 	      gp_undefined = false;
 	    }
 	  if (! int_rel.r_extern)
@@ -1801,10 +1803,7 @@ mips_read_relocs (abfd, sec)
       sec->used_by_bfd =
 	(PTR) bfd_alloc_by_size_t (abfd, sizeof (struct ecoff_section_tdata));
       if (sec->used_by_bfd == NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return false;
-	}
+	return false;
 
       section_tdata = ecoff_section_data (abfd, sec);
       section_tdata->external_relocs = NULL;
@@ -1822,10 +1821,7 @@ mips_read_relocs (abfd, sec)
       section_tdata->external_relocs =
 	(PTR) bfd_alloc (abfd, external_relocs_size);
       if (section_tdata->external_relocs == NULL && external_relocs_size != 0)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return false;
-	}
+	return false;
 
       if (bfd_seek (abfd, sec->rel_filepos, SEEK_SET) != 0
 	  || (bfd_read (section_tdata->external_relocs, 1,
@@ -1936,7 +1932,7 @@ mips_relax_section (abfd, sec, info, again)
 	continue;
 
       /* Quickly check that this reloc is external PCREL16.  */
-      if (abfd->xvec->header_byteorder_big_p)
+      if (bfd_header_big_endian (abfd))
 	{
 	  if ((ext_rel->r_bits[3] & RELOC_BITS3_EXTERN_BIG) == 0
 	      || (((ext_rel->r_bits[3] & RELOC_BITS3_TYPE_BIG)
@@ -2005,12 +2001,9 @@ mips_relax_section (abfd, sec, info, again)
 	  if (info->keep_memory)
 	    contents = (bfd_byte *) bfd_alloc (abfd, sec->_raw_size);
 	  else
-	    contents = (bfd_byte *) malloc ((size_t) sec->_raw_size);
+	    contents = (bfd_byte *) bfd_malloc ((size_t) sec->_raw_size);
 	  if (contents == (bfd_byte *) NULL)
-	    {
-	      bfd_set_error (bfd_error_no_memory);
-	      goto error_return;
-	    }
+	    goto error_return;
 	  if (! bfd_get_section_contents (abfd, sec, (PTR) contents,
 					  (file_ptr) 0, sec->_raw_size))
 	    goto error_return;
@@ -2046,10 +2039,7 @@ mips_relax_section (abfd, sec, info, again)
 	  size = sec->reloc_count * sizeof (long);
 	  offsets = (long *) bfd_alloc_by_size_t (abfd, size);
 	  if (offsets == (long *) NULL)
-	    {
-	      bfd_set_error (bfd_error_no_memory);
-	      goto error_return;
-	    }
+	    goto error_return;
 	  memset (offsets, 0, size);
 	  section_tdata->offsets = offsets;
 	}
@@ -2226,10 +2216,7 @@ mips_relax_section (abfd, sec, info, again)
       adjust = ((struct ecoff_value_adjust *)
 		bfd_alloc (abfd, sizeof (struct ecoff_value_adjust)));
       if (adjust == (struct ecoff_value_adjust *) NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  goto error_return;
-	}
+	goto error_return;
 
       adjust->start = int_rel.r_vaddr;
       adjust->end = sec->vma + sec->_raw_size;
@@ -2330,10 +2317,7 @@ bfd_mips_ecoff_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
 
   relsec->contents = (bfd_byte *) bfd_alloc (abfd, datasec->reloc_count * 4);
   if (relsec->contents == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   p = relsec->contents;
 
@@ -2436,13 +2420,13 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
     (unsigned (*) PARAMS ((bfd *,PTR,PTR))) bfd_void, /* reloc_out */
     mips_ecoff_swap_filehdr_out, mips_ecoff_swap_aouthdr_out,
     mips_ecoff_swap_scnhdr_out,
-    FILHSZ, AOUTSZ, SCNHSZ, 0, 0, 0, 0, true,
+    FILHSZ, AOUTSZ, SCNHSZ, 0, 0, 0, 0, true, false,
     mips_ecoff_swap_filehdr_in, mips_ecoff_swap_aouthdr_in,
     mips_ecoff_swap_scnhdr_in, NULL,
     mips_ecoff_bad_format_hook, _bfd_ecoff_set_arch_mach_hook,
     _bfd_ecoff_mkobject_hook, _bfd_ecoff_styp_to_sec_flags,
     _bfd_ecoff_set_alignment_hook, _bfd_ecoff_slurp_symbol_table,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
   },
   /* Supported architecture.  */
   bfd_arch_mips,
@@ -2509,7 +2493,9 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
   /* Relocate section contents while linking.  */
   mips_relocate_section,
   /* Do final adjustments to filehdr and aouthdr.  */
-  NULL
+  NULL,
+  /* Read an element from an archive at a given file position.  */
+  _bfd_get_elt_at_filepos
 };
 
 /* Looking up a reloc type is MIPS specific.  */
@@ -2530,8 +2516,8 @@ const bfd_target ecoff_little_vec =
 {
   "ecoff-littlemips",		/* name */
   bfd_target_ecoff_flavour,
-  false,			/* data byte order is little */
-  false,			/* header byte order is little */
+  BFD_ENDIAN_LITTLE,		/* data byte order is little */
+  BFD_ENDIAN_LITTLE,		/* header byte order is little */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
@@ -2572,8 +2558,8 @@ const bfd_target ecoff_big_vec =
 {
   "ecoff-bigmips",		/* name */
   bfd_target_ecoff_flavour,
-  true,				/* data byte order is big */
-  true,				/* header byte order is big */
+  BFD_ENDIAN_BIG,		/* data byte order is big */
+  BFD_ENDIAN_BIG,		/* header byte order is big */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |

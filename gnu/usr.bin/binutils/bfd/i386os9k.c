@@ -199,10 +199,7 @@ os9k_mkobject (abfd)
 
   rawptr = (struct bout_data_struct *) bfd_zalloc (abfd, sizeof (struct bout_data_struct));
   if (rawptr == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   abfd->tdata.bout_data = rawptr;
   exec_hdr (abfd) = &rawptr->e;
@@ -338,8 +335,8 @@ const bfd_target i386os9k_vec =
 {
   "i386os9k",			/* name */
   bfd_target_os9k_flavour,
-  false,			/* data byte order is little */
-  false,			/* hdr byte order is big */
+  BFD_ENDIAN_LITTLE,		/* data byte order is little */
+  BFD_ENDIAN_LITTLE,		/* hdr byte order is little */
   (HAS_RELOC | EXEC_P | WP_TEXT),	/* object flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD),	/* section flags */
   0,				/* symbol leading char */

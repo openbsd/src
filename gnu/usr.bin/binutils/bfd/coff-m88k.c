@@ -27,68 +27,189 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "coff/internal.h"
 #include "libcoff.h"
 
+static bfd_reloc_status_type m88k_special_reloc
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
 static void rtype2howto PARAMS ((arelent *, struct internal_reloc *));
+static void reloc_processing
+  PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection *));
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (3)
 
-#undef HOWTO_PREPARE
-/* Provided the symbol, returns the value reffed */
-#define HOWTO_PREPARE(relocation, symbol) 	\
-  {						\
-  if (symbol != (asymbol *)NULL) {		\
-    if (bfd_is_com_section (symbol->section)) { \
-      relocation = 0;				\
-    }						\
-    else {					\
-      relocation = symbol->value;		\
-    }						\
-  }						\
-  if (symbol->section != (asection *)NULL) {	\
-    relocation += symbol->section->output_section->vma +	\
-      symbol->section->output_offset;		\
-  }						\
-}			
-
 static bfd_reloc_status_type 
-howto_hvrt16 (abfd, reloc_entry, symbol_in, data,
-	      ignore_input_section, ignore_bfd, error_message)
+m88k_special_reloc (abfd, reloc_entry, symbol, data,
+		    input_section, output_bfd, error_message)
      bfd *abfd;
      arelent *reloc_entry;
-     asymbol *symbol_in;
+     asymbol *symbol;
      PTR data;
-     asection *ignore_input_section;
-     bfd *ignore_bfd;
+     asection *input_section;
+     bfd *output_bfd;
      char **error_message;
 {
-  long relocation = 0;
-  bfd_vma addr = reloc_entry->address;
-  long x = bfd_get_16(abfd, (bfd_byte *)data + addr);
+  reloc_howto_type *howto = reloc_entry->howto;
 
-  HOWTO_PREPARE(relocation, symbol_in);
+  switch (howto->type)
+    {
+    case R_HVRT16:
+    case R_LVRT16:
+      if (output_bfd != (bfd *) NULL)
+	{
+	  /* This is a partial relocation, and we want to apply the
+	     relocation to the reloc entry rather than the raw data.
+	     Modify the reloc inplace to reflect what we now know.  */
 
-  x = (x + relocation + reloc_entry->addend) >> 16;
+	  reloc_entry->address += input_section->output_offset;
+	}
+      else
+	{
+	  bfd_vma output_base = 0;
+	  bfd_vma addr = reloc_entry->address;
+	  bfd_vma x = bfd_get_16 (abfd, (bfd_byte *) data + addr);
+	  asection *reloc_target_output_section;
+	  long relocation = 0;
 
-  bfd_put_16(abfd, x, (bfd_byte *)data + addr);
+	  /* Work out which section the relocation is targetted at and the
+	     initial relocation command value.  */
+
+	  /* Get symbol value.  (Common symbols are special.)  */
+	  if (bfd_is_com_section (symbol->section))
+	    relocation = 0;
+	  else
+	    relocation = symbol->value;
+
+	  reloc_target_output_section = symbol->section->output_section;
+
+	  /* Convert input-section-relative symbol value to absolute.  */
+	  if (output_bfd)
+	    output_base = 0;
+	  else
+	    output_base = reloc_target_output_section->vma;
+
+	  relocation += output_base + symbol->section->output_offset;
+
+	  /* Add in supplied addend.  */
+	  relocation += ((reloc_entry->addend << howto->bitsize) + x);
+
+	  reloc_entry->addend = 0;
+
+	  relocation >>= (bfd_vma) howto->rightshift;
+
+	  /* Shift everything up to where it's going to be used */
+
+	  relocation <<= (bfd_vma) howto->bitpos;
+
+	  if (relocation)
+	      bfd_put_16 (abfd, relocation, (unsigned char *) data + addr);
+	}
+
+      return bfd_reloc_ok;
+      break;
+
+    default:
+      if (output_bfd != (bfd *) NULL)
+	{
+	  /* This is a partial relocation, and we want to apply the
+	     relocation to the reloc entry rather than the raw data.
+	     Modify the reloc inplace to reflect what we now know.  */
+
+	  reloc_entry->address += input_section->output_offset;
+	  return bfd_reloc_ok;
+	}
+      break;
+    }
+
+  if (output_bfd == (bfd *) NULL)
+    return bfd_reloc_continue;
+
   return bfd_reloc_ok;
 }
 
-
-
 static reloc_howto_type howto_table[] = 
 {
-  HOWTO(R_PCR16L,02,1,16,true, 0,complain_overflow_signed, 0, "PCR16L",false,0x0000ffff,0x0000ffff,true),
-  HOWTO(R_PCR26L,02,2,26,true, 0,complain_overflow_signed, 0, "PCR26L",false,0x03ffffff,0x03ffffff,true),
-  HOWTO(R_VRT16, 00,1,16,false,0,complain_overflow_bitfield, 0, "VRT16", false,0x0000ffff,0x0000ffff,true),
-  HOWTO(R_HVRT16,16,1,16,false,0,complain_overflow_dont,howto_hvrt16,"HVRT16",false,0x0000ffff,0x0000ffff,true),
-  HOWTO(R_LVRT16,00,1,16,false,0,complain_overflow_dont, 0, "LVRT16",false,0x0000ffff,0x0000ffff,true),
-  HOWTO(R_VRT32, 00,2,32,false,0,complain_overflow_bitfield, 0, "VRT32", false,0xffffffff,0xffffffff,true),
+  HOWTO (R_PCR16L,			/* type */
+	 02,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long) */
+	 16,				/* bitsize */
+	 true,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_signed,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "PCR16L",			/* name */
+	 false,				/* partial_inplace */
+	 0x0000ffff,			/* src_mask */
+	 0x0000ffff,			/* dst_mask */
+	 true),				/* pcrel_offset */
+
+  HOWTO (R_PCR26L,			/* type */
+	 02,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long) */
+	 26,				/* bitsize */
+	 true,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_signed,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "PCR26L",			/* name */
+	 false,				/* partial_inplace */
+	 0x03ffffff,			/* src_mask */
+	 0x03ffffff,			/* dst_mask */
+	 true),				/* pcrel_offset */
+
+  HOWTO (R_VRT16,			/* type */
+	 00,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long) */
+	 16,				/* bitsize */
+	 false,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_bitfield,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "VRT16",			/* name */
+	 false,				/* partial_inplace */
+	 0x0000ffff,			/* src_mask */
+	 0x0000ffff,			/* dst_mask */
+	 true),				/* pcrel_offset */
+
+  HOWTO (R_HVRT16,			/* type */
+	 16,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long) */
+	 16,				/* bitsize */
+	 false,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "HVRT16",			/* name */
+	 false,				/* partial_inplace */
+	 0x0000ffff,			/* src_mask */
+	 0x0000ffff,			/* dst_mask */
+	 true),				/* pcrel_offset */
+
+  HOWTO (R_LVRT16,			/* type */
+	 00,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long) */
+	 16,				/* bitsize */
+	 false,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "LVRT16",			/* name */
+	 false,				/* partial_inplace */
+	 0x0000ffff,			/* src_mask */
+	 0x0000ffff,			/* dst_mask */
+	 true),				/* pcrel_offset */
+
+  HOWTO (R_VRT32,			/* type */
+	 00,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long) */
+	 32,				/* bitsize */
+	 false,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_bitfield,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "VRT32",			/* name */
+	 false,				/* partial_inplace */
+	 0xffffffff,			/* src_mask */
+	 0xffffffff,			/* dst_mask */
+	 true),				/* pcrel_offset */
 };
-
-
-/* Code to swap in the reloc offset */
-#define SWAP_IN_RELOC_OFFSET  bfd_h_get_16
-#define SWAP_OUT_RELOC_OFFSET bfd_h_put_16
-
 
 /* Code to turn an external r_type into a pointer to an entry in the
    above howto table.  */
@@ -100,7 +221,6 @@ rtype2howto (cache_ptr, dst)
   if (dst->r_type >= R_PCR16L && dst->r_type <= R_VRT32)
     {
       cache_ptr->howto = howto_table + dst->r_type - R_PCR16L;
-      cache_ptr->addend += dst->r_offset << 16;
     }
   else
     {
@@ -109,6 +229,39 @@ rtype2howto (cache_ptr, dst)
 }
 
 #define RTYPE2HOWTO(cache_ptr, dst) rtype2howto (cache_ptr, dst)
+
+
+/* Code to swap in the reloc offset */
+#define SWAP_IN_RELOC_OFFSET  bfd_h_get_16
+#define SWAP_OUT_RELOC_OFFSET bfd_h_put_16
+
+
+#define RELOC_PROCESSING(relent,reloc,symbols,abfd,section)	\
+  reloc_processing(relent, reloc, symbols, abfd, section)
+
+static void
+reloc_processing (relent, reloc, symbols, abfd, section)
+     arelent *relent;
+     struct internal_reloc *reloc;
+     asymbol **symbols;
+     bfd *abfd;
+     asection *section;
+{
+  relent->address = reloc->r_vaddr;
+  rtype2howto (relent, reloc);
+
+  if (((int) reloc->r_symndx) > 0)
+    {
+      relent->sym_ptr_ptr = symbols + obj_convert (abfd)[reloc->r_symndx];
+    }
+  else
+    {
+      relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+    }
+
+  relent->addend = reloc->r_offset;
+  relent->address -= section->vma;
+}
 
 #define BADMAG(x) MC88BADMAG(x)
 #include "coffcode.h"
@@ -119,8 +272,8 @@ const bfd_target m88kbcs_vec =
 {
   "coff-m88kbcs",		/* name */
   bfd_target_coff_flavour,
-  true,				/* data byte order is big */
-  true,				/* header byte order is big */
+  BFD_ENDIAN_BIG,		/* data byte order is big */
+  BFD_ENDIAN_BIG,		/* header byte order is big */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |

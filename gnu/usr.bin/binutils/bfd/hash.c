@@ -553,10 +553,7 @@ strtab_hash_newfunc (entry, table, string)
     ret = ((struct strtab_hash_entry *)
 	   bfd_hash_allocate (table, sizeof (struct strtab_hash_entry)));
   if (ret == (struct strtab_hash_entry *) NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   /* Call the allocation method of the superclass.  */
   ret = ((struct strtab_hash_entry *)
@@ -585,12 +582,10 @@ _bfd_stringtab_init ()
 {
   struct bfd_strtab_hash *table;
 
-  table = (struct bfd_strtab_hash *) malloc (sizeof (struct bfd_strtab_hash));
+  table = ((struct bfd_strtab_hash *)
+	   bfd_malloc (sizeof (struct bfd_strtab_hash)));
   if (table == NULL)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return NULL;
-    }
+    return NULL;
 
   if (! bfd_hash_table_init (&table->table, strtab_hash_newfunc))
     {

@@ -414,6 +414,8 @@ coff_i386_reloc_type_lookup (abfd, code)
       return howto_table +R_IMAGEBASE;
     case BFD_RELOC_32:
       return howto_table + R_DIR32;
+    case BFD_RELOC_32_PCREL:
+      return howto_table + R_PCRLONG;
     default:
       BFD_FAIL ();
       return 0;
@@ -446,14 +448,20 @@ const bfd_target
   "coff-i386",			/* name */
 #endif
   bfd_target_coff_flavour,
-  false,			/* data byte order is little */
-  false,			/* header byte order is little */
+  BFD_ENDIAN_LITTLE,		/* data byte order is little */
+  BFD_ENDIAN_LITTLE,		/* header byte order is little */
 
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
+#ifndef COFF_WITH_PE
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+#else
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* section flags */
+   | SEC_LINK_ONCE | SEC_LINK_DUPLICATES),
+#endif
+
 #ifdef TARGET_UNDERSCORE
   TARGET_UNDERSCORE,		/* leading underscore */
 #else

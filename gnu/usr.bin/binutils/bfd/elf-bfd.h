@@ -1,5 +1,5 @@
 /* BFD back-end data structures for ELF files.
-   Copyright (C) 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -102,6 +102,11 @@ struct elf_link_hash_entry
      require an entry in the procedure linkage table.  */
   bfd_vma plt_offset;
 
+  /* If this symbol is used in the linker created sections, the processor
+     specific backend uses this field to map the field into the offset
+     from the beginning of the section.  */
+  struct elf_linker_section_pointers *linker_section_pointer;
+
   /* Symbol type (STT_NOTYPE, STT_OBJECT, etc.).  */
   char type;
 
@@ -121,6 +126,10 @@ struct elf_link_hash_entry
 #define ELF_LINK_HASH_NEEDS_COPY 040
   /* Symbol needs a procedure linkage table entry.  */
 #define ELF_LINK_HASH_NEEDS_PLT 0100
+  /* Symbol appears in a non-ELF input file.  */
+#define ELF_LINK_NON_ELF 0200
+  /* Note: If you add more flags, you must change the type of
+     elf_link_hash_flags.  */
 };
 
 /* ELF linker hash table.  */
@@ -137,16 +146,20 @@ struct elf_link_hash_table
   bfd *dynobj;
   /* The number of symbols found in the link which must be put into
      the .dynsym section.  */
-  size_t dynsymcount;
+  bfd_size_type dynsymcount;
   /* The string table of dynamic symbols, which becomes the .dynstr
      section.  */
   struct bfd_strtab_hash *dynstr;
   /* The number of buckets in the hash table in the .hash section.
      This is based on the number of dynamic symbols.  */
-  size_t bucketcount;
+  bfd_size_type bucketcount;
   /* A linked list of DT_NEEDED names found in dynamic objects
      included in the link.  */
   struct bfd_link_needed_list *needed;
+  /* The _GLOBAL_OFFSET_TABLE_ symbol.  */
+  struct elf_link_hash_entry *hgot;
+  /* A pointer to information used to link stabs in sections.  */
+  PTR stab_info;
 };
 
 /* Look up an entry in an ELF linker hash table.  */
@@ -176,12 +189,13 @@ struct elf_size_info {
 
   unsigned char arch_size, file_align;
   unsigned char elfclass, ev_current;
-  int (*write_out_phdrs) PARAMS ((bfd *, Elf_Internal_Phdr *, int));
+  int (*write_out_phdrs) PARAMS ((bfd *, const Elf_Internal_Phdr *, int));
   boolean (*write_shdrs_and_ehdr) PARAMS ((bfd *));
   void (*write_relocs) PARAMS ((bfd *, asection *, PTR));
-  void (*swap_symbol_out) PARAMS ((bfd *, Elf_Internal_Sym *, PTR));
+  void (*swap_symbol_out) PARAMS ((bfd *, const Elf_Internal_Sym *, PTR));
   boolean (*slurp_reloc_table) PARAMS ((bfd *, asection *, asymbol **));
   long (*slurp_symbol_table) PARAMS ((bfd *, asymbol **, boolean));
+  void (*swap_dyn_in) PARAMS ((bfd *, const PTR, Elf_Internal_Dyn *));
 };
 
 #define elf_symbol_from(ABFD,S) \
@@ -211,6 +225,12 @@ struct elf_backend_data
      MIPS ELF because the Irix 5 tools can not handle the .init
      section.  */
   boolean collect;
+
+  /* This is true if the linker should ignore changes to the type of a
+     symbol.  This is true for MIPS ELF because some Irix 5 objects
+     record undefined functions as STT_OBJECT although the definitions
+     are STT_FUNC.  */
+  boolean type_change_ok;
 
   /* A function to translate an ELF RELA relocation to a BFD arelent
      structure.  */
@@ -412,13 +432,14 @@ struct elf_backend_data
   void (*elf_backend_final_write_processing)
     PARAMS ((bfd *, boolean linker));
 
-  /* A function to create any special program headers required by the
-     backend.  PHDRS are the program headers, and PHDR_COUNT is the
-     number of them.  If PHDRS is NULL, this just counts headers
-     without creating them.  This returns an updated value for
-     PHDR_COUNT.  */
-  int (*elf_backend_create_program_headers)
-    PARAMS ((bfd *, Elf_Internal_Phdr *phdrs, int phdr_count));
+  /* This function is called by get_program_header_size.  It should
+     return the number of additional program segments which this BFD
+     will need.  It should return -1 on error.  */
+  int (*elf_backend_additional_program_headers) PARAMS ((bfd *));
+
+  /* This function is called to modify an existing segment map in a
+     backend specific fashion.  */
+  boolean (*elf_backend_modify_segment_map) PARAMS ((bfd *));
 
   /* The swapping table to use when dealing with ECOFF information.
      Used for the MIPS ELF .mdebug section.  */
@@ -433,20 +454,21 @@ struct elf_backend_data
   unsigned want_got_plt : 1;
   unsigned plt_readonly : 1;
   unsigned want_plt_sym : 1;
-
-  /* Put ELF and program headers in the first loadable segment.  */
-  unsigned want_hdr_in_seg : 1;
 };
 
 /* Information stored for each BFD section in an ELF file.  This
    structure is allocated by elf_new_section_hook.  */
 
-struct bfd_elf_section_data {
+struct bfd_elf_section_data
+{
   /* The ELF header for this section.  */
   Elf_Internal_Shdr this_hdr;
   /* The ELF header for the reloc section associated with this
      section, if any.  */
   Elf_Internal_Shdr rel_hdr;
+  /* If there is a second reloc section associated with this section,
+     as can happen on Irix 6, this field points to the header.  */
+  Elf_Internal_Shdr *rel_hdr2;
   /* The ELF section number of this section.  Only used for an output
      file.  */
   int this_idx;
@@ -464,12 +486,62 @@ struct bfd_elf_section_data {
      record the dynamic symbol index for a section symbol
      corresponding to this section.  */
   long dynindx;
+  /* A pointer used for .stab linking optimizations.  */
+  PTR stab_info;
+  /* A pointer available for the processor specific ELF backend.  */
+  PTR tdata;
 };
 
 #define elf_section_data(sec)  ((struct bfd_elf_section_data*)sec->used_by_bfd)
 
 #define get_elf_backend_data(abfd) \
   ((struct elf_backend_data *) (abfd)->xvec->backend_data)
+
+/* Enumeration to specify the special section.  */
+typedef enum elf_linker_section_enum
+{
+  LINKER_SECTION_UNKNOWN,		/* not used */
+  LINKER_SECTION_GOT,			/* .got section for global offset pointers */
+  LINKER_SECTION_PLT,			/* .plt section for generated procedure stubs */
+  LINKER_SECTION_SDATA,			/* .sdata/.sbss section for PowerPC */
+  LINKER_SECTION_SDATA2,		/* .sdata2/.sbss2 section for PowerPC */
+  LINKER_SECTION_MAX			/* # of linker sections */
+} elf_linker_section_enum_t;
+
+/* Sections created by the linker.  */
+
+typedef struct elf_linker_section
+{
+  char *name;				/* name of the section */
+  char *rel_name;			/* name of the associated .rel{,a}. section */
+  char *bss_name;			/* name of a related .bss section */
+  char *sym_name;			/* name of symbol to reference this section */
+  asection *section;			/* pointer to the section */
+  asection *bss_section;		/* pointer to the bss section associated with this */
+  asection *rel_section;		/* pointer to the relocations needed for this section */
+  struct elf_link_hash_entry *sym_hash;	/* pointer to the created symbol hash value */
+  bfd_vma initial_size;			/* initial size before any linker generated allocations */
+  bfd_vma sym_offset;			/* offset of symbol from beginning of section */
+  bfd_vma hole_size;			/* size of reserved address hole in allocation */
+  bfd_vma hole_offset;			/* current offset for the hole */
+  bfd_vma max_hole_offset;		/* maximum offset for the hole */
+  elf_linker_section_enum_t which;	/* which section this is */
+  boolean hole_written_p;		/* whether the hole has been initialized */
+  int alignment;			/* alignment for the section */
+  flagword flags;			/* flags to use to create the section */
+} elf_linker_section_t;
+
+/* Linked list of allocated pointer entries.  This hangs off of the symbol lists, and
+   provides allows us to return different pointers, based on different addend's.  */
+
+typedef struct elf_linker_section_pointers
+{
+  struct elf_linker_section_pointers *next;	/* next allocated pointer for this symbol */
+  bfd_vma offset;				/* offset of pointer from beginning of section */
+  bfd_signed_vma addend;			/* addend used */
+  elf_linker_section_enum_t which;		/* which linker section this is */
+  boolean written_address_p;			/* whether address was written yet */
+} elf_linker_section_pointers_t;
 
 /* Some private data is stashed away for future use using the tdata pointer
    in the bfd structure.  */
@@ -479,10 +551,11 @@ struct elf_obj_tdata
   Elf_Internal_Ehdr elf_header[1];	/* Actual data, but ref like ptr */
   Elf_Internal_Shdr **elf_sect_ptr;
   Elf_Internal_Phdr *phdr;
+  struct elf_segment_map *segment_map;
   struct bfd_strtab_hash *strtab_ptr;
   int num_locals;
   int num_globals;
-  asymbol **section_syms;	/* STT_SECTION symbols for each section */
+  asymbol **section_syms;		/* STT_SECTION symbols for each section */
   Elf_Internal_Shdr symtab_hdr;
   Elf_Internal_Shdr shstrtab_hdr;
   Elf_Internal_Shdr strtab_hdr;
@@ -491,10 +564,10 @@ struct elf_obj_tdata
   unsigned int symtab_section, shstrtab_section;
   unsigned int strtab_section, dynsymtab_section;
   file_ptr next_file_pos;
-  void *prstatus;		/* The raw /proc prstatus structure */
-  void *prpsinfo;		/* The raw /proc prpsinfo structure */
-  bfd_vma gp;			/* The gp value (MIPS only, for now) */
-  unsigned int gp_size;		/* The gp size (MIPS only, for now) */
+  void *prstatus;			/* The raw /proc prstatus structure */
+  void *prpsinfo;			/* The raw /proc prpsinfo structure */
+  bfd_vma gp;				/* The gp value (MIPS only, for now) */
+  unsigned int gp_size;			/* The gp size (MIPS only, for now) */
 
   /* This is set to true if the object was created by the backend
      linker.  */
@@ -509,11 +582,19 @@ struct elf_obj_tdata
      table, used when linking.  This is indexed by the symbol index.  */
   bfd_vma *local_got_offsets;
 
+  /* A mapping from local symbols to offsets into the various linker
+     sections added.  This is index by the symbol index.  */
+  elf_linker_section_pointers_t **linker_section_pointers;
+
   /* The linker ELF emulation code needs to let the backend ELF linker
      know what filename should be used for a dynamic object if the
-     dynamic object is found using a search.  This field is used to
-     hold that information.  */
-  const char *dt_needed_name;
+     dynamic object is found using a search.  The emulation code then
+     sometimes needs to know what name was actually used.  Until the
+     file has been added to the linker symbol table, this field holds
+     the name the linker wants.  After it has been added, it holds the
+     name actually used, which will be the DT_SONAME entry if there is
+     one.  */
+  const char *dt_name;
 
   /* Irix 5 often screws up the symbol table, sorting local symbols
      after global symbols.  This flag is set if the symbol table in
@@ -525,14 +606,20 @@ struct elf_obj_tdata
   /* Records the result of `get_program_header_size'.  */
   bfd_size_type program_header_size;
 
+  /* Used by find_nearest_line entry point.  */
+  PTR line_info;
+
   /* Used by MIPS ELF find_nearest_line entry point.  The structure
      could be included directly in this one, but there's no point to
      wasting the memory just for the infrequently called
      find_nearest_line.  */
   struct mips_elf_find_line *find_line_info;
 
-  /* Used by PowerPC to determine if the e_flags field has been intiialized */
-  boolean ppc_flags_init;
+  /* Used to determine if the e_flags field has been initialized */
+  boolean flags_init;
+
+  /* Linker sections that we are interested in.  */
+  struct elf_linker_section *linker_section[ (int)LINKER_SECTION_MAX ];
 };
 
 #define elf_tdata(bfd)		((bfd) -> tdata.elf_obj_data)
@@ -550,13 +637,18 @@ struct elf_obj_tdata
 #define elf_gp_size(bfd)	(elf_tdata(bfd) -> gp_size)
 #define elf_sym_hashes(bfd)	(elf_tdata(bfd) -> sym_hashes)
 #define elf_local_got_offsets(bfd) (elf_tdata(bfd) -> local_got_offsets)
-#define elf_dt_needed_name(bfd)	(elf_tdata(bfd) -> dt_needed_name)
+#define elf_local_ptr_offsets(bfd) (elf_tdata(bfd) -> linker_section_pointers)
+#define elf_dt_name(bfd)	(elf_tdata(bfd) -> dt_name)
 #define elf_bad_symtab(bfd)	(elf_tdata(bfd) -> bad_symtab)
-#define elf_ppc_flags_init(bfd)	(elf_tdata(bfd) -> ppc_flags_init)
+#define elf_flags_init(bfd)	(elf_tdata(bfd) -> flags_init)
+#define elf_linker_section(bfd,n) (elf_tdata(bfd) -> linker_section[(int)n])
 
-extern char * bfd_elf_string_from_elf_section PARAMS ((bfd *, unsigned, unsigned));
-extern char * bfd_elf_get_str_section PARAMS ((bfd *, unsigned));
+extern int _bfd_elf_section_from_bfd_section PARAMS ((bfd *, asection *));
+extern char *bfd_elf_string_from_elf_section
+  PARAMS ((bfd *, unsigned, unsigned));
+extern char *bfd_elf_get_str_section PARAMS ((bfd *, unsigned));
 
+extern boolean _bfd_elf_print_private_bfd_data PARAMS ((bfd *, PTR));
 extern void bfd_elf_print_symbol PARAMS ((bfd *, PTR, asymbol *,
 					  bfd_print_symbol_type));
 #define elf_string_from_elf_strtab(abfd,strindex) \
@@ -626,6 +718,10 @@ extern boolean _bfd_elf_new_section_hook PARAMS ((bfd *, asection *));
 extern void _bfd_elf_no_info_to_howto PARAMS ((bfd *, arelent *,
 					       Elf_Internal_Rela *));
 
+extern boolean bfd_section_from_shdr PARAMS ((bfd *, unsigned int shindex));
+
+extern int _bfd_elf_symbol_from_bfd_symbol PARAMS ((bfd *, asymbol **));
+
 asection *bfd_section_from_elf_index PARAMS ((bfd *, unsigned int));
 boolean _bfd_elf_create_dynamic_sections PARAMS ((bfd *,
 						  struct bfd_link_info *));
@@ -641,10 +737,62 @@ file_ptr _bfd_elf_assign_file_position_for_section PARAMS ((Elf_Internal_Shdr *,
 							    file_ptr,
 							    boolean));
 
+extern boolean _bfd_elf_validate_reloc PARAMS ((bfd *, arelent *));
+
 boolean _bfd_elf_create_dynamic_sections PARAMS ((bfd *,
 						  struct bfd_link_info *));
 boolean _bfd_elf_create_got_section PARAMS ((bfd *,
 					     struct bfd_link_info *));
+
+elf_linker_section_t *_bfd_elf_create_linker_section
+  PARAMS ((bfd *abfd,
+	   struct bfd_link_info *info,
+	   enum elf_linker_section_enum,
+	   elf_linker_section_t *defaults));
+
+elf_linker_section_pointers_t *_bfd_elf_find_pointer_linker_section
+  PARAMS ((elf_linker_section_pointers_t *linker_pointers,
+	   bfd_signed_vma addend,
+	   elf_linker_section_enum_t which));
+
+boolean bfd_elf32_create_pointer_linker_section
+  PARAMS ((bfd *abfd,
+	   struct bfd_link_info *info,
+	   elf_linker_section_t *lsect,
+	   struct elf_link_hash_entry *h,
+	   const Elf32_Internal_Rela *rel));
+
+bfd_vma bfd_elf32_finish_pointer_linker_section
+  PARAMS ((bfd *output_abfd,
+	   bfd *input_bfd,
+	   struct bfd_link_info *info,
+	   elf_linker_section_t *lsect,
+	   struct elf_link_hash_entry *h,
+	   bfd_vma relocation,
+	   const Elf32_Internal_Rela *rel,
+	   int relative_reloc));
+
+boolean bfd_elf64_create_pointer_linker_section
+  PARAMS ((bfd *abfd,
+	   struct bfd_link_info *info,
+	   elf_linker_section_t *lsect,
+	   struct elf_link_hash_entry *h,
+	   const Elf64_Internal_Rela *rel));
+
+bfd_vma bfd_elf64_finish_pointer_linker_section
+  PARAMS ((bfd *output_abfd,
+	   bfd *input_bfd,
+	   struct bfd_link_info *info,
+	   elf_linker_section_t *lsect,
+	   struct elf_link_hash_entry *h,
+	   bfd_vma relocation,
+	   const Elf64_Internal_Rela *rel,
+	   int relative_reloc));
+
+boolean _bfd_elf_make_linker_section_rela
+  PARAMS ((bfd *dynobj,
+	   elf_linker_section_t *lsect,
+	   int alignment));
 
 extern const bfd_target *bfd_elf32_object_p PARAMS ((bfd *));
 extern const bfd_target *bfd_elf32_core_file_p PARAMS ((bfd *));
@@ -659,25 +807,30 @@ extern boolean bfd_elf32_bfd_final_link
   PARAMS ((bfd *, struct bfd_link_info *));
 
 extern void bfd_elf32_swap_symbol_in
-  PARAMS ((bfd *, Elf32_External_Sym *, Elf_Internal_Sym *));
+  PARAMS ((bfd *, const Elf32_External_Sym *, Elf_Internal_Sym *));
 extern void bfd_elf32_swap_symbol_out
-  PARAMS ((bfd *, Elf_Internal_Sym *, PTR));
+  PARAMS ((bfd *, const Elf_Internal_Sym *, PTR));
 extern void bfd_elf32_swap_reloc_in
-  PARAMS ((bfd *, Elf32_External_Rel *, Elf_Internal_Rel *));
+  PARAMS ((bfd *, const Elf32_External_Rel *, Elf_Internal_Rel *));
 extern void bfd_elf32_swap_reloc_out
-  PARAMS ((bfd *, Elf_Internal_Rel *, Elf32_External_Rel *));
+  PARAMS ((bfd *, const Elf_Internal_Rel *, Elf32_External_Rel *));
 extern void bfd_elf32_swap_reloca_in
-  PARAMS ((bfd *, Elf32_External_Rela *, Elf_Internal_Rela *));
+  PARAMS ((bfd *, const Elf32_External_Rela *, Elf_Internal_Rela *));
 extern void bfd_elf32_swap_reloca_out
-  PARAMS ((bfd *, Elf_Internal_Rela *, Elf32_External_Rela *));
+  PARAMS ((bfd *, const Elf_Internal_Rela *, Elf32_External_Rela *));
 extern void bfd_elf32_swap_phdr_in
-  PARAMS ((bfd *, Elf32_External_Phdr *, Elf_Internal_Phdr *));
+  PARAMS ((bfd *, const Elf32_External_Phdr *, Elf_Internal_Phdr *));
 extern void bfd_elf32_swap_phdr_out
-  PARAMS ((bfd *, Elf_Internal_Phdr *, Elf32_External_Phdr *));
+  PARAMS ((bfd *, const Elf_Internal_Phdr *, Elf32_External_Phdr *));
 extern void bfd_elf32_swap_dyn_in
-  PARAMS ((bfd *, const Elf32_External_Dyn *, Elf_Internal_Dyn *));
+  PARAMS ((bfd *, const PTR, Elf_Internal_Dyn *));
 extern void bfd_elf32_swap_dyn_out
   PARAMS ((bfd *, const Elf_Internal_Dyn *, Elf32_External_Dyn *));
+extern long bfd_elf32_slurp_symbol_table
+  PARAMS ((bfd *, asymbol **, boolean));
+extern boolean bfd_elf32_write_shdrs_and_ehdr PARAMS ((bfd *));
+extern int bfd_elf32_write_out_phdrs
+  PARAMS ((bfd *, const Elf_Internal_Phdr *, int));
 extern boolean bfd_elf32_add_dynamic_entry
   PARAMS ((struct bfd_link_info *, bfd_vma, bfd_vma));
 extern boolean bfd_elf32_link_create_dynamic_sections
@@ -695,25 +848,30 @@ extern boolean bfd_elf64_bfd_final_link
   PARAMS ((bfd *, struct bfd_link_info *));
 
 extern void bfd_elf64_swap_symbol_in
-  PARAMS ((bfd *, Elf64_External_Sym *, Elf_Internal_Sym *));
+  PARAMS ((bfd *, const Elf64_External_Sym *, Elf_Internal_Sym *));
 extern void bfd_elf64_swap_symbol_out
-  PARAMS ((bfd *, Elf_Internal_Sym *, PTR));
+  PARAMS ((bfd *, const Elf_Internal_Sym *, PTR));
 extern void bfd_elf64_swap_reloc_in
-  PARAMS ((bfd *, Elf64_External_Rel *, Elf_Internal_Rel *));
+  PARAMS ((bfd *, const Elf64_External_Rel *, Elf_Internal_Rel *));
 extern void bfd_elf64_swap_reloc_out
-  PARAMS ((bfd *, Elf_Internal_Rel *, Elf64_External_Rel *));
+  PARAMS ((bfd *, const Elf_Internal_Rel *, Elf64_External_Rel *));
 extern void bfd_elf64_swap_reloca_in
-  PARAMS ((bfd *, Elf64_External_Rela *, Elf_Internal_Rela *));
+  PARAMS ((bfd *, const Elf64_External_Rela *, Elf_Internal_Rela *));
 extern void bfd_elf64_swap_reloca_out
-  PARAMS ((bfd *, Elf_Internal_Rela *, Elf64_External_Rela *));
+  PARAMS ((bfd *, const Elf_Internal_Rela *, Elf64_External_Rela *));
 extern void bfd_elf64_swap_phdr_in
-  PARAMS ((bfd *, Elf64_External_Phdr *, Elf_Internal_Phdr *));
+  PARAMS ((bfd *, const Elf64_External_Phdr *, Elf_Internal_Phdr *));
 extern void bfd_elf64_swap_phdr_out
-  PARAMS ((bfd *, Elf_Internal_Phdr *, Elf64_External_Phdr *));
+  PARAMS ((bfd *, const Elf_Internal_Phdr *, Elf64_External_Phdr *));
 extern void bfd_elf64_swap_dyn_in
-  PARAMS ((bfd *, const Elf64_External_Dyn *, Elf_Internal_Dyn *));
+  PARAMS ((bfd *, const PTR, Elf_Internal_Dyn *));
 extern void bfd_elf64_swap_dyn_out
   PARAMS ((bfd *, const Elf_Internal_Dyn *, Elf64_External_Dyn *));
+extern long bfd_elf64_slurp_symbol_table
+  PARAMS ((bfd *, asymbol **, boolean));
+extern boolean bfd_elf64_write_shdrs_and_ehdr PARAMS ((bfd *));
+extern int bfd_elf64_write_out_phdrs
+  PARAMS ((bfd *, const Elf_Internal_Phdr *, int));
 extern boolean bfd_elf64_add_dynamic_entry
   PARAMS ((struct bfd_link_info *, bfd_vma, bfd_vma));
 extern boolean bfd_elf64_link_create_dynamic_sections
@@ -721,5 +879,39 @@ extern boolean bfd_elf64_link_create_dynamic_sections
 
 #define bfd_elf32_link_record_dynamic_symbol _bfd_elf_link_record_dynamic_symbol
 #define bfd_elf64_link_record_dynamic_symbol _bfd_elf_link_record_dynamic_symbol
+
+/* MIPS ELF specific routines.  */
+
+extern boolean _bfd_mips_elf_object_p PARAMS ((bfd *));
+extern boolean _bfd_mips_elf_section_from_shdr
+  PARAMS ((bfd *, Elf_Internal_Shdr *, const char *));
+extern boolean _bfd_mips_elf_fake_sections
+  PARAMS ((bfd *, Elf_Internal_Shdr *, asection *));
+extern boolean _bfd_mips_elf_section_from_bfd_section
+  PARAMS ((bfd *, Elf_Internal_Shdr *, asection *, int *));
+extern boolean _bfd_mips_elf_section_processing
+  PARAMS ((bfd *, Elf_Internal_Shdr *));
+extern void _bfd_mips_elf_symbol_processing PARAMS ((bfd *, asymbol *));
+extern boolean _bfd_mips_elf_read_ecoff_info
+  PARAMS ((bfd *, asection *, struct ecoff_debug_info *));
+extern void _bfd_mips_elf_final_write_processing PARAMS ((bfd *, boolean));
+extern bfd_reloc_status_type _bfd_mips_elf_hi16_reloc
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+extern bfd_reloc_status_type _bfd_mips_elf_lo16_reloc
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+extern bfd_reloc_status_type _bfd_mips_elf_gprel16_reloc
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+extern bfd_reloc_status_type _bfd_mips_elf_got16_reloc
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+extern bfd_reloc_status_type _bfd_mips_elf_gprel32_reloc
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+extern boolean _bfd_mips_elf_set_private_flags PARAMS ((bfd *, flagword));
+extern boolean _bfd_mips_elf_copy_private_bfd_data PARAMS ((bfd *, bfd *));
+extern boolean _bfd_mips_elf_merge_private_bfd_data PARAMS ((bfd *, bfd *));
+extern boolean _bfd_mips_elf_find_nearest_line
+  PARAMS ((bfd *, asection *, asymbol **, bfd_vma, const char **,
+	   const char **, unsigned int *));
+extern boolean _bfd_mips_elf_set_section_contents
+  PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
 
 #endif /* _LIBELF_H_ */

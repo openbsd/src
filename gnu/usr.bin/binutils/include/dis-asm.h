@@ -40,8 +40,20 @@ typedef struct disassemble_info {
   FILE *stream;
   PTR application_data;
 
-  /* For use by the disassembler.  */
-  int flags;
+  /* Target description.  We could replace this with a pointer to the bfd,
+     but that would require one.  There currently isn't any such requirement
+     so to avoid introducing one we record these explicitly.  */
+  /* The bfd_arch value.  */
+  enum bfd_architecture arch;
+  /* The bfd_mach value.  */
+  unsigned long mach;
+  /* Endianness (for bi-endian cpus).  Mono-endian cpus can ignore this.  */
+  enum bfd_endian endian;
+
+  /* For use by the disassembler.
+     The top 16 bits are reserved for public use (and are documented here).
+     The bottom 16 bits are for the internal use of the disassembler.  */
+  unsigned long flags;
   PTR private_data;
 
   /* Function used to get bytes to disassemble.  MEMADDR is the
@@ -143,8 +155,10 @@ extern void perror_memory PARAMS ((int, bfd_vma, struct disassemble_info *));
 extern void generic_print_address
   PARAMS ((bfd_vma, struct disassemble_info *));
 
-#define INIT_DISASSEMBLE_INFO(INFO, STREAM) \
-  (INFO).fprintf_func = (fprintf_ftype)fprintf, \
+/* Macro to initialize a disassemble_info struct.  This should be called
+   by all applications creating such a struct.  */
+#define INIT_DISASSEMBLE_INFO(INFO, STREAM, FPRINTF_FUNC) \
+  (INFO).fprintf_func = (FPRINTF_FUNC), \
   (INFO).stream = (STREAM), \
   (INFO).buffer = NULL, \
   (INFO).buffer_vma = 0, \
@@ -152,6 +166,10 @@ extern void generic_print_address
   (INFO).read_memory_func = buffer_read_memory, \
   (INFO).memory_error_func = perror_memory, \
   (INFO).print_address_func = generic_print_address, \
+  (INFO).arch = bfd_arch_unknown, \
+  (INFO).mach = 0, \
+  (INFO).endian = BFD_ENDIAN_UNKNOWN, \
+  (INFO).flags = 0, \
   (INFO).insn_info_valid = 0
 
 #endif /* ! defined (DIS_ASM_H) */

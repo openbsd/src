@@ -215,6 +215,10 @@ MY (callback) (abfd)
   obj_datasec (abfd)->vma = N_DATADDR (*execp);
   obj_bsssec (abfd)->vma = N_BSSADDR (*execp);
 
+  obj_textsec (abfd)->lma = obj_textsec (abfd)->vma;
+  obj_datasec (abfd)->lma = obj_datasec (abfd)->vma;
+  obj_bsssec (abfd)->lma = obj_bsssec (abfd)->vma;
+
   /* The file offsets of the sections */
   obj_textsec (abfd)->filepos = N_TXTOFF (*execp);
   obj_datasec (abfd)->filepos = N_DATOFF (*execp);
@@ -472,10 +476,7 @@ NAME (aout,swap_exec_header_in) (abfd, raw_bytes, execp)
       rawptr = (struct aout_data_struct *) bfd_zalloc (abfd, sizeof (*rawptr));
 
       if (rawptr == NULL)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return;
-	}
+	return;
       abfd->tdata.aout_data = rawptr;
       obj_aout_subformat (abfd) = gnu_encap_format;
     }
@@ -526,10 +527,7 @@ MY (slurp_symbol_table) (abfd)
   strings = (char *) bfd_alloc (abfd,
 				symbol_bytes + SYM_EXTRA_BYTES);
   if (!strings)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
   syms = (struct external_nlist *) (strings + SYM_EXTRA_BYTES);
   if (bfd_seek (abfd, obj_sym_filepos (abfd), SEEK_SET) != 0
       || bfd_read ((PTR) syms, symbol_bytes, 1, abfd) != symbol_bytes)
@@ -556,10 +554,7 @@ MY (slurp_symbol_table) (abfd)
 	    bfd_zalloc (abfd,
 			bfd_get_symcount (abfd) * sizeof (aout_symbol_type)));
   if (cached == NULL && bfd_get_symcount (abfd) != 0)
-    {
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   /* as we march thru the hp symbol table, convert it into a list of
      null terminated strings to hold the symbol names.  Make sure any
@@ -746,17 +741,13 @@ doit:
   reloc_cache = (arelent *) bfd_zalloc (abfd, (size_t) (count * sizeof
 							(arelent)));
   if (!reloc_cache && count != 0)
-    {
-    nomem:
-      bfd_set_error (bfd_error_no_memory);
-      return false;
-    }
+    return false;
 
   relocs = (PTR) bfd_alloc (abfd, reloc_size);
   if (!relocs && reloc_size != 0)
     {
       bfd_release (abfd, reloc_cache);
-      goto nomem;
+      return false;
     }
 
   if (bfd_read (relocs, 1, reloc_size, abfd) != reloc_size)
