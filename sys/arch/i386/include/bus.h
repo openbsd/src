@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.22 2000/08/05 22:03:36 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.23 2001/02/03 21:55:37 mickey Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -235,15 +235,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "=D" (_addr), "=c" (_cnt), "=d" (_port)	:	\
 		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
 		    "%eax", "memory", "cc");				\
-	} else {							\
-		__asm __volatile("					\
-			cld					;	\
-			repne					;	\
-			movsb"					:	\
-		    "=D" (_addr), "=c" (_cnt), "=S" (_port)	:	\
-		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
-		    "memory", "cc");					\
-	}								\
+	} else								\
+		i386_space_copy(_port, _addr, 1, _cnt);			\
 } while (0)
 
 #define	bus_space_read_region_2(t, h, o, a, cnt) do {			\
@@ -258,15 +251,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "=D" (_addr), "=c" (_cnt), "=d" (_port)	:	\
 		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
 		    "%eax", "memory", "cc");				\
-	} else {							\
-		__asm __volatile("					\
-			cld					;	\
-			repne					;	\
-			movsw"					:	\
-		    "=D" (_addr), "=c" (_cnt), "=S" (_port)	:	\
-		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
-		    "memory", "cc");					\
-	}								\
+	} else								\
+		i386_space_copy(_port, _addr, 2, _cnt);			\
 } while (0)
 
 #define	bus_space_read_region_4(t, h, o, a, cnt) do {			\
@@ -281,15 +267,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "=D" (_addr), "=c" (_cnt), "=d" (_port)	:	\
 		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
 		    "%eax", "memory", "cc");				\
-	} else {							\
-		__asm __volatile("					\
-			cld					;	\
-			repne					;	\
-			movsl"					:	\
-		    "=D" (_addr), "=c" (_cnt), "=S" (_port)	:	\
-		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
-		    "memory", "cc");					\
-	}								\
+	} else								\
+		i386_space_copy(_port, _addr, 4, _cnt);			\
 } while (0)
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
@@ -453,15 +432,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "=d" (_port), "=S" (_addr), "=c" (_cnt)	:	\
 		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
 		    "%eax", "memory", "cc");				\
-	} else {							\
-		__asm __volatile("					\
-			cld					;	\
-			repne					;	\
-			movsb"					:	\
-		    "=D" (_port), "=S" (_addr), "=c" (_cnt)	:	\
-		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
-		    "memory", "cc");					\
-	}								\
+	} else								\
+		i386_space_copy(_addr, _port, 1, _cnt);			\
 } while (0)
 
 #define	bus_space_write_region_2(t, h, o, a, cnt) do {			\
@@ -476,15 +448,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "=d" (_port), "=S" (_addr), "=c" (_cnt)	:	\
 		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
 		    "%eax", "memory", "cc");				\
-	} else {							\
-		__asm __volatile("					\
-			cld					;	\
-			repne					;	\
-			movsw"					:	\
-		    "=D" (_port), "=S" (_addr), "=c" (_cnt)	:	\
-		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
-		    "memory", "cc");					\
-	}								\
+	} else								\
+		i386_space_copy(_addr, _port, 2, _cnt);			\
 } while (0)
 
 #define	bus_space_write_region_4(t, h, o, a, cnt) do {			\
@@ -499,15 +464,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "=d" (_port), "=S" (_addr), "=c" (_cnt)	:	\
 		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
 		    "%eax", "memory", "cc");				\
-	} else {							\
-		__asm __volatile("					\
-			cld					;	\
-			repne					;	\
-			movsl"					:	\
-		    "=D" (_port), "=S" (_addr), "=c" (_cnt)	:	\
-		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
-		    "memory", "cc");					\
-	}								\
+	} else								\
+		i386_space_copy(_addr, _port, 4, _cnt);			\
 } while (0)
 
 #if 0	/* Cause a link error for bus_space_write_region_8 */
@@ -715,15 +673,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
 		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
 		    "%edx", "%eax", "cc");				\
-	} else {							\
-		__asm __volatile("					\
-			cld					;	\
-			repne					;	\
-			movsb"					:	\
-		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
-		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
-		    "memory", "cc");					\
-	}								\
+	} else								\
+		i386_space_copy(_port1, _port2, 1, _cnt);		\
 } while (0)
 
 #define	bus_space_copy_2(t, h1, o1, h2, o2, cnt) do {			\
@@ -740,15 +691,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
 		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
 		    "%edx", "%eax", "cc");				\
-	} else {							\
-		__asm __volatile("					\
-			cld					;	\
-			repne					;	\
-			movsw"					:	\
-		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
-		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
-		    "memory", "cc");					\
-	}								\
+	} else								\
+		i386_space_copy(_port1, _port2, 2, _cnt);			\
 } while (0)
 
 #define	bus_space_copy_4(t, h1, o1, h2, o2, cnt) do {			\
@@ -765,21 +709,35 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
 		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
 		    "%edx", "%eax", "cc");				\
-	} else {							\
-		__asm __volatile("					\
-			cld					;	\
-			repne					;	\
-			movsl"					:	\
-		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
-		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
-		    "memory", "cc");					\
-	}								\
+	} else								\
+		i386_space_copy(_port1, _port2, 4, _cnt);		\
 } while (0)
 
 #if 0	/* Cause a link error for bus_space_copy_8 */
 #define	bus_space_copy_8					\
 			!!! bus_space_copy_8 unimplemented !!!
 #endif
+
+#define	i386_space_copy1(a1, a2, cnt, movs, df)		\
+	__asm __volatile(df "\n\trep\n\t" movs :	\
+	    "+S" (a1), "+D" (a2), "+c" (cnt)	:: "memory", "cc");
+
+#define	i386_space_copy(a1, a2, sz, cnt) do {				\
+	int _len = (sz) * (cnt);					\
+	if ((void *)(a2) < ((void *)(a1) + _len)) {			\
+		a1 += _len; a2 += _len;					\
+		switch (sz) {						\
+		case 1:	i386_space_copy1(a1,a2,cnt,"movsb","std");break;\
+		case 2:	i386_space_copy1(a1,a2,cnt,"movsw","std");break;\
+		case 4:	i386_space_copy1(a1,a2,cnt,"movsl","std");break;\
+		}							\
+	} else								\
+		switch (sz) {						\
+		case 1:	i386_space_copy1(a1,a2,cnt,"movsb","cld");break;\
+		case 2:	i386_space_copy1(a1,a2,cnt,"movsw","cld");break;\
+		case 4:	i386_space_copy1(a1,a2,cnt,"movsl","cld");break;\
+		}							\
+} while (0)
 
 /*
  * Bus read/write barrier methods.
