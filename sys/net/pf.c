@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.230 2002/06/10 19:31:44 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.231 2002/06/11 01:58:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -286,49 +286,49 @@ pf_state_compare(struct pf_tree_node *a, struct pf_tree_node *b)
 #ifdef INET
 	case AF_INET:
 		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
-			return 1;
+			return (1);
 		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
-			return -1;
+			return (-1);
 		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
-			return 1;
+			return (1);
 		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
-			return -1;
+			return (-1);
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		if (a->addr[0].addr32[0] > b->addr[0].addr32[0])
-			return 1;
+			return (1);
 		if (a->addr[0].addr32[0] < b->addr[0].addr32[0])
-			return -1;
+			return (-1);
 		if (a->addr[0].addr32[1] > b->addr[0].addr32[1])
-			return 1;
+			return (1);
 		if (a->addr[0].addr32[1] < b->addr[0].addr32[1])
-			return -1;
+			return (-1);
 		if (a->addr[0].addr32[2] > b->addr[0].addr32[2])
-			return 1;
+			return (1);
 		if (a->addr[0].addr32[2] < b->addr[0].addr32[2])
-			return -1;
+			return (-1);
 		if (a->addr[0].addr32[3] > b->addr[0].addr32[3])
-			return 1;
+			return (1);
 		if (a->addr[0].addr32[3] < b->addr[0].addr32[3])
-			return -1;
+			return (-1);
 		if (a->addr[1].addr32[0] > b->addr[1].addr32[0])
-			return 1;
+			return (1);
 		if (a->addr[1].addr32[0] < b->addr[1].addr32[0])
-			return -1;
+			return (-1);
 		if (a->addr[1].addr32[1] > b->addr[1].addr32[1])
-			return 1;
+			return (1);
 		if (a->addr[1].addr32[1] < b->addr[1].addr32[1])
-			return -1;
+			return (-1);
 		if (a->addr[1].addr32[2] > b->addr[1].addr32[2])
-			return 1;
+			return (1);
 		if (a->addr[1].addr32[2] < b->addr[1].addr32[2])
-			return -1;
+			return (-1);
 		if (a->addr[1].addr32[3] > b->addr[1].addr32[3])
-			return 1;
+			return (1);
 		if (a->addr[1].addr32[3] < b->addr[1].addr32[3])
-			return -1;
+			return (-1);
 		break;
 #endif /* INET6 */
 	}
@@ -541,7 +541,7 @@ pf_insert_state(struct pf_state *state)
 
 	keya = pool_get(&pf_tree_pl, PR_NOWAIT);
 	if (keya == NULL)
-		return -1;
+		return (-1);
 	keya->state = state;
 	keya->proto = state->proto;
 	keya->af = state->af;
@@ -908,12 +908,12 @@ pf_cksum_fixup(u_int16_t cksum, u_int16_t old, u_int16_t new, u_int8_t udp)
 	u_int32_t l;
 
 	if (udp && !cksum)
-		return 0x0000;
+		return (0x0000);
 	l = cksum + old - new;
 	l = (l >> 16) + (l & 65535);
 	l = l & 65535;
 	if (udp && !l)
-		return 0xFFFF;
+		return (0xFFFF);
 	return (l);
 }
 
@@ -1278,9 +1278,9 @@ pf_match(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 {
 	switch (op) {
 	case PF_OP_IRG:
-		return (p > a1) && (p < a2);
+		return ((p > a1) && (p < a2));
 	case PF_OP_XRG:
-		return (p < a1) || (p > a2);
+		return ((p < a1) || (p > a2));
 	case PF_OP_EQ:
 		return (p == a1);
 	case PF_OP_NE:
@@ -1544,7 +1544,7 @@ pf_map_port_range(struct pf_rdr *rdr, u_int16_t port)
 	/* wrap around if necessary */
 	if (nport > 65535)
 		nport -= 65535;
-	return htons((u_int16_t)nport);
+	return (htons((u_int16_t)nport));
 }
 
 int
