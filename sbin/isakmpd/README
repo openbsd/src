@@ -1,17 +1,17 @@
-$OpenBSD: README,v 1.13 1999/06/02 06:31:08 niklas Exp $
-$EOM: README,v 1.24 1999/05/25 07:52:00 niklas Exp $
+$OpenBSD: README,v 1.14 1999/08/26 22:31:24 niklas Exp $
+$EOM: README,v 1.25 1999/08/12 22:33:03 niklas Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,
 funded by Ericsson Radio Systems AB.  Currently it is work in
-progress, although it can be used for real setups.  It is not released,
-thus I won't bother calling it any version numbers.  When you got the
-source, hopefully the archive was named with a date which reflects when
-it was created.  These archives are also known as snapshots and will be
-created at irregular intervals and put up on ftp.gsnig.net and
-ftp.appli.se in /pub/isakmpd.  From Nov 14, 1998 isakmpd is also
-available in the OpenBSD main source tree under src/sbin/isakmpd,
-though slightly modified for patent reasons, and because I don't want to
+progress, although it can be used for real setups.  It is not
+released, thus I won't bother calling it any version numbers.  When
+you got the source, hopefully the archive was named with a date which
+reflects when it was created.  These archives are also known as
+snapshots and will be created at irregular intervals and put up on
+ftp.gsnig.net and ftp.appli.se in /pub/isakmpd.  From Nov 14, 1998
+isakmpd is also available in the OpenBSD main source tree under
+src/sbin/isakmpd, though slightly modified because I don't want to
 carry support files for other OSes in that distribution.  Look at
 http://www.openbsd.org/ for details on how to get OpenBSD source.
 
