@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_i386.8,v 1.5 2001/10/04 16:56:52 mpech Exp $
+.\"	$OpenBSD: boot_i386.8,v 1.6 2002/01/04 21:56:04 kjell Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\"
@@ -63,7 +63,7 @@ boot the hard disk C (otherwise known as hard disk controller 1, drive 0).
 .Ss Warm starts
 The BIOS loads the first block (at physical location: track 0, head 0,
 sector 1) off the boot device into memory, and if the last two bytes in the
-block match the signature 0x55AA, the BIOS considers the block a valid
+block match the signature 0xAA55, the BIOS considers the block a valid
 bootable drive.
 The BIOS then proceeds to call the machine code program in this block.
 If the BIOS is current, it will also pass the boot drive
