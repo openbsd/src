@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.58 2003/04/29 21:44:06 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.59 2003/05/17 01:55:28 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1597,7 +1597,7 @@ dc_attach(sc)
 	struct dc_softc *sc;
 {
 	struct ifnet *ifp;
-	int error = 0, mac_offset, tmp, i;
+	int mac_offset, tmp, i;
 
 	/*
 	 * Get station address from the EEPROM.
@@ -1739,10 +1739,26 @@ hasmac:
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		error = ENXIO;
+	if (DC_IS_INTEL(sc)) {
+		if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
+			sc->dc_pmode = tmp;
+			if (sc->dc_pmode != DC_PMODE_SIA)
+				sc->dc_pmode = DC_PMODE_SYM;
+			sc->dc_flags |= DC_21143_NWAY;
+			if (sc->dc_flags & DC_MOMENCO_BOTCH)
+				sc->dc_pmode = DC_PMODE_MII;
+			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+		} else {
+			/* we have a PHY, so we must clear this bit */
+			sc->dc_flags &= ~DC_TULIP_LEDS;
+		}
+	}
+
+	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+		printf("%s: MII without any PHY!\n", sc->sc_dev.dv_xname);
 	} else if (sc->dc_type == DC_TYPE_21145) {
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
 	} else
@@ -1750,27 +1766,6 @@ hasmac:
 
 	if (DC_IS_DAVICOM(sc) && sc->dc_revision >= DC_REVISION_DM9102A)
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_HPNA_1,0,NULL);
-
-	if (DC_IS_INTEL(sc)) {
-		if (error) {
-			sc->dc_pmode = tmp;
-			if (sc->dc_pmode != DC_PMODE_SIA)
-				sc->dc_pmode = DC_PMODE_SYM;
-			sc->dc_flags |= DC_21143_NWAY;
-			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
-			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
-			error = 0;
-		} else {
-			/* we have a PHY, so we must clear this bit */
-			sc->dc_flags &= ~DC_TULIP_LEDS;
-		}
-	}
-
-	if (error) {
-		printf("%s: MII without any PHY!\n", sc->sc_dev.dv_xname);
-		error = ENXIO;
-		goto fail;
-	}
 
 	if (DC_IS_XIRCOM(sc)) {
 		/*

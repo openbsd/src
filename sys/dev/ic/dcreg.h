@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.28 2003/04/29 21:39:34 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.29 2003/05/17 01:55:28 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -752,6 +752,7 @@ struct dc_softc {
 #define DC_64BIT_HASH		0x00002000
 #define DC_TULIP_LEDS		0x00004000
 #define DC_TX_ONE		0x00008000
+#define DC_MOMENCO_BOTCH	0x00010000
 
 /*
  * register space access macros
