@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.10 1995/11/30 00:58:40 jtc Exp $
+#	$NetBSD: STEELHEAD,v 1.11 1996/01/25 19:36:36 phil Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -46,7 +46,7 @@ options		INET			# IP
 #options	EON			# ?
 
 # pc532 specific options
-options		"COMDEF_SPEED=B19200"	# default baud on the scn chips
+options		"CONSOLE_SPEED=B19200"	# default baud on the console (tty00)
 #options	"RAMD_SIZE=1536000"	# Size of the "boot strap ram disk"
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
 options		"CONFIG_NEW"		# Use config.new stuff
@@ -80,7 +80,7 @@ scn7 at membus?
 pseudo-device	pty 16			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
 pseudo-device	bpfilter 4		# packet filter
-pseudo-device	sl 1			# compressed SLIP
-pseudo-device	ppp 1			# Point-to-Point Protocol
+pseudo-device	sl 3			# compressed SLIP
+pseudo-device	ppp 2			# Point-to-Point Protocol
 pseudo-device   vnd 4			# Vnode devices
 #pseudo-device	ether			# 

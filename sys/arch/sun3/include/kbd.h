@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.2 1995/05/24 20:57:00 gwr Exp $	*/
+/*	$NetBSD: kbd.h,v 1.3 1996/01/24 22:40:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,8 +56,11 @@
  * KBD_IDLE does not take the place of any `up' transitions (it merely occurs
  * after them).
  */
-#define	KBD_RESET	0xff		/* keyboard `reset' response */
+#define	KBD_RESET	0xff		/* `reset' response (ID follows) */
+#define	KBD_LAYOUT	0xfe		/* Indicates that `layout' follows */
 #define	KBD_IDLE	0x7f		/* keyboard `all keys are up' code */
+#define	KBD_ERROR	0x7e		/* keyboard detected an error */
+#define KBD_SPECIAL(c) (((c) & 0x7e) == 0x7e)
 
 /* Keyboard IDs */
 #define	KB_SUN2		2		/* type 2 keyboard */
@@ -79,6 +82,7 @@
 #define	KBD_CMD_CLICK	10		/* turn keyclick on */
 #define	KBD_CMD_NOCLICK	11		/* turn keyclick off */
 #define KBD_CMD_SETLED	14		/* set LED state (type 4 kbd) */
+#define	KBD_CMD_GETLAYOUT 15	/* ask for layout (type 4 kbd) */
 
 #define	LED_NUM_LOCK	0x1
 #define	LED_COMPOSE	0x2

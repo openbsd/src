@@ -1,6 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46 1995/12/11 17:09:11 thorpej Exp $	*/
-
-#undef STACKCHECK	/* doesn't work any more */
+/*	$NetBSD: locore.s,v 1.47 1996/01/16 22:24:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,19 +41,6 @@
  *
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
-
-/*
- * STACKCHECK enables two types of kernel stack checking:
- *	1. stack "overflow".  On every clock interrupt we ensure that
- *	   the current kernel stack has not grown into the user struct
- *	   page, i.e. size exceeded UPAGES-1 pages.
- *	2. stack "underflow".  Before every rte to user mode we ensure
- *	   that we will be exactly at the base of the stack after the
- *	   exception frame has been popped.
- * Both checks are performed at splclock since they operate on the
- * global temporary stack.
- */
-/* #define	STACKCHECK */
 
 #include "assym.s"
 #include <hp300/hp300/vectors.s>
@@ -417,11 +402,7 @@ Ltrap1:
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most registers
 	addql	#8,sp			| pop SP and stack adjust
-#ifdef STACKCHECK
-	jra	Ldorte
-#else
 	rte
-#endif
 
 /*
  * Routines for traps 1 and 2.  The meaning of the two traps depends
@@ -607,26 +588,6 @@ Lnotdma:
 	jra	rei
 
 _lev6intr:
-#ifdef STACKCHECK
-	.globl	_panicstr,_badkstack
-	cmpl	#_kstack+NBPG,sp	| are we still in stack page?
-	jcc	Lstackok		| yes, continue normally
-	tstl	_curproc		| if !curproc could have switch_exited,
-	jeq	Lstackok		|     might be on tmpstk
-	tstl	_panicstr		| have we paniced?
-	jne	Lstackok		| yes, do not re-panic
-	movl	sp@(4),tmpstk-4		| no, copy common
-	movl	sp@,tmpstk-8		|  frame info
-	movl	sp,tmpstk-16		| no, save original SP
-	lea	tmpstk-16,sp		| switch to tmpstk
-	moveml	#0xFFFE,sp@-		| push remaining registers
-	movl	#1,sp@-			| is an overflow
-	jbsr	_badkstack		| badkstack(1, frame)
-	addql	#4,sp
-	moveml	sp@+,#0x7FFF		| restore most registers
-	movl	sp@,sp			| and SP
-Lstackok:
-#endif
 	moveml	#0xC0C0,sp@-		| save scratch registers
 	CLKADDR(a0)
 	movb	a0@(CLKSR),d0		| read clock status
@@ -725,10 +686,6 @@ _lev7intr:
 	.globl	_astpending
 	.globl	rei
 rei:
-#ifdef STACKCHECK
-	tstl	_panicstr		| have we paniced?
-	jne	Ldorte1			| yes, do not make matters worse
-#endif
 	tstl	_astpending		| AST pending?
 	jeq	Lchksir			| no, go check for SIR
 Lrei1:
@@ -751,11 +708,7 @@ Lrei2:
 	jne	Laststkadj		| yes, go to it
 	moveml	sp@+,#0x7FFF		| no, restore most user regs
 	addql	#8,sp			| toss SP and stack adjust
-#ifdef STACKCHECK
-	jra	Ldorte
-#else
 	rte				| and do real RTE
-#endif
 Laststkadj:
 	lea	sp@(FR_HW),a1		| pointer to HW frame
 	addql	#8,a1			| source pointer
@@ -766,11 +719,7 @@ Laststkadj:
 	movl	a0,sp@(FR_SP)		| new SSP
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
-#ifdef STACKCHECK
-	jra	Ldorte
-#else
 	rte				| and do real RTE
-#endif
 Lchksir:
 	tstb	_ssir			| SIR pending?
 	jeq	Ldorte			| no, all done
@@ -797,63 +746,11 @@ Lsir1:
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| and all remaining registers
 	addql	#8,sp			| pop SP and stack adjust
-#ifdef STACKCHECK
-	jra	Ldorte
-#else
 	rte
-#endif
 Lnosir:
 	movl	sp@+,d0			| restore scratch register
 Ldorte:
-#ifdef STACKCHECK
-	movw	#SPL6,sr		| avoid trouble
-	btst	#5,sp@			| are we returning to user mode?
-	jne	Ldorte1			| no, skip it
-	movl	a6,tmpstk-20
-	movl	d0,tmpstk-76
-	moveq	#0,d0
-	movb	sp@(6),d0		| get format/vector
-	lsrl	#3,d0			| convert to index
-	lea	_exframesize,a6		|  into exframesize
-	addl	d0,a6			|  to get pointer to correct entry
-	movw	a6@,d0			| get size for this frame
-	addql	#8,d0			| adjust for unaccounted for bytes
-	lea	_kstackatbase,a6	| desired stack base
-	subl	d0,a6			|   - frame size == our stack
-	cmpl	a6,sp			| are we where we think?
-	jeq	Ldorte2			| yes, skip it
-	lea	tmpstk,a6		| will be using tmpstk
-	movl	sp@(4),a6@-		| copy common
-	movl	sp@,a6@-		|   frame info
-	clrl	a6@-
-	movl	sp,a6@-			| save sp
-	subql	#4,a6			| skip over already saved a6
-	moveml	#0x7FFC,a6@-		| push remaining regs (d0/a6/a7 done)
-	lea	a6@(-4),sp		| switch to tmpstk (skip saved d0)
-	clrl	sp@-			| is an underflow
-	jbsr	_badkstack		| badkstack(0, frame)
-	addql	#4,sp
-	moveml	sp@+,#0x7FFF		| restore most registers
-	movl	sp@,sp			| and SP
-	rte
-Ldorte2:
-	movl	tmpstk-76,d0
-	movl	tmpstk-20,a6
-Ldorte1:
-#endif
 	rte				| real return
-
-#ifdef STACKCHECK
-/*
- * Kernel access to the current processes kernel stack is via a fixed
- * virtual address.  It is at the same address as in the users VA space.
- */
-	.data
-	.set	_kstack,USRSTACK
-	.set	_kstackatbase,USRSTACK+USPACE-4
-	.globl	_kstackatbase
-	.globl	_kstack
-#endif
 
 #define	RELOC(var, ar)	\
 	lea	var,ar;	\

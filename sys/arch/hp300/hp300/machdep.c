@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1996/01/04 22:21:51 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 1996/01/16 22:24:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1684,24 +1684,6 @@ hexstr(val, len)
 	}
 	return(nbuf);
 }
-
-#ifdef STACKCHECK
-char oflowmsg[] = "k-stack overflow";
-char uflowmsg[] = "k-stack underflow";
-
-badkstack(oflow, fr)
-	int oflow;
-	struct frame fr;
-{
-	extern char kstackatbase[];
-
-	printf("%s: sp should be %x\n", 
-	       oflow ? oflowmsg : uflowmsg,
-	       kstackatbase - (exframesize[fr.f_format] + 8));
-	regdump(&fr, 0);
-	panic(oflow ? oflowmsg : uflowmsg);
-}
-#endif
 
 /*
  * cpu_exec_aout_makecmds():

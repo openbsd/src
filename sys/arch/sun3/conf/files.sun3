@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.16 1996/01/01 22:48:55 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.17 1996/01/24 22:39:48 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -32,7 +32,6 @@ file arch/sun3/sun3/vm_machdep.c
 file arch/m68k/fpe/fpu_emulate.c		fpu_emulate
 file arch/m68k/m68k/copy.s
 file dev/cons.c
-file dev/cninit.c
 
 # Declare our "catch-all" root node.
 device mainbus at root {}
@@ -63,11 +62,6 @@ file arch/sun3/dev/obmem.c		obmem
 file arch/sun3/dev/vme.c		vmes vmel
 
 #
-# Sun-compatible Frame Buffers (?)
-#
-define sunfb {}
-
-#
 # Machine-independent SCSI drivers
 #
 include "../../../scsi/files.scsi"
@@ -75,8 +69,6 @@ include "../../../scsi/files.scsi"
 #
 # On-Board I/O (OBIO)
 #
-device zs at obio: tty
-file arch/sun3/dev/zs.c			zs needs-count
 
 device eeprom at obio
 file arch/sun3/dev/eeprom.c		eeprom
@@ -97,6 +89,12 @@ file	arch/sun3/dev/si.c		si
 
 device ncr_si at obio, vmes: scsi, ncr5380sbc
 file	arch/sun3/dev/ncr_si.c  	ncr_si
+
+#
+# Sun-compatible Frame Buffers (?)
+#
+define sunfb
+file arch/sun3/dev/fb.c			sunfb
 
 #
 # On-Board MEMory (OBMEM)
@@ -133,11 +131,24 @@ file arch/sun3/dev/idprom.c		idprom needs-count
 #
 # Console (zs) related stuff
 #
-file arch/sun3/dev/kbd.c		zs
-file arch/sun3/dev/event.c		zs
-file arch/sun3/dev/kd.c			zs
-file arch/sun3/dev/ms.c			zs
-file arch/sun3/dev/fb.c
+device zsc at obio {channel = -1}
+file arch/sun3/dev/zs.c 		zsc needs-flag
+file dev/ic/z8530sc.c			zsc
+
+device zstty at zsc: tty
+file dev/ic/z8530tty.c			zstty needs-flag
+
+define zsevent
+file dev/sun/event.c			zsevent
+
+device kbd at zsc: zsevent
+file dev/sun/kbd.c			kbd needs-flag
+file dev/sun/kbd_tables.c 		kbd
+file arch/sun3/dev/kd.c 		kbd
+
+device ms at zsc: zsevent
+file dev/sun/ms.c			ms needs-flag
+
 
 # RAM Disk for boot tape
 device	rd at mainbus

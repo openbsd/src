@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.22 1995/09/26 20:16:17 phil Exp $ */
+/*	$NetBSD: scn.c,v 1.23 1996/01/25 19:50:39 phil Exp $ */
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -392,8 +392,16 @@ scnattach(parent, self, aux)
 #endif
   WR_ADR (u_char, rs->acr_port,
   	 (rs->uart->speed_grp << 7) | rs->uart->acr_int_bits);
-  scn_config(unit, scndefaultrate, scndefaultrate,
-  	 LC_NONE, LC_STOP1, LC_BITS8);
+#ifdef CONSOLE_SPEED
+  if (unit == 0)
+{ printf ("scn_config on unit 0\n");    
+    scn_config(unit, CONSOLE_SPEED, CONSOLE_SPEED,
+	       LC_NONE, LC_STOP1, LC_BITS8);
+}
+  else
+#endif
+    scn_config(unit, scndefaultrate, scndefaultrate,
+	       LC_NONE, LC_STOP1, LC_BITS8);
 
   /* Turn on the Rx and Tx. */
   WR_ADR (u_char, rs->cmd_port, CMD_ENA_RX | CMD_ENA_TX);

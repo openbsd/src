@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.13 1995/12/02 18:21:52 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.14 1996/01/23 00:28:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -380,22 +380,22 @@ ctcommand(dev, cmd, cnt)
 		bp->b_un.b_addr = nbp->b_un.b_addr;
 		bp->b_bcount = MAXBSIZE;
 	}
-again:
-	bp->b_flags = B_BUSY;
-	if (cmd == MTBSF) {
-		sc->sc_blkno = sc->sc_eofs[sc->sc_eofp];
-		sc->sc_eofp--;
+
+	while (cnt-- > 0) {
+		bp->b_flags = B_BUSY;
+		if (cmd == MTBSF) {
+			sc->sc_blkno = sc->sc_eofs[sc->sc_eofp];
+			sc->sc_eofp--;
 #ifdef DEBUG
-		if (ctdebug & CT_BSF)
-			printf("%s: backup eof pos %d blk %d\n",
-			       sc->sc_hd->hp_xname, sc->sc_eofp, 
-			       sc->sc_eofs[sc->sc_eofp]);
+			if (ctdebug & CT_BSF)
+				printf("%s: backup eof pos %d blk %d\n",
+				    sc->sc_hd->hp_xname, sc->sc_eofp, 
+				    sc->sc_eofs[sc->sc_eofp]);
 #endif
+		}
+		ctstrategy(bp);
+		iowait(bp);
 	}
-	ctstrategy(bp);
-	iowait(bp);
-	if (--cnt > 0)
-		goto again;
 	bp->b_flags = 0;
 	sc->sc_flags &= ~CTF_CMD;
 	if (nbp)
@@ -444,7 +444,6 @@ ctstart(unit)
 	register int i;
 
 	bp = cttab[unit].b_actf;
-again:
 	if ((sc->sc_flags & CTF_CMD) && sc->sc_bp == bp) {
 		switch(sc->sc_cmd) {
 
@@ -804,7 +803,6 @@ ctread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-
 	return (physio(ctstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
@@ -814,7 +812,6 @@ ctwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-
 	/* XXX: check for hardware write-protect? */
 	return (physio(ctstrategy, NULL, dev, B_WRITE, minphys, uio));
 }

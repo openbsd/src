@@ -1,6 +1,7 @@
-/*	$NetBSD: event_var.h,v 1.3 1994/11/21 21:30:47 gwr Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2 1996/01/24 22:40:48 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -41,48 +42,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)event_var.h	8.1 (Berkeley) 6/11/93
- *	from: Hdr: event_var.h,v 1.5 92/11/26 01:11:51 torek Exp  (LBL)
+ *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
+
+#include <dev/ic/z8530sc.h>
 
 /*
- * Internal `Firm_event' interface for the keyboard and mouse drivers.
- * The drivers are expected not to place events in the queue above spltty(),
- * i.e., are expected to run off serial ports.
+ * Macros to read and write individual registers (except 0) in a channel.
+ * The ZS chip requires a 1.6 uSec. recovery time between accesses, and
+ * the Sun3 hardware does NOT take care of this for you.
  */
+#define	ZS_READ(c, r)		zs_read_reg(c, r)
+#define	ZS_WRITE(c, r, v)	zs_write_reg(c, r, v)
+#define ZS_DELAY()			delay2us()
 
-/* EV_QSIZE should be a power of two so that `%' is fast */
-#define	EV_QSIZE	256	/* may need tuning; this uses 2k */
-
-struct evvar {
-	u_int	ev_get;		/* get (read) index (modified synchronously) */
-	volatile u_int ev_put;	/* put (write) index (modified by interrupt) */
-	struct	selinfo ev_sel;	/* process selecting */
-	struct	proc *ev_io;	/* process that opened queue (can get SIGIO) */
-	char	ev_wanted;	/* wake up on input ready */
-	char	ev_async;	/* send SIGIO on input ready */
-	struct	firm_event *ev_q;/* circular buffer (queue) of events */
-};
-
-#define	splev()	spltty()
-
-#define	EV_WAKEUP(ev) { \
-	selwakeup(&(ev)->ev_sel); \
-	if ((ev)->ev_wanted) { \
-		(ev)->ev_wanted = 0; \
-		wakeup((caddr_t)(ev)); \
-	} \
-	if ((ev)->ev_async) \
-		psignal((ev)->ev_io, SIGIO); \
-}
-
-void	ev_init __P((struct evvar *));
-void	ev_fini __P((struct evvar *));
-int	ev_read __P((struct evvar *, struct uio *, int));
-int	ev_select __P((struct evvar *, int, struct proc *));
+u_char zs_read_reg __P((struct zs_chanstate *zc, u_char reg));
+void  zs_write_reg __P((struct zs_chanstate *zc, u_char reg, u_char val));
 
 /*
- * PEVENT is set just above PSOCK, which is just above TTIPRI, on the
- * theory that mouse and keyboard `user' input should be quick.
+ * How to request a "soft" interrupt.
+ * This could be a macro if you like.
  */
-#define	PEVENT	23
+void zsc_req_softint __P((struct zsc_softc *zsc));
+
+/* Handle user request to enter kernel debugger. */
+void zs_abort();
+
+/*
+ * Some warts needed by z8530tty.c -
+ * The default parity REALLY needs to be the same as the PROM uses,
+ * or you can not see messages done with printf during boot-up...
+ */
+#define	ZSTTY_MAJOR 	12		/* XXX */
+#define	ZSTTY_DEF_CFLAG 	(CREAD | CS8 | HUPCL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.6 1995/11/30 00:58:50 jtc Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.7 1996/01/26 05:04:12 phil Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -392,7 +392,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 #ifdef AUTO_SENSE
 		if (link) {
 			link->link = reqp;
-			link->xcmd.bytes[link->xs->cmdlen-1] |= 1;
+			link->xcmd.bytes[link->xs->cmdlen - 2] |= 1;
 		}
 #endif
 	}
@@ -406,8 +406,8 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 
 	run_main(xs->sc_link->adapter_softc);
 
-	if (xs->flags & SCSI_POLL)
-		return (COMPLETE);	/* We're booting */
+	if (xs->flags & (SCSI_POLL|ITSDONE))
+		return (COMPLETE); /* We're booting or run_main has completed */
 	return (SUCCESSFULLY_QUEUED);
 }
 
@@ -561,7 +561,8 @@ connected:
 			goto main_exit;
 		}
 		splx(sps);
-#endif
+#endif /* REAL_DMA */
+
 		/*
 		 * Let the target guide us through the bus-phases
 		 */
@@ -871,8 +872,14 @@ SC_REQ	*reqp;
 	 * Here we prepare to send an 'IDENTIFY' message.
 	 * Allow disconnect only when interrups are allowed.
 	 */
+#if 1
+	/* def YES_DISCONNECT_RECONNECT_IS_WORKING */
 	tmp[0] = MSG_IDENTIFY(reqp->targ_lun,
 			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
+#else
+	tmp[0] = MSG_IDENTIFY(reqp->targ_lun,
+			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 0);
+#endif
 	cnt    = 1;
 	phase  = PH_MSGOUT;
 
@@ -1067,6 +1074,7 @@ handle_message(reqp, msg)
 SC_REQ	*reqp;
 u_int	msg;
 {
+	SC_REQ	*prev, *req;
 	int	sps;
 
 	PID("hmessage1");
@@ -1087,10 +1095,14 @@ u_int	msg;
 				return (-1);
 			}
 			ack_message();
-			reqp->xs->error = 0;
+
+			if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
+				reqp->xs->resid = reqp->xdata_len;
+				reqp->xs->error = 0;
+			}
 
 #ifdef AUTO_SENSE
-			if (check_autosense(reqp, 0) == -1)
+			if (check_autosense(reqp, 1) == -1)
 				return (-1);
 #endif /* AUTO_SENSE */
 
@@ -1098,14 +1110,32 @@ u_int	msg;
 			if (dbg_target_mask & (1 << reqp->targ_id))
 				show_request(reqp->link, "LINK");
 #endif
+			/*
+			 * Unlink the 'linked' request from the issue_q
+			 */
+			sps  = splbio();
+			prev = NULL;
+			req  = issue_q;
+			for (; req != NULL; prev = req, req = req->next) {
+				if (req == reqp->link)
+					break;
+			}
+			if (req == NULL)
+				panic("Inconsistent issue_q");
+			if (prev == NULL)
+				issue_q = req->next;
+			else prev->next = req->next;
+			req->next = NULL;
 			connected = reqp->link;
+			splx(sps);
+
 			finish_req(reqp);
 			PID("hmessage3");
 			return (-1);
 		case MSG_ABORT:
 		case MSG_CMDCOMPLETE:
 			ack_message();
-			connected = NULL;	
+			connected = NULL;
 			busy     &= ~(1 << reqp->targ_id);
 			if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
 				reqp->xs->resid = reqp->xdata_len;
@@ -1188,17 +1218,8 @@ struct ncr_softc *sc;
 	 * choose something long enough to suit all targets.
 	 */
 	SET_5380_REG(NCR5380_ICOM, SC_A_BSY);
-	len = 1000;
+	len = 250000;
 	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) && (len > 0)) {
-#if 0
-		if (!GET_5380_REG(NCR5380_DATA)) {
-			/*
-			 * We stepped into the reselection timeout....
-			 */
-			SET_5380_REG(NCR5380_ICOM, 0);
-			return;
-		}
-#endif
 		delay(1);
 		len--;
 	}
@@ -1210,6 +1231,18 @@ struct ncr_softc *sc;
 
 	SET_5380_REG(NCR5380_ICOM, 0);
 	
+	/*
+	 * Check if the reselection is still valid. Check twice because
+	 * of possible line glitches - cheaper than delay(1) and we need
+	 * only a few nanoseconds.
+	 */
+	if (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)) {
+	    if (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)) {
+		ncr_aprint(sc, "Stepped into the reselection timeout\n");
+		return;
+	    }
+	}
+
 	/*
 	 * Get the expected identify message.
 	 */
@@ -1513,7 +1546,8 @@ int	linked;
 	 */
 	PID("cautos1");
 	if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
-		if (reqp->status == SCSCHKC) {
+		switch (reqp->status & SCSMASK) {
+		case SCSCHKC:
 			bcopy(sense_cmd, &reqp->xcmd, sizeof(sense_cmd));
 			reqp->xdata_ptr = (u_char *)&reqp->xs->sense;
 			reqp->xdata_len = sizeof(reqp->xs->sense);
@@ -1534,6 +1568,10 @@ int	linked;
 #endif
 			PID("cautos2");
 			return (-1);
+
+		case SCSBUSY:
+			reqp->xs->error = XS_BUSY;
+			return (0);
 		}
 	}
 	else {
@@ -1850,7 +1888,7 @@ char	*qtxt;
 			qtxt, reqp->targ_id, reqp->xdata_ptr, reqp->xdata_len,
 			reqp->xcmd.opcode, reqp->status, reqp->message,
 			reqp->xs->error, reqp->xs->resid, reqp->link ? "L":"");
-	if (reqp->status == SCSCHKC)
+	if ((reqp->status & SCSMASK) == SCSCHKC)
 		show_data_sense(reqp->xs);
 }
 
