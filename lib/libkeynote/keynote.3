@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.13 1999/10/09 06:59:37 angelos Exp $
+.\" $OpenBSD: keynote.3,v 1.14 1999/10/09 19:47:32 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -28,8 +28,6 @@
 .Nm KeyNote
 .Nd a trust-management system library
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <regex.h>
 .Fd #include <keynote.h>
 .Bd -literal
 
@@ -549,13 +547,7 @@ indicating the returned value to the query. On failure, it returns \-1
 and sets
 .Va keynote_errno
 to the same values as
-.Xr kn_do_query 3 ,
-or to
-.Er ERROR_MEMORY
-if a trusted or untrusted assertion could not be added to the session due
-to lack of memory resources. Syntax errors in assertions will not be reported
-by
-.Fn kn_query .
+.Xr kn_do_query 3 .
 .Pp
 .Fn kn_encode_base64
 converts the data of length

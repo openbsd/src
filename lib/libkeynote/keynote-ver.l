@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote-ver.l,v 1.5 1999/10/09 06:59:37 angelos Exp $ */
+/* $OpenBSD: keynote-ver.l,v 1.6 1999/10/09 19:47:32 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -47,10 +47,8 @@
 #endif
 
 #include "z.tab.h"
-#include "header.h"
 #include "keynote.h"
-
-static void mystrncpy(char *, char *, int);
+#include "header.h"
 %}
 vstring		[a-zA-Z0-9][a-zA-Z0-9_]*
 litstring	\"(([^\"\n])|(\\[\"\n\f\r\t.]))*\"

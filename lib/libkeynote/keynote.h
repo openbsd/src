@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.h,v 1.9 1999/10/09 06:59:37 angelos Exp $ */
+/* $OpenBSD: keynote.h,v 1.10 1999/10/09 19:47:32 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -21,6 +21,21 @@
 
 #ifndef __KEYNOTE_H__
 #define __KEYNOTE_H__
+
+#include <sys/types.h>
+#include <regex.h>
+
+#include <ssl/crypto.h>
+#include <ssl/dsa.h>
+#include <ssl/rsa.h>
+#include <ssl/sha.h>
+#include <ssl/md5.h>
+#include <ssl/err.h>
+#include <ssl/rand.h>
+#include <ssl/x509.h>
+#include <ssl/pem.h>
+
+#define KEYNOTERNDFILENAME "/dev/urandom"
 
 struct environment
 {

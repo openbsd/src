@@ -1,4 +1,3 @@
-# $OpenBSD: Makefile.in,v 1.4 1999/10/09 06:59:37 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -18,7 +17,7 @@
 # MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 # PURPOSE.
 
-VERSION = 2.1
+VERSION = 2.0
 DISTFILE = keynote-${VERSION}.tar.gz
 KNSUBDIR = KeyNote-${VERSION}
 
@@ -84,13 +83,13 @@ $(TARGET): $(OBJS)
 $(TARGET2): $(TARGET) $(OBJS2)
 	$(CC) $(CFLAGS) -o $(TARGET2) $(OBJS2) $(LIBS)
 
-k.tab.c: keynote.y header.h keynote.h assertion.h config.h
+k.tab.c: keynote.y keynote.h assertion.h config.h
 	$(YACC) $(YACCFLAGS) keynote.y
 
 z.tab.c: keynote-ver.y keynote.h header.h config.h
 	$(YACC) $(YACCFLAGS2) keynote-ver.y
 
-lex.kn.c: keynote.l k.tab.h header.h keynote.h assertion.h config.h
+lex.kn.c: keynote.l k.tab.h keynote.h assertion.h config.h
 	$(LEX) $(LEXFLAGS) keynote.l
 
 lex.kv.c: keynote-ver.l z.tab.h keynote.h header.h config.h
@@ -99,16 +98,16 @@ lex.kv.c: keynote-ver.l z.tab.h keynote.h header.h config.h
 .c.o:
 	$(CC) $(CFLAGS) $(DEFS) $(INC) -c $<
 
-aux.c: header.h keynote.h assertion.h signature.h config.h
-parse_assertion.c: header.h keynote.h assertion.h signature.h config.h
-environment.c: header.h keynote.h assertion.h config.h
-keynote-verify.c: header.h keynote.h header.h config.h
-signature.c: header.h keynote.h assertion.h signature.h config.h
+aux.c: keynote.h assertion.h signature.h config.h
+parse_assertion.c: keynote.h assertion.h signature.h config.h
+environment.c: keynote.h assertion.h config.h
+keynote-verify.c: keynote.h header.h config.h
+signature.c: keynote.h assertion.h signature.h config.h
 keynote-keygen.c: keynote.h assertion.h signature.h header.h config.h
 keynote-sign.c: keynote.h header.h config.h
 keynote-sigver.c: keynote.h header.h config.h
 keynote-main.c: header.h config.h
-base64.c: header.h keynote.h config.h
+base64.c: keynote.h config.h
 
 clean:
 	$(RM) $(RMFLAGS) $(OBJS) $(OBJS2) a.out *.core *~ */*~
