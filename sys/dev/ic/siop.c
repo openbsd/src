@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.34 2004/04/25 01:49:12 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.35 2004/07/30 00:24:33 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -1402,6 +1402,11 @@ siop_scsicmd(xs)
 
 	TAILQ_INSERT_TAIL(&sc->ready_list, siop_cmd, next);
 
+	/* Negotiate transfer parameters on first non-polling command. */
+	if (((xs->flags & SCSI_POLL) == 0) &&
+	    siop_target->target_c.status == TARST_PROBING)
+		siop_target->target_c.status = TARST_ASYNC;
+
 	siop_start(sc);
 	if ((xs->flags & SCSI_POLL) == 0) {
 		splx(s);
@@ -1428,8 +1433,6 @@ siop_scsicmd(xs)
 			 */
 			for (j = 0; j < SIOP_NTAG; j += SIOP_NCMDPB)
 				siop_morecbd(sc);
-			if (sc->sc_c.targets[target]->status == TARST_PROBING)
-				sc->sc_c.targets[target]->status = TARST_ASYNC;
 
 			/*
 			 * Set TARF_DT here because if it is turned off during
