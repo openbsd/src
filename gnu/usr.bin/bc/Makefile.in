@@ -1,314 +1,320 @@
-# Makefile for GNU bc and dc.	-*- Indented-Text -*-
-# Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+# Makefile.in generated automatically by automake 1.3 from Makefile.am
 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
+# Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
+# This Makefile.in is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
 
 # This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-# @configure_input@
-
-#### Start of system configuration section. ####
+SHELL = /bin/sh
 
 srcdir = @srcdir@
+top_srcdir = @top_srcdir@
 VPATH = @srcdir@
-
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 
-bindir = $(exec_prefix)/bin
-datadir = $(prefix)/lib
-libdir = $(prefix)/lib
-infodir = $(prefix)/info
+bindir = @bindir@
+sbindir = @sbindir@
+libexecdir = @libexecdir@
+datadir = @datadir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@
+localstatedir = @localstatedir@
+libdir = @libdir@
+infodir = @infodir@
+mandir = @mandir@
+includedir = @includedir@
+oldincludedir = /usr/include
 
-# Where to install the manual pages.
-mandir = $(prefix)/man/man1
-# Extension (not including `.') for the installed manual page filenames.
-manext = 1
+DISTDIR =
 
-#
-# This is the name of the library file, if needed.  This definition should
-# not be deleted.
-#
-LIBFILE = $(libdir)/libmath.b
+pkgdatadir = $(datadir)/@PACKAGE@
+pkglibdir = $(libdir)/@PACKAGE@
+pkgincludedir = $(includedir)/@PACKAGE@
 
-#
-# Programs definitions for use by make.
-#
+top_builddir = .
 
-SHELL = /bin/sh
-YACC = @YACC@
-LEX = @LEX@
-CC = @CC@
+ACLOCAL = @ACLOCAL@
+AUTOCONF = @AUTOCONF@
+AUTOMAKE = @AUTOMAKE@
+AUTOHEADER = @AUTOHEADER@
 
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+transform = @program_transform_name@
 
-UUENCODE = uue
+NORMAL_INSTALL = :
+PRE_INSTALL = :
+POST_INSTALL = :
+NORMAL_UNINSTALL = :
+PRE_UNINSTALL = :
+POST_UNINSTALL = :
+CC = @CC@
+LEX = @LEX@
+MAKEINFO = @MAKEINFO@
+PACKAGE = @PACKAGE@
+RANLIB = @RANLIB@
+VERSION = @VERSION@
+YACC = @YACC@
 
-LIBS = @LIBS@ @LEXLIB@
-
-CPPFLAGS = @CPPFLAGS@
-LDFLAGS = @LDFLAGS@
-
-MAKEINFO = makeinfo
-TEXI2DVI = texi2dvi
-
-# stuff for cflags
-
-STDDEFS = -D_POSIX_SOURCE -DDOT_IS_LAST
-INCDIR = -I. -I$(srcdir)
-
-#
-#  The following are the standard definitions.  For MINIX PC, you need to
-#  comment these out and select one of the MINIX PC definition sets.
-#  Other configuration defines are generated automatically.  See the 
-#  README file for more details.
-#
-O=o
-CFLAGS = -O $(INCDIR) $(STDDEFS) @CFLAGS@
-LDFLAGS = 
-#
-# For the PC version of MINIX (K&R compiler), use the following lines.
-# 
-#O=s
-#CFLAGS = -O $(INCDIR) $(STDDEFS) @CFLAGS@
-#LDFLAGS = -i
-#
-# For the PC version of MINIX (ANSI compiler), use the following lines:
-# 
-#O=o
-#CFLAGS = -m $(INCDIR) $(STDDEFS) @CFLAGS@
-#LDFLAGS = -i
-#
-#
-DISTFILES = COPYING Makefile.in Install bc.y bcdefs.h const.h version.h \
-            execute.c global.c global.h load.c main.c number.c storage.c \
-	    number.h proto.h scan.l util.c vfprintf.c README bc.1 sbc.y \
-	    fix_libmath.h libmath.b configure configure.in config.h.in \
-	    acconfig.h ChangeLog \
-	    dc.1 dc.texinfo \
- 	    dc-array.c dc-eval.c dc-misc.c dc-number.c dc-stack.c \
-	    dc-string.c dc.h dc-proto.h dc-regdef.h dc-version.h \
-	    install-sh
-#
-BCOFILES = scan.$O util.$O main.$O number.$O storage.$O load.$O execute.$O 
-DCOFILES = dc-misc.$O dc-eval.$O dc-stack.$O dc-array.$O dc-string.$O \
-	   dc-number.$O
-#
-SUBDIRS = Examples Test
-#
-EXTRAFILES = bc.c.dist scan.c.dist y.tab.h.dist libmath.h dc.info
-#
-
-all: bc dc dc.info
-
-### targets required by GNU Coding standards ###
-
-Makefile: Makefile.in config.status
-	./config.status
-
-#config.status: configure
-#	$(srcdir)/configure --srcdir=$(srcdir) --no-create
-#
-#configure: configure.in
-#	cd $(srcdir); autoconf
-
-bc: $& config.h bc.$O $(BCOFILES) global.$O
-	$(CC) $(LDFLAGS) -o bc bc.$O $(BCOFILES) global.$O $(LIBS)
-
-dc: $(DCOFILES) number.o
-	$(CC) $(LDFLAGS) -o dc $(DCOFILES) number.o $(LIBS)
-
-sbc: sbc.$O $(BCOFILES) global.$O
-	$(CC) -o sbc $(LDFLAGS) sbc.$O $(BCOFILES) global.$O $(LIBS)
-
-config.h.in:
-	autoheader
-
-config.h:	config.h.in configure
-	./configure
-
-libmath.h: libmath.b
-	$(MAKE) fbc
-	./fbc -c libmath.b </dev/null >libmath.h
-	./fix_libmath.h
-	rm -f ./fbc
-
-fbc: $(BCOFILES) bc.$O
-	echo \"\" > libmath.h
-	$(CC) -c $(CFLAGS) global.c
-	$(CC) -o fbc $(LDFLAGS) bc.$O $(BCOFILES) global.$O $(LEXLIB)
-
-install: installdirs bc libmath.b config.h
-	rm -f $(bindir)/bc $(bindir)/dc
-	$(INSTALL_PROGRAM) bc $(bindir)
-	$(INSTALL_PROGRAM) dc $(bindir)
-	chmod 555 $(bindir)/bc $(bindir)/dc
-	if grep -s "define BC_MATH_FILE" config.h; \
-	  then rm -f $(libdir)/libmath.b; \
-	  $(INSTALL_DATA) $(srcdir)/libmath.b $(libdir); \
-	  chmod 444 $(libdir)/libmath.b; \
-	  else true; \
-	fi
-	$(INSTALL_DATA) $(srcdir)/bc.1 $(mandir)
-	$(INSTALL_DATA) $(srcdir)/dc.1 $(mandir)
-	$(INSTALL_DATA) $(srcdir)/dc.info $(infodir)
-
-installdirs:
-	-mkdir $(prefix)
-	-mkdir $(bindir)
-	-if grep -s "define BC_MATH_FILE" config.h; \
-	  then mkdir $(libdir)
-	  else true; \
-	fi
-	-mkdir $(mandir)
-	-mkdir $(infodir)
-
-uninstall: 
-	rm -f $(bindir)/bc $(bindir)/dc
-	if grep -s "define BC_MATH_FILE" config.h; \
-	  then rm -f $(libdir)/libmath.b;
-	  else true; \
-	fi
-	rm -f $(mandir)/bc1 $(mandir)/dc.1
-	rm -f $(infodir)/dc.info
-
-dist: $(EXTRAFILES)
-	OF=`sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\).*/bc-\1/p' version.h` \
-	; rm -rf $$OF \
-	; mkdir $$OF \
-	; chmod 777 $$OF \
-	; for file in $(DISTFILES) ; do ln $(srcdir)/$$file $$OF/$$file; done \
-	; for file in $(EXTRAFILES) ; do ln $$file $$OF/$$file; done \
-	; for dir in $(SUBDIRS); do \
-	   mkdir $$OF/$$dir ; chmod 777 $$OF/$$dir ; \
-	   cp $(srcdir)/$$dir/* $$OF/$$dir; done \
-	; tar cf $$OF.tar $$OF \
-	; gzip $$OF.tar \
-	; rm -rf $$OF
-
-shars: dist
-	OF=`sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\).*/bc-\1/p' version.h` \
-	; $(UUENCODE) $$OF.tar.Z - > $$OF.uue \
-	; split -775 $$OF.uue $$OF-u. \
-	; for file in $$OF-u.a?; do shar $$file > $$file.sh; done
-
-minixdist: $(EXTRAFILES)
-	OF=`sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\).*/bc-\1/p' version.h` \
-	; rm -rf $$OF \
-	; mkdir $$OF \
-	; cd $$OF \
-	; for file in $(DISTFILES) $(EXTRAFILES); do ln ../$$file; done \
-	; cd .. \
-	; tar cf $$OF.tar $$OF \
-	; gzip $$OF.tar \
-	; rm -rf $$OF
-
-minixshars: minixdist
-	OF=`sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\).*/bc-\1/p' version.h` \
-	; $(UUENCODE) $$OF.tar.Z - > $$OF.uue \
-	; split -775 $$OF.uue $$OF-u. \
-	; for file in $$OF-u.a?; do shar $$file > $$file.sh; done
-
-csrshars: $(EXTRAFILES)
-	findsrc -dy $(DISTFILES) $(EXTRAFILES) $(SUBDIRS) | \
-	makekit -npart -oMANIFEST
-
-bc.c.dist: bc.c
-	cp bc.c bc.c.dist
-
-scan.c.dist: scan.c
-	cp scan.c scan.c.dist
-
-y.tab.h.dist: y.tab.h
-	cp y.tab.h y.tab.h.dist
-
-extra:  $(EXTRAFILES)
-
-# assumes that the extra files exist!
-derived: 
-	@if [ ! -f $(srcdir)/bc.c.dist ] ; then \
-	  echo "You do not have a complete distribution.  Get a new copy or"; \
-	  echo "see if you can make the derived files using lex and yacc."; \
-	  exit 1; \
-	fi
-	cp $(srcdir)/bc.c.dist bc.c
-	cp $(srcdir)/scan.c.dist scan.c
-	cp $(srcdir)/y.tab.h.dist y.tab.h
-
-clean:
-	rm -f *.$O core ERRS *~ *.bak *.Z 
-
-distclean: clean
-	rm -f scan.c y.tab.h bc.c sbc.c bc sbc bc-dist* config.h  bc-*.* \
-	dc part?? MANIFEST* config.h config.status config.log config.cache \
-	Makefile *.aux *.cp *.dvi *.fn *.ky *.log *.pg *.toc *.tp *.vr
-
-mostlyclean: distclean
-
-realclean: distclean
-	rm -rf *.dist configure libmath.h dc.info config.h.in
-
-scan.c: scan.l
-	$(LEX) scan.l
-	mv lex.yy.c scan.c
-
-y.tab.h bc.c: bc.y
-	@echo "expect 1 shift/reduce conflict"
-	$(YACC) -d bc.y
-	mv y.tab.c bc.c
-
-sbc.c: sbc.y
-	$(YACC) -d sbc.y
-	mv y.tab.c sbc.c
-
-# Information files
-info: dc.info
-dvi: dc.dvi
-
-#bc.info: bc.texinfo
-#	$(MAKEINFO) -I$(srcdir) --no-split bc.texinfo
-#
-#bc.dvi: bc.texinfo
-#	$(TEXI2DVI) $(srcdir)/bc.texinfo
-
-dc.info: dc.texinfo
-	$(MAKEINFO) -I$(srcdir) --no-split dc.texinfo
-
-dc.dvi: dc.texinfo
-	$(TEXI2DVI) $(srcdir)/dc.texinfo
+SUBDIRS = lib bc dc doc
+ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+CONFIG_HEADER = config.h
+CONFIG_CLEAN_FILES = 
+DIST_COMMON =  README AUTHORS COPYING ChangeLog INSTALL Makefile.am \
+Makefile.in NEWS acconfig.h aclocal.m4 config.h.in configure \
+configure.in install-sh missing mkinstalldirs stamp-h.in
 
 
-global.$O:  bcdefs.h global.h libmath.h global.c
-bc.$O:	    bcdefs.h global.h bc.y
-execute.$O: bcdefs.h global.h execute.c
-load.$O:    bcdefs.h global.h load.c
-main.$O:    bcdefs.h global.h version.h main.c
-number.$O:  bcdefs.h Makefile number.c
-sbc.$O:     bcdefs.h global.h sbc.y
-scan.$O:    bcdefs.h global.h y.tab.h scan.c
-storage.$O: bcdefs.h global.h storage.c
-util.$O:    bcdefs.h global.h version.h util.c
+DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-bcdefs.h: number.h const.h config.h
-	touch bcdefs.h
+TAR = tar
+GZIP = --best
+all: all-recursive-am all-am
 
-dc-array.$O : dc-array.c config.h dc.h dc-proto.h dc-regdef.h 
-dc-eval.$O : dc-eval.c config.h dc.h dc-proto.h 
-dc-misc.$O : dc-misc.c config.h dc.h dc-proto.h dc-version.h 
-dc-number.$O : dc-number.c config.h bcdefs.h const.h version.h number.h \
-  proto.h global.h dc.h dc-proto.h 
-dc-stack.$O : dc-stack.c config.h dc.h dc-proto.h dc-regdef.h 
-dc-string.$O : dc-string.c config.h dc.h dc-proto.h 
-number.$O : number.c bcdefs.h config.h const.h version.h number.h proto.h 
+.SUFFIXES:
+$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4)
+	cd $(top_srcdir) && $(AUTOMAKE) --gnu --include-deps Makefile
+
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
+	cd $(top_builddir) \
+	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+$(ACLOCAL_M4):  configure.in 
+	cd $(srcdir) && $(ACLOCAL)
+
+config.status: $(srcdir)/configure
+	$(SHELL) ./config.status --recheck
+$(srcdir)/configure: $(srcdir)/configure.in $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
+	cd $(srcdir) && $(AUTOCONF)
+
+config.h: stamp-h
+	@:
+stamp-h: $(srcdir)/config.h.in $(top_builddir)/config.status
+	cd $(top_builddir) \
+	  && CONFIG_FILES= CONFIG_HEADERS=config.h \
+	     $(SHELL) ./config.status
+	@echo timestamp > stamp-h
+$(srcdir)/config.h.in: $(srcdir)/stamp-h.in
+$(srcdir)/stamp-h.in: $(top_srcdir)/configure.in $(ACLOCAL_M4) acconfig.h
+	cd $(top_srcdir) && $(AUTOHEADER)
+	@echo timestamp > $(srcdir)/stamp-h.in
+
+mostlyclean-hdr:
+
+clean-hdr:
+
+distclean-hdr:
+	-rm -f config.h
+
+maintainer-clean-hdr:
+
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run `make' without going through this Makefile.
+# To change the values of `make' variables: instead of editing Makefiles,
+# (1) if the variable is set in `config.status', edit `config.status'
+#     (which will cause the Makefiles to be regenerated when you run `make');
+# (2) otherwise, pass the desired values on the `make' command line.
+
+@SET_MAKE@
+
+all-recursive install-data-recursive install-exec-recursive \
+installdirs-recursive install-recursive uninstall-recursive  \
+check-recursive installcheck-recursive info-recursive dvi-recursive:
+	@set fnord $(MAKEFLAGS); amf=$$2; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  target=`echo $@ | sed s/-recursive//`; \
+	  echo "Making $$target in $$subdir"; \
+	  (cd $$subdir && $(MAKE) $$target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+
+mostlyclean-recursive clean-recursive distclean-recursive \
+maintainer-clean-recursive:
+	@set fnord $(MAKEFLAGS); amf=$$2; \
+	rev=''; list='$(SUBDIRS)'; for subdir in $$list; do \
+	  rev="$$subdir $$rev"; \
+	done; \
+	for subdir in $$rev; do \
+	  target=`echo $@ | sed s/-recursive//`; \
+	  echo "Making $$target in $$subdir"; \
+	  (cd $$subdir && $(MAKE) $$target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+tags-recursive:
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  (cd $$subdir && $(MAKE) tags); \
+	done
+
+tags: TAGS
+
+ID: $(HEADERS) $(SOURCES) $(LISP)
+	here=`pwd` && cd $(srcdir) \
+	  && mkid -f$$here/ID $(SOURCES) $(HEADERS) $(LISP)
+
+TAGS: tags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) $(LISP)
+	tags=; \
+	here=`pwd`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test -f $$subdir/TAGS && tags="$$tags -i $$here/$$subdir/TAGS"; \
+	done; \
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	test -z "$(ETAGS_ARGS)config.h.in$$unique$(LISP)$$tags" \
+	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags config.h.in $$unique $(LISP) -o $$here/TAGS)
+
+mostlyclean-tags:
+
+clean-tags:
+
+distclean-tags:
+	-rm -f TAGS ID
+
+maintainer-clean-tags:
+
+distdir = $(PACKAGE)-$(VERSION)
+top_distdir = $(distdir)
+
+# This target untars the dist file and tries a VPATH configuration.  Then
+# it guarantees that the distribution is self-contained by making another
+# tarfile.
+distcheck: dist
+	-rm -rf $(distdir)
+	GZIP=$(GZIP) $(TAR) zxf $(distdir).tar.gz
+	mkdir $(distdir)/=build
+	mkdir $(distdir)/=inst
+	dc_install_base=`cd $(distdir)/=inst && pwd`; \
+	cd $(distdir)/=build \
+	  && ../configure --srcdir=.. --prefix=$$dc_install_base \
+	  && $(MAKE) \
+	  && $(MAKE) dvi \
+	  && $(MAKE) check \
+	  && $(MAKE) install \
+	  && $(MAKE) installcheck \
+	  && $(MAKE) dist
+	-rm -rf $(distdir)
+	@echo "========================"; \
+	echo "$(distdir).tar.gz is ready for distribution"; \
+	echo "========================"
+dist: distdir
+	-chmod -R a+r $(distdir)
+	GZIP=$(GZIP) $(TAR) chozf $(distdir).tar.gz $(distdir)
+	-rm -rf $(distdir)
+dist-all: distdir
+	-chmod -R a+r $(distdir)
+	GZIP=$(GZIP) $(TAR) chozf $(distdir).tar.gz $(distdir)
+	-rm -rf $(distdir)
+distdir: $(DISTFILES)
+	-rm -rf $(distdir)
+	mkdir $(distdir)
+	-chmod 777 $(distdir)
+	@for file in $(DISTFILES); do \
+	  d=$(srcdir); \
+	  test -f $(distdir)/$$file \
+	  || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
+	  || cp -p $$d/$$file $(distdir)/$$file; \
+	done
+	for subdir in $(SUBDIRS); do \
+	  test -d $(distdir)/$$subdir \
+	  || mkdir $(distdir)/$$subdir \
+	  || exit 1; \
+	  chmod 777 $(distdir)/$$subdir; \
+	  (cd $$subdir && $(MAKE) top_distdir=../$(distdir) distdir=../$(distdir)/$$subdir distdir) \
+	    || exit 1; \
+	done
+	$(MAKE) top_distdir="$(top_distdir)" distdir="$(distdir)" dist-hook
+info: info-recursive
+dvi: dvi-recursive
+check: all-am
+	$(MAKE) check-recursive
+installcheck: installcheck-recursive
+all-recursive-am: config.h
+	$(MAKE) all-recursive
+
+all-am: Makefile config.h
+
+install-exec: install-exec-recursive
+	@$(NORMAL_INSTALL)
+
+install-data: install-data-recursive
+	@$(NORMAL_INSTALL)
+
+install: install-recursive
+	@:
+
+uninstall: uninstall-recursive
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' INSTALL_SCRIPT='$(INSTALL_PROGRAM)' install
+installdirs: installdirs-recursive
+
+
+mostlyclean-generic:
+	-test -z "$(MOSTLYCLEANFILES)" || rm -f $(MOSTLYCLEANFILES)
+
+clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
+
+distclean-generic:
+	-rm -f Makefile $(DISTCLEANFILES)
+	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+
+maintainer-clean-generic:
+	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
+mostlyclean-am:  mostlyclean-hdr mostlyclean-tags mostlyclean-generic
+
+clean-am:  clean-hdr clean-tags clean-generic mostlyclean-am
+
+distclean-am:  distclean-hdr distclean-tags distclean-generic clean-am
+
+maintainer-clean-am:  maintainer-clean-hdr maintainer-clean-tags \
+		maintainer-clean-generic distclean-am
+
+mostlyclean:  mostlyclean-recursive mostlyclean-am
+
+clean:  clean-recursive clean-am
+
+distclean:  distclean-recursive distclean-am
+	-rm -f config.status
+
+maintainer-clean:  maintainer-clean-recursive maintainer-clean-am
+	@echo "This command is intended for maintainers to use;"
+	@echo "it deletes files that may require special tools to rebuild."
+	-rm -f config.status
+
+.PHONY: mostlyclean-hdr distclean-hdr clean-hdr maintainer-clean-hdr \
+install-data-recursive uninstall-data-recursive install-exec-recursive \
+uninstall-exec-recursive installdirs-recursive uninstalldirs-recursive \
+all-recursive check-recursive installcheck-recursive info-recursive \
+dvi-recursive mostlyclean-recursive distclean-recursive clean-recursive \
+maintainer-clean-recursive tags tags-recursive mostlyclean-tags \
+distclean-tags clean-tags maintainer-clean-tags distdir info dvi \
+installcheck all-recursive-am all-am install-exec install-data install \
+uninstall all installdirs mostlyclean-generic distclean-generic \
+clean-generic maintainer-clean-generic clean mostlyclean distclean \
+maintainer-clean
+
+
+dist-hook:
+	mkdir $(distdir)/h $(distdir)/Examples $(distdir)/Test
+	cp -p $(srcdir)/h/*.h $(distdir)/h
+	cp -p $(srcdir)/Examples/*.b $(distdir)/Examples
+	cp -p $(srcdir)/Test/*.b $(srcdir)/Test/*.bc $(distdir)/Test
+	cp -p $(srcdir)/Test/signum $(srcdir)/Test/timetest $(distdir)/Test
+
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:

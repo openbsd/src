@@ -1,0 +1,62 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1.1.1 1998/06/29 00:19:01 millert Exp $
+
+MAN=	doc/bc.1 doc/dc.1
+#CLEANFILES=
+LDFLAGS+=	-s ${LDSTATIC}
+GNUCFLAGS=	CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
+
+all:	config.status wrapper
+	${MAKE} ${GNUCFLAGS}
+
+wrapper:
+	cd ${.CURDIR}/bcwrap && ${MAKE}
+
+.FORCE:	.IGNORE
+
+.include <bsd.own.mk>
+
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
+config: .FORCE
+.ifndef GLOBAL_AUTOCONF_CACHE
+	-rm -f config.cache
+.endif
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	sh ${.CURDIR}/configure --prefix=${PREFIX}/usr --infodir=${PREFIX}/usr/share/info ${CF}
+
+config.status:
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	sh ${.CURDIR}/configure --prefix=${PREFIX}/usr --infodir=${PREFIX}/usr/share/info ${CF}
+
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.endif
+
+install: maninstall
+	cd ${.CURDIR}/bcwrap && ${MAKE} install
+	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
+		bindir=${DESTDIR}/usr/bin infodir=${PREFIX}/usr/share/info
+
+clean cleandir:
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+	rm -f ${CLEANFILES}
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.ifndef NOMAN
+.include <bsd.man.mk>
+.endif
