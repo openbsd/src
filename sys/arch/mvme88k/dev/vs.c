@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.33 2004/04/30 19:08:02 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.34 2004/05/09 05:34:00 krw Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -494,7 +494,7 @@ vs_chksense(xs)
 	*/
 	xs->status = riopb->iopb_STATUS >> 8;
 #ifdef SDEBUG
-	scsi_print_sense(xs, 2);
+	scsi_print_sense(xs);
 #endif
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.43 2004/04/18 00:49:29 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.44 2004/05/09 05:33:59 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -351,7 +351,7 @@ int	scsi_do_safeioctl(struct scsi_link *, dev_t, u_long, caddr_t,
 void	sc_print_addr(struct scsi_link *);
 
 void	show_scsi_xs(struct scsi_xfer *);
-void	scsi_print_sense(struct scsi_xfer *, int);
+void	scsi_print_sense(struct scsi_xfer *);
 void	show_scsi_cmd(struct scsi_xfer *);
 void	show_mem(u_char *, int);
 int	scsi_probe_busses(int, int, int);

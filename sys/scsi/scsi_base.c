@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.57 2004/05/09 04:01:59 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.58 2004/05/09 05:33:59 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -790,7 +790,7 @@ scsi_interpret_sense(xs)
 		}
 
 		if (key && (xs->flags & SCSI_SILENT) == 0)
-			scsi_print_sense(xs, 0);
+			scsi_print_sense(xs);
 
 		return error;
 
@@ -1439,12 +1439,10 @@ asc2ascii(asc, ascq, result, len)
 #endif /* SCSITERSE */
 
 void
-scsi_print_sense(xs, verbosity)
+scsi_print_sense(xs)
 	struct scsi_xfer *xs;
-	int verbosity;
 {
 	int32_t info;
-	register int i, j, k;
 	char *sbs, *s;
 
 	sc_print_addr(xs->sc_link);
@@ -1509,52 +1507,6 @@ scsi_print_sense(xs, verbosity)
 	sbs = scsi_decode_sense(s, DECODE_SKSV);
 	if (strlen(sbs) > 0)
 		printf("         SKSV: %s\n", sbs);
-	if (verbosity == 0)
-		return;
-
-	/*
-	 * Now figure whether we should print any additional informtion.
-	 *
-	 * Where should we start from? If we had SKSV data,
-	 * start from offset 18, else from offset 15.
-	 *
-	 * From that point until the end of the buffer, check for any
-	 * nonzero data. If we have some, go back and print the lot,
-	 * otherwise we're done.
-	 */
-	if (strlen(sbs) > 0)
-		i = 18;
-	else
-		i = 15;
-
-	for (j = i; j < sizeof (xs->sense); j++)
-		if (s[j])
-			break;
-	if (j == sizeof (xs->sense))
-		return;
-
-	printf(" Additional Sense Information (byte %d out...):\n", i);
-	if (i == 15) {
-		printf("        %2d:", i);
-		k = 7;
-	} else {
-		printf("        %2d:", i);
-		k = 2;
-		j -= 2;
-	}
-	while (j > 0) {
-		if (i >= sizeof (xs->sense))
-			break;
-		if (k == 8) {
-			k = 0;
-			printf("\n        %2d:", i);
-		}
-		printf(" 0x%02x", s[i] & 0xff);
-		k++;
-		j--;
-		i++;
-	}
-	printf("\n");
 }
 
 char *
