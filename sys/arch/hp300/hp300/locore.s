@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.50 1996/02/14 02:56:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.53 1996/05/17 16:32:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,11 +42,18 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
-#include "assym.s"
-#include <hp300/hp300/vectors.s>
+#include "assym.h"
 
 #define MMUADDR(ar)	movl	_MMUbase,ar
 #define CLKADDR(ar)	movl	_CLKbase,ar
+
+/*
+ * This is for kvm_mkdb, and should be the address of the beginning
+ * of the kernel text segment (not necessarily the same as kernbase).
+ */
+	.text
+	.globl  _kernel_text
+_kernel_text:
 
 /*
  * Temporary stack for a variety of purposes.
@@ -57,6 +64,8 @@
 	.data
 	.space	NBPG
 tmpstk:
+
+#include <hp300/hp300/vectors.s>
 
 	.text
 /*
@@ -476,42 +485,8 @@ _trace:
 	moveq	#T_TRACE,d0
 	jra	fault
 
-/*
- * The sigreturn() syscall comes here.  It requires special handling
- * because we must open a hole in the stack to fill in the (possibly much
- * larger) original stack frame.
- */
-sigreturn:
-	lea	sp@(-84),sp		| leave enough space for largest frame
-	movl	sp@(84),sp@		| move up current 8 byte frame
-	movl	sp@(88),sp@(4)
-	movl	#84,sp@-		| default: adjust by 84 bytes
-	moveml	#0xFFFF,sp@-		| save user registers
-	movl	usp,a0			| save the user SP
-	movl	a0,sp@(FR_SP)		|   in the savearea
-	movl	#SYS_sigreturn,sp@-	| push syscall number
-	jbsr	_syscall		| handle it
-	addql	#4,sp			| pop syscall#
-	movl	sp@(FR_SP),a0		| grab and restore
-	movl	a0,usp			|   user SP
-	lea	sp@(FR_HW),a1		| pointer to HW frame
-	movw	sp@(FR_ADJ),d0		| do we need to adjust the stack?
-	jeq	Lsigr1			| no, just continue
-	moveq	#92,d1			| total size
-	subw	d0,d1			|  - hole size = frame size
-	lea	a1@(92),a0		| destination
-	addw	d1,a1			| source
-	lsrw	#1,d1			| convert to word count
-	subqw	#1,d1			| minus 1 for dbf
-Lsigrlp:
-	movw	a1@-,a0@-		| copy a word
-	dbf	d1,Lsigrlp		| continue
-	movl	a0,a1			| new HW frame base
-Lsigr1:
-	movl	a1,sp@(FR_SP)		| new SP value
-	moveml	sp@+,#0x7FFF		| restore user registers
-	movl	sp@,sp			| and our SP
-	jra	rei			| all done
+/* Use common m68k sigreturn */
+#include <m68k/m68k/sigreturn.s>
 
 /*
  * Interrupt handlers.
@@ -767,21 +742,21 @@ start:
 	movl	a1@(MMUCMD),d0		| read it back
 	btst	#7,d0			| still on?
 	jeq	Lisa370			| no, must be a 370
-	movl	#5,a0@			| yes, must be a 340
+	movl	#HP_340,a0@		| yes, must be a 340
 	jra	Lstart1
 Lnot370:
-	movl	#3,a0@			| type is at least a 360
+	movl	#HP_360,a0@		| type is at least a 360
 	movl	#0,a1@(MMUCMD)		| clear magic cookie2
 	movl	a1@(MMUCMD),d0		| read it back
 	btst	#16,d0			| still on?
 	jeq	Lstart1			| no, must be a 360
-	movl	#6,a0@			| yes, must be a 345/375
+	movl	#HP_375,a0@		| yes, must be a 345/375
 	jra	Lhaspac
 Lisa370:
-	movl	#4,a0@			| set to 370
+	movl	#HP_370,a0@		| set to 370
 Lhaspac:
 	RELOC(_ectype, a0)
-	movl	#-1,a0@			| also has a physical address cache
+	movl	#EC_PHYS,a0@		| also has a physical address cache
 	jra	Lstart1
 Lnot68030:
 	bset	#31,d0			| data cache enable bit
@@ -794,16 +769,16 @@ Lnot68030:
 	RELOC(_mmutype, a0)
 	movl	#MMU_68040,a0@		| with a 68040 MMU
 	RELOC(_ectype, a0)
-	movl	#0,a0@			| and no cache (for now XXX)
+	movl	#EC_NONE,a0@		| and no cache (for now XXX)
 	RELOC(_machineid, a0)
 	movl	a1@(MMUCMD),d0		| read MMU register
 	lsrl	#8,d0			| get apparent ID
 	cmpb	#6,d0			| id == 6?
 	jeq	Lis33mhz		| yes, we have a 433s
-	movl	#7,a0@			| no, we have a 380/425t
+	movl	#HP_380,a0@		| no, we have a 380/425t
 	jra	Lstart1
 Lis33mhz:
-	movl	#8,a0@			| 433s (XXX 425s returns same ID, ugh!)
+	movl	#HP_433,a0@		| 433s (XXX 425s returns same ID, ugh!)
 	jra	Lstart1
 Lis68020:
 	movl	#1,a1@(MMUCMD)		| a 68020, write HP MMU location
@@ -813,17 +788,21 @@ Lis68020:
 	RELOC(_mmutype, a0)
 	movl	#MMU_68851,a0@		| no, we have PMMU
 	RELOC(_machineid, a0)
-	movl	#1,a0@			| and 330 CPU
+	movl	#HP_330,a0@		| and 330 CPU
 	jra	Lstart1
 Lishpmmu:
 	RELOC(_ectype, a0)		| 320 or 350
-	movl	#1,a0@			| both have a virtual address cache
+	movl	#EC_VIRT,a0@		| both have a virtual address cache
 	movl	#0x80,a1@(MMUCMD)	| set magic cookie
 	movl	a1@(MMUCMD),d0		| read it back
 	btst	#7,d0			| cookie still on?
-	jeq	Lstart1			| no, just a 320
+	jeq	Lis320			| no, just a 320
 	RELOC(_machineid, a0)
-	movl	#2,a0@			| yes, a 350
+	movl	#HP_350,a0@		| yes, a 350
+	jra	Lstart1
+Lis320:
+	RELOC(_machineid, a0)
+	movl	#HP_320,a0@
 
 Lstart1:
 	movl	#0,a1@(MMUCMD)		| clear out MMU again
@@ -971,7 +950,10 @@ Lfinish:
 	orl	#MMU_CEN,a0@(MMUCMD)	| turn on external cache
 Lnocache0:
 /* final setup for C code */
+	movl	#_vectab,d0		| set Vector Base Register
+	movc	d0,vbr
 	jbsr	_isrinit		| be ready for stray ints
+	jbsr	_hp300_calibrate_delay	| calibrate delay
 	movw	#PSL_LOWIPL,sr		| lower SPL
 	movl	d7,_boothowto		| save reboot flags
 	movl	d6,_bootdev		|   and boot device
@@ -1846,6 +1828,24 @@ ENTRY(_remque)
 	movl	a0,a1@(4)		| e->next->prev = e->prev
 	movl	a1,a0@			| e->prev->next = e->next
 	movw	d0,sr
+	rts
+
+/*
+ * _delay(u_int N)
+ *
+ * Delay for at least (N/256) microsecends.
+ * This routine depends on the variable:  delay_divisor
+ * which should be set based on the CPU clock rate.
+ */
+	.globl	__delay
+__delay:
+	| d0 = arg = (usecs << 8)
+	movl	sp@(4),d0
+	| d1 = delay_divisor
+	movl	_delay_divisor,d1
+L_delay:
+	subl	d1,d0
+	jgt	L_delay
 	rts
 
 #ifdef FPCOPROC

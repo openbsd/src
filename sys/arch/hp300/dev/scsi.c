@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.8 1996/02/14 02:44:59 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.10 1996/05/18 23:57:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -64,8 +64,8 @@
  * SCSI delays
  * In u-seconds, primarily for state changes on the SPC.
  */
-#define	SCSI_CMD_WAIT	1000	/* wait per step of 'immediate' cmds */
-#define	SCSI_DATA_WAIT	1000	/* wait per data in/out step */
+#define	SCSI_CMD_WAIT	10000	/* wait per step of 'immediate' cmds */
+#define	SCSI_DATA_WAIT	10000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	50000	/* wait per step (both) during init */
 
 extern void isrlink();
@@ -112,7 +112,8 @@ u_int	sgo_wait[MAXWAIT+2];
 #define	b_cylin		b_resid
 
 static void
-scsiabort(hs, hd, where)
+scsiabort(target, hs, hd, where)
+	int target;
 	register struct scsi_softc *hs;
 	volatile register struct scsidevice *hd;
 	char *where;
@@ -122,9 +123,11 @@ scsiabort(hs, hd, where)
 	int startlen;	/* XXX - kludge till I understand whats *supposed* to happen */
 	u_char junk;
 
-	printf("%s: abort from %s: phase=0x%x, ssts=0x%x, ints=0x%x\n",
-		hs->sc_hc->hp_xname, where, hd->scsi_psns, hd->scsi_ssts,
-		hd->scsi_ints);
+	printf("%s: ", hs->sc_hc->hp_xname);
+	if (target != -1)
+		printf("targ %d ", target);
+	printf("abort from %s: phase=0x%x, ssts=0x%x, ints=0x%x\n",
+		where, hd->scsi_psns, hd->scsi_ssts, hd->scsi_ints);
 
 	hd->scsi_ints = hd->scsi_ints;
 	hd->scsi_csr = 0;
@@ -183,7 +186,7 @@ out:
 
 	if (! ((junk = hd->scsi_ints) & INTS_RESEL)) {
 		hd->scsi_sctl |= SCTL_CTRLRST;
-		DELAY(1);
+		DELAY(2);
 		hd->scsi_sctl &=~ SCTL_CTRLRST;
 		hd->scsi_hconf = 0;
 		hd->scsi_ints = hd->scsi_ints;
@@ -301,7 +304,7 @@ scsiattach(hc)
 	 * XXX scale initialization wait according to CPU speed.
 	 * Should we do this for all wait?  Should we do this at all?
 	 */
-	scsi_init_wait *= cpuspeed;
+	scsi_init_wait *= (cpuspeed / 8);
 }
 
 void
@@ -314,7 +317,7 @@ scsireset(unit)
 	u_int i;
 
 	if (hs->sc_flags & SCSI_ALIVE)
-		scsiabort(hs, hd, "reset");
+		scsiabort(-1, hs, hd, "reset");
 		
 	hd->scsi_id = 0xFF;
 	DELAY(100);
@@ -740,7 +743,7 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 		}
 	}
 abort:
-	scsiabort(hs, hd, "icmd");
+	scsiabort(target, hs, hd, "icmd");
 out:
 	return (hs->sc_stat[0]);
 }
@@ -786,7 +789,7 @@ finishxfer(hs, hd, target)
 	}
 	hd->scsi_scmd |= SCMD_PROG_XFR;
 	hd->scsi_sctl |= SCTL_CTRLRST;
-	DELAY(1);
+	DELAY(2);
 	hd->scsi_sctl &=~ SCTL_CTRLRST;
 	hd->scsi_hconf = 0;
 	/*
@@ -838,7 +841,7 @@ finishxfer(hs, hd, target)
 			return;
 	}
 abort:
-	scsiabort(hs, hd, "finishxfer");
+	scsiabort(target, hs, hd, "finishxfer");
 	hs->sc_stat[0] = 0xfe;
 }
 
@@ -1135,7 +1138,7 @@ out:
 	hs->sc_flags |= SCSI_IO;
 	return (0);
 abort:
-	scsiabort(hs, hd, "go");
+	scsiabort(slave, hs, hd, "go");
 	hs->sc_flags &=~ SCSI_HAVEDMA;
 	dmafree(&hs->sc_dq);
 	return (1);
@@ -1194,7 +1197,7 @@ scsiintr(arg)
 		hd->scsi_ints = ints;
 		hd->scsi_csr = 0;
 		scsierror(hs, hd, ints);
-		scsiabort(hs, hd, "intr");
+		scsiabort(dq->dq_slave, hs, hd, "intr");
 		if (hs->sc_flags & SCSI_IO) {
 			hs->sc_flags &=~ (SCSI_IO|SCSI_HAVEDMA);
 			dmafree(&hs->sc_dq);

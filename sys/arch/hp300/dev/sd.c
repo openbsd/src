@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.22 1996/02/14 02:45:05 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.22.4.1 1996/06/06 16:22:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -48,7 +48,6 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/stat.h>
-#include <sys/dkstat.h>		/* XXX */
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/malloc.h>
@@ -313,7 +312,6 @@ sdident(sc, hd, verbose)
 			printf("drive empty\n");
 	}
 
-	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);	/* XXX */
 	scsi_delay(0);
 	return(inqbuf.type);
 failed:
@@ -605,10 +603,6 @@ sdopen(dev, flags, mode, p)
 		if (error)
 			return(error);
 	}
-
-	/* XXX Support old-style instrumentation for now. */
-	if (sc->sc_hd->hp_dk >= 0)
-		dk_wpms[sc->sc_hd->hp_dk] = sc->sc_wpms;
 
 	mask = 1 << sdpart(dev);
 	if (mode == S_IFCHR)
@@ -999,14 +993,6 @@ sdgo(unit)
 #endif
 	if (scsigo(hp->hp_ctlr, hp->hp_slave, sc->sc_punit,
 	    bp, cmd, pad) == 0) {
-		/* XXX Support old-style instrumentation for now. */
-		if (hp->hp_dk >= 0) {
-			dk_busy |= 1 << hp->hp_dk;
-			++dk_seek[hp->hp_dk];
-			++dk_xfer[hp->hp_dk];
-			dk_wds[hp->hp_dk] += bp->b_bcount >> 6;
-		}
-
 		/* Instrumentation. */
 		disk_busy(&sc->sc_dkdev);
 		sc->sc_dkdev.dk_seek++;		/* XXX */
@@ -1040,10 +1026,6 @@ sdintr(arg, stat)
 		printf("%s: bp == NULL\n", sc->sc_hd->hp_xname);
 		return;
 	}
-
-	/* XXX Support old-style instrumentation for now. */
-	if (hp->hp_dk >= 0)
-		dk_busy &=~ (1 << hp->hp_dk);
 
 	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - bp->b_resid));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.29 1996/02/24 00:55:20 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.29.4.1 1996/06/06 15:39:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -295,9 +295,10 @@ iteopen(dev, mode, devtype, p)
 	int error;
 	int first = 0;
 
-	if (ip->tty == NULL)
-		tp = ip->tty = ttymalloc();
-	else
+	if (ip->tty == NULL) {
+	 	tp = ip->tty = ttymalloc();
+		tty_attach(tp);
+	} else
 		tp = ip->tty;
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
 	    && p->p_ucred->cr_uid != 0)
@@ -345,6 +346,7 @@ iteclose(dev, flag, mode, p)
 	ttyclose(tp);
 	iteoff(ip, 0);
 #if 0
+	tty_detach(tp);
 	ttyfree(tp);
 	ip->tty = (struct tty *)0;
 #endif

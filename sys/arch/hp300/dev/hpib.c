@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.8 1996/02/14 02:44:28 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.9 1996/05/17 15:09:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -187,7 +187,7 @@ hpibid(unit, slave)
 	 * take forever on slow CPUs.
 	 */
 	ohpibtimeout = hpibtimeout;
-	hpibtimeout = hpibidtimeout * cpuspeed;
+	hpibtimeout = hpibidtimeout * (cpuspeed / 8);
 	if (hpibrecv(unit, 31, slave, &id, 2) != 2)
 		id = 0;
 	hpibtimeout = ohpibtimeout;

@@ -246,7 +246,7 @@ hilclose(dev, flags, mode, p)
 	u_char device = HILUNIT(dev);
 	char mask, lpctrl;
 	int s;
-	extern struct emul emul_native;
+	extern struct emul emul_netbsd;
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
@@ -257,7 +257,7 @@ hilclose(dev, flags, mode, p)
 	if (device && (dptr->hd_flags & HIL_PSEUDO))
 		return (0);
 
-	if (p && p->p_emul == &emul_native) {
+	if (p && p->p_emul == &emul_netbsd) {
 		/*
 		 * If this is the loop device,
 		 * free up all queues belonging to this process.

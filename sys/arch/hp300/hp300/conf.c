@@ -45,6 +45,12 @@
 
 int	ttselect	__P((dev_t, int, struct proc *));
 
+#ifndef LKM
+#define	lkmenodev	enodev
+#else
+int	lkmenodev();
+#endif
+
 #include "ct.h"
 bdev_decl(ct);
 #include "mt.h"
@@ -146,14 +152,6 @@ cdev_decl(tun);
 #endif
 cdev_decl(lkm);
 
-/* open, close, read, ioctl */
-cdev_decl(ipl);
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
-
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -187,7 +185,6 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 28 */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
-	cdev_gen_ipf(NIPF,ipl),         /* 31: IP filter log */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

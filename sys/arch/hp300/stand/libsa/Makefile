@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/09/02 05:04:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1996/01/30 19:47:32 thorpej Exp $
 
 LIB=	sa
 
@@ -12,11 +12,11 @@ CFLAGS+=-I${.CURDIR}/../../../..  -I${.CURDIR}/../../../../lib/libsa
 
 # stand routines
 SRCS=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
-	printf.c strerror.c
+	memcpy.c printf.c strerror.c
 
 # io routines
-SRCS+=	close.c dev.c disklabel.c ioctl.c lseek.c open.c read.c \
-	stat.c write.c
+SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
+	open.c read.c stat.c write.c
 
 # network routines
 SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c

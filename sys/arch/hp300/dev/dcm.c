@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.26 1996/03/03 16:48:54 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.27.4.1 1996/06/06 15:39:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -284,11 +284,11 @@ dcmmatch(hd)
 	while ((dcm->dcm_ic & IC_IR) == 0)
 		if (++timo == 20000)
 			return (0);
-	DELAY(50000)	/* XXX why is this needed ???? */
+	DELAY(50000);	/* XXX why is this needed ???? */
 	while ((dcm->dcm_iir & IIR_SELFT) == 0)
 		if (++timo == 400000)
 			return (0);
-	DELAY(50000)	/* XXX why is this needed ???? */
+	DELAY(50000);	/* XXX why is this needed ???? */
 	if (dcm->dcm_stcon != ST_OK) {
 		if (hd->hp_args->hw_sc != conscode)
 			printf("dcm%d: self test failed: %x\n",
@@ -418,9 +418,10 @@ dcmopen(dev, flag, mode, p)
 	if ((sc->sc_flags & DCM_ACTIVE) == 0)
 		return (ENXIO);
 
-	if (sc->sc_tty[port] == NULL)
+	if (sc->sc_tty[port] == NULL) {
 		tp = sc->sc_tty[port] = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = sc->sc_tty[port];
 
 	tp->t_oproc = dcmstart;
@@ -530,6 +531,7 @@ dcmclose(dev, flag, mode, p)
 	splx(s);
 	ttyclose(tp);
 #if 0
+	tty_detach(tp);
 	ttyfree(tp);
 	sc->sc_tty[port] == NULL;
 #endif

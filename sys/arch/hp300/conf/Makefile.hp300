@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.6 1996/04/25 06:36:20 mickey Exp $
-#	$NetBSD: Makefile.hp300,v 1.38 1996/03/01 17:03:17 scottr Exp $
+#	$NetBSD: Makefile.hp300,v 1.39 1996/05/11 16:12:02 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -150,7 +149,7 @@ links:
 
 SRCS=	${HP300}/hp300/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${HP300}/hp300/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
@@ -164,9 +163,7 @@ depend: .depend
 autoconf.o conf.o: Makefile
  
 # depend on network or filesystem configuration 
-uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
-if_tun.o if_loop.o if_ethersubr.o: Makefile
-in_proto.o: Makefile
+uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
 genassym.o machdep.o: Makefile

@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.23 1996/03/03 16:48:52 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.23.4.1 1996/06/06 15:39:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -267,9 +267,10 @@ dcaopen(dev, flag, mode, p)
 
 	dca = sc->sc_dca;
 
-	if (sc->sc_tty == NULL)
+	if (sc->sc_tty == NULL) {
 		tp = sc->sc_tty = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = sc->sc_tty;
 	tp->t_oproc = dcastart;
 	tp->t_param = dcaparam;
@@ -375,6 +376,7 @@ dcaclose(dev, flag, mode, p)
 	splx(s);
 	ttyclose(tp);
 #if 0
+	tty_detach(tp);
 	ttyfree(tp);
 	sc->sc_tty = NULL;
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.18 1995/05/12 12:49:54 mycroft Exp $
+#	$NetBSD: DUALITY,v 1.19 1996/05/20 18:16:42 mrg Exp $
 #
 # DUALITY (mycroft's hp370 test machine)
 #
@@ -45,12 +45,13 @@ options		FDESC
 options		FIFO
 options		KERNFS
 #options	NULLFS
-#options	PORTAL
+#options	PORTAL		# portal filesystem (still experimental)
 options		PROCFS
 #options	UMAPFS
 options		UNION
 
 # GNU uses setuid scripts
+options		SETUIDSCRIPTS
 
 options		GATEWAY
 options		INET

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 1995/12/21 05:01:57 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 1996/05/17 15:37:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -207,16 +207,17 @@ extern unsigned char ssir;
 #define	EC_NONE		0	/* no external cache */
 #define	EC_VIRT		1	/* external virtual address cache */
 
-/* values for cpuspeed (not really related to clock speed due to caches) */
-#define	MHZ_8		1
-#define	MHZ_16		2
-#define	MHZ_25		3
-#define	MHZ_33		4
-#define	MHZ_50		6
-
 #ifdef _KERNEL
-extern	int machineid, mmutype, ectype;
+extern	int machineid;		/* CPU model */
+extern	int mmutype;		/* MMU on this host */
+extern	int ectype;		/* External cache type */
+extern	int cpuspeed;		/* CPU speed, in MHz */
+
 extern	char *intiobase, *intiolimit;
+extern	void (*vectab[]) __P((void));
+
+void	doboot __P((void))
+	__attribute__((__noreturn__));
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()

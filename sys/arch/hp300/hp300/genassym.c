@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.18 1996/02/02 23:53:20 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.19 1996/05/17 15:20:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -118,6 +118,22 @@ main()
 	def("MMU_68030", MMU_68030);
 	def("MMU_HP", MMU_HP);
 	def("MMU_68851", MMU_68851);
+
+	/* values for machineid */
+	def("HP_320", HP_320);
+	def("HP_330", HP_330);
+	def("HP_350", HP_350);
+	def("HP_360", HP_360);
+	def("HP_370", HP_370);
+	def("HP_340", HP_340);
+	def("HP_375", HP_375);
+	def("HP_380", HP_380);
+	def("HP_433", HP_433);
+
+	/* values for ectype */
+	def("EC_PHYS", EC_PHYS);
+	def("EC_NONE", EC_NONE);
+	def("EC_VIRT", EC_VIRT);
 
 	/* general constants */
 	def("UPAGES", UPAGES);

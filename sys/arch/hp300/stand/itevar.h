@@ -218,6 +218,7 @@ void	rbox_putc __P((struct ite_data *, int, int, int, int));
 void	rbox_cursor __P((struct ite_data *, int));
 void	rbox_scroll __P((struct ite_data *, int, int, int, int));
 
+void	dvbox_init __P((struct ite_data *));
 void	dvbox_clear __P((struct ite_data *, int, int, int, int));
 void	dvbox_putc __P((struct ite_data *, int, int, int, int));
 void	dvbox_cursor __P((struct ite_data *, int));
@@ -228,4 +229,3 @@ void	hyper_clear __P((struct ite_data *, int, int, int, int));
 void	hyper_putc __P((struct ite_data *, int, int, int, int));
 void	hyper_cursor __P((struct ite_data *, int));
 void	hyper_scroll __P((struct ite_data *, int, int, int, int));
-

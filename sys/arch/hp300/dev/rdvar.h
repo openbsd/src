@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.4 1996/01/07 22:02:16 thorpej Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.4.4.1 1996/06/06 16:22:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,6 @@ struct	rd_softc {
 	short	sc_punit;
 	char	*sc_addr;
 	int	sc_resid;
-	u_int	sc_wpms;
 	struct	rd_describe sc_rddesc;
 	struct	devqueue sc_dq;
 	struct	rd_iocmd sc_ioc;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300.oldconf,v 1.25 1996/02/24 00:54:55 thorpej Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.26.4.1 1996/06/10 06:51:58 thorpej Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
@@ -24,6 +24,7 @@ arch/hp300/dev/grf_rb.c			optional grf needs-count # XXX? d-d?
 arch/hp300/dev/grf_tc.c			optional grf needs-count # XXX? d-d?
 arch/hp300/dev/dcm.c			optional dcm device-driver
 arch/hp300/dev/if_le.c			optional le device-driver
+dev/ic/am7990.c				optional le device-driver
 arch/hp300/dev/dma.c			standard
 arch/hp300/dev/hpib.c			optional hpib
 arch/hp300/dev/fhpib.c			optional hpib device-driver
@@ -34,7 +35,7 @@ arch/hp300/dev/ppi.c			optional ppi device-driver
 arch/hp300/dev/rd.c			optional rd needs-count # XXX? d-d?
 arch/hp300/dev/rd_compat.c		optional rd compat_nolabel
 arch/hp300/dev/scsi.c			optional scsi device-driver
-arch/hp300/dev/ac.c			optional ac
+arch/hp300/dev/ac.c			optional ac needs-count # XXX? d-d?
 arch/hp300/dev/sd.c			optional sd needs-count # XXX? d-d?
 arch/hp300/dev/sd_compat.c		optional sd compat_nolabel
 arch/hp300/dev/st.c			optional st needs-count # XXX? d-d?

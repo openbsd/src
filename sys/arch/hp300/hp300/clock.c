@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1994/12/29 03:48:38 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 1996/05/18 23:30:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,11 +52,12 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <hp300/dev/hilreg.h>
-#include <hp300/hp300/clockreg.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
+
+#include <hp300/dev/hilreg.h>
+#include <hp300/hp300/clockreg.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -87,6 +88,8 @@ u_char bbc_registers[13];
 u_char write_bbc_reg(), read_bbc_reg();
 struct hil_dev *bbcaddr = NULL;
 
+void	hp300_calibrate_delay __P((void));
+
 /*
  * Machine-dependent clock routines.
  *
@@ -101,9 +104,80 @@ struct hil_dev *bbcaddr = NULL;
 #define	COUNTS_PER_SEC	(1000000 / CLK_RESOLUTION)
 
 /*
+ * Calibrate the delay constant, based on Chuck Cranor's
+ * mvme68k delay calibration algorithm.
+ */
+void
+hp300_calibrate_delay()
+{
+	extern int delay_divisor;
+	volatile struct clkreg *clk;
+	volatile u_char csr;
+	int intvl;
+
+	clkstd[0] = IIOV(0x5F8000);		/* XXX yuck */
+	clk = (volatile struct clkreg *)clkstd[0];
+
+	/*
+	 * Calibrate delay() using the 4 usec counter.
+	 * We adjust delay_divisor until we get the result we want.
+	 * We assume we've been called at splhigh().
+	 */
+	for (delay_divisor = 140; delay_divisor > 1; delay_divisor--) {
+		/* Reset clock chip */
+		clk->clk_cr2 = CLK_CR1;
+		clk->clk_cr1 = CLK_RESET;
+
+		/*
+		 * Prime the timer.  We're looking for
+		 * 10,000 usec (10ms).  See interval comment
+		 * above.
+		 */
+		intvl = (10000 / CLK_RESOLUTION) - 1;
+		asm volatile(" movpw %0,%1@(5)" : : "d" (intvl), "a" (clk));
+
+		/* Enable the timer */
+		clk->clk_cr2 = CLK_CR1;
+		clk->clk_cr1 = CLK_IENAB;
+		
+		delay(10000);
+
+		/* Timer1 interrupt flag high? */
+		csr = clk->clk_sr;
+		if (csr & CLK_INT1) {
+			/*
+			 * Got it.  Clear interrupt and get outta here.
+			 */
+			asm volatile(" movpw %0@(5),%1" : :
+			    "a" (clk), "d" (intvl));
+			break;
+		}
+
+		/*
+		 * Nope.  Poll for completion of the interval,
+		 * clear interrupt, and try again.
+		 */
+		do {
+			csr = clk->clk_sr;
+		} while ((csr & CLK_INT1) == 0);
+
+		asm volatile(" movpw %0@(5),%1" : : "a" (clk), "d" (intvl));
+	}
+
+	/*
+	 * Sanity check the delay_divisor value.  If we totally lost,
+	 * assume a 50MHz CPU;
+	 */
+	if (delay_divisor == 0)
+		delay_divisor = 2048 / 50;
+
+	/* Calculate CPU speed. */
+	cpuspeed = 2048 / delay_divisor;
+}
+
+/*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only if
  * no alternative timer is available.
- *
  */
 cpu_initclocks()
 {

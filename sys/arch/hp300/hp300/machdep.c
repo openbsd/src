@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 1996/03/13 23:42:45 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 1996/05/18 23:30:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,10 +134,20 @@ int	convasize;		/* size of mapped console device */
 int	conforced;		/* console has been forced */
 
 /*
+ * Note that the value of delay_divisor is roughly
+ * 2048 / cpuspeed (where cpuspeed is in MHz) on 68020
+ * and 68030 systems.  See clock.c for the delay
+ * calibration algorithm.
+ */
+int	cpuspeed;		/* relative cpu speed; XXX skewed on 68040 */
+int	delay_divisor;		/* delay constant */
+
+/*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
+void
 consinit()
 {
 	extern struct map extiomap[];
@@ -149,38 +159,6 @@ consinit()
 	convasize = 0;
 	conforced = 0;
 	conscode = 1024;		/* invalid */
-
-	/*
-	 * Set cpuspeed immediately since hp300_cninit() called routines
-	 * might use delay.  Note that we only set it if a custom value
-	 * has not already been specified.
-	 */
-	if (cpuspeed == 0) {
-		switch (machineid) {
-		case HP_320:
-		case HP_330:
-		case HP_340:
-			cpuspeed = MHZ_16;
-			break;
-		case HP_350:
-		case HP_360:
-		case HP_380:
-			cpuspeed = MHZ_25;
-			break;
-		case HP_370:
-		case HP_433:
-			cpuspeed = MHZ_33;
-			break;
-		case HP_375:
-			cpuspeed = MHZ_50;
-			break;
-		default:	/* assume the fastest */
-			cpuspeed = MHZ_50;
-			break;
-		}
-		if (mmutype == MMU_68040)
-			cpuspeed *= 2;	/* XXX */
-	}
 
 	/*
 	 * Initialize the DIO resource map.
@@ -593,6 +571,7 @@ identifycpu()
 	}
 	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
+	printf("delay constant for this cpu: %d\n", delay_divisor);
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
@@ -1141,10 +1120,6 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
-		/* make panic at reboot go away */
-		if (curproc == NULL)
-			curproc = &proc0;
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -1661,12 +1636,12 @@ cpu_exec_aout_makecmds(p, epp)
 	switch (midmag) {
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
-		error = cpu_exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(p, epp);
 		break;
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
-		error = cpu_exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(p, epp);
 		break;
 #endif
 	default:
@@ -1678,59 +1653,3 @@ cpu_exec_aout_makecmds(p, epp)
 	return ENOEXEC;
 #endif
 }
-
-#if defined(COMPAT_NOMID) || defined(COMPAT_44)
-/*
- * cpu_exec_aout_prep_oldzmagic():
- *	Prepare the vmcmds to build a vmspace for an old
- *	(i.e. USRTEXT == 0) binary.
- *
- * Cloned from exec_aout_prep_zmagic() in kern/exec_aout.c; a more verbose
- * description of operation is there.
- */
-int
-cpu_exec_aout_prep_oldzmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-
-	epp->ep_taddr = 0;
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = epp->ep_taddr + execp->a_text;
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-	/*
-	 * check if vnode is in open for writing, because we want to			 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
-#endif
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, NBPG, /* XXX - should NBPG be CLBYTES? */
-	    VM_PROT_READ|VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp,
-	    execp->a_text + NBPG, /* XXX - should NBPG be CLBYTES? */
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return exec_aout_setup_stack(p, epp);
-}
-#endif /* COMPAT_NOMID */

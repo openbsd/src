@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1996/04/07 18:21:08 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1996/05/18 01:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -59,6 +59,7 @@
 #include <sys/conf.h>
 #include <sys/dmap.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
 
 #include <dev/cons.h>
 
@@ -79,7 +80,6 @@
  * the machine.
  */
 int	cold;		    /* if 1, still working on cold-start */
-int	cpuspeed = 0;	    /* relative cpu speed -- can be patched */	
 struct	hp_hw sc_table[MAXCTLRS];
 
 /* XXX must be allocated statically because of early console init */
@@ -90,6 +90,11 @@ extern	char *extiobase;
 
 #ifdef DEBUG
 int	acdebug = 0;
+#endif
+
+#ifndef NEWCONFIG	/* XXX */
+struct	devicelist alldevs;
+struct	evcntlist allevents;
 #endif
 
 /*
@@ -1195,6 +1200,8 @@ setroot()
 void
 config_init()
 {
-	/* Stub, so kernel will link. */
+
+	TAILQ_INIT(&alldevs);
+	TAILQ_INIT(&allevents);
 }
 #endif

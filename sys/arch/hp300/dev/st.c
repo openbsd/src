@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.14 1996/02/14 02:45:12 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.14.4.1 1996/06/10 06:45:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -353,7 +353,8 @@ st_inqbuf.inqbuf.qual, st_inqbuf.inqbuf.version);
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("Python 25501", product, 12) == 0) {
+	} else if (bcmp("Python 25501", product, 12) == 0 ||
+		   bcmp("Python 28849", product, 12) == 0) {
 		sc->sc_tapeid = MT_ISPYTHON;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
 		sc->sc_datalen[CMD_INQUIRY] = 36;

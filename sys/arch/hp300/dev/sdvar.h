@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.4 1996/01/07 22:02:21 thorpej Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.4.4.1 1996/06/06 16:22:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -52,7 +52,6 @@ struct	sd_softc {
 	int	sc_blksize;	/* device block size in bytes */
 	u_int	sc_heads;	/* number of heads (tracks) */
 	u_int	sc_cyls;	/* number of cylinders */
-	u_int	sc_wpms;	/* average xfer rate in 16 bit wds/sec. */
 };
 
 /* sc_flags values */

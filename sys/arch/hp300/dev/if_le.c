@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.29 1996/04/22 02:30:45 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.31 1996/05/09 21:11:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -65,22 +65,19 @@
 #endif
 
 #include <hp300/dev/device.h>
+
+#include <dev/ic/am7990reg.h>
+#include <dev/ic/am7990var.h>
+
 #include <hp300/dev/if_lereg.h>
 #include <hp300/dev/if_levar.h>
-#include <dev/ic/am7990reg.h>
-#define	LE_NEED_BUF_CONTIG
-#include <dev/ic/am7990var.h>
 
 #include "le.h"
 struct	le_softc le_softc[NLE];
 
-#define	LE_SOFTC(unit)	&le_softc[unit]
-#define	LE_DELAY(x)	DELAY(x)
-
 int	lematch __P((struct hp_device *));
 void	leattach __P((struct hp_device *));
 int	leintr __P((void *));
-static	int hp300_leintr __P((void *));	/* machine-dependent wrapper */
 
 struct	driver ledriver = {
 	lematch, leattach, "le",
@@ -89,19 +86,16 @@ struct	driver ledriver = {
 /* offsets for:	   ID,   REGS,    MEM,  NVRAM */
 int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
-integrate void
-lehwinit(sc)
-	struct le_softc *sc;
-{
-}
+hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));  
 
-integrate void
+hide void
 lewrcsr(sc, port, val)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	register struct lereg0 *ler0 = sc->sc_r0;
-	register struct lereg1 *ler1 = sc->sc_r1;
+	register struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
+	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	do {
 		ler1->ler1_rap = port;
@@ -111,13 +105,13 @@ lewrcsr(sc, port, val)
 	} while ((ler0->ler0_status & LE_ACK) == 0);
 }
 
-integrate u_int16_t
+hide u_int16_t
 lerdcsr(sc, port)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	register struct lereg0 *ler0 = sc->sc_r0;
-	register struct lereg1 *ler1 = sc->sc_r1;
+	register struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
+	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	do {
@@ -134,14 +128,14 @@ lematch(hd)
 	struct hp_device *hd;
 {
 	register struct lereg0 *ler0;
-	struct le_softc *sc = LE_SOFTC(hd->hp_unit);
+	struct le_softc *lesc = &le_softc[hd->hp_unit];
 
 	ler0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
 	if (ler0->ler0_id != LEID)
 		return (0);
 
 	hd->hp_ipl = LE_IPL(ler0->ler0_status);
-	sc->sc_hd = hd;
+	lesc->sc_hd = hd;
 
 	return (1);
 }
@@ -156,19 +150,20 @@ leattach(hd)
 	struct hp_device *hd;
 {
 	register struct lereg0 *ler0;
-	struct le_softc *sc = LE_SOFTC(hd->hp_unit);
+	struct le_softc *lesc = &le_softc[hd->hp_unit];
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	char *cp;
 	int i;
 
-	ler0 = sc->sc_r0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
+	ler0 = lesc->sc_r0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
 	ler0->ler0_id = 0xFF;
 	DELAY(100);
 
 	/* XXXX kluge for now */
 	sc->sc_dev.dv_unit = hd->hp_unit;
-	sprintf(sc->sc_dev.dv_xname, "%s%d", ledriver.d_name, hd->hp_unit);
+	sprintf(sc->sc_dev.dv_xname, "%s%d", le_cd.cd_name, hd->hp_unit);
 
-	sc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)hd->hp_addr);
+	lesc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)hd->hp_addr);
 	sc->sc_mem = (void *)(lestd[2] + (int)hd->hp_addr);
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = 0;
@@ -191,19 +186,22 @@ leattach(hd)
 	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
 	sc->sc_zerobuf = am7990_zerobuf_contig;
 
-	sc->sc_arpcom.ac_if.if_name = ledriver.d_name;
-	leconfig(sc);
+	sc->sc_rdcsr = lerdcsr;
+	sc->sc_wrcsr = lewrcsr;
+	sc->sc_hwinit = NULL;
+
+	am7990_config(sc);
 
 	/* Establish the interrupt handler. */
-	isrlink(hp300_leintr, sc, hd->hp_ipl, ISRPRI_NET);
+	isrlink(leintr, sc, hd->hp_ipl, ISRPRI_NET);
 	ler0->ler0_status = LE_IE;
 }
 
-static int
-hp300_leintr(arg)
+int
+leintr(arg)
 	void *arg;
 {
-	struct le_softc *sc = arg;
+	struct am7990_softc *sc = arg;
 	u_int16_t isr;
 
 #ifdef USELEDS
@@ -221,7 +219,5 @@ hp300_leintr(arg)
 			ledcontrol(0, 0, LED_LANXMT);
 #endif /* USELEDS */
 
-	return (leintr(sc));
+	return (am7990_intr(sc));
 }
-		
-#include <dev/ic/am7990.c>

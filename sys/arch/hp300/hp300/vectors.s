@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.7 1996/02/14 02:57:07 thorpej Exp $
+|	$NetBSD: vectors.s,v 1.9 1996/05/18 00:52:53 thorpej Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -45,7 +45,8 @@
 	.globl	_fpfline, _fpunsupp
 	.globl	_trap12
 
-Lvectab:
+	.globl	_vectab
+_vectab:
 	.long	0x4ef80400	/* 0: jmp 0x400:w (unused reset SSP) */
 	.long	0		/* 1: NOT USED (reset PC) */
 	.long	_buserr		/* 2: bus error */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.20 1996/02/14 02:44:54 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.20.4.1 1996/06/06 16:22:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,6 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/stat.h>
-#include <sys/dkstat.h>		/* XXX */
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/ioctl.h>
@@ -333,9 +332,6 @@ rdident(rs, hd, verbose)
 			name[i] = (n & 0xf) + '0';
 			n >>= 4;
 		}
-		/* use drive characteristics to calculate xfer rate */
-		rs->sc_wpms = 1000000 * (desc->d_sectsize/2) /
-		    desc->d_blocktime;
 	}
 #ifdef DEBUG
 	if (rddebug & RDB_IDENT) {
@@ -513,15 +509,6 @@ rdopen(dev, flags, mode, p)
 		wakeup((caddr_t)rs);
 		if (error)
 			return(error);
-	}
-	if (rs->sc_hd->hp_dk >= 0) {
-		/* guess at xfer rate based on 3600 rpm (60 rps) */
-		if (rs->sc_wpms == 0)
-			rs->sc_wpms = 60 * rs->sc_dkdev.dk_label->d_nsectors
-				* DEV_BSIZE / 2;
-
-		/* XXX Support old-style instrumentation for now. */
-		dk_wpms[rs->sc_hd->hp_dk] = rs->sc_wpms;
 	}
 
 	mask = 1 << rdpart(dev);
@@ -711,12 +698,6 @@ again:
 	if (hpibsend(hp->hp_ctlr, hp->hp_slave, C_CMD, &rs->sc_ioc.c_unit,
 		     sizeof(rs->sc_ioc)-2) == sizeof(rs->sc_ioc)-2) {
 
-		/* XXX Support old-style instrumentation for now. */
-		if (hp->hp_dk >= 0) {
-			 dk_busy |= 1 << hp->hp_dk;
-			 dk_seek[hp->hp_dk]++;
-		}
-
 		/* Instrumentation. */
 		disk_busy(&rs->sc_dkdev);
 		rs->sc_dkdev.dk_seek++;
@@ -769,13 +750,6 @@ rdgo(unit)
 
 	rw = bp->b_flags & B_READ;
 
-	/* XXX Support old-style instrumentation for now. */
-	if (hp->hp_dk >= 0) {
-		dk_busy |= 1 << hp->hp_dk;
-		dk_xfer[hp->hp_dk]++;
-		dk_wds[hp->hp_dk] += rs->sc_resid >> 6;
-	}
-
 	/* Instrumentation. */
 	disk_busy(&rs->sc_dkdev);
 
@@ -806,10 +780,6 @@ rdintr(arg)
 		return;
 	}
 #endif
-	/* XXX Support old-style instrumentation for now. */
-	if (hp->hp_dk >= 0)
-		dk_busy &= ~(1 << hp->hp_dk);
-
 	disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid));
 
 	if (rs->sc_flags & RDF_SEEK) {
@@ -826,10 +796,6 @@ rdintr(arg)
 #ifdef DEBUG
 			rdstats[unit].rdpollwaits++;
 #endif
-
-			/* XXX Support old-style instrumentation for now. */
-			if (hp->hp_dk >= 0)
-				dk_busy |= 1 << hp->hp_dk;
 
 			/* Instrumentation. */
 			disk_busy(&rs->sc_dkdev);
