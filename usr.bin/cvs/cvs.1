@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.48 2005/02/09 16:56:39 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.49 2005/02/13 11:02:05 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -603,8 +603,156 @@ Export from a particular symbolic or numerical revision.
 Aliases:
 .Ic ex ,
 .Ic exp .
-.It Ic history
-Show repository access history.
+.It Xo Ic history
+.Op Fl aceloTw
+.Op Fl b Ar str
+.Op Fl D Ar date
+.Op Fl f Ar file
+.Op Fl m Ar module
+.Op Fl n Ar module
+.Op Fl p Ar path
+.Op Fl r Ar rev
+.Op Fl t Ar tag
+.Op Fl u Ar user
+.Op Fl x Ar ACEFGMORTUW
+.Op Fl z Ar tz
+.Op Ar file ...
+.Xc
+.Pp
+The
+.Ic history
+command is used to display the history of actions done in the
+base repository.
+This functionality is only available if the
+.Ar CVSROOT/history
+file has been created.
+Only the
+.Ic checkout ,
+.Ic commit ,
+.Ic export ,
+.Ic release ,
+.Ic rtag ,
+and
+.Ic update
+commands are logged into this file.
+.Pp
+The
+.Ic history
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl a
+Display records for all users.
+By default, only records from the user issuing the
+.Ic history
+command are displayed.
+.It Fl b Ar str
+Display everything back to a record containing the string
+.Ar str
+in either the module name, the file name, or the repository path.
+.It Fl c
+Display the archived files
+.Pf ( Ic commit
+command).
+.It Fl D Ar date
+Report no later than
+.Ar date .
+.It Fl e
+Select all records (same as
+.Fl x
+with all types).
+.It Fl f Ar file
+Display records related to
+.Ar file .
+.It Fl l
+Show last checkouts of modules with the
+.Ic checkout
+command.
+.It Fl m Ar module
+Look for the
+.Ar module
+(can be used several times).
+.It Fl n Ar module
+Search into the
+.Ar module .
+.It Fl o
+Report on modules checked out by users.
+.It Fl p Ar path
+Display records from the base repository being in the directory
+specified by the
+.Ar path .
+.It Fl r Ar rev
+Report for a particular revision (checks in the RCS file).
+.It Fl t Ar tag
+Report since tag record placed in the
+.Ar CVSROOT/history
+file by any user.
+.It Fl T
+Report on all tags.
+.It Fl u Ar user
+Report for a specified
+.Ar user .
+Can be used several times to match many users.
+.It Fl w
+Check that records match the current working directory.
+.It Fl x Ar ACEFGMORTUW
+Extract by a specific record type specified by a single letter.
+They can be used in combination.
+The available types are as follows:
+.Bl -tag -width "XXX"
+.It A
+A file has been added with the
+.Ic add
+command.
+.It C
+A merge has been done, but unresolved conflicts still remain.
+.It E
+Export.
+.It F
+Release.
+.It G
+A merge has been done without conflict.
+.It M
+A file has been modified (using the
+.Ic commit
+command).
+.It O
+Checkout.
+.It R
+A file has been removed with the
+.Ic remove
+command.
+.It T
+Rtag.
+.It U
+Normal update.
+.It W
+The file has been deleted from the directory because it does not
+exist anymore in the base repository.
+.El
+.It Fl z Ar tz
+Display records with time synchronized with the
+.Ar timezone
+passed as argument.
+.El
+.Pp
+All records have the following five first columns:
+.Pp
+.Bl -dash -compact
+.It
+The record type (the
+.Fl x
+option).
+.It
+The date of the action.
+.It
+The time of the action.
+.It
+The time zone.
+.It
+The user who made the action.
+.El
+.Pp
+The other columns may vary depending on the command issued.
 .Pp
 Aliases:
 .Ic hi ,
