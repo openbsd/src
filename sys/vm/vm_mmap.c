@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.11 1998/02/18 23:36:12 deraadt Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.12 1998/02/19 22:00:27 niklas Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -213,7 +213,13 @@ sys_mmap(p, v, retval)
 		if (fp->f_type != DTYPE_VNODE)
 			return (EINVAL);
 		vp = (struct vnode *)fp->f_data;
-		if (vp->v_type != VREG && vp->v_type != VCHR)
+
+		/*
+		 * Only files and cdevs are mappable, and cdevs does not
+		 * provide private mappings of any kind.
+		 */
+		if (vp->v_type != VREG &&
+		    (vp->v_type != VCHR || (flags & (MAP_PRIVATE|MAP_COPY))))
 			return (EINVAL);
 		/*
 		 * XXX hack to handle use of /dev/zero to map anon
@@ -238,17 +244,16 @@ sys_mmap(p, v, retval)
 		else if (prot & PROT_READ)
 			return (EACCES);
 
-		if ((flags & MAP_SHARED) != 0 ||
-		    ((flags & (MAP_PRIVATE|MAP_SHARED|MAP_COPY)) == MAP_FILE &&
-		    vp->v_type == VCHR)) {
-			if (fp->f_flag & FWRITE)
-				maxprot |= VM_PROT_WRITE;
-		} else if (flags & MAP_SHARED) {
-			if (fp->f_flag & FWRITE)
-				maxprot |= VM_PROT_WRITE;
-			else if (prot & PROT_WRITE)
-				return (EACCES);
-		} else
+		/*
+		 * If we are sharing potential changes (either via MAP_SHARED
+		 * or via the implicit sharing of character device mappings),
+		 * and we are trying to get write permission although we
+		 * opened it without asking for it, bail out.
+		 */
+		if (((flags & MAP_SHARED) != 0 || vp->v_type == VCHR) &&
+		    (fp->f_flag & FWRITE) == 0 && (prot & PROT_WRITE) != 0)
+			return (EACCES);
+		else
 			maxprot |= VM_PROT_WRITE;
 		handle = (caddr_t)vp;
 	} else {
