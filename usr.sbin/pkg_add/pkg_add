@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.123 2004/11/18 21:48:02 espie Exp $
+# $OpenBSD: pkg_add,v 1.124 2004/11/20 23:38:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -494,18 +494,17 @@ my $syst_avail;
 sub add_system_libs
 {
 	my ($destdir, $avail) = @_;
-	for my $dir ("/usr/lib", "/usr/X11R6/lib") {
-		local *DIR;
-		opendir(DIR, $destdir.$dir);
-		while (my $d = readdir(DIR)) {
+	for my $dirname ("/usr/lib", "/usr/X11R6/lib") {
+		opendir(my $dir, $destdir.$dirname);
+		while (my $d = readdir($dir)) {
 			next unless $d =~ m/^(.*\.so\.\d+)\.(\d+)$/;
 			my ($stem, $minor) = ($1, $2);
-			$stem = "$dir/$stem";
+			$stem = "$dirname/$stem";
 			if (!defined $avail->{"$stem"} || $avail->{"$stem"}->[0] < $minor) {
 				$avail->{"$stem"} = [$minor, 'system'];
 			}
 		}
-		closedir(DIR);
+		closedir($dir);
 	}
 }
 
