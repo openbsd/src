@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cond.c,v 1.11 2001/12/08 14:51:36 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cond.c,v 1.12 2001/12/20 07:33:14 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -48,7 +48,7 @@ static inline void	cond_queue_enq(pthread_cond_t, pthread_t);
 
 /* Reinitialize a condition variable to defaults. */
 int
-_cond_reinit(pthread_cond_t * cond)
+_cond_reinit(pthread_cond_t *cond)
 {
 	int ret = 0;
 
@@ -64,6 +64,7 @@ _cond_reinit(pthread_cond_t * cond)
 		(*cond)->c_flags = COND_FLAGS_INITED;
 		(*cond)->c_type = COND_TYPE_FAST;
 		(*cond)->c_mutex = NULL;
+		(*cond)->c_seqno = 0;
 		_SPINLOCK_INIT(&(*cond)->lock);
 	}
 	return (ret);
@@ -119,6 +120,7 @@ pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * cond_attr)
 				pcond->c_flags |= COND_FLAGS_INITED;
 				pcond->c_type = type;
 				pcond->c_mutex = NULL;
+				pcond->c_seqno = 0;
 				_SPINLOCK_INIT(&pcond->lock);
 				*cond = pcond;
 			}
@@ -160,20 +162,37 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 {
 	struct pthread	*curthread = _get_curthread();
 	int	rval = 0;
+	int	done = 0;
 	int	interrupted = 0;
+	int	seqno;
 
-	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
-	if (cond == NULL)
-		rval = EINVAL;
+	if (cond == NULL) {
+		_thread_leave_cancellation_point();
+		return (EINVAL);
+	}
 
 	/*
 	 * If the condition variable is statically initialized,
 	 * perform the dynamic initialization:
 	 */
-	else if (*cond != NULL ||
-	    (rval = pthread_cond_init(cond,NULL)) == 0) {
+	if (*cond == NULL &&
+	    (rval = pthread_cond_init(cond, NULL)) != 0) {
+		_thread_leave_cancellation_point();
+		return (rval);
+	}
+
+	/*
+	 * Enter a loop waiting for a condition signal or broadcast
+	 * to wake up this thread.  A loop is needed in case the waiting
+	 * thread is interrupted by a signal to execute a signal handler.
+	 * It is not (currently) possible to remain in the waiting queue
+	 * while running a handler.  Instead, the thread is interrupted
+	 * and backed out of the waiting queue prior to executing the
+	 * signal handler.
+	 */
+	do {
 		/* Lock the condition variable structure: */
 		_SPINLOCK(&(*cond)->lock);
 
@@ -198,8 +217,9 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 				/* Return invalid argument error: */
 				rval = EINVAL;
 			} else {
-				/* Reset the timeout flag: */
+				/* Reset the timeout and interrupted flags: */
 				curthread->timeout = 0;
+				curthread->interrupted = 0;
 
 				/*
 				 * Queue the running thread for the condition
@@ -207,8 +227,9 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 				 */
 				cond_queue_enq(*cond, curthread);
 
-				/* Remember the mutex that is being used: */
+				/* Remember the mutex and sequence number: */
 				(*cond)->c_mutex = *mutex;
+				seqno = (*cond)->c_seqno;
 
 				/* Wait forever: */
 				curthread->wakeup_time.tv_sec = -1;
@@ -229,8 +250,7 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 
 					/* Unlock the condition variable structure: */
 					_SPINUNLOCK(&(*cond)->lock);
-				}
-				else {
+				} else {
 					/*
 					 * Schedule the next thread and unlock
 					 * the condition variable structure:
@@ -238,8 +258,44 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 					_thread_kern_sched_state_unlock(PS_COND_WAIT,
 				    	    &(*cond)->lock, __FILE__, __LINE__);
 
-					/* Lock the mutex: */
-					rval = _mutex_cv_lock(mutex);
+					done = (seqno != (*cond)->c_seqno);
+
+					interrupted = curthread->interrupted;
+
+					/*
+					 * Check if the wait was interrupted
+					 * (canceled) or needs to be resumed
+					 * after handling a signal.
+					 */
+					if (interrupted != 0) {
+						/*
+						 * Lock the mutex and ignore any
+						 * errors.  Note that even
+						 * though this thread may have
+						 * been canceled, POSIX requires
+						 * that the mutex be reaquired
+						 * prior to cancellation.
+						 */
+						(void)_mutex_cv_lock(mutex);
+					} else {
+						/*
+						 * Lock the condition variable
+						 * while removing the thread.
+						 */
+						_SPINLOCK(&(*cond)->lock);
+
+						cond_queue_remove(*cond,
+						    curthread);
+
+						/* Check for no more waiters: */
+						if (TAILQ_FIRST(&(*cond)->c_queue) == NULL)
+							(*cond)->c_mutex = NULL;
+
+						_SPINUNLOCK(&(*cond)->lock);
+
+						/* Lock the mutex: */
+						rval = _mutex_cv_lock(mutex);
+					}
 				}
 			}
 			break;
@@ -256,9 +312,8 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 
 		if ((interrupted != 0) && (curthread->continuation != NULL))
 			curthread->continuation((void *) curthread);
-	}
+	} while ((done == 0) && (rval == 0));
 
-	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */
@@ -271,24 +326,37 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 {
 	struct pthread	*curthread = _get_curthread();
 	int	rval = 0;
+	int	done = 0;
 	int	interrupted = 0;
+	int	seqno;
 
-	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
-	if (cond == NULL || abstime == NULL)
-		rval = EINVAL;
-
-	else if (abstime->tv_sec < 0 || 
-		abstime->tv_nsec < 0 || abstime->tv_nsec >= 1000000000)
-		rval = EINVAL;
+	if (cond == NULL ||
+	    abstime == NULL || abstime->tv_sec < 0 || abstime->tv_nsec < 0 ||
+	    abstime->tv_nsec >= 1000000000) {
+		_thread_leave_cancellation_point();
+		return (EINVAL);
+	}
+	/*
+	 * If the condition variable is statically initialized, perform dynamic
+	 * initialization.
+	 */
+	if (*cond == NULL && (rval = pthread_cond_init(cond, NULL)) != 0) {
+		_thread_leave_cancellation_point();
+		return (rval);
+	}
 
 	/*
-	 * If the condition variable is statically initialized,
-	 * perform the dynamic initialization:
+	 * Enter a loop waiting for a condition signal or broadcast
+	 * to wake up this thread.  A loop is needed in case the waiting
+	 * thread is interrupted by a signal to execute a signal handler.
+	 * It is not (currently) possible to remain in the waiting queue
+	 * while running a handler.  Instead, the thread is interrupted
+	 * and backed out of the waiting queue prior to executing the
+	 * signal handler.
 	 */
-	else if (*cond != NULL ||
-	    (rval = pthread_cond_init(cond,NULL)) == 0) {
+	do {
 		/* Lock the condition variable structure: */
 		_SPINLOCK(&(*cond)->lock);
 
@@ -319,8 +387,9 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 				curthread->wakeup_time.tv_nsec =
 				    abstime->tv_nsec;
 
-				/* Reset the timeout flag: */
+				/* Reset the timeout and interrupted flags: */
 				curthread->timeout = 0;
+				curthread->interrupted = 0;
 
 				/*
 				 * Queue the running thread for the condition
@@ -328,8 +397,9 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 				 */
 				cond_queue_enq(*cond, curthread);
 
-				/* Remember the mutex that is being used: */
+				/* Remember the mutex and sequence number: */
 				(*cond)->c_mutex = *mutex;
+				seqno = (*cond)->c_seqno;
 
 				/* Unlock the mutex: */
 				if ((rval = _mutex_cv_unlock(mutex)) != 0) {
@@ -354,20 +424,32 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 					_thread_kern_sched_state_unlock(PS_COND_WAIT,
 				  	     &(*cond)->lock, __FILE__, __LINE__);
 
-					/* Check if the wait timedout: */
-					if (curthread->timeout == 0) {
-						/* Lock the mutex: */
-						rval = _mutex_cv_lock(mutex);
-					}
-					else {
-						/* Lock the condition variable structure: */
+					done = (seqno != (*cond)->c_seqno);
+
+					interrupted = curthread->interrupted;
+
+					/*
+					 * Check if the wait was interrupted
+					 * (canceled) or needs to be resumed
+					 * after handling a signal.
+					 */
+					if (interrupted != 0) {
+						/*
+						 * Lock the mutex and ignore any
+						 * errors.  Note that even
+						 * though this thread may have
+						 * been canceled, POSIX requires
+						 * that the mutex be reaquired
+						 * prior to cancellation.
+						 */
+						(void)_mutex_cv_lock(mutex);
+					} else {
+						/*
+						 * Lock the condition variable
+						 * while removing the thread.
+						 */
 						_SPINLOCK(&(*cond)->lock);
 
-						/*
-						 * The wait timed out; remove
-						 * the thread from the condition
-					 	 * variable queue:
-						 */
 						cond_queue_remove(*cond,
 						    curthread);
 
@@ -375,17 +457,20 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 						if (TAILQ_FIRST(&(*cond)->c_queue) == NULL)
 							(*cond)->c_mutex = NULL;
 
-						/* Unock the condition variable structure: */
 						_SPINUNLOCK(&(*cond)->lock);
 
-						/* Return a timeout error: */
-						rval = ETIMEDOUT;
+						/* Lock the mutex: */
+						rval = _mutex_cv_lock(mutex);
 
 						/*
-						 * Lock the mutex and ignore
-						 * any errors:
+						 * Return ETIMEDOUT if the wait
+						 * timed out and there wasn't an
+						 * error locking the mutex:
 						 */
-						(void)_mutex_cv_lock(mutex);
+						if ((curthread->timeout != 0)
+						    && rval == 0)
+							rval = ETIMEDOUT;
+
 					}
 				}
 			}
@@ -403,9 +488,8 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 
 		if ((interrupted != 0) && (curthread->continuation != NULL))
 			curthread->continuation((void *) curthread);
-	}
+	} while ((done == 0) && (rval == 0));
 
-	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */
@@ -418,9 +502,13 @@ pthread_cond_signal(pthread_cond_t * cond)
 	int             rval = 0;
 	pthread_t       pthread;
 
-	if (cond == NULL || *cond == NULL)
+	if (cond == NULL)
 		rval = EINVAL;
-	else {
+	/*
+	 * If the condition variable is statically initialized, perform dynamic
+	 * initialization.
+	 */
+	else if (*cond != NULL || (rval = pthread_cond_init(cond, NULL)) == 0) {
 		/*
 		 * Defer signals to protect the scheduling queues
 		 * from access by the signal handler:
@@ -434,18 +522,21 @@ pthread_cond_signal(pthread_cond_t * cond)
 		switch ((*cond)->c_type) {
 		/* Fast condition variable: */
 		case COND_TYPE_FAST:
-			/*
-			 * Enter a loop to dequeue threads from the condition
-			 * queue until we find one that hasn't previously
-			 * timed out.
-			 */
-			while (((pthread = cond_queue_deq(*cond)) != NULL) &&
-			    (pthread->timeout != 0)) {
-			}
+			/* Increment the sequence number: */
+			(*cond)->c_seqno++;
 
-			if (pthread != NULL)
-				/* Allow the thread to run: */
-				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
+			if ((pthread = cond_queue_deq(*cond)) != NULL) {
+				/*
+				 * Unless the thread is currently suspended,
+				 * allow it to run.  If the thread is suspended,
+				 * make a note that the thread isn't in a wait
+				 * queue any more.
+			 	 */
+				if (pthread->state != PS_SUSPENDED)
+					PTHREAD_NEW_STATE(pthread,PS_RUNNING);
+				else
+					pthread->suspended = SUSP_NOWAIT;
+			}
 
 			/* Check for no more waiters: */
 			if (TAILQ_FIRST(&(*cond)->c_queue) == NULL)
@@ -479,9 +570,13 @@ pthread_cond_broadcast(pthread_cond_t * cond)
 	int             rval = 0;
 	pthread_t       pthread;
 
-	if (cond == NULL || *cond == NULL)
+	if (cond == NULL)
 		rval = EINVAL;
-	else {
+	/*
+	 * If the condition variable is statically initialized, perform dynamic
+	 * initialization.
+	 */
+	else if (*cond != NULL || (rval = pthread_cond_init(cond, NULL)) == 0) {
 		/*
 		 * Defer signals to protect the scheduling queues
 		 * from access by the signal handler:
@@ -495,17 +590,24 @@ pthread_cond_broadcast(pthread_cond_t * cond)
 		switch ((*cond)->c_type) {
 		/* Fast condition variable: */
 		case COND_TYPE_FAST:
+			/* Increment the sequence number: */
+			(*cond)->c_seqno++;
+
 			/*
 			 * Enter a loop to bring all threads off the
 			 * condition queue:
 			 */
 			while ((pthread = cond_queue_deq(*cond)) != NULL) {
 				/*
-				 * The thread is already running if the
-				 * timeout flag is set.
+				 * Unless the thread is currently suspended,
+				 * allow it to run.  If the thread is suspended,
+				 * make a note that the thread isn't in a wait
+				 * queue any more.
 				 */
-				if (pthread->timeout == 0)
+				if (pthread->state != PS_SUSPENDED)
 					PTHREAD_NEW_STATE(pthread,PS_RUNNING);
+				else
+					pthread->suspended = SUSP_NOWAIT;
 			}
 
 			/* There are no more waiting threads: */
@@ -542,9 +644,17 @@ cond_queue_deq(pthread_cond_t cond)
 {
 	pthread_t pthread;
 
-	if ((pthread = TAILQ_FIRST(&cond->c_queue)) != NULL) {
-		TAILQ_REMOVE(&cond->c_queue, pthread, qe);
+	while ((pthread = TAILQ_FIRST(&cond->c_queue)) != NULL) {
+		TAILQ_REMOVE(&cond->c_queue, pthread, sqe);
 		pthread->flags &= ~PTHREAD_FLAGS_IN_CONDQ;
+		if ((pthread->timeout == 0) && (pthread->interrupted == 0))
+			/*
+			 * Only exit the loop when we find a thread
+			 * that hasn't timed out or been canceled;
+			 * those threads are already running and don't
+			 * need their run state changed.
+			 */
+			break;
 	}
 
 	return(pthread);
@@ -564,7 +674,7 @@ cond_queue_remove(pthread_cond_t cond, pthread_t pthread)
 	 * it isn't in the queue.
 	 */
 	if (pthread->flags & PTHREAD_FLAGS_IN_CONDQ) {
-		TAILQ_REMOVE(&cond->c_queue, pthread, qe);
+		TAILQ_REMOVE(&cond->c_queue, pthread, sqe);
 		pthread->flags &= ~PTHREAD_FLAGS_IN_CONDQ;
 	}
 }
@@ -578,19 +688,22 @@ cond_queue_enq(pthread_cond_t cond, pthread_t pthread)
 {
 	pthread_t tid = TAILQ_LAST(&cond->c_queue, cond_head);
 
+	PTHREAD_ASSERT_NOT_IN_SYNCQ(pthread);
+
 	/*
 	 * For the common case of all threads having equal priority,
 	 * we perform a quick check against the priority of the thread
 	 * at the tail of the queue.
 	 */
 	if ((tid == NULL) || (pthread->active_priority <= tid->active_priority))
-		TAILQ_INSERT_TAIL(&cond->c_queue, pthread, qe);
+		TAILQ_INSERT_TAIL(&cond->c_queue, pthread, sqe);
 	else {
 		tid = TAILQ_FIRST(&cond->c_queue);
 		while (pthread->active_priority <= tid->active_priority)
-			tid = TAILQ_NEXT(tid, qe);
-		TAILQ_INSERT_BEFORE(tid, pthread, qe);
+			tid = TAILQ_NEXT(tid, sqe);
+		TAILQ_INSERT_BEFORE(tid, pthread, sqe);
 	}
 	pthread->flags |= PTHREAD_FLAGS_IN_CONDQ;
+	pthread->data.cond = cond;
 }
 #endif
