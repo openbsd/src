@@ -1,6 +1,7 @@
-/*	$OpenBSD: psl.h,v 1.10 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: mvme197.h,v 1.1 2001/12/13 08:55:51 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
+ * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,77 +43,32 @@
  * thereof, and that both notices appear in supporting documentation.
  *
  */
-#ifndef __M88K_M88100_PSL_H__
-#define __M88K_M88100_PSL_H__
-
-/* 
- * 88100 control registers
+#ifndef __MACHINE_MVME197_H__
+#define __MACHINE_MVME197_H__
+/*
+ *      VME187 CPU board constants - derived from Luna88k
+ *      This file is include from <machine/board.h>
  */
 
 /*
- * processor identification register (PID)
+ * Something to put append a 'U' to a long constant if it's C so that
+ * it'll be unsigned in both ANSI and traditional.
  */
-#define PID_ARN		0x0000FF00U	/* architectural revision number */
-#define PID_VN		0x000000FEU	/* version number */
-#define PID_MC		0x00000001U	/* master/checker */
+#ifndef UDEFINED
+#if defined(_LOCORE)
+#	define U(num)	num
+#else
+#  if defined(__STDC__)
+#	define U(num)	num ## U
+#  else
+#	define U(num)	num/**/U
+#  endif
+#endif
+#endif
 
-/*
- * processor status register
- */
+#define M197_ILEVEL	U(0xFFF00064)	/* interrupt priority level */
+#define M197_IMASK	U(0xFFF00065)	/* interrupt mask level */
+#define M197_ISRC	U(0xFFF0006F)	/* interrupt SRC */
+#define M197_IACK	U(0xFFF00100)	/* interrupt ACK base */
 
-#define PSR_MODE	0x80000000U	/* supervisor/user mode */
-#define PSR_BO		0x40000000U	/* byte-ordering 0:big 1:little */
-#define PSR_SER		0x20000000U	/* 88110 serial mode */
-#define PSR_C		0x10000000U	/* carry */
-#define PSR_SGN		0x04000000U	/* 88110 Signed Immediate mode */
-#define PSR_SRM		0x02000000U	/* 88110 Serialize Memory */
-#define PSR_TRACE	0x00800000U	/* 88110 hardware trace */
-#define PSR_SFD		0x000003E0U	/* SFU disable */
-#define PSR_SFD2	0x00000010U	/* 88110 SFU2 (Graphics) disable */
-#define PSR_SFD1	0x00000008U	/* SFU1 (FPU) disable */
-#define PSR_MXM		0x00000004U	/* misaligned access enable */
-#define PSR_IND		0x00000002U	/* interrupt disable */
-#define PSR_SFRZ	0x00000001U	/* shadow freeze */
-/*
- *	This is used in ext_int() and hard_clock().
- */
-#define PSR_IPL		0x00001000	/* for basepri */
-
-#define PSR_SUPERVISOR	(PSR_MODE | PSR_SFD)
-#define PSR_USER	(PSR_SFD)
-#define PSR_SET_BY_USER	(PSR_BO | PSR_SER | PSR_C | PSR_MXM)
-
-#ifndef	_LOCORE
-struct psr {
-    unsigned
-	psr_mode: 1,
-	psr_bo  : 1,
-	psr_ser : 1, /* mc88110 */
-	psr_c   : 1,
-	        : 1,
-	psr_sgn : 1, /* mc88110 */
-	psr_srm : 1, /* mc88110 */
-	        : 1,
-	psr_trc	: 1, /* mc88110 */
-		:13,
-	psr_sfd : 5,
-	psr_sfd2: 1, /* mc88110 */
-	psr_sfd1: 1,
-	psr_mxm : 1,
-	psr_ind : 1,
-	psr_sfrz: 1;
-};
-#endif 
-
-#define FIP_V		0x00000002U	/* valid */
-#define FIP_E		0x00000001U	/* exception */
-#define FIP_ADDR	0xFFFFFFFCU	/* address mask */
-#define NIP_V		0x00000002U	/* valid */
-#define NIP_E		0x00000001U	/* exception */
-#define NIP_ADDR	0xFFFFFFFCU	/* address mask */
-#define XIP_V		0x00000002U	/* valid */
-#define XIP_E		0x00000001U	/* exception */
-#define XIP_ADDR	0xFFFFFFFCU	/* address mask */
-
-#endif /* __M88K_M88100_PSL_H__ */
-
+#endif __MACHINE_MVME197_H__

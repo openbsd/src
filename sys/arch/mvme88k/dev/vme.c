@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.16 2001/11/07 22:31:57 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.17 2001/12/13 08:55:51 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -408,7 +408,6 @@ vme2chip_init(sc)
 {
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
 	u_long ctl;
-
 	/* turn off SYSFAIL LED */
 	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
 
@@ -462,18 +461,18 @@ vme2chip_init(sc)
 	 * Map the Software VME irq levels to the cpu level 7.
 	*/
 	vme2->vme2_irql3 = (7 << VME2_IRQL3_SW7SHIFT) | (7 << VME2_IRQL3_SW6SHIFT) | 
-			(7 << VME2_IRQL3_SW5SHIFT) | (7 << VME2_IRQL3_SW4SHIFT) |
-			(7 << VME2_IRQL3_SW3SHIFT) | (7 << VME2_IRQL3_SW2SHIFT) | 
-			(7 << VME2_IRQL3_SW1SHIFT) | (7 << VME2_IRQL3_SW0SHIFT);
-		/* 
-		 * pseudo driver, abort interrupt handler
-		 */
-		sc->sc_abih.ih_fn = vme2abort;
-		sc->sc_abih.ih_arg = 0;
-		sc->sc_abih.ih_wantframe = 1;
-		sc->sc_abih.ih_ipl = IPL_NMI;
-		intr_establish(110, &sc->sc_abih);
-		vme2->vme2_irqen |= VME2_IRQ_AB;
+			   (7 << VME2_IRQL3_SW5SHIFT) | (7 << VME2_IRQL3_SW4SHIFT) |
+			   (7 << VME2_IRQL3_SW3SHIFT) | (7 << VME2_IRQL3_SW2SHIFT) | 
+			   (7 << VME2_IRQL3_SW1SHIFT) | (7 << VME2_IRQL3_SW0SHIFT);
+	/* 
+	 * pseudo driver, abort interrupt handler
+	 */
+	sc->sc_abih.ih_fn = vme2abort;
+	sc->sc_abih.ih_arg = 0;
+	sc->sc_abih.ih_wantframe = 1;
+	sc->sc_abih.ih_ipl = IPL_NMI;
+	intr_establish(110, &sc->sc_abih);
+	vme2->vme2_irqen |= VME2_IRQ_AB;
 	vme2->vme2_irqen |= VME2_IRQ_ACF;
 }
 #endif /* NPCCTWO */

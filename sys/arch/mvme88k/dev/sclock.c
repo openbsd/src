@@ -1,4 +1,4 @@
-/*	$OpenBSD: sclock.c,v 1.6 2001/08/26 02:37:07 miod Exp $ */
+/*	$OpenBSD: sclock.c,v 1.7 2001/12/13 08:55:51 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * 
@@ -191,7 +191,7 @@ sclockattach(parent, self, args)
 		sc->sc_statih.ih_ipl = ca->ca_ipl;
 		stat_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		pcctwointr_establish(PCC2V_TIMER2, &sc->sc_statih);
-		mdfp.statclock_init_func = &sbc_initstatclock;
+		md.statclock_init_func = &sbc_initstatclock;
 		printf(": VME1x7");
 		break;
 #endif /* NPCCTWO */
@@ -202,7 +202,7 @@ sclockattach(parent, self, args)
 		sc->sc_statih.ih_wantframe = 1;
 		sc->sc_statih.ih_ipl = ca->ca_ipl;
 		sysconintr_establish(SYSCV_TIMER2, &sc->sc_statih);
-		mdfp.statclock_init_func = &m188_initstatclock;
+		md.statclock_init_func = &m188_initstatclock;
 		printf(": VME188");
 		break;
 #endif /* NSYSCON */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.20 2001/08/31 01:41:33 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.21 2001/12/13 08:55:52 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -62,7 +62,6 @@
 
 #include <machine/asm.h>
 #include <machine/trap.h>
-#include <machine/m88100.h>
 #include <machine/psl.h>
 #include <machine/param.h>
 #include <machine/vmparam.h>      /* INTSTACK_SIZE */
@@ -94,9 +93,9 @@ GLOBAL(doboot)
 	 */
 #ifdef MVME188
 	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_C_LABEL(cputyp))
-	ld	r3, r4, lo16(_C_LABEL(cputyp))
-	cmp	r4, r3, 0x188
+	or.u	r4, r0, hi16(_C_LABEL(brdtyp))
+	ld	r3, r4, lo16(_C_LABEL(brdtyp))
+	cmp	r4, r3, BRD_188
 	bb1	ne, r4, 1f
 	bsr	_C_LABEL(m188_reset)
 	br	m188_doboot_fail
@@ -140,7 +139,7 @@ GLOBAL(start_text)	/* This is the *real* start upon poweron or reset */
 	 */
 /*
  *	(*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini, 
- *               kernel.emini, bootdev, cputyp); 
+ *               kernel.emini, bootdev, brdtyp); 
  */ 
 	or.u	r13, r0,  hi16(_boothowto)
 	st	r2,  r13, lo16(_boothowto)
@@ -154,8 +153,21 @@ GLOBAL(start_text)	/* This is the *real* start upon poweron or reset */
 #endif
 	or.u	r13, r0,  hi16(_bootdev)
 	st	r7,  r13, lo16(_bootdev)
+	or.u	r13, r0,  hi16(_brdtyp)
+	st	r8,  r13, lo16(_brdtyp)
+	
+	/* set _cputyp */
+	cmp     r2,  r8, BRD_197	/* r8 contains brdtyp */
+        bb1     ne, r2, 1f	/* if it's a '197, CPU is 88110 */ 
+	or.u    r13, r0,  hi16(CPU_88110) 
+	or	r8,  r13, lo16(CPU_88110)/* r8 contains 0x110 */
+	br	2f
+1:	
+	or.u    r13, r0,  hi16(CPU_88100) 
+	or	r8,  r13, lo16(CPU_88100)/* r8 contains 0x100 */
+2:	
 	or.u	r13, r0,  hi16(_cputyp)
-	st	r8,  r13, lo16(_cputyp)
+	st	r8,  r13, lo16(_cputyp) /* r8 contains cputyp */
 	
 	/*
 	 * CPU Initialization
@@ -191,23 +203,23 @@ GLOBAL(start_text)	/* This is the *real* start upon poweron or reset */
 	 *
 	 *	jfriedl@omron.co.jp
 	 */
-	cmp	r2, r8, 0x197	/* r8 contains cputyp */
-	bb1	eq, r2, 1f	/* if it's a '197, skip SSBR */
-	stcr	r0, SSBR	/* clear this for later */
+        
+	cmp     r2, r8, CPU_88110 /* r8 contains cputyp */
+        bb1     eq, r2, 1f      /* if it's a 'mc88110, skip SSBR */
+        stcr    r0, SSBR        /* clear this for later */
 1:
-	stcr	r0, SR0		/* clear "current thread" */
-	stcr	r0, SR1		/* clear the CPU flags */
+        stcr    r0, SR0         /* clear "current thread" */
+        stcr    r0, SR1         /* clear the CPU flags */
+        
+        set     r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
+        set     r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
+        set     r11, r11, 1<PSR_SERIALIZE_BIT>
+        stcr    r11, PSR
+        stcr    r0,  VBR     /* set Vector Base Register to 0, ALWAYS! */
+        FLUSH_PIPELINE
+        cmp     r2, r8, CPU_88110 /* r8 contains cputyp */
+        bb1     eq, r2, master_start    /* if it's a '197, skip to master_start */
 	
-	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
-	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
-	set	r11, r11, 1<4>
-	set	r11, r11, 1<29>
-	set	r11, r11, 1<25>
-	stcr	r11, PSR
-	stcr	r0,  VBR     /* set Vector Base Register to 0, ALWAYS! */
-	FLUSH_PIPELINE
-	cmp	r2, r8, 0x197	/* r8 contains cputyp */
-	bb1	eq, r2, master_start	/* if it's a '197, skip to master_start */
 #if 0
 	/* clear BSS. Boot loader might have already done this... */
 	or.u	r2, r0, hi16(_edata)
@@ -296,17 +308,17 @@ ASGLOBAL(master_start)
 	or	r31, r31, lo16(_intstack_end)
 	clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
 
-#ifdef MVME197
-	cmp	r2, r8, 0x197	/* r8 contains cputyp */
-	bb1	ne, r2, 1f	/* if it's a '197, use different vectors */ 
-	or.u	r3, r0, hi16(_m197_vector_list)
-	or	r3, r3, lo16(_m197_vector_list)
+#ifdef M88110
+	cmp	r2, r8, CPU_88110 /* r8 contains cputyp */
+	bb1	ne, r2, 1f	/* if it's a 'mc88110, use different vectors */ 
+	or.u	r3, r0, hi16(_m88110_vector_list)
+	or	r3, r3, lo16(_m88110_vector_list)
 	bsr.n	_vector_init
 	ldcr	r2, VBR
 	br	2f
-#endif /* MVME197 */
+#endif /* M88110 */
 1:
-#if defined(MVME187) || defined(MVME188)	
+#ifdef M88100
 	/*
 	 * Want to make the call:
 	 * 	vector_init(VBR, vector_list)
@@ -315,7 +327,7 @@ ASGLOBAL(master_start)
 	or	r3, r3, lo16(_vector_list)
 	bsr.n	_vector_init
 	ldcr	r2, VBR		
-#endif /* defined(MVME187) || defined(MVME188) */
+#endif /* M88100 */
 2:	
 	/* still on int stack */
 	bsr.n	_mvme_bootstrap
@@ -390,21 +402,22 @@ GLOBAL(spin_cpu)
 /*****************************************************************************/
 
 	data
+#ifdef M88100
 	.align 4096		  /* VBR points to page aligned list */
-#if defined(MVME187) || defined(MVME188)	
 	global _vector_list, _vector_list_end
 _vector_list:     		  /* references memory BELOW this line */
 #include "machine/exception_vectors.h"
 _vector_list_end:
 	word END_OF_VECTOR_LIST
-#endif /* defined(MVME187) || defined(MVME188) */	
-#ifdef MVME197	
-	global _m197_vector_list, _m197_vector_list_end
-_m197_vector_list:     		  /* references memory BELOW this line */
+#endif /* M88100 */
+#ifdef M88110
+	.align 4096		  /* VBR points to page aligned list */
+	global _m88110_vector_list, _m88110_vector_list_end
+_m88110_vector_list:   		  /* references memory BELOW this line */
 #include "machine/exception_vectors2.h"
-_m197_vector_list_end:
+_m88110_vector_list_end:
 	word END_OF_VECTOR_LIST
-#endif /* MVME197 */	
+#endif /* M88110 */	
 	.align 4096		  /* SDT (segment descriptor table */
 	global _kernel_sdt
 _kernel_sdt:	
@@ -544,5 +557,4 @@ _eintrnames:
 _intrcnt:
 	word	0,0,0,0,0,0,0,0,0,0,0,0
 _eintrcnt:
-
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.13 2001/11/06 00:30:38 art Exp $ */
+/*	$OpenBSD: nvram.c,v 1.14 2001/12/13 08:55:51 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -102,13 +102,7 @@ nvrammatch(parent, vcf, args)
 
 #if 0
 	bugrtcrd(&rtc);
-	ret = badvaddr(IIOV(ca->ca_vaddr), 1);
-	if (ret != 0)
-		ret = badvaddr(IIOV(ca->ca_vaddr), 2);
-	if (ret != 0)
-		ret = badvaddr(IIOV(ca->ca_vaddr), 4);
-
-	if (ret != 0) {
+	if (badvaddr(IIOV(ca->ca_vaddr), 1)) {
 		printf("==> nvram: address 0x%x failed check\n", ca->ca_vaddr);
 		return (0);
 	} else
@@ -130,7 +124,7 @@ nvramattach(parent, self, args)
 	sc->sc_paddr = ca->ca_paddr;
 	sc->sc_vaddr = ca->ca_vaddr;
 
-	if (cputyp == CPU_188) {
+	if (brdtyp == BRD_188) {
 		sc->sc_len = MK48T02_SIZE;
 	} else {
 		sc->sc_len = MK48T08_SIZE;
@@ -142,7 +136,7 @@ nvramattach(parent, self, args)
 /*X*/	if (sc->sc_vaddr == NULL)
 /*X*/		panic("failed to map!");
 
-	if (cputyp != CPU_188) {
+	if (brdtyp != BRD_188) {
 		sc->sc_regs = (void *)(sc->sc_vaddr + sc->sc_len -
 				       sizeof(struct clockreg));
 	} else {
@@ -322,7 +316,7 @@ inittodr(base)
 		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
 	}
-	if (cputyp != CPU_188) {
+	if (brdtyp != BRD_188) {
 		register struct clockreg *cl = (struct clockreg *)sc->sc_regs;
 		cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
 		sec = cl->cl_sec;
@@ -378,7 +372,7 @@ void resettodr()
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	struct chiptime c;
-	if (cputyp != CPU_188) {
+	if (brdtyp != BRD_188) {
 		register struct clockreg *cl = (struct clockreg *)sc->sc_regs;
 
 		if (!time.tv_sec || cl == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.4 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: sram.c,v 1.5 2001/12/13 08:55:51 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -72,7 +72,7 @@ srammatch(parent, vcf, args)
 	struct confargs *ca = args;
 	int ret;
 
-	if (cputyp != CPU_187)
+	if (brdtyp != BRD_187)	/* The only one... */
 		return (0);
 
 	ca->ca_paddr = (void *)0xffe00000;
@@ -101,20 +101,20 @@ sramattach(parent, self, args)
 	struct mcreg *mc;
 	int i;
 
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME167
-	case CPU_167:
-	case CPU_166:
+	case BRD_167:
+	case BRD_166:
 		sc->sc_len = 128*1024;		/* always 128K */
 		break;
 #endif
 #ifdef MVME177
-	case CPU_177:
+	case BRD_177:
 		sc->sc_len = 128*1024;		/* always 128K */
 		break;
 #endif
 #ifdef MVME187
-	case CPU_187:
+	case BRD_187:
 		sc->sc_len = 128*1024;		/* always 128K */
 		break;
 #endif

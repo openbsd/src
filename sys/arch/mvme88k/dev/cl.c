@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.14 2001/08/31 01:05:44 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.15 2001/12/13 08:55:51 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -217,8 +217,6 @@ int dopoll = 1;
 #define CL_CHANNEL(x) (minor(x) & 3)
 #define CL_TTY(x) (minor(x))
 
-extern int cputyp;
-
 struct tty *cltty __P((dev_t dev));
 
 struct tty *cltty(dev)
@@ -247,20 +245,17 @@ clprobe(parent, self, aux)
 	 */
 	struct clreg *cl_reg;
 	struct confargs *ca = aux;
-	int ret;
-	if (cputyp != CPU_187)
+	
+	if (brdtyp == BRD_188)
 		return 0;
 
 	ca->ca_ipl = IPL_TTY;
-	ca->ca_paddr = (void *)CD2400_BASE_ADDR;
+	ca->ca_vaddr = ca->ca_paddr = (void *)CD2400_BASE_ADDR;
 	cl_reg = (struct clreg *)ca->ca_vaddr;
 
-#if 0
-	ret = !badvaddr(&cl_reg->cl_gfrcr,1);
-#else
-	ret = 1;
-#endif
-	return ret;
+	if (badvaddr(&cl_reg->cl_gfrcr,1))
+		return 0;
+	return 1;
 }
 
 void
@@ -401,10 +396,10 @@ cl_initchannel(sc, channel)
 		cl_reg->cl_cor5	= 0xec;
 		cl_reg->cl_cor6	= 0x00;
 		cl_reg->cl_cor7	= 0x00;
-		cl_reg->cl_schr1	= 0x00;
-		cl_reg->cl_schr2	= 0x00;
-		cl_reg->cl_schr3	= 0x00;
-		cl_reg->cl_schr4	= 0x00;
+		cl_reg->cl_schr1 = 0x00;
+		cl_reg->cl_schr2 = 0x00;
+		cl_reg->cl_schr3 = 0x00;
+		cl_reg->cl_schr4 = 0x00;
 		cl_reg->cl_scrl	= 0x00;
 		cl_reg->cl_scrh	= 0x00;
 		cl_reg->cl_lnxt	= 0x00;
@@ -413,10 +408,10 @@ cl_initchannel(sc, channel)
 		cl_reg->cl_tbpr	= 0x40; /* 9600 */
 		cl_reg->cl_tcor	= 0x01 << 5;
 		/* console port should be 0x88 already */
-		cl_reg->cl_msvr_rts	= 0x00;
-		cl_reg->cl_msvr_dtr	= 0x00;
-		cl_reg->cl_rtprl	= CL_RX_TIMEOUT;
-		cl_reg->cl_rtprh	= 0x00;
+		cl_reg->cl_msvr_rts = 0x00;
+		cl_reg->cl_msvr_dtr = 0x00;
+		cl_reg->cl_rtprl = CL_RX_TIMEOUT;
+		cl_reg->cl_rtprh = 0x00;
 	}
 	sc->cl_reg->cl_ccr = 0x20;
 	while (sc->cl_reg->cl_ccr != 0) {
@@ -928,7 +923,7 @@ clcnprobe(cp)
 	int maj;
 
 	/* bomb if it'a a MVME188 */
-	if (cputyp == CPU_188) {
+	if (brdtyp == BRD_188) {
 		cp->cn_pri = CN_DEAD;
 		return 0;
 	}
@@ -938,7 +933,7 @@ clcnprobe(cp)
 			break;
 	cp->cn_dev = makedev (maj, 0);
 	cp->cn_pri = CN_NORMAL;
-
+	
 	return 1;
 }
 
@@ -948,7 +943,7 @@ clcninit(cp)
 {
 	volatile struct clreg *cl_reg;
 	
-	cl_cons.cl_paddr = (void *)0xfff45000;
+	cl_cons.cl_paddr = (void *)CD2400_BASE_ADDR;
 	cl_cons.cl_vaddr   = (struct clreg *)IIOV(cl_cons.cl_paddr);
 	cl_cons.pcctwoaddr = (void *)IIOV(0xfff42000);
 	cl_reg = cl_cons.cl_vaddr;

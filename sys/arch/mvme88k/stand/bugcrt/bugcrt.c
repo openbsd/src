@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugcrt.c,v 1.6 2001/01/13 05:19:01 smurph Exp $ */
+/*	$OpenBSD: bugcrt.c,v 1.7 2001/12/13 08:55:52 smurph Exp $ */
 
 /* 
  * This is the startup file for single stage bootstraps or the first 
@@ -36,6 +36,8 @@ start()
 	asm("|	enable SFU1");
 	asm("	ldcr	r25,cr1");
 	asm("	xor	r25,r25,0x8");
+	asm("	set	r25,r25,1<25>"); /* bit 25 is Serialize */
+	asm("	set	r25,r25,1<29>"); /* bit 29 is Serial mode execution */
 	asm("	stcr	r25,cr1");
 #endif
 

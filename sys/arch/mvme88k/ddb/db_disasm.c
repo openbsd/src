@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.6 2001/08/26 02:37:00 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.7 2001/12/13 08:55:51 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -30,6 +30,7 @@
  * m88k disassembler for use in ddb
  */
 
+#include <sys/param.h>		/* cputyp and friends */
 #include <sys/types.h>
 
 #include <machine/db_machdep.h>
@@ -47,7 +48,7 @@ static char *condname[6] = {
 	"gt0 ", "eq0 ", "ge0 ", "lt0 ", "ne0 ", "le0 "
 };  
 
-static char *ctrlreg[64] = {
+static char *m88100_ctrlreg[64] = {
 	"cr0(PID)   ",
 	"cr1(PSR)   ",
 	"cr2(EPSR)  ",
@@ -81,6 +82,60 @@ static char *ctrlreg[64] = {
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	"fcr62(FPSR)",
 	"fcr63(FPCR)"
+};
+
+static char *m88110_ctrlreg[64] = {
+	"cr0(PID)   ",
+	"cr1(PSR)   ",
+	"cr2(EPSR)  ",
+	0,
+	"cr4(EXIP)  ",
+	"cr5(ENIP)  ",
+	0,
+	"cr7(VBR)   ",
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	"cr14(RES1) ",
+	"cr15(RES2) ",
+	"cr16(SR0)  ",
+	"cr17(SR1)  ",
+	"cr18(SR2)  ",
+	"cr19(SR3)  ",
+	"cr20(SR4)  ",
+	0,
+	0,
+	0,
+	0,
+	"cr25(ICMD) ",
+	"cr26(ICTL) ",
+	"cr27(ISAR) ",
+	"cr28(ISAP) ",
+	"cr29(IUAP) ",
+	"cr30(IIR)  ",
+	"cr31(IBP)  ",
+	"cr32(IPPU) ",
+	"cr33(IPPL) ",
+	"cr34(ISR)  ",
+	"cr35(ILAR) ",
+	"cr36(IPAR) ",
+	0,0,0,
+	"cr40(DCMD) ",
+	"cr41(DCTL) ",
+	"cr42(DSAR) ",
+	"cr43(DSAP) ",
+	"cr44(DUAP) ",
+	"cr45(DIR)  ",
+	"cr46(DBP)  ",
+	"cr47(DPPU) ",
+	"cr48(DPPL) ",
+	"cr49(DSR)  ",
+	"cr50(DLAR) ",
+	"cr51(DPAR) ",
+	0,0,0,0,0,0,0,0,0,0,0,0
 };
 
 #define printval(x) \
@@ -142,11 +197,14 @@ ctrlregs(int inst, char *opcode, long iadr)
   db_printf("\t%s",opcode);
   
   if ( L6inst == 010 || L6inst == 011 )
-    db_printf("\t\tr%-3d,%s", rd, ctrlreg[creg]);
+    db_printf("\t\tr%-3d,%s", rd, 
+	      cputyp == CPU_88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
   else if ( L6inst == 020 || L6inst == 021 )
-    db_printf("\t\tr%-3d,%s", rs1, ctrlreg[creg]);
+    db_printf("\t\tr%-3d,%s", rs1, 
+	      cputyp == CPU_88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
   else
-    db_printf("\t\tr%-3d,r%-3d,%s", rd, rs1, ctrlreg[creg]);
+    db_printf("\t\tr%-3d,r%-3d,%s", rd, rs1,
+              cputyp == CPU_88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
 }
 
 

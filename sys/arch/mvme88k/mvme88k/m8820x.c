@@ -1,6 +1,6 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.14 2001/08/31 01:52:22 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.1 2001/12/13 08:55:52 smurph Exp $	*/
 /*
- * Copyright (c) 1998 Steve Murphree, Jr.
+ * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+#ifdef M88100
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -68,29 +69,28 @@
 #include <machine/cpus.h>
 #include <machine/cpu_number.h>
 #include <machine/locore.h>
-#include <machine/m882xx.h>
+
+#include <machine/cmmu.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/
-#endif /* DDB */
-
-#ifdef DDB
 #define DEBUG_MSG db_printf
+#define STATIC
 #else
 #define DEBUG_MSG printf
+#define STATIC	static
 #endif /* DDB */
 
 /* On some versions of 88200, page size flushes don't work. I am using
  * sledge hammer approach till I find for sure which ones are bad XXX nivas */
 #define BROKEN_MMU_MASK	
-#define CMMU_DEBUG
 
 #ifdef DEBUG
 #define DB_CMMU	0x4000	/* MMU debug */
-unsigned int m18x_debuglevel = 0;
+unsigned int m8820x_debuglevel = 0;
 #define dprintf(_L_,_X_) \
 	do { \
-		if (m18x_debuglevel & (_L_)) { \
+		if (m8820x_debuglevel & (_L_)) { \
 			unsigned int psr = disable_interrupts_return_psr(); \
 			printf("%d: ", cpu_number()); \
 			printf _X_;  \
@@ -101,6 +101,43 @@ unsigned int m18x_debuglevel = 0;
 #define dprintf(_L_,_X_) do { } while (0)
 #endif 
 #undef	SHADOW_BATC		/* don't use BATCs for now XXX nivas */
+
+/* This is the function table for the mc8820x CMMUs */
+struct cmmu_p cmmu8820x = {
+	m8820x_cmmu_init,
+	m8820x_show_apr,
+	m8820x_setup_board_config,
+	m8820x_setup_cmmu_config,
+	m8820x_cmmu_dump_config,
+	m8820x_cpu_configuration_print,
+	m8820x_cmmu_shutdown_now,
+	m8820x_cmmu_parity_enable,
+	m8820x_cmmu_cpu_number,
+	m8820x_cmmu_remote_set,
+	m8820x_cmmu_remote_get,
+	m8820x_cmmu_get_idr,
+	m8820x_cmmu_set_sapr,
+	m8820x_cmmu_remote_set_sapr,
+	m8820x_cmmu_set_uapr,
+	m8820x_cmmu_set_batc_entry,
+	m8820x_cmmu_set_pair_batc_entry,
+	m8820x_cmmu_flush_remote_tlb,
+	m8820x_cmmu_flush_tlb,
+	m8820x_cmmu_pmap_activate,
+	m8820x_cmmu_flush_remote_cache,
+	m8820x_cmmu_flush_cache,
+	m8820x_cmmu_flush_remote_inst_cache,
+	m8820x_cmmu_flush_inst_cache,
+	m8820x_cmmu_flush_remote_data_cache,
+	m8820x_cmmu_flush_data_cache,
+	m8820x_dma_cachectl,
+#ifdef DDB
+	m8820x_cmmu_get_by_mode,
+	m8820x_cmmu_show_translation,
+	m8820x_cmmu_cache_state,
+	m8820x_show_cmmu_info;
+#endif /* end if DDB */
+};
 
 struct cmmu_regs {
    /* base + $000 */volatile unsigned idr; 
@@ -125,7 +162,7 @@ struct cmmu_regs {
 
    /* The rest for the 88204 */
 #define cssp0 cssp
-   /*             */ unsigned padding7[0x03]; 
+   /*             */unsigned padding7[0x03]; 
    /* base + $890 */volatile unsigned cssp1; 
    /*             */unsigned padding8[0x03]; 
    /* base + $8A0 */volatile unsigned cssp2; 
@@ -133,7 +170,7 @@ struct cmmu_regs {
    /* base + $8B0 */volatile unsigned cssp3;
 };
 
-struct cmmu {
+struct m8820x_cmmu {
 	struct cmmu_regs *cmmu_regs;	/* CMMU "base" area */
 	unsigned char  cmmu_cpu;	/* cpu number it is attached to */
 	unsigned char  which;		/* either INST_CMMU || DATA_CMMU */
@@ -172,27 +209,19 @@ error("ack gag barf!");
  * May be used from "db_interface.c".
  */
 
-int      vme188_config;
+STATIC int      vme188_config;
 
-/* prototypes */
-void m18x_setup_cmmu_config __P((void));
-void m18x_setup_board_config __P((void));
-#if defined(CMMU_DEBUG)
-void m18x_show_apr __P((unsigned value));
-void m18x_show_sctr __P((unsigned value));
-#endif
-unsigned m18x_cmmu_get __P((int mmu, int reg));
-void m18x_cmmu_set __P((int reg, unsigned val, int flags, int num,
-    int mode, int access, vm_offset_t addr));
-void m18x_cmmu_sync_cache __P((vm_offset_t physaddr, int size));
-void m18x_cmmu_sync_inval_cache __P((vm_offset_t physaddr, int size));
-void m18x_cmmu_inval_cache __P((vm_offset_t physaddr, int size));
-int m18x_cmmu_alive __P((int));
-void m18x_cmmu_store __P((int, int, unsigned));
+/* local prototypes */
+STATIC unsigned m8820x_cmmu_get __P((int mmu, int reg));
+STATIC void m8820x_cmmu_store __P((int, int, unsigned));
+STATIC void m8820x_cmmu_set __P((int, unsigned, int, int, int, int, vm_offset_t));
+STATIC void m8820x_cmmu_sync_cache __P((vm_offset_t, int));
+STATIC void m8820x_cmmu_sync_inval_cache __P((vm_offset_t, int));
+STATIC void m8820x_cmmu_inval_cache __P((vm_offset_t, int));
+STATIC int m8820x_cmmu_alive __P((int));
 
-#ifdef CMMU_DEBUG
 void
-m18x_show_apr(value)
+m8820x_show_apr(value)
 	unsigned value;
 {
 	union apr_template apr_template;
@@ -206,28 +235,6 @@ m18x_show_apr(value)
 	else			   printf(", not valid");
 	printf("\n");
 }
-
-void
-m18x_show_sctr(value)
-	unsigned value;
-{
-	union {
-		unsigned bits;
-		struct {
-			unsigned :16,
-			pe: 1,
-			se: 1,
-			pr: 1,
-			:13;
-		} fields;
-	} sctr; 
-	sctr.bits = value;
-	printf("%spe, %sse %spr]\n",
-	       sctr.fields.pe ? "" : "!",
-	       sctr.fields.se ? "" : "!",
-	       sctr.fields.pr ? "" : "!");
-}
-#endif
 
 /*----------------------------------------------------------------
  * The cmmu.c module was initially designed for the Omron Luna 88K
@@ -285,7 +292,8 @@ struct board_config {
 	int supported;
 	int ncpus;
 	int ncmmus;
-} bd_config[] = {
+} bd_config[] =
+{
 	/* sup, CPU MMU */
 	{  1,  4,  8}, /* 4P128 - 4P512 */
 	{  1,  2,  8}, /* 2P128 - 2P512 */
@@ -309,7 +317,8 @@ struct board_config {
  * Structure for accessing MMUS properly.
  */
 
-struct cmmu cmmu[MAX_CMMUS] = {
+struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS] =
+{
 	/* addr    cpu       mode           access
       alive   addr mask */
 	{(void *)VME_CMMU_I0, -1, INST_CMMU, CMMU_ACS_BOTH, 
@@ -331,11 +340,11 @@ struct cmmu cmmu[MAX_CMMUS] = {
 };
 
 struct cpu_cmmu {
-	struct cmmu *pair[2];
+	struct m8820x_cmmu *pair[2];
 } cpu_cmmu[MAX_CPUS];
 
 void 
-m18x_setup_board_config()
+m8820x_setup_board_config()
 {
 	volatile unsigned long *whoami;
 
@@ -343,47 +352,49 @@ m18x_setup_board_config()
 	switch (cputyp) {
 #ifdef MVME187
 	case CPU_187:
-		vme188_config = 10; /* There is no WHOAMI reg on MVME1x7 - fake it... */
-		cmmu[0].cmmu_regs = (void *)SBC_CMMU_I;
-		cmmu[0].cmmu_cpu = 0;
-		cmmu[1].cmmu_regs = (void *)SBC_CMMU_D;
-		cmmu[1].cmmu_cpu = 0;
-		cmmu[2].cmmu_regs = (void *)NULL;
-		cmmu[3].cmmu_regs = (void *)NULL;
-		cmmu[4].cmmu_regs = (void *)NULL;
-		cmmu[5].cmmu_regs = (void *)NULL;
-		cmmu[6].cmmu_regs = (void *)NULL;
-		cmmu[7].cmmu_regs = (void *)NULL;
+		vme188_config = 10; /* There is no WHOAMI reg on MVME187 - fake it... */
+		m8820x_cmmu[0].cmmu_regs = (void *)SBC_CMMU_I;
+		m8820x_cmmu[0].cmmu_cpu = 0;
+		m8820x_cmmu[1].cmmu_regs = (void *)SBC_CMMU_D;
+		m8820x_cmmu[1].cmmu_cpu = 0;
+		m8820x_cmmu[2].cmmu_regs = (void *)NULL;
+		m8820x_cmmu[3].cmmu_regs = (void *)NULL;
+		m8820x_cmmu[4].cmmu_regs = (void *)NULL;
+		m8820x_cmmu[5].cmmu_regs = (void *)NULL;
+		m8820x_cmmu[6].cmmu_regs = (void *)NULL;
+		m8820x_cmmu[7].cmmu_regs = (void *)NULL;
 		max_cpus = 1;
 		max_cmmus = 2;
 		break;
-#endif /* defined(MVME187) */
+#endif /* MVME187 */
 #ifdef MVME188
 	case CPU_188:
 		whoami = (volatile unsigned long *)MVME188_WHOAMI;
 		vme188_config = (*whoami & 0xf0) >> 4;
-		dprintf(DB_CMMU,("m18x_setup_board_config: WHOAMI @ 0x%08x holds value 0x%08x vme188_config = %d\n",
+		dprintf(DB_CMMU,("m8820x_setup_board_config: WHOAMI @ 0x%08x holds value 0x%08x vme188_config = %d\n",
 				 whoami, *whoami, vme188_config));
 		max_cpus = bd_config[vme188_config].ncpus;
 		max_cmmus = bd_config[vme188_config].ncmmus;
 		break;
 #endif /* MVME188 */
+	default:
+		panic("m8820x_setup_board_config: Unknown CPU type.");
 	}
 	cpu_cmmu_ratio = max_cmmus / max_cpus;
 	switch (bd_config[vme188_config].supported) {
 	case 0:
 		printf("MVME%x board configuration #%X: %d CPUs %d CMMUs\n", cputyp, 
 		       vme188_config, max_cpus, max_cmmus);
-		panic("This configuration is not supported - go and get another OS.");
+		panic("This configuration is not supported - go and get another OS.\n");
 		/* NOTREACHED */
 		break;
 	case 1:
 		printf("MVME%x board configuration #%X: %d CPUs %d CMMUs\n", cputyp,
 		       vme188_config, max_cpus, max_cmmus);
-		m18x_setup_cmmu_config();
+		m8820x_setup_cmmu_config();
 		break;
 	default:
-		panic("UNKNOWN MVME%x board configuration: WHOAMI = 0x%02x", cputyp, *whoami);
+		panic("UNKNOWN MVME%x board configuration: WHOAMI = 0x%02x\n", cputyp, *whoami);
 		/* NOTREACHED */
 		break;
 	}
@@ -395,7 +406,7 @@ m18x_setup_board_config()
  * motorola/m88k/m88100/cmmu.c module.
  */
 void 
-m18x_setup_cmmu_config()
+m8820x_setup_cmmu_config()
 {
 	register int num, cmmu_num;
 #ifdef MVME188
@@ -404,25 +415,25 @@ m18x_setup_cmmu_config()
 	volatile unsigned long *pcnfb;
 #endif 
 
-	dprintf(DB_CMMU,("m18x_setup_cmmu_config: initializing with %d CPU(s) and %d CMMU(s)\n",
+	dprintf(DB_CMMU,("m8820x_setup_cmmu_config: initializing with %d CPU(s) and %d CMMU(s)\n",
 			 max_cpus, max_cmmus));
 
 	/*
 	 * Probe for available MMUs
 	 */
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++)
-		if (!badwordaddr((vm_offset_t)cmmu[cmmu_num].cmmu_regs)) {
+		if (!badwordaddr((vm_offset_t)m8820x_cmmu[cmmu_num].cmmu_regs)) {
 			union cpupid id;
 
-			id.cpupid = cmmu[cmmu_num].cmmu_regs->idr;
+			id.cpupid = m8820x_cmmu[cmmu_num].cmmu_regs->idr;
 			if (id.m88200.type != M88200 && id.m88200.type != M88204) {
 				printf("WARNING: non M8820x circuit found at CMMU address 0x%08x\n",
-				       cmmu[cmmu_num].cmmu_regs);
+				       m8820x_cmmu[cmmu_num].cmmu_regs);
 				continue;
 			}
-			cmmu[cmmu_num].cmmu_alive = CMMU_ALIVE;
-			dprintf(DB_CMMU,("m18x_setup_cmmu_config: CMMU %d found at 0x%08x\n",
-					 cmmu_num, cmmu[cmmu_num].cmmu_regs));
+			m8820x_cmmu[cmmu_num].cmmu_alive = CMMU_ALIVE;
+			dprintf(DB_CMMU,("m8820x_setup_cmmu_config: CMMU %d found at 0x%08x\n",
+					 cmmu_num, m8820x_cmmu[cmmu_num].cmmu_regs));
 		}
 
 		/*
@@ -436,13 +447,13 @@ m18x_setup_cmmu_config()
 		for (i = 0; i < cpu_cmmu_ratio; i++) {
 			dprintf(DB_CMMU,("cmmu_init: testing CMMU %d for CPU %d\n",
 					 num*cpu_cmmu_ratio+i, num));
-			if (!m18x_cmmu_alive(num*cpu_cmmu_ratio + i)) {
+			if (!m8820x_cmmu_alive(num*cpu_cmmu_ratio + i)) {
 				printf("CMMU %d attached to CPU %d is not working\n");
-				panic("m18x_setup_cmmu_config");
+				panic("m8820x_setup_cmmu_config");
 			}
 		}
 		cpu_sets[num] = 1;   /* This cpu installed... */
-		id.cpupid = cmmu[num*cpu_cmmu_ratio].cmmu_regs->idr;
+		id.cpupid = m8820x_cmmu[num*cpu_cmmu_ratio].cmmu_regs->idr;
 
 		if (id.m88200.type == M88204)
 			printf("CPU%d is attached with %d MC88204 CMMUs\n",
@@ -455,7 +466,7 @@ m18x_setup_cmmu_config()
 	for (num = 0; num < max_cpus; num++) {
 		cpu_cmmu_strategy[num].inst &= CMMU_SPLIT_MASK;
 		cpu_cmmu_strategy[num].data &= CMMU_SPLIT_MASK;
-		dprintf(DB_CMMU,("m18x_setup_cmmu_config: CPU %d inst strat %d data strat %d\n",
+		dprintf(DB_CMMU,("m8820x_setup_cmmu_config: CPU %d inst strat %d data strat %d\n",
 				 num, cpu_cmmu_strategy[num].inst, cpu_cmmu_strategy[num].data));
 	}
 
@@ -466,7 +477,7 @@ m18x_setup_cmmu_config()
 	case CONFIG_0:
 	case CONFIG_5:
 	case CONFIG_A:
-		dprintf(DB_CMMU,("m18x_setup_cmmu_config: resetting strategies\n"));
+		dprintf(DB_CMMU,("m8820x_setup_cmmu_config: resetting strategies\n"));
 		for (num = 0; num < max_cpus; num++)
 			cpu_cmmu_strategy[num].inst = cpu_cmmu_strategy[num].data =
 						      CMMU_SPLIT_ADDRESS;
@@ -482,7 +493,7 @@ m18x_setup_cmmu_config()
 		val2 = (cpu_cmmu_strategy[1].inst << 2) | cpu_cmmu_strategy[1].data;
 		*pcnfa = val1;
 		*pcnfb = val2;
-		dprintf(DB_CMMU,("m18x_setup_cmmu_config: 2P128: PCNFA = 0x%x, PCNFB = 0x%x\n", val1, val2));
+		dprintf(DB_CMMU,("m8820x_setup_cmmu_config: 2P128: PCNFA = 0x%x, PCNFB = 0x%x\n", val1, val2));
 		break;
 	case CONFIG_2:
 		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
@@ -491,46 +502,46 @@ m18x_setup_cmmu_config()
 		val2 = (cpu_cmmu_strategy[0].data << 2) | cpu_cmmu_strategy[0].data;
 		*pcnfa = val1;
 		*pcnfb = val2;
-		dprintf(DB_CMMU,("m18x_setup_cmmu_config: 1P128: PCNFA = 0x%x, PCNFB = 0x%x\n", val1, val2));
+		dprintf(DB_CMMU,("m8820x_setup_cmmu_config: 1P128: PCNFA = 0x%x, PCNFB = 0x%x\n", val1, val2));
 		break;
 	case CONFIG_6:
 		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
 		val1 = (cpu_cmmu_strategy[0].inst << 2) | cpu_cmmu_strategy[0].data;
 		*pcnfa = val1;
-		dprintf(DB_CMMU,("m18x_setup_cmmu_config: 1P64: PCNFA = 0x%x\n", val1));
+		dprintf(DB_CMMU,("m8820x_setup_cmmu_config: 1P64: PCNFA = 0x%x\n", val1));
 		break;
 #endif /* MVME188 */
 	default:
-		panic("m18x_setup_cmmu_config");
+		panic("m8820x_setup_cmmu_config");
 		break;
 	}
 
 #ifdef MVME188
-	dprintf(DB_CMMU,("m18x_setup_cmmu_config: PCNFA = 0x%x, PCNFB = 0x%x\n", *pcnfa, *pcnfb));
+	dprintf(DB_CMMU,("m8820x_setup_cmmu_config: PCNFA = 0x%x, PCNFB = 0x%x\n", *pcnfa, *pcnfb));
 #endif /* MVME188 */
 
 	/*
 	 * Calculate the CMMU<->CPU connections
 	 */
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
-		cmmu[cmmu_num].cmmu_cpu =
+		m8820x_cmmu[cmmu_num].cmmu_cpu =
 		(int) (((float) cmmu_num) * ((float) max_cpus) / ((float) max_cmmus));
-		dprintf(DB_CMMU,("m18x_setup_cmmu_config: CMMU %d connected with CPU %d\n",
-				 cmmu_num, cmmu[cmmu_num].cmmu_cpu));
+		dprintf(DB_CMMU,("m8820x_setup_cmmu_config: CMMU %d connected with CPU %d\n",
+				 cmmu_num, m8820x_cmmu[cmmu_num].cmmu_cpu));
 	}
 
 	/*
-	 * Now set cmmu[].cmmu_access and addr
+	 * Now set m8820x_cmmu[].cmmu_access and addr
 	 */
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 		/*
 		 * We don't set up anything for the hardwired configurations.
 		 */
 		if (cpu_cmmu_ratio == 2) {
-			cmmu[cmmu_num].cmmu_addr =
-			cmmu[cmmu_num].cmmu_addr_mask = 0;
-			cmmu[cmmu_num].cmmu_addr_match = 1;
-			cmmu[cmmu_num].cmmu_access = CMMU_ACS_BOTH;
+			m8820x_cmmu[cmmu_num].cmmu_addr =
+			m8820x_cmmu[cmmu_num].cmmu_addr_mask = 0;
+			m8820x_cmmu[cmmu_num].cmmu_addr_match = 1;
+			m8820x_cmmu[cmmu_num].cmmu_access = CMMU_ACS_BOTH;
 			continue;
 		}
 
@@ -538,33 +549,33 @@ m18x_setup_cmmu_config()
 		 * First we set the address/mask pairs for the exact address
 		 * matches.
 		 */
-		switch ((cmmu[cmmu_num].which == INST_CMMU) ?
-			cpu_cmmu_strategy[cmmu[cmmu_num].cmmu_cpu].inst :
-			cpu_cmmu_strategy[cmmu[cmmu_num].cmmu_cpu].data) {
+		switch ((m8820x_cmmu[cmmu_num].which == INST_CMMU) ?
+			cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].inst :
+			cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].data) {
 		case CMMU_SPLIT_ADDRESS:
-			cmmu[cmmu_num].cmmu_addr = ((cmmu_num & 0x2) ^ 0x2) << 11;
-			cmmu[cmmu_num].cmmu_addr_mask = CMMU_A12_MASK;
-			cmmu[cmmu_num].cmmu_addr_match = 1;
+			m8820x_cmmu[cmmu_num].cmmu_addr = ((cmmu_num & 0x2) ^ 0x2) << 11;
+			m8820x_cmmu[cmmu_num].cmmu_addr_mask = CMMU_A12_MASK;
+			m8820x_cmmu[cmmu_num].cmmu_addr_match = 1;
 			break;
 		case CMMU_SPLIT_SPV:
-			cmmu[cmmu_num].cmmu_addr =
-			cmmu[cmmu_num].cmmu_addr_mask = 0;
-			cmmu[cmmu_num].cmmu_addr_match = 1;
+			m8820x_cmmu[cmmu_num].cmmu_addr =
+			m8820x_cmmu[cmmu_num].cmmu_addr_mask = 0;
+			m8820x_cmmu[cmmu_num].cmmu_addr_match = 1;
 			break;
 		case CMMU_SPLIT_SRAM_ALL:
-			cmmu[cmmu_num].cmmu_addr = CMMU_SRAM;
-			cmmu[cmmu_num].cmmu_addr_mask = CMMU_SRAM_MASK;
-			cmmu[cmmu_num].cmmu_addr_match = (cmmu_num & 0x2) ? 1 : 0;
+			m8820x_cmmu[cmmu_num].cmmu_addr = CMMU_SRAM;
+			m8820x_cmmu[cmmu_num].cmmu_addr_mask = CMMU_SRAM_MASK;
+			m8820x_cmmu[cmmu_num].cmmu_addr_match = (cmmu_num & 0x2) ? 1 : 0;
 			break;
 		case CMMU_SPLIT_SRAM_SPV:
 			if (cmmu_num & 0x2) {
-				cmmu[cmmu_num].cmmu_addr = CMMU_SRAM;
-				cmmu[cmmu_num].cmmu_addr_mask = CMMU_SRAM_MASK;
+				m8820x_cmmu[cmmu_num].cmmu_addr = CMMU_SRAM;
+				m8820x_cmmu[cmmu_num].cmmu_addr_mask = CMMU_SRAM_MASK;
 			} else {
-				cmmu[cmmu_num].cmmu_addr =
-				cmmu[cmmu_num].cmmu_addr_mask = 0;
+				m8820x_cmmu[cmmu_num].cmmu_addr =
+				m8820x_cmmu[cmmu_num].cmmu_addr_mask = 0;
 			}
-			cmmu[cmmu_num].cmmu_addr_match = 1;
+			m8820x_cmmu[cmmu_num].cmmu_addr_match = 1;
 			break;
 		}
 
@@ -575,26 +586,26 @@ m18x_setup_cmmu_config()
 		 * NOT TESTED!!! - em
 		 */
 		if (cpu_cmmu_ratio > 4) {
-			cmmu[cmmu_num].cmmu_addr |= ((cmmu_num & 0x4) ^ 0x4) << 12;
-			cmmu[cmmu_num].cmmu_addr_mask |= CMMU_A14_MASK;
+			m8820x_cmmu[cmmu_num].cmmu_addr |= ((cmmu_num & 0x4) ^ 0x4) << 12;
+			m8820x_cmmu[cmmu_num].cmmu_addr_mask |= CMMU_A14_MASK;
 		}
 
 		/*
 		 * Next we cope with the various access modes.
 		 */
-		switch ((cmmu[cmmu_num].which == INST_CMMU) ?
-			cpu_cmmu_strategy[cmmu[cmmu_num].cmmu_cpu].inst :
-			cpu_cmmu_strategy[cmmu[cmmu_num].cmmu_cpu].data) {
+		switch ((m8820x_cmmu[cmmu_num].which == INST_CMMU) ?
+			cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].inst :
+			cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].data) {
 		case CMMU_SPLIT_SPV:
-			cmmu[cmmu_num].cmmu_access =
+			m8820x_cmmu[cmmu_num].cmmu_access =
 			(cmmu_num & 0x2 ) ? CMMU_ACS_USER : CMMU_ACS_SUPER;
 			break;
 		case CMMU_SPLIT_SRAM_SPV:
-			cmmu[cmmu_num].cmmu_access =
+			m8820x_cmmu[cmmu_num].cmmu_access =
 			(cmmu_num & 0x2 ) ? CMMU_ACS_SUPER : CMMU_ACS_BOTH;
 			break;
 		default:
-			cmmu[cmmu_num].cmmu_access = CMMU_ACS_BOTH;
+			m8820x_cmmu[cmmu_num].cmmu_access = CMMU_ACS_BOTH;
 			break;
 		}
 	}
@@ -611,7 +622,7 @@ static char *cmmu_strat_string[] = {
 #endif 
 
 void 
-m18x_cmmu_dump_config()
+m8820x_cmmu_dump_config()
 {
 #ifdef MVME188
 	volatile unsigned long *pcnfa;
@@ -625,60 +636,62 @@ m18x_cmmu_dump_config()
 #ifdef MVME187
 	case CPU_187:
 		DEBUG_MSG("VME1x7 split mode\n\n");
-#endif /* defined(MVME187) */
+#endif /* MVME187 */
 #ifdef MVME188
 	case CPU_188:
+		DEBUG_MSG("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);
 		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
 		pcnfb = (volatile unsigned long *)MVME188_PCNFB;
-		DEBUG_MSG("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);
 		for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 			DEBUG_MSG("CMMU #%d: %s CMMU for CPU %d:\n Strategy: %s\n %s access addr 0x%08x mask 0x%08x match %s\n",
 				  cmmu_num,
-				  (cmmu[cmmu_num].which == INST_CMMU) ? "inst" : "data",
-				  cmmu[cmmu_num].cmmu_cpu,
-				  cmmu_strat_string[(cmmu[cmmu_num].which == INST_CMMU) ?
-						    cpu_cmmu_strategy[cmmu[cmmu_num].cmmu_cpu].inst :
-						    cpu_cmmu_strategy[cmmu[cmmu_num].cmmu_cpu].data],
-				  (cmmu[cmmu_num].cmmu_access == CMMU_ACS_BOTH) ?   "User and spv" :
-				  ((cmmu[cmmu_num].cmmu_access == CMMU_ACS_USER) ? "User        " :
+				  (m8820x_cmmu[cmmu_num].which == INST_CMMU) ? "inst" : "data",
+				  m8820x_cmmu[cmmu_num].cmmu_cpu,
+				  cmmu_strat_string[(m8820x_cmmu[cmmu_num].which == INST_CMMU) ?
+						    cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].inst :
+						    cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].data],
+				  (m8820x_cmmu[cmmu_num].cmmu_access == CMMU_ACS_BOTH) ?   "User and spv" :
+				  ((m8820x_cmmu[cmmu_num].cmmu_access == CMMU_ACS_USER) ? "User        " :
 				   "Supervisor  "),
-				  cmmu[cmmu_num].cmmu_addr,
-				  cmmu[cmmu_num].cmmu_addr_mask,
-				  cmmu[cmmu_num].cmmu_addr_match ? "TRUE" : "FALSE");
+				  m8820x_cmmu[cmmu_num].cmmu_addr,
+				  m8820x_cmmu[cmmu_num].cmmu_addr_mask,
+				  m8820x_cmmu[cmmu_num].cmmu_addr_match ? "TRUE" : "FALSE");
 		}
 #endif /* MVME188 */
+	default:
+		DEBUG_MSG("Unknown CPU\n\n");
 	}
 }
 
 /* To be implemented as a macro for speedup - XXX-em */
-void
-m18x_cmmu_store(mmu, reg, val)
+STATIC void 
+m8820x_cmmu_store(mmu, reg, val)
 	int mmu, reg;
 	unsigned val;
 {
-	*(volatile unsigned *)(reg + (char *)(cmmu[mmu].cmmu_regs)) = val;
+	*(volatile unsigned *)(reg + (char*)(m8820x_cmmu[mmu].cmmu_regs)) = val;
 }
 
-int 
-m18x_cmmu_alive(mmu)
+STATIC int 
+m8820x_cmmu_alive(mmu)
 	int mmu;
 {
-	return (cmmu[mmu].cmmu_alive == CMMU_ALIVE);
+	return (m8820x_cmmu[mmu].cmmu_alive == CMMU_ALIVE);
 }
 
-unsigned 
-m18x_cmmu_get(mmu, reg)
+STATIC unsigned 
+m8820x_cmmu_get(mmu, reg)
 	int mmu, reg;
 {
-	return *(volatile unsigned *)(reg + (char*)(cmmu[mmu].cmmu_regs));
+	return *(volatile unsigned *)(reg + (char*)(m8820x_cmmu[mmu].cmmu_regs));
 }
 
 /*
  * This function is called by the MMU module and pokes values
  * into the CMMU's registers.
  */
-void 
-m18x_cmmu_set(reg, val, flags, num, mode, access, addr)
+STATIC void 
+m8820x_cmmu_set(reg, val, flags, num, mode, access, addr)
 	int reg;
 	unsigned val;
 	int flags, num, mode, access;
@@ -692,7 +705,7 @@ m18x_cmmu_set(reg, val, flags, num, mode, access, addr)
 		 * Simply store the value away.
 		 */
 		/* assert(num < max_cmmus); */
-		m18x_cmmu_store(num, reg, val);
+		m8820x_cmmu_store(num, reg, val);
 		return;
 	}
 
@@ -702,19 +715,19 @@ m18x_cmmu_set(reg, val, flags, num, mode, access, addr)
 	 */
 	for (mmu = num*cpu_cmmu_ratio; mmu < (num+1)*cpu_cmmu_ratio; mmu++) {
 		if (((flags & MODE_VAL)) &&
-		    (cmmu[mmu].which != mode))
+		    (m8820x_cmmu[mmu].which != mode))
 			continue;
 		if (((flags & ACCESS_VAL)) &&
-		    (cmmu[mmu].cmmu_access != access) &&
-		    (cmmu[mmu].cmmu_access != CMMU_ACS_BOTH))
+		    (m8820x_cmmu[mmu].cmmu_access != access) &&
+		    (m8820x_cmmu[mmu].cmmu_access != CMMU_ACS_BOTH))
 			continue;
 		if (flags & ADDR_VAL) {
-			if (((addr & cmmu[mmu].cmmu_addr_mask) == cmmu[mmu].cmmu_addr)
-			    != cmmu[mmu].cmmu_addr_match) {
+			if (((addr & m8820x_cmmu[mmu].cmmu_addr_mask) == m8820x_cmmu[mmu].cmmu_addr)
+			    != m8820x_cmmu[mmu].cmmu_addr_match) {
 				continue;
 			}
 		}
-		m18x_cmmu_store(mmu, reg, val);
+		m8820x_cmmu_store(mmu, reg, val);
 	}
 }
 
@@ -723,17 +736,17 @@ m18x_cmmu_set(reg, val, flags, num, mode, access, addr)
  * Used by DDB for cache probe functions
  */
 unsigned 
-m18x_cmmu_get_by_mode(cpu, mode)
+m8820x_cmmu_get_by_mode(cpu, mode)
 	int cpu, mode;
 {
 	register int mmu;
 
 	for (mmu = cpu*cpu_cmmu_ratio; mmu < (cpu+1)*cpu_cmmu_ratio; mmu++)
-		if (cmmu[mmu].which == mode)
+		if (m8820x_cmmu[mmu].which == mode)
 			return mmu;
 	printf("can't figure out first %s CMMU for CPU %d\n",
 	       (mode == DATA_CMMU) ? "data" : "instruction", cpu);
-	panic("m18x_cmmu_get_by_mode");
+	panic("m8820x_cmmu_get_by_mode");
 	/* NOTREACHED */
 	return(0);
 }
@@ -756,7 +769,7 @@ static char *mmutypes[8] = {
  * by the master, before the slaves are started.
 */
 void 
-m18x_cpu_configuration_print(master)
+m8820x_cpu_configuration_print(master)
 	int master;
 {
 	int pid = read_processor_identification_register();
@@ -783,14 +796,14 @@ m18x_cpu_configuration_print(master)
 #endif
 
 	for (mmu = cpu*cpu_cmmu_ratio; mmu < (cpu+1)*cpu_cmmu_ratio; mmu++) {
-		int idr = m18x_cmmu_get(mmu, CMMU_IDR);
+		int idr = m8820x_cmmu_get(mmu, CMMU_IDR);
 		int mmuid = (0xe00000 & idr)>>21;
 
 		printf(" %s %s Cache: ",
-		       (cmmu[mmu].cmmu_access == CMMU_ACS_BOTH) ?  "Spv and User" :
-		       ((cmmu[mmu].cmmu_access == CMMU_ACS_USER) ? "User        " :
+		       (m8820x_cmmu[mmu].cmmu_access == CMMU_ACS_BOTH) ?  "Spv and User" :
+		       ((m8820x_cmmu[mmu].cmmu_access == CMMU_ACS_USER) ? "User        " :
 			"Supervisor  "),
-		       (cmmu[mmu].which == INST_CMMU) ?   "Instruction" :
+		       (m8820x_cmmu[mmu].which == INST_CMMU) ?   "Instruction" :
 		       "Data       ");
 		if (mmutypes[mmuid][0] == 'U')
 			printf("Type 0x%x ", mmuid);
@@ -807,7 +820,7 @@ m18x_cpu_configuration_print(master)
  * CMMU initialization routine
  */
 void
-m18x_cmmu_init()
+m8820x_cmmu_init()
 {
 	unsigned tmp, cmmu_num;
 	union cpupid id;
@@ -818,33 +831,33 @@ m18x_cmmu_init()
 	}
 
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++){
-		if (m18x_cmmu_alive(cmmu_num)) {
-			id.cpupid = cmmu[cmmu_num].cmmu_regs->idr;
+		if (m8820x_cmmu_alive(cmmu_num)) {
+			id.cpupid = m8820x_cmmu[cmmu_num].cmmu_regs->idr;
 
-			cpu_cmmu[cmmu[cmmu_num].cmmu_cpu].pair[cmmu[cmmu_num].which] =
-			&cmmu[cmmu_num];
+			cpu_cmmu[m8820x_cmmu[cmmu_num].cmmu_cpu].pair[m8820x_cmmu[cmmu_num].which] =
+			&m8820x_cmmu[cmmu_num];
 			/*
 			 * Reset cache data....
 			 * as per M88200 Manual (2nd Ed.) section 3.11.
 			 */
 			for (tmp = 0; tmp < 255; tmp++) {
-				cmmu[cmmu_num].cmmu_regs->sar = tmp << 4;
-				cmmu[cmmu_num].cmmu_regs->cssp = 0x3f0ff000;
+				m8820x_cmmu[cmmu_num].cmmu_regs->sar = tmp << 4;
+				m8820x_cmmu[cmmu_num].cmmu_regs->cssp = 0x3f0ff000;
 			}
 
 			/* 88204 has additional cache to clear */
 			if (id.m88200.type == M88204) {
 				for (tmp = 0; tmp < 255; tmp++) {
-					cmmu[cmmu_num].cmmu_regs->sar = tmp<<4;
-					cmmu[cmmu_num].cmmu_regs->cssp1 = 0x3f0ff000;
+					m8820x_cmmu[cmmu_num].cmmu_regs->sar = tmp<<4;
+					m8820x_cmmu[cmmu_num].cmmu_regs->cssp1 = 0x3f0ff000;
 				}
 				for (tmp = 0; tmp < 255; tmp++) {
-					cmmu[cmmu_num].cmmu_regs->sar = tmp<<4;
-					cmmu[cmmu_num].cmmu_regs->cssp2 = 0x3f0ff000;
+					m8820x_cmmu[cmmu_num].cmmu_regs->sar = tmp<<4;
+					m8820x_cmmu[cmmu_num].cmmu_regs->cssp2 = 0x3f0ff000;
 				}
 				for (tmp = 0; tmp < 255; tmp++) {
-					cmmu[cmmu_num].cmmu_regs->sar = tmp<<4;
-					cmmu[cmmu_num].cmmu_regs->cssp3 = 0x3f0ff000;
+					m8820x_cmmu[cmmu_num].cmmu_regs->sar = tmp<<4;
+					m8820x_cmmu[cmmu_num].cmmu_regs->cssp3 = 0x3f0ff000;
 				}
 			}
 
@@ -856,7 +869,7 @@ m18x_cmmu_init()
 			! CMMU_SCTR_PE |   /* not parity enable */
 			! CMMU_SCTR_SE | /* not snoop enable */
 			! CMMU_SCTR_PR ;  /* not priority arbitration */
-			cmmu[cmmu_num].cmmu_regs->sctr = tmp;
+			m8820x_cmmu[cmmu_num].cmmu_regs->sctr = tmp;
 
 			tmp =
 			(0x00000 << 12) |  /* segment table base address */
@@ -864,31 +877,31 @@ m18x_cmmu_init()
 			AREA_D_G  | /* global */
 			AREA_D_CI | /* cache inhibit */
 			! AREA_D_TE ;	/* not translation enable */
-			cmmu[cmmu_num].cmmu_regs->sapr =
-			cmmu[cmmu_num].cmmu_regs->uapr = tmp;
+			m8820x_cmmu[cmmu_num].cmmu_regs->sapr =
+			m8820x_cmmu[cmmu_num].cmmu_regs->uapr = tmp;
 
 
 #ifdef SHADOW_BATC
-			cmmu[cmmu_num].batc[0] =
-			cmmu[cmmu_num].batc[1] =
-			cmmu[cmmu_num].batc[2] =
-			cmmu[cmmu_num].batc[3] =
-			cmmu[cmmu_num].batc[4] =
-			cmmu[cmmu_num].batc[5] =
-			cmmu[cmmu_num].batc[6] =
-			cmmu[cmmu_num].batc[7] = 0;
+			m8820x_cmmu[cmmu_num].batc[0] =
+			m8820x_cmmu[cmmu_num].batc[1] =
+			m8820x_cmmu[cmmu_num].batc[2] =
+			m8820x_cmmu[cmmu_num].batc[3] =
+			m8820x_cmmu[cmmu_num].batc[4] =
+			m8820x_cmmu[cmmu_num].batc[5] =
+			m8820x_cmmu[cmmu_num].batc[6] =
+			m8820x_cmmu[cmmu_num].batc[7] = 0;
 #endif
-			cmmu[cmmu_num].cmmu_regs->bwp[0] = 
-			cmmu[cmmu_num].cmmu_regs->bwp[1] = 
-			cmmu[cmmu_num].cmmu_regs->bwp[2] = 
-			cmmu[cmmu_num].cmmu_regs->bwp[3] = 
-			cmmu[cmmu_num].cmmu_regs->bwp[4] = 
-			cmmu[cmmu_num].cmmu_regs->bwp[5] = 
-			cmmu[cmmu_num].cmmu_regs->bwp[6] = 
-			cmmu[cmmu_num].cmmu_regs->bwp[7] = 0;
-			cmmu[cmmu_num].cmmu_regs->scr = CMMU_FLUSH_CACHE_INV_ALL;
-			cmmu[cmmu_num].cmmu_regs->scr = CMMU_FLUSH_SUPER_ALL;
-			cmmu[cmmu_num].cmmu_regs->scr = CMMU_FLUSH_USER_ALL;
+			m8820x_cmmu[cmmu_num].cmmu_regs->bwp[0] = 
+			m8820x_cmmu[cmmu_num].cmmu_regs->bwp[1] = 
+			m8820x_cmmu[cmmu_num].cmmu_regs->bwp[2] = 
+			m8820x_cmmu[cmmu_num].cmmu_regs->bwp[3] = 
+			m8820x_cmmu[cmmu_num].cmmu_regs->bwp[4] = 
+			m8820x_cmmu[cmmu_num].cmmu_regs->bwp[5] = 
+			m8820x_cmmu[cmmu_num].cmmu_regs->bwp[6] = 
+			m8820x_cmmu[cmmu_num].cmmu_regs->bwp[7] = 0;
+			m8820x_cmmu[cmmu_num].cmmu_regs->scr = CMMU_FLUSH_CACHE_INV_ALL;
+			m8820x_cmmu[cmmu_num].cmmu_regs->scr = CMMU_FLUSH_SUPER_ALL;
+			m8820x_cmmu[cmmu_num].cmmu_regs->scr = CMMU_FLUSH_USER_ALL;
 		}
 	}
 	/*
@@ -913,12 +926,12 @@ m18x_cmmu_init()
 			! CMMU_SCTR_PE |  /* not parity enable */
 			! CMMU_SCTR_PR ;  /* not priority arbitration */
 		}
-		m18x_cmmu_set(CMMU_SCTR, tmp, 0, cpu, DATA_CMMU, 0, 0);
-		m18x_cmmu_set(CMMU_SCTR, tmp, 0, cpu, INST_CMMU, 0, 0);
+		m8820x_cmmu_set(CMMU_SCTR, tmp, 0, cpu, DATA_CMMU, 0, 0);
+		m8820x_cmmu_set(CMMU_SCTR, tmp, 0, cpu, INST_CMMU, 0, 0);
 
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL, ACCESS_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL, ACCESS_VAL,
 			      cpu, DATA_CMMU, CMMU_ACS_SUPER, 0);
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL, ACCESS_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL, ACCESS_VAL,
 			      cpu, INST_CMMU, CMMU_ACS_SUPER, 0);
 	}
 
@@ -943,13 +956,13 @@ m18x_cmmu_init()
 		/*
 		REGS(cpu, INST_CMMU).sapr = tmp;
 		*/
-		m18x_cmmu_set(CMMU_SAPR, tmp, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAPR, tmp, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
 
 		/*
 		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_SUPER_ALL;
 		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL, ACCESS_VAL|MODE_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL, ACCESS_VAL|MODE_VAL,
 			      cpu, DATA_CMMU, CMMU_ACS_SUPER, 0);
 	}
 }
@@ -958,11 +971,12 @@ m18x_cmmu_init()
  * Just before poweroff or reset....
  */
 void
-m18x_cmmu_shutdown_now()
+m8820x_cmmu_shutdown_now()
 {
 	unsigned tmp;
 	unsigned cmmu_num;
 
+	CMMU_LOCK;
 	/*
 	 * Now set some state as we like...
 	 */
@@ -978,7 +992,7 @@ m18x_cmmu_shutdown_now()
 			! CMMU_SCTR_PR ;   /* priority arbitration */
 		}
 
-		cmmu[cmmu_num].cmmu_regs->sctr = tmp;
+		m8820x_cmmu[cmmu_num].cmmu_regs->sctr = tmp;
 
 		tmp = 
 		(0x00000 << 12) |  /* segment table base address */
@@ -987,9 +1001,10 @@ m18x_cmmu_shutdown_now()
 		AREA_D_CI |	   /* cache inhibit */
 		! AREA_D_TE ;	   /* translation disable */
 
-		cmmu[cmmu_num].cmmu_regs->sapr = tmp;
-		cmmu[cmmu_num].cmmu_regs->uapr = tmp;
+		m8820x_cmmu[cmmu_num].cmmu_regs->sapr = tmp;
+		m8820x_cmmu[cmmu_num].cmmu_regs->uapr = tmp;
 	}
+	CMMU_UNLOCK;
 }
 
 #define PARITY_ENABLE
@@ -997,23 +1012,25 @@ m18x_cmmu_shutdown_now()
  * enable parity
  */
 void 
-m18x_cmmu_parity_enable()
+m8820x_cmmu_parity_enable()
 {
 #ifdef PARITY_ENABLE
 	register int cmmu_num;
+	CMMU_LOCK;
 
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
-		if (m18x_cmmu_alive(cmmu_num)) {
+		if (m8820x_cmmu_alive(cmmu_num)) {
 			register unsigned val1 = 
-				m18x_cmmu_get(cmmu_num, CMMU_SCTR);
+				m8820x_cmmu_get(cmmu_num, CMMU_SCTR);
 
 			/*
-			cmmu[cmmu_num].cmmu_regs->sctr |= CMMU_SCTR_PE;
+			m8820x_cmmu[cmmu_num].cmmu_regs->sctr |= CMMU_SCTR_PE;
 			*/
-			m18x_cmmu_set(CMMU_SCTR, val1 | CMMU_SCTR_PE, 
+			m8820x_cmmu_set(CMMU_SCTR, val1 | CMMU_SCTR_PE, 
 				      NUM_CMMU, cmmu_num, 0, 0, 0);
 		}
 	}
+	CMMU_UNLOCK;
 #endif  /* PARITY_ENABLE */
 }
 
@@ -1025,18 +1042,19 @@ m18x_cmmu_parity_enable()
 #define ILLADDRESS	U(0x0F000000) 	/* any faulty address */
 
 unsigned 
-m18x_cmmu_cpu_number()
+m8820x_cmmu_cpu_number()
 {
 	register unsigned cmmu_no;
 	int i;
-
+	
+	CMMU_LOCK;
 
 	for (i=0; i < 10; i++) {
 		/* clear CMMU p-bus status registers */
 		for (cmmu_no = 0; cmmu_no < MAX_CMMUS; cmmu_no++) {
-			if (cmmu[cmmu_no].cmmu_alive == CMMU_AVAILABLE &&
-			    cmmu[cmmu_no].which == DATA_CMMU)
-				cmmu[cmmu_no].cmmu_regs->pfSTATUSr = 0;
+			if (m8820x_cmmu[cmmu_no].cmmu_alive == CMMU_AVAILABLE &&
+			    m8820x_cmmu[cmmu_no].which == DATA_CMMU)
+				m8820x_cmmu[cmmu_no].cmmu_regs->pfSTATUSr = 0;
 		}
 
 		/* access faulting address */
@@ -1044,18 +1062,19 @@ m18x_cmmu_cpu_number()
 
 		/* check which CMMU reporting the fault  */
 		for (cmmu_no = 0; cmmu_no < MAX_CMMUS; cmmu_no++) {
-			if (cmmu[cmmu_no].cmmu_alive == CMMU_AVAILABLE &&
-			    cmmu[cmmu_no].which == DATA_CMMU &&
-			    cmmu[cmmu_no].cmmu_regs->pfSTATUSr & 0x70000) {
-				if (cmmu[cmmu_no].cmmu_regs->pfSTATUSr & 0x70000) {
-					cmmu[cmmu_no].cmmu_regs->pfSTATUSr = 0;	/* to be clean */
-					cmmu[cmmu_no].cmmu_alive = CMMU_MARRIED;
-					return cmmu[cmmu_no].cmmu_cpu;
+			if (m8820x_cmmu[cmmu_no].cmmu_alive == CMMU_AVAILABLE &&
+			    m8820x_cmmu[cmmu_no].which == DATA_CMMU &&
+			    m8820x_cmmu[cmmu_no].cmmu_regs->pfSTATUSr & 0x70000) {
+				if (m8820x_cmmu[cmmu_no].cmmu_regs->pfSTATUSr & 0x70000) {
+					m8820x_cmmu[cmmu_no].cmmu_regs->pfSTATUSr = 0;	/* to be clean */
+					m8820x_cmmu[cmmu_no].cmmu_alive = CMMU_MARRIED;
+					return m8820x_cmmu[cmmu_no].cmmu_cpu;
 				}
 			}
 		}
 	}
-	panic("m18x_cmmu_cpu_number: could not determine my cpu number");
+	panic("m8820x_cmmu_cpu_number: could not determine my cpu number");
+	CMMU_UNLOCK;
 	return 0; /* to make compiler happy */
 }
 
@@ -1063,27 +1082,9 @@ m18x_cmmu_cpu_number()
  * Functions that actually modify CMMU registers.
  */
 
-void
-m18x_cmmu_remote_set(cpu, r, data, x)
-	unsigned cpu, r, data, x;
-{
-	*(volatile unsigned *)(r + (char*)&REGS(cpu,data)) = x;
-}
-
-/*
- * cmmu_cpu_lock should be held when called if read
- * the CMMU_SCR or CMMU_SAR.
- */
-unsigned
-m18x_cmmu_remote_get(cpu, r, data)
-	unsigned cpu, r, data;
-{
-	return (*(volatile unsigned *)(r + (char*)&REGS(cpu,data)));
-}
-
 /* Needs no locking - read only registers */
 unsigned
-m18x_cmmu_get_idr(data)
+m8820x_cmmu_get_idr(data)
 	unsigned data;
 {
 	int cpu;
@@ -1092,71 +1093,65 @@ m18x_cmmu_get_idr(data)
 }
 
 void
-m18x_cmmu_set_sapr(ap)
+m8820x_cmmu_set_sapr(ap)
 	unsigned ap;
 {
 	int cpu;
 	cpu = cpu_number();
 
+	CMMU_LOCK;
 	if (cache_policy & CACHE_INH)
 		ap |= AREA_D_CI;
-	/*
-	REGS(cpu, INST_CMMU).sapr = ap;
-	REGS(cpu, DATA_CMMU).sapr = ap;
-	*/
-	m18x_cmmu_set(CMMU_SAPR, ap, ACCESS_VAL,
+	m8820x_cmmu_set(CMMU_SAPR, ap, ACCESS_VAL,
 		      cpu, 0, CMMU_ACS_SUPER, 0);
+	CMMU_UNLOCK;
 }
 
 void
-m18x_cmmu_remote_set_sapr(cpu, ap)
+m8820x_cmmu_remote_set_sapr(cpu, ap)
 	unsigned cpu, ap;
 {
+	CMMU_LOCK;
 	if (cache_policy & CACHE_INH)
 		ap |= AREA_D_CI;
-
-	/*
-	REGS(cpu, INST_CMMU).sapr = ap;
-	REGS(cpu, DATA_CMMU).sapr = ap;
-	*/
-	m18x_cmmu_set(CMMU_SAPR, ap, ACCESS_VAL,
+	m8820x_cmmu_set(CMMU_SAPR, ap, ACCESS_VAL,
 		      cpu, 0, CMMU_ACS_SUPER, 0);
+	CMMU_UNLOCK;
 }
 
 void
-m18x_cmmu_set_uapr(ap)
+m8820x_cmmu_set_uapr(ap)
 	unsigned ap;
 {
+	register int s = splhigh();
 	int cpu;
+	
 	cpu = cpu_number();
-
-	/* this functionality also mimiced in m18x_cmmu_pmap_activate() */
-	/*
-	REGS(cpu, INST_CMMU).uapr = ap;
-	REGS(cpu, DATA_CMMU).uapr = ap;
-	*/
-	m18x_cmmu_set(CMMU_UAPR, ap, ACCESS_VAL,
+	
+	CMMU_LOCK;
+	/* this functionality also mimiced in m8820x_cmmu_pmap_activate() */
+	m8820x_cmmu_set(CMMU_UAPR, ap, ACCESS_VAL,
 		      cpu, 0, CMMU_ACS_USER, 0);
+	CMMU_UNLOCK;
+	splx(s);
 }
 
 /*
  * Set batc entry number entry_no to value in 
  * the data or instruction cache depending on data.
  *
- * Except for the cmmu_init, this function, m18x_cmmu_set_pair_batc_entry,
- * and m18x_cmmu_pmap_activate are the only functions which may set the
+ * Except for the cmmu_init, this function, m8820x_cmmu_set_pair_batc_entry,
+ * and m8820x_cmmu_pmap_activate are the only functions which may set the
  * batc values.
  */
 void
-m18x_cmmu_set_batc_entry(cpu, entry_no, data, value)
+m8820x_cmmu_set_batc_entry(cpu, entry_no, data, value)
 	unsigned cpu, entry_no;
 	unsigned data;	/* 1 = data, 0 = instruction */
 	unsigned value;	/* the value to stuff into the batc */
 {
-	/*
-	REGS(cpu,data).bwp[entry_no] = value;
-	*/
-	m18x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL|ACCESS_VAL,
+	CMMU_LOCK;
+	m8820x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL|ACCESS_VAL,
 		      cpu, data, CMMU_ACS_USER, 0);
 #ifdef SHADOW_BATC
 	CMMU(cpu,data)->batc[entry_no] = value;
@@ -1165,6 +1160,7 @@ m18x_cmmu_set_batc_entry(cpu, entry_no, data, value)
 	REGS(cpu,data).scr = CMMU_FLUSH_SUPER_ALL;
 	REGS(cpu,data).scr = CMMU_FLUSH_USER_ALL;
 #endif
+	CMMU_UNLOCK;
 }
 
 /*
@@ -1172,23 +1168,17 @@ m18x_cmmu_set_batc_entry(cpu, entry_no, data, value)
  * the data and instruction cache for the named CPU.
  */
 void
-m18x_cmmu_set_pair_batc_entry(cpu, entry_no, value)
+m8820x_cmmu_set_pair_batc_entry(cpu, entry_no, value)
 	unsigned cpu, entry_no;
 	unsigned value;	/* the value to stuff into the batc */
 {
-
-	/*
-	REGS(cpu,DATA_CMMU).bwp[entry_no] = value;
-	*/
-	m18x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL|ACCESS_VAL,
+	CMMU_LOCK;
+	m8820x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL|ACCESS_VAL,
 		      cpu, DATA_CMMU, CMMU_ACS_USER, 0);
 #ifdef SHADOW_BATC
 	CMMU(cpu,DATA_CMMU)->batc[entry_no] = value;
 #endif
-	/*
-	REGS(cpu,INST_CMMU).bwp[entry_no] = value;
-	*/
-	m18x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL|ACCESS_VAL,
+	m8820x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL|ACCESS_VAL,
 		      cpu, INST_CMMU, CMMU_ACS_USER, 0);
 #ifdef SHADOW_BATC
 	CMMU(cpu,INST_CMMU)->batc[entry_no] = value;
@@ -1200,6 +1190,7 @@ m18x_cmmu_set_pair_batc_entry(cpu, entry_no, value)
 	REGS(cpu,DATA_CMMU).scr = CMMU_FLUSH_SUPER_ALL;
 	REGS(cpu,DATA_CMMU).scr = CMMU_FLUSH_USER_ALL;
 #endif
+	CMMU_UNLOCK;
 }
 
 /*
@@ -1208,46 +1199,31 @@ m18x_cmmu_set_pair_batc_entry(cpu, entry_no, value)
 
 /*
  *	flush any tlb
- *	Some functionality mimiced in m18x_cmmu_pmap_activate.
+ *	Some functionality mimiced in m8820x_cmmu_pmap_activate.
  */
 void
-m18x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size)
+m8820x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size)
 	unsigned cpu, kernel;
 	vm_offset_t vaddr;
 	int size;
 {
 	register int s = splhigh();
+	CMMU_LOCK;
 
 	if (cpu > max_cpus) {
 		cpu = cpu_number();
 	}
 
 	if ((unsigned)size > PAGE_SIZE) {
-		/*
-		REGS(cpu, INST_CMMU).scr =
-		REGS(cpu, DATA_CMMU).scr =
-		kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL;
-		    */
-
-		m18x_cmmu_set(CMMU_SCR, kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL, ACCESS_VAL,
+		m8820x_cmmu_set(CMMU_SCR, kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL, ACCESS_VAL,
 			      cpu, 0, kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, 0);
 	} else { /* a page or smaller */
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)vaddr;
-		REGS(cpu, DATA_CMMU).sar = (unsigned)vaddr;
-		*/
-		m18x_cmmu_set(CMMU_SAR, vaddr, ADDR_VAL|ACCESS_VAL,
+		m8820x_cmmu_set(CMMU_SAR, vaddr, ADDR_VAL|ACCESS_VAL,
 			      cpu, 0, kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, vaddr);
-
-		/*
-		REGS(cpu, INST_CMMU).scr =
-		REGS(cpu, DATA_CMMU).scr =
-		kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE;
-		    */
-		m18x_cmmu_set(CMMU_SCR, kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE, ADDR_VAL|ACCESS_VAL,
+		m8820x_cmmu_set(CMMU_SCR, kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE, ADDR_VAL|ACCESS_VAL,
 			      cpu, 0, kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, vaddr);
 	}
-
+	CMMU_UNLOCK;
 	splx(s);
 }
 
@@ -1255,14 +1231,14 @@ m18x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size)
  *	flush my personal tlb
  */
 void
-m18x_cmmu_flush_tlb(kernel, vaddr, size)
+m8820x_cmmu_flush_tlb(kernel, vaddr, size)
 	unsigned kernel;
 	vm_offset_t vaddr;
 	int size;
 {
 	int cpu;
 	cpu = cpu_number();
-	m18x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
+	m8820x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
 }
 
 /*
@@ -1271,30 +1247,22 @@ m18x_cmmu_flush_tlb(kernel, vaddr, size)
  * Only called from pmap.c's _pmap_activate().
  */
 void
-m18x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
+m8820x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
 	unsigned cpu, uapr;
 	batc_template_t i_batc[BATC_MAX];
 	batc_template_t d_batc[BATC_MAX];
 {
 	int entry_no;
+	CMMU_LOCK;
 
-
-	/* the following is from m18x_cmmu_set_uapr */
-	/*
-	REGS(cpu, INST_CMMU).uapr = uapr;
-	REGS(cpu, DATA_CMMU).uapr = uapr;
-	*/
-	m18x_cmmu_set(CMMU_UAPR, uapr, ACCESS_VAL,
+	/* the following is from m8820x_cmmu_set_uapr */
+	m8820x_cmmu_set(CMMU_UAPR, uapr, ACCESS_VAL,
 		      cpu, 0, CMMU_ACS_USER, 0);
 
 	for (entry_no = 0; entry_no < BATC_MAX; entry_no++) {
-		/*
-		REGS(cpu,INST_CMMU).bwp[entry_no] = i_batc[entry_no].bits;
-		REGS(cpu,DATA_CMMU).bwp[entry_no] = d_batc[entry_no].bits;
-		*/
-		m18x_cmmu_set(CMMU_BWP(entry_no), i_batc[entry_no].bits, MODE_VAL|ACCESS_VAL,
+		m8820x_cmmu_set(CMMU_BWP(entry_no), i_batc[entry_no].bits, MODE_VAL|ACCESS_VAL,
 			      cpu, INST_CMMU, CMMU_ACS_USER, 0);
-		m18x_cmmu_set(CMMU_BWP(entry_no), d_batc[entry_no].bits, MODE_VAL|ACCESS_VAL,
+		m8820x_cmmu_set(CMMU_BWP(entry_no), d_batc[entry_no].bits, MODE_VAL|ACCESS_VAL,
 			      cpu, DATA_CMMU, CMMU_ACS_USER, 0);
 #ifdef SHADOW_BATC
 		CMMU(cpu,INST_CMMU)->batc[entry_no] = i_batc[entry_no].bits;
@@ -1302,18 +1270,14 @@ m18x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
 #endif
 	}
 
-
 	/*
 	 * Flush the user TLB.
 	 * IF THE KERNEL WILL EVER CARE ABOUT THE BATC ENTRIES,
 	 * THE SUPERVISOR TLBs SHOULB EE FLUSHED AS WELL.
 	 */
-	/*
-	REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_USER_ALL;
-	REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_USER_ALL;
-	*/
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_USER_ALL, ACCESS_VAL,
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_USER_ALL, ACCESS_VAL,
 		      cpu, 0, CMMU_ACS_USER, 0);
+	CMMU_UNLOCK;
 }
 
 /*
@@ -1334,72 +1298,41 @@ m18x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
  *	flush both Instruction and Data caches
  */
 void
-m18x_cmmu_flush_remote_cache(cpu, physaddr, size)
+m8820x_cmmu_flush_remote_cache(cpu, physaddr, size)
 	int cpu;
 	vm_offset_t physaddr;
 	int size;
 {
 	register int s = splhigh();
-
+	CMMU_LOCK;
 
 #if !defined(BROKEN_MMU_MASK)
 
 	if (size < 0 || size > NBSG ) {
-		/*
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, 0,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, 0,
 			      cpu, 0, 0, 0);
 	} else if (size <= 16) {
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, ADDR_VAL,
 			      cpu, 0, 0, (unsigned)physaddr);
-		/*
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_LINE;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_LINE;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_LINE , ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_LINE , ADDR_VAL,
 			      cpu, 0, 0, (unsigned)physaddr);
 	} else if (size <= NBPG) {
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, ADDR_VAL,
 			      cpu, 0, 0, (unsigned)physaddr);
-		/*
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_PAGE;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_PAGE;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_PAGE , ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_PAGE , ADDR_VAL,
 			      cpu, 0, 0, (unsigned)physaddr);
 	} else {
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, 0,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, 0,
 			      cpu, 0, 0, 0);
-		/*
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_SEGMENT;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_SEGMENT;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_SEGMENT, 0,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_SEGMENT, 0,
 			      cpu, 0, 0, 0);
 	}
 
 #else
-	/*
-	REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-	REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-	*/
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, 0,
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, 0,
 		      cpu, 0, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
+	CMMU_UNLOCK;
 	splx(s);
 }
 
@@ -1407,77 +1340,53 @@ m18x_cmmu_flush_remote_cache(cpu, physaddr, size)
  *	flush both Instruction and Data caches
  */
 void
-m18x_cmmu_flush_cache(physaddr, size)
+m8820x_cmmu_flush_cache(physaddr, size)
 	vm_offset_t physaddr;
 	int size;
 {
 	int cpu = cpu_number();
-	m18x_cmmu_flush_remote_cache(cpu, physaddr, size);
+	m8820x__cmmu_flush_remote_cache(cpu, physaddr, size);
 }
 
 /*
  *	flush Instruction caches
  */
 void
-m18x_cmmu_flush_remote_inst_cache(cpu, physaddr, size)
+m8820x_cmmu_flush_remote_inst_cache(cpu, physaddr, size)
 	int cpu;
 	vm_offset_t physaddr;
 	int size;
 {
 	register int s = splhigh();
-
-
+	CMMU_LOCK;
 
 #if !defined(BROKEN_MMU_MASK)
 	if (size < 0 || size > NBSG ) {
-		/*
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
 	} else if (size <= 16) {
 
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		/*
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_LINE;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_LINE, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_LINE, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
 	} else if (size <= NBPG) {
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		/*
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_PAGE;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_PAGE, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_PAGE, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
 	} else {
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_SEGMENT;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_SEGMENT, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_SEGMENT, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
 	}
 #else
-	/*
-	REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-	*/
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 		      cpu, INST_CMMU, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
 
+	CMMU_UNLOCK;
 	splx(s);
 }
 
@@ -1485,67 +1394,51 @@ m18x_cmmu_flush_remote_inst_cache(cpu, physaddr, size)
  *	flush Instruction caches
  */
 void
-m18x_cmmu_flush_inst_cache(physaddr, size)
+m8820x_cmmu_flush_inst_cache(physaddr, size)
 	vm_offset_t physaddr;
 	int size;
 {
 	int cpu;
 	cpu = cpu_number();
-	m18x_cmmu_flush_remote_inst_cache(cpu, physaddr, size);
+	m8820x_cmmu_flush_remote_inst_cache(cpu, physaddr, size);
 }
 
 void
-m18x_cmmu_flush_remote_data_cache(cpu, physaddr, size)
+m8820x_cmmu_flush_remote_data_cache(cpu, physaddr, size)
 	int cpu;
 	vm_offset_t physaddr;
 	int size;
 {
 	register int s = splhigh();
+	CMMU_LOCK;
 
 #if !defined(BROKEN_MMU_MASK)
 	if (size < 0 || size > NBSG ) {
 
-		/*
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
 	} else if (size <= 16) {
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_LINE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_LINE, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_LINE, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
 
 	} else if (size <= NBPG) {
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_PAGE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_PAGE, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_PAGE, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
 	} else {
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_SEGMENT;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_SEGMENT, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_SEGMENT, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
 	}
 #else
-	/*
-	REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-	*/
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 		      cpu, DATA_CMMU, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
+	CMMU_UNLOCK;
 	splx(s);
 }
 
@@ -1553,274 +1446,184 @@ m18x_cmmu_flush_remote_data_cache(cpu, physaddr, size)
  * flush data cache
  */ 
 void
-m18x_cmmu_flush_data_cache(physaddr, size)
+m8820x_cmmu_flush_data_cache(physaddr, size)
 	vm_offset_t physaddr;
 	int size;
 { 
 	int cpu;
 	cpu = cpu_number();
-	m18x_cmmu_flush_remote_data_cache(cpu, physaddr, size);
+	m8820x_cmmu_flush_remote_data_cache(cpu, physaddr, size);
 }
 
 /*
  * sync dcache (and icache too)
  */
-void
-m18x_cmmu_sync_cache(physaddr, size)
+static void
+m8820x_cmmu_sync_cache(physaddr, size)
+	vm_offset_t physaddr;
+	int size;
+{
+	register int s = splhigh();
+	int cpu;
+	
+	CMMU_LOCK;
+	cpu = cpu_number();
+
+#if !defined(BROKEN_MMU_MASK)
+	if (size < 0 || size > NBSG ) {
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
+			      cpu, DATA_CMMU, 0, 0);
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
+			      cpu, INST_CMMU, 0, 0);
+	} else if (size <= 16) {
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+			      cpu, INST_CMMU, 0, (unsigned)physaddr);
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_LINE, MODE_VAL,
+			      cpu, INST_CMMU, 0, 0);
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_LINE, MODE_VAL,
+			      cpu, DATA_CMMU, 0, 0);
+	} else if (size <= NBPG) {
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+			      cpu, INST_CMMU, 0, (unsigned)physaddr);
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_PAGE, MODE_VAL,
+			      cpu, INST_CMMU, 0, 0);
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_PAGE, MODE_VAL,
+			      cpu, DATA_CMMU, 0, 0);
+	} else {
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+			      cpu, INST_CMMU, 0, (unsigned)physaddr);
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_SEGMENT, MODE_VAL,
+			      cpu, INST_CMMU, 0, 0);
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_SEGMENT, MODE_VAL,
+			      cpu, DATA_CMMU, 0, 0);
+	}
+#else
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
+		      cpu, DATA_CMMU, 0, 0);
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
+		      cpu, INST_CMMU, 0, 0);
+#endif /* !BROKEN_MMU_MASK */
+	splx(s);
+	CMMU_UNLOCK;
+}
+
+static void 
+m8820x_cmmu_sync_inval_cache(physaddr, size)
 	vm_offset_t physaddr;
 	int size;
 {
 	register int s = splhigh();
 	int cpu;
 	cpu = cpu_number();
+	CMMU_LOCK;
 
 #if !defined(BROKEN_MMU_MASK)
 	if (size < 0 || size > NBSG ) {
-		/*
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CB_ALL;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CB_ALL;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
 	} else if (size <= 16) {
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CB_LINE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_LINE, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_LINE, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CB_LINE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_LINE, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_LINE, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
 	} else if (size <= NBPG) {
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CB_PAGE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_PAGE, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_PAGE, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CB_PAGE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_PAGE, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_PAGE, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
 	} else {
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CB_SEGMENT;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_SEGMENT, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_SEGMENT, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CB_SEGMENT;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_SEGMENT, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_SEGMENT, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
 	}
+
 #else
-	/*
-	REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CB_ALL;
-	REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CB_ALL;
-	*/
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 		      cpu, DATA_CMMU, 0, 0);
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 		      cpu, INST_CMMU, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
+	CMMU_UNLOCK;
 	splx(s);
 }
 
-void 
-m18x_cmmu_sync_inval_cache(physaddr, size)
+static void
+m8820x_cmmu_inval_cache(physaddr, size)
 	vm_offset_t physaddr;
 	int size;
 {
 	register int s = splhigh();
 	int cpu;
 	cpu = cpu_number();
+	CMMU_LOCK;
 
 #if !defined(BROKEN_MMU_MASK)
 	if (size < 0 || size > NBSG ) {
-		/*
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
 	} else if (size <= 16) {
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_LINE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_LINE, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_LINE, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_LINE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_LINE, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_LINE, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
 	} else if (size <= NBPG) {
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_PAGE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_PAGE, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_PAGE, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_PAGE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_PAGE, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_PAGE, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
 	} else {
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_SEGMENT;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_SEGMENT, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_SEGMENT, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_SEGMENT;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
+		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
 			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_SEGMENT, MODE_VAL,
+		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_SEGMENT, MODE_VAL,
 			      cpu, DATA_CMMU, 0, 0);
 	}
-
 #else
-	/*
-	REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-	REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_CBI_ALL;
-	*/
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
 		      cpu, DATA_CMMU, 0, 0);
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
+	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
 		      cpu, INST_CMMU, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
+	CMMU_UNLOCK;
 	splx(s);
 }
 
 void
-m18x_cmmu_inval_cache(physaddr, size)
-	vm_offset_t physaddr;
-	int size;
-{
-	register int s = splhigh();
-	int cpu;
-	cpu = cpu_number();
-
-#if !defined(BROKEN_MMU_MASK)
-	if (size < 0 || size > NBSG ) {
-		/*
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_INV_ALL;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_INV_ALL;
-		*/
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
-			      cpu, DATA_CMMU, 0, 0);
-		m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
-			      cpu, INST_CMMU, 0, 0);
-	} else if (size <= 16) {
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_INV_LINE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
-			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_LINE, MODE_VAL,
-			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_INV_LINE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
-			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_LINE, MODE_VAL,
-			      cpu, DATA_CMMU, 0, 0);
-	} else if (size <= NBPG) {
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_INV_PAGE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
-			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_PAGE, MODE_VAL,
-			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_INV_PAGE;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
-			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_PAGE, MODE_VAL,
-			      cpu, DATA_CMMU, 0, 0);
-	} else {
-		/*
-		REGS(cpu, DATA_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_INV_SEGMENT;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
-			      cpu, INST_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_SEGMENT, MODE_VAL,
-			      cpu, INST_CMMU, 0, 0);
-		/*
-		REGS(cpu, INST_CMMU).sar = (unsigned)physaddr;
-		REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_INV_SEGMENT;
-		*/
-		m18x_cmmu_set(CMMU_SAR, (unsigned)physaddr, MODE_VAL|ADDR_VAL,
-			      cpu, DATA_CMMU, 0, (unsigned)physaddr);
-		m18x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_SEGMENT, MODE_VAL,
-			      cpu, DATA_CMMU, 0, 0);
-	}
-#else
-	/*
-	REGS(cpu, DATA_CMMU).scr = CMMU_FLUSH_CACHE_INV_ALL;
-	REGS(cpu, INST_CMMU).scr = CMMU_FLUSH_CACHE_INV_ALL;
-	*/
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
-		      cpu, DATA_CMMU, 0, 0);
-	m18x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
-		      cpu, INST_CMMU, 0, 0);
-#endif /* !BROKEN_MMU_MASK */
-
-	splx(s);
-}
-
-void
-m18x_dma_cachectl(va, size, op)
+m8820x_dma_cachectl(va, size, op)
 	vm_offset_t va;
 	int size, op;
 {
@@ -1834,11 +1637,11 @@ m18x_dma_cachectl(va, size, op)
 			count = size;
 
 		if (op == DMA_CACHE_SYNC)
-			m18x_cmmu_sync_cache(kvtop(va), count);
+			m8820x_cmmu_sync_cache(kvtop(va), count);
 		else if (op == DMA_CACHE_SYNC_INVAL)
-			m18x_cmmu_sync_inval_cache(kvtop(va), count);
+			m8820x_cmmu_sync_inval_cache(kvtop(va), count);
 		else
-			m18x_cmmu_inval_cache(kvtop(va), count);
+			m8820x_cmmu_inval_cache(kvtop(va), count);
 
 		va = (vm_offset_t)((int)va + count);
 		size -= count;
@@ -1846,11 +1649,11 @@ m18x_dma_cachectl(va, size, op)
 #else
 
 	if (op == DMA_CACHE_SYNC)
-		m18x_cmmu_sync_cache(kvtop(va), size);
+		m8820x_cmmu_sync_cache(kvtop(va), size);
 	else if (op == DMA_CACHE_SYNC_INVAL)
-		m18x_cmmu_sync_inval_cache(kvtop(va), size);
+		m8820x_cmmu_sync_inval_cache(kvtop(va), size);
 	else
-		m18x_cmmu_inval_cache(kvtop(va), size);
+		m8820x_cmmu_inval_cache(kvtop(va), size);
 #endif /* !BROKEN_MMU_MASK */
 }
 
@@ -1930,7 +1733,7 @@ union batcu {
  * If cmmu == -1, the data cmmu for the current cpu is used.
  */
 void
-m18x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
+m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 	unsigned address, supervisor_flag, verbose_flag;
 	int cmmu_num;
 {
@@ -2010,7 +1813,7 @@ m18x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 			return;
 		}
 
-		if (cmmu[cmmu_num].cmmu_alive == 0) {
+		if (m8820x_cmmu[cmmu_num].cmmu_alive == 0) {
 			DEBUG_MSG("warning: cmmu %d is not alive.\n", cmmu_num);
 #if 0
 			return;
@@ -2018,24 +1821,24 @@ m18x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 		}
 
 		if (!verbose_flag) {
-			if (!(cmmu[cmmu_num].cmmu_regs->sctr & CMMU_SCTR_SE))
+			if (!(m8820x_cmmu[cmmu_num].cmmu_regs->sctr & CMMU_SCTR_SE))
 				DEBUG_MSG("WARNING: snooping not enabled for CMMU#%d.\n",
 					  cmmu_num);
 		} else {
 			int i;
 			for (i=0; i<MAX_CMMUS; i++)
-				if ((i == cmmu_num || cmmu[i].cmmu_alive) &&
-				    (verbose_flag>1 || !(cmmu[i].cmmu_regs->sctr&CMMU_SCTR_SE))) {
+				if ((i == cmmu_num || m8820x_cmmu[i].cmmu_alive) &&
+				    (verbose_flag>1 || !(m8820x_cmmu[i].cmmu_regs->sctr&CMMU_SCTR_SE))) {
 					DEBUG_MSG("CMMU#%d (cpu %d %s) snooping %s\n", i,
-						  cmmu[i].cmmu_cpu, cmmu[i].which ? "data" : "inst",
-						  (cmmu[i].cmmu_regs->sctr & CMMU_SCTR_SE) ? "on":"OFF");
+						  m8820x_cmmu[i].cmmu_cpu, m8820x_cmmu[i].which ? "data" : "inst",
+						  (m8820x_cmmu[i].cmmu_regs->sctr & CMMU_SCTR_SE) ? "on":"OFF");
 				}
 		}
 
 		if (supervisor_flag)
-			value = cmmu[cmmu_num].cmmu_regs->sapr;
+			value = m8820x_cmmu[cmmu_num].cmmu_regs->sapr;
 		else
-			value = cmmu[cmmu_num].cmmu_regs->uapr;
+			value = m8820x_cmmu[cmmu_num].cmmu_regs->uapr;
 
 	}
 
@@ -2046,7 +1849,7 @@ m18x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 		int i;
 		union batcu batc;
 		for (i = 0; i < 8; i++) {
-			batc.bits = cmmu[cmmu_num].batc[i];
+			batc.bits = m8820x_cmmu[cmmu_num].batc[i];
 			if (batc.field.v == 0) {
 				if (verbose_flag>1)
 					DEBUG_MSG("cmmu #%d batc[%d] invalid.\n", cmmu_num, i);
@@ -2070,7 +1873,7 @@ m18x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 #endif /* 0 */
 	{
 		union ssr ssr;
-		struct cmmu_regs *cmmu_regs = cmmu[cmmu_num].cmmu_regs;
+		struct cmmu_regs *cmmu_regs = m8820x_cmmu[cmmu_num].cmmu_regs;
 		cmmu_regs->sar = address;
 		cmmu_regs->scr = supervisor_flag ? CMMU_PROBE_SUPER : CMMU_PROBE_USER;
 		ssr.bits = cmmu_regs->ssr;
@@ -2265,7 +2068,7 @@ m18x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 }
 
 void
-m18x_cmmu_cache_state(addr, supervisor_flag)
+m8820x_cmmu_cache_state(addr, supervisor_flag)
 	unsigned addr, supervisor_flag;
 {
 	static char *vv_name[4] =
@@ -2277,12 +2080,12 @@ m18x_cmmu_cache_state(addr, supervisor_flag)
 		union cssp cssp;
 		struct cmmu_regs *R;
 		unsigned tag, line;
-		if (!cmmu[cmmu_num].cmmu_alive)
+		if (!m8820x_cmmu[cmmu_num].cmmu_alive)
 			continue;
-		R = cmmu[cmmu_num].cmmu_regs;
+		R = m8820x_cmmu[cmmu_num].cmmu_regs;
 		DEBUG_MSG("cmmu #%d %s cmmu for cpu %d.\n", cmmu_num,
-			  cmmu[cmmu_num].which ? "data" : "inst", 
-			  cmmu[cmmu_num].cmmu_cpu);
+			  m8820x_cmmu[cmmu_num].which ? "data" : "inst", 
+			  m8820x_cmmu[cmmu_num].cmmu_cpu);
 		R->sar = addr;
 		R->scr = supervisor_flag ? CMMU_PROBE_SUPER : CMMU_PROBE_USER;
 
@@ -2319,20 +2122,22 @@ m18x_cmmu_cache_state(addr, supervisor_flag)
 
 }
 
+#endif /* DDB */
+
 void
-m18x_show_cmmu_info(addr)
+m8820x_show_cmmu_info(addr)
 	unsigned addr;
 {
 	int cmmu_num;
-	m18x_cmmu_cache_state(addr, 1);
+	m8820x_cmmu_cache_state(addr, 1);
 
 	for (cmmu_num = 0; cmmu_num < MAX_CMMUS; cmmu_num++)
-		if (cmmu[cmmu_num].cmmu_alive) {
+		if (m8820x_cmmu[cmmu_num].cmmu_alive) {
 			DEBUG_MSG("cmmu #%d %s cmmu for cpu %d: ", cmmu_num,
-				  cmmu[cmmu_num].which ? "data" : "inst", 
-				  cmmu[cmmu_num].cmmu_cpu);
-			m18x_cmmu_show_translation(addr, 1, 0, cmmu_num);
+				  m8820x_cmmu[cmmu_num].which ? "data" : "inst", 
+				  m8820x_cmmu[cmmu_num].cmmu_cpu);
+			m8820x_cmmu_show_translation(addr, 1, 0, cmmu_num);
 		}
 }
 
-#endif /* DDB */
+#endif /* M88100 */

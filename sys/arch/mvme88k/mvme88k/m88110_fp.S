@@ -1,4 +1,4 @@
-/* $OpenBSD: m88110_fp.S,v 1.6 2001/08/24 22:53:15 miod Exp $	*/
+/* $OpenBSD: m88110_fp.S,v 1.7 2001/12/13 08:55:52 smurph Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -47,10 +47,11 @@
  * 1) Unimplemented Floating Point Instruction
  * 2) Floating Point Privilege Violation
  */
+#ifdef M88110
 
 #include "assym.h"
-#include <machine/trap.h>
 #include <machine/asm.h>
+#include <machine/trap.h>
 
 	.text
 ENTRY(m88110_Xfp_precise)
@@ -82,7 +83,7 @@ ASGLOBAL(m88110_FPuimp)
 	st      r3,r31,32       /* save exception frame */
 	or      r2,r0,T_FPEPFLT /* load trap type */
 	or	r3, r29, r0
-	bsr     _C_LABEL(trap197)        /* trap */
+	bsr     _m88110_trap      /* trap */
 	ld      r1,r31,36       /* recover return address */
 	addu    r31,r31,40      /* deallocate stack */
  	jmp	r1
@@ -93,7 +94,7 @@ ASGLOBAL(m88110_FPpriviol)
 	st      r3,r31,32       /* save exception frame */
 	or      r2,r0,T_PRIVINFLT /* load trap type */
 	or	r3, r29, r0
-	bsr     _C_LABEL(trap197)        /* trap */
+	bsr     _m88110_trap      /* trap */
 	ld      r1,r31,36       /* recover return address */
 	addu    r31,r31,40      /* deallocate stack */
  	jmp	r1
@@ -104,7 +105,6 @@ ENTRY(set_tcfp)
 	or	r2, r2, lo16(0x200000)
 	jmp.n	r1
 	fstcr	r2, fcr0
-
 
 /*************************************************************************
  *************************************************************************
@@ -258,3 +258,5 @@ ENTRY(get_mmureg)
 	ldcr	r2,	cr26
 regmark2: jmp.n	r1
 	ldcr	r2,	cr25
+#endif /* M88110 */
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt.c,v 1.2 2001/02/01 03:38:23 smurph Exp $ */
+/*	$OpenBSD: crt.c,v 1.3 2001/12/13 08:55:52 smurph Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -33,6 +33,8 @@ start()
 	asm("|	enable SFU1");
 	asm("	ldcr	r25,cr1");
 	asm("	clr	r25,r25,1<3>"); /* bit 3 is SFU1D */
+	asm("	set	r25,r25,1<25>"); /* bit 25 is Serialize */
+	asm("	set	r25,r25,1<29>"); /* bit 29 is Serial mode execution */
 	asm("	stcr	r25,cr1");
 
 	bugargs.dev_lun = dev_lun;

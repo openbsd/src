@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.23 2001/12/05 01:57:15 provos Exp $ */
+/*	$OpenBSD: param.h,v 1.24 2001/12/13 08:55:51 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -173,16 +173,30 @@ extern int delay __P((int));
 #define  DELAY(x)             delay(x)
 
 extern int cputyp;
+extern int brdtyp;
 extern int cpumod;
 #endif
 
 /*
+ * Values for the brdtyp variable.
+ */
+#define BRD_187		0x187
+#define BRD_188		0x188
+#define BRD_197		0x197
+#define BRD_8120	0x8120
+
+/*
  * Values for the cputyp variable.
  */
-#define CPU_187		0x187
-#define CPU_188		0x188
-#define CPU_197		0x197
-#define CPU_8120	0x8120
+#define CPU_88100	0x100
+#define CPU_88110	0x110
+
+/*
+ * Values for the cpumod variable.
+ */
+#define MOD_LE		0x01
+#define MOD_SP		0x02
+#define MOD_DP		0x03
 
 #endif /* !_MACHINE_PARAM_H_ */
 

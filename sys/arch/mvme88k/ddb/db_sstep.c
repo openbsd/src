@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.7 2001/03/16 00:01:51 miod Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.8 2001/12/13 08:55:51 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -30,6 +30,7 @@
 #include <sys/systm.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>	/* db_get_value() */
+#include <ddb/db_break.h>	/* db_breakpoint_t */
 
 /*
  * Support routines for software single step.
@@ -38,8 +39,12 @@
  *
  */
 
-boolean_t inst_delayed __P((unsigned ins));
-db_expr_t getreg_val __P((unsigned regno, db_regs_t *frame));
+boolean_t inst_delayed __P((unsigned int ins));
+
+#ifdef INTERNAL_SSTEP
+db_breakpoint_t	db_not_taken_bkpt = 0;
+db_breakpoint_t	db_taken_bkpt = 0;
+#endif 
 
 /*
  * Returns TRUE is the instruction a branch or jump instruction
@@ -47,7 +52,7 @@ db_expr_t getreg_val __P((unsigned regno, db_regs_t *frame));
  */
 boolean_t
 inst_branch(ins)
-	unsigned ins;
+	unsigned int ins;
 {
 	/* check high five bits */
 	switch (ins >> (32 - 5)) {
@@ -72,7 +77,7 @@ inst_branch(ins)
  */
 unsigned
 inst_load(ins)
-	unsigned ins;
+	unsigned int ins;
 {
 	/* look at the top six bits, for starters */
 	switch (ins >> (32 - 6)) {
@@ -116,7 +121,7 @@ inst_load(ins)
  */
 unsigned
 inst_store(ins)
-	unsigned ins;
+	unsigned int ins;
 {
 	/* decode top 6 bits again */
 	switch (ins >> (32 - 6)) {
@@ -156,7 +161,7 @@ inst_store(ins)
  */
 boolean_t
 inst_delayed(ins)
-	unsigned ins;
+	unsigned int ins;
 {
 	/* check the br, bsr, bb0, bb1, bcnd cases */
 	switch ((ins & 0xfc000000U) >> (32 - 6)) {
@@ -248,8 +253,10 @@ branch_taken(inst, pc, func, func_data)
 
 	/* check jmp/jsr case */
 	/* check bits 5-31, skipping 10 & 11 */
-	if ((inst & 0xfffff3e0U) == 0xf400c000U)
-		return (*func)(func_data, inst & 0x1f);  /* the register value */
+	if ((inst & 0xfffff3e0U) == 0xf400c000U){
+		return (*func)(func_data, (inst & 0x0000001fU));  /* the register value */
+	}
+
 
 	panic("branch_taken");
 	return 0; /* keeps compiler happy */
@@ -260,17 +267,71 @@ branch_taken(inst, pc, func, func_data)
  *              Returns the value of the register in the specified
  *              frame. Only makes sense for general registers.
  */
-db_expr_t
-getreg_val(regno, frame)
-	unsigned regno;
+
+register_t
+getreg_val(frame, regno)
 	db_regs_t *frame;
+	int regno;
 {
 	if (regno == 0)
 		return 0;
 	else if (regno < 31)
 		return frame->r[regno];
 	else {
-		panic("bad register number to getreg_val.");
+		panic("bad register number (%d) to getreg_val.", regno);
 		return 0;/*to make compiler happy */
 	}
 }
+
+#ifdef INTERNAL_SSTEP
+void
+db_set_single_step(regs)
+	register db_regs_t *regs;
+{
+	if (cputyp == CPU_88110){
+		 ((regs)->epsr |= (PSR_TRACE | PSR_SER));
+	} else {
+		db_addr_t pc = PC_REGS(regs);
+#ifndef SOFTWARE_SSTEP_EMUL
+		db_addr_t brpc;
+		u_int inst;
+
+		/*
+		 * User was stopped at pc, e.g. the instruction
+		 * at pc was not executed.
+		 */
+		inst = db_get_value(pc, sizeof(int), FALSE);
+		if (inst_branch(inst) || inst_call(inst) || inst_return(inst)) {
+			brpc = branch_taken(inst, pc, getreg_val, regs);
+			if (brpc != pc) {	/* self-branches are hopeless */
+				db_taken_bkpt = db_set_temp_breakpoint(brpc);
+			}
+#if 0
+		/* XXX this seems like a true bug, no?  */
+		pc = next_instr_address(pc, 1);
+#endif
+		}
+#endif /*SOFTWARE_SSTEP_EMUL*/
+		pc = next_instr_address(pc, 0);
+		db_not_taken_bkpt = db_set_temp_breakpoint(pc);
+	}
+}
+
+void
+db_clear_single_step(regs)
+	db_regs_t *regs;
+{
+	if (cputyp == CPU_88110){
+		((regs)->epsr &= ~(PSR_TRACE | PSR_SER));
+	} else {
+		if (db_taken_bkpt != 0) {
+		    db_delete_temp_breakpoint(db_taken_bkpt);
+		    db_taken_bkpt = 0;
+		}
+		if (db_not_taken_bkpt != 0) {
+		    db_delete_temp_breakpoint(db_not_taken_bkpt);
+		    db_not_taken_bkpt = 0;
+		}
+	}
+}
+#endif 

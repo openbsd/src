@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_number.h,v 1.6 2001/08/26 14:31:07 miod Exp $	*/
+/*	$OpenBSD: cpu_number.h,v 1.7 2001/12/13 08:55:51 smurph Exp $	*/
 
 /* 
  * Mach Operating System
@@ -39,8 +39,7 @@ static unsigned cpu_number __P((void));
 static __inline__ unsigned cpu_number(void)
 {
 	register unsigned cpu;
-
-	if (cputyp != CPU_188 || number_cpus == 1) return 0;
+	if (brdtyp != BRD_188 || number_cpus == 1) return 0;
 	__asm__ ("ldcr %0, cr18" : "=r" (cpu));
 	return (cpu & 3);
 }

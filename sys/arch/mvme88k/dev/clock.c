@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 2001/10/28 00:57:20 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.12 2001/12/13 08:55:51 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -191,7 +191,7 @@ clockattach(parent, self, args)
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		prof_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih);
-		mdfp.clock_init_func = &sbc_initclock;
+		md.clock_init_func = sbc_initclock;
 		printf(": VME1x7");
 		break;
 #endif /* NPCCTWO */
@@ -202,7 +202,7 @@ clockattach(parent, self, args)
 		sc->sc_profih.ih_wantframe = 1;
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		sysconintr_establish(SYSCV_TIMER1, &sc->sc_profih);
-		mdfp.clock_init_func = &m188_initclock;
+		md.clock_init_func = m188_initclock;
 		printf(": VME188");
 		break;
 #endif /* NSYSCON */
@@ -264,7 +264,7 @@ delay(us)
 	 * Do not go to the real timer until vme device is present.
 	 * Or, in the case of MVME188, not at all.
 	 */
-	if (sys_vme2 == NULL || cputyp == CPU_188) {
+	if (sys_vme2 == NULL || brdtyp == BRD_188) {
 		c = 3 * us;
 		while (--c > 0);
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.12 2001/11/06 18:41:10 art Exp $ */
+/*	$OpenBSD: trap.h,v 1.13 2001/12/13 08:55:51 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -88,14 +88,19 @@ int ss_inst_delayed(unsigned ins);
 unsigned ss_next_instr_address(struct proc *p, unsigned pc, unsigned delay_slot);
 int cpu_singlestep(register struct proc *p);
 
-#if defined(MVME187) || defined(MVME188)
-void syscall(register_t code, struct m88100_saved_state *tf);
-void trap18x(unsigned type, struct m88100_saved_state *frame);
-#endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-void m197_syscall(register_t code, struct m88100_saved_state *tf);
-void trap197(unsigned type, struct m88100_saved_state *frame);
-#endif /* MVME197 */
+#ifdef M88100
+void m88100_trap __P((unsigned, struct m88100_saved_state *));
+void m88100_syscall __P((register_t, struct m88100_saved_state *));
+#endif /* M88100 */
+
+#ifdef M88110
+void m88110_trap __P((unsigned, struct m88100_saved_state *));
+void m88110_syscall __P((register_t, struct m88100_saved_state *));
+#endif /* M88110 */
+
+/* machine dependant trap and syscall macros */
+#define trap(type, frame)	(*md.interrupt_func)(type, frame)
+#define syscall(code, frame)	(*md.syscall_func)(code, frame)
 
 #endif /* _LOCORE */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.14 2001/11/27 05:37:02 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.15 2001/12/13 08:55:52 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -28,14 +28,17 @@
 
 #include "assym.h"
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 
+#include <machine/cpu_number.h>		/* cpu_number()		*/
+#include <machine/board.h>		/* m188 bit defines	*/
+#include <machine/cmmu.h>		/* DMT_VALID		*/
 #include <machine/asm.h>		/* END_OF_VECTOR_LIST, etc.	*/
 #include <machine/asm_macro.h>		/* enable/disable interrupts	*/
 #include <machine/mmu.h>
 #include <machine/board.h>		/* m188 bit defines	*/
-#include <machine/cmmu.h>
 #include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/locore.h>
 #include <machine/m88100.h>		/* DMT_VALID		*/
@@ -62,8 +65,18 @@
 #define DMT_HALF	2
 #define DMT_WORD	4
 
-extern volatile u_char *int_mask_level;	/* machdep.c */
+typedef struct {
+   unsigned word_one,
+   word_two;
+} m88k_exception_vector_area;
 
+extern volatile unsigned int * int_mask_reg[MAX_CPUS]; /* in machdep.c */
+extern unsigned master_cpu;      /* in cmmu.c */
+
+/* FORWARDS */
+void vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list);
+
+#ifdef M88100
 static struct {
 	unsigned char    offset;
 	unsigned char    size;
@@ -73,6 +86,7 @@ static struct {
 	{0, DMT_BYTE}, {0, 0}, {0, 0}, {0, 0},
 	{0, DMT_HALF}, {0, 0}, {0, 0}, {0, DMT_WORD}
 };
+#endif 
 
 #ifdef DATA_DEBUG
 int data_access_emulation_debug = 0;
@@ -94,7 +108,7 @@ void setlevel __P((int));
 void db_setlevel __P((int));
 #endif
 
-#if defined(MVME187) || defined(MVME188)
+#ifdef M88100
 void 
 dae_print(unsigned *eframe)
 {
@@ -136,7 +150,6 @@ dae_print(unsigned *eframe)
 
 	}
 }
-#endif /* defined(MVME187) || defined(MVME188) */
 
 void
 data_access_emulation(unsigned *eframe)
@@ -281,6 +294,7 @@ data_access_emulation(unsigned *eframe)
    }
    eframe[EF_DMT0] = 0;
 }
+#endif /* M88100 */
 
 /*
  ***********************************************************************
@@ -291,13 +305,6 @@ data_access_emulation(unsigned *eframe)
 
 #define EMPTY_BR	0xC0000000U      /* empty "br" instruction */
 #define NO_OP 		0xf4005800U      /* "or r0, r0, r0" */
-
-typedef struct {
-   unsigned word_one,
-   word_two;
-} m88k_exception_vector_area;
-
-void vector_init __P((m88k_exception_vector_area *, unsigned *));
 
 #define BRANCH(FROM, TO) (EMPTY_BR | ((unsigned)(TO) - (unsigned)(FROM)) >> 2)
 
@@ -329,28 +336,27 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 	}
 
 	switch (cputyp) {
-#ifdef MVME197
-	case CPU_197:
+#ifdef M88110
+	case CPU_88110:
 		while (num < 496) {
-			SET_VECTOR(num, to, m197_sigsys);
+			SET_VECTOR(num, to, m88110_sigsys);
 			num++;
 		}
 		num++; /* skip 496, BUG ROM vector */
-		SET_VECTOR(450, to, m197_syscall_handler);
+		SET_VECTOR(450, to, m88110_syscall_handler);
 
 		while (num <= SIGSYS_MAX)
-			SET_VECTOR(num++, to, m197_sigsys);
+			SET_VECTOR(num++, to, m88110_sigsys);
 
 		while (num <= SIGTRAP_MAX)
-			SET_VECTOR(num++, to, m197_sigtrap);
+			SET_VECTOR(num++, to, m88110_sigtrap);
 
-		SET_VECTOR(504, to, m197_stepbpt);
-		SET_VECTOR(511, to, m197_userbpt);
+		SET_VECTOR(504, to, m88110_stepbpt);
+		SET_VECTOR(511, to, m88110_userbpt);
 		break;
 #endif /* MVME197 */
-#if defined(MVME187) || defined(MVME188)
-	case CPU_187:
-	case CPU_188:
+#ifdef M88100
+	case CPU_88100:
 		while (num < 496) {
 			SET_VECTOR(num, to, sigsys);
 			num++;
@@ -485,17 +491,17 @@ spl(void)
 	int cpu = 0;	/* prevent warning */
 #endif 
 	psr = disable_interrupts_return_psr();
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		cpu = cpu_number();
 		curspl = m188_curspl[cpu];
 		break;
 #endif /* MVME188 */
 #if defined(MVME187) || defined(MVME197)
-	case CPU_187:
-	case CPU_197:
-		curspl = *int_mask_level;
+	case BRD_187:
+	case BRD_197:
+		curspl = *md.intr_mask;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}
@@ -514,17 +520,17 @@ db_spl(void)
 #endif 
 
 	psr = disable_interrupts_return_psr();
-	switch (cputyp) {
-#ifdef MVME188
-	case CPU_188:
+	switch (brdtyp) {
+   #ifdef MVME188
+	case BRD_188:
 		cpu = cpu_number();
 		curspl = m188_curspl[cpu];
 		break;
-#endif /* MVME188 */
-#if defined(MVME187) || defined(MVME197)
-	case CPU_187:
-	case CPU_197:
-		curspl = *int_mask_level;
+   #endif /* MVME188 */
+   #if defined(MVME187) || defined(MVME197)
+	case BRD_187:
+	case BRD_197:
+		curspl = *md.intr_mask;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}
@@ -560,19 +566,19 @@ setipl(unsigned level)
 	}
 
 	psr = disable_interrupts_return_psr();
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		cpu = cpu_number();
 		curspl = m188_curspl[cpu];
 		setlevel(level);
 		break;
 #endif /* MVME188 */
 #if defined(MVME187) || defined(MVME197)
-	case CPU_187:
-	case CPU_197:
-		curspl = *int_mask_level;
-		*int_mask_level = level;
+	case BRD_187:
+	case BRD_197:
+		curspl = *md.intr_mask;
+		*md.intr_mask = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}
@@ -598,19 +604,19 @@ db_setipl(unsigned level)
 #endif 
 
 	psr = disable_interrupts_return_psr();
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		cpu = cpu_number();
 		curspl = m188_curspl[cpu];
 		db_setlevel(level);
 		break;
 #endif /* MVME188 */
 #if defined(MVME187) || defined(MVME197)
-	case CPU_187:
-	case CPU_197:
-		curspl = *int_mask_level;
-		*int_mask_level = level;
+	case BRD_187:
+	case BRD_197:
+		curspl = *md.intr_mask;
+		*md.intr_mask = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}

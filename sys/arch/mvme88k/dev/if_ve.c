@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.11 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.12 2001/12/13 08:55:51 smurph Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -71,7 +71,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/bugio.h>
-#include <machine/mmu.h>	/* DMA_CACHE_SYNC, etc... */
+#include <machine/cmmu.h>	/* DMA_CACHE_SYNC, etc... */
 
 #include <mvme88k/dev/if_vereg.h>
 #include <mvme88k/dev/if_vevar.h>
@@ -247,11 +247,9 @@ vematch(parent, vcf, args)
 {
 
 	struct confargs *ca = args;
-	if (!badvaddr((unsigned)ca->ca_vaddr, 1)) {
-		return (1);
-	} else {
+	if (badvaddr((unsigned)ca->ca_vaddr, 1))
 		return (0);
-	}           
+	return (1);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.15 2001/11/23 00:39:41 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.16 2001/12/13 08:55:51 smurph Exp $
 #	
 maxpartitions 16
 
@@ -14,12 +14,12 @@ file	arch/mvme88k/dev/bugtty.c			bugtty needs-count
 device cpu
 attach cpu at mainbus
 
-device busswitch { [offset = -1], [ ipl = 0 ] }
-attach busswitch at mainbus
-file	arch/mvme88k/dev/busswitch.c			busswitch needs-count
+device bussw { [offset = -1], [ ipl = 0 ] }
+attach bussw at mainbus
+file	arch/mvme88k/dev/bussw.c			bussw needs-count
 
 device pcctwo { [offset = -1], [ ipl = 0 ] }
-attach pcctwo at busswitch, mainbus
+attach pcctwo at bussw, mainbus
 file	arch/mvme88k/dev/pcctwo.c			pcctwo needs-count
 
 device syscon { [offset = -1], [ ipl = 0 ] }
@@ -88,8 +88,8 @@ file	netns/ns_cksum.c				ns
 file	arch/mvme88k/mvme88k/autoconf.c
 file	arch/mvme88k/mvme88k/conf.c
 file	arch/mvme88k/mvme88k/cmmu.c
-file	arch/mvme88k/mvme88k/m18x_cmmu.c		mvme187 | mvme188
-file	arch/mvme88k/mvme88k/m197_cmmu.c		mvme197
+file	arch/mvme88k/mvme88k/m8820x.c			mvme187 | mvme188
+file	arch/mvme88k/mvme88k/m88110.c			mvme197
 file	arch/mvme88k/mvme88k/disksubr.c
 file	arch/mvme88k/mvme88k/dkbad.c
 file	arch/mvme88k/mvme88k/eh.S

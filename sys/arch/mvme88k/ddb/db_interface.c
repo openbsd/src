@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.18 2001/11/27 05:37:00 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.19 2001/12/13 08:55:51 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -37,12 +37,13 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/m882xx.h>		 /* CMMU defs		        */
-#include <machine/trap.h>		 /* current_thread()            */
-#include <machine/db_machdep.h>		 /* local ddb stuff             */
-#include <machine/bugio.h>		 /* bug routines 		*/
+#include <machine/asm_macro.h>		/* flush_pipeline()	*/
+#include <machine/trap.h>		/* current_thread()	*/
+#include <machine/db_machdep.h>		/* local ddb stuff	*/
+#include <machine/bugio.h>		/* bug routines		*/
 #include <machine/locore.h>		 
-#include <machine/mmu.h>
+#include <machine/cmmu.h>		/* CMMU defs		*/
+#include <machine/m8820x.h>		/* temporary unitl I can do M88100 defs	*/
 #include <machine/cpu_number.h>
 
 #include <ddb/db_command.h>
@@ -70,6 +71,7 @@ char *db_task_name __P((void));
 int m88k_dmx_print __P((unsigned, unsigned, unsigned, unsigned));
 void m88k_db_pause __P((unsigned));
 void m88k_db_print_frame __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_registers __P((db_expr_t, int, db_expr_t, char *));
 void m88k_db_where __P((db_expr_t, int, db_expr_t, char *));
 void m88k_db_frame_search __P((db_expr_t, int, db_expr_t, char *));
 void m88k_db_iflush __P((db_expr_t, int, db_expr_t, char *));
@@ -254,7 +256,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	    R(24), R(25), R(26), R(27), R(28), R(29));
 	db_printf("R30-31: 0x%08x  0x%08x\n", R(30), R(31));
 
-	db_printf("sxip: 0x%08x ", s->sxip & ~3);
+	db_printf("%sxip: 0x%08x ", cputyp == CPU_88110 ? "e" : "s", s->sxip & ~3);
 	db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->sxip),
 	    &name, &offset);
 	if (name != 0 && (unsigned)offset <= db_maxoff)
@@ -262,27 +264,36 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	db_printf("\n");
 
 	if (s->snip != s->sxip + 4) {
-		db_printf("snip: 0x%08x ", s->snip);
+		db_printf("%snip: 0x%08x ", cputyp == CPU_88110 ? "e" : "s", s->snip);
 		db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->snip),
 		    &name, &offset);
 		if (name != 0 && (unsigned)offset <= db_maxoff)
 			db_printf("%s+0x%08x", name, (unsigned)offset);
 		db_printf("\n");
 	}
-
-	if (s->sfip != s->snip + 4) {
-		db_printf("sfip: 0x%08x ", s->sfip);
-		db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->sfip),
-		    &name, &offset);
-		if (name != 0 && (unsigned)offset <= db_maxoff)
-			db_printf("%s+0x%08x", name, (unsigned)offset);
-		db_printf("\n");
+	
+	if (cputyp != CPU_88110) {
+		if (s->sfip != s->snip + 4) {
+			db_printf("sfip: 0x%08x ", s->sfip);
+			db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->sfip),
+			    &name, &offset);
+			if (name != 0 && (unsigned)offset <= db_maxoff)
+				db_printf("%s+0x%08x", name, (unsigned)offset);
+			db_printf("\n");
+		}
+	} else {
+		db_printf("fpsr: 0x%08x fpcr: 0x%08x fpecr: 0x%08x\n",
+			  s->fpsr, s->fpcr, s->fpecr);
+		db_printf("dsap 0x%08x duap 0x%08x dsr 0x%08x dlar 0x%08x dpar 0x%08x\n",
+			  s->dsap, s->duap, s->dsr, s->dlar, s->dpar);
+		db_printf("isap 0x%08x iuap 0x%08x isr 0x%08x ilar 0x%08x ipar 0x%08x\n",
+			  s->isap, s->iuap, s->isr, s->ilar, s->ipar);
 	}
 
-	db_printf("vector: 0x%02x                    interrupt mask: 0x%08x\n",
-	    s->vector, s->mask);
 	db_printf("epsr: 0x%08x                current process: 0x%x\n",
 	    s->epsr, curproc);
+	db_printf("vector: 0x%02x                     interrupt mask: 0x%08x\n",
+	    s->vector, s->mask);
 
 	/*
 	 * If the vector indicates trap, instead of an exception or
@@ -292,54 +303,68 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	 */
 
 	if (!(s->vector <= 10 || (114 <= s->vector && s->vector <= 127))) {
-		db_printf("\n\n");
+		db_printf("\n");
 		return;
 	}
 
-	if (s->vector == /*data*/3 || s->dmt0 & 1) {
-		db_printf("dmt,d,a0: 0x%08x  0x%08x  0x%08x ",
-		    s->dmt0, s->dmd0, s->dma0);
-		db_find_xtrn_sym_and_offset((db_addr_t)s->dma0, &name, &offset);
-		if (name != 0 && (unsigned)offset <= db_maxoff)
-			db_printf("%s+0x%08x", name, (unsigned)offset);
-		db_printf("\n          ");
-		surpress1 = m88k_dmx_print(s->dmt0|0x01, s->dmd0, s->dma0, 0);
-		db_printf("\n");
-
-		if ((s->dmt1 & 1) && (!surpress1)) {
-			db_printf("dmt,d,a1: 0x%08x  0x%08x  0x%08x ",
-			    s->dmt1, s->dmd1, s->dma1);
-			db_find_xtrn_sym_and_offset((db_addr_t)s->dma1,
-			    &name, &offset);
+	if (cputyp != CPU_88110) {
+		if (s->vector == /*data*/3 || s->dmt0 & 1) {
+			db_printf("dmt,d,a0: 0x%08x  0x%08x  0x%08x ",
+			    s->dmt0, s->dmd0, s->dma0);
+			db_find_xtrn_sym_and_offset((db_addr_t)s->dma0, &name, &offset);
 			if (name != 0 && (unsigned)offset <= db_maxoff)
 				db_printf("%s+0x%08x", name, (unsigned)offset);
 			db_printf("\n          ");
-			surpress2 = m88k_dmx_print(s->dmt1, s->dmd1, s->dma1, 1);
+			surpress1 = m88k_dmx_print(s->dmt0|0x01, s->dmd0, s->dma0, 0);
 			db_printf("\n");
-
-			if ((s->dmt2 & 1) && (!surpress2)) {
-				db_printf("dmt,d,a2: 0x%08x  0x%08x  0x%08x ",
-				    s->dmt2, s->dmd2, s->dma2);
-				db_find_xtrn_sym_and_offset((db_addr_t)s->dma2,
+	
+			if ((s->dmt1 & 1) && (!surpress1)) {
+				db_printf("dmt,d,a1: 0x%08x  0x%08x  0x%08x ",
+				    s->dmt1, s->dmd1, s->dma1);
+				db_find_xtrn_sym_and_offset((db_addr_t)s->dma1,
 				    &name, &offset);
 				if (name != 0 && (unsigned)offset <= db_maxoff)
 					db_printf("%s+0x%08x", name, (unsigned)offset);
 				db_printf("\n          ");
-				m88k_dmx_print(s->dmt2, s->dmd2, s->dma2, 2);
+				surpress2 = m88k_dmx_print(s->dmt1, s->dmd1, s->dma1, 1);
 				db_printf("\n");
+	
+				if ((s->dmt2 & 1) && (!surpress2)) {
+					db_printf("dmt,d,a2: 0x%08x  0x%08x  0x%08x ",
+					    s->dmt2, s->dmd2, s->dma2);
+					db_find_xtrn_sym_and_offset((db_addr_t)s->dma2,
+					    &name, &offset);
+					if (name != 0 && (unsigned)offset <= db_maxoff)
+						db_printf("%s+0x%08x", name, (unsigned)offset);
+					db_printf("\n          ");
+					m88k_dmx_print(s->dmt2, s->dmd2, s->dma2, 2);
+					db_printf("\n");
+				}
 			}
 		}
 	}
-
+	
 	if (s->fpecr & 255) { /* floating point error occurred */
 		db_printf("fpecr: 0x%08x fpsr: 0x%08x fpcr: 0x%08x\n",
 		    s->fpecr, s->fpsr, s->fpcr);
-		db_printf("fcr1-4: 0x%08x  0x%08x  0x%08x  0x%08x\n",
-		    s->fphs1, s->fpls1, s->fphs2, s->fpls2);
-		db_printf("fcr5-8: 0x%08x  0x%08x  0x%08x  0x%08x\n",
-		    s->fppt, s->fprh, s->fprl, s->fpit);
+		if (cputyp != CPU_88110) {
+			db_printf("fcr1-4: 0x%08x  0x%08x  0x%08x  0x%08x\n",
+			    s->fphs1, s->fpls1, s->fphs2, s->fpls2);
+			db_printf("fcr5-8: 0x%08x  0x%08x  0x%08x  0x%08x\n",
+			    s->fppt, s->fprh, s->fprl, s->fpit);
+		}
 	}
-	db_printf("\n\n");
+	db_printf("\n");
+}
+
+void
+m88k_db_registers(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	int count;
+	char *modif;
+{
+	m88k_db_print_frame((db_expr_t)DDB_REGS, TRUE, 0, modif);
 }
 
 /************************/
@@ -461,10 +486,13 @@ ddb_break_trap(type, eframe)
 	if (type == T_KDB_BREAK) {
 		/*
 		 * back up an instruction and retry the instruction
-		 * at the breakpoint address
+		 * at the breakpoint address.  mc88110's exip reg 
+		 * already has the adress of the exception instruction.
 		 */
-		eframe->sfip = eframe->snip;
-		eframe->snip = eframe->sxip;
+		if (cputyp != CPU_88110) {
+			eframe->sfip = eframe->snip;
+			eframe->snip = eframe->sxip;
+		}
 	}
 
 	return 0;
@@ -578,7 +606,10 @@ m88k_db_where(addr, have_addr, count, modif)
 
 	s = DDB_REGS;
 
-	l = m88k_pc(s); /* clear low bits */
+	if (cputyp == CPU_88110)
+		l = s->exip & ~3;
+	else 
+		l = m88k_pc(s); /* clear low bits */
 
 	db_find_xtrn_sym_and_offset((db_addr_t) l,&name, (db_expr_t*)&offset);
 	if (name && (unsigned)offset <= db_maxoff)
@@ -815,6 +846,7 @@ struct db_command db_machine_cmds[] =
 {
     {"cache",		0,			0, m88k_cache_cmds},
     {"frame",		m88k_db_print_frame,	0, 0},
+    {"regs",		m88k_db_registers,	0, 0},
     {"noise",		m88k_db_noise,		0, 0},
     {"searchframe",	m88k_db_frame_search,	0, 0},
     {"translate",	m88k_db_translate,      0, 0},

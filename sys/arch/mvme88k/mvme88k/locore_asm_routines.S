@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.16 2001/08/24 22:53:15 miod Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.17 2001/12/13 08:55:52 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -29,13 +29,11 @@
  */
 
 #include "assym.h"
-
-#include <sys/errno.h>
-
 #include <machine/asm.h>
 #include <machine/board.h>
-#include <machine/cpu_number.h>
+#include <machine/param.h>
 #include <machine/trap.h>
+#include <sys/errno.h>
 
 /*****************************************************************************
  * DO_LOAD_ADDRESS
@@ -169,6 +167,227 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 1:	xmem.bu	r3,r2,r0
 2:	jmp	r1
 
+   .data
+
+/*
+ * reserve MAX_CPUS words for lockinit and lockeach;
+ * counters for simple_lock_init calls and lock acquisition calls.
+ */
+
+lockinit:
+   zero 4*MAX_CPUS
+
+lockuse:
+   zero 4*MAX_CPUS
+
+lockpause:
+   zero 4*MAX_CPUS
+
+   .text
+
+/*************************************************************************/
+/******************  SIMPLE LOCK OPERATIONS  *****************************/
+/*************************************************************************/
+
+#ifdef done_in_kernel
+/*************************************************************
+ *************************************************************
+ **
+ **  	void simple_lock_init(int *lock_data)
+ **	{
+ **		*lock_data = 0;
+ **	}
+ **
+ **  	void simple_unlock(simple_lock_t *)
+ **	{
+ **		*lock_data = 0;
+ **	}
+ **/
+#undef simple_unlock
+ENTRY(simple_lock_init)
+	st      r0, r2, 0               /* init */
+        
+	ldcr	r2, SR1
+	extu	r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
+	mask  	r2, r2, 3			/* play it safe */
+        or.u    r3, r0, hi16(lockinit)
+        or      r3, r3, lo16(lockinit)
+        ld      r4, r3[r2]
+        addu    r4, r4, 1
+        jmp.n   r1
+        st      r4, r3[r2]
+        
+ENTRY(simple_unlock)
+        jmp.n   r1
+        st      r0, r2, 0
+
+#if DDB
+/* version of simple_unlock for the debugger - should be identical to
+   simple_unlock, but should never have breakpoints inserted on it */
+ENTRY(db_simple_unlock)
+   jmp.n r1
+   st    r0, r2, 0
+#endif       
+
+/**
+ **     Simple_lock
+ **
+ **	Returns when the lock is taken. It also increments lockuse[cpu]
+ **/
+ENTRY(simple_lock)
+   /* do r3 = test_and_set(r2, 1) */
+   or    r3, r0, 1
+   xmem  r3, r2, r0
+   bcnd  ne0, r3, 1f
+#if 0
+   ldcr  r5, SR1
+   extu  r5, r5, FLAG_CPU_FIELD_WIDTH<0>	/* r5 = cpu# */
+   mask  r5, r5, 3				/* play it safe */
+   or.u  r3, r0, hi16(lockuse)
+   or    r3, r3, lo16(lockuse)
+   ld    r4, r3[r5]
+   addu  r4, r4, 1
+   st    r4, r3[r5]
+#endif
+   jmp     r1
+	
+1:
+	/* wait until the lock appears to be free */
+   or.u  r4, r0, 0x0300
+2:
+   subu  r4, r4, 1
+   bcnd  eq0, r4, _simple_lock_too_long
+   ld    r3, r2, 0       /* check lock */
+   bcnd  ne0, r3, 2b
+   br    _simple_lock	/* looks free... check again with the xmem */
+
+ENTRY(simple_lock_too_long)
+#ifdef JEFF_DEBUG
+	/* just want to break here.... */
+   tb0   0, r0 , 0x84 /* gimmeabreak */
+#else
+	/* waited too long */
+   subu  r31, r31, 0x40
+   st    r1, r31, 0x30
+   st    r30, r31, 0x34
+   st    r2, r31, 0x38
+   or    r3, r0, r1
+#if 0
+   bsr   _report_lock_info
+#endif 
+   ld    r2, r31, 0x38
+   ld    r30, r31, 0x34
+   ld    r1, r31, 0x30
+   addu  r31, r31, 0x40
+   br    _simple_lock
+#endif /* JEFF_DEBUG */
+
+
+#if DDB
+/*
+ * Version of simple_lock for the kernel debugger; should never have
+ * breakpoints set on it. Should be kept consistent with simple_lock.
+ */
+ENTRY(db_simple_lock)
+   /* do r10 = test_and_set(r2, 1) */
+   or    r10, r0, 1
+   xmem  r10, r2, r0
+   bcnd  ne0, r10, db_simple_lock_watch
+   
+   ldcr  r2, SR1
+   extu  r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
+   mask  r2, r2, 3				/* play it safe */
+   or.u  r3, r0, hi16(lockuse)
+   or    r3, r3, lo16(lockuse)
+   ld    r4, r3[r2]
+   addu  r4, r4, 1
+   jmp.n r1
+   st    r4, r3[r2]
+	
+db_simple_lock_watch:
+	/* wait until the lock appears to be free */
+3:
+   ld    r10, r2, 0
+   bcnd  ne0, r10, 3b
+   br    _db_simple_lock	/* looks free... check again with the xmem */
+#endif /* DDB */
+
+/*************************************************************
+ *************************************************************
+ **
+ ** 	boolean_t simple_try_lock(simple_lock_t *);
+ **
+ **	Grab the lock if it's free.  Return zero if the lock was
+ **	busy, non-zero if the lock has been taken.
+ **/
+ENTRY(simple_lock_try)
+   or    r3, r0, 1	/* r3 := test_and_set(r2, 1) */
+   xmem  r3, r2, r0
+   /* If r3 is now zero, we hold the lock -- return non-zero.  */
+   /* If r3 is now one,  we didn't get it -- return zero.	     */
+   /* Thus, we want to "return(!r3)"			     */
+   cmp   r4, r3, r0
+   jmp.n r1
+   extu  r2, r4, 1<2>
+
+#if DDB
+/* version for the kernel debugger - keep consistent with above */
+ENTRY(db_simple_lock_try)
+   or    r3, r0, 1	/* r3 := test_and_set(r2, 1) */
+   xmem  r3, r2, r0
+   /* If r3 is now zero, we hold the lock -- return non-zero.  */
+   /* If r3 is now one,  we didn't get it -- return zero.	     */
+   /* Thus, we want to "return(!r3)"			     */
+   cmp   r4, r3, r0
+   jmp.n r1
+   extu  r2, r4, 1<2>
+#endif
+
+#if DDB  /* version for the debugger */
+ENTRY(db_simple_lock_held)
+   jmp.n r1
+   ld    r2, r2, 0
+#endif
+
+/*
+ * void simple_lock_pause(void). 
+ *
+ * This routine is called when we find a simple lock held that we wish to
+ * acquire, but cannot spin on because we are holding a lock that is in the
+ * wrong order to it with respect to the locking hierarchy. Once we drop the
+ * lock we are holding, however, we cannot assume the lock we were trying to 
+ * acquire is not deallocated. Consequently, we drop the lock we are holding 
+ * and wait for a while, then retry. This is the wait for a while routine. 
+ *
+ * We define a array of counters[cpus], lockpause
+ * to tell use how many times this routine is called.
+ * We currently wait 128 cycles per call.
+ */
+
+ENTRY(simple_lock_pause)
+	ldcr	r2, SR1
+	extu	r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
+	mask	r2, r2, 3				/* play it safe */
+        or.u    r3, r0, hi16(lockpause)
+        or      r3, r3, lo16(lockpause)
+        ld      r4, r3[r2]
+        or      r5, r0, 128                     /* initialize counters*/
+1:      subu    r5, r5, 1                       /* count down */
+        bcnd    ne0, r5, 1b
+        addu    r4, r4, 1
+	jmp.n	r1                              /* return*/
+  	st	r4, r3[r2]
+
+#endif /* done_in_kernel */
+
+ENTRY(are_interrupts_disabled)
+	ldcr	r2, PSR                   /* get the processor status word */
+	set  	r3, r0, 1<PSR_INTERRUPT_DISABLE_BIT>   /* set mask */
+	jmp.n 	r1                                     /* delayed return */
+	and 	r2, r2, r3                            /* r2 = r3 & r2 */
+
+
+/* version for the debugger */
 #if DDB
 ENTRY(db_are_interrupts_disabled)
 	ldcr	r2, PSR                   /* get the processor status word */
@@ -1546,7 +1765,7 @@ ENTRY(bzero)
 	bb1	0, R_dest, not_initially_word_aligned
 	bb1	1, R_dest, not_initially_word_aligned
 
-   now_word_aligned:
+now_word_aligned:
 	/*
 	 * before we get into the main loop, grab the
 	 * address of the label "mark" below.
@@ -1554,7 +1773,7 @@ ENTRY(bzero)
 	or.u	R_mark_address, r0, hi16(mark)
 	or	R_mark_address, R_mark_address, lo16(mark)
 	
-   top_of_main_loop:
+top_of_main_loop:
 #define MAX_AT_ONE_TIME 128
 	/*
 	 * Now we find out how many words we can zero-fill in a row.
@@ -1642,17 +1861,17 @@ do_max: subu	R_len, R_len, R_bytes	/* NOTE: this is in the delay slot! */
 	st	r0, R_dest, 0x04	/*   4 */
 	st	r0, R_dest, 0x00	/*   0 */
 
-   mark:
+mark:
 	br.n	top_of_main_loop
 	addu	R_dest, R_dest, R_bytes	/* bump up the dest address */
 
 
 
-   done_doing_words:
+done_doing_words:
 	bcnd	ne0, R_len, finish_up_last_bytes
 	jmp	r1		/* RETURN */
 
-   finish_up_last_bytes:
+finish_up_last_bytes:
 	subu	R_len, R_len, 1
 	bcnd.n	ne0, R_len, finish_up_last_bytes
 	st.b	r0, R_dest, R_len
@@ -1660,7 +1879,7 @@ do_max: subu	R_len, R_len, R_bytes	/* NOTE: this is in the delay slot! */
    leave:
 	jmp	r1		/* RETURN */
 	
-   not_initially_word_aligned:
+not_initially_word_aligned:
 	/*
 	 * Bzero to word-align the address (at least if the length allows it).
 	 */

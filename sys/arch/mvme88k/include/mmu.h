@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.12 2001/08/24 22:47:18 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.13 2001/12/13 08:55:51 smurph Exp $ */
 
 #ifndef	__MACHINE_MMU_H__
 #define	__MACHINE_MMU_H__
@@ -60,7 +60,7 @@ typedef union sdt_entry_template {
 typedef struct pt_entry {
 	unsigned long
 			pfn:20,		/* page frame address */
-			rsvA:1,		/* reserved */
+			rsvA:1,		/* reserved (U1 on mc88110) */
 			wired:1,	/* wired bit <<software>> */
 			wt:1,		/* writethrough (cache control) */
 			sup:1,		/* supervisor protection */
@@ -70,9 +70,15 @@ typedef struct pt_entry {
 			modified:1,	/* modified */
 			pg_used:1,	/* used (referenced) */
 			prot:1,		/* write protect */
-			rsvC:1,		/* reserved */
-			dtype:1;	/* valid */
+			dtype:2;	/* descriptor type (bit 2 only on mc88110) */
 } pt_entry_t;
+
+/* mc88110 indirect descriptors */
+typedef struct pt_ind_entry {
+	unsigned long
+			pda:30,		/* page descriptor address */
+			dtype:2;	/* valid */
+} pt_ind_entry_t;
 
 typedef union pte_template {
 	pt_entry_t	pte;
@@ -137,6 +143,8 @@ typedef union batc_template {
  */
 #define DT_INVALID	0
 #define DT_VALID	1
+#define DT_IND_MASKED	2
+#define DT_IND_UMASKED	3
 
 /*
  * Number of entries in a page table.
@@ -243,7 +251,6 @@ extern u_int kvtop __P((vm_offset_t));
 #define DMA_CACHE_SYNC		0x1
 #define DMA_CACHE_SYNC_INVAL	0x2
 #define DMA_CACHE_INV		0x3
-extern void dma_cachectl(vm_offset_t, int, int);
 
 #endif /* __MACHINE_MMU_H__ */
 
