@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.2 1997/07/11 05:35:46 millert Exp $
+.\"	$OpenBSD: sha1.3,v 1.3 1997/07/12 11:02:28 provos Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -84,6 +84,11 @@ is called when all data has been added via
 and stores a message digest in the
 .Ar digest
 parameter.
+When a null pointer is passed to
+.Fn SHA1Final
+as first argument only the final padding will be applied and the 
+current context can still be used with
+.Fn SHA1Update .
 .Pp
 The
 .Fn SHA1Transform
