@@ -1,5 +1,5 @@
-/*	$OpenBSD: dpme.h,v 1.4 1997/04/23 00:29:14 gene Exp $	*/
-/*	$NetBSD: dpme.h,v 1.6 1996/06/23 15:30:51 briggs Exp $	 */
+/*	$OpenBSD: dpme.h,v 1.5 1998/02/14 07:01:07 gene Exp $	*/
+/*	$NetBSD: dpme.h,v 1.8 1997/11/30 04:46:59 briggs Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -96,4 +96,7 @@ struct blockzeroblock {
 #define PART_MAC_TYPE		"APPLE_HFS"
 #define PART_SCRATCH		"APPLE_SCRATCH"
 #define PART_DRIVER_TYPE	"APPLE_DRIVER"
+#define PART_DRIVER43_TYPE	"APPLE_DRIVER43"
+#define PART_DRIVERATA_TYPE	"APPLE_DRIVER_ATA"
+#define PART_FWB_COMPONENT_TYPE	"FWB DRIVER COMPONENTS"
 #define PART_PARTMAP_TYPE	"APPLE_PARTITION_MAP"

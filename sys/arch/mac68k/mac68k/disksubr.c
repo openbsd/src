@@ -1,5 +1,5 @@
-/*	$OpenBSD: disksubr.c,v 1.7 1997/09/08 06:14:50 deraadt Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.14 1996/05/05 06:18:22 briggs Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 1998/02/14 07:01:06 gene Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -86,7 +86,7 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 
-#include "dpme.h"		/* MF the structure of a mac partition entry */
+#include <mac68k/mac68k/dpme.h>	/* MF the structure of a mac partition entry */
 
 #define	b_cylin	b_resid
 
@@ -144,6 +144,12 @@ whichType(part)
 
 	if (strcmp(PART_DRIVER_TYPE, (char *)part->pmPartType) == 0)
 		return 0;
+	if (strcmp(PART_DRIVER43_TYPE, (char *)part->pmPartType) == 0)
+		return 0;
+	if (strcmp(PART_DRIVERATA_TYPE, (char *)part->pmPartType) == 0)
+		return 0;
+	if (strcmp(PART_FWB_COMPONENT_TYPE, (char *)part->pmPartType) == 0)
+		return 0;
 	if (strcmp(PART_PARTMAP_TYPE, (char *)part->pmPartType) == 0)
 		return 0;
 	if (strcmp(PART_UNIX_TYPE, (char *)part->pmPartType) == 0) {
@@ -161,7 +167,7 @@ whichType(part)
 		if (bzb->bzbType == BZB_TYPESWAP)
 			return SWAP_PART;
 
-		return 0;
+		return SCRATCH_PART;
 	}
 	if (strcmp(PART_MAC_TYPE, (char *)part->pmPartType) == 0)
 		return HFS_PART;
@@ -188,7 +194,7 @@ fixPartTable(partTable, size, base, num)
 	struct partmapentry *pmap;
 	char *s;
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
+	for (i = 0; i < NUM_PARTS_PROBED; i++) {
 		pmap = (struct partmapentry *)((i * size) + base);
 
 		if (pmap->pmSig != DPME_MAGIC) { /* this is not valid */
@@ -360,7 +366,7 @@ skip:
  * MF --
  * here's what i'm gonna do:
  * read in the entire diskpartition table, it may be bigger or smaller
- * than MAXPARTITIONS but read that many entries.  Each entry has a magic
+ * than NUM_PARTS_PROBED but read that many entries.  Each entry has a magic
  * number so we'll know if an entry is crap.
  * next fill in the disklabel with info like this
  * next fill in the root, usr, and swap parts.
