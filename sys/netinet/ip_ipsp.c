@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.54 1999/09/03 13:52:34 ho Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.55 1999/11/04 11:20:05 ho Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -161,7 +161,7 @@ struct xformsw *xformswNXFORMSW = &xformsw[sizeof(xformsw)/sizeof(xformsw[0])];
 unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */ 
 
 #define TDB_HASHSIZE_INIT 32
-static struct tdb **tdbh = NULL;
+static struct tdb **tdbh = NULL, *tdb_bypass = NULL;
 static u_int tdb_hashmask = TDB_HASHSIZE_INIT - 1;
 static int tdb_count;
 
@@ -359,7 +359,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 {
     struct tdb *tdbp;
     u_int32_t spi;
-    int nums;
+    int nums, s;
 
     /* Don't accept ranges only encompassing reserved SPIs.  */
     if (tspi < sspi || tspi <= SPI_RESERVED_MAX)
@@ -395,7 +395,11 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	  spi = htonl(spi);
 
 	/* Check whether we're using this SPI already */
-	if (gettdb(spi, dst, sproto) != (struct tdb *) NULL)
+	s = spltdb();
+	tdbp = gettdb(spi, dst, sproto);
+	splx(s);
+
+	if (tdbp != (struct tdb *) NULL)
 	  continue;
 	
 	MALLOC(tdbp, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
@@ -464,6 +468,8 @@ tdb_hash(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
  * When we receive an IPSP packet, we need to look up its tunnel descriptor
  * block, based on the SPI in the packet and the destination address (which
  * is really one of our addresses if we received the packet!
+ *
+ * Caller is responsible for setting at least spltdb().
  */
 
 struct tdb *
@@ -473,18 +479,37 @@ gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
     struct tdb *tdbp;
     int s;
 
+    if (spi == 0 && proto == 0)
+    {
+      /* tdb_bypass; a placeholder for bypass flows, allocate on first pass */
+      if (tdb_bypass == NULL)
+      {
+	s = spltdb();
+	MALLOC(tdb_bypass, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
+	tdb_count++;
+	splx(s);
+
+	bzero(tdb_bypass, sizeof(struct tdb));
+	tdb_bypass->tdb_satype = SADB_X_SATYPE_BYPASS;
+	tdb_bypass->tdb_established = time.tv_sec;
+	tdb_bypass->tdb_epoch = kernfs_epoch - 1;
+	tdb_bypass->tdb_flags = 0;
+	TAILQ_INIT(&tdb_bypass->tdb_bind_in);
+	TAILQ_INIT(&tdb_bypass->tdb_inp);
+      }
+      return tdb_bypass;
+    }
+
     if (tdbh == NULL)
       return (struct tdb *) NULL;
 
     hashval = tdb_hash(spi, dst, proto);
 
-    s = spltdb();
     for (tdbp = tdbh[hashval]; tdbp != NULL; tdbp = tdbp->tdb_hnext)
       if ((tdbp->tdb_spi == spi) && 
 	  !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)) &&
 	  (tdbp->tdb_sproto == proto))
 	break;
-    splx(s);
 
     return tdbp;
 }
@@ -838,6 +863,11 @@ find_global_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
     if (tdbh == NULL)
       return (struct flow *) NULL;
 
+    if (tdb_bypass != NULL)
+      if ((flow = find_flow(src, srcmask, dst, dstmask, proto, tdb_bypass))
+	  != (struct flow *) NULL)
+	return flow;
+
     for (i = 0; i <= tdb_hashmask; i++)
     {
 	for (tdb = tdbh[i]; tdb != NULL; tdb = tdb->tdb_hnext)
@@ -862,7 +892,7 @@ tdb_rehash(void)
     tdb_hashmask = (tdb_hashmask << 1) | 1;
     MALLOC(new_tdbh, struct tdb **, sizeof(struct tdb *) * (tdb_hashmask + 1),
 	   M_TDB, M_WAITOK);
-    bzero(new_tdbh, sizeof(struct tdbh *) * (tdb_hashmask + 1));
+    bzero(new_tdbh, sizeof(struct tdb *) * (tdb_hashmask + 1));
     for (i = 0; i <= old_hashmask; i++)
       for (tdbp = tdbh[i]; tdbp != NULL; tdbp = tdbnp)
       {
@@ -962,6 +992,14 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
     u_int32_t hashval = tdbp->tdb_sproto + tdbp->tdb_spi;
     int s;
 
+    /* When deleting the bypass tdb, skip the hash table code. */
+    if (tdbp == tdb_bypass && tdbp != NULL)
+    {
+	s = spltdb();
+	delchain = 0;
+	goto skip_hash;
+    }
+
     if (tdbh == NULL)
       return;
 
@@ -981,6 +1019,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 	    tdbpp = tdbp;
 	}
 
+ skip_hash:
     /*
      * If there was something before us in the chain pointing to us,
      * make it point nowhere
@@ -1073,6 +1112,10 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 
     if (tdbp->tdb_dstid)
       FREE(tdbp->tdb_dstid, M_XDATA);
+
+    /* If we're deleting the bypass tdb, reset the variable. */
+    if (tdbp == tdb_bypass)
+      tdb_bypass = NULL;
 
     FREE(tdbp, M_TDB);
     tdb_count--;
