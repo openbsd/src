@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.18 2000/11/23 12:56:15 niklas Exp $	*/
+/*	$OpenBSD: policy.c,v 1.19 2001/01/10 00:42:00 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1235,19 +1235,19 @@ policy_callback (char *name)
       LOG_DBG ((LOG_SA, 80, "remote_filter_type == %s", remote_filter_type));
       LOG_DBG ((LOG_SA, 80, "remote_filter_addr_upper == %s", remote_filter_addr_upper));
       LOG_DBG ((LOG_SA, 80, "remote_filter_addr_lower == %s", remote_filter_addr_lower));
-      LOG_DBG ((LOG_SA, 80, "remote_filter == %s", remote_filter));
+      LOG_DBG ((LOG_SA, 80, "remote_filter == %s", (remote_filter ? remote_filter : "")));
       LOG_DBG ((LOG_SA, 80, "remote_filter_port == %s", remote_filter_port));
       LOG_DBG ((LOG_SA, 80, "remote_filter_proto == %s", remote_filter_proto));
       LOG_DBG ((LOG_SA, 80, "local_filter_type == %s", local_filter_type));
       LOG_DBG ((LOG_SA, 80, "local_filter_addr_upper == %s", local_filter_addr_upper));
       LOG_DBG ((LOG_SA, 80, "local_filter_addr_lower == %s", local_filter_addr_lower));
-      LOG_DBG ((LOG_SA, 80, "local_filter == %s", local_filter));
+      LOG_DBG ((LOG_SA, 80, "local_filter == %s", (local_filter ? local_filter : "")));
       LOG_DBG ((LOG_SA, 80, "local_filter_port == %s", local_filter_port));
       LOG_DBG ((LOG_SA, 80, "local_filter_proto == %s", local_filter_proto));
       LOG_DBG ((LOG_SA, 80, "remote_id_type == %s", remote_id_type));
       LOG_DBG ((LOG_SA, 80, "remote_id_addr_upper == %s", remote_id_addr_upper));
       LOG_DBG ((LOG_SA, 80, "remote_id_addr_lower == %s", remote_id_addr_lower));
-      LOG_DBG ((LOG_SA, 80, "remote_id == %s", remote_id));
+      LOG_DBG ((LOG_SA, 80, "remote_id == %s", (remote_id ? remote_id : "")));
       LOG_DBG ((LOG_SA, 80, "remote_id_port == %s", remote_id_port));
       LOG_DBG ((LOG_SA, 80, "remote_id_proto == %s", remote_id_proto));
       LOG_DBG ((LOG_SA, 80, "remote_negotiation_address == %s", remote_ike_address));
@@ -1362,7 +1362,7 @@ policy_callback (char *name)
     return remote_filter_type;
 
   if (strcmp (name, "remote_filter") == 0)
-    return remote_filter;
+    return (remote_filter ? remote_filter : "");
 
   if (strcmp (name, "remote_filter_addr_upper") == 0)
     return remote_filter_addr_upper;
@@ -1380,7 +1380,7 @@ policy_callback (char *name)
     return local_filter_type;
 
   if (strcmp (name, "local_filter") == 0)
-    return local_filter;
+    return (local_filter ? local_filter : "");
 
   if (strcmp (name, "local_filter_addr_upper") == 0)
     return local_filter_addr_upper;
@@ -1410,7 +1410,7 @@ policy_callback (char *name)
     return remote_id_type;
 
   if (strcmp (name, "remote_id") == 0)
-    return remote_id;
+    return (remote_id ? remote_id : "");
 
   if (strcmp (name, "remote_id_addr_upper") == 0)
     return remote_id_addr_upper;
