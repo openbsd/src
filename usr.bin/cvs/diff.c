@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.16 2004/12/28 22:07:31 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.17 2005/01/13 23:39:42 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -239,12 +239,13 @@ static int  isqrt(int);
 static int  stone(int *, int, int *, int *);
 static int  readhash(FILE *);
 static int  files_differ(FILE *, FILE *);
+static char *match_function(const long *, int, FILE *);
 static char *preadline(int, size_t, off_t);
 
 
 extern int cvs_client;
 
-static int aflag, bflag, dflag, iflag, Nflag, tflag, Tflag, wflag;
+static int aflag, bflag, dflag, iflag, Nflag, pflag, tflag, Tflag, wflag;
 static int context, status;
 static int format = D_NORMAL;
 static struct stat stb1, stb2;
@@ -273,8 +274,9 @@ static struct context_vec *context_vec_end;
 static struct context_vec *context_vec_ptr;
 
 #define FUNCTION_CONTEXT_SIZE	41
-static int lastline;
-static int lastmatchline;
+static char lastbuf[FUNCTION_CONTEXT_SIZE];
+static int  lastline;
+static int  lastmatchline;
 
 
 /*
@@ -357,7 +359,7 @@ cvs_diff(int argc, char **argv)
 	memset(&darg, 0, sizeof(darg));
 	strlcpy(diffargs, argv[0], sizeof(diffargs));
 
-	while ((ch = getopt(argc, argv, "cD:liN:r:u")) != -1) {
+	while ((ch = getopt(argc, argv, "cD:liNpr:u")) != -1) {
 		switch (ch) {
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));
@@ -386,6 +388,10 @@ cvs_diff(int argc, char **argv)
 		case 'N':
 			strlcat(diffargs, " -N", sizeof(diffargs));
 			Nflag = 1;
+			break;
+		case 'p':
+			strlcat(diffargs, " -p", sizeof(diffargs));
+			pflag = 1;
 			break;
 		case 'r':
 			if ((darg.rev1 == NULL) && (darg.date1 == NULL))
@@ -438,6 +444,11 @@ int
 cvs_diff_sendflags(struct cvsroot *root, struct diff_arg *dap)
 {
 	/* send the flags */
+	if (Nflag && (cvs_sendarg(root, "-N", 0) < 0))
+		return (-1);
+	if (pflag && (cvs_sendarg(root, "-p", 0) < 0))
+		return (-1);
+
 	if (format == D_CONTEXT)
 		cvs_sendarg(root, "-c", 0);
 	else if (format == D_UNIFIED)
@@ -1424,6 +1435,37 @@ asciifile(FILE *f)
 	return (1);
 }
 
+static char*
+match_function(const long *f, int pos, FILE *fp)
+{
+	unsigned char buf[FUNCTION_CONTEXT_SIZE];
+	size_t nc;
+	int last = lastline;
+	char *p;
+
+	lastline = pos;
+	while (pos > last) {
+		fseek(fp, f[pos - 1], SEEK_SET);
+		nc = f[pos] - f[pos - 1];
+		if (nc >= sizeof(buf))
+			nc = sizeof(buf) - 1;
+		nc = fread(buf, 1, nc, fp);
+		if (nc > 0) {
+			buf[nc] = '\0';
+			p = strchr(buf, '\n');
+			if (p != NULL)
+				*p = '\0';
+			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
+				strlcpy(lastbuf, buf, sizeof lastbuf);
+				lastmatchline = pos;
+				return lastbuf;
+			}
+		}
+		pos--;
+	}
+	return (lastmatchline > 0) ? lastbuf : NULL;
+}
+
 
 /* dump accumulated "context" diff changes */
 static void
@@ -1432,7 +1474,7 @@ dump_context_vec(FILE *f1, FILE *f2)
 	struct context_vec *cvp = context_vec_start;
 	int lowa, upb, lowc, upd, do_output;
 	int a, b, c, d;
-	char ch;
+	char ch, *f;
 
 	if (context_vec_start > context_vec_ptr)
 		return;
@@ -1444,6 +1486,13 @@ dump_context_vec(FILE *f1, FILE *f2)
 	upd = MIN(len[1], context_vec_ptr->d + context);
 
 	printf("***************");
+	if (pflag) {
+		f = match_function(ixold, lowa - 1, f1);
+		if (f != NULL) {
+			putchar(' ');
+			fputs(f, stdout);
+		}
+	}
 	printf("\n*** ");
 	range(lowa, upb, ",");
 	printf(" ****\n");
@@ -1530,7 +1579,7 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	struct context_vec *cvp = context_vec_start;
 	int lowa, upb, lowc, upd;
 	int a, b, c, d;
-	char ch;
+	char ch, *f;
 
 	if (context_vec_start > context_vec_ptr)
 		return;
@@ -1546,6 +1595,13 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	fputs(" +", stdout);
 	uni_range(lowc, upd);
 	fputs(" @@", stdout);
+	if (pflag) {
+		f = match_function(ixold, lowa - 1, f1);
+		if (f != NULL) {
+			putchar(' ');
+			fputs(f, stdout);
+		}
+	}
 	putchar('\n');
 
 	/*

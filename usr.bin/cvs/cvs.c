@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.33 2005/01/13 18:47:31 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.34 2005/01/13 23:39:42 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -131,8 +131,8 @@ static struct cvs_cmd {
 	},
 	{
 		CVS_OP_DIFF, "diff",     { "di",  "dif" }, cvs_diff,
-		"[-cilu] [-D date] [-r rev] ...",
-		"cD:ilur:",
+		"[-cilNpu] [-D date] [-r rev] ...",
+		"cD:ilNpr:u",
 		"Show differences between revisions",
 		NULL,
 	},
