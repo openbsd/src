@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.119 1999/02/16 17:45:39 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.120 1999/02/19 02:15:10 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1620,7 +1620,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
 	    0,
 	    "Invertex",
-	    "AEON Encryption",
+	    "AEON",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
