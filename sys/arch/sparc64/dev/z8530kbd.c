@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.13 2002/11/29 01:00:49 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.14 2003/03/09 01:43:46 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ static void zskbd_txint(struct zs_chanstate *);
 static void zskbd_softint(struct zs_chanstate *);
 static void zskbd_diag(void *);
 
-void zskbd_init(struct zskbd_softc *);
+int zskbd_init(struct zskbd_softc *);
 void zskbd_putc(struct zskbd_softc *, u_int8_t);
 void zskbd_raw(struct zskbd_softc *, u_int8_t);
 
@@ -369,40 +369,40 @@ zskbd_attach(parent, self, aux)
 
 		/* Wait a while for previous console output to complete */
 		DELAY(10000);
-
-		/*
-		 * Turn on receiver and status interrupts.
-		 * We defer the actual write of the register to zsparam(),
-		 * but we must make sure status interrupts are turned on by
-		 * the time zsparam() reads the initial rr0 state.
-		 */
-		zskbd_init(zst);
-		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
-		zs_write_reg(cs, 1, cs->cs_creg[1]);
-
-		s = splzs();
-
-		/* Make sure DTR is on now. */
-		zs_modem(zst, 1);
-
-		splx(s);
 	} else if (!ISSET(zst->zst_hwflags, ZS_HWFLAG_NORESET)) {
 		/* Not the console; may need reset. */
 		int reset;
 
 		reset = (channel == 0) ? ZSWR9_A_RESET : ZSWR9_B_RESET;
-
 		s = splzs();
-
 		zs_write_reg(cs, 9, reset);
-
-		/* Will raise DTR in open. */
-		zs_modem(zst, 0);
-
 		splx(s);
-		printf("\n");
-	} else
-		printf("\n");
+	}
+
+	/*
+	 * Probe for a keyboard.
+	 * If one is found, turn on receiver and status interrupts.
+	 * We defer the actual write of the register to zsparam(),
+	 * but we must make sure status interrupts are turned on by
+	 * the time zsparam() reads the initial rr0 state.
+	 */
+	if (zskbd_init(zst)) {
+		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+		zs_write_reg(cs, 1, cs->cs_creg[1]);
+
+		/* Make sure DTR is on now. */
+		s = splzs();
+		zs_modem(zst, 1);
+		splx(s);
+	} else {
+		/* Will raise DTR in open. */
+		s = splzs();
+		zs_modem(zst, 0);
+		splx(s);
+
+		printf("%s: no keyboard\n", self->dv_xname);
+		return;
+	}
 
 	a.console = console;
 	if (ISTYPE5(zst->zst_layout)) {
@@ -431,7 +431,7 @@ zskbd_attach(parent, self, aux)
 	zst->zst_wskbddev = config_found(self, &a, wskbddevprint);
 }
 
-void
+int
 zskbd_init(zst)
 	struct zskbd_softc *zst;
 {
@@ -442,11 +442,11 @@ zskbd_init(zst)
 	/* setup for 1200n81 */
 	if (zs_set_speed(cs, 1200)) {			/* set 1200bps */
 		printf(": failed to set baudrate\n");
-		return;
+		return 0;
 	}
 	if (zs_set_modes(cs, CS8 | CLOCAL)) {
 		printf(": failed to set modes\n");
-		return;
+		return 0;
 	}
 
 	s = splzs();
@@ -575,6 +575,8 @@ zskbd_init(zst)
 	else
 		printf(": layout %d\n", zst->zst_layout);
 	splx(s);
+
+	return tries;
 }
 
 void
