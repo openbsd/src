@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.3 1998/03/19 11:13:01 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/03/19 23:31:57 deraadt Exp $
 
-SUBDIR=	common_source backgammon teachgammon
+SUBDIR=backgammon teachgammon
 
 .include <bsd.subdir.mk>

@@ -1,12 +1,13 @@
-#	$OpenBSD: Makefile,v 1.3 1998/03/19 11:13:03 pjanzen Exp $
+#	$NetBSD: Makefile,v 1.6 1995/03/21 15:04:52 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	backgammon
-CFLAGS+=-I${.CURDIR}/../common_source
-SRCS=	extra.c main.c move.c text.c
+CFLAGS+=-DV7 -I${.CURDIR}/../common_source
+SRCS=	allow.c board.c check.c extra.c fancy.c init.c main.c move.c \
+	odds.c one.c save.c subs.c table.c text.c
 MAN=	backgammon.6
-DPADD=	${.CURDIR}/../common_source/libcommon.a ${LIBTERMCAP}
-LDADD=	-L${.CURDIR}/../common_source -lcommon -ltermcap
+DPADD=	${LIBTERMCAP} ${LIBCOMPAT}
+LDADD=	-ltermcap -lcompat
 .PATH:	${.CURDIR}/../common_source
 HIDEGAME=hidegame
 
