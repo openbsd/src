@@ -1,0 +1,105 @@
+.\"	$OpenBSD: emu.4,v 1.1 2001/10/24 03:34:43 mickey Exp $
+.\"	$NetBSD: emuxki.4,v 1.1 2001/10/18 18:40:16 jdolecek Exp $
+.\"
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 18, 2001
+.Dt EMUXKI 4
+.Os
+.Sh NAME
+.Nm emu
+.Nd Creative Labs SBLive! and PCI 512 audio device driver
+.Sh SYNOPSIS
+.Cd "emu* at pci? dev ? function ?"
+.Cd "audio* at emu?"
+.Sh DESCRIPTION
+The
+.Nm
+device driver supports Creative
+Sound Blaster Live! cards as well as the Sound Blaster PCI 512.
+.Pp
+These Environmental Audio cards are based upon eprogrammable EMU10K1
+digital-processing chip.
+.Pp
+Hardware features:
+.Bl -bullet -compact
+.It
+E-mu Systems, Inc. EMU10K1 music synthesis engine
+.It
+64-voice hardware polyphony with E-mu's patented 8-point interpolation
+technology
+.It
+Up 1024-voice polyphony with multi-timbre capability
+.It
+Support for real-time digital effects like reverb, chorus, flanger, pitch
+shifter, or distortion across any audio source
+.It
+User-selectable settings are optimized for headphones, two or four speakers
+.It
+Creative Multi Speaker Surround technology places any mono or stereo source
+in a 360 degree audio space
+.It
+Processes sample rates from 5kHz to 48kHz
+.It
+Hardware full duplex support enables simultaneous record and playback
+at 8 standard sample rates
+.It
+Creative Multi Speaker Surround (CMSS) places any mono or stereo sound
+source in a 360 degree audio space
+.It
+Hardware full-duplex support enables simultaneous record and playback
+at 8 standard sample rates
+.It
+Allows multiple audio sources playback on the same speaker system
+.El
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr joy 4 ,
+.Xr mpu 4 ,
+.Xr pci 4
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Ox 3.1 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Yannick Montulet Aq yannick.montulet@epitech.net
+and ported to
+.Ox 3.1
+by
+.An Michael Shalayeff Aq mickey@openbsd.org .
+.Sh BUGS
+Currently, this driver does not support recording,
+MIDI, joystick input or the multi-voice capability.
