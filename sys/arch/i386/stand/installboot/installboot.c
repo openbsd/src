@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.12 1997/09/21 23:15:59 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.13 1997/09/24 23:10:03 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -59,7 +59,7 @@
 #include <util.h>
 
 extern	char *__progname;
-int	verbose, nowrite, heads, nsectors;
+int	verbose, nowrite, nheads, nsectors;
 char	*boot, *proto, *dev, *realdev;
 struct nlist nl[] = {
 #define X_BLOCK_COUNT	0
@@ -73,9 +73,7 @@ u_int8_t *block_count_p;	/* block count var. in prototype image */
 u_int8_t *block_table_p;	/* block number array in prototype image */
 int	maxblocknum;		/* size of this array */
 
-#ifdef CPU_BIOS
 int biosdev;
-#endif
 
 char		*loadprotoblocks __P((char *, long *));
 int		loadblocknums __P((char *, int, struct disklabel *));
@@ -106,12 +104,13 @@ main(argc, argv)
 	struct dos_mbr mbr;
 	struct dos_partition *dp;
 	off_t startoff = 0;
+	int mib[4], size;
 
-	nsectors = heads = -1;
+	nsectors = nheads = -1;
 	while ((c = getopt(argc, argv, "vnh:s:")) != EOF) {
 		switch (c) {
 		case 'h':
-			heads = atoi(optarg);
+			nheads = atoi(optarg);
 			break;
 		case 's':
 			nsectors = atoi(optarg);
@@ -137,17 +136,13 @@ main(argc, argv)
 	proto = argv[optind + 1];
 	realdev = dev = argv[optind + 2];
 
-#ifdef CPU_BIOS
-	if (heads == -1 || nsectors == -1) {
-		int mib[3], size;
+	mib[0] = CTL_MACHDEP;
+	mib[1] = CPU_BIOS;
+	mib[2] = BIOS_DEV;
+	size = sizeof(int);
 
-		mib[0] = CTL_MACHDEP;
-		mib[1] = CPU_BIOS;
-		mib[2] = BIOS_DEV;
-		size = sizeof(int);
-
-		if (sysctl(mib, 2, &biosdev, &size, NULL, 0) == -1)
-			err(1, "sysctl");
+	if ((nheads == -1 || nsectors == -1) &&
+	    sysctl(mib, 2, &biosdev, &size, NULL, 0) != -1) {
 
 		if (biosdev & 0x80) {
 			int geo;
@@ -158,11 +153,12 @@ main(argc, argv)
 			if (sysctl(mib, 2, &geo, &size, NULL, 0) == -1)
 				err(1, "sysctl");
 
-			heads = BIOSNHEADS(geo);
-			nsectors = BIOSNSECTS(geo);
+			if (nheads == -1)
+				nheads = BIOSNHEADS(geo);
+			if (nsectors == -1)
+				nsectors = BIOSNSECTS(geo);
 		}
 	}
-#endif
 
 	/* Open and check raw disk device */
 	if ((devfd = opendev(dev, (nowrite? O_RDONLY:O_RDWR),
@@ -436,8 +432,8 @@ loadblocknums(boot, devfd, dl)
 		/* adjust disklabel w/ synthetic geometry */
 		if (nsectors > 0)
 			dl->d_nsectors = nsectors;
-		if (heads > 0)
-			dl->d_secpercyl = dl->d_nsectors * heads;
+		if (nheads > 0)
+			dl->d_secpercyl = dl->d_nsectors * nheads;
 	}
 
 	if (verbose)
