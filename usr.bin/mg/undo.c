@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.7 2002/02/26 00:45:45 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.8 2002/03/16 20:29:21 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  *							 All rights reserved.
@@ -374,6 +374,60 @@ undo_add_change(LINE *lp, int offset, int size)
 
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 	
+	return TRUE;
+}
+
+/*
+ * Show the undo records for the current buffer in a new buffer.
+ */
+int
+undo_dump(void)
+{
+	struct undo_rec *rec;
+	BUFFER *bp;
+	MGWIN *wp;
+	char buf[4096], tmp[1024];
+	int num;
+
+	/*
+	 * Prepare the buffer for insertion.
+	 */
+	if ((bp = bfind("*undo*", TRUE)) == NULL)
+		return FALSE;
+
+	bclear(bp);
+	popbuf(bp);
+
+	for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
+		if (wp->w_bufp == bp) {
+			wp->w_dotp = bp->b_linep;
+			wp->w_doto = 0;
+		}
+
+	num = 0;
+	for (rec = LIST_FIRST(&curbp->b_undo); rec != NULL;
+	     rec = LIST_NEXT(rec, next)) {
+		num++;
+		snprintf(buf, sizeof buf,
+		    "Record %d =>\t %s at %d ", num,
+		    (rec->type == DELETE) ? "DELETE":
+		    (rec->type == INSERT) ? "INSERT":
+		    (rec->type == CHANGE) ? "CHANGE":
+		    (rec->type == BOUNDARY) ? "----" : "UNKNOWN",
+		    rec->pos);
+		if (rec->type == DELETE || rec->type == CHANGE) {
+
+			strlcat(buf, "\"", sizeof buf);
+			snprintf(tmp, sizeof tmp, "%.*s", rec->region.r_size,
+			    rec->content);
+			strlcat(buf, tmp, sizeof buf);
+			strlcat(buf, "\"", sizeof buf);
+		}
+		snprintf(tmp, sizeof buf, " [%d]", rec->region.r_size);
+		strlcat(buf, tmp, sizeof buf);
+
+		addlinef(bp, buf);
+	}
 	return TRUE;
 }
 
