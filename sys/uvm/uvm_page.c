@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.19 2001/07/25 14:47:59 art Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.29 1999/12/30 16:09:47 eeh Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.20 2001/07/31 14:03:47 art Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.30 2000/02/13 03:34:40 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -737,6 +737,7 @@ uvm_page_rehash()
 	int freepages, lcv, bucketcount, s, oldcount;
 	struct pglist *newbuckets, *oldbuckets;
 	struct vm_page *pg;
+	size_t newsize, oldsize;
 
 	/*
 	 * compute number of pages that can go in the free pool
@@ -756,11 +757,19 @@ uvm_page_rehash()
 		bucketcount = bucketcount * 2;
 
 	/*
-	 * malloc new buckets
+	 * compute the size of the current table and new table.
 	 */
 
-	MALLOC(newbuckets, struct pglist *, sizeof(struct pglist) * bucketcount,
-					 M_VMPBUCKET, M_NOWAIT);
+	oldbuckets = uvm.page_hash;
+	oldcount = uvm.page_nhash;
+	oldsize = round_page(sizeof(struct pglist) * oldcount);
+	newsize = round_page(sizeof(struct pglist) * bucketcount);
+
+	/*
+	 * allocate the new buckets
+	 */
+
+	newbuckets = (struct pglist *) uvm_km_alloc(kernel_map, newsize);
 	if (newbuckets == NULL) {
 		printf("uvm_page_physrehash: WARNING: could not grow page "
 		    "hash table\n");
@@ -775,9 +784,6 @@ uvm_page_rehash()
 
 	s = splimp();
 	simple_lock(&uvm.hashlock);
-	/* swap old for new ... */
-	oldbuckets = uvm.page_hash;
-	oldcount = uvm.page_nhash;
 	uvm.page_hash = newbuckets;
 	uvm.page_nhash = bucketcount;
 	uvm.page_hashmask = bucketcount - 1;  /* power of 2 */
@@ -799,7 +805,7 @@ uvm_page_rehash()
 	 */
 
 	if (oldbuckets != &uvm_bootbucket)
-		FREE(oldbuckets, M_VMPBUCKET);
+		uvm_km_free(kernel_map, (vaddr_t) oldbuckets, oldsize);
 
 	/*
 	 * done
