@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.20 1997/02/23 03:08:27 niklas Exp $	*/
+/*	$OpenBSD: acd.c,v 1.21 1997/02/23 13:08:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -218,9 +218,9 @@ acdattach(parent, self, aux)
 	}
 
 	if (acd_get_mode(acd, &acd->mode_page, ATAPI_CAP_PAGE, CAPPAGESIZE,
-			 A_POLLED) != 0) {
+	    A_POLLED) != 0) {
 		printf("%s: can't MODE SENSE: acd_get_mode failed\n",
-		       self->dv_xname);
+		    self->dv_xname);
 		return;
 	}
 
@@ -358,7 +358,7 @@ acdopen(dev, flag, fmt)
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= acd->sc_dk.dk_label->d_npartitions ||
-	     acd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
+	    acd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
 		goto bad;
 	}
@@ -612,14 +612,14 @@ acdstart(vp)
 		blkno =
 		    bp->b_blkno / (acd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 		if (CDPART(bp->b_dev) != RAW_PART) {
-			p =
-			  &acd->sc_dk.dk_label->d_partitions[CDPART(bp->b_dev)];
+			p = &acd->sc_dk.dk_label->d_partitions[
+			    CDPART(bp->b_dev)];
 			blkno += p->p_offset;
 		}
 		nblks = howmany(bp->b_bcount, acd->sc_dk.dk_label->d_secsize);
 
-		ACD_DEBUG_PRINT(("acdstart: blkno %d nblk %d\n",
-		    blkno, nblks));
+		ACD_DEBUG_PRINT(("acdstart: blkno %d nblk %d\n", blkno,
+		    nblks));
 
 		/*
 		 *  Fill out the atapi command
@@ -636,7 +636,7 @@ acdstart(vp)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		 if (atapi_exec_io(ad_link, &cmd, sizeof(cmd), bp, A_NOSLEEP)) {
+		if (atapi_exec_io(ad_link, &cmd, sizeof(cmd), bp, A_NOSLEEP)) {
 		 	disk_unbusy(&acd->sc_dk, 0);
 			printf("%s: not queued", acd->sc_dev.dv_xname);
 		}
@@ -749,16 +749,14 @@ acdioctl(dev, cmd, addr, flag, p)
 		struct ioc_play_track *args = (struct ioc_play_track *)addr;
 
 		return acd_play_tracks(acd, args->start_track,
-				       args->start_index, args->end_track,
-				       args->end_index);
+		    args->start_index, args->end_track, args->end_index);
 	}
 
 	case CDIOCPLAYMSF: {
 		struct ioc_play_msf *args = (struct ioc_play_msf *)addr;
 
 		return acd_play_msf(acd, args->start_m, args->start_s,
-				    args->start_f, args->end_m, args->end_s,
-				    args->end_f);
+		    args->start_f, args->end_m, args->end_s, args->end_f);
 	}
 
 	case CDIOCPLAYBLOCKS: {
@@ -768,8 +766,8 @@ acdioctl(dev, cmd, addr, flag, p)
 	}
 
 	case CDIOCREADSUBCHANNEL: {
-		struct ioc_read_subchannel *args
-				= (struct ioc_read_subchannel *)addr;
+		struct ioc_read_subchannel *args =
+		    (struct ioc_read_subchannel *)addr;
 		struct cd_sub_channel_info data;
 		int len = args->data_len;
 
@@ -778,7 +776,7 @@ acdioctl(dev, cmd, addr, flag, p)
 			return EINVAL;
 
 		error = acd_read_subchannel(acd, args->address_format,
-		    	args->data_format, args->track, &data, len);
+		    args->data_format, args->track, &data, len);
 		if (error)
 			return error;
 		return copyout(&data, args->data, len);
@@ -804,7 +802,7 @@ acdioctl(dev, cmd, addr, flag, p)
 	/* XXX Remove endian dependency */
 	case CDIOREADTOCENTRYS: {
 		struct ioc_read_toc_entry *te =
-				(struct ioc_read_toc_entry *)addr;
+		    (struct ioc_read_toc_entry *)addr;
 		struct cd_toc toc;
 		struct ioc_toc_header *th = &toc.hdr;
 		int len = te->data_len;
@@ -821,20 +819,25 @@ acdioctl(dev, cmd, addr, flag, p)
 			return error;
 
 		if (te->address_format == CD_LBA_FORMAT) {
-		    for (ntracks = th->ending_track - th->starting_track + 1;
-		         ntracks >= 0; ntracks--) {
-			toc.tab[ntracks].addr_type = CD_LBA_FORMAT;
-			if (acd->ad_link->quirks & AQUIRK_LITTLETOC) {
+			for (ntracks =
+			    th->ending_track - th->starting_track + 1;
+		            ntracks >= 0; ntracks--) {
+				toc.tab[ntracks].addr_type = CD_LBA_FORMAT;
+				if (acd->ad_link->quirks & AQUIRK_LITTLETOC) {
 #if BYTE_ORDER == BIG_ENDIAN
-				bswap((u_int8_t*)&toc.tab[ntracks].addr.addr, sizeof(toc.tab[ntracks].addr.addr));
+					bswap((u_int8_t*)
+					    &toc.tab[ntracks].addr.addr,
+					    sizeof(toc.tab[ntracks].addr.addr)
+					    );
 #endif
-			} else
-				(u_int32_t)(*toc.tab[ntracks].addr.addr) = ntohl((u_int32_t)(*toc.tab[ntracks].addr.addr));
-		    }
+				} else
+					toc.tab[ntracks].addr.lba =
+					    ntohl(toc.tab[ntracks].addr.lba);
+			}
 		}
 		if (acd->ad_link->quirks & AQUIRK_LITTLETOC) {
 #if BYTE_ORDER == BIG_ENDIAN
-				bswap((u_int8_t*)&th->len, sizeof(th->len));
+			bswap((u_int8_t*)&th->len, sizeof(th->len));
 #endif
 		} else
 			th->len = ntohs(th->len);
@@ -847,12 +850,13 @@ acdioctl(dev, cmd, addr, flag, p)
 		struct ioc_patch *arg = (struct ioc_patch *)addr;
 
 		return acd_setchan(acd, arg->patch[0], arg->patch[1],
-				   arg->patch[2], arg->patch[3]);
+		    arg->patch[2], arg->patch[3]);
 	}
 
 	case CDIOCGETVOL: {
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct atapi_mode_data data;
+
 		error = acd_get_mode(acd, &data, ATAPI_AUDIO_PAGE,
 		    AUDIOPAGESIZE, 0);
 		if (error)
@@ -892,27 +896,27 @@ acdioctl(dev, cmd, addr, flag, p)
 
 	case CDIOCSETMONO: {
 		return acd_setchan(acd, BOTH_CHANNEL, BOTH_CHANNEL,
-				   MUTE_CHANNEL, MUTE_CHANNEL);
+		    MUTE_CHANNEL, MUTE_CHANNEL);
 	}
 
 	case CDIOCSETSTEREO: {
 		return acd_setchan(acd, LEFT_CHANNEL, RIGHT_CHANNEL,
-				   MUTE_CHANNEL, MUTE_CHANNEL);
+		    MUTE_CHANNEL, MUTE_CHANNEL);
 	}
 
 	case CDIOCSETMUTE: {
 		return acd_setchan(acd, MUTE_CHANNEL, MUTE_CHANNEL,
-				   MUTE_CHANNEL, MUTE_CHANNEL);
+		    MUTE_CHANNEL, MUTE_CHANNEL);
 	}
 
 	case CDIOCSETLEFT: {
 		return acd_setchan(acd, LEFT_CHANNEL, LEFT_CHANNEL,
-				   MUTE_CHANNEL, MUTE_CHANNEL);
+		    MUTE_CHANNEL, MUTE_CHANNEL);
 	}
 
 	case CDIOCSETRIGHT: {
 		return acd_setchan(acd, RIGHT_CHANNEL, RIGHT_CHANNEL,
-				   MUTE_CHANNEL, MUTE_CHANNEL);
+		    MUTE_CHANNEL, MUTE_CHANNEL);
 	}
 
 	case CDIOCRESUME:
@@ -931,6 +935,7 @@ acdioctl(dev, cmd, addr, flag, p)
 		if (((struct mtop *)addr)->mt_op != MTOFFL)
 			return EIO;
 		/* FALLTHROUGH */
+
 	case CDIOCEJECT:	/* FALLTHROUGH */
 	case DIOCEJECT:
 		acd->ad_link->flags |= ADEV_EJECTING;
@@ -945,6 +950,7 @@ acdioctl(dev, cmd, addr, flag, p)
 	case DIOCLOCK:
 		return atapi_prevent(acd->ad_link,
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW);
+
 	case CDIOCRESET:
 		return acd_reset(acd);
 
@@ -970,15 +976,16 @@ acdgetdisklabel(acd)
 {
 	struct disklabel *lp = acd->sc_dk.dk_label;
 	char *errstring;
-	u_int8_t hdr[TOC_HEADER_SZ], *toc, *ent, *lent;
+	u_int8_t hdr[TOC_HEADER_SZ], *toc, *ent;
 	u_int32_t lba, nlba;
-	int i, n, len;
+	int i, n, len, is_data, data_track = -1;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(acd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = acd->params.blksize;
 #if 0
+	/* I don't think this is necessary anymore.  */
 	if (lp->d_secsize > 2048)
 		lp->d_secsize = 2048;
 #endif
@@ -991,6 +998,7 @@ acdgetdisklabel(acd)
 		/* as long as it's not 0 - readdisklabel divides by it (?) */
 	}
 
+	strncpy(lp->d_typename, "ATAPI CD-ROM", 16);
 	lp->d_type = DTYPE_SCSI;	/* XXX */
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = acd->params.disksize;
@@ -1003,64 +1011,78 @@ acdgetdisklabel(acd)
 	lp->d_checksum = dkcksum(lp);
 
 	/*
-	 * Call the generic disklabel extraction routine if we have a data CD
+	 * Read the TOC and loop throught the individual tracks and lay them
+	 * out in our disklabel.  If there is a data track, call the generic
+	 * disklabel read routine.  XXX should we move all data tracks up front
+	 * before any other tracks?
 	 */
 	if (acd_read_toc(acd, 0, 0, hdr, TOC_HEADER_SZ))
 		return;
-	n = hdr[TOC_HEADER_ENDING_TRACK] - hdr[TOC_HEADER_STARTING_TRACK] + 1;
-	len = TOC_HEADER_SZ + n * TOC_ENTRY_SZ;
+	n = min(hdr[TOC_HEADER_ENDING_TRACK] - hdr[TOC_HEADER_STARTING_TRACK] +
+	   1, MAXPARTITIONS);
+	len = TOC_HEADER_SZ + (n + 1) * TOC_ENTRY_SZ;
 	MALLOC(toc, u_int8_t *, len, M_TEMP, M_WAITOK);
 	if (acd_read_toc (acd, CD_LBA_FORMAT, 0, toc, len))
 		goto done;
 
-	if (toc[TOC_HEADER_SZ + TOC_ENTRY_CONTROL_ADDR_TYPE] & 4) {
-		strncpy(lp->d_typename, "ATAPI CD-ROM", 16);
-		lp->d_partitions[RAW_PART].p_offset = 0;
-		lp->d_partitions[RAW_PART].p_size =
-		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
-		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-		lp->d_npartitions = RAW_PART + 1;
+	/* The raw partition is special.  */
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * lp->d_secsize / DEV_BSIZE;
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 
-		errstring =
-		    readdisklabel(MAKECDDEV(0, acd->sc_dev.dv_unit, RAW_PART),
-		    acdstrategy, lp, acd->sc_dk.dk_cpulabel);
-		if (errstring) {
+	/* Create the partition table.  */
+	lp->d_npartitions = max(RAW_PART, n) + 1;
+	ent = toc + TOC_HEADER_SZ;
+	lba = ((acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
+	    ent[TOC_ENTRY_MSF_LBA] | ent[TOC_ENTRY_MSF_LBA + 1] << 8 |
+	    ent[TOC_ENTRY_MSF_LBA + 2] << 16 |
+	    ent[TOC_ENTRY_MSF_LBA + 3] << 24 :
+	    ent[TOC_ENTRY_MSF_LBA] << 24 | ent[TOC_ENTRY_MSF_LBA + 1] << 16 |
+	    ent[TOC_ENTRY_MSF_LBA + 2] << 8 | ent[TOC_ENTRY_MSF_LBA + 3]) *
+	    lp->d_secsize / DEV_BSIZE;
+
+	for (i = 0; i < (n > RAW_PART + 1 ? n + 1 : n); i++) {
+		/* The raw partition was specially handled above.  */
+		if (i != RAW_PART) {
+			is_data = toc[TOC_HEADER_SZ +
+			    TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
+			lp->d_partitions[i].p_fstype =
+			    is_data ? FS_UNUSED : FS_OTHER;
+			if (is_data && data_track == -1)
+				data_track = i;
+			ent += TOC_ENTRY_SZ;
+			nlba = ((acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
+			    ent[TOC_ENTRY_MSF_LBA] |
+			    ent[TOC_ENTRY_MSF_LBA + 1] << 8 |
+			    ent[TOC_ENTRY_MSF_LBA + 2] << 16 |
+			    ent[TOC_ENTRY_MSF_LBA + 3] << 24 :
+			    ent[TOC_ENTRY_MSF_LBA] << 24 |
+			    ent[TOC_ENTRY_MSF_LBA + 1] << 16 |
+			    ent[TOC_ENTRY_MSF_LBA + 2] << 8 |
+			    ent[TOC_ENTRY_MSF_LBA + 3]) * lp->d_secsize /
+			    DEV_BSIZE;
+			lp->d_partitions[i].p_offset = lba;
+			lp->d_partitions[i].p_size = nlba - lba;
+			lba = nlba;
+		}
+	}
+
+	/* We have a data track, look in there for a real disklabel.  */
+	if (data_track != -1) {
+#ifdef notyet
+		/*
+		 * Reading a disklabel inside the track we setup above
+		 * does not yet work, for unknown reasons.
+		 */
+		errstring = readdisklabel(MAKECDDEV(0, acd->sc_dev.dv_unit,
+		    data_track), acdstrategy, lp, acd->sc_dk.dk_cpulabel);
+#else
+		errstring = readdisklabel(MAKECDDEV(0, acd->sc_dev.dv_unit,
+		    RAW_PART), acdstrategy, lp, acd->sc_dk.dk_cpulabel);
+#endif
+		if (errstring)
 			printf("%s: %s\n", acd->sc_dev.dv_xname, errstring);
-			goto done;
-		}
-	} else {
-		strncpy(lp->d_typename, "ATAPI audio CD", 16);
-		lp->d_npartitions = min(n + 1, MAXPARTITIONS);
-		ent = toc + TOC_HEADER_SZ;
-		lba =
-		    (acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
-		    ent[TOC_ENTRY_MSF_LBA] | ent[TOC_ENTRY_MSF_LBA + 1] << 8 :
-		    ent[TOC_ENTRY_MSF_LBA] << 8 | ent[TOC_ENTRY_MSF_LBA + 1];
-		for (i = 0; i < min(n + 1, MAXPARTITIONS); i++) {
-			if (i == RAW_PART) {
-				lp->d_partitions[i].p_offset = 0;
-				lent = toc + TOC_HEADER_SZ + n * TOC_ENTRY_SZ;
-				lp->d_partitions[i].p_size =
-				    (acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
-				    lent[TOC_ENTRY_MSF_LBA] |
-				    lent[TOC_ENTRY_MSF_LBA + 1] << 8 :
-				    lent[TOC_ENTRY_MSF_LBA] << 8 |
-				    lent[TOC_ENTRY_MSF_LBA + 1];
-				lp->d_partitions[i].p_fstype = FS_UNUSED;
-			} else {
-				lp->d_partitions[i].p_fstype = FS_OTHER;
-				ent += TOC_ENTRY_SZ;
-				nlba =
-				    (acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
-				    ent[TOC_ENTRY_MSF_LBA] |
-				    ent[TOC_ENTRY_MSF_LBA + 1] << 8 :
-				    ent[TOC_ENTRY_MSF_LBA] << 8 |
-				    ent[TOC_ENTRY_MSF_LBA + 1];
-				lp->d_partitions[i].p_offset = lba;
-				lp->d_partitions[i].p_size = nlba - lba;
-				lba = nlba;
-			}
-		}
 	}
 
 done:
