@@ -1684,6 +1684,16 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/slcompress.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/slip.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/zlib.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_compat.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_crypto.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_ioctl.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_node.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_proto.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_radiotap.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_rssadapt.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netatalk
 ./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/aarp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/at.ph

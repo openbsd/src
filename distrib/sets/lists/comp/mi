@@ -956,6 +956,16 @@
 ./usr/include/net/slcompress.h
 ./usr/include/net/slip.h
 ./usr/include/net/zlib.h
+./usr/include/net80211
+./usr/include/net80211/ieee80211.h
+./usr/include/net80211/ieee80211_compat.h
+./usr/include/net80211/ieee80211_crypto.h
+./usr/include/net80211/ieee80211_ioctl.h
+./usr/include/net80211/ieee80211_node.h
+./usr/include/net80211/ieee80211_proto.h
+./usr/include/net80211/ieee80211_radiotap.h
+./usr/include/net80211/ieee80211_rssadapt.h
+./usr/include/net80211/ieee80211_var.h
 ./usr/include/netatalk
 ./usr/include/netatalk/aarp.h
 ./usr/include/netatalk/at.h
