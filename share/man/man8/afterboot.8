@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.91 2004/06/04 14:03:06 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.92 2004/07/07 06:01:02 henning Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -472,9 +472,6 @@ Check for any local changes needed in the files
 .Pa /etc/rc.securelevel ,
 and
 .Pa /etc/rc.shutdown .
-Turning on something like the Network Time Protocol in
-.Pa /etc/rc.conf.local
-requires making sure the package is installed.
 .Pp
 If you've installed X, you may want to turn on
 .Xr xdm 1 ,
