@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.14 2004/12/19 06:17:54 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.15 2004/12/20 20:56:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -286,30 +286,16 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
                 memcpy(&xs->sense, ahd_get_sense_buf(ahd, scb),
                     sizeof(struct scsi_sense_data));
                 xs->error = XS_SENSE;
-#if 0
 	} else if ((scb->flags & SCB_PKT_SENSE) != 0) {
 		struct scsi_status_iu_header *siu;
-		u_int sense_len;
-		int i;
+		u_int32_t len;
 
-		/*
-		 * Copy only the sense data into the provided buffer.
-		 */
-		siu = (struct scsi_status_iu_header *)scb->sense_data;
-		sense_len = MIN(scsi_4btoul(siu->sense_length),
-				sizeof(struct scsi_sense_data));
-		memset(&xs->sense, 0, &xs->sense);
-		memcpy(&xs->sense, 
-		       ahd_get_sense_buf(ahd, scb) + SIU_SENSE_OFFSET(siu),
-		       sense_len);
-		printf("Copied %d bytes of sense data offset %d:", sense_len,
-		       SIU_SENSE_OFFSET(siu));
-		for (i = 0; i < sense_len; i++)
-			printf(" 0x%x", ((uint8_t *)&xs->sense)[i]);
-		printf("\n");
-
+ 		siu = (struct scsi_status_iu_header *)scb->sense_data;
+		len = SIU_SENSE_LENGTH(siu);
+		memset(&xs->sense, 0, sizeof(xs->sense));
+		memcpy(&xs->sense, SIU_SENSE_DATA(siu),
+		    ulmin(len, sizeof(xs->sense)));
                 xs->error = XS_SENSE;
-#endif
 	}
 #if 0	/* MU: no such settings in ahc */
 	if (scb->flags & SCB_REQUEUE)

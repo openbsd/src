@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.23 2004/12/19 06:17:54 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.24 2004/12/20 20:56:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -8081,7 +8081,6 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 	aic_set_transaction_status(scb, CAM_SCSI_STATUS_ERROR);
 	aic_set_scsi_status(scb, hscb->shared_data.istatus.scsi_status);
 	switch (hscb->shared_data.istatus.scsi_status) {
-#if 0
 	case STATUS_PKT_SENSE:
 	{
 		struct scsi_status_iu_header *siu;
@@ -8142,7 +8141,6 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		ahd_done(ahd, scb);
 		break;
 	}
-#endif
 	case SCSI_STATUS_CMD_TERMINATED:
 	case SCSI_STATUS_CHECK_COND:
 	{
