@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.22 2003/11/05 06:39:48 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.23 2003/11/07 21:32:47 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -560,7 +560,9 @@ carpattach(int number)
 		sc->sc_advskew = 0;
 		sc->sc_init_counter = 1;
 		sc->sc_naddrs = sc->sc_naddrs6 = 0;
+#ifdef INET6
 		sc->sc_im6o.im6o_multicast_hlim = CARP_DFLTTL;
+#endif /* INET6 */
 
 		timeout_set(&sc->sc_ad_tmo, carp_send_ad, sc);
 		timeout_set(&sc->sc_md_tmo, carp_master_down, sc);
