@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 2001/04/29 20:57:25 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.42 2001/04/29 20:58:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -756,7 +756,7 @@ pmap_bootstrap(vstart, vend)
 		atop(virtual_avail), totalphysmem + i, VM_FREELIST_DEFAULT);
 	/* we have only one initial phys memory segment */
 	vm_physmem[0].pmseg.pvent = (struct pv_entry *)addr;
-	mtctl(addr, CR_PSEG);
+	/* mtctl(addr, CR_PSEG); */
 
 	/* here will be a hole due to the kernel memory alignment
 	   and we use it for pmap_steal_memory */
