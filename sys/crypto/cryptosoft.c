@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.20 2001/05/15 02:40:35 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.21 2001/06/06 04:37:07 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -674,7 +674,6 @@ swcr_process(struct cryptop *crp)
     struct cryptodesc *crd;
     struct swcr_data *sw;
     u_int32_t lid;
-    u_int64_t nid;
     int type;
 
     /* Sanity check */
@@ -754,18 +753,6 @@ swcr_process(struct cryptop *crp)
     }
 
  done:
-    if (crp->crp_etype == ENOENT)
-    {
-	crypto_freesession(crp->crp_sid); /* Just in case */
-
-	/* Migrate session */
-	for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
-	  crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
-
-	if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
-	  crp->crp_sid = nid;
-    }
-
     crypto_done(crp);
     return 0;
 }
