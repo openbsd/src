@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.14 1997/02/03 01:05:33 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.15 1997/02/05 04:55:12 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.18 1997/02/01 10:44:54 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.14 1997/02/03 01:05:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.15 1997/02/05 04:55:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ settype(argc, argv)
 		return;
 	}
 	if ((p->t_arg != NULL) && (*(p->t_arg) != '\0'))
-		comret = command ("TYPE %s %s", p->t_mode, p->t_arg);
+		comret = command("TYPE %s %s", p->t_mode, p->t_arg);
 	else
 		comret = command("TYPE %s", p->t_mode);
 	if (comret == COMPLETE) {
@@ -701,7 +701,8 @@ togglevar(argc, argv, var, mesg)
 		printf("usage: %s [ on | off ]\n", argv[0]);
 		return -1;
 	}
-	printf("%s %s.\n", mesg, onoff(*var));
+	if (mesg)
+		printf("%s %s.\n", mesg, onoff(*var));
 	return (*var);
 }
 
@@ -1504,7 +1505,8 @@ account(argc, argv)
 jmp_buf abortprox;
 
 void
-proxabort()
+proxabort(notused)
+	int notused;
 {
 
 	alarmtimer(0);
@@ -1862,7 +1864,8 @@ setpassive(argc, argv)
 	char *argv[];
 {
 
-	code = togglevar(argc, argv, &passivemode, "Passive mode");
+	code = togglevar(argc, argv, &passivemode,
+	    verbose ? "Passive mode" : NULL);
 }
 
 void

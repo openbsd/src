@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 1997/02/03 01:05:46 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 1997/02/05 04:55:21 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.4 1997/02/01 11:26:34 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.2 1997/02/03 01:05:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.3 1997/02/05 04:55:21 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -47,8 +47,10 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.2 1997/02/03 01:05:46 millert Exp $"
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -231,10 +233,23 @@ remglob(argv, doswitch)
                 return (cp);
         }
         if (ftemp == NULL) {
-                (void)snprintf(temp, sizeof(temp), "%s%s", _PATH_TMP, TMPFILE)
+		int len;
+
+		if ((cp = getenv("TMPDIR")) == NULL)
+		    cp = _PATH_TMP;
+		len = strlen(cp);
+		if (len + sizeof(TMPFILE) + (cp[len-1] != '/') > sizeof(temp)) {
+			warnx("unable to create temporary file: %s",
+			    strerror(ENAMETOOLONG));
+			return (NULL);
+		}
+
+		(void)strcpy(temp, cp);
+		if (temp[len-1] != '/')
+			temp[len++] = '/';
+		(void)strcpy(&temp[len], TMPFILE);
 ;
-                fd = mkstemp(temp);
-                if (fd < 0) {
+                if ((fd = mkstemp(temp)) < 0) {
                         warn("unable to create temporary file %s", temp);
                         return (NULL);
                 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.11 1997/02/03 01:05:40 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.12 1997/02/05 04:55:18 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.22 1997/02/01 10:45:03 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.11 1997/02/03 01:05:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.12 1997/02/05 04:55:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$OpenBSD: ftp.c,v 1.11 1997/02/03 01:05:40 millert Exp $"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <utime.h>
 #include <varargs.h>
 
 #include "ftp_var.h"
@@ -88,7 +89,7 @@ hookup(host, port)
 	int s, len, tos;
 	static char hostnamebuf[MAXHOSTNAMELEN];
 
-	memset((char *)&hisctladdr, 0, sizeof(hisctladdr));
+	memset((void *)&hisctladdr, 0, sizeof(hisctladdr));
 	if (inet_aton(host, &hisctladdr.sin_addr) != 0) {
 		hisctladdr.sin_family = AF_INET;
 		(void)strncpy(hostnamebuf, host, sizeof(hostnamebuf) - 1);
@@ -194,8 +195,8 @@ login(host)
 {
 	char tmp[80];
 	char *user, *pass, *acct;
-	char anonpass[MAXLOGNAME + MAXHOSTNAMELEN + 2];	/* "user@hostname\0" */
-	char hostname[MAXHOSTNAMELEN + 1];
+	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
+	char hostname[MAXHOSTNAMELEN];
 	int n, aflag = 0;
 
 	user = pass = acct = NULL;
@@ -285,7 +286,8 @@ login(host)
 }
 
 void
-cmdabort()
+cmdabort(notused)
+	int notused;
 {
 
 	alarmtimer(0);
@@ -473,7 +475,8 @@ empty(mask, sec)
 jmp_buf	sendabort;
 
 void
-abortsend()
+abortsend(notused)
+	int notused;
 {
 
 	alarmtimer(0);
@@ -750,7 +753,8 @@ abort:
 jmp_buf	recvabort;
 
 void
-abortrecv()
+abortrecv(notused)
+	int notused;
 {
 
 	alarmtimer(0);
@@ -775,7 +779,6 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	off_t hashbytes;
 	struct stat st;
 	time_t mtime;
-	struct timeval tval[2];
 
 	hashbytes = mark;
 	direction = "received";
@@ -1053,14 +1056,13 @@ break2:
 		if (preserve && (closefunc == fclose)) {
 			mtime = remotemodtime(remote, 0);
 			if (mtime != -1) {
-				(void)gettimeofday(&tval[0],
-				    (struct timezone *)0);
-				tval[1].tv_sec = mtime;
-				tval[1].tv_usec = 0;
-				if (utimes(local, tval) == -1) {
+				struct utimbuf ut;
+
+				ut.actime = time(NULL);
+				ut.modtime = mtime;
+				if (utime(local, &ut) == -1)
 					printf("Can't change modification time on %s to %s",
 					    local, asctime(localtime(&mtime)));
-				}
 			}
 		}
 	}
@@ -1261,7 +1263,8 @@ psummary(notused)
 }
 
 void
-psabort()
+psabort(notused)
+	int notused;
 {
 
 	alarmtimer(0);
@@ -1362,7 +1365,8 @@ pswitch(flag)
 }
 
 void
-abortpt()
+abortpt(notused)
+	int notused;
 {
 
 	alarmtimer(0);

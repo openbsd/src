@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 1997/02/03 01:22:08 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 1997/02/05 04:55:19 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.17 1997/02/01 10:45:07 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.19 1997/02/03 01:22:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.20 1997/02/05 04:55:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,8 +220,8 @@ main(argc, argv)
 
 			if (setjmp(toplevel))
 				exit(0);
-			(void)signal(SIGINT, intr);
-			(void)signal(SIGPIPE, lostpeer);
+			(void)signal(SIGINT, (sig_t)intr);
+			(void)signal(SIGPIPE, (sig_t)lostpeer);
 			xargv[0] = __progname;
 			xargv[1] = argv[0];
 			xargv[2] = argv[1];
@@ -241,8 +241,8 @@ main(argc, argv)
 	}
 	top = setjmp(toplevel) == 0;
 	if (top) {
-		(void)signal(SIGINT, intr);
-		(void)signal(SIGPIPE, lostpeer);
+		(void)signal(SIGINT, (sig_t)intr);
+		(void)signal(SIGPIPE, (sig_t)lostpeer);
 	}
 	for (;;) {
 		cmdscanner(top);
@@ -388,8 +388,8 @@ cmdscanner(top)
 		if (c->c_handler != help)
 			break;
 	}
-	(void)signal(SIGINT, intr);
-	(void)signal(SIGPIPE, lostpeer);
+	(void)signal(SIGINT, (sig_t)intr);
+	(void)signal(SIGPIPE, (sig_t)lostpeer);
 }
 
 struct cmd *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.2 1997/02/03 01:05:35 millert Exp $	*/
+/*	$OpenBSD: complete.c,v 1.3 1997/02/05 04:55:14 millert Exp $	*/
 /*	$NetBSD: complete.c,v 1.2 1997/02/01 10:44:57 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.2 1997/02/03 01:05:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.3 1997/02/05 04:55:14 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -77,7 +77,7 @@ complete_ambiguous(word, list, words)
 	int list;
 	StringList *words;
 {
-	char insertstr[MAXPATHLEN + 1];
+	char insertstr[MAXPATHLEN];
 	char *lastmatch;
 	int i, j, matchlen, wordlen;
 
@@ -160,7 +160,7 @@ complete_local(word, list)
 	int list;
 {
 	StringList *words;
-	char dir[MAXPATHLEN + 1];
+	char dir[MAXPATHLEN];
 	char *file;
 	DIR *dd;
 	struct dirent *dp;
@@ -214,10 +214,10 @@ complete_remote(word, list)
 	int list;
 {
 	static StringList *dirlist;
-	static char	 lastdir[MAXPATHLEN + 1];
+	static char	 lastdir[MAXPATHLEN];
 	static int	 ftpdslashbug;
 	StringList	*words;
-	char		 dir[MAXPATHLEN + 1];
+	char		 dir[MAXPATHLEN];
 	char		*file, *cp;
 	int		 i, offset;
 	unsigned char	 rv;

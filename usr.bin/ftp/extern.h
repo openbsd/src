@@ -1,5 +1,5 @@
 /*	$NetBSD: extern.h,v 1.11 1997/02/01 10:44:58 lukem Exp $	*/
-/*	$OpenBSD: extern.h,v 1.7 1997/02/03 01:05:37 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 1997/02/05 04:55:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -39,10 +39,10 @@
 struct fd_set;
 
 void    abort_remote __P((FILE *));
-void    abortpt __P(());
-void    abortrecv __P(());
-void    abortsend __P(());
-void    aborthttp __P(());
+void    abortpt __P((int));
+void    abortrecv __P((int));
+void    abortsend __P((int));
+void    aborthttp __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
@@ -51,7 +51,7 @@ void	blkfree __P((char **));
 void	cd __P((int, char **));
 void	cdup __P((int, char **));
 void	changetype __P((int, int));
-void	cmdabort __P(());
+void	cmdabort __P((int));
 void	cmdscanner __P((int));
 int	command __P(());
 #ifndef SMALLFTP
@@ -78,11 +78,11 @@ void	help __P((int, char **));
 char   *hookup __P((const char *, int));
 void	idle __P((int, char **));
 int     initconn __P((void));
-void	intr __P(());
+void	intr __P((void));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
 int	login __P((const char *));
-void	lostpeer __P(());
+void	lostpeer __P((void));
 void	lpwd __P((int, char **));
 void	ls __P((int, char **));
 void	mabort __P((int));
@@ -97,10 +97,10 @@ void	mput __P((int, char **));
 char   *onoff __P((int));
 void	newer __P((int, char **));
 void    progressmeter __P((int));
-char   *prompt __P(());
-void	proxabort __P(());
+char   *prompt __P((void));
+void	proxabort __P((int));
 void    proxtrans __P((const char *, const char *, const char *));
-void    psabort __P(());
+void    psabort __P((int));
 void	psummary __P((int));
 void    pswitch __P((int));
 void    ptransfer __P((int));
@@ -157,7 +157,7 @@ char   *slurpstring __P(());
 void	status __P((int, char **));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
-void	usage __P(());
+void	usage __P((void));
 void	user __P((int, char **));
 
 

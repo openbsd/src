@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.2 1997/02/03 01:05:37 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.3 1997/02/05 04:55:16 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.2 1997/02/01 10:45:00 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.2 1997/02/03 01:05:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.3 1997/02/05 04:55:16 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.2 1997/02/03 01:05:37 millert Exp $
 #include <err.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -325,7 +326,8 @@ cleanup_http_get:
  * Abort a http retrieval
  */
 void
-aborthttp()
+aborthttp(notused)
+	int notused;
 {
 
 	alarmtimer(0);
@@ -365,8 +367,8 @@ auto_fetch(argc, argv)
 			disconnect(0, NULL);
 		return (argpos + 1);
 	}
-	(void)signal(SIGINT, intr);
-	(void)signal(SIGPIPE, lostpeer);
+	(void)signal(SIGINT, (sig_t)intr);
+	(void)signal(SIGPIPE, (sig_t)lostpeer);
 
 	/*
 	 * Loop through as long as there's files to fetch.
