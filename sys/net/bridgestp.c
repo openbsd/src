@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.8 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.9 2002/09/24 19:52:20 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -395,7 +395,7 @@ bstp_transmit_tcn(sc)
 	if (m == NULL)
 		return;
 	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = sizeof(eh) + sizeof(bpdu);
+	m->m_pkthdr.len = sizeof(*eh) + sizeof(bpdu);
 	m->m_len = m->m_pkthdr.len;
 
 	eh = mtod(m, struct ether_header *);
@@ -408,7 +408,7 @@ bstp_transmit_tcn(sc)
 	bpdu.tbu_protoid = 0;
 	bpdu.tbu_protover = 0;
 	bpdu.tbu_bpdutype = BSTP_MSGTYPE_TCN;
-	bcopy(&bpdu, m->m_data + sizeof(eh), sizeof(bpdu));
+	bcopy(&bpdu, m->m_data + sizeof(*eh), sizeof(bpdu));
 
 	s = splimp();
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
