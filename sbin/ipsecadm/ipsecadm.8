@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.65 2004/01/27 09:26:22 markus Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.66 2004/09/23 21:47:33 jaredy Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -38,20 +38,21 @@
 .Nd interface to set up IPsec
 .Sh SYNOPSIS
 .Nm ipsecadm
-.Op command
-.Ar modifiers ...
+.Ar command Op Ar modifier ...
 .Sh NOTE
 To use
 .Nm ipsecadm ,
-IPsec must be enabled by having one or more of the following
+.Xr ipsec 4
+must be enabled by having one or more of the following
 .Xr sysctl 3
 variables set:
-.Bl -tag -offset 4n -width xxxxxxxxxxxxxxxxxxxxxx
-.It net.inet.esp.enable
+.Pp
+.Bl -tag -offset 4n -width net.inet.ipcomp.enable -compact
+.It Va net.inet.esp.enable
 Enable the ESP IPsec protocol
-.It net.inet.ah.enable
+.It Va net.inet.ah.enable
 Enable the AH IPsec protocol
-.It net.inet.ipcomp.enable
+.It Va net.inet.ipcomp.enable
 Enable the IPComp protocol
 .El
 .Pp
@@ -71,7 +72,7 @@ The possible commands are:
 .Bl -tag -width new_esp
 .It new esp
 Set up a Security Association (SA) which uses the new esp transforms.
-A SA consists of the destination address,
+An SA consists of the destination address,
 a Security Parameter Index (SPI) and a security protocol.
 Encryption and authentication algorithms can be applied.
 This is the default mode.
@@ -114,7 +115,8 @@ and
 .Fl keyfile .
 .It new ah
 Set up an SA which uses the new ah transforms.
-Authentication will be done with HMAC using the specified hash algorithm.
+Authentication will be done with Hashed Message Authentication Code
+(HMAC) using the specified hash algorithm.
 Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
@@ -165,10 +167,10 @@ and
 .It ip4
 Set up an SA which uses the IP-in-IP encapsulation protocol.
 This mode
-offers no security services by itself, but can be used to route other
+offers no security services by itself but can be used to route other
 (experimental or otherwise) protocols over an IP network.
 The SPI value
-is not used for anything other than referencing the information, and
+is not used for anything other than referencing the information and
 does not appear on the wire.
 Unlike other setups, like new esp, there
 is no necessary setup in the receiving side.
@@ -178,7 +180,7 @@ Allowed modifiers are:
 and
 .Fl spi .
 .It delspi
-The specified SA will be deleted.
+Delete the specified SA.
 Allowed modifiers are:
 .Fl dst ,
 .Fl spi ,
@@ -210,9 +212,11 @@ Allowed modifiers are:
 .Fl permit
 and
 .Fl deny .
+.Pp
 The
 .Xr netstat 1
 command shows all specified flows.
+.Pp
 Flows are directional, and the
 .Fl in
 and
@@ -227,6 +231,7 @@ unspecified, the destination address from the packet will be used
 to locate an SA (the source address is used for incoming flows).
 For incoming flows, the destination address (if specified) should
 point to the expected source of the SA (the remote SA peer).
+.Pp
 If no such SA exists, key management daemons will be used to generate
 them if
 .Fl acquire
@@ -249,17 +254,19 @@ The
 .Fl proto
 argument (by default set to
 .Nm esp )
-will be used to determine what type of SA should be established.
+can be used to determine what type of SA should be established.
+.Pp
 A
 .Nm bypass
 or
 .Nm permit
-flow is used to specify a flow for which IPsec processing will be
-bypassed, i.e packets will/need not be processed by any SAs.
-For
-.Nm bypass
+flow (created with
+.Fl bypass
 or
-.Nm permit
+.Fl permit )
+is used to specify a flow for which IPsec processing will be
+bypassed, i.e., packets will/need not be processed by any SAs.
+For bypass or permit
 flows, additional modifiers are restricted to:
 .Fl addr ,
 .Fl transport ,
@@ -325,9 +332,9 @@ and
 .Fl forcetunnel .
 To create an IPsec SA using compression, an IPCA and an SA must first
 be created.
-After this an IPCA/SA bundle must be created using the
+After this, an IPCA/SA bundle must be created using the
 .Nm group
-keyword.
+command.
 The IPCA must be applied first.
 .It tcpmd5
 Set up a key for use by the RFC 2385 TCP MD5 option.
@@ -340,12 +347,12 @@ and
 .Fl keyfile .
 .El
 .Pp
-If no command is given
+If no command is given,
 .Nm ipsecadm
 defaults to new esp mode.
 .Pp
 The modifiers have the following meanings:
-.Bl -tag -width xxxx -offset indent
+.Bl -tag -width 7n
 .It Fl src
 The source IP address for the SA.
 This is necessary for incoming
@@ -375,14 +382,14 @@ The Security Parameter Index (SPI), given as a hexadecimal number.
 The second SPI used by
 .Nm group .
 .It Fl cpi
-The Compression Parameter Index (CPI), given as a 16 bit hexadecimal number.
+The Compression Parameter Index (CPI), given as a 16-bit hexadecimal number.
 .It Fl tunnel
-This option has been deprecated.
+.Sy This modifier has been deprecated.
 The arguments are ignored, and it otherwise has the same effect as the
 .Nm forcetunnel
 option.
 .It Fl newpadding
-This option has been deprecated.
+.Sy This modifier has been deprecated.
 .It Fl forcetunnel
 Force IP-inside-IP encapsulation before ESP or AH processing is performed for
 outgoing packets.
@@ -407,7 +414,7 @@ This is available for both old and new esp.
 Notice that hardware crackers for DES can be (and have been) built for
 US$250,000 (in 1998).
 Use DES for encryption of critical information at your own risk.
-We suggest using 3DES or AES instead.
+Use of 3DES or AES is recommended instead.
 DES support is kept for interoperability
 (with old implementations) purposes only.
 See
@@ -427,7 +434,7 @@ CAST encryption is available only in new esp.
 .It Nm skipjack
 SKIPJACK encryption is available only in new esp.
 This algorithm was designed by the NSA and is faster than 3DES.
-However, since it was designed by the NSA
+However, since it was designed by the NSA,
 it is a poor choice.
 .El
 .Pp
@@ -438,11 +445,12 @@ Possible values are:
 and
 .Nm sha1
 for both old and new ah and also new esp.
-Also
 .Nm rmd160 ,
 .Nm sha2-256 ,
 .Nm sha2-384 ,
+and
 .Nm sha2-512
+are also available
 for both new ah and esp.
 .It Fl comp
 The compression algorithm to be used with the IPCA.
@@ -457,17 +465,17 @@ is only available with
 because of the patent held by Hifn, Inc.
 .It Fl key
 The secret symmetric key used for encryption and authentication.
-The size for
+The sizes for
 .Nm des
 and
 .Nm 3des
-is fixed to 8 and 24 respectively.
+are fixed to 8 and 24 bits, respectively.
 For other ciphers like
 .Nm cast ,
 .Nm aes ,
 or
 .Nm blf
-the key length can vary (depending on the algorithm).
+the key length can vary, depending on the algorithm.
 The
 .Nm key
 should be given in hexadecimal digits.
@@ -477,8 +485,8 @@ should be chosen at random (ideally, using some true-random source like
 coin flipping).
 It is very important that the key is not guessable.
 One practical way of generating 160-bit (20-byte) keys is as follows:
-.Bd -literal
-	$ openssl rand 20 | hexdump -e '20/1 "%02x"'
+.Bd -literal -offset indent
+$ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
 .It Fl keyfile
 Read the key from a file.
@@ -488,7 +496,7 @@ flag, and has the same syntax considerations.
 .It Fl authkey
 The secret key material used for authentication
 if additional authentication in new esp mode is required.
-For old or new ah the key material for authentication is passed with the
+For old or new ah, the key material for authentication is passed with the
 .Nm key
 option.
 The
@@ -500,22 +508,23 @@ should be chosen at random (ideally, using some true-random source like
 coin flipping).
 It is very important that the key is not guessable.
 One practical way of generating 160-bit (20-byte) keys is as follows:
-.Bd -literal
-	$ openssl rand 20 | hexdump -e '20/1 "%02x"'
+.Bd -literal -offset indent
+$ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
 .It Fl authkeyfile
-Read the authkey from a file.
+Read the additional authentication key from a file.
 May be used instead of the
 .Fl authkey
 flag, and has the same syntax considerations.
 .It Fl iv
-This option has been deprecated.
+.Sy This modifier has been deprecated.
 The argument is ignored.
 When applicable, it has the same behaviour as the
 .Nm halfiv
 option.
 .It Fl halfiv
-This option causes use of a 4 byte IV in old ESP (as opposed to 8 bytes).
+This option causes use of a 4-byte initialization vector (IV) in old ESP
+(as opposed to 8 bytes).
 It may only be used with old ESP.
 .It Fl proto
 The security protocol needed by
@@ -524,18 +533,22 @@ or
 .Nm flow ,
 to uniquely specify the SA.
 The default value is 50 which means
-.Nm IPPROTO_ESP .
+.Dv IPPROTO_ESP .
 Other accepted values are 51
-.Nm ( IPPROTO_AH ) ,
+.Dv ( IPPROTO_AH )
 and 4
-.Nm ( IPPROTO_IP ) .
-One can also specify the symbolic names "esp", "ah", and "ip4",
+.Dv ( IPPROTO_IP ) .
+One can also specify the symbolic names
+.Dq esp ,
+.Dq ah ,
+and
+.Dq ip4 ,
 case insensitive.
 .It Fl proto2
 The second security protocol used by
 .Nm group .
 It defaults to
-.Nm IPPROTO_AH ,
+.Dv IPPROTO_AH ,
 otherwise takes the same values as
 .Fl proto .
 .It Fl addr
@@ -549,19 +562,19 @@ All addresses must be of the same address family
 .It Fl transport
 The protocol number which packets need to match to use the specified
 Security Association.
-By default the protocol number is not used for matching.
+By default, the protocol number is not used for matching.
 Instead of a number, a valid protocol name that appears in
 .Xr protocols 5
 can be used.
 .It Fl sport
 The source port which packets have to match for the flow.
-By default the source port is not used for matching.
+By default, the source port is not used for matching.
 Instead of a number, a valid service name that appears in
 .Xr services 5
 can be used.
 .It Fl dport
 The destination port which packets have to match for the flow.
-By default the source port is not used for matching.
+By default, the destination port is not used for matching.
 Instead of a number, a valid service name that appears in
 .Xr services 5
 can be used.
@@ -574,7 +587,7 @@ If left unspecified, the source address of the flow is used
 above, with regard to source address).
 .It Fl dstid
 For flow, used to specify what the remote identity key management
-should expect is.
+should expect.
 If left unspecified, the destination address of the flow is used
 (see the discussion on
 .Nm flow
@@ -587,6 +600,7 @@ Valid values are
 .Nm fqdn ,
 and
 .Nm ufqdn .
+.Pp
 The
 .Nm prefix
 type implies an IPv4 or IPv6 address followed by a forward slash
@@ -594,6 +608,7 @@ character and a decimal number indicating the number of important bits
 in the address (equivalent to a netmask, in IPv4 terms).
 Key management then has to pick a local identity that falls within the
 address space indicated.
+.Pp
 The
 .Nm fqdn
 and
@@ -647,7 +662,7 @@ For
 specify that packets matching this flow must use IPsec.
 If such SAs are not present, simply drop the packets.
 Such a policy may be used to demand peers establish SAs before they
-can communicate with us, without going through the burden of
+can communicate, without going through the burden of
 initiating the SA ourselves (thus allowing for some denial of service
 attacks).
 This flow type is particularly suitable for security gateways.
@@ -679,56 +694,64 @@ only flush SAs of type old esp.
 For
 .Nm flush ,
 only flush SAs of type ip4.
+.It Fl ipcomp
+For
+.Cm flush ,
+only flush SAs of type IPComp.
+.It Fl tcpmd5
+For
+.Cm flush ,
+only flush SAs using the TCP MD5 option.
 .El
 .Sh EXAMPLES
-Set up an SA which uses new esp with 3des encryption and HMAC-SHA1
+Set up an SA which uses new ESP with 3DES encryption and HMAC-SHA1
 authentication:
-.Bd -literal
-# ipsecadm new esp -enc 3des -auth sha1 -spi 100a -dst 169.20.12.2 \\
-	-src 169.20.12.3 \\
-	-key 638063806380638063806380638063806380638063806380 \\
+.Bd -literal -offset 3n
+# ipsecadm new esp -enc 3des -auth sha1 -spi 100a \e
+	-dst 169.20.12.2 -src 169.20.12.3 \e
+	-key 638063806380638063806380638063806380638063806380 \e
 	-authkey 1234123412341234123412341234123412341234
 .Ed
 .Pp
-Set up an SA for authentication with old ah only:
-.Bd -literal
-# ipsecadm old ah -auth md5 -spi 10f2 -dst 169.20.12.2 -src 169.20.12.3 \\
+Set up an SA for authentication with old AH only:
+.Bd -literal -offset 3n
+# ipsecadm old ah -auth md5 -spi 10f2 \e
+	-dst 169.20.12.2 -src 169.20.12.3 \e
 	-key 12341234deadbeef
 .Ed
 .Pp
 Set up a flow requiring use of AH:
-.Bd -literal
-# ipsecadm flow -dst 169.20.12.2 -proto ah \\
+.Bd -literal -offset 3n
+# ipsecadm flow -dst 169.20.12.2 -proto ah \e
 	-addr 10.1.1.0/24 10.0.0.0/24 -out -require
 .Ed
 .Pp
 Set up an inbound SA:
-.Bd -literal
-# ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \\
-	-src 169.20.12.2 \\
-	-key abadbeef15deadbeefabadbeef15deadbeefabadbeef15deadbeef \\
+.Bd -literal -offset 3n
+# ipsecadm new esp -enc blf -auth md5 -spi 1002 \e
+	-dst 169.20.12.3 -src 169.20.12.2 \e
+	-key abadbeef15deadbeefabadbeef15deadbeefabadbeef15deadbeef \e
 	-authkey 12349876432167890192837465098273
 .Ed
 .Pp
 Set up an ingress flow for the inbound SA:
-.Bd -literal
-# ipsecadm flow -addr 10.0.0.0/8 10.1.1.0/24 \\
+.Bd -literal -offset 3n
+# ipsecadm flow -addr 10.0.0.0/8 10.1.1.0/24 \e
 	-dst 169.20.12.2 -proto esp -in -require
 .Ed
 .Pp
 Set up a bypass flow:
-.Bd -literal
-# ipsecadm flow -bypass -out \\
-	-addr 10.1.1.0/24 10.1.1.0/24
+.Bd -literal -offset 3n
+# ipsecadm flow -bypass -out -addr 10.1.1.0/24 10.1.1.0/24
 .Ed
 .Pp
 Set up a key for the TCP MD5 option:
-.Bd -literal
+.Bd -literal -offset 3n
 # ipsecadm tcpmd5 -src ::1 -dst ::1 -spi 0100 -key deadbeef
 .Ed
 .Pp
-Delete all esp SAs and their flows and routing information:
-.Bd -literal
+Delete all ESP SAs and their flows and routing information:
+.Bd -literal -offset 3n
 # ipsecadm flush -esp
 .Ed
 .Sh SEE ALSO
