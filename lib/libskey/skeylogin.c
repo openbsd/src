@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.49 2003/04/03 17:48:50 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.50 2003/04/28 20:59:13 millert Exp $
  */
 
 #include <sys/param.h>
@@ -37,6 +37,7 @@
 
 static void skey_fakeprompt(char *, char *);
 static char *tgetline(int, char *, size_t, int);
+static int skeygetent(struct skey *, const char *);
 
 /*
  * Return an skey challenge string for user 'name'. If successful,
@@ -74,23 +75,21 @@ skeychallenge(struct skey *mp, char *name, char *ss)
 }
 
 /*
- * Find an entry in the One-time Password database and lock it.
+ * Get an entry in the One-time Password database and lock it.
  *
  * Return codes:
  * -1: error in opening database or unable to lock entry
  *  0: entry found, file R/W pointer positioned at beginning of record
  *  1: entry not found
  */
-int
-skeylookup(struct skey *mp, char *name)
+static int
+skeygetent(struct skey *mp, const char *name)
 {
 	struct stat statbuf;
 	size_t nread;
 	char *cp, filename[PATH_MAX], *last;
 	FILE *keyfile;
 	int fd;
-
-	memset(mp, 0, sizeof(*mp));
 
 	/* Check to see that /etc/skey has not been disabled. */
 	if (stat(_PATH_SKEYDIR, &statbuf) != 0)
@@ -171,6 +170,22 @@ skeylookup(struct skey *mp, char *name)
 }
 
 /*
+ * Look up an entry in the One-time Password database and lock it.
+ * Zeroes out the passed in struct skey before using it.
+ *
+ * Return codes:
+ * -1: error in opening database or unable to lock entry
+ *  0: entry found, file R/W pointer positioned at beginning of record
+ *  1: entry not found
+ */
+int
+skeylookup(struct skey *mp, char *name)
+{
+	memset(mp, 0, sizeof(*mp));
+	return (skeygetent(mp, name));
+}
+
+/*
  * Get the next entry in the One-time Password database.
  *
  * Return codes:
@@ -197,9 +212,9 @@ skeygetnext(struct skey *mp)
 	while ((readdir_r(mp->keydir, &entry, &dp)) == 0 && dp == &entry) {
 		/* Skip dot files and zero-length files. */
 		if (entry.d_name[0] != '.' &&
-		    (rval = skeylookup(mp, entry.d_name) != 1))
+		    (rval = skeygetent(mp, entry.d_name)) != 1)
 			break;
-	};
+	}
 
 	if (dp == NULL) {
 		closedir(mp->keydir);
