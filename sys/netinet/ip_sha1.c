@@ -1,3 +1,5 @@
+/*	$OpenBSD: ip_sha1.c,v 1.3 1997/02/24 14:06:44 niklas Exp $	*/
+
 /*
 SHA-1 in C
 By Steve Reid <steve@edmweb.com>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: ip_esp.h,v 1.3 1997/02/24 14:06:39 niklas Exp $	*/
+
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).

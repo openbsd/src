@@ -1,3 +1,5 @@
+/*	$OpenBSD: ecb_enc.c,v 1.2 1997/02/24 14:06:52 niklas Exp $	*/
+
 /* lib/des/ecb_enc.c */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
  * All rights reserved.

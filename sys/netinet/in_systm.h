@@ -1,3 +1,4 @@
+/*	$OpenBSD: in_systm.h,v 1.2 1997/02/24 14:06:35 niklas Exp $	*/
 /*	$NetBSD: in_systm.h,v 1.8 1995/04/13 06:29:22 cgd Exp $	*/
 
 /*

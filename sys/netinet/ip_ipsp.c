@@ -1,3 +1,5 @@
+/*	$OpenBSD: ip_ipsp.c,v 1.6 1997/02/24 14:06:42 niklas Exp $	*/
+
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -54,6 +56,9 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
+
+int	tdb_init __P((struct tdb *, struct mbuf *));
+int	ipsp_kern __P((int, char **, int));
 
 #ifdef ENCDEBUG
 int encdebug = 1;

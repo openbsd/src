@@ -1,3 +1,5 @@
+/*	$OpenBSD: ip_ah.c,v 1.2 1997/02/24 14:06:36 niklas Exp $	*/
+
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -57,6 +59,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 
+void	ah_input __P((struct mbuf *, int));
 
 /*
  * ah_input gets called when we receive an packet with an AH.

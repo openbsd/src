@@ -1,3 +1,4 @@
+/*	$OpenBSD: tcp_timer.h,v 1.3 1997/02/24 14:06:46 niklas Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*

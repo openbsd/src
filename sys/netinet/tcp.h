@@ -1,3 +1,4 @@
+/*	$OpenBSD: tcp.h,v 1.2 1997/02/24 14:06:44 niklas Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*

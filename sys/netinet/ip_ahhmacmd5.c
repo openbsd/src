@@ -1,3 +1,5 @@
+/*	$OpenBSD: ip_ahhmacmd5.c,v 1.4 1997/02/24 14:06:37 niklas Exp $	*/
+
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).

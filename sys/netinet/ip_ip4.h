@@ -1,3 +1,5 @@
+/*	$OpenBSD: ip_ip4.h,v 1.3 1997/02/24 14:06:41 niklas Exp $	*/
+
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).

@@ -1,3 +1,4 @@
+/*	$OpenBSD: icmp_var.h,v 1.2 1997/02/24 14:06:33 niklas Exp $	*/
 /*	$NetBSD: icmp_var.h,v 1.8 1995/03/26 20:32:19 jtc Exp $	*/
 
 /*

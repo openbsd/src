@@ -1,3 +1,4 @@
+/*	$OpenBSD: udp.h,v 1.3 1997/02/24 14:06:47 niklas Exp $	*/
 /*	$NetBSD: udp.h,v 1.6 1995/04/13 06:37:10 cgd Exp $	*/
 
 /*
