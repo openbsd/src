@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.8 2004/07/05 03:07:45 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.9 2004/07/06 02:49:05 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.54 2004/01/17 13:15:05 jdolecek Exp $	*/
 
 /*
@@ -1257,7 +1257,7 @@ ehci_open(usbd_pipe_handle pipe)
 	/* qh_link filled when the QH is added */
 	sqh->qh.qh_endp = htole32(
 		EHCI_QH_SET_ADDR(addr) |
-		EHCI_QH_SET_ENDPT(ed->bEndpointAddress) |
+		EHCI_QH_SET_ENDPT(UE_GET_ADDR(ed->bEndpointAddress)) |
 		EHCI_QH_SET_EPS(speed) | /* XXX */
 		/* XXX EHCI_QH_DTC ? */
 		EHCI_QH_SET_MPL(UGETW(ed->wMaxPacketSize)) |
