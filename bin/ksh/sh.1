@@ -1,5 +1,5 @@
 '\" t
-.\"	$OpenBSD: sh.1,v 1.1 1996/11/30 23:54:37 downsj Exp $
+.\"	$OpenBSD: sh.1,v 1.2 1997/01/02 17:41:47 downsj Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -616,12 +616,6 @@ splitting arguments with spaces).
 .\"{{{  general shell parameters
 .PP
 The following parameters are set and/or used by the shell:
-.\"{{{  _
-.IP "\fB_\fP \fI(underscore)\fP"
-In interactive use, this parameter is set to the last word of the
-previous command.  When a command is executed, this parameter is set to
-the full path of the command and is placed in the command's environment.
-.\"}}}
 .\"{{{  CDPATH
 .IP \fBCDPATH\fP
 Search path for the \fBcd\fP built-in command.  Works the same way as
