@@ -1,13 +1,13 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.25 2000/07/10 03:16:08 millert Exp $
+# $OpenBSD: termtypes.master,v 1.26 2000/07/24 04:08:17 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
 #	bug-ncurses@gnu.org
 #
 #	Version 10.2.1
-#	Date: 2000/07/01 21:23:58
+#	Date: 2000/07/23 00:29:34
 #	terminfo syntax
 #
 #	Eric S. Raymond		(current maintainer)
@@ -14277,6 +14277,34 @@ amiga-8bit|Amiga ANSI using 8-bit controls,
 	acsc=, dl=\233%p1%dM, dl1=\233M, il=\233%p1%dL, il1=\233L, 
 	ind=\204, indn@, ri=\215, rin@, use=amiga-h, 
 
+# From: Ruediger Kuhlmann <terminfo@ruediger-kuhlmann.de>, 18 Jul 2000
+# requires use of appropriate preferences settings.
+amiga-vnc|Amiga using VNC console (black on light gray), 
+	am, da, db, msgr, ndscr, 
+	btns#1, colors#16, cols#80, lines#24, lm#0, ncv#0, pairs#256, 
+	bel=^G, blink=\E[7;2m, bold=\E[1m, civis=\E[0p, 
+	clear=\E[H\E[J, cnorm=\E[p\E[>?6l, cr=^M, 
+	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=\E[D, 
+	cud=\E[%p1%dB, cud1=\E[B, cuf=\E[%p1%dC, cuf1=\E[C, 
+	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\E[A, 
+	cvvis=\E[>?6h, dch=\E[%p1%dP, dch1=\E[P, dim=\E[2m, 
+	dl=\E[%p1%dM, dl1=\E[1M, ed=\E[J, el=\E[K, flash=^G, 
+	ich=\E[%p1%d@, ich1=\E[@, il=\E[%p1%dL, il1=\E[1L, ind=\ED, 
+	indn=\E[%p1%dS, invis=\E8m, 
+	is2=\E[>?2;18l\E[>?26;?6;20;>?15;?7;>?22;>?8h, 
+	kbs=^H, kcbt=\233Z, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, 
+	kcuu1=\E[A, kdch1=\177, kf0=\E[9~, kf1=\E[0~, kf2=\E[1~, 
+	kf3=\E[2~, kf4=\E[3~, kf5=\E[4~, kf6=\E[5~, kf7=\E[6~, 
+	kf8=\E[7~, kf9=\E[8~, khlp=\E[?~, khome=\E[44~, kll=\E[45~, 
+	kmous=\E[M, knp=\E[42~, kpp=\E[41~, nel=\EE, oc=\E[0m, 
+	rev=\E[7m, ri=\EM, rin=\E[%p1%dT, rmcup=\E[?7h\E[r\E[J, 
+	rmkx=\E[?1l, rmso=\E[21m, rmul=\E[24m, rs1=\Ec, 
+	rs2=\E[>?2;18l\E[>?26;?6;20;>?15;?7;>?22;>?8h, 
+	setab=\E[%?%p1%{8}%>%t%'F'%p1%+%d%e4%p1%d%;m, 
+	setaf=\E[%?%p1%{8}%>%t%'2'%p1%+%d%e3%p1%d%;m, 
+	sgr0=\E[0m\017\E[30;85;>15m, smcup=\E[?7h, smkx=\E[?1h, 
+	smso=\E[1m, smul=\E[4m, 
+
 # Commodore B-128 microcomputer from Doug Tyrol <det@HEL-ACE.ARPA>
 # 	I'm trying to write a termcap for a commodore b-128, and I'm
 # having a little trouble. I've had to map most of my control characters
@@ -18345,6 +18373,9 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #
 # 2000/7/1
 #	* add Eterm (Michael Jennings)
+#
+# 2000-07-18
+#       * add amiga-vnc entry.
 #
 # The following sets edit modes for GNU EMACS.
 # Local Variables:
