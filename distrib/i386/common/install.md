@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.27 2005/03/27 15:13:50 krw Exp $
+#	$OpenBSD: install.md,v 1.28 2005/04/02 14:34:46 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ md_installboot() {
 	echo Installing boot block...
 	# LBA biosboot uses /boot's i-node number. Using 'cat' preserves that
 	# number, so multiboot setups (NTLDR) can work across upgrades.
-	cat /usr/mdec/boot > /mnt/boot
+	cat /usr/mdec/boot >/mnt/boot
 	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
 	echo "done."
 }
@@ -74,7 +74,7 @@ md_prep_fdisk() {
 	ask_yn "Do you want to use *all* of $_disk for OpenBSD?"
 	if [[ $resp == y ]]; then
 		echo -n "Putting all of $_disk into an active OpenBSD MBR partition (type 'A6')..."
-		fdisk -e ${_disk} << __EOT > /dev/null
+		fdisk -e ${_disk} <<__EOT >/dev/null
 reinit
 update
 write
@@ -85,7 +85,7 @@ __EOT
 	fi
 
 	# Manually configure the MBR.
-	cat << __EOT
+	cat <<__EOT
 
 You will now create a single MBR partition to contain your OpenBSD data. This
 partition must have an id of 'A6'; must *NOT* overlap other partitions; and
@@ -97,7 +97,7 @@ $(fdisk ${_disk})
 __EOT
 	fdisk -e ${_disk}
 
-	cat << __EOT
+	cat <<__EOT
 Here is the partition information you chose:
 
 $(fdisk ${_disk})
@@ -109,7 +109,7 @@ md_prep_disklabel() {
 
 	md_prep_fdisk $_disk
 
-	cat << __EOT
+	cat <<__EOT
 
 You will now create an OpenBSD disklabel inside the OpenBSD MBR
 partition. The disklabel defines how OpenBSD splits up the MBR partition

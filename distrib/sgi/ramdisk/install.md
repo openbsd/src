@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2005/03/27 15:13:50 krw Exp $
+#	$OpenBSD: install.md,v 1.5 2005/04/02 14:34:46 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ md_checkfordisklabel() {
 	# $1 is the disk to check
 	local rval
 
-	disklabel $1 > /dev/null 2> /tmp/checkfordisklabel
+	disklabel $1 >/dev/null 2>/tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
 		rval=1
 	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
@@ -70,10 +70,10 @@ md_prep_disklabel()
 	_disk=$1
 	echo
 	echo "Checking SGI Volume Header:"
-	/usr/mdec/sgivol -q $_disk > /dev/null 2> /dev/null
+	/usr/mdec/sgivol -q $_disk >/dev/null 2>/dev/null
 	case $? in
 	0)	/usr/mdec/sgivol $_disk
-	cat << __EOT
+	cat <<__EOT
 
 A SGI Volume Header was found on the disk. Normally you want to replace it
 with a new Volume Header suitable for installing OpenBSD. Doing this will
@@ -85,7 +85,7 @@ __EOT
 			/usr/mdec/sgivol -qi $_disk
 			;;
 		n*|N*)
-			cat << __EOT
+			cat <<__EOT
 
 If the Volume Header was installed by a previous OpenBSD install keeping
 it is OK as long as the Volume Header has room for the 'boot' program.
@@ -148,7 +148,7 @@ __EOT
 		;;
 	esac
 
-	cat << __EOT
+	cat <<__EOT
 
 You will now create an OpenBSD disklabel. The default disklabel have an 'a'
 partition which is the space available for OpenBSD. The 'i' partition must
@@ -171,7 +171,7 @@ __EOT
 }
 
 md_congrats() {
-	cat << __EOT
+	cat <<__EOT
 
 Your machine is now set up to boot OpenBSD. Normally the ARCS PROM will
 set up the system to boot from the first disk found with a valid Volume
