@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2001/08/20 19:40:43 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2001/08/22 05:08:11 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -247,6 +247,7 @@ bootstrap(nctx)
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
 #ifdef DDB
+	db_machine_init();
 	ddb_init();
 #ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */

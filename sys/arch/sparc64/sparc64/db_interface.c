@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.3 2001/08/20 20:23:53 jason Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.4 2001/08/22 05:08:11 jason Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -973,7 +973,7 @@ db_uvmhistdump(addr, have_addr, count, modif)
 extern void db_esp(db_expr_t, int, db_expr_t, char*);
 #endif
 
-const struct db_command db_machine_command_table[] = {
+struct db_command db_machine_command_table[] = {
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
@@ -1231,4 +1231,10 @@ db_inst_store(inst)
       default:
 	return 0;
     }
+}
+
+void
+db_machine_init()
+{
+	db_machine_commands_install(db_machine_command_table);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.4 2001/08/22 05:08:11 jason Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -120,6 +120,7 @@ int		db_inst_load __P((int inst));
 int		db_inst_store __P((int inst));
 boolean_t	db_inst_unconditional_flow_transfer __P((int inst));
 db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
+void		db_machine_init __P((void));
 
 #define inst_trap_return(ins)	db_inst_trap_return(ins)
 #define inst_return(ins)	db_inst_return(ins)
