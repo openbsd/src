@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.368 2005/03/27 15:13:50 krw Exp $
+#	$OpenBSD: install.sub,v 1.369 2005/04/02 13:02:52 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -462,14 +462,16 @@ makedev() {
 }
 
 # Create an entry in the hosts file. If an entry with the
-# same symbolic name already exists, delete it.
-# $1 - IP address
+# same symbolic name and address family already exists, delete it.
+# $1 - IP address (v6 if it contains ':', else v4)
 # $2 - symbolic name
 addhostent() {
-	sed "/ $2\$/d" /tmp/hosts > /tmp/hosts.new
+	local _addr=$1 _name=$2
+	
+	sed "/^[0-9a-fA-F]*[:.].* $_name\$/d" /tmp/hosts >/tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
-	echo "$1 $2" >> /tmp/hosts
+	echo "$_addr $_name" >>/tmp/hosts
 }
 
 # Show list of available sets and let the user select which sets to install.
@@ -567,6 +569,7 @@ __EOT
 
 		rm -f $_hn
 		v4_config "$_ifs" "$_media" "$_name" "$_hn"
+		v6_config "$_ifs" "$_media" "$_name" "$_hn"
 
 		[[ -f $_hn ]] && _IFDEVS=$(rmel "$_ifs" $_IFDEVS)
 	done
@@ -581,6 +584,18 @@ v4_info() {
 		1s/.*<.*/DOWN/p
 		/inet/s/netmask//
 		/inet/s///p'
+}
+
+# Obtain and output the inet6 information related to the given
+# interface. Should output '<UP/DOWN> <addr> <prefixlen> <rest of inet line> '.
+#
+# $1 == interface
+v6_info() {
+	ifconfig $1 inet6 | sed -n '
+		1s/.*<UP,.*/UP/p
+		1s/.*<.*/DOWN/p
+		/inet6/s/prefixlen//
+		/inet6/s///p'
 }
 
 # Construct etc/dhclient.conf and issue DHCP request. Return FALSE if
@@ -656,7 +671,7 @@ v4_config() {
 			echo "DHCP not possible - no /sbin/dhclient."
 		elif dhcp_request $_ifs "$_name" || dhcp_request $_ifs ; then
 			addhostent "127.0.0.1" "$_name"
-			echo "dhcp NONE NONE NONE $_media" > $_hn
+			echo "dhcp NONE NONE NONE $_media" >> $_hn
 		fi
 		;;
 	*)	_addr=$resp
@@ -668,6 +683,45 @@ v4_config() {
 		fi
 		;;
 	esac
+}
+
+v6_config() {
+	local _ifs=$1 _media=$2 _name=$3 _hn=$4 _addr _prefixlen _prompt
+
+	ifconfig lo0 inet6 >/dev/null 2>&1 || return
+
+	set -- $(v6_info $_ifs)
+	[[ -n $2 ]] && { _addr=$2; _prefixlen=$3; }
+
+	[[ -x /sbin/rtsol ]] && _prompt="or 'rtsol' "
+	_prompt="IPv6 address for $_ifs? (${_prompt}or 'none')"
+	ask_until "$_prompt" "$_addr"
+
+	case $resp in
+	none)	return	
+		;;
+	rtsol) 	if [[ ! -x /sbin/rtsol ]]; then
+			echo "rtsol not possible - no /sbin/rtsol."
+			return
+ 		fi
+		ifconfig $_ifs up
+		rtsol -F $_ifs
+		addhostent "::1" "$_name"
+		echo "up\nrtsol $media" >>$_hn
+		return
+ 		;;
+ 	esac
+
+	_addr=$resp
+	ask_until "IPv6 prefix length for $_ifs?" "${_prefixlen:=64}"
+	ifconfig $_ifs inet6 $_addr prefixlen $resp up || return
+	echo "inet6 $_addr $resp $media" >>$_hn
+	addhostent "$_addr" "$_name"
+
+	v6_defroute $_ifs
+	[[ $resp == none ]] && return
+	route -n add -inet6 -host default "$resp" || return
+	echo "!route -n add -host -inet6 default $resp" >>$_hn
 }
 
 v4_defroute() {
@@ -687,6 +741,35 @@ v4_defroute() {
 		# Put the old default route back. The new one did not work.
 		route -n add -inet -host default $_dr >/dev/null 2>&1
 	done
+}
+
+v6_defroute() {
+	local _if=$1 _routers _oifs
+
+	if [[ -z $(route -n show -inet6 | sed -ne '/^default */{s///; s/ .*//; p;}') ]]; then
+		resp=none
+		return
+	fi
+
+	if [[ -x /sbin/ping6 ]]; then
+		_routers=$(ping6 -n -c 2 ff02::2%$_if 2>&1 | sed -n \
+			-e '/bytes from/{s/^.*from //;s/,.*$//;p;}')
+	fi
+
+	_oifs=$IFS
+	IFS=
+	PS3="IPv6 default router? (list #, IPv6 address or 'none'): "
+	select i in $_routers; do
+		case $i in
+		"")	resp=$REPLY
+			[[ -n $resp ]] && break
+			;;
+		*)	resp=$i
+			break
+			;;
+		esac
+	done	
+	IFS=$_oifs
 }
 
 # Much of this is gratuitously stolen from /etc/netstart.
@@ -729,9 +812,9 @@ enable_network() {
 			# $af can be "dhcp", "up", "rtsol", an address family, commands, or
 			# a comment.
 			case $af in
-			"#"*|"!"*|"bridge"|""|"rtsol")
+			"#"*|"!"*|"bridge"|"")
 				# skip comments, user commands, bridges,
-				# IPv6 rtsol and empty lines
+				# and empty lines
 				continue
 				;;
 			"dhcp")	[ "$name" = "NONE" ] && name=
@@ -739,6 +822,11 @@ enable_network() {
 				[ "$bcaddr" = "NONE" ] && bcaddr=
 				ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
 				cmd="dhclient $if"
+				;;
+			"rtsol")
+				ifconfig $if $name $mask $bcaddr $ext1 $ext2 up
+				rtsif="$rtsif $if"
+				cmd=
 				;;
 			"up")
 				# The only one of these guaranteed to be set is $if
@@ -777,8 +865,8 @@ enable_network() {
 					[ "$alias" ] && rtcmd="; route -qn add -host $name 127.0.0.1"
 					;;
 				inet6)
-					# Ignore IPv6 setup
-					continue
+					[ "$mask" ] && cmd="$cmd prefixlen $mask"
+					cmd="$cmd $bcaddr"
 					;;
 				*)	cmd="$cmd $mask $bcaddr"
 				esac
@@ -788,6 +876,8 @@ enable_network() {
 			eval "$cmd"
 		done </mnt/etc/hostname.$if
 	done
+
+	[[ -n $rtsif ]] && /mnt/sbin/rtsol -F $rtsif
 
 	# /mnt/etc/mygate, if it exists, contains the name of my gateway host
 	# that name must be in /etc/hosts.
@@ -1034,6 +1124,9 @@ install_url() {
 		_url_base=$_url_base$(encode_for_url "$_ftp_server_login"):$(encode_for_url "$_passwd")@
 	fi
 	eval _url_base=$_url_base\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
+
+	# XXX Workaround for problems ftp'ing out from a v6 only host.
+	ifconfig lo0 127.0.0.1
 
 	# Get list of files from the server.
 	if [[ $_url_type == ftp && -z $ftp_proxy ]] ; then
@@ -1479,7 +1572,8 @@ questions() {
 		ask_yn "Do you expect to run the X Window System?" yes
 		if [[ $resp == y ]]; then
 			sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
-			    /mnt/etc/sysctl.conf > /tmp/sysctl.conf
+			    /mnt/etc/sysctl.conf >/tmp/sysctl.conf
+			cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 		fi
 	fi
 
@@ -1512,6 +1606,12 @@ finish_up() {
 			[[ $_fstype == swap ]] && \
 			    /mnt/sbin/swapctl -a $_dev >/dev/null 2>&1
 		done </mnt/etc/fstab
+	fi
+
+	if grep -qs '^rtsol' /tmp/hostname.*; then
+		sed -e "/^#\(net\.inet6\.ip6\.accept_rtadv\)/s//\1/" \
+		    /mnt/etc/sysctl.conf > /tmp/sysctl.conf
+		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 	fi
 
 	echo -n "Making all device nodes..."
