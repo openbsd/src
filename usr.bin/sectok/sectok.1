@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sectok.1,v 1.4 2001/07/26 20:00:16 rees Exp $
+.\"	$OpenBSD: sectok.1,v 1.5 2001/07/27 07:33:31 jakob Exp $
 .\"
 .\" Copyright (C) 2001, Jakob Schlyter. All rights reserved.
 .\"
@@ -29,14 +29,17 @@
 .Dd July 17, 2001
 .Dt SECTOK 1
 .Os
+.\"
 .Sh NAME
 .Nm sectok
 .Nd communicate with smartcards using iso7816
+.\"
 .Sh SYNOPSIS
 .Nm sectok
 .Op Fl 0123
 .Op Fl f Ar scriptfile
 .Op Fl s Ar sleeptime
+.\"
 .Sh DESCRIPTION
 .Nm
 is a command-line-like interface for communicating with smartcards.
@@ -54,6 +57,7 @@ Run commands from scriptfile.
 .It Fl s Ar sleeptime
 Set sleep (in milliseconds) between commands in the script.
 .El
+.\"
 .Sh COMMANDS
 .Ss Non-card commands
 .Pp
@@ -130,7 +134,8 @@ Try all 256 possible instructions and print results.
 .Cm class
 .Op Ar class
 .Xc
-Inquire or set default application class.
+Inquire or set default application
+.Ar class .
 .It Xo
 .Cm read
 .Op Fl x
@@ -141,7 +146,9 @@ Read selected fid and write to stdout.
 .Cm write
 .Ar input-filename
 .Xc
-Read from input-filename and write to selected fid.
+Read from
+.Ar input-filename
+and write to selected fid.
 .El
 .Ss Cyberflex commands
 .Pp
@@ -213,7 +220,9 @@ use manufacturer's default AUT0 key
 .Ar filename
 .Xc
 Load an applet to the card.
-If the first byte of the aid is '#' it will be converted to 0xfc.
+If the first byte of the
+.Ar aid
+is '#' it will be converted to 0xfc.
 .It Xo
 .Cm junload
 .Op Fl p Ar progID
@@ -234,10 +243,16 @@ select default loader
 .Op Fl d
 .Op Fl x Ar hex-aut0
 .Xc
+.Bl -tag -width Ds
+.It Fl d
+use manufacturer's default AUT0 key
 .El
+.El
+.\"
 .Sh AUTHORS
 .Nm
 was written by Jim Rees and others at University of Michigan.
+.\"
 .Sh HISTORY
 .Nm
 first appeared in
