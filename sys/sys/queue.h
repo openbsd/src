@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.20 2001/06/23 03:53:22 angelos Exp $	*/
+/*	$OpenBSD: queue.h,v 1.21 2001/06/23 04:23:05 angelos Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -268,14 +268,6 @@ struct {								\
 		    &(elm)->field.de_next;				\
 	(listelm)->field.de_next = (elm);				\
 	(elm)->field.de_prev = &(listelm)->field.de_next;		\
-} while (0)
-
-#define	DLIST_INSERT_BEFORE(listelm, elm, field) do {			\
-	(elm)->field.de_prev = (listelm)->field.de_prev;		\
-	(elm)->field.de_next = (listelm);				\
-	if ((listelm)->field.de_prev != NULL)				\
-		*(listelm)->field.de_prev = (elm);		       	\
-	(listelm)->field.de_prev = &(elm)->field.de_next;		\
 } while (0)
 
 #define DLIST_INSERT_HEAD(head, elm, field) do {			\
