@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2001/09/06 19:12:34 jason Exp $
+#	$OpenBSD: Makefile,v 1.6 2001/10/08 22:19:38 jason Exp $
 #	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -16,12 +16,9 @@ STRIPFLAG=
 
 # deal with Solaris vs. NetBSD build environments for now ..
 OS!=uname -s
-.if (${OS} == "NetBSD")
+.if (${OS} == "OpenBSD")
 USE_GENASSYM?=	no
 SVR4=
-.elif (${OS} == "OpenBSD")
-USE_GENASSYM?=	no
-SVR4=-U__NetBSD__ -D__OpenBSD__
 .else
 USE_GENASSYM?=	yes
 SVR4=-U__SVR4 -U__svr4__ -D__NetBSD__
