@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.7 1996/04/29 11:42:06 mickey Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.8 1996/05/02 13:45:45 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.18 1996/02/13 22:00:14 christos Exp $	*/
 
 /*
@@ -191,8 +191,8 @@ ether_output(ifp, m0, dst, rt0)
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if (*edst & 1)
 			m->m_flags |= (M_BCAST|M_MCAST);
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX)
-		    && (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
+		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
 			M_PREPEND(mcopy, sizeof (*eh), M_DONTWAIT);
 			if (mcopy) {
 				eh = mtod(mcopy, struct ether_header *);
