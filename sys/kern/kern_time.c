@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.15 1999/12/06 19:36:42 aaron Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.16 2000/01/22 23:41:42 millert Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -298,13 +298,33 @@ sys_settimeofday(p, v, retval)
 		return (error);
 	if (SCARG(uap, tv)) {
 		/*
+		 * Don't allow the time to be set forward so far it will wrap
+		 * and become negative, thus allowing an attacker to bypass
+		 * the next check below.  The cutoff is 1 year before rollover
+		 * occurs, so even if the attacker uses adjtime(2) to move
+		 * the time past the cutoff, it will take a very long time
+		 * to get to the wrap point.
+		 *
+		 * XXX: we check against INT_MAX since on 64-bit
+		 *	platforms, sizeof(int) != sizeof(long) and
+		 *	time_t is 32 bits even when atv.tv_sec is 64 bits.
+		 */
+		if (atv.tv_sec > INT_MAX - 365*24*60*60) {
+			printf("denied attempt to set clock forward to %ld\n",
+			    atv.tv_sec);
+			return (EPERM);
+		}
+		/*
 		 * If the system is secure, we do not allow the time to be
 		 * set to an earlier value (it may be slowed using adjtime,
 		 * but not set back). This feature prevent interlopers from
 		 * setting arbitrary time stamps on files.
 		 */
-		if (securelevel > 1 && timercmp(&atv, &time, <))
+		if (securelevel > 1 && timercmp(&atv, &time, <)) {
+			printf("denied attempt to set clock back %ld seconds\n",
+			    time.tv_sec - atv.tv_sec);
 			return (EPERM);
+		}
 		settime(&atv);
 	}
 	if (SCARG(uap, tzp))
