@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.9 2004/02/23 20:09:02 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.10 2004/02/23 20:16:00 henning Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -492,8 +492,8 @@ struct tree *tree_limit(struct tree *, int);
 int tree_evaluate(struct tree_cache *);
 
 /* alloc.c */
-VOIDPTR dmalloc(int, char *);
-void dfree(VOIDPTR, char *);
+void *dmalloc(int, char *);
+void dfree(void *, char *);
 struct packet *new_packet(char *);
 struct dhcp_packet *new_dhcp_packet(char *);
 struct tree *new_tree(char *);
