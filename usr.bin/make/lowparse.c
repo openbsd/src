@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lowparse.c,v 1.12 2001/07/11 12:59:43 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.13 2001/07/18 14:49:13 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -430,13 +430,13 @@ Parse_ReadNormalLine(linebuf)
 unsigned long
 Parse_Getlineno()
 {
-    return current->lineno;
+    return current ? current->lineno : 0;
 }
 
 const char *
 Parse_Getfilename()
 {
-    return current->fname;
+    return current ? current->fname : NULL;
 }
 
 #ifdef CLEANUP
