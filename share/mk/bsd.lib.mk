@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.19 1999/01/27 03:28:51 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.20 1999/05/26 19:10:28 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -17,8 +17,9 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 
 # prefer .S to a .c, add .po, remove stuff not used in the BSD libraries.
 # .so used for PIC object files.  .ln used for lint output files.
+# .m for objective c files.
 .SUFFIXES:
-.SUFFIXES: .out .o .po .so .S .s .c .cc .C .cxx .f .y .l .ln .m4
+.SUFFIXES: .out .o .po .so .S .s .c .cc .C .cxx .f .y .l .ln .m4 .m
 
 .c.o:
 	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
