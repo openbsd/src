@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.7 1997/11/06 05:58:30 csapuntz Exp $
+#	$OpenBSD: vnode_if.src,v 1.8 1998/08/08 03:53:30 csapuntz Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -56,9 +56,23 @@
 #% lookup	dvp	L ? ?
 #% lookup	vpp	- L -
 #
-# XXX - the lookup locking protocol defies simple description and depends
-#	on the flags and operation fields in the (cnp) structure.  Note
-#	especially that *vpp may equal dvp and both may be locked.
+#
+# Note that EJUSTRETURN is not considered an error condition for locking
+# purposes.
+#
+# if both ISLASTCN and LOCKPARENT are set in cnp->cn_flags then 
+#
+#	dvp  L L L*
+#
+# otherwise,
+#
+#       dvp  L U L*
+#
+# * The lock state on return is indeterminate since the lookup implementations
+# unlock and relock the vnode (an operation which is not guaranteed to 
+# succeed). However, these types of failures should be rare. Unfortunately,
+# they are currently undetectable.
+#
 
 vop_lookup {
 	IN struct vnode *dvp;
