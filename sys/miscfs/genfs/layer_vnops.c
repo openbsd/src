@@ -1,4 +1,4 @@
-/*	$OpenBSD: layer_vnops.c,v 1.5 2003/11/29 18:44:46 jmc Exp $ */
+/*	$OpenBSD: layer_vnops.c,v 1.6 2004/05/26 23:17:14 pedro Exp $ */
 /*	$NetBSD: layer_vnops.c,v 1.10 2001/12/06 04:29:23 chs Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.5 2003/11/29 18:44:46 jmc Exp $
+ *	$Id: layer_vnops.c,v 1.6 2004/05/26 23:17:14 pedro Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -87,7 +87,7 @@
  * name space under a new name.  In this respect, it is
  * similar to the loopback file system.  It differs from
  * the loopback fs in two respects:  it is implemented using
- * a stackable layers techniques, and it's "null-node"s stack above
+ * a stackable layers technique, and it's "null-node"s stack above
  * all lower-layer vnodes, not just over directory vnodes.
  *
  * The null layer has two purposes.  First, it serves as a demonstration
@@ -95,7 +95,7 @@
  * does everything the loopback file system does, which is slightly
  * more than nothing.)  Second, the null layer can serve as a prototype
  * layer.  Since it provides all necessary layer framework,
- * new file system layers can be created very easily be starting
+ * new file system layers can be created very easily by starting
  * with a null layer.
  *
  * The remainder of the man page examines the null layer as a basis
@@ -112,7 +112,7 @@
  * of target-pn subtree will be aliased under alias-pn.
  *
  * It is conceivable that other overlay filesystems will take different
- * parameters. For instance, data migration or access controll layers might
+ * parameters. For instance, data migration or access control layers might
  * only take one pathname which will serve both as the target-pn and
  * alias-pn described above.
  *
@@ -130,7 +130,7 @@
  * operation arguments and replacing any layered nodes by their
  * lower-layer equivalents.  It then invokes the operation
  * on the lower layer.  Finally, it replaces the layered nodes
- * in the arguments and, if a vnode is return by the operation,
+ * in the arguments and, if a vnode is returned by the operation,
  * stacks a layered node on top of the returned vnode.
  *
  * The bypass routine in this file, layer_bypass(), is suitable for use
@@ -150,7 +150,7 @@
  * of operations are special cased, and handled by the layered fs. One
  * group, layer_setattr, layer_getattr, layer_access, layer_open, and
  * layer_fsync, perform layer-specific manipulation in addition to calling
- * the bypass routine. The other group
+ * the bypass routine.
 
  * Although bypass handles most operations, vop_getattr, vop_lock,
  * vop_unlock, vop_inactive, vop_reclaim, and vop_print are not
@@ -172,7 +172,7 @@
  * INSTANTIATING VNODE STACKS
  *
  * Mounting associates the null layer with a lower layer,
- * effect stacking two VFSes.  Vnode stacks are instead
+ * effectively stacking two VFSes.  Vnode stacks are instead
  * created on demand as files are accessed.
  *
  * The initial mount creates a single vnode stack for the
@@ -202,7 +202,7 @@
  *
  * One of the easiest ways to construct new file system layers is to make
  * a copy of the null layer, rename all files and variables, and
- * then begin modifing the copy.  Sed can be used to easily rename
+ * then begin modifying the copy.  Sed can be used to easily rename
  * all variables.
  *
  * The umap layer is an example of a layer descended from the 
@@ -216,7 +216,7 @@
  * is appropriate in different situations.  In both cases,
  * it is the responsibility of the aliasing layer to make
  * the operation arguments "correct" for the lower layer
- * by mapping an vnode arguments to the lower layer.
+ * by mapping all vnode arguments to the lower layer.
  *
  * The first approach is to call the aliasing layer's bypass routine.
  * This method is most suitable when you wish to invoke the operation
