@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.19 1997/07/27 23:30:37 niklas Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.20 1997/07/31 00:40:21 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -270,15 +270,12 @@ ip_output(m0, va_alist)
 				 * Register first use, 
 				 * setup expiration timer 
 				 */
-				if (tdb->tdb_first_use == 0)
-				{
+				if (tdb->tdb_first_use == 0) {
 				    tdb->tdb_first_use = time.tv_sec;
 				    
-				    if (tdb->tdb_flags & TDBF_FIRSTUSE)
-				    {
+				    if (tdb->tdb_flags & TDBF_FIRSTUSE) {
 					exp = get_expiration();
-					if (exp == (struct expiration *) NULL)
-					{
+					if (exp == (struct expiration *) NULL) {
 					    log(LOG_WARNING, "ip_output(): out of memory for expiration timer");
 					    m_freem(m);
 					    RTFREE(re->re_rt);
@@ -294,11 +291,10 @@ ip_output(m0, va_alist)
 				    }
 
 				    if ((tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
-					(tdb->tdb_soft_first_use <= tdb->tdb_exp_first_use))
-				    {
+					(tdb->tdb_soft_first_use <=
+					tdb->tdb_exp_first_use)) {
 					exp = get_expiration();
-					if (exp == (struct expiration *) NULL)
-					{
+					if (exp == (struct expiration *) NULL) {
 					    log(LOG_WARNING, "ip_output(): out of memory for expiration timer");
 					    m_freem(m);
 					    RTFREE(re->re_rt);
@@ -331,15 +327,12 @@ ip_output(m0, va_alist)
 #endif /* ENCDEBUG */
 
 			/* Register first use, setup expiration timer */
-			if (tdb->tdb_first_use == 0)
-			{
+			if (tdb->tdb_first_use == 0) {
 			    tdb->tdb_first_use = time.tv_sec;
 			    
-			    if (tdb->tdb_flags & TDBF_FIRSTUSE)
-			    {
+			    if (tdb->tdb_flags & TDBF_FIRSTUSE) {
 				exp = get_expiration();
-				if (exp == (struct expiration *) NULL)
-				{
+				if (exp == (struct expiration *) NULL) {
 				    log(LOG_WARNING, "ip_output(): out of memory for expiration timer");
 				    m_freem(m);
 				    RTFREE(re->re_rt);
@@ -357,11 +350,9 @@ ip_output(m0, va_alist)
 
 			    if ((tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
 				(tdb->tdb_soft_first_use <= 
-				 tdb->tdb_exp_first_use))
-			    {
+				 tdb->tdb_exp_first_use)) {
 				exp = get_expiration();
-				if (exp == (struct expiration *) NULL)
-				{
+				if (exp == (struct expiration *) NULL) {
 				    log(LOG_WARNING, "ip_output(): out of memory for expiration timer");
 				    m_freem(m);
 				    RTFREE(re->re_rt);
