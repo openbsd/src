@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: authfile.c,v 1.10 1999/11/24 19:53:44 markus Exp $");
+RCSID("$Id: authfile.c,v 1.11 1999/12/06 19:11:15 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -40,7 +40,7 @@ save_private_key(const char *filename, const char *passphrase,
 {
 	Buffer buffer, encrypted;
 	char buf[100], *cp;
-	int f, i;
+	int fd, i;
 	CipherContext cipher;
 	int cipher_type;
 	u_int32_t rand;
@@ -111,19 +111,19 @@ save_private_key(const char *filename, const char *passphrase,
 	memset(buf, 0, sizeof(buf));
 	buffer_free(&buffer);
 
-	f = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-	if (f < 0)
+	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	if (fd < 0)
 		return 0;
-	if (write(f, buffer_ptr(&encrypted), buffer_len(&encrypted)) !=
+	if (write(fd, buffer_ptr(&encrypted), buffer_len(&encrypted)) !=
 	    buffer_len(&encrypted)) {
 		debug("Write to key file %.200s failed: %.100s", filename,
 		      strerror(errno));
 		buffer_free(&encrypted);
-		close(f);
+		close(fd);
 		remove(filename);
 		return 0;
 	}
-	close(f);
+	close(fd);
 	buffer_free(&encrypted);
 	return 1;
 }
@@ -138,28 +138,28 @@ int
 load_public_key(const char *filename, RSA * pub,
 		char **comment_return)
 {
-	int f, i;
+	int fd, i;
 	off_t len;
 	Buffer buffer;
 	char *cp;
 
-	f = open(filename, O_RDONLY);
-	if (f < 0)
+	fd = open(filename, O_RDONLY);
+	if (fd < 0)
 		return 0;
-	len = lseek(f, (off_t) 0, SEEK_END);
-	lseek(f, (off_t) 0, SEEK_SET);
+	len = lseek(fd, (off_t) 0, SEEK_END);
+	lseek(fd, (off_t) 0, SEEK_SET);
 
 	buffer_init(&buffer);
 	buffer_append_space(&buffer, &cp, len);
 
-	if (read(f, cp, (size_t) len) != (size_t) len) {
+	if (read(fd, cp, (size_t) len) != (size_t) len) {
 		debug("Read from key file %.200s failed: %.100s", filename,
 		      strerror(errno));
 		buffer_free(&buffer);
-		close(f);
+		close(fd);
 		return 0;
 	}
-	close(f);
+	close(fd);
 
 	/* Check that it is at least big enought to contain the ID string. */
 	if (len < strlen(AUTHFILE_ID_STRING) + 1) {
@@ -172,7 +172,7 @@ load_public_key(const char *filename, RSA * pub,
 	 * from the buffer.
 	 */
 	for (i = 0; i < (unsigned int) strlen(AUTHFILE_ID_STRING) + 1; i++)
-		if (buffer_get_char(&buffer) != (unsigned char) AUTHFILE_ID_STRING[i]) {
+		if (buffer_get_char(&buffer) != (u_char) AUTHFILE_ID_STRING[i]) {
 			debug("Bad key file %.200s.", filename);
 			buffer_free(&buffer);
 			return 0;
@@ -207,7 +207,7 @@ int
 load_private_key(const char *filename, const char *passphrase,
 		 RSA * prv, char **comment_return)
 {
-	int f, i, check1, check2, cipher_type;
+	int fd, i, check1, check2, cipher_type;
 	off_t len;
 	Buffer buffer, decrypted;
 	char *cp;
@@ -216,14 +216,15 @@ load_private_key(const char *filename, const char *passphrase,
 	BIGNUM *aux;
 	struct stat st;
 
-	f = open(filename, O_RDONLY);
-	if (f < 0)
+	fd = open(filename, O_RDONLY);
+	if (fd < 0)
 		return 0;
 
 	/* check owner and modes */
-	if (fstat(f, &st) < 0 ||
+	if (fstat(fd, &st) < 0 ||
 	    (st.st_uid != 0 && st.st_uid != getuid()) ||
 	    (st.st_mode & 077) != 0) {
+		close(fd);
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 		error("@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @");
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
@@ -232,20 +233,20 @@ load_private_key(const char *filename, const char *passphrase,
 		error("It is recommended that your private key files are NOT accessible by others.");
 		return 0;
 	}
-	len = lseek(f, (off_t) 0, SEEK_END);
-	lseek(f, (off_t) 0, SEEK_SET);
+	len = lseek(fd, (off_t) 0, SEEK_END);
+	lseek(fd, (off_t) 0, SEEK_SET);
 
 	buffer_init(&buffer);
 	buffer_append_space(&buffer, &cp, len);
 
-	if (read(f, cp, (size_t) len) != (size_t) len) {
+	if (read(fd, cp, (size_t) len) != (size_t) len) {
 		debug("Read from key file %.200s failed: %.100s", filename,
 		      strerror(errno));
 		buffer_free(&buffer);
-		close(f);
+		close(fd);
 		return 0;
 	}
-	close(f);
+	close(fd);
 
 	/* Check that it is at least big enought to contain the ID string. */
 	if (len < strlen(AUTHFILE_ID_STRING) + 1) {
