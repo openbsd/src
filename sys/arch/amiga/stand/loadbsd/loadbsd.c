@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadbsd.c,v 1.13 1999/09/09 21:25:13 espie Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.14 2000/06/07 15:39:24 espie Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.22 1996/10/13 13:39:52 is Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ extern const char _version[];
  *              turn on -Wall, clean up warnings. Be sensical about 
  *              ixemul/libnix issues.
  *      2.15.3  07/18/98 ME - poolmem awareness
+ *      2.15.4  06/07/00 ME - change defaults to be less confusing
  */
 
 /*
@@ -179,7 +180,7 @@ int k_flag;
 int p_flag;
 int t_flag;
 int reqmemsz;
-int S_flag;
+int S_flag = 1;
 u_long I_flag;
 int Z_flag;
 u_long cpuid;
@@ -210,13 +211,11 @@ main(argc, argv)
 	     int, void *, int, int, u_long, u_long, int)) = startit;
 
 	program_name = argv[0];
-	boothowto = RB_SINGLE;
+	boothowto = RB_AUTOBOOT;
 
-	if (argc < 2)
-		usage();
 	open_libraries();
 
-	while ((ch = getopt(argc, argv, "aAbcC:DhI:km:n:ptsSVZ")) != -1) {
+	while ((ch = getopt(argc, argv, "aAbcC:DhI:km:n:ptsRSVZ")) != -1) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;
@@ -246,6 +245,9 @@ main(argc, argv)
 			break;
 		case 'V':
 			fprintf(stderr,"%s\n",_version + 6);
+			break;
+		case 'R':
+			S_flag = 0;
 			break;
 		case 'S':
 			S_flag = 1;
@@ -281,9 +283,12 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1)
+	if (argc == 1)
+		kname = argv[0];
+	else if (argc == 0)
+		kname = "bsd";
+	else
 		usage();
-	kname = argv[0];
 	
 	if ((fd = open(kname, 0)) < 0)
 		err(20, "open");
@@ -872,9 +877,9 @@ void
 usage()
 {
 	fprintf(stderr,
-	     "usage: %s [-abchkpstADSVZ] [-C machine] [-m mem] [-n mode]\n",
+	     "usage: %s [-abchkpstADRSVZ] [-C machine] [-m mem] [-n mode]\n",
 	     program_name);
-	fprintf(stderr,"           [-I sync-inhibit] kernel\n");
+	fprintf(stderr,"           [-I sync-inhibit] [kernel]\n");
 	exit(1);
 }
 
@@ -886,10 +891,10 @@ verbose_usage()
 NAME
 \t%s - loads OpenBSD from amiga dos.
 SYNOPSIS
-\t%s [-abchkpstADSVZ] [-C machine] [-m mem] [-n flags]
+\t%s [-abchkpstADRSVZ] [-C machine] [-m mem] [-n flags]
 \t    [-I sync-inhibit] kernel
 OPTIONS
-\t-a  Boot up to multiuser mode.
+\t-a  Boot up to multiuser mode (default).
 \t-A  Use AGA display mode, if available.
 \t-b  Ask for which root device.
 \t    Its possible to have multiple roots and choose between them.
@@ -909,8 +914,9 @@ OPTIONS
 \t    segment. The higher priority segment is usually faster
 \t    (i.e. 32 bit memory), but some people have smaller amounts
 \t    of 32 bit memory.
-\t-s  Boot up in singleuser mode (default).
-\t-S  Include kernel symbol table.
+\t-s  Boot up in singleuser mode.
+\t-R  Remove kernel symbol table.
+\t-S  Include kernel symbol table (default).
 \t-t  This is a *test* option.  It prints out the memory
 \t    list information being passed to the kernel and also
 \t    exits without actually starting OpenBSD.

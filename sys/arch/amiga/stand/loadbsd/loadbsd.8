@@ -1,4 +1,4 @@
-.\"	$OpenBSD: loadbsd.8,v 1.5 2000/04/12 16:50:52 aaron Exp $
+.\"	$OpenBSD: loadbsd.8,v 1.6 2000/06/07 15:39:24 espie Exp $
 .\" Copyright (c) 1999 Marc Espie
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -17,12 +17,12 @@
 .Nd load OpenBSD from AmigaOS
 .Sh SYNOPSIS
 .Nm
-.Op Fl abchkpstADSVZ
+.Op Fl abchkpstADRSVZ
 .Op Fl C Ar machine
 .Op Fl m Ar mem
 .Op Fl n Ar flags
 .Op Fl I Ar sync-inhibit
-.Ar file
+.Op Ar file
 .Sh DESCRIPTION
 The
 .Nm
@@ -30,6 +30,7 @@ utility loads the
 .Ox
 kernel from
 .Ar file 
+(default file name: bsd)
 under AmigaOS, and starts 
 .Ox .
 .Nm 
@@ -39,12 +40,12 @@ but it no longer needs ixemul.
 .Nm 
 supports multiple root devices. By default,
 .Nm
-boots to single-user mode, without symbols.
+boots to multi-user mode, with debugging symbols.
 .Pp
 Options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-Boot up to multiuser mode.
+Boot up to multiuser mode (default).
 .It Fl A
 Use AGA display mode, if available.
 .It Fl b
@@ -92,8 +93,10 @@ segment. The higher priority segment is usually faster
 of 32 bit memory.
 .It Fl s
 Boot up in single user mode.
+.It Fl R
+Remove kernel symbol table.
 .It Fl S
-Include kernel symbol table.
+Include kernel symbol table (default).
 .It Fl t
 Test configuration.  Check the machine, and loads the kernel,
 but stop without actually starting 
