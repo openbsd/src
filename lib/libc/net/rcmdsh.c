@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcmdsh.c,v 1.3 1996/09/15 09:31:17 tholo Exp $	*/ 
+/*	$OpenBSD: rcmdsh.c,v 1.4 1997/07/23 16:59:37 millert Exp $	*/ 
 
 /*
  * This is an rcmd() replacement originally by 
@@ -6,7 +6,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmdsh.c,v 1.3 1996/09/15 09:31:17 tholo Exp $";
+static char *rcsid = "$OpenBSD: rcmdsh.c,v 1.4 1997/07/23 16:59:37 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include      <sys/types.h>
@@ -50,11 +50,13 @@ rcmdsh(ahost, rport, locuser, remuser, cmd, rshprog)
 	}
 
 	/* Validate remote hostname. */
-	if ((hp = gethostbyname(*ahost)) == NULL) {
-		herror(*ahost);
-		return(-1);
+	if (strcmp(*ahost, "localhost") != 0) {
+		if ((hp = gethostbyname(*ahost)) == NULL) {
+			herror(*ahost);
+			return(-1);
+		}
+		*ahost = hp->h_name;
 	}
-	*ahost = hp->h_name;
 
 	/* Get a socketpair we'll use for stdin and stdout. */
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) < 0) {
