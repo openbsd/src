@@ -1,4 +1,4 @@
-/*     $OpenBSD: kerberos.c,v 1.9 2001/11/03 00:07:52 hin Exp $    */
+/*     $OpenBSD: kerberos.c,v 1.10 2002/06/09 00:43:00 hin Exp $    */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -371,7 +371,7 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 
 		if (pw->pw_uid == 0)
 		    syslog(LOG_INFO|LOG_AUTH,
-			   "ROOT Kerberos login from %s on %s\n",
+			   "ROOT Kerberos login from %s on %s",
 			   krb_unparse_name_long(adat.pname,
 						 adat.pinst,
 						 adat.prealm),
