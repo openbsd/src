@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.6 2004/07/05 03:08:56 deraadt Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.7 2004/07/05 03:09:57 deraadt Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.14 2003/10/13 00:05:10 enami Exp $	*/
 
 /*
@@ -38,8 +38,8 @@
  */
 
 /*
- * The EHCI 0.96 spec can be found at
- * http://developer.intel.com/technology/usb/download/ehci-r096.pdf
+ * The EHCI 1.0 spec can be found at
+ * http://developer.intel.com/technology/usb/download/ehci-r10.pdf
  * and the USB 2.0 spec at
  * http://www.usb.org/developers/data/usb_20.zip
  */
@@ -188,16 +188,89 @@ typedef u_int32_t ehci_link_t;
 typedef u_int32_t ehci_physaddr_t;
 
 /* Isochronous Transfer Descriptor */
+#define EHCI_ITD_NTRANS 8
+#define EHCI_ITD_NBUFFERS 7
 typedef struct {
 	ehci_link_t	itd_next;
-	/* XXX many more */
+	u_int32_t	itd_trans[EHCI_ITD_NTRANS];
+#define EHCI_ITD_GET_OFFSET(x)	(((x) >>  0) & 0xfff) /* offset from buf ptr */
+#define EHCI_ITD_SET_OFFSET(x)	(x)
+#define EHCI_ITD_GET_PG(x)	(((x) >> 12) & 0x7) /* buffer page */
+#define EHCI_ITD_SET_PG(x)	((x) << 12)
+#define EHCI_QTD_GET_IOC(x)	(((x) >> 15) &  0x1) /* interrupt on complete */
+#define EHCI_QTD_IOC		0x00008000
+#define EHCI_ITD_GET_XLEN(x)	(((x) >> 16) & 0xfff) /* transaction length */
+#define EHCI_ITD_SET_XLEN(x)	((x) << 12)
+#define EHCI_ITD_GET_STATUS(x)	(((x) >> 28) & 0xf) /* duh */
+#define EHCI_ITD_SET_STATUS(x)	((x) << 28)
+#define  ECHI_ITD_ACTIVE	0x8
+#define  ECHI_ITD_BUFERR	0x4
+#define  ECHI_ITD_BABBLE	0x2
+#define  ECHI_ITD_XACTERR	0x1
+	ehci_physaddr_t	itd_buffer[EHCI_ITD_NBUFFERS];
+/* page (buffer) 0 */
+#define EHCI_ITD_GET_ADDR	(((x) >>  0) & 0x7f) /* endpoint addr */
+#define EHCI_ITD_SET_ADDR	(x)
+#define EHCI_ITD_GET_ENDPT	(((x) >>  8) & 0xf) /* endpoint no */
+#define EHCI_ITD_SET_ENDPT	((x) <<  8)
+/* page (buffer) 2 */
+#define EHCI_ITD_GET_MPS	(((x) >>  0) & 0x7ff) /* max packet size */
+#define EHCI_ITD_SET_MPS	(x)
+#define EHCI_ITD_DIRECTION	0x00000800
+/* page (buffer) 3 */
+#define EHCI_ITD_GET_MULTI	(((x) >>  0) & 0x3) /* trans per microframe */
+#define EHCI_ITD_SET_MULTI	(x)
+	ehci_physaddr_t	itd_buffer_hi[EHCI_ITD_NBUFFERS]; /* 64bit */
 } ehci_itd_t;
 #define EHCI_ITD_ALIGN 32
 
 /* Split Transaction Isochronous Transfer Descriptor */
+#define EHCI_SITD_NBUFFERS 2
 typedef struct {
 	ehci_link_t	sitd_next;
-	/* XXX many more */
+	u_int32_t	sitd_endp;
+#define EHCI_SITD_GET_ADDR	(((x) >>  0) & 0x7f) /* endpoint addr */
+#define EHCI_SITD_SET_ADDR	(x)
+#define EHCI_SITD_GET_ENDPT	(((x) >>  8) & 0xf) /* endpoint no */
+#define EHCI_SITD_SET_ENDPT	((x) <<  8)
+#define EHCI_SITD_GET_HUBA	(((x) >> 16) & 0x7f) /* hub address */
+#define EHCI_SITD_SET_HUBA	((x) << 16)
+#define EHCI_SITD_GET_PORT(x)	(((x) >> 23) & 0x7f) /* hub port */
+#define EHCI_SITD_SET_PORT(x)	((x) << 23)
+	u_int32_t	sitd_sched;
+#define EHCI_QH_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
+#define EHCI_QH_SET_SMASK(x)	((x) <<  0)
+#define EHCI_QH_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */
+#define EHCI_QH_SET_CMASK(x)	((x) <<  8)
+	u_int32_t	sitd_trans;
+#define EHCI_SITD_GET_STATUS(x)	(((x) >>  0) & 0xff) /* status */
+#define  EHCI_SITD_ACTIVE	0x80
+#define  EHCI_SITD_ERR		0x40
+#define  EHCI_SITD_BUFERR	0x20
+#define  EHCI_SITD_BABBLE	0x10
+#define  EHCI_SITD_XACTERR	0x08
+#define  EHCI_SITD_MISSEDMICRO	0x04
+#define  EHCI_SITD_SPLITXSTATE	0x02
+#define EHCI_SITD_GET_CPROG(x)	(((x) >>  8) & 0xff) /* c-mask progress */
+#define EHCI_SITD_SET_CPROG(x)	(((x) >>  8) & 0xff)
+#define EHCI_SITD_GET_BYTES(x)	(((x) >> 16) &  0x7ff) /* bytes to transfer */
+#define EHCI_SITD_SET_BYTES(x)	((x) << 16)
+#define EHCI_SITD_GET_PG(x)	(((x) >> 30) & 0x1) /* buffer page */
+#define EHCI_SITD_SET_PG(x)	((x) << 30)
+#define EHCI_SITD_IOC		0x80000000 /* interrupt on complete */
+	ehci_physaddr_t	sitd_buffer[EHCI_SITD_NBUFFERS];
+/* page (buffer) 0 */
+#define ECHI_SITD_GET_OFFSET(x)	(((x) >>  0) & 0xfff) /* current offset */
+/* page (buffer) 1 */
+#define EHCI_SITD_GET_TCOUNT(x)	(((x) >>  0) & 0x3) /* transaction count */
+#define EHCI_SITD_GET_TP(x)	(((x) >>  3) & 0x3) /* transaction position */
+#define EHCI_SITD_SET_TP(x)	((x) <<  3)
+#define  EHCI_SITD_TP_ALL	0x0
+#define  EHCI_SITD_TP_BEGIN	0x1
+#define  EHCI_SITD_TP_MIDDLE	0x2
+#define  EHCI_SITD_TP_END	0x3
+	ehci_link_t	sitd_back;
+	ehci_physaddr_t sitd_buffer_hi[EHCI_SITD_NBUFFERS]; /* 64bit */
 } ehci_sitd_t;
 #define EHCI_SITD_ALIGN 32
 
