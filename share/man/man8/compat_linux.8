@@ -51,7 +51,7 @@ option enabled.
 .Pp
 A lot of programs are dynamically linked. This means, that you will
 also need the Linux shared libraries that the program depends on, and
-the runtime linker. Also, you will need to create a "shadow root"
+the runtime linker.  Also, you will need to create a "shadow root"
 directory for Linux binaries on your OpenBSD system. This directory
 is named /emul/linux. Any file operations done by Linux programs
 run under OpenBSD will look in this directory first. So, if a Linux
@@ -70,7 +70,7 @@ imported Linux binaries without any extra work.
 
 .Ss Setting up shared libraries
 How to get to know which shared libraries Linux binaries need, and where
-to get them? Basically, there are 2 possibilities (when following
+to get them? Basically, there are 3 possibilities (when following
 these instructions: you will need to be root on your OpenBSD system to
 do the necessary installation steps).
 
@@ -224,6 +224,19 @@ and install it on your system. The XXXX (name) and <N> (major
 revision number) should match; the minor number(s) <mm> are
 less important, though it is advised to take the most
 recent version.
+.Pp
+.It 3.
+You have access to the OpenBSD
+.Xr ports 7
+system.  Install the port named
+.Nm linux_lib
+in the
+.Nm emulators
+category.  The
+.Nm linux_lib
+port contains the shared libraries, binaries, and other related files
+necessary to run Linux applications.  Access to a Linux system is not
+needed.
 .El
 
 .Ss Finding the necessary files.
@@ -231,7 +244,10 @@ recent version.
 the information below is valid as of the time this
 document was written (March, 1995), but certain details
 such as names of ftp sites, directories and distribution names
-may have changed by the time you read this.
+may have changed by the time you read this.  You can also
+save yourself a lot of headaches by using the OpenBSD
+.Xr ports 7
+system (possibility 3, above).
 .Pp
 Linux is distributed by several groups that make their own set
 of binaries that they distribute. Each distribution has its own
