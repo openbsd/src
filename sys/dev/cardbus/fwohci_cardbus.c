@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci_cardbus.c,v 1.2 2002/12/13 02:13:39 tdeval Exp $	*/
+/*	$OpenBSD: fwohci_cardbus.c,v 1.3 2002/12/13 02:15:01 tdeval Exp $	*/
 /*	$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Exp $	*/
 
 /*
@@ -183,10 +183,18 @@ int
 fwohci_cardbus_detach(struct device *self, int flags)
 {
 	struct fwohci_cardbus_softc *sc = (struct fwohci_cardbus_softc *)self;
+	struct ieee1394_softc *iea;
 	cardbus_devfunc_t ct = sc->sc_ct;
-	int rv;
+	int rv = 0;
 
-	rv = fwohci_detach(&sc->sc_sc, flags);
+	LIST_FOREACH(iea, &sc->sc_sc.sc_nodelist, sc1394_node) {
+#ifdef	FWOHCI_DEBUG
+		printf("%s: detach %s\n", __func__, iea->sc1394_dev.dv_xname);
+#endif	/* FWOHCI_DEBUG */
+		rv |= config_detach(&iea->sc1394_dev, flags);
+	}
+
+	rv |= fwohci_detach(&sc->sc_sc, flags);
 
 	if (rv)
 		return (rv);
