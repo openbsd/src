@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.22 2000/12/19 23:17:56 markus Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.23 2000/12/21 15:10:16 markus Exp $");
 
 #include "packet.h"
 #include "match.h"
@@ -107,7 +107,8 @@ hostfile_check_key(int bits, Key *key, const char *host, const char *filename, i
  */
 
 HostStatus
-check_host_in_hostfile(const char *filename, const char *host, Key *key, Key *found)
+check_host_in_hostfile(const char *filename, const char *host, Key *key,
+    Key *found, int *numret)
 {
 	FILE *f;
 	char line[8192];
@@ -163,6 +164,9 @@ check_host_in_hostfile(const char *filename, const char *host, Key *key, Key *fo
 			continue;
 		if (!hostfile_check_key(kbits, found, host, filename, linenum))
 			continue;
+
+		if (numret != NULL)
+			*numret = linenum;
 
 		/* Check if the current key is the same as the given key. */
 		if (key_equal(key, found)) {
