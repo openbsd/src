@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.40 2005/01/02 13:27:16 brad Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.41 2005/01/02 13:39:21 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -418,6 +418,7 @@ struct dc_desc {
 #define DC_RXSTAT_FIFOOFLOW	0x00000001
 #define DC_RXSTAT_CRCERR	0x00000002
 #define DC_RXSTAT_DRIBBLE	0x00000004
+#define DC_RXSTAT_MIIERE	0x00000008
 #define DC_RXSTAT_WATCHDOG	0x00000010
 #define DC_RXSTAT_FRAMETYPE	0x00000020	/* 0 == IEEE 802.3 */
 #define DC_RXSTAT_COLLSEEN	0x00000040
@@ -427,6 +428,7 @@ struct dc_desc {
 #define DC_RXSTAT_MULTICAST	0x00000400
 #define DC_RXSTAT_RUNT		0x00000800
 #define DC_RXSTAT_RXTYPE	0x00003000
+#define DC_RXSTAT_DE		0x00004000
 #define DC_RXSTAT_RXERR		0x00008000
 #define DC_RXSTAT_RXLEN		0x3FFF0000
 #define DC_RXSTAT_OWN		0x80000000
@@ -767,7 +769,8 @@ struct dc_softc {
 #define DC_64BIT_HASH		0x00002000
 #define DC_TULIP_LEDS		0x00004000
 #define DC_TX_ONE		0x00008000
-#define DC_MOMENCO_BOTCH	0x00010000
+#define DC_TX_ALIGN		0x00010000	/* align mbuf on tx */
+#define DC_MOMENCO_BOTCH	0x00020000
 
 /*
  * register space access macros
