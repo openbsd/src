@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.3 1997/09/17 06:47:17 downsj Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.4 1998/02/11 01:27:29 marc Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.3 1997/09/14 19:16:04 pk Exp $ */
 
 /*
@@ -60,11 +60,19 @@ struct iommureg {
 #define IOMMU_FLPG_VADDR	0xfffff000
 #define IOMMU_FLUSH_MASK	0xfffff000
 
+/*
+ * Read something back from the IOMMU control space after writing
+ * to a flush register to drain write buffers (?).   This seems to
+ * avoid utter lossage on some machines (SS4s & SS5s) where our caller
+ * would see some of its local (`%lx') registers trashed.
+ */
 #define IOMMU_FLUSHPAGE(sc, va)	do {				\
 	(sc)->sc_reg->io_flushpage = (va) & IOMMU_FLUSH_MASK;	\
+	(*(volatile u_int32_t *)&(sc)->sc_reg->io_bar);		\
 } while (0);
 #define IOMMU_FLUSHALL(sc)	do {				\
 	(sc)->sc_reg->io_flashclear = 0;			\
+	(*(volatile u_int32_t *)&(sc)->sc_reg->io_bar);		\
 } while (0)
 
 /* to pte.h ? */
