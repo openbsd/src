@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvax.h,v 1.2 1997/05/29 00:04:55 niklas Exp $ */
-/*	$NetBSD: uvax.h,v 1.1 1996/07/20 17:58:24 ragge Exp $ */
+/*	$OpenBSD: uvax.h,v 1.3 1997/09/10 11:47:11 maja Exp $ */
+/*	$NetBSD: uvax.h,v 1.2 1997/02/19 10:06:07 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,6 +33,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _VAX_UVAX_H_
+#define _VAX_UVAX_H_
+
 /*
  * generic(?) MicroVAX and VAXstation support
  *
@@ -52,26 +55,15 @@ void	uvax_steal_pages __P((void));
 int	uvax_setup __P((int mapen));
 
 struct uvax_calls {
-	u_long	(*uc_phys2virt) __P((u_long));	/* most often used! */
 	u_long	(*uc_memsize) __P((void));
-	void	(*uc_steal_pages) __P((void));
-	void	(*uc_conf) __P((struct device*, struct device*, void*));
-	void	(*uc_memerr) __P((void));
-	int	(*uc_mchk) __P((caddr_t));
-	int	(*uc_clkread) __P((time_t));
-	void	(*uc_clkwrite) __P((void));
 
 	char	*uc_name;
-	u_char  *uc_intreq;
-	u_char	*uc_intclr;
-	u_char  *uc_intmsk;
 
 	void	*le_iomem;		/* base addr of RAM -- CPU's view */
 	u_long	*le_ioaddr;		/* base addr of RAM -- LANCE's view */
 	int	*le_memsize;		/* size of RAM reserved for LANCE */
 
 	void	*uc_physmap;
-	int	uc_busTypes;
 	int	uc_vups;		/* used by delay() */
 
 	int	uv_flags;
@@ -114,3 +106,6 @@ extern struct uc_map *uc_physmap;
 /* Prototypes */
 int	uvax_clkread __P((time_t));
 void	uvax_clkwrite __P((void));
+void	uvax_fillmap __P((void));
+u_long	uvax_phys2virt __P((u_long));
+#endif

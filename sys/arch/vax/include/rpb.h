@@ -1,5 +1,5 @@
-/*	$OpenBSD: rpb.h,v 1.3 1997/05/29 00:04:50 niklas Exp $ */
-/*	$NetBSD: rpb.h,v 1.2 1995/10/20 13:47:27 ragge Exp $ */
+/*	$OpenBSD: rpb.h,v 1.4 1997/09/10 11:47:09 maja Exp $ */
+/*	$NetBSD: rpb.h,v 1.3 1997/03/15 15:09:40 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -97,6 +97,28 @@ struct rpb {		/* size		description */
 	u_char	reserved[6];	/* 6  -- */
 	long	vmb_revision;	/* 4  VMB revision label */
 };
+
+/*
+ * Bootstrap device number encoding.
+ */
+#define	BDEV_HP		0
+#define	BDEV_RK		1
+#define	BDEV_RL		2
+#define	BDEV_IDC	3
+#define	BDEV_UDA	17
+#define	BDEV_TK		18
+#define	BDEV_HSC	32
+#define	BDEV_KDB	33
+#define	BDEV_KRB	34
+#define	BDEV_NK		35
+#define	BDEV_RD		36
+#define	BDEV_SCSI	37
+#define	BDEV_SFL	42
+#define	BDEV_CNSL	64
+#define	BDEV_QE		96
+#define	BDEV_DE		97
+#define	BDEV_NI		98
+#define	BDEV_LE		99
 
 #ifdef _KERNEL
 extern struct rpb rpb;

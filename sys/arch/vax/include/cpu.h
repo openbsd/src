@@ -1,5 +1,5 @@
-/*      $OpenBSD: cpu.h,v 1.6 1997/05/29 00:04:37 niklas Exp $      */
-/*      $NetBSD: cpu.h,v 1.19 1996/07/20 17:58:12 ragge Exp $      */
+/*      $OpenBSD: cpu.h,v 1.7 1997/09/10 11:47:05 maja Exp $      */
+/*      $NetBSD: cpu.h,v 1.23 1997/03/15 15:09:41 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -31,20 +31,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-
 #include <sys/cdefs.h>
 #include <sys/device.h>
 
 #include <machine/mtpr.h>
 #include <machine/pcb.h>
+#include <machine/uvax.h>
 
 #define enablertclock()
 #define	cpu_wait(p)
 #define	cpu_swapout(p)
 
-extern struct cpu_dep cpu_calls[];
-
+/*
+ * All cpu-dependent info is kept in this struct. Pointer to the
+ * struct for the current cpu is set up in locore.c.
+ */
 struct	cpu_dep {
 	void	(*cpu_steal_pages) __P((void)); /* pmap init before mm is on */
 	void	(*cpu_clock) __P((void)); /* CPU dep RT clock start */
@@ -54,15 +55,24 @@ struct	cpu_dep {
 	void	(*cpu_conf) __P((struct device *, struct device *, void *));
 	int	(*cpu_clkread) __P((time_t));	/* Read cpu clock time */
 	void	(*cpu_clkwrite) __P((void));	/* Write system time to cpu */
+	int	cpu_vups;	/* speed of cpu */
+	u_char  *cpu_intreq;	/* Used on some VAXstations */
+	u_char  *cpu_intclr;	/* Used on some VAXstations */
+	u_char  *cpu_intmsk;	/* Used on some VAXstations */
+	struct	uc_map *cpu_map; /* Map containing important addresses */
 };
+
+extern struct cpu_dep *dep_call; /* Holds pointer to current CPU struct. */
 
 struct clockframe {
         int     pc;
         int     ps;
 };
 
+extern struct device *booted_from;
 extern int cold;
 extern int mastercpu;
+extern int bootdev;
 
 #define	setsoftnet()	mtpr(12,PR_SIRR)
 #define setsoftclock()	mtpr(8,PR_SIRR)

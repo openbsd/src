@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.h,v 1.2 1997/05/29 00:04:36 niklas Exp $ */
-/*	$NetBSD: clock.h,v 1.1 1996/07/20 17:35:42 ragge Exp $ */
+/*	$OpenBSD: clock.h,v 1.3 1997/09/10 11:47:04 maja Exp $ */
+/*	$NetBSD: clock.h,v 1.2 1997/05/04 19:13:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,19 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/*
- * Conversion structure.
- */
-struct chiptime {
-	long	sec;
-	long	min;
-	long	hour;
-	long	day;
-	long	mon;
-	long	year;
-};
-
 /*
  * Time constants. These are unlikely to change.
  */
@@ -61,10 +48,27 @@ struct chiptime {
 
 #define TODRBASE	(1 << 28) /* Rumours says it comes from VMS */
 
+#define	SEC_OFF		0
+#define	MIN_OFF		2
+#define	HR_OFF		4
+#define	WDAY_OFF	6
+#define	DAY_OFF		7
+#define	MON_OFF		8
+#define	YR_OFF		9
+#define	CSRA_OFF	10
+#define	CSRB_OFF	11
+#define	CSRD_OFF	13
+
+#define	CSRA_UIP	0200
+#define	CSRB_SET	0200
+#define	CSRB_24		0002
+#define	CSRB_DM		0004
+#define	CSRD_VRT	0200
+
 /* Prototypes */
-long	chiptotime __P((struct chiptime *));
-void	timetochip __P((struct chiptime *));
 void	generic_clock __P((void));
 void	no_nicr_clock __P((void));
 int	generic_clkread __P((time_t));
 void	generic_clkwrite __P((void));
+int	chip_clkread __P((time_t));
+void	chip_clkwrite __P((void));

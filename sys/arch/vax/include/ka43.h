@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka43.h,v 1.2 1997/05/29 00:04:41 niklas Exp $ */
-/*	$NetBSD: ka43.h,v 1.1 1996/07/20 17:58:16 ragge Exp $ */
+/*	$OpenBSD: ka43.h,v 1.3 1997/09/10 11:47:07 maja Exp $ */
+/*	$NetBSD: ka43.h,v 1.2 1997/04/18 18:53:40 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -55,7 +55,6 @@
 #define KA43_CT2_END	0x2101FFFF
 #define KA43_CT2_SIZE	   0x20000
 #define KA43_CH2_CREG	0x21100000	/* 2nd level cache control register */
-#define KA43_SESR	0x21100000	/* ??? */
 
 #define KA43_ROM_BASE	0x20040000	/* System module ROM */
 #define KA43_ROM_END	0x2007FFFF
@@ -66,45 +65,78 @@
 #define KA43_IVN_SIZE	      0x20
 
 #define KA43_HLTCOD	0x20080000	/* Halt Code Register */
-#define KA43_MSER	0x20080004	/* Memory System Error register */
-#define KA43_MEAR	0x20080008	/* Memory Error Address register */
+/* #define KA43_MSER	0x20080004	/* Memory System Error register */
+/* #define KA43_MEAR	0x20080008	/* Memory Error Address register */
 #define KA43_INTMSK	0x2008000C	/* Interrupt Mask register */
 #define KA43_VDCORG	0x2008000D	/* Video Controller Origin Register */
 #define KA43_VDCSEL	0x2008000E	/* Video Controller Select Register */
 #define KA43_INTREQ	0x2008000F	/* Interrupt Request register */
 #define KA43_INTCLR	0x2008000F	/* Interrupt Request clear register */
-#define KA43_DIAGDSP	0x20080010
+#define KA43_DIAGDSP	0x20080010	/* Diagnostic display register */
 #define KA43_PARCTL	0x20080014	/* Parity Control Register */
-#define KA43_DIAGTME	0x2008001E
+#define KA43_DIAGTME	0x2008001E	/* diagnostic time register */
 
 #define KA43_PCTL_DPEN	0x00000001	/* DMA parity enable (bit 0) */
 #define KA43_PCTL_CPEN	0x00000002	/* CPU Parity enable (bit 1) */
 #define KA43_PCTL_DMA	0x01000000	/* LANCE DMA control (bit 24) */
 
-#define KA43_SESR_CENB	0x00000001
+/*
+ * "CH2" and "SESR" are two common names related to Secondary Cache 
+ */
+#define KA43_SESR	0x21100000	/* same as KA43_CH2_CREG */
+
+#define KA43_SESR_CENB	0x00000001	/* Cache Enable */
 #define KA43_SESR_SERR  0x00000002
 #define KA43_SESR_LERR	0x00000004
 #define KA43_SESR_CERR	0x00000008
 #define KA43_SESR_DIRTY	0x00000010
 #define KA43_SESR_MISS	0x00000020
-#define KA43_SESR_DPE	0x00000040
-#define KA43_SESR_TPE	0x00000080
+#define KA43_SESR_DPE	0x00000040	/* Dal Parity Error */
+#define KA43_SESR_TPE	0x00000080	/* Tag Parity Error */
 #define KA43_SESR_WSB	0x00010000
 #define KA43_SESR_CIEA	0x7FFC0000
 
-#define KA43_PCS_FORCEHIT	(1<<0)	/* Force hit */
-#define KA43_PCS_ENABLE		(1<<1)	/* Enable primary cache */
-#define KA43_PCS_FLUSH		(1<<2)	/* Flush cache */
-#define KA43_PCS_REFRESH	(1<<3)	/* Enable refresh */
-#define KA43_PCS_HIT		(1<<4)	/* Cache hit */
-#define KA43_PCS_INTERRUPT	(1<<5)	/* Interrupt pending */
-#define KA43_PCS_TRAP2		(1<<6)	/* Trap while trap */
-#define KA43_PCS_TRAP1		(1<<7)	/* Micro trap / machine check */
-#define KA43_PCS_TPERR		(1<<8)	/* Tag parity error */
-#define KA43_PCS_DPERR		(1<<9)	/* Dal data parity error */
-#define KA43_PCS_PPERR		(1<<10)	/* P data parity error */
-#define KA43_PCS_BUSERR		(1<<11)	/* Bus error */
-#define KA43_PCS_BCHIT		(1<<12)	/* B cache hit */
+#define KA43_SESR_BITS \
+	"\020\010TPE\007DPE\006MISS\005DIRTY\004CERR\003LERR\002SERR\001ENABLE"
+
+/*
+ * The following values refer to bits/bitfields within the 4 internal 
+ * registers controlling primary cache: 
+ * PR_PCTAG(124, tag-register)		PR_PCIDX(125, index-register)
+ * PR_PCERR(126, error-register)	PR_PCSTS(127, status-register)
+ */
+#define KA43_PCTAG_TAG		0x1FFFF800	/* bits 11-29 */
+#define KA43_PCTAG_PARITY	0x40000000
+#define KA43_PCTAG_VALID	0x80000000
+
+#define KA43_PCIDX_INDEX	0x000007F8	/* 0x100 Q-word entries */
+
+#define KA43_PCERR_ADDR		0x3FFFFFFF
+
+#define KA43_PCS_FORCEHIT	0x00000001	/* Force hit */
+#define KA43_PCS_ENABLE		0x00000002	/* Enable primary cache */
+#define KA43_PCS_FLUSH		0x00000004	/* Flush cache */
+#define KA43_PCS_REFRESH	0x00000008	/* Enable refresh */
+#define KA43_PCS_HIT		0x00000010	/* Cache hit */
+#define KA43_PCS_INTERRUPT	0x00000020	/* Interrupt pending */
+#define KA43_PCS_TRAP2		0x00000040	/* Trap while trap */
+#define KA43_PCS_TRAP1		0x00000080	/* Micro trap/machine check */
+#define KA43_PCS_TPERR		0x00000100	/* Tag parity error */
+#define KA43_PCS_DPERR		0x00000200	/* Dal data parity error */
+#define KA43_PCS_PPERR		0x00000400	/* P data parity error */
+#define KA43_PCS_BUSERR		0x00000800	/* Bus error */
+#define KA43_PCS_BCHIT		0x00001000	/* B cache hit */
+
+#define KA43_PCSTS_BITS \
+	"\020\015BCHIT\014BUSERR\013PPERR\012DPERR\011TPERR\010TRAP1" \
+	"\007TRAP2\006INTR\005HIT\004REFRESH\003FLUSH\002ENABLE\001FORCEHIT"
+
+/*
+ * Bits in PR_ACCS (Floating Point Accelerator Register)
+ */
+#define KA43_ACCS_VECTOR	(1<<0)	/* Vector Unit Present */
+#define KA43_ACCS_FCHIP		(1<<1)	/* FPU chip present */
+#define KA43_ACCS_WEP		(1<<31)	/* Write Even Parity */
 
 /*
  * Other fixed addresses which should be mapped
@@ -142,6 +174,8 @@
 #define KA43_VME_BASE	0x30000000
 #define KA43_VME_END	0x3003FFFF
 #define KA43_VME_SIZE	   0x40000
+
+#define KA43_DIAGMEM	0x28000000	/* start of diagnostic memory */
 
 #define KA43_SC1_DADR	0x200C00A0	/* (1st SCSI) DMA address register */
 #define KA43_SC1_DCNT	0x200C00C0	/* (1st SCSI) DMA byte count reg. */
@@ -181,10 +215,17 @@
 #define KA43_RESERVED	0x200B00C0	/* Reserved (16 bytes) */
 
 struct ka43_cpu {
-	u_long  ka43_hltcod;
-	u_long  ka43_mser;
-	u_long  ka43_cear;
-	u_long  ka43_intmsk;
+	u_long  hltcod;		/* Halt Code Register */
+	u_long  pad2;		
+	u_long  pad3;		
+	u_char  intreg[4];	/* Four 1-byte registers */
+	u_short	diagdsp;	/* Diagnostic display register */
+	u_short pad4;
+	u_long	parctl;		/* Parity Control Register */
+	u_short pad5;
+	u_short pad6;
+	u_short pad7;
+	u_short	diagtme;	/* Diagnostic time register */
 };
 
 struct ka43_clock {

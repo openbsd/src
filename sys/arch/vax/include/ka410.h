@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka410.h,v 1.2 1997/05/29 00:04:40 niklas Exp $ */
-/*	$NetBSD: ka410.h,v 1.1 1996/07/20 17:58:14 ragge Exp $ */
+/*	$OpenBSD: ka410.h,v 1.3 1997/09/10 11:47:06 maja Exp $ */
+/*	$NetBSD: ka410.h,v 1.2 1997/02/19 10:06:05 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,7 +65,7 @@
 /*
  * Other fixed addresses which should be mapped
  */
-#define KA410_CPU_BASE	0x20080000
+#define KA410_CPU_BASE	((struct ka410_cpu *)0x20080000)
 #define KA410_CPU_END	0x200800FF
 #define KA410_CPU_SIZE	     0x100
 #define KA410_NWA_BASE	0x20090000	/* Network Address ROM */
@@ -74,7 +74,7 @@
 #define KA410_SER_BASE	0x200A0000	/* Serial line controller */
 #define KA410_SER_END	0x200A000F
 #define KA410_SER_SIZE        0x10
-#define KA410_WAT_BASE	0x200B0000	/* TOY clock and NV-RAM */
+#define KA410_WAT_BASE	((struct ka410_clock *)0x200B0000)/* TOY clock */
 #define KA410_WAT_END	0x200B00FF
 #define KA410_WAT_SIZE	     0x100
 #define KA410_DKC_BASE	0x200C0000	/* Disk Controller Ports */

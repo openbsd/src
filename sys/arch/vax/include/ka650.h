@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka650.h,v 1.5 1997/05/29 00:04:42 niklas Exp $	*/
-/*	$NetBSD: ka650.h,v 1.4 1996/05/19 16:43:20 ragge Exp $	*/
+/*	$OpenBSD: ka650.h,v 1.6 1997/09/10 11:47:07 maja Exp $	*/
+/*	$NetBSD: ka650.h,v 1.5 1997/02/12 17:50:36 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -234,6 +234,14 @@ struct ka650_ipcr {
 #define	KA650ROM_PUTS	0x2006000c	/* (jsb) put string to console */
 #define	KA650ROM_GETS	0x20060010	/* (jsb) read string with prompt */
 #define KA650_CONSTYPE	0x20140401	/* byte at which console type resides */
+
+/*
+ * Some useful macros
+ */
+#define	GETCPUTYPE(x)	((x >> 24) & 0xff)
+#define	GETSYSSUBT(x)	((x >> 8) & 0xff)
+#define	GETFRMREV(x)	((x >> 16) & 0xff)
+#define	GETCODREV(x)	(x & 0xff)
 
 /* prototypes */
 struct sbi_attach_args;

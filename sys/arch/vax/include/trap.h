@@ -1,5 +1,5 @@
-/*      $OpenBSD: trap.h,v 1.7 1997/05/29 00:04:53 niklas Exp $     */
-/*      $NetBSD: trap.h,v 1.14 1997/01/11 11:46:43 ragge Exp $     */
+/*      $OpenBSD: trap.h,v 1.8 1997/09/10 11:47:11 maja Exp $     */
+/*      $NetBSD: trap.h,v 1.15 1997/02/16 20:37:29 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,25 +70,25 @@
 
 #ifndef _LOCORE
 struct	trapframe {
-	unsigned	fp;	/* Stack frame pointer */
-	unsigned	ap;     /* Argument pointer on user stack */
-	unsigned	sp;	/* Stack pointer */
-	unsigned	r0;     /* General registers saved upon trap/syscall */
-	unsigned	r1;
-	unsigned	r2;
-	unsigned	r3;
-	unsigned	r4;
-	unsigned	r5;
-	unsigned	r6;
-	unsigned	r7;
-	unsigned	r8;
-	unsigned	r9;
-	unsigned	r10;
-	unsigned	r11;
-	unsigned	trap;	/* Type of trap */
-        unsigned	code;   /* Trap specific code */
-        unsigned	pc;     /* User pc */
-        unsigned	psl;    /* User psl */
+	long	fp;	/* Stack frame pointer */
+	long	ap;     /* Argument pointer on user stack */
+	long	sp;	/* Stack pointer */
+	long	r0;     /* General registers saved upon trap/syscall */
+	long	r1;
+	long	r2;
+	long	r3;
+	long	r4;
+	long	r5;
+	long	r6;
+	long	r7;
+	long	r8;
+	long	r9;
+	long	r10;
+	long	r11;
+	long	trap;	/* Type of trap */
+        long	code;   /* Trap specific code */
+        long	pc;     /* User pc */
+        long	psl;    /* User psl */
 };
 
 /*
