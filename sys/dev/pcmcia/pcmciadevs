@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.120 2004/12/12 07:05:49 deraadt Exp $
+	$OpenBSD: pcmciadevs,v 1.121 2005/02/07 20:09:42 matthieu Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -509,3 +509,4 @@ product AROWANA FE		{ "PCMCIA", "Fast-Ethernet", NULL, NULL }
 product GVC NP0335		{ "ETHER-C16", "ETHER-C16", "Fast&spEthernet", NULL }
 product RELIA RE2408T		{ "PCMCIA&spLAN", "Ethernet", "A", "004743118001" }
 product ALLIEDTELESIS WR211PCM	{ "Allied&spTelesis&spK.K.", "WR211PCM", NULL, NULL }
+product BILLIONTON CFLT2	{ "CF", "10Base-Ethernet", NULL, NULL }
