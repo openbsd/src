@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_interface.c,v 1.4 1996/04/21 22:17:49 deraadt Exp $	*/
-/*	$NetBSD: db_interface.c,v 1.19 1996/03/16 18:45:44 mhitch Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 1996/05/09 22:30:10 niklas Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.20 1996/04/29 20:50:28 leo Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,16 +37,26 @@
 
 #include <vm/vm.h>
 
+#include <dev/cons.h>
+
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
+
+#include <ddb/db_command.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
 
 extern label_t	*db_recover;
 
 int	db_active = 0;
 
+static void kdbprinttrap __P((int, int));
+
 /*
  * Received keyboard interrupt sequence.
  */
+void
 kdb_kintr(regs)
 	register struct mc68020_saved_state *regs;
 {
@@ -60,6 +70,7 @@ kdb_kintr(regs)
  * kdb_trap - field a TRACE or BPT trap
  * Return non-zero if we "handled" the trap.
  */
+int
 kdb_trap(type, regs)
 	int	type;
 	register struct mc68020_saved_state *regs;
@@ -124,6 +135,7 @@ extern int trap_types;
 /*
  * Print trap reason.
  */
+static void
 kdbprinttrap(type, code)
 	int	type, code;
 {

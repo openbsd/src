@@ -1,4 +1,5 @@
-/*	$NetBSD: in_cksum.c,v 1.5 1994/10/26 07:51:11 cgd Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.2 1996/05/09 22:30:11 niklas Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.6 1996/04/30 11:57:05 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990 Regents of the University of California.
@@ -46,7 +47,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-extern int oc_cksum();
+extern int oc_cksum __P((char *buffer, int length, int startingval));
 
 /*
  * Checksum routine for the Internet Protocol family.
@@ -59,6 +60,7 @@ extern int oc_cksum();
  * inside the "if".  If fact, if m_copydata & sb_compact are doing
  * their job, we should never do the hairy code inside the "if".
  */
+int
 in_cksum(m, len)
 	register struct mbuf *m;
 	register int len;

@@ -1,4 +1,5 @@
-/*	$NetBSD: sunos_machdep.c,v 1.8 1996/01/04 22:22:12 jtc Exp $	*/
+/*	$OpenBSD: sunos_machdep.c,v 1.6 1996/05/09 22:30:12 niklas Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.10 1996/05/05 16:11:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +58,7 @@
 #include <sys/buf.h>
 
 #include <sys/syscallargs.h>
+#include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
 
 #include <machine/psl.h>
@@ -144,7 +146,7 @@ sunos_sendsig(catcher, sig, mask, code)
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sunos_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		printf("sunos_sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
@@ -194,8 +196,8 @@ sunos_sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sunos_sendsig(%d): sig %d scp %x sc_sp %x\n",
-		       p->p_pid, sig, kfp.sf_sc.sc_sp);
+		printf("sunos_sendsig(%d): sig %d scp %p sc_sp %x\n",
+		       p->p_pid, sig, &fp->sf_sc,kfp.sf_sc.sc_sp);
 #endif
 
 	/* have the user-level trampoline code sort out what registers it
@@ -233,7 +235,7 @@ sunos_sys_sigreturn(p, v, retval)
 	scp = (struct sunos_sigcontext *) SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sunos_sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sunos_sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);

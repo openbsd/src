@@ -1,4 +1,5 @@
-/*	$NetBSD: db_machdep.h,v 1.12 1994/10/26 07:50:44 cgd Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.2 1996/05/09 22:25:15 niklas Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /* 
  * Mach Operating System
@@ -103,5 +104,12 @@ db_regs_t	ddb_regs;		/* register state */
 				 ((ins)&M_BSR) == I_BSR)
 #define inst_load(ins)		0
 #define inst_store(ins)		0
+
+#ifdef _KERNEL
+
+void	kdb_kintr __P((struct mc68020_saved_state *));
+int	kdb_trap __P((int, struct mc68020_saved_state *));
+
+#endif /* _KERNEL */
 
 #endif	/* _M68K_DB_MACHDEP_H_ */
