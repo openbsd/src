@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.2 2001/09/10 12:57:24 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.3 2001/09/11 06:47:00 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -46,8 +46,8 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 
 #include <machine/autoconf.h>
