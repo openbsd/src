@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinfo.c,v 1.10 2002/05/16 17:26:58 millert Exp $	*/
+/*	$OpenBSD: skeyinfo.c,v 1.11 2003/05/06 10:43:27 mpech Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -78,6 +78,7 @@ main(int argc, char **argv)
 
 	if ((name = strdup(pw->pw_name)) == NULL)
 		err(1, "cannot allocate memory");
+	sevenbit(name);
 
 	error = skeylookup(&key, name);
 	switch (error) {
