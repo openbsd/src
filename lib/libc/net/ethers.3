@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ethers.3,v 1.7 1998/03/17 06:18:48 millert Exp $
+.\"	$OpenBSD: ethers.3,v 1.8 1998/03/17 23:58:20 millert Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
@@ -57,8 +57,7 @@ The
 .Fn ether_ntohost
 function looks up the given Ethernet address and writes the associated
 host name into the character buffer passed.  This buffer should be
-.Ev
-MAXHOSTNAMELEN
+.Ev MAXHOSTNAMELEN
 characters in size.
 The
 .Fn ether_hostton
@@ -85,8 +84,7 @@ file and fills in the passed ``struct ether_addr'' and character
 buffer with the Ethernet address and host name on the line.  It
 returns zero if the line was successfully parsed and -1 if not.
 The character buffer buffer should be
-.Ev
-MAXHOSTNAMELEN
+.Ev MAXHOSTNAMELEN
 characters in size.
 .Sh FILES
 .Bl -tag -width /etc/ethers -compact
