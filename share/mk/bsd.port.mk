@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.9 1996/12/25 20:10:09 imp Exp $
+#	$OpenBSD: bsd.port.mk,v 1.10 1997/01/11 11:58:11 niklas Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -23,6 +23,9 @@
 #
 # Variables that typically apply to all ports:
 # 
+# ONLY_FOR_ARCHS- If a port only makes sense to certain architectures, this
+#				  is a list containing the names for them.  It is checked
+#				  against the predefined ${MACHINE} value
 # OPSYS			- Portability clause.  This is the operating system the
 #				  makefile is being used on.  Automatically set to
 #				  "FreeBSD," "NetBSD," or "OpenBSD" as appropriate.
@@ -246,6 +249,24 @@
 # NEVER override the "regular" targets unless you want to open
 # a major can of worms.
 
+.if defined(ONLY_FOR_ARCHS)
+.for __ARCH in ${ONLY_FOR_ARCHS}
+.if ${MACHINE} == "${__ARCH}"
+__ARCH_OK=	1
+.endif
+.endfor
+.else
+__ARCH_OK=	1
+.endif
+
+.if !defined(__ARCH_OK)
+.MAIN:	all
+
+fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
+	@echo "This port is only for ${ONLY_FOR_ARCHS},"
+	@echo "and you are running ${MACHINE}."
+.else
+
 # Get the operating system type
 OPSYS!=	uname -s
 
@@ -254,7 +275,7 @@ OPSYS!=	uname -s
 .endif
 
 .if (${OPSYS} == "OpenBSD")
-NOMANCOMPRESS?=yes
+NOMANCOMPRESS?=	yes
 .endif
 
 # These need to be absolute since we don't know how deep in the ports
@@ -272,7 +293,11 @@ _DISTDIR?=		${DISTDIR}/${DIST_SUBDIR}
 PACKAGES?=		${PORTSDIR}/packages
 TEMPLATES?=		${PORTSDIR}/templates
 .if !defined(NO_WRKDIR)
+.if defined(OBJMACHINE)
+WRKDIR?=		${.CURDIR}/work.${MACHINE}
+.else
 WRKDIR?=		${.CURDIR}/work
+.endif
 .else
 WRKDIR?=		${.CURDIR}
 .endif
@@ -386,6 +411,11 @@ MTREE_CMD?=	/usr/sbin/mtree
 MTREE_ARGS?=	-U -f ${MTREE_LOCAL} -d -e -p
 .if defined(USE_X11) || defined(USE_IMAKE) || !defined(MTREE_LOCAL)
 NO_MTREE=	yes
+.endif
+
+.if (${OPSYS} == "OpenBSD")
+.include <bsd.own.mk>
+MAKE_ENV+=	EXTRA_SYS_MK_INCLUDES="<bsd.own.mk>"
 .endif
 
 # A few aliases for *-install targets
@@ -828,7 +858,7 @@ do-extract:
 	@${MKDIR} ${WRKDIR}
 .endif
 	@for file in ${EXTRACT_ONLY}; do \
-		if !(cd ${WRKDIR} && ${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${_DISTDIR}/$$file ${EXTRACT_AFTER_ARGS});\
+		if ! (cd ${WRKDIR} && ${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${_DISTDIR}/$$file ${EXTRACT_AFTER_ARGS});\
 		then \
 			exit 1; \
 		fi \
@@ -1595,4 +1625,6 @@ depend:
 # Same goes for tags
 .if !target(tags)
 tags:
+.endif
+
 .endif
