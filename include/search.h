@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.h,v 1.5 2002/02/17 19:42:21 millert Exp $	*/
+/*	$OpenBSD: search.h,v 1.6 2004/06/24 16:14:40 deraadt Exp $	*/
 /*	$NetBSD: search.h,v 1.9 1995/08/08 21:14:45 jtc Exp $	*/
 
 /*
@@ -35,7 +35,7 @@ typedef enum {
 __BEGIN_DECLS
 extern void	*bsearch(const void *, const void *, size_t, size_t,
 		    int (*)(const void *, const void *));
-extern int	 hcreate(unsigned int);
+extern int	 hcreate(size_t);
 extern void	 hdestroy(void);
 extern ENTRY	*hsearch(ENTRY, ACTION);
 

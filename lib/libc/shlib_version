@@ -1,2 +1,2 @@
-major=32
+major=33
 minor=0 # note: remember to update minor in ../libpthread/shlib_version
