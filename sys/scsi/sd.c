@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.40 1999/08/24 01:20:22 csapuntz Exp $	*/
+/*	$OpenBSD: sd.c,v 1.41 1999/12/05 02:49:17 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -204,7 +204,6 @@ sdattach(parent, self, aux)
 	 * request must specify this.
 	 */
 	printf("\n");
-	printf("%s: ", sd->sc_dev.dv_xname);
 
 	if ((sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
 		error = scsi_start(sd->sc_link, SSS_START,
@@ -224,6 +223,7 @@ sdattach(parent, self, aux)
 		result = (*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
 		    SCSI_AUTOCONF);
 
+	printf("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
 	case SDGP_RESULT_OK:
                 printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec, %ld sec total",
