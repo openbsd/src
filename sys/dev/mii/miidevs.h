@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.31 2002/04/02 14:49:04 lebel Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.32 2002/04/02 17:23:32 drahn Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.28 2002/04/02 14:48:34 lebel Exp 
+ *	OpenBSD: miidevs,v 1.29 2002/04/02 17:22:32 drahn Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -117,6 +117,8 @@
 #define	MII_STR_xxBROADCOM_BCM5401	"BCM5401 10/100/1000baseTX PHY"
 #define	MII_MODEL_xxBROADCOM_BCM5411	0x0007
 #define	MII_STR_xxBROADCOM_BCM5411	"BCM5411 10/100/1000baseTX PHY"
+#define	MII_MODEL_xxBROADCOM_BCM5421S	0x000e
+#define	MII_STR_xxBROADCOM_BCM5421S	"BCM5421S 10/100/1000baseTX PHY"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
 #define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000baseTX PHY"
 #define	MII_MODEL_BROADCOM_BCM5401	0x0005
