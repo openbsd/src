@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.118 2004/09/14 23:56:55 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.119 2004/09/15 01:00:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -535,12 +535,7 @@ pmap_bootstrap(vstart)
 		    physical_end - physical_steal, physical_steal));
 	}
 
-	/*
-	 * NOTE: we no longer trash the BTLB w/ unused entries,
-	 * lazy map only needed pieces (see bus_mem_add_mapping() for refs).
-	 */
-
-	/* kernel virtual is the last gig of the mohicans */
+	/* kernel virtual is the last gig of the moohicans */
 	nkpdes = totalphysmem >> 14;	/* at least 16/gig for kmem */
 	if (nkpdes < 4)
 		nkpdes = 4;		/* ... but no less than four */
