@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.13 1999/03/04 19:58:43 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.14 1999/03/15 15:37:02 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -107,6 +107,9 @@ xf_set(struct iovec *iov, int cnt, int len)
     if (sd < 0) 
     {
 	perror("socket");
+	if (errno == EPROTONOSUPPORT)
+	    fprintf(stderr,
+		"Make sure your kernel is compiled with option KEY\n");
 	exit(1);
     }
 
