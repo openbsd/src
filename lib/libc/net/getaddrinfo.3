@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.20 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.21 2003/05/01 19:10:09 jmc Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -351,32 +351,32 @@ indicate an unknown error.
 The implementation allows experimental numeric IPv6 address notation with
 scope identifier.
 By appending the percent character and scope identifier to addresses,
-you can fill
+you can fill the
 .Li sin6_scope_id
 field for addresses.
 This would make management of scoped address easier,
 and allows cut-and-paste input of scoped address.
 .Pp
 At this moment the code supports only link-local addresses with the format.
-Scope identifier is hardcoded to name of hardware interface associated
+Scope identifier is hardcoded to the name of the hardware interface associated
 with the link.
 .Po
 such as
 .Li ne0
 .Pc .
-Example would be like
+An example is
 .Dq Li fe80::1%ne0 ,
 which means
 .Do
 .Li fe80::1
-on the link associated with
+on the link associated with the
 .Li ne0
 interface
 .Dc .
 .Pp
 The implementation is still very experimental and non-standard.
-The current implementation assumes one-by-one relationship between
-interface and link, which is not necessarily true from the specification.
+The current implementation assumes a one-to-one relationship between
+the interface and link, which is not necessarily true from the specification.
 .\"
 .Sh EXAMPLES
 The following code tries to connect to
@@ -384,14 +384,14 @@ The following code tries to connect to
 service
 .Dq Li http .
 via stream socket.
-It loops through all the addresses available, regardless from address family.
-If the destination resolves to IPv4 address, it will use
+It loops through all the addresses available, regardless of address family.
+If the destination resolves to an IPv4 address, it will use
 .Dv AF_INET
 socket.
 Similarly, if it resolves to IPv6,
 .Dv AF_INET6
 socket is used.
-Observe that there is no hardcoded reference to particular address family.
+Observe that there is no hardcoded reference to a particular address family.
 The code works even if
 .Nm getaddrinfo
 returns addresses that are not IPv4/v6.
@@ -532,8 +532,8 @@ values, the function still returns a pointer to a string whose contents
 indicate an unknown error.
 .\"
 .Sh SEE ALSO
-.Xr getnameinfo 3 ,
 .Xr gethostbyname 3 ,
+.Xr getnameinfo 3 ,
 .Xr getservbyname 3 ,
 .Xr hosts 5 ,
 .Xr resolv.conf 5 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.17 2001/11/15 06:53:09 itojun Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.18 2003/05/01 19:10:09 jmc Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -56,11 +56,11 @@ The
 function is defined for protocol-independent address-to-nodename translation.
 Its functionality is a reverse conversion of
 .Xr getaddrinfo 3 ,
-and implements similar functionality with
+and implements similar functionality to
 .Xr gethostbyaddr 3
 and
 .Xr getservbyport 3
-in more sophisticated manner.
+in a more sophisticated manner.
 .Pp
 This function looks up an IP address and port number provided by the
 caller in the DNS and system-specific database, and returns text
@@ -180,16 +180,16 @@ flags are defined in
 .Ss Extension for scoped IPv6 address
 The implementation allows experimental numeric IPv6 address notation with
 scope identifier.
-IPv6 link-local address will appear as string like
+IPv6 link-local address will appear as a string like
 .Dq Li fe80::1%ne0 .
 Refer to
 .Xr getaddrinfo 3
 for the notation.
 .\"
 .Sh EXAMPLES
-The following code tries to get numeric hostname, and service name,
+The following code tries to get a numeric hostname, and service name,
 for given socket address.
-Observe that there is no hardcoded reference to particular address family.
+Observe that there is no hardcoded reference to a particular address family.
 .Bd -literal -offset indent
 struct sockaddr *sa;	/* input */
 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
@@ -281,7 +281,7 @@ The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .Sh STANDARDS
 The
 .Fn getaddrinfo
-function is defined IEEE POSIX 1003.1g draft specification,
+function is defined in IEEE POSIX 1003.1g draft specification,
 and documented in
 .Dq Basic Socket Interface Extensions for IPv6
 .Pq RFC2553 .
@@ -292,6 +292,6 @@ The current implementation is not thread-safe.
 The text was shamelessly copied from RFC2553.
 .Pp
 .Ox
-intentionally uses different
+intentionally uses a different
 .Dv NI_MAXHOST
 value from what RFC2553 suggests, to avoid buffer length handling mistakes.
