@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.22 2002/08/01 20:50:17 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.23 2002/08/02 02:26:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -487,21 +487,28 @@ char *
 intercept_get_string(int fd, pid_t pid, void *addr)
 {
 	static char name[_POSIX2_LINE_MAX];
-	int off = 0, done = 0;
+	int off = 0, done = 0, stride;
 
+	stride = 32;
 	do {
 		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
-			&name[off], 4) == -1) {
-			warn("%s: ioctl", __func__);
-			return (NULL);
+			&name[off], stride) == -1) {
+			if (errno != EINVAL || stride == 4) {
+				warn("%s: ioctl", __func__);
+				return (NULL);
+			}
+
+			/* Try smaller stride */
+			stride /= 2;
+			continue;
 		}
 
-		off += 4;
+		off += stride;
 		name[off] = '\0';
 		if (strlen(name) < off)
 			done = 1;
 
-	} while (!done && off + 5 < sizeof(name));
+	} while (!done && off + stride + 1 < sizeof(name));
 
 	if (!done) {
 		warnx("%s: string too long", __func__);
