@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.5 1998/02/14 07:01:07 gene Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.6 1999/04/19 04:48:02 downsj Exp $	*/
 /*	$NetBSD: dpme.h,v 1.8 1997/11/30 04:46:59 briggs Exp $	*/
 
 /*
@@ -90,6 +90,9 @@ struct blockzeroblock {
 #define BZB_TYPESWAP	3
 #define BZB_ROOTFS	0x8000
 #define BZB_USRFS	0x4000
+#define BZB_EXFS4	0x4
+#define BZB_EXFS5	0x5
+#define BZB_EXFS6	0x6
 
 /* MF */
 #define PART_UNIX_TYPE		"APPLE_UNIX_SVR2"

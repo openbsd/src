@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.10 1999/01/08 04:29:07 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.11 1999/04/19 04:48:02 downsj Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -161,7 +161,10 @@ whichType(part)
 		if (bzb->bzbFlags & BZB_ROOTFS)
 			return ROOT_PART;
 
-		if (bzb->bzbFlags & BZB_USRFS)
+		if ((bzb->bzbFlags & BZB_USRFS)
+		    || (bzb->bzbFlags & BZB_EXFS4)
+		    || (bzb->bzbFlags & BZB_EXFS5)
+		    || (bzb->bzbFlags & BZB_EXFS6))
 			return UFS_PART;
 
 		if (bzb->bzbType == BZB_TYPESWAP)
