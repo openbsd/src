@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.14 2000/04/18 16:22:16 art Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.15 2000/04/19 08:35:37 art Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -53,28 +53,24 @@
 
 #include <vm/vm.h>
 
-struct ktr_header *ktrgetheader __P((struct proc *, int));
+void ktrinitheader __P((struct ktr_header *, struct proc *, int));
 int ktrops __P((struct proc *, struct proc *, int, int, struct vnode *));
 int ktrsetchildren __P((struct proc *, struct proc *, int, int,
 			struct vnode *));
 void ktrwrite __P((struct vnode *, struct ktr_header *));
 int ktrcanset __P((struct proc *, struct proc *));
 
-struct ktr_header *
-ktrgetheader(p, type)
+void
+ktrinitheader(kth, p, type)
+	struct ktr_header *kth;
 	struct proc *p;
 	int type;
 {
-	struct ktr_header *kth;
-
-	MALLOC(kth, struct ktr_header *, sizeof (struct ktr_header), 
-		M_TEMP, M_WAITOK);
 	bzero(kth, sizeof (struct ktr_header));
 	kth->ktr_type = type;
 	microtime(&kth->ktr_time);
 	kth->ktr_pid = p->p_pid;
-	bcopy(p->p_comm, kth->ktr_comm, MAXCOMLEN);
-	return (kth);
+	bcopy(p->p_comm, kth->ktr_comm, MAXCOMLEN);	
 }
 
 void
@@ -84,7 +80,7 @@ ktrsyscall(vp, code, argsize, args)
 	size_t argsize;
 	register_t args[];
 {
-	struct	ktr_header *kth;
+	struct	ktr_header kth;
 	struct	ktr_syscall *ktp;
 	unsigned int len = sizeof(struct ktr_syscall) + argsize;
 	struct proc *p = curproc;	/* XXX */
@@ -92,18 +88,17 @@ ktrsyscall(vp, code, argsize, args)
 	int i;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(p, KTR_SYSCALL);
+	ktrinitheader(&kth, p, KTR_SYSCALL);
 	MALLOC(ktp, struct ktr_syscall *, len, M_TEMP, M_WAITOK);
 	ktp->ktr_code = code;
 	ktp->ktr_argsize = argsize;
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
 	for (i = 0; i < (argsize / sizeof *argp); i++)
 		*argp++ = args[i];
-	kth->ktr_buf = (caddr_t)ktp;
-	kth->ktr_len = len;
-	ktrwrite(vp, kth);
+	kth.ktr_buf = (caddr_t)ktp;
+	kth.ktr_len = len;
+	ktrwrite(vp, &kth);
 	FREE(ktp, M_TEMP);
-	FREE(kth, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
@@ -114,21 +109,20 @@ ktrsysret(vp, code, error, retval)
 	int error;
 	register_t retval;
 {
-	struct ktr_header *kth;
+	struct ktr_header kth;
 	struct ktr_sysret ktp;
 	struct proc *p = curproc;	/* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(p, KTR_SYSRET);
+	ktrinitheader(&kth, p, KTR_SYSRET);
 	ktp.ktr_code = code;
 	ktp.ktr_error = error;
 	ktp.ktr_retval = retval;		/* what about val2 ? */
 
-	kth->ktr_buf = (caddr_t)&ktp;
-	kth->ktr_len = sizeof(struct ktr_sysret);
+	kth.ktr_buf = (caddr_t)&ktp;
+	kth.ktr_len = sizeof(struct ktr_sysret);
 
-	ktrwrite(vp, kth);
-	FREE(kth, M_TEMP);
+	ktrwrite(vp, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
@@ -137,16 +131,15 @@ ktrnamei(vp, path)
 	struct vnode *vp;
 	char *path;
 {
-	struct ktr_header *kth;
+	struct ktr_header kth;
 	struct proc *p = curproc;	/* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(p, KTR_NAMEI);
-	kth->ktr_len = strlen(path);
-	kth->ktr_buf = path;
+	ktrinitheader(&kth, p, KTR_NAMEI);
+	kth.ktr_len = strlen(path);
+	kth.ktr_buf = path;
 
-	ktrwrite(vp, kth);
-	FREE(kth, M_TEMP);
+	ktrwrite(vp, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
@@ -155,16 +148,15 @@ ktremul(vp, emul)
 	struct vnode *vp;
 	char *emul;
 {
-	struct ktr_header *kth;
+	struct ktr_header kth;
 	struct proc *p = curproc;       /* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(p, KTR_EMUL);
-	kth->ktr_len = strlen(emul);
-	kth->ktr_buf = emul;
+	ktrinitheader(&kth, p, KTR_EMUL);
+	kth.ktr_len = strlen(emul);
+	kth.ktr_buf = emul;
 
-	ktrwrite(vp, kth);
-	FREE(kth, M_TEMP);
+	ktrwrite(vp, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
@@ -176,7 +168,7 @@ ktrgenio(vp, fd, rw, iov, len, error)
 	struct iovec *iov;
 	int len, error;
 {
-	struct ktr_header *kth;
+	struct ktr_header kth;
 	struct ktr_genio *ktp;
 	caddr_t cp;
 	int resid = len, cnt;
@@ -190,12 +182,13 @@ ktrgenio(vp, fd, rw, iov, len, error)
 
 	buflen = min(PAGE_SIZE, len + sizeof(struct ktr_genio));
 
-	kth = ktrgetheader(p, KTR_GENIO);
+	ktrinitheader(&kth, p, KTR_GENIO);
 	MALLOC(ktp, struct ktr_genio *, buflen, M_TEMP, M_WAITOK);
 	ktp->ktr_fd = fd;
 	ktp->ktr_rw = rw;
-	kth->ktr_buf = (caddr_t)ktp;
-	kth->ktr_len = buflen;
+
+	kth.ktr_buf = (caddr_t)ktp;
+	kth.ktr_len = buflen;
 
 	cp = (caddr_t)((char *)ktp + sizeof (struct ktr_genio));
 
@@ -204,13 +197,12 @@ ktrgenio(vp, fd, rw, iov, len, error)
 		cnt = min(iov->iov_len, buflen);
 		if (copyin(iov->iov_base, cp, cnt))
 			goto done;
-		ktrwrite(vp, kth);
+		ktrwrite(vp, &kth);
 		if ((iov->iov_len -= cnt) <= 0)
 			iov++;
 	}
 done:
 	FREE(ktp, M_TEMP);
-	FREE(kth, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 	
 }
@@ -222,21 +214,20 @@ ktrpsig(vp, sig, action, mask, code)
 	sig_t action;
 	int mask, code;
 {
-	struct ktr_header *kth;
+	struct ktr_header kth;
 	struct ktr_psig	kp;
 	struct proc *p = curproc;	/* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(p, KTR_PSIG);
+	ktrinitheader(&kth, p, KTR_PSIG);
 	kp.signo = (char)sig;
 	kp.action = action;
 	kp.mask = mask;
 	kp.code = code;
-	kth->ktr_buf = (caddr_t)&kp;
-	kth->ktr_len = sizeof (struct ktr_psig);
+	kth.ktr_buf = (caddr_t)&kp;
+	kth.ktr_len = sizeof (struct ktr_psig);
 
-	ktrwrite(vp, kth);
-	FREE(kth, M_TEMP);
+	ktrwrite(vp, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
@@ -245,19 +236,18 @@ ktrcsw(vp, out, user)
 	struct vnode *vp;
 	int out, user;
 {
-	struct ktr_header *kth;
+	struct ktr_header kth;
 	struct	ktr_csw kc;
 	struct proc *p = curproc;	/* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(p, KTR_CSW);
+	ktrinitheader(&kth, p, KTR_CSW);
 	kc.out = out;
 	kc.user = user;
-	kth->ktr_buf = (caddr_t)&kc;
-	kth->ktr_len = sizeof (struct ktr_csw);
+	kth.ktr_buf = (caddr_t)&kc;
+	kth.ktr_len = sizeof (struct ktr_csw);
 
-	ktrwrite(vp, kth);
-	FREE(kth, M_TEMP);
+	ktrwrite(vp, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
