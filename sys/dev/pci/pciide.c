@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.109 2003/01/16 17:24:46 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.110 2003/01/17 00:54:23 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4349,7 +4349,7 @@ pdc20268_setup_channel(chp)
 			drvp->drive_flags &= ~DRIVE_DMA;
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			if (cable && drvp->UDMA_mode > 2) {
-				WDCDEBUG_PRINT(("%s(%s:%d:%d): 80-pin "
+				WDCDEBUG_PRINT(("%s(%s:%d:%d): 80-wire "
 				    "cable not detected\n", drvp->drive_name,
 				    sc->sc_wdcdev.sc_dev.dv_xname,
 				    channel, drive), DEBUG_PROBE);
