@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.4 1999/12/18 11:18:12 pjanzen Exp $	*/
+/*	$OpenBSD: move.c,v 1.5 2000/07/23 22:23:42 pjanzen Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.4 1999/12/18 11:18:12 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.5 2000/07/23 22:23:42 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,6 +203,7 @@ teleport:
 			wrefresh(curscr);
 			break;
 		  case EOF:
+			quit(0);
 			break;
 		  default:
 			beep();

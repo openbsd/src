@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.7 1998/03/12 09:03:49 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.8 2000/07/23 22:23:42 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: bs.c,v 1.7 1998/03/12 09:03:49 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bs.c,v 1.8 2000/07/23 22:23:42 pjanzen Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* (setegid, random) */
@@ -640,6 +640,9 @@ static int getcoord(int atcpu)
 	    }
 	    break;
 #endif /* NCURSES_MOUSE_VERSION */
+	case ERR:
+	    uninitgame(1);
+	    break;
 	default:
 	    if (atcpu)
 		(void) mvaddstr(CYBASE + BDEPTH + 1, CXBASE + 11, "      ");

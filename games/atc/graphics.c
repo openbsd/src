@@ -1,4 +1,4 @@
-/*	$OpenBSD: graphics.c,v 1.4 1999/09/01 00:27:07 pjanzen Exp $	*/
+/*	$OpenBSD: graphics.c,v 1.5 2000/07/23 22:23:37 pjanzen Exp $	*/
 /*	$NetBSD: graphics.c,v 1.3 1995/03/21 15:04:04 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: graphics.c,v 1.4 1999/09/01 00:27:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: graphics.c,v 1.5 2000/07/23 22:23:37 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,12 +70,13 @@ WINDOW	*radar, *cleanradar, *credit, *input, *planes;
 int
 getAChar()
 {
+	int c;
 #ifdef BSD
-	return (getchar());
+	if ((c = getchar()) == EOF && feof(stdin))
+		quit(0);
+	return (c);
 #endif
 #ifdef SYSV
-	int c;
-
 	while ((c = getchar()) == -1 && errno == EINTR) ;
 	return(c);
 #endif
