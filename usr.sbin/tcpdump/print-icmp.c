@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.12 2001/09/02 12:06:57 jakob Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.13 2001/11/07 18:48:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.12 2001/09/02 12:06:57 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.13 2001/11/07 18:48:16 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -167,7 +167,6 @@ struct id_rdiscovery {
 void
 icmp_print(register const u_char *bp, register const u_char *bp2)
 {
-	register char *cp;
 	register const struct icmp *dp;
 	register const struct ip *ip;
 	register const char *str, *fmt;
@@ -175,6 +174,7 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 	register const struct udphdr *ouh;
 	register u_int hlen, dport, mtu;
 	char buf[MAXHOSTNAMELEN+256];
+	char buf2[MAXHOSTNAMELEN+256];
 
 	dp = (struct icmp *)bp;
 	ip = (struct ip *)bp2;
@@ -284,44 +284,40 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 		register const struct id_rdiscovery *idp;
 		u_int lifetime, num, size;
 
-		(void)strncpy(buf, "router advertisement", sizeof buf-1);
-		buf[sizeof buf-1] = '\0';
-		cp = buf + strlen(buf);
+		(void)strlcpy(buf, "router advertisement", sizeof(buf));
 
 		ihp = (struct ih_rdiscovery *)&dp->icmp_void;
 		TCHECK(*ihp);
-		(void)strcpy(cp, " lifetime ");
-		cp = buf + strlen(buf);
+		(void)strlcat(buf, " lifetime ", sizeof(buf));
 		lifetime = EXTRACT_16BITS(&ihp->ird_lifetime);
 		if (lifetime < 60)
-			(void)snprintf(cp, buf + sizeof buf - cp, "%u", lifetime);
+			(void)snprintf(buf2, sizeof(buf2), "%u", lifetime);
 		else if (lifetime < 60 * 60)
-			(void)snprintf(cp, buf + sizeof buf - cp, "%u:%02u",
+			(void)snprintf(buf2, sizeof(buf2), "%u:%02u",
 			    lifetime / 60, lifetime % 60);
 		else
-			(void)snprintf(cp, buf + sizeof buf - cp, "%u:%02u:%02u",
-			    lifetime / 3600,
-			    (lifetime % 3600) / 60,
+			(void)snprintf(buf2, sizeof(buf2), "%u:%02u:%02u",
+			    lifetime / 3600, (lifetime % 3600) / 60,
 			    lifetime % 60);
-		cp = buf + strlen(buf);
+		strlcat(buf, buf2, sizeof(buf));
 
 		num = ihp->ird_addrnum;
-		(void)snprintf(cp, buf + sizeof buf - cp, " %d:", num);
-		cp = buf + strlen(buf);
+		(void)snprintf(buf2, sizeof(buf2), " %d:", num);
+		strlcat(buf, buf2, sizeof(buf));
 
 		size = ihp->ird_addrsiz;
 		if (size != 2) {
-			(void)snprintf(cp, buf - sizeof buf - cp,
-				" [size %d]", size);
+			(void)snprintf(buf2, sizeof(buf2), " [size %d]", size);
+			strlcat(buf, buf2, sizeof(buf));
 			break;
 		}
 		idp = (struct id_rdiscovery *)&dp->icmp_data;
 		while (num-- > 0) {
 			TCHECK(*idp);
-			(void)snprintf(cp, buf + sizeof buf - cp, " {%s %u}",
+			(void)snprintf(buf2, sizeof(buf2), " {%s %u}",
 			    ipaddr_string(&idp->ird_addr),
 			    EXTRACT_32BITS(&idp->ird_pref));
-			cp = buf + strlen(buf);
+			strlcat(buf, buf2, sizeof(buf));
 		}
 		}
 		break;

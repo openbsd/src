@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbutil.c,v 1.2 2001/01/03 18:41:00 mickey Exp $	*/
+/*	$OpenBSD: smbutil.c,v 1.3 2001/11/07 18:48:16 deraadt Exp $	*/
 
 /*
    Copyright (C) Andrew Tridgell 1995-1999
@@ -13,7 +13,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-     "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/smbutil.c,v 1.2 2001/01/03 18:41:00 mickey Exp $";
+     "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/smbutil.c,v 1.3 2001/11/07 18:48:16 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -329,8 +329,7 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
 	char bitfmt[128];
 	char *p = strchr(++fmt,'}');
 	int l = PTR_DIFF(p,fmt);
-	strncpy(bitfmt,fmt,l);
-	bitfmt[l]=0;
+	strlcpy(bitfmt,fmt,sizeof(bitfmt));
 	fmt = p+1;
 	write_bits(CVAL(buf,0),bitfmt);
 	buf++;
@@ -556,7 +555,7 @@ const uchar *fdata(const uchar *buf, const char *fmt, const uchar *maxbuf)
       if (buf>=maxbuf) return(buf);
       memset(s, 0, sizeof(s));
       p = strchr(fmt,']');
-      strncpy(s,fmt,p-fmt);
+      strncpy(s,fmt,p-fmt);	/* XXX? */
       fmt = p+1;
       buf = fdata1(buf,s,maxbuf);
       if (buf == NULL)
@@ -713,8 +712,9 @@ char *smb_errstr(int class,int num)
 	    for (j=0;err[j].name;j++)
 	      if (num == err[j].code)
 		{
-		  snprintf(ret,sizeof(ret),"%s - %s (%s)",err_classes[i].class,
-			  err[j].name,err[j].message);
+		  snprintf(ret, sizeof(ret), "%s - %s (%s)",
+		    err_classes[i].class,
+		    err[j].name,err[j].message);
 		  return ret;
 		}
 	  }

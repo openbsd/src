@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nfs.c,v 1.9 2000/12/05 08:17:45 jakob Exp $	*/
+/*	$OpenBSD: print-nfs.c,v 1.10 2001/11/07 18:48:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -377,7 +377,7 @@ nfs_printfh(register const u_int32_t *dp)
 		static char temp[NFS_FHSIZE+1];
 
 		/* Make sure string is null-terminated */
-		strncpy(temp, sfsname, NFS_FHSIZE);
+		strlcpy(temp, sfsname, sizeof(temp));
 		/* Remove trailing spaces */
 		sfsname = strchr(temp, ' ');
 		if (sfsname)

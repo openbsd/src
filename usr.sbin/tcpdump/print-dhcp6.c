@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.2 2000/05/05 12:32:09 jakob Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.3 2001/11/07 18:48:16 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-dhcp6.c,v 1.2 2000/05/05 12:32:09 jakob Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-dhcp6.c,v 1.3 2001/11/07 18:48:16 deraadt Exp $";
 #endif
 
 #ifdef INET6
@@ -208,7 +208,7 @@ dhcp6ext_print(u_char *cp, u_char *ep)
 			break;
 		case OT6_STR:
 			memset(&buf, 0, sizeof(buf));
-			strncpy(buf, &cp[4], len);
+			strlcpy(buf, &cp[4], len);
 			printf("%s", buf);
 			break;
 		case OT6_NUM:
