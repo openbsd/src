@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.45 2002/08/11 16:51:04 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.46 2002/08/11 18:41:17 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -124,13 +124,13 @@ _dl_dopreload(paths)
  * to do is to dig out all information we need to accomplish our task.
  */
 unsigned long
-_dl_boot(const char **argv, char **envp, const long loff,
-	Elf_Dyn *dynp, long *dl_data)
+_dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 {
 	struct elf_object *exe_obj;	/* Pointer to executable object */
 	struct elf_object *dyn_obj;	/* Pointer to executable object */
 	struct r_debug **map_link;	/* Where to put pointer for gdb */
 	struct r_debug *debug_map;
+	Elf_Dyn *dynp;
 	elf_object_t *dynobj;
 	Elf_Phdr *phdp;
 	char *us = "";

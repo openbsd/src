@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.8 2002/07/12 20:18:30 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.9 2002/08/11 18:41:17 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -102,11 +102,10 @@ L3:
 	lda	s2, 0(sp)
 	mov	s2, a3
 	CALL(_dl_boot_bind)
-	mov	s3, a0
-	mov	s4, a1
-	mov	s1, a2
-	mov	s5, a3
-	mov	s2, a4
+	mov	s3, a0		/* **argv  */
+	mov	s4, a1		/* **envp  */
+	mov	s1, a2		/* loff    */
+	mov	s2, a3		/* dl_data */
 	CALL(_dl_boot)
 	mov	s0, a0
 	mov	v0, pv
