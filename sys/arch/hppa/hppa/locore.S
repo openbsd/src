@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.134 2004/06/13 21:49:14 niklas Exp $	*/
+/*	$OpenBSD: locore.S,v 1.135 2004/06/30 18:18:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -158,6 +158,7 @@ cpu_itmr			/* itmr value at the most recent clk int */
 	BSS(fpu_curpcb, 4)	/* pcb of the fpu owner */
 	.export fpu_enable, data
 	BSS(fpu_enable, 4)	/* bits to set in the ccr to enable fpu */
+	BSS(cpu_fpuena, 4)	/* enable FPU, otherwise force emulate */
 	BSS(fpu_scratch, 16)	/* FPU scratch space, enough for a quad */
 	.export hppa_vtop, data
 	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
@@ -1062,14 +1063,19 @@ ENTRY(TLABEL(emu),0)
 	 * or the trap will be generted later.
 	 */
 
+	ldil	L%cpu_fpuena, r1
+	ldw	R%cpu_fpuena(r1), r9
+	comib,=	0, r9, $fpusw_emu
+	ldil	L%fpu_curpcb, r1
+
 	/* if we are already enabled and hit again, emulate */
 	mfctl	ccr, r1
 	extru,<> r1, 25, 2, r0
 	b,n	$fpusw_set
 	nop
 
+$fpusw_emu
 	mtctl	r0, ccr		/* cause a reload after exception */
-	ldil	L%fpu_curpcb, r1
 	stw	r0, R%fpu_curpcb(r1)
 #if 0
 	/* here we emulate the fld/fst */
@@ -1317,7 +1323,7 @@ $tlbd_l
 	ldw	0(r17), r24
 	VTAG
 	sub,<>	r16, r24, r0
-	stw	r25, 4(r17)
+	stw	r0, 0(r17)
 #endif
 	TLB_STATS_AFT(tlbd)
 	rfir

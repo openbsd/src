@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.130 2004/05/13 15:09:19 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.131 2004/06/30 18:18:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -436,6 +436,7 @@ cpuid()
 	extern u_int trap_ep_T_ITLBMISSNA[];
 
 	extern u_int fpu_enable;
+	extern int cpu_fpuena;
 	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
 	const struct hppa_cpu_typed *p = NULL;
 	u_int cpu_features;
@@ -469,12 +470,14 @@ cpuid()
 	/* locate coprocessors and SFUs */
 	bzero(&pdc_coproc, sizeof(pdc_coproc));
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_COPROC, PDC_COPROC_DFLT,
-	    &pdc_coproc, 0, 0, 0, 0)) < 0)
+	    &pdc_coproc, 0, 0, 0, 0)) < 0) {
 		printf("WARNING: PDC_COPROC error %d\n", error);
-	else {
+		cpu_fpuena = 0;
+	} else {
 		printf("pdc_coproc: 0x%x, 0x%x\n", pdc_coproc.ccr_enable,
 		    pdc_coproc.ccr_present);
 		fpu_enable = pdc_coproc.ccr_enable & CCR_MASK;
+		cpu_fpuena = 1;
 	}
 
 	/* BTLB params */
@@ -527,9 +530,11 @@ cpuid()
 		printf("WARNING: UNKNOWN CPU TYPE; GOOD LUCK "
 		    "(type 0x%x, features 0x%x)\n", cpu_type, cpu_features);
 		p = cpu_types;
-	} else if ((p->type == hpcxl || p->type == hpcxl2) && !fpu_enable)
+	} else if ((p->type == hpcxl || p->type == hpcxl2) && !fpu_enable) {
 		/* we know PCXL and PCXL2 do not exist w/o FPU */
 		fpu_enable = 0xc0;
+		cpu_fpuena = 1;
+	}
 
 	/*
 	 * TODO: HPT on 7200 is not currently supported
@@ -1216,10 +1221,9 @@ setregs(p, pack, stack, retval)
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
 	if (tf->tf_cr30 == fpu_curpcb) {
 		fpu_curpcb = 0;
-		/* force an fpu ctxsw, we'll not be hugged by the cpu_switch */
+		/* force an fpu ctxsw, we won't be hugged by the cpu_switch */
 		mtctl(0, CR_CCR);
 	}
-
 	retval[1] = 0;
 }
 
@@ -1459,7 +1463,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+	extern paddr_t fpu_curpcb;	/* from locore.S */
+	extern int cpu_fpuena;
 	dev_t consdev;
+
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);	/* overloaded */
@@ -1471,6 +1478,13 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
+	case CPU_FPU:
+		if (fpu_curpcb) {
+			fpu_save(fpu_curpcb);
+			fpu_curpcb = 0;
+			mtctl(0, CR_CCR);
+		}
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_fpuena));
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.43 2004/06/13 21:49:14 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.44 2004/06/30 18:18:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -164,11 +164,13 @@ int	cpu_dump(void);
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_FPU			2	/* int: fpu present/enabled */
+#define	CPU_MAXID		3	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "fpu", CTLTYPE_INT }, \
 }
 #endif
 
