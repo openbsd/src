@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.27 2004/11/27 14:26:32 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.28 2004/12/30 21:22:20 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -163,12 +163,10 @@ do { \
 
 #define	PMAP_MD_RELOC2() \
 do { \
-	IOBase = (u_long)m68k_ptob(nptpages * NPTEPG - MACHINE_IIOMAPSIZE); \
-	ROMBase = (char *)m68k_ptob(nptpages * NPTEPG - \
-	    (ROMMAPSIZE + VIDMAPSIZE)); \
+	IOBase = iiobase; \
+	ROMBase = (char *)(iiobase + m68k_ptob(IIOMAPSIZE)); \
 	if (vidlen != 0) { \
-		newvideoaddr = (u_int32_t) \
-				m68k_ptob(nptpages * NPTEPG - VIDMAPSIZE) \
+		newvideoaddr = iiobase + m68k_ptob(IIOMAPSIZE + ROMMAPSIZE) \
 				+ (mac68k_vidphys & PGOFSET); \
 		if (mac68k_vidlog) \
 			mac68k_vidlog = newvideoaddr; \

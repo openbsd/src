@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.8 2004/11/27 14:26:30 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.9 2004/12/30 21:22:20 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -121,6 +121,7 @@ pmap_bootstrap(nextpa, firstpa)
 	paddr_t firstpa;
 {
 	paddr_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
+	vaddr_t iiobase, eiobase;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -162,11 +163,27 @@ pmap_bootstrap(nextpa, firstpa)
 	kstpa = nextpa;
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
+
 	nptpages = RELOC(Sysptsize, int) +
 	    (MACHINE_IIOMAPSIZE + MACHINE_EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
+
+	iiopa = nextpa + RELOC(Sysptsize, int) * NBPG;
+	iiobase = m68k_ptob(RELOC(Sysptsize, int) * NPTEPG);
+	eiopa = iiopa + MACHINE_IIOMAPSIZE * sizeof(pt_entry_t);
+	eiobase = iiobase + m68k_ptob(MACHINE_IIOMAPSIZE);
+
+	/*
+	 * We need to be able to map a whole UPT here as well. Adjust
+	 * nptpages if necessary.
+	 */
+	num = RELOC(Sysptsize, int) +
+	    (m68k_btop(MACHINE_MAX_PTSIZE) * sizeof(pt_entry_t) + NPTEPG - 1) /
+	      NPTEPG;
+	if (nptpages < num)
+		nptpages = num;
+
 	nextpa += nptpages * NBPG;
-	eiopa = nextpa - MACHINE_EIOMAPSIZE * sizeof(pt_entry_t);
-	iiopa = eiopa - MACHINE_IIOMAPSIZE * sizeof(pt_entry_t);
+
 	kptmpa = nextpa;
 	nextpa += NBPG;
 	lkptpa = nextpa;

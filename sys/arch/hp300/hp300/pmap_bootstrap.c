@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.18 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.19 2004/12/30 21:22:19 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /* 
@@ -79,17 +79,11 @@ extern int maxmem;
 	 */
 #define	PMAP_MD_RELOC2() \
 do { \
-	RELOC(intiobase, char *) = \
-	    (char *)m68k_ptob(nptpages * NPTEPG - \
-	        (MACHINE_IIOMAPSIZE + MACHINE_EIOMAPSIZE)); \
-	RELOC(intiolimit, char *) = \
-	    (char *)m68k_ptob(nptpages * NPTEPG - MACHINE_EIOMAPSIZE); \
-	RELOC(extiobase, char *) = \
-	    (char *)m68k_ptob(nptpages * NPTEPG - MACHINE_EIOMAPSIZE); \
-	RELOC(CLKbase, vaddr_t) = \
-	    (vaddr_t)RELOC(intiobase, char *) + CLKBASE; \
-	RELOC(MMUbase, vaddr_t) = \
-	    (vaddr_t)RELOC(intiobase, char *) + MMUBASE; \
+	RELOC(intiobase, char *) = (char *)iiobase; \
+	RELOC(intiolimit, char *) = (char *)eiobase; \
+	RELOC(extiobase, char *) = (char *)eiobase; \
+	RELOC(CLKbase, vaddr_t) = iiobase + CLKBASE; \
+	RELOC(MMUbase, vaddr_t) = iiobase + MMUBASE; \
 } while (0)
 
 #define	PMAP_MD_MEMSIZE() \

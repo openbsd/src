@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.18 2003/06/02 23:27:51 millert Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.19 2004/12/30 21:22:20 miod Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -113,13 +113,9 @@ do { \
 	 */
 #define	PMAP_MD_RELOC2() \
 do { \
-	RELOC(intiobase, char *) = \
-	    (char *)m68k_ptob(nptpages * NPTEPG - \
-	        (MACHINE_IIOMAPSIZE + MACHINE_EIOMAPSIZE)); \
-	RELOC(intiolimit, char *) = \
-	    (char *)m68k_ptob(nptpages * NPTEPG - MACHINE_EIOMAPSIZE); \
-	RELOC(extiobase, char *) = \
-	    (char *)m68k_ptob(nptpages * NPTEPG - MACHINE_EIOMAPSIZE); \
+	RELOC(intiobase, char *) = (char *)iiobase; \
+	RELOC(intiolimit, char *) = (char *)eiobase; \
+	RELOC(extiobase, char *) = (char *)eiobase; \
 } while (0)
 
 #define	PMAP_MD_MEMSIZE() \
