@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.5 2001/08/24 19:46:32 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.6 2001/08/24 19:48:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -181,6 +181,7 @@ reset_dump(void)
 {
 	struct pcap_file_header hdr;
 	struct stat st;
+	int tmpsnap;
 	FILE *fp;
 
 	if (hpcap == NULL)
@@ -213,6 +214,14 @@ reset_dump(void)
 #define TCPDUMP_MAGIC 0xa1b2c3d4
 
 	if (st.st_size == 0) {
+		if (snaplen != pcap_snapshot(hpcap)) {
+			logmsg(LOG_NOTICE, "Using snaplen %d\n", snaplen);
+			if (init_pcap()) {
+				logmsg(LOG_ERR, "Failed to initialize\n");
+				if (hpcap == NULL) return (-1);
+				logmsg(LOG_NOTICE, "Using old settings\n");
+			}
+		}
 		hdr.magic = TCPDUMP_MAGIC;
 		hdr.version_major = PCAP_VERSION_MAJOR;
 		hdr.version_minor = PCAP_VERSION_MINOR;
@@ -243,6 +252,7 @@ reset_dump(void)
 			logmsg(LOG_WARNING,
 			    "Existing file specifies a snaplen of %d, using it",
 			    hdr.snaplen);
+			tmpsnap = snaplen;
 			snaplen = hdr.snaplen;
 			if (init_pcap()) {
 				logmsg(LOG_ERR, "Failed to re-initialize\n");
@@ -252,6 +262,7 @@ reset_dump(void)
 					"Using old settings, offset: %d\n",
 					st.st_size);
 			}
+			snaplen = tmpsnap;
 		}
 	}
 
