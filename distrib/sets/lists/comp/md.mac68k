@@ -173,7 +173,6 @@
 ./usr/include/mac68k/limits.h
 ./usr/include/mac68k/param.h
 ./usr/include/mac68k/pcb.h
-./usr/include/mac68k/pio.h
 ./usr/include/mac68k/pmap.h
 ./usr/include/mac68k/proc.h
 ./usr/include/mac68k/profile.h

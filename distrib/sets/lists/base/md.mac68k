@@ -1572,7 +1572,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/limits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/param.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/pcb.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/pio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/pmap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/proc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/profile.ph
