@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.11 2001/07/05 10:00:33 art Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.12 2001/12/04 06:32:06 mickey Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -186,7 +186,7 @@ pciaddr_resource_manage(sc, pc, tag, func)
 	val = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(val)) {
 	default:
-		printf("WARNING: unknown PCI device header.");
+		printf("WARNING: unknown PCI device header.\n");
 		sc->nbogus++;
 		return;
 	case 0: 
