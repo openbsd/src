@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.98 2003/01/01 23:38:18 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.99 2003/01/04 23:13:51 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -127,6 +127,7 @@ void regdump(struct trapframe *f);
 void dumpsys(void);
 void consinit(void);
 vm_offset_t size_memory(void);
+vm_offset_t memsize187(void);
 int getcpuspeed(void);
 int getscsiid(void);
 void identifycpu(void);
@@ -304,6 +305,29 @@ consinit()
 #endif
 }
 
+#ifdef MVME187
+/*
+ * Figure out how much memory is available, by querying the memory controllers
+ */
+#include <mvme88k/dev/memcreg.h>
+vm_offset_t
+memsize187()
+{
+	struct memcreg *memc;
+	vm_offset_t x;
+
+	memc = (struct memcreg *)0xfff43000;
+	x = MEMC_MEMCONF_RTOB(memc->memc_memconf);
+
+	memc = (struct memcreg *)0xfff43100;
+	if (!badaddr((vm_offset_t)&memc->memc_memconf, 1))
+		x += MEMC_MEMCONF_RTOB(memc->memc_memconf);
+
+	return x;
+}
+#endif
+
+#if defined(MVME188) || defined(MVME197)
 /*
  * Figure out how much real memory is available.
  * Start looking from the megabyte after the end of the kernel data,
@@ -352,9 +376,9 @@ size_memory()
 		look = (unsigned int *)0x01FFF000; 
 	}
 	
-	physmem = btoc(trunc_page((unsigned)look)); /* in pages */
 	return (trunc_page((unsigned)look));
 }
+#endif	/* defined(MVME188) || defined(MVME197) */
 
 int
 getcpuspeed()
@@ -2375,7 +2399,22 @@ mvme_bootstrap()
 	uvm_setpagesize();
 	first_addr = round_page(first_addr);
 
-	last_addr = size_memory();
+	switch (brdtyp) {
+#ifdef MVME187
+	case BRD_187:
+		last_addr = memsize187();
+		break;
+#endif
+#ifdef MVME188
+	case BRD_188:
+#endif
+#ifdef MVME197
+	case BRD_197:
+#endif
+		last_addr = size_memory();
+		break;
+	}
+	physmem = btoc(last_addr);
 
 	cmmu_parity_enable();
 
