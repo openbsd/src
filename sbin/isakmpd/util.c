@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.25 2002/01/23 17:10:09 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.26 2002/01/23 18:44:48 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -380,7 +380,8 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 		free (*address);
 		return -1;
 	      }
-	    sprintf (*address + strlen (*address), "%03ld", val);
+	    snprintf (*address + strlen (*address), 
+		      addrlen - strlen (*address), "%03ld", val);
 	    if (bstart)
 	      strlcat (*address, ".", addrlen);
 	  }
@@ -397,9 +398,9 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 	  return -1;
 
 	for (i = 0, j = 0; i < 8; i++)
-	  j += sprintf ((*address) + j, "%02x%02x:",
-			((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i],
-			((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i + 1]);
+	  j += snprintf ((*address) + j, addrlen - j, "%02x%02x:",
+			 ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i],
+			 ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i + 1]);
 	(*address)[j - 1] = '\0';
 	break;
 

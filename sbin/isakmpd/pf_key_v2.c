@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.93 2002/01/23 17:21:16 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.94 2002/01/23 18:44:47 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2119,9 +2119,10 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
       addr = id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
       if (inet_ntop (AF_INET, addr, addrbuf, ADDRESS_MAX) == NULL)
 	return 0;
-      sprintf (addrbuf + strlen (addrbuf), "/%d",
-	       pf_key_v2_mask_to_bits ((u_int32_t)
-				       *(addr + sizeof (struct in_addr))));
+      snprintf (addrbuf + strlen (addrbuf), ADDRESS_MAX - strlen (addrbuf),
+		"/%d", pf_key_v2_mask_to_bits ((u_int32_t)
+					       *(addr + 
+						 sizeof (struct in_addr))));
       *reslen = strlen (addrbuf);
       res = strdup (addrbuf);
       if (!res)
@@ -2134,8 +2135,9 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
       addr = id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
       if (inet_ntop (AF_INET6, addr, addrbuf, ADDRESS_MAX) == NULL)
 	return 0;
-      sprintf (addrbuf + strlen (addrbuf), "/%d",
-	       pf_key_v2_mask6_to_bits (addr + sizeof (struct in6_addr)));
+      snprintf (addrbuf + strlen (addrbuf), ADDRESS_MAX - strlen (addrbuf),
+		"/%d", pf_key_v2_mask6_to_bits (addr + 
+						sizeof (struct in6_addr)));
       *reslen = strlen (addrbuf);
       res = strdup (addrbuf);
       if (!res)
@@ -2769,7 +2771,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   char dstbuf[ADDRESS_MAX], srcbuf[ADDRESS_MAX], *peer = 0, *conn = 0;
   char confname[120];
   char *srcid = 0, *dstid = 0, *prefstring = 0;
-  int slen, af, afamily, masklen;
+  int slen, af, afamily, masklen, buflen;
   struct sockaddr *smask, *sflow, *dmask, *dflow;
   struct sadb_protocol *sproto;
   char ssflow[ADDRESS_MAX], sdflow[ADDRESS_MAX];
@@ -3143,24 +3145,20 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		}
 	    }
 
-	  srcid = malloc ((slen ? slen : strlen (pwd->pw_name))
-			  + strlen (prefstring) + sizeof "ID:/");
+	  buflen = (slen ? slen : strlen (pwd->pw_name)) + strlen (prefstring)
+	    + sizeof "ID:/";
+	  srcid = malloc (buflen);
 	  if (!srcid)
 	    {
-	      log_error ("pf_key_v2_acquire: malloc (%d) failed",
-			 slen ? slen : strlen (pwd->pw_name)
-			 + strlen (prefstring) + sizeof "ID:/");
+	      log_error ("pf_key_v2_acquire: malloc (%d) failed", buflen);
 	      goto fail;
 	    }
 
-	  sprintf (srcid, "ID:%s/", prefstring);
+	  snprintf (srcid, buflen, "ID:%s/", prefstring);
 	  if (slen != 0)
-	    strlcat (srcid + sizeof "ID:/" - 1 + strlen (prefstring),
-		     (char *)(srcident + 1),
-		     slen + strlen (prefstring) + sizeof "ID:/");
+	    strlcat (srcid, (char *)(srcident + 1), buflen);
 	  else
-	    strlcat (srcid + sizeof "ID:/" - 1 + strlen (prefstring),
-		     pwd->pw_name, strlen (prefstring) + sizeof "ID:/");
+	    strlcat (srcid, pwd->pw_name, buflen);
 	  pwd = 0;
 
 	  /* Set the section if it doesn't already exist. */
@@ -3312,25 +3310,20 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		}
 	    }
 
-	  dstid = malloc ((slen ? slen : strlen (pwd->pw_name))
-			  + strlen (prefstring) + sizeof "ID:/");
+	  buflen = (slen ? slen : strlen (pwd->pw_name)) + strlen (prefstring)
+	    + sizeof "ID:/";
+	  dstid = malloc (buflen);
 	  if (!dstid)
 	    {
-	      log_error ("pf_key_v2_acquire: malloc (%d) failed",
-			 slen ? slen : strlen (pwd->pw_name)
-			 + strlen (prefstring) + sizeof "ID:/");
+	      log_error ("pf_key_v2_acquire: malloc (%d) failed", buflen);
 	      goto fail;
 	    }
 
-	  sprintf (dstid, "ID:%s/", prefstring);
+	  snprintf (dstid, buflen, "ID:%s/", prefstring);
 	  if (slen != 0)
-	    strlcat (dstid + sizeof "ID:/" - 1 + strlen (prefstring),
-		     (char *)(dstident + 1),
-		     slen + strlen (prefstring) + sizeof "ID:/");
+	    strlcat (dstid, (char *)(dstident + 1), buflen);
 	  else
-	    strlcat (dstid + sizeof "ID:/" - 1 + strlen (prefstring),
-		     pwd->pw_name,
-		     strlen (prefstring) + sizeof "ID:/");
+	    strlcat (dstid, pwd->pw_name, buflen);
 	  pwd = 0;
 
 	  /* Set the section if it doesn't already exist. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: field.c,v 1.9 2002/01/03 16:27:41 ho Exp $	*/
+/*	$OpenBSD: field.c,v 1.10 2002/01/23 18:44:47 ho Exp $	*/
 /*	$EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ field_debug_raw (u_int8_t *buf, size_t len, struct constant_map **maps)
   p = retval + 2;
   while (len--)
     {
-      sprintf (p, "%02x", *buf++);
+      snprintf (p, 1 + len * 2, "%02x", *buf++);
       p += 2;
     }
   return retval;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.57 2002/01/23 17:16:42 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.58 2002/01/23 18:44:47 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -212,8 +212,8 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       strlcpy (principal[1], "passphrase-md5-hex:", len);
       MD5 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 16; i++)
-	sprintf (principal[1] + 2 * i + sizeof "passphrase-md5-hex:" - 1,
-		 "%02x", hashbuf[i]);
+	snprintf (principal[1] + 2 * i + sizeof "passphrase-md5-hex:" - 1,
+		  2, "%02x", hashbuf[i]);
 
       len = sizeof "passphrase-sha1-hex:" + 2 * 20;
       principal[2] = calloc (len, sizeof (char));
@@ -227,8 +227,8 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       strlcpy (principal[2], "passphrase-sha1-hex:", len);
       SHA1 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 20; i++)
-	sprintf (principal[2] + 2 * i + sizeof "passphrase-sha1-hex:" - 1,
-		 "%02x", hashbuf[i]);
+	snprintf (principal[2] + 2 * i + sizeof "passphrase-sha1-hex:" - 1,
+		  2, "%02x", hashbuf[i]);
       break;
 
     case ISAKMP_CERTENC_KEYNOTE:
@@ -287,16 +287,16 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  goto policydone;
 	}
 
-      principal[1] = calloc (strlen (principal[0]) + sizeof "rsa-hex:",
-			     sizeof (char));
+      len = strlen (principal[0]) + sizeof "rsa-hex:";
+      principal[1] = calloc (len, sizeof (char));
       if (!principal[1])
 	{
-	  log_error ("check_policy: calloc (%d, %d) failed",
-		     strlen (principal[0]) + sizeof "rsa-hex:", sizeof (char));
+	  log_error ("check_policy: calloc (%d, %d) failed", len,
+		     sizeof (char));
 	  goto policydone;
 	}
 
-      sprintf (principal[1], "rsa-hex:%s", principal[0]);
+      snprintf (principal[1], len, "rsa-hex:%s", principal[0]);
       free (principal[0]);
       principal[0] = principal[1];
       principal[1] = 0;

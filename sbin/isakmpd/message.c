@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.47 2001/10/26 13:29:26 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.48 2002/01/23 18:44:47 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -885,8 +885,10 @@ message_recv (struct message *msg)
   struct proto tmp_proto;
   struct sa tmp_sa;
 
+#ifdef USE_DEBUG
   /* Possibly dump a raw hex image of the message to the log channel.  */
   message_dump_raw ("message_recv", msg, LOG_MESSAGE);
+#endif
 
   /* Messages shorter than an ISAKMP header are bad.  */
   if (sz < ISAKMP_HDR_SZ || sz != GET_ISAKMP_HDR_LENGTH (buf))
@@ -1222,7 +1224,9 @@ message_send (struct message *msg)
 			  GET_ISAKMP_HDR_FLAGS (msg->iov[0].iov_base)
 			  | ISAKMP_FLAGS_COMMIT);
 
+#ifdef USE_DEBUG
   message_dump_raw ("message_send", msg, LOG_MESSAGE);
+#endif
   msg->flags |= MSG_IN_TRANSIT;
   exchange->in_transit = msg;
   
@@ -1533,7 +1537,8 @@ message_dump_raw (char *header, struct message *msg, int class)
   for (i = 0; i < msg->iovlen; i++)
     for (j = 0; j < msg->iov[i].iov_len; j++)
       {
-	sprintf (p, "%02x", ((u_int8_t *)msg->iov[i].iov_base)[j]);
+	snprintf (p, 80 - (int)(p - buf), "%02x", 
+		  ((u_int8_t *)msg->iov[i].iov_base)[j]);
 	p += 2;
 	if (++k % 32 == 0)
 	  {

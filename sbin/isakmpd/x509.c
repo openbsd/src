@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.67 2002/01/23 17:26:21 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.68 2002/01/23 18:44:48 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -1341,7 +1341,7 @@ x509_printable (void *cert)
     }
 
   for (i = 0; i < datalen; i++)
-    sprintf (s + (2 * i), "%02x", data[i]);
+    snprintf (s + (2 * i), 2 * (datalen - i), "%02x", data[i]);
   free (data);
   return s;
 }
