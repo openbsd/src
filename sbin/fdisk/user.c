@@ -1,5 +1,5 @@
 
-/* $OpenBSD: user.c,v 1.1 1997/09/29 22:58:19 weingart Exp $ */
+/* $OpenBSD: user.c,v 1.2 1997/09/29 23:28:26 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -50,18 +50,18 @@
 
 /* Our command table */
 static cmd_table_t cmd_table[] = {
-	{"help",	Xhelp,		"Command help list"},
-	{"init",	Xinit,		"Initialize loaded MBR"},
-	{"disk",	Xdisk,		"Edit current drive stats"},
-	{"edit",	Xedit,		"Edit given table entry"},
-	{"flag",	Xflag,		"Flag given table entry as bootable"},
-	{"update",	Xupdate,	"Update machine code in loaded MBR"},
-	{"select",	Xselect,	"Select extended partition table entry MBR"},
-	{"print",	Xprint,		"Print loaded MBR partition table"},
-	{"write",	Xwrite,		"Write loaded MBR to disk"},
-	{"exit",	Xexit,		"Exit current level of fdisk edit"},
-	{"quit",	Xquit,		"Quit program without saving current changes"},
-	{NULL,		NULL,		NULL}
+	{"help",   Xhelp,	"Command help list"},
+	{"init",   Xinit,	"Initialize loaded MBR"},
+	{"disk",   Xdisk,	"Edit current drive stats"},
+	{"edit",   Xedit,	"Edit given table entry"},
+	{"flag",   Xflag,	"Flag given table entry as bootable"},
+	{"update", Xupdate,	"Update machine code in loaded MBR"},
+	{"select", Xselect,	"Select extended partition table entry MBR"},
+	{"print",  Xprint,	"Print loaded MBR partition table"},
+	{"write",  Xwrite,	"Write loaded MBR to disk"},
+	{"exit",   Xexit,	"Exit current level of fdisk edit"},
+	{"quit",   Xquit,	"Quit program without saving current changes"},
+	{NULL,     NULL,	NULL}
 };
 
 
@@ -134,7 +134,7 @@ USER_modify(disk, tt, offset)
 		ask_cmd(&cmd);
 
 		for(i = 0; cmd_table[i].cmd != NULL; i++)
-			if(strstr(cmd_table[i].cmd, cmd.cmd) == cmd_table[i].cmd)
+			if(strstr(cmd_table[i].cmd, cmd.cmd)==cmd_table[i].cmd)
 				break;
 
 		/* Quick hack to put in '?' == 'help' */
@@ -160,10 +160,10 @@ USER_modify(disk, tt, offset)
 
 	/* XXX - Write out MBR */
 	if(modified){
-		printf("\n");
-		printf("\t-----------------------------------------------------\n");
-		printf("\t--- ATTENTION - PARTITION TABLE HAS BEEN MODIFIED ---\n");
-		printf("\t-----------------------------------------------------\n");
+		printf("\a\n"
+		   "\t-----------------------------------------------------\n"
+		   "\t--- ATTENTION - PARTITION TABLE HAS BEEN MODIFIED ---\n"
+		   "\t-----------------------------------------------------\n");
 		if(ask_yn("\nDo you wish to write before exit?")){
 			fd = DISK_open(disk->name, O_RDWR);
 			MBR_make(&mbr, mbr_buf);
