@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_iso.c,v 1.9 2004/01/03 14:08:54 espie Exp $	*/
+/*	$OpenBSD: tp_iso.c,v 1.10 2004/06/20 17:19:27 itojun Exp $	*/
 /*	$NetBSD: tp_iso.c,v 1.8 1996/03/16 23:13:54 christos Exp $	*/
 
 /*-
@@ -103,10 +103,6 @@ SOFTWARE.
 #include <netiso/tp_var.h>
 #include <netiso/cltp_var.h>
 #include <netiso/idrp_var.h>
-
-#ifdef TUBA
-#include <netiso/tuba_table.h>
-#endif
 
 #include <sys/stdarg.h>
 
@@ -532,11 +528,6 @@ tpclnp_input(struct mbuf *m, ...)
 	m->m_pkthdr.len -= clnp_len;
 	/* XXXX: should probably be in clnp_input */
 	switch (dst->siso_data[dst->siso_nlen - 1]) {
-#ifdef TUBA
-	case ISOPROTO_TCP:
-		tuba_tcpinput(m, src, dst);
-		return;
-#endif
 	case 0:
 		if (m->m_len == 0 && (m = m_pullup(m, 1)) == 0)
 			return;

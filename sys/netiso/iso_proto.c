@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_proto.c,v 1.4 2003/06/02 23:28:17 millert Exp $	*/
+/*	$OpenBSD: iso_proto.c,v 1.5 2004/06/20 17:19:27 itojun Exp $	*/
 /*	$NetBSD: iso_proto.c,v 1.6 1996/02/13 22:10:21 christos Exp $	*/
 
 /*-
@@ -80,9 +80,6 @@ SOFTWARE.
 #include <netiso/tp_param.h>
 #include <netiso/tp_var.h>
 #include <netiso/esis.h>
-#ifdef TUBA
-#include <netiso/tuba_table.h>
-#endif
 #include <netiso/idrp_var.h>
 #include <netiso/iso_pcb.h>
 #include <netiso/cltp_var.h>
@@ -150,14 +147,6 @@ struct protosw  isosw[] = {
 		tp_usrreq,
 		tp_init, tp_fasttimo, tp_slowtimo, tp_drain,
 	},
-
-#ifdef TUBA
-	{SOCK_STREAM, &isodomain, ISOPROTO_TCP, PR_CONNREQUIRED | PR_WANTRCVD | PR_ABRTACPTDIS,
-		tuba_tcpinput, 0, 0, tuba_ctloutput,
-		tuba_usrreq,
-		tuba_init, tuba_fasttimo, tuba_fasttimo, 0
-	},
-#endif
 
 #ifdef TPCONS
 	/* ISOPROTO_TP */

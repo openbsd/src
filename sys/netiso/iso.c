@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.c,v 1.6 2003/12/10 07:22:44 itojun Exp $	*/
+/*	$OpenBSD: iso.c,v 1.7 2004/06/20 17:19:27 itojun Exp $	*/
 /*	$NetBSD: iso.c,v 1.14 1996/04/13 01:34:48 cgd Exp $	*/
 
 /*-
@@ -81,9 +81,6 @@ SOFTWARE.
 #include <netiso/iso_pcb.h>
 #include <netiso/clnp.h>
 #include <netiso/argo_debug.h>
-#ifdef TUBA
-#include <netiso/tuba_table.h>
-#endif
 
 #ifdef ISO
 
@@ -477,11 +474,6 @@ iso_control(so, cmd, data, ifp)
 		if (ia == 0) {
 			if (cmd == SIOCDIFADDR_ISO)
 				return (EADDRNOTAVAIL);
-#ifdef TUBA
-			/* XXXXXX can't be done in the proto init routines */
-			if (tuba_tree == 0)
-				tuba_table_init();
-#endif
 			MALLOC(ia, struct iso_ifaddr *, sizeof(*ia),
 			       M_IFADDR, M_WAITOK);
 			bzero((caddr_t) ia, sizeof(*ia));
