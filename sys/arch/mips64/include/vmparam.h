@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 2004/09/17 19:19:05 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.6 2004/09/21 05:51:13 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -123,7 +123,7 @@
 #define	VM_FREELIST_DEFAULT	0
 
 /* Kernel page table size is variable. */
-vaddr_t virtual_end;
+extern vaddr_t virtual_end;
 #define VM_MAX_KERNEL_ADDRESS	virtual_end
 
 /* virtual sizes (bytes) for various kernel submaps */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.8 2004/09/20 10:29:57 pefo Exp $ */
+/*	$OpenBSD: cpu.c,v 1.9 2004/09/21 05:51:15 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -36,9 +36,24 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-
 int	cpumatch(struct device *, void *, void *);
 void	cpuattach(struct device *, struct device *, void *);
+
+u_int	CpuPrimaryInstCacheSize;
+u_int	CpuPrimaryInstCacheLSize;
+u_int	CpuPrimaryInstSetSize;
+u_int	CpuPrimaryDataCacheSize;
+u_int	CpuPrimaryDataCacheLSize;
+u_int	CpuPrimaryDataSetSize;
+u_int	CpuCacheAliasMask;
+u_int	CpuSecondaryCacheSize;
+u_int	CpuTertiaryCacheSize;
+u_int	CpuNWayCache;
+u_int	CpuCacheType;		/* R4K, R5K, RM7K */
+u_int	CpuConfigRegister;
+u_int	CpuStatusRegister;
+u_int	CpuExternalCacheOn;	/* R5K, RM7K */
+u_int	CpuOnboardCacheOn;	/* RM7K */
 
 int cpu_is_rm7k = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 2004/09/20 10:29:57 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 2004/09/21 05:51:13 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -356,7 +356,7 @@
 
 #define aston()		(astpending = 1)
 
-int	want_resched;	/* resched() was called */
+extern int want_resched;	/* resched() was called */
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
@@ -406,21 +406,21 @@ int	want_resched;	/* resched() was called */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-u_int	CpuPrimaryInstCacheSize;
-u_int	CpuPrimaryInstCacheLSize;
-u_int	CpuPrimaryInstSetSize;
-u_int	CpuPrimaryDataCacheSize;
-u_int	CpuPrimaryDataCacheLSize;
-u_int	CpuPrimaryDataSetSize;
-u_int	CpuCacheAliasMask;
-u_int	CpuSecondaryCacheSize;
-u_int	CpuTertiaryCacheSize;
-u_int	CpuNWayCache;
-u_int	CpuCacheType;		/* R4K, R5K, RM7K */
-u_int	CpuConfigRegister;
-u_int	CpuStatusRegister;
-u_int	CpuExternalCacheOn;	/* R5K, RM7K */
-u_int	CpuOnboardCacheOn;	/* RM7K */
+extern u_int	CpuPrimaryInstCacheSize;
+extern u_int	CpuPrimaryInstCacheLSize;
+extern u_int	CpuPrimaryInstSetSize;
+extern u_int	CpuPrimaryDataCacheSize;
+extern u_int	CpuPrimaryDataCacheLSize;
+extern u_int	CpuPrimaryDataSetSize;
+extern u_int	CpuCacheAliasMask;
+extern u_int	CpuSecondaryCacheSize;
+extern u_int	CpuTertiaryCacheSize;
+extern u_int	CpuNWayCache;
+extern u_int	CpuCacheType;		/* R4K, R5K, RM7K */
+extern u_int	CpuConfigRegister;
+extern u_int	CpuStatusRegister;
+extern u_int	CpuExternalCacheOn;	/* R5K, RM7K */
+extern u_int	CpuOnboardCacheOn;	/* RM7K */
 
 struct tlb;
 struct user;

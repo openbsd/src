@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 2004/09/17 19:19:08 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 2004/09/21 05:51:15 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -90,6 +90,7 @@
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
 
+int	want_resched;	/* resched() was called */
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
 char	*trap_type[] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.5 2004/09/20 10:29:57 pefo Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.6 2004/09/21 05:51:15 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -55,6 +55,21 @@
 #include <mips64/db_machdep.h>
 #include <ddb/db_sym.h>
 #endif
+
+volatile intrmask_t cpl;
+volatile intrmask_t ipending, astpending;
+
+intrmask_t imask[NIPLS];
+
+intrmask_t idle_mask;
+int	last_low_int;
+
+struct {
+	intrmask_t int_mask;
+	intrmask_t (*int_hand)(intrmask_t, struct trap_frame *);
+} cpu_int_tab[NLOWINT];
+
+void_f *pending_hand;
 
 int netisr;
 
@@ -566,4 +581,8 @@ splraise(int newcpl)
 	__asm__ (" sync\n .set reorder\n");
 	return (oldcpl);
 }
+volatile intrmask_t cpl;
+volatile intrmask_t ipending, astpending;
+
+intrmask_t imask[NIPLS];
 #endif

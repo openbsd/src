@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 2004/09/20 15:10:35 pefo Exp $ */
+/*	$OpenBSD: intr.h,v 1.7 2004/09/21 05:51:15 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -135,11 +135,11 @@ void clearsoftnet(void);
 void clearsofttty(void);
 #endif
 
+extern volatile intrmask_t cpl;
+extern volatile intrmask_t ipending;
+extern volatile intrmask_t astpending;
 
-volatile intrmask_t cpl;
-volatile intrmask_t ipending, astpending;
-
-intrmask_t imask[NIPLS];
+extern intrmask_t imask[NIPLS];
 
 /*
  *  A note on clock interrupts. Clock interrupts are always
@@ -154,7 +154,7 @@ static __inline void splx(int newcpl);
 static __inline int spllower(int newcpl);
 
 typedef void  (void_f) (void);
-void_f *pending_hand;
+extern void_f *pending_hand;
 
 static __inline void
 register_pending_int_handler(void(*pending)(void))
@@ -224,6 +224,8 @@ struct intrhand {
 	void	*frame;
 };
 
+extern struct intrhand *intrhand[INTMASKSIZE];
+
 /*
  * Low level interrupt dispatcher registration data.
  */
@@ -231,13 +233,8 @@ struct intrhand {
 
 struct trap_frame;
 
-struct {
-	intrmask_t int_mask;
-	intrmask_t (*int_hand)(intrmask_t, struct trap_frame *);
-} cpu_int_tab[NLOWINT];
-
-intrmask_t idle_mask;
-int	last_low_int;
+extern intrmask_t idle_mask;
+extern int last_low_int;
 
 void set_intr(int, intrmask_t, intrmask_t(*)(intrmask_t, struct trap_frame *));
 

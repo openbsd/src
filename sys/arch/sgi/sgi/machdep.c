@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 2004/09/20 10:31:16 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.13 2004/09/21 05:51:15 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -116,7 +116,6 @@ int	bufpages = BUFPAGES;
 vm_map_t exec_map;
 vm_map_t phys_map;
 
-int	msgbufmapped;		/* set when safe to use msgbuf */
 caddr_t	msgbufbase;
 
 int	physmem;		/* max supported memory, changes to actual */
@@ -263,7 +262,7 @@ mips_init(int argc, int32_t *argv)
 			continue;	/* Outside kernel */
 		}
 
-		if (fp > firstkernpage) 
+		if (fp > firstkernpage)
 			fp = lastkernpage + 1;
 		else if (lp < lastkernpage)
 			lp = firstkernpage - 1;
@@ -855,6 +854,7 @@ dumpconf()
 void
 dumpsys()
 {
+	extern int msgbufmapped;
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
