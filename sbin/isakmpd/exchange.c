@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.62 2001/08/25 22:13:27 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.63 2002/01/03 16:27:41 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1118,12 +1118,12 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
   /* Include phase 2 SA list for this exchange */
   if (exchange->phase == 2)
     {
-      sprintf (buf, "sa_list ");
+      snprintf (buf, bufsize_max, "sa_list ");
       for (sa = TAILQ_FIRST (&exchange->sa_list);
 	   sa && strlen (buf) < bufsize_max; sa = TAILQ_NEXT (sa, next))
 	sprintf (buf + strlen (buf), "%p ", sa);
       if (sa)
-	strcat (buf, "...");
+	strlcat (buf, "...", bufsize_max);
     }
   else
     buf[0] = '\0';
@@ -1273,12 +1273,11 @@ exchange_check_old_sa (struct sa *sa, void *v_arg)
     return 0;
 
   if (sa->initiator)
-    strncpy (res1, ipsec_decode_ids ("%s %s", sa->id_i, sa->id_i_len, sa->id_r,
+    strlcpy (res1, ipsec_decode_ids ("%s %s", sa->id_i, sa->id_i_len, sa->id_r,
 				     sa->id_r_len, 0), sizeof res1);
   else
-    strncpy (res1, ipsec_decode_ids ("%s %s", sa->id_r, sa->id_r_len, sa->id_i,
+    strlcpy (res1, ipsec_decode_ids ("%s %s", sa->id_r, sa->id_r_len, sa->id_i,
 				     sa->id_i_len, 0), sizeof res1);
-  res1[sizeof res1 - 1] = '\0';
 
   LOG_DBG ((LOG_EXCHANGE, 30,
 	    "checking whether new SA replaces existing SA with IDs %s", res1));

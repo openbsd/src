@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.34 2001/10/05 05:59:06 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.35 2002/01/03 16:27:41 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -250,8 +250,7 @@ conf_parse_line (int trans, char *line, size_t sz)
       if (section)
 	free (section);
       section = malloc (i);
-      strncpy (section, line + 1, i - 1);
-      section[i - 1] = '\0';
+      strlcpy (section, line + 1, i);
       return;
     }
 
@@ -372,8 +371,9 @@ conf_find_trans_xf (int phase, char *xf)
 static void
 conf_load_defaults (int tr)
 {
+#define CONF_MAX 256
   int enc, auth, hash, proto, mode, pfs;
-  char sect[256], *dflt;
+  char sect[CONF_MAX], *dflt;
 
   char *mm_auth[]   = { "PRE_SHARED", "DSS", "RSA_SIG", 0 };
   char *mm_hash[]   = { "MD5", "SHA", 0 };
@@ -432,8 +432,8 @@ conf_load_defaults (int tr)
     for (hash = 0; mm_hash[hash]; hash ++)
       for (auth = 0; mm_auth[auth]; auth ++)
 	{
-	  sprintf (sect, "%s-%s%s", mm_enc_p[enc], mm_hash[hash],
-		   mm_auth_p[auth]);
+	  snprintf (sect, CONF_MAX, "%s-%s%s", mm_enc_p[enc], mm_hash[hash],
+		    mm_auth_p[auth]);
 
 #if 0
 	  if (!conf_find_trans_xf (1, sect))
@@ -480,13 +480,14 @@ conf_load_defaults (int tr)
 	      continue;
 	    else
 	      {
-		char tmp[256];
+		char tmp[CONF_MAX];
 
-		sprintf (tmp, "QM-%s%s%s%s%s", PROTO (proto), MODE_p (mode),
-			 qm_enc_p[enc], qm_hash_p[hash], PFS (pfs));
+		snprintf (tmp, CONF_MAX, "QM-%s%s%s%s%s", PROTO (proto),
+			  MODE_p (mode), qm_enc_p[enc], qm_hash_p[hash], 
+			  PFS (pfs));
 
-		strcpy (sect, tmp);
-		strcat (sect, "-SUITE");
+		strlcpy (sect, tmp, CONF_MAX);
+		strlcat (sect, "-SUITE", CONF_MAX);
 
 #if 0
 		if (!conf_find_trans_xf (2, sect))
@@ -498,11 +499,11 @@ conf_load_defaults (int tr)
 
 		conf_set (tr, sect, "Protocols", tmp, 0, 1);
 
-		sprintf (sect, "IPSEC_%s", PROTO (proto));
+		snprintf (sect, CONF_MAX, "IPSEC_%s", PROTO (proto));
 		conf_set (tr, tmp, "PROTOCOL_ID", sect, 0, 1);
 
-		strcpy (sect, tmp);
-		strcat (sect, "-XF");
+		strlcpy (sect, tmp, CONF_MAX);
+		strlcat (sect, "-XF", CONF_MAX);
 		conf_set (tr, tmp, "Transforms", sect, 0, 1);
 
                 /* XXX For now, defaults contain just one xf per protocol.  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.53 2001/10/26 13:29:26 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.54 2002/01/03 16:27:41 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -351,7 +351,7 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
 		 if_addr->sa_family);
       return;
     }
-  strncpy (flags_ifr.ifr_name, ifname, sizeof flags_ifr.ifr_name - 1);
+  strlcpy (flags_ifr.ifr_name, ifname, sizeof flags_ifr.ifr_name);
   if (ioctl (s, SIOCGIFFLAGS, (caddr_t)&flags_ifr) == -1)
     {
       log_error ("udp_bind_if: ioctl (%d, SIOCGIFFLAGS, ...) failed", s);
@@ -818,7 +818,7 @@ udp_decode_ids (struct transport *t)
 		   idsrc, sizeof idsrc, NULL, 0, NI_NUMERICHOST) != 0)
     {
       log_print ("udp_decode_ids: getnameinfo () failed for 'src'");
-      strcpy (idsrc, "<error>");
+      strlcpy (idsrc, "<error>", 256);
     }
 
   if (getnameinfo (((struct udp_transport *)t)->dst,
@@ -826,14 +826,14 @@ udp_decode_ids (struct transport *t)
 		   iddst, sizeof iddst, NULL, 0, NI_NUMERICHOST) != 0)
     {
       log_print ("udp_decode_ids: getnameinfo () failed for 'dst'");
-      strcpy (iddst, "<error>");
+      strlcpy (iddst, "<error>", 256);
     }
 #else
-  strcpy (idsrc, inet_ntoa (((struct udp_transport *)t)->src.sin_addr));
-  strcpy (iddst, inet_ntoa (((struct udp_transport *)t)->dst.sin_addr));
+  strlcpy (idsrc, inet_ntoa (((struct udp_transport *)t)->src.sin_addr), 256);
+  strlcpy (iddst, inet_ntoa (((struct udp_transport *)t)->dst.sin_addr), 256);
 #endif /* HAVE_GETNAMEINFO */
 
-  sprintf (result, "src: %s dst: %s", idsrc, iddst);
+  snprintf (result, 1024, "src: %s dst: %s", idsrc, iddst);
 
   return result;
 }

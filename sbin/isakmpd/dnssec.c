@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.11 2001/08/23 14:17:08 aaron Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.12 2002/01/03 16:27:41 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -121,7 +121,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
       if (id_len < sizeof ip4)
 	return 0;
       memcpy (&ip4, id + ISAKMP_ID_DATA_OFF, sizeof ip4);
-      sprintf (name, "%d.%d.%d.%d.in-addr.arpa.", ip4 >> 24, 
+      snprintf (name, MAXHOSTNAMELEN, "%d.%d.%d.%d.in-addr.arpa.", ip4 >> 24, 
 	       (ip4 >> 16) & 0xFF, (ip4 >> 8) & 0xFF, ip4 & 0xFF);
       break;
 
@@ -157,7 +157,8 @@ dns_get_key (int type, struct message *msg, int *keylen)
 	}
       *umark++ = '\0';
       /* id is now terminated. 'umark', however, is not.  */
-      sprintf (name, "%s%s", id + ISAKMP_ID_DATA_OFF, DNS_UFQDN_SEPARATOR);
+      snprintf (name, MAXHOSTNAMELEN, "%s%s", id + ISAKMP_ID_DATA_OFF,
+		DNS_UFQDN_SEPARATOR);
       memcpy (name + strlen (name), umark, id_len - strlen (id) - 1);
       *(name + id_len + sizeof (DNS_UFQDN_SEPARATOR) - 2) = '.';
       *(name + id_len + sizeof (DNS_UFQDN_SEPARATOR) - 1) = '\0';

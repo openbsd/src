@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.24 2001/10/05 08:18:37 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.25 2002/01/03 16:27:41 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -162,15 +162,15 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
       t = now.tv_sec;
       tm = localtime (&t);
       if (class >= 0)
-	sprintf (nbuf, "%02d%02d%02d.%06ld %s %02d ", tm->tm_hour, 
-		 tm->tm_min, tm->tm_sec, now.tv_usec, _log_get_class (class), 
-		 level);
+	snprintf (nbuf, LOG_SIZE + 32, "%02d%02d%02d.%06ld %s %02d ",
+		  tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec,
+		  _log_get_class (class), level);
       else /* LOG_PRINT (-1) or LOG_REPORT (-2) */
-	sprintf (nbuf, "%02d%02d%02d.%06ld %s ", tm->tm_hour, 
-		 tm->tm_min, tm->tm_sec, now.tv_usec,
-		 class == LOG_PRINT ? "Default" : "Report>");	
-      strcat (nbuf, buffer);
-      strcat (nbuf, "\n");
+	snprintf (nbuf, LOG_SIZE + 32, "%02d%02d%02d.%06ld %s ", tm->tm_hour, 
+		  tm->tm_min, tm->tm_sec, now.tv_usec,
+		  class == LOG_PRINT ? "Default" : "Report>");	
+      strlcat (nbuf, buffer, LOG_SIZE + 32);
+      strlcat (nbuf, "\n", LOG_SIZE + 32);
 
       if (fwrite (nbuf, strlen (nbuf), 1, log_output) == 0)
 	{

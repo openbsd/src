@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.17 2001/07/05 12:37:05 ho Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.18 2002/01/03 16:27:41 ho Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ main (int argc, char *argv[])
   printf ("Testing RSA keys: ");
 
   err = 0;
-  strcpy (dec, "Eine kleine Testmeldung");
+  strlcpy (dec, "Eine kleine Testmeldung", 256);
   if ((len = LC (RSA_private_encrypt, (strlen (dec), dec, enc, priv_key,
 				       RSA_PKCS1_PADDING))) == -1)
   

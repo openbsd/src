@@ -1,4 +1,4 @@
-/*	$OpenBSD: field.c,v 1.8 2000/02/25 17:23:39 niklas Exp $	*/
+/*	$OpenBSD: field.c,v 1.9 2002/01/03 16:27:41 ho Exp $	*/
 /*	$EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ field_debug_raw (u_int8_t *buf, size_t len, struct constant_map **maps)
   retval = malloc (3 + len * 2);
   if (!retval)
     return 0;
-  strcpy (retval, "0x");
+  strlcpy (retval, "0x", 3 + len * 2);
   p = retval + 2;
   while (len--)
     {
@@ -148,7 +148,7 @@ field_debug_mask (u_int8_t *buf, size_t len, struct constant_map **maps)
   if (!retval)
     return 0;
 
-  strcpy (retval, "[ ");
+  strlcpy (retval, "[ ", buf_sz);
   for (bit = 1; bit; bit <<= 1)
     {
       if (val & bit)
@@ -162,11 +162,11 @@ field_debug_mask (u_int8_t *buf, size_t len, struct constant_map **maps)
 	      return 0;
 	    }
 	  retval = new_buf;
-	  strcat (retval, name);
-	  strcat (retval, " ");
+	  strlcat (retval, name, buf_sz);
+	  strlcat (retval, " ", buf_sz);
 	}
     }
-  strcat (retval, "]");
+  strlcat (retval, "]", buf_sz);
   return retval;
 }
 
