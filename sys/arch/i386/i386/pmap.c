@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.43 2001/07/25 13:25:32 art Exp $	*/
-/*	$NetBSD: pmap.c,v 1.84 2000/02/21 02:01:24 chs Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 2001/08/11 11:45:27 art Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
  *
@@ -991,7 +991,7 @@ pmap_init()
 		       sizeof(char) * npages);
 	s = round_page(s); /* round up */
 	addr = (vaddr_t) uvm_km_zalloc(kernel_map, s);
-	if (addr == NULL)
+	if (addr == 0)
 		panic("pmap_init: unable to allocate pv_heads");
 
 	/*
@@ -1023,7 +1023,7 @@ pmap_init()
 	pv_initpage = (struct pv_page *) uvm_km_alloc(kernel_map, NBPG);
 	if (pv_initpage == NULL)
 		panic("pmap_init: pv_initpage");
-	pv_cachedva = NULL;   /* a VA we have allocated but not used yet */
+	pv_cachedva = 0;   /* a VA we have allocated but not used yet */
 	pv_nfpvents = 0;
 	(void) pmap_add_pvpage(pv_initpage, FALSE);
 
@@ -1158,10 +1158,10 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	s = splimp();   /* must protect kmem_map/kmem_object with splimp! */
-	if (pv_cachedva == NULL) {
+	if (pv_cachedva == 0) {
 		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
 		    NBPG, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
-		if (pv_cachedva == NULL) {
+		if (pv_cachedva == 0) {
 			splx(s);
 			goto steal_one;
 		}
@@ -1199,7 +1199,7 @@ pmap_alloc_pvpage(pmap, mode)
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
 	pvpage = (struct pv_page *) pv_cachedva;
-	pv_cachedva = NULL;
+	pv_cachedva = 0;
 	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
 
 steal_one:
@@ -1581,7 +1581,7 @@ pmap_alloc_ptp(pmap, pde_index, just_try)
 	struct vm_page *ptp;
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
-			    UVM_PGA_USERESERVE);
+			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (ptp == NULL) {
 		if (just_try)
 			return(NULL);
@@ -1589,12 +1589,13 @@ pmap_alloc_ptp(pmap, pde_index, just_try)
 		if (ptp == NULL) {
 			return (NULL);
 		}
+		/* stole one; zero it. */
+		pmap_zero_page(VM_PAGE_TO_PHYS(ptp));
 	}
 
 	/* got one! */
 	ptp->flags &= ~PG_BUSY;	/* never busy */
 	ptp->wire_count = 1;	/* no mappings yet */
-	pmap_zero_page(VM_PAGE_TO_PHYS(ptp));
 	pmap->pm_pdir[pde_index] =
 		(pd_entry_t) (VM_PAGE_TO_PHYS(ptp) | PG_u | PG_RW | PG_V);
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
@@ -2113,6 +2114,28 @@ pmap_zero_page(pa)
 }
 
 /*
+ * pmap_zero_page_uncached: the same, except uncached.
+ */
+
+void
+pmap_zero_page_uncached(pa)
+	paddr_t pa;
+{
+	simple_lock(&pmap_zero_page_lock);
+#ifdef DIAGNOSTIC
+	if (*zero_pte)
+		panic("pmap_zero_page_uncached: lock botch");
+#endif
+
+	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
+	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
+	memset(zerop, 0, NBPG);				/* zero */
+	*zero_pte = 0;					/* zap! */
+	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
+	simple_unlock(&pmap_zero_page_lock);
+}
+
+/*
  * pmap_copy_page: copy a page
  */
 
@@ -2219,7 +2242,8 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
 #ifdef DIAGNOSTIC
 		if (bank == -1)
 			panic("pmap_remove_ptes: unmanaged page marked "
-			      "PG_PVLIST");
+			      "PG_PVLIST, va = 0x%lx, pa = 0x%lx",
+			      startva, (u_long)(opte & PG_FRAME));
 #endif
 
 		/* sync R/M bits */
@@ -2285,7 +2309,7 @@ pmap_remove_pte(pmap, ptp, pte, va)
 	if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
 		if (vm_physseg_find(i386_btop(opte & PG_FRAME), &off) != -1)
-			panic("pmap_remove_ptes: managed page without "
+			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
 #endif
 		return(TRUE);
@@ -2294,7 +2318,9 @@ pmap_remove_pte(pmap, ptp, pte, va)
 	bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
 #ifdef DIAGNOSTIC
 	if (bank == -1)
-		panic("pmap_remove_pte: unmanaged page marked PG_PVLIST");
+		panic("pmap_remove_pte: unmanaged page marked "
+		    "PG_PVLIST, va = 0x%lx, pa = 0x%lx", va,
+		    (u_long)(opte & PG_FRAME));
 #endif
 
 	/* sync R/M bits */
@@ -2721,7 +2747,7 @@ pmap_change_attrs(pg, setbits, clearbits)
 	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
 #ifdef DIAGNOSTIC
 		if (pve->pv_va >= uvm.pager_sva && pve->pv_va < uvm.pager_eva) {
-			printf("pmap_change_attrs: found pager VA on pv_list");
+			printf("pmap_change_attrs: found pager VA on pv_list\n");
 		}
 		if (!pmap_valid_entry(pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]))
 			panic("pmap_change_attrs: mapping without PTP "
@@ -2925,13 +2951,11 @@ pmap_unwire(pmap, va)
 			ptes[i386_btop(va)] &= ~PG_W;
 			pmap->pm_stats.wired_count--;
 		}
-#if 0
-#ifdef DIAGNOSITC
+#ifdef DIAGNOSTIC
 		else {
 			printf("pmap_unwire: wiring for pmap %p va 0x%lx "
 			       "didn't change!\n", pmap, va);
 		}
-#endif
 #endif
 		pmap_unmap_ptes(pmap);		/* unlocks map */
 	}
@@ -3512,8 +3536,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 				bank = vm_physseg_find(atop(pa), &off);
 #ifdef DIAGNOSTIC
 				if (bank == -1)
-					panic("pmap_enter: PG_PVLIST mapping "
-					    "with unmanaged page");
+					panic("pmap_enter: same pa PG_PVLIST "
+					      "mapping with unmanaged page "
+					      "pa = 0x%lx (0x%lx)", pa,
+					      atop(pa));
 #endif
 				pvh = &vm_physmem[bank].pmseg.pvhead[off];
 				simple_lock(&pvh->pvh_lock);
@@ -3539,7 +3565,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef DIAGNOSTIC
 			if (bank == -1)
 				panic("pmap_enter: PG_PVLIST mapping with "
-				    "unmanaged page");
+				      "unmanaged page "
+				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
 #endif
 			pvh = &vm_physmem[bank].pmseg.pvhead[off];
 			simple_lock(&pvh->pvh_lock);
@@ -3660,6 +3687,7 @@ pmap_growkernel(maxkvaddr)
 
 			if (uvm_page_physget(&ptaddr) == FALSE)
 				panic("pmap_growkernel: out of memory");
+			pmap_zero_page(ptaddr);
 
 			kpm->pm_pdir[PDSLOT_KERN + nkpde] =
 				ptaddr | PG_RW | PG_V;
@@ -3668,6 +3696,12 @@ pmap_growkernel(maxkvaddr)
 			kpm->pm_stats.resident_count++;
 			continue;
 		}
+
+		/*
+		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
+		 * pmap_initialized == FALSE CASE!  WE MAY BE
+		 * INVOKED WHILE pmap_init() IS RUNNING!
+		 */
 
 		/*
 		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
