@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: groups.sh,v 1.3 1997/02/07 14:31:49 deraadt Exp $
+#	$OpenBSD: groups.sh,v 1.4 2001/06/20 20:50:27 pjanzen Exp $
 #	Public domain.
 
-/usr/bin/id -Gn $*
+exec /usr/bin/id -Gn $*
