@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.6 2005/02/21 21:17:17 jsg Exp $
+.\"	$OpenBSD: rtw.4,v 1.7 2005/02/21 21:27:31 jsg Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -28,6 +28,12 @@ The
 .Nm
 driver supports PCI/Cardbus 802.11B wireless adapters based on the
 Realtek 8180.
+This includes:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Corega CG-WLCB11V3 Cardbus card
+.It Netgear MA521 Cardbus card
+.El
 .Pp
 The operating mode is selected using the
 .Xr ifconfig 8
