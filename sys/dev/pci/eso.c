@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.12 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: eso.c,v 1.13 2001/09/21 17:55:43 miod Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -346,8 +346,7 @@ eso_attach(parent, self, aux)
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, eso_intr, sc);
 #endif
 	if (sc->sc_ih == NULL) {
-		printf(", couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(", couldn't establish interrupt");
 		if (intrstring != NULL)
 			printf(" at %s", intrstring);
 		printf("\n");

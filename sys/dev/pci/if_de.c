@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.50 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.51 2001/09/21 17:55:43 miod Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -5545,8 +5545,7 @@ tulip_pci_attach(
 	    sc->tulip_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 					      intr_rtn, sc, self->dv_xname);
 	    if (sc->tulip_ih == NULL) {
-		printf(", couldn't establish interrupt",
-		       sc->tulip_dev.dv_xname);
+		printf(", couldn't establish interrupt");
 		if (intrstr != NULL)
 		    printf(" at %s", intrstr);
 		printf("\n");

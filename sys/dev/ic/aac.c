@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.7 2001/08/12 20:12:11 mickey Exp $	*/
+/*	$OpenBSD: aac.c,v 1.8 2001/09/21 17:55:43 miod Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1095,8 +1095,8 @@ aac_bio_complete(struct aac_ccb *ccb)
 		bp->b_flags |= B_ERROR;
 	
 		/* XXX be more verbose? */
-		printf("%s: I/O error %d (%s)\n", status,
-		    AAC_COMMAND_STATUS(status));
+		printf("%s: I/O error %d (%s)\n", sc->sc_dev.dv_xname,
+		    status, AAC_COMMAND_STATUS(status));
 	}
 	scsi_done(xs);
 }

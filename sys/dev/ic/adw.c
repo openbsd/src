@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.21 2001/08/26 02:39:05 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.22 2001/09/21 17:55:43 miod Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -1405,8 +1405,8 @@ adw_async_callback(sc, code)
 		break;
 
 	default:
-	        printf("%s: Unknown Async callback code (ignored): 0x%02x\n"
-		       ,sc->sc_dev.dv_xname );
+	        printf("%s: Unknown Async callback code (ignored): 0x%02x\n",
+		    sc->sc_dev.dv_xname, code);
 		break;
 	}
 }

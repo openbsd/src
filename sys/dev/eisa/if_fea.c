@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fea.c,v 1.10 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: if_fea.c,v 1.11 2001/09/21 17:55:43 miod Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
@@ -221,7 +221,7 @@ pdq_eisa_attach(parent, self, aux)
 		return;
 	}
 	if (intrstr != NULL)
-		printf(": interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+		printf(": interrupting at %s\n", intrstr);
 
 	bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes,
 	    sc->sc_ac.ac_enaddr, 6);

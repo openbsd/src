@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.55 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.56 2001/09/21 17:55:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -391,7 +391,7 @@ txp_download_fw(sc)
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	if (txp_download_fw_wait(sc)) {
-		printf(": fw wait failed, initial\n");
+		printf("%s: fw wait failed, initial\n", sc->sc_dev.dv_xname);
 		return (-1);
 	}
 
@@ -438,7 +438,7 @@ txp_download_fw_wait(sc)
 	}
 
 	if (!(r & TXP_INT_A2H_0)) {
-		printf(": fw wait failed comm0\n", sc->sc_dev.dv_xname);
+		printf(": fw wait failed comm0\n");
 		return (-1);
 	}
 
@@ -446,7 +446,7 @@ txp_download_fw_wait(sc)
 
 	r = READ_REG(sc, TXP_A2H_0);
 	if (r != STAT_WAITING_FOR_SEGMENT) {
-		printf(": fw not waiting for segment\n", sc->sc_dev.dv_xname);
+		printf(": fw not waiting for segment\n");
 		return (-1);
 	}
 	return (0);
@@ -516,7 +516,8 @@ txp_download_fw_section(sc, sect, sectnum)
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_SEGMENT_AVAILABLE);
 
 	if (txp_download_fw_wait(sc)) {
-		printf(": fw wait failed, section %d\n", sectnum);
+		printf("%s: fw wait failed, section %d\n",
+		    sc->sc_dev.dv_xname, sectnum);
 		err = -1;
 	}
 

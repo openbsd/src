@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.13 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.14 2001/09/21 17:55:43 miod Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ pcic_isa_attach(parent, self, aux)
 	} else
 		printf("%s: no irq, ", sc->dev.dv_xname);
 
-	printf("polling enabled\n", sc->dev.dv_xname);
+	printf("polling enabled\n");
 	if (sc->poll_established == 0) {
 		timeout_set(&sc->poll_timeout, pcic_poll_intr, sc);
 		timeout_add(&sc->poll_timeout, hz / 2);

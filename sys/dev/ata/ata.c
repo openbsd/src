@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.12 2001/07/12 01:45:42 csapuntz Exp $      */
+/*      $OpenBSD: ata.c,v 1.13 2001/09/21 17:55:43 miod Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -97,7 +97,7 @@ ata_get_params(drvp, flags, prms)
 	{
 		int ret;
 		if ((ret = wdc_exec_command(drvp, &wdc_c)) != WDC_COMPLETE) {
-			printf ("WDC_EXEC_COMMAND: %d\n");
+			printf ("WDC_EXEC_COMMAND: %d\n", ret);
 			return CMD_AGAIN;
 		}
 	}
