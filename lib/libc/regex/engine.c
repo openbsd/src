@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.8 2004/03/30 20:36:07 millert Exp $	*/
+/*	$OpenBSD: engine.c,v 1.9 2004/04/02 18:34:33 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -36,7 +36,7 @@
  */
 
 #if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
-static char enginercsid[] = "$OpenBSD: engine.c,v 1.8 2004/03/30 20:36:07 millert Exp $";
+static char enginercsid[] = "$OpenBSD: engine.c,v 1.9 2004/04/02 18:34:33 otto Exp $";
 #endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*
@@ -607,6 +607,8 @@ sopno lev;			/* PLUS nesting level */
 			return(NULL);
 		assert(m->pmatch[i].rm_so != -1);
 		len = m->pmatch[i].rm_eo - m->pmatch[i].rm_so;
+		if (len == 0)
+			return(NULL);
 		assert(stop - m->beginp >= len);
 		if (sp > stop - len)
 			return(NULL);	/* not enough left to match */
