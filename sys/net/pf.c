@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.67 2001/06/27 01:55:54 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.68 2001/06/27 01:57:17 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1915,7 +1915,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			    &h2, NULL, NULL)) {
 				printf("pf: "
 				    "ICMP error message too short\n");
-				return NULL;
+				return (NULL);
 			}
 			seq = ntohl(th.th_seq);
 			end = seq + h2.ip_len - ((h2.ip_hl + th.th_off)<<2) +
@@ -1993,7 +1993,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			if (!pull_hdr(ifp, m, ipoff2, off2, &uh, sizeof(uh),
 			    &h2, NULL, NULL)) {
 				printf("pf: ICMP error message too short\n");
-				return NULL;
+				return (NULL);
 			}
 
 			key.proto   = IPPROTO_UDP;
@@ -2063,7 +2063,7 @@ pull_hdr(struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *p,
 	if (ipoff > off) {
 		ACTION_SET(actionp, PF_DROP);
 		REASON_SET(reasonp, PFRES_BADOFF);
-		return NULL;
+		return (NULL);
 	}
 	if (fragoff) {
 		if (fragoff >= len)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.35 2001/06/25 05:14:00 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.36 2001/06/27 02:00:30 provos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -153,7 +153,7 @@ struct sockaddr *dst;
 register struct rtentry *rt;
 {
     m_freem(m);
-    return 0;
+    return (0);
 }
 
 /* ARGSUSED */
@@ -187,7 +187,7 @@ caddr_t data;
 	    break;
 
 	default:
-	    return EINVAL;
+	    return (EINVAL);
     }
 
     return 0;
