@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.20 1998/04/25 07:14:50 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.21 1998/05/13 08:50:52 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -118,11 +118,11 @@ int	 fchdir __P((int));
 int	 fchown __P((int, uid_t, gid_t));
 int	 fsync __P((int));
 int	 ftruncate __P((int, off_t));
-int	 getdomainname __P((char *, int));
+int	 getdomainname __P((char *, size_t));
 int	 getdtablesize __P((void));
 int	 getgrouplist __P((const char *, gid_t, gid_t *, int *));
 long	 gethostid __P((void));
-int	 gethostname __P((char *, int));
+int	 gethostname __P((char *, size_t));
 mode_t	 getmode __P((const void *, mode_t));
 int	 getpagesize __P((void));
 char	*getpass __P((const char *));
@@ -156,12 +156,12 @@ char	*sbrk __P((int));
 #ifndef _XOPEN_SOURCE
 int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
 #endif
-int	 setdomainname __P((const char *, int));
+int	 setdomainname __P((const char *, size_t));
 int	 setegid __P((gid_t));
 int	 seteuid __P((uid_t));
 int	 setgroups __P((int, const gid_t *));
 int	 sethostid __P((long));
-int	 sethostname __P((const char *, int));
+int	 sethostname __P((const char *, size_t));
 int	 setkey __P((const char *));
 int	 setlogin __P((const char *));
 void	*setmode __P((const char *));

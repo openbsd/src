@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostname.3,v 1.4 1996/08/19 08:23:33 tholo Exp $
+.\"	$OpenBSD: gethostname.3,v 1.5 1998/05/13 08:50:56 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,9 +41,9 @@
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
-.Fn gethostname "char *name" "int namelen"
+.Fn gethostname "char *name" "size_t namelen"
 .Ft int
-.Fn sethostname "const char *name" "int namelen"
+.Fn sethostname "const char *name" "size_t namelen"
 .Sh DESCRIPTION
 .Fn Gethostname
 returns the standard host name for the current processor, as

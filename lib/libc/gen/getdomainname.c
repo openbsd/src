@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getdomainname.c,v 1.2 1996/08/19 08:23:22 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getdomainname.c,v 1.3 1998/05/13 08:50:55 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -41,7 +41,7 @@ static char rcsid[] = "$OpenBSD: getdomainname.c,v 1.2 1996/08/19 08:23:22 tholo
 int
 getdomainname(name, namelen)
 	char *name;
-	int namelen;
+	size_t namelen;
 {
 	int mib[2];
 	size_t size;
