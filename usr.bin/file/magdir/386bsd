@@ -1,0 +1,6 @@
+
+#------------------------------------------------------------------------------
+# 386bsd:  file(1) magic for 386BSD objects
+#
+0	lelong			000000413	386BSD demand paged executable
+>16	lelong			>0		not stripped

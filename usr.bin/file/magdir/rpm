@@ -1,5 +1,3 @@
-#	$OpenBSD: rpm,v 1.2 1996/06/26 05:33:04 deraadt Exp $
-
 #------------------------------------------------------------------------------
 #
 # RPM: file(1) magic for Red Hat Packages   Erik Troan (ewt@redhat.com)
@@ -11,6 +9,9 @@
 >>6	beshort		1		src
 >>8	beshort		1		i386
 >>8	beshort		2		Alpha
->>8	beshort		3		PowerPC
->>8	beshort		4		Sparc
+>>8	beshort		3		Sparc
+>>8	beshort		4		MIPS
+>>8	beshort		5		PowerPC
+>>8	beshort		6		68000
+>>8     beshort         7               SGI
 >>10	string		x		%s
