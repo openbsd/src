@@ -590,6 +590,8 @@
 ./usr/share/keymaps
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/amiga/din.map
+./usr/share/keymaps/amiga/es.map
+./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
 ./usr/lib/perl5/site_perl/m68k-openbsd/dbm.ph
