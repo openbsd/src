@@ -1,4 +1,4 @@
-.\"	$OpenBSD: va.4,v 1.6 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: va.4,v 1.7 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: va.4,v 1.3 1996/03/03 17:14:15 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -111,7 +111,7 @@ int plotmd[] = { VPLOT, 0, 0 };
 and
 .Ar va
 is the result of a call to
-.Xr fopen
+.Xr fopen 3
 on stdio.
 When you finish using the Benson-Varian in plot mode you should advance to
 a new page
@@ -172,6 +172,6 @@ play havoc with the
 We have intermittent minor problems on the
 .Tn UNIBUS
 where our
-.Xr va
+.Nm
 lives, but haven't ever been able to pin them down
 completely.

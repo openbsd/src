@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: adb.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: adb.4,v 1.6 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
 .\"
 .Dd July 17, 1997
@@ -95,7 +95,7 @@ call is used to control the
 .Tn ADB
 event device.
 The following is a list of available
-.Xr ioctl
+.Xr ioctl 2
 commands:
 .Bl -tag -width ADBIOC_GETREPEAT
 .It Dv ADBIOC_DEVSINFO
@@ -228,7 +228,7 @@ event device.
 Another process has the device open.
 .It Bq Er EINVAL
 Invalid
-.Xr ioctl
+.Xr ioctl 2
 specification.
 .It Bq Er EMSGSIZE
 The size of the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.16 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: termios.4,v 1.17 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -214,7 +214,7 @@ the writing process is orphaned, and the writing process is not ignoring
 or blocking
 .Dv SIGTTOU ,
 the
-.Xr write
+.Xr write 2
 returns -1 with
 .Va errno
 set to
@@ -382,7 +382,7 @@ process the bytes received.
 .Dv VMIN
 represents the minimum number of bytes that should be received when
 the
-.Xr read
+.Xr read 2
 function successfully returns.
 .Dv VTIME
 is a timer of 0.1 second

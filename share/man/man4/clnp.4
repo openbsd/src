@@ -1,4 +1,4 @@
-.\"	$OpenBSD: clnp.4,v 1.6 2000/12/21 21:01:15 aaron Exp $
+.\"	$OpenBSD: clnp.4,v 1.7 2001/11/13 13:54:25 mpech Exp $
 .\"	$NetBSD: clnp.4,v 1.4 1994/11/30 16:22:07 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -73,7 +73,7 @@ system calls may be used).
 Outgoing packets automatically have a CLNP header prepended to them.
 Incoming packets received by the user contain the full CLNP header.
 The following
-.Xr setsockopt
+.Xr setsockopt 2
 options apply to CLNP:
 .Bl -tag -width CLNPOPT_FLAGS
 .It Dv CLNPOPT_FLAGS

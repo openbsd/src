@@ -1,4 +1,4 @@
-.\"	$OpenBSD: st.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: st.4,v 1.8 2001/11/13 13:54:26 mpech Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,8 +127,8 @@ Bit 5 in the minor device number selects fixed block mode with a block
 size of 1K.
 Variable length records are the default if bit 5 is not set.
 .Pp
-For unit 0 here are the effects of minor device bits 2,3,4,5. For other
-units add the
+For unit 0 here are the effects of minor device bits 2,3,4,5.
+For other units add the
 .Em unit#
 to each of the device names.
 .Bl -column norewind density filemarks -offset indent
@@ -165,7 +165,8 @@ The
 .Tn SCSI
 controller hardware can not do odd length
 .Tn DMA
-transfers.  If odd length
+transfers.
+If odd length
 .Tn DMA I/O
 is requested the driver will use the
 "Program Transfer Mode" of the Fujitsu
@@ -173,9 +174,9 @@ is requested the driver will use the
 chip.
 Read requests are normally even length for which a
 .Tn DMA
-transfer is used. If, however, the
-driver detects that a odd length read has happened (when a even length
-was requested) it will issue the
+transfer is used.
+If, however, the driver detects that a odd length read has happened
+(when a even length was requested) it will issue the
 .Dv EIO
 error and the last byte of the read
 data will be 0x00. 

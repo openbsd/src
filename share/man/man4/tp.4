@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tp.4,v 1.13 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: tp.4,v 1.14 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: tp.4,v 1.4 1994/11/30 16:22:38 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -160,9 +160,9 @@ and
 system calls may be used.
 .Pp
 Through the
-.Xr getsockopt
+.Xr getsockopt 2
 and
-.Xr setsockopt
+.Xr setsockopt 2
 system calls,
 .Tn TP
 supports several options
@@ -177,17 +177,17 @@ the options marked with a pound sign
 .Ql \&#
 may be used
 with
-.Xr setsockopt
+.Xr setsockopt 2
 after a connection is established.
 Others must be used before the connection
 is established, in other words,
 before calling
-.Xr connect
+.Xr connect 2
 or
-.Xr accept .
+.Xr accept 2 .
 All options may be used
 with
-.Xr getsockopt
+.Xr getsockopt 2
 before or
 after a connection is established.
 .Bl -tag -width TPOPT_PSTATISTICS
@@ -195,16 +195,16 @@ after a connection is established.
 (char *) [none]
 .br
 Data to send on
-.Xr connect .
+.Xr connect 2 .
 The passive user may issue a
-.Xr getsockopt
+.Xr getsockopt 2
 call to retrieve a connection request's user data,
 after having done the
-.Xr accept
+.Xr accept 2
 system call without implying confirmation of the connection.
 .Pp
 The data may also be retrieved by issuing a
-.Xr recvmsg
+.Xr recvmsg 2
 request for ancillary data only,
 without implying confirmation of the connection.
 The returned
@@ -221,16 +221,16 @@ for
 (char *) [none]
 .br
 Data to send on
-.Xr close .
+.Xr close 2 .
 Disconnect data may be sent by the side initiating the close
 but not by the passive side ("passive" with respect to the closing
 of the connection), so there is no need to read disconnect data
 after calling
-.Xr close .
+.Xr close 2 .
 This may be sent by a
-.Xr setsockopt
+.Xr setsockopt 2
 system call, or by issuing a
-.Xr sendmsg
+.Xr sendmsg 2
 request specifying ancillary data only.
 The user-provided
 .Va cmsghdr
@@ -249,19 +249,16 @@ the connection.
 .br
 Data to send when confirming a connection.
 This may also be sent by a
-.Xr setsockopt
+.Xr setsockopt 2
 system call, or by issuing a
-.Xr sendmsg
+.Xr sendmsg 2
 request, as above.
 Sending of connect confirm data will cause the connection
 to be confirmed rather than rejected.
 .It Dv TPOPT_PERF_MEAS \&#
 Boolean.
 .br
-When
-.Xr true ,
-performance measurements will be kept
-for this connection.
+When true, performance measurements will be kept for this connection.
 When set before a connection is established, the
 active side will use a locally defined parameter on the
 connect request packet; if the peer is another
@@ -279,7 +276,7 @@ On output,
 This command is used to read the performance statistics accumulated
 during a connection's lifetime.
 It can only be used with
-.Xr getsockopt .
+.Xr getsockopt 2 .
 The structure it returns is described in
 .Aq Pa netiso/tp_stat.h .
 See
@@ -289,7 +286,7 @@ unsigned integer.
 [0x0]
 .br
 This command can only be used with
-.Xr getsockopt .
+.Xr getsockopt 2 .
 See the description of the flags below.
 .It Dv TPOPT_PARAMS
 .Ar struct tp_conn_param
@@ -298,9 +295,9 @@ Used to get or set a group parameters for a connection.
 The
 .Ar struct tp_conn_param
 is the argument used with the
-.Xr getsockopt
+.Xr getsockopt 2
 or
-.Xr setsockopt
+.Xr setsockopt 2
 system call.
 It is described in
 .Aq Pa netiso/tp_user.h .
@@ -603,7 +600,7 @@ and
 .Aq Pa netiso/iso_errno.h .
 User programs may print messages associated with these value by
 using an expanded version of
-.Xr perror
+.Xr perror 3
 found in the
 .Tn ISO
 library,
@@ -637,7 +634,7 @@ that
 timed out, the read may result in
 .Er ENOTSOCK ,
 because the
-.Xr accept
+.Xr accept 2
 call had not yet returned a
 legitimate socket descriptor when the signal was handled.
 .Dv ETIMEDOUT
@@ -674,7 +671,7 @@ system
 call to see if the signal
 was due to the arrival of expedited data or due to a disconnection.
 In the latter case,
-.Xr getsockopt
+.Xr getsockopt 2
 will return
 .Er ENOTCONN .
 .El

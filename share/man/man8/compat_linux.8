@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.20 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.21 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -88,12 +88,14 @@ any extra work.
 How to get to know which shared libraries Linux binaries need, and where
 to get them?
 Basically, there are 3 possibilities (when following these instructions:
-you will need to be root on your OpenBSD system to do the necessary
-installation steps).
+you will need to be root on your
+.Ox
+system to do the necessary installation steps).
 .Pp
 .Bl -tag -width 123 -compact
 .It 1.
-You have access to the OpenBSD
+You have access to the
+.Ox
 .Xr ports 7
 system.
 Install the port named
@@ -184,7 +186,9 @@ itself, you don't need to worry about that.
 Finally, you must make sure that you have the Linux runtime linker
 and its config files on your system.
 You should copy these files from the Linux system to their appropriate
-place on your OpenBSD system (in the /emul/linux tree):
+place on your
+.Ox
+system (in the /emul/linux tree):
 .Pp
 .nf
 /lib/ld.so
@@ -263,7 +267,8 @@ of shared libraries that the program depends on, in the
 form  <majorname> (<jumpversion>) => <fullname>.
 .Pp
 If it prints "not found" instead of <fullname> it means that
-you need an extra library. Which library this is, is shown
+you need an extra library.
+Which library this is, is shown
 in <majorname>, which will be of the form libXXXX.so.<N>
 You will need to find a libXXXX.so.<N>.<mm> on a Linux ftp site,
 and install it on your system.

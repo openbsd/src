@@ -1,4 +1,4 @@
-.\"   $OpenBSD: bah.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
+.\"   $OpenBSD: bah.4,v 1.9 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: bah.4,v 1.2 1995/06/06 23:41:37 cgd Exp $
 .\"
 .\" Copyright (c) 1995 Ignatios Souvatzis
@@ -51,7 +51,7 @@ ARCnet chip set.
 Each of the host's network addresses
 is specified at boot time with an
 .Dv SIOCSIFADDR
-.Xr ioctl .
+.Xr ioctl 2 .
 The
 .Nm
 interface does not employ the address resolution protocol described in
@@ -60,9 +60,9 @@ to dynamically map between Internet and Ethernet addresses on the local
 network.
 Instead, it uses the least significant 8 bits of the IP address as hardware
 address, as described in
-.Xr RFC 1051
+.Em RFC 1051
 and
-.Xr RFC 1201
+.Em RFC 1201
 as one option.
 .Pp
 With the IFF_LINK0 flag cleared, IP encoding is done according to the

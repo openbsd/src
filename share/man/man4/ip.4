@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.17 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: ip.4,v 1.18 2001/11/13 13:54:25 mpech Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -118,7 +118,7 @@ option is enabled on a
 .Dv SOCK_DGRAM
 socket,
 the
-.Xr recvmsg
+.Xr recvmsg 2
 call will return the destination
 .Tn IP
 address for a
@@ -279,9 +279,9 @@ Raw
 .Tn IP
 sockets are connectionless,
 and are normally used with the
-.Xr sendto
+.Xr sendto 2
 and
-.Xr recvfrom
+.Xr recvfrom 2
 calls, though the
 .Xr connect 2
 call may also be used to fix the destination for future

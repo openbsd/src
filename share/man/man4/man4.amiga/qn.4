@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qn.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: qn.4,v 1.10 2001/11/13 13:54:26 mpech Exp $
 .\"
 .\"
 .\" Copyright (c) 1995 Mika Kortelainen. All rights reserved.
@@ -62,7 +62,7 @@ Ethernet chip set.
 Each of the host's network addresses
 is specified at boot time with an
 .Dv SIOCSIFADDR
-.Xr ioctl .
+.Xr ioctl 2 .
 The
 .Nm
 interface employs the address resolution protocol described in
@@ -80,7 +80,7 @@ Resource Management Force's ethernet card, manufacturer\ 2011, product\ 2
 .Sh NOTES
 Multicasting not done yet.
 If the driver happens to lock up, you may use
-.Xr ifconfig
+.Xr ifconfig 8
 to force the driver down and up again.
 This usually helps.
 .Sh HISTORY

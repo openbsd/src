@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utmp.5,v 1.15 2001/01/31 21:07:02 chris Exp $
+.\"	$OpenBSD: utmp.5,v 1.16 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: utmp.5,v 1.5 1994/11/30 19:31:35 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -88,7 +88,7 @@ struct utmp {
 .Ed
 .Pp
 Each time a user logs in, the
-.Xr login
+.Xr login 1
 program looks up the user's
 .Tn UID
 in the
@@ -101,7 +101,7 @@ are written to the standard output (provided the login is not
 see
 .Xr login 1 ) .
 The
-.Xr login
+.Xr login 1
 program then records the new login time in the
 .Nm lastlog
 file.
@@ -128,7 +128,7 @@ and
 .Xr who 1 .
 .Pp
 Next, the
-.Xr login
+.Xr login 1
 program opens the
 .Nm wtmp
 file and appends the user's
@@ -174,7 +174,7 @@ and
 The system time has been manually or automatically updated (see
 .Xr date 1 ) .
 The command name
-.Xr date
+.Xr date 1
 is recorded in the field
 .Fa ut_name .
 In the field

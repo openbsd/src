@@ -1,4 +1,4 @@
-.\"	$OpenBSD: link.5,v 1.9 2001/08/03 15:21:16 mpech Exp $
+.\"	$OpenBSD: link.5,v 1.10 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: link.5,v 1.5 1996/01/09 00:14:32 pk Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -134,7 +134,7 @@ struct	_dynamic {
 This field provides for different versions of the dynamic linking
 implementation.
 The current version numbers understood by ld and
-.Xr ld.so
+.Xr ld.so 1
 are LD_VERSION_SUN(3), which is used by the SunOS 4.x releases,
 and LD_VERSION_BSD(8), which is currently in use by
 .Ox .
@@ -183,7 +183,7 @@ struct section_dispatch_table {
 .It Fa sdt_loaded
 A pointer to the first link map loaded (see below).
 This field is set by
-.Xr ld.so
+.Xr ld.so 1
 for the benefit of debuggers that may use it to load a shared object's
 symbol table.
 .It Fa sdt_sods
@@ -262,7 +262,7 @@ The offset in the text segment of a string describing this link object.
 If set,
 .Fa sod_name
 specifies a library that is to be searched for by
-.Xr ld.so .
+.Xr ld.so 1 .
 The path name
 is obtained by searching a set of directories
 .Po
@@ -410,7 +410,7 @@ Virtual address of next
 .It Fa rt_link
 Next in hash bucket.
 Used by internally by
-.Xr ld.so .
+.Xr ld.so 1 .
 .It Fa rt_srcaddr
 Location of the source of initialized data within a shared object.
 .It Fa rt_smp
@@ -472,7 +472,7 @@ may be interested in.
 The
 .Em ld_entry
 structure defines a set of service routines within
-.Xr ld.so .
+.Xr ld.so 1 .
 See
 .Xr dlfcn 3
 for more information.
@@ -489,7 +489,7 @@ struct ld_entry {
 The
 .Fa crt_ldso
 structure defines the interface between
-.Xr ld.so
+.Xr ld.so 1
 and the start-up code in
 .Em crt0 .
 .Bd -literal -offset indent
@@ -512,7 +512,7 @@ struct crt_ldso {
 .Bl -tag -width crt_dzfd
 .It Fa crt_ba
 The virtual address at which
-.Xr ld.so
+.Xr ld.so 1
 was loaded by
 .Em crt0 .
 .It Fa crt_dzfd
@@ -526,7 +526,7 @@ systems it contains \-1.
 Contains an open file descriptor that was used by
 .Em crt0
 to load
-.Xr ld.so .
+.Xr ld.so 1 .
 .It Fa crt_dp
 A pointer to main's
 .Fa _dynamic
@@ -559,7 +559,7 @@ and
 structures define the layout of the library hints, normally found in
 .Pa /var/run/ld.so.hints ,
 which is used by
-.Xr ld.so
+.Xr ld.so 1
 to quickly locate the shared object images in the filesystem.
 The organization of the hints file is not unlike that of an
 .Xr a.out 5

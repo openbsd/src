@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.8 2001/11/13 13:54:25 mpech Exp $
 .\"	$NetBSD: ifmedia.4,v 1.1 1998/08/09 00:37:17 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -136,7 +136,8 @@ connector.
 100baseVG AnyLAN.
 [100baseVG, 100VG]
 .It Dv IFM_100_T2
-100baseT2.  [100baseT2, 100T2]
+100baseT2.
+[100baseT2, 100T2]
 .It Dv IFM_1000_FX
 1000baseFX, 1Gb/s over fiber optic cables.
 [1000baseFX, 1000FX]
@@ -182,9 +183,11 @@ All routes vs. single route broadcast.
 The following media types are defined for FDDI:
 .Bl -tag -offset indent -width IFM_FDDI_SMF
 .It Dv IFM_FDDI_SMF
-Single-mode fiber.  [Single-mode, SMF]
+Single-mode fiber.
+[Single-mode, SMF]
 .It Dv IFM_FDDI_MMF
-Multi-mode fiber.  [Multi-mode, MMF]
+Multi-mode fiber.
+[Multi-mode, MMF]
 .It Dv IFM_FDDI_UTP
 Unshielded twisted pair, RJ45 connector.
 [UTP, CDDI]

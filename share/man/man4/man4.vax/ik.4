@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ik.4,v 1.3 1999/06/05 13:18:38 aaron Exp $
+.\"	$OpenBSD: ik.4,v 1.4 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: ik.4,v 1.3 1996/03/03 17:13:42 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -69,7 +69,7 @@ returns the virtual address where the user process can
 find the interface registers.
 The
 .Dv IK_WAITINT
-.Xr ioctl
+.Xr ioctl 2
 suspends the user process until the ikonas device
 has interrupted (for whatever reason \(em the user process has to set
 the interrupt enables).

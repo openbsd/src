@@ -1,4 +1,4 @@
-.\"	$OpenBSD: genassym.cf.5,v 1.1 2001/09/16 14:31:58 miod Exp $
+.\"	$OpenBSD: genassym.cf.5,v 1.2 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: genassym.cf.5,v 1.8 2001/06/19 12:34:27 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthias Pfaller.
@@ -62,7 +62,8 @@ command removed.
 The first word after a
 .Em define
 command is taken as a CPP identifier and the rest of the line has to be
-a constant C expression. The output of
+a constant C expression.
+The output of
 .Xr genassym.sh 8
 will assign the numerical value of this expression to the CPP identifier.
 .Pp
@@ -99,7 +100,8 @@ does a
 .br
 .Em "define FOO offsetof(<last struct>, bar)" ,
 .br
-with its first argument converted to upper case. In the case where struct was
+with its first argument converted to upper case.
+In the case where struct was
 invoked with an extra argument, as in
 .br
 .Em "struct foo PREFIX_" ,
@@ -116,7 +118,8 @@ When producing C output, values are casted to <ctype> (default: long)
 before they get handed to printf. <gcc constraint> (default: n) is the
 constraint used in the __asm__ statements. <asm print modifier> (default:
 empty) can be used to force gcc to output operands in different ways
-then normal. The "a" modifier e.g. stops gcc from emitting immediate
+then normal.
+The "a" modifier e.g. stops gcc from emitting immediate
 prefixes in front of constants for the i386 and m68k port.
 .Sh FILES
 .Pa /sys/arch/${MACHINE}/${MACHINE}/genassym.cf

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.87 2001/11/06 03:20:34 pvalchev Exp $
+.\"	$OpenBSD: options.4,v 1.88 2001/11/13 13:54:25 mpech Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -61,7 +61,7 @@ This makes it possible to run binaries that use old versions of the
 .Xr msgctl 2 ,
 .Xr shmctl 2
 and
-.Xr __semctl
+.Xr semctl 2
 system calls which changed semantics in
 .Ox 2.4 .
 .It Cd option COMPAT_25
@@ -236,12 +236,11 @@ is useful for debugging kernels and their crashdumps with gdb.
 Note that
 .Xr gdb Ns 's
 .Fl k
-flag
-is obsolete and should not be used.
+flag is obsolete and should not be used.
 Instead, a crashdump can be debugged by starting
 .Xr gdb
 with the kernel name as an argument (no core file) and then use the
-.Xr gdb
+.Xr gdb 1
 command
 .Dq target kcore COREFILE .
 .It Cd option DEBUG

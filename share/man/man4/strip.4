@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strip.4,v 1.13 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: strip.4,v 1.14 2001/11/13 13:54:25 mpech Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -79,8 +79,8 @@ a dedicated point-to-point connection.
 In contrast,
 .Nm
 sends
-packets to a frequency-hopping radio, which  can address packets to
-any peer Metricom radio. rather than just to a single host at the
+packets to a frequency-hopping radio, which can address packets to
+any peer Metricom radio rather than just to a single host at the
 other end of a point-to-point line.
 Thus, one
 .Nm
@@ -179,7 +179,7 @@ has not been widely tested on a variety of lower-level tty drivers.
 The detection and resetting of radios that crash out of Starmode does
 not always work in this version of the driver.
 One workaround is to kill the
-.Xr slattach
+.Xr slattach 8
 process, ifconfig the
 .Nm
 interface down, and then start a new slattach and rerun ifconfig.

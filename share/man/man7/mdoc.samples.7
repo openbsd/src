@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.33 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.34 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -345,9 +345,9 @@ of passing spaces in between quotes by reassigning individual
 arguments before parsing was fairly expensive speed wise
 and space wise to implement in all the macros for
 .Tn AT&T
-.Xr troff .
+.Xr troff 1 .
 It is not expensive for
-.Xr groff
+.Xr groff 1
 but for the sake of portability, has been limited
 to the following macros which need
 it the most:
@@ -388,7 +388,7 @@ that is, a blank space preceded by the escape character
 This method may be used with any macro but has the side effect
 of interfering with the adjustment of text
 over the length of a line.
-.Xr Troff
+.Em Troff
 sees the hard space as if it were any other printable character and
 cannot split the string into blank or newline separated pieces as one
 would expect.
@@ -419,7 +419,7 @@ a newline boundary, see the
 .Sx BUGS
 section.
 .Ss Trailing Blank Space Characters
-.Xr Troff
+.Em Troff
 can be confused by blank space characters at the end of a line.
 It
 is a wise preventive measure to globally remove all blank spaces
@@ -619,7 +619,7 @@ In the first case,
 .Xr troff 1
 macros are themselves a type of command;
 the general syntax for a
-.Xr troff
+.Xr troff 1
 command is:
 .Bd -literal -offset indent
 \&.Va argument1 argument2 ... argument9
@@ -785,7 +785,7 @@ default font distinguishing it from the strings in literal font.
 To remove the special meaning from a punctuation character
 escape it with
 .Ql \e& .
-.Xr Troff
+.Em Troff
 is limited as a macro language, and has difficulty
 when presented with a string containing
 a member of the mathematical, logical or
@@ -795,7 +795,7 @@ quotation set:
 .Ed
 .Pp
 The problem is that
-.Xr troff
+.Xr troff 1
 may assume it is supposed to actually perform the operation
 or evaluation suggested by the characters.
 To prevent the accidental evaluation of these characters,
@@ -1139,7 +1139,7 @@ At the moment,
 .Ql \&.Fn
 does not check its word boundaries
 against
-.Xr troff
+.Xr troff 1
 line lengths and may split across a newline ungracefully.
 This will be fixed in the near future.
 .Ss Function Type
@@ -2027,7 +2027,7 @@ so a command line such as:
 .Dl ".Op Fl a | Fl b"
 .Pp
 will not go orbital.
-.Xr Troff
+.Em Troff
 normally interprets a \*(Ba as a special operator.
 See
 .Sx PREDEFINED STRINGS
@@ -2295,12 +2295,12 @@ and is useful for preventing line breaks in the middle of options.
 In the example for the make command line arguments (see
 .Sx What's in a name ) ,
 the keep prevented
-.Xr nroff
+.Xr nroff 1
 from placing the flag and the argument on separate lines.
 (Actually, the option macro used to prevent this from occurring,
 but was dropped when the decision (religious) was made to force
 right justified margins in
-.Xr troff
+.Xr troff 1
 as options in general look atrocious when spread across a sparse
 line.
 More work needs to be done with the keep macros, a
@@ -2428,7 +2428,7 @@ aligns the block about two inches from
 the right side of the page.
 This macro needs
 work and perhaps may never do the right thing by
-.Xr troff .
+.Xr troff 1 .
 .El
 .El
 .It Li ".Ed"
@@ -2715,7 +2715,7 @@ was produced by:
 .Sh PREDEFINED STRINGS
 The following strings are predefined and may be used by
 preceding them with the
-.Xr troff
+.Xr troff 1
 string interpreting sequence
 .Ql \&\e*(xx
 where
@@ -2765,14 +2765,14 @@ as the collision of an argument name with an internal
 register or macro name.
 (A what?)
 A register is an arithmetic storage class for
-.Xr troff
+.Xr troff 1
 with a one or two character name.
 All registers internal to
 .Nm \-mdoc
 for
-.Xr troff
+.Xr troff 1
 and
-.Xr ditroff
+.Em ditroff
 are two characters and
 of the form <upper_case><lower_case> such as
 .Ql \&Ar ,
@@ -2921,14 +2921,14 @@ Other diagnostics consist of usage statements and are self explanatory.
 The
 .Nm \-mdoc
 package does not need compatibility mode with
-.Xr groff .
+.Xr groff 1 .
 .Pp
 The package inhibits page breaks, and the headers and footers
 which normally occur at those breaks with
-.Xr nroff ,
+.Xr nroff 1 ,
 to make the manual more efficient for viewing on-line.
 At the moment,
-.Xr groff
+.Xr groff 1
 with
 .Fl T Ns Ar ascii
 does eject the imaginary remainder of the page at end of file.
@@ -2979,7 +2979,7 @@ looks ridiculous if a line is in fill mode.
 .Pp
 The method used to prevent header and footer page
 breaks (other than the initial header and footer) when using
-.Xr nroff
+.Xr nroff 1
 occasionally places an unsightly partially filled line (blank)
 at the would be bottom of the page.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netgroup.5,v 1.9 2000/10/26 00:37:05 aaron Exp $
+.\"	$OpenBSD: netgroup.5,v 1.10 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: netgroup.5,v 1.3 1995/03/18 14:58:34 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -81,12 +81,12 @@ should normally be used to access the
 database.
 .Pp
 These functions operate on the
-.Xr db
+.Xr db 3
 version of the
 .Nm
 .Pq Pa netgroup.db
 file which can be generated using
-.Xr netgroup_mkdb .
+.Xr netgroup_mkdb 8 .
 If that file is not present, and the system supports NIS, then the
 .Nm
 NIS maps are used.

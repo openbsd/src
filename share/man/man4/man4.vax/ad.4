@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ad.4,v 1.3 1999/06/05 13:18:37 aaron Exp $
+.\"	$OpenBSD: ad.4,v 1.4 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: ad.4,v 1.3 1996/03/03 17:13:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -59,7 +59,7 @@ The driver communicates to a user process by means of
 .Xr ioctl 2 Ns s.
 The
 .Dv AD_CHAN
-.Xr ioctl
+.Xr ioctl 2
 selects which channel of the board to read.
 For example,
 .Bd -literal -offset indent

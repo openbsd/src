@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hil.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: hil.4,v 1.7 2001/11/13 13:54:26 mpech Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -131,7 +131,7 @@ cannot be shared between processes.
 .Pp
 Choosing the type of interface is done on a per device basis using
 an
-.Xr ioctl ,
+.Xr ioctl 2 ,
 but each device can only have one interface at any given time.
 .Pp
 .Em Select
@@ -371,7 +371,7 @@ device open, and is using it in
 mode.
 .It Bq Er EINVAL
 Invalid
-.Xr ioctl
+.Xr ioctl 2
 specification.
 .It Bq Er EMFILE
 No more shared queues available.

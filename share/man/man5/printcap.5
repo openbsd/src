@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.12 2000/10/26 00:37:05 aaron Exp $
+.\"	$OpenBSD: printcap.5,v 1.13 2001/11/13 13:54:26 mpech Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -53,7 +53,7 @@ The spooling system accesses the
 file every time it is used, allowing dynamic addition and deletion of printers.
 Each entry in the database is used to describe one printer.
 This database may not be substituted for, as is possible for
-.Xr termcap ,
+.Xr termcap 5 ,
 because it may allow accounting to be bypassed.
 .Pp
 The default printer is normally
@@ -179,7 +179,7 @@ The
 flag is passed only if the
 .Fl l
 flag (pass control characters literally) is specified to
-.Xr lpr .
+.Xr lpr 1 .
 .Ar width
 and
 .Ar length
@@ -267,7 +267,7 @@ of one of the filters are sent to the corresponding
 .Sy lf
 file.
 The filters may, of course, use
-.Xr syslog
+.Xr syslog 3
 themselves.
 .Pp
 Error messages sent to the console have a carriage return and a line

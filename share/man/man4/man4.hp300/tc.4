@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tc.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: tc.4,v 1.7 2001/11/13 13:54:26 mpech Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,8 @@ the device to their requirements.
 The Topcat and Catseye are nearly identical in common usage and only the
 Topcat will be referred to from now on.
 .Pp
-The Topcat display cards are not user configurable.  If one is present on a
+The Topcat display cards are not user configurable.
+If one is present on a
 system, it will always have a frame buffer address of 0x200000 and a control
 register address of 0x560000.
 These are the
@@ -115,7 +116,7 @@ The frame buffer structure describing Topcat/Catseye devices is defined in
 .El
 .Pp
 For further information about the use of
-.Xr ioctl
+.Xr ioctl 2
 see the man page.
 .Sh EXAMPLES
 A small example of opening, mapping and using the device is given below.
@@ -172,7 +173,7 @@ no such device.
 Another process has the device open.
 .It Bq Er EINVAL
 Invalid
-.Xr ioctl
+.Xr ioctl 2
 specification.
 .El
 .Sh SEE ALSO
