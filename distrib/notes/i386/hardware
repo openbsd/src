@@ -115,6 +115,10 @@ Supported devices {:-include-:}:
 		Winbond W89C840F Ethernet adapters, including:
 			Trendware TE100-PCIE
 			Compex RL100-ATX 10/100baseTX
+		Xircom 16-bit PCMCIA adapters, including:
+			Xircom CE3
+			Xircom Realport
+		Lucent technologies WaveLAN IEEE 802.11 [*] [+]
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
@@ -139,13 +143,21 @@ Supported devices {:-include-:}:
 		Personal Sound System [*] [+]
 		Windows Sound System [*] [+]
 		ProAudio Spectrum [*] [+]
+		ESS PnP audio cards [*] [+]
+		ESS Solo-1 PCI-based audio cards [*] [+]
 	Miscellaneous:
 		OPTi(82C929) chipset for multi-interface CD-ROM, and
 			sound ISA cards.
 		PCI-PCI bridges and cards which {:-include-:} them, such as
 			the AHA-394x SCSI host adapter and some
 			DC21x4x-based multi-Ethernet cards.
-		APM power management.
+		Brooktree 8[47][89] based frame grabber and TV tuner cards, 
+			such as: [*] [+]
+			Hauppage Wincast TV
+			STB TV PCI Television Tuner
+			Miro PC TV
+			Intel Smart Video Recorder III
+		APM v1.0 power management.
 
 Drivers for hardware marked with "[*]" are NOT included on the
 distribution floppies.  Except as noted above, all other drivers are
