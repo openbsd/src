@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.33 2001/06/25 17:17:04 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.34 2001/06/25 19:22:26 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -601,23 +601,31 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCCOMMITRULES: {
 		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_rule *old_rules;
 
 		if (*ticket != ticket_rules_inactive) {
 			error = EBUSY;
 			goto done;
 		}
+
+		/* Swap rules, keep the old. */
 		s = splsoftnet();
-		while (pf_rulehead_active != NULL) {
-			struct pf_rule *next = pf_rulehead_active->next;
-			pool_put(&pf_rule_pl, pf_rulehead_active);
-			pf_rulehead_active = next;
-		}
+		old_rules = pf_rulehead_active;
 		pf_rulehead_active = pf_rulehead_inactive;
 		pf_ruletail_active = pf_ruletail_inactive;
 		pf_rulehead_inactive = NULL;
 		pf_ruletail_inactive = NULL;
 		ticket_rules_active = ticket_rules_inactive;
 		splx(s);
+
+		/* Purge the old rule list. */
+		while (old_rules != NULL) {
+			struct pf_rule *next = old_rules->next;
+
+			pool_put(&pf_rule_pl, old_rules);
+			old_rules = next;
+		}
+
 		break;
 	}
 
