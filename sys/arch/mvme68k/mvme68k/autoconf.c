@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 1996/06/11 10:15:49 deraadt Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.8 1996/06/16 10:34:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -103,7 +103,6 @@
  */
 extern int cold;		/* if 1, still working on cold-start */
 
-static	int getstr __P((char *, int));
 struct	device *parsedisk __P((char *, int, int, dev_t *));
 void	setroot __P((void));
 
@@ -396,7 +395,7 @@ setroot()
 					bootdv->dv_class == DV_DISK
 						? 'a' : ' ');
 			printf(": ");
-			len = getstr(buf, sizeof(buf));
+			len = getsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
 				len = strlen(buf);
@@ -431,7 +430,7 @@ setroot()
 					bootdv->dv_xname,
 					bootdv->dv_class == DV_DISK?'b':' ');
 			printf(": ");
-			len = getstr(buf, sizeof(buf));
+			len = getsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				switch (bootdv->dv_class) {
 				case DV_IFNET:
@@ -545,53 +544,6 @@ gotswap:
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
 }
-
-static int
-getstr(cp, size)
-	register char *cp;
-	register int size;
-{
-	register char *lp;
-	register int c;
-	register int len;
-
-	lp = cp;
-	len = 0;
-	for (;;) {
-		c = cngetc();
-		switch (c) {
-		case '\n':
-		case '\r':
-			printf("\n");
-			*lp++ = '\0';
-			return (len);
-		case '\b':
-		case '\177':
-		case '#':
-			if (len) {
-				--len;
-				--lp;
-				printf("\b \b");
-			}
-			continue;
-		case '@':
-		case 'u'&037:
-			len = 0;
-			lp = cp;
-			printf("\n");
-			continue;
-		default:
-			if (len + 1 >= size || c < ' ') {
-				printf("\007");
-				continue;
-			}
-			printf("%c", c);
-			++len;
-			*lp++ = c;
-		}
-	}
-}
-
 
 /*
  * find a device matching "name" and unit number
