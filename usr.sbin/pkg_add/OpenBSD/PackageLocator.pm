@@ -1,4 +1,4 @@
-# $OpenBSD: PackageLocator.pm,v 1.2 2003/10/19 18:41:56 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.3 2003/10/23 23:18:55 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -228,7 +228,7 @@ sub info
 sub close
 {
 	my $self = shift;
-	close($self->{fh});
+	close($self->{fh}) if defined $self->{fh};
 	$self->{fh} = undef;
 	$self->{archive} = undef;
 }
