@@ -40,7 +40,6 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
-void _exit(int) __attribute__((noreturn));
 void _exit(int status)
 {
 	int		flags;
@@ -77,19 +76,48 @@ void _exit(int status)
 	_thread_sys__exit(status);
 }
 
+/*
+ * avoid using sprintf and append a small integer
+ * onto a string.
+ */
+static void
+numlcat(char *s, int num, size_t size)
+{
+	int i;
+	char digit[7];
+
+	if (num<0) {
+		num = -num;
+		strlcat(s, "-", size);
+	}
+	digit[sizeof digit - 1] = '\0';
+	for (i = sizeof digit - 2; i >= 0; i--) {
+		digit[i] = '0' + (num % 10);
+		num /= 10;
+		if (num == 0)
+			break;
+	}
+	if (i<0)
+		strlcat(s, "inf", size);
+	else
+		strlcat(s, &digit[i], size);
+}
+
 void
-_thread_exit(char *fname, int lineno, char *string)
+_thread_exit(const char *fname, int lineno, const char *string)
 {
 	char            s[256];
 
 	/* Prepare an error message string: */
-	strcpy(s, "Fatal error '");
-	strcat(s, string);
-	strcat(s, "' at line ? ");
-	strcat(s, "in file ");
-	strcat(s, fname);
-	strcat(s, " (errno = ?");
-	strcat(s, ")\n");
+	strlcpy(s, "Fatal error '", sizeof s);
+	strlcat(s, string, sizeof s);
+	strlcat(s, "' at line ", sizeof s);
+	numlcat(s, lineno, sizeof s);
+	strlcat(s, " in file ", sizeof s);
+	strlcat(s, fname, sizeof s);
+	strlcat(s, " (errno = ", sizeof s);
+	numlcat(s, errno, sizeof s);
+	strlcat(s, ")\n", sizeof s);
 
 	/* Write the string to the standard error file descriptor: */
 	_thread_sys_write(2, s, strlen(s));

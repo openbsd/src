@@ -543,7 +543,7 @@ void    _lock_thread(void);
 void    _lock_thread_list(void);
 void    _unlock_thread(void);
 void    _unlock_thread_list(void);
-void    _thread_exit(char *, int, char *)
+void    _thread_exit(const char *, int, const char *)
 		__attribute__((noreturn));
 void    _thread_fd_unlock(int, int);
 void    _thread_fd_unlock_debug(int, int, char *, int);
