@@ -802,7 +802,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/acl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/kadm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/kadm_err.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/kafs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/krb-protos.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/krb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosIV/krb_db.ph
@@ -826,6 +825,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5/kadm5_err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5/private.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5_err.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kafs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5-private.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5-protos.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5-types.ph

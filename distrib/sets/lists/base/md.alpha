@@ -36,8 +36,8 @@
 ./usr/lib/lib45.so.1.0
 ./usr/lib/libacl.so.5.0
 ./usr/lib/libasn1.so.2.0
-./usr/lib/libc.so.28.3
-./usr/lib/libc_r.so.6.3
+./usr/lib/libc.so.28.4
+./usr/lib/libc_r.so.6.4
 ./usr/lib/libcrypto.so.6.0
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.8.0
@@ -48,7 +48,7 @@
 ./usr/lib/libgssapi.so.1.0
 ./usr/lib/libiberty.so.4.2
 ./usr/lib/libkadm.so.7.0
-./usr/lib/libkafs.so.9.0
+./usr/lib/libkafs.so.10.0
 ./usr/lib/libkdb.so.6.0
 ./usr/lib/libkrb.so.10.0
 ./usr/lib/libkrb5.so.4.0
@@ -1264,7 +1264,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosIV/acl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosIV/kadm.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosIV/kadm_err.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosIV/kafs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosIV/krb-protos.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosIV/krb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosIV/krb_db.ph
@@ -1288,6 +1287,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/kadm5/kadm5_err.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/kadm5/private.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/kadm5_err.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/kafs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/krb5-private.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/krb5-protos.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/krb5-types.ph

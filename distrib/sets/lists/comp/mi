@@ -864,7 +864,6 @@
 ./usr/include/kerberosIV/acl.h
 ./usr/include/kerberosIV/kadm.h
 ./usr/include/kerberosIV/kadm_err.h
-./usr/include/kerberosIV/kafs.h
 ./usr/include/kerberosIV/krb-protos.h
 ./usr/include/kerberosIV/krb.h
 ./usr/include/kerberosIV/krb_db.h
@@ -888,6 +887,7 @@
 ./usr/include/kerberosV/kadm5/kadm5_err.h
 ./usr/include/kerberosV/kadm5/private.h
 ./usr/include/kerberosV/kadm5_err.h
+./usr/include/kerberosV/kafs.h
 ./usr/include/kerberosV/krb5-private.h
 ./usr/include/kerberosV/krb5-protos.h
 ./usr/include/kerberosV/krb5-types.h

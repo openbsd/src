@@ -2167,3 +2167,6 @@
 ./usr/share/man/ps9/sparc64
 ./usr/share/man/ps9/sun3
 ./usr/share/man/ps9/vax
+./usr/share/texinfo
+./usr/share/texinfo/texinfo.dtd
+./usr/share/texinfo/texinfo.xsl

@@ -266,6 +266,7 @@
 ./usr/bin/indxbib
 ./usr/bin/info
 ./usr/bin/infocmp
+./usr/bin/infokey
 ./usr/bin/infotocap
 ./usr/bin/install
 ./usr/bin/install-info
