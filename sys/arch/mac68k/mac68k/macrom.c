@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.8 1997/01/24 01:35:49 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.9 1997/02/23 06:05:00 briggs Exp $	*/
 /*	$NetBSD: macrom.c,v 1.30 1996/12/18 07:21:06 scottr Exp $	*/
 
 /*-
@@ -119,6 +119,9 @@ caddr_t ResHndls[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 #else
 caddr_t ResHndls[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #endif
+
+void	setup_egret __P((void));
+
 
 /*
  * Last straw functions; we didn't set them up, so freak out!
@@ -347,6 +350,10 @@ mrg_jkybdtaskpanic()	/* JKybdTask stopper */
 	panic("Agh!  Called JKybdTask!\n");
 }
 
+#ifndef HWDIRECT	/* mrg_adbintr and mrg_pmintr are not defined
+                         * here if we are using the HWDIRECT method to
+			 * access the ADB/PRAM/RTC. They are
+			 * defined in adb_direct.c */
 long
 mrg_adbintr()	/* Call ROM ADB Interrupt */
 {
@@ -403,6 +410,7 @@ mrg_pmintr()	/* Call ROM PM Interrupt */
 	}
 	return(1);
 }
+#endif	/* ifndef HWDIRECT */
 
 
 void
@@ -427,7 +435,7 @@ mrg_NewPtr()
 	u_int32_t trapword;
 	caddr_t ptr;
 
-	__asm("	movl	d1, %0
+	__asm("	movw	d1, %0
 		movl	d0, %1"
 		: "=g" (trapword), "=g" (numbytes) : : "d0", "d1");
 
@@ -654,16 +662,18 @@ mrg_aline_super(struct frame *frame)
 	tron();
 #endif
 
-/* 	put trapword in d1 */
-/* 	put trapaddr in a1 */
-/* 	put a0 in a0 */
-/* 	put d0 in d0 */
-/* save a6 */
-/* 	call the damn routine */
-/* restore a6 */
-/* 	store d0 in d0bucket */
-/* 	store a0 in d0bucket */
-/* This will change a1,d1,d0,a0 and possibly a6 */
+/*
+ * 	put trapword in d1
+ * 	put trapaddr in a1
+ * 	put a0 in a0
+ * 	put d0 in d0
+ * save a6
+ * 	call the damn routine
+ * restore a6
+ * 	store d0 in d0bucket
+ * 	store a0 in d0bucket
+ * This will change a1,d1,d0,a0 and possibly a6
+ */
 
 	__asm("
 		movl	%2, a1
@@ -677,7 +687,7 @@ mrg_aline_super(struct frame *frame)
 		: "=g" (a0bucket), "=g" (d0bucket)
 
 		: "g" (trapaddr), "g" (trapword),
-			"m" (frame->f_regs[0]), "m" (frame->f_regs[8])
+		  "m" (frame->f_regs[0]), "m" (frame->f_regs[8])
 
 		: "d0", "d1", "a0", "a1", "a6"
 
@@ -979,9 +989,7 @@ mrg_init()
 	}
 }
 
-static void	setup_egret __P((void));
-
-static void
+void
 setup_egret(void)
 {
 	if (0 != mrg_InitEgret){
@@ -1034,6 +1042,10 @@ mrg_initadbintr()
 			HwCfgFlags, HwCfgFlags2, HwCfgFlags3);
 	}
 
+#ifdef HWDIRECT		/* Extra Egret setup not required for the
+			 * HWDIRECT method. */
+        printf("mrg: skipping egret setup\n");
+#else
 	/*
 	 * If we think there is an Egret in the machine, attempt to
 	 * set it up.  If not, just enable the interrupts (only on
@@ -1060,6 +1072,7 @@ mrg_initadbintr()
 		if (mac68k_machine.do_graybars)
 			printf("mrg: ADB interrupts enabled.\n");
 	}	
+#endif
 }
 
 /*
@@ -1229,6 +1242,7 @@ t:  walter@ghpc8.ihf.rwth-aachen.de\n");
 #endif
 }   
 
+#ifndef HWDIRECT
 void
 ADBAlternateInit(void)
 {
@@ -1246,3 +1260,4 @@ ADBAlternateInit(void)
 			: "a1", "a3");
 	}
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.4 1997/01/24 01:35:28 briggs Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.5 1997/02/23 06:04:55 briggs Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.5 1997/01/13 07:01:24 scottr Exp $	*/
 
 /*-
@@ -30,6 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <machine/adbsys.h>
 
 #define ADB_MAXTRACE	(NBPG / sizeof(int) - 1)
 extern int adb_traceq[ADB_MAXTRACE];
@@ -64,3 +66,25 @@ void	extdms_complete __P((void));
 /* adbsys.c */
 void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 void	extdms_init __P((int));
+
+#ifdef HWDIRECT
+
+/* types of adb hardware that we (will eventually) support */
+#define ADB_HW_UNKNOWN		0x01	/* don't know */
+#define ADB_HW_II		0x02	/* Mac II series */
+#define ADB_HW_IISI		0x03	/* Mac IIsi series */
+#define ADB_HW_PB		0x04	/* PowerBook series */
+#define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
+
+/* adb_direct.c */
+int	adb_poweroff __P((void));
+int	CountADBs __P((void));
+void	ADBReInit __P((void));
+int	GetIndADB __P((ADBDataBlock * info, int index));
+int	GetADBInfo __P((ADBDataBlock * info, int adbAddr));
+int	SetADBInfo __P((ADBSetInfoBlock * info, int adbAddr));
+int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
+int	adb_read_date_time __P((unsigned long *t));
+int	adb_set_date_time __P((unsigned long t));
+
+#endif

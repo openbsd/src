@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.c,v 1.6 1997/01/24 01:35:28 briggs Exp $	*/
+/*	$OpenBSD: adbsys.c,v 1.7 1997/02/23 06:04:54 briggs Exp $	*/
 /*	$NetBSD: adbsys.c,v 1.24 1997/01/13 07:01:23 scottr Exp $	*/
 
 /*-
@@ -34,13 +34,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/adbsys.h>
 #include <machine/cpu.h>
 #include <machine/macinfo.h>
 #include <machine/viareg.h>
 
-#include "adbvar.h"
-#include "../mac68k/macrom.h"
+#include <arch/mac68k/mac68k/macrom.h>
+#include <arch/mac68k/dev/adbvar.h>
 
 extern	struct mac68k_machine_S mac68k_machine;
 
@@ -182,10 +181,13 @@ adb_init()
 		return;
 	}
 
+#ifndef HWDIRECT		/* We don't care about ADB ROM driver if we are
+				 * using the HWDIRECT method for ADB/PRAM/RTC. */
 	if (!mrg_romready()) {
 		printf("adb: no ROM ADB driver in this kernel for this machine\n");
 		return;
 	}
+#endif
 	printf("adb: bus subsystem\n");
 #ifdef MRG_DEBUG
 	printf("adb: call mrg_initadbintr\n");
@@ -199,12 +201,21 @@ adb_init()
 	/* ADBReInit pre/post-processing */
 	JADBProc = adb_jadbproc;
 
-	/* Initialize ADB */
+	/*
+	 * Initialize ADB
+	 *
+	 * If using HWDIRECT method to access ADB, then call
+	 * ADBReInit directly.  Otherwise use ADB AlternateInit()
+	 */
+#ifdef HWDIRECT
+	printf("adb: calling ADBReInit\n");
+	ADBReInit();
+#else
 #ifdef MRG_DEBUG
 	printf("adb: calling ADBAlternateInit.\n");
 #endif
-
 	ADBAlternateInit();
+#endif
 
 #ifdef MRG_DEBUG
 	printf("adb: done with ADBReInit\n");

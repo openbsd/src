@@ -1,4 +1,4 @@
-/*	$OpenBSD: macromasm.s,v 1.3 1996/05/26 18:36:26 briggs Exp $	*/
+/*	$OpenBSD: macromasm.s,v 1.4 1997/02/23 06:05:03 briggs Exp $	*/
 /*	$NetBSD: macromasm.s,v 1.11 1996/05/25 14:45:37 briggs Exp $	*/
 
 /*-
@@ -122,6 +122,9 @@
 	.global _panic
 	.global _printf
 
+#ifndef HWDIRECT	/* These functions are NOT defined here if using the
+			 * HWDIRECT method of accessing the ADB/PRAM/RTC. 
+			 * They are in adb_direct.c. */
 /*
  * Most of the following glue just takes C function calls, converts
  * the parameters to the MacOS Trap parameters, and then tries to
@@ -216,6 +219,7 @@ _ADBOp:
 	movl	sp@(16), d0
 	.word 0xa07c
 	rts
+#endif /* ifndef HWDIRECT */
 
 
 #if 0

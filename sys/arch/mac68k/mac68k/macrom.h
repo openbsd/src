@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.h,v 1.4 1997/01/19 03:58:08 briggs Exp $	*/
+/*	$OpenBSD: macrom.h,v 1.5 1997/02/23 06:05:02 briggs Exp $	*/
 /*	$NetBSD: macrom.h,v 1.9 1996/05/25 14:45:35 briggs Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ typedef struct {
 	unsigned char	devType;
 	unsigned char	origADBAddr;
 	Ptr		dbServiceRtPtr;
-	Ptr		dbDataAreaAdd;
+	Ptr		dbDataAreaAddr;
 } ADBDataBlock;
 
 
@@ -108,6 +108,10 @@ int MyOwnTrap(
 void KnownRTS(
 	void);
 
+#ifndef HWDIRECT	/* These routines are NOT defined here
+			 * if using the HWDIRECT method for accessing
+			 * the ADB/PRAM/RTC. They are 
+			 * defined in adb_direct.h */
 /* ADB Manager */
 int SetADBInfo(
 	ADBSetInfoBlock *info,
@@ -129,6 +133,7 @@ int ADBOp(
 	short	commandNum);
 void ADBAlternateInit(
 	void);
+#endif
 
 /* Memory Manager */
 Ptr NewPtr(

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.10 1997/01/24 01:35:26 briggs Exp $
+#	$OpenBSD: files.mac68k,v 1.11 1997/02/23 06:04:51 briggs Exp $
 #	$NetBSD: files.mac68k,v 1.55 1997/01/21 09:43:45 thorpej Exp $
 
 # mac68k-specific configuration info
@@ -24,6 +24,8 @@ attach	adb at obio
 file	arch/mac68k/dev/adb.c		adb
 file	arch/mac68k/dev/adbsys.c
 file	arch/mac68k/dev/adbsysasm.s
+file	arch/mac68k/dev/adb_direct.c	hwdirect
+file	arch/mac68k/dev/pm_direct.c	hwdirect
 
 device	asc
 attach	asc at obio
@@ -56,7 +58,7 @@ device	sn: ifnet, ether
 attach	sn at obio
 file	arch/mac68k/dev/if_sn.c		sn needs-flag
 
-include "scsi/files.scsi"
+include "../../../scsi/files.scsi"
 
 # Option 1 for ncr5380 support
 device	ncrscsi: scsi
@@ -90,7 +92,7 @@ file	arch/mac68k/mac68k/fpu.c	fpu
 
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/db_memrw.c	ddb
-include "arch/m68k/fpe/files.fpe"
+include "../../../arch/m68k/fpe/files.fpe"
 
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/clock.c
@@ -127,5 +129,5 @@ major	{rd = 13}
 # Compatibility modules
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include "compat/sunos/files.sunos"
+include "../../../compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.6 1997/01/24 01:35:27 briggs Exp $	*/
+/*	$OpenBSD: adb.c,v 1.7 1997/02/23 06:04:52 briggs Exp $	*/
 /*	$NetBSD: adb.c,v 1.13 1996/12/16 16:17:02 scottr Exp $	*/
 
 /*-
@@ -39,13 +39,12 @@ e*    notice, this list of conditions and the following disclaimer in the
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
-#include <machine/adbsys.h>
 #include <machine/autoconf.h>
 #include <machine/keyboard.h>
 
-#include "adbvar.h"
-#include "itevar.h"
-#include "../mac68k/macrom.h"
+#include <arch/mac68k/mac68k/macrom.h>
+#include <arch/mac68k/dev/adbvar.h>
+#include <arch/mac68k/dev/itevar.h>
 
 /*
  * Function declarations.

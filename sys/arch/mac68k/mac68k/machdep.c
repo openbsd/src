@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 1997/02/21 05:49:29 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 1997/02/23 06:04:59 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.129 1997/01/09 07:20:46 scottr Exp $	*/
 
 /*
@@ -129,9 +129,10 @@
 #include <vm/vm_page.h>
 
 #include <dev/cons.h>
+#include <arch/mac68k/mac68k/macrom.h>
+#include <arch/mac68k/dev/adbvar.h>
 
 #include <machine/viareg.h>
-#include "macrom.h"
 #include "ether.h"
 
 /* The following is used externally (sysctl_hw) */
