@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.273 2002/11/10 01:08:33 krw Exp $
+#	$OpenBSD: install.sub,v 1.274 2002/11/28 00:44:56 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -414,8 +414,8 @@ get_rootdisk() {
 	_defdsk=`echo $DKDEVS | cutlast`
 	[ "$_defdsk" = "$DKDEVS" ] || _defdsk=
 
-if [ "$MODE" = "install" -a ! -f /etc/fstab ]; then
-	cat << __EOT
+	if [ "$MODE" = "install" -a ! -f /etc/fstab ]; then
+		cat << __EOT
 
 You will now initialize the disk(s) that OpenBSD will use. To enable all
 available security features you should configure the disk(s) to allow the
