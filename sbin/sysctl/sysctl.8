@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.93 2002/12/18 15:49:51 millert Exp $
+.\"	$OpenBSD: sysctl.8,v 1.94 2002/12/18 19:17:28 miod Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd May 9, 1995
+.Dd December 18, 2002
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -101,17 +101,13 @@ privilege can change the value.
 .It kern.ostype	string	no
 .It kern.osrelease	string	no
 .It kern.osrevision	integer	no
-.It kern.osversion	string	no
 .It kern.version	string	no
 .It kern.maxvnodes	integer	yes
 .It kern.maxproc	integer	yes
 .It kern.maxfiles	integer	yes
-.It kern.maxpartitions	integer	no
-.It kern.rawpartition	integer	no
 .It kern.argmax	integer	no
 .It kern.securelevel	integer	raise only
 .It kern.hostname	string	yes
-.It kern.domainname	string	yes
 .It kern.hostid	u_int	yes
 .It kern.clockrate	struct	no
 .It kern.posix1version	integer	no
@@ -119,9 +115,10 @@ privilege can change the value.
 .It kern.job_control	integer	no
 .It kern.saved_ids	integer	no
 .It kern.boottime	struct	no
-.It kern.cp_time	struct	no
-.It kern.nchstats	struct	no
-.It kern.forkstat	struct	no
+.It kern.domainname	string	yes
+.It kern.maxpartitions	integer	no
+.It kern.rawpartition	integer	no
+.It kern.osversion	string	no
 .It kern.somaxconn	integer	yes
 .It kern.sominconn	integer	yes
 .It kern.usermount	integer	yes
@@ -133,26 +130,29 @@ privilege can change the value.
 .It kern.sysvshm	integer	no
 .It kern.arandom	u_int	no
 .It kern.msgbufsize	integer	no
-.It kern.nselcoll	integer	no
 .It kern.malloc.buckets	string	no
 .It kern.malloc.bucket.<sz>	string	no
 .It kern.malloc.kmemnames	string	no
 .It kern.malloc.kmemstat.<name>	string	no
+.It kern.cp_time	struct	no
+.It kern.nchstats	struct	no
+.It kern.forkstat	struct	no
+.It kern.nselcoll	integer	no
 .It kern.tty.tk_nin	int64_t	no
 .It kern.tty.tk_nout	int64_t	no
 .It kern.tty.tk_rawcc	int64_t	no
 .It kern.tty.tk_cancc	int64_t	no
-.It kern.fscale	integer	no
 .It kern.ccpu	u_int	no
+.It kern.fscale	integer	no
 .It kern.nprocs	integer	no
 .It kern.stackgap_random	integer	yes
-.It kern.userasymcrypto	integer	yes
 .It kern.usercrypto	integer	yes
 .It kern.cryptodevallowsoft	integer	yes
+.It kern.splassert	integer	yes
 .It kern.nfiles	integer	no
 .It kern.ttycount	integer	no
 .It kern.numvnodes	integer	no
-.It kern.mbstat	struct	no
+.It kern.userasymcrypto	integer	yes
 .It kern.seminfo.semmni	integer	yes
 .It kern.seminfo.semmns	integer	yes
 .It kern.seminfo.semmnu	integer	yes
@@ -167,13 +167,19 @@ privilege can change the value.
 .It kern.shminfo.shmmni	integer	yes
 .It kern.shminfo.shmseg	integer	yes
 .It kern.shminfo.shmall	integer	yes
+.It vm.vmmeter	struct	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
+.It vm.uvmexp	struct	no
 .It vm.swapencrypt.enable	integer	yes
 .It vm.swapencrypt.keyscreated	integer	no
 .It vm.swapencrypt.keysdeleted	integer	no
-.It vm.uvmexp	struct	no
-.It vm.vmmeter	struct	no
+.It vm.nkmempages	integer	no
+.It vm.anonmin	integer	yes
+.It vm.vtextmin	integer	yes
+.It vm.vnodemin	integer	yes
+.It vm.maxslp	integer	no
+.It vm.uspace	integer	no
 .It fs.posix.setuid	integer	yes
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.redirect	integer	yes
@@ -187,6 +193,8 @@ privilege can change the value.
 .It net.inet.ip.porthilast	integer	yes
 .It net.inet.ip.maxqueue	integer	yes
 .It net.inet.ip.encdebug	integer	yes
+.It net.inet.ip.ipsec-expire-acquire	integer	yes
+.It net.inet.ip.ipsec-invalid-life	integer	yes
 .It net.inet.ip.ipsec-pfs	integer	yes
 .It net.inet.ip.ipsec-soft-allocs	integer	yes
 .It net.inet.ip.ipsec-allocs	integer	yes
@@ -198,11 +206,9 @@ privilege can change the value.
 .It net.inet.ip.ipsec-firstuse	integer	yes
 .It net.inet.ip.ipsec-enc-alg	string	yes
 .It net.inet.ip.ipsec-auth-alg	string	yes
-.It net.inet.ip.ipsec-comp-alg	string	yes
-.It net.inet.ip.ipsec-expire-acquire	integer	yes
-.It net.inet.ip.ipsec-invalid-life	integer	yes
 .It net.inet.ip.mtudisc	integer	yes
 .It net.inet.ip.mtudisctimeout	integer	yes
+.It net.inet.ip.ipsec-comp-alg	string	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.bmcastecho	integer	yes
 .It net.inet.icmp.errppslimit	integer	yes
@@ -210,7 +216,6 @@ privilege can change the value.
 .It net.inet.icmp.redirtimeout	integer	yes
 .It net.inet.icmp.tstamprepl	integer	yes
 .It net.inet.ipip.allow	integer	yes
-.It net.inet.etherip.allow	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
 .It net.inet.tcp.keepinittime	integer	yes
 .It net.inet.tcp.keepidle	integer	yes
@@ -228,12 +233,13 @@ privilege can change the value.
 .It net.inet.udp.baddynamic	array	yes
 .It net.inet.udp.recvspace	integer	yes
 .It net.inet.udp.sendspace	integer	yes
-.It net.inet.esp.enable	integer	yes
-.It net.inet.ah.enable	integer	yes
-.It net.inet.ipcomp.enable integer yes
 .It net.inet.gre.allow	integer	yes
 .It net.inet.gre.wccp	integer	yes
+.It net.inet.esp.enable	integer	yes
+.It net.inet.ah.enable	integer	yes
 .It net.inet.mobileip.allow	integer	yes
+.It net.inet.etherip.allow	integer	yes
+.It net.inet.ipcomp.enable	integer	yes
 .It net.inet6.ip6.forwarding	integer	yes
 .It net.inet6.ip6.redirect	integer	yes
 .It net.inet6.ip6.hlim	integer	yes
@@ -294,7 +300,6 @@ privilege can change the value.
 .It machdep.kbdreset	integer	yes (i386 only)
 .It machdep.allowaperture	integer	yes (XFree86)
 .It machdep.led_blink	integer	yes (sparc/sparc64)
-.It machdep.vsyncblank	integer	yes (sparc only)
 .It user.cs_path	string	no
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
@@ -322,10 +327,22 @@ privilege can change the value.
 .It ddb.panic	integer	yes
 .It ddb.console	integer	yes
 .It vfs.mounts.*	struct	no
-.It vfs.ffs.doasyncfree	integer	yes
 .It vfs.ffs.doclusterread	integer	yes
 .It vfs.ffs.doclusterwrite	integer	yes
 .It vfs.ffs.doreallocblks	integer	yes
+.It vfs.ffs.doasyncfree	integer	yes
+.It vfs.ffs.max_softdeps	integer	yes
+.It vfs.ffs.sd_tickdelay	integer	yes
+.It vfs.ffs.sd_worklist_push	integer	no
+.It vfs.ffs.sd_blk_limit_push	integer	no
+.It vfs.ffs.sd_ino_limit_push	integer	no
+.It vfs.ffs.sd_blk_limit_hit	integer	no
+.It vfs.ffs.sd_ino_limit_hit	integer	no
+.It vfs.ffs.sd_sync_limit_hit	integer	no
+.It vfs.ffs.sd_indir_blk_ptrs	integer	no
+.It vfs.ffs.sd_inode_bitmap	integer	no
+.It vfs.ffs.sd_direct_blk_ptrs	integer	no
+.It vfs.ffs.sd_dir_entry	integer	no
 .It vfs.nfs.iothreads	integer	yes
 .El
 .Pp
@@ -410,7 +427,7 @@ See
 .Xr nfssvc 2
 and
 .Xr nfsd 8
-for futher discussion.
+for further discussion.
 .Pp
 To set the amount of shared memory available in the system and
 the maximum number of shared memory segments:
