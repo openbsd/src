@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.157 2000/09/13 05:11:35 rahnds Exp $
+#	$OpenBSD: install.sub,v 1.158 2000/10/09 22:47:22 naddy Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1029,7 +1029,7 @@ fi
 
 # Build up the base url since it is so nasty...
 if [ "${_url_type}" = "ftp" -a "${_ftp_server_login}" != "anonymous" ]; then
-	eval _url_base=${_url_type}://${_ftp_server_login}:${_ftp_server_password}@\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
+	_url_base=ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}
 else
 	eval _url_base=${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
 fi
