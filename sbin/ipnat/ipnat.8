@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm ipnat
-.Nd User interface to the NAT
+.Nd user interface to the NAT
 .Sh SYNOPSIS
 .Nm ipnat
 .Op Fl CFlnrsv
@@ -16,8 +16,10 @@ configured on a gateway, the NAT provides Internet access to connected
 computers lacking officially assigned IP addresses. It is discussed in RFC
 1631.
 .Pp
-Options are as follows:
+The options are as follows:
 .Bl -tag -width Ds
+.It Fl f Ar filename
+File from which rules are read from.
 .It Fl C
 Delete all entries in the NAT list.
 .It Fl F
@@ -51,7 +53,7 @@ if an entry contradicts another previously added, the newer will take
 precedence.
 .Pp
 Comments (beginning with a
-.Dq # )
+.Ql # )
 and blank lines are ignored as
 .Nm
 parses the file. Entries may be separated by spaces or tabs. Each rule must
