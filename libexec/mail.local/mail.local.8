@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.1.1.1 1995/10/18 08:43:19 deraadt Exp $
+.\"	$Id: mail.local.8,v 1.2 1996/08/27 03:17:57 dm Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -40,6 +40,7 @@
 .Nd store mail in a mailbox
 .Sh SYNOPSIS
 .Nm mail.local
+.Op Fl L
 .Op Fl l
 .Op Fl f Ar from
 .Ar user ...
@@ -58,9 +59,14 @@ The options are as follows:
 .It Fl f Ar from
 Specify the sender's name.
 .It Fl l
-Request that
+For compatibility, request that
 .Nm username.lock
-files be used for locking.
+files be used for locking.  (This done by default anyway.)
+.It Fl L
+Request that
+.Fn flock
+be used for locking the mail spool rather than
+.Nm username.lock .
 .El
 .Pp
 Individual mail messages in the mailbox are delimited by an empty
@@ -71,11 +77,11 @@ A blank line is appended to each message.
 A greater-than character (``>'') is prepended to any line in the message
 which could be mistaken for a ``From '' delimiter line.
 .Pp
-If the
-.Op Fl l
-flag is specified mailbox locking is done with
+By default, mailbox locking is done with
 .Nm username.lock
-files. Otherwise, the mailbox is exclusively locked with
+files. However, if the
+.Fl -L
+flag is specified, the mailbox is exclusively locked with
 .Xr flock 2
 while mail is appended.
 .Pp

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.2 1996/07/19 07:35:18 deraadt Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.3 1996/08/27 03:18:00 dm Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,14 +74,14 @@ main(argc, argv)
 	extern int optind;
 	extern char *optarg;
 	struct passwd *pw;
-	int ch, fd, eval, lockfile=0;
+	int ch, fd, eval, lockfile=1;
 	uid_t uid;
 	char *from;
 
 	openlog("mail.local", LOG_PERROR, LOG_MAIL);
 
 	from = NULL;
-	while ((ch = getopt(argc, argv, "ldf:r:")) != EOF)
+	while ((ch = getopt(argc, argv, "lLdf:r:")) != EOF)
 		switch(ch) {
 		case 'd':		/* backward compatible */
 			break;
@@ -92,7 +92,10 @@ main(argc, argv)
 			from = optarg;
 			break;
 		case 'l':
-			lockfile++;
+			lockfile=1;
+			break;
+		case 'L':
+			lockfile=0;
 			break;
 		case '?':
 		default:
