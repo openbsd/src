@@ -191,6 +191,23 @@ union cd_pages {
 	} audio;
 };
 
+#ifdef CDDA
+/*
+ * There are 2352 bytes in a CD digital audio frame.  One frame is 1/75 of a
+ * second, at 44.1kHz sample rate, 16 bits/sample, 2 channels.
+ *
+ * The frame data have the two channels interleaved, with the left
+ * channel first.  Samples are little endian 16-bit signed values.
+ */
+#define CD_DA_BLKSIZ		2352	/* # bytes in CD-DA frame */
+#ifndef CD_NORMAL_DENSITY_CODE
+#define CD_NORMAL_DENSITY_CODE	0x00	/* from Toshiba CD-ROM specs */
+#endif
+#ifndef CD_DA_DENSITY_CODE
+#define CD_DA_DENSITY_CODE	0x82	/* from Toshiba CD-ROM specs */
+#endif
+#endif /* CDDA */
+
 struct cd_mode_data {
 	struct scsi_mode_header header;
 	struct scsi_blk_desc blk_desc;

@@ -86,11 +86,17 @@ struct cd_softc {
 #define	CDF_WLABEL	0x04		/* label is writable */
 #define	CDF_LABELLING	0x08		/* writing label */
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
+#ifdef CDDA
+#define CDF_CDDAMODE	0x08
+#endif
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {
 		int blksize;
 		u_long disksize;	/* total number sectors */
 	} params;
+#ifdef CDDA
+	struct cd_parms orig_params;    /* filled in when CD-DA mode starts */
+#endif
 	struct buf buf_queue;
 };
 
@@ -267,6 +273,18 @@ cdopen(dev, flag, fmt, p)
 	if ((error = cdlock(cd)) != 0)
 		return error;
 
+#ifdef CDDA
+	/*
+	 * We can't open the block device if the drive is in CDDA
+	 * mode.  If we allow such opens, either the drive will get
+	 * quite unhappy about undersized I/O or the BSD I/O subsystem
+	 * will start trashing memory with disk transfers overrunning
+	 * the end of their buffers.  Either way, it's Bad.
+	 */
+	if (cd->flags & CDF_CDDAMODE && fmt == S_IFBLK)
+		return EBUSY;
+#endif
+
 	if (cd->sc_dk.dk_openmask != 0) {
 		/*
 		 * If any partition is open, but the disk has been invalidated,
@@ -276,6 +294,16 @@ cdopen(dev, flag, fmt, p)
 			error = EIO;
 			goto bad3;
 		}
+#ifdef CDDA
+		/*
+		 * If it's in CDDA mode, process may only open the
+		 * raw partition
+		 */
+		if (cd->flags & CDF_CDDAMODE && part != RAW_PART) {
+			error = EBUSY;
+			goto bad3;
+		}
+#endif
 	} else {
 		/* Check that it is still responding and ok. */
 		error = scsi_test_unit_ready(sc_link,
@@ -432,6 +460,18 @@ cdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
+#ifdef CDDA
+	/*
+	 * If in CDDA mode, return immediately (the user must issue
+	 * SCSI read commands directly using SCIOCCOMMAND).  The BSD
+	 * I/O subsystem just can't deal with bizzare block sizes like
+	 * those used for CD-DA frames.
+	 */
+	if (cd->flags & CDF_CDDAMODE) {
+		bp->b_error = EIO;
+		goto bad;
+	}
+#endif
 	/*
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
@@ -909,6 +949,66 @@ cdioctl(dev, cmd, addr, flag, p)
 		return 0;
 	case CDIOCRESET:
 		return cd_reset(cd);
+#ifdef CDDA
+	case CDIOCSETCDDA: {
+		int onoff = *(int *)addr;
+		/* select CD-DA mode */
+		struct cd_mode_data data;
+
+		if (CDPART(dev) != RAW_PART)
+			return ENOTTY;
+		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
+			return error;
+		if (onoff) {
+			/* turn it on */
+			if (cd->flags & CDF_CDDAMODE)
+				return EALREADY;
+			/*
+			 * do not permit changing of block size if the block
+			 * device is open, or if some other partition (not
+			 * a raw partition) is open.
+			 */
+			if (cd->sc_dk.dk_bopenmask ||
+			    (cd->sc_dk.dk_copenmask & ~(1 << RAW_PART)))
+				return EBUSY;
+
+			data.blk_desc.density = CD_DA_DENSITY_CODE;
+			data.blk_desc.blklen[0] = (CD_DA_BLKSIZ >> 16) & 0xff;
+			data.blk_desc.blklen[1] = (CD_DA_BLKSIZ >> 8) & 0xff;
+			data.blk_desc.blklen[2] = CD_DA_BLKSIZ & 0xff;
+
+			if (cd_set_mode(cd, &data) != 0) 
+				return EIO;
+
+			cd->orig_params = cd->params;
+			cd->flags |= CDF_CDDAMODE;
+		} else {
+			if (!(cd->flags & CDF_CDDAMODE))
+				return EALREADY;
+			/* turn it off */
+			data.blk_desc.density = CD_NORMAL_DENSITY_CODE;
+			data.blk_desc.blklen[0] = (cd->orig_params.blksize >> 16) & 0xff;
+			data.blk_desc.blklen[1] = (cd->orig_params.blksize >> 8) & 0xff;
+			data.blk_desc.blklen[2] = (cd->orig_params.blksize) & 0xff;
+
+			if (cd_set_mode(cd, &data) != 0)
+				return EIO;
+
+			cd->flags &= ~CDF_CDDAMODE;
+			cd->params = cd->orig_params;
+		}
+		if (cd_get_parms(cd, 0) != 0) {
+			data.blk_desc.density = CD_NORMAL_DENSITY_CODE;
+			data.blk_desc.blklen[0] = (cd->orig_params.blksize >> 16) & 0xff;
+			data.blk_desc.blklen[1] = (cd->orig_params.blksize >> 8) & 0xff;
+			data.blk_desc.blklen[2] = (cd->orig_params.blksize) & 0xff;
+			(void) cd_set_mode(cd, &data); /* it better work...! */
+			cd->params = cd->orig_params;
+			return EIO;
+		}
+		return 0;
+	}
+#endif
 
 	default:
 		if (CDPART(dev) != RAW_PART)
