@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.4 1998/06/27 20:01:08 todd Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.5 1999/07/18 17:12:38 maja Exp $	*/
 /*	$NetBSD: kbd.h,v 1.6 1996/03/31 22:21:35 pk Exp $ */
 
 /*
@@ -87,6 +87,30 @@
 #define	LED_COMPOSE	0x2
 #define	LED_SCROLL_LOCK	0x4
 #define	LED_CAPS_LOCK	0x8
+
+#define	CAPSLOCK	0
+#define	SHIFTLOCK	1
+#define	LEFTSHIFT	2
+#define	RIGHTSHIFT	3
+#define	LEFTCTRL	4
+#define	RIGHTCTRL	5
+#define	ALTGRAPH	9
+#define	ALT		10
+#define	NUMLOCK		11
+
+#define	SYSTEMBIT	1
+
+#define	SHIFTKEYS	0x100
+#define	BUCKYBITS	0x200
+#define	FUNNY		0x300
+#define	NOP		0x300
+#define	OOPS		0x301
+/*	HOLE		0x302 defined in kbio.h */
+#define	RESET		0x306
+#define	ERROR		0x307
+#define	IDLE		0x308
+#define	COMPOSE		0x309
+#define	NONL		0x30a
 
 #ifdef _KERNEL
 void 	kbd_serial __P((struct tty *,
