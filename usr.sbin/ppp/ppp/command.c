@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: command.c,v 1.23 1999/06/02 00:46:55 brian Exp $
+ * $Id: command.c,v 1.24 1999/06/02 21:27:54 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -143,7 +143,7 @@
 #define NEG_DNS		52
 
 const char Version[] = "2.21";
-const char VersionDate[] = "$Date: 1999/06/02 00:46:55 $";
+const char VersionDate[] = "$Date: 1999/06/02 21:27:54 $";
 
 static int ShowCommand(struct cmdargs const *);
 static int TerminalCommand(struct cmdargs const *);
@@ -1818,7 +1818,7 @@ static struct cmdtab const SetCommands[] = {
    "set lcpretry value [attempts]", (const void *)VAR_LCPRETRY},
   {"log", NULL, log_SetLevel, LOCAL_AUTH, "log level",
   "set log [local] [+|-]async|cbcp|ccp|chat|command|connect|debug|hdlc|id0|"
-  "ipcp|lcp|lqm|phase|tcp/ip|timer|tun..."},
+  "ipcp|lcp|lqm|phase|physical|sync|tcp/ip|timer|tun..."},
   {"login", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX,
   "login script", "set login chat-script", (const void *) VAR_LOGIN},
   {"lqrperiod", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX_OPT,
