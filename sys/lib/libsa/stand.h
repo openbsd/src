@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.23 1997/04/26 17:50:08 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.24 1997/05/30 23:06:28 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -159,6 +159,7 @@ void	*memcpy __P((void *, const void *, size_t));
 int	memcmp __P((const void *, const void*, size_t));
 char	*strncpy __P((char *, const char *, size_t));
 char	*strcpy __P((char *, const char *));
+int	strncmp __P((const char *, const char *, size_t));
 size_t	strlen __P((const char *));
 void	*memset __P((void *, int, size_t));
 void	exec __P((char *, void *, int));
@@ -191,6 +192,8 @@ char	*ttyname __P((int)); /* match userland decl, but ignore !0 */
 void	putc __P((int));    
 int	getc __P((void));
 int	ischar __P((void));
+void	sleep __P((u_int));
+void	usleep __P((u_int));
 
 void	putchar __P((int));    
 int	getchar __P((void));
