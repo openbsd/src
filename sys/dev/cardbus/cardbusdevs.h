@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.14 2003/06/26 00:50:59 mickey Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.15 2003/09/27 19:38:54 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.13 2003/06/26 00:50:42 mickey Exp 
+ *	OpenBSD: cardbusdevs,v 1.14 2003/09/27 19:38:10 fgsch Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -50,6 +50,7 @@
 
 #define	CARDBUS_VENDOR_DEC	0x1011		/* DEC */
 #define	CARDBUS_VENDOR_OPTI	0x1045		/* Opti */
+#define	CARDBUS_VENDOR_DLINK	0x1186		/* D-Link */
 #define	CARDBUS_VENDOR_3COM	0x10B7		/* 3Com */
 #define	CARDBUS_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
 #define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton */
@@ -96,6 +97,9 @@
 
 /* DEC products */
 #define	CARDBUS_PRODUCT_DEC_21142	0x0019		/* 21142/3 */
+
+/* D-Link products */
+#define	CARDBUS_PRODUCT_DLINK_DFE_690TXD	0x1340		/* DFE-690TXD */
 
 /* Intel products */
 #define	CARDBUS_PRODUCT_INTEL_82557	0x1229		/* 82557 */

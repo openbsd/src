@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.14 2003/06/26 00:50:59 mickey Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.15 2003/09/27 19:38:54 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.13 2003/06/26 00:50:42 mickey Exp 
+ *	OpenBSD: cardbusdevs,v 1.14 2003/09/27 19:38:10 fgsch Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -105,6 +105,10 @@ struct cardbus_known_product cardbus_known_product[] = {
 	    "21142/3",
 	},
 	{
+	    CARDBUS_VENDOR_DLINK, CARDBUS_PRODUCT_DLINK_DFE_690TXD,
+	    "DFE-690TXD",
+	},
+	{
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_82557,
 	    "82557",
 	},
@@ -159,6 +163,10 @@ struct cardbus_known_vendor cardbus_known_vendors[] = {
 	{
 	    CARDBUS_VENDOR_OPTI, 0,
 	    "Opti",
+	},
+	{
+	    CARDBUS_VENDOR_DLINK, 0,
+	    "D-Link",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, 0,
