@@ -217,7 +217,8 @@ struct	kinfo_proc	*getproc()
 {
 	static	struct	kinfo_proc kp;
 	pid_t	pid = getpid();
-	int	siz, n, mib[4];
+	int	mib[4];
+	size_t	n;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROC;
