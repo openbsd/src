@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.9 1997/09/28 21:44:37 millert Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.10 1997/11/30 00:36:21 millert Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.9 1997/09/28 21:44:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.10 1997/11/30 00:36:21 millert Exp $";
 #endif
 #endif
 
@@ -488,7 +488,7 @@ set_up_tty(fd, local)
     }
 
     tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB | CLOCAL);
-    if (crtscts > 0 && !local)
+    if (crtscts > 0 && modem)
 	tios.c_cflag |= CRTSCTS;
     else if (crtscts < 0)
 	tios.c_cflag &= ~CRTSCTS;
