@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilvar.h,v 1.6 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: hilvar.h,v 1.7 2005/01/09 23:49:36 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -90,8 +90,8 @@ struct hil_softc {
 
 #ifdef _KERNEL
 
-void	send_hil_cmd(struct hil_softc *, u_int, u_int8_t *, u_int, u_int8_t *);
-void	send_hildev_cmd(struct hildev_softc *, u_int, u_int8_t *, u_int *);
+int	send_hil_cmd(struct hil_softc *, u_int, u_int8_t *, u_int, u_int8_t *);
+int	send_hildev_cmd(struct hildev_softc *, u_int, u_int8_t *, u_int *);
 void	hil_set_poll(struct hil_softc *, int);
 int	hil_poll_data(struct hildev_softc *, u_int8_t *, u_int8_t *);
 

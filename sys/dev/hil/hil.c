@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.14 2004/05/10 05:18:53 jolan Exp $	*/
+/*	$OpenBSD: hil.c,v 1.15 2005/01/09 23:49:35 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -96,7 +96,7 @@ void	hilconfig(struct hil_softc *);
 int	hilsubmatch(struct device *, void *, void *);
 void	hil_process_int(struct hil_softc *, u_int8_t, u_int8_t);
 int	hil_process_poll(struct hil_softc *, u_int8_t, u_int8_t);
-void	send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd);
+int	send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd);
 void	polloff(struct hil_softc *);
 void	pollon(struct hil_softc *);
 
@@ -219,10 +219,10 @@ hil_attach_deferred(void *v)
 	 * few seconds, give up.
 	 */
 	for (tries = 10; tries != 0; tries--) {
-		send_hil_cmd(sc, HIL_READLPSTAT, NULL, 0, &db);
-		
-		if (db & (LPS_CONFFAIL | LPS_CONFGOOD))
-			break;
+		if (send_hil_cmd(sc, HIL_READLPSTAT, NULL, 0, &db) == 0) {
+			if (db & (LPS_CONFFAIL | LPS_CONFGOOD))
+				break;
+		}
 
 #ifdef HILDEBUG
 		printf("%s: loop not ready, retrying...\n",
@@ -436,7 +436,11 @@ hilconfig(struct hil_softc *sc)
 		int len;
 		const struct hildevice *hd;
 		
-		send_device_cmd(sc, id, HIL_IDENTIFY);
+		if (send_device_cmd(sc, id, HIL_IDENTIFY) != 0) {
+			printf("%s: no answer from device %d\n",
+			    sc->sc_dev.dv_xname, id);
+			continue;
+		}
 
 		len = sc->sc_cmdbp - sc->sc_cmdbuf;
 		if (len == 0) {
@@ -507,7 +511,7 @@ hilconfig(struct hil_softc *sc)
  * Send a command to the 8042 with zero or more bytes of data.
  * If rdata is non-null, wait for and return a byte of data.
  */
-void
+int
 send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
     u_int8_t *rdata)
 {
@@ -521,7 +525,7 @@ send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
 		printf("%s: no answer from the loop\n", sc->sc_dev.dv_xname);
 #endif
 		splx(s);
-		return;
+		return (EBUSY);
 	}
 
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, HILP_CMD, cmd);
@@ -547,6 +551,7 @@ send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
 		} while (((status >> HIL_SSHIFT) & HIL_SMASK) != HIL_68K);
 	}
 	splx(s);
+	return (0);
 }
 
 /*
@@ -558,10 +563,11 @@ send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
  * internally generated poll commands.
  * Needs to be called at splhil().
  */
-void
+int
 send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd)
 {
 	u_int8_t status, c;
+	int rc = 0;
 
 	polloff(sc);
 
@@ -573,6 +579,7 @@ send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd)
 		printf("%s: no answer from device %d\n",
 		    sc->sc_dev.dv_xname, device);
 #endif
+		rc = EBUSY;
 		goto out;
 	}
 
@@ -599,6 +606,7 @@ send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd)
 			printf("%s: no answer from device %d\n",
 			    sc->sc_dev.dv_xname, device);
 #endif
+			rc = EBUSY;
 			break;
 		}
 		status = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
@@ -610,28 +618,30 @@ out:
 	sc->sc_cmddev = 0;
 
 	pollon(sc);
+	return (rc);
 }
 
-void
+int
 send_hildev_cmd(struct hildev_softc *dev, u_int cmd,
     u_int8_t *outbuf, u_int *outlen)
 {
 	struct hil_softc *sc = (struct hil_softc *)dev->sc_dev.dv_parent;
-	int s;
+	int s, rc;
        
 	s = splhil();
 
-	send_device_cmd(sc, dev->sc_code, cmd);
-
-	/*
-	 * Return the command response in the buffer if necessary
-	 */
-	if (outbuf != NULL && outlen != NULL) {
-		*outlen = min(*outlen, sc->sc_cmdbp - sc->sc_cmdbuf);
-		bcopy(sc->sc_cmdbuf, outbuf, *outlen);
+	if ((rc = send_device_cmd(sc, dev->sc_code, cmd)) == 0) {
+		/*
+		 * Return the command response in the buffer if necessary
+	 	*/
+		if (outbuf != NULL && outlen != NULL) {
+			*outlen = min(*outlen, sc->sc_cmdbp - sc->sc_cmdbuf);
+			bcopy(sc->sc_cmdbuf, outbuf, *outlen);
+		}
 	}
 
 	splx(s);
+	return (rc);
 }
 
 /*

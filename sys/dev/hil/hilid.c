@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilid.c,v 1.3 2003/12/20 22:53:56 miod Exp $	*/
+/*	$OpenBSD: hilid.c,v 1.4 2005/01/09 23:49:36 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -85,14 +85,15 @@ hilidattach(struct device *parent, struct device *self, void *aux)
 
 	bzero(sc->sc_id, sizeof(sc->sc_id));
 	len = sizeof(sc->sc_id);
-	send_hildev_cmd((struct hildev_softc *)sc,
-	    HIL_SECURITY, sc->sc_id, &len);
-
 	printf("%s: security code", self->dv_xname);
-	for (i = 0; i < sizeof(sc->sc_id); i++)
-		printf(" %02x", sc->sc_id[i]);
 
-	printf("\n");
+	if (send_hildev_cmd((struct hildev_softc *)sc,
+	    HIL_SECURITY, sc->sc_id, &len) == 0) {
+		for (i = 0; i < sizeof(sc->sc_id); i++)
+			printf(" %02x", sc->sc_id[i]);
+		printf("\n");
+	} else
+		printf(" unavailable\n");
 }
 
 int
