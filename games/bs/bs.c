@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.14 2002/05/31 04:21:29 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.15 2002/08/09 08:36:33 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: bs.c,v 1.14 2002/05/31 04:21:29 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: bs.c,v 1.15 2002/08/09 08:36:33 pjanzen Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* ( random() ) */
@@ -334,13 +334,10 @@ static int rnd(int n)
 static void randomplace(int b, ship_t *ss)
 /* generate a valid random ship placement into px,py */
 {
-    int bwidth = BWIDTH - ss->length;
-    int bdepth = BDEPTH - ss->length;
-
     do {
-	ss->y = rnd(bdepth);
-	ss->x = rnd(bwidth);
 	ss->dir = rnd(2) ? E : S;
+	ss->x = rnd(BWIDTH - (ss->dir == E ? ss->length : 0));
+	ss->y = rnd(BDEPTH - (ss->dir == S ? ss->length : 0));
     } while
 	(!checkplace(b, ss, FALSE));
 }
@@ -1400,4 +1397,5 @@ int main(int argc, char *argv[])
 	(playagain());
     uninitgame(0);
     /*NOTREACHED*/
+    exit(0);
 }
