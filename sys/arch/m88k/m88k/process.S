@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.5 2004/08/02 08:34:21 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.6 2004/08/02 17:30:08 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -284,9 +284,8 @@ ENTRY(savectx)
 	/*
 	 * Save preserved general register set.
 	 */
-	NOP
 	st	r1,  r2,  PCB_PC		/* save return address */
-ASENTRY(__savectx)
+ASLOCAL(__savectx)
 	st	r14, r2,  PCB_R14
 	st	r15, r2,  PCB_R15
 	st	r16, r2,  PCB_R16
