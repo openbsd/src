@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.14 2004/03/23 18:20:03 hshoexer Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.15 2004/03/29 16:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -539,6 +539,7 @@ monitor_loop (int debugging)
 {
   pid_t pid;
   fd_set *fds;
+  size_t fdsn;
   int n, maxfd;
 
   if (!debugging)
@@ -546,7 +547,8 @@ monitor_loop (int debugging)
 
   maxfd = m_state.s + 1;
 
-  fds = (fd_set *)calloc (howmany (maxfd, NFDBITS), sizeof (fd_mask));
+  fdsn = howmany (maxfd, NFDBITS) * sizeof (fd_mask);
+  fds = (fd_set *)calloc (fdsn);
   if (!fds)
     {
       kill (m_state.pid, SIGTERM);
@@ -594,7 +596,7 @@ monitor_loop (int debugging)
 	  monitor_sighupped = 0;
 	}
 
-      FD_ZERO (fds);
+      memset (fds, 0, fdsn);
       FD_SET (m_state.s, fds);
 
       n = select (maxfd, fds, NULL, NULL, NULL);
