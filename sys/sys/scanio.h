@@ -1,4 +1,4 @@
-/*	$OpenBSD: scanio.h,v 1.6 1997/04/05 23:34:18 kstailey Exp $	*/
+/*	$OpenBSD: scanio.h,v 1.7 1997/04/15 10:51:33 tholo Exp $	*/
 /*	$NetBSD: scanio.h,v 1.1 1996/02/18 20:33:18 mycroft Exp $	*/
 
 /*
@@ -110,5 +110,6 @@ struct scan_io {
 #define EPSON_ES300C	12	/* epson es300c */
 #define GENERIC_SCSI2	13	/* good luck 8c{)] */
 #define ULTIMA_AC6000C	14	/* Ultima A6000C */
+#define ULTIMA_AT3	15	/* Ultima AT3 */
 
 #endif /* _SYS_SCANIO_H */

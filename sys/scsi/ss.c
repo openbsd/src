@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.32 1997/04/05 23:34:20 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.33 1997/04/15 10:51:36 tholo Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -141,6 +141,15 @@ void	get_buffer_status __P((struct ss_softc *, struct buf *));
  */
 
 struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
+	{{T_SCANNER, T_FIXED,
+	 "ULTIMA  ", "AT3     1.60    ", "    "}, {
+		 "Ultima AT3",
+		 SS_Q_HALFTONE |
+		 SS_Q_PADDING_TYPE,
+		 0, 0, 0, 0, { 3, 0 }, 0, 0,
+		 ULTIMA_AT3,
+		 NULL, NULL, NULL
+	 }},
 	{{T_SCANNER, T_FIXED,
 	 "ULTIMA  ", "A6000C PLUS     ", "    "}, {
 		 "Ultima A6000C",
