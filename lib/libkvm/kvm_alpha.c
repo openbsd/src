@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_alpha.c,v 1.6 2001/01/22 14:01:28 art Exp $	*/
+/*	$OpenBSD: kvm_alpha.c,v 1.7 2001/05/18 09:08:37 art Exp $	*/
 /*	$NetBSD: kvm_alpha.c,v 1.5 1996/10/01 21:12:05 cgd Exp $	*/
 
 /*
@@ -128,8 +128,7 @@ _kvm_kvatop(kd, va, pa)
 		/* Find and read the L1 PTE. */
 		pteoff = cpu_kh->lev1map_pa +
 		    l1pte_index(va) * sizeof(alpha_pt_entry_t);
-		if (lseek(kd->pmfd, _kvm_pa2off(kd, pteoff), 0) == -1 ||
-		    read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte)) {
+		if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)_kvm_pa2off(kd, pteoff)) != sizeof(pte)) {
 			_kvm_syserr(kd, 0, "could not read L1 PTE");
 			goto lose;
 		}
@@ -141,8 +140,7 @@ _kvm_kvatop(kd, va, pa)
 		}
 		pteoff = ALPHA_PTE_TO_PFN(pte) * cpu_kh->page_size +
 		    l2pte_index(va) * sizeof(alpha_pt_entry_t);
-		if (lseek(kd->pmfd, _kvm_pa2off(kd, pteoff), 0) == -1 ||
-		    read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte)) {
+		if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)_kvm_pa2off(kd, pteoff)) != sizeof(pte)) {
 			_kvm_syserr(kd, 0, "could not read L2 PTE");
 			goto lose;
 		}
@@ -154,8 +152,7 @@ _kvm_kvatop(kd, va, pa)
 		}
 		pteoff = ALPHA_PTE_TO_PFN(pte) * cpu_kh->page_size +
 		    l3pte_index(va) * sizeof(alpha_pt_entry_t);
-		if (lseek(kd->pmfd, _kvm_pa2off(kd, pteoff), 0) == -1 ||
-		    read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte)) {
+		if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)_kvm_pa2off(kd, pteoff)) != sizeof(pte)) {
 			_kvm_syserr(kd, 0, "could not read L3 PTE");
 			goto lose;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.6 2000/04/16 21:02:04 mickey Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.7 2001/05/18 09:08:37 art Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.6 2000/04/16 21:02:04 mickey Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.7 2001/05/18 09:08:37 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,24 +109,13 @@ _kvm_initvtop(kd)
 
 	vm->PTD = 0;
 
-	if (lseek(kd->pmfd, _kvm_pa2off(kd, nlist[0].n_value - KERNBASE),
-				SEEK_SET) == -1 && errno != 0) {
-		_kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid;
-	}
-	if (read(kd->pmfd, &pa, sizeof pa) != sizeof pa) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
+	if (_kvm_pread(kd, kd->pmfd, &pa, sizeof pa, (off_t)_kvm_pa2off(kd, nlist[0].n_value - KERNBASE)) != sizeof pa) {
 		goto invalid;
 	}
 
 	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
 
-	if (lseek(kd->pmfd, _kvm_pa2off(kd, pa), SEEK_SET) == -1 && errno != 0) {
-		_kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid;
-	}
-	if (read(kd->pmfd, vm->PTD, NBPG) != NBPG) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
+	if (_kvm_pread(kd, kd->pmfd, vm->PTD, NBPG, (off_t)_kvm_pa2off(kd, pa)) != NBPG) {
 		goto invalid;
 	}
 
@@ -175,13 +164,7 @@ _kvm_kvatop(kd, va, pa)
 	    (ptei(va) * sizeof(pt_entry_t));
 	/* XXX READ PHYSICAL XXX */
 	{
-		if (lseek(kd->pmfd, _kvm_pa2off(kd, pte_pa), SEEK_SET) == -1 &&
-		    errno != 0) {
-			_kvm_syserr(kd, kd->program, "kvm_lseek");
-			goto invalid;
-		}
-		if (read(kd->pmfd, &pte, sizeof pte) != sizeof pte) {
-			_kvm_syserr(kd, kd->program, "kvm_read");
+		if (_kvm_pread(kd, kd->pmfd, &pte, sizeof pte, (off_t)_kvm_pa2off(kd, pte_pa)) != sizeof pte) {
 			goto invalid;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.4 1996/05/10 12:58:33 deraadt Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.5 2001/05/18 09:08:38 art Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -101,3 +101,7 @@ off_t	 _kvm_pa2off __P((kvm_t *, u_long));
 void	*_kvm_realloc __P((kvm_t *kd, void *, size_t));
 void	 _kvm_syserr
 	    __P((kvm_t *kd, const char *program, const char *fmt, ...));
+ssize_t	_kvm_pread
+		__P((kvm_t *, int, void *, size_t, off_t));
+ssize_t	_kvm_pwrite
+		__P((kvm_t *, int, void *, size_t, off_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips.c,v 1.5 1998/08/31 18:02:21 pefo Exp $ */
+/*	$OpenBSD: kvm_mips.c,v 1.6 2001/05/18 09:08:38 art Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_mips.c,v 1.5 1998/08/31 18:02:21 pefo Exp $";
+static char *rcsid = "$OpenBSD: kvm_mips.c,v 1.6 2001/05/18 09:08:38 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -156,8 +156,7 @@ _kvm_kvatop(kd, va, pa)
 	 * Can't use KREAD to read kernel segment table entries.
 	 * Fortunately it is 1-to-1 mapped so we don't have to. 
 	 */
-	if (lseek(kd->pmfd, (off_t)addr, 0) < 0 ||
-	    read(kd->pmfd, (char *)&pte, sizeof(pte)) < 0)
+	if (_kvm_pread(kd, (kd->pmfd, (char *)&pte, sizeof(pte), (off_t)addr) < 0) 
 		goto invalid;
 	if (!(pte & PG_V))
 		goto invalid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_arm32.c,v 1.2 1997/02/26 16:46:29 niklas Exp $ */
+/*	$OpenBSD: kvm_arm32.c,v 1.3 2001/05/18 09:08:37 art Exp $ */
 /*	$NetBSD: kvm_arm32.c,v 1.2 1996/03/18 22:33:16 thorpej Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_arm32.c,v 1.2 1997/02/26 16:46:29 niklas Exp $";
+static char *rcsid = "$OpenBSD: kvm_arm32.c,v 1.3 2001/05/18 09:08:37 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -189,9 +189,7 @@ _kvm_uvatop(kd, p, va, pa)
 		goto invalid;
 
 	pteloc = (pt_entry_t *)(pde & PG_FRAME) + btop(va & PT_MASK);
-	if (lseek(kd->pmfd, (off_t)(u_long)pteloc, 0) != (off_t)(u_long)pteloc)
-		goto invalid;
-	if (read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte))
+	if (_kvm_pread(kd, (kd->pmfd, (char *)&pte, sizeof(pte), (off_t)(u_long)pteloc) != sizeof(pte))
 		goto invalid;
 	if (pte == 0)
 		goto invalid;

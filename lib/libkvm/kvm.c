@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.21 2001/05/17 21:03:55 miod Exp $ */
+/*	$OpenBSD: kvm.c,v 1.22 2001/05/18 09:08:36 art Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.21 2001/05/17 21:03:55 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.22 2001/05/18 09:08:36 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,8 +81,6 @@ static int	_kvm_get_header __P((kvm_t *));
 static kvm_t	*_kvm_open __P((kvm_t *, const char *, const char *,
 		    const char *, int, char *));
 static int	clear_gap __P((kvm_t *, FILE *, int));
-static off_t	Lseek __P((kvm_t *, int, off_t, int));
-static ssize_t	Read __P(( kvm_t *, int, void *, size_t));
 
 char *
 kvm_geterr(kd)
@@ -96,6 +94,56 @@ kvm_geterr(kd)
 #else
 #include <varargs.h>
 #endif
+
+/*
+ * Wrapper around pread.
+ */
+ssize_t
+#ifdef	__STDC__
+_kvm_pread(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
+#else
+_kvm_pread(kd, fd, buf, nbytes, offset)
+	kvm_t *kd;
+	int fd;
+	void *buf;
+	size_t nbytes;
+	off_t offset;
+#endif
+{
+ssize_t rval;
+
+	errno = 0;
+	rval = pread(fd, buf, nbytes, offset);
+	if (rval == -1 || errno != 0) {
+		_kvm_syserr(kd, kd->program, "pread");
+	}
+	return(rval);
+}
+
+/*
+ * Wrapper around pwrite.
+ */
+ssize_t
+#ifdef	__STDC__
+_kvm_pwrite(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
+#else
+_kvm_pwrite(kd, fd, buf, nbytes, offset)
+	kvm_t *kd;
+	int fd;
+	void *buf;
+	size_t nbytes;
+	off_t offset;
+#endif
+{
+ssize_t rval;
+
+	errno = 0;
+	rval = pwrite(fd, buf, nbytes, offset);
+	if (rval == -1 || errno != 0) {
+		_kvm_syserr(kd, kd->program, "pwrite");
+	}
+	return(rval);
+}
 
 /*
  * Report an error using printf style arguments.  "program" is kd->program
@@ -174,42 +222,6 @@ _kvm_malloc(kd, n)
 	if ((p = malloc(n)) == NULL)
 		_kvm_err(kd, kd->program, "%s", strerror(errno));
 	return (p);
-}
-
-/*
- * Wrappers for Lseek/Read system calls.  They check for errors and
- * call _kvm_syserr() if appropriate.
- */
-static off_t
-Lseek(kd, fd, offset, whence)
-	kvm_t	*kd;
-	int	fd, whence;
-	off_t	offset;
-{
-	off_t	off;
-
-	errno = 0;
-	if ((off = lseek(fd, offset, whence)) == -1 && errno != 0) {
-		_kvm_syserr(kd, kd->program, "Lseek");
-		return (-1);
-	}
-	return (off);
-}
-
-static ssize_t
-Read(kd, fd, buf, nbytes)
-	kvm_t	*kd;
-	int	fd;
-	void	*buf;
-	size_t	nbytes;
-{
-	ssize_t	rv;
-
-	errno = 0;
-
-	if ((rv = read(fd, buf, nbytes)) != nbytes && errno != 0)
-		_kvm_syserr(kd, kd->program, "Read");
-	return (rv);
 }
 
 static kvm_t *
@@ -359,11 +371,10 @@ _kvm_get_header(kd)
 	/*
 	 * Read the kcore_hdr_t
 	 */
-	if (Lseek(kd, kd->pmfd, (off_t)0, SEEK_SET) == -1)
+	sz = _kvm_pread(kd, kd->pmfd, &kcore_hdr, sizeof(kcore_hdr), (off_t)0);
+	if (sz != sizeof(kcore_hdr)) {
 		return (-1);
-	sz = Read(kd, kd->pmfd, &kcore_hdr, sizeof(kcore_hdr));
-	if (sz != sizeof(kcore_hdr))
-		return (-1);
+	}
 
 	/*
 	 * Currently, we only support dump-files made by the current
@@ -393,11 +404,11 @@ _kvm_get_header(kd)
 	/*
 	 * Read the CPU segment header
 	 */
-	if (Lseek(kd, kd->pmfd, (off_t)offset, SEEK_SET) == -1)
+	sz = _kvm_pread(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr), (off_t)offset);
+	if (sz != sizeof(cpu_hdr)) {
 		goto fail;
-	sz = Read(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr));
-	if (sz != sizeof(cpu_hdr))
-		goto fail;
+	}
+	
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORESEG_MAGIC) ||
 	    (CORE_GETFLAG(cpu_hdr) != CORE_CPU))
 		goto fail;
@@ -410,21 +421,22 @@ _kvm_get_header(kd)
 	kd->cpu_data = _kvm_malloc(kd, cpu_hdr.c_size);
 	if (kd->cpu_data == NULL)
 		goto fail;
-	if (Lseek(kd, kd->pmfd, (off_t)offset, SEEK_SET) == -1)
+
+	sz = _kvm_pread(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size, (off_t)offset);
+	if (sz != cpu_hdr.c_size) {
 		goto fail;
-	sz = Read(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size);
-	if (sz != cpu_hdr.c_size)
-		goto fail;
+	}
+
 	offset += cpu_hdr.c_size;
 
 	/*
 	 * Read the next segment header: data segment
 	 */
-	if (Lseek(kd, kd->pmfd, (off_t)offset, SEEK_SET) == -1)
+	sz = _kvm_pread(kd, kd->pmfd, &mem_hdr, sizeof(mem_hdr), (off_t)offset);
+	if (sz != sizeof(mem_hdr)) {
 		goto fail;
-	sz = Read(kd, kd->pmfd, &mem_hdr, sizeof(mem_hdr));
-	if (sz != sizeof(mem_hdr))
-		goto fail;
+	}
+
 	offset += kcore_hdr.c_seghdrsize;
 
 	if ((CORE_GETMAGIC(mem_hdr) != KCORESEG_MAGIC) ||
@@ -475,11 +487,10 @@ off_t	dump_off;
 	/*
 	 * Validate new format crash dump
 	 */
-	if (Lseek(kd, kd->pmfd, dump_off, SEEK_SET) == -1)
+	sz = _kvm_pread(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr), (off_t)dump_off);
+	if (sz != sizeof(cpu_hdr)) {
 		return (-1);
-	sz = Read(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr));
-	if (sz != sizeof(cpu_hdr))
-		return (-1);
+	}
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
 		|| (CORE_GETMID(cpu_hdr) != MID_MACHINE)) {
 		_kvm_err(kd, 0, "invalid magic in cpu_hdr");
@@ -494,9 +505,8 @@ off_t	dump_off;
 	kd->cpu_data = _kvm_malloc(kd, kd->cpu_dsize);
 	if (kd->cpu_data == NULL)
 		goto fail;
-	if (Lseek(kd, kd->pmfd, dump_off+hdr_size, SEEK_SET) == -1)
-		goto fail;
-	sz = Read(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size);
+
+	sz = _kvm_pread(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size, (off_t)dump_off+hdr_size);
 	if (sz != cpu_hdr.c_size) {
 		_kvm_err(kd, 0, "invalid size in cpu_hdr");
 		goto fail;
@@ -507,8 +517,9 @@ off_t	dump_off;
 	 * Leave phys mem pointer at beginning of memory data
 	 */
 	kd->dump_off = dump_off + hdr_size;
-	if (Lseek(kd, kd->pmfd, kd->dump_off, SEEK_SET) == -1) {
-		_kvm_err(kd, 0, "invalid dump offset");
+	errno = 0;
+	if (lseek(kd->pmfd, kd->dump_off, SEEK_SET) != kd->dump_off && errno != 0) {
+		_kvm_err(kd, 0, "invalid dump offset - lseek");
 		goto fail;
 	}
 
@@ -871,15 +882,9 @@ kvm_t	*kd;
 	if (_kvm_kvatop(kd, (u_long)nlist[0].n_value, &pa) == 0)
 		return (-1);
 
-	errno = 0;
-	if (lseek(kd->pmfd, _kvm_pa2off(kd, pa), SEEK_SET) == -1
-		&& errno != 0) {
-		_kvm_err(kd, 0, "cannot invalidate dump - lseek");
-		return (-1);
-	}
 	pa = 0;
-	if (write(kd->pmfd, &pa, sizeof(pa)) != sizeof(pa)) {
-		_kvm_err(kd, 0, "cannot invalidate dump - write");
+	if (_kvm_pwrite(kd, kd->pmfd, &pa, sizeof(pa), (off_t)_kvm_pa2off(kd, pa)) != sizeof(pa)) {
+		_kvm_err(kd, 0, "cannot invalidate dump");
 		return (-1);
 	}
 	return (0);
@@ -900,15 +905,9 @@ kvm_read(kd, kva, buf, len)
 		 * We're using /dev/kmem.  Just read straight from the
 		 * device and let the active kernel do the address translation.
 		 */
-		errno = 0;
-		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
-			&& errno != 0) {
-			_kvm_err(kd, 0, "invalid address (%lx)", kva);
-			return (-1);
-		}
-		cc = read(kd->vmfd, buf, len);
+		cc = _kvm_pread(kd, kd->vmfd, buf, len, (off_t)kva);
 		if (cc < 0) {
-			_kvm_syserr(kd, 0, "kvm_read");
+			_kvm_err(kd, 0, "invalid address (%lx)", kva);
 			return (-1);
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short read");
@@ -921,7 +920,6 @@ kvm_read(kd, kva, buf, len)
 		cp = buf;
 		while (len > 0) {
 			u_long	pa;
-			off_t	foff;
 		
 			/* In case of error, _kvm_kvatop sets the err string */
 			cc = _kvm_kvatop(kd, kva, &pa);
@@ -929,16 +927,9 @@ kvm_read(kd, kva, buf, len)
 				return (-1);
 			if (cc > len)
 				cc = len;
-			foff = _kvm_pa2off(kd, pa);
-			errno = 0;
-			if (lseek(kd->pmfd, foff, SEEK_SET) == -1
-				&& errno != 0) {
-				_kvm_syserr(kd, 0, _PATH_MEM);
-				break;
-			}
-			cc = read(kd->pmfd, cp, cc);
+			cc = _kvm_pread(kd, kd->pmfd, cp, cc, (off_t)_kvm_pa2off(kd, pa));
 			if (cc < 0) {
-				_kvm_syserr(kd, kd->program, "kvm_read");
+				_kvm_syserr(kd, 0, _PATH_MEM);
 				break;
 			}
 			/*
@@ -971,15 +962,9 @@ kvm_write(kd, kva, buf, len)
 		/*
 		 * Just like kvm_read, only we write.
 		 */
-		errno = 0;
-		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
-			&& errno != 0) {
-			_kvm_err(kd, 0, "invalid address (%lx)", kva);
-			return (-1);
-		}
-		cc = write(kd->vmfd, buf, len);
+		cc = _kvm_pwrite(kd, kd->vmfd, (void*)buf, (size_t)len, (off_t)kva);
 		if (cc < 0) {
-			_kvm_syserr(kd, 0, "kvm_write");
+			_kvm_err(kd, 0, "invalid address (%lx)", kva);
 			return (-1);
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short write");

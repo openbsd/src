@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.6 2000/06/18 17:59:54 niklas Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.7 2001/05/18 09:08:38 art Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.6 2000/06/18 17:59:54 niklas Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.7 2001/05/18 09:08:38 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -222,19 +222,13 @@ _kvm_uread(kd, p, va, cnt)
 		if (KREAD(kd, addr, &pg))
 			return NULL;
 
-		if (lseek(kd->pmfd, pg.phys_addr, SEEK_SET) < 0)
+		if (_kvm_pread(kd, kd->pmfd, (void *)kd->swapspc, (size_t)kd->nbpg, (off_t)pg.phys_addr) != kd->nbpg) {
 			return NULL;
-
-		if (read(kd->pmfd, (void *)kd->swapspc, (size_t)kd->nbpg)
-		    != kd->nbpg)
-			return NULL;
+		}
 	} else {
-		if (lseek(kd->swfd, (off_t)(anon.an_swslot * kd->nbpg),
-			  SEEK_SET) < 0)
+		if (_kvm_pread(kd, kd->swfd, (void *)kd->swapspc, (size_t)kd->nbpg, (off_t)(anon.an_swslot * kd->nbpg)) != kd->nbpg) {
 			return NULL;
-		if (read(kd->swfd, (void *)kd->swapspc, (size_t)kd->nbpg)
-		    != kd->nbpg)
-			return NULL;
+		}
 	}
  
 #else
@@ -334,10 +328,9 @@ _kvm_readfromcore(kd, object, offset)
 
 	seekpoint = mem.phys_addr;
 
-	if (lseek(kd->pmfd, seekpoint, 0) == -1)
+	if (_kvm_pread(kd, kd->pmfd, kd->swapspc, kd->nbpg, (off_t)seekpoint) != kd->nbpg) {
 		return (-1);
-	if (read(kd->pmfd, kd->swapspc, kd->nbpg) != kd->nbpg)
-		return (-1);
+	}
 
 	return (1);
 }
@@ -413,10 +406,9 @@ _kvm_readfrompager(kd, vmop, offset)
 	/* Calculate the physical address and read the page. */
 	seekpoint = dbtob(swb.swb_block) + (offset & ~(kd->nbpg -1));
 
-	if (lseek(kd->swfd, seekpoint, 0) == -1)
+	if (_kvm_pread(kd, kd->swfd, kd->swapspc, kd->nbpg, (off_t)seekpoint) != kd->nbpg) {
 		return (-1);
-	if (read(kd->swfd, kd->swapspc, kd->nbpg) != kd->nbpg)
-		return (-1);
+	}
 
 	return (1);
 }

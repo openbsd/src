@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.5 1997/02/26 16:46:31 niklas Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.6 2001/05/18 09:08:37 art Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.5 1997/02/26 16:46:31 niklas Exp $";
+static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.6 2001/05/18 09:08:37 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,8 +133,7 @@ _kvm_vatop(kd, sta, va, pa)
 		 * Fortunately it is 1-to-1 mapped so we don't have to. 
 		 */
 		if (sta == cpu_kh->sysseg_pa) {
-			if (lseek(kd->pmfd, _kvm_pa2off(kd, addr), 0) == -1 ||
-			    read(kd->pmfd, (char *)&ste, sizeof(ste)) < 0)
+			if (_kvm_pread(kd, (kd->pmfd, (char *)&ste, sizeof(ste), (off_t)_kvm_pa2off(kd, addr)) < 0)
 				goto invalid;
 		} else if (KREAD(kd, addr, &ste))
 			goto invalid;
@@ -149,8 +148,7 @@ _kvm_vatop(kd, sta, va, pa)
 		 * Address from level 1 STE is a physical address,
 		 * so don't use kvm_read.
 		 */
-		if (lseek(kd->pmfd, _kvm_pa2off(kd, addr), 0) == -1 || 
-		    read(kd->pmfd, (char *)&ste, sizeof(ste)) < 0)
+		if (_kvm_pread(kd, kd->pmfd, (char *)&ste, sizeof(ste), (off_t)_kvm_pa2off(kd, addr)) < 0)
 			goto invalid;
 		if ((ste & SG_V) == 0) {
 			_kvm_err(kd, 0, "invalid level 2 descriptor (%x)",
@@ -166,8 +164,7 @@ _kvm_vatop(kd, sta, va, pa)
 		 * Fortunately it is 1-to-1 mapped so we don't have to. 
 		 */
 		if (sta == cpu_kh->sysseg_pa) {
-			if (lseek(kd->pmfd, _kvm_pa2off(kd, addr), 0) == -1 ||
-			    read(kd->pmfd, (char *)&ste, sizeof(ste)) < 0)
+			if (_kvm_pread(kd, kd->pmfd, (char *)&ste, sizeof(ste), (off_t)_kvm_pa2off(kd, addr)) < 0)
 				goto invalid;
 		} else if (KREAD(kd, addr, &ste))
 			goto invalid;
@@ -181,8 +178,7 @@ _kvm_vatop(kd, sta, va, pa)
 	/*
 	 * Address from STE is a physical address so don't use kvm_read.
 	 */
-	if (lseek(kd->pmfd, _kvm_pa2off(kd, addr), 0) == -1 || 
-	    read(kd->pmfd, (char *)&pte, sizeof(pte)) < 0)
+	if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)_kvm_pa2off(kd, addr)) < 0)
 		goto invalid;
 	addr = pte & PG_FRAME;
 	if (pte == PG_NV) {
