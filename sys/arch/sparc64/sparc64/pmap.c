@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2003/05/10 00:35:42 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2003/05/11 22:05:49 jason Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -281,7 +281,7 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 
 struct pmap kernel_pmap_;
 
-int physmem;
+extern int physmem;
 /*
  * Virtual and physical addresses of the start and end of kernel text
  * and data segments.
