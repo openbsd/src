@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.19 2001/06/27 04:29:21 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.20 2001/06/27 20:47:46 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -311,7 +311,7 @@ print_status(struct pf_status *s)
 		printf("Bytes In: %llu  Bytes Out: %llu\n", 
 		    s->bcounters[PF_IN], s->bcounters[PF_OUT]);
 		printf("Inbound Packets: Passed: %llu Dropped: %llu\n", 
-		    s->pcounters[PF_IN][PF_DROP], 
+		    s->pcounters[PF_IN][PF_PASS], 
 		    s->pcounters[PF_IN][PF_DROP]);
 		printf("Outbound Packets: Passed: %llu Dropped: %llu\n", 
 		    s->pcounters[PF_OUT][PF_PASS], 
