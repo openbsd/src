@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.48 2002/06/18 00:32:59 fgsch Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -205,7 +205,7 @@ target(all, apci, 0)dnl
 target(all, ppi, 0)dnl
 target(all, view0, 0, 1, 2, 3, 4, 5)dnl
 target(all, local)dnl
-target(all, gpr)dnl
+target(all, gpr, 0)dnl
 dnl
 _mkdev(all, {-all-}, {-dnl
 show_target(all)dnl
@@ -1123,8 +1123,8 @@ __devitem(adb, adb, Apple Desktop bus event interface)dnl
 _mkdev(adb, adb, {-M adb c major_adb_c 0-})dnl
 __devitem(pdc, pdc, PDC device)dnl
 _mkdev(local, local, {-test -s $T.local && sh $T.local-}, 666)dnl
-__devitem(gpr, gpr, gpr400 pcmcia device)dnl
-_mkdev(gpr, gpr, {-M gpr c major_gpr_c 0-})dnl
+__devitem(gpr, gpr*, gpr400 pcmcia device)dnl
+_mcdev(gpr, gpr*, gpr, {-major_gpr_c-})dnl
 dnl
 divert(1)dnl
 include(etc.MACHINE/MAKEDEV.md)dnl
