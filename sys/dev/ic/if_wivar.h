@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.2 2001/06/07 05:07:27 mickey Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.3 2001/06/09 20:17:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -55,6 +55,7 @@ struct wi_softc	{
 	u_int16_t		wi_create_ibss;
 	u_int16_t		wi_channel;
 	u_int16_t		wi_pm_enabled;
+	u_int16_t		wi_mor_enabled;
 	u_int16_t		wi_max_sleep;
 	u_int16_t		wi_authtype;
 	u_int16_t		wi_roaming;

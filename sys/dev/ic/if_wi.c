@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.6 2001/06/09 03:45:15 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.7 2001/06/09 20:17:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.6 2001/06/09 03:45:15 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.7 2001/06/09 20:17:22 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -227,7 +227,7 @@ wi_attach(sc)
 	gen.wi_type = WI_RID_OWN_CHNL;
 	gen.wi_len = 2;
 	wi_read_record(sc, &gen);
-	sc->wi_channel = gen.wi_val;
+	sc->wi_channel = letoh16(gen.wi_val);
 
 	/*
 	 * Find out if we support WEP on this card.
@@ -235,7 +235,7 @@ wi_attach(sc)
 	gen.wi_type = WI_RID_WEP_AVAIL;
 	gen.wi_len = 2;
 	wi_read_record(sc, &gen);
-	sc->wi_has_wep = gen.wi_val;
+	sc->wi_has_wep = letoh16(gen.wi_val);
 	timeout_set(&sc->sc_timo, wi_inquire, sc);
 
 	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
@@ -345,7 +345,7 @@ wi_rxeof(sc)
 		return;
 	}
 
-	if (rx_frame.wi_status & WI_STAT_ERRSTAT) {
+	if (rx_frame.wi_status & htole16(WI_STAT_ERRSTAT)) {
 		ifp->if_ierrors++;
 		return;
 	}
@@ -365,20 +365,20 @@ wi_rxeof(sc)
 	eh = mtod(m, struct ether_header *);
 	m->m_pkthdr.rcvif = ifp;
 
-	if (rx_frame.wi_status == WI_STAT_1042 ||
-	    rx_frame.wi_status == WI_STAT_TUNNEL ||
-	    rx_frame.wi_status == WI_STAT_WMP_MSG) {
-		if((rx_frame.wi_dat_len + WI_SNAPHDR_LEN) > MCLBYTES) {
+	if (rx_frame.wi_status == htole16(WI_STAT_1042) ||
+	    rx_frame.wi_status == htole16(WI_STAT_TUNNEL) ||
+	    rx_frame.wi_status == htole16(WI_STAT_WMP_MSG)) {
+		if ((letoh16(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN) > MCLBYTES) {
 			printf(WI_PRT_FMT ": oversized packet received "
 			    "(wi_dat_len=%d, wi_status=0x%x)\n",
-			    WI_PRT_ARG(sc), rx_frame.wi_dat_len,
-			    rx_frame.wi_status);
+			    WI_PRT_ARG(sc), letoh16(rx_frame.wi_dat_len),
+			    letoh16(rx_frame.wi_status));
 			m_freem(m);
 			ifp->if_ierrors++;
 			return;
 		}
 		m->m_pkthdr.len = m->m_len =
-		    rx_frame.wi_dat_len + WI_SNAPHDR_LEN;
+		    letoh16(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN;
 
 		bcopy((char *)&rx_frame.wi_addr1,
 		    (char *)&eh->ether_dhost, ETHER_ADDR_LEN);
@@ -395,18 +395,18 @@ wi_rxeof(sc)
 			return;
 		}
 	} else {
-		if((rx_frame.wi_dat_len +
+		if ((letoh16(rx_frame.wi_dat_len) +
 		    sizeof(struct ether_header)) > MCLBYTES) {
 			printf(WI_PRT_FMT ": oversized packet received "
 			    "(wi_dat_len=%d, wi_status=0x%x)\n",
-			    WI_PRT_ARG(sc), rx_frame.wi_dat_len,
-			    rx_frame.wi_status);
+			    WI_PRT_ARG(sc), letoh16(rx_frame.wi_dat_len),
+			    letoh16(rx_frame.wi_status));
 			m_freem(m);
 			ifp->if_ierrors++;
 			return;
 		}
 		m->m_pkthdr.len = m->m_len =
-		    rx_frame.wi_dat_len + sizeof(struct ether_header);
+		    letoh16(rx_frame.wi_dat_len) + sizeof(struct ether_header);
 
 		if (wi_read_data(sc, id, WI_802_3_OFFSET,
 		    mtod(m, caddr_t), m->m_len + 2)) {
@@ -486,7 +486,7 @@ wi_update_stats(sc)
 	u_int16_t		id;
 	struct ifnet		*ifp;
 	u_int32_t		*ptr;
-	int			i;
+	int			len, i;
 	u_int16_t		t;
 
 	ifp = &sc->arpcom.ac_if;
@@ -495,13 +495,16 @@ wi_update_stats(sc)
 
 	wi_read_data(sc, id, 0, (char *)&gen, 4);
 
-	if (gen.wi_type != WI_INFO_COUNTERS ||
-	    gen.wi_len > (sizeof(sc->wi_stats) / 4) + 1)
+	if (gen.wi_type != WI_INFO_COUNTERS)
 		return;
+
+	/* Some card versions have a larger stats structure */
+	len = (gen.wi_len - 1 < sizeof(sc->wi_stats) / 4) ?
+	    gen.wi_len - 1 : sizeof(sc->wi_stats) / 4;
 
 	ptr = (u_int32_t *)&sc->wi_stats;
 
-	for (i = 0; i < gen.wi_len - 1; i++) {
+	for (i = 0; i < len; i++) {
 		t = CSR_READ_2(sc, WI_DATA1);
 #ifdef WI_HERMES_STATS_WAR
 		if (t > 0xF000)
@@ -628,30 +631,40 @@ wi_read_record(sc, ltv)
 		ptr[i] = CSR_READ_2(sc, WI_DATA1);
 
 	if (sc->sc_prism2) {
+		int v;
+
 		switch (oltv->wi_type) {
 		case WI_RID_TX_RATE:
 		case WI_RID_CUR_TX_RATE:
-			switch (ltv->wi_val) {
-			case 1: oltv->wi_val = 1; break;
-			case 2: oltv->wi_val = 2; break;
-			case 3:	oltv->wi_val = 6; break;
-			case 4: oltv->wi_val = 5; break;
-			case 7: oltv->wi_val = 7; break;
-			case 8: oltv->wi_val = 11; break;
-			case 15: oltv->wi_val = 3; break;
-			default: oltv->wi_val = 0x100 + ltv->wi_val; break;
+			switch (letoh16(ltv->wi_val)) {
+			case 1: v = 1; break;
+			case 2: v = 2; break;
+			case 3:	v = 6; break;
+			case 4: v = 5; break;
+			case 7: v = 7; break;
+			case 8: v = 11; break;
+			case 15: v = 3; break;
+			default: v = 0x100 + letoh16(ltv->wi_val); break;
 			}
+			oltv->wi_val = htole16(v);
 			break;
 		case WI_RID_ENCRYPTION:
 			oltv->wi_len = 2;
-			if (ltv->wi_val & 0x01)
-				oltv->wi_val = 1;
+			if (ltv->wi_val & htole16(0x01))
+				oltv->wi_val = htole16(1);
 			else
-				oltv->wi_val = 0;
+				oltv->wi_val = htole16(0);
 			break;
 		case WI_RID_TX_CRYPT_KEY:
 			oltv->wi_len = 2;
 			oltv->wi_val = ltv->wi_val;
+			break;
+		case WI_RID_AUTH_CNTL:
+			oltv->wi_len = 2;
+			if (ltv->wi_val & htole16(0x01))
+				oltv->wi_val = htole16(1);
+			else if (ltv->wi_val & htole16(0x02))
+				oltv->wi_val = htole16(2);
 			break;
 		}
 	}
@@ -672,27 +685,32 @@ wi_write_record(sc, ltv)
 	struct wi_ltv_gen	p2ltv;
 
 	if (sc->sc_prism2) {
+		int v;
+
 		switch (ltv->wi_type) {
 		case WI_RID_TX_RATE:
-			switch (ltv->wi_val) {
-			case 1: p2ltv.wi_val = 1; break;
-			case 2: p2ltv.wi_val = 2; break;
-			case 3:	p2ltv.wi_val = 15; break;
-			case 5: p2ltv.wi_val = 4; break;
-			case 6: p2ltv.wi_val = 3; break;
-			case 7: p2ltv.wi_val = 7; break;
-			case 11: p2ltv.wi_val = 8; break;
+			p2ltv.wi_type = WI_RID_TX_RATE;
+			p2ltv.wi_len = 2;
+			switch (letoh16(ltv->wi_val)) {
+			case 1: v = 1; break;
+			case 2: v = 2; break;
+			case 3:	v = 15; break;
+			case 5: v = 4; break;
+			case 6: v = 3; break;
+			case 7: v = 7; break;
+			case 11: v = 8; break;
 			default: return EINVAL;
 			}
+			p2ltv.wi_val = htole16(v);
 			ltv = &p2ltv;
 			break;
 		case WI_RID_ENCRYPTION:
 			p2ltv.wi_type = WI_RID_P2_ENCRYPTION;
 			p2ltv.wi_len = 2;
-			if (ltv->wi_val & 0x01)
-				p2ltv.wi_val = 0x03;
+			if (ltv->wi_val & htole16(0x01))
+				p2ltv.wi_val = htole16(0x03);
 			else
-				p2ltv.wi_val = 0x90;
+				p2ltv.wi_val = htole16(0x90);
 			ltv = &p2ltv;
 			break;
 		case WI_RID_TX_CRYPT_KEY:
@@ -718,6 +736,15 @@ wi_write_record(sc, ltv)
 				}
 			}
 			return (0);
+		case WI_RID_AUTH_CNTL:
+			p2ltv.wi_type = WI_RID_AUTH_CNTL;
+			p2ltv.wi_len = 2;
+			if (ltv->wi_val == htole16(1))
+				p2ltv.wi_val = htole16(0x01);
+			else if (ltv->wi_val == htole16(2))
+				p2ltv.wi_val = htole16(0x02);
+			ltv = &p2ltv;
+			break;
 		}
 	}
 
@@ -945,25 +972,25 @@ wi_setdef(sc, wreq)
 		    ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
-		sc->wi_ptype = wreq->wi_val[0];
+		sc->wi_ptype = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_TX_RATE:
-		sc->wi_tx_rate = wreq->wi_val[0];
+		sc->wi_tx_rate = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_MAX_DATALEN:
-		sc->wi_max_data_len = wreq->wi_val[0];
+		sc->wi_max_data_len = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_RTS_THRESH:
-		sc->wi_rts_thresh = wreq->wi_val[0];
+		sc->wi_rts_thresh = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_SYSTEM_SCALE:
-		sc->wi_ap_density = wreq->wi_val[0];
+		sc->wi_ap_density = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_CREATE_IBSS:
-		sc->wi_create_ibss = wreq->wi_val[0];
+		sc->wi_create_ibss = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_OWN_CHNL:
-		sc->wi_channel = wreq->wi_val[0];
+		sc->wi_channel = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_NODENAME:
 		bzero(sc->wi_node_name, sizeof(sc->wi_node_name));
@@ -978,10 +1005,13 @@ wi_setdef(sc, wreq)
 		bcopy((char *)&wreq->wi_val[1], sc->wi_ibss_name, 30);
 		break;
 	case WI_RID_PM_ENABLED:
-		sc->wi_pm_enabled = wreq->wi_val[0];
+		sc->wi_pm_enabled = letoh16(wreq->wi_val[0]);
+		break;
+	case WI_RID_MICROWAVE_OVEN:
+		sc->wi_mor_enabled = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_MAX_SLEEP:
-		sc->wi_max_sleep = wreq->wi_val[0];
+		sc->wi_max_sleep = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_AUTH_CNTL:
 		sc->wi_authtype = letoh16(wreq->wi_val[0]);
@@ -993,7 +1023,7 @@ wi_setdef(sc, wreq)
 		sc->wi_use_wep = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_TX_CRYPT_KEY:
-		sc->wi_tx_key = wreq->wi_val[0];
+		sc->wi_tx_key = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		bcopy((char *)wreq, (char *)&sc->wi_keys,
@@ -1104,6 +1134,7 @@ wi_ioctl(ifp, command, data)
 		if (error)
 			break;
 		if (wreq.wi_type == WI_RID_IFACE_STATS) {
+			/* XXX native byte order */
 			bcopy((char *)&sc->wi_stats, (char *)&wreq.wi_val,
 			    sizeof(sc->wi_stats));
 			wreq.wi_len = (sizeof(sc->wi_stats) / 2) + 1;
@@ -1148,7 +1179,6 @@ wi_ioctl(ifp, command, data)
 	}
 
 	splx(s);
-
 	return(error);
 }
 
@@ -1220,6 +1250,13 @@ wi_init(xsc)
 	   (char *)&mac.wi_mac_addr, ETHER_ADDR_LEN);
 	wi_write_record(sc, (struct wi_ltv_gen *)&mac);
 
+	/* Initialize promisc mode. */
+	if (ifp->if_flags & IFF_PROMISC) {
+		WI_SETVAL(WI_RID_PROMISC, 1);
+	} else {
+		WI_SETVAL(WI_RID_PROMISC, 0);
+	}
+
 	/* Configure WEP. */
 	if (sc->wi_has_wep) {
 		WI_SETVAL(WI_RID_ENCRYPTION, sc->wi_use_wep);
@@ -1229,10 +1266,10 @@ wi_init(xsc)
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
 		if (sc->sc_prism2 && sc->wi_use_wep) {
 			/*
-			 * Prism2 Firmware version less than 0.8 variant3
-			 *   If promiscuous mode disable, Prism2 chip
-			 *  does not work with WEP .
-			 * It is under investigation for details.
+			 * For Prism2 Firmware version less than 0.8 variant3.
+			 * If promiscuous mode is disabled, the Prism2 chip
+			 * does not work with WEP .
+			 * I'm currently investigating the details of this.
 			 * (ichiro@netbsd.org)
 			 */
 			 if (sc->sc_prism2_ver < 83 ) {
@@ -1243,18 +1280,11 @@ wi_init(xsc)
 		}
 	}
 
-	/* Initialize promisc mode. */
-	if (ifp->if_flags & IFF_PROMISC) {
-		WI_SETVAL(WI_RID_PROMISC, 1);
-	} else {
-		WI_SETVAL(WI_RID_PROMISC, 0);
-	}
-
 	/* Set multicast filter. */
 	wi_setmulti(sc);
 
 	/* Enable desired port */
-	wi_cmd(sc, WI_CMD_ENABLE|sc->wi_portnum, 0);
+	wi_cmd(sc, WI_CMD_ENABLE | sc->wi_portnum, 0);
 
 	if (wi_alloc_nicmem(sc, 1518 + sizeof(struct wi_frame) + 8, &id))
 		printf(WI_PRT_FMT ": tx buffer allocation failed\n",
@@ -1324,8 +1354,8 @@ wi_start(ifp)
 		bcopy((char *)&eh->ether_shost,
 		    (char *)&tx_frame.wi_src_addr, ETHER_ADDR_LEN);
 
-		tx_frame.wi_dat_len = m0->m_pkthdr.len - WI_SNAPHDR_LEN;
-		tx_frame.wi_frame_ctl = WI_FTYPE_DATA;
+		tx_frame.wi_dat_len = htole16(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
+		tx_frame.wi_frame_ctl = htole16(WI_FTYPE_DATA);
 		tx_frame.wi_dat[0] = htons(WI_SNAP_WORD0);
 		tx_frame.wi_dat[1] = htons(WI_SNAP_WORD1);
 		tx_frame.wi_len = htons(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
@@ -1340,7 +1370,7 @@ wi_start(ifp)
 		wi_write_data(sc, id, WI_802_11_OFFSET, (caddr_t)&sc->wi_txbuf,
 		    (m0->m_pkthdr.len - sizeof(struct ether_header)) + 2);
 	} else {
-		tx_frame.wi_dat_len = m0->m_pkthdr.len;
+		tx_frame.wi_dat_len = htole16(m0->m_pkthdr.len);
 
 		m_copydata(m0, 0, m0->m_pkthdr.len, (caddr_t)&sc->wi_txbuf);
 
@@ -1397,7 +1427,7 @@ wi_mgmt_xmit(sc, data, len)
 	bcopy((char *)hdr, (char *)&tx_frame.wi_frame_ctl,
 	   sizeof(struct wi_80211_hdr));
 
-	tx_frame.wi_dat_len = len - WI_SNAPHDR_LEN;
+	tx_frame.wi_dat_len = htole16(len - WI_SNAPHDR_LEN);
 	tx_frame.wi_len = htons(len - WI_SNAPHDR_LEN);
 
 	wi_write_data(sc, id, 0, (caddr_t)&tx_frame, sizeof(struct wi_frame));
@@ -1431,6 +1461,7 @@ wi_stop(sc)
 	timeout_del(&sc->sc_timo);
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_timer = 0;
 
 	return;
 }
