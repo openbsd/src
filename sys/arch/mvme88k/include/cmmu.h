@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.9 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.10 2001/12/22 09:49:39 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -27,6 +27,8 @@
 
 #ifndef	_MACHINE_CMMU_H_
 #define	_MACHINE_CMMU_H_
+
+#include <machine/mmu.h>
 
 /* Area Description */
 #define AREA_D_WT	0x00000200	/* write through */
@@ -58,70 +60,106 @@ extern unsigned cpu_sets[MAX_CPUS];
 extern int cpu_cmmu_ratio;
 extern unsigned number_cpus, master_cpu;
 extern unsigned cache_policy;
+extern unsigned number_cpus;
+extern unsigned master_cpu;
 extern int max_cpus, max_cmmus;
 
-#ifdef CMMU_DEBUG
-void show_apr(unsigned value);
-void show_sctr(unsigned value);
-#endif
-
-#ifdef DDB
-void cmmu_show_translation(unsigned, unsigned, unsigned, int);
-void cmmu_cache_state(unsigned, unsigned);
-void show_cmmu_info(unsigned);
-#endif 
-
 /*
- * Prototypes from "mvme88k/mvme88k/cmmu.c"
+ * This lock protects the cmmu SAR and SCR's; other ports 
+ * can be accessed without locking it 
+ *
+ * May be used from "db_interface.c".
  */
+extern struct simplelock cmmu_cpu_lock;
 
-unsigned cmmu_cpu_number(void);
-unsigned cmmu_remote_get(unsigned cpu, unsigned r, unsigned data);
-unsigned cmmu_get_idr(unsigned data);
-void cmmu_init(void);
-void cmmu_shutdown_now(void);
-void cmmu_parity_enable(void);
-void setup_board_config(void);
-void setup_cmmu_config(void);
-void cmmu_dump_config(void);
-unsigned cmmu_get_by_mode(int cpu, int mode);
-void cpu_configuration_print(int master);
-void dma_cachectl(vm_offset_t va, int size, int op);
-void cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x);
-void cmmu_set_sapr(unsigned ap);
-void cmmu_remote_set_sapr(unsigned cpu, unsigned ap);
-void cmmu_set_uapr(unsigned ap);
-void cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size);
-void cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size);
-void cmmu_flush_cache(vm_offset_t physaddr, int size);
-void cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size);
-void cmmu_flush_inst_cache(vm_offset_t physaddr, int size);
-void cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size);
-void cmmu_flush_data_cache(vm_offset_t physaddr, int size);
+#define CMMU_LOCK   simple_lock(&cmmu_cpu_lock)
+#define CMMU_UNLOCK simple_unlock(&cmmu_cpu_lock)
 
-void cmmu_pmap_activate(
-    unsigned cpu,
-    unsigned uapr,
-    batc_template_t i_batc[BATC_MAX],
-    batc_template_t d_batc[BATC_MAX]);
+/* machine dependant cmmu function pointer structure */
+struct cmmu_p {
+	void (*cmmu_init_func) __P((void));
+	void (*show_apr_func) __P((unsigned));
+	void (*setup_board_config_func) __P((void));
+	void (*setup_cmmu_config_func) __P((void));
+	void (*cmmu_dump_config_func) __P((void));
+	void (*cpu_configuration_print_func) __P((int));
+	void (*cmmu_shutdown_now_func) __P((void));
+	void (*cmmu_parity_enable_func) __P((void));
+	unsigned (*cmmu_cpu_number_func) __P((void));
+	unsigned (*cmmu_get_idr_func) __P((unsigned));
+	void (*cmmu_set_sapr_func) __P((unsigned));
+	void (*cmmu_remote_set_sapr_func) __P((unsigned, unsigned));
+	void (*cmmu_set_uapr_func) __P((unsigned));
+	void (*cmmu_set_batc_entry_func) __P((unsigned, unsigned, unsigned, unsigned));
+	void (*cmmu_set_pair_batc_entry_func) __P((unsigned, unsigned, unsigned));
+	void (*cmmu_flush_remote_tlb_func) __P((unsigned, unsigned, vm_offset_t, int));
+	void (*cmmu_flush_tlb_func) __P((unsigned, vm_offset_t, int));
+	void (*cmmu_pmap_activate_func) __P((unsigned, unsigned,
+					     batc_template_t i_batc[BATC_MAX],
+					     batc_template_t d_batc[BATC_MAX]));
+	void (*cmmu_flush_remote_cache_func) __P((int, vm_offset_t, int));
+	void (*cmmu_flush_cache_func) __P((vm_offset_t, int));
+	void (*cmmu_flush_remote_inst_cache_func) __P((int, vm_offset_t, int));
+	void (*cmmu_flush_inst_cache_func) __P((vm_offset_t, int));
+	void (*cmmu_flush_remote_data_cache_func) __P((int, vm_offset_t, int));
+	void (*cmmu_flush_data_cache_func) __P((vm_offset_t, int));
+	void (*dma_cachectl_func) __P((vm_offset_t, int, int));
+#ifdef DDB
+	unsigned (*cmmu_get_by_mode_func) __P((int, int));
+	void (*cmmu_show_translation_func) __P((unsigned, unsigned, unsigned, int));
+	void (*cmmu_cache_state_func) __P((unsigned, unsigned));
+	void (*show_cmmu_info_func) __P((unsigned));
+#endif /* end if DDB */
+};
 
-void cmmu_flush_remote_tlb(
-	unsigned cpu,
-	unsigned kernel,
-	vm_offset_t vaddr,
-	int size);
+/* THE pointer! */
+extern struct cmmu_p *cmmu;
 
-void cmmu_set_batc_entry(
-     unsigned cpu,
-     unsigned entry_no,
-     unsigned data,   /* 1 = data, 0 = instruction */
-     unsigned value);  /* the value to stuff into the batc */
+extern struct cmmu_p cmmu88110;
+extern struct cmmu_p cmmu8820x;
 
-void cmmu_set_pair_batc_entry(
-     unsigned cpu,
-     unsigned entry_no,
-     unsigned value);  /* the value to stuff into the batc */
+/* The macros... */
+#define cmmu_init (cmmu->cmmu_init_func)
+#define show_apr(ap) (cmmu->show_apr_func)(ap)
+#define setup_board_config	(cmmu->setup_board_config_func)
+#define	setup_cmmu_config 	(cmmu->setup_cmmu_config_func)
+#define	cmmu_dump_config	(cmmu->cmmu_dump_config_func)
+#define	cpu_configuration_print(a)	(cmmu->cpu_configuration_print_func)(a)
+#define	cmmu_shutdown_now	(cmmu->cmmu_shutdown_now_func)
+#define	cmmu_parity_enable	(cmmu->cmmu_parity_enable_func)
+#define	cmmu_cpu_number		(cmmu->cmmu_cpu_number_func)
+#define	cmmu_get_idr(a)		(cmmu->cmmu_get_idr_func)(a)
+#define	cmmu_set_sapr(a)	(cmmu->cmmu_set_sapr_func)(a)
+#define	cmmu_remote_set_sapr(a, b)	(cmmu->cmmu_remote_set_sapr_func)(a, b)
+#define	cmmu_set_uapr(a)	(cmmu->cmmu_set_uapr_func)(a)
+#define	cmmu_set_batc_entry(a, b, c, d) 	(cmmu->cmmu_set_batc_entry_func)(a, b, c, d)
+#define	cmmu_set_pair_batc_entry(a, b, c)	(cmmu->cmmu_set_pair_batc_entry_func)(a, b, c)
+#define	cmmu_flush_remote_tlb(a, b, c, d) 	(cmmu->cmmu_flush_remote_tlb_func)(a, b, c, d)
+#define	cmmu_flush_tlb(a, b, c)	(cmmu->cmmu_flush_tlb_func)(a, b, c)
+#define	cmmu_pmap_activate(a, b, c, d) 	(cmmu->cmmu_pmap_activate_func)(a, b, c, d) 
+#define	cmmu_flush_remote_cache(a, b, c)	(cmmu->cmmu_flush_remote_cache_func)(a, b, c)
+#define	cmmu_flush_cache(a, b)	(cmmu->cmmu_flush_cache_func)(a, b)
+#define	cmmu_flush_remote_inst_cache(a, b, c)	(cmmu->cmmu_flush_remote_inst_cache_func)(a, b, c)
+#define	cmmu_flush_inst_cache(a, b)	(cmmu->cmmu_flush_inst_cache_func)(a, b)
+#define	cmmu_flush_remote_data_cache(a, b, c)	(cmmu->cmmu_flush_remote_data_cache_func)(a, b, c)
+#define	cmmu_flush_data_cache(a, b)	(cmmu->cmmu_flush_data_cache_func)(a, b)
+#define	dma_cachectl(a, b, c)	(cmmu->dma_cachectl_func)(a, b, c)
+#ifdef DDB
+#define	cmmu_get_by_mode(a, b)	(cmmu->cmmu_get_by_mode_func)(a, b)
+#define	cmmu_show_translation(a, b, c, d)	(cmmu->cmmu_show_translation_func)(a, b, c, d)
+#define	cmmu_cache_state(a, b)	(cmmu->cmmu_cache_state_func)(a, b)
+#define	show_cmmu_info(a)	(cmmu->show_cmmu_info_func)(a)
+#endif /* end if DDB */
 
 #endif	/* _LOCORE */
 
+#ifdef M88100
+#include <machine/m8820x.h>
+#endif /* M88100 */
+#ifdef M88110
+#include <machine/m88110.h>
+#include <machine/m88410.h>
+#endif /* M88110 */
+
 #endif	/* _MACHINE_CMMU_H_ */
+

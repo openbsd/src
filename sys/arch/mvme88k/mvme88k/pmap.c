@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.56 2001/12/22 07:35:43 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.57 2001/12/22 09:49:39 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -59,11 +59,9 @@
 #include <uvm/uvm.h>
 
 #include <machine/asm_macro.h>
-#include <machine/mmu.h>
 #include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu_number.h>
-#include <machine/m8820x.h>		/* CMMU stuff */
 #include <machine/pmap_table.h>
 #include <machine/pte.h>
 
@@ -430,7 +428,6 @@ pt_entry_t *
 pmap_pte(pmap_t map, vm_offset_t virt)
 {
 	sdt_entry_t *sdt;
-
 #ifdef DIAGNOSTIC
 	/*XXX will this change if physical memory is not contiguous? */
 	/* take a look at PDTIDX XXXnivas */
@@ -511,8 +508,9 @@ pmap_expand_kmap(vm_offset_t virt, vm_prot_t prot)
 		return (PT_ENTRY_NULL);
 	}
 	kpdt_free = kpdt_free->next;
-
+	/* physical table */
 	((sdt_entry_template_t *)sdt)->bits = kpdt_ent->phys | aprot | DT_VALID;
+	/* virtual table */
 	((sdt_entry_template_t *)(sdt + SDT_ENTRIES))->bits = (vm_offset_t)kpdt_ent | aprot | DT_VALID;
 	(unsigned)(kpdt_ent->phys) = 0;
 	(unsigned)(kpdt_ent->next) = 0;
@@ -3808,32 +3806,32 @@ cache_flush_loop(int mode, vm_offset_t pa, int size)
 
 	case FLUSH_CACHE:   /* All caches, all CPUs */
 		ncpus = max_cpus;
-		cfunc = cmmu_flush_remote_cache;
+		cfunc = cmmu->cmmu_flush_remote_cache_func;
 		break;
 
 	case FLUSH_CODE_CACHE: /* Instruction caches, all CPUs */
 		ncpus = max_cpus;
-		cfunc = cmmu_flush_remote_inst_cache;
+		cfunc = cmmu->cmmu_flush_remote_inst_cache_func;
 		break;
 
 	case FLUSH_DATA_CACHE: /* Data caches, all CPUs */
 		ncpus = max_cpus;
-		cfunc = cmmu_flush_remote_data_cache;
+		cfunc = cmmu->cmmu_flush_remote_data_cache_func;
 		break;
 
 	case FLUSH_LOCAL_CACHE:	     /* Both caches, my CPU */
 		ncpus = 1;
-		cfunc = cmmu_flush_remote_cache;
+		cfunc = cmmu->cmmu_flush_remote_cache_func;
 		break;
 
 	case FLUSH_LOCAL_CODE_CACHE: /* Instruction cache, my CPU */
 		ncpus = 1;
-		cfunc = cmmu_flush_remote_inst_cache;
+		cfunc = cmmu->cmmu_flush_remote_inst_cache_func;
 		break;
 
 	case FLUSH_LOCAL_DATA_CACHE: /* Data cache, my CPU */
 		ncpus = 1;
-		cfunc = cmmu_flush_remote_data_cache;
+		cfunc = cmmu->cmmu_flush_remote_data_cache_func;
 		break;
 	}
 

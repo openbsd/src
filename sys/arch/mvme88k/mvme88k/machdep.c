@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.79 2001/12/22 07:35:43 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.80 2001/12/22 09:49:39 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -85,16 +85,17 @@
 #include <machine/board.h>
 #include <machine/bug.h>
 #include <machine/bugio.h>
-#include <machine/cmmu.h>
+#include <machine/cmmu.h>		/* CMMU stuff	*/
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
 #include <machine/kcore.h>
 #include <machine/locore.h>
-#include <machine/m88100.h>  		/* DMT_VALID        */
-#include <machine/m8820x.h>  		/* CMMU stuff       */
 #include <machine/prom.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#ifdef M88100
+#include <machine/m88100.h>		/* DMT_VALID	*/
+#endif 
 
 #include <dev/cons.h>
 
@@ -224,7 +225,6 @@ caddr_t allocsys __P((caddr_t));
  */
 char  machine[] = MACHINE;	 /* cpu "architecture" */
 char  cpu_model[120];
-extern unsigned master_cpu;
 
 struct bugenv bugargs;
 
@@ -2358,6 +2358,7 @@ mvme_bootstrap()
 	switch (brdtyp) {
 #ifdef MVME188
 	case BRD_188:
+		cmmu = &cmmu8820x;
 		md.interrupt_func = &m188_ext_int;
 		md.intr_mask = NULL;
 		md.intr_ipl = NULL;
@@ -2371,6 +2372,7 @@ mvme_bootstrap()
 #endif /* MVME188 */
 #ifdef MVME187
 	case BRD_187:
+		cmmu = &cmmu8820x;
 		md.interrupt_func = &m187_ext_int;
 		md.intr_mask = (u_char *)M187_IMASK;
 		md.intr_ipl = (u_char *)M187_ILEVEL;
@@ -2379,6 +2381,7 @@ mvme_bootstrap()
 #endif /* MVME187 */
 #ifdef MVME197
 	case BRD_197:
+		cmmu = &cmmu88110;
 		md.interrupt_func = &m197_ext_int;
 		md.intr_mask = (u_char *)M197_IMASK;
 		md.intr_ipl = (u_char *)M197_ILEVEL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.23 2001/12/22 08:31:04 smurph Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.24 2001/12/22 09:49:39 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -38,12 +38,11 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>		/* flush_pipeline()	*/
-#include <machine/m8820x.h>		/* CMMU defs		*/
+#include <machine/cmmu.h>		/* CMMU defs		*/
 #include <machine/trap.h>		/* current_thread()	*/
 #include <machine/db_machdep.h>		/* local ddb stuff	*/
 #include <machine/bugio.h>		/* bug routines		*/
 #include <machine/locore.h>		 
-#include <machine/mmu.h>
 #include <machine/cpu_number.h>
 
 #include <ddb/db_command.h>
@@ -661,7 +660,9 @@ m88k_db_iflush(addr, have_addr, count, modif)
 	char *modif;
 {
 	addr = 0;
+#ifdef may_be_removed
 	cmmu_remote_set(addr, CMMU_SCR, 0, CMMU_FLUSH_CACHE_CBI_ALL);
+#endif 
 }
 
 /* flush dcache */
@@ -674,7 +675,9 @@ m88k_db_dflush(addr, have_addr, count, modif)
 	char *modif;
 {
 	addr = 0;
+#ifdef may_be_removed
 	cmmu_remote_set(addr, CMMU_SCR, 1, CMMU_FLUSH_CACHE_CBI_ALL);
+#endif 
 }
 
 /* probe my cache */
@@ -685,6 +688,7 @@ m88k_db_peek(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
+#ifdef may_be_removed
 	int pa12;
 	int valmask;
 
@@ -711,6 +715,7 @@ m88k_db_peek(addr, have_addr, count, modif)
 		  (unsigned)cmmu_remote_get(0, CMMU_CTP1, 0),
 		  (unsigned)cmmu_remote_get(0, CMMU_CTP2, 0),
 		  (unsigned)cmmu_remote_get(0, CMMU_CTP3, 0));
+#endif 
 }
 
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.18 2001/12/19 04:02:25 smurph Exp $
+#	$OpenBSD: files.mvme88k,v 1.19 2001/12/22 09:49:38 smurph Exp $
 #	
 maxpartitions 16
 
@@ -88,8 +88,8 @@ file	netns/ns_cksum.c				ns
 file	arch/mvme88k/mvme88k/autoconf.c
 file	arch/mvme88k/mvme88k/conf.c
 file	arch/mvme88k/mvme88k/cmmu.c
-file	arch/mvme88k/mvme88k/m18x_cmmu.c		mvme187 | mvme188
-file	arch/mvme88k/mvme88k/m197_cmmu.c		mvme197
+file	arch/mvme88k/mvme88k/m8820x.c			mvme187 | mvme188
+file	arch/mvme88k/mvme88k/m88110.c			mvme197
 file	arch/mvme88k/mvme88k/disksubr.c
 file	arch/mvme88k/mvme88k/dkbad.c
 file	arch/mvme88k/mvme88k/eh.S

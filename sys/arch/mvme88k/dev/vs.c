@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.13 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.14 2001/12/22 09:49:39 smurph Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -61,7 +61,7 @@
 #include <mvme88k/dev/vsreg.h>
 #include <mvme88k/dev/vsvar.h>
 #include <mvme88k/dev/vme.h>		/* vme_findvec() */
-#include <machine/mmu.h>		/* DMA_CACHE_SYNC, etc... */
+#include <machine/cmmu.h>		/* DMA_CACHE_SYNC, etc... */
 #else
 #include <mvme68k/dev/vsreg.h>
 #include <mvme68k/dev/vsvar.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.18 2001/12/20 06:07:28 smurph Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.19 2001/12/22 09:49:39 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -34,14 +34,14 @@
 
 #include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/board.h>		/* m188 bit defines	*/
+#include <machine/cmmu.h>		/* DMT_VALID		*/
 #include <machine/asm.h>		/* END_OF_VECTOR_LIST, etc.	*/
 #include <machine/asm_macro.h>		/* enable/disable interrupts	*/
-#include <machine/mmu.h>
-#include <machine/cmmu.h>		/* DMT_VALID		*/
 #include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/locore.h>
+#ifdef M88100
 #include <machine/m88100.h>		/* DMT_VALID		*/
-#include <machine/param.h>
+#endif
 
 #ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/
