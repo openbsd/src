@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.20 2001/08/26 03:28:30 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.21 2001/08/27 02:57:07 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,20 +35,21 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.20 2001/08/26 03:28:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.21 2001/08/27 02:57:07 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <pwd.h>
+#include <sys/uio.h>
+
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <pwd.h>
 #include <stdio.h>
+#include <signal.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <signal.h>
 #include <util.h>
 #include <login_cap.h>
 
@@ -69,9 +70,8 @@ local_passwd(uname, authenticated)
 	login_cap_t *lc;
 	sigset_t fullset;
 	time_t period;
-	int pfd, tfd = -1;
+	int i, pfd, tfd = -1;
 	int pwflags = _PASSWORD_OMITV7;
-	char *s = NULL;
 
 	if (!(pw = getpwnam(uname))) {
 #ifdef YP
@@ -118,43 +118,18 @@ local_passwd(uname, authenticated)
 
 	/* Get a lock on the passwd file and open it. */
 	pw_init();
-	for (;;) {
-		int i, c, d;
-
-		for (i = 0; i < (s ? 64 : 8) && (tfd = pw_lock(0)) == -1; i++) {
-			if (i == 0)
-				(void)fputs("Please wait", stderr);
-			(void)signal(SIGINT, kbintr);
-			fputc('.', stderr);
-			usleep(250000);
-			(void)signal(SIGINT, SIG_IGN);
-		}
-		if (i)
-			fputc('\n', stderr);
-		if (tfd != -1)
-			break;
-
-		/* Unable to lock passwd file, let the user decide. */
-		if (errno == EEXIST) {
-			if (s == NULL)
-				s = "The passwd file is busy,";
-			else
-				s = "The passwd file is still busy,";
-		} else
-			s = "Unable to open passwd temp file,";
-		(void)fprintf(stderr,
-		    "%s do you want to wait until it is available? [y/n] ", s);
+	for (i = 1; (tfd = pw_lock(0)) == -1; i++) {
+		if (i == 4)
+			(void)fputs("Attempting lock password file, "
+			    "please wait or press ^C to abort", stderr);
 		(void)signal(SIGINT, kbintr);
-		c = getchar();
+		if (i % 16 == 0)
+			fputc('.', stderr);
+		usleep(250000);
 		(void)signal(SIGINT, SIG_IGN);
-		if (c != '\n')
-			while ((d = getchar()) != '\n' && d != EOF)
-				;
-		if (tolower(c) != 'y') {
-			printf("Password unchanged\n");
-			exit(1);
-		}
 	}
+	if (i >= 4)
+		fputc('\n', stderr);
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
 	if (pfd < 0 || fcntl(pfd, F_SETFD, 1) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
@@ -219,8 +194,21 @@ void
 kbintr(signo)
 	int signo;
 {
-	char msg[] = "\nPassword unchanged\n";
+	char msg[] = "\nPassword unchanged.\n";
+	struct iovec iv[5];
+	extern char *__progname;
 
-	write(STDOUT_FILENO, msg, sizeof(msg) - 1);
+	iv[0].iov_base = "\nPassword unchanged.\n";
+	iv[0].iov_len = sizeof(msg) - 1;
+	iv[1].iov_base = __progname;
+	iv[1].iov_len = strlen(__progname);
+	iv[2].iov_base = ": ";
+	iv[2].iov_len = 2;
+	iv[3].iov_base = _PATH_MASTERPASSWD;
+	iv[3].iov_len = sizeof(_PATH_MASTERPASSWD) - 1;
+	iv[4].iov_base = " unchanged\n";
+	iv[4].iov_len = 11;
+	writev(STDERR_FILENO, iv, 5);
+
 	_exit(1);
 }
