@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.52 2001/03/27 07:52:15 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.53 2001/03/27 10:23:44 peter Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -55,6 +55,7 @@ vendor MEGAHERTZ2		0x0128	Megahertz
 vendor ADAPTEC			0x012f	Adaptec
 vendor QUATECH			0x0137	Quatech
 vendor COMPAQ			0x0138	Compaq
+vendor GREYCELL			0x0143	Grey Cell
 vendor LINKSYS			0x0149	Linksys
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL			0x014d	Symbol
@@ -150,6 +151,9 @@ product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
 product FUJITSU SCSI600		0x0401 Fujitsu 600
 product FUJITSU LA10S		0x1003 Fujitsu CF Ethernet
 product FUJITSU LA501		0x2000 Fujitsu Towa LA501
+ 
+/* Greycell */
+product GREYCELL GCS2000	0x0201 Grey Cell GCS2000 Gold II Ethernet
 
 /* IBM */
 product IBM 3270		0x0001 3270 Emulation

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.37 2001/03/13 02:31:37 mickey Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.38 2001/03/27 10:23:44 peter Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -175,6 +175,10 @@ const struct ne2000dev {
      * needs a table where the exceptions comes first and then the normal
      * product and vendor entries.
      */
+
+    { PCMCIA_VENDOR_GREYCELL, PCMCIA_PRODUCT_GREYCELL_GCS2000,
+      PCMCIA_CIS_GREYCELL_GCS2000,
+      0, -1, { 0x00, 0x47, 0x43 } },
 
     { PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
       PCMCIA_CIS_IBM_INFOMOVER,
