@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.35 2003/04/19 11:54:02 henning Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.36 2003/04/29 21:39:34 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -165,9 +165,6 @@ void dc_pci_acpi(self, aux)
 	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	u_int32_t		r, cptr;
-	int			unit;
-
-	unit = sc->dc_unit;
 
 	/* Find the location of the capabilities block */
 	cptr = pci_conf_read(pc, pa->pa_tag, DC_PCI_CCAP) & 0xFF;
@@ -185,8 +182,9 @@ void dc_pci_acpi(self, aux)
 			irq = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFIT);
 
 			/* Reset the power state. */
-			printf("dc%d: chip is in D%d power mode "
-			    "-- setting to D0\n", unit, r & DC_PSTATE_D3);
+			printf("%s: chip is in D%d power mode "
+			    "-- setting to D0\n", sc->sc_dev.dv_xname,
+			    r & DC_PSTATE_D3);
 			r &= 0xFFFFFFFC;
 			pci_conf_write(pc, pa->pa_tag, cptr + 4, r);
 
@@ -221,7 +219,6 @@ void dc_pci_attach(parent, self, aux)
 
 	s = splimp();
 	sc->sc_dmat = pa->pa_dmat;
-	sc->dc_unit = sc->sc_dev.dv_unit;
 
 	/*
 	 * Handle power management nonsense.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.56 2003/04/29 15:19:12 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.57 2003/04/29 21:39:34 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -631,8 +631,6 @@ dc_miibus_readreg(self, phy, reg)
 	struct dc_softc *sc = (struct dc_softc *)self;
 	int i, rval, phy_reg;
 
-	bzero((char *)&frame, sizeof(frame));
-
 	/*
 	 * Note: both the AL981 and AN983 have internal PHYs,
 	 * however the AL981 provides direct access to the PHY
@@ -650,7 +648,6 @@ dc_miibus_readreg(self, phy, reg)
 	 * MII address 0 (possibly HomePNA?) and 1 (ethernet)
 	 * so we only respond to correct one.
 	 */
-	
 	if (DC_IS_CONEXANT(sc) && phy != DC_CONEXANT_PHYADDR)
 		return (0);
 
@@ -720,8 +717,8 @@ dc_miibus_readreg(self, phy, reg)
 			phy_reg = DC_AL_ANER;
 			break;
 		default:
-			printf("dc%d: phy_read: bad phy register %x\n",
-			    sc->dc_unit, reg);
+			printf("dc%s: phy_read: bad phy register %x\n",
+			    sc->sc_dev.dv_xname, reg);
 			return (0);
 			break;
 		}
@@ -732,6 +729,8 @@ dc_miibus_readreg(self, phy, reg)
 			return (0);
 		return (rval);
 	}
+
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -796,8 +795,8 @@ dc_miibus_writereg(self, phy, reg, data)
 			phy_reg = DC_AL_ANER;
 			break;
 		default:
-			printf("dc%d: phy_write: bad phy register %x\n",
-			    sc->dc_unit, reg);
+			printf("%s: phy_write: bad phy register %x\n",
+			    sc->sc_dev.dv_xname, reg);
 			return;
 			break;
 		}
@@ -1250,8 +1249,8 @@ dc_setcfg(sc, media)
 		}
 
 		if (i == DC_TIMEOUT)
-			printf("dc%d: failed to force tx and "
-				"rx to idle state\n", sc->dc_unit);
+			printf("%s: failed to force tx and "
+			    "rx to idle state\n", sc->sc_dev.dv_xname);
 
 	}
 
@@ -1397,7 +1396,7 @@ dc_reset(sc)
 	}
 
 	if (i == DC_TIMEOUT)
-		printf("dc%d: reset never completed!\n", sc->dc_unit);
+		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -1768,7 +1767,7 @@ hasmac:
 	}
 
 	if (error) {
-		printf("dc%d: MII without any PHY!\n", sc->dc_unit);
+		printf("%s: MII without any PHY!\n", sc->sc_dev.dv_xname);
 		error = ENXIO;
 		goto fail;
 	}
@@ -1907,15 +1906,15 @@ dc_newbuf(sc, i, m)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("dc%d: no memory for rx list "
-			    "-- packet dropped!\n", sc->dc_unit);
+			printf("dc%s: no memory for rx list "
+			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
 			return (ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("dc%d: no memory for rx list "
-			    "-- packet dropped!\n", sc->dc_unit);
+			printf("dc%s: no memory for rx list "
+			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return (ENOBUFS);
 		}
@@ -2476,27 +2475,15 @@ dc_intr(arg)
 		if (status & DC_ISR_TX_UNDERRUN) {
 			u_int32_t		cfg;
 
-#if 0
-			printf("dc%d: TX underrun -- ", sc->dc_unit);
-#endif
 			if (DC_IS_DAVICOM(sc) || DC_IS_INTEL(sc))
 				dc_init(sc);
 			cfg = CSR_READ_4(sc, DC_NETCFG);
 			cfg &= ~DC_NETCFG_TX_THRESH;
 			if (sc->dc_txthresh == DC_TXTHRESH_160BYTES) {
-#if 0
-				printf("using store and forward mode\n");
-#endif
 				DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_STORENFWD);
 			} else if (sc->dc_flags & DC_TX_STORENFWD) {
-#if 0
-				printf("resetting\n");
-#endif
 			} else {
 				sc->dc_txthresh += 0x4000;
-#if 0
-				printf("increasing TX threshold\n");
-#endif
 				CSR_WRITE_4(sc, DC_NETCFG, cfg);
 				DC_SETBIT(sc, DC_NETCFG, sc->dc_txthresh);
 				DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_STORENFWD);
@@ -2633,14 +2620,15 @@ dc_coal(sc, m_head)
 	m = *m_head;
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL) {
-		printf("dc%d: no memory for tx list", sc->dc_unit);
+		printf("dc%s: no memory for tx list", sc->sc_dev.dv_xname);
 		return (ENOBUFS);
 	}
 	if (m->m_pkthdr.len > MHLEN) {
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			m_freem(m_new);
-			printf("dc%d: no memory for tx list", sc->dc_unit);
+			printf("dc%s: no memory for tx list",
+			    sc->sc_dev.dv_xname);
 			return (ENOBUFS);
 		}
 	}
@@ -2826,8 +2814,8 @@ dc_init(xsc)
 
 	/* Init circular RX list. */
 	if (dc_list_rx_init(sc) == ENOBUFS) {
-		printf("dc%d: initialization failed: no "
-		    "memory for rx buffers\n", sc->dc_unit);
+		printf("%s: initialization failed: no "
+		    "memory for rx buffers\n", sc->sc_dev.dv_xname);
 		dc_stop(sc);
 		splx(s);
 		return;
@@ -3057,7 +3045,7 @@ dc_watchdog(ifp)
 	sc = ifp->if_softc;
 
 	ifp->if_oerrors++;
-	printf("dc%d: watchdog timeout\n", sc->dc_unit);
+	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 	dc_stop(sc);
 	dc_reset(sc);
