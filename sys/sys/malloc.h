@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.64 2003/01/27 22:23:45 miod Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.65 2003/01/30 16:38:39 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -99,9 +99,8 @@
 #define	M_LOCKF		40	/* Byte-range locking structures */
 #define	M_PROC		41	/* Proc structures */
 #define	M_SUBPROC	42	/* Proc sub-structures */
-#define	M_SEGMENT	43	/* Segment for LFS */
-#define	M_LFSNODE	44	/* LFS vnode private part */
-/* 45 - free */
+#define	M_VCLUSTER	43	/* Cluster for VFS */
+/* 45-46 - free */
 #define	M_MFSNODE	46	/* MFS vnode private part */
 /* 47-48 - free */
 #define	M_NETADDR	49	/* Export host address structure */
@@ -212,8 +211,8 @@
 	"lockf",	/* 40 M_LOCKF */ \
 	"proc",		/* 41 M_PROC */ \
 	"subproc",	/* 42 M_SUBPROC */ \
-	"LFS segment",	/* 43 M_SEGMENT */ \
-	"LFS node",	/* 44 M_LFSNODE */ \
+	"VFS cluster",	/* 43 M_VCLUSTER */ \
+	NULL, \
 	NULL, \
 	"MFS node",	/* 46 M_MFSNODE */ \
 	NULL, \
