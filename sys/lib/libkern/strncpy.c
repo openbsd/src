@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncpy.c,v 1.3 1997/11/07 15:56:51 niklas Exp $	*/
+/*	$OpenBSD: strncpy.c,v 1.4 1998/06/27 01:07:59 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,10 +38,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strncpy.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$OpenBSD: strncpy.c,v 1.3 1997/11/07 15:56:51 niklas Exp $";
+static char *rcsid = "$OpenBSD: strncpy.c,v 1.4 1998/06/27 01:07:59 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
