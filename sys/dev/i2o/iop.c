@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.1 2001/06/25 23:04:29 niklas Exp $	*/
+/*	$OpenBSD: iop.c,v 1.2 2001/06/26 03:14:58 mickey Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -480,11 +480,12 @@ iop_config_interrupts(struct device *self)
 		return;
 	}
 
+#ifdef notyet
 	/* Attempt to match and attach a product-specific extension. */
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
 	config_found_sm(self, &ia, iop_vendor_print, iop_submatch);
-
+#endif
 	lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL, curproc);
 	if ((rv = iop_reconfigure(sc, 0)) == -1) {
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
