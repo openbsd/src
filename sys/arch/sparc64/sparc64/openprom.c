@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.3 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.4 2002/06/14 04:16:23 art Exp $	*/
 /*	$NetBSD: openprom.c,v 1.2 2000/11/18 23:45:05 mrg Exp $ */
 
 /*
@@ -74,10 +74,6 @@ openpromopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-#if defined(SUN4)
-	if (cputyp==CPU_SUN4)
-		return (ENODEV);
-#endif
 
 	return (0);
 }
