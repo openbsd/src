@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.233 2002/06/11 04:25:49 krw Exp $
+#	$OpenBSD: install.sub,v 1.234 2002/06/15 16:03:40 fgsch Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1749,7 +1749,7 @@ sets in one try and can recover from some errors.
 __EOT
 
 	if [ "$local_sets_dir" ]; then
-		install_from_mounted_fs "$local_sets_dir"
+		install_mounted_fs "$local_sets_dir"
 		[ "$_setsdone" ] && _yup=TRUE
 	fi
 
