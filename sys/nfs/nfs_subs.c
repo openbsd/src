@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.17 1997/04/27 23:55:49 angelos Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.18 1997/04/28 00:37:06 angelos Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsmount.h>
-#include <nfs/nfsrvcache.h>
 #include <nfs/nqnfs.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
@@ -90,12 +89,6 @@
 #define INLINE
 #endif
 
-#define NFSRCHASH(xid) \
-        (&nfsrvhashtbl[((xid) + ((xid) >> 24)) & nfsrvhash])
-extern LIST_HEAD(nfsrvhash, nfsrvcache) *nfsrvhashtbl;
-extern TAILQ_HEAD(nfsrvlru, nfsrvcache) nfsrvlruhead;
-extern u_long nfsrvhash;
-
 int	nfs_attrtimeo __P((struct nfsnode *np));
 
 /*
@@ -110,6 +103,7 @@ u_int32_t nfs_prog, nqnfs_prog, nfs_true, nfs_false;
 
 /* And other global data */
 static u_int32_t nfs_xid = 0;
+static u_int32_t nfs_xid_touched = 0;
 nfstype nfsv2_type[9] = { NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFNON,
 		      NFCHR, NFNON };
 nfstype nfsv3_type[9] = { NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFSOCK,
@@ -627,7 +621,6 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	register u_int32_t *tl;
 	register caddr_t bpos;
 	register int i;
-	register struct nfsrvcache *rp;
 	struct mbuf *mreq, *mb2;
 	int siz, grpsiz, authsiz;
 
@@ -651,25 +644,19 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 
 	/* Get a new (non-zero) xid */
 
-	do
+	if ((nfs_xid == 0) && (nfs_xid_touched == 0))
 	{
-	    i = 0;
-
-	    while (((*xidp = arc4random()) == nfs_xid) || (*xidp == 0))
+	    nfs_xid = arc4random();
+	    nfs_xid_touched = 1;
+	}
+	else
+	{
+	    while ((*xidp = arc4random() % 256) == 0)
 	      ;
 
-	    nfs_xid = *xidp;
+	    nfs_xid += *xidp;
+	}
 	    
-	    for (rp = NFSRCHASH(nfs_xid)->lh_first; rp !=0; 
-		 rp = rp->rc_hash.le_next)
-	      if ((nfs_xid == rp->rc_xid) &&
-		  (rp->rc_proc == procid))
-	      {
-		  i = 1;     /* do the loop again */
-		  break;
-	      }
-	} while (i);
-     
 	*tl++ = *xidp = txdr_unsigned(nfs_xid);
 	*tl++ = rpc_call;
 	*tl++ = rpc_vers;
