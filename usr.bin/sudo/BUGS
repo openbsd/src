@@ -1,4 +1,4 @@
-Known bugs in sudo version 1.6.6
+Known bugs in sudo version 1.6.7
 ================================
 
 1) Sudo should have an option to log when removing "dangerous"

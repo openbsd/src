@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996,1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: check.c,v 1.203 2002/04/25 15:30:12 millert Exp $";
+static const char rcsid[] = "$Sudo: check.c,v 1.210 2003/03/15 20:31:01 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -145,6 +145,8 @@ update_timestamp(timestampdir, timestampfile)
     char *timestampfile;
 {
 
+    if (timestamp_uid != 0)
+	set_perms(PERM_TIMESTAMP);
     if (touch(timestampfile ? timestampfile : timestampdir, time(NULL)) == -1) {
 	if (timestampfile) {
 	    int fd = open(timestampfile, O_WRONLY|O_CREAT|O_TRUNC, 0600);
@@ -158,6 +160,8 @@ update_timestamp(timestampdir, timestampfile)
 		log_error(NO_EXIT|USE_ERRNO, "Can't mkdir %s", timestampdir);
 	}
     }
+    if (timestamp_uid != 0)
+	set_perms(PERM_ROOT);
 }
 
 /*
@@ -170,57 +174,101 @@ expand_prompt(old_prompt, user, host)
     char *user;
     char *host;
 {
-    size_t len;
+    size_t len, n;
     int subst;
-    char *p, *np, *new_prompt, lastchar;
+    char *p, *np, *new_prompt, *endp;
 
     /* How much space do we need to malloc for the prompt? */
     subst = 0;
-    for (p = old_prompt, len = strlen(old_prompt), lastchar = '\0'; *p; p++) {
-	if (lastchar == '%') {
-	    if (*p == 'h') {
-		len += strlen(user_shost) - 2;
-		subst = 1;
-	    } else if (*p == 'u') {
-		len += strlen(user_name) - 2;
-		subst = 1;
+    for (p = old_prompt, len = strlen(old_prompt); *p; p++) {
+	if (p[0] =='%') {
+	    switch (p[1]) {
+		case 'h':
+		    p++;
+		    len += strlen(user_shost) - 2;
+		    subst = 1;
+		    break;
+		case 'H':
+		    p++;
+		    len += strlen(user_host) - 2;
+		    subst = 1;
+		    break;
+		case 'u':
+		    p++;
+		    len += strlen(user_name) - 2;
+		    subst = 1;
+		    break;
+		case 'U':
+		    p++;
+		    len += strlen(*user_runas) - 2;
+		    subst = 1;
+		    break;
+		case '%':
+		    p++;
+		    len--;
+		    subst = 1;
+		    break;
+		default:
+		    break;
 	    }
 	}
-
-	if (lastchar == '%' && *p == '%') {
-	    lastchar = '\0';
-	    len--;
-	} else
-	    lastchar = *p;
     }
 
     if (subst) {
-	new_prompt = (char *) emalloc(len + 1);
-	for (p = old_prompt, np = new_prompt, lastchar = '\0'; *p; p++) {
-	    if (lastchar == '%' && (*p == 'h' || *p == 'u' || *p == '%')) {
-		/* substitute user/host name */
-		if (*p == 'h') {
-		    np--;
-		    strcpy(np, user_shost);
-		    np += strlen(user_shost);
-		} else if (*p == 'u') {
-		    np--;
-		    strcpy(np, user_name);
-		    np += strlen(user_name);
+	new_prompt = (char *) emalloc(++len);
+	*new_prompt = '\0';
+	endp = new_prompt + len - 1;
+	for (p = old_prompt, np = new_prompt; *p; p++) {
+	    if (p[0] =='%') {
+		switch (p[1]) {
+		    case 'h':
+			p++;
+			if ((n = strlcat(new_prompt, user_shost, len)) >= len)
+			    goto oflow;
+			np += n;
+			continue;
+		    case 'H':
+			p++;
+			if ((n = strlcat(new_prompt, user_host, len)) >= len)
+			    goto oflow;
+			np += n;
+			continue;
+		    case 'u':
+			p++;
+			if ((n = strlcat(new_prompt, user_name, len)) >= len)
+			    goto oflow;
+			np += n;
+			continue;
+		    case 'U':
+			p++;
+			if ((n = strlcat(new_prompt, *user_runas, len)) >= len)
+			    goto oflow;
+			np += n;
+			continue;
+		    case '%':
+			/* convert %% -> % */
+			p++;
+			break;
+		    default:
+			/* no conversion */
+			break;
 		}
-	    } else
-		*np++ = *p;
-
-	    if (lastchar == '%' && *p == '%')
-		lastchar = '\0';
-	    else
-		lastchar = *p;
+	    }
+	    if (np >= endp)
+		goto oflow;
+	    *np++ = *p;
 	}
 	*np = '\0';
     } else
 	new_prompt = old_prompt;
 
     return(new_prompt);
+
+oflow:
+    /* We pre-allocate enough space, so this should never happen. */
+    (void) fprintf(stderr, "%s: internal error, expand_prompt() overflow\n",
+	Argv[0]);
+    exit(1);
 }
 
 /*
@@ -307,6 +355,9 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
     char *dirparent = def_str(I_TIMESTAMPDIR);
     int status = TS_ERROR;		/* assume the worst */
 
+    if (timestamp_uid != 0)
+	set_perms(PERM_TIMESTAMP);
+
     /*
      * Sanity check dirparent and make it if it doesn't already exist.
      * We start out assuming the worst (that the dir is not sane) and
@@ -318,9 +369,10 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 	if (!S_ISDIR(sb.st_mode))
 	    log_error(NO_EXIT, "%s exists but is not a directory (0%o)",
 		dirparent, sb.st_mode);
-	else if (sb.st_uid != 0)
-	    log_error(NO_EXIT, "%s owned by uid %ld, should be owned by root",
-		dirparent, (long) sb.st_uid);
+	else if (sb.st_uid != timestamp_uid)
+	    log_error(NO_EXIT, "%s owned by uid %lu, should be uid %lu",
+		dirparent, (unsigned long) sb.st_uid,
+		(unsigned long) timestamp_uid);
 	else if ((sb.st_mode & 0000022))
 	    log_error(NO_EXIT,
 		"%s writable by non-owner (0%o), should be mode 0700",
@@ -342,8 +394,11 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 		status = TS_MISSING;
 	}
     }
-    if (status == TS_ERROR)
+    if (status == TS_ERROR) {
+	if (timestamp_uid != 0)
+	    set_perms(PERM_ROOT);
 	return(status);
+    }
 
     /*
      * Sanity check the user's ticket dir.  We start by downgrading
@@ -361,9 +416,10 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 	    } else
 		log_error(NO_EXIT, "%s exists but is not a directory (0%o)",
 		    timestampdir, sb.st_mode);
-	} else if (sb.st_uid != 0)
-	    log_error(NO_EXIT, "%s owned by uid %ld, should be owned by root",
-		timestampdir, (long) sb.st_uid);
+	} else if (sb.st_uid != timestamp_uid)
+	    log_error(NO_EXIT, "%s owned by uid %lu, should be uid %lu",
+		timestampdir, (unsigned long) sb.st_uid,
+		(unsigned long) timestamp_uid);
 	else if ((sb.st_mode & 0000022))
 	    log_error(NO_EXIT,
 		"%s writable by non-owner (0%o), should be mode 0700",
@@ -402,10 +458,11 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 		    timestampfile, sb.st_mode);
 	    } else {
 		/* If bad uid or file mode, complain and kill the bogus file. */
-		if (sb.st_uid != 0) {
+		if (sb.st_uid != timestamp_uid) {
 		    log_error(NO_EXIT,
-			"%s owned by uid %ld, should be owned by root",
-			timestampfile, (long) sb.st_uid);
+			"%s owned by uid %ud, should be uid %lu",
+			timestampfile, (unsigned long) sb.st_uid,
+			(unsigned long) timestamp_uid);
 		    (void) unlink(timestampfile);
 		} else if ((sb.st_mode & 0000022)) {
 		    log_error(NO_EXIT,
@@ -456,6 +513,8 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 	}
     }
 
+    if (timestamp_uid != 0)
+	set_perms(PERM_ROOT);
     return(status);
 }
 

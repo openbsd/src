@@ -1,15 +1,15 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.349 2002/04/18 15:41:30 millert Exp $
+dnl $Sudo: configure.in,v 1.367 2003/03/15 20:31:01 millert Exp $
 dnl
-dnl Copyright (c) 1994-1996,1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+dnl Copyright (c) 1994-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT(sudo, 1.6.6)
+AC_INIT(sudo, 1.6.7)
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-echo "Configuring Sudo version 1.6.6"
+echo "Configuring Sudo version 1.6.7"
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
@@ -24,7 +24,6 @@ AC_SUBST(NET_LIBS)dnl
 AC_SUBST(AFS_LIBS)dnl
 AC_SUBST(OSDEFS)dnl
 AC_SUBST(AUTH_OBJS)dnl
-AC_SUBST(LIBOBJS)dnl
 AC_SUBST(MANTYPE)dnl
 AC_SUBST(MAN_POSTINSTALL)dnl
 AC_SUBST(SUDOERS_MODE)dnl
@@ -111,7 +110,7 @@ dnl
 test "$mandir" = '${prefix}/man' && mandir='$(prefix)/man'
 test "$bindir" = '${exec_prefix}/bin' && bindir='$(exec_prefix)/bin'
 test "$sbindir" = '${exec_prefix}/sbin' && sbindir='$(exec_prefix)/sbin'
-test "$sysconfdir" = '${prefix}/etc' && sysconfdir='/etc'
+test "$sysconfdir" = '${prefix}/etc' -a X"$with_stow" != X"yes" && sysconfdir='/etc'
 
 dnl
 dnl Deprecated --with options (these all warn or generate an error)
@@ -292,7 +291,6 @@ AC_ARG_WITH(SecurID, [  --with-SecurID          enable SecurID support],
 		AC_MSG_CHECKING(whether to use SecurID for authentication)
 		AC_MSG_RESULT(yes)
 		with_passwd=no
-		AUTH_OBJS="securid.o"
 		;;
 esac])
 
@@ -480,7 +478,7 @@ AC_ARG_WITH(badpri, [  --with-badpri           syslog priority for failures (def
 		;;
 esac])
 AC_DEFINE_UNQUOTED(PRI_FAILURE, "$badpri", [The syslog priority sudo will use for unsuccessful attempts/errors.])
-AC_MSG_RESULT(badpri)
+AC_MSG_RESULT($badpri)
 
 AC_ARG_WITH(logpath, [  --with-logpath          path to the sudo log file],
 [case $with_logpath in  
@@ -550,7 +548,7 @@ AC_ARG_WITH(mail-if-no-host, [  --with-mail-if-no-host  send mail if user in sud
 		;;
 esac])
 if test "$mail_no_host" = "on"; then
-    AC_DEFINE(SEND_MAIL_WHEN_NO_HOST, 1, [Define to send mail when the user is not not allowed to run sudo on this host.])
+    AC_DEFINE(SEND_MAIL_WHEN_NO_HOST, 1, [Define to send mail when the user is not allowed to run sudo on this host.])
     AC_MSG_RESULT(yes)
 else
     AC_MSG_RESULT(no)
@@ -567,7 +565,7 @@ AC_ARG_WITH(mail-if-noperms, [  --with-mail-if-noperms  send mail if user not al
 		;;
 esac])
 if test "$mail_noperms" = "on"; then
-    AC_DEFINE(SEND_MAIL_WHEN_NOT_OK, 1, [Define to send mail when the user is not not allowed to run a command.])
+    AC_DEFINE(SEND_MAIL_WHEN_NOT_OK, 1, [Define to send mail when the user is not allowed to run a command.])
     AC_MSG_RESULT(yes)
 else
     AC_MSG_RESULT(no)
@@ -669,7 +667,7 @@ AC_ARG_WITH(sudoers-mode, [  --with-sudoers-mode     mode of sudoers file (defau
 		;;
     0*)		SUDOERS_MODE=$with_sudoers_mode
 		;;
-    *)		AC_MSG_ERROR(["you must use a numeric uid, not a name."])
+    *)		AC_MSG_ERROR(["you must use an octal mode, not a name."])
 		;;
 esac])
 
@@ -681,7 +679,7 @@ AC_ARG_WITH(sudoers-uid, [  --with-sudoers-uid      uid that owns sudoers file (
 		;;
     [[0-9]]*)	SUDOERS_UID=$with_sudoers_uid
 		;;
-    *)		AC_MSG_ERROR(["you must use a numeric uid, not a name."])
+    *)		AC_MSG_ERROR(["you must use an unsigned numeric uid, not a name."])
 		;;
 esac])
 
@@ -693,7 +691,7 @@ AC_ARG_WITH(sudoers-gid, [  --with-sudoers-gid      gid that owns sudoers file (
 		;;
     [[0-9]]*)	SUDOERS_GID=$with_sudoers_gid
 		;;
-    *)		AC_MSG_ERROR(["you must use a numeric gid, not a name."])
+    *)		AC_MSG_ERROR(["you must use an unsigned numeric gid, not a name."])
 		;;
 esac])
 
@@ -787,7 +785,7 @@ AC_MSG_RESULT($passwd_tries)
 
 AC_MSG_CHECKING(time in minutes after which sudo will ask for a password again)
 AC_ARG_WITH(timeout, [  --with-timeout          minutes before sudo asks for passwd again (def is 5 minutes)],
-[echo $with_timeout; case $with_timeout in  
+[case $with_timeout in  
     yes)	;;
     no)		timeout=0
 		;;
@@ -944,6 +942,18 @@ AC_ARG_WITH(interfaces, [  --without-interfaces    don't try to read the ip addr
 		;;
 esac], AC_MSG_RESULT(yes))
 
+AC_MSG_CHECKING(whether stow should be used)
+AC_ARG_WITH(stow, [  --with-stow             properly handle GNU stow packaging],
+[case $with_stow in
+    yes)	AC_MSG_RESULT(yes)
+		AC_DEFINE(USE_STOW, 1, [Define if you use stow packaging.])
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["--with-stow does not take an argument."])
+		;;
+esac], AC_MSG_RESULT(no))
+
 dnl
 dnl Options for --enable
 dnl
@@ -982,7 +992,16 @@ AC_ARG_ENABLE(root-mailer,
 AC_ARG_ENABLE(setreuid,
 [  --disable-setreuid      Don't try to use the setreuid() function],
 [ case "$enableval" in
-    no)		BROKEN_SETREUID=1
+    no)		SKIP_SETREUID=yes
+		;;
+    *)		;;
+  esac
+])
+
+AC_ARG_ENABLE(setresuid,
+[  --disable-setresuid      Don't try to use the setresuid() function],
+[ case "$enableval" in
+    no)		SKIP_SETRESUID=yes
 		;;
     *)		;;
   esac
@@ -1291,7 +1310,7 @@ case "$host" in
 		# use SIA by default, if we have it, else SecureWare
 		# unless overridden on the command line
 		if test "$CHECKSIA" = "true"; then
-		    AC_CHECK_FUNC(sia_ses_init, AC_DEFINE(HAVE_SIA, 1, [Define if you use SIA.]) [
+		    AC_CHECK_FUNC(sia_ses_init, [AC_DEFINE(HAVE_SIA, 1, [Define if you use SIA.])] [
 		    if test -n "$with_skey" -o -n "$with_opie" -o -n "$with_otp_only" -o -n "$with_long_otp_prompt" -o -n "$with_SecurID" -o -n "$with_fwtk" -o -n "$with_kerb4" -o -n "$with_kerb5" -o -n "$with_pam" -o -n "$with_AFS" -o -n "$with_DCE"; then
 			AC_MSG_ERROR(["you cannot mix SIA and other authentication schemes.  You can turn off SIA support via the --disable-sia option"])
 		    fi]; CHECKSHADOW=false)
@@ -1328,7 +1347,7 @@ case "$host" in
     *-*-irix*)
 		CPPFLAGS="${CPPFLAGS} -D_BSD_TYPES"
 		if test -z "$NROFFPROG"; then
-		    MAN_POSTINSTALL='	/bin/rm -f $(mandir8)/sudo.$(mansect8).z $(mandir8)/visudo.$(mansect8).z $(mandir5)/sudoers.$(mansect5).z ; /usr/bin/pack $(mandir8)/sudo.$(mansect8) $(mandir8)/visudo.$(mansect8) $(mandir5)/sudoers.$(mansect5)'
+		    MAN_POSTINSTALL='	/bin/rm -f $(mandirsu)/sudo.$(mansectsu).z $(mandirsu)/visudo.$(mansectsu).z $(mandirform)/sudoers.$(mansectform).z ; /usr/bin/pack $(mandirsu)/sudo.$(mansectsu) $(mandirsu)/visudo.$(mansectsu) $(mandirform)/sudoers.$(mansectform)'
 		    if test "$prefix" = "/usr/local" -a "$mandir" = '$(prefix)/man'; then
 			if test -d /usr/share/catman/local; then
 			    mandir="/usr/share/catman/local"
@@ -1432,7 +1451,7 @@ case "$host" in
 		test -n "$mansectform" || mansectform=4
 		;;
     *-*-bsdi*)
-		BROKEN_SETREUID=yes
+		SKIP_SETREUID=yes
 		# Use shlicc for BSD/OS [23].x unless asked to do otherwise
 		if test "${with_CC+set}" != set -a "$ac_cv_prog_CC" = gcc; then
 		    case "$OSREV" in
@@ -1448,7 +1467,7 @@ case "$host" in
 		# backported to 2.0.5.  We just take 2.1 and above...
 		case "`echo $host_os | sed 's/^freebsd\([[0-9\.]]*\).*$/\1/'`" in
 		0.*|1.*|2.0*)
-		    BROKEN_SETREUID=yes
+		    SKIP_SETREUID=yes
 		    ;;
 		esac
 		if test "$with_logincap" = "yes"; then
@@ -1462,7 +1481,7 @@ case "$host" in
 		fi
 		;;
     *-*-*openbsd*)
-		BROKEN_SETREUID=yes
+		SKIP_SETREUID=yes
 		if test "$CHECKSHADOW" = "true"; then
 		    CHECKSHADOW="false"
 		fi
@@ -1471,7 +1490,7 @@ case "$host" in
 		# NetBSD has a real setreuid(2) starting with 1.3.2
 		case "`echo $host_os | sed 's/^netbsd\([[0-9\.]]*\).*$/\1/'`" in
 		0.9*|1.[012]*|1.3|1.3.1)
-		    BROKEN_SETREUID=yes
+		    SKIP_SETREUID=yes
 		    ;;
 		esac
 		if test "$CHECKSHADOW" = "true"; then
@@ -1548,7 +1567,7 @@ if test "$with_logincap" = "yes"; then
     AC_CHECK_HEADERS(login_cap.h)
 fi
 if test "$with_bsdauth" = "yes"; then
-    AC_CHECK_HEADER(bsd_auth.h, AC_DEFINE(HAVE_BSD_AUTH_H, 1, [Define if you use BSD authentication.]) [with_passwd=no; AUTH_OBJS=bsdauth.o])
+    AC_CHECK_HEADER(bsd_auth.h, AC_DEFINE(HAVE_BSD_AUTH_H, 1, [Define if you use BSD authentication.]) [with_passwd=no; AUTH_OBJS=bsdauth.o], -)
 fi
 dnl
 dnl typedef checks
@@ -1578,12 +1597,15 @@ dnl
 dnl Function checks
 dnl
 AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf tzset \
-	       seteuid setegid strftime setrlimit initgroups fstat)
-if test -z "$BROKEN_SETREUID"; then
+	       strftime setrlimit initgroups fstat)
+if test -z "$SKIP_SETRESUID"; then
+    AC_CHECK_FUNCS(setresuid, [SKIP_SETREUID=yes])
+fi
+if test -z "$SKIP_SETREUID"; then
     AC_CHECK_FUNCS(setreuid)
 fi
 if test X"$with_interfaces" != X"no"; then
-    AC_CHECK_FUNCS(getifaddrs, AC_CHECK_FUNCS(freeifaddrs))
+    AC_CHECK_FUNCS(getifaddrs, [AC_CHECK_FUNCS(freeifaddrs)])
 fi
 if test -n "$SECUREWARE"; then
     AC_CHECK_FUNCS(bigcrypt set_auth_parameters initprivs)
@@ -1593,12 +1615,12 @@ if test -z "$BROKEN_GETCWD"; then
 fi
 AC_CHECK_FUNCS(lockf flock, [break])
 AC_CHECK_FUNCS(waitpid wait3, [break])
-AC_CHECK_FUNCS(innetgr _innetgr, AC_CHECK_FUNCS(getdomainname) [break])
-AC_CHECK_FUNCS(lsearch, , [AC_CHECK_LIB(compat, lsearch, AC_CHECK_HEADER(search.h, AC_DEFINE(HAVE_LSEARCH) [LIBS="${LIBS} -lcompat"], AC_LIBOBJ(lsearch)), AC_LIBOBJ(lsearch))])
-AC_CHECK_FUNCS(utime, SUDO_FUNC_UTIME_POSIX, AC_LIBOBJ(utime))
+AC_CHECK_FUNCS(innetgr _innetgr, [AC_CHECK_FUNCS(getdomainname) [break]])
+AC_CHECK_FUNCS(lsearch, , [AC_CHECK_LIB(compat, lsearch, AC_CHECK_HEADER(search.h, AC_DEFINE(HAVE_LSEARCH) [LIBS="${LIBS} -lcompat"], AC_LIBOBJ(lsearch), -), AC_LIBOBJ(lsearch))])
+AC_CHECK_FUNCS(utime, [SUDO_FUNC_UTIME_POSIX], [AC_LIBOBJ(utime)])
 SUDO_FUNC_FNMATCH(AC_DEFINE(HAVE_FNMATCH, 1, [Define if you have the `fnmatch' function.]), AC_LIBOBJ(fnmatch))
 SUDO_FUNC_ISBLANK
-AC_REPLACE_FUNCS(strerror strcasecmp sigaction)
+AC_REPLACE_FUNCS(strerror strcasecmp sigaction strlcpy strlcat)
 AC_CHECK_FUNCS(snprintf vsnprintf asprintf vasprintf, , [NEED_SNPRINTF=1])
 dnl
 dnl If NEED_SNPRINTF is set, add snprintf.c to LIBOBJS
@@ -1675,7 +1697,7 @@ dnl
 dnl PAM libs
 dnl
 if test "$with_pam" = "yes"; then
-    AC_HAVE_LIBRARY(dl, SUDO_LIBS="${SUDO_LIBS} -ldl -lpam", SUDO_LIBS="${SUDO_LIBS} -lpam")
+    AC_HAVE_LIBRARY(dl, SUDO_LIBS="${SUDO_LIBS} -lpam -ldl", SUDO_LIBS="${SUDO_LIBS} -lpam")
 fi
 
 dnl
@@ -1802,15 +1824,20 @@ dnl extra SecurID lib + includes
 dnl
 if test -n "$with_SecurID" -a "$with_SecurID" != "no"; then
     if test "$with_SecurID" != "yes"; then
-	SUDO_LIBS="${SUDO_LIBS} ${with_SecurID}/sdiclient.a"
-	CPPFLAGS="${CPPFLAGS} -I${with_SecurID}"
-    elif test -f /usr/ace/examples/sdiclient.a; then
-	SUDO_LIBS="${SUDO_LIBS} /usr/ace/examples/sdiclient.a"
-	CPPFLAGS="${CPPFLAGS} -I/usr/ace/examples"
+	:
+    elif test -d /usr/ace/examples; then
+	with_SecurID=/usr/ace/examples
     else
-	SUDO_LIBS="${SUDO_LIBS} /usr/ace/sdiclient.a"
-	CPPFLAGS="${CPPFLAGS} -I/usr/ace"
+	with_SecurID=/usr/ace
     fi
+    CPPFLAGS="${CPPFLAGS} -I${with_SecurID}"
+    _LDFLAGS="${LDFLAGS}"
+    LDFLAGS="${LDFLAGS} -L${with_SecurID}"
+    #
+    # Determine whether to use the new or old SecurID API
+    #
+    AC_CHECK_LIB(aceclnt, SD_Init, [AUTH_OBJS="securid5.o"; SUDO_LIBS="${SUDO_LIBS} -laceclnt -lpthread"; SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_SecurID}"], [AUTH_OBJS="securid.o"; SUDO_LIBS="${SUDO_LIBS} ${with_SecurID}/sdiclient.a"], [-lpthread])
+    LDFLAGS="${_LDFLAGS}"
 fi
 
 dnl
@@ -1920,6 +1947,13 @@ AH_BOTTOM([/*
 # ifdef HAVE_WAIT3
 #  define sudo_waitpid(p, s, o)	wait3(s, o, NULL)
 # endif
+#endif
+
+/* GNU stow needs /etc/sudoers to be a symlink. */
+#ifdef HAVE_STOW
+# define stat_sudoers	stat
+#else
+# define stat_sudoers	lstat
 #endif
 
 /* Solaris doesn't use const qualifiers in PAM. */

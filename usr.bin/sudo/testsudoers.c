@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Chris Jepeway.
@@ -82,7 +82,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: testsudoers.c,v 1.76 2002/03/16 00:44:48 millert Exp $";
+static const char rcsid[] = "$Sudo: testsudoers.c,v 1.79 2003/03/15 20:31:02 millert Exp $";
 #endif /* lint */
 
 
@@ -91,7 +91,7 @@ static const char rcsid[] = "$Sudo: testsudoers.c,v 1.76 2002/03/16 00:44:48 mil
  */
 void init_parser	__P((void));
 void dumpaliases	__P((void));
-void set_perms_dummy	__P((int, int));
+void set_perms_dummy	__P((int));
 
 /*
  * Globals
@@ -102,7 +102,7 @@ int parse_error = FALSE;
 int num_interfaces;
 struct interface *interfaces;
 struct sudo_user sudo_user;
-void (*set_perms) __P((int, int)) = set_perms_dummy;
+void (*set_perms) __P((int)) = set_perms_dummy;
 extern int clearaliases;
 extern int pedantic;
 
@@ -311,8 +311,8 @@ netgr_matches(netgr, host, shost, user)
 }
 
 void
-set_perms_dummy(i, j)
-    int i, j;
+set_perms_dummy(i)
+    int i;
 {
     return;
 }
@@ -377,17 +377,23 @@ main(argc, argv)
 
     /* Fill in cmnd_args from NewArgv. */
     if (NewArgc > 1) {
-	size_t size;
 	char *to, **from;
+	size_t size, n;
 
-	size = (size_t) NewArgv[NewArgc-1] + strlen(NewArgv[NewArgc-1]) -
-	       (size_t) NewArgv[1] + 1;
+	size = (size_t) (NewArgv[NewArgc-1] - NewArgv[1]) +
+		strlen(NewArgv[NewArgc-1]) + 1;
 	user_args = (char *) emalloc(size);
-	for (to = user_args, from = &NewArgv[1]; *from; from++) {
+	for (to = user_args, from = NewArgv + 1; *from; from++) {
+	    n = strlcpy(to, *from, size - (to - user_args));
+	    if (n >= size) {
+		(void) fprintf(stderr,
+		    "%s: internal error, init_vars() overflow\n", Argv[0]);
+		exit(1);
+	    }
+	    to += n;
 	    *to++ = ' ';
-	    (void) strcpy(to, *from);
-	    to += strlen(*from);
 	}
+	*--to = '\0';
     }
 
     /* Initialize default values. */

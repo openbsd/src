@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1996, 1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+# Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.225 2002/04/18 15:41:30 millert Exp $
+# $Sudo: Makefile.in,v 1.230 2003/03/15 20:31:02 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -113,12 +113,13 @@ SRCS = alloc.c alloca.c check.c def_data.c defaults.c env.c fileops.c \
        find_path.c fnmatch.c getcwd.c getspwuid.c goodpath.c \
        interfaces.c lex.yy.c lsearch.c logging.c parse.c parse.lex \
        parse.yacc set_perms.c sigaction.c snprintf.c strcasecmp.c strerror.c \
-       sudo.c sudo.tab.c testsudoers.c tgetpass.c utime.c visudo.c \
-       $(AUTH_SRCS)
+       strlcat.c strlcpy.c sudo.c sudo.tab.c testsudoers.c tgetpass.c utime.c \
+       visudo.c $(AUTH_SRCS)
 
 AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
 	    auth/kerb4.c auth/kerb5.c auth/pam.c auth/passwd.c auth/rfc1938.c \
-	    auth/secureware.c auth/securid.c auth/sia.c auth/sudo_auth.c
+	    auth/secureware.c auth/securid.c auth/securid5.c auth/sia.c \
+	    auth/sudo_auth.c
 
 HDRS = compat.h def_data.h defaults.h ins_2001.h ins_classic.h ins_csops.h \
        ins_goons.h insults.h interfaces.h logging.h parse.h sudo.h sudo.tab.h \
@@ -138,7 +139,7 @@ TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
 
 LIBOBJS = @LIBOBJS@ @ALLOCA@
 
-VERSION = 1.6.6
+VERSION = 1.6.7
 
 DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES HISTORY INSTALL INSTALL.configure \
 	    LICENSE Makefile.in PORTING README RUNSON TODO TROUBLESHOOTING \
@@ -225,6 +226,8 @@ getcwd.o: getcwd.c config.h compat.h
 lsearch.o: lsearch.c config.h compat.h emul/search.h
 snprintf.o: snprintf.c config.h compat.h
 strcasecmp.o: strcasecmp.c config.h
+strlcat.o: strlcat.c config.h
+strlcpy.o: strlcpy.c config.h
 strerror.o: strerror.c config.h
 utime.o: utime.c config.h pathnames.h compat.h emul/utime.h
 
@@ -255,12 +258,14 @@ secureware.o: $(authdir)/secureware.c $(AUTHDEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/secureware.c
 securid.o: $(authdir)/securid.c $(AUTHDEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/securid.c
+securid5.o: $(authdir)/securid5.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/securid5.c
 sia.o: $(authdir)/sia.c $(AUTHDEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/sia.c
 
 sudo.man.in: $(srcdir)/sudo.pod
 	@rm -f $(srcdir)/$@
-	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectsu --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudo.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" > $@ )
+	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; sed -n -e 1d -e '/^=pod/q' -e 's/^/.\\" /p' sudo.pod > $@; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectsu --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudo.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" >> $@ )
 
 sudo.man: sudo.man.in
 	CONFIG_FILES=$@ CONFIG_HEADERS= sh ./config.status
@@ -269,7 +274,7 @@ sudo.cat: sudo.man
 
 visudo.man.in: $(srcdir)/visudo.pod
 	@rm -f $(srcdir)/$@
-	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectsu --release=$(VERSION) --center="MAINTENANCE COMMANDS" visudo.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" > $@ )
+	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; sed -n -e 1d -e '/^=pod/q' -e 's/^/.\\" /p' visudo.pod > $@; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectsu --release=$(VERSION) --center="MAINTENANCE COMMANDS" visudo.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" >> $@ )
 
 visudo.man: visudo.man.in
 	CONFIG_FILES=$@ CONFIG_HEADERS= sh ./config.status
@@ -278,7 +283,7 @@ visudo.cat: visudo.man
 
 sudoers.man.in: $(srcdir)/sudoers.pod
 	@rm -f $(srcdir)/$@
-	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectform --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudoers.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" > $@ )
+	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; sed -n -e 1d -e '/^=pod/q' -e 's/^/.\\" /p' sudoers.pod > $@; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectform --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudoers.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" >> $@ )
 
 sudoers.man:: sudoers.man.in
 	CONFIG_FILES=$@ CONFIG_HEADERS= sh ./config.status

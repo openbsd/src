@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996,1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -98,7 +98,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.318 2002/01/15 23:43:59 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.333 2003/03/15 20:31:01 millert Exp $";
 #endif /* lint */
 
 /*
@@ -131,6 +131,7 @@ FILE *sudoers_fp = NULL;
 struct interface *interfaces;
 int num_interfaces;
 int tgetpass_flags;
+uid_t timestamp_uid;
 extern int errorlineno;
 #if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
 static struct rlimit corelimit;
@@ -141,7 +142,7 @@ login_cap_t *lc;
 #ifdef HAVE_BSD_AUTH_H
 char *login_style;
 #endif /* HAVE_BSD_AUTH_H */
-void (*set_perms) __P((int, int));
+void (*set_perms) __P((int));
 
 
 int
@@ -156,7 +157,7 @@ main(argc, argv, envp)
     int sudo_mode;
     int pwflag;
     char **new_environ;
-    sigaction_t sa;
+    sigaction_t sa, saved_sa_int, saved_sa_quit, saved_sa_tstp, saved_sa_chld;
     extern int printmatches;
     extern char **environ;
 
@@ -180,18 +181,22 @@ main(argc, argv, envp)
     }
 
     /*
-     * Ignore keyboard-generated signals so the user cannot interrupt
-     * us at some point and avoid the logging.
+     * Signal setup:
+     *	Ignore keyboard-generated signals so the user cannot interrupt
+     *  us at some point and avoid the logging.
+     *  Install handler to wait for children when they exit.
      */
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
     sa.sa_handler = SIG_IGN;
-    (void) sigaction(SIGINT, &sa, NULL);
-    (void) sigaction(SIGQUIT, &sa, NULL);
-    (void) sigaction(SIGTSTP, &sa, NULL);
+    (void) sigaction(SIGINT, &sa, &saved_sa_int);
+    (void) sigaction(SIGQUIT, &sa, &saved_sa_quit);
+    (void) sigaction(SIGTSTP, &sa, &saved_sa_tstp);
+    sa.sa_handler = reapchild;
+    (void) sigaction(SIGCHLD, &sa, &saved_sa_chld);
 
     /*
-     * Setup signal handlers, turn off core dumps, and close open files.
+     * Turn off core dumps, close open files and setup set_perms().
      */
     initial_setup();
     setpwent();
@@ -217,7 +222,6 @@ main(argc, argv, envp)
 		    dump_auth_methods();
 		    dump_defaults();
 		    dump_interfaces();
-		    dump_badenv();
 		}
 		exit(0);
 		break;
@@ -256,17 +260,18 @@ main(argc, argv, envp)
     validated = sudoers_lookup(pwflag);
 
     /*
-     * If we have POSIX saved uids and the stay_setuid flag was not set,
-     * set the real, effective and saved uids to 0 and use set_perms_fallback()
+     * If we are using set_perms_posix() and the stay_setuid flag was not set,
+     * set the real, effective and saved uids to 0 and use set_perms_nosuid()
      * instead of set_perms_posix().
      */
-#if !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
+#if !defined(HAVE_SETRESUID) && !defined(HAVE_SETREUID) && \
+    !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
     if (!def_flag(I_STAY_SETUID) && set_perms == set_perms_posix) {
 	if (setuid(0)) {
 	    perror("setuid(0)");
 	    exit(1);
 	}
-	set_perms = set_perms_fallback;
+	set_perms = set_perms_nosuid;
     }
 #endif
 
@@ -287,6 +292,22 @@ main(argc, argv, envp)
 	    log_error(NO_MAIL|MSG_ONLY, "no passwd entry for %s!", *user_runas);
     }
 
+    /*
+     * Look up the timestamp dir owner if one is specified.
+     */
+    if (def_str(I_TIMESTAMPOWNER)) {
+	struct passwd *pw;
+
+	if (*def_str(I_TIMESTAMPOWNER) == '#')
+	    pw = getpwuid(atoi(def_str(I_TIMESTAMPOWNER) + 1));
+	else
+	    pw = getpwnam(def_str(I_TIMESTAMPOWNER));
+	if (!pw)
+	    log_error(0, "timestamp owner (%s): No such user",
+		def_str(I_TIMESTAMPOWNER));
+	timestamp_uid = pw->pw_uid;
+    }
+
     /* This goes after the sudoers parse since we honor sudoers options. */
     if (sudo_mode == MODE_KILL || sudo_mode == MODE_INVALIDATE) {
 	remove_timestamp((sudo_mode == MODE_KILL));
@@ -299,8 +320,9 @@ main(argc, argv, envp)
 
     /* Is root even allowed to run sudo? */
     if (user_uid == 0 && !def_flag(I_ROOT_SUDO)) {
-	(void) fputs("You are already root, you don't need to use sudo.\n",
-	    stderr);
+	(void) fprintf(stderr,
+	    "Sorry, %s has been configured to not allow root to run it.\n",
+	    Argv[0]);
 	exit(1);
     }
 
@@ -362,14 +384,6 @@ main(argc, argv, envp)
 		"please report this error at http://courtesan.com/sudo/bugs/");
 	}
 
-	/* Reset signal handlers before we exec. */
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = SIG_DFL;
-	(void) sigaction(SIGINT, &sa, NULL);
-	(void) sigaction(SIGQUIT, &sa, NULL);
-	(void) sigaction(SIGTSTP, &sa, NULL);
-
 	/* Override user's umask if configured to do so. */
 	if (def_ival(I_UMASK) != 0777)
 	    (void) umask(def_mode(I_UMASK));
@@ -380,7 +394,7 @@ main(argc, argv, envp)
 #endif /* RLIMIT_CORE */
 
 	/* Become specified user or root. */
-	set_perms(PERM_RUNAS, sudo_mode);
+	set_perms(PERM_RUNAS);
 
 	/* Close the password and group files */
 	endpwent();
@@ -388,6 +402,12 @@ main(argc, argv, envp)
 
 	/* Install the new environment. */
 	environ = new_environ;
+
+	/* Restore signal handlers before we exec. */
+	(void) sigaction(SIGINT, &saved_sa_int, NULL);
+	(void) sigaction(SIGQUIT, &saved_sa_quit, NULL);
+	(void) sigaction(SIGTSTP, &saved_sa_tstp, NULL);
+	(void) sigaction(SIGCHLD, &saved_sa_chld, NULL);
 
 #ifndef PROFILING
 	if ((sudo_mode & MODE_BACKGROUND) && fork() > 0)
@@ -460,7 +480,7 @@ init_vars(sudo_mode)
     /* Default value for cmnd and cwd, overridden later. */
     if (user_cmnd == NULL)
 	user_cmnd = NewArgv[0];
-    (void) strcpy(user_cwd, "unknown");
+    (void) strlcpy(user_cwd, "unknown", sizeof(user_cwd));
 
     /*
      * We avoid gethostbyname() if possible since we don't want
@@ -505,12 +525,13 @@ init_vars(sudo_mode)
 	char pw_name[MAX_UID_T_LEN + 1];
 
 	pw.pw_uid = getuid();
-	(void) sprintf(pw_name, "%ld", (long) pw.pw_uid);
+	(void) snprintf(pw_name, sizeof(pw_name), "%lu",
+	    (unsigned long) pw.pw_uid);
 	pw.pw_name = pw_name;
 	sudo_user.pw = &pw;
 
-	log_error(0, "uid %ld does not exist in the passwd file!",
-	    (long) pw.pw_uid);
+	log_error(0, "uid %lu does not exist in the passwd file!",
+	    (unsigned long) pw.pw_uid);
     }
     if (user_shell == NULL || *user_shell == '\0')
 	user_shell = sudo_user.pw->pw_shell;
@@ -529,16 +550,16 @@ init_vars(sudo_mode)
     /*
      * Get current working directory.  Try as user, fall back to root.
      */
-    set_perms(PERM_USER, sudo_mode);
+    set_perms(PERM_USER);
     if (!getcwd(user_cwd, sizeof(user_cwd))) {
-	set_perms(PERM_ROOT, sudo_mode);
+	set_perms(PERM_ROOT);
 	if (!getcwd(user_cwd, sizeof(user_cwd))) {
 	    (void) fprintf(stderr, "%s: Can't get working directory!\n",
 			   Argv[0]);
-	    (void) strcpy(user_cwd, "unknown");
+	    (void) strlcpy(user_cwd, "unknown", sizeof(user_cwd));
 	}
     } else
-	set_perms(PERM_ROOT, sudo_mode);
+	set_perms(PERM_ROOT);
 
     /*
      * If we were given the '-s' option (run shell) we need to redo
@@ -547,7 +568,7 @@ init_vars(sudo_mode)
     if ((sudo_mode & MODE_SHELL)) {
 	char **dst, **src = NewArgv;
 
-	NewArgv = (char **) emalloc (sizeof(char *) * (++NewArgc + 1));
+	NewArgv = (char **) emalloc2((++NewArgc + 1), sizeof(char *));
 	if (user_shell && *user_shell) {
 	    NewArgv[0] = user_shell;
 	} else {
@@ -569,15 +590,15 @@ init_vars(sudo_mode)
 	rval = find_path(NewArgv[0], &user_cmnd, user_path);
 	if (rval != FOUND) {
 	    /* Failed as root, try as invoking user. */
-	    set_perms(PERM_USER, sudo_mode);
+	    set_perms(PERM_USER);
 	    rval = find_path(NewArgv[0], &user_cmnd, user_path);
-	    set_perms(PERM_ROOT, sudo_mode);
+	    set_perms(PERM_ROOT);
 	}
 
 	/* set user_args */
 	if (NewArgc > 1) {
 	    char *to, **from;
-	    size_t size;
+	    size_t size, n;
 
 	    /* If MODE_SHELL not set then NewArgv is contiguous so just count */
 	    if (!(sudo_mode & MODE_SHELL)) {
@@ -589,10 +610,15 @@ init_vars(sudo_mode)
 	    }
 
 	    /* alloc and copy. */
-	    to = user_args = (char *) emalloc(size);
-	    for (from = NewArgv + 1; *from; from++) {
-		(void) strcpy(to, *from);
-		to += strlen(*from);
+	    user_args = (char *) emalloc(size);
+	    for (to = user_args, from = NewArgv + 1; *from; from++) {
+		n = strlcpy(to, *from, size - (to - user_args));
+		if (n >= size) {
+		    (void) fprintf(stderr,
+			"%s: internal error, init_vars() overflow\n", Argv[0]);
+		    exit(1);
+		}
+		to += n;
 		*to++ = ' ';
 	    }
 	    *--to = '\0';
@@ -609,7 +635,7 @@ init_vars(sudo_mode)
 static int
 parse_args()
 {
-    int rval = MODE_RUN;		/* what mode is suod to be run in? */
+    int rval = MODE_RUN;		/* what mode is sudo to be run in? */
     int excl = 0;			/* exclusive arg, no others allowed */
 
     NewArgv = Argv + 1;
@@ -777,7 +803,7 @@ check_sudoers()
      * Fix the mode and group on sudoers file from old default.
      * Only works if filesystem is readable/writable by root.
      */
-    if ((rootstat = lstat(_PATH_SUDOERS, &statbuf)) == 0 &&
+    if ((rootstat = stat_sudoers(_PATH_SUDOERS, &statbuf)) == 0 &&
 	SUDOERS_UID == statbuf.st_uid && SUDOERS_MODE != 0400 &&
 	(statbuf.st_mode & 0007777) == 0400) {
 
@@ -806,9 +832,9 @@ check_sudoers()
      * file owner.  We already did a stat as root, so use that
      * data if we can't stat as sudoers file owner.
      */
-    set_perms(PERM_SUDOERS, 0);
+    set_perms(PERM_SUDOERS);
 
-    if (rootstat != 0 && lstat(_PATH_SUDOERS, &statbuf) != 0)
+    if (rootstat != 0 && stat_sudoers(_PATH_SUDOERS, &statbuf) != 0)
 	log_error(USE_ERRNO, "can't stat %s", _PATH_SUDOERS);
     else if (!S_ISREG(statbuf.st_mode))
 	log_error(0, "%s is not a regular file", _PATH_SUDOERS);
@@ -818,11 +844,11 @@ check_sudoers()
 	log_error(0, "%s is mode 0%o, should be 0%o", _PATH_SUDOERS,
 	    (statbuf.st_mode & 07777), SUDOERS_MODE);
     else if (statbuf.st_uid != SUDOERS_UID)
-	log_error(0, "%s is owned by uid %ld, should be %d", _PATH_SUDOERS,
-	    (long) statbuf.st_uid, SUDOERS_UID);
+	log_error(0, "%s is owned by uid %lu, should be %lu", _PATH_SUDOERS,
+	    (unsigned long) statbuf.st_uid, SUDOERS_UID);
     else if (statbuf.st_gid != SUDOERS_GID)
-	log_error(0, "%s is owned by gid %ld, should be %d", _PATH_SUDOERS,
-	    (long) statbuf.st_gid, SUDOERS_GID);
+	log_error(0, "%s is owned by gid %lu, should be %lu", _PATH_SUDOERS,
+	    (unsigned long) statbuf.st_gid, SUDOERS_GID);
     else {
 	/* Solaris sometimes returns EAGAIN so try 10 times */
 	for (i = 0; i < 10 ; i++) {
@@ -840,7 +866,7 @@ check_sudoers()
 	    log_error(USE_ERRNO, "can't open %s", _PATH_SUDOERS);
     }
 
-    set_perms(PERM_ROOT, 0);		/* change back to root */
+    set_perms(PERM_ROOT);		/* change back to root */
 }
 
 /*
@@ -854,7 +880,6 @@ initial_setup()
 #ifdef HAVE_SETRLIMIT
     struct rlimit rl;
 #endif
-    sigaction_t sa;
 
 #if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
     /*
@@ -883,19 +908,23 @@ initial_setup()
     for (fd = maxfd; fd > STDERR_FILENO; fd--)
 	(void) close(fd);
 
-    /* Catch children as they die... */
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    sa.sa_handler = reapchild;
-    (void) sigaction(SIGCHLD, &sa, NULL);
-
-    /* Set set_perms pointer to the correct function */
-#if !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
+    /*
+     * Make set_perms point to the correct function.
+     * If we are using setresuid() or setreuid() we only need to set this
+     * once.  If we are using POSIX saved uids we will switch to
+     * set_perms_nosuid after sudoers has been parsed if the "stay_suid"
+     * option is not set.
+     */
+#if defined(HAVE_SETRESUID) || defined(HAVE_SETREUID)
+    set_perms = set_perms_suid;
+#else
+# if !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
     if (sysconf(_SC_SAVED_IDS) == 1 && sysconf(_SC_VERSION) >= 199009)
 	set_perms = set_perms_posix;
     else
-#endif
-	set_perms = set_perms_fallback;
+# endif
+	set_perms = set_perms_nosuid;
+#endif /* HAVE_SETRESUID || HAVE_SETREUID */
 }
 
 #ifdef HAVE_LOGIN_CAP_H

@@ -83,7 +83,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: tgetpass.c,v 1.103 2001/12/17 23:56:47 millert Exp $";
+static const char rcsid[] = "$Sudo: tgetpass.c,v 1.104 2002/12/13 18:20:34 millert Exp $";
 #endif /* lint */
 
 #ifndef TCSASOFT
@@ -154,9 +154,6 @@ restart:
 	output = STDERR_FILENO;
     }
 
-    if (prompt)
-	(void) write(output, prompt, strlen(prompt));
-
     /*
      * Catch signals that would otherwise cause the user to end
      * up with echo turned off in the shell.  Don't worry about
@@ -186,6 +183,9 @@ restart:
 	memset(&term, 0, sizeof(term));
 	memset(&oterm, 0, sizeof(oterm));
     }
+
+    if (prompt)
+	(void) write(output, prompt, strlen(prompt));
 
     pass = tgetline(input, buf, sizeof(buf), timeout);
     save_errno = errno;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: visudo.c,v 1.146 2002/01/17 15:35:54 millert Exp $";
+static const char rcsid[] = "$Sudo: visudo.c,v 1.149 2003/03/15 20:31:02 millert Exp $";
 #endif /* lint */
 
 /*
@@ -231,16 +231,24 @@ main(argc, argv)
 		Exit(-1);
 	    }
 
+	/* Add missing newline at EOF if needed. */
+	if (n > 0 && buf[n - 1] != '\n') {
+	    buf[0] = '\n';
+	    write(stmp_fd, buf, 1);
+	}
+
 	(void) close(stmp_fd);
 	(void) touch(stmp, sudoers_sb.st_mtime);
 
 	/* Parse sudoers to pull in editor and env_editor conf values. */
 	if ((yyin = fopen(stmp, "r"))) {
 	    yyout = stdout;
+	    n = quiet;
+	    quiet = 1;
 	    init_parser();
 	    yyparse();
 	    parse_error = FALSE;
-	    yyrestart(yyin);
+	    quiet = n;
 	    fclose(yyin);
 	}
     } else
@@ -390,10 +398,7 @@ main(argc, argv)
 	     * for parse errors.
 	     */
 	    yyout = stdout;
-	    if (parse_error)
-		yyin = freopen(stmp, "r", yyin);
-	    else
-		yyin = fopen(stmp, "r");
+	    yyin = fopen(stmp, "r+");
 	    if (yyin == NULL) {
 		(void) fprintf(stderr,
 		    "%s: Can't re-open temporary file (%s), %s unchanged.\n",
@@ -401,18 +406,25 @@ main(argc, argv)
 		Exit(-1);
 	    }
 
+	    /* Add missing newline at EOF if needed. */
+	    if (fseek(yyin, -1, SEEK_END) == 0 && (ch = fgetc(yyin)) != '\n')
+		fputc('\n', yyin);
+	    rewind(yyin);
+
 	    /* Clean slate for each parse */
 	    user_runas = NULL;
 	    init_defaults();
 	    init_parser();
 
-	    /* Parse the sudoers file */
+	    /* Parse the sudoers temp file */
+	    yyrestart(yyin);
 	    if (yyparse() && parse_error != TRUE) {
 		(void) fprintf(stderr,
 		    "%s: Failed to parse temporary file (%s), unknown error.\n",
 		    Argv[0], stmp);
 		parse_error = TRUE;
 	    }
+	    fclose(yyin);
 	} else {
 	    (void) fprintf(stderr,
 		"%s: Editor (%s) failed, %s unchanged.\n", Argv[0],
@@ -432,7 +444,6 @@ main(argc, argv)
 				Exit(0);
 				break;
 	    }
-	    yyrestart(yyin);	/* reset lexer */
 	}
     } while (parse_error == TRUE);
 

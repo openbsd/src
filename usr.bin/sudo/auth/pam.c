@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,7 +66,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: pam.c,v 1.29 2002/01/22 16:43:23 millert Exp $";
+static const char rcsid[] = "$Sudo: pam.c,v 1.32 2003/03/15 20:37:44 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -201,11 +201,11 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     struct pam_response **response;
     VOID *appdata_ptr;
 {
-    struct pam_response *pr;
+    volatile struct pam_response *pr;
     PAM_CONST struct pam_message *pm;
     const char *p = def_prompt;
-    char *pass;
-    int n;
+    volatile char *pass;
+    int n, flags;
     extern int nil_pw;
 
     if ((*response = malloc(num_msg * sizeof(struct pam_response))) == NULL)
@@ -213,17 +213,17 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     (void) memset(*response, 0, num_msg * sizeof(struct pam_response));
 
     for (pr = *response, pm = *msg, n = num_msg; n--; pr++, pm++) {
+	flags = tgetpass_flags;
 	switch (pm->msg_style) {
 	    case PAM_PROMPT_ECHO_ON:
-		tgetpass_flags |= TGP_ECHO;
+		flags |= TGP_ECHO;
 	    case PAM_PROMPT_ECHO_OFF:
 		/* Only override PAM prompt if it matches /^Password: ?/ */
 		if (strncmp(pm->msg, "Password:", 9) || (pm->msg[9] != '\0'
 		    && (pm->msg[9] != ' ' || pm->msg[10] != '\0')))
 		    p = pm->msg;
 		/* Read the password. */
-		pass = tgetpass(p, def_ival(I_PASSWD_TIMEOUT) * 60,
-		    tgetpass_flags);
+		pass = tgetpass(p, def_ival(I_PASSWD_TIMEOUT) * 60, flags);
 		pr->resp = estrdup(pass ? pass : "");
 		if (*pr->resp == '\0')
 		    nil_pw = 1;		/* empty password */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-1996, 1998-1999, 2001
+ * Copyright (c) 1994-1996, 1998-1999, 2001, 2003
  *	Todd C. Miller <Todd.Miller@courtesan.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,22 +58,26 @@
 #include <pwd.h>
 
 #if defined(HAVE_SKEY)
-#include <skey.h>
-#define RFC1938			skey
-#define rfc1938challenge	skeychallenge
-#define rfc1938verify		skeyverify
+# include <skey.h>
+# define RFC1938				skey
+#  ifdef __NetBSD__
+#   define rfc1938challenge(a,b,c,d)	skeychallenge((a),(b),(c),(d))
+#  else
+#   define rfc1938challenge(a,b,c,d)	skeychallenge((a),(b),(c))
+#  endif
+# define rfc1938verify(a,b)		skeyverify((a),(b))
 #elif defined(HAVE_OPIE)
-#include <opie.h>
-#define RFC1938			opie
-#define rfc1938challenge	opiechallenge
-#define rfc1938verify		opieverify
+# include <opie.h>
+# define RFC1938			opie
+# define rfc1938challenge(a,b,c,d)	opiechallenge((a),(b),(c))
+# define rfc1938verify(a,b)		opieverify((a),(b))
 #endif
 
 #include "sudo.h"
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: rfc1938.c,v 1.9 2001/12/14 19:52:53 millert Exp $";
+static const char rcsid[] = "$Sudo: rfc1938.c,v 1.11 2003/03/15 20:37:44 millert Exp $";
 #endif /* lint */
 
 int
@@ -115,7 +119,7 @@ rfc1938_setup(pw, promptp, auth)
      * If the user is not in the OTP db, only post a fatal error if
      * we are running alone (since they may just use a normal passwd).
      */
-    if (rfc1938challenge(&rfc1938, pw->pw_name, challenge) != 0) {
+    if (rfc1938challenge(&rfc1938, pw->pw_name, challenge, sizeof(challenge))) {
 	if (IS_ONEANDONLY(auth)) {
 	    (void) fprintf(stderr,
 			   "%s: You do not exist in the %s database.\n",

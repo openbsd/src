@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: aix_auth.c,v 1.12 2002/01/21 22:25:14 millert Exp $";
+static const char rcsid[] = "$Sudo: aix_auth.c,v 1.14 2003/03/15 20:37:44 millert Exp $";
 #endif /* lint */
 
 int
@@ -70,13 +70,14 @@ aixauth_verify(pw, prompt, auth)
     char *prompt;
     sudo_auth *auth;
 {
-    char *message, *pass;
+    volatile char *pass;
+    char *message;
     int reenter = 1;
     int rval = AUTH_FAILURE;
 
     pass = tgetpass(prompt, def_ival(I_PASSWD_TIMEOUT) * 60, tgetpass_flags);
     if (pass) {
-	if (authenticate(pw->pw_name, pass, &reenter, &message) == 0)
+	if (authenticate(pw->pw_name, (char *)pass, &reenter, &message) == 0)
 	    rval = AUTH_SUCCESS;
 	memset(pass, 0, strlen(pass));
     }

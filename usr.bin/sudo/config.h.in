@@ -1,4 +1,4 @@
-/* config.h.in.  Generated automatically from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.in by autoheader.  */
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -18,7 +18,7 @@
 /* Define if you want insults culled from the twisted minds of CSOps. */
 #undef CSOPS_INSULTS
 
-/* Define if using `alloca.c'. */
+/* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
 /* Define if you want sudo to display "command not allowed" instead of
@@ -46,19 +46,20 @@
 /* Define if you use AFS. */
 #undef HAVE_AFS
 
-/* Define if you have `alloca', as a function or macro. */
+/* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 
-/* Define if you have <alloca.h> and it should be used (not on Ultrix). */
+/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
+   */
 #undef HAVE_ALLOCA_H
 
-/* Define if you have the `asprintf' function. */
+/* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 
 /* Define if you use AIX general authentication. */
 #undef HAVE_AUTHENTICATE
 
-/* Define if you have the `bigcrypt' function. */
+/* Define to 1 if you have the `bigcrypt' function. */
 #undef HAVE_BIGCRYPT
 
 /* Define if you use BSD authentication. */
@@ -67,22 +68,23 @@
 /* Define if you use OSF DCE. */
 #undef HAVE_DCE
 
-/* Define if you have the <dirent.h> header file, and it defines `DIR'. */
+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+   */
 #undef HAVE_DIRENT_H
 
-/* Define if you have the `dispcrypt' function. */
+/* Define to 1 if you have the `dispcrypt' function. */
 #undef HAVE_DISPCRYPT
 
-/* Define if you have the `flock' function. */
+/* Define to 1 if you have the `flock' function. */
 #undef HAVE_FLOCK
 
 /* Define if you have the `fnmatch' function. */
 #undef HAVE_FNMATCH
 
-/* Define if you have the `freeifaddrs' function. */
+/* Define to 1 if you have the `freeifaddrs' function. */
 #undef HAVE_FREEIFADDRS
 
-/* Define if you have the `fstat' function. */
+/* Define to 1 if you have the `fstat' function. */
 #undef HAVE_FSTAT
 
 /* Define if you use the FWTK authsrv daemon. */
@@ -92,13 +94,13 @@
    */
 #undef HAVE_GETAUTHUID
 
-/* Define if you have the `getcwd' function. */
+/* Define to 1 if you have the `getcwd' function. */
 #undef HAVE_GETCWD
 
-/* Define if you have the `getdomainname' function. */
+/* Define to 1 if you have the `getdomainname' function. */
 #undef HAVE_GETDOMAINNAME
 
-/* Define if you have the `getifaddrs' function. */
+/* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
 
 /* Define if you have the `getprpwnam' function. (SecureWare-style shadow
@@ -116,16 +118,16 @@
    passwords) */
 #undef HAVE_GETSPWUID
 
-/* Define if you have the `initgroups' function. */
+/* Define to 1 if you have the `initgroups' function. */
 #undef HAVE_INITGROUPS
 
-/* Define if you have the `initprivs' function. */
+/* Define to 1 if you have the `initprivs' function. */
 #undef HAVE_INITPRIVS
 
-/* Define if you have the `innetgr' function. */
+/* Define to 1 if you have the `innetgr' function. */
 #undef HAVE_INNETGR
 
-/* Define if you have the <inttypes.h> header file. */
+/* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
 /* Define if you have isblank(3). */
@@ -145,37 +147,37 @@
 /* Define if you use Kerberos V. */
 #undef HAVE_KERB5
 
-/* Define if you have the `lockf' function. */
+/* Define to 1 if you have the `lockf' function. */
 #undef HAVE_LOCKF
 
-/* Define if you have the <login_cap.h> header file. */
+/* Define to 1 if you have the <login_cap.h> header file. */
 #undef HAVE_LOGIN_CAP_H
 
 /* Define if your compiler supports the "long long" type. */
 #undef HAVE_LONG_LONG
 
-/* Define if you have the `lsearch' function. */
+/* Define to 1 if you have the `lsearch' function. */
 #undef HAVE_LSEARCH
 
-/* Define if you have the <malloc.h> header file. */
+/* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
 
-/* Define if you have the `memchr' function. */
+/* Define to 1 if you have the `memchr' function. */
 #undef HAVE_MEMCHR
 
-/* Define if you have the `memcpy' function. */
+/* Define to 1 if you have the `memcpy' function. */
 #undef HAVE_MEMCPY
 
-/* Define if you have the <memory.h> header file. */
+/* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define if you have the `memset' function. */
+/* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
 
-/* Define if you have the <ndir.h> header file, and it defines `DIR'. */
+/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
-/* Define if you have the <netgroup.h> header file. */
+/* Define to 1 if you have the <netgroup.h> header file. */
 #undef HAVE_NETGROUP_H
 
 /* Define if you use NRL OPIE. */
@@ -184,7 +186,7 @@
 /* Define if you use PAM. */
 #undef HAVE_PAM
 
-/* Define if you have the <paths.h> header file. */
+/* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
 
 /* Define if your struct sockadr has an sa_len field. */
@@ -193,31 +195,28 @@
 /* Define if you use SecurID. */
 #undef HAVE_SECURID
 
-/* Define if you have the `setegid' function. */
-#undef HAVE_SETEGID
+/* Define to 1 if you have the `setresuid' function. */
+#undef HAVE_SETRESUID
 
-/* Define if you have the `seteuid' function. */
-#undef HAVE_SETEUID
-
-/* Define if you have the `setreuid' function. */
+/* Define to 1 if you have the `setreuid' function. */
 #undef HAVE_SETREUID
 
-/* Define if you have the `setrlimit' function. */
+/* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
 
-/* Define if you have the `set_auth_parameters' function. */
+/* Define to 1 if you have the `set_auth_parameters' function. */
 #undef HAVE_SET_AUTH_PARAMETERS
 
 /* Define if you use SIA. */
 #undef HAVE_SIA
 
-/* Define if you have the `sigaction' function. */
+/* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
 
 /* Define if <signal.h> has the sigaction_t typedef. */
 #undef HAVE_SIGACTION_T
 
-/* Define if the system has the type `sig_atomic_t'. */
+/* Define to 1 if the system has the type `sig_atomic_t'. */
 #undef HAVE_SIG_ATOMIC_T
 
 /* Define if you use S/Key. */
@@ -226,95 +225,103 @@
 /* Define if your S/Key library has skeyaccess(). */
 #undef HAVE_SKEYACCESS
 
-/* Define if you have the `snprintf' function. */
+/* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
 
-/* Define if you have the <stdint.h> header file. */
+/* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
-/* Define if you have the <stdlib.h> header file. */
+/* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define if you have the `strcasecmp' function. */
+/* Define to 1 if you have the `strcasecmp' function. */
 #undef HAVE_STRCASECMP
 
-/* Define if you have the `strchr' function. */
+/* Define to 1 if you have the `strchr' function. */
 #undef HAVE_STRCHR
 
-/* Define if you have the `strerror' function. */
+/* Define to 1 if you have the `strerror' function. */
 #undef HAVE_STRERROR
 
-/* Define if you have the `strftime' function. */
+/* Define to 1 if you have the `strftime' function. */
 #undef HAVE_STRFTIME
 
-/* Define if you have the <strings.h> header file. */
+/* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
-/* Define if you have the <string.h> header file. */
+/* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define if you have the `strrchr' function. */
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define to 1 if you have the `strrchr' function. */
 #undef HAVE_STRRCHR
 
-/* Define if you have the `sysconf' function. */
+/* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
 
-/* Define if you have the <sys/bsdtypes.h> header file. */
+/* Define to 1 if you have the <sys/bsdtypes.h> header file. */
 #undef HAVE_SYS_BSDTYPES_H
 
-/* Define if you have the <sys/dir.h> header file, and it defines `DIR'. */
+/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
+   */
 #undef HAVE_SYS_DIR_H
 
-/* Define if you have the <sys/ndir.h> header file, and it defines `DIR'. */
+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
+   */
 #undef HAVE_SYS_NDIR_H
 
-/* Define if you have the <sys/select.h> header file. */
+/* Define to 1 if you have the <sys/select.h> header file. */
 #undef HAVE_SYS_SELECT_H
 
-/* Define if you have the <sys/sockio.h> header file. */
+/* Define to 1 if you have the <sys/sockio.h> header file. */
 #undef HAVE_SYS_SOCKIO_H
 
-/* Define if you have the <sys/stat.h> header file. */
+/* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
-/* Define if you have the <sys/types.h> header file. */
+/* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
 /* Define if you have the <termios.h> header file and the `tcgetattr'
    function. */
 #undef HAVE_TERMIOS_H
 
-/* Define if you have the <termio.h> header file. */
+/* Define to 1 if you have the <termio.h> header file. */
 #undef HAVE_TERMIO_H
 
-/* Define if you have the `tzset' function. */
+/* Define to 1 if you have the `tzset' function. */
 #undef HAVE_TZSET
 
-/* Define if you have the <unistd.h> header file. */
+/* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define if you have the `utime' function. */
+/* Define to 1 if you have the `utime' function. */
 #undef HAVE_UTIME
 
-/* Define if you have the <utime.h> header file. */
+/* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
 
 /* Define if you have a POSIX utime() (uses struct utimbuf). */
 #undef HAVE_UTIME_POSIX
 
-/* Define if you have the `vasprintf' function. */
+/* Define to 1 if you have the `vasprintf' function. */
 #undef HAVE_VASPRINTF
 
-/* Define if you have the `vsnprintf' function. */
+/* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
-/* Define if you have the `wait3' function. */
+/* Define to 1 if you have the `wait3' function. */
 #undef HAVE_WAIT3
 
-/* Define if you have the `waitpid' function. */
+/* Define to 1 if you have the `waitpid' function. */
 #undef HAVE_WAITPID
 
-/* Define if you have the `_innetgr' function. */
+/* Define to 1 if you have the `_innetgr' function. */
 #undef HAVE__INNETGR
 
 /* Define if you want the hostname to be entered into the log file. */
@@ -388,11 +395,11 @@
 /* Define to override the user's path with a builtin one. */
 #undef SECURE_PATH
 
-/* Define to send mail when the user is not not allowed to run a command. */
+/* Define to send mail when the user is not allowed to run a command. */
 #undef SEND_MAIL_WHEN_NOT_OK
 
-/* Define to send mail when the user is not not allowed to run sudo on this
-   host. */
+/* Define to send mail when the user is not allowed to run sudo on this host.
+   */
 #undef SEND_MAIL_WHEN_NO_HOST
 
 /* Define to send mail when the user is not in the sudoers file. */
@@ -401,7 +408,7 @@
 /* Define if you want sudo to start a shell if given no arguments. */
 #undef SHELL_IF_NO_ARGS
 
-/* Define if you want sudo to set /home/millert in shell mode. */
+/* Define if you want sudo to set $HOME in shell mode. */
 #undef SHELL_SETS_HOME
 
 /* If using the C implementation of alloca, define if you know the
@@ -412,7 +419,7 @@
         STACK_DIRECTION = 0 => direction of growth unknown */
 #undef STACK_DIRECTION
 
-/* Define if you have the ANSI C header files. */
+/* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
 /* Define if the code in interfaces.c does not compile for you. */
@@ -434,6 +441,9 @@
 /* Define if you want to insult the user for entering an incorrect password.
    */
 #undef USE_INSULTS
+
+/* Define if you use stow packaging. */
+#undef USE_STOW
 
 /* Define if you want a different ticket file for each tty. */
 #undef USE_TTY_TICKETS
@@ -459,9 +469,6 @@
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE	1
 #endif
-
-/* Define if you need to in order for stat and other things to work. */
-#undef _POSIX_SOURCE
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
@@ -503,6 +510,13 @@
 # ifdef HAVE_WAIT3
 #  define sudo_waitpid(p, s, o)	wait3(s, o, NULL)
 # endif
+#endif
+
+/* GNU stow needs /etc/sudoers to be a symlink. */
+#ifdef HAVE_STOW
+# define stat_sudoers	stat
+#else
+# define stat_sudoers	lstat
 #endif
 
 /* Solaris doesn't use const qualifiers in PAM. */

@@ -6,10 +6,10 @@ the current version of sudo does not mean it won't work...
 Name	Rev	Arch	Used		Version	By		 Options
 =======	=======	=======	===============	======= ===============  ===============
 Auspex	1.6.1	sun4	bundled cc	1.3.4	Alek Komarnitsky none
-SunOS	4.1.3	sun4	bundled cc	1.6.6	Todd Miller	 none
-SunOS	4.1.3	sun4	gcc2.9.5.2	1.6.6	Todd Miller	 none
+SunOS	4.1.3	sun4	bundled cc	1.6.7	Todd Miller	 none
+SunOS	4.1.3	sun4	gcc2.9.5.2	1.6.7	Todd Miller	 none
 SunOS	4.1.3	sun4	gcc2.7.2.1	1.5.3	Todd Miller	 --with-kerb4
-SunOS	4.1.3	sun4	gcc2.9.5.2	1.6.6	Todd Miller	 --with-skey
+SunOS	4.1.3	sun4	gcc2.9.5.2	1.6.7	Todd Miller	 --with-skey
 Solaris	2.5.1	sparc	SC4.0		1.5.6p1	Brian Jackson	 none 
 Solaris	2.5.1	sun4u	gcc2.7.2.3	1.5.4	Leon von Stauber none
 Solaris	2.5.1	i386	gcc2.7.2	1.5.4	Leon von Stauber none
@@ -24,11 +24,12 @@ Solaris	7	i386	Workshop 5.0	1.6	Brian Jackson	 none
 Solaris	7	sun4u	egcs 1.1.2	1.5.9p4	Scott Kinnane	 none
 Solaris	7	sparc	SC4.2		1.6.6	Todd Miller	 none
 Solaris	7	sun4u	Workshop 6.2	1.6.3p7	Donna Dickerson	 none
-Solaris	7	sparc	2.95.2		1.6.6	Todd Miller	 --with-skey
+Solaris	7	sparc	gcc2.95.2	1.6.6	Todd Miller	 --with-skey
 Solaris	2.6	sun4u	egcs 1.1.2	1.5.9p4	Scott Kinnane	 none
-Solaris	8	sparc	2.95.2		1.6.6	Todd Miller	 --with-skey
+Solaris	8	sparc	gcc2.95.2	1.6.6	Todd Miller	 --with-skey
 Solaris	8	sparc	SC4.2		1.6.6	Todd Miller	 none
 Solaris	8	sun4u	Workshop 6.2	1.6.3p7	Donna Dickerson	 none
+Solaris	8	sun4u	gcc2.95.3	1.6.6	Banu Yobas	 none
 ISC	4.0	i386	bundled cc	1.4	Andy Smith	 none
 ISC	4.0	i386	gcc2.7.0	1.4	Andy Smith	 none
 ISC	4.1	i386	bundled cc	1.4	Andy Smith	 none
@@ -45,8 +46,10 @@ HP-UX	10.20	hp700	gcc2.9.5.2	1.6.6	Todd Miller	 --with-skey
 HP-UX	10.20	hp700	bundled cc	1.6.6	Todd Miller	 none
 HP-UX	10.20	hp700	gcc 2.95.2	1.6.2	Jeff Earickson 	 --with-DCE
 HP-UX	11.00	hp700	ansi-c		1.5.5b1	Alek Komarnitsky --with-C2
-HP-UX	11.00	hp700	bundled cc	1.5.5p5	Lynn Osburn	 none
-HP-UX	11.00	hp700	HP C compiler	1.6.2	Jeff Earickson 	 --with-pam
+HP-UX	11.00	hp700	bundled cc	1.6.7	Todd Miller 	 none
+HP-UX	11.00	hp700	bundled cc	1.6.7	Todd Miller 	 --with-pam
+HP-UX	11.00	hp700	gcc 3.2		1.6.7	Todd Miller 	 none
+HP-UX	11.00	hp700	gcc 3.2		1.6.7	Todd Miller 	 --with-pam
 HP-UX	11.11	hp800	HP C compiler	1.6.5p2	Bill Marmagas 	 --with-pam
 Ultrix	4.3	mips	bundled cc	1.6.3b2	Todd Miller	 none
 Ultrix	4.3	mips	gcc2.7.2.1	1.5.9	Todd Miller	 --with-skey
@@ -93,6 +96,8 @@ AIX	4.2.1	rs6000	bundled cc	1.5.7p4	Sam Mabjish	 none
 AIX	4.2.1	rs6000	egcs 1.1.2	1.5.9p4	Scott Kinnane	 none
 AIX	4.3	rs6000	bundled cc	1.5.4	Leon von Stauber none
 AIX	4.3.2	rs6000	egcs 1.1.2	1.5.9p4	Scott Kinnane	 none
+AIX	5.0.1.0	rs6000	bundled cc	1.6.6	David Littlewood none
+AIX	5.1	PowerPC	gcc-3.2.1	1.6.6	Neil MacGregor	 none
 ConvexOS 9.1	convex	bundled cc	1.3.6	Todd Miller	 none
 ConvexOS 9.1	convex	gcc2.4.5	1.3.6	Todd Miller	 none
 BSD/OS	4.1	i386	cc		1.6.3	Todd Miller	 --with-skey
@@ -108,12 +113,13 @@ Linux	2.0.34	i586	egcs-2.91.57	1.5.6p2	Darrin Chandler	 none
 Linux	2.0.36	i586	gcc-2.7.2.3	1.5.7p4	Nathan Haney	 none
 Linux	2.0.33pl1 m68k	gcc 2.7.2.3	1.5.6	James Troup	 none
 Linux	2.2.12	i586	gcc-2.95.2	1.6.3	Todd Miller	 --with-pam
-Linux	2.4.9	i686	gcc-2.96	1.6.6	Todd Miller	 --with-pam
+Linux	2.4.18	i686	gcc-3.2		1.6.7	Todd Miller	 --with-pam
 Linux	2.2.13	alpha	egcs-2.91.66	1.6.3	Todd Miller	 --with-pam
 Linux	2.2.6-15 ppc	egcs-1.1.2	1.5.9p4	Barbara Schelkle none
 Linux	2.0.34	mips	gcc-2.7.2	1.6	Tristan Roddis	 none
 UnixWare 1.1.4	i386	gcc-2.7.2	1.4	Michael Hancock	 none
 UnixWare 7.1.1	i686	cc		1.6.5p1	Mike Petkau	 none
+UnixWare 7.1.3	i686	cc		1.6.6	Larry Rosenman	 none
 Pyramid DC/OSx 1.1	bundled cc	1.4	Les Schuettpelz	 none
 ATT	SVR4.x	i486	Metaware CC	1.4	Chris Ellington	 none
 SINIX	5.42	R4000	bundled cc	1.4	Paul Tuininga	 none

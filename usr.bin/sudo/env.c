@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2000-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,11 +62,11 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: env.c,v 1.16 2002/04/18 15:38:52 millert Exp $";
+static const char rcsid[] = "$Sudo: env.c,v 1.25 2003/03/15 20:31:01 millert Exp $";
 #endif /* lint */
 
 /*
- * Flags used in env_reset()
+ * Flags used in rebuild_env()
  */
 #undef DID_TERM
 #define DID_TERM	0x01
@@ -86,14 +86,14 @@ static const char rcsid[] = "$Sudo: env.c,v 1.16 2002/04/18 15:38:52 millert Exp
  */
 char **rebuild_env		__P((int, char **));
 char **zero_env			__P((char **));
-static void insert_env		__P((char **, char *));
+static void insert_env		__P((char *, int));
 static char *format_env		__P((char *, char *));
 
 /*
  * Default table of "bad" variables to remove from the environment.
  * XXX - how to omit TERMCAP if it starts with '/'?
  */
-char *initial_badenv_table[] = {
+static const char *initial_badenv_table[] = {
     "IFS",
     "LOCALDOMAIN",
     "RES_OPTIONS",
@@ -108,6 +108,9 @@ char *initial_badenv_table[] = {
 #ifdef _AIX
     "LIBPATH",
 #endif /* _AIX */
+#ifdef __APPLE__
+    "DYLD_*",
+#endif
 #ifdef HAVE_KERB4
     "KRB_CONF*",
     "KRBCONFDIR"
@@ -133,12 +136,16 @@ char *initial_badenv_table[] = {
 /*
  * Default table of variables to check for '%' and '/' characters.
  */
-char *initial_checkenv_table[] = {
+static const char *initial_checkenv_table[] = {
     "LC_*",
     "LANG",
     "LANGUAGE",
     NULL
 };
+
+static char **new_environ;	/* Modified copy of the environment */
+static size_t env_size;		/* size of new_environ in char **'s */
+static size_t env_len;		/* number of slots used, not counting NULL */
 
 /*
  * Zero out environment and replace with a minimal set of
@@ -206,44 +213,57 @@ format_env(var, val)
     char *var;
     char *val;
 {
-    char *estring, *p;
-    size_t varlen, vallen;
+    char *estring;
+    size_t esize;
 
-    varlen = strlen(var);
-    vallen = strlen(val);
-    p = estring = (char *) emalloc(varlen + vallen + 2);
-    strcpy(p, var);
-    p += varlen;
-    *p++ = '=';
-    strcpy(p, val);
+    esize = strlen(var) + 1 + strlen(val) + 1;
+    estring = (char *) emalloc(esize);
+
+    /* We pre-allocate enough space, so this should never overflow. */
+    if (strlcpy(estring, var, esize) >= esize ||
+	strlcat(estring, "=", esize) >= esize ||
+	strlcat(estring, val, esize) >= esize) {
+	(void) fprintf(stderr, "%s: internal error, format_env() overflow\n",
+	    Argv[0]);
+	exit(1);
+    }
 
     return(estring);
 }
 
 /*
- * Insert str into envp.
- * Assumes str has an '=' in it and does not check for available space!
+ * Insert str into new_environ, assumes str has an '=' in it.
+ * NOTE: no other routines may modify new_environ, env_size, or env_len.
  */
 static void
-insert_env(envp, str)
-    char **envp;
+insert_env(str, dupcheck)
     char *str;
+    int dupcheck;
 {
-    char **ep;
+    char **nep;
     size_t varlen;
 
-    varlen = (strchr(str, '=') - str) + 1;
+    /* Make sure there is room for the new entry. */
+    if (env_len + 1 > env_size) {
+	env_size += 128;
+	new_environ = erealloc3(new_environ, env_size, sizeof(char *));
+    }
 
-    for (ep = envp; *ep; ep++) {
-	if (strncmp(str, *ep, varlen) == 0) {
-	    *ep = str;
-	    break;
-	}
-    }
-    if (*ep == NULL) {
-	*ep++ = str;
-	*ep = NULL;
-    }
+    if (dupcheck) {
+	    varlen = (strchr(str, '=') - str) + 1;
+
+	    for (nep = new_environ; *nep; nep++) {
+		if (strncmp(str, *nep, varlen) == 0) {
+		    *nep = str;
+		    return;
+		}
+	    }
+    } else
+	nep = &new_environ[env_len];
+
+    env_len++;
+    *nep++ = str;
+    *nep = NULL;
 }
 
 /*
@@ -256,14 +276,10 @@ rebuild_env(sudo_mode, envp)
     int sudo_mode;
     char **envp;
 {
-    char **newenvp, **ep, **nep, *cp, *ps1;
+    char **ep, *cp, *ps1;
     int okvar, iswild, didvar;
-    size_t env_size, len;
+    size_t len;
     struct list_member *cur;
-
-    /* Count number of items in "env_keep" list (if any) */
-    for (len = 0, cur = def_list(I_ENV_KEEP); cur; cur = cur->next)
-	len++;
 
     /*
      * Either clean out the environment or reset to a safe default.
@@ -272,10 +288,6 @@ rebuild_env(sudo_mode, envp)
     didvar = 0;
     if (def_flag(I_ENV_RESET)) {
 	int keepit;
-
-	/* Alloc space for new environment. */
-	env_size = 32 + len;
-	nep = newenvp = (char **) emalloc(env_size * sizeof(char *));
 
 	/* Pull in vars we want to keep from the old environment. */
 	for (ep = envp; *ep; ep++) {
@@ -307,28 +319,28 @@ rebuild_env(sudo_mode, envp)
 		    case 'H':
 			if (strncmp(*ep, "HOME=", 5) == 0)
 			    didvar |= DID_HOME;
-			    break;
+			break;
 		    case 'S':
 			if (strncmp(*ep, "SHELL=", 6) == 0)
 			    didvar |= DID_SHELL;
-			    break;
+			break;
 		    case 'L':
 			if (strncmp(*ep, "LOGNAME=", 8) == 0)
 			    didvar |= DID_LOGNAME;
-			    break;
+			break;
 		    case 'U':
 			if (strncmp(*ep, "USER=", 5) == 0)
 			    didvar |= DID_USER;
-			    break;
+			break;
 		}
-		*nep++ = *ep;
+		insert_env(*ep, 0);
 	    } else {
 		/* Preserve TERM and PATH, ignore anything else. */
 		if (!(didvar & DID_TERM) && !strncmp(*ep, "TERM=", 5)) {
-		    *nep++ = *ep;
+		    insert_env(*ep, 0);
 		    didvar |= DID_TERM;
 		} else if (!(didvar & DID_PATH) && !strncmp(*ep, "PATH=", 5)) {
-		    *nep++ = *ep;
+		    insert_env(*ep, 0);
 		    didvar |= DID_PATH;
 		}
 	    }
@@ -339,19 +351,14 @@ rebuild_env(sudo_mode, envp)
 	 * user's environment.
 	 */
 	if (!(didvar & DID_HOME))
-	    *nep++ = format_env("HOME", user_dir);
+	    insert_env(format_env("HOME", user_dir), 0);
 	if (!(didvar & DID_SHELL))
-	    *nep++ = format_env("SHELL", sudo_user.pw->pw_shell);
+	    insert_env(format_env("SHELL", sudo_user.pw->pw_shell), 0);
 	if (!(didvar & DID_LOGNAME))
-	    *nep++ = format_env("LOGNAME", user_name);
+	    insert_env(format_env("LOGNAME", user_name), 0);
 	if (!(didvar & DID_USER))
-	    *nep++ = format_env("USER", user_name);
+	    insert_env(format_env("USER", user_name), 0);
     } else {
-	/* Alloc space for new environment. */
-	for (env_size = 16 + len, ep = envp; *ep; ep++, env_size++)
-	    ;
-	nep = newenvp = (char **) emalloc(env_size * sizeof(char *));
-
 	/*
 	 * Copy envp entries as long as they don't match env_delete or
 	 * env_check.
@@ -397,77 +404,57 @@ rebuild_env(sudo_mode, envp)
 		    didvar |= DID_PATH;
 		else if (strncmp(*ep, "TERM=", 5) == 0)
 		    didvar |= DID_TERM;
-		*nep++ = *ep;
+		insert_env(*ep, 0);
 	    }
 	}
     }
     /* Provide default values for $TERM and $PATH if they are not set. */
     if (!(didvar & DID_TERM))
-	*nep++ = "TERM=unknown";
+	insert_env("TERM=unknown", 0);
     if (!(didvar & DID_PATH))
-	*nep++ = format_env("PATH", _PATH_DEFPATH);
-    *nep = NULL;
-
-    /*
-     * At this point we must use insert_env() to modify newenvp.
-     * Access via 'nep' is not allowed (since we must check for dupes).
-     */
+	insert_env(format_env("PATH", _PATH_DEFPATH), 0);
 
 #ifdef SECURE_PATH
     /* Replace the PATH envariable with a secure one. */
-    insert_env(newenvp, format_env("PATH", SECURE_PATH));
+    insert_env(format_env("PATH", SECURE_PATH), 1);
 #endif
 
     /* Set $USER and $LOGNAME to target if "set_logname" is true. */
     if (def_flag(I_SET_LOGNAME) && runas_pw->pw_name) {
-	insert_env(newenvp, format_env("LOGNAME", runas_pw->pw_name));
-	insert_env(newenvp, format_env("USER", runas_pw->pw_name));
+	insert_env(format_env("LOGNAME", runas_pw->pw_name), 1);
+	insert_env(format_env("USER", runas_pw->pw_name), 1);
     }
 
     /* Set $HOME for `sudo -H'.  Only valid at PERM_RUNAS. */
     if ((sudo_mode & MODE_RESET_HOME) && runas_pw->pw_dir)
-	insert_env(newenvp, format_env("HOME", runas_pw->pw_dir));
+	insert_env(format_env("HOME", runas_pw->pw_dir), 1);
 
     /* Set PS1 if SUDO_PS1 is set. */
     if (ps1)
-	insert_env(newenvp, ps1);
+	insert_env(ps1, 1);
 
     /* Add the SUDO_COMMAND envariable (cmnd + args). */
     if (user_args) {
 	easprintf(&cp, "SUDO_COMMAND=%s %s", user_cmnd, user_args);
-	insert_env(newenvp, cp);
+	insert_env(cp, 1);
     } else
-	insert_env(newenvp, format_env("SUDO_COMMAND", user_cmnd));
+	insert_env(format_env("SUDO_COMMAND", user_cmnd), 1);
 
     /* Add the SUDO_USER, SUDO_UID, SUDO_GID environment variables. */
-    insert_env(newenvp, format_env("SUDO_USER", user_name));
-    easprintf(&cp, "SUDO_UID=%ld", (long) user_uid);
-    insert_env(newenvp, cp);
-    easprintf(&cp, "SUDO_GID=%ld", (long) user_gid);
-    insert_env(newenvp, cp);
+    insert_env(format_env("SUDO_USER", user_name), 1);
+    easprintf(&cp, "SUDO_UID=%lu", (unsigned long) user_uid);
+    insert_env(cp, 1);
+    easprintf(&cp, "SUDO_GID=%lu", (unsigned long) user_gid);
+    insert_env(cp, 1);
 
-    return(newenvp);
-}
-
-void
-dump_badenv()
-{
-    struct list_member *cur;
-
-    puts("Default table of environment variables to clear");
-    for (cur = def_list(I_ENV_DELETE); cur; cur = cur->next)
-	printf("\t%s\n", cur->value);
-
-    puts("Default table of environment variables to sanity check");
-    for (cur = def_list(I_ENV_CHECK); cur; cur = cur->next)
-	printf("\t%s\n", cur->value);
+    return(new_environ);
 }
 
 void
 init_envtables()
 {
     struct list_member *cur;
-    char **p;
+    const char **p;
 
     /* Fill in "env_delete" variable. */
     for (p = initial_badenv_table; *p; p++) {

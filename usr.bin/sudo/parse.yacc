@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Chris Jepeway.
@@ -85,7 +85,7 @@
 #endif /* HAVE_LSEARCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.yacc,v 1.180 2002/03/16 00:44:47 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.yacc,v 1.187 2003/03/15 20:31:02 millert Exp $";
 #endif /* lint */
 
 /*
@@ -117,7 +117,7 @@ int top = 0, stacksize = 0;
     do { \
 	if (top >= stacksize) { \
 	    while ((stacksize += STACKINCREMENT) < top); \
-	    match = (struct matchstack *) erealloc(match, sizeof(struct matchstack) * stacksize); \
+	    match = (struct matchstack *) erealloc3(match, stacksize, sizeof(struct matchstack)); \
 	} \
 	match[top].user   = -1; \
 	match[top].cmnd   = -1; \
@@ -131,7 +131,7 @@ int top = 0, stacksize = 0;
     do { \
 	if (top >= stacksize) { \
 	    while ((stacksize += STACKINCREMENT) < top); \
-	    match = (struct matchstack *) erealloc(match, sizeof(struct matchstack) * stacksize); \
+	    match = (struct matchstack *) erealloc3(match, stacksize, sizeof(struct matchstack)); \
 	} \
 	match[top].user   = match[top-1].user; \
 	match[top].cmnd   = match[top-1].cmnd; \
@@ -229,6 +229,7 @@ yyerror(s)
 %token <tok>	 DEFAULTS		/* Defaults entry */
 %token <tok>	 DEFAULTS_HOST		/* Host-specific defaults entry */
 %token <tok>	 DEFAULTS_USER		/* User-specific defaults entry */
+%token <tok>	 DEFAULTS_RUNAS		/* Runas-specific defaults entry */
 %token <tok> 	 RUNAS			/* ( runas_list ) */
 %token <tok> 	 NOPASSWD		/* no passwd req for command */
 %token <tok> 	 PASSWD			/* passwd req for command (default) */
@@ -281,12 +282,17 @@ entry		:	COMMENT
 		;
 
 defaults_line	:	defaults_type defaults_list
+		;
 
 defaults_type	:	DEFAULTS {
 			    defaults_matches = TRUE;
 			}
 		|	DEFAULTS_USER { push; } userlist {
 			    defaults_matches = user_matches;
+			    pop;
+			}
+		|	DEFAULTS_RUNAS { push; } runaslist {
+			    defaults_matches = $3 == TRUE;
 			    pop;
 			}
 		|	DEFAULTS_HOST { push; } hostlist {
@@ -297,6 +303,7 @@ defaults_type	:	DEFAULTS {
 
 defaults_list	:	defaults_entry
 		|	defaults_entry ',' defaults_list
+		;
 
 defaults_entry	:	DEFVAR {
 			    if (defaults_matches == TRUE &&
@@ -341,6 +348,7 @@ defaults_entry	:	DEFVAR {
 			    free($1);
 			    free($3);
 			}
+		;
 
 privileges	:	privilege
 		|	privileges ':' privilege
@@ -369,6 +377,7 @@ ophost		:	host {
 			    if ($2 != -1)
 				host_matches = ! $2;
 			}
+		;
 
 host		:	ALL {
 			    $$ = TRUE;
@@ -518,6 +527,7 @@ oprunasuser	:	runasuser { ; }
 			    /* Set $$ to the negation of runasuser */
 			    $$ = ($3 == -1 ? -1 : ! $3);
 			}
+		;
 
 runasuser	:	WORD {
 			    if (printmatches == TRUE) {
@@ -706,8 +716,10 @@ hostaliases	:	hostalias
 
 hostalias	:	ALIAS { push; } '=' hostlist {
 			    if ((host_matches != -1 || pedantic) &&
-				!add_alias($1, HOST_ALIAS, host_matches))
+				!add_alias($1, HOST_ALIAS, host_matches)) {
+				yyerror(NULL);
 				YYERROR;
+			    }
 			    pop;
 			}
 		;
@@ -731,8 +743,10 @@ cmndalias	:	ALIAS {
 			     }
 			} '=' cmndlist {
 			    if ((cmnd_matches != -1 || pedantic) &&
-				!add_alias($1, CMND_ALIAS, cmnd_matches))
+				!add_alias($1, CMND_ALIAS, cmnd_matches)) {
+				yyerror(NULL);
 				YYERROR;
+			    }
 			    pop;
 			    free($1);
 
@@ -759,8 +773,10 @@ runasalias	:	ALIAS {
 			    }
 			} '=' runaslist {
 			    if (($4 != -1 || pedantic) &&
-				!add_alias($1, RUNAS_ALIAS, $4))
+				!add_alias($1, RUNAS_ALIAS, $4)) {
+				yyerror(NULL);
 				YYERROR;
+			    }
 			    free($1);
 
 			    if (printmatches == TRUE)
@@ -774,8 +790,10 @@ useraliases	:	useralias
 
 useralias	:	ALIAS { push; }	'=' userlist {
 			    if ((user_matches != -1 || pedantic) &&
-				!add_alias($1, USER_ALIAS, user_matches))
+				!add_alias($1, USER_ALIAS, user_matches)) {
+				yyerror(NULL);
 				YYERROR;
+			    }
 			    pop;
 			    free($1);
 			}
@@ -793,6 +811,7 @@ opuser		:	user {
 			    if ($2 != -1)
 				user_matches = ! $2;
 			}
+		;
 
 user		:	WORD {
 			    if (strcmp($1, user_name) == 0)
@@ -828,8 +847,10 @@ user		:	WORD {
 				    (void) fprintf(stderr,
 					"%s: undeclared User_Alias `%s' referenced near line %d\n",
 					(pedantic == 1) ? "Warning" : "Error", $1, sudolineno);
-				    if (pedantic > 1)
+				    if (pedantic > 1) {
+					yyerror(NULL);
 					YYERROR;
+				    }
 				}
 				$$ = -1;
 			    }
@@ -1000,21 +1021,21 @@ dumpaliases()
 void
 list_matches()
 {
-    int i; 
+    size_t count; 
     char *p;
     struct generic_alias *ga, key;
 
     (void) printf("User %s may run the following commands on this host:\n",
 	user_name);
-    for (i = 0; i < cm_list_len; i++) {
+    for (count = 0; count < cm_list_len; count++) {
 
 	/* Print the runas list. */
 	(void) fputs("    ", stdout);
-	if (cm_list[i].runas) {
+	if (cm_list[count].runas) {
 	    (void) putchar('(');
-	    p = strtok(cm_list[i].runas, ", ");
+	    p = strtok(cm_list[count].runas, ", ");
 	    do {
-		if (p != cm_list[i].runas)
+		if (p != cm_list[count].runas)
 		    (void) fputs(", ", stdout);
 
 		key.alias = p;
@@ -1031,32 +1052,32 @@ list_matches()
 	}
 
 	/* Is a password required? */
-	if (cm_list[i].nopasswd == TRUE && def_flag(I_AUTHENTICATE))
+	if (cm_list[count].nopasswd == TRUE && def_flag(I_AUTHENTICATE))
 	    (void) fputs("NOPASSWD: ", stdout);
-	else if (cm_list[i].nopasswd == FALSE && !def_flag(I_AUTHENTICATE))
+	else if (cm_list[count].nopasswd == FALSE && !def_flag(I_AUTHENTICATE))
 	    (void) fputs("PASSWD: ", stdout);
 
 	/* Print the actual command or expanded Cmnd_Alias. */
-	key.alias = cm_list[i].cmnd;
+	key.alias = cm_list[count].cmnd;
 	key.type = CMND_ALIAS;
 	if ((ga = (struct generic_alias *) lfind((VOID *) &key,
 	    (VOID *) &ga_list[0], &ga_list_len, sizeof(key), genaliascmp)))
 	    (void) puts(ga->entries);
 	else
-	    (void) puts(cm_list[i].cmnd);
+	    (void) puts(cm_list[count].cmnd);
     }
 
     /* Be nice and free up space now that we are done. */
-    for (i = 0; i < ga_list_len; i++) {
-	free(ga_list[i].alias);
-	free(ga_list[i].entries);
+    for (count = 0; count < ga_list_len; count++) {
+	free(ga_list[count].alias);
+	free(ga_list[count].entries);
     }
     free(ga_list);
     ga_list = NULL;
 
-    for (i = 0; i < cm_list_len; i++) {
-	free(cm_list[i].runas);
-	free(cm_list[i].cmnd);
+    for (count = 0; count < cm_list_len; count++) {
+	free(cm_list[count].runas);
+	free(cm_list[count].cmnd);
     }
     free(cm_list);
     cm_list = NULL;
@@ -1088,6 +1109,7 @@ append(src, dstp, dst_len, dst_size, separator)
     /* Assumes dst will be NULL if not set. */
     if (dst == NULL) {
 	dst = (char *) emalloc(BUFSIZ);
+	*dst = '\0';
 	*dst_size = BUFSIZ;
 	*dst_len = 0;
 	*dstp = dst;
@@ -1103,12 +1125,10 @@ append(src, dstp, dst_len, dst_size, separator)
     }
 
     /* Copy src -> dst adding a separator if appropriate and adjust len. */
-    dst += *dst_len;
-    *dst_len += src_len;
-    *dst = '\0';
     if (separator)
-	(void) strcat(dst, separator);
-    (void) strcat(dst, src);
+	(void) strlcat(dst, separator, *dst_size);
+    (void) strlcat(dst, src, *dst_size);
+    *dst_len += src_len;
 }
 
 /*
@@ -1139,7 +1159,7 @@ expand_ga_list()
 	while ((ga_list_size += STACKINCREMENT) < ga_list_len)
 	    ;
 	ga_list = (struct generic_alias *)
-	    erealloc(ga_list, sizeof(struct generic_alias) * ga_list_size);
+	    erealloc3(ga_list, ga_list_size, sizeof(struct generic_alias));
     }
 
     ga_list[ga_list_len - 1].entries = NULL;
@@ -1158,7 +1178,7 @@ expand_match_list()
 	if (cm_list == NULL)
 	    cm_list_len = 0;		/* start at 0 since it is a subscript */
 	cm_list = (struct command_match *)
-	    erealloc(cm_list, sizeof(struct command_match) * cm_list_size);
+	    erealloc3(cm_list, cm_list_size, sizeof(struct command_match));
     }
 
     cm_list[cm_list_len].runas = cm_list[cm_list_len].cmnd = NULL;
@@ -1185,7 +1205,7 @@ init_parser()
 
     /* Allocate space for the matching stack. */
     stacksize = STACKINCREMENT;
-    match = (struct matchstack *) emalloc(sizeof(struct matchstack) * stacksize);
+    match = (struct matchstack *) emalloc2(stacksize, sizeof(struct matchstack));
 
     /* Allocate space for the match list (for `sudo -l'). */
     if (printmatches == TRUE)

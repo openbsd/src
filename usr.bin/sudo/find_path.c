@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: find_path.c,v 1.98 2001/12/14 06:40:03 millert Exp $";
+static const char rcsid[] = "$Sudo: find_path.c,v 1.101 2003/03/15 20:31:02 millert Exp $";
 #endif /* lint */
 
 /*
@@ -82,6 +82,7 @@ find_path(infile, outfile, path)
     char *origpath;		/* so we can free path later */
     char *result = NULL;	/* result of path/file lookup */
     int checkdot = 0;		/* check current dir? */
+    int len;			/* length parameter */
 
     if (strlen(infile) >= MAXPATHLEN) {
 	(void) fprintf(stderr, "%s: path too long: %s\n", Argv[0], infile);
@@ -93,7 +94,7 @@ find_path(infile, outfile, path)
      * there is no need to look at $PATH.
      */
     if (strchr(infile, '/')) {
-	(void) strcpy(command, infile);
+	strlcpy(command, infile, sizeof(command));	/* paranoia */
 	if (sudo_goodpath(command)) {
 	    *outfile = command;
 	    return(FOUND);
@@ -128,11 +129,11 @@ find_path(infile, outfile, path)
 	/*
 	 * Resolve the path and exit the loop if found.
 	 */
-	if (strlen(path) + strlen(infile) + 1 >= MAXPATHLEN) {
+	len = snprintf(command, sizeof(command), "%s/%s", path, infile);
+	if (len <= 0 || len >= sizeof(command)) {
 	    (void) fprintf(stderr, "%s: path too long: %s\n", Argv[0], infile);
 	    exit(1);
 	}
-	(void) sprintf(command, "%s/%s", path, infile);
 	if ((result = sudo_goodpath(command)))
 	    break;
 

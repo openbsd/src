@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -99,7 +99,7 @@ struct rtentry;
 #include "interfaces.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: interfaces.c,v 1.63 2002/01/18 19:17:07 millert Exp $";
+static const char rcsid[] = "$Sudo: interfaces.c,v 1.68 2003/03/15 20:31:02 millert Exp $";
 #endif /* lint */
 
 
@@ -121,7 +121,7 @@ load_interfaces()
 	return;
 
     /* Allocate space for the interfaces list. */
-    for (ifa = ifaddrs; ifa -> ifa_next; ifa = ifa -> ifa_next) {
+    for (ifa = ifaddrs; ifa != NULL; ifa = ifa -> ifa_next) {
 	/* Skip interfaces marked "down" and "loopback". */
 	if (ifa->ifa_addr == NULL || !(ifa->ifa_flags & IFF_UP) ||
 	    (ifa->ifa_flags & IFF_LOOPBACK))
@@ -134,11 +134,13 @@ load_interfaces()
 		break;
 	}
     }
+    if (num_interfaces == 0)
+	return;
     interfaces =
-	(struct interface *) emalloc(sizeof(struct interface) * num_interfaces);
+	(struct interface *) emalloc2(num_interfaces, sizeof(struct interface));
 
     /* Store the ip addr / netmask pairs. */
-    for (ifa = ifaddrs, i = 0; ifa -> ifa_next; ifa = ifa -> ifa_next) {
+    for (ifa = ifaddrs, i = 0; ifa != NULL; ifa = ifa -> ifa_next) {
 	/* Skip interfaces marked "down" and "loopback". */
 	if (ifa->ifa_addr == NULL || !(ifa->ifa_flags & IFF_UP) ||
 	    (ifa->ifa_flags & IFF_LOOPBACK))
@@ -191,7 +193,7 @@ load_interfaces()
     }
 
     /*
-     * Get interface configuration or return (leaving num_interfaces 0)
+     * Get interface configuration or return (leaving num_interfaces == 0)
      */
     for (;;) {
 	ifconf_buf = erealloc(ifconf_buf, len);
@@ -218,8 +220,9 @@ load_interfaces()
     }
 
     /* Allocate space for the maximum number of interfaces that could exist. */
-    n = ifconf->ifc_len / sizeof(struct ifreq);
-    interfaces = (struct interface *) emalloc(sizeof(struct interface) * n);
+    if ((n = ifconf->ifc_len / sizeof(struct ifreq)) == 0)
+	return;
+    interfaces = (struct interface *) emalloc2(n, sizeof(struct interface));
 
     /* For each interface, store the ip address and netmask. */
     for (i = 0; i < ifconf->ifc_len; ) {
@@ -291,8 +294,8 @@ load_interfaces()
     /* If the expected size < real size, realloc the array. */
     if (n != num_interfaces) {
 	if (num_interfaces != 0)
-	    interfaces = (struct interface *) erealloc(interfaces,
-		sizeof(struct interface) * num_interfaces);
+	    interfaces = (struct interface *) erealloc3(interfaces,
+		num_interfaces, sizeof(struct interface));
 	else
 	    free(interfaces);
     }

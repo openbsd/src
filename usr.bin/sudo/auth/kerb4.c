@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999, 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: kerb4.c,v 1.6 2001/12/14 19:52:53 millert Exp $";
+static const char rcsid[] = "$Sudo: kerb4.c,v 1.7 2003/03/15 20:37:44 millert Exp $";
 #endif /* lint */
 
 int

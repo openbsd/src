@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Chris Jepeway.
@@ -68,7 +68,7 @@
 #include <sudo.tab.h>
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.lex,v 1.119 2002/03/16 00:44:47 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.lex,v 1.126 2003/03/15 20:31:02 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */
@@ -99,7 +99,7 @@ extern void yyerror		__P((char *));
 OCTET			(1?[0-9]{1,2})|(2[0-4][0-9])|(25[0-5])
 DOTTEDQUAD		{OCTET}(\.{OCTET}){3}
 HOSTNAME		[[:alnum:]_-]+
-WORD			([^#@!=:,\(\) \t\n\\]|\\[^\n])+
+WORD			([^#>@!=:,\(\) \t\n\\]|\\[^\n])+
 ENVAR			([^#!=, \t\n\\]|\\[^\n])([^#=, \t\n\\]|\\[^\n])*
 DEFVAR			[a-z_]+
 
@@ -175,12 +175,15 @@ DEFVAR			[a-z_]+
 			}			/* a command line arg */
 }
 
-<INITIAL>^Defaults[:@]?	{
+<INITIAL>^Defaults[:@>]? {
 			    BEGIN GOTDEFS;
 			    switch (yytext[8]) {
 				case ':':
 				    LEXTRACE("DEFAULTS_USER ");
 				    return(DEFAULTS_USER);
+				case '>':
+				    LEXTRACE("DEFAULTS_RUNAS ");
+				    return(DEFAULTS_RUNAS);
 				case '@':
 				    LEXTRACE("DEFAULTS_HOST ");
 				    return(DEFAULTS_HOST);
@@ -362,8 +365,10 @@ fill(s, len)
     int i, j;
 
     yylval.string = (char *) malloc(len + 1);
-    if (yylval.string == NULL)
+    if (yylval.string == NULL) {
 	yyerror("unable to allocate memory");
+	return;
+    }
 
     /* Copy the string and collapse any escaped characters. */
     for (i = 0, j = 0; i < len; i++, j++) {
@@ -382,13 +387,14 @@ fill_cmnd(s, len)
 {
     arg_len = arg_size = 0;
 
-    yylval.command.cmnd = (char *) malloc(len + 1);
-    if (yylval.command.cmnd == NULL)
+    yylval.command.cmnd = (char *) malloc(++len);
+    if (yylval.command.cmnd == NULL) {
 	yyerror("unable to allocate memory");
+	return;
+    }
 
     /* copy the string and NULL-terminate it (escapes handled by fnmatch) */
-    (void) strncpy(yylval.command.cmnd, s, len);
-    yylval.command.cmnd[len] = '\0';
+    (void) strlcpy(yylval.command.cmnd, s, len);
 
     yylval.command.args = NULL;
 }
@@ -402,41 +408,35 @@ fill_args(s, len, addspace)
     int new_len;
     char *p;
 
-    /*
-     * If first arg, malloc() some room, else if we don't
-     * have enough space realloc() some more.
-     */
     if (yylval.command.args == NULL) {
 	addspace = 0;
 	new_len = len;
+    } else
+	new_len = arg_len + len + addspace;
 
+    if (new_len >= arg_size) {
+	/* Allocate more space than we need for subsequent args */
 	while (new_len >= (arg_size += COMMANDARGINC))
 	    ;
 
-	yylval.command.args = (char *) malloc(arg_size);
-	if (yylval.command.args == NULL)
-	    yyerror("unable to allocate memory");
-    } else {
-	new_len = arg_len + len + addspace;
-
-	if (new_len >= arg_size) {
-	    /* Allocate more space than we need for subsequent args */
-	    while (new_len >= (arg_size += COMMANDARGINC))
-		;
-
-	    if ((p = (char *) realloc(yylval.command.args, arg_size)) == NULL) {
+	p = yylval.command.args ?
+	    (char *) realloc(yylval.command.args, arg_size) :
+	    (char *) malloc(arg_size);
+	if (p == NULL) {
+	    if (yylval.command.args != NULL)
 		free(yylval.command.args);
-		yyerror("unable to allocate memory");
-	    } else
-		yylval.command.args = p;
-	}
+	    yyerror("unable to allocate memory");
+	    return;
+	} else
+	    yylval.command.args = p;
     }
 
     /* Efficiently append the arg (with a leading space if needed). */
     p = yylval.command.args + arg_len;
     if (addspace)
 	*p++ = ' ';
-    (void) strcpy(p, s);
+    if (strlcpy(p, s, arg_size - (p - yylval.command.args)) != len)
+	yyerror("fill_args: buffer overflow");	/* paranoia */
     arg_len = new_len;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: compat.h,v 1.63 2002/01/25 18:38:22 millert Exp $
+ * $Sudo: compat.h,v 1.65 2003/03/15 20:31:02 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H
@@ -166,32 +166,6 @@
 #if !defined(HAVE_MEMSET) && !defined(memset)
 # define memset(_s, _x, _n)	(bzero(_s, _n))
 #endif
-
-/*
- * Emulate sete[ug]id() via setres[ug]id(2) or setre[ug]id(2)
- */
-#ifndef HAVE_SETEUID
-# ifdef __hpux
-#  define seteuid(_EUID)	(setresuid((uid_t) -1, _EUID, (uid_t) -1))
-# else
-#  define seteuid(_EUID)	(setreuid((uid_t) -1, _EUID))
-# endif /* __hpux */
-#endif /* HAVE_SETEUID */
-#ifndef HAVE_SETEGID
-# ifdef __hpux
-#  define setegid(_EGID)	(setresgid((gid_t) -1, _EGID, (gid_t) -1))
-# else
-#  define setegid(_EGID)	(setregid((gid_t) -1, _EGID))
-# endif /* __hpux */
-#endif /* HAVE_SETEGID */
-
-/*
- * Emulate setreuid() for HP-UX via setresuid(2)
- */
-#if !defined(HAVE_SETREUID) && defined(__hpux)
-# define setreuid(_RUID, _EUID)	(setresuid(_RUID, _EUID, (uid_t) -1))
-# define HAVE_SETREUID
-#endif /* !HAVE_SETEUID && __hpux */
 
 /*
  * NCR's SVr4 has _innetgr(3) instead of innetgr(3) for some reason.

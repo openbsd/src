@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,12 +31,12 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: version.h,v 1.61 2002/04/18 15:41:30 millert Exp $
+ * $Sudo: version.h,v 1.63 2003/03/15 20:31:02 millert Exp $
  */
 
 #ifndef _SUDO_VERSION_H
 #define _SUDO_VERSION_H
 
-static const char version[] = "1.6.6";
+static const char version[] = "1.6.7";
 
 #endif /* _SUDO_VERSION_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996,1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: sudo.h,v 1.184 2002/01/16 21:27:09 millert Exp $
+ * $Sudo: sudo.h,v 1.192 2003/03/15 20:31:02 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -116,6 +116,7 @@ struct sudo_user {
 #define PERM_FULL_USER           0x03
 #define PERM_SUDOERS             0x04
 #define PERM_RUNAS               0x05
+#define PERM_TIMESTAMP           0x06
 
 /*
  * Shortcuts for sudo_user contents.
@@ -195,14 +196,21 @@ int vasprintf		__P((char **, const char *, va_list));
 #ifndef HAVE_STRCASECMP
 int strcasecmp		__P((const char *, const char *));
 #endif
+#ifndef HAVE_STRLCAT
+size_t strlcat		__P((char *, const char *, size_t));
+#endif
+#ifndef HAVE_STRLCPY
+size_t strlcpy		__P((char *, const char *, size_t));
+#endif
 char *sudo_goodpath	__P((const char *));
 char *tgetpass		__P((const char *, int, int));
 int find_path		__P((char *, char **, char *));
 void check_user		__P((void));
 void verify_user	__P((struct passwd *, char *));
 int sudoers_lookup	__P((int));
-void set_perms_posix	__P((int, int));
-void set_perms_fallback	__P((int, int));
+void set_perms_nosuid	__P((int));
+void set_perms_posix	__P((int));
+void set_perms_suid	__P((int));
 void remove_timestamp	__P((int));
 int check_secureware	__P((char *));
 void sia_attempt_auth	__P((void));
@@ -210,11 +218,12 @@ void pam_attempt_auth	__P((void));
 int yyparse		__P((void));
 void pass_warn		__P((FILE *));
 VOID *emalloc		__P((size_t));
+VOID *emalloc2		__P((size_t, size_t));
 VOID *erealloc		__P((VOID *, size_t));
+VOID *erealloc3		__P((VOID *, size_t, size_t));
 char *estrdup		__P((const char *));
 int easprintf		__P((char **, const char *, ...));
 int evasprintf		__P((char **, const char *, va_list));
-void dump_badenv	__P((void));
 void dump_defaults	__P((void));
 void dump_auth_methods	__P((void));
 void init_envtables	__P((void));
@@ -235,8 +244,9 @@ extern int Argc;
 extern char **Argv;
 extern FILE *sudoers_fp;
 extern int tgetpass_flags;
+extern uid_t timestamp_uid;
 
-extern void (*set_perms) __P((int, int));
+extern void (*set_perms) __P((int));
 #endif
 extern int errno;
 

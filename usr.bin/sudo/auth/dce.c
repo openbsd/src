@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998, 1999, 2001
+ * Copyright (c) 1996, 1998, 1999, 2001, 2002
  *	Todd C. Miller <Todd.Miller@courtesan.com>.  All rights reserved.
  *
  * This code is derived from software contributed by Jeff Earickson
@@ -79,7 +79,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: dce.c,v 1.8 2001/12/14 19:52:53 millert Exp $";
+static const char rcsid[] = "$Sudo: dce.c,v 1.9 2003/03/15 20:37:44 millert Exp $";
 #endif /* lint */
 
 static int check_dce_status __P((error_status_t, char *));

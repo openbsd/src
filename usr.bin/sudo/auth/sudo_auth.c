@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@
 #include "insults.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.25 2001/12/14 19:52:54 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.28 2003/03/15 20:37:44 millert Exp $";
 #endif /* lint */
 
 sudo_auth auth_switch[] = {
@@ -113,7 +113,7 @@ verify_user(pw, prompt)
     int success = AUTH_FAILURE;
     int status;
     int flags;
-    char *p;
+    volatile char *p;
     sudo_auth *auth;
     sigaction_t sa, osa;
 
@@ -138,7 +138,7 @@ verify_user(pw, prompt)
     for (auth = auth_switch; auth->name; auth++) {
 	if (auth->init && IS_CONFIGURED(auth)) {
 	    if (NEEDS_USER(auth))
-		set_perms(PERM_USER, 0);
+		set_perms(PERM_USER);
 
 	    status = (auth->init)(pw, &prompt, auth);
 	    if (status == AUTH_FAILURE)
@@ -147,7 +147,7 @@ verify_user(pw, prompt)
 		exit(1);		/* assume error msg already printed */
 
 	    if (NEEDS_USER(auth))
-		set_perms(PERM_ROOT, 0);
+		set_perms(PERM_ROOT);
 	}
     }
 
@@ -156,7 +156,7 @@ verify_user(pw, prompt)
 	for (auth = auth_switch; auth->name; auth++) {
 	    if (auth->setup && IS_CONFIGURED(auth)) {
 		if (NEEDS_USER(auth))
-		    set_perms(PERM_USER, 0);
+		    set_perms(PERM_USER);
 
 		status = (auth->setup)(pw, &prompt, auth);
 		if (status == AUTH_FAILURE)
@@ -165,7 +165,7 @@ verify_user(pw, prompt)
 		    exit(1);		/* assume error msg already printed */
 
 		if (NEEDS_USER(auth))
-		    set_perms(PERM_ROOT, 0);
+		    set_perms(PERM_ROOT);
 	    }
 	}
 
@@ -186,12 +186,12 @@ verify_user(pw, prompt)
 		continue;
 
 	    if (NEEDS_USER(auth))
-		set_perms(PERM_USER, 0);
+		set_perms(PERM_USER);
 
-	    success = auth->status = (auth->verify)(pw, p, auth);
+	    success = auth->status = (auth->verify)(pw, (char *)p, auth);
 
 	    if (NEEDS_USER(auth))
-		set_perms(PERM_ROOT, 0);
+		set_perms(PERM_ROOT);
 
 	    if (auth->status != AUTH_FAILURE)
 		goto cleanup;
@@ -217,14 +217,14 @@ cleanup:
     for (auth = auth_switch; auth->name; auth++) {
 	if (auth->cleanup && IS_CONFIGURED(auth)) {
 	    if (NEEDS_USER(auth))
-		set_perms(PERM_USER, 0);
+		set_perms(PERM_USER);
 
 	    status = (auth->cleanup)(pw, auth);
 	    if (status == AUTH_FATAL)	/* XXX log */
 		exit(1);		/* assume error msg already printed */
 
 	    if (NEEDS_USER(auth))
-		set_perms(PERM_ROOT, 0);
+		set_perms(PERM_ROOT);
 	}
     }
 

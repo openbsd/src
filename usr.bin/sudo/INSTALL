@@ -1,4 +1,4 @@
-Installation instructions for Sudo 1.6.6
+Installation instructions for Sudo 1.6.7
 ========================================
 
 Sudo uses a `configure' script to probe the capabilities and type
@@ -147,15 +147,15 @@ Special features/options:
 	(or at least the library and header files).
 
   --with-kerb4
-	Enable kerberos v4 support.  Tested only with the Cygnus Network
-	Security package (CNS).  This uses kerberos passphrases for
-	authentication but does not use the kerberos cookie scheme.
+	Enable Kerberos IV support.  Tested only with the Cygnus Network
+	Security package (CNS).  This uses Kerberos passphrases for
+	authentication but does not use the Kerberos cookie scheme.
 
   --with-kerb5
-	Enable kerberos v5 support.  Tested against MIT Kerberos V,
+	Enable Kerberos V support.  Tested against MIT Kerberos V,
 	release 1.1, although also expected to work against CNS.  This
-	This uses kerberos passphrases for authentication but does not
-	use the kerberos cookie scheme.  Will not work for Kerberos V
+	This uses Kerberos passphrases for authentication but does not
+	use the Kerberos cookie scheme.  Will not work for Kerberos V
 	older than version 1.1.
 
   --with-authenticate
@@ -177,7 +177,7 @@ Special features/options:
 	/etc/pam.conf to obtain syslog output for debugging purposes.
 
   --with-AFS
-	Enable AFS support with kerberos authentication.  Should work under
+	Enable AFS support with Kerberos authentication.  Should work under
 	AFS 3.3.  If your AFS doesn't have -laudit you should be able to
 	link without it.
 
@@ -221,6 +221,10 @@ Special features/options:
         Disable use of the setreuid() function for operating systems
         where it is broken.  4.4BSD has setreuid() but it doesn't
         really work.
+
+  --disable-setresuid
+        Disable use of the setresuid() function for operating systems
+        where it is broken (none currently known).
 
   --disable-sia
         Disable SIA support.  This is the "Security Integration
@@ -270,6 +274,11 @@ Special features/options:
 
   --with-otp-only
         This option is now just an alias for --without-passwd.
+
+  --with-stow
+        Properly handle GNU stow packaging.  The sudoers file will
+        physically live in ${prefix}/etc and /etc/sudoers will be
+        a symbolic link.
 
 The following options are also configurable at runtime:
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: fwtk.c,v 1.15 2002/01/21 22:25:14 millert Exp $";
+static const char rcsid[] = "$Sudo: fwtk.c,v 1.17 2003/03/15 20:37:44 millert Exp $";
 #endif /* lint */
 
 int
@@ -108,8 +108,8 @@ fwtk_verify(pw, prompt, auth)
     char *prompt;
     sudo_auth *auth;
 {
-    char *pass;				/* Password from the user */
-    char buf[SUDO_PASS_MAX + 12];	/* General prupose buffer */
+    volatile char *pass;		/* Password from the user */
+    volatile char buf[SUDO_PASS_MAX + 12]; /* General prupose buffer */
     char resp[128];			/* Response from the server */
     int error;
     extern int nil_pw;

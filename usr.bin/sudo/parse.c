@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Chris Jepeway.
@@ -96,7 +96,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.137 2002/03/16 00:44:47 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.c,v 1.140 2003/03/15 20:31:02 millert Exp $";
 #endif /* lint */
 
 /*
@@ -125,7 +125,7 @@ sudoers_lookup(pwflag)
     int nopass;
 
     /* Become sudoers file owner */
-    set_perms(PERM_SUDOERS, 0);
+    set_perms(PERM_SUDOERS);
 
     /* We opened _PATH_SUDOERS in check_sudoers() so just rewind it. */
     rewind(sudoers_fp);
@@ -140,7 +140,7 @@ sudoers_lookup(pwflag)
 	keepall = TRUE;
 
     /* Need to be root while stat'ing things in the parser. */
-    set_perms(PERM_ROOT, 0);
+    set_perms(PERM_ROOT);
     error = yyparse();
 
     /* Close the sudoers file now that we are done with it. */
@@ -343,10 +343,9 @@ command_matches(cmnd, cmnd_args, path, sudoers_args)
 
 	while ((dent = readdir(dirp)) != NULL) {
 	    /* ignore paths > MAXPATHLEN (XXX - log) */
-	    if (plen + NAMLEN(dent) >= sizeof(buf))
+	    if (strlcpy(buf, path, sizeof(buf)) >= sizeof(buf) ||
+		strlcat(buf, dent->d_name, sizeof(buf)) >= sizeof(buf))
 		continue;
-	    strcpy(buf, path);
-	    strcat(buf, dent->d_name);
 
 	    /* only stat if basenames are the same */
 	    if (strcmp(cmnd_base, dent->d_name) != 0 || stat(buf, &pst) == -1)

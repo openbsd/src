@@ -1,4 +1,4 @@
-This is Sudo version 1.6.6
+This is Sudo version 1.6.7
 
 The sudo philosophy
 ===================
@@ -45,7 +45,7 @@ tokenizer and pre-yacc'd grammar parser).  You'll also have to
 uncomment a few lines from the Makefile or run configure with the
 --with-devel option.  You can get flex via anonymous ftp from
 ftp://ftp.ee.lbl.gov/pub/flex* as well as any GNU mirror.  You can
-get GNU bison from ftp://prep.ai.mit.edu/pub/gnu/bison* or any GNU
+get GNU bison from ftp://ftp.gnu.org/pub/gnu/bison/ or any GNU
 mirror.
 
 Building the release

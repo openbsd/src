@@ -1,6 +1,6 @@
 dnl Local m4 macors for autoconf (used by sudo)
 dnl
-dnl Copyright (c) 1994-1996,1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+dnl Copyright (c) 1994-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
 dnl XXX - should cache values in all cases!!!
 dnl
@@ -308,7 +308,7 @@ main() {
   if ((f = fopen("conftestdata", "w")) == NULL)
     exit(1);
 
-  (void) sprintf(b, "%u", u);
+  (void) sprintf(b, "%lu", (unsigned long) u);
   (void) fprintf(f, "%d\n", strlen(b));
   (void) fclose(f);
   exit(0);

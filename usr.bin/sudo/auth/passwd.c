@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: passwd.c,v 1.11 2002/01/17 15:56:15 millert Exp $";
+static const char rcsid[] = "$Sudo: passwd.c,v 1.12 2003/03/15 20:37:44 millert Exp $";
 #endif /* lint */
 
 #define DESLEN			13
