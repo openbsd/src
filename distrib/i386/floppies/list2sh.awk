@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.3 1996/05/14 18:30:32 mickey Exp $
+#	$OpenBSD: list2sh.awk,v 1.4 1997/05/08 04:56:00 tholo Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -24,6 +24,18 @@ $1 == "SYMLINK" {
 	printf("echo '%s'\n", $0);
 	printf("rm -f ${TARGDIR}/%s\n", $3);
 	printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $3);
+	next;
+}
+$1 == "ARGVLINK" {
+	# crunchgen directive; ignored here
+	next;
+}
+$1 == "SRCDIRS" {
+	# crunchgen directive; ignored here
+	next;
+}
+$1 == "CRUNCHSPECIAL" {
+	# crunchgen directive; ignored here
 	next;
 }
 $1 == "COPYDIR" {
