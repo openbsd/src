@@ -1,7 +1,7 @@
-/*	$OpenBSD: captoinfo.c,v 1.5 1999/12/12 04:49:19 millert Exp $	*/
+/*	$OpenBSD: captoinfo.c,v 1.6 2000/03/13 23:53:40 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -94,7 +94,7 @@
 #include <ctype.h>
 #include <tic.h>
 
-MODULE_ID("$From: captoinfo.c,v 1.33 1999/12/12 02:25:56 tom Exp $")
+MODULE_ID("$From: captoinfo.c,v 1.35 2000/03/11 12:27:55 tom Exp $")
 
 #define MAX_PUSHED	16	/* max # args we can push onto the stack */
 
@@ -645,6 +645,7 @@ _nc_infotocap(
     char ch1 = 0, ch2 = 0;
     char *bufptr = init_string();
     int len;
+    bool syntax_error = FALSE;
 
     /* we may have to move some trailing mandatory padding up front */
     padding = str + strlen(str) - 1;
@@ -715,7 +716,7 @@ _nc_infotocap(
 	    if (saw_n++ == 0) {
 		bufptr = save_string(bufptr, "%m");
 	    }
-	} else {
+	} else {		/* cm-style format element */
 	    str++;
 	    switch (*str) {
 	    case '%':
@@ -735,8 +736,11 @@ _nc_infotocap(
 		bufptr = save_char(bufptr, '%');
 		while (isdigit(*str))
 		    bufptr = save_char(bufptr, *str++);
-		if (*str != 'd') /* termcap doesn't have octal, hex */
-		    return 0;
+		if (strchr("doxX", *str)) {
+		    if (*str != 'd')	/* termcap doesn't have octal, hex */
+			return 0;
+  		    str++;
+		}
 		break;
 
 	    case 'd':
@@ -774,8 +778,9 @@ _nc_infotocap(
 		break;
 
 	    default:
-		return (0);
-
+		bufptr = save_char(bufptr, *str);
+		syntax_error = TRUE;
+		break;
 	    }			/* endswitch (*str) */
 	}			/* endelse (*str == '%') */
 
@@ -784,7 +789,7 @@ _nc_infotocap(
 
     }				/* endwhile (*str) */
 
-    return (my_string);
+    return (syntax_error ? NULL : my_string);
 }
 
 #ifdef MAIN

@@ -102,7 +102,7 @@ char *ttyname(int fd);
 #include <curses.h>		/* for bool typedef */
 #include <dump_entry.h>
 
-MODULE_ID("$From: tset.c,v 0.40 2000/03/05 04:37:53 tom Exp $")
+MODULE_ID("$From: tset.c,v 0.41 2000/03/12 00:03:00 tom Exp $")
 
 extern char **environ;
 
@@ -355,7 +355,7 @@ add_mapping(const char *port, char *arg)
     else
 	termp = base = arg;
 
-    for (;; ++arg)		/* Optional conditionals. */
+    for (;; ++arg) {		/* Optional conditionals. */
 	switch (*arg) {
 	case '<':
 	    if (mapp->conditional & GT)
@@ -377,8 +377,10 @@ add_mapping(const char *port, char *arg)
 	default:
 	    goto next;
 	}
+    }
 
-  next:if (*arg == ':') {
+  next:
+    if (*arg == ':') {
 	if (mapp->conditional)
 	    goto badmopt;
 	++arg;
@@ -580,7 +582,7 @@ get_termcap_entry(char *userarg)
     }
     /* Find the terminfo entry.  If it doesn't exist, ask the user. */
     while ((rval = setupterm((NCURSES_CONST char *) ttype, STDOUT_FILENO,
-	&errret)) != OK) {
+		&errret)) != OK) {
 	if (errret == 0) {
 	    (void) fprintf(stderr, "tset: unknown terminal type %s\n",
 		ttype);
@@ -1156,12 +1158,13 @@ main(int argc, char **argv)
 	    set_init();
 
 	/* Set the modes if they've changed. */
-	if (memcmp(&mode, &oldmode, sizeof(mode)))
+	if (memcmp(&mode, &oldmode, sizeof(mode))) {
 #ifdef TERMIOS
 	    tcsetattr(STDERR_FILENO, TCSADRAIN, &mode);
 #else
 	    stty(STDERR_FILENO, &mode);
 #endif
+	}
     }
 
     /* Get the terminal name from the entry. */

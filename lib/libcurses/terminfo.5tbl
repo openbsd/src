@@ -33,7 +33,7 @@
 .\"***************************************************************************
 .\"
 .\" $From: terminfo.head,v 1.8 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: terminfo.5tbl,v 1.6 2000/01/09 05:06:01 millert Exp $
+.\" $OpenBSD: terminfo.5tbl,v 1.7 2000/03/13 23:53:39 millert Exp $
 .TH TERMINFO 5 "" "" "File Formats"
 .ds n 5
 .ds d /usr/share/terminfo
@@ -1623,7 +1623,7 @@ YI Set page length to #1 hundredth of an inch
 T}
 .TE
 .ad
-.\" $From: terminfo.tail,v 1.30 2000/01/08 22:09:12 tom Exp $
+.\" $From: terminfo.tail,v 1.31 2000/03/12 00:36:41 tom Exp $
 .\" Beginning of terminfo.tail file
 .ps +1
 .PP
@@ -2951,16 +2951,20 @@ capabilities of the form \fBx\fR\fIx\fR.
 .PP
 .SS Similar Terminals
 .PP
-If there are two very similar terminals,
-one can be defined as being just like the other with certain exceptions.
-The string capability \fBuse\fR can be given
-with the name of the similar terminal.
-The capabilities given before
+If there are two very similar terminals, one (the variant) can be defined as
+being just like the other (the base) with certain exceptions.  In the
+definition of the variant, the string capability \fBuse\fR can be given with
+the name of the base terminal.  The capabilities given before
 .B use
-override those in the terminal type invoked by
+override those in the base type named by
 .BR use .
+If there are multiple \fBuse\fR capabilities, they are merged in reverse order.
+That is, the rightmost \fBuse\fR reference is processed first, then the one to
+its left, and so forth.  Capabilities given explicitly in the entry override
+those brought in by \fBuse\fR references.
+.PP
 A capability can be canceled by placing \fBxx@\fR to the left of the
-capability definition, where xx is the capability.
+use reference that imports it, where \fIxx\fP is the capability.
 For example, the entry
 .PP
 	2621-nl, smkx@, rmkx@, use=2621,

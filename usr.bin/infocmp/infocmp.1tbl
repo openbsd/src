@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: infocmp.1tbl,v 1.6 2000/01/08 06:26:24 millert Exp $
+.\" $OpenBSD: infocmp.1tbl,v 1.7 2000/03/13 23:53:41 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,14 +29,14 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: infocmp.1m,v 1.21 1999/06/15 23:12:25 tom Exp $
+.\" $From: infocmp.1m,v 1.23 2000/03/12 02:52:56 tom Exp $
 .TH infocmp 1 ""
 .ds n 5
 .ds d /usr/share/terminfo
 .SH NAME
 \fBinfocmp\fR - compare or print out \fIterminfo\fR descriptions
 .SH SYNOPSIS
-\fBinfocmp\fR [\fB-dceEGgnpILCuV1\fR] [\fB-v\fR \fIn\fR] [\fB-s d\fR| \fBi\fR| \fBl\fR| \fBc\fR]
+\fBinfocmp\fR [\fB-dceEGgnpqrILCuV1\fR] [\fB-v\fR \fIn\fR] [\fB-s d\fR| \fBi\fR| \fBl\fR| \fBc\fR]
 .br
       [\fB-w\fR\ \fIwidth\fR] [\fB-A\fR\ \fIdirectory\fR] [\fB-B\fR\ \fIdirectory\fR]
 .br
@@ -215,11 +215,18 @@ filenames.  The files are searched for pairwise matches between
 entries, with two entries considered to match if any of their names do.
 The report printed to standard output lists entries with no matches in
 the other file, and entries with more than one match.  For entries
-with exactly one match it includes a difference report.
+with exactly one match it includes a difference report.  Normally,
+to reduce the volume of the report, use references are
+not resolved before looking for differences, but resolution can be forced
+by also specifying \fB-r\fR.
 .TP
 \fB-G\fR
 Display constant literals in decimal form
 rather than their character equivalents.
+.TP 5
+\fB-q\fR
+Make the comparison listing shorter by omitting subheadings, and using
+"-" for absent capabilities, "@" for cancelled rather than "NULL".
 .TP 5
 \fB-R\fR\fIsubset\fR
 Restrict output to a given subset.  This option is for use with archaic
@@ -341,8 +348,9 @@ The
 \fB-e\fR,
 \fB-f\fR,
 \fB-g\fR,
-\fB-i\fR, and
-\fB-p\fR
+\fB-i\fR,
+\fB-p\fR, and
+\fB-q\fR
 options are not supported in SVr4 curses.
 
 The \fB-r\fR option's notion of `termcap' capabilities is System V Release 4's.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.h,v 1.4 1999/03/11 21:08:09 millert Exp $	*/
+/*	$OpenBSD: dump_entry.h,v 1.5 2000/03/13 23:53:41 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -52,11 +52,18 @@
 #define S_VARIABLE	3	/* sort by C variable names */
 #define S_TERMCAP	4	/* sort by termcap names */
 
+/* capability types for the comparison hook */
+#define CMP_BOOLEAN	0	/* comparison on booleans */
+#define CMP_NUMBER	1	/* comparison on numerics */
+#define CMP_STRING	2	/* comparison on strings */
+#define CMP_USE		3	/* comparison on use capabilities */
+
 extern NCURSES_CONST char *nametrans(const char *);
 extern void dump_init(const char *, int, int, int, int, bool);
 extern int fmt_entry(TERMTYPE *, int (*)(int, int), bool, bool, int);
 extern int dump_entry(TERMTYPE *, bool, int, int (*)(int, int));
 extern int dump_uses(const char *, bool);
-extern void compare_entry(void (*)(int, int, const char *), TERMTYPE *);
+extern void compare_entry(void (*)(int, int, const char *), TERMTYPE *, bool);
+extern void repair_acsc(TERMTYPE * tp);
 
 #define FAIL	-1

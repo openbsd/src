@@ -42,7 +42,7 @@
 #include <dump_entry.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: tic.c,v 1.63 2000/03/05 04:33:15 tom Exp $")
+MODULE_ID("$From: tic.c,v 1.64 2000/03/11 21:45:07 tom Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -627,7 +627,7 @@ main(int argc, char *argv[])
 
     /* do use resolution */
     if (check_only || (!infodump && !capdump) || forceresolve) {
-	if (!_nc_resolve_uses() && !check_only) {
+	if (!_nc_resolve_uses(TRUE) && !check_only) {
 	    cleanup();
 	    return EXIT_FAILURE;
 	}
@@ -677,7 +677,7 @@ main(int argc, char *argv[])
 
 		    len = dump_entry(&qp->tterm, limited, numbers, NULL);
 		    for (j = 0; j < qp->nuses; j++)
-			len += dump_uses((char *) (qp->uses[j].parent), !capdump);
+			len += dump_uses(qp->uses[j].name, !capdump);
 		    (void) putchar('\n');
 		    if (debug_level != 0 && !limited)
 			printf("# length=%d\n", len);

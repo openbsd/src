@@ -1,4 +1,4 @@
-/*	$OpenBSD: make_keys.c,v 1.5 1999/11/28 18:05:38 millert Exp $	*/
+/*	$OpenBSD: make_keys.c,v 1.6 2000/03/13 23:53:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -39,7 +39,7 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: make_keys.c,v 1.7 1999/09/11 17:32:57 Jeffrey.Honig Exp $")
+MODULE_ID("$From: make_keys.c,v 1.8 2000/03/12 02:55:50 Todd.C.Miller Exp $")
 
 #include <names.c>
 

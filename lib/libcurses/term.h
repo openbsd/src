@@ -1,7 +1,7 @@
-/*	$OpenBSD: term.h,v 1.8 2000/01/08 06:26:25 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.9 2000/03/13 23:53:39 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,7 @@
 /*    and: Eric S. Raymond <esr@snark.thyrsus.com>                          */
 /****************************************************************************/
 
-/* $From: MKterm.h.awk.in,v 1.36 1999/09/01 22:36:52 Peter.Wemm Exp $ */
+/* $From: MKterm.h.awk.in,v 1.37 2000/03/12 02:40:07 tom Exp $ */
 
 /*
 **	term.h -- Definition of struct term
@@ -690,6 +690,9 @@ extern "C" {
 #define BOOLCOUNT 44
 #define NUMCOUNT  39
 #define STRCOUNT  414
+
+/* used by code for comparing entries */
+#define acs_chars_index	146
 
 typedef struct termtype {	/* in-core form of terminfo data */
     char  *term_names;		/* str_table offset of term names */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.5 2000/03/10 01:35:04 millert Exp $	 */
+/*	$OpenBSD: read_termcap.c,v 1.6 2000/03/13 23:53:40 millert Exp $	 */
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -1044,7 +1044,7 @@ _nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
 	return (ERR);
 
     /* resolve all use references */
-    _nc_resolve_uses();
+    _nc_resolve_uses(TRUE);
 
     /* find a terminal matching tn, if we can */
 #if USE_GETCAP_CACHE

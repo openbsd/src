@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.8 2000/03/10 01:35:04 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.9 2000/03/13 23:53:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -43,7 +43,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_entry.c,v 1.66 2000/02/13 01:01:26 tom Exp $")
+MODULE_ID("$From: read_entry.c,v 1.67 2000/03/11 12:35:45 tom Exp $")
 
 #if !HAVE_TELL
 #define tell(fd) 0		/* lseek() is POSIX, but not tell() - odd... */
@@ -359,7 +359,9 @@ read_termtype(int fd, TERMTYPE * ptr)
     {
 	T(("...done reading terminfo bool %d num %d str %d",
 		bool_count, num_count, str_count));
+#if NCURSES_XNAMES
 	TR(TRACE_DATABASE, ("normal: num_Booleans:%d", ptr->num_Booleans));
+#endif
     }
 
     for (i = bool_count; i < BOOLCOUNT; i++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_keytry.c,v 1.3 1999/11/28 18:05:38 millert Exp $	*/
+/*	$OpenBSD: init_keytry.c,v 1.4 2000/03/13 23:53:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1999 Free Software Foundation, Inc.                        *
@@ -34,7 +34,7 @@
 			/* cursor_visible,cursor_normal,cursor_invisible */
 #include <tic.h>	/* struct tinfo_fkeys */
 
-MODULE_ID("$From: init_keytry.c,v 1.2 1999/09/11 17:32:57 Jeffrey.Honig Exp $")
+MODULE_ID("$From: init_keytry.c,v 1.3 2000/03/12 02:55:50 Todd.C.Miller Exp $")
 
 /*
 **      _nc_init_keytry()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.13 2000/01/09 05:06:02 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.14 2000/03/13 23:53:41 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -40,7 +40,7 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$From: dump_entry.c,v 1.45 2000/01/08 22:19:05 Todd.Miller Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.48 2000/03/12 02:33:01 tom Exp $")
 
 #define INDENT			8
 #define DISCARD(string) string = ABSENT_STRING
@@ -249,7 +249,6 @@ dump_predicate(int type, int idx)
 }
 
 static void set_obsolete_termcaps(TERMTYPE * tp);
-static void repair_acsc(TERMTYPE * tp);
 
 /* is this the index of a function key string? */
 #define FNKEY(i)	(((i)<= 65 && (i)>= 75) || ((i)<= 216 && (i)>= 268))
@@ -566,7 +565,6 @@ fmt_entry(TERMTYPE * tterm,
     if (len & 1)
 	len++;
 
-    repair_acsc(tterm);
     for_each_string(j, tterm) {
 	i = StrIndirect(j);
 	name = ExtStrname(tterm, i, str_names);
@@ -824,13 +822,13 @@ dump_uses(const char *name, bool infodump)
 }
 
 void
-compare_entry(void (*hook) (int t, int i, const char *name), TERMTYPE * tp GCC_UNUSED)
+compare_entry(void (*hook) (int t, int i, const char *name), TERMTYPE * tp GCC_UNUSED, bool quiet)
 /* compare two entries */
 {
     int i, j;
     NCURSES_CONST char *name;
 
-    (void) fputs("    comparing booleans.\n", stdout);
+    if (!quiet) fputs("    comparing booleans.\n", stdout);
     for_each_boolean(j, tp) {
 	i = BoolIndirect(j);
 	name = ExtBoolname(tp, i, bool_names);
@@ -838,10 +836,10 @@ compare_entry(void (*hook) (int t, int i, const char *name), TERMTYPE * tp GCC_U
 	if (isObsolete(outform, name))
 	    continue;
 
-	(*hook) (BOOLEAN, i, name);
+	(*hook) (CMP_BOOLEAN, i, name);
     }
 
-    (void) fputs("    comparing numbers.\n", stdout);
+    if (!quiet) fputs("    comparing numbers.\n", stdout);
     for_each_number(j, tp) {
 	i = NumIndirect(j);
 	name = ExtNumname(tp, i, num_names);
@@ -849,10 +847,10 @@ compare_entry(void (*hook) (int t, int i, const char *name), TERMTYPE * tp GCC_U
 	if (isObsolete(outform, name))
 	    continue;
 
-	(*hook) (NUMBER, i, name);
+	(*hook) (CMP_NUMBER, i, name);
     }
 
-    (void) fputs("    comparing strings.\n", stdout);
+    if (!quiet) fputs("    comparing strings.\n", stdout);
     for_each_string(j, tp) {
 	i = StrIndirect(j);
 	name = ExtStrname(tp, i, str_names);
@@ -860,8 +858,12 @@ compare_entry(void (*hook) (int t, int i, const char *name), TERMTYPE * tp GCC_U
 	if (isObsolete(outform, name))
 	    continue;
 
-	(*hook) (STRING, i, name);
+	(*hook) (CMP_STRING, i, name);
     }
+
+    /* (void) fputs("    comparing use entries.\n", stdout); */
+    (*hook) (CMP_USE, 0, "use");
+
 }
 
 #define NOTSET(s)	((s) == 0)
@@ -884,7 +886,7 @@ set_obsolete_termcaps(TERMTYPE * tp)
  * Convert an alternate-character-set string to canonical form: sorted and
  * unique.
  */
-static void
+void
 repair_acsc(TERMTYPE * tp)
 {
     if (VALID_STRING(acs_chars)) {
