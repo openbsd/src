@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: inject.c,v 1.2 1996/09/05 21:26:54 deraadt Exp $
+ *	$Id: inject.c,v 1.3 1997/11/26 02:32:27 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -117,7 +117,7 @@ main(int argc, char **argv)
 	memcpy(ramdisk, filesys, filesyslen);
 
 	/* Sync vm/fs and unmap the images */
-	msync(kern, kernlen);
+	msync(kern, kernlen, 0);
 	munmap(kern, kernlen);
 	munmap(filesys, filesyslen);
 	exit(0);

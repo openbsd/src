@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rdsetroot.c,v 1.1 1996/10/12 01:18:01 deraadt Exp $
+ *	$Id: rdsetroot.c,v 1.2 1997/11/26 02:32:25 deraadt Exp $
  */
 
 /*
@@ -163,11 +163,7 @@ main(argc,argv)
 		exit(1);
 	}
 
-	msync(dataseg - data_pgoff, data_len
-#ifdef	sun
-		  ,0
-#endif
-		  );
+	msync(dataseg - data_pgoff, data_len, 0);
 
 #ifdef	DEBUG
 	printf("...copied %d bytes\n", n);

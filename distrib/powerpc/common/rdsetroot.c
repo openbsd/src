@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.1 1997/10/13 15:35:48 pefo Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.2 1997/11/26 02:32:28 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -153,9 +153,7 @@ main(argc,argv)
 		exit(1);
 	}
 
-#if 0
-	msync(dataseg, mmap_size);
-#endif
+	msync(dataseg, mmap_size, 0);
 
 #ifdef	DEBUG
 	printf("...copied %d bytes\n", n);

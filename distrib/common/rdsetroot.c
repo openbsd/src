@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.3 1997/05/16 20:59:45 niklas Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.4 1997/11/26 02:32:23 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -172,11 +172,7 @@ main(argc,argv)
 		exit(1);
 	}
 
-	msync(dataseg - data_pgoff, data_len
-#ifdef	sun
-		  ,0
-#endif
-		  );
+	msync(dataseg - data_pgoff, data_len, 0);
 
 #ifdef	DEBUG
 	printf("...copied %d bytes\n", n);
