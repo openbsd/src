@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.214 2002/06/07 18:45:59 pb Exp $ */
+/*	$OpenBSD: pf.c,v 1.215 2002/06/07 20:59:20 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5215,6 +5215,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir)
 	struct sockaddr_in *dst;
 	struct ip *ip;
 	struct ifnet *ifp = r->rt_ifp;
+	struct m_tag *mtag;
 	int hlen;
 	int error = 0;
 
@@ -5257,6 +5258,20 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir)
 
 	if (ifp == NULL)
 		goto bad;
+
+	mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
+	if (mtag == NULL) {
+		if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
+			goto bad;
+		else if (m0 == NULL)
+			goto done;
+		else {
+			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
+			if (mtag == NULL)
+				goto bad;
+			m_tag_prepend(m0, mtag);
+		}
+	}
 
 	/* Copied from ip_output. */
 	if ((u_int16_t)ip->ip_len <= ifp->if_mtu) {
@@ -5370,6 +5385,20 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir)
 
 	if (ifp == NULL)
 		goto bad;
+
+	mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
+	if (mtag == NULL) {
+		if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
+			goto bad;
+		else if (m0 == NULL)
+			goto done;
+		else {
+			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
+			if (mtag == NULL)
+				goto bad;
+			m_tag_prepend(m0, mtag);
+		}
+	}
 
 	/*
 	 * Do not fragment packets (yet).  Not much is done here for dealing
