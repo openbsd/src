@@ -1,5 +1,32 @@
-/*	$OpenBSD: buf.c,v 1.7 1999/10/05 21:59:00 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.8 1999/12/06 22:24:31 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $	*/
+
+/*
+ * Copyright (c) 1999 Marc Espie.
+ *
+ * Extensive code modifications for the OpenBSD project.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+ * PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -43,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.7 1999/10/05 21:59:00 espie Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.8 1999/12/06 22:24:31 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,20 +90,20 @@ static char rcsid[] = "$OpenBSD: buf.c,v 1.7 1999/10/05 21:59:00 espie Exp $";
 /*
  * BufExpand --
  * 	Expand the given buffer to hold the given number of additional
- *	bytes.
- *	Makes sure there's room for an extra NULL byte at the end of the
+ *	chars.
+ *	Makes sure there's room for an extra NULL char at the end of the
  *	buffer in case it holds a string.
  */
 #define BufExpand(bp,nb) 						\
  	if (bp->left < (nb)+1) {					\
-	    Byte  *newBuf; 						\
-	    int   newSize = (bp)->size; 				\
+	    char  *newBuf; 						\
+	    size_t   newSize = (bp)->size; 				\
 									\
 	    do { 							\
 		newSize *= 2 ; 						\
 		(bp)->left = newSize - ((bp)->inPtr - (bp)->buffer); 	\
 	    } while ((bp)->left < (nb)+1+BUF_MARGIN);			\
-	    newBuf = (Byte *) erealloc((bp)->buffer, newSize); 		\
+	    newBuf = erealloc((bp)->buffer, newSize); 		\
 	    (bp)->inPtr = newBuf + ((bp)->inPtr - (bp)->buffer); 	\
 	    (bp)->outPtr = newBuf + ((bp)->outPtr - (bp)->buffer); 	\
 	    (bp)->buffer = newBuf; 					\
@@ -88,11 +115,8 @@ static char rcsid[] = "$OpenBSD: buf.c,v 1.7 1999/10/05 21:59:00 espie Exp $";
 
 /*-
  *-----------------------------------------------------------------------
- * Buf_OvAddByte --
- *	Add a single byte to the buffer.  left is zero or negative.
- *
- * Results:
- *	None.
+ * Buf_OvAddChar --
+ *	Add a single char to the buffer.  
  *
  * Side Effects:
  *	The buffer may be expanded.
@@ -100,13 +124,11 @@ static char rcsid[] = "$OpenBSD: buf.c,v 1.7 1999/10/05 21:59:00 espie Exp $";
  *-----------------------------------------------------------------------
  */
 void
-Buf_OvAddByte (bp, byte)
-    register Buffer bp;
-    int    byte;
+Buf_OvAddChar(bp, byte)
+    Buffer 	bp;
+    char	byte;
 {
-    int nbytes = 1;
-    bp->left = 0;
-    BufExpand (bp, nbytes);
+    BufExpand(bp, 1);
 
     *bp->inPtr++ = byte;
     bp->left--;
@@ -119,11 +141,8 @@ Buf_OvAddByte (bp, byte)
 
 /*-
  *-----------------------------------------------------------------------
- * Buf_AddBytes --
- *	Add a number of bytes to the buffer.
- *
- * Results:
- *	None.
+ * Buf_AddChars --
+ *	Add a number of chars to the buffer.
  *
  * Side Effects:
  *	Guess what?
@@ -131,15 +150,15 @@ Buf_OvAddByte (bp, byte)
  *-----------------------------------------------------------------------
  */
 void
-Buf_AddBytes (bp, numBytes, bytesPtr)
-    register Buffer bp;
-    int	    numBytes;
-    const Byte *bytesPtr;
+Buf_AddChars(bp, numBytes, bytesPtr)
+    Buffer 	bp;
+    size_t	numBytes;
+    const char 	*bytesPtr;
 {
 
-    BufExpand (bp, numBytes);
+    BufExpand(bp, numBytes);
 
-    memcpy (bp->inPtr, bytesPtr, numBytes);
+    memcpy(bp->inPtr, bytesPtr, numBytes);
     bp->inPtr += numBytes;
     bp->left -= numBytes;
 
@@ -155,20 +174,17 @@ Buf_AddBytes (bp, numBytes, bytesPtr)
  *	Get all the available data at once.
  *
  * Results:
- *	A pointer to the data and the number of bytes available.
- *
- * Side Effects:
- *	None.
+ *	A pointer to the data and the number of chars available.
  *
  *-----------------------------------------------------------------------
  */
-Byte *
-Buf_GetAll (bp, numBytesPtr)
-    register Buffer bp;
-    int	    *numBytesPtr;
+char *
+Buf_GetAll(bp, numBytesPtr)
+    Buffer 	bp;
+    size_t	*numBytesPtr;
 {
 
-    if (numBytesPtr != (int *)NULL) {
+    if (numBytesPtr != NULL) {
 	*numBytesPtr = bp->inPtr - bp->outPtr;
     }
 
@@ -178,20 +194,17 @@ Buf_GetAll (bp, numBytesPtr)
 /*-
  *-----------------------------------------------------------------------
  * Buf_Discard --
- *	Throw away bytes in a buffer.
- *
- * Results:
- *	None.
+ *	Throw away chars in a buffer.
  *
  * Side Effects:
- *	The bytes are discarded.
+ *	The chars are discarded.
  *
  *-----------------------------------------------------------------------
  */
 void
-Buf_Discard (bp, numBytes)
-    register Buffer bp;
-    int	    numBytes;
+Buf_Discard(bp, numBytes)
+    Buffer 	bp;
+    size_t	numBytes;
 {
 
     if (bp->inPtr - bp->outPtr <= numBytes) {
@@ -206,14 +219,11 @@ Buf_Discard (bp, numBytes)
 /*-
  *-----------------------------------------------------------------------
  * Buf_Size --
- *	Returns the number of bytes in the given buffer. Doesn't include
- *	the null-terminating byte.
+ *	Returns the number of chars in the given buffer. Doesn't include
+ *	the null-terminating char.
  *
  * Results:
- *	The number of bytes.
- *
- * Side Effects:
- *	None.
+ *	The number of chars.
  *
  *-----------------------------------------------------------------------
  */
@@ -240,18 +250,18 @@ Buf_Size (buf)
  *-----------------------------------------------------------------------
  */
 Buffer
-Buf_Init (size)
-    int	    size; 	/* Initial size for the buffer */
+Buf_Init(size)
+    size_t    	size;	/* Initial size for the buffer */
 {
-    Buffer bp;	  	/* New Buffer */
+    Buffer 	bp;	/* New Buffer */
 
     bp = (Buffer)emalloc(sizeof(*bp));
 
-    if (size <= 0) {
+    if (size == 0) {
 	size = BUF_DEF_SIZE;
     }
     bp->left = bp->size = size;
-    bp->buffer = (Byte *)emalloc(size);
+    bp->buffer = emalloc(size);
     bp->inPtr = bp->outPtr = bp->buffer;
     *bp->inPtr = 0;
 
@@ -263,33 +273,27 @@ Buf_Init (size)
  * Buf_Destroy --
  *	Nuke a buffer and all its resources.
  *
- * Results:
- *	None.
- *
  * Side Effects:
  *	The buffer is freed.
  *
  *-----------------------------------------------------------------------
  */
 void
-Buf_Destroy (buf, freeData)
+Buf_Destroy(buf, freeData)
     Buffer  buf;  	/* Buffer to destroy */
     Boolean freeData;	/* TRUE if the data should be destroyed as well */
 {
 
     if (freeData) {
-	free ((char *)buf->buffer);
+	free(buf->buffer);
     }
     free ((char *)buf);
 }
 
 /*-
  *-----------------------------------------------------------------------
- * Buf_ReplaceLastByte --
- *     Replace the last byte in a buffer.
- *
- * Results:
- *     None.
+ * Buf_ReplaceLastChar --
+ *     Replace the last char in a buffer.
  *
  * Side Effects:
  *     If the buffer was empty intially, then a new byte will be added.
@@ -298,12 +302,12 @@ Buf_Destroy (buf, freeData)
  *-----------------------------------------------------------------------
  */
 void
-Buf_ReplaceLastByte (buf, byte)
-    Buffer buf;	/* buffer to augment */
-    int byte;	/* byte to be written */
+Buf_ReplaceLastChar(buf, byte)
+    Buffer 	buf;	/* buffer to augment */
+    char 	byte;	/* byte to be written */
 {
     if (buf->inPtr == buf->outPtr)
-        Buf_AddByte(buf, byte);
+        Buf_AddChar(buf, byte);
     else
         *(buf->inPtr - 1) = byte;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.5 1998/12/05 00:06:27 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.6 1999/12/06 22:24:31 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $	*/
 
 /*
@@ -51,34 +51,28 @@
 
 #include    "sprite.h"
 
-typedef char Byte;
-
 typedef struct Buffer {
-    int	    size; 	/* Current size of the buffer */
-    int     left;	/* Space left (== size - (inPtr - buffer)) */
-    Byte    *buffer;	/* The buffer itself */
-    Byte    *inPtr;	/* Place to write to */
-    Byte    *outPtr;	/* Place to read from */
+    size_t  size; 	/* Current size of the buffer */
+    size_t  left;	/* Space left (== size - (inPtr - buffer)) */
+    char    *buffer;	/* The buffer itself */
+    char    *inPtr;	/* Place to write to */
+    char    *outPtr;	/* Place to read from */
 } *Buffer;
 
-/* Buf_AddByte adds a single byte to a buffer. */
-#define	Buf_AddByte(bp, byte) \
-	(void) (--(bp)->left <= 0 ? Buf_OvAddByte(bp, byte), 1 : \
+/* Buf_AddChar adds a single char to a buffer. */
+#define	Buf_AddChar(bp, byte) \
+	(void) (--(bp)->left == 0 ? Buf_OvAddChar(bp, byte), 1 : \
 		(*(bp)->inPtr++ = (byte), *(bp)->inPtr = 0), 1)
 
 #define BUF_ERROR 256
 
-void Buf_OvAddByte __P((Buffer, int));
-void Buf_AddBytes __P((Buffer, int, const Byte *));
-void Buf_UngetByte __P((Buffer, int));
-void Buf_UngetBytes __P((Buffer, int, Byte *));
-int Buf_GetByte __P((Buffer));
-int Buf_GetBytes __P((Buffer, int, Byte *));
-Byte *Buf_GetAll __P((Buffer, int *));
-void Buf_Discard __P((Buffer, int));
+void Buf_OvAddChar __P((Buffer, char));
+void Buf_AddChars __P((Buffer, size_t, const char *));
+char *Buf_GetAll __P((Buffer, size_t *));
+void Buf_Discard __P((Buffer, size_t));
 int Buf_Size __P((Buffer));
-Buffer Buf_Init __P((int));
+Buffer Buf_Init __P((size_t));
 void Buf_Destroy __P((Buffer, Boolean));
-void Buf_ReplaceLastByte __P((Buffer, int));
+void Buf_ReplaceLastChar __P((Buffer, char));
 
 #endif /* _BUF_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.24 1999/11/11 11:42:19 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.25 1999/12/06 22:24:31 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.24 1999/11/11 11:42:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.25 1999/12/06 22:24:31 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2105,7 +2105,8 @@ ParseSkipLine(skip)
     int skip; 		/* Skip lines that don't start with . */
 {
     char *line;
-    int c, lastc, lineLength = 0;
+    int c, lastc;
+    size_t lineLength = 0;
     Buffer buf;
 
     buf = Buf_Init(MAKE_BSIZE);
@@ -2117,7 +2118,7 @@ ParseSkipLine(skip)
         while (((c = ParseReadc()) != '\n' || lastc == '\\')
                && c != EOF) {
             if (c == '\n') {
-                Buf_ReplaceLastByte(buf, (Byte)' ');
+                Buf_ReplaceLastChar(buf, ' ');
                 lineno++;
 
                 while ((c = ParseReadc()) == ' ' || c == '\t');
@@ -2126,12 +2127,12 @@ ParseSkipLine(skip)
                     break;
             }
 
-            Buf_AddByte(buf, (Byte)c);
+            Buf_AddChar(buf, c);
             lastc = c;
         }
 
-        Buf_AddByte(buf, (Byte)'\0');
-        line = (char *)Buf_GetAll(buf, &lineLength);
+        Buf_AddChar(buf, '\0');
+        line = Buf_GetAll(buf, &lineLength);
         lineno++;
 	    /* allow for non-newline terminated lines while skipping */
 	if (line[0] == '.')
@@ -2182,7 +2183,6 @@ ParseReadLine ()
 				 * shell command */
     char 	  *line;    	/* Result */
     char          *ep;		/* to strip trailing blanks */
-    int	    	  lineLength;	/* Length of result */
 
     semiNL = FALSE;
     ignDepOp = FALSE;
@@ -2330,7 +2330,7 @@ test_char:
 	    /*
 	     * Copy in the previous character and save this one in lastc.
 	     */
-	    Buf_AddByte (buf, (Byte)lastc);
+	    Buf_AddChar(buf, lastc);
 	    lastc = c;
 
 	}
@@ -2338,11 +2338,11 @@ test_char:
 	lineno++;
 
 	if (lastc != '\0') {
-	    Buf_AddByte (buf, (Byte)lastc);
+	    Buf_AddChar(buf, lastc);
 	}
-	Buf_AddByte (buf, (Byte)'\0');
-	line = (char *)Buf_GetAll (buf, &lineLength);
-	Buf_Destroy (buf, FALSE);
+	Buf_AddChar(buf, '\0');
+	line = Buf_GetAll(buf, NULL);
+	Buf_Destroy(buf, FALSE);
 
 	/*
 	 * Strip trailing blanks and tabs from the line.
