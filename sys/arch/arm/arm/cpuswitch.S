@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.4 2004/08/04 20:20:18 miod Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.5 2004/12/30 23:43:42 drahn Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 #include "assym.h"
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/intr.h>
 #include <machine/asm.h>
 
 /* LINTSTUB: include <sys/param.h> */
