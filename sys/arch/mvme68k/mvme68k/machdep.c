@@ -1,7 +1,8 @@
-/*	$OpenBSD: machdep.c,v 1.30 1999/12/08 06:50:16 itojun Exp $ */
+/*	$OpenBSD: machdep.c,v 1.31 2000/01/06 03:21:43 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
+ * Copyright (c) 1999 Steve Murphree, Jr. (68060 support)
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -125,28 +126,28 @@ extern vm_offset_t avail_end;
 /*
  * Declare these as initialized data so we can patch them.
  */
-int	nswbuf = 0;
+int   nswbuf = 0;
 #ifdef	NBUF
-int	nbuf = NBUF;
+int   nbuf = NBUF;
 #else
-int	nbuf = 0;
+int   nbuf = 0;
 #endif
 #ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
+int   bufpages = BUFPAGES;
 #else
-int	bufpages = 0;
+int   bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
-int	maxmem;			/* max memory per process */
-int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+int   msgbufmapped;		/* set when safe to use msgbuf */
+int   maxmem;			/* max memory per process */
+int   physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
  */
-int	safepri = PSL_LOWIPL;
+int   safepri = PSL_LOWIPL;
 
-extern	u_int lowram;
-extern	short exframesize[];
+extern   u_int lowram;
+extern   short exframesize[];
 
 #ifdef COMPAT_HPUX
 extern struct emul emul_hpux;
@@ -155,24 +156,55 @@ extern struct emul emul_hpux;
 extern struct emul emul_sunos;
 #endif
 
+/* 
+ *  XXX this is to fake out the console routines, while 
+ *  booting. New and improved! :-) smurph
+ */
+void bootcnprobe __P((struct consdev *));
+void bootcninit __P((struct consdev *));
+void bootcnputc __P((dev_t, int));
+int  bootcngetc __P((dev_t));
+extern void nullcnpollc __P((dev_t, int));
+
+#define bootcnpollc nullcnpollc
+
+static struct consdev bootcons = {
+	NULL, 
+	NULL, 
+	bootcngetc, 
+	bootcnputc,
+	bootcnpollc, 
+	makedev(14,0), 
+	1};
+
+void initvectors(void);
+
 void
 mvme68k_init()
 {
 #if defined(MACHINE_NEW_NONCONTIG)
 	extern vm_offset_t avail_start, avail_end;
-        
+
 	/*
- 	 * Tell the VM system about available physical memory.  The
- 	 * hp300 only has one segment.
- 	 */
+	 * Tell the VM system about available physical memory.  The
+	 * hp300 only has one segment.
+	 */
 #if defined(UVM)
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-    		atop(avail_start), atop(avail_end));
+							atop(avail_start), atop(avail_end));
 #else
 	vm_page_physload(atop(avail_start), atop(avail_end),
-    		atop(avail_start), atop(avail_end));
+						  atop(avail_start), atop(avail_end));
 #endif /* UVM */
 #endif /* MACHINE_NEW_NONCONTIG */
+
+	/* 
+	 * Put machine specific exception vectors in place.
+	 */
+	initvectors();
+
+	/* startup fake console driver.  It will be replaced by consinit() */
+	cn_tab = &bootcons;
 }
 
 /*
@@ -187,6 +219,7 @@ consinit()
 	/*
 	 * Initialize the console before we print anything out.
 	 */
+	cn_tab = NULL;	/* Get rid of fake console driver */
 	cninit();
 
 #ifdef DDB
@@ -226,11 +259,11 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-      pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
-			avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-			TRUE, VM_PROT_READ|VM_PROT_WRITE);
-	
-   msgbufmapped = 1;
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
+					  avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+					  TRUE, VM_PROT_READ|VM_PROT_WRITE);
+
+	msgbufmapped = 1;
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -255,7 +288,7 @@ cpu_startup()
 	 * addresses to the various data structures.
 	 */
 	firstaddr = 0;
-again:
+	again:
 	v = (caddr_t)firstaddr;
 
 #define	valloc(name, type, num) \
@@ -281,7 +314,7 @@ again:
 	valloc(msghdrs, struct msg, msginfo.msgtql);
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
-	
+
 	/*
 	 * Determine how many buffers to allocate.
 	 * We just allocate a flat 5%.  Insure a minimum of 16 buffers.
@@ -327,10 +360,10 @@ again:
 	 */
 	size = MAXBSIZE * nbuf;
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-				   &maxaddr, size, TRUE);
+										&maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
-			&minaddr, size, FALSE) != KERN_SUCCESS)
+						 &minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
@@ -355,22 +388,22 @@ again:
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
+									 16*NCARGS, TRUE);
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE);
+									 VM_PHYS_SIZE, TRUE);
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
 	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
+										M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
+								  VM_MBUF_SIZE, FALSE);
 	/*
 	 * Initialize callouts
 	 */
@@ -384,7 +417,7 @@ again:
 #endif
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+			 nbuf, bufpages * CLBYTES);
 #ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
@@ -428,10 +461,10 @@ again:
  */
 void
 setregs(p, pack, stack, retval)
-	register struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
+register struct proc *p;
+struct exec_package *pack;
+u_long stack;
+register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
@@ -475,13 +508,13 @@ setregs(p, pack, stack, retval)
 /*
  * Info for CTL_HW
  */
-char	cpu_model[120];
-extern	char version[];
+char  cpu_model[120];
+extern   char version[];
 
-int	cputyp;
-int	cpuspeed;
+int   cputyp;
+int   cpuspeed;
 
-struct	mvmeprom_brdid brdid;
+struct   mvmeprom_brdid brdid;
 
 identifycpu()
 {
@@ -493,80 +526,95 @@ identifycpu()
 
 	bzero(suffix, sizeof suffix);
 
-	mc = (mmutype == MMU_68040 ? "40" :
-	    (mmutype == MMU_68030 ? "30" : "20"));
+	switch (mmutype) {
+		case MMU_68060:
+			mc = "60";
+			break;
+		case MMU_68040:
+			mc = "40";
+			break;
+		case MMU_68030:
+			mc = "30";
+			break;
+		default:
+			mc = "20";
+	}
 	switch (cputyp) {
 #ifdef MVME147
-	case CPU_147:
-		bcopy(&brdid.suffix, suffix, sizeof brdid.suffix);
-		sprintf(suffix, "MVME%x", brdid.model, suffix);
-		cpuspeed = pccspeed((struct pccreg *)IIOV(0xfffe1000));
-		sprintf(speed, "%02d", cpuspeed);
-		break;
+		case CPU_147:
+			bcopy(&brdid.suffix, suffix, sizeof brdid.suffix);
+			sprintf(suffix, "MVME%x", brdid.model, suffix);
+			cpuspeed = pccspeed((struct pccreg *)IIOV(0xfffe1000));
+			sprintf(speed, "%02d", cpuspeed);
+			break;
 #endif
-#if defined(MVME162) || defined(MVME167) || defined(MVME177)
-	case CPU_162:
-	case CPU_167:
-	case CPU_177:
-		bzero(speed, sizeof speed);
-		speed[0] = brdid.speed[0];
-		speed[1] = brdid.speed[1];
-		if (brdid.speed[2] != '0' &&
-		    brdid.speed[3] != '0') {
-			speed[2] = '.';
-			speed[3] = brdid.speed[2];
-			speed[4] = brdid.speed[3];
-		}
-		cpuspeed = (speed[0] - '0') * 10 + (speed[1] - '0');
-		bcopy(brdid.longname, suffix, sizeof(brdid.longname));
-		for (len = strlen(suffix)-1; len; len--) {
-			if (suffix[len] == ' ')
-				suffix[len] = '\0';
-			else
-				break;
-		}
-		break;
+#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
+		case CPU_162:
+		case CPU_167:
+		case CPU_172:
+		case CPU_177:
+			bzero(speed, sizeof speed);
+			speed[0] = brdid.speed[0];
+			speed[1] = brdid.speed[1];
+			if (brdid.speed[2] != '0' &&
+				 brdid.speed[3] != '0') {
+				speed[2] = '.';
+				speed[3] = brdid.speed[2];
+				speed[4] = brdid.speed[3];
+			}
+			cpuspeed = (speed[0] - '0') * 10 + (speed[1] - '0');
+			bcopy(brdid.longname, suffix, sizeof(brdid.longname));
+			for (len = strlen(suffix)-1; len; len--) {
+				if (suffix[len] == ' ')
+					suffix[len] = '\0';
+				else
+					break;
+			}
+			break;
 #endif
 	}
 	sprintf(cpu_model, "Motorola %s: %sMHz MC680%s CPU",
-	    suffix, speed, mc);
+			  suffix, speed, mc);
 	switch (mmutype) {
-	case MMU_68040:
+		case MMU_68060:
+		case MMU_68040:
 #ifdef FPSP
-		bcopy(&fpsp_tab, &fpvect_tab,
-			(&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
-
+			bcopy(&fpsp_tab, &fpvect_tab,
+					(&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
 #endif
-		strcat(cpu_model, "+MMU");
-		break;
-	case MMU_68030:
-		strcat(cpu_model, "+MMU");
-		break;
-	case MMU_68851:
-		strcat(cpu_model, ", MC68851 MMU");
-		break;
-	default:
-		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
-		panic("startup");
+			strcat(cpu_model, "+MMU");
+			break;
+		case MMU_68030:
+			strcat(cpu_model, "+MMU");
+			break;
+		case MMU_68851:
+			strcat(cpu_model, ", MC68851 MMU");
+			break;
+		default:
+			printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
+			panic("startup");
 	}
 	len = strlen(cpu_model);
+	if (mmutype == MMU_68060)
+		len += sprintf(cpu_model + len,
+							"+FPU, 8k on-chip physical I/D caches");
 	if (mmutype == MMU_68040)
 		len += sprintf(cpu_model + len,
-		    "+FPU, 4k on-chip physical I/D caches");
+							"+FPU, 4k on-chip physical I/D caches");
 #if defined(M68030) || defined(M68020)
 	else {
 		int fpu = fpu_gettype();
 
 		switch (fpu) {
-		case 0:
-			break;
-		case 1:
-		case 2:
-			len += sprintf(cpu_model + len, ", MC6888%d FPU", fpu);
-			break;
-		case 3:
-			len += sprintf(cpu_model + len, ", unknown FPU", speed);
-			break;
+			case 0:
+				break;
+			case 1:
+			case 2:
+				len += sprintf(cpu_model + len, ", MC6888%d FPU", fpu);
+				break;
+			case 3:
+				len += sprintf(cpu_model + len, ", unknown FPU", speed);
+				break;
 		}
 	}
 #endif
@@ -577,13 +625,13 @@ identifycpu()
  * machine dependent system variables.
  */
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+int *name;
+u_int namelen;
+void *oldp;
+size_t *oldlenp;
+void *newp;
+size_t newlen;
+struct proc *p;
 {
 	dev_t consdev;
 
@@ -592,28 +640,28 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
+		case CPU_CONSDEV:
+			if (cn_tab != NULL)
+				consdev = cn_tab->cn_dev;
+			else
+				consdev = NODEV;
+			return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+											sizeof consdev));
+		default:
+			return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
 }
 
-int	waittime = -1;
+int   waittime = -1;
 
 static struct haltvec *halts;
 
 /* XXX insert by priority */
 void
 halt_establish(fn, pri)
-	void (*fn) __P((void));
-	int pri;
+void (*fn) __P((void));
+int pri;
 {
 	struct haltvec *hv, *h;
 
@@ -657,7 +705,7 @@ halt_establish(fn, pri)
 
 void
 boot(howto)
-	register int howto;
+register int howto;
 {
 
 	/* take a snap shot before clobbering any registers */
@@ -703,9 +751,9 @@ boot(howto)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
-int	dumpsize = 0;		/* pages */
-long	dumplo = 0;		/* blocks */
+u_long   dumpmag = 0x8fca0101;	/* magic number */
+int   dumpsize = 0;		/* pages */
+long  dumplo = 0;		/* blocks */
 
 /*
  * This is called by configure to set dumplo and dumpsize.
@@ -767,51 +815,123 @@ dumpsys()
 
 	printf("dump ");
 	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+		
+		case ENXIO:
+			printf("device bad\n");
+			break;
 
-	case ENXIO:
-		printf("device bad\n");
-		break;
+		case EFAULT:
+			printf("device not ready\n");
+			break;
 
-	case EFAULT:
-		printf("device not ready\n");
-		break;
+		case EINVAL:
+			printf("area improper\n");
+			break;
 
-	case EINVAL:
-		printf("area improper\n");
-		break;
+		case EIO:
+			printf("i/o error\n");
+			break;
 
-	case EIO:
-		printf("i/o error\n");
-		break;
+		case EINTR:
+			printf("aborted from console\n");
+			break;
 
-	case EINTR:
-		printf("aborted from console\n");
-		break;
-
-	default:
-		printf("succeeded\n");
-		break;
+		default:
+			printf("succeeded\n");
+			break;
 	}
 }
+
+#if defined(M68060)
+int m68060_pcr_init = 0x21;	/* make this patchable */
+#endif
 
 initcpu()
 {
 }
 
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+void
+initvectors()
 {
-	printf("unexpected trap (vector %d) from %x\n",
-	    (evec & 0xFFF) >> 2, pc);
+	typedef void trapfun __P((void));
+
+	/* XXX should init '40 vecs here, too */
+#if defined(M68060) || defined(M68040)
+	extern trapfun *vectab[256];
+	extern trapfun addrerr4060;
+#endif
+
+#ifdef M68060
+	extern trapfun buserr60;
+#if defined(M060SP)
+	/*extern u_int8_t I_CALL_TOP[];*/
+	extern trapfun intemu60, fpiemu60, fpdemu60, fpeaemu60;
+	extern u_int8_t FP_CALL_TOP[];
+#else
+	extern trapfun illinst;
+#endif
+	extern trapfun fpfault;
+#endif
+
+#ifdef M68040
+	extern trapfun buserr40;
+#endif
+
+#ifdef FPU_EMULATE
+	extern trapfun fpemuli;
+#endif
+
+#ifdef M68060
+	if (cputyp == CPU_177 || cputyp == CPU_172) {
+		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
+						  "d"(m68060_pcr_init):"d0" );
+
+		/* bus/addrerr vectors */
+		vectab[2] = buserr60;
+		vectab[3] = addrerr4060;
+#if defined(M060SP)
+
+		/* integer support */
+		vectab[61] = intemu60/*(trapfun *)&I_CALL_TOP[128 + 0x00]*/;
+
+		/* floating point support */
+		/*
+		 * XXX maybe we really should run-time check for the
+		 * stack frame format here:
+		 */
+		vectab[11] = fpiemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x30]*/;
+
+		vectab[55] = fpdemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x38]*/;
+		vectab[60] = fpeaemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x40]*/;
+
+		vectab[54] = (trapfun *)&FP_CALL_TOP[128 + 0x00];
+		vectab[52] = (trapfun *)&FP_CALL_TOP[128 + 0x08];
+		vectab[53] = (trapfun *)&FP_CALL_TOP[128 + 0x10];
+		vectab[51] = (trapfun *)&FP_CALL_TOP[128 + 0x18];
+		vectab[50] = (trapfun *)&FP_CALL_TOP[128 + 0x20];
+		vectab[49] = (trapfun *)&FP_CALL_TOP[128 + 0x28];
+#else
+		vectab[61] = illinst;
+#endif
+		vectab[48] = fpfault;
+	}
+#endif
 }
 
-int	*nofault;
+straytrap(pc, evec)
+int pc;
+u_short evec;
+{
+	printf("unexpected trap (vector %d) from %x\n",
+			 (evec & 0xFFF) >> 2, pc);
+}
+
+int   *nofault;
 
 int
 badpaddr(addr, size)
-	register void *addr;
-	int size;
+register void *addr;
+int size;
 {
 	int off = (int)addr & PGOFSET;
 	caddr_t v, p = (void *)((int)addr & ~PGOFSET);
@@ -828,14 +948,14 @@ badpaddr(addr, size)
 
 int
 badvaddr(addr, size)
-	register caddr_t addr;
-	int size;
+register caddr_t addr;
+int size;
 {
 	register int i;
-	label_t	faultbuf;
+	label_t  faultbuf;
 
 #ifdef lint
-	i = *addr; if (i) return(0);
+	i = *addr; if (i)	return (0);
 #endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
@@ -843,15 +963,15 @@ badvaddr(addr, size)
 		return (1);
 	}
 	switch (size) {
-	case 1:
-		i = *(volatile char *)addr;
-		break;
-	case 2:
-		i = *(volatile short *)addr;
-		break;
-	case 4:
-		i = *(volatile long *)addr;
-		break;
+		case 1:
+			i = *(volatile char *)addr;
+			break;
+		case 2:
+			i = *(volatile short *)addr;
+			break;
+		case 4:
+			i = *(volatile long *)addr;
+			break;
 	}
 	nofault = (int *)0;
 	return (0);
@@ -913,7 +1033,7 @@ netintr()
  * drop into ddb.
  */
 nmihand(frame)
-	struct frame *frame;
+struct frame *frame;
 {
 #ifdef DDB
 	printf("NMI ... going to debugger\n");
@@ -925,8 +1045,8 @@ nmihand(frame)
 }
 
 regdump(fp, sbytes)
-	struct frame *fp; /* must not be register */
-	int sbytes;
+struct frame *fp;	/* must not be register */
+int sbytes;
 {
 	static int doingdump = 0;
 	register int i;
@@ -938,7 +1058,7 @@ regdump(fp, sbytes)
 	s = splhigh();
 	doingdump = 1;
 	printf("pid = %d, pc = %s, ",
-	    curproc ? curproc->p_pid : -1, hexstr(fp->f_pc, 8));
+			 curproc ? curproc->p_pid : -1, hexstr(fp->f_pc, 8));
 	printf("ps = %s, ", hexstr(fp->f_sr, 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
@@ -954,7 +1074,7 @@ regdump(fp, sbytes)
 	if (sbytes > 0) {
 		if (fp->f_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
-			    hexstr((int)(((int *)&fp)-1), 8));
+					 hexstr((int)(((int *)&fp)-1), 8));
 			dumpmem(((int *)&fp)-1, sbytes, 0);
 		} else {
 			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
@@ -968,8 +1088,8 @@ regdump(fp, sbytes)
 #define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
 dumpmem(ptr, sz, ustack)
-	register int *ptr;
-	int sz, ustack;
+register int *ptr;
+int sz, ustack;
 {
 	register int i, val;
 	extern char *hexstr();
@@ -984,7 +1104,7 @@ dumpmem(ptr, sz, ustack)
 				break;
 		} else {
 			if (ustack == 0 &&
-			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
+				 (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
 				break;
 			val = *ptr++;
 		}
@@ -995,14 +1115,14 @@ dumpmem(ptr, sz, ustack)
 
 char *
 hexstr(val, len)
-	register int val;
-	int len;
+register int val;
+int len;
 {
 	static char nbuf[9];
 	register int x, i;
 
 	if (len > 8)
-		return("");
+		return ("");
 	nbuf[len] = '\0';
 	for (i = len-1; i >= 0; --i) {
 		x = val & 0xF;
@@ -1012,7 +1132,7 @@ hexstr(val, len)
 			nbuf[i] = x + '0';
 		val >>= 4;
 	}
-	return(nbuf);
+	return (nbuf);
 }
 
 #ifdef STACKCHECK
@@ -1020,14 +1140,14 @@ char oflowmsg[] = "k-stack overflow";
 char uflowmsg[] = "k-stack underflow";
 
 badkstack(oflow, fr)
-	int oflow;
-	struct frame fr;
+int oflow;
+struct frame fr;
 {
 	extern char kstackatbase[];
 
 	printf("%s: sp should be %x\n", 
-	    oflow ? oflowmsg : uflowmsg,
-	    kstackatbase - (exframesize[fr.f_format] + 8));
+			 oflow ? oflowmsg : uflowmsg,
+			 kstackatbase - (exframesize[fr.f_format] + 8));
 	regdump(&fr, 0);
 	panic(oflow ? oflowmsg : uflowmsg);
 }
@@ -1041,8 +1161,8 @@ badkstack(oflow, fr)
  * understand and, if so, set up the vmcmds for it.
  */
 cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+struct proc *p;
+struct exec_package *epp;
 {
 	int error = ENOEXEC;
 	struct exec *execp = epp->ep_hdr;
@@ -1050,19 +1170,19 @@ cpu_exec_aout_makecmds(p, epp)
 #ifdef COMPAT_SUNOS
 	{
 		extern sunos_exec_aout_makecmds
-		    __P((struct proc *, struct exec_package *));
+		__P((struct proc *, struct exec_package *));
 		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
-			return(0);
+			return (0);
 	}
 #endif
 	return (error);
 }
 
-u_char	myea[6] = { 0x08, 0x00, 0x3e, 0xff, 0xff, 0xff };
+u_char   myea[6] = { 0x08, 0x00, 0x3e, 0xff, 0xff, 0xff};
 
 void
 myetheraddr(ether)
-	u_char *ether;
+u_char *ether;
 {
 	bcopy(myea, ether, sizeof myea);
 }
@@ -1075,9 +1195,9 @@ fpu_gettype()
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
 	 * We, of course, need to have enough room for either.
 	 */
-	int	fpframe[60 / sizeof(int)];
-	label_t	faultbuf;
-	u_char	b;
+	int   fpframe[60 / sizeof(int)];
+	label_t  faultbuf;
+	u_char   b;
 
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
@@ -1118,7 +1238,7 @@ fpu_gettype()
 #endif
 
 
-#ifdef MVME162
+#if defined(MVME162) || defined(MVME172)
 #include <mvme68k/dev/mcreg.h>
 /*
  * XXX
@@ -1132,29 +1252,29 @@ memsize162()
 	struct mcreg *mc = (struct mcreg *)0xfff42000;
 
 	switch (mc->mc_memoptions & MC_MEMOPTIONS_DRAMMASK) {
-	case MC_MEMOPTIONS_DRAM1M:
-		return (1*1024*1024);
-	case MC_MEMOPTIONS_DRAM2M:
-		return (2*1024*1024);
-	case MC_MEMOPTIONS_DRAM4M:
-		return (4*1024*1024);
-	case MC_MEMOPTIONS_DRAM4M2:
-		return (4*1024*1024);
-	case MC_MEMOPTIONS_DRAM8M:
-		return (8*1024*1024);
-	case MC_MEMOPTIONS_DRAM16M:
-		return (16*1024*1024);
-	default:
-		/*
-		 * XXX if the machine has no MC-controlled memory,
-		 * perhaps it has a MCECC or MEMC040 controller?
-		 */
-		return (memsize1x7());
+		case MC_MEMOPTIONS_DRAM1M:
+			return (1*1024*1024);
+		case MC_MEMOPTIONS_DRAM2M:
+			return (2*1024*1024);
+		case MC_MEMOPTIONS_DRAM4M:
+			return (4*1024*1024);
+		case MC_MEMOPTIONS_DRAM4M2:
+			return (4*1024*1024);
+		case MC_MEMOPTIONS_DRAM8M:
+			return (8*1024*1024);
+		case MC_MEMOPTIONS_DRAM16M:
+			return (16*1024*1024);
+		default:
+			/*
+			 * XXX if the machine has no MC-controlled memory,
+			 * perhaps it has a MCECC or MEMC040 controller?
+			 */
+			return (memsize1x7());
 	}
 }
 #endif
 
-#if defined(MVME162) || defined(MVME167) || defined(MVME177)
+#if defined(MVME162) || defined(MVME167) || defined(MVME177) || defined(MVME172)
 #include <mvme68k/dev/memcreg.h>
 /*
  * XXX
@@ -1166,9 +1286,99 @@ int
 memsize1x7()
 {
 	struct memcreg *memc = (struct memcreg *)0xfff43000;
-	u_long	x;
+	u_long   x;
 
 	x = MEMC_MEMCONF_RTOB(memc->memc_memconf);
 	return (x);
 }
 #endif
+
+int foodebug = 0;
+
+int
+memsize(void)
+{
+	volatile unsigned int *look;
+	unsigned int *max;
+	extern char *end;
+#define MAXPHYSMEM (unsigned long)0x10000000 	/* max physical memory */
+#define PATTERN   0x5a5a5a5a
+#define STRIDE    (4*1024) 	/* 4k at a time */
+#define Roundup(value, stride) (((unsigned)(value) + (stride) - 1) & ~((stride)-1))
+	/* 
+	 * Put machine specific exception vectors in place.
+	 */
+	initvectors();
+	/*
+	 * count it up.
+	 */
+	max = (void*)MAXPHYSMEM;
+	for (look = (void*)Roundup(end, STRIDE); look < max;
+		 look = (int*)((unsigned)look + STRIDE)) {
+		unsigned save;
+
+		/* if can't access, we've reached the end */
+		if (foodebug) printf("%x\n", look);
+		if (badvaddr((caddr_t)look, 2)) {
+#if defined(DEBUG)
+			printf("%x\n", look);
+#endif
+			look = (int *)((int)look - STRIDE);
+			break;
+		}
+
+		/*
+		 * If we write a value, we expect to read the same value back.
+		 * We'll do this twice, the 2nd time with the opposite bit
+		 * pattern from the first, to make sure we check all bits.
+		 */
+		save = *look;
+		if (*look = PATTERN, *look != PATTERN)
+			break;
+		if (*look = ~PATTERN, *look != ~PATTERN)
+			break;
+		*look = save;
+	}
+	physmem = btoc(trunc_page((unsigned)look)); /* in pages */
+	return (trunc_page((unsigned)look));
+}
+
+/*
+ * Boot console routines: 
+ * Enables printing of boot messages before consinit().
+ */
+
+void
+bootcnprobe(cp)
+struct consdev *cp;
+{
+	cp->cn_dev = makedev(14, 0);
+	cp->cn_pri = CN_NORMAL;
+	return;
+}
+
+void
+bootcninit(cp)
+struct consdev *cp;
+{
+	/* Nothing to do */
+}
+
+int
+bootcngetc(dev)
+dev_t dev;
+{
+	return (bug_inchr());
+}
+
+void
+bootcnputc(dev, c)
+dev_t dev;
+int c;
+{
+	int s;
+	char cc = (char)c;
+	if (cc == '\n')
+		bug_outchr('\r');
+	bug_outchr(cc);
+}

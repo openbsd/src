@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.17 1999/10/04 04:23:41 smurph Exp $ */
+/*	$OpenBSD: cl.c,v 1.18 2000/01/06 03:21:42 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -231,22 +231,18 @@ int	clprobe(parent, self, aux)
 	void *self;
 	void *aux;
 {
-	/* probing onboard 166/167/187 CL-cd2400
+	/* probing onboard 166/167/177/187 CL-cd2400
 	 * should be previously configured, 
 	 * we can check the value before resetting the chip
 	 */
 	struct clreg *cl_reg;
 	struct confargs *ca = aux;
 	int ret;
-	if (cputyp != CPU_167 && cputyp != CPU_166
-#ifdef CPU_187
-		&& cputyp != CPU_187
-#endif
-		)
+	if (cputyp != CPU_167 && cputyp != CPU_166 && cputyp != CPU_177)
 	{
 		return 0;
 	}
-	cl_reg = (struct clreg *)ca->ca_vaddr;
+   cl_reg = (struct clreg *)ca->ca_vaddr;
 
 #if 0
 	ret = !badvaddr(&cl_reg->cl_gfrcr,1);

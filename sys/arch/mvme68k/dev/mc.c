@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc.c,v 1.5 1996/11/23 21:45:59 kstailey Exp $ */
+/*	$OpenBSD: mc.c,v 1.6 2000/01/06 03:21:42 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -84,7 +84,7 @@ mcmatch(parent, vcf, args)
 	struct confargs *ca = args;
 	struct mcreg *mc = (struct mcreg *)(IIOV(ca->ca_paddr) + MC_MCCHIP_OFF);
 
-	if (cputyp != CPU_162 || badvaddr(mc, 1) ||
+	if ((cputyp != CPU_172 && cputyp != CPU_162) || badvaddr(mc, 1) ||
 	    mc->mc_chipid != MC_CHIPID)
 		return (0);
 	return (1);

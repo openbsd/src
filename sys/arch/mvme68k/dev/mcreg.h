@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcreg.h,v 1.3 1996/04/28 11:03:24 deraadt Exp $ */
+/*	$OpenBSD: mcreg.h,v 1.4 2000/01/06 03:21:42 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -35,69 +35,69 @@
  * VME162 MCchip
  */
 struct mcreg {
-	volatile u_char		mc_chipid;
-	volatile u_char		mc_chiprev;
-	volatile u_char		mc_genctl;
-	volatile u_char		mc_vecbase;
-	volatile u_long		mc_t1cmp;
-	volatile u_long		mc_t1count;
-	volatile u_long		mc_t2cmp;
-	volatile u_long		mc_t2count;
-	volatile u_char		mc_lsbprescale;
-	volatile u_char		mc_adjprescale;
-	volatile u_char		mc_t2ctl;
-	volatile u_char		mc_t1ctl;
-	volatile u_char		mc_t4irq;
-	volatile u_char		mc_t3irq;
-	volatile u_char		mc_t2irq;
-	volatile u_char		mc_t1irq;
-	volatile u_char		mc_parity;
-	volatile u_char		mc_zsirq;
-	volatile u_char		mc_t4ctl;
-	volatile u_char		mc_t3ctl;
-	volatile u_short	mc_drambase;
-	volatile u_short	mc_srambase;
-	volatile u_char		mc_dramsize;
-	volatile u_char		mc_memoptions;
-#define MC_MEMOPTIONS_SRAMMASK	0x18
-#define MC_MEMOPTIONS_SRAM128K	0x00
-#define MC_MEMOPTIONS_SRAM512K	0x08
-#define MC_MEMOPTIONS_SRAM1M	0x10
-#define MC_MEMOPTIONS_SRAM2M	0x18
-#define MC_MEMOPTIONS_DRAMMASK	0x07
-#define MC_MEMOPTIONS_DRAM1M	0x00
-#define MC_MEMOPTIONS_DRAM2M	0x01
-#define MC_MEMOPTIONS_DRAM4M	0x03
-#define MC_MEMOPTIONS_DRAM4M2	0x04
-#define MC_MEMOPTIONS_DRAM8M	0x05
-#define MC_MEMOPTIONS_DRAM16M	0x07
-	volatile u_char		mc_sramsize;
-	volatile u_char		mc_resv1;
-	volatile u_char		mc_ieerr;
-	volatile u_char		mc_resv2;
-	volatile u_char		mc_ieirq;
-	volatile u_char		mc_iefailirq;
-	volatile u_char		mc_ncrerr;
-	volatile u_char		mc_input;
-	volatile u_char		mc_ver;
-	volatile u_char		mc_ncrirq;
-	volatile u_long		mc_t3cmp;
-	volatile u_long		mc_t3count;
-	volatile u_long		mc_t4cmp;
-	volatile u_long		mc_t4count;
-	volatile u_char		mc_busclock;
-	volatile u_char		mc_promtime;
-	volatile u_char		mc_flashctl;
-	volatile u_char		mc_abortirq;
-	volatile u_char		mc_resetctl;
-	volatile u_char		mc_watchdogctl;
-	volatile u_char		mc_watchdogtime;
-	volatile u_char		mc_resv3;
-	volatile u_char		mc_dramctl;
-	volatile u_char		mc_resv4;
-	volatile u_char		mc_mpustat;
-	volatile u_char		mc_resv5;
-	volatile u_long		mc_prescale;
+/*0x00*/ 	volatile u_char		mc_chipid;
+/*0x01*/ 	volatile u_char		mc_chiprev;
+/*0x02*/   	volatile u_char		mc_genctl;
+/*0x03*/   	volatile u_char		mc_vecbase;
+/*0x04*/   	volatile u_long		mc_t1cmp;
+/*0x08*/   	volatile u_long		mc_t1count;
+/*0x0C*/   	volatile u_long		mc_t2cmp;
+/*0x10*/   	volatile u_long		mc_t2count;
+/*0x14*/   	volatile u_char		mc_lsbprescale;
+/*0x15*/   	volatile u_char		mc_adjprescale;
+/*0x16*/   	volatile u_char		mc_t2ctl;
+/*0x17*/   	volatile u_char		mc_t1ctl;
+/*0x18*/   	volatile u_char		mc_t4irq;
+/*0x19*/   	volatile u_char		mc_t3irq;
+/*0x1A*/   	volatile u_char		mc_t2irq;
+/*0x1B*/   	volatile u_char		mc_t1irq;
+/*0x1C*/   	volatile u_char		mc_parity;
+/*0x1D*/   	volatile u_char		mc_zsirq;
+/*0x1E*/   	volatile u_char		mc_t4ctl;
+/*0x1F*/   	volatile u_char		mc_t3ctl;
+/*0x20*/   	volatile u_short	mc_drambase;
+/*0x22*/   	volatile u_short	mc_srambase;
+/*0x24*/   	volatile u_char		mc_dramsize;
+/*0x25*/   	volatile u_char		mc_memoptions;
+   #define MC_MEMOPTIONS_SRAMMASK	0x18
+   #define MC_MEMOPTIONS_SRAM128K	0x00
+   #define MC_MEMOPTIONS_SRAM512K	0x08
+   #define MC_MEMOPTIONS_SRAM1M	0x10
+   #define MC_MEMOPTIONS_SRAM2M	0x18
+   #define MC_MEMOPTIONS_DRAMMASK	0x07
+   #define MC_MEMOPTIONS_DRAM1M	0x00
+   #define MC_MEMOPTIONS_DRAM2M	0x01
+   #define MC_MEMOPTIONS_DRAM4M	0x03
+   #define MC_MEMOPTIONS_DRAM4M2	0x04
+   #define MC_MEMOPTIONS_DRAM8M	0x05
+   #define MC_MEMOPTIONS_DRAM16M	0x07
+/*0x01*/   	volatile u_char		mc_sramsize;
+/*0x01*/   	volatile u_char		mc_resv1;
+/*0x01*/   	volatile u_char		mc_ieerr;
+/*0x01*/   	volatile u_char		mc_resv2;
+/*0x01*/   	volatile u_char		mc_ieirq;
+/*0x01*/   	volatile u_char		mc_iefailirq;
+/*0x01*/   	volatile u_char		mc_ncrerr;
+/*0x01*/   	volatile u_char		mc_input;
+/*0x01*/   	volatile u_char		mc_ver;
+/*0x01*/   	volatile u_char		mc_ncrirq;
+/*0x01*/   	volatile u_long		mc_t3cmp;
+/*0x01*/   	volatile u_long		mc_t3count;
+/*0x01*/   	volatile u_long		mc_t4cmp;
+/*0x01*/   	volatile u_long		mc_t4count;
+/*0x01*/   	volatile u_char		mc_busclock;
+/*0x01*/   	volatile u_char		mc_promtime;
+/*0x01*/   	volatile u_char		mc_flashctl;
+/*0x01*/   	volatile u_char		mc_abortirq;
+/*0x01*/   	volatile u_char		mc_resetctl;
+/*0x01*/   	volatile u_char		mc_watchdogctl;
+/*0x01*/   	volatile u_char		mc_watchdogtime;
+/*0x01*/   	volatile u_char		mc_resv3;
+/*0x01*/   	volatile u_char		mc_dramctl;
+/*0x01*/   	volatile u_char		mc_resv4;
+/*0x01*/   	volatile u_char		mc_mpustat;
+/*0x01*/   	volatile u_char		mc_resv5;
+/*0x01*/   	volatile u_long		mc_prescale;
 };
 #define MC_MCCHIP_OFF		0x42000
 #define MC_CHIPID		0x84

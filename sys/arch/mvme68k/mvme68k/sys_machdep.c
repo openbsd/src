@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.6 1999/06/06 15:38:34 deraadt Exp $ */
+/*	$OpenBSD: sys_machdep.c,v 1.7 2000/01/06 03:21:43 smurph Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -50,51 +50,51 @@
 #include <vm/vm.h>
 
 #ifdef TRACE
-int	nvualarm;
+int   nvualarm;
 
 vtrace(p, uap, retval)
-	struct proc *p;
-	register struct vtrace_args /* {
-		syscallarg(int) request;
-		syscallarg(int) value;
-	} */ *uap;
-	register_t *retval;
+struct proc *p;
+register struct vtrace_args /* {
+	syscallarg(int) request;
+	syscallarg(int) value;
+} */ *uap;
+register_t *retval;
 {
 	int vdoualarm();
 
 	switch (SCARG(uap, request)) {
+		
+		case VTR_DISABLE:		/* disable a trace point */
+		case VTR_ENABLE:		/* enable a trace point */
+			if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
+				return (EINVAL);
+			*retval = traceflags[SCARG(uap, value)];
+			traceflags[SCARG(uap, value)] = SCARG(uap, request);
+			break;
 
-	case VTR_DISABLE:		/* disable a trace point */
-	case VTR_ENABLE:		/* enable a trace point */
-		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[SCARG(uap, value)];
-		traceflags[SCARG(uap, value)] = SCARG(uap, request);
-		break;
+		case VTR_VALUE:		/* return a trace point setting */
+			if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
+				return (EINVAL);
+			*retval = traceflags[SCARG(uap, value)];
+			break;
 
-	case VTR_VALUE:		/* return a trace point setting */
-		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[SCARG(uap, value)];
-		break;
+		case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
+			if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
+				 nvualarm > 5)
+				return (EINVAL);
+			nvualarm++;
+			timeout(vdoualarm, (void *)p->p_pid, SCARG(uap, value));
+			break;
 
-	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
-		    nvualarm > 5)
-			return (EINVAL);
-		nvualarm++;
-		timeout(vdoualarm, (void *)p->p_pid, SCARG(uap, value));
-		break;
-
-	case VTR_STAMP:
-		trace(TR_STAMP, SCARG(uap, value), p->p_pid);
-		break;
+		case VTR_STAMP:
+			trace(TR_STAMP, SCARG(uap, value), p->p_pid);
+			break;
 	}
 	return (0);
 }
 
 vdoualarm(arg)
-	void *arg;
+void *arg;
 {
 	register int pid = (int)arg;
 	register struct proc *p;
@@ -127,14 +127,14 @@ vdoualarm(arg)
  */
 /*ARGSUSED1*/
 cachectl(req, addr, len)
-	int req;
-	caddr_t	addr;
-	int len;
+int req;
+caddr_t  addr;
+int len;
 {
 	int error = 0;
 
-#if defined(M68040)
-	if (mmutype == MMU_68040) {
+#if defined(M68040) || defined(M68060)
+	if (mmutype <= MMU_68040) {
 		register int inc = 0;
 		int pa = 0, doall = 0;
 		caddr_t end;
@@ -142,12 +142,16 @@ cachectl(req, addr, len)
 		extern struct emul emul_hpux;
 
 		if ((curproc->p_emul == &emul_hpux) &&
-		    len != 16 && len != NBPG)
+			 len != 16 && len != NBPG)
 			doall = 1;
 #endif
-
+#ifdef M68060
+		if (mmutype == MMU_68040) {
+			doall = 1;
+		}
+#endif
 		if (addr == 0 ||
-		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+			 (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
 			doall = 1;
 
 		if (!doall) {
@@ -167,77 +171,77 @@ cachectl(req, addr, len)
 			 * entire cache (XXX is this a rational thing to do?)
 			 */
 			if (!doall &&
-			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
+				 (pa == 0 || ((int)addr & PGOFSET) == 0)) {
 				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-						  (vm_offset_t)addr);
+										(vm_offset_t)addr);
 				if (pa == 0)
 					doall = 1;
 			}
 			switch (req) {
-			case CC_EXTPURGE|CC_IPURGE:
-			case CC_IPURGE:
-				if (doall) {
-					DCFA();
-					ICPA();
-				} else if (inc == 16) {
-					DCFL(pa);
-					ICPL(pa);
-				} else if (inc == NBPG) {
-					DCFP(pa);
-					ICPP(pa);
-				}
-				break;
+				case CC_EXTPURGE|CC_IPURGE:
+				case CC_IPURGE:
+					if (doall) {
+						DCFA();
+						ICPA();
+					} else if (inc == 16) {
+						DCFL(pa);
+						ICPL(pa);
+					} else if (inc == NBPG) {
+						DCFP(pa);
+						ICPP(pa);
+					}
+					break;
 
-			case CC_EXTPURGE|CC_PURGE:
-			case CC_PURGE:
-				if (doall)
-					DCFA(); /* note: flush not purge */
-				else if (inc == 16)
-					DCPL(pa);
-				else if (inc == NBPG)
-					DCPP(pa);
-				break;
+				case CC_EXTPURGE|CC_PURGE:
+				case CC_PURGE:
+					if (doall)
+						DCFA(); /* note: flush not purge */
+					else if (inc == 16)
+						DCPL(pa);
+					else if (inc == NBPG)
+						DCPP(pa);
+					break;
 
-			case CC_EXTPURGE|CC_FLUSH:
-			case CC_FLUSH:
-				if (doall)
-					DCFA();
-				else if (inc == 16)
-					DCFL(pa);
-				else if (inc == NBPG)
-					DCFP(pa);
-				break;
+				case CC_EXTPURGE|CC_FLUSH:
+				case CC_FLUSH:
+					if (doall)
+						DCFA();
+					else if (inc == 16)
+						DCFL(pa);
+					else if (inc == NBPG)
+						DCFP(pa);
+					break;
 
-			default:
-				error = EINVAL;
-				break;
+				default:
+					error = EINVAL;
+					break;
 			}
 			if (doall)
 				break;
 			pa += inc;
 			addr += inc;
 		} while (addr < end);
-		return(error);
+		return (error);
 	}
 #endif
 	switch (req) {
-	case CC_EXTPURGE|CC_PURGE:
-	case CC_EXTPURGE|CC_FLUSH:
-	case CC_PURGE:
-	case CC_FLUSH:
-		DCIU();
-		break;
-	case CC_EXTPURGE|CC_IPURGE:
-		DCIU();
-		/* fall into... */
-	case CC_IPURGE:
-		ICIA();
-		break;
-	default:
-		error = EINVAL;
-		break;
+		case CC_EXTPURGE|CC_PURGE:
+		case CC_EXTPURGE|CC_FLUSH:
+		case CC_PURGE:
+		case CC_FLUSH:
+			DCIU();
+			break;
+		case CC_EXTPURGE|CC_IPURGE:
+			DCIU();
+			/* fall into... */
+		case CC_IPURGE:
+			ICIA();
+			break;
+		default:
+			error = EINVAL;
+			break;
 	}
-	return(error);
+	return (error);
 }
 
 /*
@@ -245,17 +249,17 @@ cachectl(req, addr, len)
  */
 /*ARGSUSED1*/
 dma_cachectl(addr, len)
-	caddr_t	addr;
-	int len;
+caddr_t  addr;
+int len;
 {
-#ifdef M68040
-	if (mmutype == MMU_68040) {
+#if defined(M68040) || defined(M68060)
+	if (mmutype <= MMU_68040) {
 		register int inc = 0;
 		int pa = 0;
 		caddr_t end;
 
 		end = addr + len;
-		if (len <= 1024) {
+		if (len <= 1024 || mmutype == MMU_68060) { /* always line push line for 060 */
 			addr = (caddr_t)((int)addr & ~0xF);
 			inc = 16;
 		} else {
@@ -281,14 +285,14 @@ dma_cachectl(addr, len)
 		} while (addr < end);
 	}
 #endif	/* M68040 */
-	return(0);
+	return (0);
 }
 
 int
 sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+struct proc *p;
+void *v;
+register_t *retval;
 {
 	struct sysarch_args /* {
 		syscallarg(int) op;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.6 1997/04/22 16:01:21 gvf Exp $ */
+/*	$OpenBSD: boot.c,v 1.7 2000/01/06 03:21:44 smurph Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -76,8 +76,8 @@
  */
 #define LOADADDR	0x10000
 
-extern	char *version;
-char	line[80];
+extern   char *version;
+char  line[80];
 
 main()
 {
@@ -99,7 +99,7 @@ main()
 			if (line[0]) {
 				bugargs.arg_start = line;
 				cp = line;
-				while (cp < (line + sizeof(line) - 1) && *cp) 
+				while (cp < (line + sizeof(line) - 1) && *cp)
 					cp++;
 				bugargs.arg_end = cp;
 				ret =parse_args(&file, &howto);

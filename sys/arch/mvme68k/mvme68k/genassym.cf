@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.2 1997/11/20 20:35:17 etheisen Exp $
+#	$OpenBSD: genassym.cf,v 1.3 2000/01/06 03:21:43 smurph Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -174,6 +174,10 @@ define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR
 define	IC_CLEAR		IC_CLEAR
 define	DC_CLEAR		DC_CLEAR
+define	CACHE60_ON		CACHE60_ON
+define	CACHE60_OFF		CACHE60_OFF
+define	IC60_CUBC		IC60_CUBC
+define	IC60_CABC		IC60_CABC
 
 # pte/ste bits
 define	PG_V			PG_V

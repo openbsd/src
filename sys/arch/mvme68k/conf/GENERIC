@@ -1,18 +1,21 @@
-#	$OpenBSD: GENERIC,v 1.9 1997/03/31 00:23:50 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.10 2000/01/06 03:21:42 smurph Exp $
 
 machine		mvme68k m68k
 
 include "../../../conf/GENERIC"
 
-#option		M68060		# support for 060
-option		M68040		# support for 040
-option		FPSP		# MC68040 floating point support
 option		M68030		# support for 030
+option		M68040		# support for 040
+option		M68060		# support for 060
+option		FPSP		# MC68040 floating point support
+option		M060SP		# ...and MC68060 support package
+option		FPU_EMULATE	# FPU emulation
 
 option		MVME147		# (requires M68030)
 option		MVME162		# (requires M68040, FPSP)
 option		MVME167		# includes 166 (requires M68040, FPSP)
-#option		MVME177		# (requires M68060, ...)
+option		MVME172		# (requires M68060, 060SP, FPSP)
+option		MVME177		# (requires M68060, 060SP, FPSP)
 
 option		COMPAT_SUNOS
 option		COMPAT_HPUX

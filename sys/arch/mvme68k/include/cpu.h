@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 1997/03/31 00:23:59 downsj Exp $ */
+/*	$OpenBSD: cpu.h,v 1.7 2000/01/06 03:21:43 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -136,19 +136,10 @@ struct clockframe {
 int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
 
-
 /*
- * simulated software interrupt register
+ * Get interrupt glue.
  */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define setsoftint(x)	ssir |= (x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-u_long	allocate_sir __P((void (*proc)(), void *arg));
+#include <machine/intr.h>
 
 /*
  * CTL_MACHDEP definitions.
