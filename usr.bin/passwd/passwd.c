@@ -39,12 +39,15 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: passwd.c,v 1.2 1996/01/16 07:22:15 deraadt Exp $";
+static char rcsid[] = "$Id: passwd.c,v 1.3 1996/05/03 18:23:34 tholo Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef KERBEROS
+#include <kerberosIV/krb.h>
+#endif
 
 /*
  * Note on configuration:
@@ -69,9 +72,11 @@ main(argc, argv)
 	char *username;
 	int status = 0;
 	char *basename;
-
 #if defined(KERBEROS) || defined(KERBEROS5)
-	use_kerberos = 1;
+	extern char realm[];
+
+	if (krb_get_lrealm(realm,1) == KSUCCESS)
+		use_kerberos = 1;
 #endif
 #ifdef	YP
 	use_yp = _yp_check(NULL);
