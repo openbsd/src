@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.7 1995/12/25 23:28:24 niklas Exp $
+#	$Id: 4.4BSD.dist,v 1.8 1995/12/26 20:00:28 david Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -47,6 +47,11 @@ mtree
 # ./etc/namedb
 namedb
 # ./etc/namedb
+..
+
+# ./etc/ppp
+ppp
+# ./etc/ppp
 ..
 
 # ./etc/sliphome

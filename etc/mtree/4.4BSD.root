@@ -99,6 +99,11 @@ namedb           type=dir mode=0755
 # ./etc/namedb
 ..
 
+# ./etc/ppp
+/set type=file gname=wheel uname=root mode=0644
+ppp      type=dir mode=0755
+# ./etc/ppp
+..
 
 # ./etc/sliphome
 /set type=file gname=wheel uname=root mode=0755
