@@ -725,6 +725,7 @@ main (argc, argv)
 		    error (0, 0, "Sorry, you don't have read/write access to the history file");
 		    error (1, save_errno, "%s", path);
 		}
+		parseopts(CVSroot_directory);
 	    }
 
 #ifdef HAVE_PUTENV
