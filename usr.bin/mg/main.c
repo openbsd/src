@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2002/02/21 00:02:04 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2002/02/21 15:27:29 deraadt Exp $	*/
 
 /*
  *	Mainline.
@@ -30,9 +30,6 @@ main(argc, argv)
 {
 	char	*cp;
 
-#ifdef SYSINIT
-	SYSINIT;		/* System dependent.		*/
-#endif	/* SYSINIT */
 	vtinit();		/* Virtual terminal.		*/
 #ifndef NO_DIR
 	dirinit();		/* Get current directory.	*/

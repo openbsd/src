@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.12 2002/02/21 00:02:04 deraadt Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.13 2002/02/21 15:27:29 deraadt Exp $	*/
 
 /*
  *	Terminal independent keyboard handling.
@@ -384,7 +384,7 @@ selfinsert(f, n)
 			maclcur->l_used += n;
 			/* Copy in the new data */
 			for (count = maclcur->l_used - n;
-			     count < maclcur->l_used; count++)
+			    count < maclcur->l_used; count++)
 				maclcur->l_text[count] = c;
 		} else {
 			macro[macrocount - 1].m_funct = insert;

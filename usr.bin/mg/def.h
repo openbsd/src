@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.33 2002/02/21 04:21:05 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.34 2002/02/21 15:27:29 deraadt Exp $	*/
 
 #include <sys/queue.h>
 
@@ -257,8 +257,8 @@ typedef struct {
  * This structure holds information about recent actions for the Undo command.
  */
 struct undo_rec {
-        LIST_ENTRY(undo_rec) next;
-        BUFFER          *buf;
+	LIST_ENTRY(undo_rec) next;
+	BUFFER		*buf;
 	enum {
 		INSERT = 1,
 		DELETE,
@@ -268,7 +268,7 @@ struct undo_rec {
 	REGION		 region;
 	int		 pos;
 	int		 size;
-        char            *content;
+	char		*content;
 };
    
 LIST_HEAD(undo_list, undo_rec);
