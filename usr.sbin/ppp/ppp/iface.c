@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: iface.c,v 1.5 1999/05/27 08:44:48 brian Exp $
+ *	$Id: iface.c,v 1.6 1999/05/31 23:57:37 brian Exp $
  */
 
 #include <sys/param.h>
@@ -59,9 +59,9 @@
 #include "hdlc.h"
 #include "throughput.h"
 #include "slcompress.h"
-#include "filter.h"
 #include "descriptor.h"
 #include "ipcp.h"
+#include "filter.h"
 #include "lcp.h"
 #include "ccp.h"
 #include "link.h"
