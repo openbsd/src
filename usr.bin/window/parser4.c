@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser4.c,v 1.3 1997/02/25 00:04:14 downsj Exp $	*/
+/*	$OpenBSD: parser4.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: parser4.c,v 1.5 1995/09/29 00:44:05 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser4.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: parser4.c,v 1.3 1997/02/25 00:04:14 downsj Exp $";
+static char rcsid[] = "$OpenBSD: parser4.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$OpenBSD: parser4.c,v 1.3 1997/02/25 00:04:14 downsj Exp 
  * * / %	10
  */
 p_expr3_10(level, v, flag)
-register struct value *v;
+struct value *v;
 char flag;
 {
 	struct value l, r;

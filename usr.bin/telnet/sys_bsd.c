@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.9 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.10 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ TerminalSaveState()
 
     cc_t *
 tcval(func)
-    register int func;
+    int func;
 {
     switch(func) {
     case SLC_IP:	return(&termIntChar);
@@ -364,7 +364,7 @@ static void ayt();
 
     void
 TerminalNewMode(f)
-    register int f;
+    int f;
 {
     static int prevmode = 0;
 #ifndef	USE_TERMIO
@@ -754,9 +754,9 @@ TerminalSpeeds(ispeed, ospeed)
     long *ospeed;
 {
 #ifdef	DECODE_BAUD
-    register struct termspeeds *tp;
+    struct termspeeds *tp;
 #endif	/* DECODE_BAUD */
-    register long in, out;
+    long in, out;
 
     out = cfgetospeed(&old_tc);
     in = cfgetispeed(&old_tc);
@@ -961,7 +961,7 @@ sys_telnet_init()
 process_rings(netin, netout, netex, ttyin, ttyout, poll)
     int poll;		/* If 0, then block until something to do */
 {
-    register int c;
+    int c;
 		/* One wants to be a bit careful about setting returnValue
 		 * to one, since a one implies we did some useful work,
 		 * and therefore probably won't be called to block next

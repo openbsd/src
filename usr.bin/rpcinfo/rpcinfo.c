@@ -1,9 +1,9 @@
-/*	$OpenBSD: rpcinfo.c,v 1.7 2001/07/17 02:24:00 pvalchev Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.8 2001/11/19 19:02:16 mpech Exp $	*/
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";*/
 /*static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.7 2001/07/17 02:24:00 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.8 2001/11/19 19:02:16 mpech Exp $";
 #endif
 
 /*
@@ -92,7 +92,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int c;
+	int c;
 	extern char *optarg;
 	extern int optind;
 	int errflg;
@@ -474,7 +474,7 @@ tcpping(portnum, argc, argv)
  */
 int
 pstatus(client, prognum, vers)
-	register CLIENT *client;
+	CLIENT *client;
 	u_long prognum;
 	u_long vers;
 {
@@ -499,11 +499,11 @@ pmapdump(argc, argv)
 	char **argv;
 {
 	struct sockaddr_in server_addr;
-	register struct hostent *hp;
+	struct hostent *hp;
 	struct pmaplist *head = NULL;
 	int socket = RPC_ANYSOCK;
 	struct timeval minutetimeout;
-	register CLIENT *client;
+	CLIENT *client;
 	struct rpcent *rpc;
 	
 	if (argc > 1)
@@ -569,7 +569,7 @@ reply_proc(res, who)
 	caddr_t res;			/* Nothing comes back */
 	struct sockaddr_in *who;	/* Who sent us the reply */
 {
-	register struct hostent *hp;
+	struct hostent *hp;
 
 	hp = gethostbyaddr((char *) &who->sin_addr, sizeof who->sin_addr,
 	    AF_INET);
@@ -674,7 +674,7 @@ getprognum(arg, ulp)
 	char *arg;
 	u_long *ulp;
 {
-	register struct rpcent *rpc;
+	struct rpcent *rpc;
 
 	if (isalpha(*arg)) {
 		rpc = getrpcbyname(arg);
@@ -717,7 +717,7 @@ get_inet_address(addr, host)
 	struct sockaddr_in *addr;
 	char *host;
 {
-	register struct hostent *hp;
+	struct hostent *hp;
 
 	bzero((char *)addr, sizeof *addr);
 	if (inet_aton(host, &addr->sin_addr) == 0) {

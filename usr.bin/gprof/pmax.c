@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmax.c,v 1.3 2001/03/22 05:18:30 mickey Exp $	*/
+/*	$OpenBSD: pmax.c,v 1.4 2001/11/19 19:02:14 mpech Exp $	*/
 /*	$NetBSD: pmax.c,v 1.3 1995/04/19 07:16:18 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: pmax.c,v 1.3 2001/03/22 05:18:30 mickey Exp $";
+static char rcsid[] = "$OpenBSD: pmax.c,v 1.4 2001/11/19 19:02:14 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,11 +83,11 @@ findcall(parentp, p_lowpc, p_highpc)
 	unsigned long	p_lowpc;
 	unsigned long	p_highpc;
 {
-	register u_long pc;
+	u_long pc;
 	nltype *childp;
 	unsigned long destpc;
-	register long op;
-	register int off;
+	long op;
+	int off;
 
 	if (textspace == 0)
 		return;

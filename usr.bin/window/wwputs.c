@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwputs.c,v 1.3 1997/02/25 00:05:04 downsj Exp $	*/
+/*	$OpenBSD: wwputs.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwputs.c,v 1.3 1995/09/28 10:35:48 tls Exp $	*/
 
 /*
@@ -41,17 +41,17 @@
 #if 0
 static char sccsid[] = "@(#)wwputs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwputs.c,v 1.3 1997/02/25 00:05:04 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwputs.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
 wwputs(s, w)
-register char *s;
+char *s;
 struct ww *w;
 {
-	register char *p = s;
+	char *p = s;
 
 	while (*p++)
 		;

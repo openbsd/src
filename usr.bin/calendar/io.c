@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.18 2001/10/03 18:17:48 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.19 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.18 2001/10/03 18:17:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.19 2001/11/19 19:02:13 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,8 @@ struct iovec header[] = {
 void
 cal()
 {
-	register int printing;
-	register char *p;
+	int printing;
+	char *p;
 	FILE *fp;
 	int ch, l, i, bodun = 0, bodun_maybe = 0;
 	int var;

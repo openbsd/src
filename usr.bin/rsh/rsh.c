@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.21 2001/09/27 16:24:45 deraadt Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.22 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.21 2001/09/27 16:24:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.22 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ int krcmd_mutual __P((char **, u_short, char *, char *, int *, char *,
 
 void usage __P((void));
 
-void talk __P((int, sigset_t *, int, register int));
+void talk __P((int, sigset_t *, int, int));
 
 /*
  * rsh - remote shell
@@ -105,7 +105,7 @@ main(argc, argv)
 	struct servent *sp;
 	sigset_t mask, omask;
 	int argoff, asrsh, ch, dflag, nflag, one, pid = 0, rem, uid;
-	register char *p;
+	char *p;
 	char *args, *host, *user, *copyargs();
 	void sendsig();
 
@@ -333,10 +333,10 @@ void
 talk(nflag, omask, pid, rem)
 	int nflag, pid;
 	sigset_t *omask;
-	register int rem;
+	int rem;
 {
-	register int cc, wc;
-	register char *bp;
+	int cc, wc;
+	char *bp;
 	fd_set readfrom, ready, rembits;
 	char buf[BUFSIZ];
 
@@ -476,8 +476,8 @@ char *
 copyargs(argv)
 	char **argv;
 {
-	register int cc;
-	register char **ap, *p;
+	int cc;
+	char **ap, *p;
 	char *args, *malloc();
 
 	cc = 0;

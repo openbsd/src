@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.6 1998/05/15 03:16:39 art Exp $	*/
+/*	$OpenBSD: network.c,v 1.7 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ setneturg()
     int
 netflush()
 {
-    register int n, n1;
+    int n, n1;
 
 #if    defined(ENCRYPTION)
     if (encrypt_output)

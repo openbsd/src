@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.5 2000/09/20 21:57:37 pjanzen Exp $	*/
+/*	$OpenBSD: leave.c,v 1.6 2001/11/19 19:02:14 mpech Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: leave.c,v 1.5 2000/09/20 21:57:37 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: leave.c,v 1.6 2001/11/19 19:02:14 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,9 +69,9 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register u_int secs;
-	register int hours, minutes;
-	register char c, *cp;
+	u_int secs;
+	int hours, minutes;
+	char c, *cp;
 	struct tm *t;
 	time_t now;
 	int plusnow;
@@ -132,7 +132,7 @@ void
 doalarm(secs)
 	u_int secs;
 {
-	register int bother;
+	int bother;
 	time_t daytime;
 	int pid;
 

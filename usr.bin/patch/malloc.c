@@ -1,4 +1,4 @@
-/* *	$OpenBSD: malloc.c,v 1.2 1996/06/10 11:21:29 niklas Exp $*/
+/* *	$OpenBSD: malloc.c,v 1.3 2001/11/19 19:02:15 mpech Exp $*/
 /*
  *	from: @(#)nmalloc.c 1 (Caltech) 2/21/82
  *
@@ -134,11 +134,11 @@ malloc_init (end)
 
 static
 morecore (nu)			/* ask system for more memory */
-    register int nu; {		/* size index to get more of  */
+    int nu; {		/* size index to get more of  */
 	char   *sbrk ();
-	register char  *cp;
-	register int    nblks;
-	register int    siz;
+	char  *cp;
+	int    nblks;
+	int    siz;
 
 #ifdef	M_WARN
 #ifndef BSD42
@@ -214,8 +214,8 @@ morecore (nu)			/* ask system for more memory */
 
 static
 getpool () {
-	register int nu;
-	register char *cp = sbrk (0);
+	int nu;
+	char *cp = sbrk (0);
 
 	if ((int) cp & 0x3ff)	/* land on 1K boundaries */
 	    sbrk (1024 - ((int) cp & 0x3ff));
@@ -245,15 +245,15 @@ getpool () {
 char *
 malloc (n)		/* get a block */
     unsigned n; {
-	register struct  mhead *p;
-	register unsigned int  nbytes;
-	register int    nunits = 0;
+	struct  mhead *p;
+	unsigned int  nbytes;
+	int    nunits = 0;
 
 	/* Figure out how many bytes are required, rounding up to the nearest
 	multiple of 4, then figure out which nextf[] area to use */
 	nbytes = (n + sizeof *p + EXTRA + 3) & ~3;
 		{
-		register unsigned int   shiftr = (nbytes - 1) >> 2;
+		unsigned int   shiftr = (nbytes - 1) >> 2;
 
 		while (shiftr >>= 1)
 		    nunits++;
@@ -285,7 +285,7 @@ malloc (n)		/* get a block */
 	p -> mh_nbytes = n;
 	p -> mh_magic4 = MAGIC4;
 		{
-		register char  *m = (char *) (p + 1) + n;
+		char  *m = (char *) (p + 1) + n;
 
 		*m++ = MAGIC1, *m++ = MAGIC1, *m++ = MAGIC1, *m = MAGIC1;
 		}
@@ -300,9 +300,9 @@ malloc (n)		/* get a block */
 
 free (mem)
     char *mem; {
-	register struct mhead *p;
+	struct mhead *p;
 		{
-		register char *ap = mem;
+		char *ap = mem;
 
 		ASSERT (ap != 0);
 		p = (struct mhead *) ap - 1;
@@ -315,7 +315,7 @@ free (mem)
 #endif /* rcheck */
 		}
 		{
-		register int nunits = p -> mh_index;
+		int nunits = p -> mh_index;
 
 		ASSERT (nunits <= 29);
 		p -> mh_alloc = ISFREE;
@@ -331,11 +331,11 @@ free (mem)
 char *
 realloc (mem, n)
     char *mem;
-    register unsigned n; {
-	register struct mhead *p;
-	register unsigned int tocopy;
-	register int nbytes;
-	register int nunits;
+    unsigned n; {
+	struct mhead *p;
+	unsigned int tocopy;
+	int nbytes;
+	int nunits;
 
 	if ((p = (struct mhead *) mem) == 0)
 	    return malloc (n);
@@ -345,7 +345,7 @@ realloc (mem, n)
 #ifdef rcheck
 	ASSERT (p -> mh_magic4 == MAGIC4);
 		{
-		register char *m = mem + (tocopy = p -> mh_nbytes);
+		char *m = mem + (tocopy = p -> mh_nbytes);
 		ASSERT (*m++ == MAGIC1); ASSERT (*m++ == MAGIC1);
 		ASSERT (*m++ == MAGIC1); ASSERT (*m   == MAGIC1);
 		}
@@ -362,7 +362,7 @@ realloc (mem, n)
 	/* If ok, use the same block, just marking its size as changed.  */
 	if (nbytes > (4 << nunits) && nbytes <= (8 << nunits)) {
 #ifdef rcheck
-		register char *m = mem + tocopy;
+		char *m = mem + tocopy;
 		*m++ = 0;  *m++ = 0;  *m++ = 0;  *m++ = 0;
 		p-> mh_nbytes = n;
 		m = mem + n;
@@ -375,7 +375,7 @@ realloc (mem, n)
 	if (n < tocopy)
 	    tocopy = n;
 		{
-		register char *new;
+		char *new;
 		void bcopy();	/*HMS: here? */
 
 		if ((new = malloc (n)) == 0)
@@ -399,8 +399,8 @@ struct mstats_value
 malloc_stats (size)
     int size; {
 	struct mstats_value v;
-	register int i;
-	register struct mhead *p;
+	int i;
+	struct mhead *p;
 
 	v.nfree = 0;
 
@@ -421,9 +421,9 @@ malloc_stats (size)
 /* how much space is available? */
 
 unsigned freespace() {
-  	register int i, j;
-  	register struct mhead *p;
-  	register unsigned space = 0;
+  	int i, j;
+  	struct mhead *p;
+  	unsigned space = 0;
 	int local;	/* address only is used */
 
 	space = (char *)&local - sbrk(0);	/* stack space */
@@ -438,7 +438,7 @@ unsigned freespace() {
 
 unsigned mc_size(cp)
     char *cp;{
-	register struct mhead *p;
+	struct mhead *p;
 
 	if ((p = (struct mhead *) cp) == 0) {
 		/*HMS? */
@@ -460,9 +460,9 @@ unsigned mc_size(cp)
 /*HMS: Really should use memcpy, if available... */
 
 void bcopy(source, dest, len)
-    register char *source, *dest;
-    register len; {
-	register i;
+    char *source, *dest;
+    len; {
+	i;
 	
 	for (i = 0; i < len; i++)
 	    *dest++ = *source++;}

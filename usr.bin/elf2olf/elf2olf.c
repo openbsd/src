@@ -1,4 +1,4 @@
-/*      $OpenBSD: elf2olf.c,v 1.5 2001/07/12 05:17:01 deraadt Exp $	*/
+/*      $OpenBSD: elf2olf.c,v 1.6 2001/11/19 19:02:13 mpech Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -30,7 +30,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.5 2001/07/12 05:17:01 deraadt Exp $";
+static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.6 2001/11/19 19:02:13 mpech Exp $";
 #endif
 
 #include <stdlib.h>
@@ -67,10 +67,10 @@ main(int argc, char*argv[])
 {
     extern char *optarg;
     extern int optind;
-    register int ch, i, okay;
+    int ch, i, okay;
     char *opstring;
 
-    register int fd;
+    int fd;
     struct stat st;
     Elf32_Ehdr ehdr;
     Elf32_Shdr shdr;
@@ -238,7 +238,7 @@ pwarn(name, fname, errval)
 void
 usage()
 {
-    register int i;
+    int i;
     int col = 8;
 
     if (olf2elf) {

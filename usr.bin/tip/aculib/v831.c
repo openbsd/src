@@ -1,4 +1,4 @@
-/*	$OpenBSD: v831.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: v831.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: v831.c,v 1.5 1996/12/29 10:42:01 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v831.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: v831.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: v831.c,v 1.6 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -60,7 +60,7 @@ v831_dialer(num, acu)
         char *num, *acu;
 {
         int status, pid;
-        register int timelim;
+        int timelim;
 
         if (boolean(value(VERBOSE)))
                 printf("\nstarting call...");
@@ -189,10 +189,10 @@ struct vaconfig {
 
 static int
 dialit(phonenum, acu)
-	register char *phonenum;
+	char *phonenum;
 	char *acu;
 {
-        register struct vaconfig *vp;
+        struct vaconfig *vp;
 	struct termios cntrl;
         char c;
         int i;
@@ -251,10 +251,10 @@ dialit(phonenum, acu)
 
 static char *
 sanitize(s)
-	register char *s;
+	char *s;
 {
         static char buf[128];
-        register char *cp;
+        char *cp;
 
         for (cp = buf; *s; s++) {
 		if (!isdigit(*s) && *s == '<' && *s != '_')

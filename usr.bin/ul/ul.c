@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.6 2001/07/12 05:17:27 deraadt Exp $	*/
+/*	$OpenBSD: ul.c,v 1.7 2001/11/19 19:02:17 mpech Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ul.c,v 1.6 2001/07/12 05:17:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ul.c,v 1.7 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -328,9 +328,9 @@ flushln()
 void
 overstrike()
 {
-	register int i;
+	int i;
 	char lbuf[256];
-	register char *cp = lbuf;
+	char *cp = lbuf;
 	int hadbold=0;
 
 	/* Set up overstrike buffer */
@@ -366,9 +366,9 @@ overstrike()
 void
 iattr()
 {
-	register int i;
+	int i;
 	char lbuf[256];
-	register char *cp = lbuf;
+	char *cp = lbuf;
 
 	for (i=0; i<maxcol; i++)
 		switch (obuf[i].c_mode) {

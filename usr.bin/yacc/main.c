@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2001/11/07 11:42:53 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2001/11/07 11:42:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ char *nullable;
 void onintr __P((int));
 void set_signals __P((void));
 void usage __P((void));
-void getargs __P((int, register char *[]));
+void getargs __P((int, char *[]));
 void create_file_names __P((void));
 void open_files __P((void));
 
@@ -181,8 +181,8 @@ getargs(argc, argv)
 int argc;
 char *argv[];
 {
-    register int i;
-    register char *s;
+    int i;
+    char *s;
 
     for (i = 1; i < argc; ++i)
     {
@@ -295,7 +295,7 @@ char *
 allocate(n)
 unsigned n;
 {
-    register char *p;
+    char *p;
 
     p = NULL;
     if (n)

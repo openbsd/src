@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.2 2001/01/29 01:58:04 niklas Exp $	*/
+/*	$OpenBSD: signal.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -165,7 +165,7 @@ init_signals(on)
 	public void
 psignals()
 {
-	register int tsignals;
+	int tsignals;
 
 	if ((tsignals = sigs) == 0)
 		return;

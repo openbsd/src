@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.8 2000/06/07 14:20:15 aaron Exp $	*/
+/*	$OpenBSD: paste.c,v 1.9 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.8 2000/06/07 14:20:15 aaron Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.9 2001/11/19 19:02:15 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -111,9 +111,9 @@ void
 parallel(argv)
 	char **argv;
 {
-	register LIST *lp;
-	register int cnt;
-	register char ch, *p;
+	LIST *lp;
+	int cnt;
+	char ch, *p;
 	LIST *head, *tmp;
 	int opencnt, output;
 	char *buf, *lbuf;
@@ -193,9 +193,9 @@ void
 sequential(argv)
 	char **argv;
 {
-	register FILE *fp;
-	register int cnt;
-	register char ch, *p, *dp;
+	FILE *fp;
+	int cnt;
+	char ch, *p, *dp;
 	char *buf, *lbuf;
 	size_t len;
 
@@ -242,8 +242,8 @@ int
 tr(arg)
 	char *arg;
 {
-	register int cnt;
-	register char ch, *p;
+	int cnt;
+	char ch, *p;
 
 	for (p = arg, cnt = 0; (ch = *p++); ++arg, ++cnt)
 		if (ch == '\\')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.14 2001/09/05 22:32:42 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.15 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.14 2001/09/05 22:32:42 deraadt Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.15 2001/11/19 19:02:15 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -84,7 +84,7 @@ void
 server()
 {
 	char cmdbuf[BUFSIZ];
-	register char *cp;
+	char *cp;
 
 	signal(SIGHUP, cleanup);
 	signal(SIGINT, cleanup);
@@ -361,7 +361,7 @@ sendf(rname, opts)
 	char *rname;
 	int opts;
 {
-	register struct subcmd *sc;
+	struct subcmd *sc;
 	struct stat stb;
 	int sizerr, f, u, len;
 	off_t i;
@@ -599,9 +599,9 @@ update(rname, opts, stp)
 	int opts;
 	struct stat *stp;
 {
-	register char *cp, *s;
-	register off_t size;
-	register time_t mtime;
+	char *cp, *s;
+	off_t size;
+	time_t mtime;
 
 	if (debug) 
 		printf("update(%s, %x, %x)\n", rname, opts, stp);
@@ -736,7 +736,7 @@ recvf(cmd, type)
 	char *cmd;
 	int type;
 {
-	register char *cp = cmd;
+	char *cp = cmd;
 	int f = -1, mode, opts = 0, wrerr, olderrno;
 	off_t i, size;
 	time_t mtime;
@@ -990,7 +990,7 @@ static void
 hardlink(cmd)
 	char *cmd;
 {
-	register char *cp = cmd;
+	char *cp = cmd;
 	struct stat stb;
 	char *oldname;
 	int opts = 0, exists = 0;
@@ -1046,7 +1046,7 @@ static int
 chkparent(name)
 	char *name;
 {
-	register char *cp;
+	char *cp;
 	struct stat stb;
 
 	cp = strrchr(name, '/');
@@ -1076,7 +1076,7 @@ fchog(fd, file, owner, group, mode)
 	char *file, *owner, *group;
 	int mode;
 {
-	register int i;
+	int i;
 	int uid, gid;
 	extern char user[];
 	extern int userid;
@@ -1138,7 +1138,7 @@ static void
 rmchk(opts)
 	int opts;
 {
-	register char *cp, *s;
+	char *cp, *s;
 	struct stat stb;
 
 	if (debug)
@@ -1219,10 +1219,10 @@ rmchk(opts)
  */
 static void
 clean(cp)
-	register char *cp;
+	char *cp;
 {
 	DIR *d;
-	register struct direct *dp;
+	struct direct *dp;
 	struct stat stb;
 	char *otp;
 	int len, opts;
@@ -1297,7 +1297,7 @@ removeit(stp)
 {
 	DIR *d;
 	struct direct *dp;
-	register char *cp;
+	char *cp;
 	struct stat stb;
 	char *otp;
 	int len;
@@ -1365,7 +1365,7 @@ dospecial(cmd)
 	char *cmd;
 {
 	int fd[2], status, pid, i;
-	register char *cp, *s;
+	char *cp, *s;
 	char sbuf[BUFSIZ];
 	extern int userid, groupid;
 

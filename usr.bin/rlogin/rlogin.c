@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.26 2001/11/16 23:57:12 deraadt Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.27 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.26 2001/11/16 23:57:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.27 2001/11/19 19:02:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -529,7 +529,7 @@ catch_child(signo)
 void
 writer()
 {
-	register int bol, local, n;
+	int bol, local, n;
 	char c;
 
 	bol = 1;			/* beginning of line */
@@ -605,13 +605,13 @@ writer()
 
 void
 #ifdef __STDC__
-echo(register char c)
+echo(char c)
 #else
 echo(c)
-	register char c;
+	char c;
 #endif
 {
-	register char *p;
+	char *p;
 	char buf[8];
 
 	p = buf;
@@ -953,7 +953,7 @@ get_window_size(fd, wp)
 
 u_int
 getescape(p)
-	register char *p;
+	char *p;
 {
 	long val;
 	int len;

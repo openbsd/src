@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwframe.c,v 1.4 1997/02/25 00:04:53 downsj Exp $	*/
+/*	$OpenBSD: wwframe.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwframe.c,v 1.4 1996/02/08 21:49:05 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwframe.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwframe.c,v 1.4 1997/02/25 00:04:53 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwframe.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,14 +52,14 @@ static char rcsid[] = "$OpenBSD: wwframe.c,v 1.4 1997/02/25 00:04:53 downsj Exp 
 	w1->ww_fmap || w1->ww_order > (w)->ww_order)
 
 wwframe(w, wframe)
-register struct ww *w;
+struct ww *w;
 struct ww *wframe;
 {
-	register r, c;
+	int r, c;
 	char a1, a2, a3;
 	char b1, b2, b3;
-	register code;
-	register struct ww *w1;
+	int code;
+	struct ww *w1;
 
 	if (w->ww_w.t > 0) {
 		r = w->ww_w.t - 1;
@@ -199,12 +199,12 @@ struct ww *wframe;
 }
 
 wwframec(f, r, c, code)
-register struct ww *f;
-register r, c;
+struct ww *f;
+int r, c;
 char code;
 {
 	char oldcode;
-	register unsigned char *smap;
+	unsigned char *smap;
 
 	if (r < f->ww_i.t || r >= f->ww_i.b || c < f->ww_i.l || c >= f->ww_i.r)
 		return;
@@ -212,7 +212,7 @@ char code;
 	smap = &wwsmap[r][c];
 
 	{
-		register struct ww *w;
+		struct ww *w;
 
 		w = wwindex[*smap];
 		if (w->ww_order > f->ww_order) {
@@ -223,7 +223,7 @@ char code;
 	}
 
 	if (f->ww_fmap != 0) {
-		register char *fmap;
+		char *fmap;
 
 		fmap = &f->ww_fmap[r][c];
 		oldcode = *fmap;
@@ -234,14 +234,14 @@ char code;
 	} else
 		oldcode = 0;
 	{
-		register char *win = &f->ww_win[r][c];
+		char *win = &f->ww_win[r][c];
 
 		if (*win == WWM_GLS && *smap == f->ww_index)
 			f->ww_nvis[r]++;
 		*win &= ~WWM_GLS;
 	}
 	if (oldcode != code && (code & WWF_LABEL) == 0) {
-		register short frame;
+		short frame;
 
 		frame = tt.tt_frame[code & WWF_MASK];
 		f->ww_buf[r][c].c_w = frame;

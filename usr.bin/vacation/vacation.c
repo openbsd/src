@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.14 2001/07/09 07:04:56 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.15 2001/11/19 19:02:17 mpech Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.14 2001/07/09 07:04:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.15 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -209,8 +209,8 @@ main(argc, argv)
 void
 readheaders()
 {
-	register ALIAS *cur;
-	register char *p;
+	ALIAS *cur;
+	char *p;
 	int tome, cont;
 	char buf[MAXLINE];
 
@@ -312,9 +312,9 @@ findme:			for (cur = names; !tome && cur; cur = cur->next)
  */
 int
 nsearch(name, str)
-	register char *name, *str;
+	char *name, *str;
 {
-	register int len;
+	int len;
 
 	for (len = strlen(name); *str; ++str)
 		if (!strncasecmp(name, str, len))
@@ -341,9 +341,9 @@ junkmail()
 		{ "-relay", 6 },
 		{ NULL, 0 }
 	};
-	register struct ignore *cur;
-	register int len;
-	register char *p;
+	struct ignore *cur;
+	int len;
+	char *p;
 
 	/*
 	 * This is mildly amusing, and I'm not positive it's right; trying

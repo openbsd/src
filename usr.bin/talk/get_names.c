@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.8 2001/03/09 03:19:52 deraadt Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.9 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: get_names.c,v 1.8 2001/03/09 03:19:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: get_names.c,v 1.9 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -60,7 +60,7 @@ get_names(argc, argv)
 	char *his_name, *my_name;
 	char *my_machine_name, *his_machine_name;
 	char *his_tty;
-	register char *cp;
+	char *cp;
 	char *names;
 
 	if (argc > 1 && !strcmp(argv[1], "-H")) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.11 2001/07/04 06:30:44 deraadt Exp $	*/
+/*	$OpenBSD: finger.c,v 1.12 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,7 +54,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$OpenBSD: finger.c,v 1.11 2001/07/04 06:30:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: finger.c,v 1.12 2001/11/19 19:02:13 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -204,8 +204,8 @@ userlist(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int i;
-	register PERSON *pn;
+	int i;
+	PERSON *pn;
 	PERSON *nethead, **nettail;
 	struct utmp user;
 	struct passwd *pw;

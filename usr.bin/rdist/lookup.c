@@ -1,4 +1,4 @@
-/*	$OpenBSD: lookup.c,v 1.8 1998/06/26 21:21:14 millert Exp $	*/
+/*	$OpenBSD: lookup.c,v 1.9 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: lookup.c,v 6.8 1996/07/19 16:49:55 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: lookup.c,v 1.8 1998/06/26 21:21:14 millert Exp $";
+"$OpenBSD: lookup.c,v 1.9 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)lookup.c	5.1 (Berkeley) 6/6/85";
@@ -71,8 +71,8 @@ void
 define(name)
 	char *name;
 {
-	register char *cp, *s;
-	register struct namelist *nl;
+	char *cp, *s;
+	struct namelist *nl;
 	struct namelist *value;
 
 	debugmsg(DM_CALL, "define(%s)", name);
@@ -137,9 +137,9 @@ lookup(name, action, value)	/* %% in name.  Ignore quotas in name */
 	int action;
 	struct namelist *value;
 {
-	register unsigned n;
-	register char *cp;
-	register struct syment *s;
+	unsigned n;
+	char *cp;
+	struct syment *s;
 	char ebuf[BUFSIZ];
 
 	debugmsg(DM_CALL, "lookup(%s, %d, %x)", name, action, value);

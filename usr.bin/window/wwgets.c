@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwgets.c,v 1.4 1997/02/25 00:04:54 downsj Exp $	*/
+/*	$OpenBSD: wwgets.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwgets.c,v 1.6 1996/02/08 20:45:08 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwgets.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwgets.c,v 1.4 1997/02/25 00:04:54 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwgets.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,10 +52,10 @@ static char rcsid[] = "$OpenBSD: wwgets.c,v 1.4 1997/02/25 00:04:54 downsj Exp $
 wwgets(buf, n, w)
 char *buf;
 int n;
-register struct ww *w;
+struct ww *w;
 {
-	register char *p = buf;
-	register int c;
+	char *p = buf;
+	int c;
 	int uc = ISSET(w->ww_wflags, WWW_UNCTRL);
 	static void rub();
 
@@ -110,7 +110,7 @@ static void
 rub(c, w)
 struct ww *w;
 {
-	register i;
+	int i;
 
 	for (i = strlen(unctrl(c)); --i >= 0;)
 		(void) wwwrite(w, "\b \b", 3);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwalloc.c,v 1.4 1998/04/26 22:49:03 millert Exp $	*/
+/*	$OpenBSD: wwalloc.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwalloc.c,v 1.3 1995/09/28 10:35:10 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwalloc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwalloc.c,v 1.4 1998/04/26 22:49:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwalloc.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,8 @@ wwalloc(row, col, nrow, ncol, size)
 	int row, col, nrow, ncol;
 	size_t size;
 {
-	register char *p, **pp;
-	register int i;
+	char *p, **pp;
+	int i;
 
 	/* fast, call malloc only once */
 	pp = (char **)
@@ -75,7 +75,7 @@ wwalloc(row, col, nrow, ncol, size)
 }
 
 wwfree(p, row)
-register char **p;
+char **p;
 {
 	free((char *)(p + row));
 }

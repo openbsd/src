@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwtty.c,v 1.4 1997/02/25 00:05:11 downsj Exp $	*/
+/*	$OpenBSD: wwtty.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwtty.c,v 1.4 1995/12/21 11:06:50 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwtty.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwtty.c,v 1.4 1997/02/25 00:05:11 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwtty.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static char rcsid[] = "$OpenBSD: wwtty.c,v 1.4 1997/02/25 00:05:11 downsj Exp $"
 #endif
 
 wwgettty(d, t)
-register struct ww_tty *t;
+struct ww_tty *t;
 {
 #ifdef OLD_TTY
 	if (ioctl(d, TIOCGETP, (char *)&t->ww_sgttyb) < 0)
@@ -82,7 +82,7 @@ bad:
  * it changes, to avoid unnecessary flushing of typeahead.
  */
 wwsettty(d, t)
-register struct ww_tty *t;
+struct ww_tty *t;
 {
 #ifdef OLD_TTY
 	int i;

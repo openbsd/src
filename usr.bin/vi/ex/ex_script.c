@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.6 2001/07/09 07:04:57 deraadt Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.7 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -752,8 +752,8 @@ sscr_pty(amaster, aslave, name, termp, winp)
 	void *winp;
 {
 	static char line[] = "/dev/ptyXX";
-	register char *cp1, *cp2;
-	register int master, slave, ttygid;
+	char *cp1, *cp2;
+	int master, slave, ttygid;
 	struct group *gr;
 
 	if ((gr = getgrnam("tty")) != NULL)

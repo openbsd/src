@@ -1,4 +1,4 @@
-/*	$OpenBSD: opttbl.c,v 1.4 2001/01/29 01:58:03 niklas Exp $	*/
+/*	$OpenBSD: opttbl.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -252,7 +252,7 @@ static struct option option[] =
 	public void
 init_option()
 {
-	register struct option *o;
+	struct option *o;
 
 	for (o = option;  o->oletter != '\0';  o++)
 	{
@@ -271,7 +271,7 @@ init_option()
 findopt(c)
 	int c;
 {
-	register struct option *o;
+	struct option *o;
 
 	for (o = option;  o->oletter != '\0';  o++)
 	{

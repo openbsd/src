@@ -1,4 +1,4 @@
-/*	$OpenBSD: username.c,v 1.3 2001/07/27 17:04:06 deraadt Exp $	*/
+/*	$OpenBSD: username.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -70,10 +70,10 @@ void init_hash()
 
 char *username(uid)
 
-register uid_t uid;
+uid_t uid;
 
 {
-    register int hashindex;
+    int hashindex;
 
     hashindex = hashit(uid);
     if (is_empty_hash(hashindex) || (hash_table[hashindex].uid != uid))
@@ -109,12 +109,12 @@ char *username;
 
 static int enter_user(uid, name, wecare)
 
-register uid_t  uid;
-register char *name;
+uid_t  uid;
+char *name;
 int wecare;		/* 1 = enter it always, 0 = nice to have */
 
 {
-    register int hashindex;
+    int hashindex;
 
 #ifdef DEBUG
     fprintf(stderr, "enter_hash(%d, %s, %d)\n", uid, name, wecare);
@@ -146,7 +146,7 @@ int wecare;		/* 1 = enter it always, 0 = nice to have */
 
 static int get_user(uid)
 
-register uid_t uid;
+uid_t uid;
 
 {
     struct passwd *pwd;

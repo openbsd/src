@@ -1,4 +1,4 @@
-/*	$OpenBSD: distopt.c,v 1.5 1999/02/04 23:18:57 millert Exp $	*/
+/*	$OpenBSD: distopt.c,v 1.6 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: distopt.c,v 6.10 1996/01/30 01:52:07 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: distopt.c,v 1.5 1999/02/04 23:18:57 millert Exp $";
+"$OpenBSD: distopt.c,v 1.6 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)distopt.c";
@@ -88,7 +88,7 @@ DISTOPTINFO distoptinfo[] = {
 extern DISTOPTINFO *getdistopt(name)
 	char *name;
 {
-	register int i;
+	int i;
 
 	for (i = 0; distoptinfo[i].do_name; ++i)
 		if (strcasecmp(name, distoptinfo[i].do_name) == 0)
@@ -107,7 +107,7 @@ extern int parsedistopts(str, optptr, doerrs)
 	opt_t *optptr;
 	int doerrs;
 {
-	register char *string, *optstr;
+	char *string, *optstr;
 	DISTOPTINFO *distopt;
 	int negate;
 
@@ -149,7 +149,7 @@ extern int parsedistopts(str, optptr, doerrs)
  */
 extern char *getdistoptlist()
 {
-	register int i;
+	int i;
 	static char buf[1024];
 
 	for (i = 0, buf[0] = CNULL; distoptinfo[i].do_name; ++i) {
@@ -171,7 +171,7 @@ extern char *getdistoptlist()
 extern char *getondistoptlist(opts)
 	opt_t opts;
 {
-	register int i;
+	int i;
 	static char buf[1024];
 
 	for (i = 0, buf[0] = CNULL; distoptinfo[i].do_name; ++i) {

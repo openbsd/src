@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.38 2001/11/16 23:49:07 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.39 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.38 2001/11/16 23:49:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.39 2001/11/19 19:02:15 mpech Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -764,7 +764,7 @@ age_old_log(file)
 /* Skip Over Blanks */
 char *
 sob(p)
-	register char   *p;
+	char   *p;
 {
 	while (p && *p && isspace(*p))
 		p++;
@@ -774,7 +774,7 @@ sob(p)
 /* Skip Over Non-Blanks */
 char *
 son(p)
-	register char   *p;
+	char   *p;
 {
 	while (p && *p && !isspace(*p))
 		p++;

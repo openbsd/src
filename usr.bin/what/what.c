@@ -1,4 +1,4 @@
-/*	$OpenBSD: what.c,v 1.5 1999/08/16 19:57:37 art Exp $	*/
+/*	$OpenBSD: what.c,v 1.6 2001/11/19 19:02:17 mpech Exp $	*/
 /*	$NetBSD: what.c,v 1.4 1994/12/20 16:01:03 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: what.c,v 1.5 1999/08/16 19:57:37 art Exp $";
+static char rcsid[] = "$OpenBSD: what.c,v 1.6 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -89,7 +89,7 @@ void
 search(match)
 	char *match;
 {
-	register int c;
+	int c;
 	int i;
 
 	while ((c = getchar()) != EOF) {

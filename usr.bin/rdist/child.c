@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.9 1999/02/05 00:39:08 millert Exp $	*/
+/*	$OpenBSD: child.c,v 1.10 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: child.c,v 6.28 1996/02/22 19:30:09 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: child.c,v 1.9 1999/02/05 00:39:08 millert Exp $";
+"$OpenBSD: child.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -89,7 +89,7 @@ static int 		needscan = FALSE;	/* Need to scan children */
 static void removechild(child)
 	CHILD *child;
 {
-	register CHILD *pc, *prevpc;
+	CHILD *pc, *prevpc;
 
 	debugmsg(DM_CALL, "removechild(%s, %d, %d) start",
 		 child->c_name, child->c_pid, child->c_readfd);
@@ -147,7 +147,7 @@ static void removechild(child)
 static CHILD *copychild(child)
 	CHILD *child;
 {
-	register CHILD *newc;
+	CHILD *newc;
 
 	newc = (CHILD *) xmalloc(sizeof(CHILD));
 
@@ -166,7 +166,7 @@ static CHILD *copychild(child)
 static void addchild(child)
 	CHILD *child;
 {
-	register CHILD *pc;
+	CHILD *pc;
 
 	debugmsg(DM_CALL, "addchild() start\n");
 
@@ -279,7 +279,7 @@ static int waitproc(statval, block)
  */
 static void reap()
 {
-	register CHILD *pc;
+	CHILD *pc;
 	int save_errno = errno;
 	int status = 0;
 	pid_t pid;
@@ -337,7 +337,7 @@ static void reap()
  */
 static void childscan() 
 {
-	register CHILD *pc, *nextpc;
+	CHILD *pc, *nextpc;
 	
 	debugmsg(DM_CALL, "childscan() start");
 
@@ -367,8 +367,8 @@ static void childscan()
 extern void waitup()
 {
 #if	defined(HAVE_SELECT)
-	register int count;
-	register CHILD *pc;
+	int count;
+	CHILD *pc;
 	fd_set *rchildfdsp = NULL;
 	int rchildfdsn = 0;
 	size_t bytes;

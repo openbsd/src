@@ -1,4 +1,4 @@
-/*	$OpenBSD: soelim.c,v 1.3 1997/09/11 11:21:53 deraadt Exp $	*/
+/*	$OpenBSD: soelim.c,v 1.4 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: soelim.c,v 1.3 1994/12/21 08:11:26 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: soelim.c,v 1.3 1997/09/11 11:21:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: soelim.c,v 1.4 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -91,8 +91,8 @@ main(argc, argv)
 int process(file)
 	char *file;
 {
-	register char *cp;
-	register int c;
+	char *cp;
+	int c;
 	char fname[BUFSIZ];
 	FILE *soee;
 	int isfile;

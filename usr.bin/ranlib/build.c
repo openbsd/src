@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.7 1999/09/21 13:15:43 espie Exp $	*/
+/*	$OpenBSD: build.c,v 1.8 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: build.c,v 1.7 1999/09/21 13:15:43 espie Exp $";
+static char rcsid[] = "$OpenBSD: build.c,v 1.8 2001/11/19 19:02:15 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -141,13 +141,13 @@ build()
  */
 static int
 rexec(rfd, wfd)
-	register int rfd;
+	int rfd;
 	int wfd;
 {
-	register RLIB *rp;
-	register long nsyms;
-	register int nr, symlen;
-	register char *strtab = 0;
+	RLIB *rp;
+	long nsyms;
+	int nr, symlen;
+	char *strtab = 0;
 	char *sym;
 	struct exec ebuf;
 	struct nlist nl;
@@ -251,7 +251,7 @@ static void
 symobj(mid)
 	int mid;
 {
-	register RLIB *rp, *rnext;
+	RLIB *rp, *rnext;
 	struct ranlib rn;
 	char hb[sizeof(struct ar_hdr) + 1], pad;
 	long ransize, size, stroff;

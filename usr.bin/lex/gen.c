@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen.c,v 1.5 2001/06/17 07:30:42 deraadt Exp $	*/
+/*	$OpenBSD: gen.c,v 1.6 2001/11/19 19:02:14 mpech Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/gen.c,v 1.5 2001/06/17 07:30:42 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/gen.c,v 1.6 2001/11/19 19:02:14 mpech Exp $ */
 
 #include "flexdef.h"
 
@@ -63,7 +63,7 @@ static char C_state_decl[] =
 
 void do_indent()
 	{
-	register int i = indent_level * 8;
+	int i = indent_level * 8;
 
 	while ( i >= 8 )
 		{
@@ -133,7 +133,7 @@ void gen_bu_action()
 
 void genctbl()
 	{
-	register int i;
+	int i;
 	int end_of_buffer_action = num_rules + 1;
 
 	/* Table of verify for transition and offset to next state. */
@@ -229,7 +229,7 @@ void genctbl()
 
 void genecs()
 	{
-	register int i, j;
+	int i, j;
 	int numrows;
 
 	out_str_dec( C_int_decl, "yy_ec", csize );
@@ -410,7 +410,7 @@ void gen_find_action()
 
 void genftbl()
 	{
-	register int i;
+	int i;
 	int end_of_buffer_action = num_rules + 1;
 
 	out_str_dec( long_align ? C_long_decl : C_short_decl,
@@ -420,7 +420,7 @@ void genftbl()
 
 	for ( i = 1; i <= lastdfa; ++i )
 		{
-		register int anum = dfaacc[i].dfaacc_state;
+		int anum = dfaacc[i].dfaacc_state;
 
 		mkdata( anum );
 
@@ -957,7 +957,7 @@ void gentabs()
 
 	for ( i = 1; i <= lastdfa; ++i )
 		{
-		register int d = def[i];
+		int d = def[i];
 
 		if ( base[i] == JAMSTATE )
 			base[i] = jambase;
@@ -1059,7 +1059,7 @@ char str[];
 
 void make_tables()
 	{
-	register int i;
+	int i;
 	int did_eof_rule = false;
 
 	skelout();

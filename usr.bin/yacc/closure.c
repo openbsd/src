@@ -1,4 +1,4 @@
-/*	$OpenBSD: closure.c,v 1.4 2001/07/16 06:29:43 pvalchev Exp $	*/
+/*	$OpenBSD: closure.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)closure.c	5.3 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: closure.c,v 1.4 2001/07/16 06:29:43 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: closure.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,12 +58,12 @@ static unsigned *EFF;
 void
 set_EFF()
 {
-    register unsigned *row;
-    register int symbol;
-    register short *sp;
-    register int rowsize;
-    register int i;
-    register int rule;
+    unsigned *row;
+    int symbol;
+    short *sp;
+    int rowsize;
+    int i;
+    int rule;
 
     rowsize = WORDSIZE(nvars);
     EFF = NEW2(nvars * rowsize, unsigned);
@@ -95,12 +95,12 @@ set_EFF()
 void
 set_first_derives()
 {
-    register unsigned *rrow;
-    register unsigned *vrow;
-    register int j;
-    register unsigned k;
-    register unsigned cword;
-    register short *rp;
+    unsigned *rrow;
+    unsigned *vrow;
+    int j;
+    unsigned k;
+    unsigned cword;
+    short *rp;
 
     int rule;
     int i;
@@ -153,13 +153,13 @@ closure(nucleus, n)
 short *nucleus;
 int n;
 {
-    register int ruleno;
-    register unsigned word;
-    register unsigned i;
-    register short *csp;
-    register unsigned *dsp;
-    register unsigned *rsp;
-    register int rulesetsize;
+    int ruleno;
+    unsigned word;
+    unsigned i;
+    short *csp;
+    unsigned *dsp;
+    unsigned *rsp;
+    int rulesetsize;
 
     short *csend;
     unsigned *rsend;
@@ -233,7 +233,7 @@ finalize_closure()
 print_closure(n)
 int n;
 {
-  register short *isp;
+  short *isp;
 
   printf("\n\nn = %d\n\n", n);
   for (isp = itemset; isp < itemsetend; isp++)
@@ -243,10 +243,10 @@ int n;
 
 print_EFF()
 {
-    register int i, j;
-    register unsigned *rowp;
-    register unsigned word;
-    register unsigned k;
+    int i, j;
+    unsigned *rowp;
+    unsigned word;
+    unsigned k;
 
     printf("\n\nEpsilon Free Firsts\n");
 
@@ -274,11 +274,11 @@ print_EFF()
 
 print_first_derives()
 {
-    register int i;
-    register int j;
-    register unsigned *rp;
-    register unsigned cword;
-    register unsigned k;
+    int i;
+    int j;
+    unsigned *rp;
+    unsigned cword;
+    unsigned k;
 
     printf("\n\n\nFirst Derives\n");
 

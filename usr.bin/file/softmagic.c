@@ -1,4 +1,4 @@
-/*	$OpenBSD: softmagic.c,v 1.4 1998/07/10 15:05:27 mickey Exp $	*/
+/*	$OpenBSD: softmagic.c,v 1.5 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*
  * softmagic - interpret variable magic from /etc/magic
@@ -37,7 +37,7 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: softmagic.c,v 1.4 1998/07/10 15:05:27 mickey Exp $";
+static char *moduleid = "$OpenBSD: softmagic.c,v 1.5 2001/11/19 19:02:13 mpech Exp $";
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
@@ -385,8 +385,8 @@ mcheck(p, m)
 union VALUETYPE* p;
 struct magic *m;
 {
-	register uint32 l = m->value.l;
-	register uint32 v;
+	uint32 l = m->value.l;
+	uint32 v;
 	int matched;
 
 	if ( (m->value.s[0] == 'x') && (m->value.s[1] == '\0') ) {
@@ -424,9 +424,9 @@ struct magic *m;
 		 */
 		v = 0;
 		{
-			register unsigned char *a = (unsigned char*)m->value.s;
-			register unsigned char *b = (unsigned char*)p->s;
-			register int len = m->vallen;
+			unsigned char *a = (unsigned char*)m->value.s;
+			unsigned char *b = (unsigned char*)p->s;
+			int len = m->vallen;
 
 			while (--len >= 0)
 				if ((v = *b++ - *a++) != '\0')

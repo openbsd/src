@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.2 2001/01/29 01:58:04 niklas Exp $	*/
+/*	$OpenBSD: search.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -116,8 +116,8 @@ cvt_text(odst, osrc, ops)
 	char *osrc;
 	int ops;
 {
-	register char *dst;
-	register char *src;
+	char *dst;
+	char *src;
 
 	for (src = osrc, dst = odst;  *src != '\0';  src++, dst++)
 	{
@@ -141,7 +141,7 @@ cvt_text(odst, osrc, ops)
 is_ucase(s)
 	char *s;
 {
-	register char *p;
+	char *p;
 
 	for (p = s;  *p != '\0';  p++)
 		if (isupper(*p))
@@ -1143,7 +1143,7 @@ match(pattern, buf, pfound, pend)
 	char *pattern, *buf;
 	char **pfound, **pend;
 {
-	register char *pp, *lp;
+	char *pp, *lp;
 
 	for ( ;  *buf != '\0';  buf++)
 	{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 1997/01/17 07:12:42 millert Exp $
+/*	$OpenBSD: util.c,v 1.4 2001/11/19 19:02:15 mpech Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.3 1997/01/17 07:12:42 millert Exp $
+ * $Id: util.c,v 1.4 2001/11/19 19:02:15 mpech Exp $
  */
 
 
@@ -154,7 +154,7 @@ char *
 patprep(name)
 	char *name;
 {
-	register char *endmark, *p, *subp;
+	char *endmark, *p, *subp;
 
 	subp = globfree;
 	*subp++ = '\0';   /* set first element to '\0' */
@@ -208,7 +208,7 @@ u_char *
 tolower_word(word)
 	u_char *word;
 {
-	register u_char *p;
+	u_char *p;
 
 	for(p = word; *p != '\0'; p++)
 		*p = TOLOWER(*p);
@@ -232,7 +232,7 @@ getwm(p)
 	caddr_t p;
 {
 	static char buf[INTSIZE];
-	register int i;
+	int i;
 
 	for (i = 0; i < INTSIZE; i++)
 		buf[i] = *p++;
@@ -263,7 +263,7 @@ int
 getwf(fp)
 	FILE *fp;
 {
-	register int word;
+	int word;
 
 	word = getw(fp);
 

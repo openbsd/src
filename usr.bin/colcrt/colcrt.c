@@ -1,4 +1,4 @@
-/*	$OpenBSD: colcrt.c,v 1.3 2001/07/12 05:16:59 deraadt Exp $	*/
+/*	$OpenBSD: colcrt.c,v 1.4 2001/11/19 19:02:13 mpech Exp $	*/
 /*	$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: colcrt.c,v 1.3 2001/07/12 05:16:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: colcrt.c,v 1.4 2001/11/19 19:02:13 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,8 +88,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int c;
-	register char *cp, *dp;
+	int c;
+	char *cp, *dp;
 
 	argc--;
 	progname = *argv++;
@@ -211,8 +211,8 @@ void
 pflush(ol)
 	int ol;
 {
-	register int i;
-	register char *cp;
+	int i;
+	char *cp;
 	char lastomit;
 	int l;
 
@@ -246,7 +246,7 @@ void
 move(l, m)
 	int l, m;
 {
-	register char *cp, *dp;
+	char *cp, *dp;
 
 	for (cp = page[l], dp = page[m]; *cp; cp++, dp++) {
 		switch (*cp) {

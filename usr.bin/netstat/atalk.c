@@ -1,4 +1,4 @@
-/*	$OpenBSD: atalk.c,v 1.4 2001/08/18 22:14:03 brian Exp $	*/
+/*	$OpenBSD: atalk.c,v 1.5 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-static char rcsid[] = "$OpenBSD: atalk.c,v 1.4 2001/08/18 22:14:03 brian Exp $";
+static char rcsid[] = "$OpenBSD: atalk.c,v 1.5 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -264,7 +264,7 @@ atalkprotopr(off, name)
 	char  *name;
 {
 	struct ddpcb    cb;
-	register struct ddpcb *prev, *next;
+	struct ddpcb *prev, *next;
 	struct ddpcb   *initial;
 
 	if (off == 0)

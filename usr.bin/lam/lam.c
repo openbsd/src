@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.2 1996/06/26 05:34:49 deraadt Exp $	*/
+/*	$OpenBSD: lam.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lam.c,v 1.2 1996/06/26 05:34:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lam.c,v 1.3 2001/11/19 19:02:14 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -83,7 +83,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct	openfile *ip;
+	struct	openfile *ip;
 
 	getargs(argv);
 	if (!morefiles)
@@ -105,9 +105,9 @@ void
 getargs(av)
 	char *av[];
 {
-	register struct	openfile *ip = input;
-	register char *p;
-	register char *c;
+	struct	openfile *ip = input;
+	char *p;
+	char *c;
 	static char fmtbuf[BUFSIZ];
 	char *fmtp = fmtbuf;
 	int P, S, F, T;
@@ -177,8 +177,8 @@ char *
 pad(ip)
 	struct openfile *ip;
 {
-	register char *p = ip->sepstring;
-	register char *lp = linep;
+	char *p = ip->sepstring;
+	char *lp = linep;
 
 	while (*p)
 		*lp++ = *p++;
@@ -194,9 +194,9 @@ gatherline(ip)
 	struct openfile *ip;
 {
 	char s[BUFSIZ];
-	register int c;
-	register char *p;
-	register char *lp = linep;
+	int c;
+	char *p;
+	char *lp = linep;
 	char *end = s + BUFSIZ;
 
 	if (ip->eof)

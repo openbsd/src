@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsystem.c,v 1.2 2001/01/29 01:58:02 niklas Exp $	*/
+/*	$OpenBSD: lsystem.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -54,12 +54,12 @@ extern IFILE curr_ifile;
 lsystem(cmd)
 	char *cmd;
 {
-	register int inp;
+	int inp;
 #if MSOFTC || OS2
-	register int inp2;
+	int inp2;
 #endif
-	register char *shell;
-	register char *p;
+	char *shell;
+	char *p;
 	IFILE save_ifile;
 
 	/*
@@ -224,8 +224,8 @@ pipe_data(cmd, spos, epos)
 	POSITION spos;
 	POSITION epos;
 {
-	register FILE *f;
-	register int c;
+	FILE *f;
+	int c;
 	extern FILE *popen();
 
 	/*

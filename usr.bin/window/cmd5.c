@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd5.c,v 1.3 1997/02/25 00:03:59 downsj Exp $	*/
+/*	$OpenBSD: cmd5.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: cmd5.c,v 1.3 1995/09/28 10:34:09 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd5.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd5.c,v 1.3 1997/02/25 00:03:59 downsj Exp $";
+static char rcsid[] = "$OpenBSD: cmd5.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: cmd5.c,v 1.3 1997/02/25 00:03:59 downsj Exp $";
  */
 
 c_move(w)
-register struct ww *w;
+struct ww *w;
 {
 	int col, row;
 	int mincol, minrow;
@@ -96,7 +96,7 @@ register struct ww *w;
 }
 
 movewin(w, row, col)
-register struct ww *w;
+struct ww *w;
 {
 	struct ww *back = w->ww_back;
 
@@ -112,7 +112,7 @@ register struct ww *w;
  * Weird stufff, don't ask.
  */
 getminmax(x, n, a, b, curx, minx, maxx)
-register x, n, a, b;
+int x, n, a, b;
 int *curx, *minx, *maxx;
 {
 	if (x < 0)

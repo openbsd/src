@@ -1,4 +1,4 @@
-/*	$OpenBSD: astosc.c,v 1.2 1996/06/26 05:41:04 deraadt Exp $	*/
+/*	$OpenBSD: astosc.c,v 1.3 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)astosc.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: astosc.c,v 1.2 1996/06/26 05:41:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: astosc.c,v 1.3 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -54,10 +54,10 @@ struct astosc astosc[256] = {
 
 static
 ustrcmp(string1, string2)
-register char *string1;
-register char *string2;
+char *string1;
+char *string2;
 {
-    register int c1, c2;
+    int c1, c2;
 
     while ((c1 = (unsigned char) *string1++) != 0) {
 	if (isupper(c1)) {
@@ -88,9 +88,9 @@ register char *string2;
 
 int
 ascii_to_index(string)
-register char *string;
+char *string;
 {
-    register struct astosc *this;
+    struct astosc *this;
 
     for (this = astosc; this <= &astosc[highestof(astosc)]; this++) {
 	if ((this->name != 0) && (ustrcmp(this->name, string) == 0)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: optfunc.c,v 1.2 2001/01/29 01:58:03 niklas Exp $	*/
+/*	$OpenBSD: optfunc.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -252,7 +252,7 @@ opt__T(type, s)
 	public void
 opt_p(type, s)
 	int type;
-	register char *s;
+	char *s;
 {
 	switch (type)
 	{
@@ -275,9 +275,9 @@ opt_p(type, s)
 	public void
 opt__P(type, s)
 	int type;
-	register char *s;
+	char *s;
 {
-	register char **proto;
+	char **proto;
 	PARG parg;
 
 	switch (type)

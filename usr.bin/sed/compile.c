@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.9 1998/09/24 03:00:59 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.10 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.9 1998/09/24 03:00:59 millert Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.10 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,7 +151,7 @@ static struct s_command **
 compile_stream(link)
 	struct s_command **link;
 {
-	register char *p;
+	char *p;
 	static char lbuf[_POSIX2_LINE_MAX + 1];	/* To save stack */
 	struct s_command *cmd, *cmd2, *stack;
 	struct s_format *fp;
@@ -691,7 +691,7 @@ compile_addr(p, a)
  */
 static char *
 duptoeol(s, ctype)
-	register char *s;
+	char *s;
 	char *ctype;
 {
 	size_t len;
@@ -751,9 +751,9 @@ static void
 enterlabel(cp)
 	struct s_command *cp;
 {
-	register struct labhash **lhp, *lh;
-	register u_char *p;
-	register u_int h, c;
+	struct labhash **lhp, *lh;
+	u_char *p;
+	u_int h, c;
 
 	for (h = 0, p = (u_char *)cp->t; (c = *p) != 0; p++)
 		h = (h << 5) + h + c;
@@ -777,9 +777,9 @@ static struct s_command *
 findlabel(name)
 	char *name;
 {
-	register struct labhash *lh;
-	register u_char *p;
-	register u_int h, c;
+	struct labhash *lh;
+	u_char *p;
+	u_int h, c;
 
 	for (h = 0, p = (u_char *)name; (c = *p) != 0; p++)
 		h = (h << 5) + h + c;
@@ -799,8 +799,8 @@ findlabel(name)
 static void
 uselabel()
 {
-	register struct labhash *lh, *next;
-	register int i;
+	struct labhash *lh, *next;
+	int i;
 
 	for (i = 0; i < LHSZ; i++) {
 		for (lh = labels[i]; lh != NULL; lh = next) {

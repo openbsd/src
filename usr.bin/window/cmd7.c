@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd7.c,v 1.3 1997/02/25 00:04:00 downsj Exp $	*/
+/*	$OpenBSD: cmd7.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: cmd7.c,v 1.3 1995/09/28 10:34:12 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd7.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd7.c,v 1.3 1997/02/25 00:04:00 downsj Exp $";
+static char rcsid[] = "$OpenBSD: cmd7.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static char rcsid[] = "$OpenBSD: cmd7.c,v 1.3 1997/02/25 00:04:00 downsj Exp $";
  */
 
 c_size(w)
-register struct ww *w;
+struct ww *w;
 {
 	int col, row;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdbuf.c,v 1.2 2001/01/29 01:58:00 niklas Exp $	*/
+/*	$OpenBSD: cmdbuf.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -117,7 +117,7 @@ len_cmdbuf()
 	static int
 cmd_erase()
 {
-	register char *s;
+	char *s;
 	char *p;
 	int col;
 

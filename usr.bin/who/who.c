@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.10 2001/01/31 17:42:26 deraadt Exp $	*/
+/*	$OpenBSD: who.c,v 1.11 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.10 2001/01/31 17:42:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: who.c,v 1.11 2001/11/19 19:02:18 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -192,7 +192,7 @@ who_am_i(ufp)
 {
 	struct utmp usr;
 	struct passwd *pw;
-	register char *p;
+	char *p;
 	char *t;
 
 	/* search through the utmp and find an entry for this tty */

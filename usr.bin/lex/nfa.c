@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfa.c,v 1.4 2001/06/17 07:30:42 deraadt Exp $	*/
+/*	$OpenBSD: nfa.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
 
 /* nfa - NFA construction routines */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/nfa.c,v 1.4 2001/06/17 07:30:42 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/nfa.c,v 1.5 2001/11/19 19:02:14 mpech Exp $ */
 
 #include "flexdef.h"
 
@@ -321,7 +321,7 @@ int first, last;
  */
 
 void mark_beginning_as_normal( mach )
-register int mach;
+int mach;
 	{
 	switch ( state_type[mach] )
 		{

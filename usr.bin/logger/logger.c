@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.3 1997/01/15 23:42:45 millert Exp $	*/
+/*	$OpenBSD: logger.c,v 1.4 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: logger.c,v 1.3 1997/01/15 23:42:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: logger.c,v 1.4 2001/11/19 19:02:15 mpech Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -112,7 +112,7 @@ main(argc, argv)
 
 	/* log input line if appropriate */
 	if (argc > 0) {
-		register char *p, *endp;
+		char *p, *endp;
 		int len;
 
 		for (p = buf, endp = buf + sizeof(buf) - 2; *argv;) {
@@ -143,7 +143,7 @@ main(argc, argv)
  */
 int
 pencode(s)
-	register char *s;
+	char *s;
 {
 	char *save;
 	int fac, lev;
@@ -177,7 +177,7 @@ decode(name, codetab)
 	char *name;
 	CODE *codetab;
 {
-	register CODE *c;
+	CODE *c;
 
 	if (isdigit(*name))
 		return (atoi(name));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.53 2001/08/26 09:42:04 brian Exp $	*/
+/*	$OpenBSD: inet.c,v 1.54 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.53 2001/08/26 09:42:04 brian Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.54 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,10 +132,10 @@ protopr0(off, name, af)
 	int af;
 {
 	struct inpcbtable table;
-	register struct inpcb *head, *next, *prev;
+	struct inpcb *head, *next, *prev;
 	struct inpcb inpcb;
 	int istcp;
-	static int first = 1;
+	int first = 1;
 	char *name0;
 	char namebuf[20];
 
@@ -453,7 +453,7 @@ icmp_stats(off, name)
 	char *name;
 {
 	struct icmpstat icmpstat;
-	register int i, first;
+	int i, first;
 
 	if (off == 0)
 		return;
@@ -537,11 +537,11 @@ getrpcportnam(port, proto)
 	int proto;
 {
 	struct sockaddr_in server_addr;
-	register struct hostent *hp;
+	struct hostent *hp;
 	static struct pmaplist *head;
 	int socket = RPC_ANYSOCK;
 	struct timeval minutetimeout;
-	register CLIENT *client;
+	CLIENT *client;
 	struct rpcent *rpc;
 	static int first;
 	static struct rpcnams *rpcn;
@@ -602,7 +602,7 @@ getrpcportnam(port, proto)
  */
 void
 inetprint(in, port, proto, local)
-	register struct in_addr *in;
+	struct in_addr *in;
 	in_port_t port;
 	char *proto;
 	int local;
@@ -638,7 +638,7 @@ char *
 inetname(inp)
 	struct in_addr *inp;
 {
-	register char *cp;
+	char *cp;
 	static char line[50];
 	struct hostent *hp;
 	struct netent *np;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd6.c,v 1.4 2000/04/15 05:22:14 millert Exp $	*/
+/*	$OpenBSD: cmd6.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: cmd6.c,v 1.3 1995/09/28 10:34:10 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd6.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd6.c,v 1.4 2000/04/15 05:22:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd6.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char rcsid[] = "$OpenBSD: cmd6.c,v 1.4 2000/04/15 05:22:14 millert Exp $"
 
 c_debug()
 {
-	register struct ww *w;
+	struct ww *w;
 
 	if (!terse)
 		wwputs("[m(smap) n(ns) o(os) s(string) v(nvis) w(win)]? ", cmdwin);
@@ -93,7 +93,7 @@ c_debug()
 #ifdef STR_DEBUG
 debug_str()
 {
-	register struct ww *w;
+	struct ww *w;
 	struct string *s;
 
 	if ((w = openiwin(wwnrow - 3, "Allocated Strings")) == 0) {

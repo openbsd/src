@@ -1,4 +1,4 @@
-/*	$OpenBSD: warshall.c,v 1.4 2001/07/16 06:29:45 pvalchev Exp $	*/
+/*	$OpenBSD: warshall.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: warshall.c,v 1.4 1996/03/19 03:21:51 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)warshall.c	5.4 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: warshall.c,v 1.4 2001/07/16 06:29:45 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: warshall.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,15 +54,15 @@ transitive_closure(R, n)
 unsigned *R;
 int n;
 {
-    register int rowsize;
-    register unsigned i;
-    register unsigned *rowj;
-    register unsigned *rp;
-    register unsigned *rend;
-    register unsigned *ccol;
-    register unsigned *relend;
-    register unsigned *cword;
-    register unsigned *rowi;
+    int rowsize;
+    unsigned i;
+    unsigned *rowj;
+    unsigned *rp;
+    unsigned *rend;
+    unsigned *ccol;
+    unsigned *relend;
+    unsigned *cword;
+    unsigned *rowi;
 
     rowsize = WORDSIZE(n);
     relend = R + n*rowsize;
@@ -107,10 +107,10 @@ reflexive_transitive_closure(R, n)
 unsigned *R;
 int n;
 {
-    register int rowsize;
-    register unsigned i;
-    register unsigned *rp;
-    register unsigned *relend;
+    int rowsize;
+    unsigned i;
+    unsigned *rp;
+    unsigned *relend;
 
     transitive_closure(R, n);
 

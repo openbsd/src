@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.5 1997/07/06 02:28:55 millert Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$OpenBSD: ruptime.c,v 1.5 1997/07/06 02:28:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: ruptime.c,v 1.6 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,10 +77,10 @@ main(argc, argv)
 {
 	extern char *optarg;
 	extern int optind;
-	register struct hs *hsp;
-	register struct whod *wd;
-	register struct whoent *we;
-	register DIR *dirp;
+	struct hs *hsp;
+	struct whod *wd;
+	struct whoent *we;
+	DIR *dirp;
 	struct dirent *dp;
 	int aflg, cc, ch, f, i, maxloadav;
 	char buf[sizeof(struct whod)];
@@ -220,7 +220,7 @@ int
 lcmp(a1, a2)
 	void *a1, *a2;
 {
-	register struct hs *h1 = a1, *h2 = a2;
+	struct hs *h1 = a1, *h2 = a2;
 
 	if (ISDOWN(h1))
 		if (ISDOWN(h2))
@@ -239,7 +239,7 @@ int
 ucmp(a1, a2)
 	void *a1, *a2;
 {
-	register struct hs *h1 = a1, *h2 = a2;
+	struct hs *h1 = a1, *h2 = a2;
 
 	if (ISDOWN(h1))
 		if (ISDOWN(h2))
@@ -257,7 +257,7 @@ int
 tcmp(a1, a2)
 	void *a1, *a2;
 {
-	register struct hs *h1 = a1, *h2 = a2;
+	struct hs *h1 = a1, *h2 = a2;
 
 	return(rflg * (
 		(ISDOWN(h2) ? h2->hs_wd->wd_recvtime - now

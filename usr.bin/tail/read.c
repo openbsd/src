@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.5 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: read.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: read.c,v 1.5 2001/09/19 10:58:07 mpech Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.6 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,11 +72,11 @@ static char rcsid[] = "$OpenBSD: read.c,v 1.5 2001/09/19 10:58:07 mpech Exp $";
  */
 int
 bytes(fp, off)
-	register FILE *fp;
+	FILE *fp;
 	off_t off;
 {
-	register int ch, len, tlen;
-	register char *ep, *p, *t;
+	int ch, len, tlen;
+	char *ep, *p, *t;
 	int wrap;
 	char *sp;
 
@@ -143,7 +143,7 @@ bytes(fp, off)
  */
 int
 lines(fp, off)
-	register FILE *fp;
+	FILE *fp;
 	off_t off;
 {
 	struct {
@@ -151,8 +151,8 @@ lines(fp, off)
 		u_int len;
 		char *l;
 	} *lines;
-	register int ch;
-	register char *p = NULL;
+	int ch;
+	char *p = NULL;
 	int blen, cnt, recno, wrap;
 	char *sp = NULL;
 

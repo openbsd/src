@@ -1,4 +1,4 @@
-/*	$OpenBSD: mark.c,v 1.2 2001/01/29 01:58:03 niklas Exp $	*/
+/*	$OpenBSD: mark.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -93,7 +93,7 @@ getumark(c)
 getmark(c)
 	int c;
 {
-	register struct mark *m;
+	struct mark *m;
 	static struct mark sm;
 
 	switch (c)
@@ -170,7 +170,7 @@ badmark(c)
 setmark(c)
 	int c;
 {
-	register struct mark *m;
+	struct mark *m;
 	struct scrpos scrpos;
 
 	m = getumark(c);
@@ -203,7 +203,7 @@ lastmark()
 gomark(c)
 	int c;
 {
-	register struct mark *m;
+	struct mark *m;
 	struct scrpos scrpos;
 
 	m = getmark(c);
@@ -251,7 +251,7 @@ gomark(c)
 markpos(c)
 	int c;
 {
-	register struct mark *m;
+	struct mark *m;
 
 	m = getmark(c);
 	if (m == NULL)

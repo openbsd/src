@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.7 2001/11/02 19:41:06 mickey Exp $	*/
+/*	$OpenBSD: parse.c,v 1.8 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.7 2001/11/02 19:41:06 mickey Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.8 2001/11/19 19:02:14 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ void
 addfile(name)
 	char *name;
 {
-	register char *p;
+	char *p;
 	FILE *fp;
 	size_t len;
 
@@ -84,7 +84,7 @@ void
 add(fmt)
 	char *fmt;
 {
-	register char *p;
+	char *p;
 	static FS **nextfs;
 	FS *tfs;
 	FU *tfu, **nextfu;
@@ -163,9 +163,9 @@ int
 size(fs)
 	FS *fs;
 {
-	register FU *fu;
-	register int bcnt, cursize;
-	register char *fmt;
+	FU *fu;
+	int bcnt, cursize;
+	char *fmt;
 	int prec;
 
 	/* figure out the data block size needed for each format unit */
@@ -218,9 +218,9 @@ rewrite(fs)
 	FS *fs;
 {
 	enum { NOTOKAY, USEBCNT, USEPREC } sokay;
-	register PR *pr, **nextpr;
-	register FU *fu;
-	register char *p1, *p2;
+	PR *pr, **nextpr;
+	FU *fu;
+	char *p1, *p2;
 	char savech, *fmtp;
 	int nconv, prec;
 
@@ -449,9 +449,9 @@ sw2:					switch(fu->bcnt) {
 
 void
 escape(p1)
-	register char *p1;
+	char *p1;
 {
-	register char *p2;
+	char *p2;
 
 	/* alphabetic escape sequences have to be done in place */
 	for (p2 = p1;; ++p1, ++p2) {

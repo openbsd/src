@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.5 1998/03/12 04:57:47 art Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -51,9 +51,9 @@ int	prettydump;
 
     void
 upcase(argument)
-    register char *argument;
+    char *argument;
 {
-    register int c;
+    int c;
 
     while ((c = *argument) != 0) {
 	if (islower(c)) {
@@ -94,7 +94,7 @@ unsigned char NetTraceFile[256] = "(standard output)";
 
     void
 SetNetTrace(file)
-    register char *file;
+    char *file;
 {
     if (NetTrace && NetTrace != stdout)
 	fclose(NetTrace);
@@ -174,7 +174,7 @@ printoption(direction, cmd, option)
 		else
 		    fprintf(NetTrace, "%s IAC %d", direction, option);
 	} else {
-		register char *fmt;
+		char *fmt;
 		fmt = (cmd == WILL) ? "WILL" : (cmd == WONT) ? "WONT" :
 			(cmd == DO) ? "DO" : (cmd == DONT) ? "DONT" : 0;
 		if (fmt) {
@@ -200,7 +200,7 @@ printoption(direction, cmd, option)
     void
 optionstatus()
 {
-    register int i;
+    int i;
     extern char will_wont_resp[], do_dont_resp[];
 
     for (i = 0; i < 256; i++) {
@@ -280,7 +280,7 @@ printsub(direction, pointer, length)
     unsigned char *pointer;	/* where suboption data sits */
     int		  length;	/* length of suboption data */
 {
-    register int i;
+    int i;
     char buf[512];
     extern int want_status_response;
 
@@ -290,7 +290,7 @@ printsub(direction, pointer, length)
 	    fprintf(NetTrace, "%s IAC SB ",
 				(direction == '<')? "RCVD":"SENT");
 	    if (length >= 3) {
-		register int j;
+		int j;
 
 		i = pointer[length-2];
 		j = pointer[length-1];
@@ -643,8 +643,8 @@ printsub(direction, pointer, length)
 	    break;
 
 	case TELOPT_STATUS: {
-	    register char *cp;
-	    register int j, k;
+	    char *cp;
+	    int j, k;
 
 	    fprintf(NetTrace, "STATUS");
 
@@ -757,7 +757,7 @@ printsub(direction, pointer, length)
 		fprintf(NetTrace, "INFO ");
 	    env_common:
 		{
-		    register int noquote = 2;
+		    int noquote = 2;
 #if defined(ENV_HACK) && defined(OLD_ENVIRON)
 		    extern int old_env_var, old_env_value;
 #endif

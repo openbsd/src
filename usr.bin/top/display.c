@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.7 2001/09/03 18:08:10 camield Exp $	*/
+/*	$OpenBSD: display.c,v 1.8 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -91,7 +91,7 @@ static void line_update();
 int display_resize()
 
 {
-    register int display_lines;
+    int display_lines;
 
     /* first, deallocate any previous buffer that may have been there */
     if (screenbuf != NULL)
@@ -130,10 +130,10 @@ int display_init(statics)
 struct statics *statics;
 
 {
-    register int display_lines;
-    register char **pp;
-    register int *ip;
-    register int i;
+    int display_lines;
+    char **pp;
+    int *ip;
+    int i;
 
     /* call resize to do the dirty work */
     display_lines = display_resize();
@@ -179,7 +179,7 @@ int mpid;
 double *avenrun;
 
 {
-    register int i;
+    int i;
 
     /* i_loadave also clears the screen, since it is first */
     clear();
@@ -207,7 +207,7 @@ int mpid;
 double *avenrun;
 
 {
-    register int i;
+    int i;
 
     if (mpid != -1)
     {
@@ -293,7 +293,7 @@ int total;
 int *brkdn;
 
 {
-    register int i;
+    int i;
 
     /* write current number of processes and remember the value */
     printf("%d processes:", total);
@@ -323,7 +323,7 @@ int *brkdn;
 
 {
     static char new[128];
-    register int i;
+    int i;
 
     /* update number of processes only if it has changed */
     if (ltotal != total)
@@ -379,7 +379,7 @@ static int cpustates_column;
 static char *cpustates_tag()
 
 {
-    register char *use;
+    char *use;
 
     static char *short_tag = "CPU: ";
     static char *long_tag = "CPU states: ";
@@ -402,13 +402,13 @@ static char *cpustates_tag()
 
 void i_cpustates(states)
 
-register int *states;
+int *states;
 
 {
-    register int i = 0;
-    register int value;
-    register char **names = cpustate_names;
-    register char *thisname;
+    int i = 0;
+    int value;
+    char **names = cpustate_names;
+    char *thisname;
 
     /* print tag and bump lastline */
     printf("\n%s", cpustates_tag());
@@ -436,14 +436,14 @@ register int *states;
 
 void u_cpustates(states)
 
-register int *states;
+int *states;
 
 {
-    register int value;
-    register char **names = cpustate_names;
-    register char *thisname;
-    register int *lp;
-    register int *colp;
+    int value;
+    char **names = cpustate_names;
+    char *thisname;
+    int *lp;
+    int *colp;
 
     Move_to(cpustates_column, y_cpustates);
     lastline = y_cpustates;
@@ -484,10 +484,10 @@ register int *states;
 void z_cpustates()
 
 {
-    register int i = 0;
-    register char **names = cpustate_names;
-    register char *thisname;
-    register int *lp;
+    int i = 0;
+    char **names = cpustate_names;
+    char *thisname;
+    int *lp;
 
     /* show tag and bump lastline */
     printf("\n%s", cpustates_tag());
@@ -649,8 +649,8 @@ int line;
 char *thisline;
 
 {
-    register char *p;
-    register char *base;
+    char *p;
+    char *base;
 
     /* make sure we are on the correct line */
     while (lastline < y_procs + line)
@@ -681,9 +681,9 @@ int linenum;
 char *linebuf;
 
 {
-    register char *optr;
-    register int screen_line = linenum + Header_lines;
-    register char *bufferline;
+    char *optr;
+    int screen_line = linenum + Header_lines;
+    char *bufferline;
 
     /* remember a pointer to the current line in the screen buffer */
     bufferline = &screenbuf[lineindex(linenum)];
@@ -726,11 +726,11 @@ char *linebuf;
 
 void u_endscreen(hi)
 
-register int hi;
+int hi;
 
 {
-    register int screen_line = hi + Header_lines;
-    register int i;
+    int screen_line = hi + Header_lines;
+    int i;
 
     if (smart_terminal)
     {
@@ -810,7 +810,7 @@ char *msgfmt;
 caddr_t a1, a2, a3;
 
 {
-    register int i;
+    int i;
 
     /* first, format the message */
     (void) snprintf(next_msg, sizeof(next_msg), msgfmt, a1, a2, a3);
@@ -869,10 +869,10 @@ int  size;
 int  numeric;
 
 {
-    register char *ptr = buffer;
-    register char ch;
-    register char cnt = 0;
-    register char maxcnt = 0;
+    char *ptr = buffer;
+    char ch;
+    char cnt = 0;
+    char maxcnt = 0;
 
     /* allow room for null terminator */
     size -= 1;
@@ -957,10 +957,10 @@ int  numeric;
 
 static int string_count(pp)
 
-register char **pp;
+char **pp;
 
 {
-    register int cnt;
+    int cnt;
 
     cnt = 0;
     while (*pp++ != NULL)
@@ -974,12 +974,12 @@ static void summary_format(str, numbers, names)
 
 char *str;
 int *numbers;
-register char **names;
+char **names;
 
 {
-    register char *p;
-    register int num;
-    register char *thisname;
+    char *p;
+    int num;
+    char *thisname;
 
     /* format each number followed by its string */
     p = str;
@@ -1023,16 +1023,16 @@ register char **names;
 
 static void line_update(old, new, start, line)
 
-register char *old;
-register char *new;
+char *old;
+char *new;
 int start;
 int line;
 
 {
-    register int ch;
-    register int diff;
-    register int newcol = start + 1;
-    register int lastcol = start;
+    int ch;
+    int diff;
+    int newcol = start + 1;
+    int lastcol = start;
     char cursor_on_line = No;
     char *current;
 
@@ -1156,8 +1156,8 @@ char *printable(str)
 char *str;
 
 {
-    register char *ptr;
-    register char ch;
+    char *ptr;
+    char ch;
 
     ptr = str;
     while ((ch = *ptr) != '\0')

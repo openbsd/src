@@ -1,4 +1,4 @@
-/*	$OpenBSD: sum1.c,v 1.2 1996/03/27 19:32:22 niklas Exp $	*/
+/*	$OpenBSD: sum1.c,v 1.3 2001/11/19 19:02:13 mpech Exp $	*/
 /*	$NetBSD: sum1.c,v 1.5 1996/02/27 21:17:27 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sum1.c	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$NetBSD: sum1.c,v 1.5 1996/02/27 21:17:27 cgd Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sum1.c,v 1.2 1996/03/27 19:32:22 niklas Exp $";
+static char rcsid[] = "$OpenBSD: sum1.c,v 1.3 2001/11/19 19:02:13 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,13 +50,13 @@ static char rcsid[] = "$OpenBSD: sum1.c,v 1.2 1996/03/27 19:32:22 niklas Exp $";
 
 int
 csum1(fd, cval, clen)
-	register int fd;
+	int fd;
 	u_int32_t *cval, *clen;
 {
-	register u_int32_t total;
-	register int nr;
-	register u_int crc;
-	register u_char *p;
+	u_int32_t total;
+	int nr;
+	u_int crc;
+	u_char *p;
 	u_char buf[8192];
 
 	/*

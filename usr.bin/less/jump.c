@@ -1,4 +1,4 @@
-/*	$OpenBSD: jump.c,v 1.2 2001/01/29 01:58:02 niklas Exp $	*/
+/*	$OpenBSD: jump.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -181,7 +181,7 @@ jump_loc(pos, sline)
 	POSITION pos;
 	int sline;
 {
-	register int nline;
+	int nline;
 	POSITION tpos;
 	POSITION bpos;
 

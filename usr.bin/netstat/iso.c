@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.c,v 1.7 1998/02/27 12:07:36 deraadt Exp $	*/
+/*	$OpenBSD: iso.c,v 1.8 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: iso.c,v 1.12 1995/10/03 21:42:38 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: iso.c,v 1.7 1998/02/27 12:07:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: iso.c,v 1.8 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ iso_protopr(off, name)
 	char *name;
 {
 	struct isopcb cb;
-	register struct isopcb *prev, *next;
+	struct isopcb *prev, *next;
 
 	if (off == 0) {
 		printf("%s control block: symbol not in namelist\n", name);
@@ -381,7 +381,7 @@ tp_inproto(pcb)
 #ifdef notdef
 char *
 isonetname(iso)
-	register struct iso_addr *iso;
+	struct iso_addr *iso;
 {
 	struct sockaddr_iso sa;
 	struct iso_hostent *ihe = 0;
@@ -413,7 +413,7 @@ isonetname(iso)
 
 static void
 isonetprint(iso, sufx, sufxlen, islocal)
-	register struct iso_addr *iso;
+	struct iso_addr *iso;
 	char *sufx;
 	u_short	sufxlen;
 	int islocal;
@@ -483,7 +483,7 @@ x25_protopr(off, name)
 		"ACKWAIT",
 		"OPEN",
 	};
-	register struct isopcb *prev, *next;
+	struct isopcb *prev, *next;
 	struct x25_pcb xpcb;
 
 	if (off == 0) {
@@ -561,7 +561,7 @@ tp_stats(off, name)
 
 static void
 tprintstat(s, indent)
-	register struct tp_stat *s;
+	struct tp_stat *s;
 	int indent;
 {
 	fprintf(OUT,
@@ -641,7 +641,7 @@ tprintstat(s, indent)
 	fprintf(OUT,
 		"\t%*sM:L ( M mbuf chains of length L)\n", indent, " ");
 	{
-		register int j;
+		int j;
 
 		fprintf(OUT, "\t%*s%ld: over 16\n", indent, " ",
 		s->ts_mb_len_distr[0]);
@@ -682,7 +682,7 @@ tprintstat(s, indent)
 		"\t%*s%ld tp 0 connection%s\n",  indent, " ",
 		s->ts_tp0_conn ,plural(s->ts_tp0_conn));
     {
-		register int j;
+		int j;
 		static char *name[]= {
 			"~LOCAL, PDN",
 			"~LOCAL,~PDN",
@@ -813,7 +813,7 @@ tprintstat(s, indent)
 
 static void
 isonetprint(siso, islocal)
-	register struct sockaddr_iso *siso;
+	struct sockaddr_iso *siso;
 	int islocal;
 {
 	hexprint(siso->siso_nlen, siso->siso_addr.isoa_genaddr, "{}");
@@ -833,9 +833,9 @@ hexprint(n, buf, delim)
 	int n;
 	char *buf, *delim;
 {
-	register u_char *in = (u_char *)buf, *top = in + n;
-	register char *out = obuf;
-	register int i;
+	u_char *in = (u_char *)buf, *top = in + n;
+	char *out = obuf;
+	int i;
 
 	if (n == 0)
 		return;

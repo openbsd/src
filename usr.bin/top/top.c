@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.13 2001/11/17 19:57:36 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.14 2001/11/19 19:02:17 mpech Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -105,9 +105,9 @@ int  argc;
 char *argv[];
 
 {
-    register int i;
-    register int active_procs;
-    register int change;
+    int i;
+    int active_procs;
+    int change;
 
     struct system_info system_info;
     struct statics statics;

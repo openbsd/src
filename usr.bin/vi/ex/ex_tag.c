@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.8 2001/01/29 01:58:44 niklas Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.9 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1252,9 +1252,9 @@ ctag_file(sp, tfp, name, dirp, dlenp)
 
 static char *
 binary_search(string, front, back)
-	register char *string, *front, *back;
+	char *string, *front, *back;
 {
-	register char *p;
+	char *p;
 
 	p = front + (back - front) / 2;
 	SKIP_PAST_NEWLINE(p, back);
@@ -1315,7 +1315,7 @@ linear_search(string, front, back)
  */
 static int
 compare(s1, s2, back)
-	register char *s1, *s2, *back;
+	char *s1, *s2, *back;
 {
 	for (; *s1 && s2 < back && (*s2 != '\t' && *s2 != ' '); ++s1, ++s2)
 		if (*s1 != *s2)

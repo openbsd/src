@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.6 1998/02/27 12:07:37 deraadt Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.7 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -94,8 +94,8 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 	u_long mfchash;
 	struct vif viftable[MAXVIFS];
 	struct mfc *mfcp, mfc;
-	register struct vif *v;
-	register vifi_t vifi;
+	struct vif *v;
+	vifi_t vifi;
 	int i;
 	int banner_printed;
 	int saved_nflag;

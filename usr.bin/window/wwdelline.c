@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwdelline.c,v 1.3 1997/02/25 00:04:47 downsj Exp $	*/
+/*	$OpenBSD: wwdelline.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwdelline.c,v 1.3 1995/09/28 10:35:24 tls Exp $	*/
 
 /*
@@ -41,19 +41,19 @@
 #if 0
 static char sccsid[] = "@(#)wwdelline.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwdelline.c,v 1.3 1997/02/25 00:04:47 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwdelline.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
 wwdelline(w, row)
-register struct ww *w;
+struct ww *w;
 int row;
 {
-	register i;
-	register union ww_char **cpp, **cqq;
-	register union ww_char *cp;
+	int i;
+	union ww_char **cpp, **cqq;
+	union ww_char *cp;
 	int row1, row2;
 	char deleted;
 	int visible;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2001/07/31 14:32:15 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 2001/07/31 14:32:15 mpech Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -253,7 +253,7 @@ modecmd(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct modes *p;
+	struct modes *p;
 	char *sep;
 
 	if (argc < 2) {
@@ -320,8 +320,8 @@ put(argc, argv)
 	char *argv[];
 {
 	int fd;
-	register int n;
-	register char *cp, *targ;
+	int n;
+	char *cp, *targ;
 
 	if (argc < 2) {
 		strcpy(line, "send ");
@@ -413,8 +413,8 @@ get(argc, argv)
 	char *argv[];
 {
 	int fd;
-	register int n;
-	register char *cp;
+	int n;
+	char *cp;
 	char *src;
 
 	if (argc < 2) {
@@ -578,7 +578,7 @@ char *
 tail(filename)
 	char *filename;
 {
-	register char *s;
+	char *s;
 
 	while (*filename) {
 		s = strrchr(filename, '/');
@@ -597,7 +597,7 @@ tail(filename)
 static __dead void
 command()
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	for (;;) {
 		printf("%s> ", prompt);
@@ -629,11 +629,11 @@ command()
 
 struct cmd *
 getcmd(name)
-	register char *name;
+	char *name;
 {
-	register char *p, *q;
-	register struct cmd *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 
 	longest = 0;
 	nmatches = 0;
@@ -662,8 +662,8 @@ getcmd(name)
 static int
 makeargv()
 {
-	register char *cp;
-	register char **argp = margv;
+	char *cp;
+	char **argp = margv;
 	int ret = 0;
 
 	margc = 0;
@@ -706,7 +706,7 @@ help(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	if (argc == 1) {
 		printf("Commands may be abbreviated.  Commands are:\n\n");
@@ -715,7 +715,7 @@ help(argc, argv)
 		return;
 	}
 	while (--argc > 0) {
-		register char *arg;
+		char *arg;
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwadd.c,v 1.4 1997/02/25 00:04:37 downsj Exp $	*/
+/*	$OpenBSD: wwadd.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwadd.c,v 1.4 1996/02/08 21:48:56 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwadd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwadd.c,v 1.4 1997/02/25 00:04:37 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwadd.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,11 +51,11 @@ static char rcsid[] = "$OpenBSD: wwadd.c,v 1.4 1997/02/25 00:04:37 downsj Exp $"
  * Stick w1 behind w2.
  */
 wwadd(w1, w2)
-register struct ww *w1;
+struct ww *w1;
 struct ww *w2;
 {
-	register i;
-	register struct ww *w;
+	int i;
+	struct ww *w;
 
 	w1->ww_order = w2->ww_order + 1;
 	w1->ww_back = w2;
@@ -66,9 +66,9 @@ struct ww *w2;
 	for (w = w1->ww_forw; w != &wwhead; w = w->ww_forw)
 		w->ww_order++;
 	for (i = w1->ww_i.t; i < w1->ww_i.b; i++) {
-		register j;
-		register unsigned char *smap = wwsmap[i];
-		register char *win = w1->ww_win[i];
+		int j;
+		unsigned char *smap = wwsmap[i];
+		char *win = w1->ww_win[i];
 		union ww_char *ns = wwns[i];
 		union ww_char *buf = w1->ww_buf[i];
 		int nvis = 0;

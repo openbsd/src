@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_rw.c,v 1.8 2001/07/17 02:13:29 pvalchev Exp $	*/
+/*	$OpenBSD: des_rw.c,v 1.9 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: des_rw.c,v 1.2 1995/03/21 07:58:30 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)des_rw.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: des_rw.c,v 1.8 2001/07/17 02:13:29 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: des_rw.c,v 1.9 2001/11/19 19:02:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ desrw_clear_key()
 int
 des_read(fd, buf, len)
 	int fd;
-	register char *buf;
+	char *buf;
 	int len;
 {
 	long net_len, rd_len;

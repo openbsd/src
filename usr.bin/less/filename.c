@@ -1,4 +1,4 @@
-/*	$OpenBSD: filename.c,v 1.2 2001/01/29 01:58:01 niklas Exp $	*/
+/*	$OpenBSD: filename.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -89,7 +89,7 @@ dirfile(dirname, filename)
 homefile(filename)
 	char *filename;
 {
-	register char *pathname;
+	char *pathname;
 
 	/*
 	 * Try $HOME/filename.
@@ -124,7 +124,7 @@ homefile(filename)
 	public char *
 find_helpfile()
 {
-	register char *helpfile;
+	char *helpfile;
 	
 	if ((helpfile = getenv("LESSHELP")) != NULL)
 		return (save(helpfile));
@@ -144,9 +144,9 @@ find_helpfile()
 fexpand(s)
 	char *s;
 {
-	register char *fr, *to;
-	register int n;
-	register char *e;
+	char *fr, *to;
+	int n;
+	char *e;
 
 	/*
 	 * Make one pass to see how big a buffer we 
@@ -542,10 +542,10 @@ close_altfile(altfilename, filename, pipefd)
 glob(filename)
 	char *filename;
 {
-	register char *gfilename;
-	register char *p;
-	register int len;
-	register int n;
+	char *gfilename;
+	char *p;
+	int len;
+	int n;
 	struct find_t fnd;
 	char drive[_MAX_DRIVE];
 	char dir[_MAX_DIR];
@@ -642,7 +642,7 @@ close_altfile(altfilename, filename)
 bad_file(filename)
 	char *filename;
 {
-	register char *m;
+	char *m;
 	struct stat statbuf;
 
 	if (stat(filename, &statbuf) < 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwmisc.c,v 1.4 1997/02/25 00:04:59 downsj Exp $	*/
+/*	$OpenBSD: wwmisc.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwmisc.c,v 1.4 1996/02/08 20:45:10 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwmisc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwmisc.c,v 1.4 1997/02/25 00:04:59 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwmisc.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,10 @@ static char rcsid[] = "$OpenBSD: wwmisc.c,v 1.4 1997/02/25 00:04:59 downsj Exp $
  * Sufficient but not necessary test for total visibility.
  */
 wwvisible(w)
-register struct ww *w;
+struct ww *w;
 {
-	register i;
-	register nvis = 0;
+	int i;
+	int nvis = 0;
 
 	for (i = w->ww_i.t; i < w->ww_i.b; i++)
 		nvis += w->ww_nvis[i];

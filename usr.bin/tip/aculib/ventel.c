@@ -1,4 +1,4 @@
-/*	$OpenBSD: ventel.c,v 1.6 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: ventel.c,v 1.7 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ventel.c,v 1.6 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: ventel.c,v 1.7 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -65,16 +65,16 @@ static	void echo();
  */
 #define delay(num,denom) busyloop(CPUSPEED*num/denom)
 #define CPUSPEED 1000000	/* VAX 780 is 1MIPS */
-#define DELAY(n) do { register long N = (n); while (--N > 0); } while (0)
+#define DELAY(n) do { long N = (n); while (--N > 0); } while (0)
 #define busyloop(n) do { DELAY(n); } while (0)
 
 int
 ven_dialer(num, acu)
-	register char *num;
+	char *num;
 	char *acu;
 {
-	register char *cp;
-	register int connected = 0;
+	char *cp;
+	int connected = 0;
 	char *msg, line[80];
 	struct termios	cntrl;
 
@@ -154,7 +154,7 @@ ven_abort()
 
 static void
 echo(s)
-	register char *s;
+	char *s;
 {
 	char c;
 
@@ -186,10 +186,10 @@ sigALRM()
 
 static int
 gobble(match, response)
-	register char match;
+	char match;
 	char response[];
 {
-	register char *cp = response;
+	char *cp = response;
 	sig_t f;
 	char c;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tttermcap.c,v 1.3 1997/02/25 00:04:25 downsj Exp $	*/
+/*	$OpenBSD: tttermcap.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: tttermcap.c,v 1.3 1995/09/28 10:34:52 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tttermcap.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: tttermcap.c,v 1.3 1997/02/25 00:04:25 downsj Exp $";
+static char rcsid[] = "$OpenBSD: tttermcap.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ struct tt_str *
 tttgetstr(str)
 	char *str;
 {
-	register struct tt_str *s;
+	struct tt_str *s;
 
 	if ((str = tgetstr(str, &tt_strp)) == 0)
 		return 0;
@@ -80,7 +80,7 @@ struct tt_str *
 ttxgetstr(str)
 	char *str;
 {
-	register struct tt_str *s;
+	struct tt_str *s;
 	char buf[100];
 	char *bufp = buf;
 
@@ -98,7 +98,7 @@ ttxgetstr(str)
 tttgoto(s, col, row)
 	struct tt_str *s;
 {
-	register char *p = s->ts_str;
+	char *p = s->ts_str;
 
 	ttputs(tgoto(p, col, row));
 	for (p += s->ts_n; *--p == 0;)
@@ -113,7 +113,7 @@ ttpgoto(s, col, row, n)
 }
 
 ttstrcmp(a, b)
-	register struct tt_str *a, *b;
+	struct tt_str *a, *b;
 {
 	int n, r;
 

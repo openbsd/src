@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecs.c,v 1.4 2001/06/17 07:30:42 deraadt Exp $	*/
+/*	$OpenBSD: ecs.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
 
 /* ecs - equivalence class routines */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/ecs.c,v 1.4 2001/06/17 07:30:42 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/ecs.c,v 1.5 2001/11/19 19:02:14 mpech Exp $ */
 
 #include "flexdef.h"
 
@@ -144,7 +144,7 @@ int lenccl, fwd[], bck[], llsiz, NUL_mapping;
 			{ /* look for the symbol in the character class */
 			for ( ; j < lenccl; ++j )
 				{
-				register int ccl_char;
+				int ccl_char;
 
 				if ( NUL_mapping && ccls[j] == 0 )
 					ccl_char = NUL_mapping;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.4 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: arcs.c,v 1.4 2001/08/12 12:03:03 heko Exp $";
+static char rcsid[] = "$OpenBSD: arcs.c,v 1.5 2001/11/19 19:02:14 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -359,8 +359,8 @@ timepropagate( parentp )
 void
 cyclelink()
 {
-    register nltype	*nlp;
-    register nltype	*cyclenlp;
+    nltype	*nlp;
+    nltype	*cyclenlp;
     int			cycle;
     nltype		*memberp;
     arctype		*arcp;

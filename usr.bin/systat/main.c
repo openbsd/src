@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.16 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.17 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -230,7 +230,7 @@ void
 display(signo)
 	int signo;
 {
-	register int i, j;
+	int i, j;
 
 	/* Get the load average over the last minute. */
 	(void) getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));

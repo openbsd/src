@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.13 2001/11/02 16:25:30 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.14 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.13 2001/11/02 16:25:30 deraadt Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.14 2001/11/19 19:02:18 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register char *cp;
+	char *cp;
 	time_t atime;
 	uid_t myuid;
 	int msgsok, myttyfd;
@@ -251,8 +251,8 @@ do_write(tty, mytty, myuid)
 	char *tty, *mytty;
 	uid_t myuid;
 {
-	register char *login, *nows;
-	register struct passwd *pwd;
+	char *login, *nows;
+	struct passwd *pwd;
 	time_t now;
 	char path[MAXPATHLEN], host[MAXHOSTNAMELEN], line[512];
 
@@ -303,9 +303,9 @@ done(int sig)
  */
 void
 wr_fputs(s)
-	register char *s;
+	char *s;
 {
-	register u_char c;
+	u_char c;
 	char visout[5], *s2;
 
 #define	PUTC(c)	if (putchar(c) == EOF) goto err;

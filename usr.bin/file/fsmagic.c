@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsmagic.c,v 1.5 1999/12/06 00:32:29 deraadt Exp $	*/
+/*	$OpenBSD: fsmagic.c,v 1.6 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -53,7 +53,7 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: fsmagic.c,v 1.5 1999/12/06 00:32:29 deraadt Exp $";
+static char *moduleid = "$OpenBSD: fsmagic.c,v 1.6 2001/11/19 19:02:13 mpech Exp $";
 #endif	/* lint */
 
 int
@@ -108,7 +108,7 @@ struct stat *sb;
 	case S_IFLNK:
 		{
 			char buf[BUFSIZ+4];
-			register int nch;
+			int nch;
 			struct stat tstatbuf;
 
 			if ((nch = readlink(fn, buf, BUFSIZ-1)) <= 0) {

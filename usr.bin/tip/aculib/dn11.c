@@ -1,4 +1,4 @@
-/*	$OpenBSD: dn11.c,v 1.4 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: dn11.c,v 1.5 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: dn11.c,v 1.4 1995/10/29 00:49:53 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dn11.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: dn11.c,v 1.4 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: dn11.c,v 1.5 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -56,7 +56,7 @@ dn_dialer(num, acu)
 	char *num, *acu;
 {
 	int lt, nw;
-	register int timelim;
+	int timelim;
 	struct termios cntrl;
 
 	if (boolean(value(VERBOSE)))

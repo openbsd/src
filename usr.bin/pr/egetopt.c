@@ -1,4 +1,4 @@
-/*	$OpenBSD: egetopt.c,v 1.3 1999/05/23 17:37:41 millert Exp $	*/
+/*	$OpenBSD: egetopt.c,v 1.4 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: egetopt.c,v 1.3 1999/05/23 17:37:41 millert Exp $";
+static char *rcsid = "$OpenBSD: egetopt.c,v 1.4 2001/11/19 19:02:15 mpech Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -76,9 +76,9 @@ egetopt(nargc, nargv, ostr)
 	const char *ostr;
 {
 	static char *place = EMSG;	/* option letter processing */
-	register char *oli;		/* option letter list index */
+	char *oli;			/* option letter list index */
 	static int delim;		/* which option delimeter */
-	register char *p;
+	char *p;
 	static char savec = '\0';
 
 	if (savec != '\0') {

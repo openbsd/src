@@ -1,4 +1,4 @@
-/* $OpenBSD: pwd_gensalt.c,v 1.10 2001/06/18 21:09:24 millert Exp $ */
+/* $OpenBSD: pwd_gensalt.c,v 1.11 2001/11/19 19:02:15 mpech Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -139,9 +139,9 @@ static unsigned char itoa64[] =	 /* 0 ... 63 => ascii - 64 */
 
 void
 to64(s, v, n)
-	register char *s;
-	register int32_t v;
-	register int n;
+	char *s;
+	int32_t v;
+	int n;
 {
 	while (--n >= 0) {
 		*s++ = itoa64[v&0x3f];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttgeneric.c,v 1.3 1997/02/25 00:04:22 downsj Exp $	*/
+/*	$OpenBSD: ttgeneric.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: ttgeneric.c,v 1.3 1995/09/28 10:34:45 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttgeneric.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: ttgeneric.c,v 1.3 1997/02/25 00:04:22 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ttgeneric.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,9 +139,9 @@ char new;
 }
 
 gen_setmodes(new)
-register new;
+int new;
 {
-	register diff;
+	int diff;
 
 	diff = new ^ tt.tt_modes;
 	if (diff & WWM_REV) {
@@ -202,7 +202,7 @@ gen_delline(n)
 }
 
 gen_putc(c)
-register char c;
+char c;
 {
 	if (tt.tt_insert)
 		gen_setinsert(0);
@@ -219,8 +219,8 @@ register char c;
 }
 
 gen_write(p, n)
-	register char *p;
-	register n;
+	char *p;
+	int n;
 {
 	if (tt.tt_insert)
 		gen_setinsert(0);
@@ -238,7 +238,7 @@ gen_write(p, n)
 }
 
 gen_move(row, col)
-register int row, col;
+int row, col;
 {
 	if (tt.tt_row == row && tt.tt_col == col)
 		return;
@@ -330,7 +330,7 @@ gen_clear()
 }
 
 gen_inschar(c)
-register char c;
+char c;
 {
 	if (!tt.tt_insert)
 		gen_setinsert(1);

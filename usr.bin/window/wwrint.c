@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwrint.c,v 1.4 1997/02/25 00:05:06 downsj Exp $	*/
+/*	$OpenBSD: wwrint.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwrint.c,v 1.4 1995/12/21 10:46:24 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwrint.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwrint.c,v 1.4 1997/02/25 00:05:06 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwrint.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$OpenBSD: wwrint.c,v 1.4 1997/02/25 00:05:06 downsj Exp $
 void
 wwrint()
 {
-	register n;
+	int n;
 
 	wwnread++;
 	n = read(0, wwibq, wwibe - wwibq);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwinit.c,v 1.10 2000/04/15 05:22:14 millert Exp $	*/
+/*	$OpenBSD: wwinit.c,v 1.11 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwinit.c,v 1.11 1996/02/08 21:49:07 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: wwinit.c,v 1.10 2000/04/15 05:22:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwinit.c,v 1.11 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ static char rcsid[] = "$OpenBSD: wwinit.c,v 1.10 2000/04/15 05:22:14 millert Exp
 
 wwinit()
 {
-	register i, j;
+	int i, j;
 	char *kp;
 	sigset_t sigset, osigset;
 
@@ -350,12 +350,12 @@ bad:
 }
 
 wwaddcap(cap, kp)
-	register char *cap;
-	register char **kp;
+	char *cap;
+	char **kp;
 {
 	char tbuf[512];
 	char *tp = tbuf;
-	register char *str, *p;
+	char *str, *p;
 
 	if ((str = tgetstr(cap, &tp)) != 0) {
 		while (*(*kp)++ = *cap++)
@@ -372,8 +372,8 @@ wwaddcap(cap, kp)
 }
 
 wwaddcap1(cap, kp)
-	register char *cap;
-	register char **kp;
+	char *cap;
+	char **kp;
 {
 	while (*(*kp)++ = *cap++)
 		;
@@ -382,7 +382,7 @@ wwaddcap1(cap, kp)
 
 wwstart()
 {
-	register i;
+	int i;
 
 	(void) wwsettty(0, &wwnewtty);
 	for (i = 0; i < wwnrow; i++)
@@ -392,7 +392,7 @@ wwstart()
 
 wwstart1()
 {
-	register i, j;
+	int i, j;
 
 	for (i = 0; i < wwnrow; i++)
 		for (j = 0; j < wwncol; j++) {
@@ -411,7 +411,7 @@ wwstart1()
  */
 wwreset()
 {
-	register i;
+	int i;
 
 	xxreset();
 	for (i = 0; i < wwnrow; i++)

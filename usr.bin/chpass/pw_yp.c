@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.12 1999/12/15 21:31:42 deraadt Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.13 2001/11/19 19:02:13 mpech Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.12 1999/12/15 21:31:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.13 2001/11/19 19:02:13 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ pw_yp(pw, uid)
 
 static char *
 pwskip(p)
-	register char *p;
+	char *p;
 {
 	while (*p && *p != ':' && *p != '\n')
 		++p;
@@ -191,7 +191,7 @@ interpret(pwent, line)
 	struct passwd *pwent;
 	char *line;
 {
-	register char	*p = line;
+	char	*p = line;
 
 	pwent->pw_passwd = "*";
 	pwent->pw_uid = 0;

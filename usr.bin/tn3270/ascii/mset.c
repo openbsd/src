@@ -1,4 +1,4 @@
-/*	$OpenBSD: mset.c,v 1.2 1996/06/26 05:41:11 deraadt Exp $	*/
+/*	$OpenBSD: mset.c,v 1.3 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mset.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: mset.c,v 1.2 1996/06/26 05:41:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mset.c,v 1.3 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -114,10 +114,10 @@ struct regstate *regptr, *sptr;
 
 static struct regstate *
 doRegister(regptr)
-register struct regstate *regptr;
+struct regstate *regptr;
 {
     static struct regstate *pivot = regstates;
-    register struct regstate *sptr = pivot;
+    struct regstate *sptr = pivot;
     int check;
 
     if (pivot == regstates) {		/* first time called */
@@ -179,11 +179,11 @@ static char savename[20] = " ";  /* for deciding if name is new */
 
 static void
 printString(string, begin, tc_name)
-register char *string;
+char *string;
 char *begin, *tc_name;
 {
-    register char *st1, *st2;
-    register int pchar;
+    char *st1, *st2;
+    int pchar;
     static char suffix = 'A';
     int new = strcmp(savename, tc_name);
     char delim = new ? ';' : '|';

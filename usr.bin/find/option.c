@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.12 2000/07/08 16:09:34 millert Exp $	*/
+/*	$OpenBSD: option.c,v 1.13 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: option.c,v 1.12 2000/07/08 16:09:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: option.c,v 1.13 2001/11/19 19:02:13 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -112,7 +112,7 @@ PLAN *
 find_create(argvp)
 	char ***argvp;
 {
-	register OPTION *p;
+	OPTION *p;
 	PLAN *new;
 	char **argv;
 

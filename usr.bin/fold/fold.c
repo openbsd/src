@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.4 2001/07/09 21:59:02 pjanzen Exp $	*/
+/*	$OpenBSD: fold.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: fold.c,v 1.4 2001/07/09 21:59:02 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fold.c,v 1.5 2001/11/19 19:02:14 mpech Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -68,7 +68,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int ch;
+	int ch;
 	int width;
 	char *p;
 
@@ -130,12 +130,12 @@ main(argc, argv)
  */
 static void
 fold(width)
-	register int width;
+	int width;
 {
 	static char *buf = NULL;
 	static int   buf_max = 0;
-	register int ch, col;
-	register int indx;
+	int ch, col;
+	int indx;
 
 	col = indx = 0;
 	while ((ch = getchar()) != EOF) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2000/12/12 16:23:27 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 2000/12/12 16:23:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.16 2001/11/19 19:02:13 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,9 +84,9 @@ int permission __P((char *));
 void setfile __P((char *, struct stat *));
 void usage __P((void));
 int compress
-	__P((const char *, const char *, register struct compressor *, int));
+	__P((const char *, const char *, struct compressor *, int));
 int decompress
-	__P((const char *, const char *, register struct compressor *, int));
+	__P((const char *, const char *, struct compressor *, int));
 struct compressor *check_method __P((int, const char *));
 
 struct stat sb, osb;
@@ -325,13 +325,13 @@ int
 compress(in, out, method, bits)
 	const char *in;
 	const char *out;
-	register struct compressor *method;
+	struct compressor *method;
 	int bits;
 {
-	register int ifd;
+	int ifd;
 	int ofd;
-	register void *cookie;
-	register ssize_t nr;
+	void *cookie;
+	ssize_t nr;
 	u_char buf[Z_BUFSIZE];
 	int error;
 
@@ -384,7 +384,7 @@ check_method(fd, out)
 	int fd;
 	const char *out;
 {
-	register struct compressor *method;
+	struct compressor *method;
 
 	for (method = &c_table[0];
 	     method->name != NULL &&
@@ -402,13 +402,13 @@ int
 decompress(in, out, method, bits)
 	const char *in;
 	const char *out;
-	register struct compressor *method;
+	struct compressor *method;
 	int bits;
 {
 	int ifd;
-	register int ofd;
-	register void *cookie;
-	register ssize_t nr;
+	int ofd;
+	void *cookie;
+	ssize_t nr;
 	u_char buf[Z_BUFSIZE];
 	int error;
 
@@ -467,7 +467,7 @@ decompress(in, out, method, bits)
 void
 setfile(name, fs)
 	char *name;
-	register struct stat *fs;
+	struct stat *fs;
 {
 	static struct timeval tv[2];
 

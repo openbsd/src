@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwbox.c,v 1.3 1997/02/25 00:04:39 downsj Exp $	*/
+/*	$OpenBSD: wwbox.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwbox.c,v 1.3 1995/09/28 10:35:11 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwbox.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwbox.c,v 1.3 1997/02/25 00:04:39 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwbox.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,12 +49,12 @@ static char rcsid[] = "$OpenBSD: wwbox.c,v 1.3 1997/02/25 00:04:39 downsj Exp $"
 #include "tt.h"
 
 wwbox(w, r, c, nr, nc)
-register struct ww *w;
-register r, c;
+struct ww *w;
+int r, c;
 int nr, nc;
 {
-	register r1, c1;
-	register i;
+	int r1, c1;
+	int i;
 
 	r1 = r + nr - 1;
 	c1 = c + nc - 1;

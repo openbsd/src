@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.10 2000/06/30 16:00:13 millert Exp $	*/
+/*	$OpenBSD: apprentice.c,v 1.11 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -36,7 +36,7 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: apprentice.c,v 1.10 2000/06/30 16:00:13 millert Exp $";
+static char *moduleid = "$OpenBSD: apprentice.c,v 1.11 2001/11/19 19:02:13 mpech Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -425,14 +425,14 @@ char **p;
  */
 static char *
 getstr(s, p, plen, slen)
-register char	*s;
-register char	*p;
+char	*s;
+char	*p;
 int	plen, *slen;
 {
 	char	*origs = s, *origp = p;
 	char	*pmax = p + plen - 1;
-	register int	c;
-	register int	val;
+	int	c;
+	int	val;
 
 	while ((c = *s++) != '\0') {
 		if (isspace((unsigned char) c))
@@ -547,7 +547,7 @@ FILE *fp;
 const char *s;
 int len;
 {
-	register char	c;
+	char	c;
 
 	for (;;) {
 		c = *s++;

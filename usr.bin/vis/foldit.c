@@ -1,4 +1,4 @@
-/*	$OpenBSD: foldit.c,v 1.2 1996/06/26 05:42:37 deraadt Exp $	*/
+/*	$OpenBSD: foldit.c,v 1.3 2001/11/19 19:02:17 mpech Exp $	*/
 /*	$NetBSD: foldit.c,v 1.4 1994/12/20 16:13:02 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)foldit.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: foldit.c,v 1.2 1996/06/26 05:42:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: foldit.c,v 1.3 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -48,7 +48,7 @@ foldit(chunk, col, max)
 	char *chunk;
 	int col, max;
 {
-	register char *cp;
+	char *cp;
 
 	/*
 	 * Keep track of column position. Insert hidden newline

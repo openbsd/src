@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.7 2001/06/25 04:58:31 pjanzen Exp $	*/
+/*	$OpenBSD: args.c,v 1.8 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: args.c,v 1.7 2001/06/25 04:58:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.8 2001/11/19 19:02:14 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -252,7 +252,7 @@ void
 set_option(arg)
     char *arg;
 {
-    register struct pro *p;
+    struct pro *p;
 
     arg++;			/* ignore leading "-" */
     for (p = pro; p->p_name; p++)

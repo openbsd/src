@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.8 2001/07/09 07:04:51 deraadt Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.9 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: rdist.c,v 6.65 1995/12/12 00:20:39 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.8 2001/07/09 07:04:51 deraadt Exp $";
+"$OpenBSD: rdist.c,v 1.9 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
@@ -88,7 +88,7 @@ static void addhostlist(name, hostlist)
 	char *name;
 	struct namelist **hostlist;
 {
-	register struct namelist *ptr, *new;
+	struct namelist *ptr, *new;
 
 	if (!name || !hostlist)
 		return;
@@ -112,8 +112,8 @@ main(argc, argv, envp)
 	char **envp;
 {
 	struct namelist *hostlist = NULL;
-	register int x;
-	register char *cp;
+	int x;
+	char *cp;
 	int cmdargs = 0;
 	int c;
 
@@ -397,8 +397,8 @@ docmdargs(nargs, args)
 	int nargs;
 	char *args[];
 {
-	register struct namelist *nl, *prev;
-	register char *cp;
+	struct namelist *nl, *prev;
+	char *cp;
 	struct namelist *files, *hosts;
 	struct subcmd *cmds;
 	char *dest;
@@ -447,10 +447,10 @@ docmdargs(nargs, args)
  * Get a list of NAME blocks (mostly for debugging).
  */
 extern char *getnlstr(nl)
-	register struct namelist *nl;
+	struct namelist *nl;
 {
 	static char buf[16384];
-	register int count = 0, len = 0;
+	int count = 0, len = 0;
 
 	(void) sprintf(buf, "(");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dohits.c,v 1.3 1998/05/02 02:27:18 mickey Exp $	*/
+/*	$OpenBSD: dohits.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dohits.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: dohits.c,v 1.3 1998/05/02 02:27:18 mickey Exp $";
+static char rcsid[] = "$OpenBSD: dohits.c,v 1.4 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -80,8 +80,8 @@ dohash(seed, string)
 unsigned int seed;
 char *string;
 {
-    register unsigned int i = seed;
-    register unsigned char c;
+    unsigned int i = seed;
+    unsigned char c;
 
     while (c = *string++) {
 	if (c >= 0x60) {

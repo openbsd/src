@@ -1,4 +1,4 @@
-/*	$OpenBSD: xor.c,v 1.2 2001/01/29 01:58:12 niklas Exp $	*/
+/*	$OpenBSD: xor.c,v 1.3 2001/11/19 19:02:15 mpech Exp $	*/
 
 /* Generic xor handler.
 
@@ -27,8 +27,8 @@ xorb (buf, len)
   char * buf;
   int len;
 {
-  register int x;
-  register char * pb;
+  int x;
+  char * pb;
 
   pb = buf;
   x = len;
@@ -47,8 +47,8 @@ main (argc, argv)
   int argc;
   char ** argv;
 {
-  register int x = 0;
-  register int y;
+  int x = 0;
+  int y;
 
 /* manually preload; xor-with-0xFF is all too common */
   memset (bytes, 0, sizeof (bytes));

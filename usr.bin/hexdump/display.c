@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.7 2001/11/02 19:41:06 mickey Exp $	*/
+/*	$OpenBSD: display.c,v 1.8 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.7 2001/11/02 19:41:06 mickey Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.8 2001/11/19 19:02:14 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -139,11 +139,11 @@ void
 display()
 {
 	extern FU *endfu;
-	register FS *fs;
-	register FU *fu;
-	register PR *pr;
-	register int cnt;
-	register u_char *bp;
+	FS *fs;
+	FU *fu;
+	PR *pr;
+	int cnt;
+	u_char *bp;
 	off_t saveaddress;
 	u_char savech, *savebp, *get();
 
@@ -195,7 +195,7 @@ bpad(pr)
 	PR *pr;
 {
 	static char *spec = " -0+#";
-	register char *p1, *p2;
+	char *p1, *p2;
 
 	/*
 	 * remove all conversion flags; '-' is the only one valid
@@ -218,7 +218,7 @@ get()
 	extern int length;
 	static int ateof = 1;
 	static u_char *curp, *savp;
-	register int n;
+	int n;
 	int need, nread;
 	int valid_save = 0;
 	u_char *tmpp;

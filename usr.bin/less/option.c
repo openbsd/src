@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.2 2001/01/29 01:58:03 niklas Exp $	*/
+/*	$OpenBSD: option.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -57,8 +57,8 @@ extern char *every_first_cmd;
 scan_option(s)
 	char *s;
 {
-	register struct option *o;
-	register int c;
+	struct option *o;
+	int c;
 	char *str;
 	int set_default;
 	PARG parg;
@@ -207,8 +207,8 @@ toggle_option(c, s, how_toggle)
 	char *s;
 	int how_toggle;
 {
-	register struct option *o;
-	register int num;
+	struct option *o;
+	int num;
 	int err;
 	PARG parg;
 
@@ -420,7 +420,7 @@ propt(c)
 single_char_option(c)
 	int c;
 {
-	register struct option *o;
+	struct option *o;
 
 	o = findopt(c);
 	if (o == NULL)
@@ -436,7 +436,7 @@ single_char_option(c)
 opt_prompt(c)
 	int c;
 {
-	register struct option *o;
+	struct option *o;
 
 	o = findopt(c);
 	if (o == NULL || (o->otype & (STRING|NUMBER)) == 0)
@@ -488,7 +488,7 @@ optstring(s, c)
 	char *s;
 	int c;
 {
-	register char *p;
+	char *p;
 
 	if (*s == '\0')
 	{
@@ -515,9 +515,9 @@ getnum(sp, c, errp)
 	int c;
 	int *errp;
 {
-	register char *s;
-	register int n;
-	register int neg;
+	char *s;
+	int n;
+	int neg;
 	PARG parg;
 
 	s = skipsp(*sp);

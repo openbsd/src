@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.5 1998/12/07 18:23:29 deraadt Exp $	*/
+/*	$OpenBSD: str.c,v 1.6 2001/11/19 19:02:17 mpech Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: str.c,v 1.5 1998/12/07 18:23:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.6 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -64,9 +64,9 @@ static void	genseq __P((STR *));
 
 int
 next(s)
-	register STR *s;
+	STR *s;
 {
-	register int ch;
+	int ch;
 
 	switch (s->state) {
 	case EOS:
@@ -122,9 +122,9 @@ next(s)
 
 static int
 bracket(s)
-	register STR *s;
+	STR *s;
 {
-	register char *p;
+	char *p;
 
 	switch (s->str[1]) {
 	case ':':				/* "[:class:]" */
@@ -178,7 +178,7 @@ static void
 genclass(s)
 	STR *s;
 {
-	register int cnt, (*func) __P((int));
+	int cnt, (*func) __P((int));
 	CLASS *cp, tmp;
 	int *p;
 
@@ -294,9 +294,9 @@ genseq(s)
  */
 static int
 backslash(s)
-	register STR *s;
+	STR *s;
 {
-	register int ch, cnt, val;
+	int ch, cnt, val;
 
 	for (cnt = val = 0;;) {
 		ch = *++s->str;

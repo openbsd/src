@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwenviron.c,v 1.5 1998/03/17 04:11:54 deraadt Exp $	*/
+/*	$OpenBSD: wwenviron.c,v 1.6 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwenviron.c,v 1.4 1995/12/21 08:39:50 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwenviron.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.5 1998/03/17 04:11:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.6 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,9 @@ static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.5 1998/03/17 04:11:54 deraadt E
  * Set up the environment of this process to run in window 'wp'.
  */
 wwenviron(wp)
-register struct ww *wp;
+struct ww *wp;
 {
-	register i;
+	int i;
 #ifndef TIOCSCTTY
 	int pgrp = getpid();
 #endif

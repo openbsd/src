@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.3 1997/01/15 23:43:33 millert Exp $	*/
+/*	$OpenBSD: vis.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vis.c,v 1.3 1997/01/15 23:43:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.4 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -135,8 +135,8 @@ process(fp, filename)
 	char *filename;
 {
 	static int col = 0;
-	register char *cp = "\0"+1;	/* so *(cp-1) starts out != '\n' */
-	register int c, rachar; 
+	char *cp = "\0"+1;	/* so *(cp-1) starts out != '\n' */
+	int c, rachar; 
 	char buff[5];
 	
 	c = getc(fp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.20 2000/07/19 19:30:10 mickey Exp $	*/
+/*	$OpenBSD: function.c,v 1.21 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.20 2000/07/19 19:30:10 mickey Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.21 2001/11/19 19:02:13 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -337,10 +337,10 @@ c_empty()
  */
 int
 f_exec(plan, entry)
-	register PLAN *plan;
+	PLAN *plan;
 	FTSENT *entry;
 {
-	register int cnt;
+	int cnt;
 	pid_t pid;
 	int status;
 
@@ -386,8 +386,8 @@ c_exec(argvp, isok)
 	int isok;
 {
 	PLAN *new;			/* node returned */
-	register int cnt;
-	register char **argv, **ap, *p;
+	int cnt;
+	char **argv, **ap, *p;
 
 	isoutput = 1;
     
@@ -438,10 +438,10 @@ c_exec(argvp, isok)
  */
 int
 f_execdir(plan, entry)
-	register PLAN *plan;
+	PLAN *plan;
 	FTSENT *entry;
 {
-	register int cnt;
+	int cnt;
 	pid_t pid;
 	int status, fd;
 	char base[MAXPATHLEN];
@@ -506,8 +506,8 @@ c_execdir(argvp)
 	char ***argvp;
 {
 	PLAN *new;			/* node returned */
-	register int cnt;
-	register char **argv, **ap, *p;
+	int cnt;
+	char **argv, **ap, *p;
 
 	ftsoptions &= ~FTS_NOSTAT;
 	isoutput = 1;
@@ -679,7 +679,7 @@ PLAN *
 c_fstype(arg)
 	char *arg;
 {
-	register PLAN *new;
+	PLAN *new;
     
 	ftsoptions &= ~FTS_NOSTAT;
     
@@ -1433,8 +1433,8 @@ f_expr(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	register PLAN *p;
-	register int state;
+	PLAN *p;
+	int state;
 
 	for (p = plan->p_data[0];
 	    p && (state = (p->eval)(p, entry)); p = p->next);
@@ -1468,8 +1468,8 @@ f_not(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	register PLAN *p;
-	register int state;
+	PLAN *p;
+	int state;
 
 	for (p = plan->p_data[0];
 	    p && (state = (p->eval)(p, entry)); p = p->next);
@@ -1493,8 +1493,8 @@ f_or(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	register PLAN *p;
-	register int state;
+	PLAN *p;
+	int state;
 
 	for (p = plan->p_data[0];
 	    p && (state = (p->eval)(p, entry)); p = p->next);

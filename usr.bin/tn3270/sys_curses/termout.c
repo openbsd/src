@@ -1,4 +1,4 @@
-/*	$OpenBSD: termout.c,v 1.7 2000/10/11 19:28:02 millert Exp $	*/
+/*	$OpenBSD: termout.c,v 1.8 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: termout.c,v 1.7 2000/10/11 19:28:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: termout.c,v 1.8 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -166,9 +166,9 @@ int	where;		/* cursor address */
 
 static int
 WhereTermAttrByte(p)
-register int	p;
+int	p;
 {
-    register int i;
+    int i;
 
     i = p;
 
@@ -207,10 +207,10 @@ static void
 #endif	/* defined(NOT43) */
 SlowScreen()
 {
-    register int is, shouldbe, isattr, shouldattr;
-    register int pointer;
-    register int fieldattr, termattr;
-    register int columnsleft;
+    int is, shouldbe, isattr, shouldattr;
+    int pointer;
+    int fieldattr, termattr;
+    int columnsleft;
 
 #define	NORMAL		0		
 #define	HIGHLIGHT	1		/* Mask bits */
@@ -504,7 +504,7 @@ FastScreen()
  * In particular, we separate out the two cases from the beginning.
  */
     if ((Highest != HighestScreen()) || (Lowest != LowestScreen())) {
-	register int columnsleft;
+	int columnsleft;
 
 	move(ScreenLine(Lowest), ScreenLineOffset(Lowest));
 	p = &Host[Lowest];
@@ -546,7 +546,7 @@ FastScreen()
     } else {		/* Going from Lowest to Highest */
 	unsigned char tmpbuf[MAXNUMBERCOLUMNS+1];
 	ScreenImage *End = &Host[ScreenSize]-1-SaveCorner;
-	register unsigned char *tmp = tmpbuf, *tmpend = tmpbuf+NumberColumns;
+	unsigned char *tmp = tmpbuf, *tmpend = tmpbuf+NumberColumns;
 
 	*tmpend = 0;		/* terminate from the beginning */
 	move(0,0);

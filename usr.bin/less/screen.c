@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.7 2001/01/29 01:58:04 niklas Exp $	*/
+/*	$OpenBSD: screen.c,v 1.8 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -453,7 +453,7 @@ scrsize()
 	public void
 scrsize()
 {
-	register char *s;
+	char *s;
 #ifdef TIOCGWINSZ
 	struct winsize w;
 #else
@@ -673,8 +673,8 @@ get_debug_term()
 get_term()
 {
 	char *sp;
-	register char *t1, *t2;
-	register int hard;
+	char *t1, *t2;
+	int hard;
 	char *term;
 	char termbuf[2048];
 

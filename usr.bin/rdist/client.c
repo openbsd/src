@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.12 1999/03/05 01:36:12 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.13 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.12 1999/03/05 01:36:12 millert Exp $";
+"$OpenBSD: client.c,v 1.13 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)client.c";
@@ -84,7 +84,7 @@ char *remfilename(src, dest, path, rname, destdir)
 	int destdir;
 {
 	extern struct namelist *filelist;
-	register char *lname, *cp;
+	char *lname, *cp;
 	static char buff[BUFSIZ];
 	int srclen, pathlen;
 	char *p;
@@ -146,7 +146,7 @@ int inlist(list, file)
 	struct namelist *list;
 	char *file;
 {
-	register struct namelist *nl;
+	struct namelist *nl;
 
 	for (nl = list; nl != NULL; nl = nl->n_next)
 		if (strcmp(file, nl->n_name) == 0)
@@ -163,7 +163,7 @@ static void runspecial(starget, opts, rname, destdir)
 	char *rname;
 	int destdir;
 {
-	register struct subcmd *sc;
+	struct subcmd *sc;
 	extern struct subcmd *subcmds;
 	char *rfile;
 
@@ -200,7 +200,7 @@ static void addcmdspecialfile(starget, rname, destdir)
 {
 	char *rfile;
 	struct namelist *new;
-	register struct subcmd *sc;
+	struct subcmd *sc;
 	extern struct subcmd *subcmds;
 	int isokay = 0;
 
@@ -227,7 +227,7 @@ static void addcmdspecialfile(starget, rname, destdir)
  */
 static void freecmdspecialfiles()
 {
-	register struct namelist *ptr, *save;
+	struct namelist *ptr, *save;
 
 	for (ptr = updfilelist; ptr; ) {
 		if (ptr->n_name) (void) free(ptr->n_name);
@@ -249,8 +249,8 @@ extern void runcmdspecial(cmd, filev, opts)
 	char **filev;
 	opt_t opts;
 {
-	register struct subcmd *sc;
-	register struct namelist *f;
+	struct subcmd *sc;
+	struct namelist *f;
 	int first = TRUE;
 
 	for (sc = cmd->c_cmds; sc != NULL; sc = sc->sc_next) {
@@ -292,7 +292,7 @@ extern void runcmdspecial(cmd, filev, opts)
 int checkfilename(name)
 	char *name;
 {
-	register char *cp;
+	char *cp;
 
 	if (strchr(name, '\n')) {
 		for (cp = name; *cp; cp++)
@@ -498,7 +498,7 @@ static int sendfile(rname, opts, stb, user, group, destdir)
 static int rmchk(opts)
 	opt_t opts;
 {
-	register u_char *s;
+	u_char *s;
 	struct stat stb;
 	int didupdate = 0;
 	int n;
@@ -772,8 +772,8 @@ static int update(rname, opts, statp)
 	opt_t opts;
 	struct stat *statp;
 {
-	register off_t size;
-	register time_t mtime;
+	off_t size;
+	time_t mtime;
 	unsigned short lmode;
 	unsigned short rmode;
 	char *owner = NULL, *group = NULL;

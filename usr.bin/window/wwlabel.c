@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwlabel.c,v 1.4 1997/02/25 00:04:58 downsj Exp $	*/
+/*	$OpenBSD: wwlabel.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwlabel.c,v 1.4 1996/02/08 21:49:11 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwlabel.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwlabel.c,v 1.4 1997/02/25 00:04:58 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwlabel.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,13 +59,13 @@ struct ww *f;
 char *l;
 {
 	int row;
-	register j;
+	int j;
 	int jj;
-	register char *win;
-	register union ww_char *buf;
-	register union ww_char *ns;
-	register char *fmap;
-	register unsigned char *smap;
+	char *win;
+	union ww_char *buf;
+	union ww_char *ns;
+	char *fmap;
+	unsigned char *smap;
 	char touched;
 	char *p;
 

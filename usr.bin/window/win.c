@@ -1,4 +1,4 @@
-/*	$OpenBSD: win.c,v 1.5 1997/02/25 00:04:32 downsj Exp $	*/
+/*	$OpenBSD: win.c,v 1.6 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: win.c,v 1.8 1996/02/08 21:07:57 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: win.c,v 1.5 1997/02/25 00:04:32 downsj Exp $";
+static char rcsid[] = "$OpenBSD: win.c,v 1.6 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ openwin(id, row, col, nrow, ncol, nline, label, type, uflags, shf, sh)
 char *label;
 char *shf, **sh;
 {
-	register struct ww *w;
+	struct ww *w;
 
 	if (id < 0 && (id = findid()) < 0)
 		return 0;
@@ -113,7 +113,7 @@ char *shf, **sh;
 
 findid()
 {
-	register i;
+	int i;
 
 	for (i = 0; i < NWINDOW && window[i] != 0; i++)
 		;
@@ -127,8 +127,8 @@ findid()
 struct ww *
 findselwin()
 {
-	register struct ww *w, *s = 0;
-	register i;
+	struct ww *w, *s = 0;
+	int i;
 
 	for (i = 0; i < NWINDOW; i++)
 		if ((w = window[i]) != 0 && w != selwin &&
@@ -142,10 +142,10 @@ findselwin()
  * Close a user window.  Close all if w == 0.
  */
 closewin(w)
-register struct ww *w;
+struct ww *w;
 {
 	char didit = 0;
-	register i;
+	int i;
 
 	if (w != 0) {
 		closewin1(w);
@@ -178,7 +178,7 @@ struct ww *
 openiwin(nrow, label)
 char *label;
 {
-	register struct ww *w;
+	struct ww *w;
 
 	if ((w = wwopen(WWT_INTERNAL, 0, nrow, wwncol, 2, 0, 0)) == 0)
 		return 0;
@@ -202,7 +202,7 @@ struct ww *w;
 }
 
 closewin1(w)
-register struct ww *w;
+struct ww *w;
 {
 	if (w == selwin)
 		selwin = 0;
@@ -224,7 +224,7 @@ register struct ww *w;
  * Always reframe() if doreframe is true.
  */
 front(w, doreframe)
-register struct ww *w;
+struct ww *w;
 char doreframe;
 {
 	if (w->ww_back != (isfg(w) ? framewin : fgwin) && !wwvisible(w)) {
@@ -241,7 +241,7 @@ char doreframe;
  * For normal windows, we put it behind the current window.
  */
 addwin(w, fg)
-register struct ww *w;
+struct ww *w;
 char fg;
 {
 	if (fg) {
@@ -257,7 +257,7 @@ char fg;
  * Delete a window.
  */
 deletewin(w)
-register struct ww *w;
+struct ww *w;
 {
 	if (fgwin == w)
 		fgwin = w->ww_back;
@@ -266,7 +266,7 @@ register struct ww *w;
 
 reframe()
 {
-	register struct ww *w;
+	struct ww *w;
 
 	wwunframe(framewin);
 	for (w = wwhead.ww_back; w != &wwhead; w = w->ww_back)
@@ -277,7 +277,7 @@ reframe()
 }
 
 labelwin(w)
-register struct ww *w;
+struct ww *w;
 {
 	int mode = w == selwin ? WWM_REV : 0;
 
@@ -303,7 +303,7 @@ register struct ww *w;
 }
 
 stopwin(w)
-	register struct ww *w;
+	struct ww *w;
 {
 	if (w->ww_pty >= 0 && w->ww_type == WWT_PTY && wwstoptty(w->ww_pty) < 0)
 		error("Can't stop output: %s.", wwerror());
@@ -312,7 +312,7 @@ stopwin(w)
 }
 
 startwin(w)
-	register struct ww *w;
+	struct ww *w;
 {
 	if (w->ww_pty >= 0 && w->ww_type == WWT_PTY && wwstarttty(w->ww_pty) < 0)
 		error("Can't start output: %s.", wwerror());
@@ -321,7 +321,7 @@ startwin(w)
 }
 
 sizewin(w, nrow, ncol)
-register struct ww *w;
+struct ww *w;
 {
 	struct ww *back = w->ww_back;
 
@@ -341,7 +341,7 @@ struct ww *w;
 }
 
 more(w, always)
-register struct ww *w;
+struct ww *w;
 char always;
 {
 	int c;
@@ -357,7 +357,7 @@ char always;
 }
 
 waitnl1(w, prompt)
-register struct ww *w;
+struct ww *w;
 char *prompt;
 {
 	int uc = ISSET(w->ww_wflags, WWW_UNCTRL);

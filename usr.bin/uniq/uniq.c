@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.7 2001/07/12 05:17:28 deraadt Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.8 2001/11/19 19:02:17 mpech Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.7 2001/07/12 05:17:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.8 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -74,7 +74,7 @@ main (argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *t1, *t2;
+	char *t1, *t2;
 	FILE *ifp, *ofp;
 	int ch;
 	char *prevline, *thisline, *p;
@@ -187,9 +187,9 @@ show(ofp, str)
 
 char *
 skip(str)
-	register char *str;
+	char *str;
 {
-	register int infield, nchars, nfields;
+	int infield, nchars, nfields;
 
 	for (nfields = numfields, infield = 0; nfields && *str; ++str)
 		if (isspace(*str)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.42 2001/10/09 09:21:10 brian Exp $	*/
+/*	$OpenBSD: route.c,v 1.43 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.42 2001/10/09 09:21:10 brian Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.43 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,7 @@ pr_encaphdr()
 
 static struct sockaddr *
 kgetsa(dst)
-	register struct sockaddr *dst;
+	struct sockaddr *dst;
 {
 
 	kget(dst, pt_u.u_sa);
@@ -358,7 +358,7 @@ ntreestuff()
 	size_t needed;
 	int mib[6];
 	char *buf, *next, *lim;
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -387,9 +387,9 @@ ntreestuff()
 
 static void
 np_rtentry(rtm)
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 {
-	register struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
+	struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
 #ifdef notdef
 	static int masks_done, banner_printed;
 #endif
@@ -431,14 +431,14 @@ p_sockaddr(sa, mask, flags, width)
 	int flags, width;
 {
 	char workbuf[128], *cplim;
-	register char *cp = workbuf;
+	char *cp = workbuf;
 	size_t n;
 
 	switch (sa->sa_family) {
 	case AF_INET:
 	    {
-		register struct sockaddr_in *sin = (struct sockaddr_in *)sa;
-		register struct sockaddr_in *msin = (struct sockaddr_in *)mask;
+		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+		struct sockaddr_in *msin = (struct sockaddr_in *)mask;
 
 		cp = (sin->sin_addr.s_addr == 0) ? "default" :
 		      ((flags & RTF_HOST) || mask == NULL ?
@@ -488,7 +488,7 @@ p_sockaddr(sa, mask, flags, width)
 		
 	case AF_LINK:
 	    {
-		register struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
+		struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
 
 		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
 		    sdl->sdl_slen == 0)
@@ -497,8 +497,8 @@ p_sockaddr(sa, mask, flags, width)
 		else switch (sdl->sdl_type) {
 		case IFT_ETHER:
 		    {
-			register int i;
-			register u_char *lla = (u_char *)sdl->sdl_data +
+			int i;
+			u_char *lla = (u_char *)sdl->sdl_data +
 			    sdl->sdl_nlen;
 
 			cplim = "";
@@ -531,7 +531,7 @@ p_sockaddr(sa, mask, flags, width)
 	    }
 	default:
 	    {
-		register u_char *s = (u_char *)sa->sa_data, *slim;
+		u_char *s = (u_char *)sa->sa_data, *slim;
 
 		slim = sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
@@ -572,11 +572,11 @@ p_sockaddr(sa, mask, flags, width)
 
 static void
 p_flags(f, format)
-	register int f;
+	int f;
 	char *format;
 {
 	char name[33], *flags;
-	register struct bits *p = bits;
+	struct bits *p = bits;
 
 	for (flags = name; p->b_mask; p++)
 		if (p->b_mask & f)
@@ -587,7 +587,7 @@ p_flags(f, format)
 
 static void
 p_rtentry(rt)
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
 	static struct ifnet ifnet, *lastif;
 	struct sockaddr_storage sock1, sock2;
@@ -652,7 +652,7 @@ char *
 routename(in)
 	in_addr_t in;
 {
-	register char *cp;
+	char *cp;
 	static char line[MAXHOSTNAMELEN];
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN];
@@ -874,15 +874,16 @@ short ns_bh[] = {-1,-1,-1};
 
 char *
 ns_print(sa)
-	register struct sockaddr *sa;
+	struct sockaddr *sa;
 {
-	register struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
+	struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
 	struct ns_addr work;
 	union { union ns_net net_e; u_long long_e; } net;
 	in_port_t port;
 	static char mybuf[50], cport[10], chost[25];
 	char *host = "";
-	register char *p; register u_char *q;
+	char *p;
+	u_char *q;
 
 	work = sns->sns_addr;
 	port = ntohs(work.x_port);
@@ -924,7 +925,7 @@ char *
 ns_phost(sa)
 	struct sockaddr *sa;
 {
-	register struct sockaddr_ns *sns = (struct sockaddr_ns *)sa;
+	struct sockaddr_ns *sns = (struct sockaddr_ns *)sa;
 	struct sockaddr_ns work;
 	static union ns_net ns_zeronet;
 	char *p;
@@ -943,15 +944,15 @@ u_short ipx_bh[] = {0xffff,0xffff,0xffff};
 
 char *
 ipx_print(sa)
-	register struct sockaddr *sa;
+	struct sockaddr *sa;
 {
-	register struct sockaddr_ipx *sipx = (struct sockaddr_ipx*)sa;
+	struct sockaddr_ipx *sipx = (struct sockaddr_ipx*)sa;
 	struct ipx_addr work;
 	union { union ipx_net net_e; u_long long_e; } net;
 	in_port_t port;
 	static char mybuf[50], cport[10], chost[25];
 	char *host = "";
-	register char *q;
+	char *q;
 
 	work = sipx->sipx_addr;
 	port = ntohs(work.ipx_port);
@@ -991,7 +992,7 @@ char *
 ipx_phost(sa)
 	struct sockaddr *sa;
 {
-	register struct sockaddr_ipx *sipx = (struct sockaddr_ipx *)sa;
+	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *)sa;
 	struct sockaddr_ipx work;
 	static union ipx_net ipx_zeronet;
 	char *p;
@@ -1007,7 +1008,7 @@ ipx_phost(sa)
 
 static void
 encap_print(rt)
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
 	struct sockaddr_encap sen1, sen2, sen3;
         struct ipsec_policy ipo;
@@ -1119,7 +1120,7 @@ void
 upHex(p0)
 	char *p0;
 {
-	register char *p = p0;
+	char *p = p0;
 	for (; *p; p++) switch (*p) {
 
 	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: command.c,v 1.3 2001/01/29 01:58:00 niklas Exp $	*/
+/*	$OpenBSD: command.c,v 1.4 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -163,7 +163,7 @@ mca_search()
 	static void
 exec_mca()
 {
-	register char *cbuf;
+	char *cbuf;
 
 	cmd_exec();
 	cbuf = get_cmdbuf();
@@ -412,7 +412,7 @@ mca_char(c)
 	static void
 prompt()
 {
-	register char *p;
+	char *p;
 
 	if (ungotp != NULL && ungotp > ungot)
 	{
@@ -566,7 +566,7 @@ ungetcc(c)
 ungetsc(s)
 	char *s;
 {
-	register char *p;
+	char *p;
 
 	for (p = s + strlen(s) - 1;  p >= s;  p--)
 		ungetcc(*p);
@@ -582,7 +582,7 @@ multi_search(pattern, n)
 	char *pattern;
 	int n;
 {
-	register int nomore;
+	int nomore;
 	IFILE save_ifile;
 	int changed_file;
 
@@ -662,9 +662,9 @@ multi_search(pattern, n)
 	public void
 commands()
 {
-	register int c;
-	register int action;
-	register char *cbuf;
+	int c;
+	int action;
+	char *cbuf;
 	int save_search_type;
 	char *s;
 	char tbuf[2];

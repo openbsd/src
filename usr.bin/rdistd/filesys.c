@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.6 1999/11/26 21:32:38 millert Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.7 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: filesys.c,v 6.24 1996/01/30 01:57:07 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: filesys.c,v 1.6 1999/11/26 21:32:38 millert Exp $";
+"$OpenBSD: filesys.c,v 1.7 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)filesys.c";
@@ -71,7 +71,7 @@ char *find_file(pathname, statbuf, isvalid)
 	static char last_pathname[MAXPATHLEN];
 	static char file[MAXPATHLEN + 3];
 	static struct stat filestat;
-	register char *p;
+	char *p;
 
 	/*
 	 * Mark the statbuf as invalid to start with.
@@ -186,7 +186,7 @@ mntent_t *findmnt(filest, mntinfo)
 	struct stat *filest;
 	struct mntinfo *mntinfo;
 {
-	register struct mntinfo *mi;
+	struct mntinfo *mi;
 
 	for (mi = mntinfo; mi; mi = mi->mi_nxt) {
 		if (mi->mi_mnt->me_flags & MEFLAG_IGNORE)
@@ -205,7 +205,7 @@ int isdupmnt(mnt, mntinfo)
 	mntent_t *mnt;
 	struct mntinfo *mntinfo;
 {
-	register struct mntinfo *m;
+	struct mntinfo *m;
 
 	for (m = mntinfo; m; m = m->mi_nxt)
 		if (strcmp(m->mi_mnt->me_path, mnt->me_path) == 0)
@@ -312,7 +312,7 @@ mntent_t *getmntpt(pathname, statbuf, isvalid)
 	static struct stat filestat;
 	struct stat *pstat;
 	struct mntinfo *tmpmi;
-	register mntent_t *mnt;
+	mntent_t *mnt;
 
 	/*
 	 * Use the supplied stat buffer if not NULL or our own.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xx.c,v 1.4 1998/04/26 22:49:10 millert Exp $	*/
+/*	$OpenBSD: xx.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: xx.c,v 1.3 1995/09/28 10:36:03 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)xx.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: xx.c,v 1.4 1998/04/26 22:49:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: xx.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ xxreset()
 
 xxreset1()
 {
-	register struct xx *xp, *xq;
+	struct xx *xp, *xq;
 
 	for (xp = xx_head; xp != 0; xp = xq) {
 		xq = xp->link;
@@ -115,7 +115,7 @@ xxend()
 struct xx *
 xxalloc()
 {
-	register struct xx *xp;
+	struct xx *xp;
 
 	if (xxbufp > xxbufe)
 		abort();
@@ -134,7 +134,7 @@ xxalloc()
 }
 
 xxfree(xp)
-	register struct xx *xp;
+	struct xx *xp;
 {
 	xp->link = xx_freelist;
 	xx_freelist = xp;
@@ -142,7 +142,7 @@ xxfree(xp)
 
 xxmove(row, col)
 {
-	register struct xx *xp = xx_tail;
+	struct xx *xp = xx_tail;
 
 	if (xp == 0 || xp->cmd != xc_move) {
 		xp = xxalloc();
@@ -154,7 +154,7 @@ xxmove(row, col)
 
 xxscroll(dir, top, bot)
 {
-	register struct xx *xp = xx_tail;
+	struct xx *xp = xx_tail;
 
 	if (xp != 0 && xp->cmd == xc_scroll &&
 	    xp->arg1 == top && xp->arg2 == bot &&
@@ -171,7 +171,7 @@ xxscroll(dir, top, bot)
 
 xxinschar(row, col, c, m)
 {
-	register struct xx *xp;
+	struct xx *xp;
 
 	xp = xxalloc();
 	xp->cmd = xc_inschar;
@@ -183,7 +183,7 @@ xxinschar(row, col, c, m)
 
 xxinsspace(row, col)
 {
-	register struct xx *xp = xx_tail;
+	struct xx *xp = xx_tail;
 
 	if (xp != 0 && xp->cmd == xc_insspace && xp->arg0 == row &&
 	    col >= xp->arg1 && col <= xp->arg1 + xp->arg2) {
@@ -199,7 +199,7 @@ xxinsspace(row, col)
 
 xxdelchar(row, col)
 {
-	register struct xx *xp = xx_tail;
+	struct xx *xp = xx_tail;
 
 	if (xp != 0 && xp->cmd == xc_delchar &&
 	    xp->arg0 == row && xp->arg1 == col) {
@@ -215,7 +215,7 @@ xxdelchar(row, col)
 
 xxclear()
 {
-	register struct xx *xp;
+	struct xx *xp;
 
 	xxreset1();
 	xp = xxalloc();
@@ -224,7 +224,7 @@ xxclear()
 
 xxclreos(row, col)
 {
-	register struct xx *xp = xxalloc();
+	struct xx *xp = xxalloc();
 
 	xp->cmd = xc_clreos;
 	xp->arg0 = row;
@@ -233,7 +233,7 @@ xxclreos(row, col)
 
 xxclreol(row, col)
 {
-	register struct xx *xp = xxalloc();
+	struct xx *xp = xxalloc();
 
 	xp->cmd = xc_clreol;
 	xp->arg0 = row;
@@ -243,7 +243,7 @@ xxclreol(row, col)
 xxwrite(row, col, p, n, m)
 	char *p;
 {
-	register struct xx *xp;
+	struct xx *xp;
 
 	if (xxbufp + n + 1 > xxbufe)
 		xxflush(0);

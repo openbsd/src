@@ -1,4 +1,4 @@
-/*	$OpenBSD: mloop.c,v 1.5 1997/02/25 00:04:10 downsj Exp $	*/
+/*	$OpenBSD: mloop.c,v 1.6 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: mloop.c,v 1.5 1996/02/08 20:45:03 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mloop.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mloop.c,v 1.5 1997/02/25 00:04:10 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mloop.c,v 1.6 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,9 +61,9 @@ mloop()
 				(void) wwgetc();
 			error("Process died.");
 		} else {
-			register struct ww *w = wwcurwin;
-			register char *p;
-			register n;
+			struct ww *w = wwcurwin;
+			char *p;
+			int n;
 
 			if (wwibp >= wwibq) {
 				wwibp = wwibq = wwib;

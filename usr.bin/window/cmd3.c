@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.3 1997/02/25 00:03:57 downsj Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.3 1995/09/28 10:34:07 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.3 1997/02/25 00:03:57 downsj Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static char rcsid[] = "$OpenBSD: cmd3.c,v 1.3 1997/02/25 00:03:57 downsj Exp $";
 #include "string.h"
 
 setescape(esc)
-register char *esc;
+char *esc;
 {
 	if (*esc == '^') {
 		if (esc[1] != 0)
@@ -61,7 +61,7 @@ register char *esc;
 }
 
 setlabel(w, label)
-register struct ww *w;
+struct ww *w;
 char *label;
 {
 	if (w->ww_label != 0)

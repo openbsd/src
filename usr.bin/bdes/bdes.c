@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.5 2001/02/05 08:38:23 deraadt Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.6 2001/11/19 19:02:13 mpech Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.5 2001/02/05 08:38:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bdes.c,v 1.6 2001/11/19 19:02:13 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -191,8 +191,8 @@ main(ac, av)
 {
 	extern int optind;		/* option (argument) number */
 	extern char *optarg;		/* argument to option if any */
-	register int i;			/* counter in a for loop */
-	register char *p;		/* used to obtain the key */
+	int i;				/* counter in a for loop */
+	char *p;			/* used to obtain the key */
 	Desbuf msgbuf;			/* I/O buffer */
 	int kflag;			/* command-line encryptiooon key */
 	int argc;			/* the real arg count */
@@ -395,7 +395,7 @@ cvtkey(obuf, ibuf)
 	char *obuf;			/* bit pattern */
 	char *ibuf;			/* the key itself */
 {
-	register int i, j;		/* counter in a for loop */
+	int i, j;			/* counter in a for loop */
 	int nbuf[64];			/* used for hex/key translation */
 
 	/*
@@ -464,8 +464,8 @@ setbits(s, mult)
 	char *s;			/* the ASCII string */
 	int mult;			/* what it must be a multiple of */
 {
-	register char *p;		/* pointer in a for loop */
-	register int n = 0;		/* the integer collected */
+	char *p;			/* pointer in a for loop */
+	int n = 0;			/* the integer collected */
 
 	/*
 	 * skip white space
@@ -506,8 +506,8 @@ void
 makekey(buf)
 	Desbuf buf;				/* key block */
 {
-	register int i, j;			/* counter in a for loop */
-	register int par;			/* parity counter */
+	int i, j;				/* counter in a for loop */
+	int par;				/* parity counter */
 
 	/*
 	 * if the parity is not preserved, flip it
@@ -534,8 +534,8 @@ makekey(buf)
 void
 ecbenc()
 {
-	register int n;		/* number of bytes actually read */
-	register int bn;	/* block number */
+	int n;			/* number of bytes actually read */
+	int bn;			/* block number */
 	Desbuf msgbuf;		/* I/O buffer */
 
 	for (bn = 0; (n = READ(BUFFER(msgbuf),  8)) == 8; bn++) {
@@ -563,9 +563,9 @@ ecbenc()
 void
 ecbdec()
 {
-	register int n;		/* number of bytes actually read */
-	register int c;		/* used to test for EOF */
-	register int bn;	/* block number */
+	int n;			/* number of bytes actually read */
+	int c;			/* used to test for EOF */
+	int bn;			/* block number */
 	Desbuf msgbuf;		/* I/O buffer */
 
 	for (bn = 1; (n = READ(BUFFER(msgbuf), 8)) == 8; bn++) {
@@ -595,8 +595,8 @@ ecbdec()
 void
 cbcenc()
 {
-	register int n;		/* number of bytes actually read */
-	register int bn;	/* block number */
+	int n;			/* number of bytes actually read */
+	int bn;			/* block number */
 	Desbuf msgbuf;		/* I/O buffer */
 
 	/*
@@ -629,11 +629,11 @@ cbcenc()
 void
 cbcdec()
 {
-	register int n;		/* number of bytes actually read */
+	int n;			/* number of bytes actually read */
 	Desbuf msgbuf;		/* I/O buffer */
 	Desbuf ibuf;		/* temp buffer for initialization vector */
-	register int c;		/* used to test for EOF */
-	register int bn;	/* block number */
+	int c;			/* used to test for EOF */
+	int bn;			/* block number */
 
 	for (bn = 0; (n = READ(BUFFER(msgbuf), 8)) == 8; bn++) {
 		/*
@@ -666,7 +666,7 @@ cbcdec()
 void
 cbcauth()
 {
-	register int n, j;		/* number of bytes actually read */
+	int n, j;		/* number of bytes actually read */
 	Desbuf msgbuf;		/* I/O buffer */
 	Desbuf encbuf;		/* encryption buffer */
 
@@ -711,9 +711,9 @@ cbcauth()
 void
 cfbenc()
 {
-	register int n;		/* number of bytes actually read */
-	register int nbytes;	/* number of bytes to read */
-	register int bn;	/* block number */
+	int n;			/* number of bytes actually read */
+	int nbytes;		/* number of bytes to read */
+	int bn;			/* block number */
 	char ibuf[8];		/* input buffer */
 	Desbuf msgbuf;		/* encryption buffer */
 
@@ -753,10 +753,10 @@ cfbenc()
 void
 cfbdec()
 {
-	register int n;		/* number of bytes actually read */
-	register int c;		/* used to test for EOF */
-	register int nbytes;	/* number of bytes to read */
-	register int bn;	/* block number */
+	int n;			/* number of bytes actually read */
+	int c;			/* used to test for EOF */
+	int nbytes;		/* number of bytes to read */
+	int bn;			/* block number */
 	char ibuf[8];		/* input buffer */
 	char obuf[8];		/* output buffer */
 	Desbuf msgbuf;		/* encryption buffer */
@@ -799,9 +799,9 @@ cfbdec()
 void
 cfbaenc()
 {
-	register int n;		/* number of bytes actually read */
-	register int nbytes;	/* number of bytes to read */
-	register int bn;	/* block number */
+	int n;			/* number of bytes actually read */
+	int nbytes;		/* number of bytes to read */
+	int bn;			/* block number */
 	char ibuf[8];		/* input buffer */
 	char obuf[8];		/* output buffer */
 	Desbuf msgbuf;		/* encryption buffer */
@@ -845,10 +845,10 @@ cfbaenc()
 void
 cfbadec()
 {
-	register int n;		/* number of bytes actually read */
-	register int c;		/* used to test for EOF */
-	register int nbytes;	/* number of bytes to read */
-	register int bn;	/* block number */
+	int n;			/* number of bytes actually read */
+	int c;			/* used to test for EOF */
+	int nbytes;		/* number of bytes to read */
+	int bn;			/* block number */
 	char ibuf[8];		/* input buffer */
 	char obuf[8];		/* output buffer */
 	Desbuf msgbuf;		/* encryption buffer */
@@ -892,10 +892,10 @@ cfbadec()
 void
 ofbenc()
 {
-	register int n;		/* number of bytes actually read */
-	register int c;		/* used to test for EOF */
-	register int nbytes;	/* number of bytes to read */
-	register int bn;	/* block number */
+	int n;			/* number of bytes actually read */
+	int c;			/* used to test for EOF */
+	int nbytes;		/* number of bytes to read */
+	int bn;			/* block number */
 	char ibuf[8];		/* input buffer */
 	char obuf[8];		/* output buffer */
 	Desbuf msgbuf;		/* encryption buffer */
@@ -938,10 +938,10 @@ ofbenc()
 void
 ofbdec()
 {
-	register int n;		/* number of bytes actually read */
-	register int c;		/* used to test for EOF */
-	register int nbytes;	/* number of bytes to read */
-	register int bn;	/* block number */
+	int n;			/* number of bytes actually read */
+	int c;			/* used to test for EOF */
+	int nbytes;		/* number of bytes to read */
+	int bn;			/* block number */
 	char ibuf[8];		/* input buffer */
 	char obuf[8];		/* output buffer */
 	Desbuf msgbuf;		/* encryption buffer */
@@ -987,8 +987,8 @@ ofbdec()
 void
 cfbauth()
 {
-	register int n, j;	/* number of bytes actually read */
-	register int nbytes;	/* number of bytes to read */
+	int n, j;		/* number of bytes actually read */
+	int nbytes;		/* number of bytes to read */
 	char ibuf[8];		/* input buffer */
 	Desbuf msgbuf;		/* encryption buffer */
 
@@ -1040,7 +1040,7 @@ expand(from, to)
 	Desbuf from;			/* 8bit/unsigned char string */
 	char *to;			/* 1bit/char string */
 {
-	register int i, j;		/* counters in for loop */
+	int i, j;			/* counters in for loop */
 
 	for (i = 0; i < 8; i++)
 		for (j = 0; j < 8; j++)
@@ -1054,7 +1054,7 @@ compress(from, to)
 	char *from;			/* 1bit/char string */
 	Desbuf to;			/* 8bit/unsigned char string */
 {
-	register int i, j;		/* counters in for loop */
+	int i, j;			/* counters in for loop */
 
 	for (i = 0; i < 8; i++) {
 	 	CHAR(to, i) = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checknr.c,v 1.6 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: checknr.c,v 1.7 2001/11/19 19:02:13 mpech Exp $	*/
 /*	$NetBSD: checknr.c,v 1.4 1995/03/26 04:10:19 glass Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-static char rcsid[] = "$OpenBSD: checknr.c,v 1.6 2001/08/12 12:03:03 heko Exp $";
+static char rcsid[] = "$OpenBSD: checknr.c,v 1.7 2001/11/19 19:02:13 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ void
 process(f)
 FILE *f;
 {
-	register int i, n;
+	int i, n;
 	char mac[5];	/* The current macro or nroff command */
 	int pl;
 
@@ -414,7 +414,7 @@ chkcmd(line, mac)
 char *line;
 char *mac;
 {
-	register int i;
+	int i;
 
 	/*
 	 * Check to see if it matches top of stack.
@@ -451,7 +451,7 @@ void
 nomatch(mac)
 char *mac;
 {
-	register int i, j;
+	int i, j;
 
 	/*
 	 * Look for a match further down on stack
@@ -565,7 +565,7 @@ void
 addmac(mac)
 char *mac;
 {
-	register char **src, **dest, **loc;
+	char **src, **dest, **loc;
 
 	if (binsrch(mac) >= 0){	/* it's OK to redefine something */
 #ifdef DEBUG
@@ -598,10 +598,10 @@ int
 binsrch(mac)
 char *mac;
 {
-	register char *p;	/* pointer to current cmd in list */
-	register int d;		/* difference if any */
-	register int mid;	/* mid point in binary search */
-	register int top, bot;	/* boundaries of bin search, inclusive */
+	char *p;		/* pointer to current cmd in list */
+	int d;			/* difference if any */
+	int mid;		/* mid point in binary search */
+	int top, bot;		/* boundaries of bin search, inclusive */
 
 	top = ncmds-1;
 	bot = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.3 2001/01/29 01:58:11 niklas Exp $	*/
+/*	$OpenBSD: data.c,v 1.4 2001/11/19 19:02:15 mpech Exp $	*/
 
 /* primitive arbitrary-data frontend for netcat.  0.9 960226
    only handles one value per ascii line, but at least parses 0xNN too
@@ -38,8 +38,8 @@ char * fgetss (buf, len, from)
   size_t len;
   FILE * from;
 {
-  register int x;
-  register char * p, * q;
+  int x;
+  char * p, * q;
   p = fgets (buf, len, from);		/* returns ptr to buf */
   if (! p)
     return (NULL);
@@ -61,8 +61,8 @@ char * fgetss (buf, len, from)
    swiped from rndb.c.  Generates an INT, you have to mask down to char. */
 int randint()
 {
-  register int q;
-  register int x;
+  int q;
+  int x;
 
 #ifndef HAVE_RANDOM
   q = rand();
@@ -78,12 +78,12 @@ main (argc, argv)
   int argc;
   char ** argv;
 {
-  register unsigned char * p;
-  register char * q;
-  register int x;
+  unsigned char * p;
+  char * q;
+  int x;
   int bc = 0;
   int limit = 0;		/* num to gen, or 0 = infinite */
-  register int xlimit;		/* running limit */
+  int xlimit;			/* running limit */
   FILE * txt;			/* line-by-line ascii file */
   int raw;			/* raw bytes fd */
   int dumping = 0;		/* cmd flags ... */

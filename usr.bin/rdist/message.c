@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.9 2000/11/10 15:33:12 provos Exp $	*/
+/*	$OpenBSD: message.c,v 1.10 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: message.c,v 6.24 1996/07/19 17:00:35 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: message.c,v 1.9 2000/11/10 15:33:12 provos Exp $";
+"$OpenBSD: message.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -96,7 +96,7 @@ MSGFACILITY msgfacility[] = {
  */
 extern void msgprusage()
 {
-	register int i, x;
+	int i, x;
 
 	(void) fprintf(stderr, "\nWhere <msgopt> is of form\n");
 	(void) fprintf(stderr, 
@@ -119,7 +119,7 @@ extern void msgprusage()
  */
 extern void msgprconfig()
 {
-	register int i, x;
+	int i, x;
 	static char buf[MSGBUFSIZ];
 
 	debugmsg(DM_MISC, "Current message logging config:");
@@ -144,7 +144,7 @@ extern void msgprconfig()
 static MSGFACILITY *getmsgfac(name)
 	char *name;
 {
-	register int i;
+	int i;
 
 	for (i = 0; msgfacility[i].mf_name; ++i)
 		if (strcasecmp(name, msgfacility[i].mf_name) == 0)
@@ -159,7 +159,7 @@ static MSGFACILITY *getmsgfac(name)
 static MSGTYPE *getmsgtype(name)
 	char *name;
 {
-	register int i;
+	int i;
 
 	for (i = 0; msgtypes[i].mt_name; ++i)
 		if (strcasecmp(name, msgtypes[i].mt_name) == 0)
@@ -177,9 +177,9 @@ static char *setmsgtypes(msgfac, str)
 	char *str;
 {
 	static char ebuf[BUFSIZ];
-	register char *cp;
-	register char *strptr, *word;
-	register MSGTYPE *mtp;
+	char *cp;
+	char *strptr, *word;
+	MSGTYPE *mtp;
 
 	/*
 	 * MF_SYSLOG is the only supported message facility for the server
@@ -271,8 +271,8 @@ extern char *msgparseopts(msgstr, doset)
 	int doset;
 {
 	static char ebuf[BUFSIZ], msgbuf[MSGBUFSIZ];
-	register char *cp, *optstr;
-	register char *word;
+	char *cp, *optstr;
+	char *word;
 	MSGFACILITY *msgfac;
 
 	if (msgstr == NULL)
@@ -461,7 +461,7 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 		return;
 
 	if (!msgfac->mf_fptr) {
-		register char *cp;
+		char *cp;
 		int fd;
 		char *getenv();
 
@@ -518,8 +518,8 @@ static void _message(flags, msgbuf)
 	int flags;
 	char *msgbuf;
 {
-	register int i, x;
-	register char *cp;
+	int i, x;
+	char *cp;
 	static char mbuf[2048];
 
 	if (msgbuf && *msgbuf) {
@@ -866,7 +866,7 @@ extern void fatalerr(fmt, a1, a2, a3, a4, a5)
  */
 extern char *getnotifyfile()
 {
-	register int i;
+	int i;
 
 	for (i = 0; msgfacility[i].mf_name; i++)
 		if (msgfacility[i].mf_msgfac == MF_NOTIFY &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwiomux.c,v 1.6 1998/04/26 22:49:01 millert Exp $	*/
+/*	$OpenBSD: wwiomux.c,v 1.7 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwiomux.c,v 1.5 1996/02/08 20:45:09 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwiomux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwiomux.c,v 1.6 1998/04/26 22:49:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwiomux.c,v 1.7 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,10 +65,10 @@ static char rcsid[] = "$OpenBSD: wwiomux.c,v 1.6 1998/04/26 22:49:01 millert Exp
  */
 wwiomux()
 {
-	register struct ww *w;
+	struct ww *w;
 	fd_set imask;
-	register n;
-	register char *p;
+	int n;
+	char *p;
 	char c;
 	struct timeval tv;
 	char noblock = 0;

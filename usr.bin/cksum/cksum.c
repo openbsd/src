@@ -1,4 +1,4 @@
-/*	$OpenBSD: cksum.c,v 1.6 2000/11/21 18:03:18 aaron Exp $	*/
+/*	$OpenBSD: cksum.c,v 1.7 2001/11/19 19:02:13 mpech Exp $	*/
 /*	$NetBSD: cksum.c,v 1.7 1995/09/02 05:45:18 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: cksum.c,v 1.6 2000/11/21 18:03:18 aaron Exp $";
+static char rcsid[] = "$OpenBSD: cksum.c,v 1.7 2001/11/19 19:02:13 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -73,7 +73,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int ch, fd, rval;
+	int ch, fd, rval;
 	u_int32_t len, val;
 	char *fn;
 	int (*cfncn) __P((int, u_int32_t *, u_int32_t *));

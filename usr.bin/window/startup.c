@@ -1,4 +1,4 @@
-/*	$OpenBSD: startup.c,v 1.5 2000/08/02 04:10:50 millert Exp $	*/
+/*	$OpenBSD: startup.c,v 1.6 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: startup.c,v 1.4 1996/02/08 20:45:04 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: startup.c,v 1.5 2000/08/02 04:10:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: startup.c,v 1.6 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ doconfig()
 dodefault()
 {
 	struct ww *w;
-	register r = wwnrow / 2 - 1;
+	int r = wwnrow / 2 - 1;
 
 	if (openwin(1, r + 2, 0, wwnrow - r - 2, wwncol, default_nline,
 	    (char *) 0, WWT_PTY, WWU_HASFRAME, default_shellfile,

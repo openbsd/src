@@ -1,4 +1,4 @@
-/*	$OpenBSD: colrm.c,v 1.4 2001/07/12 05:16:59 deraadt Exp $	*/
+/*	$OpenBSD: colrm.c,v 1.5 2001/11/19 19:02:13 mpech Exp $	*/
 /*	$NetBSD: colrm.c,v 1.4 1995/09/02 05:51:37 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colrm.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: colrm.c,v 1.4 2001/07/12 05:16:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: colrm.c,v 1.5 2001/11/19 19:02:13 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,8 +67,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register u_long column, start, stop;
-	register int ch;
+	u_long column, start, stop;
+	int ch;
 	char *p;
 
 	while ((ch = getopt(argc, argv, "")) != -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.3 1998/09/20 06:19:14 niklas Exp $	*/
+/*	$OpenBSD: utils.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -28,7 +28,7 @@ int atoiwi(str)
 char *str;
 
 {
-    register int len;
+    int len;
 
     len = strlen(str);
     if (len != 0)
@@ -66,10 +66,10 @@ char *str;
 
 char *itoa(val)
 
-register int val;
+int val;
 
 {
-    register char *ptr;
+    char *ptr;
     static char buffer[16];	/* result is built here */
     				/* 16 is sufficient since the largest number
 				   we will ever convert will be 2^32-1,
@@ -97,10 +97,10 @@ register int val;
 
 char *itoa7(val)
 
-register int val;
+int val;
 
 {
-    register char *ptr;
+    char *ptr;
     static char buffer[25];	/* result is built here */
 
     ptr = buffer + sizeof(buffer);
@@ -131,7 +131,7 @@ int digits(val)
 int val;
 
 {
-    register int cnt = 0;
+    int cnt = 0;
 
     while (val > 0)
     {
@@ -148,8 +148,8 @@ int val;
 
 char *strecpy(to, from)
 
-register char *to;
-register char *from;
+char *to;
+char *from;
 
 {
     while ((*to++ = *from++) != '\0');
@@ -166,7 +166,7 @@ char *string;
 char **array;
 
 {
-    register int i = 0;
+    int i = 0;
 
     while (*array != NULL)
     {
@@ -193,13 +193,13 @@ char *line;
 int *cntp;
 
 {
-    register char *from;
-    register char *to;
-    register int cnt;
-    register int ch;
+    char *from;
+    char *to;
+    int cnt;
+    int ch;
     int length;
     int lastch;
-    register char **argv;
+    char **argv;
     char **argarray;
     char *args;
 
@@ -276,15 +276,15 @@ int percentages(cnt, out, new, old, diffs)
 
 int cnt;
 int *out;
-register long *new;
-register long *old;
+long *new;
+long *old;
 long *diffs;
 
 {
-    register int i;
-    register long change;
-    register long total_change;
-    register long *dp;
+    int i;
+    long change;
+    long total_change;
+    long *dp;
     long half_total;
 
     /* initialization */
@@ -402,9 +402,9 @@ int amt;
 {
     static char retarray[NUM_STRINGS][16];
     static int index = 0;
-    register char *p;
-    register char *ret;
-    register char tag = 'K';
+    char *p;
+    char *ret;
+    char tag = 'K';
 
     p = ret = retarray[index];
     index = (index + 1) % NUM_STRINGS;

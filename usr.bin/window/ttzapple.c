@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttzapple.c,v 1.3 1997/02/25 00:04:28 downsj Exp $	*/
+/*	$OpenBSD: ttzapple.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: ttzapple.c,v 1.3 1995/09/28 10:34:57 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttzapple.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: ttzapple.c,v 1.3 1997/02/25 00:04:28 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ttzapple.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,8 +116,8 @@ zz_putc(c)
 }
 
 zz_write(p, n)
-	register char *p;
-	register n;
+	char *p;
+	int n;
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		zz_setmodes(tt.tt_nmodes);
@@ -128,9 +128,9 @@ zz_write(p, n)
 }
 
 zz_move(row, col)
-	register row, col;
+	int row, col;
 {
-	register x;
+	int x;
 
 	if (tt.tt_row == row) {
 same_row:
@@ -364,13 +364,13 @@ zz_put_token(t, s, n)
 zz_rint(p, n)
 	char *p;
 {
-	register i;
-	register char *q;
+	int i;
+	char *q;
 
 	if (!zz_ecc)
 		return n;
 	for (i = n, q = p; --i >= 0;) {
-		register c = (unsigned char) *p++;
+		int c = (unsigned char) *p++;
 
 		if (zz_lastc == 0) {
 			switch (c) {
@@ -418,11 +418,11 @@ zz_rint(p, n)
 }
 
 zz_checksum(p, n)
-	register char *p;
-	register n;
+	char *p;
+	int n;
 {
 	while (--n >= 0) {
-		register c = *p++ & 0x7f;
+		int c = *p++ & 0x7f;
 		c ^= zz_sum;
 		zz_sum = c << 1 | c >> 11 & 1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xstr.c,v 1.5 2001/07/20 14:20:29 deraadt Exp $	*/
+/*	$OpenBSD: xstr.c,v 1.6 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: xstr.c,v 1.5 2001/07/20 14:20:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xstr.c,v 1.6 2001/11/19 19:02:18 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -156,8 +156,8 @@ process(name)
 	char *name;
 {
 	char *cp;
-	register int c;
-	register int incomm = 0;
+	int c;
+	int incomm = 0;
 	int ret;
 
 	printf("extern char\t%s[];\n", array);
@@ -224,13 +224,13 @@ out:
 
 off_t
 yankstr(cpp)
-	register char **cpp;
+	char **cpp;
 {
-	register char *cp = *cpp;
-	register int c, ch;
+	char *cp = *cpp;
+	int c, ch;
 	char dbuf[BUFSIZ];
-	register char *dp = dbuf;
-	register char *tp;
+	char *dp = dbuf;
+	char *tp;
 
 	while (c = *cp++) {
 		switch (c) {
@@ -292,7 +292,7 @@ octdigit(c)
 inithash()
 {
 	char buf[BUFSIZ];
-	register FILE *mesgread = fopen(strings, "r");
+	FILE *mesgread = fopen(strings, "r");
 
 	if (mesgread == NULL)
 		return;
@@ -307,11 +307,11 @@ inithash()
 
 fgetNUL(obuf, rmdr, file)
 	char *obuf;
-	register int rmdr;
+	int rmdr;
 	FILE *file;
 {
-	register c;
-	register char *buf = obuf;
+	int c;
+	char *buf = obuf;
 
 	while (--rmdr > 0 && (c = xgetc(file)) != 0 && c != EOF)
 		*buf++ = c;
@@ -342,7 +342,7 @@ hashit(str, new)
 	int new;
 {
 	int i;
-	register struct hash *hp, *hp0;
+	struct hash *hp, *hp0;
 
 	hp = hp0 = &bucket[lastchr(str) & 0177];
 	while (hp->hnext) {
@@ -369,10 +369,10 @@ hashit(str, new)
 
 flushsh()
 {
-	register int i;
-	register struct hash *hp;
-	register FILE *mesgwrit;
-	register int old = 0, new = 0;
+	int i;
+	struct hash *hp;
+	FILE *mesgwrit;
+	int old = 0, new = 0;
 
 	for (i = 0; i < BUCKETS; i++)
 		for (hp = bucket[i].hnext; hp != NULL; hp = hp->hnext)
@@ -415,9 +415,9 @@ found(new, off, str)
 }
 
 prstr(cp)
-	register char *cp;
+	char *cp;
 {
-	register int c;
+	int c;
 
 	while (c = (*cp++ & 0377))
 		if (c < ' ')
@@ -432,8 +432,8 @@ prstr(cp)
 
 xsdotc()
 {
-	register FILE *strf = fopen(strings, "r");
-	register FILE *xdotcf;
+	FILE *strf = fopen(strings, "r");
+	FILE *xdotcf;
 
 	if (strf == NULL)
 		perror(strings), exit(5);
@@ -442,7 +442,7 @@ xsdotc()
 		perror("xs.c"), exit(6);
 	fprintf(xdotcf, "char\t%s[] = {\n", array);
 	for (;;) {
-		register int i, c;
+		int i, c;
 
 		for (i = 0; i < 8; i++) {
 			c = getc(strf);
@@ -465,7 +465,7 @@ out:
 }
 
 lastchr(cp)
-	register char *cp;
+	char *cp;
 {
 
 	while (cp[0] && cp[1])
@@ -474,9 +474,9 @@ lastchr(cp)
 }
 
 istail(str, of)
-	register char *str, *of;
+	char *str, *of;
 {
-	register int d = strlen(of) - strlen(str);
+	int d = strlen(of) - strlen(str);
 
 	if (d < 0 || strcmp(&of[d], str) != 0)
 		return (-1);

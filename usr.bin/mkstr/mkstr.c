@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkstr.c,v 1.3 1997/07/05 23:11:12 deraadt Exp $	*/
+/*	$OpenBSD: mkstr.c,v 1.4 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: mkstr.c,v 1.4 1995/09/28 06:22:20 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mkstr.c,v 1.3 1997/07/05 23:11:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkstr.c,v 1.4 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ main(argc, argv)
 void
 process()
 {
-	register c;
+	int c;
 
 	for (;;) {
 		c = getchar();
@@ -159,8 +159,8 @@ int
 match(ocp)
 	char *ocp;
 {
-	register char *cp;
-	register c;
+	char *cp;
+	int c;
 
 	for (cp = ocp + 1; *cp; cp++) {
 		c = getchar();
@@ -177,9 +177,9 @@ match(ocp)
 void
 copystr()
 {
-	register c, ch;
+	int c, ch;
 	char buf[512];
-	register char *cp = buf;
+	char *cp = buf;
 
 	for (;;) {
 		c = getchar();
@@ -274,10 +274,10 @@ hashit(str, really, fakept)
 	unsigned fakept;
 {
 	int i;
-	register struct hash *hp;
+	struct hash *hp;
 	char buf[512];
 	long hashval = 0;
-	register char *cp;
+	char *cp;
 
 	if (really)
 		fflush(mesgwrite);
@@ -317,11 +317,11 @@ hashit(str, really, fakept)
 int
 fgetNUL(obuf, rmdr, file)
 	char *obuf;
-	register int rmdr;
+	int rmdr;
 	FILE *file;
 {
-	register c;
-	register char *buf = obuf;
+	int c;
+	char *buf = obuf;
 
 	while (--rmdr > 0 && (c = getc(file)) != 0 && c != EOF)
 		*buf++ = c;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.31 2001/07/12 05:17:06 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.32 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.31 2001/07/12 05:17:06 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.32 2001/11/19 19:02:14 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -167,7 +167,7 @@ main(argc, argv)
 {
 	extern char *optarg;
 	extern int optind;
-	register struct passwd *passwd;
+	struct passwd *passwd;
 	struct kinfo_proc *p, *plast;
 	int arg, ch, what;
 	char *memf, *nlistf;
@@ -441,7 +441,7 @@ vtrans(vp, i, flag, offset)
 	}
 	if (checkfile) {
 		int fsmatch = 0;
-		register DEVS *d;
+		DEVS *d;
 
 		if (badtype)
 			return;
@@ -569,7 +569,7 @@ nfs_filestat(vp, fsp)
 	struct filestat *fsp;
 {
 	struct nfsnode nfsnode;
-	register mode_t mode;
+	mode_t mode;
 
 	if (!KVM_READ(VTONFS(vp), &nfsnode, sizeof (nfsnode))) {
 		dprintf("can't read nfsnode at %p for pid %d", VTONFS(vp), Pid);
@@ -716,7 +716,7 @@ getmnton(m)
 		struct mount *m;
 		char mntonname[MNAMELEN];
 	} *mhead = NULL;
-	register struct mtab *mt;
+	struct mtab *mt;
 
 	for (mt = mhead; mt != NULL; mt = mt->next)
 		if (m == mt->m)
@@ -1016,7 +1016,7 @@ getinetproto(number)
 	int number;
 {
 	static int isopen;
-	register struct protoent *pe;
+	struct protoent *pe;
 
 	if (!isopen)
 		setprotoent(++isopen);

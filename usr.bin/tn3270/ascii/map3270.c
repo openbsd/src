@@ -1,4 +1,4 @@
-/*	$OpenBSD: map3270.c,v 1.3 2000/07/06 08:51:05 deraadt Exp $	*/
+/*	$OpenBSD: map3270.c,v 1.4 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: map3270.c,v 1.3 2000/07/06 08:51:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: map3270.c,v 1.4 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
@@ -169,8 +169,8 @@ static lexicon
 Get()
 {
     lexicon c;
-    register lexicon *pC = &c;
-    register int character;
+    lexicon *pC = &c;
+    int character;
 
     if (!Empty) {
 	*pC = lifo[rp];
@@ -266,7 +266,7 @@ lexicon c;			/* character to unget */
  */
 char *
 uncontrol(c)
-	register int c;
+	int c;
 {
 	static char buf[3];
 
@@ -289,10 +289,10 @@ uncontrol(c)
 /* compare two strings, ignoring case */
 
 ustrcmp(string1, string2)
-register char *string1;
-register char *string2;
+char *string1;
+char *string2;
 {
-    register int c1, c2;
+    int c1, c2;
 
     while ((c1 = (unsigned char) *string1++) != 0) {
 	if (isupper(c1)) {

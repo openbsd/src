@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.9 2001/06/23 23:08:16 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.10 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: docmd.c,v 6.86 1996/01/30 02:29:43 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.9 2001/06/23 23:08:16 millert Exp $";
+"$OpenBSD: docmd.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -99,10 +99,10 @@ static void closeconn()
  */
 static void notify(rhost, to, lmod)
 	char *rhost;
-	register struct namelist *to;
+	struct namelist *to;
 	time_t lmod;
 {
-	register int fd, len;
+	int fd, len;
 	FILE *pf, *popen();
 	struct stat stb;
 	static char buf[BUFSIZ];
@@ -221,7 +221,7 @@ extern void markassigned(cmd, cmdlist)
 	struct cmd *cmd;
 	struct cmd *cmdlist;
 {
-	register struct cmd *pcmd;
+	struct cmd *pcmd;
 	
 	for (pcmd = cmdlist; pcmd; pcmd = pcmd->c_next) {
 		checkcmd(pcmd);
@@ -238,7 +238,7 @@ static void markfailed(cmd, cmdlist)
 	struct cmd *cmd;
 	struct cmd *cmdlist;
 {
-	register struct cmd *pc;
+	struct cmd *pc;
 
 	if (!cmd) {
 		debugmsg(DM_MISC, "markfailed() NULL cmd parameter");
@@ -310,7 +310,7 @@ static int remotecmd(rhost, luser, ruser, cmd)
 static int makeconn(rhost)
 	char *rhost;
 {
-	register char *ruser, *cp;
+	char *ruser, *cp;
 	static char *cur_host = NULL;
 	extern char *locuser;
 	extern long min_freefiles, min_freespace;
@@ -431,9 +431,9 @@ static void doarrow(cmd, filev)
 	struct cmd *cmd;
 	char **filev;
 {
-	register struct namelist *f;
-	register struct subcmd *sc;
-	register char **cpp;
+	struct namelist *f;
+	struct subcmd *sc;
+	char **cpp;
 	int n, ddir, destdir;
 	struct namelist *files;
 	struct subcmd *sbcmds;
@@ -586,7 +586,7 @@ done:
 			notify(rhost, sc->sc_args, (time_t) 0);
 
 	if (!nflag) {
-		register struct linkbuf *nextl, *l;
+		struct linkbuf *nextl, *l;
 
 		for (l = ihead; l != NULL; freelinkinfo(l), l = nextl) {
 			nextl = l->nextp;
@@ -605,10 +605,10 @@ done:
 
 int
 okname(name)
-	register char *name;
+	char *name;
 {
-	register char *cp = name;
-	register int c, isbad;
+	char *cp = name;
+	int c, isbad;
 
 	for (isbad = FALSE; *cp && !isbad; ++cp) {
 		c = *cp;
@@ -630,9 +630,9 @@ static void rcmptime(st, sbcmds, env)
 	struct subcmd *sbcmds;
 	char **env;
 {
-	register DIR *d;
-	register DIRENTRY *dp;
-	register char *cp;
+	DIR *d;
+	DIRENTRY *dp;
+	char *cp;
 	char *optarget;
 	int len;
 
@@ -743,9 +743,9 @@ static void dodcolon(cmd, filev)
 	struct cmd *cmd;
 	char **filev;
 {
-	register struct subcmd *sc;
-	register struct namelist *f;
-	register char *cp, **cpp;
+	struct subcmd *sc;
+	struct namelist *f;
+	char *cp, **cpp;
 	struct stat stb;
 	struct namelist *files = cmd->c_files;
 	struct subcmd *sbcmds = cmd->c_cmds;
@@ -827,8 +827,8 @@ static void dodcolon(cmd, filev)
 extern int except(file)
 	char *file;
 {
-	register struct	subcmd *sc;
-	register struct	namelist *nl;
+	struct	subcmd *sc;
+	struct	namelist *nl;
 
 	debugmsg(DM_CALL, "except(%s)", file);
 
@@ -921,8 +921,8 @@ static void docmd(cmd, argc, argv)
 	int argc;
 	char **argv;
 {
-	register struct namelist *f;
-	register int i;
+	struct namelist *f;
+	int i;
 
 	if (argc) {
 		for (i = 0; i < argc; i++) {
@@ -965,9 +965,9 @@ extern void docmds(hostlist, argc, argv)
 	int argc;
 	char **argv;
 {
-	register struct cmd *c;
-	register char *cp;
-	register int i;
+	struct cmd *c;
+	char *cp;
+	int i;
 
 	(void) signal(SIGHUP, sighandler);
 	(void) signal(SIGINT, sighandler);
@@ -1035,7 +1035,7 @@ extern void docmds(hostlist, argc, argv)
 
 		if (hostlist) {
 			/* Do specific hosts as specified on command line */
-			register struct namelist *nlptr;
+			struct namelist *nlptr;
 
 			for (nlptr = hostlist; nlptr; nlptr = nlptr->n_next)
 				/*

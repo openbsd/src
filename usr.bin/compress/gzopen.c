@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.1 1997/07/06 20:22:57 mickey Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.2 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -96,10 +96,10 @@ struct gz_stream {
 
 static u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 
-static int put_int32 __P((register gz_stream *, u_int32_t));
-static u_int32_t get_int32 __P((register gz_stream *));
-static int get_header __P((register gz_stream *));
-static int get_byte __P((register gz_stream *));
+static int put_int32 __P((gz_stream *, u_int32_t));
+static u_int32_t get_int32 __P((gz_stream *));
+static int get_header __P((gz_stream *));
+static int get_byte __P((gz_stream *));
 
 int
 gz_check_header(fd, sb, ofn)
@@ -197,7 +197,7 @@ int
 gz_close (cookie)
 	void *cookie;
 {
-	register gz_stream *s = (gz_stream*)cookie;
+	gz_stream *s = (gz_stream*)cookie;
 	int err = 0;
 
 	if (s == NULL)
@@ -225,7 +225,7 @@ gz_flush (cookie, flush)
     void *cookie;
     int flush;
 {
-	register gz_stream *s = (gz_stream*)cookie;
+	gz_stream *s = (gz_stream*)cookie;
 	size_t len;
 	int done = 0;
 	int err;
@@ -262,7 +262,7 @@ gz_flush (cookie, flush)
 
 static int
 put_int32 (s, x)
-	register gz_stream *s;
+	gz_stream *s;
 	u_int32_t x;
 {
 	if (write(s->z_fd, &x, 1) != 1)
@@ -281,7 +281,7 @@ put_int32 (s, x)
 
 static int
 get_byte(s)
-	register gz_stream *s;
+	gz_stream *s;
 {
 	if (s->z_eof)
 		return EOF;
@@ -301,9 +301,9 @@ get_byte(s)
 
 static u_int32_t 
 get_int32 (s)
-	register gz_stream *s;
+	gz_stream *s;
 {
-	register u_int32_t x;
+	u_int32_t x;
 
 	x  = ((u_int32_t)(get_byte(s) & 0xff));
 	x |= ((u_int32_t)(get_byte(s) & 0xff))<<8;
@@ -314,7 +314,7 @@ get_int32 (s)
 
 static int
 get_header(s)
-	register gz_stream *s;
+	gz_stream *s;
 {
 	int method; /* method byte */
 	int flags;  /* flags byte */
@@ -375,7 +375,7 @@ gz_read(cookie, buf, len)
 	char *buf;
 	int len;
 {
-	register gz_stream *s = (gz_stream*)cookie;
+	gz_stream *s = (gz_stream*)cookie;
 	u_char *start = buf; /* starting point for crc computation */
 
 	s->z_stream.next_out = buf;
@@ -419,7 +419,7 @@ gz_write(cookie, buf, len)
 	const char *buf;
 	int len;
 {
-	register gz_stream *s = (gz_stream*)cookie;
+	gz_stream *s = (gz_stream*)cookie;
 
 	s->z_stream.next_in = (char *)buf;
 	s->z_stream.avail_in = len;

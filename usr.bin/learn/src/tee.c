@@ -1,4 +1,4 @@
-/*	$OpenBSD: tee.c,v 1.3 2001/01/29 01:57:59 niklas Exp $	*/
+/*	$OpenBSD: tee.c,v 1.4 2001/11/19 19:02:14 mpech Exp $	*/
 
 /* tee - copy stdin into .ocopy, for learn(1). */
 
@@ -61,7 +61,7 @@ put(c, f)
 }
 fl(f)
 {
-	register char *s;
+	char *s;
 
 	s = ln;
 	while (*s == '$' && *(s+1) == ' ')

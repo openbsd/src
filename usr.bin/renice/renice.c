@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.6 2001/07/06 21:54:57 pvalchev Exp $	*/
+/*	$OpenBSD: renice.c,v 1.7 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)renice.c	8.1 (Berkeley) 6/9/93";
 #else
-static char rcsid[] = "$OpenBSD: renice.c,v 1.6 2001/07/06 21:54:57 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: renice.c,v 1.7 2001/11/19 19:02:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ main(argc, argv)
 			continue;
 		}
 		if (which == PRIO_USER) {
-			register struct passwd *pwd = getpwnam(*argv);
+			struct passwd *pwd = getpwnam(*argv);
 			
 			if (pwd == NULL) {
 				warnx("%s: unknown user", *argv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.10 2001/06/25 04:58:31 pjanzen Exp $	*/
+/*	$OpenBSD: indent.c,v 1.11 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -47,7 +47,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.10 2001/06/25 04:58:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: indent.c,v 1.11 2001/11/19 19:02:14 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,7 +84,7 @@ main(argc, argv)
     int         force_nl;	/* when true, code must be broken */
     int         hd_type;	/* used to store type of stmt for if (...),
 				 * for (...), etc */
-    register int i;		/* local loop counter */
+    int 	i;		/* local loop counter */
     int         scase;		/* set to true when we see a case, so we will
 				 * know what to do with the following colon */
     int         sp_sw;		/* when true, we are in the expressin of
@@ -92,7 +92,7 @@ main(argc, argv)
     int         squest;		/* when this is positive, we have seen a ?
 				 * without the matching : in a <c>?<s>:<s>
 				 * construct */
-    register char *t_ptr;	/* used for copying tokens */
+    char 	*t_ptr;		/* used for copying tokens */
     int         type_code;	/* the type of token, returned by lexi */
 
     int         last_else = 0;	/* true iff last keyword was an else */
@@ -276,7 +276,7 @@ main(argc, argv)
 	    ps.ind_level = ps.i_l_follow = col / ps.ind_size;
     }
     if (troff) {
-	register char *p = in_name,
+	char *p = in_name,
 	           *beg = in_name;
 
 	while (*p)

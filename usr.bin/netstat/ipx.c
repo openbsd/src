@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.7 2000/10/23 19:17:09 mickey Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.8 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.7 2000/10/23 19:17:09 mickey Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.8 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ ipxprotopr(off, name)
 	char *name;
 {
 	struct ipxpcbtable	table;
-	register struct ipxpcb	*head, *prev, *next;
+	struct ipxpcb	*head, *prev, *next;
 	int isspx;
 
 	if (off == 0)
@@ -284,8 +284,8 @@ ipxerr_stats(off, name)
 	char *name;
 {
 	struct ipx_errstat ipx_errstat;
-	register int j;
-	register int histoprint = 1;
+	int j;
+	int histoprint = 1;
 	int z;
 
 	if (off == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.8 2001/07/16 06:29:45 pvalchev Exp $	*/
+/*	$OpenBSD: reader.c,v 1.9 2001/11/19 19:02:18 mpech Exp $	*/
 
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
@@ -138,9 +138,9 @@ int c;
 void
 get_line()
 {
-    register FILE *f = input_file;
-    register int c;
-    register int i;
+    FILE *f = input_file;
+    int c;
+    int i;
 
     if (saw_eof || (c = getc(f)) == EOF)
     {
@@ -185,7 +185,7 @@ get_line()
 char *
 dup_line()
 {
-    register char *p, *s, *t;
+    char *p, *s, *t;
 
     if (line == 0) return (0);
     s = line;
@@ -203,7 +203,7 @@ dup_line()
 void
 skip_comment()
 {
-    register char *s;
+    char *s;
 
     int st_lineno = lineno;
     char *st_line = dup_line();
@@ -234,7 +234,7 @@ skip_comment()
 int
 nextc()
 {
-    register char *s;
+    char *s;
 
     if (line == 0)
     {
@@ -296,7 +296,7 @@ nextc()
 int
 keyword()
 {
-    register int c;
+    int c;
     char *t_cptr = cptr;
 
     c = *++cptr;
@@ -362,8 +362,8 @@ keyword()
 void
 copy_ident()
 {
-    register int c;
-    register FILE *f = output_file;
+    int c;
+    FILE *f = output_file;
 
     c = nextc();
     if (c == EOF) unexpected_EOF();
@@ -392,9 +392,9 @@ copy_ident()
 void
 copy_text()
 {
-    register int c;
+    int c;
     int quote;
-    register FILE *f = text_file;
+    FILE *f = text_file;
     int need_newline = 0;
     int t_lineno = lineno;
     char *t_line = dup_line();
@@ -524,7 +524,7 @@ loop:
 void
 copy_union()
 {
-    register int c;
+    int c;
     int quote;
     int depth;
     int u_lineno = lineno;
@@ -679,11 +679,11 @@ int c;
 bucket *
 get_literal()
 {
-    register int c, quote;
-    register int i;
-    register int n;
-    register char *s;
-    register bucket *bp;
+    int c, quote;
+    int i;
+    int n;
+    char *s;
+    bucket *bp;
     int s_lineno = lineno;
     char *s_line = dup_line();
     char *s_cptr = s_line + (cptr - line);
@@ -840,7 +840,7 @@ char *name;
 bucket *
 get_name()
 {
-    register int c;
+    int c;
 
     cinc = 0;
     for (c = *cptr; IS_IDENT(c); c = *++cptr)
@@ -856,8 +856,8 @@ get_name()
 int
 get_number()
 {
-    register int c;
-    register int n;
+    int c;
+    int n;
 
     n = 0;
     for (c = *cptr; isdigit(c); c = *++cptr)
@@ -870,9 +870,9 @@ get_number()
 char *
 get_tag()
 {
-    register int c;
-    register int i;
-    register char *s;
+    int c;
+    int i;
+    char *s;
     int t_lineno = lineno;
     char *t_line = dup_line();
     char *t_cptr = t_line + (cptr - line);
@@ -922,8 +922,8 @@ void
 declare_tokens(assoc)
 int assoc;
 {
-    register int c;
-    register bucket *bp;
+    int c;
+    bucket *bp;
     int value;
     char *tag = 0;
 
@@ -990,7 +990,7 @@ void
 declare_expect(assoc)
 int assoc;
 {
-    register int c;
+    int c;
 
     if (assoc != EXPECT) ++prec;
 
@@ -1029,8 +1029,8 @@ int assoc;
 void
 declare_types()
 {
-    register int c;
-    register bucket *bp;
+    int c;
+    bucket *bp;
     char *tag;
 
     c = nextc();
@@ -1058,8 +1058,8 @@ declare_types()
 void
 declare_start()
 {
-    register int c;
-    register bucket *bp;
+    int c;
+    bucket *bp;
 
     c = nextc();
     if (c == EOF) unexpected_EOF();
@@ -1077,7 +1077,7 @@ declare_start()
 void
 read_declarations()
 {
-    register int c, k;
+    int c, k;
 
     cache_size = 256;
     cache = MALLOC(cache_size);
@@ -1185,8 +1185,8 @@ expand_rules()
 void
 advance_to_start()
 {
-    register int c;
-    register bucket *bp;
+    int c;
+    bucket *bp;
     char *s_cptr;
     int s_lineno;
 
@@ -1235,7 +1235,7 @@ advance_to_start()
 
 void
 start_rule(bp, s_lineno)
-register bucket *bp;
+bucket *bp;
 int s_lineno;
 {
     if (bp->class == TERM)
@@ -1252,7 +1252,7 @@ int s_lineno;
 void
 end_rule()
 {
-    register int i;
+    int i;
 
     if (!last_was_action && plhs[nrules]->tag)
     {
@@ -1272,7 +1272,7 @@ end_rule()
 void
 insert_empty_rule()
 {
-    register bucket *bp, **bpp;
+    bucket *bp, **bpp;
 
     assert(cache);
     sprintf(cache, "$$%d", ++gensym);
@@ -1302,8 +1302,8 @@ insert_empty_rule()
 void
 add_symbol()
 {
-    register int c;
-    register bucket *bp;
+    int c;
+    bucket *bp;
     int s_lineno = lineno;
 
     c = *cptr;
@@ -1334,12 +1334,12 @@ add_symbol()
 void
 copy_action()
 {
-    register int c;
-    register int i, n;
+    int c;
+    int i, n;
     int depth;
     int quote;
     char *tag;
-    register FILE *f = action_file;
+    FILE *f = action_file;
     int a_lineno = lineno;
     char *a_line = dup_line();
     char *a_cptr = a_line + (cptr - line);
@@ -1560,8 +1560,8 @@ loop:
 int
 mark_symbol()
 {
-    register int c;
-    register bucket *bp;
+    int c;
+    bucket *bp;
 
     c = cptr[1];
     if (c == '%' || c == '\\')
@@ -1604,7 +1604,7 @@ mark_symbol()
 void
 read_grammar()
 {
-    register int c;
+    int c;
 
     initialize_grammar();
     advance_to_start();
@@ -1638,7 +1638,7 @@ read_grammar()
 void
 free_tags()
 {
-    register int i;
+    int i;
 
     if (tag_table == 0) return;
 
@@ -1654,8 +1654,8 @@ free_tags()
 void
 pack_names()
 {
-    register bucket *bp;
-    register char *p, *s, *t;
+    bucket *bp;
+    char *p, *s, *t;
 
     name_pool_size = 13;  /* 13 == sizeof("$end") + sizeof("$accept") */
     for (bp = first_symbol; bp; bp = bp->next)
@@ -1680,7 +1680,7 @@ pack_names()
 void
 check_symbols()
 {
-    register bucket *bp;
+    bucket *bp;
 
     if (goal->class == UNKNOWN)
 	undefined_goal(goal->name);
@@ -1699,9 +1699,9 @@ check_symbols()
 void
 pack_symbols()
 {
-    register bucket *bp;
-    register bucket **v;
-    register int i, j, k, n;
+    bucket *bp;
+    bucket **v;
+    int i, j, k, n;
 
     nsyms = 2;
     ntokens = 1;
@@ -1824,7 +1824,7 @@ pack_symbols()
 void
 pack_grammar()
 {
-    register int i, j;
+    int i, j;
     int assoc, prec;
 
     ritem = (short *) MALLOC(nitems*sizeof(short));
@@ -1884,9 +1884,9 @@ pack_grammar()
 void
 print_grammar()
 {
-    register int i, j, k;
+    int i, j, k;
     int spacing;
-    register FILE *f = verbose_file;
+    FILE *f = verbose_file;
 
     if (!vflag) return;
 

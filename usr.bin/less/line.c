@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.2 2001/01/29 01:58:02 niklas Exp $	*/
+/*	$OpenBSD: line.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -84,9 +84,9 @@ prewind()
 plinenum(pos)
 	POSITION pos;
 {
-	register int lno;
-	register int i;
-	register int n;
+	int lno;
+	int i;
+	int n;
 
 	/*
 	 * We display the line number at the start of each line
@@ -172,7 +172,7 @@ pwidth(c, a)
 	int c;
 	int a;
 {
-	register int w;
+	int w;
 
 	if (c == '\b')
 		/*
@@ -219,7 +219,7 @@ storec(c, a, pos)
 	int a;
 	POSITION pos;
 {
-	register int w;
+	int w;
 
 #if HILITE_SEARCH
 	if (is_hilited(pos, pos+1, 0))
@@ -288,7 +288,7 @@ storec(c, a, pos)
  */
 	public int
 pappend(c, pos)
-	register int c;
+	int c;
 	POSITION pos;
 {
 	if (pendc)
@@ -322,8 +322,8 @@ do_append(c, pos)
 	int c;
 	POSITION pos;
 {
-	register char *s;
-	register int a;
+	char *s;
+	int a;
 
 #define	STOREC(c,a) \
 	if (storec((c),(a),pos)) return (1); else curr++
@@ -447,8 +447,8 @@ pdone(endline)
  */
 	public int
 gline(i, ap)
-	register int i;
-	register int *ap;
+	int i;
+	int *ap;
 {
 	char *s;
 	
@@ -487,8 +487,8 @@ forw_raw_line(curr_pos, linep)
 	POSITION curr_pos;
 	char **linep;
 {
-	register char *p;
-	register int c;
+	char *p;
+	int c;
 	POSITION new_pos;
 
 	if (curr_pos == NULL_POSITION || ch_seek(curr_pos) ||
@@ -533,8 +533,8 @@ back_raw_line(curr_pos, linep)
 	POSITION curr_pos;
 	char **linep;
 {
-	register char *p;
-	register int c;
+	char *p;
+	int c;
 	POSITION new_pos;
 
 	if (curr_pos == NULL_POSITION || curr_pos <= ch_zero() ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.8 2001/07/28 05:36:18 pvalchev Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.9 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.8 2001/07/28 05:36:18 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: pigs.c,v 1.9 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -96,7 +96,7 @@ closepigs(w)
 void
 showpigs()
 {
-	register int i, j, y, k;
+	int i, j, y, k;
 	struct	eproc *ep;
 	float total;
 	int factor;
@@ -181,10 +181,10 @@ initpigs()
 void
 fetchpigs()
 {
-	register int i;
-	register float time;
-	register struct proc *pp;
-	register float *pctp;
+	int i;
+	float time;
+	struct proc *pp;
+	float *pctp;
 	struct kinfo_proc *kpp;
 	long ctime[CPUSTATES];
 	double t;

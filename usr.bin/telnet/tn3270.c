@@ -1,4 +1,4 @@
-/*	$OpenBSD: tn3270.c,v 1.3 1998/03/12 04:57:46 art Exp $	*/
+/*	$OpenBSD: tn3270.c,v 1.4 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: tn3270.c,v 1.5 1996/02/28 21:04:18 thorpej Exp $	*/
 
 /*
@@ -99,11 +99,11 @@ init_3270()
 
     int
 DataToNetwork(buffer, count, done)
-    register char *buffer;	/* where the data is */
-    register int  count;	/* how much to send */
+    char *buffer;	/* where the data is */
+    int  count;	/* how much to send */
     int		  done;		/* is this the last of a logical block */
 {
-    register int loop, c;
+    int loop, c;
     int origCount;
 
     origCount = count;
@@ -184,10 +184,10 @@ outputPurge()
 
     int
 DataToTerminal(buffer, count)
-    register char	*buffer;		/* where the data is */
-    register int	count;			/* how much to send */
+    char	*buffer;		/* where the data is */
+    int		count;			/* how much to send */
 {
-    register int c;
+    int c;
     int origCount;
 
     origCount = count;

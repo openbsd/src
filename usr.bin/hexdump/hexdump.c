@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.c,v 1.5 2001/07/12 05:17:10 deraadt Exp $	*/
+/*	$OpenBSD: hexdump.c,v 1.6 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: hexdump.c,v 1.5 2001/07/12 05:17:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hexdump.c,v 1.6 2001/11/19 19:02:14 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register FS *tfs;
+	FS *tfs;
 	char *p;
 
 	if (!(p = strrchr(argv[0], 'o')) || strcmp(p, "od"))

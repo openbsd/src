@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.5 1998/07/24 20:50:24 deraadt Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.6 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: fastfind.c,v 1.5 1998/07/24 20:50:24 deraadt Exp $
+ * $Id: fastfind.c,v 1.6 2001/11/19 19:02:15 mpech Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
@@ -47,9 +47,9 @@ statistic (fp, path_fcodes)
 	FILE *fp;               /* open database */
 	char *path_fcodes;  	/* for error message */
 {
-	register int lines, chars, size, big, zwerg;
-	register u_char *p, *s;
-	register int c;
+	int lines, chars, size, big, zwerg;
+	u_char *p, *s;
+	int c;
 	int count, umlaut;
 	u_char bigram1[NBG], bigram2[NBG], path[MAXPATHLEN];
 
@@ -139,8 +139,8 @@ fastfind
 #endif /* MMAP */
 
 {
-	register u_char *p, *s, *patend, *q, *foundchar;
-	register int c, cc;
+	u_char *p, *s, *patend, *q, *foundchar;
+	int c, cc;
 	int count, found, globflag;
 	u_char *cutoff;
 	u_char bigram1[NBG], bigram2[NBG], path[MAXPATHLEN];

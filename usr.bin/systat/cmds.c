@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.6 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.7 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.6 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.7 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -53,8 +53,8 @@ void
 command(cmd)
         char *cmd;
 {
-        register struct cmdtab *p;
-        register char *cp;
+        struct cmdtab *p;
+        char *cp;
 	int interval;
 	sigset_t mask, omask;
 
@@ -152,11 +152,11 @@ done:
 
 struct cmdtab *
 lookup(name)
-	register char *name;
+	char *name;
 {
-	register char *p, *q;
-	register struct cmdtab *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmdtab *c, *found;
+	int nmatches, longest;
 
 	longest = 0;
 	nmatches = 0;
@@ -189,7 +189,7 @@ status()
 
 int
 prefix(s1, s2)
-        register char *s1, *s2;
+        char *s1, *s2;
 {
 
         while (*s1 == *s2) {

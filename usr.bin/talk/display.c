@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.8 2000/12/31 00:24:51 hugh Exp $	*/
+/*	$OpenBSD: display.c,v 1.9 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: display.c,v 1.8 2000/12/31 00:24:51 hugh Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.9 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -73,11 +73,11 @@ max(a,b)
  */
 void
 display(win, text, size)
-	register xwin_t *win;
-	register char *text;
+	xwin_t *win;
+	char *text;
 	int size;
 {
-	register int i;
+	int i;
 	char cch;
 
 	for (i = 0; i < size; i++) {
@@ -175,7 +175,7 @@ readwin(win, line, col)
 	int line, col;
 {
 	int oldline, oldcol;
-	register int c;
+	int c;
 
 	getyx(win, oldline, oldcol);
 	wmove(win, line, col);
@@ -190,7 +190,7 @@ readwin(win, line, col)
  */
 void
 xscroll(win, flag)
-	register xwin_t *win;
+	xwin_t *win;
 	int flag;
 {
 

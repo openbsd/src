@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.61 2001/11/06 19:20:15 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.62 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -159,12 +159,12 @@ extern char *__progname;
 
 int
 main(argc, argv)
-	register int argc;
-	register char **argv;
+	int argc;
+	char **argv;
 {
 	extern int optind;
 	extern char *optarg;
-	register int c, todo;
+	int c, todo;
 	u_int interval;
 	int reps;
 	char errbuf[_POSIX2_LINE_MAX];
@@ -299,7 +299,7 @@ char **
 choosedrives(argv)
 	char **argv;
 {
-	register int i;
+	int i;
 
 	/*
 	 * Choose drives to be displayed.  Priority goes to (in order) drives
@@ -446,7 +446,7 @@ dovmstat(interval, reps)
 void
 printhdr()
 {
-	register int i;
+	int i;
 
 	(void)printf(" procs   memory       page%*s", 20, "");
 	if (ndrives > 0)
@@ -659,7 +659,7 @@ doforkst()
 void
 dkstats()
 {
-	register int dn, state;
+	int dn, state;
 	double etime;
 
 	/* Calculate disk stat deltas. */
@@ -681,7 +681,7 @@ dkstats()
 void
 cpustats()
 {
-	register int state;
+	int state;
 	double pct, total;
 
 	total = 0;
@@ -831,10 +831,10 @@ dointr()
 void
 dointr()
 {
-	register long *intrcnt, inttotal;
+	long *intrcnt, inttotal;
 	time_t uptime;
-	register int nintr, inamlen;
-	register char *intrname;
+	int nintr, inamlen;
+	char *intrname;
 	struct evcntlist allevents;
 	struct evcnt evcnt, *evptr;
 	struct device dev;
@@ -888,9 +888,9 @@ char *kmemnames[] = INITKMEMNAMES;
 void
 domem()
 {
-	register struct kmembuckets *kp;
-	register struct kmemstats *ks;
-	register int i, j;
+	struct kmembuckets *kp;
+	struct kmemstats *ks;
+	int i, j;
 	int len, size, first;
 	u_long totuse = 0, totfree = 0;
 	quad_t totreq = 0;

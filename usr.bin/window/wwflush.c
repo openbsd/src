@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwflush.c,v 1.4 1997/02/25 00:04:52 downsj Exp $	*/
+/*	$OpenBSD: wwflush.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwflush.c,v 1.5 1995/12/21 10:46:08 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwflush.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwflush.c,v 1.4 1997/02/25 00:04:52 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwflush.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ static char rcsid[] = "$OpenBSD: wwflush.c,v 1.4 1997/02/25 00:04:52 downsj Exp 
 
 wwflush()
 {
-	register row, col;
+	int row, col;
 
 	if ((row = wwcursorrow) < 0)
 		row = 0;
@@ -104,10 +104,10 @@ wwcheckpoint()
 }
 
 wwcopyscreen(s1, s2)
-	register union ww_char **s1, **s2;
+	union ww_char **s1, **s2;
 {
-	register i;
-	register s = wwncol * sizeof **s1;
+	int i;
+	int s = wwncol * sizeof **s1;
 
 	for (i = wwnrow; --i >= 0;)
 		bcopy((char *) *s1++, (char *) *s2++, s);

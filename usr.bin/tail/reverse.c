@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.10 2001/07/17 02:23:58 pvalchev Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.11 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.10 2001/07/17 02:23:58 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.11 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -111,13 +111,13 @@ reverse(fp, style, off, sbp)
 static int
 r_reg(fp, style, off, sbp)
 	FILE *fp;
-	register enum STYLE style;
+	enum STYLE style;
 	long off;
 	struct stat *sbp;
 {
-	register off_t size;
-	register int llen;
-	register char *p;
+	off_t size;
+	int llen;
+	char *p;
 	char *start;
 
 	if (!(size = sbp->st_size))
@@ -173,9 +173,9 @@ static void
 r_buf(fp)
 	FILE *fp;
 {
-	register BF *mark, *tr, *tl = NULL;
-	register int ch, len, llen;
-	register char *p;
+	BF *mark, *tr, *tl = NULL;
+	int ch, len, llen;
+	char *p;
 	off_t enomem;
 
 #define	BSZ	(128 * 1024)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.4 2000/12/22 22:53:10 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.5 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.4 2000/12/22 22:53:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.5 2001/11/19 19:02:15 mpech Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -131,8 +131,8 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register char *fmt, *start;
-	register int fieldwidth, precision;
+	char *fmt, *start;
+	int fieldwidth, precision;
 	char convch, nextch;
 	char *format;
 	int ch;
@@ -282,7 +282,7 @@ main(argc, argv)
  */
 static int
 print_escape_str(str)
-	register const char *str;
+	const char *str;
 {
 	int value;
 	int c;
@@ -323,7 +323,7 @@ print_escape_str(str)
  */
 static int
 print_escape(str)
-	register const char *str;
+	const char *str;
 {
 	const char *start = str;
 	int value;

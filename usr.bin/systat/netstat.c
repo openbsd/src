@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.16 2001/07/28 05:36:18 pvalchev Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.17 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.16 2001/07/28 05:36:18 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.17 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -134,7 +134,7 @@ void
 closenetstat(w)
         WINDOW *w;
 {
-	register struct netinfo *p;
+	struct netinfo *p;
 
 	endhostent();
 	endnetent();
@@ -182,8 +182,8 @@ void
 fetchnetstat()
 {
 	struct inpcbtable pcbtable;
-	register struct inpcb *head, *prev, *next;
-	register struct netinfo *p;
+	struct inpcb *head, *prev, *next;
+	struct netinfo *p;
 	struct inpcb inpcb;
 	struct socket sockb;
 	struct tcpcb tcpcb;
@@ -258,12 +258,12 @@ printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next,
 
 static void
 enter(inp, so, state, proto)
-	register struct inpcb *inp;
-	register struct socket *so;
+	struct inpcb *inp;
+	struct socket *so;
 	int state;
 	char *proto;
 {
-	register struct netinfo *p;
+	struct netinfo *p;
 
 	/*
 	 * Only take exact matches, any sockets with
@@ -363,7 +363,7 @@ labelnetstat()
 void
 shownetstat()
 {
-	register struct netinfo *p, *q;
+	struct netinfo *p, *q;
 
 	/*
 	 * First, delete any connections that have gone
@@ -464,7 +464,7 @@ shownetstat()
  */
 static void
 inetprint(in, port, proto)
-	register struct in_addr *in;
+	struct in_addr *in;
 	int port;
 	char *proto;
 {
@@ -492,7 +492,7 @@ inetprint(in, port, proto)
 #ifdef INET6
 static void
 inet6print(in6, port, proto)
-	register struct in6_addr *in6;
+	struct in6_addr *in6;
 	int port;
 	char *proto;
 {
@@ -590,7 +590,7 @@ int
 cmdnetstat(cmd, args)
 	char *cmd, *args;
 {
-	register struct netinfo *p;
+	struct netinfo *p;
 
 	if (prefix(cmd, "all")) {
 		aflag = !aflag;

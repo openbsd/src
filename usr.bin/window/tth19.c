@@ -1,4 +1,4 @@
-/*	$OpenBSD: tth19.c,v 1.3 1997/02/25 00:04:22 downsj Exp $	*/
+/*	$OpenBSD: tth19.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: tth19.c,v 1.3 1995/09/28 10:34:47 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tth19.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: tth19.c,v 1.3 1997/02/25 00:04:22 downsj Exp $";
+static char rcsid[] = "$OpenBSD: tth19.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ extern struct tt_str *gen_VE;
 int h19_msp10c;
 
 #define PAD(ms10) { \
-	register i; \
+	int i; \
 	for (i = ((ms10) + 5) / h19_msp10c; --i >= 0;) \
 		ttputc('\0'); \
 }
@@ -88,9 +88,9 @@ int h19_msp10c;
 #define H19_SETINSERT(m) ttesc((tt.tt_insert = (m)) ? '@' : 'O')
 
 h19_setmodes(new)
-register new;
+int new;
 {
-	register diff;
+	int diff;
 
 	diff = new ^ tt.tt_modes;
 	if (diff & WWM_REV)
@@ -117,7 +117,7 @@ h19_delline(n)
 }
 
 h19_putc(c)
-register char c;
+char c;
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		(*tt.tt_setmodes)(tt.tt_nmodes);
@@ -129,8 +129,8 @@ register char c;
 }
 
 h19_write(p, n)
-register char *p;
-register n;
+char *p;
+int n;
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		(*tt.tt_setmodes)(tt.tt_nmodes);
@@ -143,7 +143,7 @@ register n;
 }
 
 h19_move(row, col)
-register char row, col;
+char row, col;
 {
 	if (tt.tt_row == row) {
 		if (tt.tt_col == col)
@@ -219,7 +219,7 @@ h19_clear()
 }
 
 h19_inschar(c)
-register char c;
+char c;
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		(*tt.tt_setmodes)(tt.tt_nmodes);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.5 2001/07/16 06:29:44 pvalchev Exp $	*/
+/*	$OpenBSD: error.c,v 1.6 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: error.c,v 1.4 1996/03/19 03:21:32 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.5 2001/07/16 06:29:44 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.6 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ print_pos(st_line, st_cptr)
 char *st_line;
 char *st_cptr;
 {
-    register char *s;
+    char *s;
 
     if (st_line == 0) return;
     for (s = st_line; *s != '\n'; ++s)

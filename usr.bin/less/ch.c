@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.2 2001/01/29 01:58:00 niklas Exp $	*/
+/*	$OpenBSD: ch.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -108,9 +108,9 @@ static int ch_addbuf();
 	int
 fch_get()
 {
-	register struct buf *bp;
-	register int n;
-	register int slept;
+	struct buf *bp;
+	int n;
+	int slept;
 	POSITION pos;
 	POSITION len;
 
@@ -314,7 +314,7 @@ end_logfile()
 	public void
 sync_logfile()
 {
-	register struct buf *bp;
+	struct buf *bp;
 	int warned = FALSE;
 	long block;
 	long nblocks;
@@ -352,7 +352,7 @@ sync_logfile()
 buffered(block)
 	long block;
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	for (bp = ch_bufhead;  bp != END_OF_CHAIN;  bp = bp->next)
 		if (bp->block == block)
@@ -366,7 +366,7 @@ buffered(block)
  */
 	public int
 ch_seek(pos)
-	register POSITION pos;
+	POSITION pos;
 {
 	long new_block;
 	POSITION len;
@@ -429,7 +429,7 @@ ch_end_seek()
 	public int
 ch_beg_seek()
 {
-	register struct buf *bp, *firstbp;
+	struct buf *bp, *firstbp;
 
 	/*
 	 * Try a plain ch_seek first.
@@ -480,7 +480,7 @@ ch_tell()
 	public int
 ch_forw_get()
 {
-	register int c;
+	int c;
 
 	c = ch_get();
 	if (c == EOI)
@@ -550,7 +550,7 @@ ch_nbuf(want_nbufs)
 	public void
 ch_flush()
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	if (!(ch_flags & CH_CANSEEK))
 	{
@@ -598,7 +598,7 @@ ch_flush()
 	static int
 ch_addbuf()
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	/*
 	 * Allocate and initialize a new buffer and link it 
@@ -622,7 +622,7 @@ ch_addbuf()
 	static void
 ch_delbufs()
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	while (ch_bufhead != END_OF_CHAIN)
 	{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xxflush.c,v 1.3 1997/02/25 00:05:17 downsj Exp $	*/
+/*	$OpenBSD: xxflush.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: xxflush.c,v 1.3 1995/09/28 10:36:05 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)xxflush.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: xxflush.c,v 1.3 1997/02/25 00:05:17 downsj Exp $";
+static char rcsid[] = "$OpenBSD: xxflush.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,9 +50,9 @@ static char rcsid[] = "$OpenBSD: xxflush.c,v 1.3 1997/02/25 00:05:17 downsj Exp 
 #include "tt.h"
 
 xxflush(intr)
-	register intr;
+	int intr;
 {
-	register struct xx *xp, *xq;
+	struct xx *xp, *xq;
 
 	for (xp = xx_head; xp != 0 && !(intr && wwinterrupt()); xp = xq) {
 		switch (xp->cmd) {
@@ -104,9 +104,9 @@ xxflush(intr)
 }
 
 xxflush_scroll(xp)
-	register struct xx *xp;
+	struct xx *xp;
 {
-	register struct xx *xq;
+	struct xx *xq;
 
  top:
 	if (xp->arg0 == 0)

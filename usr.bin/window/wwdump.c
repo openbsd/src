@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwdump.c,v 1.3 1997/02/25 00:04:48 downsj Exp $	*/
+/*	$OpenBSD: wwdump.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwdump.c,v 1.5 1995/09/29 00:44:09 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwdump.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwdump.c,v 1.3 1997/02/25 00:04:48 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwdump.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,9 @@ static char rcsid[] = "$OpenBSD: wwdump.c,v 1.3 1997/02/25 00:04:48 downsj Exp $
 static char cmap[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 wwdumpwin(w)
-register struct ww *w;
+struct ww *w;
 {
-	register i, j;
+	int i, j;
 
 	tt.tt_nmodes = 0;
 	(*tt.tt_clear)();
@@ -66,9 +66,9 @@ register struct ww *w;
 }
 
 wwdumpnvis(w)
-register struct ww *w;
+struct ww *w;
 {
-	register i;
+	int i;
 	char buf[20];
 
 	tt.tt_nmodes = 0;
@@ -82,7 +82,7 @@ register struct ww *w;
 
 wwdumpsmap()
 {
-	register i, j;
+	int i, j;
 
 	tt.tt_nmodes = 0;
 	(*tt.tt_clear)();
@@ -95,7 +95,7 @@ wwdumpsmap()
 
 wwdumpns()
 {
-	register i, j;
+	int i, j;
 
 	(*tt.tt_clear)();
 	for (i = 0; i < wwnrow; i++) {
@@ -109,7 +109,7 @@ wwdumpns()
 
 wwdumpos()
 {
-	register i, j;
+	int i, j;
 
 	(*tt.tt_clear)();
 	for (i = 0; i < wwnrow; i++) {

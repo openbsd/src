@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.9 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: server.c,v 1.10 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] =
 "$From: server.c,v 6.85 1996/03/12 22:55:38 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: server.c,v 1.9 2001/09/19 10:58:07 mpech Exp $";
+"$OpenBSD: server.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
@@ -196,7 +196,7 @@ static int fchog(fd, file, owner, group, mode)
 	static UID_T last_uid = (UID_T)-2;
 	static GID_T last_primegid;
 	extern char *locuser;
-	register int i;
+	int i;
 	UID_T uid;
 	GID_T gid;
 	GID_T primegid = (GID_T)-2;
@@ -324,7 +324,7 @@ static int removefile(statb)
 {
 	DIR *d;
 	static DIRENTRY *dp;
-	register char *cp;
+	char *cp;
 	struct stat stb;
 	char *optarget;
 	int len, failures = 0;
@@ -413,10 +413,10 @@ removed:
  * for extraneous files and remove them.
  */
 static void doclean(cp)
-	register char *cp;
+	char *cp;
 {
 	DIR *d;
-	register DIRENTRY *dp;
+	DIRENTRY *dp;
 	struct stat stb;
 	char *optarget, *ep;
 	int len;
@@ -480,7 +480,7 @@ static void doclean(cp)
  * Frontend to doclean().
  */
 static void clean(cp)
-	register char *cp;
+	char *cp;
 {
 	doclean(cp);
 	(void) sendcmd(CC_END, NULL);
@@ -508,7 +508,7 @@ static void dospecial(cmd)
  */
 static void docmdspecial()
 {
-	register char *cp;
+	char *cp;
 	char *cmd, *env = NULL;
 	int n;
 	int len;
@@ -666,7 +666,7 @@ static int chkparent(name, opts)
 	char *name;
 	opt_t opts;
 {
-	register char *cp;
+	char *cp;
 	struct stat stb;
 	int r = -1;
 
@@ -759,7 +759,7 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 {
 	int f, wrerr, olderrno, lastwashole = 0, wassparse = 0;
 	off_t i;
-	register char *cp;
+	char *cp;
 	char *savefile = NULL;
 	static struct stat statbuff;
 
@@ -986,7 +986,7 @@ static void recvdir(opts, mode, owner, group)
 	char *owner, *group;
 {
 	static char lowner[100], lgroup[100];
-	register char *cp;
+	char *cp;
 	struct stat stb;
 	int s;
 
@@ -1304,7 +1304,7 @@ static void hardlink(cmd)
 static void setconfig(cmd)
 	char *cmd;
 {
-	register char *cp = cmd;
+	char *cp = cmd;
 	char *estr;
 
 	switch (*cp++) {
@@ -1581,8 +1581,8 @@ extern void cleanup()
 extern void server()
 {
 	static char cmdbuf[BUFSIZ];
-	register char *cp;
-	register int n;
+	char *cp;
+	int n;
 	extern jmp_buf finish_jmpbuf;
 
 	if (setjmp(finish_jmpbuf)) {

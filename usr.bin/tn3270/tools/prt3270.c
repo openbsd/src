@@ -1,4 +1,4 @@
-/*	$OpenBSD: prt3270.c,v 1.2 1996/06/26 05:41:35 deraadt Exp $	*/
+/*	$OpenBSD: prt3270.c,v 1.3 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)prt3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: prt3270.c,v 1.2 1996/06/26 05:41:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: prt3270.c,v 1.3 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -252,13 +252,13 @@ int	i;
 /* returns the number of characters consumed */
 int
 DataFromNetwork(buffer, count, control)
-register unsigned char	*buffer;		/* what the data is */
-register int	count;				/* and how much there is */
+unsigned char	*buffer;			/* what the data is */
+int	count;					/* and how much there is */
 int	control;				/* this buffer ended block? */
 {
     int origCount;
-    register int c;
-    register int i;
+    int c;
+    int i;
     static int Command;
     static int Wcc;
     static int	LastWasTerminated = 1;	/* was "control" = 1 last time? */

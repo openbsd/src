@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.5 2001/05/04 16:48:34 ericj Exp $	*/
+/*	$OpenBSD: mbufs.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: mbufs.c,v 1.5 2001/05/04 16:48:34 ericj Exp $";
+static char rcsid[] = "$OpenBSD: mbufs.c,v 1.6 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ labelmbufs()
 void
 showmbufs()
 {
-	register int i, j, max, index;
+	int i, j, max, index;
 	char buf[13];
 
 	if (mb == 0)

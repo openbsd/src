@@ -1,4 +1,4 @@
-/*	$OpenBSD: prompt.c,v 1.4 2001/01/29 01:58:03 niklas Exp $	*/
+/*	$OpenBSD: prompt.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -287,9 +287,9 @@ protochar(c, where)
  */
 	static char *
 skipcond(p)
-	register char *p;
+	char *p;
 {
-	register int iflevel;
+	int iflevel;
 
 	/*
 	 * We came in here after processing a ? or :,
@@ -369,8 +369,8 @@ pr_expand(proto, maxwidth)
 	char *proto;
 	int maxwidth;
 {
-	register char *p;
-	register int c;
+	char *p;
+	int c;
 	int where;
 
 	mp = message;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcmds.c,v 1.5 2000/01/05 11:04:22 itojun Exp $	*/
+/*	$OpenBSD: netcmds.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netcmds.c,v 1.5 2000/01/05 11:04:22 itojun Exp $";
+static char rcsid[] = "$OpenBSD: netcmds.c,v 1.6 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -129,7 +129,7 @@ changeitems(args, onoff)
 	char *args;
 	int onoff;
 {
-	register char *cp;
+	char *cp;
 	struct servent *sp;
 	struct addrinfo hints, *res0, *res;
 
@@ -203,7 +203,7 @@ selectport(port, onoff)
 	long port;
 	int onoff;
 {
-	register struct pitem *p;
+	struct pitem *p;
 
 	if (port == -1) {
 		if (ports == 0)
@@ -229,9 +229,9 @@ selectport(port, onoff)
 
 int
 checkport(inp)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 {
-	register struct pitem *p;
+	struct pitem *p;
 
 	if (ports)
 	for (p = ports; p < ports+nports; p++)
@@ -243,7 +243,7 @@ checkport(inp)
 static void
 showports()
 {
-	register struct pitem *p;
+	struct pitem *p;
 	struct servent *sp;
 
 	for (p = ports; p < ports+nports; p++) {
@@ -293,7 +293,7 @@ selecthost(sa, onoff)
 	struct sockaddr *sa;
 	int onoff;
 {
-	register struct hitem *p;
+	struct hitem *p;
 
 	if (sa == 0) {
 		if (hosts == 0)
@@ -321,9 +321,9 @@ selecthost(sa, onoff)
 
 int
 checkhost(inp)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 {
-	register struct hitem *p;
+	struct hitem *p;
 
 	if (hosts)
 	for (p = hosts; p < hosts+nhosts; p++) {
@@ -352,7 +352,7 @@ checkhost(inp)
 static void
 showhosts()
 {
-	register struct hitem *p;
+	struct hitem *p;
 	char hbuf[NI_MAXHOST];
 	struct sockaddr *sa;
 	int flags;

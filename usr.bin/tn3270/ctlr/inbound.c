@@ -1,4 +1,4 @@
-/*	$OpenBSD: inbound.c,v 1.3 1998/03/12 17:31:42 deraadt Exp $	*/
+/*	$OpenBSD: inbound.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inbound.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: inbound.c,v 1.3 1998/03/12 17:31:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inbound.c,v 1.4 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -121,7 +121,7 @@ init_inbound()
 static void
 Tab()
 {
-    register int i, j;
+    int i, j;
 
     i = CursorAddress;
     j = WhereAttrByte(CursorAddress);
@@ -144,7 +144,7 @@ Tab()
 static void
 BackTab()
 {
-    register int i;
+    int i;
 
     i = ScreenDec(CursorAddress);
     for (;;) {
@@ -195,7 +195,7 @@ int on;
 static void
 EraseEndOfField()
 {
-    register int i;
+    int i;
 
     if (IsProtected(CursorAddress)) {
 	RingBell("Protected Field");
@@ -238,10 +238,10 @@ EraseEndOfField()
 
 static void
 Delete(where, from)
-register int	where,		/* Where to start deleting from */
+int		where,		/* Where to start deleting from */
 		from;		/* Where to pull back from */
 {
-    register int i;
+    int i;
 
     TurnOnMdt(where);			/* Only do this once in this field */
     i = where;
@@ -259,7 +259,7 @@ register int	where,		/* Where to start deleting from */
 static void
 ColBak()
 {
-    register int i;
+    int i;
 
     i = ScreenLineOffset(CursorAddress);
     for (i = i-1; i >= 0; i--) {
@@ -276,7 +276,7 @@ ColBak()
 static void
 ColTab()
 {
-    register int i;
+    int i;
 
     i = ScreenLineOffset(CursorAddress);
     for (i = i+1; i < NumberColumns; i++) {
@@ -293,8 +293,8 @@ ColTab()
 static void
 Home()
 {
-    register int i;
-    register int j;
+    int i;
+    int j;
 
     i = SetBufferAddress(OptHome, 0);
     j = WhereLowByte(i);
@@ -324,10 +324,10 @@ Home()
 
 static
 LastOfField(i)
-register int	i;	/* position to start from */
+int	i;	/* position to start from */
 {
-    register int j;
-    register int k;
+    int j;
+    int k;
 
     k = j = i;
     SetXIsProtected();
@@ -386,9 +386,9 @@ char	character;
 static void
 SendUnformatted()
 {
-    register int i, j;
-    register int Nulls;
-    register int c;
+    int i, j;
+    int Nulls;
+    int c;
 
 			/* look for start of field */
     Nulls = 0;
@@ -410,13 +410,13 @@ SendUnformatted()
 
 static
 SendField(i, cmd)
-register int i;			/* where we saw MDT bit */
+int 	i;			/* where we saw MDT bit */
 int	cmd;			/* The command code (type of read) */
 {
-    register int j;
-    register int k;
-    register int Nulls;
-    register int c;
+    int j;
+    int k;
+    int Nulls;
+    int c;
 
 			/* look for start of field */
     i = j = WhereLowByte(i);
@@ -463,7 +463,7 @@ void
 DoReadModified(cmd)
 int	cmd;			/* The command sent */
 {
-    register int i, j;
+    int i, j;
 
     if (AidByte) {
 	if (AidByte != AID_TREQ) {
@@ -513,7 +513,7 @@ int	cmd;			/* The command sent */
 void
 DoReadBuffer()
 {
-    register int i, j;
+    int i, j;
 
     if (AidByte) {
 	AddChar(AidByte);
@@ -592,7 +592,7 @@ OneCharacter(c, insert)
 int c;			/* character (Ebcdic) to be shoved in */
 int insert;		/* are we in insert mode? */
 {
-    register int i, j;
+    int i, j;
 
     if (IsProtected(CursorAddress)) {
 	RingBell("Protected Field");
@@ -639,9 +639,9 @@ unsigned int
     scancode,			/* 3270 scancode */
     shiftstate;			/* The shift state */
 {
-    register int c;
-    register int i;
-    register int j;
+    int c;
+    int i;
+    int j;
     enum ctlrfcn ctlrfcn;
 
     if (scancode >= numberof(hits)) {

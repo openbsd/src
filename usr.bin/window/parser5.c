@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser5.c,v 1.3 1997/02/25 00:04:15 downsj Exp $	*/
+/*	$OpenBSD: parser5.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: parser5.c,v 1.3 1995/09/28 10:34:35 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser5.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: parser5.c,v 1.3 1997/02/25 00:04:15 downsj Exp $";
+static char rcsid[] = "$OpenBSD: parser5.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: parser5.c,v 1.3 1997/02/25 00:04:15 downsj Exp 
  * unary $ $? + - ! ~
  */
 p_expr11(v, flag)
-register struct value *v;
+struct value *v;
 char flag;
 {
 	int op;
@@ -154,7 +154,7 @@ char flag;
  * Always return v_type == V_ERR when flag == 0.
  */
 p_expr12(v, flag)
-register struct value *v;
+struct value *v;
 char flag;
 {
 	v->v_type = V_ERR;

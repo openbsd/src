@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.3 1998/03/12 04:57:45 art Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.4 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ init_terminal()
 ttyflush(drop)
     int drop;
 {
-    register int n, n0, n1;
+    int n, n0, n1;
 
     n0 = ring_full_count(&ttyoring);
     if ((n1 = n = ring_full_consecutive(&ttyoring)) > 0) {
@@ -201,7 +201,7 @@ getconnmode()
 setconnmode(force)
     int force;
 {
-    register int newmode;
+    int newmode;
 #ifdef ENCRYPTION
     static int enc_passwd = 0;
 #endif

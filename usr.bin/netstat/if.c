@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.26 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.27 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.26 2001/09/04 23:35:59 millert Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.27 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ intpr(interval, ifnetaddr)
 #ifdef INET6
 		struct sockaddr_in6 *sin6;
 #endif
-		register char *cp;
+		char *cp;
 		int n, m;
 
 		if (ifaddraddr == 0) {
@@ -391,8 +391,8 @@ sidewaysintpr(interval, off)
 {
 	struct ifnet ifnet;
 	u_long firstifnet;
-	register struct iftot *ip, *total;
-	register int line;
+	struct iftot *ip, *total;
+	int line;
 	struct iftot *lastif, *sum, *interesting;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
 	sigset_t emptyset;

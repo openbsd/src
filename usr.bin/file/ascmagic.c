@@ -1,4 +1,4 @@
-/*	$OpenBSD: ascmagic.c,v 1.4 1998/07/10 15:05:15 mickey Exp $	*/
+/*	$OpenBSD: ascmagic.c,v 1.5 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*
  * ASCII magic -- file types that we know based on keywords
@@ -38,7 +38,7 @@
 #include "names.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: ascmagic.c,v 1.4 1998/07/10 15:05:15 mickey Exp $";
+static char *moduleid = "$OpenBSD: ascmagic.c,v 1.5 2001/11/19 19:02:13 mpech Exp $";
 #endif	/* lint */
 
 			/* an optimisation over plain strcmp() */
@@ -53,7 +53,7 @@ int nbytes;	/* size actually read */
 	unsigned char *s;
 	char nbuf[HOWMANY+1];	/* one extra for terminating '\0' */
 	char *token;
-	register struct names *p;
+	struct names *p;
 
 	/*
 	 * Do the tar test first, because if the first file in the tar

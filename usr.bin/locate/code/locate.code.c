@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.7 1997/01/15 23:42:42 millert Exp $
+ *	$OpenBSD: locate.code.c,v 1.8 2001/11/19 19:02:15 mpech Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.7 1997/01/15 23:42:42 millert Exp $
+ * 	$Id: locate.code.c,v 1.8 2001/11/19 19:02:15 mpech Exp $
  */
 
 #ifndef lint
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.7 1997/01/15 23:42:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.8 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,10 +132,10 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register u_char *cp, *oldpath, *path;
+	u_char *cp, *oldpath, *path;
 	int ch, code, count, diffcount, oldcount;
 	FILE *fp;
-	register int i, j;
+	int i, j;
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
@@ -258,7 +258,7 @@ int
 bgindex(bg)			/* Return location of bg in bigrams or -1. */
 	char *bg;
 {
-	register char bg0, bg1, *p;
+	char bg0, bg1, *p;
 
 	bg0 = bg[0];
 	bg1 = bg[1];

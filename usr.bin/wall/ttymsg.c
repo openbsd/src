@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.8 2001/09/04 23:44:19 millert Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.9 2001/11/19 19:02:17 mpech Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.8 2001/09/04 23:44:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.9 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ ttymsg(iov, iovcnt, line, tmout)
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
 	static char errbuf[1024];
-	register int cnt, fd, left, wret;
+	int cnt, fd, left, wret;
 	struct iovec localiov[6];
 	int forked = 0;
 	struct stat st;

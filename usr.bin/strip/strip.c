@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.14 2001/07/18 17:17:39 pvalchev Exp $	*/
+/*	$OpenBSD: strip.c,v 1.15 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.14 2001/07/18 17:17:39 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.15 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -80,7 +80,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int fd;
+	int fd;
 	EXEC *ep;
 	struct stat sb;
 	int (*sfcn)__P((const char *, int, EXEC *, struct stat *));
@@ -146,12 +146,12 @@ int
 s_sym(fn, fd, ep, sp)
 	const char *fn;
 	int fd;
-	register EXEC *ep;
+	EXEC *ep;
 	struct stat *sp;
 {
-	register char *neweof;
+	char *neweof;
 #if	0
-	register char *mineof;
+	char *mineof;
 #endif
 	int zmagic;
 
@@ -218,9 +218,9 @@ s_stab(fn, fd, ep, sp)
 	EXEC *ep;
 	struct stat *sp;
 {
-	register int cnt, len;
-	register char *nstr, *nstrbase, *p, *strbase;
-	register NLIST *sym, *nsym;
+	int cnt, len;
+	char *nstr, *nstrbase, *p, *strbase;
+	NLIST *sym, *nsym;
 	u_long allocsize;
 	int mid;
 	NLIST *symbase;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brac.c,v 1.2 2001/01/29 01:58:00 niklas Exp $	*/
+/*	$OpenBSD: brac.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -44,13 +44,13 @@
  */
 	public void
 match_brac(obrac, cbrac, forwdir, n)
-	register int obrac;
-	register int cbrac;
+	int obrac;
+	int cbrac;
 	int forwdir;
 	int n;
 {
-	register int c;
-	register int nest;
+	int c;
+	int nest;
 	POSITION pos;
 	int (*chget)();
 

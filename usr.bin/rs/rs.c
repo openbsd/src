@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.5 2001/10/28 03:56:46 deraadt Exp $	*/
+/*	$OpenBSD: rs.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -127,9 +127,9 @@ main(argc, argv)
 void
 getfile()
 {
-	register char *p;
-	register char *endp;
-	register char **ep = 0;
+	char *p;
+	char *endp;
+	char **ep = 0;
 	int multisep = (flags & ONEISEPONLY ? 0 : 1);
 	int nullpad = flags & NULLPAD;
 	char **padto;
@@ -193,8 +193,8 @@ getfile()
 void
 putfile()
 {
-	register char **ep;
-	register int i, j, n;
+	char **ep;
+	int i, j, n;
 
 	ep = elem;
 	if (flags & TRANSPOSE) {
@@ -220,8 +220,8 @@ prints(s, col)
 	char *s;
 	int col;
 {
-	register int n;
-	register char *p = s;
+	int n;
+	char *p = s;
 
 	while (*p)
 		p++;
@@ -248,9 +248,9 @@ usage(msg, s)
 void
 prepfile()
 {
-	register char **ep;
-	register int  i;
-	register int  j;
+	char **ep;
+	int  i;
+	int  j;
 	char **lp;
 	int colw;
 	int max = 0;
@@ -343,8 +343,8 @@ getline()	/* get line; maintain curline, curlen; manage storage */
 {
 	static	int putlength;
 	static	char *endblock = ibuf + BSIZE;
-	register char *p;
-	register int c, i;
+	char *p;
+	int c, i;
 
 	if (!irows) {
 		curline = ibuf;
@@ -375,7 +375,7 @@ char **
 getptrs(sp)
 	char **sp;
 {
-	register char **p;
+	char **p;
 
 	allocsize += allocsize;
 	p = (char **)realloc(elem, allocsize * sizeof(char *));
@@ -392,7 +392,7 @@ getargs(ac, av)
 	int ac;
 	char *av[];
 {
-	register char *p;
+	char *p;
 
 	if (ac == 1) {
 		flags |= NOARGS | TRANSPOSE;
@@ -503,8 +503,8 @@ getlist(list, p)
 	short **list;
 	char *p;
 {
-	register int count = 1;
-	register char *t;
+	int count = 1;
+	char *t;
 
 	for (t = p + 1; *t; t++) {
 		if (!isdigit(*t))
@@ -536,7 +536,7 @@ getnum(num, p, strict)	/* num = number p points to; if (strict) complain */
 	int *num, strict;	/* returns pointer to end of num */
 	char *p;
 {
-	register char *t = p;
+	char *t = p;
 
 	if (!isdigit(*++t)) {
 		if (strict || *t == '-' || *t == '+')

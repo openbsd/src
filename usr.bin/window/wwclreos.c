@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwclreos.c,v 1.4 1997/02/25 00:04:43 downsj Exp $	*/
+/*	$OpenBSD: wwclreos.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwclreos.c,v 1.4 1996/02/08 20:45:07 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwclreos.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwclreos.c,v 1.4 1997/02/25 00:04:43 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwclreos.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,9 +49,9 @@ static char rcsid[] = "$OpenBSD: wwclreos.c,v 1.4 1997/02/25 00:04:43 downsj Exp
 #include "tt.h"
 
 wwclreos(w, row, col)
-register struct ww *w;
+struct ww *w;
 {
-	register i;
+	int i;
 
 	wwclreol(w, row, col);
 	for (i = row + 1; i < w->ww_b.b; i++)

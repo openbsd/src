@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.15 2001/06/13 02:29:15 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.16 2001/11/19 19:02:15 mpech Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.15 2001/06/13 02:29:15 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.16 2001/11/19 19:02:15 mpech Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -831,7 +831,7 @@ icmp6_stats(off, name)
 	char *name;
 {
 	struct icmp6stat icmp6stat;
-	register int i, first;
+	int i, first;
 
 	if (off == 0)
 		return;
@@ -999,7 +999,7 @@ pim6_stats(off, name)
 
 void
 inet6print(in6, port, proto)
-	register struct in6_addr *in6;
+	struct in6_addr *in6;
 	int port;
 	char *proto;
 {
@@ -1043,7 +1043,7 @@ char *
 inet6name(in6p)
 	struct in6_addr *in6p;
 {
-	register char *cp;
+	char *cp;
 	static char line[NI_MAXHOST];
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN + 1];

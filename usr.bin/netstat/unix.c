@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.6 1999/12/08 12:30:17 itojun Exp $	*/
+/*	$OpenBSD: unix.c,v 1.7 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: unix.c,v 1.6 1999/12/08 12:30:17 itojun Exp $";
+static char *rcsid = "$OpenBSD: unix.c,v 1.7 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ void
 unixpr(off)
 	u_long	off;
 {
-	register struct file *fp;
+	struct file *fp;
 	struct socket sock, *so = &sock;
 	char *filebuf;
 	struct protosw *unixsw = (struct protosw *)off;
@@ -105,7 +105,7 @@ static	char *socktype[] =
 
 static void
 unixdomainpr(so, soaddr)
-	register struct socket *so;
+	struct socket *so;
 	caddr_t soaddr;
 {
 	struct unpcb unpcb, *unp = &unpcb;

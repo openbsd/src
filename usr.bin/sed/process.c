@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.5 1999/06/06 15:42:24 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.6 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: process.c,v 1.5 1999/06/06 15:42:24 deraadt Exp $";
+static char *rcsid = "$OpenBSD: process.c,v 1.6 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -459,10 +459,10 @@ flush_appends()
 
 static void
 lputs(s)
-	register char *s;
+	char *s;
 {
-	register int count;
-	register char *escapes, *p;
+	int count;
+	char *escapes, *p;
 	struct winsize win;
 	static int termwidth = -1;
 
@@ -543,8 +543,8 @@ regsub(sp, string, src)
 	SPACE *sp;
 	char *string, *src;
 {
-	register int len, no;
-	register char c, *dst;
+	int len, no;
+	char c, *dst;
 
 #define	NEEDSP(reqlen)							\
 	if (sp->len >= sp->blen - (reqlen) - 1) {			\
@@ -613,7 +613,7 @@ cspace(sp, p, len, spflag)
  */
 void
 cfclose(cp, end)
-	register struct s_command *cp, *end;
+	struct s_command *cp, *end;
 {
 
 	for (; cp != end; cp = cp->next)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: os.c,v 1.3 2001/01/29 01:58:03 niklas Exp $	*/
+/*	$OpenBSD: os.c,v 1.4 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -89,7 +89,7 @@ iread(fd, buf, len)
 	char *buf;
 	unsigned int len;
 {
-	register int n;
+	int n;
 
 #if MSOFTC
 	if (kbhit())
@@ -177,8 +177,8 @@ strerror(err)
 errno_message(filename)
 	char *filename;
 {
-	register char *p;
-	register char *m;
+	char *p;
+	char *m;
 #if HAVE_ERRNO
 	extern int errno;
 	p = strerror(errno);

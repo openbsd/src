@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.13 2001/09/27 18:19:20 mickey Exp $	*/
+/*	$OpenBSD: day.c,v 1.14 2001/11/19 19:02:13 mpech Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.13 2001/09/27 18:19:20 mickey Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.14 2001/11/19 19:02:13 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -565,9 +565,9 @@ isnow(endp, bodun)
 
 int
 getmonth(s)
-	register char *s;
+	char *s;
 {
-	register char **p;
+	char **p;
 	struct fixs *n;
 
 	for (n = fnmonths; n->name; ++n)
@@ -585,9 +585,9 @@ getmonth(s)
 
 int
 getday(s)
-	register char *s;
+	char *s;
 {
-	register char **p;
+	char **p;
 	struct fixs *n;
 
 	for (n = fndays; n->name; ++n)
@@ -609,9 +609,9 @@ getday(s)
  */
 int
 getdayvar(s)
-	register char *s;
+	char *s;
 {
-	register int offset;
+	int offset;
 
 
 	offset = strlen(s);

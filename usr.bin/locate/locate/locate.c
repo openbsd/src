@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.9 2001/05/11 15:56:14 art Exp $
+ *	$OpenBSD: locate.c,v 1.10 2001/11/19 19:02:15 mpech Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.9 2001/05/11 15:56:14 art Exp $
+ *      $Id: locate.c,v 1.10 2001/11/19 19:02:15 mpech Exp $
  */
 
 #ifndef lint
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c    8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.9 2001/05/11 15:56:14 art Exp $";
+static char rcsid[] = "$OpenBSD: locate.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ main(argc, argv)
         int argc;
         char **argv;
 {
-        register int ch;
+        int ch;
         char **dbv = NULL;
 #ifdef MMAP
         f_mmap = 1;		/* mmap is default */

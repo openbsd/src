@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwopen.c,v 1.6 1998/04/26 22:49:09 millert Exp $	*/
+/*	$OpenBSD: wwopen.c,v 1.7 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwopen.c,v 1.6 1996/02/08 21:08:04 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwopen.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: wwopen.c,v 1.6 1998/04/26 22:49:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwopen.c,v 1.7 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,8 +54,8 @@ static char rcsid[] = "$OpenBSD: wwopen.c,v 1.6 1998/04/26 22:49:09 millert Exp 
 struct ww *
 wwopen(type, oflags, nrow, ncol, row, col, nline)
 {
-	register struct ww *w;
-	register i, j;
+	struct ww *w;
+	int i, j;
 	char m;
 	short nvis;
 

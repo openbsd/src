@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.7 2000/06/04 23:52:19 aaron Exp $	*/
+/*	$OpenBSD: cut.c,v 1.8 2001/11/19 19:02:13 mpech Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: cut.c,v 1.7 2000/06/04 23:52:19 aaron Exp $";
+static char rcsid[] = "$OpenBSD: cut.c,v 1.8 2001/11/19 19:02:13 mpech Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -141,8 +141,8 @@ void
 get_list(list)
 	char *list;
 {
-	register int setautostart, start, stop;
-	register char *pos;
+	int setautostart, start, stop;
+	char *pos;
 	char *p;
 
 	/*
@@ -201,8 +201,8 @@ c_cut(fp, fname)
 	FILE *fp;
 	char *fname;
 {
-	register int ch, col;
-	register char *pos;
+	int ch, col;
+	char *pos;
 
 	for (;;) {
 		pos = positions + 1;
@@ -231,8 +231,8 @@ f_cut(fp, fname)
 	FILE *fp;
 	char *fname;
 {
-	register int ch, field, isdelim;
-	register char *pos, *p, sep;
+	int ch, field, isdelim;
+	char *pos, *p, sep;
 	int output;
 	size_t len;
 	char *lbuf, *tbuf;

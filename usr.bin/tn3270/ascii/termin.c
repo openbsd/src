@@ -1,4 +1,4 @@
-/*	$OpenBSD: termin.c,v 1.2 1996/06/26 05:41:12 deraadt Exp $	*/
+/*	$OpenBSD: termin.c,v 1.3 2001/11/19 19:02:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termin.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: termin.c,v 1.2 1996/06/26 05:41:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: termin.c,v 1.3 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 /* this takes characters from the keyboard, and produces 3270 keystroke
@@ -106,7 +106,7 @@ void
 InitMapping()
 {
     extern state *InitControl();
-    register struct astosc *ptr;
+    struct astosc *ptr;
 
     if (!headOfControl) {
 	/* need to initialize */
@@ -164,7 +164,7 @@ TerminalIn()
 {
     /* send data from us to next link in stream */
     int work = 0;
-    register struct astosc *ptr;
+    struct astosc *ptr;
 
     while (!EmptyChar) {			/* send up the link */
 	if (*ourPHead == ' ') {
@@ -189,12 +189,12 @@ TerminalIn()
 
 int
 DataFromTerminal(buffer, count)
-register char	*buffer;		/* the data read in */
-register int	count;			/* how many bytes in this buffer */
+char	*buffer;		/* the data read in */
+int	count;			/* how many bytes in this buffer */
 {
-    register state *regControlPointer;
-    register char c;
-    register int result;
+    state *regControlPointer;
+    char c;
+    int result;
     int origCount;
     extern int bellwinup;
     static state *controlPointer;

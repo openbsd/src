@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 2001/01/29 01:58:03 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -282,7 +282,7 @@ strtcpy(to, from, len)
 save(s)
 	char *s;
 {
-	register char *p;
+	char *p;
 
 	p = (char *) ecalloc(strlen(s)+1, sizeof(char));
 	strcpy(p, s);
@@ -298,7 +298,7 @@ ecalloc(count, size)
 	int count;
 	unsigned int size;
 {
-	register VOID_POINTER p;
+	VOID_POINTER p;
 
 	p = (VOID_POINTER) calloc(count, size);
 	if (p != NULL)
@@ -313,7 +313,7 @@ ecalloc(count, size)
  */
 	public char *
 skipsp(s)
-	register char *s;
+	char *s;
 {
 	while (*s == ' ' || *s == '\t')	
 		s++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.4 1998/03/17 04:11:53 deraadt Exp $	*/
+/*	$OpenBSD: error.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: error.c,v 1.3 1995/09/28 10:34:20 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.4 1998/03/17 04:11:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,8 @@ static char rcsid[] = "$OpenBSD: error.c,v 1.4 1998/03/17 04:11:53 deraadt Exp $
 error(fmt, a, b, c, d, e, f, g, h)
 char *fmt;
 {
-	register struct context *x;
-	register struct ww *w;
+	struct context *x;
+	struct ww *w;
 
 	for (x = &cx; x != 0 && x->x_type != X_FILE; x = x->x_link)
 		;

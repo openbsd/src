@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.6 1998/08/13 03:29:09 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.7 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: expand.c,v 6.18 1998/03/24 00:37:10 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: expand.c,v 1.6 1998/08/13 03:29:09 deraadt Exp $";
+"$OpenBSD: expand.c,v 1.7 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)expand.c	5.2 (Berkeley) 3/28/86";
@@ -80,9 +80,9 @@ void    	matchdir();
 		      sizeof(*sortbase), argcmp), sortbase = &eargv[eargc]
 
 static void Cat(s1, s2)				/* quote in s1 and s2 */
-	register u_char *s1, *s2;
+	u_char *s1, *s2;
 {
-	register char *cp;
+	char *cp;
 	int len = strlen((char *)s1) + strlen((char *)s2) + 2;
 
 	if ((eargc + 1) >= MAXEARGS) {
@@ -130,8 +130,8 @@ expand(list, wh)				/* quote in list->n_name */
 	struct namelist *list;
 	int wh;
 {
-	register struct namelist *nl, *prev;
-	register int n;
+	struct namelist *nl, *prev;
+	int n;
 	char pathbuf[BUFSIZ];
 
 	if (debug)
@@ -181,7 +181,7 @@ u_char *xstrchr(str, ch)
 	u_char *str;
 	int ch;
 {
-	register u_char *cp;
+	u_char *cp;
 
 	for (cp = str; cp && *cp != CNULL; ++cp)
 		if (ch == *cp)
@@ -193,8 +193,8 @@ u_char *xstrchr(str, ch)
 void expstr(s)
 	u_char *s;
 {
-	register u_char *cp, *cp1;
-	register struct namelist *tp;
+	u_char *cp, *cp1;
+	struct namelist *tp;
 	u_char *tail;
 	u_char ebuf[BUFSIZ];
 	u_char varbuff[BUFSIZ];
@@ -340,8 +340,8 @@ argcmp(a1, a2)
 void expsh(s)				/* quote in s */
 	u_char *s;
 {
-	register u_char *cp, *oldcp;
-	register char *spathp;
+	u_char *cp, *oldcp;
+	char *spathp;
 	struct stat stb;
 
 	spathp = pathp;
@@ -379,7 +379,7 @@ void matchdir(pattern)				/* quote in pattern */
 	char *pattern;
 {
 	struct stat stb;
-	register DIRENTRY *dp;
+	DIRENTRY *dp;
 	DIR *dirp;
 
 	dirp = opendir(path);
@@ -420,7 +420,7 @@ execbrc(p, s)				/* quote in p */
 	u_char *p, *s;
 {
 	u_char restbuf[BUFSIZ + 2];
-	register u_char *pe, *pm, *pl;
+	u_char *pe, *pm, *pl;
 	int brclev = 0;
 	u_char *lm, savec;
 	char *spathp;
@@ -510,8 +510,8 @@ int
 match(s, p)					/* quote in p */
 	char *s, *p;
 {
-	register int c;
-	register char *sentp;
+	int c;
+	char *sentp;
 	char sexpany = expany;
 
 	if (*s == '.' && *p != '.')
@@ -526,10 +526,10 @@ match(s, p)					/* quote in p */
 
 int
 amatch(s, p)					/* quote in p */
-	register char *s;
-	register u_char *p;
+	char *s;
+	u_char *p;
 {
-	register int scc;
+	int scc;
 	int ok, lc;
 	char *spathp;
 	struct stat stb;

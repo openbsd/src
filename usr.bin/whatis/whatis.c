@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.5 2000/04/01 05:05:35 millert Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.6 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -137,7 +137,7 @@ whatis(argv, path, buildpath)
 	char **argv, *path;
 	int buildpath;
 {
-	register char *end, *name, **p;
+	char *end, *name, **p;
 	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
 	char hold[MAXPATHLEN];
 
@@ -180,10 +180,10 @@ whatis(argv, path, buildpath)
  */
 int
 match(bp, str)
-	register char *bp, *str;
+	char *bp, *str;
 {
-	register int len;
-	register char *start;
+	int len;
+	char *start;
 
 	if (!*str || !*bp)
 		return(0);
@@ -218,9 +218,9 @@ match(bp, str)
  */
 void
 dashtrunc(from, to)
-	register char *from, *to;
+	char *from, *to;
 {
-	register int ch;
+	int ch;
 
 	for (; (ch = *from) && ch != '\n' &&
 	    (ch != ' ' || from[1] != '-' || from[2] != ' '); ++from)

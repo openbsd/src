@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.9 2001/07/09 07:04:55 deraadt Exp $	*/
+/*	$OpenBSD: system.c,v 1.10 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: system.c,v 1.9 2001/07/09 07:04:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: system.c,v 1.10 2001/11/19 19:02:17 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -593,7 +593,7 @@ child_died(code)
 {
     int save_errno = errno;
     union wait status;
-    register int pid;
+    int pid;
 
     while ((pid = wait3((int *)&status, WNOHANG, (struct rusage *)0)) > 0) {
 	if (pid == shell_pid) {
@@ -728,7 +728,7 @@ char	*argv[];
 	    state = UNCONNECTED;
 	}
     } else {				/* New process */
-	register int i;
+	int i;
 
 	for (i = 3; i < 30; i++) {
 	    (void) close(i);

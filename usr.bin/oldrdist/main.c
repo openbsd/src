@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2001/07/18 17:17:39 pvalchev Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.9 2001/07/18 17:17:39 pvalchev Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -83,7 +83,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *arg;
+	char *arg;
 	int cmdargs = 0;
 	char *dhosts[NHOSTS], **hp = dhosts;
 
@@ -244,8 +244,8 @@ docmdargs(nargs, args)
 	int nargs;
 	char *args[];
 {
-	register struct namelist *nl, *prev;
-	register char *cp;
+	struct namelist *nl, *prev;
+	char *cp;
 	struct namelist *files, *hosts;
 	struct subcmd *cmds;
 	char *dest;
@@ -297,7 +297,7 @@ docmdargs(nargs, args)
  */
 void
 prnames(nl)
-	register struct namelist *nl;
+	struct namelist *nl;
 {
 	printf("( ");
 	while (nl != NULL) {
@@ -341,7 +341,7 @@ warn(fmt, va_alist)
 char *xbasename(path)
 	char *path;
 {
-	register char *cp;
+	char *cp;
 
 	if (cp = strrchr(path, '/'))
 		return(cp+1);

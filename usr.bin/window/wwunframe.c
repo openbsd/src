@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwunframe.c,v 1.4 1997/02/25 00:05:12 downsj Exp $	*/
+/*	$OpenBSD: wwunframe.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwunframe.c,v 1.4 1996/02/08 21:49:17 mycroft Exp $	*/
 
 /*
@@ -41,23 +41,23 @@
 #if 0
 static char sccsid[] = "@(#)wwunframe.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwunframe.c,v 1.4 1997/02/25 00:05:12 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwunframe.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
 wwunframe(w)
-register struct ww *w;
+struct ww *w;
 {
 	int i;
 
 	for (i = w->ww_i.t; i < w->ww_i.b; i++) {
-		register j;
-		register char *win = w->ww_win[i];
-		register char *fmap = w->ww_fmap ? w->ww_fmap[i] : 0;
-		register unsigned char *smap = wwsmap[i];
-		register union ww_char *ns = wwns[i];
+		int j;
+		char *win = w->ww_win[i];
+		char *fmap = w->ww_fmap ? w->ww_fmap[i] : 0;
+		unsigned char *smap = wwsmap[i];
+		union ww_char *ns = wwns[i];
 		int nchanged = 0;
 
 		for (j = w->ww_i.l; j < w->ww_i.r; j++) {

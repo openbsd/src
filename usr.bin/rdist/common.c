@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.11 2001/07/09 07:04:51 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.12 2001/11/19 19:02:15 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.11 2001/07/09 07:04:51 deraadt Exp $";
+"$OpenBSD: common.c,v 1.12 2001/11/19 19:02:15 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -95,7 +95,7 @@ extern WRITE_RETURN_T xwrite(fd, buf, len)
 {
     	WRITE_AMT_T nleft = len;
 	WRITE_RETURN_T nwritten;
-	register char *ptr = buf;
+	char *ptr = buf;
          
 	while (nleft > 0) {
 	    	if ((nwritten = write(fd, ptr, nleft)) <= 0) {
@@ -114,7 +114,7 @@ extern WRITE_RETURN_T xwrite(fd, buf, len)
 extern void setprogname(argv)
 	char **argv;
 {
-	register char *cp;
+	char *cp;
 
 	if (!progname) {
 		progname = xstrdup(argv[0]);
@@ -132,8 +132,8 @@ extern int init(argc, argv, envp)
 	char **argv;
 	char **envp;
 {
-	register int i;
-	register char *cp;
+	int i;
+	char *cp;
 
 	if (!isserver)
 		(void) signal(SIGSEGV, sighandler);
@@ -438,12 +438,12 @@ static int remmore()
  * the third argument is nonzero, this routine never returns failure.
  */
 extern int remline(buffer, space, doclean)
-	register u_char *buffer;
+	u_char *buffer;
 	int space;
 	int doclean;
 {
-	register int c, left = space;
-	register u_char *p = buffer;
+	int c, left = space;
+	u_char *p = buffer;
 
 	if (rem_r < 0) {
 		error("Cannot read remote input: Remote descriptor not open.");
@@ -501,7 +501,7 @@ extern int remline(buffer, space, doclean)
 int
 readrem(p, space)
 	char *p;
-	register int space;
+	int space;
 {
 	if (remleft <= 0) {
 		/*
@@ -664,9 +664,9 @@ extern int response()
  */
 extern char *exptilde(ebuf, file)
 	char *ebuf;
-	register char *file;
+	char *file;
 {
-	register char *s1, *s2, *s3;
+	char *s1, *s2, *s3;
 	extern char *homedir;
 
 	if (*file != '~') {
@@ -816,7 +816,7 @@ void runcommand(cmd)
 {
 	int fd[2], pid, i;
 	int status;
-	register char *cp, *s;
+	char *cp, *s;
 	char sbuf[BUFSIZ], buf[BUFSIZ];
 
 	if (pipe(fd) < 0) {
@@ -955,7 +955,7 @@ char *xstrdup(str)
 extern char *xbasename(path)
 	char *path;
 {
-	register char *cp;
+	char *cp;
  
 	if ((cp = strrchr(path, '/')))
 		return(cp+1);
@@ -971,8 +971,8 @@ extern char *xbasename(path)
 extern char *searchpath(path)
 	char *path;
 {
-	register char *cp;
-	register char *file;
+	char *cp;
+	char *file;
 	struct stat statbuf;
 
 	for (; ;) {

@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.bigram.c,v 1.6 1996/10/20 00:52:51 michaels Exp $
+ *	$OpenBSD: locate.bigram.c,v 1.7 2001/11/19 19:02:14 mpech Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.bigram.c,v 1.6 1996/10/20 00:52:51 michaels Exp $
+ * 	$Id: locate.bigram.c,v 1.7 2001/11/19 19:02:14 mpech Exp $
  */
 
 #ifndef lint
@@ -45,7 +45,7 @@ static char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #else
-static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.6 1996/10/20 00:52:51 michaels Exp $";
+static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.7 2001/11/19 19:02:14 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,9 +72,9 @@ u_int bigram[UCHAR_MAX + 1][UCHAR_MAX + 1];
 int
 main(void)
 {
-  	register u_char *cp;
-	register u_char *oldpath = buf1, *path = buf2;
-	register u_int i, j;
+  	u_char *cp;
+	u_char *oldpath = buf1, *path = buf2;
+	u_int i, j;
 
      	while (fgets(path, sizeof(buf2), stdin) != NULL) {
 

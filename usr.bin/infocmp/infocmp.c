@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.14 2001/10/24 13:06:36 mpech Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.15 2001/11/19 19:02:14 mpech Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -337,8 +337,8 @@ static void
 compare_predicate(int type, int idx, const char *name)
 /* predicate function to use for entry difference reports */
 {
-    register ENTRY *e1 = &entries[0];
-    register ENTRY *e2 = &entries[1];
+    ENTRY *e1 = &entries[0];
+    ENTRY *e2 = &entries[1];
     char buf1[MAX_STRING], buf2[MAX_STRING];
     int b1, b2;
     int n1, n2;

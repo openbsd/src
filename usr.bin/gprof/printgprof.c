@@ -1,4 +1,4 @@
-/*	$OpenBSD: printgprof.c,v 1.4 2001/03/31 23:27:02 fgsch Exp $	*/
+/*	$OpenBSD: printgprof.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: printgprof.c,v 1.4 2001/03/31 23:27:02 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: printgprof.c,v 1.5 2001/11/19 19:02:14 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static char rcsid[] = "$OpenBSD: printgprof.c,v 1.4 2001/03/31 23:27:02 fgsch Ex
 void
 printprof()
 {
-    register nltype	*np;
+    nltype		*np;
     nltype		**sortednlp;
     int			index;
 
@@ -122,7 +122,7 @@ flatprofheader()
 
 void
 flatprofline( np )
-    register nltype	*np;
+    nltype	*np;
 {
 
     if ( zflag == 0 && np -> ncall == 0 && np -> time == 0 ) {
@@ -173,7 +173,7 @@ gprofheader()
 
 void
 gprofline( np )
-    register nltype	*np;
+    nltype	*np;
 {
     char	kirkbuffer[ BUFSIZ ];
 
@@ -249,8 +249,8 @@ totalcmp( npp1 , npp2 )
     nltype	**npp1;
     nltype	**npp2;
 {
-    register nltype	*np1 = *npp1;
-    register nltype	*np2 = *npp2;
+    nltype		*np1 = *npp1;
+    nltype		*np2 = *npp2;
     double		diff;
 
     diff =    ( np1 -> propself + np1 -> propchild )
@@ -679,7 +679,7 @@ void
 printindex()
 {
     nltype		**namesortnlp;
-    register nltype	*nlp;
+    nltype		*nlp;
     int			index, nnames, todo, i, j;
     char		peterbuffer[ BUFSIZ ];
 

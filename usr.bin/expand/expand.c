@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.3 1998/01/22 17:41:09 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.4 2001/11/19 19:02:13 mpech Exp $	*/
 /*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: expand.c,v 1.3 1998/01/22 17:41:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: expand.c,v 1.4 2001/11/19 19:02:13 mpech Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -66,8 +66,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int c, column;
-	register int n;
+	int c, column;
+	int n;
 
 	/* handle obsolete syntax */
 	while (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
@@ -152,9 +152,9 @@ main(argc, argv)
 
 static void
 getstops(cp)
-	register char *cp;
+	char *cp;
 {
-	register int i;
+	int i;
 
 	nstops = 0;
 	for (;;) {

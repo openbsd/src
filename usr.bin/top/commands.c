@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.2 1997/08/22 07:16:26 downsj Exp $	*/
+/*	$OpenBSD: commands.c,v 1.3 2001/11/19 19:02:17 mpech Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -97,7 +97,7 @@ u       - display processes for only one user (+ selects all users)\n\
 
 static char *next_field(str)
 
-register char *str;
+char *str;
 
 {
     if ((str = strchr(str, ' ')) == NULL)
@@ -118,8 +118,8 @@ char *str;
 int  *intp;
 
 {
-    register int val = 0;
-    register char ch;
+    int val = 0;
+    char ch;
 
     /* if there is nothing left of the string, flag it as an error */
     /* This fix is dedicated to Greg Earle */
@@ -194,10 +194,10 @@ static char *err_listem =
 static char *err_string()
 
 {
-    register struct errs *errp;
-    register int  cnt = 0;
-    register int  first = Yes;
-    register int  currerr = -1;
+    struct errs *errp;
+    int  cnt = 0;
+    int  first = Yes;
+    int  currerr = -1;
     int stringlen;		/* characters still available in "string" */
     static char string[STRMAX];
 
@@ -258,8 +258,8 @@ int len;
 int err;
 
 {
-    register char *msg;
-    register int  msglen;
+    char *msg;
+    int  msglen;
 
     msg = err == 0 ? "Not a number" : strerror(err);
     msglen = strlen(msg) + 2;
@@ -286,7 +286,7 @@ char *arg;
 int  first;
 
 {
-    register int arglen;
+    int arglen;
 
     arglen = strlen(arg);
     if (!first)
@@ -315,9 +315,9 @@ static int err_compar(e1, e2)
 const void *e1, *e2;
 
 {
-    register const struct errs *p1 = (struct errs *)e1;
-    register const struct errs *p2 = (struct errs *)e2;
-    register int result;
+    const struct errs *p1 = (struct errs *)e1;
+    const struct errs *p2 = (struct errs *)e2;
+    int result;
 
     if ((result = p1->errno - p2->errno) == 0)
     {
@@ -343,8 +343,8 @@ int error_count()
 void show_errors()
 
 {
-    register int cnt = 0;
-    register struct errs *errp = errs;
+    int cnt = 0;
+    struct errs *errp = errs;
 
     printf("%d error%s:\n\n", errcnt, errcnt == 1 ? "" : "s");
     while (cnt++ < errcnt)
@@ -365,7 +365,7 @@ char *kill_procs(str)
 char *str;
 
 {
-    register char *nptr;
+    char *nptr;
     int signum = SIGTERM;	/* default */
     int procnum;
     struct sigdesc *sigp;
@@ -455,7 +455,7 @@ char *renice_procs(str)
 char *str;
 
 {
-    register char negate;
+    char negate;
     int prio;
     int procnum;
     int uid;

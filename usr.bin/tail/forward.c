@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.12 2001/08/18 14:49:15 art Exp $	*/
+/*	$OpenBSD: forward.c,v 1.13 2001/11/19 19:02:16 mpech Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.12 2001/08/18 14:49:15 art Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.13 2001/11/19 19:02:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -258,8 +258,8 @@ rlines(fp, off, sbp)
 	long off;
 	struct stat *sbp;
 {
-	register off_t size;
-	register char *p;
+	off_t size;
+	char *p;
 	char *start;
 
 	if (!(size = sbp->st_size))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwwrite.c,v 1.4 1997/02/25 00:05:14 downsj Exp $	*/
+/*	$OpenBSD: wwwrite.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
 /*	$NetBSD: wwwrite.c,v 1.5 1996/02/08 21:49:19 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwwrite.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwwrite.c,v 1.4 1997/02/25 00:05:14 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwwrite.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,8 @@ static char rcsid[] = "$OpenBSD: wwwrite.c,v 1.4 1997/02/25 00:05:14 downsj Exp 
  * to avoid recursion, which might be a better idea.
  */
 wwwrite(w, p, n)
-register struct ww *w;
-register char *p;
+struct ww *w;
+char *p;
 int n;
 {
 	int hascursor;
@@ -91,8 +91,8 @@ int n;
 		if (w->ww_wstate == 0 &&
 		    (isprt(*p) || ISSET(w->ww_wflags, WWW_UNCTRL) &&
 		     isunctrl(*p))) {
-			register i;
-			register union ww_char *bp;
+			int i;
+			union ww_char *bp;
 			int col, col1;
 
 			if (ISSET(w->ww_wflags, WWW_INSERT)) {
@@ -122,7 +122,7 @@ int n;
 					q = s;
 					r = 0;
 				} else if (*p == '\t') {
-					register tmp = 8 - (i - w->ww_w.l & 7);
+					int tmp = 8 - (i - w->ww_w.l & 7);
 					p++;
 					i += tmp;
 					bp += tmp;
@@ -143,10 +143,10 @@ int n;
 			w->ww_cur.c = i;
 			if (w->ww_cur.r >= w->ww_i.t
 			    && w->ww_cur.r < w->ww_i.b) {
-				register union ww_char *ns = wwns[w->ww_cur.r];
-				register unsigned char *smap =
+				union ww_char *ns = wwns[w->ww_cur.r];
+				unsigned char *smap =
 				    &wwsmap[w->ww_cur.r][col];
-				register char *win = w->ww_win[w->ww_cur.r];
+				char *win = w->ww_win[w->ww_cur.r];
 				int nchanged = 0;
 
 				bp = w->ww_buf[w->ww_cur.r];

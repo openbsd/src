@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2001/08/26 09:42:04 brian Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2001/11/19 19:02:15 mpech Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.27 2001/08/26 09:42:04 brian Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.28 2001/11/19 19:02:15 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -289,8 +289,8 @@ main(argc, argv)
 {
 	extern char *optarg;
 	extern int optind;
-	register struct protoent *p;
-	register struct protox *tp = NULL; /* for printing cblocks & stats */
+	struct protoent *p;
+	struct protox *tp = NULL; /* for printing cblocks & stats */
 	int ch;
 	char *nlistf = NULL, *memf = NULL;
 	char buf[_POSIX2_LINE_MAX];
@@ -542,7 +542,7 @@ main(argc, argv)
  */
 static void
 printproto(tp, name)
-	register struct protox *tp;
+	struct protox *tp;
 	char *name;
 {
 	void (*pr)();
