@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.9 1998/03/23 06:54:17 millert Exp $
+	$OpenBSD: syscalls.master,v 1.10 1998/03/23 07:12:40 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.33 1996/02/28 16:05:43 pk Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -68,7 +68,7 @@
 22	UNIMPL		System V umount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
-25	STD		{ int sunos_sys_stime(time_t *tp); }
+25	STD		{ int sunos_sys_ostime(int time); }
 26	STD		{ long sunos_sys_ptrace(int req, pid_t pid, \
 			    caddr_t addr, int data, char *addr2); }
 27	UNIMPL		sunos_alarm

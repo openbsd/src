@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.19 1998/03/23 06:54:10 millert Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.20 1998/03/23 07:12:39 millert Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -1207,19 +1207,31 @@ sunos_sys_sigvec(p, v, retval)
 }
 
 int
-sunos_sys_stime(p, v, retval)
+sunos_sys_ostime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sunos_sys_stime_args /* {
-		time_t		*tp;
+	/*
+	 * XXX - settime() is private to kern_time.c so we just lie.
+	 */
+#if 0
+	struct sunos_sys_ostime_args /* {
+		syscallarg(int) time;
 	} */ *uap = v;
 	struct timeval tv;
+	int error;
 
-	*retval = 0;
-	microtime(&tv);
-	return copyout(&tv.tv_sec, SCARG(uap, tp), sizeof(*(SCARG(uap, tp))));
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	tv.tv_sec = SCARG(uap, time);
+	tv.tv_usec = 0;
+	settime(&tv);
+	return(0);
+#else
+	return(EPERM);
+#endif
 }
 
 /*
