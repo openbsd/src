@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.6 1996/09/24 11:34:29 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.7 1996/09/25 11:56:39 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -45,16 +45,16 @@
 #define	NDOSPART	4
 
 struct dos_partition {
-	unsigned char	dp_flag;	/* bootstrap flags */
-	unsigned char	dp_shd;		/* starting head */
-	unsigned char	dp_ssect;	/* starting sector */
-	unsigned char	dp_scyl;	/* starting cylinder */
-	unsigned char	dp_typ;		/* partition type (see below) */
-	unsigned char	dp_ehd;		/* end head */
-	unsigned char	dp_esect;	/* end sector */
-	unsigned char	dp_ecyl;	/* end cylinder */
-	unsigned long	dp_start;	/* absolute starting sector number */
-	unsigned long	dp_size;	/* partition size in sectors */
+	u_int8_t	dp_flag;	/* bootstrap flags */
+	u_int8_t	dp_shd;		/* starting head */
+	u_int8_t	dp_ssect;	/* starting sector */
+	u_int8_t	dp_scyl;	/* starting cylinder */
+	u_int8_t	dp_typ;		/* partition type (see below) */
+	u_int8_t	dp_ehd;		/* end head */
+	u_int8_t	dp_esect;	/* end sector */
+	u_int8_t	dp_ecyl;	/* end cylinder */
+	u_int32_t	dp_start;	/* absolute starting sector number */
+	u_int32_t	dp_size;	/* partition size in sectors */
 } dos_partitions[NDOSPART];
 
 /* Known DOS partition types. */
