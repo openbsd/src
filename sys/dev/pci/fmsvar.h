@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmsvar.h,v 1.4 2002/05/28 04:19:53 mickey Exp $ */
+/*	$OpenBSD: fmsvar.h,v 1.5 2002/05/29 14:30:21 mickey Exp $ */
 /*	$NetBSD: fmsvar.h,v 1.1 1999/11/01 21:54:12 augustss Exp $	*/
 
 /*-
@@ -47,8 +47,6 @@ struct fms_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	bus_addr_t sc_ioaddr;
-	bus_size_t sc_iosize;
 	bus_dma_tag_t sc_dmat;
 
 	bus_space_handle_t sc_opl_ioh;
