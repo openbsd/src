@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.h,v 1.5 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: monitor.h,v 1.6 2004/03/15 16:29:00 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -37,12 +37,6 @@ enum monitor_reqtypes
   MONITOR_BIND,
   MONITOR_MKFIFO,
   MONITOR_SHUTDOWN,
-#if defined (USE_X509)
-  MONITOR_RSA_UPLOADKEY,
-  MONITOR_RSA_GETKEY,
-  MONITOR_RSA_ENCRYPT,
-  MONITOR_RSA_FREEKEY,
-#endif
 };
 
 pid_t	monitor_init (void);
@@ -59,14 +53,6 @@ int	monitor_socket (int, int, int);
 int	monitor_setsockopt (int, int, int, const void *, socklen_t);
 int	monitor_bind (int, const struct sockaddr *, socklen_t);
 int	monitor_mkfifo (const char *, mode_t);
-
-#if defined (USE_X509)
-char	*monitor_RSA_upload_key (char *);
-char	*monitor_RSA_get_private_key (char *, char *);
-int	monitor_RSA_private_encrypt (int, unsigned char *, unsigned char **,
-				     void *, int);
-void	monitor_RSA_free (void *);
-#endif
 
 #else /* !USE_PRIVSEP */
 
