@@ -1,4 +1,6 @@
-.\"	$OpenBSD: hsq.4,v 1.3 2000/10/18 02:38:22 aaron Exp $
+.\"	$OpenBSD: hsq.4,v 1.4 2000/12/11 20:04:56 deraadt Exp $
+.\"	from: OpenBSD: ast.4,v 1.5 1999/07/09 13:35:43 aaron Exp
+.\"	from: NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -37,19 +39,22 @@
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
 .\"
-.Dd November 28, 1999
-.Dt HSQ 4
+.Dd March 30, 1994
+.Dt HSQ 4 i386
 .Os
 .Sh NAME
 .Nm hsq
-.Nd multiplexing serial communications interface
+.Nd
+multiplexing serial communications interface
 .Sh SYNOPSIS
 .Cd "hsq0 at isa? port 0x140 irq 10"
-.Cd "com* at hsq? slave ?"
+.Cd "pccom* at hsq? slave ?"
 .Sh DESCRIPTION
 The
 .Nm hsq
-driver provides support for boards that multiplex together up to four
+driver provides support for Hostess (Comtrol Corporation,
+www.comtrol.com) and compatible boards that multiplex together
+up to four
 .Tn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
@@ -59,13 +64,13 @@ communications interfaces.
 Each
 .Nm
 device is the master device for up to four
-.Nm com
+.Nm pccom
 devices.  The kernel configuration specifies these
-.Nm com
+.Nm pccom
 devices as slave devices of the
 .Nm
 device, as shown in the synopsis.  The slave ID given for each
-.Nm com
+.Nm pccom
 device determines which bit in the interrupt multiplexing register is
 tested to find interrupts for that device.
 The
@@ -73,17 +78,27 @@ The
 specification for the
 .Nm
 device is used to compute the base addresses for the
-.Nm com
-subdevices and the port for the interrupt multiplexing register.
+.Nm pccom
+subdevices (they are equal to
+.Tn port
++ ID * 8) and the port for the interrupt multiplexing register
+(it is equal to
+.Tn port
++ 7). More technical details on how driver works can be achieved from
+a big comment at the begining of the driver's source code.
+.Pp
+Information on setup of card's configuration switches should be taken
+from Comtrol Corpoartion's web site, since the author wrote and tested
+the driver only with Hostess-compatible cards.
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /dev/tty0?
-.El
+.It Pa /dev/cua0?
 .Sh SEE ALSO
-.Xr com 4
+.Xr pccom 4
 .Sh HISTORY
 The
 .Nm
-driver was written by Denis A. Doroshenko, based on the
+driver was written by Denis A. Doroshenko based on
 .Xr ast 4
 driver.
