@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.9 2005/01/06 23:47:20 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.10 2005/01/17 04:22:34 drahn Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -645,10 +645,11 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pxa2x0_lcd_softc *sc = v;
 	struct wsdisplay_fbinfo *wsdisp_info;
+	struct pxa2x0_lcd_screen *scr = sc->active;  /* ??? */
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN; /* XXX */
+		*(u_int *)data = WSDISPLAY_TYPE_PXALCD; /* XXX */
 		break;
 
 	case WSDISPLAYIO_GINFO:
@@ -674,8 +675,11 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
 		return -1;	/* not implemented */
-	}
 
+        case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = scr->rinfo.ri_stride;
+		break;
+	}
 	return (0);
 }
 
