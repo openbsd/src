@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq.c,v 1.7 1996/10/31 01:01:37 niklas Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.8 1998/03/01 12:45:18 niklas Exp $	*/
 /*	$NetBSD: pdq.c,v 1.9 1996/10/13 01:37:26 christos Exp $	*/
 
 /*-
@@ -748,8 +748,9 @@ pdq_process_received_data(
 			status.rxs_rcc_reason, status.rxs_fsc, status.rxs_fsb_e));
 	    if (status.rxs_rcc_reason == 7)
 		goto discard_frame;
-	    if (status.rxs_rcc_reason != 0)
+	    if (status.rxs_rcc_reason != 0) {
 		/* hardware fault */
+	    }
 	    if (status.rxs_rcc_badcrc) {
 		printf(PDQ_OS_PREFIX " MAC CRC error (source=%x-%x-%x-%x-%x-%x)\n",
 		       PDQ_OS_PREFIX_ARGS,
