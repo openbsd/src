@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.80 1999/03/24 01:13:44 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.81 1999/03/30 07:12:05 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.80 1999/03/24 01:13:44 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.81 1999/03/30 07:12:05 marc Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -1272,6 +1272,29 @@ do-fetch:
 mirror-distfiles:
 .if (${MIRROR_DISTFILE} == "yes")
 	@make fetch __ARCH_OK=yes NO_IGNORE=yes NO_WARNINGS=yes
+.endif
+
+# Obj
+
+.if !target(obj)
+obj:
+.if !defined(NO_WRKDIR)
+.if defined(WRKOBJDIR)
+	@${RM} -rf ${WRKOBJDIR}/${PORTSUBDIR}
+	@${MKDIR} -p ${WRKOBJDIR}/${PORTSUBDIR}
+	@if [ ! -L ${WRKDIR} ] || \
+	  [ X`${READLINK} ${WRKDIR}` != X${WRKOBJDIR}/${PORTSUBDIR} ]; then \
+		echo "${WRKDIR} -> ${WRKOBJDIR}/${PORTSUBDIR}"; \
+		${RM} -f ${WRKDIR}; \
+		${LN} -sf ${WRKOBJDIR}/${PORTSUBDIR} ${WRKDIR}; \
+	fi
+.else
+	@${ECHO_MSG} ">>"
+	@${ECHO_MSG} ">> Please set the WRKOBJDIR variable before using 'make obj'"
+	@${ECHO_MSG} ">>"
+	@exit 1;
+.endif
+.endif
 .endif
 
 # Extract
