@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.23 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.24 2005/03/31 14:57:32 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -245,8 +245,6 @@ static int  files_differ(FILE *, FILE *);
 static char *match_function(const long *, int, FILE *);
 static char *preadline(int, size_t, off_t);
 
-
-extern int cvs_client;
 
 static int aflag, bflag, dflag, iflag, Nflag, pflag, tflag, Tflag, wflag;
 static int context, status;
