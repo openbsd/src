@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.317 2004/12/19 12:00:48 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.318 2004/12/21 02:00:36 mjc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1145,10 +1145,11 @@ This causes a TCP RST to be returned for
 packets and an ICMP UNREACHABLE for UDP and other packets.
 .El
 .Pp
-Options returning packets have no effect if
+Options returning ICMP packets currently have no effect if
 .Xr pf 4
 operates on a
-.Xr bridge 4 .
+.Xr bridge 4 ,
+as the code to support this feature has not yet been implemented.
 .It Ar pass
 The packet is passed.
 .El
