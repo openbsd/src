@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.14 2003/01/09 18:55:32 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.15 2003/01/09 18:59:02 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -604,7 +604,8 @@ radix_perror(void)
 		perror(__progname);
 }
 
-void	pfctl_begin_table(void)
+void
+pfctl_begin_table(void)
 {
 	static int hookreg;
 	int rv;
@@ -622,7 +623,8 @@ void	pfctl_begin_table(void)
 	}
 }
 
-void    pfctl_append_addr(char *addr, int net, int neg)
+void
+pfctl_append_addr(char *addr, int net, int neg)
 {
 	char *p = NULL;
 
@@ -644,7 +646,8 @@ void    pfctl_append_addr(char *addr, int net, int neg)
 	free(p);
 }
 
-void    pfctl_define_table(char *name, int flags, int addrs)
+void
+pfctl_define_table(char *name, int flags, int addrs)
 {
 	struct pfr_table tbl;
 	int rv;
@@ -669,7 +672,8 @@ void    pfctl_define_table(char *name, int flags, int addrs)
 	size = 0;
 }
 
-void	pfctl_commit_table(void)
+void
+pfctl_commit_table()
 {
 	int rv;
 
@@ -683,7 +687,8 @@ void	pfctl_commit_table(void)
 	inactive = 0;
 }
 
-void	inactive_cleanup(void)
+void
+inactive_cleanup()
 {
 	if (inactive)
 		pfr_ina_begin(NULL, NULL, 0);
