@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtld.1,v 1.9 1998/07/22 04:31:00 deraadt Exp $
+.\"	$OpenBSD: rtld.1,v 1.10 1998/08/05 05:03:11 deraadt Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -139,9 +139,11 @@ its behaviour as follows:
 .It Ev LD_LIBRARY_PATH
 A colon separated list of directories, overriding the default search path
 for shared libraries.
+This variable is ignored for set-user-ID and set-group-ID executables.
 .It Ev LD_PRELOAD
 A colon seperate list of library names to load before any of the regular
 libraries are loaded.
+This variable is ignored for set-user-ID and set-group-ID executables.
 .It Ev LD_WARN_NON_PURE_CODE
 When set, issue a warning whenever a link-editing operation requires
 modification of the text segment of some loaded object. This is usually
