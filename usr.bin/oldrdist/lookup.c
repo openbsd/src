@@ -1,4 +1,4 @@
-/*	$OpenBSD: lookup.c,v 1.8 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: lookup.c,v 1.9 2004/01/15 19:12:31 otto Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: lookup.c,v 1.8 2003/06/03 02:56:14 millert Exp $";
+static char *rcsid = "$OpenBSD: lookup.c,v 1.9 2004/01/15 19:12:31 otto Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -128,7 +128,7 @@ lookup(name, action, value)
 	char buf[BUFSIZ];
 
 	if (debug)
-		printf("lookup(%s, %d, %x)\n", name, action, value);
+		printf("lookup(%s, %d, %p)\n", name, action, value);
 
 	n = 0;
 	for (cp = name; *cp; )

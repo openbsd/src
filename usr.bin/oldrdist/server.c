@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.24 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.25 2004/01/15 19:12:31 otto Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.24 2003/06/03 02:56:14 millert Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.25 2004/01/15 19:12:31 otto Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -391,14 +391,14 @@ sendf(rname, opts)
 			log(lfp, "%s: no password entry for uid %u \n",
 				target, stb.st_uid);
 			pw = NULL;
-			(void) snprintf(user, sizeof(user), ":%lu", stb.st_uid);
+			(void) snprintf(user, sizeof(user), ":%u", stb.st_uid);
 		}
 	if (gr == NULL || gr->gr_gid != stb.st_gid)
 		if ((gr = getgrgid(stb.st_gid)) == NULL) {
 			log(lfp, "%s: no name for group %u\n",
 				target, stb.st_gid);
 			gr = NULL;
-			(void) snprintf(group, sizeof(group), ":%lu",
+			(void) snprintf(group, sizeof(group), ":%u",
 				stb.st_gid);
 		}
 	if (u == 1) {
@@ -468,8 +468,8 @@ sendf(rname, opts)
 			}
 		}
 		(void) snprintf(buf, sizeof(buf), "K%o %o %qd %ld %s %s %s\n",
-			opts, stb.st_mode & 07777, stb.st_size, stb.st_mtime,
-			protoname(), protogroup(), rname);
+			opts, stb.st_mode & 07777, stb.st_size,
+			(long)stb.st_mtime, protoname(), protogroup(), rname);
 		if (debug)
 			printf("buf = %s", buf);
 		(void) write(rem, buf, strlen(buf));
@@ -511,7 +511,7 @@ sendf(rname, opts)
 		return;
 	}
 	(void) snprintf(buf, sizeof(buf), "R%o %o %qd %ld %s %s %s\n", opts,
-		stb.st_mode & 07777, stb.st_size, stb.st_mtime,
+		stb.st_mode & 07777, stb.st_size, (long)stb.st_mtime,
 		protoname(), protogroup(), rname);
 	if (debug)
 		printf("buf = %s", buf);
@@ -604,7 +604,7 @@ update(rname, opts, stp)
 	time_t mtime;
 
 	if (debug) 
-		printf("update(%s, %x, %x)\n", rname, opts, stp);
+		printf("update(%s, %x, %p)\n", rname, opts, stp);
 
 	/*
 	 * Check to see if the file exists on the remote machine.
@@ -715,7 +715,7 @@ query(name)
 	switch (stb.st_mode & S_IFMT) {
 	case S_IFREG:
 		(void) snprintf(buf, sizeof(buf), "Y%qd %ld\n", stb.st_size,
-			stb.st_mtime);
+			(long)stb.st_mtime);
 		(void) write(rem, buf, strlen(buf));
 		break;
 
