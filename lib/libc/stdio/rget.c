@@ -35,16 +35,18 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rget.c,v 1.2 1996/08/19 08:33:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rget.c,v 1.3 2001/07/09 06:57:44 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include "local.h"
 
 /*
  * Handle getc() when the buffer ran out:
  * Refill, then return the first character
  * in the newly-filled buffer.
  */
+int
 __srget(fp)
 	register FILE *fp;
 {

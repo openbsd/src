@@ -35,12 +35,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: putw.c,v 1.2 1996/08/19 08:33:00 tholo Exp $";
+static char rcsid[] = "$OpenBSD: putw.c,v 1.3 2001/07/09 06:57:44 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include "fvwrite.h"
 
+int
 putw(w, fp)
 	int w;
 	FILE *fp;

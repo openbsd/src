@@ -90,7 +90,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtod.c,v 1.13 2000/04/30 04:58:22 bjc Exp $";
+static char *rcsid = "$OpenBSD: strtod.c,v 1.14 2001/07/09 06:57:45 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -395,7 +395,7 @@ Balloc
 	int x;
 	Bigint *rv;
 
-	if (rv = freelist[k]) {
+	if ((rv = freelist[k])) {
 		freelist[k] = rv->next;
 		}
 	else {
@@ -643,7 +643,7 @@ mult
 	xc0 = c->x;
 #ifdef Pack_32
 	for(; xb < xbe; xb++, xc0++) {
-		if (y = *xb & 0xffff) {
+		if ((y = *xb & 0xffff)) {
 			x = xa;
 			xc = xc0;
 			carry = 0;
@@ -657,7 +657,7 @@ mult
 				while(x < xae);
 			*xc = carry;
 			}
-		if (y = *xb >> 16) {
+		if ((y = *xb >> 16)) {
 			x = xa;
 			xc = xc0;
 			carry = 0;
@@ -708,7 +708,7 @@ pow5mult
 	int i;
 	static int p05[3] = { 5, 25, 125 };
 
-	if (i = k & 3)
+	if ((i = k & 3))
 		b = multadd(b, p05[i-1], 0);
 
 	if (!(k >>= 2))
@@ -771,7 +771,7 @@ lshift
 			z = *x++ >> k1;
 			}
 			while(x < xe);
-		if (*x1 = z)
+		if ((*x1 = z))
 			++n1;
 		}
 #else

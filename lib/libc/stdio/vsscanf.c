@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vsscanf.c,v 1.3 1996/09/15 09:31:47 tholo Exp $";
+static char rcsid[] = "$OpenBSD: vsscanf.c,v 1.4 2001/07/09 06:57:45 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -52,6 +52,7 @@ eofread(cookie, buf, len)
 	return (0);
 }
 
+int
 vsscanf(str, fmt, ap)
 	const char *str;
 	const char *fmt;

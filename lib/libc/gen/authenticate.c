@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.4 2001/07/02 19:22:34 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.5 2001/07/09 06:57:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -103,9 +103,6 @@ auth_mkvalue(char *value)
 void
 auth_checknologin(login_cap_t *lc)
 {
-	struct stat sb;
-	char *nologin;
-
 	if (_auth_checknologin(lc, 1))
 		exit(1);
 }
@@ -179,7 +176,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 	if (as != NULL)
 		pwd = auth_getpwd(as);
 
-	if (pwd == NULL)
+	if (pwd == NULL) {
 		if (name != NULL)
 			pwd = getpwnam(name);
 		else {
@@ -190,6 +187,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 			}
 			name = pwd->pw_name;
 		}
+	}
 
 	if (name == NULL)
 		name = pwd->pw_name;

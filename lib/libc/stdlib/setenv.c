@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: setenv.c,v 1.3 1998/02/02 22:44:53 millert Exp $";
+static char *rcsid = "$OpenBSD: setenv.c,v 1.4 2001/07/09 06:57:45 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -62,7 +62,8 @@ setenv(name, value, rewrite)
 		if (!rewrite)
 			return (0);
 		if (strlen(C) >= l_value) {	/* old larger; copy over */
-			while (*C++ = *value++);
+			while ((*C++ = *value++))
+				;
 			return (0);
 		}
 	} else {					/* create new slot */
@@ -95,7 +96,7 @@ setenv(name, value, rewrite)
 		return (-1);
 	for (C = environ[offset]; (*C = *name++) && *C != '='; ++C)
 		;
-	for (*C++ = '='; *C++ = *value++; )
+	for (*C++ = '='; (*C++ = *value++); )
 		;
 	return (0);
 }
