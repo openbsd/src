@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.7 1998/07/08 22:13:32 deraadt Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.8 2000/02/25 23:32:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ main(argc, argv)
 	system = core = NULL;
 
 	jflag = npcbs = 0;
-	while ((ch = getopt(argc, argv, "afjp:st")) != -1) {
+	while ((ch = getopt(argc, argv, "afjM:N:p:st")) != -1) {
 		switch (ch) {
 		case 'a':
 			++aflag;
