@@ -46,6 +46,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
+#include <sys/systm.h>
 #include <sys/select.h>
 #include <sys/device.h>
 
@@ -131,6 +132,14 @@ void egreset __P((struct eg_softc *));
 void egread __P((struct eg_softc *, caddr_t, int));
 struct mbuf *egget __P((struct eg_softc *, caddr_t, int));
 void egstop __P((struct eg_softc *));
+
+static inline void egprintpcb __P((struct eg_softc *));
+static inline void egprintstat __P((u_char));
+static int egoutPCB __P((struct eg_softc *, u_char));
+static int egreadPCBstat __P((struct eg_softc *, u_char));
+static int egreadPCBready __P((struct eg_softc *));
+static int egwritePCB __P((struct eg_softc *));
+static int egreadPCB __P((struct eg_softc *));
 
 /*
  * Support stuff
@@ -297,7 +306,7 @@ egprobe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	int i;
 
-	if (ia->ia_iobase & ~0x07f0 != 0) {
+	if ((ia->ia_iobase & ~0x07f0) != 0) {
 		dprintf(("Weird iobase %x\n", ia->ia_iobase));
 		return 0;
 	}
@@ -351,7 +360,6 @@ egattach(parent, self, aux)
 	struct eg_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i;
 	
 	egstop(sc);
 
@@ -734,7 +742,6 @@ egioctl(ifp, cmd, data)
 {
 	struct eg_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();

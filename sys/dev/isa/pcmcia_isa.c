@@ -1,4 +1,4 @@
-/*	$Id: pcmcia_isa.c,v 1.3 1996/05/03 07:59:36 deraadt Exp $	*/
+/*	$Id: pcmcia_isa.c,v 1.4 1996/10/16 12:36:02 deraadt Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -85,7 +85,6 @@ pcmcia_isa_init(parent, cf, aux, pca, flag)
 {
 	struct pcmciabus_attach_args *pa = aux;
 	bus_mem_handle_t memh;
-	vm_offset_t physaddr;
 
 #ifdef PCMCIA_ISA_DEBUG
 	if (parent != NULL)

@@ -1,4 +1,4 @@
-/*	$Id: pcmcia_pcic.c,v 1.6 1996/05/07 07:37:28 deraadt Exp $	*/
+/*	$Id: pcmcia_pcic.c,v 1.7 1996/10/16 12:36:04 deraadt Exp $	*/
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
  *  All rights reserved.
@@ -220,6 +220,8 @@ pcic_wr(slot, reg, val)
 		printf("pcic_wr(%x %x) = %x\n", reg, val, res);
 	}
 }
+
+static __inline int pcic_wait __P((struct slot *, int));
 
 static __inline int
 pcic_wait(slot, i)
