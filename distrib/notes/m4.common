@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.38 2002/10/07 19:31:01 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.39 2002/11/07 22:38:36 mickey Exp $
 dnl
 dnl a simple MACHINE->MACHINE_ARCH converter.
 define(`MACHINE_ARCH',
@@ -711,10 +711,11 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	image copy and boot process is not especially tolerant of read
 	errors.
 
-	Note that if you are using NT to write the images to disk, you
-	will need to use ntrw.exe instead.  It is also available in the
-	"tools" directory.  Grab it and run in with the correct
-	arguments like this "ntrw <image> <drive>:"
+	Note that if you are using NT, 2000, or XP to write the
+	images to disk, you will need to use ntrw.exe instead.  It
+	is also available in the "tools" directory.  Grab it and
+	run in with the correct arguments like this "ntrw <image>
+	<drive>:"
 
 	Note that, when installing, the boot floppy can be write-protected
 	(i.e  read-only).-:})dnl
