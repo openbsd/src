@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.24 1997/10/25 23:42:37 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.25 1997/10/26 02:41:19 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -187,21 +187,23 @@ main(argc, argv)
 		mib[1] = CPU_CHR2BLK;
 		mib[2] = sb.st_rdev;
 		size = sizeof(devno);
-		if(sysctl(mib, 3, &devno, &size, NULL, 0) < 0)
-			err(1, "mapping device number");
-		devno = MAKEBOOTDEV(major(devno), 0, 0, DISKUNIT(devno), 0);
+		if(sysctl(mib, 3, &devno, &size, NULL, 0) >= 0) {
+			devno = MAKEBOOTDEV(major(devno),0,0,DISKUNIT(devno),0);
 
-		mib[0] = CTL_MACHDEP;
-		mib[1] = CPU_BIOS;
-		mib[2] = BIOS_DISKINFO;
-		mib[3] = devno;
-		size = sizeof(di);
-		if(sysctl(mib, 4, &di, &size, NULL, 0) < 0)
-			errx(1, "Unable to get BIOS geometry, "
-				"must specify -h and -s");
-		nheads = di.bios_heads;
-		nsectors = di.bios_sectors;
+			mib[0] = CTL_MACHDEP;
+			mib[1] = CPU_BIOS;
+			mib[2] = BIOS_DISKINFO;
+			mib[3] = devno;
+			size = sizeof(di);
+			if(sysctl(mib, 4, &di, &size, NULL, 0) >= 0) {
+				nheads = di.bios_heads;
+				nsectors = di.bios_sectors;
+			}
+		}
 	}
+
+	if (nheads == -1 || nsectors == -1)
+		errx(1, "Unable to get BIOS geometry, must specify -h and -s");
 
 	/* Extract and load block numbers */
 	if (loadblocknums(boot, devfd, &dl) != 0)
@@ -405,14 +407,15 @@ loadblocknums(boot, devfd, dl)
 
 	if (fstat(devfd, &sb) != 0)
 		err(1, "fstat: %s", realdev);
+
+	/* check devices */
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_CHR2BLK;
 	mib[2] = sb.st_rdev;
 	size = sizeof(dev);
-	if (sysctl(mib, 3, &dev, &size, NULL, 0) < 0)
-		err(1, "can't map device number");
-	if (statbuf.st_dev / MAXPARTITIONS != dev / MAXPARTITIONS)
-		errx(1, "cross-device install");
+	if (sysctl(mib, 3, &dev, &size, NULL, 0) >= 0)
+		if (statbuf.st_dev / MAXPARTITIONS != dev / MAXPARTITIONS)
+			errx(1, "cross-device install");
 
 	pl = &dl->d_partitions[DISKPART(statbuf.st_dev)];
 	close(fd);
