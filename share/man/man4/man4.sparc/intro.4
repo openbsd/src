@@ -1,0 +1,255 @@
+.\"     $OpenBSD: intro.4,v 1.1 1998/03/07 21:17:05 johns Exp $
+.\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
+.\"
+.\" Copyright (c) 1996 Jonathan Stone.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jonathan Stone.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd August 13, 1997
+.Dt INTRO 4 sparc
+.Os
+.Sh NAME
+.Nm intro
+.Nd introduction to special files and hardware support
+.Sh DESCRIPTION
+This section describes the special files, related driver functions,
+and networking support
+available in the system.
+In this part of the manual, the
+.Tn SYNOPSIS
+section of
+each configurable device gives a sample specification
+for use in constructing a system description for the
+.Xr config 8
+program.
+The
+.Tn DIAGNOSTICS
+section lists messages which may appear on the console
+and/or in the system error log
+.Pa /var/log/messages
+due to errors in device operation;
+see
+.Xr syslogd 8
+for more information.
+.Pp
+This section contains both devices
+which may be configured into the system
+and network related information.
+The networking support is introduced in
+.Xr netintro 4 .
+.Sh DEVICE SUPPORT
+This section describes the hardware supported on the SPARC
+platform.
+Software support for these devices comes in two forms.  A hardware
+device may be supported with a character or block
+.Em device driver ,
+or it may be used within the networking subsystem and have a
+.Em network interface driver .
+Block and character devices are accessed through files in the file
+system of a special type; see
+.Xr mknod 8 .
+Network interfaces are indirectly accessed through the interprocess
+communication facilities provided by the system; see
+.Xr socket 2 .
+.Pp
+A hardware device is identified to the system at configuration time
+and the appropriate device or network interface driver is then compiled
+into the system.  When the resultant system is booted, the
+autoconfiguration facilities in the system probe for the device
+and, if found, enable the software support for it.
+If a device does not respond at autoconfiguration
+time it is not accessible at any time afterwards.
+To enable a device which did not autoconfigure,
+the system must be rebooted.
+.Pp
+The autoconfiguration system is described in
+.Xr autoconf 4 .
+A list of the supported devices is given below.
+.Sh SEE ALSO
+.Xr cd 4 ,
+.Xr sd 4 ,
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr autoconf 4 ,
+.Xr config 8 .
+.Sh SUPPORTED SYSTEMS
+The following Sun SPARC system architectures and models are supported:
+.Bl -tag -width speaker
+.It sun4
+first generation SPARC systems on VMEbus:
+.br
+Sun 4/100 series (14.28 MHz)
+.br
+Sun 4/200 series (16.67 MHz)
+.br
+Sun 4/300 series (25 MHz)
+.It sun4c
+desktop SPARC systems with Sbus:
+.br
+SPARCstation 1 (20 MHz)
+.br
+SPARCstation 1+ (25 MHz)
+.br
+SPARCstation 2 (40 MHz)
+.br
+SPARCstation SLC (20 MHz)
+.br
+SPARCstation ELC (33 MHz)
+.br
+SPARCstation IPC (25 MHz)
+.br
+SPARCstation IPX (40 MHz).
+.It sun4m
+desktop SPARC systems with Mbus for CPUs, and Sbus:
+.br
+SPARC Classic (50 Mhz microSPARC I)
+.br
+SPARC LX (50 MHz microSPARC I)
+.br
+SPARCstation 4 (70 Mhz microSPARC II)
+.br
+SPARCstation 5 (70, 85, 110 MHz microSPARC II)
+.br
+SPARCstation 5 (170 MHz TurboSPARC)
+.br
+SPARCstation 10M (36 MHz SuperSPARC I)
+.br
+SPARCstation 20M (50 MHz SuperSPARC I)
+.br
+SPARCstation 10 (Mbus modules)
+.br
+SPARCstation 20 (Mbus modules)
+.El
+.Pp
+The SPARCstation 2 and IPX can be upgraded with a Weitek PowerUP CPU
+that is clock-doubled (i.e. internally it runs at 80 MHz).
+.Ox
+supports this configuration.
+.Pp
+Hardware level clones of these systems from other manufacturers
+will likely work (e.g. Xerox, Tatung, Axil, Cycle);
+other systems which have a SPARC CPU but do not
+use Sun's hardware architecture (e.g. Solbourne) will likely not work.
+.Pp
+The Sun 4/400 series, sun4d (SPARC Center 1000, 1000E, and 2000),
+and sun4u (UltraSPARC) architectures are not yet supported.
+.Pp
+The sun4m architecture with Mbus modules for the CPUs is supported
+with the following modules with only one CPU:
+.Bl -tag -width speaker
+.It SM41
+40 Mhz SuperSPARC I with 1MB SuperCACHE
+.It SM51
+50 Mhz SuperSPARC I with 1MB SuperCACHE
+.It SM61
+60 Mhz SuperSPARC I with 1MB SuperCACHE
+.It SM71
+75 Mhz SuperSPARC II with 1MB SuperCACHE
+.El
+.Pp
+.Ox
+does not yet support multiprocessor systems.
+.Sh LIST OF DEVICES
+The devices listed below are supported in this incarnation of
+the system.  Devices are indicated by their functional interface.
+Not all supported devices are listed.
+.Pp
+.Bl -tag -width speaker
+.It audio
+AMD 79C30 obio (sun4c) audio controller
+.It bwtwo
+black and white obio frame buffer
+.It cgeight
+24 bit VMEbus color frame buffer
+.It cgfour
+8 bit obio (sun4 P4 bus) color graphics frame buffer
+.It cgfourteen
+24 bit Sbus color frame buffer
+.It cgsix
+8 bit obio (sun4c & sun4m), Sbus color graphics frame buffer
+.It cgthree
+8 bit VMEbus, Sbus, and obio (sun4m) color graphics frame buffer
+.It cgtwo
+8 bit VMEbus color frame buffer
+.It eeprom
+Sun non-volatile configuration RAM driver
+.It esp
+NCR53C90 ESP100 (Sun 4/300), 
+.br
+ESP100A (sun4c),
+.br
+ESP200 (sun4m) SCSI controller,
+.br
+FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet Sbus controller
+.It fd
+Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
+floppy disk drive controller
+.It ie
+Intel 82586 Ethernet controller (Sun 4/100)
+.It isp
+Qlogic ISP Sbus SCSI controller
+.It kbd
+Sun type 2, type 3, type 4, and type 5 keyboards (on zs)
+.It le/lebuffer
+AMD 7990 LANCE ethernet controller (Sun 4/200, 4/300, sun4c, sun4m, Sbus)
+.It ms
+Sun mouse (on zs)
+.It openprom
+Sun Open boot PROM (what became IEEE 1275) configuration driver
+.It si
+NCR5380 "SCSI-2" VMEbus (Sun 4/200, Sun 4/400) SCSI controller
+.It sw
+NCR5380 obio (Sun 4/100) "SCSI Wierd" SCSI controller
+.It tcx
+8 or 24 bit Sbus color graphics frame buffer
+.It xd
+Xylogics 753/7053 VMEbus SMD disk controller
+.It xy
+Xylogics 450/451 VMEbus SMD disk controller
+.It zs
+Zilog 8530 serial controller
+.El
+.Sh UNSUPPORTED DEVICES
+.Pp
+The following devices are not supported, due to unavailability of
+either documentation or sample hardware:
+.Bl -tag -width speaker
+.It bpp
+Bi-directional Parallel port
+.It dbri
+Dual Basic Rate Interface (BRI) ISDN (SPARC LX & SPARCstation 10)
+.It audio
+sun4m audio that is dependent on the dbri
+.It power
+sun4m power management is recognized but unused
+.El
+.Sh HISTORY
+The
+sparc
+.Nm 
+first appeared with OpenBSD 2.3.
