@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy82c693.c,v 1.1 2000/06/09 17:10:58 chris Exp $	*/
+/*	$OpenBSD: cy82c693.c,v 1.2 2001/01/16 15:37:53 art Exp $	*/
 /* $NetBSD: cy82c693.c,v 1.1 2000/06/06 03:07:39 thorpej Exp $ */
 
 /*-
@@ -81,6 +81,7 @@ cy82c693_init(bus_space_tag_t iot)
 {
 	bus_space_handle_t ioh;
 	int s;
+	int error;
 
 	CYHC_LOCK(s);
 
@@ -91,8 +92,9 @@ cy82c693_init(bus_space_tag_t iot)
 		return (&cyhc_handle);
 	}
 
-	if (bus_space_map(iot, CYHC_CONFIG_ADDR, 2, 0, &ioh) != 0) {
+	if ((error = bus_space_map(iot, CYHC_CONFIG_ADDR, 2, 0, &ioh)) != 0) {
 		CYHC_UNLOCK(s);
+		printf("cy82c693_init: bus_space_map failed (%d)", error);
 		return (NULL);
 	}
 
