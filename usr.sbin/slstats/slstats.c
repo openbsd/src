@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.5 1996/08/05 12:02:54 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.6 1996/12/10 15:14:33 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.5 1996/08/05 12:02:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.6 1996/12/10 15:14:33 deraadt Exp $";
 #endif
 
 #define INET
@@ -64,7 +64,7 @@ struct nlist nl[] = {
 	"",
 };
 
-extern	char __progname;	/* from crt0.o */
+extern	char *__progname;	/* from crt0.o */
 
 char	*kernel;		/* kernel for namelist */
 char	*kmemf;			/* memory file */
