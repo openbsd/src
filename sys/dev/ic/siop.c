@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.25 2003/01/21 00:48:55 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.26 2003/06/09 02:28:13 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -1227,15 +1227,11 @@ siop_handle_reset(sc)
 				siop_cmd = siop_lun->siop_tag[tag].active;
 				if (siop_cmd == NULL)
 					continue;
-				sc_print_addr(siop_cmd->cmd_c.xs->sc_link);
-				printf("command with tag id %d reset\n", tag);
-				siop_cmd->cmd_c.xs->error =
-				    (siop_cmd->cmd_c.flags & CMDFL_TIMEOUT) ?
-		    		    XS_TIMEOUT : XS_RESET;
-				siop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
 				siop_lun->siop_tag[tag].active = NULL;
-				siop_cmd->cmd_c.status = CMDST_DONE;
-				siop_scsicmd_end(siop_cmd);
+				TAILQ_INSERT_TAIL(&reset_list, siop_cmd, next);
+				sc_print_addr(siop_cmd->cmd_c.xs->sc_link);
+				printf("cmd %p (tag %d) added to reset list\n",
+				    siop_cmd, tag);
 			}
 		}
 		sc->sc_c.targets[target]->status = TARST_ASYNC;
@@ -1248,41 +1244,42 @@ siop_handle_reset(sc)
 	for (siop_cmd = TAILQ_FIRST(&sc->urgent_list); siop_cmd != NULL;
 	    siop_cmd = next_siop_cmd) {
 		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
-		siop_cmd->cmd_c.flags &= ~CMDFL_TAG;
-		printf("cmd %p (target %d:%d) in reset list (wait)\n",
-		    siop_cmd, siop_cmd->cmd_c.xs->sc_link->target,
-		    siop_cmd->cmd_c.xs->sc_link->lun);
 		TAILQ_REMOVE(&sc->urgent_list, siop_cmd, next);
 		TAILQ_INSERT_TAIL(&reset_list, siop_cmd, next);
+		sc_print_addr(siop_cmd->cmd_c.xs->sc_link);
+		printf("cmd %p added to reset list from urgent list\n",
+		    siop_cmd);
 	}
-	/* Then command waiting in the input list */
+	/* Then commands waiting in the input list. */
 	for (siop_cmd = TAILQ_FIRST(&sc->ready_list); siop_cmd != NULL;
 	    siop_cmd = next_siop_cmd) {
 		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
-		siop_cmd->cmd_c.flags &= ~CMDFL_TAG;
-		printf("cmd %p (target %d:%d) in reset list (wait)\n",
-		    siop_cmd, siop_cmd->cmd_c.xs->sc_link->target,
-		    siop_cmd->cmd_c.xs->sc_link->lun);
 		TAILQ_REMOVE(&sc->ready_list, siop_cmd, next);
 		TAILQ_INSERT_TAIL(&reset_list, siop_cmd, next);
+		sc_print_addr(siop_cmd->cmd_c.xs->sc_link);
+		printf("cmd %p added to reset list from ready list\n",
+		    siop_cmd);
 	}
 
 	for (siop_cmd = TAILQ_FIRST(&reset_list); siop_cmd != NULL;
 	    siop_cmd = next_siop_cmd) {
 		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
-		siop_cmd->cmd_c.xs->error = (siop_cmd->cmd_c.flags & CMDFL_TIMEOUT) ?
-		    XS_TIMEOUT : XS_RESET;
-		siop_cmd->cmd_tables->status = htole32(SCSI_SIOP_NOCHECK);
-		printf("cmd %p (status %d) about to be processed\n", siop_cmd,
-		    siop_cmd->cmd_c.status);
+		siop_cmd->cmd_c.flags &= ~CMDFL_TAG;
+		siop_cmd->cmd_c.xs->error =
+		    (siop_cmd->cmd_c.flags & CMDFL_TIMEOUT)
+		    ? XS_TIMEOUT : XS_RESET;
+		siop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
+		printf("cmd %p (status %d) reset ",
+		    siop_cmd, siop_cmd->cmd_c.status);
 		if (siop_cmd->cmd_c.status == CMDST_SENSE ||
 		    siop_cmd->cmd_c.status == CMDST_SENSE_ACTIVE) 
 			siop_cmd->cmd_c.status = CMDST_SENSE_DONE;
 		else
 			siop_cmd->cmd_c.status = CMDST_DONE;
+		printf(" with status %d, xs->error %d\n",
+		    siop_cmd->cmd_c.status, siop_cmd->cmd_c.xs->error);
 		TAILQ_REMOVE(&reset_list, siop_cmd, next);
 		siop_scsicmd_end(siop_cmd);
-		TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 	}
 }
 
