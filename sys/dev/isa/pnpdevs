@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.105 2001/12/05 18:27:24 naddy Exp $
+#	$OpenBSD: pnpdevs,v 1.106 2002/01/02 19:41:11 mickey Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -406,6 +406,8 @@ com/pccom	PNPC001	# Compaq 2400/9600 Modem (TBD)
 #ep		TCM5094 # 3COM 3c509B		(PNP80F7)
 #ep		TCM5095 # 3COM 3c509B		(PNP80F7)
 #ep		TCM5098 # 3COM 3c509B		(PNP80F7)
+#ep		TCM5150 # 3COM 3c515-TX
+#ep		TCM5151 # 3COM 3c515-T4
 #le		TKN0010	# Lance Ethernet on TEKNOR board (PNP828C)
 #le		ADV55AA	# AMD PCnet-ISA II Ethernet Netwo (PNP828C)
 le		CSI2203	# Cabletron E22xx Adapter
