@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.4 1998/10/14 07:34:43 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.5 1998/11/05 09:12:52 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -86,7 +86,7 @@ product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
 product IODATA PCLAT		0x2216 I-O DATA PCLA/T
 
 /* Linksys corporation */
-product LINKSYS ECARD_1		0x0265 Linksys EthernetCard
+product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
 
