@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.3,v 1.6 2000/11/10 00:06:27 deraadt Exp $
+.\"	$OpenBSD: scsi.3,v 1.7 2002/05/01 08:03:30 mpech Exp $
 .\" Copyright (c) 1994 HD Associates (hd@world.std.com)
 .\" All rights reserved.
 .\"
@@ -79,7 +79,8 @@ use the SCIOCCOMMAND
 of the SCSI subsystem
 to provide user level access to SCSI commands.
 The programmer must know the SCSI CDB (Command Descriptor
-Block) to perform the desired command.  These functions assist in
+Block) to perform the desired command.
+These functions assist in
 building up the CDB, submitting it to the SCSI subsystem, and decoding
 the result.
 .Pp
@@ -89,7 +90,8 @@ command before using the library directly - simple programs are
 best implemented as scripts using that facility.
 .Pp
 To provide for security,
-not all devices accept the SCIOCCOMAND ioctl.  It is accepted by the
+not all devices accept the SCIOCCOMAND ioctl.
+It is accepted by the
 control device for tape drives, partition D for disk drives, partition C
 for CD ROM drives, and any "unknown" device.
 The "super scsi"
@@ -145,8 +147,8 @@ determined by the
 argument.
 .Pp
 .Fr buf
-is the data buffer used during the SCSI data phase.  If it is NULL it
-is allocated via malloc and
+is the data buffer used during the SCSI data phase.
+If it is NULL it is allocated via malloc and
 .Ar scsireq->databuf
 is set to point to the newly allocated memory.
 .Pp
@@ -171,17 +173,17 @@ indicates a data out phase (a transfer out of the user buffer).
 .Pp
 .Fr fmt
 is a CDB format specifier used to build up the SCSI CDB.
-This text string is made up of a list of field specifiers.  Field
-specifiers specify the value for each CDB field (including indicating
+This text string is made up of a list of field specifiers.
+Field specifiers specify the value for each CDB field (including indicating
 that the value be taken from the next argument in the
 variable argument list), the width
-of the field in bits or bytes, and an optional name.  White space is
-ignored, and the pound sign ('#') introduces a comment that ends at the
-end of the current line.
+of the field in bits or bytes, and an optional name.
+White space is ignored, and the pound sign ('#') introduces a comment that
+ends at the end of the current line.
 .Pp
 The optional name is the first part of a field specifier and
-is in curly braces.  The text in curly braces in this example are
-the names:
+is in curly braces.
+The text in curly braces in this example are the names:
 .Bd -literal -offset indent
 .Fr "{PS} v:b1 {Reserved} 0:b1 {Page Code} v:b6 # Mode select page"
 .Ed
@@ -277,8 +279,8 @@ described above in
 .Fn scsireq_decode .
 .Pp
 .Fn scsireq_encode
-encodes the data phase section of the structure.  The encoding is
-handled identically as the encoding of the CDB structure by
+encodes the data phase section of the structure.
+The encoding is handled identically as the encoding of the CDB structure by
 .Fn scsireq_build
 .Pp
 .Fn scsireq_enter
@@ -330,11 +332,14 @@ returns the result of the ioctl call.
 .Xr scsi 4 ,
 .Xr scsi 8
 .Sh BUGS
-This only works completely for the 1542C.  The host adapter code
+This only works completely for the 1542C.
+The host adapter code
 that sets up the residual amount of data transfer has to be added
-to each individual adapter.  This library is usable on the other
+to each individual adapter.
+This library is usable on the other
 host adapters; however, the SCSI driver pretends that the proper
-amount of data is always transferred.  If you have an Adaptec 174x
+amount of data is always transferred.
+If you have an Adaptec 174x
 and can hack contact dufault@hda.com and you can have the code to
 calculate residual data for the 174x series to integrate and test.
 .Sh HISTORY
@@ -342,7 +347,8 @@ Many systems have comparable interfaces to permit a user to construct a
 SCSI command in user space.
 .Pp
 The data structure is almost identical to the SGI /dev/scsi data
-structure.  If anyone knows the name of the authors it should
+structure.
+If anyone knows the name of the authors it should
 go here; Peter Dufault first read about it in a 1989 Sun Expert magazine.
 .Pp
 Peter Dufault implemented a clone of SGI's interface in 386bsd that

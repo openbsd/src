@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.3,v 1.7 2001/09/06 15:04:34 mpech Exp $
+.\"	$OpenBSD: hosts_access.3,v 1.8 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -54,17 +54,20 @@
 .Sh DESCRIPTION
 The routines described in this document are part of the
 .Nm libwrap.a
-library.  They implement a rule-based access control language with
+library.
+They implement a rule-based access control language with
 optional shell commands that are executed when a rule fires.
 .Pp
 .Fn request_init
 initializes a structure with information about a client
 request.
 .Fn request_set
-updates an already initialized request structure.  Both functions take a
+updates an already initialized request structure.
+Both functions take a
 variable-length list of key-value pairs and return their first argument.
-The argument lists are terminated with a zero key value.  All string-valued
-arguments are copied.  The expected keys (and corresponding value types) are:
+The argument lists are terminated with a zero key value.
+All string-valued arguments are copied.
+The expected keys (and corresponding value types) are:
 .Bl -tag -width XXXXXXXXXXXXXXXXXXXXXXXX
 .It "RQ_FILE (int)"
 The file descriptor associated with the request.
@@ -91,7 +94,8 @@ The name of the user on whose behalf the client host makes the request.
 .Fn hosts_access
 consults the access control tables described in the
 .Xr hosts_access 5
-manual page.  When internal endpoint information is available, host names
+manual page.
+When internal endpoint information is available, host names
 and client user names are looked up on demand, using the request structure
 as a cache.
 .Fn hosts_access
@@ -104,7 +108,8 @@ and
 .Fn hosts_access
 routines with a perhaps more convenient interface (though it does not
 pass on enough information to support automated client username
-lookups).  The client host address, client host name and username
+lookups).
+The client host address, client host name and username
 arguments should contain valid data or STRING_UNKNOWN.
 .Fn hosts_ctl
 returns zero if access should be denied.
@@ -114,9 +119,9 @@ The
 and
 .Fa deny_severity
 variables determine
-how accepted and rejected requests may be logged. They must be provided
-by the caller and may be modified by rules in the access control
-tables.
+how accepted and rejected requests may be logged.
+They must be provided
+by the caller and may be modified by rules in the access control tables.
 .Sh DIAGNOSTICS
 Problems are reported via the syslog daemon.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\" $OpenBSD: flockfile.3,v 1.6 1999/07/07 10:50:05 aaron Exp $
+.\" $OpenBSD: flockfile.3,v 1.7 2002/05/01 08:03:30 mpech Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 20, 1998
 .Dt FLOCKFILE 3
@@ -24,7 +24,8 @@ and
 .Fn funlockfile
 functions provide for explicit application-level locking of stdio
 .Ft "FILE *"
-objects. These functions can be used by a thread to delineate a sequence
+objects.
+These functions can be used by a thread to delineate a sequence
 of I/O statements that are to be executed as a unit.
 .Pp
 The
@@ -51,14 +52,17 @@ function.
 .Pp
 Logically, there is a lock count associated with each
 .Ft "FILE *"
-object. This count is implicitly intialized to zero when the
+object.
+This count is implicitly intialized to zero when the
 .Ft "FILE *"
-object is created. The
+object is created.
+The
 .Ft "FILE *"
 object is unlocked when the count is zero.
 When the count is positive, a single thread owns the
 .Ft "FILE *"
-object. When the
+object.
+When the
 .Fn flockfile
 function is called, if the count is zero or if the count is positive and
 the caller owns the
@@ -68,7 +72,8 @@ Otherwise, the calling thread is suspended, waiting for the count to
 return to zero.
 Each call to
 .Fn funlockfile
-decrements the count. This allows matching calls to
+decrements the count.
+This allows matching calls to
 .Fn flockfile
 (or successful calls to
 .Fn ftrylockfile )

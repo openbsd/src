@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.13 2001/07/15 20:13:45 nate Exp $
+.\"	$OpenBSD: strftime.3,v 1.14 2002/05/01 08:03:30 mpech Exp $
 .\"
 .Dd January 18, 1998
 .Dt STRFTIME 3
@@ -137,7 +137,8 @@ is replaced by the time in the format
 is replaced by the locale's representation of 12-hour clock time
 using AM/PM notation.
 .It Cm \&%S
-is replaced by the second as a decimal number (00-61).  The range of
+is replaced by the second as a decimal number (00-61).
+The range of
 seconds is (00-61) instead of (00-59) to allow for the periodic occurance
 of leap seconds and double leap seconds.
 .It Cm %s

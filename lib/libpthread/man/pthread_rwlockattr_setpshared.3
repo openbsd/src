@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlockattr_setpshared.3,v 1.5 2000/04/12 21:48:03 aaron Exp $
+.\" $OpenBSD: pthread_rwlockattr_setpshared.3,v 1.6 2002/05/01 08:03:30 mpech Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -50,14 +50,14 @@ Any thread of any process that has access to the memory where the
 read/write lock resides can manipulate the lock.
 .It Ar PTHREAD_PROCESS_PRIVATE
 Only threads created within the same process as the thread that
-initialized the read/write lock can manipulate the lock.  This is
-the default value.
+initialized the read/write lock can manipulate the lock.
+This is the default value.
 .El
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_rwlockattr_setpshared
-function will return zero.  Otherwise an error number will be returned
-to indicate the error.
+function will return zero.
+Otherwise an error number will be returned to indicate the error.
 .Sh SEE ALSO
 .Xr pthread_rwlock_init 3 ,
 .Xr pthread_rwlockattr_init 3 ,

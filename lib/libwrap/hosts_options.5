@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_options.5,v 1.6 2001/09/06 15:04:34 mpech Exp $
+.\"	$OpenBSD: hosts_options.5,v 1.7 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -53,27 +53,30 @@ daemon_list : client_list : option : option ...
 The first two fields are described in the
 .Xr hosts_access 5
 manual page.
-The remainder of the rules is a list of zero or more options.  Any ":"
+The remainder of the rules is a list of zero or more options.
+Any ":"
 characters within options should be protected with a backslash.
 .Pp
-An option is of the form "keyword" or "keyword value". Options are
-processed in the specified order. Some options are subjected to
-%<letter> substitutions. For the sake of backwards compatibility with
+An option is of the form "keyword" or "keyword value".
+Options are processed in the specified order.
+Some options are subjected to %<letter> substitutions.
+For the sake of backwards compatibility with
 earlier versions, an "=" is permitted between keyword and value.
 .Sh LOGGING
 .Bl -tag -width "severity mail.info"
 .It "severity mail.info"
 .It "severity notice"
-Change the severity level at which the event will be logged. Facility
-names (such as mail) are optional, and are not supported on systems
-with older syslog implementations. The severity option can be used
-to emphasize or to ignore specific events.
+Change the severity level at which the event will be logged.
+Facility names (such as mail) are optional, and are not supported
+on systems with older syslog implementations.
+The severity option can be used to emphasize or to ignore specific events.
 .El
 .Sh ACCESS CONTROL
 .Bl -tag -width allow
 .It "allow"
 .It "deny"
-Grant (deny) service. These options must appear at the end of a rule.
+Grant (deny) service.
+These options must appear at the end of a rule.
 .El
 .Pp
 The
@@ -105,9 +108,11 @@ Notice the leading dot on the domain name patterns.
 .It "spawn shell_command"
 Execute, in a child process, the specified shell command, after
 performing the %<letter> expansions described in the hosts_access(5)
-manual page.  The command is executed with stdin, stdout and stderr
+manual page.
+The command is executed with stdin, stdout and stderr
 connected to the null device, so that it won\'t mess up the
-conversation with the client host. Example:
+conversation with the client host.
+Example:
 .Bd -unfilled -offset indent
 spawn (/some/where/safe_finger -l @%h | /usr/ucb/mail root) &
 .Ed
@@ -118,15 +123,17 @@ remote host.
 .Pp
 The example uses the "safe_finger" command instead of the regular
 "finger" command, to limit possible damage from data sent by the finger
-server. The "safe_finger" command is part of the daemon wrapper
+server.
+The "safe_finger" command is part of the daemon wrapper
 package; it is a wrapper around the regular finger command that filters
 the data sent by the remote host.
 .It "twist shell_command"
 Replace the current process by an instance of the specified shell
 command, after performing the %<letter> expansions described in the
 .Xr hosts_access 5
-manual page.  Stdin, stdout and stderr are connected to
-the client process. This option must appear at the end of a rule.
+manual page.
+Stdin, stdout and stderr are connected to the client process.
+This option must appear at the end of a rule.
 .Pp
 To send a customized bounce message to the client instead of
 running the real ftp daemon:
@@ -155,11 +162,11 @@ the client process; UDP requires other I/O primitives.
 .Sh NETWORK OPTIONS
 .Bl -tag -width "linger number_of_seconds"
 .It "keepalive"
-Causes the server to periodically send a message to the client.  The
-connection is considered broken when the client does not respond. The
-keepalive option can be useful when users turn off their machine while
-it is still connected to a server.  The keepalive option is not useful
-for datagram (UDP) services.
+Causes the server to periodically send a message to the client.
+The connection is considered broken when the client does not respond.
+The keepalive option can be useful when users turn off their machine while
+it is still connected to a server.
+The keepalive option is not useful for datagram (UDP) services.
 .It "linger number_of_seconds"
 Specifies how long the kernel will try to deliver not-yet delivered
 data after the server process closes a connection.
@@ -168,11 +175,14 @@ data after the server process closes a connection.
 .Bl -tag -width "rfc931 [ timeout_in_seconds ]"
 .It "rfc931 [ timeout_in_seconds ]"
 Look up the client user name with the RFC 931 (TAP, IDENT, RFC 1413)
-protocol.  This option is silently ignored in case of services based on
-transports other than TCP.  It requires that the client system runs an
+protocol.
+This option is silently ignored in case of services based on
+transports other than TCP.
+It requires that the client system runs an
 RFC 931 (IDENT, etc.) -compliant daemon, and may cause noticeable
-delays with connections from non-UNIX clients.  The timeout period is
-optional. If no timeout is specified a compile-time defined default
+delays with connections from non-UNIX clients.
+The timeout period is optional.
+If no timeout is specified a compile-time defined default
 value is taken.
 .El
 .Sh MISCELLANEOUS
@@ -194,25 +204,27 @@ manual page).
 Warning: banners are supported for connection-oriented (TCP) network
 services only.
 .It "nice [ number ]"
-Change the nice value of the process (default 10).  Specify a positive
-value to spend more CPU resources on other processes.
+Change the nice value of the process (default 10).
+Specify a positive value to spend more CPU resources on other processes.
 .It "setenv name value"
-Place a (name, value) pair into the process environment. The value is
-subjected to %<letter> expansions and may contain whitespace (but
+Place a (name, value) pair into the process environment.
+The value is subjected to %<letter> expansions and may contain whitespace (but
 leading and trailing blanks are stripped off).
 .Pp
 Warning: many network daemons reset their environment before spawning a
 login or shell process.
 .It "umask 022"
-Like the umask command that is built into the shell. An umask of 022
+Like the umask command that is built into the shell.
+An umask of 022
 prevents the creation of files with group and world write permission.
 The umask argument should be an octal number.
 .It "user nobody"
 .It "user nobody.kmem"
 Assume the privileges of the "nobody" userid (or user "nobody", group
-"kmem"). The first form is useful with inetd implementations that run
-all services with root privilege. The second form is useful for
-services that need special group privileges only.
+"kmem").
+The first form is useful with inetd implementations that run all services with
+root privilege.
+The second form is useful for services that need special group privileges only.
 .El
 .Sh DIAGNOSTICS
 When a syntax error is found in an access control rule, the error

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: insque.3,v 1.5 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: insque.3,v 1.6 2002/05/01 08:03:30 mpech Exp $
 .\" Copyright (c) 1993 John Brezak
 .\" All rights reserved.
 .\"
@@ -58,7 +58,8 @@ These interfaces are available from the compatibility library, libcompat.
 .Fn insque
 and
 .Fn remque
-manipulate queues built from doubly linked lists. Each element in the queue
+manipulate queues built from doubly linked lists.
+Each element in the queue
 must begin with a "struct qelem".
 .Sh DIAGNOSTICS
 These functions are not atomic unless that machine architecture allows it.

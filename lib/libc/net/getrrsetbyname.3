@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrrsetbyname.3,v 1.5 2002/04/30 16:31:42 mpech Exp $
+.\" $OpenBSD: getrrsetbyname.3,v 1.6 2002/05/01 08:03:29 mpech Exp $
 .\"
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
 .\"
@@ -67,7 +67,8 @@ and
 are in uncompressed DNS wire format.
 Properties of the rdataset are represented in the
 .Li rri_flags
-bitfield. If the
+bitfield.
+If the
 .Dv RRSET_VALIDATED
 bit is set, the data has been DNSSEC
 validated and the signatures verified.

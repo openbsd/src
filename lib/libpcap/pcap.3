@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.22 2001/12/17 22:29:47 dugsong Exp $
+.\"	$OpenBSD: pcap.3,v 1.23 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,8 @@
 .Fn pcap_dump_close "pcap_dumper_t *p"
 .Sh DESCRIPTION
 .Nm
-provides a high level interface to packet capture systems. All packets
+provides a high level interface to packet capture systems.
+All packets
 on the network, even those destined for other hosts, are accessible
 through this mechanism.
 .Sh ROUTINES
@@ -121,8 +122,8 @@ is called to open a
 .Dq savefile
 for reading.
 .Fa fname
-specifies the name of the file to open. The file has
-the same format as those used by
+specifies the name of the file to open.
+The file has the same format as those used by
 .Xr tcpdump 8 .
 .\" and
 .\" .BR tcpslice(1) .
@@ -153,7 +154,8 @@ struct as returned by
 or
 .Fn pcap_open_live .
 .Fa fname
-specifies the name of the file to open. If
+specifies the name of the file to open.
+If
 .Dv NULL
 is returned,
 .Fn pcap_geterr
@@ -188,9 +190,11 @@ is filled in with an appropriate error message.
 .Fn pcap_dispatch
 is used to collect and process packets.
 .Fa cnt
-specifies the maximum number of packets to process before returning. A
+specifies the maximum number of packets to process before returning.
+A
 .Fa cnt
-of \-1 processes all the packets received in one buffer. A
+of \-1 processes all the packets received in one buffer.
+A
 .Fa cnt
 of 0 processes all packets until an error occurs,
 .Tn EOF
@@ -206,7 +210,8 @@ a pointer to the
 struct (which precede the actual network headers and data),
 and a
 .Fa u_char
-pointer to the packet data. The number of packets read is returned.
+pointer to the packet data.
+The number of packets read is returned.
 Zero is returned when
 .Tn EOF
 is reached in a savefile.
@@ -313,8 +318,10 @@ returns the stream associated with the savefile.
 .Fn pcap_stats
 returns 0 and fills in a
 .Fa pcap_stat
-struct. The values represent packet statistics from the start of the
-run to the time of the call. If there is an error or the under lying
+struct.
+The values represent packet statistics from the start of the
+run to the time of the call.
+If there is an error or the under lying
 packet capture doesn't support packet statistics, \-1 is returned and
 the error text can be obtained with
 .Fn pcap_perror

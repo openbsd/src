@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.17 2002/04/30 16:31:42 mpech Exp $
+.\" $OpenBSD: pthreads.3,v 1.18 2002/05/01 08:03:30 mpech Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -23,7 +23,8 @@ option.
 The
 .Dv SIGINFO
 signal can be sent to a threaded process to have the library show the state of
-all of its threads. The information is sent to the process'
+all of its threads.
+The information is sent to the process'
 controlling tty and describes each thread's
 ID,
 state (see
@@ -185,8 +186,8 @@ Enables verbose
 signal output.
 .It Ev LIBC_R_DEBUG
 Display thread status every time the garbage collection thread runs,
-approximately once every 10 seconds.   The status display verbosity is
-controled by the
+approximately once every 10 seconds.
+The status display verbosity is controled by the
 .Ev PTHREAD_DEBUG
 environment variable.
 .El
@@ -240,7 +241,8 @@ The library contains a scheduler that uses the
 process virtual interval timer to pre-empt running threads.
 This means that using
 .Xr setitimer 2
-to alter the process virtual timer will have undefined effects. The
+to alter the process virtual timer will have undefined effects.
+The
 .Dv SIGVTALRM
 will never be delivered to threads in a process.
 .Pp

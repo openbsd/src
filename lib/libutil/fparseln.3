@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fparseln.3,v 1.4 2000/01/05 18:51:11 deraadt Exp $
+.\"	$OpenBSD: fparseln.3,v 1.5 2002/05/01 08:03:30 mpech Exp $
 .\"	$NetBSD: fparseln.3,v 1.7 1999/07/02 15:49:12 simonb Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -49,7 +49,8 @@ function
 returns a pointer to the next logical line from the stream referenced by
 .Fa stream .
 This string is null terminated and dynamically allocated on each
-invocation. It is the responsibility of the caller to free the pointer.
+invocation.
+It is the responsibility of the caller to free the pointer.
 .Pp
 By default, if a character is escaped, both it and the preceding escape
 character will be present in the returned string.

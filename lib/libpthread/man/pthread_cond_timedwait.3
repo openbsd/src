@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_cond_timedwait.3,v 1.7 2002/02/21 20:12:19 fgsch Exp $
+.\" $OpenBSD: pthread_cond_timedwait.3,v 1.8 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -59,8 +59,8 @@ and the current thread reaquires the lock on
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_cond_timedwait
-function will return zero. Otherwise an error number will be returned to
-indicate the error.
+function will return zero.
+Otherwise an error number will be returned to indicate the error.
 .Sh ERRORS
 .Fn pthread_cond_timedwait
 will fail if:

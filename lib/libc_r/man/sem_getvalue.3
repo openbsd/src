@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_getvalue.3,v 1.2 2002/02/20 05:29:37 fgsch Exp $
+.\" $OpenBSD: sem_getvalue.3,v 1.3 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -68,6 +68,7 @@ conforms to
 .St -p1003.1-96 .
 .Pp
 The value of the semaphore is never negative, even if there are threads blocked
-on the semaphore.  POSIX is somewhat ambiguous in its wording with regard to
+on the semaphore.
+POSIX is somewhat ambiguous in its wording with regard to
 what the value of the semaphore should be if there are blocked waiting threads,
 but this behavior is conformant, given the wording of the specification.

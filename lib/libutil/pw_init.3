@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pw_init.3,v 1.4 1999/09/23 04:12:01 alex Exp $
+.\"	$OpenBSD: pw_init.3,v 1.5 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,7 +69,8 @@
 .Fn pw_error "const char *name" "int err" "int eval"
 .Sh DESCRIPTION
 These functions are designed as conveniences for interactive programs
-which update the passwd file and do nothing else.  They generally
+which update the passwd file and do nothing else.
+They generally
 handle errors by printing out a message to the standard error stream
 and possibly aborting the process.
 .Pp
@@ -83,7 +84,8 @@ disabling most signals.
 The
 .Fn pw_setdir
 function sets an alternative directory where the rest of the functions looks
-for password-related files.  Use this if you are writing utilities that should
+for password-related files.
+Use this if you are writing utilities that should
 be able to handle password files outside of /etc.
 .Pp
 The
@@ -91,7 +93,8 @@ The
 function transforms filenames so that they end up in the directory specified
 to the latest
 .Fn pw_setdir
-call.  The rule is that all directories are stripped off the given name and
+call.
+The rule is that all directories are stripped off the given name and
 only the filename is appended to the directory.
 .Pp
 The
@@ -104,7 +107,8 @@ if EDITOR is not set) on the file
 .Pa /etc/ptmp
 if
 .Fa filename
-is NULL).  If
+is NULL).
+If
 .Fa notsetuid
 is nonzero,
 .Fn pw_edit
@@ -170,7 +174,8 @@ is empty.
 The
 .Fn pw_error
 function displays an error message, aborts the current passwd update,
-and exits the current process.  If
+and exits the current process.
+If
 .Fa err
 is non-zero, a warning message beginning with
 .Fa name

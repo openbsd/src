@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_detach.3,v 1.9 2002/02/21 20:12:19 fgsch Exp $
+.\" $OpenBSD: pthread_detach.3,v 1.10 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (c) 1996-1998 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -48,22 +48,26 @@ The
 function is used to indicate to the implementation that storage for the
 thread
 .Fa thread
-can be reclaimed when the thread terminates. If
+can be reclaimed when the thread terminates.
+If
 .Fa thread
 has not terminated,
 .Fn pthread_detach
-will not cause it to terminate. The effect of multiple
+will not cause it to terminate.
+The effect of multiple
 .Fn pthread_detach
 calls on the same target thread is unspecified.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_detach
-function will return zero. Otherwise an error number will be returned to
-indicate the error. Note that the function does not change the value
+function will return zero.
+Otherwise an error number will be returned to indicate the error.
+Note that the function does not change the value
 of
 .Va errno
-as it did for some drafts of the standard. These early drafts
-also passed a pointer to pthread_t as the argument. Beware!
+as it did for some drafts of the standard.
+These early drafts also passed a pointer to pthread_t as the argument.
+Beware!
 .Sh ERRORS
 .Fn pthread_detach
 will fail if:

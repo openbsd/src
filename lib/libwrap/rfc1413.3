@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfc1413.3,v 1.4 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: rfc1413.3,v 1.5 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (c) 2001, Bob Beck.  All rights reserved.
 .\"
@@ -44,7 +44,8 @@
 .Fn rfc1413
 retrieves a user name from a remote system using the
 .Nm ident
-protocol described in rfc 1413. It is implenented in the
+protocol described in rfc 1413.
+It is implenented in the
 .Nm libwrap.a
 library.
 .Pp
@@ -69,7 +70,8 @@ strips the trailing CRLF from the returned value and stores up to
 .Nm "dsize - 1"
 bytes of the returned username into
 .Nm dest,
-always terminating with a nul byte. In this case 0 is returned.
+always terminating with a nul byte.
+In this case 0 is returned.
 .Fn rfc1413
 returns -1 if any failure occurs such that it was unable to
 retrieve the remote username.
@@ -79,8 +81,8 @@ retrieve the remote username.
 The ident protocol only works on TCP sockets.
 .Pp
 Ident connections are made unencrypted, and nothing prevents the
-remote server from lying about who the user is. Consequently, ident
-should never be used to authenticate users. ident is however, quite
-useful for logging users of connections from multiuser machines that
-can be trusted not to lie about it.
+remote server from lying about who the user is.
+Consequently, ident should never be used to authenticate users.
+ident is however, quite useful for logging users of connections
+from multiuser machines that can be trusted not to lie about it.
 \" @(#) hosts_access.3 1.8 96/02/11 17:01:26

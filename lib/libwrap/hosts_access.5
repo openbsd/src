@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.13 2001/09/06 15:04:34 mpech Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.14 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,8 +41,9 @@
 .Sh DESCRIPTION
 This manual page describes a simple access control language that is
 based on client (host name/address, user name), and server (process
-name, host name/address) patterns.  Examples are given at the end.  The
-impatient reader is encouraged to skip to the EXAMPLES section for a
+name, host name/address) patterns.
+Examples are given at the end.
+The impatient reader is encouraged to skip to the EXAMPLES section for a
 quick introduction.
 .Pp
 An extended version of the access control language is described in the
@@ -58,8 +59,8 @@ is the process name of a network daemon process, and
 is the name and/or address of a host requesting service.  Network daemon
 process names are specified in the inetd configuration file.
 .Sh ACCESS CONTROL FILES
-The access control software consults two files. The search stops
-at the first match:
+The access control software consults two files.
+The search stops at the first match:
 .Bl -bullet -tag -width XXX
 .It
 Access will be granted when a (daemon,client) pair matches an entry in
@@ -76,17 +77,17 @@ Otherwise, access will be granted.
 .El
 .Pp
 A non-existing access control file is treated as if it were an empty
-file. Thus, access control can be turned off by providing no access
-control files.
+file.
+Thus, access control can be turned off by providing no access control files.
 .Sh ACCESS CONTROL RULES
-Each access control file consists of zero or more lines of text.  These
-lines are processed in order of appearance.  The search terminates when a
-match is found.
+Each access control file consists of zero or more lines of text.
+These lines are processed in order of appearance.
+The search terminates when a match is found.
 .Bl -bullet -tag -width XXX
 .It
 A newline character is ignored when it is preceded by a backslash
-character. This permits you to break up long lines so that they are
-easier to edit.
+character.
+This permits you to break up long lines so that they are easier to edit.
 .It
 Blank lines or lines that begin with a
 .Sq #
@@ -133,8 +134,8 @@ A string that begins with a
 .Ns .
 .Sc
 character. A host name is matched if
-the last components of its name match the specified pattern.  For
-example, the pattern
+the last components of its name match the specified pattern.
+For example, the pattern
 .Sq .tue.nl
 matches the host name
 .Sq wzv.win.tue.nl .
@@ -143,8 +144,9 @@ A string that ends with a
 .So
 .Ns .
 .Sc
-character. A host address is matched if its first numeric fields match the
-given string.  For example, the pattern
+character.
+A host address is matched if its first numeric fields match the given string.
+For example, the pattern
 .So
 131.155.
 .Sc
@@ -154,9 +156,10 @@ network (131.155.x.x).
 A string that begins with an
 .Sq @
 character is treated as an NIS
-(formerly YP) netgroup name. A host name is matched if it is a host
-member of the specified netgroup. Netgroup matches are not supported
-for daemon process names or for client user names.
+(formerly YP) netgroup name.
+A host name is matched if it is a host member of the specified netgroup.
+Netgroup matches are not supported for daemon process names or for client
+user names.
 .It
 An expression of the form
 .Sq n.n.n.n/m.m.m.m
@@ -203,15 +206,17 @@ The universal wildcard, always matches.
 Matches any host whose name does not contain a dot character.
 .It UNKNOWN
 Matches any user whose name is unknown, and matches any host whose name
-or address are unknown.  This pattern should be used with care:
-host names may be unavailable due to temporary name server problems. A
-network address will be unavailable when the software cannot figure out
+or address are unknown.
+This pattern should be used with care:
+host names may be unavailable due to temporary name server problems.
+A network address will be unavailable when the software cannot figure out
 what type of network it is talking to.
 .It KNOWN
 Matches any user whose name is known, and matches any host whose name
-and address are known. This pattern should be used with care:
-host names may be unavailable due to temporary name server problems.  A
-network address will be unavailable when the software cannot figure out
+and address are known.
+This pattern should be used with care:
+host names may be unavailable due to temporary name server problems.
+A network address will be unavailable when the software cannot figure out
 what type of network it is talking to.
 .\" .IP PARANOID
 .\" Matches any host whose name does not match its address.  When tcpd is
@@ -228,7 +233,8 @@ this construct matches anything that matches
 unless it matches
 .Ar list_2 .
 The EXCEPT operator can be used in daemon_lists and in
-client_lists. The EXCEPT operator can be nested: if the control
+client_lists.
+The EXCEPT operator can be nested: if the control
 language would permit the use of parentheses,
 .Sq a EXCEPT b EXCEPT c
 would parse as
@@ -293,25 +299,29 @@ process_name@host_pattern : client_list ...
 .Ed
 .Pp
 Patterns like these can be used when the machine has different internet
-addresses with different internet hostnames.  Service providers can use
+addresses with different internet hostnames.
+Service providers can use
 this facility to offer FTP, GOPHER or WWW archives with internet names
-that may even belong to different organizations. See also the
+that may even belong to different organizations.
+See also the
 .Sq twist
 option in the
 .Xr hosts_options 5
-document.  Many systems can have more than one internet address on one physical
+document.
+Many systems can have more than one internet address on one physical
 interface; with other systems you may have to resort to SLIP or PPP
 pseudo interfaces that live in a dedicated network address space.
 .Pp
 The host_pattern obeys the same syntax rules as host names and
-addresses in client_list context. Usually, server endpoint information
+addresses in client_list context.
+Usually, server endpoint information
 is available only with connection-oriented services.
 .Sh CLIENT USERNAME LOOKUP
 When the client host supports the RFC 931 protocol or one of its
 descendants (TAP, IDENT, RFC 1413) the wrapper programs can retrieve
-additional information about the owner of a connection. Client username
-information, when available, is logged together with the client host
-name, and can be used to match patterns like:
+additional information about the owner of a connection.
+Client username information, when available, is logged together with the
+client host name, and can be used to match patterns like:
 .Pp
 .Bd -unfilled -offset indent
 daemon_list : ... user_pattern@host_pattern ...
@@ -319,7 +329,8 @@ daemon_list : ... user_pattern@host_pattern ...
 .Pp
 The daemon wrappers can be configured at compile time to perform
 rule-driven username lookups (default) or to always interrogate the
-client host.  In the case of rule-driven username lookups, the above
+client host.
+In the case of rule-driven username lookups, the above
 rule would cause username lookup only when both the
 .Ar daemon_list
 and the
@@ -327,13 +338,13 @@ and the
 match.
 .Pp
 A user pattern has the same syntax as a daemon process pattern, so the
-same wildcards apply (netgroup membership is not supported).  One
-should not get carried away with username lookups, though.
+same wildcards apply (netgroup membership is not supported).
+One should not get carried away with username lookups, though.
 .Bl -bullet -tag -width XXX
 .It
 The client username information cannot be trusted when it is needed
-most, i.e., when the client system has been compromised.  In general,
-ALL and (UN)KNOWN are the only user name patterns that make sense.
+most, i.e., when the client system has been compromised.
+In general, ALL and (UN)KNOWN are the only user name patterns that make sense.
 .It
 Username lookups are possible only with TCP-based services, and only
 when the client host runs a suitable daemon; in all other cases the
@@ -343,8 +354,8 @@ result is "unknown".
 .\" lookups are blocked by a firewall. The wrapper README document
 .\" describes a procedure to find out if your kernel has this bug.
 .It
-Username lookups may cause noticeable delays for non-UNIX users.  The
-default timeout for username lookups is 10 seconds: too short to cope
+Username lookups may cause noticeable delays for non-UNIX users.
+The default timeout for username lookups is 10 seconds: too short to cope
 with slow networks, but long enough to irritate PC users.
 .El
 .Pp
@@ -360,9 +371,9 @@ but would perform username lookups with all other systems.
 .Sh DETECTING ADDRESS SPOOFING ATTACKS
 A flaw in the sequence number generator of many TCP/IP implementations
 allows intruders to easily impersonate trusted hosts and to break in
-via, for example, the remote shell service.  The IDENT (RFC931 etc.)
-service can be used to detect such and other host address spoofing
-attacks.
+via, for example, the remote shell service.
+The IDENT (RFC931 etc.)
+service can be used to detect such and other host address spoofing attacks.
 .Pp
 Before accepting a client request, the wrappers can use the IDENT
 service to find out that the client did not send the request at all.
@@ -373,15 +384,17 @@ is strong evidence of a host spoofing attack.
 .Pp
 A positive IDENT lookup result (the client matches
 .Sq KNOWN@host )
-is less trustworthy. It is possible for an intruder to spoof both the
+is less trustworthy.
+It is possible for an intruder to spoof both the
 client connection and the IDENT lookup, although doing so is much
-harder than spoofing just a client connection. It may also be that
-the client\'s IDENT server is lying.
+harder than spoofing just a client connection.
+It may also be that the client\'s IDENT server is lying.
 .Pp
 Note: IDENT lookups don\'t work with UDP services.
 .Sh EXAMPLES
 The language is flexible enough that different types of access control
-policy can be expressed with a minimum of fuss. Although the language
+policy can be expressed with a minimum of fuss.
+Although the language
 uses two access control tables, the most common policies can be
 implemented with one of the tables being trivial or even empty.
 .Pp
@@ -390,12 +403,13 @@ allow table is scanned before the deny table, that the search
 terminates when a match is found, and that access is granted when no
 match is found at all.
 .Pp
-The examples use host and domain names. They can be improved by
+The examples use host and domain names.
+They can be improved by
 including address and/or network/netmask information, to reduce the
 impact of temporary name server lookup failures.
 .Sh MOSTLY CLOSED
-In this case, access is denied by default. Only explicitly authorized
-hosts are permitted access.
+In this case, access is denied by default.
+Only explicitly authorized hosts are permitted access.
 .Pp
 The default policy (no access) is implemented with a trivial deny
 file:
@@ -427,7 +441,8 @@ The first rule permits access from hosts in the local domain (no
 .Sc
 in the host name) and from members of the
 .Ar some_netgroup
-netgroup.  The second rule permits access from all hosts in the
+netgroup.
+The second rule permits access from all hosts in the
 .Ar foobar.edu
 domain (notice the leading dot), with the exception of
 .Ar terminalserver.foobar.edu .
@@ -436,8 +451,9 @@ Here, access is granted by default; only explicitly specified hosts are
 refused service.
 .Pp
 The default policy (access granted) makes the allow file redundant so
-that it can be omitted.  The explicitly non-authorized hosts are listed
-in the deny file. For example:
+that it can be omitted.
+The explicitly non-authorized hosts are listed in the deny file.
+For example:
 .Pp
 .Bd -unfilled -offset indent
 /etc/hosts.deny:
@@ -451,9 +467,10 @@ The first rule denies some hosts and domains all services; the second
 rule still permits finger requests from other hosts and domains.
 .Sh BOOBY TRAPS
 The next example permits tftp requests from hosts in the local domain
-(notice the leading dot).  Requests from any other hosts are denied.
-Instead of the requested file, a finger probe is sent to the offending
-host. The result is mailed to the superuser.
+(notice the leading dot).
+Requests from any other hosts are denied.
+Instead of the requested file, a finger probe is sent to the offending host.
+The result is mailed to the superuser.
 .Pp
 .Bd -unfilled -offset indent
 /etc/hosts.allow:
@@ -473,9 +490,9 @@ tftpd: ALL: (/some/where/safe_finger -l @%h | \\
 The
 .Nm safe_finger
 command comes with the tcpd wrapper and should be
-installed in a suitable place. It limits possible damage from data sent
-by the remote finger server.  It gives better protection than the
-standard finger command.
+installed in a suitable place.
+It limits possible damage from data sent by the remote finger server.
+It gives better protection than the standard finger command.
 .Pp
 The expansion of the %h (client host) and %d (service name) sequences
 is described in the section on shell commands.
@@ -493,7 +510,8 @@ control rule; when the length of an access control rule exceeds the
 capacity of an internal buffer; when an access control rule is not
 terminated by a newline character; when the result of %<letter>
 expansion would overflow an internal buffer; when a system call fails
-that shouldn\'t.  All problems are reported via the syslog daemon.
+that shouldn\'t.
+All problems are reported via the syslog daemon.
 .Sh FILES
 .Bl -tag -width /etc/hosts.allow -compact
 .It Pa /etc/hosts.allow

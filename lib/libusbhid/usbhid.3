@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usbhid.3,v 1.2 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: usbhid.3,v 1.3 2002/05/01 08:03:30 mpech Exp $
 .\"	$NetBSD: usb.3,v 1.14 2001/04/09 12:09:49 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -96,11 +96,11 @@ A report descriptor can be obtained by calling
 .Fn hid_get_report_desc
 with a file descriptor obtained by opening a
 .Xr uhid 4
-device. Alternatively a data buffer containing the report descriptor can be
-passed into
+device.
+Alternatively a data buffer containing the report descriptor can be passed into
 .Fn hid_use_report_desc .
-The data is copied into an internal structure. When the report descriptor
-is no longer needed it should be freed by calling
+The data is copied into an internal structure.
+When the report descriptor is no longer needed it should be freed by calling
 .Fn hid_dispose_report_desc .
 The type
 .Fa report_desc_t
@@ -113,8 +113,8 @@ fails it will return
 To parse the report descriptor the
 .Fn hid_start_parse
 function should be called with a report descriptor and a set that
-describes which items that are interesting.  The set is obtained
-by or-ing together values
+describes which items that are interesting.
+The set is obtained by or-ing together values
 .Fa "(1 << k)"
 where
 .Fa k
@@ -144,17 +144,18 @@ can be found in
 and the meaning of the components in the USB HID documentation.
 .Pp
 Data should be read/written to the device in the size of
-the report.  The size of a report (of a certain kind) can be
-computed by the
+the report.
+The size of a report (of a certain kind) can be computed by the
 .Fn hid_report_size
-function.  If the report is prefixed by an ID byte it is
-stored at
+function.
+If the report is prefixed by an ID byte it is stored at
 .Fa idp ,
 otherwise it will contain 0.
 .Pp
 To locate a single item the
 .Fn hid_locate
-function can be used.  It should be given the usage code of
+function can be used.
+It should be given the usage code of
 the item and its kind and it will fill the item and return
 non-zero if the item was found.
 .Ss NAME TRANSLATION FUNCTIONS
@@ -179,7 +180,8 @@ if it cannot be found.
 Before any of these functions can be called the usage table
 must be parsed, this is done by calling
 .Fn hid_init
-with the name of the table.  Passing
+with the name of the table.
+Passing
 .Fa NULL
 to this function will cause it to use the default table.
 .Ss DATA EXTRACTION FUNCTIONS

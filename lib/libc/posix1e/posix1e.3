@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix1e.3,v 1.4 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: posix1e.3,v 1.5 2002/05/01 08:03:29 mpech Exp $
 .\"
 .\" Copyright (c) 2000 Robert N. M. Watson
 .\" All rights reserved.
@@ -34,8 +34,8 @@
 .Nd introduction to the POSIX.1e security API
 .Sh DESCRIPTION
 The IEEE POSIX.1e specification never left draft form, but the interfaces
-it describes are now widely used despite inherent limitations.  Currently,
-only a few of the interfaces and features are implemented in
+it describes are now widely used despite inherent limitations.
+Currently, only a few of the interfaces and features are implemented in
 .Ox ,
 although efforts are underway to complete the integration at this time.
 .Pp
@@ -54,14 +54,16 @@ development at this time.
 POSIX.1e assigns security labels to all objects, extending the security
 functionality described in POSIX.1.  These additional labels provide
 fine-grained discretionary access control, fine-grained capabilities,
-and labels necessary for mandatory access control.  POSIX.2c describes
+and labels necessary for mandatory access control.
+POSIX.2c describes
 a set of userland utilities for manipulating these labels.
 .Sh SEE ALSO
 .Xr extattr 9
 .Sh STANDARDS
 POSIX.1e is described in IEEE POSIX.1e draft 17.  Discussion
 of the draft continues on the cross-platform POSIX.1e implementation
-mailing list.  To join this list, see the
+mailing list.
+To join this list, see the
 .Ox
 POSIX.1e implementation
 page for more information.

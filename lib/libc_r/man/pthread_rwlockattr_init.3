@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlockattr_init.3,v 1.5 2000/04/12 21:48:03 aaron Exp $
+.\" $OpenBSD: pthread_rwlockattr_init.3,v 1.6 2002/05/01 08:03:30 mpech Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -42,8 +42,8 @@ function is used to initialize a read/write lock attributes object.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_rwlockattr_init
-function will return zero.  Otherwise an error number will be returned
-to indicate the error.
+function will return zero.
+Otherwise an error number will be returned to indicate the error.
 .Sh SEE ALSO
 .Xr pthread_rwlock_init 3 ,
 .Xr pthread_rwlockattr_destroy 3 ,

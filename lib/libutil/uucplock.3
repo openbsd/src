@@ -1,4 +1,4 @@
-.\" $OpenBSD: uucplock.3,v 1.12 2001/08/06 10:42:26 mpech Exp $
+.\" $OpenBSD: uucplock.3,v 1.13 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" All rights reserved.
 .\"
@@ -123,7 +123,8 @@ the reason for failure is returned.
 .Fn uu_lockerr
 uses the current value of
 .Va errno
-to determine the exact error.  Care should be made not to allow
+to determine the exact error.
+Care should be made not to allow
 .Va errno
 to be changed between calls to
 .Fn uu_lock
@@ -134,8 +135,8 @@ and
 may return any of the following values:
 .Pp
 .Dv UU_LOCK_OK :
-The transfer was successful.  The specified process now holds the device
-lock.
+The transfer was successful.
+The specified process now holds the device lock.
 .Pp
 .Dv UU_LOCK_OWNER_ERR :
 The current process does not already own a lock on the specified device.
@@ -148,8 +149,8 @@ If
 .Fn uu_lock
 returns one of the error values above, the global value
 .Va errno
-can be used to determine the cause.  Refer to the respective manual pages
-for further details.
+can be used to determine the cause.
+Refer to the respective manual pages for further details.
 .Pp
 .Fn uu_unlock
 will set the global variable
@@ -170,6 +171,7 @@ the stale lock.
 .Pp
 The calling process must have write permissions to the
 .Pa /var/spool/lock
-directory.  There is no mechanism in place to ensure that the
+directory.
+There is no mechanism in place to ensure that the
 permissions of this directory are the same as those of the
 serial devices that might be locked.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openpty.3,v 1.7 2001/07/13 22:14:07 millert Exp $
+.\"	$OpenBSD: openpty.3,v 1.8 2002/05/01 08:03:30 mpech Exp $
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -103,12 +103,14 @@ function combines
 .Fn fork ,
 and
 .Fn login_tty
-to creates a new process operating in a pseudo-tty.  The file
+to creates a new process operating in a pseudo-tty.
+The file
 descriptor of the master side of the pseudo-tty is returned in
 .Fa amaster ,
 and the filename of the slave in
 .Fa name
-if it is non-null.  The
+if it is non-null.
+The
 .Fa termp
 and
 .Fa winp
@@ -122,7 +124,8 @@ or
 .Fn forkpty
 is not successful, \-1 is returned and
 .Va errno
-is set to indicate the error.  Otherwise,
+is set to indicate the error.
+Otherwise,
 .Fn openpty ,
 .Fn login_tty ,
 and the child process of

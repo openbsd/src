@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.5,v 1.10 2002/04/30 16:31:42 mpech Exp $
+.\" $OpenBSD: keynote.5,v 1.11 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -44,24 +44,26 @@ see RFC 2704.
 .Pp
 KeyNote assertions are divided into sections, called
 .Sq fields ,
-that serve various semantic functions. Each field starts with an
+that serve various semantic functions.
+Each field starts with an
 identifying label at the beginning of a line, followed by the
 .Qq \:
-character and the field's contents. There can be at most one field per
-line.
+character and the field's contents.
+There can be at most one field per line.
 .Pp
 A field may be continued over more than one line by indenting
 subsequent lines with at least one ASCII SPACE or TAB character.
 Whitespace (a SPACE, TAB, or NEWLINE character) separates tokens but
-is otherwise ignored outside of quoted strings. Comments with a
-leading octothorp character ('#') may begin in any column.
+is otherwise ignored outside of quoted strings.
+Comments with a leading octothorp character ('#') may begin in any column.
 .Pp
 One mandatory field is required in all assertions: Authorizer
 .Pp
 Six optional fields may also appear: Comment, Conditions,
 KeyNote-Version, Licensees, Local-Constants, Signature.
 .Pp
-All field names are case-insensitive. The
+All field names are case-insensitive.
+The
 .Qq KeyNote-Version
 field, if present, appears first. The
 .Qq Signature
@@ -194,13 +196,16 @@ operator has higher precedence than the
 operator.
 .Sh DEREFERENCED ATTRIBUTES
 Action attributes provide the primary mechanism for applications to
-pass information to assertions. Attribute names are strings from a
+pass information to assertions.
+Attribute names are strings from a
 limited character set (see below), and attribute values are
-represented internally as strings. An attribute is dereferenced simply
-by using its name. In general, KeyNote allows the use of an attribute
-anywhere a string literal is permitted.
+represented internally as strings.
+An attribute is dereferenced simply by using its name.
+In general, KeyNote allows the use of an attribute anywhere a string literal
+is permitted.
 .Pp
-Attributes are dereferenced as strings by default. When required,
+Attributes are dereferenced as strings by default.
+When required,
 dereferenced attributes can be converted to integers or floating point
 numbers with the type conversion operators
 .Qq \@
@@ -229,7 +234,8 @@ dereferenced as a string and the value zero when dereferenced as an
 integer or float.
 .Pp
 Attribute names may be given literally or calculated from string
-expressions and may be recursively dereferenced. In the simplest case,
+expressions and may be recursively dereferenced.
+In the simplest case,
 an attribute is dereferenced simply by using its name outside of
 quotes; e.g., the string value of the attribute named
 .Qq foo
@@ -309,7 +315,8 @@ Cryptographic identifiers are also lexically encoded as strings:
 .Ed
 .Pp
 Unlike Opaque Identifiers, however, Cryptographic Identifier strings
-have a special form. To be interpreted by KeyNote (for signature
+have a special form.
+To be interpreted by KeyNote (for signature
 verification), an identifier string should be of the form:
 .Bd -literal
       <IDString>:: <ALGORITHM>":"<ENCODEDBITS> ;
@@ -317,15 +324,16 @@ verification), an identifier string should be of the form:
 .Pp
 .Qq ALGORITHM
 is an ASCII substring that describes the algorithms to be
-used in interpreting the key's bits. The ALGORITHM identifies the
-major cryptographic algorithm (e.g., RSA
+used in interpreting the key's bits.
+The ALGORITHM identifies the major cryptographic algorithm (e.g., RSA
 .Bq RSA78 ,
 DSA
 .Bq DSA94 ,
 etc.),
 structured format (e.g., PKCS1
 .Bq PKCS1 ) ,
-and key bit encoding (e.g., HEX or BASE64). By convention, the ALGORITHM
+and key bit encoding (e.g., HEX or BASE64).
+By convention, the ALGORITHM
 substring starts with an alphabetic character and can contain letters,
 digits, underscores, or dashes (i.e., it should match the regular expression
 .Qo Ns Bo a-zA-Z
@@ -345,8 +353,8 @@ canonical form for the purposes of any internal comparisons between
 them; see RFC 2704 for more details.
 .Sh KEYNOTE-VERSION FIELD
 The KeyNote-Version field identifies the version of the KeyNote
-assertion language under which the assertion was written. The
-KeyNote-Version field is of the form:
+assertion language under which the assertion was written.
+The KeyNote-Version field is of the form:
 .Bd -literal
        <VersionField>:: "KeyNote-Version:" <VersionString> ;
        <VersionString>:: <StringLiteral>
@@ -566,7 +574,8 @@ If an attribute dereferenced as a number cannot be properly converted
 to be zero.
 .Sh COMMENT FIELD
 The Comment field allows assertions to be annotated with information
-describing their purpose. It is of the form:
+describing their purpose.
+It is of the form:
 .Bd -literal
        <CommentField>:: "Comment:" <text> ;
 .Ed

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pw_lock.3,v 1.8 2001/08/26 03:28:30 millert Exp $
+.\"	$OpenBSD: pw_lock.3,v 1.9 2002/05/01 08:03:30 mpech Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,13 +65,15 @@ function attempts to lock the passwd database by creating the file
 .Pa /etc/ptmp
 with an exclusive lock (using
 .Xr flock 2
-semantics) and returns the file descriptor of that file.  If
+semantics) and returns the file descriptor of that file.
+If
 .Fa retries
 is greater than zero,
 .Fn pw_lock
 will try multiple times to open
 .Pa /etc/ptmp ,
-waiting one second between tries.  In addition to being a lock file,
+waiting one second between tries.
+In addition to being a lock file,
 .Pa /etc/ptmp
 will also hold the contents of the new passwd file.
 .Pp
