@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.22 2002/06/20 03:37:54 fgsch Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.23 2002/06/22 22:30:09 deraadt Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ Proxim RangeLAN2 PC-Card
 .It Xr sm 4
 Megahertz Ethernet cards.
 .It Xr wi 4
-Lucent WaveLAN IEEE 802.11DS and compatible cards.
+WaveLAN/IEEE, PRISM-II and Spectrum24 IEEE 802.11DS cards.
 .It Xr xe 4
 Xircom 16bit Ethernet cards.
 .El
@@ -104,6 +104,22 @@ This includes Compact Flash cards which emulate a disk drive.
 .El
 .Pp
 The supported PCMCIA controllers are those that are i82365 compatible.
+.Sh NOTES
+On some
+.Nm
+adapters, for instance the
+.Xr sbus 4 Ns -based
+.Xr stp 4 ,
+the
+.Nm
+bus will be mapped in big-endian format instead of the natural (and
+preferred) little endian format.
+Unfortunately such controllers lack the hardware facility to swap bytes,
+and it is not efficient to convert all drivers to always know about this.
+While 8 bit drivers can invisibly work on such a bus, but 16 bit
+drivers will need modification to handle this.
+.Xr wi 4
+is the first driver to have these modifications. 
 .Sh SEE ALSO
 .Xr cardbus 4 ,
 .Xr intro 4 ,
