@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1996/02/21 12:53:48 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.5 1996/04/28 10:58:09 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -87,6 +87,8 @@ bdev_decl(ch);
 bdev_decl(xd);
 #include "vnd.h"
 bdev_decl(vnd);
+#include "ccd.h"
+bdev_decl(ccd);
 
 #ifdef LKM
 int	lkmenodev();
@@ -105,7 +107,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
 	bdev_notdef(),			/* 7 */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
-	bdev_notdef(),			/* 9 */
+	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
 	bdev_disk_init(NXD,xd),		/* 10: XD disk */
 	bdev_notdef(),			/* 11 */
 	bdev_notdef(),			/* 12 */
@@ -180,6 +182,9 @@ cdev_decl(sd);
 cdev_decl(cd);
 cdev_decl(xd);
 cdev_decl(vnd);
+cdev_decl(ccd);
+
+dev_decl(filedesc,open);
 
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -226,7 +231,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 18 */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
-	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
+	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
