@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.22 2001/06/23 23:17:35 fgsch Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.23 2001/06/24 04:24:18 fgsch Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -446,6 +446,9 @@ am7990_read(sc, boff, len)
 	int boff, len;
 {
 	struct mbuf *m;
+#ifedef LANCE_RECV_BUG
+	struct ether_header *eh;
+#endif
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHERMTU + sizeof(struct ether_header)) {
@@ -476,10 +479,6 @@ am7990_read(sc, boff, len)
 #endif
 
 #ifdef LANCE_REVC_BUG
-	{
-	struct ether_header *eh;
-	eh = mtod(m, struct ether_header *);
-
 	/*
 	 * The old LANCE (Rev. C) chips have a bug which causes
 	 * garbage to be inserted in front of the received packet.
@@ -487,14 +486,15 @@ am7990_read(sc, boff, len)
 	 * destination address (garbage will usually not match).
 	 * Of course, this precludes multicast support...
 	 */
+	eh = mtod(m, struct ether_header *);
 	if (ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr) &&
 	    ETHER_CMP(eh->ether_dhost, etherbroadcastaddr)) {
 		m_freem(m);
 		return;
 	}
-	}
 #endif
 
+	/* Pass the packet up. */
 	ether_input_mbuf(ifp, m);
 }
 
