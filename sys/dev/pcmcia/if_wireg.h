@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.8 2001/03/19 20:13:44 niklas Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.9 2001/03/19 20:25:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -117,7 +117,7 @@ struct wi_softc	{
 	struct timeout		sc_timo;
 };
 
-#define WI_TIMEOUT	5000	/* XXX just a guess at a good value.  */
+#define WI_TIMEOUT	50000	/* XXX just a guess at a good value.  */
 
 #define WI_PORT0	0
 #define WI_PORT1	1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.26 2001/03/19 20:13:43 niklas Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.27 2001/03/19 20:24:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.26 2001/03/19 20:13:43 niklas Exp $";
+	"$OpenBSD: if_wi.c,v 1.27 2001/03/19 20:24:59 niklas Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -671,7 +671,7 @@ wi_cmd(sc, cmd, val)
 	CSR_WRITE_2(sc, WI_PARAM0, val);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
-	for (i = WI_TIMEOUT; i--; DELAY(10)) {
+	for (i = WI_TIMEOUT; i--; DELAY(1)) {
 		/*
 		 * Wait for 'command complete' bit to be
 		 * set in the event status register.
@@ -809,7 +809,7 @@ wi_seek(sc, id, off, chan)
 	CSR_WRITE_2(sc, selreg, id);
 	CSR_WRITE_2(sc, offreg, off);
 
-	for (i = WI_TIMEOUT; i--; DELAY(10))
+	for (i = WI_TIMEOUT; i--; DELAY(1))
 		if (!(CSR_READ_2(sc, offreg) & (WI_OFF_BUSY|WI_OFF_ERR)))
 			break;
 
@@ -905,7 +905,7 @@ wi_alloc_nicmem(sc, len, id)
 		return(ENOMEM);
 	}
 
-	for (i = WI_TIMEOUT; i--; DELAY(10)) {
+	for (i = WI_TIMEOUT; i--; DELAY(1)) {
 		if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_ALLOC)
 			break;
 	}
