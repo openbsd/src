@@ -156,10 +156,11 @@
 .if !"\\$2"" \{\
 .	ds cH \\$2
 .\" .	if "\\$3"" \{\
-.		if \\$2>=1 .if \\$2<=8 \{\
+.		if \\$2>=1 .if \\$2<=9 \{\
 .			ds vT NetBSD Reference Manual
 .			if \\$2>1 .if \\$2<6 .ds vT NetBSD Programmer's Manual
 .			if "\\$2"8" .ds vT NetBSD System Manager's Manual
+.			if "\\$2"9" .ds vT NetBSD Kernel Manual
 .			nr sN \\$2
 .		\}
 .		if "\\$2"unass"  .ds vT DRAFT
@@ -174,6 +175,7 @@
 .	if "\\$3"SMM"   .ds vT NetBSD System Manager's Manual
 .	if "\\$3"URM"   .ds vT NetBSD Reference Manual
 .	if "\\$3"PRM"   .ds vT NetBSD Programmers's Manual
+.	if "\\$3"KM"    .ds vT NetBSD Kernel Manual
 .	if "\\$3"IND"   .ds vT NetBSD Manual Master Index
 .\" .	if "\\$3"CON"   .ds vT NetBSD Contributed Software Manual
 .\" .	if "\\$3"IMP"	.ds vT NetBSD Implementation Notes
