@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.13 2002/04/25 23:05:19 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.14 2002/04/29 19:53:50 jsyn Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -123,7 +123,7 @@ device and will not require any PCMCIA support.
 Cards in this type of adapter should only be removed when the
 machine is powered down.
 .Pp
-The following cards are among those supported to by
+The following cards are among those supported by the
 .Nm
 driver:
 .Pp
