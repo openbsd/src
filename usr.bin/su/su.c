@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.40 2001/06/25 21:29:31 hin Exp $	*/
+/*	$OpenBSD: su.c,v 1.41 2001/09/18 04:41:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.40 2001/06/25 21:29:31 hin Exp $";
+#if 0
+static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
+#else
+static const char rcsid[] = "$OpenBSD: su.c,v 1.41 2001/09/18 04:41:09 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +90,7 @@ main(argc, argv)
 	int asme, asthem, authok, ch, fastlogin, prio;
 	char *class, *style, *p, **g;
 	char *user, *shell, *avshell, *username, **np, *fullname;
-	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
+	char avshellbuf[MAXPATHLEN];
 
 	iscsh = UNSET;
 	class = shell = style = NULL;
@@ -144,7 +147,7 @@ main(argc, argv)
 	ruid = getuid();
 	username = getlogin();
 
-	if(username != NULL)
+	if (username != NULL)
 		auth_setoption(as, "invokinguser", username);
 
 	if (username == NULL || (pwd = getpwnam(username)) == NULL ||
@@ -153,11 +156,10 @@ main(argc, argv)
 	if (pwd == NULL)
 		auth_errx(as, 1, "who are you?");
 	if ((username = strdup(pwd->pw_name)) == NULL)
-		auth_err(as, 1, "can't allocate memory");
+		auth_errx(as, 1, "can't allocate memory");
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
-			strlcpy(shellbuf, pwd->pw_shell, sizeof(shellbuf));
-			shell = shellbuf;
+			shell = strdup(pwd->pw_shell);
 		} else {
 			shell = _PATH_BSHELL;
 			iscsh = NO;
@@ -170,8 +172,9 @@ main(argc, argv)
 
 	if ((pwd = getpwnam(user)) == NULL)
 		auth_errx(as, 1, "unknown login %s", user);
-	if ((user = strdup(pwd->pw_name)) == NULL)
-		auth_err(as, 1, "can't allocate memory");
+	if ((pwd = pw_dup(pwd)) == NULL)
+		auth_errx(as, 1, "can't allocate memory");
+	user = pwd->pw_name;
 
 	/* If the user specified a login class and we are root, use it */
 	if (ruid && class)
