@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.2 2001/08/20 20:23:53 jason Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.3 2001/08/24 00:03:23 art Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -729,7 +729,7 @@ OF_interpret(char *s, int nreturns, ...)
 	} args;
 
 	if (nreturns != 1)
-		panic("XXX - bork bork bork");
+		panic("XXX - OF_interpret: can't handle multiple returns");
 	
 	args.name = ADR2CELL(&"interpret");
 	args.nargs = 1;
