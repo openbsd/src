@@ -28,10 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx.c,v 1.45 2003/03/21 14:58:06 drahn Exp $
+ * $Id: aic7xxx.c,v 1.46 2003/03/30 21:04:18 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.80 2001/12/16 17:38:30 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.45 2003/03/21 14:58:06 drahn Exp $
+ * $OpenBSD: aic7xxx.c,v 1.46 2003/03/30 21:04:18 krw Exp $
  */
 
 #ifdef __OpenBSD__
@@ -1389,11 +1389,15 @@ void
 ahc_clear_intstat(struct ahc_softc *ahc)
 {
 	/* Clear any interrupt conditions this may have caused */
+	ahc_flush_device_writes(ahc);
 	ahc_outb(ahc, CLRSINT1, CLRSELTIMEO|CLRATNO|CLRSCSIRSTI
 				|CLRBUSFREE|CLRSCSIPERR|CLRPHASECHG|
 				CLRREQINIT);
+	ahc_flush_device_writes(ahc);
 	ahc_outb(ahc, CLRSINT0, CLRSELDO|CLRSELDI|CLRSELINGO);
+	ahc_flush_device_writes(ahc);
 	ahc_outb(ahc, CLRINT, CLRSCSIINT);
+	ahc_flush_device_writes(ahc);
 }
 
 /**************************** Debugging Routines ******************************/
@@ -5627,6 +5631,7 @@ ahc_reset_current_bus(struct ahc_softc *ahc)
 	ahc_outb(ahc, SIMODE1, ahc_inb(ahc, SIMODE1) & ~ENSCSIRST);
 	scsiseq = ahc_inb(ahc, SCSISEQ);
 	ahc_outb(ahc, SCSISEQ, scsiseq | SCSIRSTO);
+	ahc_flush_device_writes(ahc);
 	ahc_delay(AHC_BUSRESET_DELAY);
 	/* Turn off the bus reset */
 	ahc_outb(ahc, SCSISEQ, scsiseq & ~SCSIRSTO);
