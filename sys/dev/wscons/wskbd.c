@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.12 2001/03/30 16:38:13 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.13 2001/04/09 18:34:35 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -100,6 +100,8 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+
+#include <ddb/db_var.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -1378,7 +1380,7 @@ internal_command(sc, type, ksym, ksym2)
 	switch (ksym) {
 #ifdef DDB
 	case KS_Cmd_Debugger:
-		if (sc->sc_isconsole)
+		if (sc->sc_isconsole && db_console)
 			Debugger();
 		/* discard this key (ddb discarded command modifiers) */
 		*type = WSCONS_EVENT_KEY_UP;
