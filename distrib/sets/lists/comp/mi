@@ -271,6 +271,7 @@
 ./usr/include/dev/ic/tcic2reg.h
 ./usr/include/dev/ic/tcic2var.h
 ./usr/include/dev/ic/tea5757.h
+./usr/include/dev/ic/trm.h
 ./usr/include/dev/ic/tropicreg.h
 ./usr/include/dev/ic/tropicvar.h
 ./usr/include/dev/ic/twereg.h

@@ -262,6 +262,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tcic2reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tcic2var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tea5757.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/trm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tropicreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tropicvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/twereg.ph

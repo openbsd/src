@@ -300,6 +300,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/tcic2reg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/tcic2var.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/tea5757.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/trm.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/tropicreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/tropicvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/twereg.ph

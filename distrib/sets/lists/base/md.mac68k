@@ -659,6 +659,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/tea5757.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/trm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/tropicreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/tropicvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/twereg.ph
