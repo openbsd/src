@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2000/04/02 19:48:09 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2000/04/04 18:08:27 millert Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 
 ENVDEF= -DNEWDB -DMAP_REGEX
-# XXX - adding IPv6 support seems to break IPv4 support in OpenBSD
+# XXX - IPv6 support breaks IPv4 support since we don't do RFC2553
 #ENVDEF+= -DNETINET6 -DNEEDSGETIPNODE
 .if (${YP} == "yes")
 ENVDEF+=-DNIS
