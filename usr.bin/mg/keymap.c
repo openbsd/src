@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.6 2001/05/23 16:14:00 art Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.7 2001/05/23 16:26:39 art Exp $	*/
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific 
@@ -899,63 +899,6 @@ name_function(fname)
 	if ((i = name_fent(fname, FALSE)) >= 0)
 		return functnames[i].n_funct;
 	return (PF)NULL;
-}
-
-/*
- * complete function name
- */
-int
-complete_function(fname, c)
-	char *fname;
-	int   c;
-{
-	int	i, j, k, l, oj;
-
-	i = name_fent(fname, TRUE);
-	for (j = 0; (l = fname[j]) && functnames[i].n_name[j] == l; j++) {
-	}
-	if (fname[j] != '\0') {
-		if (++i >= NFUNCT)
-			/* no match */
-			return -2;
-		for (j = 0; (l = fname[j]) && functnames[i].n_name[j] == l; 
-		    j++);
-		if (fname[j] != '\0')
-			/* no match */
-			return -2;
-	}
-	if (c == CCHR('M') && functnames[i].n_name[j] == '\0')
-		return -1;
-	/* find last match */
-	for (k = i + 1; k < NFUNCT; k++) {
-		for (l = 0; functnames[k].n_name[l] == fname[l]; l++);
-		if (l < j)
-			break;
-	}
-	k--;
-	oj = j;
-
-	if (k > i) {
-		/* multiple matches */
-		while ((l = functnames[i].n_name[j]) == 
-		    functnames[k].n_name[j]) {
-			fname[j++] = l;
-			if (l == '-' && c == ' ')
-				break;
-		}
-		if (j == oj)
-			/* ambiguous */
-			return -3;
-	} else {
-		/* single match */
-		while ((l = functnames[i].n_name[j])) {
-			fname[j++] = l;
-			if (l == '-' && c == ' ')
-				break;
-		}
-	}
-	fname[j] = '\0';
-	return j - oj;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.12 2001/05/23 15:39:35 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.13 2001/05/23 16:26:39 art Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -407,7 +407,6 @@ int	 d_makename		__P((LINE  *, char *));
 LIST    *make_file_list		__P((char *));
 
 /* keymap.c X */
-int	 complete_function	__P((char *, int));
 LIST	*complete_function_list	__P((char *, int));
 
 /* kbd.c X */
