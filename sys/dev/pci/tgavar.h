@@ -1,4 +1,4 @@
-/* $OpenBSD: tgavar.h,v 1.6 2002/04/01 11:26:32 matthieu Exp $ */
+/* $OpenBSD: tgavar.h,v 1.7 2002/04/26 20:04:50 matthieu Exp $ */
 /* $NetBSD: tgavar.h,v 1.8 2000/04/02 19:01:11 nathanw Exp $ */
 
 /*
@@ -99,6 +99,7 @@ struct tga_softc {
 
 	struct	tga_devconfig *sc_dc;	/* device configuration */
 	void	*sc_intr;		/* interrupt handler info */
+	u_int	sc_mode;	        /* wscons mode used */
 	/* XXX should record intr fns/arg */
 
 	int nscreens;

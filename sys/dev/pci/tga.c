@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.14 2002/04/01 11:26:32 matthieu Exp $ */
+/* $OpenBSD: tga.c,v 1.15 2002/04/26 20:04:50 matthieu Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -572,6 +572,20 @@ tga_ioctl(v, cmd, data, flag, p)
 		*(u_int *)data = WSDISPLAY_TYPE_TGA;
 		return (0);
 
+	case WSDISPLAYIO_SMODE:
+		sc->sc_mode = *(u_int *)data;
+		switch (sc->sc_mode) {
+		case WSDISPLAYIO_MODE_DUMBFB:
+			/* in dump fb mode start the framebuffer at 0 */
+			TGAWREG(dc, TGA_REG_VVBR, 0);
+			break;
+		default:
+			/* XXX it this useful, except for not breaking Xtga? */
+			TGAWREG(dc, TGA_REG_VVBR, 1);
+			break;			
+		}
+		return (0);
+
 	case WSDISPLAYIO_GINFO:
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
 		wsd_fbip->height = sc->sc_dc->dc_ht;
@@ -581,6 +595,9 @@ tga_ioctl(v, cmd, data, flag, p)
 #undef wsd_fbip
 		return (0);
 
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_dc->dc_rowbytes;
+		return 0;
 	case WSDISPLAYIO_GETCMAP:
 		return (*dcrf->ramdac_get_cmap)(dcrc,
 		    (struct wsdisplay_cmap *)data);
@@ -690,20 +707,21 @@ tga_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-
-	/* XXX NEW MAPPING CODE... */
-
-#if defined(__alpha__)
 	struct tga_softc *sc = v;
+	struct tga_devconfig *dc = sc->sc_dc;
 
-	if (offset >= sc->sc_dc->dc_tgaconf->tgac_cspace_size || offset < 0)
+	if (offset >= dc->dc_tgaconf->tgac_cspace_size || offset < 0)
 		return -1;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB) {
+		/* 
+		 * The framebuffer starts at the upper half of tga mem
+		 */
+		offset += dc->dc_tgaconf->tgac_cspace_size/2;
+	}
+#if defined(__alpha__)
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 #elif defined(__mips__)
-	struct tga_softc *sc = v;
-
-	if (offset >= sc->sc_dc->dc_tgaconf->tgac_cspace_size || offset < 0)
-		return -1;
 	return mips_btop(sc->sc_dc->dc_paddr + offset);
 #else
 	return (-1);
