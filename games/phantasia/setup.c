@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.8 2003/04/06 18:50:38 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.9 2003/04/25 21:37:47 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
@@ -26,7 +26,7 @@ void Error(char *, char *);
 / RETURN VALUE: none
 /
 / MODULES CALLED: time(), exit(), stat(), Error(), open(), close(), fopen(), 
-/	fgets(), floor(), srandomdev(), umask(), strcpy(),
+/	fgets(), floor(), srandomdev(), umask(), strlcpy(),
 /	unlink(), fwrite(), fclose(), sscanf(), printf(), strlen(), fprintf()
 /
 / GLOBAL INPUTS: Curmonster, _iob[], Databuf[], *Monstfp, Enrgyvoid

@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.5 2003/04/06 18:50:38 deraadt Exp $	*/
+/*	$OpenBSD: convert.c,v 1.6 2003/04/25 21:37:47 deraadt Exp $	*/
 /*	$NetBSD: convert.c,v 1.2 1995/03/24 03:58:34 cgd Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char	Newpfile[] = DEST/newcharacs";		/* new format file */
 / RETURN VALUE: none
 /
 / MODULES CALLED: time(), exit(), fread(), fopen(), srandomdev(), floor(), 
-/	random(), strcmp(), fwrite(), strcpy(), fclose(), fprintf()
+/	random(), strcmp(), fwrite(), strlcpy(), fclose(), fprintf()
 /
 / GLOBAL INPUTS: _iob[], Oldplayer, Newplayer
 /

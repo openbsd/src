@@ -1,4 +1,4 @@
-/*	$OpenBSD: gamesupport.c,v 1.5 2003/04/06 18:50:38 deraadt Exp $	*/
+/*	$OpenBSD: gamesupport.c,v 1.6 2003/04/25 21:37:47 deraadt Exp $	*/
 /*	$NetBSD: gamesupport.c,v 1.3 1995/04/24 12:24:28 cgd Exp $	*/
 
 /*
@@ -21,7 +21,7 @@
 / RETURN VALUE: none
 /
 / MODULES CALLED: freerecord(), writerecord(), descrstatus(), truncstring(), 
-/	time(), more(), wmove(), wclear(), strcmp(), printw(), strcpy(), 
+/	time(), more(), wmove(), wclear(), strcmp(), printw(), strlcpy(), 
 /	infloat(), waddstr(), cleanup(), findname(), userlist(), mvprintw(), 
 /	localtime(), getanswer(), descrtype(), getstring()
 /
@@ -662,7 +662,7 @@ purgeoldplayers()
 / RETURN VALUE: none
 /
 / MODULES CALLED: fread(), fseek(), fopen(), error(), strcmp(), fclose(), 
-/	strcpy(), fwrite(), descrtype()
+/	strlcpy(), fwrite(), descrtype()
 /
 / GLOBAL INPUTS: Player
 /

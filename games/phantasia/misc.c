@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.11 2003/04/06 18:50:38 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 2003/04/25 21:37:47 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ movelevel()
 /
 / RETURN VALUE: pointer to string containing result
 /
-/ MODULES CALLED: fabs(), floor(), sprintf(), distance()
+/ MODULES CALLED: fabs(), floor(), snprintf(), distance()
 /
 / GLOBAL INPUTS: Databuf[]
 /
@@ -567,7 +567,7 @@ allstatslist()
 /
 / RETURN VALUE: pointer to string describing player type
 /
-/ MODULES CALLED: strcpy()
+/ MODULES CALLED: strlcpy()
 /
 / GLOBAL INPUTS: Databuf[]
 /
@@ -828,7 +828,7 @@ leavegame()
 /
 / MODULES CALLED: freerecord(), enterscore(), more(), exit(), fread(), 
 /	fseek(), execl(), fopen(), floor(), wmove(), drandom(), wclear(), strcmp(), 
-/	fwrite(), fflush(), printw(), strcpy(), fclose(), waddstr(), cleanup(), 
+/	fwrite(), fflush(), printw(), strlcpy(), fclose(), waddstr(), cleanup(), 
 /	fprintf(), wrefresh(), getanswer(), descrtype()
 /
 / GLOBAL INPUTS: Curmonster, Wizard, Player, *stdscr, Fileloc, *Monstfp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2003/04/06 18:50:38 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2003/04/25 21:37:47 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -77,8 +77,8 @@
 /	throneroom(), checkbattle(), readmessage(), changestats(), writerecord(), 
 /	tradingpost(), adjuststats(), recallplayer(), displaystats(), checktampered(), 
 /	fabs(), rollnewplayer(), time(), exit(), sqrt(), floor(), wmove(), 
-/	signal(), strcat(), purgeoldplayers(), getuid(), isatty(), wclear(), 
-/	strcpy(), system(), altercoordinates(), cleanup(), waddstr(), procmain(), 
+/	signal(), strlcat(), purgeoldplayers(), getuid(), isatty(), wclear(), 
+/	strlcpy(), system(), altercoordinates(), cleanup(), waddstr(), procmain(), 
 /	playinit(), leavegame(), localtime(), getanswer(), neatstuff(), initialstate(), 
 /	scorelist(), titlelist()
 /
@@ -752,8 +752,8 @@ procmain()
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: fread(), fseek(), fopen(), fgets(), wmove(), strcpy(), 
-/	fclose(), strlen(), waddstr(), sprintf(), wrefresh()
+/ MODULES CALLED: fread(), fseek(), fopen(), fgets(), wmove(), strlcpy(), 
+/	fclose(), strlen(), waddstr(), snprintf(), wrefresh()
 /
 / GLOBAL INPUTS: Lines, Other, *stdscr, Databuf[], *Playersfp
 /
