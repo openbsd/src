@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2002/02/18 19:12:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2003/07/06 21:34:10 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,7 @@ bootparam_prot_svc.c: ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.x
 	ln -s ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.x .
 	rm -f bootparam_prot.h
 	ln -s ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.h .
-	rpcgen -m -o $@ bootparam_prot.x
+	rpcgen -C -m -o $@ bootparam_prot.x
 
 CLEANFILES += bootparam_prot_svc.c bootparam_prot.x bootparam_prot.h
 
