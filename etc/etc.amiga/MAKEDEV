@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.23 1997/05/14 15:41:07 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.24 1997/05/16 20:11:01 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -124,12 +124,11 @@ all)
 	sh MAKEDEV tun0 tun1 par0 lkm ss0 random local
 	;;
 
-floppy)
-	sh MAKEDEV std kbd pty0 tty00 ttyA0 ttyA1 ttyB0 ttyB1 tun0 tun1
-	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 grf5 grf6
+floppy|ramdisk)
+	sh MAKEDEV std kbd pty0 tty00 ttyA0 ttyA1 ttyB0 ttyB1
 	sh MAKEDEV ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
-	sh MAKEDEV cd0 cd1 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 st0 st1
-	sh MAKEDEV fd0 fd1 fd2 fd3 wd0 wd1 acd0
+	sh MAKEDEV cd0 cd1 sd0 sd1 sd2 sd3 st0 st1
+	sh MAKEDEV fd0 fd1 wd0 wd1 acd0 rd0 random
 	;;
 
 std)
@@ -214,10 +213,11 @@ fd*)
 	umask 77
 	;;
 
-sd*|ccd*|wd*)
+sd*|ccd*|wd*|rd*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
 	sd*) name=sd; blk=4; chr=8;;
+	rd*) name=rd; blk=16; chr=41;;
 	ccd*) name=ccd; blk=8; chr=7;;
 	wd*) name=wd; blk=0; chr=37;;
 	esac
