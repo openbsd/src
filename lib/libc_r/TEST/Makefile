@@ -1,15 +1,15 @@
-# $OpenBSD: Makefile,v 1.18 2000/02/10 11:42:07 d Exp $
+# $OpenBSD: Makefile,v 1.19 2000/08/07 01:23:58 brad Exp $
 # Copyright (c) 1993 Chris Provenzano, proven@athena.mit.edu
 
 LIBC_R?=	/usr/lib/libc_r.a
 LIBPTHREAD?=	/usr/lib/libpthread.a
 
-.if 1 # ${MACHINE_ARCH} != "i386"
-PTHREAD=	-pthread
-DPADD +=	${LIBC_R}
-.else
+.if 1 # ${MACHINE_ARCH} == "i386"
 PTHREAD=	-lpthread
 DPADD +=	${LIBPTHREAD}
+.else
+PTHREAD=	-pthread
+DPADD +=	${LIBC_R}
 .endif
 
 CFLAGS +=	-Wall # -Werror
