@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.48 2003/06/02 04:00:17 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.49 2003/06/25 21:45:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.48 2003/06/02 04:00:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.49 2003/06/25 21:45:47 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -80,10 +80,6 @@ struct _dom_binding {
 	char dom_servlist[MAXPATHLEN];
 	FILE *dom_servlistfp;
 };
-
-extern bool_t xdr_domainname(), xdr_ypbind_resp();
-extern bool_t xdr_ypreq_key(), xdr_ypresp_val();
-extern bool_t xdr_ypbind_setdom();
 
 void rpc_received(char *dom, struct sockaddr_in *raddrp, int force);
 void checkwork(void);
