@@ -75,7 +75,7 @@ AC_SUBST(DEMANGLER_NAME)
 AC_CHECK_HEADERS(string.h strings.h stdlib.h unistd.h fcntl.h sys/file.h)
 AC_HEADER_SYS_WAIT
 AC_FUNC_ALLOCA
-AC_CHECK_FUNCS(sbrk utimes setmode)
+AC_CHECK_FUNCS(mkdtemp mkstemp sbrk utimes setmode)
 
 # Some systems have frexp only in -lm, not in -lc.
 AC_SEARCH_LIBS(frexp, m)

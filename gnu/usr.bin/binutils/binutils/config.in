@@ -145,6 +145,12 @@
 /* Define if you have the stpcpy function */
 #undef HAVE_STPCPY
 
+/* Define if you have the mkdtemp function */
+#undef HAVE_MKDTEMP
+
+/* Define if you have the mkstemp function */
+#undef HAVE_MKSTEMP
+
 /* Define if your locale.h file contains LC_MESSAGES. */
 #undef HAVE_LC_MESSAGES
 
