@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.11 2001/06/29 20:16:22 mickey Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.12 2001/08/29 20:20:26 mickey Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -358,8 +358,8 @@ struct wsdisplay_delscreendata {
 };
 #define WSDISPLAYIO_DELSCREEN	_IOW('W', 84, struct wsdisplay_delscreendata)
 
-#define WSDISPLAYIO_GETSCREEN	_IOR('W', 85, struct wsdisplay_addscreendata)
-#define	WSDISPLAYIO_SETSCREEN	_IOR('W', 86, u_int)
+#define WSDISPLAYIO_GETSCREEN	_IOWR('W', 85, struct wsdisplay_addscreendata)
+#define	WSDISPLAYIO_SETSCREEN	_IOW('W', 86, u_int)
 
 /* Display information: number of bytes per row, may be same as pixels */
 #define	WSDISPLAYIO_LINEBYTES	_IOR('W', 95, u_int)

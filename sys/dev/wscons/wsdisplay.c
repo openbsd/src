@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.31 2001/07/10 11:07:25 espie Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.32 2001/08/29 20:20:26 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -1133,6 +1133,12 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 		}
 		return (error);
 #undef d
+	case WSDISPLAYIO_GETSCREEN:
+#define d ((struct wsdisplay_addscreendata *)data)
+		return (wsdisplay_getscreen(sc, d));
+#undef d
+	case WSDISPLAYIO_SETSCREEN:
+		return (wsdisplay_switch((void *)sc, *(int *)data, 1));
 	}
 
 	/* check ioctls for display */
