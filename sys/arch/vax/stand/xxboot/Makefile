@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2000/04/27 02:26:27 bjc Exp $	
+#	$OpenBSD: Makefile,v 1.2 2000/10/04 04:54:38 bjc Exp $	
 #	$NetBSD: Makefile,v 1.2 1999/10/23 14:40:39 ragge Exp $
 
-S=../../../..
+S=${.CURDIR}/../../../../
 
 PROG=	xxboot
 LINKS=	${BINDIR}/xxboot ${BINDIR}/raboot 
@@ -18,6 +18,7 @@ CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
 BINDIR=	/usr/mdec
 NOMAN=	1
 
+SAREL=
 SA_AS=	library
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=	${SALIB}
