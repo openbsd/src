@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.6 2001/10/24 16:20:20 mickey Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.7 2001/11/02 18:26:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -569,7 +569,7 @@ struct an_ltv_status {
 	u_int16_t		an_max_noise_prev_sec;	/* 0x7A */
 	u_int16_t		an_avg_noise_prev_min;	/* 0x7C */
 	u_int16_t		an_max_noise_prev_min;	/* 0x7E */
-	u_int16_t		an_spare[3];		/* 0x80 */
+	u_int16_t		an_spare[4];		/* 0x80 */
 };
 
 #define AN_STATUS_OPMODE_CONFIGURED		0x0001
