@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.9 1999/01/20 06:38:52 millert Exp $
+#	$OpenBSD: sendbug.sh,v 1.10 1999/01/20 06:47:05 millert Exp $
 
 # The version of this send-pr.
 VERSION=3.97
@@ -71,6 +71,15 @@ fi
 
 umask 077
 
+# Find a user name
+if [ "$LOGNAME" = "" ]; then
+	if [ "$USER" != "" ]; then
+		LOGNAME="$USER"
+	else
+		LOGNAME="UNKNOWN"
+	fi
+fi
+
 # For '&' expansion in gecos
 TEMP=${LOGNAME}
 while test ${#TEMP} -gt 1; do
@@ -119,18 +128,16 @@ else
   fi
 fi
 
-TEMP=$TMPDIR/p$$
-BAD=$TMPDIR/pbad$$
-REF=$TMPDIR/pf$$
-
-# find a user name
-if [ "$LOGNAME" = "" ]; then
-	if [ "$USER" != "" ]; then
-		LOGNAME="$USER"
-	else
-		LOGNAME="UNKNOWN"
-	fi
-fi
+# Make temp files safely
+TEMP=`mktemp $TMPDIR/p.XXXXXX` || exit 1
+BAD=`mktemp $TMPDIR/pbad.XXXXXX` || {
+    rm -f $TEMP
+    exit 1
+}
+REF=`mktemp $TMPDIR/pf.XXXXXX` || {
+    rm -f $TEMP $BAD
+    exit 1
+}
 
 FROM="$LOGNAME"
 if [ -z "$REPLYTO" ]; then
