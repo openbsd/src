@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.10 1995/12/13 18:50:30 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.11 1996/01/28 12:18:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -70,21 +70,22 @@ start()
 	/*
 	 * We can be running either in system or user space when
 	 * getting here. Need to figure out which and take care
-	 * of it.
+	 * of it. We also save all registers if panic gets called.
 	 */
 	asm("
-	movl	r9,_esym
-	movl	r10,_bootdev
-	movl	r11,_boothowto
+	bisl2	$0x80000000, r9
+	movl	r9, _esym
+	movl	r10, _bootdev
+	movl	r11, _boothowto
 	jsb	ett
-ett:	cmpl	(sp)+,$0x80000000
+ett:	cmpl	(sp)+, $0x80000000
 	bleq	tvo	# New boot
 	pushl	$0x001f0000
-	pushl	$to_kmem
+	pushl	$tokmem
 	rei
 tvo:	movl	(sp)+,_boothowto
 	movl	(sp)+,_bootdev
-to_kmem:
+tokmem: movw	$0xfff, _panic
 	");
 
 	/*
@@ -92,7 +93,7 @@ to_kmem:
 	 * This is the only thing we have to setup here, rest in pmap.
 	 */
 
-	PAGE_SIZE = NBPG*2; /* Set logical page size */
+	PAGE_SIZE = NBPG * 2; /* Set logical page size */
 #ifdef DDB
 	if ((boothowto & RB_KDB) != 0)
 		proc0paddr = ROUND_PAGE(esym) | 0x80000000;
@@ -126,18 +127,18 @@ to_kmem:
 	cninit();
 
 	/* Count up memory etc... early machine dependent routines */
-	if((cpunumber = MACHID(mfpr(PR_SID)))>VAX_MAX) cpunumber=0;
+	if ((cpunumber = MACHID(mfpr(PR_SID))) > VAX_MAX)
+		cpunumber = 0;
 	cpu_type = mfpr(PR_SID);
 	pmap_bootstrap();
 
 	((struct pcb *)proc0paddr)->framep = scratch;
 
 	/*
-	 * change mode down to userspace is done by faking an stack
+	 * Change mode down to userspace is done by faking a stack
 	 * frame that is setup in cpu_set_kpc(). Not done by returning
 	 * from main anymore.
 	 */
 	main();
-
 	/* NOTREACHED */
 }
