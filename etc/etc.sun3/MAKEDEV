@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.27 2000/03/02 22:59:05 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 2000/03/22 07:34:30 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -210,10 +210,10 @@ cd*|sd*|xy*|ccd*|rd*|vnd*)
 st*)
 	name=st; blk=11; chr=18;
 	offset=`expr $unit \* 16`;
-	mk   r$name$unit c $chr `expr $offset + 0`
-	mk  nr$name$unit c $chr `expr $offset + 1`
-	mk  er$name$unit c $chr `expr $offset + 2`
-	mk enr$name$unit c $chr `expr $offset + 3`
+	mk   r$name$unit c $chr `expr $offset + 0` 660 operator
+	mk  nr$name$unit c $chr `expr $offset + 1` 660 operator
+	mk  er$name$unit c $chr `expr $offset + 2` 660 operator
+	mk enr$name$unit c $chr `expr $offset + 3` 660 operator
 	;;
 
 bwtwo*)

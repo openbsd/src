@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 1999/08/20 17:00:37 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 2000/03/22 07:34:30 niklas Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -90,7 +90,7 @@ st*)
 		mknod nr${name}h${unit} c $chr $unit3
 		chown root.operator r${name}${unit} nr${name}${unit} \
 			r${name}h${unit} nr${name}h${unit}
-		chmod 640 r${name}${unit} nr${name}${unit} \
+		chmod 660 r${name}${unit} nr${name}${unit} \
 			r${name}h${unit} nr${name}h${unit}
 		;;
 	*)

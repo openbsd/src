@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.14 2000/03/01 21:25:04 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.15 2000/03/22 07:34:31 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.1.1.1.4.1 1996/06/17 02:36:16 oki Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -158,7 +158,7 @@ st*)
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
 			er${name}${unit} enr${name}${unit} 
-		chmod 640 ${name}${unit} n${name}${unit} \
+		chmod 660 ${name}${unit} n${name}${unit} \
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
 			er${name}${unit} enr${name}${unit} 

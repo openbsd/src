@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.43 1999/08/20 17:00:33 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.44 2000/03/22 07:34:27 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -231,7 +231,7 @@ st*)
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
 			er${name}${unit} enr${name}${unit} 
-		chmod 640 ${name}${unit} n${name}${unit} \
+		chmod 660 ${name}${unit} n${name}${unit} \
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
 			er${name}${unit} enr${name}${unit} 
@@ -370,7 +370,7 @@ ch*)
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
 	chown root.operator $name$unit
-	chmod 640 $name$unit
+	chmod 660 $name$unit
 	umask 77
 	;;
 

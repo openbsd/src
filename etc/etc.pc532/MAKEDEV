@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.17 1999/08/20 17:00:36 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 2000/03/22 07:34:29 niklas Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -233,7 +233,7 @@ st*)
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
 		er${name}${unit} enr${name}${unit} 
-	chmod 640 ${name}${unit} n${name}${unit} \
+	chmod 660 ${name}${unit} n${name}${unit} \
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
 		er${name}${unit} enr${name}${unit} 

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.75 2000/02/21 08:22:44 mjacob Exp $
+#	$OpenBSD: MAKEDEV,v 1.76 2000/03/22 07:34:29 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -77,6 +77,7 @@
 # Call units:
 #
 # Special purpose devices:
+#	ch*	SCSI media changer
 #	fd	file descriptors
 #	bpf*	packet filter
 #	speaker	pc speaker				(XXX - installed)
@@ -442,7 +443,7 @@ st*)
 	mknod enr$name$unit	c $chr $(( $n + 3 ))
 	chown root.operator $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	chmod 640 $name$unit n$name$unit e$name$unit en$name$unit \
+	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	umask 77
 	;;
@@ -455,7 +456,7 @@ ch*)
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
 	chown root.operator $name$unit
-	chmod 640 $name$unit
+	chmod 660 $name$unit
 	umask 77
 	;;
 

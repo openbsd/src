@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.33 1999/10/07 11:18:10 maja Exp $
+#	$OpenBSD: MAKEDEV,v 1.34 2000/03/22 07:34:29 niklas Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -162,7 +162,8 @@ tz*)
 		mknod nrmt$unit c $chr $unit1
 		mknod rmth$unit c $chr $unit2
 		mknod nrmth$unit c $chr $unit3
-		chmod 666 rmt$unit nrmt$unit rmth$unit nrmth$unit
+		chown root.operator rmt$unit nrmt$unit rmth$unit nrmth$unit
+		chmod 660 rmt$unit nrmt$unit rmth$unit nrmth$unit
 		;;
 	*)
 		echo bad unit for tape in: $1

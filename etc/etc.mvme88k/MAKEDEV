@@ -270,19 +270,28 @@ st*)
 	mknod enr$name$unit	c $chr `expr $unit '*' 16 + 3`
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	chmod 640 $name$unit n$name$unit e$name$unit en$name$unit \
+	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	;;
 
-ch*|uk*)
+ch*)
 	case $i in
 	ch*) name=ch;	unit=${i#ch};	chr=31;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	chown root.operator $name$unit
+	chmod 660 $name$unit
+	;;
+
+uk*)
+	case $i in
 	uk*) name=uk;	unit=${i#uk};	chr=34;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
-	chgrp operator $name$unit
-	chmod 640 $name$unit
+	chown root.wheel $name$unit
+	chmod 600 $name$unit
 	;;
 
 cd*)

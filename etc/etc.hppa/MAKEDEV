@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.1 1999/11/30 21:25:38 mickey Exp $
+#	$OpenBSD: MAKEDEV,v 1.2 2000/03/22 07:34:28 niklas Exp $
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
 # Device "make" file.  Valid arguments:
@@ -157,7 +157,7 @@ st*)
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chown root.operator $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit
-	chmod 640 $name$unit n$name$unit e$name$unit en$name$unit \
+	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	umask 77
 	;;

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.61 2000/02/21 08:22:08 mjacob Exp $
+#	$OpenBSD: MAKEDEV,v 1.62 2000/03/22 07:34:30 niklas Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -46,10 +46,6 @@
 # Disks:
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
-#	ch*	SCSI media changer
-#	uk*	SCSI Unknown device
-#	ses*	SCSI SES/SAF-TE device
-#	ss*	SCSI scanners
 #	xy*	Xylogic 450/451 disks
 #	rd*	"ramdisk" pseudo-disks
 #	xd*	Xylogic 753/7053 disks
@@ -68,6 +64,10 @@
 #	cua[a-d]	onboard zs serial ports
 #
 # Special purpose devices:
+#	ch*	SCSI media changer
+#	uk*	SCSI Unknown device
+#	ses*	SCSI SES/SAF-TE device
+#	ss*	SCSI scanners
 #	audio	
 #	openprom	
 #	bwtwo*	
@@ -522,7 +522,7 @@ st*)
 		e$name$unit en$name$unit \
 		r$name$unit nr$name$unit \
 		er$name$unit enr$name$unit 
-	chmod 640 $name$unit n$name$unit \
+	chmod 660 $name$unit n$name$unit \
 		e$name$unit en$name$unit \
 		r$name$unit nr$name$unit \
 		er$name$unit enr$name$unit 
@@ -537,7 +537,7 @@ ch*)
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
 	chown root.operator $name$unit
-	chmod 640 $name$unit
+	chmod 660 $name$unit
 	umask 77
 	;;
 

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.30 1999/08/20 17:00:35 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.31 2000/03/22 07:34:28 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -167,6 +167,10 @@ ct*|mt*|st*)
 		mknod r${name}${four}	c $chr $four
 		mknod r${name}${eight}	c $chr $eight
 		mknod r${name}${twelve}	c $chr $twelve
+		chown root.operator r${name}${unit} r${name}${four} \
+		    r${name}${eight} r${name}${twelve}
+		chmod 660 r${name}${unit} r${name}${four} \
+		    r${name}${eight} r${name}${twelve}
 		ln r${name}${four} nr${name}${unit} ;: sanity w/pdp11 v7
 		ln r${name}${twelve} nr${name}${eight} ;: ditto
 		;;

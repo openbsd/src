@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.28 2000/02/03 03:06:54 rahnds Exp $
+#	$OpenBSD: MAKEDEV,v 1.29 2000/03/22 07:34:30 niklas Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -39,7 +39,6 @@
 #	wd*	IDE disks
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
-#	ch*	SCSI media changer
 #	vnd*	"file" pseudo-disks
 #	rd*	"ramdisk" pseudo-disks
 #	ccd*	concatenated disk devices
@@ -57,6 +56,7 @@
 #		CyberVision 64 (grf5)
 #
 # Special purpose devices:
+#	ch*	SCSI media changer
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
@@ -366,11 +366,11 @@ st*)
 		mknod nr${name}${unit}	c $chr $(( $unit * 16 + 1 ))
 		mknod er${name}${unit}	c $chr $(( $unit * 16 + 2 ))
 		mknod enr${name}${unit}	c $chr $(( $unit * 16 + 3 ))
-		chgrp operator ${name}${unit} n${name}${unit} \
+		chown root.operator ${name}${unit} n${name}${unit} \
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
 			er${name}${unit} enr${name}${unit} 
-		chmod 640 ${name}${unit} n${name}${unit} \
+		chmod 660 ${name}${unit} n${name}${unit} \
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
 			er${name}${unit} enr${name}${unit} 
@@ -391,8 +391,8 @@ ch*)
 	case $unit in
 	0|1|2|3|4|5|6)
 		mknod ${name}${unit}	c $chr $unit
-		chgrp operator ${name}${unit}
-		chmod 640 ${name}${unit}
+		chown root.operator ${name}${unit}
+		chmod 660 ${name}${unit}
 		;;
 	*)
 		echo bad unit for media changer in: $i
