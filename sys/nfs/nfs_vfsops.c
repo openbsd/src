@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.17 1997/04/18 09:28:03 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.18 1997/04/18 09:30:48 deraadt Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -466,6 +466,9 @@ nfs_decode_args(nmp, argp)
 	adjsock = !(nmp->nm_flag & NFSMNT_RESVPORT)
 		  && (argp->flags & NFSMNT_RESVPORT);
 #endif
+	/* Also re-bind if we're switching to/from a connected UDP socket */
+	adjsock |= ((nmp->nm_flag & NFSMNT_NOCONN) !=
+	    (argp->flags & NFSMNT_NOCONN));
 
 	/* Update flags atomically.  Don't change the lock bits. */
 	nmp->nm_flag =
