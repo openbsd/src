@@ -1,8 +1,9 @@
-/*	$OpenBSD: chroot.c,v 1.5 2002/07/14 02:59:29 deraadt Exp $	*/
+/*	$OpenBSD: chroot.c,v 1.6 2002/10/25 19:23:48 millert Exp $	*/
+/*	$NetBSD: chroot.c,v 1.11 2001/04/06 02:34:04 lukem Exp $	*/
 
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,43 +34,156 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+static const char copyright[] =
+"@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)chroot.c	5.8 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: chroot.c,v 1.5 2002/07/14 02:59:29 deraadt Exp $";
+#if 0
+static const char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
+#else
+static const char rcsid[] = "$OpenBSD: chroot.c,v 1.6 2002/10/25 19:23:48 millert Exp $";
+#endif
 #endif /* not lint */
 
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <grp.h>
+#include <limits.h>
+#include <paths.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
 #include <unistd.h>
-#include <err.h>
+
+int		main(int, char **);
+__dead void	usage(void);
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-	char *shell;
+	struct group	*gp;
+	struct passwd	*pw;
+	const char	*shell;
+	char		*user, *group, *grouplist, *endp, *p;
+	gid_t		gid, gidlist[NGROUPS_MAX];
+	uid_t		uid;
+	int		ch, gids;
+	unsigned long	ul;
 
-	if (argc < 2) {
-		(void)fprintf(stderr, "usage: chroot newroot [command]\n");
-		exit(1);
+	gids = 0;
+	user = group = grouplist = NULL;
+	while ((ch = getopt(argc, argv, "G:g:u:")) != -1) {
+		switch(ch) {
+		case 'u':
+			user = optarg;
+			if (*user == '\0')
+				usage();
+			break;
+		case 'g':
+			group = optarg;
+			if (*group == '\0')
+				usage();
+			break;
+		case 'G':
+			grouplist = optarg;
+			if (*grouplist == '\0')
+				usage();
+			break;
+		case '?':
+		default:
+			usage();
+		}
 	}
-	if (chroot(argv[1]) || chdir("/"))
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1)
+		usage();
+
+	if (group != NULL) {
+		if ((gp = getgrnam(group)) != NULL)
+			gid = gp->gr_gid;
+		else if (isdigit((unsigned char)*group)) {
+			errno = 0;
+			ul = strtoul(group, &endp, 10);
+			if (*endp != '\0' ||
+			    (ul == ULONG_MAX && errno == ERANGE))
+				errx(1, "invalid group ID `%s'", group);
+			gid = (gid_t)ul;
+		} else
+			errx(1, "no such group `%s'", group);
+		if (grouplist != NULL)
+			gidlist[gids++] = gid;
+	}
+
+	while ((p = strsep(&grouplist, ",")) != NULL && gids < NGROUPS_MAX) {
+		if (*p == '\0')
+			continue;
+
+		if ((gp = getgrnam(p)) != NULL)
+			gidlist[gids] = gp->gr_gid;
+		else if (isdigit((unsigned char)*p)) {
+			errno = 0;
+			ul = strtoul(p, &endp, 10);
+			if (*endp != '\0' ||
+			    (ul == ULONG_MAX && errno == ERANGE))
+				errx(1, "invalid group ID `%s'", p);
+			gidlist[gids] = (gid_t)ul;
+		} else
+			errx(1, "no such group `%s'", p);
+		gids++;
+	}
+	if (p != NULL && gids == NGROUPS_MAX)
+		errx(1, "too many supplementary groups provided");
+
+	if (user != NULL) {
+		if ((pw = getpwnam(user)) != NULL)
+			uid = pw->pw_uid;
+		else if (isdigit((unsigned char)*user)) {
+			errno = 0;
+			ul = strtoul(user, &endp, 10);
+			if (*endp != '\0' ||
+			    (ul == ULONG_MAX && errno == ERANGE))
+				errx(1, "invalid user ID `%s'", user);
+			uid = (uid_t)ul;
+		} else
+			errx(1, "no such user `%s'", user);
+	}
+
+	if (chroot(argv[0]) != 0 || chdir("/") != 0)
+		err(1, "%s", argv[0]);
+
+	if (gids && setgroups(gids, gidlist) != 0)
+		err(1, "setgroups");
+	if (group && setgid(gid) != 0)
+		err(1, "setgid");
+	if (user && setuid(uid) != 0)
+		err(1, "setuid");
+
+	if (argv[1]) {
+		execvp(argv[1], &argv[1]);
 		err(1, "%s", argv[1]);
-	if (argv[2]) {
-		execvp(argv[2], &argv[2]);
-		err(1, "%s", argv[2]);
-	} else {
-		if (!(shell = getenv("SHELL")))
-			shell = _PATH_BSHELL;
-		execlp(shell, shell, "-i", (char *)NULL);
-		err(1, "%s", shell);
 	}
+
+	if ((shell = getenv("SHELL")) == NULL)
+		shell = _PATH_BSHELL;
+	execlp(shell, shell, "-i", (char *)NULL);
+	err(1, "%s", shell);
 	/* NOTREACHED */
+}
+
+void
+usage(void)
+{
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [-g group] [-G group,group,...] "
+	    "[-u user] newroot [command]\n", __progname);
+	exit(1);
 }

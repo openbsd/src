@@ -1,7 +1,8 @@
-.\" $OpenBSD: chroot.8,v 1.6 2001/05/28 15:26:55 aaron Exp $
+.\"	$OpenBSD: chroot.8,v 1.7 2002/10/25 19:23:48 millert Exp $
+.\"	$NetBSD: chroot.8,v 1.9 2000/08/17 12:36:32 mrg Exp $
 .\"
-.\" Copyright (c) 1988, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1988, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -31,10 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)chroot.8	5.3 (Berkeley) 3/16/91
-.\"	$Id: chroot.8,v 1.6 2001/05/28 15:26:55 aaron Exp $
+.\"     from: @(#)chroot.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd March 16, 1991
+.Dd October 25, 2002
 .Dt CHROOT 8
 .Os
 .Sh NAME
@@ -42,6 +42,9 @@
 .Nd change root directory
 .Sh SYNOPSIS
 .Nm chroot
+.Op Fl u Ar user
+.Op Fl g Ar group
+.Op Fl G Ar group,group,...
 .Ar newroot
 .Op Ar command
 .Sh DESCRIPTION
@@ -51,11 +54,37 @@ command changes its root directory to the supplied directory
 .Ar newroot
 and executes
 .Ar command ,
-if supplied, or an interactive copy of your shell.
+if supplied, or an interactive copy of the user's shell.
 .Pp
-Note,
+The
+.Nm
+command is restricted to the superuser.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl u Ar user
+Set user ID to
+.Ar user
+(a user name or user ID).
+.It Fl g Ar group
+Set group ID to
+.Ar group
+(a group name or group ID).
+If supplemental groups are specified via the
+.Fl G
+flag,
+.Ar group
+will be the used as the first entry in the group vector.
+.It Fl G Ar group,group,...
+Set the supplemental group IDs to a comma-separated list of
+group names or group IDs.
+.El
+.Pp
+Note, the
 .Ar command
-or the shell are run as your real user ID.
+or shell are run with the real user ID of the invoking user unless the
+.Fl u
+flag is specified.
 .Sh ENVIRONMENT
 .Bl -tag -width SHELL
 .It Ev SHELL
@@ -73,9 +102,18 @@ is used.
 .Sh SEE ALSO
 .Xr chdir 2 ,
 .Xr chroot 2 ,
+.Xr setgid 2 ,
+.Xr setgroups 2 ,
+.Xr setuid 2 ,
+.Xr getgrnam 3 ,
+.Xr getpwnam 3 ,
 .Xr environ 7
 .Sh HISTORY
 The
 .Nm
-command is
-.Ud
+utility first appeared in
+.Bx 4.4 .
+.Sh CAVEATS
+.Nm
+should never be installed setuid root, as it would then be possible
+to exploit the program to gain root privileges.
