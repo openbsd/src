@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.40 2004/05/23 20:52:16 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.41 2004/06/10 16:05:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -912,15 +912,15 @@ vs_build_memory_structure(struct vs_softc *sc, struct scsi_xfer *xs,
 	/*
 	 * Check if we need scatter/gather
 	 */
-	if (len > PAGE_SIZE) {
-		for (level = 0, point_virt = round_page(starting_point_virt+1);
+	if (trunc_page(virt + len - 1) != trunc_page(virt)) {
+		for (point_virt = round_page(starting_point_virt + 1);
 		    /* if we do already scatter/gather we have to stay in the loop and jump */
-		    point_virt < virt + (vaddr_t)len || sg ;
-		    point_virt += PAGE_SIZE) {			   /* out later */
+		    point_virt < virt + len || sg != NULL;
+		    point_virt += PAGE_SIZE) {		   /* out later */
 
 			point2_phys = kvtop(point_virt);
 
-			if ((point2_phys - trunc_page(point1_phys) - PAGE_SIZE) ||		   /* physical memory is not contiguous */
+			if ((point2_phys != trunc_page(point1_phys) + PAGE_SIZE) ||		   /* physical memory is not contiguous */
 			    (point_virt - starting_point_virt >= MAX_SG_BLOCK_SIZE && sg)) {   /* we only can access (1<<16)-1 bytes in scatter/gather_mode */
 				if (point_virt - starting_point_virt >= MAX_SG_BLOCK_SIZE) {	       /* We were walking too far for one scatter/gather block ... */
 					point_virt = trunc_page(starting_point_virt+MAX_SG_BLOCK_SIZE-1);    /* So go back to the beginning of the last matching page */
@@ -935,6 +935,8 @@ vs_build_memory_structure(struct vs_softc *sc, struct scsi_xfer *xs,
 #if 1 /* broken firmware */
 				if (sg->elements >= MAX_SG_ELEMENTS) {
 					vs_dealloc_scatter_gather(sg);
+					printf("%s: scatter/gather list too large\n",
+					    sc->sc_dev.dv_xname);
 					return (NULL);
 				}
 #else /* if the firmware will ever get fixed */
@@ -963,17 +965,17 @@ vs_build_memory_structure(struct vs_softc *sc, struct scsi_xfer *xs,
 					sg = sg->down[i]; /* Climb down */
 				}
 #endif /* 1 */
-				if (point_virt < virt+(vaddr_t)len) {
+				if (point_virt < virt + len) {
 					/* linking element */
 					vs_link_sg_element(&(sg->list[sg->elements]),
 							   starting_point_phys,
-							   point_virt-starting_point_virt);
+							   point_virt - starting_point_virt);
 					sg->elements++;
 				} else {
 					/* linking last element */
 					vs_link_sg_element(&(sg->list[sg->elements]),
 							   starting_point_phys,
-							   (vaddr_t)(virt+len)-starting_point_virt);
+							   virt + len - starting_point_virt);
 					sg->elements++;
 					break;			       /* We have now collected all blocks */
 				}
