@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.7 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.8 2002/04/26 17:26:52 mickey Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -66,9 +66,10 @@
 #include <macppc/dev/dbdma.h>
 #include <macppc/dev/if_bmreg.h>
 
-#define BMAC_TXBUFS 2
-#define BMAC_RXBUFS 16
-#define BMAC_BUFLEN 2048
+#define BMAC_TXBUFS	2
+#define BMAC_RXBUFS	16
+#define BMAC_BUFLEN	2048
+#define	BMAC_BUFSZ	((BMAC_RXBUFS + BMAC_TXBUFS + 2) * BMAC_BUFLEN)
 
 struct bmac_softc {
 	struct device sc_dev;
@@ -84,11 +85,15 @@ struct bmac_softc {
 	struct timeout sc_tick_ch;
 	vaddr_t sc_regs;
 	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_bufmap;
+	bus_dma_segment_t sc_bufseg[1];
 	dbdma_regmap_t *sc_txdma, *sc_rxdma;
 	dbdma_command_t *sc_txcmd, *sc_rxcmd;
 	dbdma_t sc_rxdbdma, sc_txdbdma;
 	caddr_t sc_txbuf;
+	paddr_t sc_txbuf_pa;
 	caddr_t sc_rxbuf;
+	paddr_t sc_rxbuf_pa;
 	int sc_rxlast;
 	int sc_flags;
 	int sc_debug;
@@ -118,7 +123,7 @@ static int bmac_rint(void *);
 static void bmac_reset(struct bmac_softc *);
 static void bmac_stop(struct bmac_softc *);
 static void bmac_start(struct ifnet *);
-static void bmac_transmit_packet(struct bmac_softc *, void *, int);
+static void bmac_transmit_packet(struct bmac_softc *, paddr_t, int);
 static int bmac_put(struct bmac_softc *, caddr_t, struct mbuf *);
 static struct mbuf *bmac_get(struct bmac_softc *, caddr_t, int);
 static void bmac_watchdog(struct ifnet *);
@@ -209,6 +214,7 @@ bmac_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_if;
 	struct mii_data *mii = &sc->sc_mii;
 	u_char laddr[6];
+	int nseg, error;
 
 	timeout_set(&sc->sc_tick_ch, bmac_mii_tick, sc);
 
@@ -239,13 +245,44 @@ bmac_attach(parent, self, aux)
 	sc->sc_txcmd = sc->sc_txdbdma->d_addr;
 	sc->sc_rxdbdma = dbdma_alloc(sc->sc_dmat, BMAC_RXBUFS + 1);
 	sc->sc_rxcmd = sc->sc_rxdbdma->d_addr;
-	sc->sc_txbuf = malloc(BMAC_BUFLEN * BMAC_TXBUFS, M_DEVBUF, M_NOWAIT);
-	sc->sc_rxbuf = malloc(BMAC_BUFLEN * BMAC_RXBUFS, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_txbuf == NULL || sc->sc_rxbuf == NULL ||
-	    sc->sc_txcmd == NULL || sc->sc_rxcmd == NULL) {
-		printf("cannot allocate memory\n");
+
+	error = bus_dmamem_alloc(sc->sc_dmat, BMAC_BUFSZ,
+	    PAGE_SIZE, 0, sc->sc_bufseg, 1, &nseg, BUS_DMA_NOWAIT);
+	if (error) {
+		printf(": cannot allocate buffers (%d)\n", error);
 		return;
 	}
+
+	error = bus_dmamem_map(sc->sc_dmat, sc->sc_bufseg, nseg,
+	    BMAC_BUFSZ, &sc->sc_txbuf, BUS_DMA_NOWAIT);
+	if (error) {
+		printf(": cannot map buffers (%d)\n", error);
+		bus_dmamem_free(sc->sc_dmat, sc->sc_bufseg, 1);
+		return;
+	}
+
+	error = bus_dmamap_create(sc->sc_dmat, BMAC_BUFSZ, 1, BMAC_BUFSZ, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_bufmap);
+	if (error) {
+		printf(": cannot create buffer dmamap (%d)\n", error);
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_txbuf, BMAC_BUFSZ);
+		bus_dmamem_free(sc->sc_dmat, sc->sc_bufseg, 1);
+		return;
+	}
+
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_bufmap, sc->sc_txbuf,
+	    BMAC_BUFSZ, NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf(": cannot load buffers dmamap (%d)\n", error);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_bufmap);
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_txbuf, BMAC_BUFSZ);
+		bus_dmamem_free(sc->sc_dmat, sc->sc_bufseg, nseg);
+		return;
+	}
+
+	sc->sc_txbuf_pa = sc->sc_bufmap->dm_segs->ds_addr;
+	sc->sc_rxbuf = sc->sc_txbuf + BMAC_BUFLEN * BMAC_TXBUFS;
+	sc->sc_rxbuf_pa = sc->sc_txbuf_pa + BMAC_BUFLEN * BMAC_TXBUFS;
 
 	printf(" irq %d,%d: address %s\n", ca->ca_intr[0], ca->ca_intr[2],
 		ether_sprintf(laddr));
@@ -427,7 +464,7 @@ bmac_init(sc)
 	bzero(data, sizeof(eh) + ETHERMIN);
 	bcopy(sc->sc_enaddr, eh->ether_dhost, ETHER_ADDR_LEN);
 	bcopy(sc->sc_enaddr, eh->ether_shost, ETHER_ADDR_LEN);
-	bmac_transmit_packet(sc, data, sizeof(eh) + ETHERMIN);
+	bmac_transmit_packet(sc, sc->sc_txbuf_pa, sizeof(eh) + ETHERMIN);
 
 	bmac_start(ifp);
 
@@ -449,7 +486,7 @@ bmac_init_dma(sc)
 
 	for (i = 0; i < BMAC_RXBUFS; i++) {
 		DBDMA_BUILD(cmd, DBDMA_CMD_IN_LAST, 0, BMAC_BUFLEN,
-			vtophys((vaddr_t)(sc->sc_rxbuf + BMAC_BUFLEN * i)),
+			sc->sc_rxbuf_pa + BMAC_BUFLEN * i,
 			DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 		cmd++;
 	}
@@ -678,25 +715,19 @@ bmac_start(ifp)
 		ifp->if_timer = 5;
 		ifp->if_opackets++;		/* # of pkts */
 
-		bmac_transmit_packet(sc, sc->sc_txbuf, tlen);
+		bmac_transmit_packet(sc, sc->sc_txbuf_pa, tlen);
 	}
 }
 
 void
-bmac_transmit_packet(sc, buff, len)
+bmac_transmit_packet(sc, pa, len)
 	struct bmac_softc *sc;
-	void *buff;
+	paddr_t pa;
 	int len;
 {
 	dbdma_command_t *cmd = sc->sc_txcmd;
-	vaddr_t va = (vaddr_t)buff;
 
-#ifdef BMAC_DEBUG
-	if (vtophys(va) + len - 1 != vtophys(va + len - 1))
-		panic("bmac_transmit_packet");
-#endif
-
-	DBDMA_BUILD(cmd, DBDMA_CMD_OUT_LAST, 0, len, vtophys(va),
+	DBDMA_BUILD(cmd, DBDMA_CMD_OUT_LAST, 0, len, pa,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	cmd++;
 	DBDMA_BUILD(cmd, DBDMA_CMD_STOP, 0, 0, 0,
