@@ -1,4 +1,4 @@
-.\"	$OpenBSD: link.5,v 1.13 2003/01/19 21:02:15 deraadt Exp $
+.\"	$OpenBSD: link.5,v 1.14 2003/10/30 21:31:28 jmc Exp $
 .\"	$NetBSD: link.5,v 1.5 1996/01/09 00:14:32 pk Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -56,8 +56,8 @@ the link-editing process and indirection tables to facilitate
 .Em Position Independent Code
 (PIC for short) to improve sharing of code pages among different processes.
 The collection of data structures described here will be referred to as the
-.Em Run-time Relocation Section (RRS)
-and is embedded in the standard text and data segments of the dynamically
+.Em Run-time Relocation Section
+(RRS) and is embedded in the standard text and data segments of the dynamically
 linked program or shared object image as the existing
 .Xr a.out 5
 format offers no room for it elsewhere.
@@ -75,12 +75,12 @@ PIC code differs from conventional code
 in that it accesses data variables through an indirection table, the
 Global Offset Table, by convention accessible by the reserved name
 .Dv _GLOBAL_OFFSET_TABLE_ .
-The exact mechanism used for this is machine dependent, usually a machine
+The exact mechanism used for this is machine dependent; usually a machine
 register is reserved for the purpose.
 The rational behind this construct
 is to generate code that is independent of the actual load address.
 Only the values contained in the Global Offset Table may need updating at
-run-time depending on the load addresses of the various shared objects
+run-time, depending on the load addresses of the various shared objects
 in the address space.
 .Pp
 Likewise, procedure calls to globally defined functions are redirected through
@@ -94,7 +94,7 @@ process address space.
 It also collects all symbols that may be needed by the
 run-time link editor and stores these along with the image's text and data bits.
 Another reserved symbol,
-.Dv _DYNAMIC
+.Dv _DYNAMIC ,
 is used to indicate the presence of the run-time linker structures.
 Whenever
 .Dv _DYNAMIC
@@ -178,7 +178,6 @@ struct section_dispatch_table {
 	long	sdt_plt_sz;
 };
 .Ed
-.Pp
 .Bl -tag -width sdt_loaded
 .It Fa sdt_loaded
 A pointer to the first link map loaded (see below).
@@ -248,13 +247,12 @@ structure.
 struct sod {
 	long	sod_name;
 	u_int	sod_library : 1,
-		sod_unused : 31;
+		sod_reserved : 31;
 	short	sod_major;
 	short	sod_minor;
 	long	sod_next;
 };
 .Ed
-.Pp
 .Bl -tag -width sod_library
 .It Fa sod_name
 The offset in the text segment of a string describing this link object.
@@ -270,7 +268,7 @@ see also
 .Xr ldconfig 8
 .Pc
 for a shared object matching
-.Em lib\&<sod_name>\&.so.n.m .
+.Em lib<sod_name>.so.n.m .
 If not set,
 .Fa sod_name
 should point at a full path name for the desired shared object.
@@ -355,7 +353,7 @@ See
 The size of the data represented by this symbol.
 .El
 .Pp
-A hash table is included within the text segment of shared object to
+A hash table is included within the text segment of shared objects to
 facilitate quick lookup of symbols during run-time link-editing.
 The
 .Fa sdt_hash
@@ -370,7 +368,6 @@ struct rrs_hash {
 	int	rh_next;		/* next hash entry */
 };
 .Ed
-.Pp
 .Bl -tag -width rh_symbolnum
 .It Fa rh_symbolnum
 The index of the symbol in the shared object's symbol table (as given by the
@@ -400,7 +397,6 @@ struct rt_symbol {
 	struct so_map		*rt_smp;
 };
 .Ed
-.Pp
 .Bl -tag -width rt_scraddr
 .It Fa rt_sp
 The symbol description.
@@ -443,7 +439,6 @@ struct 	so_debug {
 	struct rt_symbol *dd_cc;
 };
 .Ed
-.Pp
 .Bl -tag -width dd_in_debugger
 .It Fa dd_version
 Version number of this interface.
@@ -478,11 +473,12 @@ See
 for more information.
 .Bd -literal -offset indent
 struct ld_entry {
-	void	*(*dlopen)(char *, int);
+	void	*(*dlopen)(const char *, int);
 	int	(*dlclose)(void *);
-	void	*(*dlsym)(void *, char *);
+	void	*(*dlsym)(void *, const char *);
 	int	(*dlctl)(void *, int, void *);
 	void	(*dlexit)(void);
+	void	(*dlrsrvd[3])(void);
 };
 .Ed
 .Pp
@@ -502,7 +498,7 @@ struct crt_ldso {
 	caddr_t		crt_bp;
 	char		*crt_prog;
 	char		*crt_ldso;
-	char		*crt_ldentry;
+	struct ld_entry	*crt_ldentry;
 };
 #define CRT_VERSION_SUN		1
 #define CRT_VERSION_BSD2	2
@@ -602,7 +598,6 @@ This field is only available with interface version number
 .Dv LD_HINTS_VERSION_2
 and higher.
 .El
-.Pp
 .Bd -literal -offset indent
 /*
  * Hash table element in hints file.
