@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.24 1997/12/26 08:16:48 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.25 1998/01/06 02:35:19 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -57,13 +57,15 @@ option	APM_NOIDLE
 option	APMDEBUG
 isa0	at mainbus0
 eisa0	at mainbus0
-pci0	at mainbus0
+pci*	at mainbus0
 
 option		PCIVERBOSE
 option		EISAVERBOSE
 
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
+pci*	at pchb? bus ?
 
 pcicmaster0 at isa? port 0x3E0 size 2
 pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
