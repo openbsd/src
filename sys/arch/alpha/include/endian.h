@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.6 1997/06/25 12:52:07 grr Exp $	*/
+/*	$OpenBSD: endian.h,v 1.7 1997/08/08 18:27:17 niklas Exp $	*/
 /*	$NetBSD: endian.h,v 1.3 1996/10/13 19:57:59 cgd Exp $	*/
 
 /*
@@ -62,11 +62,76 @@ typedef u_int32_t in_addr_t;
 typedef u_int16_t in_port_t;
 
 __BEGIN_DECLS
+#if 0
+/*
+ * prototypes supplied for documentation purposes solely
+ */
+u_int32_t	htobe32 __P((u_int32_t));
+u_int16_t	htobe16 __P((u_int16_t));
+u_int32_t	betoh32 __P((u_int32_t));
+u_int16_t	betoh16 __P((u_int16_t));
+
+u_int32_t	htole32 __P((u_int32_t));
+u_int16_t	htole16 __P((u_int16_t));
+u_int32_t	letoh32 __P((u_int32_t));
+u_int16_t	letoh16 __P((u_int16_t));
+
 u_int32_t	htonl __P((u_int32_t));
 u_int16_t	htons __P((u_int16_t));
 u_int32_t	ntohl __P((u_int32_t));
 u_int16_t	ntohs __P((u_int16_t));
+#endif
 __END_DECLS
+
+#ifdef __GNUC__
+
+/* XXX perhaps some __asm would be better here?  */
+#define	__byte_swap_int32_variable(x) \
+({ register u_int32_t __x = (x); \
+    (((__x) & 0xff000000) >> 24) | (((__x) & 0x00ff0000) >> 8) | \
+    (((__x) & 0x0000ff00) << 8) | (((__x) & 0x000000ff) << 24); })
+
+#define	__byte_swap_int16_variable(x) \
+({ register u_int16_t __x = (x); \
+    (((__x) & 0xff00) >> 8) | (((__x) & 0x00ff) << 8); })
+
+#ifdef __OPTIMIZE__
+
+#define	__byte_swap_int32_constant(x) \
+	((((x) & 0xff000000) >> 24) | \
+	 (((x) & 0x00ff0000) >>  8) | \
+	 (((x) & 0x0000ff00) <<  8) | \
+	 (((x) & 0x000000ff) << 24))
+#define	__byte_swap_int16_constant(x) \
+	((((x) & 0xff00) >> 8) | \
+	 (((x) & 0x00ff) << 8))
+#define	__byte_swap_int32(x) \
+	(__builtin_constant_p((x)) ? \
+	 __byte_swap_int32_constant(x) : __byte_swap_int32_variable(x))
+#define	__byte_swap_int16(x) \
+	(__builtin_constant_p((x)) ? \
+	 __byte_swap_int16_constant(x) : __byte_swap_int16_variable(x))
+
+#else /* __OPTIMIZE__ */
+
+#define	__byte_swap_int32(x)	__byte_swap_int32_variable(x)
+#define	__byte_swap_int16(x)	__byte_swap_int16_variable(x)
+
+#endif /* __OPTIMIZE__ */
+#endif /* __GNUC__ */
+
+/*
+ * Macros for big/little endian to host and vice versa.
+ */
+#define	betoh32(x)	__byte_swap_int32(x)
+#define	betoh16(x)	__byte_swap_int16(x)
+#define	htobe32(x)	__byte_swap_int32(x)
+#define	htobe16(x)	__byte_swap_int16(x)
+
+#define	letoh32(x)	(x)
+#define	letoh16(x)	(x)
+#define	htole32(x)	(x)
+#define	htole16(x)	(x)
 
 /*
  * Macros for network/external number representation conversion.
@@ -78,23 +143,15 @@ __END_DECLS
  * and probably does work, but generates gcc warnings on architectures
  * where the macros are used to optimize away an unneeded conversion.
  */
-#if BYTE_ORDER == BIG_ENDIAN && !defined(lint)
-#define	ntohl(x)	(x)
-#define	ntohs(x)	(x)
-#define	htonl(x)	(x)
-#define	htons(x)	(x)
+#define	ntohl(x)	betoh32(x)
+#define	ntohs(x)	betoh16(x)
+#define	htonl(x)	htobe32(x)
+#define	htons(x)	htobe16(x)
 
-#define	NTOHL(x)	(void)(x)
-#define	NTOHS(x)	(void)(x)
-#define	HTONL(x)	(void)(x)
-#define	HTONS(x)	(void)(x)
+#define	NTOHL(x)	(void)((x) = ntohl(x))
+#define	NTOHS(x)	(void)((x) = ntohs(x))
+#define	HTONL(x)	(void)((x) = htonl(x))
+#define	HTONS(x)	(void)((x) = htons(x))
 
-#else
-
-#define	NTOHL(x)	(x) = ntohl((u_int32_t)x)
-#define	NTOHS(x)	(x) = ntohs((u_int16_t)x)
-#define	HTONL(x)	(x) = htonl((u_int32_t)x)
-#define	HTONS(x)	(x) = htons((u_int16_t)x)
-#endif
 #endif /* !_POSIX_SOURCE */
 #endif /* !_ENDIAN_H_ */
