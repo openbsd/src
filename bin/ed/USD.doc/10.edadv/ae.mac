@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae.mac,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: ae.mac,v 1.3 2004/04/05 16:27:21 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -36,14 +36,10 @@
 .\"
 .tr _\(em
 .de UL
-.if n .ul
-.if n \\$3\\$1\\$2
-.if t \\$3\f3\\$1\fP\\$2
+\&\\$3\f2\\$1\f1\\$2
 ..
 .de IT
-.if t \\$3\f2\\$1\fP\\$2
-.if n .ul
-.if n \\$3\\$1\\$2
+\&\\$3\f2\\$1\fP\\$2
 ..
 .de UI
 \f3\\$1\fI\\$2\fR\\$3
@@ -57,11 +53,15 @@
 .\"		use first argument as indent if present
 .if \\n(.$ .DS I \\$1
 .if !\\n(.$ .DS I 5
+.bd 1 2
 ..
 .de P2
+.br
+.bd 1 2
 .DE
+.bd 1
 .tr --
-.if n .ls 2
+.if n .ls 1
 ..
 .if t .ds BL \s6\|\v'.1m'\(sq\v'-.1m'\|\s0
 .if n .ds BL []
@@ -84,4 +84,3 @@
 .hy 14
 .\"	2=not last lines; 4= no -xx; 8=no xx-
 .tr *\(**
-
