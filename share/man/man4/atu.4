@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atu.4,v 1.7 2004/11/22 22:49:22 jmc Exp $
+.\"	$OpenBSD: atu.4,v 1.8 2004/11/23 12:37:36 naddy Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -121,14 +121,14 @@ Join an ad-hoc network with network name
 	mediaopt adhoc
 .Ed
 .Pp
-Create an IBBS network with network name
+Create an IBSS network with network name
 .Dq my_net :
 .Bd -literal -compact -offset indent
 # ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
 	mediaopt ibss-master
 .Ed
 .Pp
-Join an IBBS network with network name
+Join an IBSS network with network name
 .Dq my_net :
 .Bd -literal -compact -offset indent
 # ifconfig atu0 inet 192.168.0.22 netmask 0xffffff00 nwid my_net \e
