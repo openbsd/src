@@ -1,91 +1,126 @@
-.\"	$OpenBSD: timeout.9,v 1.2 1999/09/02 17:28:07 espie Exp $
-.\"	$NetBSD: timeout.9,v 1.7 1999/03/16 00:40:48 garbled Exp $
+.\"	$OpenBSD: timeout.9,v 1.3 2000/03/23 10:10:20 art Exp $
 .\"
-.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
-.\" All rights reserved.
+.\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
+.\" All rights reserved. 
 .\"
-.\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Paul Kranenburg.
+.\" Redistribution and use in source and binary forms, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met: 
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"        This product includes software developed by the NetBSD
-.\"        Foundation, Inc. and its contributors.
-.\" 4. Neither the name of The NetBSD Foundation nor the names of its
-.\"    contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" 1. Redistributions of source code must retain the above copyright 
+.\"    notice, this list of conditions and the following disclaimer. 
+.\" 2. Redistributions in binary form must reproduce the above copyright 
+.\"    notice, this list of conditions and the following disclaimer in the 
+.\"    documentation and/or other materials provided with the distribution. 
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission. 
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
-.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
-.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-.\" POSSIBILITY OF SUCH DAMAGE.
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 .\"
 .Dd June 23, 1996
 .Dt TIMEOUT 9
 .Os
 .Sh NAME
-.Nm timeout ,
-.Nm untimeout
+.Nm timeout_set ,
+.Nm timeout_add ,
+.Nm timeout_del
 .Nd execute a function after a specified length of time
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
-.Fd #include <sys/systm.h>
-.Ft void
-.Fn "timeout" "void (*ftn)(void *)" "void *arg" "int ticks"
-.Ft void
-.Fn "untimeout" "void (*ftn)(void *)" "void *arg"
+.Fd #include <sys/timeout.h>
+.Fn "timeout_set" "struct timeout *to" "void (*fn)(void *)" "void *arg"
+.Fn "timeout_add" "struct timeout *to" "int ticks"
+.Fn "timeout_del" "struct timeout *to"
 .Sh DESCRIPTION
+The finction
+.Fn timeout_set
+Prepares the timeout structure
+.Fa to
+to be used in future calls to
+.Fn timeout_add
+and
+.Fn timeout_del .
+The timeout will be preapared to call the function given in the
+.Fa fn
+argument with a
+.Fa void *
+argument given in the
+.Fa arg
+argument.
+Once initialized, the
+.Fa to
+structure can be used in repeatedly in
+.Fn timeout_add
+and
+.Fn timeout_del
+and doesn't need to be reinitialized unless you wish to
+change the function called and/or the argument to it.
+.Pp
 The function
-.Fn timeout
-schedules a call to the function given by the argument
-.Fa ftn
-to take place after
+.Fn timeout_del
+schedules an execution of the
+.Fa to
+timeout in at least
 .Fa ticks Ns No /hz
 seconds.
-Non-positive values of
+Negative values of
 .Fa ticks
-are silently converted to the value
-.Sq 1 .
-.Fa ftn
-should be a pointer to a function that takes a
-.Fa void *
-argument, to which the argument
-.Fa arg
-will be passed.
+are illegal. If the value is
+.Sq 0
+it will, in the current implementation, be treated as
+.Sq 1
+, but in the future it might cause an immediate timeout.
+The timeout in the
+.Fa to
+argument must be already initialized by
+.Fn timeout_set
+and may not be used in calls to timeout_set until it has
+timed out or been removed with
+.Fn timeout_del .
+If the timeout in the
+.Fa to
+argument is already scheduled, the old execution time will be
+replaced by the new one.
 .Pp
 The function
-.Fn untimeout
-cancels the first scheduled call
-.Pq i.e. the one with the shortest delay left
-that matches the
-.Aq Fa ftn , Ns Fa arg
-pair.
-If a match can not be found in the callout queue, nothing happens.
+.Fn timeout_del
+will cancel the timeout in the argument
+.Fa to .
+If the timeout has already executed or has never been added
+the call will have no effect.
 .Pp
-The callout queue is statically sized, dependent on the
-.Va MAXUSERS
-parameter.
+It's the caller responsibility to provide those functions with
+the timeout structures. No functions in this API will do memory
+allocation. All functions in this API may be called in interrupt
+context below
+.Fn splclock .
+.Pp
+The old
+.Fn timeout
+and
+.Fn untimeout
+interface is implemented as wrappers around the new API, but it's
+obsolete and will be removed in the future.
 .Sh CODE REFERENCES
 These functions are implemented in the file
-.Pa sys/kern/kern_clock.c .
+.Pa sys/kern/kern_timeout.c .
 .Sh SEE ALSO
 .Xr hz 9 ,
 .Xr sleep 9
 .Sh BUGS
-.Fn untimeout
-should probably remove all matches from the queue.
+The
+.Fn timeout_add
+function executes in linear speed depending on the number of pending
+timeouts. It will also block all interrupts while inserting the timeout
+to the timeout queue. Thus it is not recommended to use a large number
+of timeouts in the system.
+
