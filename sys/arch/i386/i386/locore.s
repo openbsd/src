@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.46 1999/02/12 19:40:12 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.47 1999/02/26 04:34:31 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -720,6 +720,66 @@ ENTRY(bcopyb)
 	cld
 	ret
 
+#if defined(UVM)
+/*
+ * kcopy(caddr_t from, caddr_t to, size_t len);
+ * Copy len bytes, abort on fault.
+ */
+ENTRY(kcopy)
+	pushl	%esi
+	pushl	%edi
+	movl	_C_LABEL(curpcb),%eax	# load curpcb into eax and set on-fault
+	pushl	PCB_ONFAULT(%eax)
+	movl	$_C_LABEL(copy_fault), PCB_ONFAULT(%eax)
+
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%ecx
+	movl	%edi,%eax
+	subl	%esi,%eax
+	cmpl	%ecx,%eax		# overlapping?
+	jb	1f
+	cld				# nope, copy forward
+	shrl	$2,%ecx			# copy by 32-bit words
+	rep
+	movsl
+	movl	24(%esp),%ecx
+	andl	$3,%ecx			# any bytes left?
+	rep
+	movsb
+
+	movl	_C_LABEL(curpcb),%edx
+	popl	PCB_ONFAULT(%edx)
+	popl	%edi
+	popl	%esi
+	xorl	%eax,%eax
+	ret
+
+	ALIGN_TEXT
+1:	addl	%ecx,%edi		# copy backward
+	addl	%ecx,%esi
+	std
+	andl	$3,%ecx			# any fractional bytes?
+	decl	%edi
+	decl	%esi
+	rep
+	movsb
+	movl	24(%esp),%ecx		# copy remainder by 32-bit words
+	shrl	$2,%ecx
+	subl	$3,%esi
+	subl	$3,%edi
+	rep
+	movsl
+	cld
+
+	movl	_C_LABEL(curpcb),%edx
+	popl	PCB_ONFAULT(%edx)
+	popl	%edi
+	popl	%esi
+	xorl	%eax,%eax
+	ret
+#endif
+	
 /*
  * bcopyw(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes, two bytes at a time.
@@ -1495,8 +1555,12 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
+#ifdef UVM
+	.globl	_C_LABEL(whichqs),_C_LABEL(qs),_C_LABEL(uvmexp),_C_LABEL(panic)
+#else
 	.globl	_whichqs,_qs,_cnt,_panic
-
+#endif
+	
 /*
  * setrunqueue(struct proc *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
@@ -1790,7 +1854,12 @@ switch_return:
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
+#if defined(UVM)
+	.globl	_C_LABEL(proc0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
+	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
+#else
 	.globl	_proc0,_vmspace_free,_kernel_map,_kmem_free,_tss_free
+#endif
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_proc0,%ebx
@@ -1839,11 +1908,19 @@ ENTRY(switch_exit)
 	pushl	P_ADDR(%edi)
 	call	_tss_free
 	pushl	P_VMSPACE(%edi)
+#if defined(UVM)
+	call	_C_LABEL(uvmspace_free)
+#else
 	call	_vmspace_free
+#endif
 	pushl	$USPACE
 	pushl	P_ADDR(%edi)
 	pushl	_kernel_map
+#if defined(UVM)
+	call	_C_LABEL(uvm_km_free)
+#else
 	call	_kmem_free
+#endif
 	addl	$20,%esp
 
 	/* Jump into cpu_switch() with the right state. */
@@ -1975,7 +2052,11 @@ IDTVEC(fpu)
 	INTRENTRY
 	pushl	_cpl			# if_ppl in intrframe
 	pushl	%esp			# push address of intrframe
+#if defined(UVM)
+	incl	_C_LABEL(uvmexp)+V_TRAP
+#else
 	incl	_cnt+V_TRAP
+#endif
 	call	_npxintr
 	addl	$8,%esp			# pop address and if_ppl
 	INTRFASTEXIT
