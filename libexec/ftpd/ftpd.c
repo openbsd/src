@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.37 1997/06/05 09:22:41 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.38 1997/06/21 12:44:41 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2066,38 +2066,37 @@ logxfer(name, size, start)
 	time_t start;
 {
 	char buf[400 + MAXHOSTNAMELEN*4 + MAXPATHLEN*4];
-	char path[MAXPATHLEN];
+	char dir[MAXPATHLEN], path[MAXPATHLEN], rpath[MAXPATHLEN];
 	char vremotehost[MAXHOSTNAMELEN*4], vpath[MAXPATHLEN*4];
-	char *vname, *vpw;
+	char *vpw;
 	time_t now;
 
-	if ((statfd >= 0) && (getcwd(path, sizeof(path)) != NULL)) {
+	if ((statfd >= 0) && (getcwd(dir, sizeof(dir)) != NULL)) {
 		time(&now);
 
-		vname = (char *)malloc(strlen(name)*4+1);
-		if (vname == NULL)
-			return;
 		vpw = (char *)malloc(strlen((guest) ? guestpw : pw->pw_name)*4+1);
-		if (vpw == NULL) {
-			free(vname);
+		if (vpw == NULL)
 			return;
+
+		snprintf(path, sizeof path, "%s/%s", dir, name);
+		if (realpath(path, rpath) == NULL) {
+			strncpy(rpath, path, sizeof rpath-1);
+			rpath[sizeof rpath-1] = '\0';
 		}
+		strvis(vpath, rpath, VIS_SAFE|VIS_NOSLASH);
 
 		strvis(vremotehost, remotehost, VIS_SAFE|VIS_NOSLASH);
-		strvis(vpath, path, VIS_SAFE|VIS_NOSLASH);
-		strvis(vname, name, VIS_SAFE|VIS_NOSLASH);
 		strvis(vpw, (guest) ? guestpw : pw->pw_name, VIS_SAFE|VIS_NOSLASH);
 
 		snprintf(buf, sizeof(buf),
-			 "%.24s %d %s %qd %s/%s %c %s %c %c %s ftp %d %s %s\n",
-			 ctime(&now), now - start + (now == start),
-			 vremotehost, size, vpath, vname,
-			 ((type == TYPE_A) ? 'a' : 'b'), "*" /* none yet */,
-			 'o', ((guest) ? 'a' : 'r'),
-			 vpw, 0 /* none yet */,
-			 ((guest) ? "*" : pw->pw_name), dhostname);
+		    "%.24s %d %s %qd %s %c %s %c %c %s ftp %d %s %s\n",
+		    ctime(&now), now - start + (now == start),
+		    vremotehost, size, vpath,
+		    ((type == TYPE_A) ? 'a' : 'b'), "*" /* none yet */,
+		    'o', ((guest) ? 'a' : 'r'),
+		    vpw, 0 /* none yet */,
+		    ((guest) ? "*" : pw->pw_name), dhostname);
 		write(statfd, buf, strlen(buf));
-		free(vname);
 		free(vpw);
 	}
 }
