@@ -1,4 +1,4 @@
-#    $OpenBSD: GNUmakefile,v 1.5 2003/05/14 20:49:36 ho Exp $
+#    $OpenBSD: GNUmakefile,v 1.6 2003/05/18 18:16:34 ho Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -43,12 +43,14 @@
 
 # openbsd means 2.5 or newer, freeswan is the name for Linux with FreeS/WAN
 # integrated, freebsd/netbsd means FreeBSD/NetBSD with KAME IPsec.
-# darwin means MacOS X 10.2 and later with KAME IPsec.
+# darwin means MacOS X 10.2 and later with KAME IPsec. linux means Linux-2.5
+# and later with native IPSec support.
 OS=		openbsd
 #OS=		netbsd
 #OS=		freebsd
 #OS=		freeswan
 #OS=		darwin
+#OS=		linux
 
 .CURDIR:=	$(shell pwd)
 VPATH=		${.CURDIR}/sysdep/${OS}

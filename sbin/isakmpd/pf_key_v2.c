@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.129 2003/05/15 00:28:53 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.130 2003/05/18 18:16:34 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -42,7 +42,12 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/uio.h>
+
+#include "sysdep.h"
+
+#if !defined (LINUX_IPSEC)
 #include <net/pfkeyv2.h>
+#endif
 #include <netinet/in.h>
 #ifdef SADB_X_EXT_FLOW_TYPE
 #include <sys/mbuf.h>
@@ -55,8 +60,6 @@
 #include <pwd.h>
 #include <errno.h>
 #include <bitstring.h>
-
-#include "sysdep.h"
 
 #include "cert.h"
 #include "conf.h"
@@ -824,7 +827,9 @@ pf_key_v2_setup_sockaddr (void *res, struct sockaddr *src,
     case AF_INET:
       ip4_sa = (struct sockaddr_in *)res;
       ip4_sa->sin_family = AF_INET;
+#ifndef USE_OLD_SOCKADDR
       ip4_sa->sin_len = sizeof *ip4_sa;
+#endif
       ip4_sa->sin_port = port;
       if (dst)
 	p = (u_int8_t *)(ingress
@@ -838,7 +843,9 @@ pf_key_v2_setup_sockaddr (void *res, struct sockaddr *src,
     case AF_INET6:
       ip6_sa = (struct sockaddr_in6 *)res;
       ip6_sa->sin6_family = AF_INET6;
+#ifndef USE_OLD_SOCKADDR
       ip6_sa->sin6_len = sizeof *ip6_sa;
+#endif
       ip6_sa->sin6_port = port;
       if (dst)
 	p = (u_int8_t *)(ingress
@@ -1085,7 +1092,14 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   memset (&ssa2, 0, sizeof ssa2);
   ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
   ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
+#if defined (LINUX_IPSEC)
+  if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL)
+    ssa2.sadb_x_sa2_mode = IPSEC_MODE_TUNNEL;
+  else
+    ssa2.sadb_x_sa2_mode = IPSEC_MODE_TRANSPORT;
+#else
   ssa2.sadb_x_sa2_mode = 0;
+#endif
   if (pf_key_v2_msg_add (update, (struct sadb_ext *)&ssa2, 0) == -1)
     goto cleanup;
 #endif
@@ -1676,7 +1690,8 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
 		u_int8_t *spi, u_int8_t proto, struct sockaddr *dst,
 		struct sockaddr *src, int delete, int ingress,
 		u_int8_t srcid_type, u_int8_t *srcid, int srcid_len,
-		u_int8_t dstid_type, u_int8_t *dstid, int dstid_len)
+		u_int8_t dstid_type, u_int8_t *dstid, int dstid_len,
+		struct ipsec_proto *iproto)
 {
 #ifdef USE_DEBUG
   char *laddr_str, *lmask_str, *raddr_str, *rmask_str;
@@ -2070,8 +2085,15 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
     default:
       log_print ("pf_key_v2_flow: invalid proto %d", proto);
       goto cleanup;
-    }
+  }
+#if defined (LINUX_IPSEC)
+  if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL)
+    ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;
+  else
+    ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
+#else
   ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;	/* XXX */
+#endif
   ipsecrequest->sadb_x_ipsecrequest_level
     = ingress ? IPSEC_LEVEL_USE : IPSEC_LEVEL_REQUIRE;
   ipsecrequest->sadb_x_ipsecrequest_reqid = 0;	/* XXX */
@@ -2306,7 +2328,8 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
   error = pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
 			  isa->dst_mask, isa->tproto, isa->sport, isa->dport,
 			  proto->spi[0], proto->proto, dst, src, 0, 0,
-			  sidtype, sid, sidlen, didtype, did, didlen);
+			  sidtype, sid, sidlen, didtype, did, didlen,
+			  proto->data);
   if (error)
     goto cleanup;
 
@@ -2316,13 +2339,17 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
     {
     case AF_INET:
       ((struct sockaddr_in *)hostmask)->sin_family = AF_INET;
+#ifndef USE_OLD_SOCKADDR
       ((struct sockaddr_in *)hostmask)->sin_len = sizeof (struct in_addr);
+#endif
       memset (&((struct sockaddr_in *)hostmask)->sin_addr.s_addr, 0xff,
 	      sizeof (struct in_addr));
       break;
     case AF_INET6:
       ((struct sockaddr_in6 *)hostmask)->sin6_family = AF_INET6;
+#ifndef USE_OLD_SOCKADDR
       ((struct sockaddr_in6 *)hostmask)->sin6_len = sizeof (struct in6_addr);
+#endif
       memset (&((struct sockaddr_in6 *)hostmask)->sin6_addr.s6_addr, 0xff,
 	      sizeof (struct in6_addr));
       break;
@@ -2333,7 +2360,7 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
     {
       error = pf_key_v2_flow (dst, hostmask, src, hostmask, 0, 0, 0,
 			      proto->spi[1], proto->proto, src, dst,
-			      0, 1, 0, 0, 0, 0, 0, 0);
+			      0, 1, 0, 0, 0, 0, 0, 0, proto->data);
       if (error)
 	goto cleanup;
       proto = TAILQ_NEXT (proto, link);
@@ -2343,7 +2370,8 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
   error = pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
 			  isa->src_mask, isa->tproto, isa->dport, isa->sport,
 			  proto->spi[1], proto->proto, src, dst, 0, 1,
-			  sidtype, sid, sidlen, didtype, did, didlen);
+			  sidtype, sid, sidlen, didtype, did, didlen,
+			  proto->data);
 
  cleanup:
 #if defined (SADB_X_EXT_FLOW_TYPE)
@@ -2492,7 +2520,7 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
     return pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
 			   isa->dst_mask, isa->tproto, isa->sport, isa->dport,
 			   proto->spi[0], proto->proto, src, dst, 1, 0,
-			   0, 0, 0, 0, 0, 0);
+			   0, 0, 0, 0, 0, 0, proto->data);
   else
     {
 #if !defined (SADB_X_EXT_FLOW_TYPE)
@@ -2501,14 +2529,18 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 	{
 	case AF_INET:
 	  ((struct sockaddr_in *)hostmask)->sin_family = AF_INET;
+#ifndef USE_OLD_SOCKADDR
 	  ((struct sockaddr_in *)hostmask)->sin_len = sizeof (struct in_addr);
+#endif
 	  memset (&((struct sockaddr_in *)hostmask)->sin_addr.s_addr, 0xff,
 		  sizeof (struct in_addr));
 	  break;
 	case AF_INET6:
 	  ((struct sockaddr_in6 *)hostmask)->sin6_family = AF_INET6;
+#ifndef USE_OLD_SOCKADDR
 	  ((struct sockaddr_in6 *)hostmask)->sin6_len =
 	    sizeof (struct in6_addr);
+#endif
 	  memset (&((struct sockaddr_in6 *)hostmask)->sin6_addr.s6_addr, 0xff,
 		  sizeof (struct in6_addr));
 	  break;
@@ -2519,7 +2551,7 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 	{
           error = pf_key_v2_flow (dst, hostmask, src, hostmask, 0, 0, 0,
 				  proto->spi[1], proto->proto, src, dst,
-				  1, 1, 0, 0, 0, 0, 0, 0);
+				  1, 1, 0, 0, 0, 0, 0, 0, proto->data);
           if (error)
 	    return error;
           proto = TAILQ_NEXT (proto, link);
@@ -2529,7 +2561,7 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
       return pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
 			     isa->src_mask, isa->tproto, isa->dport,
 			     isa->sport, proto->spi[1], proto->proto,
-			     src, dst, 1, 1, 0, 0, 0, 0, 0, 0);
+			     src, dst, 1, 1, 0, 0, 0, 0, 0, 0, proto->data);
     }
 }
 
@@ -4029,6 +4061,7 @@ void
 pf_key_v2_handler (int fd)
 {
   struct pf_key_v2_msg *msg;
+#if !defined (LINUX_IPSEC)
   int n;
 
   /*
@@ -4044,6 +4077,7 @@ pf_key_v2_handler (int fd)
     }
   if (!n)
     return;
+#endif /* LINUX_IPSEC */
 
   msg = pf_key_v2_read (0);
   if (msg)

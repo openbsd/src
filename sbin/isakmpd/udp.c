@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.59 2003/05/15 00:28:53 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.60 2003/05/18 18:16:34 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -678,7 +678,9 @@ udp_init (void)
     {
       memset (&dflt_stor, 0, sizeof dflt_stor);
       dflt->sin_family = AF_INET;
+#if !defined (LINUX_IPSEC)
       ((struct sockaddr_in *)dflt)->sin_len = sizeof (struct sockaddr_in);
+#endif
       ((struct sockaddr_in *)dflt)->sin_port = htons (lport);
 
       default_transport = udp_bind ((struct sockaddr *)&dflt_stor);
@@ -696,7 +698,9 @@ udp_init (void)
     {
       memset (&dflt_stor, 0, sizeof dflt_stor);
       dflt->sin_family = AF_INET6;
+#if !defined (LINUX_IPSEC)
       ((struct sockaddr_in6 *)dflt)->sin6_len = sizeof (struct sockaddr_in6);
+#endif
       ((struct sockaddr_in6 *)dflt)->sin6_port = htons (lport);
 
       default_transport6 = udp_bind ((struct sockaddr *)&dflt_stor);
