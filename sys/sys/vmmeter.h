@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmeter.h,v 1.5 1997/11/09 22:12:22 millert Exp $	*/
+/*	$OpenBSD: vmmeter.h,v 1.6 1999/02/26 02:47:02 art Exp $	*/
 /*	$NetBSD: vmmeter.h,v 1.9 1995/03/26 20:25:04 jtc Exp $	*/
 
 /*-
@@ -40,8 +40,10 @@
 #define	__VMMETER_H__
 
 /*
- * System wide statistics counters.
+ * System wide statistics counters.  Look in <uvm/uvm_extern.h> for the
+ * UVM equivalent.
  */
+#if !defined(UVM)
 struct vmmeter {
 	/*
 	 * General system activity.
@@ -90,6 +92,7 @@ struct vmmeter {
 };
 #ifdef _KERNEL
 struct	vmmeter cnt;
+#endif
 #endif
 
 /* systemwide totals computed every five seconds */
