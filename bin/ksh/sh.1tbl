@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1tbl,v 1.46 2004/03/15 08:52:12 jmc Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.47 2004/03/15 08:56:56 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -365,8 +365,8 @@ to the standard input of the following command.
 The exit status of a pipeline is that of its last command.
 A pipeline may be prefixed by the
 .Ql \&!
-reserved word which causes the exit status of the pipeline to be logically
-complemented: if the original status was 0 the complemented status will be 1;
+reserved word, which causes the exit status of the pipeline to be logically
+complemented: if the original status was 0, the complemented status will be 1;
 if the original status was not 0, the complemented status will be 0.
 .Pp
 .Em Lists
