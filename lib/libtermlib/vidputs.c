@@ -1,4 +1,4 @@
-/*	$OpenBSD: vidputs.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: vidputs.c,v 1.2 1996/07/20 07:35:04 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: vidputs.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: vidputs.c,v 1.2 1996/07/20 07:35:04 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -122,5 +122,6 @@ vidputs(attr, outc)
 	if ((attr_on & A_VERTICAL) && enter_vertical_hl_mode != NULL)
 	    tputs(enter_vertical_hl_mode, 1, outc);
     }
-    return ERR;
+    old_attr = attr;
+    return OK;
 }
