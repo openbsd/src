@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.15 2005/01/10 20:33:01 brad Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.16 2005/01/10 22:52:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -155,7 +155,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			 */
 			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
-			(void) mii_phy_auto(sc);
+			(void) mii_phy_auto(sc, 0);
 			break;
 		case IFM_100_T4:
 			/*
