@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.160 2000/12/30 07:59:27 angelos Exp $
+#	$OpenBSD: rc,v 1.161 2001/01/16 04:08:35 angelos Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -465,7 +465,7 @@ if [ "X${smtpfwdd_flags}" != X"NO" ]; then
 fi
 
 
-if [ X${inetd} = X"YES" ]; then
+if [ X${inetd} = X"YES" -a -e /etc/inetd.conf ]; then
 	echo -n ' inetd';		inetd
 fi
 
