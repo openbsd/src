@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.15 1999/01/11 02:01:34 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.16 1999/03/24 02:33:02 cmetz Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
  */
 
 #include <sys/queue.h>
-#include <netinet6/in6.h>
 #include <netinet6/ipv6.h>
 #include <netinet6/ipv6_var.h>
 #include <netinet6/icmpv6.h>
