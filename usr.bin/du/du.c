@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.6 2000/04/16 04:21:34 ericj Exp $	*/
+/*	$OpenBSD: du.c,v 1.7 2001/02/23 19:14:21 pjanzen Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.6 2000/04/16 04:21:34 ericj Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.7 2001/02/23 19:14:21 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,12 +58,14 @@ static char rcsid[] = "$OpenBSD: du.c,v 1.6 2000/04/16 04:21:34 ericj Exp $";
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 int	 linkchk __P((FTSENT *));
+void	 prtout __P((quad_t, char *, int));
 void	 usage __P((void));
 
 int
@@ -73,16 +75,18 @@ main(argc, argv)
 {
 	FTS *fts;
 	FTSENT *p;
-	long blocksize, totalblocks;
+	long blocksize;
+	quad_t totalblocks;
 	int ftsoptions, listdirs, listfiles;
-	int Hflag, Lflag, Pflag, aflag, ch, cflag, kflag, notused, rval, sflag;
+	int Hflag, Lflag, Pflag, aflag, cflag, hflag, kflag, sflag;
+	int ch, notused, rval;
 	char **save;
 
 	save = argv;
-	Hflag = Lflag = Pflag = aflag = cflag = kflag = sflag = 0;
+	Hflag = Lflag = Pflag = aflag = cflag = hflag = kflag = sflag = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPacksxr")) != -1)
+	while ((ch = getopt(argc, argv, "HLPachksxr")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -101,6 +105,9 @@ main(argc, argv)
 			break;
 		case 'c':
 			cflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
 			break;
 		case 'k':
 			blocksize = 1024;
@@ -157,7 +164,7 @@ main(argc, argv)
 		argv[1] = NULL;
 	}
 
-	if (!kflag)
+	if (!kflag || hflag)
 		(void)getbsize(&notused, &blocksize);
 	blocksize /= 512;
 
@@ -179,9 +186,8 @@ main(argc, argv)
 			 * root of a traversal, display the total.
 			 */
 			if (listdirs || (!listfiles && !p->fts_level))
-				(void)printf("%ld\t%s\n",
-				    howmany(p->fts_number, blocksize),
-				    p->fts_path);
+				prtout((quad_t)howmany(p->fts_number, blocksize),
+				    p->fts_path, hflag);
 			break;
 		case FTS_DC:			/* Ignore. */
 			break;
@@ -199,18 +205,17 @@ main(argc, argv)
 			 * the root of a traversal, display the total.
 			 */
 			if (listfiles || !p->fts_level)
-				(void)printf("%qd\t%s\n",
-				    howmany(p->fts_statp->st_blocks, blocksize),
-				    p->fts_path);
+				prtout(howmany(p->fts_statp->st_blocks, blocksize),
+				    p->fts_path, hflag);
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
 			if (cflag)
 				totalblocks += p->fts_statp->st_blocks;
 		}
 	if (errno)
 		err(1, "fts_read");
-	if (cflag)
-		(void)printf("%ld\ttotal\n",
-		    howmany(totalblocks, blocksize));
+	if (cflag) {
+		prtout((quad_t)howmany(totalblocks, blocksize), "total", hflag);
+	}
 	exit(rval);
 }
 
@@ -245,11 +250,71 @@ linkchk(p)
 	return (0);
 }
 
+/*
+ * "human-readable" output: use 3 digits max.--put unit suffixes at
+ * the end.  Makes output compact and easy-to-read. 
+ */
+
+typedef enum { NONE = 0, KILO, MEGA, GIGA, TERA, PETA /* , EXA */ } unit_t;
+
+unit_t
+unit_adjust(val)
+	double *val;
+{
+	double abval;
+	unit_t unit;
+
+	abval = fabs(*val);
+	if (abval < 1024)
+		unit = NONE;
+	else if (abval < 1048576ULL) {
+		unit = KILO;
+		*val /= 1024;
+	} else if (abval < 1073741824ULL) {
+		unit = MEGA;
+		*val /= 1048576;
+	} else if (abval < 1099511627776ULL) {
+		unit = GIGA;
+		*val /= 1073741824ULL;
+	} else if (abval < 1125899906842624ULL) {
+		unit = TERA;
+		*val /= 1099511627776ULL;
+	} else /* if (abval < 1152921504606846976ULL) */ {
+		unit = PETA;
+		*val /= 1125899906842624ULL;
+	}
+	return (unit);
+}
+
+void
+prtout(size, path, hflag)
+	quad_t size;
+	char *path;
+	int hflag;
+{
+	unit_t unit;
+	double bytes;
+
+	if (!hflag)
+		(void)printf("%qd\t%s\n", size, path);
+	else {
+		bytes = (double)size * 512.0;
+		unit = unit_adjust(&bytes);
+
+		if (bytes == 0)
+			(void)printf("     0B\t%s\n", path);
+		else if (bytes > 10)
+			(void)printf("%.0f%c\t%s\n", bytes, "BKMGTPE"[unit], path);
+		else
+			(void)printf("%.1f%c\t%s\n", bytes, "BKMGTPE"[unit], path);
+	}
+}
+
 void
 usage()
 {
 
 	(void)fprintf(stderr,
-		"usage: du [-H | -L | -P] [-a | -s] [-ckrx] [file ...]\n");
+		"usage: du [-H | -L | -P] [-a | -s] [-chkrx] [file ...]\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.13 2000/03/11 21:40:07 aaron Exp $
+.\"	$OpenBSD: du.1,v 1.14 2001/02/23 19:14:20 pjanzen Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@
 .Nm du
 .Op Fl H | Fl L | Fl P
 .Op Fl a | Fl s
-.Op Fl ckrx
+.Op Fl chkrx
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -83,6 +83,13 @@ blocks.
 Partial numbers of blocks are rounded up.
 .It Fl c
 Display the grand total after all the arguments have been processed.
+.It Fl h
+Display numbers in a human readable form.
+Use unit suffixes: Byte, Kilobyte, Megabyte, Gigabyte, Terabyte in order to
+reduce the number of digits to four or less.
+This overrides the
+.Fl k
+option.
 .It Fl s
 Display only the grand total for the specified files.
 .It Fl r
