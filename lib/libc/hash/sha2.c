@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.2 2003/09/08 00:00:47 millert Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.3 2004/04/28 22:06:02 millert Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: sha2.c,v 1.2 2003/09/08 00:00:47 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sha2.c,v 1.3 2004/04/28 22:06:02 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -272,7 +272,8 @@ const static u_int64_t sha512_initial_hash_value[8] = {
 
 
 /*** SHA-256: *********************************************************/
-void SHA256_Init(SHA256_CTX *context) {
+void
+SHA256_Init(SHA256_CTX *context) {
 	if (context == (SHA256_CTX *)0) {
 		return;
 	}
@@ -318,7 +319,8 @@ void SHA256_Init(SHA256_CTX *context) {
 	(h) = T1 + Sigma0_256(a) + Maj((a), (b), (c)); \
 	j++
 
-void SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
+void
+SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
 	u_int32_t	a, b, c, d, e, f, g, h, s0, s1;
 	u_int32_t	T1, *W256;
 	int		j;
@@ -376,7 +378,8 @@ void SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
 
 #else /* SHA2_UNROLL_TRANSFORM */
 
-void SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
+void
+SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
 	u_int32_t	a, b, c, d, e, f, g, h, s0, s1;
 	u_int32_t	T1, T2, *W256;
 	int		j;
@@ -456,7 +459,8 @@ void SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
 
 #endif /* SHA2_UNROLL_TRANSFORM */
 
-void SHA256_Update(SHA256_CTX *context, const u_int8_t *data, size_t len) {
+void
+SHA256_Update(SHA256_CTX *context, const u_int8_t *data, size_t len) {
 	unsigned int	freespace, usedspace;
 
 	if (len == 0) {
@@ -501,7 +505,8 @@ void SHA256_Update(SHA256_CTX *context, const u_int8_t *data, size_t len) {
 	usedspace = freespace = 0;
 }
 
-void SHA256_Final(u_int8_t digest[], SHA256_CTX *context) {
+void
+SHA256_Final(u_int8_t digest[], SHA256_CTX *context) {
 	u_int32_t	*d = (u_int32_t *)digest;
 	unsigned int	usedspace;
 
@@ -563,7 +568,8 @@ void SHA256_Final(u_int8_t digest[], SHA256_CTX *context) {
 
 
 /*** SHA-512: *********************************************************/
-void SHA512_Init(SHA512_CTX *context) {
+void
+SHA512_Init(SHA512_CTX *context) {
 	if (context == (SHA512_CTX *)0) {
 		return;
 	}
@@ -608,7 +614,8 @@ void SHA512_Init(SHA512_CTX *context) {
 	(h) = T1 + Sigma0_512(a) + Maj((a), (b), (c)); \
 	j++
 
-void SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
+void
+SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
 	u_int64_t	a, b, c, d, e, f, g, h, s0, s1;
 	u_int64_t	T1, *W512 = (u_int64_t *)context->buffer;
 	int		j;
@@ -663,7 +670,8 @@ void SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
 
 #else /* SHA2_UNROLL_TRANSFORM */
 
-void SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
+void
+SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
 	u_int64_t	a, b, c, d, e, f, g, h, s0, s1;
 	u_int64_t	T1, T2, *W512 = (u_int64_t *)context->buffer;
 	int		j;
@@ -741,7 +749,8 @@ void SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
 
 #endif /* SHA2_UNROLL_TRANSFORM */
 
-void SHA512_Update(SHA512_CTX *context, const u_int8_t *data, size_t len) {
+void
+SHA512_Update(SHA512_CTX *context, const u_int8_t *data, size_t len) {
 	unsigned int	freespace, usedspace;
 
 	if (len == 0) {
@@ -786,7 +795,8 @@ void SHA512_Update(SHA512_CTX *context, const u_int8_t *data, size_t len) {
 	usedspace = freespace = 0;
 }
 
-void SHA512_Last(SHA512_CTX *context) {
+void
+SHA512_Last(SHA512_CTX *context) {
 	unsigned int	usedspace;
 
 	usedspace = (context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH;
@@ -827,7 +837,8 @@ void SHA512_Last(SHA512_CTX *context) {
 	SHA512_Transform(context, (u_int64_t *)context->buffer);
 }
 
-void SHA512_Final(u_int8_t digest[], SHA512_CTX *context) {
+void
+SHA512_Final(u_int8_t digest[], SHA512_CTX *context) {
 	u_int64_t	*d = (u_int64_t *)digest;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
@@ -855,7 +866,8 @@ void SHA512_Final(u_int8_t digest[], SHA512_CTX *context) {
 
 
 /*** SHA-384: *********************************************************/
-void SHA384_Init(SHA384_CTX *context) {
+void
+SHA384_Init(SHA384_CTX *context) {
 	if (context == (SHA384_CTX *)0) {
 		return;
 	}
@@ -864,11 +876,13 @@ void SHA384_Init(SHA384_CTX *context) {
 	context->bitcount[0] = context->bitcount[1] = 0;
 }
 
-void SHA384_Update(SHA384_CTX *context, const u_int8_t *data, size_t len) {
+void
+SHA384_Update(SHA384_CTX *context, const u_int8_t *data, size_t len) {
 	SHA512_Update((SHA512_CTX *)context, data, len);
 }
 
-void SHA384_Final(u_int8_t digest[], SHA384_CTX *context) {
+void
+SHA384_Final(u_int8_t digest[], SHA384_CTX *context) {
 	u_int64_t	*d = (u_int64_t *)digest;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
