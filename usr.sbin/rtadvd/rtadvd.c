@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.23 2002/09/10 05:31:17 deraadt Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.24 2003/03/14 18:33:58 itojun Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -1197,12 +1197,21 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 	int optlen = 0;
 
 	for (; limit > 0; limit -= optlen) {
+		if (limit < sizeof(struct nd_opt_hdr *)) {
+			syslog(LOG_INFO, "<%s> short option header", __func__);
+			goto bad;
+		}
+
 		hdr = (struct nd_opt_hdr *)((caddr_t)hdr + optlen);
-		optlen = hdr->nd_opt_len << 3;
 		if (hdr->nd_opt_len == 0) {
 			syslog(LOG_ERR,
 			    "<%s> bad ND option length(0) (type = %d)",
 			    __func__, hdr->nd_opt_type);
+			goto bad;
+		}
+		optlen = hdr->nd_opt_len << 3;
+		if (optlen > limit) {
+			syslog(LOG_INFO, "<%s> short option", __func__);
 			goto bad;
 		}
 
@@ -1219,10 +1228,24 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 			continue;
 		}
 
+		/*
+		 * Option length check.  Do it here for all fixed-length
+		 * options.
+		 */
+		if ((hdr->nd_opt_type == ND_OPT_MTU &&
+		    (optlen != sizeof(struct nd_opt_mtu))) ||
+		    ((hdr->nd_opt_type == ND_OPT_PREFIX_INFORMATION &&
+		    optlen != sizeof(struct nd_opt_prefix_info)))) {
+			syslog(LOG_INFO, "<%s> invalid option length",
+			    __func__);
+			continue;
+		}
+
 		switch (hdr->nd_opt_type) {
 		case ND_OPT_SOURCE_LINKADDR:
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_REDIRECTED_HEADER:
+			break;	/* we don't care about these options */
 		case ND_OPT_MTU:
 			if (ndopts->nd_opt_array[hdr->nd_opt_type]) {
 				syslog(LOG_INFO,
