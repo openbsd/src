@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.32 2000/12/16 21:47:49 mickey Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.33 2001/01/29 05:37:51 mickey Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ struct cfattach ne_pcmcia_ca = {
 	ne_pcmcia_detach, ne_pcmcia_activate
 };
 
-struct ne2000dev {
+const struct ne2000dev {
     u_int16_t manufacturer;
     u_int16_t product;
     char *cis_info[4];
@@ -163,7 +163,7 @@ struct ne2000dev {
 
     /*
      * You have to add new entries which contains
-     * PCMCIA_VENDOR_INVALID and/or PCMCIA_PRODUCT_INVALID 
+     * PCMCIA_VENDOR_INVALID and/or PCMCIA_PRODUCT_INVALID
      * in front of this comment.
      *
      * There are cards which use a generic vendor and product id but needs
@@ -214,7 +214,7 @@ struct ne2000dev {
       0, -1, { 0x00, 0xe0, 0x98 } },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
-      PCMCIA_CIS_LINKSYS_COMBO_ECARD, 
+      PCMCIA_CIS_LINKSYS_COMBO_ECARD,
       0, -1, { 0x00, 0x80, 0xc8 } },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD,
@@ -262,7 +262,7 @@ struct ne2000dev {
     { PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
       PCMCIA_CIS_IODATA_PCLATE,
       0, -1, { 0x00, 0xa0, 0xb0 } },
- 
+
     /*
      * This entry should be placed after above PCLA-TE entry.
      * See above comments for detail.
@@ -308,7 +308,7 @@ struct ne2000dev {
       0, -1, { 0x00, 0x10, 0xa4 } },
 
     { PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
-      PCMCIA_CIS_MELCO_LPC3_TX, 
+      PCMCIA_CIS_MELCO_LPC3_TX,
       0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_DUAL, PCMCIA_PRODUCT_DUAL_NE2000,
@@ -433,7 +433,7 @@ ne_pcmcia_attach(parent, self, aux)
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	struct ne2000dev *ne_dev;
+	const struct ne2000dev *ne_dev;
 	int i;
 	u_int8_t myea[6], *enaddr;
 	void (*npp_init_media) __P((struct dp8390_softc *, int **,
@@ -556,7 +556,7 @@ again:
 		ne_dev = ne2000_match(pa->card, pa->pf->number, i);
 		if (ne_dev != NULL) {
 			if (ne_dev->enet_maddr >= 0) {
-				enaddr = ne_pcmcia_get_enaddr(psc, 
+				enaddr = ne_pcmcia_get_enaddr(psc,
 				    ne_dev->enet_maddr, myea);
 				if (enaddr == NULL)
 					continue;
