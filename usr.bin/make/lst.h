@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.6 1998/12/05 00:06:28 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.7 1999/07/29 19:55:19 deraadt Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #ifndef _LST_H_
 #define _LST_H_
 
-#include	<sprite.h>
+#include	"sprite.h"
 #include	<sys/param.h>
 #ifdef __STDC__
 #include	<stdlib.h>
