@@ -1,3 +1,5 @@
+/*	$OpenBSD: syslogd.c,v 1.33 1999/07/06 10:07:03 millert Exp $	*/
+
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";*/
-static char rcsid[] = "$NetBSD: syslogd.c,v 1.5 1996/01/02 17:48:41 perry Exp $";
+#if 0
+static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
+#else
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.33 1999/07/06 10:07:03 millert Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -825,10 +830,10 @@ void
 reapchild(signo)
 	int signo;
 {
-	union wait status;
+	int status;
 	int save_errno = errno;
 
-	while (wait3((int *)&status, WNOHANG, (struct rusage *)NULL) > 0)
+	while (waitpid(-1, &status, WNOHANG) > 0)
 		;
 	errno = save_errno;
 }
