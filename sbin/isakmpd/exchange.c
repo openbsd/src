@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.53 2001/06/29 19:55:51 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.54 2001/06/29 19:59:51 niklas Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -973,10 +973,10 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
        * policies too.
        */
       t->vtbl->get_dst (t, &dst);
-      if (sockaddr2text(dst, &addr, 0) == -1)
+      if (sockaddr2text(dst, &str, 0) == -1)
 	return 0;
-      name = conf_get_str ("Phase 1", addr);
-      free (addr);
+      name = conf_get_str ("Phase 1", str);
+      free (str);
       if (name)
 	{
 	  /*
