@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_conf.h,v 1.5 1996/06/10 07:37:21 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_conf.h,v 1.6 1996/08/27 09:04:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -399,7 +399,7 @@
 				/* -- see also PCVT_PALFLICKER above -- */
 
 #if !defined PCVT_INHIBIT_NUMLOCK /* --------- DEFAULT: OFF ----------- */
-# define PCVT_INHIBIT_NUMLOCK 0 /* A notebook hack: since i am getting	*/
+# define PCVT_INHIBIT_NUMLOCK 1 /* A notebook hack: since i am getting	*/
 #elif PCVT_INHIBIT_NUMLOCK != 0	/* tired of the numlock LED always	*/
 # undef PCVT_INHIBIT_NUMLOCK    /* being turned on - which causes the	*/
 # define PCVT_INHIBIT_NUMLOCK 1 /* right half of my keyboard being	*/
