@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.12 1997/04/26 17:50:07 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.13 1997/04/28 07:39:00 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -63,6 +63,7 @@ static int Xregs __P((register struct cmd_state *));
 static int Xset __P((register struct cmd_state *));
 static int Xhowto __P((register struct cmd_state *));
 static int Xtty __P((register struct cmd_state *));
+static int Xtime __P((register struct cmd_state *));
 
 struct cmd_table {
 	char *cmd_name;
@@ -92,6 +93,7 @@ static const struct cmd_table cmd_table[] = {
 	{"reboot", Xreboot},
 	{"regs",   Xregs},
 	{"set",    Xset, cmd_set},
+	{"time",   Xtime},
 	{NULL, 0},
 };
 
@@ -406,6 +408,18 @@ Xtty(cmd)
 {
 	if (cmd->argc == 1)
 		printf("tty=%s\n", ttyname(0));
+	else {
+	}
+
+	return 0;
+}
+
+static int
+Xtime(cmd)
+	register struct cmd_state *cmd;
+{
+	if (cmd->argc == 1)
+		time_print();
 	else {
 	}
 

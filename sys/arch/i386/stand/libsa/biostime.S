@@ -1,4 +1,4 @@
-/*	$OpenBSD: biostime.S,v 1.5 1997/04/21 20:20:28 mickey Exp $	*/
+/*	$OpenBSD: biostime.S,v 1.6 1997/04/28 07:39:01 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -58,9 +58,69 @@ ENTRY(usleep)
 	popl	%ecx
 	ret
 
+
 /*
- *
+ * int biostime(char buf[4])
  */
-ENTRY(getsecs)
+ENTRY(biostime)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl	%ecx
+	pushl	%ebx
+
+	/* Get address of buffer */
+	movl	8(%ebp), %ebx
+
+	movb	$0x02, %ah
+	BIOSINT(0x1a)
+	jc		1f
+
+	movl	$0x0, %eax
+	movb	%ch, 0(%ebx)
+	movb	%cl, 1(%ebx)
+	movb	%dh, 2(%ebx)
+	movb	%dl, 3(%ebx)
+
+	jmp		2f
+
+1:	movl	$0x01, %eax
+
+2:	popl	%ebx
+	popl	%ecx
+	popl	%ebp
+	ret
+
+
+/*
+ * int biosdate(char buf[4])
+ */
+ENTRY(biosdate)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl	%ecx
+	pushl	%ebx
+
+	/* Get address of buffer */
+	movl	8(%ebp), %ebx
+
+	movb	$0x04, %ah
+	BIOSINT(0x1a)
+	jc		1f
+
+	movl	$0x0, %eax
+	movb	%ch, 0(%ebx)
+	movb	%cl, 1(%ebx)
+	movb	%dh, 2(%ebx)
+	movb	%dl, 3(%ebx)
+
+	jmp		2f
+
+1:	movl	$0x01, %eax
+
+2:	popl	%ebx
+	popl	%ecx
+	popl	%ebp
 	ret
 
