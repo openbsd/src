@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.59 1998/03/26 03:49:19 millert Exp $
+#	$OpenBSD: install.sub,v 1.60 1998/03/26 03:57:43 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -339,7 +339,7 @@ __getrootdisk_1
 	fi
 	echo	"$_DKDEVS"
 	echo	""
-	echo -n	"Which disk is the root disk? [${_defdsk}]"
+	echo -n "Which disk is the root disk [${_defdsk}]? "
 	getresp "${_defdsk}"
 	if isin $resp $_DKDEVS ; then
 		ROOTDISK="$resp"
