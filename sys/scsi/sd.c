@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.71 2005/02/27 01:12:11 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.72 2005/03/25 05:07:43 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -222,9 +222,10 @@ sdattach(parent, self, aux)
 	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
-	/* Start the pack spinning if necessary. */
+	/* Try to start the unit if it wasn't ready. */
 	if (error == EIO)
-		error = scsi_start(sc_link, SSS_START, 0);
+		error = scsi_start(sc_link, SSS_START,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 	/* Fill in name struct for spoofed label */
 	viscpy(sd->name.vendor, sa->sa_inqbuf->vendor, 8);
@@ -395,9 +396,11 @@ sdopen(dev, flag, fmt, p)
 		    SCSI_IGNORE_ILLEGAL_REQUEST |
 		    SCSI_IGNORE_MEDIA_CHANGE);
 
-		/* Start the pack spinning if necessary. */
+		/* Try to start the unit if it wasn't ready. */
 		if (error == EIO)
-			error = scsi_start(sc_link, SSS_START, 0);
+			error = scsi_start(sc_link, SSS_START,
+			    SCSI_IGNORE_ILLEGAL_REQUEST |
+			    SCSI_IGNORE_MEDIA_CHANGE);
 
 		if (error)
 			goto bad3;
@@ -1134,7 +1137,8 @@ sd_interpret_sense(xs)
 		} else {
 			printf("%s: respinning up disk\n", sd->sc_dev.dv_xname);
 			retval = scsi_start(sd->sc_link, SSS_START,
-			    SCSI_URGENT | SCSI_NOSLEEP);
+		    	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_URGENT |
+			    SCSI_NOSLEEP);
 			if (retval != 0) {
 				printf("%s: respin of disk failed - %d\n",
 				    sd->sc_dev.dv_xname, retval);
