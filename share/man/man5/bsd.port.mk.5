@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.55 2001/10/07 11:36:09 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.56 2001/11/11 13:57:31 heko Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1020,6 +1020,13 @@ The
 .Sq any
 setting creates an extra flavor choice of 
 .Sq lesstif .
+.It Ev VMEM_WARNING
+Set to 
+.Sq Yes 
+if the port requires a lot of memory to compile, and the user is
+likely to see a message like 
+.Qq virtual memory exhausted
+with the default process limits.
 .It Ev XMKMF
 Invocation of xmkmf for CONFIGURE_STYLE=imake port.
 Defaults to xmkf -a -DPorts.
