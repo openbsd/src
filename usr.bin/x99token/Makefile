@@ -1,8 +1,6 @@
-#	BSDI $Id: Makefile,v 1.1 2001/08/01 21:22:16 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/08/14 00:56:58 millert Exp $
 
 PROG=	x99token
-SRCS=	x99token.c
-CFLAGS+=-DKRBDES
 LDADD+=	-ldes
 
 .include <bsd.prog.mk>
