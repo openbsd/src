@@ -1,6 +1,6 @@
 Installation is supported from several media types, including:
 
-	CD-ROM
+	CD-ROM (NOT supported if booting from floppy)
 	FFS partitions
 	Tape
 dnl	Remote NFS partition
