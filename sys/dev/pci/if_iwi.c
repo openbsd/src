@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.12 2004/11/24 21:00:50 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.13 2004/11/24 21:17:26 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -235,8 +235,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps =  IEEE80211_C_IBSS | IEEE80211_C_PMGT |
-	    IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_PMGT |
+	    IEEE80211_C_TXPMGT | IEEE80211_C_WEP | IEEE80211_C_SHPREAMBLE;
 
 	/* read MAC address from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 0);
@@ -1746,22 +1746,26 @@ iwi_config(struct iwi_softc *sc)
 	if (error != 0)
 		return error;
 
-	power.mode = IWI_MODE_11B;
-	power.nchan = 11;
-	for (i = 0; i < 11; i++) {
-		power.chan[i].chan = i + 1;
-		power.chan[i].power = ic->ic_txpower / IWI_TXPOWER_RATIO;
-	}
-	DPRINTF(("Setting .11b channels tx power\n"));
-	error = iwi_cmd(sc, IWI_CMD_SET_TX_POWER, &power, sizeof power, 0);
-	if (error != 0)
-		return error;
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
+		power.mode = IWI_MODE_11B;
+		power.nchan = 11;
+		for (i = 0; i < 11; i++) {
+			power.chan[i].chan = i + 1;
+			power.chan[i].power = IWI_TXPOWER_MAX;
+		}
+		DPRINTF(("Setting .11b channels tx power\n"));
+		error = iwi_cmd(sc, IWI_CMD_SET_TX_POWER, &power, sizeof power,
+		    0);
+		if (error != 0)
+			return error;
 
-	power.mode = IWI_MODE_11G;
-	DPRINTF(("Setting .11g channels tx power\n"));
-	error = iwi_cmd(sc, IWI_CMD_SET_TX_POWER, &power, sizeof power, 0);
-	if (error != 0)
-		return error;
+		power.mode = IWI_MODE_11G;
+		DPRINTF(("Setting .11g channels tx power\n"));
+		error = iwi_cmd(sc, IWI_CMD_SET_TX_POWER, &power, sizeof power,
+		    0);
+		if (error != 0)
+			return error;
+	}
 
 	rs.mode = IWI_MODE_11G;
 	rs.type = IWI_RATESET_TYPE_SUPPORTED;
@@ -1857,7 +1861,6 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	struct iwi_associate assoc;
 	struct iwi_rateset rs;
 	u_int32_t data;
-	u_int16_t capinfo;
 	int error;
 
 	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
@@ -1897,7 +1900,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if (error != 0)
 		return error;
 
-	data = htole32(IWI_RSSI2SENS(ni->ni_rssi));
+	data = htole32(0);
 	DPRINTF(("Setting sensitivity to %d\n", letoh32(data)));
 	error = iwi_cmd(sc, IWI_CMD_SET_SENSITIVITY, &data, sizeof data,
 	    IWI_ASYNC_CMD);
@@ -1911,21 +1914,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if (sc->authmode == IEEE80211_AUTH_SHARED)
 		assoc.auth = IWI_AUTH_SHARED | ic->ic_wep_txkey;
 	bcopy(ni->ni_tstamp, assoc.tstamp, 8);
-
-	capinfo = 0;
-	if (ic->ic_opmode == IEEE80211_M_IBSS)
-		capinfo |= IEEE80211_CAPINFO_IBSS;
-	else	/* IEEE80211_M_STA */
-		capinfo |= IEEE80211_CAPINFO_ESS;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
-		capinfo |= IEEE80211_CAPINFO_PRIVACY;
-	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
-
-	assoc.capinfo = htole16(capinfo);
+	assoc.capinfo = htole16(ni->ni_capinfo);
 	assoc.lintval = htole16(ic->ic_lintval);
 	assoc.intval = htole16(ni->ni_intval);
 	IEEE80211_ADDR_COPY(assoc.bssid, ni->ni_bssid);
