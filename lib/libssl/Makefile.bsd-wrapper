@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.13 2000/03/19 22:17:05 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.14 2000/03/29 09:28:31 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -33,8 +33,161 @@ SSLCONF=	--openssldir=/etc/ssl OpenBSD
 
 MUNGEDFILES =  	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h ${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/Makefile ${.OBJDIR}/${SSL_SRC}/apps/der_chop ${.OBJDIR}/${SSL_SRC}/tools/c_rehash
 
+.ifndef NOMAN
+# skipped err.cat3 rand.cat3 rc4.cat3 threads.cat3 ripemd.cat3 
+MANALL=	ssl.cat3 SSL_get_error.cat3 \
+	\
+	BN_CTX_new.cat3 OPENSSL_VERSION_NUMBER.cat3 BN_CTX_start.cat3 \
+	OpenSSL_add_all_algorithms.cat3 BN_add.cat3 RAND_add.cat3 BN_add_word.cat3 \
+	RAND_bytes.cat3 BN_bn2bin.cat3 RAND_cleanup.cat3 BN_cmp.cat3 RAND_egd.cat3 \
+	BN_copy.cat3 RAND_load_file.cat3 BN_generate_prime.cat3 \
+	RAND_set_rand_method.cat3 BN_mod_inverse.cat3 RSA_blinding_on.cat3 \
+	BN_mod_mul_montgomery.cat3 RSA_check_key.cat3 BN_mod_mul_reciprocal.cat3 \
+	RSA_generate_key.cat3 BN_new.cat3 RSA_get_ex_new_index.cat3 BN_num_bytes.cat3 \
+	RSA_new.cat3 BN_rand.cat3 RSA_padding_add_PKCS1_type_1.cat3 BN_set_bit.cat3 \
+	RSA_print.cat3 BN_zero.cat3 RSA_private_encrypt.cat3 CRYPTO_set_ex_data.cat3 \
+	RSA_public_encrypt.cat3 DH_generate_key.cat3 RSA_set_method.cat3 \
+	DH_generate_parameters.cat3 RSA_sign.cat3 DH_get_ex_new_index.cat3 \
+	RSA_sign_ASN1_OCTET_STRING.cat3 DH_new.cat3 RSA_size.cat3 DH_set_method.cat3 \
+	blowfish.cat3 DH_size.cat3 bn.cat3 DSA_SIG_new.cat3 bn_internal.cat3 \
+	DSA_do_sign.cat3 buffer.cat3 DSA_dup_DH.cat3 crypto.cat3 DSA_generate_key.cat3 \
+	DSA_generate_parameters.cat3 d2i_RSAPublicKey.cat3 \
+	DSA_get_ex_new_index.cat3 des_modes.cat3 DSA_new.cat3 dh.cat3 \
+	DSA_set_method.cat3 dsa.cat3 DSA_sign.cat3 DSA_size.cat3 hmac.cat3 \
+	ERR_GET_LIB.cat3 lh_stats.cat3 ERR_clear_error.cat3 lhash.cat3 \
+	ERR_error_string.cat3 md5.cat3 ERR_get_error.cat3 mdc2.cat3 \
+	ERR_load_crypto_strings.cat3 ERR_load_strings.cat3  \
+	ERR_print_errors.cat3 ERR_put_error.cat3 rsa.cat3 \
+	ERR_remove_state.cat3 sha.cat3 EVP_DigestInit.cat3 \
+	EVP_EncryptInit.cat3 \
+	\
+	openssl.cat1
+MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
+	BN_CTX_start.3 BN_CTX_get.3 BN_CTX_start.3 BN_CTX_end.3 \
+	BN_add.3 BN_sub.3 BN_add.3 BN_mul.3 BN_add.3 BN_div.3 \
+	BN_add.3 BN_sqr.3 BN_add.3 BN_mod.3 BN_add.3 BN_mod_mul.3 \
+	BN_add.3 BN_exp.3 BN_add.3 BN_mod_exp.3 BN_add.3 BN_gcd.3 \
+	BN_add_word.3 BN_sub_word.3 BN_add_word.3 BN_mul_word.3 \
+	BN_add_word.3 BN_div_word.3 BN_add_word.3 BN_mod_word.3 \
+	BN_bn2bin.3 BN_bin2bn.3 BN_bn2bin.3 BN_bn2hex.3 \
+	BN_bn2bin.3 BN_bn2dec.3 BN_bn2bin.3 BN_hex2bn.3 \
+	BN_bn2bin.3 BN_dec2bn.3 BN_bn2bin.3 BN_print.3 \
+	BN_bn2bin.3 BN_print_fp.3 BN_bn2bin.3 BN_bn2mpi.3 \
+	BN_bn2bin.3 BN_mpi2bn.3 \
+	BN_cmp.3 BN_ucmp.3 BN_cmp.3 BN_is_zero.3 BN_cmp.3 BN_is_one.3 \
+	BN_cmp.3 BN_is_word.3 BN_cmp.3 BN_is_odd.3 \
+	BN_copy.3 BN_dup.3 \
+	BN_generate_prime.3 BN_is_prime.3 \
+	BN_generate_prime.3 BN_is_prime_fasttest.3 \
+	BN_mod_mul_montgomery.3 BN_MONT_CTX_new.3 \
+	BN_mod_mul_montgomery.3 BN_MONT_CTX_init.3 \
+	BN_mod_mul_montgomery.3 BN_MONT_CTX_free.3 \
+	BN_mod_mul_montgomery.3 BN_MONT_CTX_set.3 \
+	BN_mod_mul_montgomery.3 BN_MONT_CTX_copy.3 \
+	BN_mod_mul_montgomery.3 BN_from_montgomery.3 \
+	BN_mod_mul_montgomery.3 BN_to_montgomery.3 \
+	BN_mod_mul_reciprocal.3 BN_RECP_CTX_new.3 \
+	BN_mod_mul_reciprocal.3 BN_RECP_CTX_init.3 \
+	BN_mod_mul_reciprocal.3 BN_RECP_CTX_free.3 \
+	BN_mod_mul_reciprocal.3 BN_RECP_CTX_set.3 \
+	BN_mod_mul_reciprocal.3 BN_div_recp.3 \
+	BN_new.3 BN_init.3 BN_new.3 BN_clear.3 \
+	BN_new.3 BN_free.3 BN_new.3 BN_clear_free.3 \
+	BN_num_bytes.3 BN_num_bits.3 \
+	BN_num_bytes.3 BN_num_bits_word.3 \
+	BN_rand.3 BN_pseudo_rand.3 \
+	BN_set_bit.3 BN_clear_bit.3 BN_set_bit.3 BN_is_bit_set.3 \
+	BN_set_bit.3 BN_mask_bits.3 BN_set_bit.3 BN_lshift.3 \
+	BN_set_bit.3 BN_lshift1.3 BN_set_bit.3 BN_rshift.3 \
+	BN_set_bit.3 BN_rshift1.3 \
+	BN_zero.3 BN_one.3 BN_zero.3 BN_value_one.3 \
+	BN_zero.3 BN_set_word.3 BN_zero.3 BN_get_word.3 \
+	CRYPTO_set_ex_data.3 CRYPTO_get_ex_data.3 \
+	DH_generate_key.3 DH_compute_key.3 \
+	DH_generate_parameters.3 DH_check.3 \
+	DH_get_ex_new_index.3 DH_set_ex_data.3 \
+	DH_get_ex_new_index.3 DH_get_ex_data.3 \
+	DH_new.3 DH_free.3 \
+	DH_set_method.3 DH_set_default_method.3 \
+	DH_set_method.3 DH_get_default_method.3 \
+	DH_set_method.3 DH_new_method.3 \
+	DH_set_method.3 DH_OpenSSL.3 \
+	ERR_GET_LIB.3 ERR_GET_FUNC.3 \
+	ERR_GET_LIB.3 ERR_GET_REASON.3 \
+	ERR_error_string.3 ERR_lib_error_string.3 \
+	ERR_error_string.3 ERR_func_error_string.3 \
+	ERR_error_string.3 ERR_reason_error_string.3 \
+	ERR_get_error.3 ERR_peek_error.3 \
+	ERR_get_error.3 ERR_get_error_line.3 \
+	ERR_get_error.3 ERR_peek_error_line.3 \
+	ERR_get_error.3 ERR_get_error_line_data.3 \
+	ERR_get_error.3 ERR_peek_error_line_data.3 \
+	ERR_load_crypto_strings.3 ERR_free_strings.3 \
+	ERR_load_crypto_strings.3 SSL_load_error_strings.3 \
+	ERR_load_strings.3 ERR_get_next_error_library.3 \
+	ERR_load_strings.3 ERR_PACK.3 \
+	ERR_print_errors.3 ERR_print_errors_fp.3 \
+	ERR_put_error.3 ERR_add_error_data.3 \
+	OPENSSL_VERSION_NUMBER.3 SSLeay.3 \
+	OpenSSL_add_all_algorithms.3 OpenSSL_add_all_ciphers.3 \
+	OpenSSL_add_all_algorithms.3 OpenSSL_add_all_digests.3 \
+	OpenSSL_add_all_algorithms.3 EVP_cleanup.3 \
+	RAND_add.3 RAND_seed.3 RAND_add.3 RAND_status.3 RAND_add.3 RAND_screen.3 \
+	RAND_bytes.3 RAND_pseudo_bytes.3 \
+	RAND_load_file.3 RAND_file_name.3 RAND_load_file.3 RAND_write_file.3 \
+	RAND_set_rand_method.3 RAND_get_rand_method.3 \
+	RAND_set_rand_method.3 RAND_SSLeay.3 \
+	RSA_blinding_on.3 RSA_blinding_off.3 \
+	RSA_get_ex_new_index.3 RSA_set_ex_data.3 \
+	RSA_get_ex_new_index.3 RSA_get_ex_data.3 \
+	RSA_new.3 RSA_free.3 \
+	RSA_padding_add_PKCS1_type_1.3 RSA_padding_check_PKCS1_type_1.3 \
+	RSA_padding_add_PKCS1_type_1.3 RSA_padding_add_PKCS1_type_2.3 \
+	RSA_padding_add_PKCS1_type_1.3 RSA_padding_check_PKCS1_type_2.3 \
+	RSA_padding_add_PKCS1_type_1.3 RSA_padding_add_PKCS1_OAEP.3 \
+	RSA_padding_add_PKCS1_type_1.3 RSA_padding_check_PKCS1_OAEP.3 \
+	RSA_padding_add_PKCS1_type_1.3 RSA_padding_add_SSLv23.3 \
+	RSA_padding_add_PKCS1_type_1.3 RSA_padding_check_SSLv23.3 \
+	RSA_padding_add_PKCS1_type_1.3 RSA_padding_add_none.3 \
+	RSA_padding_add_PKCS1_type_1.3 RSA_padding_check_none.3 \
+	RSA_print.3 RSA_print_fp.3 RSA_print.3 DSAparams_print.3 \
+	RSA_print.3 DSAparams_print_fp.3 RSA_print.3 DSA_print_fp.3 \
+	RSA_print.3 DHparams_print.3 RSA_print.3 DHparams_print_fp.3 \
+	RSA_private_encrypt.3 RSA_public_decrypt.3 \
+	RSA_public_encrypt.3 RSA_private_decrypt.3 \
+	RSA_set_method.3 RSA_get_method.3 \
+	RSA_set_method.3 RSA_set_default_method.3 \
+	RSA_set_method.3 RSA_get_default_method.3 \
+	RSA_set_method.3 RSA_PKCS1_SSLeay.3 \
+	RSA_set_method.3 RSA_PKCS1_RSAref.3 \
+	RSA_set_method.3 RSA_null_method.3 \
+	RSA_set_method.3 RSA_flags.3 \
+	RSA_set_method.3 RSA_new_method.3 \
+	RSA_sign.3 RSA_verify.3 \
+	RSA_sign_ASN1_OCTET_STRING.3 RSA_verify_ASN1_OCTET_STRING.3 \
+	buffer.3 BUF_MEM_new.3 buffer.3 BUF_MEM_free.3 \
+	buffer.3 BUF_MEM_grow.3 buffer.3 BUF_strdup.3 \
+	d2i_DHparams.3 i2d_DHparams.3
+.else
+MANALL=
+.endif
 
 .include <bsd.own.mk>
+.include <bsd.man.mk>
+
+# XXX .PATH order is critical because of non-unique filenames
+.PATH: ${.CURDIR}/src/doc/crypto ${.CURDIR}/src/doc/ssl ${.CURDIR}/src/doc/apps
+.SUFFIXES: .pod
+.pod.cat3:
+	pod2man --section=3 --official --center='OpenBSD Reference Manual' \
+	    --release="OpenBSD `uname -r`" ${.ALLSRC} | \
+	    nroff -Tascii -man > ${.TARGET}
+
+.pod.cat1:
+	pod2man --section=1 --official --center='OpenBSD Reference Manual' \
+	    --release="OpenBSD `uname -r`" ${.ALLSRC} | \
+	    nroff -Tascii -man > ${.TARGET}
+
 
 .if exists(src-patent)
 SSL_SRC=src-patent
@@ -42,7 +195,7 @@ SSL_SRC=src-patent
 SSL_SRC=src
 .endif 	  
 
-all: 	prereq
+all: 	prereq ${MANALL}
 	cd ${.OBJDIR} && ${MAKE}
 
 includes: prereq
@@ -50,7 +203,7 @@ includes: prereq
 
 prereq:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
 
-install:
+install: maninstall
 	cd ${.OBJDIR} && ${MAKE} install
 
 ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h
