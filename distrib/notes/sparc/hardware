@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.43 2002/09/02 08:00:21 miod Exp $
+dnl	$OpenBSD: hardware,v 1.44 2003/01/22 19:03:25 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -30,7 +30,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	  170MHz
 	- SS10: Pizzabox mbus-based machine
 	- SS20: Improved pizzabox mbus-based machine
-	- Sun Voyager (untested)
+	- Sun Voyager
 
     * As vell as faithful clones of the above Sun systems, such as:
 	- Aries Research Inc, Parrot II (SS2 clone)
