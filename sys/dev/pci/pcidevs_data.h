@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.656 2003/07/24 01:10:59 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.657 2003/07/24 07:25:05 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3909,6 +3909,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID,
 	    "AcceleRAID",
+	},
+	{
+	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803,
+	    "MTD803",
 	},
 	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
@@ -8933,6 +8937,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_DELTA,
 	    "Delta",
+	},
+	{
+	    PCI_VENDOR_MYSON,
+	    "Myson Century Inc",
 	},
 	{
 	    PCI_VENDOR_TOPIC,
