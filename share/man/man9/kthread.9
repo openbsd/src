@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kthread.9,v 1.6 2003/11/02 18:59:46 grange Exp $
+.\"	$OpenBSD: kthread.9,v 1.7 2004/04/17 14:05:16 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -34,11 +34,11 @@
 .Sh SYNOPSIS
 .Fd #include <sys/kthread.h>
 .Ft int
-.Fn kthread_create "void (*func)(void)" "void *arg" "struct proc **newpp" "const char *fmt" ...
+.Fn kthread_create "void (*func)(void *)" "void *arg" "struct proc **newpp" "const char *fmt" ...
 .Ft void
 .Fn kthread_exit "int ecode"
 .Ft void
-.Fn kthread_create_deferred "void (*func)(void)" "void *arg"
+.Fn kthread_create_deferred "void (*func)(void *)" "void *arg"
 .Sh DESCRIPTION
 Kernel threads are system light-weight processes: cloned from process 0
 (the swapper), sharing its memory map and limits, but with a copy of its
