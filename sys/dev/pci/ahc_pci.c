@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.12 2000/01/31 01:50:55 weingart Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.13 2000/03/22 04:01:07 smurph Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -33,42 +33,24 @@
  * SUCH DAMAGE.
  */
 
-#if defined(__FreeBSD__)
-#include <pci.h>
-#endif
-#if NPCI > 0 || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#endif /* defined(__NetBSD__) */
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#if defined(__FreeBSD__)
-
-#include <pci/pcireg.h>
-#include <pci/pcivar.h>
-
-#include <machine/clock.h>
-
-#include <i386/scsi/aic7xxx.h>
-#include <i386/scsi/93cx6.h>
-
-#include <dev/aic7xxx/aic7xxx_reg.h>
-
-#define PCI_BASEADR0	PCI_MAP_REG_START
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+
+#define AHC_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
+#define AHC_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
 
 #include <dev/ic/aic7xxxreg.h>
 #include <dev/ic/aic7xxxvar.h>
@@ -86,392 +68,388 @@
 
 #define PCI_BASEADR0	PCI_MAPREG_START
 
-#endif /* defined(__NetBSD__) */
+#define AHC_394X_SLOT_CHANNEL_A	4
+#define AHC_394X_SLOT_CHANNEL_B	5
 
-#define PCI_DEVICE_ID_ADAPTEC_3940U	0x82789004ul
-#define PCI_DEVICE_ID_ADAPTEC_398XU	0x83789004ul
-#define PCI_DEVICE_ID_ADAPTEC_2944U	0x84789004ul
-#define PCI_DEVICE_ID_ADAPTEC_2940U	0x81789004ul
-#define PCI_DEVICE_ID_ADAPTEC_2940AU	0x61789004ul
-#define PCI_DEVICE_ID_ADAPTEC_3940	0x72789004ul
-#define PCI_DEVICE_ID_ADAPTEC_2944	0x74789004ul
-#define PCI_DEVICE_ID_ADAPTEC_2940	0x71789004ul
-#define PCI_DEVICE_ID_ADAPTEC_AIC7880	0x80789004ul
-#define PCI_DEVICE_ID_ADAPTEC_AIC7870	0x70789004ul
-#define PCI_DEVICE_ID_ADAPTEC_AIC7860	0x60789004ul
-#define PCI_DEVICE_ID_ADAPTEC_AIC7855	0x55789004ul
-#define PCI_DEVICE_ID_ADAPTEC_AIC7850	0x50789004ul
-#define PCI_DEVICE_ID_ADAPTEC_2940UWPro	0x87789004ul
+#define AHC_398X_SLOT_CHANNEL_A	4
+#define AHC_398X_SLOT_CHANNEL_B	8
+#define AHC_398X_SLOT_CHANNEL_C	12
 
 #define	DEVCONFIG		0x40
-#define		MPORTMODE	0x00000400ul	/* aic7870 only */
-#define		RAMPSM		0x00000200ul	/* aic7870 only */
-#define		VOLSENSE	0x00000100ul
-#define		SCBRAMSEL	0x00000080ul
-#define		MRDCEN		0x00000040ul
-#define		EXTSCBTIME	0x00000020ul	/* aic7870 only */
-#define		EXTSCBPEN	0x00000010ul	/* aic7870 only */
-#define		BERREN		0x00000008ul
-#define		DACEN		0x00000004ul
-#define		STPWLEVEL	0x00000002ul
-#define		DIFACTNEGEN	0x00000001ul	/* aic7870 only */
+#define		SCBSIZE32	0x00010000UL	/* aic789X only */
+#define		MPORTMODE	0x00000400UL	/* aic7870 only */
+#define		RAMPSM		0x00000200UL	/* aic7870 only */
+#define		VOLSENSE	0x00000100UL
+#define		SCBRAMSEL	0x00000080UL
+#define		PCI64		0x00000080UL	/* aic7891 & aic7897 only */
+#define		MRDCEN		0x00000040UL
+#define		EXTSCBTIME	0x00000020UL	/* aic7870 only */
+#define		EXTSCBPEN	0x00000010UL	/* aic7870 & aic7890 only */
+#define		BERREN		0x00000008UL
+#define		DACEN		0x00000004UL
+#define		STPWLEVEL	0x00000002UL
+#define		DIFACTNEGEN	0x00000001UL	/* aic7870 only */
 
 #define	CSIZE_LATTIME		0x0c
 #define		CACHESIZE	0x0000003ful	/* only 5 bits */
 #define		LATTIME		0x0000ff00ul
 
-/*
- * Define the format of the aic78X0 SEEPROM registers (16 bits).
- *
- */
+int	    ahc_pci_intr __P((struct ahc_softc *ahc));
+static int  ahc_ext_scbram_present __P((struct ahc_softc *ahc));
+static void ahc_ext_scbram_config __P((struct ahc_softc *ahc, int enable,
+													int pcheck, int fast));
+static void ahc_probe_ext_scbram __P((struct ahc_softc *ahc));
+static void check_extport __P((struct ahc_softc *ahc, u_int *sxfrctl1));
+static void configure_termination __P((struct ahc_softc *ahc,
+				       struct seeprom_descriptor *sd,
+				       u_int adapter_control,
+				       u_int *sxfrctl1));
+static void ahc_new_term_detect __P((struct ahc_softc *ahc,
+				     int *enableSEC_low,
+				     int *enableSEC_high,
+				     int *enablePRI_low,
+				     int *enablePRI_high,
+				     int *eeprom_present));
+static void aic787X_cable_detect __P((struct ahc_softc *ahc,
+				      int *internal50_present,
+				      int *internal68_present,
+				      int *externalcable_present,
+				      int *eeprom_present));
+static void aic785X_cable_detect __P((struct ahc_softc *ahc,
+				      int *internal50_present,
+				      int *externalcable_present,
+				      int *eeprom_present));
+static void write_brdctl __P((struct ahc_softc *ahc, u_int8_t value));
+static u_int8_t read_brdctl __P((struct ahc_softc *ahc));
 
-struct seeprom_config {
-
-/*
- * SCSI ID Configuration Flags
- */
-#define CFXFER		0x0007		/* synchronous transfer rate */
-#define CFSYNCH		0x0008		/* enable synchronous transfer */
-#define CFDISC		0x0010		/* enable disconnection */
-#define CFWIDEB		0x0020		/* wide bus device */
-/* UNUSED		0x00C0 */
-#define CFSTART		0x0100		/* send start unit SCSI command */
-#define CFINCBIOS	0x0200		/* include in BIOS scan */
-#define CFRNFOUND	0x0400		/* report even if not found */
-/* UNUSED		0xf800 */
-  u_int16_t device_flags[16];	/* words 0-15 */
-
-/*
- * BIOS Control Bits
- */
-#define CFSUPREM	0x0001		/* support all removeable drives */
-#define CFSUPREMB	0x0002		/* support removeable drives for boot only */
-#define CFBIOSEN	0x0004		/* BIOS enabled */
-/* UNUSED		0x0008 */
-#define CFSM2DRV	0x0010		/* support more than two drives */
-/* UNUSED		0x0060 */
-#define CFEXTEND	0x0080		/* extended translation enabled */
-/* UNUSED		0xff00 */
-  u_int16_t bios_control;		/* word 16 */
-
-/*
- * Host Adapter Control Bits
- */
-/* UNUSED		0x0001 */
-#define CFULTRAEN       0x0002          /* Ultra SCSI speed enable (Ultra cards) */
-#define CFSTERM		0x0004		/* SCSI low byte termination (non-wide cards) */
-#define CFWSTERM	0x0008		/* SCSI high byte termination (wide card) */
-#define CFSPARITY	0x0010		/* SCSI parity */
-/* UNUSED		0x0020 */
-#define CFRESETB	0x0040		/* reset SCSI bus at IC initialization */
-/* UNUSED		0xff80 */
-  u_int16_t adapter_control;	/* word 17 */
-
-/*
- * Bus Release, Host Adapter ID
- */
-#define CFSCSIID	0x000f		/* host adapter SCSI ID */
-/* UNUSED		0x00f0 */
-#define CFBRTIME	0xff00		/* bus release time */
- u_int16_t brtime_id;		/* word 18 */
-
-/*
- * Maximum targets
- */
-#define CFMAXTARG	0x00ff	/* maximum targets */
-/* UNUSED		0xff00 */
-  u_int16_t max_targets;		/* word 19 */
-
-  u_int16_t res_1[11];		/* words 20-30 */
-  u_int16_t checksum;		/* word 31 */
-};
-
-static void load_seeprom __P((struct ahc_data *ahc));
-static int acquire_seeprom __P((struct seeprom_descriptor *sd));
+void load_seeprom __P((struct ahc_softc *ahc));
+static int acquire_seeprom __P((struct ahc_softc *ahc,
+				struct seeprom_descriptor *sd));
 static void release_seeprom __P((struct seeprom_descriptor *sd));
+int ahc_probe_scbs __P((struct ahc_softc *ahc));
 
 static u_char aic3940_count;
-
-#if defined(__FreeBSD__)
-
-static char* aic7870_probe __P((pcici_t tag, pcidi_t type));
-static void aic7870_attach __P((pcici_t config_id, int unit));
-
-static struct  pci_device ahc_pci_driver = {
-	"ahc",
-        aic7870_probe,
-        aic7870_attach,
-        &ahc_unit,
-	NULL
-};
-
-DATA_SET (pcidevice_set, ahc_pci_driver);
-
-static  char*
-aic7870_probe (pcici_t tag, pcidi_t type)
-{
-	switch(type) {
-		case PCI_DEVICE_ID_ADAPTEC_3940U:
-			return ("Adaptec 3940 Ultra SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_3940:
-			return ("Adaptec 3940 SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_2944U:
-			return ("Adaptec 2944 Ultra SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_2940U:
-			return ("Adaptec 2940 Ultra SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_2944:
-			return ("Adaptec 2944 SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_2940:
-			return ("Adaptec 2940 SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_2940AU:
-			return ("Adaptec 2940A Ultra SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_AIC7880:
-			return ("Adaptec aic7880 Ultra SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_AIC7870:
-			return ("Adaptec aic7870 SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_AIC7860:
-			return ("Adaptec aic7860 SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_AIC7855:
-			return ("Adaptec aic7855 SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_2940UWPro:
-			return ("Adaptec 2940UW Pro Ultra SCSI host adapter");
-			break;
-		case PCI_DEVICE_ID_ADAPTEC_AIC7850:
-			return ("Adaptec aic7850 SCSI host adapter");
-			break;
-		default:
-			break;
-	}
-	return (0);
-
-}
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 int ahc_pci_probe __P((struct device *, void *, void *));
 void ahc_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ahc_pci_ca = {
-	sizeof(struct ahc_data), ahc_pci_probe, ahc_pci_attach
+	sizeof(struct ahc_softc), ahc_pci_probe, ahc_pci_attach
+};
+
+struct ahc_pci_data {
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	u_int function;
 };
 
 int
 ahc_pci_probe(parent, match, aux)
-        struct device *parent;
-        void *match, *aux; 
-{       
-        struct pci_attach_args *pa = aux;
-
-	switch (pa->pa_id) {
-	case PCI_DEVICE_ID_ADAPTEC_3940U:
-	case PCI_DEVICE_ID_ADAPTEC_398XU:
-	case PCI_DEVICE_ID_ADAPTEC_2944U:
-	case PCI_DEVICE_ID_ADAPTEC_2940U:
-	case PCI_DEVICE_ID_ADAPTEC_2940AU:
-	case PCI_DEVICE_ID_ADAPTEC_3940:
-	case PCI_DEVICE_ID_ADAPTEC_2944:
-	case PCI_DEVICE_ID_ADAPTEC_2940:
-	case PCI_DEVICE_ID_ADAPTEC_AIC7880:
-	case PCI_DEVICE_ID_ADAPTEC_AIC7870:
-	case PCI_DEVICE_ID_ADAPTEC_AIC7860:
-	case PCI_DEVICE_ID_ADAPTEC_AIC7855:
-	case PCI_DEVICE_ID_ADAPTEC_AIC7850:
-	case PCI_DEVICE_ID_ADAPTEC_2940UWPro:
-		return 1;
-	}
-	return 0;
-}
-#endif /* defined(__NetBSD__) */
-
-#if defined(__FreeBSD__)
-static void
-aic7870_attach(config_id, unit)
-	pcici_t config_id;
-	int	unit;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-void    
-ahc_pci_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
-#endif
+struct device *parent;
+void *match, *aux;
 {
-#if defined(__FreeBSD__)
-	u_long io_port;
-	int unit = ahc->sc_dev.dv_unit;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct pci_attach_args *pa = aux;
-	struct ahc_data *ahc = (void *)self;
-	bus_addr_t iobase;
-	bus_size_t iosize;
+
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_ADP:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_ADP_AIC7810:
+		case PCI_PRODUCT_ADP_AIC7850:
+		case PCI_PRODUCT_ADP_AIC7855:
+		case PCI_PRODUCT_ADP_AIC5900:
+		case PCI_PRODUCT_ADP_AIC5905:
+		case PCI_PRODUCT_ADP_AIC7860:
+		case PCI_PRODUCT_ADP_2940AU:
+		case PCI_PRODUCT_ADP_AIC7870:
+		case PCI_PRODUCT_ADP_2940:
+		case PCI_PRODUCT_ADP_3940:
+		case PCI_PRODUCT_ADP_3985:
+		case PCI_PRODUCT_ADP_2944:
+		case PCI_PRODUCT_ADP_AIC7880:
+		case PCI_PRODUCT_ADP_2940U:
+		case PCI_PRODUCT_ADP_3940U:
+		case PCI_PRODUCT_ADP_398XU:
+		case PCI_PRODUCT_ADP_2944U:
+		case PCI_PRODUCT_ADP_2940UWPro:
+		case PCI_PRODUCT_ADP_AIC6915:
+		case PCI_PRODUCT_ADP_7895:
+			return (1);
+		}
+			break;
+	case PCI_VENDOR_ADP2:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_ADP2_2940U2:
+		case PCI_PRODUCT_ADP2_AIC7890:
+		case PCI_PRODUCT_ADP2_AIC7892:
+		case PCI_PRODUCT_ADP2_29160:
+		case PCI_PRODUCT_ADP2_19160B:
+		case PCI_PRODUCT_ADP2_3950U2B:
+		case PCI_PRODUCT_ADP2_3950U2D:
+		case PCI_PRODUCT_ADP2_AIC7896:
+		case PCI_PRODUCT_ADP2_AIC7899:
+		case PCI_PRODUCT_ADP2_3960D:
+			return (1);
+		}
+		break;
+	}
+	return (0);
+}
+
+void
+ahc_pci_attach(parent, self, aux)
+struct device *parent, *self;
+void *aux;
+{
+	struct pci_attach_args *pa = aux;
+	struct ahc_softc *ahc = (void *)self;
+	bus_space_tag_t  iot;
 	bus_space_handle_t ioh;
+#ifdef AHC_ALLOW_MEMIO
+	bus_space_tag_t memt;
+	bus_space_handle_t memh;
+	int	memh_valid;
+#endif
 	pci_intr_handle_t ih;
+	pcireg_t	   command;
 	const char *intrstr;
-#endif
-	u_long id;
 	unsigned opri = 0;
-	ahc_type ahc_t = AHC_NONE;
-	ahc_flag ahc_f = AHC_FNONE;
-#if defined(__FreeBSD__)
-	struct ahc_data *ahc;
-#endif
+	ahc_chip ahc_c = AHC_PCI; /* we are a PCI controller */
+	ahc_flag ahc_flags = AHC_FNONE;
+	ahc_feature ahc_f = AHC_FENONE;
+	int	ioh_valid;
+
 	u_char ultra_enb = 0;
 	u_char our_id = 0;
+	u_char channel = 'A';
+	u_int    sxfrctl1;
+	u_int    scsiseq;
+	/* So we can access PCI configuration space after init */
+	struct ahc_pci_data *pd;
 
-#if defined(__FreeBSD__)
-        if(!(io_port = pci_conf_read(config_id, PCI_BASEADR0)))
-		return;
-	/*
-	 * The first bit of PCI_BASEADR0 is always
-	 * set hence we mask it off.
-	 */
-	io_port &= 0xfffffffe;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_BASEADR0, &iobase, &iosize))
-		return;
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &ioh))
-		return;
-#endif
+	ahc->sc_dmat = pa->pa_dmat;
+	
+	command = pci_conf_read(pa->pa_pc, pa->pa_tag,
+				PCI_COMMAND_STATUS_REG);
 
-#if defined(__FreeBSD__)
-	switch ((id = pci_conf_read(config_id, PCI_ID_REG))) {
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	switch (id = pa->pa_id) {
-#endif
-		case PCI_DEVICE_ID_ADAPTEC_3940U:
-		case PCI_DEVICE_ID_ADAPTEC_3940:
-			if (id == PCI_DEVICE_ID_ADAPTEC_3940U)
-				ahc_t = AHC_394U;
-			else
-				ahc_t = AHC_394;
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_ADP:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_ADP_7895:
+			{
+				pcireg_t devconfig;
+				channel = pa->pa_function == 1 ? 'B' : 'A';
+				ahc_c |= AHC_AIC7895;
+				/* The 'C' revision of the aic7895 
+				   has a few additional features */
+				if (PCI_REVISION(pa->pa_class) >= 4)
+					ahc_f = AHC_AIC7895C_FE;
+				else
+					ahc_f = AHC_AIC7895_FE;
+				ahc_flags |= AHC_NEWEEPROM_FMT;
+				devconfig = pci_conf_read(pa->pa_pc, 
+							  pa->pa_tag,
+							  DEVCONFIG);
+				devconfig &= ~SCBSIZE32;
+				pci_conf_write(pa->pa_pc, pa->pa_tag,
+					       DEVCONFIG, devconfig);
+			}
+			break;
+	   case PCI_PRODUCT_ADP_3940U:
+		case PCI_PRODUCT_ADP_3940:
+			if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADP_3940U) {
+				ahc_c |= AHC_AIC7880;
+				ahc_f = AHC_AIC7880_FE;
+			} else {
+				ahc_c |= AHC_AIC7870;
+				ahc_f = AHC_AIC7870_FE;
+			}
 			aic3940_count++;
-			if(!(aic3940_count & 0x01))
+			if (!(aic3940_count & 0x01))
 				/* Even count implies second channel */
-				ahc_f |= AHC_CHNLB;
+				channel = 'B';
 			break;
-		case PCI_DEVICE_ID_ADAPTEC_2944U:
-		case PCI_DEVICE_ID_ADAPTEC_2940U:
-		case PCI_DEVICE_ID_ADAPTEC_2940UWPro:
-			ahc_t = AHC_294U;
+		case PCI_PRODUCT_ADP_2940UWPro:
+			ahc_c |= AHC_AIC7880;
+			ahc_f = AHC_AIC7880_FE;
+			ahc_f |= AHC_INT50_SPEEDFLEX;
+		case PCI_PRODUCT_ADP_2944U:
+		case PCI_PRODUCT_ADP_2940U:
+			ahc_c |= AHC_AIC7880;
+			ahc_f = AHC_AIC7880_FE;
 			break;
-		case PCI_DEVICE_ID_ADAPTEC_2944:
-		case PCI_DEVICE_ID_ADAPTEC_2940:
-			ahc_t = AHC_294;
+		case PCI_PRODUCT_ADP_2944:
+		case PCI_PRODUCT_ADP_2940:
+			ahc_c |= AHC_AIC7870;
+			ahc_f = AHC_AIC7870_FE;
 			break;
-		case PCI_DEVICE_ID_ADAPTEC_2940AU:
-			ahc_t = AHC_294AU;
+		case PCI_PRODUCT_ADP_2940AU:
+			ahc_c |= AHC_AIC7860;
+			ahc_f = AHC_AIC7860_FE;
 			break;
-		case PCI_DEVICE_ID_ADAPTEC_398XU:	/* XXX */
-		case PCI_DEVICE_ID_ADAPTEC_AIC7880:
-			ahc_t = AHC_AIC7880;
+		case PCI_PRODUCT_ADP_398XU:	/* XXX */
+		case PCI_PRODUCT_ADP_AIC7880:
+			ahc_c |= AHC_AIC7880;
+			ahc_f = AHC_AIC7880_FE;
 			break;
-		case PCI_DEVICE_ID_ADAPTEC_AIC7870:
-			ahc_t = AHC_AIC7870;
+		case PCI_PRODUCT_ADP_AIC7870:
+			ahc_c |= AHC_AIC7870;
+			ahc_f = AHC_AIC7870_FE;
 			break;
-		case PCI_DEVICE_ID_ADAPTEC_AIC7860:
-			ahc_t = AHC_AIC7860;
+		case PCI_PRODUCT_ADP_AIC7860:
+			ahc_c |= AHC_AIC7860;
+			ahc_f = AHC_AIC7860_FE;
 			break;
-		case PCI_DEVICE_ID_ADAPTEC_AIC7855:
-		case PCI_DEVICE_ID_ADAPTEC_AIC7850:
-			ahc_t = AHC_AIC7850;
+		case PCI_PRODUCT_ADP_AIC7855:
+		case PCI_PRODUCT_ADP_AIC7850:
+			ahc_c |= AHC_AIC7850;
+			ahc_f = AHC_AIC7850_FE;
 			break;
 		default:
+			/* TTT */
 			break;
 	}
-
-	/* On all PCI adapters, we allow SCB paging */
-	ahc_f |= AHC_PAGESCBS;
-
-	/* Remeber how the card was setup in case there is no SEEPROM */
-#if defined(__FreeBSD__)
-	our_id = inb(SCSIID + io_port) & OID;
-	if(ahc_t & AHC_ULTRA)
-		ultra_enb = inb(SXFRCTL0 + io_port) & ULTRAEN;
-#else
-	our_id = bus_space_read_1(pa->pa_iot, ioh, SCSIID) & OID;
-	if(ahc_t & AHC_ULTRA)
-		ultra_enb = bus_space_read_1(pa->pa_iot, ioh, SXFRCTL0) &
-		    ULTRAEN;
-#endif
-
-#if defined(__FreeBSD__)
-	ahc_reset(io_port);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_iot, ioh);
-#endif
-
-	if(ahc_t & AHC_AIC7870){
-#if defined(__FreeBSD__)
-		u_long devconfig = pci_conf_read(config_id, DEVCONFIG);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-		u_long devconfig =
-			pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
-#endif
-
-		if(devconfig & (RAMPSM)) {
-			/*
-			 * External SRAM present.  Have the probe walk
-			 * the SCBs to see how much SRAM we have and set
-			 * the number of SCBs accordingly.  We have to
-			 * turn off SCBRAMSEL to access the external
-			 * SCB SRAM.
-			 *
-			 * It seems that early versions of the aic7870
-			 * didn't use these bits, hence the hack for the
-			 * 3940 above.  I would guess that recent 3940s
-			 * using later aic7870 or aic7880 chips do
-			 * actually set RAMPSM.
-			 *
-			 * The documentation isn't clear, but it sounds
-			 * like the value written to devconfig must not
-			 * have RAMPSM set.  The second sixteen bits of
-			 * the register are R/O anyway, so it shouldn't
-			 * affect RAMPSM either way.
-			 */
-			devconfig &= ~(RAMPSM|SCBRAMSEL);
-#if defined(__FreeBSD__)
-			pci_conf_write(config_id, DEVCONFIG, devconfig);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-				       DEVCONFIG, devconfig);
-#endif
+		break;
+	case PCI_VENDOR_ADP2:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_ADP2_AIC7890:
+		case PCI_PRODUCT_ADP2_2940U2:
+			ahc_c |= AHC_AIC7890;
+			ahc_f = AHC_AIC7890_FE;
+			ahc_flags |= AHC_NEWEEPROM_FMT;
+			break;
+		case PCI_PRODUCT_ADP2_AIC7892:
+		case PCI_PRODUCT_ADP2_29160:
+		case PCI_PRODUCT_ADP2_19160B:
+			ahc_c |= AHC_AIC7892;
+			ahc_f = AHC_AIC7892_FE;
+			ahc_flags |= AHC_NEWEEPROM_FMT;
+			break;
+		case PCI_PRODUCT_ADP2_3950U2B:
+		case PCI_PRODUCT_ADP2_3950U2D:
+		case PCI_PRODUCT_ADP2_AIC7896:
+			{
+				pcireg_t devconfig;
+				channel = pa->pa_function == 1 ? 'B' : 'A';
+				ahc_c |= AHC_AIC7896;
+				ahc_f = AHC_AIC7896_FE;
+				ahc_flags |= AHC_NEWEEPROM_FMT;
+				devconfig = pci_conf_read(pa->pa_pc, 
+							  pa->pa_tag, 
+							  DEVCONFIG);
+				/* turn off 64 bit for now XXX smurph */
+				devconfig &= ~PCI64;
+				pci_conf_write(pa->pa_pc, pa->pa_tag, 
+					       DEVCONFIG, devconfig);
+			}
+			break;
+		case PCI_PRODUCT_ADP2_AIC7899:
+		case PCI_PRODUCT_ADP2_3960D:
+			ahc_c |= AHC_AIC7899;
+			ahc_f = AHC_AIC7899_FE;
+			ahc_flags |= AHC_NEWEEPROM_FMT;
+			break;
+		default:
+			/* TTT */
 		}
 	}
+	
+#ifdef AHC_ALLOW_MEMIO
+	memh_valid = (pci_mapreg_map(pa, AHC_PCI_MEMADDR,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &memt, &memh, NULL, NULL) == 0);
+#endif
+	ioh_valid = (pci_mapreg_map(pa, AHC_PCI_IOADDR,
+	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, NULL) == 0);
 
-#if defined(__FreeBSD__)
-	if(!(ahc = ahc_alloc(unit, io_port, ahc_t, ahc_f)))
-		return;  /* XXX PCI code should take return status */
+	if (ioh_valid) {
+		/* do nothing */
+#ifdef AHC_ALLOW_MEMIO
+	} else if (memh_valid) {
+		/* do nothing */
+#endif
+	} else {
+		/* error out */
+		printf(": unable to map registers\n");
+		return;
+	}
+	
+	/* Ensure busmastering is enabled */
+	command |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
-	if(!(pci_map_int(config_id, ahc_intr, (void *)ahc, &bio_imask))) {
+	pd = malloc(sizeof (struct ahc_pci_data), M_DEVBUF, M_NOWAIT);
+	if (pd == NULL) {
+		printf(": error allocating pci data\n");
+		return;
+	}
+
+	pd->pc = pa->pa_pc;
+	pd->tag = pa->pa_tag;
+	pd->function = pa->pa_function;
+
+	/* setup the PCI stuff */
+	ahc->pci_data = pd;
+	ahc->pci_intr_func = ahc_pci_intr;
+
+
+	/* On all PCI adapters, we allow SCB paging */
+	ahc_flags |= AHC_PAGESCBS;
+
+	ahc_construct(ahc, pa->pa_iot, ioh, ahc_c, ahc_flags, ahc_f, channel);
+	/* Now we can use the ahc_inb and ahc_outb macros */
+
+	/* setup the PCI error interrupt handler */
+	ahc->pci_intr_func = &ahc_pci_intr;
+	
+	/* Remeber how the card was setup in case there is no SEEPROM */
+	ahc_outb(ahc, HCNTRL, ahc->pause);
+	if ((ahc->features & AHC_ULTRA2) != 0)
+		our_id = ahc_inb(ahc, SCSIID_ULTRA2) & OID;
+	else
+		our_id = ahc_inb(ahc, SCSIID) & OID;
+	sxfrctl1 = ahc_inb(ahc, SXFRCTL1) & STPWEN;
+	scsiseq = ahc_inb(ahc, SCSISEQ);
+	
+	if (ahc_reset(ahc) != 0) {
+		/* Failed */
 		ahc_free(ahc);
 		return;
 	}
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	ahc_construct(ahc, pa->pa_iot, ioh, ahc_t, ahc_f);
+	
+	if (ahc->features & AHC_ULTRA)
+		ultra_enb = bus_space_read_1(pa->pa_iot, ioh, SXFRCTL0) &
+						FAST20;
+	
+	if ((ahc->features & AHC_DT) != 0) {
+		u_int optionmode;
+		u_int sfunct;
+
+		/* Perform ALT-Mode Setup */
+		sfunct = ahc_inb(ahc, SFUNCT) & ~ALT_MODE;
+		ahc_outb(ahc, SFUNCT, sfunct | ALT_MODE);
+		optionmode = ahc_inb(ahc, OPTIONMODE);
+		printf("OptionMode = %x\n", optionmode);
+		ahc_outb(ahc, OPTIONMODE, OPTIONMODE_DEFAULTS);
+		/* Send CRC info in target mode every 4K */
+		ahc_outb(ahc, TARGCRCCNT, 0);
+		ahc_outb(ahc, TARGCRCCNT + 1, 0x10);
+		ahc_outb(ahc, SFUNCT, sfunct);
+
+		/* Normal mode setup */
+		ahc_outb(ahc, CRCCONTROL1, CRCVALCHKEN|CRCENDCHKEN|CRCREQCHKEN
+					|TARGCRCENDEN|TARGCRCCNTEN);
+	}
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
-		printf(": couldn't map interrupt\n");
+		printf("%s: couldn't map interrupt\n", ahc->sc_dev.dv_xname);
 		ahc_free(ahc);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-#ifndef __OpenBSD__
-	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
-#else
 	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc,
-	    ahc->sc_dev.dv_xname);
-#endif
+                                        ahc->sc_dev.dv_xname);
+
 	if (ahc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -482,7 +460,7 @@ ahc_pci_attach(parent, self, aux)
 	}
 	if (intrstr != NULL)
 		printf(": %s\n", intrstr);
-#endif
+
 	/*
 	 * Protect ourself from spurrious interrupts during
 	 * intialization.
@@ -490,115 +468,88 @@ ahc_pci_attach(parent, self, aux)
 	opri = splbio();
 
 	/*
-	 * Do aic7870/aic7880/aic7850 specific initialization
+	 * Do aic7880/aic7870/aic7860/aic7850 specific initialization
 	 */
 	{
-		u_char	sblkctl;
-		char	*id_string;
+		u_int8_t sblkctl;
+		u_int dscommand0;
 
-		switch(ahc->type) {
-		   case AHC_394U:
-		   case AHC_294U:
-		   case AHC_AIC7880:
-		   {
-			id_string = "aic7880 ";
-			load_seeprom(ahc);
-			break;
-		   }
-		   case AHC_394:
-		   case AHC_294:
-		   case AHC_AIC7870:
-		   {
-			id_string = "aic7870 ";
-			load_seeprom(ahc);
-			break;
-		   }
-		   case AHC_294AU:
-		   case AHC_AIC7860:
-		   {
-			id_string = "aic7860 ";
-			load_seeprom(ahc);
-			break;
-		   }
-		   case AHC_AIC7850:
-		   {
-			id_string = "aic7850 ";
+		dscommand0 = ahc_inb(ahc, DSCOMMAND0);
+		dscommand0 |= MPARCKEN;
+		if ((ahc->features & AHC_ULTRA2) != 0) {
+
 			/*
-			 * Use defaults, if the chip wasn't initialized by
-			 * a BIOS.
+			 * DPARCKEN doesn't work correctly on
+			 * some MBs so don't use it.
 			 */
-			ahc->flags |= AHC_USEDEFAULTS;
-			break;
-		   }
-		   default:
-		   {
-			printf("ahc: Unknown controller type.  Ignoring.\n");
-			ahc_free(ahc);
-			splx(opri);
-			return;
-		   }
+			dscommand0 &= ~(USCBSIZE32|DPARCKEN);
+			dscommand0 |= CACHETHEN;
 		}
+
+		ahc_outb(ahc, DSCOMMAND0, dscommand0);
+
+		/* See if we have an SEEPROM and perform auto-term */
+		check_extport(ahc, &sxfrctl1);
 
 		/*
 		 * Take the LED out of diagnostic mode
 		 */
-		sblkctl = AHC_INB(ahc, SBLKCTL);
-		AHC_OUTB(ahc, SBLKCTL, (sblkctl & ~(DIAGLEDEN|DIAGLEDON)));
+		sblkctl = ahc_inb(ahc, SBLKCTL);
+		ahc_outb(ahc, SBLKCTL, (sblkctl & ~(DIAGLEDEN|DIAGLEDON)));
 
 		/*
 		 * I don't know where this is set in the SEEPROM or by the
-		 * BIOS, so we default to 100%.
+		 * BIOS, so we default to 100% on Ultra or slower controllers
+		 * and 75% on ULTRA2 controllers.
 		 */
-		AHC_OUTB(ahc, DSPCISTATUS, DFTHRSH_100);
+		if ((ahc->features & AHC_ULTRA2) != 0) {
+			ahc_outb(ahc, DFF_THRSH, RD_DFTHRSH_75|WR_DFTHRSH_75);
+		} else {
+			ahc_outb(ahc, DSPCISTATUS, DFTHRSH_100);
+		}
 
-		if(ahc->flags & AHC_USEDEFAULTS) {
+		if (ahc->flags & AHC_USEDEFAULTS) {
 			/*
 			 * PCI Adapter default setup
 			 * Should only be used if the adapter does not have
 			 * an SEEPROM.
 			 */
 			/* See if someone else set us up already */
-			u_long i;
-		        for(i = TARG_SCRATCH; i < 0x60; i++) {
-                        	if(AHC_INB(ahc, i) != 0x00)
-					break;
-			}
-			if(i == TARG_SCRATCH) {
-				/*
-				 * Try looking for all ones.  You can get
-				 * either.
-				 */
-		        	for (i = TARG_SCRATCH; i < 0x60; i++) {
-                        		if(AHC_INB(ahc, i) != 0xff)
-						break;
-				}
-			}
-			if((i != 0x60) && (our_id != 0)) {
+			if (scsiseq != 0) {
 				printf("%s: Using left over BIOS settings\n",
-					ahc_name(ahc));
+						 ahc_name(ahc));
 				ahc->flags &= ~AHC_USEDEFAULTS;
-			}
-			else
-				our_id = 0x07;
-			AHC_OUTB(ahc, SCSICONF,
-				 (our_id & 0x07)|ENSPCHK|RESET_SCSI);
-			/* In case we are a wide card */
-			AHC_OUTB(ahc, SCSICONF + 1, our_id);
-
-			if(!ultra_enb || (ahc->flags & AHC_USEDEFAULTS)) {
+			} else {
 				/*
-				 * If there wasn't a BIOS or the board
-				 * wasn't in this mode to begin with, 
-				 * turn off ultra.
+				 * Assume only one connector and always turn
+				 * on termination.
 				 */
-				ahc->type &= ~AHC_ULTRA;
+				our_id = 0x07;
+				sxfrctl1 = STPWEN;
 			}
-		}
+			ahc_outb(ahc, SCSICONF, our_id|ENSPCHK|RESET_SCSI);
 
-		printf("%s: %s", ahc_name(ahc), id_string);
+			ahc->our_id = our_id;
+		}
 	}
 
-	if(ahc_init(ahc)){
+	/*
+	 * Take a look to see if we have external SRAM.
+	 * We currently do not attempt to use SRAM that is
+	 * shared among multiple controllers.
+	 */
+	ahc_probe_ext_scbram(ahc);
+
+	printf("%s: ", ahc_name(ahc));
+
+	/*
+	 * Record our termination setting for the
+	 * generic initialization routine.
+	 */
+	if ((sxfrctl1 & STPWEN) != 0)
+		ahc->flags |= AHC_TERM_ENB_A;
+
+	if (ahc_init(ahc)) {
 		ahc_free(ahc);
 		splx(opri);
 		return; /* XXX PCI code should take return status */
@@ -609,30 +560,181 @@ ahc_pci_attach(parent, self, aux)
 }
 
 /*
- * Read the SEEPROM.  Return 0 on failure
+ * Test for the presense of external sram in an
+ * "unshared" configuration.
  */
-void
-load_seeprom(ahc)
-	struct	ahc_data *ahc;
+static int
+ahc_ext_scbram_present(ahc)
+struct ahc_softc *ahc;
 {
-	struct	seeprom_descriptor sd;
-	struct	seeprom_config sc;
-	u_short *scarray = (u_short *)&sc;
-	u_short	checksum = 0;
-	u_char	scsi_conf;
-	u_char	host_id;
-	int	have_seeprom;
-                 
-#if defined(__FreeBSD__)
-	sd.sd_iobase = ahc->baseport + SEECTL;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+	int ramps;
+	int single_user;
+	pcireg_t devconfig;
+	struct ahc_pci_data *pd = ahc->pci_data;
+
+	devconfig = pci_conf_read(pd->pc, pd->tag, DEVCONFIG);
+	single_user = (devconfig & MPORTMODE) != 0;
+
+	if ((ahc->features & AHC_ULTRA2) != 0)
+		ramps = (ahc_inb(ahc, DSCOMMAND0) & RAMPS) != 0;
+	else if ((ahc->chip & AHC_CHIPID_MASK) >= AHC_AIC7870)
+		ramps = (devconfig & RAMPSM) != 0;
+	else
+		ramps	= 0;
+
+	if (ramps && single_user)
+		return (1);
+	return (0);
+}
+
+/*
+ * Enable external scbram.
+ */
+static void
+ahc_ext_scbram_config(ahc, enable, pcheck, fast)
+struct ahc_softc *ahc;
+int enable;
+int pcheck;
+int fast;
+{
+	pcireg_t devconfig;
+	struct ahc_pci_data *pd = ahc->pci_data;
+
+	if (ahc->features & AHC_MULTI_FUNC) {
+		u_char channel; 
+		/*
+		 * Set the SCB Base addr (highest address bit)
+		 * depending on which channel we are.
+		 */
+		channel = pd->function == 1 ? 1 : 0;
+		ahc_outb(ahc, SCBBADDR, channel);
+	}
+
+	devconfig = pci_conf_read(pd->pc, pd->tag, DEVCONFIG);
+	
+	if ((ahc->features & AHC_ULTRA2) != 0) {
+		u_int dscommand0;
+
+		dscommand0 = ahc_inb(ahc, DSCOMMAND0);
+		if (enable)
+			dscommand0 &= ~INTSCBRAMSEL;
+		else
+			dscommand0 |= INTSCBRAMSEL;
+		ahc_outb(ahc, DSCOMMAND0, dscommand0);
+	} else {
+		if (fast)
+			devconfig &= ~EXTSCBTIME;
+		else
+			devconfig |= EXTSCBTIME;
+		if (enable)
+			devconfig &= ~SCBRAMSEL;
+		else
+			devconfig |= SCBRAMSEL;
+	}
+	if (pcheck)
+		devconfig |= EXTSCBPEN;
+	else
+		devconfig &= ~EXTSCBPEN;
+
+	pci_conf_write(pd->pc, pd->tag, DEVCONFIG, devconfig);
+}
+
+/*
+ * Take a look to see if we have external SRAM.
+ * We currently do not attempt to use SRAM that is
+ * shared among multiple controllers.
+ */
+static void
+ahc_probe_ext_scbram(ahc)
+struct ahc_softc *ahc;
+{
+	int num_scbs;
+	int test_num_scbs;
+	int enable;
+	int pcheck;
+	int fast;
+
+	if (ahc_ext_scbram_present(ahc) == 0)
+		return;
+
+	/*
+	 * Probe for the best parameters to use.
+	 */
+	enable = 0;
+	pcheck = 0;
+	fast = 0;
+	ahc_ext_scbram_config(ahc,	/*enable*/1, pcheck, fast);
+	num_scbs = ahc_probe_scbs(ahc);
+	if (num_scbs == 0) {
+		/* The SRAM wasn't really present. */
+		goto done;
+	}
+	enable = 1;
+
+	/* Now see if we can do parity */
+	ahc_ext_scbram_config(ahc, enable, /*pcheck*/1, fast);
+	num_scbs = ahc_probe_scbs(ahc);
+	if ((ahc_inb(ahc, INTSTAT) & BRKADRINT) == 0
+		 || (ahc_inb(ahc, ERROR) & MPARERR) == 0)
+		pcheck = 1;
+
+	/* Clear any resulting parity error */
+	ahc_outb(ahc, CLRINT, CLRPARERR);
+	ahc_outb(ahc, CLRINT, CLRBRKADRINT);
+
+	/* Now see if we can do fast timing */
+	ahc_ext_scbram_config(ahc, enable, pcheck, /*fast*/1);
+	test_num_scbs = ahc_probe_scbs(ahc);
+	if (test_num_scbs == num_scbs
+		 && ((ahc_inb(ahc, INTSTAT) & BRKADRINT) == 0
+			  || (ahc_inb(ahc, ERROR) & MPARERR) == 0))
+		fast = 1;
+
+	done:
+	/* Clear any resulting parity error */
+	ahc_outb(ahc, CLRINT, CLRPARERR);
+	ahc_outb(ahc, CLRINT, CLRBRKADRINT);
+	if (bootverbose && enable) {
+		printf("%s: External SRAM, %dns access%s\n",
+				 ahc_name(ahc), fast ? 10 : 20,
+				 pcheck ? ", parity checking enabled" : "");
+
+	}
+	ahc_ext_scbram_config(ahc, enable, pcheck, fast);
+}             
+
+/*
+ * Check the external port logic for a serial eeprom
+ * and termination/cable detection contrls.
+ */
+static void
+check_extport(ahc, sxfrctl1)
+struct ahc_softc *ahc;
+u_int *sxfrctl1;
+{
+	struct     seeprom_descriptor sd;
+	struct     seeprom_config sc;
+	u_int   scsi_conf;
+	u_int   adapter_control;
+	int     have_seeprom;
+	int     have_autoterm;
+
 	sd.sd_tag = ahc->sc_iot;
 	sd.sd_bsh = ahc->sc_ioh;
-	sd.sd_control_offset = SEECTL;
-	sd.sd_status_offset = SEECTL;
-	sd.sd_dataout_offset = SEECTL;
-#endif
-	sd.sd_chip = C46;	/* XXX - backwards compat */
+	sd.sd_control_offset = SEECTL;      
+	sd.sd_status_offset = SEECTL;    
+	sd.sd_dataout_offset = SEECTL;      
+
+	/*
+	 * For some multi-channel devices, the c46 is simply too
+	 * small to work.  For the other controller types, we can
+	 * get our information from either SEEPROM type.  Set the
+	 * type to start our probe with accordingly.
+	 */
+	if (ahc->flags & AHC_LARGE_SEEPROM)
+		sd.sd_chip = C56_66;
+	else
+		sd.sd_chip = C46;
 
 	sd.sd_MS = SEEMS;
 	sd.sd_RDY = SEERDY;
@@ -641,83 +743,548 @@ load_seeprom(ahc)
 	sd.sd_DO = SEEDO;
 	sd.sd_DI = SEEDI;
 
-	if(bootverbose) 
-		printf("%s: Reading SEEPROM...", ahc_name(ahc));
-	have_seeprom = acquire_seeprom(&sd);
+	have_seeprom = acquire_seeprom(ahc, &sd);
 	if (have_seeprom) {
-		have_seeprom = read_seeprom(&sd,
-					    (u_int16_t *)&sc,
-					    ahc->flags & AHC_CHNLB,
-					    sizeof(sc)/2);
-		release_seeprom(&sd);
-		if (have_seeprom) {
-			/* Check checksum */
-			int i;
 
-			for (i = 0;i < (sizeof(sc)/2 - 1);i = i + 1)
-				checksum = checksum + scarray[i];
-			if (checksum != sc.checksum) {
-				if(bootverbose)
-					printf ("checksum error");
-				have_seeprom = 0;
+		if (bootverbose)
+			printf("%s: Reading SEEPROM...", ahc_name(ahc));
+
+		for (;;) {
+			bus_size_t start_addr;
+
+			start_addr = 32 * (ahc->channel - 'A');
+
+			have_seeprom = read_seeprom(&sd,
+						    (u_int16_t *)&sc,
+						    start_addr,
+						    sizeof(sc)/2);
+
+			if (have_seeprom) {
+				/* Check checksum */
+				int i;
+				int maxaddr;
+				u_int32_t checksum;
+				u_int16_t *scarray;
+
+				maxaddr = (sizeof(sc)/2) - 1;
+				checksum = 0;
+				scarray = (u_int16_t *)&sc;
+
+				for (i = 0; i < maxaddr; i++)
+					checksum = checksum + scarray[i];
+				if (checksum == 0
+				    || (checksum & 0xFFFF) != sc.checksum) {
+					if (bootverbose && sd.sd_chip == C56_66)
+						printf ("checksum error\n");
+					have_seeprom = 0;
+				} else {
+					if (bootverbose)
+						printf("done.\n");
+					break;
+				}
 			}
-			else if(bootverbose)
-				printf("done.\n");
+
+			if (sd.sd_chip == C56_66)
+				break;
+			sd.sd_chip = C56_66;
 		}
 	}
+
 	if (!have_seeprom) {
-		if(bootverbose)
-			printf("\n%s: No SEEPROM availible\n", ahc_name(ahc));
+		if (bootverbose)
+			printf("%s: No SEEPROM available.\n", ahc_name(ahc));
 		ahc->flags |= AHC_USEDEFAULTS;
-	}
-	else {
+	} else {
 		/*
 		 * Put the data we've collected down into SRAM
 		 * where ahc_init will find it.
 		 */
 		int i;
 		int max_targ = sc.max_targets & CFMAXTARG;
+		u_int16_t discenable;
+		u_int16_t ultraenb;
 
-	        for(i = 0; i < max_targ; i++){
-	                u_char target_settings;
-			target_settings = (sc.device_flags[i] & CFXFER) << 4;
-			if (sc.device_flags[i] & CFSYNCH)
-				target_settings |= SOFS;
-			if (sc.device_flags[i] & CFWIDEB)
-				target_settings |= WIDEXFER;
-			if (sc.device_flags[i] & CFDISC)
-				ahc->discenable |= (0x01 << i);
-			AHC_OUTB(ahc, TARG_SCRATCH+i, target_settings);
+		discenable = 0;
+		ultraenb = 0;
+		if ((sc.adapter_control & CFULTRAEN) != 0) {
+			/*
+			 * Determine if this adapter has a "newstyle"
+			 * SEEPROM format.
+			 */
+			for (i = 0; i < max_targ; i++) {
+				if ((sc.device_flags[i] & CFSYNCHISULTRA) != 0) {
+					ahc->flags |= AHC_NEWEEPROM_FMT;
+					break;
+				}
+			}
 		}
-		AHC_OUTB(ahc, DISC_DSB, ~(ahc->discenable & 0xff));
-		AHC_OUTB(ahc, DISC_DSB + 1, ~((ahc->discenable >> 8) & 0xff));
 
-		host_id = sc.brtime_id & CFSCSIID;
+		for (i = 0; i < max_targ; i++) {
+			u_int     scsirate;
+			u_int16_t target_mask;
 
-		scsi_conf = (host_id & 0x7);
-		if(sc.adapter_control & CFSPARITY)
+			target_mask = 0x01 << i;
+			if (sc.device_flags[i] & CFDISC)
+				discenable |= target_mask;
+			if ((ahc->flags & AHC_NEWEEPROM_FMT) != 0) {
+				if ((sc.device_flags[i] & CFSYNCHISULTRA) != 0)
+					ultraenb |= target_mask;
+			} else if ((sc.adapter_control & CFULTRAEN) != 0) {
+				ultraenb |= target_mask;
+			}
+			if ((sc.device_flags[i] & CFXFER) == 0x04
+				 && (ultraenb & target_mask) != 0) {
+				/* Treat 10MHz as a non-ultra speed */
+				sc.device_flags[i] &= ~CFXFER;
+				ultraenb &= ~target_mask;
+			}
+			if ((ahc->features & AHC_ULTRA2) != 0) {
+				u_int offset;
+
+				if (sc.device_flags[i] & CFSYNCH)
+					offset = MAX_OFFSET_ULTRA2;
+				else
+					offset = 0;
+				ahc_outb(ahc, TARG_OFFSET + i, offset);
+
+				scsirate = (sc.device_flags[i] & CFXFER)
+				| ((ultraenb & target_mask) ? 0x8 : 0x0);
+				if (sc.device_flags[i] & CFWIDEB)
+					scsirate |= WIDEXFER;
+			} else {
+				scsirate = (sc.device_flags[i] & CFXFER) << 4;
+				if (sc.device_flags[i] & CFSYNCH)
+					scsirate |= SOFS;
+				if (sc.device_flags[i] & CFWIDEB)
+					scsirate |= WIDEXFER;
+			}
+			ahc_outb(ahc, TARG_SCSIRATE + i, scsirate);
+		}
+		ahc->our_id = sc.brtime_id & CFSCSIID;
+
+		scsi_conf = (ahc->our_id & 0x7);
+		if (sc.adapter_control & CFSPARITY)
 			scsi_conf |= ENSPCHK;
-		if(sc.adapter_control & CFRESETB)
+		if (sc.adapter_control & CFRESETB)
 			scsi_conf |= RESET_SCSI;
 
-		if(ahc->type & AHC_ULTRA) {
+		if (sc.bios_control & CFEXTEND)
+			ahc->flags |= AHC_EXTENDED_TRANS_A;
+		if (ahc->features & AHC_ULTRA
+			 && (ahc->flags & AHC_NEWEEPROM_FMT) == 0) {
 			/* Should we enable Ultra mode? */
-			if(!(sc.adapter_control & CFULTRAEN))
+			if (!(sc.adapter_control & CFULTRAEN))
 				/* Treat us as a non-ultra card */
-				ahc->type &= ~AHC_ULTRA;
+				ultraenb = 0;
 		}
-		/* Set the host ID */
-		AHC_OUTB(ahc, SCSICONF, scsi_conf);
-		/* In case we are a wide card */
-		AHC_OUTB(ahc, SCSICONF + 1, host_id);
+		/* Set SCSICONF info */
+		ahc_outb(ahc, SCSICONF, scsi_conf);
+		ahc_outb(ahc, DISC_DSB, ~(discenable & 0xff));
+		ahc_outb(ahc, DISC_DSB + 1, ~((discenable >> 8) & 0xff));
+		ahc_outb(ahc, ULTRA_ENB, ultraenb & 0xff);
+		ahc_outb(ahc, ULTRA_ENB + 1, (ultraenb >> 8) & 0xff);
 	}
+
+	/*
+	 * Cards that have the external logic necessary to talk to
+	 * a SEEPROM, are almost certain to have the remaining logic
+	 * necessary for auto-termination control.  This assumption
+	 * hasn't failed yet...
+	 */
+	have_autoterm = have_seeprom;
+	if (have_seeprom)
+		adapter_control = sc.adapter_control;
+	else
+		adapter_control = CFAUTOTERM;
+
+	/*
+	 * Some low-cost chips have SEEPROM and auto-term control built
+	 * in, instead of using a GAL.  They can tell us directly
+	 * if the termination logic is enabled.
+	 */
+	if ((ahc->features & AHC_SPIOCAP) != 0) {
+		if ((ahc_inb(ahc, SPIOCAP) & SSPIOCPS) != 0)
+			have_autoterm = 1;
+		else
+			have_autoterm = 0;
+	}
+
+	if (have_autoterm)
+		configure_termination(ahc, &sd, adapter_control, sxfrctl1);
+
+	release_seeprom(&sd);
+}
+
+static void
+configure_termination(ahc, sd, adapter_control, sxfrctl1)
+struct ahc_softc *ahc;
+struct seeprom_descriptor *sd;
+u_int adapter_control;
+u_int *sxfrctl1;
+{
+	u_int8_t brddat;
+
+	brddat = 0;
+
+	/*
+	 * Update the settings in sxfrctl1 to match the
+	 * termination settings 
+	 */
+	*sxfrctl1 = 0;
+
+	/*
+	 * SEECS must be on for the GALS to latch
+	 * the data properly.  Be sure to leave MS
+	 * on or we will release the seeprom.
+	 */
+	SEEPROM_OUTB(sd, sd->sd_MS | sd->sd_CS);
+	if ((adapter_control & CFAUTOTERM) != 0
+		 || (ahc->features & AHC_NEW_TERMCTL) != 0) {
+		int internal50_present;
+		int internal68_present;
+		int externalcable_present;
+		int eeprom_present;
+		int enableSEC_low;
+		int enableSEC_high;
+		int enablePRI_low;
+		int enablePRI_high;
+
+		enableSEC_low = 0;
+		enableSEC_high = 0;
+		enablePRI_low = 0;
+		enablePRI_high = 0;
+		if ((ahc->features & AHC_NEW_TERMCTL) != 0) {
+			ahc_new_term_detect(ahc, &enableSEC_low,
+					    &enableSEC_high,
+					    &enablePRI_low,
+					    &enablePRI_high,
+					    &eeprom_present);
+			if ((adapter_control & CFSEAUTOTERM) == 0) {
+				if (bootverbose)
+					printf("%s: Manual SE Termination\n",
+							 ahc_name(ahc));
+				enableSEC_low = (adapter_control & CFSTERM);
+				enableSEC_high = (adapter_control & CFWSTERM);
+			}
+			if ((adapter_control & CFAUTOTERM) == 0) {
+				if (bootverbose)
+					printf("%s: Manual LVD Termination\n",
+					       ahc_name(ahc));
+				enablePRI_low = enablePRI_high =
+					(adapter_control & CFLVDSTERM);
+			}
+			/* Make the table calculations below happy */
+			internal50_present = 0;
+			internal68_present = 1;
+			externalcable_present = 1;
+		} else if ((ahc->features & AHC_SPIOCAP) != 0) {
+			aic785X_cable_detect(ahc, &internal50_present,
+					     &externalcable_present,
+					     &eeprom_present);
+		} else {
+			aic787X_cable_detect(ahc, &internal50_present,
+					     &internal68_present,
+					     &externalcable_present,
+					     &eeprom_present);
+		}
+
+		if ((ahc->features & AHC_WIDE) == 0)
+			internal68_present = 0;
+
+		if (bootverbose) {
+			if ((ahc->features & AHC_ULTRA2) == 0) {
+				printf("%s: internal 50 cable %s present, "
+				       "internal 68 cable %s present\n",
+				       ahc_name(ahc),
+				       internal50_present ? "is":"not",
+				       internal68_present ? "is":"not");
+
+				printf("%s: external cable %s present\n",
+				       ahc_name(ahc),
+				       externalcable_present ? "is":"not");
+			}
+			printf("%s: BIOS eeprom %s present\n",
+			       ahc_name(ahc), eeprom_present ? "is" : "not");
+		}
+
+		if ((ahc->flags & AHC_INT50_SPEEDFLEX) != 0) {
+			/*
+			 * The 50 pin connector is a separate bus,
+			 * so force it to always be terminated.
+			 * In the future, perform current sensing
+			 * to determine if we are in the middle of
+			 * a properly terminated bus.
+			 */
+			internal50_present = 0;
+		}
+
+		/*
+		 * Now set the termination based on what
+		 * we found.
+		 * Flash Enable = BRDDAT7
+		 * Secondary High Term Enable = BRDDAT6
+		 * Secondary Low Term Enable = BRDDAT5 (7890)
+		 * Primary High Term Enable = BRDDAT4 (7890)
+		 */
+		if ((ahc->features & AHC_ULTRA2) == 0
+		    && (internal50_present != 0)
+		    && (internal68_present != 0)
+		    && (externalcable_present != 0)) {
+			printf("%s: Illegal cable configuration!!. "
+			       "Only two connectors on the "
+			       "adapter may be used at a "
+			       "time!\n", ahc_name(ahc));
+		}
+
+		if ((ahc->features & AHC_WIDE) != 0
+			 && ((externalcable_present == 0)
+				  || (internal68_present == 0)
+				  || (enableSEC_high != 0))) {
+			brddat |= BRDDAT6;
+			if (bootverbose) {
+				if ((ahc->flags & AHC_INT50_SPEEDFLEX) != 0)
+					printf("%s: 68 pin termination "
+					       "Enabled\n", ahc_name(ahc));
+				else
+					printf("%s: %sHigh byte termination "
+					       "Enabled\n", ahc_name(ahc),
+					       enableSEC_high ? "Secondary "
+					       : "");
+			}
+		}
+
+		if (((internal50_present ? 1 : 0)
+			  + (internal68_present ? 1 : 0)
+			  + (externalcable_present ? 1 : 0)) <= 1
+			 || (enableSEC_low != 0)) {
+			if ((ahc->features & AHC_ULTRA2) != 0)
+				brddat |= BRDDAT5;
+			else
+				*sxfrctl1 |= STPWEN;
+			if (bootverbose) {
+				if ((ahc->flags & AHC_INT50_SPEEDFLEX) != 0)
+					printf("%s: 50 pin termination "
+					       "Enabled\n", ahc_name(ahc));
+				else
+					printf("%s: %sLow byte termination "
+					       "Enabled\n", ahc_name(ahc),
+					       enableSEC_low ? "Secondary "
+					       : "");
+			}
+		}
+
+		if (enablePRI_low != 0) {
+			*sxfrctl1 |= STPWEN;
+			if (bootverbose)
+				printf("%s: Primary Low Byte termination "
+				       "Enabled\n", ahc_name(ahc));
+		}
+
+		/*
+		 * Setup STPWEN before setting up the rest of
+		 * the termination per the tech note on the U160 cards.
+		 */
+		ahc_outb(ahc, SXFRCTL1, *sxfrctl1);
+
+		if (enablePRI_high != 0) {
+			brddat |= BRDDAT4;
+			if (bootverbose)
+				printf("%s: Primary High Byte "
+				       "termination Enabled\n",
+				       ahc_name(ahc));
+		}
+
+		write_brdctl(ahc, brddat);
+
+	} else {
+		if ((adapter_control & CFSTERM) != 0) {
+			*sxfrctl1 |= STPWEN;
+
+			if (bootverbose)
+				printf("%s: %sLow byte termination Enabled\n",
+				       ahc_name(ahc),
+				       (ahc->features & AHC_ULTRA2)
+				       ? "Primary " : "");
+		}
+
+		if ((adapter_control & CFWSTERM) != 0) {
+			brddat |= BRDDAT6;
+			if (bootverbose)
+				printf("%s: %sHigh byte termination Enabled\n",
+				       ahc_name(ahc),
+				       (ahc->features & AHC_ULTRA2)
+				       ? "Secondary " : "");
+		}
+
+		/*
+		 * Setup STPWEN before setting up the rest of
+		 * the termination per the tech note on the U160 cards.
+		 */
+		ahc_outb(ahc, SXFRCTL1, *sxfrctl1);
+
+		write_brdctl(ahc, brddat);
+	}
+	SEEPROM_OUTB(sd, sd->sd_MS); /* Clear CS */
+}
+
+static void
+ahc_new_term_detect(ahc, enableSEC_low, enableSEC_high, enablePRI_low, 
+		    enablePRI_high, eeprom_present)
+struct ahc_softc *ahc;
+int *enableSEC_low;
+int *enableSEC_high;
+int *enablePRI_low;
+int *enablePRI_high;
+int *eeprom_present;
+{
+	u_int8_t brdctl;
+
+	/*
+	 * BRDDAT7 = Eeprom
+	 * BRDDAT6 = Enable Secondary High Byte termination
+	 * BRDDAT5 = Enable Secondary Low Byte termination
+	 * BRDDAT4 = Enable Primary high byte termination
+	 * BRDDAT3 = Enable Primary low byte termination
+	 */
+	brdctl = read_brdctl(ahc);
+	*eeprom_present = brdctl & BRDDAT7;
+	*enableSEC_high = (brdctl & BRDDAT6);
+	*enableSEC_low = (brdctl & BRDDAT5);
+	*enablePRI_high = (brdctl & BRDDAT4);
+	*enablePRI_low = (brdctl & BRDDAT3);
+}
+
+static void
+aic787X_cable_detect(ahc, internal50_present, internal68_present,
+		     externalcable_present, eeprom_present)
+struct ahc_softc *ahc;
+int *internal50_present;
+int *internal68_present;
+int *externalcable_present;
+int *eeprom_present;
+{
+	u_int8_t brdctl;
+
+	/*
+	 * First read the status of our cables.
+	 * Set the rom bank to 0 since the
+	 * bank setting serves as a multiplexor
+	 * for the cable detection logic.
+	 * BRDDAT5 controls the bank switch.
+	 */
+	write_brdctl(ahc, 0);
+
+	/*
+	 * Now read the state of the internal
+	 * connectors.  BRDDAT6 is INT50 and
+	 * BRDDAT7 is INT68.
+	 */
+	brdctl = read_brdctl(ahc);
+	*internal50_present = !(brdctl & BRDDAT6);
+	*internal68_present = !(brdctl & BRDDAT7);
+
+	/*
+	 * Set the rom bank to 1 and determine
+	 * the other signals.
+	 */
+	write_brdctl(ahc, BRDDAT5);
+
+	/*
+	 * Now read the state of the external
+	 * connectors.  BRDDAT6 is EXT68 and
+	 * BRDDAT7 is EPROMPS.
+	 */
+	brdctl = read_brdctl(ahc);
+	*externalcable_present = !(brdctl & BRDDAT6);
+	*eeprom_present = brdctl & BRDDAT7;
+}
+
+static void
+aic785X_cable_detect(ahc, internal50_present, externalcable_present,
+		     eeprom_present)
+struct ahc_softc *ahc;
+int *internal50_present;
+int *externalcable_present;
+int *eeprom_present;
+{
+	u_int8_t brdctl;
+
+	ahc_outb(ahc, BRDCTL, BRDRW|BRDCS);
+	ahc_outb(ahc, BRDCTL, 0);
+	brdctl = ahc_inb(ahc, BRDCTL);
+	*internal50_present = !(brdctl & BRDDAT5);
+	*externalcable_present = !(brdctl & BRDDAT6);
+
+	*eeprom_present = (ahc_inb(ahc, SPIOCAP) & EEPROM) != 0;
+}
+
+static void
+write_brdctl(ahc, value)
+struct   ahc_softc *ahc;
+u_int8_t value;
+{
+	u_int8_t brdctl;
+
+	if ((ahc->chip & AHC_CHIPID_MASK) == AHC_AIC7895) {
+		brdctl = BRDSTB;
+		if (ahc->channel == 'B')
+			brdctl |= BRDCS;
+	} else if ((ahc->features & AHC_ULTRA2) != 0) {
+		brdctl = 0;
+	} else {
+		brdctl = BRDSTB|BRDCS;
+	}
+	ahc_outb(ahc, BRDCTL, brdctl);
+	DELAY(20);
+	brdctl |= value;
+	ahc_outb(ahc, BRDCTL, brdctl);
+	DELAY(20);
+	if ((ahc->features & AHC_ULTRA2) != 0)
+		brdctl |= BRDSTB_ULTRA2;
+	else
+		brdctl &= ~BRDSTB;
+	ahc_outb(ahc, BRDCTL, brdctl);
+	DELAY(20);
+	if ((ahc->features & AHC_ULTRA2) != 0)
+		brdctl = 0;
+	else
+		brdctl &= ~BRDCS;
+	ahc_outb(ahc, BRDCTL, brdctl);
+}
+
+static u_int8_t
+read_brdctl(ahc)
+struct   ahc_softc *ahc;
+{
+	u_int8_t brdctl;
+	u_int8_t value;
+
+	if ((ahc->chip & AHC_CHIPID_MASK) == AHC_AIC7895) {
+		brdctl = BRDRW;
+		if (ahc->channel == 'B')
+			brdctl |= BRDCS;
+	} else if ((ahc->features & AHC_ULTRA2) != 0) {
+		brdctl = BRDRW_ULTRA2;
+	} else {
+		brdctl = BRDRW|BRDCS;
+	}
+	ahc_outb(ahc, BRDCTL, brdctl);
+	DELAY(20);
+	value = ahc_inb(ahc, BRDCTL);
+	ahc_outb(ahc, BRDCTL, 0);
+	return (value);
 }
 
 static int
-acquire_seeprom(sd)
-	struct seeprom_descriptor *sd;
+acquire_seeprom(ahc, sd)
+struct ahc_softc *ahc;
+struct seeprom_descriptor *sd;
 {
 	int wait;
+
+	if ((ahc->features & AHC_SPIOCAP) != 0
+		 && (ahc_inb(ahc, SPIOCAP) & SEEPROM) == 0)
+		return (0);
 
 	/*
 	 * Request access of the memory port.  When access is
@@ -729,21 +1296,71 @@ acquire_seeprom(sd)
 	SEEPROM_OUTB(sd, sd->sd_MS);
 	wait = 1000;  /* 1 second timeout in msec */
 	while (--wait && ((SEEPROM_STATUS_INB(sd) & sd->sd_RDY) == 0)) {
-		DELAY (1000);  /* delay 1 msec */
-        }
+		DELAY(1000);  /* delay 1 msec */
+	}
 	if ((SEEPROM_STATUS_INB(sd) & sd->sd_RDY) == 0) {
 		SEEPROM_OUTB(sd, 0); 
 		return (0);
-	}         
-	return(1);
+	}
+	return (1);
 }
 
 static void
 release_seeprom(sd)
-	struct seeprom_descriptor *sd;
+struct seeprom_descriptor *sd;
 {
 	/* Release access to the memory port and the serial EEPROM. */
 	SEEPROM_OUTB(sd, 0);
 }
 
-#endif /* NPCI > 0 */
+#define DPE	PCI_STATUS_PARITY_DETECT
+#define SSE	PCI_STATUS_SPECIAL_ERROR
+#define RMA	PCI_STATUS_MASTER_ABORT
+#define RTA	PCI_STATUS_MASTER_TARGET_ABORT
+#define STA	PCI_STATUS_TARGET_TARGET_ABORT
+#define DPR	PCI_STATUS_PARITY_ERROR
+
+int
+ahc_pci_intr(ahc)
+struct ahc_softc *ahc;
+{
+	pcireg_t status1;
+	struct ahc_pci_data *pd = ahc->pci_data;
+        
+	if ((ahc_inb(ahc, ERROR) & PCIERRSTAT) == 0)
+                return 0;
+
+	status1 = pci_conf_read(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG);
+
+	if (status1 & DPE) {
+		printf("%s: Data Parity Error Detected during address "
+				 "or write data phase\n", ahc_name(ahc));
+	}
+	if (status1 & SSE) {
+		printf("%s: Signal System Error Detected\n", ahc_name(ahc));
+	}
+	if (status1 & RMA) {
+		printf("%s: Received a Master Abort\n", ahc_name(ahc));
+	}
+	if (status1 & RTA) {
+		printf("%s: Received a Target Abort\n", ahc_name(ahc));
+	}
+	if (status1 & STA) {
+		printf("%s: Signaled a Target Abort\n", ahc_name(ahc));
+	}
+	if (status1 & DPR) {
+		printf("%s: Data Parity Error has been reported via PERR#\n",
+				 ahc_name(ahc));
+	}
+	if ((status1 & (DPE|SSE|RMA|RTA|STA|DPR)) == 0) {
+		printf("%s: Latched PCIERR interrupt with "
+				 "no status bits set\n", ahc_name(ahc)); 
+	}
+	pci_conf_write(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG, status1);
+
+	if (status1 & (DPR|RMA|RTA)) {
+		ahc_outb(ahc, CLRINT, CLRPARERR);
+	}
+
+        return 1;
+}
