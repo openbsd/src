@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.75 2001/10/25 17:24:39 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.76 2001/10/28 19:21:58 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.70 2001/10/25 17:24:23 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.71 2001/10/28 19:21:37 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -195,6 +195,8 @@
 #define	PCMCIA_PRODUCT_ELSA_MC2_IEEE	0x0001
 #define	PCMCIA_CIS_ELSA_XI300_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ELSA_XI300_IEEE	0x0002
+#define	PCMCIA_CIS_ELSA_XI800_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_XI800_IEEE	0x0004
 
 /* Farallon Communications */
 #define	PCMCIA_CIS_FARALLON_SKYLINE	{ NULL, NULL, NULL, NULL }
