@@ -25,7 +25,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-i386.c,v 1.1.1.1 1995/10/18 08:39:04 deraadt Exp $";
+static char rcsid[] = "$Id: tc-i386.c,v 1.2 1996/01/29 06:49:46 deraadt Exp $";
 #endif
 
 #include "as.h"
@@ -1913,8 +1913,9 @@ char **argP;
 int *cntP;
 char ***vecP;
 {
+	switch (**argP) {
 #ifdef PIC
-	if (argP && *argP && **argP == 'k') {
+	case 'k':
 #if 00
 		char *tmp = xmalloc(3+1+strlen(operand_special_chars));
 		strcpy(tmp, operand_special_chars);
@@ -1931,8 +1932,12 @@ char ***vecP;
 
 		/* Predefine GOT symbol */
 		GOT_symbol = symbol_find_or_make("__GLOBAL_OFFSET_TABLE_");
-	}
+		break;
 #endif
+
+	default:
+		return 0;
+	}
 	return 1;
 }
 

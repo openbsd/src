@@ -1081,7 +1081,7 @@ char **argP;
 int *cntP;
 char ***vecP;
 {
-	return 1;
+	return 0;
 }
 
 #ifdef comment
