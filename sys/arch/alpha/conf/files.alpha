@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.33 2000/07/05 21:52:07 ericj Exp $
+#	$OpenBSD: files.alpha,v 1.34 2000/08/12 20:11:32 ericj Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -278,6 +278,7 @@ file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
+file	arch/alpha/alpha/osf1_locore.s		compat_osf1
 
 # NetBSD binary compatibility (COMPAT_NETBSD)
 include "../../../compat/netbsd/files.netbsd"
