@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.7 2003/06/25 03:39:23 tedu Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.8 2003/06/25 03:42:00 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -128,7 +128,7 @@ struct cand {
 struct line {
 	int serial;
 	int value;
-} *file[2], line;
+} *file[2];
 
 int len[2];
 struct line *sfile[2];	/* shortened by pruning common prefix and suffix */
@@ -400,9 +400,9 @@ prepare(int i, FILE *fd)
 	int j, h;
 
 	fseek(fd, 0, 0);
-	p = talloc(3 * sizeof(line));
+	p = talloc(3 * sizeof(struct line));
 	for (j = 0; (h = readhash(fd));) {
-		p = ralloc(p, (++j + 3) * sizeof(line));
+		p = ralloc(p, (++j + 3) * sizeof(struct line));
 		p[j].value = h;
 	}
 	len[i] = j;
