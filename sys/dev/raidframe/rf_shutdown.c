@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_shutdown.c,v 1.4 2000/08/08 16:07:45 peter Exp $	*/
+/*	$OpenBSD: rf_shutdown.c,v 1.5 2002/12/16 07:01:05 tdeval Exp $	*/
 /*	$NetBSD: rf_shutdown.c,v 1.6 2000/01/13 23:41:18 oster Exp $	*/
+
 /*
  * rf_shutdown.c
  */
@@ -40,19 +41,16 @@
 #include "rf_debugMem.h"
 #include "rf_freelist.h"
 
-static void 
-rf_FreeShutdownEnt(RF_ShutdownList_t * ent)
+void rf_FreeShutdownEnt(RF_ShutdownList_t *);
+void
+rf_FreeShutdownEnt(RF_ShutdownList_t *ent)
 {
 	FREE(ent, M_RAIDFRAME);
 }
 
-int 
-_rf_ShutdownCreate(
-    RF_ShutdownList_t ** listp,
-    void (*cleanup) (void *arg),
-    void *arg,
-    char *file,
-    int line)
+int
+_rf_ShutdownCreate(RF_ShutdownList_t **listp, void (*cleanup) (void *arg),
+    void *arg, char *file, int line)
 {
 	RF_ShutdownList_t *ent;
 
@@ -60,10 +58,10 @@ _rf_ShutdownCreate(
          * Have to directly allocate memory here, since we start up before
          * and shutdown after RAIDframe internal allocation system.
          */
-	/* 	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
-		M_RAIDFRAME, M_WAITOK); */
-	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
-					   M_RAIDFRAME, M_NOWAIT);
+	/* ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t),
+	 *     M_RAIDFRAME, M_WAITOK); */
+	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t),
+	    M_RAIDFRAME, M_NOWAIT);
 	if (ent == NULL)
 		return (ENOMEM);
 	ent->cleanup = cleanup;
@@ -75,12 +73,12 @@ _rf_ShutdownCreate(
 	return (0);
 }
 
-int 
-rf_ShutdownList(RF_ShutdownList_t ** list)
+int
+rf_ShutdownList(RF_ShutdownList_t **list)
 {
 	RF_ShutdownList_t *r, *next;
-	char   *file;
-	int     line;
+	char *file;
+	int line;
 
 	for (r = *list; r; r = next) {
 		next = r->next;
@@ -93,7 +91,8 @@ rf_ShutdownList(RF_ShutdownList_t ** list)
 		r->cleanup(r->arg);
 
 		if (rf_shutdownDebug) {
-			printf("completed shutdown, created %s:%d\n", file, line);
+			printf("completed shutdown, created %s:%d\n", file,
+			    line);
 		}
 		rf_FreeShutdownEnt(r);
 	}

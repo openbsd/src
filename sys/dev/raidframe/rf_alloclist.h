@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_alloclist.h,v 1.2 1999/02/16 00:02:23 niklas Exp $	*/
+/*	$OpenBSD: rf_alloclist.h,v 1.3 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_alloclist.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,32 +30,33 @@
 
 /****************************************************************************
  *
- * alloclist.h -- header file for alloclist.c
+ * alloclist.h -- Header file for alloclist.c
  *
  ***************************************************************************/
 
-#ifndef _RF__RF_ALLOCLIST_H_
-#define _RF__RF_ALLOCLIST_H_
+#ifndef	_RF__RF_ALLOCLIST_H_
+#define	_RF__RF_ALLOCLIST_H_
 
 #include "rf_types.h"
 
-#define RF_POINTERS_PER_ALLOC_LIST_ELEMENT 20
+#define	RF_POINTERS_PER_ALLOC_LIST_ELEMENT	20
 
 struct RF_AllocListElem_s {
-	void   *pointers[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
-	int     sizes[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
-	int     numPointers;
-	RF_AllocListElem_t *next;
+	void			*pointers[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
+	int			 sizes[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
+	int			 numPointers;
+	RF_AllocListElem_t	*next;
 };
-#define rf_MakeAllocList(_ptr_) _ptr_ = rf_real_MakeAllocList(1);
-#define rf_AddToAllocList(_l_,_ptr_,_sz_) rf_real_AddToAllocList((_l_), (_ptr_), (_sz_), 1)
+#define	rf_MakeAllocList(_ptr_)		_ptr_ = rf_real_MakeAllocList(1);
+#define	rf_AddToAllocList(_l_,_ptr_,_sz_)				\
+	rf_real_AddToAllocList((_l_), (_ptr_), (_sz_), 1)
 
-int     rf_ConfigureAllocList(RF_ShutdownList_t ** listp);
+int  rf_ConfigureAllocList(RF_ShutdownList_t **);
 
-#if RF_UTILITY == 0
-void    rf_real_AddToAllocList(RF_AllocListElem_t * l, void *p, int size, int lockflag);
-void    rf_FreeAllocList(RF_AllocListElem_t * l);
-RF_AllocListElem_t *rf_real_MakeAllocList(int lockflag);
-#endif				/* RF_UTILITY == 0 */
+#if	RF_UTILITY == 0
+void rf_real_AddToAllocList(RF_AllocListElem_t *, void *, int, int);
+void rf_FreeAllocList(RF_AllocListElem_t *);
+RF_AllocListElem_t *rf_real_MakeAllocList(int);
+#endif	/* RF_UTILITY == 0 */
 
-#endif				/* !_RF__RF_ALLOCLIST_H_ */
+#endif	/* !_RF__RF_ALLOCLIST_H_ */

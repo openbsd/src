@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_memchunk.c,v 1.3 2000/01/07 14:50:21 peter Exp $	*/
+/*	$OpenBSD: rf_memchunk.c,v 1.4 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_memchunk.c,v 1.4 1999/08/13 03:41:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -76,12 +76,12 @@ struct RF_ChunkHdr_s {
 
 static RF_ChunkHdr_t *chunklist, *chunk_hdr_free_list;
 static RF_ChunkDesc_t *chunk_desc_free_list;
-RF_DECLARE_STATIC_MUTEX(chunkmutex)
-	static void rf_ShutdownMemChunk(void *);
-	static RF_ChunkDesc_t *NewMemChunk(int, char *);
+RF_DECLARE_STATIC_MUTEX(chunkmutex);
+void rf_ShutdownMemChunk(void *);
+RF_ChunkDesc_t *rf_NewMemChunk(int, char *);
 
 
-	static void rf_ShutdownMemChunk(ignored)
+void rf_ShutdownMemChunk(ignored)
 	void   *ignored;
 {
 	RF_ChunkDesc_t *pt, *p;
@@ -133,8 +133,8 @@ rf_ConfigureMemChunk(listp)
  *
  * free list is not currently used
  */
-static RF_ChunkDesc_t *
-NewMemChunk(size, buf)
+RF_ChunkDesc_t *
+rf_NewMemChunk(size, buf)
 	int     size;
 	char   *buf;
 {
@@ -176,7 +176,7 @@ rf_GetMemChunk(size)
 		}
 	if (!p) {
 		RF_Malloc(buf, size, (char *));
-		p = NewMemChunk(size, buf);
+		p = rf_NewMemChunk(size, buf);
 	}
 	RF_UNLOCK_MUTEX(chunkmutex);
 	(void) bzero(p->buf, size);

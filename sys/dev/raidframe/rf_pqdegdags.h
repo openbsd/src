@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_pqdegdags.h,v 1.2 1999/02/16 00:03:12 niklas Exp $	*/
+/*	$OpenBSD: rf_pqdegdags.h,v 1.3 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_pqdegdags.h,v 1.3 1999/02/05 00:06:15 oster Exp $	*/
+
 /*
  * rf_pqdegdags.h
  */
@@ -34,16 +35,16 @@
  * Degraded mode dags for double fault cases.
  */
 
-#ifndef _RF__RF_PQDEGDAGS_H_
-#define _RF__RF_PQDEGDAGS_H_
+#ifndef	_RF__RF_PQDEGDAGS_H_
+#define	_RF__RF_PQDEGDAGS_H_
 
 #include "rf_dag.h"
 
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_DoubleDegRead);
-int     rf_PQDoubleRecoveryFunc(RF_DagNode_t * node);
-int     rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t * node);
+int  rf_PQDoubleRecoveryFunc(RF_DagNode_t *);
+int  rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t *);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_DDLargeWrite);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_DDSimpleSmallWrite);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_200_CreateWriteDAG);
 
-#endif				/* !_RF__RF_PQDEGDAGS_H_ */
+#endif	/* !_RF__RF_PQDEGDAGS_H_ */

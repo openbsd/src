@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_states.h,v 1.2 1999/02/16 00:03:28 niklas Exp $	*/
+/*	$OpenBSD: rf_states.h,v 1.3 2002/12/16 07:01:05 tdeval Exp $	*/
 /*	$NetBSD: rf_states.h,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,22 +28,22 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _RF__RF_STATES_H_
-#define _RF__RF_STATES_H_
+#ifndef	_RF__RF_STATES_H_
+#define	_RF__RF_STATES_H_
 
 #include "rf_types.h"
 
-void    rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc);
-void    rf_ContinueDagAccess(RF_DagList_t * dagList);
-int     rf_State_LastState(RF_RaidAccessDesc_t * desc);
-int     rf_State_IncrAccessCount(RF_RaidAccessDesc_t * desc);
-int     rf_State_DecrAccessCount(RF_RaidAccessDesc_t * desc);
-int     rf_State_Quiesce(RF_RaidAccessDesc_t * desc);
-int     rf_State_Map(RF_RaidAccessDesc_t * desc);
-int     rf_State_Lock(RF_RaidAccessDesc_t * desc);
-int     rf_State_CreateDAG(RF_RaidAccessDesc_t * desc);
-int     rf_State_ExecuteDAG(RF_RaidAccessDesc_t * desc);
-int     rf_State_ProcessDAG(RF_RaidAccessDesc_t * desc);
-int     rf_State_Cleanup(RF_RaidAccessDesc_t * desc);
+void rf_ContinueRaidAccess(RF_RaidAccessDesc_t *);
+void rf_ContinueDagAccess(RF_DagList_t *);
+int  rf_State_LastState(RF_RaidAccessDesc_t *);
+int  rf_State_IncrAccessCount(RF_RaidAccessDesc_t *);
+int  rf_State_DecrAccessCount(RF_RaidAccessDesc_t *);
+int  rf_State_Quiesce(RF_RaidAccessDesc_t *);
+int  rf_State_Map(RF_RaidAccessDesc_t *);
+int  rf_State_Lock(RF_RaidAccessDesc_t *);
+int  rf_State_CreateDAG(RF_RaidAccessDesc_t *);
+int  rf_State_ExecuteDAG(RF_RaidAccessDesc_t *);
+int  rf_State_ProcessDAG(RF_RaidAccessDesc_t *);
+int  rf_State_Cleanup(RF_RaidAccessDesc_t *);
 
-#endif				/* !_RF__RF_STATES_H_ */
+#endif	/* !_RF__RF_STATES_H_ */

@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_fifo.c,v 1.5 2000/08/08 16:07:41 peter Exp $	*/
+/*	$OpenBSD: rf_fifo.c,v 1.6 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_fifo.c,v 1.5 2000/03/04 03:27:13 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,30 +49,27 @@
 #include "rf_raid.h"
 #include "rf_types.h"
 
-/* just malloc a header, zero it (via calloc), and return it */
+/* Just malloc a header, zero it (via calloc), and return it. */
 /*ARGSUSED*/
-void   *
-rf_FifoCreate(sectPerDisk, clList, listp)
-	RF_SectorCount_t sectPerDisk;
-	RF_AllocListElem_t *clList;
-	RF_ShutdownList_t **listp;
+void *
+rf_FifoCreate(RF_SectorCount_t sectPerDisk, RF_AllocListElem_t *clList,
+    RF_ShutdownList_t **listp)
 {
 	RF_FifoHeader_t *q;
 
-	RF_CallocAndAdd(q, 1, sizeof(RF_FifoHeader_t), (RF_FifoHeader_t *), clList);
+	RF_CallocAndAdd(q, 1, sizeof(RF_FifoHeader_t), (RF_FifoHeader_t *),
+	    clList);
 	q->hq_count = q->lq_count = 0;
 	return ((void *) q);
 }
 
-void 
-rf_FifoEnqueue(q_in, elem, priority)
-	void   *q_in;
-	RF_DiskQueueData_t *elem;
-	int     priority;
+void
+rf_FifoEnqueue(void *q_in, RF_DiskQueueData_t *elem, int priority)
 {
 	RF_FifoHeader_t *q = (RF_FifoHeader_t *) q_in;
 
-	RF_ASSERT(priority == RF_IO_NORMAL_PRIORITY || priority == RF_IO_LOW_PRIORITY);
+	RF_ASSERT(priority == RF_IO_NORMAL_PRIORITY ||
+	    priority == RF_IO_LOW_PRIORITY);
 
 	elem->next = NULL;
 	if (priority == RF_IO_NORMAL_PRIORITY) {
@@ -87,8 +85,8 @@ rf_FifoEnqueue(q_in, elem, priority)
 	} else {
 		RF_ASSERT(elem->next == NULL);
 		if (rf_fifoDebug) {
-			printf("raid%d: fifo: ENQ lopri\n", 
-			       elem->raidPtr->raidid);
+			printf("raid%d: fifo: ENQ lopri\n",
+			    elem->raidPtr->raidid);
 		}
 		if (!q->lq_tail) {
 			RF_ASSERT(q->lq_count == 0 && q->lq_head == NULL);
@@ -101,7 +99,7 @@ rf_FifoEnqueue(q_in, elem, priority)
 		q->lq_count++;
 	}
 	if ((q->hq_count + q->lq_count) != elem->queue->queueLength) {
-		printf("Queue lengths differ!: %d %d %d\n",
+		printf("Queue lengths differ ! : %d %d %d\n",
 		    q->hq_count, q->lq_count, (int) elem->queue->queueLength);
 		printf("%d %d %d %d\n",
 		    (int) elem->queue->numOutstanding,
@@ -113,8 +111,7 @@ rf_FifoEnqueue(q_in, elem, priority)
 }
 
 RF_DiskQueueData_t *
-rf_FifoDequeue(q_in)
-	void   *q_in;
+rf_FifoDequeue(void *q_in)
 {
 	RF_FifoHeader_t *q = (RF_FifoHeader_t *) q_in;
 	RF_DiskQueueData_t *nd;
@@ -138,17 +135,19 @@ rf_FifoDequeue(q_in)
 			nd->next = NULL;
 			q->lq_count--;
 			if (rf_fifoDebug) {
-				printf("raid%d: fifo: DEQ lopri %lx\n", 
-				       nd->raidPtr->raidid, (long) nd);
+				printf("raid%d: fifo: DEQ lopri %lx\n",
+				    nd->raidPtr->raidid, (long) nd);
 			}
 		} else {
-			RF_ASSERT(q->hq_count == 0 && q->lq_count == 0 && q->hq_tail == NULL && q->lq_tail == NULL);
+			RF_ASSERT(q->hq_count == 0 && q->lq_count == 0 &&
+			    q->hq_tail == NULL && q->lq_tail == NULL);
 			nd = NULL;
 		}
 	return (nd);
 }
 
-/* Return ptr to item at head of queue.  Used to examine request
+/*
+ * Return ptr to item at head of queue. Used to examine request
  * info without actually dequeueing the request.
  */
 RF_DiskQueueData_t *
@@ -165,43 +164,48 @@ rf_FifoPeek(void *q_in)
 			headElement = q->lq_head;
 	return (headElement);
 }
-/* We sometimes need to promote a low priority access to a regular priority access.
- * Currently, this is only used when the user wants to write a stripe which is currently
- * under reconstruction.
- * This routine will promote all accesses tagged with the indicated parityStripeID from
- * the low priority queue to the end of the normal priority queue.
+
+/*
+ * We sometimes need to promote a low priority access to a regular priority
+ * access. Currently, this is only used when the user wants to write a stripe
+ * that is currently under reconstruction.
+ * This routine will promote all accesses tagged with the indicated
+ * parityStripeID from the low priority queue to the end of the normal
+ * priority queue.
  * We assume the queue is locked upon entry.
  */
-int 
-rf_FifoPromote(q_in, parityStripeID, which_ru)
-	void   *q_in;
-	RF_StripeNum_t parityStripeID;
-	RF_ReconUnitNum_t which_ru;
+int
+rf_FifoPromote(void *q_in, RF_StripeNum_t parityStripeID,
+    RF_ReconUnitNum_t which_ru)
 {
 	RF_FifoHeader_t *q = (RF_FifoHeader_t *) q_in;
-	RF_DiskQueueData_t *lp = q->lq_head, *pt = NULL;	/* lp = lo-pri queue
-								 * pointer, pt = trailer */
-	int     retval = 0;
+	/* lp = lo-pri queue pointer, pt = trailer */
+	RF_DiskQueueData_t *lp = q->lq_head, *pt = NULL;
+	int retval = 0;
 
 	while (lp) {
 
-		/* search for the indicated parity stripe in the low-pri queue */
-		if (lp->parityStripeID == parityStripeID && lp->which_ru == which_ru) {
+		/*
+		 * Search for the indicated parity stripe in the low-pri queue.
+		 */
+		if (lp->parityStripeID == parityStripeID &&
+		    lp->which_ru == which_ru) {
 			/* printf("FifoPromote:  promoting access for psid
-			 * %ld\n",parityStripeID); */
+			 * %ld\n", parityStripeID); */
 			if (pt)
-				pt->next = lp->next;	/* delete an entry other
-							 * than the first */
+				/* Delete an entry other than the first. */
+				pt->next = lp->next;
 			else
-				q->lq_head = lp->next;	/* delete the head entry */
+				/* Delete the head entry. */
+				q->lq_head = lp->next;
 
 			if (!q->lq_head)
-				q->lq_tail = NULL;	/* we deleted the only
-							 * entry */
+				/* We deleted the only entry. */
+				q->lq_tail = NULL;
 			else
 				if (lp == q->lq_tail)
-					q->lq_tail = pt;	/* we deleted the tail
-								 * entry */
+					/* We deleted the tail entry. */
+					q->lq_tail = pt;
 
 			lp->next = NULL;
 			q->lq_count--;
@@ -210,17 +214,18 @@ rf_FifoPromote(q_in, parityStripeID, which_ru)
 				q->hq_tail->next = lp;
 				q->hq_tail = lp;
 			}
-			 /* append to hi-priority queue */ 
+			 /* Append to hi-priority queue. */
 			else {
 				q->hq_head = q->hq_tail = lp;
 			}
 			q->hq_count++;
 
+			/* Deal with this later, if ever. */
 			/* UpdateShortestSeekFinishTimeForced(lp->requestPtr,
-			 * lp->diskState); *//* deal with this later, if ever */
+			 * lp->diskState); */
 
-			lp = (pt) ? pt->next : q->lq_head;	/* reset low-pri pointer
-								 * and continue */
+			/* Reset low-pri pointer and continue. */
+			lp = (pt) ? pt->next : q->lq_head;
 			retval++;
 
 		} else {
@@ -229,8 +234,10 @@ rf_FifoPromote(q_in, parityStripeID, which_ru)
 		}
 	}
 
-	/* sanity check.  delete this if you ever put more than one entry in
-	 * the low-pri queue */
+	/*
+	 * Sanity check. Delete this if you ever put more than one entry in
+	 * the low-pri queue.
+	 */
 	RF_ASSERT(retval == 0 || retval == 1);
 	return (retval);
 }

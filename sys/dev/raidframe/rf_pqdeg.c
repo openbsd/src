@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_pqdeg.c,v 1.4 2000/01/11 18:02:22 peter Exp $	*/
+/*	$OpenBSD: rf_pqdeg.c,v 1.5 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_pqdeg.c,v 1.5 2000/01/07 03:41:04 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,7 +30,7 @@
 
 #include "rf_archs.h"
 
-#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
+#if	(RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 
 #include "rf_types.h"
 #include "rf_raid.h"
@@ -47,171 +48,177 @@
 #include "rf_pq.h"
 
 /*
-   Degraded mode dag functions for P+Q calculations.
+ * Degraded mode dag functions for P+Q calculations.
+ *
+ * The following nomenclature is used.
+ *
+ *   PQ_<D><P><Q>_Create{Large,Small}<Write|Read>DAG
+ *
+ * where <D><P><Q> are single digits representing the number of failed
+ * data units <D> (0,1,2), parity units <P> (0,1), and Q units <Q>, effecting
+ * the I/O. The reads have only  PQ_<D><P><Q>_CreateReadDAG variants, while
+ * the single fault writes have both large and small write versions.
+ * Single fault PQ is equivalent to normal mode raid 5 in many aspects.
+ *
+ * Some versions degenerate into the same case, and are grouped together below.
+ */
 
-   The following nomenclature is used.
 
-   PQ_<D><P><Q>_Create{Large,Small}<Write|Read>DAG
+/* Reads, single failure. */
 
-   where <D><P><Q> are single digits representing the number of failed
-   data units <D> (0,1,2), parity units <P> (0,1), and Q units <Q>, effecting
-   the I/O. The reads have only  PQ_<D><P><Q>_CreateReadDAG variants, while
-   the single fault writes have both large and small write versions. (Single fault
-   PQ is equivalent to normal mode raid 5 in many aspects.
-
-   Some versions degenerate into the same case, and are grouped together below.
-*/
-
-/* Reads, single failure
-
-   we have parity, so we can do a raid 5
-   reconstruct read.
-*/
-
+/* We have parity, so we can do a raid 5 reconstruct read. */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_100_CreateReadDAG)
 {
-	rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_pRecoveryFuncs);
+	rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
+	    &rf_pRecoveryFuncs);
 }
-/* Reads double failure  */
+
+
+/* Reads double failure. */
 
 /*
-   Q is lost, but not parity
-   so we can a raid 5 reconstruct read.
-*/
-
+ * Q is lost, but not parity.
+ * So we can a raid 5 reconstruct read.
+ */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_101_CreateReadDAG)
 {
-	rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_pRecoveryFuncs);
+	rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
+	    &rf_pRecoveryFuncs);
 }
-/*
-  parity is lost, so we need to
-  do a reconstruct read and recompute
-  the data with Q.
-*/
 
+/*
+ * Parity is lost, so we need to
+ * do a reconstruct read and recompute
+ * the data with Q.
+ */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_110_CreateReadDAG)
 {
 	RF_PhysDiskAddr_t *temp;
-	/* swap P and Q pointers to fake out the DegradedReadDAG code */
+	/* Swap P and Q pointers to fake out the DegradedReadDAG code. */
 	temp = asmap->parityInfo;
 	asmap->parityInfo = asmap->qInfo;
 	asmap->qInfo = temp;
-	rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_qRecoveryFuncs);
+	rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
+	    &rf_qRecoveryFuncs);
 }
+
 /*
-  Two data units are dead in this stripe, so we will need read
-  both P and Q to reconstruct the data. Note that only
-  one data unit we are reading may actually be missing.
-*/
+ * Two data units are dead in this stripe, so we will need read
+ * both P and Q to reconstruct the data. Note that only
+ * one data unit we are reading may actually be missing.
+ */
 RF_CREATE_DAG_FUNC_DECL(rf_CreateDoubleDegradedReadDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_CreateDoubleDegradedReadDAG)
 {
 	rf_PQ_DoubleDegRead(raidPtr, asmap, dag_h, bp, flags, allocList);
 }
+
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_200_CreateReadDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_200_CreateReadDAG)
 {
-	rf_CreateDoubleDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList);
+	rf_CreateDoubleDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags,
+	    allocList);
 }
-/* Writes, single failure */
+
+
+/* Writes, single failure. */
 
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_100_CreateWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_100_CreateWriteDAG)
 {
 	if (asmap->numStripeUnitsAccessed != 1 &&
-	    asmap->failedPDAs[0]->numSector != 
+	    asmap->failedPDAs[0]->numSector !=
 	    raidPtr->Layout.sectorsPerStripeUnit)
 		RF_PANIC();
-	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, 
-		      flags, allocList, 2, 
-		      (int (*) (RF_DagNode_t *)) rf_Degraded_100_PQFunc, 
-		      RF_FALSE);
+	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp,
+	    flags, allocList, 2, (int (*) (RF_DagNode_t *))
+	    rf_Degraded_100_PQFunc, RF_FALSE);
 }
-/* Dead  P - act like a RAID 5 small write with parity = Q */
+
+/* Dead  P - act like a RAID 5 small write with parity = Q. */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_010_CreateSmallWriteDAG)
 {
 	RF_PhysDiskAddr_t *temp;
-	/* swap P and Q pointers to fake out the DegradedReadDAG code */
+	/* Swap P and Q pointers to fake out the DegradedReadDAG code. */
 	temp = asmap->parityInfo;
 	asmap->parityInfo = asmap->qInfo;
 	asmap->qInfo = temp;
-	rf_CommonCreateSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags, 
-				     allocList, &rf_qFuncs, NULL);
+	rf_CommonCreateSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags,
+	    allocList, &rf_qFuncs, NULL);
 }
-/* Dead Q - act like a RAID 5 small write */
+
+/* Dead Q - act like a RAID 5 small write. */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_001_CreateSmallWriteDAG)
 {
-	rf_CommonCreateSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags, 
-				     allocList, &rf_pFuncs, NULL);
+	rf_CommonCreateSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags,
+	    allocList, &rf_pFuncs, NULL);
 }
-/* Dead P - act like a RAID 5 large write but for Q */
+
+/* Dead P - act like a RAID 5 large write but for Q. */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_010_CreateLargeWriteDAG)
 {
 	RF_PhysDiskAddr_t *temp;
-	/* swap P and Q pointers to fake out the code */
+	/* Swap P and Q pointers to fake out the code. */
 	temp = asmap->parityInfo;
 	asmap->parityInfo = asmap->qInfo;
 	asmap->qInfo = temp;
-	rf_CommonCreateLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags, 
-				     allocList, 1, rf_RegularQFunc, RF_FALSE);
+	rf_CommonCreateLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags,
+	    allocList, 1, rf_RegularQFunc, RF_FALSE);
 }
-/* Dead Q - act like a RAID 5 large write */
+
+/* Dead Q - act like a RAID 5 large write. */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_001_CreateLargeWriteDAG)
 {
-	rf_CommonCreateLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags, 
-				     allocList, 1, rf_RegularPFunc, RF_FALSE);
+	rf_CommonCreateLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags,
+	    allocList, 1, rf_RegularPFunc, RF_FALSE);
 }
 
 
-/*
- * writes, double failure
- */
+/* Writes, double failure. */
 
-/*
- * Lost P & Q - do a nonredundant write
- */
+/* Lost P & Q - do a nonredundant write. */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_011_CreateWriteDAG)
 {
-	rf_CreateNonRedundantWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
-	    RF_IO_TYPE_WRITE);
+	rf_CreateNonRedundantWriteDAG(raidPtr, asmap, dag_h, bp, flags,
+	    allocList, RF_IO_TYPE_WRITE);
 }
-/*
-   In the two cases below,
-   A nasty case arises when the write a (strict) portion of a failed stripe unit
-   and parts of another su. For now, we do not support this.
-*/
+
 
 /*
-  Lost Data and  P - do a Q write.
-*/
+ * In the two cases below, a nasty case arises when it's a write for a
+ * (strict) portion of a failed stripe unit and parts of another su.
+ * For now, we do not support this.
+ */
+
+/* Lost Data and  P - do a Q write. */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_110_CreateWriteDAG)
 {
 	RF_PhysDiskAddr_t *temp;
 
 	if (asmap->numStripeUnitsAccessed != 1 &&
-	    asmap->failedPDAs[0]->numSector != raidPtr->Layout.sectorsPerStripeUnit) {
+	    asmap->failedPDAs[0]->numSector !=
+	    raidPtr->Layout.sectorsPerStripeUnit) {
 		RF_PANIC();
 	}
-	/* swap P and Q to fake out parity code */
+	/* Swap P and Q to fake out parity code. */
 	temp = asmap->parityInfo;
 	asmap->parityInfo = asmap->qInfo;
 	asmap->qInfo = temp;
 	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
-		      allocList, 1, 
-		      (int (*) (RF_DagNode_t *)) rf_PQ_DegradedWriteQFunc,
-		      RF_FALSE);
-	/* is the regular Q func the right one to call? */
+	    allocList, 1, (int (*) (RF_DagNode_t *))
+	    rf_PQ_DegradedWriteQFunc, RF_FALSE);
+	/* Is the regular Q func the right one to call ? */
 }
-/*
-   Lost Data and Q - do degraded mode P write
-*/
+
+/* Lost Data and Q - do degraded mode P write. */
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_101_CreateWriteDAG)
 {
 	if (asmap->numStripeUnitsAccessed != 1 &&
-	    asmap->failedPDAs[0]->numSector != raidPtr->Layout.sectorsPerStripeUnit)
+	    asmap->failedPDAs[0]->numSector !=
+	    raidPtr->Layout.sectorsPerStripeUnit)
 		RF_PANIC();
 	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
 	    allocList, 1, rf_RecoveryXorFunc, RF_FALSE);
 }
-#endif				/* (RF_INCLUDE_DECL_PQ > 0) ||
-				 * (RF_INCLUDE_RAID6 > 0) */
+
+#endif	/* (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) */

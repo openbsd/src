@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_chaindecluster.h,v 1.2 1999/02/16 00:02:26 niklas Exp $	*/
+/*	$OpenBSD: rf_chaindecluster.h,v 1.3 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_chaindecluster.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,44 +28,27 @@
  * rights to redistribute these changes.
  */
 
-/* rf_chaindecluster.h
- * header file for Chained Declustering
+/*
+ * rf_chaindecluster.h
+ * Header file for Chained Declustering.
  */
 
 
-#ifndef _RF__RF_CHAINDECLUSTER_H_
-#define _RF__RF_CHAINDECLUSTER_H_
+#ifndef	_RF__RF_CHAINDECLUSTER_H_
+#define	_RF__RF_CHAINDECLUSTER_H_
 
-int 
-rf_ConfigureChainDecluster(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr);
-RF_ReconUnitCount_t rf_GetNumSpareRUsChainDecluster(RF_Raid_t * raidPtr);
-void 
-rf_MapSectorChainDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
-rf_MapParityChainDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
-rf_IdentifyStripeChainDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids, RF_RowCol_t * outRow);
-void 
-rf_MapSIDToPSIDChainDecluster(RF_RaidLayout_t * layoutPtr,
-    RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
-    RF_ReconUnitNum_t * which_ru);
-void 
-rf_RAIDCDagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap,
-    RF_VoidFuncPtr *);
-#if 0
-void    (**createFunc) (RF_Raid_t *,
-            RF_AccessStripeMap_t *,
-            RF_DagHeader_t *,
-            void *,
-            RF_RaidAccessFlags_t,
-            RF_AllocListElem_t *)
-/**INDENT** Warning@59: Extra ) */
-);
-#endif
+int  rf_ConfigureChainDecluster(RF_ShutdownList_t **, RF_Raid_t *,
+	RF_Config_t *);
+RF_ReconUnitCount_t rf_GetNumSpareRUsChainDecluster(RF_Raid_t *);
+void rf_MapSectorChainDecluster(RF_Raid_t *, RF_RaidAddr_t,
+	RF_RowCol_t *, RF_RowCol_t *, RF_SectorNum_t *, int);
+void rf_MapParityChainDecluster(RF_Raid_t *, RF_RaidAddr_t,
+	RF_RowCol_t *, RF_RowCol_t *, RF_SectorNum_t *, int);
+void rf_IdentifyStripeChainDecluster(RF_Raid_t *, RF_RaidAddr_t,
+	RF_RowCol_t **, RF_RowCol_t *);
+void rf_MapSIDToPSIDChainDecluster(RF_RaidLayout_t *,
+	RF_StripeNum_t, RF_StripeNum_t *, RF_ReconUnitNum_t *);
+void rf_RAIDCDagSelect(RF_Raid_t *, RF_IoType_t,
+	RF_AccessStripeMap_t *, RF_VoidFuncPtr *);
 
-#endif				/* !_RF__RF_CHAINDECLUSTER_H_ */
+#endif	/* !_RF__RF_CHAINDECLUSTER_H_ */

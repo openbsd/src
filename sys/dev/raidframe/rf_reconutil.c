@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_reconutil.c,v 1.2 1999/02/16 00:03:23 niklas Exp $	*/
+/*	$OpenBSD: rf_reconutil.c,v 1.3 2002/12/16 07:01:05 tdeval Exp $	*/
 /*	$NetBSD: rf_reconutil.c,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,9 +28,9 @@
  * rights to redistribute these changes.
  */
 
-/********************************************
- * rf_reconutil.c -- reconstruction utilities
- ********************************************/
+/**********************************************
+ * rf_reconutil.c -- Reconstruction utilities.
+ **********************************************/
 
 #include "rf_types.h"
 #include "rf_raid.h"
@@ -42,33 +43,40 @@
 #include "rf_interdecluster.h"
 #include "rf_chaindecluster.h"
 
-/*******************************************************************
- * allocates/frees the reconstruction control information structures
- *******************************************************************/
+
+/*********************************************************************
+ * Allocates/frees the reconstruction control information structures.
+ *********************************************************************/
 RF_ReconCtrl_t *
-rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
-	RF_RaidReconDesc_t *reconDesc;
-	RF_RowCol_t frow;	/* failed row and column */
-	RF_RowCol_t fcol;
-	RF_RowCol_t srow;	/* identifies which spare we're using */
-	RF_RowCol_t scol;
+rf_MakeReconControl(
+    RF_RaidReconDesc_t	*reconDesc,
+    RF_RowCol_t		 frow,	/* Failed row and column. */
+    RF_RowCol_t		 fcol,
+    RF_RowCol_t		 srow,	/* Identifies which spare we're using. */
+    RF_RowCol_t		 scol
+)
 {
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
-	RF_ReconUnitCount_t RUsPerPU = layoutPtr->SUsPerPU / layoutPtr->SUsPerRU;
+	RF_ReconUnitCount_t RUsPerPU = layoutPtr->SUsPerPU /
+	    layoutPtr->SUsPerRU;
 	RF_ReconUnitCount_t numSpareRUs;
 	RF_ReconCtrl_t *reconCtrlPtr;
 	RF_ReconBuffer_t *rbuf;
 	RF_LayoutSW_t *lp;
-	int     retcode, rc;
+	int retcode, rc;
 	RF_RowCol_t i;
 
 	lp = raidPtr->Layout.map;
 
-	/* make and zero the global reconstruction structure and the per-disk
-	 * structure */
+	/*
+	 * Make and zero the global reconstruction structure and the per-disk
+	 * structure.
+	 */
 	RF_Calloc(reconCtrlPtr, 1, sizeof(RF_ReconCtrl_t), (RF_ReconCtrl_t *));
-	RF_Calloc(reconCtrlPtr->perDiskInfo, raidPtr->numCol, sizeof(RF_PerDiskReconCtrl_t), (RF_PerDiskReconCtrl_t *));	/* this zeros it */
+	/* This zeros it. */
+	RF_Calloc(reconCtrlPtr->perDiskInfo, raidPtr->numCol,
+	    sizeof(RF_PerDiskReconCtrl_t), (RF_PerDiskReconCtrl_t *));
 	reconCtrlPtr->reconDesc = reconDesc;
 	reconCtrlPtr->fcol = fcol;
 	reconCtrlPtr->spareRow = srow;
@@ -76,19 +84,20 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	reconCtrlPtr->lastPSID = layoutPtr->numStripe / layoutPtr->SUsPerPU;
 	reconCtrlPtr->percentComplete = 0;
 
-	/* initialize each per-disk recon information structure */
+	/* Initialize each per-disk recon information structure. */
 	for (i = 0; i < raidPtr->numCol; i++) {
 		reconCtrlPtr->perDiskInfo[i].reconCtrl = reconCtrlPtr;
 		reconCtrlPtr->perDiskInfo[i].row = frow;
 		reconCtrlPtr->perDiskInfo[i].col = i;
-		reconCtrlPtr->perDiskInfo[i].curPSID = -1;	/* make it appear as if
-								 * we just finished an
-								 * RU */
+		/* Make it appear as if we just finished an RU. */
+		reconCtrlPtr->perDiskInfo[i].curPSID = -1;
 		reconCtrlPtr->perDiskInfo[i].ru_count = RUsPerPU - 1;
 	}
 
-	/* Get the number of spare units per disk and the sparemap in case
-	 * spare is distributed  */
+	/*
+	 * Get the number of spare units per disk and the sparemap in case
+	 * spare is distributed.
+	 */
 
 	if (lp->GetNumSpareRUs) {
 		numSpareRUs = lp->GetNumSpareRUs(raidPtr);
@@ -97,47 +106,50 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	}
 
 	/*
-         * Not all distributed sparing archs need dynamic mappings
-         */
+	 * Not all distributed sparing archs need dynamic mappings.
+	 */
 	if (lp->InstallSpareTable) {
 		retcode = rf_InstallSpareTable(raidPtr, frow, fcol);
 		if (retcode) {
-			RF_PANIC();	/* XXX fix this */
+			RF_PANIC();	/* XXX Fix this. */
 		}
 	}
-	/* make the reconstruction map */
-	reconCtrlPtr->reconMap = rf_MakeReconMap(raidPtr, (int) (layoutPtr->SUsPerRU * layoutPtr->sectorsPerStripeUnit),
+	/* Make the reconstruction map. */
+	reconCtrlPtr->reconMap = rf_MakeReconMap(raidPtr,
+	    (int) (layoutPtr->SUsPerRU * layoutPtr->sectorsPerStripeUnit),
 	    raidPtr->sectorsPerDisk, numSpareRUs);
 
-	/* make the per-disk reconstruction buffers */
+	/* Make the per-disk reconstruction buffers. */
 	for (i = 0; i < raidPtr->numCol; i++) {
-		reconCtrlPtr->perDiskInfo[i].rbuf = (i == fcol) ? NULL : rf_MakeReconBuffer(raidPtr, frow, i, RF_RBUF_TYPE_EXCLUSIVE);
+		reconCtrlPtr->perDiskInfo[i].rbuf = (i == fcol) ? NULL :
+		    rf_MakeReconBuffer(raidPtr, frow, i,
+		     RF_RBUF_TYPE_EXCLUSIVE);
 	}
 
-	/* initialize the event queue */
+	/* Initialize the event queue. */
 	rc = rf_mutex_init(&reconCtrlPtr->eq_mutex);
 	if (rc) {
-		/* XXX deallocate, cleanup */
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		/* XXX Deallocate, cleanup. */
+		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d.\n",
+		    __FILE__, __LINE__, rc);
 		return (NULL);
 	}
 	rc = rf_cond_init(&reconCtrlPtr->eq_cond);
 	if (rc) {
-		/* XXX deallocate, cleanup */
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		/* XXX Deallocate, cleanup. */
+		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d.\n",
+		    __FILE__, __LINE__, rc);
 		return (NULL);
 	}
 	reconCtrlPtr->eventQueue = NULL;
 	reconCtrlPtr->eq_count = 0;
 
-	/* make the floating recon buffers and append them to the free list */
+	/* Make the floating recon buffers and append them to the free list. */
 	rc = rf_mutex_init(&reconCtrlPtr->rb_mutex);
 	if (rc) {
-		/* XXX deallocate, cleanup */
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		/* XXX Deallocate, cleanup. */
+		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d.\n",
+		    __FILE__, __LINE__, rc);
 		return (NULL);
 	}
 	reconCtrlPtr->fullBufferList = NULL;
@@ -145,24 +157,23 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	reconCtrlPtr->floatingRbufs = NULL;
 	reconCtrlPtr->committedRbufs = NULL;
 	for (i = 0; i < raidPtr->numFloatingReconBufs; i++) {
-		rbuf = rf_MakeReconBuffer(raidPtr, frow, fcol, RF_RBUF_TYPE_FLOATING);
+		rbuf = rf_MakeReconBuffer(raidPtr, frow, fcol,
+		    RF_RBUF_TYPE_FLOATING);
 		rbuf->next = reconCtrlPtr->floatingRbufs;
 		reconCtrlPtr->floatingRbufs = rbuf;
 	}
 
-	/* create the parity stripe status table */
+	/* Create the parity stripe status table. */
 	reconCtrlPtr->pssTable = rf_MakeParityStripeStatusTable(raidPtr);
 
-	/* set the initial min head sep counter val */
+	/* Set the initial min head sep counter val. */
 	reconCtrlPtr->minHeadSepCounter = 0;
 
 	return (reconCtrlPtr);
 }
 
-void 
-rf_FreeReconControl(raidPtr, row)
-	RF_Raid_t *raidPtr;
-	RF_RowCol_t row;
+void
+rf_FreeReconControl(RF_Raid_t *raidPtr, RF_RowCol_t row)
 {
 	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl[row];
 	RF_ReconBuffer_t *t;
@@ -183,17 +194,17 @@ rf_FreeReconControl(raidPtr, row)
 	rf_cond_destroy(&reconCtrlPtr->eq_cond);
 	rf_FreeReconMap(reconCtrlPtr->reconMap);
 	rf_FreeParityStripeStatusTable(raidPtr, reconCtrlPtr->pssTable);
-	RF_Free(reconCtrlPtr->perDiskInfo, raidPtr->numCol * sizeof(RF_PerDiskReconCtrl_t));
+	RF_Free(reconCtrlPtr->perDiskInfo, raidPtr->numCol *
+	    sizeof(RF_PerDiskReconCtrl_t));
 	RF_Free(reconCtrlPtr, sizeof(*reconCtrlPtr));
 }
 
 
-/******************************************************************************
- * computes the default head separation limit
+/*****************************************************************************
+ * Computes the default head separation limit.
  *****************************************************************************/
-RF_HeadSepLimit_t 
-rf_GetDefaultHeadSepLimit(raidPtr)
-	RF_Raid_t *raidPtr;
+RF_HeadSepLimit_t
+rf_GetDefaultHeadSepLimit(RF_Raid_t *raidPtr)
 {
 	RF_HeadSepLimit_t hsl;
 	RF_LayoutSW_t *lp;
@@ -206,15 +217,14 @@ rf_GetDefaultHeadSepLimit(raidPtr)
 }
 
 
-/******************************************************************************
- * computes the default number of floating recon buffers
+/*****************************************************************************
+ * Computes the default number of floating recon buffers.
  *****************************************************************************/
-int 
-rf_GetDefaultNumFloatingReconBuffers(raidPtr)
-	RF_Raid_t *raidPtr;
+int
+rf_GetDefaultNumFloatingReconBuffers(RF_Raid_t *raidPtr)
 {
 	RF_LayoutSW_t *lp;
-	int     nrb;
+	int nrb;
 
 	lp = raidPtr->Layout.map;
 	if (lp->GetDefaultNumFloatingReconBuffers == NULL)
@@ -224,19 +234,17 @@ rf_GetDefaultNumFloatingReconBuffers(raidPtr)
 }
 
 
-/******************************************************************************
- * creates and initializes a reconstruction buffer
+/*****************************************************************************
+ * Creates and initializes a reconstruction buffer.
  *****************************************************************************/
 RF_ReconBuffer_t *
-rf_MakeReconBuffer(
-    RF_Raid_t * raidPtr,
-    RF_RowCol_t row,
-    RF_RowCol_t col,
+rf_MakeReconBuffer(RF_Raid_t *raidPtr, RF_RowCol_t row, RF_RowCol_t col,
     RF_RbufType_t type)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_ReconBuffer_t *t;
-	u_int   recon_buffer_size = rf_RaidAddressToByte(raidPtr, layoutPtr->SUsPerRU * layoutPtr->sectorsPerStripeUnit);
+	u_int recon_buffer_size = rf_RaidAddressToByte(raidPtr,
+	    layoutPtr->SUsPerRU * layoutPtr->sectorsPerStripeUnit);
 
 	RF_Malloc(t, sizeof(RF_ReconBuffer_t), (RF_ReconBuffer_t *));
 	RF_Malloc(t->buffer, recon_buffer_size, (caddr_t));
@@ -250,15 +258,17 @@ rf_MakeReconBuffer(
 	t->next = NULL;
 	return (t);
 }
-/******************************************************************************
- * frees a reconstruction buffer
+
+
+/*****************************************************************************
+ * Frees a reconstruction buffer.
  *****************************************************************************/
-void 
-rf_FreeReconBuffer(rbuf)
-	RF_ReconBuffer_t *rbuf;
+void
+rf_FreeReconBuffer(RF_ReconBuffer_t *rbuf)
 {
 	RF_Raid_t *raidPtr = rbuf->raidPtr;
-	u_int   recon_buffer_size = rf_RaidAddressToByte(raidPtr, raidPtr->Layout.SUsPerRU * raidPtr->Layout.sectorsPerStripeUnit);
+	u_int recon_buffer_size = rf_RaidAddressToByte(raidPtr,
+	    raidPtr->Layout.SUsPerRU * raidPtr->Layout.sectorsPerStripeUnit);
 
 	RF_Free(rbuf->arrived, raidPtr->numCol * sizeof(char));
 	RF_Free(rbuf->buffer, recon_buffer_size);
@@ -266,18 +276,16 @@ rf_FreeReconBuffer(rbuf)
 }
 
 
-/******************************************************************************
- * debug only:  sanity check the number of floating recon bufs in use
+/*****************************************************************************
+ * Debug only:  Sanity check the number of floating recon bufs in use.
  *****************************************************************************/
-void 
-rf_CheckFloatingRbufCount(raidPtr, dolock)
-	RF_Raid_t *raidPtr;
-	int     dolock;
+void
+rf_CheckFloatingRbufCount(RF_Raid_t *raidPtr, int dolock)
 {
 	RF_ReconParityStripeStatus_t *p;
 	RF_PSStatusHeader_t *pssTable;
 	RF_ReconBuffer_t *rbuf;
-	int     i, j, sum = 0;
+	int i, j, sum = 0;
 	RF_RowCol_t frow = 0;
 
 	for (i = 0; i < raidPtr->numRow; i++)
@@ -312,19 +320,23 @@ rf_CheckFloatingRbufCount(raidPtr, dolock)
 		RF_UNLOCK_MUTEX(pssTable[i].mutex);
 	}
 
-	for (rbuf = raidPtr->reconControl[frow]->floatingRbufs; rbuf; rbuf = rbuf->next) {
+	for (rbuf = raidPtr->reconControl[frow]->floatingRbufs; rbuf;
+	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->committedRbufs; rbuf; rbuf = rbuf->next) {
+	for (rbuf = raidPtr->reconControl[frow]->committedRbufs; rbuf;
+	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->fullBufferList; rbuf; rbuf = rbuf->next) {
+	for (rbuf = raidPtr->reconControl[frow]->fullBufferList; rbuf;
+	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->priorityList; rbuf; rbuf = rbuf->next) {
+	for (rbuf = raidPtr->reconControl[frow]->priorityList; rbuf;
+	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}

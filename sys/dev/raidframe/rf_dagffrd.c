@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_dagffrd.c,v 1.3 2000/01/11 18:02:21 peter Exp $	*/
+/*	$OpenBSD: rf_dagffrd.c,v 1.4 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_dagffrd.c,v 1.4 2000/01/07 03:40:58 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +31,7 @@
 /*
  * rf_dagffrd.c
  *
- * code for creating fault-free read DAGs
+ * Code for creating fault-free read DAGs.
  *
  */
 
@@ -44,7 +45,11 @@
 #include "rf_general.h"
 #include "rf_dagffrd.h"
 
-/******************************************************************************
+void rf_CreateMirrorReadDAG( RF_Raid_t *, RF_AccessStripeMap_t *,
+	RF_DagHeader_t *, void *, RF_RaidAccessFlags_t, RF_AllocListElem_t *,
+	int (*) (RF_DagNode_t *));
+
+/*****************************************************************************
  *
  * General comments on DAG creation:
  *
@@ -60,39 +65,42 @@
  *
  * A graph has only 1 Cmt node.
  *
- */
+ *****************************************************************************/
 
 
-/******************************************************************************
+/*****************************************************************************
  *
  * The following wrappers map the standard DAG creation interface to the
  * DAG creation routines.  Additionally, these wrappers enable experimentation
  * with new DAG structures by providing an extra level of indirection, allowing
  * the DAG creation routines to be replaced at this single point.
- */
+ *
+ *****************************************************************************/
 
-void 
+void
 rf_CreateFaultFreeReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+	RF_Raid_t		*raidPtr,
+	RF_AccessStripeMap_t	*asmap,
+	RF_DagHeader_t		*dag_h,
+	void			*bp,
+	RF_RaidAccessFlags_t	 flags,
+	RF_AllocListElem_t	*allocList
+)
 {
 	rf_CreateNonredundantDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    RF_IO_TYPE_READ);
 }
 
 
-/******************************************************************************
+/*****************************************************************************
  *
- * DAG creation code begins here
- */
+ * DAG creation code begins here.
+ *
+ *****************************************************************************/
 
-/******************************************************************************
+/*****************************************************************************
  *
- * creates a DAG to perform a nonredundant read or write of data within one
+ * Creates a DAG to perform a nonredundant read or write of data within one
  * stripe.
  * For reads, this DAG is as follows:
  *
@@ -124,21 +132,22 @@ rf_CreateFaultFreeReadDAG(
  *
  *****************************************************************************/
 
-void 
+void
 rf_CreateNonredundantDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList,
-    RF_IoType_t type)
+	RF_Raid_t		*raidPtr,
+	RF_AccessStripeMap_t	*asmap,
+	RF_DagHeader_t		*dag_h,
+	void			*bp,
+	RF_RaidAccessFlags_t	 flags,
+	RF_AllocListElem_t	*allocList,
+	RF_IoType_t		 type
+)
 {
 	RF_DagNode_t *nodes, *diskNodes, *blockNode, *commitNode, *termNode;
 	RF_PhysDiskAddr_t *pda = asmap->physInfo;
-	int     (*doFunc) (RF_DagNode_t *), (*undoFunc) (RF_DagNode_t *);
-	int     i, n, totalNumNodes;
-	char   *name;
+	int (*doFunc) (RF_DagNode_t *), (*undoFunc) (RF_DagNode_t *);
+	int i, n, totalNumNodes;
+	char *name;
 
 	n = asmap->numStripeUnitsAccessed;
 	dag_h->creator = "NonredundantDAG";
@@ -164,20 +173,20 @@ rf_CreateNonredundantDAG(
 	}
 
 	/*
-         * For reads, the dag can not commit until the block node is reached.
-         * for writes, the dag commits immediately.
-         */
+	 * For reads, the dag can not commit until the block node is reached.
+	 * For writes, the dag commits immediately.
+	 */
 	dag_h->numCommitNodes = 1;
 	dag_h->numCommits = 0;
 	dag_h->numSuccedents = 1;
 
 	/*
-         * Node count:
-         * 1 block node
-         * n data reads (or writes)
-         * 1 commit node
-         * 1 terminator node
-         */
+	 * Node count:
+	 * 1 block node
+	 * n data reads (or writes)
+	 * 1 commit node
+	 * 1 terminator node
+	 */
 	RF_ASSERT(n > 0);
 	totalNumNodes = n + 3;
 	RF_CallocAndAdd(nodes, totalNumNodes, sizeof(RF_DagNode_t),
@@ -193,23 +202,29 @@ rf_CreateNonredundantDAG(
 	i += 1;
 	RF_ASSERT(i == totalNumNodes);
 
-	/* initialize nodes */
+	/* Initialize nodes. */
 	switch (type) {
 	case RF_IO_TYPE_READ:
-		rf_InitNode(blockNode, rf_wait, RF_FALSE, rf_NullNodeFunc, rf_NullNodeUndoFunc,
-		    NULL, n, 0, 0, 0, dag_h, "Nil", allocList);
-		rf_InitNode(commitNode, rf_wait, RF_TRUE, rf_NullNodeFunc, rf_NullNodeUndoFunc,
-		    NULL, 1, n, 0, 0, dag_h, "Cmt", allocList);
-		rf_InitNode(termNode, rf_wait, RF_FALSE, rf_TerminateFunc, rf_TerminateUndoFunc,
-		    NULL, 0, 1, 0, 0, dag_h, "Trm", allocList);
+		rf_InitNode(blockNode, rf_wait, RF_FALSE, rf_NullNodeFunc,
+		    rf_NullNodeUndoFunc, NULL, n, 0, 0, 0, dag_h, "Nil",
+		    allocList);
+		rf_InitNode(commitNode, rf_wait, RF_TRUE, rf_NullNodeFunc,
+		    rf_NullNodeUndoFunc, NULL, 1, n, 0, 0, dag_h, "Cmt",
+		    allocList);
+		rf_InitNode(termNode, rf_wait, RF_FALSE, rf_TerminateFunc,
+		    rf_TerminateUndoFunc, NULL, 0, 1, 0, 0, dag_h, "Trm",
+		    allocList);
 		break;
 	case RF_IO_TYPE_WRITE:
-		rf_InitNode(blockNode, rf_wait, RF_FALSE, rf_NullNodeFunc, rf_NullNodeUndoFunc,
-		    NULL, 1, 0, 0, 0, dag_h, "Nil", allocList);
-		rf_InitNode(commitNode, rf_wait, RF_TRUE, rf_NullNodeFunc, rf_NullNodeUndoFunc,
-		    NULL, n, 1, 0, 0, dag_h, "Cmt", allocList);
-		rf_InitNode(termNode, rf_wait, RF_FALSE, rf_TerminateFunc, rf_TerminateUndoFunc,
-		    NULL, 0, n, 0, 0, dag_h, "Trm", allocList);
+		rf_InitNode(blockNode, rf_wait, RF_FALSE, rf_NullNodeFunc,
+		    rf_NullNodeUndoFunc, NULL, 1, 0, 0, 0, dag_h, "Nil",
+		    allocList);
+		rf_InitNode(commitNode, rf_wait, RF_TRUE, rf_NullNodeFunc,
+		    rf_NullNodeUndoFunc, NULL, n, 1, 0, 0, dag_h, "Cmt",
+		    allocList);
+		rf_InitNode(termNode, rf_wait, RF_FALSE, rf_TerminateFunc,
+		    rf_TerminateUndoFunc, NULL, 0, n, 0, 0, dag_h, "Trm",
+		    allocList);
 		break;
 	default:
 		RF_PANIC();
@@ -217,42 +232,43 @@ rf_CreateNonredundantDAG(
 
 	for (i = 0; i < n; i++) {
 		RF_ASSERT(pda != NULL);
-		rf_InitNode(&diskNodes[i], rf_wait, RF_FALSE, doFunc, undoFunc, rf_GenericWakeupFunc,
-		    1, 1, 4, 0, dag_h, name, allocList);
+		rf_InitNode(&diskNodes[i], rf_wait, RF_FALSE, doFunc, undoFunc,
+		    rf_GenericWakeupFunc, 1, 1, 4, 0, dag_h, name, allocList);
 		diskNodes[i].params[0].p = pda;
 		diskNodes[i].params[1].p = pda->bufPtr;
-		/* parity stripe id is not necessary */
+		/* Parity stripe id is not necessary. */
 		diskNodes[i].params[2].v = 0;
-		diskNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, 0);
+		diskNodes[i].params[3].v =
+		    RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, 0);
 		pda = pda->next;
 	}
 
 	/*
-         * Connect nodes.
-         */
+	 * Connect nodes.
+	 */
 
-	/* connect hdr to block node */
+	/* Connect hdr to block node. */
 	RF_ASSERT(blockNode->numAntecedents == 0);
 	dag_h->succedents[0] = blockNode;
 
 	if (type == RF_IO_TYPE_READ) {
-		/* connecting a nonredundant read DAG */
+		/* Connecting a nonredundant read DAG. */
 		RF_ASSERT(blockNode->numSuccedents == n);
 		RF_ASSERT(commitNode->numAntecedents == n);
 		for (i = 0; i < n; i++) {
-			/* connect block node to each read node */
+			/* Connect block node to each read node. */
 			RF_ASSERT(diskNodes[i].numAntecedents == 1);
 			blockNode->succedents[i] = &diskNodes[i];
 			diskNodes[i].antecedents[0] = blockNode;
 			diskNodes[i].antType[0] = rf_control;
 
-			/* connect each read node to the commit node */
+			/* Connect each read node to the commit node. */
 			RF_ASSERT(diskNodes[i].numSuccedents == 1);
 			diskNodes[i].succedents[0] = commitNode;
 			commitNode->antecedents[i] = &diskNodes[i];
 			commitNode->antType[i] = rf_control;
 		}
-		/* connect the commit node to the term node */
+		/* Connect the commit node to the term node. */
 		RF_ASSERT(commitNode->numSuccedents == 1);
 		RF_ASSERT(termNode->numAntecedents == 1);
 		RF_ASSERT(termNode->numSuccedents == 0);
@@ -260,8 +276,8 @@ rf_CreateNonredundantDAG(
 		termNode->antecedents[0] = commitNode;
 		termNode->antType[0] = rf_control;
 	} else {
-		/* connecting a nonredundant write DAG */
-		/* connect the block node to the commit node */
+		/* Connecting a nonredundant write DAG. */
+		/* Connect the block node to the commit node. */
 		RF_ASSERT(blockNode->numSuccedents == 1);
 		RF_ASSERT(commitNode->numAntecedents == 1);
 		blockNode->succedents[0] = commitNode;
@@ -272,13 +288,13 @@ rf_CreateNonredundantDAG(
 		RF_ASSERT(termNode->numAntecedents == n);
 		RF_ASSERT(termNode->numSuccedents == 0);
 		for (i = 0; i < n; i++) {
-			/* connect the commit node to each write node */
+			/* Connect the commit node to each write node. */
 			RF_ASSERT(diskNodes[i].numAntecedents == 1);
 			commitNode->succedents[i] = &diskNodes[i];
 			diskNodes[i].antecedents[0] = commitNode;
 			diskNodes[i].antType[0] = rf_control;
 
-			/* connect each write node to the term node */
+			/* Connect each write node to the term node. */
 			RF_ASSERT(diskNodes[i].numSuccedents == 1);
 			diskNodes[i].succedents[0] = termNode;
 			termNode->antecedents[i] = &diskNodes[i];
@@ -286,37 +302,38 @@ rf_CreateNonredundantDAG(
 		}
 	}
 }
-/******************************************************************************
- * Create a fault-free read DAG for RAID level 1
+/*****************************************************************************
+ * Create a fault-free read DAG for RAID level 1.
  *
  * Hdr -> Nil -> Rmir -> Cmt -> Trm
  *
  * The "Rmir" node schedules a read from the disk in the mirror pair with the
- * shortest disk queue.  the proper queue is selected at Rmir execution.  this
+ * shortest disk queue.  The proper queue is selected at Rmir execution.  This
  * deferred mapping is unlike other archs in RAIDframe which generally fix
  * mapping at DAG creation time.
  *
- * Parameters:  raidPtr   - description of the physical array
- *              asmap     - logical & physical addresses for this access
- *              bp        - buffer ptr (for holding read data)
- *              flags     - general flags (e.g. disk locking)
- *              allocList - list of memory allocated in DAG creation
+ * Parameters:  raidPtr	  - description of the physical array
+ *		asmap	  - logical & physical addresses for this access
+ *		bp	  - buffer ptr (for holding read data)
+ *		flags	  - general flags (e.g. disk locking)
+ *		allocList - list of memory allocated in DAG creation
  *****************************************************************************/
 
-static void 
-CreateMirrorReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList,
-    int (*readfunc) (RF_DagNode_t * node))
+void
+rf_CreateMirrorReadDAG(
+	RF_Raid_t		 *raidPtr,
+	RF_AccessStripeMap_t	 *asmap,
+	RF_DagHeader_t		 *dag_h,
+	void			 *bp,
+	RF_RaidAccessFlags_t	  flags,
+	RF_AllocListElem_t	 *allocList,
+	int			(*readfunc) (RF_DagNode_t *)
+)
 {
 	RF_DagNode_t *readNodes, *nodes, *blockNode, *commitNode, *termNode;
 	RF_PhysDiskAddr_t *data_pda = asmap->physInfo;
 	RF_PhysDiskAddr_t *parity_pda = asmap->parityInfo;
-	int     i, n, totalNumNodes;
+	int i, n, totalNumNodes;
 
 	n = asmap->numStripeUnitsAccessed;
 	dag_h->creator = "RaidOneReadDAG";
@@ -324,20 +341,20 @@ CreateMirrorReadDAG(
 		printf("[Creating RAID level 1 read DAG]\n");
 	}
 	/*
-         * This dag can not commit until the commit node is reached
-         * errors prior to the commit point imply the dag has failed.
-         */
+	 * This dag can not commit until the commit node is reached.
+	 * Errors prior to the commit point imply the dag has failed.
+	 */
 	dag_h->numCommitNodes = 1;
 	dag_h->numCommits = 0;
 	dag_h->numSuccedents = 1;
 
 	/*
-         * Node count:
-         * n data reads
-         * 1 block node
-         * 1 commit node
-         * 1 terminator node
-         */
+	 * Node count:
+	 * n data reads
+	 * 1 block node
+	 * 1 commit node
+	 * 1 terminator node
+	 */
 	RF_ASSERT(n > 0);
 	totalNumNodes = n + 3;
 	RF_CallocAndAdd(nodes, totalNumNodes, sizeof(RF_DagNode_t),
@@ -353,7 +370,7 @@ CreateMirrorReadDAG(
 	i += 1;
 	RF_ASSERT(i == totalNumNodes);
 
-	/* initialize nodes */
+	/* Initialize nodes. */
 	rf_InitNode(blockNode, rf_wait, RF_FALSE, rf_NullNodeFunc,
 	    rf_NullNodeUndoFunc, NULL, n, 0, 0, 0, dag_h, "Nil", allocList);
 	rf_InitNode(commitNode, rf_wait, RF_TRUE, rf_NullNodeFunc,
@@ -365,27 +382,28 @@ CreateMirrorReadDAG(
 		RF_ASSERT(data_pda != NULL);
 		RF_ASSERT(parity_pda != NULL);
 		rf_InitNode(&readNodes[i], rf_wait, RF_FALSE, readfunc,
-		    rf_DiskReadMirrorUndoFunc, rf_GenericWakeupFunc, 1, 1, 5, 0, dag_h,
-		    "Rmir", allocList);
+		    rf_DiskReadMirrorUndoFunc, rf_GenericWakeupFunc, 1, 1, 5,
+		    0, dag_h, "Rmir", allocList);
 		readNodes[i].params[0].p = data_pda;
 		readNodes[i].params[1].p = data_pda->bufPtr;
-		/* parity stripe id is not necessary */
+		/* Parity stripe id is not necessary. */
 		readNodes[i].params[2].p = 0;
-		readNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, 0);
+		readNodes[i].params[3].v =
+		    RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, 0);
 		readNodes[i].params[4].p = parity_pda;
 		data_pda = data_pda->next;
 		parity_pda = parity_pda->next;
 	}
 
 	/*
-         * Connect nodes
-         */
+	 * Connect nodes.
+	 */
 
-	/* connect hdr to block node */
+	/* Connect hdr to block node. */
 	RF_ASSERT(blockNode->numAntecedents == 0);
 	dag_h->succedents[0] = blockNode;
 
-	/* connect block node to read nodes */
+	/* Connect block node to read nodes. */
 	RF_ASSERT(blockNode->numSuccedents == n);
 	for (i = 0; i < n; i++) {
 		RF_ASSERT(readNodes[i].numAntecedents == 1);
@@ -394,7 +412,7 @@ CreateMirrorReadDAG(
 		readNodes[i].antType[0] = rf_control;
 	}
 
-	/* connect read nodes to commit node */
+	/* Connect read nodes to commit node. */
 	RF_ASSERT(commitNode->numAntecedents == n);
 	for (i = 0; i < n; i++) {
 		RF_ASSERT(readNodes[i].numSuccedents == 1);
@@ -403,7 +421,7 @@ CreateMirrorReadDAG(
 		commitNode->antType[i] = rf_control;
 	}
 
-	/* connect commit node to term node */
+	/* Connect commit node to term node. */
 	RF_ASSERT(commitNode->numSuccedents == 1);
 	RF_ASSERT(termNode->numAntecedents == 1);
 	RF_ASSERT(termNode->numSuccedents == 0);
@@ -412,28 +430,30 @@ CreateMirrorReadDAG(
 	termNode->antType[0] = rf_control;
 }
 
-void 
+void
 rf_CreateMirrorIdleReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+	RF_Raid_t		*raidPtr,
+	RF_AccessStripeMap_t	*asmap,
+	RF_DagHeader_t		*dag_h,
+	void			*bp,
+	RF_RaidAccessFlags_t	 flags,
+	RF_AllocListElem_t	*allocList
+)
 {
-	CreateMirrorReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
+	rf_CreateMirrorReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    rf_DiskReadMirrorIdleFunc);
 }
 
-void 
+void
 rf_CreateMirrorPartitionReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+	RF_Raid_t		*raidPtr,
+	RF_AccessStripeMap_t	*asmap,
+	RF_DagHeader_t		*dag_h,
+	void			*bp,
+	RF_RaidAccessFlags_t	 flags,
+	RF_AllocListElem_t	*allocList
+)
 {
-	CreateMirrorReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
+	rf_CreateMirrorReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    rf_DiskReadMirrorPartitionFunc);
 }

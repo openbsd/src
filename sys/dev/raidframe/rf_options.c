@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_options.c,v 1.2 1999/02/16 00:03:02 niklas Exp $	*/
+/*	$OpenBSD: rf_options.c,v 1.3 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_options.c,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
+
 /*
  * rf_options.c
  */
@@ -37,40 +38,46 @@
 #include "rf_general.h"
 #include "rf_options.h"
 
-#ifdef RF_DBG_OPTION
-#undef RF_DBG_OPTION
-#endif				/* RF_DBG_OPTION */
+#ifdef	RF_DBG_OPTION
+#undef	RF_DBG_OPTION
+#endif	/* RF_DBG_OPTION */
 
-#ifdef __STDC__
-#define RF_DBG_OPTION(_option_,_defval_) long rf_##_option_ = _defval_;
-#else				/* __STDC__ */
-#define RF_DBG_OPTION(_option_,_defval_) long rf_/**/_option_ = _defval_;
-#endif				/* __STDC__ */
+#ifdef	__STDC__
+#define	RF_DBG_OPTION(_option_,_defval_)				\
+	long rf_##_option_ = _defval_;
+#else	/* __STDC__ */
+#define	RF_DBG_OPTION(_option_,_defval_)				\
+	long rf_/**/_option_ = _defval_;
+#endif	/* __STDC__ */
 
 #include "rf_optnames.h"
 
-#undef RF_DBG_OPTION
+#undef	RF_DBG_OPTION
 
-#ifdef __STDC__
-#define RF_DBG_OPTION(_option_,_defval_) { RF_STRING(_option_), &rf_##_option_ },
-#else				/* __STDC__ */
-#define RF_DBG_OPTION(_option_,_defval_) { RF_STRING(_option_), &rf_/**/_option_ },
-#endif				/* __STDC__ */
+#ifdef	__STDC__
+#define	RF_DBG_OPTION(_option_,_defval_)				\
+	{RF_STRING(_option_), &rf_##_option_},
+#else	/* __STDC__ */
+#define	RF_DBG_OPTION(_option_,_defval_)				\
+	{RF_STRING(_option_), &rf_/**/_option_},
+#endif	/* __STDC__ */
 
 RF_DebugName_t rf_debugNames[] = {
 #include "rf_optnames.h"
 	{NULL, NULL}
 };
-#undef RF_DBG_OPTION
+#undef	RF_DBG_OPTION
 
-#ifdef __STDC__
-#define RF_DBG_OPTION(_option_,_defval_) rf_##_option_  = _defval_ ;
-#else				/* __STDC__ */
-#define RF_DBG_OPTION(_option_,_defval_) rf_/**/_option_ = _defval_ ;
-#endif				/* __STDC__ */
+#ifdef	__STDC__
+#define	RF_DBG_OPTION(_option_,_defval_)				\
+	rf_##_option_  = _defval_;
+#else	/* __STDC__ */
+#define	RF_DBG_OPTION(_option_,_defval_)				\
+	rf_/**/_option_ = _defval_;
+#endif	/* __STDC__ */
 
-void 
-rf_ResetDebugOptions()
+void
+rf_ResetDebugOptions(void)
 {
 #include "rf_optnames.h"
 }

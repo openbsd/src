@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_general.h,v 1.4 2000/08/08 16:07:41 peter Exp $	*/
+/*	$OpenBSD: rf_general.h,v 1.5 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_general.h,v 1.5 2000/03/03 02:04:48 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,76 +29,86 @@
  */
 
 /*
- * rf_general.h -- some general-use definitions
+ * rf_general.h -- Some general-use definitions.
  */
 
 /*#define NOASSERT*/
 
-#ifndef _RF__RF_GENERAL_H_
-#define _RF__RF_GENERAL_H_
+#ifndef	_RF__RF_GENERAL_H_
+#define	_RF__RF_GENERAL_H_
 
-/* error reporting and handling */
+/* Error reporting and handling. */
 
-#ifdef _KERNEL
-#include<sys/systm.h>		/* printf, sprintf, and friends */
+#ifdef	_KERNEL
+#include <sys/systm.h>		/* printf, sprintf, and friends. */
 #endif
 
-#define RF_ERRORMSG(s)            printf((s))
-#define RF_ERRORMSG1(s,a)         printf((s),(a))
-#define RF_ERRORMSG2(s,a,b)       printf((s),(a),(b))
-#define RF_ERRORMSG3(s,a,b,c)     printf((s),(a),(b),(c))
+#define	RF_ERRORMSG(s)		printf((s))
+#define	RF_ERRORMSG1(s,a)	printf((s), (a))
+#define	RF_ERRORMSG2(s,a,b)	printf((s), (a), (b))
+#define	RF_ERRORMSG3(s,a,b,c)	printf((s), (a), (b), (c))
 
 extern char rf_panicbuf[];
-#define RF_PANIC() {sprintf(rf_panicbuf,"raidframe error at line %d file %s",__LINE__,__FILE__); panic(rf_panicbuf);}
+#define	RF_PANIC()							\
+do {									\
+	sprintf(rf_panicbuf, "RAIDframe error at line %d file %s",	\
+	    __LINE__, __FILE__);					\
+	panic(rf_panicbuf);						\
+} while (0)
 
-#ifdef _KERNEL
-#ifdef RF_ASSERT
-#undef RF_ASSERT
-#endif				/* RF_ASSERT */
-#ifndef NOASSERT
-#define RF_ASSERT(_x_) { \
-  if (!(_x_)) { \
-    sprintf(rf_panicbuf, \
-        "raidframe error at line %d file %s (failed asserting %s)\n", \
-        __LINE__, __FILE__, #_x_); \
-    panic(rf_panicbuf); \
-  } \
-}
-#else				/* !NOASSERT */
-#define RF_ASSERT(x) {/*noop*/}
-#endif				/* !NOASSERT */
-#else				/* _KERNEL */
-#define RF_ASSERT(x) {/*noop*/}
-#endif				/* _KERNEL */
+#ifdef	_KERNEL
+#ifdef	RF_ASSERT
+#undef	RF_ASSERT
+#endif	/* RF_ASSERT */
+#ifndef	NOASSERT
+#define	RF_ASSERT(_x_)							\
+do {									\
+	if (!(_x_)) {							\
+		sprintf(rf_panicbuf, "RAIDframe error at line %d"	\
+		    " file %s (failed asserting %s)\n", __LINE__,	\
+		     __FILE__, #_x_);					\
+		panic(rf_panicbuf);					\
+	}								\
+} while (0)
+#else	/* !NOASSERT */
+#define	RF_ASSERT(x)		{/*noop*/}
+#endif	/* !NOASSERT */
+#else	/* _KERNEL */
+#define	RF_ASSERT(x)		{/*noop*/}
+#endif	/* _KERNEL */
 
-/* random stuff */
-#define RF_MAX(a,b) (((a) > (b)) ? (a) : (b))
-#define RF_MIN(a,b) (((a) < (b)) ? (a) : (b))
+/* Random stuff. */
+#define	RF_MAX(a,b)		(((a) > (b)) ? (a) : (b))
+#define	RF_MIN(a,b)		(((a) < (b)) ? (a) : (b))
 
-/* divide-by-zero check */
-#define RF_DB0_CHECK(a,b) ( ((b)==0) ? 0 : (a)/(b) )
+/* Divide-by-zero check. */
+#define	RF_DB0_CHECK(a,b)	(((b)==0) ? 0 : (a)/(b))
 
-/* get time of day */
-#define RF_GETTIME(_t) microtime(&(_t))
+/* Get time of day. */
+#define	RF_GETTIME(_t)		microtime(&(_t))
 
 /*
- * zero memory- not all bzero calls go through here, only
- * those which in the kernel may have a user address
+ * Zero memory - Not all bzero calls go through here, only
+ * those which in the kernel may have a user address.
  */
 
-#define RF_BZERO(_bp,_b,_l)  bzero(_b,_l)	/* XXX This is likely
-						 * incorrect. GO */
+#define	RF_BZERO(_bp,_b,_l)	bzero(_b, _l)	/*
+						 * XXX This is likely
+						 * incorrect. GO
+						 */
 
+#define	RF_UL(x)		((unsigned long)(x))
+#define	RF_PGMASK		RF_UL(NBPG-1)
+#define	RF_BLIP(x)		(NBPG - (RF_UL(x) & RF_PGMASK))	/*
+								 * Bytes left
+								 * in page.
+								 */
+#define	RF_PAGE_ALIGNED(x)	((RF_UL(x) & RF_PGMASK) == 0)
 
-#define RF_UL(x)           ((unsigned long) (x))
-#define RF_PGMASK          RF_UL(NBPG-1)
-#define RF_BLIP(x)         (NBPG - (RF_UL(x) & RF_PGMASK))	/* bytes left in page */
-#define RF_PAGE_ALIGNED(x) ((RF_UL(x) & RF_PGMASK) == 0)
+#ifdef	__STDC__
+#define	RF_STRING(_str_)	#_str_
+#else	/* __STDC__ */
+#define	RF_STRING(_str_)	"_str_"
+#endif	/* __STDC__ */
 
-#ifdef __STDC__
-#define RF_STRING(_str_) #_str_
-#else				/* __STDC__ */
-#define RF_STRING(_str_) "_str_"
-#endif				/* __STDC__ */
-
-#endif				/* !_RF__RF_GENERAL_H_ */
+#endif	/* !_RF__RF_GENERAL_H_ */

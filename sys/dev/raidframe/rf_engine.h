@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_engine.h,v 1.3 2002/08/05 22:11:27 tdeval Exp $	*/
+/*	$OpenBSD: rf_engine.h,v 1.4 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_engine.h,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,24 +28,23 @@
  * rights to redistribute these changes.
  */
 
-/**********************************************************
- *                                                        *
- * engine.h -- header file for execution engine functions *
- *                                                        *
- **********************************************************/
+/***********************************************************
+ *                                                         *
+ * engine.h -- Header file for execution engine functions. *
+ *                                                         *
+ ***********************************************************/
 
-#ifndef _RF__RF_ENGINE_H_
-#define _RF__RF_ENGINE_H_
+#ifndef	_RF__RF_ENGINE_H_
+#define	_RF__RF_ENGINE_H_
 
 extern void **rf_hook_cookies;
 
-int 
-rf_ConfigureEngine(RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr, RF_Config_t * cfgPtr);
+int  rf_ConfigureEngine(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
 
-int     rf_FinishNode(RF_DagNode_t * node, int context);	/* return finished node
-								 * to engine */
+	/* Return finished node to engine. */
+int  rf_FinishNode(RF_DagNode_t *, int);
 
-int     rf_DispatchDAG(RF_DagHeader_t * dag, void (*cbFunc) (void *), void *cbArg);	/* execute dag */
+	/* Execute dag. */
+int  rf_DispatchDAG(RF_DagHeader_t *, void (*) (void *), void *);
 
-#endif				/* !_RF__RF_ENGINE_H_ */
+#endif	/* !_RF__RF_ENGINE_H_ */

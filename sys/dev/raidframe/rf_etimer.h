@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_etimer.h,v 1.5 2000/01/07 14:50:21 peter Exp $	*/
+/*	$OpenBSD: rf_etimer.h,v 1.6 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_etimer.h,v 1.4 1999/08/13 03:26:55 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,8 +28,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _RF__RF_TIMER_H_
-#define _RF__RF_TIMER_H_
+#ifndef	_RF__RF_TIMER_H_
+#define	_RF__RF_TIMER_H_
 
 
 #include "rf_options.h"
@@ -42,34 +43,34 @@ struct RF_Etimer_s {
 	struct timeval diff;
 };
 
-#if defined(_KERNEL)
+#if	defined(_KERNEL)
 #include <sys/kernel.h>
 
-#define RF_ETIMER_START(_t_) 					\
-		{						\
-			int s;					\
-			bzero(&(_t_), sizeof (_t_));		\
-			s = splclock();				\
-			(_t_).st = mono_time;			\
-			splx(s);				\
-		}
+#define	RF_ETIMER_START(_t_) 						\
+	do {								\
+		int s;							\
+		bzero(&(_t_), sizeof (_t_));				\
+		s = splclock();						\
+		(_t_).st = mono_time;					\
+		splx(s);						\
+	} while (0)
 
-#define RF_ETIMER_STOP(_t_) 					\
-		{						\
-			int s;					\
-			s = splclock();				\
-			(_t_).et = mono_time;			\
-			splx(s);				\
-		}
+#define	RF_ETIMER_STOP(_t_) 						\
+	do {								\
+		int s;							\
+		s = splclock();						\
+		(_t_).et = mono_time;					\
+		splx(s);						\
+	} while (0)
 
-#define RF_ETIMER_EVAL(_t_)					\
-	{							\
-		RF_TIMEVAL_DIFF(&(_t_).st, &(_t_).et, &(_t_).diff) \
-	}
+#define	RF_ETIMER_EVAL(_t_)						\
+	do {								\
+		RF_TIMEVAL_DIFF(&(_t_).st, &(_t_).et, &(_t_).diff);	\
+	} while (0)
 
-#define RF_ETIMER_VAL_US(_t_)      (RF_TIMEVAL_TO_US((_t_).diff))
-#define RF_ETIMER_VAL_MS(_t_)      (RF_TIMEVAL_TO_US((_t_).diff)/1000)
+#define	RF_ETIMER_VAL_US(_t_)		(RF_TIMEVAL_TO_US((_t_).diff))
+#define	RF_ETIMER_VAL_MS(_t_)		(RF_TIMEVAL_TO_US((_t_).diff)/1000)
 
-#endif /* _KERNEL */
+#endif	/* _KERNEL */
 
-#endif				/* !_RF__RF_TIMER_H_ */
+#endif	/* !_RF__RF_TIMER_H_ */

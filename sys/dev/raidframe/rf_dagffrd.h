@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_dagffrd.h,v 1.2 1999/02/16 00:02:30 niklas Exp $	*/
+/*	$OpenBSD: rf_dagffrd.h,v 1.3 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_dagffrd.h,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,27 +28,21 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _RF__RF_DAGFFRD_H_
-#define _RF__RF_DAGFFRD_H_
+#ifndef	_RF__RF_DAGFFRD_H_
+#define	_RF__RF_DAGFFRD_H_
 
 #include "rf_types.h"
 
-/* fault-free read DAG creation routines */
-void 
-rf_CreateFaultFreeReadDAG(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList);
-void 
-rf_CreateNonredundantDAG(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList, RF_IoType_t type);
-void 
-rf_CreateMirrorIdleReadDAG(RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
-    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
-void 
-rf_CreateMirrorPartitionReadDAG(RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
-    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
+/* Fault-free read DAG creation routines. */
 
-#endif				/* !_RF__RF_DAGFFRD_H_ */
+void rf_CreateFaultFreeReadDAG(RF_Raid_t *, RF_AccessStripeMap_t *,
+	RF_DagHeader_t *, void *, RF_RaidAccessFlags_t, RF_AllocListElem_t *);
+void rf_CreateNonredundantDAG(RF_Raid_t *, RF_AccessStripeMap_t *,
+	RF_DagHeader_t *, void *, RF_RaidAccessFlags_t, RF_AllocListElem_t *,
+	RF_IoType_t);
+void rf_CreateMirrorIdleReadDAG(RF_Raid_t *, RF_AccessStripeMap_t *,
+	RF_DagHeader_t *, void *, RF_RaidAccessFlags_t, RF_AllocListElem_t *);
+void rf_CreateMirrorPartitionReadDAG(RF_Raid_t *, RF_AccessStripeMap_t *,
+	RF_DagHeader_t *, void *, RF_RaidAccessFlags_t, RF_AllocListElem_t *);
+
+#endif	/* !_RF__RF_DAGFFRD_H_ */

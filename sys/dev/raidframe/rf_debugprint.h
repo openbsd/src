@@ -1,8 +1,10 @@
-/*	$OpenBSD: rf_debugprint.h,v 1.2 1999/02/16 00:02:34 niklas Exp $	*/
+/*	$OpenBSD: rf_debugprint.h,v 1.3 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_debugprint.h,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+
 /*
  * rf_debugprint.h
  */
+
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,15 +32,14 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _RF__RF_DEBUGPRINT_H_
-#define _RF__RF_DEBUGPRINT_H_
+#ifndef	_RF__RF_DEBUGPRINT_H_
+#define	_RF__RF_DEBUGPRINT_H_
 
-int     rf_ConfigureDebugPrint(RF_ShutdownList_t ** listp);
-void    rf_clear_debug_print_buffer(void);
-void 
-rf_debug_printf(char *s, void *a1, void *a2, void *a3, void *a4,
-    void *a5, void *a6, void *a7, void *a8);
-void    rf_print_debug_buffer(void);
-void    rf_spill_debug_buffer(char *fname);
+int  rf_ConfigureDebugPrint(RF_ShutdownList_t **);
+void rf_clear_debug_print_buffer(void);
+void rf_debug_printf(char *, void *, void *, void *, void *, void *, void *,
+	void *, void *);
+void rf_print_debug_buffer(void);
+void rf_spill_debug_buffer(char *);
 
-#endif				/* !_RF__RF_DEBUGPRINT_H_ */
+#endif	/* ! _RF__RF_DEBUGPRINT_H_ */

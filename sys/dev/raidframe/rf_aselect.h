@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_aselect.h,v 1.2 1999/02/16 00:02:24 niklas Exp $	*/
+/*	$OpenBSD: rf_aselect.h,v 1.3 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_aselect.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,15 +30,15 @@
 
 /*****************************************************************************
  *
- * aselect.h -- header file for algorithm selection code
+ * rf_aselect.h -- Header file for algorithm selection code.
  *
  *****************************************************************************/
 
-#ifndef _RF__RF_ASELECT_H_
-#define _RF__RF_ASELECT_H_
+#ifndef	_RF__RF_ASELECT_H_
+#define	_RF__RF_ASELECT_H_
 
 #include "rf_desc.h"
 
-int     rf_SelectAlgorithm(RF_RaidAccessDesc_t * desc, RF_RaidAccessFlags_t flags);
+int  rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
 
-#endif				/* !_RF__RF_ASELECT_H_ */
+#endif	/* !_RF__RF_ASELECT_H_ */

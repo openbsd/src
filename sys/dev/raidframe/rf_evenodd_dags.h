@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_evenodd_dags.h,v 1.2 1999/02/16 00:02:45 niklas Exp $	*/
+/*	$OpenBSD: rf_evenodd_dags.h,v 1.3 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_evenodd_dags.h,v 1.2 1999/02/05 00:06:11 oster Exp $	*/
+
 /*
  * rf_evenodd_dags.h
  */
@@ -30,16 +31,17 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _RF__RF_EVENODD_DAGS_H_
-#define _RF__RF_EVENODD_DAGS_H_
+#ifndef	_RF__RF_EVENODD_DAGS_H_
+#define	_RF__RF_EVENODD_DAGS_H_
 
 #include "rf_types.h"
 
-#if RF_UTILITY == 0
+#if	RF_UTILITY == 0
 #include "rf_dag.h"
 
-/* extern decl's of the failure mode EO functions.
- * swiped from rf_pqdeg.h
+/*
+ * Extern decl's of the failure mode EO functions.
+ * Swiped from rf_pqdeg.h
  */
 
 RF_CREATE_DAG_FUNC_DECL(rf_EO_100_CreateReadDAG);
@@ -59,6 +61,6 @@ RF_CREATE_DAG_FUNC_DECL(rf_EO_DoubleDegRead);
 RF_CREATE_DAG_FUNC_DECL(rf_EOCreateSmallWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_EOCreateLargeWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_EO_200_CreateWriteDAG);
-#endif				/* RF_UTILITY == 0 */
+#endif	/* RF_UTILITY == 0 */
 
-#endif				/* !_RF__RF_EVENODD_DAGS_H_ */
+#endif	/* !_RF__RF_EVENODD_DAGS_H_ */

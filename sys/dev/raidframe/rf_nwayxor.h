@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_nwayxor.h,v 1.2 1999/02/16 00:03:00 niklas Exp $	*/
+/*	$OpenBSD: rf_nwayxor.h,v 1.3 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_nwayxor.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
+
 /*
  * rf_nwayxor.h
  */
@@ -29,26 +30,27 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
 /*
- * rf_nwayxor.h -- types and prototypes for nwayxor module
+ * rf_nwayxor.h -- Types and prototypes for nwayxor module.
  */
 
-#ifndef _RF__RF_NWAYXOR_H_
-#define _RF__RF_NWAYXOR_H_
+#ifndef	_RF__RF_NWAYXOR_H_
+#define	_RF__RF_NWAYXOR_H_
 
 #include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_reconstruct.h"
 
-int     rf_ConfigureNWayXor(RF_ShutdownList_t ** listp);
-void    rf_nWayXor1(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
-void    rf_nWayXor2(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
-void    rf_nWayXor3(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
-void    rf_nWayXor4(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
-void    rf_nWayXor5(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
-void    rf_nWayXor6(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
-void    rf_nWayXor7(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
-void    rf_nWayXor8(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
-void    rf_nWayXor9(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
+int  rf_ConfigureNWayXor(RF_ShutdownList_t **);
+void rf_nWayXor1(RF_ReconBuffer_t **, RF_ReconBuffer_t *, int);
+void rf_nWayXor2(RF_ReconBuffer_t **, RF_ReconBuffer_t *, int);
+void rf_nWayXor3(RF_ReconBuffer_t **, RF_ReconBuffer_t *, int);
+void rf_nWayXor4(RF_ReconBuffer_t **, RF_ReconBuffer_t *, int);
+void rf_nWayXor5(RF_ReconBuffer_t **, RF_ReconBuffer_t *, int);
+void rf_nWayXor6(RF_ReconBuffer_t **, RF_ReconBuffer_t *, int);
+void rf_nWayXor7(RF_ReconBuffer_t **, RF_ReconBuffer_t *, int);
+void rf_nWayXor8(RF_ReconBuffer_t **, RF_ReconBuffer_t *, int);
+void rf_nWayXor9(RF_ReconBuffer_t **, RF_ReconBuffer_t *, int);
 
-#endif				/* !_RF__RF_NWAYXOR_H_ */
+#endif	/* !_RF__RF_NWAYXOR_H_ */

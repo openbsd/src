@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_interdecluster.h,v 1.2 1999/02/16 00:02:52 niklas Exp $	*/
+/*	$OpenBSD: rf_interdecluster.h,v 1.3 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_interdecluster.h,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,30 +32,23 @@
  * header file for Interleaved Declustering
  */
 
-#ifndef _RF__RF_INTERDECLUSTER_H_
-#define _RF__RF_INTERDECLUSTER_H_
+#ifndef	_RF__RF_INTERDECLUSTER_H_
+#define	_RF__RF_INTERDECLUSTER_H_
 
-int 
-rf_ConfigureInterDecluster(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr);
-int     rf_GetDefaultNumFloatingReconBuffersInterDecluster(RF_Raid_t * raidPtr);
-RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitInterDecluster(RF_Raid_t * raidPtr);
-RF_ReconUnitCount_t rf_GetNumSpareRUsInterDecluster(RF_Raid_t * raidPtr);
-void 
-rf_MapSectorInterDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
-rf_MapParityInterDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
-rf_IdentifyStripeInterDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids, RF_RowCol_t * outRow);
-void 
-rf_MapSIDToPSIDInterDecluster(RF_RaidLayout_t * layoutPtr,
-    RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
-    RF_ReconUnitNum_t * which_ru);
-void 
-rf_RAIDIDagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);
+int  rf_ConfigureInterDecluster(RF_ShutdownList_t **, RF_Raid_t *,
+	RF_Config_t *);
+int  rf_GetDefaultNumFloatingReconBuffersInterDecluster(RF_Raid_t *);
+RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitInterDecluster(RF_Raid_t *);
+RF_ReconUnitCount_t rf_GetNumSpareRUsInterDecluster(RF_Raid_t *);
+void rf_MapSectorInterDecluster(RF_Raid_t *, RF_RaidAddr_t, RF_RowCol_t *,
+	RF_RowCol_t *, RF_SectorNum_t *, int);
+void rf_MapParityInterDecluster(RF_Raid_t *, RF_RaidAddr_t, RF_RowCol_t *,
+	RF_RowCol_t *, RF_SectorNum_t *, int);
+void rf_IdentifyStripeInterDecluster(RF_Raid_t *, RF_RaidAddr_t,
+	RF_RowCol_t **, RF_RowCol_t *);
+void rf_MapSIDToPSIDInterDecluster(RF_RaidLayout_t *, RF_StripeNum_t,
+	RF_StripeNum_t *, RF_ReconUnitNum_t *);
+void rf_RAIDIDagSelect(RF_Raid_t *, RF_IoType_t, RF_AccessStripeMap_t *,
+	RF_VoidFuncPtr *);
 
-#endif				/* !_RF__RF_INTERDECLUSTER_H_ */
+#endif	/* !_RF__RF_INTERDECLUSTER_H_ */

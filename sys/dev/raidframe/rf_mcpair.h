@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_mcpair.h,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*	$OpenBSD: rf_mcpair.h,v 1.4 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_mcpair.h,v 1.4 1999/03/14 21:53:31 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,27 +28,28 @@
  * rights to redistribute these changes.
  */
 
-/* rf_mcpair.h
- * see comments in rf_mcpair.c
+/*
+ * rf_mcpair.h
+ * See comments in rf_mcpair.c
  */
 
-#ifndef _RF__RF_MCPAIR_H_
-#define _RF__RF_MCPAIR_H_
+#ifndef	_RF__RF_MCPAIR_H_
+#define	_RF__RF_MCPAIR_H_
 
 #include "rf_types.h"
 #include "rf_threadstuff.h"
 
 struct RF_MCPair_s {
-	RF_DECLARE_MUTEX(mutex)
-	RF_DECLARE_COND(cond)
-	int     flag;
-	RF_MCPair_t *next;
+	RF_DECLARE_MUTEX(mutex);
+	RF_DECLARE_COND (cond);
+	int		 flag;
+	RF_MCPair_t	*next;
 };
-#define RF_WAIT_MCPAIR(_mcp)  tsleep(&((_mcp)->flag), PRIBIO, "mcpair", 0)
+#define	RF_WAIT_MCPAIR(_mcp)	tsleep(&((_mcp)->flag), PRIBIO, "mcpair", 0)
 
-int     rf_ConfigureMCPair(RF_ShutdownList_t ** listp);
+int  rf_ConfigureMCPair(RF_ShutdownList_t **);
 RF_MCPair_t *rf_AllocMCPair(void);
-void    rf_FreeMCPair(RF_MCPair_t * t);
-void    rf_MCPairWakeupFunc(RF_MCPair_t * t);
+void rf_FreeMCPair(RF_MCPair_t *);
+void rf_MCPairWakeupFunc(RF_MCPair_t *);
 
-#endif				/* !_RF__RF_MCPAIR_H_ */
+#endif	/* !_RF__RF_MCPAIR_H_ */

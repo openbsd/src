@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_acctrace.c,v 1.3 2000/01/07 14:50:19 peter Exp $	*/
+/*	$OpenBSD: rf_acctrace.c,v 1.4 2002/12/16 07:01:02 tdeval Exp $	*/
 /*	$NetBSD: rf_acctrace.c,v 1.4 1999/08/13 03:41:52 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,7 +30,7 @@
 
 /*****************************************************************************
  *
- * acctrace.c -- code to support collecting information about each access
+ * acctrace.c -- Code to support collecting information about each access.
  *
  *****************************************************************************/
 
@@ -52,77 +53,84 @@ static int accessTraceBufCount = 0;
 static RF_AccTraceEntry_t *access_tracebuf;
 static long traceCount;
 
-int     rf_stopCollectingTraces;
-RF_DECLARE_MUTEX(rf_tracing_mutex)
-	int     rf_trace_fd;
+int	rf_stopCollectingTraces;
+RF_DECLARE_MUTEX(rf_tracing_mutex);
+int	rf_trace_fd;
 
-	static void rf_ShutdownAccessTrace(void *);
+void rf_ShutdownAccessTrace(void *);
 
-	static void rf_ShutdownAccessTrace(ignored)
-	void   *ignored;
+void
+rf_ShutdownAccessTrace(void *ignored)
 {
 	if (rf_accessTraceBufSize) {
 		if (accessTraceBufCount)
 			rf_FlushAccessTraceBuf();
-		RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
+		RF_Free(access_tracebuf, rf_accessTraceBufSize *
+		    sizeof(RF_AccTraceEntry_t));
 	}
 	rf_mutex_destroy(&rf_tracing_mutex);
 }
 
-int 
-rf_ConfigureAccessTrace(listp)
-	RF_ShutdownList_t **listp;
+int
+rf_ConfigureAccessTrace(RF_ShutdownList_t **listp)
 {
-	int     rc;
+	int rc;
 
 	numTracesSoFar = accessTraceBufCount = rf_stopCollectingTraces = 0;
 	if (rf_accessTraceBufSize) {
-		RF_Malloc(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
+		RF_Malloc(access_tracebuf, rf_accessTraceBufSize *
+		    sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
 		accessTraceBufCount = 0;
 	}
 	traceCount = 0;
 	numTracesSoFar = 0;
 	rc = rf_mutex_init(&rf_tracing_mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d.\n",
+		    __FILE__, __LINE__, rc);
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownAccessTrace, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d"
+		    " rc=%d.\n", __FILE__, __LINE__, rc);
 		if (rf_accessTraceBufSize) {
-			RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
+			RF_Free(access_tracebuf, rf_accessTraceBufSize *
+			    sizeof(RF_AccTraceEntry_t));
 			rf_mutex_destroy(&rf_tracing_mutex);
 		}
 	}
 	return (rc);
 }
-/* install a trace record.  cause a flush to disk or to the trace collector daemon
- * if the trace buffer is at least 1/2 full.
+
+/*
+ * Install a trace record. Cause a flush to disk or to the trace collector
+ * daemon if the trace buffer is at least 1/2 full.
  */
-void 
-rf_LogTraceRec(raid, rec)
-	RF_Raid_t *raid;
-	RF_AccTraceEntry_t *rec;
+void
+rf_LogTraceRec(RF_Raid_t *raid, RF_AccTraceEntry_t *rec)
 {
 	RF_AccTotals_t *acc = &raid->acc_totals;
 #if 0
 	RF_Etimer_t timer;
-	int     i, n;
+	int	i, n;
 #endif
 
-	if (rf_stopCollectingTraces || ((rf_maxNumTraces >= 0) && (numTracesSoFar >= rf_maxNumTraces)))
+	if (rf_stopCollectingTraces || ((rf_maxNumTraces >= 0) &&
+	    (numTracesSoFar >= rf_maxNumTraces)))
 		return;
 
-	/* update AccTotals for this device */
+	/* Update AccTotals for this device. */
 	if (!raid->keep_acc_totals)
 		return;
+
 	acc->num_log_ents++;
 	if (rec->reconacc) {
-		acc->recon_start_to_fetch_us += rec->specific.recon.recon_start_to_fetch_us;
-		acc->recon_fetch_to_return_us += rec->specific.recon.recon_fetch_to_return_us;
-		acc->recon_return_to_submit_us += rec->specific.recon.recon_return_to_submit_us;
+		acc->recon_start_to_fetch_us +=
+		    rec->specific.recon.recon_start_to_fetch_us;
+		acc->recon_fetch_to_return_us +=
+		    rec->specific.recon.recon_fetch_to_return_us;
+		acc->recon_return_to_submit_us +=
+		    rec->specific.recon.recon_return_to_submit_us;
 		acc->recon_num_phys_ios += rec->num_phys_ios;
 		acc->recon_phys_io_us += rec->phys_io_us;
 		acc->recon_diskwait_us += rec->diskwait_us;
@@ -130,11 +138,15 @@ rf_LogTraceRec(raid, rec)
 	} else {
 		RF_HIST_ADD(acc->tot_hist, rec->total_us);
 		RF_HIST_ADD(acc->dw_hist, rec->diskwait_us);
-		/* count of physical ios which are too big.  often due to
-		 * thermal recalibration */
-		/* if bigvals > 0, you should probably ignore this data set */
+		/*
+		 * Count of physical IOs that are too big. (often due to
+		 * thermal recalibration)
+		 *
+		 * If bigvals > 0, you should probably ignore this data set.
+		 */
 		if (rec->diskwait_us > 100000)
 			acc->bigvals++;
+
 		acc->total_us += rec->total_us;
 		acc->suspend_ovhd_us += rec->specific.user.suspend_ovhd_us;
 		acc->map_us += rec->specific.user.map_us;
@@ -156,12 +168,13 @@ rf_LogTraceRec(raid, rec)
 }
 
 
-/* assumes the tracing mutex is locked at entry.  In order to allow this to be called
- * from interrupt context, we don't do any copyouts here, but rather just wake trace
- * buffer collector thread.
+/*
+ * Assumes the tracing mutex is locked at entry. In order to allow this to
+ * be called from interrupt context, we don't do any copyouts here, but rather
+ * just wake the trace buffer collector thread.
  */
-void 
-rf_FlushAccessTraceBuf()
+void
+rf_FlushAccessTraceBuf(void)
 {
 	accessTraceBufCount = 0;
 }

@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_utils.h,v 1.4 2000/01/07 14:50:23 peter Exp $	*/
+/*	$OpenBSD: rf_utils.h,v 1.5 2002/12/16 07:01:05 tdeval Exp $	*/
 /*	$NetBSD: rf_utils.h,v 1.4 1999/08/13 03:26:55 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,44 +28,48 @@
  * rights to redistribute these changes.
  */
 
-/***************************************
+/****************************************
  *
- * rf_utils.c -- header file for utils.c
+ * rf_utils.c -- Header file for utils.c
  *
- ***************************************/
+ ****************************************/
 
 
-#ifndef _RF__RF_UTILS_H_
-#define _RF__RF_UTILS_H_
+#ifndef	_RF__RF_UTILS_H_
+#define	_RF__RF_UTILS_H_
 
 #include "rf_types.h"
 #include "rf_alloclist.h"
 #include "rf_threadstuff.h"
 
-char   *rf_find_non_white(char *p);
-char   *rf_find_white(char *p);
-RF_RowCol_t **rf_make_2d_array(int b, int k, RF_AllocListElem_t * allocList);
-RF_RowCol_t *rf_make_1d_array(int c, RF_AllocListElem_t * allocList);
-void    rf_free_2d_array(RF_RowCol_t ** a, int b, int k);
-void    rf_free_1d_array(RF_RowCol_t * a, int n);
-int     rf_gcd(int m, int n);
-int     rf_atoi(char *p);
-int     rf_htoi(char *p);
+char *rf_find_non_white(char *);
+char *rf_find_white(char *);
+RF_RowCol_t **rf_make_2d_array(int, int, RF_AllocListElem_t *);
+RF_RowCol_t *rf_make_1d_array(int, RF_AllocListElem_t *);
+void  rf_free_2d_array(RF_RowCol_t **, int, int);
+void  rf_free_1d_array(RF_RowCol_t *, int);
+int   rf_gcd(int, int);
+int   rf_atoi(char *);
+int   rf_htoi(char *);
 
-#define RF_USEC_PER_SEC 1000000
-#define RF_TIMEVAL_TO_US(_t_) (((_t_).tv_sec) \
-                * RF_USEC_PER_SEC + (_t_).tv_usec)
+#define	RF_USEC_PER_SEC			1000000
+#define	RF_TIMEVAL_TO_US(_t_)						\
+	(((_t_).tv_sec) * RF_USEC_PER_SEC + (_t_).tv_usec)
 
-#define RF_TIMEVAL_DIFF(_start_,_end_,_diff_) { \
-	if ((_end_)->tv_usec < (_start_)->tv_usec) { \
-		(_diff_)->tv_usec = ((_end_)->tv_usec + RF_USEC_PER_SEC) \
-				- (_start_)->tv_usec; \
-		(_diff_)->tv_sec = ((_end_)->tv_sec-1) - (_start_)->tv_sec; \
-	} \
-	else { \
-		(_diff_)->tv_usec = (_end_)->tv_usec - (_start_)->tv_usec; \
-		(_diff_)->tv_sec  = (_end_)->tv_sec  - (_start_)->tv_sec; \
-	} \
-}
+#define	RF_TIMEVAL_DIFF(_start_,_end_,_diff_)				\
+do {									\
+	if ((_end_)->tv_usec < (_start_)->tv_usec) {			\
+		(_diff_)->tv_usec = ((_end_)->tv_usec +			\
+		    RF_USEC_PER_SEC) - (_start_)->tv_usec;		\
+		(_diff_)->tv_sec = ((_end_)->tv_sec-1) -		\
+		    (_start_)->tv_sec;					\
+	}								\
+	else {								\
+		(_diff_)->tv_usec = (_end_)->tv_usec -			\
+		    (_start_)->tv_usec;					\
+		(_diff_)->tv_sec  = (_end_)->tv_sec  -			\
+		    (_start_)->tv_sec;					\
+	}								\
+} while (0)
 
-#endif				/* !_RF__RF_UTILS_H_ */
+#endif	/* !_RF__RF_UTILS_H_ */

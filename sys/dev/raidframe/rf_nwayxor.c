@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_nwayxor.c,v 1.3 2000/08/08 16:07:43 peter Exp $	*/
+/*	$OpenBSD: rf_nwayxor.c,v 1.4 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_nwayxor.c,v 1.4 2000/03/30 12:45:41 augustss Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,26 +28,25 @@
  * rights to redistribute these changes.
  */
 
-/************************************************************
+/*************************************************************
  *
- * nwayxor.c -- code to do N-way xors for reconstruction
+ * nwayxor.c -- Code to do N-way xors for reconstruction.
  *
  * nWayXorN xors N input buffers into the destination buffer.
- * adapted from danner's longword_bxor code.
+ * Adapted from danner's longword_bxor code.
  *
- ************************************************************/
+ *************************************************************/
 
 #include "rf_nwayxor.h"
 #include "rf_shutdown.h"
 
 static int callcount[10];
-static void rf_ShutdownNWayXor(void *);
+void rf_ShutdownNWayXor(void *);
 
-static void 
-rf_ShutdownNWayXor(ignored)
-	void   *ignored;
+void
+rf_ShutdownNWayXor(void *ignored)
 {
-	int     i;
+	int i;
 
 	if (rf_showXorCallCounts == 0)
 		return;
@@ -56,11 +56,10 @@ rf_ShutdownNWayXor(ignored)
 	printf("\n");
 }
 
-int 
-rf_ConfigureNWayXor(listp)
-	RF_ShutdownList_t **listp;
+int
+rf_ConfigureNWayXor(RF_ShutdownList_t **listp)
 {
-	int     i, rc;
+	int i, rc;
 
 	for (i = 0; i < 10; i++)
 		callcount[i] = 0;
@@ -68,11 +67,12 @@ rf_ConfigureNWayXor(listp)
 	return (rc);
 }
 
-void 
-rf_nWayXor1(src_rbs, dest_rb, len)
-	RF_ReconBuffer_t **src_rbs;
-	RF_ReconBuffer_t *dest_rb;
-	int     len;
+void
+rf_nWayXor1(
+	RF_ReconBuffer_t	**src_rbs,
+	RF_ReconBuffer_t	 *dest_rb,
+	int			  len
+)
 {
 	unsigned long *src = (unsigned long *) src_rbs[0]->buffer;
 	unsigned long *dest = (unsigned long *) dest_rb->buffer;
@@ -102,11 +102,12 @@ rf_nWayXor1(src_rbs, dest_rb, len)
 	}
 }
 
-void 
-rf_nWayXor2(src_rbs, dest_rb, len)
-	RF_ReconBuffer_t **src_rbs;
-	RF_ReconBuffer_t *dest_rb;
-	int     len;
+void
+rf_nWayXor2(
+	RF_ReconBuffer_t	**src_rbs,
+	RF_ReconBuffer_t	 *dest_rb,
+	int			  len
+)
 {
 	unsigned long *dst = (unsigned long *) dest_rb->buffer;
 	unsigned long *a = dst;
@@ -115,7 +116,7 @@ rf_nWayXor2(src_rbs, dest_rb, len)
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[2]++;
-	/* align dest to cache line */
+	/* Align dest to cache line. */
 	while ((((unsigned long) dst) & 0x1f)) {
 		*dst++ = *a++ ^ *b++ ^ *c++;
 		len--;
@@ -135,7 +136,7 @@ rf_nWayXor2(src_rbs, dest_rb, len)
 
 		b2 = b[2];
 		b3 = b[3];
-		/* start dual issue */
+		/* Start dual issue. */
 		a0 ^= b0;
 		b0 = c[0];
 
@@ -167,39 +168,41 @@ rf_nWayXor2(src_rbs, dest_rb, len)
 		len--;
 	}
 }
-/* note that first arg is not incremented but 2nd arg is */
-#define LOAD_FIRST(_dst,_b) \
-  a0 = _dst[0]; len -= 4;   \
-  a1 = _dst[1];             \
-  a2 = _dst[2];             \
-  a3 = _dst[3];             \
-  b0 = _b[0];               \
-  b1 = _b[1];               \
-  b2 = _b[2];               \
-  b3 = _b[3];  _b += 4;
 
-/* note: arg is incremented */
-#define XOR_AND_LOAD_NEXT(_n) \
-  a0 ^= b0; b0 = _n[0];       \
-  a1 ^= b1; b1 = _n[1];       \
-  a2 ^= b2; b2 = _n[2];       \
-  a3 ^= b3; b3 = _n[3];       \
-  _n += 4;
+/* Note that first arg is not incremented but 2nd arg is. */
+#define	LOAD_FIRST(_dst,_b)						\
+	a0 = _dst[0]; len -= 4;						\
+	a1 = _dst[1];							\
+	a2 = _dst[2];							\
+	a3 = _dst[3];							\
+	b0 = _b[0];							\
+	b1 = _b[1];							\
+	b2 = _b[2];							\
+	b3 = _b[3];  _b += 4;
 
-/* arg is incremented */
-#define XOR_AND_STORE(_dst)       \
-  a0 ^= b0; _dst[0] = a0;         \
-  a1 ^= b1; _dst[1] = a1;         \
-  a2 ^= b2; _dst[2] = a2;         \
-  a3 ^= b3; _dst[3] = a3;         \
-  _dst += 4;
+/* Note: arg is incremented. */
+#define	XOR_AND_LOAD_NEXT(_n)						\
+	a0 ^= b0; b0 = _n[0];						\
+	a1 ^= b1; b1 = _n[1];						\
+	a2 ^= b2; b2 = _n[2];						\
+	a3 ^= b3; b3 = _n[3];						\
+	_n += 4;
+
+/* Arg is incremented. */
+#define	XOR_AND_STORE(_dst)						\
+	a0 ^= b0; _dst[0] = a0;						\
+	a1 ^= b1; _dst[1] = a1;						\
+	a2 ^= b2; _dst[2] = a2;						\
+	a3 ^= b3; _dst[3] = a3;						\
+	_dst += 4;
 
 
-void 
-rf_nWayXor3(src_rbs, dest_rb, len)
-	RF_ReconBuffer_t **src_rbs;
-	RF_ReconBuffer_t *dest_rb;
-	int     len;
+void
+rf_nWayXor3(
+	RF_ReconBuffer_t	**src_rbs,
+	RF_ReconBuffer_t	 *dest_rb,
+	int			  len
+)
 {
 	unsigned long *dst = (unsigned long *) dest_rb->buffer;
 	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
@@ -208,7 +211,7 @@ rf_nWayXor3(src_rbs, dest_rb, len)
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[3]++;
-	/* align dest to cache line */
+	/* Align dest to cache line. */
 	while ((((unsigned long) dst) & 0x1f)) {
 		*dst++ ^= *b++ ^ *c++ ^ *d++;
 		len--;
@@ -225,11 +228,12 @@ rf_nWayXor3(src_rbs, dest_rb, len)
 	}
 }
 
-void 
-rf_nWayXor4(src_rbs, dest_rb, len)
-	RF_ReconBuffer_t **src_rbs;
-	RF_ReconBuffer_t *dest_rb;
-	int     len;
+void
+rf_nWayXor4(
+	RF_ReconBuffer_t	**src_rbs,
+	RF_ReconBuffer_t	 *dest_rb,
+	int			  len
+)
 {
 	unsigned long *dst = (unsigned long *) dest_rb->buffer;
 	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
@@ -239,7 +243,7 @@ rf_nWayXor4(src_rbs, dest_rb, len)
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[4]++;
-	/* align dest to cache line */
+	/* Align dest to cache line. */
 	while ((((unsigned long) dst) & 0x1f)) {
 		*dst++ ^= *b++ ^ *c++ ^ *d++ ^ *e++;
 		len--;
@@ -257,11 +261,12 @@ rf_nWayXor4(src_rbs, dest_rb, len)
 	}
 }
 
-void 
-rf_nWayXor5(src_rbs, dest_rb, len)
-	RF_ReconBuffer_t **src_rbs;
-	RF_ReconBuffer_t *dest_rb;
-	int     len;
+void
+rf_nWayXor5(
+	RF_ReconBuffer_t	**src_rbs,
+	RF_ReconBuffer_t	 *dest_rb,
+	int			  len
+)
 {
 	unsigned long *dst = (unsigned long *) dest_rb->buffer;
 	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
@@ -272,7 +277,7 @@ rf_nWayXor5(src_rbs, dest_rb, len)
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[5]++;
-	/* align dest to cache line */
+	/* Align dest to cache line. */
 	while ((((unsigned long) dst) & 0x1f)) {
 		*dst++ ^= *b++ ^ *c++ ^ *d++ ^ *e++ ^ *f++;
 		len--;
@@ -291,11 +296,12 @@ rf_nWayXor5(src_rbs, dest_rb, len)
 	}
 }
 
-void 
-rf_nWayXor6(src_rbs, dest_rb, len)
-	RF_ReconBuffer_t **src_rbs;
-	RF_ReconBuffer_t *dest_rb;
-	int     len;
+void
+rf_nWayXor6(
+	RF_ReconBuffer_t	**src_rbs,
+	RF_ReconBuffer_t	 *dest_rb,
+	int			  len
+)
 {
 	unsigned long *dst = (unsigned long *) dest_rb->buffer;
 	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
@@ -307,7 +313,7 @@ rf_nWayXor6(src_rbs, dest_rb, len)
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[6]++;
-	/* align dest to cache line */
+	/* Align dest to cache line. */
 	while ((((unsigned long) dst) & 0x1f)) {
 		*dst++ ^= *b++ ^ *c++ ^ *d++ ^ *e++ ^ *f++ ^ *g++;
 		len--;
@@ -327,11 +333,12 @@ rf_nWayXor6(src_rbs, dest_rb, len)
 	}
 }
 
-void 
-rf_nWayXor7(src_rbs, dest_rb, len)
-	RF_ReconBuffer_t **src_rbs;
-	RF_ReconBuffer_t *dest_rb;
-	int     len;
+void
+rf_nWayXor7(
+	RF_ReconBuffer_t	**src_rbs,
+	RF_ReconBuffer_t	 *dest_rb,
+	int			  len
+)
 {
 	unsigned long *dst = (unsigned long *) dest_rb->buffer;
 	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
@@ -344,7 +351,7 @@ rf_nWayXor7(src_rbs, dest_rb, len)
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[7]++;
-	/* align dest to cache line */
+	/* Align dest to cache line. */
 	while ((((unsigned long) dst) & 0x1f)) {
 		*dst++ ^= *b++ ^ *c++ ^ *d++ ^ *e++ ^ *f++ ^ *g++ ^ *h++;
 		len--;
@@ -365,11 +372,12 @@ rf_nWayXor7(src_rbs, dest_rb, len)
 	}
 }
 
-void 
-rf_nWayXor8(src_rbs, dest_rb, len)
-	RF_ReconBuffer_t **src_rbs;
-	RF_ReconBuffer_t *dest_rb;
-	int     len;
+void
+rf_nWayXor8(
+	RF_ReconBuffer_t	**src_rbs,
+	RF_ReconBuffer_t	 *dest_rb,
+	int			  len
+)
 {
 	unsigned long *dst = (unsigned long *) dest_rb->buffer;
 	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
@@ -383,7 +391,7 @@ rf_nWayXor8(src_rbs, dest_rb, len)
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[8]++;
-	/* align dest to cache line */
+	/* Align dest to cache line. */
 	while ((((unsigned long) dst) & 0x1f)) {
 		*dst++ ^= *b++ ^ *c++ ^ *d++ ^ *e++ ^ *f++ ^ *g++ ^ *h++ ^ *i++;
 		len--;
@@ -406,11 +414,12 @@ rf_nWayXor8(src_rbs, dest_rb, len)
 }
 
 
-void 
-rf_nWayXor9(src_rbs, dest_rb, len)
-	RF_ReconBuffer_t **src_rbs;
-	RF_ReconBuffer_t *dest_rb;
-	int     len;
+void
+rf_nWayXor9(
+	RF_ReconBuffer_t	**src_rbs,
+	RF_ReconBuffer_t	 *dest_rb,
+	int			  len
+)
 {
 	unsigned long *dst = (unsigned long *) dest_rb->buffer;
 	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
@@ -425,9 +434,10 @@ rf_nWayXor9(src_rbs, dest_rb, len)
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[9]++;
-	/* align dest to cache line */
+	/* Align dest to cache line. */
 	while ((((unsigned long) dst) & 0x1f)) {
-		*dst++ ^= *b++ ^ *c++ ^ *d++ ^ *e++ ^ *f++ ^ *g++ ^ *h++ ^ *i++ ^ *j++;
+		*dst++ ^= *b++ ^ *c++ ^ *d++ ^ *e++ ^
+		    *f++ ^ *g++ ^ *h++ ^ *i++ ^ *j++;
 		len--;
 	}
 	while (len > 4) {
@@ -443,7 +453,8 @@ rf_nWayXor9(src_rbs, dest_rb, len)
 		XOR_AND_STORE(dst);
 	}
 	while (len) {
-		*dst++ ^= *b++ ^ *c++ ^ *d++ ^ *e++ ^ *f++ ^ *g++ ^ *h++ ^ *i++ ^ *j++;
+		*dst++ ^= *b++ ^ *c++ ^ *d++ ^ *e++ ^
+		    *f++ ^ *g++ ^ *h++ ^ *i++ ^ *j++;
 		len--;
 	}
 }

@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_debugprint.c,v 1.2 1999/02/16 00:02:34 niklas Exp $	*/
+/*	$OpenBSD: rf_debugprint.c,v 1.3 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_debugprint.c,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,48 +44,50 @@
 #include <sys/param.h>
 
 struct RF_Entry_s {
-	char   *cstring;
-	void   *a1, *a2, *a3, *a4, *a5, *a6, *a7, *a8;
+	char	*cstring;
+	void	*a1, *a2, *a3, *a4, *a5, *a6, *a7, *a8;
 };
+
 /* space for 1k lines */
-#define BUFSHIFT 10
-#define BUFSIZE  (1<<BUFSHIFT)
-#define BUFMASK  (BUFSIZE-1)
+#define	BUFSHIFT		   10
+#define	BUFSIZE		(1<<BUFSHIFT)
+#define	BUFMASK		  (BUFSIZE-1)
 
 static struct RF_Entry_s rf_debugprint_buf[BUFSIZE];
 static int rf_debugprint_index = 0;
-RF_DECLARE_STATIC_MUTEX(rf_debug_print_mutex)
-	int     rf_ConfigureDebugPrint(listp)
-	RF_ShutdownList_t **listp;
+RF_DECLARE_STATIC_MUTEX(rf_debug_print_mutex);
+
+int
+rf_ConfigureDebugPrint(RF_ShutdownList_t **listp)
 {
-	int     rc;
+	int rc;
 
 	rc = rf_create_managed_mutex(listp, &rf_debug_print_mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n",
+		    __FILE__, __LINE__, rc);
 		return (rc);
 	}
+
 	rf_clear_debug_print_buffer();
 	return (0);
 }
 
-void 
-rf_clear_debug_print_buffer()
+void
+rf_clear_debug_print_buffer(void)
 {
-	int     i;
+	int i;
 
 	for (i = 0; i < BUFSIZE; i++)
 		rf_debugprint_buf[i].cstring = NULL;
 	rf_debugprint_index = 0;
 }
 
-void 
-rf_debug_printf(s, a1, a2, a3, a4, a5, a6, a7, a8)
-	char   *s;
-	void   *a1, *a2, *a3, *a4, *a5, *a6, *a7, *a8;
+void
+rf_debug_printf(char *s, void *a1, void *a2, void *a3, void *a4, void *a5,
+    void *a6, void *a7, void *a8)
 {
-	int     idx;
+	int idx;
 
 	if (rf_debugPrintUseBuffer) {
 
@@ -107,28 +110,36 @@ rf_debug_printf(s, a1, a2, a3, a4, a5, a6, a7, a8)
 	}
 }
 
-void 
-rf_print_debug_buffer()
+void
+rf_print_debug_buffer(void)
 {
 	rf_spill_debug_buffer(NULL);
 }
 
-void 
-rf_spill_debug_buffer(fname)
-	char   *fname;
+void
+rf_spill_debug_buffer(char *fname)
 {
-	int     i;
+	int i;
 
 	if (!rf_debugPrintUseBuffer)
 		return;
 
 	RF_LOCK_MUTEX(rf_debug_print_mutex);
 
-	for (i = rf_debugprint_index + 1; i != rf_debugprint_index; i = (i + 1) & BUFMASK)
+	for (i = rf_debugprint_index + 1; i != rf_debugprint_index;
+	     i = (i + 1) & BUFMASK)
 		if (rf_debugprint_buf[i].cstring)
-			printf(rf_debugprint_buf[i].cstring, rf_debugprint_buf[i].a1, rf_debugprint_buf[i].a2, rf_debugprint_buf[i].a3,
-			    rf_debugprint_buf[i].a4, rf_debugprint_buf[i].a5, rf_debugprint_buf[i].a6, rf_debugprint_buf[i].a7, rf_debugprint_buf[i].a8);
-	printf(rf_debugprint_buf[i].cstring, rf_debugprint_buf[i].a1, rf_debugprint_buf[i].a2, rf_debugprint_buf[i].a3,
-	    rf_debugprint_buf[i].a4, rf_debugprint_buf[i].a5, rf_debugprint_buf[i].a6, rf_debugprint_buf[i].a7, rf_debugprint_buf[i].a8);
+			printf(rf_debugprint_buf[i].cstring,
+			    rf_debugprint_buf[i].a1, rf_debugprint_buf[i].a2,
+			    rf_debugprint_buf[i].a3, rf_debugprint_buf[i].a4,
+			    rf_debugprint_buf[i].a5, rf_debugprint_buf[i].a6,
+			    rf_debugprint_buf[i].a7, rf_debugprint_buf[i].a8);
+
+	printf(rf_debugprint_buf[i].cstring,
+	    rf_debugprint_buf[i].a1, rf_debugprint_buf[i].a2,
+	    rf_debugprint_buf[i].a3, rf_debugprint_buf[i].a4,
+	    rf_debugprint_buf[i].a5, rf_debugprint_buf[i].a6,
+	    rf_debugprint_buf[i].a7, rf_debugprint_buf[i].a8);
+
 	RF_UNLOCK_MUTEX(rf_debug_print_mutex);
 }

@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_invertq.h,v 1.2 1999/02/16 00:02:53 niklas Exp $	*/
+/*	$OpenBSD: rf_invertq.h,v 1.3 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_invertq.h,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+
 /*
  * rf_invertq.h
  */
@@ -7,19 +8,19 @@
  * This is normally a generated file.  Not so for Net- and OpenBSD.
  */
 
-#ifndef _RF__RF_INVERTQ_H_
-#define _RF__RF_INVERTQ_H_
+#ifndef	_RF__RF_INVERTQ_H_
+#define	_RF__RF_INVERTQ_H_
 
 /*
  * rf_geniq.c must include rf_archs.h before including
  * this file (to get VPATH magic right with the way we
- * generate this file in kernel trees)
+ * generate this file in kernel trees).
  */
 /* #include "rf_archs.h" */
 
-#if (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
+#if	(RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 
-#define RF_Q_COLS 32
+#define	RF_Q_COLS	32
 RF_ua32_t rf_rn = {
 1, 2, 4, 8, 16, 5, 10, 20, 13, 26, 17, 7, 14, 28, 29, 31, 27, 19, 3, 6, 12, 24, 21, 15, 30, 25, 23, 11, 22, 9, 18, 1,};
 RF_ua32_t rf_qfor[32] = {
@@ -56,9 +57,8 @@ RF_ua32_t rf_qfor[32] = {
 	 /* i = 30 */ {0, 18, 1, 19, 2, 16, 3, 17, 4, 22, 5, 23, 6, 20, 7, 21, 8, 26, 9, 27, 10, 24, 11, 25, 12, 30, 13, 31, 14, 28, 15, 29,},
 	 /* i = 31 */ {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,},
 };
-#define RF_Q_DATA_COL(col_num) rf_rn[col_num],rf_qfor[28-(col_num)]
+#define	RF_Q_DATA_COL(col_num)	rf_rn[col_num], rf_qfor[28-(col_num)]
 RF_ua1024_t rf_qinv[1];		/* don't compile monster table into kernel */
 
-#endif				/* (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 >
-				 * 0) */
-#endif				/* !_RF__RF_INVERTQ_H_ */
+#endif	/* (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0) */
+#endif	/* !_RF__RF_INVERTQ_H_ */

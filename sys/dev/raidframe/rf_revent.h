@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_revent.h,v 1.2 1999/02/16 00:03:25 niklas Exp $	*/
+/*	$OpenBSD: rf_revent.h,v 1.3 2002/12/16 07:01:05 tdeval Exp $	*/
 /*	$NetBSD: rf_revent.h,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,26 +28,22 @@
  * rights to redistribute these changes.
  */
 
-/*******************************************************************
+/*********************************************************************
  *
- * rf_revent.h -- header file for reconstruction event handling code
+ * rf_revent.h -- Header file for reconstruction event handling code.
  *
- *******************************************************************/
+ *********************************************************************/
 
-#ifndef _RF__RF_REVENT_H_
-#define _RF__RF_REVENT_H_
+#ifndef	_RF__RF_REVENT_H_
+#define	_RF__RF_REVENT_H_
 
 #include "rf_types.h"
 
-int     rf_ConfigureReconEvent(RF_ShutdownList_t ** listp);
+int  rf_ConfigureReconEvent(RF_ShutdownList_t **);
+RF_ReconEvent_t *rf_GetNextReconEvent(RF_RaidReconDesc_t *,
+	RF_RowCol_t, void (*) (void *), void *);
+void rf_CauseReconEvent(RF_Raid_t *,
+	RF_RowCol_t, RF_RowCol_t, void *, RF_Revent_t);
+void rf_FreeReconEventDesc(RF_ReconEvent_t *);
 
-RF_ReconEvent_t *
-rf_GetNextReconEvent(RF_RaidReconDesc_t * reconDesc,
-    RF_RowCol_t row, void (*continueFunc) (void *), void *continueArg);
-
-	void    rf_CauseReconEvent(RF_Raid_t * raidPtr, RF_RowCol_t row, RF_RowCol_t col,
-            void *arg, RF_Revent_t type);
-
-	void    rf_FreeReconEventDesc(RF_ReconEvent_t * event);
-
-#endif				/* !_RF__RF_REVENT_H_ */
+#endif	/* !_RF__RF_REVENT_H_ */

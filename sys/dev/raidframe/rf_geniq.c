@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_geniq.c,v 1.4 2001/07/09 17:20:07 fgsch Exp $	*/
+/*	$OpenBSD: rf_geniq.c,v 1.5 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_geniq.c,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,23 +28,22 @@
  * rights to redistribute these changes.
  */
 
-/* rf_geniq.c
- *  code which implements Reed-Solomon encoding for RAID level 6
+/*
+ * rf_geniq.c -- Code which implements Reed-Solomon encoding for RAID level 6.
  */
 
 
-#define RF_UTILITY 1
+#define	RF_UTILITY	1
 #include "rf_pqdeg.h"
 
 /*
-   five bit lfsr
-   poly - feedback connections
-
-   val  = value;
-*/
-int 
-lsfr_shift(val, poly)
-	unsigned val, poly;
+ * five bit lfsr
+ * poly - feedback connections
+ *
+ * val  = value;
+ */
+int
+lsfr_shift(unsigned val, unsigned poly)
 {
 	unsigned new;
 	unsigned int i;
@@ -54,19 +54,21 @@ lsfr_shift(val, poly)
 
 	for (i = 1; i <= 4; i++) {
 		bit = (val >> (i - 1)) & 1;
-		if (poly & (1 << i))	/* there is a feedback connection */
+		if (poly & (1 << i))	/* There is a feedback connection. */
 			new = new | ((bit ^ high) << i);
 		else
 			new = new | (bit << i);
 	}
 	return new;
 }
-/* generate Q matricies for the data */
+
+
+/* Generate Q matrices for the data. */
 
 RF_ua32_t rf_qfor[32];
 
-void 
-main()
+int
+main(void)
 {
 	unsigned int i, j, l, a, b;
 	unsigned int val;
@@ -82,20 +84,20 @@ main()
 	printf(" * GENERATED FILE -- DO NOT EDIT\n");
 	printf(" */\n");
 	printf("\n");
-	printf("#ifndef _RF__RF_INVERTQ_H_\n");
-	printf("#define _RF__RF_INVERTQ_H_\n");
+	printf("#ifndef\t_RF__RF_INVERTQ_H_\n");
+	printf("#define\t_RF__RF_INVERTQ_H_\n");
 	printf("\n");
 	printf("/*\n");
 	printf(" * rf_geniq.c must include rf_archs.h before including\n");
 	printf(" * this file (to get VPATH magic right with the way we\n");
-	printf(" * generate this file in kernel trees)\n");
+	printf(" * generate this file in kernel trees).\n");
 	printf(" */\n");
 	printf("/* #include \"rf_archs.h\" */\n");
 	printf("\n");
-	printf("#if (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0)\n");
+	printf("#if\t(RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0)\n");
 	printf("\n");
-	printf("#define RF_Q_COLS 32\n");
-	printf("RF_ua32_t rf_rn = {\n");
+	printf("#define\tRF_Q_COLS\t32\n");
+	printf("RF_ua32_t rf_rn = {");
 	k[0] = 1;
 	for (j = 0; j < 31; j++)
 		k[j + 1] = lsfr_shift(k[j], 5);
@@ -105,7 +107,7 @@ main()
 
 	printf("RF_ua32_t rf_qfor[32] = {\n");
 	for (i = 0; i < 32; i++) {
-		printf("/* i = %d */ { 0, ", i);
+		printf("/* i = %d */\t{0, ", i);
 		rf_qfor[i][0] = 0;
 		for (j = 1; j < 32; j++) {
 			val = j;
@@ -117,47 +119,58 @@ main()
 		printf("},\n");
 	}
 	printf("};\n");
-	printf("#define RF_Q_DATA_COL(col_num) rf_rn[col_num],rf_qfor[28-(col_num)]\n");
+	printf("#define\tRF_Q_DATA_COL(col_num)\trf_rn[col_num],"
+	    " rf_qfor[28-(col_num)]\n");
 
 	/* generate the inverse tables. (i,j,p,q) */
 	/* The table just stores a. Get b back from the parity */
-	printf("#ifdef _KERNEL\n");
-	printf("RF_ua1024_t rf_qinv[1];        /* don't compile monster table into kernel */\n");
-	printf("#elif defined(NO_PQ)\n");
+	printf("#ifdef\t_KERNEL\n");
+	printf("RF_ua1024_t rf_qinv[1];\t/* don't compile monster table"
+	    " into kernel */\n");
+	printf("#elif\tdefined(NO_PQ)\n");
 	printf("RF_ua1024_t rf_qinv[29*29];\n");
-	printf("#else /* !_KERNEL && NO_PQ */\n");
+	printf("#else\t/* !_KERNEL && NO_PQ */\n");
 	printf("RF_ua1024_t rf_qinv[29*29] = {\n");
 	for (i = 0; i < 29; i++) {
 		for (j = 0; j < 29; j++) {
-			printf("/* i %d, j %d */{ ", i, j);
+			printf("/* i %d, j %d */\t{", i, j);
 			if (i == j)
 				for (l = 0; l < 1023; l++)
 					printf("0, ");
 			else {
 				for (p = 0; p < 32; p++)
 					for (q = 0; q < 32; q++) {
-						/* What are a, b such that a ^
-						 * b =  p; and qfor[(28-i)][a
+						/*
+						 * What are a, b such that a ^
+						 * b == p; and qfor[(28-i)][a
 						 * ^ rf_rn[i+1]] ^
 						 * qfor[(28-j)][b ^
-						 * rf_rn[j+1]] =  q. Solve by
-						 * guessing a. Then testing. */
+						 * rf_rn[j+1]] == q. Solve by
+						 * guessing a. Then testing.
+						 */
 						for (a = 0; a < 32; a++) {
 							b = a ^ p;
-							if ((rf_qfor[28 - i][a ^ k[i + 1]] ^ rf_qfor[28 - j][b ^ k[j + 1]]) == q)
+							if ((rf_qfor[28 - i]
+							     [a ^ k[i + 1]] ^
+							    rf_qfor[28 - j]
+							     [b ^ k[j + 1]]) ==
+							    q)
 								break;
 						}
 						if (a == 32)
-							printf("unable to solve %d %d %d %d\n", i, j, p, q);
-						printf("%d,", a);
+							printf("unable to solve"
+							    " %d %d %d %d\n",
+							    i, j, p, q);
+						printf("%d, ", a);
 					}
 			}
 			printf("},\n");
 		}
 	}
 	printf("};\n");
-	printf("\n#endif /* (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0) */\n\n");
-	printf("#endif /* !_KERNEL && NO_PQ */\n");
-	printf("#endif /* !_RF__RF_INVERTQ_H_ */\n");
+	printf("\n#endif\t/* (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0) */"
+	    "\n\n");
+	printf("#endif\t/* !_KERNEL && NO_PQ */\n");
+	printf("#endif\t/* !_RF__RF_INVERTQ_H_ */\n");
 	exit(0);
 }

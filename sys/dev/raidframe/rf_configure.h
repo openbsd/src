@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_configure.h,v 1.4 2002/05/22 21:22:32 tdeval Exp $	*/
+/*	$OpenBSD: rf_configure.h,v 1.5 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_configure.h,v 1.4 1999/03/02 03:18:49 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,18 +28,18 @@
  * rights to redistribute these changes.
  */
 
-/********************************
+/*****************************************************************************
  *
  * rf_configure.h
  *
- * header file for raidframe configuration in the kernel version only.
- * configuration is invoked via ioctl rather than at boot time
+ * Header file for RAIDframe configuration in the kernel version only.
+ * Configuration is invoked via ioctl rather than at boot time.
  *
- *******************************/
+ *****************************************************************************/
 
 
-#ifndef _RF__RF_CONFIGURE_H_
-#define _RF__RF_CONFIGURE_H_
+#ifndef	_RF__RF_CONFIGURE_H_
+#define	_RF__RF_CONFIGURE_H_
 
 #include "rf_archs.h"
 #include "rf_types.h"
@@ -48,48 +49,68 @@
 
 #include <sys/ioctl.h>
 
-/* the raidframe configuration, passed down through an ioctl.
- * the driver can be reconfigured (with total loss of data) at any time,
+/*
+ * The RAIDframe configuration, passed down through an ioctl.
+ * The driver can be reconfigured (with total loss of data) at any time,
  * but it must be shut down first.
  */
 struct RF_Config_s {
-	RF_RowCol_t numRow, numCol, numSpare;	/* number of rows, columns,
-						 * and spare disks */
-	dev_t   devs[RF_MAXROW][RF_MAXCOL];	/* device numbers for disks
-						 * comprising array */
-	char    devnames[RF_MAXROW][RF_MAXCOL][50];	/* device names */
-	dev_t   spare_devs[RF_MAXSPARE];	/* device numbers for spare
-						 * disks */
-	char    spare_names[RF_MAXSPARE][50];	/* device names */
-	RF_SectorNum_t sectPerSU;	/* sectors per stripe unit */
-	RF_StripeNum_t SUsPerPU;/* stripe units per parity unit */
-	RF_StripeNum_t SUsPerRU;/* stripe units per reconstruction unit */
-	RF_ParityConfig_t parityConfig;	/* identifies the RAID architecture to
-					 * be used */
-	RF_DiskQueueType_t diskQueueType;	/* 'f' = fifo, 'c' = cvscan,
-						 * not used in kernel */
-	char    maxOutstandingDiskReqs;	/* # concurrent reqs to be sent to a
-					 * disk.  not used in kernel. */
-	char    debugVars[RF_MAXDBGV][RF_MAXDBGVLEN];	/* space for specifying
-							 * debug variables &
-							 * their values */
-	unsigned int layoutSpecificSize;	/* size in bytes of
-						 * layout-specific info */
-	void   *layoutSpecific;	/* a pointer to a layout-specific structure to
-				 * be copied in */
-	int     force;                          /* if !0, ignore many fatal
-						   configuration conditions */
-	/* 
-	  "force" is used to override cases where the component labels would 
-	  indicate that configuration should not proceed without user 
-	  intervention
+	/* Number of rows, columns, and spare disks. */
+	RF_RowCol_t		 numRow, numCol, numSpare;
+
+	/* Device numbers for disks comprising array. */
+	dev_t			 devs[RF_MAXROW][RF_MAXCOL];
+
+	/* Device names. */
+	char			 devnames[RF_MAXROW][RF_MAXCOL][50];
+
+	/* Device numbers for spare disks. */
+	dev_t			 spare_devs[RF_MAXSPARE];
+
+	/* Device names. */
+	char			 spare_names[RF_MAXSPARE][50];
+
+	/* Sectors per stripe unit. */
+	RF_SectorNum_t		 sectPerSU;
+
+	/* Stripe units per parity unit. */
+	RF_StripeNum_t		 SUsPerPU;
+
+	/* Stripe units per reconstruction unit. */
+	RF_StripeNum_t		 SUsPerRU;
+
+	/* Identifies the RAID architecture to be used. */
+	RF_ParityConfig_t	 parityConfig;
+
+	/* 'f' = fifo, 'c' = cvscan, not used in kernel. */
+	RF_DiskQueueType_t	 diskQueueType;
+
+	/* # concurrent reqs to be sent to a disk.  Not used in kernel. */
+	char			 maxOutstandingDiskReqs;
+
+	/* Space for specifying debug variables & their values. */
+	char			 debugVars[RF_MAXDBGV][RF_MAXDBGVLEN];
+
+	/* Size in bytes of layout-specific info. */
+	unsigned int		 layoutSpecificSize;
+
+	/* A pointer to a layout-specific structure to be copied in. */
+	void			*layoutSpecific;
+
+	/* If !0, ignore many fatal configuration conditions. */
+	int			 force;
+	/*
+	 * "force" is used to override cases where the component labels
+	 * would indicate that configuration should not proceed without
+	 * user intervention.
 	*/
 };
-#ifndef _KERNEL
-int     rf_MakeConfig(char *configname, RF_Config_t * cfgPtr);
-int     rf_MakeLayoutSpecificNULL(FILE * fp, RF_Config_t * cfgPtr, void *arg);
-int     rf_MakeLayoutSpecificDeclustered(FILE * configfp, RF_Config_t * cfgPtr, void *arg);
-void   *rf_ReadSpareTable(RF_SparetWait_t * req, char *fname);
-#endif				/* !_KERNEL */
 
-#endif				/* !_RF__RF_CONFIGURE_H_ */
+#ifndef	_KERNEL
+int   rf_MakeConfig(char *, RF_Config_t *);
+int   rf_MakeLayoutSpecificNULL(FILE *, RF_Config_t *, void *);
+int   rf_MakeLayoutSpecificDeclustered(FILE *, RF_Config_t *, void *);
+void *rf_ReadSpareTable(RF_SparetWait_t *, char *);
+#endif	/* !_KERNEL */
+
+#endif	/* !_RF__RF_CONFIGURE_H_ */

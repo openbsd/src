@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_options.h,v 1.2 1999/02/16 00:03:02 niklas Exp $	*/
+/*	$OpenBSD: rf_options.h,v 1.3 2002/12/16 07:01:04 tdeval Exp $	*/
 /*	$NetBSD: rf_options.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
+
 /*
  * rf_options.h
  */
@@ -30,29 +31,31 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _RF__RF_OPTIONS_H_
-#define _RF__RF_OPTIONS_H_
+#ifndef	_RF__RF_OPTIONS_H_
+#define	_RF__RF_OPTIONS_H_
 
-#define RF_DEFAULT_LOCK_TABLE_SIZE 256
+#define	RF_DEFAULT_LOCK_TABLE_SIZE	256
 
 typedef struct RF_DebugNames_s {
-	char   *name;
-	long   *ptr;
-}       RF_DebugName_t;
+	char	*name;
+	long	*ptr;
+} RF_DebugName_t;
 
 extern RF_DebugName_t rf_debugNames[];
 
-#ifdef RF_DBG_OPTION
-#undef RF_DBG_OPTION
-#endif				/* RF_DBG_OPTION */
+#ifdef	RF_DBG_OPTION
+#undef	RF_DBG_OPTION
+#endif	/* RF_DBG_OPTION */
 
-#ifdef __STDC__
-#define RF_DBG_OPTION(_option_,_defval_) extern long rf_##_option_;
-#else				/* __STDC__ */
-#define RF_DBG_OPTION(_option_,_defval_) extern long rf_/**/_option_;
-#endif				/* __STDC__ */
+#ifdef	__STDC__
+#define	RF_DBG_OPTION(_option_,_defval_)				\
+	extern long rf_##_option_;
+#else	/* __STDC__ */
+#define	RF_DBG_OPTION(_option_,_defval_)				\
+	extern long rf_/**/_option_;
+#endif	/* __STDC__ */
 #include "rf_optnames.h"
 
-void    rf_ResetDebugOptions(void);
+void rf_ResetDebugOptions(void);
 
-#endif				/* !_RF__RF_OPTIONS_H_ */
+#endif	/* !_RF__RF_OPTIONS_H_ */

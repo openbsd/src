@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_callback.c,v 1.2 1999/02/16 00:02:24 niklas Exp $	*/
+/*	$OpenBSD: rf_callback.c,v 1.3 2002/12/16 07:01:03 tdeval Exp $	*/
 /*	$NetBSD: rf_callback.c,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,11 +28,11 @@
  * rights to redistribute these changes.
  */
 
-/*****************************************************************************************
+/*****************************************************************************
  *
- * callback.c -- code to manipulate callback descriptor
+ * rf_callback.c -- Code to manipulate callback descriptor.
  *
- ****************************************************************************************/
+ *****************************************************************************/
 
 
 #include "rf_types.h"
@@ -43,23 +44,22 @@
 
 static RF_FreeList_t *rf_callback_freelist;
 
-#define RF_MAX_FREE_CALLBACK 64
-#define RF_CALLBACK_INC       4
-#define RF_CALLBACK_INITIAL   4
+void rf_ShutdownCallback(void *);
 
-static void rf_ShutdownCallback(void *);
-static void 
-rf_ShutdownCallback(ignored)
-	void   *ignored;
+#define	RF_MAX_FREE_CALLBACK	64
+#define	RF_CALLBACK_INC		 4
+#define	RF_CALLBACK_INITIAL	 4
+
+void
+rf_ShutdownCallback(void *ignored)
 {
 	RF_FREELIST_DESTROY(rf_callback_freelist, next, (RF_CallbackDesc_t *));
 }
 
-int 
-rf_ConfigureCallback(listp)
-	RF_ShutdownList_t **listp;
+int
+rf_ConfigureCallback(RF_ShutdownList_t **listp)
 {
-	int     rc;
+	int rc;
 
 	RF_FREELIST_CREATE(rf_callback_freelist, RF_MAX_FREE_CALLBACK,
 	    RF_CALLBACK_INC, sizeof(RF_CallbackDesc_t));
@@ -67,8 +67,8 @@ rf_ConfigureCallback(listp)
 		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownCallback, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d"
+		    " rc=%d.\n", __FILE__, __LINE__, rc);
 		rf_ShutdownCallback(NULL);
 		return (rc);
 	}
@@ -78,7 +78,7 @@ rf_ConfigureCallback(listp)
 }
 
 RF_CallbackDesc_t *
-rf_AllocCallbackDesc()
+rf_AllocCallbackDesc(void)
 {
 	RF_CallbackDesc_t *p;
 
@@ -86,9 +86,8 @@ rf_AllocCallbackDesc()
 	return (p);
 }
 
-void 
-rf_FreeCallbackDesc(p)
-	RF_CallbackDesc_t *p;
+void
+rf_FreeCallbackDesc(RF_CallbackDesc_t *p)
 {
 	RF_FREELIST_FREE(rf_callback_freelist, p, next);
 }
