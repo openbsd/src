@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.1 2003/01/21 17:02:29 markus Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.2 2003/08/07 16:59:37 mickey Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ struct cfattach elansc_ca = {
 };
 
 struct cfdriver elansc_cd = {
-        NULL, "elansc", DV_DULL
+	NULL, "elansc", DV_DULL
 };
 
 int
@@ -115,7 +115,7 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, NBPG, 0,
 	    &sc->sc_memh) != 0) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
+		printf(": unable to map registers\n");
 		return;
 	}
 
@@ -123,16 +123,12 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	cpuctl = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_CPUCTL);
 	ressta = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA);
 
-	printf("%s: product %d stepping %d.%d, CPU clock %s"
-	    ", reset %b",
-	    sc->sc_dev.dv_xname,
+	printf(": product %d stepping %d.%d, CPU clock %s, reset %b\n",
 	    (rev & REVID_PRODID) >> REVID_PRODID_SHIFT,
 	    (rev & REVID_MAJSTEP) >> REVID_MAJSTEP_SHIFT,
 	    (rev & REVID_MINSTEP),
 	    elansc_speeds[cpuctl & CPUCTL_CPU_CLK_SPD_MASK],
 	    ressta, RSTBITS);
-
-	printf("\n");
 
 	/*
 	 * SC520 rev A1 has a bug that affects the watchdog timer.  If
