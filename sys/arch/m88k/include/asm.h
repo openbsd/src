@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.2 2004/07/28 12:28:06 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 2004/07/28 12:28:48 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -224,43 +224,6 @@
 #define	DMT_DAS_BIT		14
 #define	DMT_DREG_OFFSET		7
 #define	DMT_DREG_WIDTH		5
-
-/*
- * Bits for eh_debug.
- */
-#define	DEBUG_INTERRUPT_BIT		0
-#define	DEBUG_DATA_BIT			1
-#define	DEBUG_INSTRUCTION_BIT		2
-#define	DEBUG_MISALIGN_BIT		3
-#define	DEBUG_UNIMP_BIT			4
-#define	DEBUG_DIVIDE_BIT		5
-#define	DEBUG_OF_BIT			6
-#define	DEBUG_FPp_BIT			7
-#define	DEBUG_FPi_BIT			8
-#define	DEBUG_SYSCALL_BIT	 	9
-#define	DEBUG_MACHSYSCALL_BIT		10
-#define	DEBUG_UNIMPLEMENTED_BIT		11
-#define	DEBUG_PRIVILEGE_BIT		12
-#define	DEBUG_BOUNDS_BIT		13
-#define	DEBUG_OVERFLOW_BIT		14
-#define	DEBUG_ERROR_BIT			15
-#define	DEBUG_SIGSYS_BIT		16
-#define	DEBUG_SIGTRAP_BIT		17
-#define	DEBUG_BREAK_BIT			18
-#define	DEBUG_TRACE_BIT			19
-#define	DEBUG_KDB_BIT			20
-#define	DEBUG_JKDB_BIT			21
-#define	DEBUG_BUGCALL_BIT		22
-/* MVME197 Non-Maskable Interrupt */
-#define	DEBUG_NON_MASK_BIT		23
-/* MVME197 Data Read Miss (Software Table Searches) */
-#define	DEBUG_197_READ_BIT		25
-/* MVME197 Data Write Miss (Software Table Searches) */
-#define	DEBUG_197_WRITE_BIT		26
-/* MVME197 Inst ATC Miss (Software Table Searches) */
-#define	DEBUG_197_INST_BIT		27
-
-#define	DEBUG_UNKNOWN_BIT		31
 
 /* exception vector marker */
 #define	UNKNOWN_HANDLER		0xffffffff

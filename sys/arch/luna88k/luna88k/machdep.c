@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.7 2004/07/01 13:37:53 aoyama Exp $	*/
+/* $OpenBSD: machdep.c,v 1.8 2004/07/28 12:28:48 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1492,29 +1492,6 @@ spl0()
 
 	return (x);
 }
-
-#ifdef EH_DEBUG
-
-void
-MY_info(f, p, flags, s)
-	struct trapframe  *f;
-	caddr_t     p;
-	int         flags;
-	char        *s;
-{
-	regdump(f);
-	printf("proc %x flags %x type %s\n", p, flags, s);
-}
-
-void
-MY_info_done(f, flags)
-	struct trapframe  *f;
-	int         flags;
-{
-	regdump(f);
-}
-
-#endif
 
 void
 nmihand(void *framep)

@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.2 2004/07/28 12:28:07 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.3 2004/07/28 12:28:48 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -330,15 +330,15 @@
 
 /*
  *
- * #define PREP881x0(NAME, NUM, BIT, SSBR_STUFF, FLAG_CHECK)
+ * #define PREP881x0(NAME, NUM, SSBR_STUFF, FLAG_CHECK)
  *
  * This is the "exception processing preparation" common to all exception
  * processing.  It is used in the following manner:
  *
  *	ASGLOBAL(foo_handler)
- *		PREP88100("foo", 11, DEBUG_FOO_BIT, SSBR_Stuff, Precheck_Stuff)
+ *		PREP88100("foo", 11, SSBR_Stuff, Precheck_Stuff)
  *		CALL(_C_LABEL(trapXXX), T_FOO_FAULT, r31)
- *		DONE88100(DEBUG_FOO_BIT)
+ *		DONE88100
  *
  * This defines the exception handler for the "foo" exception.
  * The arguments are:
@@ -346,8 +346,6 @@
  *	String for debugging (more info later)
  * NUM
  *	The exception number [see the manual, Table 6-1]
- * BIT
- *	Bit to check in eh_debug for debugging (more info later)
  * SSBR_STUFF
  *	If the exception might leave some bits in the SSBR set,
  *	this should indicate how they are cleared.
@@ -362,7 +360,7 @@
  */
 
 #ifdef M88100
-#define PREP88100(NAME, NUM, BIT, SSBR_STUFF, FLAG_PRECHECK) \
+#define PREP88100(NAME, NUM, SSBR_STUFF, FLAG_PRECHECK) \
 	xcr	FLAGS, FLAGS, SR1			; \
 	FLAG_PRECHECK					; \
 	/* the bsr later clobbers r1, so save now */	  \
@@ -382,13 +380,11 @@
 	SSBR_STUFF					; \
 	/* call setup_phase_two to restart the FPU  */	  \
 	/* and to save all general registers.       */	  \
-	bsr	_ASM_LABEL(m88100_setup_phase_two)	; \
-	/* All general regs free -- do any debugging */	  \
-	PREP_DEBUG(BIT, NAME)
+	bsr	_ASM_LABEL(m88100_setup_phase_two)
 #endif
 
 #ifdef M88110
-#define PREP88110(NAME, NUM, BIT, FLAG_PRECHECK) \
+#define PREP88110(NAME, NUM, FLAG_PRECHECK) \
 	SAVE_CTX					; \
 	xcr	FLAGS, FLAGS, SR1			; \
 	FLAG_PRECHECK					; \
@@ -406,9 +402,7 @@
 	st	TMP2, r31, REG_OFF(EF_VECTOR)		; \
 	/* call setup_phase_two to restart the FPU  */	; \
 	/* and to save all general registers.       */	; \
-	bsr	_ASM_LABEL(m88110_setup_phase_two)	; \
-	/* All general regs free -- do any debugging */	; \
-	PREP_DEBUG(BIT, NAME)
+	bsr	_ASM_LABEL(m88110_setup_phase_two)
 #endif
 
 /* Some defines for use with PREP88100() */
@@ -421,78 +415,10 @@
 	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, \
 	    _ASM_LABEL(m88110_ignore_data_exception)
 
-#ifdef EH_DEBUG
-/*
- * If we allow debugging, there is a variable "eh_debug"
- * in which there is a bit for each exception.  If the bit
- * is set for an exception, debugging information is printed
- * about that exception whenever it occurs.
- *
- * The bits are defined in "asm.h"
- */
-
-ASGLOBAL(eh_debug)
-	word	0x00000000
-
-/*
- * additional pre-servicing preparation to be done when
- * debugging... check eh_debug and make the call if
- * need be.
- */
-#define PREP_DEBUG(DebugNumber, Name) \
-	or.u	r2, r0, hi16(_ASM_LABEL(eh_debug))	; \
-	ld	r3, r2, lo16(_ASM_LABEL(eh_debug))	; \
-	bb0	DebugNumber, r3, 4f			; \
-	/* call MY_info(ef,SR0,flags,kind)*/		  \
-	or	r2, r30, r0				; \
-	ldcr	r3, SR0					; \
-	ldcr	r4, SR1					; \
-	or.u	r5, r0, hi16(2f)			; \
-	or	r5, r5, lo16(2f)			; \
-	bsr.n	_C_LABEL(MY_info)			; \
-	 subu	r31, r31, 32				; \
-	br.n	4f					; \
-	 addu	r31, r31, 32				; \
-	data						; \
-2:	string Name					; \
-	byte	0					; \
-	align	4					; \
-	text						; \
-4:
-
-
-/*
- * Post-servicing work to be done.
- * When debugging, check "eh_debug" and call the
- * debug routined if neeed be.
- *
- * Then, return from the interrupt handler.
- */
-#define DONE88100(DebugNumber) \
-	or.u	r2, r0, hi16(_ASM_LABEL(eh_debug))	; \
-	ld	r3, r2, lo16(_ASM_LABEL(eh_debug))	; \
-	bb0	DebugNumber, r3, 2f			; \
-	ldcr	r4, SR1					; \
-	CALL(_C_LABEL(MY_info_done), r31, r4)		; \
-2:	br	_ASM_LABEL(m88100_return_code)
-#define DONE88110(DebugNumber) \
-	or.u	r2, r0, hi16(_ASM_LABEL(eh_debug))	; \
-	ld	r3, r2, lo16(_ASM_LABEL(eh_debug))	; \
-	bb0	DebugNumber, r3, 2f			; \
-	ldcr	r4, SR1					; \
-	CALL(_C_LABEL(MY_info_done), r31, r4)		; \
-2:	br	_ASM_LABEL(m88110_return_code)
-#else
-/*
- * If not debugging, then no debug-prep to do.
- * Also, when you're done, you're done!   (no debug check).
- */
-#define	PREP_DEBUG(bit, name)
-#define	DONE88100(num) \
+#define	DONE88100 \
 	br	_ASM_LABEL(m88100_return_code)
-#define	DONE88110(num) \
+#define	DONE88110 \
 	br	_ASM_LABEL(m88110_return_code)
-#endif	/* EH_DEBUG */
 
 #ifdef M88100
 /*
@@ -501,42 +427,42 @@ ASGLOBAL(eh_debug)
 
 /* unknown exception handler */
 GLOBAL(unknown_handler)
-	PREP88100("unknown", 0, DEBUG_UNKNOWN_BIT,,)
+	PREP88100("unknown", 0,,)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
-	DONE88100(DEBUG_UNKNOWN_BIT)
+	DONE88100
 
 /* interrupt exception handler */
 GLOBAL(interrupt_handler)
-	PREP88100("interrupt", 1, DEBUG_INTERRUPT_BIT,,)
+	PREP88100("interrupt", 1,,)
 	CALL(_C_LABEL(m88100_trap), T_INT, r30)
-	DONE88100(DEBUG_INTERRUPT_BIT)
+	DONE88100
 
 /* instruction access exception handler */
 GLOBAL(instruction_access_handler)
-	PREP88100("inst", 2, DEBUG_INSTRUCTION_BIT,,)
+	PREP88100("inst", 2,,)
 	CALL(_C_LABEL(m88100_trap), T_INSTFLT, r30)
-	DONE88100(DEBUG_INSTRUCTION_BIT)
+	DONE88100
 
 /*
  * data access exception handler --
  *  See badaddr() below for info about Data_Precheck.
  */
 GLOBAL(data_exception_handler)
-	PREP88100("data", 3, DEBUG_DATA_BIT,, M88100_Data_Precheck)
+	PREP88100("data", 3,, M88100_Data_Precheck)
 	/* No need to call m88100_trap(T_DATAFLT) as PREP will do this for us */
-	DONE88100(DEBUG_DATA_BIT)
+	DONE88100
 
 /* misaligned access exception handler */
 GLOBAL(misaligned_handler)
-	PREP88100("misalign", 4, DEBUG_MISALIGN_BIT, Clear_SSBR_Dest,)
+	PREP88100("misalign", 4, Clear_SSBR_Dest,)
 	CALL(_C_LABEL(m88100_trap), T_MISALGNFLT, r30)
-	DONE88100(DEBUG_MISALIGN_BIT)
+	DONE88100
 
 /* unimplemented opcode exception handler */
 GLOBAL(unimplemented_handler)
-	PREP88100("unimp", 5, DEBUG_UNIMPLEMENTED_BIT,,)
+	PREP88100("unimp", 5,,)
 	CALL(_C_LABEL(m88100_trap), T_ILLFLT, r30)
-	DONE88100(DEBUG_UNIMPLEMENTED_BIT)
+	DONE88100
 
 /*
  * Some versions of the chip have a bug whereby false privilege
@@ -549,108 +475,108 @@ GLOBAL(privilege_handler)
 	bb1.n	RTE_VALID_BIT, r1, 1f	/* skip over if a valid exception */
 	 ldcr	r1, SR2		/* restore r1 */
 	RTE
-1:	PREP88100("privilege", 6, DEBUG_PRIVILEGE_BIT, Clear_SSBR_Dest,)
+1:	PREP88100("privilege", 6, Clear_SSBR_Dest,)
 	CALL(_C_LABEL(m88100_trap), T_PRIVINFLT, r30)
-	DONE88100(DEBUG_PRIVILEGE_BIT)
+	DONE88100
 
 /* bounds checking exception handler */
 GLOBAL(bounds_handler)
-	PREP88100("bounds", 7, DEBUG_BOUNDS_BIT, Clear_SSBR_Dest,)
+	PREP88100("bounds", 7, Clear_SSBR_Dest,)
 	CALL(_C_LABEL(m88100_trap), T_BNDFLT, r30)
-	DONE88100(DEBUG_BOUNDS_BIT)
+	DONE88100
 
 /* integer divide-by-zero exception handler */
 GLOBAL(divide_handler)
-	PREP88100("divide", 8, DEBUG_DIVIDE_BIT, Clear_SSBR_Dest,)
+	PREP88100("divide", 8, Clear_SSBR_Dest,)
 	CALL(_C_LABEL(m88100_trap), T_ZERODIV, r30)
-	DONE88100(DEBUG_DIVIDE_BIT)
+	DONE88100
 
 /* integer overflow exception handler */
 GLOBAL(overflow_handler)
-	PREP88100("overflow", 9, DEBUG_OVERFLOW_BIT,,)
+	PREP88100("overflow", 9,,)
 	CALL(_C_LABEL(m88100_trap), T_OVFFLT, r30)
-	DONE88100(DEBUG_OVERFLOW_BIT)
+	DONE88100
 
 /* Floating-point precise handler */
 #define	FPp_SSBR_STUFF \
 	bsr	_ASM_LABEL(clear_FPp_ssbr_bit)
 GLOBAL(fp_precise_handler)
-	PREP88100("FPU precise", 114, DEBUG_FPp_BIT, FPp_SSBR_STUFF,)
+	PREP88100("FPU precise", 114, FPp_SSBR_STUFF,)
 	CALL(_ASM_LABEL(m88100_Xfp_precise), r0, r30)
-	DONE88100(DEBUG_FPp_BIT)
+	DONE88100
 
 /* Floating-point imprecise handler */
 #define	FPi_SSBR_STUFF \
 	bsr	_ASM_LABEL(clear_FPi_ssbr_bit)
 GLOBAL(fp_imprecise_handler)
-	PREP88100("FPU imprecise", 115, DEBUG_FPi_BIT, FPi_SSBR_STUFF,)
+	PREP88100("FPU imprecise", 115, FPi_SSBR_STUFF,)
 	CALL(_ASM_LABEL(Xfp_imprecise), r0, r30)
-	DONE88100(DEBUG_FPi_BIT)
+	DONE88100
 
 /* All standard system calls.  */
 GLOBAL(syscall_handler)
-	PREP88100("syscall", 128, DEBUG_SYSCALL_BIT,,)
+	PREP88100("syscall", 128,,)
 	ld	r13, r30, GENREG_OFF(13)
 	CALL(_C_LABEL(m88100_syscall), r13, r30)
-	DONE88100(DEBUG_SYSCALL_BIT)
+	DONE88100
 
 /* trap 496 comes here */
 GLOBAL(bugtrap)
-	PREP88100("bugsyscall", 496, DEBUG_BUGCALL_BIT,,)
+	PREP88100("bugsyscall", 496,,)
 	ld	r9, r30, GENREG_OFF(9)
 	CALL(_C_LABEL(bugsyscall), r9, r30)
-	DONE88100(DEBUG_BUGCALL_BIT)
+	DONE88100
 
 GLOBAL(sigsys)
-	PREP88100("sigsys", 501, DEBUG_SIGSYS_BIT,,)
+	PREP88100("sigsys", 501,,)
 	CALL(_C_LABEL(m88100_trap), T_SIGSYS, r30)
-	DONE88100(DEBUG_SIGSYS_BIT)
+	DONE88100
 
 GLOBAL(sigtrap)
-	PREP88100("sigtrap", 510, DEBUG_SIGTRAP_BIT,,)
+	PREP88100("sigtrap", 510,,)
 	CALL(_C_LABEL(m88100_trap), T_SIGTRAP, r30)
-	DONE88100(DEBUG_SIGTRAP_BIT)
+	DONE88100
 
 GLOBAL(stepbpt)
-	PREP88100("stepbpt", 504, DEBUG_SIGTRAP_BIT,,)
+	PREP88100("stepbpt", 504,,)
 	CALL(_C_LABEL(m88100_trap), T_STEPBPT, r30)
-	DONE88100(DEBUG_SIGTRAP_BIT)
+	DONE88100
 
 GLOBAL(userbpt)
-	PREP88100("userbpt", 511, DEBUG_SIGTRAP_BIT,,)
+	PREP88100("userbpt", 511,,)
 	CALL(_C_LABEL(m88100_trap), T_USERBPT, r30)
-	DONE88100(DEBUG_SIGTRAP_BIT)
+	DONE88100
 
 #ifdef DDB
 GLOBAL(break)
-	PREP88100("break", 130, DEBUG_BREAK_BIT,,)
+	PREP88100("break", 130,,)
 	CALL(_C_LABEL(m88100_trap), T_KDB_BREAK, r30)
-	DONE88100(DEBUG_BREAK_BIT)
+	DONE88100
 
 GLOBAL(trace)
-	PREP88100("trace", 131, DEBUG_TRACE_BIT,,)
+	PREP88100("trace", 131,,)
 	CALL(_C_LABEL(m88100_trap), T_KDB_TRACE, r30)
-	DONE88100(DEBUG_TRACE_BIT)
+	DONE88100
 
 GLOBAL(entry)
-	PREP88100("kdb", 132, DEBUG_KDB_BIT,,)
+	PREP88100("kdb", 132,,)
 	CALL(_C_LABEL(m88100_trap), T_KDB_ENTRY, r30)
-	DONE88100(DEBUG_KDB_BIT)
+	DONE88100
 #else
 GLOBAL(break)
-	PREP88100("break", 130, DEBUG_BREAK_BIT,,)
+	PREP88100("break", 130,,)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
-	DONE88100(DEBUG_BREAK_BIT)
+	DONE88100
 
 GLOBAL(trace)
-	PREP88100("trace", 131, DEBUG_TRACE_BIT,,)
+	PREP88100("trace", 131,,)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
-	DONE88100(DEBUG_TRACE_BIT)
+	DONE88100
 
 GLOBAL(entry)
-	PREP88100("unknown", 132, DEBUG_KDB_BIT,,)
+	PREP88100("unknown", 132,,)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
-	DONE88100(DEBUG_KDB_BIT)
+	DONE88100
 #endif
 
 /*
@@ -1905,163 +1831,163 @@ ASLOCAL(no_ast)
 
 /* unknown exception handler */
 GLOBAL(m88110_unknown_handler)
-	PREP88110("unknown", 0, DEBUG_UNKNOWN_BIT,)
+	PREP88110("unknown", 0,)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
-	DONE88110(DEBUG_UNKNOWN_BIT)
+	DONE88110
 
 /* interrupt exception handler */
 GLOBAL(m88110_interrupt_handler)
-	PREP88110("interrupt", 1, DEBUG_INTERRUPT_BIT,)
+	PREP88110("interrupt", 1,)
 	CALL(_C_LABEL(m88110_trap), T_INT, r30)
-	DONE88110(DEBUG_INTERRUPT_BIT)
+	DONE88110
 
 /* instruction access exception handler */
 GLOBAL(m88110_instruction_access_handler)
-	PREP88110("inst", 2, DEBUG_INSTRUCTION_BIT,)
+	PREP88110("inst", 2,)
 	CALL(_C_LABEL(m88110_trap), T_INSTFLT, r30)
-	DONE88110(DEBUG_INSTRUCTION_BIT)
+	DONE88110
 /*
  * data access exception handler --
  *  See badaddr() below for info about Data_Precheck.
  */
 GLOBAL(m88110_data_exception_handler)
-	PREP88110("data", 3, DEBUG_DATA_BIT, M88110_Data_Precheck)
+	PREP88110("data", 3, M88110_Data_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_DATAFLT, r30)
-	DONE88110(DEBUG_DATA_BIT)
+	DONE88110
 
 /* misaligned access exception handler */
 GLOBAL(m88110_misaligned_handler)
-	PREP88110("misalign", 4, DEBUG_MISALIGN_BIT,)
+	PREP88110("misalign", 4,)
 	CALL(_C_LABEL(m88110_trap), T_MISALGNFLT, r30)
-	DONE88110(DEBUG_MISALIGN_BIT)
+	DONE88110
 
 /* unimplemented opcode exception handler */
 GLOBAL(m88110_unimplemented_handler)
-	PREP88110("unimp", 5, DEBUG_UNIMPLEMENTED_BIT,)
+	PREP88110("unimp", 5,)
 	CALL(_C_LABEL(m88110_trap), T_ILLFLT, r30)
-	DONE88110(DEBUG_UNIMPLEMENTED_BIT)
+	DONE88110
 
 /* privilege exception handler */
 GLOBAL(m88110_privilege_handler)
-	PREP88110("privilege", 6, DEBUG_PRIVILEGE_BIT,)
+	PREP88110("privilege", 6,)
 	CALL(_C_LABEL(m88110_trap), T_PRIVINFLT, r30)
-	DONE88110(DEBUG_PRIVILEGE_BIT)
+	DONE88110
 
 /*
  * I'm not sure what the trap(T_BNDFLT,...) does, but it doesn't send
  * a signal to the process...
  */
 GLOBAL(m88110_bounds_handler)
-	PREP88110("bounds", 7, DEBUG_BOUNDS_BIT,)
+	PREP88110("bounds", 7,)
 	CALL(_C_LABEL(m88110_trap), T_BNDFLT, r30)
-	DONE88110(DEBUG_BOUNDS_BIT)
+	DONE88110
 
 /* integer divide-by-zero exception handler */
 GLOBAL(m88110_divide_handler)
-	PREP88110("divide", 8, DEBUG_DIVIDE_BIT,)
+	PREP88110("divide", 8,)
 	CALL(_C_LABEL(m88110_trap), T_ZERODIV, r30)
-	DONE88110(DEBUG_DIVIDE_BIT)
+	DONE88110
 
 /* integer overflow exception handler */
 GLOBAL(m88110_overflow_handler)
-	PREP88110("overflow", 9, DEBUG_OVERFLOW_BIT,)
+	PREP88110("overflow", 9,)
 	CALL(_C_LABEL(m88110_trap), T_OVFFLT, r30)
-	DONE88110(DEBUG_OVERFLOW_BIT)
+	DONE88110
 
 /* Floating-point precise handler */
 GLOBAL(m88110_fp_precise_handler)
-	PREP88110("FPU precise", 114, DEBUG_FPp_BIT,)
+	PREP88110("FPU precise", 114,)
 	CALL(_ASM_LABEL(m88110_Xfp_precise), r0, r30)
-	DONE88110(DEBUG_FPp_BIT)
+	DONE88110
 
 /* MVME197 non-maskable interrupt handler (ABORT button) */
 GLOBAL(m88110_nonmaskable)
-	PREP88110("MVME197 non-mask", 11, DEBUG_NON_MASK_BIT,)
+	PREP88110("MVME197 non-mask", 11,)
 	CALL(_C_LABEL(m88110_trap), T_NON_MASK, r30)
-	DONE88110(DEBUG_NON_MASK_BIT)
+	DONE88110
 
 /* MVME197 data MMU read miss handler */
 GLOBAL(m88110_data_read_miss)
-	PREP88110("MVME197 read miss", 12, DEBUG_197_READ_BIT,)
+	PREP88110("MVME197 read miss", 12,)
 	CALL(_C_LABEL(m88110_trap), T_197_READ, r30)
-	DONE88110(DEBUG_197_READ_BIT)
+	DONE88110
 
 /* MVME197 data MMU write miss handler */
 GLOBAL(m88110_data_write_miss)
-	PREP88110("MVME197 write miss", 13, DEBUG_197_WRITE_BIT,)
+	PREP88110("MVME197 write miss", 13,)
 	CALL(_C_LABEL(m88110_trap), T_197_WRITE, r30)
-	DONE88110(DEBUG_197_WRITE_BIT)
+	DONE88110
 
 /* MVME197 inst MMU ATC miss handler */
 GLOBAL(m88110_inst_atc_miss)
-	PREP88110("MVME197 inst miss", 14, DEBUG_197_INST_BIT,)
+	PREP88110("MVME197 inst miss", 14,)
 	CALL(_C_LABEL(m88110_trap), T_197_INST, r30)
-	DONE88110(DEBUG_197_INST_BIT)
+	DONE88110
 
 /* All standard system calls.  */
 GLOBAL(m88110_syscall_handler)
-	PREP88110("syscall", 128, DEBUG_SYSCALL_BIT,)
+	PREP88110("syscall", 128,)
 	ld	r13, r30, GENREG_OFF(13)
 	CALL(_C_LABEL(m88110_syscall), r13, r30)
-	DONE88110(DEBUG_SYSCALL_BIT)
+	DONE88110
 
 /* trap 496 comes here */
 GLOBAL(m88110_bugtrap)
-	PREP88110("bugsyscall", 496, DEBUG_BUGCALL_BIT,)
+	PREP88110("bugsyscall", 496,)
 	ld	r9,  r30, GENREG_OFF(9)
 	CALL(_C_LABEL(bugsyscall), r9, r30)
-	DONE88110(DEBUG_BUGCALL_BIT)
+	DONE88110
 
 GLOBAL(m88110_sigsys)
-	PREP88110("sigsys", 501, DEBUG_SIGSYS_BIT,)
+	PREP88110("sigsys", 501,)
 	CALL(_C_LABEL(m88110_trap), T_SIGSYS, r30)
-	DONE88110(DEBUG_SIGSYS_BIT)
+	DONE88110
 
 GLOBAL(m88110_sigtrap)
-	PREP88110("sigtrap", 510, DEBUG_SIGTRAP_BIT,)
+	PREP88110("sigtrap", 510,)
 	CALL(_C_LABEL(m88110_trap), T_SIGTRAP, r30)
-	DONE88110(DEBUG_SIGTRAP_BIT)
+	DONE88110
 
 GLOBAL(m88110_stepbpt)
-	PREP88110("stepbpt", 504, DEBUG_SIGTRAP_BIT,)
+	PREP88110("stepbpt", 504,)
 	CALL(_C_LABEL(m88110_trap), T_STEPBPT, r30)
-	DONE88110(DEBUG_SIGTRAP_BIT)
+	DONE88110
 
 GLOBAL(m88110_userbpt)
-	PREP88110("userbpt", 511, DEBUG_SIGTRAP_BIT,)
+	PREP88110("userbpt", 511,)
 	CALL(_C_LABEL(m88110_trap), T_USERBPT, r30)
-	DONE88110(DEBUG_SIGTRAP_BIT)
+	DONE88110
 
 #ifdef DDB
 GLOBAL(m88110_break)
-	PREP88110("break", 130, DEBUG_BREAK_BIT,)
+	PREP88110("break", 130,)
 	CALL(_C_LABEL(m88110_trap), T_KDB_BREAK, r30)
-	DONE88110(DEBUG_BREAK_BIT)
+	DONE88110
 
 GLOBAL(m88110_trace)
-	PREP88110("trace", 131, DEBUG_TRACE_BIT,)
+	PREP88110("trace", 131,)
 	CALL(_C_LABEL(m88110_trap), T_KDB_TRACE, r30)
-	DONE88110(DEBUG_TRACE_BIT)
+	DONE88110
 
 GLOBAL(m88110_entry)
-	PREP88110("kdb", 132, DEBUG_KDB_BIT,)
+	PREP88110("kdb", 132,)
 	CALL(_C_LABEL(m88110_trap), T_KDB_ENTRY, r30)
-	DONE88110(DEBUG_KDB_BIT)
+	DONE88110
 #else
 GLOBAL(m88110_break)
-	PREP88110("break", 130, DEBUG_BREAK_BIT,)
+	PREP88110("break", 130,)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
-	DONE88110(DEBUG_BREAK_BIT)
+	DONE88110
 
 GLOBAL(m88110_trace)
-	PREP88110("trace", 131, DEBUG_TRACE_BIT,)
+	PREP88110("trace", 131,)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
-	DONE88110(DEBUG_TRACE_BIT)
+	DONE88110
 
 GLOBAL(m88110_entry)
-	PREP88110("unknown", 132, DEBUG_KDB_BIT,)
+	PREP88110("unknown", 132,)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
-	DONE88110(DEBUG_KDB_BIT)
+	DONE88110
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.22 2004/04/16 23:35:52 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.23 2004/07/28 12:28:48 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -56,8 +56,6 @@ int intr_findvec(int, int, int);
 void bugsyscall(void);
 void myetheraddr(u_char *cp);
 void dosoftint(void);
-void MY_info(struct trapframe *f, caddr_t p, int flags, char *s);
-void MY_info_done(struct trapframe *f, int flags);
 void mvme_bootstrap(void);
 void m187_ext_int(u_int v, struct trapframe *eframe);
 void m188_reset(void);
