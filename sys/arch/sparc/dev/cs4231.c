@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.7 2002/01/11 16:28:43 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.8 2002/01/11 16:51:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -574,7 +574,7 @@ cs4231_close(addr)
 	cs4231_halt_input(sc);
 	cs4231_halt_output(sc);
 	regs->iar = CS_IAR_PC;
-	regs->idr |= CS_PC_IEN;
+	regs->idr &= ~CS_PC_IEN;
 	sc->sc_open = 0;
 }
 
