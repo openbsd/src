@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.121 2004/06/22 07:35:20 cedric Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.122 2004/07/31 21:27:31 brad Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -64,13 +64,6 @@
 #include <netinet/ip_ipsp.h>
 #endif /* IPSEC */
 
-#ifndef	IPFORWARDING
-#ifdef GATEWAY
-#define	IPFORWARDING	1	/* forward IP packets not for us */
-#else /* GATEWAY */
-#define	IPFORWARDING	0	/* don't forward IP packets not for us */
-#endif /* GATEWAY */
-#endif /* IPFORWARDING */
 #ifndef	IPSENDREDIRECTS
 #define	IPSENDREDIRECTS	1
 #endif
@@ -111,7 +104,7 @@ char ipsec_def_comp[20];
 #define	IPDIRECTEDBCAST	0
 #endif /* DIRECTED_BROADCAST */
 #endif /* IPDIRECTEDBCAST */
-int	ipforwarding = IPFORWARDING;
+int	ipforwarding = 0;	/* no forwarding unless sysctl'd to enable */
 int	ipsendredirects = IPSENDREDIRECTS;
 int	ip_dosourceroute = 0;	/* no src-routing unless sysctl'd to enable */
 int	ip_defttl = IPDEFTTL;

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.108 2004/07/15 12:11:36 henning Exp $
+#	$OpenBSD: GENERIC,v 1.109 2004/07/31 21:27:31 brad Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -60,7 +60,6 @@ option		NULLFS		# loopback file system
 option		UMAPFS		# NULLFS + uid and gid remapping
 option		UNION		# union file system
 
-#option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
 option		ALTQ		# ALTQ base
 option		INET6		# IPv6 (needs INET)

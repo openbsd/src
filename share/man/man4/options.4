@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.148 2004/07/16 00:18:29 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.149 2004/07/31 21:27:31 brad Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -719,30 +719,6 @@ for details.
 .El
 .Ss Networking Options
 .Bl -ohang
-.It Cd option IPFORWARDING
-Enables IP routing behavior.
-With this option enabled, the machine
-will forward IP datagrams between its interfaces that are destined for
-other machines.
-Note that even without this option, the kernel will
-still forward some packets (such as source routed packets) -- removing
-.Em IPFORWARDING
-is insufficient to stop all routing through a bastion host on a
-firewall -- source routing is controlled independently.
-Note that IP
-forwarding may be turned on and off independently of the setting of the
-.Em IPFORWARDING
-option through the use of the
-.Em net.inet.ip.forwarding
-sysctl variable.
-If
-.Em net.inet.ip.forwarding
-is 1, IP forwarding is on.
-See
-.Xr sysctl 8
-and
-.Xr sysctl 3
-for details.
 .It Cd option MROUTING
 Includes support for IP multicast routers.
 .Em INET
