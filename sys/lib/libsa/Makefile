@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 1997/02/17 12:26:20 mickey Exp $
+#	$OpenBSD: Makefile,v 1.17 1997/04/02 04:57:34 mickey Exp $
 #	$NetBSD: Makefile,v 1.13 1996/10/02 16:19:51 ws Exp $
 
 LIB=	sa
@@ -18,11 +18,6 @@ CPPFLAGS+=${XCPPFLAGS}
 
 .if defined(SA_ZLIB)
 CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD
-.endif
-
-.if ${MACHINE_ARCH}=="i386"
-.PATH: ${DIR}/../../arch/${MACHINE_ARCH}/stand
-.include "${DIR}/../../arch/${MACHINE_ARCH}/stand/Makefile.inc"
 .endif
 
 # stand routines
