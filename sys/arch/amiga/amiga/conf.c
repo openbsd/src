@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 1998/07/20 00:49:23 espie Exp $	*/
+/*	$OpenBSD: conf.c,v 1.24 1998/08/24 05:30:06 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@
 #include "acd.h"
 #include "rd.h"
 #include "ch.h"
+#include "ksyms.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -148,6 +149,7 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NAUDIO,audio),	/* 39: cc audio interface */
 	cdev_ch_init(NCH,ch),		/* 40: SCSI autochanger */
 	cdev_disk_init(NRD,rd),		/* 41: RAM disk */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 42: Kernel symbols device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

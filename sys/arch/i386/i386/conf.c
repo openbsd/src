@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.46 1998/07/23 08:38:24 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.47 1998/08/24 05:29:55 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -175,6 +175,8 @@ cdev_decl(svr4_net);
 #include "bios.h"
 #include "bktr.h"
 cdev_decl(bktr);
+#include "ksyms.h"
+cdev_decl(ksyms);   
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -251,6 +253,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
 	cdev_ocis_init(NBIOS,bios),	/* 48: onboard BIOS PROM */
 	cdev_bktr_init(NBKTR,bktr),     /* 49: Bt848 video capture device */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

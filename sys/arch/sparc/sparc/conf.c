@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 1998/07/07 06:56:11 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 1998/08/24 05:30:02 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -82,6 +82,7 @@
 #include "xd.h"
 #include "xy.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
+#include "ksyms.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -237,6 +238,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 119: random generator */
 	cdev_uk_init(NUK,uk),		/* 120: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 121: SCSI scanner */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 122: Kernel symbols device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 1998/07/07 06:56:02 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.21 1998/08/24 05:29:52 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -145,6 +145,8 @@ cdev_decl(bpf);
 cdev_decl(tun);
 cdev_decl(random);
 cdev_decl(rd);
+#include "ksyms.h"
+cdev_decl(ksyms);   
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -190,6 +192,7 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_ipf(NIPF,ipl),		/* 33: ip filtering */
 	cdev_disk_init(NRD,rd),		/* 34: RAM disk */
 	cdev_tty_init(NAPCI,apci),	/* 35: Apollo APCI UARTs */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 36: Kernel symbols device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.23 1998/05/05 05:54:50 imp Exp $
+#	$OpenBSD: MAKEDEV,v 1.24 1998/08/24 05:29:51 millert Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -104,6 +104,7 @@ std)
 	mknod stdin		c 7 0	; chmod 666 stdin
 	mknod stdout		c 7 1	; chmod 666 stdout
 	mknod stderr		c 7 2	; chmod 666 stderr
+	mknod ksyms		c 35 0  ; chmod 640 ksyms ; chown root.kmem ksyms
 	;;
 
 ttyC*)

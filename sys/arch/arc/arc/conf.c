@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 1998/07/07 06:55:57 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.23 1998/08/24 05:29:49 millert Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.22 1998/07/07 06:55:57 deraadt Exp $
+ *      $Id: conf.c,v 1.23 1998/08/24 05:29:49 millert Exp $
  */
 
 #include <sys/param.h>
@@ -163,6 +163,8 @@ cdev_decl(wd);
 cdev_decl(acd);
 #include "joy.h"
 cdev_decl(joy);
+#include "ksyms.h"
+cdev_decl(ksyms);
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -206,7 +208,8 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_ipf(NIPF,ipl),         /* 31: IP filter log */
 	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
 	cdev_random_init(1,random),	/* 33: random data source */
-	cdev_ss_init(NSS,ss),           /* 34: SCSI scanner */
+	cdev_ss_init(NSS,ss),		/* 34: SCSI scanner */
+	cdev_kyms_init(NSS,ksyms),	/* 35: Kernel symbols device */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

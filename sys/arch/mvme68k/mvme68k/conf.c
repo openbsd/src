@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 1997/11/23 05:21:56 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.18 1998/08/24 05:29:57 millert Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -161,6 +161,8 @@ cdev_decl(bugtty);
 cdev_decl(lp);
 #include "lptwo.h"
 cdev_decl(lptwo);
+#include "ksyms.h"
+cdev_decl(ksyms);
 
 cdev_decl(xd);
 cdev_decl(rd);
@@ -222,6 +224,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 40: random data source */
 	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

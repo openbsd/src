@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 1998/07/07 06:55:54 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 1998/08/24 05:29:46 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -124,6 +124,8 @@ cdev_decl(wd);
 cdev_decl(acd);
 #include "cy.h"
 cdev_decl(cy);
+#include "ksyms.h"
+cdev_decl(ksyms);
 
 struct cdevsw	cdevsw[] =
 {
@@ -166,6 +168,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NWDC,wd),	/* 36: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 37: ATAPI CD-ROM */
         cdev_tty_init(NCY,cy),          /* 38: Cyclom serial port */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 39: Kernel symbols device */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
