@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.32 1999/08/14 15:11:11 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.33 1999/10/09 21:05:57 angelos Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -116,166 +116,143 @@
 .Oo Ar disktype Oc
 .Sh DESCRIPTION
 .Nm
-can be used to install, examine or modify the label on a disk drive or pack.
-When writing the label, it can be used
-to change the drive identification,
-the disk partitions on the drive,
-or to replace a damaged label.
-On some systems,
-.Nm
-can be used to install bootstrap code as well.
-There are several forms of the command that read (display), install or edit
-the label on a disk.
-Each form has an additional option,
-.Fl r ,
-which causes the label to be read from or written to the disk directly,
-rather than going through the system's in-core copy of the label.
-This option may allow a label to be installed on a disk
-without kernel support for a label, such as when labels are first installed
-on a system; it must be used when first installing a label on a disk.
-The specific effect of
+can be used to install, examine, or modify the label on a disk drive or
+pack. The disk label is information about disk characteristics (size,
+type, etc.) and partition layout of the disk, stored on the disk
+itself. It is used by the operating system to optimize disk I/O, and
+to locate the filesystems resident on the disk.
+.Pp
+The following options are available:
+.Bl -tag -width -indent
+.It Fl n
+Make no permanent changes to the disklabel (useful for debugging
+purposes).
+.It Fl v
+Print additional information during operation (verbose mode).
+.It Fl r
+Causes the label to be read from or written to the disk directly,
+rather than going through the system's in-core copy of the label. This
+option may allow a label to be installed on a disk without kernel
+support for a label, such as when labels are first installed on a
+system. This flag does not work on a number of architecture, thus it is
+not considered the right wa to put a new label on a disk. Its use is
+discouraged.
+.It Fl B
+Install bootstrap code. The
 .Fl r
-is described under each command.
-The read and install forms also support the
+flag is implied by
 .Fl B
-option to install bootstrap code.
-These variants are described later.
-.Pp
-In all cases you can specify
-.Fl n
-to operate in no change mode to avoid committing any permanent changes.
-The
-.Fl v
-flag can be used to make
-.Nm
-be more verbose about what it is doing.
-.Pp
-When reading or editing a label, you may also specify the
-.Fl d
-option to use the
+and never needs to be specified.
+.It Fl b
+Specify the single level boot program, or the primary boot program,
+depending on the system boot architecture (single or two-level).
+.It Fl s
+On machines with a two-level bootstrap (such as i386-based systems),
+specify the secondary boot program.
+.It Fl d
+Use the
 .Em default
 label.  This ignores any existing
 .Ox
-partitions on the disk.  Note that this option will only work for
-disks that are capable of reporting their geometry, such as SCSI,
-IDE, and ESDI.
-Additionally, the
-.Fl c
-flag may be used to clear the system's in-core copy of the label
-and update it based on the on-disk label.  Note that the
-.Fl d
-and
-.Fl c
-flags may not be used in conjuction with the
+partitions on the disk. Note that this option will only work for disks
+that are capable of reporting their geometry, such as SCSI, IDE, and
+ESDI. May not be used in conjunction with the
 .Fl r
 flag.
+.It Fl c
+Clear the system's in-core copy of the label and update it based on
+the on-disk label. May not be used in conjunction with the
+.Fl r
+flag.
+.It Fl f Ar tempfile
+Write entries to
+.Ar tempfile
+in
+.Xr fstab 5
+format for any partitions for which mount point information has been
+specified. The
+.Fl f
+flag is only valid when used in conjunction with the
+.Fl E
+flag. If
+.Ar tempfile
+already exists, it will be overwritten.
+.It Fl t
+Format the label as a
+.Xr disktab 5
+entry.
+.It Fl w
+Write a standard label on the designated drive.
+.It Fl e
+Edit an existing disk label using the editor specified in the
+.Ev EDITOR
+environment variable, or
+.Xr vi 1
+if none is specified.
+.It Fl E
+Use a simple initial label editor, using the command-driven built-in
+editor described below.
+.It Fl R
+Restore a disk label that was formatted in a prior operation and
+saved in an
+.Tn ASCII
+file.
+.It Fl N
+Disallow writing of the pack label area on the selected disk.
+.It Fl W
+Allow writing of the pack label area on the selected disk.
+.El
 .Pp
-The first form of the command (read) is used to examine the label on the named
-disk drive (e.g. sd0 or
+The first form  of the command (read) is used to examine the label on
+the named disk drive (e.g., sd0 or
 .Pa /dev/rsd0c Ns ).
 It will display all of the parameters associated with the drive
 and its partition layout.
 Unless the
 .Fl r
-flag is given,
-the kernel's in-core copy of the label is displayed;
-if the disk has no label, or the partition types on the disk are incorrect,
-the kernel may have constructed or modified the label.
-If the
-.Fl r
-flag is given, the label from the raw disk will be displayed rather
-than the in-core label.
-If the
-.Fl t
-flag is given, then the label will be formatted as a
-.Xr disktab 5
-entry.
+flag is given, the kernel's in-core copy of the label is displayed; if
+the disk has no label, or the partition types on the disk are
+incorrect, the kernel may have constructed or modified the label.
 .Pp
-The second form of the command, with the
-.Fl w
-flag, is used to write a standard label on the designated drive.
-The required arguments to
-.Nm
-are the drive to be labeled (e.g. sd0), and
-the drive type as described in the
-.Xr disktab 5
-file.
-The drive parameters and partitions are taken from that file.
-If different disks of the same physical type are to have different
-partitions, it will be necessary to have separate disktab entries
-describing each, or to edit the label after installation as described below.
-The optional argument is a pack identification string,
-up to 16 characters long.
-The pack ID must be quoted if it contains blanks.
-If the
+The second form of the command (write) is used to write a standard
+label on the designated drive. The drive parameters and partitions are
+taken from that file. If different disks of the same physical type are
+to have different partitions, it will be necessary to have separate
+disktab entries describing each, or to edit the label after
+installation as described below. The optional argument is a pack
+identification string, up to 16 characters long. The pack ID must be
+quoted if it contains blanks. If the
 .Fl r
 flag is given, the disk sectors containing the label and bootstrap
-will be written directly.
-A side-effect of this is that any existing bootstrap code will be overwritten
-and the disk rendered unbootable.
+will be written directly. A side-effect of this is that any existing
+bootstrap code will be overwritten and the disk rendered unbootable.
 If
 .Fl r
-is not specified,
-the existing label will be updated via the in-core copy and any bootstrap
-code will be unaffected.
-If the disk does not already have a label, the
+is not specified, the existing label will be updated via the in-core
+copy and any bootstrap code will be unaffected. If the disk does not
+already have a label, the
 .Fl r
-flag must be used.
-In either case, the kernel's in-core label is replaced.
+flag must be used. In either case, the kernel's in-core label is
+replaced.
 .Pp
-An existing disk label may be edited by using the
-.Fl e
-flag.
-The label is read from the in-core kernel copy,
-or directly from the disk if the
+In the third form of the command (edit), the label is read from the
+in-core kernel copy, or directly from the disk if the
 .Fl r
-flag is also given.
-The label is formatted and then supplied to an editor for changes.
-If no editor is specified in an
+flag is also given. The label is formatted and then supplied to an
+editor for changes. If no editor is specified in an
 .Ev EDITOR
 environment variable,
 .Xr vi 1
-is used.
-When the editor terminates, the formatted label is reread
-and used to rewrite the disk label.
-Existing bootstrap code is unchanged regardless of whether
+is used. When the editor terminates, the formatted label is reread and
+used to rewrite the disk label. Existing bootstrap code is unchanged
+regardless of whether
 .Fl r
 was specified.
 .Pp
-With the
-.Fl R
-flag,
-.Nm
-is capable of restoring a disk label that was formatted
-in a prior operation and saved in an
-.Tn ASCII
-file.
-The prototype file used to create the label should be in the same format
-as that produced when reading or editing a label.
-Comments are delimited by
-.Ar \&#
-and newline.
-As with
-.Fl w ,
-any existing bootstrap code will be clobbered if
-.Fl r
-is specified and will be unaffected otherwise.
-.Pp
-The
-.Fl NW
-flags for
-.Nm
-explicitly disallow and
-allow, respectively, writing of the pack label area on the selected disk.
-.Pp
-The
-.Fl E
-flag to
-.Nm
-will drop you into a simple initial label editor.  This mode is
-only intended for new disks as it will move partitions around as
-necessary to maintain a contiguous pool of free blocks.  Some commands
-or prompts take an optional unit.  Available units are
+The initial label editor mode is only intended for new disks as it
+will move partitions around as necessary to maintain a contiguous pool
+of free blocks. Some commands or prompts take an optional unit.
+Available units are
 .Sq b
 for bytes,
 .Sq c
@@ -400,48 +377,26 @@ asked whether or not to save the changes to the on-disk label.
 Exit the editor without saving any changes to the label.
 .El
 .Pp
-The
-.Fl f Ar tempfile
-flag to
-.Nm
-is only valid when used in conjunction with the
-.Fl E
-flag.  When the
-.Fl f
-flag is specified,
-.Nm
-will write entries to
-.Ar tempfile
-in
-.Xr fstab 5
-format for any partitions for which mount point information has been
-specified.
+In the restore form of the command, the prototype file used to create
+the label should be in the same format as that produced when reading
+or editing a label. Comments are delimited by
+.Ar \&#
+and newline. As with
+.Fl w ,
+any existing bootstrap code will be clobbered if
+.Fl r
+is specified and will be unaffected otherwise.
 .Pp
 The final three forms of
 .Nm
-are used to install bootstrap code on machines where the bootstrap
-is part of the label.  The bootstrap code is comprised of one or
-two boot programs depending on the machine.  The
+are used to install bootstrap code on machines where the bootstrap is
+part of the label. The bootstrap code is comprised of one or two boot
+programs depending on the machine.
+.Pp
+When installting bootstrap code with the
 .Fl B
-option is used to denote that bootstrap code is to be installed.
-The
-.Fl r
-flag is implied by
-.Fl B
-and never needs to be specified.  The name of the boot program(s)
-to be installed can be selected in a variety of ways.  First, the
-names can be specified explicitly via the
-.Fl b
-and
-.Fl s
-flags.  On machines with only a single level of boot program,
-.Fl b
-is the name of that program.  For machines with a two-level bootstrap,
-.Fl b
-indicates the primary boot program and
-.Fl s
-the secondary boot program.  If the names are not explicitly given,
-standard boot programs will be used.  The boot programs are located in
+flag, if the names are not explicitly given, standard boot programs
+will be used. The boot programs are located in
 .Pa /usr/mdec .
 The names of the programs are taken from the
 .Dq b0
@@ -465,12 +420,12 @@ if the disk device is
 .Em sd0 .
 .Pp
 The first of the three boot-installation forms is used to install
-bootstrap code without changing the existing label.  It is essentially
+bootstrap code without changing the existing label. It is essentially
 a read command with respect to the disk label itself and all options
 are related to the specification of the boot program as described
-previously.  The final two forms are analogous to the basic write
-and restore versions except that they will install bootstrap code
-in addition to a new label.
+previously. The final two forms are analogous to the basic write and
+restore versions except that they will install bootstrap code in
+addition to a new label.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /etc/disktab
