@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.62 2003/02/25 14:04:09 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.63 2003/04/07 17:09:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -355,47 +355,23 @@ trap(type, frame)
 			break;
 		}
 
-		if (!(vm = p->p_vmspace)) {
-			printf("trap: no vm, p=%p\n", p);
-			goto dead_end;
-		}
-
 		/*
 		 * it could be a kernel map for exec_map faults
 		 */
-		if (!(type & T_USER) && space == HPPA_SID_KERNEL)
+		if (space == HPPA_SID_KERNEL)
 			map = kernel_map;
-		else
+		else {
+			vm = p->p_vmspace;
 			map = &vm->vm_map;
-
-		if (map->pmap->pm_space != space) {
-			if (map->pmap->pm_space != HPPA_SID_KERNEL) {
-				sv.sival_int = va;
-				trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
-			} else {
-				printf("trap: space missmatch %d != %d\n",
-				    space, map->pmap->pm_space);
-				goto dead_end;
-			}
 		}
 
-#ifdef TRAPDEBUG
-		if (space == -1) {
-			extern int pmapdebug;
-			pmapdebug = 0xffffff;
+		if (type & T_USER && map->pmap->pm_space != space) {
+			sv.sival_int = va;
+			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+			break;
 		}
-#endif
+
 		ret = uvm_fault(map, hppa_trunc_page(va), fault, vftype);
-
-#ifdef TRAPDEBUG
-		if (space == -1) {
-			extern int pmapdebug;
-			pmapdebug = 0;
-		}
-
-		printf("uvm_fault(%p, %x, %d, %d)=%d\n",
-		    map, va, 0, vftype, ret);
-#endif
 
 		/*
 		 * If this was a stack access we keep track of the maximum
