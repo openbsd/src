@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.41 2005/03/04 20:22:16 jaredy Exp $	*/
+/*	$OpenBSD: if.c,v 1.42 2005/03/13 16:05:50 mpf Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.41 2005/03/04 20:22:16 jaredy Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.42 2005/03/13 16:05:50 mpf Exp $";
 #endif
 #endif /* not lint */
 
@@ -319,6 +319,7 @@ intpr(int interval, u_long ifnetaddr)
 					(struct sockaddr_dl *)sa;
 				m = printf("%-11.11s ", "<Link>");
 				if (sdl->sdl_type == IFT_ETHER ||
+				    sdl->sdl_type == IFT_CARP ||
 				    sdl->sdl_type == IFT_FDDI ||
 				    sdl->sdl_type == IFT_ISO88025)
 					printf("%-17.17s ",
