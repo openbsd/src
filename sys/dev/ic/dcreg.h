@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.36 2004/09/28 16:58:56 brad Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.37 2004/10/14 15:36:03 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -235,11 +235,16 @@
 #define DC_OPMODE_INTLOOP	0x00000400
 #define DC_OPMODE_EXTLOOP	0x00000800
 
+#if 0
 #define DC_TXTHRESH_72BYTES	0x00000000
 #define DC_TXTHRESH_96BYTES	0x00004000
 #define DC_TXTHRESH_128BYTES	0x00008000
 #define DC_TXTHRESH_160BYTES	0x0000C000
+#endif
 
+#define DC_TXTHRESH_MIN		0x00000000
+#define DC_TXTHRESH_INC		0x00004000
+#define DC_TXTHRESH_MAX		0x0000C000
 
 /*
  * Interrupt mask bits.
