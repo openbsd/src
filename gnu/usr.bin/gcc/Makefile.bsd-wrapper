@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.31 1998/03/03 21:14:24 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.32 1998/03/04 03:55:34 millert Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1 f/g77.1
 MLINKS+=	gcc.1 cc.1
@@ -55,7 +55,8 @@ config.status: Makefile.in configure c-parse.in
 
 includes:
 	@-for i in ${CXX_HEADERS}; do \
-		cmp -s $$i ${DESTDIR}/${GPP_INC_DIR}/$$i || \
+		j=`basename $$i` \
+		cmp -s $$i ${DESTDIR}/${GPP_INC_DIR}/$$j || \
 		    ${INSTALL} ${INSTALL_COPY} -m 444 $$i \
 		    ${DESTDIR}/${GPP_INC_DIR}; \
 	done
