@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.28 2000/04/25 04:48:49 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.29 2000/05/30 14:36:41 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,14 @@ struct ne_pcmcia_softc {
 	void *sc_ih;				/* interrupt handle */
 };
 
+u_int8_t *
+	ne_pcmcia_get_enaddr __P((struct ne_pcmcia_softc *, int,
+	    u_int8_t[ETHER_ADDR_LEN]));
+u_int8_t *
+	ne_pcmcia_dl10019_get_enaddr __P((struct ne_pcmcia_softc *,
+	    u_int8_t[ETHER_ADDR_LEN]));
+int	ne_pcmcia_ax88190_set_iobase __P((struct ne_pcmcia_softc *));
+
 struct cfattach ne_pcmcia_ca = {
 	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach,
 	ne_pcmcia_detach, ne_pcmcia_activate
@@ -89,6 +97,9 @@ struct ne2000dev {
     int function;
     int enet_maddr;
     unsigned char enet_vendor[3];
+    int flags;
+#define	NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
+#define	NE2000DVF_AX88190	0x0002		/* chip is ASIX AX88190 */
 } ne2000devs[] = {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_AMBICOM_AMB8002T,
@@ -165,32 +176,42 @@ struct ne2000dev {
       PCMCIA_CIS_IBM_INFOMOVER,
       0, 0x0ff0, { 0x08, 0x00, 0x5a } },
 
+    { PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
+      PCMCIA_CIS_IBM_INFOMOVER,
+      0, 0x0ff0, { 0x00, 0x04, 0xac } },
+
+    { PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
+      PCMCIA_CIS_IBM_INFOMOVER,
+      0, 0x0ff0, { 0x00, 0x06, 0x29 } },
+
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
       PCMCIA_CIS_LINKSYS_ECARD_1,
       0, -1, { 0x00, 0x80, 0xc8 } },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_PLANEX_FNW3600T,
-      0, -1, { 0x00, 0x90, 0xcc } },
+      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_DL10019 },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_SVEC_PN650TX,
-      0, -1, { 0x00, 0xe0, 0x98 } },
+      0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
 
     /*
      * This entry should be here so that above two cards doesn't
      * match with this.  FNW-3700T won't match above entries due to
      * MAC address check.
      */
-#if 0
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_PLANEX_FNW3700T,
-      0, -1, { 0x00, 0x90, 0xcc } },
-#endif
+      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
-      0, -1, { 0x00, 0x80, 0xc8 } }, 
+      0, -1, { 0x00, 0x80, 0xc8 }, NE2000DVF_DL10019 },
+
+    { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
+      PCMCIA_CIS_DLINK_DE650,
+      0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_LINKSYS_COMBO_ECARD, 
@@ -268,7 +289,7 @@ struct ne2000dev {
 
     { PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
       PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
-      0, -1, { 0x00, 0x00, 0xf4 } },
+      0, -1, { 0x00, 0x00, 0xf4 }, NE2000DVF_DL10019 },
 
     { PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
@@ -286,11 +307,9 @@ struct ne2000dev {
       PCMCIA_CIS_XIRCOM_CFE_10,
       0, -1, { 0x00, 0x10, 0xa4 } },
 
-#if 0
     { PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
       PCMCIA_CIS_MELCO_LPC3_TX, 
-      0, -1, { 0x00, 0x40, 0x26 } },
-#endif
+      0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_DUAL, PCMCIA_PRODUCT_DUAL_NE2000,
       PCMCIA_CIS_DUAL_NE2000,
@@ -332,15 +351,6 @@ struct ne2000dev {
     { "Hypertec Ethernet",
       0x0000, 0x0000, NULL, NULL, 0,
       0x01c0, { 0x00, 0x40, 0x4c } },
-    { "IBM CCAE",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x08, 0x00, 0x5a } },
-    { "IBM CCAE",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x00, 0x04, 0xac } },
-    { "IBM CCAE",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x00, 0x06, 0x29 } },
     { "IBM FME",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0374, { 0x00, 0x04, 0xac } },
@@ -423,10 +433,8 @@ ne_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct ne2000dev *ne_dev;
-	struct pcmcia_mem_handle pcmh;
-	bus_addr_t offset;
-	int i, j, mwindow;
-	u_int8_t *enaddr = NULL;
+	int i;
+	u_int8_t myea[6], *enaddr;
 	void (*npp_init_media) __P((struct dp8390_softc *, int **,
 	    int *, int *));
 	int *media, nmedia, defmedia;
@@ -436,47 +444,65 @@ ne_pcmcia_attach(parent, self, aux)
 	nmedia = defmedia = 0;
 
 	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
 
+	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
+	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
 #if 0
-	/*
-	 * Some ne2000 driver's claim to have memory; others don't.
-	 * Since I don't care, I don't check.
-	 */
+		/*
+		 * Some ne2000 driver's claim to have memory; others don't.
+		 * Since I don't care, I don't check.
+		 */
 
-	if (cfe->num_memspace != 1) {
-		printf(": unexpected number of memory spaces, "
-		    " %d should be 1\n", cfe->num_memspace);
-		return;
-	}
+		if (cfe->num_memspace != 1) {
+			printf(": unexpected number of memory spaces, "
+			    " %d should be 1\n", cfe->num_memspace);
+			return;
+		}
 #endif
 
-	if (cfe->num_iospace == 1) {
-		if (cfe->iospace[0].length != NE2000_NPORTS) {
-			printf(": unexpected I/O space configuration\n");
-			return;
+		if (cfe->num_iospace == 1) {
+			if (cfe->iospace[0].length != NE2000_NPORTS) {
+				printf(": unexpected I/O space "
+				    "configuration\n");
+				continue;
+			}
+		} else if (cfe->num_iospace == 2) {
+			/*
+			 * Some cards report a separate space for NIC and ASIC.
+			 * This make some sense, but we must allocate a single
+			 * NE2000_NPORTS-sized chunk, due to brain damaged
+			 * address decoders on some of these cards.
+			 */
+			if (cfe->iospace[0].length + cfe->iospace[1].length !=
+			    NE2000_NPORTS) {
+#ifdef DIAGNOSTIC
+				printf(": unexpected I/O space "
+				    "configuration\n");
+#endif
+				continue;
+			}
+		} else {
+#ifdef DIAGNOSTIC
+			printf(": unexpected number of i/o spaces %d"
+			    " should be 1 or 2\n", cfe->num_iospace);
+#endif
+			continue;
 		}
-	} else if (cfe->num_iospace == 2) {
-		/*
-		 * Some cards report a separate space for NIC and ASIC.
-		 * This make some sense, but we must allocate a single
-		 * NE2000_NPORTS-sized chunk, due to brain damaged
-		 * address decoders on some of these cards.
-		 */
-		if ((cfe->iospace[0].length + cfe->iospace[1].length) !=
-		    NE2000_NPORTS) {
-			printf(": unexpected I/O space configuration\n");
-			return;
+
+		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
+		    NE2000_NPORTS, NE2000_NPORTS, &psc->sc_pcioh)) {
+#ifdef DIAGNOSTIC
+			printf(": can't allocate I/O space\n");
+#endif
+			continue;
 		}
-	} else {
-		printf(": unexpected number of i/o spaces %d"
-		    " should be 1 or 2\n", cfe->num_iospace);
+
+		break;
 	}
 
-	if (pcmcia_io_alloc(pa->pf, 0, NE2000_NPORTS, NE2000_NPORTS,
-	    &psc->sc_pcioh)) {
-		printf(": can't alloc i/o space\n");
-		return;
+	if (cfe == NULL) {
+		printf(": no suitable config entry\n");
+		goto fail_1;
 	}
 
 	dsc->sc_regt = psc->sc_pcioh.iot;
@@ -484,13 +510,12 @@ ne_pcmcia_attach(parent, self, aux)
 
 	nsc->sc_asict = psc->sc_pcioh.iot;
 	if (bus_space_subregion(dsc->sc_regt, dsc->sc_regh,
-	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
-	    &nsc->sc_asich)) {
+	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS, &nsc->sc_asich)) {
 		printf(": can't get subregion for asic\n");
-		return;
+		goto fail_2;
 	}
 
-#if 0
+#ifdef notyet
 	/* Set up power management hooks. */
 	dsc->sc_enable = ne_pcmcia_enable;
 	dsc->sc_disable = ne_pcmcia_disable;
@@ -500,24 +525,22 @@ ne_pcmcia_attach(parent, self, aux)
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto fail_2;
 	}
 
 	dsc->sc_enabled = 1;
 
 	/* some cards claim to be io16, but they're lying. */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO8,
-	    NE2000_NIC_OFFSET, NE2000_NIC_NPORTS,
-	    &psc->sc_pcioh, &psc->sc_nic_io_window)) {
-		printf(": can't map NIC i/o space\n");
-		return;
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO8, NE2000_NIC_OFFSET,
+	    NE2000_NIC_NPORTS, &psc->sc_pcioh, &psc->sc_nic_io_window)) {
+		printf(": can't map NIC I/O space\n");
+		goto fail_3;
 	}
 
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16,
-	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
-	    &psc->sc_pcioh, &psc->sc_asic_io_window)) {
-		printf(": can't map ASIC i/o space\n");
-		return;
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, NE2000_ASIC_OFFSET,
+	    NE2000_ASIC_NPORTS, &psc->sc_pcioh, &psc->sc_asic_io_window)) {
+		printf(": can't map ASIC I/O space\n");
+		goto fail_4;
 	}
 
 	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, NE2000_NIC_NPORTS);
@@ -525,33 +548,34 @@ ne_pcmcia_attach(parent, self, aux)
 	/*
 	 * Read the station address from the board.
 	 */
-	for (i = 0; i < NE2000_NDEVS; i++) {
-		if ((ne_dev = ne2000_match(pa->card, pa->pf->number, i))
-		    != NULL) {
+	i = 0;
+again:
+	enaddr = NULL;			/* Ask ASIC by default */
+	for (; i < NE2000_NDEVS; i++) {
+		ne_dev = ne2000_match(pa->card, pa->pf->number, i);
+		if (ne_dev != NULL) {
 			if (ne_dev->enet_maddr >= 0) {
-				if (pcmcia_mem_alloc(pa->pf,
-				    ETHER_ADDR_LEN * 2, &pcmh)) {
-					printf(": can't alloc mem for"
-					    " address\n");
-					return;
-				}
-				if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_ATTR,
-				    ne_dev->enet_maddr, ETHER_ADDR_LEN * 2,
-				    &pcmh, &offset, &mwindow)) {
-					printf(": can't map mem for"
-					    " address\n");
-					return;
-				}
-				for (j = 0; j < ETHER_ADDR_LEN; j++)
-					dsc->sc_arpcom.ac_enaddr[j] =
-					    bus_space_read_1(pcmh.memt,
-					    pcmh.memh, offset + (j * 2));
-				pcmcia_mem_unmap(pa->pf, mwindow);
-				pcmcia_mem_free(pa->pf, &pcmh);
-				enaddr = dsc->sc_arpcom.ac_enaddr;
+				enaddr = ne_pcmcia_get_enaddr(psc, 
+				    ne_dev->enet_maddr, myea);
+				if (enaddr == NULL)
+					continue;
 			}
 			break;
 		}
+	}
+	if (i == NE2000_NDEVS) {
+		printf("%s: can't match ethernet vendor code\n",
+		    dsc->sc_dev.dv_xname);
+		goto fail_5;
+	}
+
+	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
+		enaddr = ne_pcmcia_dl10019_get_enaddr(psc, myea);
+		if (enaddr == NULL) {
+			++i;
+			goto again;
+		}
+		nsc->sc_type = NE2000_TYPE_DL10019;
 	}
 
 	if (enaddr != NULL) {
@@ -561,16 +585,16 @@ ne_pcmcia_attach(parent, self, aux)
 		if (enaddr[0] != ne_dev->enet_vendor[0] ||
 		    enaddr[1] != ne_dev->enet_vendor[1] ||
 		    enaddr[2] != ne_dev->enet_vendor[2]) {
-			printf("%s: enet addr has incorrect vendor code\n",
-			    dsc->sc_dev.dv_xname);
-			printf(": (%02x:%02x:%02x should be "
-			    "%02x:%02x:%02x)\n",
-			    enaddr[0], enaddr[1], enaddr[2],
-			    ne_dev->enet_vendor[0],
-			    ne_dev->enet_vendor[1],
-			    ne_dev->enet_vendor[2]);
-			return;
+			++i;
+			goto again;
 		}
+	}
+
+	if ((ne_dev->flags & NE2000DVF_AX88190) != 0) {
+		if (ne_pcmcia_ax88190_set_iobase(psc))
+			goto fail_5;
+
+		nsc->sc_type = NE2000_TYPE_AX88190;
 	}
 
 	/*
@@ -600,11 +624,31 @@ ne_pcmcia_attach(parent, self, aux)
 	if (npp_init_media != NULL)
 		(*npp_init_media)(dsc, &media, &nmedia, &defmedia);
 
-	ne2000_attach(nsc, enaddr, media, nmedia, defmedia);
+	if (ne2000_attach(nsc, enaddr, media, nmedia, defmedia))
+		goto fail_5;
 
-#if 0
+#if notyet
 	pcmcia_function_disable(pa->pf);
 #endif
+	return;
+
+fail_5:
+	/* Unmap ASIC I/O windows. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
+
+fail_4:
+	/* Unmap NIC I/O windows. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+
+fail_3:
+	pcmcia_function_disable(pa->pf);
+
+fail_2:
+	/* Free our I/O space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+fail_1:
+	psc->sc_nic_io_window = -1;
 }
 
 int
@@ -616,6 +660,10 @@ ne_pcmcia_detach(dev, flags)
 	struct dp8390_softc *dsc = &psc->sc_ne2000.sc_dp8390;
 	struct ifnet *ifp = &dsc->sc_arpcom.ac_if;
 	int rv = 0;
+
+	if (psc->sc_nic_io_window == -1)
+		/* Nothing to detach. */
+		return (0);
 
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
@@ -686,4 +734,111 @@ ne_pcmcia_disable(dsc)
 
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 	pcmcia_function_disable(psc->sc_pf);
+}
+
+u_int8_t *
+ne_pcmcia_get_enaddr(psc, maddr, myea)
+	struct ne_pcmcia_softc *psc;
+	int maddr;
+	u_int8_t myea[ETHER_ADDR_LEN];
+{
+	struct ne2000_softc *nsc = &psc->sc_ne2000;
+	struct dp8390_softc *dsc = &nsc->sc_dp8390;
+	struct pcmcia_mem_handle pcmh;
+	bus_addr_t offset;
+	u_int8_t *enaddr = NULL;
+	int j, mwindow;
+
+	if (maddr < 0)
+		return (NULL);
+
+	if (pcmcia_mem_alloc(psc->sc_pf, ETHER_ADDR_LEN * 2, &pcmh)) {
+		printf("%s: can't alloc mem for enet addr\n",
+		    dsc->sc_dev.dv_xname);
+		goto fail_1;
+	}
+	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR, maddr,
+	    ETHER_ADDR_LEN * 2, &pcmh, &offset, &mwindow)) {
+		printf("%s: can't map mem for enet addr\n",
+		    dsc->sc_dev.dv_xname);
+		goto fail_2;
+	}
+	for (j = 0; j < ETHER_ADDR_LEN; j++)
+		myea[j] = bus_space_read_1(pcmh.memt, pcmh.memh,
+		    offset + (j * 2));
+	enaddr = myea;
+
+	pcmcia_mem_unmap(psc->sc_pf, mwindow);
+ fail_2:
+	pcmcia_mem_free(psc->sc_pf, &pcmh);
+ fail_1:
+	return (enaddr);
+}
+
+u_int8_t *
+ne_pcmcia_dl10019_get_enaddr(psc, myea)
+	struct ne_pcmcia_softc *psc;
+	u_int8_t myea[ETHER_ADDR_LEN];
+{
+	struct ne2000_softc *nsc = &psc->sc_ne2000;
+	u_int8_t sum;
+	int j;
+
+#define PAR0	0x04
+	for (j = 0, sum = 0; j < 8; j++)
+		sum += bus_space_read_1(nsc->sc_asict, nsc->sc_asich,
+		    PAR0 + j);
+	if (sum != 0xff)
+		return (NULL);
+	for (j = 0; j < ETHER_ADDR_LEN; j++)
+		myea[j] = bus_space_read_1(nsc->sc_asict,
+		    nsc->sc_asich, PAR0 + j);
+#undef PAR0
+	return (myea);
+}
+
+int
+ne_pcmcia_ax88190_set_iobase(psc)
+	struct ne_pcmcia_softc *psc;
+{
+	struct ne2000_softc *nsc = &psc->sc_ne2000;
+	struct dp8390_softc *dsc = &nsc->sc_dp8390;
+	struct pcmcia_mem_handle pcmh;
+	bus_addr_t offset;
+	int rv = 1, mwindow;
+
+	if (pcmcia_mem_alloc(psc->sc_pf, NE2000_AX88190_LAN_IOSIZE, &pcmh)) {
+		printf("%s: can't alloc mem for LAN iobase\n",
+		    dsc->sc_dev.dv_xname);
+		goto fail_1;
+	}
+	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
+	    NE2000_AX88190_LAN_IOBASE, NE2000_AX88190_LAN_IOSIZE,
+	    &pcmh, &offset, &mwindow)) {
+		printf("%s: can't map mem for LAN iobase\n",
+		    dsc->sc_dev.dv_xname);
+		goto fail_2;
+	}
+
+#ifdef DIAGNOSTIC
+	printf("%s: LAN iobase 0x%x (0x%x) ->", dsc->sc_dev.dv_xname,
+	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
+	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8,
+	    (u_int)psc->sc_pcioh.addr);
+#endif
+	bus_space_write_1(pcmh.memt, pcmh.memh, offset,
+	    psc->sc_pcioh.addr & 0xff);
+	bus_space_write_1(pcmh.memt, pcmh.memh, offset + 2,
+	    psc->sc_pcioh.addr >> 8);
+#ifdef DIAGNOSTIC
+	printf(" 0x%x\n", bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
+	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
+#endif
+	rv = 0;
+
+	pcmcia_mem_unmap(psc->sc_pf, mwindow);
+ fail_2:
+	pcmcia_mem_free(psc->sc_pf, &pcmh);
+ fail_1:
+	return (rv);
 }
