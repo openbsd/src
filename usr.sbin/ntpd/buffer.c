@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.5 2005/02/02 18:57:09 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.6 2005/03/23 11:36:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,12 +92,6 @@ msgbuf_clear(struct msgbuf *msgbuf)
 int
 msgbuf_write(struct msgbuf *msgbuf)
 {
-	/*
-	 * possible race here
-	 * when we cannot write out data completely from a buffer,
-	 * we MUST return and NOT try to write out stuff from later buffers -
-	 * the socket might have become writeable again
-	 */
 	struct iovec	 iov[IOV_MAX];
 	struct buf	*buf, *next;
 	int		 i = 0;
