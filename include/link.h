@@ -1,4 +1,4 @@
-/*	$NetBSD: link.h,v 1.9 1995/09/23 22:26:15 pk Exp $	*/
+/*	$NetBSD: link.h,v 1.10 1996/01/09 00:00:11 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -254,11 +254,13 @@ struct hints_header {
 #define HH_MAGIC	011421044151
 	long		hh_version;	/* Interface version number */
 #define LD_HINTS_VERSION_1	1
+#define LD_HINTS_VERSION_2	2
 	long		hh_hashtab;	/* Location of hash table */
 	long		hh_nbucket;	/* Number of buckets in hashtab */
 	long		hh_strtab;	/* Location of strings */
 	long		hh_strtab_sz;	/* Size of strings */
 	long		hh_ehints;	/* End of hints (max offset in file) */
+	long		hh_dirlist;	/* Colon-separated list of srch dirs */
 };
 
 #define HH_BADMAG(hdr)	((hdr).hh_magic != HH_MAGIC)
