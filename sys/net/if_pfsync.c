@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.45 2005/02/15 21:31:22 aaron Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.46 2005/02/20 15:58:38 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -308,6 +308,7 @@ pfsync_input(struct mbuf *m, ...)
 
 	switch (action) {
 	case PFSYNC_ACT_CLR: {
+		struct pf_state *nexts;
 		struct pfi_kif	*kif;
 		u_int32_t creatorid;
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
@@ -320,7 +321,9 @@ pfsync_input(struct mbuf *m, ...)
 
 		s = splsoftnet();
 		if (cp->ifname[0] == '\0') {
-			RB_FOREACH(st, pf_state_tree_id, &tree_id) {
+			for (st = RB_MIN(pf_state_tree_id, &tree_id);
+			    st; st = nexts) {
+                		nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
 				if (st->creatorid == creatorid) {
 					st->timeout = PFTM_PURGE;
 					pf_purge_expired_state(st);
@@ -335,8 +338,10 @@ pfsync_input(struct mbuf *m, ...)
 				splx(s);
 				goto done;
 			}
-			RB_FOREACH(st, pf_state_tree_lan_ext,
-			    &kif->pfik_lan_ext) {
+			for (st = RB_MIN(pf_state_tree_lan_ext,
+			    &kif->pfik_lan_ext); st; st = nexts) {
+				nexts = RB_NEXT(pf_state_tree_lan_ext,
+				    &kif->pfik_lan_ext, st);
 				if (st->creatorid == creatorid) {
 					st->timeout = PFTM_PURGE;
 					pf_purge_expired_state(st);
