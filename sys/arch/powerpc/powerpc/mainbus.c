@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.5 2001/03/29 22:54:37 drahn Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.6 2001/05/29 01:20:44 drahn Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -124,6 +124,12 @@ mbattach(parent, self, aux)
 				if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
 					printf ("name not found on node %x\n");
 					continue;
+			}
+			if (strcmp(name, "memory-controller") == 0) {
+				nca.ca_name = "memc";
+				nca.ca_node = node;
+				nca.ca_bus = &sc->sc_bus;
+				config_found(self, &nca, mbprint);
 			}
 			if (strcmp(name, "pci") == 0) {
 				nca.ca_name = "mpcpcibr";

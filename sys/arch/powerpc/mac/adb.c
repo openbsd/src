@@ -98,6 +98,20 @@ adbmatch(parent, cf, aux)
 	return 0;
 }
 
+/* HACK ALERT */
+int adb_read_date_time(unsigned long *time);
+int adb_write_date_time(unsigned long time);
+int adb_set_date_time(unsigned long time);
+typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
+         int *mon, int *yr);
+typedef int (time_read_t)(unsigned long *sec);
+typedef int (time_write_t)(unsigned long sec);
+extern time_read_t  *time_read;
+extern time_write_t  *time_write;
+extern clock_read_t  *clock_read;
+
+
+
 static void
 adbattach(parent, self, aux)
 	struct device *parent, *self;
@@ -129,6 +143,11 @@ adbattach(parent, self, aux)
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_HIGH,
 		adb_intr, sc, "adb");
+
+	/* init powerpc globals which control RTC functionality */
+	clock_read = NULL;
+	time_read = adb_read_date_time;
+	time_write = adb_set_date_time;
 
 #ifdef ADB_DEBUG
 	if (adb_debug)

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.20 2001/05/17 00:57:58 pvalchev Exp $
+#	$OpenBSD: RAMDISK,v 1.21 2001/05/29 01:20:43 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -40,8 +40,8 @@ config		bsd	root on rd0a swap on rd0b
 mainbus0	at root
 cpu*		at mainbus0
 
-ofroot*		at mainbus0
 mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
+memc*		at mainbus0
 pchb*		at pci?		# host bridge identifiers
 
 #### PCI Bus devices.
@@ -157,14 +157,6 @@ cd*		at scsibus? target ? lun ?
 #ch*		at scsibus? target ? lun ?
 #ss*		at scsibus? target ? lun ?
 #uk*		at scsibus? target ? lun ?
-
-#### openfirmware devices
-# mostly unused currently 
-ofbus*		at openfirm?
-ofrtc*		at openfirm?
-#ofdisk*		at openfirm?	 # used for floppy support
-#ofnet*		at openfirm?
-ofcons*	at openfirm?
 
 pseudo-device	loop	1	# network loopback
 pseudo-device	pty	64	# pseudo-terminals

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.33 2001/04/13 03:01:01 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.34 2001/05/29 01:20:43 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -28,8 +28,8 @@ config		bsd	swap generic
 mainbus0	at root
 cpu*		at mainbus0
 
-ofroot*		at mainbus0
 mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
+memc*		at mainbus0
 pchb*		at pci?		# host bridge identifiers
 
 #### PCI Bus devices.
@@ -149,11 +149,5 @@ cd*		at scsibus? target ? lun ?
 ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
-
-#### openfirmware devices
-# mostly unused currently 
-ofbus*		at openfirm?
-ofrtc*		at openfirm?
-ofcons*	at openfirm?
 
 #pseudo-device        wsmux	2	# mouse & keyboard multiplexor

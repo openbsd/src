@@ -1,7 +1,7 @@
-/*	$OpenBSD: uni_n.c,v 1.2 2001/03/14 03:24:54 deraadt Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.3 2001/05/29 01:20:44 drahn Exp $	*/
 
 /*
- * Copyright (c) 1998 Dale Rahn. All rights reserved.
+ * Copyright (c) 1998-2001 Dale Rahn. All rights reserved.
  *
  *   
  * Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,71 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <machine/bus.h>
+#include <machine/autoconf.h>
 
 #include <dev/ofw/openfirm.h>
 
-void
+static int	memcmatch __P((struct device *, void *, void *));
+static void	memcattach __P((struct device *, struct device *, void *));
+
+struct memc_softc {
+	struct device sc_dev;
+	char *baseaddr;
+};
+/* Driver definition */
+struct cfdriver memc_cd = {
+	NULL, "memc", DV_DULL
+};
+/* Driver definition */
+struct cfattach memc_ca = {
+	sizeof(struct memc_softc), memcmatch, memcattach
+};
+
+void *uni_n_config(int handle);
+
+int
+memcmatch(parent, cf, aux)
+	struct device *parent;
+	void *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+	int node;
+	static int memc_attached = 0;
+	int len;
+	char name[64];
+
+	/* allow only one instance */
+	if (memc_attached == 0) {
+		if (0 == strcmp (ca->ca_name, "memc")) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static void
+memcattach(parent, self, aux)
+	struct device *parent, *self;
+	void   *aux;
+{
+	struct confargs *ca = aux;
+	int len;
+	char name[64];
+	u_int32_t address;
+	u_int32_t *ctladdr;
+	struct memc_softc *sc = (struct memc_softc *)self;
+
+	len = OF_getprop(ca->ca_node, "name", name, sizeof name);
+	if (len > 0) {
+		name[len] = 0;
+	}
+	if (strcmp (name, "uni-n")== 0) {
+		sc->baseaddr = uni_n_config(ca->ca_node);
+	}
+	printf (": %s\n", name);
+}
+void *
 uni_n_config(int handle)
 {
 	char name[20];
@@ -49,11 +110,12 @@ uni_n_config(int handle)
 		if (!strcmp (name, "uni-n")) {
 			if (OF_getprop(handle, "reg", &address,
 			    sizeof address) > 0) {
-				printf("found uni-n at address %x\n", address);
 				baseaddr = mapiodev(address, NBPG);
 				ctladdr = (void*)(baseaddr + 0x20);
 				*ctladdr |= 0x02;
 			}
+		return baseaddr;
 		}
 	}
+	return 0;
 }

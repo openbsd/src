@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2000/09/06 18:15:49 matthieu Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2001/05/29 01:20:44 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -64,10 +64,14 @@ static volatile u_long lasttb;
 
 typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
          int *mon, int *yr);
+typedef int (time_read_t)(u_long *sec);
+typedef int (time_write_t)(u_long sec);
 
 int power4e_getclock(int *, int *, int *, int *, int *, int *);
 
 clock_read_t *clock_read = NULL;
+time_read_t  *time_read  = NULL;
+time_write_t  *time_write  = NULL;
 
 static u_long
 chiptotime(int sec, int min, int hour, int day, int mon, int year);
@@ -103,11 +107,17 @@ inittodr(base)
 
 	if (clock_read != NULL ) {
 		(*clock_read)( &sec, &min, &hour, &day, &mon, &year);
+		time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
+	} else if (time_read != NULL) {
+		u_long cursec;
+		(*time_read)(&cursec);
+		time.tv_sec = cursec;
+		printf ("time is %d seconds\n", cursec);
 	} else {
-		/* force failure on chiptotime */
-		mon = 0;
+		/* force failure */
+		time.tv_sec = 0;
 	} 
-	if ((time.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
+	if (time.tv_sec == 0) {
 		printf("WARNING: unable to get date/time");
 		/*
 		 * Believe the time in the file system for lack of
@@ -175,6 +185,17 @@ chiptotime(sec, min, hour, day, mon, year)
 void
 resettodr()
 {
+	struct timeval curtime;
+	#if 0
+	if (time_write != NULL) {
+		curtime = time;
+		curtime.tv_sec -= tz.tz_minuteswest * 60;
+		if (tz.tz_dsttime) {
+			curtime.tv_sec += 3600;
+		}
+		(*time_write)(time.tv_sec);
+	}
+	#endif
 }
 
 void
@@ -347,28 +368,3 @@ setstatclockrate(arg)
 {
 	/* Do nothing */
 }
-
-
-#if 0
-int
-power4e_getclock(sec, min, hour, day, mon, year)
-	int *sec;
-	int *min;
-	int *hour;
-	int *day;
-	int *mon;
-	int *year;
-{
-	int clkbase = MPC106_V_PCI_MEM_SPACE + 0x000f1ff8;
-
-	outb(clkbase, inb(clkbase) | 0x40);	/* stop update */
-	*sec = inb(clkbase + 1);
-	*min = inb(clkbase + 2);
-	*hour = inb(clkbase + 3);
-	*day = inb(clkbase + 5);
-	*mon = inb(clkbase + 6);
-	*year = inb(clkbase + 7);
-	outb(clkbase, inb(clkbase) & ~0x40);
-	return(0);
-}
-#endif

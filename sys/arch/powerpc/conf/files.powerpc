@@ -67,10 +67,9 @@ attach	cpu at mainbus
 file	arch/powerpc/powerpc/cpu.c
 
 include "../../../dev/ofw/files.ofw"
-file	arch/powerpc/powerpc/opendev.c ofcons | ofnet | ofdisk | ofrtc
+file	arch/powerpc/powerpc/opendev.c 
 major	{ ofdisk = 4 }
 
-file	arch/powerpc/mac/uni_n.c ofbus
 
 include "dev/pci/files.pci"
 
@@ -78,6 +77,10 @@ device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
 file	arch/powerpc/pci/mpcpcibus.c		mpcpcibr
 #file	arch/powerpc/pci/pci_addr_fixup.c	mpcpcibr
+
+device	memc {}
+attach	memc at mainbus
+file	arch/powerpc/mac/uni_n.c	memc
 
 major   {rd = 17}
 major	{sd = 2}		# hey this was 0 but at slot 2 in bdevsw XXX

@@ -1896,11 +1896,13 @@ adb_read_date_time(unsigned long *time)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
 	int result;
+	int retcode;
 	volatile int flag = 0;
 
 	switch (adbHardware) {
 	case ADB_HW_II:
-		return -1;
+		retcode = -1;
+		break;
 
 	case ADB_HW_IISI:
 		output[0] = 0x02;	/* 2 byte message */
@@ -1908,18 +1910,22 @@ adb_read_date_time(unsigned long *time)
 		output[2] = 0x03;	/* read date/time */
 		result = send_adb_IIsi((u_char *)output, (u_char *)output,
 		    (void *)adb_op_comprout, (int *)&flag, (int)0);
-		if (result != 0)	/* exit if not sent */
-			return -1;
+		if (result != 0) {	/* exit if not sent */
+			retcode = -1;
+			break;
+		}
 
 		while (0 == flag)	/* wait for result */
 			;
 
 		*time = (long)(*(long *)(output + 1));
-		return 0;
+		retcode = 0;
+		break;
 
 	case ADB_HW_PB:
 		pm_read_date_time(time);
-		return 0;
+		retcode = 0;
+		break;
 
 	case ADB_HW_CUDA:
 		output[0] = 0x02;	/* 2 byte message */
@@ -1927,19 +1933,31 @@ adb_read_date_time(unsigned long *time)
 		output[2] = 0x03;	/* read date/time */
 		result = send_adb_cuda((u_char *)output, (u_char *)output,
 		    (void *)adb_op_comprout, (void *)&flag, (int)0);
-		if (result != 0)	/* exit if not sent */
-			return -1;
+		if (result != 0) {	/* exit if not sent */
+			retcode = -1;
+			break;
+		}
 
 		while (0 == flag)	/* wait for result */
 			;
 
 		memcpy(time, output + 1, 4);
-		return 0;
+		retcode = 0;
+		break;
 
 	case ADB_HW_UNKNOWN:
 	default:
-		return -1;
+		retcode = -1;
+		break;
 	}
+	if (retcode == 0) {
+#define DIFF19041970 2082844800
+		*time -= DIFF19041970;
+
+	} else {
+		*time = 0;
+	}
+	return retcode;
 }
 
 /* caller should really use machine-independant version: setPramTime */
@@ -1951,6 +1969,7 @@ adb_set_date_time(unsigned long time)
 	int result;
 	volatile int flag = 0;
 
+	time += DIFF19041970;
 	switch (adbHardware) {
 
 	case ADB_HW_CUDA:
