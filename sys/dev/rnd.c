@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.36 2000/04/13 13:48:29 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.37 2000/04/14 14:40:50 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -1045,7 +1045,7 @@ randomioctl(dev, cmd, data, flag, p)
 	int	ret = 0;
 	u_int	cnt;
 
-	add_timer_randomness((int)p);
+	add_timer_randomness((u_long)p ^ (u_long)data ^ cmd);
 
 	switch (cmd) {
 	case RNDGETENTCNT:
@@ -1085,6 +1085,7 @@ randomioctl(dev, cmd, data, flag, p)
 	default:
 		ret = EINVAL;
 	}
-	add_timer_randomness((int)p);
+
+	add_timer_randomness((u_long)p ^ (u_long)data ^ cmd);
 	return ret;
 }
