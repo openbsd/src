@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.6 1998/01/02 05:32:52 deraadt Exp $	*/
+/*	$OpenBSD: mman.h,v 1.7 1998/06/02 05:22:26 deraadt Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -99,8 +99,8 @@ void *	mmap __P((void *, size_t, int, int, int, off_t));
 int	mprotect __P((void *, size_t, int));
 int	munmap __P((void *, size_t));
 int	msync __P((void *, size_t, int));
-int	mlock __P((void *, size_t));
-int	munlock __P((void *, size_t));
+int	mlock __P((const void *, size_t));
+int	munlock __P((const void *, size_t));
 int	madvise __P((void *, size_t, int));
 int	mincore __P((void *, size_t, char *));
 int	minherit __P((void *, size_t, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.14 1998/05/11 19:43:11 niklas Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.15 1998/06/02 05:22:27 deraadt Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -617,7 +617,7 @@ sys_mlock(p, v, retval)
 	register_t *retval;
 {
 	struct sys_mlock_args /* {
-		syscallarg(void *) addr;
+		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vm_offset_t addr;
@@ -666,7 +666,7 @@ sys_munlock(p, v, retval)
 	register_t *retval;
 {
 	struct sys_munlock_args /* {
-		syscallarg(void *) addr;
+		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vm_offset_t addr;
