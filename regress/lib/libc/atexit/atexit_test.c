@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit_test.c,v 1.2 2002/09/14 22:03:14 dhartmei Exp $ */
+/*	$OpenBSD: atexit_test.c,v 1.3 2002/10/21 20:40:50 mickey Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -37,7 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-#include "/usr/src/lib/libc/stdlib/atexit.h"
+#include "stdlib/atexit.h"
 
 void	handle_first();
 void	handle_middle();
