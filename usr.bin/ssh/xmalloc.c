@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: xmalloc.c,v 1.12 2001/02/07 08:57:26 deraadt Exp $");
+RCSID("$OpenBSD: xmalloc.c,v 1.13 2001/02/07 16:46:08 markus Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -37,7 +37,7 @@ xrealloc(void *ptr, size_t new_size)
 	void *new_ptr;
 
 	if (new_size == 0)
-		fatal("xmalloc: zero size");
+		fatal("xrealloc: zero size");
 	if (ptr == NULL)
 		fatal("xrealloc: NULL pointer given as argument");
 	new_ptr = realloc(ptr, new_size);
@@ -61,7 +61,7 @@ xstrdup(const char *str)
 	char *cp;
 
 	if (len == 0)
-		fatal("xmalloc: zero size");
+		fatal("xstrdup: zero size");
 	cp = xmalloc(len);
 	strlcpy(cp, str, len);
 	return cp;
