@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.18 2001/04/13 00:25:02 mjacob Exp $
+$OpenBSD: miidevs,v 1.19 2001/05/11 18:08:55 nate Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -133,6 +133,8 @@ model MYSON MTD972		0x0000 MTD972 10/100 media interface
 model NATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model NATSEMI DP83843		0x0001 DP83843 10/100 media interface
 model NATSEMI DP83815		0x0002 DP83815 10/100 integrated
+model NATSEMI DP83891		0x0005 DP83891 10/100/1000 media interface
+model NATSEMI DP83861		0x0006 DP83861 10/100/1000 media interface
 
 /* Quality Semiconductor PHYs */
 model QUALSEMI QS6612		0x0000 QS6612 10/100 media interface
