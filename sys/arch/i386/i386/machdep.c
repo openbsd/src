@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 1998/09/28 05:13:13 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.95 1998/12/28 11:03:57 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1065,6 +1065,10 @@ sendsig(catcher, sig, mask, code, type, val)
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
 		initsiginfo(&frame.sf_si, sig, code, type, val);
+#ifdef VM86
+		if (sig == SIGURG)	/* VM86 userland trap */
+			frame.sf_si.si_trapno = code;
+#endif
 	}
 
 	/* XXX don't copyout siginfo if not needed? */
