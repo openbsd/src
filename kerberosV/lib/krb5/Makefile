@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2001/06/24 18:25:58 hin Exp $
+# $OpenBSD: Makefile,v 1.9 2001/06/24 18:57:36 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -10,25 +10,9 @@ INCLUDE_FILES=	${KRB5SRC}/lib/krb5/{krb5.h,krb5-protos.h,krb5-private.h} \
 
 includes:	krb5_err.h heim_err.h
 
-MAN=	krb5.conf.5 \
-	krb5_425_conv_principal.3 \
-	krb5_appdefault.3 \
-	krb5_build_principal.3 \
-	krb5_config.3 \
-	krb5_free_principal.3 \
-	krb5_openlog.3 \
-	krb5_parse_name.3 \
-	krb5_sname_to_principal.3 \
-	krb5_unparse_name.3 \
-	krb5_warn.3 \
-	krb5_auth_context.3 \
-	krb5_context.3 \
-	krb5_init_context.3 \
-	krb5_keytab.3
-# This not built yet
-#	verify_krb5_conf.8
-
+MAN=	krb5_init_context.3
 MLINKS+=krb5_init_context.3 krb5_free_context.3
+
 MLINKS+=krb5_warn.3 krb5_warnx.3
 MLINKS+=krb5_warn.3 krb5_vwarn.3
 MLINKS+=krb5_warn.3 krb5_vwarnx.3
@@ -36,6 +20,114 @@ MLINKS+=krb5_warn.3 krb5_err.3
 MLINKS+=krb5_warn.3 krb5_errx.3
 MLINKS+=krb5_warn.3 krb5_verr.3
 MLINKS+=krb5_warn.3 krb5_verrx.3
+
+MAN+=	krb5_425_conv_principal.3
+MLINKS+=krb5_425_conv_principal.3 krb5_425_conv_principal_ext.3
+MLINKS+=krb5_425_conv_principal.3 krb5_524_conv_principal.3
+
+MAN+=	krb5_appdefault.3
+MLINKS+=krb5_appdefault.3 krb5_appdefault_boolean.3
+MLINKS+=krb5_appdefault.3 krb5_appdefault_string.3
+MLINKS+=krb5_appdefault.3 krb5_appdefault_time.3
+
+MAN+=	krb5_build_principal.3
+MLINKS+=krb5_build_principal.3 krb5_build_principal_ext.3
+MLINKS+=krb5_build_principal.3 krb5_build_principal_va.3
+MLINKS+=krb5_build_principal.3 krb5_build_principal_va_ext.3
+MLINKS+=krb5_build_principal.3 krb5_make_principal.3
+
+MAN+=	krb5_config.3
+MLINKS+=krb5_config.3 krb5_config_get_bool_default.3
+MLINKS+=krb5_config.3 krb5_config_get_int_default.3
+MLINKS+=krb5_config.3 krb5_config_get_string_default.3
+MLINKS+=krb5_config.3 krb5_config_get_time_default.3
+
+MAN+=	krb5_openlog.3
+MLINKS+=krb5_openlog.3 krb5_initlog.3
+MLINKS+=krb5_openlog.3 krb5_closelog.3
+MLINKS+=krb5_openlog.3 krb5_addlog_dest.3
+MLINKS+=krb5_openlog.3 krb5_addlog_func.3
+MLINKS+=krb5_openlog.3 krb5_log.3
+MLINKS+=krb5_openlog.3 krb5_vlog.3
+MLINKS+=krb5_openlog.3 krb5_log_msg.3
+MLINKS+=krb5_openlog.3 krb5_vlog_msg.3
+
+MAN+=	krb5_sname_to_principal.3
+MLINKS+=krb5_sname_to_principal.3 krb5_sock_to_principal.3
+
+MAN+=	krb5_auth_context.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_init.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_free.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_setflags.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_getflags.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_setaddrs.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_setaddrs_from_fd.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_getaddrs.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_genaddrs.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_getkey.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_setkey.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_getuserkey.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_setuserkey.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_getlocalsubkey.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_setlocalsubkey.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_getremotesubkey.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_setremotesubkey.3
+MLINKS+=krb5_auth_context.3 krb5_auth_setcksumtype.3
+MLINKS+=krb5_auth_context.3 krb5_auth_getcksumtype.3
+MLINKS+=krb5_auth_context.3 krb5_auth_setkeytype.3
+MLINKS+=krb5_auth_context.3 krb5_auth_getkeytype.3
+MLINKS+=krb5_auth_context.3 krb5_auth_getlocalseqnumber.3
+MLINKS+=krb5_auth_context.3 krb5_auth_setlocalseqnumber.3
+MLINKS+=krb5_auth_context.3 krb5_auth_getremoteseqnumber.3
+MLINKS+=krb5_auth_context.3 krb5_auth_setremoteseqnumber.3
+MLINKS+=krb5_auth_context.3 krb5_auth_getauthenticator.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_getrcache.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_setrcache.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_initivector.3
+MLINKS+=krb5_auth_context.3 krb5_auth_con_setivector.3
+
+MAN+=	krb5_context.3
+
+MAN+=	krb5_create_checksum.3
+MLINKS+=krb5_create_checksum.3 krb5_checksum_is_collision_proof.3
+MLINKS+=krb5_create_checksum.3 krb5_checksum_is_keyed.3
+MLINKS+=krb5_create_checksum.3 krb5_checksumsize.3
+MLINKS+=krb5_create_checksum.3 krb5_verify_checksum.3
+
+MAN+=	krb5_crypto_init.3
+MLINKS+=krb5_crypto_init.3 krb5_crypto_destroy.3
+
+MAN+=	krb5_encrypt.3
+MLINKS+=krb5_encrypt.3 krb5_decrypt.3
+MLINKS+=krb5_encrypt.3 krb5_decrypt_EncryptedData.3
+MLINKS+=krb5_encrypt.3 krb5_encrypt_EncryptedData.3
+
+MAN+=	krb5_free_principal.3
+
+MAN+=	krb5_keytab.3
+MLINKS+=krb5_keytab.3 krb5_kt_ops.3
+MLINKS+=krb5_keytab.3 krb5_keytab_entry.3
+MLINKS+=krb5_keytab.3 krb5_kt_cursor.3
+MLINKS+=krb5_keytab.3 krb5_kt_add_entry.3
+MLINKS+=krb5_keytab.3 krb5_kt_close.3
+MLINKS+=krb5_keytab.3 krb5_kt_compare.3
+MLINKS+=krb5_keytab.3 krb5_kt_copy_entry_contents.3
+MLINKS+=krb5_keytab.3 krb5_kt_default.3
+MLINKS+=krb5_keytab.3 krb5_kt_default_name.3
+MLINKS+=krb5_keytab.3 krb5_kt_end_seq_get.3
+MLINKS+=krb5_keytab.3 krb5_kt_free_entry.3
+MLINKS+=krb5_keytab.3 krb5_kt_get_entry.3
+MLINKS+=krb5_keytab.3 krb5_kt_get_name.3
+MLINKS+=krb5_keytab.3 krb5_kt_next_entry.3
+MLINKS+=krb5_keytab.3 krb5_kt_read_service_key.3
+MLINKS+=krb5_keytab.3 krb5_kt_register.3
+MLINKS+=krb5_keytab.3 krb5_kt_remove_entry.3
+MLINKS+=krb5_keytab.3 krb5_kt_resolve.3
+MLINKS+=krb5_keytab.3 krb5_kt_start_seq_get.3
+
+MAN+=	krb5_parse_name.3
+
+MAN+=	krb5_unparse_name.3
 
 SRCS=	add_et_list.c \
 	addr_families.c \
