@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.11 2002/07/14 02:59:41 deraadt Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.12 2002/09/06 21:10:20 henning Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.11 2002/07/14 02:59:41 deraadt Exp $";
+static	char rcsid[] = "$OpenBSD: ukcutil.c,v 1.12 2002/09/06 21:10:20 henning Exp $";
 #endif
 
 #include <sys/types.h>
@@ -47,43 +47,38 @@ static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.11 2002/07/14 02:59:41 deraadt Ex
 #include "ukc.h"
 #include "misc.h"
 
-extern int ukc_mod_kernel;
+extern	int ukc_mod_kernel;
 
-struct cfdata *
-get_cfdata(idx)
-	int	idx;
+struct	cfdata *
+get_cfdata(int idx)
 {
 	return((struct cfdata *)(adjust((caddr_t)nl[P_CFDATA].n_value) +
 	    idx*sizeof(struct cfdata)));
 }
 
 short *
-get_locnamp(idx)
-	int	idx;
+get_locnamp(int idx)
 {
 	return((short *)(adjust((caddr_t)nl[S_LOCNAMP].n_value) +
 	    idx*sizeof(short)));
 }
 
 caddr_t *
-get_locnames(idx)
-	int	idx;
+get_locnames(int idx)
 {
 	return((caddr_t *)(adjust((caddr_t)nl[P_LOCNAMES].n_value) +
 	    idx*sizeof(caddr_t)));
 }
 
 int *
-get_extraloc(idx)
-	int	idx;
+get_extraloc(int idx)
 {
 	return((int *)(adjust((caddr_t)nl[IA_EXTRALOC].n_value) +
 	    idx*sizeof(int)));
 }
 
 char *
-get_pdevnames(idx)
-	int	idx;
+get_pdevnames(int idx)
 {
 	caddr_t *p;
 
@@ -94,15 +89,14 @@ get_pdevnames(idx)
 }
 
 struct pdevinit *
-get_pdevinit(idx)
-	int	idx;
+get_pdevinit(int idx)
 {
 	return((struct pdevinit *)(adjust((caddr_t)nl[S_PDEVINIT].n_value) +
 	    idx*sizeof(struct pdevinit)));
 }
 
 int
-more()
+more(void)
 {
 	int quit = 0;
 	cmd_t cmd;
@@ -122,8 +116,7 @@ more()
 }
 
 void
-pnum(val)
-	int val;
+pnum(int val)
 {
 	if (val > -2 && val < 16) {
 		printf("%d", val);
@@ -145,8 +138,7 @@ pnum(val)
 }
 
 void
-pdevnam(devno)
-	short devno;
+pdevnam(short int devno)
 {
 	struct cfdata *cd;
 	struct cfdriver *cdrv;
@@ -180,8 +172,7 @@ pdevnam(devno)
 }
 
 void
-pdev(devno)
-	short devno;
+pdev(short int devno)
 {
 	struct cfdata *cd;
 	short	*s, *ln;
@@ -252,9 +243,7 @@ pdev(devno)
 }
 
 int
-number(c, val)
-	const char *c;
-	int *val;
+number(const char *c, int *val)
 {
 	u_int num = 0;
 	int neg = 0;
@@ -297,12 +286,9 @@ number(c, val)
 }
 
 int
-device(cmd, len, unit, state)
-	char *cmd;
-	int *len;
-	short *unit, *state;
+device(char *cmd, int *len, short int *unit, short int *state)
 {
-	short u = 0, s = FSTATE_FOUND;
+	short int u = 0, s = FSTATE_FOUND;
 	int l = 0;
 	char *c;
 
@@ -335,13 +321,11 @@ device(cmd, len, unit, state)
 }
 
 int
-attr(cmd, val)
-	char *cmd;
-	int *val;
+attr(char *cmd, int *val)
 {
 	char *c;
 	caddr_t *p;
-	short attr = -1, i = 0, l = 0;
+	short int attr = -1, i = 0, l = 0;
 
 	c = cmd;
 	while (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') {
@@ -367,9 +351,7 @@ attr(cmd, val)
 }
 
 void
-modify(item, val)
-	char *item;
-	int  *val;
+modify(char *item, int *val)
 {
 	cmd_t cmd;
 	int a;
@@ -398,8 +380,7 @@ modify(item, val)
 }
 
 void
-change(devno)
-	int devno;
+change(int devno)
 {
 	struct cfdata *cd, *c;
 	caddr_t	*p;
@@ -502,9 +483,7 @@ change(devno)
 }
 
 void
-change_history(devno, str)
-	int devno;
-	char *str;
+change_history(int devno, char *str)
 {
 	int	 i, share = 0, *j = NULL, *k = NULL, *l;
 	struct cfdata *cd, *c;
@@ -628,8 +607,7 @@ change_history(devno, str)
 }
 
 void
-disable(devno)
-	int devno;
+disable(int devno)
 {
 	struct cfdata *cd;
 	int done = 0;
@@ -682,8 +660,7 @@ disable(devno)
 }
 
 void
-enable(devno)
-	int devno;
+enable(int devno)
 {
 	struct cfdata *cd;
 	int done = 0;
@@ -734,7 +711,7 @@ enable(devno)
 }
 
 void
-show()
+show(void)
 {
 	caddr_t *p;
 	int	i = 0;
@@ -755,10 +732,7 @@ show()
 }
 
 void
-common_attr_val(attr, val, routine)
-	short attr;
-	int   *val;
-	char  routine;
+common_attr_val(short int attr, int *val, char routine)
 {
 	int	i = 0;
 	struct cfdata *cd;
@@ -814,8 +788,7 @@ common_attr_val(attr, val, routine)
 }
 
 void
-show_attr(cmd)
-	char *cmd;
+show_attr(char *cmd)
 {
 	char *c;
 	caddr_t *p;
@@ -859,11 +832,7 @@ show_attr(cmd)
 }
 
 void
-common_dev(dev, len, unit, state, routine)
-	char *dev;
-	int len;
-	short unit, state;
-	char routine;
+common_dev(char *dev, int len, short int unit, short int state, char routine)
 {
 	struct cfdata *cd;
 	struct cfdriver *cdrv;
@@ -962,10 +931,7 @@ common_dev(dev, len, unit, state, routine)
 }
 
 void
-common_attr(cmd, attr, routine)
-	char *cmd;
-	int attr;
-	char routine;
+common_attr(char *cmd, int attr, char routine)
 {
 	char *c;
 	short l = 0;
@@ -992,12 +958,7 @@ common_attr(cmd, attr, routine)
 }
 
 void
-add_read(prompt, field, dev, len, val)
-	char *prompt;
-	char field;
-	char *dev;
-	int len;
-	int *val;
+add_read(char *prompt, char field, char *dev, int len, int *val)
 {
 	int ok = 0;
 	int a;
@@ -1049,10 +1010,7 @@ add_read(prompt, field, dev, len, val)
 }
 
 void
-add(dev, len, unit, state)
-	char *dev;
-	int len;
-	short unit, state;
+add(char *dev, int len, short int unit, short int state)
 {
 	int i = 0, found = 0, *p;
 	short *pv;
@@ -1216,9 +1174,7 @@ add(dev, len, unit, state)
 }
 
 void
-add_history(devno, unit, state, newno)
-	int devno, newno;
-	short unit, state;
+add_history(int devno, short int unit, short int state, int newno)
 {
 	int i = 0, *p;
 	short *pv;
@@ -1322,7 +1278,7 @@ add_history(devno, unit, state, newno)
 }
 
 int
-config()
+config(void)
 {
 	cmd_t cmd;
 	int i, st;
@@ -1371,9 +1327,7 @@ again:
 }
 
 void
-process_history(len, buf)
-	int len;
-	char *buf;
+process_history(int len, char *buf)
 {
 	char *c;
 	int devno, newno;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.10 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: hash.c,v 1.11 2002/09/06 21:10:20 henning Exp $	*/
 /*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
 
 /*
@@ -174,12 +174,10 @@ ht_expand(ht)
  * Make a new hash entry, setting its h_next to NULL.
  */
 static inline struct hashent *
-newhashent(name, h)
-	const char *name;
-	u_int h;
+newhashent(const char *name, u_int h)
 {
-	struct hashent *hp;
-	char *m;
+	struct	hashent *hp;
+	char	*m;
 
 	m = poolalloc(sizeof(*hp) + ALIGNBYTES);
 	hp = (struct hashent *)ALIGN(m);
@@ -193,8 +191,7 @@ newhashent(name, h)
  * Hash a string.
  */
 static inline u_int
-hash(str)
-	const char *str;
+hash(const char *str)
 {
 	u_int h;
 

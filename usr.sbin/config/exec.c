@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.3 2002/02/16 21:28:01 millert Exp $ */
+/*	$OpenBSD: exec.c,v 1.4 2002/09/06 21:10:20 henning Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec.c,v 1.3 2002/02/16 21:28:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.4 2002/09/06 21:10:20 henning Exp $";
 #endif
 
 #ifdef AOUT_SUPPORT
@@ -68,8 +68,7 @@ caddr_t	elf_readjust(caddr_t);
 int current_exec = -1;
 
 caddr_t
-adjust(x)
-	caddr_t x;
+adjust(caddr_t x)
 {
 	switch (current_exec) {
 #ifdef AOUT_SUPPORT
@@ -89,12 +88,12 @@ adjust(x)
 #endif
 	default:
 		errx(1, "no supported exec type");
+		return(x);
 	}
 }
 
 caddr_t
-readjust(x)
-	caddr_t x;
+readjust(caddr_t x)
 {
 	switch (current_exec) {
 #ifdef AOUT_SUPPORT
@@ -114,12 +113,12 @@ readjust(x)
 #endif
 	default:
 		errx(1, "no supported exec type");
+		return(x);
 	}
 }
 
 void
-loadkernel(file)
-	char *file;
+loadkernel(char *file)
 {
 	current_exec = -1;
 
@@ -163,8 +162,7 @@ loadkernel(file)
 }
 
 void
-savekernel(outfile)
-	char *outfile;
+savekernel(char *outfile)
 {
 	switch (current_exec) {
 #ifdef AOUT_SUPPORT
