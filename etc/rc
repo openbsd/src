@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.109 1999/09/04 21:07:23 millert Exp $
+#	$OpenBSD: rc,v 1.110 1999/09/04 21:30:49 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -327,43 +327,47 @@ if [ $? -eq 0 ]; then
 fi
 
 # vi file recovery
-if [ ! -d /var/tmp/vi.recover ]; then
-	if [ -e /var/tmp/vi.recover ]; then
-		echo "Warning!  /var/tmp/vi.recover is not a directory!"
-	else
-		mkdir /var/tmp/vi.recover
-		chmod 1777 /var/tmp/vi.recover
+vidir=/var/tmp/vi.recover
+if [ -L $vidir ]; then
+	echo "Warning! $vidir is a symbolic link! (ignoring)"
+elif [ ! -O $vidir ]; then
+	echo "Warning! $vidir is not owned by root! (ignoring)"
+elif [ ! -d $vidir -a -e $vidir ]; then
+	echo "Warning!  $vidir is not a directory! (ignoring)"
+elif [ ! -d $vidir ]; then
+	mkdir $vidir
+	chmod 1777 $vidir
+else
+	vibackup=$vidir/vi.*
+	if [ "$vibackup" != "$vidir/vi.*" ]; then
+		for i in $vibackup; do
+			# Unmodified vi editor backup files either have the
+			# execute bit set or are zero length.  Delete them.
+			# Anything that is not a normal file gets deleted too.
+			if [ -x $i -o ! -s $i -o ! -f $i ]; then
+				rm $i
+			fi
+		done
 	fi
-fi
-vibackup=/var/tmp/vi.recover/vi.*
-if [ "$vibackup" != "/var/tmp/vi.recover/vi.*" ]; then
-	for i in $vibackup; do
-		# Unmodified vi editor backup files either have the
-		# execute bit set or are zero length.  Delete them.
-		# Anything that is not a normal file gets deleted too.
-		if [ -x $i -o ! -s $i -o ! -f $i ]; then
-			rm $i
-		fi
-	done
-fi
-virecovery=/var/tmp/vi.recover/recover.*
-if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
-	echo preserving editor files
-	for i in $virecovery; do
-		# Delete any recovery files that are zero length, corrupted,
-		# or that have no corresponding backup file.  Else send mail
-		# to the user.
-		if [ -f $i ]; then
-			recfile=`awk '/^X-vi-recover-path:/{print $2}' < $i`
-			if [ -n "$recfile" -a -s "$recfile" ]; then
-				sendmail -t < $i
+	virecovery=$vidir/recover.*
+	if [ "$virecovery" != "$vidir/recover.*" ]; then
+		echo preserving editor files
+		for i in $virecovery; do
+			# Delete any recovery files that are zero length,
+			# corrupted, # or that have no corresponding backup
+			# file.  Else send mail to the user.
+			if [ -f $i ]; then
+				r=`awk '/^X-vi-recover-path:/{print $2}' < $i`
+				if [ -n "$r" -a -s "$r" ]; then
+					sendmail -t < $i
+				else
+					rm $i
+				fi
 			else
 				rm $i
 			fi
-		else
-			rm $i
-		fi
-	done
+		done
+	fi
 fi
 
 if [ -f /var/account/acct ]; then
