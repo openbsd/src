@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.51 2004/05/16 00:24:45 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.52 2004/05/16 02:06:10 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -161,6 +161,7 @@ void	carpattach(int);
 void	carpdetach(struct carp_softc *);
 int	carp_prepare_ad(struct mbuf *, struct carp_softc *,
 	    struct carp_header *);
+void	carp_send_ad_all(void);
 void	carp_send_ad(void *);
 void	carp_send_arp(struct carp_softc *);
 void	carp_master_down(void *);
@@ -744,6 +745,27 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 }
 
 void
+carp_send_ad_all(void)
+{
+	struct ifnet *ifp;
+	struct carp_if *cif;
+	struct carp_softc *vh;
+
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (ifp->if_carp == NULL)
+			continue;
+
+		cif = (struct carp_if *)ifp->if_carp;
+		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
+			if ((vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) &&
+			     vh->sc_state == MASTER)
+				carp_send_ad(vh);
+		}
+	}
+}
+
+
+void
 carp_send_ad(void *v)
 {
 	struct carp_header ch;
@@ -828,8 +850,11 @@ carp_send_ad(void *v)
 			sc->sc_ac.ac_if.if_oerrors++;
 			if (sc->sc_sendad_errors < INT_MAX)
 				sc->sc_sendad_errors++;
-			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS)
+			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS) {
 				carp_suppress_preempt++;
+				if (carp_suppress_preempt == 1)
+					carp_send_ad_all();
+			}
 			sc->sc_sendad_success = 0;
 		} else {
 			if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS) {
@@ -893,8 +918,11 @@ carp_send_ad(void *v)
 			sc->sc_ac.ac_if.if_oerrors++;
 			if (sc->sc_sendad_errors < INT_MAX)
 				sc->sc_sendad_errors++;
-			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS)
+			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS) {
 				carp_suppress_preempt++;
+				if (carp_suppress_preempt == 1)
+					carp_send_ad_all();
+			}
 			sc->sc_sendad_success = 0;
 		} else {
 			if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS) {
@@ -1851,8 +1879,11 @@ carp_carpdev_state(void *v)
 			timeout_del(&sc->sc_md6_tmo);
 			carp_set_state(sc, INIT);
 			carp_setrun(sc, 0);
-			if (!sc->sc_suppress)
+			if (!sc->sc_suppress) {
 				carp_suppress_preempt++;
+				if (carp_suppress_preempt == 1)
+					carp_send_ad_all();
+			}
 			sc->sc_suppress = 1;
 		} else {
 			sc->sc_ac.ac_if.if_flags |= sc->sc_flags_backup;
