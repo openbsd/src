@@ -272,6 +272,7 @@ int	st_read_block_limits __P((struct st_softc *, int flags));
 int	st_touch_tape __P((struct st_softc *));
 int	st_write_filemarks __P((struct st_softc *, int number, int flags));
 int	st_load __P((struct st_softc *, u_int type, int flags));
+int	st_erase __P((struct st_softc *, int full, int flags));
 int	st_mode_select __P((struct st_softc *, int flags));
 void    ststrategy __P((struct buf *));
 int	st_check_eod __P((struct st_softc *, boolean, int *, int));
