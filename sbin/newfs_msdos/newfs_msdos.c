@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.6 1997/03/29 20:01:26 millert Exp $ */
+/*	$OpenBSD: newfs_msdos.c,v 1.7 1997/04/14 12:07:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Joerg Wunsch
@@ -36,6 +36,8 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -43,6 +45,7 @@
 #include <memory.h>
 #include <err.h>
 #include <errno.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <util.h>
 
@@ -74,7 +77,7 @@ struct descrip {
 	int8_t		ext_fsysid[8];
 };
 
-static struct descrip table[] = {
+struct descrip table[] = {
 	/* NB: must be sorted, starting with the largest format! */
 	/*
 	 * kilobytes
@@ -90,6 +93,20 @@ static struct descrip table[] = {
 	{360,  512, 2, 1, 2, 112, 720, 0xfd, 2, 9, 2, 0,
 		0, 0, 0, "4.4BSD     ", "FAT12   "},
 };
+
+struct disklabel *
+getdisklabel(s, fd)
+	char *s;
+	int fd;
+{
+	static struct disklabel lab;
+
+	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
+		warn("ioctl (GDINFO)");
+		return (NULL);
+	}
+	return (&lab);
+}
 
 void
 usage(void)
@@ -202,7 +219,7 @@ main(argc, argv)
 	struct tm *tp;
 	time_t  now;
 	int	c, i, fd, format = 0, rootdirsize;
-	char *rdev;
+	char	*rdev;
 
 	while ((c = getopt(argc, argv, "s:L:t:")) != -1)
 		switch (c) {
@@ -228,17 +245,39 @@ main(argc, argv)
 		err(1, "%s", rdev);
 
 	if (format == 0) {
+		struct disklabel *lp;
+		struct partition *pp;
+		off_t size = 0;
+
 		/*
 		 * No format specified, try to figure it out.
 		 */
-		if ((format = findformat(fd)) == 0)
+		lp = getdisklabel(rdev, fd);
+		if (lp) {
+			char cc = rdev[strlen(rdev) - 1];
+
+			if (isdigit(cc))
+				pp = &lp->d_partitions[0];
+			else if (cc >= 'a' && cc < 'a' + MAXPARTITIONS)
+				pp = &lp->d_partitions[cc - 'a'];
+			else
+				errx(1, "unknown partition %c in %s", cc, rdev);
+			if (pp->p_size == 0)
+				errx(1, "%s: `%c' partition is unavailable",
+				    rdev, cc);
+			size = pp->p_size;
+			format = size * lp->d_secsize / 1024;
+		} else if ((format = findformat(fd)) == 0)
 			errx(1, "cannot determine size, must use -s format");
 	}
-	for (i = 0, dp = table; i < sizeof table / sizeof(struct descrip); i++, dp++)
+	for (i = 0, dp = table; i < sizeof table/sizeof(table[0]); i++, dp++)
 		if (dp->kilobytes == format)
 			break;
 	if (i == sizeof table / sizeof(struct descrip))
 		errx(1, "cannot find format description for %d KB", format);
+
+	if (read(fd, (char *)bs.raw, sizeof bs) != sizeof bs)
+		err(1, "boot sector read()");
 
 	/* prepare and write the boot sector */
 	setup_boot_sector_from_template(&bs, dp);
@@ -259,12 +298,11 @@ main(argc, argv)
 	fat->padded = 0xff;
 	fat->contents[0] = 0xff;
 	if (dp->totsecs > 20740 || (dp->totsecs == 0 && dp->ext_totsecs > 20740))
-		/* 16-bit FAT */
-		fat->contents[1] = 0xff;
+		fat->contents[1] = 0xff;	/* 16-bit FAT */
 
 	for (i = 0; i < dp->fatcnt; i++)
-		if (write(fd, (char *) fat, dp->sectsiz * dp->fatsize)
-		    != dp->sectsiz * dp->fatsize)
+		if (write(fd, (char *) fat, dp->sectsiz * dp->fatsize) !=
+		    dp->sectsiz * dp->fatsize)
 			err(1, "FAT write()");
 
 	free((void *) fat);
@@ -279,7 +317,7 @@ main(argc, argv)
 
 	/* set up a volume label inside the root dir :) */
 	if (label)
-		strncpy(rootdir[0].name, label, 11);
+		strncpy(rootdir[0].name, label, 11);	/* XXX but safe */
 	else
 		memcpy(rootdir[0].name, dp->ext_label, 11);
 	rootdir[0].attr = FA_VOLLABEL;
