@@ -30,7 +30,8 @@ all:	bsd.rd
 #	newfs -m 0 -o space -i 8192 -c 80 ${VND_RDEV}
 #	mount ${VND_DEV} ${MOUNT_POINT}
 #	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-#	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
+#	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
+#	    sh ${UTILS}/runlist.sh ${LISTFLOPPY}
 #	/usr/mdec/installboot -v /mnt/boot ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
 #	@echo ""
 #	@df -i ${MOUNT_POINT}

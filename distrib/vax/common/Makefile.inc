@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2001/03/16 04:55:52 hugh Exp $
+#	$OpenBSD: Makefile.inc,v 1.1 2002/04/25 22:10:28 deraadt Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
 CBIN=		instbin
-COMMONDIR=	${TOP}/inst-common
+COMMONDIR=	${TOP}/common
+UTILS=		${TOP}/../miniroot
 
 MOUNT_POINT?=	/mnt
 VND?=		svnd0
@@ -25,7 +26,8 @@ all: ${CBIN} bootroot
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
+	    sh ${UTILS}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""

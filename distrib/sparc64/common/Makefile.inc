@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2002/04/21 07:30:58 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2002/04/25 22:10:28 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -7,6 +7,7 @@ IMAGE=		mr.fs
 CBIN?=		instbin
 CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}.conf
 LISTS?=		${.CURDIR}/list
+UTILS?=		${.CURDIR}/../../miniroot
 
 MOUNT_POINT=	/mnt
 MTREE=		${.CURDIR}/../common/mtree.conf
@@ -33,7 +34,8 @@ ${FS}:	bsd.rd
 	newfs -m 0 -o space -i 524288 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/common/runlist.sh ${LISTFLOPPY}
+	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
+	    sh ${UTILS}/runlist.sh ${LISTFLOPPY}
 	/usr/mdec/installboot -v ${DESTDIR}/usr/mdec/bootblk ${VND_CRDEV}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -91,7 +93,8 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/common/runlist.sh ${LISTS}
+	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
+	    sh ${UTILS}/runlist.sh ${LISTS}
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}*.cache \

@@ -1,11 +1,12 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.3 2001/02/08 14:32:31 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2002/04/25 22:10:27 deraadt Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
 
 CBIN?=		raminst
 COMMONDIR=	${TOP}/inst-common
+UTILS=		${TOP}/../miniroot
 
 MOUNT_POINT?=	${TOP}/${BASE}/fs
 
@@ -22,7 +23,8 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS}\
+	    sh ${UTILS}/runlist.sh ${LISTS}
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c

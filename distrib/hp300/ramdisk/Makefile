@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1999/08/16 09:30:05 downsj Exp $
+#	$OpenBSD: Makefile,v 1.16 2002/04/25 22:10:27 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -21,7 +21,6 @@ GZIP?=		gzip
 GZIPFLAGS?=	-9f
 
 all: ${CBIN} ${IMAGE} bsd.rd bsd.rd.gz
-	@echo "all done"
 
 install: bsd.rd
 	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd

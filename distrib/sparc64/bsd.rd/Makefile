@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2002/04/21 17:56:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2002/04/25 22:10:28 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -34,7 +34,6 @@ CLEANFILES+=	bsd.rd_unz elfrdsetroot
 #.include "${TOP}/common/Makefile.inc"
 
 all: ${CBIN} bsd.rd
-	@echo "all done"
 
 DISKTYPE=       rdroot
 NBLKS=          5744

@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.2 1998/03/28 23:40:48 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2002/04/25 22:10:27 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
@@ -7,6 +7,7 @@
 
 CBIN?=		raminst
 COMMONDIR=	${TOP}/ramdisk
+UTILS?=		${TOP}/../miniroot
 
 MOUNT_POINT?=	${TOP}/${BASE}/fs
 
@@ -23,7 +24,8 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
+	    sh ${UTILS}/runlist.sh ${LISTS}
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c

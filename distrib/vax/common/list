@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.12 2002/04/18 21:50:27 deraadt Exp $
+#	$OpenBSD: list,v 1.1 2002/04/25 22:10:28 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -63,7 +63,7 @@ COPY	${DESTDIR}/etc/services		etc
 COPY	${DESTDIR}/etc/spwd.db		etc
 
 # and the common installation tools
-COPY	${TOPDIR}/inst-common/termcap.vt	usr/share/misc/termcap
+COPY	${TOPDIR}/common/termcap.vt	usr/share/misc/termcap
 
 COPY	${DESTDIR}/bsd			.
 COPY	${DESTDIR}/boot			.
