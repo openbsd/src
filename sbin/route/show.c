@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.41 2005/03/30 05:34:30 henning Exp $	*/
+/*	$OpenBSD: show.c,v 1.42 2005/03/30 05:40:55 henning Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -30,14 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
-#else
-static const char rcsid[] = "$OpenBSD: show.c,v 1.41 2005/03/30 05:34:30 henning Exp $";
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -63,6 +55,12 @@ static const char rcsid[] = "$OpenBSD: show.c,v 1.41 2005/03/30 05:34:30 henning
 #include <unistd.h>
 
 #include "show.h"
+
+char	*any_ntoa(const struct sockaddr *);
+char	*ipx_print(struct sockaddr *);
+char	*link_print(struct sockaddr *);
+
+extern int nflag;
 
 #define PLEN  (LONG_BIT / 4 + 2) /* XXX this is also defined in netstat.h */
 
@@ -242,14 +240,8 @@ pr_family(int af)
 	case AF_INET6:
 		afname = "Internet6";
 		break;
-	case AF_NS:
-		afname = "XNS";
-		break;
 	case AF_IPX:
 		afname = "IPX";
-		break;
-	case AF_CCITT:
-		afname = "X.25";
 		break;
 	case PF_KEY:
 		afname = "Encap";
