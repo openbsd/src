@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.56 1999/12/09 21:46:51 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.57 2000/01/12 11:11:26 d Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -171,12 +171,12 @@ static __inline struct pvlist *pvhead __P((int));
 static __inline struct pvlist *pvalloc __P((void));
 static __inline void pvfree __P((struct pvlist *));
 
+#if defined(SUN4M)
 static __inline int *pt1_alloc __P((void));
 static __inline int *pt23_alloc __P((void));
 static __inline void pt1_free __P((int *));
 static __inline void pt23_free __P((int *));
 
-#if defined(SUN4M)
 static u_int	VA2PA __P((caddr_t));
 #endif
 
@@ -3742,6 +3742,7 @@ if (pmapdebug) {
 	if (pm->pm_regstore)
 		free(pm->pm_regstore, M_VMPMAP);
 
+#if defined(SUN4M)
 	if (CPU_ISSUN4M) {
 		if ((c = pm->pm_ctx) != NULL) {
 			if (pm->pm_ctxnum == 0)
@@ -3752,6 +3753,7 @@ if (pmapdebug) {
 		pm->pm_reg_ptps = NULL;
 		pm->pm_reg_ptps_pa = 0;
 	}
+#endif
 }
 
 /*
