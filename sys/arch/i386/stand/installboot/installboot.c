@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.5 1997/08/22 20:03:17 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.6 1997/08/23 14:31:49 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -403,11 +403,13 @@ loadblocknums(boot, devfd)
 		printf("Will load %d blocks of size %d each.\n",
 			   ndb, fs->fs_bsize);
 
-	/* adjust disklabel w/ synthetic geometry */
-	if (nsectors > 0)
-		dl.d_nsectors = nsectors;
-	if (heads > 0)
-		dl.d_secpercyl = dl.d_nsectors * heads;
+	if (dl.d_type != 0 && dl.d_type < DTYPE_FLOPPY) {
+		/* adjust disklabel w/ synthetic geometry */
+		if (nsectors > 0)
+			dl.d_nsectors = nsectors;
+		if (heads > 0)
+			dl.d_secpercyl = dl.d_nsectors * heads;
+	}
 
 	/*
 	 * Get the block numbers; we don't handle fragments
