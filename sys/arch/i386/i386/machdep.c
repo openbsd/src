@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 1998/05/25 06:54:48 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.89 1998/06/04 05:00:27 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -629,7 +629,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_686,
 			{
 				0, "Pentium Pro", 0, "Pentium II",
-				"Pentium Pro", 0, 0,
+				"Pentium Pro", 0, "Pentium II",
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro"	/* Default */
 			},
@@ -670,7 +670,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
+				"686 class"		/* Default */
 			},
 			NULL
 		} }
@@ -683,8 +683,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{ {
 			CPUCLASS_486,
 			{
-				0, 0, 0, "MediaGX", 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0,
+				0, 0, 0, "MediaGX", 0, 0, 0, 0, "5x86", 0, 0,
+				0, 0, 0, 0,
 				"486 class"	/* Default */
 			},
 			NULL
@@ -1911,6 +1911,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+	extern char cpu_vendor[];
+	extern int cpu_id;
+	extern int cpu_feature;
 	dev_t dev;
 
 	switch (name[0]) {
@@ -1938,7 +1941,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (ENOTDIR);		/* overloaded */
 		dev = chrtoblk((dev_t)name[1]);
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
-	case  CPU_ALLOWAPERTURE:
+	case CPU_ALLOWAPERTURE:
 #ifdef APERTURE
 		if (securelevel > 0) 
 			return (sysctl_rdint(oldp, oldlenp, newp, 
@@ -1949,6 +1952,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
+	case CPU_CPUVENDOR:
+		return (sysctl_rdstring(oldp, oldlenp, newp, cpu_vendor));
+	case CPU_CPUID:
+		return (sysctl_rdint(oldp, oldlenp, newp, cpu_id));
+	case CPU_CPUFEATURE:
+		return (sysctl_rdint(oldp, oldlenp, newp, cpu_feature));
 	default:
 		return EOPNOTSUPP;
 	}
