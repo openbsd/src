@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.11 2001/05/24 19:04:51 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.12 2001/05/26 07:00:02 angelos Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -300,16 +300,7 @@ m_tag_prepend(m, t)
 	struct mbuf *m;
 	struct m_tag *t;
 {
-	TAILQ_INSERT_HEAD(&m->m_pkthdr.tags, t, m_tag_link);
-}
-
-/* Append a packet tag. */
-void
-m_tag_append(m, t)
-	struct mbuf *m;
-	struct m_tag *t;
-{
-	TAILQ_INSERT_TAIL(&m->m_pkthdr.tags, t, m_tag_link);
+	LIST_INSERT_HEAD(&m->m_pkthdr.tags, t, m_tag_link);
 }
 
 /* Unlink a packet tag. */
@@ -318,7 +309,7 @@ m_tag_unlink(m, t)
 	struct mbuf *m;
 	struct m_tag *t;
 {
-	TAILQ_REMOVE(&m->m_pkthdr.tags, t, m_tag_link);
+	LIST_REMOVE(t, m_tag_link);
 }
 
 /* Unlink and free a packet tag. */
@@ -337,27 +328,17 @@ m_tag_delete_chain(m, t)
 	struct mbuf *m;
 	struct m_tag *t;
 {
-	struct m_tag *p;
+	struct m_tag *p, *q;
 
-#ifdef DIAGNOSTIC
-	if ((m->m_flags & M_PKTHDR) == 0)
-		printf("m_tag_delete_chain: non packet header mbuf %p give to us\n", m);
-
-	if (m->m_pkthdr.tags.tqh_last == NULL ||
-	    (m->m_pkthdr.tags.tqh_first == NULL &&
-	    m->m_pkthdr.tags.tqh_last != &m->m_pkthdr.tags.tqh_first)) {
-		printf("m_tag_delete_chain: uninitialized tags on mbuf %p\n",
-		       m);
-		TAILQ_INIT(&m->m_pkthdr.tags);
+	if (t != NULL)
+		p = t;
+	else
+		p = LIST_FIRST(&m->m_pkthdr.tags);
+	if (p == NULL)
 		return;
-	}
-#endif
-
-	while ((p = TAILQ_LAST(&m->m_pkthdr.tags, packet_tags)) != NULL) {
-		m_tag_delete(m, p);
-		if (t != NULL && p == t)
-			return;
-	}
+	while ((q = LIST_NEXT(p, m_tag_link)) != NULL)
+		m_tag_delete(m, q);
+	m_tag_delete(m, p);
 }
 
 /* Find a tag, starting from a given position. */
@@ -370,13 +351,13 @@ m_tag_find(m, type, t)
 	struct m_tag *p;
 
 	if (t == NULL)
-		p = TAILQ_FIRST(&m->m_pkthdr.tags);
+		p = LIST_FIRST(&m->m_pkthdr.tags);
 	else
-		p = TAILQ_NEXT(t, m_tag_link);
+		p = LIST_NEXT(t, m_tag_link);
 	while (p != NULL) {
 		if (p->m_tag_id == type)
 			return (p);
-		p = TAILQ_NEXT(p, m_tag_link);
+		p = LIST_NEXT(p, m_tag_link);
 	}
 	return (NULL);
 }
@@ -406,16 +387,29 @@ m_tag_copy_chain(to, from)
 	struct mbuf *to;
 	struct mbuf *from;
 {
-	struct m_tag *p, *t;
+	struct m_tag *p, *t, *tprev = NULL;
 
 	m_tag_delete_chain(to, NULL);
-	TAILQ_FOREACH(p, &from->m_pkthdr.tags, m_tag_link) {
+	LIST_FOREACH(p, &from->m_pkthdr.tags, m_tag_link) {
 		t = m_tag_copy(p);
 		if (t == NULL) {
 			m_tag_delete_chain(to, NULL);
 			return (0);
 		}
-		m_tag_append(to, t);
+		if (tprev == NULL)
+			LIST_INSERT_HEAD(&to->m_pkthdr.tags, t, m_tag_link);
+		else {
+			LIST_INSERT_AFTER(tprev, t, m_tag_link);
+			tprev = t;
+		}
 	}
 	return (1);
+}
+
+/* Initialize tags on an mbuf. */
+void
+m_tag_init(m)
+	struct mbuf *m;
+{
+	LIST_INIT(&m->m_pkthdr.tags);
 }
