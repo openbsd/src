@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.7 2002/07/19 14:38:58 itojun Exp $	*/
+/*	$OpenBSD: lex.l,v 1.8 2002/07/30 05:39:31 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -47,7 +47,7 @@
 #include "systrace.h"
 #include "y.tab.h"
 
-int yyerror(char *fmt, ...);
+extern int yyerror(const char *fmt, ...);
 int yylex(void);
 
 char *mystring;
