@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.73 2004/07/04 17:06:12 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.74 2004/08/18 02:53:50 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -9,7 +9,7 @@ option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
 option		I686_CPU
-option		GPL_MATH_EMULATE	# floating point emulation
+#option		GPL_MATH_EMULATE	# floating point emulation
 
 option		SMALL_KERNEL
 option		NO_PROPOLICE
@@ -28,7 +28,7 @@ option		EXT2FS		# Linux ext2fs
 #option		NFSCLIENT	# Network File System client
 
 option		CD9660		# ISO 9660 + Rock Ridge file system
-option		MSDOSFS		# MS-DOS file system
+#option		MSDOSFS		# MS-DOS file system
 option		FIFO		# FIFOs; RECOMMENDED
 
 option		INET		# IP + ICMP + TCP + UDP
@@ -129,8 +129,8 @@ pccom2	at isa? port 0x3e8 irq 5
 #ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 #ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 #scsibus* at ahc?
-#ahd*	at pci? dev ? function ?	# Adaptec 79?? SCSI controllers
-#scsibus* at ahd?
+ahd*	at pci? dev ? function ?	# Adaptec 79?? SCSI controllers
+scsibus* at ahd?
 mpt*	at pci? dev ? function ?	# LSI Fusion-MPT SCSI/Fibre
 scsibus* at mpt?
 dpt*	at pci? dev ? function ?        # DPT SmartCache/SmartRAID PCI
@@ -246,11 +246,11 @@ ep*	at pci? dev ? function ?		# 3C59x ethernet cards
 #xe*	at pcmcia? function ?			# Xircom ethernet
 #fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
-rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
-tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
-tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
+#rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
+#tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
+#tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
 vr*	at pci? dev ? function ?		# VIA Rhine ethernet
-wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
+#wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 #ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 #skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
