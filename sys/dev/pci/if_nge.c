@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.12 2001/09/26 14:23:27 peter Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.13 2001/10/05 01:02:25 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -111,14 +111,14 @@
 
 #include <vm/vm.h>              /* for vtophys */
 
-#define NGE_USEIOSPACE
-
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+
+#define NGE_USEIOSPACE
 
 #include <dev/pci/if_ngereg.h>
 
@@ -619,8 +619,6 @@ void nge_setmulti(sc)
 	u_int32_t		h = 0, i, filtsave;
 	int			bit, index;
 
-	ifp = &sc->arpcom.ac_if;
-
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		NGE_CLRBIT(sc, NGE_RXFILT_CTL,
 		    NGE_RXFILTCTL_MCHASH|NGE_RXFILTCTL_UCHASH);
@@ -636,7 +634,7 @@ void nge_setmulti(sc)
 	 */
 	NGE_SETBIT(sc, NGE_RXFILT_CTL, NGE_RXFILTCTL_MCHASH);
 	NGE_CLRBIT(sc, NGE_RXFILT_CTL,
-	    NGE_RXFILTCTL_ALLMULTI|NGE_RXFILTCTL_UCHASH);
+		   NGE_RXFILTCTL_ALLMULTI|NGE_RXFILTCTL_UCHASH);
 
 	filtsave = CSR_READ_4(sc, NGE_RXFILT_CTL);
 
@@ -1061,7 +1059,7 @@ int nge_newbuf(sc, c, m)
 		if (buf == NULL) {
 #ifdef NGE_VERBOSE
 			printf("%s: jumbo allocation failed "
-			    "-- packet dropped!\n", sc->sc_dv.dv_xname);
+			       "-- packet dropped!\n", sc->sc_dv.dv_xname);
 #endif
 			m_freem(m_new);
 			return(ENOBUFS);
@@ -1630,7 +1628,6 @@ void nge_start(ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m_head);
 #endif
-
 	}
 
 	/* Transmit */
@@ -1864,7 +1861,7 @@ int nge_ioctl(ifp, command, data)
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
 		return (error);
-       }
+	}
 
 	switch(command) {
 	case SIOCSIFMTU:
@@ -2052,7 +2049,6 @@ void nge_shutdown(xsc)
 	nge_reset(sc);
 	nge_stop(sc);
 }
-
 
 struct cfattach nge_ca = {
 	sizeof(struct nge_softc), nge_probe, nge_attach
