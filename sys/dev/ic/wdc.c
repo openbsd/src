@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.58 2002/12/22 18:28:06 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.59 2003/02/13 20:54:59 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1238,12 +1238,49 @@ wdc_probe_caps(drvp, params)
 		}
 	} else 
 #endif
-	/* An ATAPI device is at last PIO mode 3 */
+	/* Use PIO mode 3 as a default value for ATAPI devices */
 	if (drvp->drive_flags & DRIVE_ATAPI)
 		drvp->PIO_mode = 3;
 
 	WDCDEBUG_PRINT(("wdc_probe_caps: wdc_cap %d cf_flags %d\n", 
 		    wdc->cap, cf_flags), DEBUG_PROBE);
+
+	valid_mode_found = 0;
+
+	WDCDEBUG_PRINT(("%s: atap_oldpiotiming=%d\n", __func__,
+	    params->atap_oldpiotiming), DEBUG_PROBE);
+	/*
+	 * ATA-4 compliant devices contain PIO mode
+	 * number in atap_oldpiotiming.
+	 */
+	if (params->atap_oldpiotiming <= 2) {
+		drvp->PIO_cap = params->atap_oldpiotiming;
+		valid_mode_found = 1;
+		drvp->drive_flags |= DRIVE_MODE;
+	} else if (params->atap_oldpiotiming > 180 &&
+	    params->atap_oldpiotiming <= 600) {
+		/*
+		 * ATA-2 compliant devices contain cycle
+		 * time in atap_oldpiotiming.
+		 * A device with a cycle time of 180ns
+		 * or less is at least PIO mode 3 and
+		 * should be reporting that in
+		 * atap_piomode_supp, so ignore it here.
+		 * A cycle time greater than 600ns seems
+		 * to be invalid.
+		 */
+		if (params->atap_oldpiotiming <= 240) {
+			drvp->PIO_cap = 2;
+		} else if (params->atap_oldpiotiming <= 480) {
+			drvp->PIO_cap = 1;
+		} else {
+			drvp->PIO_cap = 0;
+		}
+		valid_mode_found = 1;
+		drvp->drive_flags |= DRIVE_MODE;
+	}
+	if (valid_mode_found)
+		drvp->PIO_mode = drvp->PIO_cap;
 
 	/*
 	 * It's not in the specs, but it seems that some drive 
@@ -1251,7 +1288,6 @@ wdc_probe_caps(drvp, params)
 	 */
 	if (params->atap_extensions != 0xffff &&
 	    (params->atap_extensions & WDC_EXT_MODES)) {
-		valid_mode_found = 0;
 		/*
 		 * XXX some drives report something wrong here (they claim to
 		 * support PIO mode 8 !). As mode is coded on 3 bits in

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.18 2003/01/10 13:50:56 grange Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.19 2003/02/13 20:54:59 grange Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -607,6 +607,9 @@ again:
 			goto geometry;
 		/* Also don't try if the drive didn't report its mode */
 		if ((drvp->drive_flags & DRIVE_MODE) == 0)
+			goto geometry;
+		/* SET FEATURES 0x08 is only for PIO mode > 2 */
+		if (drvp->PIO_mode <= 2)
 			goto geometry;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
