@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.11 1997/02/13 01:19:05 kstailey Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.12 1997/02/13 23:33:37 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -415,10 +415,8 @@ char	*name;
 			     sizeof(ifr->ifr_name)))
 			continue;
 		ifreq = *ifr;
-		if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0) {
-			warn("SIOCGIFADDR");
-			goto if_addr_lose;
-		}
+		if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0)
+			continue;
 		if (ifr->ifr_addr.sa_family != AF_INET)
 			continue;
 		if (!strcmp(name, ifr->ifr_name)) {
