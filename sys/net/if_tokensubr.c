@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.1 1999/12/27 21:47:23 fgsch Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.2 2000/01/21 13:44:27 fgsch Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -123,8 +123,8 @@ extern struct ifqueue pkintrq;
 #define llc_snap	llc_un.type_snap
 #endif
 
-static	int token_output __P((struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *)); 
+int	token_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+	struct rtentry *)); 
 
 /*
  * Token Ring output routine.
@@ -132,7 +132,7 @@ static	int token_output __P((struct ifnet *, struct mbuf *,
  * Assumes that ifp is actually pointer to arphdr structure.
  * XXX route info has to go into the same mbuf as the header
  */
-static int
+int
 token_output(ifp, m0, dst, rt0)
 	register struct ifnet *ifp;
 	struct mbuf *m0;
