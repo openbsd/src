@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.29 1999/12/08 07:45:30 itojun Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.30 1999/12/08 23:53:13 aaron Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -63,24 +63,24 @@
 .Op Fl A | Am
 .Op Ar address_family
 .Sh DESCRIPTION
+The
 .Nm
-is used to assign an address
+utility is used to assign an address
 to a network interface and/or configure
 network interface parameters.
 .Nm
-must be used at boot time to define the network address
+must be used at boot-time to define the network address
 of each interface present on a machine; it may also be used at
 a later time to redefine an interface's address
 or other operating parameters.  To configure a bridge interface,
 use the
 .Xr brconfig 8
-program instead of
-.Nm ifconfig .
+program instead.
 .Pp
 Available operands for
 .Nm ifconfig :
 .Bl -tag -width Ds
-.It Ar Address
+.It Ar address
 For the
 .Tn DARPA-Internet
 family,
@@ -127,12 +127,13 @@ with different naming schemes, specifying the address family is recommended.
 The address or protocol families currently
 supported are
 .Dq inet ,
+.Dq inet6 ,
 .Dq atalk ,
 .Dq iso ,
 .Dq ipx ,
 and
 .Dq ns .
-.It Ar Interface
+.It Ar interface
 The
 .Ar interface
 parameter is a string of the form
@@ -148,6 +149,8 @@ The following parameters may be set with
 Establish an additional network address for this interface.
 This is sometimes useful when changing network numbers, and
 one wishes to accept packets addressed to the old interface.
+.It Fl alias
+Remove the specified network address alias.
 .It Cm arp
 Enable the use of the Address Resolution Protocol in mapping
 between network level addresses and link level addresses (default).
@@ -164,7 +167,7 @@ Set the IPv6 anycast address bit.
 (inet6 only)
 Clear the IPv6 anycast address bit.
 .It Cm broadcast Ar addr
-(Inet only)
+(inet only)
 Specify the address to use to represent broadcasts to the
 network.
 The default broadcast address is the address with a host part of all 1's.
@@ -244,7 +247,7 @@ Higher metrics have the effect of making a route
 less favorable; metrics are counted as addition hops
 to the destination network or host.
 .It Cm netmask Ar mask
-(Inet, inet6 and ISO)
+(inet, inet6 and iso)
 Specify how much of the address to reserve for subdividing
 networks into sub-networks.
 The mask includes the network part of the local address
@@ -300,7 +303,7 @@ Set preferred lifetime for the address.
 .It Cm prefixlen Ar n
 (inet6 only)
 Effect is similar to
-.Cm netmask .
+.Cm netmask ,
 but you can specify by prefix length by digits.
 .It Cm tentative
 (inet6 only)
