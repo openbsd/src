@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.25 2002/06/25 08:13:26 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.26 2002/10/25 10:40:45 camield Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -63,26 +63,26 @@ struct pfctl {
 	struct pfioc_rdr *prdr;
 };
 
-int	 pfctl_add_rule(struct pfctl *, struct pf_rule *);
-int	 pfctl_add_nat(struct pfctl *, struct pf_nat *);
-int	 pfctl_add_binat(struct pfctl *, struct pf_binat *);
-int	 pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
+int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
+int	pfctl_add_nat(struct pfctl *, struct pf_nat *);
+int	pfctl_add_binat(struct pfctl *, struct pf_binat *);
+int	pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
 
-int	 pfctl_set_timeout(struct pfctl *, const char *, int);
-int	 pfctl_set_optimization(struct pfctl *, const char *);
-int	 pfctl_set_limit(struct pfctl *, const char *, unsigned int);
-int	 pfctl_set_logif(struct pfctl *, char *);
+int	pfctl_set_timeout(struct pfctl *, const char *, int);
+int	pfctl_set_optimization(struct pfctl *, const char *);
+int	pfctl_set_limit(struct pfctl *, const char *, unsigned int);
+int	pfctl_set_logif(struct pfctl *, char *);
 
-int	 parse_rules(FILE *, struct pfctl *);
-int	 parse_flags(char *);
+int	parse_rules(FILE *, struct pfctl *);
+int	parse_flags(char *);
 
-void	 print_rule(struct pf_rule *);
-void	 print_nat(struct pf_nat *);
-void	 print_binat(struct pf_binat *);
-void	 print_rdr(struct pf_rdr *);
-void	 print_status(struct pf_status *);
+void	print_rule(struct pf_rule *);
+void	print_nat(struct pf_nat *);
+void	print_binat(struct pf_binat *);
+void	print_rdr(struct pf_rdr *);
+void	print_status(struct pf_status *);
 
-int	 unmask(struct pf_addr *, u_int8_t);
+int	unmask(struct pf_addr *, sa_family_t);
 
 struct icmptypeent {
 	char *name;

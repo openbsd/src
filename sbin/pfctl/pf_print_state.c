@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.6 2002/10/22 12:28:08 mcbride Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.7 2002/10/25 10:40:45 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,32 +55,10 @@
 #include "pfctl_parser.h"
 #include "pf_print_state.h"
 
-void	print_name(struct pf_addr *, struct pf_addr *, int);
-
-int
-unmask(struct pf_addr *m, u_int8_t af)
-{
-	int i = 31, j = 0, b = 0, msize;
-	u_int32_t tmp;
-
-	if (af == AF_INET)
-		msize = 1;
-	else
-		msize = 4;
-	while (j < msize && m->addr32[j] == 0xffffffff) {
-		b += 32;
-		j++;
-	}
-	if (j < msize) {
-		tmp = ntohl(m->addr32[j]);
-		for (i = 31; tmp & (1 << i); --i)
-			b++;
-	}
-	return (b);
-}
+void	print_name(struct pf_addr *, struct pf_addr *, sa_family_t);
 
 void
-print_addr(struct pf_addr_wrap *addr, struct pf_addr *mask, u_int8_t af)
+print_addr(struct pf_addr_wrap *addr, struct pf_addr *mask, sa_family_t af)
 {
 	char buf[48];
 
@@ -101,7 +79,7 @@ print_addr(struct pf_addr_wrap *addr, struct pf_addr *mask, u_int8_t af)
 }
 
 void
-print_name(struct pf_addr *addr, struct pf_addr *mask, int af)
+print_name(struct pf_addr *addr, struct pf_addr *mask, sa_family_t af)
 {
 	char host[NI_MAXHOST];
 
