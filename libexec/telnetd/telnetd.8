@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.5 1998/06/15 17:55:39 mickey Exp $
+.\"	$OpenBSD: telnetd.8,v 1.6 1998/07/23 17:55:53 deraadt Exp $
 .\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@
 protocol server
 .Sh SYNOPSIS
 .Nm /usr/libexec/telnetd
-.Op Fl Uhlkns
+.Op Fl Uhlkn
 .Op Fl D Ar debugmode
 .Op Fl I Ns Ar initid
 .Op Fl S Ar tos
@@ -271,25 +271,6 @@ can differentiate
 .Ar highpty
 from
 .Ar lowpty .
-.It Fl s
-This option is only enabled if
-.Nm telnetd
-is compiled with support for
-.Tn SecurID
-cards.
-It causes the
-.Fl s
-option to be passed on to
-.Xr login 1 ,
-and thus is only useful if
-.Xr login 1
-supports the
-.Fl s
-flag to indicate that only
-.Tn SecurID
-validated logins are allowed, and is
-usually useful for controlling remote logins
-from outside of a firewall.
 .It Fl S Ar tos
 .It Fl u Ar len
 This option is used to specify the size of the field

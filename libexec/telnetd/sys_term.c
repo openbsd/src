@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.15 1998/07/13 02:11:20 millert Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.16 1998/07/23 17:55:51 deraadt Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.15 1998/07/13 02:11:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.16 1998/07/23 17:55:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1660,14 +1660,6 @@ start_login(host, autologin, name)
 		argv = addarg(argv, "-e");
 		argv = addarg(argv, BFTPPATH);
 	} else
-#endif
-#if	defined (SecurID)
-	/*
-	 * don't worry about the -f that might get sent.
-	 * A -s is supposed to override it anyhow.
-	 */
-	if (require_SecurID)
-		argv = addarg(argv, "-s");
 #endif
 #if	defined (AUTHENTICATION)
 	if (auth_level >= 0 && autologin == AUTH_VALID) {

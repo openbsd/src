@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.6 1998/05/08 19:37:45 deraadt Exp $	*/
+/*	$OpenBSD: ext.h,v 1.7 1998/07/23 17:55:50 deraadt Exp $	*/
 /*	$NetBSD: ext.h,v 1.6 1996/02/28 20:38:13 thorpej Exp $	*/
 
 /*
@@ -60,9 +60,6 @@ extern int	diagnostic;	/* telnet diagnostic capabilities */
 #ifdef BFTPDAEMON
 extern int	bftpd;		/* behave as bftp daemon */
 #endif /* BFTPDAEMON */
-#if	defined(SecurID)
-extern int	require_SecurID;
-#endif
 #if	defined(AUTHENTICATION)
 extern int	auth_level;
 #endif

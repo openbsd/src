@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.12 1998/05/08 19:37:50 deraadt Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.13 1998/07/23 17:55:54 deraadt Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.12 1998/05/08 19:37:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.13 1998/07/23 17:55:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,9 +95,6 @@ int	auth_level = 0;
 #if	defined(ENCRYPTION)
 #include <libtelnet/encrypt.h>
 #include <libtelnet/misc-proto.h>
-#endif
-#if	defined(SecurID)
-int	require_SecurID = 0;
 #endif
 
 extern	int utmp_len;
@@ -173,9 +170,6 @@ char valid_opts[] = {
 #endif
 #ifdef CRAY
 	'r', ':',
-#endif
-#ifdef	SecurID
-	's',
 #endif
 	'\0'
 };
@@ -345,12 +339,6 @@ main(argc, argv)
 		    }
 #endif	/* CRAY */
 
-#ifdef	SecurID
-		case 's':
-			/* SecurID required */
-			require_SecurID = 1;
-			break;
-#endif	/* SecurID */
 		case 'S':
 #ifdef	HAS_GETTOS
 			if ((tos = parsetos(optarg, "tcp")) < 0)
@@ -578,9 +566,6 @@ usage()
 	fprintf(stderr, " [-r[lowpty]-[highpty]]");
 #endif
 	fprintf(stderr, "\n\t");
-#ifdef	SecurID
-	fprintf(stderr, " [-s]");
-#endif
 #ifdef	HAS_GETTOS
 	fprintf(stderr, " [-S tos]");
 #endif
