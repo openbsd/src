@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.29 1998/07/05 19:41:35 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.30 1998/07/05 19:47:16 millert Exp $
  */
 
 #include <sys/param.h>
@@ -484,10 +484,7 @@ skey_authenticate(username)
 				secret = hseed;
 				secretlen = SKEY_MAX_SEED_LEN;
 				flg = 0;
-			} else if (((fd = open(_PATH_MEM, O_RDONLY)) != -1 ||
-			    (fd = open("/", O_RDONLY)) != -1) &&
-			    fstat(fd, &sb) == 0 ) {
-				close(fd);
+			} else if (!stat(_PATH_MEM, &sb) || !stat("/", &sb)) {
 				t = sb.st_ctime;
 				secret = ctime(&t);
 				secretlen = strlen(secret);
