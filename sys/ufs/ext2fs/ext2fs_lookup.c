@@ -1,7 +1,11 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.1.1.1 1997/05/30 05:18:51 downsj Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.2 1997/06/12 21:09:34 downsj Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.1 1997/06/11 09:33:59 bouyer Exp $	*/
 
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
-
+/* 
+ * Modified for NetBSD 1.2E
+ * May 1997, Manuel Bouyer
+ * Laboratoire d'informatique de Paris VI
+ */
 /*
  *  modified for Lites 1.1
  *
@@ -281,8 +285,6 @@ ext2fs_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((dp->i_e2fs_mode & IFMT) != IFDIR)
-		return (ENOTDIR);
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);
 
@@ -495,6 +497,12 @@ searchloop:
 	 */
 	if ((nameiop == CREATE || nameiop == RENAME) &&
 		(flags & ISLASTCN) && dp->i_e2fs_nlink != 0) {
+		/*
+		 * Creation of files on a read-only mounted file system
+		 * is pointless, so don't proceed any further.
+		 */
+		if (vdp->v_mount->mnt_flag & MNT_RDONLY)
+					return (EROFS);
 		/*
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.

@@ -1,9 +1,8 @@
-/*	$OpenBSD: ext2fs_dir.h,v 1.2 1997/05/30 08:33:49 downsj Exp $	*/
-/*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$OpenBSD: ext2fs_dir.h,v 1.3 1997/06/12 21:09:32 downsj Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.1 1997/06/11 09:33:50 bouyer Exp $	*/
 
 /*
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -41,6 +40,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dir.h	8.4 (Berkeley) 8/10/94
+ * Modified for ext2fs by Manuel Bouyer.
  */
 
 #ifndef _EXT2FS_DIR_H_
@@ -95,7 +95,7 @@ struct	ext2fs_direct {
  * terminating null byte, rounded up to a 4 byte boundary.
  */
 #define EXT2FS_DIRSIZ(len) \
-    (( 8 + len + 3) &~ 3)
+   (( 8 + len + 3) &~ 3)
 
 /*
  * Template for manipulating directories.  Should use struct direct's,

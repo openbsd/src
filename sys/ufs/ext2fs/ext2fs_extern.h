@@ -1,9 +1,8 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.2 1997/05/30 08:33:52 downsj Exp $	*/
-/*	$NetBSD: ffs_extern.h,v 1.5 1996/09/01 23:49:18 mycroft Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$OpenBSD: ext2fs_extern.h,v 1.3 1997/06/12 21:09:33 downsj Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,6 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ffs_extern.h	8.3 (Berkeley) 4/16/94
+ * Modified for ext2fs by Manuel Bouyer.
  */
 
 struct buf;
@@ -60,7 +60,7 @@ __BEGIN_DECLS
 int ext2fs_alloc __P((struct inode *, daddr_t, daddr_t , struct ucred *,
 		   daddr_t *));
 int ext2fs_realloccg __P((struct inode *, daddr_t, daddr_t, int, int ,
-		       struct ucred *, struct buf **));
+			  struct ucred *, struct buf **));
 int ext2fs_reallocblks __P((void *));
 int ext2fs_valloc __P((void *));
 daddr_t ext2fs_blkpref __P((struct inode *, daddr_t, int, daddr_t *));
@@ -69,7 +69,7 @@ int ext2fs_vfree __P((void *));
 
 /* ext2fs_balloc.c */
 int ext2fs_balloc __P((struct inode *, daddr_t, int, struct ucred *,
-		    struct buf **, int));
+			struct buf **, int));
 
 /* ext2fs_bmap.c */
 int ext2fs_bmap __P((void *));
@@ -110,7 +110,7 @@ int ext2fs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int ext2fs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int ext2fs_vget __P((struct mount *, ino_t, struct vnode **));
 int ext2fs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-		    struct vnode **, int *, struct ucred **));
+			struct vnode **, int *, struct ucred **));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));
 int ext2fs_sbupdate __P((struct ufsmount *, int));
 int ext2fs_cgupdate __P((struct ufsmount *, int));
@@ -134,8 +134,8 @@ int ext2fs_rmdir __P((void *));
 int ext2fs_symlink __P((void *));
 int ext2fs_readlink __P((void *));
 int ext2fs_advlock __P((void *));
-int ext2fs_vinit __P(( struct mount *, int (**specops) __P((void *)),
-                       int (**fifoops) __P((void *)), struct vnode **));
+int ext2fs_vinit __P((struct mount *, int (**specops) __P((void *)),
+                      int (**fifoops) __P((void *)), struct vnode **));
 int ext2fs_makeinode __P((int, struct vnode *, struct vnode **,
                           struct componentname *cnp));
 int ext2fs_fsync __P((void *));

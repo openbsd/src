@@ -1,9 +1,8 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.2 1997/05/30 08:33:46 downsj Exp $	*/
-/*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$OpenBSD: ext2fs_dinode.h,v 1.3 1997/06/12 21:09:32 downsj Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.1 1997/06/11 09:33:48 bouyer Exp $	*/
 
 /*
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -41,6 +40,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dinode.h	8.6 (Berkeley) 9/13/94
+ *  Modified for ext2fs by Manuel Bouyer.
  */
 
 #include <sys/stat.h>
@@ -129,5 +129,5 @@ struct ext2fs_dinode {
  * di_db area.
  */
 
-#define e2di_rdev         e2di_blocks[0]
-#define e2di_shortlink    e2di_blocks
+#define e2di_rdev		e2di_blocks[0]
+#define e2di_shortlink	e2di_blocks

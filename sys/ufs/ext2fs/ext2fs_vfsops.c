@@ -1,9 +1,8 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.2 1997/05/30 08:34:06 downsj Exp $	*/
-/*	$NetBSD: ffs_vfsops.c,v 1.21 1996/10/12 21:58:47 christos Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.3 1997/06/12 21:09:35 downsj Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1989, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,6 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ffs_vfsops.c	8.14 (Berkeley) 11/28/94
+ * Modified for ext2fs by Manuel Bouyer.
  */
 
 #include <sys/param.h>

@@ -1,9 +1,8 @@
-/*	$OpenBSD: ext2fs.h,v 1.2 1997/05/30 08:33:32 downsj Exp $	*/
-/*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$OpenBSD: ext2fs.h,v 1.3 1997/06/12 21:09:30 downsj Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.1 1997/06/11 09:33:37 bouyer Exp $	*/
 
 /*
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,6 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)fs.h	8.10 (Berkeley) 10/27/94
+ *  Modified for ext2fs by Manuel Bouyer.
  */
 
 /*
@@ -166,7 +166,7 @@ struct m_ext2fs {
  * Filesystem clean flags
  */
 #define	E2FS_ISCLEAN	0x01
-#define	E2FS_ERRORS	    0x02
+#define	E2FS_ERRORS		0x02
 
 /* ext2 file system block group descriptor */
 
@@ -191,9 +191,9 @@ struct ext2_gd {
 
 /*
  * Macros for handling inode numbers:
- *     inode number to file system block offset.
- *     inode number to cylinder group number.
- *     inode number to file system block address.
+ *	 inode number to file system block offset.
+ *	 inode number to cylinder group number.
+ *	 inode number to file system block address.
  */
 #define	ino_to_cg(fs, x)	(((x) - 1) / (fs)->e2fs.e2fs_ipg)
 #define	ino_to_fsba(fs, x)						\

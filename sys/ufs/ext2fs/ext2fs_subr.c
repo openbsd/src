@@ -1,9 +1,8 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.2 1997/05/30 08:34:02 downsj Exp $	*/
-/*	$NetBSD: ffs_subr.c,v 1.9 1996/10/12 21:58:45 christos Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$OpenBSD: ext2fs_subr.c,v 1.3 1997/06/12 21:09:35 downsj Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,6 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ffs_subr.c	8.2 (Berkeley) 9/21/93
+ * Modified for ext2fs by Manuel Bouyer.
  */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ ext2fs_checkoverlap(bp, ip)
 	last = start + btodb(bp->b_bcount) - 1;
 	for (ep = buf; ep < ebp; ep++) {
 		if (ep == bp || (ep->b_flags & B_INVAL) ||
-		    ep->b_vp == NULLVP)
+			ep->b_vp == NULLVP)
 			continue;
 		if (VOP_BMAP(ep->b_vp, (daddr_t)0, &vp, (daddr_t)0, NULL))
 			continue;
@@ -109,12 +109,12 @@ ext2fs_checkoverlap(bp, ip)
 			continue;
 		/* look for overlap */
 		if (ep->b_bcount == 0 || ep->b_blkno > last ||
-		    ep->b_blkno + btodb(ep->b_bcount) <= start)
+			ep->b_blkno + btodb(ep->b_bcount) <= start)
 			continue;
 		vprint("Disk overlap", vp);
 		printf("\tstart %d, end %d overlap start %d, end %ld\n",
-		    start, last, ep->b_blkno,
-		    ep->b_blkno + btodb(ep->b_bcount) - 1);
+			start, last, ep->b_blkno,
+			ep->b_blkno + btodb(ep->b_bcount) - 1);
 		panic("Disk buffer overlap");
 	}
 }

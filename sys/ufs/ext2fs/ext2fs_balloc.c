@@ -1,9 +1,8 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.2 1997/05/30 08:33:39 downsj Exp $	*/
-/*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$OpenBSD: ext2fs_balloc.c,v 1.3 1997/06/12 21:09:31 downsj Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.1 1997/06/11 09:33:44 bouyer Exp $	*/
 
 /*
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,6 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ffs_balloc.c	8.4 (Berkeley) 9/23/93
+ * Modified for ext2fs by Manuel Bouyer.
  */
 
 #include <sys/param.h>
@@ -97,8 +97,8 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 			return (0);
 		} else {
 			error = ext2fs_alloc(ip, bn,
-			    ext2fs_blkpref(ip, bn, (int)bn, &ip->i_e2fs_blocks[0]),
-			    cred, &newb);
+				ext2fs_blkpref(ip, bn, (int)bn, &ip->i_e2fs_blocks[0]),
+				cred, &newb);
 			if (error)
 				return (error);
 			ip->i_e2fs_last_lblk = lbn;
@@ -130,7 +130,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	nb = ip->i_e2fs_blocks[NDADDR + indirs[0].in_off];
 	if (nb == 0) {
 		pref = ext2fs_blkpref(ip, lbn, 0, (daddr_t *)0);
-	        error = ext2fs_alloc(ip, lbn, pref,
+			error = ext2fs_alloc(ip, lbn, pref,
 				  cred, &newb);
 		if (error)
 			return (error);
@@ -155,7 +155,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	 */
 	for (i = 1;;) {
 		error = bread(vp,
-		    indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, &bp);
+			indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);

@@ -1,9 +1,8 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.2 1997/05/30 08:33:36 downsj Exp $	*/
-/*	$NetBSD: ffs_alloc.c,v 1.13 1996/10/12 21:58:44 christos Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$OpenBSD: ext2fs_alloc.c,v 1.3 1997/06/12 21:09:31 downsj Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.1 1997/06/11 09:33:41 bouyer Exp $	*/
 
 /*
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,6 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ffs_alloc.c	8.11 (Berkeley) 10/27/94
+ *  Modified for ext2fs by Manuel Bouyer.
  */
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ static u_long	ext2fs_dirpref __P((struct m_ext2fs *));
 static void	ext2fs_fserr __P((struct m_ext2fs *, u_int, char *));
 static u_long	ext2fs_hashalloc __P((struct inode *, int, long, int,
 				   daddr_t (*)(struct inode *, int, daddr_t,
-					       int)));
+						   int)));
 static daddr_t	ext2fs_nodealloccg __P((struct inode *, int, daddr_t, int));
 static daddr_t	ext2fs_mapsearch __P((struct m_ext2fs *, char *, daddr_t));
 
@@ -76,13 +76,13 @@ static daddr_t	ext2fs_mapsearch __P((struct m_ext2fs *, char *, daddr_t));
  *   2) allocate a rotationally optimal block in the same cylinder.
  *   3) allocate a block in the same cylinder group.
  *   4) quadradically rehash into other cylinder groups, until an
- *      available block is located.
+ *	  available block is located.
  * If no block preference is given the following heirarchy is used
  * to allocate a block:
  *   1) allocate a block in the cylinder group that contains the
- *      inode for the file.
+ *	  inode for the file.
  *   2) quadradically rehash into other cylinder groups, until an
- *      available block is located.
+ *	  available block is located.
  */
 int
 ext2fs_alloc(ip, lbn, bpref, cred, bnp)
@@ -111,8 +111,8 @@ ext2fs_alloc(ip, lbn, bpref, cred, bnp)
 		cg = ino_to_cg(fs, ip->i_number);
 	else
 		cg = dtog(fs, bpref);
-	bno = (daddr_t)ext2fs_hashalloc(ip, cg, (long)bpref, fs->e2fs_bsize,
-	    			     ext2fs_alloccg);
+	bno = (daddr_t)ext2fs_hashalloc(ip, cg, bpref, fs->e2fs_bsize,
+						 ext2fs_alloccg);
 	if (bno > 0) {
 		ip->i_e2fs_nblock += btodb(fs->e2fs_bsize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -133,12 +133,12 @@ nospace:
  *   1) allocate the preferred inode.
  *   2) allocate an inode in the same cylinder group.
  *   3) quadradically rehash into other cylinder groups, until an
- *      available inode is located.
+ *	  available inode is located.
  * If no inode preference is given the following heirarchy is used
  * to allocate an inode:
  *   1) allocate an inode in cylinder group 0.
  *   2) quadradically rehash into other cylinder groups, until an
- *      available inode is located.
+ *	  available inode is located.
  */
 int
 ext2fs_valloc(v)
@@ -168,7 +168,7 @@ ext2fs_valloc(v)
 		cg = ext2fs_dirpref(fs);
 	else
 		cg = ino_to_cg(fs, pip->i_number);
-	ipref = cg * fs->e2fs.e2fs_ipg;
+	ipref = cg * fs->e2fs.e2fs_ipg + 1;
 	ino = (ino_t)ext2fs_hashalloc(pip, cg, (long)ipref, mode, ext2fs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
@@ -180,7 +180,7 @@ ext2fs_valloc(v)
 	ip = VTOI(*ap->a_vpp);
 	if (ip->i_e2fs_mode && ip->i_e2fs_nlink != 0) {
 		printf("mode = 0%o, nlinks %d, inum = %d, fs = %s\n",
-	    	ip->i_e2fs_mode, ip->i_e2fs_nlink, ip->i_number, fs->e2fs_fsmnt);
+			ip->i_e2fs_mode, ip->i_e2fs_nlink, ip->i_number, fs->e2fs_fsmnt);
 		panic("ext2fs_valloc: dup alloc");
 	}
 
@@ -422,7 +422,7 @@ gotit:
  * allocate it using the following policy:
  *   1) allocate the requested inode.
  *   2) allocate the next available inode after the requested
- *      inode in the specified cylinder group.
+ *	  inode in the specified cylinder group.
  */
 static daddr_t
 ext2fs_nodealloccg(ip, cg, ipref, mode)
@@ -461,7 +461,7 @@ ext2fs_nodealloccg(ip, cg, ipref, mode)
 		loc = skpc(0xff, len, &ibp[0]);
 		if (loc == 0) {
 			printf("cg = %d, ipref = %d, fs = %s\n",
-			    cg, ipref, fs->e2fs_fsmnt);
+				cg, ipref, fs->e2fs_fsmnt);
 			panic("ext2fs_nodealloccg: map corrupted");
 			/* NOTREACHED */
 		}
@@ -522,7 +522,7 @@ ext2fs_blkfree(ip, bno)
 	bno = dtogd(fs, bno);
 	if (isclr(bbp, bno)) {
 		printf("dev = 0x%x, block = %d, fs = %s\n",
-		    ip->i_dev, bno, fs->e2fs_fsmnt);
+			ip->i_dev, bno, fs->e2fs_fsmnt);
 		panic("blkfree: freeing free block");
 	}
 	clrbit(bbp, bno);
@@ -558,7 +558,7 @@ ext2fs_vfree(v)
 	fs = pip->i_e2fs;
 	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s\n",
-		    pip->i_dev, ino, fs->e2fs_fsmnt);
+			pip->i_dev, ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
@@ -570,7 +570,7 @@ ext2fs_vfree(v)
 	ino = (ino - 1) % fs->e2fs.e2fs_ipg;
 	if (isclr(ibp, ino)) {
 		printf("dev = 0x%x, ino = %d, fs = %s\n",
-		    pip->i_dev, ino, fs->e2fs_fsmnt);
+			pip->i_dev, ino, fs->e2fs_fsmnt);
 		if (fs->e2fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}
@@ -617,7 +617,7 @@ ext2fs_mapsearch(fs, bbp, bpref)
 		loc = skpc(0xff, len, &bbp[start]);
 		if (loc == 0) {
 			printf("start = %d, len = %d, fs = %s\n",
-			    start, len, fs->e2fs_fsmnt);
+				start, len, fs->e2fs_fsmnt);
 			panic("ext2fs_alloccg: map corrupted");
 			/* NOTREACHED */
 		}
