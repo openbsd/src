@@ -1,18 +1,18 @@
-#	$OpenBSD: Makefile,v 1.3 1997/08/07 09:01:49 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 2003/11/10 20:32:17 otto Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
 
 # The following modules do not build/install:
 # 10.named, 13.amd
 
 # Missing:
-# 02.config 11.timedop 12.timed
+# 02.config
 
 # Missing from 4.4BSD-Lite:
-# 14.uucpimpl 15.uucpnet 16.security 17.password
+# 14.uucpimpl 15.uucpnet 16.security
 
 DOCDIR=	/usr/share/doc/smm
 FILES=	00.contents Makefile Title
-SUBDIR=	01.setup 04.quotas 05.fastfs 06.nfs 18.net
+SUBDIR=	01.setup 04.quotas 05.fastfs 06.nfs 17.password 18.net
 .if exists(03.fsck_ffs)
 SUBDIR+= 03.fsck_ffs
 .endif
