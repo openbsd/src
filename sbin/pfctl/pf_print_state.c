@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.1 2002/06/06 22:22:44 mickey Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.2 2002/06/11 02:48:12 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -198,6 +198,15 @@ print_state(struct pf_state *s, int opts)
 			print_seq(dst);
 			printf("\n");
 		}
+	} else if (s->proto == IPPROTO_UDP && src->state < PFUDPS_NSTATES &&
+	    dst->state < PFUDPS_NSTATES) {
+		const char *states[] = PFUDPS_NAMES;
+		printf("   %s:%s\n", states[src->state], states[dst->state]);
+	} else if (s->proto != IPPROTO_ICMP && src->state < PFOTHERS_NSTATES &&
+	    dst->state < PFOTHERS_NSTATES) {
+		/* XXX ICMP doesn't really have state levels */
+		const char *states[] = PFOTHERS_NAMES;
+		printf("   %s:%s\n", states[src->state], states[dst->state]);
 	} else {
 		printf("   %u:%u\n", src->state, dst->state);
 	}
