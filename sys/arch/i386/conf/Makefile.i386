@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.14 1996/06/24 17:07:34 deraadt Exp $
+#	$OpenBSD: Makefile.i386,v 1.15 1996/10/17 21:47:11 niklas Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -35,7 +35,17 @@ I386=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Di386
-CFLAGS=		${DEBUG} -O2 -Werror
+
+CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
+		-Wno-format
+
+.if ${IDENT:M-D*_CPU} == ${IDENT:M-DI486_CPU}
+CMACHFLAGS=	-m486
+.else
+CMACHFLAGS=
+.endif
+
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext F8100000 -e start
 
