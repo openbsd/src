@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_syscalls.c,v 1.4 1998/09/06 01:48:58 art Exp $	*/
+/*	$OpenBSD: xfs_syscalls.c,v 1.5 1998/09/17 20:50:25 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -48,6 +48,15 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/syscallargs.h>
+
+#ifndef XFS
+int
+sys_xfspioctl(struct proc *p, void *v, int *i)
+{
+	return ENOSYS;
+}
+#else
 
 #include <xfs/xfs_common.h>
 
@@ -64,7 +73,6 @@ RCSID("$KTH: xfs_syscalls.c,v 1.20 1998/07/19 21:18:30 art Exp $");
 
 /* Misc syscalls */
 #include <xfs/xfs_pioctl.h>
-#include <sys/syscallargs.h>
 
 #ifdef ACTUALLY_LKM_NOT_KERNEL
 
@@ -293,6 +301,9 @@ sys_xfspioctl(struct proc *p, void *v, int *i)
 	int		error = EINVAL;
 
 	switch (SCARG(arg, operation)) {
+	case AFSCALL_PROBE:
+		error = 0;
+		break;
 	case AFSCALL_PIOCTL:
 		error = xfs_pioctl_call(p, v, i);
 		break;
@@ -446,3 +457,4 @@ xfs_stat_syscalls(void)
 
 #endif
 #endif /* ACTUALLY_LKM_NOT_KERNEL */
+#endif /* !XFS */
