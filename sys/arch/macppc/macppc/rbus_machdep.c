@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.4 2003/10/15 17:50:16 drahn Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.5 2003/10/25 12:35:32 drahn Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -138,5 +138,15 @@ macppc_cardbus_init(pci_chipset_tag_t pc, pcitag_t tag)
 			x |= 1 << 8;
 			pci_conf_write(pc, tag, 0x40, x);
 		}
+	}
+
+	if (PCI_VENDOR(x) == PCI_VENDOR_TI &&
+	    PCI_PRODUCT(x) == PCI_PRODUCT_TI_PCI1410) {
+		/* dont mess with the bus numbers or latency timer */
+
+		/* Route INTA to MFUNC0 */
+		x = pci_conf_read(pc, tag, 0x8c);
+		x |= 0x02;
+		pci_conf_write(pc, tag, 0x8c, x);
 	}
 }
