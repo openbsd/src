@@ -1,10 +1,10 @@
-/*	$OpenBSD: semaphore.h,v 1.1 2002/01/18 00:36:36 fgsch Exp $	*/
+/*	$OpenBSD: semaphore.h,v 1.2 2002/01/18 20:36:25 fgsch Exp $	*/
 
 /* semaphore.h: POSIX 1003.1b semaphores */
 
 /*-
  * Copyright (c) 1996, 1997
- *      HD Associates, Inc.  All rights reserved.
+ *	HD Associates, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by HD Associates, Inc
+ *	This product includes software developed by HD Associates, Inc
  * 4. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -52,15 +52,15 @@ typedef struct sem *sem_t;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int      sem_init __P((sem_t *, int, unsigned int));
-int      sem_destroy __P((sem_t *));
-sem_t   *sem_open __P((const char *, int, ...));
-int      sem_close __P((sem_t *));
-int      sem_unlink __P((const char *));
-int      sem_wait __P((sem_t *));
-int      sem_trywait __P((sem_t *));
-int      sem_post __P((sem_t *));
-int      sem_getvalue __P((sem_t *, int *));
+int	sem_init __P((sem_t *, int, unsigned int));
+int	sem_destroy __P((sem_t *));
+sem_t  *sem_open __P((const char *, int, ...));
+int	sem_close __P((sem_t *));
+int	sem_unlink __P((const char *));
+int	sem_wait __P((sem_t *));
+int	sem_trywait __P((sem_t *));
+int	sem_post __P((sem_t *));
+int	sem_getvalue __P((sem_t *, int *));
 __END_DECLS
 
 #endif /* _KERNEL */
