@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.1 2004/08/20 17:53:09 pefo Exp $
+dnl	$OpenBSD: install,v 1.2 2004/08/26 13:31:12 pefo Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -36,6 +36,12 @@ When the message:
 is displayed, press the ESCAPE key to get into maintenance mode. Again,
 select '5' to get to the Command monitor.
 
+When setting up the system to boot from disk, one environment variable
+needs to be changed. Set 'OSLoader' to 'boot'. By default it is set to
+'sash' which is the IRIX stand alone shell and loader. It may be convenient
+to do this setup now so the system will diskboot once the 'reboot' command
+is entered after the installation is complete.
+
 To be able to boot, a bootp/dhcpd server needs to be set up. To find out
 the ethernet address for your system, use the 'printenv' command from the
 Command monitor. See the value of the eaddr variable. See the dhcpd(8)
@@ -71,13 +77,7 @@ The installation script goes through the following phases:
 	- extraction of the distribution tar files
 	- installation of kernel and the bootable kernel
 
-The installation program will guide you through the installation. There is
-one area of complexity that you should be careful about and that is to
-correctly answer the question about the disks previous history. If the
-disk have an MBR record in the beginning of the disk it has o be wiped
-because PMON does not know about how to find the OpenBSD partition. Just
-read the instructions and answer the question correctly.
-
+The installation program will guide you through the installation.
 
 
 OpenBSDFTPInstall
