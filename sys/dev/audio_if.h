@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.4 1996/04/18 23:46:58 niklas Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.5 1997/07/10 23:06:30 provos Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.7 1996/03/07 15:00:10 christos Exp $	*/
 
 /*
@@ -53,14 +53,11 @@ struct audio_hw_if {
 	u_long	(*get_out_sr)__P((void *));
 
 	/* Encoding. */
-	/* XXX should we have separate in/out? */
-	int	(*query_encoding)__P((void *, struct audio_encoding *));
-	int	(*set_encoding)__P((void *, u_int));
-	int	(*get_encoding)__P((void *));
-
 	/* Precision = bits/sample, usually 8 or 16 */
 	/* XXX should we have separate in/out? */
-	int	(*set_precision)__P((void *, u_int));
+	int	(*query_encoding)__P((void *, struct audio_encoding *));
+	int	(*set_format)__P((void *, u_int, u_int));
+	int	(*get_encoding)__P((void *));
 	int	(*get_precision)__P((void *));
 
 	/* Channels - mono(1), stereo(2) */
@@ -85,9 +82,6 @@ struct audio_hw_if {
 	 * adjustment.
 	 */
 	int	(*commit_settings)__P((void *));
-
-	/* Return silence value for encoding */
-	u_int	(*get_silence)__P((int));
 
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_encode)__P((void *, int, u_char *, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aria.c,v 1.2 1996/08/01 15:29:53 deraadt Exp $ */
+/*	$OpenBSD: aria.c,v 1.3 1997/07/10 23:06:32 provos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
@@ -122,7 +122,7 @@ struct aria_softc {
 	u_int	spkr_state;		/* non-null is on */
 
 	u_long	sc_rate;		/* Sample rate for input and output */
-	u_int	encoding;		/* audio encoding -- ulaw/linear */
+	u_int	sc_encoding;		/* audio encoding -- ulaw/linear */
 	int	sc_chans;		/* # of channels */
 	int	sc_precision;		/* # bits per sample */
 
@@ -165,9 +165,8 @@ void	aria_prometheus_kludge __P((struct isa_attach_args *));
 int	aria_set_sr __P((void *, u_long));
 u_long	aria_get_sr __P((void *));
 int	aria_query_encoding __P((void *, struct audio_encoding *));
-int	aria_set_encoding __P((void *, u_int));
+int	aria_set_format __P((void *, u_int, u_int));
 int	aria_get_encoding __P((void *));
-int	aria_set_precision __P((void *, u_int));
 int	aria_get_precision __P((void *));
 int	aria_set_channels __P((void *, int));
 int	aria_get_channels __P((void *));
@@ -185,8 +184,6 @@ int	aria_start_input __P((void *, void *, int, void (*)(), void*));
 int	aria_halt_input __P((void *));
 int	aria_halt_output __P((void *));
 int	aria_cont __P((void *));
-
-u_int	aria_get_silence __P((int));
 
 int	aria_sendcmd __P((u_short, u_short, int, int, int));
 
@@ -236,9 +233,8 @@ struct audio_hw_if aria_hw_if = {
 	aria_set_sr,
 	aria_get_sr,
 	aria_query_encoding,
-	aria_set_encoding,
+	aria_set_format,
 	aria_get_encoding,
-	aria_set_precision,
 	aria_get_precision,
 	aria_set_channels,
 	aria_get_channels,
@@ -248,7 +244,6 @@ struct audio_hw_if aria_hw_if = {
 	aria_set_in_port,
 	aria_get_in_port,
 	aria_commit_settings,
-	aria_get_silence,
 	mulaw_expand,
 	mulaw_compress,
 	aria_start_output,
@@ -613,24 +608,31 @@ aria_query_encoding(addr, fp)
 }
 
 int
-aria_set_encoding(addr, enc)
+aria_set_format(addr, enc, precision)
 	void *addr;
-	u_int enc;
+	u_int enc, prec;
 {
         register struct aria_softc *sc = addr;
 
-	DPRINTF(("aria_set_encoding\n"));
+	DPRINTF(("aria_set_format\n"));
 
         switch(enc){
         case AUDIO_ENCODING_ULAW:
-                sc->encoding = AUDIO_ENCODING_ULAW;
-                break;
-        case AUDIO_ENCODING_LINEAR:
-                sc->encoding = AUDIO_ENCODING_LINEAR;
-                break;
+        case AUDIO_ENCODING_PCM16:
+	case AUDIO_ENCODING_PCM8:
+		break;
         default:
                 return (EINVAL);
         }
+
+	if (prec!=8 && prec!=16)
+		return (EINVAL);
+
+	if (sc->encoding!=AUDIO_ENCODING_PCM16 && prec==16)
+		return (EINVAL);
+
+	sc->sc_encoding = enc;
+	sc->sc_precision = prec;
         return (0);
 }
 
@@ -643,25 +645,6 @@ aria_get_encoding(addr)
 	DPRINTF(("aria_get_encoding\n"));
 
         return(sc->encoding);
-}
-
-int
-aria_set_precision(addr, prec)
-	void *addr;
-	u_int prec;
-{
-        struct aria_softc *sc = addr;
-
-	DPRINTF(("aria_set_precision\n"));
-
-	if (prec!=8 && prec!=16)
-		return EINVAL;
-
-	if (sc->encoding!=AUDIO_ENCODING_PCM16 && prec==16)
-		return EINVAL;
-
-	sc->sc_precision = prec;
-	return(0);
 }
 
 int
@@ -1215,32 +1198,6 @@ aria_intr(arg)
 	aria_sendcmd(iobase, ARIADSPC_TRANSCOMPLETE, -1, -1, -1);
 
 	return 1;
-}
-
-u_int
-aria_get_silence(enc)
-    int enc;
-{
-#define ULAW_SILENCE    0x7f
-#define ALAW_SILENCE    0x55
-#define LINEAR_SILENCE  0x00
-    u_int auzero;
-   
-    switch (enc) {
-    case AUDIO_ENCODING_ULAW:
-        auzero = ULAW_SILENCE;
-        break;
-    case AUDIO_ENCODING_ALAW:
-        auzero = ALAW_SILENCE;
-        break;
-    case AUDIO_ENCODING_PCM8:
-    case AUDIO_ENCODING_PCM16:
-    default:
-        auzero = LINEAR_SILENCE;
-        break;
-    }
-
-    return(auzero);
 }
 
 int

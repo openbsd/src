@@ -64,18 +64,10 @@ struct ad1848_softc {
 	int	sc_drq;			/* DMA */
 	int	sc_recdrq;		/* record/capture DMA */
 	
-	u_long	sc_irate;		/* Sample rate for input */
-	u_long	sc_orate;		/* ...and output */
-
 	/* We keep track of these */
 	struct ad1848_volume rec_gain, aux1_gain, aux2_gain, out_gain, mon_gain, line_gain, mono_gain;
 
-	u_int	encoding;		/* ulaw/linear -- keep track */
-	u_int	precision;		/* 8/16 bits */
-	
 	int	rec_port;		/* recording port */
-
-	int	channels;
 
 	/* ad1848 */
 	u_char	MCE_bit;
@@ -84,9 +76,14 @@ struct ad1848_softc {
 	char	*chip_name;
 	int	mode;
 	
-	int	speed;
+	u_long	speed;
+	u_int	encoding;		/* ulaw/linear -- keep track */
+	u_int	precision;		/* 8/16 bits */
+	int	channels;
+	
 	u_char	speed_bits;
 	u_char	format_bits;
+	u_char	need_commit;
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
 	void	(*sc_intr)(void *);	/* dma completion intr handler */
@@ -115,9 +112,8 @@ u_long	ad1848_get_in_sr __P((void *));
 int	ad1848_set_out_sr __P((void *, u_long));
 u_long	ad1848_get_out_sr __P((void *));
 int	ad1848_query_encoding __P((void *, struct audio_encoding *));
-int	ad1848_set_encoding __P((void *, u_int));
+int	ad1848_set_format __P((void *, u_int, u_int));
 int	ad1848_get_encoding __P((void *));
-int	ad1848_set_precision __P((void *, u_int));
 int	ad1848_get_precision __P((void *));
 int	ad1848_set_channels __P((void *, int));
 int	ad1848_get_channels __P((void *));
@@ -128,8 +124,6 @@ int	ad1848_dma_output __P((void *, void *, int, void (*)(void *), void*));
 int	ad1848_dma_input __P((void *, void *, int, void (*)(void *), void*));
 
 int	ad1848_commit_settings __P((void *));
-
-u_int	ad1848_get_silence __P((int));
 
 int	ad1848_halt_in_dma __P((void *));
 int	ad1848_halt_out_dma __P((void *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.13 1996/06/23 13:44:50 deraadt Exp $	*/
+/*	$OpenBSD: wss.c,v 1.14 1997/07/10 23:06:40 provos Exp $	*/
 /*	$NetBSD: wss.c,v 1.13 1996/05/12 23:54:16 mycroft Exp $	*/
 
 /*
@@ -131,9 +131,8 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_set_out_sr,
 	ad1848_get_out_sr,
 	ad1848_query_encoding,
-	ad1848_set_encoding,
+	ad1848_set_format,
 	ad1848_get_encoding,
-	ad1848_set_precision,
 	ad1848_get_precision,
 	ad1848_set_channels,
 	ad1848_get_channels,
@@ -143,7 +142,6 @@ struct audio_hw_if wss_hw_if = {
 	wss_set_in_port,
 	wss_get_in_port,
 	ad1848_commit_settings,
-	ad1848_get_silence,
 	NULL,
 	NULL,
 	ad1848_dma_output,
@@ -161,10 +159,6 @@ struct audio_hw_if wss_hw_if = {
 	0,	/* not full-duplex */
 	0
 };
-
-#ifndef NEWCONFIG
-#define at_dma(flags, ptr, cc, chan)	isa_dmastart(flags, ptr, cc, chan)
-#endif
 
 int	wssprobe __P((struct device *, void *, void *));
 void	wssattach __P((struct device *, struct device *, void *));
@@ -194,23 +188,19 @@ wssprobe(parent, match, aux)
     static u_char dma_bits[4] = {1, 2, 0, 3};
     
     if (!WSS_BASE_VALID(ia->ia_iobase)) {
-	printf("wss: configured iobase %x invalid\n", ia->ia_iobase);
+	DPRINTF(("wss: configured iobase %x invalid\n", ia->ia_iobase));
 	return 0;
     }
 
     if( !opti_snd_setup( OPTI_WSS, iobase, ia->ia_irq, ia->ia_drq ) )
-#ifdef DEBUG
-       printf("ad_detect_A: could not setup OPTi chipset.\n");
-#else
-       ;
-#endif
+       DPRINTF(("ad_detect_A: could not setup OPTi chipset.\n"));
 
-    sc->sc_ad1848.sc_iobase = iobase;
+    sc->sc_ad1848.sc_iobase = iobase + WSS_CODEC;
 
     /* Is there an ad1848 chip at the WSS iobase ? */
     if (ad1848_probe(&sc->sc_ad1848) == 0) {
 #if 0
-	printf("ad_detect_A: no ad1848 found.\n");
+	DPRINTF(("ad_detect_A: no ad1848 found.\n"));
 #endif
 	return 0;
     }
@@ -219,7 +209,7 @@ wssprobe(parent, match, aux)
 
     /* Setup WSS interrupt and DMA */
     if (!WSS_DRQ_VALID(ia->ia_drq)) {
-	printf("wss: configured dma chan %d invalid\n", ia->ia_drq);
+	DPRINTF(("wss: configured dma chan %d invalid\n", ia->ia_drq));
 	return 0;
     }
     sc->wss_drq = ia->ia_drq;
@@ -238,7 +228,7 @@ wssprobe(parent, match, aux)
     else
 #endif
     if (!WSS_IRQ_VALID(ia->ia_irq)) {
-	printf("wss: configured interrupt %d invalid\n", ia->ia_irq);
+	DPRINTF(("wss: configured interrupt %d invalid\n", ia->ia_irq));
 	return 0;
     }
 
@@ -368,7 +358,7 @@ wss_get_out_port(addr)
     void *addr;
 {
     DPRINTF(("wss_get_out_port:\n"));
-    return(EINVAL);
+    return(WSS_DAC_LVL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbreg.h,v 1.2 1996/04/18 23:47:49 niklas Exp $	*/
+/*	$OpenBSD: sbreg.h,v 1.3 1997/07/10 23:06:39 provos Exp $	*/
 /*	$NetBSD: sbreg.h,v 1.16 1996/03/16 04:00:14 jtk Exp $	*/
 
 /*
@@ -85,6 +85,7 @@
 
 #define SBP_SET_IRQ		0x80	/* Soft-configured irq (SB16-) */
 #define SBP_SET_DRQ		0x81	/* Soft-configured drq (SB16-) */
+#define	SBP_IRQ_STATUS		0x82	/* Pending IRQ status (SB16-) */
 
 #define	SBP_RECORD_SOURCE	0x0C
 #define	SBP_STEREO		0x0E
@@ -123,6 +124,8 @@
 #define SBP_DSP_RSTAT		14	/* R read status */
 #define 	SB_DSP_BUSY	0x80
 #define 	SB_DSP_READY	0x80
+#define	SBP_DSP_IRQACK8		14	/* R acknowledge DSP IRQ, 8-bit */
+#define	SBP_DSP_IRQACK16	15	/* R acknowledge DSP IRQ, 16-bit */
 #define SBP_CDROM_DATA		16	/* RW send cmds/recv data */
 #define SBP_CDROM_STATUS	17	/* R status port */
 #define SBP_CDROM_RESET		18	/* W reset register */
@@ -143,8 +146,10 @@
 #define SB_DSP_DACWRITE		0x10	/* programmed I/O write to DAC */
 #define SB_DSP_WDMA		0x14	/* begin 8-bit linear DMA output */
 #define SB_DSP_WDMA_2		0x16	/* begin 2-bit ADPCM DMA output */
+#define	SB_DSP_WDMA_LOOP	0x1C	/* begin 8-bit linear DMA output loop */
 #define SB_DSP_ADCREAD		0x20	/* programmed I/O read from ADC */
 #define SB_DSP_RDMA		0x24	/* begin 8-bit linear DMA input */
+#define	SB_DSP_RDMA_LOOP	0x2C	/* begin 8-bit linear DMA input loop */
 #define SB_MIDI_POLL		0x30	/* initiate a polling read for MIDI */
 #define SB_MIDI_READ		0x31	/* read a MIDI byte on recv intr */
 #define SB_MIDI_UART_POLL	0x34	/* enter UART mode w/ read polling */
@@ -157,8 +162,8 @@
 #define SB_DSP_WDMA_4		0x74	/* begin 4-bit ADPCM DMA output */
 #define SB_DSP_WDMA_2_6		0x76	/* begin 2.6-bit ADPCM DMA output */
 #define SB_DSP_SILENCE		0x80	/* send a block of silence */
-#define SB_DSP_HS_OUTPUT	0x91	/* set high speed mode for wdma */
-#define SB_DSP_HS_INPUT		0x99	/* set high speed mode for rdma */
+#define SB_DSP_HS_OUTPUT	0x90	/* set high speed mode for wdma */
+#define SB_DSP_HS_INPUT		0x98	/* set high speed mode for rdma */
 #define SB_DSP_RECORD_MONO	0xA0	/* set mono recording */
 #define SB_DSP_RECORD_STEREO	0xA8	/* set stereo recording */
 #define	SB_DSP16_WDMA_16	0xB6	/* begin 16-bit linear output */
@@ -230,6 +235,8 @@
 #define SBP_IRQ_VALID(irq)  ((irq) == 5 || (irq) == 7 || (irq) == 9 || (irq) == 10)
 #define SB_IRQ_VALID(irq)   ((irq) == 3 || (irq) == 5 || (irq) == 7 || (irq) == 9)
 
+#define SB16_DRQ_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3 || \
+			      (chan) == 5 || (chan) == 6 || (chan) == 7) 
 #define SBP_DRQ_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3)
 #define SB_DRQ_VALID(chan)  ((chan) == 1)
 

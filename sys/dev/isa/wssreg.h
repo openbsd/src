@@ -37,8 +37,6 @@
  * Copyright (c) 1993 Analog Devices Inc. All rights reserved
  */
 
-#define WSS_NPORT	8
-
 /*
  * Macros to detect valid hardware configuration data.
  */
@@ -50,12 +48,11 @@
 			      (base) == 0x0e80 || \
 			      (base) == 0x0f40)
 
-/* Default WSS base */
-#define WSS_BASE_ADDRESS 0x0530
-
 /* WSS registers */
 #define WSS_CONFIG	0x00	/* write only */
 #define WSS_STATUS	0x03	/* read only */
+#define WSS_CODEC	0x04	/* ad1848 codec registers (0x04-0x07) */
+#define WSS_NPORT	8
 
 /* WSS status register bits */
 #define WSS_16SLOT	0x80

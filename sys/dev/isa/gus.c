@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.11 1996/05/26 00:27:15 deraadt Exp $	*/
+/*	$OpenBSD: gus.c,v 1.12 1997/07/10 23:06:34 provos Exp $	*/
 /*	$NetBSD: gus.c,v 1.16 1996/05/12 23:52:08 mycroft Exp $	*/
 
 /*-
@@ -364,13 +364,11 @@ int 	gus_set_out_sr __P((void *, u_long));
 u_long 	gus_get_out_sr __P((void *));
 int 	gusmax_set_out_sr __P((void *, u_long));
 u_long 	gusmax_get_out_sr __P((void *));
-int	gus_set_encoding __P((void *, u_int));
+int	gus_set_format __P((void *, u_int, u_int));
 int	gus_get_encoding __P((void *));
-int	gusmax_set_encoding __P((void *, u_int));
-int	gusmax_get_encoding __P((void *));
-int	gus_set_precision __P((void *, u_int));
 int	gus_get_precision __P((void *));
-int	gusmax_set_precision __P((void *, u_int));
+int	gusmax_set_format __P((void *, u_int, u_int));
+int	gusmax_get_encoding __P((void *));
 int	gusmax_get_precision __P((void *));
 int	gus_set_channels __P((void *, int));
 int	gus_get_channels __P((void *));
@@ -389,8 +387,6 @@ int	gus_halt_in_dma __P((void *));
 int	gus_cont_out_dma __P((void *));
 int	gus_cont_in_dma __P((void *));
 int	gus_speaker_ctl __P((void *, int));
-int	gusmax_set_precision __P((void *, u_int));
-int	gusmax_get_precision __P((void *));
 int	gusmax_round_blocksize __P((void *, int));
 int	gusmax_commit_settings __P((void *));
 int	gusmax_dma_output __P((void *, void *, int, void (*)(void *), void *));
@@ -624,10 +620,8 @@ struct audio_hw_if gus_hw_if = {
 	gus_get_out_sr,
 
 	gus_query_encoding,
-	gus_set_encoding,
+	gus_set_format,
 	gus_get_encoding,
-
-	gus_set_precision,
 	gus_get_precision,
 
 	gus_set_channels,
@@ -641,8 +635,6 @@ struct audio_hw_if gus_hw_if = {
 	gus_get_in_port,
 
 	gus_commit_settings,
-
-	ad1848_get_silence,
 
 	gus_expand,
 	mulaw_compress,
@@ -2123,43 +2115,52 @@ gus_set_volume(sc, voice, volume)
  */
 
 int
-gusmax_set_encoding(addr, encoding)
+gusmax_set_format(addr, encoding, precision)
 	void * addr;
-	u_int encoding;
+	u_int encoding, precision;
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
-	(void) ad1848_set_encoding(ac, encoding);
-	return gus_set_encoding(sc, encoding);
+	int error;
+
+	error = ad1848_set_format(ac, encoding, precision);
+	return (error ? error : gus_set_format(sc, encoding, precision));
 }
 
 int
-gus_set_encoding(addr, encoding)
+gus_set_format(addr, encoding, precision)
 	void * addr;
-	u_int encoding;
+	u_int encoding, precision;
 {
 	register struct gus_softc *sc = addr;
+	int s;
 
-	DPRINTF(("gus_set_encoding called\n"));
+	DPRINTF(("gus_set_format called\n"));
 
-	/* XXX todo: add alaw for codec */
-	if (encoding != AUDIO_ENCODING_ULAW &&
-	    encoding != AUDIO_ENCODING_PCM16 &&
-	    encoding != AUDIO_ENCODING_PCM8)
-		return EINVAL;
+	switch (encoding) {
+	case AUDIO_ENCODING_ULAW:
+	case AUDIO_ENCODING_PCM16:
+	case AUDIO_ENCODING_PCM8:
+		break;
+	default:
+		return (EINVAL);
+	}
 
-	if (encoding != AUDIO_ENCODING_PCM16)
-		sc->sc_precision = 8;       /* XXX force it. */
+	s = splaudio();
 
-	sc->sc_encoding = encoding;
-
-	if (sc->sc_precision == 8) {
+	if (precision == 8) {
 		sc->sc_voc[GUS_VOICE_LEFT].voccntl &= ~GUSMASK_DATA_SIZE16;
 		sc->sc_voc[GUS_VOICE_RIGHT].voccntl &= ~GUSMASK_DATA_SIZE16;
 	} else {
 		sc->sc_voc[GUS_VOICE_LEFT].voccntl |= GUSMASK_DATA_SIZE16;
 		sc->sc_voc[GUS_VOICE_RIGHT].voccntl |= GUSMASK_DATA_SIZE16;
 	}
+
+	sc->sc_encoding = encoding;
+	sc->sc_precision = precision;
+
+	splx(s);
+
 	return 0;
 }
 
@@ -2170,8 +2171,10 @@ gusmax_set_channels(addr, channels)
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
-	(void) ad1848_set_channels(ac, channels);
-	return gus_set_channels(sc, channels);
+	int error;
+
+	error = ad1848_set_channels(ac, channels);
+	return (error ? error : gus_set_channels(sc, channels));
 }
 
 int
@@ -2188,51 +2191,6 @@ gus_set_channels(addr, channels)
 
 	sc->sc_channels = channels;
 
-	return 0;
-}
-
-/*
- * Interface to the audio layer - set the data precision
- */
-
-int
-gusmax_set_precision(addr, bits)
-	void * addr;
-	u_int bits;
-{
-	register struct ad1848_softc *ac = addr;
-	register struct gus_softc *sc = ac->parent;
-
-	(void) ad1848_set_precision(ac, bits);
-	return gus_set_precision(sc, bits);
-}
-
-
-int
-gus_set_precision(addr, bits)
-	void * addr;
-	u_int bits;
-{
-	register struct gus_softc *sc = addr;
-
-	DPRINTF(("gus_set_precision called\n"));
-
-	if (bits != 8 && bits != 16)
-		return EINVAL;
-
-	if (sc->sc_encoding != AUDIO_ENCODING_PCM16 && bits != 8)
-		/* If we're doing PCM8 or MULAW, it must be 8 bits. */
-		return EINVAL;
-
-	sc->sc_precision = bits;
-
-	if (bits == 16) {
-		sc->sc_voc[GUS_VOICE_LEFT].voccntl |= GUSMASK_DATA_SIZE16;
-		sc->sc_voc[GUS_VOICE_RIGHT].voccntl |= GUSMASK_DATA_SIZE16;
-	} else {
-		sc->sc_voc[GUS_VOICE_LEFT].voccntl &= ~GUSMASK_DATA_SIZE16;
-		sc->sc_voc[GUS_VOICE_RIGHT].voccntl &= ~GUSMASK_DATA_SIZE16;
-	}
 	return 0;
 }
 
@@ -2412,8 +2370,10 @@ gusmax_set_out_sr(addr, rate)
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
-	(void) ad1848_set_out_sr(ac, rate);
-	return gus_set_out_sr(sc, rate);
+	int error;
+
+	error = ad1848_set_out_sr(ac, rate);
+	return (error ? error : gus_set_out_sr(sc, rate));
 }
 
 int
@@ -2571,8 +2531,10 @@ gusmax_set_in_sr(addr, rate)
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
-	(void) ad1848_set_in_sr(ac, rate);
-	return gus_set_in_sr(sc, rate);
+	int error;
+
+	error = ad1848_set_in_sr(ac, rate);
+	return (error ? error : gus_set_in_sr(sc, rate));
 }
 
 
@@ -3007,10 +2969,8 @@ gus_init_cs4231(sc)
 			gusmax_get_out_sr,
 
 			ad1848_query_encoding, /* query encoding */
-			gusmax_set_encoding,
+			gusmax_set_format,
 			gusmax_get_encoding,
-
-			gusmax_set_precision,
 			gusmax_get_precision,
 
 			gusmax_set_channels,
@@ -3024,8 +2984,6 @@ gus_init_cs4231(sc)
 			gusmax_get_in_port,
 
 			gusmax_commit_settings,
-
-			ad1848_get_silence,
 
 			gusmax_expand,	/* XXX use codec */
 			mulaw_compress,

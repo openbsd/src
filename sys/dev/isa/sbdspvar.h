@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdspvar.h,v 1.6 1996/11/29 22:55:07 niklas Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.7 1997/07/10 23:06:38 provos Exp $	*/
 /*	$NetBSD: sbdspvar.h,v 1.13 1996/04/29 20:28:50 christos Exp $	*/
 
 /*
@@ -76,11 +76,14 @@
 struct sbdsp_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
+	isa_chipset_tag_t sc_ic;
+	bus_space_tag_t sc_iot;		/* tag */
+	bus_space_handle_t sc_ioh;	/* handle */
 	void	*sc_ih;			/* interrupt vectoring */
 
 	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
-	int	sc_drq;			/* DMA (8-bit) */
+	int	sc_drq8;		/* DMA (8-bit) */
 	int	sc_drq16;		/* DMA (16-bit) */
 
 	u_short	sc_open;		/* reference count of open calls */
@@ -88,8 +91,6 @@ struct sbdsp_softc {
 	u_int	gain[SB_NDEVS];		/* kept in SB levels: right/left each
 					   in a nibble */
 	
-	u_int	encoding;		/* ulaw/linear -- keep track */
-
 	u_int	out_port;		/* output port */
 	u_int	in_port;		/* input port */
 	u_int	in_filter;		/* one of SB_TREBLE_EQ, SB_BASS_EQ, 0 */
@@ -112,9 +113,13 @@ struct sbdsp_softc {
 	int	dmaflags;
 	caddr_t	dmaaddr;
 	vm_size_t	dmacnt;
+	int	dmachan;		/* active DMA channel */
 	int	sc_last_hs_size;	/* last HS dma size */
-	int	sc_precision;		/* size of samples */
+
+	u_int	sc_encoding;		/* ulaw/linear -- keep track */
+	u_int	sc_precision;		/* size of samples */
 	int	sc_channels;		/* # of channels */
+
 	int	sc_dmadir;		/* DMA direction */
 #define	SB_DMA_NONE	0
 #define	SB_DMA_IN	1
@@ -126,6 +131,9 @@ struct sbdsp_softc {
 
 #define MODEL_JAZZ16 0x80000000
 };
+
+#define	ISSB2CLASS(sc) \
+	(SBVER_MAJOR((sc)->sc_model) >= 2)
 
 #define ISSBPROCLASS(sc) \
 	(SBVER_MAJOR((sc)->sc_model) > 2)
@@ -162,9 +170,8 @@ int	sbdsp_set_out_sr __P((void *, u_long));
 int	sbdsp_set_out_sr_real __P((void *, u_long));
 u_long	sbdsp_get_out_sr __P((void *));
 int	sbdsp_query_encoding __P((void *, struct audio_encoding *));
-int	sbdsp_set_encoding __P((void *, u_int));
+int	sbdsp_set_format __P((void *, u_int, u_int));
 int	sbdsp_get_encoding __P((void *));
-int	sbdsp_set_precision __P((void *, u_int));
 int	sbdsp_get_precision __P((void *));
 int	sbdsp_set_channels __P((void *, int));
 int	sbdsp_get_channels __P((void *));
@@ -186,7 +193,6 @@ int	sbdsp_dma_input __P((void *, void *, int, void (*)(void *), void*));
 int	sbdsp_haltdma __P((void *));
 int	sbdsp_contdma __P((void *));
 
-u_int	sbdsp_get_silence __P((int));
 void	sbdsp_compress __P((int, u_char *, int));
 void	sbdsp_expand __P((int, u_char *, int));
 
@@ -194,8 +200,8 @@ int	sbdsp_reset __P((struct sbdsp_softc *));
 void	sbdsp_spkron __P((struct sbdsp_softc *));
 void	sbdsp_spkroff __P((struct sbdsp_softc *));
 
-int	sbdsp_wdsp(int iobase, int v);
-int	sbdsp_rdsp(int iobase);
+int	sbdsp_wdsp __P((struct sbdsp_softc *, int v));
+int	sbdsp_rdsp __P((struct sbdsp_softc *));
 
 int	sbdsp_intr __P((void *));
 short	sbversion __P((struct sbdsp_softc *));

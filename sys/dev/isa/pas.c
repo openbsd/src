@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.13 1996/10/16 12:33:39 deraadt Exp $	*/
+/*	$OpenBSD: pas.c,v 1.14 1997/07/10 23:06:36 provos Exp $	*/
 /*	$NetBSD: pas.c,v 1.17 1996/05/12 23:53:18 mycroft Exp $	*/
 
 /*
@@ -113,9 +113,8 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_set_out_sr,
 	sbdsp_get_out_sr,
 	sbdsp_query_encoding,
-	sbdsp_set_encoding,
+	sbdsp_set_format,
 	sbdsp_get_encoding,
-	sbdsp_set_precision,
 	sbdsp_get_precision,
 	sbdsp_set_channels,
 	sbdsp_get_channels,
@@ -125,7 +124,6 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_set_in_port,
 	sbdsp_get_in_port,
 	sbdsp_commit_settings,
-	sbdsp_get_silence,
 	mulaw_expand,
 	mulaw_compress,
 	sbdsp_dma_output,
@@ -345,8 +343,6 @@ pasprobe(parent, match, aux)
         }
 
 	/* Now a SoundBlaster */
-/*	sc->sc_iobase = ia->ia_iobase; */
-	/* and set the SB iobase into the DSP as well ... */
 	sc->sc_sbdsp.sc_iobase = ia->ia_iobase;
 	if (sbdsp_reset(&sc->sc_sbdsp) < 0) {
 		DPRINTF(("pas: couldn't reset card\n"));
@@ -379,7 +375,8 @@ pasprobe(parent, match, aux)
 	}
 
 	sc->sc_sbdsp.sc_irq = ia->ia_irq;
-	sc->sc_sbdsp.sc_drq = ia->ia_drq;
+	sc->sc_sbdsp.sc_drq8 = ia->ia_drq;
+	sc->sc_sbdsp.sc_drq16 = -1; /* XXX */
 	
 	if (sbdsp_probe(&sc->sc_sbdsp) == 0) {
 		DPRINTF(("pas: sbdsp probe failed\n"));
