@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.45 2005/03/16 20:17:10 damien Exp $
+#	$OpenBSD: files.usb,v 1.46 2005/03/16 23:28:59 deraadt Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -221,4 +221,4 @@ file	dev/usb/if_ubt.c		ubt
 # Ralink Technology RT2500USB
 device	ural: ether, ifnet, ifmedia, wlan
 attach	ural at uhub
-file	dev/usb/if_ral.c		ral
+file	dev/usb/if_ral.c		ural
