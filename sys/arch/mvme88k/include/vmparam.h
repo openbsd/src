@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 1999/09/27 20:46:19 smurph Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.7 2001/01/12 07:29:27 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -65,6 +65,14 @@
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		MAXDSIZ			/* max stack size */
+#endif
+
+/*
+ * PTEs for mapping user space into the kernel for phyio operations.
+ * One page is enough to handle 4Mb of simultaneous raw IO operations.
+ */
+#ifndef USRIOSIZE
+#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
 #endif
 
 /*
@@ -168,6 +176,7 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
+#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
 /*
  *	Conversion between MACHINE pages and VM pages
@@ -176,6 +185,32 @@
 #define trunc_m88k_to_vm(p)	(atop(trunc_page(m88k_ptob(p))))
 #define round_m88k_to_vm(p)	(atop(round_page(m88k_ptob(p))))
 #define vm_to_m88k(p)		(m88k_btop(ptoa(p)))
+
+/* Use new VM page bootstrap interface. */
+#define	MACHINE_NEW_NONCONTIG
+
+#if defined(MACHINE_NEW_NONCONTIG)
+/*
+ * Constants which control the way the VM system deals with memory segments.
+ * The hp300 only has one physical memory segment.
+ */
+#define	VM_PHYSSEG_MAX		1
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD
+
+#define VM_NFREELIST		1
+#define VM_FREELIST_DEFAULT	0
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv table for this seg */
+	char *attrs;			/* page modify list for this seg */
+	struct simplelock *plock;	/* page lock for this seg */
+};
+#endif /* MACHINE_NEW_NONCONTIG */
+
 
 #if	1	/*Do we really need all this stuff*/
 #if	1	/*Do we really need all this stuff*/

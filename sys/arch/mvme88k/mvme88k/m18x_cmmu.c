@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.3 2000/12/28 21:21:24 smurph Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.4 2001/01/12 07:29:26 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -61,6 +61,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/simplelock.h>
+#include <machine/asm_macro.h>
 #include <machine/board.h>
 #include <machine/cpus.h>
 #include <machine/cpu_number.h>

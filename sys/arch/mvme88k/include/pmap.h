@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.9 1999/09/27 20:46:19 smurph Exp $ */
+/*	$OpenBSD: pmap.h,v 1.10 2001/01/12 07:29:27 smurph Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -51,11 +51,23 @@ struct pmap {
 
 }; 
 
-#include <vm/vm.h>
-
 #define PMAP_NULL ((pmap_t) 0)
-
 extern	pmap_t	kernel_pmap;
+
+/* 	The PV (Physical to virtual) List.
+ *
+ * For each vm_page_t, pmap keeps a list of all currently valid virtual
+ * mappings of that page. An entry is a pv_entry_t; the list is the
+ * pv_head_table. This is used by things like pmap_remove, when we must
+ * find and remove all mappings for a particular physical page.
+ */
+typedef  struct pv_entry {
+   struct pv_entry   *next;      /* next pv_entry */
+   pmap_t      pmap;    /* pmap where mapping lies */
+   vm_offset_t va;      /* virtual address for mapping */
+} *pv_entry_t;
+
+#include <vm/vm.h>
 
 #define PMAP_ACTIVATE(pmap, th, my_cpu)	_pmap_activate(pmap, th, my_cpu)
 #define PMAP_DEACTIVATE(pmap, th, my_cpu) _pmap_deactivate(pmap, th, my_cpu)
@@ -94,8 +106,8 @@ extern	pmap_t	kernel_pmap;
 
 void _pmap_activate(pmap_t pmap, pcb_t, int my_cpu);
 void _pmap_deactivate(pmap_t pmap, pcb_t, int my_cpu);
-void pmap_activate(pmap_t my_pmap, pcb_t, int cpu);
-void pmap_deactivate(pmap_t pmap, pcb_t, int cpu);
+void pmap_activate(struct proc *p);
+void pmap_deactivate(struct proc *p);
 int pmap_check_transaction(pmap_t pmap, vm_offset_t va, vm_prot_t type);
 
 vm_offset_t pmap_map(

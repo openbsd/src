@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 2000/12/28 21:21:25 smurph Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2001/01/12 07:29:26 smurph Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -180,10 +180,6 @@ cpu_exit(struct proc *p)
 #else
 	cnt.v_swtch++;
 #endif
-
-#if 1
-	exit2(p);		/* XXX - can't be right! */
-#endif 
 	switch_exit(p);
 	/* NOTREACHED */
 }

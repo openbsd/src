@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.5 1999/09/27 19:13:22 smurph Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.6 2001/01/12 07:29:26 smurph Exp $	*/
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.5 1999/09/27 19:13:22 smurph Exp $
+ *	$Id: genassym.c,v 1.6 2001/01/12 07:29:26 smurph Exp $
  */
 
 #ifndef KERNEL
@@ -51,6 +51,9 @@
 #include <machine/vmparam.h>
 #include <sys/syscall.h>
 #include <vm/vm.h>
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#endif 
 #include <sys/user.h>
 
 #define pair(TOKEN, ELEMENT) \
@@ -62,7 +65,11 @@ main()
 {
 	register struct proc *p = (struct proc *)0;
 	struct m88100_saved_state *ss = (struct m88100_saved_state *) 0;
+#ifdef UVM
+	register struct uvmexp *uvm = (struct uvmexp *)0;
+#else
 	register struct vmmeter *vm = (struct vmmeter *)0;
+#endif 
 	register struct user *up = (struct user *)0;
 	register struct rusage *rup = (struct rusage *)0;
 	struct vmspace *vms = (struct vmspace *)0;
@@ -83,10 +90,16 @@ main()
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
 	printf("#define\tSRUN %d\n", SRUN);
-	
+#if 1
 	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
+#else 
+	printf("#define\tVM_PMAP %d\n", &vms->vm_map.pmap);
+#endif 
+#ifdef UVM
+	printf("#define\tUVMEXP_INTRS %d\n", &uvm->intrs);
+#else
 	printf("#define\tV_INTR %d\n", &vm->v_intr);
-	
+#endif
 	printf("#define\tUPAGES %d\n", UPAGES);
 	printf("#define\tPGSHIFT %d\n", PGSHIFT);
 	printf("#define\tUSIZE %d\n", USPACE);

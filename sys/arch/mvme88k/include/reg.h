@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.5 1999/09/27 20:46:19 smurph Exp $ */
+/*	$OpenBSD: reg.h,v 1.6 2001/01/12 07:29:27 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -30,46 +30,56 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include <machine/pcb.h>
+#ifndef _M88K_REG_H_
+#define _M88K_REG_H_
 
-#define reg m88100_saved_state
 #define r_
 
-#if 0
+/* This must always be an even number of words long */
 struct reg {
-    unsigned r_r[32];
-    unsigned r_fpsr;
-    unsigned r_fpcr;
-    unsigned r_epsr;
-    unsigned r_sxip;
-    unsigned r_snip;
-    unsigned r_sfip;
-    unsigned r_ssbr;
-    unsigned r_dmt0;
-    unsigned r_dmd0;
-    unsigned r_dma0;
-    unsigned r_dmt1;
-    unsigned r_dmd1;
-    unsigned r_dma1;
-    unsigned r_dmt2;
-    unsigned r_dmd2;
-    unsigned r_dma2;
-    unsigned r_fpecr;
-    unsigned r_fphs1;
-    unsigned r_fpls1;
-    unsigned r_fphs2;
-    unsigned r_fpls2;
-    unsigned r_fppt;
-    unsigned r_fprh;
-    unsigned r_fprl;
-    unsigned r_fpit;
-    unsigned r_vector;   /* exception vector number */
-    unsigned r_mask;	   /* interrupt mask level */
-    unsigned r_mode;     /* interrupt mode */
-    unsigned r_scratch1; /* used by locore trap handling code */
-    unsigned r_pad;      /* to make an even length */
-} ;
-#endif 
+    unsigned r[32];  /* 0 - 31 */
+#define   tf_sp r[31]
+    unsigned epsr;   /* 32 */
+    unsigned fpsr;
+    unsigned fpcr;
+    unsigned sxip;
+#define exip sxip
+    unsigned snip;
+#define enip snip
+    unsigned sfip;
+    unsigned ssbr;
+    unsigned dmt0;
+    unsigned dmd0;
+    unsigned dma0;
+    unsigned dmt1;
+    unsigned dmd1;
+    unsigned dma1;
+    unsigned dmt2;
+    unsigned dmd2;
+    unsigned dma2;
+    unsigned fpecr;
+    unsigned fphs1;
+    unsigned fpls1;
+    unsigned fphs2;
+    unsigned fpls2;
+    unsigned fppt;
+    unsigned fprh;
+    unsigned fprl;
+    unsigned fpit;
+    unsigned vector;	      /* exception vector number */
+    unsigned mask;	      /* interrupt mask level */
+    unsigned mode;	      /* interrupt mode */
+    unsigned scratch1;	   /* used by locore trap handling code */
+    unsigned ipfsr;        /* P BUS status - used in inst fault handling */
+    unsigned dpfsr;        /* P BUS status - used in data fault handling */
+    unsigned dsr;          /* MVME197 */
+    unsigned dlar;         /* MVME197 */
+    unsigned dpar;         /* MVME197 */
+    unsigned isr;          /* MVME197 */
+    unsigned ilar;         /* MVME197 */
+    unsigned ipar;         /* MVME197 */
+    unsigned pad;          /* alignment */
+};
 
 struct fpreg {
     unsigned fp_fpecr;
@@ -82,3 +92,5 @@ struct fpreg {
     unsigned fp_fprl;
     unsigned fp_fpit;
 };
+
+#endif /* _M88K_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2000/12/28 21:21:24 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 2001/01/12 07:29:26 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -61,6 +61,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
+#include <sys/user.h>
 #include <machine/assert.h>
 #include <machine/cpu_number.h>
 #include <machine/pmap_table.h>
@@ -189,32 +190,76 @@ int      ptes_per_vm_page; /* no. of ptes required to map one VM page */
  */
 char  *pmap_modify_list;
 
-
-/* 	The PV (Physical to virtual) List.
- *
- * For each vm_page_t, pmap keeps a list of all currently valid virtual
- * mappings of that page. An entry is a pv_entry_t; the list is the
- * pv_head_table. This is used by things like pmap_remove, when we must
- * find and remove all mappings for a particular physical page.
- */
-typedef  struct pv_entry {
-   struct pv_entry   *next;      /* next pv_entry */
-   pmap_t      pmap;    /* pmap where mapping lies */
-   vm_offset_t va;      /* virtual address for mapping */
-} *pv_entry_t;
-
 #define PV_ENTRY_NULL	((pv_entry_t) 0)
 
 static struct simplelock *pv_lock_table; /* array */
 
 static pv_entry_t pv_head_table; /* array of entries, one per page */
+
+#if !defined(MACHINE_NEW_NONCONTIG)
+/*
+ * First and last physical address that we maintain any information
+ * for. Initialized to zero so that pmap operations done before
+ * pmap_init won't touch any non-existent structures.
+ */
+static vm_offset_t   pmap_phys_start   = (vm_offset_t) 0;
+static vm_offset_t   pmap_phys_end  = (vm_offset_t) 0;
+
 /*
  * Index into pv_head table, its lock bits, and the modify bits
  * starting at pmap_phys_start.
  */
 #define PFIDX(pa)		(atop(pa - pmap_phys_start))
 #define PFIDX_TO_PVH(pfidx)	(&pv_head_table[pfidx])
+#define	PA_TO_PVH(pa)		(&pv_head_table[PFIDX(pa)])
+#define PMAP_MANAGED(pa)	(pmap_initialized && \
+	((pa) >= pmap_phys_start && (pa) < pmap_phys_end))
+#define LOCK_PVH(pa)		simple_lock(&(pv_lock_table[PFIDX(pa)]))
+#define UNLOCK_PVH(pa)		simple_unlock(&(pv_lock_table[PFIDX(pa)]))
+#define	PA_TO_ATTRIB(pa)	(pmap_modify_list[PFIDX(pa)])
+#define	SET_ATTRIB(pa, attr)	(pmap_modify_list[PFIDX(pa)] = (attr))
 
+#else
+#define	PMAP_MANAGED(pa) (pmap_initialized &&			\
+			 vm_physseg_find(atop((pa)), NULL) != -1)
+
+#define	PA_TO_PVH(pa)							\
+({									\
+	int bank_, pg_;							\
+									\
+	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
+	&vm_physmem[bank_].pmseg.pvent[pg_];				\
+})
+#define	LOCK_PVH(pa)							\
+({									\
+	int bank_, pg_;							\
+									\
+	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
+	simple_lock(&vm_physmem[bank_].pmseg.plock[pg_]);		\
+})
+#define	UNLOCK_PVH(pa)							\
+({									\
+	int bank_, pg_;							\
+									\
+	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
+	simple_unlock(&vm_physmem[bank_].pmseg.plock[pg_]);		\
+})
+#define	PA_TO_ATTRIB(pa)						\
+({									\
+	int bank_, pg_;							\
+									\
+	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
+	vm_physmem[bank_].pmseg.attrs[pg_];				\
+})
+#define	SET_ATTRIB(pa, attr)						\
+({									\
+	int bank_, pg_;							\
+									\
+	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
+	vm_physmem[bank_].pmseg.attrs[pg_] = (attr);			\
+})
+
+#endif 
 
 /*
  *	Locking and TLB invalidation primitives
@@ -274,23 +319,11 @@ static pv_entry_t pv_head_table; /* array of entries, one per page */
 }
 
 #define PV_LOCK_TABLE_SIZE(n)	((vm_size_t)((n) * sizeof(struct simplelock)))
-#define LOCK_PVH(index)		simple_lock(&(pv_lock_table[index]))
-#define UNLOCK_PVH(index)	simple_unlock(&(pv_lock_table[index]))
+#define PV_TABLE_SIZE(n)	((vm_size_t)((n) * sizeof(struct pv_entry)))
 
 #define ETHERPAGES 16
 void  *etherbuf=NULL;
 int   etherlen;
-
-/*
- * First and last physical address that we maintain any information
- * for. Initialized to zero so that pmap operations done before
- * pmap_init won't touch any non-existent structures.
- */
-
-static vm_offset_t   pmap_phys_start   = (vm_offset_t) 0;
-static vm_offset_t   pmap_phys_end  = (vm_offset_t) 0;
-
-#define PMAP_MANAGED(pa) (pmap_initialized && ((pa) >= pmap_phys_start && (pa) < pmap_phys_end))
 
 /*
  *	This variable extract vax's pmap.c.
@@ -404,6 +437,7 @@ flush_atc_entry(long users, vm_offset_t va, int kernel)
  * _pmap_activate.
  *
  */
+#if 0
 void
 _pmap_activate(pmap_t pmap, pcb_t pcb, int my_cpu)
 {
@@ -469,6 +503,7 @@ _pmap_activate(pmap_t pmap, pcb_t pcb, int my_cpu)
 
    }
 } /* _pmap_activate */
+#endif 
 
 /*
  * Routine:	_PMAP_DEACTIVATE
@@ -491,6 +526,7 @@ _pmap_activate(pmap_t pmap, pcb_t pcb, int my_cpu)
  * _pmap_deactivate.
  *
  */
+#if 0
 void
 _pmap_deactivate(pmap_t pmap, pcb_t pcb, int my_cpu)
 {
@@ -504,7 +540,7 @@ _pmap_deactivate(pmap_t pmap, pcb_t pcb, int my_cpu)
       simple_unlock(&pmap->lock);
    }
 }
-
+#endif 
 /*
  *  Author: Joe Uemura
  *	Convert machine-independent protection code to M88K protection bits.
@@ -1447,6 +1483,7 @@ pmap_bootstrap(vm_offset_t load_start, /* IN */
  * memory will never be freed, and in essence it is wired down.
  */
 
+#if !defined(MACHINE_NEW_NONCONTIG)
 void *
 pmap_bootstrap_alloc(int size)
 {
@@ -1467,6 +1504,7 @@ pmap_bootstrap_alloc(int size)
    bzero((void *)mem, size);
    return (mem);
 }
+#endif /* !defined(MACHINE_NEW_NONCONTIG) */
 
 /*
  * Routine:	PMAP_INIT
@@ -1510,6 +1548,89 @@ pmap_bootstrap_alloc(int size)
  *	zinit(segment zone)
  *
  */
+#ifdef MACHINE_NEW_NONCONTIG
+void
+pmap_init(void)
+{
+   register long    npages;
+   register vm_offset_t	addr;
+   register vm_size_t	s;
+   register int     i;
+   struct pv_entry *pv;
+   char	*attr;
+   struct simplelock *lock;
+   int	bank;
+
+#ifdef	DEBUG
+   if ((pmap_con_dbg & (CD_INIT | CD_NORM)) == (CD_INIT | CD_NORM))
+	   printf("pmap_init()\n");
+#endif
+
+   /*
+   * Allocate memory for the pv_head_table and its lock bits,
+    * the modify bit array, and the pte_page table.
+    */
+   for (npages = 0, bank = 0; bank < vm_nphysseg; bank++)
+      npages += vm_physmem[bank].end - vm_physmem[bank].start;
+   
+   s = PV_TABLE_SIZE(npages);			/* pv_list */
+   s += PV_LOCK_TABLE_SIZE(npages);		/* pv_lock_table */
+   s += npages * sizeof(char);			/* pmap_modify_list */
+
+#ifdef	DEBUG
+   if ((pmap_con_dbg & (CD_INIT | CD_FULL)) == (CD_INIT | CD_FULL)) {
+      printf("(pmap_init) nbr of managed pages = %x\n", npages);
+      printf("(pmap_init) size of pv_list = %x\n",
+             npages * sizeof(struct pv_entry));
+   }
+#endif
+
+   s = round_page(s);
+#if defined(UVM)
+   addr = (vaddr_t)uvm_km_zalloc(kernel_map, s);
+#else
+   addr = (vm_offset_t)kmem_alloc(kernel_map, s);
+#endif
+
+   pv_head_table =  (pv_entry_t)addr;
+   addr += PV_TABLE_SIZE(npages);
+
+   /*
+    * Assume that 'simple_lock' is used to lock pv_lock_table
+    */
+   pv_lock_table = (struct simplelock *)addr; /* XXX */
+   addr += PV_LOCK_TABLE_SIZE(npages);
+
+   pmap_modify_list = (char *)addr;
+
+   /*
+   * Initialize pv_lock_table
+   */
+   for (i = 0; i < npages; i++)
+      simple_lock_init(&(pv_lock_table[i]));
+   
+   /*
+    * Now that the pv, attribute, and lock tables have been allocated,
+    * assign them to the memory segments.
+    */
+   pv = pv_head_table;
+   lock = pv_lock_table;
+   attr = pmap_modify_list;
+   for (bank = 0; bank < vm_nphysseg; bank++) {
+	   npages = vm_physmem[bank].end - vm_physmem[bank].start;
+	   vm_physmem[bank].pmseg.pvent = pv;
+	   vm_physmem[bank].pmseg.attrs = attr;
+	   vm_physmem[bank].pmseg.plock = lock;
+	   pv += npages;
+	   lock += npages;
+	   attr += npages;
+   }
+
+   pmap_initialized = TRUE;
+
+} /* pmap_init() */
+
+#else
 void
 pmap_init(vm_offset_t phys_start, vm_offset_t phys_end)
 {
@@ -1529,10 +1650,9 @@ pmap_init(vm_offset_t phys_start, vm_offset_t phys_end)
     * the modify bit array, and the pte_page table.
     */
    npages = atop(phys_end - phys_start);
-   pvl_table_size = PV_LOCK_TABLE_SIZE(npages);
-   s = (vm_size_t)(npages * sizeof(struct pv_entry)  /* pv_list */
-                   + pvl_table_size           /* pv_lock_table */
-                   + npages);              /* pmap_modify_list */
+   s = PV_TABLE_SIZE(npages);			/* pv_list */
+   s += PV_LOCK_TABLE_SIZE(npages);		/* pv_lock_table */
+   s += npages * sizeof(char);			/* pmap_modify_list */
 
 #ifdef	DEBUG
    if ((pmap_con_dbg & (CD_INIT | CD_FULL)) == (CD_INIT | CD_FULL)) {
@@ -1546,13 +1666,13 @@ pmap_init(vm_offset_t phys_start, vm_offset_t phys_end)
    addr = (vm_offset_t)kmem_alloc(kernel_map, s);
 
    pv_head_table =  (pv_entry_t)addr;
-   addr = (vm_offset_t)(pv_head_table + npages);
+   addr += PV_TABLE_SIZE(npages);
 
    /*
     * Assume that 'simple_lock' is used to lock pv_lock_table
     */
    pv_lock_table = (struct simplelock *)addr; /* XXX */
-   addr = (vm_offset_t)pv_lock_table + pvl_table_size;
+   addr += PV_LOCK_TABLE_SIZE(npages);
 
    pmap_modify_list = (char *)addr;
 
@@ -1575,7 +1695,7 @@ pmap_init(vm_offset_t phys_start, vm_offset_t phys_end)
    pmap_initialized = TRUE;
 
 } /* pmap_init() */
-
+#endif 
 
 /*
  * Routine:	PMAP_ZERO_PAGE
@@ -1986,10 +2106,9 @@ pmap_reference(pmap_t p)
  *	PDT_VALID
  *	M88K_PTOB
  *	PMAP_MANAGED
- *	PFIDX
  *	LOCK_PVH
  *	UNLOCK_PVH
- *	PFIDX_TO_PVH
+ *	PA_TO_PVH
  *	CHECK_PV_LIST
  *	zfree
  *	invalidate_pte
@@ -2082,13 +2201,12 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
       pa = M88K_PTOB(pfn);
 
       if (PMAP_MANAGED(pa)) {
-         pfi = PFIDX(pa);
-         LOCK_PVH(pfi);
+         LOCK_PVH(pa);
          /*
           * Remove the mapping from the pvlist for
           * this physical page.
           */
-         pvl = PFIDX_TO_PVH(pfi);
+         pvl = PA_TO_PVH(pa);
          CHECK_PV_LIST(pa, pvl, "pmap_remove_range before");
 
          if (pvl->pmap == PMAP_NULL)
@@ -2127,7 +2245,7 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
          }
 
          CHECK_PV_LIST(pa, pvl, "pmap_remove_range after");
-         UNLOCK_PVH(pfi);
+         UNLOCK_PVH(pa);
 
       } /* if PAGE_MANAGED */
 
@@ -2153,7 +2271,7 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
             }
             /* keep track ourselves too */
             if (PMAP_MANAGED(pa))
-               pmap_modify_list[pfi] = 1;
+               SET_ATTRIB(pa, 1);
          }
          pte++;
          tva += M88K_PGBYTES;
@@ -2234,8 +2352,7 @@ pmap_remove(pmap_t map, vm_offset_t s, vm_offset_t e)
  * Calls:
  *	PMAP_MANAGED
  *	SPLVM, SPLX
- *	PFIDX
- *	PFIDX_TO_PVH
+ *	PA_TO_PVH
  *	CHECK_PV_LIST
  *	simple_lock
  *	M88K_PTOB
@@ -2292,10 +2409,9 @@ pmap_remove_all(vm_offset_t phys)
     */
    remove_all_Retry:
 
-   pfi = PFIDX(phys);
-   pvl = PFIDX_TO_PVH(pfi);
+   pvl = PA_TO_PVH(phys);
    CHECK_PV_LIST(phys, pvl, "pmap_remove_all before");
-   LOCK_PVH(pfi);
+   LOCK_PVH(phys);
 
    /*
     * Loop for each entry on the pv list
@@ -2303,7 +2419,7 @@ pmap_remove_all(vm_offset_t phys)
    while ((pmap = pvl->pmap) != PMAP_NULL) {
       va = pvl->va;
       if (!simple_lock_try(&pmap->lock)) {
-         UNLOCK_PVH(pfi);
+         UNLOCK_PVH(phys);
          goto remove_all_Retry;
       }
 
@@ -2355,7 +2471,7 @@ pmap_remove_all(vm_offset_t phys)
          if (opte.pte.modified) {
             vm_page_set_modified((vm_page_t)PHYS_TO_VM_PAGE(phys));
             /* keep track ourselves too */
-            pmap_modify_list[pfi] = 1;
+            SET_ATTRIB(phys, 1);
          }
          pte++;
          va += M88K_PGBYTES;
@@ -2370,7 +2486,7 @@ pmap_remove_all(vm_offset_t phys)
    }
    CHECK_PV_LIST(phys, pvl, "pmap_remove_all after");
 
-   UNLOCK_PVH(pfi);
+   UNLOCK_PVH(phys);
    SPLX(spl);
 
 } /* pmap_remove_all() */
@@ -2386,7 +2502,7 @@ pmap_remove_all(vm_offset_t phys)
  *
  * Calls:
  *		SPLVM, SPLX
- *		PFIDX_TO_PVH
+ *		PA_TO_PVH
  *		CHECK_PV_LIST
  *		simple_lock, simple_unlock
  *		panic
@@ -2422,10 +2538,10 @@ pmap_copy_on_write(vm_offset_t phys)
 
    SPLVM(spl);
 
-   copy_on_write_Retry:
-   pv_e = PFIDX_TO_PVH(PFIDX(phys));
+copy_on_write_Retry:
+   pv_e = PA_TO_PVH(phys);
    CHECK_PV_LIST(phys, pv_e, "pmap_copy_on_write before");
-   LOCK_PVH(PFIDX(phys));
+   LOCK_PVH(phys);
    if (pv_e->pmap  == PMAP_NULL) {
 
 #ifdef	DEBUG
@@ -2433,7 +2549,7 @@ pmap_copy_on_write(vm_offset_t phys)
          printf("(pmap_copy_on_write :%x) phys addr 0x%x not mapped\n", curproc, phys);
 #endif
 
-      UNLOCK_PVH(PFIDX(phys));
+      UNLOCK_PVH(phys);
       SPLX(spl);
 
       return;     /* no mappings */
@@ -2452,7 +2568,7 @@ pmap_copy_on_write(vm_offset_t phys)
       va = pv_e->va;
 
       if (!simple_lock_try(&pmap->lock)) {
-         UNLOCK_PVH(PFIDX(phys));
+         UNLOCK_PVH(phys);
          goto copy_on_write_Retry;
       }
 
@@ -2498,9 +2614,9 @@ pmap_copy_on_write(vm_offset_t phys)
       simple_unlock(&pmap->lock);
       pv_e = pv_e->next;
    }
-   CHECK_PV_LIST(phys, PFIDX_TO_PVH(PFIDX(phys)), "pmap_copy_on_write");
+   CHECK_PV_LIST(phys, PA_TO_PVH(phys), "pmap_copy_on_write");
 
-   UNLOCK_PVH(PFIDX(phys));
+   UNLOCK_PVH(phys);
    SPLX(spl);
 
 } /* pmap_copy_on_write */
@@ -3013,9 +3129,8 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
           *	Enter the mappimg in the PV list for this
           *	physical page.
           */
-         pfi = PFIDX(pa);
-         LOCK_PVH(pfi);
-         pvl = PFIDX_TO_PVH(pfi);
+         LOCK_PVH(pa);
+         pvl = PA_TO_PVH(pa);
          CHECK_PV_LIST (pa, pvl, "pmap_enter before");
 
          if (pvl->pmap == PMAP_NULL) {
@@ -3045,7 +3160,7 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
              *	Add new pv_entry after header.
              */
             if (pv_e == PV_ENTRY_NULL) {
-               UNLOCK_PVH(pfi);
+               UNLOCK_PVH(pa);
                PMAP_UNLOCK(pmap, spl);
                pv_e = (pv_entry_t) malloc(sizeof *pv_e, M_VMPVENT,
                                           M_NOWAIT);
@@ -3060,7 +3175,7 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
              */
             pv_e = PV_ENTRY_NULL;
          }
-         UNLOCK_PVH(pfi);
+         UNLOCK_PVH(pa);
       }
 
       /*
@@ -3487,18 +3602,74 @@ pmap_collect(pmap_t pmap)
  *		to the physical address of the segment descriptor table.
  *
  *	Parameters:
- *		pmap		pointer to pmap structure
- *		pcbp		pointer to current pcb
- *		cpu		CPU number
+ *		p		pointer to proc structure
  */
 void
-pmap_activate(pmap_t pmap, pcb_t pcb, int cpu)
+pmap_activate(struct proc *p)
 {
-#ifdef	lint
-   my_cpu++;
+	apr_template_t   apr_data;
+	int     n;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	int my_cpu = cpu_number();  
+
+#ifdef DEBUG
+	if ((pmap_con_dbg & (CD_ACTIVATE | CD_NORM)) == (CD_ACTIVATE | CD_NORM))
+		printf("(_pmap_activate :%x) pmap 0x%x\n", p, (unsigned)pmap);
 #endif
-   cpu = cpu_number();  /* hack to fix bogus cpu number */
-   PMAP_ACTIVATE(pmap, pcb, cpu);
+
+	if (pmap != kernel_pmap) {
+		/*
+		 *	Lock the pmap to put this cpu in its active set.
+		 */
+		simple_lock(&pmap->lock);
+
+		apr_data.bits = 0;
+		apr_data.field.st_base = M88K_BTOP(pmap->sdt_paddr); 
+		apr_data.field.wt = 0;
+		apr_data.field.g  = 1;
+		apr_data.field.ci = 0;
+		apr_data.field.te = 1;
+#ifdef notyet
+	#ifdef OMRON_PMAP
+		/*
+		 * cmmu_pmap_activate will set the uapr and the batc entries, then
+		 * flush the *USER* TLB.  IF THE KERNEL WILL EVER CARE ABOUT THE
+		 * BATC ENTRIES, THE SUPERVISOR TLBs SHOULB BE FLUSHED AS WELL.
+		 */
+		cmmu_pmap_activate(my_cpu, apr_data.bits, pmap->i_batc, pmap->d_batc);
+		for (n = 0; n < BATC_MAX; n++)
+			*(unsigned*)&batc_entry[n] = pmap->i_batc[n].bits;
+	#else
+		cmmu_set_uapr(apr_data.bits);
+		cmmu_flush_tlb(0, 0, -1);
+	#endif
+#endif /* notyet */
+		/*
+		 * I am forcing it to not program the BATC at all. pmap.c module
+		 * needs major, major cleanup. XXX nivas
+		 */
+		cmmu_set_uapr(apr_data.bits);
+		cmmu_flush_tlb(0, 0, -1);
+
+		/*
+		 *	Mark that this cpu is using the pmap.
+		 */
+		SETBIT_CPUSET(my_cpu, &(pmap->cpus_using));
+
+		simple_unlock(&pmap->lock);
+
+	} else {
+
+		/*
+		 * kernel_pmap must be always active.
+		 */
+
+#ifdef DEBUG
+		if ((pmap_con_dbg & (CD_ACTIVATE | CD_NORM)) == (CD_ACTIVATE | CD_NORM))
+			printf("(_pmap_activate :%x) called for kernel_pmap\n", curproc);
+#endif
+
+	}
 } /* pmap_activate() */
 
 
@@ -3512,17 +3683,23 @@ pmap_activate(pmap_t pmap, pcb_t pcb, int cpu)
  *		In a mono-processor the PMAP_DEACTIVATE macro is null.
  *
  *	Parameters:
- *		pmap		pointer to pmap structure
- *		pcb		pointer to pcb
- *		cpu		CPU number
+ *		p		pointer to proc structure
  */
 void
-pmap_deactivate(pmap_t pmap, pcb_t pcb,int cpu)
+pmap_deactivate(struct proc *p)
 {
-#ifdef	lint
-   pmap++; th++; which_cpu++;
-#endif
-   PMAP_DEACTIVATE(pmap, pcb, cpu);
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	int my_cpu = cpu_number();  
+	
+	if (pmap != kernel_pmap) {
+
+		/*
+		 * we expect the spl is already raised to sched level.
+		 */
+		simple_lock(&pmap->lock);
+		CLRBIT_CPUSET(my_cpu, &(pmap->cpus_using));
+		simple_unlock(&pmap->lock);
+	}
 } /* pmap_deactivate() */
 
 
@@ -3862,8 +4039,7 @@ pmap_redzone(pmap_t pmap, vm_offset_t va)
  *	Calls:
  *		PMAP_MANAGED
  *		SPLVM, SPLX
- *		PFIDX
- *		PFIDX_TO_PVH
+ *		PA_TO_PVH
  *		CHECK_PV_LIST
  *		simple_lock, simple_unlock
  *		pmap_pte
@@ -3901,14 +4077,12 @@ pmap_clear_modify(vm_offset_t phys)
    SPLVM(spl);
 
    clear_modify_Retry:
-   pfi = PFIDX(phys);
-   pvl = PFIDX_TO_PVH(pfi);
+   pvl = PA_TO_PVH(phys);
    CHECK_PV_LIST (phys, pvl, "pmap_clear_modify");
-   LOCK_PVH(pfi);
-
+   LOCK_PVH(phys);
 
    /* update correspoinding pmap_modify_list element */
-   pmap_modify_list[pfi] = 0;
+   SET_ATTRIB(phys, 0);
 
    if (pvl->pmap == PMAP_NULL) {
 #ifdef	DEBUG
@@ -3916,7 +4090,7 @@ pmap_clear_modify(vm_offset_t phys)
          printf("(pmap_clear_modify :%x) phys addr 0x%x not mapped\n", curproc, phys);
 #endif
 
-      UNLOCK_PVH(pfi);
+      UNLOCK_PVH(phys);
       SPLX(spl);
       return;
    }
@@ -3927,7 +4101,7 @@ pmap_clear_modify(vm_offset_t phys)
       pmap = pvep->pmap;
       va = pvep->va;
       if (!simple_lock_try(&pmap->lock)) {
-         UNLOCK_PVH(pfi);
+         UNLOCK_PVH(phys);
          goto clear_modify_Retry;
       }
 
@@ -3964,7 +4138,7 @@ pmap_clear_modify(vm_offset_t phys)
       pvep = pvep->next;
    }
 
-   UNLOCK_PVH(pfi);
+   UNLOCK_PVH(phys);
    SPLX(spl);
 
 } /* pmap_clear_modify() */
@@ -3990,8 +4164,7 @@ pmap_clear_modify(vm_offset_t phys)
  *		simple_lock, simple_unlock
  *		SPLVM, SPLX
  *		PMAP_MANAGED
- *		PFIDX
- *		PFIDX_TO_PVH
+ *		PA_TO_PVH
  *		pmap_pte
  *
  *	If the physical address specified is not a managed page, this
@@ -4028,12 +4201,11 @@ pmap_is_modified(vm_offset_t phys)
 
    SPLVM(spl);
 
-   pfi = PFIDX(phys);
-   pvl = PFIDX_TO_PVH(pfi);
+   pvl = PA_TO_PVH(phys);
    CHECK_PV_LIST (phys, pvl, "pmap_is_modified");
-   is_mod_Retry:
+is_mod_Retry:
 
-   if ((boolean_t) pmap_modify_list[pfi]) {
+   if ((boolean_t) PA_TO_ATTRIB(phys)) {
       /* we've already cached a modify flag for this page,
          no use looking further... */
 #ifdef	DBG
@@ -4043,17 +4215,17 @@ pmap_is_modified(vm_offset_t phys)
       SPLX(spl);
       return (TRUE);
    }
-   LOCK_PVH(pfi);
+   LOCK_PVH(phys);
 
    if (pvl->pmap == PMAP_NULL) {
       /* unmapped page - get info from page_modified array
          maintained by pmap_remove_range/ pmap_remove_all */
-      modified_flag = (boolean_t) pmap_modify_list[pfi];
+      modified_flag = (boolean_t) PA_TO_ATTRIB(phys);
 #ifdef	DBG
       if ((pmap_con_dbg & (CD_IMOD | CD_NORM)) == (CD_IMOD | CD_NORM))
          printf("(pmap_is_modified :%x) phys addr 0x%x not mapped\n", curproc, phys);
 #endif
-      UNLOCK_PVH(pfi);
+      UNLOCK_PVH(phys);
       SPLX(spl);
       return (modified_flag);
    }
@@ -4062,7 +4234,7 @@ pmap_is_modified(vm_offset_t phys)
    pvep = pvl;
    while (pvep != PV_ENTRY_NULL) {
       if (!simple_lock_try(&pvep->pmap->lock)) {
-         UNLOCK_PVH(pfi);
+         UNLOCK_PVH(phys);
          goto is_mod_Retry;
       }
 
@@ -4078,7 +4250,7 @@ pmap_is_modified(vm_offset_t phys)
             if ((pmap_con_dbg & (CD_IMOD | CD_FULL)) == (CD_IMOD | CD_FULL))
                printf("(pmap_is_modified :%x) modified page pte@0x%x\n", curproc, (unsigned)ptep);
 #endif
-            UNLOCK_PVH(pfi);
+            UNLOCK_PVH(phys);
             SPLX(spl);
             return (TRUE);
          }
@@ -4089,7 +4261,7 @@ pmap_is_modified(vm_offset_t phys)
       pvep = pvep->next;
    }
 
-   UNLOCK_PVH(pfi);
+   UNLOCK_PVH(phys);
    SPLX(spl);
    return (FALSE);
 
@@ -4115,8 +4287,7 @@ pmap_is_modified(vm_offset_t phys)
  *	Calls:
  *		PMAP_MANAGED
  *		SPLVM, SPLX
- *		PFIDX
- *		PFIDX_TO_PVH
+ *		PA_TO_PVH
  *		CHECK_PV_LIST
  *		simple_lock
  *		pmap_pte
@@ -4157,9 +4328,8 @@ pmap_clear_reference(vm_offset_t phys)
    SPLVM(spl);
 
    clear_reference_Retry:
-   pfi = PFIDX(phys);
-   LOCK_PVH(pfi);
-   pvl = PFIDX_TO_PVH(pfi);
+   LOCK_PVH(phys);
+   pvl = PA_TO_PVH(phys);
    CHECK_PV_LIST(phys, pvl, "pmap_clear_reference");
 
 
@@ -4168,7 +4338,7 @@ pmap_clear_reference(vm_offset_t phys)
       if ((pmap_con_dbg & (CD_CREF | CD_NORM)) == (CD_CREF | CD_NORM))
          printf("(pmap_clear_reference :%x) phys addr 0x%x not mapped\n", curproc,phys);
 #endif
-      UNLOCK_PVH(pfi);
+      UNLOCK_PVH(phys);
       SPLX(spl);
       return;
    }
@@ -4179,7 +4349,7 @@ pmap_clear_reference(vm_offset_t phys)
       pmap = pvep->pmap;
       va = pvep->va;
       if (!simple_lock_try(&pmap->lock)) {
-         UNLOCK_PVH(pfi);
+         UNLOCK_PVH(phys);
          goto clear_reference_Retry;
       }
 
@@ -4216,7 +4386,7 @@ pmap_clear_reference(vm_offset_t phys)
       pvep = pvep->next;
    }
 
-   UNLOCK_PVH(pfi);
+   UNLOCK_PVH(phys);
    SPLX(spl);
 
 } /* pmap_clear_reference() */
@@ -4243,8 +4413,7 @@ pmap_clear_reference(vm_offset_t phys)
  * Calls:
  *	PMAP_MANAGED
  *	SPLVM
- *	PFIDX
- *	PFIDX_TO_PVH
+ *	PA_TO_PVH
  *	CHECK_PV_LIST
  *	simple_lock
  *	pmap_pte
@@ -4272,24 +4441,23 @@ pmap_is_referenced(vm_offset_t phys)
 
    SPLVM(spl);
 
-   pfi = PFIDX(phys);
-   pvl = PFIDX_TO_PVH(pfi);
+   pvl = PA_TO_PVH(phys);
    CHECK_PV_LIST(phys, pvl, "pmap_is_referenced");
 
-   is_ref_Retry:
+is_ref_Retry:
 
    if (pvl->pmap == PMAP_NULL) {
       SPLX(spl);
       return (FALSE);
    }
 
-   LOCK_PVH(pfi);
+   LOCK_PVH(phys);
 
    /* for each listed pmap, check used bit for given page */
    pvep = pvl;
    while (pvep != PV_ENTRY_NULL) {
       if (!simple_lock_try(&pvep->pmap->lock)) {
-         UNLOCK_PVH(pfi);
+         UNLOCK_PVH(phys);
          goto is_ref_Retry;
       }
 
@@ -4299,7 +4467,7 @@ pmap_is_referenced(vm_offset_t phys)
       for (i = ptes_per_vm_page; i > 0; i--) {
          if (ptep->pg_used) {
             simple_unlock(&pvep->pmap->lock);
-            UNLOCK_PVH(pfi);
+            UNLOCK_PVH(phys);
             SPLX(spl);
             return (TRUE);
          }
@@ -4310,7 +4478,7 @@ pmap_is_referenced(vm_offset_t phys)
       pvep = pvep->next;
    }
 
-   UNLOCK_PVH(pfi);
+   UNLOCK_PVH(phys);
    SPLX(spl);
    return (FALSE);
 } /* pmap_is referenced() */
@@ -4325,14 +4493,10 @@ pmap_is_referenced(vm_offset_t phys)
  *				Variables changed below,
  *					vm_first_phys --> pmap_phys_start
  *					vm_last_phys  --> pmap_phys_end
- *				Macro chnged below,
- *					pa_index   --> PFIDX
- *					pai_to_pvh --> PFI_TO_PVH
  *
  *	Calls:
  *		SPLVM, SPLX
- *		PFIDX
- *		PFI_TO_PVH
+ *		PA_TO_PVH
  *
  *	Global/Extern:
  *		pmap_initialized
@@ -4360,11 +4524,11 @@ pmap_verify_free(vm_offset_t phys)
 
    SPLVM(spl);
 
-   pv_h = PFIDX_TO_PVH(PFIDX(phys));
-   LOCK_PVH(PFIDX(phys));
+   pv_h = PA_TO_PVH(phys);
+   LOCK_PVH(phys);
 
    result = (pv_h->pmap == PMAP_NULL);
-   UNLOCK_PVH(PFIDX(phys));
+   UNLOCK_PVH(phys);
    SPLX(spl);
 
    return (result);
@@ -4491,12 +4655,11 @@ pagemove(vm_offset_t from, vm_offset_t to, int size)
        */
       pa = M88K_PTOB(srcpte->pfn);
       if (PMAP_MANAGED(pa)) {
-         pfi = PFIDX(pa);
-         LOCK_PVH(pfi);
-         pvl = PFIDX_TO_PVH(pfi);
+         LOCK_PVH(pa);
+         pvl = PA_TO_PVH(pa);
          CHECK_PV_LIST(pa, pvl, "pagemove");
          pvl->va = (vm_offset_t)to;
-         UNLOCK_PVH(pfi);
+         UNLOCK_PVH(pa);
       }
 
       /*
@@ -4734,7 +4897,7 @@ check_pv_list(vm_offset_t phys, pv_entry_t pv_h, char *who)
    pt_entry_t  *pte;
    vm_offset_t pa;
 
-   if (pv_h != PFIDX_TO_PVH(PFIDX(phys))) {
+   if (pv_h != PA_TO_PVH(phys)) {
       printf("check_pv_list: incorrect pv_h supplied.\n");
       panic(who);
    }
@@ -4818,7 +4981,10 @@ check_map(pmap_t map, vm_offset_t s, vm_offset_t e, char *who)
    pt_entry_t  *ptep;
    boolean_t   found;
    int      loopcnt;
-
+#if defined(MACHINE_NEW_NONCONTIG)
+   int bank;
+   unsigned      npages;
+#endif 
 
    /*
     * for each page in the address space, check to see if there's
@@ -4865,11 +5031,18 @@ check_map(pmap_t map, vm_offset_t s, vm_offset_t e, char *who)
          reserved by vm_page_startup */
       /* pmap_init also allocate some memory for itself. */
 
+#if defined(MACHINE_NEW_NONCONTIG)
+      for (npages = 0, bank = 0; bank < vm_nphysseg; bank++)
+         npages += vm_physmem[bank].end - vm_physmem[bank].start;
+      if (map == kernel_pmap &&
+          va < round_page((vm_offset_t)(pmap_modify_list + npages)))
+         continue;
+#else
       if (map == kernel_pmap &&
           va < round_page((vm_offset_t)(pmap_modify_list + (pmap_phys_end - pmap_phys_start))))
          continue;
-
-      pv_h = PFIDX_TO_PVH(PFIDX(phys));
+#endif 
+      pv_h = PA_TO_PVH(phys);
       found = FALSE;
 
       if (pv_h->pmap != PMAP_NULL) {
@@ -4949,6 +5122,10 @@ check_pmap_consistency(char *who)
    vm_offset_t phys;
    pv_entry_t  pv_h;
    int      spl;
+#ifdef MACHINE_NEW_NONCONTIG
+   int bank;
+   unsigned      npages;
+#endif 
 
    if ((pmap_con_dbg & (CD_CHKPM | CD_NORM)) == (CD_CHKPM | CD_NORM))
       printf("check_pmap_consistency (%s :%x) start.\n", who, curproc);
@@ -4975,10 +5152,19 @@ check_pmap_consistency(char *who)
    }
 
    /* run through all managed paes, check pv_list for each one */
+#if defined(MACHINE_NEW_NONCONTIG)
+    for (npages = 0, bank = 0; bank < vm_nphysseg; bank++){
+        for (phys = ptoa(vm_physmem[bank].start); phys < ptoa(vm_physmem[bank].end); phys += PAGE_SIZE) {
+            pv_h = PA_TO_PVH(phys);
+	    check_pv_list(phys, pv_h, who);
+	}
+    }
+#else
    for (phys = pmap_phys_start; phys < pmap_phys_end; phys += PAGE_SIZE) {
-      pv_h = PFIDX_TO_PVH(PFIDX(phys));
+      pv_h = PA_TO_PVH(phys);
       check_pv_list(phys, pv_h, who);
    }
+#endif /* defined(MACHINE_NEW_NONCONTIG) */
 
    SPLX(spl);
 

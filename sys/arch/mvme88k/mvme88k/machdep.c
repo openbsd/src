@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.21 2000/12/28 21:21:24 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.22 2001/01/12 07:29:26 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -165,6 +165,14 @@ int BugWorks = 0;
  * during autoconfiguration or after a panic.
  */
 int   safepri = 0;
+
+#if defined(UVM)
+vm_map_t exec_map = NULL;
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+#else
+vm_map_t buffer_map;
+#endif
 
 /*
  * iomap stuff is for managing chunks of virtual address space that
@@ -612,9 +620,9 @@ cpu_startup()
 	/*
 	 * Allocate map for physio.
 	 */
-
-	phys_map = vm_map_create(kernel_pmap, PHYSIO_MAP_START,
-				 PHYSIO_MAP_START + PHYSIO_MAP_SIZE, TRUE);
+	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, VM_PHYS_SIZE,
+	    TRUE);
+	
 	if (phys_map == NULL) {
 		panic("cpu_startup: unable to create phys_map");
 	}
@@ -629,12 +637,13 @@ cpu_startup()
 	 * defined, as it checks (long)addr < 0.  So as a workaround, I use 
 	 * 0x10000000 as a base address. XXX smurph
 	 */
-
-	iomap_map = vm_map_create(kernel_pmap, (u_long)0x10000000,
-				  (u_long)0x10000000 + IOMAP_SIZE, TRUE);
+	iomap_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, IOMAP_SIZE,
+	    TRUE);
+	
 	if (iomap_map == NULL) {
 		panic("cpu_startup: unable to create iomap_map");
 	}
+	
 	iomapbase = (void *)kmem_alloc_wait(iomap_map, IOMAP_SIZE);
 	rminit(iomap, IOMAP_SIZE, (u_long)iomapbase, "iomap", NIOPMAP);
 
@@ -1085,9 +1094,10 @@ boot(howto)
 register int howto;
 {
 	/* take a snap shot before clobbering any registers */
+#if 0
 	if (curproc)
 		savectx(curproc->p_addr->u_pcb);
-
+#endif 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;
@@ -2158,6 +2168,20 @@ mvme_bootstrap(void)
 		       &avail_start, &avail_end, &virtual_avail,
 		       &virtual_end);
 
+#if defined(MACHINE_NEW_NONCONTIG)
+	/*
+	 * Tell the VM system about available physical memory.  
+	 * mvme88k only has one segment.
+	 */
+#if defined(UVM)
+	uvm_page_physload(atop(avail_start), atop(avail_end),
+			  atop(avail_start), atop(avail_end),VM_FREELIST_DEFAULT);
+#else
+	vm_page_physload(atop(avail_start), atop(avail_end),
+			 atop(avail_start), atop(avail_end));
+#endif /* UVM */
+#endif /* MACHINE_NEW_NONCONTIG */
+	
 	/*
 	 * Must initialize p_addr before autoconfig or
 	 * the fault handler will get a NULL reference.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.5 1999/02/09 06:36:30 smurph Exp $	*/
+/*	$OpenBSD: process.S,v 1.6 2001/01/12 07:29:26 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -70,12 +70,13 @@ Lswsrunpanic:
  * The mapping of the pcb at p->p_addr has already been deleted,
  * and the memory for the pcb+stack has been freed.
  * The ipl is high enough to prevent the memory from being reallocated.
+ * switch_exit(proc * p)
  */
 
 ENTRY(switch_exit)
 	/*
 	 * Change pcb to idle u. area, i.e., set r31 to top of stack
-	 * and set curpcb to point to _idle_u.
+	 * and set curpcb to point to _idle_u.  r2 contains proc *p.
 	 */
 	or.u	r30, r0, hi16(_idle_u)
 	or	r30, r30,lo16(_idle_u)
@@ -84,7 +85,12 @@ ENTRY(switch_exit)
 	st	r30, r10,lo16(_curpcb)	/* curpcb = &idle_u */
 	or.u	r10, r0, hi16(_curproc)
 	st	r0, r10, lo16(_curproc)	/* curproc = NULL */
-	bsr.n	_cpu_switch
+        
+	/* Schedule the vmspace and stack to be freed. */
+	bsr.n	_exit2			/* call exit2(p); */
+	subu	r31, r31, 48		/* allocate stack  */
+	addu	r31, r31, 48		/* restore stack */
+	bsr.n	_cpu_switch		/* goto final switch */
 	or	r2, r0, r10
 
 #if 0
@@ -254,18 +260,16 @@ Lsw2:
 	ld	r3, r9, P_ADDR
 	or.u	r10, r0, hi16(_curpcb)
 	st	r3, r10, lo16(_curpcb)		/* curpcb = p->p_addr */
-
+	
 	/* see if pmap_activate needs to be called */
-	ld	r2, r9, P_VMSPACE	/* vmspace = p->p_vmspace */
-	addu	r2, r2, VM_PMAP		/* pmap = &vmspace.vm_pmap */
-#ifdef notyet 
-	ld	r5, r2, PM_STCHG	/* pmap->st_changed? */
-	bcnd	eq0, r5, Lswnochg	/* no, skip */
-#endif /* notyet */
+	/* _pmap_activate() now has proc * as parameter 01-11-2000 smurph */
+	/* No more VM_PMAP to contend with!!!  */
+	or	r2, r0, r9		/* r2 = p */
 	or	r14, r0, r9		/* save p in r14 */
 	subu	r31, r31,48
-	bsr	_pmap_activate		/* pmap_activate(pmap, pcb) */
-	addu	r31, r31,48
+	/* r2 = pmap, r3 = pcb, r4 = cpu number */
+	bsr	_pmap_activate		/* _pmap_activate(proc *p)*/ 
+	addu    r31, r31,48
 	or	r9, r0, r14		/* restore p saved in r14 */
 
 Lswnochg:
@@ -276,9 +280,11 @@ Lswnochg:
 	or	r2, r0, r9
 	addu	r31, r31,48
 					/* flush tlb of any user addresses */
-	or	r2, r0, 0
-	or	r3, r0, 0
+        or	r2, r0, 0	/* 0 = user space */
+	or	r3, r0, 0	/* start at addr 0 */
 	subu	r31, r31,48
+	/* r2 = 1 : kernel ? user, r3 = address, r4 = size */
+	/* cmmu_flush_tlb(0, 0, 0xffff) */
 	bsr.n	_cmmu_flush_tlb
 	or	r4, r0, 0xffff		/* cmmu_flush_tlb flushes entire tlb */
 					/* for sizes > 4096		     */

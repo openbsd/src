@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.6 2000/12/28 21:21:24 smurph Exp $ */
+/*	$OpenBSD: pcb.h,v 1.7 2001/01/12 07:29:27 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -31,8 +31,10 @@
  */
 /*
  */
-#ifndef _PCB_H_
-#define _PCB_H_
+#ifndef _M88K_PCB_H_
+#define _M88K_PCB_H_
+
+#include <machine/reg.h>
 
 /* 
  * Our PCB is the regular PCB+Save area for kernel frame.
@@ -75,63 +77,7 @@ struct m88100_pcb {
     unsigned pcb_sp; 	/* kernel stack pointer */
 };
 
-
-/*
- *	m88100_saved_state	this structure corresponds to the state
- *				of the user registers as saved on the
- *				stack upon kernel entry.  This structure
- *				is used internally only.  Since this
- *				structure may change from version to
- *				version, it is hidden from the user.
- */
-
-/* This must always be an even number of words long */
-
-struct m88100_saved_state {
-    unsigned r[32];  /* 0 - 31 */
-#define   tf_sp r[31]
-    unsigned epsr;   /* 32 */
-    unsigned fpsr;
-    unsigned fpcr;
-#define exip sxip
-    unsigned sxip;
-#define enip snip
-    unsigned snip;
-    unsigned sfip;
-    unsigned ssbr;
-    unsigned dmt0;
-    unsigned dmd0;
-    unsigned dma0;
-    unsigned dmt1;
-    unsigned dmd1;
-    unsigned dma1;
-    unsigned dmt2;
-    unsigned dmd2;
-    unsigned dma2;
-    unsigned fpecr;
-    unsigned fphs1;
-    unsigned fpls1;
-    unsigned fphs2;
-    unsigned fpls2;
-    unsigned fppt;
-    unsigned fprh;
-    unsigned fprl;
-    unsigned fpit;
-    unsigned vector;	      /* exception vector number */
-    unsigned mask;	      /* interrupt mask level */
-    unsigned mode;	      /* interrupt mode */
-    unsigned scratch1;	   /* used by locore trap handling code */
-    unsigned ipfsr;        /* P BUS status - used in inst fault handling */
-    unsigned dpfsr;        /* P BUS status - used in data fault handling */
-    unsigned dsr;          /* MVME197 */
-    unsigned dlar;         /* MVME197 */
-    unsigned dpar;         /* MVME197 */
-    unsigned isr;          /* MVME197 */
-    unsigned ilar;         /* MVME197 */
-    unsigned ipar;         /* MVME197 */
-    unsigned pad;          /* alignment */
-};
-
+#define m88100_saved_state reg
 #define trapframe m88100_saved_state
 
 struct pcb
@@ -159,4 +105,4 @@ struct md_coredump {
 	struct	trapframe md_tf;
 };
 
-#endif  _PCB_H_
+#endif _M88K_PCB_H_
