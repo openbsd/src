@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.4 1999/08/05 18:10:54 deraadt Exp $	*/
+/*	$OpenBSD: eso.c,v 1.5 1999/08/08 19:16:25 deraadt Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -235,37 +235,35 @@ eso_attach(parent, self, aux)
 
 	if (sc->sc_revision <=
 	    sizeof (eso_rev2model) / sizeof (eso_rev2model[0]))
-		printf(": %s\n", eso_rev2model[sc->sc_revision]);
+		printf(": %s", eso_rev2model[sc->sc_revision]);
 	else
-		printf(": (unknown rev. 0x%02x)\n", sc->sc_revision);
+		printf(": (unknown rev. 0x%02x)", sc->sc_revision);
 
 	/* Map I/O registers. */
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_IO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
+		printf(", can't map I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_SB, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_sb_iot, &sc->sc_sb_ioh, NULL, NULL)) {
-		printf("%s: can't map SB I/O space\n", sc->sc_dev.dv_xname);
+		printf(", can't map SB I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_VC, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_dmac_iot, &sc->sc_dmac_ioh, &vcbase, &sc->sc_vcsize)) {
-		printf("%s: can't map VC I/O space\n", sc->sc_dev.dv_xname);
-		/* Don't bail out yet: we can map it later, see below. */
 		vcbase = 0;
 		sc->sc_vcsize = 0x10; /* From the data sheet. */
 	}
 
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_MPU, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_mpu_iot, &sc->sc_mpu_ioh, NULL, NULL)) {
-		printf("%s: can't map MPU I/O space\n", sc->sc_dev.dv_xname);
+		printf(", can't map MPU I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_GAME, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_game_iot, &sc->sc_game_ioh, NULL, NULL)) {
-		printf("%s: can't map Game I/O space\n", sc->sc_dev.dv_xname);
+		printf(", can't map Game I/O space\n");
 		return;
 	}
 
@@ -280,7 +278,7 @@ eso_attach(parent, self, aux)
 
 	/* Reset the device; bail out upon failure. */
 	if (eso_reset(sc) != 0) {
-		printf("%s: can't reset\n", sc->sc_dev.dv_xname);
+		printf(", can't reset\n");
 		return;
 	}
 	
@@ -332,7 +330,7 @@ eso_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(", couldn't map interrupt\n");
 		return;
 	}
 	intrstring = pci_intr_string(pa->pa_pc, ih);
@@ -343,14 +341,14 @@ eso_attach(parent, self, aux)
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, eso_intr, sc);
 #endif
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		printf(", couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstring != NULL)
 			printf(" at %s", intrstring);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstring);
+	printf(" %s\n", intrstring);
 
 	/*
 	 * Set up the DDMA Control register; a suitable I/O region has been
