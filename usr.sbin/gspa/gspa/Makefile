@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/11/17 10:05:23 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1996/02/06 18:30:58 jtc Exp $
 
 PROG=	gspa
 CFLAGS+=-I. -I${.CURDIR}
@@ -7,5 +7,7 @@ SRCS=	gsp_gram.c gspa.c gsp_out.c gsp_sym.c gsp_lex.c gsp_act.c \
 	gsp_eval.c gsp_inst.c gsp_pseu.c
 NOMAN=	noman
 CLEANFILES+=gsp_gram.c y.tab.h
+
+gsp_eval.o gsp_lex.o gspa.o: gsp_gram.c
 
 .include <bsd.prog.mk>
