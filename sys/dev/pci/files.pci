@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.92 2001/01/29 08:45:58 ho Exp $
+#	$OpenBSD: files.pci,v 1.93 2001/02/14 05:10:17 fgsch Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -330,3 +330,8 @@ file	dev/pci/cmpci.c			cmpci
 # Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
 attach	iha at pci with iha_pci
 file	dev/pci/iha_pci.c		iha_pci
+
+# AMD Am53c974 PCscsi-PCI SCSI controllers
+device	pcscp: scsi, ncr53c9x
+attach	pcscp at pci
+file	dev/pci/pcscp.c			pcscp
