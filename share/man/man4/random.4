@@ -1,6 +1,6 @@
-.\"	$OpenBSD: random.4,v 1.1 1996/12/17 22:56:03 millert Exp $
+.\"	$OpenBSD: random.4,v 1.2 1997/06/15 03:41:49 mickey Exp $
 .\"
-.\" Copyright (c) 1996 Michael Shalayeff
+.\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -33,36 +33,49 @@
 .Dt RND 4
 .Os OpenBSD
 .Sh NAME
-.Nm random
-.Nm srandom
-.Nm urandom
-.Nm prandom
+.Nm random ,
+.Nm srandom ,
+.Nm urandom ,
+.Nm prandom ,
+.Nm arandom
 .Nd random data source devices.
 .Sh SYNOPSIS
-.Cd "pseudo-device random"
+.Fd #include <sys/types.h>
+.Fd #include <dev/rndvar.h>
+.Fd #include <dev/rndioctl.h>
 .Sh DESCRIPTION
 The
 .Nm
 device produces random data, with different random quality.
-{s,u}random devices generates random data based on the system activity
+{u,s,a}random devices generates random data based on the system activity
 (like disk and network devices).
 .Pp
-.Bl -hang -width Ds
-.It random
+.Bl -hang -width /dev/srandomXXX
+.It /dev/random
 reserved for nuclear noise generators.
-.It srandom
+.It /dev/srandom
 strong random data.
-.It urandom
+.It /dev/urandom
 same as above, but does not guaranties the data to be strong.
-.It prandom
+.It /dev/prandom
 simple pseudo-random generator (as it is in the kernel).
+.It /dev/arandom
+aRC4 hashed data (as apposed to the {u,s}random, as they are MD5).
 .Sh SEE ALSO
-random(9)
+.Xr random 9 ,
+.Xr random 3 ,
+.Xr md5 9 ,
+.Xr md5 3 ,
+.Xr arc4random 3 .
 .Sh FILES
-.Bl -tag -width /dev/random, /dev/srandom, /dev/urandom, /dev/prandom
-.It Pa /dev/random, /dev/srandom, /dev/urandom, /dev/prandom
+.Bl -tag -width /dev/srandom
+.It Pa /dev/random, /dev/srandom, /dev/urandom, /dev/prandom, /dev/arandom
 .El
+.Sh BUGS
+No randomness testing suite provided.
 .Sh HISTORY
 An
 .Nm
-device appeared in Linux operating system.
+device first appeared in Linux operating system.
+.Pp
+aRC4 routines added by David Mazieres.
