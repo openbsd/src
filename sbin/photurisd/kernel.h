@@ -1,3 +1,4 @@
+/* $OpenBSD: kernel.h,v 1.12 2001/01/28 22:45:11 niklas Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.11 2000/12/16 08:31:56 provos Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.

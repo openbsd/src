@@ -1,3 +1,5 @@
+/*	$OpenBSD: handle_value_request.c,v 1.7 2001/01/28 22:45:10 niklas Exp $	*/
+
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_request.c,v 1.6 2000/12/15 07:29:44 provos Exp $";
+static char rcsid[] = "$OpenBSD: handle_value_request.c,v 1.7 2001/01/28 22:45:10 niklas Exp $";
 #endif
 
 #include <stdio.h>

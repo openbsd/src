@@ -1,3 +1,5 @@
+/*	$OpenBSD: photuris_identity_request.c,v 1.3 2001/01/28 22:45:14 niklas Exp $	*/
+
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: photuris_identity_request.c,v 1.2 2000/12/15 02:50:39 provos Exp $";
+static char rcsid[] = "$OpenBSD: photuris_identity_request.c,v 1.3 2001/01/28 22:45:14 niklas Exp $";
 #endif
 
 #include <stdio.h>

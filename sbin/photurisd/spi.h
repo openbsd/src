@@ -1,3 +1,4 @@
+/* $OpenBSD: spi.h,v 1.7 2001/01/28 22:45:17 niklas Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: spi.h,v 1.6 2000/12/15 02:50:40 provos Exp $ */
 /*
  * spi.h: 
  * security paramter index creation.

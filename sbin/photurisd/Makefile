@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.4 2001/01/28 22:45:05 niklas Exp $
+
 PROG=   photurisd
 LDADD=	-lcrypto -ldes
 DPADD=	${LIBCRYPTO} ${LIBDES}

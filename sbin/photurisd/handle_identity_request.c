@@ -1,3 +1,5 @@
+/*	$OpenBSD: handle_identity_request.c,v 1.6 2001/01/28 22:45:08 niklas Exp $	*/
+
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_request.c,v 1.5 2000/12/15 02:50:38 provos Exp $";
+static char rcsid[] = "$OpenBSD: handle_identity_request.c,v 1.6 2001/01/28 22:45:08 niklas Exp $";
 #endif
 
 #include <stdio.h>

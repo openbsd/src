@@ -1,3 +1,5 @@
+/*	$OpenBSD: compute_secrets.c,v 1.5 2001/01/28 22:45:07 niklas Exp $	*/
+
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,7 +36,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: compute_secrets.c,v 1.4 2000/12/15 02:50:37 provos Exp $"; 
+static char rcsid[] = "$OpenBSD: compute_secrets.c,v 1.5 2001/01/28 22:45:07 niklas Exp $"; 
 #endif 
 
 #define _SECRETS_C_

@@ -1,3 +1,5 @@
+/*	$OpenBSD: modulus.c,v 1.5 2001/01/28 22:45:12 niklas Exp $	*/
+
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.

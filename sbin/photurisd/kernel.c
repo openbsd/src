@@ -1,3 +1,5 @@
+/*	$OpenBSD: kernel.c,v 1.21 2001/01/28 22:45:11 niklas Exp $	*/
+
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -39,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.20 2000/12/16 08:31:56 provos Exp $";
+static char rcsid[] = "$OpenBSD: kernel.c,v 1.21 2001/01/28 22:45:11 niklas Exp $";
 #endif
 
 #include <time.h>

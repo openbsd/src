@@ -1,3 +1,4 @@
+/* $OpenBSD: exchange.h,v 1.4 2001/01/28 22:45:08 niklas Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: exchange.h,v 1.3 2000/12/15 02:50:38 provos Exp $ */
 /* 
  * exchange.h: 
  * exchange generation header file
