@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.22 2003/09/16 20:49:05 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.23 2003/09/26 19:04:28 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -41,7 +41,6 @@
 #ifndef	_LOCORE
 
 #include <machine/pcb.h>	/* m88100_saved_state */
-#include <machine/psl.h>
 #include <machine/trap.h>
 
 #include <uvm/uvm_param.h>

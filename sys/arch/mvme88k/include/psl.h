@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.12 2001/12/20 06:33:16 smurph Exp $ */
+/*	$OpenBSD: psl.h,v 1.13 2003/09/26 19:04:28 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -42,8 +42,9 @@
  * thereof, and that both notices appear in supporting documentation.
  *
  */
-#ifndef __M88K_M88100_PSL_H__
-#define __M88K_M88100_PSL_H__
+
+#ifndef __M88K_PSL_H__
+#define __M88K_PSL_H__
 
 /* 
  * 88100 control registers
@@ -73,36 +74,10 @@
 #define PSR_MXM		0x00000004U	/* misaligned access enable */
 #define PSR_IND		0x00000002U	/* interrupt disable */
 #define PSR_SFRZ	0x00000001U	/* shadow freeze */
-/*
- *	This is used in ext_int() and hard_clock().
- */
-#define PSR_IPL		0x00001000	/* for basepri */
 
 #define PSR_SUPERVISOR	(PSR_MODE | PSR_SFD)
 #define PSR_USER	(PSR_SFD)
 #define PSR_SET_BY_USER	(PSR_BO | PSR_SER | PSR_C | PSR_MXM)
-
-#ifndef	_LOCORE
-struct psr {
-    unsigned
-	psr_mode: 1,
-	psr_bo  : 1,
-	psr_ser : 1, /* mc88110 */
-	psr_c   : 1,
-	        : 1,
-	psr_sgn : 1, /* mc88110 */
-	psr_srm : 1, /* mc88110 */
-	        : 1,
-	psr_trc	: 1, /* mc88110 */
-		:13,
-	psr_sfd : 5,
-	psr_sfd2: 1, /* mc88110 */
-	psr_sfd1: 1,
-	psr_mxm : 1,
-	psr_ind : 1,
-	psr_sfrz: 1;
-};
-#endif 
 
 #define FIP_V		0x00000002U	/* valid */
 #define FIP_E		0x00000001U	/* exception */
@@ -114,5 +89,5 @@ struct psr {
 #define XIP_E		0x00000001U	/* exception */
 #define XIP_ADDR	0xFFFFFFFCU	/* address mask */
 
-#endif /* __M88K_M88100_PSL_H__ */
+#endif /* __M88K_PSL_H__ */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2003/09/17 22:22:32 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2003/09/26 19:04:30 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -91,8 +91,8 @@ unsigned traptrace = 0;
 #define DEBUG_MSG printf
 #endif /* DDB */
 
-#define USERMODE(PSR)   (((struct psr*)&(PSR))->psr_mode == 0)
-#define SYSTEMMODE(PSR) (((struct psr*)&(PSR))->psr_mode != 0)
+#define USERMODE(PSR)   (((PSR) & PSR_MODE) == 0)
+#define SYSTEMMODE(PSR) (((PSR) & PSR_MODE) != 0)
 
 /* sigh */
 extern int procfs_domem(struct proc *, struct proc *, void *, struct uio *);
