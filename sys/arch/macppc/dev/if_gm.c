@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_gm.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
-/*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.3 2001/09/05 16:54:01 mickey Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.14 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -72,6 +72,7 @@
 
 #define NTXBUF 4
 #define NRXBUF 32
+#define	GM_BUFSZ	((NRXBUF + NTXBUF + 2) * 2048)
 
 struct gmac_softc {
 	struct device sc_dev;
@@ -87,8 +88,13 @@ struct gmac_softc {
 	vaddr_t sc_reg;
 	bus_space_handle_t gm_bush;
 	bus_space_tag_t    gm_bust;
+	bus_dma_tag_t	gm_dmat;
+	bus_dmamap_t	sc_bufmap;
+	bus_dma_segment_t sc_bufseg[1];
 	struct gmac_dma *sc_txlist;
+	paddr_t	sc_txlist_pa;
 	struct gmac_dma *sc_rxlist;
+	paddr_t	sc_rxlist_pa;
 	int sc_txnext;
 	int sc_rxlast;
 	caddr_t sc_txbuf[NTXBUF];
@@ -135,6 +141,11 @@ void gmac_mii_tick __P((void *));
 
 u_int32_t ether_crc32_le(const u_int8_t *buf, size_t len);
 
+#ifdef __NetBSD__
+#define	letoh32	 le32toh
+#endif
+
+
 struct cfattach gm_ca = {
 	sizeof(struct gmac_softc), gmac_match, gmac_attach
 };
@@ -177,8 +188,7 @@ gmac_attach(parent, self, aux)
 #ifdef __NetBSD__
 	int node;
 #endif
-	int i;
-	char *p;
+	int i, nseg, error;
 	struct gmac_dma *dp;
 	u_char laddr[6];
 
@@ -206,30 +216,17 @@ gmac_attach(parent, self, aux)
 		pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
 #ifdef USE_IO
-		if (pci_io_find(pc, pa->pa_tag, 0x10, &iobase, &iosize, NULL)) {
-			printf(": can't find I/O space\n");
+		if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0,
+		    &sc->gm_bust, &sc->gm_bush, &iobase, &iosize, 0)) {
+			printf(": can't map controller i/o space\n");
 			return;
 		}
-		if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->gm_bush))
-		{
-			printf(": can't map I/O space\n");
-			return;
-		}
-		sc->gm_bust = pa->pa_iot;
 #else /* !USE_IO */
-		if (pci_mem_find(pc, pa->pa_tag, 0x10, &membase, &memsize,
-			NULL))
-		{
-			printf(": can't find MEM space\n");
+		if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->gm_bust, &sc->gm_bush, &membase, &memsize, 0)) {
+			printf(": can't map controller mem space\n");
 			return;
 		}
-		if (bus_space_map(pa->pa_memt, membase, memsize, 0,
-			&sc->gm_bush))
-		{
-			printf(": can't map MEM space\n");
-			return;
-		}
-		sc->gm_bust = pa->pa_memt;
 #endif /* !USE_IO */
 
 	}
@@ -270,35 +267,73 @@ gmac_attach(parent, self, aux)
 	}
 #endif 
 
-	/* Setup packet buffers and dma descriptors. */
-	p = malloc((NRXBUF + NTXBUF) * 2048 + 3 * 0x800, M_DEVBUF, M_NOWAIT);
-	if (p == NULL) {
-		printf(": cannot malloc buffers\n");
+	sc->gm_dmat = pa->pa_dmat;
+	{
+	vaddr_t va;
+	paddr_t pa;
+	error = bus_dmamem_alloc(sc->gm_dmat, GM_BUFSZ,
+	    PAGE_SIZE, 0, sc->sc_bufseg, 1, &nseg, BUS_DMA_NOWAIT);
+	if (error) {
+		printf(": cannot allocate buffers (%d)\n", error);
 		return;
 	}
-	p = (void *)roundup((vaddr_t)p, 0x800);
-	bzero(p, 2048 * (NRXBUF + NTXBUF) + 2 * 0x800);
 
-	sc->sc_rxlist = (void *)p;
-	p += 0x800;
-	sc->sc_txlist = (void *)p;
-	p += 0x800;
+	error = bus_dmamem_map(sc->gm_dmat, sc->sc_bufseg, nseg,
+	    GM_BUFSZ, (caddr_t *)&va, BUS_DMA_NOWAIT);
+	if (error) {
+		printf(": cannot map buffers (%d)\n", error);
+		bus_dmamem_free(sc->gm_dmat, sc->sc_bufseg, 1);
+		return;
+	}
+
+	error = bus_dmamap_create(sc->gm_dmat, GM_BUFSZ, 1, GM_BUFSZ, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_bufmap);
+	if (error) {
+		printf(": cannot create buffer dmamap (%d)\n", error);
+		bus_dmamem_unmap(sc->gm_dmat, (void *)va, GM_BUFSZ);
+		bus_dmamem_free(sc->gm_dmat, sc->sc_bufseg, 1);
+		return;
+	}
+	error = bus_dmamap_load(sc->gm_dmat, sc->sc_bufmap, (void *)va,
+	    GM_BUFSZ, NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf(": cannot load buffers dmamap (%d)\n", error);
+		bus_dmamap_destroy(sc->gm_dmat, sc->sc_bufmap);
+		bus_dmamem_unmap(sc->gm_dmat, (void *)va, GM_BUFSZ);
+		bus_dmamem_free(sc->gm_dmat, sc->sc_bufseg, nseg);
+		return;
+	}
+
+	bzero((void *)va, GM_BUFSZ);
+	pa = sc->sc_bufseg[0].ds_addr;
+
+	sc->sc_rxlist = (void *)va;
+	sc->sc_rxlist_pa = pa;
+	va += 0x800;
+	pa += 0x800;
+	sc->sc_txlist = (void *)va;
+	sc->sc_txlist_pa = pa;;
+	va += 0x800;
+	pa += 0x800;
 
 	dp = sc->sc_rxlist;
 	for (i = 0; i < NRXBUF; i++) {
-		sc->sc_rxbuf[i] = p;
-		dp->address = htole32(vtophys((vaddr_t)p));
+		sc->sc_rxbuf[i] = (void *)va;
+		dp->address = htole32(pa);
 		dp->cmd = htole32(GMAC_OWN);
 		dp++;
-		p += 2048;
+		va += 2048;
+		pa += 2048;
 	}
 
 	dp = sc->sc_txlist;
 	for (i = 0; i < NTXBUF; i++) {
-		sc->sc_txbuf[i] = p;
-		dp->address = htole32(vtophys((vaddr_t)p));
+		sc->sc_txbuf[i] = (void *)va;
+		dp->address = htole32(pa);
 		dp++;
-		p += 2048;
+		va += 2048;
+		pa += 2048;
+	}
 	}
 
 #ifdef __OpenBSD__
@@ -460,7 +495,7 @@ gmac_rint(sc)
 	struct ifnet *ifp = &sc->sc_if;
 	volatile struct gmac_dma *dp;
 	struct mbuf *m;
-	int i, len;
+	int i, j, len;
 	u_int cmd;
 
 	for (i = sc->sc_rxlast;; i++) {
@@ -468,21 +503,13 @@ gmac_rint(sc)
 			i = 0;
 
 		dp = &sc->sc_rxlist[i];
-#ifdef __OpenBSD__
 		cmd = letoh32(dp->cmd);
-#else /* !__OpenBSD__ */
-		cmd = le32toh(dp->cmd);
-#endif /* !__OpenBSD__ */
 		if (cmd & GMAC_OWN)
 			break;
 		len = (cmd >> 16) & GMAC_LEN_MASK;
 		len -= 4;	/* CRC */
 
-#ifdef __OpenBSD__
-		if (letoh32(dp->cmd_hi) & 0x40000000) {
-#else /* !__OpenBSD__ */
-		if (le32toh(dp->cmd_hi) & 0x40000000) {
-#endif /* !__OpenBSD__ */
+		if (dp->cmd_hi & htole32(0x40000000)) {
 			ifp->if_ierrors++;
 			goto next;
 		}
@@ -514,6 +541,15 @@ next:
 		dp->cmd = htole32(GMAC_OWN);
 	}
 	sc->sc_rxlast = i;
+
+	/* XXX Make sure free buffers have GMAC_OWN. */
+	i++;
+	for (j = 1; j < NRXBUF; j++) {
+		if (i == NRXBUF)
+			i = 0;
+		dp = &sc->sc_rxlist[i++];
+		dp->cmd = htole32(GMAC_OWN);
+	}
 }
 
 struct mbuf *
@@ -615,9 +651,8 @@ gmac_start(ifp)
 			bpf_tap(ifp->if_bpf, buff, tlen);
 #endif
 		i++;
-		if (i == NTXBUF) {
+		if (i == NTXBUF)
 			i = 0;
-		}
 		if (i == gmac_read_reg(sc, GMAC_TXDMACOMPLETE)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -678,9 +713,9 @@ gmac_reset(sc)
 	__asm __volatile ("sync");
 
 	gmac_write_reg(sc, GMAC_TXDMADESCBASEHI, 0);
-	gmac_write_reg(sc, GMAC_TXDMADESCBASELO, vtophys((vaddr_t)sc->sc_txlist));
+	gmac_write_reg(sc, GMAC_TXDMADESCBASELO, sc->sc_txlist_pa);
 	gmac_write_reg(sc, GMAC_RXDMADESCBASEHI, 0);
-	gmac_write_reg(sc, GMAC_RXDMADESCBASELO, vtophys((vaddr_t)sc->sc_rxlist));
+	gmac_write_reg(sc, GMAC_RXDMADESCBASELO, sc->sc_rxlist_pa);
 	gmac_write_reg(sc, GMAC_RXDMAKICK, NRXBUF);
 
 	splx(s);
@@ -773,11 +808,10 @@ gmac_init_mac(sc)
 		gmac_write_reg(sc, GMAC_TXMACCONFIG, 0);
 		gmac_write_reg(sc, GMAC_XIFCONFIG, 5);
 	}
-	if (0) { /* g-bit? */ 
+	if (0)	/* g-bit? */ 
 		gmac_write_reg(sc, GMAC_MACCTRLCONFIG, 3);
-	} else {
+	else
 		gmac_write_reg(sc, GMAC_MACCTRLCONFIG, 0);
-	}
 }
 
 void

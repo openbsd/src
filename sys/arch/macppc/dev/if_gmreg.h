@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gmreg.h,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: if_gmreg.h,v 1.2 2001/09/05 16:54:01 mickey Exp $	*/
 /*	$NetBSD: if_gmreg.h,v 1.1 2000/02/27 18:00:55 tsubai Exp $	*/
 
 /*-
@@ -99,11 +99,3 @@ struct gmac_dma {
 #define GMAC_RANDOMSEED		0x6130
 #define GMAC_MIFFRAMEOUTPUT	0x620c
 #define GMAC_DATAPATHMODE	0x9050
-
-#ifndef ETHER_MAX_LEN
-#define ETHER_MAX_LEN           1518
-#endif
-#ifndef ETHER_MIN_LEN
-#define ETHER_MIN_LEN           64
-#endif
-
