@@ -1,5 +1,5 @@
 
-# $OpenBSD: Makefile,v 1.8 2002/01/03 01:03:49 art Exp $
+# $OpenBSD: Makefile,v 1.9 2002/02/15 21:21:55 todd Exp $
 
 MAKEDEVARCHS+=alpha amiga hp300 hppa i386 mac68k macppc mvme68k mvme88k
 MAKEDEVARCHS+=mvmeppc sparc sparc64 sun3 vax
@@ -19,10 +19,14 @@ ${MAKEDEVARCHS}:
 	@exec ${SUDO} chown root.wheel test.${.TARGET}
 	@cd test.${.TARGET}; time ${SUDO} sh ./MAKEDEV all || true; \
 	time ${SUDO} sh ./MAKEDEV all || true; \
-	( ls -l; ls -l fd/; ls -l altq/ ) | \
-		awk '/^[bcps]/ {print $$1,$$2,$$3,$$4,$$5,$$6,$$10} \
-		     /^l/      {print $$1,$$2,$$3,$$4,$$5,$$9,$$10,$$11}' |\
-		sort +4 -n > ../t1.${.TARGET}.out
+	( ls -ln; ls -ln fd/; ls -ln altq/ ) | \
+		awk '/^[bcps]/ {printf "%s %x.%x %x,%x%s\n",$$1,$$3,$$4,$$5,$$6,$$10} \
+		     /^l/      {printf "%s %s.%s%s>%s\n",$$1,$$3,$$4,$$9,$$11}' | \
+		sort +5 -n | \
+		sed -e 's/rwx/7/g;s/rw-/6/g;s/r-x/5/g;s/r--/4/g' \
+		    -e 's/-wx/3/g;s/-w-/2/g;s/--x/1/g;s/---/0/g' \
+		    -e 's/^\([bcpsl]\)\([0-9][0-9]*\) /\2\1/' \
+		> ../t1.${.TARGET}.out
 
 clean:
 	for f in ${MAKEDEVARCHS}; do rm -rf test.$$f; done
