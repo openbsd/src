@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.19 2002/12/10 23:46:49 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.20 2003/03/08 04:43:45 hugh Exp $
 
 machine 	vax			# machine type
 
@@ -117,7 +117,7 @@ mtc0		at uba? csr 0174500	# Tape MSCP ctlr
 #qd0		at uba? csr 0177400	# 4- or 8-bitplans color graphics
 #qv0		at uba? csr 0177400	# Monochrome graphics
 #de0		at uba? csr 0174510	# DELUA/DEUNA
-#qe0		at uba? csr 0174440	# DEQNA/DELQA
+qe0		at uba? csr 0174440	# DEQNA/DELQA
 #dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
 #dl0		at uba? csr 0176500	# DL-11
