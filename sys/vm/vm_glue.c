@@ -232,7 +232,11 @@ vm_fork(p1, p2)
 	/*
 	 * Allocate a wired-down (for now) pcb and kernel stack for the process
 	 */
+#ifdef pica
+	addr = kmem_alloc_upage(kernel_map, USPACE);
+#else
 	addr = kmem_alloc_pageable(kernel_map, USPACE);
+#endif
 	if (addr == 0)
 		panic("vm_fork: no more kernel virtual memory");
 	vm_map_pageable(kernel_map, addr, addr + USPACE, FALSE);
@@ -409,6 +413,10 @@ loop:
 			printf("swapin: pid %d(%s)@%x, pri %d free %d\n",
 			       p->p_pid, p->p_comm, p->p_addr,
 			       ppri, cnt.v_free_count);
+#endif
+#ifdef pica
+			vm_map_pageable(kernel_map, (vm_offset_t)p->p_addr,
+			    (vm_offset_t)p->p_addr + atop(USPACE), FALSE);
 #endif
 		swapin(p);
 		goto loop;
