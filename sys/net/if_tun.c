@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.61 2004/07/16 15:01:09 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.62 2004/11/09 13:45:03 henning Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -789,7 +789,7 @@ tunread(dev, uio, ioflag)
 				return (error);
 			}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		if (m0 == 0) {
+		if (m0 == NULL) {
 			if (tp->tun_flags & TUN_NBIO && ioflag & IO_NDELAY) {
 				splx(s);
 				return EWOULDBLOCK;
@@ -801,10 +801,10 @@ tunread(dev, uio, ioflag)
 				return (error);
 			}
 		}
-	} while (m0 == 0);
+	} while (m0 == NULL);
 	splx(s);
 
-	while (m0 && uio->uio_resid > 0 && error == 0) {
+	while (m0 != NULL && uio->uio_resid > 0 && error == 0) {
 		len = min(uio->uio_resid, m0->m_len);
 		if (len != 0)
 			error = uiomove(mtod(m0, caddr_t), len, uio);
@@ -812,7 +812,7 @@ tunread(dev, uio, ioflag)
 		m0 = m;
 	}
 
-	if (m0) {
+	if (m0 != NULL) {
 		TUNDEBUG(("Dropping mbuf\n"));
 		m_freem(m0);
 	}
@@ -858,7 +858,7 @@ tunwrite(dev, uio, ioflag)
 		return ENOBUFS;
 	mlen = MHLEN;
 
-	top = 0;
+	top = NULL;
 	mp = &top;
 	if (tp->tun_flags & TUN_LAYER2) {
 		/*
@@ -875,7 +875,7 @@ tunwrite(dev, uio, ioflag)
 		mp = &m->m_next;
 		if (error == 0 && uio->uio_resid > 0) {
 			MGET (m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				error = ENOBUFS;
 				break;
 			}
@@ -883,8 +883,8 @@ tunwrite(dev, uio, ioflag)
 		}
 	}
 	if (error) {
-		if (top)
-			m_freem (top);
+		if (top != NULL)
+			m_freem(top);
 		ifp->if_ierrors++;
 		return error;
 	}
