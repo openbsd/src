@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.3 2003/05/17 06:07:57 nate Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.4 2003/05/18 18:13:01 nate Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.39 2003/05/08 15:19:47 augustss Exp $	*/
 
 /*
@@ -171,6 +171,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_IOMEGA, USB_PRODUCT_IOMEGA_ZIP250 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
+	  PQUIRK_NOTUR,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_IOMEGA, USB_PRODUCT_IOMEGA_ZIP250_2 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  UMASS_QUIRK_NO_START_STOP,
 	  PQUIRK_NOTUR,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
