@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.16 2003/01/09 10:40:44 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.17 2003/01/09 15:58:35 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -45,7 +45,7 @@
 #define ACCEPT_FLAGS(oklist)			\
 	do {					\
 		if ((flags & ~(oklist)) &	\
-		   PFR_FLAG_ALLMASK)		\
+		    PFR_FLAG_ALLMASK)		\
 			return (EINVAL);	\
 	} while (0)
 
@@ -629,7 +629,7 @@ pfr_enqueue_addrs(struct pfr_ktable *kt, struct pfr_kentryworkq *workq,
 void
 pfr_mark_addrs(struct pfr_ktable *kt)
 {
-	struct pfr_walktree     w;
+	struct pfr_walktree	w;
 
 	bzero(&w, sizeof(w));
 	w.pfrw_op = PFRW_MARK;
@@ -1209,7 +1209,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 {
 	struct pfr_ktableworkq	 tableq;
 	struct pfr_kentryworkq	 addrq;
-	struct pfr_ktable       *kt, *shadow;
+	struct pfr_ktable	*kt, *shadow;
 	struct pfr_kentry	*p;
 	struct pfr_addr		 ad;
 	int			 i, rv, xadd = 0, xaddr = 0;
@@ -1277,7 +1277,7 @@ _bad:
 int
 pfr_ina_commit(int ticket, int *nadd, int *nchange, int flags)
 {
-	struct pfr_ktable       *p;
+	struct pfr_ktable	*p;
 	struct pfr_ktableworkq	 workq;
 	int			 s, xadd = 0, xchange = 0;
 	long			 tzero = time.tv_sec;

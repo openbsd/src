@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.301 2003/01/09 10:40:44 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.302 2003/01/09 15:58:35 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -783,11 +783,13 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 		    prev->src.addr.type == PF_ADDR_DYNIFTL ||
 		    cur->src.addr.type == PF_ADDR_TABLE ||
 		    prev->src.addr.type == PF_ADDR_TABLE ||
-		    cur->src.not !=  prev->src.not ||
+		    cur->src.not != prev->src.not ||
 		    (cur->src.addr.type == PF_ADDR_NOROUTE) !=
 		    (prev->src.addr.type == PF_ADDR_NOROUTE) ||
-		    !PF_AEQ(&cur->src.addr.v.a.addr, &prev->src.addr.v.a.addr, 0) ||
-		    !PF_AEQ(&cur->src.addr.v.a.mask, &prev->src.addr.v.a.mask, 0))
+		    !PF_AEQ(&cur->src.addr.v.a.addr,
+		    &prev->src.addr.v.a.addr, 0) ||
+		    !PF_AEQ(&cur->src.addr.v.a.mask,
+		    &prev->src.addr.v.a.mask, 0))
 			PF_SET_SKIP_STEPS(PF_SKIP_SRC_ADDR);
 		if (cur->src.port[0] != prev->src.port[0] ||
 		    cur->src.port[1] != prev->src.port[1] ||
@@ -797,11 +799,13 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 		    prev->dst.addr.type == PF_ADDR_DYNIFTL ||
 		    cur->dst.addr.type == PF_ADDR_TABLE ||
 		    prev->dst.addr.type == PF_ADDR_TABLE ||
-		    cur->dst.not !=  prev->dst.not ||
+		    cur->dst.not != prev->dst.not ||
 		    (cur->dst.addr.type == PF_ADDR_NOROUTE) !=
 		    (prev->dst.addr.type == PF_ADDR_NOROUTE) ||
-		    !PF_AEQ(&cur->dst.addr.v.a.addr, &prev->dst.addr.v.a.addr, 0) ||
-		    !PF_AEQ(&cur->dst.addr.v.a.mask, &prev->dst.addr.v.a.mask, 0))
+		    !PF_AEQ(&cur->dst.addr.v.a.addr,
+		    &prev->dst.addr.v.a.addr, 0) ||
+		    !PF_AEQ(&cur->dst.addr.v.a.mask,
+		    &prev->dst.addr.v.a.mask, 0))
 			PF_SET_SKIP_STEPS(PF_SKIP_DST_ADDR);
 		if (cur->dst.port[0] != prev->dst.port[0] ||
 		    cur->dst.port[1] != prev->dst.port[1] ||
@@ -896,7 +900,7 @@ pf_change_a(u_int32_t *a, u_int16_t *c, u_int32_t an, u_int8_t u)
 
 	*a = an;
 	*c = pf_cksum_fixup(pf_cksum_fixup(*c, ao / 65536, an / 65536, u),
-	   ao % 65536, an % 65536, u);
+	    ao % 65536, an % 65536, u);
 }
 
 #ifdef INET6
@@ -1125,7 +1129,7 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, sa_family_t af,
 		h2->ip_len = len;
 		h2->ip_off = ip_mtudisc ? IP_DF : 0;
 		ip_output(m, (void *)NULL, (void *)NULL, 0, (void *)NULL,
-		  (void *)NULL);
+		    (void *)NULL);
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -1377,16 +1381,16 @@ pf_addr_inc(struct pf_addr *addr, u_int8_t af)
 #endif /* INET6 */
 
 #define mix(a,b,c) \
-	do {				    \
-		a -= b; a -= c; a ^= (c >> 13); \
-		b -= c; b -= a; b ^= (a << 8);  \
-		c -= a; c -= b; c ^= (b >> 13); \
-		a -= b; a -= c; a ^= (c >> 12); \
-		b -= c; b -= a; b ^= (a << 16); \
-		c -= a; c -= b; c ^= (b >> 5);  \
-		a -= b; a -= c; a ^= (c >> 3);  \
-		b -= c; b -= a; b ^= (a << 10); \
-		c -= a; c -= b; c ^= (b >> 15); \
+	do {					\
+		a -= b; a -= c; a ^= (c >> 13);	\
+		b -= c; b -= a; b ^= (a << 8);	\
+		c -= a; c -= b; c ^= (b >> 13);	\
+		a -= b; a -= c; a ^= (c >> 12);	\
+		b -= c; b -= a; b ^= (a << 16);	\
+		c -= a; c -= b; c ^= (b >> 5);	\
+		a -= b; a -= c; a ^= (c >> 3);	\
+		b -= c; b -= a; b ^= (a << 10);	\
+		c -= a; c -= b; c ^= (b >> 15);	\
 	} while(0)
 
 /*
@@ -1729,7 +1733,8 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 				    r->src.addr.p.dyn->undefined)
 					return (NULL);
 				else
-					PF_POOLMASK(naddr, &r->src.addr.v.a.addr,
+					PF_POOLMASK(naddr,
+					    &r->src.addr.v.a.addr,
 					    &r->src.addr.v.a.mask, saddr, af);
 				break;
 			}
@@ -1741,8 +1746,8 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 
 			if (r->dst.port_op == PF_OP_RRG) {
 				u_int32_t	tmp_nport;
-				tmp_nport = ntohs(r->rpool.proxy_port[0])
-				    + (ntohs(dport) - ntohs(r->dst.port[0]));
+				tmp_nport = ntohs(r->rpool.proxy_port[0]) +
+				    (ntohs(dport) - ntohs(r->dst.port[0]));
 				/* wrap around if necessary */
 				if (tmp_nport > 65535)
 					tmp_nport -= 65535;
@@ -3823,7 +3828,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 				goto bad;
 			m_tag_prepend(m0, mtag);
 			if (m0->m_len < sizeof(struct ip))
-				panic("pf_route: m0->m_len < sizeof(struct ip)");
+				panic("pf_route: m0->m_len < "
+				    "sizeof(struct ip)");
 			ip = mtod(m0, struct ip *);
 		}
 	}

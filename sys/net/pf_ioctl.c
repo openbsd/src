@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.46 2003/01/09 10:40:44 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.47 2003/01/09 15:58:35 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -824,12 +824,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		s = splsoftnet();
 
 		if (pcr->action == PF_CHANGE_ADD_HEAD)
-			oldrule = TAILQ_FIRST(ruleset->rules[rs_num].active.ptr);
+			oldrule = TAILQ_FIRST(
+			    ruleset->rules[rs_num].active.ptr);
 		else if (pcr->action == PF_CHANGE_ADD_TAIL)
-			oldrule = TAILQ_LAST(ruleset->rules[rs_num].active.ptr,
-			    pf_rulequeue);
+			oldrule = TAILQ_LAST(
+			    ruleset->rules[rs_num].active.ptr, pf_rulequeue);
 		else {
-			oldrule = TAILQ_FIRST(ruleset->rules[rs_num].active.ptr);
+			oldrule = TAILQ_FIRST(
+			    ruleset->rules[rs_num].active.ptr);
 			while ((oldrule != NULL) && (oldrule->nr != pcr->nr))
 				oldrule = TAILQ_NEXT(oldrule, entries);
 			if (oldrule == NULL) {
@@ -901,10 +903,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			st = n->state;
 			if ((!psk->psk_af || st->af == psk->psk_af) &&
 			    (!psk->psk_proto || psk->psk_proto == st->proto) &&
-			    PF_MATCHA(psk->psk_src.not, &psk->psk_src.addr.v.a.addr,
-			    &psk->psk_src.addr.v.a.mask, &st->lan.addr, st->af) &&
-			    PF_MATCHA(psk->psk_dst.not, &psk->psk_dst.addr.v.a.addr,
-			    &psk->psk_dst.addr.v.a.mask, &st->ext.addr, st->af) &&
+			    PF_MATCHA(psk->psk_src.not,
+			    &psk->psk_src.addr.v.a.addr,
+			    &psk->psk_src.addr.v.a.mask, &st->lan.addr,
+			    st->af) &&
+			    PF_MATCHA(psk->psk_dst.not,
+			    &psk->psk_dst.addr.v.a.addr,
+			    &psk->psk_dst.addr.v.a.mask, &st->ext.addr,
+			    st->af) &&
 			    (psk->psk_src.port_op == 0 ||
 			    pf_match_port(psk->psk_src.port_op,
 			    psk->psk_src.port[0], psk->psk_src.port[1],
@@ -1100,7 +1106,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			else
 				st = pf_find_state(&tree_lan_ext, &key);
 			if (st != NULL) {
-				if (direction  == PF_IN) {
+				if (direction == PF_IN) {
 					PF_ACPY(&pnl->rsaddr, &st->lan.addr,
 					    st->af);
 					pnl->rsport = st->lan.port;
@@ -1640,7 +1646,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		pool->cur = TAILQ_FIRST(&pool->list);
-		PF_ACPY(&pool->counter, &pool->cur->addr.addr.v.a.addr, pca->af);
+		PF_ACPY(&pool->counter, &pool->cur->addr.addr.v.a.addr,
+		    pca->af);
 		splx(s);
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.50 2003/01/07 00:21:07 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.51 2003/01/09 15:58:35 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -192,7 +192,7 @@ pf_purge_expired_fragments(void)
 }
 
 /*
- *  Try to flush old fragments to make space for new ones
+ * Try to flush old fragments to make space for new ones
  */
 
 void
@@ -203,7 +203,7 @@ pf_flush_fragments(void)
 
 	goal = pf_nfrents * 9 / 10;
 	DPFPRINTF(("trying to free > %d frents\n",
-		   pf_nfrents - goal));
+	    pf_nfrents - goal));
 	while (goal < pf_nfrents) {
 		frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue);
 		if (frag == NULL)
@@ -214,7 +214,7 @@ pf_flush_fragments(void)
 
 	goal = pf_ncache * 9 / 10;
 	DPFPRINTF(("trying to free > %d cache entries\n",
-		   pf_ncache - goal));
+	    pf_ncache - goal));
 	while (goal < pf_ncache) {
 		frag = TAILQ_LAST(&pf_cachequeue, pf_cachequeue);
 		if (frag == NULL)
