@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.2 2004/01/13 17:32:32 mickey Exp $	*/
+/*	$OpenBSD: elf.c,v 1.3 2004/03/30 15:12:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -52,6 +52,8 @@
 #else
 #error "Unsupported ELF class"
 #endif
+
+#define	ELF_SBSS	".sbss"
 
 int
 elf_fix_header(Elf_Ehdr *eh)
@@ -179,6 +181,8 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 			} else if (!strcmp(sn, ELF_DATA))
 				np->n_type = N_DATA;
 			else if (!strcmp(sn, ELF_BSS))
+				np->n_type = N_BSS | N_EXT;
+			else if (!strcmp(sn, ELF_SBSS))
 				np->n_type = N_BSS;
 			else
 				np->n_other = '?';
