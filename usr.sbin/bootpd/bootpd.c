@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.12 2002/09/08 08:06:40 deraadt Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.13 2003/07/08 20:41:13 deraadt Exp $";
 #endif
 
 /*
@@ -114,8 +114,6 @@ static char rcsid[] = "$Id: bootpd.c,v 1.12 2002/09/08 08:06:40 deraadt Exp $";
 #define P(args) ()
 #endif
 
-extern void dumptab P((char *));
-
 PRIVATE void catcher P((int));
 PRIVATE int chk_access P((char *, int32 *));
 #ifdef VEND_CMU
@@ -186,9 +184,7 @@ char *bootpd_dump = DUMPTAB_FILE;
  */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct timeval *timeout;
 	struct bootp *bp;

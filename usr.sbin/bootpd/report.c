@@ -9,6 +9,7 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 #include <syslog.h>
 
 #include "report.h"
@@ -33,8 +34,7 @@ extern char *progname;
 static int stderr_only = 1;
 
 void
-report_init(nolog)
-	int nolog;
+report_init(int nolog)
 {
 	stderr_only = nolog;
 #ifdef SYSLOG
@@ -88,17 +88,8 @@ static int numlevels = sizeof(levelnames) / sizeof(levelnames[0]);
  * Print a log message using syslog(3) and/or stderr.
  * The message passed in should not include a newline.
  */
-#ifdef	__STDC__
 void
 report(int priority, char *fmt,...)
-#else
-/*VARARGS2*/
-void
-report(priority, fmt, va_alist)
-	int priority;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	static char buf[256];
@@ -106,11 +97,7 @@ report(priority, fmt, va_alist)
 	if ((priority < 0) || (priority >= numlevels)) {
 		priority = numlevels - 1;
 	}
-#ifdef	__STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
@@ -133,10 +120,9 @@ report(priority, fmt, va_alist)
  * Return pointer to static string which gives full filesystem error message.
  */
 char *
-get_errmsg()
+get_errmsg(void)
 {
 	extern int errno;
-	extern char *strerror();
 
 	return strerror(errno);
 }

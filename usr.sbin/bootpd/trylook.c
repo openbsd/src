@@ -16,8 +16,7 @@ int debug = 0;
 char *progname;
 
 int
-main(argc, argv)
-	char **argv;
+main(int argc, char *argv[])
 {
 	int i;
 	struct in_addr in;

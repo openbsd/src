@@ -209,3 +209,12 @@ extern hash_tbl *hwhashtable;
 extern hash_tbl *iphashtable;
 extern hash_tbl *nmhashtable;
 
+#ifdef	__STDC__
+#define P(args) args
+#else
+#define P(args) ()
+#endif
+
+void	dumptab P((char *filename));
+
+#undef P

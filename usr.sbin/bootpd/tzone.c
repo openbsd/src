@@ -28,7 +28,7 @@ int32 secondswest;
  * configuration file doesn't specify one.
  */
 void
-tzone_init()
+tzone_init(void)
 {
 #ifdef	SVR4
 	/* XXX - Is this really SunOS specific? -gwr */

@@ -22,8 +22,7 @@ int debug = 0;
 char *progname;
 
 int
-main(argc, argv)
-	char **argv;
+main(int argc, char *argv[])
 {
 	u_char ea[16];				/* Ethernet address */
 	int i;

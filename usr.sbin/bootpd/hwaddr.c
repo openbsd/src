@@ -19,6 +19,7 @@
 
 #include <net/if_arp.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef	NO_UNISTD
@@ -131,7 +132,6 @@ setarp(s, ia, ha, len)
 	int status;
 	char buf[256];
 	char *a;
-	extern char *inet_ntoa();
 
 	a = inet_ntoa(*ia);
 	snprintf(buf, sizeof(buf), "(arp -d %s; arp -s %s %s temp) "

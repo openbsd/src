@@ -34,7 +34,7 @@
 static struct ifreq ifreq[10];	/* Holds interface configuration */
 static struct ifconf ifconf;	/* points to ifreq */
 
-static int nmatch();
+static int nmatch(void *, void *);
 
 /* Return a pointer to the interface struct for the passed address. */
 struct ifreq *
@@ -109,9 +109,9 @@ getif(s, addrp)
  * internet addresses supplied.
  */
 static int
-nmatch(ca, cb)
-	u_char *ca, *cb;			/* ptrs to IP address, network order */
+nmatch(void *va, void *vb)	/* ptrs to IP address, network order */
 {
+	u_char *ca = va, *cb = vb;	/* ptrs to IP address, network order */
 	u_int m = 0;				/* count of matching bits */
 	u_int n = 4;				/* bytes left, then bitmask */
 

@@ -24,8 +24,7 @@ int debug = 0;
 char *progname;
 
 int
-main(argc, argv)
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct hostent *hep;
 	struct sockaddr ea;			/* Ethernet address */

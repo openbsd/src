@@ -53,8 +53,7 @@ dumptab(filename)
  */
 
 void
-dumptab(filename)
-	char *filename;
+dumptab(char *filename)
 {
 	int n;
 	struct host *hp;
