@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.56 2001/05/30 02:12:24 deraadt Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.57 2001/06/01 00:28:25 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -742,6 +742,9 @@ bridge_output(ifp, m, sa, rt)
 	struct ether_addr *src, *dst;
 	struct bridge_softc *sc;
 	int s;
+#ifdef IPSEC
+	struct m_tag *mtag;
+#endif /* IPSEC */
 
 	if (m->m_len < sizeof(*eh)) {
 		m = m_pullup(m, sizeof(*eh));
@@ -774,6 +777,21 @@ bridge_output(ifp, m, sa, rt)
 		struct bridge_iflist *p;
 		struct mbuf *mc;
 		int used = 0;
+
+#ifdef IPSEC
+		/*
+		 * Don't send out the packet if IPsec is needed, and
+		 * notify IPsec to do its own crypto for now.
+		 */
+		if ((mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED,
+		    NULL)) != NULL) {
+			/* Notify IPsec */
+			ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
+			m_freem(m);
+			splx(s);
+			return (0);
+		}
+#endif /* IPSEC */
 
 		LIST_FOREACH(p, &sc->sc_iflist, next) {
 			dst_if = p->ifp;
@@ -1254,6 +1272,11 @@ bridge_broadcast(sc, ifp, eh, m)
 			continue;
 		}
 
+		/* Drop non-IP frames if the appropriate flag is set. */
+		if (p->bif_flags & IFBIF_BLOCKNONIP &&
+		    bridge_blocknonip(eh, m))
+			continue;
+
 		if (bridge_filterrule(&p->bif_brlout, eh) == BRL_ACTION_BLOCK)
 			continue;
 
@@ -1267,12 +1290,6 @@ bridge_broadcast(sc, ifp, eh, m)
 				sc->sc_if.if_oerrors++;
 				continue;
 			}
-		}
-
-		if (p->bif_flags & IFBIF_BLOCKNONIP &&
-		    bridge_blocknonip(eh, mc)) {
-			m_freem(mc);
-			continue;
 		}
 
 		sc->sc_if.if_opackets++;
