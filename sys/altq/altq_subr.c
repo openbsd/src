@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.3 2001/09/07 08:47:23 kjc Exp $	*/
 /*	$KAME: altq_subr.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -1253,6 +1253,9 @@ ip4f_cache(ip, fin)
 
 	fp = ip4f_alloc();
 	fp->ip4f_id = ip->ip_id;
+	fp->ip4f_info.fi_proto = ip->ip_p;
+	fp->ip4f_info.fi_src.s_addr = ip->ip_src.s_addr;
+	fp->ip4f_info.fi_dst.s_addr = ip->ip_dst.s_addr;
 
 	/* save port numbers */
 	fp->ip4f_info.fi_sport = fin->fi_sport;
