@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.2 2001/09/05 16:15:02 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.3 2001/09/05 20:49:55 drahn Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	char		*modif;
 {
 
-	if (count == 0)
+	if (count == 0 || count == -1)
 		count = INT_MAX;
 	if (have_addr == 0){
 		addr = ddb_regs.tf.fixreg[1];
