@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: signal.c,v 1.3 2002/06/26 13:21:25 todd Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -80,7 +80,7 @@ process_signal(struct pstate *ps, int signum, int stopped, int force_ignore)
 	}
 
 	if (!ignore) {
-		fprintf(stderr, "PBMD %s child. signal: %s\n",
+		fprintf(stderr, "PMDB %s child. signal: %s\n",
 		    stopped ? "stopping" : "terminating",
 		    sys_signame[signum]);
 	} else {
