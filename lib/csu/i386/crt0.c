@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.3 1997/06/24 17:15:49 tholo Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.4 2001/07/18 23:21:18 deraadt Exp $	*/
 /*	$NetBSD: crt0.c,v 1.20 1995/06/03 13:16:08 pk Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.3 1997/06/24 17:15:49 tholo Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 2001/07/18 23:21:18 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -69,11 +69,12 @@ start()
 	argv = &kfp->kargv[0];
 	environ = argv + kfp->kargc + 1;
 
-	if ((ap = argv[0]))
+	if ((ap = argv[0])) {	
 		if ((__progname = _strrchr(ap, '/')) == NULL)
 			__progname = ap;
 		else
 			++__progname;
+	}
 
 #ifdef DYNAMIC
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
