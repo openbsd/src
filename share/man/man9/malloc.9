@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.22 2002/12/20 06:10:27 art Exp $
+.\"	$OpenBSD: malloc.9,v 1.23 2003/02/24 03:55:05 tedu Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -122,21 +122,18 @@ The following types are currently defined:
 .It Dv M_FREE
 Should be on free list.
 .It Dv M_MBUF
-Mbuf  memory.
+Mbuf memory.
 .It Dv M_DEVBUF
 Device driver memory.
-.It Dv M_SOCKET
-Socket structure.
+.It Dv M_DEBUG
+.Xr malloc 9
+debug structures.
 .It Dv M_PCB
 Protocol control block.
 .It Dv M_RTABLE
 Routing tables.
-.It Dv M_HTABLE
-IMP host tables.
 .It Dv M_FTABLE
 Fragment reassembly header.
-.It Dv M_ZOMBIE
-Zombie proc status
 .It Dv M_IFADDR
 Interface address.
 .It Dv M_SOOPTS
@@ -145,16 +142,8 @@ Socket options.
 Sysctl persistent buffers.
 .It Dv M_NAMEI
 Namei path name buffer.
-.It Dv M_GPROF
-Kernel profiling buffer.
 .It Dv M_IOCTLOPS
 Ioctl data buffer.
-.It Dv M_CRED
-Credentials.
-.It Dv M_PGRP
-Process group header.
-.It Dv M_SESSION
-Session header.
 .It Dv M_IOV
 Large IOVs.
 .It Dv M_MOUNT
@@ -177,20 +166,8 @@ UFS mount structure.
 SVID compatible shared memory segments.
 .It Dv M_VMMAP
 VM map structures.
-.It Dv M_VMMAPENT
-VM map entry structures.
-.It Dv M_VMOBJ
-VM object structure.
-.It Dv M_VMOBJHASH
-VM object hash structure.
 .It Dv M_VMPMAP
-VM pmap.
-.It Dv M_VMPVENT
-VM phys-virt mapping entry.
-.It Dv M_VMPAGER
-XXX: VM pager struct.
-.It Dv M_VMPGDATA
-XXX: VM pager private data.
+VM pmap data.
 .It Dv M_FILE
 Open file structure.
 .It Dv M_FILEDESC
@@ -201,18 +178,10 @@ Byte-range locking structures.
 Proc structures.
 .It Dv M_SUBPROC
 Proc sub-structures.
-.It Dv M_SEGMENT
-Segment for LFS.
-.It Dv M_LFSNODE
-LFS vnode private part.
-.It Dv M_FFSNODE
-FFS vnode private part.
+.It Dv M_VCLUSTER
+Cluster for VFS.
 .It Dv M_MFSNODE
 MFS vnode private part.
-.It Dv M_NQLEASE
-Nqnfs lease.
-.It Dv M_NQMHOST
-Nqnfs host address table.
 .It Dv M_NETADDR
 Export host address structure.
 .It Dv M_NFSSVC
@@ -249,16 +218,10 @@ Miscfs mount structures.
 Adosfs mount structures.
 .It Dv M_ANODE
 Adosfs anode structures and tables.
-.It Dv M_IPQ
-IP packet queue entry.
-.It Dv M_AFS
-Andrew File System.
 .It Dv M_ADOSFSBITMAP
 Adosfs bitmap.
 .It Dv M_EXT2FSNODE
 EXT2FS vnode private part.
-.It Dv M_PFIL
-Packer filter.
 .It Dv M_PFKEY
 Pfkey data.
 .It Dv M_TDB
@@ -273,65 +236,33 @@ File page dependencies.
 Inode dependencies.
 .It Dv M_NEWBLK
 New block allocation.
-.It Dv M_BMSAFEMAP
-Block or frag allocated from cyl group map.
-.It Dv M_ALLOCDIRECT
-Block or frag dependency for an inode.
-.It Dv M_INDIRDEP
-Indirect block dependencies.
-.It Dv M_ALLOCINDIR
-Block dependency for an indirect block.
-.It Dv M_FREEFRAG
-Previously used frag for an inode.
-.It Dv M_FREEBLKS
-Blocks freed from an inode.
-.It Dv M_FREEFILE
-Inode deallocated.
-.It Dv M_DIRADD
-New directory entry.
-.It Dv M_MKDIR
-New directory.
-.It Dv M_DIRREM
-Directory entry deleted.
-.It Dv M_VMPBUCKET
-VM page buckets.
 .It Dv M_VMSWAP
 VM swap structures.
 .It Dv M_RAIDFRAME
 RAIDframe data.
 .It Dv M_UVMAMAP
-UVM amap and realted.
+UVM amap and related.
 .It Dv M_UVMAOBJ
-UVM aobj and realted.
-.It Dv M_POOL
-Pool memory.
+UVM aobj and related.
 .It Dv M_USB
 USB general.
 .It Dv M_USBDEV
 USB device driver.
 .It Dv M_USBHC
 USB host controller.
-.It Dv M_PIPE
-Pipe structures.
 .It Dv M_MEMDESC
 Memory range.
-.It Dv M_DEBUG
-.Xr malloc 9
-debug structures.
-.It Dv M_KNOTE
-Kernel event queue.
-.It Dv M_CRYPTO_DATA
-Cryptographic framework data buffers.
-.It Dv M_IPSEC_POLICY
-.Xr ipsec 4
-SPD structures.
+.It Dv M_UFS_EXTATTR
+UFS Extended Attributes.
 .It Dv M_CREDENTIALS
 .Xr ipsec 4
 related credentials.
 .It Dv M_PACKET_TAGS
 Packet-attached information tags.
-.It Dv M_CRYPTO_OPS
-Cryptographic framework operation request structures.
+.It Dv M1394CTL
+IEEE 1394 control structures.
+.It Dv M1394DATA
+IEEE 1394 data buffers.
 .It Dv M_IP6OPT
 IPv6 options.
 .It Dv M_IP6NDP
