@@ -185,6 +185,7 @@
 ./usr/share/man/cat8/hp300/format.0
 ./usr/share/man/cat8/hp300/makedev.0
 ./usr/share/man/cat8/i386/MAKEDEV.0
+./usr/share/man/cat8/i386/boot.com.0
 ./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/sparc/MAKEDEV.0
 ./usr/share/man/cat8/sparc/makedev.0
