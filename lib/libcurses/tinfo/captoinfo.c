@@ -1,4 +1,4 @@
-/*	$OpenBSD: captoinfo.c,v 1.7 2000/03/26 16:45:03 millert Exp $	*/
+/*	$OpenBSD: captoinfo.c,v 1.8 2000/04/04 16:49:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -94,7 +94,7 @@
 #include <ctype.h>
 #include <tic.h>
 
-MODULE_ID("$From: captoinfo.c,v 1.36 2000/03/19 23:04:26 tom Exp $")
+MODULE_ID("$From: captoinfo.c,v 1.37 2000/04/01 20:07:34 tom Exp $")
 
 #define MAX_PUSHED	16	/* max # args we can push onto the stack */
 
@@ -462,8 +462,8 @@ _nc_captoinfo(
 	      invalid:
 		dp = save_char(dp, '%');
 		s--;
-		_nc_warning("unknown %% code %s in %s",
-		    _tracechar(*s), cap);
+		_nc_warning("unknown %% code %s (%#x) in %s",
+		    unctrl(*s), (*s) & 0xff, cap);
 		break;
 	    }
 	    break;

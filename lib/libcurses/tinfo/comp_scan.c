@@ -50,7 +50,7 @@
 #include <term_entry.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_scan.c,v 1.41 2000/03/25 17:25:33 tom Exp $")
+MODULE_ID("$From: comp_scan.c,v 1.42 2000/04/01 19:08:36 tom Exp $")
 
 /*
  * Maximum length of string capability we'll accept before raising an error.
@@ -196,7 +196,7 @@ _nc_get_token(void)
 #endif
 	 && !strchr(terminfo_punct, (char) ch)) {
 	    _nc_warning("Illegal character (expected alphanumeric or %s) - %s",
-		terminfo_punct, _tracechar((chtype) ch));
+		terminfo_punct, unctrl(ch));
 	    _nc_panic_mode(separator);
 	    goto start_token;
 	}
@@ -331,7 +331,7 @@ _nc_get_token(void)
 	    case '@':
 		if ((ch = next_char()) != separator)
 		    _nc_warning("Missing separator after `%s', have %s",
-			buffer, _tracechar((chtype) ch));
+			buffer, unctrl(ch));
 		_nc_curr_token.tk_name = buffer;
 		type = CANCEL;
 		break;
@@ -369,8 +369,7 @@ _nc_get_token(void)
 	    default:
 		/* just to get rid of the compiler warning */
 		type = UNDEF;
-		_nc_warning("Illegal character - %s",
-		    _tracechar((chtype) ch));
+		_nc_warning("Illegal character - %s", unctrl(ch));
 	    }
 	}			/* end else (first_column == FALSE) */
     }				/* end else (ch != EOF) */
@@ -469,8 +468,7 @@ _nc_trans_string(char *ptr, char *last)
 		_nc_err_abort("Premature EOF");
 
 	    if (!(is7bits(ch) && isprint(ch))) {
-		_nc_warning("Illegal ^ character - %s",
-		    _tracechar((unsigned char) ch));
+		_nc_warning("Illegal ^ character - %s", unctrl(ch));
 	    }
 	    if (ch == '?') {
 		*(ptr++) = '\177';
@@ -564,7 +562,7 @@ _nc_trans_string(char *ptr, char *last)
 
 		default:
 		    _nc_warning("Illegal character %s in \\ sequence",
-			_tracechar((unsigned char) ch));
+			unctrl(ch));
 		    *(ptr++) = (char) ch;
 		}		/* endswitch (ch) */
 	    }			/* endelse (ch < '0' ||  ch > '7') */
