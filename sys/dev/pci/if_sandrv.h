@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_sandrv.h,v 1.2 2004/06/26 20:17:23 mcbride Exp $	*/
+
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
  * All rights reserved.  www.sangoma.com
