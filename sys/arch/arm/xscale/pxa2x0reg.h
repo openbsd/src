@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.3 2005/01/03 04:43:47 drahn Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.4 2005/01/04 03:49:49 drahn Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -113,13 +113,17 @@
 #define PXA2X0_LCDC_SIZE	0x220
 #define PXA2X0_MEMCTL_BASE	0x48000000 /* Memory Controller */
 #define PXA2X0_MEMCTL_SIZE	0x48
+#define PXA2X0_USBHC_BASE	0x4c000000 /* USB Host Controller */
+#define PXA2X0_USBHC_SIZE	0x70
+
 
 /* width of interrupt controller */
 #define ICU_LEN			32   /* but [0..7,15,16] is not used */
 #define ICU_INT_HWMASK		0xffffff00
-#define PXA2X0_IRQ_MIN 8	/* 0..7 are not used by integrated 
-				   peripherals */
+#define PXA2X0_IRQ_MIN 1
 
+#define PXA2X0_INT_USBH2	2
+#define PXA2X0_INT_USBH1	3
 #define PXA2X0_INT_GPIO0	8
 #define PXA2X0_INT_GPIO1	9
 #define PXA2X0_INT_GPION	10	/* irq from GPIO[2..80] */
