@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.31 2000/11/21 06:44:04 angelos Exp $	*/
-/*	$EOM: ipsec.c,v 1.139 2000/10/16 06:01:34 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.32 2000/12/12 01:45:31 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -251,7 +251,9 @@ ipsec_sa_check_flow (struct sa *sa, void *v_arg)
     return 0;
 
   return isa->src_net == isa2->src_net && isa->src_mask == isa2->src_mask
-    && isa->dst_net == isa2->dst_net && isa->dst_mask == isa2->dst_mask;
+    && isa->dst_net == isa2->dst_net && isa->dst_mask == isa2->dst_mask
+    && isa->tproto == isa2->tproto && isa->sport == isa2->sport
+    && isa->dport == isa2->dport;
 }
 
 /*
@@ -261,7 +263,7 @@ ipsec_sa_check_flow (struct sa *sa, void *v_arg)
 static void
 ipsec_finalize_exchange (struct message *msg)
 {
-  struct sa *isakmp_sa;
+  struct sa *isakmp_sa = msg->isakmp_sa;
   struct ipsec_sa *isa;
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
@@ -275,7 +277,6 @@ ipsec_finalize_exchange (struct message *msg)
 	{
 	case ISAKMP_EXCH_ID_PROT:
 	case ISAKMP_EXCH_AGGRESSIVE:
-	  isakmp_sa = msg->isakmp_sa;
 	  isa = isakmp_sa->data;
 	  isa->hash = ie->hash->type;
 	  isa->prf_type = ie->prf_type;
@@ -328,16 +329,18 @@ ipsec_finalize_exchange (struct message *msg)
 		ipsec_set_network (ie->id_cr, ie->id_ci, isa);
 
 	      LOG_DBG ((LOG_EXCHANGE, 50,
-			"ipsec_finalize_exchange: src %x %x dst %x %x",
+			"ipsec_finalize_exchange: "
+			"src %x %x dst %x %x tproto %u sport %u dport %u",
 			ntohl (isa->src_net), ntohl (isa->src_mask),
-			ntohl (isa->dst_net), ntohl (isa->dst_mask)));
+			ntohl (isa->dst_net), ntohl (isa->dst_mask),
+			ntohs (isa->tproto), isa->sport, ntohs (isa->dport)));
 
 	      /*
 	       * If this is not an SA acquired by the kernel, it needs
 	       * to have a SPD entry (a.k.a. flow) set up.
 	       */
 	      if (!(sa->flags & SA_FLAG_ONDEMAND)
-		  && sysdep_ipsec_enable_sa (sa))
+		  && sysdep_ipsec_enable_sa (sa, isakmp_sa))
 		/* XXX Tear down this exchange.  */
 		return;
 
@@ -363,12 +366,23 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     case IPSEC_ID_IPV4_ADDR:
       memcpy (&isa->src_net, src_id + ISAKMP_ID_DATA_OFF, sizeof isa->src_net);
       isa->src_mask = htonl (0xffffffff);
+      memcpy (&isa->tproto,
+	      src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PROTO_OFF,
+	      IPSEC_ID_PROTO_LEN);
+      memcpy (&isa->sport, src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
+	      IPSEC_ID_PORT_LEN);
       break;
+
     case IPSEC_ID_IPV4_ADDR_SUBNET:
       memcpy (&isa->src_net, src_id + ISAKMP_ID_DATA_OFF, sizeof isa->src_net);
       memcpy (&isa->src_mask,
 	      src_id + ISAKMP_ID_DATA_OFF + sizeof isa->src_net,
 	      sizeof isa->src_mask);
+      memcpy (&isa->tproto,
+	      src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PROTO_OFF,
+	      IPSEC_ID_PROTO_LEN);
+      memcpy (&isa->sport, src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
+	      IPSEC_ID_PORT_LEN);
       break;
   }
 
@@ -379,12 +393,23 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     case IPSEC_ID_IPV4_ADDR:
       memcpy (&isa->dst_net, dst_id + ISAKMP_ID_DATA_OFF, sizeof isa->dst_net);
       isa->dst_mask = htonl (0xffffffff);
+      memcpy (&isa->tproto,
+	      dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PROTO_OFF,
+	      IPSEC_ID_PROTO_LEN);
+      memcpy (&isa->dport, dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
+	      IPSEC_ID_PORT_LEN);
       break;
+
     case IPSEC_ID_IPV4_ADDR_SUBNET:
       memcpy (&isa->dst_net, dst_id + ISAKMP_ID_DATA_OFF, sizeof isa->dst_net);
       memcpy (&isa->dst_mask,
 	      dst_id + ISAKMP_ID_DATA_OFF + sizeof isa->dst_net,
 	      sizeof isa->dst_mask);
+      memcpy (&isa->tproto,
+	      dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PROTO_OFF,
+	      IPSEC_ID_PROTO_LEN);
+      memcpy (&isa->dport, dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
+	      IPSEC_ID_PORT_LEN);
       break;
     }
 }
@@ -1401,12 +1426,12 @@ ipsec_keymat_length (struct proto *proto)
 /*
  * Out of a named section SECTION in the configuration file find out
  * the network address and mask as well as the ID type.  Put the info
- * in the areas pointed to by ADDR, MASK and ID respectively.  Return
- * 0 on success and -1 on failure.
+ * in the areas pointed to by ADDR, MASK, TPROTO, PORT, and ID respectively.
+ * Return 0 on success and -1 on failure.
  */
 int
 ipsec_get_id (char *section, int *id, struct in_addr *addr,
-	      struct in_addr *mask)
+	      struct in_addr *mask, u_int8_t *tproto, u_int16_t *port)
 {
   char *type, *address, *netmask;
 
@@ -1435,6 +1460,10 @@ ipsec_get_id (char *section, int *id, struct in_addr *addr,
 		     address);
 	  return -1;
 	}
+
+      *tproto = conf_get_num (section, "Protocol", 0);
+      if (*tproto)
+	*port = conf_get_num (section, "Port", 0);
       break;
 
 #ifdef notyet
@@ -1475,6 +1504,10 @@ ipsec_get_id (char *section, int *id, struct in_addr *addr,
 		     netmask);
 	  return -1;
 	}
+
+      *tproto = conf_get_num (section, "Protocol", 0);
+      if (*tproto)
+	*port = conf_get_num (section, "Port", 0);
       break;
 
 #ifdef notyet
@@ -1611,8 +1644,10 @@ ipsec_build_id (char *section, size_t *sz)
   struct in_addr addr, mask;
   u_int8_t *p;
   int id;
+  u_int8_t tproto = 0;
+  u_int16_t port = 0;
 
-  if (ipsec_get_id (section, &id, &addr, &mask))
+  if (ipsec_get_id (section, &id, &addr, &mask, &tproto, &port))
     return 0;
 
   *sz = ISAKMP_ID_SZ;
@@ -1640,10 +1675,14 @@ ipsec_build_id (char *section, size_t *sz)
     {
     case IPSEC_ID_IPV4_ADDR:
       encode_32 (p + ISAKMP_ID_DATA_OFF, ntohl (addr.s_addr));
+      SET_IPSEC_ID_PROTO (p + ISAKMP_ID_DOI_DATA_OFF, tproto);
+      SET_IPSEC_ID_PORT (p + ISAKMP_ID_DOI_DATA_OFF, port);
       break;
     case IPSEC_ID_IPV4_ADDR_SUBNET:
       encode_32 (p + ISAKMP_ID_DATA_OFF, ntohl (addr.s_addr));
       encode_32 (p + ISAKMP_ID_DATA_OFF + 4, ntohl (mask.s_addr));
+      SET_IPSEC_ID_PROTO (p + ISAKMP_ID_DOI_DATA_OFF, tproto);
+      SET_IPSEC_ID_PORT (p + ISAKMP_ID_DOI_DATA_OFF, port);
       break;
     }
 
