@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.2 1996/06/23 14:19:04 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.3 1996/09/15 21:56:11 millert Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -638,7 +638,8 @@ bits_to_string(v, cp)
 			np++;
 		if ((v & (1 << (f - 1))) == 0)
 			continue;
-		bp += sprintf(bp, "%c%.*s", sep, np - cp, cp);
+		bp += snprintf(bp, sizeof(buf) - (bp - &buf[0]),
+			       "%c%.*s", sep, np - cp, cp);
 		sep = ',';
 	}
 	if (sep != '<')
