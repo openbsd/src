@@ -1,0 +1,5 @@
+.undef A
+B=echo zoinx
+a:
+	@echo ${A:sh}
+	@echo ${B:sh}

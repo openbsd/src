@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.3 2000/07/23 15:31:14 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2000/07/24 21:53:27 espie Exp $
 
 NOMAN=
 NOPROG=
 
-regress: t1 t2 t3 t4 t5 t6 t7 t8
+regress: t1 t2 t3 t4 t5 t6 t7 t8 t9
 
 t1: t1.out
 	env -i PATH=${PATH} ${MAKE} -e -r -f ${.CURDIR}/mk1 | diff - t1.out
@@ -45,10 +45,13 @@ t8:
 	touch goodfile phony
 	cd ${.CURDIR} && env -i PATH=${PATH} ${MAKE} -r -f mk8 | diff - t8.out
 
+t9:
+	cd ${.CURDIR} && env -i PATH=${PATH} ${MAKE} -r -f mk9 2>&1 | diff - t9.out
+	
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 regress
+.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 regress
 
 CLEANFILES+=t1.out
 
