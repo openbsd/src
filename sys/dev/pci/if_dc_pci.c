@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.21 2001/12/06 20:12:00 jason Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.22 2001/12/13 17:43:03 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -457,7 +457,7 @@ void dc_pci_attach(parent, self, aux)
 
 	/* Remember the SRM console media setting */
 	if (DC_IS_INTEL(sc)) {
-		command = pci_read_config(dev, DC_PCI_CFDD, 4);
+		command = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFDD);
 		command &= ~(DC_CFDD_SNOOZE_MODE|DC_CFDD_SLEEP_MODE);
 		switch ((command >> 8) & 0xff) {
 		case 3: 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.20 2001/12/06 21:22:07 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.21 2001/12/13 17:43:02 nate Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -37,6 +37,10 @@
 /*
  * 21143 and clone common register definitions.
  */
+
+#ifdef __alpha__
+#define SRM_MEDIA
+#endif
 
 #define DC_BUSCTL		0x00	/* bus control */
 #define DC_TXSTART		0x08	/* tx start demand */

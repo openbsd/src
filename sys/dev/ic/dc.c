@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.43 2001/12/08 04:44:37 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.44 2001/12/13 17:43:02 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -129,10 +129,6 @@
 #include <dev/pci/pcidevs.h>
 
 #define DC_USEIOSPACE
-#ifdef __alpha__
-#define SRM_MEDIA
-#endif
-
 #include <dev/ic/dcreg.h>
 
 int dc_intr		__P((void *));
