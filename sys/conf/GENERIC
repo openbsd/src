@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.85 2001/09/17 17:04:27 art Exp $
+#	$OpenBSD: GENERIC,v 1.86 2002/03/14 00:42:25 miod Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -15,6 +15,7 @@ option		DDB		# in-kernel debugger
 option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
 option		KMEMSTATS	# collect malloc(9) statistics
+option		PTRACE		# ptrace(2) system call
 
 option		CRYPTO		# Cryptographic framework
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2001/06/23 05:40:57 art Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2002/03/14 00:42:24 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.17 1996/05/06 20:05:24 gwr Exp $	*/
 
 /*
@@ -63,27 +63,8 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 
-static __inline struct frame   *process_frame __P((struct proc *p));
-static __inline struct fpframe *process_fpframe __P((struct proc *p));
-
-static __inline struct frame *
-process_frame(p)
-	struct proc *p;
-{
-	void *ptr;
-
-	ptr = p->p_md.md_regs;
-
-	return (ptr);
-}
-
-static __inline struct fpframe *
-process_fpframe(p)
-	struct proc *p;
-{
-
-	return (&p->p_addr->u_pcb.pcb_fpregs);
-}
+#define	process_frame(p)	(struct frame *)&((p)->p_md.md_regs)
+#define	process_fpframe(p)	&((p)->p_addr->u_pcb.pcb_fpregs)
 
 int
 process_read_regs(p, regs)
@@ -113,6 +94,8 @@ process_read_fpregs(p, regs)
 
 	return (0);
 }
+
+#ifdef PTRACE
 
 int
 process_write_regs(p, regs)
@@ -197,3 +180,5 @@ process_set_pc(p, addr)
 
 	return (0);
 }
+
+#endif	/* PTRACE */

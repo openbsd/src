@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.16 2002/02/13 19:08:06 art Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.17 2002/03/14 00:42:25 miod Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -553,6 +553,8 @@ hpux_sys_rtprio(cp, v, retval)
 
 /* hpux_sys_advise() is found in hpux_machdep.c */
 
+#ifdef PTRACE
+
 int
 hpux_sys_ptrace(p, v, retval)
 	struct proc *p;
@@ -629,6 +631,8 @@ hpux_sys_ptrace(p, v, retval)
 #endif
 	return (error);
 }
+
+#endif	/* PTRACE */
 
 #ifdef SYSVSHM
 #include <sys/shm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.23 2002/03/11 15:39:27 art Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.24 2002/03/14 00:42:25 miod Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -89,8 +89,10 @@ struct proc_target {
 	{ DT_DIR, N(".."),	Proot,		NULL },
 	{ DT_REG, N("file"),	Pfile,		procfs_validfile },
 	{ DT_REG, N("mem"),	Pmem,		NULL },
+#ifdef PTRACE
 	{ DT_REG, N("regs"),	Pregs,		procfs_validregs },
 	{ DT_REG, N("fpregs"),	Pfpregs,	procfs_validfpregs },
+#endif
 	{ DT_REG, N("ctl"),	Pctl,		NULL },
 	{ DT_REG, N("status"),	Pstatus,	NULL },
 	{ DT_REG, N("note"),	Pnote,		NULL },
@@ -550,9 +552,12 @@ procfs_getattr(v)
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 
 	switch (pfs->pfs_type) {
-	case Pmem:
 	case Pregs:
 	case Pfpregs:
+#ifndef PTRACE
+		break;
+#endif
+	case Pmem:
 		/*
 		 * If the process has exercised some setuid or setgid
 		 * privilege, then rip away read/write permission so
@@ -640,12 +645,16 @@ procfs_getattr(v)
 		break;
 
 	case Pregs:
+#ifdef PTRACE
 		vap->va_bytes = vap->va_size = sizeof(struct reg);
+#endif
 		break;
 
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
 	case Pfpregs:
+#ifdef PTRACE
 		vap->va_bytes = vap->va_size = sizeof(struct fpreg);
+#endif
 		break;
 #endif
 
@@ -659,8 +668,10 @@ procfs_getattr(v)
 		vap->va_bytes = vap->va_size = 0;
 		break;
 
+#ifdef DIAGNOSTIC
 	default:
 		panic("procfs_getattr");
+#endif
 	}
 
 	return (error);

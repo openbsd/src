@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.6 2002/03/12 11:58:14 art Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.7 2002/03/14 00:42:20 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
 
 /*-
@@ -108,29 +108,6 @@ process_read_regs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
-{
-
-	regtoframe(regs, process_frame(p));
-	process_frame(p)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
-	process_pcb(p)->pcb_hw.apcb_usp = regs->r_regs[R_SP];
-	return (0);
-}
-
-int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
-{
-	struct trapframe *frame = process_frame(p);
-
-	frame->tf_regs[FRAME_PC] = (u_int64_t)addr;
-	return (0);
-}
-
-int
 process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
@@ -143,6 +120,43 @@ process_read_fpregs(p, regs)
 	}
 
 	bcopy(process_fpframe(p), regs, sizeof(struct fpreg));
+	return (0);
+}
+
+#ifdef PTRACE
+
+int
+process_write_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+
+	regtoframe(regs, process_frame(p));
+	process_frame(p)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
+	process_pcb(p)->pcb_hw.apcb_usp = regs->r_regs[R_SP];
+	return (0);
+}
+
+int
+process_sstep(p, sstep)
+	struct proc *p;
+	int sstep;
+{
+
+	if (sstep)
+		return (EINVAL);
+
+	return (0);
+}
+
+int
+process_set_pc(p, addr)
+	struct proc *p;
+	caddr_t addr;
+{
+	struct trapframe *frame = process_frame(p);
+
+	frame->tf_regs[FRAME_PC] = (u_int64_t)addr;
 	return (0);
 }
 
@@ -348,3 +362,5 @@ process_sstep(struct proc *p, int sstep)
 
 	return (0);
 }
+
+#endif	/* PTRACE */

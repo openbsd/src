@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.9 2001/03/09 05:44:42 smurph Exp $ */
+/*	$OpenBSD: process_machdep.c,v 1.10 2002/03/14 00:42:24 miod Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -82,10 +82,28 @@ process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-
 	bcopy((caddr_t)USER_REGS(p), (caddr_t)regs, sizeof(struct reg));
 	return (0);
 }
+
+int
+process_read_fpregs(p, regs)
+	struct proc     *p;
+	struct fpreg    *regs;
+{
+#if 0
+	extern struct fpstate   initfpstate;
+	struct fpstate          *statep = &initfpstate;
+
+	/* NOTE: struct fpreg == struct fpstate */
+	if (p->p_md.md_fpstate)
+		statep = p->p_md.md_fpstate;
+	bcopy(statep, regs, sizeof(struct fpreg));
+#endif
+	return 0;
+}
+
+#ifdef PTRACE
 
 int
 process_write_regs(p, regs)
@@ -124,23 +142,6 @@ process_set_pc(p, addr)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc     *p;
-	struct fpreg    *regs;
-{
-#if 0
-	extern struct fpstate   initfpstate;
-	struct fpstate          *statep = &initfpstate;
-
-	/* NOTE: struct fpreg == struct fpstate */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
-	bcopy(statep, regs, sizeof(struct fpreg));
-#endif
-	return 0;
-}
-
-int
 process_write_fpregs(p, regs)
 	struct proc     *p;
 	struct fpreg    *regs;
@@ -153,3 +154,5 @@ process_write_fpregs(p, regs)
 #endif
 	return 0;
 }
+
+#endif	/* PTRACE */

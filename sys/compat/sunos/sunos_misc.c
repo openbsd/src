@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.34 2002/02/13 19:08:06 art Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.35 2002/03/14 00:42:25 miod Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -994,13 +994,7 @@ sunos_sys_setrlimit(p, v, retval)
 	return compat_43_sys_setrlimit(p, uap, retval);
 }
 
-/* for the m68k machines */
-#ifndef PT_GETFPREGS
-#define PT_GETFPREGS -1
-#endif
-#ifndef PT_SETFPREGS
-#define PT_SETFPREGS -1
-#endif
+#ifdef PTRACE
 
 static int sreq2breq[] = {
 	PT_TRACE_ME,    PT_READ_I,      PT_READ_D,      -1,
@@ -1036,6 +1030,8 @@ sunos_sys_ptrace(p, v, retval)
 
 	return sys_ptrace(p, &pa, retval);
 }
+
+#endif	/* PTRACE */
 
 /*
  * SunOS reboot system call (for compatibility).

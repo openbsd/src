@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.11 1999/06/07 07:17:48 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.12 2002/03/14 00:42:25 miod Exp $
 ;	$NetBSD: syscalls.master,v 1.33 1996/02/28 16:05:43 pk Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -69,8 +69,12 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	STD		{ int sunos_sys_ostime(int time); }
+#ifdef PTRACE
 26	STD		{ long sunos_sys_ptrace(int req, pid_t pid, \
 			    caddr_t addr, int data, char *addr2); }
+#else
+26	UNIMPL		sunos_ptrace
+#endif
 27	UNIMPL		sunos_alarm
 28	UNIMPL		sunos_fstat
 29	UNIMPL		sunos_pause

@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.15 2001/09/21 15:31:59 art Exp $
+;	$OpenBSD: syscalls.master,v 1.16 2002/03/14 00:42:25 miod Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -92,8 +92,12 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	NOARGS		{ uid_t sys_geteuid(void); }
+#ifdef PTRACE
 26	NOARGS		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
 			    int data); }
+#else
+26	UNIMPL		ptrace
+#endif
 27	NOARGS		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
 28	NOARGS		{ ssize_t sys_sendmsg(int s, \

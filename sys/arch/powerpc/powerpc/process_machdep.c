@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2001/07/09 01:11:09 mickey Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2002/03/14 00:42:24 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
 
 /*
@@ -37,6 +37,31 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
+int
+process_read_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	struct trapframe *tf = trapframe(p);
+
+	bcopy(&(tf->fixreg[0]), &(regs->gpr[0]), sizeof(regs->gpr));
+	bzero(&(regs->fpr[0]), sizeof(regs->fpr));
+	/* 
+	 * need to do floating point here
+	 */
+	regs->pc  = tf->srr0;
+	regs->ps  = tf->srr1; /* is this the correct value for this ? */
+	regs->cnd = tf->cr;
+	regs->lr  = tf->lr;
+	regs->cnt = tf->ctr;
+	regs->xer = tf->xer;
+	regs->mq  = 0; /*  what should this really be? */
+
+	return (0);
+}
+
+#ifdef PTRACE
+
 /*
  * Set the process's program counter.
  */
@@ -64,28 +89,7 @@ process_sstep(p, sstep)
 		tf->srr1 &= ~PSL_SE;
 	return 0;
 }
-int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
-{
-	struct trapframe *tf = trapframe(p);
 
-	bcopy(&(tf->fixreg[0]), &(regs->gpr[0]), sizeof(regs->gpr));
-	bzero(&(regs->fpr[0]), sizeof(regs->fpr));
-	/* 
-	 * need to do floating point here
-	 */
-	regs->pc  = tf->srr0;
-	regs->ps  = tf->srr1; /* is this the correct value for this ? */
-	regs->cnd = tf->cr;
-	regs->lr  = tf->lr;
-	regs->cnt = tf->ctr;
-	regs->xer = tf->xer;
-	regs->mq  = 0; /*  what should this really be? */
-
-	return (0);
-}
 int
 process_write_regs(p, regs)
 	struct proc *p;
@@ -107,3 +111,5 @@ process_write_regs(p, regs)
 
 	return (0);
 }
+
+#endif	/* PTRACE */

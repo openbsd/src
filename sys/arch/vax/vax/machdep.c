@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.53 2002/02/17 22:59:53 maja Exp $ */
+/* $OpenBSD: machdep.c,v 1.54 2002/03/14 00:42:24 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -643,6 +643,8 @@ process_read_regs(p, regs)
 	return 0;
 }
 
+#ifdef PTRACE
+
 int
 process_write_regs(p, regs)
 	struct proc    *p;
@@ -699,6 +701,8 @@ process_sstep(p, sstep)
 
 	return (0);
 }
+
+#endif	/* PTRACE */
 
 #undef PHYSMEMDEBUG
 /*

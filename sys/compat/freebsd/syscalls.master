@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.16 2001/11/27 19:34:20 maja Exp $
+	$OpenBSD: syscalls.master,v 1.17 2002/03/14 00:42:25 miod Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -82,8 +82,12 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	NOARGS		{ uid_t sys_geteuid(void); }
+#ifdef PTRACE
 26	STD		{ int freebsd_sys_ptrace(int req, pid_t pid, \
 			    caddr_t addr, int data); }
+#else
+26	UNIMPL		ptrace
+#endif
 27	NOARGS		{ int sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
 28	NOARGS		{ int sys_sendmsg(int s, caddr_t msg, int flags); }

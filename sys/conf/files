@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.240 2002/02/22 20:37:45 drahn Exp $
+#	$OpenBSD: files,v 1.241 2002/03/14 00:42:25 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -502,7 +502,7 @@ file kern/subr_userconf.c		boot_config
 file kern/subr_xxx.c
 file kern/sys_generic.c
 file kern/sys_pipe.c
-file kern/sys_process.c
+file kern/sys_process.c			ptrace
 file kern/sys_socket.c
 file kern/syscalls.c			syscall_debug
 file kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
@@ -564,11 +564,11 @@ file miscfs/portal/portal_vfsops.c	portal
 file miscfs/portal/portal_vnops.c	portal
 file miscfs/procfs/procfs_cmdline.c	procfs
 file miscfs/procfs/procfs_ctl.c		procfs
-file miscfs/procfs/procfs_fpregs.c
+file miscfs/procfs/procfs_fpregs.c	ptrace
 file miscfs/procfs/procfs_linux.c	procfs
 file miscfs/procfs/procfs_mem.c
 file miscfs/procfs/procfs_note.c	procfs
-file miscfs/procfs/procfs_regs.c
+file miscfs/procfs/procfs_regs.c	ptrace
 file miscfs/procfs/procfs_status.c	procfs
 file miscfs/procfs/procfs_subr.c	procfs
 file miscfs/procfs/procfs_vfsops.c	procfs

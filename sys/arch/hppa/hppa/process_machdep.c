@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.4 2002/03/14 00:42:24 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -48,20 +48,22 @@ process_read_regs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
-{
-	bcopy (&regs[1], &p->p_md.md_regs->tf_r1, sizeof(*regs) - sizeof(*regs));
-	return 0;
-}
-
-int
 process_read_fpregs(p, fpregs)
 	struct proc *p;
 	struct fpreg *fpregs;
 {
 	bcopy (p->p_addr->u_pcb.pcb_fpregs, fpregs, sizeof(*fpregs));
+	return 0;
+}
+
+#ifdef PTRACE
+
+int
+process_write_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	bcopy (&regs[1], &p->p_md.md_regs->tf_r1, sizeof(*regs) - sizeof(*regs));
 	return 0;
 }
 
@@ -94,3 +96,4 @@ process_set_pc(p, addr)
 	return 0;
 }
 
+#endif	/* PTRACE */

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.8 2001/05/16 17:14:37 millert Exp $
+	$OpenBSD: syscalls.master,v 1.9 2002/03/14 00:42:24 miod Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -74,8 +74,12 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	NOARGS		{ uid_t sys_geteuid(void); }
+#ifdef PTRACE
 26	NOARGS		{ int sys_ptrace(int req, pid_t pid, \
 			    caddr_t addr, int data); }
+#else
+26	UNIMPL		ptrace
+#endif
 27	NOARGS		{ int sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
 28	NOARGS		{ int sys_sendmsg(int s, caddr_t msg, int flags); }

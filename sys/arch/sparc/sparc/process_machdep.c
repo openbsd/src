@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2002/02/20 22:28:23 deraadt Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2002/03/14 00:42:24 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.6 1996/03/14 21:09:26 christos Exp $ */
 
 /*
@@ -74,8 +74,6 @@
 #include <machine/frame.h>
 #include <sys/ptrace.h>
 
-u_int32_t process_get_wcookie(struct proc *p);
-
 int
 process_read_regs(p, regs)
 	struct proc *p;
@@ -85,6 +83,23 @@ process_read_regs(p, regs)
 	bcopy(p->p_md.md_tf, (caddr_t)regs, sizeof(struct reg));
 	return (0);
 }
+
+int
+process_read_fpregs(p, regs)
+	struct proc	*p;
+	struct fpreg	*regs;
+{
+	extern struct fpstate	initfpstate;
+	struct fpstate		*statep = &initfpstate;
+
+	/* NOTE: struct fpreg == struct fpstate */
+	if (p->p_md.md_fpstate)
+		statep = p->p_md.md_fpstate;
+	bcopy(statep, regs, sizeof(struct fpreg));
+	return 0;
+}
+
+#ifdef PTRACE
 
 int
 process_write_regs(p, regs)
@@ -118,24 +133,9 @@ process_set_pc(p, addr)
 }
 
 int
-process_read_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
-{
-	extern struct fpstate	initfpstate;
-	struct fpstate		*statep = &initfpstate;
-
-	/* NOTE: struct fpreg == struct fpstate */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
-	bcopy(statep, regs, sizeof(struct fpreg));
-	return 0;
-}
-
-int
 process_write_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
+	struct proc	*p;
+	struct fpreg	*regs;
 {
 	if (p->p_md.md_fpstate == NULL)
 		return EINVAL;
@@ -144,9 +144,4 @@ struct fpreg	*regs;
 	return 0;
 }
 
-u_int32_t
-process_get_wcookie(p)
-	struct proc *p;
-{
-	return p->p_addr->u_pcb.pcb_wcookie;
-}
+#endif	/* PTRACE */

@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.48 2002/02/22 20:37:45 drahn Exp $
+;	$OpenBSD: syscalls.master,v 1.49 2002/03/14 00:42:25 miod Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -81,8 +81,12 @@
 23	STD		{ int sys_setuid(uid_t uid); }
 24	STD		{ uid_t sys_getuid(void); }
 25	STD		{ uid_t sys_geteuid(void); }
+#ifdef PTRACE
 26	STD		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
 			    int data); }
+#else
+26	UNIMPL		ptrace
+#endif
 27	STD		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
 28	STD		{ ssize_t sys_sendmsg(int s, \
