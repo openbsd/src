@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.4 1997/09/29 03:52:20 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.5 1997/10/08 19:23:54 mickey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -12,10 +12,6 @@ option		VM86		# Virtual 8086 emulation
 option		USER_LDT	# user-settable LDT; used by WINE
 option		XSERVER
 
-# Some BIOSes don't get the size of extended memory right.  If you
-# have a broken BIOS, uncomment the following and set the value
-# properly for your system.
-#option		EXTMEM_SIZE=...	# size of extended memory
 #option		DUMMY_NOPS	# speed hack; recommended
 
 option		COMPAT_SVR4	# binary compatibility with SVR4
