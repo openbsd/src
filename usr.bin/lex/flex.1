@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.4 1998/06/11 04:15:31 deraadt Exp $
+.\"	$OpenBSD: flex.1,v 1.5 1998/08/17 03:20:23 deraadt Exp $
 .\"
 .TH FLEX 1 "April 1995" "Version 2.5"
 .SH NAME
@@ -3196,7 +3196,7 @@ When using this option, flex defaults to generating the scanner to the file
 instead of
 .B lex.yy.c.
 The generated scanner includes the header file
-.I FlexLexer.h,
+.I g++/FlexLexer.h,
 which defines the interface to two C++ classes.
 .PP
 The first class,
@@ -3249,7 +3249,7 @@ and
 object pointer).
 .PP
 The second class defined in
-.I FlexLexer.h
+.I g++/FlexLexer.h
 is
 .B yyFlexLexer,
 which is derived from
@@ -3448,7 +3448,7 @@ option) to rename each
 to some other
 .B xxFlexLexer.
 You then can include
-.B <FlexLexer.h>
+.B <g++/FlexLexer.h>
 in your other sources once per lexer class, first renaming
 .B yyFlexLexer
 as follows:
@@ -3456,11 +3456,11 @@ as follows:
 
     #undef yyFlexLexer
     #define yyFlexLexer xxFlexLexer
-    #include <FlexLexer.h>
+    #include <g++/FlexLexer.h>
 
     #undef yyFlexLexer
     #define yyFlexLexer zzFlexLexer
-    #include <FlexLexer.h>
+    #include <g++/FlexLexer.h>
 
 .fi
 if, for example, you used
@@ -3891,7 +3891,7 @@ on some systems).
 generated C++ scanner class, when using
 .B -+.
 .TP
-.I <FlexLexer.h>
+.I <g++/FlexLexer.h>
 header file defining the C++ scanner base class,
 .B FlexLexer,
 and its derived class,
