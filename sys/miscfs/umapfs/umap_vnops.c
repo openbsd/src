@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vnops.c,v 1.4 1996/03/25 18:02:58 mickey Exp $	*/
+/*	$OpenBSD: umap_vnops.c,v 1.5 1996/03/30 01:40:50 mickey Exp $	*/
 /*	$NetBSD: umap_vnops.c,v 1.5 1996/02/09 22:41:06 christos Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ umap_bypass(v)
 	struct ucred *savecredp = 0, *savecompcredp = 0;
 	struct ucred *compcredp = 0;
 	struct vnode **this_vp_p;
-	int error;
+	int error = 0;
 	struct vnode *old_vps[VDESC_MAX_VPS];
 	struct vnode *vp1 = 0;
 	struct vnode **vps_p[VDESC_MAX_VPS];
@@ -151,7 +151,8 @@ umap_bypass(v)
 		 * that aren't.  (Must map first vp or vclean fails.)
 		 */
 
-		if (i && (*this_vp_p)->v_op != umap_vnodeop_p) {
+		if (i && (*this_vp_p == NULLVP ||
+		    (*this_vp_p)->v_op != umap_vnodeop_p)) {
 			old_vps[i] = NULL;
 		} else {
 			old_vps[i] = *this_vp_p;
@@ -173,8 +174,7 @@ umap_bypass(v)
 		/* Save old values */
 
 		savecredp = *credpp;
-		if (savecredp != NOCRED)
-			*credpp = crdup(savecredp);
+		*credpp = crdup(savecredp);
 		credp = *credpp;
 
 		if (umap_bug_bypass && credp->cr_uid != 0)
@@ -199,8 +199,7 @@ umap_bypass(v)
 		    descp->vdesc_componentname_offset, ap)))->cn_cred != NOCRED ) {
 
 		savecompcredp = (*compnamepp)->cn_cred;
-		if (savecompcredp != NOCRED)
-			(*compnamepp)->cn_cred = crdup(savecompcredp);
+		(*compnamepp)->cn_cred = crdup(savecompcredp);
 		compcredp = (*compnamepp)->cn_cred;
 
 		if (umap_bug_bypass && compcredp->cr_uid != 0)
@@ -231,7 +230,7 @@ umap_bypass(v)
 	for (i = 0; i < VDESC_MAX_VPS; reles >>= 1, i++) {
 		if (descp->vdesc_vp_offsets[i] == VDESC_NO_OFFSET)
 			break;   /* bail out at end of list */
-		if (old_vps[i]) {
+		if (old_vps[i] != NULLVP) {
 			*(vps_p[i]) = old_vps[i];
 			if (reles & 1)
 				vrele(*(vps_p[i]));
@@ -246,14 +245,14 @@ umap_bypass(v)
 	if (descp->vdesc_vpp_offset != VDESC_NO_OFFSET &&
 	    !(descp->vdesc_flags & VDESC_NOMAP_VPP) &&
 	    !error) {
-		if (descp->vdesc_flags & VDESC_VPP_WILLRELE)
-			goto out;
-		vppp = VOPARG_OFFSETTO(struct vnode***,
-				 descp->vdesc_vpp_offset, ap);
-		error = umap_node_create(old_vps[0]->v_mount, **vppp, *vppp);
-	};
+		if (!(descp->vdesc_flags & VDESC_VPP_WILLRELE)) {
+			vppp = VOPARG_OFFSETTO(struct vnode***,
+				descp->vdesc_vpp_offset, ap);
+			error = umap_node_create(old_vps[0]->v_mount,
+				**vppp, *vppp);
+		}
+	}
 
- out:
 	/* 
 	 * Free duplicate cred structure and restore old one.
 	 */
@@ -263,28 +262,24 @@ umap_bypass(v)
 			printf("umap_bypass: returning-user was %d\n",
 					credp->cr_uid);
 
-		if (savecredp != NOCRED) {
-			crfree(credp);
-			*credpp = savecredp;
-			if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
-			 	printf("umap_bypass: returning-user now %d\n\n", 
-				    savecredp->cr_uid);
-		}
+		crfree(credp);
+		*credpp = savecredp;
+		if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
+		 	printf("umap_bypass: returning-user now %d\n\n", 
+			    savecredp->cr_uid);
 	}
 
 	if (descp->vdesc_componentname_offset != VDESC_NO_OFFSET
-	    && (*compnamepp)->cn_cred != NOCRED ) {
+	    && savecompcredp != NOCRED ) {
 		if (umap_bug_bypass && compcredp && compcredp->cr_uid != 0)
 			printf("umap_bypass: returning-component-user was %d\n", 
 				compcredp->cr_uid);
 
-		if (savecompcredp != NOCRED) {
-			crfree(compcredp);
-			(*compnamepp)->cn_cred = savecompcredp;
-			if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
-			 	printf("umap_bypass: returning-component-user now %d\n", 
-				    savecompcredp->cr_uid);
-		}
+		crfree(compcredp);
+		(*compnamepp)->cn_cred = savecompcredp;
+		if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
+		 	printf("umap_bypass: returning-component-user now %d\n", 
+			    savecompcredp->cr_uid);
 	}
 
 	return (error);
@@ -372,6 +367,10 @@ int
 umap_inactive(v)
 	void *v;
 {
+	struct vop_getattr_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+	} */ *ap = v;
 	/*
 	 * Do nothing (and _don't_ bypass).
 	 * Wait to vrele lowervp until reclaim,
@@ -379,6 +378,7 @@ umap_inactive(v)
 	 * cache and reusable.
 	 *
 	 */
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 

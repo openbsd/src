@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.5 1996/03/25 18:02:57 mickey Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.6 1996/03/30 01:40:48 mickey Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	if (UMAPVPTOLOWERVP(umapm_rootvp)->v_mount->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) amp;
-	getnewfsid(mp, makefstype(MOUNT_LOFS));
+	getnewfsid(mp, makefstype(MOUNT_UMAP));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -395,7 +395,7 @@ umapfs_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
 	int *exflagsp;
 	struct ucred**credanonp;
 {
-	return (EOPNOTSUPP);
+	return VFS_FHTOVP(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, fidp, nam, vpp, exflagsp, credanonp);
 }
 
 int
@@ -403,7 +403,7 @@ umapfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	return (EOPNOTSUPP);
+	return VFS_VPTOFH(UMAPVPTOLOWERVP(vp), fhp);
 }
 
 struct vfsops umap_vfsops = {
