@@ -1,4 +1,4 @@
-/*	$OpenBSD: state.c,v 1.12 2000/12/08 09:06:32 hin Exp $	*/
+/*	$OpenBSD: state.c,v 1.13 2000/12/08 10:11:42 hin Exp $	*/
 /*	$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: state.c,v 1.12 2000/12/08 09:06:32 hin Exp $";
+static char rcsid[] = "$OpenBSD: state.c,v 1.13 2000/12/08 10:11:42 hin Exp $";
 #endif
 #endif /* not lint */
 
@@ -1457,8 +1457,6 @@ suboption()
 			if (envvarok(varp)) {
 				if (valp)
 					/* XXX allocation failure? */
-					syslog(LOG_DEBUG, "Setting %=%", 
-					       varp, valp);
 					(void)setenv(varp, valp, 1);
 				else
 					unsetenv(varp);
@@ -1481,7 +1479,6 @@ suboption()
 	if (envvarok(varp)) {
 		if (valp)
 			/* XXX allocation failure? */
-			syslog 
 			(void)setenv(varp, valp, 1);
 		else
 			unsetenv(varp);
