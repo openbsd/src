@@ -1,4 +1,4 @@
-#	$OpenBSD: DRACO,v 1.16 2001/08/28 09:19:03 jj Exp $
+#	$OpenBSD: DRACO,v 1.17 2001/12/07 15:22:35 art Exp $
 #	$NetBSD: DRACO,v 1.7 1996/12/20 19:18:16 veego Exp $
 
 #
@@ -96,8 +96,6 @@ option		DDB		# Kernel debugger
 #
 # Amiga specific options
 #
-option		MACHINE_NONCONTIG # Non-contiguous memory support 
-				  # higly recommended for DraCo
 
 option		RETINACONSOLE	# enable code to allow retina to be console
 
