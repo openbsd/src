@@ -1,3 +1,5 @@
+/*	$OpenBSD: tftpd.c,v 1.7 1997/06/11 21:19:47 downsj Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.7 1997/06/11 21:19:47 downsj Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -87,11 +89,12 @@ int	fromlen;
 char	*dirs[MAXARG+1];
 
 int	secure = 0;
+int	cancreate = 0;
 
 static void
 usage()
 {
-	syslog(LOG_ERR, "Usage: %s [-s] [directory ...]\n", __progname);
+	syslog(LOG_ERR, "Usage: %s [-cs] [directory ...]\n", __progname);
 	exit(1);
 }
 
@@ -111,8 +114,11 @@ main(argc, argv)
 
 	openlog("tftpd", LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "s")) != -1)
+	while ((c = getopt(argc, argv, "cs")) != -1)
 		switch (c) {
+		case 'c':
+			cancreate = 1;
+			break;
 		case 's':
 			secure = 1;
 			break;
@@ -319,7 +325,7 @@ validate_access(filename, mode)
 	int mode;
 {
 	struct stat stbuf;
-	int	fd;
+	int	fd, wmode;
 	char *cp, **dirp;
 
 	if (!secure) {
@@ -338,22 +344,47 @@ validate_access(filename, mode)
 		if (*dirp==0 && dirp!=dirs)
 			return (EACCESS);
 	}
-	if (stat(filename, &stbuf) < 0)
-		return (errno == ENOENT ? ENOTFOUND : EACCESS);
-	if (mode == RRQ) {
-		if ((stbuf.st_mode&(S_IREAD >> 6)) == 0)
-			return (EACCESS);
+
+	/*
+	 * We use different a different permissions scheme if `cancreate' is
+	 * set.
+	 */
+	wmode = O_TRUNC;
+	if (stat(filename, &stbuf) < 0) {
+		if (!cancreate)
+			return (errno == ENOENT ? ENOTFOUND : EACCESS);
+		else {
+			if ((errno == ENOENT) && (mode != RRQ))
+				wmode = O_CREAT;
+			else
+				return(EACCESS);
+		}
 	} else {
-		if ((stbuf.st_mode&(S_IWRITE >> 6)) == 0)
-			return (EACCESS);
+		if (mode == RRQ) {
+			if ((stbuf.st_mode&(S_IREAD >> 6)) == 0)
+				return (EACCESS);
+		} else {
+			if ((stbuf.st_mode&(S_IWRITE >> 6)) == 0)
+				return (EACCESS);
+		}
 	}
-	fd = open(filename, mode == RRQ ? O_RDONLY : (O_WRONLY|O_TRUNC));
+	fd = open(filename, mode == RRQ ? O_RDONLY : (O_WRONLY|wmode));
 	if (fd < 0)
 		return (errno + 100);
-	file = fdopen(fd, (mode == RRQ)? "r":"w");
-	if (file == NULL) {
-		return errno+100;
+	/*
+	 * If the file was created, set default permissions.
+	 */
+	if ((wmode == O_CREAT) && fchmod(fd, 0666) < 0) {
+		int serrno = errno;
+
+		close(fd);
+		unlink(filename);
+
+		return (serrno + 100);
 	}
+	file = fdopen(fd, (mode == RRQ)? "r":"w");
+	if (file == NULL)
+		return (errno + 100);
 	return (0);
 }
 
