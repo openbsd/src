@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 1998/07/24 00:10:25 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 2002/05/23 18:43:00 deraadt Exp $
 
 PROG=	cribbage
 DPADD=	${LIBCURSES}
 LDADD=	-lcurses
 SRCS=	extern.c crib.c cards.c instr.c io.c score.c support.c
 MAN=	cribbage.6
-HIDEGAME=hidegame
 
 beforeinstall: 
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \

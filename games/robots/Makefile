@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1999/12/18 11:18:11 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.9 2002/05/23 18:43:00 deraadt Exp $
 
 PROG=	robots
 CFLAGS+=-DMAX_PER_UID=5
@@ -7,7 +7,6 @@ SRCS=	extern.c init_field.c main.c make_level.c move.c move_robs.c \
 MAN=	robots.6
 DPADD=	${LIBCURSES}
 LDADD=	-lcurses
-HIDEGAME=hidegame
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \

@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.126 2002/05/21 07:44:34 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.127 2002/05/23 18:43:00 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -178,11 +178,6 @@ bin
 
 # ./usr/games
 games
-
-# ./usr/games/hide
-hide            gname=games uname=root mode=0550
-# ./usr/games/hide
-..
 
 # ./usr/games
 ..

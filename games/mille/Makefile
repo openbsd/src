@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1998/07/24 00:10:34 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/05/23 18:43:00 deraadt Exp $
 
 PROG=	mille
 SRCS=	comp.c end.c extern.c init.c mille.c misc.c move.c print.c \
@@ -6,6 +6,5 @@ SRCS=	comp.c end.c extern.c init.c mille.c misc.c move.c print.c \
 DPADD=	${LIBCURSES}
 LDADD=	-lcurses
 MAN=	mille.6
-HIDEGAME=hidegame
 
 .include <bsd.prog.mk>

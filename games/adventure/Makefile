@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 2001/02/04 06:07:20 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.5 2002/05/23 18:42:59 deraadt Exp $
 
 PROG=	adventure
 SRCS=	main.c init.c done.c save.c subr.c vocab.c wizard.c io.c data.c crc.c
 MAN=	adventure.6
-HIDEGAME=hidegame
 CLEANFILES+=setup data.c
 
 data.c: glorkz setup

@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 2000/07/23 21:53:45 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.7 2002/05/23 18:43:00 deraadt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	canfield
 MAN=	canfield.6
 DPADD=	${LIBCURSES}
 LDADD=	-lcurses
-HIDEGAME=hidegame
 MLINKS=	canfield.6 cfscores.6
 
 beforeinstall:

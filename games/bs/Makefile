@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.7 1999/09/25 16:20:37 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.8 2002/05/23 18:43:00 deraadt Exp $
 
 PROG=	bs
 MAN=	bs.6
 DPADD=	${LIBCURSES}
 LDADD=	-lcurses
-HIDEGAME=hidegame
 
 .include <bsd.prog.mk>

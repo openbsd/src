@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.13 1998/11/29 19:56:54 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.14 2002/05/23 18:43:00 deraadt Exp $
 
 PROG=	phantasia
 SRCS=	main.c fight.c io.c interplayer.c gamesupport.c misc.c phantglobs.c
 CFLAGS+=-DTERMIOS
 DPADD=	${LIBM} ${LIBCURSES}
 LDADD=	-lm -lcurses
-HIDEGAME=hidegame
 MAN=	phantasia.6
 CLEANFILES+=map setup setup.o phantglobs.o.bld
 
