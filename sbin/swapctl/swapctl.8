@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.13 2000/11/09 17:53:08 aaron Exp $
+.\"	$OpenBSD: swapctl.8,v 1.14 2001/04/23 15:30:26 aaron Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -198,7 +198,7 @@ server:/export/swap/client none swap sw,nfsmntpt=/swap
 .Ed
 .El
 .Sh WARNINGS
-Local and remote swap files cannot be configured until after the file
+Local and remote swap files cannot be configured until the file
 systems they reside on are mounted read/write.
 The system startup scripts need to
 .Xr fsck 8

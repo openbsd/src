@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: realpath.3,v 1.7 2000/04/20 13:50:02 aaron Exp $
+.\"	$OpenBSD: realpath.3,v 1.8 2001/04/23 15:30:25 aaron Exp $
 .\"
 .Dd February 16, 1994
 .Dt REALPATH 3
@@ -80,14 +80,14 @@ is called.
 The
 .Fn realpath
 function returns
-.Fa resolved_name
+.Fa resolvedname
 on success.
 If an error occurs,
 .Fn realpath
 returns
 .Dv NULL ,
 and
-.Fa resolved_name
+.Fa resolvedname
 contains the pathname which caused the problem.
 .Sh ERRORS
 The function
@@ -112,7 +112,7 @@ The
 version always returns absolute pathnames,
 whereas the Solaris implementation will,
 under certain circumstances, return a relative
-.Fa resolved_path
+.Fa resolvedname
 when given a relative
 .Fa pathname .
 .Sh SEE ALSO
