@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.81 2004/02/15 11:16:08 markus Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.82 2004/03/25 14:01:20 dhartmei Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -443,7 +443,6 @@ icmp6_input(mp, offp, proto)
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
 		icmp6stat.icp6s_tooshort++;
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		return IPPROTO_DONE;
 	}
 	code = icmp6->icmp6_code;
