@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.184 2002/03/03 00:43:37 krw Exp $
+#	$OpenBSD: install.sub,v 1.185 2002/03/04 13:54:28 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -965,76 +965,55 @@ install_url() {
 #	_ftp_server_password, and _ftp_active must be global.
 
 local _sets _kernel _f _file_list _get_files _failed_files _osetsdone
-local _url_type _url_base _url_login _url_pass _reuse _minpat _oifs
+local _url_type _url_base _url_login _url_pass _oifs
 
 # Parse arguments, shell style
-while test $# != 0; do
-	case "$1" in
-		-ftp) _url_type=ftp ;;
-		-http) _url_type=http ;;
-		-reuse) _reuse=1 ;;
-		-minpat) shift; _minpat="$1" ;;
-	esac
-	shift
-done
-if [ X"${_minpat}" = X ]; then
-	_minpat='base*.tar.gz|base*.tgz|man*.tar.gz|man*.tgz|etc*.tar.gz|etc*.tgz|bsd'
-fi
+case "$1" in
+	-ftp)	_url_type=ftp  ;;
+	-http)	_url_type=http ;;
+esac
 
 echo
 echo "This is an automated ${_url_type}-based installation process.  You will be asked"
 echo "questions and then the files will be retrieved iteratively via ${_url_type}."
 echo
 
-# Reuse old values w/o prompting for anything?
-if [ X"$_reuse" = X"1" ]; then
-	_reuse=
-	if eval test X"\$_installed_via_${_url_type}" = X"1"; then
-		echo -n "Use values from previous ${_url_type} install? [y] "
-		getresp y
-		case "$resp" in
-			y*|Y*)
-				_reuse=1;;
-		esac
-	fi
+# Proxy the connections?
+if [ "X${_proxy_host}" = X"" ]; then
+	_proxy_host=none
 fi
-if [ X"$_reuse" = X ]; then
-	# Proxy the connections?
-	if [ "X${_proxy_host}" = X"" ]; then
-		_proxy_host=none
-	fi
-	echo -n "HTTP/FTP proxy URL? (e.g. \"http://proxy:8080\", or \"none\") [${_proxy_host}] "
-	getresp "${_proxy_host}"
-	if [ "X${resp}" = X"none" ]; then
-		unset _proxy_host ftp_proxy http_proxy
-	else
-		_proxy_host=$resp
-		export ftp_proxy=${_proxy_host}
-		export http_proxy=${_proxy_host}
-	fi
-	if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
-		# Use active mode ftp? (irrelevant if using a proxy)
-		case "${_ftp_active}" in
-			-A)	resp=y ;;
-			*)	resp=n ;;
-		esac
-		echo "By default, ftp will attempt a passive connection and fall back to a normal"
-		echo "(active) connection if that doesn't work.  However, there are some very"
-		echo "old ftp servers that claim to support passive mode, but really do not."
-		echo "In this case, you should explicitly request an active session."
-		echo -n "Do you want to use active ftp? [${resp}] "
-		getresp "${resp}"
-		case "$resp" in
-			y*|Y*)	_ftp_active=-A ;;
-			*)	unset _ftp_active ;;
-		esac
-	fi
-
-	# Provide a list of possible servers
-	test -z "$_ftp_getlist" && _ftp_getlist=y
-	echo -n "Do you want a list of potential ${_url_type} servers? [${_ftp_getlist}] "
-	getresp $_ftp_getlist
+echo -n "HTTP/FTP proxy URL? (e.g. \"http://proxy:8080\", or \"none\") [${_proxy_host}] "
+getresp "${_proxy_host}"
+if [ "X${resp}" = X"none" ]; then
+	unset _proxy_host ftp_proxy http_proxy
+else
+	_proxy_host=$resp
+	export ftp_proxy=${_proxy_host}
+	export http_proxy=${_proxy_host}
+fi
+if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
+	# Use active mode ftp? (irrelevant if using a proxy)
+	case "${_ftp_active}" in
+		-A)	resp=y ;;
+		*)	resp=n ;;
+	esac
+	echo "By default, ftp will attempt a passive connection and fall back to a normal"
+	echo "(active) connection if that doesn't work.  However, there are some very"
+	echo "old ftp servers that claim to support passive mode, but really do not."
+	echo "In this case, you should explicitly request an active session."
+	echo -n "Do you want to use active ftp? [${resp}] "
+	getresp "${resp}"
 	case "$resp" in
+		y*|Y*)	_ftp_active=-A ;;
+		*)	unset _ftp_active ;;
+	esac
+fi
+
+# Provide a list of possible servers
+test -z "$_ftp_getlist" && _ftp_getlist=y
+echo -n "Do you want a list of potential ${_url_type} servers? [${_ftp_getlist}] "
+getresp $_ftp_getlist
+case "$resp" in
 	n*|N*)	_ftp_getlist=n
 		;;
 	*)
@@ -1046,97 +1025,96 @@ if [ X"$_reuse" = X ]; then
 		ftp ${_ftp_active} -V -a -o /tmp/ftplist ftp://${ftphost}/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist > /dev/null
 		cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
 		;;
-	esac
+esac
 
-	# Get server IP address
-	resp=
-	while [ "X${resp}" = X"" ]; do
-		if [ -f /tmp/ftplist ]; then
-			eval echo -n "Server IP address, hostname, or list#? [\$_${_url_type}_server_ip]\ "
-		else
-			eval echo -n "Server IP address, or hostname? [\$_${_url_type}_server_ip]\ "
-		fi
-		eval getresp "\$_${_url_type}_server_ip"
-		if [ "X$resp" = "X?" -a -f /tmp/ftplist ]; then
-			cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
-			resp=
-		elif [ -n "$resp" \
-			-a `isnumeric $resp` -eq 1 \
-			-a ${resp:-0} -ge 1 \
-			-a -f /tmp/ftplist ]
-			then
-			maxlines=`grep "^${_url_type}:" /tmp/ftplist | cat -n |
-				sed -n -e '$p' | cutword 1`
-			if [ $maxlines -lt $resp ]; then
-				echo "There is no ${resp}th line in the list."
-				resp=
-				continue
-			fi
-			tline=`grep "^${_url_type}:" /tmp/ftplist | sed -n -e "${resp}p"`
-			url=`echo $tline | sed -e "s/^${_url_type}:\/\///" |
-				cutword -t' ' 1 | cutword -t' ' 1`
-			host=`echo $url | cutword -t/ 1`
-			path=`echo $url | sed -e "s/^${host}\///"`
-			path="${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
-			eval _${_url_type}_server_ip=$host
-			eval _${_url_type}_server_dir=$path
-			# do it again, just to double check
-			resp=
-			echo "Using	$tline"
-		else
-			eval _${_url_type}_server_ip="$resp"
-		fi
-	done
-
-	# Get server directory
-	if [ "${_url_type}" = "ftp" -a "X${_ftp_server_dir}" = X"" ]; then
-		# Default ftp dir
-		_ftp_server_dir="pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+# Get server IP address
+resp=
+while [ "X${resp}" = X"" ]; do
+	if [ -f /tmp/ftplist ]; then
+		eval echo -n "Server IP address, hostname, or list#? [\$_${_url_type}_server_ip]\ "
+	else
+		eval echo -n "Server IP address, or hostname? [\$_${_url_type}_server_ip]\ "
 	fi
+	eval getresp "\$_${_url_type}_server_ip"
+	if [ "X$resp" = "X?" -a -f /tmp/ftplist ]; then
+		cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
+		resp=
+	elif [ -n "$resp" \
+		-a `isnumeric $resp` -eq 1 \
+		-a ${resp:-0} -ge 1 \
+		-a -f /tmp/ftplist ]
+		then
+		maxlines=`grep "^${_url_type}:" /tmp/ftplist | cat -n |
+			sed -n -e '$p' | cutword 1`
+		if [ $maxlines -lt $resp ]; then
+			echo "There is no ${resp}th line in the list."
+			resp=
+			continue
+		fi
+		tline=`grep "^${_url_type}:" /tmp/ftplist | sed -n -e "${resp}p"`
+		url=`echo $tline | sed -e "s/^${_url_type}:\/\///" |
+			cutword -t' ' 1 | cutword -t' ' 1`
+		host=`echo $url | cutword -t/ 1`
+		path=`echo $url | sed -e "s/^${host}\///"`
+		path="${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+		eval _${_url_type}_server_ip=$host
+		eval _${_url_type}_server_dir=$path
+		# do it again, just to double check
+		resp=
+		echo "Using	$tline"
+	else
+		eval _${_url_type}_server_ip="$resp"
+	fi
+done
+
+# Get server directory
+if [ "${_url_type}" = "ftp" -a "X${_ftp_server_dir}" = X"" ]; then
+	# Default ftp dir
+	_ftp_server_dir="pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+fi
+resp=
+while [ "X${resp}" = X"" ]; do
+	eval echo -n "Server directory? [\$_${_url_type}_server_dir]\ "
+	eval getresp "\$_${_url_type}_server_dir"
+	eval _${_url_type}_server_dir=$resp
+done
+
+if [ "${_url_type}" = "ftp" ]; then
+	# Need default values even if we proxy ftp...
+	if [ "X${_ftp_server_login}" = X"" ]; then
+		_ftp_server_login=anonymous
+	fi
+	if [ "X${_ftp_server_password}" = X"" ]; then
+		_ftp_server_password=root@`hostname`.${FQDN}
+	fi
+
+	# Get login name, setting IFS to nothing so trailing or
+	# embedded blanks are preserved!
+	_oifs="$IFS"
+	IFS=
 	resp=
 	while [ "X${resp}" = X"" ]; do
-		eval echo -n "Server directory? [\$_${_url_type}_server_dir]\ "
-		eval getresp "\$_${_url_type}_server_dir"
-		eval _${_url_type}_server_dir=$resp
+		echo -n "Login? [${_ftp_server_login}] "
+		getresp "${_ftp_server_login}"
+		_ftp_server_login="$resp"
 	done
 
-	if [ "${_url_type}" = "ftp" ]; then
-		# Need default values even if we proxy ftp...
-		if [ "X${_ftp_server_login}" = X"" ]; then
-			_ftp_server_login=anonymous
-		fi
-		if [ "X${_ftp_server_password}" = X"" ]; then
-			_ftp_server_password=root@`hostname`.${FQDN}
-		fi
-
-		# Get login name, setting IFS to nothing so trailing or
-		# embedded blanks are preserved!
-		_oifs="$IFS"
-		IFS=
+	# Get password unless anonymous
+	if [ "${_ftp_server_login}" != "anonymous" ]; then
 		resp=
 		while [ "X${resp}" = X"" ]; do
-			echo -n "Login? [${_ftp_server_login}] "
-			getresp "${_ftp_server_login}"
-			_ftp_server_login="$resp"
+			echo -n "Password (will not echo): "
+			stty -echo
+			getresp -n "${_ftp_server_password}"
+			stty echo
+			echo
+			_ftp_server_password="$resp"
 		done
-
-		# Get password unless anonymous
-		if [ "${_ftp_server_login}" != "anonymous" ]; then
-			resp=
-			while [ "X${resp}" = X"" ]; do
-				echo -n "Password (will not echo): "
-				stty -echo
-				getresp -n "${_ftp_server_password}"
-				stty echo
-				echo
-				_ftp_server_password="$resp"
-			done
-		else
-			# only used by ftp_list_files()
-			_ftp_server_password=root@`hostname`.${FQDN}
-		fi
-		IFS="$_oifs"
+	else
+		# only used by ftp_list_files()
+		_ftp_server_password=root@`hostname`.${FQDN}
 	fi
+	IFS="$_oifs"
 fi
 
 # Build up the base url since it is so nasty...
@@ -1217,13 +1195,16 @@ eval echo "\\\\n"\
 _osetsdone="$_setsdone"
 # Set the minimal default
 for _f in $_sets $_kernel; do
-	eval "case $_f in \
-		${_minpat}) \
-			if ! isin \${_f} \${_setsdone}; then \
-				_get_files=\`addel \${_f} \${_get_files}\` ; \
-				_setsdone=\`addel \${_f} \${_setsdone}\` ; \
-			fi ;; \
-	esac"
+	# From logic above, $_sets contains only .tgz and .tar.gz
+	# file names, and $_kernel is empty or 'bsd'.
+	case "$_f" in
+		base*|bsd|comp*|etc*|game*|man*|misc*)
+			if ! isin ${_f} ${_setsdone}; then
+				_get_files=`addel ${_f} ${_get_files}`
+				_setsdone=`addel ${_f} ${_setsdone}`
+			fi
+			;;
+	esac
 done
 
 # Allow the user to select/de-select additional sets
@@ -1374,7 +1355,9 @@ _osetsdone="$_setsdone"
 # Set a minimal default
 for _f in $_sets $_kernel; do
 	case "$_f" in
-		base*.tar.gz|base*.tgz|man*.tar.gz|man*.tgz|etc*.tar.gz|etc*.tgz|bsd)
+	# From logic above, $_sets contains only .tgz and .tar.gz
+	# file names, and $_kernel is empty or 'bsd'.
+		base*|bsd|comp*|etc*|game*|man*|misc*)
 			if ! isin ${_f} ${_setsdone}; then
 				_get_files=`addel ${_f} ${_get_files}`
 				_setsdone=`addel ${_f} ${_setsdone}`
