@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdate.c,v 1.5 1996/12/14 12:17:45 mickey Exp $	*/
+/*	$OpenBSD: netdate.c,v 1.6 1997/03/26 19:08:06 deraadt Exp $	*/
 /*	$NetBSD: netdate.c,v 1.10 1995/09/07 06:21:06 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: netdate.c,v 1.5 1996/12/14 12:17:45 mickey Exp $";
+static char rcsid[] = "$OpenBSD: netdate.c,v 1.6 1997/03/26 19:08:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ netsettime(tval)
 		warn("gethostname");
 		goto bad;
 	}
-	(void)strncpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
+	(void)strncpy(msg.tsp_name, hostname, sizeof(msg.tsp_name)-1);
 	msg.tsp_name[sizeof(msg.tsp_name)-1] = '\0';
 	msg.tsp_seq = htons((u_short)0);
 	msg.tsp_time.tv_sec = htonl((u_long)tval);
