@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.22 2004/08/12 20:09:40 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.23 2004/08/13 02:57:28 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -229,8 +229,7 @@ cvs_connect(struct cvsroot *root)
 	}
 	if (pid == 0) {
 		if ((dup2(infd[0], STDIN_FILENO) == -1) ||
-		    (dup2(outfd[1], STDOUT_FILENO) == -1) ||
-		    (dup2(errfd[1], STDERR_FILENO) == -1)) {
+		    (dup2(outfd[1], STDOUT_FILENO) == -1)) {
 			cvs_log(LP_ERRNO,
 			    "failed to setup standard streams for cvs server");
 			return (-1);
