@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpef.c,v 1.2 1996/08/22 09:24:28 deraadt Exp $";
+static char rcsid[] = "$Id: bootpef.c,v 1.3 2002/06/10 19:53:36 hin Exp $";
 #endif
 
 
@@ -275,6 +275,7 @@ main(argc, argv)
 		mktagfile(hp);
 		hp = (struct host *) hash_NextEntry(nmhashtable);
 	}
+	return 0;
 }
 
 
