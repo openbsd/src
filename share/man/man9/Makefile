@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.90 2005/03/01 19:22:10 damien Exp $
+#	$OpenBSD: Makefile,v 1.91 2005/04/04 12:48:42 jsg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -9,7 +9,11 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	evcount.9 extattr.9 file.9 \
 	fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
-	hardclock.9 hook_establish.9 hz.9 hzto.9 iic.9 intro.9 inittodr.9 \
+	hardclock.9 hook_establish.9 hz.9 hzto.9 \
+	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
+	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
+	ieee80211_radiotap.9 \
+	iic.9 intro.9 inittodr.9 \
 	kern.9 knote.9 kthread.9 ktrace.9 loadfirmware.9 lock.9 log.9 \
 	malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
 	mountroothook_establish.9 mutex.9 namei.9 \
@@ -118,6 +122,51 @@ MLINKS+=file.9 falloc.9 file.9 fdrelease.9 file.9 FREF.9 file.9 FRELE.9 \
 MLINKS+=getdevvp.9 bdevvp.9 getdevvp.9 cdevvp.9
 MLINKS+=hook_establish.9 hook_disestablish.9
 MLINKS+=hz.9 tick.9 hz.9 tickadj.9 hz.9 stathz.9 hz.9 profhz.9
+MLINKS+=ieee80211.9 ieee80211_ifattach.9 \
+	ieee80211.9 ieee80211_ifdetach.9 \
+	ieee80211.9 ieee80211_mhz2ieee.9 \
+	ieee80211.9 ieee80211_chan2ieee.9 \
+	ieee80211.9 ieee80211_ieee2mhz.9 \
+	ieee80211.9 ieee80211_media_init.9 \
+	ieee80211.9 ieee80211_media_change.9 \
+	ieee80211.9 ieee80211_media_status.9 \
+	ieee80211.9 ieee80211_watchdog.9 \
+	ieee80211.9 ieee80211_setmode.9 \
+	ieee80211.9 ieee80211_chan2mode.9 \
+	ieee80211.9 ieee80211_rate2media.9 \
+	ieee80211.9 ieee80211_media2rate.9
+MLINKS+=ieee80211_crypto.9 ieee80211_crypto_attach.9 \
+	ieee80211_crypto.9 ieee80211_crypto_detach.9 \
+	ieee80211_crypto.9 ieee80211_wep_crypt.9
+MLINKS+=ieee80211_input.9 ieee80211_decap.9 \
+	ieee80211_input.9 ieee80211_recv_mgmt.9
+MLINKS+=ieee80211_ioctl.9 ieee80211_cfgget.9 \
+	ieee80211_ioctl.9 ieee80211_cfgset.9
+MLINKS+=ieee80211_node.9 ieee80211_node_attach.9 \
+	ieee80211_node.9 ieee80211_node_lateattach.9 \
+	ieee80211_node.9 ieee80211_node_detach.9 \
+	ieee80211_node.9 ieee80211_begin_scan.9 \
+	ieee80211_node.9 ieee80211_next_scan.9 \
+	ieee80211_node.9 ieee80211_create_ibss.9 \
+	ieee80211_node.9 ieee80211_end_scan.9 \
+	ieee80211_node.9 ieee80211_alloc_node.9 \
+	ieee80211_node.9 ieee80211_dup_bss.9 \
+	ieee80211_node.9 ieee80211_find_node.9 \
+	ieee80211_node.9 ieee80211_lookup_node.9 \
+	ieee80211_node.9 ieee80211_release_node.9 \
+	ieee80211_node.9 ieee80211_free_node.9 \
+	ieee80211_node.9 ieee80211_free_allnodes.9 \
+	ieee80211_node.9 ieee80211_iterate_nodes.9
+MLINKS+=ieee80211_output.9 ieee80211_encap.9 \
+	ieee80211_output.9 ieee80211_add_rates.9 \
+	ieee80211_output.9 ieee80211_add_xrates.9 \
+	ieee80211_output.9 ieee80211_compute_duration.9 \
+	ieee80211_output.9 ieee80211_send_mgmt.9
+MLINKS+=ieee80211_proto.9 ieee80211_proto_attach.9 \
+	ieee80211_proto.9 ieee80211_proto_detach.9 \
+	ieee80211_proto.9 ieee80211_print_essid.9 \
+	ieee80211_proto.9 ieee80211_dump_pkt.9 \
+	ieee80211_proto.9 ieee80211_fix_rate.9
 MLINKS+=knote.9 KNOTE.9
 MLINKS+=kthread.9 kthread_create.9 kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create_deferred.9
