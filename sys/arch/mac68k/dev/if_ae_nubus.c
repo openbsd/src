@@ -1,5 +1,5 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.5 1997/02/28 08:56:06 scottr Exp $	*/
-/*	$OpenBSD: if_ae_nubus.c,v 1.2 1997/03/12 13:36:58 briggs Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.9 1997/03/17 20:26:01 scottr Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.3 1997/03/18 01:02:50 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -118,10 +118,7 @@ ae_nubus_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
-	int success;
-#ifdef AE_OLD_GET_ENADDR
-	int i;
-#endif
+	int i,success;
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE,
@@ -254,17 +251,13 @@ ae_nubus_attach(parent, self, aux)
 		/* reset the NIC chip */
 		bus_space_write_1(bst, bsh, GC_RESET_OFFSET, 0);
 
-#ifdef AE_OLD_GET_ENADDR
-		/* Get station address from on-board ROM */
-		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] =
-			    bus_space_read_1(bst, bsh, (GC_ROM_OFFSET + i * 4));
-#else
 		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
-			printf(": can't find MAC address\n");
-			break;
+			/* Fall back to snarf directly from ROM.  Ick.  */
+			for (i = 0; i < ETHER_ADDR_LEN; ++i)
+				sc->sc_arpcom.ac_enaddr[i] =
+				    bus_space_read_1(bst, bsh,
+					(GC_ROM_OFFSET + i * 4));
 		}
-#endif
 
 		success = 1;
 		break;
