@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.27 2004/04/08 16:08:21 henning Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.28 2004/04/30 05:47:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -563,7 +563,7 @@ aspath_verify(void *data, u_int16_t len)
 	u_int8_t	 seg_len, seg_type;
 
 	if (len & 1)
-		/* odd lenght aspath are invalid */
+		/* odd length aspath are invalid */
 		return AS_ERR_BAD;
 
 	for (; len > 0; len -= seg_size, seg += seg_size) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.109 2004/04/29 19:56:04 deraadt Exp $ */
+/*	$OpenBSD: rde.c,v 1.110 2004/04/30 05:47:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -857,11 +857,11 @@ rde_update_queue_runner(void)
 			if (peer->state != PEER_UP)
 				continue;
 			/* first withdraws */
-			wpos = 2; /* reserve space for the lenght field */
+			wpos = 2; /* reserve space for the length field */
 			r = up_dump_prefix(queue_buf + wpos, len - wpos - 2,
 			    &peer->withdraws, peer);
 			wd_len = r;
-			/* write withdraws lenght filed */
+			/* write withdraws length filed */
 			wd_len = htons(wd_len);
 			memcpy(queue_buf, &wd_len, 2);
 			wpos += r;
@@ -874,7 +874,7 @@ rde_update_queue_runner(void)
 			if (wpos == 4)
 				/*
 				 * No packet to send. The 4 bytes are the
-				 * needed withdraw and path attribute lenght.
+				 * needed withdraw and path attribute length.
 				 */
 				continue;
 

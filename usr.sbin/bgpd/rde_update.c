@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.16 2004/03/20 23:17:35 david Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.17 2004/04/30 05:47:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -546,7 +546,7 @@ up_set_prefix(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
 	return (totlen);
 }
 
-#define MIN_PREFIX_LEN	5	/* 1 byte prefix lenght + 4 bytes addr */
+#define MIN_PREFIX_LEN	5	/* 1 byte prefix length + 4 bytes addr */
 int
 up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
     struct rde_peer *peer)

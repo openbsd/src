@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.97 2004/04/29 19:56:04 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.98 2004/04/30 05:47:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -695,7 +695,7 @@ encspec		: /* nada */	{
 			}
 
 			if (strlen($2) / 2 != $$.enc_key_len) {
-				yyerror("enc key lenght wrong: should be %u "
+				yyerror("enc key length wrong: should be %u "
 				    "bytes, is %u bytes",
 				    $$.enc_key_len * 2, strlen($2));
 				free($2);
