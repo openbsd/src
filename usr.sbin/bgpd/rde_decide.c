@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.17 2004/01/13 12:38:50 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.18 2004/01/13 13:18:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -29,7 +29,6 @@
 #include "session.h"
 
 int	prefix_cmp(struct prefix *, struct prefix *);
-void	up_generate_updates(struct prefix *, struct prefix *);
 int	up_generate_attr(struct rde_peer *, struct update_attr *,
 	    struct attr_flags *, struct nexthop *);
 int	up_set_prefix(u_char *, int, struct bgpd_addr *, u_int8_t);
@@ -226,7 +225,7 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 		 * has an unreachable nexthop. This decision has to be made
 		 * by the called functions.
 		 */
-		up_generate_updates(xp, pte->active);
+		rde_generate_updates(xp, pte->active);
 		rde_send_kroute(xp, pte->active);
 
 		if (xp == NULL || xp->aspath->nexthop == NULL ||
@@ -409,74 +408,64 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 }
 
 void
-up_generate_updates(struct prefix *new, struct prefix *old)
+up_generate_updates(struct rde_peer *peer,
+    struct prefix *new, struct prefix *old)
 {
-	extern struct rde_peer_head	 peerlist;
-	struct rde_peer			*peer;
 	struct update_attr		*a;
 	struct update_prefix		*p;
 
-	if ((old == NULL || old->aspath->nexthop == NULL ||
-	    old->aspath->nexthop->state != NEXTHOP_REACH) &&
-	    (new == NULL || new->aspath->nexthop == NULL ||
-	    new->aspath->nexthop->state != NEXTHOP_REACH))
-		return;
+	ENSURE(peer->state == PEER_UP);
+	/*
+	 * Filtering should be hooked up here.
+	 * With filtering the decision if withdraw, update or nothing
+	 * needs to be done on a per peer basis -- acctually per filter
+	 * set.
+	 */
 
-	LIST_FOREACH(peer, &peerlist, peer_l) {
-		if (peer->state != PEER_UP)
-			continue;
+	if (new == NULL || new->aspath->nexthop == NULL ||
+	    new->aspath->nexthop->state != NEXTHOP_REACH) {
+		if (peer == old->peer)
+			/* Do not send routes back to sender */
+			return;
+
+		/* withdraw prefix */
+		p = calloc(1, sizeof(struct update_prefix));
+		if (p == NULL)
+			fatal("up_queue_update");
+
+		p->prefix = old->prefix->prefix;
+		p->prefixlen = old->prefix->prefixlen;
+		if (up_add(peer, p, NULL) == -1)
+			logit(LOG_CRIT, "queuing update failed.");
+	} else {
+		if (peer == new->peer)
+			/* Do not send routes back to sender */
+			return;
+
+		/* generate update */
+		p = calloc(1, sizeof(struct update_prefix));
+		if (p == NULL)
+			fatal("up_queue_update");
+
+		a = calloc(1, sizeof(struct update_attr));
+		if (a == NULL)
+			fatal("up_queue_update");
+
+		if (up_generate_attr(peer, a, &new->aspath->flags,
+		    new->aspath->nexthop) == -1)
+			logit(LOG_CRIT,
+			    "generation of bgp path attributes failed");
+
 		/*
-		 * Filtering should be hooked up here.
-		 * With filtering the decision if withdraw, update or nothing
-		 * needs to be done on a per peer basis -- acctually per filter
-		 * set.
+		 * use aspath_hash as attr_hash, this may be unoptimal
+		 * but currently I don't care.
 		 */
+		a->attr_hash = aspath_hash(new->aspath->flags.aspath);
+		p->prefix = new->prefix->prefix;
+		p->prefixlen = new->prefix->prefixlen;
 
-		if (new == NULL || new->aspath->nexthop == NULL ||
-		    new->aspath->nexthop->state != NEXTHOP_REACH) {
-			if (peer == old->peer)
-				/* Do not send routes back to sender */
-				continue;
-			
-			/* withdraw prefix */
-			p = calloc(1, sizeof(struct update_prefix));
-			if (p == NULL)
-				fatal("up_queue_update");
-
-			p->prefix = old->prefix->prefix;
-			p->prefixlen = old->prefix->prefixlen;
-			if (up_add(peer, p, NULL) == -1)
-				logit(LOG_CRIT, "queuing update failed.");
-		} else {
-			if (peer == new->peer)
-				/* Do not send routes back to sender */
-				continue;
-
-			/* generate update */
-			p = calloc(1, sizeof(struct update_prefix));
-			if (p == NULL)
-				fatal("up_queue_update");
-
-			a = calloc(1, sizeof(struct update_attr));
-			if (a == NULL)
-				fatal("up_queue_update");
-
-			if (up_generate_attr(peer, a, &new->aspath->flags,
-			    new->aspath->nexthop) == -1)
-				logit(LOG_CRIT,
-				    "generation of bgp path attributes failed");
-
-			/*
-			 * use aspath_hash as attr_hash, this may be unoptimal
-			 * but currently I don't care.
-			 */
-			a->attr_hash = aspath_hash(new->aspath->flags.aspath);
-			p->prefix = new->prefix->prefix;
-			p->prefixlen = new->prefix->prefixlen;
-
-			if (up_add(peer, p, a) == -1)
-				logit(LOG_CRIT, "queuing update failed.");
-		}
+		if (up_add(peer, p, a) == -1)
+			logit(LOG_CRIT, "queuing update failed.");
 	}
 }
 
@@ -699,3 +688,12 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	return (wpos);
 }
 
+void
+up_dump_upcall(struct pt_entry *pt, void *ptr)
+{
+	struct rde_peer	*peer = ptr;
+
+	if (pt->active == NULL)
+		return;
+	up_generate_updates(peer, pt->active, NULL);
+}

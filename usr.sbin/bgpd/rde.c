@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.60 2004/01/11 22:08:04 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.61 2004/01/13 13:18:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -627,6 +627,24 @@ rde_send_nexthop(struct bgpd_addr *next, int valid)
  */
 u_char	queue_buf[4096];
 
+void
+rde_generate_updates(struct prefix *new, struct prefix *old)
+{
+	struct rde_peer			*peer;
+
+	if ((old == NULL || old->aspath->nexthop == NULL ||
+	    old->aspath->nexthop->state != NEXTHOP_REACH) &&
+	    (new == NULL || new->aspath->nexthop == NULL ||
+	    new->aspath->nexthop->state != NEXTHOP_REACH))
+		return;
+
+	LIST_FOREACH(peer, &peerlist, peer_l) {
+		if (peer->state != PEER_UP)
+			continue;
+		up_generate_updates(peer, new, old);
+	}
+}
+
 u_int16_t
 rde_local_as(void)
 {
@@ -796,6 +814,7 @@ peer_up(u_int32_t id, struct session_up *sup)
 	    sizeof(peer->remote_addr));
 	peer->state = PEER_UP;
 	up_init(peer);
+	pt_dump(up_dump_upcall, peer);
 }
 
 void
