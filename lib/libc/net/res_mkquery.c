@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.7 1997/04/13 21:30:46 provos Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.8 1997/04/13 22:37:21 provos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.7 1997/04/13 21:30:46 provos Exp $";
+static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.8 1997/04/13 22:37:21 provos Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -116,7 +116,8 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 		return (-1);
 	bzero(buf, HFIXEDSZ);
 	hp = (HEADER *) buf;
-	hp->id = htons(_res.id=res_randomid());
+	_res.id = res_randomid();
+	hp->id = htons(_res.id);
 	hp->opcode = op;
 	hp->rd = (_res.options & RES_RECURSE) != 0;
 	hp->rcode = NOERROR;
