@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.20 1995/07/24 04:12:45 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.22 1996/01/10 18:21:52 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -28,6 +28,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ * Support for 3Com 3c505 Etherlink+ card.
  */
 
 /* To do:
