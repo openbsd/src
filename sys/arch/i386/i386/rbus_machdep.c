@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.2 2000/09/05 17:55:54 nate Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.3 2000/10/06 17:44:35 mickey Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rbus_machdep.c,v 1.2 2000/09/05 17:55:54 nate Exp $ */
+#include "pcibios.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ rbus_pccbb_parent_mem(pa)
 	bus_size_t size;
 	struct extent *ex;
 
+#if NPCIBIOS > 0
 	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP)) {
 		struct extent_region *rp;
 		ex = pciaddr.extent_mem;
@@ -169,8 +170,9 @@ rbus_pccbb_parent_mem(pa)
 
 			rp = rp->er_link.le_next;
 		}
-	}
-	else {
+	} else
+#endif
+	{
 		extern struct extent *iomem_ex;
 		ex = iomem_ex;
 		start = ex->ex_start;
@@ -212,6 +214,7 @@ rbus_pccbb_parent_io(pa)
 	bus_addr_t start;
 	bus_size_t size;
 
+#if NPCIBIOS > 0
 	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP)) {
 		struct extent_region *rp;
 		ex = pciaddr.extent_port;
@@ -235,8 +238,9 @@ rbus_pccbb_parent_io(pa)
 
 			rp = rp->er_link.le_next;
 		}
-	}
-	else {
+	} else
+#endif
+	{
 		extern struct extent *ioport_ex;
 		ex = ioport_ex;
 		start = RBUS_IO_START;
