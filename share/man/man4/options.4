@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.2 1997/08/18 01:52:51 mickey Exp $
+.\"	$OpenBSD: options.4,v 1.3 1997/08/18 03:16:09 downsj Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
@@ -31,8 +31,8 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 20, 1996
-.Os NetBSD 1.3
+.Dd August 17, 1997
+.Os
 .Dt OPTIONS 4
 .Sh NAME
 .Nm option
@@ -81,7 +81,7 @@ an
 .Dq inapropriate ioctl
 error.
 .It Cd option COMPAT_43
-Use of this option is discouraged extremely.
+Use of this option is discouraged.
 Enables compatibility with
 .Bx 4.3 .
 This adds an old syscall for lseek.  It also adds the ioctls for
@@ -125,7 +125,7 @@ to the i386.
 On those architectures that support it, this enables binary
 compatibility with HP/UX
 applications built for the same architecture.  This is limited to the
-hp300 port, and has some known bugs.  A limited set of programs do work.
+certain ports, and has some known bugs.  A limited set of programs do work.
 .It Cd option COMPAT_IBCS2
 On those architectures that support it, this enables binary
 compatibility with iBCS2 
@@ -138,8 +138,9 @@ applications built for the same architecture.  This is currently
 limited to the alpha, and may not even work.
 .It Cd option COMPAT_NOMID
 Enable compatibility with a.out executables that lack a machine id.
-This includes NetBSD 0.8's ZMAGIC format, and 386BSD and BSDI's
-QMAGIC, NMAGIC, and OMAGIC a.out formats.
+On the i386, this includes NetBSD 0.8's ZMAGIC format, and 386BSD and BSDI's
+QMAGIC, NMAGIC, and OMAGIC a.out formats.  On the hp300 this enabled
+certain old 4.3BSD binaries to work, though it's use is discouraged now.
 .El
 .Ss Debugging Options
 .Bl -ohang
@@ -168,10 +169,10 @@ for details.
 not available on all architectures.
 .It Cd makeoptions DEBUG="-g"
 The -g flag causes
-.Pa netbsd.gdb
+.Pa bsd.gdb
 to be built in addition to
-.Pa netbsd .
-.Pa netbsd.gdb
+.Pa bsd .
+.Pa bsd.gdb
 is useful for debugging kernel crash dumps with gdb.
 The command
 .Dl gdb -k
@@ -430,11 +431,11 @@ requiring a suid root program to do it.
 This option changes part of the VM/pmap interface, to allow for
 non-contiguous memory.  On some ports it is not an option.  These
 ports typically only use one of the interfaces.
-.It Cd option RAMDISK_DISK_HOOKS
+.It Cd option RAM_DISK_HOOKS
 This option allows for some machine dependent functions to be called when
 the ramdisk driver is configured. This can result in automatically loading
 a ramdisk from floppy on open (among other things).
-.It Cd option RAMDISK_DISK_IS_ROOT
+.It Cd option RAM_DISK_IS_ROOT
 Forces the ramdisk to be the root device. This can only be overridden when
 the kernel is booted in the 'ask-for-root' mode.
 .It Cd option NTP
@@ -482,46 +483,6 @@ set to
 What this option allows as far as security is
 concerned, is the ability to safely ensure that the correct script
 it run by the interpreter, as it is passed as an already open file.
-.It Cd option RTC_OFFSET=integer
-The kernel (and typically the hardware battery backed-up clock on
-those machines that have one) keeps time in
-.Em UTC
-(Universal Coordinated Time, once known as
-.Em GMT ,
-or Greenwich Mean Time)
-and not in the time of the local time zone.
-The
-.Em RTC_OFFSET
-option is used on some ports (such as the i386) to tell the kernel
-that the hardware clock is offset from
-.Em UTC
-by the specified number of minutes. This is typically used when a
-machine boots several operating systems and one of them wants the
-hardware clock to run in the local time zone and not in
-.Em UTC ,
-e.g.
-.Em RTC_OFFSET=300
-means
-the hardware clock is set to US Eastern Time (300 minutes behind 
-.Em UTC ) ,
-and not 
-.Em UTC .
-(Note:
-.Em RTC_OFFSET
-is used to initialize a kernel variable named
-.Va rtc_offset
-which is the source actually used to determine the clock offset, and
-which may be accessed via the kern.rtc_offset sysctl variable.
-See
-.Xr sysctl 8
-and
-.Xr sysctl 3
-for details. Since the kernel clock is initialized from the hardware
-clock very early in the boot process, it is not possible to meaningfully change
-.Va rtc_offset
-in system initialization scripts.  Changing this value currently may
-only be done at kernel compile time or by patching the kernel and
-rebooting.)
 .It Cd option CCDNBUF=integer
 The
 .Xr ccd 4
@@ -664,7 +625,13 @@ Include support for Internetwork Packet Exchange protocol.
 .It Cd option NETATALK
 Include support for AppleTalk.
 .It Cd option TCP_COMPAT_42
-Use of this option is discouraged extremely.
+Use of this option is
+.Em extremely
+discouraged.  Do not enable this.  If any other machines on your network
+require you to enable this, you're better off just disconnecting
+.Em them
+from the network.
+.Pp
 TCP bug compatibility with 4.2BSD.  In 4.2BSD, TCP sequence numbers
 were 32-bit signed values.  Modern implementations of TCP use unsigned
 values.  This option clamps the initial sequence number to start in
@@ -836,6 +803,4 @@ man page first appeared in
 .Sh BUGS
 The
 .Em INET
-and the
-.Em VNODEPAGER
-options should not be required.
+option should not be required.
