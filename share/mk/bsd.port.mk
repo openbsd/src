@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.72 1999/03/01 18:44:04 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.73 1999/03/01 19:44:18 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.72 1999/03/01 18:44:04 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.73 1999/03/01 19:44:18 marc Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -96,9 +96,7 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #				  ${WRKDIR} (see below).  This is useful for building ports on
 #				  several architectures, then ${PORTSDIR} can be NFS-mounted
 #				  while ${WRKOBJDIR} is local to every arch
-# NO_SHARED_LIBS - defined as "yes" for those machine architectures that do
-#				  not support shared libraries.
-
+#
 #
 # Variables that typically apply to an individual port.  Non-Boolean
 # variables without defaults are *mandatory*.
@@ -193,6 +191,10 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # GNU_CONFIGURE	- Set if you are using GNU configure (optional).
 # CONFIGURE_SCRIPT - Name of configure script, defaults to 'configure'.
 # CONFIGURE_ARGS - Pass these args to configure if ${HAS_CONFIGURE} is set.
+# CONFIGURE_SHARED - An argument to GNU configure that expands to
+#				  --enable-shared for those architectures that support
+#				  shared libraries and --disable-shared for architectures
+#				  that do not support shared libraries.
 # CONFIGURE_ENV - Pass these env (shell-like) to configure if
 #				  ${HAS_CONFIGURE} is set.
 # SCRIPTS_ENV	- Additional environment vars passed to scripts in
@@ -315,6 +317,14 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # CAT<sect>     - The same as MAN<sect>, only for formatted manpages.
 # MANPREFIX		 -The directory prefix for ${MAN<sect>} (default: ${PREFIX}).
 # CATPREFIX     - The directory prefix for ${CAT<sect>} (default: ${PREFIX}).
+#
+# Other variables:
+#
+# NO_SHARED_LIBS - defined as "yes" for those machine architectures that do
+#				  not support shared libraries.  WARNING: This value is
+#				  NOT defined until AFTER ".include bsd.port.mk".  Thus
+#				  you can NOT use something like ".if defined(NO_SHARED_LIBS)"
+#				  before this file is included.
 #
 # Default targets and their behaviors:
 #
@@ -885,6 +895,12 @@ CONFIGURE_ENV+=		PATH=.:${PORTPATH}
 .if defined(GNU_CONFIGURE)
 CONFIGURE_ARGS+=	--prefix=${PREFIX}
 HAS_CONFIGURE=		yes
+.endif
+
+.if defined(NO_SHARED_LIBS)
+CONFIGURE_SHARED?=	--disable-shared
+.else
+CONFIGURE_SHARED?=	--enable-shared
 .endif
 
 # Passed to most of script invocations
