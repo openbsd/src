@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.37 2002/12/10 16:58:12 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.38 2002/12/25 23:13:25 henning Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -787,10 +787,6 @@ ICONFILES= \
 	icons/world2.png
 
 .include <bsd.own.mk>
-
-.if ${MACHINE_ARCH} == "alpha"
-COPTS+=-O1
-.endif
 
 all: 	prereq
 	@cd ${.OBJDIR} && ${MAKE}
