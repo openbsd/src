@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.431 2003/12/19 16:12:43 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.432 2003/12/30 16:59:38 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4392,7 +4392,7 @@ top:
 int
 parse_rules(FILE *input, struct pfctl *xpf)
 {
-	struct sym	*sym;
+	struct sym	*sym, *next;
 
 	fin = input;
 	pf = xpf;
@@ -4408,13 +4408,15 @@ parse_rules(FILE *input, struct pfctl *xpf)
 	yyparse();
 
 	/* Free macros and check which have not been used. */
-	TAILQ_FOREACH(sym, &symhead, entries) {
+	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
+		next = TAILQ_NEXT(sym, entries);
 		if ((pf->opts & PF_OPT_VERBOSE2) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
 		free(sym->nam);
 		free(sym->val);
 		TAILQ_REMOVE(&symhead, sym, entries);
+		free(sym);
 	}
 
 	return (errors ? -1 : 0);
