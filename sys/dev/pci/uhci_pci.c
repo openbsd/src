@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.17 2004/05/24 22:52:52 mickey Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.18 2004/12/31 04:22:32 dlg Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -175,10 +175,9 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	vendor = pci_findvendor(pa->pa_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	if (vendor)
-		strncpy(sc->sc.sc_vendor, vendor,
-			sizeof(sc->sc.sc_vendor) - 1);
+		strlcpy(sc->sc.sc_vendor, vendor, sizeof (sc->sc.sc_vendor));
 	else
-		snprintf(sc->sc.sc_vendor, sizeof sc->sc.sc_vendor,
+		snprintf(sc->sc.sc_vendor, sizeof (sc->sc.sc_vendor),
 			"vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 	
 	r = uhci_init(&sc->sc);
