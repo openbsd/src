@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.16 2003/06/02 23:32:06 millert Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.17 2004/02/16 22:12:02 millert Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.16 2003/06/02 23:32:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.17 2004/02/16 22:12:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ int ischflags, ischown, ischgrp, ischmod;
 extern char *__progname;
 
 gid_t a_gid(const char *);
-uid_t a_uid(const char *);
+uid_t a_uid(const char *, int);
 void usage(void);
 
 int
@@ -204,12 +204,14 @@ done:	argv += optind;
 			gid = a_gid(cp);
 		}
 #ifdef SUPPORT_DOT
-		else if ((cp = strchr(*argv, '.')) != NULL) {
+		else if ((cp = strchr(*argv, '.')) != NULL &&
+		    (uid = a_uid(*argv, 1)) == -1) {
 			*cp++ = '\0';
 			gid = a_gid(cp);
 		}
 #endif
-		uid = a_uid(*argv);
+		if (uid == -1)
+			uid = a_uid(*argv, 0);
 	} else
 		gid = a_gid(*argv);
 
@@ -279,7 +281,7 @@ done:	argv += optind;
 }
 
 uid_t
-a_uid(const char *s)
+a_uid(const char *s, int silent)
 {
 	struct passwd *pw;
 	char *ep;
@@ -291,10 +293,16 @@ a_uid(const char *s)
 	if ((pw = getpwnam(s)) != NULL) {
 		return pw->pw_uid;
 	} else {
-		if ((ul = strtoul(s, &ep, 10)) == ULONG_MAX)
+		if ((ul = strtoul(s, &ep, 10)) == ULONG_MAX) {
+			if (silent)
+				return -1;
 			err(1, "%s", s);
-		if (*ep != '\0')
+		}
+		if (*ep != '\0') {
+			if (silent)
+				return -1;
 			errx(1, "%s: invalid user name", s);
+		}
 		/* XXX long -> int */
 		return (uid_t)ul;
 	}
