@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.9 2000/09/08 02:23:11 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.10 2001/02/17 23:00:05 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,11 +11,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: bs.c,v 1.9 2000/09/08 02:23:11 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bs.c,v 1.10 2001/02/17 23:00:05 pjanzen Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* (setegid, random) */
 
+#include <sys/param.h>
 #include <curses.h>
 #include <signal.h>
 #include <ctype.h>
@@ -99,7 +100,7 @@ static char sub[] = "Submarine";
 static char destroy[] = "Destroyer";
 static char ptboat[] = "PT Boat";
 
-static char name[40];
+static char name[MAXLOGNAME];
 static char dftname[] = "stranger";
 
 /* direction constants */
@@ -121,7 +122,7 @@ static int cury = (BDEPTH / 2);
 typedef struct
 {
     char *name;		/* name of the ship type */
-    unsigned hits;	/* how many times has this ship been hit? */
+    char hits;		/* how many times has this ship been hit? */
     char symbol;	/* symbol for game purposes */
     char length;	/* length of ship */
     char x, y;		/* coordinates of ship start point */
@@ -134,20 +135,20 @@ static bool checkplace(int b, ship_t *ss, int vis);
 
 ship_t plyship[SHIPTYPES] =
 {
-    { carrier,	0, 'A', 5},
-    { battle,	0, 'B', 4},
-    { destroy,	0, 'D', 3},
-    { sub,	0, 'S', 3},
-    { ptboat,	0, 'P', 2},
+    { carrier,	0, 'A', 5, 0, 0, 0, FALSE},
+    { battle,	0, 'B', 4, 0, 0, 0, FALSE},
+    { destroy,	0, 'D', 3, 0, 0, 0, FALSE},
+    { sub,	0, 'S', 3, 0, 0, 0, FALSE},
+    { ptboat,	0, 'P', 2, 0, 0, 0, FALSE}
 };
 
 ship_t cpuship[SHIPTYPES] =
 {
-    { carrier,	0, 'A', 5},
-    { battle,	0, 'B', 4},
-    { destroy,	0, 'D', 3},
-    { sub,	0, 'S', 3},
-    { ptboat,	0, 'P', 2},
+    { carrier,	0, 'A', 5, 0, 0, 0, FALSE},
+    { battle,	0, 'B', 4, 0, 0, 0, FALSE},
+    { destroy,	0, 'D', 3, 0, 0, 0, FALSE},
+    { sub,	0, 'S', 3, 0, 0, 0, FALSE},
+    { ptboat,	0, 'P', 2, 0, 0, 0, FALSE}
 };
 
 /* The following variables (and associated defines), used for computer 
@@ -224,13 +225,13 @@ static void intro(void)
     if(signal(SIGQUIT,SIG_IGN) != SIG_IGN)
 	(void)signal(SIGQUIT,uninitgame);
 
-    if ((tmpname = getlogin()) != 0)
+    if ((tmpname = getlogin()) != NULL)
     {
-	(void)strcpy(name,tmpname);
+	(void)strlcpy(name, tmpname, sizeof(name));
 	name[0] = toupper(name[0]);
     }
     else
-	(void)strcpy(name,dftname);
+	(void)strlcpy(name, dftname, sizeof(name));
 
     (void)initscr();
 #ifdef KEY_MIN
