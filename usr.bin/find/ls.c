@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.5 1998/05/18 19:02:57 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.6 1998/10/04 01:05:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: ls.c,v 1.5 1998/05/18 19:02:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.6 1998/10/04 01:05:25 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -111,7 +111,7 @@ printlink(name)
 	int lnklen;
 	char path[MAXPATHLEN];
 
-	if ((lnklen = readlink(name, path, sizeof name-1)) == -1) {
+	if ((lnklen = readlink(name, path, sizeof(path) - 1)) == -1) {
 		warn("%s", name);
 		return;
 	}
