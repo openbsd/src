@@ -1,0 +1,2 @@
+#!/bin/sh
+cp /hdd2/OpenBSD/bsd.rd /proc/zboot

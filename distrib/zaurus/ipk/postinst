@@ -1,0 +1,12 @@
+#!/bin/sh
+rmmod zbsdmod 2>/dev/null
+mount -o remount,rw /
+rm -f /root/etc/rc.d/rc.zboot
+rm -f /root/etc/rc.d/zboot
+rm -f /root/etc/rc.d/zbsdmod.o
+cp /hdd2/OpenBSD/rc.zboot /root/etc/rc.d
+cp /hdd2/OpenBSD/zboot /root/etc/rc.d
+cp /hdd2/OpenBSD/zbsdmod.o /root/etc/rc.d
+sync; sleep 3
+mount -o remount,ro /
+insmod /hdd2/OpenBSD/zbsdmod.o

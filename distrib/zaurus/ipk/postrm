@@ -1,0 +1,7 @@
+#!/bin/sh
+rmmod zbsdmod
+mount -o remount,rw /
+rm -f /root/etc/rc.d/rc.zboot
+rm -f /root/etc/rc.d/zboot
+rm -f /root/etc/rc.d/zbsdmod.o
+mount -o remount,ro /

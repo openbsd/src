@@ -1,0 +1,8 @@
+#!/bin/sh
+/bin/busybox sleep 2
+/bin/busybox clear
+
+/sbin/insmod /root/etc/rc.d/zbsdmod.o &&
+echo /bin/true > /proc/sys/kernel/modprobe &&
+/root/etc/rc.d/zboot &&
+echo /sbin/modprobe > /proc/sys/kernel/modprobe

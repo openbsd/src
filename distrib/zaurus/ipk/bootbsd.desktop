@@ -1,0 +1,9 @@
+[Desktop Entry]
+#Comment=Boot the OpenBSD ramdisk kernel bsd.rd
+Exec=bootbsd
+Icon=bootbsd
+Type=Application
+CanFastload=0
+Name=Install OpenBSD
+Display=640x480/144dpi,480x640/144dpi
+#HidePrivilege=1
