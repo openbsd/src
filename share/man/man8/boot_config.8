@@ -1,0 +1,195 @@
+.\"	$OpenBSD: boot_config.8,v 1.1 1996/09/21 10:36:52 maja Exp $
+.\"
+.\" Copyright (c) 1996 Mats O Jansson
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Theo de Raadt.
+.\" 4. Neither the name of the author nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd September 21, 1996
+.Dt BOOT_CONFIG 8
+.Os BSD 4
+.Sh NAME
+.Nm BOOT_CONFIG
+.Nd how to change kernel configuration at boot
+.Sh DESCRIPTION
+.Nm BOOT_CONFIG
+is a kernel option that make it possible to change the configuration
+at boot time.
+.Pp
+The boot time configuration is invokes by a
+.Fl c
+option when OpenBSD ask for kernel to boot.
+.Pp
+.Bd -literal
+>> OpenBSD BOOT 640/31744 k [1.29]
+use ? for file list, or carriage return for defaults
+use hd(1,a)/bsd to boot sd0 when sd0 is also installed
+Boot: [[[wd(0,a)]/bsd][-abcdrs]] : -c\\n 
+Booting.. blah blah blah
+avail mem = 28188672
+using 430 buffers containing 1761280 bytes of memory
+User Kernel Config
+UKC>
+.Ed
+.Pp
+.Sh COMMANDS
+.Bl -tag -width "disable devno|dev" indent
+.It add Ar dev
+Add a device through copying another.
+.It base Ar 8|10|16
+Change the base for large numbers. E.g. I/O addresses in a VAXen are octal.
+.It change Ar devno|dev
+Modify one or more devices.
+.It disable Ar devno|dev
+Disable one or more devices.
+.It enable Ar devno|dev
+Enable one or more devices.
+.It exit
+Continue boot.
+.It find Ar devno|dev
+Find one or more devices.
+.It help
+Give a short summary of all commands and its arguments.
+.It list
+Show all known devices a screen at the time.
+.It lines Op Ar count
+Setup the number of rows per page.
+.It quit
+Continue boot.
+.It show Op Ar attr Op Ar val
+Show devices with an attribute and optional with a specified value.
+.El
+.Pp
+.Sh EXAMPLES
+Your ethernet card isn't found at boot because the configuration don't
+match the hardware. E.g. wrong IRQ in OpenBSD/i386. You know that your
+ethernet card is using the eddriver.
+.Pp
+.Bd -literal
+UKC> find ed\\n 
+81 ed0 at isa0 port 0x280 size 0 iomem 0xd0000 iosiz 0 irq 9 drq -1 pnpid -1
+82 ed1 at isa0 port 0x250 size 0 iomem 0xd8000 iosiz 0 irq 9 drq -1 pnpid -1
+83 ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 pnpid -1
+84 ed* at pcmcia0 port 0x300 size 0x20 iomem -1 iosiz 0 irq 10 drq -1 slot -1
+UKC>
+.Ed
+.Pp
+Ok, ed2 seems to match the configuration except IRQ 5 instead of IRQ 10. So
+change irq on ed2 with the change command. Specify device by name or number.
+.Pp
+.Bd -literal
+UKC> change ed2\\n 
+83 E ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 pnpid -1
+change (y/n) ? y\\n 
+port [0x300] ? \\n 
+size [0] ? \\n 
+iomem [0xcc000] ? \\n 
+iosiz [0] ? \\n 
+irq [10] ? 5\\n 
+drq [-1] ? \\n 
+pnpid [-1] ? \\n 
+83 ed2 changed
+83 ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 5 drq -1 pnpid -1
+UKC>
+.Ed
+.Pp
+Another case is when a none existing device is wrongly found when another 
+device is found at the probed location. One known case is the Mitsumi none
+ATAPI cdrom in OpenBSD/i386. The simplest thing to solve that problem is to
+disable mcd0.
+.Pp
+.Bd -literal
+UKC> find mcd0\\n
+ 29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
+UKC> disable mcd0\\n
+ 29 mcd0 disabled
+UKC> find 29\\n
+ 29 mcd0 at isa0 disable port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
+.Ed
+.Pp
+The show command is useful for finding which devices has a certain attribute.
+It can even show us all devices with an certain value of the attribute.
+.Bd -literal
+UKC> show slot\\n
+  1 ahc* at eisa0 slot -1
+  3 ep0 at eisa0 slot -1
+  6 ep* at eisa0 slot -1
+  8 ep* at pcmcia* port 0x300 size 0x10 iomem -1 iosiz 0 irq 10 drq -1 slot -1
+ 40 com3 at pcmcia* port 0x2e8 size 8 iomem -1 iosiz 0 irq 3 drq -1 slot -1
+ 84 ed* at pcmcia* port 0x300 size 0x20 iomem -1 iosiz 0 irq 10 drq -1 slot -1
+ 86 ahb* at eisa0 slot -1
+ 87 fea* at eisa0 slot -1
+UKC> show port 0x300\\n
+  8 ep* at pcmcia* port 0x300 size 0x10 iomem -1 iosiz 0 irq 10 drq -1 slot -1
+ 29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
+ 31 wt0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 5 drq 1 pnpid -1
+ 58 el0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 9 drq -1 pnpid -1
+ 60 ie1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
+ 83 ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 pnpid -1
+ 84 ed* at pcmcia* port 0x300 size 0x20 iomem -1 iosiz 0 irq 10 drq -1 slot -1
+UKC>
+.Ed
+.Pp
+It is possible to add devices, but only devices that already exists in the 
+kernel. If a device is added all devices after is renumbered.
+.Pp
+.Bd -literal
+UKC> find ep\\n
+  2 ep0 at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 pnpid -1
+  3 ep0 at eisa0 slot -1
+  4 ep0 at pci0|pci* dev -1 function -1
+  5 ep* at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 pnpid -1
+  6 ep* at eisa0 slot -1
+  7 ep* at pci0|pci* dev -1 function -1
+  8 ep* at pcmcia* port 0x300 size 0x10 iomem -1 iosiz 0 irq 10 drq -1 slot -1
+UKC> add ep1\\n
+Clone Device (DevNo, 'q' or '?') ? 4
+Insert before Device (DevNo, 'q' or '?') ? 5
+  5 ep1 at pci0|pci* dev -1 function -1
+UKC> change 5\\n
+  5 ep1 at pci0|pci* dev -1 function -1
+change (y/n) ?\\n
+dev [-1] ? 14\\n
+function [-1] ? \\n
+  5 ep1 changed
+  5 ep1 at pci0|pci* dev 14 function -1
+UKC>
+.Ed
+.Pp
+And to continuing boot try quit or exit...
+.Pp
+.Bd -literal
+UKC> quit\\n
+Continuing...
+mainbus0 (root)
+.Ed
+.Pp
+.Sh BUGS
+The add command is rather restricted. Might be fixed in the future.
+.Sh AUTHOR
+Mats O Jansson <moj@stacken.kth.se>
