@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.65 2000/04/26 19:08:23 chris Exp $
+#	$OpenBSD: GENERIC,v 1.66 2000/10/13 04:21:14 itojun Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -65,6 +65,7 @@ option		UNION		# union file system
 #option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
 option		INET6		# IPv6 (needs INET)
+option		PULLDOWN_TEST	# use m_pulldown for IPv6 packet parsing
 option		IPSEC		# IPsec
 #option		KEY		# PF_KEY (implied by IPSEC)
 #option		NS		# XNS
