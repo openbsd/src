@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.8 1999/11/15 01:46:41 millert Exp $
+.\"	$OpenBSD: whois.1,v 1.9 1999/11/15 19:40:59 millert Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd Internet domain name and network number directory service
 .Sh SYNOPSIS
 .Nm whois
-.Op Fl adgiprR
+.Op Fl adgipqQrR
 .Op Fl h Ar host
 .Ar name Op Ar ...
 .Sh DESCRIPTION
@@ -109,7 +109,14 @@ automatically for a large number of TLDs, ie. all of the following will
   whois -q nic.fr
   whois -q demon.co.uk
 .Ed
+This option is now the default.
 .Pp
+.It Fl Q
+Do a quick lookup.  This means that
+.Nm
+will not attempt to lookup the name in the authoratative whois
+server (if one is listed) nor will it contact InterNic if a lookup
+fails.  This flag has no effect when combined with any other flag.
 .It Fl r
 Use the R\(aaeseaux IP Europ\(aaeens
 .Pq Tn RIPE
