@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.23 2004/07/25 00:03:52 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.66 2004/07/16 23:13:27 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.24 2004/07/25 00:16:35 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.67 2004/07/23 23:13:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.66 2004/07/16 23:13:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.67 2004/07/23 23:13:27 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -2028,7 +2028,7 @@ atw_write_sram(struct atw_softc *sc, u_int ofs, u_int8_t *buf, u_int buflen)
 
 	KASSERT(ofs % 2 == 0 && buflen % 2 == 0);
 
-	KASSERT(buflen + ofs <= ATW_SRAM_SIZE);
+	KASSERT(buflen + ofs <= ATW_SRAM_A_SIZE);
 
 	ptr = &sc->sc_sram[ofs];
 

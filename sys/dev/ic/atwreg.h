@@ -1,5 +1,5 @@
-/*	$OpenBSD: atwreg.h,v 1.3 2004/07/15 16:09:20 millert Exp $	*/
-/*	$NetBSD: atwreg.h,v 1.8 2004/05/31 11:40:56 dyoung Exp $	*/
+/*	$OpenBSD: atwreg.h,v 1.4 2004/07/25 00:16:35 millert Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.10 2004/07/23 05:01:29 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -392,10 +392,14 @@
 #define	ATW_TEST1_TXWP_TDBP	LSHIFT(0x3, ATW_TEST1_TXWP_MASK)
 #define	ATW_TEST1_RSVD0_MASK	BITS(24,6)	/* reserved */
 #define	ATW_TEST1_TESTMODE_MASK	BITS(5,4)
-#define	ATW_TEST1_TESTMODE_NORMAL	LSHIFT(0x0, )	/* normal operation */
-#define	ATW_TEST1_TESTMODE_MACONLY	LSHIFT(0x1, )	/* MAC-only mode */
-#define	ATW_TEST1_TESTMODE_NORMAL2	LSHIFT(0x2, )	/* normal operation */
-#define	ATW_TEST1_TESTMODE_MONITOR	LSHIFT(0x3, )	/* monitor mode */
+/* normal operation */
+#define	ATW_TEST1_TESTMODE_NORMAL	LSHIFT(0x0, ATW_TEST1_TESTMODE_MASK)
+/* MAC-only mode */
+#define	ATW_TEST1_TESTMODE_MACONLY	LSHIFT(0x1, ATW_TEST1_TESTMODE_MASK)
+/* normal operation */
+#define	ATW_TEST1_TESTMODE_NORMAL2	LSHIFT(0x2, ATW_TEST1_TESTMODE_MASK)
+/* monitor mode */
+#define	ATW_TEST1_TESTMODE_MONITOR	LSHIFT(0x3, ATW_TEST1_TESTMODE_MASK)
 
 #define	ATW_TEST1_DUMP_MASK	BITS(3,0)		/* select dump signal
 							 * from dxfer (huh?)
@@ -551,14 +555,68 @@
 						 */
 #define ATW_PLCPHD_PMBL		BIT(15)		/* 0: long preamble, 1: short */
 
-#define ATW_MMIWADDR_INTERSIL	0x100E0C0A
-#define ATW_MMIWADDR_RFMD	0x00009101
+#define	ATW_MMIWADDR_LENLO_MASK		BITS(31,24)	/* tx: written 4th */
+#define	ATW_MMIWADDR_LENHI_MASK		BITS(23,16)	/* tx: written 3rd */
+#define	ATW_MMIWADDR_GAIN_MASK		BITS(15,8)	/* tx: written 2nd */
+#define	ATW_MMIWADDR_RATE_MASK		BITS(7,0)	/* tx: written 1st */
 
-#define ATW_MMIRADDR1_INTERSIL	0x00007c7e
-#define ATW_MMIRADDR1_RFMD	0x00000301
+/* was magic 0x100E0C0A */
+#define ATW_MMIWADDR_INTERSIL			  \
+	(LSHIFT(0x0c, ATW_MMIWADDR_GAIN_MASK)	| \
+	 LSHIFT(0x0a, ATW_MMIWADDR_RATE_MASK)	| \
+	 LSHIFT(0x0e, ATW_MMIWADDR_LENHI_MASK)	| \
+	 LSHIFT(0x10, ATW_MMIWADDR_LENLO_MASK))
 
-#define ATW_MMIRADDR2_INTERSIL	0x00100000
-#define ATW_MMIRADDR2_RFMD	0x7e100000
+/* was magic 0x00009101
+ *
+ * ADMtek sets the AI bit on the ATW_MMIWADDR_GAIN_MASK address to
+ * put the RF3000 into auto-increment mode so that it can write Tx gain,
+ * Tx length (high) and Tx length (low) registers back-to-back.
+ */
+#define ATW_MMIWADDR_RFMD						\
+	(LSHIFT(RF3000_TWI_AI|RF3000_GAINCTL, ATW_MMIWADDR_GAIN_MASK) | \
+	 LSHIFT(RF3000_CTL, ATW_MMIWADDR_RATE_MASK))
+
+#define	ATW_MMIRADDR1_RSVD_MASK		BITS(31, 24)
+#define	ATW_MMIRADDR1_PWRLVL_MASK	BITS(23, 16)
+#define	ATW_MMIRADDR1_RSSI_MASK		BITS(15, 8)
+#define	ATW_MMIRADDR1_RXSTAT_MASK	BITS(7, 0)
+
+/* was magic 0x00007c7e
+ *
+ * TBD document registers for Intersil 3861 baseband
+ */
+#define ATW_MMIRADDR1_INTERSIL	\
+	(LSHIFT(0x7c, ATW_MMIRADDR1_RSSI_MASK) | \
+	 LSHIFT(0x7e, ATW_MMIRADDR1_RXSTAT_MASK))
+
+/* was magic 0x00000301 */
+#define ATW_MMIRADDR1_RFMD	\
+	(LSHIFT(RF3000_RSSI, ATW_MMIRADDR1_RSSI_MASK) | \
+	 LSHIFT(RF3000_RXSTAT, ATW_MMIRADDR1_RXSTAT_MASK))
+
+/* was magic 0x00100000 */
+#define ATW_MMIRADDR2_INTERSIL	\
+	(LSHIFT(0x0, ATW_MMIRADDR2_ID_MASK) | \
+	 LSHIFT(0x10, ATW_MMIRADDR2_RXPECNT_MASK))
+
+/* was magic 0x7e100000 */
+#define ATW_MMIRADDR2_RFMD	\
+	(LSHIFT(0x7e, ATW_MMIRADDR2_ID_MASK) | \
+	 LSHIFT(0x10, ATW_MMIRADDR2_RXPECNT_MASK))
+
+#define	ATW_MMIRADDR2_ID_MASK	BITS(31, 24)	/* 1st element ID in WEP table
+						 * for Probe Response (huh?)
+						 */
+/* RXPE is re-asserted after RXPECNT * 22MHz. */
+#define	ATW_MMIRADDR2_RXPECNT_MASK	BITS(23, 16)
+#define	ATW_MMIRADDR2_PROREXT		BIT(15)		/* Probe Response
+							 * 11Mb/s length
+							 * extension.
+							 */
+#define	ATW_MMIRADDR2_PRORLEN_MASK	BITS(14, 0)	/* Probe Response
+							 * microsecond length
+							 */
 
 #define ATW_TXBR_ALCUPDATE_MASK	BIT(31)		/* auto-update BBP with ALCSET */
 #define ATW_TXBR_TBCNT_MASK	BITS(16, 20)	/* transmit burst count */
@@ -849,6 +907,8 @@
 /* Serial EEPROM offsets */
 #define ATW_SR_CLASS_CODE	(0x00/2)
 #define ATW_SR_FORMAT_VERSION	(0x02/2)
+#define		ATW_SR_MAJOR_MASK	BITS(7, 0)
+#define		ATW_SR_MINOR_MASK	BITS(15,8)
 #define ATW_SR_MAC00		(0x08/2)	/* CSR21 */
 #define ATW_SR_MAC01		(0x0A/2)	/* CSR21/22 */
 #define ATW_SR_MAC10		(0x0C/2)	/* CSR22 */
@@ -859,6 +919,8 @@
 #define		ATW_SR_RFTYPE_MASK	BITS(5, 3)
 #define		ATW_SR_BBPTYPE_MASK	BITS(2, 0)
 #define ATW_SR_CR28_CR03	(0x18/2)
+#define		ATW_SR_CR28_MASK	BITS(15,8)
+#define		ATW_SR_CR03_MASK	BITS(7, 0)
 #define ATW_SR_CTRY_CR29	(0x1A/2)
 #define		ATW_SR_CTRY_MASK	BITS(15,8)	/* country code */
 #define			COUNTRY_FCC	0
@@ -868,6 +930,7 @@
 #define			COUNTRY_FRANCE	4
 #define			COUNTRY_MMK	5
 #define			COUNTRY_MMK2	6
+#define		ATW_SR_CR29_MASK	BITS(7, 0)
 #define ATW_SR_PCI_DEVICE	(0x20/2)	/* CR0 */
 #define ATW_SR_PCI_VENDOR	(0x22/2)	/* CR0 */
 #define ATW_SR_SUB_DEVICE	(0x24/2)	/* CR11 */
@@ -971,5 +1034,7 @@ struct atw_rxdesc {
 #define ATW_SRAM_ADDR_SHARED_KEY	(0x160 * 2)
 #define ATW_SRAM_ADDR_SSID	(0x180 * 2)
 #define ATW_SRAM_ADDR_SUPRATES	(0x191 * 2)
-#define ATW_SRAM_SIZE		(0x200 * 2)
+#define ATW_SRAM_MAXSIZE	(0x200 * 2)
+#define ATW_SRAM_A_SIZE		ATW_SRAM_MAXSIZE
+#define ATW_SRAM_B_SIZE		(0x1c0 * 2)
 
