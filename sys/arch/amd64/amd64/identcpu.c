@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.2 2004/02/09 22:15:52 mickey Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.3 2004/02/27 21:21:44 grange Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -95,6 +95,8 @@ identifycpu(struct cpu_info *ci)
 	u_int32_t dummy, val;
 	u_int32_t brand[12];
 	int i, max;
+	char *brandstr_from, *brandstr_to;
+	int skipspace;
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000001, dummy, dummy, dummy, ci->ci_feature_eflags);
@@ -104,6 +106,21 @@ identifycpu(struct cpu_info *ci)
 	CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
 
 	strlcpy(cpu_model, (char *)brand, sizeof(cpu_model));
+
+	/* Remove leading and duplicated spaces from cpu_model */
+	brandstr_from = brandstr_to = cpu_model;
+	skipspace = 1;
+	while (*brandstr_from != '\0') {
+		if (!skipspace || *brandstr_from != ' ') {
+			skipspace = 0;
+			*(brandstr_to++) = *brandstr_from;
+		}
+		if (*brandstr_from == ' ')
+			skipspace = 1;
+		brandstr_from++;
+	}
+	*brandstr_to = '\0';
+
 	if (cpu_model[0] == 0)
 		strlcpy(cpu_model, "Opteron or Athlon 64", sizeof(cpu_model));
 
