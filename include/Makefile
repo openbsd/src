@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.85 2000/10/01 03:19:04 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.86 2000/10/10 12:12:28 hugh Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -10,7 +10,7 @@
 
 FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h cast.h cpio.h \
 	ctype.h curses.h db.h dbm.h des.h dirent.h disktab.h elf_abi.h err.h \
-	fnmatch.h fstab.h fts.h glob.h grp.h ieeefp.h ifaddrs.h inttypes.h \
+	fnmatch.h fstab.h fts.h glob.h grp.h ifaddrs.h inttypes.h \
 	iso646.h kvm.h langinfo.h libgen.h limits.h locale.h login_cap.h \
 	malloc.h math.h md4.h md5.h memory.h mpool.h ndbm.h netdb.h netgroup.h \
 	nlist.h nl_types.h olf_abi.h paths.h poll.h pwd.h ranlib.h re_comp.h \
@@ -22,6 +22,10 @@ FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h cast.h cpio.h \
 .if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "mips") && \
 	(${MACHINE_ARCH} != "powerpc")
 FILES+=	dlfcn.h link.h
+.endif
+
+.if (${MACHINE_ARCH} != "vax")
+FILES+= ieeefp.h
 .endif
 
 MFILES=	float.h frame.h stdarg.h varargs.h
