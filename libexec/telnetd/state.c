@@ -1,4 +1,4 @@
-/*	$OpenBSD: state.c,v 1.10 2000/09/15 07:13:47 deraadt Exp $	*/
+/*	$OpenBSD: state.c,v 1.11 2000/12/06 16:50:15 hin Exp $	*/
 /*	$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: state.c,v 1.10 2000/09/15 07:13:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: state.c,v 1.11 2000/12/06 16:50:15 hin Exp $";
 #endif
 #endif /* not lint */
 
@@ -1086,7 +1086,7 @@ char *badenv_table[] = {
 	"_RLD_",
 	"SHLIB_PATH=",
 	"LIBPATH=",
-	"KRB_CONF",
+	"KRB",
 	"ENV=",
 	"BASH_ENV=",
 	NULL,
