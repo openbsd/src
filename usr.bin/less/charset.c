@@ -353,7 +353,7 @@ init_charset()
 binary_char(c)
 	unsigned char c;
 {
-	return (!isprint(c));
+	return (!isprint(c) && !isspace(c));
 }
 
 /*
