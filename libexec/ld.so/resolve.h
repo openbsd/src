@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.32 2004/08/11 19:14:56 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.33 2005/03/23 19:48:05 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -143,6 +143,7 @@ extern void	_dl_remove_object(elf_object_t *object);
 extern elf_object_t *_dl_lookup_object(const char *objname);
 extern elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int, int);
 extern void	_dl_unload_shlib(elf_object_t *object);
+elf_object_t *_dl_tryload_shlib(const char *libname, int type);
 
 extern int  _dl_md_reloc(elf_object_t *object, int rel, int relsz);
 extern void _dl_md_reloc_got(elf_object_t *object, int lazy);
