@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.13 2000/04/19 07:52:45 fgsch Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.14 2000/06/23 16:53:07 aaron Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -664,6 +664,23 @@ pcic_intr(arg)
 	return (ret ? 1 : 0);
 }
 
+void
+pcic_poll_intr(arg)
+	void *arg;
+{
+	struct pcic_softc *sc = arg;
+	int i, s;
+
+	s = spltty();
+
+	for (i = 0; i < PCIC_NSLOTS; i++)
+		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
+			pcic_intr_socket(&sc->handle[i]);
+
+	timeout_add(&sc->poll_timeout, hz / 2 );
+	splx(s);
+}
+
 int
 pcic_intr_socket(h)
 	struct pcic_handle *h;
@@ -755,7 +772,6 @@ pcic_attach_card(h)
 		panic("pcic_attach_card: already attached");
 
 	/* call the MI attach function */
-
 	pcmcia_card_attach(h->pcmcia);
 
 	h->flags |= PCIC_FLAG_CARDP;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.9 1999/08/11 12:02:07 niklas Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.10 2000/06/23 16:53:08 aaron Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
@@ -208,7 +209,7 @@ pcic_isa_attach(parent, self, aux)
 	sc->irq = irq;
 
 	if (irq) {
-		printf("%s: irq %d\n", sc->dev.dv_xname, irq);
+		printf("%s: irq %d, ", sc->dev.dv_xname, irq);
 
 		/* Set up the pcic to interrupt on card detect. */
 		for (i = 0; i < PCIC_NSLOTS; i++) {
@@ -220,5 +221,12 @@ pcic_isa_attach(parent, self, aux)
 			}
 		}
 	} else
-		printf("%s: no irq\n", sc->dev.dv_xname);
+		printf("%s: no irq, ");
+
+	printf("polling enabled\n", sc->dev.dv_xname);
+	if (sc->poll_established == 0) {
+		timeout_set(&sc->poll_timeout, pcic_poll_intr, sc);
+		timeout_add(&sc->poll_timeout, hz / 2);
+		sc->poll_established = 1;
+	}
 }

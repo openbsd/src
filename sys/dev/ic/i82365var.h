@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365var.h,v 1.7 2000/04/19 07:27:43 fgsch Exp $	*/
+/*	$OpenBSD: i82365var.h,v 1.8 2000/06/23 16:53:08 aaron Exp $	*/
 /*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>
@@ -140,6 +141,10 @@ struct pcic_softc {
 	int	irq;
 	void	*ih;
 
+	/* used by socket event polling */
+	struct timeout poll_timeout;
+	int poll_established;
+
 	struct pcic_handle handle[PCIC_NSLOTS];
 };
 
@@ -150,6 +155,7 @@ int	pcic_vendor __P((struct pcic_handle *));
 void	pcic_attach __P((struct pcic_softc *));
 void	pcic_attach_sockets __P((struct pcic_softc *));
 int	pcic_intr __P((void *arg));
+void	pcic_poll_intr __P((void *arg));
 
 int	pcic_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t,
 	    struct pcmcia_mem_handle *));
