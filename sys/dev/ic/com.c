@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.81 2002/02/05 04:15:30 mickey Exp $	*/
+/*	$OpenBSD: com.c,v 1.82 2002/03/14 01:24:21 jason Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1175,7 +1175,7 @@ compoll(arg)
 		TTY_FE, TTY_PE|TTY_FE
 	};
 
-	if (sc == 0 || sc->sc_ibufp == sc->sc_ibuf)
+	if (sc == NULL || sc->sc_ibufp == sc->sc_ibuf)
 		goto out;
 
 	tp = sc->sc_tty;
@@ -1195,7 +1195,7 @@ compoll(arg)
 	sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
 	sc->sc_ibufend = sc->sc_ibuf + COM_IBUFSIZE;
 
-	if (tp == 0 || !ISSET(tp->t_state, TS_ISOPEN)) {
+	if (tp == NULL || !ISSET(tp->t_state, TS_ISOPEN)) {
 		splx(s);
 		goto out;
 	}
