@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radlib.c,v 1.4 2000/09/02 22:13:09 brian Exp $
+ *	$OpenBSD: radlib.c,v 1.5 2000/11/16 22:18:50 brian Exp $
  */
 
 #include <sys/types.h>
@@ -64,8 +64,8 @@ clear_password(struct rad_handle *h)
 	if (h->pass_len != 0) {
 		memset(h->pass, 0, h->pass_len);
 		h->pass_len = 0;
-		h->pass_pos = 0;
 	}
+	h->pass_pos = 0;
 }
 
 static void
