@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.46 2004/10/14 16:02:45 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.47 2004/11/18 16:24:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -319,7 +319,9 @@ const struct ac97_codecid {
 	{ 0x48, 0xff, 0, 0,	"AD1881A" },
 	{ 0x60, 0xff, 0, 0,	"AD1885" },
 	{ 0x61, 0xff, 0, 0,	"AD1886" },
-	{ 0x70, 0xff, 0, 0,	"AD1981" },
+	{ 0x63, 0xff, 0, 0,	"AD1886A" },
+	{ 0x68, 0xff, 0, 0,	"AD1888",	ac97_ad198x_init },
+	{ 0x70, 0xff, 0, 0,	"AD1981",	ac97_ad198x_init },
 	{ 0x72, 0xff, 0, 0,	"AD1981A" },
 	{ 0x74, 0xff, 0, 0,	"AD1981B" },
 	{ 0x75, 0xff, 0, 0,	"AD1985",	ac97_ad198x_init },
@@ -327,6 +329,7 @@ const struct ac97_codecid {
 	{ 0x00,	0xfe, 1, 0,	"AK4540" },
 	{ 0x01,	0xfe, 1, 0,	"AK4540" },
 	{ 0x02,	0xff, 0, 0,	"AK4543" },
+	{ 0x05,	0xff, 0, 0,	"AK4544" },
 	{ 0x06,	0xff, 0, 0,	"AK4544A" },
 	{ 0x07,	0xff, 0, 0,	"AK4545" },
 }, ac97_av[] = {
@@ -341,6 +344,7 @@ const struct ac97_codecid {
 	{ 0x60, 0xff, 0, 0,	"ALC655",	ac97_alc655_init },
 	{ 0x70, 0xff, 0, 0,	"ALC203" },
 	{ 0x80, 0xff, 0, 0,	"ALC658",	ac97_alc655_init },
+	{ 0x90, 0xff, 0, 0,	"ALC850" },
 }, ac97_rl[] = {
 	{ 0x00, 0xf0, 0xf, 0,	"RL5306" },
 	{ 0x10, 0xf0, 0xf, 0,	"RL5382" },
@@ -362,6 +366,7 @@ const struct ac97_codecid {
 	{ 0x40,	0xf8, 7, 0,	"CS4201" },
 	{ 0x50,	0xf8, 7, 0,	"CS4205" },
 	{ 0x60,	0xf8, 7, 0,	"CS4291" },
+	{ 0x70,	0xf8, 7, 0,	"CS4202" },
 }, ac97_cx[] = {
 	{ 0x21, 0xff, 0, 0,	"HSD11246" },
 	{ 0x28, 0xf8, 7, 0,	"CX20468",	ac97_cx20468_init },
@@ -393,6 +398,7 @@ const struct ac97_codecid {
 	{ 0x08,	0xff, 0, 0,	"STAC9708/11" },
 	{ 0x09,	0xff, 0, 0,	"STAC9721/23" },
 	{ 0x44,	0xff, 0, 0,	"STAC9744/45" },
+	{ 0x50,	0xff, 0, 0,	"STAC9750/51" },
 	{ 0x52,	0xff, 0, 0,	"STAC9752/53" },
 	{ 0x56,	0xff, 0, 0,	"STAC9756/57" },
 	{ 0x66,	0xff, 0, 0,	"STAC9766/67" },
@@ -413,8 +419,10 @@ const struct ac97_codecid {
 	{ 0x00,	0xff, 0, 0,	"WM9701A" },
 	{ 0x03,	0xff, 0, 0,	"WM9704M/Q-0" }, /* & WM9703 */
 	{ 0x04,	0xff, 0, 0,	"WM9704M/Q-1" },
+	{ 0x05,	0xff, 0, 0,	"WM9705/10" },
 }, ac97_ym[] = {
-	{ 0x00, 0xff, 0, 0,	"YMF743" },
+	{ 0x00, 0xff, 0, 0,	"YMF743-S" },
+	{ 0x03, 0xff, 0, 0,	"YMF753-S" },
 };
 
 #define	cl(n)	n, sizeof(n)/sizeof(n[0])
