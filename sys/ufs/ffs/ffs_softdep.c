@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.15 2001/02/26 17:43:34 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.16 2001/02/26 17:54:07 csapuntz Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -48,7 +48,6 @@
 #endif
 #ifndef DEBUG
 #define DEBUG
-#define STATIC
 #endif
 
 #include <sys/param.h>
@@ -70,6 +69,7 @@
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_extern.h>
 
+#define STATIC
 
 /*
  * These definitions need to be adapted to the system to which
@@ -4446,7 +4446,6 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		 * happen at most once.
 		 */
 		inum = dap->da_newinum;
-		/* XXXCPS - figure out locking here */
 		if (dap->da_state & MKDIR_BODY) {
 			FREE_LOCK(&lk);
 			if ((error = VFS_VGET(mp, inum, &vp)) != 0)
