@@ -1,4 +1,4 @@
-/*	$OpenbSD$	*/
+/*	$OpenBSD: aperture.c,v 1.5 2000/03/02 01:49:09 todd Exp $	*/
 
 /*
  * Copyright 1994 the XFree86 Project Inc. 

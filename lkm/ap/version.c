@@ -1,5 +1,4 @@
-/*	$OpenbSD$	*/
-
+/*	$OpenBSD: version.c,v 1.3 2000/03/02 01:49:09 todd Exp $	*/
 /*
  * Loadable Kernel Module for XFree86 Aperture driver
  *
