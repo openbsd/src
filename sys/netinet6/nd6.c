@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.48 2002/06/08 21:22:03 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.49 2002/06/08 21:22:41 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1333,11 +1333,7 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the prefix advertised by routers */
 		struct nd_prefix *pr, *next;
 
-#ifdef __NetBSD__
-		s = splsoftnet();
-#else
 		s = splnet();
-#endif
 		for (pr = nd_prefix.lh_first; pr; pr = next) {
 			struct in6_ifaddr *ia, *ia_next;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.17 2002/06/08 21:22:03 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.18 2002/06/08 21:22:41 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1096,11 +1096,7 @@ prelist_remove(pr)
 	if (pr->ndpr_refcnt > 0)
 		return;		/* notice here? */
 
-#ifdef __NetBSD__
-	s = splsoftnet();
-#else
 	s = splnet();
-#endif
 
 	/* unlink ndpr_entry from nd_prefix list */
 	LIST_REMOVE(pr, ndpr_entry);
