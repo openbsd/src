@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.608 2003/03/19 20:15:02 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.609 2003/03/19 21:27:36 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2115,6 +2115,7 @@
 #define	PCI_PRODUCT_S3_SUPERSAVAGE	0x8c2e		/* SuperSavage */
 #define	PCI_PRODUCT_S3_TWISTER	0x8d01		/* Twister */
 #define	PCI_PRODUCT_S3_TWISTER_K	0x8d02		/* Twister-K */
+#define	PCI_PRODUCT_S3_PROSAVAGE_DDR	0x8d04		/* ProSavage DDR */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 
 /* Schneider & Koch (SysKonnect) */

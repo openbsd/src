@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.608 2003/03/19 20:15:02 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.609 2003/03/19 21:27:36 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4857,6 +4857,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TWISTER_K,
 	    "Twister-K",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PROSAVAGE_DDR,
+	    "ProSavage DDR",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES,
