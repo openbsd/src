@@ -1,0 +1,3 @@
+dnl	$OpenBSD: whatis,v 1.1 2005/01/10 03:30:48 drahn Exp $
+OpenBSD/MACHINE is a port to the Sharp Zaurus (C3000/C860)
+more may be supported in the future.

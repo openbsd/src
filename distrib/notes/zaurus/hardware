@@ -1,0 +1,45 @@
+dnl	$OpenBSD: hardware,v 1.1 2005/01/10 03:30:48 drahn Exp $
+OpenBSD/MACHINE runs on the Sharp Zaurus C3000, C860(?)
+
+Supported devices {:-include-:}:
+	Ethernet Adapters
+		CF ne3000 (?)
+	Wireless Ethernet Adapters
+		USB Adapters
+		    Acer Warplink USB-400
+		    Actiontec HWU01170
+		    Corega WLUSB-11
+		    I-O DATA WN-B11/USB
+		    Intel PRO/Wireless 2011B
+		    Intersil Prism 2X
+		    JVC MP-XP7250
+		    Linksys WUSB11 v3.0
+		    Linksys WUSB12
+		    Melco WLI-USB-KS11G
+		    Microsoft MN510
+		    Netgear MA111
+		    Siemens SpeedStream SS1022
+		    Syntax USB-400
+	Serial ports
+		Onboard serial (pxacom) port
+	Universal Serial Bus (USB) Devices
+		USB Audio
+		USB Diamond Multimedia Rio MP3 players
+		USB Ethernet adapters, see above
+		USB Generic Human Interface Devices (catch-all)
+		USB Handspring Visor
+		USB Hubs
+		USB Keyboards
+		USB Mass Storage devices, i.e., USB floppy drives and
+		  USB memory stick controllers
+		USB Mice
+		USB Modems
+		USB Printers
+		USB Scanners
+		USB-USB cables
+		USB Y@p phone
+	Keyboards
+		USB keyboards
+	Pointing Devices
+		USB mice
+	PXALCD Onboard Display.
