@@ -1,4 +1,4 @@
-/*	$Id: kadm_server.h,v 1.1.1.1 1995/12/14 06:52:34 tholo Exp $	*/
+/*	$Id: kadm_server.h,v 1.2 1997/06/29 10:48:35 provos Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -38,7 +38,7 @@
 
 #include <sys/types.h>
 #include <kerberosIV/krb.h>
-#include <kerberosIV/des.h>
+#include <des.h>
 
 typedef struct {
   struct sockaddr_in admin_addr;
