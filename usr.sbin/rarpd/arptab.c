@@ -72,6 +72,7 @@ static char sccsid[] = "@(#)arp.c	8.2 (Berkeley) 1/2/94";
 #include <stdlib.h>
 #include <paths.h>
 #include <syslog.h>
+#include <string.h>
 
 extern int errno;
 static int pid;
