@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshrcmd.c,v 1.5 1996/09/07 03:14:27 millert Exp $	*/
+/*	$OpenBSD: rshrcmd.c,v 1.6 1996/09/07 03:15:52 millert Exp $	*/
 
 
 /*
@@ -8,7 +8,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: rshrcmd.c,v 1.5 1996/09/07 03:14:27 millert Exp $";
+"$OpenBSD: rshrcmd.c,v 1.6 1996/09/07 03:15:52 millert Exp $";
 #endif
 
 #include	"defs.h"
@@ -65,7 +65,7 @@ rshrcmd(ahost, port, luser, ruser, cmd, fd2p)
 		/* child. we use sp[1] to be stdin/stdout, and close
 		   sp[0]. */
 		(void) close(sp[0]);
-		if (dup2(sp[1], 0) < 0 || dup2(0,1) < 0 || dup2(0, 2) < 0) {
+		if (dup2(sp[1], 0) < 0 || dup2(0, 1) < 0) {
 			error("dup2 failed: %s.", SYSERR);
 			_exit(255);
 		}
