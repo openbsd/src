@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2002/12/09 09:09:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.60 2003/01/09 22:29:32 miod Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -7,14 +7,14 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 bus_dma.9 bus_space.9 copy.9 \
 	crypto.9 ctxsw.9 disk.9 disklabel.9 \
 	dohooks.9 dopowerhooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	extattr.9 file.9 \
-	fetch.9 fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
+	fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 intro.9 inittodr.9 log.9 \
 	kern.9 kthread.9 lock.9 malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
 	panic.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
-	store.9 style.9 \
+	.9 style.9 \
 	time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
 	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 vget.9 \
 	vgone.9 vhold.9 vinvalbuf.9 vput.9 vref.9 vrele.9 \
@@ -91,8 +91,6 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
 	extent.9 extent_free.9 extent.9 extent_print.9
-MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
-	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=file.9 falloc.9 file.9 fdrelease.9 file.9 FREF.9 file.9 FRELE.9 \
 	file.9 fd_getfile.9 file.9 getvnode.9 file.9 getsock.9
 MLINKS+=hook_establish.9 hook_disestablish.9
@@ -150,8 +148,6 @@ MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
 	spl.9 splsoftnet.9 spl.9 splsoftserial.9 spl.9 splsofttty.9 \
 	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9
 MLINKS+=startuphook_establish.9 startuphook_disestablish.9
-MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
-	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
 	timeout.9 timeout_pending.9 timeout.9 timeout_del.9 \
