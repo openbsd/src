@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ld.script,v 1.6 1999/08/14 04:56:28 todd Exp $	*/
+/* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 
 OUTPUT_FORMAT("elf32-hppa")
 OUTPUT_ARCH(hppa)
@@ -27,18 +27,19 @@ SECTIONS
 	.data  :
 	{
 		$global$ = . ;
-		kernel_data = . ;
-		[a-ps-z]*(.data) r[a-ce-z]*(.data) *libkern.o(.data)
-		rd_root.o(.data)	/* there is an overflow bug in ld */
+		. += 4;
+		*(.data)
+		/* [a-ps-z]*(.data) r[a-ce-z]*(.data) *libkern.o(.data) */
+		/* rd_root.o(.data)	* there is an overflow bug in ld */
 		CONSTRUCTORS
 		. = ALIGN(4096);
+		edata = ABSOLUTE(.);
 	} = 0
 	.ctors	: { *(.ctors) }
 	.dtors	: { *(.dtors) }
-	edata = ABSOLUTE(.);
 
 	__bss_start = .;
-	.sbss	: { *(.sbss) *(.scommon) }
+	/* .sbss	: { *(.sbss) *(.scommon) } */
 	.bss :
 	{
 		*(.dynbss) *(.bss)
