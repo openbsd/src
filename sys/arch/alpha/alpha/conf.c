@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.42 2002/06/19 02:52:23 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.43 2002/06/24 19:00:33 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -120,15 +120,10 @@ cdev_decl(ksyms);
 
 /* USB Devices */
 #include "usb.h"
-cdev_decl(usb);
 #include "uhid.h"
-cdev_decl(uhid);
 #include "ugen.h"
-cdev_decl(ugen);
 #include "ulpt.h"
-cdev_decl(ulpt);
 #include "ucom.h"
-cdev_decl(ucom);
 #include "pf.h"
 #ifdef USER_PCICONF
 #include "pci.h"

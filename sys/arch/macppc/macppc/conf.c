@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2002/06/19 02:52:23 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.15 2002/06/24 19:00:33 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -119,19 +119,12 @@ cdev_decl(xfs_dev);
 #include "ksyms.h"
 cdev_decl(ksyms);
 #include "usb.h"
-cdev_decl(usb);
 #include "uhid.h"
-cdev_decl(uhid);
 #include "ugen.h"
-cdev_decl(ugen);
 #include "ulpt.h"
-cdev_decl(ulpt);
 #include "urio.h"
-cdev_decl(urio);
 #include "ucom.h"
-cdev_decl(ucom);
 #include "uscanner.h"
-cdev_decl(uscanner);
 
 #include "inet.h"
 
