@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.17 2003/11/17 11:12:35 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.18 2003/12/01 09:13:55 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -41,6 +41,7 @@
 .Nd desk calculator
 .Sh SYNOPSIS
 .Nm
+.Op Fl x
 .Op Ar file
 .Sh DESCRIPTION
 .Nm
@@ -60,6 +61,17 @@ utility, which is a preprocessor for
 providing infix notation and a C-like syntax
 which implements functions and reasonable control
 structures for programs.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl x
+Enable extended register mode.
+This mode is used by
+.Xr bc 1
+to allow more than 256 registers.
+See
+.Sx Registers
+for a more detailed description.
+.El
 .Pp
 Ordinarily,
 .Nm
@@ -258,10 +270,7 @@ The top value of the main stack is popped and pushed on it.
 The
 top of the stack is popped and stored into
 a register named
-.Ar x ,
-where
-.Ar x
-may be any character, including space, tab or any other special character.
+.Ar x .
 .It Ic v
 Replaces the top element on the stack by its square root.
 The scale of the result is the maximum of the scale of the argument
@@ -375,6 +384,21 @@ stored
 Skip the rest of the line.
 This is a non-portable extension.
 .El
+.Ss Registers
+Registers have a single character name
+.Ar x ,
+where
+.Ar x
+may be any character, including space, tab or any other special character.
+If extended register mode is enabled using the
+.Fl x
+option and the register identifier
+.Ar x
+has the value 255, the next two characters are interpreted as a
+two-byte register index.
+The set of standard single character registers and the set of extended
+registers do not overlap.
+Extended register mode is a non-portable extension.
 .Sh EXAMPLES
 An example which prints the first ten values of
 .Ic n! :
@@ -415,7 +439,7 @@ for a negative array index.
 .It "input base must be a number between 2 and 16"
 for trying to set an illegal input base.
 .It output base must be a number greater than 1
-for trying to set an illegal input base.
+for trying to set an illegal output base.
 .It scale must be a nonnegative number
 for trying to set a negative or zero scale.
 .It scale too large
