@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.2 2000/04/26 22:30:21 chris Exp $
+.\" $OpenBSD: vlan.4,v 1.3 2000/04/27 03:25:36 chris Exp $
 .\"
 .Dd 09 January 2000
 .Dt VLAN 4
@@ -76,7 +76,7 @@ as well as Ethernet.
 This driver only supports such operation with ethernet devices.
 .Pp
 Some ethernet chips (notably the Intel 82558 and 82559) automatically
-discard frames that are larger then 1500 bytes.  All ethernet
+discard frames that are larger then 1514 bytes.  All ethernet
 chips sporting this sort of feature should allow for it to be turned off.
 Optimally, upon loading, the chip's driver would do this (The 
 .Xr fxp 4
