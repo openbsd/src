@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.29 2000/09/12 00:15:11 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.30 2001/06/22 22:43:20 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.29 2000/09/12 00:15:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.30 2001/06/22 22:43:20 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -224,7 +224,7 @@ main(argc, argv)
 			if (getfname(*argv))
 				checkfile = 1;
 		}
-		if (!checkfile)	/* file(s) specified, but none accessable */
+		if (!checkfile)	/* file(s) specified, but none accessible */
 			exit(1);
 	}
 
