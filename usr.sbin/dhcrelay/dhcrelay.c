@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.18 2004/04/21 01:46:35 henning Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.19 2004/05/04 21:23:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -47,8 +47,6 @@ void	 relay(struct interface_info *, struct dhcp_packet *, int,
 char	*print_hw_addr(int, int, unsigned char *);
 
 time_t cur_time;
-time_t default_lease_time = 43200; /* 12 hours... */
-time_t max_lease_time = 86400; /* 24 hours... */
 
 int log_perror = 1;
 

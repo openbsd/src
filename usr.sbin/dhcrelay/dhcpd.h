@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.5 2004/04/20 20:56:47 canacar Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.6 2004/05/04 21:23:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -140,7 +140,6 @@ struct protocol {
 /* External definitions... */
 
 /* errwarn.c */
-extern int warnings_occurred;
 void error(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int warn(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
@@ -162,11 +161,8 @@ extern void (*bootp_packet_handler)(struct interface_info *,
 void discover_interfaces(struct interface_info *);
 void dispatch(void);
 void got_one(struct protocol *);
-void add_timeout(time_t, void (*)(void *), void *);
-void cancel_timeout(void (*)(void *), void *);
 void add_protocol(char *, int, void (*)(struct protocol *), void *);
 void remove_protocol(struct protocol *);
-int interface_link_status(char *);
 
 /* packet.c */
 void assemble_hw_header(struct interface_info *, unsigned char *,

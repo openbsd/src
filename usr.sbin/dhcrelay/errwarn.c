@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.1 2004/04/12 21:10:28 henning Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.2 2004/05/04 21:23:10 deraadt Exp $	*/
 
 /* Errors and warnings... */
 
@@ -48,8 +48,6 @@ static void do_percentm(char *obuf, size_t size, char *ibuf);
 
 static char mbuf[1024];
 static char fbuf[1024];
-
-int warnings_occurred;
 
 /*
  * Log an error message, then exit.

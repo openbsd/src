@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.2 2004/04/20 04:19:00 deraadt Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.3 2004/05/04 21:23:10 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -339,91 +339,6 @@ active:
 	return (1);
 }
 
-void
-add_timeout(time_t when, void (*where)(void *), void *what)
-{
-	struct timeout *t, *q;
-
-	/* See if this timeout supersedes an existing timeout. */
-	t = NULL;
-	for (q = timeouts; q; q = q->next) {
-		if (q->func == where && q->what == what) {
-			if (t)
-				t->next = q->next;
-			else
-				timeouts = q->next;
-			break;
-		}
-		t = q;
-	}
-
-	/* If we didn't supersede a timeout, allocate a timeout
-	   structure now. */
-	if (!q) {
-		if (free_timeouts) {
-			q = free_timeouts;
-			free_timeouts = q->next;
-			q->func = where;
-			q->what = what;
-		} else {
-			q = malloc(sizeof(struct timeout));
-			if (!q)
-				error("Can't allocate timeout structure!");
-			q->func = where;
-			q->what = what;
-		}
-	}
-
-	q->when = when;
-
-	/* Now sort this timeout into the timeout list. */
-
-	/* Beginning of list? */
-	if (!timeouts || timeouts->when > q->when) {
-		q->next = timeouts;
-		timeouts = q;
-		return;
-	}
-
-	/* Middle of list? */
-	for (t = timeouts; t->next; t = t->next) {
-		if (t->next->when > q->when) {
-			q->next = t->next;
-			t->next = q;
-			return;
-		}
-	}
-
-	/* End of list. */
-	t->next = q;
-	q->next = NULL;
-}
-
-void
-cancel_timeout(void (*where)(void *), void *what)
-{
-	struct timeout *t, *q;
-
-	/* Look for this timeout on the list, and unlink it if we find it. */
-	t = NULL;
-	for (q = timeouts; q; q = q->next) {
-		if (q->func == where && q->what == what) {
-			if (t)
-				t->next = q->next;
-			else
-				timeouts = q->next;
-			break;
-		}
-		t = q;
-	}
-
-	/* If we found the timeout, put it on the free list. */
-	if (q) {
-		q->next = free_timeouts;
-		free_timeouts = q;
-	}
-}
-
 /* Add a protocol to the list of protocols... */
 void
 add_protocol(char *name, int fd, void (*handler)(struct protocol *),
@@ -458,36 +373,4 @@ remove_protocol(struct protocol *proto)
 			free(p);
 		}
 	}
-}
-
-int
-interface_link_status(char *ifname)
-{
-	struct ifmediareq ifmr;
-	int sock;
-
-	if ((sock = socket (AF_INET, SOCK_DGRAM, 0)) == -1)
-		error("Can't create socket");
-
-	memset(&ifmr, 0, sizeof(ifmr));
-	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
-	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
-		/* EINVAL -> link state unknown. treat as active */
-		if (errno != EINVAL)
-			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
-			    ifname);
-		close(sock);
-		return (1);
-	}
-	close(sock);
-
-	if (ifmr.ifm_status & IFM_AVALID) {
-		if ((ifmr.ifm_active & IFM_NMASK) == IFM_ETHER) {
-			if (ifmr.ifm_status & IFM_ACTIVE)
-				return (1);
-			else
-				return (0);
-		}
-	}
-	return (1);
 }
