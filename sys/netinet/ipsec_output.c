@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.23 2002/06/19 22:03:46 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.24 2002/07/01 18:29:28 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -256,12 +256,12 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 #ifdef INET
 			if (tdb->tdb_dst.sa.sa_family == AF_INET && setdf) {
-				ip = mtod(m, struct ip *);
 				if (m->m_len < sizeof(struct ip))
 					if ((m = m_pullup(m,
 					    sizeof(struct ip))) == NULL)
 						return ENOBUFS;
 
+				ip = mtod(m, struct ip *);
 				NTOHS(ip->ip_off);
 				ip->ip_off |= IP_DF;
 				HTONS(ip->ip_off);
