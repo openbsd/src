@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_info.c,v 1.5 1999/01/06 05:29:24 d Exp $
+ * $OpenBSD: uthread_info.c,v 1.6 1999/01/17 23:58:10 d Exp $
  */
 #include <stdio.h>
 #include <fcntl.h>
@@ -108,7 +108,7 @@ _thread_dump_info(void)
 
 	/* Display a list of active threads */
 
-	snprintf(s, sizeof s, " %8s%c%-11s %2s %4s %-8s %5s %5s %s\n", 
+	snprintf(s, sizeof s, " %8s%c%-11s %2s %5s %-8s %5s %5s %s\n", 
 	    "id", ' ',  "state", "pr", "flag", "name", "utime", "stime",
 	    "location");
 	_thread_sys_write(fd, s, strlen(s));
@@ -135,11 +135,14 @@ _thread_dump_info(void)
 		/* Output a record for the current thread: */
 		s[0] = 0;
 		snprintf(s, sizeof(s), 
-		    " %8p%c%-11s %2d %c%c%c%c %-8s %5.2f %5.2f %s\n",
+		    " %8p%c%-11s %2d %c%c%c%c%c %-8s %5.2f %5.2f %s\n",
 		    (void *)pthread,
 		    (pthread == _thread_run)     ? '*' : ' ',
 		    state,
 		    pthread->pthread_priority,
+		    (pthread->flags & PTHREAD_EXITING)		  ? 'E' :
+		    (pthread->flags & PTHREAD_CANCELLING)	  ? 'C' :
+		    (pthread->flags & PTHREAD_AT_CANCEL_POINT)	  ? 'c' : ' ',
 		    (pthread->attr.flags & PTHREAD_DETACHED)      ? 'D' : ' ',
 		    (pthread->attr.flags & PTHREAD_SCOPE_SYSTEM)  ? 'S' : ' ',
 		    (pthread->attr.flags & PTHREAD_INHERIT_SCHED) ? 'I' : ' ',
