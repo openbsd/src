@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_prefix.c,v 1.3 2000/02/04 18:13:36 itojun Exp $	*/
+/*	$OpenBSD: in6_prefix.c,v 1.4 2000/02/07 06:05:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/in6_prefix.h>
 #include <netinet6/ip6_var.h>
 
@@ -87,10 +87,13 @@ struct rr_prhead rr_prefix;
 
 #include <net/net_osdep.h>
 
+static void	add_each_addr __P((struct socket *so, struct rr_prefix *rpp,
+				   struct rp_addr *rap));
 static int create_ra_entry __P((struct rp_addr **rapp));
 static int add_each_prefix __P((struct socket *so, struct rr_prefix *rpp));
 static void free_rp_entries __P((struct rr_prefix *rpp));
 static int link_stray_ia6s __P((struct rr_prefix *rpp));
+static void	rp_remove __P((struct rr_prefix *rpp));
 
 /*
  * Copy bits from src to tgt, from off bit for len bits.
@@ -393,6 +396,34 @@ assigne_ra_entry(struct rr_prefix *rpp, int iilen, struct in6_ifaddr *ia)
 	return 0;
 }
 
+static int
+in6_prefix_add_llifid(int iilen, struct in6_ifaddr *ia)
+{
+	struct rr_prefix *rpp;
+	struct rp_addr *rap;
+	struct socket so;
+	int error, s;
+
+	if ((error = create_ra_entry(&rap)) != 0)
+		return(error);
+	/* copy interface id part */
+	bit_copy((caddr_t)&rap->ra_ifid, sizeof(rap->ra_ifid) << 3,
+		 (caddr_t)IA6_IN6(ia), sizeof(*IA6_IN6(ia)) << 3,
+		 64, (sizeof(rap->ra_ifid) << 3) - 64);
+	/* XXX: init dummy so */
+	bzero(&so, sizeof(so));
+	/* insert into list */
+	for (rpp = LIST_FIRST(&rr_prefix); rpp; rpp = LIST_NEXT(rpp, rp_entry))
+	{
+		s = splnet();
+		LIST_INSERT_HEAD(&rpp->rp_addrhead, rap, ra_entry);
+		splx(s);
+		add_each_addr(&so, rpp, rap);
+	}
+	return 0;
+}
+
+
 int
 in6_prefix_add_ifid(int iilen, struct in6_ifaddr *ia)
 {
@@ -401,6 +432,8 @@ in6_prefix_add_ifid(int iilen, struct in6_ifaddr *ia)
 	struct rp_addr *rap;
 	int error = 0;
 
+	if (IN6_IS_ADDR_LINKLOCAL(IA6_IN6(ia)))
+		return(in6_prefix_add_llifid(iilen, ia));
 	ifpr = in6_prefixwithifp(ia->ia_ifp, plen, IA6_IN6(ia));
 	if (ifpr == NULL) {
 		struct rr_prefix rp;
@@ -487,6 +520,8 @@ in6_prefix_remove_ifid(int iilen, struct in6_ifaddr *ia)
 		splx(s);
 		free(rap, M_RR_ADDR);
 	}
+	if (LIST_FIRST(&ifpr2rp(ia->ia6_ifpr)->rp_addrhead) == NULL)
+		rp_remove(ifpr2rp(ia->ia6_ifpr));
 }
 
 void
@@ -1032,11 +1067,20 @@ in6_prefix_ioctl(struct socket *so, u_long cmd, caddr_t data,
 			free_rp_entries(&rp_tmp);
 			break;
 		}
-		ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp);
-		if (ifa != NULL) {
+		for (ifa = ifp->if_addrlist.tqh_first;
+		     ifa;
+		     ifa = ifa->ifa_list.tqe_next)
+		{
+			if (ifa->ifa_addr == NULL)
+				continue;	/* just for safety */
+			if (ifa->ifa_addr->sa_family != AF_INET6)
+				continue;
+			if (IN6_IS_ADDR_LINKLOCAL(IFA_IN6(ifa)) == 0)
+				continue;
+
 			if ((error = create_ra_entry(&rap)) != 0) {
 				free_rp_entries(&rp_tmp);
-				break;
+				goto bad;
 			}
 			/* copy interface id part */
 			bit_copy((caddr_t)&rap->ra_ifid,
@@ -1063,6 +1107,7 @@ in6_prefix_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		error = delete_each_prefix(rpp, ipr->ipr_origin);
 		break;
 	}
+ bad:
 	return error;
 }
 
