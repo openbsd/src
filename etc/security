@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.41 2000/10/20 16:27:16 millert Exp $
+#	$OpenBSD: security,v 1.42 2000/12/17 22:35:19 marc Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -644,9 +644,9 @@ if [ -s /etc/changelist ] ; then
 		BACK=/var/backups/$(_fnchg "$file").backup
 		if [ -s $file -a ! -d $file ] ; then
 			if [ -s $CUR ] ; then
-				diff $CUR $file > $OUTPUT
+				diff -u $CUR $file > $OUTPUT
 				if [ -s $OUTPUT ] ; then
-		echo "\n======\n${file} diffs (OLD < > NEW)\n======"
+		echo "\n======\n${file} diffs (-OLD  +NEW)\n======"
 					cat $OUTPUT
 					cp -p $CUR $BACK
 					cp -p $file $CUR
