@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.11 2000/10/21 23:25:36 marc Exp $
+.\"	$OpenBSD: release.8,v 1.12 2000/12/17 00:39:26 marc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -232,6 +232,16 @@ In any case the release process ensures the directory is empty before starting.
 .It Va RELEASEDIR
 This is the name of a directory where the release output files are stored.
 The following process will create the directory if necessary.
+.It " "
+.Sy Warning :
+.Va DESTDIR
+and 
+.Va RELEASEDIR
+must not refer to any directory with
+.Pa /mnt
+in its path as
+.Pa /mnt
+is used in the release generation process.
 .El
 .Pp
 The floppy and
