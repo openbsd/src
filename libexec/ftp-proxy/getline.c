@@ -105,8 +105,10 @@ refill_buffer(register struct csiob *iobp)
 
 		iobp->io_buffer_size += 128;
 		tmp = realloc(iobp->io_buffer, iobp->io_buffer_size);
-		if (tmp == NULL) 
-			return(0);
+		if (tmp == NULL) {
+			syslog(LOG_INFO, "Insufficient memory");
+			exit(EX_UNAVAILABLE);
+		}
 		iobp->io_buffer = tmp;		
 		rqlen = iobp->io_buffer_size - iobp->io_buffer_len;
 	}
@@ -150,6 +152,8 @@ refill_buffer(register struct csiob *iobp)
  *
  * This code is derived from the getline routine found in the UC Berkeley
  * ftpd code.
+ *
+ * thie 
  */
 
 int
@@ -256,8 +260,10 @@ telnet_getline(register struct csiob *iobp, struct csiob *telnet_passthrough)
 			iobp->line_buffer_size = 256 + ix - iobp->next_byte;
 			tmp = realloc(iobp->line_buffer, 
 			    iobp->line_buffer_size);
-			if (tmp == NULL)
-				return(0);
+			if (tmp == NULL) {
+				syslog(LOG_INFO, "Insufficient memory");
+				exit(EX_UNAVAILABLE);
+			}
 			iobp->line_buffer = tmp;
 		}
 		
