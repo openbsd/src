@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.21 2003/04/07 17:43:28 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.22 2003/08/20 06:50:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,2000 Michael Shalayeff
@@ -82,7 +82,7 @@ static __inline register_t ldsid(vaddr_t p) {
 #define	mfcpu(r,v)	/* XXX for the lack of the mnemonics */		\
 	__asm __volatile(".word	%1\n\t"					\
 			 "copy	%%r22, %0"				\
-	    : "=r" (v) : "i" ((0x14000600 | ((r) << 21) | ((22) << 16)))\
+	    : "=r" (v) : "i" ((0x14001400 | ((r) << 21) | (22)))	\
 	    : "r22")
 
 #define mtsp(v,r) __asm __volatile("mtsp %0,%1":: "r" (v), "i" (r))
