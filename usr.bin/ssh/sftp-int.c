@@ -26,7 +26,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.44 2002/02/13 00:59:23 djm Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.45 2002/03/19 06:32:56 mpech Exp $");
 
 #include <glob.h>
 
@@ -888,8 +888,10 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 				    file2);
 
 			parse_dispatch_command(conn, cmd, &pwd);
+			xfree(dir);
 			return;
 		}
+		xfree(dir);
 	}
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(infile, NULL, _IOLBF, 0);
