@@ -9,10 +9,9 @@
 #
 
 CDEBUGFLAGS = -g -O2 -Werror
-
-INCLUDES= -I../arch/${MACHINE} -I../include -I.. -I$(srctop)/include
-CFLAGS = $(CDEBUGFLAGS) $(INCLUDES) $(ADDL_CFLAGS) -DSRCDIR=\"$(srcdir)\"
-LIBS = -static -lm -lgcc -L../obj.${MACHINE}/ -lpthread
+INCLUDES= -I/usr/include/pthread
+CFLAGS = $(CDEBUGFLAGS) $(INCLUDES) -DSRCDIR="\"${.CURDIR}\""
+LIBS = -static -lm -lgcc -L${.CURDIR}/../obj.${MACHINE}/ -lpthread
 
 # This list used to include test_select, but that test doesn't terminate.
 TESTS = test_create test_pthread_join test_switch test_sleep test_readdir \

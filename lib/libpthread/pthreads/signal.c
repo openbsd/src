@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: signal.c,v 1.2 1998/07/21 19:48:04 peter Exp $";
+static const char rcsid[] = "$Id: signal.c,v 1.3 1998/07/22 10:46:54 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -600,22 +600,16 @@ void sig_init(void)
 	static const int signum_to_ignore[] = { SIGKILL, SIGSTOP, 0 };
 	int i, j;
 
-#if defined(HAVE_SYSCALL_SIGACTION) || defined(HAVE_SYSCALL_KSIGACTION)
 	struct sigaction act;
 
 	act.sa_handler = sig_handler_real;
 	sigemptyset(&(act.sa_mask));
 	act.sa_flags = 0;
-#endif
 
 	/* Initialize the important signals */
 	for (i = 0; signum_to_initialize[i]; i++) {
 
-#if defined(HAVE_SYSCALL_SIGACTION) || defined(HAVE_SYSCALL_KSIGACTION)
 		if (sigaction(signum_to_initialize[i], &act, NULL)) {
-#else
-		if (signal(signum_to_initialize[i], sig_handler_real)) { 
-#endif
 			PANIC();
 		}
 	}
@@ -635,11 +629,7 @@ void sig_init(void)
 		}
 		pthread_signal(j, SIG_DFL);
 		
-#if defined(HAVE_SYSCALL_SIGACTION) || defined(HAVE_SYSCALL_KSIGACTION)
 		sigaction(j, &act, NULL);
-#else
-		signal(j, sig_handler_real);
-#endif
 
 		sig_next:;
 	}

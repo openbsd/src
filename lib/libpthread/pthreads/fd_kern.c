@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: fd_kern.c,v 1.2 1998/07/21 19:48:02 peter Exp $";
+static const char rcsid[] = "$Id: fd_kern.c,v 1.3 1998/07/22 10:46:51 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -57,8 +57,6 @@ static const char rcsid[] = "$Id: fd_kern.c,v 1.2 1998/07/21 19:48:02 peter Exp 
 #include <pthread/posix.h>
 #include <string.h>
 
-#if defined (HAVE_SYSCALL_SENDTO) && !defined (HAVE_SYSCALL_SEND)
-
 pthread_ssize_t machdep_sys_send (int fd, const void *msg, size_t len,
  int flags)
 {
@@ -66,17 +64,11 @@ pthread_ssize_t machdep_sys_send (int fd, const void *msg, size_t len,
 			     (const struct sockaddr *) 0, 0);
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_RECVFROM) && !defined (HAVE_SYSCALL_RECV)
-
 pthread_ssize_t machdep_sys_recv (int fd, void *buf, size_t len, int flags)
 {
   return machdep_sys_recvfrom (fd, buf, len, flags,
 			       (struct sockaddr *) 0, (int *) 0);
 }
-
-#endif
 
 /* ==========================================================================
  * Check if there is any signal with must be handled.  Added by Monty
@@ -722,7 +714,6 @@ int ftruncate(int fd, off_t length)
 	return(ret);
 }
 
-#if defined (HAVE_SYSCALL_FLOCK)
 /* ==========================================================================
  * flock()
  *
@@ -742,7 +733,6 @@ int flock(int fd, int operation)
   }
   return(ret);
 }
-#endif
 
 /* ==========================================================================
  * pipe()
@@ -1056,8 +1046,6 @@ void fd_kern_fork()
  * Here are the berkeley socket functions. These are not POSIX.
  * ======================================================================= */
 
-#if defined (HAVE_SYSCALL_SOCKET) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * socket()
  */
@@ -1087,10 +1075,6 @@ int socket(int af, int type, int protocol)
     return(NOTOK);
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_BIND) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * bind()
  */
@@ -1108,10 +1092,6 @@ int bind(int fd, const struct sockaddr *name, int namelen)
 	}
 	return(ret);
 }
-
-#endif
-
-#if defined (HAVE_SYSCALL_CONNECT) || defined (HAVE_SYSCALL_SOCKETCALL)
 
 /* ==========================================================================
  * connect()
@@ -1161,10 +1141,6 @@ int connect(int fd, const struct sockaddr *name, int namelen)
   return(ret);
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_ACCEPT) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * accept()
  */
@@ -1210,10 +1186,6 @@ int accept(int fd, struct sockaddr *name, int *namelen)
   return(ret);
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_LISTEN) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * listen()
  */
@@ -1231,10 +1203,7 @@ int listen(int fd, int backlog)
   return(ret);
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_SEND) || defined (HAVE_SYSCALL_SOCKETCALL)
-
+#if 0
 /* ==========================================================================
  * send_timedwait()
  */
@@ -1308,8 +1277,6 @@ ssize_t send(int fd, const void * msg, size_t len, int flags)
 
 #endif
 
-#if defined (HAVE_SYSCALL_SENDTO) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * sendto_timedwait()
  */
@@ -1380,10 +1347,6 @@ ssize_t sendto(int fd, const void * msg, size_t len, int flags,
 {
 	return(sendto_timedwait(fd, msg, len, flags, to, to_len, NULL));
 }
-
-#endif
-
-#if defined (HAVE_SYSCALL_SENDMSG) || defined (HAVE_SYSCALL_SOCKETCALL)
 
 /* ==========================================================================
  * sendmsg_timedwait()
@@ -1483,10 +1446,7 @@ ssize_t sendmsg(int fd, const struct msghdr *msg, int flags)
 	return(sendmsg_timedwait(fd, msg, flags, NULL));
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_RECV) || defined (HAVE_SYSCALL_SOCKETCALL)
-
+#if 0
 /* ==========================================================================
  * recv_timedwait()
  */
@@ -1559,8 +1519,6 @@ ssize_t recv(int fd, void * buf, size_t len, int flags)
 
 #endif
 
-#if defined (HAVE_SYSCALL_RECVFROM) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * recvfrom_timedwait()
  */
@@ -1632,10 +1590,6 @@ ssize_t recvfrom(int fd, void * buf, size_t len, int flags,
 {
 	return(recvfrom_timedwait(fd, buf, len, flags, from, from_len, NULL));
 }
-
-#endif
-
-#if defined (HAVE_SYSCALL_RECVMSG) || defined (HAVE_SYSCALL_SOCKETCALL)
 
 /* ==========================================================================
  * recvmsg_timedwait()
@@ -1735,10 +1689,6 @@ ssize_t recvmsg(int fd, struct msghdr *msg, int flags)
 	return(recvmsg_timedwait(fd, msg, flags, NULL));
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_SHUTDOWN) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * shutdown()
  */
@@ -1779,10 +1729,6 @@ int shutdown(int fd, int how)
 	return(ret);
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_SETSOCKOPT) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * setsockopt()
  */
@@ -1800,10 +1746,6 @@ int setsockopt(int fd, int level, int optname, const void * optval, int optlen)
    	}
 	return ret;
 }
-
-#endif
-
-#if defined (HAVE_SYSCALL_GETSOCKOPT) || defined (HAVE_SYSCALL_SOCKETCALL)
 
 /* ==========================================================================
  * getsockopt()
@@ -1823,10 +1765,6 @@ int getsockopt(int fd, int level, int optname, void * optval, int * optlen)
 	return ret;
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_GETSOCKOPT) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * getsockname()
  */
@@ -1845,10 +1783,6 @@ int getsockname(int fd, struct sockaddr * name, int * naddrlen)
 	return ret;
 }
 
-#endif
-
-#if defined (HAVE_SYSCALL_GETPEERNAME) || defined (HAVE_SYSCALL_SOCKETCALL)
-
 /* ==========================================================================
  * getpeername()
  */
@@ -1866,10 +1800,6 @@ int getpeername(int fd, struct sockaddr * peer, int * paddrlen)
 	}
 	return ret;
 }
-
-#endif
-
-#if defined (HAVE_SYSCALL_SOCKETPAIR) || defined (HAVE_SYSCALL_SOCKETCALL)
 
 /* ==========================================================================
  * socketpair()
@@ -1906,5 +1836,3 @@ int socketpair(int af, int type, int protocol, int pair[2])
     }
     return(NOTOK);
 }
-
-#endif

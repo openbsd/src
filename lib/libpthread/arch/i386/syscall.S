@@ -235,3 +235,14 @@ _machdep_sys_longjmp:;
 1:  movl    %ecx,0(%esp)
     ret
 
+/* ==========================================================================
+ * machdep_sys_pipe()
+ */
+    .globl _machdep_sys_pipe;
+
+_machdep_sys_pipe:;
+    movl    4(%esp),%ecx
+    movl    %eax,(%ecx)
+    movl    %edx,4(%ecx)
+    xorl    %eax,%eax
+    ret

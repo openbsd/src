@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: stat.c,v 1.1.1.1 1998/07/21 13:20:26 peter Exp $";
+static const char rcsid[] = "$Id: stat.c,v 1.2 1998/07/22 10:46:55 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -94,7 +94,6 @@ int lstat(const char * path, struct stat * buf)
 
 }
 
-#ifdef HAVE_SYSCALL_FSTATFS
 /* ==========================================================================
  * fstatfs()
  *
@@ -113,4 +112,3 @@ int fstatfs(int fd, struct statfs *buf)
 	}
 	return(ret);
 }
-#endif
