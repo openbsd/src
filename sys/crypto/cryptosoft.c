@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.10 2000/06/18 08:37:11 angelos Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.11 2000/06/18 08:48:10 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -751,6 +751,7 @@ swcr_init(void)
         crypto_register(swcr_id, CRYPTO_RIPEMD160_HMAC96, NULL, NULL, NULL);
         crypto_register(swcr_id, CRYPTO_MD5_KPDK, NULL, NULL, NULL);
         crypto_register(swcr_id, CRYPTO_SHA1_KPDK, NULL, NULL, NULL);
+        crypto_register(swcr_id, CRYPTO_RIJNDAEL128_CBC, NULL, NULL, NULL);
 	return;
     }
 
