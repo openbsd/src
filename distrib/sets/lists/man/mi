@@ -1527,6 +1527,7 @@
 ./usr/share/man/cat8/rdconfig.0
 ./usr/share/man/cat8/rdump.0
 ./usr/share/man/cat8/reboot.0
+./usr/share/man/cat8/release.0
 ./usr/share/man/cat8/renice.0
 ./usr/share/man/cat8/repquota.0
 ./usr/share/man/cat8/restore.0
