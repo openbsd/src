@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.79 2001/06/25 23:02:53 provos Exp $
+#	$OpenBSD: GENERIC,v 1.80 2001/06/27 05:12:24 art Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -8,9 +8,6 @@
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
 option		NTP		# hooks supporting the Network Time Protocol
-
-option		SWAPPAGER	# paging; REQUIRED
-option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger
 #option		DDB_SAFE_CONSOLE # allow break into ddb during boot
