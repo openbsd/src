@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.4 2000/07/02 01:00:01 mickey Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.5 2000/07/02 03:10:38 mickey Exp $	*/
 
 /*
  * Public domain.
@@ -6,7 +6,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ffs.c,v 1.4 2000/07/02 01:00:01 mickey Exp $";
+static char *rcsid = "$OpenBSD: ffs.c,v 1.5 2000/07/02 03:10:38 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -28,18 +28,19 @@ ffs(mask)
 		-28, 1, 2, 1,
 		  3, 1, 2, 1,
 		  4, 1, 2, 1,
-		  3, 1, 2, 1 };
+		  3, 1, 2, 1
+	};
 
 	bit = 0;
-	if (0 == (r & 0xffff)) {
+	if (!(r & 0xffff)) {
 		bit += 16;
 		r >>= 16;
 	}
-	if (0 == (r & 0xff)) {
+	if (!(r & 0xff)) {
 		bit += 8;
 		r >>= 8;
 	}
-	if (0 == (r & 0xf)) {
+	if (!(r & 0xf)) {
 		bit += 4;
 		r >>= 4;
 	}
