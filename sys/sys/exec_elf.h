@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.25 2001/01/22 14:52:56 art Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.26 2001/01/22 23:48:35 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -455,7 +455,7 @@ typedef struct {
 typedef struct {
 	Elf32_Sword	au_id;				/* 32-bit id */
 	Elf32_Word	au_v;				/* 32-bit value */
-} AuxInfo; /* XXX needs to be Aux32Info */
+} Aux32Info;
 
 #define ELF64_NO_ADDR	((u_int64_t) ~0)/* Indicates addr. not yet filled in */
 #define ELF64_AUX_ENTRIES	8	/* Size of aux array passed to loader */
