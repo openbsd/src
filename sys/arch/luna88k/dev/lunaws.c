@@ -488,7 +488,7 @@ omkbd_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*(int *)data = 0;	/* XXX for now */
+		*(int *)data = WSKBD_TYPE_LUNA;
 		return 0;
 	case WSKBDIO_SETLEDS:
 	case WSKBDIO_GETLEDS:
@@ -526,7 +526,7 @@ omms_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = 0;	/* XXX for now*/
+		*(u_int *)data = WSMOUSE_TYPE_LUNA;
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.30 2004/03/01 07:53:01 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.31 2004/04/24 13:37:46 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -113,6 +113,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_SUN5		12	/* Sun Type5 */
 #define		WSKBD_TYPE_HIL		13	/* HP HIL */
 #define		WSKBD_TYPE_GSC		14	/* HP PS/2 */
+#define		WSKBD_TYPE_LUNA		15	/* OMRON Luna */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -192,6 +193,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
 #define		WSMOUSE_TYPE_ADB	9	/* ADB */
 #define		WSMOUSE_TYPE_HIL	10	/* HP HIL */
+#define		WSMOUSE_TYPE_LUNA	11	/* OMRON Luna */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
@@ -272,6 +274,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_MGX	39	/* SMS MGX */
 #define		WSDISPLAY_TYPE_SB_P9000	40	/* Tadpole SPARCbook P9000 */
 #define		WSDISPLAY_TYPE_RFLEX	41	/* RasterFlex series */
+#define		WSDISPLAY_TYPE_LUNA	42	/* OMRON Luna */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

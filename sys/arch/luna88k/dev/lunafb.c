@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.1.1.1 2004/04/21 15:23:52 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.2 2004/04/24 13:37:44 miod Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -245,7 +245,7 @@ omfbioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN; /* XXX for now */
+		*(u_int *)data = WSDISPLAY_TYPE_LUNA;
 		break;
 
 	case WSDISPLAYIO_GINFO:
