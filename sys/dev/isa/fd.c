@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.37 1998/01/18 18:48:41 niklas Exp $	*/
+/*	$OpenBSD: fd.c,v 1.38 1998/08/08 23:01:13 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -591,6 +591,7 @@ fdintr(fdc)
 	struct buf *bp;
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
+	bus_space_handle_t ioh_ctl = fdc->sc_ioh_ctl;
 	int read, head, sec, i, nblks;
 	struct fd_type *type;
 	struct fd_formb *finfo = NULL;
@@ -701,7 +702,7 @@ loop:
 		isadma_start(bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    fdc->sc_drq, read);
 #endif
-		bus_space_write_1(iot, ioh, fdctl, type->rate);
+		bus_space_write_1(iot, ioh_ctl, fdctl, type->rate);
 #ifdef FD_DEBUG
 		printf("fdintr: %s drive %d track %d head %d sec %d nblks %d\n",
 		    read ? "read" : "write", fd->sc_drive, fd->sc_cylin, head,

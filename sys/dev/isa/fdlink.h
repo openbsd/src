@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdlink.h,v 1.3 1996/11/29 22:54:56 niklas Exp $	*/
+/*	$OpenBSD: fdlink.h,v 1.4 1998/08/08 23:01:16 downsj Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -92,6 +92,7 @@ struct fdc_softc {
 
 	bus_space_tag_t sc_iot;		/* ISA chipset identifier */
 	bus_space_handle_t sc_ioh;	/* ISA io handle */
+	bus_space_handle_t sc_ioh_ctl;	/* ISA io handle */
 
 	int sc_drq;
 

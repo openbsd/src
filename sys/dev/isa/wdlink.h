@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdlink.h,v 1.9 1997/12/10 23:11:13 rees Exp $	*/
+/*	$OpenBSD: wdlink.h,v 1.10 1998/08/08 23:01:11 downsj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -52,6 +52,7 @@ struct wdc_softc {
 	struct wdc_link ctlr_link;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_ioh_ctl;
 	int sc_drq;			/* DMA channel */
 
 	TAILQ_HEAD(xferhead, wdc_xfer) sc_xfer;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.32 1998/07/23 04:40:12 csapuntz Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.33 1998/08/08 23:01:06 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -162,9 +162,12 @@ wdcprobe(parent, match, aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	bus_space_handle_t ioh_ctl;
 	struct wdc_softc *wdc = match;
 	struct isa_attach_args *ia = aux;
+#ifdef notyet
 	int err;
+#endif
 
 #if NISADMA == 0
 	if (ia->ia_drq != DRQUNK) {
@@ -175,12 +178,17 @@ wdcprobe(parent, match, aux)
 
 	wdc->sc_iot = iot = ia->ia_iot;
 	if (IS_ISAPNP(parent)) {
-		ioh = ia->ia_ioh;
+		ioh = ia->ipa_io[0].h;
+		ioh_ctl = ia->ipa_io[1].h;
 	} else {
 		if (bus_space_map(iot, ia->ia_iobase, 8, 0, &ioh))
 			return 0;
+		if (bus_space_map(iot, ia->ia_iobase + WDCTL_OFFSET,
+				  1, 0, &ioh_ctl))
+			return 0;
 	}
 	wdc->sc_ioh = ioh;
+	wdc->sc_ioh_ctl = ioh_ctl;
 
 	/* Check if we have registers that work. */
 	/* Error register not writable, */
@@ -235,6 +243,7 @@ wdcprobe(parent, match, aux)
 	if (wait_for_unbusy(wdc) < 0)
 		goto nomatch;
 
+#ifdef notyet
 	/* See if the drive(s) are alive. */
 	err = bus_space_read_1(iot, ioh, wd_error);
 	if (err && (err != 0x01)) {
@@ -249,14 +258,17 @@ wdcprobe(parent, match, aux)
 		} else
 			goto nomatch;
 	}
+#endif
 
 	ia->ia_iosize = 8;
 	ia->ia_msize = 0;
 	return 1;
 
 nomatch:
-	if (!IS_ISAPNP(parent))
+	if (!IS_ISAPNP(parent)) {
 		bus_space_unmap(iot, ioh, 8);
+		bus_space_unmap(iot, ioh_ctl, 1);
+	}
 	return 0;
 }
 
@@ -430,6 +442,9 @@ wdc_ata_start(wdc, xfer)
 {
 	bus_space_tag_t iot = wdc->sc_iot;
 	bus_space_handle_t ioh = wdc->sc_ioh;
+#ifdef WDDEBUG
+	bus_space_handle_t ioh_ctl = wdc->sc_ioh_ctl;
+#endif
 	struct wd_link *d_link = xfer->d_link;
 	struct buf *bp = xfer->c_bp;
 	int nblks;
@@ -480,7 +495,7 @@ wdc_ata_start(wdc, xfer)
 		    xfer->c_bcount, xfer->c_blkno));
 	} else {
 		WDDEBUG_PRINT((" %d)0x%x", xfer->c_skip,
-		    bus_space_read_1(iot, ioh, wd_altsts)));
+		    bus_space_read_1(iot, ioh_ctl, wd_altsts)));
 	}
 
 	/*
@@ -610,7 +625,7 @@ wdc_ata_start(wdc, xfer)
 
 		WDDEBUG_PRINT(("sector %d cylin %d head %d addr %x sts %x\n",
 		    sector, cylin, head, xfer->databuf,
-		    bus_space_read_1(iot, ioh, wd_altsts)));
+		    bus_space_read_1(iot, ioh_ctl, wd_altsts)));
 
 	} else if (xfer->c_nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
@@ -1240,6 +1255,7 @@ wdc_atapi_send_command_packet(ab_link, acp)
 	struct wdc_softc *wdc = (void*)ab_link->wdc_softc;
 	bus_space_tag_t iot = wdc->sc_iot;
 	bus_space_handle_t ioh = wdc->sc_ioh;
+	bus_space_handle_t ioh_ctl = wdc->sc_ioh_ctl;
 	struct wdc_xfer *xfer;
 	u_int8_t flags = acp->flags & 0xff;
 
@@ -1272,7 +1288,7 @@ wdc_atapi_send_command_packet(ab_link, acp)
 		}
 
 		/* Turn off interrupts.  */
-		bus_space_write_1(iot, ioh, wd_ctlr, WDCTL_4BIT | WDCTL_IDS);
+		bus_space_write_1(iot, ioh_ctl, wd_ctlr, WDCTL_4BIT|WDCTL_IDS);
 		delay(1000);
 
 		if (wdccommand((struct wd_link*)ab_link,
@@ -1313,7 +1329,7 @@ wdc_atapi_send_command_packet(ab_link, acp)
 		}
 
 		/* Turn on interrupts again. */
-		bus_space_write_1(iot, ioh, wd_ctlr, WDCTL_4BIT);
+		bus_space_write_1(iot, ioh_ctl, wd_ctlr, WDCTL_4BIT);
 		delay(1000);
 
 		wdc->sc_flags &= ~(WDCF_IRQ_WAIT | WDCF_SINGLE | WDCF_ERROR);
@@ -1598,14 +1614,15 @@ wdcreset(wdc, mode)
 {
 	bus_space_tag_t iot = wdc->sc_iot;
 	bus_space_handle_t ioh = wdc->sc_ioh;
+	bus_space_handle_t ioh_ctl = wdc->sc_ioh_ctl;
 
 	/* Reset the device. */
-	bus_space_write_1(iot, ioh, wd_ctlr, WDCTL_RST|WDCTL_IDS);
+	bus_space_write_1(iot, ioh_ctl, wd_ctlr, WDCTL_RST|WDCTL_IDS);
 	delay(1000);
-	bus_space_write_1(iot, ioh, wd_ctlr, WDCTL_IDS);
+	bus_space_write_1(iot, ioh_ctl, wd_ctlr, WDCTL_IDS);
 	delay(1000);
 	(void) bus_space_read_1(iot, ioh, wd_error);
-	bus_space_write_1(iot, ioh, wd_ctlr, WDCTL_4BIT);
+	bus_space_write_1(iot, ioh_ctl, wd_ctlr, WDCTL_4BIT);
 
 	if (wait_for_unbusy(wdc) < 0) {
 		if (mode != WDCRESET_SILENT)

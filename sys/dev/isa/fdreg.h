@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdreg.h,v 1.9 1996/12/05 13:13:21 deraadt Exp $	*/
+/*	$OpenBSD: fdreg.h,v 1.10 1998/08/08 23:01:17 downsj Exp $	*/
 /*	$NetBSD: fdreg.h,v 1.8 1995/06/28 04:30:57 cgd Exp $	*/
 
 /*-
@@ -53,17 +53,19 @@
 #define	fdsts	4	/* NEC 765 Main Status Register (R) */
 #define	fddata	5	/* NEC 765 Data Register (R/W) */
 
-#define	fdctl	7	/* Control Register (W) */
+#define FDCTL_OFFSET	7	/* Offset from the other registers. */
+#define	fdctl	0	/* Control Register (W) */
 #define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
 #define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
 #define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
 #define	FDC_125KBPS	0x03	/* 125KBPS FM drive transfer rate */
 
-#define	fdin	7	/* Digital Input Register (R) */
+#define	fdin	0	/* Digital Input Register (R) */
 #define	FDI_DCHG	0x80	/* diskette has been changed */
 
 #define	FDC_BSIZE	512
-#define	FDC_NPORT	8
+#define	FDC_NPORT	6
+#define FDCTL_NPORT	1
 #define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
 
 #define FDUNIT(dev)	((dev & 0x80) >> 7)	/* XXX two drives max, sorry */

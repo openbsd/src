@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.10 1998/08/08 22:39:10 millert Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.11 1998/08/08 23:01:15 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ fdcprobe(parent, match, aux)
 	register struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	bus_space_handle_t ioh_ctl;
 	int rv;
 
 	iot = ia->ia_iot;
@@ -119,6 +120,9 @@ fdcprobe(parent, match, aux)
 
 	/* Map the i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
+		return 0;
+	if (bus_space_map(iot, ia->ia_iobase + FDCTL_OFFSET,
+			  FDCTL_NPORT, 0, &ioh_ctl))
 		return 0;
 
 	/* reset */
@@ -151,6 +155,7 @@ fdcprobe(parent, match, aux)
 
  out:
 	bus_space_unmap(iot, ioh, FDC_NPORT);
+	bus_space_unmap(iot, ioh_ctl, FDCTL_NPORT);
 	return rv;
 }
 
@@ -182,6 +187,7 @@ fdcattach(parent, self, aux)
 	struct fdc_softc *fdc = (void *)self;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	bus_space_handle_t ioh_ctl;
 	struct isa_attach_args *ia = aux;
 	struct fdc_attach_args fa;
 	int type;
@@ -189,11 +195,14 @@ fdcattach(parent, self, aux)
 	iot = ia->ia_iot;
 
 	/* Re-map the I/O space. */
-	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh) ||
+	    bus_space_map(iot, ia->ia_iobase + FDCTL_OFFSET,
+			  FDCTL_NPORT, 0, &ioh_ctl))
 		panic("fdcattach: couldn't map I/O ports");
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
+	fdc->sc_ioh_ctl = ioh_ctl;
 
 	fdc->sc_drq = ia->ia_drq;
 	fdc->sc_state = DEVIDLE;
