@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.49 2003/06/10 20:27:31 millert Exp $ */
+/* $OpenBSD: user.c,v 1.50 2003/06/10 20:52:01 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -349,7 +349,7 @@ creategid(char *group, gid_t gid, const char *name)
 		return 0;
 	}
 	while ((cc = fread(buf, sizeof(char), sizeof(buf), from)) > 0) {
-		if (fwrite(buf, cc, 1, to) <= 0) {
+		if (fwrite(buf, cc, 1, to) != 1) {
 			(void) fclose(from);
 			(void) fclose(to);
 			(void) unlink(f);
@@ -387,7 +387,7 @@ modify_gid(char *group, char *newent)
 	int		cc;
 
 	if ((from = fopen(_PATH_GROUP, "r")) == NULL) {
-		warn("can't create gid for `%s': can't open `%s'", group,
+		warn("can't modify gid for `%s': can't open `%s'", group,
 		    _PATH_GROUP);
 		return 0;
 	}
@@ -398,24 +398,24 @@ modify_gid(char *group, char *newent)
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
 		(void) fclose(from);
-		warn("can't create gid: mkstemp failed");
+		warn("can't modify gid: mkstemp failed");
 		return 0;
 	}
 	if ((to = fdopen(fd, "w")) == NULL) {
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
-		warn("can't create gid: fdopen `%s' failed", f);
+		warn("can't modify gid: fdopen `%s' failed", f);
 		return 0;
 	}
 	groupc = strlen(group);
 	while (fgets(buf, sizeof(buf), from) != NULL) {
 		cc = strlen(buf);
-		if (buf[cc - 1] != '\n') {
-			while (!feof(from) && fgetc(from) != '\n')
+		if (buf[cc - 1] != '\n' && !feof(from)) {
+			while (fgetc(from) != '\n' && !feof(from))
 				cc++;
-			warn("line `%s' too long (%d bytes), skipping", buf,
-			    cc);
+			warn("%s: line `%s' too long (%d bytes), skipping",
+			    _PATH_GROUP, buf, cc);
 			continue;
 		}
 		if ((colon = strchr(buf, ':')) == NULL) {
@@ -431,11 +431,11 @@ modify_gid(char *group, char *newent)
 				(void) strlcpy(buf, newent, sizeof(buf));
 			}
 		}
-		if (fwrite(buf, cc, 1, to) <= 0) {
+		if (fwrite(buf, cc, 1, to) != 1) {
 			(void) fclose(from);
 			(void) fclose(to);
 			(void) unlink(f);
-			warn("can't create gid: short write to `%s'", f);
+			warn("can't modify gid: short write to `%s'", f);
 			return 0;
 		}
 	}
@@ -443,7 +443,7 @@ modify_gid(char *group, char *newent)
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
 		(void) unlink(f);
-		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
+		warn("can't modify gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
 	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
@@ -496,23 +496,23 @@ append_group(char *user, int ngroups, const char **groups)
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
 		(void) fclose(from);
-		warn("can't create gid: mkstemp failed");
+		warn("can't append group: mkstemp failed");
 		return 0;
 	}
 	if ((to = fdopen(fd, "w")) == NULL) {
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
-		warn("can't create gid: fdopen `%s' failed", f);
+		warn("can't append group: fdopen `%s' failed", f);
 		return 0;
 	}
 	while (fgets(buf, sizeof(buf), from) != NULL) {
 		cc = strlen(buf);
-		if (buf[cc - 1] != '\n') {
-			while (!feof(from) && fgetc(from) != '\n')
+		if (buf[cc - 1] != '\n' && !feof(from)) {
+			while (fgetc(from) != '\n' && !feof(from))
 				cc++;
-			warn("line `%s' too long (%d bytes), skipping", buf,
-			    cc);
+			warn("%s: line `%s' too long (%d bytes), skipping",
+			    _PATH_GROUP, buf, cc);
 			continue;
 		}
 		if ((colon = strchr(buf, ':')) == NULL) {
@@ -537,11 +537,11 @@ append_group(char *user, int ngroups, const char **groups)
 				buf[cc] = '\0';
 			}
 		}
-		if (fwrite(buf, cc, 1, to) <= 0) {
+		if (fwrite(buf, cc, 1, to) != 1) {
 			(void) fclose(from);
 			(void) fclose(to);
 			(void) unlink(f);
-			warn("can't create gid: short write to `%s'", f);
+			warn("can't append group: short write to `%s'", f);
 			return 0;
 		}
 	}
@@ -549,7 +549,7 @@ append_group(char *user, int ngroups, const char **groups)
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
 		(void) unlink(f);
-		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
+		warn("can't append group: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
 	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
@@ -1116,22 +1116,29 @@ rm_user_from_groups(char *login_name)
 	}
 	while (fgets(buf, sizeof(buf), from) > 0) {
 		cc = strlen(buf);
+		if (buf[cc - 1] != '\n' && !feof(from)) {
+			while (fgetc(from) != '\n' && !feof(from))
+				cc++;
+			warn("%s: line `%s' too long (%d bytes), skipping",
+			    _PATH_GROUP, buf, cc);
+			continue;
+		}
 		if (regexec(&r, buf, 10, matchv, 0) == 0) {
 			if (buf[(int)matchv[1].rm_so] == ',')
 				matchv[2].rm_so = matchv[1].rm_so;
 			else if (matchv[2].rm_eo != matchv[3].rm_eo)
 				matchv[2].rm_eo = matchv[3].rm_eo;
-			cc -= (int)(matchv[2].rm_eo);
+			cc -= (int) matchv[2].rm_eo;
 			sc = (int) matchv[2].rm_so;
-			if (fwrite(buf, sizeof(char), sc, to) != sc ||
-			    fwrite(&buf[(int)matchv[2].rm_eo], sizeof(char), cc, to) != cc) {
+			if (fwrite(buf, sc, 1, to) != 1 ||
+			    fwrite(&buf[(int)matchv[2].rm_eo], cc, 1, to) != 1) {
 				(void) fclose(from);
 				(void) close(fd);
 				(void) unlink(f);
 				warn("can't create gid: short write to `%s'", f);
 				return 0;
 			}
-		} else if (fwrite(buf, sizeof(char), cc, to) != cc) {
+		} else if (fwrite(buf, cc, 1, to) != 1) {
 			(void) fclose(from);
 			(void) close(fd);
 			(void) unlink(f);
@@ -1160,6 +1167,7 @@ is_local(char *name, const char *file)
 	char		buf[LINE_MAX];
 	char		re[LINE_MAX];
 	int		ret;
+	int		cc;
 
 	(void) snprintf(re, sizeof(re), "^%s:", name);
 	if (regcomp(&r, re, REG_EXTENDED) != 0) {
@@ -1169,6 +1177,14 @@ is_local(char *name, const char *file)
 		err(EXIT_FAILURE, "can't open `%s'", file);
 	}
 	for (ret = 0 ; fgets(buf, sizeof(buf), fp) != NULL ; ) {
+		cc = strlen(buf);
+		if (buf[cc - 1] != '\n' && !feof(fp)) {
+			while (fgetc(fp) != '\n' && !feof(fp))
+				cc++;
+			warn("%s: line `%s' too long (%d bytes), skipping",
+			    file, buf, cc);
+			continue;
+		}
 		if (regexec(&r, buf, 10, matchv, 0) == 0) {
 			ret = 1;
 			break;
@@ -1805,7 +1821,7 @@ userdel(int argc, char **argv)
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
 		(void) memset(password, '*', DES_Len);
 		password[DES_Len] = 0;
-		memsave(&u.u_password, password, PasswordLength);
+		memsave(&u.u_password, password, strlen(password));
 		u.u_flags |= F_PASSWORD;
 		openlog("userdel", LOG_PID, LOG_USER);
 		return moduser(*argv, *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
