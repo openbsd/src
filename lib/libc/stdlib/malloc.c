@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.5 1996/08/19 08:33:37 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.6 1996/08/20 17:30:49 downsj Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -23,6 +23,11 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.5 1996/08/19 08:33:37 tholo Exp $"
  * It has no run-time performance hit.
  */
 #define MALLOC_STATS
+
+/*
+ * Defining CFREE_STUB will include a cfree() stub that just calls free().
+ */
+#define CFREE_STUB
 
 #if defined(EXTRA_SANITY) && !defined(MALLOC_STATS)
 # define MALLOC_STATS	/* required for EXTRA_SANITY */
@@ -111,7 +116,8 @@ struct pgfree {
 #ifdef __i386__
 #define ffs _ffs
 static __inline int
-_ffs(unsigned input)
+_ffs(input)
+	unsigned input;
 {
 	int result;
 	asm("bsfl %1,%0" : "=r" (result) : "r" (input));
@@ -120,7 +126,8 @@ _ffs(unsigned input)
 
 #define fls _fls
 static __inline int
-_fls(unsigned input)
+_fls(input)
+	unsigned input;
 {
 	int result;
 	asm("bsrl %1,%0" : "=r" (result) : "r" (input));
@@ -129,7 +136,9 @@ _fls(unsigned input)
 
 #define set_bit _set_bit
 static __inline void
-_set_bit(struct pginfo *pi, int bit)
+_set_bit(pi, bit)
+	struct pginfo *pi;
+	int bit;
 {
 	asm("btsl %0,(%1)" :
 	: "r" (bit & (MALLOC_BITS-1)), "r" (pi->bits+(bit/MALLOC_BITS)));
@@ -137,7 +146,9 @@ _set_bit(struct pginfo *pi, int bit)
 
 #define clr_bit _clr_bit
 static __inline void
-_clr_bit(struct pginfo *pi, int bit)
+_clr_bit(pi, bit)
+	struct pginfo *pi;
+	int bit;
 {
 	asm("btcl %0,(%1)" :
 	: "r" (bit & (MALLOC_BITS-1)), "r" (pi->bits+(bit/MALLOC_BITS)));
@@ -273,7 +284,8 @@ static int extend_pgdir(u_long index);
 
 #ifdef MALLOC_STATS
 void
-malloc_dump(FILE *fd)
+malloc_dump(fd)
+    FILE *fd;
 {
     struct pginfo **pd;
     struct pgfree *pf;
@@ -330,7 +342,8 @@ malloc_dump(FILE *fd)
 #endif /* MALLOC_STATS */
 
 static void
-wrterror(char *p)
+wrterror(p)
+    char *p;
 {
     char *q = "Malloc error: ";
     suicide = 1;
@@ -344,7 +357,8 @@ wrterror(char *p)
 }
 
 static void
-wrtwarning(char *p)
+wrtwarning(p)
+    char *p;
 {
     char *q = "Malloc warning: ";
     if (malloc_abort)
@@ -372,7 +386,8 @@ malloc_exit()
  * Allocate a number of pages from the OS
  */
 static caddr_t
-map_pages(int pages)
+map_pages(pages)
+    int pages;
 {
     caddr_t result,tail;
 
@@ -400,7 +415,9 @@ map_pages(int pages)
  */
 #ifndef set_bit
 static __inline void
-set_bit(struct pginfo *pi, int bit)
+set_bit(pi, bit)
+    struct pginfo *pi;
+    int bit;
 {
     pi->bits[bit/MALLOC_BITS] |= 1<<(bit%MALLOC_BITS);
 }
@@ -411,7 +428,9 @@ set_bit(struct pginfo *pi, int bit)
  */
 #ifndef clr_bit
 static __inline void
-clr_bit(struct pginfo *pi, int bit)
+clr_bit(pi, bit)
+    struct pginfo *pi;
+    int bit;
 {
     pi->bits[bit/MALLOC_BITS] &= ~(1<<(bit%MALLOC_BITS));
 }
@@ -422,7 +441,9 @@ clr_bit(struct pginfo *pi, int bit)
  * Test a bit in the bitmap
  */
 static __inline int
-tst_bit(struct pginfo *pi, int bit)
+tst_bit(pi, bit)
+    struct pginfo *pi;
+    int bit;
 {
     return pi->bits[bit/MALLOC_BITS] & (1<<(bit%MALLOC_BITS));
 }
@@ -433,7 +454,8 @@ tst_bit(struct pginfo *pi, int bit)
  */
 #ifndef fls
 static __inline int
-fls(int size)
+fls(size)
+    int size;
 {
     int i = 1;
     while (size >>= 1)
@@ -446,7 +468,8 @@ fls(int size)
  * Extend page directory
  */
 static int
-extend_pgdir(u_long index)
+extend_pgdir(index)
+    u_long index;
 {
     struct  pginfo **new,**old;
     int i, oldlen;
@@ -617,7 +640,8 @@ malloc_init ()
  * Allocate a number of complete pages
  */
 void *
-malloc_pages(size_t size)
+malloc_pages(size)
+    size_t size;
 {
     void *p,*delay_free = 0;
     int i;
@@ -702,7 +726,8 @@ malloc_pages(size_t size)
  */
 
 static __inline int
-malloc_make_chunks(int bits)
+malloc_make_chunks(bits)
+    int bits;
 {
     struct  pginfo *bp;
     void *pp;
@@ -765,7 +790,8 @@ malloc_make_chunks(int bits)
  * Allocate a fragment
  */
 static void *
-malloc_bytes(size_t size)
+malloc_bytes(size)
+    size_t size;
 {
     int j;
     struct  pginfo *bp;
@@ -813,7 +839,8 @@ malloc_bytes(size_t size)
  * Allocate a piece of memory
  */
 void *
-malloc(size_t size)
+malloc(size)
+    size_t size;
 {
     void *result;
 #ifdef  _THREAD_SAFE
@@ -850,7 +877,9 @@ malloc(size_t size)
  * Change the size of an allocation.
  */
 void *
-realloc(void *ptr, size_t size)
+realloc(ptr, size)
+    void *ptr;
+    size_t size;
 {
     void *p;
     u_long osize,index;
@@ -987,7 +1016,10 @@ realloc(void *ptr, size_t size)
  */
 
 static __inline void
-free_pages(void *ptr, int index, struct pginfo *info)
+free_pages(ptr, index, info)
+    void *ptr;
+    int index;
+    struct pginfo *info;
 {
     int i;
     struct pgfree *pf,*pt;
@@ -1110,7 +1142,10 @@ free_pages(void *ptr, int index, struct pginfo *info)
  */
 
 static __inline void
-free_bytes(void *ptr, int index, struct pginfo *info)
+free_bytes(ptr, index, info)
+    void *ptr;
+    int index;
+    struct pginfo *info;
 {
     int i;
     struct pginfo **mp;
@@ -1169,7 +1204,8 @@ free_bytes(void *ptr, int index, struct pginfo *info)
 }
 
 void
-free(void *ptr)
+free(ptr)
+    void *ptr;
 {
     struct pginfo *info;
     int index;
@@ -1222,3 +1258,12 @@ free(void *ptr)
 #endif
     return;
 }
+
+#ifdef CFREE_STUB
+void
+cfree(ptr)
+    void *ptr;
+{
+    free(ptr);
+}
+#endif
