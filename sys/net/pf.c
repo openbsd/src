@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.262 2002/11/23 09:37:01 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.263 2002/11/24 22:45:48 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1328,8 +1328,8 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 				if (rmask->addr32[0] != 0xffffffff)
 					rpool->counter.addr32[0] = arc4random();
 				break;
-			}
 #endif /* INET6 */
+			}
 			PF_POOLMASK(naddr, raddr, rmask, &rpool->counter, af);
 			PF_ACPY(init_addr, naddr, af);
 
