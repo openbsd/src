@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.2 2000/01/07 19:28:48 angelos Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.3 2000/01/09 19:23:49 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -121,7 +121,7 @@ gif_output(ifp, m, dst, rt)
 	register struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
 	static int called = 0;	/* XXX: MUTEX */
-	int calllimit = 10;	/* XXX: adhoc */
+	int calllimit = 3;	/* XXX: adhoc */
 
 	/*
 	 * gif may cause infinite recursion calls when misconfigured.
