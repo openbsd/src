@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.36 2004/07/28 16:00:02 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.37 2004/08/03 14:00:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -101,7 +101,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 	DUMP_SHORT(buf, bgp->as);
 	DUMP_SHORT(buf, peer->remote_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
-	DUMP_SHORT(buf, 4);
+	DUMP_SHORT(buf, AFI_IPv4);
 	DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
 	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
 
