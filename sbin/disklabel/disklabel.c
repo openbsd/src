@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.14 1996/06/25 01:21:57 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.15 1996/08/10 12:14:19 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.14 1996/06/25 01:21:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.15 1996/08/10 12:14:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -845,19 +845,22 @@ display(f, lp)
 				fprintf(f, "%20.20s", "");
 				break;
 			}
-			fprintf(f, "\t# (Cyl. %4d",
-			    pp->p_offset / lp->d_secpercyl);
-			if (pp->p_offset % lp->d_secpercyl)
-			    putc('*', f);
-			else
-			    putc(' ', f);
-			fprintf(f, "- %d",
-			    (pp->p_offset + 
-			    pp->p_size + lp->d_secpercyl - 1) /
-			    lp->d_secpercyl - 1);
-			if (pp->p_size % lp->d_secpercyl)
-			    putc('*', f);
-			fprintf(f, ")\n");
+			if (lp->d_secpercyl) {
+				fprintf(f, "\t# (Cyl. %4d",
+				    pp->p_offset / lp->d_secpercyl);
+				if (pp->p_offset % lp->d_secpercyl)
+					putc('*', f);
+				else
+					putc(' ', f);
+				fprintf(f, "- %d",
+				    (pp->p_offset + 
+				    pp->p_size + lp->d_secpercyl - 1) /
+				    lp->d_secpercyl - 1);
+				if (pp->p_size % lp->d_secpercyl)
+					putc('*', f);
+				fprintf(f, ")");
+			}
+			fprintf(f, "\n");
 		}
 	}
 	fflush(f);
