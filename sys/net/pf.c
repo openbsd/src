@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.442 2004/04/26 02:03:38 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.443 2004/04/27 18:28:07 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3649,7 +3649,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 	struct pf_state		 key;
 	struct tcphdr		*th = pd->hdr.tcp;
 	u_int16_t		 win = ntohs(th->th_win);
-	u_int32_t		 ack, end, seq;
+	u_int32_t		 ack, end, seq, orig_seq;
 	u_int8_t		 sws, dws;
 	int			 ackskew;
 	int			 copyback = 0;
@@ -3762,7 +3762,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 	 *	tcp_filtering.ps
 	 */
 
-	seq = ntohl(th->th_seq);
+	orig_seq = seq = ntohl(th->th_seq);
 	if (src->seqlo == 0) {
 		/* First packet from this end. Set its state */
 
@@ -3872,8 +3872,11 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 	    /* Retrans: not more than one window back */
 	    (ackskew >= -MAXACKWINDOW) &&
 	    /* Acking not more than one reassembled fragment backwards */
-	    (ackskew <= (MAXACKWINDOW << sws))) {
+	    (ackskew <= (MAXACKWINDOW << sws)) &&
 	    /* Acking not more than one window forward */
+	    ((th->th_flags & TH_RST) == 0 || orig_seq == src->seqlo ||
+	    (pd->flags & PFDESC_IP_REAS) == 0)) {
+	    /* Require an exact sequence match on resets when possible */
 
 		/* update max window */
 		if (src->max_win < win)
@@ -5280,7 +5283,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 	/* We do IP header normalization and packet reassembly here */
-	if (pf_normalize_ip(m0, dir, kif, &reason) != PF_PASS) {
+	if (pf_normalize_ip(m0, dir, kif, &reason, &pd) != PF_PASS) {
 		action = PF_DROP;
 		goto done;
 	}
@@ -5585,7 +5588,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 	/* We do IP header normalization and packet reassembly here */
-	if (pf_normalize_ip6(m0, dir, kif, &reason) != PF_PASS) {
+	if (pf_normalize_ip6(m0, dir, kif, &reason, &pd) != PF_PASS) {
 		action = PF_DROP;
 		goto done;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.82 2004/04/26 02:03:38 mcbride Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.83 2004/04/27 18:28:07 frantzen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -810,7 +810,8 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment **frag, int mff,
 }
 
 int
-pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason)
+pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
+    struct pf_pdesc *pd)
 {
 	struct mbuf		*m = *m0;
 	struct pf_rule		*r;
@@ -978,6 +979,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason)
 
 	if (r->rule_flag & PFRULE_RANDOMID)
 		h->ip_id = ip_randomid();
+	if ((r->rule_flag & (PFRULE_FRAGCROP|PFRULE_FRAGDROP)) == 0)
+		pd->flags |= PFDESC_IP_REAS;
 
 	return (PF_PASS);
 
@@ -985,7 +988,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason)
 	/* Enforce a minimum ttl, may cause endless packet loops */
 	if (r->min_ttl && h->ip_ttl < r->min_ttl)
 		h->ip_ttl = r->min_ttl;
-
+	if ((r->rule_flag & (PFRULE_FRAGCROP|PFRULE_FRAGDROP)) == 0)
+		pd->flags |= PFDESC_IP_REAS;
 	return (PF_PASS);
 
  no_mem:
@@ -1017,7 +1021,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason)
 #ifdef INET6
 int
 pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
-    u_short *reason)
+    u_short *reason, struct pf_pdesc *pd)
 {
 	struct mbuf		*m = *m0;
 	struct pf_rule		*r;
@@ -1167,6 +1171,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 		goto badfrag;
 
 	/* do something about it */
+	/* remember to set pd->flags |= PFDESC_IP_REAS */
 	return (PF_PASS);
 
  shortpkt:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.190 2004/04/26 00:12:28 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.191 2004/04/27 18:28:07 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -851,6 +851,7 @@ struct pf_pdesc {
 	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
 					 * state code. Easier than tags */
 #define PFDESC_TCP_NORM	0x0001		/* TCP shall be statefully scrubbed */
+#define PFDESC_IP_REAS	0x0002		/* IP frags would've been reassembled */
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 tos;
@@ -1362,8 +1363,10 @@ int	pf_match_uid(u_int8_t, uid_t, uid_t, uid_t);
 int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 
 void	pf_normalize_init(void);
-int	pf_normalize_ip(struct mbuf **, int, struct pfi_kif *, u_short *);
-int	pf_normalize_ip6(struct mbuf **, int, struct pfi_kif *, u_short *);
+int	pf_normalize_ip(struct mbuf **, int, struct pfi_kif *, u_short *,
+	    struct pf_pdesc *);
+int	pf_normalize_ip6(struct mbuf **, int, struct pfi_kif *, u_short *,
+	    struct pf_pdesc *);
 int	pf_normalize_tcp(int, struct pfi_kif *, struct mbuf *, int, int, void *,
 	    struct pf_pdesc *);
 void	pf_normalize_tcp_cleanup(struct pf_state *);
