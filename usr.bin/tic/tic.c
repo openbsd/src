@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.4 1999/01/18 18:57:52 millert Exp $	*/
+/*	$OpenBSD: tic.c,v 1.5 1999/01/24 19:33:51 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@
 #include <dump_entry.h>
 #include <term_entry.h>
 
-MODULE_ID("$Id: tic.c,v 1.4 1999/01/18 18:57:52 millert Exp $")
+MODULE_ID("$From: tic.c,v 1.41 1999/01/24 02:55:48 tom Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -155,7 +155,7 @@ static void write_it(ENTRY *ep)
 	_nc_write_entry(&ep->tterm);
 }
 
-static bool immedhook(ENTRY *ep)
+static bool immedhook(ENTRY *ep GCC_UNUSED)
 /* write out entries with no use capabilities immediately to save storage */
 {
 #ifndef HAVE_BIG_CORE
