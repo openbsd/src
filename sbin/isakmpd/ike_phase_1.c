@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.39 2003/08/08 08:46:59 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.40 2003/10/04 17:29:58 cloder Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -1330,12 +1330,23 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	      goto bail_out;
 	    }
 
-	  if (!strcmp (conf_get_str (vs->life, "LIFE_DURATION"), "ANY"))
-	    rv = 0;
+	  str = conf_get_str (vs->life, "LIFE_DURATION");
+	  if (str)
+	    {
+	      if (!strcmp (str, "ANY"))
+		rv = 0;
+	      else
+		rv = !conf_match_num (vs->life, "LIFE_DURATION",
+				      len == 4 ? decode_32 (value) :
+				      decode_16 (value));
+	    }
 	  else
-	    rv = !conf_match_num (vs->life, "LIFE_DURATION",
-				  len == 4 ? decode_32 (value) :
-				  decode_16 (value));
+	    {
+	      LOG_DBG ((LOG_NEGOTIATION, 70, "attribute_unacceptable: "
+			"section [%s] has no LIFE_DURATION", vs->life));
+	      rv = 1;
+	    }
+
 	  free (vs->life);
 	  vs->life = 0;
 	  break;
