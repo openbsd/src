@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 2004/04/24 19:51:48 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2004/04/30 21:32:54 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -711,38 +711,11 @@ bus_space_copy_4(bus_space_tag_t tag, bus_space_handle_t h1, bus_addr_t o1,
 }
 
 /*
- * Extra D16 access functions
- *
- * D16 cards will trigger bus errors on attempting to read or write more
- * than 16 bits on the bus. Given how the m88k processor works, this means
- * basically that all long (D32) accesses must be carefully taken care of.
- *
- * Since the kernels bcopy() and bzero() routines will use 32 bit accesses
- * for performance, here are specific D16-compatible routines. They expect
- * pointers to be 16-bit aligned.
+ * Extra D16 access functions (see vme.c)
  */
 
-static void d16_bcopy(const void *, void *, size_t);
-static void d16_bzero(void *, size_t);
-
-static __inline__ void
-d16_bcopy(const void *src, void *dst, size_t len)
-{
-	extern const struct mvme88k_bus_space_tag vme_bustag;
-	bus_space_write_region_2(&vme_bustag, 0, (vaddr_t)dst/*XXX*/, (void *)src, len / 2);
-	if (len & 1)
-		bus_space_write_1(&vme_bustag, 0, dst + len - 1,
-		    *(u_int8_t *)((vaddr_t)src + len - 1));
-}
-
-static __inline__ void
-d16_bzero(void *dst, size_t len)
-{
-	extern const struct mvme88k_bus_space_tag vme_bustag;
-	bus_space_set_region_2(&vme_bustag, 0, (vaddr_t)dst/*XXX*/, 0, len / 2);
-	if (len & 1)
-		bus_space_write_1(&vme_bustag, 0, dst + len - 1, 0);
-}
+void d16_bcopy(const void *, void *, size_t);
+void d16_bzero(void *, size_t);
 
 #endif	/* __BUS_SPACE_RESTRICT_D16__ */
 
