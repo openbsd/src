@@ -83,16 +83,16 @@ char **argv;
 	switch (nspis)
 	{
 	      case 4:
-		em->em_rel[3].emr_spi = htonl(strtol(argv[8], NULL, 16));
+		em->em_rel[3].emr_spi = htonl(strtoul(argv[8], NULL, 16));
 		em->em_rel[3].emr_dst.s_addr = inet_addr(argv[7]);
 	      case 3:
-		em->em_rel[2].emr_spi = htonl(strtol(argv[6], NULL, 16));
+		em->em_rel[2].emr_spi = htonl(strtoul(argv[6], NULL, 16));
 		em->em_rel[2].emr_dst.s_addr = inet_addr(argv[5]);
 	      case 2:
-		em->em_rel[1].emr_spi = htonl(strtol(argv[4], NULL, 16));
+		em->em_rel[1].emr_spi = htonl(strtoul(argv[4], NULL, 16));
 		em->em_rel[1].emr_dst.s_addr = inet_addr(argv[3]);
 	      case 1:
-		em->em_rel[0].emr_spi = htonl(strtol(argv[2], NULL, 16));
+		em->em_rel[0].emr_spi = htonl(strtoul(argv[2], NULL, 16));
 		em->em_rel[0].emr_dst.s_addr = inet_addr(argv[1]);
 		break;
 	}

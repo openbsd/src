@@ -82,7 +82,7 @@ char **argv;
 	  em->em_type = EMT_DELSPICHAIN;
 	else
 	  em->em_type = EMT_DELSPI;
-	em->em_spi = htonl(strtol(argv[2], NULL, 16));
+	em->em_spi = htonl(strtoul(argv[2], NULL, 16));
 	em->em_if = 1;
 	em->em_dst.s_addr = inet_addr(argv[1]);
 	em->em_alg = atoi(argv[4]);  /* sanity checking in the kernel */

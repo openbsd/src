@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.1 1997/03/01 15:08:24 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.2 1997/04/14 10:04:27 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -89,7 +89,7 @@ x2i(char *s)
 	ss[1] = s[1];
 	ss[2] = 0;
 
-	return strtol(ss, NULL, 16);
+	return strtoul(ss, NULL, 16);
 }
 
 void

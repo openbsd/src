@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_espdes.c,v 1.1 1997/03/01 15:08:28 provos Exp $ */
+/* $OpenBSD: xf_espdes.c,v 1.2 1997/04/14 10:04:32 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -75,7 +75,7 @@ char **argv;
 	em->em_msglen = EMT_SETSPI_FLEN + ESP_ULENGTH;
 	em->em_version = 0;
 	em->em_type = EMT_SETSPI;
-	em->em_spi = htonl(strtol(argv[2], NULL, 16));
+	em->em_spi = htonl(strtoul(argv[2], NULL, 16));
 	em->em_if = 1;
 	em->em_dst.s_addr = inet_addr(argv[1]);
 	em->em_alg = XF_ESPDES;

@@ -78,7 +78,7 @@ char **argv;
 	em->em_msglen = EMT_SETSPI_FLEN + sizeof(struct ip4_xencap);
 	em->em_version = 0;
 	em->em_type = EMT_SETSPI;
-	em->em_spi = htonl(strtol(argv[2], NULL, 16));
+	em->em_spi = htonl(strtoul(argv[2], NULL, 16));
 	em->em_if = 1;
 	em->em_dst.s_addr = inet_addr(argv[1]);
 	em->em_alg = XF_IP4;

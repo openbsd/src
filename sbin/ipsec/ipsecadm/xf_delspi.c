@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_delspi.c,v 1.1 1997/03/01 15:08:27 provos Exp $ */
+/* $OpenBSD: xf_delspi.c,v 1.2 1997/04/14 10:04:30 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -79,7 +79,7 @@ char **argv;
 	  em->em_type = EMT_DELSPICHAIN;
 	else
 	  em->em_type = EMT_DELSPI;
-	em->em_spi = htonl(strtol(argv[2], NULL, 16));
+	em->em_spi = htonl(strtoul(argv[2], NULL, 16));
 	em->em_if = 1;
 	em->em_dst.s_addr = inet_addr(argv[1]);
 	em->em_alg = atoi(argv[4]);  /* sanity checking in the kernel */

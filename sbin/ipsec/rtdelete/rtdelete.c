@@ -135,7 +135,7 @@ char **argv;
 	gw->sen_type = SENT_IPSP;
 	gw->sen_ipsp_src.s_addr = inet_addr(argv[5]);
 	gw->sen_ipsp_dst.s_addr = inet_addr(argv[6]);
-	gw->sen_ipsp_spi = htonl(strtol(argv[7], NULL, 16));
+	gw->sen_ipsp_spi = htonl(strtoul(argv[7], NULL, 16));
 	gw->sen_ipsp_ifn = atoi(argv[8]);
 
 /*
