@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.h,v 1.5 2000/04/24 03:33:27 form Exp $	*/
+/*	$OpenBSD: ld.h,v 1.6 2000/09/21 12:03:12 espie Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -680,6 +680,7 @@ void	claim_rrs_segment_reloc __P((struct file_entry *, struct relocation_info *)
 void	consider_rrs_section_lengths __P((void));
 void	relocate_rrs_addresses __P((void));
 void	write_rrs __P((void));
+void	rrs_summarize_warnings __P((void));
 
 /* In <md>.c */
 void	md_init_header __P((struct exec *, int, int));

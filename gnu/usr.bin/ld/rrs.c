@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrs.c,v 1.6 1999/08/25 07:42:06 niklas Exp $*/
+/*	$OpenBSD: rrs.c,v 1.7 2000/09/21 12:03:12 espie Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -301,6 +301,19 @@ rrs_next_reloc()
 	return r;
 }
 
+/* don't warn more than n times for text relocations */
+#define TEXT_RELOC_THRESHOLD	3
+static unsigned long total_text_relocs = 0;
+
+/* called at cleanup time */
+void
+rrs_summarize_warnings()
+{
+	if (total_text_relocs >= TEXT_RELOC_THRESHOLD)
+		warnx("Total: %lu RRS text relocations",
+		    total_text_relocs);
+}    
+
 /*
  * Claim a RRS relocation as a result of a regular (ie. non-PIC)
  * relocation record in a rel file.
@@ -318,7 +331,8 @@ claim_rrs_reloc(entry, rp, sp, relocation)
 {
 	struct relocation_info	*r = rrs_next_reloc();
 
-	if (rp->r_address < text_start + text_size)
+	if (rp->r_address < text_start + text_size &&
+	    ++total_text_relocs < TEXT_RELOC_THRESHOLD)
 		warnx("%s: RRS text relocation at %#x for \"%s\"",
 			get_file_name(entry), rp->r_address, sp->name);
 

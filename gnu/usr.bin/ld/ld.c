@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.16 2000/09/20 22:57:20 espie Exp $	*/
+/*	$OpenBSD: ld.c,v 1.17 2000/09/21 12:03:12 espie Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -284,6 +284,9 @@ main(argc, argv)
 	int	argc;
 	char	*argv[];
 {
+
+	if (atexit(cleanup))
+		err(1, "atexit");
 
 	/* Added this to stop ld core-dumping on very large .o files.    */
 #ifdef RLIMIT_STACK
@@ -2632,9 +2635,6 @@ write_output()
 	if (outstream == NULL)
 		err(1, "open: %s", output_filename);
 
-	if (atexit(cleanup))
-		err(1, "atexit");
-
 	if (fstat(fileno(outstream), &statbuf) < 0)
 		err(1, "fstat: %s", output_filename);
 
@@ -3814,6 +3814,8 @@ static void
 cleanup()
 {
 	struct stat	statbuf;
+
+	rrs_summarize_warnings();
 
 	if (outstream == 0)
 		return;
