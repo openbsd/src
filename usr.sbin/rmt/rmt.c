@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.1.1.1 1995/10/18 08:48:05 deraadt Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.2 1996/08/10 22:24:18 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -49,8 +49,11 @@ static char rcsid[] = "$Id: rmt.c,v 1.1.1.1 1995/10/18 08:48:05 deraadt Exp $";
 #include <sgtty.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mtio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
@@ -71,6 +74,10 @@ FILE	*debug;
 #define	DEBUG1(f,a)	if (debug) fprintf(debug, f, a)
 #define	DEBUG2(f,a1,a2)	if (debug) fprintf(debug, f, a1, a2)
 
+void	getstring __P((char *));
+void	error __P((int));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -188,6 +195,7 @@ ioerror:
 	goto top;
 }
 
+void
 getstring(bp)
 	char *bp;
 {
@@ -226,6 +234,7 @@ checkbuf(record, size)
 	return (record);
 }
 
+void
 error(num)
 	int num;
 {
