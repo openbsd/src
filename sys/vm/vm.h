@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.h,v 1.16 2001/08/12 05:18:42 mickey Exp $	*/
+/*	$OpenBSD: vm.h,v 1.17 2001/08/12 20:18:30 mickey Exp $	*/
 /*	$NetBSD: vm.h,v 1.22 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ typedef struct vm_page  *vm_page_t;
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 #include <vm/pmap.h>
-#include <vm/vm_extern.h>
 
 /*
  * Shareable process virtual address space.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.20 2001/08/12 05:18:41 mickey Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.21 2001/08/12 20:18:30 mickey Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.42 2000/06/08 05:52:34 thorpej Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ typedef int		vm_prot_t;
  * structures
  */
 
+struct buf;
 struct core;
 struct mount;
 struct pglist;
@@ -446,6 +447,19 @@ void			kmeminit_nkmempages __P((void));
 void			kmeminit __P((void));
 extern int		nkmempages;
 
-#endif /* _KERNEL */
+void		swstrategy __P((struct buf *));
 
+/* Machine dependent portion */
+void		vmapbuf __P((struct buf *, vsize_t));
+void		vunmapbuf __P((struct buf *, vsize_t));
+void		pagemove __P((caddr_t, caddr_t, size_t));
+void		cpu_fork __P((struct proc *, struct proc *, void *, size_t));
+#ifndef	cpu_swapin
+void		cpu_swapin __P((struct proc *));
+#endif
+#ifndef	cpu_swapout
+void		cpu_swapout __P((struct proc *));
+#endif
+
+#endif /* _KERNEL */
 #endif /* _UVM_UVM_EXTERN_H_ */
