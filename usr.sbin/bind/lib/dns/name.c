@@ -1782,7 +1782,6 @@ dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
 						trem--;
 						nlen--;
 					} else {
-						char buf[5];
 						if (trem < 4)
 							return (ISC_R_NOSPACE);
 						snprintf(tdata, trem,
