@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.6 1997/02/03 04:47:48 downsj Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.7 1997/02/10 01:33:58 downsj Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.6 1997/01/30 09:14:22 thorpej Exp $	*/
 
 /*
@@ -74,10 +74,9 @@ struct	sd_softc {
 #define SDF_RMEDIA	0x20
 #define SDF_ERROR	0x40
 
-#define	sdunit(x)	(minor(x) >> 3)
-#define sdpart(x)	(minor(x) & 0x7)
-#define	sdpunit(x)	((x) & 7)
-#define sdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* sd?c */
+#define	sdunit(x)	DISKUNIT(x)
+#define sdpart(x)	DISKPART(x)
+#define sdlabdev(d)	MAKEDISKDEV(major(d), sdunit(d), RAW_PART)
 
 #define	b_cylin		b_resid
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.7 1997/02/03 04:47:47 downsj Exp $	*/
+/*	$OpenBSD: sd.c,v 1.8 1997/02/10 01:33:57 downsj Exp $	*/
 /*	$NetBSD: sd.c,v 1.29 1997/01/30 09:14:20 thorpej Exp $	*/
 
 /*
@@ -1022,9 +1022,6 @@ sdioctl(dev, cmd, data, flag, p)
 	int error, flags;
 
 	switch (cmd) {
-	default:
-		return (EINVAL);
-
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *lp;
 		return (0);
@@ -1106,6 +1103,9 @@ sdioctl(dev, cmd, data, flag, p)
 		 */
 		bcopy(&sc->sc_sensestore, data, sizeof(sc->sc_sensestore));
 		return (0);
+
+	default:
+		return (EINVAL);
 		
 	}
 	/*NOTREACHED*/
