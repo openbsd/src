@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.107 2005/03/18 17:27:39 cloder Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.108 2005/03/29 04:51:21 cloder Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1812,7 +1812,7 @@ ipsec_get_proto_port(char *section, u_int8_t *tproto, u_int16_t *port)
 	pstr = conf_get_str(section, "Port");
 	if (!pstr)
 		return 0;
-	*port = (u_int16_t)atoi(pstr);
+	*port = htons((u_int16_t)atoi(pstr));
 	if (!*port) {
 		se = getservbyname(pstr,
 		    pe ? pe->p_name : (pstr ? pstr : NULL));
