@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.11 2004/05/13 14:22:18 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.12 2004/06/03 19:54:04 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.11 2004/05/13 14:22:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.12 2004/06/03 19:54:04 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -459,12 +459,19 @@ run_job(atjob *job, char *atfile)
 			login_close(lc);
 		}
 #else
-		setgid(pw->pw_gid);
-		initgroups(pw->pw_name, pw->pw_gid);
+		if (setgid(pw->pw_gid) || initgroups(pw->pw_name, pw->pw_gid)) {
+			fprintf(stderr,
+			    "unable to set groups for %s\n", pw->pw_name);
+			_exit(ERROR_EXIT);
+		}
 #if (defined(BSD)) && (BSD >= 199103)
 		setlogin(pw->pw_name);
 #endif
-		setuid(pw->pw_uid);
+		if (setuid(pw->pw_uid)) {
+			fprintf(stderr,
+			    "unable to set uid to %ld\n", (long)pw->pw_uid);
+			_exit(ERROR_EXIT);
+		}
 
 #endif /* LOGIN_CAP */
 
@@ -544,8 +551,8 @@ run_job(atjob *job, char *atfile)
 #ifdef MAIL_DATE
 		fprintf(mail, "Date: %s\n", arpadate(&StartTime));
 #endif /*MAIL_DATE*/
-		fprintf(mail, "\nYour \"at\" job on %s\n\"%s/%s\"\n",
-		    hostname, CRONDIR, atfile);
+		fprintf(mail, "\nYour \"at\" job on %s\n\"%s/%s/%s\"\n",
+		    hostname, CRONDIR, AT_DIR, atfile);
 		fprintf(mail, "\nproduced the following output:\n\n");
 
 		/* Pipe the job's output to sendmail. */

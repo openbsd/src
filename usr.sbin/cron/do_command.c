@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.26 2004/04/26 17:15:37 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.27 2004/06/03 19:54:04 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.26 2004/04/26 17:15:37 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.27 2004/06/03 19:54:04 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -233,12 +233,19 @@ child_process(entry *e, user *u) {
 			}
 		}
 #else
-		setgid(e->pwd->pw_gid);
-		initgroups(usernm, e->pwd->pw_gid);
+		if (setgid(e->pwd->pw_gid) || initgroups(usernm, e->pwd->pw_gid) {
+			fprintf(stderr,
+			    "unable to set groups for %s\n", e->pwd->pw_name);
+			_exit(ERROR_EXIT);
+		}
 #if (defined(BSD)) && (BSD >= 199103)
 		setlogin(usernm);
 #endif /* BSD */
-		setuid(e->pwd->pw_uid);	/* we aren't root after this... */
+		if (setuid(e->pwd->pw_uid)) {
+			fprintf(stderr,
+			    "unable to set uid to %ld\n", (long)e->pwd->pw_uid);
+			_exit(ERROR_EXIT);
+		}
 
 #endif /* LOGIN_CAP */
 		chdir(env_get("HOME", e->envp));
@@ -375,18 +382,12 @@ child_process(entry *e, user *u) {
 			/* get name of recipient.  this is MAILTO if set to a
 			 * valid local username; USER otherwise.
 			 */
-			if (mailto) {
-				/* MAILTO was present in the environment
-				 */
-				if (!*mailto) {
-					/* ... but it's empty. set to NULL
-					 */
-					mailto = NULL;
-				}
-			} else {
+			if (!mailto) {
 				/* MAILTO not present, set to USER.
 				 */
 				mailto = usernm;
+			} else if (!*mailto || !safe_p(usernm, mailto)) {
+				mailto = NULL;
 			}
 		
 			/* if we are supposed to be mailing, MAILTO will
@@ -394,7 +395,7 @@ child_process(entry *e, user *u) {
 			 * up the mail command and subjects and stuff...
 			 */
 
-			if (mailto && safe_p(usernm, mailto)) {
+			if (mailto) {
 				char	**env;
 				char	mailcmd[MAX_COMMAND];
 				char	hostname[MAXHOSTNAMELEN];

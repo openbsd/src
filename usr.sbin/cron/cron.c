@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.34 2004/05/13 13:54:52 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.35 2004/06/03 19:54:04 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.34 2004/05/13 13:54:52 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.35 2004/06/03 19:54:04 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -51,11 +51,17 @@ static	double			batch_maxload = BATCH_MAXLOAD;
 
 static void
 usage(void) {
+#if DEBUGGING
 	const char **dflags;
+#endif
 
 	fprintf(stderr, "usage:  %s [-l load_avg] [-n] [-x [", ProgramName);
+#if DEBUGGING
 	for (dflags = DebugFlagNames; *dflags; dflags++)
 		fprintf(stderr, "%s%s", *dflags, dflags[1] ? "," : "]");
+#else
+	fprintf(stderr, "debugging flags (none supported in this build)]");
+#endif
 	fprintf(stderr, "]\n");
 	exit(ERROR_EXIT);
 }
@@ -336,7 +342,7 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 			    )
 			   ) {
 				if ((doNonWild &&
-				    !(e->flags & (MIN_STAR|HR_STAR))) || 
+				    !(e->flags & (MIN_STAR|HR_STAR))) ||
 				    (doWild && (e->flags & (MIN_STAR|HR_STAR))))
 					job_add(e, u);
 			}
@@ -405,6 +411,7 @@ cron_sleep(int target) {
 		if (nfds > 0) {
 			Debug(DSCH, ("[%ld] Got a poke on the socket\n",
 			    (long)getpid()))
+			sunlen = sizeof(s_un);
 			fd = accept(cronSock, (struct sockaddr *)&s_un, &sunlen);
 			if (fd >= 0 && fcntl(fd, F_SETFL, O_NONBLOCK) == 0) {
 				(void) read(fd, &poke, 1);
