@@ -1,5 +1,5 @@
-/*	$OpenBSD: piixvar.h,v 1.3 2000/03/27 15:56:45 jason Exp $	*/
-/*	$NetBSD$	*/
+/*	$OpenBSD: piixvar.h,v 1.4 2000/03/28 03:38:00 mickey Exp $	*/
+/*	$NetBSD: piixvar.h,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

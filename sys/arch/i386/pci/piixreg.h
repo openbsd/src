@@ -1,5 +1,5 @@
-/*	$OpenBSD	*/
-/*	$NetBSD$	*/
+/*	$OpenBSD: piixreg.h,v 1.3 2000/03/28 03:37:59 mickey Exp $	*/
+/*	$NetBSD: piixreg.h,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

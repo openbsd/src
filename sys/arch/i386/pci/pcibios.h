@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcibios.h,v 1.2 2000/03/27 08:35:22 brad Exp $	*/
-/*	$NetBSD$	*/
+/*	$OpenBSD: pcibios.h,v 1.3 2000/03/28 03:37:59 mickey Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.1 1999/11/17 01:16:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
