@@ -1,5 +1,38 @@
-#	$OpenBSD: bsd.port.subdir.mk,v 1.2 1996/10/22 14:01:20 niklas Exp $
-#	FreeBSD Id: bsd.port.subdir.mk,v 1.14 1996/04/09 22:54:13 wosch Exp $
+#	from: @(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
+#	$OpenBSD: bsd.port.subdir.mk,v 1.3 1997/09/09 15:11:29 imp Exp $
+#	FreeBSD Id: bsd.port.subdir.mk,v 1.20 1997/08/22 11:16:15 asami Exp
+#
+# The include file <bsd.port.subdir.mk> contains the default targets
+# for building ports subdirectories. 
+#
+#
+# +++ variables +++
+#
+# STRIP		The flag passed to the install program to cause the binary
+#		to be stripped.  This is to be used when building your
+#		own install script so that the entire system can be made
+#		stripped/not-stripped using a single knob. [-s]
+#
+# ECHO_MSG	Used to print all the '===>' style prompts - override this
+#		to turn them off [echo].
+#
+# OPSYS		Get the operating system type [`uname -s`]
+#
+# SUBDIR	A list of subdirectories that should be built as well.
+#		Each of the targets will execute the same target in the
+#		subdirectories.
+#
+#
+# +++ targets +++
+#
+#	README.html:
+#		Creating README.html for package.
+#
+#	afterinstall, all, beforeinstall, build, checksum, clean,
+#	configure, depend, describe, extract, fetch, fetch-list,
+#	install, package, readmes, realinstall, reinstall, tags
+#
+
 
 .MAIN: all
 
@@ -7,6 +40,9 @@
 STRIP?=	-s
 .endif
 
+.if !defined(OPSYS)	# XXX !!
+OPSYS!=	uname -s
+.endif
 
 ECHO_MSG?=	echo
 
@@ -19,16 +55,17 @@ _SUBDIRUSE: .USE
 				${ECHO_MSG} "===> ${DIRPRFX}$${entry} skipped"; \
 			fi; \
 		done; \
+		if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
+			edir=$${entry}.${MACHINE}; \
+		elif test -d ${.CURDIR}/$${entry}; then \
+			edir=$${entry}; \
+		else \
+			OK="false"; \
+			${ECHO_MSG} "===> ${DIRPRFX}$${entry} non-existent"; \
+		fi; \
 		if [ "$$OK" = "" ]; then \
-			if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
-				${ECHO_MSG} "===> ${DIRPRFX}$${entry}.${MACHINE}"; \
-				edir=$${entry}.${MACHINE}; \
-				cd ${.CURDIR}/$${edir}; \
-			else \
-				${ECHO_MSG} "===> ${DIRPRFX}$$entry"; \
-				edir=$${entry}; \
-				cd ${.CURDIR}/$${edir}; \
-			fi; \
+			${ECHO_MSG} "===> ${DIRPRFX}$${edir}"; \
+			cd ${.CURDIR}/$${edir}; \
 			${MAKE} ${.TARGET:realinstall=install} \
 				DIRPRFX=${DIRPRFX}$$edir/; \
 		fi; \
@@ -43,7 +80,7 @@ ${SUBDIR}::
 	${MAKE} all
 
 .for __target in all fetch fetch-list package extract configure \
-		 build clean depend describe reinstall tags checksum
+		 build clean depend describe distclean reinstall tags checksum
 .if !target(__target)
 ${__target}: _SUBDIRUSE
 .endif
@@ -71,7 +108,11 @@ readme:
 	@make README.html
 .endif
 
+.if (${OPSYS} == "NetBSD")
+PORTSDIR ?= /usr/opt
+.else
 PORTSDIR ?= /usr/ports
+.endif
 TEMPLATES ?= ${PORTSDIR}/templates
 .if defined(PORTSTOP)
 README=	${TEMPLATES}/README.top
