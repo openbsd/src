@@ -1355,3 +1355,6 @@
 ./usr/share/man/cat4/bridge.0
 ./usr/share/man/cat8/brconfig.0
 ./usr/share/man/cat8/ipsecadm.0
+./usr/share/man/cat8/rc.local.0
+./usr/share/man/cat8/rc.securelevel.0
+./usr/share/man/cat8/netstart.0

@@ -386,3 +386,4 @@
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_bridge.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/sys/pool.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/dbm.ph

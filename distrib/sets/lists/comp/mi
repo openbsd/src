@@ -2824,3 +2824,4 @@
 ./usr/include/net/if_bridge.h
 ./usr/include/skipjack.h
 ./usr/include/sys/pool.h
+./usr/include/dev/isa/cs4232.h
