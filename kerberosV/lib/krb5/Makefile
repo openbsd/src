@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2001/06/24 18:57:36 hin Exp $
+# $OpenBSD: Makefile,v 1.10 2001/06/24 19:07:04 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -128,6 +128,9 @@ MLINKS+=krb5_keytab.3 krb5_kt_start_seq_get.3
 MAN+=	krb5_parse_name.3
 
 MAN+=	krb5_unparse_name.3
+
+MAN+=	krb5_verify_user.3
+MLINKS+=krb5_verify_user.3 krb5_verify_user_lrealm.3
 
 SRCS=	add_et_list.c \
 	addr_families.c \
