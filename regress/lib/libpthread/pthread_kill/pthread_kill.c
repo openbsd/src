@@ -1,4 +1,4 @@
-/* $OpenBSD: pthread_kill.c,v 1.2 2002/10/23 22:30:04 marc Exp $ */
+/* $OpenBSD: pthread_kill.c,v 1.3 2003/06/19 00:59:54 pvalchev Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /*
@@ -25,6 +25,7 @@ act_handler(int signal, siginfo_t *siginfo, void *context)
 	asprintf(&str, "act_handler: signal %d, siginfo %p, context %p\n",
 		 signal, siginfo, context);
 	write(STDOUT_FILENO, str, strlen(str));
+	free(str);
 }
  
 void *

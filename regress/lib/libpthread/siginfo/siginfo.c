@@ -1,4 +1,4 @@
-/* $OpenBSD: siginfo.c,v 1.8 2002/10/27 21:49:45 marc Exp $ */
+/* $OpenBSD: siginfo.c,v 1.9 2003/06/19 00:59:54 pvalchev Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /*
@@ -27,6 +27,7 @@ act_handler(int signal, siginfo_t *siginfo, void *context)
 		 "addr %p, code %d, trap %d\n", signal, siginfo, context,
 		 siginfo->si_addr, siginfo->si_code, siginfo->si_trapno);
 	write(STDOUT_FILENO, str, strlen(str));
+	free(str);
  	ASSERT(siginfo->si_addr == BOGUS);
 	ASSERT(siginfo->si_code != SI_USER);
 	ASSERT(siginfo->si_code > 0 && siginfo->si_code <= NSIGSEGV);
