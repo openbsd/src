@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.740 2004/06/05 07:30:40 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.741 2004/06/05 22:11:58 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3665,6 +3665,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_WMCH,
 	    "E7710 WMCH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RD,
+	    "i960 RD PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_SERVER,
+	    "PRO 100 Server",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
