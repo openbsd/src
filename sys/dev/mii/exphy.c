@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.4 1999/07/23 12:39:11 deraadt Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.5 1999/09/26 17:50:41 jason Exp $	*/
 /*	$NetBSD: exphy.c,v 1.15.6.1 1999/04/23 15:39:33 perry Exp $	*/
 
 /*-
@@ -125,9 +125,9 @@ exphymatch(parent, match, aux)
 		return (0);
 
 	/*
-	 * Make sure the parent is an `ex'.
+	 * Make sure the parent is an `xl'.
 	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "ex") != 0)
+	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "xl") != 0)
 		return (0);
 
 	return (10);
