@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.2 2001/10/09 21:16:20 nate Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.3 2002/03/06 23:13:58 nate Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2157,8 +2157,3 @@ struct bge_softc {
 	char			*bge_vpd_prodname;
 	char			*bge_vpd_readonly;
 };
-
-#ifdef __alpha__
-#undef vtophys
-#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
-#endif
