@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.160 2004/04/12 14:17:55 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.161 2004/04/14 20:46:50 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3877,8 +3877,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	return (so);
 
 resetandabort:
-	(void) tcp_respond(NULL, mtod(m, caddr_t), m,
-			   th->th_seq + tlen, (tcp_seq)0, TH_RST|TH_ACK);
+	tcp_respond(NULL, mtod(m, caddr_t), m, (tcp_seq)0, th->th_ack, TH_RST);
 abort:
 	if (so != NULL)
 		(void) soabort(so);
