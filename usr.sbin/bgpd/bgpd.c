@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.92 2004/05/03 04:44:41 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.93 2004/05/07 10:06:15 djm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -215,6 +215,8 @@ main(int argc, char *argv[])
 	mrt_init(&ibuf_rde, &ibuf_se);
 	if ((rfd = kr_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE))) == -1)
 		quit = 1;
+	if (pftable_clear_all() != 0)
+		quit = 1;
 
 	while ((net = TAILQ_FIRST(&net_l)) != NULL) {
 		TAILQ_REMOVE(&net_l, net, network_l);
@@ -326,6 +328,7 @@ main(int argc, char *argv[])
 	free(rules_l);
 	control_cleanup();
 	kr_shutdown();
+	pftable_clear_all();
 
 	do {
 		if ((pid = wait(NULL)) == -1 &&
@@ -461,6 +464,35 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 					log_warnx("wrong imsg len");
 				else
 					kr_nexthop_delete(imsg.data);
+			break;
+		case IMSG_PFTABLE_ADD:
+			if (idx != PFD_PIPE_ROUTE)
+				log_warnx("pftable request not from RDE");
+			else
+				if (imsg.hdr.len != IMSG_HEADER_SIZE +
+				    sizeof(struct pftable_msg))
+					log_warnx("wrong imsg len");
+				else if (pftable_addr_add(imsg.data) != 0)
+					return (-1);
+			break;
+		case IMSG_PFTABLE_REMOVE:
+			if (idx != PFD_PIPE_ROUTE)
+				log_warnx("pftable request not from RDE");
+			else
+				if (imsg.hdr.len != IMSG_HEADER_SIZE +
+				    sizeof(struct pftable_msg))
+					log_warnx("wrong imsg len");
+				else if (pftable_addr_remove(imsg.data) != 0)
+					return (-1);
+			break;
+		case IMSG_PFTABLE_COMMIT:
+			if (idx != PFD_PIPE_ROUTE)
+				log_warnx("pftable request not from RDE");
+			else
+				if (imsg.hdr.len != IMSG_HEADER_SIZE)
+					log_warnx("wrong imsg len");
+				else if (pftable_commit() != 0)
+					return (-1);
 			break;
 		case IMSG_CTL_RELOAD:
 			if (idx != PFD_PIPE_SESSION)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.110 2004/04/30 05:47:50 deraadt Exp $ */
+/*	$OpenBSD: rde.c,v 1.111 2004/05/07 10:06:15 djm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -798,6 +798,36 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 }
 
 /*
+ * pf table specific functions
+ */
+void
+rde_send_pftable(const char *table, struct bgpd_addr *addr, 
+    u_int8_t len, int del)
+{
+	struct pftable_msg pfm;
+
+	if (*table == '\0')
+		return;
+
+	bzero(&pfm, sizeof(pfm));
+	strlcpy(pfm.pftable, table, sizeof(pfm.pftable));
+	memcpy(&pfm.addr, addr, sizeof(pfm.addr));
+	pfm.len = len;
+
+	if (imsg_compose(&ibuf_main,
+	    del ? IMSG_PFTABLE_REMOVE : IMSG_PFTABLE_ADD, 
+	    0, &pfm, sizeof(pfm)) == -1)
+		fatal("imsg_compose error");
+}
+
+void
+rde_send_pftable_commit(void)
+{
+	if (imsg_compose(&ibuf_main, IMSG_PFTABLE_COMMIT, 0, NULL, 0) == -1)
+		fatal("imsg_compose error");
+}
+
+/*
  * nexthop specific functions
  */
 void
@@ -1049,6 +1079,9 @@ peer_down(u_int32_t id)
 		path_remove(asp);
 	}
 	LIST_INIT(&peer->path_h);
+
+	/* Deletions are performed in path_remove() */
+	rde_send_pftable_commit();
 
 	peer_remove(peer);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.7 2004/03/11 17:12:51 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.8 2004/05/07 10:06:15 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,6 +17,8 @@
  */
 #include <sys/types.h>
 #include <sys/queue.h>
+
+#include <string.h>
 
 #include "bgpd.h"
 #include "rde.h"
@@ -74,6 +76,8 @@ rde_apply_set(struct attr_flags *attrs, struct filter_set *set)
 		attrs->aspath->hdr.prepend += set->prepend;
 		attrs->aspath->hdr.as_cnt += set->prepend;
 	}
+	if (set->flags & SET_PFTABLE)
+		strlcpy(attrs->pftable, set->pftable, sizeof(attrs->pftable));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.44 2004/04/30 18:42:05 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.45 2004/05/07 10:06:15 djm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -114,6 +114,9 @@ path_update(struct rde_peer *peer, struct attr_flags *attrs,
 
 	RIB_STAT(path_update);
 
+	rde_send_pftable(attrs->pftable, prefix, prefixlen, 0);
+	rde_send_pftable_commit();
+
 	if ((asp = path_get(attrs->aspath, peer)) == NULL) {
 		/* path not available */
 		asp = path_add(peer, attrs);
@@ -179,6 +182,10 @@ path_remove(struct rde_aspath *asp)
 	RIB_STAT(path_remove);
 
 	while ((p = LIST_FIRST(&asp->prefix_h)) != NULL) {
+		/* Commit is done in peer_down() */
+		rde_send_pftable(p->aspath->flags.pftable,
+		    &p->prefix->prefix, p->prefix->prefixlen, 1);
+
 		prefix_destroy(p);
 	}
 	path_destroy(asp);
@@ -430,6 +437,10 @@ prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
 		return;
 
 	asp = p->aspath;
+
+	rde_send_pftable(asp->flags.pftable, prefix, prefixlen, 1);
+	rde_send_pftable_commit();
+    
 	prefix_unlink(p);
 	prefix_free(p);
 

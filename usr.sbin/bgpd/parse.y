@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.101 2004/05/06 14:41:47 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.102 2004/05/07 10:06:15 djm Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -118,7 +118,7 @@ typedef struct {
 %token	QUICK
 %token	FROM TO ANY
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
-%token	SET LOCALPREF MED NEXTHOP PREPEND
+%token	SET LOCALPREF MED NEXTHOP PREPEND PFTABLE
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
 %token	<v.string>		STRING
@@ -905,6 +905,9 @@ filter_set_l	: filter_set_l comma filter_set_opt	{
 				    sizeof($$.nexthop));
 			if ($3.flags & SET_PREPEND)
 				$$.prepend = $3.prepend;
+			if ($3.flags & SET_PFTABLE)
+				strlcpy($$.pftable, $3.pftable,
+				    sizeof($$.pftable));
 		}
 		| filter_set_opt
 		;
@@ -929,6 +932,22 @@ filter_set_opt	: LOCALPREF number		{
 		| PREPEND number		{
 			$$.flags = SET_PREPEND;
 			$$.prepend = $2;
+		}
+		| PFTABLE string		{
+			$$.flags = SET_PFTABLE;
+			if (pftable_exists($2) != 0) {
+				yyerror("pftable name does not exist");
+				YYERROR;
+			}
+			if (strlcpy($$.pftable, $2, sizeof($$.pftable)) >=
+			    sizeof($$.pftable)) {
+				yyerror("pftable name too long");
+				YYERROR;
+			}
+			if (pftable_add($2) != 0) {
+				yyerror("Couldn't register table");
+				YYERROR;
+			}
 		}
 		;
 
@@ -1020,6 +1039,7 @@ lookup(char *s)
 		{ "out",		OUT},
 		{ "passive",		PASSIVE},
 		{ "password",		PASSWORD},
+		{ "pftable",		PFTABLE},
 		{ "prefix",		PREFIX},
 		{ "prefixlen",		PREFIXLEN},
 		{ "prepend-self",	PREPEND},

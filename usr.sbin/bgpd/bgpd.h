@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.121 2004/05/06 14:41:47 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.122 2004/05/07 10:06:15 djm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,6 +34,7 @@
 #define	CONFFILE			"/etc/bgpd.conf"
 #define	BGPD_USER			"_bgpd"
 #define	PEER_DESCR_LEN			32
+#define	PFTABLE_LEN			16
 #define	TCP_MD5_KEY_LEN			80
 #define	IPSEC_ENC_KEY_LEN		32
 #define IPSEC_AUTH_KEY_LEN		20
@@ -144,6 +145,7 @@ struct filter_set {
 	struct in_addr	nexthop;
 	struct in6_addr	nexthop6;
 	u_int8_t	prepend;
+	char		pftable[PFTABLE_LEN];
 };
 
 enum auth_method {
@@ -244,6 +246,9 @@ enum imsg_type {
 	IMSG_NEXTHOP_ADD,
 	IMSG_NEXTHOP_REMOVE,
 	IMSG_NEXTHOP_UPDATE,
+	IMSG_PFTABLE_ADD,
+	IMSG_PFTABLE_REMOVE,
+	IMSG_PFTABLE_COMMIT,
 	IMSG_CTL_SHOW_NEIGHBOR,
 	IMSG_CTL_END,
 	IMSG_CTL_RELOAD,
@@ -345,6 +350,12 @@ struct session_up {
 	struct peer_config	conf;
 };
 
+struct pftable_msg {
+	char			pftable[PFTABLE_LEN];
+	struct bgpd_addr	addr;
+	u_int8_t		len;
+};
+
 struct ctl_show_nexthop {
 	struct bgpd_addr	addr;
 	u_int8_t		valid;
@@ -426,6 +437,7 @@ enum comp_ops {
 #define	SET_NEXTHOP	0x04
 #define	SET_NEXTHOP6	0x08
 #define	SET_PREPEND	0x10
+#define	SET_PFTABLE	0x20
 
 struct filter_peers {
 	u_int32_t	peerid;
@@ -552,5 +564,13 @@ void	kr_show_route(struct imsg *);
 int	control_init(void);
 void	control_cleanup(void);
 int	control_imsg_relay(struct imsg *);
+
+/* pftable.c */
+int	pftable_exists(const char *);
+int	pftable_add(const char *);
+int	pftable_clear_all(void);
+int	pftable_addr_add(struct pftable_msg *);
+int	pftable_addr_remove(struct pftable_msg *);
+int	pftable_commit(void);
 
 #endif /* __BGPD_H__ */

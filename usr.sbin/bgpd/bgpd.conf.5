@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.21 2004/04/02 18:28:49 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.22 2004/05/07 10:06:15 djm Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -544,6 +544,11 @@ Set the
 .Em NEXTHOP
 .Em AS path attribute
 to a different nexthop address.
+.It Ar pftable
+Adds the prefix in the update to the specified
+.Xr pf 4
+radix table, regardless of whether or not the path was selected for routing.
+This option may be useful in building realtime blacklists.
 .It Ar prepend-self
 Prepend the local
 .Em AS
