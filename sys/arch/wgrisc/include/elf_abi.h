@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_abi.h,v 1.1.1.1 1997/02/06 16:02:44 pefo Exp $ */
+/*	$OpenBSD: elf_abi.h,v 1.2 1997/07/31 21:23:31 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -55,3 +55,4 @@
 #define DT_MIPS_HIPAGENO     0x70000014 /* Number of GOT page table entries */
 #define DT_MIPS_RLD_MAP      0x70000016 /* Address of debug map pointer */
 
+#define DT_PROCNUM (DT_MIPS_HIPAGENO - DT_LOPROC + 1)
