@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isinf.3,v 1.8 2000/12/24 00:30:49 aaron Exp $
+.\"	$OpenBSD: isinf.3,v 1.9 2001/09/06 04:40:55 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,8 +76,7 @@ otherwise 0.
 .%R Std 754-1985
 .Re
 .Sh BUGS
-Neither the
 .Tn VAX
-nor the Tahoe floating point have distinguished values
+floating point does not have distinguished values
 for either infinity or not-a-number.
-These routines always return 0 on those architectures.
+These routines always return 0 on that architecture.
