@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.19 2001/11/14 22:18:33 miod Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.20 2001/12/09 14:57:45 miod Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -45,7 +45,6 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
-#include <err.h>
 #include <machine/apmvar.h>
 #include "pathnames.h"
 #include "apm-proto.h"
@@ -167,8 +166,10 @@ bind_socket(const char *sockname)
 	int sock;
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock == -1)
-		err(1, "cannot create local socket");
+	if (sock == -1) {
+		syslog(LOG_ERR, "cannot create local socket: %m");
+		exit(1);
+	}
 
 	s_un.sun_family = AF_UNIX;
 	strncpy(s_un.sun_path, sockname, sizeof(s_un.sun_path));
@@ -178,10 +179,15 @@ bind_socket(const char *sockname)
 	(void) remove(sockname);
 	umask (077);
 
-	if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1)
-		err(1, "cannot connect to APM socket");
-	if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1)
-		err(1, "cannot set socket mode/owner/group to 660/0/0");
+	if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1) {
+		syslog(LOG_ERR, "cannot connect to APM socket: %m");
+		exit(1);
+	}
+	if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1) {
+		syslog(LOG_ERR,
+		    "cannot set socket mode/owner/group to 660/0/0: %m");
+		exit(1);
+	}
 
 	listen(sock, 1);
 	socketname = strdup(sockname);
@@ -361,8 +367,10 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if ((ctl_fd = open(fname, O_RDWR)) == -1)
-		err(1, "cannot open device file `%s'", fname);
+	if ((ctl_fd = open(fname, O_RDWR)) == -1) {
+		syslog(LOG_ERR, "cannot open device file `%s': %m", fname);
+		exit(1);
+	}
 
 	if (debug)
 		openlog(__progname, LOG_CONS, LOG_LOCAL1);
@@ -396,15 +404,19 @@ main(int argc, char *argv[])
 
 	sock_fd = bind_socket(sockname);
 	kq = kqueue();
-	if (kq <= 0)
-		err(1, "kqueue");
+	if (kq <= 0) {
+		syslog(LOG_ERR, "kqueue: %m");
+		exit(1);
+	}
 
 	EV_SET(&ev[0], ctl_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
 	    0, 0, NULL);
 	EV_SET(&ev[1], sock_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
 	    0, 0, NULL);
-	if (kevent(kq, ev, 2, NULL, 0, &sts) < 0)
-		err(1, "kevent");
+	if (kevent(kq, ev, 2, NULL, 0, &sts) < 0) {
+		syslog(LOG_ERR, "kevent: %m");
+		exit(1);
+	}
 
 	for (;;) {
 		int rv;
