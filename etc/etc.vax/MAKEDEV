@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.19 2000/05/01 01:48:36 bjc Exp $
+#	$OpenBSD: MAKEDEV,v 1.20 2000/11/24 19:14:03 hugh Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -255,25 +255,16 @@ hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*|raid*)
 	esac
 	case $unit in
 	[0-9]|[12][0-9]|3[01])
-		rm -f ${name}${unit}[a-h] r${name}${unit}[a-h]
-		mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-		mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
-		mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
-		mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
-		mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
-		mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
-		mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
-		mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
-		mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-		mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
-		mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
-		mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
-		mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
-		mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
-		mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
-		mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+		minor=$(($unit * 16))
+		rm -f ${name}${unit}[a-p] r${name}${unit}[a-p]
+		for slice in a b c d e f g h i j k l m n o p
+		do
+			mknod ${name}${unit}${slice}  b $blk $minor
+			mknod r${name}${unit}${slice} c $chr $minor
+			minor=$(($minor + 1))
+		done
+		chgrp operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 		;;
 	*)
 		echo bad unit for disk in: $i
@@ -287,10 +278,10 @@ cd*)
 	cd*) name=cd;   unit=${i#cd};   chr=61; blk=22;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a   b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}d   b $blk $(($unit * 8 + 3))
-	mknod r${name}${unit}a  c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}d  c $chr $(($unit * 8 + 3))
+	mknod ${name}${unit}a   b $blk $(($unit * 16 + 0))
+	mknod ${name}${unit}c   b $blk $(($unit * 16 + 2))
+	mknod r${name}${unit}a  c $chr $(($unit * 16 + 0))
+	mknod r${name}${unit}c  c $chr $(($unit * 16 + 2))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 	;;
@@ -321,10 +312,10 @@ ch*|uk*)
 md*)
 	unit=${i#md}; blk=23; chr=62;
 	rm -f md${unit}? rmd${unit}?
-	mknod md${unit}a  b $blk $(($unit * 8 + 0)) 
-	mknod md${unit}c  b $blk $(($unit * 8 + 2)) 
-#	mknod rmd${unit}a c $chr $(($unit * 8 + 0)) 
-#	mknod rmd${unit}c c $chr $(($unit * 8 + 2)) 
+	mknod md${unit}a  b $blk $(($unit * 16 + 0)) 
+	mknod md${unit}c  b $blk $(($unit * 16 + 2)) 
+#	mknod rmd${unit}a c $chr $(($unit * 16 + 0)) 
+#	mknod rmd${unit}c c $chr $(($unit * 16 + 2)) 
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
