@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.48 2001/08/13 14:33:35 itojun Exp $	*/
+/*	$OpenBSD: udp.c,v 1.49 2001/08/23 23:11:02 angelos Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -81,6 +81,7 @@ struct udp_transport {
 
 static struct transport *udp_clone (struct udp_transport *, struct sockaddr *);
 static struct transport *udp_create (char *);
+static void udp_reinit (void);
 static void udp_remove (struct transport *);
 static void udp_report (struct transport *);
 static int udp_fd_set (struct transport *, fd_set *, int);
@@ -98,6 +99,7 @@ static in_port_t udp_decode_port (char *);
 static struct transport_vtbl udp_transport_vtbl = {
   { 0 }, "udp",
   udp_create,
+  udp_reinit,
   udp_remove,
   udp_report,
   udp_fd_set,
@@ -561,6 +563,49 @@ udp_report (struct transport *t)
 }
 
 /*
+ * Probe the interface list and determine what new interfaces have
+ * appeared.
+ *
+ * At the same time, we try to determine whether existing interfaces have
+ * been rendered invalid; we do this by marking all UDP transports before
+ * we call udp_bind_if () through if_map (), and then releasing those
+ * transports that have not been unmarked.
+ */
+static void
+udp_reinit (void)
+{
+  struct udp_transport *u, *u2;
+
+  /* Mark all UDP transports, except the default ones. */
+  for (u = LIST_FIRST (&udp_listen_list); u; u = LIST_NEXT (u, link))
+    if (&u->transport != default_transport &&
+	&u->transport != default_transport6)
+       u->transport.flags |= TRANSPORT_MARK;
+
+  /* Re-probe interface list.  */
+  /* XXX need to check errors */
+  if_map (udp_bind_if, udp_default_port ? udp_default_port : "500");
+
+  /*
+   * Release listening transports for local addresses that no
+   * longer exist. udp_bind_if () will have left those still marked.
+   */
+  u = LIST_FIRST (&udp_listen_list);
+  while (u)
+    {
+      u2 = LIST_NEXT (u, link);
+
+      if (u->transport.flags & TRANSPORT_MARK)
+	{
+	  LIST_REMOVE (u, link);
+	  transport_release (&u->transport);
+	}
+
+      u = u2;
+    }
+}
+
+/*
  * Find out the magic numbers for the UDP protocol as well as the UDP port
  * to use.  Setup an UDP server for each address of this machine, and one
  * for the generic case when we are the initiator.
@@ -667,7 +712,7 @@ udp_fd_isset (struct transport *t, fd_set *fds)
 static void
 udp_handle_message (struct transport *t)
 {
-  struct udp_transport *u = (struct udp_transport *)t, *u2;
+  struct udp_transport *u = (struct udp_transport *)t;
   u_int8_t buf[UDP_SIZE];
   struct sockaddr_storage from;
   int len = sizeof from;
@@ -683,47 +728,12 @@ udp_handle_message (struct transport *t)
     }
 
   /*
-   * If we received a packet over the default transports, then:
-   * - if we use the Listen-on directive in the configuration, just ignore
-   *   the packet
-   * - otherwise, re-probe the interface list
-   * At the same time, we try to determine whether existing transports have
-   * been rendered invalid; we do this by marking all UDP transports before
-   * we call udp_bind_if () through if_map (), and then releasing those
-   * transports that have not been unmarked.
+   * If we received the packet over the default transports, reprobe the
+   * interfaces.
    */
   if (t == default_transport || t == default_transport6)
     {
-      if (conf_get_str ("General", "Listen-on"))
-	return;
-
-      /* Mark all UDP transports, except the default ones. */
-      for (u = LIST_FIRST (&udp_listen_list); u; u = LIST_NEXT (u, link))
-	if (&u->transport != default_transport &&
-	    &u->transport != default_transport6)
-	  u->transport.flags |= TRANSPORT_MARK;
-
-      /* Re-probe interface list. */
-      /* XXX need to check errors */
-      if_map (udp_bind_if, udp_default_port ? udp_default_port : "500");
-
-      /*
-       * Release listening transports for local addresses that no
-       * longer exist.
-       */
-      u = LIST_FIRST (&udp_listen_list);
-      while (u)
-        {
-	  u2 = LIST_NEXT (u, link);
-
-	  if (u->transport.flags & TRANSPORT_MARK)
-	    {
-	      LIST_REMOVE (u, link);
-	      transport_release (&u->transport);
-	    }
-
-	  u = u2;
-	}
+      udp_reinit ();
 
       /*
        * As we don't know the actual destination address of the packet,

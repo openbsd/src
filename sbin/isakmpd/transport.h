@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.h,v 1.9 2001/08/11 05:29:23 angelos Exp $	*/
+/*	$OpenBSD: transport.h,v 1.10 2001/08/23 23:11:02 angelos Exp $	*/
 /*	$EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	*/
 
 /*
@@ -60,6 +60,9 @@ struct transport_vtbl {
 
   /* Create a transport instance of this method.  */
   struct transport *(*create) (char *);
+
+  /* Reinitialize specific transport.  */
+  void (*reinit) (void);
 
   /* Remove a transport instance of this method.  */
   void (*remove) (struct transport *);
@@ -134,5 +137,5 @@ extern void transport_reference (struct transport *);
 extern void transport_release (struct transport *);
 extern void transport_report (void);
 extern void transport_send_messages (fd_set *);
-
+extern void transport_reinit (void);
 #endif /* _TRANSPORT_H_ */

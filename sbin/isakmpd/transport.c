@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.c,v 1.13 2001/04/09 22:09:53 ho Exp $	*/
+/*	$OpenBSD: transport.c,v 1.14 2001/08/23 23:11:02 angelos Exp $	*/
 /*	$EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -52,6 +52,17 @@
 
 LIST_HEAD (transport_list, transport) transport_list;
 LIST_HEAD (transport_method_list, transport_vtbl) transport_method_list;
+
+/* Call the reinit function of the various transports.  */
+void
+transport_reinit (void)
+{
+  struct transport_vtbl *method;
+
+  for (method = LIST_FIRST (&transport_method_list); method;
+       method = LIST_NEXT (method, link))
+    method->reinit ();
+}
 
 /* Initialize the transport maintenance module.  */
 void

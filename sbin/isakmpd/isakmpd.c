@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.34 2001/08/23 14:17:08 aaron Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.35 2001/08/23 23:11:02 angelos Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -245,10 +245,9 @@ reinit (void)
   connection_reinit ();
 
   /*
-   * XXX Rescan interfaces.
-   *   transport_reinit ();
-   *   udp_reinit ();
+   * Rescan interfaces.
    */
+  transport_reinit ();
 
   /*
    * XXX "These" (non-existant) reinitializations should not be done.
