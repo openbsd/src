@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.50 2004/06/12 04:36:13 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.51 2004/08/10 20:12:15 markus Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -259,8 +259,6 @@ void	 in_pcbinit(struct inpcbtable *, int);
 struct inpcb *
 	 in_pcblookup(struct inpcbtable *, void *, u_int, void *,
 	    u_int, int);
-int	 in_pcbnotify(struct inpcbtable *, struct sockaddr *,
-	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int));
 void	 in_pcbnotifyall(struct inpcbtable *, struct sockaddr *,
 	    int, void (*)(struct inpcb *, int));
 void	 in_pcbrehash(struct inpcb *);

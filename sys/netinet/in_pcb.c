@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.79 2004/08/04 20:45:09 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.80 2004/08/10 20:12:15 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -568,8 +568,7 @@ in_setpeeraddr(inp, nam)
 
 /*
  * Pass some notification to all connections of a protocol
- * associated with address dst.  The local address and/or port numbers
- * may be specified to limit the search.  The "usual action" will be
+ * associated with address dst.  The "usual action" will be
  * taken, depending on the ctlinput cmd.  The caller must filter any
  * cmds that are uninteresting (e.g., no error in the map).
  * Call the protocol specific routine (if any) to report
@@ -577,61 +576,6 @@ in_setpeeraddr(inp, nam)
  *
  * Must be called at splsoftnet.
  */
-int
-in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
-	struct inpcbtable *table;
-	struct sockaddr *dst;
-	u_int fport_arg, lport_arg;
-	struct in_addr laddr;
-	int errno;
-	void (*notify)(struct inpcb *, int);
-{
-	struct inpcb *inp, *oinp;
-	struct in_addr faddr;
-	u_int16_t fport = fport_arg, lport = lport_arg;
-	int nmatch = 0;
-
-	splassert(IPL_SOFTNET);
-
-#ifdef INET6
-	/*
-	 * See in6_pcbnotify() for IPv6 codepath.  By the time this
-	 * gets called, the addresses passed are either definitely IPv4 or
-	 * IPv6; *_pcbnotify() never gets called with v4-mapped v6 addresses.
-	 */
-#endif /* INET6 */
-
-	if (dst->sa_family != AF_INET)
-		return (0);
-	faddr = satosin(dst)->sin_addr;
-	if (faddr.s_addr == INADDR_ANY)
-		return (0);
-
-	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
-	    inp != CIRCLEQ_END(&table->inpt_queue);) {
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6) {
-			inp = CIRCLEQ_NEXT(inp, inp_queue);
-			continue;
-		}
-#endif
-		if (inp->inp_faddr.s_addr != faddr.s_addr ||
-		    inp->inp_socket == 0 ||
-		    inp->inp_fport != fport ||
-		    inp->inp_lport != lport ||
-		    inp->inp_laddr.s_addr != laddr.s_addr) {
-			inp = CIRCLEQ_NEXT(inp, inp_queue);
-			continue;
-		}
-		oinp = inp;
-		inp = CIRCLEQ_NEXT(inp, inp_queue);
-		nmatch++;
-		if (notify)
-			(*notify)(oinp, errno);
-	}
-	return (nmatch);
-}
-
 void
 in_pcbnotifyall(table, dst, errno, notify)
 	struct inpcbtable *table;
@@ -641,6 +585,8 @@ in_pcbnotifyall(table, dst, errno, notify)
 {
 	struct inpcb *inp, *oinp;
 	struct in_addr faddr;
+
+	splassert(IPL_SOFTNET);
 
 #ifdef INET6
 	/*
