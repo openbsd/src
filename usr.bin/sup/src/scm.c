@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.16 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: scm.c,v 1.17 2004/01/12 04:22:23 beck Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -235,7 +235,7 @@ lock_host_file(lockdir)
 	char *lockdir;
 {
 	char *dd, *lpath;
-	int i, fd; 
+	int fd; 
 	FILE *f;
 
 	dd = strdup(inet_ntoa(remoteaddr));
@@ -243,21 +243,10 @@ lock_host_file(lockdir)
 		syslog(LOG_ERR, "Malloc failed in lock_host_file()");
 		return(-1);
 	}
-	i = strlen(lockdir) + strlen(dd) + 2; /* NUL and maybe a / */
-	lpath = (char *)malloc(i);
-	if (lpath == NULL) {
+	if (asprintf(&lpath, "%s/%s", lockdir, dd) == -1) {
 		syslog(LOG_ERR, "Malloc failed in lock_host_file()");
 		free(dd);
 		return(-1);
-	}
-	(void) strlcpy(lpath, lockdir, i);
-	if (lpath[strlen(lpath) - 1] != '/') {
-		lpath[strlen(lpath)] = '/'; 
-		lpath[strlen(lpath) + 1] = '\0';
-	}
-	if (strlcat(lpath, dd, i) >= i) {
-		syslog(LOG_CRIT, "Buffer overrun in lock_host_file(). SHOULD NOT HAPPEN!");
-		abort();
 	}
 	free(dd);
 	if ((fd = open(lpath, O_CREAT | O_WRONLY, 0600)) < 0) {
