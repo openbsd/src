@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.2 1995/11/23 15:56:22 deraadt Exp $
+	$Id: tm.h,v 1.3 1995/12/14 03:42:39 deraadt Exp $
 */
 
 /* Override number of expected traps from sysv. */

@@ -1,4 +1,4 @@
-#	$Id: Makefile.cc1,v 1.1.1.1 1995/10/18 08:39:15 deraadt Exp $
+#	$Id: Makefile.cc1,v 1.2 1995/12/14 03:42:27 deraadt Exp $
 
 NOMAN=
 
@@ -9,7 +9,8 @@ CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common \
 YFLAGS=
 
 LIBCC1!= cd $(.CURDIR)/../common; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libcc1.a\n" | ${MAKE} -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/libcc1.a\n" | \
+	${MAKE} -r -s -f - xxx | grep libcc1
 
 LDADD+=${LIBCC1} -lgnumalloc
 DPADD+= /usr/lib/libgnumalloc.a

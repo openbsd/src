@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: nm.h,v 1.2 1995/11/23 15:56:21 deraadt Exp $
+	$Id: nm.h,v 1.3 1995/12/14 03:42:38 deraadt Exp $
 */
 
 #ifndef NM_I386BSD_H

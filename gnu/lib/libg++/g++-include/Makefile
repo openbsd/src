@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:38:17 deraadt Exp $
+#	$Id: Makefile,v 1.2 1995/12/14 03:42:17 deraadt Exp $
 
 LIB=		g++
 
@@ -26,6 +26,6 @@ DPADD=		${DESTDIR}/usr/lib/c++rt0.o ${LIBCURSES}
 NOMAN=		noman
 .PATH:		$(.CURDIR)/../iostream 
 LIBCURSES!=	printf "xxx:\n\techo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
-			$(MAKE) -r -s -f - xxx
+			$(MAKE) -r -s -f - xxx | grep curses
 
 .include <bsd.lib.mk>
