@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.9 2001/09/28 20:45:49 miod Exp $ */
+/*	$OpenBSD: m88100.h,v 1.10 2003/09/26 23:37:02 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -24,23 +24,22 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  */
-/*
- * HISTORY
- */
-/*
- * M88100 flags
- */
 
 #ifndef __MACHINE_M88100_H__
 #define __MACHINE_M88100_H__
-
 
 /*
  *	88100 RISC definitions
  */
 
-/* DMT0, DMT1, DMT2 */
-#define DMT_SKIP	0x00010000	/* skip this dmt in data_access_emulation */
+/*
+ * DMT0, DMT1, DMT2 layout
+ *
+ * The DMT_SKIP bit is never set by the cpu.  It is used to mark 'known'
+ * transactions so that they don't get prosessed a second time by
+ * data_access_emulation().
+ */
+#define DMT_SKIP	0x00010000	/* skip this dmt */
 #define DMT_BO		0x00008000	/* Byte-Ordering */
 #define DMT_DAS		0x00004000	/* Data Access Space */
 #define DMT_DOUB1	0x00002000	/* Double Word */
@@ -51,26 +50,10 @@
 #define DMT_WRITE	0x00000002	/* Read/Write Transaction Bit */
 #define	DMT_VALID	0x00000001	/* Valid Transaction Bit */
 
-#ifndef	_LOCORE
-#include <sys/types.h>
+#define	DMT_DREGSHIFT	7
+#define	DMT_ENSHIFT	2
 
-/* dmt_skip is never set by the cpu.  It is used to 
- * mark 'known' transactions so that they don't get 
- * prosessed by data_access_emulation().  XXX smurph 
- */
-struct dmt_reg {
-	unsigned int :15,
-	dmt_skip:1,   
-	dmt_bo:1,
-	dmt_das:1,
-	dmt_doub1:1,
-	dmt_lockbar:1,
-	dmt_dreg:5,
-	dmt_signed:1,
-	dmt_en:4,
-	dmt_write:1,
-	dmt_valid:1;
-};
-#endif 
+#define	DMT_DREGBITS(x)	(((x) & DMT_DREG) >> DMT_DREGSHIFT)
+#define	DMT_ENBITS(x)	(((x) & DMT_EN) >> DMT_ENSHIFT)
 
 #endif /* __MACHINE_M88100_H__ */

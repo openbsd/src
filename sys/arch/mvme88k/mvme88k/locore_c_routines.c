@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.33 2003/09/26 21:43:30 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.34 2003/09/26 23:37:04 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -41,11 +41,11 @@
 #include <machine/prom.h>
 #include <machine/trap.h>
 #ifdef M88100
-#include <machine/m88100.h>		/* DMT_VALID		*/
+#include <machine/m88100.h>
 #endif
 
 #ifdef DDB
-#include <ddb/db_output.h>		/* db_printf()		*/
+#include <ddb/db_output.h>
 #endif /* DDB */
 
 #if defined(DDB) && defined(JEFF_DEBUG)
@@ -58,25 +58,27 @@
 #define DEBUG_MSG printf
 #endif /* DDB */
 
-/*
- *  data access emulation for M88100 exceptions
- */
-#define DMT_BYTE	1
-#define DMT_HALF	2
-#define DMT_WORD	4
-
 typedef struct {
-   unsigned word_one,
-   word_two;
+	unsigned word_one, word_two;
 } m88k_exception_vector_area;
 
 extern unsigned int *volatile int_mask_reg[MAX_CPUS]; /* in machdep.c */
 extern unsigned master_cpu;      /* in cmmu.c */
 
 /* FORWARDS */
-void vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list);
+void setlevel(unsigned int);
+void vector_init(m88k_exception_vector_area *, unsigned *);
 
 #ifdef M88100
+
+/*
+ *  data access emulation for M88100 exceptions
+ */
+
+#define DMT_BYTE	1
+#define DMT_HALF	2
+#define DMT_WORD	4
+
 static struct {
 	unsigned char    offset;
 	unsigned char    size;
@@ -86,7 +88,6 @@ static struct {
 	{0, DMT_BYTE}, {0, 0}, {0, 0}, {0, 0},
 	{0, DMT_HALF}, {0, 0}, {0, 0}, {0, DMT_WORD}
 };
-#endif 
 
 #ifdef DATA_DEBUG
 int data_access_emulation_debug = 0;
@@ -97,21 +98,21 @@ static char *bytes[] =
    "x___", "x__x", "x_x_", "x_xx",
    "xx__", "xx_x", "xxx_", "xxxx",
 };
-#define DAE_DEBUG(stuff) {						\
-	if (data_access_emulation_debug != 0) { stuff ;}   }
+#define DAE_DEBUG(stuff) \
+	do { \
+		if (data_access_emulation_debug != 0) { \
+			stuff; \
+		} \
+	} while (0)
 #else
 #define DAE_DEBUG(stuff)
 #endif
 
-void setlevel(unsigned int);
-
-#ifdef M88100
 void 
 dae_print(unsigned *eframe)
 {
-	register int x;
-	register struct dmt_reg *dmtx;
-	register unsigned  dmax, dmdx;
+	int x;
+	unsigned dmax, dmdx, dmtx;
 	static char *bytes[] =
 	{
 		"____", "___x", "__x_", "__xx",
@@ -124,191 +125,214 @@ dae_print(unsigned *eframe)
 		return;
 
 	for (x = 0; x < 3; x++) {
-		dmtx = (struct dmt_reg *)&eframe[EF_DMT0+x*3];
+		dmtx = eframe[EF_DMT0 + x * 3];
 
-		if (!dmtx->dmt_valid)
+		if (!ISSET(dmtx, DMT_VALID))
 			continue;
 
-		dmdx = eframe[EF_DMD0+x*3];
-		dmax = eframe[EF_DMA0+x*3];
+		dmdx = eframe[EF_DMD0 + x * 3];
+		dmax = eframe[EF_DMA0 + x * 3];
 
-		if (dmtx->dmt_write)
+		if (ISSET(dmtx, DMT_WRITE))
 			printf("[DMT%d=%x: st.%c %x to %x as [%s] %s %s]\n",
-			       x, eframe[EF_DMT0+x*3], dmtx->dmt_das ? 's' : 'u',
-			       dmdx, dmax, bytes[dmtx->dmt_en], 
-			       dmtx->dmt_doub1 ? "double": "not double",
-			       dmtx->dmt_lockbar ? "xmem": "not xmem");
+			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
+			    bytes[DMT_ENBITS(dmtx)], 
+			    dmtx & DMT_DOUB1 ? "double": "not double",
+			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
 		else
 			printf("[DMT%d=%x: ld.%c r%d <- %x as [%s] %s %s]\n",
-			       x, eframe[EF_DMT0+x*3], dmtx->dmt_das ? 's' : 'u',
-			       dmtx->dmt_dreg, dmax, bytes[dmtx->dmt_en], 
-			       dmtx->dmt_doub1 ? "double": "not double",
-			       dmtx->dmt_lockbar ? "xmem": "not xmem");
-
+			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
+			    DMT_DREGBITS(dmtx), dmax,
+			    bytes[DMT_ENBITS(dmtx)], 
+			    dmtx & DMT_DOUB1 ? "double": "not double",
+			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
 	}
 }
 
 void
 data_access_emulation(unsigned *eframe)
 {
-   register int x;
-   register struct dmt_reg *dmtx;
-   register unsigned  dmax, dmdx;
-   register unsigned  v, reg;
+	int x;
+	unsigned dmax, dmdx, dmtx;
+	unsigned v, reg;
 
-   dmtx = (struct dmt_reg *)&eframe[EF_DMT0];
-   if (!dmtx->dmt_valid && !dmtx->dmt_skip)
-      return;
+	dmtx = eframe[EF_DMT0];
+	if (!ISSET(dmtx, DMT_VALID) && !ISSET(dmtx, DMT_SKIP))
+		return;
    
-   for (x = 0; x < 3; x++) {
-      dmtx = (struct dmt_reg *)&eframe[EF_DMT0+x*3];
+	for (x = 0; x < 3; x++) {
+		dmtx = eframe[EF_DMT0 + x * 3];
 
-      if (!dmtx->dmt_valid || dmtx->dmt_skip)	
-         continue;
+		if (!ISSET(dmtx, DMT_VALID) && !ISSET(dmtx, DMT_SKIP))
+			continue;
 
-      dmdx = eframe[EF_DMD0+x*3];
-      dmax = eframe[EF_DMA0+x*3];
+		dmdx = eframe[EF_DMD0 + x * 3];
+		dmax = eframe[EF_DMA0 + x * 3];
 
       DAE_DEBUG(
-               if (dmtx->dmt_write)
-               DEBUG_MSG("[DMT%d=%x: st.%c %x to %x as [%s] %s %s]\n",
-                         x, eframe[EF_DMT0+x*3], dmtx->dmt_das ? 's' : 'u',
-                         dmdx, dmax, bytes[dmtx->dmt_en], 
-                         dmtx->dmt_doub1 ? "double": "not double",
-                         dmtx->dmt_lockbar ? "xmem": "not xmem");
-               else
-               DEBUG_MSG("[DMT%d=%x: ld.%c r%d<-%x as [%s] %s %s]\n",
-                         x, eframe[EF_DMT0+x*3], dmtx->dmt_das ? 's' : 'u',
-                         dmtx->dmt_dreg, dmax, bytes[dmtx->dmt_en], 
-                         dmtx->dmt_doub1 ? "double": "not double",
-                         dmtx->dmt_lockbar ? "xmem": "not xmem");
-               )
+		if (ISSET(dmtx, DMT_WRITE))
+			printf("[DMT%d=%x: st.%c %x to %x as [%s] %s %s]\n",
+			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
+			    bytes[DMT_ENBITS(dmtx)], 
+			    dmtx & DMT_DOUB1 ? "double": "not double",
+			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
+		else
+			printf("[DMT%d=%x: ld.%c r%d <- %x as [%s] %s %s]\n",
+			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
+			    DMT_DREGBITS(dmtx), dmax,
+			    bytes[DMT_ENBITS(dmtx)], 
+			    dmtx & DMT_DOUB1 ? "double": "not double",
+			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem")
+	);
 
-      dmax += dmt_en_info[dmtx->dmt_en].offset;
-      reg = dmtx->dmt_dreg;
+		dmax += dmt_en_info[DMT_ENBITS(dmtx)].offset;
+		reg = DMT_DREGBITS(dmtx);
 
-      if ( ! dmtx->dmt_lockbar) {
-         /* the fault is not during an XMEM */
+		if (!ISSET(dmtx, DMT_LOCKBAR)) {
+			/* the fault is not during an XMEM */
 
-         if (x == 2 && dmtx->dmt_doub1) {
-            /* pipeline 2 (earliest stage) for a double */
+			if (x == 2 && ISSET(dmtx, DMT_DOUB1)) {
+				/* pipeline 2 (earliest stage) for a double */
 
-            if (dmtx->dmt_write) {
-               /* STORE DOUBLE WILL BE RE-INITIATED BY rte */
-               
-            }
+				if (ISSET(dmtx, DMT_WRITE)) {
+					/*
+					 * STORE DOUBLE WILL BE REINITIATED
+					 * BY rte
+					 */
+				} else {
+					/* EMULATE ld.d INSTRUCTION */
+					v = do_load_word(dmax, dmtx & DMT_DAS);
+					if (reg != 0)
+						eframe[EF_R0 + reg] = v;
+					v = do_load_word(dmax ^ 4,
+					    dmtx & DMT_DAS);
+					if (reg != 31)
+						eframe[EF_R0 + reg + 1] = v;
+				}
+			} else {
+				/* not pipeline #2 with a double */
+				if (dmtx & DMT_WRITE) {
+					switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
+					case DMT_BYTE:
+					DAE_DEBUG(
+						DEBUG_MSG("[byte %x -> [%x(%c)]\n",
+						    dmdx & 0xff, dmax,
+						    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
+					);
+						do_store_byte(dmax, dmdx,
+						    dmtx & DMT_DAS);
+						break;
+					case DMT_HALF:
+					DAE_DEBUG(
+						DEBUG_MSG("[half %x -> [%x(%c)]\n",
+						    dmdx & 0xffff, dmax,
+						    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
+					);
+						do_store_half(dmax, dmdx,
+						    dmtx & DMT_DAS);
+						break;
+					case DMT_WORD:
+					DAE_DEBUG(
+						DEBUG_MSG("[word %x -> [%x(%c)]\n",
+						    dmdx, dmax,
+						    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
+					);
+						do_store_word(dmax, dmdx,
+						    dmtx & DMT_DAS);
+						break;
+					} 
+				} else {
+					/* else it's a read */
+					switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
+					case DMT_BYTE:
+						v = do_load_byte(dmax,
+						    dmtx & DMT_DAS);
+						if (!ISSET(dmtx, DMT_SIGNED))
+							v &= 0x000000ff;
+						break;
+					case DMT_HALF:
+						v = do_load_half(dmax,
+						    dmtx & DMT_DAS);
+						if (!ISSET(dmtx, DMT_SIGNED))
+							v &= 0x0000ffff;
+						break;
+					case DMT_WORD:
+						v = do_load_word(dmax,
+						    dmtx & DMT_DAS);
+						break;
+					}
+					DAE_DEBUG(
+						if (reg == 0)
+							DEBUG_MSG("[no write to r0 done]\n");
+						else
+							DEBUG_MSG("[r%d <- %x]\n", reg, v);
+					);
+					if (reg != 0)
+						eframe[EF_R0 + reg] = v;
+				}
+			}
+		} else {
+			/* if lockbar is set... it's part of an XMEM */
+			/*
+			 * According to Motorola's "General Information",
+			 * the DMT_DOUB1 bit is never set in this case, as it
+			 * should be.
+			 * If lockbar is set (as it is if we're here) and if
+			 * the write is not set, then it's the same as if DOUB1
+			 * was set...
+			 */
+			if (!ISSET(dmtx, DMT_WRITE)) {
+				if (x != 2) {
+					/* RERUN xmem WITH DMD(x+1) */
+					x++;
+					dmdx = eframe[EF_DMD0 + x * 3];
+				} else {
+					/* RERUN xmem WITH DMD2 */
+				}
 
-            else {
-               /* EMULATE ld.d INSTRUCTION */
-               v = do_load_word(dmax, dmtx->dmt_das);
-               if (reg != 0)
-                  eframe[EF_R0 + reg] = v;
-               v = do_load_word(dmax ^ 4, dmtx->dmt_das);
-               if (reg != 31)
-                  eframe[EF_R0 + reg + 1] = v;
-            }
-         } else {  /* not pipeline #2 with a double */
-            if (dmtx->dmt_write) {
-               switch (dmt_en_info[dmtx->dmt_en].size) {
-                  case DMT_BYTE:
-                     DAE_DEBUG(DEBUG_MSG("[byte %x -> [%x(%c)]\n",
-                                         dmdx & 0xff, dmax, dmtx->dmt_das ? 's' : 'u'))
-                     do_store_byte(dmax, dmdx, dmtx->dmt_das);
-                     break;
-                  case DMT_HALF:
-                     DAE_DEBUG(DEBUG_MSG("[half %x -> [%x(%c)]\n",
-                                         dmdx & 0xffff, dmax, dmtx->dmt_das ? 's' : 'u'))
-                     do_store_half(dmax, dmdx, dmtx->dmt_das);
-                     break;
-                  case DMT_WORD:
-                     DAE_DEBUG(DEBUG_MSG("[word %x -> [%x(%c)]\n",
-                                         dmdx, dmax, dmtx->dmt_das ? 's' : 'u'))
-                     do_store_word(dmax, dmdx, dmtx->dmt_das);
-                     break;
-               } 
-            } else {  /* else it's a read */
-               switch (dmt_en_info[dmtx->dmt_en].size) {
-                  case DMT_BYTE:
-                     v = do_load_byte(dmax, dmtx->dmt_das);
-                     if (!dmtx->dmt_signed)
-                        v &= 0x000000ff;
-                     break;
-                  case DMT_HALF:
-                     v = do_load_half(dmax, dmtx->dmt_das);
-                     if (!dmtx->dmt_signed)
-                        v &= 0x0000ffff;
-                     break;
-                  case DMT_WORD:
-                  default: /* 'default' just to shut up lint */
-                     v = do_load_word(dmax, dmtx->dmt_das);
-                     break;
-               }
-               if (reg == 0) {
-                  DAE_DEBUG(DEBUG_MSG("[no write to r0 done]\n"));
-               } else {
-                  DAE_DEBUG(DEBUG_MSG("[r%d <- %x]\n", reg, v));
-                  eframe[EF_R0 + reg] = v;
-               }
-            }
-         }
-      } else { /* if lockbar is set... it's part of an XMEM */
-         /*
-          * According to Motorola's "General Information",
-          * the dmt_doub1 bit is never set in this case, as it should be.
-          * They call this "general information" - I call it a f*cking bug!
-          *
-          * Anyway, if lockbar is set (as it is if we're here) and if
-          * the write is not set, then it's the same as if doub1
-          * was set...
-          */
-         if ( ! dmtx->dmt_write) {
-            if (x != 2) {
-               /* RERUN xmem WITH DMD(x+1) */
-               x++;
-               dmdx = eframe[EF_DMD0 + x*3];
-            } else {
-               /* RERUN xmem WITH DMD2 */
-               
-            }
-
-            if (dmt_en_info[dmtx->dmt_en].size == DMT_WORD)
-               v = do_xmem_word(dmax, dmdx, dmtx->dmt_das);
-            else
-               v = do_xmem_byte(dmax, dmdx, dmtx->dmt_das);
-            eframe[EF_R0 + reg] = v;
-         } else {
-            if (x == 0) {
-               eframe[EF_R0 + reg] = dmdx;
-               eframe[EF_SFIP] = eframe[EF_SNIP];
-               eframe[EF_SNIP] = eframe[EF_SXIP];
-               eframe[EF_SXIP] = 0;
-               /* xmem RERUN ON rte */
-               eframe[EF_DMT0] = 0;
-               return;
-            }
-         }
-      }
-   }
-   eframe[EF_DMT0] = 0;
+				if (dmt_en_info[DMT_ENBITS(dmtx)].size ==
+				    DMT_WORD) {
+					v = do_xmem_word(dmax, dmdx,
+					    dmtx & DMT_DAS);
+				} else {
+					v = do_xmem_byte(dmax, dmdx,
+					    dmtx & DMT_DAS);
+				}
+				if (reg != 0)
+					eframe[EF_R0 + reg] = v;
+			} else {
+				if (x == 0) {
+					if (reg != 0)
+						eframe[EF_R0 + reg] = dmdx;
+					eframe[EF_SFIP] = eframe[EF_SNIP];
+					eframe[EF_SNIP] = eframe[EF_SXIP];
+					eframe[EF_SXIP] = 0;
+					/* xmem RERUN ON rte */
+					eframe[EF_DMT0] = 0;
+					return;
+				}
+			}
+		}
+	}
+	eframe[EF_DMT0] = 0;
 }
 #endif /* M88100 */
 
-/*
- ***********************************************************************
- ***********************************************************************
- */
-#define SIGSYS_MAX      501
-#define SIGTRAP_MAX     510
+#define SIGSYS_MAX	501
+#define SIGTRAP_MAX	510
 
-#define EMPTY_BR	0xC0000000U      /* empty "br" instruction */
-#define NO_OP 		0xf4005800U      /* "or r0, r0, r0" */
+#define EMPTY_BR	0xc0000000	/* empty "br" instruction */
+#define NO_OP 		0xf4005800	/* "or r0, r0, r0" */
 
-#define BRANCH(FROM, TO) (EMPTY_BR | ((unsigned)(TO) - (unsigned)(FROM)) >> 2)
+#define BRANCH(FROM, TO) \
+	(EMPTY_BR | ((unsigned)(TO) - (unsigned)(FROM)) >> 2)
 
-#define SET_VECTOR(NUM, VALUE) {                                       \
-	vector[NUM].word_one = NO_OP; 	                                   \
-	vector[NUM].word_two = BRANCH(&vector[NUM].word_two, VALUE);    \
-}
+#define SET_VECTOR(NUM, VALUE) \
+	do { \
+		vector[NUM].word_one = NO_OP; \
+		vector[NUM].word_two = BRANCH(&vector[NUM].word_two, VALUE); \
+	} while (0)
+
 /*
  * vector_init(vector, vector_init_list)
  *
@@ -325,13 +349,10 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 	extern void bugtrap(void);
 	extern void m88110_bugtrap(void);
 
-	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST; num++) {
+	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST;
+	    num++) {
 		if (vec != UNKNOWN_HANDLER)
 			SET_VECTOR(num, vec);
-		__asm__ (NOP_STRING);
-		__asm__ (NOP_STRING);
-		__asm__ (NOP_STRING);
-		__asm__ (NOP_STRING);
 	}
 
 	/* Save BUG vector */
@@ -403,7 +424,7 @@ safe_level(mask, curlevel)
 	unsigned mask;
 	unsigned curlevel;
 {
-	register int i;
+	int i;
 
 	for (i = curlevel; i < 8; i++)
 		if (!(int_mask_val[i] & mask))
@@ -508,6 +529,7 @@ setipl(unsigned level)
 	return curspl;
 }
 
+/* XXX Utterly bogus */
 #if NCPUS > 1
 #include <sys/simplelock.h>
 void
