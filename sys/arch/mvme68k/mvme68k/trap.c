@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 1997/01/27 22:48:17 deraadt Exp $ */
+/*	$OpenBSD: trap.c,v 1.10 1997/02/02 00:43:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -237,7 +237,7 @@ again:
 		} else if (sig = writeback(fp, fromtrap)) {
 			beenhere = 1;
 			oticks = p->p_sticks;
-			trapsignal(p, sig, T_MMUFLT, (caddr_t)faultaddr);
+			trapsignal(p, sig, T_MMUFLT, SEGV_MAPERR, (caddr_t)faultaddr);
 			goto again;
 		}
 	}
@@ -262,10 +262,10 @@ trap(type, code, v, frame)
 	register int i;
 	u_int ucode;
 	u_quad_t sticks;
+	int typ = 0, bit;
 #ifdef COMPAT_HPUX
 	extern struct emul emul_hpux;
 #endif
-	int bit;
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
@@ -309,7 +309,12 @@ copyfault:
 		return;
 
 	case T_BUSERR|T_USER:	/* bus error */
+		typ = BUS_OBJERR;
+		ucode = code & ~T_USER;
+		i = SIGBUS;
+		break;
 	case T_ADDRERR|T_USER:	/* address error */
+		typ = BUS_ADRALN;
 		ucode = code & ~T_USER;
 		i = SIGBUS;
 		break;
@@ -333,11 +338,13 @@ copyfault:
 		p->p_sigmask &= ~i;
 		i = SIGILL;
 		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
+		typ = ILL_COPROC;
 		break;
 
 #ifdef FPCOPROC
 	case T_COPERR|T_USER:	/* user coprocessor violation */
 	/* What is a proper response here? */
+		typ = FPE_FLTINV;
 		ucode = 0;
 		i = SIGFPE;
 		break;
@@ -352,6 +359,7 @@ copyfault:
 	 * 3 bits of the status register are defined as 0 so there is
 	 * no clash.
 	 */
+		typ = FPE_FLTRES;
 		ucode = code;
 		i = SIGFPE;
 		break;
@@ -366,6 +374,7 @@ copyfault:
 		       frame.f_format == 2 ? "instruction" : "data type",
 		       frame.f_pc, frame.f_fmt2.f_iaddr);
 		/* XXX need to FRESTORE */
+		typ = FPE_FLTINV;
 		i = SIGFPE;
 		break;
 #endif
@@ -373,12 +382,16 @@ copyfault:
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == &emul_hpux) {
+			typ = 0;
 			ucode = HPUX_ILL_ILLINST_TRAP;
 			i = SIGILL;
 			break;
 		}
-		/* fall through */
 #endif
+		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
+		typ = ILL_ILLOPC;
+		i = SIGILL;
+		break;
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == &emul_hpux)
@@ -386,6 +399,7 @@ copyfault:
 		else
 #endif
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
+		typ = ILL_PRVOPC;
 		i = SIGILL;
 		break;
 
@@ -396,6 +410,7 @@ copyfault:
 		else
 #endif
 		ucode = frame.f_format;	/* XXX was FPE_INTDIV_TRAP */
+		typ = FPE_INTDIV;
 		i = SIGFPE;
 		break;
 
@@ -409,6 +424,7 @@ copyfault:
 		}
 #endif
 		ucode = frame.f_format;	/* XXX was FPE_SUBRNG_TRAP */
+		typ = FPE_FLTSUB;
 		i = SIGFPE;
 		break;
 
@@ -422,6 +438,7 @@ copyfault:
 		}
 #endif
 		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
+		typ = FPE_FLTOVF;
 		i = SIGFPE;
 		break;
 
@@ -445,6 +462,7 @@ copyfault:
 #endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
+		typ = TRAP_TRACE;
 		break;
 
 	case T_TRACE|T_USER:	/* user trace trap */
@@ -463,6 +481,7 @@ copyfault:
 #endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
+		typ = TRAP_TRACE;
 		break;
 
 	case T_ASTFLT:		/* system async trap, cannot happen */
@@ -612,11 +631,12 @@ copyfault:
 		}
 		frame.f_pad = code & 0xffff;
 		ucode = T_MMUFLT;
+		typ = SEGV_MAPERR;
 		i = SIGSEGV;
 		break;
 	    }
 	}
-	trapsignal(p, i, ucode, (caddr_t)v);
+	trapsignal(p, i, ucode, typ, (caddr_t)v);
 	if ((type & T_USER) == 0)
 		return;
 out:

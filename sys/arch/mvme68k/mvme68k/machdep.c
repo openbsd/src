@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 1997/01/28 09:01:31 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.16 1997/02/02 00:43:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -683,11 +683,12 @@ int sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code, addr)
+sendsig(catcher, sig, mask, code, type, val)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
-	caddr_t addr;
+	int type;
+	union sigval val;
 {
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
@@ -815,17 +816,7 @@ sendsig(catcher, sig, mask, code, addr)
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		kfp->sf_sip = &kfp->sf_si;
-		initsiginfo(kfp->sf_sip, sig);
-		fixsiginfo(kfp->sf_sip, sig, code, addr);
-		if (sig == SIGSEGV) {
-			/* try to be more specific about read or write */
-#if 0
-			if (WRFAULT(frame->f_pad))
-				kfp->sf_si.si_code |= SEGV_ACCERR;
-			else
-				kfp->sf_si.si_code |= SEGV_MAPERR;
-#endif
-		}
+		initsiginfo(kfp->sf_sip, sig, code, type, val);
 	}
 
 #ifdef COMPAT_HPUX
@@ -1055,77 +1046,6 @@ sys_sigreturn(p, v, retval)
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
-}
-
-void
-fixsiginfo(si, sig, code, addr)
-	siginfo_t *si;
-	int sig;
-	u_long code;
-	caddr_t addr;
-{
-	si->si_addr = addr;
-
-	switch (code) {
-#if 0
-	case T_PRIVINFLT:
-		si->si_code = ILL_PRVOPC;
-		si->si_trapno = T_PRIVINFLT;
-		break;
-	case T_BREAKPOINT:
-		si->si_code = TRAP_BRKPT;
-		si->si_trapno = T_BREAKPOINT;
-		break;
-	case T_ARITHTRAP:
-		si->si_code = FPE_INTOVF;
-		si->si_trapno = T_DIVIDE;
-		break;
-	case T_PROTFLT:
-		si->si_code = SEGV_ACCERR;
-		si->si_trapno = T_PROTFLT;
-		break;
-	case T_TRCTRAP:
-		si->si_code = TRAP_TRACE;
-		si->si_trapno = T_TRCTRAP;
-		break;
-	case T_PAGEFLT:
-		si->si_code = SEGV_ACCERR;
-		si->si_trapno = T_PAGEFLT;
-		break;
-	case T_ALIGNFLT:
-		si->si_code = BUS_ADRALN;
-		si->si_trapno = T_ALIGNFLT;
-		break;
-	case T_DIVIDE:
-		si->si_code = FPE_FLTDIV;
-		si->si_trapno = T_DIVIDE;
-		break;
-	case T_OFLOW:
-		si->si_code = FPE_FLTOVF;
-		si->si_trapno = T_DIVIDE;
-		break;
-	case T_BOUND:
-		si->si_code = FPE_FLTSUB;
-		si->si_trapno = T_BOUND;
-		break;
-	case T_DNA:
-		si->si_code = FPE_FLTINV;
-		si->si_trapno = T_DNA;
-		break;
-	case T_FPOPFLT:
-		si->si_code = FPE_FLTINV;
-		si->si_trapno = T_FPOPFLT;
-		break;
-	case T_SEGNPFLT:
-		si->si_code = SEGV_MAPERR;
-		si->si_trapno = T_SEGNPFLT;
-		break;
-	case T_STKFLT:
-		si->si_code = ILL_BADSTK;
-		si->si_trapno = T_STKFLT;
-		break;
-#endif
-	}
 }
 
 int	waittime = -1;
