@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.18 2000/09/24 01:02:24 millert Exp $	*/
+/*	$OpenBSD: show.c,v 1.19 2000/11/15 01:45:48 angelos Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.18 2000/09/24 01:02:24 millert Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.19 2000/11/15 01:45:48 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,8 @@ static char *rcsid = "$OpenBSD: show.c,v 1.18 2000/09/24 01:02:24 millert Exp $"
 #include <arpa/inet.h>
 
 #include <sys/sysctl.h>
+
+#include "keywords.h"
 
 #include <netdb.h>
 #include <stdio.h>
@@ -117,8 +119,42 @@ show(argc, argv)
 	struct rt_msghdr *rtm;
 	char *buf = NULL, *next, *lim;
 	size_t needed;
-	int mib[6];
+	int mib[6], af = 0;
+        struct sockaddr *sa;
 
+        if (argc > 1) {
+                argv++;
+                if (argc == 2 && **argv == '-')
+                    switch (keyword(*argv + 1)) {
+                        case K_INET:
+                                af = AF_INET;
+                                break;
+#ifdef INET6
+                        case K_INET6:
+                                af = AF_INET6;
+                                break;
+#endif
+                        case K_XNS:
+                                af = AF_NS;
+                                break;
+                        case K_IPX:
+                                af = AF_IPX;
+                                break;
+                        case K_LINK:
+                                af = AF_LINK;
+                                break;
+                        case K_ISO:
+                        case K_OSI:
+                                af = AF_ISO;
+                                break;
+                        case K_X25:
+                                af = AF_CCITT;
+                                break;
+                        default:
+                                goto bad;
+                } else
+bad:                    usage(*argv);
+        }
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;
@@ -146,6 +182,9 @@ show(argc, argv)
 	if (buf) {
 		for (next = buf; next < lim; next += rtm->rtm_msglen) {
 			rtm = (struct rt_msghdr *)next;
+			sa = (struct sockaddr *)(rtm + 1);
+			if (af && sa->sa_family != af)
+				continue;
 			p_rtentry(rtm);
 		}
 		free(buf);
