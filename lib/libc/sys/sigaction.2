@@ -338,15 +338,6 @@ is set to indicated the reason.
 The handler routine can be declared:
 .Bd -literal -offset indent
 void
-handler(sig, nothing, scp)
-	int sig;
-	int nothing;		/* this will be NULL */
-	struct sigcontext *scp;
-.Pp
-.Ed
-or alternatively just
-.Bd -literal -offset indent
-void
 handler(sig)
 	int sig;
 .Pp
