@@ -220,6 +220,7 @@ rresvport(alport)
 	struct sockaddr_in sin;
 	int s;
 
+	bzero(&sin, sizeof sin);
 	sin.sin_len = sizeof(struct sockaddr_in);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
