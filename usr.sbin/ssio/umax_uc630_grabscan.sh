@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: umax_uc630_grabscan.sh,v 1.1 1997/03/11 03:23:18 kstailey Exp $
+# $Id: umax_uc630_grabscan.sh,v 1.2 2002/06/03 09:05:59 deraadt Exp $
 #
 # Copyright (c) 1996 Kenneth Stailey
 # All rights reserved.
@@ -57,6 +57,18 @@ set `get_scanner -p -l $scan_lname`
 width=$1
 height=$2
 
+red_tempfile=`mktemp -t grabscan.red.XXXXXXXXXX` || exit 1
+green_tempfile=`mktemp -t grabscan.green.XXXXXXXXXX`
+if [ $? -ne 0 ]; then
+	rm -f $red_tempfile
+	exit 1
+fi
+blue_tempfile=`mktemp -t grabscan.blue.XXXXXXXXXX`
+if [ $? -ne 0 ]; then
+	rm -f $red_tempfile $green_tempfile
+	exit 1
+fi
+
 case $image_mode in
 
 grayscale)
@@ -84,7 +96,7 @@ red|green|blue)
   (echo P5
    echo $width $height
    echo 255
-   dd if=/dev/scan0 bs=256k) > /tmp/grabscan.$$.red
+   dd if=/dev/scan0 bs=256k) > $red_tempfile
 
 # green pass...
   echo green... >&2
@@ -92,7 +104,7 @@ red|green|blue)
   (echo P5
    echo $width $height
    echo 255
-   dd if=/dev/scan0 bs=256k) > /tmp/grabscan.$$.green
+   dd if=/dev/scan0 bs=256k) > $green_tempfile
 
 # blue pass...
   echo blue... >&2
@@ -100,12 +112,12 @@ red|green|blue)
   (echo P5
    echo $width $height
    echo 255
-   dd if=/dev/scan0 bs=256k) > /tmp/grabscan.$$.blue
+   dd if=/dev/scan0 bs=256k) > $blue_tempfile
 
   echo mixing colors together... >&2
-  rgb3toppm /tmp/grabscan.$$.red /tmp/grabscan.$$.green /tmp/grabscan.$$.blue
+  rgb3toppm $red_tempfile $green_tempfile $blue_tempfile
 
-  rm /tmp/grabscan.$$.red /tmp/grabscan.$$.green /tmp/grabscan.$$.blue
+  rm $red_tempfile $green_tempfile $blue_tempfile
 
 # restore scanner
   set_scanner $save_modes >/dev/null
