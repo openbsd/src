@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390reg.h,v 1.3 1996/07/31 01:51:50 niklas Exp $	*/
+/*	$OpenBSD: dp8390reg.h,v 1.4 1997/04/14 07:03:22 millert Exp $	*/
 /*	$NetBSD: dp8390reg.h,v 1.2 1995/04/12 16:12:42 mycroft Exp $	*/
 
 /*
@@ -318,8 +318,10 @@
 #define ED_DCR_FT1	0x40
 
 /*
- * bit 7 (0x80) is unused/reserved
+ * QTS: Quad-word Transfer Select.  QTS establishes 32-bit word transfers
+ * for both remote and local DMA transfers.  (XXX - correct name?)
  */
+#define ED_DCR_QTS	0x80
 
 /*
  *		Transmit Configuration Register (TCR) definitions
