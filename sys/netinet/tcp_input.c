@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.179 2004/12/29 17:17:28 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.180 2004/12/30 01:30:30 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2795,6 +2795,9 @@ tcp_xmit_timer(tp, rtt)
 {
 	short delta;
 	short rttmin;
+
+	if (rtt < 0)
+		return;
 
 	tcpstat.tcps_rttupdated++;
 	--rtt;
