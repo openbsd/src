@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.2 2001/12/14 02:51:12 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.3 2002/05/17 01:19:49 mjacob Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 
 /*
@@ -102,7 +102,7 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	NULL,
-	ISP_1000_RISC_CODE
+	(u_int16_t *) ISP_1000_RISC_CODE
 };
 
 struct isp_sbussoftc {
@@ -598,4 +598,3 @@ isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(isp->isp_dmatag, dmap);
 }
-/* %W% */

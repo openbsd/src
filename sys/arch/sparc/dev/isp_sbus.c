@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.21 2002/04/30 01:12:29 art Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.22 2002/05/17 01:19:00 mjacob Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -81,7 +81,7 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	NULL,
-	ISP_1000_RISC_CODE,
+	(u_int16_t *) ISP_1000_RISC_CODE,
 	BIU_BURST_ENABLE|BIU_SBUS_CONF1_FIFO_32
 };
 
