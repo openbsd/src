@@ -1,0 +1,82 @@
+.\"	dhcpd.conf.5
+.\"
+.\" Copyright (c) 1997 The Internet Software Consortium.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The Internet Software Consortium nor the names
+.\"    of its contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" This software has been written for the Internet Software Consortium
+.\" by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
+.\" Enterprises.  To learn more about the Internet Software Consortium,
+.\" see ``http://www.isc.org/isc''.  To learn more about Vixie
+.\" Enterprises, see ``http://www.vix.com''.
+.TH dhcpd.leases 5
+.SH NAME
+dhcpd.leases - DHCP client lease database
+.SH DESCRIPTION
+The Internet Software Consortium DHCP Server keeps a persistent
+database of leases that it has assigned.  This database is a free-form
+ASCII file containing one valid declaration per lease.  If more than
+one declaration appears for a given lease, the last one in the file is
+used.  The file is written as a log, so this is not an unusual
+occurrance.
+.PP
+When dhcpd is first installed, there is no lease database.   However,
+dhcpd requires that a lease database be present before it will start.
+To make the initial lease database, just create an empty file called
+/var/db/dhcpd.leases.
+.PP
+In order to prevent the lease database from growing without bound, the
+file is rewritten from time to time.   First, a temporary lease
+database is created and all known leases are dumped to it.   Then, the
+old lease database is renamed /var/db/dhcpd.leases~.   Finally, the
+newly written lease database is moved into place.
+.PP
+There is a window of vulnerability where if the dhcpd process is
+killed or the system crashes after the old lease database has been
+renamed but before the new one has been moved into place, there will
+be no /var/db/dhcpd.leases.   In this case, dhcpd will refuse to start,
+and will require manual intervention.   \fBDO NOT\fR simply create a
+new lease file when this happens - if you do, you will lose all your
+old bindings, and chaos will ensue.   Instead, rename
+/var/db/dhcpd.leases~ to /var/db/dhcpd.leases, restoring the old, valid
+lease file, and then start dhcpd.   This guarantees that a valid lease
+file will be restored.
+.SH FORMAT
+The format of the lease declarations is not currently documented.
+.SH FILES
+.B /var/db/dhcpd.leases
+.SH SEE ALSO
+dhcpd(8), dhcp-options(5), dhcpd.conf(5), RFC2132, RFC2131.
+.SH AUTHOR
+.B dhcpd(8)
+was written by Ted Lemon <mellon@vix.com>
+under a contract with Vixie Labs.   Funding
+for this project was provided by the Internet Software Corporation.
+Information about the Internet Software Consortium can be found at
+.B http://www.isc.org/isc.

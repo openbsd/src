@@ -1,0 +1,686 @@
+.\"	dhcpd.conf.5
+.\"
+.\" Copyright (c) 1995, 1996 The Internet Software Consortium.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The Internet Software Consortium nor the names
+.\"    of its contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" This software has been written for the Internet Software Consortium
+.\" by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
+.\" Enterprises.  To learn more about the Internet Software Consortium,
+.\" see ``http://www.isc.org/isc''.  To learn more about Vixie
+.\" Enterprises, see ``http://www.vix.com''.
+.TH dhcpd.conf 5
+.SH NAME
+dhcpd.conf - dhcpd configuration file
+.SH DESCRIPTION
+The dhcpd.conf file contains configuration information for
+.IR dhcpd,
+the Internet Software Consortium DHCP Server.
+.PP
+The dhcpd.conf file is a free-form ASCII text file.   It is parsed by
+the recursive-descent parser built into dhcpd.   The file may contain
+extra tabs and newlines for formatting purposes.  Keywords in the file
+are case-insensitive.   Comments may be placed anywhere within the
+file (except within quotes).   Comments begin with the # character and
+end at the end of the line.
+.PP
+The file essentially consists of a list of statements.   Statements
+fall into two broad categories - parameters and declarations.
+.PP
+Parameter statements either say how to do something (e.g., how long a
+lease to offer), whether to do something (e.g., should dhcpd provide
+addresses to unknown clients), or what parameters to provide to the
+client (e.g., use gateway 220.177.244.7).
+.PP
+Declarations are used to describe the topology of the
+network, to describe clients on the network, to provide addresses that
+can be assigned to clients, or to apply a group of parameters to a
+group of declarations.   In any group of parameters and declarations,
+all parameters must be specified before any declarations which depend
+on those parameters may be specified.
+.PP
+Declarations about network topology include the
+ \fIshared-network\fR and the \fIsubnet\fR
+declarations.   If clients on a subnet are to be assigned addresses
+dynamically, a \fIrange\fR declaration must appear within the
+\fIsubnet\fR declaration.   For clients with statically assigned
+addresses, or for installations where only known clients will be
+served, each such client must have a \fIhost\fR declaration.   If
+parameters are to be applied to a group of declarations which are not
+related strictly on a per-subnet basis, the \fIgroup\fR declaration
+can be used.
+.PP
+For every subnet which will be served, and for every subnet
+to which the dhcp server is connected, there must be one \fIsubnet\fR
+declaration, which tells dhcpd how to recognize that an address is on
+that subnet.  A \fIsubnet\fR declaration is required for each subnet
+even if no addresses will be dynamically allocated on that subnet.
+.PP
+Some installations have physical networks on which more than one IP
+subnet operates.   For example, if there is a site-wide requirement
+that 8-bit subnet masks be used, but a department with a single
+physical ethernet network expands to the point where it has more than
+254 nodes, it may be necessary to run two 8-bit subnets on the same
+ethernet until such time as a new physical network can be added.   In
+this case, the \fIsubnet\fR declarations for these two networks may be
+enclosed in a \fIshared-network\fR declaration.
+.PP
+Some sites may have departments which have clients on more than one
+subnet, but it may be desirable to offer those clients a uniform set
+of parameters which are different than what would be offered to
+clients from other departments on the same subnet.   For clients which
+will be declared explicitly with \fIhost\fR declarations, these
+declarations can be enclosed in a \fIgroup\fR declaration along with
+the parameters which are common to that department.   For clients
+whose addresses will be dynamically assigned, there is currently no
+way to group parameter assignments other than by network topology.
+.PP
+When a client is to be booted, its boot parameters are determined by
+first consulting that client's \fIhost\fR declaration (if any), then
+consulting the \fIgroup\fR declaration (if any) which enclosed that
+\fIhost\fR declaration, then consulting the \fIsubnet\fR declaration
+for the subnet on which the client is booting, then consulting the
+\fIshared-network\fR declaration (if any) containing that subnet, and
+finally consulting the top-level parameters which may be specified
+outside of any declaration.
+.PP
+When dhcpd tries to find a \fIhost\fR declaration for a client, it
+first looks for a \fIhost\fR declaration which has a
+\fIfixed-address\fR parameter which matches the subnet or shared
+network on which the client is booting.   If it doesn't find any such
+entry, it then tries to find an entry which has no \fIfixed-address\fR
+parameter.   If no such entry is found, then dhcpd acts as if there is
+no entry in the dhcpd.conf file for that client, even if there is an
+entry for that client on a different subnet or shared network.
+.SH EXAMPLES
+.PP
+A typical dhcpd.conf file will look something like this:
+.nf
+
+.I global parameters...
+
+shared-network ISC-BIGGIE {
+  \fIshared-network-specific parameters...\fR
+  subnet 204.254.239.0 netmask 255.255.255.224 {
+    \fIsubnet-specific parameters...\fR
+    range 204.254.239.10 204.254.239.30;
+  }
+  subnet 204.254.239.32 netmask 255.255.255.224 {
+    \fIsubnet-specific parameters...\fR
+    range 204.254.239.42 204.254.239.62;
+  }
+}
+
+subnet 204.254.239.64 netmask 255.255.255.224 {
+  \fIsubnet-specific parameters...\fR
+  range 204.254.239.74 204.254.239.94;
+}
+
+group {
+  \fIgroup-specific parameters...\fR
+  host zappo.test.isc.org {
+    \fIhost-specific parameters...\fR
+  }
+  host beppo.test.isc.org {
+    \fIhost-specific parameters...\fR
+  }
+  host harpo.test.isc.org {
+    \fIhost-specific parameters...\fR
+  }
+}
+
+.ce 1
+Figure 1
+
+.fi
+.PP
+Notice that at the beginning of the file, there's a place
+for global parameters.   These might be things like the organization's
+domain name, the addresses of the name servers (if they are common to
+the entire organization), and so on.   So, for example:
+.nf
+
+	option domain-name "isc.org";
+	option domain-name-servers ns1.isc.org, ns2.isc.org;
+
+.ce 1
+Figure 2
+.fi
+.PP
+As you can see in Figure 2, it's legal to specify host addresses in
+parameters as domain names rather than as numeric IP addresses.  If a
+given hostname resolves to more than one IP address (for example, if
+that host has two ethernet interfaces), both addresses are supplied to
+the client.
+.PP
+In Figure 1, you can see that both the shared-network statement and
+the subnet statements can have parameters.   Let us say that the
+shared network \fIISC-BIGGIE\fR supports an entire department -
+perhaps the accounting department.   If accounting has its own domain,
+then a shared-network-specific parameter might be:
+.nf
+
+	option domain-name "accounting.isc.org";
+.fi
+.PP
+All subnet declarations appearing in the shared-network declaration
+would then have the domain-name option set to "accounting.isc.org"
+instead of just "isc.org".
+.PP
+The most obvious reason for having subnet-specific parameters as
+shown in Figure 1 is that each subnet, of necessity, has its own
+router.   So for the first subnet, for example, there should be
+something like:
+.nf
+
+	option routers 204.254.239.1;
+.fi
+.PP
+Note that the address here is specified numerically.   This is not
+required - if you have a different domain name for each interface on
+your router, it's perfectly legitimate to use the domain name for that
+interface instead of the numeric address.   However, in many cases
+there may be only one domain name for all of a router's IP addresses, and
+it would not be appropriate to use that name here.
+.PP
+In Figure 1 there is also a \fIgroup\fR statement, which provides
+common parameters for a set of three hosts - zappo, beppo and harpo.
+As you can see, these hosts are all in the test.isc.org domain, so it
+might make sense for a group-specific parameter to override the domain
+name supplied to these hosts:
+.nf
+
+	option domain-name "test.isc.org";
+.fi
+.PP
+Also, given the domain they're in, these are probably test machines.
+If we wanted to test the DHCP leasing mechanism, we might set the
+lease timeout somewhat shorter than the default:
+
+.nf
+	max-lease-time 120;
+	default-lease-time 120;
+.fi
+.PP
+You may have noticed that while some parameters start with the
+\fIoption\fR keyword, some do not.   Parameters starting with the
+\fIoption\fR keyword correspond to actual DHCP options, while
+parameters that do not start with the option keyword either control
+the behaviour of the DHCP server (e.g., how long a lease dhcpd will
+give out), or specify client parameters that are not optional in the
+DHCP protocol (for example, server-name and filename).
+.PP
+In Figure 1, each host had \fIhost-specific parameters\fR.   These
+could include such things as the \fIhostname\fR option, the name of a
+file to upload (the \fIfilename parameter) and the address of the
+server from which to upload the file (the \fInext-server\fR
+parameter).   In general, any parameter can appear anywhere that
+parameters are allowed, and will be applied according to the scope in
+which the parameter appears.
+.PP
+Imagine that you have a site with a lot of NCD X-Terminals.   These
+terminals come in a variety of models, and you want to specify the
+boot files for each models.   One way to do this would be to have host
+declarations for each server and group them by model:
+.nf
+
+group {
+  filename "Xncd19r";
+  next-server ncd-booter;
+
+  host ncd1 { hardware ethernet 0:c0:c3:49:2b:57; }
+  host ncd4 { hardware ethernet 0:c0:c3:80:fc:32; }
+  host ncd8 { hardware ethernet 0:c0:c3:22:46:81; }
+}
+
+group {
+  filename "Xncd19c";
+  next-server ncd-booter;
+
+  host ncd2 { hardware ethernet 0:c0:c3:88:2d:81; }
+  host ncd3 { hardware ethernet 0:c0:c3:00:14:11; }
+}
+
+group {
+  filename "XncdHMX";
+  next-server ncd-booter;
+
+  host ncd1 { hardware ethernet 0:c0:c3:11:90:23; }
+  host ncd4 { hardware ethernet 0:c0:c3:91:a7:8; }
+  host ncd8 { hardware ethernet 0:c0:c3:cc:a:8f; }
+}
+.fi
+.SH REFERENCE: DECLARATIONS
+.PP
+.B The 
+.I shared-network
+.B statement
+.PP
+.nf
+ \fBshared-network\fR \fIname\fR \fB{\fR
+   [ \fIparameters\fR ]
+   [ \fIdeclarations\fR ]
+ \fB}\fR
+.fi
+.PP
+The \fIshared-network\fR statement is used to inform the DHCP server
+that some IP subnets actually share the same physical network.  Any
+subnets in a shared network should be declared within a
+\fIshared-network\fR statement.  Parameters specified in the
+\fIshared-network\fR statement will be used when booting clients on
+those subnets unless parameters provided at the subnet or host level
+override them.  If any subnet in a shared network has addresses
+available for dynamic allocation, those addresses are collected into a
+common pool for that shared network and assigned to clients as needed.
+There is no way to distinguish on which subnet of a shared network a
+client should boot.
+.PP
+.I Name
+should be the name of the shared network.   This name is used when
+printing debugging messages, so it should be descriptive for the
+shared network.   The name may have the syntax of a valid domain name
+(although it will never be used as such), or it may be any arbitrary
+name, enclosed in quotes.
+.PP
+.B The 
+.I subnet
+.B statement
+.PP
+.nf
+ \fBsubnet\fR \fIsubnet-number\fR \fBnetmask\fR \fInetmask\fR \fB{\fR
+   [ \fIparameters\fR ]
+   [ \fIdeclarations\fR ]
+ \fB}\fR
+.fi
+.PP
+The \fIsubnet\fR statement is used to provide dhcpd with enough
+information to tell whether or not an IP address is on that subnet.
+It may also be used to provide subnet-specific parameters and to
+specify what addresses may be dynamically allocated to clients booting
+on that subnet.   Such addresses are specified using the \fIrange\fR
+declaration.
+.PP
+The
+.I subnet-number
+should be an IP address or domain name which resolves to the subnet
+number of the subnet being described.   The 
+.I netmask
+should be an IP address or domain name which resolves to the subnet mask
+of the subnet being described.   The subnet number, together with the
+netmask, are sufficient to determine whether any given IP address is
+on the specified subnet.
+.PP
+Although a netmask must be given with every subnet declaration, it is
+recommended that if there is any variance in subnet masks at a site, a
+subnet-mask option statement be used in each subnet declaration to set
+the desired subnet mask, since any subnet-mask option statement will
+override the subnet mask declared in the subnet statement.
+.PP
+.B The
+.I range
+.B statement
+.PP
+.nf
+ \fBrange\fR [ \fBdynamic-bootp\fR ] \fIlow-address\fR [ \fIhigh-address\fR]\fB;\fR
+.fi
+.PP
+For any subnet on which addresses will be assigned dynamically, there
+must be at least one \fIrange\fR statement.   The range statement
+gives the lowest and highest IP addresses in a range.   All IP
+addresses in the range should be in the subnet in which the
+\fIrange\fR statement is declared.   The \fIdynamic-bootp\fR flag may
+be specified if addresses in the specified range may be dynamically
+assigned to BOOTP clients as well as DHCP clients.   When specifying a
+single address, \fIhigh-address\fR can be omitted.
+.PP
+.B The
+.I host
+.B statement
+.PP
+.nf
+ \fBhost\fR \fIhostname\fR {
+   [ \fIparameters\fR ]
+   [ \fIdeclarations\fR ]
+ \fB}\fR
+.fi
+.PP
+There must be at least one
+.B host
+statement for every BOOTP client that is to be served.   
+.B host
+statements may also be specified for DHCP clients, although this is
+not required unless booting is only enabled for known hosts.
+.PP
+If it is desirable to be able to boot a DHCP or BOOTP
+client on more than one subnet with fixed addresses, more than one
+address may be specified in the
+.I fixed-address
+parameter, or more than one
+.B host
+statement may be specified.
+.PP
+If client-specific boot parameters must change based on the network
+to which the client is attached, then multiple 
+.B host
+statements should
+be used.
+.PP
+If a client is to be booted using a fixed address if it's
+possible, but should be allocated a dynamic address otherwise, then a
+.B host
+statement must be specified without a
+.B fixed-address
+clause.
+.I hostname
+should be a name identifying the host.  If a \fIhostname\fR option is
+not specified for the host, \fIhostname\fR is used.
+.PP
+\fIHost\fR declarations are matched to actual DHCP or BOOTP clients
+by matching the \fRdhcp-client-identifier\fR option specified in the
+\fIhost\fR declaration to the one supplied by the client, or, if the
+\fIhost\fR declaration or the client does not provide a
+\fRdhcp-client-identifier\fR option, by matching the \fIhardware\fR
+parameter in the \fIhost\fR declaration to the network hardware
+address supplied by the client.   BOOTP clients do not normally
+provide a \fIdhcp-client-identifier\fR, so the hardware address must
+be used for all clients that may boot using the BOOTP protocol.
+.PP
+.B The
+.I group
+.B statement
+.PP
+.nf
+ \fBgroup\fR {
+   [ \fIparameters\fR ]
+   [ \fIdeclarations\fR ]
+ \fB}\fR
+.fi
+.PP
+The group statement is used simply to apply one or more parameters to
+a group of declarations.   It can be used to group hosts, shared
+networks, subnets, or even other groups.
+.SH REFERENCE: ALLOW and DENY
+.PP
+The
+.I allow
+and
+.I deny
+statements can be used to control the behaviour of dhcpd to various
+sorts of requests.
+.PP
+.PP
+.B The
+.I unknown-clients
+.B keyword
+.PP
+ \fBallow unknown-clients;\fR
+ \fBdeny unknown-clients;\fR
+.PP
+The \fBunknown-clients\fR flag is used to tell dhcpd whether
+or not to dynamically assign addresses to unknown clients.   Dynamic
+address assignment to unknown clients is \fBallow\fRed by default.
+.PP
+.B The
+.I bootp
+.B keyword
+.PP
+ \fBallow bootp;\fR
+ \fBdeny bootp;\fR
+.PP
+The \fBbootp\fR flag is used to tell dhcpd whether
+or not to respond to bootp queries.  Bootp queries are \fBallow\fRed
+by default.
+.PP
+.B The
+.I booting
+.B keyword
+.PP
+ \fBallow booting;\fR
+ \fBdeny booting;\fR
+.PP
+The \fBbooting\fR flag is used to tell dhcpd whether or not to respond
+to queries from a particular client.  This keyword only has meaning
+when it appears in a host declaration.   By default, booting is
+\fBallow\fRed, but if it is disabled for a particular client, then
+that client will not be able to get and address from the DHCP server.
+.SH REFERENCE: PARAMETERS
+.PP
+.B The
+.I default-lease-time
+.B statement
+.PP
+ \fBdefault-lease-time\fR \fItime\fR\fB;\fR
+.PP
+.I Time
+should be the length in seconds that will be assigned to a lease if
+the client requesting the lease does not ask for a specific expiration
+time.
+.PP
+.B The
+.I max-lease-time
+.B statement
+.PP
+ \fBmax-lease-time\fR \fItime\fR\fB;\fR
+.PP
+.I Time
+should be the maximum length in seconds that will be assigned to a
+lease if the client requesting the lease asks for a specific
+expiration time.
+.PP
+.B The 
+.I hardware
+.B statement
+.PP
+ \fBhardware\fR \fIhardware-type\fR \fIhardware-address\fR\fB;\fR
+.PP
+In order for a BOOTP client to be recognized, its network hardware
+address must be declared using a \fIhardware\fR clause in the
+.I host
+statement.
+.I hardware-type
+must be the name of a physical hardware interface type.   Currently,
+only the
+.B ethernet
+type is recognized, although support for
+.B token-ring
+and
+.B fddi
+hardware types would also be desirable.
+The
+.I hardware-address
+should be a set of hexadecimal octets (numbers from 0 through ff)
+seperated by colons.   The \fIhardwarefR statement may also be used
+for DHCP clients.
+.PP
+.B The
+.I filename
+.B statement
+.PP
+ \fBfilename\fR \fB"\fR\fIfilename\fR\fB";\fR
+.PP
+The \fIfilename\fR statement can be used to specify the name of the
+initial boot file which is to be loaded by a client.  The
+.I filename
+should be a filename recognizable to whatever file transfer protocol
+the client can be expected to use to load the file.
+.PP
+.B The
+.I server-name
+.B statement
+.PP
+ \fBserver-name\fR \fB"\fR\fIname\fR\fB";\fR
+.PP
+The \fIserver-name\fR statement can be used to inform the client of
+the name of the server from which it is booting.   \fIName\fR should
+be the name that will be provided to the client.
+.PP
+.B The
+.I next-server
+.B statement
+.PP
+ \fBnext-server\fR \fIserver-name\fR\fB;\fR
+.PP
+The \fInext-server\fR statement is used to specify the host address of
+the server from which the initial boot file (specified in the
+\fIfilename\fR statement) is to be loaded.   \fIServer-name\fR should
+be a numeric IP address or a domain name.   If no \fInext-server\fR
+parameter applies to a given client, the DHCP server's IP address is
+used.
+.PP
+.B The
+.I fixed-address
+.B statement
+.PP
+ \fBfixed-address\fR \fIaddress\fR [\fB,\fR \fIaddress\fR ... ]\fB;\fR
+.PP
+The \fIfixed-address\fR statement is used to assign one or more fixed
+IP addresses to a client.  It should only appear in a \fIhost\fR
+declaration.  If more than one address is supplied, then when the
+client boots, it will be assigned the address which corresponds to the
+network on which it is booting.  If none of the addresses in the
+\fIfixed-address\fR statement are on the network on which the client
+is booting, that client will not match the \fIhost\fR declaration
+containing that \fIfixed-address\fR statement.  Each \fIaddress\fR
+should be either an IP address or a domain name which resolves to one
+or more IP addresses.
+.PP
+.B The
+.I dynamic-bootp-lease-cutoff
+.B statement
+.PP
+ \fBdynamic-bootp-lease-cutoff\fR \fIdate\fR\fB;\fR
+.PP
+The \fIdynamic-bootp-lease-cutoff\fR statement sets the ending time
+for all leases assigned dynamically to BOOTP clients.  Because BOOTP
+clients do not have any way of renewing leases, and don't know that
+their leases could expire, by default dhcpd assignes infinite leases
+to all BOOTP clients.  However, it may make sense in some situations
+to set a cutoff date for all BOOTP leases - for example, the end of a
+school term, or the time at night when a facility is closed and all
+machines are required to be powered off.
+.PP
+.I Date
+should be the date on which all assigned BOOTP leases will end.  The
+date is specified in the form:
+.PP
+.ce 1
+W YYYY/MM/DD HH:MM:SS
+.PP
+W is the day of the week expressed as a number
+from zero (Sunday) to six (Saturday).  YYYY is the year, including the
+century.  MM is the month expressed as a number from 1 to 12.  DD is
+the day of the month, counting from 1.  HH is the hour, from zero to
+23.  MM is the minute and SS is the second.  The time is always in
+Greenwich Mean Time (GMT), not local time.
+.PP
+.B The
+.I dynamic-bootp-lease-length
+.B statement
+.PP
+ \fBdynamic-bootp-lease-length\fR \fIlength\fR\fB;\fR
+.PP
+The \fIdynamic-bootp-lease-length\fR statement is used to set the
+length of leases dynamically assigned to BOOTP clients.   At some
+sites, it may be possible to assume that a lease is no longer in
+use if its holder has not used BOOTP or DHCP to get its address within
+a certain time period.   The period is specified in \fIlength\fR as a
+number of seconds.   If a client reboots using BOOTP during the
+timeout period, the lease duration is reset to \fIlength\fR, so a
+BOOTP client that boots frequently enough will never lose its lease.
+Needless to say, this parameter should be adjusted with extreme
+caution.
+.PP
+.B The
+.I get-lease-hostnames
+.B statement
+.PP
+ \fBget-lease-hostnames\fR \fIflag\fR\fB;\fR
+.PP
+The \fIget-lease-hostnames\fR statement is used to tell dhcpd whether
+or not to look up the domain name corresponding to the IP address of
+each address in the lease pool and use that address for the DHCP
+\fIhostname\fR option.  If \fIflag\fR is true, then this lookup is
+done for all addresses in the current scope.   By default, or if
+\fIflag\fR is false, no lookups are done.
+.PP
+.B The
+.I use-host-decl-names
+.B statement
+.PP
+ \fBuse-host-decl-names\fR \fIflag\fR\fB;\fR
+.PP
+If the \fIuse-host-decl-names\fR parameter is true in a given scope,
+then for every host declaration within that scope, the name provided
+for the host declaration will be supplied to the client as its
+hostname.   So, for example,
+.PP
+.nf
+    group {
+      use-host-decl-names on;
+
+      host joe {
+	hardware ethernet 08:00:2b:4c:29:32;
+	fixed-address joe.fugue.com;
+      }
+    }
+
+is equivalent to
+
+      host joe {
+	hardware ethernet 08:00:2b:4c:29:32;
+	fixed-address joe.fugue.com;
+        option host-name "joe";
+      }
+.fi
+.PP
+An \fIoption host-name\fR statement within a host declaration will
+override the use of the name in the host declaration.
+.PP
+.B The
+.I server-identifier
+.B statement
+.PP
+ \fBserver-identifier \fIhostname\fR\fB;\fR
+.PP
+The server-identifier statement is now obsolete and is ignored by
+the DHCP server.
+.SH REFERENCE: OPTION STATEMENTS
+.PP
+DHCP option statements are documented in the
+.B dhcp-options(5)
+manual page.
+.SH SEE ALSO
+dhcpd.conf(5), dhcpd.leases(5), RFC2132, RFC2131.
+.SH AUTHOR
+.B dhcpd(8)
+was written by Ted Lemon <mellon@vix.com>
+under a contract with Vixie Labs.   Funding
+for this project was provided by the Internet Software Corporation.
+Information about the Internet Software Consortium can be found at
+.B http://www.isc.org/isc.
