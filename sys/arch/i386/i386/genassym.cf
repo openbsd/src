@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.16 2004/06/28 02:00:20 deraadt Exp $
+#	$OpenBSD: genassym.cf,v 1.17 2004/07/02 16:29:55 niklas Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -103,8 +103,6 @@ struct	pcb
 member	pcb_cr3
 member	pcb_ebp
 member	pcb_esp
-member	pcb_fs
-member	pcb_gs
 member	pcb_cr0
 member	pcb_ldt_sel
 member	pcb_onfault
@@ -126,9 +124,6 @@ struct	sigframe	SIGF_
 member	HANDLER		sf_handler
 member	SC		sf_sc
 struct	sigcontext
-member	sc_fs
-member	sc_gs
-member	sc_eflags
 
 # mbuf fields
 ifdef INET
@@ -144,9 +139,6 @@ struct	svr4_sigframe	SVR4_SIGF_
 member	HANDLER		sf_handler
 member	UC		sf_uc
 struct	svr4_ucontext	SVR4_UC_
-member	FS		uc_mcontext.greg[SVR4_X86_FS]
-member	GS		uc_mcontext.greg[SVR4_X86_GS]
-member	EFLAGS		uc_mcontext.greg[SVR4_X86_EFL]
 endif
 
 # Linux frame offsets
@@ -155,9 +147,6 @@ struct	linux_sigframe		LINUX_SIGF_
 member	HANDLER			sf_handler
 member	SC			sf_sc
 struct	linux_sigcontext	LINUX_
-member	sc_fs			
-member	sc_gs
-member	sc_eflags
 endif
 
 # FreeBSD frame offsets

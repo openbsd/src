@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.302 2004/06/28 20:51:02 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.303 2004/07/02 16:29:55 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2268,8 +2268,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	} else
 #endif
 	{
-		__asm("movw %%gs,%w0" : "=r" (frame.sf_sc.sc_gs));
-		__asm("movw %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
+		frame.sf_sc.sc_fs = tf->tf_fs;
+		frame.sf_sc.sc_gs = tf->tf_gs;
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
 		frame.sf_sc.sc_eflags = tf->tf_eflags;
@@ -2308,8 +2308,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	/*
 	 * Build context to run handler in.
 	 */
-	__asm("movw %w0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-	__asm("movw %w0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
@@ -2376,7 +2376,8 @@ sys_sigreturn(p, v, retval)
 		    !USERMODE(context.sc_cs, context.sc_eflags))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_fs = context.sc_fs;
+		tf->tf_gs = context.sc_gs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
 		tf->tf_eflags = context.sc_eflags;
@@ -2718,8 +2719,8 @@ setregs(p, pack, stack, retval)
 	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __OpenBSD_NPXCW__;
 
-	__asm("movw %w0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-	__asm("movw %w0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
+	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ebp = 0;
@@ -2869,7 +2870,7 @@ init386(paddr_t first_avail)
 	bios_memmap_t *im;
 
 	proc0.p_addr = proc0paddr;
-	curpcb = &proc0.p_addr->u_pcb;
+	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
 
 	/*
 	 * Initialize the I/O port and I/O mem extent maps.

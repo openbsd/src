@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.12 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.13 2004/07/02 16:29:55 niklas Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -58,8 +58,6 @@ struct pcb {
 #define	pcb_esp	pcb_tss.tss_esp
 #define	pcb_ebp	pcb_tss.tss_ebp
 #define	pcb_cs	pcb_tss.tss_cs
-#define	pcb_fs	pcb_tss.tss_fs
-#define	pcb_gs	pcb_tss.tss_gs
 #define	pcb_ldt_sel	pcb_tss.tss_ldt
 	int	pcb_tss_sel;
 	union	descriptor *pcb_ldt;	/* per process (user) LDT */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.20 2003/05/13 03:49:04 art Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.21 2004/07/02 16:29:55 niklas Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -85,8 +85,8 @@ svr4_getcontext(p, uc, mask, oonstack)
 	} else
 #endif
 	{
-	        __asm("movl %%gs,%k0" : "=r" (r[SVR4_X86_GS]));
-		__asm("movl %%fs,%k0" : "=r" (r[SVR4_X86_FS]));
+		r[SVR4_X86_FS] = tf->tf_fs;
+		r[SVR4_X86_GS] = tf->tf_gs;
 		r[SVR4_X86_ES] = tf->tf_es;
 		r[SVR4_X86_DS] = tf->tf_ds;
 		r[SVR4_X86_EFL] = tf->tf_eflags;
@@ -179,7 +179,8 @@ svr4_setcontext(p, uc)
 		    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_fs = r[SVR4_X86_FS];
+		tf->tf_gs = r[SVR4_X86_GS];
 		tf->tf_es = r[SVR4_X86_ES];
 		tf->tf_ds = r[SVR4_X86_DS];
 		tf->tf_eflags = r[SVR4_X86_EFL];

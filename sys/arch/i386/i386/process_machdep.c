@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.16 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.17 2004/07/02 16:29:55 niklas Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -168,7 +168,6 @@ process_read_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
 
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
@@ -180,8 +179,8 @@ process_read_regs(p, regs)
 	} else
 #endif
 	{
-		regs->r_gs = pcb->pcb_gs & 0xffff;
-		regs->r_fs = pcb->pcb_fs & 0xffff;
+		regs->r_gs = tf->tf_gs & 0xffff;
+		regs->r_fs = tf->tf_fs & 0xffff;
 		regs->r_es = tf->tf_es & 0xffff;
 		regs->r_ds = tf->tf_ds & 0xffff;
 		regs->r_eflags = tf->tf_eflags;
@@ -236,7 +235,6 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
 
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
@@ -248,23 +246,6 @@ process_write_regs(p, regs)
 	} else
 #endif
 	{
-#if 0
-		extern int gdt_size;
-
-#define	verr_ldt(slot)	(slot < pcb->pcb_ldt_len && \
-			 (pcb->pcb_ldt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
-			 pcb->pcb_ldt[slot].sd.sd_dpl == SEL_UPL && \
-			 pcb->pcb_ldt[slot].sd.sd_p == 1)
-#define	verr_gdt(slot)	(slot < gdt_size && \
-			 (gdt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
-			 gdt[slot].sd.sd_dpl == SEL_UPL && \
-			 gdt[slot].sd.sd_p == 1)
-#define	verr(sel)	(ISLDT(sel) ? verr_ldt(IDXSEL(sel)) : \
-				      verr_gdt(IDXSEL(sel)))
-#define	valid_sel(sel)	(ISPL(sel) == SEL_UPL && verr(sel))
-#define	null_sel(sel)	(!ISLDT(sel) && IDXSEL(sel) == 0)
-#endif
-
 		/*
 		 * Check for security violations.
 		 */
@@ -272,17 +253,8 @@ process_write_regs(p, regs)
 		    !USERMODE(regs->r_cs, regs->r_eflags))
 			return (EINVAL);
 
-		/* XXX Is this safe to remove. */
-#if 0
-		if ((regs->r_gs != pcb->pcb_gs && \
-		     !valid_sel(regs->r_gs) && !null_sel(regs->r_gs)) ||
-		    (regs->r_fs != pcb->pcb_fs && \
-		     !valid_sel(regs->r_fs) && !null_sel(regs->r_fs)))
-			return (EINVAL);
-#endif
-
-		pcb->pcb_gs = regs->r_gs & 0xffff;
-		pcb->pcb_fs = regs->r_fs & 0xffff;
+		tf->tf_gs = regs->r_gs & 0xffff;
+		tf->tf_fs = regs->r_fs & 0xffff;
 		tf->tf_es = regs->r_es & 0xffff;
 		tf->tf_ds = regs->r_ds & 0xffff;
 		tf->tf_eflags = regs->r_eflags;

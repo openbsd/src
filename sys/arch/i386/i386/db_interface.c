@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.14 2004/06/21 22:41:11 andreas Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.15 2004/07/02 16:29:55 niklas Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
@@ -144,6 +144,8 @@ kdb_trap(type, code, regs)
 	db_active--;
 	splx(s);
 
+	regs->tf_fs     = ddb_regs.tf_fs & 0xffff;
+	regs->tf_gs     = ddb_regs.tf_gs & 0xffff;
 	regs->tf_es     = ddb_regs.tf_es & 0xffff;
 	regs->tf_ds     = ddb_regs.tf_ds & 0xffff;
 	regs->tf_edi    = ddb_regs.tf_edi;

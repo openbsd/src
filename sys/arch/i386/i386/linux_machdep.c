@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.29 2003/08/15 20:32:13 tedu Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.30 2004/07/02 16:29:55 niklas Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -150,8 +150,8 @@ linux_sendsig(catcher, sig, mask, code, type, val)
 	} else
 #endif
 	{
-		__asm("movl %%gs,%k0" : "=r" (frame.sf_sc.sc_gs));
-		__asm("movl %%fs,%k0" : "=r" (frame.sf_sc.sc_fs));
+		frame.sf_sc.sc_fs = tf->tf_fs;
+		frame.sf_sc.sc_gs = tf->tf_gs;
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
 		frame.sf_sc.sc_eflags = tf->tf_eflags;
@@ -248,7 +248,8 @@ linux_sys_sigreturn(p, v, retval)
 		    !USERMODE(context.sc_cs, context.sc_eflags))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_fs = context.sc_fs;
+		tf->tf_gs = context.sc_gs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
 		tf->tf_eflags = context.sc_eflags;

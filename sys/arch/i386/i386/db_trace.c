@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.9 2003/05/20 09:51:22 andreas Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.10 2004/07/02 16:29:55 niklas Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /* 
@@ -43,8 +43,10 @@
  * Machine register set.
  */
 struct db_variable db_regs[] = {
-	{ "es",		(long *)&ddb_regs.tf_es,     FCN_NULL },
 	{ "ds",		(long *)&ddb_regs.tf_ds,     FCN_NULL },
+	{ "es",		(long *)&ddb_regs.tf_es,     FCN_NULL },
+	{ "fs",		(long *)&ddb_regs.tf_fs,     FCN_NULL },
+	{ "gs",		(long *)&ddb_regs.tf_gs,     FCN_NULL },
 	{ "edi",	(long *)&ddb_regs.tf_edi,    FCN_NULL },
 	{ "esi",	(long *)&ddb_regs.tf_esi,    FCN_NULL },
 	{ "ebp",	(long *)&ddb_regs.tf_ebp,    FCN_NULL },

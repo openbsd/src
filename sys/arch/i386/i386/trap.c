@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.63 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.64 2004/07/02 16:29:55 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -180,7 +180,8 @@ trap(frame)
 	int type = frame.tf_trapno;
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
-	extern char resume_iret[], resume_pop_ds[], resume_pop_es[];
+	extern char resume_iret[], resume_pop_ds[], resume_pop_es[],
+	    resume_pop_fs[], resume_pop_gs[];
 	struct trapframe *vframe;
 	int resume;
 	vm_prot_t vftype, ftype;
@@ -298,17 +299,34 @@ trap(frame)
 		 */
 		switch (*(u_char *)frame.tf_eip) {
 		case 0xcf:	/* iret */
-			vframe = (void *)((int)&frame.tf_esp - 44);
+			vframe = (void *)((int)&frame.tf_esp -
+			    offsetof(struct trapframe, tf_eip));
 			resume = (int)resume_iret;
 			break;
 		case 0x1f:	/* popl %ds */
-			vframe = (void *)((int)&frame.tf_esp - 4);
+			vframe = (void *)((int)&frame.tf_esp -
+			    offsetof(struct trapframe, tf_ds));
 			resume = (int)resume_pop_ds;
 			break;
 		case 0x07:	/* popl %es */
-			vframe = (void *)((int)&frame.tf_esp - 0);
+			vframe = (void *)((int)&frame.tf_esp -
+			    offsetof(struct trapframe, tf_es));
 			resume = (int)resume_pop_es;
 			break;
+		case 0x0f:	/* 0x0f prefix */
+			switch (*(u_char *)(frame.tf_eip+1)) {
+			case 0xa1:		/* popl %fs */
+				vframe = (void *)((int)&frame.tf_esp - 
+				    offsetof(struct trapframe, tf_fs));
+				resume = (int)resume_pop_fs;
+				break;
+			case 0xa9:		/* popl %gs */
+				vframe = (void *)((int)&frame.tf_esp -
+				    offsetof(struct trapframe, tf_gs));
+				resume = (int)resume_pop_gs;
+				break;
+			}
+                        break;
 		default:
 			goto we_re_toast;
 		}
