@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.9 2003/07/07 15:37:07 jason Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.10 2004/09/30 07:28:13 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.17 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -237,8 +237,6 @@ leattach_sbus(struct device *parent, struct device *self, void *aux)
 	}
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
-
-	sc->sc_hasifmedia = 1;
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
