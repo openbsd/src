@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.10 1997/11/11 10:43:57 niklas Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.11 1998/02/26 08:00:17 jason Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -93,6 +93,7 @@ char *fsrtoname __P((int, int, int, char *));
 void cache_print __P((struct cpu_softc *));
 void cpu_spinup __P((struct cpu_softc *));
 void fpu_init __P((struct cpu_softc *));
+void identifycpu __P((void));
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
 #define	IU_VERS(psr)	(((psr) >> 24) & 0xf)
@@ -151,6 +152,18 @@ cpu_match(parent, vcf, aux)
 	return (strcmp(cf->cf_driver->cd_name, ca->ca_ra.ra_name) == 0);
 }
 
+void
+identifycpu()
+{
+	struct cpu_softc sc;
+	struct confargs ca;
+
+	sc.node = 0;
+	ca.ca_ra.ra_node = 0;
+	strcpy(sc.dv.dv_xname, "cpu0");
+	cpu_attach(NULL, (struct device *)&sc, &ca);
+}
+
 /*
  * Attach the CPU.
  * Discover interesting goop about the virtual address cache
@@ -182,6 +195,7 @@ cpu_attach(parent, self, aux)
 	}
 
 	if (sc->master) {
+		printf("%s", sc->dv.dv_xname);
 		/*
 		 * Gross, but some things in cpuinfo may already have
 		 * been setup by early routines like pmap_bootstrap().
