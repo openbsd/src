@@ -1734,6 +1734,7 @@ struct frame_info *
 get_prev_frame (struct frame_info *this_frame)
 {
   struct frame_info *prev_frame;
+  struct frame_id this_id;
 
   if (frame_debug)
     {
@@ -1904,7 +1905,8 @@ get_prev_frame (struct frame_info *this_frame)
   /* Check that this frame's ID was valid.  If it wasn't, don't try to
      unwind to the prev frame.  Be careful to not apply this test to
      the sentinel frame.  */
-  if (this_frame->level >= 0 && !frame_id_p (get_frame_id (this_frame)))
+  this_id = get_frame_id (this_frame);
+  if (this_frame->level >= 0 && !frame_id_p (this_id))
     {
       if (frame_debug)
 	{
@@ -1920,16 +1922,14 @@ get_prev_frame (struct frame_info *this_frame)
      Since the sentinel frame doesn't really exist, don't compare the
      inner-most against that sentinel.  */
   if (this_frame->level > 0
-      && frame_id_inner (get_frame_id (this_frame),
-			 get_frame_id (this_frame->next)))
+      && frame_id_inner (this_id, get_frame_id (this_frame->next)))
     error ("Previous frame inner to this frame (corrupt stack?)");
 
   /* Check that this and the next frame are not identical.  If they
      are, there is most likely a stack cycle.  As with the inner-than
      test above, avoid comparing the inner-most and sentinel frames.  */
   if (this_frame->level > 0
-      && frame_id_eq (get_frame_id (this_frame),
-		      get_frame_id (this_frame->next)))
+      && frame_id_eq (this_id, get_frame_id (this_frame->next)))
     error ("Previous frame identical to this frame (corrupt stack?)");
 
   /* Allocate the new frame but do not wire it in to the frame chain.

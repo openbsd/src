@@ -21,6 +21,8 @@
 #include "defs.h"
 #include "osabi.h"
 
+#include "gdb_string.h"
+
 #include "arm-tdep.h"
 #include "nbsd-tdep.h"
 #include "solib-svr4.h"
@@ -102,4 +104,6 @@ _initialize_arm_netbsd_tdep (void)
                           arm_netbsd_aout_init_abi);
   gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_NETBSD_ELF,
                           arm_netbsd_elf_init_abi);
+  gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_OPENBSD_ELF,
+			  arm_netbsd_elf_init_abi);
 }

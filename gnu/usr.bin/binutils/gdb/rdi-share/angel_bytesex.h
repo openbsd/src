@@ -11,8 +11,8 @@
   Copyright: (C) 1991, Advanced RISC Machines Ltd., Cambridge, England.
 */
 /*
- * RCS $Revision: 1.1.1.1 $
- * Checkin $Date: 2004/05/21 19:15:48 $
+ * RCS $Revision: 1.2 $
+ * Checkin $Date: 2004/05/21 20:23:36 $
  */
 
 #ifndef angel_bytesex_h

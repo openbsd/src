@@ -51,6 +51,7 @@ arm*-*-linux*)		gdb_target=linux
 			build_gdbserver=yes
 			;;
 arm*-*-netbsd*)		gdb_target=nbsd ;;
+arm*-*-openbsd*)	gdb_target=nbsd ;;
 arm-*-nto*)		gdb_target=nto ;;
 arm*-*-* | thumb*-*-* | strongarm*-*-*)
 			gdb_target=embed
@@ -74,6 +75,7 @@ frv-*-*)		gdb_target=frv ;;
 hppa*64*-*-hpux11*)	gdb_target=hppa64 ;;
 hppa*-*-hpux*)		gdb_target=hppahpux ;;
 hppa*-*-hiux*)		gdb_target=hppahpux ;;
+hppa*-*-*)		gdb_target=obsd ;;
 hppa*-*-*)		gdb_target=hppa ;;
 
 i[34567]86-ncr-*)	gdb_target=ncr3000 ;;
@@ -125,6 +127,7 @@ m68*-*-linux*)		gdb_target=linux
 			;;
 # OBSOLETE m68*-*-lynxos*)		gdb_target=m68klynx ;;
 m68*-*-netbsd*)		gdb_target=nbsdaout ;;
+m68*-*-openbsd*)	gdb_target=obsd ;;
 m68*-*-os68k*)		gdb_target=os68k ;;
 # OBSOLETE m68*-*-sunos3*)		gdb_target=sun3os3 ;;
 # OBSOLETE m68*-*-sunos4*)		gdb_target=sun3os4 ;;
@@ -150,6 +153,7 @@ mn10300-*-*)		gdb_target=mn10300 ;;
 ns32k-*-netbsd*)	gdb_target=nbsdaout ;;
 
 powerpc-*-netbsd*)	gdb_target=nbsd ;;
+powerpc-*-openbsd*)	gdb_target=obsd ;;
 powerpc-*-aix*)		gdb_target=aix ;;
 powerpc-*-linux*)	gdb_target=linux
 			build_gdbserver=yes
@@ -201,6 +205,7 @@ sparc64-*-*)		gdb_target=sparc64 ;;
 
 xstormy16-*-*)          gdb_target=xstormy16 ;;
 
+vax-*-openbsd*)		gdb_target=nbsd ;;
 vax-*-*)		gdb_target=vax ;;
 
 v850*-*-*)		gdb_target=v850

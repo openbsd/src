@@ -1,5 +1,6 @@
-/* Common target dependent code for GDB on VAX systems.
-   Copyright 2002, 2003 Free Software Foundation, Inc.
+/* Target-dependent code for the VAX.
+
+   Copyright 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,35 +22,20 @@
 #ifndef VAX_TDEP_H
 #define VAX_TDEP_H
 
-/* Say how long (ordinary) registers are.  This is a piece of bogosity
-   used in push_word and a few other places;  DEPRECATED_REGISTER_RAW_SIZE is the
-   real way to know how big a register is.  */
-#define VAX_REGISTER_SIZE 4
+/* Register numbers of various important registers.  */
+
+enum vax_regnum
+{
+  VAX_R0_REGNUM,
+  VAX_R1_REGNUM,
+  VAX_AP_REGNUM = 12,		/* Argument pointer on user stack.  */
+  VAX_FP_REGNUM,		/* Address of executing stack frame.  */
+  VAX_SP_REGNUM,		/* Address of top of stack.  */
+  VAX_PC_REGNUM,		/* Program counter.  */
+  VAX_PS_REGNUM			/* Processor status.  */
+};
 
 /* Number of machine registers.  */
 #define VAX_NUM_REGS 17
 
-/* Total amount of space needed to store our copies of the machine's
-   register state.  */
-#define VAX_REGISTER_BYTES (VAX_NUM_REGS * 4)
-
-/* Largest value DEPRECATED_REGISTER_RAW_SIZE can have.  */
-#define VAX_MAX_REGISTER_RAW_SIZE 4
-
-/* Largest value DEPRECATED_REGISTER_VIRTUAL_SIZE can have.  */
-#define VAX_MAX_REGISTER_VIRTUAL_SIZE 4
-
-/* Register numbers of various important registers.
-   Note that most of these values are "real" register numbers,
-   and correspond to the general registers of the machine,
-   and are "phony" register numbers which is too large
-   to be an actual register number as far as the user is concerned
-   but serves to get the desired value when passed to read_register.  */
-
-#define VAX_AP_REGNUM     12  /* argument pointer */
-#define VAX_FP_REGNUM     13  /* Contains address of executing stack frame */
-#define VAX_SP_REGNUM     14  /* Contains address of top of stack */
-#define VAX_PC_REGNUM     15  /* Contains program counter */
-#define VAX_PS_REGNUM     16  /* Contains processor status */
-
-#endif /* VAX_TDEP_H */
+#endif /* vax-tdep.h */

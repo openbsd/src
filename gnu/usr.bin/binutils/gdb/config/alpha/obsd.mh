@@ -1,8 +1,0 @@
-# Host: Little-endian Alpha running OpenBSD/Alpha
-XDEPFILES= 
-XM_FILE= xm-alphaobsd.h
-NAT_FILE= nm-obsd.h
-NATDEPFILES= infptrace.o inftarg.o corelow.o kcore-nbsd.o alphaobsd-nat.o fork-child.o
-NAT_CLIBS= -lkvm
-MMALLOC = 
-MMALLOC_CFLAGS = -DNO_MMALLOC 

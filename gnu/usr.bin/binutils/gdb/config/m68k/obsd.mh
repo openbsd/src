@@ -1,8 +1,6 @@
-# Host: Motorola m68k running OpenBSD
-XDEPFILES= ser-tcp.o
-XM_FILE= xm-obsd.h
-NAT_FILE= nm-obsd.h
-NAT_CLIBS= -lkvm
-NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o kcore-nbsd.o m68knbsd-nat.o
-MMALLOC = 
-MMALLOC_CFLAGS = -DNO_MMALLOC 
+# Host: OpenBSD/m68k
+NATDEPFILES= m68kbsd-nat.o bsd-kvm.o fork-child.o infptrace.o inftarg.o \
+	solib.o solib-sunos.o
+NAT_FILE= nm-nbsdaout.h
+
+LOADLIBES= -lkvm

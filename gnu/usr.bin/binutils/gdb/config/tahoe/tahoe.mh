@@ -1,4 +1,0 @@
-# Host: CCI or Harris Tahoe running BSD Unix
-
-XM_FILE= xm-tahoe.h
-XDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o core-aout.o

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.55 2004/05/17 21:54:18 drahn Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.56 2004/05/21 20:23:01 kettenis Exp $
 
 NEW_BINUTILS=alpha arm hppa i386 mips powerpc sparc sparc64 amd64
 
@@ -16,7 +16,7 @@ MANDIR=${PREFIX}/share/man/cat
 
 MAN=		binutils/objdump.1 c++filt.1
 
-.if (${MACHINE_ARCH} != "unknown") && (${MACHINE_ARCH} != "amd64") && (${MACHINE_ARCH} != "arm")
+.if (${MACHINE_ARCH} != "unknown") && (${MACHINE_ARCH} != "m88k")
 SUBDIRS+=	gdb
 MAN+=		gdb/gdb.1
 ALL_X11_MODULES+=all-gdb

@@ -564,6 +564,38 @@ core_xfer_partial (struct target_ops *ops, enum target_object object,
 	}
       return -1;
 
+    case TARGET_OBJECT_WCOOKIE:
+      if (readbuf)
+        {
+          /* When the StackGhost cookie is stored in core file, BFD
+             represents this with a fake section called ".wcookie".  */
+
+          struct bfd_section *section;
+          bfd_size_type size;
+          char *contents;
+
+          section = bfd_get_section_by_name (core_bfd, ".wcookie");
+          if (section == NULL)
+            return -1;
+
+          size = bfd_section_size (core_bfd, section);
+          if (offset >= size)
+            return 0;
+          size -= offset;
+          if (size > len)
+            size = len;
+          if (size > 0
+              && !bfd_get_section_contents (core_bfd, section, readbuf,
+                                            (file_ptr) offset, size))
+            {
+              warning ("Couldn't read StackGhost cookie in core file.");
+              return -1;
+            }
+
+          return size;
+        }
+      return -1;
+
     default:
       if (ops->beneath != NULL)
 	return ops->beneath->to_xfer_partial (ops->beneath, object, annex,

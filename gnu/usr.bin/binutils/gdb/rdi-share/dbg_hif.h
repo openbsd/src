@@ -15,8 +15,8 @@
  */
 
 /*
- * RCS $Revision: 1.1.1.1 $
- * Checkin $Date: 2004/05/21 19:15:54 $
+ * RCS $Revision: 1.2 $
+ * Checkin $Date: 2004/05/21 20:23:37 $
  */
 
 #ifndef dbg_hif__h

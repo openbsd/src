@@ -8,8 +8,8 @@
 
 /* -*-C-*-
  *
- * $Revision: 1.1.1.1 $
- *     $Date: 2004/05/21 19:16:01 $
+ * $Revision: 1.2 $
+ *     $Date: 2004/05/21 20:23:37 $
  *
  */
 #ifndef angsd_unixcomm_h

@@ -1,2 +1,0 @@
-CFLAGS = -I/s1/cygnus/dejagnu/mips-idt-ecoff/include -g
-LDFLAGS = -nostartfiles /s1/cygnus/dejagnu/mips-idt-ecoff/crt0.o -L/s1/cygnus/dejagnu/mips-idt-ecoff -g

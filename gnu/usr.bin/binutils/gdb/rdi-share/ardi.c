@@ -11,8 +11,8 @@
  * Angel Remote Debug Interface
  *
  *
- * $Revision: 1.1.1.1 $
- *     $Date: 2004/05/21 19:15:50 $
+ * $Revision: 1.2 $
+ *     $Date: 2004/05/21 20:23:36 $
  *
  * This file is based on /plg/pisd/rdi.c, but instead of using RDP it uses
  * ADP messages.

@@ -1,4 +1,0 @@
-CFLAGS_FOR_TARGET = 
-STEP_EXECUTABLE = step
-THREADFLAGS = -mposix -mthreads
-#LDFLAGS= -L/usr/cygnus/progressive-95q1/H-sparc-sun-sunos4.1.3/i386-lynx/lib/thread

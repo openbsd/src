@@ -1,103 +1,97 @@
-/* Functions specific to running gdb native on a Powerpc System.
-   Copyright (C) 1993, Free Software Foundation, Inc.
+/* Native-dependent code for OpenBSD/powerpc.
 
-This file is part of GDB.
+   Copyright 2004 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This file is part of GDB.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-#include <sys/types.h>
-#include <sys/ptrace.h>
-#include <sys/param.h>
-#include <sys/signal.h>	/* for MAXSIG in sys/user.h */
-#include <sys/types.h>	/* for ushort in sys/dir.h */
-#include <sys/dir.h>	/* for struct direct in sys/user.h */
-#include <sys/user.h>
-#include <machine/reg.h>
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
+
+#include "nm-bsd.h"
+
 #include "defs.h"
 #include "inferior.h"
-#include "target.h"
-#include "gdbcore.h"
+#include "regcache.h"
 
-#include <nlist.h>
+#include <stddef.h>
+#include <sys/types.h>
+#include <sys/ptrace.h>
+#include <machine/reg.h>
 
-#if !defined (offsetof)
-#define offsetof(TYPE, MEMBER) ((unsigned long) &((TYPE *)0)->MEMBER)
-#endif
+#include "ppcobsd-tdep.h"
+
 
-void
-fetch_inferior_registers (regno)
-     int regno;
-{
-  struct reg inferior_registers;
-
-/* 
- * this gets fp and gpr?
- */
-
-  ptrace (PT_GETREGS, inferior_pid,
-	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
-  memcpy (&registers, &inferior_registers,
-	  sizeof(inferior_registers));
-
-
-  registers_fetched ();
-}
+/* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
+   for all registers.  */
 
 void
-store_inferior_registers (regno)
-     int regno;
+fetch_inferior_registers (int regnum)
 {
-  struct reg inferior_registers;
+  struct reg regs;
 
+  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+	      (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+    perror_with_name ("Couldn't get registers");
 
-  memcpy (&inferior_registers, &registers,
-	  sizeof(inferior_registers));
-  ptrace (PT_SETREGS, inferior_pid,
-	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
-
+  ppcobsd_supply_gregset (&ppcobsd_gregset, current_regcache, -1,
+			  &regs, sizeof regs);
 }
-/* Return the address in the core dump or inferior of register REGNO.
-   BLOCKEND is the address of the end of the user structure.  */
 
-CORE_ADDR
-register_addr (regno, blockend)
-     int	regno;
-     CORE_ADDR	blockend;
+/* Store register REGNUM back into the inferior.  If REGNUM is -1, do
+   this for all registers.  */
+
+void
+store_inferior_registers (int regnum)
 {
-	int ppcreg[] = 
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* fp 0-15 */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* fp 16-31 */
-	   36,    37,   33,    32,    35,    34 ,   0 };
-	/* "pc", "ps", "cnd", "lr", "cnt", "xer", "mq" */
-	/*
-	32 lr
-	33 cr
-	34 xer
-	35 ctr
-	36 srr0
-	37 srr1
-	*/
-  if (regno < NUM_REGS) {
-    return (blockend + REGISTER_BYTE(regno));
-  } else
-    {
-      fprintf_unfiltered (gdb_stderr, "\
-Internal error: invalid register number %d in REGISTER_U_ADDR\n",
-	       regno);
-      return blockend;
-    }
+  struct reg regs;
+
+  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+	      (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+    perror_with_name ("Couldn't get registers");
+
+  ppcobsd_collect_gregset (&ppcobsd_gregset, current_regcache,
+			   regnum, &regs, sizeof regs);
+
+  if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
+	      (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+    perror_with_name ("Couldn't write registers");
+}
+
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+void _initialize_ppcobsd_nat (void);
+
+void
+_initialize_ppcobsd_nat (void)
+{
+  /* General-purpose registers.  */
+  ppcobsd_reg_offsets.r0_offset = offsetof (struct reg, gpr);
+  ppcobsd_reg_offsets.pc_offset = offsetof (struct reg, pc);
+  ppcobsd_reg_offsets.ps_offset = offsetof (struct reg, ps);
+  ppcobsd_reg_offsets.cr_offset = offsetof (struct reg, cnd);
+  ppcobsd_reg_offsets.lr_offset = offsetof (struct reg, lr);
+  ppcobsd_reg_offsets.ctr_offset = offsetof (struct reg, cnt);
+  ppcobsd_reg_offsets.xer_offset = offsetof (struct reg, xer);
+  ppcobsd_reg_offsets.mq_offset = offsetof (struct reg, mq);
+
+  /* Floating-point registers.  */
+  ppcobsd_reg_offsets.f0_offset = offsetof (struct reg, fpr);
+  ppcobsd_reg_offsets.fpscr_offset = -1;
+
+  /* AltiVec registers.  */
+  ppcobsd_reg_offsets.vr0_offset = offsetof (struct vreg, vreg);
+  ppcobsd_reg_offsets.vscr_offset = offsetof (struct vreg, vscr);
+  ppcobsd_reg_offsets.vrsave_offset = offsetof (struct vreg, vrsave);
 }

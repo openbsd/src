@@ -58,7 +58,7 @@ TEXI2DVI=texi2dvi
 
 # Where is the source dir for the READLINE library doc?  
 # Traditionally readline is in .. or .
-READLINE_DIR = ${gdbdir}/../readline/doc
+READLINE_DIR = ${gdbdir}/../../../lib/libreadline/doc
 
 # The GDB/MI docs come from a sibling directory ../mi
 GDBMI_DIR = ${gdbdir}/mi
@@ -102,7 +102,7 @@ GDB_DOC_SOURCE_INCLUDES = \
 	$(srcdir)/gpl.texi \
 	$(srcdir)/agentexpr.texi \
 	$(READLINE_DIR)/rluser.texinfo \
-	$(READLINE_DIR)/inc-hist.texinfo
+	$(srcdir)/inc-hist.texinfo
 GDB_DOC_BUILD_INCLUDES = \
 	gdb-cfg.texi \
 	GDBvn.texi

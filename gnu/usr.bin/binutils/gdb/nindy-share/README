@@ -1,3 +1,0 @@
-The files in this directory started out life as code shared between
-the nindy monitor and GDB.  For various reasons, this is no longer
-true.  Eventually, they probably should be merged into remote-nindy.c.

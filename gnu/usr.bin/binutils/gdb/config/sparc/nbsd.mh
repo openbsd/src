@@ -1,6 +1,0 @@
-# Host: Sun 4 or Sparcstation, running NetBSD
-XDEPFILES= ser-tcp.o
-XM_FILE= xm-nbsd.h
-NAT_FILE= nm-nbsd.h
-NAT_CLIBS= -lkvm
-NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o kcore-nbsd.o sparcnbsd-nat.o

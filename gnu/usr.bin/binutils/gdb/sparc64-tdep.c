@@ -52,17 +52,6 @@
 /* The functions on this page are intended to be used to classify
    function arguments.  */
 
-/* Return the contents if register REGNUM as an address.  */
-
-static CORE_ADDR
-sparc_address_from_register (int regnum)
-{
-  ULONGEST addr;
-
-  regcache_cooked_read_unsigned (current_regcache, regnum, &addr);
-  return addr;
-}
-
 /* Check whether TYPE is "Integral or Pointer".  */
 
 static int

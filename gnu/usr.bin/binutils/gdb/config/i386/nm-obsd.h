@@ -1,37 +1,62 @@
-/* Native-dependent definitions for Intel 386 running OpenBSD, for GDB.
-   Copyright 1986, 1987, 1989, 1992, 1994 Free Software Foundation, Inc.
+/* Native-dependent definitions for OpenBSD/i386.
 
-This file is part of GDB.
+   Copyright 2001, 2004 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This file is part of GDB.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-#define SVR4_SHARED_LIBS
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
-/* Get generic OpenBSD native definitions. */
+#ifndef NM_OBSD_H
+#define NM_OBSD_H
 
-#include "nm-obsd.h"
+/* Type of the third argument to the `ptrace' system call.  */
+#define PTRACE_ARG3_TYPE caddr_t
 
-#define FLOAT_INFO extern i386_float_info (); \
-						  i386_float_info ()
+/* Override copies of {fetch,store}_inferior_registers in `infptrace.c'.  */
+#define FETCH_INFERIOR_REGISTERS
 
+/* We can attach and detach.  */
+#define ATTACH_DETACH
+
 
-#include "solib.h"	/* Support for shared libraries. */
+/* Support for the user struct.  */
 
-/* The Net- and OpenBSD link.h structure definitions have different names
-   than the SunOS version, but the structures are very similar,
-   so we can use solib.c by defining the SunOS names.  */
+/* Return the size of the user struct.  */
+
+#define KERNEL_U_SIZE kernel_u_size ()
+extern int kernel_u_size (void);
+
+/* This is the amount to subtract from u.u_ar0
+   to get the offset in the core file of the register values.  */
+
+#include <machine/vmparam.h>
+#define KERNEL_U_ADDR USRSTACK
+
+#define REGISTER_U_ADDR(addr, blockend, regno) \
+  (addr) = register_u_addr ((blockend), (regno))
+extern CORE_ADDR register_u_addr (CORE_ADDR blockend, int regno);
+
+
+/* Shared library support.  */
+
+#include "solib.h"
+
+/* Make structure definitions match up with those expected in
+   `solib-sunos.c'.  */
+
 #define link_object	sod
 #define lo_name		sod_name
 #define lo_library	sod_library
@@ -40,12 +65,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define lo_minor	sod_minor
 #define lo_next		sod_next
 
-#define l_addr		som_addr
-#define l_name		som_path
-#define l_next		som_next
+#define link_map	so_map
+#define lm_addr		som_addr
+#define lm_name		som_path
+#define lm_next		som_next
 #define lm_lop		som_sod
 #define lm_lob		som_sodbase
-#define l_prev		som_sodbase
 #define lm_rwt		som_write
 #define lm_ld		som_dynamic
 #define lm_lpd		som_spd
@@ -53,7 +78,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define link_dynamic_2	section_dispatch_table
 #define ld_loaded	sdt_loaded
 #define ld_need		sdt_sods
-#define ld_rules	sdt_rules
+#define ld_rules	sdt_filler1
 #define ld_got		sdt_got
 #define ld_plt		sdt_plt
 #define ld_rel		sdt_rel
@@ -70,7 +95,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define rtc_sp		rt_sp
 #define rtc_next	rt_next
 
-#define r_debug		so_debug
+#define ld_debug	so_debug
 #define ldd_version	dd_version
 #define ldd_in_debugger	dd_in_debugger
 #define ldd_sym_loaded	dd_sym_loaded
@@ -83,3 +108,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ldd		d_debug
 #define ld_un		d_un
 #define ld_2		d_sdt
+
+#endif /* nm-obsd.h */

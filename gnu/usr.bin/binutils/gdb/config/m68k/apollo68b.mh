@@ -1,6 +1,0 @@
-# Host: Apollo m68k, BSD mode.
-
-XM_FILE= xm-apollo68b.h
-XDEPFILES= 
-NAT_FILE= nm-apollo68b.h
-NATDEPFILES= infptrace.o inftarg.o fork-child.o a68v-nat.o

@@ -42,12 +42,14 @@ alpha*-*-openbsd*)	gdb_host=nbsd ;;
 arm*-*-linux*)		gdb_host=linux ;;
 arm*-*-netbsdelf*)	gdb_host=nbsdelf ;;
 arm*-*-netbsd*)		gdb_host=nbsdaout ;;
+arm*-*-openbsd*)	gdb_host=nbsdelf ;;
 
 hppa*-*-hiux*)		gdb_host=hppahpux ;;
 hppa*-*-hpux10.20)	gdb_host=hpux1020 ;;
 hppa*64*-*-hpux11*)	gdb_host=hpux11w ;;
 hppa*-*-hpux11*)	gdb_host=hpux11 ;;
 hppa*-*-hpux*)		gdb_host=hppahpux ;;
+hppa*-*-openbsd*)	gdb_host=obsd ;;
 
 i[34567]86-ncr-*)	gdb_host=ncr3000 ;;
 i[34567]86-*-dgux*)	gdb_host=i386v4 ;;
@@ -90,6 +92,7 @@ ia64-*-linux*)		gdb_host=linux ;;
 m68*-*-linux*)		gdb_host=linux ;;
 # OBSOLETE m68*-*-lynxos*)		gdb_host=m68klynx ;;
 m68*-*-netbsd*)		gdb_host=nbsdaout ;;
+m68*-*-openbsd*)	gdb_host=obsd ;;
 # OBSOLETE m68*-*-sysv4*)		gdb_host=m68kv4 ;;
 # OBSOLETE m68*-motorola-*)	gdb_host=delta68 ;;
 # OBSOLETE m68*-sun-sunos3*)	gdb_host=sun3os3 ;;
@@ -116,6 +119,7 @@ powerpc-*-aix4.3.[0-1]*)	gdb_host=aix ;;
 powerpc-*-aix*)		gdb_host=aix432 ;;
 powerpc-*-linux*)	gdb_host=linux ;;
 powerpc-*-netbsd*)	gdb_host=nbsd ;;
+powerpc-*-openbsd*)	gdb_host=obsd ;;
 
 powerpc64-*-linux*)     gdb_host=ppc64-linux ;;
 
@@ -140,6 +144,7 @@ sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
 			gdb_host=sol2
 			;;
 
+vax-*-openbsd*)		gdb_host=obsd ;;
 vax-*-bsd*)		gdb_host=vaxbsd ;;
 vax-*-ultrix2*)		gdb_host=vaxult2 ;;
 vax-*-ultrix*)		gdb_host=vaxult ;;

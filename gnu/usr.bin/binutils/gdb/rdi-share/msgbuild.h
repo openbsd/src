@@ -8,8 +8,8 @@
 
 /* -*-C-*-
  *
- * $Revision: 1.1.1.1 $
- *     $Date: 2004/05/21 19:15:58 $
+ * $Revision: 1.2 $
+ *     $Date: 2004/05/21 20:23:37 $
  *
  *
  * msgbuild.h - utilities for assembling and interpreting ADP messages

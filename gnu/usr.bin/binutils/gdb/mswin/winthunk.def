@@ -1,5 +1,0 @@
-LIBRARY KERNEL32
-EXPORTS
-    LoadLibrary16@4                 @35
-    FreeLibrary16@4                 @36
-    GetProcAddress16@8              @37

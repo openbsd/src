@@ -1,9 +1,0 @@
-# Host: OpenBSD Mips Big Endian based systems. (arc etc.)
-XDEPFILES= 
-XM_FILE= xm-bigmips.h
-NAT_FILE= nm-mips.h
-NATDEPFILES= infptrace.o inftarg.o corelow.o mips-obsd.o fork-child.o obsdsolib.o
-
-# Use native malloc with real mmap().
-MMALLOC = 
-MMALLOC_CFLAGS = -DNO_MMALLOC
