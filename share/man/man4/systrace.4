@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.4 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: systrace.4,v 1.5 2002/12/17 10:14:56 miod Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -98,6 +98,10 @@ struct str_msg_child {
 };
 .Ed
 .Sh IOCTL INTERFACE
+.Nm
+supports the following
+.Xr ioctl 2
+commands:
 .Bl -tag -width "xxxxxx"
 .It Dv SYSTR_CLONE Fa "int"
 Return a
@@ -107,10 +111,6 @@ further
 .Xr ioctl 2
 operations.
 .El
-.Nm
-supports the following
-.Xr ioctl 2
-command:
 .Bl -tag -width STRIOCXXXXXXXX
 .It Dv STRIOCATTACH Fa "pid_t"
 Attach to a process, unless:
