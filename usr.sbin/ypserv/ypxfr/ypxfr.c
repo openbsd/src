@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.16 1997/04/12 00:12:58 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.17 1997/04/12 16:37:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.16 1997/04/12 00:12:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.17 1997/04/12 16:37:37 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -148,8 +148,8 @@ u_long *lordernum;
 		if (v.dptr == NULL) {
 			*lordernum = 0;
 		} else {
-	        	strncpy(order, v.dptr, v.dsize);
-			order[v.dsize] = '\0';
+	        	strncpy(order, v.dptr, sizeof order-1);
+			order[sizeof order-1] = '\0';
 			*lordernum = (u_long) atol((char *) &order);
 		}
 	}
