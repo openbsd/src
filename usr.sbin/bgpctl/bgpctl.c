@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.25 2004/01/11 01:05:16 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.26 2004/01/11 02:36:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -35,6 +35,7 @@ enum actions {
 	SHOW_NEIGHBOR,
 	SHOW_NEIGHBOR_TIMERS,
 	SHOW_FIB,
+	SHOW_NEXTHOP,
 	RELOAD,
 	FIB,
 	FIB_COUPLE,
@@ -64,7 +65,8 @@ static const struct keywords keywords_main[] = {
 static const struct keywords keywords_show[] = {
 	{ "neighbor",	SHOW_NEIGHBOR},
 	{ "summary",	SHOW_SUMMARY},
-	{ "fib",	SHOW_FIB}
+	{ "fib",	SHOW_FIB},
+	{ "nexthop",	SHOW_NEXTHOP}
 };
 
 static const struct keywords keywords_show_neighbor[] = {
@@ -95,6 +97,8 @@ static char	*fmt_timeframe_core(time_t t);
 int		 parse_addr(const char *, struct bgpd_addr *);
 void		 show_fib_head(void);
 int		 show_fib_msg(struct imsg *);
+void		 show_nexthop_head(void);
+int		 show_nexthop_msg(struct imsg *);
 
 struct imsgbuf	ibuf;
 
@@ -165,6 +169,10 @@ again:
 			imsg_compose(&ibuf, IMSG_CTL_KROUTE_ADDR, 0, &addr,
 			    sizeof(addr));
 		show_fib_head();
+		break;
+	case SHOW_NEXTHOP:
+		imsg_compose(&ibuf, IMSG_CTL_SHOW_NEXTHOP, 0, NULL, 0);
+		show_nexthop_head();
 		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
@@ -257,6 +265,9 @@ again:
 				break;
 			case SHOW_FIB:
 				done = show_fib_msg(&imsg);
+				break;
+			case SHOW_NEXTHOP:
+				done = show_nexthop_msg(&imsg);
 				break;
 			case SHOW_NEIGHBOR:
 				done = show_neighbor_msg(&imsg, NV_DEFAULT);
@@ -567,3 +578,31 @@ show_fib_msg(struct imsg *imsg)
 
 	return (0);
 }
+
+void
+show_nexthop_head(void)
+{
+	printf("%-20s %s\n", "Nexthop", "State");
+}
+
+int
+show_nexthop_msg(struct imsg *imsg)
+{
+	struct ctl_show_nexthop	*p;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_NEXTHOP:
+		p = imsg->data;
+		printf("%-20s %s\n", inet_ntoa(p->addr.v4),
+		    p->valid ? "valid" : "invalid");
+		break;
+	case IMSG_CTL_END:
+		return (1);
+		break;
+	default:
+		break;
+	}
+
+	return (0);
+}
+
