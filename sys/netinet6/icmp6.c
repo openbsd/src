@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.51 2001/12/07 09:33:10 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.52 2001/12/07 09:56:32 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -550,8 +550,10 @@ icmp6_input(mp, offp, proto)
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_timeexceed);
 		switch (code) {
 		case ICMP6_TIME_EXCEED_TRANSIT:
+			code = PRC_TIMXCEED_INTRANS;
+			break;
 		case ICMP6_TIME_EXCEED_REASSEMBLY:
-			code += PRC_TIMXCEED_INTRANS;
+			code = PRC_TIMXCEED_REASS;
 			break;
 		default:
 			goto badcode;
@@ -579,17 +581,29 @@ icmp6_input(mp, offp, proto)
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_echo);
 		if (code != 0)
 			goto badcode;
-		if ((n = m_copy(m, 0, M_COPYALL)) == NULL) {
-			/* Give up remote */
-			break;
+		/*
+		 * Copy mbuf to send to two data paths: userland socket(s),
+		 * and to the querier (echo reply).
+		 * m: a copy for socket, n: a copy for querier
+		 */
+		if ((n = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
+			/* Give up local */
+			n = m;
+			m = NULL;
+			goto deliverecho;
 		}
-		if ((n->m_flags & M_EXT) != 0
-		 || n->m_len < off + sizeof(struct icmp6_hdr)) {
+		/*
+		 * If the first mbuf is shared, or the first mbuf is too short,
+		 * copy the first part of the data into a fresh mbuf.
+		 * Otherwise, we will wrongly overwrite both copies.
+		 */
+		if ((n->m_flags & M_EXT) != 0 ||
+		    n->m_len < off + sizeof(struct icmp6_hdr)) {
 			struct mbuf *n0 = n;
 			const int maxlen = sizeof(*nip6) + sizeof(*nicmp6);
 
 			/*
-			 * Prepare an internal mbuf. m_pullup() doesn't
+			 * Prepare an internal mbuf.  m_pullup() doesn't
 			 * always copy the length we specified.
 			 */
 			if (maxlen >= MCLBYTES) {
@@ -606,9 +620,11 @@ icmp6_input(mp, offp, proto)
 				}
 			}
 			if (n == NULL) {
-				/* Give up remote */
+				/* Give up local */
 				m_freem(n0);
-				break;
+				n = m;
+				m = NULL;
+				goto deliverecho;
 			}
 			M_MOVE_PKTHDR(n, n0);
 			/*
@@ -630,6 +646,7 @@ icmp6_input(mp, offp, proto)
 			m_adj(n0, off + sizeof(struct icmp6_hdr));
 			n->m_next = n0;
 		} else {
+	 deliverecho:
 			nip6 = mtod(n, struct ip6_hdr *);
 			nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
 			noff = off;
@@ -641,6 +658,8 @@ icmp6_input(mp, offp, proto)
 			icmp6stat.icp6s_outhist[ICMP6_ECHO_REPLY]++;
 			icmp6_reflect(n, noff);
 		}
+		if (!m)
+			goto freeit;
 		break;
 
 	case ICMP6_ECHO_REPLY:
@@ -698,7 +717,7 @@ icmp6_input(mp, offp, proto)
 			IP6_EXTHDR_CHECK(m, off, sizeof(struct icmp6_nodeinfo),
 					 IPPROTO_DONE);
 #endif
-			n = m_copy(m, 0, M_COPYALL);
+			n = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (n)
 				n = ni6_input(n, off);
 			/* XXX meaningless if n == NULL */
@@ -729,6 +748,7 @@ icmp6_input(mp, offp, proto)
 				/* Give up remote */
 				break;
 			}
+			n->m_pkthdr.rcvif = NULL;
 			n->m_len = 0;
 			maxhlen = M_TRAILINGSPACE(n) - maxlen;
 			if (maxhlen > hostnamelen)
@@ -1586,8 +1606,12 @@ ni6_nametodns(name, namelen, old)
 			/* result does not fit into mbuf */
 			if (cp + i + 1 >= ep)
 				goto fail;
-			/* DNS label length restriction, RFC1035 page 8 */
-			if (i >= 64)
+			/*
+			 * DNS label length restriction, RFC1035 page 8.
+			 * "i == 0" case is included here to avoid returning
+			 * 0-length label on "foo..bar".
+			 */
+			if (i <= 0 || i >= 64)
 				goto fail;
 			*cp++ = i;
 			bcopy(p, cp, i);
@@ -2490,6 +2514,7 @@ icmp6_redirect_output(m0, rt)
 		MCLGET(m, M_DONTWAIT);
 	if (!m)
 		goto fail;
+	m->m_pkthdr.rcvif = NULL;
 	m->m_len = 0;
 	maxlen = M_TRAILINGSPACE(m);
 	maxlen = min(IPV6_MMTU, maxlen);
