@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.6 2002/08/28 22:30:42 mickey Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.7 2002/08/29 01:15:21 mickey Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.5 1996/10/12 18:08:12 cgd Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
 #define	_MACHINE_CDEFS_H_
 
 #define	__weak_alias(alias,sym)						\
-    __asm__(".export " __STRING(alias) ", entry ! .weak " __STRING(alias) " ! " __STRING(alias) " = " __STRING(sym))
+    __asm__(".export " __STRING(alias) ", entry\n\t.weak " __STRING(alias) "\n\t" __STRING(alias) " = " __STRING(sym))
 #define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning." __STRING(sym) " ! .ascii \"" msg "\" ; .text")
+    __asm__(".section .gnu.warning." __STRING(sym) "\n\t.ascii \"" msg "\"\n\t.text")
 
 #endif /* !_MACHINE_CDEFS_H_ */
