@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)readmsg.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.2 $"
+#ident "$Revision: 1.3 $"
 #endif
 
 #include "globals.h"
@@ -216,6 +216,13 @@ again:
 			    fprintf(fd,"readmsg: version mismatch\n");
 			    /* should do a dump of the packet */
 			}
+			continue;
+		}
+
+		if (memchr(msgin.tsp_name, '\0', sizeof msgin.tsp_name) ==
+		    NULL) {
+			syslog(LOG_NOTICE, "hostname field not NUL terminated "
+			    "in packet from %s", inet_ntoa(from.sin_addr));
 			continue;
 		}
 
