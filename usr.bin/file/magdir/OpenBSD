@@ -52,6 +52,27 @@
 0	belong&0377777777	041600507	OpenBSD/m68k core
 >12	string			>\0		from '%s'
 
+0	belong&0377777777	046200413	OpenBSD/m88k demand paged
+>0	byte			&0x80		
+>>20	belong			<8192		shared library
+>>20	belong			=8192		dynamically linked executable
+>>20	belong			>8192		dynamically linked executable
+>0	byte			^0x80		executable
+>16	belong			>0		not stripped
+0	belong&0377777777	046200410	OpenBSD/m88k pure
+>0	byte			&0x80		dynamically linked executable
+>0	byte			^0x80		executable
+>16	belong			>0		not stripped
+0	belong&0377777777	046200407	OpenBSD/m88k
+>0	byte			&0x80		dynamically linked executable
+>0	byte			^0x80
+>>0	byte			&0x40		position independent
+>>20	belong			!0		executable
+>>20	belong			=0		object file
+>16	belong			>0		not stripped
+0	belong&0377777777	046200507	OpenBSD/m88k core
+>12	string			>\0		from '%s'
+
 0	belong&0377777777	042000413	OpenBSD/m68k4k demand paged
 >0	byte			&0x80		
 >>20	belong			<4096		shared library
