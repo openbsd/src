@@ -1,7 +1,7 @@
-/*	$OpenBSD: cgtwelve.c,v 1.5 2002/11/06 21:06:20 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.6 2003/04/06 17:02:32 miod Exp $	*/
 
 /*
- * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
+ * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,12 +36,12 @@
  * SPARCstation 1, 1+, 2 and 5, or in an xbox SBUS extension (untested).
  *
  * It is a 24-bit 3D accelerated framebuffer made by Matrox, featuring 4MB
- * (regular model) or 8MB (high-res model) of video memory, a complex windowing
- * engine, double buffering modes, three video planes (overlay, 8 bit and 24 bit
- * color), and a lot of colormap combinations.
+ * (regular model) or 8MB (high-res model) of video memory, a complex
+ * windowing engine, double buffering modes, three video planes (overlay,
+ * 8 bit and 24 bit color), and a lot of colormap combinations.
  *
- * All of this is driven by a set of three Bt462 ramdacs, and a couple of
- * Matrox-specific chips.
+ * All of this is driven by a set of three Bt462 ramdacs (latched unless
+ * explicitely programmed), and a couple of other Matrox-specific chips.
  *
  * XXX The high res card is untested.
  */
@@ -110,14 +110,11 @@ void cgtwelve_free_screen(void *, void *);
 int cgtwelve_show_screen(void *, void *, int, void (*cb)(void *, int, int),
     void *);
 paddr_t cgtwelve_mmap(void *, off_t, int);
-void cgtwelve_reset(struct cgtwelve_softc *);
-void cgtwelve_burner(void *, u_int, u_int);
+void cgtwelve_reset(struct cgtwelve_softc *, int);
 void cgtwelve_prom(void *);
 
 static __inline__ void cgtwelve_ramdac_wraddr(struct cgtwelve_softc *sc,
     u_int32_t addr);
-void cgtwelve_initcmap(struct cgtwelve_softc *);
-void cgtwelve_darkcmap(struct cgtwelve_softc *);
 
 struct wsdisplay_accessops cgtwelve_accessops = {
 	cgtwelve_ioctl,
@@ -128,7 +125,7 @@ struct wsdisplay_accessops cgtwelve_accessops = {
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
-	cgtwelve_burner
+	NULL,	/* burner */
 };
 
 int cgtwelvematch(struct device *, void *, void *);
@@ -155,13 +152,10 @@ cgtwelvematch(parent, vcf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) != 0)
 		return (0);
 
-	if (ca->ca_bustype == BUS_SBUS)
-		return (1);
-
-	return (0);
+	return (1);
 }
 
 /*
@@ -175,7 +169,7 @@ cgtwelveattach(parent, self, args)
 	struct cgtwelve_softc *sc = (struct cgtwelve_softc *)self;
 	struct confargs *ca = args;
 	struct wsemuldisplaydev_attach_args waa;
-	int fb_depth, node;
+	int node;
 	int isconsole = 0;
 	char *ps;
 
@@ -203,23 +197,15 @@ cgtwelveattach(parent, self, args)
 	    CG12_OFF_DAC, sizeof(struct cgtwelve_dac));
 
 	/*
-	 * Compute framebuffer size
+	 * The console is using the 1-bit overlay plane, while the prom
+	 * will correctly report 32 bit depth.
 	 */
-	if (ISSET(sc->sc_sunfb.sf_flags, FB_FORCELOW))
-		fb_depth = 1;
-	else
-		fb_depth = 32;
-
-	fb_setsize(&sc->sc_sunfb, fb_depth, CG12_WIDTH, CG12_HEIGHT,
+	fb_setsize(&sc->sc_sunfb, 1, CG12_WIDTH, CG12_HEIGHT,
 	    node, ca->ca_bustype);
-
-	if (fb_depth == 1 && sc->sc_sunfb.sf_depth == 32) {
-		/* the prom will report depth == 32, so compensate */
-		sc->sc_sunfb.sf_depth = 1;
-		sc->sc_sunfb.sf_linebytes = sc->sc_sunfb.sf_width / 8;
-		sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_height *
-		    sc->sc_sunfb.sf_linebytes;
-	}
+	sc->sc_sunfb.sf_depth = 1;
+	sc->sc_sunfb.sf_linebytes = sc->sc_sunfb.sf_width / 8;
+	sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_height *
+	    sc->sc_sunfb.sf_linebytes;
 
 	sc->sc_highres = sc->sc_sunfb.sf_width == CG12_WIDTH_HR;
 
@@ -230,25 +216,16 @@ cgtwelveattach(parent, self, args)
 	    sc->sc_highres ? CG12_OFF_OVERLAY0_HR : CG12_OFF_OVERLAY0,
 	    round_page(sc->sc_highres ? CG12_SIZE_OVERLAY_HR :
 	        CG12_SIZE_OVERLAY));
-	if (sc->sc_sunfb.sf_depth != 1)
-		sc->sc_inten = mapiodev(ca->ca_ra.ra_reg,
-		    sc->sc_highres ? CG12_OFF_INTEN_HR : CG12_OFF_INTEN,
-		    round_page(sc->sc_highres ? CG12_SIZE_COLOR24_HR :
-		        CG12_SIZE_COLOR24));
+	sc->sc_inten = mapiodev(ca->ca_ra.ra_reg,
+	    sc->sc_highres ? CG12_OFF_INTEN_HR : CG12_OFF_INTEN,
+	    round_page(sc->sc_highres ? CG12_SIZE_COLOR24_HR :
+	        CG12_SIZE_COLOR24));
 
 	/* reset cursor & frame buffer controls */
-	cgtwelve_reset(sc);
+	sc->sc_sunfb.sf_depth = 0;	/* force action */
+	cgtwelve_reset(sc, 1);
 
-	if (sc->sc_sunfb.sf_depth != 1) {
-		/* enable video */
-		cgtwelve_burner(sc, 1, 0);
-	}
-
-	if (sc->sc_sunfb.sf_depth == 1)
-		sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_overlay;
-	else 
-		sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_inten;
-
+	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_overlay;
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
@@ -258,17 +235,8 @@ cgtwelveattach(parent, self, args)
 	cgtwelve_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
 	if (isconsole) {
-		if (sc->sc_sunfb.sf_depth == 1) {
-			fbwscons_console_init(&sc->sc_sunfb,
-			    &cgtwelve_stdscreen, -1, NULL);
-		} else {
-			/*
-			 * Since the screen has been cleared, restart at the
-			 * top of the screen.
-			 */
-			fbwscons_console_init(&sc->sc_sunfb,
-			    &cgtwelve_stdscreen, 0, cgtwelve_burner);
-		}
+		fbwscons_console_init(&sc->sc_sunfb,
+		    &cgtwelve_stdscreen, -1, NULL);
 		shutdownhook_establish(cgtwelve_prom, sc);
 	}
 
@@ -299,35 +267,40 @@ cgtwelve_ioctl(dev, cmd, data, flags, p)
 	struct cgtwelve_softc *sc = dev;
 	struct wsdisplay_fbinfo *wdf;
 
+	/*
+	 * Note that, although the emulation (text) mode is running in the
+	 * overlay plane, we advertize the frame buffer as the full-blown
+	 * 32-bit beast it is.
+	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		if (sc->sc_sunfb.sf_depth == 1)
-			*(u_int *)data = WSDISPLAY_TYPE_SUNBW;
-		else
-			*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
-		wdf->depth = sc->sc_sunfb.sf_depth;
+		wdf->depth = 32;
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
+		*(u_int *)data = sc->sc_sunfb.sf_linebytes * 32;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
 		break;
 
-	case WSDISPLAYIO_SVIDEO:
-	case WSDISPLAYIO_GVIDEO:
-	case WSDISPLAYIO_GCURPOS:
-	case WSDISPLAYIO_SCURPOS:
-	case WSDISPLAYIO_GCURMAX:
-	case WSDISPLAYIO_GCURSOR:
-	case WSDISPLAYIO_SCURSOR:
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+			/* Back from X11 to text mode */
+			cgtwelve_reset(sc, 1);
+		} else {
+			/* Starting X11, switch to 32 bit mode */
+			cgtwelve_reset(sc, 32);
+		}
+		break;
+
 	default:
 		return (-1);	/* not supported yet */
 	}
@@ -339,58 +312,104 @@ cgtwelve_ioctl(dev, cmd, data, flags, p)
  * Clean up hardware state (e.g., after bootup or after X crashes).
  */
 void
-cgtwelve_reset(sc)
+cgtwelve_reset(sc, depth)
 	struct cgtwelve_softc *sc;
+	int depth;
 {
-	if (sc->sc_sunfb.sf_depth == 1)
-		return;
+	u_int32_t c;
 
-	/*
-	 * Select the overlay plane as sc_overlay.
-	 */
-	sc->sc_apu->hpage =
-	    sc->sc_highres ? CG12_HPAGE_OVERLAY_HR : CG12_HPAGE_OVERLAY;
-	sc->sc_apu->haccess = CG12_HACCESS_OVERLAY;
-	sc->sc_dpu->pln_sl_host = CG12_PLN_SL_OVERLAY;
-	sc->sc_dpu->pln_rd_msk_host = CG12_PLN_RD_OVERLAY;
-	sc->sc_dpu->pln_wr_msk_host = CG12_PLN_WR_OVERLAY;
+	if (sc->sc_sunfb.sf_depth != depth) {
+		if (depth == 1) {
+			/*
+			 * Select the enable plane as sc_overlay, and fill it.
+			 */
+			sc->sc_apu->hpage = sc->sc_highres ?
+			    CG12_HPAGE_ENABLE_HR : CG12_HPAGE_ENABLE;
+			sc->sc_apu->haccess = CG12_HACCESS_ENABLE;
+			sc->sc_dpu->pln_sl_host = CG12_PLN_SL_ENABLE;
+			sc->sc_dpu->pln_rd_msk_host = CG12_PLN_RD_ENABLE;
+			sc->sc_dpu->pln_wr_msk_host = CG12_PLN_WR_ENABLE;
 
-	/*
-	 * Do not attempt to somewhat preserve screen contents - reading the
-	 * overlay plane and writing to the color plane at the same time is not
-	 * reliable, and allocating memory to save a copy of the overlay plane
-	 * would be awful.
-	 */
-	bzero((void *)sc->sc_overlay,
-	    sc->sc_highres ? CG12_SIZE_OVERLAY_HR : CG12_SIZE_OVERLAY);
+			memset((void *)sc->sc_overlay, 0xff, sc->sc_highres ?
+			    CG12_SIZE_ENABLE_HR : CG12_SIZE_ENABLE);
 
-	/*
-	 * Select the enable plane as sc_overlay, and clear it.
-	 */
-	sc->sc_apu->hpage =
-	    sc->sc_highres ? CG12_HPAGE_ENABLE_HR : CG12_HPAGE_ENABLE;
-	sc->sc_apu->haccess = CG12_HACCESS_ENABLE;
-	sc->sc_dpu->pln_sl_host = CG12_PLN_SL_ENABLE;
-	sc->sc_dpu->pln_rd_msk_host = CG12_PLN_RD_ENABLE;
-	sc->sc_dpu->pln_wr_msk_host = CG12_PLN_WR_ENABLE;
+			/*
+			 * Select the overlay plane as sc_overlay.
+			 */
+			sc->sc_apu->hpage = sc->sc_highres ?
+			    CG12_HPAGE_OVERLAY_HR : CG12_HPAGE_OVERLAY;
+			sc->sc_apu->haccess = CG12_HACCESS_OVERLAY;
+			sc->sc_dpu->pln_sl_host = CG12_PLN_SL_OVERLAY;
+			sc->sc_dpu->pln_rd_msk_host = CG12_PLN_RD_OVERLAY;
+			sc->sc_dpu->pln_wr_msk_host = CG12_PLN_WR_OVERLAY;
 
-	bzero((void *)sc->sc_overlay,
-	    sc->sc_highres ? CG12_SIZE_ENABLE_HR : CG12_SIZE_ENABLE);
+			/*
+			 * Upload a strict mono colormap, or the text
+			 * upon returning from 32 bit mode would appear
+			 * as (slightly dark) white on white.
+			 */
+			cgtwelve_ramdac_wraddr(sc, 0);
+			sc->sc_ramdac->color = 0x00000000;
+			for (c = 1; c < 256; c++)
+				sc->sc_ramdac->color = 0x00ffffff;
+		} else {
+			/*
+			 * Select the overlay plane as sc_overlay.
+			 */
+			sc->sc_apu->hpage = sc->sc_highres ?
+			    CG12_HPAGE_OVERLAY_HR : CG12_HPAGE_OVERLAY;
+			sc->sc_apu->haccess = CG12_HACCESS_OVERLAY;
+			sc->sc_dpu->pln_sl_host = CG12_PLN_SL_OVERLAY;
+			sc->sc_dpu->pln_rd_msk_host = CG12_PLN_RD_OVERLAY;
+			sc->sc_dpu->pln_wr_msk_host = CG12_PLN_WR_OVERLAY;
 
-	/*
-	 * Select the intensity (color) plane, and clear it.
-	 */
-	sc->sc_apu->hpage =
-	    sc->sc_highres ? CG12_HPAGE_24BIT_HR : CG12_HPAGE_24BIT;
-	sc->sc_apu->haccess = CG12_HACCESS_24BIT;
-	sc->sc_dpu->pln_sl_host = CG12_PLN_SL_24BIT;
-	sc->sc_dpu->pln_rd_msk_host = CG12_PLN_RD_24BIT;
-	sc->sc_dpu->pln_wr_msk_host = CG12_PLN_WR_24BIT;
+			/*
+			 * Do not attempt to somewhat preserve screen
+			 * contents - reading the overlay plane and writing
+			 * to the color plane at the same time is not
+			 * reliable, and allocating memory to save a copy
+			 * of the overlay plane would be awful.
+			 */
+			bzero((void *)sc->sc_overlay, sc->sc_highres ?
+			    CG12_SIZE_OVERLAY_HR : CG12_SIZE_OVERLAY);
 
-	memset((void *)sc->sc_inten, 0x00ffffff,
-	    sc->sc_highres ? CG12_SIZE_COLOR24_HR : CG12_SIZE_COLOR24);
+			/*
+			 * Select the enable plane as sc_overlay, and clear it.
+			 */
+			sc->sc_apu->hpage = sc->sc_highres ?
+			    CG12_HPAGE_ENABLE_HR : CG12_HPAGE_ENABLE;
+			sc->sc_apu->haccess = CG12_HACCESS_ENABLE;
+			sc->sc_dpu->pln_sl_host = CG12_PLN_SL_ENABLE;
+			sc->sc_dpu->pln_rd_msk_host = CG12_PLN_RD_ENABLE;
+			sc->sc_dpu->pln_wr_msk_host = CG12_PLN_WR_ENABLE;
 
-	shutdownhook_establish(cgtwelve_prom, sc);
+			bzero((void *)sc->sc_overlay, sc->sc_highres ?
+			    CG12_SIZE_ENABLE_HR : CG12_SIZE_ENABLE);
+
+			/*
+			 * Select the intensity (color) plane, and clear it.
+			 */
+			sc->sc_apu->hpage = sc->sc_highres ?
+			    CG12_HPAGE_24BIT_HR : CG12_HPAGE_24BIT;
+			sc->sc_apu->haccess = CG12_HACCESS_24BIT;
+			sc->sc_dpu->pln_sl_host = CG12_PLN_SL_24BIT;
+			sc->sc_dpu->pln_rd_msk_host = CG12_PLN_RD_24BIT;
+			sc->sc_dpu->pln_wr_msk_host = CG12_PLN_WR_24BIT;
+
+			memset((void *)sc->sc_inten, 0x00ffffff,
+			    sc->sc_highres ?
+			      CG12_SIZE_COLOR24_HR : CG12_SIZE_COLOR24);
+
+			/*
+			 * Use a direct colormap (ramp)
+			 */
+			cgtwelve_ramdac_wraddr(sc, 0);
+			for (c = 0; c < 256; c++)
+				sc->sc_ramdac->color = c | (c << 8) | (c << 16);
+		}
+	}
+
+	sc->sc_sunfb.sf_depth = depth;
 }
 
 /*
@@ -405,20 +424,17 @@ cgtwelve_mmap(v, offset, prot)
 {
 	struct cgtwelve_softc *sc = v;
 
-	if (offset & PGOFSET)
+	if (offset & PGOFSET || offset < 0)
 		return (-1);
 
-	/* Allow mapping as a dumb framebuffer from offset 0 */
-	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize) {
-		if (sc->sc_sunfb.sf_depth == 1) {
-			return (REG2PHYS(&sc->sc_phys,
-			    (sc->sc_highres ? CG12_OFF_OVERLAY0_HR :
-			    CG12_OFF_OVERLAY0) + offset) | PMAP_NC);
-		} else {
-			return (REG2PHYS(&sc->sc_phys,
-			    (sc->sc_highres ? CG12_OFF_INTEN_HR :
-			    CG12_OFF_INTEN) + offset) | PMAP_NC);
-		}
+	/*
+	 * Note that mmap() will invoke this function only if we are NOT
+	 * in emulation mode, so we can assume 32 bit mode safely here.
+	 */
+	if (offset < sc->sc_sunfb.sf_fbsize * 32) {
+		return (REG2PHYS(&sc->sc_phys,
+		    (sc->sc_highres ? CG12_OFF_INTEN_HR :
+		    CG12_OFF_INTEN) + offset) | PMAP_NC);
 	}
 
 	return (-1);	/* not a user-map offset */
@@ -478,50 +494,6 @@ cgtwelve_ramdac_wraddr(struct cgtwelve_softc *sc, u_int32_t addr)
 	sc->sc_ramdac->addr_hi = ((addr >> 8) & 0xff);
 }
 
-void
-cgtwelve_initcmap(sc)
-	struct cgtwelve_softc *sc;
-{
-	u_int32_t c;
-
-	/*
-	 * Since we are using the framebuffer in true color mode, there is
-	 * theoretically no ramdac initialisation to do.
-	 * In practice, we have to load a ramp on each ramdac first.
-	 * Fortunately they are latched on each other at this point, so by
-	 * loading one single ramp, all of them get initialized.
-	 */
-	cgtwelve_ramdac_wraddr(sc, 0);
-	for (c = 0; c < 256; c++)
-		sc->sc_ramdac->color = c | (c << 8) | (c << 16);
-}
-
-void
-cgtwelve_darkcmap(sc)
-	struct cgtwelve_softc *sc;
-{
-	u_int32_t c;
-
-	cgtwelve_ramdac_wraddr(sc, 0);
-	for (c = 0; c < 256; c++)
-		sc->sc_ramdac->color = 0;
-}
-
-void cgtwelve_burner(v, on, flags)
-	void *v;
-	u_int on, flags;
-{
-	struct cgtwelve_softc *sc = v;
-
-	if (sc->sc_sunfb.sf_depth == 1)
-		return;
-
-	if (on)
-		cgtwelve_initcmap(sc);
-	else
-		cgtwelve_darkcmap(sc);
-}
-
 /*
  * Shutdown hook used to restore PROM-compatible video mode on shutdown,
  * so that the PROM prompt is visible again.
@@ -531,33 +503,15 @@ cgtwelve_prom(v)
 	void *v;
 {
 	struct cgtwelve_softc *sc = v;
-	int c;
 	extern struct consdev consdev_prom;
 
-	/*
-	 * Select the overlay plane.
-	 */
-	sc->sc_apu->hpage =
-	    sc->sc_highres ? CG12_HPAGE_OVERLAY_HR : CG12_HPAGE_OVERLAY;
-	sc->sc_apu->haccess = CG12_HACCESS_OVERLAY;
-	sc->sc_dpu->pln_sl_host = CG12_PLN_SL_OVERLAY;
-	sc->sc_dpu->pln_rd_msk_host = CG12_PLN_RD_OVERLAY;
-	sc->sc_dpu->pln_wr_msk_host = CG12_PLN_WR_OVERLAY;
+	if (sc->sc_sunfb.sf_depth != 1) {
+		cgtwelve_reset(sc, 1);
 
-	/*
-	 * Do not touch enable and intensity planes, so that kernel
-	 * messages can still be read when back to the prom.
-	 * However, we need to fix the colormap, or the prompt will come
-	 * back as white on white.
-	 */
-	cgtwelve_ramdac_wraddr(sc, 0);
-	sc->sc_ramdac->color = 0x00ffffff;
-	for (c = 1; c < 256; c++)
-		sc->sc_ramdac->color = 0x00000000;
-
-	/*
-	 * Go back to prom output for the last few messages, so they
-	 * will be displayed correctly.
-	 */
-	cn_tab = &consdev_prom;
+		/*
+		 * Go back to prom output for the last few messages, so they
+		 * will be displayed correctly.
+		 */
+		cn_tab = &consdev_prom;
+	}
 }

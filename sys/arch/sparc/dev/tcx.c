@@ -1,8 +1,8 @@
-/*	$OpenBSD: tcx.c,v 1.15 2002/12/10 20:32:57 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.16 2003/04/06 17:02:32 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
- * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
+ * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -105,6 +105,8 @@ struct tcx_softc {
 	struct	rom_reg sc_phys[TCX_NREG];	/* phys addr of h/w */
 	volatile struct bt_regs *sc_bt;		/* Brooktree registers */
 	volatile struct tcx_thc *sc_thc;	/* THC registers */
+	volatile u_int8_t *sc_dfb8;		/* 8 bit plane */
+	volatile u_int32_t *sc_dfb24;		/* S24 24 bit plane */
 	volatile u_int32_t *sc_cplane;		/* S24 control plane */
 	union	bt_cmap sc_cmap;		/* Brooktree color map */
 	struct	intrhand sc_ih;
@@ -117,7 +119,6 @@ struct wsscreen_descr tcx_stdscreen = {
 
 const struct wsscreen_descr *tcx_scrlist[] = {
 	&tcx_stdscreen,
-	/* XXX other formats? */
 };
 
 struct wsscreen_list tcx_screenlist = {
@@ -131,7 +132,7 @@ void tcx_free_screen(void *, void *);
 int tcx_show_screen(void *, void *, int, void (*cb)(void *, int, int),
     void *);
 paddr_t tcx_mmap(void *, off_t, int);
-void tcx_reset(struct tcx_softc *);
+void tcx_reset(struct tcx_softc *, int);
 void tcx_burner(void *, u_int, u_int);
 void tcx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 static __inline__ void tcx_loadcmap_deferred(struct tcx_softc *, u_int, u_int);
@@ -190,13 +191,10 @@ tcxmatch(parent, vcf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	if (strcmp(ra->ra_name, "SUNW,tcx"))
+	if (strcmp(ra->ra_name, "SUNW,tcx") != 0)
 		return (0);
 
-	if (ca->ca_bustype == BUS_SBUS)
-		return (1);
-
-	return (0);
+	return (1);
 }
 
 /*
@@ -210,16 +208,22 @@ tcxattach(parent, self, args)
 	struct tcx_softc *sc = (struct tcx_softc *)self;
 	struct confargs *ca = args;
 	struct wsemuldisplaydev_attach_args waa;
-	int fb_depth, node = 0, i;
+	int node = 0, i;
 	volatile struct bt_regs *bt;
 	int isconsole = 0;
 	char *nam = NULL;
 
 	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
 
-	if (ca->ca_ra.ra_nreg < TCX_NREG)
-		panic("tcx: expected %d registers, got %d", TCX_NREG,
-		    ca->ca_ra.ra_nreg);
+	node = ca->ca_ra.ra_node;
+	nam = getpropstring(node, "model");
+	printf(": %s\n", nam);
+
+	if (ca->ca_ra.ra_nreg < TCX_NREG) {
+		printf("\n%s: expected %d registers, got %d\n",
+		    self->dv_xname, TCX_NREG, ca->ca_ra.ra_nreg);
+		return;
+	}
 
 	/* Copy register address spaces */
 	for (i = 0; i < TCX_NREG; i++)
@@ -231,40 +235,28 @@ tcxattach(parent, self, args)
 	    mapiodev(&ca->ca_ra.ra_reg[TCX_REG_THC],
 	        0x1000, sizeof *sc->sc_thc);
 
-	switch (ca->ca_bustype) {
-	case BUS_SBUS:
-		node = ca->ca_ra.ra_node;
-		nam = getpropstring(node, "model");
-		break;
-
-	default:
-		printf("TCX on bus 0x%x?\n", ca->ca_bustype);
-		return;
-	}
-
-	printf(": %s\n", nam);
-
 	isconsole = node == fbnode;
 
-	if (ISSET(sc->sc_sunfb.sf_flags, FB_FORCELOW))
-		fb_depth = 8;
-	else
-		fb_depth = node_has_property(node, "tcx-8-bit") ?  8 : 32;
+	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, ca->ca_bustype);
+	if (node_has_property(node, "tcx-8-bit")) {
+		sc->sc_dfb8 = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_DFB8], 0,
+		    round_page(sc->sc_sunfb.sf_fbsize));
+		sc->sc_dfb24 = NULL;
+		sc->sc_cplane = NULL;
+	} else {
+		sc->sc_dfb8 = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_DFB8], 0,
+		    round_page(sc->sc_sunfb.sf_fbsize));
 
-	fb_setsize(&sc->sc_sunfb, fb_depth, 1152, 900, node, ca->ca_bustype);
-
-	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&ca->ca_ra.ra_reg[
-	    sc->sc_sunfb.sf_depth == 8 ? TCX_REG_DFB8 : TCX_REG_DFB24],
-	    0, round_page(sc->sc_sunfb.sf_fbsize));
-	
-	/* map the control plane for S24 framebuffers */
-	if (sc->sc_sunfb.sf_depth != 8) {
-		sc->sc_cplane = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_RDFB32],
-		    0, round_page(sc->sc_sunfb.sf_fbsize));
+		/* map the 24 bit and control planes for S24 framebuffers */
+		sc->sc_dfb24 = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_DFB24], 0,
+		    round_page(sc->sc_sunfb.sf_fbsize * 4));
+		sc->sc_cplane = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_RDFB32], 0,
+		    round_page(sc->sc_sunfb.sf_fbsize * 4));
 	}
 
 	/* reset cursor & frame buffer controls */
-	tcx_reset(sc);
+	sc->sc_sunfb.sf_depth = 0;	/* force action */
+	tcx_reset(sc, 8);
 
 	/* grab initial (current) color map */
 	bt->bt_addr = 0;
@@ -275,6 +267,7 @@ tcxattach(parent, self, args)
 	tcx_burner(sc, 1, 0);
 
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
+	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_dfb8;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
 
@@ -325,51 +318,62 @@ tcx_ioctl(dev, cmd, data, flags, p)
 	struct wsdisplay_fbinfo *wdf;
 	int error;
 
+	/*
+	 * Note that, although the emulation (text) mode is running in 8-bit
+	 * mode, if the frame buffer is able to run in 24-bit mode, it will
+	 * be advertized as such.
+	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		if (sc->sc_cplane == NULL)
+			*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		else
+			*(u_int *)data = WSDISPLAY_TYPE_SUN24;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
 		wdf->depth = sc->sc_sunfb.sf_depth;
-		wdf->cmsize = (sc->sc_sunfb.sf_depth == 8) ? 256 : 0;
+		wdf->cmsize = sc->sc_cplane == NULL ? 256 : 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
+		if (sc->sc_cplane == NULL)
+			*(u_int *)data = sc->sc_sunfb.sf_linebytes;
+		else
+			*(u_int *)data = sc->sc_sunfb.sf_linebytes * 4;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
-		if (sc->sc_sunfb.sf_depth == 8) {
-			cm = (struct wsdisplay_cmap *)data;
-			error = bt_getcmap(&sc->sc_cmap, cm);
-			if (error)
-				return (error);
-		}
+		cm = (struct wsdisplay_cmap *)data;
+		error = bt_getcmap(&sc->sc_cmap, cm);
+		if (error)
+			return (error);
 		break;
 	case WSDISPLAYIO_PUTCMAP:
-		if (sc->sc_sunfb.sf_depth == 8) {
-			cm = (struct wsdisplay_cmap *)data;
-			error = bt_putcmap(&sc->sc_cmap, cm);
-			if (error)
-				return (error);
-			if (ISSET(sc->sc_sunfb.sf_flags, TCX_INTR)) {
-				tcx_loadcmap_deferred(sc, cm->index, cm->count);
-			} else {
-				bt_loadcmap(&sc->sc_cmap, sc->sc_bt,
-				    cm->index, cm->count, 1);
-			}
+		cm = (struct wsdisplay_cmap *)data;
+		error = bt_putcmap(&sc->sc_cmap, cm);
+		if (error)
+			return (error);
+		if (ISSET(sc->sc_sunfb.sf_flags, TCX_INTR)) {
+			tcx_loadcmap_deferred(sc, cm->index, cm->count);
+		} else {
+			bt_loadcmap(&sc->sc_cmap, sc->sc_bt,
+			    cm->index, cm->count, 1);
 		}
 		break;
 
-	case WSDISPLAYIO_SVIDEO:
-	case WSDISPLAYIO_GVIDEO:
-	case WSDISPLAYIO_GCURPOS:
-	case WSDISPLAYIO_SCURPOS:
-	case WSDISPLAYIO_GCURMAX:
-	case WSDISPLAYIO_GCURSOR:
-	case WSDISPLAYIO_SCURSOR:
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+			/* Back from X11 to text mode */
+			tcx_reset(sc, 8);
+		} else {
+			/* Starting X11, try to switch to 24 bit mode */
+			if (sc->sc_cplane != NULL)
+				tcx_reset(sc, 32);
+		}
+		break;
+
 	default:
 		return (-1);	/* not supported yet */
 	}
@@ -381,8 +385,9 @@ tcx_ioctl(dev, cmd, data, flags, p)
  * Clean up hardware state (e.g., after bootup or after X crashes).
  */
 void
-tcx_reset(sc)
+tcx_reset(sc, depth)
 	struct tcx_softc *sc;
+	int depth;
 {
 	volatile struct bt_regs *bt;
 
@@ -395,31 +400,34 @@ tcx_reset(sc)
 	bt->bt_ctrl |= 0x03 << 24;
 
 	/*
-	 * Select 24-bit mode if appropriate.
+	 * Change mode if appropriate
 	 */
-	if (sc->sc_sunfb.sf_depth != 8) {
-		volatile u_int32_t *cptr;
-		u_int32_t pixel;
-		int ramsize;
+	if (sc->sc_sunfb.sf_depth != depth) {
+		if (sc->sc_cplane != NULL) {
+			volatile u_int32_t *cptr;
+			u_int32_t pixel;
+			int ramsize;
 
-		ramsize = sc->sc_sunfb.sf_fbsize / sizeof(u_int32_t);
-		cptr = sc->sc_cplane;
+			cptr = sc->sc_cplane;
+			ramsize = sc->sc_sunfb.sf_fbsize;
 
-		/*
-		 * Since the prom output so far has only been white (0)
-		 * or black (255), we can promote the 8 bit plane contents
-		 * to full color.
-		 * Of course, the 24 bit plane uses 0 for black, so a
-		 * reversal is necessary. Blame Sun.
-		 */
-		while (ramsize-- != 0) {
-			pixel = 255 - ((*cptr & TCX_CTL_PIXELMASK) & 0xff);
-			pixel = (pixel << 16) | (pixel << 8) | pixel;
-			*cptr++ = pixel | TCX_CTL_24_LEVEL;
+			if (depth == 8) {
+				while (ramsize-- != 0) {
+					pixel = (*cptr & TCX_CTL_PIXELMASK);
+					*cptr++ = pixel | TCX_CTL_8_MAPPED;
+				}
+			} else {
+				while (ramsize-- != 0) {
+					*cptr++ = TCX_CTL_24_LEVEL;
+				}
+			}
 		}
 
-		shutdownhook_establish(tcx_prom, sc);
+		if (depth == 8)
+			fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
 	}
+
+	sc->sc_sunfb.sf_depth = depth;
 }
 
 void
@@ -429,28 +437,18 @@ tcx_prom(v)
 	struct tcx_softc *sc = v;
 	extern struct consdev consdev_prom;
 
-	/*
-	 * Select 8-bit mode.
-	 */
 	if (sc->sc_sunfb.sf_depth != 8) {
-		volatile u_int32_t *cptr;
-		u_int32_t pixel;
-		int ramsize;
+		/*
+	 	* Select 8-bit mode.
+	 	*/
+		tcx_reset(sc, 8);
 
-		ramsize = sc->sc_sunfb.sf_fbsize / sizeof(u_int32_t);
-		cptr = sc->sc_cplane;
-
-		while (ramsize-- != 0) {
-			pixel = (*cptr & TCX_CTL_PIXELMASK);
-			*cptr++ = pixel | TCX_CTL_8_MAPPED;
-		}
+		/*
+	 	* Go back to prom output for the last few messages, so they
+	 	* will be displayed correctly.
+	 	*/
+		cn_tab = &consdev_prom;
 	}
-
-	/*
-	 * Go back to prom output for the last few messages, so they
-	 * will be displayed correctly.
-	 */
-	cn_tab = &consdev_prom;
 }
 
 void
@@ -487,17 +485,17 @@ tcx_mmap(v, offset, prot)
 	int prot;
 {
 	struct tcx_softc *sc = v;
-	int reg;
 
-	if (offset & PGOFSET)
+	if (offset & PGOFSET || offset < 0)
 		return (-1);
 
 	/* Allow mapping as a dumb framebuffer from offset 0 */
-	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize) {
-		reg = (sc->sc_sunfb.sf_depth == 8) ?
-		    TCX_REG_DFB8 : TCX_REG_DFB24;
-		return (REG2PHYS(&sc->sc_phys[reg], offset) | PMAP_NC);
-	}
+	if (sc->sc_sunfb.sf_depth == 8 && offset < sc->sc_sunfb.sf_fbsize)
+		return (REG2PHYS(&sc->sc_phys[TCX_REG_DFB8], offset) | PMAP_NC);
+	else if (sc->sc_sunfb.sf_depth != 8 &&
+	    offset < sc->sc_sunfb.sf_fbsize * 4)
+		return (REG2PHYS(&sc->sc_phys[TCX_REG_DFB24], offset) |
+		    PMAP_NC);
 
 	return (-1);	/* not a user-map offset */
 }
@@ -529,13 +527,8 @@ tcx_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = &sc->sc_sunfb.sf_ro;
 	*curyp = 0;
 	*curxp = 0;
-	if (sc->sc_sunfb.sf_depth == 8) {
-		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	} else {
-		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-		    0, 0, 0, attrp);
-	}
+	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
+	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }

@@ -1,8 +1,8 @@
-/*	$OpenBSD: cgfourteen.c,v 1.22 2003/04/06 17:00:35 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.23 2003/04/06 17:02:32 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
- * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
+ * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,8 +78,6 @@
 
 /*
  * Driver for Campus-II on-board mbus-based video (cgfourteen).
- * Provides minimum emulation of a Sun cgthree 8-bit framebuffer to
- * allow X to run.
  *
  * Does not handle interrupts, even though they can occur.
  *
@@ -133,6 +131,9 @@ struct cgfourteen_softc {
 	struct	cg14clut *sc_clut3;
 	u_int	*sc_clutincr;
 
+	int	sc_32;			/* can do 32bit at this resolution */
+	size_t	sc_vramsize;		/* total video memory size */
+
 	int	sc_nscreens;
 };
 
@@ -156,7 +157,7 @@ void cgfourteen_free_screen(void *, void *);
 int cgfourteen_show_screen(void *, void *, int, void (*cb)(void *, int, int),
     void *);
 paddr_t cgfourteen_mmap(void *, off_t, int);
-void cgfourteen_reset(struct cgfourteen_softc *);
+void cgfourteen_reset(struct cgfourteen_softc *, int);
 void cgfourteen_burner(void *, u_int, u_int);
 void cgfourteen_prom(void *);
 
@@ -234,7 +235,7 @@ cgfourteenattach(parent, self, args)
 	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
 	struct confargs *ca = args;
 	struct wsemuldisplaydev_attach_args waa;
-	int fb_depth, node, i;
+	int node, i;
 	u_int32_t *lut;
 	int isconsole = 0;
 	char *nam;
@@ -253,14 +254,14 @@ cgfourteenattach(parent, self, args)
 	 * Sanity checks
 	 */
 	if (ca->ca_ra.ra_len < 0x10000) {
-		printf("\n");
-		panic("cgfourteen: expected %x bytes of control "
-		    "registers, got %x", 0x10000, ca->ca_ra.ra_len);
+		printf("\n%s: expected %x bytes of control registers, got %x\n",
+		    self->dv_xname, 0x10000, ca->ca_ra.ra_len);
+		return;
 	}
 	if (ca->ca_ra.ra_nreg < CG14_NREG) {
-		printf("\n");
-		panic("cgfourteen: expected %d registers, got %d",
-		    CG14_NREG, ca->ca_ra.ra_nreg);
+		printf("\n%s: expected %d registers, got %d",
+		    self->dv_xname, CG14_NREG, ca->ca_ra.ra_nreg);
+		return;
 	}
 
 	printf(", %dMB", ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len >> 20);
@@ -291,39 +292,29 @@ cgfourteenattach(parent, self, args)
 	 */
 	sc->sc_phys = ca->ca_ra.ra_reg[CG14_REG_VRAM];
 
-	if (ISSET(sc->sc_sunfb.sf_flags, FB_FORCELOW))
-		fb_depth = 8;
-	else
-		fb_depth = 32;
-
-	fb_setsize(&sc->sc_sunfb, fb_depth, 1152, 900, node, ca->ca_bustype);
+	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, ca->ca_bustype);
 
 	/*
-	 * The prom will report depth == 8, since this is the mode
-	 * it will get initialized in.
-	 * Try to compensate and enable 32 bit mode, unless it would
-	 * not fit in the video memory. Note that, in this case, the
+	 * The prom will report depth == 8, since this is the mode it will
+	 * get initialized in.
+	 * Check if we will be able to use 32 bit mode later (i.e. if it will
+	 * fit in the video memory. Note that, if this is not the case, the
 	 * VSIMM will usually not appear in the OBP device tree!
 	 */
-	if (fb_depth == 32 && sc->sc_sunfb.sf_depth == 8 &&
-	    sc->sc_sunfb.sf_fbsize * 4 <=
-	    ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len) {
-		sc->sc_sunfb.sf_depth = 32;
-		sc->sc_sunfb.sf_linebytes *= 4;
-		sc->sc_sunfb.sf_fbsize *= 4;
-	}
+	sc->sc_vramsize = ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len;
+	sc->sc_32 = sc->sc_sunfb.sf_fbsize * 4 <= sc->sc_vramsize;
 
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&ca->ca_ra.ra_reg[CG14_REG_VRAM],
 	    0,	/* CHUNKY_XBGR */
-	    round_page(sc->sc_sunfb.sf_fbsize));
+	    sc->sc_vramsize);
 
-	printf(", %dx%d, depth %d\n", sc->sc_sunfb.sf_width,
-	    sc->sc_sunfb.sf_height, sc->sc_sunfb.sf_depth);
+	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	/*
 	 * Reset frame buffer controls
 	 */
-	cgfourteen_reset(sc);
+	sc->sc_sunfb.sf_depth = 0;	/* force action */
+	cgfourteen_reset(sc, 8);
 
 	/*
 	 * Grab the initial colormap
@@ -348,8 +339,7 @@ cgfourteenattach(parent, self, args)
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &cgfourteen_stdscreen,
-		    sc->sc_sunfb.sf_depth == 8 ? -1 : 0,
-		    cgfourteen_burner);
+		    -1, cgfourteen_burner);
 		shutdownhook_establish(cgfourteen_prom, sc);
 	}
 
@@ -373,48 +363,59 @@ cgfourteen_ioctl(dev, cmd, data, flags, p)
 	struct wsdisplay_fbinfo *wdf;
 	int error;
 
+	/*
+	 * Note that, although the emulation (text) mode is running in a
+	 * 8-bit plane, we advertize the frame buffer as 32-bit if it can
+	 * support this mode.
+	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		if (sc->sc_32)
+			*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		else
+			*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
-		wdf->depth = sc->sc_sunfb.sf_depth;
-		wdf->cmsize = (sc->sc_sunfb.sf_depth == 8) ? 256 : 0;
+		wdf->depth = sc->sc_32 ? 32 : 8;
+		wdf->cmsize = sc->sc_32 ? 0 : 256;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
+		if (sc->sc_32)
+			*(u_int *)data = sc->sc_sunfb.sf_linebytes * 4;
+		else
+			*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
-		if (sc->sc_sunfb.sf_depth == 8) {
-			cm = (struct wsdisplay_cmap *)data;
-			error = cgfourteen_getcmap(&sc->sc_cmap, cm);
-			if (error)
-				return (error);
-		}
+		cm = (struct wsdisplay_cmap *)data;
+		error = cgfourteen_getcmap(&sc->sc_cmap, cm);
+		if (error)
+			return (error);
 		break;
 
 	case WSDISPLAYIO_PUTCMAP:
-		if (sc->sc_sunfb.sf_depth == 8) {
-			cm = (struct wsdisplay_cmap *)data;
-			error = cgfourteen_putcmap(&sc->sc_cmap, cm);
-			if (error)
-				return (error);
-			/* XXX should use retrace interrupt */
-			cgfourteen_loadcmap(sc, cm->index, cm->count);
+		cm = (struct wsdisplay_cmap *)data;
+		error = cgfourteen_putcmap(&sc->sc_cmap, cm);
+		if (error)
+			return (error);
+		/* XXX should use retrace interrupt */
+		cgfourteen_loadcmap(sc, cm->index, cm->count);
+		break;
+
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+			/* Back from X11 to text mode */
+			cgfourteen_reset(sc, 8);
+		} else {
+			/* Starting X11, try to switch to 32 bit mode */
+			if (sc->sc_32)
+				cgfourteen_reset(sc, 32);
 		}
 		break;
 
-	case WSDISPLAYIO_SVIDEO:
-	case WSDISPLAYIO_GVIDEO:
-	case WSDISPLAYIO_GCURPOS:
-	case WSDISPLAYIO_SCURPOS:
-	case WSDISPLAYIO_GCURMAX:
-	case WSDISPLAYIO_GCURSOR:
-	case WSDISPLAYIO_SCURSOR:
 	default:
 		return (-1);	/* not supported yet */
 	}
@@ -437,12 +438,8 @@ cgfourteen_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = &sc->sc_sunfb.sf_ro;
 	*curyp = 0;
 	*curxp = 0;
-	if (sc->sc_sunfb.sf_depth == 8)
-		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	else
-		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-		    0, 0, 0, attrp);
+	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
+	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }
@@ -484,7 +481,7 @@ cgfourteen_mmap(v, offset, prot)
 		return (-1);
 
 	/* Allow mapping as a dumb framebuffer from offset 0 */
-	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize) {
+	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize * 4) {
 		return (REG2PHYS(&sc->sc_phys, offset) | PMAP_NC);
 	}
 
@@ -493,36 +490,42 @@ cgfourteen_mmap(v, offset, prot)
 
 /* Initialize the framebuffer, storing away useful state for later reset */
 void
-cgfourteen_reset(sc)
+cgfourteen_reset(sc, depth)
 	struct cgfourteen_softc *sc;
+	int depth;
 {
 
-	if (sc->sc_sunfb.sf_depth == 8) {
-		/*
-		 * Enable the video and put it in 8 bit mode
-		 */
-		sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID |
-		    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL;
-	} else {
-		/*
-		 * Enable the video, and put in 32 bit mode.
-		 */
-		sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID |
-		    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL;
+	if (sc->sc_sunfb.sf_depth != depth) {
+		if (depth == 8) {
+			/*
+			 * Enable the video and put it in 8 bit mode
+			 */
+			sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID |
+			    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL;
 
-		/*
-		 * Clear the screen to white
-		 */
-		memset(sc->sc_sunfb.sf_ro.ri_bits, 0xff,
-		    round_page(sc->sc_sunfb.sf_fbsize));
+			fbwscons_setcolormap(&sc->sc_sunfb,
+			    cgfourteen_setcolor);
+		} else {
+			/*
+			 * Clear the screen to black
+			 */
+			bzero(sc->sc_sunfb.sf_ro.ri_bits,
+			    sc->sc_sunfb.sf_fbsize);
 
-		/*
-		 * Zero the xlut to enable direct-color mode
-		 */
-		bzero(sc->sc_xlut, CG14_CLUT_SIZE);
+			/*
+			 * Enable the video, and put in 32 bit mode.
+			 */
+			sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID |
+			    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL;
 
-		shutdownhook_establish(cgfourteen_prom, sc);
+			/*
+			 * Zero the xlut to enable direct-color mode
+			 */
+			bzero(sc->sc_xlut, CG14_CLUT_SIZE);
+		}
 	}
+
+	sc->sc_sunfb.sf_depth = depth;
 }
 
 void
@@ -536,8 +539,7 @@ cgfourteen_prom(v)
 		/*
 		 * Go back to 8-bit mode.
 		 */
-		sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID |
-		    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL;
+		cgfourteen_reset(sc, 8);
 
 		/*
 		 * Go back to prom output for the last few messages, so they
