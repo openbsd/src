@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.65 2004/06/22 07:35:20 cedric Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.66 2005/01/18 22:25:38 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -627,9 +627,8 @@ icmp_reflect(struct mbuf *m)
 	ip->ip_dst = ip->ip_src;
 	/*
 	 * If the incoming packet was addressed directly to us,
-	 * use dst as the src for the reply.  Otherwise (broadcast
-	 * or anonymous), use the address which corresponds
-	 * to the incoming interface.
+	 * use dst as the src for the reply.  For broadcast, use
+	 * the address which corresponds to the incoming interface.
 	 */
 	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
 		if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
@@ -638,13 +637,10 @@ icmp_reflect(struct mbuf *m)
 		    t.s_addr == ia->ia_broadaddr.sin_addr.s_addr)
 			break;
 	}
-	icmpdst.sin_addr = t;
-	if ((ia == (struct in_ifaddr *)0) && (m->m_pkthdr.rcvif != NULL))
-		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
-		    m->m_pkthdr.rcvif));
 	/*
-	 * The following happens if the packet was not addressed to us,
-	 * and was received on an interface with no IP address.
+	 * The following happens if the packet was not addressed to us.
+	 * Use the new source address and do a route lookup. If it fails
+	 * drop the packet as there is no path to the host.
 	 */
 	if (ia == (struct in_ifaddr *)0) {
 		struct sockaddr_in *dst;
@@ -654,7 +650,7 @@ icmp_reflect(struct mbuf *m)
 		dst = satosin(&ro.ro_dst);
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = t;
+		dst->sin_addr = ip->ip_src;
 
 		rtalloc(&ro);
 		if (ro.ro_rt == 0) {
