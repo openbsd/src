@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.18 2002/12/19 01:25:21 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.19 2003/01/07 08:25:23 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -353,7 +353,7 @@ i82596_cmd_wait(sc)
 	/* spin on i82596 command acknowledge; wait at most 0.9 (!) seconds */
 	int i, off;
 
-	for (i = 0; i < 180000; i++) {
+	for (i = 180000; i--; DELAY(5)) {
 		/* Read the command word */
 		off = IE_SCB_CMD(sc->scb);
 		bus_space_barrier(sc->bt, sc->bh, off, 2,
@@ -366,7 +366,6 @@ i82596_cmd_wait(sc)
 #endif
 			return (0);
 		}
-		DELAY(5);
 	}
 
 	printf("i82596_cmd_wait: timo(%ssync): scb status: %b\n",
@@ -428,11 +427,11 @@ i82596_start_cmd(sc, cmd, iecmdbuf, mask, async)
 		 * According to the packet driver, the minimum timeout
 		 * should be .369 seconds.
 		 */
-		for (i = 0; i < 73800; i++) {
+		for (i = 73800; i--; DELAY(5)) {
 			/* Read the command status */
 			off = IE_CMD_COMMON_STATUS(iecmdbuf);
 			bus_space_barrier(sc->bt, sc->bh, off, 2,
-					  BUS_SPACE_BARRIER_READ);
+			    BUS_SPACE_BARRIER_READ);
 			status = (sc->ie_bus_read16)(sc, off);
 			if (status & mask) {
 #ifdef I82596_DEBUG
@@ -443,7 +442,6 @@ i82596_start_cmd(sc, cmd, iecmdbuf, mask, async)
 #endif
 				return (0);
 			}
-			DELAY(5);
 		}
 
 	} else {
