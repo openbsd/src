@@ -1,12 +1,13 @@
-$NetBSD: README.files,v 1.1 1995/10/16 04:55:16 cgd Exp $
+$NetBSD: README.files,v 1.3 1995/12/21 02:40:49 cgd Exp $
 
 README.files			This list.
 
-Files are organized by release, numbered by year, month, and date, in
-the form: YYMMDD
+Snapshots are organized by release, numbered by year, month, and date, in
+directories with names of the form "YYMMDD".
 
 In each directory:
 
+README_FIRST			Important last-minute notes about the snapshot.
 README				Installation notes; probably incomplete.
 STATUS				Status of NetBSD/Alpha.
 TODO.users			Things that I think users could do to help out.
@@ -14,7 +15,7 @@ TODO.users			Things that I think users could do to help out.
 bin/				Directory with binaries for this snapshot.
 
 	bin.tar.gz		Everything on the disk image except /etc,
-				/usr/X11R6, and the kernel.
+				/usr/X11R6, /boot, and the kernel.
 	etc.tar.gz		/etc from the disk image.
 	netbsd.gz		Gzipped GENERIC kernel (also on disk image).
 	netbsd.gdb.gz		Gzipped GENERIC kernel w/debugging symbols.
