@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.8 1997/09/16 07:52:35 deraadt Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.9 1998/05/25 08:02:24 downsj Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -54,45 +54,6 @@ struct pctrst {
 
 #define _PATH_PCTR "/dev/pctr"
 
-#define __cpuid()				\
-({						\
-  pctrval id;					\
-  __asm __volatile ("pushfl\n"			\
-		    "\tpopl %%eax\n"		\
-		    "\tmovl %%eax,%%ecx\n"	\
-		    "\txorl %1,%%eax\n"		\
-		    "\tpushl %%eax\n"		\
-		    "\tpopfl\n"			\
-		    "\tpushfl\n"		\
-		    "\tpopl %%eax\n"		\
-		    "\tpushl %%ecx\n"		\
-		    "\tpopfl\n"			\
-		    "\tcmpl %%eax,%%ecx\n"	\
-		    "\tmovl $0,%%eax\n"		\
-		    "\tje 1f\n"			\
-		    "\tcpuid\n"			\
-		    "\ttestl %%eax,%%eax\n"	\
-		    "\tje 1f\n"			\
-		    "\tmovl $1,%%eax\n"		\
-		    "\tcpuid\n"			\
-		    "\tjmp 2f\n"		\
-		    "1:\t"			\
-		    "\txorl %%eax,%%eax\n"	\
-		    "\txorl %%edx,%%edx\n"	\
-		    "2:\t"			\
-		    : "=A" (id) : "i" (PSL_ID)	\
-		    : "edx", "ecx", "ebx");	\
-  id;						\
-})
-
-#define __hastsc(id) (((id) & 0x1000000000ULL) != 0ULL)
-#define __hasp5ctr(id) (((id) & 0xf00) == 0x500		\
-			&& (((id) & 0xf0) == 0x10	\
-			    || ((id) & 0xf0) == 0x20))
-#define __hasp6ctr(id) (((id) & 0xf00) == 0x600)		
-
-#define __cpufamily() ((__cpuid() >> 8) & 0xf)
-
 #define rdtsc()						\
 ({							\
   pctrval v;						\
@@ -111,9 +72,6 @@ struct pctrst {
 })
 
 #ifdef _KERNEL
-
-#define CR4_TSD 0x004         /* Time stamp disable */
-#define CR4_PCE 0x100         /* Performance counter enable */
 
 #define MSR_TSC 0x10          /* MSR for TSC */
 #define P5MSR_CTRSEL 0x11     /* MSR for selecting both counters on P5 */
