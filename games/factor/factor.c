@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.10 2001/08/19 23:19:46 pjanzen Exp $	*/
+/*	$OpenBSD: factor.c,v 1.11 2001/10/24 14:32:56 deraadt Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: factor.c,v 1.10 2001/08/19 23:19:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: factor.c,v 1.11 2001/10/24 14:32:56 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ main(argc, argv)
  * processing.
  *
  * Print the factors of the number, from the lowest to the highest.
- * A factor will be printed numtiple times if it divides the value
+ * A factor will be printed multiple times if it divides the value
  * multiple times.
  *
  * Factors are printed with leading tabs.
