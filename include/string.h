@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.13 2003/08/01 17:38:33 avsm Exp $	*/
+/*	$OpenBSD: string.h,v 1.14 2004/06/20 17:47:07 avsm Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -90,6 +90,7 @@ size_t	 strxfrm(char *, const char *, size_t)
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 int	 bcmp(const void *, const void *, size_t);
 void	 bcopy(const void *, void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,3)))
 		__attribute__ ((__bounded__(__buffer__,2,3)));
 void	 bzero(void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,2)));
