@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.17 1997/08/20 05:32:17 millert Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.18 1998/03/22 21:22:59 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -82,7 +82,6 @@ struct quotause {
 
 void	putprivs __P((long, int, struct quotause *));
 void	freeprivs __P((struct quotause *));
-int	getentry __P((char *, int));
 int	writetimes __P((struct quotause *, int, int));
 int	editit __P((char *));
 int	readtimes __P((struct quotause *, int));
@@ -91,6 +90,7 @@ int	alldigits __P((char *s));
 int	readprivs __P((struct quotause *, int));
 int	hasquota __P((struct fstab *, int, char **));
 int	cvtatos __P((time_t, char *, time_t *));
+u_int	getentry __P((char *, int));
 
 void
 usage()
@@ -108,8 +108,6 @@ main(argc, argv)
 	int argc;
 {
 	register struct quotause *qup, *protoprivs, *curprivs;
-	extern char *optarg;
-	extern int optind;
 	register u_int id, protoid;
 	register int quotatype, tmpfd;
 	char *protoname = NULL;
@@ -191,25 +189,32 @@ main(argc, argv)
  * an identifier. This routine must agree with the kernel routine
  * getinoquota as to the interpretation of quota types.
  */
-int
+u_int
 getentry(name, quotatype)
 	char *name;
 	int quotatype;
 {
 	struct passwd *pw;
 	struct group *gr;
+	u_long id;
 
-	if (alldigits(name))
-		return(atoi(name));
 	switch(quotatype) {
 	case USRQUOTA:
 		if ((pw = getpwnam(name)))
 			return(pw->pw_uid);
+		else if (alldigits(name)) {
+			if ((id = strtoul(name, NULL, 10)) <= UID_MAX)
+				return((uid_t)id);
+		}
 		warnx("%s: no such user", name);
 		break;
 	case GRPQUOTA:
 		if ((gr = getgrnam(name)))
 			return(gr->gr_gid);
+		else if (alldigits(name)) {
+			if ((id = strtoul(name, NULL, 10)) <= GID_MAX)
+				return((gid_t)id);
+		}
 		warnx("%s: no such group", name);
 		break;
 	default:
@@ -234,7 +239,6 @@ getprivs(id, quotatype)
 	int qcmd, qupsize, fd;
 	char *qfpathname;
 	static int warned = 0;
-	extern int errno;
 
 	setfsent();
 	quphead = (struct quotause *)0;
@@ -357,8 +361,6 @@ editit(tmpfile)
 	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
  top:
 	if ((pid = fork()) < 0) {
-		extern errno;
-
 		if (errno == EPROCLIM) {
 			warnx("you have too many processes");
 			free(p);
@@ -712,7 +714,7 @@ int
 alldigits(s)
 	register char *s;
 {
-	register c;
+	register int c;
 
 	c = *s++;
 	do {
