@@ -2291,7 +2291,13 @@
 ./var/www/conf/srm.conf-dist
 ./var/www/htdocs
 ./var/www/htdocs/apache_pb.gif
+./var/www/htdocs/blowfish.jpg
+./var/www/htdocs/bsd_small.gif
 ./var/www/htdocs/index.html
+./var/www/htdocs/lock.gif
+./var/www/htdocs/logo23.jpg
+./var/www/htdocs/logo24.jpg
+./var/www/htdocs/smalltitle.gif
 ./var/www/htdocs/manual
 ./var/www/htdocs/manual/LICENSE
 ./var/www/htdocs/manual/bind.html
@@ -2589,3 +2595,4 @@
 ./var/www/htdocs/manual/images/mod_ssl_sb.gif
 ./var/www/htdocs/manual/images/ssleay.gif
 ./var/www/htdocs/manual/install-tpf.html
+./usr/bin/infocmp
