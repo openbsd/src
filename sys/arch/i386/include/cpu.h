@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.66 2004/07/14 05:34:14 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.67 2004/08/05 03:07:47 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -214,7 +214,7 @@ extern void cpu_init_idle_pcbs(void);
 #define astpending (curcpu()->ci_astpending)
 
 /*
- * Preemt the current process if in interrupt from user monre,
+ * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
 extern void need_resched(struct cpu_info *);
