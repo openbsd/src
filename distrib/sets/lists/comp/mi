@@ -1764,6 +1764,7 @@
 ./usr/share/man/cat3/CIRCLEQ_NEXT.0
 ./usr/share/man/cat3/CIRCLEQ_PREV.0
 ./usr/share/man/cat3/CIRCLEQ_REMOVE.0
+./usr/share/man/cat3/COLOR_PAIR.0
 ./usr/share/man/cat3/CRYPTO_get_ex_data.0
 ./usr/share/man/cat3/CRYPTO_num_locks.0
 ./usr/share/man/cat3/CRYPTO_set_ex_data.0
@@ -1949,6 +1950,7 @@
 ./usr/share/man/cat3/OpenSSL_add_all_algorithms.0
 ./usr/share/man/cat3/OpenSSL_add_all_ciphers.0
 ./usr/share/man/cat3/OpenSSL_add_all_digests.0
+./usr/share/man/cat3/PAIR_NUMBER.0
 ./usr/share/man/cat3/RAND_SSLeay.0
 ./usr/share/man/cat3/RAND_add.0
 ./usr/share/man/cat3/RAND_bytes.0
@@ -2990,6 +2992,7 @@
 ./usr/share/man/cat3/modf.0
 ./usr/share/man/cat3/moncontrol.0
 ./usr/share/man/cat3/monstartup.0
+./usr/share/man/cat3/mouse_trafo.0
 ./usr/share/man/cat3/mouseinterval.0
 ./usr/share/man/cat3/mousemask.0
 ./usr/share/man/cat3/move.0
@@ -3440,6 +3443,9 @@
 ./usr/share/man/cat3/sinhf.0
 ./usr/share/man/cat3/sleep.0
 ./usr/share/man/cat3/slk_attr.0
+./usr/share/man/cat3/slk_attr_off.0
+./usr/share/man/cat3/slk_attr_on.0
+./usr/share/man/cat3/slk_attr_set.0
 ./usr/share/man/cat3/slk_attroff.0
 ./usr/share/man/cat3/slk_attron.0
 ./usr/share/man/cat3/slk_attrset.0
@@ -3648,6 +3654,7 @@
 ./usr/share/man/cat3/vsscanf.0
 ./usr/share/man/cat3/vsyslog.0
 ./usr/share/man/cat3/vtimes.0
+./usr/share/man/cat3/vw_printw.0
 ./usr/share/man/cat3/vwarn.0
 ./usr/share/man/cat3/vwarnx.0
 ./usr/share/man/cat3/vwprintw.0
