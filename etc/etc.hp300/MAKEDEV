@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.35 2001/06/28 02:58:53 kjc Exp $
+#	$OpenBSD: MAKEDEV,v 1.36 2002/01/04 03:00:44 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -207,6 +207,7 @@ tun*)
 
 rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	rm -f rd$unit? rrd$unit?
 	mknod rd${unit}a b 8 `expr $unit '*' 16 + 0`
 	mknod rd${unit}c b 8 `expr $unit '*' 16 + 2`
 	mknod rrd${unit}a c 34 `expr $unit '*' 16 + 0`
