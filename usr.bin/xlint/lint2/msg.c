@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.4 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: msg.c,v 1.5 2003/04/14 03:03:52 deraadt Exp $	*/
 /*	$NetBSD: msg.c,v 1.2 1995/07/03 21:24:56 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: msg.c,v 1.4 2002/02/19 19:39:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: msg.c,v 1.5 2003/04/14 03:03:52 deraadt Exp $";
 #endif
 
 #include <string.h>
@@ -130,10 +130,10 @@ mkpos(posp)
 	if (len > blen)
 		buf = xrealloc(buf, blen = len);
 	if (line != 0) {
-		(void)sprintf(buf, "%s%s(%hu)",
+		(void)snprintf(buf, blen, "%s%s(%hu)",
 			      fn, qm ? "?" : "", line);
 	} else {
-		(void)sprintf(buf, "%s", fn);
+		(void)snprintf(buf, blen, "%s", fn);
 	}
 
 	return (buf);

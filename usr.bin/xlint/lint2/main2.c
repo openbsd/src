@@ -1,4 +1,4 @@
-/*	$OpenBSD: main2.c,v 1.4 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: main2.c,v 1.5 2003/04/14 03:03:52 deraadt Exp $	*/
 /*	$NetBSD: main2.c,v 1.2 1995/07/03 21:24:53 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main2.c,v 1.4 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: main2.c,v 1.5 2003/04/14 03:03:52 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -119,7 +119,7 @@ main(argc, argv)
 		case 'C':
 			len = strlen(optarg);
 			lname = xmalloc(len + 10);
-			(void)sprintf(lname, "llib-l%s.ln", optarg);
+			(void)snprintf(lname, len + 10, "llib-l%s.ln", optarg);
 			libname = lname;
 			Cflag = 1;
 			uflag = 0;
