@@ -1,5 +1,4 @@
 PROG	= fs
-MAN	=
 BINDIR	= /usr/sbin
 SRCS	= fs.c arlalib.c fs_lib.c
 LDADD	+= -lkafs
