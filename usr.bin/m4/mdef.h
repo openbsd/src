@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.24 2003/06/12 14:36:43 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.25 2003/06/30 21:42:50 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -85,6 +85,7 @@
 #define TRACEONTYPE	42
 #define TRACEOFFTYPE	43
 
+#define BUILTIN_MARKER	"__builtin_"
  
 #define TYPEMASK	63	/* Keep bits really corresponding to a type. */
 #define RECDEF		256	/* Pure recursive def, don't expand it */
@@ -135,16 +136,11 @@
  
 typedef struct ndblock *ndptr;
  
-struct ndblock {		/* hastable structure         */
-	char		*name;	/* entry name..               */
+struct macro_definition {
 	char		*defn;	/* definition..               */
 	unsigned int	type;	/* type of the entry..        */
-	unsigned int 	hv;	/* hash function value..      */
-	ndptr		nxtptr;	/* link to next entry..       */
 };
- 
-#define nil     ((ndptr) 0)
- 
+
 struct keyblk {
         char    *knam;          /* keyword name */
         int     ktyp;           /* keyword type */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.48 2003/06/18 21:08:07 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.49 2003/06/30 21:42:50 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.48 2003/06/18 21:08:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.49 2003/06/30 21:42:50 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,9 +61,6 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.48 2003/06/18 21:08:07 espie Exp $";
 #include "extern.h"
 #include "pathnames.h"
 
-#define BUILTIN_MARKER	"__builtin_"
-
-static void 	setup_definition(ndptr, const char *);
 static void	dodefn(const char *);
 static void	dopushdef(const char *, const char *);
 static void	dodump(const char *[], int);
@@ -82,7 +79,7 @@ static void	map(char *, const char *, const char *, const char *);
 static const char *handledash(char *, char *, const char *);
 static void	expand_builtin(const char *[], int, int);
 static void	expand_macro(const char *[], int);
-static void	dump_one_def(ndptr);
+static void	dump_one_def(const char *, struct macro_definition *);
 
 unsigned long	expansion_id;
 
@@ -91,7 +88,7 @@ unsigned long	expansion_id;
  *	  argc - number of elements in argv.
  *	  argv - element vector :
  *			argv[0] = definition of a user
- *				  macro or nil if built-in.
+ *				  macro or NULL if built-in.
  *			argv[1] = name of the macro or
  *				  built-in.
  *			argv[2] = parameters to user-defined
@@ -196,7 +193,7 @@ expand_builtin(const char *argv[], int argc, int td)
 	 * another definition
 	 */
 		if (argc > 3) {
-			if (lookup(argv[2]) != nil)
+			if (lookup_macro_definition(argv[2]) != NULL)
 				pbstr(argv[3]);
 			else if (argc > 4)
 				pbstr(argv[4]);
@@ -344,7 +341,7 @@ expand_builtin(const char *argv[], int argc, int td)
 	 */
 		if (argc > 2)
 			for (n = 2; n < argc; n++)
-				remhash(argv[n], ALL);
+				macro_undefine(argv[n]);
 		break;
 
 	case POPDTYPE:
@@ -355,7 +352,7 @@ expand_builtin(const char *argv[], int argc, int td)
 	 */
 		if (argc > 2)
 			for (n = 2; n < argc; n++)
-				remhash(argv[n], TOP);
+				macro_popdef(argv[n]);
 		break;
 
 	case MKTMTYPE:
@@ -563,48 +560,15 @@ expand_macro(const char *argv[], int argc)
 
 
 /*
- * common part to dodefine and dopushdef
- */
-static void 
-setup_definition(ndptr p, const char *defn)
-{
-	int n;
-
-	if (strncmp(defn, BUILTIN_MARKER, sizeof(BUILTIN_MARKER)-1) == 0) {
-		n = builtin_type(defn+sizeof(BUILTIN_MARKER)-1);
-		if (n != -1) {
-			p->type = n & TYPEMASK;
-			if ((n & NOARGS) == 0)
-				p->type |= NEEDARGS;
-			p->defn = xstrdup(defn+sizeof(BUILTIN_MARKER)-1);
-			return;
-		}
-	}
-	if (!*defn)
-		p->defn = null;
-	else
-		p->defn = xstrdup(defn);
-	p->type = MACRTYPE;
-}
-
-/*
  * dodefine - install definition in the table
  */
 void
 dodefine(const char *name, const char *defn)
 {
-	ndptr p;
-
 	if (!*name)
 		errx(1, "%s at line %lu: null definition.", CURRENT_NAME,
 		    CURRENT_LINE);
-	if ((p = lookup(name)) == nil)
-		p = addent(name);
-	else if (p->defn != null)
-		free((char *) p->defn);
-	setup_definition(p, defn);
-	if (STREQ(name, defn))
-		p->type |= RECDEF;
+	macro_define(name, defn);
 }
 
 /*
@@ -614,10 +578,10 @@ dodefine(const char *name, const char *defn)
 static void
 dodefn(const char *name)
 {
-	ndptr p;
+	struct macro_definition *p;
 	char *real;
 
-	if ((p = lookup(name)) != nil) {
+	if ((p = lookup_macro_definition(name)) != NULL) {
 		if ((p->type & TYPEMASK) == MACRTYPE) {
 			pbstr(rquote);
 			pbstr(p->defn);
@@ -639,31 +603,26 @@ dodefn(const char *name)
 static void
 dopushdef(const char *name, const char *defn)
 {
-	ndptr p;
-
 	if (!*name)
 		errx(1, "%s at line %lu: null definition", CURRENT_NAME,
 		    CURRENT_LINE);
-	p = addent(name);
-	setup_definition(p, defn);
-	if (STREQ(name, defn))
-		p->type |= RECDEF;
+	macro_pushdef(name, defn);
 }
 
 /*
  * dump_one_def - dump the specified definition.
  */
 static void
-dump_one_def(ndptr p)
+dump_one_def(const char *name, struct macro_definition *p)
 {
 	if (mimic_gnu) {
 		if ((p->type & TYPEMASK) == MACRTYPE)
-			fprintf(traceout, "%s:\t%s\n", p->name, p->defn);
+			fprintf(traceout, "%s:\t%s\n", name, p->defn);
 		else {
-			fprintf(traceout, "%s:\t<%s>\n", p->name, p->defn);
+			fprintf(traceout, "%s:\t<%s>\n", name, p->defn);
 	    	}
 	} else
-		fprintf(traceout, "`%s'\t`%s'\n", p->name, p->defn);
+		fprintf(traceout, "`%s'\t`%s'\n", name, p->defn);
 }
 
 /*
@@ -675,17 +634,14 @@ static void
 dodump(const char *argv[], int argc)
 {
 	int n;
-	ndptr p;
+	struct macro_definition *p;
 
 	if (argc > 2) {
 		for (n = 2; n < argc; n++)
-			if ((p = lookup(argv[n])) != nil)
-				dump_one_def(p);
-	} else {
-		for (n = 0; n < HASHSIZE; n++)
-			for (p = hashtab[n]; p != nil; p = p->nxtptr)
-				dump_one_def(p);
-	}
+			if ((p = lookup_macro_definition(argv[n])) != NULL)
+				dump_one_def(argv[n], p);
+	} else
+		macro_for_all(dump_one_def);
 }
 
 /*

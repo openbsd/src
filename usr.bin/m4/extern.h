@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.33 2003/06/18 21:08:07 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.34 2003/06/30 21:42:50 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -58,10 +58,17 @@ extern void doesyscmd(const char *);
  
 
 /* look.c */
-extern ndptr	addent(const char *);
-extern unsigned	hash(const char *);
 extern ndptr	lookup(const char *);
-extern void	remhash(const char *, int);
+
+extern struct macro_definition *lookup_macro_definition(const char *);
+extern void 	macro_define(const char *, const char *);
+extern void 	macro_pushdef(const char *, const char *);
+extern void 	macro_popdef(const char *);
+extern void 	macro_undefine(const char *);
+extern void 	setup_builtin(const char *, unsigned int);
+extern void 	macro_for_all(void (*)(const char *, struct macro_definition *));
+extern const char *macro_name(ndptr);
+extern struct macro_definition *macro_getdef(ndptr);
 
 /* main.c */
 extern void outputstr(const char *);
@@ -149,3 +156,4 @@ extern char scommt[MAXCCHARS+1];/* start character for comment */
 extern int  synch_lines;	/* line synchronisation directives */
 
 extern int mimic_gnu;		/* behaves like gnu-m4 */
+

@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.21 2003/06/08 22:42:27 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.22 2003/06/30 21:42:50 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -159,9 +159,9 @@ fopen_trypath(struct input_file *i, const char *filename)
 void 
 doindir(const char *argv[], int argc)
 {
-	ndptr p;
+	struct macro_definition *p;
 
-	p = lookup(argv[2]);
+	p = lookup_macro_definition(argv[2]);
 	if (p == NULL)
 		errx(1, "undefined macro %s", argv[2]);
 	argv[1] = p->defn;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.11 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: look.c,v 1.12 2003/06/30 21:42:50 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,9 +51,19 @@ static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 #include "stdd.h"
 #include "extern.h"
 
+struct ndblock {		/* hastable structure         */
+	char		*name;	/* entry name..               */
+	struct macro_definition d;
+	unsigned int 	hv;	/* hash function value..      */
+	ndptr		nxtptr;	/* link to next entry..       */
+};
+ 
 static void freent(ndptr);
+static void	remhash(const char *, int);
+static unsigned	hash(const char *);
+static ndptr	addent(const char *);
 
-unsigned int
+static unsigned int
 hash(const char *name)
 {
 	unsigned int h = 0;
@@ -72,7 +82,7 @@ lookup(const char *name)
 	unsigned int h;
 
 	h = hash(name);
-	for (p = hashtab[h % HASHSIZE]; p != nil; p = p->nxtptr)
+	for (p = hashtab[h % HASHSIZE]; p != NULL; p = p->nxtptr)
 		if (h == p->hv && STREQ(name, p->name))
 			break;
 	return (p);
@@ -82,7 +92,7 @@ lookup(const char *name)
  * hash and create an entry in the hash table.
  * The new entry is added in front of a hash bucket.
  */
-ndptr 
+static ndptr 
 addent(const char *name)
 {
 	unsigned int h;
@@ -101,15 +111,15 @@ static void
 freent(ndptr p)
 {
 	free((char *) p->name);
-	if (p->defn != null)
-		free((char *) p->defn);
+	if (p->d.defn != null)
+		free((char *) p->d.defn);
 	free((char *) p);
 }
 
 /*
  * remove an entry from the hashtable
  */
-void
+static void
 remhash(const char *name, int all)
 {
 	unsigned int h;
@@ -117,11 +127,11 @@ remhash(const char *name, int all)
 
 	h = hash(name);
 	mp = hashtab[h % HASHSIZE];
-	tp = nil;
-	while (mp != nil) {
+	tp = NULL;
+	while (mp != NULL) {
 		if (mp->hv == h && STREQ(mp->name, name)) {
 			mp = mp->nxtptr;
-			if (tp == nil) {
+			if (tp == NULL) {
 				freent(hashtab[h % HASHSIZE]);
 				hashtab[h % HASHSIZE] = mp;
 			}
@@ -138,4 +148,114 @@ remhash(const char *name, int all)
 			mp = mp->nxtptr;
 		}
 	}
+}
+
+struct macro_definition *
+lookup_macro_definition(const char *name)
+{
+	ndptr p;
+
+	p = lookup(name);
+	if (p)
+		return &(p->d);
+	else
+		return NULL;
+}
+
+static void 
+setup_definition(struct macro_definition *d, const char *defn)
+{
+	int n;
+
+	if (strncmp(defn, BUILTIN_MARKER, sizeof(BUILTIN_MARKER)-1) == 0) {
+		n = builtin_type(defn+sizeof(BUILTIN_MARKER)-1);
+		if (n != -1) {
+			d->type = n & TYPEMASK;
+			if ((n & NOARGS) == 0)
+				d->type |= NEEDARGS;
+			d->defn = xstrdup(defn+sizeof(BUILTIN_MARKER)-1);
+			return;
+		}
+	}
+	if (!*defn)
+		d->defn = null;
+	else
+		d->defn = xstrdup(defn);
+	d->type = MACRTYPE;
+}
+
+void
+macro_define(const char *name, const char *defn)
+{
+	ndptr p;
+
+	if ((p = lookup(name)) == NULL)
+		p = addent(name);
+	else if (p->d.defn != null)
+		free((char *) p->d.defn);
+	setup_definition(&(p->d), defn);
+	if (STREQ(name, defn))
+		p->d.type |= RECDEF;
+}
+
+void
+macro_pushdef(const char *name, const char *defn)
+{
+	ndptr p;
+
+	p = addent(name);
+	setup_definition(&(p->d), defn);
+	if (STREQ(name, defn))
+		p->d.type |= RECDEF;
+}
+
+void
+macro_undefine(const char *name)
+{
+	remhash(name, ALL);
+}
+
+void
+macro_popdef(const char *name)
+{
+	remhash(name, TOP);
+}
+
+void
+macro_for_all(void (*f)(const char *, struct macro_definition *))
+{
+	int n;
+	ndptr p;
+
+	for (n = 0; n < HASHSIZE; n++)
+		for (p = hashtab[n]; p != NULL; p = p->nxtptr)
+			f(p->name, &(p->d));
+}
+
+void 
+setup_builtin(const char *name, unsigned int type)
+{
+	unsigned int h;
+	ndptr p;
+
+	h = hash(name);
+	p = (ndptr) xalloc(sizeof(struct ndblock));
+	p->nxtptr = hashtab[h % HASHSIZE];
+	hashtab[h % HASHSIZE] = p;
+	p->name = xstrdup(name);
+	p->d.defn = xstrdup(name);
+	p->hv = h;
+	p->d.type = type;
+}
+
+const char *
+macro_name(ndptr p)
+{
+	return p->name;
+}
+
+struct macro_definition *
+macro_getdef(ndptr p)
+{
+	return &(p->d);
 }
