@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.11 2003/04/05 20:31:58 deraadt Exp $	*/
+/*	$OpenBSD: message.c,v 1.12 2003/04/06 18:57:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: message.c,v 6.24 1996/07/19 17:00:35 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: message.c,v 1.11 2003/04/05 20:31:58 deraadt Exp $";
+"$OpenBSD: message.c,v 1.12 2003/04/06 18:57:44 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -130,8 +130,9 @@ extern void msgprconfig()
 			if (IS_ON(msgfacility[i].mf_msgtypes, 
 				  msgtypes[x].mt_type)) {
 				if (x > 0)
-					(void) strcat(buf, ",");
-				(void) strcat(buf, msgtypes[x].mt_name);
+					(void) strlcat(buf, ",", sizeof buf);
+				(void) strlcat(buf, msgtypes[x].mt_name,
+				    sizeof buf);
 			}
 		debugmsg(DM_MISC, "%s", buf);
 	}
