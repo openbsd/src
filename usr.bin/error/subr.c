@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.3 1997/06/17 20:56:40 kstailey Exp $	*/
+/*	$OpenBSD: subr.c,v 1.4 1998/11/16 06:22:28 deraadt Exp $	*/
 /*	$NetBSD: subr.c,v 1.4 1995/09/10 15:55:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: subr.c,v 1.3 1997/06/17 20:56:40 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.4 1998/11/16 06:22:28 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: subr.c,v 1.3 1997/06/17 20:56:40 kstailey Exp $
 /*
  *	Arrayify a list of rules
  */
+void
 arrayify(e_length, e_array, header)
 	int	*e_length;
 	Eptr	**e_array;
@@ -75,6 +76,7 @@ arrayify(e_length, e_array, header)
 }
 
 /*VARARGS1*/
+void
 error(msg, a1, a2, a3)
 	char	*msg;
 {
@@ -85,6 +87,7 @@ error(msg, a1, a2, a3)
 	fflush(stderr);
 	exit(6);
 }
+
 /*ARGSUSED*/
 char *Calloc(nelements, size)
 	int	nelements;
