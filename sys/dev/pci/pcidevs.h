@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.404 2001/06/13 04:58:35 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.405 2001/06/16 20:17:40 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1051,6 +1051,8 @@
 
 /* Distributed Processing Technology products */
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/Raid */
+#define	PCI_PRODUCT_DPT_RAID_I2O	0xa501		/* SmartRAID (I2O) */
+#define	PCI_PRODUCT_DPT_MEMCTLR	0x1012		/* Memory Controller */
 
 /* Dolphin products */
 #define	PCI_PRODUCT_DOLPHIN_PCISCI	0x0658		/* PCI-SCI */
@@ -1569,7 +1571,8 @@
 
 /* PLX products */
 #define	PCI_PRODUCT_PLX_1076	0x1076		/* I/O */
-#define	PCI_PRODUCT_PLX_9050	0x9050		/* I/O */
+#define	PCI_PRODUCT_PLX_9050	0x9050		/* I/O 9050 */
+#define	PCI_PRODUCT_PLX_9080	0x9080		/* I/O 9080 */
 
 /* Promise products */
 #define	PCI_PRODUCT_PROMISE_DC5030	0x5300		/* DC5030 */
