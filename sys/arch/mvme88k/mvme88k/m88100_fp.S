@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.20 2003/12/25 00:12:37 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.21 2004/01/16 00:13:43 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -2482,6 +2482,7 @@ ASENTRY(Xfp_imprecise)
 	bb0	1,r4,3f			/* branch to FPoverflow if bit set */
 	br	_ASM_LABEL(FPoverflow)
 3:
+	/* XXX handle inexact!!! */
 #ifdef HANDLER
 	br	_handler		/* branch to handler since bit will */
 					/* be set for inexact */
@@ -2490,12 +2491,12 @@ ASENTRY(Xfp_imprecise)
 fpui_wrapup:
 	tb1	0,r0,0		/* make sure all floating point operations */
 				/* have finished */
-	ldcr	r10, cr1	/* load the PSR */
+	ldcr	r4, cr1	/* load the PSR */
 #if 0
-	set	r10, r10, 1<PSR_FPU_DISABLE_BIT>
+	set	r4, r4, 1<PSR_FPU_DISABLE_BIT>
 #endif
-	set	r10, r10, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r10, cr1
+	set	r4, r4, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r4, cr1
 	ld	r1, r31, 32
 	ld	r29,r31, 36
 	addu	r31, r31, 40
