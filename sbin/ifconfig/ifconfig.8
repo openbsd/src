@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.28 1999/09/23 22:42:11 deraadt Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.29 1999/12/08 07:45:30 itojun Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -157,6 +157,12 @@ Internet
 addresses and 10Mb/s Ethernet addresses.
 .It Fl arp
 Disable the use of the Address Resolution Protocol.
+.It Cm anycast
+(inet6 only)
+Set the IPv6 anycast address bit.
+.It Fl anycast
+(inet6 only)
+Clear the IPv6 anycast address bit.
 .It Cm broadcast Ar addr
 (Inet only)
 Specify the address to use to represent broadcasts to the
@@ -238,7 +244,7 @@ Higher metrics have the effect of making a route
 less favorable; metrics are counted as addition hops
 to the destination network or host.
 .It Cm netmask Ar mask
-(Inet and ISO)
+(Inet, inet6 and ISO)
 Specify how much of the address to reserve for subdividing
 networks into sub-networks.
 The mask includes the network part of the local address
@@ -288,6 +294,20 @@ netmasks though OpenBSD implements it internally as a set of netmasks.
 .It Cm phase
 The argument following this specifies the version (phase) of the
 AppleTalk network attached to the interface. Values of 1 or 2 are permitted.
+.It Cm pltime Ar n
+(inet6 only)
+Set preferred lifetime for the address.
+.It Cm prefixlen Ar n
+(inet6 only)
+Effect is similar to
+.Cm netmask .
+but you can specify by prefix length by digits.
+.It Cm tentative
+(inet6 only)
+Set the IPv6 tentative address bit.
+.It Fl tentative
+(inet6 only)
+Clear the IPv6 tentative address bit.
 .It Cm trailers
 Request the use of a
 .Dq trailer
@@ -327,6 +347,9 @@ This may be used to enable an interface after an
 It happens automatically when setting the first address on an interface.
 If the interface was reset when previously marked down,
 the hardware will be re-initialized.
+.It Cm vltime Ar n
+(inet6 only)
+Set valid lifetime for the address.
 .El
 .Pp
 .Pp
