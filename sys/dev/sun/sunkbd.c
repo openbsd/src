@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.4 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.5 2002/05/29 20:43:43 maja Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -196,6 +196,35 @@ const keysym_t sunkbd_keydesc_sv_nodead[] = {
     KC(0x41),		KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
 
+const keysym_t sunkbd5_keydesc_sv[] = {
+
+    KC(0x0d),		KS_Mode_switch,
+    KC(0x0f),		KS_asciitilde,	KS_asciicircum, 
+    KC(0x1f),		KS_2,		KS_quotedbl,	KS_at,
+    KC(0x20),		KS_3,		KS_numbersign,	KS_sterling,
+    KC(0x21),		KS_4,		KS_currency,	KS_dollar,
+    KC(0x23),		KS_6,		KS_ampersand,
+    KC(0x24),		KS_7,		KS_slash,	KS_braceleft,
+    KC(0x25),		KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(0x26),		KS_9,		KS_parenright,	KS_bracketright,
+    KC(0x27),		KS_0,		KS_equal,	KS_braceright,
+    KC(0x28),		KS_plus,	KS_question,	KS_backslash,
+    KC(0x29),		KS_dead_acute,	KS_dead_grave,
+    KC(0x2a),		KS_paragraph,	KS_onehalf,
+    KC(0x40),		KS_aring,
+    KC(0x41),		KS_dead_diaeresis,KS_dead_circumflex,KS_dead_tilde,
+    KC(0x43),		KS_Multi_key,
+    KC(0x4c),		KS_Control_L,
+    KC(0x56),		KS_odiaeresis,
+    KC(0x57),		KS_adiaeresis,
+    KC(0x58),		KS_apostrophe,	KS_asterisk,	KS_grave,
+    KC(0x6b),		KS_comma,	KS_semicolon,
+    KC(0x6c),		KS_period,	KS_colon,
+    KC(0x6d),		KS_minus,	KS_underscore,
+    KC(0x77),		KS_Caps_Lock,
+    KC(0x7c),		KS_less,	KS_greater,	KS_bar,
+};
+
 #define KBD_MAP(name, base, map) \
     { name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -206,10 +235,26 @@ const struct wscons_keydesc sunkbd_keydesctab[] = {
 	{0, 0, 0, 0},
 };
 
+const struct wscons_keydesc sunkbd5_keydesctab[] = {
+	KBD_MAP(KB_US,			0,	sunkbd_keydesc_us),
+	KBD_MAP(KB_SV,			KB_US,	sunkbd5_keydesc_sv),
+	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	sunkbd_keydesc_sv_nodead),
+	{0, 0, 0, 0},
+};
+
 struct wskbd_mapdata sunkbd_keymapdata = {
 	sunkbd_keydesctab,
 #ifdef SUNKBD_LAYOUT
 	SUNKBD_LAYOUT,
+#else
+	KB_US,
+#endif
+};
+
+struct wskbd_mapdata sunkbd5_keymapdata = {
+	sunkbd5_keydesctab,
+#ifdef SUNKBD5_LAYOUT
+	SUNKBD5_LAYOUT,
 #else
 	KB_US,
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.11 2002/03/21 03:09:33 jason Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.12 2002/05/29 20:43:43 maja Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -405,12 +405,16 @@ zskbd_attach(parent, self, aux)
 		printf("\n");
 
 	a.console = console;
-	a.keymap = &sunkbd_keymapdata;
+	if (ISTYPE5(zst->zst_layout)) {
+		a.keymap = &sunkbd5_keymapdata;
+	} else {
+		a.keymap = &sunkbd_keymapdata;
+	}
 	a.accessops = &zskbd_accessops;
 	a.accesscookie = zst;
 
 	if (console)
-		wskbd_cnattach(&zskbd_consops, zst, &sunkbd_keymapdata);
+		wskbd_cnattach(&zskbd_consops, zst, a.keymap);
 
 	zst->zst_wskbddev = config_found(self, &a, wskbddevprint);
 }
@@ -1153,7 +1157,11 @@ zskbd_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*d_int = WSKBD_TYPE_SUN;
+		if (ISTYPE5(zst->zst_layout)) {
+			*d_int = WSKBD_TYPE_SUN5;
+		} else {
+			*d_int = WSKBD_TYPE_SUN;
+		}
 		return (0);
 	case WSKBDIO_SETLEDS:
 		zskbd_set_leds(zst, *d_int);

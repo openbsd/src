@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.6 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.7 2002/05/29 20:43:43 maja Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -239,7 +239,11 @@ comkbd_attach(parent, self, aux)
 		cn_tab->cn_dev = makedev(77, sc->sc_dv.dv_unit); /* XXX */
 		cn_tab->cn_pollc = wskbd_cnpollc;
 		cn_tab->cn_getc = wskbd_cngetc;
-		wskbd_cnattach(&comkbd_consops, sc, &sunkbd_keymapdata);
+		if (ISTYPE5(sc->sc_layout)) {
+			wskbd_cnattach(&comkbd_consops, sc, &sunkbd5_keymapdata);
+		} else {
+			wskbd_cnattach(&comkbd_consops, sc, &sunkbd_keymapdata);
+		}
 		sc->sc_ier = IER_ETXRDY | IER_ERXRDY;
 		COM_WRITE(sc, com_ier, sc->sc_ier);
 		COM_READ(sc, com_iir);
@@ -249,7 +253,11 @@ comkbd_attach(parent, self, aux)
 
 
 	a.console = console;
-	a.keymap = &sunkbd_keymapdata;
+	if (ISTYPE5(sc->sc_layout)) {
+		a.keymap = &sunkbd5_keymapdata;
+	} else {
+		a.keymap = &sunkbd_keymapdata;
+	}
 	a.accessops = &comkbd_accessops;
 	a.accesscookie = sc;
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
@@ -308,7 +316,11 @@ comkbd_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*d_int = WSKBD_TYPE_SUN;
+		if (ISTYPE5(sc->sc_layout)) {
+			*d_int = WSKBD_TYPE_SUN5;
+		} else {
+			*d_int = WSKBD_TYPE_SUN;
+		}
 		return (0);
 	case WSKBDIO_SETLEDS:
 		comkbd_setleds(v, *d_int);
