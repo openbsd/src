@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.3 1999/06/21 01:12:56 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.4 1999/09/10 19:55:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -2309,9 +2309,9 @@ fmpyaddDasm(i, ofs, w)
 	return (1);
 }
 
-vm_offset_t
+vaddr_t
 db_disasm(loc, flag)
-	vm_offset_t loc;
+	vaddr_t loc;
 	boolean_t flag;
 {
 	register const struct inst *i;

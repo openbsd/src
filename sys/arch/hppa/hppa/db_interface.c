@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 1999/08/14 03:18:29 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 1999/09/10 19:56:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -61,6 +61,7 @@ extern int trap_types;
 
 db_regs_t	ddb_regs;
 struct db_variable db_regs[] = {
+	{ "flags", (long *)&ddb_regs.tf_flags,  FCN_NULL },
 	{ "r1",    (long *)&ddb_regs.tf_r1,  FCN_NULL },
 	{ "rp",    (long *)&ddb_regs.tf_rp,  FCN_NULL },
 	{ "r3",    (long *)&ddb_regs.tf_r3,  FCN_NULL },
@@ -122,6 +123,7 @@ struct db_variable db_regs[] = {
 	{ "hptm",  (long *)&ddb_regs.tf_hptm,  FCN_NULL },
 	{ "vtop",  (long *)&ddb_regs.tf_vtop,  FCN_NULL },
 	{ "cr28",  (long *)&ddb_regs.tf_cr28,  FCN_NULL },
+	{ "cr30",  (long *)&ddb_regs.tf_cr30,  FCN_NULL },
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 int db_active = 0;
@@ -135,7 +137,7 @@ Debugger()
 
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t addr;
+	vaddr_t addr;
 	size_t size;
 	char *data;
 {
@@ -147,7 +149,7 @@ db_read_bytes(addr, size, data)
 
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t addr;
+	vaddr_t addr;
 	size_t size;
 	char *data;
 {
