@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.10 1996/12/11 13:36:12 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.11 1997/01/02 06:28:43 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -136,15 +136,21 @@ readdisklabel(dev, strat, lp, clp)
 	struct buf *bp;
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
-	int error;
+	int error, i;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
+	lp->d_npartitions = RAW_PART+1;
+	for (i = 0; i < RAW_PART; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+	if (lp->d_partitions[i].p_size == 0)
+		lp->d_partitions[i].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
+	lp->d_bbsize = 8192;
+	lp->d_sbsize = 64*1024;		/* XXX ? */
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
