@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getbsize.c,v 1.4 1997/07/09 00:28:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: getbsize.c,v 1.5 1997/08/24 21:25:45 millert Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -49,9 +49,9 @@ getbsize(headerlenp, blocksizep)
 	long n, max, mul, blocksize;
 	char *ep, *p, *form;
 
-#define	KB	(1024L)
-#define	MB	(1024L * 1024L)
-#define	GB	(1024L * 1024L * 1024L)
+#define	KB	(1024)
+#define	MB	(1024 * 1024)
+#define	GB	(1024 * 1024 * 1024)
 #define	MAXB	GB		/* No tera, peta, nor exa. */
 	form = "";
 	if ((p = getenv("BLOCKSIZE")) != NULL && *p != '\0') {

@@ -318,8 +318,11 @@ void RMD160Update(context, data, nbytes)
 	const u_char *data;
 	u_int32_t nbytes;
 {
-	u_int32_t i, j, X[16];
-
+	u_int32_t X[16];
+	u_int32_t i;
+#if BYTE_ORDER != LITTLE_ENDIAN
+	u_int32_t j;
+#endif
 	(void)memset(X, 0, sizeof(X));
 
 	/* process all complete blocks */
