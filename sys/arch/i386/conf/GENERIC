@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.157 2000/02/07 00:33:04 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.158 2000/02/11 18:47:17 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -258,6 +258,7 @@ ste*	at pci? dev ? function ?		# Sundance ST201 ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above
+wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii? phy ?				# 3Com internal PHYs
