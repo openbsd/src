@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 2001/10/15 18:44:56 jason Exp $
+#	$OpenBSD: GENERIC,v 1.27 2001/10/28 02:21:47 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -36,6 +36,10 @@ scsibus* at siop?
 
 auxio*	at ebus?
 beeper*	at ebus?
+
+# SAB82532 based serial ports
+#sab*	at ebus?
+#sabtty* at sab?
 
 #com*	at ebus?	#*BROKEN*
 
