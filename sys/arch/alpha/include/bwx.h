@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.h,v 1.3 2001/11/04 23:00:11 art Exp $ */
+/* $OpenBSD: bwx.h,v 1.4 2002/05/10 10:13:27 art Exp $ */
 /* $NetBSD: bwx.h,v 1.3 2000/06/08 02:55:37 thorpej Exp $ */
 
 /*-
@@ -90,7 +90,8 @@ alpha_stb(__volatile u_int8_t *a0, u_int8_t a1)
 
 	__asm __volatile("stb %1, %0"
 		: "=m" (*a0)
-		: "r" (a1));
+		: "r" (a1)
+		: "memory");
 }
 
 static __inline void
@@ -99,7 +100,8 @@ alpha_stw(__volatile u_int16_t *a0, u_int16_t a1)
 
 	__asm __volatile("stw %1, %0"
 		: "=m" (*a0)
-		: "r" (a1));
+		: "r" (a1)
+		: "memory");
 }
 
 static __inline void
@@ -108,7 +110,8 @@ alpha_stl(__volatile u_int32_t *a0, u_int32_t a1)
 
 	__asm __volatile("stl %1, %0"
 		: "=m" (*a0)
-		: "r" (a1));
+		: "r" (a1)
+		: "memory");
 }
 
 static __inline u_int8_t
@@ -118,7 +121,8 @@ alpha_sextb(u_int8_t a0)
 
 	__asm __volatile("sextb %1, %0"
 		: "=r" (v0)
-		: "r" (a0));
+		: "r" (a0)
+		: "memory");
 
 	return (v0);
 }
@@ -130,7 +134,8 @@ alpha_sextw(u_int16_t a0)
 
 	__asm __volatile("sextw %1, %0"
 		: "=r" (v0)
-		: "r" (a0));
+		: "r" (a0)
+		: "memory");
 
 	return (v0);
 }
