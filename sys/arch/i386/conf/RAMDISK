@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 1997/06/03 20:41:26 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.8 1997/07/03 07:24:17 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #       Install kernels no longer support X.
@@ -152,6 +152,7 @@ ep*	at eisa? slot ?				# 3C579 ethernet cards
 #fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
+fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 ep0	at pci? dev ? function ?		# 3C590 ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
