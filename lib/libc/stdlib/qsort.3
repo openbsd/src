@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.8 2001/12/29 02:35:37 miod Exp $
+.\"	$OpenBSD: qsort.3,v 1.9 2002/02/23 19:51:46 miod Exp $
 .\"
 .Dd June 4, 1993
 .Dt QSORT 3
@@ -142,8 +142,8 @@ time is O N lg N; its best case is O N.
 Normally,
 .Fn qsort
 is faster than
-.Fn mergesort
-is faster than
+.Fn mergesort ,
+which is faster than
 .Fn heapsort .
 Memory availability and pre-existing order in the data can make this untrue.
 .Sh RETURN VALUES
@@ -169,7 +169,7 @@ functions succeed unless:
 .It Bq Er EINVAL
 The
 .Fa size
-argument is zero, or, the
+argument is zero, or the
 .Fa size
 argument to
 .Fn mergesort
