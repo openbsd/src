@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.h,v 1.1 2000/07/01 23:52:45 mickey Exp $	*/
+/*	$OpenBSD: wsconsctl.h,v 1.2 2001/05/08 22:31:09 mickey Exp $	*/
 /*	$NetBSD: wsconsctl.h 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -43,6 +43,7 @@ struct field {
 	char *name;
 	void *valp;
 #define FMT_UINT	1		/* unsigned integer */
+#define FMT_BOOL	2		/* boolean on/off */
 #define FMT_KBDTYPE	101		/* keyboard type */
 #define FMT_MSTYPE	102		/* mouse type */
 #define FMT_DPYTYPE	103		/* display type */

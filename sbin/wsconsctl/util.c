@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2001/03/03 08:53:46 maja Exp $ */
+/*	$OpenBSD: util.c,v 1.4 2001/05/08 22:31:09 mickey Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -195,6 +195,9 @@ pr_field(f, sep)
 	case FMT_UINT:
 		printf("%u", *((u_int *) f->valp));
 		break;
+	case FMT_BOOL:
+		printf("%s", *((u_int *) f->valp)? "on" : "off");
+		break;
 	case FMT_KBDTYPE:
 		p = int2name(*((u_int *) f->valp), 1,
 			     kbtype_tab, TABLEN(kbtype_tab));
@@ -254,6 +257,12 @@ rd_field(f, val, merge)
 			*((u_int *) f->valp) += u;
 		else
 			*((u_int *) f->valp) = u;
+		break;
+	case FMT_BOOL:
+		if (*val != 'o' || (val[1] != 'n' &&
+		    (val[1] != 'f' || val[2] != 'f')))
+			errx(1, "%s: invalid value (on/off)", val);
+		*((u_int *) f->valp) = val[1] == 'n'? 1 : 0;
 		break;
 	case FMT_KBDENC:
 		p = strchr(val, '.');
