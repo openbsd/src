@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.1 2001/06/25 16:12:33 kjell Exp $
+.\" $OpenBSD: pfctl.8,v 1.2 2001/06/25 19:07:22 smart Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -34,14 +34,14 @@
 .Nm pfctl
 .Nd control the packet filter and NAT subsystems
 .Sh SYNOPSIS
-.Nm 
+.Nm pfctl
 .Ar commands
 .Sh DESCRIPTION
 The
 .Nm
 utility communicates with the packet filter system using the
 ioctl interface described in
-.Xr pf 4
+.Xr pf 4 .
 .Pp
 The
 .Nm
@@ -49,9 +49,9 @@ utility provides several commands:
 .Pp
 .Bl -tag -width "parse" -compact
 .It Cm start
-Start the packet filter.
+Start the packet filter
 .It Cm stop
-Stop the packet filter.
+Stop the packet filter
 .It Cm show
 .Bl -tag -width "status" -compact
 .It Cm rules
