@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.87 2001/05/21 03:23:36 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.88 2001/05/21 03:27:48 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -40,9 +40,7 @@
 #ifndef _NETINET_IPSP_H_
 #define _NETINET_IPSP_H_
 
-/*
- * IPSP global definitions.
- */
+/* IPSP global definitions. */
 
 #include <sys/types.h>
 #include <sys/queue.h>
