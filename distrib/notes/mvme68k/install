@@ -1,37 +1,38 @@
-dnl	$OpenBSD: install,v 1.19 2003/06/21 00:32:59 pvalchev Exp $
+dnl	$OpenBSD: install,v 1.20 2003/06/21 01:06:00 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD ramdisk kernel that can
 be booted from tape.
 
-Alternatively, if your MACHINE is hooked up in a network you can find a server
-to arrange for a diskless setup, which is a convenient way to install on a
-machine whose disk does not currently hold a usable operating system.
+Alternatively, if the MACHINE is hooked up in a network, it is possible
+to setup another machine as a server for diskless setup, which is a
+convenient way to install on a machine whose disk does not currently
+hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
-use afterwards.  (see ``Installing using a diskless setup'' below).
+use afterwards.  (See ``Installing using a diskless setup'' below).
 
 
 Booting from the Installation Media:
 
-Prior to attempting an installation, you should make sure that everything
-of value on the target system has been backed up.  While installing OpenBSD
-does not necessarily wipe out all the partitions on the hard disk, errors
-during the install process can have unforeseen consequences and you will
-probably render the system unbootable if you start, but do not complete
-the installation.  Having the installation media for the prior installation,
-like a Motorola SystemV/MACHINE tape is good insurance if you want to be
-able to "go back" for some reason.
+Prior to attempting an installation, everything of value on the target
+system should be backed up.  While installing OpenBSD does not necessarily
+wipe out all the partitions on the hard disk, errors during the install
+process can have unforeseen consequences and will probably leave the system
+unbootable if the installation process is not completed. Availability
+of the installation media for the prior installation, such as a Motorola
+SystemV/MACHINE tape is always a good insurance, should it be necessary
+to "go back" for some reason.
 
-After taking care of all that, bring your system down gracefully using
-the shutdown(8) and/or halt(8) commands.  This will get you to the BUG
-prompt.
+After taking care of all that, the system should be brought down gracefully
+using the shutdown(8) and/or halt(8) commands, which will eventually go
+bakc to the ``BUG>'' prompt (it may be necessary to send a break if the
+system is completely halted).
 
 
 Booting from SCSI tape:
 
-After creating the boot tape, boot it by typing the appropriate command
-at the PROM:
+Bootable tapes can be booted with the following command at the prompt:
 
 	167-bug> bo xx yy
 
@@ -48,52 +49,55 @@ for any other MACHINE board.
 
 Installing using a diskless setup:
 
-First, you must setup a diskless client configuration on a server. If
-you are using a OpenBSD system as the boot-server, have a look at the
-diskless(8) manual page for guidelines on how to proceed with this.
-If the server runs another operating system, you'll have to consult
-documentation that came with it (on SunOS systems, add_client(8) and
-the Sun System/Networks administrators guide constitute a good start;
-on Solaris systems, share(1M) is a good starting point as well).
+First, a diskless client configuration should be setup on a server. If
+the boot server is an OpenBSD system, the diskless(8) manual page will
+provide detailed information on the process.
 
-You should then setup your workstation using the NIOT command at the BUG
-prompt. The Load Address should be 0x3F0000, and the Execution Address
-should be 0x3F0000 as well. You may now boot your workstation from the
-server by entering the NBO command at the BUG prompt:
+If the server runs another operating system, the setup instructions will
+likely be available as part of the documentation that came with it (on
+SunOS systems, add_client(8) and the Sun System/Networks administrators
+guide constitute a good start; on Solaris systems, share(1M) is a good
+starting point as well).
+
+Second, the MACHINE workstation should then be setup using the NIOT command
+at the BUG prompt. The ``Load Address'' value should be 0x3F0000, and the
+``Execution Address'' value should be 0x3F0000 as well.
+
+Then, it should be possible to boot the machine from the server by entering
+the NBO command at the BUG prompt:
 	
 	167-bug> nbo 00 00 bsd.rd
 
-If your BUG version does not understand the NIOT and NBO commands (most
-MVME147 don't), you will have to boot via S-Records.
+If the BUG version does not understand the NIOT and NBO commands (most
+MVME147 don't), the alternative is to boot from S-Records.
 
 
 Booting from S-Records:
 
-First, you must setup a diskless client configuration on a server. If
-you are using a OpenBSD system as the boot-server, have a look at the
-diskless(8) manual page for guidelines on how to proceed with this.
-If the server runs another operating system, you'll have to consult
-documentation that came with it (on SunOS systems, add_client(8) and
-the Sun System/Networks administrators guide constitute a good start;
-on Solaris systems, share(1M) is a good starting point as well).
+First, a diskless client configuration should be setup on a server. Refer
+to the short description above for details.
 
-Second, make sure you use a terminal emulator able to read files from the
-local machine and send their contents over the serial link. OpenBSD ships
-with both cu(1) and tip(1), but others can be used.
+Second, using a terminal emulator able to read files from the local machine
+and send their contents over the serial link, such as cu(1) and tip(1) - both
+being available on OpenBSD - the MACHINE workstation should be put in
+S-Records receive mode, with the LO command at the BUG prompr:
 
-After reseting your MACHINE board, enter "LO" at the BUG prompt. If you get
-an error message, switch directories (enter "SD") and retry. The MACHINE
-should be awaiting a S-Record program now.
+	147-bug> LO
 
-From your terminal emulator, send the contents of the ``sboot'' file over
-the line. Depending on the speed of the serial link, this will take some
+If this command prints an error messages and returns to the BUG prompt
+immediately, it might be necessary to switch directories, using the SD
+command, before retrying.
+
+Then, the contents of the ``sboot'' file should be sent From the terminal
+emulator. Depending on the speed of the serial link, this will take some
 time, but no more than a couple of minutes.
 
-If you don't get a prompt back after a few minutes, send a break, reset
-your MACHINE board, and retry.
+If a prompt does not come back after a few minutes, it is likely that the
+S-Records download is hosed. In this case, the MACHINE board should be reset
+before a further attempt to download the S-Records is made.
 
-When the transfer is finished, enter "GO" at the BUG prompt.  The S-Records
-boot loader will start.  This is a very crude bootloader which will attempt
+Once the transfer is finished, entering GO at the BUG prompt will start the
+S-Records boot loader. This is a very crude bootloader which will attempt
 to fetch a secondary boot program via TFTP requests, like the NBO command.
 
 This will cause the kernel provided by the diskless setup to be booted.
@@ -108,21 +112,14 @@ OpenBSDInstallPart2
 
 	Boot your machine from the installation media as described above.
 
-	It will take a while to load the kernel especially from a floppy
-	or slow network connection, most likely more than a minute.  If
-	some action doesn't eventually happen, or the spinning cursor has
-	stopped and nothing further has happened, either your boot media
-	is bad, your diskless setup isn't correct, or you may have
-	a hardware or configuration problem.
+	It will take a while to load the kernel especially from a slow
+	network connection, most likely more than a minute.  If some action
+	doesn't eventually happen, or the spinning cursor has stopped and
+	nothing further has happened, either your boot media is bad, your
+	diskless setup isn't correct, or you may have a hardware or
+	configuration problem.
 
 OpenBSDBootMsgs
-
-	While booting, you will probably see several warnings.  You
-	may be warned that the kernel can't figure out what device
-	it booted from.  Do not be alarmed, this is completely normal.
-	This warning occurs because while OpenBSD/MACHINE can boot from
-	the floppy drive, the kernel itself lacks a floppy driver for some
-	MACHINE models.
 
 	You will next be asked for your terminal type.  You should choose
 	the terminal type from amongst those listed.
