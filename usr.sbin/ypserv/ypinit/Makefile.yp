@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.yp,v 1.10 1997/07/28 12:42:59 niklas Exp $
+#	$OpenBSD: Makefile.yp,v 1.11 1998/02/14 10:02:20 maja Exp $
 
 YPDBDIR=/var/yp
 DIR=/etc
@@ -29,6 +29,9 @@ YPPUSH=/usr/sbin/yppush
 # a privileged user can access it.
 MAKEDBM-S=$(MAKEDBM) -s
 UNSECURE="True"
+
+# If you want ypserv to ask DNS for unknown hosts set USEDNS to -b
+USEDNS=
 
 all: passwd group hosts ethers networks rpc services protocols netid netgroup amd.home aliases
 
@@ -98,10 +101,10 @@ hosts.time: $(DIR)/hosts
 	-@if [ -f $(DIR)/hosts ]; then \
 		$(STDHOSTS) $(>) | $(SED) -e s/#.*$$// | \
 		$(AWK) '{for (i = 2; i <= NF; i++) print $$i, $$0 }' | \
-		$(MAKEDBM) - hosts.byname; \
+		$(MAKEDBM) $(USEDNS) - hosts.byname; \
 		$(STDHOSTS) $(>) | \
 		$(AWK) 'BEGIN { OFS="\t"; } { print $$1, $$0 }' | \
-		$(MAKEDBM) - hosts.byaddr; \
+		$(MAKEDBM) $(USEDNS) - hosts.byaddr; \
 		$(TOUCH) $(@); \
 		$(ECHO) "updated hosts"; \
 		if [ ! $(NOPUSH) ]; then \
