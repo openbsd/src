@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.147 2004/02/03 17:17:33 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.148 2004/03/14 23:26:11 hshoexer Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1950,6 +1950,11 @@ hifn_process(struct cryptop *crp)
 	if (crp == NULL || crp->crp_callback == NULL) {
 		hifnstats.hst_invalid++;
 		return (EINVAL);
+	}
+
+	if (crp->crp_ilen == 0) {
+		err = EINVAL;
+		goto errout;
 	}
 
 	card = HIFN_CARD(crp->crp_sid);
