@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.2 2000/06/09 00:45:25 aaron Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.3 2000/06/17 18:02:05 niklas Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -124,7 +124,7 @@ static struct csdev {
 	{ CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
 	{ CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO }
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
 	{ CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_MODEM56,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO }
 };
@@ -276,15 +276,20 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 		printf("%s", DEVNAME(csc));
 	}
 
+#ifdef __OpenBSD__
+	if (com_cardbus_enable(sc))
+		printf(": function enable failed\n");
+
+	sc->enabled = 1;
+
+	com_cardbus_attach2(sc);
+#else
 	com_cardbus_setup(csc);
 
-#if 0
 	com_attach_subr(sc);
-#else
-	com_cardbus_attach2(sc);
-#endif
 
 	Cardbus_function_disable(csc->cc_ct);
+#endif
 }
 
 void
@@ -340,7 +345,7 @@ com_cardbus_enable(struct com_softc *sc)
 		return (1);
 	}
 
-	printf("%s: interrupting at irq %d\n", DEVNAME(csc), psc->sc_intrline);
+	printf(": irq %d", psc->sc_intrline);
 
 	return (0);
 }
@@ -478,34 +483,34 @@ com_cardbus_attach2(sc)
 	sc->sc_fifolen = 1;	/* default */
 	switch (sc->sc_uarttype) {
 	case COM_UART_UNKNOWN:
-		printf(": unknown uart\n");
+		printf("unknown uart\n");
 		break;
 	case COM_UART_8250:
-		printf(": ns8250, no fifo\n");
+		printf("ns8250, no fifo\n");
 		break;
 	case COM_UART_16450:
-		printf(": ns16450, no fifo\n");
+		printf("ns16450, no fifo\n");
 		break;
 	case COM_UART_16550:
-		printf(": ns16550, no working fifo\n");
+		printf("ns16550, no working fifo\n");
 		break;
 	case COM_UART_16550A:
-		printf(": ns16550a, 16 byte fifo\n");
+		printf("ns16550a, 16 byte fifo\n");
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 16;
 		break;
 	case COM_UART_ST16650:
-		printf(": st16650, no working fifo\n");
+		printf("st16650, no working fifo\n");
 		break;
 	case COM_UART_ST16650V2:
-		printf(": st16650, 32 byte fifo\n");
+		printf("st16650, 32 byte fifo\n");
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 32;
 		break;
 #if NPCCOM > 0
 #ifdef i386
 	case COM_UART_XR16850:
-		printf(": xr16850 (rev %d), 128 byte fifo\n", sc->sc_uartrev);
+		printf("xr16850 (rev %d), 128 byte fifo\n", sc->sc_uartrev);
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 128;
 		break;
