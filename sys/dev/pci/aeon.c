@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeon.c,v 1.3 1999/02/24 06:09:45 deraadt Exp $	*/
+/*	$OpenBSD: aeon.c,v 1.4 1999/12/06 07:29:56 art Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -150,8 +150,13 @@ aeon_attach(parent, self, aux)
 	sc->sc_st1 = pa->pa_memt;
 	printf(" mem %x %x", sc->sc_sh0, sc->sc_sh1);
 
+#if defined(UVM)
+	sc->sc_dma = (struct aeon_dma *)uvm_pagealloc_contig(sizeof(*sc->sc_dma),
+	    0x100000, 0xffffffff, PAGE_SIZE);
+#else
 	sc->sc_dma = (struct aeon_dma *)vm_page_alloc_contig(sizeof(*sc->sc_dma),
 	    0x100000, 0xffffffff, PAGE_SIZE);
+#endif
 	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
 
 	aeon_reset_board(sc);
