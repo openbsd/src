@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.20 2002/10/16 14:41:52 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.21 2002/10/16 15:01:08 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -171,6 +171,10 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls,
 			if (action == ICPOLICY_NEVER)
 				action = filter->match_error;
 			icpid->uflags = filter->match_flags;
+
+			/* Policy requests privilege elevation */
+			if (filter->elevate.e_flags)
+				icpid->elevate = &filter->elevate;
 			return (action);
 		}
 
@@ -405,7 +409,7 @@ filter_quickpredicate(struct filter *filter)
 	if (!pdc->p_flags)
 		return (1);
 
-	intercept_setpid(&icpid);
+	intercept_setpid(&icpid, getuid(), getgid());
 
 	if (!filter_predicate(&icpid, pdc))
 		return (0);

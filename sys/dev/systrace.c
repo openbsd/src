@@ -60,6 +60,8 @@ int	systracewrite(dev_t, struct uio *, int);
 int	systraceioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	systraceselect(dev_t, int, struct proc *);
 
+uid_t	systrace_seteuid(struct proc *,  uid_t);
+gid_t	systrace_setegid(struct proc *,  gid_t);
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_ioctl(struct file *, u_long, caddr_t, struct proc *p);
@@ -86,6 +88,8 @@ struct str_policy {
 #define STR_PROC_SYSCALLRES	0x04
 #define STR_PROC_REPORT		0x08	/* Report emulation */
 #define STR_PROC_NEEDSEQNR	0x10	/* Answer must quote seqnr */
+#define STR_PROC_SETEUID	0x20	/* Elevate privileges */
+#define STR_PROC_SETEGID	0x40
 
 struct str_process {
 	TAILQ_ENTRY(str_process) next;
@@ -103,6 +107,11 @@ struct str_process {
 	short answer;
 	short error;
 	u_int16_t seqnr;	/* expected reply sequence number */
+
+	uid_t seteuid;
+	uid_t saveuid;
+	gid_t setegid;
+	gid_t savegid;
 
 	struct str_message msg;
 };
@@ -641,7 +650,11 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	struct str_process *strp;
 	struct str_policy *strpolicy;
 	struct fsystrace *fst = NULL;
-	int policy, error = 0, report = 0, maycontrol = 0;
+	struct emul *oldemul;
+	struct pcred *pc;
+	uid_t olduid;
+	gid_t oldgid;
+	int policy, error = 0, report = 0, maycontrol = 0, issuser = 0;
 
 	systrace_lock();
 	strp = p->p_systrace;
@@ -664,9 +677,10 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	 * real gid match the monitored process.  Changing the
 	 * uid or gid causes P_SUGID to be set.
 	 */
-	if (fst->issuser)
+	if (fst->issuser) {
 		maycontrol = 1;
-	else if (!(p->p_flag & P_SUGID)) {
+		issuser =1 ;
+	} else if (!(p->p_flag & P_SUGID)) {
 		maycontrol = fst->p_ruid == p->p_cred->p_ruid &&
 		    fst->p_rgid == p->p_cred->p_rgid;
 	}
@@ -729,77 +743,148 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		fst = NULL;
 	}
 
-	if (!error) {
-		struct emul *oldemul = p->p_emul;
-		uid_t olduid = p->p_cred->p_ruid;
-		gid_t oldgid = p->p_cred->p_rgid;
+	if (error)
+		return (error);
 
-		error = (*callp->sy_call)(p, v, retval);
-
-		if (p->p_flag & P_SUGID) {
-			/* Stupid Locking not necessary */
-			if ((strp = p->p_systrace) == NULL ||
-			    (fst = strp->parent) == NULL)
-				return (error);
-			if (!fst->issuser)
-				return (error);
-		}
-
-		/* Report change in emulation */
+	oldemul = p->p_emul;
+	pc = p->p_cred;
+	olduid = pc->p_ruid;
+	oldgid = pc->p_rgid;
+		
+	/* Elevate privileges as desired */
+	if (issuser) {
 		systrace_lock();
-		strp = p->p_systrace;
-
-		/* See if we should force a report */
-		if (strp != NULL && ISSET(strp->flags, STR_PROC_REPORT)) {
-			CLR(strp->flags, STR_PROC_REPORT);
-			oldemul = NULL;
+		if ((strp = p->p_systrace) != NULL) {
+			if (ISSET(strp->flags, STR_PROC_SETEUID))
+				strp->saveuid = systrace_seteuid(p, strp->seteuid);
+			if (ISSET(strp->flags, STR_PROC_SETEGID))
+				strp->savegid = systrace_setegid(p, strp->setegid);
 		}
+		systrace_unlock();
+	} else
+		CLR(strp->flags, STR_PROC_SETEUID|STR_PROC_SETEGID);
+				
+	error = (*callp->sy_call)(p, v, retval);
 
-		if (p->p_emul != oldemul && strp != NULL) {
-			fst = strp->parent;
-			lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
-			systrace_unlock();
-
-			/* Old policy is without meaning now */
-			if (strp->policy) {
-				systrace_closepolicy(fst, strp->policy);
-				strp->policy = NULL;
-			}
-			systrace_msg_emul(fst, strp);
-		} else
-			systrace_unlock();
-
-		/* Report if effective uid or gid changed */
-		if (olduid != p->p_cred->p_ruid ||
-		    oldgid != p->p_cred->p_rgid) {
-			systrace_lock();
-			if ((strp = p->p_systrace) == NULL) {
-				systrace_unlock();
-				goto nougid;
-			}
-
-			fst = strp->parent;
-			lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
-			systrace_unlock();
-
-			systrace_msg_ugid(fst, strp);
-		nougid:
-		}
-
-		/* Report result from system call */
+	/* Return to old privileges */
+	if (issuser) {
 		systrace_lock();
-		if (report && (strp = p->p_systrace) != NULL) {
-			fst = strp->parent;
-			lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
-			systrace_unlock();
-
-			systrace_msg_result(fst, strp, error, code,
-			    callp->sy_argsize, v, retval);
-		} else
-			systrace_unlock();
+		if ((strp = p->p_systrace) != NULL) {
+			if (ISSET(strp->flags, STR_PROC_SETEUID)) {
+				if (pc->pc_ucred->cr_uid == strp->seteuid)
+					systrace_seteuid(p, strp->saveuid);
+				CLR(strp->flags, STR_PROC_SETEUID);
+			}
+			if (ISSET(strp->flags, STR_PROC_SETEGID)) {
+				if (pc->pc_ucred->cr_gid == strp->setegid)
+					systrace_setegid(p, strp->savegid);
+				CLR(strp->flags, STR_PROC_SETEGID);
+			}
+		}
+		systrace_unlock();
 	}
 
+	if (p->p_flag & P_SUGID) {
+		/* Stupid Locking not necessary */
+		if ((strp = p->p_systrace) == NULL ||
+		    (fst = strp->parent) == NULL)
+			return (error);
+		if (!fst->issuser)
+			return (error);
+	}
+
+	/* Report change in emulation */
+	systrace_lock();
+	strp = p->p_systrace;
+
+	/* See if we should force a report */
+	if (strp != NULL && ISSET(strp->flags, STR_PROC_REPORT)) {
+		CLR(strp->flags, STR_PROC_REPORT);
+		oldemul = NULL;
+	}
+
+	if (p->p_emul != oldemul && strp != NULL) {
+		fst = strp->parent;
+		lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
+		systrace_unlock();
+
+		/* Old policy is without meaning now */
+		if (strp->policy) {
+			systrace_closepolicy(fst, strp->policy);
+			strp->policy = NULL;
+		}
+		systrace_msg_emul(fst, strp);
+	} else
+		systrace_unlock();
+
+	/* Report if effective uid or gid changed */
+	if (olduid != p->p_cred->p_ruid ||
+	    oldgid != p->p_cred->p_rgid) {
+		systrace_lock();
+		if ((strp = p->p_systrace) == NULL) {
+			systrace_unlock();
+			goto nougid;
+		}
+
+		fst = strp->parent;
+		lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
+		systrace_unlock();
+
+		systrace_msg_ugid(fst, strp);
+	nougid:
+	}
+
+	/* Report result from system call */
+	systrace_lock();
+	if (report && (strp = p->p_systrace) != NULL) {
+		fst = strp->parent;
+		lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
+		systrace_unlock();
+
+		systrace_msg_result(fst, strp, error, code,
+		    callp->sy_argsize, v, retval);
+	} else
+		systrace_unlock();
+
 	return (error);
+}
+
+uid_t
+systrace_seteuid(struct proc *p,  uid_t euid)
+{
+	struct pcred *pc = p->p_cred;
+	uid_t oeuid = pc->pc_ucred->cr_uid;
+
+	if (pc->pc_ucred->cr_uid == euid)
+		return (oeuid);
+
+	/*
+	 * Copy credentials so other references do not see our changes.
+	 */
+	pc->pc_ucred = crcopy(pc->pc_ucred);
+	pc->pc_ucred->cr_uid = euid;
+	p->p_flag |= P_SUGID;
+
+	return (oeuid);
+}
+
+gid_t
+systrace_setegid(struct proc *p,  gid_t egid)
+{
+	struct pcred *pc = p->p_cred;
+	gid_t oegid = pc->pc_ucred->cr_gid;
+
+	if (pc->pc_ucred->cr_gid == egid)
+		return (oegid);
+
+	/*
+	 * Copy credentials so other references do not see our changes.
+	 */
+	pc->pc_ucred = crcopy(pc->pc_ucred);
+	pc->pc_ucred->cr_gid = egid;
+	p->p_flag |= P_SUGID;
+
+	return (oegid);
 }
 
 /* Called with fst locked */
@@ -832,6 +917,17 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 		strp->error = EPERM;
 	if (ISSET(ans->stra_flags, SYSTR_FLAGS_RESULT))
 		SET(strp->flags, STR_PROC_SYSCALLRES);
+
+	/* See if we should elevate privileges for this system call */
+	if (ISSET(ans->stra_flags, SYSTR_FLAGS_SETEUID)) {
+		SET(strp->flags, STR_PROC_SETEUID);
+		strp->seteuid = ans->stra_seteuid;
+	}
+	if (ISSET(ans->stra_flags, SYSTR_FLAGS_SETEGID)) {
+		SET(strp->flags, STR_PROC_SETEGID);
+		strp->setegid = ans->stra_setegid;
+	}
+	
 
 	/* Clearing the flag indicates to the process that it woke up */
 	CLR(strp->flags, STR_PROC_WAITANSWER);

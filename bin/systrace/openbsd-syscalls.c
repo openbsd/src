@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.14 2002/10/09 03:52:10 itojun Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.15 2002/10/16 15:01:08 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -127,7 +127,8 @@ static int obsd_syscall_number(const char *, const char *);
 static short obsd_translate_policy(short);
 static short obsd_translate_flags(short);
 static int obsd_translate_errno(int);
-static int obsd_answer(int, pid_t, u_int32_t, short, int, short);
+static int obsd_answer(int, pid_t, u_int32_t, short, int, short,
+    struct elevate *);
 static int obsd_newpolicy(int);
 static int obsd_assignpolicy(int, pid_t, int);
 static int obsd_modifypolicy(int, int, int, short);
@@ -352,15 +353,27 @@ obsd_translate_errno(int nerrno)
 
 static int
 obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
-    short flags)
+    short flags, struct elevate *elevate)
 {
 	struct systrace_answer ans;
 
+	memset(&ans, 0, sizeof(ans));
 	ans.stra_pid = pid;
 	ans.stra_seqnr = seqnr;
 	ans.stra_policy = obsd_translate_policy(policy);
 	ans.stra_flags = obsd_translate_flags(flags);
 	ans.stra_error = obsd_translate_errno(nerrno);
+
+	if (elevate != NULL) {
+		if (elevate->e_flags & ELEVATE_UID) {
+			ans.stra_flags |= SYSTR_FLAGS_SETEUID;
+			ans.stra_seteuid = elevate->e_uid;
+		}
+		if (elevate->e_flags & ELEVATE_GID) {
+			ans.stra_flags |= SYSTR_FLAGS_SETEGID;
+			ans.stra_setegid = elevate->e_gid;
+		}
+	}
 
 	if (ioctl(fd, STRIOCANSWER, &ans) == -1)
 		return (-1);
@@ -591,7 +604,7 @@ obsd_read(int fd)
 			break;
 		}
 
-		if (obsd_answer(fd, pid, seqnr, 0, 0, 0) == -1)
+		if (obsd_answer(fd, pid, seqnr, 0, 0, 0, NULL) == -1)
 			err(1, "%s:%d: answer", __func__, __LINE__);
 		break;
 
@@ -602,7 +615,7 @@ obsd_read(int fd)
 
 		intercept_ugid(icpid, msg_ugid->uid, msg_ugid->uid);
 
-		if (obsd_answer(fd, pid, seqnr, 0, 0, 0) == -1)
+		if (obsd_answer(fd, pid, seqnr, 0, 0, 0, NULL) == -1)
 			err(1, "%s:%d: answer", __func__, __LINE__);
 		break;
 	}

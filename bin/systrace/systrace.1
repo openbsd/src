@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.28 2002/10/16 15:01:08 itojun Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -42,21 +42,25 @@
 .Op Fl d Ar policydir
 .Op Fl g Ar gui
 .Op Fl f Ar file
+.Op Fl c Ar uid:gid
 .Op Fl p Ar pid
 .Ar command ...
 .Sh DESCRIPTION
 The
 .Nm
 utility monitors and controls an application's access to the system by
-enforcing access policies for system calls.  The
+enforcing access policies for system calls.
+The
 .Nm
 utility might be used to trace an untrusted application's access to
-the system.  Alternatively, it might be used to protect the system
+the system.
+Alternatively, it might be used to protect the system
 from software bugs (such as buffer overflows) by constraining a
 daemon's access to the system.
 .Pp
 The access policy can be generated interactively or obtained from a
-policy file.  Operations not covered by the policy raise an alarm and
+policy file.
+Operations not covered by the policy raise an alarm and
 allow an user to refine the currently configured policy.
 .Pp
 The options are as follows:
@@ -70,9 +74,10 @@ Automatically generate a policy that allows every operation the
 application executes.
 The created policy functions as a base that can be refined.
 .It Fl u
-Do not perform aliasing on system call names.  Aliasing is enabled
-by default to group similar system calls into a single compound
-name.  For example, system calls that read from the file system
+Do not perform aliasing on system call names.
+Aliasing is enabled by default to group similar system calls into a
+single compound name.
+For example, system calls that read from the file system
 like
 .Fn lstat
 and
@@ -90,6 +95,14 @@ Specifies an alternative location for the user's directory from
 which policies are loaded and to which changed policies are stored.
 .It Fl g Ar gui
 Specifies an alternative location for the notification user interface.
+.It Fl c Ar uid:gid
+Specifies the
+.Va uid
+and
+.Va gid
+that the monitored application should be executed with.
+This is useful in conjunction with privilege elevation and requires
+root privileges.
 .It Fl f Ar file
 The policies specified in
 .Ar file
@@ -129,7 +142,8 @@ is used to return an
 .Xr errno 2
 value to the system call when using a
 .Va deny
-action.  The values
+action.
+The values
 .Do
 inherit
 .Dc
@@ -198,6 +212,43 @@ Predicates have the following format:
 .Pp
 A rule is added to the configured policy only if its predicate
 evaluates to true.
+.Sh PRIVILEGE ELEVATION
+With
+.Nm
+it is possible to remove setuid or setgid binaries, and use the
+privilege elevation feature instead.
+Single system calls can be executed with higher privileges if
+specified by the policy.
+For example,
+.Bd -literal -offset 4
+native-bind: sockaddr eq "inet-[0.0.0.0]:22" then permit as root
+.Ed
+.Pp
+allows an unprivileged application to bind to a reserved port.
+Privilege elevation requires that the
+.Nm
+process is executed as root.
+.Pp
+The following statements can be appended after the
+.Va permit
+in a policy to elevate the privileges for the matching system call:
+.Bd -literal -offset 4
+as user
+as user:group
+as group
+.Ed
+.Pp
+The effective
+.Va uid
+and
+.Va gid
+are elevated only for the duration of the system call, and are restored
+to the old values afterwards.
+The only exception are the
+.Va seteuid
+or
+.Va setegid
+system calls.
 .Sh FILES
 .Bl -tag -width xHOME/xsystrace -compact
 .It Pa /dev/systrace
@@ -214,15 +265,15 @@ policy might look as follows:
 .Bd -literal -offset AAA
 Policy: /bin/ls, Emulation: native
 [...]
-	native-open: filename eq "$HOME" and oflags sub "ro" then permit
-	native-fchdir: permit
+   native-fsread: filename eq "$HOME" then permit
+   native-fchdir: permit
 [...]
-	native-open: filename eq "/tmp" and oflags sub "ro" then permit
-	native-stat: permit
-	native-open: filename match "$HOME/*" and oflags sub "ro" then permit
-	native-open: filename eq "/etc/pwd.db" and oflags sub "ro" then permit
+   native-fsread: filename eq "/tmp" then permit
+   native-stat: permit
+   native-fsread: filename match "$HOME/*" then permit
+   native-fsread: filename eq "/etc/pwd.db" then permit
 [...]
-	native-open: filename eq "/etc" then deny[eperm], if group != wheel
+   native-fsread: filename eq "/etc" then deny[eperm], if group != wheel
 .Ed
 .Sh SEE ALSO
 .Xr systrace 4

@@ -89,6 +89,8 @@ struct systrace_answer {
 	pid_t stra_pid;
 	u_int16_t stra_seqnr;
 	short reserved;
+	uid_t stra_seteuid;	/* elevated privileges for system call */
+	uid_t stra_setegid;
 	int stra_policy;
 	int stra_error;
 	int stra_flags;
@@ -152,6 +154,8 @@ struct systrace_replace {
 #define SYSTR_POLICY_NEVER	2
 
 #define SYSTR_FLAGS_RESULT	0x001
+#define SYSTR_FLAGS_SETEUID	0x002
+#define SYSTR_FLAGS_SETEGID	0x004
 
 #ifdef _KERNEL
 struct str_process;
