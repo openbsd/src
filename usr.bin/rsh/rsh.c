@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.13 1997/06/23 09:13:07 deraadt Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.14 1997/06/29 11:10:34 provos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.13 1997/06/23 09:13:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.14 1997/06/29 11:10:34 provos Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,7 +65,7 @@ static char rcsid[] = "$OpenBSD: rsh.c,v 1.13 1997/06/23 09:13:07 deraadt Exp $"
 #include "pathnames.h"
 
 #ifdef KERBEROS
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 
 CREDENTIALS cred;

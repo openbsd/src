@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.28 1997/06/27 06:59:58 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.29 1997/06/29 11:10:35 provos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.28 1997/06/27 06:59:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.29 1997/06/29 11:10:35 provos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ static char rcsid[] = "$OpenBSD: su.c,v 1.28 1997/06/27 06:59:58 deraadt Exp $";
 #endif                                                                       
 
 #ifdef KERBEROS
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #include <netdb.h>
 

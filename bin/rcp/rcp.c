@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.11 1997/06/06 11:02:21 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.12 1997/06/29 11:10:28 provos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -74,7 +74,7 @@ static char rcsid[] = "$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $";
 #include "extern.h"
 
 #ifdef KERBEROS
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 
 char	dst_realm_buf[REALM_SZ];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: krcmd.c,v 1.6 1996/11/11 05:59:46 mickey Exp $	*/
+/*	$OpenBSD: krcmd.c,v 1.7 1997/06/29 11:10:37 provos Exp $	*/
 /*	$NetBSD: krcmd.c,v 1.2 1995/03/21 07:58:36 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: krcmd.c,v 1.6 1996/11/11 05:59:46 mickey Exp $";
+static char rcsid[] = "$OpenBSD: krcmd.c,v 1.7 1997/06/29 11:10:37 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static char rcsid[] = "$OpenBSD: krcmd.c,v 1.6 1996/11/11 05:59:46 mickey Exp $"
 
 #include <netinet/in.h>
 
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 
 #include <stdio.h>

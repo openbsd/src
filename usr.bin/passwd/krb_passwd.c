@@ -1,4 +1,4 @@
-/*	$OpenBSD: krb_passwd.c,v 1.6 1997/06/11 10:23:12 deraadt Exp $	*/
+/*	$OpenBSD: krb_passwd.c,v 1.7 1997/06/29 11:10:33 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$OpenBSD: krb_passwd.c,v 1.6 1997/06/11 10:23:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: krb_passwd.c,v 1.7 1997/06/29 11:10:33 provos Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -45,7 +45,7 @@ static char rcsid[] = "$OpenBSD: krb_passwd.c,v 1.6 1997/06/11 10:23:12 deraadt 
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <netinet/in.h>
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #include <netdb.h>
 #include <signal.h>

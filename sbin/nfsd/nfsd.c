@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.5 1997/06/25 18:28:10 kstailey Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.6 1997/06/29 11:10:32 provos Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char rcsid[] = "$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $"
 #include <nfs/nfs.h>
 
 #ifdef NFSKERB
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #endif
 

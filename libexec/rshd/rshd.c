@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.17 1997/06/15 05:10:39 millert Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.18 1997/06/29 11:10:30 provos Exp $";
 #endif /* not lint */
 
 /*
@@ -86,7 +86,7 @@ char	*topdomain __P((char *));
 void	 usage __P((void));
 
 #ifdef	KERBEROS
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #define	VERSION_SIZE	9
 #define SECURE_MESSAGE  "This rsh session is using DES encryption for all transmissions.\r\n"
