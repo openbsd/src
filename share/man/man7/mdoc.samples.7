@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.29 2001/03/01 16:11:22 aaron Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.30 2001/06/22 11:14:53 mpech Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1481,9 +1481,19 @@ It accepts at most two arguments.
 .Bx 4.3 .
 .El
 .Pp
+.Dl Usage: .Bsx [Version/release] ... \*(Pu
+.Bl -tag -width ".Bsx 3.0 ) ," -compact -offset 13n
+.It Li ".Bsx"
+.Bsx
+.It Li ".Bsx 3.0 ."
+.Bsx 3.0 .
+.El
+.Pp
 The
 .Ql \&.Bx
-macro is parsed and is callable.
+and
+.Ql \&.Bsx
+macros is parsed and is callable.
 .Ss OpenBSD/FreeBSD/NetBSD Macros
 .Dl Usage: .Ox [Version/release] ... \*(Pu
 .Bl -tag -width ".Ox 2.7 ) ," -compact -offset 14n
