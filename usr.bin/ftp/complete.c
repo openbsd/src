@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.16 2004/07/20 03:50:25 deraadt Exp $	*/
+/*	$OpenBSD: complete.c,v 1.17 2004/09/16 04:39:16 deraadt Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.16 2004/07/20 03:50:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.17 2004/09/16 04:39:16 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -292,12 +292,12 @@ complete(EditLine *el, int ch)
 {
 	static char word[FTPBUFLEN];
 	static int lastc_argc, lastc_argo;
-
 	struct cmd *c;
 	const LineInfo *lf;
 	int celems, dolist;
 	size_t len;
 
+	ch = ch;		/* not used */
 	lf = el_line(el);
 	len = lf->lastchar - lf->buffer;
 	if (len >= sizeof(line))
@@ -338,22 +338,21 @@ complete(EditLine *el, int ch)
 		return (CC_ERROR);
 
 	switch (c->c_complete[cursor_argc - 1]) {
-		case 'l':			/* local complete */
-		case 'L':
-			return (complete_local(word, dolist));
-		case 'r':			/* remote complete */
-		case 'R':
-			if (connected != -1) {
-				fputs("\nMust be logged in to complete.\n", ttyout);
-				return (CC_REDISPLAY);
-			}
-			return (complete_remote(word, dolist));
-		case 'c':			/* command complete */
-		case 'C':
-			return (complete_command(word, dolist));
-		case 'n':			/* no complete */
-		default:
-			return (CC_ERROR);
+	case 'l':			/* local complete */
+	case 'L':
+		return (complete_local(word, dolist));
+	case 'r':			/* remote complete */
+	case 'R':
+		if (connected != -1) {
+			fputs("\nMust be logged in to complete.\n", ttyout);
+			return (CC_REDISPLAY);
+		}
+		return (complete_remote(word, dolist));
+	case 'c':			/* command complete */
+	case 'C':
+		return (complete_command(word, dolist));
+	case 'n':			/* no complete */
+		return (CC_ERROR);
 	}
 
 	return (CC_ERROR);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.17 2003/12/16 21:46:22 deraadt Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.18 2004/09/16 04:39:16 deraadt Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.17 2003/12/16 21:46:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.18 2004/09/16 04:39:16 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 #include <stdio.h>
@@ -144,7 +144,7 @@ struct cmd cmdtab[] = {
 	{ "close",	disconhelp,	0, 1, 1, CMPL0		disconnect },
 	{ "cr",		crhelp,		0, 0, 0, CMPL0		setcr },
 	{ "debug",	debughelp,	0, 0, 0, CMPL0		setdebug },
-	{ "delete",	deletehelp,	0, 1, 1, CMPL(r)	delete },
+	{ "delete",	deletehelp,	0, 1, 1, CMPL(r)	deletecmd },
 	{ "dir",	dirhelp,	1, 1, 1, CMPL(rl)	ls },
 	{ "disconnect",	disconhelp,	0, 1, 1, CMPL0		disconnect },
 #ifndef SMALL

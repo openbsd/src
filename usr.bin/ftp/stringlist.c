@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.c,v 1.5 2004/07/20 03:50:26 deraadt Exp $	*/
+/*	$OpenBSD: stringlist.c,v 1.6 2004/09/16 04:39:16 deraadt Exp $	*/
 /*	$NetBSD: stringlist.c,v 1.2 1997/01/17 07:26:20 lukem Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(SMALL)
-static char *rcsid = "$OpenBSD: stringlist.c,v 1.5 2004/07/20 03:50:26 deraadt Exp $";
+static char *rcsid = "$OpenBSD: stringlist.c,v 1.6 2004/09/16 04:39:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint and not SMALL */
 
 #include <stdio.h>
@@ -97,20 +97,4 @@ sl_free(StringList *sl, int all)
 		free(sl->sl_str);
 	}
 	free(sl);
-}
-
-
-/*
- * sl_find(): Find a name in the string list
- */
-char *
-sl_find(StringList *sl, char *name)
-{
-	size_t i;
-
-	for (i = 0; i < sl->sl_cur; i++)
-		if (strcmp(sl->sl_str[i], name) == 0)
-			return sl->sl_str[i];
-
-	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.26 2003/08/11 21:23:58 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.27 2004/09/16 04:39:16 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ void	controlediting(void);
 #endif /* !SMALL */
 int	confirm(const char *, const char *);
 FILE   *dataconn(const char *);
-void	delete(int, char **);
+void	deletecmd(int, char **);
 void	disconnect(int, char **);
 void	do_chmod(int, char **);
 void	do_umask(int, char **);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.38 2004/07/20 03:50:26 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.39 2004/09/16 04:39:16 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: util.c,v 1.38 2004/07/20 03:50:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.39 2004/09/16 04:39:16 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -652,8 +652,9 @@ foregroundproc(void)
 	    ctty_pgrp == pgrp));
 }
 
+/* ARGSUSED */
 static void
-updateprogressmeter(int dummy)
+updateprogressmeter(int signo)
 {
 	int save_errno = errno;
 
@@ -844,10 +845,10 @@ void
 list_vertical(StringList *sl)
 {
 	int i, j, w;
-	int columns, width, lines, items;
+	int columns, width, lines;
 	char *p;
 
-	width = items = 0;
+	width = 0;
 
 	for (i = 0 ; i < sl->sl_cur ; i++) {
 		w = strlen(sl->sl_str[i]);
@@ -881,8 +882,9 @@ list_vertical(StringList *sl)
 /*
  * Update the global ttywidth value, using TIOCGWINSZ.
  */
+/* ARGSUSED */
 void
-setttywidth(int a)
+setttywidth(int signo)
 {
 	int save_errno = errno;
 	struct winsize winsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.47 2004/07/20 03:50:25 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.48 2004/09/16 04:39:16 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.47 2004/07/20 03:50:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.48 2004/09/16 04:39:16 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -189,7 +189,7 @@ char *stype[] = {
 /*
  * Set binary transfer type.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setbinary(int argc, char *argv[])
 {
@@ -201,7 +201,7 @@ setbinary(int argc, char *argv[])
 /*
  * Set ascii transfer type.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setascii(int argc, char *argv[])
 {
@@ -213,7 +213,7 @@ setascii(int argc, char *argv[])
 /*
  * Set tenex transfer type.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 settenex(int argc, char *argv[])
 {
@@ -706,7 +706,7 @@ togglevar(int argc, char *argv[], int *var, const char *mesg)
 /*
  * Set beep on cmd completed mode.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setbell(int argc, char *argv[])
 {
@@ -718,7 +718,7 @@ setbell(int argc, char *argv[])
 /*
  * Set command line editing
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setedit(int argc, char *argv[])
 {
@@ -731,7 +731,7 @@ setedit(int argc, char *argv[])
 /*
  * Toggle use of IPv4 EPSV/EPRT
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setepsv4(int argc, char *argv[])
 {
@@ -743,7 +743,7 @@ setepsv4(int argc, char *argv[])
 /*
  * Turn on packet tracing.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 settrace(int argc, char *argv[])
 {
@@ -754,7 +754,7 @@ settrace(int argc, char *argv[])
 /*
  * Toggle hash mark printing during transfers, or set hash mark bytecount.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 sethash(int argc, char *argv[])
 {
@@ -791,7 +791,7 @@ sethash(int argc, char *argv[])
 /*
  * Turn on printing of server echo's.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setverbose(int argc, char *argv[])
 {
@@ -802,7 +802,7 @@ setverbose(int argc, char *argv[])
 /*
  * Toggle PORT/LPRT cmd use before each data connection.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setport(int argc, char *argv[])
 {
@@ -813,7 +813,7 @@ setport(int argc, char *argv[])
 /*
  * Toggle transfer progress bar.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setprogress(int argc, char *argv[])
 {
@@ -824,7 +824,7 @@ setprogress(int argc, char *argv[])
 /*
  * Turn on interactive prompting during mget, mput, and mdelete.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setprompt(int argc, char *argv[])
 {
@@ -835,7 +835,7 @@ setprompt(int argc, char *argv[])
 /*
  * Toggle gate-ftp mode, or set gate-ftp server
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setgate(int argc, char *argv[])
 {
@@ -894,7 +894,7 @@ setgate(int argc, char *argv[])
 /*
  * Toggle metacharacter interpretation on local file names.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setglob(int argc, char *argv[])
 {
@@ -905,7 +905,7 @@ setglob(int argc, char *argv[])
 /*
  * Toggle preserving modification times on retrieved files.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setpreserve(int argc, char *argv[])
 {
@@ -916,7 +916,7 @@ setpreserve(int argc, char *argv[])
 /*
  * Set debugging mode on/off and/or set level of debugging.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 setdebug(int argc, char *argv[])
 {
@@ -1019,7 +1019,7 @@ lcd(int argc, char *argv[])
  * Delete a single file.
  */
 void
-delete(int argc, char *argv[])
+deletecmd(int argc, char *argv[])
 {
 
 	if ((argc < 2 && !another(&argc, &argv, "remote-file")) || argc > 2) {
@@ -1282,7 +1282,7 @@ user(int argc, char *argv[])
 /*
  * Print working directory on remote machine.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 pwd(int argc, char *argv[])
 {
@@ -1302,6 +1302,7 @@ pwd(int argc, char *argv[])
 /*
  * Print working directory on local machine.
  */
+/* ARGSUSED */
 void
 lpwd(int argc, char *argv[])
 {
@@ -1480,7 +1481,7 @@ rmthelp(int argc, char *argv[])
 /*
  * Terminate session and exit.
  */
-/*VARARGS*/
+/*ARGSUSED*/
 void
 quit(int argc, char *argv[])
 {
@@ -1497,6 +1498,7 @@ quit(int argc, char *argv[])
 /*
  * Terminate session, but don't exit.
  */
+/* ARGSUSED */
 void
 disconnect(int argc, char *argv[])
 {
@@ -1534,8 +1536,9 @@ account(int argc, char *argv[])
 
 jmp_buf abortprox;
 
+/* ARGSUSED */
 void
-proxabort(int notused)
+proxabort(int signo)
 {
 
 	alarmtimer(0);
@@ -1898,6 +1901,7 @@ setrunique(int argc, char *argv[])
 }
 
 /* change directory to parent directory */
+/* ARGSUSED */
 void
 cdup(int argc, char *argv[])
 {
@@ -1940,6 +1944,7 @@ restart(int argc, char *argv[])
 /* 
  * Show remote system type
  */
+/* ARGSUSED */
 void
 syst(int argc, char *argv[])
 {
