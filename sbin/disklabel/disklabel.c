@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.34 1997/07/28 08:26:58 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.35 1997/08/29 18:05:40 mickey Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.34 1997/07/28 08:26:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.35 1997/08/29 18:05:40 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -324,7 +324,7 @@ makelabel(type, name, lp)
 	 */
 	if (!xxboot && lp->d_boot0) {
 		if (*lp->d_boot0 != '/')
-			(void)sprintf(boot0, "%s/%s",
+			(void)sprintf(boot0, "%s%s",
 				      _PATH_BOOTDIR, lp->d_boot0);
 		else
 			(void)strcpy(boot0, lp->d_boot0);
@@ -333,7 +333,7 @@ makelabel(type, name, lp)
 #if NUMBOOT > 1
 	if (!bootxx && lp->d_boot1) {
 		if (*lp->d_boot1 != '/')
-			(void)sprintf(boot1, "%s/%s",
+			(void)sprintf(boot1, "%s%s",
 				      _PATH_BOOTDIR, lp->d_boot1);
 		else
 			(void)strcpy(boot1, lp->d_boot1);
@@ -738,23 +738,23 @@ makebootarea(boot, dp, f)
 		*np++ = '\0';
 
 		if (!xxboot) {
-			(void)sprintf(np, "%s/%sboot",
+			(void)sprintf(np, "%s%sboot",
 				      _PATH_BOOTDIR, dkbasename);
 			if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
 				dkbasename++;
 			xxboot = np;
-			(void)sprintf(xxboot, "%s/%sboot",
+			(void)sprintf(xxboot, "%s%sboot",
 				      _PATH_BOOTDIR, dkbasename);
 			np += strlen(xxboot) + 1;
 		}
 #if NUMBOOT > 1
 		if (!bootxx) {
-			(void)sprintf(np, "%s/boot%s",
+			(void)sprintf(np, "%sboot%s",
 				      _PATH_BOOTDIR, dkbasename);
 			if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
 				dkbasename++;
 			bootxx = np;
-			(void)sprintf(bootxx, "%s/boot%s",
+			(void)sprintf(bootxx, "%sboot%s",
 				      _PATH_BOOTDIR, dkbasename);
 			np += strlen(bootxx) + 1;
 		}

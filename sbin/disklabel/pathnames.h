@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1996/09/16 02:21:58 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 1997/08/29 18:05:40 mickey Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.6 1995/03/18 14:54:43 cgd Exp $	*/
 
 /*
@@ -38,5 +38,4 @@
 
 #include <paths.h>
 
-#define	_PATH_BOOTDIR	"/usr/mdec"
 #define	_PATH_TMPFILE	"/tmp/EdDk.aXXXXXX"
