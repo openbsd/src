@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.25 2003/08/29 19:46:29 tedu Exp $
+.\"	$OpenBSD: pool.9,v 1.26 2003/12/30 21:27:44 jmc Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 .Fa "u_int align"
 .Fa "u_int align_offset"
 .Fa "int flags"
-.Fa "char *wmesg"
+.Fa "const char *wmesg"
 .Fa "struct pool_allocator *palloc"
 .Fc
 .Ft void
@@ -75,7 +75,7 @@
 .Ft void
 .Fn pool_put "struct pool *pp" "void *item"
 .Ft int
-.Fn pool_prime "struct pool *pp" "int nitems" "caddr_t storage"
+.Fn pool_prime "struct pool *pp" "int nitems"
 .Ft void
 .Fn pool_sethiwat "struct pool *pp" "int n"
 .Ft void
@@ -83,7 +83,7 @@
 .Ft int
 .Fo pool_sethardlimit
 .Fa "struct pool *pp"
-.Fa "int n"
+.Fa "unsigned n"
 .Fa "const char *warnmess"
 .Fa "int ratecap"
 .Fc
@@ -110,7 +110,6 @@ The function
 .Fn pool_init
 initializes a resource pool.
 The arguments are:
-.Pp
 .Bl -tag -offset indent -width "align_offset"
 .It Fa pool
 Specifies the pool storage to be initialized.
@@ -260,8 +259,6 @@ parameter.
 The handle identifying the pool resource instance.
 .It Fa nitems
 The number of items to add to the pool.
-.It Fa storage
-Optional pre-allocated storage.
 .El
 .Pp
 This function may return
