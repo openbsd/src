@@ -474,3 +474,13 @@
 ./usr/mipsel-unknown-openbsd2.7/bin
 ./usr/mipsel-unknown-openbsd2.7/lib
 ./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/bt463reg.ph
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/bt463var.ph
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/bt485reg.ph
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/bt485var.ph
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/monitors.ph
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/ramdac.ph
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/mii/dmphyreg.ph
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/pci/i82365_pcivar.ph
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/pci/svreg.ph
+./usr/libdata/perl5/site_perl/arc-openbsd/dev/pci/svvar.ph

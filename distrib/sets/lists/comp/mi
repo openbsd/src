@@ -120,6 +120,10 @@
 ./usr/include/dev/ic/anvar.h
 ./usr/include/dev/ic/awireg.h
 ./usr/include/dev/ic/awivar.h
+./usr/include/dev/ic/bt463reg.h
+./usr/include/dev/ic/bt463var.h
+./usr/include/dev/ic/bt485reg.h
+./usr/include/dev/ic/bt485var.h
 ./usr/include/dev/ic/cd1190reg.h
 ./usr/include/dev/ic/cd1400reg.h
 ./usr/include/dev/ic/comreg.h
@@ -168,6 +172,7 @@
 ./usr/include/dev/ic/mc6845.h
 ./usr/include/dev/ic/midwayreg.h
 ./usr/include/dev/ic/midwayvar.h
+./usr/include/dev/ic/monitors.h
 ./usr/include/dev/ic/mpuvar.h
 ./usr/include/dev/ic/ncr5380reg.h
 ./usr/include/dev/ic/ncr5380var.h
@@ -183,6 +188,7 @@
 ./usr/include/dev/ic/oplvar.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
+./usr/include/dev/ic/ramdac.h
 ./usr/include/dev/ic/rln.h
 ./usr/include/dev/ic/rlncmd.h
 ./usr/include/dev/ic/rlnreg.h
@@ -263,6 +269,7 @@
 ./usr/include/dev/midisynvar.h
 ./usr/include/dev/midivar.h
 ./usr/include/dev/mii
+./usr/include/dev/mii/dmphyreg.h
 ./usr/include/dev/mii/icsphyreg.h
 ./usr/include/dev/mii/inphyreg.h
 ./usr/include/dev/mii/iophyreg.h
@@ -296,6 +303,7 @@
 ./usr/include/dev/pci/fmsvar.h
 ./usr/include/dev/pci/hifn7751reg.h
 ./usr/include/dev/pci/hifn7751var.h
+./usr/include/dev/pci/i82365_pcivar.h
 ./usr/include/dev/pci/if_devar.h
 ./usr/include/dev/pci/if_levar.h
 ./usr/include/dev/pci/if_lmc_types.h

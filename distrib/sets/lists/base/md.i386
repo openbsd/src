@@ -1740,3 +1740,13 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/bt463reg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/bt463var.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/bt485reg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/bt485var.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/monitors.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/ramdac.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/dmphyreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/i82365_pcivar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/svreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/svvar.ph
