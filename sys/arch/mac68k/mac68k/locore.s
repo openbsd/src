@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.21 1997/03/28 12:38:58 briggs Exp $	*/
+/*	$OpenBSD: locore.s,v 1.22 1999/01/20 13:31:16 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.74 1997/02/02 08:17:46 thorpej Exp $	*/
 
 /*
@@ -1034,11 +1034,7 @@ Lmainreturned:
 
 /*
  * proc_trampoline
- *	Call function in register a2 with a3 as an arg and then rei.  Note
- * that we restore the stack before calling, thus giving "a2" more stack.
- * (for the case that, e.g., if curproc had a deeply nested call chain...)
- * cpu_fork() also depends on struct frame being a second arg to the
- * function in a2.
+ *	Call function in register a2 with a3 as an arg and then rei.
  */
 	.globl	_proc_trampoline
 _proc_trampoline:

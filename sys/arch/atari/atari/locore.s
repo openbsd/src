@@ -896,14 +896,10 @@ Lnoflush:
 
 /*
  * proc_trampoline call function in register a2 with a3 as an arg
- * and then rei.  Note we restore the stack before calling thus giving
- * "a2" more stack  (e.g. if curproc had a deeply nested call chain...)
- * cpu_fork() also depends on struct frame being a second arg to the
- * function in a2.
+ * and then rei.
  */
 	.globl	_proc_trampoline
 _proc_trampoline:
-	movl	a3@(P_MD + MD_REGS),sp	| process' frame pointer in sp
 	movl	a3,sp@-			| push function arg (curproc)
 	jbsr	a2@			| call function
 	addql	#4,sp			| pop arg
