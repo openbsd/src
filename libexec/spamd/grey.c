@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.11 2004/03/11 17:48:59 millert Exp $	*/
+/*	$OpenBSD: grey.c,v 1.12 2004/03/13 17:46:15 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,17 +43,31 @@
 extern time_t passtime, greyexp, whiteexp;
 extern struct syslog_data sdata;
 extern struct passwd *pw;
+extern pid_t jail_pid;
 extern FILE * grey;
 extern int debug;
 
 size_t whitecount, whitealloc;
 char **whitelist;
+pid_t db_pid = -1;
 int pfdev;
 
 static char *pargv[11]= {
 	"pfctl", "-p", "/dev/pf", "-q", "-t",
 	"spamd-white", "-T", "replace", "-f" "-", NULL
 };
+
+
+/* If the parent gets a signal, kill off the children and exit */
+static void
+sig_term_chld(int sig)
+{
+	if (db_pid != -1)
+		kill(db_pid, SIGTERM);
+	if (jail_pid != -1)
+		kill(jail_pid, SIGTERM);
+	_exit(1);
+}
 
 int
 configure_pf(char **addrs, int count)
@@ -75,6 +90,7 @@ configure_pf(char **addrs, int count)
 		fdpath = NULL;
 		return(-1);
 	}
+	signal(SIGCHLD, SIG_DFL);
 	switch (pid = fork()) {
 	case -1:
 		syslog_r(LOG_INFO, &sdata, "fork failed (%m)");
@@ -82,6 +98,7 @@ configure_pf(char **addrs, int count)
 		fdpath = NULL;
 		close(pdes[0]);
 		close(pdes[1]);
+		signal(SIGCHLD, sig_term_chld);
 		return(-1);
 	case 0:
 		/* child */
@@ -103,6 +120,7 @@ configure_pf(char **addrs, int count)
 	if (pf == NULL) {
 		syslog_r(LOG_INFO, &sdata, "fdopen failed (%m)");
 		close(pdes[1]);
+		signal(SIGCHLD, sig_term_chld);
 		return(-1);
 	}
 	for (i = 0; i < count; i++)
@@ -110,6 +128,7 @@ configure_pf(char **addrs, int count)
 			fprintf(pf, "%s/32\n", addrs[i]);
 	fclose(pf);
 	waitpid(pid, NULL, 0);
+	signal(SIGCHLD, sig_term_chld);
 	return(0);
 }
 
@@ -352,8 +371,10 @@ greyreader(void)
 	struct in_addr ia;
 
 	state = 0;
-	if (grey == NULL)
-		errx(-1, "No greylist pipe stream!\n");
+	if (grey == NULL) {
+		syslog_r(LOG_ERR, &sdata, "No greylist pipe stream!\n");
+		exit(1);
+	}
 	while ((buf = fgetln(grey, &len))) {
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
@@ -417,21 +438,28 @@ greyscanner(void)
 int
 greywatcher(void)
 {
-	pid_t pid;
 	int i;
 
 	pfdev = open("/dev/pf", O_RDWR);
-	if (pfdev == -1)
-		err(1, "open of /dev/pf failed");
+	if (pfdev == -1) {
+		syslog_r(LOG_ERR, &sdata, "open of /dev/pf failed (%m)");
+		exit(1);
+	}
 
 	/* check to see if /var/db/spamd exists, if not, create it */
 	if ((i = open(PATH_SPAMD_DB, O_RDWR, 0)) == -1 && errno == ENOENT) {
 		i = open(PATH_SPAMD_DB, O_RDWR|O_CREAT, 0644);
-		if (i == -1)
-			err(1, "can't create %s", PATH_SPAMD_DB);
+		if (i == -1) {
+			syslog_r(LOG_ERR, &sdata, "create %s failed (%m)", 
+			    PATH_SPAMD_DB);
+			exit(1);
+		}
 		/* if we are dropping privs, chown to that user */
-		if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1))
-			err(1, "can't chown %s", PATH_SPAMD_DB);
+		if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1)) {
+			syslog_r(LOG_ERR, &sdata, "chown %s failed (%m)", 
+			    PATH_SPAMD_DB);
+			exit(1);
+		}
 	}
 	if (i != -1)
 		close(i);
@@ -448,15 +476,11 @@ greywatcher(void)
 		setuid(pw->pw_uid);
 	}
 
-	if (!debug) {
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
-	}
-
-	pid = fork();
-	switch(pid) {
+	db_pid = fork();
+	switch(db_pid) {
 	case -1:
-		err(1, "fork");
+		syslog_r(LOG_ERR, &sdata, "fork failed (%m)"); 
+		exit(1);
 	case 0:
 		/*
 		 * child, talks to jailed spamd over greypipe,
@@ -473,6 +497,11 @@ greywatcher(void)
 	 * pf whitelist table accordingly.
 	 */
 	fclose(grey);
+	signal(SIGTERM, sig_term_chld);
+	signal(SIGHUP,  sig_term_chld);
+	signal(SIGCHLD, sig_term_chld);
+	signal(SIGINT, sig_term_chld);
+
 	setproctitle("(pf <spamd-white> update)");
 	greyscanner();
 	/* NOTREACHED */

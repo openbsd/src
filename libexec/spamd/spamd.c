@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.59 2004/03/12 21:02:58 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.60 2004/03/13 17:46:15 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -112,6 +112,7 @@ time_t passtime = PASSTIME;
 time_t greyexp = GREYEXP;
 time_t whiteexp = WHITEEXP;
 struct passwd *pw;
+pid_t jail_pid = -1;
 
 extern struct sdlist *blacklists;
 
@@ -854,7 +855,6 @@ main(int argc, char *argv[])
 	u_short port, cfg_port;
 	struct servent *ent;
 	struct rlimit rlp;
-	pid_t pid;
 	char *bind_address = NULL;
 
 	tzset();
@@ -1001,21 +1001,28 @@ main(int argc, char *argv[])
 	if (!pw)
 		pw = getpwnam("nobody");
 
+	if (debug == 0) {
+		if (daemon(1, 1) == -1)
+			err(1, "daemon");
+	}
+
 	if (greylist) {
 		/* open pipe to talk to greylister */
-		if (pipe(greypipe) == -1)
-			err(1, "pipe");
-
-		pid = fork();
-		switch(pid) {
-		case -1:
-			err(1, "fork");
+		if (pipe(greypipe) == -1) {
+			syslog(LOG_ERR, "pipe (%m)");
+			exit(1);
+		}
+		jail_pid = fork();
+		switch(jail_pid) {
+		case -1: 
+			syslog(LOG_ERR, "fork (%m)");
+			exit(1);
 		case 0:
 			/* child - continue */
 			close(greypipe[0]);
 			grey = fdopen(greypipe[1], "w");
 			if (grey == NULL) {
-				warn("fdopen");
+				syslog(LOG_ERR, "fdopen (%m)");
 				_exit(1);
 			}
 			goto jail;
@@ -1023,8 +1030,10 @@ main(int argc, char *argv[])
 		/* parent - run greylister */
 		close(greypipe[1]);
 		grey = fdopen(greypipe[0], "r");
-		if (grey == NULL)
-			err(1, "fdopen");
+		if (grey == NULL) {
+			syslog(LOG_ERR, "fdopen (%m)");
+			exit(1);
+		}
 		return(greywatcher());
 		/* NOTREACHED */
 	}
@@ -1049,10 +1058,7 @@ jail:
 	if (listen(conflisten, 10) == -1)
 		err(1, "listen");
 
-	if (debug == 0) {
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
-	} else
+	if (debug != 0)
 		printf("listening for incoming connections.\n");
 	syslog_r(LOG_WARNING, &sdata, "listening for incoming connections.");
 
