@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.28 2000/07/07 19:07:21 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.29 2000/07/31 23:39:43 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -1815,8 +1815,10 @@ amd756_setup_channel(chp)
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+#ifndef	PCIIDE_AMD756_ENABLEDMA
 	int rev = PCI_REVISION(
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
+#endif
 
 	idedma_ctl = 0;
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_DATATIM);
@@ -1908,8 +1910,8 @@ apollo_chip_map(sc, pa)
 	struct pci_attach_args *pa;
 {
 	struct pciide_channel *cp;
-	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
-				    sc->sc_tag, PCI_CLASS_REG));
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+        pcireg_t rev = PCI_REVISION(pa->pa_class);
 	int channel;
 	u_int32_t ideconf;
 	bus_size_t cmdsize, ctlsize;
@@ -1920,7 +1922,8 @@ apollo_chip_map(sc, pa)
 	pciide_mapreg_dma(sc, pa);
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586A_IDE)
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586A_IDE
+		    && rev >= 6)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE;
