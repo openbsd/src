@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.h,v 1.6 2003/12/16 22:33:02 henning Exp $	*/
+/*	$OpenBSD: zlib.h,v 1.7 2003/12/16 22:35:50 henning Exp $	*/
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.1, November 17th, 2003
 
@@ -85,11 +85,11 @@ struct internal_state;
 typedef struct z_stream_s {
     Bytef    *next_in;  /* next input byte */
     uInt     avail_in;  /* number of bytes available at next_in */
-    uLong    total_in;  /* total nb of input bytes read so far */
+    z_off_t  total_in;  /* total nb of input bytes read so far */
 
     Bytef    *next_out; /* next output byte should be put there */
     uInt     avail_out; /* remaining free space at next_out */
-    uLong    total_out; /* total nb of bytes output so far */
+    z_off_t  total_out; /* total nb of bytes output so far */
 
     char     *msg;      /* last error message, NULL if no error */
     struct internal_state FAR *state; /* not visible by applications */
