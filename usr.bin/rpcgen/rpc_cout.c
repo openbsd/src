@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.3 1996/12/10 15:29:34 deraadt Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.4 1997/10/11 21:10:41 deraadt Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -171,7 +171,7 @@ print_header(def)
 	/* Now add Inline support */
 
 
-	if (inline == 0)
+	if (doinline == 0)
 		return;
 	/* May cause lint to complain. but  ... */
 	f_print(fout, "\t register int32_t *buf;\n\n");
@@ -420,7 +420,7 @@ emit_struct(def)
 	int     can_inline;
 
 
-	if (inline == 0) {
+	if (doinline == 0) {
 		for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
 			print_stat(1, &dl->decl);
 		return;
@@ -444,13 +444,13 @@ emit_struct(def)
 				break;	/* can be inlined */
 			};
 		} else {
-			if (size >= inline) {
+			if (size >= doinline) {
 				can_inline = 1;
 				break;	/* can be inlined */
 			}
 			size = 0;
 		}
-	if (size > inline)
+	if (size > doinline)
 		can_inline = 1;
 
 	if (can_inline == 0) {	/* can not inline, drop back to old mode */
@@ -515,9 +515,9 @@ emit_struct(def)
 
 			} else {
 				if (i > 0)
-					if (sizestr == NULL && size < inline) {
+					if (sizestr == NULL && size < doinline) {
 						/* don't expand into inline
-						 * code if size < inline */
+						 * code if size < doinline */
 						while (cur != dl) {
 							print_stat(1, &cur->decl);
 							cur = cur->next;
@@ -567,9 +567,9 @@ emit_struct(def)
 
 		}
 		if (i > 0)
-			if (sizestr == NULL && size < inline) {
+			if (sizestr == NULL && size < doinline) {
 				/* don't expand into inline code if size <
-				 * inline */
+				 * doinline */
 				while (cur != dl) {
 					print_stat(1, &cur->decl);
 					cur = cur->next;
