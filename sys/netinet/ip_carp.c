@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.87 2004/12/19 23:44:03 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.88 2004/12/22 06:04:33 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -106,6 +106,7 @@ struct carp_softc {
 #define	sc_if		sc_ac.ac_if
 #define	sc_carpdev 	sc_ac.ac_if.if_carpdev
 	int if_flags;			/* current flags to treat UP/DOWN */
+	void *ah_cookie;
 	struct ip_moptions sc_imo;
 #ifdef INET6
 	struct ip6_moptions sc_im6o;
@@ -190,6 +191,7 @@ enum	{ CARP_COUNT_MASTER, CARP_COUNT_RUNNING };
 void	carp_multicast_cleanup(struct carp_softc *);
 int	carp_set_ifp(struct carp_softc *, struct ifnet *);
 void	carp_set_enaddr(struct carp_softc *);
+void	carp_addr_updated(void *);
 int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
 int	carp_join_multicast(struct carp_softc *, struct ifnet *);
 #ifdef INET6
@@ -305,6 +307,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			struct radix_node_head *rnh =
 			    rt_tables[ifa->ifa_addr->sa_family];
 			struct radix_node *rn;
+			int hr_otherif, nr_ourif;
 
 			/*
 			 * Avoid screwing with the routes if there are other
@@ -326,41 +329,51 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			    ifa->ifa_addr, ifa->ifa_netmask,
 			    RTF_HOST, NULL);
 
-			/* Check for a route on a physical interface */
+			/* Check for our address on another interface */
 			rn = rnh->rnh_matchaddr(ifa->ifa_addr, rnh);
 			rt = (struct rtentry *)rn;
+			hr_otherif = (rt && rt->rt_ifp != &sc->sc_if &&
+			    rt->rt_flags & (RTF_CLONING|RTF_CLONED));
+
+			/* Check for a network route on our interface */
+			bcopy(ifa->ifa_addr, &sa, sizeof(sa));
+			satosin(&sa)->sin_addr.s_addr = satosin(ifa->ifa_netmask
+			    )->sin_addr.s_addr & satosin(&sa)->sin_addr.s_addr;
+			rn = rnh->rnh_lookup(&sa, ifa->ifa_netmask, rnh);
+			rt = (struct rtentry *)rn;
+			nr_ourif = (rt && rt->rt_ifp == &sc->sc_if);
 
 			switch (cmd) {
 			case RTM_ADD:
-				if (rt && rt->rt_ifp != &sc->sc_if &&
-				    rt->rt_flags & (RTF_CLONING|RTF_CLONED)) {
+				if (hr_otherif) {
+					ifa->ifa_rtrequest = NULL;
+					ifa->ifa_flags &= ~RTF_CLONING;
+
 					rtrequest(RTM_ADD, ifa->ifa_addr,
 					    ifa->ifa_addr, ifa->ifa_netmask,
 					    RTF_UP | RTF_HOST, NULL);
-				} else {
+				}
+				if (!hr_otherif || nr_ourif || !rt) {
+					if (nr_ourif && !(rt->rt_flags & 
+					    RTF_CLONING))
+						rtrequest(RTM_DELETE, &sa,
+						    ifa->ifa_addr,
+						    ifa->ifa_netmask, 0, NULL);
+
 					ifa->ifa_rtrequest = arp_rtrequest;
 					ifa->ifa_flags |= RTF_CLONING;
 
-					rtrequest(RTM_ADD, ifa->ifa_addr,
-					    ifa->ifa_addr, ifa->ifa_netmask,
-					    0, NULL);
+					if (rtrequest(RTM_ADD, ifa->ifa_addr,
+					    ifa->ifa_addr, ifa->ifa_netmask, 0,
+					    NULL) == 0)
+		 				ifa->ifa_flags |= IFA_ROUTE;
 				}
 				break;
 			case RTM_DELETE:
-				ifa->ifa_rtrequest = NULL;
-				ifa->ifa_flags &= ~RTF_CLONING;
-
-				if (!(rt && rt->rt_ifp != &sc->sc_if &&
-				    rt->rt_flags & (RTF_CLONING|RTF_CLONED))) {
-					bcopy(ifa->ifa_addr, &sa, sizeof(sa));
-					satosin(&sa)->sin_addr.s_addr =
-					    satosin(ifa->ifa_netmask
-					    )->sin_addr.s_addr &
-					    satosin(&sa)->sin_addr.s_addr;
-
-					rtrequest(cmd, &sa, ifa->ifa_addr,
-					    ifa->ifa_netmask, 0, NULL);
-				}
+				if (nr_ourif)
+					rtrequest(RTM_DELETE, &sa, 
+					    ifa->ifa_addr, ifa->ifa_netmask, 0,
+					    NULL);
 				break;
 			default:
 				break;
@@ -1576,6 +1589,14 @@ carp_set_enaddr(struct carp_softc *sc)
 	    LLADDR(sc->sc_if.if_sadl), sc->sc_if.if_addrlen);
 }
 
+void
+carp_addr_updated(void *v)
+{
+	struct carp_softc *sc = (struct carp_softc *) v;
+
+	carp_setrun(sc, 0);
+}
+
 int
 carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 {
@@ -1635,7 +1656,14 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 	if (own)
 		sc->sc_advskew = 0;
 	carp_set_state(sc, INIT);
-	carp_setrun(sc, 0);
+
+	/*
+	 * Hook if_addrhooks so that we get a callback after in_ifinit has run,
+	 * to correct any inappropriate routes that it inserted.
+	 */
+	if (sc->ah_cookie == NULL)
+		sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0, 
+		    carp_addr_updated, sc);
 
 	return (0);
 }
