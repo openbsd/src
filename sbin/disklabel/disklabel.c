@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.25 1996/12/07 10:09:24 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.26 1996/12/13 16:58:25 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.25 1996/12/07 10:09:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.26 1996/12/13 16:58:25 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1237,11 +1237,15 @@ getasciilabel(f, lp)
 		if ('a' <= *cp && *cp <= 'z' && cp[1] == '\0') {
 			unsigned part = *cp - 'a';
 
-			if (part > lp->d_npartitions) {
-				warnx("line %d: bad partition name: %s",
-				    lineno, cp);
-				errors++;
-				continue;
+			if (part >= lp->d_npartitions) {
+				if (part >= MAXPARTITIONS) {
+					warnx("line %d: bad partition name: %s",
+					    lineno, cp);
+					errors++;
+					continue;
+				} else {
+					lp->d_npartitions = part + 1;
+				}
 			}
 			pp = &lp->d_partitions[part];
 #define NXTNUM(n) { \
