@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_float.c,v 1.10 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: xdr_float.c,v 1.11 2004/01/28 01:51:39 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -55,7 +55,7 @@ static char *rcsid = "$OpenBSD: xdr_float.c,v 1.10 2001/09/15 13:51:01 deraadt E
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
     defined(__arm32__) || defined(__powerpc__) || defined(__m88k__) || \
-    defined(__hppa__)
+    defined(__hppa__) || defined(__x86_64__)
 #include <machine/endian.h>
 #define IEEEFP
 #endif
