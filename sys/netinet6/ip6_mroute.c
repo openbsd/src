@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.5 2000/07/13 14:44:17 itojun Exp $	*/
-/*	$KAME: ip6_mroute.c,v 1.24 2000/05/19 07:37:05 jinmei Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.6 2000/08/29 09:20:24 itojun Exp $	*/
+/*	$KAME: ip6_mroute.c,v 1.31 2000/08/23 03:20:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -76,6 +76,8 @@
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/pim6.h>
 #include <netinet6/pim6_var.h>
+
+#include <net/net_osdep.h>
 
 #define M_HASCL(m) ((m)->m_flags & M_EXT)
 
@@ -927,6 +929,7 @@ ip6_mforward(ip6, ifp, m)
 	register struct mbuf *mm;
 	int s;
 	mifi_t mifi;
+	long time_second = time.tv_sec;
 
 #ifdef MRT6DEBUG
 	if (mrt6debug & DEBUG_FORWARD)
@@ -945,10 +948,31 @@ ip6_mforward(ip6, ifp, m)
 	ip6->ip6_hlim--;
 
 	/*
+	 * Source address check: do not forward packets with unspecified
+	 * source. It was discussed in July 2000, on ipngwg mailing list.
+	 * This is rather more serious than unicast cases, because some
+	 * MLD packets can be sent with the unspecified source address
+	 * (although such packets must normally set 1 to the hop limit field).
+	 */
+	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
+		ip6stat.ip6s_cantforward++;
+		if (ip6_log_time + ip6_log_interval < time_second) {
+			ip6_log_time = time_second;
+			log(LOG_DEBUG,
+			    "cannot forward "
+			    "from %s to %s nxt %d received on %s\n",
+			    ip6_sprintf(&ip6->ip6_src),
+			    ip6_sprintf(&ip6->ip6_dst),
+			    ip6->ip6_nxt,
+			    if_name(m->m_pkthdr.rcvif));
+		}
+		return 0;
+	}
+
+	/*
 	 * Determine forwarding mifs from the forwarding cache table
 	 */
 	s = splnet();
-
 	MF6CFIND(ip6->ip6_src, ip6->ip6_dst, rt);
 
 	/* Entry exists, so forward if necessary */
