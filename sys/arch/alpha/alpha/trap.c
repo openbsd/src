@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1997/07/06 16:23:48 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1997/07/06 17:18:50 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -121,6 +121,16 @@ userret(p, pc, oticks)
 
 	curpriority = p->p_priority;
 }
+
+char	*trap_type[] = {
+	"interrupt",			/*  0 ALPHA_KENTRY_INT */
+	"arithmetic trap",		/*  1 ALPHA_KENTRY_ARITH */
+	"memory management fault",	/*  2 ALPHA_KENTRY_MM */
+	"instruction fault",		/*  3 ALPHA_KENTRY_IF */
+	"unaligned access fault",	/*  4 ALPHA_KENTRY_UNA */
+	"system call",			/*  5 ALPHA_KENTRY_SYS */
+};
+int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
 /*
  * Trap is called from locore to handle most types of processor traps.
@@ -442,31 +452,10 @@ out:
 
 dopanic:
 	{
-		const char *entryname;
+		const char *entryname = "???";
 
-		switch (entry) {
-		case ALPHA_KENTRY_INT:
-			entryname = "interrupt";
-			break;
-		case ALPHA_KENTRY_ARITH:
-			entryname = "arithmetic trap";
-			break;
-		case ALPHA_KENTRY_MM:
-			entryname = "memory management fault";
-			break;
-		case ALPHA_KENTRY_IF:
-			entryname = "instruction fault";
-			break;
-		case ALPHA_KENTRY_UNA:
-			entryname = "unaligned access fault";
-			break;
-		case ALPHA_KENTRY_SYS:
-			entryname = "system call";
-			break;
-		default:
-			entryname = "???";
-			break;
-		}
+		if (entry > 0 && entry < trap_types)
+			entryname = trap_type[entry];
 
 		printf("\n");
 		printf("fatal %s trap:\n", user ? "user" : "kernel");
