@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.19 2001/04/03 16:33:49 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.20 2002/04/02 03:17:16 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -149,6 +149,8 @@ sub add_unformated_subject
     	{}
 	# unbreakable spaces
     s/\\\s+/ /g;
+    	# unbreakable em dashes
+    s/\\\|\\\(em\\\|/-/g;
 	# em dashes
     s/\\\(em\s+/- /g;
     	# em dashes in the middle of lines
@@ -157,6 +159,7 @@ sub add_unformated_subject
     s/\\\(tm/(tm)/g;
 	# font changes
     s/\\f[BIRP]//g;
+    s/\\f\(..//g;
     	# fine space adjustments
     while (s/\\[vh]\'.*?\'//g)
     	{}
@@ -177,6 +180,12 @@ sub add_unformated_subject
     s/\s+$//;
     s/^\s+//;
     s/\s+/ /g;
+    	# some damage control
+    if (m/^\Q($section) - \E/) {
+    	print STDERR "Rejecting non-subject line from $filename:\n$_\n"
+	    if $picky;
+	return;
+    }
     push(@$subjects, $_);
     verify_subject($_, $filename) if $picky;
 }
@@ -231,11 +240,11 @@ sub handle_unformated
 		if (m/^\.\s*SH/ || m/^\.\s*sh/) {
 		    my @subject = ();
 		    while (<$f>) {
-			last if m/^\.\s*(?:SH|sh|SS|ss|nf)/;
+			last if m/^\.\s*(?:SH|sh|SS|ss|nf|LI)/;
 			    # several subjects in one manpage
 			if (m/^\.\s*(?:PP|Pp|br|PD|LP|sp)/) {
 			    add_unformated_subject(\@lines, \@subject,
-				$section, $filename, \%toexpand) 
+				$section, $filename, \%toexpand)
 				    if @subject != 0;
 			    @subject = ();
 			    next;
