@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cl.c,v 1.12 1998/03/01 12:42:40 niklas Exp $	*/
+/*	$OpenBSD: grf_cl.c,v 1.13 1999/03/08 15:26:09 espie Exp $	*/
 /*	$NetBSD: grf_cl.c,v 1.20 1997/07/29 17:46:24 veego Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ unsigned long cl_maxpixelclock = 86000000;
 extern unsigned char CIRRUSFONT[];
 
 struct grfcltext_mode clconsole_mode = {
-	{255, "", 25200000, 640, 480, 4, 640/8, 752/8, 792/8, 800/8,
+	{255, "", 28200000, 640, 480, 4, 640/8, 752/8, 792/8, 832/8,
 	 481, 490, 498, 522, 0},
 	8, CIRRUSFONTY, 80, 480 / CIRRUSFONTY, CIRRUSFONT, 32, 255
 };
