@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.11 2003/11/08 06:46:44 mcbride Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.12 2003/11/08 19:51:38 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.11 2003/11/08 06:46:44 mcbride Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.12 2003/11/08 19:51:38 dhartmei Exp $";
 #endif
 
 #include <sys/param.h>
@@ -111,6 +111,7 @@ pfsync_if_print(u_char *user, const struct pcap_pkthdr *h,
 		pf_state_peer_ntoh(&s->src, &st.src);
 		pf_state_peer_ntoh(&s->dst, &st.dst);
 		st.rule.nr = ntohl(s->rule.nr);
+		st.anchor.nr = ntohl(s->anchor.nr);
 		bcopy(&s->rt_addr, &st.rt_addr, sizeof(st.rt_addr));
 		st.creation = ntohl(s->creation);
 		st.expire = ntohl(s->expire);

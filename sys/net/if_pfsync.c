@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.6 2003/06/21 09:07:01 djm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.7 2003/11/08 19:51:38 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -238,7 +238,7 @@ pfsync_pack_state(action, st)
 	struct pfsync_softc *sc = ifp->if_softc;
 	struct pfsync_header *h;
 	struct pf_state *sp;
-	struct pf_rule *r = st->rule.ptr;
+	struct pf_rule *r;
 	struct mbuf *m;
 	u_long secs;
 	int s, ret;
@@ -288,10 +288,14 @@ pfsync_pack_state(action, st)
 	sp->packets[1] = htonl(st->packets[1]);
 	sp->bytes[0] = htonl(st->bytes[0]);
 	sp->bytes[1] = htonl(st->bytes[1]);
-	if (r == NULL)
+	if ((r = st->rule.ptr) == NULL)
 		sp->rule.nr = htonl(-1);
 	else
 		sp->rule.nr = htonl(r->nr);
+	if ((r = st->anchor.ptr) == NULL)
+		sp->anchor.nr = htonl(-1);
+	else
+		sp->anchor.nr = htonl(r->nr);
 	sp->af = st->af;
 	sp->proto = st->proto;
 	sp->direction = st->direction;
