@@ -1187,7 +1187,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/asm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/autoconf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/bppioctl.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/bsd_audioio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/bsd_openprom.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/cdefs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/cgtworeg.ph
