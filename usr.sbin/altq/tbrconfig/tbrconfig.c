@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbrconfig.c,v 1.2 2001/10/26 07:39:52 kjc Exp $	*/
+/*	$OpenBSD: tbrconfig.c,v 1.3 2002/02/15 03:31:16 deraadt Exp $	*/
 /*	$KAME: tbrconfig.c,v 1.3 2001/05/08 04:36:39 itojun Exp $	*/
 /*
  * Copyright (C) 2000
@@ -138,15 +138,15 @@ main(int argc, char **argv)
 		char rate_str[64], size_str[64];
 
 		if (req.tb_prof.rate < 999999)
-			sprintf(rate_str, "%.2fK",
+			snprintf(rate_str, sizeof rate_str, "%.2fK",
 				(double)req.tb_prof.rate/1000.0);
 		else
-			sprintf(rate_str, "%.2fM",
+			snprintf(rate_str, sizeof rate_str, "%.2fM",
 				(double)req.tb_prof.rate/1000000.0);
 		if (req.tb_prof.depth < 10240)
-			sprintf(size_str, "%u", req.tb_prof.depth);
+			snprintf(size_str, sizeof size_str, "%u", req.tb_prof.depth);
 		else
-			sprintf(size_str, "%.2fK",
+			snprintf(size_str, sizeof size_str, "%.2fK",
 				(double)req.tb_prof.depth/1024.0);
 		printf("%s: tokenrate %s(bps)  bucketsize %s(bytes)\n",
 		       req.ifname, rate_str, size_str);
@@ -179,15 +179,16 @@ list_all(void)
 			continue;
 
 		if (req.tb_prof.rate < 999999)
-			sprintf(rate_str, "%.2fK",
+			snprintf(rate_str, sizeof rate_str, "%.2fK",
 				(double)req.tb_prof.rate/1000.0);
 		else
-			sprintf(rate_str, "%.2fM",
+			snprintf(rate_str, sizeof rate_str, "%.2fM",
 				(double)req.tb_prof.rate/1000000.0);
 		if (req.tb_prof.depth < 10240)
-			sprintf(size_str, "%u", req.tb_prof.depth);
+			snprintf(size_str, sizeof size_str,
+				"%u", req.tb_prof.depth);
 		else
-			sprintf(size_str, "%.2fK",
+			snprintf(size_str, sizeof size_str, "%.2fK",
 				(double)req.tb_prof.depth/1024.0);
 		printf("%s: tokenrate %s(bps)  bucketsize %s(bytes)\n",
 		       req.ifname, rate_str, size_str);
