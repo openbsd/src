@@ -1,4 +1,4 @@
-/*	$OpenBSD: pnpinfo.c,v 1.1.1.1 1996/08/11 15:48:55 shawn Exp $	*/
+/*	$OpenBSD: pnpinfo.c,v 1.2 1997/01/09 15:35:18 weingart Exp $	*/
 /*
  * Copyright (c) 1996, Sujal M. Patel
  * All rights reserved.
@@ -385,7 +385,7 @@ handle_small_res(resinfo, item, len)
 			printf("Device decodes the full 16-bit ISA address\n");
 		else
 			printf("Device does not decode the full 16-bit ISA address\n");
-		printf("I/O Range maximum address: 0x%x\n",
+		printf("I/O Range minimum address: 0x%x\n",
 		    resinfo[1] + (resinfo[2] << 8));
 		printf("I/O Range maximum address: 0x%x\n",
 		    resinfo[3] + (resinfo[4] << 8));
