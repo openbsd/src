@@ -44,7 +44,7 @@ file	dev/tc/tc.c			tc		needs-flag
 #
 device ioasic { } 		#{ }	# not really optional
 attach ioasic at tc
-file	arch/pmax/tc/asic.c		ioasic
+file	arch/pmax/tc/asic.c		ioasic | dc_ds # TTTTT dc_ds is ugly
 
 
 # Real-time clock (not optional)
@@ -106,7 +106,7 @@ file	arch/pmax/dev/rz.c		rz needs-count
 device dc
 file	arch/pmax/dev/dc.c		dc	needs-flag
 attach dc at ioasic with dc_ioasic
-file	arch/pmax/dev/dc_ioasic.c	dc_ioasic
+file	arch/pmax/dev/dc_ioasic.c	dc_ioasic | dc_ds # TTTTT ugly
 attach dc at mainbus with dc_ds
 file	arch/pmax/dev/dc_ds.c		dc_ds
 
