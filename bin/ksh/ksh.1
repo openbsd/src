@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.86 2005/01/17 09:59:02 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.87 2005/01/19 17:15:19 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -4629,7 +4629,7 @@ Moves the cursor to the beginning of the edited input line.
 Uppercase the first character in the next
 .Ar n
 words, leaving the cursor past the end of the last word.
-.Pp
+.It Ic comment ^[#
 If the current line does not begin with a comment character, one is added at
 the beginning of the line and the line is entered (as if return had been
 pressed); otherwise, the existing comment characters are removed and the cursor
