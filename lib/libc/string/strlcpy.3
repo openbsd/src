@@ -1,4 +1,4 @@
-.\" $OpenBSD: strlcpy.3,v 1.12 2001/05/07 15:51:54 millert Exp $
+.\" $OpenBSD: strlcpy.3,v 1.13 2001/06/18 22:29:59 millert Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -125,7 +125,9 @@ traverses
 .Fa size
 characters without finding a NUL, the length of the string is considered
 to be
-.Fa size .
+.Fa size
+and the destination string will not be NUL-terminated (since there was
+no space for the NUL).
 This keeps
 .Fn strlcat
 from running off the end of a string.
