@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.48 2003/09/17 17:20:10 millert Exp $
+dnl	$OpenBSD: mirrors,v 1.49 2003/10/06 06:52:03 david Exp $
 This is a list of currently known ftp servers as the time of the OSREV release.
 For a more recent list, please refer to http://www.OpenBSD.org/ftp.html
 
@@ -52,7 +52,6 @@ Germany:
     ftp://pandemonium.tiscali.de/pub/OpenBSD (Frankfurt)
     ftp://openbsd.bay13.net/pub/OpenBSD (Hamburg)
     ftp://ftp.leo.org/pub/OpenBSD (Muenchen)
-    ftp://mirrors.serveftp.org/openbsd (Nurnberg)
     ftp://ftp.uni-stuttgart.de/pub/OpenBSD (Stuttgart)
     ftp://ftp.fh-wolfenbuettel.de/pub/os/openbsd (Wolfenbuettel)
 
@@ -81,7 +80,6 @@ Lithuania:
 
 The Netherlands:
     ftp://ftp.nl.uu.net/pub/OpenBSD (Amsterdam)
-    ftp://ftp.calyx.nl/pub/OpenBSD (Amsterdam)
     ftp://ftp.nluug.nl/pub/OpenBSD (Utrecht)
 
 Norway:
