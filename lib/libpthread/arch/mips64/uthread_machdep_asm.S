@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.1 2000/10/03 02:44:15 d Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.1 2004/08/11 17:41:34 pefo Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
