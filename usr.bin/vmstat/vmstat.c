@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.27 1999/05/13 22:12:50 alex Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.28 1999/06/11 23:10:52 espie Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -126,11 +126,11 @@ struct nlist namelist[] = {
 #define	X_DKEYSTATS	(X_END+2)
 	{ "_dkeystats" },
 #endif
-#if defined(pc532)
+#if defined(__pc532__)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
 #endif
-#if defined(i386)
+#if defined(__i386__)
 #define	X_INTRHAND	(X_END)
 	{ "_intrhand" },
 #define	X_INTRSTRAY	(X_END+1)
@@ -629,7 +629,7 @@ cpustats()
 	(void)printf("%2.0f", cur.cp_time[CP_IDLE] * pct);
 }
 
-#if defined(pc532)
+#if defined(__pc532__)
 /* To get struct iv ...*/
 #define _KERNEL
 #include <machine/psl.h>
@@ -666,7 +666,7 @@ dointr()
 		    inttotal, inttotal / uptime);
 	}
 }
-#elif defined(i386)
+#elif defined(__i386__)
 /* To get struct intrhand */
 #define _KERNEL
 #include <machine/psl.h>
