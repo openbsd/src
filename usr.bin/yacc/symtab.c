@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.9 2003/06/19 16:34:53 pvalchev Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.10 2003/08/12 01:16:33 millert Exp $	*/
 /*	$NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.9 2003/06/19 16:34:53 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: symtab.c,v 1.10 2003/08/12 01:16:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,6 +155,7 @@ free_symbols(void)
     for (p = first_symbol; p; p = q)
     {
 	q = p->next;
+	FREE(p->name);
 	FREE(p);
     }
 }
