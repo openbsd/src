@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.82 2004/06/20 17:17:35 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.83 2004/06/20 17:44:06 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -302,8 +302,8 @@ message_parse_payloads(struct message *msg, struct payload *p, u_int8_t next,
 		if (next >= ISAKMP_PAYLOAD_RESERVED_MIN &&
 		    next <= ISAKMP_PAYLOAD_RESERVED_MAX) {
 			log_print("message_parse_payloads: invalid next "
-			    "payload type %d in payload of type %d", next,
-			    payload);
+			    "payload type %s in payload of type %d",
+			    constant_name(isakmp_payload_cst, next), payload);
 			message_drop(msg, ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE,
 			    0, 1, 1);
 			return -1;
@@ -323,7 +323,8 @@ message_parse_payloads(struct message *msg, struct payload *p, u_int8_t next,
 
 		if (message_payload_sz(payload) == 0) {
 			log_print("message_parse_payloads: unknown minimum "
-			    "payload size for payload type %u", payload);
+			    "payload size for payload type %s",
+			    constant_name(isakmp_payload_cst, payload));
 			message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED,
 			    0, 1, 1);
 			return -1;
@@ -343,11 +344,13 @@ message_parse_payloads(struct message *msg, struct payload *p, u_int8_t next,
 			    0, 1, 1);
 			return -1;
 		}
-		/* Ignore private payloads.  */
-		if (next >= ISAKMP_PAYLOAD_PRIVATE_MIN) {
+		/* Ignore most private payloads.  */
+		if (next >= ISAKMP_PAYLOAD_PRIVATE_MIN &&
+		    next != ISAKMP_PAYLOAD_NAT_D) {
 			LOG_DBG((LOG_MESSAGE, 30, "message_parse_payloads: "
-			    "private next payload type %d in payload of "
-			    "type %d ignored", next, payload));
+			    "private next payload type %s in payload of "
+			    "type %d ignored",
+			    constant_name(isakmp_payload_cst, next), payload));
 			goto next_payload;
 		}
 		/*
@@ -355,8 +358,9 @@ message_parse_payloads(struct message *msg, struct payload *p, u_int8_t next,
 		 * this stage.
 	         */
 		if (!ISSET(payload, accepted_payloads)) {
-			log_print("message_parse_payloads: payload type %d "
-			    "unexpected", payload);
+			log_print("message_parse_payloads: payload type %s "
+			    "unexpected", constant_name(isakmp_payload_cst,
+				payload));
 			message_drop(msg, ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE,
 			    0, 1, 1);
 			return -1;
@@ -390,7 +394,7 @@ message_parse_proposal(struct message *msg, struct payload *p,
 	message_index_payload(msg, p, payload, buf);
 
 	ZERO(&payload_set);
-	SET(ISAKMP_PAYLOAD_TRANSFORM, &payload_set);
+	SET(payload_revmap[ISAKMP_PAYLOAD_TRANSFORM], &payload_set);
 	if (message_parse_payloads(msg,
 	    payload_last(msg, ISAKMP_PAYLOAD_PROPOSAL),
 	    ISAKMP_PAYLOAD_TRANSFORM, buf + ISAKMP_PROP_SPI_OFF +
@@ -1022,7 +1026,7 @@ message_validate_sa(struct message *msg, struct payload *p)
 
 	/* Go through the PROPOSAL payloads.  */
 	ZERO(&payload_set);
-	SET(ISAKMP_PAYLOAD_PROPOSAL, &payload_set);
+	SET(payload_revmap[ISAKMP_PAYLOAD_PROPOSAL], &payload_set);
 	if (message_parse_payloads(msg, p, ISAKMP_PAYLOAD_PROPOSAL,
 	    p->p + ISAKMP_SA_SIT_OFF + len, &payload_set,
 	    message_parse_proposal) == -1)
@@ -1160,7 +1164,7 @@ message_sort_payloads(struct message *msg, u_int8_t next)
 	for (i = ISAKMP_PAYLOAD_SA; i < payload_index_max; i++)
 		if (i != ISAKMP_PAYLOAD_PROPOSAL && i !=
 		    ISAKMP_PAYLOAD_TRANSFORM)
-			SET(i, &payload_set);
+			SET(payload_revmap[i], &payload_set);
 	sz = message_parse_payloads(msg, 0, next,
 	    (u_int8_t *)msg->iov[0].iov_base + ISAKMP_HDR_SZ, &payload_set,
 	    message_index_payload);
