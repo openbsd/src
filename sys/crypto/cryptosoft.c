@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptosoft.c,v 1.13 2000/07/21 00:02:20 angelos Exp $ */
+/* $OpenBSD: cryptosoft.c,v 1.14 2000/08/19 13:43:23 nate Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -399,8 +399,8 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 	else
 	  swcr_sesnum *= 2;
 
-	MALLOC(swd, struct swcr_data **,
-	       swcr_sesnum * sizeof(struct swcr_data *), M_XDATA, M_NOWAIT);
+	swd = malloc(swcr_sesnum * sizeof(struct swcr_data *),
+		     M_XDATA, M_NOWAIT);
 	if (swd == NULL)
 	{
 	    /* Reset session number */
@@ -419,7 +419,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 	{
 	    bcopy(swcr_sessions, swd,
 		  (swcr_sesnum / 2) * sizeof(struct swcr_data *));
-	    FREE(swcr_sessions, M_XDATA);
+	    free(swcr_sessions, M_XDATA);
 	}
 
 	swcr_sessions = swd;
@@ -464,8 +464,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 	enccommon:
 		txf->setkey(&((*swd)->sw_kschedule), cri->cri_key,
 			    cri->cri_klen / 8);
-		MALLOC((*swd)->sw_iv, u_int8_t *, txf->blocksize, M_XDATA,
-		       M_NOWAIT);
+		(*swd)->sw_iv = malloc(txf->blocksize, M_XDATA, M_NOWAIT);
 		if ((*swd)->sw_iv == NULL)
 		{
 		    swcr_freesession(i);
@@ -489,16 +488,14 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		axf = &auth_hash_hmac_ripemd_160_96;
 
 	authcommon:
-		MALLOC((*swd)->sw_ictx, u_int8_t *, axf->ctxsize, M_XDATA,
-		       M_NOWAIT);
+		(*swd)->sw_ictx = malloc(axf->ctxsize, M_XDATA, M_NOWAIT);
 		if ((*swd)->sw_ictx == NULL)
 		{
 		    swcr_freesession(i);
 		    return ENOBUFS;
 		}
 
-		MALLOC((*swd)->sw_octx, u_int8_t *, axf->ctxsize, M_XDATA,
-		       M_NOWAIT);
+		(*swd)->sw_octx = malloc(axf->ctxsize, M_XDATA, M_NOWAIT);
 		if ((*swd)->sw_octx == NULL)
 		{
 		    swcr_freesession(i);
@@ -537,8 +534,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		axf = &auth_hash_key_sha1;
 
 	auth2common:
-		MALLOC((*swd)->sw_ictx, u_int8_t *, axf->ctxsize, M_XDATA,
-		       M_NOWAIT);
+		(*swd)->sw_ictx = malloc(axf->ctxsize, M_XDATA, M_NOWAIT);
 		if ((*swd)->sw_ictx == NULL)
 		{
 		    swcr_freesession(i);
@@ -546,8 +542,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		}
 
 		/* Store the key so we can "append" it to the payload */
-		MALLOC((*swd)->sw_octx, u_int8_t *, cri->cri_klen / 8,
-		       M_XDATA, M_NOWAIT);
+		(*swd)->sw_octx = malloc(cri->cri_klen / 8, M_XDATA, M_NOWAIT);
 		if ((*swd)->sw_octx == NULL)
 		{
 		    swcr_freesession(i);
@@ -614,7 +609,7 @@ swcr_freesession(u_int64_t tid)
 		  txf->zerokey(&(swd->sw_kschedule));
 
 		if (swd->sw_iv)
-		  FREE(swd->sw_iv, M_XDATA);
+		  free(swd->sw_iv, M_XDATA);
 		break;
 
 	    case CRYPTO_MD5_HMAC96:
@@ -625,13 +620,13 @@ swcr_freesession(u_int64_t tid)
 		if (swd->sw_ictx)
 		{
 		    bzero(swd->sw_ictx, axf->ctxsize);
-		    FREE(swd->sw_ictx, M_XDATA);
+		    free(swd->sw_ictx, M_XDATA);
 		}
 
 		if (swd->sw_octx)
 		{
 		    bzero(swd->sw_octx, axf->ctxsize);
-		    FREE(swd->sw_octx, M_XDATA);
+		    free(swd->sw_octx, M_XDATA);
 		}
 		break;
 
@@ -642,13 +637,13 @@ swcr_freesession(u_int64_t tid)
 		if (swd->sw_ictx)
 		{
 		    bzero(swd->sw_ictx, axf->ctxsize);
-		    FREE(swd->sw_ictx, M_XDATA);
+		    free(swd->sw_ictx, M_XDATA);
 		}
 
 		if (swd->sw_octx)
 		{
 		    bzero(swd->sw_octx, swd->sw_klen);
-		    FREE(swd->sw_octx, M_XDATA);
+		    free(swd->sw_octx, M_XDATA);
 		}
 		break;
 	}
