@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.55 2002/05/27 13:42:16 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.56 2002/05/29 02:51:37 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -261,10 +261,7 @@ if_attachdomain1(ifp)
 {
 	struct domain *dp;
 
-	/*
-	 * address family dependent data region - effective only
-	 * after domaininit()
-	 */
+	/* address family dependent data region */
 	bzero(ifp->if_afdata, sizeof(ifp->if_afdata));
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_ifattach)
