@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.70 2000/01/27 21:11:09 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.71 2000/02/01 10:17:08 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -130,6 +130,8 @@
  */
 
 struct pmap_stats {
+	int	ps_alias_uncache;	/* # of uncaches due to bad aliases */
+	int	ps_alias_recache;	/* # of recaches due to bad aliases */
 	int	ps_unlink_pvfirst;	/* # of pv_unlinks on head */
 	int	ps_unlink_pvsearch;	/* # of pv_unlink searches */
 	int	ps_changeprots;		/* # of calls to changeprot */
@@ -2184,6 +2186,7 @@ pv_unlink4_4c(pv, pm, va)
 		for (npv = pv->pv_next; npv != NULL; npv = npv->pv_next)
 			if (BADALIAS(va, npv->pv_va) || (npv->pv_flags & PV_NC))
 				return;
+		pmap_stats.ps_alias_recache++;
 		pv->pv_flags &= ~PV_ANC;
 		pv_changepte4_4c(pv, 0, PG_NC);
 	}
@@ -2239,6 +2242,7 @@ pv_link4_4c(pv, pm, va, nc)
 					va, npv->pv_va, -1); /* XXX -1 */
 #endif
 				/* Mark list head `uncached due to aliases' */
+				pmap_stats.ps_alias_uncache++;
 				pv->pv_flags |= PV_ANC;
 				pv_changepte4_4c(pv, ret = PG_NC, 0);
 				break;
@@ -2486,6 +2490,7 @@ pv_unlink4m(pv, pm, va)
 			if (BADALIAS(va, npv->pv_va) ||
 			    (npv->pv_flags & PV_C4M) == 0)
 				return;
+		pmap_stats.ps_alias_recache++;
 		pv->pv_flags &= ~PV_ANC;
 		pv_changepte4m(pv, SRMMU_PG_C, 0);
 	}
@@ -2558,6 +2563,7 @@ retry:
 					va, npv->pv_va, -1); /* XXX -1 */
 #endif
 				/* Mark list head `uncached due to aliases' */
+				pmap_stats.ps_alias_uncache++;
 				pv->pv_flags |= PV_ANC;
 				pv_changepte4m(pv, 0, ret = SRMMU_PG_C);
 				/* cache_flush_page(va); XXX: needed? */
