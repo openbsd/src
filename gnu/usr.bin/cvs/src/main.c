@@ -447,8 +447,8 @@ main (argc, argv)
     if (getenv (CVSREAD_ENV) != NULL)
 	cvswrite = 0;
     if (getenv (CVSREADONLYFS_ENV)) {
-	readonlyfs = TRUE;
-	logoff = TRUE;
+	readonlyfs = 1;
+	logoff = 1;
     }
 
     /* Set this to 0 to force getopt initialization.  getopt() sets
@@ -823,7 +823,6 @@ Copyright (c) 1989-1997 Brian Berliner, david d `zoo' zuhn, \n\
 		    error (0, 0, "Sorry, you don't have read/write access to the history file");
 		    error (1, save_errno, "%s", path);
 		}
-		parseopts(CVSroot_directory);
 		free (path);
 	    }
 
@@ -1006,75 +1005,4 @@ usage (cpp)
     for (; *cpp; cpp++)
 	(void) fprintf (stderr, *cpp);
     error_exit();
-}
-
-void
-parseopts(root)
-    const char *root;
-{
-    char path[PATH_MAX];
-    int save_errno;
-    char buf[1024];
-    const char *p;
-    char *q;
-    FILE *fp;
-
-    if (root == NULL) {
-	printf("no CVSROOT in parseopts\n");
-	return;
-    }
-    p = strchr (root, ':');
-    if (p)
-	p++;
-    else
-	p = root;
-    if (p == NULL) {
-	printf("mangled CVSROOT in parseopts\n");
-	return;
-    }
-    (void) sprintf (path, "%s/%s/%s", p, CVSROOTADM, CVSROOTADM_OPTIONS);
-    if ((fp = fopen(path, "r")) != NULL) {
-	while (fgets(buf, sizeof buf, fp) != NULL) {
-	    if (buf[0] == '#')
-		continue;
-	    q = strrchr(buf, '\n');
-	    if (q)
-		*q = '\0';
-
-	    if (!strncmp(buf, "tag=", 4)) {
-		char *what;
-
-		RCS_citag = strdup(buf+4);
-		if (RCS_citag == NULL) {
-			printf("no memory for local tag\n");
-			return;
-		}
-		what = malloc(sizeof("RCSLOCALID")+1+strlen(RCS_citag)+1);
-		if (what == NULL) {
-			printf("no memory for local tag\n");
-			return;
-		}
-		sprintf(what, "RCSLOCALID=%s", RCS_citag);
-		putenv(what);
-	    } else if (!strncmp(buf, "umask=", 6)) {
-		mode_t mode;
-
-		cvsumask = (mode_t)(strtol(buf+6, NULL, 8) & 0777);
-	    }
-	    else if (!strncmp(buf, "dlimit=", 7)) {
-#ifdef BSD
-#include <sys/resource.h>
-		struct rlimit rl;
-
-		if (getrlimit(RLIMIT_DATA, &rl) != -1) {
-			rl.rlim_cur = atoi(buf+7);
-			rl.rlim_cur *= 1024;
-
-			(void) setrlimit(RLIMIT_DATA, &rl);
-		}
-#endif /* BSD */
-	    }
-	}
-	fclose(fp);
-    }
 }

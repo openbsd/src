@@ -472,7 +472,6 @@ int isabsolute PROTO((const char *filename));
 char *last_component PROTO((char *path));
 char *get_homedir PROTO ((void));
 char *cvs_temp_name PROTO ((void));
-void parseopts PROTO ((const char *root));
 
 int numdots PROTO((const char *s));
 char *increment_revnum PROTO ((const char *));

@@ -279,6 +279,12 @@ static const char *const modules_contents[] = {
 static const char *const config_contents[] = {
     "# Set this to \"no\" if pserver shouldn't check system users/passwords\n",
     "#SystemAuth=no\n",
+    "# Set this to the name of a local tag to use in addition to Id\n",
+    "#tag=OurTag\n",
+    "# Set this to the default umask to use when creating files and directories\n",
+    "#umask=002\n",
+    "# Set this to the default data resource limit to use\n",
+    "#dlimit=65536\n",
     NULL
 };
 
