@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.89 2003/04/14 22:29:46 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.90 2003/06/06 13:28:13 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -83,9 +83,9 @@ will try to fetch a version with the correct checksum from the
 .Ox
 main archive site in the case of a checksum mismatch.
 .It Ar clean
-Clean ports contents. 
+Clean ports contents.
 By default, it will clean the work directory.
-It can be invoked as 
+It can be invoked as
 make clean='[depends bulk work fake flavors dist install sub package packages]'.
 .Bl -tag -width packages
 .It Va work
@@ -259,7 +259,7 @@ port's variables without guessing wrongly.
 Update the packing lists for a port, using the fake installation and the
 existing packing lists.
 .Ar update-plist
-should produce mostly correct 
+should produce mostly correct
 .Pa PLIST ,
 .Pa PFRAG.shared
 and
@@ -334,8 +334,8 @@ Defaults to ${WRKSRC}.
 Starting with
 .Ox 3.3 ,
 several versions of autoconf may coexist peacefully.
-Setting 
-.Ev AUTOCONF_VERSION 
+Setting
+.Ev AUTOCONF_VERSION
 along with
 .Ev CONFIGURE_STYLE
 set to autoconf is the correct way to specify which one to use.
@@ -348,7 +348,7 @@ Set based on corresponding INSTALL_* variables.
 .It Ev BIN_PACKAGES
 If set to
 .Sq Yes ,
-the 
+the
 .Ar package
 target will trust a package built in the repository to be up-to-date,
 and will not rebuild it if the work directory is absent.
@@ -364,7 +364,7 @@ defaults to
 .Sq install
 if it is not specified.
 .Sq legacy
-used to be a file to check. 
+used to be a file to check.
 The ports tree now uses
 .Sq pkgspec
 instead, as a package that must be installed prior to the build.
@@ -378,16 +378,17 @@ is a comma separated list of flavors.
 By default, the dependency will build the default flavor.
 Build dependencies are checked at the beginning of the extract stage.
 .Pp
-Build dependencies that are not the default 
-.Ar package or 
-.Ar install 
+Build dependencies that are not the default
+.Ar package
+or
+.Ar install
 target will be processed in a subdirectory of the working directory,
 specifically, in ${WRKDIR}/directory.
 .It Ev BULK
-If set to 
+If set to
 .Sq Yes ,
 successful package builds and installations will clean
-their working directories, after invoking 
+their working directories, after invoking
 .Ar ftp-packages ,
 .Ar cdrom-packages ,
 and any other targets mentioned in BULK_TARGETS.
@@ -402,7 +403,7 @@ Used to store cookies for successful bulk-package builds, defaults to
 Flags to pass to build each target in
 .Ev BULK_TARGETS .
 .It Ev BULK_TARGETS
-Targets to run after each bulk package build before cleaning up the 
+Targets to run after each bulk package build before cleaning up the
 working directory.
 Defaults to
 .Ar ftp-packages ,
@@ -461,7 +462,9 @@ Comment used for a sub-, flavored package.
 .It Ev COMES_WITH
 The first release where the port was made part of the standard
 distribution.
-If the current OpenBSD version is >= this version then a notice
+If the current
+.Ox
+version is >= this version then a notice
 will be displayed instead of the port being built.
 .It Ev CONFIGURE_ARGS
 Arguments to pass to configure script.
@@ -478,7 +481,7 @@ Should be relative to ${WRKSRC}.
 .It Ev CONFIGURE_SHARED
 Set to --enable-shared or --disable-shared, depending on whether the
 architecture supports shared libraries.
-Should be appended to CONFIGURE_ARGS, for ports that build dynamic libraries 
+Should be appended to CONFIGURE_ARGS, for ports that build dynamic libraries
 and whose configure script supports these options.
 .It Ev CONFIGURE_STYLE
 Set to style of configuration that needs to happen.
@@ -498,7 +501,7 @@ if port does not handle DESTDIR correctly, and needs to be configured to
 add DESTDIR to prefixes
 .Po
 see also
-.Ev DESTDIRNAME 
+.Ev DESTDIRNAME
 .Pc .
 Add
 .Sq old
@@ -540,7 +543,7 @@ Don't override.
 Name of variable to set to ${WRKINST} while faking.
 Usually DESTDIR.
 To be used in the rare cases where a port heeds DESTDIR in a few
-directories and needs to be configured with 
+directories and needs to be configured with
 .Sq gnu dest ,
 so that those few directories do not get in the way.
 .It Ev DISTDIR
@@ -713,7 +716,7 @@ which is a comma-separated list of
 .Sq lib_spec
 of the form:
 .Sq libname.[version.[subversion]] .
-See 
+See
 .Xr library-specs 7
 for more details.
 .Pp
@@ -760,11 +763,11 @@ Environment variables passed to make invocations.
 Sets at least PATH, PREFIX, LOCALBASE, X11BASE, CFLAGS, TRUEPREFIX, DESTDIR,
 and the BSD_INSTALL_* macros.
 .It Ev MAKE_FLAGS
-Flags used for all make invocations, except for the 
-.Ar fake 
+Flags used for all make invocations, except for the
+.Ar fake
 stage, which uses
 .Ev FAKE_FLAGS ,
-and for the regress stage, which uses 
+and for the regress stage, which uses
 .Ev REGRESS_FLAGS .
 .It Ev MAKE_FILE
 Name of the Makefile used for ports building.
@@ -852,13 +855,13 @@ Suffix used by
 .Ar patch
 to rename original files, and
 .Ar update-patches
-to re-generate 
+to re-generate
 .Pa ${PATCHDIR}/${PATCH_LIST}
 by looking for files using this suffix.
 Defaults to
 .Pa .orig .
-For a port that already contains 
-.Pa .orig 
+For a port that already contains
+.Pa .orig
 files in the ${DISTFILES},
 set this to something else, such as
 .Pa .pat.orig .
@@ -926,7 +929,7 @@ Defaults to -p0 .
 .It Ev PATCH_LIST
 Wildcard pattern of patches to select under ${PATCHDIR} (default: patch-*).
 Note that filenames ending in .orig, or ~ are never applied.
-Note that 
+Note that
 .Ev PATCH_LIST
 can hold absolute pathnames, for instance to share patches among similar
 ports:
@@ -972,7 +975,7 @@ Default is
 The first cipher that matches in ${CHECKSUM_FILE} is verified.
 .It Ev PREFIX
 Base directory for the current port installation.
-Usually ${LOCALBASE}, though some ports may elect a location under 
+Usually ${LOCALBASE}, though some ports may elect a location under
 .Pa /var ,
 and some multi-package ports may install under several locations.
 .It Ev PSEUDO_FLAVORS
@@ -980,7 +983,7 @@ Extra list of flavors that do not register in package names, but are still
 used to control build logic, and e.g., working directory names.
 Its main use is for disabling part of a multi-packages build, for instance:
 .Bd -literal
-FLAVOR=no_gnome make package 
+FLAVOR=no_gnome make package
 .Ed
 .Pp
 Creation of a separate working directory is mandatory.
@@ -990,13 +993,13 @@ all the work will need to be done again.
 If set to true,
 .Ar checksum
 will analyze ${CHECKSUM_FILE}, and try retrieving files with the correct
-checksum off 
+checksum off
 .Pa ftp.openbsd.org ,
 in the directory
 .Pa /pub/OpenBSD/distfiles/$cipher/$value/$file .
 .It Ev REGRESS_DEPENDS
 See
-.Ev BUILD_DEPENDS 
+.Ev BUILD_DEPENDS
 for specification.
 Regress dependencies are only checked if the regress stage is invoked.
 .It Ev REGRESS_FLAGS
@@ -1010,12 +1013,12 @@ if port needs human interaction to run its tests.
 Target to run regression tests.
 Defaults to
 .Sq regress ,
-except for 
+except for
 .Sq perl
-and 
-.Sq gnu 
+and
+.Sq gnu
 .Ev CONFIGURE_STYLE ,
-which default to 
+which default to
 .Sq test
 and
 .Sq check
@@ -1169,17 +1172,17 @@ if port requires lesstif to work;
 if ports requires openmotif to work.
 The
 .Sq any
-setting creates an extra flavor choice of 
+setting creates an extra flavor choice of
 .Sq lesstif .
 .It Ev USE_X11
 Set to
 .Sq Yes
 if port requires X11 to work.
 .It Ev VMEM_WARNING
-Set to 
-.Sq Yes 
+Set to
+.Sq Yes
 if the port requires a lot of memory to compile, and the user is
-likely to see a message like 
+likely to see a message like
 .Qq virtual memory exhausted
 with the default process limits.
 .It Ev XMKMF
@@ -1310,9 +1313,9 @@ Used to organize a collection of ports that share most files.
 uses a single port with flavors or multi-packages to produce
 package variations instead.
 .It Ev MASTER_SITE_SUBDIR
-Contents were used to replace 
+Contents were used to replace
 .Sq %SUBDIR%
-in all 
+in all
 .Ev MASTER_SITES
 variables.
 Since
@@ -1320,10 +1323,10 @@ Since
 almost always occur at the end of the directory,
 the simpler
 .Li ${VARIABLE:=subdir/}
-construct is now used instead 
-.Po 
+construct is now used instead
+.Po
 taken from
-.Nx 
+.Nx
 .Pc .
 .It Ev MD5_FILE
 Use
@@ -1393,7 +1396,7 @@ is no longer useful.
 used to be retrieved from a separate site list.
 For greater flexibility, all files are now retrieved from
 .Ev MASTER_SITES ,
-.Ev MASTER_SITES0 , ...,
+.Ev MASTER_SITES0 , ... ,
 .Ev MASTER_SITES9 ,
 using a
 .Sq :0
@@ -1420,7 +1423,7 @@ It is not recommended to try to access them directly.
 .It Ev PKGNAME
 Used to refer to the full package name, has been superseded by
 .Ev FULLPKGNAME-foo ,
-for 
+for
 .Ev SUBPACKAGE
 -foo .
 .Ev PKGNAME
@@ -1467,9 +1470,9 @@ was used.
 .It Pa /usr/share/mk/bsd.port.mk
 Original location of
 .Nm bsd.port.mk .
-The current file lives under 
+The current file lives under
 .Pa ${PORTSDIR}/infrastructure/mk/bsd.port.mk ,
-whereas 
+whereas
 .Pa /usr/share/mk/bsd.port.mk
 is just a stub.
 .It Pa {scripts,files,patches}.${OPSYS}
@@ -1516,7 +1519,7 @@ For instance, a few ports may need supplementary stuff to be present (as
 it would be installed if the ports' dependencies were present).
 .Pp
 If {pre,do,post}-install overrides are present, they are used with some
-important changes: PREFIX is set to ${WRKINST}${PREFIX}, ${DESTDIRNAME} 
+important changes: PREFIX is set to ${WRKINST}${PREFIX}, ${DESTDIRNAME}
 is set to ${WRKINST}, and TRUEPREFIX is set to ${PREFIX}.
 Essentially, old install targets work transparently, except for a need to
 change PREFIX to TRUEPREFIX for symbolic links and similar path lookups.
@@ -1532,7 +1535,7 @@ If no do-install override is present, the port is installed using
 .Ed
 .Pp
 Note that this does set both PREFIX and ${DESTDIRNAME}.
-If a port's Makefile both heeds ${DESTDIRNAME}, 
+If a port's Makefile both heeds ${DESTDIRNAME},
 and references PREFIX explicitly,
 FAKE_FLAGS may rectify the problem by setting PREFIX=${PREFIX}
 (which will do the right thing, since ${PREFIX} is a
@@ -1586,7 +1589,7 @@ If a port can generate several useful packages, set MULTI_PACKAGES
 accordingly.
 Each extension of a MULTI_PACKAGES name should start with a dash, so that
 they cannot be confused with FLAVORS.
-In dependency checking and recursive builds, a subpackage can be 
+In dependency checking and recursive builds, a subpackage can be
 specified after a comma, e.g., SUBDIR+=quake,-server.
 MULTI_PACKAGES only affects the actual package building step (and the
 describe step, since a MULTI_PACKAGES port will produce several
@@ -1609,7 +1612,7 @@ Run env SUBPACKAGE=-server PACKAGING=-server make package,
 .Pp
 The port's Makefile can test the value of SUBPACKAGE to specialize
 processing for all sub packages.
-Note that SUBPACKAGE can also be set for dependency checking, so be 
+Note that SUBPACKAGE can also be set for dependency checking, so be
 careful to also test PACKAGING: the build stage is shared among all
 subpackages, and tests often only make sense during the packaging stage.
 All packing information is derived from
@@ -1685,15 +1688,15 @@ to register directories that hold dynamic libraries (see
 .Xr ldconfig 8 ) .
 .Li "NEWDYNLIBDIR"
 is meant for directories that will go away when the package is deleted.
-If possible, it should not be used, because users also have to edit 
+If possible, it should not be used, because users also have to edit
 .Pa rc.conf
-to add the directory. 
-It is usually better to also let libraries be visible as a link 
+to add the directory.
+It is usually better to also let libraries be visible as a link
 under ${LOCALBASE}.
 Having a separate directory is enough to trick
 .Xr ld 1
 into grabbing the right version.
-Note that libraries used only for 
+Note that libraries used only for
 .Xr dlopen 3
 do not need NEWDYNLIBDIR.
 .Pp
@@ -1708,14 +1711,9 @@ DEINSTALL files in a similar way).
 This contrasts with the FLAVORS
 situation, where all these files will automatically default to the
 non-flavor version if there is no flavor-specific file around.
-.Sh BUGS AND LIMITATIONS
-.Ev LOCALBASE ,
-.Ev X11BASE
-and
-.Ev PREFIX
-are not heeded consistently.
-Most of the ports tree will probably fall
-apart if one tries to build/use stuff elsewhere.
+.Sh SEE ALSO
+.Xr library-specs 7 ,
+.Xr packages-specs 7
 .Sh HISTORY
 The ports mechanism originally came from
 .Fx .
@@ -1731,6 +1729,11 @@ FLAVORS, MULTI_PACKAGES and FAKE are
 improvements.
 .\" Voluntarily undocumented:
 .\" AUTOCONF_ENV: probably not needed anyway, should be internal.
-.Sh SEE ALSO
-.Xr library-specs 7 ,
-.Xr packages-specs 7
+.Sh BUGS AND LIMITATIONS
+.Ev LOCALBASE ,
+.Ev X11BASE
+and
+.Ev PREFIX
+are not heeded consistently.
+Most of the ports tree will probably fall
+apart if one tries to build/use stuff elsewhere.

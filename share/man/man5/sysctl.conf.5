@@ -1,4 +1,4 @@
-.\" $OpenBSD: sysctl.conf.5,v 1.7 2003/06/03 01:52:41 millert Exp $
+.\" $OpenBSD: sysctl.conf.5,v 1.8 2003/06/06 13:28:13 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -34,6 +34,10 @@ variable assignments
 .Pq Ar variable Ns No = Ns Ar value
 with comments designated by a hash mark
 .Pq Sq # .
+.Sh FILES
+.Bl -tag -width /etc/sysctl.conf -compact
+.It Pa /etc/sysctl.conf
+.El
 .Sh EXAMPLES
 To turn on IP forwarding, one would use the following line:
 .Bd -literal -offset indent
@@ -45,10 +49,6 @@ the debugger, the following can be used:
 .Bd -literal -offset indent
 ddb.panic=0
 .Ed
-.Sh FILES
-.Bl -tag -width /etc/sysctl.conf -compact
-.It Pa /etc/sysctl.conf
-.El
 .Sh SEE ALSO
 .Xr rc 8 ,
 .Xr sysctl 8

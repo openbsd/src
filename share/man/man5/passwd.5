@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.25 2003/06/02 23:30:14 millert Exp $
+.\"	$OpenBSD: passwd.5,v 1.26 2003/06/06 13:28:13 jmc Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -266,12 +266,7 @@ containing:
 .Pp
 .%T "Managing NFS and NIS"
 (O'Reilly & Associates)
-.Sh BUGS
-User information should (and eventually will) be stored elsewhere.
-.Pp
-Placing YP exclusions in the file after any inclusions will have
-unexpected results.
-.Sh COMPATIBILITY
+.Sh STANDARDS
 The password file format has changed since
 .Bx 4.3 .
 The following
@@ -301,3 +296,8 @@ file format appeared in
 .At v3 .
 .Pp
 The YP file format first appeared in SunOS.
+.Sh BUGS
+User information should (and eventually will) be stored elsewhere.
+.Pp
+Placing YP exclusions in the file after any inclusions will have
+unexpected results.

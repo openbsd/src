@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.28 2003/06/04 07:53:04 hin Exp $
+.\" $OpenBSD: login.conf.5,v 1.29 2003/06/06 13:28:13 jmc Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -337,7 +337,7 @@ or
 to the capability name (e.g.,
 .Va openfiles-max
 and
-.Va openfiles-cur Ns No ).
+.Va openfiles-cur ) .
 .Pp
 \*(oSwill never define capabilities which start with
 .Li x-
@@ -424,7 +424,7 @@ The authentication styles currently provided are:
 .Bl -tag -width kerberosxx
 .\"
 .It Li activ
-Authenticate using an ActivCard token. 
+Authenticate using an ActivCard token.
 See
 .Xr login_activ 8 .
 .\"
@@ -636,7 +636,7 @@ for the remote hostname.
 .It Li local_addr
 The local IP address given to
 .Xr login 1
-by the 
+by the
 .Fl L
 option.
 .It Li lastchance
@@ -649,7 +649,7 @@ This is a new login session (as opposed to a simple identity check).
 .It Li remote_addr
 The remote IP address given to
 .Xr login 1
-by the 
+by the
 .Fl R
 option.
 .It Li style
@@ -676,7 +676,7 @@ Some authentication types require the user to be in group wheel when using
 the
 .Xr su 1
 program to become super user.
-.El 
+.El
 .Pp
 When the authentication program is executed,
 the environment will only contain the values
@@ -811,7 +811,7 @@ If this style of authentication does not support the
 service it should simply fail, complaining about an unknown service type.
 It should exit with a non-zero status.
 .Sh RESPONSES
-When an authentication program is called with a service of 
+When an authentication program is called with a service of
 .Li response ,
 and this style supports this mode of authentication,
 it should read two null terminated strings from file descriptor 3.

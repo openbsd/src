@@ -1,4 +1,4 @@
-.\" $OpenBSD: passwd.conf.5,v 1.16 2002/11/24 20:46:40 millert Exp $
+.\" $OpenBSD: passwd.conf.5,v 1.17 2003/06/06 13:28:13 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -97,6 +97,10 @@ The default is 3.
 .Pp
 To retrieve information from this file use
 .Xr pw_getconf 3 .
+.Sh FILES
+.Bl -tag -width /etc/passwd.conf -compact
+.It Pa /etc/passwd.conf
+.El
 .Sh EXAMPLES
 Use blowfish as the local cipher; add some more rounds for root and wheel
 members.
@@ -112,10 +116,6 @@ The old Unix crypt is used as YP cipher:
  :wheel:
       localcipher = blowfish,5
 .Ed
-.Sh FILES
-.Bl -tag -width /etc/passwd.conf -compact
-.It Pa /etc/passwd.conf
-.El
 .Sh SEE ALSO
 .Xr passwd 1 ,
 .Xr pw_getconf 3 ,

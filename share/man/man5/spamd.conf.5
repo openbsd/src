@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.10 2003/06/02 18:51:33 jason Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.11 2003/06/06 13:28:13 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -56,7 +56,7 @@ spews1:\e
 	:black:\e
 	:msg="SPAM. Your address \&%A is in the spews\e
 	level 1 database\ensee http://www.spews.org/ask.cgi?x=\&%A\en":\e
-	:method=http:\e	
+	:method=http:\e
 	:file=www.spews.org/spews_list_level1.txt:
 
 white:\e
@@ -183,7 +183,6 @@ The sequence %% will produce a single % in the output,
 and the sequence \&%A will be expanded in the message by
 .Xr spamd 8
 to display the connecting IP address in the output.
-.Pp
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr pf 4 ,

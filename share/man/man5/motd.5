@@ -1,4 +1,4 @@
-.\"	$OpenBSD: motd.5,v 1.6 2002/02/20 22:28:37 millert Exp $
+.\"	$OpenBSD: motd.5,v 1.7 2003/06/06 13:28:13 jmc Exp $
 .\"	$NetBSD: motd.5,v 1.2 1994/12/28 18:58:53 glass Exp $
 .\"
 .\" This file is in the public domain.
@@ -23,6 +23,10 @@ this file.
 Individual users may suppress the display of this file by creating a file named
 .Pa .hushlogin
 in their home directories.
+.Sh FILES
+.Bl -tag -width /etc/motd -compact
+.It Pa /etc/motd
+.El
 .Sh EXAMPLES
 .Bd -literal
 OpenBSD 3.0 (GENERIC) #5: Sat Jan 26 20:13:07 MST 2002
@@ -31,9 +35,5 @@ Make sure you have a .forward file...
 
 4/17	Machine will be down for backups all day Saturday.
 .Ed
-.Sh FILES
-.Bl -tag -width /etc/motd -compact
-.It Pa /etc/motd
-.El
 .Sh SEE ALSO
 .Xr login 1

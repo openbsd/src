@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.regress.mk.5,v 1.3 2002/09/02 19:56:55 avsm Exp $
+.\" $OpenBSD: bsd.regress.mk.5,v 1.4 2003/06/06 13:28:13 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Anil Madhavapeddy
 .\" Copyright (c) 2000 Marc Espie
@@ -56,7 +56,7 @@ Executes all of the regression targets defined in the Makefile.
 Runs an individual regression test.
 If the exit status of the program indicates an error or timeout,
 then a failure is logged, otherwise the test is marked as a success.
-.El 
+.El
 .Sh VARIABLES
 .Bl -tag -width REGRESS_LOG
 .It Ev REGRESS_LOG
@@ -75,36 +75,36 @@ variable is invoked for these targets.
 See also
 .Ev SUDO .
 .It Ev REGRESS_SKIP_SLOW
-If this variable is not empty, skip over all the regression 
+If this variable is not empty, skip over all the regression
 tests which have been marked as being 'slow' using the
 .Ev REGRESS_SLOW_TARGETS
 variable.
 .It Ev REGRESS_SLOW_TARGETS
 Targets which are defined as 'slow'.
-All of these tests can be skipped by setting the 
-.Ev REGRESS_SKIP_SLOW 
+All of these tests can be skipped by setting the
+.Ev REGRESS_SKIP_SLOW
 variable.
 .It Ev REGRESS_TARGETS
 Targets which are invoked to run the set of regression tests
 for this Makefile.
-Defaults to 
+Defaults to
 .Ar run-regress-${PROG} .
 .It Ev SUDO
 Location of the sudo command, used to switch to root for certain
 test targets which require it.
 .El
-.Sh BUGS AND LIMITATIONS
-The build system is unable to distinguish between timeouts due to 
-.Ev REGRESS_MAXTIME
-being exceeded, or a genuine failure occurring.
+.Sh SEE ALSO
+.Xr bsd.port.mk 5
 .Sh HISTORY
 The regression system originally came from
 .Nx ,
 with many tests added by
-.Ox 
+.Ox
 since.
 The current Makefile framework was written by Artur Grabowski
-and Marc Espie for 
+and Marc Espie for
 .Ox 3.1 .
-.Sh SEE ALSO
-.Xr bsd.port.mk 5
+.Sh BUGS AND LIMITATIONS
+The build system is unable to distinguish between timeouts due to
+.Ev REGRESS_MAXTIME
+being exceeded, or a genuine failure occurring.
