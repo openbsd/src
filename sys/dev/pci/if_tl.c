@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.2 1998/11/11 05:24:13 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.3 1998/11/16 18:33:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -3050,11 +3050,6 @@ tl_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE |
-		   PCI_COMMAND_MEM_ENABLE |
-		   PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef TL_USEIOSPACE
