@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.26 2004/12/22 18:57:28 otto Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.27 2004/12/28 21:11:21 jsg Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -670,13 +670,8 @@ c_unset(char **wp)
 }
 
 static void
-p_time(shf, posix, tv, width, prefix, suffix)
-	struct shf *shf;
-	int posix;
-	struct timeval *tv;
-	int width;
-	char *prefix;
-	char *suffix;
+p_time(struct shf *shf, int posix, struct timeval *tv, int width, char *prefix,
+    char *suffix)
 {
 	if (posix)
 		shf_fprintf(shf, "%s%*ld.%02ld%s", prefix ? prefix : "",
