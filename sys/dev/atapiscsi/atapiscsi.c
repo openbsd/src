@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.22 1999/12/14 08:23:35 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.23 1999/12/19 22:57:52 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -611,7 +611,10 @@ wdc_atapi_the_poll_machine(chp, xfer)
 			idx = 0;
 		}
 
-		if (xfer->delay != 0) delay (1000 * xfer->delay);
+		if (xfer->delay != 0) {
+			delay (1000 * xfer->delay);
+			idx += 1000 * xfer->delay;
+		}
 
 		switch (ret) {
 		case GOTO_NEXT:
@@ -619,7 +622,6 @@ wdc_atapi_the_poll_machine(chp, xfer)
 			
 	        case CONTINUE_POLL:
 			DELAY(1);
-
 			break;
 
 		case DONE:
@@ -999,13 +1001,22 @@ wdc_atapi_intr_data(chp, xfer, timeout)
 	ire = CHP_READ_REG(chp, wdr_ireason);
 
 	if ((message = wdc_atapi_in_data_phase(xfer, len, ire))) {
-		if (!timeout)
+		/* The drive has dropped BSY before setting up the
+		   registers correctly for DATA phase. This drive is
+		   not compliant with ATA/ATAPI-4.
+
+		   Give the drive 100ms to get its house in order
+		   before we try again.  */
+		if (!timeout) {
+			xfer->delay = 100;
 			return (CONTINUE_POLL);	
+		}
 	}
 
 	if (timeout) {
 		printf ("wdc_atapi_intr_data: error: %s\n", message);
 		
+		sc_xfer->error = XS_RESET;
 		xfer->next = wdc_atapi_reset;
 		return (GOTO_NEXT);
 	}
