@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.7 1999/08/05 22:40:37 niklas Exp $
-#	$EOM: Makefile,v 1.5 1999/08/05 15:00:05 niklas Exp $
+#	$OpenBSD: Makefile,v 1.8 1999/08/26 22:28:24 niklas Exp $
+#	$EOM: Makefile,v 1.7 1999/08/13 15:13:04 ho Exp $
 
 #
 # Copyright (c) 1999 Niels Provos.  All rights reserved.
+# Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -37,15 +38,36 @@
 # RSA Key Generation
 
 PROG=		rsakeygen
-SRCS=		log.c rsakeygen.c sysdep.c util.c
+SRCS=		libcrypto.c log.c rsakeygen.c sysdep.c util.c
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
 .PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
 CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
-LDADD+=		-lgmp -lcrypto
-DPADD+=		${LIBDES}
 NOMAN=
 DEBUG=		-g
+
+.include "${TOPSRC}/sysdep/${OS}/Makefile.sysdep"
+
+.ifdef HAVE_DLOPEN
+CFLAGS+=	-DHAVE_DLOPEN
+SRCS+=		dyn.c
+.endif
+
+.ifdef USE_LIBCRYPTO
+CFLAGS+=	-DUSE_LIBCRYPTO
+LDADD+=		-lcrypto
+DPADD+=		${LIBCRYPTO}
+.endif
+
+.if !defined (HAVE_DLOPEN) && !defined (USE_LIBCRYPTO)
+.BEGIN:
+	@echo RSA cannot be used in this environmet, skipping...
+
+PROG=
+.endif
+
+LDADD+=		${DESLIB}
+DPADD+=		${DESLIBDEP}
 
 .include <bsd.prog.mk>
