@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.4 1997/09/10 07:01:10 deraadt Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.5 1997/09/10 07:06:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lexi.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: lexi.c,v 1.4 1997/09/10 07:01:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lexi.c,v 1.5 1997/09/10 07:06:37 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -565,7 +565,6 @@ addkey(key, val)
 	/*
 	 * Whoa. Must reallocate special table.
 	 */
-	printf("alloc\n");
 	nspecials = sizeof (specialsinit) / sizeof (specialsinit[0]);
 	maxspecials = nspecials;
 	maxspecials += maxspecials >> 2;
@@ -574,7 +573,6 @@ addkey(key, val)
 	    errx(1, "indent: out of memory");
 	memmove(specials, specialsinit, sizeof specialsinit);
     } else if (nspecials >= maxspecials) {
-	printf("realloc\n");
 	maxspecials += maxspecials >> 2;
 	specials = realloc(specials, maxspecials * sizeof specials[0]);
 	if (specials == NULL)
