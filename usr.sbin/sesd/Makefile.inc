@@ -1,6 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2000/02/21 08:10:21 mjacob Exp $
-# $OpenBSD: Makefile.inc,v 1.1 2000/02/21 08:45:14 mjacob Exp $
-# $FreeBSD: $
+# $OpenBSD: Makefile.inc,v 1.2 2000/02/22 06:21:35 mjacob Exp $
 #
 # Copyright (c) 2000 by Matthew Jacob
 # All rights reserved.
@@ -34,17 +32,12 @@
 # mjacob@feral.com
 #
 
-SYS	!=	uname -s
-
-.if ${SYS} == OpenBSD
-COPTS	+=	-I/usr/include/scsi -DSESINC="<ses.h>"
-.elif	${SYS} == NetBSD
-COPTS	+=	-I/usr/include/dev/scsipi -DSESINC="<ses.h>"
-.else
-COPTS	+=	-I/usr/include/cam/scsi -DSESINC="<scsi_ses.h>"
+.if exists(${.CURDIR}/../../Makefile.inc)
+.include "${.CURDIR}/../../Makefile.inc"
 .endif
+
+COPTS	+=	-DSESINC="<scsi/ses.h>"
 # Inherit BINDIR from one level up.
-.include "../Makefile.inc"
 BINDIR	?=	${DESTDIR}/usr/sbin
 
 .PATH:	${.CURDIR}/../srcs

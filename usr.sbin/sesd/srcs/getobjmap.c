@@ -1,6 +1,6 @@
 /* $NetBSD: $ */ 
 /* $FreeBSD: $ */
-/* $OpenBSD: getobjmap.c,v 1.1 2000/02/21 08:45:15 mjacob Exp $ */
+/* $OpenBSD: getobjmap.c,v 1.2 2000/02/22 06:21:36 mjacob Exp $ */
 /*
  * Copyright (c) 2000 by Matthew Jacob
  * All rights reserved.
@@ -41,6 +41,7 @@
 #include <sys/ioctl.h>
 #include SESINC
 
+int main __P((int, char **));
 extern char *geteltnm __P((int));
 
 int

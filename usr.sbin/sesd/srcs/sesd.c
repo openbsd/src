@@ -1,6 +1,6 @@
 /* $NetBSD: $ */
 /* $FreeBSD: $ */
-/* $OpenBSD: sesd.c,v 1.1 2000/02/21 08:45:15 mjacob Exp $ */
+/* $OpenBSD: sesd.c,v 1.2 2000/02/22 06:21:36 mjacob Exp $ */
 /*
  * Copyright (c) 2000 by Matthew Jacob
  * All rights reserved.
@@ -45,6 +45,7 @@
 
 #define	ALLSTAT (SES_ENCSTAT_UNRECOV | SES_ENCSTAT_CRITICAL | \
 	SES_ENCSTAT_NONCRITICAL | SES_ENCSTAT_INFO)
+int main __P((int, char **));
 
 /*
  * Monitor named SES devices and note (via syslog) any changes in status.
@@ -57,7 +58,7 @@ main(a, v)
 {
 	static char *usage =
 	    "usage: %s [ -d ] [ -t pollinterval ] device [ device ]\n";
-	int fd, polltime, dev, devbase, nodaemon, bpri;
+	int fd, polltime, dev, devbase, nodaemon;
 	ses_encstat stat, *carray;
 
 	if (a < 2) {
@@ -117,7 +118,6 @@ main(a, v)
 
 	for (;;) {
 		for (dev = devbase; dev < a; dev++) {
-			char buf[128];
 			fd = open(v[dev], O_RDWR);
 			if (fd < 0) {
 				syslog(LOG_ERR, "%s: %m", v[dev]);

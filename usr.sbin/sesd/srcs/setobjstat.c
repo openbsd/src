@@ -1,6 +1,6 @@
 /* $NetBSD: $ */ 
 /* $FreeBSD: $ */
-/* $OpenBSD: setobjstat.c,v 1.1 2000/02/21 08:45:15 mjacob Exp $ */
+/* $OpenBSD: setobjstat.c,v 1.2 2000/02/22 06:21:36 mjacob Exp $ */
 /*
  * Copyright (c) 2000 by Matthew Jacob
  * All rights reserved.
@@ -40,6 +40,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include SESINC
+
+int main __P((int, char **));
 
 int
 main(a, v)
