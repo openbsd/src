@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.22 1997/07/06 18:10:18 niklas Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.23 1997/08/07 10:24:25 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -103,8 +103,8 @@ struct cfdriver wdc_cd = {
 enum wdcreset_mode { WDCRESET_VERBOSE, WDCRESET_SILENT };
 
 #if NWD > 0
-int	wdc_ata_intr	__P((struct wdc_softc *,struct wdc_xfer *));
-void	wdc_ata_start	__P((struct wdc_softc *,struct wdc_xfer *));
+int	wdc_ata_intr	__P((struct wdc_softc *, struct wdc_xfer *));
+void	wdc_ata_start	__P((struct wdc_softc *, struct wdc_xfer *));
 void	wdc_ata_done	__P((struct wdc_softc *, struct wdc_xfer *));
 __inline static void u_int16_to_string __P((u_int16_t *, char *, size_t));
 #endif	/* NWD */
@@ -485,9 +485,8 @@ wdc_ata_start(wdc, xfer)
 				if (blkdiff < 0)
 					continue;
 				if (blkdiff == 0) {
-					/* Replace current block of transfer. */
-					blkno =
-					    d_link->sc_lp->d_secperunit -
+					/* Replace current block of xfer. */
+					blkno = d_link->sc_lp->d_secperunit -
 					    d_link->sc_lp->d_nsectors - i - 1;
 				}
 				if (blkdiff < nblks) {
@@ -1180,7 +1179,9 @@ wdc_atapi_get_params(ab_link, drive, id)
 	    bus_space_read_1(iot, ioh, wd_cyl_hi);
 	if (len != sizeof(struct atapi_identify)) {
 		if (len < 142) {	/* XXX */
-			printf("%s: drive %d returned %d/%d of identify device data, device unusuable\n", wdc->sc_dev.dv_xname, drive, len, sizeof(struct atapi_identify));
+			printf("%s: drive %d returned %d/%d of identify device data, device unusuable\n",
+			    wdc->sc_dev.dv_xname, drive, len,
+			    sizeof(struct atapi_identify));
 
 			error = 0;
 			goto end;
@@ -1386,7 +1387,8 @@ again:
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
 			bus_space_write_raw_multi_2(iot, ioh, wd_data,
 			    xfer->databuf + xfer->c_skip, xfer->c_bcount);
-			for (i = xfer->c_bcount; i < len; i += sizeof(short))
+			for (i = xfer->c_bcount; i < len;
+			    i += sizeof(u_int16_t))
 				bus_space_write_2(iot, ioh, wd_data, 0);
 			xfer->c_bcount = 0;
 			return 1;
