@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.93 2002/02/14 22:57:46 art Exp $
+.\"	$OpenBSD: options.4,v 1.94 2002/02/22 21:13:18 drahn Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -514,6 +514,8 @@ With this option, only the superuser can set them, and they can't be cleared
 if the securelevel is greater than 0.
 See also
 .Xr chflags 1 .
+.It Cd option UFS_EXTATTR
+This option enables Extended Attribute support for UFS filesystems.
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
