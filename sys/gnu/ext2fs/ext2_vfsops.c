@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.10 1996/07/14 09:14:14 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.11 1996/07/14 09:45:03 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -113,9 +113,6 @@ static struct ufs_dirops ext2fs_dirops = {
 #define bsd_free free
 
 extern u_long nextgennumber;
-
-static int ext2fs_inode_hash_lock;
-
 
 static int	compute_sb_data __P((struct vnode * devvp,
 				     struct ext2_super_block * es,
@@ -927,20 +924,6 @@ restart:
 	if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
 		return (0);
 
-	/*
-	 * Lock out the creation of new entries in the FFS hash table in
-	 * case getnewvnode() or MALLOC() blocks, otherwise a duplicate
-	 * may occur!
-	 */
-	if (ext2fs_inode_hash_lock) {
-		while (ext2fs_inode_hash_lock) {
-			ext2fs_inode_hash_lock = -1;
-			tsleep(&ext2fs_inode_hash_lock, PVM, "ffsvgt", 0);
-		}
-		goto restart;
-	}
-	ext2fs_inode_hash_lock = 1;
-
 	/* Allocate a new vnode/inode. */
 	if (error = getnewvnode(VT_EXT2FS, mp, ext2_vnodeop_p, &vp)) {
 		*vpp = NULL;
@@ -970,10 +953,6 @@ restart:
 	 * disk portion of this inode to be read.
 	 */
 	ufs_ihashins(ip);
-
-	if (ext2fs_inode_hash_lock < 0)
-		wakeup(&ext2fs_inode_hash_lock);
-	ext2fs_inode_hash_lock = 0;
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
