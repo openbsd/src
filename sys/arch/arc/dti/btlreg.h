@@ -99,7 +99,7 @@ struct bt_mbx_in {
 #if	defined(BIG_DMA)
 #define BT_NSEG 2048    /* Number of scatter gather segments - to much vm */
 #else
-#define	BT_NSEG	32	/* Bounce buffer is limited to 128k. Be modest... */
+#define	BT_NSEG	(MAXPHYS / NBPG)
 #endif /* BIG_DMA */
 
 struct bt_scat_gath {
@@ -150,7 +150,7 @@ struct bt_ccb {
 
 struct bt_buf {
 	TAILQ_ENTRY(bt_buf) chain;
-	char	buf[8192 - 2 * sizeof(struct bt_buf *)];
+	char	buf[4096 - 2 * sizeof(struct bt_buf *)];
 };
 
 /*

@@ -129,6 +129,7 @@ struct bt_softc {
 	TAILQ_HEAD(, bt_ccb) sc_free_ccb, sc_waiting_ccb;
 	TAILQ_HEAD(, bt_buf) sc_free_buf;
 	int sc_numccbs, sc_mbofull;
+	int sc_numbufs;
 	int sc_scsi_dev;		/* adapters scsi id */
 	struct scsi_link sc_link;	/* prototype for devs */
 };
@@ -415,6 +416,7 @@ btattach(parent, self, aux)
 		buf = (struct bt_buf *)bouncearea;
 		bouncearea +=  sizeof(struct bt_buf);
 		TAILQ_INSERT_HEAD(&sc->sc_free_buf, buf, chain);
+		sc->sc_numbufs++;
 	}
 	/*
 	 * fill in the prototype scsi_link.
@@ -423,7 +425,7 @@ btattach(parent, self, aux)
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &bt_switch;
 	sc->sc_link.device = &bt_dev;
-	sc->sc_link.openings = 4;
+	sc->sc_link.openings = 1;
 
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
@@ -618,6 +620,7 @@ bt_free_buf(sc, buf)
 	s = splbio();
 
 	TAILQ_INSERT_HEAD(&sc->sc_free_buf, buf, chain);
+	sc->sc_numbufs++;
 
 	/*
 	 * If there were none, wake anybody waiting for one to come free,
@@ -706,6 +709,7 @@ bt_get_buf(sc, flags)
 		buf = sc->sc_free_buf.tqh_first;
 		if (buf) {
 			TAILQ_REMOVE(&sc->sc_free_buf, buf, chain);
+			sc->sc_numbufs;
 			break;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
@@ -1297,7 +1301,8 @@ bt_scsi_cmd(xs)
 		}
 		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
 		if (datalen) {
-			printf("%s: bt_scsi_cmd, out of bufs\n");
+			printf("%s: bt_scsi_cmd, out of bufs %d of %d left.\n",
+					sc->sc_dev.dv_xname, datalen, xs->datalen);
 			goto badbuf;
 		}
 		ltophys(KVTOPHYS(ccb->scat_gath), ccb->data_addr);

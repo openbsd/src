@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.4 1996/08/26 11:12:03 pefo Exp $ */
+/*      $OpenBSD: param.h,v 1.5 1996/09/20 18:18:46 pefo Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,15 +70,13 @@
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
-#if 0
-#define	KERNTEXTOFF	0x80080000	/* start of kernel text for kvm_mkdb */
-#endif
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+/* XXX Maxphys temporary changed to 32K while SCSI driver is fixed. */
+#define	MAXPHYS		(32 * 1024)	/* max raw I/O transfer size */
 
 #define	CLSIZE		1
 #define	CLSIZELOG2	0
