@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.8 1997/12/21 21:19:49 angelos Exp $	*/
+/*	$OpenBSD: param.h,v 1.9 1997/12/25 00:00:45 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -215,11 +215,9 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#if defined(_KERNEL) && !defined(_LOCORE)
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
-#endif
 #elif defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
@@ -235,11 +233,9 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
-#if defined(_KERNEL) && !defined(_LOCORE)
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
-#endif
 #elif defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(1)
 #	define CPU_ISSUN4C	(0)
@@ -255,11 +251,9 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(1)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
-#if defined(_KERNEL) && !defined(_LOCORE)
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
-#endif
 #elif !defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(1)
@@ -284,9 +278,7 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#if defined(_KERNEL) && !defined(_LOCORE)
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
-#endif
 #endif
