@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISKU1,v 1.1 2001/10/09 21:32:17 deraadt Exp $
+# 	$OpenBSD: RAMDISKU1,v 1.2 2001/10/09 23:07:57 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -21,7 +21,7 @@ option		SMALL_KERNEL
 #option		DIAGNOSTIC	# internal consistency checks
 option		FFS		# UFS
 #option		NFSCLIENT	# Network File System client
-option		CD9660		# ISO 9660 + Rock Ridge file system
+#option		CD9660		# ISO 9660 + Rock Ridge file system
 option		INET		# IP + ICMP + TCP + UDP
 option		BOOT_CONFIG	# add support for boot -c
 
@@ -76,7 +76,7 @@ scsibus*	at esp?
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
 sd*		at scsibus? target ? lun ?	# SCSI disks
-cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
+#cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
 
 # Media Independent Interface (mii) drivers)
 nsphy*	at mii? phy ?				# NS and compatible PHYs
