@@ -1,7 +1,7 @@
-/*	$OpenBSD: pen.c,v 1.9 2001/04/08 16:45:48 espie Exp $	*/
+/*	$OpenBSD: pen.c,v 1.10 2001/11/26 05:04:33 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pen.c,v 1.9 2001/04/08 16:45:48 espie Exp $";
+static const char *rcsid = "$OpenBSD: pen.c,v 1.10 2001/11/26 05:04:33 deraadt Exp $";
 #endif
 
 /*
@@ -29,6 +29,7 @@ static const char *rcsid = "$OpenBSD: pen.c,v 1.9 2001/04/08 16:45:48 espie Exp 
 #include <sys/signal.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <errno.h>
 
 /* For keeping track of where we are */
 static char Current[FILENAME_MAX];
@@ -139,27 +140,31 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 void
 leave_playpen(char *save)
 {
+    int save_errno = errno;
     void (*oldsig)(int);
 
+    /* XXX big signal race! */
     /* Don't interrupt while we're cleaning up */
     oldsig = signal(SIGINT, SIG_IGN);
     if (Previous[0] && chdir(Previous) == FAIL) {
-	cleanup(0);
-	errx(2, "can't chdir back to '%s'", Previous);
+	cleanup(0);	/* XXX */
+	warnx("can't chdir back to '%s'", Previous);
+	_exit(2);
     } else if (Current[0] && strcmp(Current, Previous)) {
         if (strcmp(Current,"/")==0) {
             fprintf(stderr,"PANIC: About to rm -rf / (not doing so, aborting)\n");
-            abort();
+            abort();	/* XXX is abort safe? */
         }
 	if (vsystem("rm -rf %s", Current))
 	    pwarnx("couldn't remove temporary dir '%s'", Current);
-	strcpy(Current, Previous);
+	strcpy(Current, Previous);	/* XXX */
     }
     if (save)
-	strcpy(Previous, save);
+	strcpy(Previous, save);		/* XXX */
     else
 	Previous[0] = '\0';
     signal(SIGINT, oldsig);
+    errno = save_errno;
 }
 
 off_t

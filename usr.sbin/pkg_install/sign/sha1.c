@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.2 2001/04/08 16:45:48 espie Exp $ */
+/* $OpenBSD: sha1.c,v 1.3 2001/11/26 05:04:33 deraadt Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -38,14 +38,12 @@
 #include "gzip.h"
 #include "extern.h"
 
-
 /* private context for sha1 signature checker */
 struct sha1_checker {
 	SHA1_CTX context;
 	const char *id;
 	const char *filename;
 };
-
 
 #define SHA1_TEMPLATE "SHA1 (%s) = "
 #define BUFSIZE	(MAXID+sizeof(SHA1_TEMPLATE)+2*SHA1_DIGESTSIZE+1)

@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.21 2001/11/17 10:40:05 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.22 2001/11/26 05:04:33 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.21 2001/11/17 10:40:05 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.22 2001/11/26 05:04:33 deraadt Exp $";
 #endif
 
 /*
@@ -28,9 +28,10 @@ static const char *rcsid = "$OpenBSD: perform.c,v 1.21 2001/11/17 10:40:05 espie
 #include "lib.h"
 #include "add.h"
 
+#include <sys/wait.h>
 #include <ctype.h>
 #include <signal.h>
-#include <sys/wait.h>
+#include <errno.h>
 
 static int pkg_do(char *);
 static int sanity_check(char *);
@@ -583,22 +584,29 @@ sanity_check(char *pkg)
 void
 cleanup(int signo)
 {
+    int save_errno = errno;
     static int	alreadyCleaning;
     void (*oldint)(int);
     void (*oldhup)(int);
+    char buf[1024];
     oldint = signal(SIGINT, SIG_IGN);
     oldhup = signal(SIGHUP, SIG_IGN);
 
+    /* XXX big signal race, nearly all of it! */
     if (!alreadyCleaning) {
     	alreadyCleaning = 1;
-	if (signo)
-	    printf("Signal %d received, cleaning up\n", signo);
+	if (signo) {
+	    snprintf(buf, sizeof buf,
+		"Signal %d received, cleaning up\n", signo);
+	    write(STDOUT_FILENO, buf, strlen(buf));
+	}
 	if (!Fake && zapLogDir && LogDir[0])
-	    vsystem("%s -rf %s", REMOVE_CMD, LogDir);
-	leave_playpen(Home);
+	    vsystem("%s -rf %s", REMOVE_CMD, LogDir);	/* XXX */
+	leave_playpen(Home);				/* XXX */
 	if (signo)
-	    exit(1);
+	    _exit(1);
     }
     signal(SIGINT, oldint);
     signal(SIGHUP, oldhup);
+    errno = save_errno;
 }

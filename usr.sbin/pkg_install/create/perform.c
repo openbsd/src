@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.12 2001/02/10 17:21:11 millert Exp $	*/
+/*	$OpenBSD: perform.c,v 1.13 2001/11/26 05:04:33 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.12 2001/02/10 17:21:11 millert Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.13 2001/11/26 05:04:33 deraadt Exp $";
 #endif
 
 /*
@@ -27,10 +27,12 @@ static const char *rcsid = "$OpenBSD: perform.c,v 1.12 2001/02/10 17:21:11 mille
 #include "lib.h"
 #include "create.h"
 
-#include <err.h>
-#include <signal.h>
 #include <sys/syslimits.h>
 #include <sys/wait.h>
+
+#include <err.h>
+#include <errno.h>
+#include <signal.h>
 #include <unistd.h>
 
 static void sanity_check(void);
@@ -348,20 +350,25 @@ sanity_check()
 void
 cleanup(int sig)
 {
+    int save_errno = errno;
     static int	alreadyCleaning;
     void (*oldint)(int);
     void (*oldhup)(int);
+    char buf[1024];
     oldint = signal(SIGINT, SIG_IGN);
     oldhup = signal(SIGHUP, SIG_IGN);
 
     if (!alreadyCleaning) {
     	alreadyCleaning = 1;
-	if (sig)
-	    printf("Signal %d received, cleaning up.\n", sig);
+	if (sig) {
+	    snprintf(buf, sizeof buf, "Signal %d received, cleaning up.\n", sig);
+	    write(STDOUT_FILENO, buf, strlen(buf));
+	}
 	leave_playpen(home);
 	if (sig)
-	    exit(1);
+	    _exit(1);
     }
     signal(SIGINT, oldint);
     signal(SIGHUP, oldhup);
+    errno = save_errno;
 }

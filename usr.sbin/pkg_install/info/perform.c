@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.10 2001/04/18 14:34:31 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.11 2001/11/26 05:04:33 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.10 2001/04/18 14:34:31 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.11 2001/11/26 05:04:33 deraadt Exp $";
 #endif
 
 /* This is OpenBSD pkg_install, based on:
@@ -255,8 +255,8 @@ check4pkg(char *pkgspec, char *dbdir)
 void
 cleanup(int sig)
 {
-	leave_playpen(Home);
-	exit(1);
+	leave_playpen(Home);		/* XXX signal race */
+	_exit(1);
 }
 
 int

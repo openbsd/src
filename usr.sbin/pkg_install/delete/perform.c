@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.10 2001/04/17 21:51:33 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.11 2001/11/26 05:04:33 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.10 2001/04/17 21:51:33 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.11 2001/11/26 05:04:33 deraadt Exp $";
 #endif
 
 /*
@@ -255,9 +255,7 @@ sanity_check(char *pkg)
 void
 cleanup(int sig)
 {
-    /* Nothing to do */
-    if(sig)	/* in case this is ever used as a signal handler */
-	exit(1);
+    exit(1);
 }
 
 /* deppkgname is the pkg from which's +REQUIRED_BY file we are
