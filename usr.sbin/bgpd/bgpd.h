@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.25 2003/12/25 17:07:24 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.26 2003/12/25 23:15:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -248,6 +248,13 @@ struct kroute {
 	in_addr_t	nexthop;
 };
 
+struct kroute_nexthop {
+	in_addr_t	nexthop;
+	u_int8_t	valid;
+	u_int8_t	connected;
+	in_addr_t	gateway;
+};
+
 /* prototypes */
 /* session.c */
 int		 session_main(struct bgpd_config *, int[2], int[2]);
@@ -303,5 +310,7 @@ int	kroute_change(int, struct kroute *);
 int	kroute_delete(int, struct kroute *);
 void	kroute_shutdown(int);
 void	kroute_dispatch_msg(int);
+void	kroute_validate_nexthop(in_addr_t, struct kroute_nexthop *);
+void	kroute_nexthop_check(in_addr_t);
 
 #endif /* __BGPD_H__ */

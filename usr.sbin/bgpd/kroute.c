@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.20 2003/12/25 19:24:46 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.21 2003/12/25 23:15:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -35,9 +35,15 @@
 #include "bgpd.h"
 
 struct kroute_node {
-	RB_ENTRY(kroute_node)	entry;
-	struct kroute		r;
-	int			flags;
+	RB_ENTRY(kroute_node)	 entry;
+	struct kroute		 r;
+	int			 flags;
+};
+
+struct knexthop_node {
+	RB_ENTRY(knexthop_node)	 entry;
+	struct kroute_nexthop	 nh;
+	struct kroute_node	*kroute;
 };
 
 int		kroute_msg(int, int, struct kroute *);
@@ -46,10 +52,19 @@ void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
 int		kroute_fetchtable(void);
+int		knexthop_compare(struct knexthop_node *,
+		    struct knexthop_node *);
+void		kroute_remove(struct kroute_node *);
+
+struct kroute_node * kroute_match(in_addr_t);
 
 RB_HEAD(kroute_tree, kroute_node)	kroute_tree, krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare);
 RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare);
+
+RB_HEAD(knexthop_tree, knexthop_node)	knexthop_tree, knt;
+RB_PROTOTYPE(knexthop_tree, knexthop_node, entry, knexthop_compare);
+RB_GENERATE(knexthop_tree, knexthop_node, entry, knexthop_compare);
 
 u_int32_t		rtseq = 1;
 pid_t			pid;
@@ -57,6 +72,7 @@ pid_t			pid;
 #define	F_BGPD_INSERTED		0x0001
 #define F_KERNEL		0x0002
 #define	F_CONNECTED		0x0004
+#define F_NEXTHOP		0x0008
 
 int
 kroute_init(void)
@@ -393,6 +409,8 @@ kroute_dispatch_msg(int fd)
 			if ((kr = RB_FIND(kroute_tree, &krt, &s)) != NULL) {
 				if (kr->flags & F_KERNEL) {
 					kr->r.nexthop = nexthop;
+					if (kr->flags & F_NEXTHOP) /* XXX */
+						flags |= F_NEXTHOP;
 					kr->flags = flags;
 				}
 			} else {
@@ -415,8 +433,7 @@ kroute_dispatch_msg(int fd)
 				continue;
 			if (!(kr->flags & F_KERNEL))
 				continue;
-			RB_REMOVE(kroute_tree, &krt, kr);
-			free(kr);
+			kroute_remove(kr);
 			break;
 		default:
 			/* ingnore for now */
@@ -425,3 +442,114 @@ kroute_dispatch_msg(int fd)
 
 	}
 }
+
+void
+kroute_remove(struct kroute_node *kr)
+{
+	struct knexthop_node	*s;
+	struct kroute_nexthop	 nh;
+
+	/*
+	 * the foreach is suboptimal, but:
+	 * -routes disappering that have nexthops attached should not
+	 *  happen often; except for some ibgp and multihop that should
+	 *  be connected routes anyway
+	 * -maintaining an SLIST per kroute_node is probably worse
+	 * -it is easy to change if needed ;-)
+	 */
+
+	RB_REMOVE(kroute_tree, &krt, kr);
+
+	if ((kr->flags & F_KERNEL) && (kr->flags & F_NEXTHOP))
+		RB_FOREACH(s, knexthop_tree, &knt)
+			if (s->kroute == kr) {
+				/*
+				 * XXX check again wether there's another
+				 * non-bgp route. if not, notify RDE
+				 * that this nexthop is now invalid
+				 */
+				bzero(&nh, sizeof(nh));
+				kroute_validate_nexthop(s->nh.nexthop, &nh);
+				if (nh.valid == 0) {
+					/* no alternate route */
+					/* imsg_ invalid blah blah */
+				}
+			}
+
+	free(kr);
+}
+
+struct kroute_node *
+kroute_match(in_addr_t key)
+{
+	int			i;
+	struct kroute_node	s, *kr;
+	in_addr_t		ina;
+
+	ina = ntohl(key);
+
+	for (i = 32; i >= 0; i--) {
+		s.r.prefix = htonl(ina & (0xffffffff << (32 - i)));
+		s.r.prefixlen = i;
+		if ((kr = RB_FIND(kroute_tree, &krt, &s)) != NULL)
+			return (kr);
+	}
+
+	return (NULL);
+}
+
+void
+kroute_nexthop_check(in_addr_t key)
+{
+	struct kroute_nexthop	 nh;
+	struct knexthop_node	*h, s;
+
+	s.nh.nexthop = key;
+
+	bzero(&nh, sizeof(nh));
+	nh.nexthop = key;
+
+	if ((h = RB_FIND(knexthop_tree, &knt, &s)) != NULL) {
+		if (h->kroute != NULL) {
+			nh.valid = 1;
+			nh.connected = h->kroute->flags & F_CONNECTED;
+			nh.gateway = h->kroute->r.nexthop;
+		}
+	} else
+		kroute_validate_nexthop(key, &nh);
+
+	/* imsg_compose via bgpd.c blah blah blah */
+}
+
+void
+kroute_validate_nexthop(in_addr_t key, struct kroute_nexthop *nh)
+{
+	struct kroute_node	*kr;
+	struct knexthop_node	*h;
+
+	if ((h = calloc(1, sizeof(struct knexthop_node))) == NULL)
+		fatal(NULL, errno);
+
+	nh->nexthop = key;
+
+	if ((kr = kroute_match(key)) != NULL)
+		if (kr->flags & F_KERNEL) {	/* must be non-bgp! */
+			h->kroute = kr;
+			kr->flags |= F_NEXTHOP;
+			nh->valid = 1;
+			nh->connected = kr->flags & F_CONNECTED;
+			nh->gateway = kr->r.nexthop;
+		}
+
+	if (RB_INSERT(knexthop_tree, &knt, h) != NULL)
+		fatal("RB_INSERT(knexthop_tree, &knt, h) failed!", 0);
+
+	/* imsg_compose via bgpd.c bla bla bla */
+}
+
+int
+knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
+{
+	return (b->nh.nexthop - a->nh.nexthop);
+}
+
