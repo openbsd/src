@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2005/01/04 14:13:06 drahn Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 2005/01/18 16:27:26 drahn Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -267,6 +267,8 @@ cdev_decl(xfs_dev);
 #endif
 #include "systrace.h"
 
+#include "hotplug.h"
+
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),			/*  0: virtual console */
 	cdev_ctty_init(1,ctty),			/*  1: controlling terminal */
@@ -305,7 +307,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 34: */
 	cdev_lkm_init(NLKM,lkm),		/* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),		/* 36: generic audio I/O */
-	cdev_notdef(),				/* 37: removed cpu device */
+	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 37: devices hot plugging*/
 	cdev_notdef(),				/* 38: removed cpu device */
 	cdev_lkm_dummy(),			/* 39: reserved */
 	cdev_random_init(1,random),		/* 40: random generator */

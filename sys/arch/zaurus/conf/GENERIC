@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 2005/01/17 22:58:01 miod Exp $
+#	$OpenBSD: GENERIC,v 1.19 2005/01/18 16:29:12 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -181,3 +181,4 @@ wsdisplay*	at lcd? console ?
 # Pseudo-Devices
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 pseudo-device	crypto		1
+pseudo-device	hotplug		1	# devices hot plugging
