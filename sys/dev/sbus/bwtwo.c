@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.3 2002/08/06 03:48:45 jason Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.4 2002/08/12 16:18:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -130,6 +130,7 @@ struct bwtwo_softc {
 	int sc_width, sc_height, sc_depth, sc_linebytes;
 	union bt_cmap sc_cmap;
 	struct rasops_info sc_rasops;
+	int *sc_crowp, *sc_ccolp;
 };
 
 struct wsscreen_descr bwtwo_stdscreen = {
@@ -158,6 +159,7 @@ int bwtwo_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 paddr_t bwtwo_mmap(void *, off_t, int);
 int bwtwo_is_console(int);
 void bwtwo_burner(void *, u_int, u_int);
+void bwtwo_updatecursor(struct rasops_info *);
 static int a2int(char *, int);
 
 struct wsdisplay_accessops bwtwo_accessops = {
@@ -252,7 +254,7 @@ bwtwoattach(parent, self, aux)
 	sc->sc_rasops.ri_width = sc->sc_width;
 	sc->sc_rasops.ri_height = sc->sc_height;
 	sc->sc_rasops.ri_hw = sc;
-
+	
 	rasops_init(&sc->sc_rasops,
 	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
 	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
@@ -265,14 +267,13 @@ bwtwoattach(parent, self, aux)
 	printf("\n");
 
 	if (console) {
-		int *ccolp, *crowp;
-
-		if (romgetcursoraddr(&crowp, &ccolp))
-			ccolp = crowp = NULL;
-		if (ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *ccolp;
-		if (crowp != NULL)
-			sc->sc_rasops.ri_crow = *crowp;
+		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
+			sc->sc_ccolp = sc->sc_crowp = NULL;
+		if (sc->sc_ccolp != NULL)
+			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
+		if (sc->sc_crowp != NULL)
+			sc->sc_rasops.ri_crow = *sc->sc_crowp;
+		sc->sc_rasops.ri_updatecursor = bwtwo_updatecursor;
 
 		wsdisplay_cnattach(&bwtwo_stdscreen, &sc->sc_rasops,
 		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
@@ -440,4 +441,16 @@ bwtwo_burner(vsc, on, flags)
 	}
 	FBC_WRITE(sc, FBC_CTRL, fbc);
 	splx(s);
+}
+
+void
+bwtwo_updatecursor(ri)
+	struct rasops_info *ri;
+{
+	struct bwtwo_softc *sc = ri->ri_hw;
+
+	if (sc->sc_crowp != NULL)
+		*sc->sc_crowp = ri->ri_crow;
+	if (sc->sc_ccolp != NULL)
+		*sc->sc_ccolp = ri->ri_ccol;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.22 2002/08/06 03:48:45 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.23 2002/08/12 16:18:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -131,6 +131,7 @@ struct cgthree_softc {
 	union bt_cmap sc_cmap;
 	struct rasops_info sc_rasops;
 	u_int sc_mode;
+	int *sc_crowp, *sc_ccolp;
 };
 
 struct wsscreen_descr cgthree_stdscreen = {
@@ -165,6 +166,7 @@ void cgthree_setcolor(struct cgthree_softc *, u_int,
     u_int8_t, u_int8_t, u_int8_t);
 void cgthree_burner(void *, u_int, u_int);
 void cgthree_reset(struct cgthree_softc *);
+void cgthree_updatecursor(struct rasops_info *);
 static int a2int(char *, int);
 
 struct wsdisplay_accessops cgthree_accessops = {
@@ -304,12 +306,11 @@ cgthreeattach(parent, self, aux)
 	cgthree_stdscreen.textops = &sc->sc_rasops.ri_ops;
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
 	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
+	sc->sc_rasops.ri_hw = sc;
 
 	printf("\n");
 
 	if (console) {
-		int *ccolp, *crowp;
-
 		cgthree_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
 		cgthree_setcolor(sc, 255, 0, 0, 0);
 		cgthree_setcolor(sc, WSCOL_RED, 255, 0, 0);
@@ -320,12 +321,13 @@ cgthreeattach(parent, self, aux)
 		cgthree_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
 		cgthree_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
 
-		if (romgetcursoraddr(&crowp, &ccolp))
-			ccolp = crowp = NULL;
-		if (ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *ccolp;
-		if (crowp != NULL)
-			sc->sc_rasops.ri_crow = *crowp;
+		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
+			sc->sc_ccolp = sc->sc_crowp = NULL;
+		if (sc->sc_ccolp != NULL)
+			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
+		if (sc->sc_crowp != NULL)
+			sc->sc_rasops.ri_crow = *sc->sc_crowp;
+		sc->sc_rasops.ri_updatecursor = cgthree_updatecursor;
 
 		wsdisplay_cnattach(&cgthree_stdscreen, &sc->sc_rasops,
 		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
@@ -655,4 +657,16 @@ cgthree_burner(vsc, on, flags)
 	}
 	FBC_WRITE(sc, CG3_FBC_CTRL, fbc);
 	splx(s);
+}
+
+void
+cgthree_updatecursor(ri)
+	struct rasops_info *ri;
+{
+	struct cgthree_softc *sc = ri->ri_hw;
+
+	if (sc->sc_crowp != NULL)
+		*sc->sc_crowp = ri->ri_crow;
+	if (sc->sc_ccolp != NULL)
+		*sc->sc_ccolp = ri->ri_ccol;
 }

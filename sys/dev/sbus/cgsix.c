@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.29 2002/08/06 03:48:45 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.30 2002/08/12 16:18:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -98,6 +98,7 @@ void cgsix_ras_copycols(void *, int, int, int, int);
 void cgsix_ras_erasecols(void *, int, int, int, long int);
 void cgsix_ras_eraserows(void *, int, int, long int);
 void cgsix_ras_do_cursor(struct rasops_info *);
+void cgsix_ras_updatecursor(struct rasops_info *);
 
 struct wsdisplay_accessops cgsix_accessops = {
 	cgsix_ioctl,
@@ -244,6 +245,7 @@ cgsixattach(parent, self, aux)
 	rasops_init(&sc->sc_rasops,
 	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
 	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
+	sc->sc_rasops.ri_hw = sc;
 
 	/*
 	 * Old rev. cg6 cards do not like the current acceleration code.
@@ -255,7 +257,6 @@ cgsixattach(parent, self, aux)
 		sc->sc_dev.dv_cfdata->cf_flags &= ~CG6_CFFLAG_NOACCEL;
 
 	if ((sc->sc_dev.dv_cfdata->cf_flags & CG6_CFFLAG_NOACCEL) == 0) {
-		sc->sc_rasops.ri_hw = sc;
 		sc->sc_rasops.ri_ops.copyrows = cgsix_ras_copyrows;
 		sc->sc_rasops.ri_ops.copycols = cgsix_ras_copycols;
 		sc->sc_rasops.ri_ops.eraserows = cgsix_ras_eraserows;
@@ -273,8 +274,6 @@ cgsixattach(parent, self, aux)
 	printf("\n");
 
 	if (console) {
-		int *ccolp, *crowp;
-
 		cgsix_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
 		cgsix_setcolor(sc, 255, 0, 0, 0);
 		cgsix_setcolor(sc, WSCOL_RED, 255, 0, 0);
@@ -285,12 +284,13 @@ cgsixattach(parent, self, aux)
 		cgsix_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
 		cgsix_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
 
-		if (romgetcursoraddr(&crowp, &ccolp))
-			ccolp = crowp = NULL;
-		if (ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *ccolp;
-		if (crowp != NULL)
-			sc->sc_rasops.ri_crow = *crowp;
+		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
+			sc->sc_crowp = sc->sc_ccolp = NULL;
+		if (sc->sc_ccolp != NULL)
+			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
+		if (sc->sc_crowp != NULL)
+			sc->sc_rasops.ri_crow = *sc->sc_crowp;
+		sc->sc_rasops.ri_updatecursor = cgsix_ras_updatecursor;
 
 		wsdisplay_cnattach(&cgsix_stdscreen, &sc->sc_rasops,
 		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
@@ -972,4 +972,16 @@ cgsix_ras_do_cursor(ri)
 	    ri->ri_xorigin + col + ri->ri_font->fontwidth - 1);
 	CG6_DRAW_WAIT(sc);
 	CG6_DRAIN(sc);
+}
+
+void
+cgsix_ras_updatecursor(ri)
+	struct rasops_info *ri;
+{
+	struct cgsix_softc *sc = ri->ri_hw;
+
+	if (sc->sc_crowp != NULL)
+		*sc->sc_crowp = ri->ri_crow;
+	if (sc->sc_ccolp != NULL)
+		*sc->sc_ccolp = ri->ri_ccol;
 }
