@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ni.c,v 1.2 2002/08/09 20:26:44 jsyn Exp $ */
+/*	$OpenBSD: if_ni.c,v 1.3 2002/10/27 13:25:48 miod Exp $ */
 /*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $");
 
 struct	ni_softc {
 	struct device	sc_dev;		/* Configuration common part	*/
-	struct evcnt	sc_intrcnt;	/* Interrupt coounting		*/
+	struct evcnt	sc_intrcnt;	/* Interrupt counting		*/
 	struct ethercom sc_ec;		/* Ethernet common part		*/
 #define sc_if	sc_ec.ec_if		/* network-visible interface	*/
 	bus_space_tag_t sc_iot;
