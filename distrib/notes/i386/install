@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.37 2004/03/22 21:30:21 tom Exp $
+dnl	$OpenBSD: install,v 1.38 2004/09/10 19:14:05 miod Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with DOS or another operating
@@ -13,10 +13,10 @@ that use the translated geometry.
 
 There are several ways to install OpenBSD onto a disk.  The easiest way,
 should your computer support it, is to boot off the OpenBSD CD-ROM, or
-off the bootable CD-ROM mini image.  Otherwise, you can boot from a 3.5"
-1.44MB floppy disk if your machine has a floppy drive.  If your machine
-supports PXE network boots, you could try to configure a server for a
-network install.
+off one of the bootable CD-ROM mini images.  Otherwise, you can boot
+from a 3.5" 1.44MB floppy disk if your machine has a floppy drive.
+If your machine supports PXE network boots, you could try to configure a
+server for a network install.
 
 OpenBSDInstallPart2
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.52 2004/08/10 19:34:40 miod Exp $
+dnl	$OpenBSD: contents,v 1.53 2004/09/10 19:14:05 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -25,6 +25,12 @@ OpenBSDbsdmp
 OpenBSDrd
 
 OpenBSDcd
+
+	cdemu{:--:}OSrev.iso	Another bootable CD-ROM image, for older systems
+			which BIOS only support the ``large floppy emulation''
+			mode for bootable CD-ROM, and as such are unable to
+			boot cd{:--:}OSrev.iso; this image is provided for
+			convenience purposes, but should never be needed.
 
 Additionally, you may be interested in
 
