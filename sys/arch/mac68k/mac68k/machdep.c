@@ -1,7 +1,8 @@
-/*	$OpenBSD: machdep.c,v 1.29 1997/02/23 06:04:59 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 1997/02/26 06:17:02 gene Exp $	*/
 /*	$NetBSD: machdep.c,v 1.129 1997/01/09 07:20:46 scottr Exp $	*/
 
 /*
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -98,6 +99,7 @@
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/extent.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -118,6 +120,7 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <machine/bus.h>
 #include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
@@ -196,6 +199,26 @@ int     physmem = MAXMEM;	/* max supported memory, changes to actual */
  * during autoconfiguration or after a panic.
  */
 int     safepri = PSL_LOWIPL;
+
+/*
+ * Extent maps to manage all memory space, including I/O ranges.  Allocate
+ * storage for 8 regions in each, initially.  Later, iomem_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors.
+ *
+ * The extent maps are not static!  Machine-dependent NuBus and on-board
+ * I/O routines need access to them for bus address space allocation.
+ */
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+struct	extent *iomem_ex;
+static	iomem_malloc_safe;
+
+static void	identifycpu __P((void));
+static u_long	get_physical __P((u_int, u_long *));
+void		dumpsys __P((void));
+
+int		bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
+		    int, bus_space_handle_t *));
 
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
@@ -850,7 +873,7 @@ boot(howto)
 		}
 #else
 # ifdef DIAGNOSTIC
-		printf("NetBSD/mac68k does not trust itself to update the "
+		printf("OpenBSD/mac68k does not trust itself to update the "
 		    "RTC on shutdown.\n");
 # endif
 #endif
@@ -1630,12 +1653,12 @@ getenv(str)
  * has zero or more version variants and in some cases a version variant
  * may exist in one than one length format.  Generally any one specific
  * Mac will use a common set of routines within the ROM and a model-specific
- * set also in the ROM.  Luckily most of the routines used by NetBSD fall
+ * set also in the ROM.  Luckily most of the routines used by BSD fall
  * into the common set and can therefore be defined in the ROM Family.
  * The offset addresses (address minus the ROM Base) of these common routines
  * is the same for all machines which use that ROM.  The offset addresses of
  * the machine-specific routines is generally different for each machine.
- * The machine-specific routines currently used by NetBSD/mac68k include:
+ * The machine-specific routines currently used by BSD/mac68k include:
  *       ADB_interrupt, PM_interrpt, ADBBase+130_interrupt,
  *       PMgrOp, jClkNoMem, Egret, InitEgret, and ADBReInit_JTBL
  *
@@ -1645,16 +1668,16 @@ getenv(str)
  * Egret routine may be unimportant as the machine-specific InitEgret code
  * seems to always set the OS Trap vector for Egret.
  *
- * Only three of the nine different ROMs are important to NetBSD/mac68k.
+ * Only three of the nine different ROMs are important to BSD/mac68k.
  * All other ROMs are used in early model Macs which are unable to run
- * NetBSD due to other hardware limitations such as 68000 CPU, no MMU
+ * BSD due to other hardware limitations such as 68000 CPU, no MMU
  * capability, or used only in PowerMacs.  The three that we are interested
  * in are:
  *
  * ROM Family $0178 - used in the II, IIx, IIcx, and SE/30
- *            All machines which use this ROM are now supported by NetBSD.
+ *            All machines which use this ROM are now supported by BSD.
  *            There are no machine-dependent routines in these ROMs used by
- *            NetBSD/mac68k.  This ROM is always 256K in length.
+ *            BSD/mac68k.  This ROM is always 256K in length.
  *
  * ROM Family $067c - used in Classic, Color Classic, Color Classic II,
  *                      IIci, IIsi, IIvi, IIvx, IIfx, LC, LC II, LC III,
@@ -1668,10 +1691,10 @@ getenv(str)
  *                      Duo280, Duo 280c, PB 520/520c/540/540c/550
  *             This is the so-called "Universal" ROM used in almost all 68K
  *             machines. There are machine-dependent and machine-independent
- *             routines used by NetBSD/mac68k in this ROM, and except for the
+ *             routines used by BSD/mac68k in this ROM, and except for the
  *             PowerBooks and the Duos, this ROM seems to be fairly well
- *             known by NetBSD/mac68k.  Desktop machines listed here that are
- *             not yet running NetBSD probably only lack the necessary
+ *             known by BSD/mac68k.  Desktop machines listed here that are
+ *             not yet running BSD probably only lack the necessary
  *             addresses for the machine-dependent routines, or are waiting
  *             for IDE disk support.  This ROM is generally 1Meg in length,
  *             however when used in the IIci, IIfx, IIsi, LC, Classic II, and
@@ -2523,7 +2546,7 @@ setmachdep()
 	 * Set up current ROM Glue vectors.  Actually now all we do
 	 * is save the address of the ROM Glue Vector table. This gets
 	 * used later when we re-map the vectors from MacOS Address
-	 * Space to NetBSD Address Space.
+	 * Space to BSD Address Space.
 	 */
 	if ((mac68k_machine.serial_console & 0x03) == 0 || setup_mrg_vectors)
 		mrg_MacOSROMVectors = cpui->rom_vectors;
@@ -2540,6 +2563,20 @@ mac68k_set_io_offsets(base)
 {
 	extern volatile u_char *sccA;
 	extern volatile u_char *ASCBase;
+
+	/*
+	 * Initialize the I/O mem extent map.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, all
+	 * extents of RAM are allocated from the map.
+	 */
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
 
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
@@ -2916,4 +2953,230 @@ printstar(void)
 				movl sp@+,d0;
 				movl sp@+,a1;
 				movl sp@+,a0");
+}
+
+/*
+ * bus.h implementation
+ */
+
+int
+bus_space_map(t, bpa, size, cacheable, bshp)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	u_long pa, endpa;
+	int error;
+
+	/*
+	 * Before we go any further, let's make sure that this
+	 * region is available.
+	 */
+	error = extent_alloc_region(iomem_ex, bpa, size,
+	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0));
+	if (error)
+		return (error);
+
+	pa = mac68k_trunc_page(bpa + t);
+	endpa = mac68k_round_page((bpa + t + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("bus_space_map: overflow");
+#endif
+
+	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	if (error) {
+		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
+		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
+			    bpa, size);
+			printf("bus_space_map: can't free region\n");
+		}
+	}
+
+	return (error);
+}
+
+int
+bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+    bpap, bshp)
+	bus_space_tag_t t;
+	bus_addr_t rstart, rend;
+	bus_size_t size, alignment, boundary;
+	int cacheable;
+	bus_addr_t *bpap;
+	bus_space_handle_t *bshp;
+{
+	u_long bpa;
+	int error;
+
+	/*
+	 * Sanity check the allocation against the extent's boundaries.
+	 */
+	if (rstart < iomem_ex->ex_start || rend > iomem_ex->ex_end)
+		panic("bus_space_alloc: bad region start/end");
+
+	/*
+	 * Do the requested allocation.
+	 */
+	error = extent_alloc_subregion(iomem_ex, rstart, rend, size, alignment,
+	    boundary, EX_NOWAIT | (iomem_malloc_safe ?  EX_MALLOCOK : 0),
+	    &bpa);
+
+	if (error)
+		return (error);
+
+	/*
+	 * For memory space, map the bus physical address to
+	 * a kernel virtual address.
+	 */
+	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	if (error) {
+		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
+		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
+			    bpa, size);
+			printf("bus_space_alloc: can't free region\n");
+		}
+	}
+
+	*bpap = bpa;
+
+	return (error);
+}
+
+int
+bus_mem_add_mapping(bpa, size, cacheable, bshp)
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	u_long pa, endpa;
+	vm_offset_t va;
+
+	pa = mac68k_trunc_page(bpa);
+	endpa = mac68k_round_page((bpa + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("bus_mem_add_mapping: overflow");
+#endif
+
+	va = kmem_alloc_pageable(kernel_map, endpa - pa);
+	if (va == 0)
+		return (ENOMEM);
+
+	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
+
+	for (; pa < endpa; pa += NBPG, va += NBPG) {
+		pmap_enter(pmap_kernel(), va, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		if (!cacheable)
+			pmap_changebit(pa, PG_CI, TRUE);
+	}
+ 
+	return 0;
+}
+
+void
+bus_space_unmap(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	vm_offset_t	va, endva;
+	bus_addr_t bpa;
+
+	va = mac68k_trunc_page(bsh);
+	endva = mac68k_round_page((bsh + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endva <= va)
+		panic("bus_space_unmap: overflow");
+#endif
+
+	bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+
+	/*
+	 * Free the kernel virtual mapping.
+	 */
+	kmem_free(kernel_map, va, endva - va);
+
+	if (extent_free(iomem_ex, bpa, size,
+	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+		printf("bus_space_unmap: pa 0x%lx, size 0x%lx\n",
+		    bpa, size);
+		printf("bus_space_unmap: can't free region\n");
+	}
+}
+
+void    
+bus_space_free(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	/* bus_space_unmap() does all that we need to do. */
+	bus_space_unmap(t, bsh, size);
+}
+
+int
+bus_space_subregion(t, bsh, offset, size, nbshp)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset, size;
+	bus_space_handle_t *nbshp;
+{
+
+	*nbshp = bsh + offset;
+	return (0);
+}
+
+int
+bus_probe(t, bsh, offset, sz)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	int sz;
+{
+	int i;
+	label_t faultbuf;
+
+#ifdef lint
+	i = *addr;
+	if (i)
+		return (0);
+#endif
+	nofault = (int *) &faultbuf;
+	if (setjmp((label_t *) nofault)) {
+		nofault = (int *) 0;
+		return (0);
+	}
+
+	switch (sz) {
+	case 1:
+		i = bus_space_read_1(t, bsh, offset);
+		break;
+	case 2:
+		i = bus_space_read_2(t, bsh, offset);
+		break;
+	case 4:
+		i = bus_space_read_4(t, bsh, offset);
+		break;
+	case 8:
+		/*FALLTHROUGH*/
+	default:
+#ifdef DIAGNOSTIC
+		printf("bus_probe: unsupported data size %d\n", sz);
+#endif
+		nofault = (int *) 0;
+		return (0);
+	}
+
+	nofault = (int *) 0;
+	return (1);
 }

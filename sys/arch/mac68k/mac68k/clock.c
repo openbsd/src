@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 1997/01/24 01:35:44 briggs Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 1997/02/26 06:17:00 gene Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 1997/01/15 01:28:53 perry Exp $	*/
 
 /*
@@ -368,7 +368,7 @@ inittodr(base)
 		base = 21 * SECYR;	/* 1991 is our sane date */
 	}
 	/*
-	 * Check sanity against the year 2010.  Let's hope NetBSD/mac68k
+	 * Check sanity against the year 2010.  Let's hope OpenBSD/mac68k
 	 * doesn't run that long!
 	 */
 	if (base > 40 * SECYR) {
@@ -402,7 +402,7 @@ resettodr()
 		pram_settime(ugmt_2_pramt(time.tv_sec + macos_gmtbias * 60));
 #if DIAGNOSTIC
 	else
-		printf("NetBSD/mac68k does not trust itself to try and write "
+		printf("OpenBSD/mac68k does not trust itself to try and write "
 		    "to the pram on this system.\n");
 #endif
 }
