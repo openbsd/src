@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.25 1996/01/29 04:58:23 mrg Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/09/19 09:05:03 deraadt Exp $
 #
-#  NetBSD Makefile
+#  OpenBSD Makefile
 #
-#	@(#)Makefile.NetBSD	8.3 (Berkeley) 9/13/95
-#	@Id: Makefile.NetBSD,v 1.3 1994/02/01 05:33:44 glass Exp $
 #
 
 .include <bsd.own.mk>
