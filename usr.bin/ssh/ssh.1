@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.9 1999/10/02 13:10:26 deraadt Exp $
+.\" $Id: ssh.1,v 1.10 1999/10/02 21:19:42 provos Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -450,15 +450,10 @@ or
 .It Cm Cipher
 Specifies the cipher to use for encrypting the session.  Currently,
 .Dq blowfish ,
-.Dq 3des ,
 and
-.Dq none
+.Dq 3des
 are supported.  The default is
 .Dq 3des .
-Using
-.Dq none
-(no encryption) is intended only for debugging, and will render the connection
-insecure.
 .It Cm Compression
 Specifies whether to use compression.  The argument must be
 .Dq yes
