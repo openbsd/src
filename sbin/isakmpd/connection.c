@@ -1,5 +1,5 @@
-/*	$OpenBSD: connection.c,v 1.9 2000/08/03 07:29:11 niklas Exp $	*/
-/*	$EOM: connection.c,v 1.24 2000/08/03 07:20:35 niklas Exp $	*/
+/*	$OpenBSD: connection.c,v 1.10 2000/10/07 06:58:16 niklas Exp $	*/
+/*	$EOM: connection.c,v 1.26 2000/09/12 16:27:08 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,7 @@
 
 #include <sys/queue.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -426,9 +427,9 @@ void
 connection_report (void)
 {
   struct connection *conn;
-  struct connection_passive *pconn;
   struct timeval now;
 #ifdef USE_DEBUG
+  struct connection_passive *pconn;
   struct doi *doi = doi_lookup (ISAKMP_DOI_ISAKMP);
 #endif
 
