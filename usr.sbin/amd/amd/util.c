@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.1.1.1 1995/10/18 08:47:12 deraadt Exp $
+ *	$Id: util.c,v 1.2 1996/08/10 21:39:43 deraadt Exp $
  */
 
 /*
@@ -301,21 +301,13 @@ u_short *pp;
 {
 	struct sockaddr_in sin;
 	int rc;
-	unsigned short port;
 
 	bzero((voidp) &sin, sizeof(sin));
 	sin.sin_family = AF_INET;
 
-	port = IPPORT_RESERVED;
-
-	do {
-		--port;
-		sin.sin_port = htons(port);
-		rc = bind(so, (struct sockaddr *) &sin, sizeof(sin));
-	} while (rc < 0 && port > IPPORT_RESERVED/2);
-
+	rc = bindresvport(so, &sin);
 	if (pp && rc == 0)
-		*pp = port;
+		*pp = ntohs(sin.sin_port);
 	return rc;
 }
 
