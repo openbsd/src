@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_eisa.c,v 1.16 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.17 2003/01/10 17:07:09 mickey Exp $	*/
 /*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ ep_eisa_attach(parent, self, aux)
 	/* Map i/o space. */
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot),
 	    EISA_SLOT_SIZE, 0, &ioh))
-		panic("ep_eisa_attach: can't map i/o space");
+		panic(": can't map i/o space");
 
 	sc->bustype = EP_BUS_EISA;
 	sc->sc_ioh = ioh;
@@ -171,40 +171,38 @@ ep_eisa_attach(parent, self, aux)
 	else if (strcmp(ea->ea_idstring, "TCM5920") == 0) {
 		model = EISA_PRODUCT_TCM5920;
 		chipset = EP_CHIPSET_VORTEX;
-	}
-	else if (strcmp(ea->ea_idstring, "TCM5970") == 0) {
+	} else if (strcmp(ea->ea_idstring, "TCM5970") == 0) {
 		model = EISA_PRODUCT_TCM5970;
 		chipset = EP_CHIPSET_VORTEX;
-	}
-	else if (strcmp(ea->ea_idstring, "TCM5971") == 0) {
+	} else if (strcmp(ea->ea_idstring, "TCM5971") == 0) {
 		model = EISA_PRODUCT_TCM5971;
 		chipset = EP_CHIPSET_VORTEX;
-	}
-	else if (strcmp(ea->ea_idstring, "TCM5972") == 0) {
+	} else if (strcmp(ea->ea_idstring, "TCM5972") == 0) {
 		model = EISA_PRODUCT_TCM5972;
 		chipset = EP_CHIPSET_VORTEX;
-	}
-	else
+	} else
 		model = "unknown model!";
-	printf(": %s", model);
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		printf("couldn't map interrupt (%u)\n", irq);
+		printf(": couldn't map interrupt (%u)\n", irq);
+		bus_space_unmap(iot, ioh, EISA_SLOT_SIZE);
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih);
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_EDGE, IPL_NET,
 	    epintr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("couldn't establish interrupt");
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(iot, ioh, EISA_SLOT_SIZE);
 		return;
 	}
 
-	epconfig(sc, chipset, NULL);
-
+	printf(": %s,", model);
 	if (intrstr != NULL)
-		printf(" %s\n", intrstr);
+		printf(" %s,", intrstr);
+
+	epconfig(sc, chipset, NULL);
 }
