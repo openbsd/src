@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.12 2002/03/27 17:42:37 gluk Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.13 2002/06/04 23:08:44 csapuntz Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -349,11 +349,7 @@ device_identify(argc, argv)
 {
 	struct ataparams *inqbuf;
 	struct atareq req;
-	unsigned char inbuf[DEV_BSIZE];
-#if BYTE_ORDER == LITTLE_ENDIAN
-	int i;
-	u_int16_t *p;
-#endif
+	unsigned char inbuf[512];
 
 	/* No arguments. */
 	if (argc != 0)
@@ -372,32 +368,24 @@ device_identify(argc, argv)
 
 	ata_command(&req);
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-	/*
-	 * On little endian machines, we need to shuffle the string
-	 * byte order.  However, we don't have to do this for NEC or
-	 * Mitsumi ATAPI devices
-	 */
+	if (BYTE_ORDER == BIG_ENDIAN) {
+		swap16_multi((u_int16_t *)inbuf, 10);
+		swap16_multi(((u_int16_t *)inbuf) + 20, 3);
+		swap16_multi(((u_int16_t *)inbuf) + 47, sizeof(inbuf) / 2 - 47);
+	}
 
 	if (!((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) == WDC_CFG_ATAPI &&
 	      ((inqbuf->atap_model[0] == 'N' &&
 		  inqbuf->atap_model[1] == 'E') ||
 	       (inqbuf->atap_model[0] == 'F' &&
 		  inqbuf->atap_model[1] == 'X')))) {
-		for (i = 0 ; i < sizeof(inqbuf->atap_model); i += 2) {
-			p = (u_short *) (inqbuf->atap_model + i);
-			*p = ntohs(*p);
-		}
-		for (i = 0 ; i < sizeof(inqbuf->atap_serial); i += 2) {
-			p = (u_short *) (inqbuf->atap_serial + i);
-			*p = ntohs(*p);
-		}
-		for (i = 0 ; i < sizeof(inqbuf->atap_revision); i += 2) {
-			p = (u_short *) (inqbuf->atap_revision + i);
-			*p = ntohs(*p);
-		}
+		swap16_multi((u_int16_t *)(inqbuf->atap_model),
+		    sizeof(inqbuf->atap_model) / 2);
+		swap16_multi((u_int16_t *)(inqbuf->atap_serial),
+		    sizeof(inqbuf->atap_model) / 2);
+		swap16_multi((u_int16_t *)(inqbuf->atap_model),
+		    sizeof(inqbuf->atap_model) / 2);
 	}
-#endif
 
 	/*
 	 * Strip blanks off of the info strings.  Yuck, I wish this was
