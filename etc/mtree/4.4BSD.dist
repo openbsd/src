@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.166 2004/06/05 18:26:28 grange Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.167 2004/06/29 16:31:18 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -236,6 +236,11 @@ kadm5			gname=bin uname=root mode=0755
 ..
 
 # ./usr/include/kerberosV
+..
+
+# ./usr/include/libmilter
+libmilter		gname=bin uname=root mode=0755
+# ./usr/include/libmilter
 ..
 
 # ./usr/include/openssl
