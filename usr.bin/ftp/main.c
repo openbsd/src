@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 1997/04/10 00:17:10 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 1997/04/11 23:14:04 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.28 1997/04/10 00:17:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.29 1997/04/11 23:14:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,8 +106,8 @@ main(argc, argv)
 	if (strcmp(cp, "pftp") == 0)
 		passivemode = 1;
 
-	dumb_terminal =
-	    (!strcmp(getenv("TERM"), "dumb") || !strcmp(getenv("TERM"), "su"));
+	dumb_terminal = (!strcmp(getenv("TERM"), "dumb") ||
+	    !strcmp(getenv("TERM"), "emacs") || !strcmp(getenv("TERM"), "su"));
 	fromatty = isatty(fileno(stdin));
 	if (fromatty) {
 		verbose = 1;		/* verbose if from a tty */
