@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.11 1997/09/23 20:21:28 deraadt Exp $
+ * $OpenBSD: readlink.c,v 1.12 1997/09/23 20:39:11 niklas Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -30,10 +30,9 @@
 #include <limits.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-void canonicalize __P((const char *, char *));
 
 int
 main(argc, argv)
@@ -71,7 +70,7 @@ main(argc, argv)
 		    PATH_MAX - 1);
 
 	if (fflag)
-		canonicalize(argv[0], buf);
+		realpath(argv[0], buf);
 	else if ((n = readlink(argv[0], buf, PATH_MAX)) < 0)
 		exit(1);
 
@@ -79,62 +78,4 @@ main(argc, argv)
 	if (!nflag)
 		putchar('\n');
 	exit(0);
-}
-
-void
-canonicalize(path, newpath)
-	const char *path;
-	char *newpath;
-{
-	int n;
-	char *p, *np, *lp, c  ;
-	char target[PATH_MAX];
-
-	strcpy(newpath, path);
-	for (;;) {
-		p = np = newpath;
-
-		/*
-		 * If absolute path, skip the root slash now so we won't
-		 * think of this as a NULL component.
-		 */
-		if (*p == '/')
-			p++;
-
-		/*
-		 * loop through all components of the path until a link is
-		 * found then expand it, if no link is found we are ready.
-		 */
-		for (; *p; lp = ++p) {
-			while (*p && *p != '/')
-				p++;
-			c = *p;
-			*p = '\0';
-			n = readlink(newpath, target, PATH_MAX);
-			*p = c;
-			if (n > 0 || errno != EINVAL)
-				break;
-		}
-		if (!*p && n < 0 && errno == EINVAL)
-			break;
-		if (n < 0)
-			err(1, "%s", newpath);
-		target[n] = '\0';
-#ifdef DEBUG
-		fprintf(stderr, "%.*s -> %s : ", p - newpath, newpath, target);
-#endif
-		if (*target == '/') {
-			bcopy(p, newpath + n, strlen(p) + 1);
-		        bcopy(target, newpath, n);
-		} else {
-			bcopy(p, lp + n, strlen(p) + 1);
-			bcopy(target, lp, n);
-		}
-#ifdef DEBUG
-		fprintf(stderr, "%s\n", newpath);
-#endif
-		strncpy(target, newpath, sizeof target-1);
-		target[sizeof target-1] = '\0';
-		path = target;
-	}
 }
