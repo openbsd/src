@@ -1191,8 +1191,11 @@
 ./usr/share/man/cat4/hppa/lasi.0
 ./usr/share/man/cat4/hppa/mem.0
 ./usr/share/man/cat4/hppa/mongoose.0
+./usr/share/man/cat4/hppa/pdc.0
 ./usr/share/man/cat4/hppa/phantomas.0
 ./usr/share/man/cat4/hppa/power.0
+./usr/share/man/cat4/hppa/runway.0
+./usr/share/man/cat4/hppa/uturn.0
 ./usr/share/man/cat4/hppa/wax.0
 ./usr/share/man/cat4/hsq.0
 ./usr/share/man/cat4/i386
@@ -1203,6 +1206,7 @@
 ./usr/share/man/cat4/i386/elansc.0
 ./usr/share/man/cat4/i386/geodesc.0
 ./usr/share/man/cat4/i386/gscpcib.0
+./usr/share/man/cat4/i386/gscpm.0
 ./usr/share/man/cat4/i386/gus.0
 ./usr/share/man/cat4/i386/ichpcib.0
 ./usr/share/man/cat4/i386/ie.0
@@ -1369,6 +1373,7 @@
 ./usr/share/man/cat4/pf.0
 ./usr/share/man/cat4/pflog.0
 ./usr/share/man/cat4/pfsync.0
+./usr/share/man/cat4/piixpm.0
 ./usr/share/man/cat4/pms.0
 ./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat4/pnp.0
@@ -1431,6 +1436,7 @@
 ./usr/share/man/cat4/sparc/cgthree.0
 ./usr/share/man/cat4/sparc/cgtwelve.0
 ./usr/share/man/cat4/sparc/cgtwo.0
+./usr/share/man/cat4/sparc/clock.0
 ./usr/share/man/cat4/sparc/daadio.0
 ./usr/share/man/cat4/sparc/esp.0
 ./usr/share/man/cat4/sparc/fd.0
@@ -1447,6 +1453,7 @@
 ./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/mem.0
 ./usr/share/man/cat4/sparc/mgx.0
+./usr/share/man/cat4/sparc/oclock.0
 ./usr/share/man/cat4/sparc/openprom.0
 ./usr/share/man/cat4/sparc/pninek.0
 ./usr/share/man/cat4/sparc/pnozz.0
@@ -1481,12 +1488,15 @@
 ./usr/share/man/cat4/sparc64/be.0
 ./usr/share/man/cat4/sparc64/beeper.0
 ./usr/share/man/cat4/sparc64/bwtwo.0
+./usr/share/man/cat4/sparc64/central.0
 ./usr/share/man/cat4/sparc64/cgsix.0
 ./usr/share/man/cat4/sparc64/cgthree.0
+./usr/share/man/cat4/sparc64/clock.0
 ./usr/share/man/cat4/sparc64/comkbd.0
 ./usr/share/man/cat4/sparc64/creator.0
 ./usr/share/man/cat4/sparc64/ebus.0
 ./usr/share/man/cat4/sparc64/esp.0
+./usr/share/man/cat4/sparc64/fhc.0
 ./usr/share/man/cat4/sparc64/intro.0
 ./usr/share/man/cat4/sparc64/kmem.0
 ./usr/share/man/cat4/sparc64/le.0
@@ -1501,6 +1511,7 @@
 ./usr/share/man/cat4/sparc64/qe.0
 ./usr/share/man/cat4/sparc64/qec.0
 ./usr/share/man/cat4/sparc64/rfx.0
+./usr/share/man/cat4/sparc64/rtc.0
 ./usr/share/man/cat4/sparc64/sab.0
 ./usr/share/man/cat4/sparc64/sabtty.0
 ./usr/share/man/cat4/sparc64/schizo.0
