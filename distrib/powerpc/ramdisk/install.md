@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 1997/10/10 10:16:56 pefo Exp $
+#	$OpenBSD: install.md,v 1.2 1997/10/15 14:09:04 pefo Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ md_get_partition_range() {
 md_installboot() {
 	echo "Installing boot in the msdos partition /dev/${1}i"
 	if mount -t msdos /dev/${1}i /mnt2 ; then
-# do the copy.....
+		cp /usr/mdec/ofwboot /mnt2
 		umount /mnt2
 	else
 		echo "Failed, you will not be able to boot from /dev/${1}."
@@ -103,11 +103,11 @@ md_init_mbr() {
 	echo
 	echo "You will now be asked if you want to initialize the disk with a 5Mb"
 	echo "MSDOS partition. This is the recomended setup and will allow you to"
-	echo "store about three to four different bootable kernels on the disk."
+	echo "store the boot and other interesting things here."
 	echo "If you want to have a different setup, exit 'install' now and do"
 	echo "the MBR initialization by hand using the 'fdisk' program. You may"
 	echo "also use any vendor specific program to set up the disk. Consult"
-	echo "your ARC system manuals for doing setup this way."
+	echo "your PowerPC system manuals for doing setup this way."
 	echo
 	echo -n "Do you want to init the MBR and the MSDOS partition? [y]"
 	getresp "y"
@@ -142,7 +142,7 @@ md_checkfordisklabel() {
 	echo "Install will put a boot program with the name 'ofwboot' in there"
 	echo "that you later should use to boot OpenBSD."
 	echo
-	echo -n "Have initialized a MSDOS partition with OpenFirmware? [n]"
+	echo -n "Have you initialized a MSDOS partition with OpenFirmware? [n]"
 	getresp "n"
 	case "$resp" in
 	n*|N*)

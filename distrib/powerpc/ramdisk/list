@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 1997/10/10 10:16:56 pefo Exp $
+#	$OpenBSD: list,v 1.2 1997/10/15 14:09:05 pefo Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -71,9 +71,10 @@ COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
-# we need the contents of /usr/mdec 	XXX needs to be fixed...... 
-#COPY	${DESTDIR}/usr/mdec/mbr		usr/mdec/mbr
-#COPY	${DESTDIR}/usr/mdec/msdos5mb.gz	usr/mdec/msdos5mb.gz
+# we need the contents of /usr/mdec
+COPY	${DESTDIR}/usr/mdec/ofwboot	usr/mdec/ofwboot
+COPY	${DESTDIR}/usr/mdec/mbr		usr/mdec/mbr
+COPY	${DESTDIR}/usr/mdec/msdos5mb.gz	usr/mdec/msdos5mb.gz
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
