@@ -1464,6 +1464,7 @@
 ./usr/share/man/cat7/hier.0
 ./usr/share/man/cat7/hostname.0
 ./usr/share/man/cat7/intro.0
+./usr/share/man/cat7/kgdb.0
 ./usr/share/man/cat7/mailaddr.0
 ./usr/share/man/cat7/man.0
 ./usr/share/man/cat7/mandoc.0
