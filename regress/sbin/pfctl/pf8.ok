@@ -1,3 +1,6 @@
-extern = { ! 10.0.0.0/8, 10.1.2.3  }
-@0 block out log on tun1 inet from 10.1.2.3 to any 
-@1 block out log on tun1 inet from ! 10.0.0.0/8 to any 
+extern = { ! 10.0.0.0/8, 10.1.2.3, 
+extern += 10.1.2.4, 10.1.2.5 }
+@0 block out log on tun1 inet from 10.1.2.5 to any 
+@1 block out log on tun1 inet from 10.1.2.4 to any 
+@2 block out log on tun1 inet from 10.1.2.3 to any 
+@3 block out log on tun1 inet from ! 10.0.0.0/8 to any 

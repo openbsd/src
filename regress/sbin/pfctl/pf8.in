@@ -1,2 +1,3 @@
-extern = "{ ! 10.0.0.0/8, 10.1.2.3  }"
+extern =  "{ ! 10.0.0.0/8, 10.1.2.3, "
+extern += "10.1.2.4, 10.1.2.5 }"
 block out log on tun1 from $extern to any
