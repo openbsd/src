@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.36 2004/02/04 12:58:27 otto Exp $	*/
+/*	$OpenBSD: ps.c,v 1.37 2004/02/08 19:28:19 otto Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.36 2004/02/04 12:58:27 otto Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.37 2004/02/08 19:28:19 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -283,8 +283,10 @@ main(int argc, char *argv[])
 		parsefmt(dfmt);
 
 	/* XXX - should be cleaner */
-	if (!all && ttydev == NODEV && pid == -1 && !Uflag)
+	if (!all && ttydev == NODEV && pid == -1 && !Uflag) {
 		uid = getuid();
+		Uflag = 1;
+	}
 
 	/*
 	 * scan requested variables, noting what structures are needed,
