@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cond.c,v 1.26 2001/05/29 12:53:39 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.27 2002/04/17 16:45:02 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -976,6 +976,7 @@ Cond_Eval(line)
 	/* This is the one case where we can definitely proclaim a fatal
 	 * error. If we don't, we're hosed.  */
 	Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
+	condTop = 0;
 	return COND_INVALID;
     } else {
 	condStack[condTop].value = value;
@@ -992,8 +993,9 @@ Cond_End()
     int i;
 
     if (condTop != MAXIF) {
-	Parse_Error(PARSE_FATAL, "%d open conditional%s", MAXIF-condTop,
-		    MAXIF-condTop == 1 ? "" : "s");
+	Parse_Error(PARSE_FATAL, "%s%d open conditional%s", 
+	    condTop == 0 ? "at least ": "", MAXIF-condTop,
+	    MAXIF-condTop == 1 ? "" : "s");
 	for (i = MAXIF-1; i >= condTop; i--) {
 	    fprintf(stderr, "\t at line %lu of %s\n", condStack[i].lineno,
 		condStack[i].filename);
