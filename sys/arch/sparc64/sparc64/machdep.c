@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 2001/08/30 17:58:27 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 2001/08/30 20:06:07 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -587,7 +587,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct rwindow tmpwin;
 #endif
 	struct sigframe sf;
-	int onstack, oonstack;
+	int oonstack;
 	extern char sigcode[], esigcode[];
 #define	szsigcode	(esigcode - sigcode)
 
@@ -600,7 +600,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	if (onstack) {
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size);
 		psp->ps_sigstk.ss_flags = SS_ONSTACK;
