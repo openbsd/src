@@ -1,3 +1,4 @@
+# $OpenBSD: queue3,v 1.2 2003/01/20 16:14:23 henning Exp $
 # simple PRIQ example
 
 ext_if="lo0"
