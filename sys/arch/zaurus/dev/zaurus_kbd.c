@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.20 2005/03/16 21:26:49 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.21 2005/03/29 20:10:14 uwe Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -15,13 +15,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0_gpio.h>
@@ -219,7 +220,7 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 		pxa2x0_gpio_intr_establish(pin, IST_EDGE_BOTH, IPL_TTY,
 		    zkbd_irq, sc, sc->sc_dev.dv_xname);
 	}
-	pxa2x0_gpio_intr_establish(sc->sc_onkey_pin, IST_EDGE_RISING, IPL_TTY,
+	pxa2x0_gpio_intr_establish(sc->sc_onkey_pin, IST_EDGE_BOTH, IPL_TTY,
 	    zkbd_on, sc, sc->sc_dev.dv_xname);
 	pxa2x0_gpio_intr_establish(sc->sc_sync_pin, IST_EDGE_RISING, IPL_TTY,
 	    zkbd_sync, sc, sc->sc_dev.dv_xname);
@@ -432,8 +433,12 @@ zkbd_poll(void *v)
 }
 
 #if NAPM > 0
-const	struct timeval zkbdoninterval = { 1, 0 };	/* 1 second */
-static	struct timeval zkbdonlasttime = { 0, 0 };
+extern	int kbd_reset;
+extern	int apm_suspends;
+static	int zkbdondown;				/* on key is pressed */
+static	struct timeval zkbdontv = { 0, 0 };	/* last on key event */
+const	struct timeval zkbdhalttv = { 6, 0 };	/*  6s for shutdown */
+const	struct timeval zkbdsleeptv = { 2, 0 };	/*  2s for deep sleep */
 #endif
 
 int
@@ -441,11 +446,33 @@ zkbd_on(void *v)
 {
 #if NAPM > 0
 	struct zkbd_softc *sc = v;
-	extern int apm_suspends;
+	int down = pxa2x0_gpio_get_bit(sc->sc_onkey_pin) ? 1 : 0;
 
-	if (sc->sc_hinge != 3 &&
-	    ratecheck(&zkbdonlasttime, &zkbdoninterval))
-		apm_suspends++;
+	/*
+	 * Change run mode depending on how long the key is held down.
+	 * Ignore the key if it gets pressed while the lid is closed.
+	 *
+	 * Keys can bounce and we have to work around missed interrupts.
+	 * Only the second edge is detected upon exit from sleep mode.
+	 */
+	if (down) {
+		if (sc->sc_hinge == 3) {
+			zkbdondown = 0;
+		} else {
+			microuptime(&zkbdontv);
+			zkbdondown = 1;
+		}
+	} else if (zkbdondown) {
+		if (ratecheck(&zkbdontv, &zkbdhalttv)) {
+			if (kbd_reset == 1) {
+				kbd_reset = 0;
+				psignal(initproc, SIGUSR1);
+			}
+		} else if (ratecheck(&zkbdontv, &zkbdsleeptv)) {
+			apm_suspends++;
+		}
+		zkbdondown = 0;
+	}
 #endif
 #if 0
 	printf("on key pressed\n");
