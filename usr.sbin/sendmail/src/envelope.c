@@ -777,7 +777,8 @@ setsender(from, e, delimptr, internal)
 			    strcmp(pw->pw_name, e->e_from.q_user) == 0 &&
 			    !internal)
 			{
-				buildfname(pw->pw_gecos, e->e_from.q_user, buf);
+				buildfname(pw->pw_gecos, e->e_from.q_user,
+				    buf, sizeof buf);
 				if (buf[0] != '\0')
 					FullName = newstr(buf);
 			}

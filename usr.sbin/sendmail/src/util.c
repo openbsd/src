@@ -383,10 +383,11 @@ makelower(p)
 */
 
 void
-buildfname(gecos, login, buf)
+buildfname(gecos, login, buf, bufsiz)
 	register char *gecos;
 	char *login;
 	char *buf;
+	int bufsiz;
 {
 	register char *p;
 	register char *bp = buf;
@@ -395,22 +396,13 @@ buildfname(gecos, login, buf)
 	if (*gecos == '*')
 		gecos++;
 
-	/* find length of final string */
-	l = 0;
-	for (p = gecos; *p != '\0' && *p != ',' && *p != ';' && *p != '%'; p++)
-	{
-		if (*p == '&')
-			l += strlen(login);
-		else
-			l++;
-	}
-
-	/* now fill in buf */
-	for (p = gecos; *p != '\0' && *p != ',' && *p != ';' && *p != '%'; p++)
+	for (p = gecos; *p != '\0' && *p != ',' && *p != ';' && *p != '%'
+		&& ((bp - buf) <= (bufsiz - 1)); p++)
 	{
 		if (*p == '&')
 		{
-			(void) strcpy(bp, login);
+			(void) strncpy(bp, login, (bufsiz - (bp - buf) - 1));
+			buf[bufsiz - 1] = '\0';
 			*bp = toupper(*bp);
 			while (*bp != '\0')
 				bp++;
