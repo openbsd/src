@@ -1,0 +1,23 @@
+vt200|vt220|dec-vt220|vt200-js|vt220-js|dec vt200 series with jump scroll:\
+	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:LE=\E[%dD:\
+	:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:as=^N:ct=\E[3g:dc=\E[P:dl=\E[M:\
+	:ei=\E[4l:im=\E[4h:k1=\E[17~:k2=\E[18~:k3=\E[19~:k4=\E[20~:\
+	:k5=\E[21~:k6=\E[23~:k7=\E[24~:k8=\E[25~:kD=\E[3~:kH=\E[4~:\
+	:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=\177:kh=\E[1~:km:mi:ms:\
+	:if=/usr/share/tabset/vt100:se=\E[27m:st=\EH:ue=\E[24m:\
+	:tc=vt100:
+vt100|dec-vt100|vt100-am|vt100am|dec vt100:\
+	:bl=^G:cr=^M:it#8:\
+	:do=^J:co#80:li#24:cl=50\E[;H\E[2J:sf=2*\ED:\
+	:le=^H:bs:am:cm=5\E[%i%d;%dH:nd=2\E[C:up=2\E[A:cb=3\E[1K:\
+	:ce=3\E[K:cd=50\E[J:so=2\E[7m:se=2\E[m:us=2\E[4m:ue=2\E[m:\
+	:md=2\E[1m:mr=2\E[7m:mb=2\E[5m:me=2\E[m:is=\E[1;24r\E[24;1H:\
+	:if=/usr/share/tabset/vt100:\
+	:rs=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:ks=\E[?1h\E=:ke=\E[?1l\E>:\
+	:ku=\EOA:kd=\EOB:kr=\EOC:kl=\EOD:kb=^H:\
+	:ho=\E[H:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:pt:sr=2*\EM:vt#3:xn:\
+	:sc=\E7:rc=\E8:cs=\E[%i%d;%dr:
+dumb|80-column dumb tty:\
+	:am:\
+	:co#80:\
+	:bl=^G:cr=^M:do=^J:sf=^J:
