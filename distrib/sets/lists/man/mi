@@ -1291,6 +1291,7 @@
 ./usr/share/man/cat4/sparc/audiocs.0
 ./usr/share/man/cat4/sparc/autoconf.0
 ./usr/share/man/cat4/sparc/be.0
+./usr/share/man/cat4/sparc/btcham.0
 ./usr/share/man/cat4/sparc/bwtwo.0
 ./usr/share/man/cat4/sparc/cgeight.0
 ./usr/share/man/cat4/sparc/cgfour.0
@@ -1316,6 +1317,7 @@
 ./usr/share/man/cat4/sparc/mem.0
 ./usr/share/man/cat4/sparc/mgx.0
 ./usr/share/man/cat4/sparc/openprom.0
+./usr/share/man/cat4/sparc/p9k.0
 ./usr/share/man/cat4/sparc/pnozz.0
 ./usr/share/man/cat4/sparc/presto.0
 ./usr/share/man/cat4/sparc/qe.0

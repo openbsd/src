@@ -259,6 +259,7 @@
 ./usr/include/dev/ic/oplvar.h
 ./usr/include/dev/ic/osiopreg.h
 ./usr/include/dev/ic/osiopvar.h
+./usr/include/dev/ic/p9000.h
 ./usr/include/dev/ic/pcdisplay.h
 ./usr/include/dev/ic/pcdisplayvar.h
 ./usr/include/dev/ic/pckbcvar.h

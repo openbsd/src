@@ -810,6 +810,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/oplvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/osiopreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/osiopvar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/p9000.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/pcdisplay.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/pcdisplayvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/pckbcvar.ph
