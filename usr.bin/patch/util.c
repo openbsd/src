@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.10 2003/04/05 17:17:53 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2003/04/08 00:18:31 deraadt Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.10 2003/04/05 17:17:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.11 2003/04/08 00:18:31 deraadt Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -82,7 +82,7 @@ char *from, *to;
 	    if (*s)
 		*s = toupper(*s);
 	    else
-		strcpy(simplename, simplename+1);
+		memmove(simplename, simplename+1, strlen(simplename+1)+1);
 	}
 	while (unlink(bakname) >= 0) ;	/* while() is for benefit of Eunice */
 #ifdef DEBUGGING
