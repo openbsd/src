@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1998/03/03 21:41:37 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1998/03/07 19:14:30 millert Exp $
 
 LIBIO=		io
 LIBIOSTREAM=	iostream
@@ -28,7 +28,7 @@ LIBIOSTREAM_SRCS= $(IO_SRCS) $(IOSTREAM_SRCS) $(OSPRIM_SRCS)
 
 SRCS=		$(LIBIO_SRCS)
 
-CLEANFILES+=	_G_config.h iostream.list
+CLEANFILES+=	_G_config.h iostream.list dummy.h
 
 FILES=		*.h
 
