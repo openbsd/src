@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2001/07/01 20:43:39 niklas Exp $
+#	$OpenBSD: Makefile,v 1.40 2001/07/05 12:38:04 ho Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -76,7 +76,8 @@ CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 		isakmp_num.c isakmp_num.h ipsec_fld.c ipsec_fld.h \
 		isakmp_fld.c isakmp_fld.h
 MAN=		isakmpd.8 isakmpd.conf.5 isakmpd.policy.5
-CFLAGS+=	-Wall -DNEED_SYSDEP_APP \
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-DNEED_SYSDEP_APP \
 		-I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I.
 
 # Different debugging & profiling suggestions
