@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.18 2004/05/21 16:01:57 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.19 2004/05/23 23:05:30 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -29,11 +29,54 @@ The
 program controls the
 .Xr bgpd 8
 daemon.
+Commands to switch between displays may be abbreviated to the
+minimum unambiguous prefix; for example,
+.Dq s s
+for
+.Dq show summary .
+.Pp
 The commands are as follows:
 .Bl -tag -width xxxxxx
-.It Li show summary
-Show a list of all neighbors, including information about the session state
-and message counters.
+.It Li fib couple
+Insert the learned routes into the Forward Information Base aka the kernel
+routing table.
+.It Li fib decouple
+Remove the learned routes from the Forward Information Base aka the kernel
+routing table.
+.It Li neighbor Ar address up
+Take the bgp session to the specified neighbor up.
+.It Li neighbor Ar address down
+Take the bgp session to the specified neighbor down.
+.It Li network add Ar prefix
+Add the specified prefix to the list of announced networks.
+.It Li network delete Ar prefix
+Remove the specified prefix from the list of announced networks.
+.It Li network flush
+Remove all dynamically added prefixes from the list of announced networks.
+.It Li network flush
+Show all announced networks.
+.It Li reload
+Reload the configuration file.
+.It Li show fib Ar filter
+Show routes from bgpd's view of the Forward Information Base.
+.Ar filter
+can be an IP address, in which case the route to this address is shown,
+or a flag:
+.Pp
+.Bl -tag -width connected -compact
+.It Li connected
+Show only connected routes.
+.It Li static
+Show only static routes.
+.It Li bgp
+Show only routes originating from
+.Xr bgpd 8
+itself.
+.It Li nexthop
+Show only routes required to reach a BGP nexthop.
+.El
+.It Li show interface
+Show the interface states.
 .It Li show neighbor Ar address Ar modifier
 Show detailed information about the neighbor identified by
 .Ar address ,
@@ -46,6 +89,8 @@ Show statistics about sent and received BGP messages.
 .It Li timers
 Show the BGP timers.
 .El
+.It Li show nexthop
+Show the list of BGP Nexthops and the result of their validity check.
 .It Li show rib Ar filter
 Show routes from the bgpd Routing Information Base.
 .Ar filter
@@ -65,55 +110,10 @@ Show all entries with <as> as rightmost AS.
 .It Li transit-as <as>
 Show all entries with <as> anywhere but rightmost.
 .El
-.It Li show fib Ar filter
-Show routes from bgpd's view of the Forward Information Base.
-.Ar filter
-can be an IP address, in which case the route to this address is shown,
-or a flag:
-.Pp
-.Bl -tag -width connected -compact
-.It Li connected
-Show only connected routes.
-.It Li static
-Show only static routes.
-.It Li bgp
-Show only routes originating from
-.Xr bgpd 8
-itself.
-.It Li nexthop
-Show only routes required to reach a BGP nexthop.
+.It Li show summary
+Show a list of all neighbors, including information about the session state
+and message counters.
 .El
-.It Li show nexthop
-Show the list of BGP Nexthops and the result of their validity check.
-.It Li show interface
-Show the interface states.
-.It Li reload
-Reload the configuration file.
-.It Li fib couple
-Insert the learned routes into the Forward Information Base aka the kernel
-routing table.
-.It Li fib decouple
-Remove the learned routes from the Forward Information Base aka the kernel
-routing table.
-.It Li neighbor Ar address up
-Take the bgp session to the specified neighbor up.
-.It Li neighbor Ar address down
-Take the bgp session to the specified neighbor down.
-.It Li network add Ar prefix
-Add the specified prefix to the list of announced networks.
-.It Li network delete Ar prefix
-Remove the specified prefix from the list of announced networks.
-.It Li network flush
-Remove all dynamicaly added prefixes form the list of announced networks.
-.It Li network flush
-Show all announced networks.
-.El
-.Pp
-Commands to switch between displays may be abbreviated to the
-minimum unambiguous prefix; for example,
-.Dq s s
-for
-.Dq show summary .
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact
 .It Pa /etc/bgpd.conf

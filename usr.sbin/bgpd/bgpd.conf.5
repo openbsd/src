@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.26 2004/05/21 15:36:40 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.27 2004/05/23 23:05:31 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -82,6 +82,7 @@ daemon globally.
 .It Ar AS
 Set the local Autonomous System number.
 The AS numbers are assigned by local RIRs, such as
+.Pp
 .Bl -tag -width xxxxx -compact
 .It Ar RIPE
 for Europe,
@@ -335,52 +336,6 @@ Inherited from the global configuration if not given.
 .It Ar holdtime min
 Set the minimal acceptable holdtime.
 Inherited from the global configuration if not given.
-.It Ar local-address
-When
-.Ar bgpd
-initiates the TCP connection to the neighbor system, it normally does not
-bind to a specific IP address.
-If a local-address is given it binds
-to this address before.
-.It Ar max-prefix
-Limit amount of prefixes received.
-No such limit is imposed by default.
-.It Ar multihop
-Neighbors not in the same AS as the local
-.Ar bgpd
-normally have to be directly connected to the local machine.
-If this is not the case, the
-.Ar multihop
-statement defines the maximum hops the neighbor may be away.
-.It Ar passive
-Do not attempt to actively open a TCP connection to the neighbor system.
-.It Ar remote-as
-Set the AS number of the remote system.
-.It Ar route-reflector
-Act as a RFC 2796 route-reflector for this neighbor.
-An optional cluster id can be specified else the own bgp id will be used.
-.It Ar set
-Set the
-.Em AS path attributes
-to some default per
-.Ar neighbor
-or
-.Ar group
-statement:
-.Bd -literal -offset indent
-set localpref 300
-.Ed
-.Pp
-See also the
-.Sx ATTRIBUTE SET
-section.
-.It Ar tcp md5sig
-Enable TCP MD5 signatures per RFC 2385.
-The shared secret can either be given as a password or hexadecimal key.
-.Bd -literal -offset indent
-tcp md5sig password mekmidasdigoat
-tcp md5sig key deadbeef
-.Ed
 .It Ar ipsec (ah|esp) (in|out) spi <number> <authspec> [<encspec>]
 Enable IPsec with static keying.
 There have to be at least two "ipsec" statements per peer with manual
@@ -420,14 +375,15 @@ is responsible for the session keys.
 With
 .Xr isakmpd 8 ,
 it is sufficient to copy the peer's public key, found in
-.Pa /etc/isakmpd/private/local.pub
-to the local machine. It has to be stored in a file
+.Pa /etc/isakmpd/private/local.pub ,
+to the local machine.
+It has to be stored in a file
 named after the peer's IP address and has to be stored in
 .Pa /etc/isakmpd/pubkeys/ipv4/ .
 The local public key has to be copied to the peer in the same way.
 A simple
 .Pa /etc/isakmpd/isakmpd.policy
-file is needed as well, it can be as simple as
+file is needed as well; it can be as simple as
 .Bd -literal -offset indent
 Authorizer: "POLICY"
 Comment: This bare-bones assertion accepts everything
@@ -438,6 +394,52 @@ After starting the
 and
 .Ar bgpd
 daemons on both sides the session should be established.
+.It Ar local-address
+When
+.Ar bgpd
+initiates the TCP connection to the neighbor system, it normally does not
+bind to a specific IP address.
+If a local-address is given it binds
+to this address before.
+.It Ar max-prefix
+Limit amount of prefixes received.
+No such limit is imposed by default.
+.It Ar multihop
+Neighbors not in the same AS as the local
+.Ar bgpd
+normally have to be directly connected to the local machine.
+If this is not the case, the
+.Ar multihop
+statement defines the maximum hops the neighbor may be away.
+.It Ar passive
+Do not attempt to actively open a TCP connection to the neighbor system.
+.It Ar remote-as
+Set the AS number of the remote system.
+.It Ar route-reflector
+Act as an RFC 2796 route-reflector for this neighbor.
+An optional cluster id can be specified; otherwise the bgp id will be used.
+.It Ar set
+Set the
+.Em AS path attributes
+to some default per
+.Ar neighbor
+or
+.Ar group
+statement:
+.Bd -literal -offset indent
+set localpref 300
+.Ed
+.Pp
+See also the
+.Sx ATTRIBUTE SET
+section.
+.It Ar tcp md5sig
+Enable TCP MD5 signatures per RFC 2385.
+The shared secret can either be given as a password or hexadecimal key.
+.Bd -literal -offset indent
+tcp md5sig password mekmidasdigoat
+tcp md5sig key deadbeef
+.Ed
 .El
 .Sh FILTER
 .Ar bgpd
@@ -466,14 +468,14 @@ rule decides what action is taken.
 .Pp
 The following actions can be used in the filter:
 .Bl -tag -width xxxxxxxx
-.It Ar deny
-The
-.Em UPDATE
-is blocked.
 .It Ar allow
 The
 .Em UPDATE
 is passed.
+.It Ar deny
+The
+.Em UPDATE
+is blocked.
 .It Ar match
 Apply the filter attribute set without influencing the filter decision.
 .El
@@ -487,18 +489,8 @@ always comes from, or goes to, one neighbor.
 Most parameters are optional.
 If a parameter is specified, the rule only applies to packets with
 matching attributes.
-.Bl -tag -width xxxxxxxx
-.It Ar quick
-If an
-.Em UPDATE
-matches a rule which has the
-.Ar quick
-option set, this rule is considered the last matching rule, and evaluation
-of subsequent rules is skipped.
-.It Ar from No or Ar to
-This rule applies to incoming or outgoing
-.Em UPDATES .
-Either one or the other must be specified.
+.Pp
+.Bl -tag -width xxxxxxxx -compact
 .It Ar any
 .It Ar <address>
 .It Ar group <descr>
@@ -509,10 +501,50 @@ Neighbors can be matched against their address, the group description,
 or the token
 .Ar any
 can be used to match any neighbor.
+.Pp
+.It Ar <astype> <asnum>
+This rule applies only to
+.Em UPDATES
+where the
+.Em AS path
+matches.
+The
+.Ar <asnum>
+is matched against a part of the
+.Em AS path
+specified by the
+.Ar <astype> .
+.Ar <astype>
+is one of the following operators:
+.Bd -literal -offset indent
+AS		(any part)
+source-AS	(rightmost AS number)
+transit-AS	(all but the rightmost AS number)
+.Ed
+.Pp
+.It Ar community <as>:<num>
+This rule applies only to
+.Em UPDATES
+where the community path attribute is present and matches.
+Both
+.Ar <as>
+and
+.Ar <num>
+may be set to
+.Sq *
+to do an
+.Dq anymatch .
+.Pp
+.It Ar from No or Ar to
+This rule applies to incoming or outgoing
+.Em UPDATES .
+Either one or the other must be specified.
+.Pp
 .It Ar prefix <address>/<len>
 This rule applies only to
 .Em UPDATES
 for the specified prefix.
+.Pp
 .It Ar prefixlen <desc>
 This rule applies only to
 .Em UPDATES
@@ -553,38 +585,14 @@ than 16:
 prefix 10.0.0.0/8 prefixlen > 16
 .Ed
 .Pp
-.It Ar <astype> <asnum>
-This rule applies only to
-.Em UPDATES
-where the
-.Em AS path
-matches.
-The
-.Ar <asnum>
-is matched against a part of the
-.Em AS path
-specified by the
-.Ar <astype> .
-.Ar <astype>
-is one of the following operators:
-.Bd -literal -offset indent
-AS		(any part)
-source-AS	(rightmost AS number)
-transit-AS	(all but the rightmost AS number)
-.Ed
+.It Ar quick
+If an
+.Em UPDATE
+matches a rule which has the
+.Ar quick
+option set, this rule is considered the last matching rule, and evaluation
+of subsequent rules is skipped.
 .Pp
-.It Ar community <as>:<num>
-This rule applies only to
-.Em UPDATES
-where the community path attribute is present and matches.
-Both
-.Ar <as>
-and
-.Ar <num>
-may be set to
-.Sq *
-to do an
-.Dq anymatch .
 .It Ar set
 All matching rules can set the
 .Em AS path attributes
@@ -610,34 +618,34 @@ Attribute sets can be expressed as list.
 .Pp
 The following attributes can be modified:
 .Bl -tag -width xxxxxxxx
-.It Ar localpref
-Set the
-.Em LOCAL_PREF
-.Em AS path attribute .
 .It Ar community
 Set the
 .Em COMMUNITIES
-.Em AS path attribute .
-Communities are specified as 
+AS path attribute.
+Communities are specified as
 .Ar asnum:local ,
 where
 .Ar asnum
 is an AS number and
 .Ar local
 is a locally-significant number between zero and 0xffff.
-Alternately, well-known communities may be specified by name: 
+Alternately, well-known communities may be specified by name:
 .Em NO_EXPORT ,
 .Em NO_ADVERTISE ,
-or 
+or
 .Em NO_EXPORT_SUBCONFED .
+.It Ar localpref
+Set the
+.Em LOCAL_PREF
+AS path attribute.
 .It Ar med
 Set the
 .Em MULTI_EXIT_DISC
-.Em AS path attribute .
+AS path attribute.
 .It Ar nexthop
 Set the
 .Em NEXTHOP
-.Em AS path attribute
+AS path attribute
 to a different nexthop address.
 .It Ar pftable
 Adds the prefix in the update to the specified
