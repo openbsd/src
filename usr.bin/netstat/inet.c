@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.28 1999/02/17 23:50:38 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.29 1999/02/18 08:25:51 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.28 1999/02/17 23:50:38 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.29 1999/02/18 08:25:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,10 +140,10 @@ protopr(off, name)
 				printf(" (including servers)");
 			putchar('\n');
 			if (Aflag)
-				printf("%-*.*s %-5.5s %-6.6s %-6.6s  %-*.*s %-*.*s %s\n",
+				printf("%-*.*s %-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n",
 				    PLEN, PLEN, "PCB", "Proto", "Recv-Q",
-				    "Send-Q", PLEN, PLEN, "Local Address",
-				    PLEN, PLEN, "Foreign Address", "(state)");
+				    "Send-Q", "Local Address",
+				    "Foreign Address", "(state)");
 			else
 				printf("%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
 				    "Proto", "Recv-Q", "Send-Q",
