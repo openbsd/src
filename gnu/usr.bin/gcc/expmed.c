@@ -188,6 +188,9 @@ negate_rtx (mode, x)
   if (GET_CODE (x) == CONST_INT)
     {
       HOST_WIDE_INT val = - INTVAL (x);
+      if (GET_MODE_BITSIZE (mode) > HOST_BITS_PER_WIDE_INT
+	  && INTVAL (x) < 0 && val < 0)
+	return expand_unop (mode, neg_optab, x, NULL_RTX, 0);
       if (GET_MODE_BITSIZE (mode) < HOST_BITS_PER_WIDE_INT)
 	{
 	  /* Sign extend the value from the bits that are significant.  */
