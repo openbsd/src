@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.6 2005/02/17 18:28:05 reyk Exp $  */
+/*	$OpenBSD: ral.c,v 1.7 2005/02/18 20:01:35 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1772,6 +1772,7 @@ ral_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+			ral_init(ifp);
 			return;
 		}
 		ifp->if_timer = 1;
