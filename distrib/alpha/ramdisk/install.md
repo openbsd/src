@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.6 1997/05/14 16:06:14 millert Exp $
+#       $OpenBSD: install.md,v 1.7 1997/05/15 03:44:10 millert Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -43,6 +43,10 @@ KERNFSMOUNTED=/tmp/kernfsmounted
 
 # Machine-dependent install sets
 MDSETS="kernel"
+
+md_machine_arch() {
+	cat /kern/machine
+}
 
 md_copy_kernel() {
 	if [ ! -s /mnt/bsd ]; then
