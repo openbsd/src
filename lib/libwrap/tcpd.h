@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.h,v 1.13 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: tcpd.h,v 1.14 2002/06/07 00:04:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -63,10 +63,10 @@ struct request_info {
     char    pid[10];			/* access via eval_pid(request) */
     struct host_info client[1];		/* client endpoint info */
     struct host_info server[1];		/* server endpoint info */
-    void  (*sink) ();			/* datagram sink function or 0 */
-    void  (*hostname) ();		/* address to printable hostname */
-    void  (*hostaddr) ();		/* address to printable address */
-    void  (*cleanup) ();		/* cleanup function or 0 */
+    void  (*sink)(int);			/* datagram sink function or 0 */
+    void  (*hostname)(struct host_info *); /* address to printable hostname */
+    void  (*hostaddr)(struct host_info *); /* address to printable address */
+    void  (*cleanup)(void);		/* cleanup function or 0 */
     struct netconfig *config;		/* netdir handle */
 };
 
@@ -185,8 +185,10 @@ extern void sock_hostaddr(struct host_info *);
   * everyone would have to include <setjmp.h>.
   */
 
-extern void tcpd_warn(char *, ...);
-extern void tcpd_jump(char *, ...);
+extern void tcpd_warn(char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
+extern void tcpd_jump(char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 __END_DECLS
 
 struct tcpd_context {

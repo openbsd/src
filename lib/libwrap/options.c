@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.3 2002/05/27 03:13:23 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.4 2002/06/07 00:04:21 itojun Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.3 2002/05/27 03:13:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.4 2002/06/07 00:04:21 itojun Exp $";
 #endif
 #endif
 
@@ -74,31 +74,46 @@ extern jmp_buf tcpd_buf;		/* tcpd_jump() support */
 static char whitespace_eq[] = "= \t\r\n";
 #define whitespace (whitespace_eq + 1)
 
-static char *get_field();		/* chew :-delimited field off string */
-static char *chop_string();		/* strip leading and trailing blanks */
+static char *get_field(char *);		/* chew :-delimited field off string */
+static char *chop_string(char *);	/* strip leading and trailing blanks */
 
 /* List of functions that implement the options. Add yours here. */
 
-static void user_option();		/* execute "user name.group" option */
-static void group_option();		/* execute "group name" option */
-static void umask_option();		/* execute "umask mask" option */
-static void linger_option();		/* execute "linger time" option */
-static void keepalive_option();		/* execute "keepalive" option */
-static void spawn_option();		/* execute "spawn command" option */
-static void twist_option();		/* execute "twist command" option */
-static void rfc931_option();		/* execute "rfc931" option */
-static void setenv_option();		/* execute "setenv name value" */
-static void nice_option();		/* execute "nice" option */
-static void severity_option();		/* execute "severity value" */
-static void allow_option();		/* execute "allow" option */
-static void deny_option();		/* execute "deny" option */
-static void banners_option();		/* execute "banners path" option */
+static void user_option			/* execute "user name.group" option */
+	(char *, struct request_info *);
+static void group_option		/* execute "group name" option */
+	(char *, struct request_info *);
+static void umask_option		/* execute "umask mask" option */
+	(char *, struct request_info *);
+static void linger_option		/* execute "linger time" option */
+	(char *, struct request_info *);
+static void keepalive_option		/* execute "keepalive" option */
+	(char *, struct request_info *);
+static void spawn_option		/* execute "spawn command" option */
+	(char *, struct request_info *);
+static void twist_option		/* execute "twist command" option */
+	(char *, struct request_info *);
+static void rfc931_option		/* execute "rfc931" option */
+	(char *, struct request_info *);
+static void setenv_option		/* execute "setenv name value" */
+	(char *, struct request_info *);
+static void nice_option			/* execute "nice" option */
+	(char *, struct request_info *);
+static void severity_option		/* execute "severity value" */
+	(char *, struct request_info *);
+static void allow_option		/* execute "allow" option */
+	(char *, struct request_info *);
+static void deny_option			/* execute "deny" option */
+	(char *, struct request_info *);
+static void banners_option		/* execute "banners path" option */
+	(char *, struct request_info *);
 
 /* Structure of the options table. */
 
 struct option {
     char   *name;			/* keyword name, case is ignored */
-    void  (*func) ();			/* function that does the real work */
+    void  (*func)(char *, struct request_info *);
+					/* function that does the real work */
     int     flags;			/* see below... */
 };
 
