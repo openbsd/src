@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.8 2000/04/27 01:10:11 bjc Exp $ */
+/*	$OpenBSD: db_disasm.c,v 1.9 2001/04/01 20:16:47 hugh Exp $ */
 /*	$NetBSD: db_disasm.c,v 1.10 1998/04/13 12:10:27 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -345,7 +345,7 @@ get_operand(ib, size)
 		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		if (reg == 0x0F) {	/* pc is not allowed in this mode */
-			err_print("autodecrement not allowd for PC.\n");
+			err_print("autodecrement not allowed for PC.\n");
 		}
 		break;
 
