@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.28 2001/03/25 13:11:51 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.29 2001/04/02 19:01:18 art Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1759,7 +1759,8 @@ wdc_get_xfer(flags)
 	xfer = pool_get(&wdc_xfer_pool,
 	    ((flags & WDC_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	splx(s);
-	memset(xfer, 0, sizeof(struct wdc_xfer));
+	if (xfer != NULL)
+		memset(xfer, 0, sizeof(struct wdc_xfer));
 	return xfer;
 }
 
