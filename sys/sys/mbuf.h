@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.28 2001/05/21 03:10:54 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.29 2001/05/21 03:26:26 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -61,8 +61,8 @@ extern void *ipsp_copy_ident(void *);
 /* Packet tags structure */
 struct m_tag {
 	TAILQ_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
-	int			m_tag_id;	/* Tag ID */
-	int			m_tag_len;	/* Length of data */
+	u_int16_t		m_tag_id;	/* Tag ID */
+	u_int16_t		m_tag_len;	/* Length of data */
 };
 
 /*
