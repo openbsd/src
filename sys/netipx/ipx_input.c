@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.13 2000/01/15 07:07:17 fgsch Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.14 2000/01/15 09:19:22 fgsch Exp $	*/
 
 /*-
  *
@@ -373,22 +373,15 @@ struct mbuf *m;
 			goto cleanup;
 		}
 	}
-	/* need to adjust checksum */
-	if (ipxcksum && ipx->ipx_sum != 0xffff) {
-		union bytes {
-			u_char c[4];
-			u_short s[2];
-			long l;
-		} x;
-		register int shift;
-		x.l = 0; x.c[0] = agedelta;
-		shift = (((((int)ntohs(ipx->ipx_len))+1)>>1)-2) & 0xf;
-		x.l = ipx->ipx_sum + (x.s[0] << shift);
-		x.l = x.s[0] + x.s[1];
-		x.l = x.s[0] + x.s[1];
-		if (x.l == 0xffff) ipx->ipx_sum = 0; else ipx->ipx_sum = x.l;
-	} else 
+	/*
+	 * We don't need to recompute checksum because ipx_tc field
+	 * is ignored by checksum calculation routine, however
+	 * it may be desirable to reset checksum if ipxcksum == 0
+	 */
+#if 0
+	if (!ipxcksum)
 		ipx->ipx_sum = 0xffff;
+#endif
 
 	error = ipx_outputfl(m, &ipx_droute, flags);
 	if (error == 0) {
