@@ -106,7 +106,7 @@ hex()
 
 alph2d()
 {
-	local t="$1"  
+	local t="$1"
 	local p="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	local sub=${p%${t}*}
 	echo ${#sub}

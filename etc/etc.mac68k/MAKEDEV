@@ -81,7 +81,7 @@ hex()
 
 alph2d()
 {
-	local t="$1"  
+	local t="$1"
 	local p="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	local sub=${p%${t}*}
 	echo ${#sub}
@@ -244,8 +244,8 @@ adb)
 	;;
 
 asc*)
-        M asc$U c 36 $U
-        ;;
+	M asc$U c 36 $U
+	;;
 
 xfs*)
 	M xfs$U c 51 $U 600
