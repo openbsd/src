@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.25 2003/04/05 18:04:00 avsm Exp $	*/
+/*	$OpenBSD: perform.c,v 1.26 2003/04/19 10:46:16 henning Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.25 2003/04/05 18:04:00 avsm Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.26 2003/04/19 10:46:16 henning Exp $";
 #endif
 
 /*
@@ -506,7 +506,7 @@ pkg_do(char *pkg)
 		if (s != NULL) {
 		    char *t;
 		    t=strrchr(contents, '/');
-		    strcpy(t+1, s);
+		    strlcpy(t+1, s, contents + sizeof(contents) - (t+1));
 		}else{
 		    errx(1,"Where did our dependency go?!");
 		    /* this shouldn't happen... X-) */

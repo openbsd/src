@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.16 2003/04/04 08:56:01 avsm Exp $	*/
+/*	$OpenBSD: file.c,v 1.17 2003/04/19 10:46:16 henning Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.16 2003/04/04 08:56:01 avsm Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.17 2003/04/19 10:46:16 henning Exp $";
 #endif
 
 /*
@@ -403,7 +403,8 @@ fileFindByPath(char *base, char *fname)
 					char *s;
 					s=strrchr(tmp,'/');
 					assert(s != NULL);
-					strcpy(s+1, cp);
+					strlcpy(s+1, cp,
+						tmp + sizeof(tmp) - (s+1));
 					return tmp;
 				}
 			} else {
@@ -427,7 +428,7 @@ fileFindByPath(char *base, char *fname)
 			if (s){
 				char *t;
 				t=strrchr(tmp, '/');
-				strcpy(t+1, s);
+				strlcpy(t+1, s, tmp + sizeof(tmp) - (t+1));
 				return tmp;
 			}
 		} else {
