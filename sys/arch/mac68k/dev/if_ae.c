@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.39 1996/01/13 14:03:38 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.40 1996/02/02 15:30:56 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1006,9 +1006,10 @@ aeintr(arg)
 		 * otherwise - resulting in an infinite loop.
 		 */
 		if (isr & ED_ISR_CNT) {
-			(void) NIC_GET(sc, ED_P0_CNTR0);
-			(void) NIC_GET(sc, ED_P0_CNTR1);
-			(void) NIC_GET(sc, ED_P0_CNTR2);
+			static unsigned char	dummy;
+			dummy = NIC_GET(sc, ED_P0_CNTR0);
+			dummy = NIC_GET(sc, ED_P0_CNTR1);
+			dummy = NIC_GET(sc, ED_P0_CNTR2);
 		}
 		isr = NIC_GET(sc, ED_P0_ISR);
 		if (!isr)
