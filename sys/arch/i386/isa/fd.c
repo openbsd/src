@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.22 1996/09/23 15:31:53 mickey Exp $	*/
+/*	$OpenBSD: fd.c,v 1.23 1996/10/16 12:46:22 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/mtio.h>
+#include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
 
@@ -140,6 +141,7 @@ void fdgetdisklabel __P((struct fd_softc *));
 int fd_get_parms __P((struct fd_softc *));
 void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
+int fdintr __P((struct fdc_softc *));
 
 struct dkdriver fddkdriver = { fdstrategy };
 
