@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.38 2003/12/26 18:07:32 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.39 2003/12/26 18:33:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -305,18 +305,23 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc)
 		    conffile);
 		return (-1);
 	}
-	imsg_compose(&ibuf_se, IMSG_RECONF_CONF, 0,
-	    conf, sizeof(struct bgpd_config));
-	imsg_compose(&ibuf_rde, IMSG_RECONF_CONF, 0,
-	    conf, sizeof(struct bgpd_config));
+	if (imsg_compose(&ibuf_se, IMSG_RECONF_CONF, 0,
+	    conf, sizeof(struct bgpd_config)) == -1)
+		return (-1);
+	if (imsg_compose(&ibuf_rde, IMSG_RECONF_CONF, 0,
+	    conf, sizeof(struct bgpd_config)) == -1)
+		return (-1);
 	for (p = conf->peers; p != NULL; p = p->next) {
-		imsg_compose(&ibuf_se, IMSG_RECONF_PEER, p->conf.id,
-		    &p->conf, sizeof(struct peer_config));
-		imsg_compose(&ibuf_rde, IMSG_RECONF_PEER, p->conf.id,
-		    &p->conf, sizeof(struct peer_config));
+		if (imsg_compose(&ibuf_se, IMSG_RECONF_PEER, p->conf.id,
+		    &p->conf, sizeof(struct peer_config)) == -1)
+			return (-1);
+		if (imsg_compose(&ibuf_rde, IMSG_RECONF_PEER, p->conf.id,
+		    &p->conf, sizeof(struct peer_config)) == -1)
+			return (-1);
 	}
-	imsg_compose(&ibuf_se, IMSG_RECONF_DONE, 0, NULL, 0);
-	imsg_compose(&ibuf_rde, IMSG_RECONF_DONE, 0, NULL, 0);
+	if (imsg_compose(&ibuf_se, IMSG_RECONF_DONE, 0, NULL, 0) == -1 ||
+	    imsg_compose(&ibuf_rde, IMSG_RECONF_DONE, 0, NULL, 0) == -1)
+		return (-1);
 
 	return (0);
 }
@@ -334,7 +339,10 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 	int			 n;
 	in_addr_t		 ina;
 
-	if (imsg_get(ibuf, &imsg) > 0) {
+	if ((n = imsg_get(ibuf, &imsg)) == -1)
+		return (-1);
+
+	if (n > 0) {
 		switch (imsg.hdr.type) {
 		case IMSG_MRT_MSG:
 		case IMSG_MRT_END:
@@ -402,6 +410,7 @@ send_nexthop_update(struct kroute_nexthop *msg)
 	    msg->gateway ? ": via " : "",
 	    msg->gateway ? log_ntoa(msg->gateway) : "");
 
-	imsg_compose(&ibuf_rde, IMSG_NEXTHOP_UPDATE, 0,
-	    msg, sizeof(struct kroute_nexthop));
+	if (imsg_compose(&ibuf_rde, IMSG_NEXTHOP_UPDATE, 0,
+	    msg, sizeof(struct kroute_nexthop)) == -1)
+		quit = 1;
 }

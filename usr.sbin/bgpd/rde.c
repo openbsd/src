@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.32 2003/12/26 18:07:33 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.33 2003/12/26 18:33:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -170,8 +170,12 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	struct peer_config	*pconf;
 	struct rde_peer		*p, *np;
 	u_int32_t		 rid;
+	int			 n;
 
-	if (imsg_get(ibuf, &imsg) > 0) {
+	if ((n = imsg_get(ibuf, &imsg)) == -1)
+		fatal("imsg_get error");
+
+	if (n > 0) {
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
@@ -254,8 +258,9 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("mrt request not from parent");
 			/* ignore end message because a dump is atomic */
-			imsg_compose(&ibuf_main, IMSG_MRT_END,
-			    imsg.hdr.peerid, NULL, 0);
+			if (imsg_compose(&ibuf_main, IMSG_MRT_END,
+			    imsg.hdr.peerid, NULL, 0) == -1)
+				fatalx("imsg_compose error");
 			break;
 		default:
 			break;
@@ -493,8 +498,9 @@ rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
 	u_int8_t	errcode;
 
 	errcode = errorcode;
-	imsg_compose(&ibuf_se, IMSG_UPDATE_ERR, peerid,
-	    &errcode, sizeof(errcode));
+	if (imsg_compose(&ibuf_se, IMSG_UPDATE_ERR, peerid,
+	    &errcode, sizeof(errcode)) == -1)
+		fatal("imsg_compose error");
 }
 
 /*
@@ -525,7 +531,8 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	kr.prefixlen = p->prefix->prefixlen;
 	kr.nexthop = p->aspath->flags.nexthop.s_addr;
 
-	imsg_compose(&ibuf_main, type, 0, &kr, sizeof(kr));
+	if (imsg_compose(&ibuf_main, type, 0, &kr, sizeof(kr)) == -1)
+		fatal("imsg_compose error");
 }
 
 /*
@@ -534,12 +541,15 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 void
 rde_send_nexthop(in_addr_t next, int valid)
 {
+	int	type;
+
 	if (valid)
-		imsg_compose(&ibuf_main, IMSG_NEXTHOP_ADD, 0,
-		    &next, sizeof(next));
+		type = IMSG_NEXTHOP_ADD;
 	else
-		imsg_compose(&ibuf_main, IMSG_NEXTHOP_REMOVE, 0,
-		    &next, sizeof(next));
+		type = IMSG_NEXTHOP_REMOVE;
+
+	if (imsg_compose(&ibuf_main, type, 0, &next, sizeof(next)) == -1)
+		fatal("imsg_compose error");
 }
 
 /*

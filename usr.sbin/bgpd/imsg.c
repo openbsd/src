@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.10 2003/12/26 18:07:32 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.11 2003/12/26 18:33:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -54,8 +54,10 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	do {
 		if ((n = read(ibuf->sock, ibuf->r.wptr,
 		    ibuf->r.pkt_len - ibuf->r.read_len)) == -1) {
-			if (errno != EAGAIN && errno != EINTR)
-				fatal("pipe read error");
+			if (errno != EAGAIN && errno != EINTR) {
+				log_err("imsg_get pipe read error");
+				return (-1);
+			}
 			return (0);
 		}
 		read_total += n;
@@ -68,8 +70,10 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 				ibuf->r.pkt_len = hdr->len;
 				ibuf->r.peerid = hdr->peerid;
 				if (hdr->len < IMSG_HEADER_SIZE ||
-				    hdr->len > MAX_IMSGSIZE)
-					fatalx("wrong imsg header len");
+				    hdr->len > MAX_IMSGSIZE) {
+					logit(LOG_CRIT, "wrong imsg hdr len");
+					return (-1);
+				}
 				ibuf->r.seen_hdr = 1;
 			} else {		/* we got the full packet */
 				imsg->hdr.type = ibuf->r.type;
@@ -77,8 +81,10 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 				imsg->hdr.peerid = ibuf->r.peerid;
 				datalen = ibuf->r.pkt_len - IMSG_HEADER_SIZE;
 				rptr = ibuf->r.buf + IMSG_HEADER_SIZE;
-				if ((imsg->data = malloc(datalen)) == NULL)
-					fatal("get_imsg malloc");
+				if ((imsg->data = malloc(datalen)) == NULL) {
+					log_err("imsg_get");
+					return (-1);
+				}
 				memcpy(imsg->data, rptr, datalen);
 				n = 0;	/* give others a chance */
 				imsg_init_readbuf(ibuf);
@@ -104,16 +110,24 @@ imsg_compose(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
 	hdr.type = type;
 	hdr.peerid = peerid;
 	wbuf = buf_open(hdr.len);
-	if (wbuf == NULL)
-		fatalx("imsg_compose: buf_open error");
-	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1)
-		fatalx("imsg_compose: buf_add error");
+	if (wbuf == NULL) {
+		logit(LOG_CRIT, "imsg_compose: buf_open error");
+		return (-1);
+	}
+	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1) {
+		logit(LOG_CRIT, "imsg_compose: buf_add error");
+		return (-1);
+	}
 	if (datalen)
-		if (buf_add(wbuf, data, datalen) == -1)
-			fatalx("imsg_compose: buf_add error");
-	if ((n = buf_close(&ibuf->w, wbuf)) < 0)
-		fatal("imsg_compose: buf_close error");
+		if (buf_add(wbuf, data, datalen) == -1) {
+			logit(LOG_CRIT, "imsg_compose: buf_add error");
+			return (-1);
+		}
 
+	if ((n = buf_close(&ibuf->w, wbuf)) < 0) {
+			logit(LOG_CRIT, "imsg_compose: buf_add error");
+			return (-1);
+	}
 	return (n);
 }
 

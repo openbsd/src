@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.45 2003/12/26 18:07:33 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.46 2003/12/26 18:33:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1189,7 +1189,9 @@ parse_update(struct peer *peer)
 	p += MSGSIZE_HEADER;	/* header is already checked */
 	datalen -= MSGSIZE_HEADER;
 
-	imsg_compose(&ibuf_rde, IMSG_UPDATE, peer->conf.id, p, datalen);
+	if (imsg_compose(&ibuf_rde, IMSG_UPDATE, peer->conf.id, p,
+	    datalen) == -1)
+		return (-1);
 
 	return (0);
 }
@@ -1235,8 +1237,12 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	struct peer_config	*pconf;
 	struct peer		*p, *next;
 	enum reconf_action	 reconf;
+	int			 n;
 
-	if (imsg_get(ibuf, &imsg) > 0) {
+	if ((n = imsg_get(ibuf, &imsg)) == -1)
+		fatal("imsg_get error");
+
+	if (n > 0) {
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
@@ -1342,13 +1348,15 @@ getpeerbyip(in_addr_t ip)
 void
 session_down(struct peer *peer)
 {
-	imsg_compose(&ibuf_rde, IMSG_SESSION_DOWN, peer->conf.id,
-	    NULL, 0);
+	if (imsg_compose(&ibuf_rde, IMSG_SESSION_DOWN, peer->conf.id,
+	    NULL, 0) == -1)
+		fatalx("imsg_compose error");
 }
 
 void
 session_up(struct peer *peer)
 {
-	imsg_compose(&ibuf_rde, IMSG_SESSION_UP, peer->conf.id,
-	    &peer->remote_bgpid, sizeof(peer->remote_bgpid));
+	if (imsg_compose(&ibuf_rde, IMSG_SESSION_UP, peer->conf.id,
+	    &peer->remote_bgpid, sizeof(peer->remote_bgpid)) == -1)
+		fatalx("imsg_compose error");
 }
