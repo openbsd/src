@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.148 2004/03/23 01:04:24 krw Exp $
+dnl	$OpenBSD: hardware,v 1.149 2004/03/23 13:50:08 nick Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -904,57 +904,6 @@ PCI BIOS, or autoconfigured.
 
 Hardware not listed in the above table doesn't need any specific
 configuration.
-
-
-Special care for SMC Elite Ultra:
-
-	The Elite Ultra is very sensitive to how its I/O port is treated.
-	Mistreating it can cause a number of effects -- anything from
-	the card not responding when the kernel probes, to the soft
-	configuration being corrupted or wiped completely.
-
-	By default, the kernel ships with device we1 configured for the
-	'default' Elite Ultra locations, comprising of port 0x300, irq 10,
-	and memory location 0xcc000.  This matches a hard coded jumper on
-	the board as well a common soft config setting.
-
-	Unfortunately, the kernel's autoconfiguration process (specifically,
-	some of the devices it probes for) causes conflicts with the SMC
-	Elite Ultra, and very often causes it to lose its configuration and
-	fail its own probe.  If this happens, you must boot the computer
-	into DOS, and run the EzSetup program from SMC (if you do not have
-	a copy on the floppy accompanying your board, you can download it
-	from ftp://ftp.darmstadt.gmd.de/pub/pc/hardware/nic/smc/gez122.exe -
-	it is not available from SMC anymore).  This program will allow you
-	to reconfigure and recover a card that has lost its configuration
-	with a minimum of hassle.
-
-	In order to avoid blowing away the card, one *must* use the
-	run-time kernel configuration system when booting the Install
-	kernel.  This is done by giving the -c flag to the initial boot
-	request.  Following the loading of the kernel, the user is
-	presented with a
-
-	UKC>
-
-	prompt.  At this prompt, a variety of commands may be issued, but
-	the relevant one to getting the SMC Elite Ultra running is
-	'disable'.  The wt0, el0, and ie1 devices all need to be disabled.
-	This is done by typing 'disable' followed by the name of the
-	device, i.e., 'disable wt0', and pressing return.
-
-	If, for some reason, your Elite Ultra is not configured at the
-	'default' location the kernel is expecting it, you may also use
-	the 'change' command in the UKC system to modify where the kernel
-	will look for it.  Typing 'change we1' will allow you to modify
-	those settings.  Note that running the card at an I/O port of
-	anything other than 0x300 at this point is not recommended, and is
-	beyond the scope of this document-- by doing so you risk other
-	device probes wreaking the havoc we are trying to avoid.
-
-	When all three extra devices are disabled and any changes made,
-	the 'quit' command will exit the UKC.  The kernel should then
-	boot, and find your Elite Ultra on device we1.
 
 
 Special care for PCI BIOS:
