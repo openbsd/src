@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.312 2003/07/03 15:19:01 krw Exp $
+#	$OpenBSD: install.sub,v 1.313 2003/07/10 14:12:54 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1716,6 +1716,11 @@ SETDIR="$VNAME/$ARCH"
 FTPDIR="pub/OpenBSD/$VNAME"
 OBSD="OpenBSD/$ARCH $VNAME"
 SERVERLIST=/tmp/serverlist
+
+# Do not limit ourselves during installs or upgrades.
+for _opt in d f l m n p s; do
+	ulimit -$_opt unlimited
+done
 
 # Extract and save one boot's worth of dmesg
 dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /var/run/dmesg.boot
