@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.15 1999/06/03 06:41:39 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.16 1999/07/01 06:07:47 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.13 1999/06/03 06:40:28 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.14 1999/07/01 06:07:15 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -66,6 +66,7 @@
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
@@ -84,7 +85,7 @@
 /* 3COM Products */
 #define	PCMCIA_CIS_3COM_3CXEM556	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CXEM556	0x0035
-#define	PCMCIA_STR_3COM_3CXEM556	"3Com/Megahertz 3XEM556 Ethernet/Modem"
+#define	PCMCIA_STR_3COM_3CXEM556	"3Com/Megahertz 3CXEM556 Ethernet/Modem"
 #define	PCMCIA_CIS_3COM_3C562	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C562	0x0562
 #define	PCMCIA_STR_3COM_3C562	"3Com 3c562 33.6 Modem/10Mbps Ethernet"
@@ -157,6 +158,11 @@
 #define	PCMCIA_CIS_KINGSTON_KNE_PC2	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_KINGSTON_KNE_PC2	0x0100
 #define	PCMCIA_STR_KINGSTON_KNE_PC2	"Kingston KNE-PC2"
+
+/* Lasat Products */
+#define	PCMCIA_CIS_LASAT_CREDIT_288	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LASAT_CREDIT_288	0x2811
+#define	PCMCIA_STR_LASAT_CREDIT_288	"Lasat Credit 288 Modem"
 
 /* Linksys corporation */
 #define	PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD	{ NULL, NULL, NULL, NULL }
@@ -240,9 +246,9 @@
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
 #define	PCMCIA_STR_NEWMEDIA_BASICS	"NewMedia BASICS Ethernet"
-#define	PCMCIA_CIS_NEWMEDIA_MULTIMEDIA	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_NEWMEDIA_MULTIMEDIA	0x100b
-#define	PCMCIA_STR_NEWMEDIA_MULTIMEDIA	"NewMedia Multimedia Sound/SCSI"
+#define	PCMCIA_CIS_NEWMEDIA_BUSTOASTER	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER	0xc102
+#define	PCMCIA_STR_NEWMEDIA_BUSTOASTER	"NewMedia BusToaster SCSI Host Adapter"
 
 /* Standard Microsystems Corporation Products */
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
