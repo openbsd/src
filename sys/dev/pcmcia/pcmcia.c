@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.16 1999/07/01 06:27:00 fgsch Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.17 1999/07/01 13:48:07 niklas Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -160,9 +160,6 @@ pcmcia_card_attach(dev)
 
 	for (pf = sc->card.pf_head.sqh_first; pf != NULL;
 	    pf = pf->pf_list.sqe_next) {
-		if (pf->cfe_head.sqh_first == NULL)
-			continue;
-
 		pf->sc = sc;
 		pf->cfe = NULL;
 		pf->ih_fct = NULL;
@@ -171,9 +168,6 @@ pcmcia_card_attach(dev)
 
 	for (pf = sc->card.pf_head.sqh_first; pf != NULL;
 	    pf = pf->pf_list.sqe_next) {
-		if (pf->cfe_head.sqh_first == NULL)
-			continue;
-
 		paa.manufacturer = sc->card.manufacturer;
 		paa.product = sc->card.product;
 		paa.card = &sc->card;
@@ -183,18 +177,23 @@ pcmcia_card_attach(dev)
 		    pcmcia_submatch)) {
 			attached++;
 
-			DPRINTF(("%s: function %d CCR at %d "
-			     "offset %lx: %x %x %x %x, %x %x %x %x, %x\n",
-			     sc->dev.dv_xname, pf->number,
-			     pf->pf_ccr_window, pf->pf_ccr_offset,
-			     pcmcia_ccr_read(pf, 0x00),
-			pcmcia_ccr_read(pf, 0x02), pcmcia_ccr_read(pf, 0x04),
-			pcmcia_ccr_read(pf, 0x06), pcmcia_ccr_read(pf, 0x0A),
-			pcmcia_ccr_read(pf, 0x0C), pcmcia_ccr_read(pf, 0x0E),
-			pcmcia_ccr_read(pf, 0x10), pcmcia_ccr_read(pf, 0x12)));
+			if (SIMPLEQ_FIRST(&pf->cfe_head)) {
+				DPRINTF(("%s: function %d CCR at %d offset %lx"
+					": %x %x %x %x, %x %x %x %x, %x\n",
+					sc->dev.dv_xname, pf->number,
+					pf->pf_ccr_window, pf->pf_ccr_offset,
+					pcmcia_ccr_read(pf, 0x00),
+					pcmcia_ccr_read(pf, 0x02),
+					pcmcia_ccr_read(pf, 0x04),
+					pcmcia_ccr_read(pf, 0x06),
+					pcmcia_ccr_read(pf, 0x0A),
+					pcmcia_ccr_read(pf, 0x0C),
+					pcmcia_ccr_read(pf, 0x0E),
+					pcmcia_ccr_read(pf, 0x10),
+					pcmcia_ccr_read(pf, 0x12)));
+			}
 		}
 	}
-
 	return (attached ? 0 : 1);
 }
 
@@ -332,6 +331,7 @@ pcmcia_function_enable(pf)
 		/*
 		 * Don't do anything if we're already enabled.
 		 */
+		DPRINTF(("%s: pcmcia_function_enable on enabled func\n"));
 		return (0);
 	}
 
@@ -339,7 +339,6 @@ pcmcia_function_enable(pf)
 	 * it's possible for different functions' CCRs to be in the same
 	 * underlying page.  Check for that.
 	 */
-
 	for (tmp = pf->sc->card.pf_head.sqh_first; tmp != NULL;
 	    tmp = tmp->pf_list.sqe_next) {
 		if ((tmp->pf_flags & PFF_ENABLED) &&
@@ -384,6 +383,7 @@ pcmcia_function_enable(pf)
 			reg |= PCMCIA_CCR_OPTION_IREQ_ENABLE;
 
 	}
+	
 	pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 
 	reg = 0;
@@ -395,7 +395,7 @@ pcmcia_function_enable(pf)
 	pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, reg);
 
 	pcmcia_ccr_write(pf, PCMCIA_CCR_SOCKETCOPY, 0);
-
+	
 	if (pcmcia_mfc(pf->sc)) {
 		long tmp, iosize;
 
@@ -612,7 +612,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			if (pf->sc->ih != NULL)
 				panic("card has intr handler, but no function does");
 #endif
-			s = splhigh();
+			s = spltty();
 
 			/* set up the handler for the new function */
 
@@ -629,8 +629,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 				panic("functions have ih, but the card does not");
 #endif
 
-			/* XXX need #ifdef for splserial on x86 */
-			s = splhigh();
+			s = spltty();
 
 			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 						      pf->sc->ih);
@@ -645,7 +644,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 
 			splx(s);
 		} else {
-			s = splhigh();
+			s = spltty();
 
 			/* set up the handler for the new function */
 
@@ -745,8 +744,7 @@ pcmcia_intr_disestablish(pf, ih)
 			if (pf->sc->ih == NULL)
 				panic("changing ih ipl, but card has no ih");
 #endif
-			/* XXX need #ifdef for splserial on x86 */
-			s = splhigh();
+			s = spltty();
 
 			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 			    pf->sc->ih);
@@ -760,7 +758,7 @@ pcmcia_intr_disestablish(pf, ih)
 
 			splx(s);
 		} else {
-			s = splhigh();
+			s = spltty();
 
 			pf->ih_fct = NULL;
 			pf->ih_arg = NULL;
