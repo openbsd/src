@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.11 2000/12/07 22:36:45 mickey Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.12 2001/04/08 22:45:53 jakob Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.11 2000/12/07 22:36:45 mickey Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.12 2001/04/08 22:45:53 jakob Exp $";
 #endif
 
 #include <sys/param.h>
@@ -88,6 +88,15 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 	else if (p[0] == 0xf0 && p[1] == 0xf0)
 		netbios_print(p, length);
 #endif
+
+	/* Cisco Discovery Protocol  - SNAP & ether type 0x2000 */
+	if(llc.ssap == LLCSAP_SNAP && llc.dsap == LLCSAP_SNAP &&
+		llc.llcui == LLC_UI && 
+		llc.ethertype[0] == 0x20 && llc.ethertype[1] == 0x00 ) {
+		    cdp_print( p, length, caplen, esrc, edst);
+		    return (1);
+	}
+
 	if (llc.ssap == LLCSAP_ISONS && llc.dsap == LLCSAP_ISONS
 	    && llc.llcui == LLC_UI) {
 		isoclns_print(p + 3, length - 3, caplen - 3, esrc, edst);
