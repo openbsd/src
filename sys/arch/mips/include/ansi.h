@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.1 1998/01/28 11:14:35 pefo Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.2 1998/05/08 15:53:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -71,6 +71,7 @@
  * defined for ctype.h.
  */
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
+#define	_BSD_WINT_T_	int			/* wint_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
 
 #endif	/* _MIPS_ANSI_H_ */
