@@ -66,7 +66,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: set_perms.c,v 1.9 2002/01/13 18:28:09 millert Exp $";
+static const char rcsid[] = "$Sudo: set_perms.c,v 1.10 2002/01/15 22:47:29 millert Exp $";
 #endif /* lint */
 
 /*
@@ -75,7 +75,7 @@ static const char rcsid[] = "$Sudo: set_perms.c,v 1.9 2002/01/13 18:28:09 miller
 static void runas_setup		__P((void));
 static void fatal		__P((char *));
 
-#if defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
+#if !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
 /*
  * Set real and effective uids and gids based on perm.
  * Since we have POSIX saved IDs we can get away with just
@@ -140,7 +140,7 @@ set_perms_posix(perm, sudo_mode)
 			      	break;
     }
 }
-#endif /* _SC_SAVED_IDS && _SC_VERSION */
+#endif /* !NO_SAVED_IDS && _SC_SAVED_IDS && _SC_VERSION */
 
 #ifdef HAVE_SETREUID
 /*

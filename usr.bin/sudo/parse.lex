@@ -69,7 +69,7 @@
 #include <sudo.tab.h>
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.lex,v 1.117 2001/12/30 22:12:06 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.lex,v 1.118 2002/01/15 18:16:31 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */
@@ -157,7 +157,7 @@ DEFVAR			[a-z_]+
 }
 
 <GOTCMND>{
-    \\[:\,= \t#]	{
+    \\[:\\,= \t#]	{
 			    LEXTRACE("QUOTEDCHAR ");
 			    fill_args(yytext + 1, 1, sawspace);
 			    sawspace = FALSE;
@@ -169,7 +169,7 @@ DEFVAR			[a-z_]+
 			    return(COMMAND);
 			}			/* end of command line args */
 
-    [^:, \t\n]+ 	{
+    [^\\:, \t\n]+ 	{
 			    LEXTRACE("ARG ");
 			    fill_args(yytext, yyleng, sawspace);
 			    sawspace = FALSE;

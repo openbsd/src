@@ -84,7 +84,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: getspwuid.c,v 1.61 2001/12/14 19:52:47 millert Exp $";
+static const char rcsid[] = "$Sudo: getspwuid.c,v 1.62 2002/01/15 23:43:59 millert Exp $";
 #endif /* lint */
 
 /*
@@ -98,29 +98,8 @@ int crypt_type = INT_MAX;
 /*
  * Local functions not visible outside getspwuid.c
  */
-static char *sudo_getshell		__P((struct passwd *));
 static struct passwd *sudo_pwdup	__P((struct passwd *));
 
-
-/*
- * Return the user's shell based on either the SHELL environment variable
- * (already assigned to user_shell) or, failing that, the passwd(5) entry.
- */
-static char *
-sudo_getshell(pw)
-    struct passwd *pw;
-{
-    char *pw_shell;
-
-    if ((pw_shell = user_shell) == NULL)
-	pw_shell = pw->pw_shell;
-
-    /* empty string "" means bourne shell */
-    if (*pw_shell == '\0')
-	pw_shell = _PATH_BSHELL;
-
-    return(pw_shell);
-}
 
 /*
  * Return a copy of the encrypted password for the user described by pw.
@@ -236,8 +215,11 @@ sudo_pwdup(pw)
     local_pw->pw_class = estrdup(pw->pw_class);
 #endif
 
-    /* pw_shell is a special case since we overide with $SHELL */
-    local_pw->pw_shell = estrdup(sudo_getshell(pw));
+    /* If shell field is empty, expand to _PATH_BSHELL. */
+    if (local_pw->pw_shell[0] == '\0')
+	local_pw->pw_shell = _PATH_BSHELL;
+    else
+	local_pw->pw_shell = estrdup(pw->pw_shell);
 
     /* pw_passwd gets a shadow password if applicable */
     local_pw->pw_passwd = sudo_getepw(pw);

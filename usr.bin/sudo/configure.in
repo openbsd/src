@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.342 2002/01/07 18:59:47 millert Exp $
+dnl $Sudo: configure.in,v 1.344 2002/01/15 22:47:29 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -200,6 +200,19 @@ AC_ARG_WITH(devel, [  --with-devel            add developement options],
 		;;
     no)		;;
     *)		echo "Ignoring unknown argument to --with-devel: $with_devel"
+		;;
+esac])
+
+AC_ARG_WITH(efence, [  --with-efence           link with -lefence for malloc() debugging],
+[case $with_efence in  
+    yes)	echo 'Sudo will link with -lefence (Electric Fence)'
+		LIBS="${LIBS} -lefence"
+		if test -f /usr/local/lib/libefence.a; then
+		    LDFLAGS="${LDFLAGS} -L/usr/local/lib"
+		fi
+		;;
+    no)		;;
+    *)		echo "Ignoring unknown argument to --with-efence: $with_efence"
 		;;
 esac])
 
@@ -950,6 +963,21 @@ AC_ARG_ENABLE(authentication,
 		;;
   esac
 ], AC_MSG_RESULT(yes))
+
+AC_MSG_CHECKING(whether to disable use of POSIX saved ids)
+AC_ARG_ENABLE(saved-ids,
+[  --saved-ids             Don't try to use POSIX saved ids],
+[ case "$enableval" in
+    yes)	AC_MSG_RESULT(no)
+		;;
+    no)		AC_MSG_RESULT(yes)
+		AC_DEFINE(NO_SAVED_IDS, 1, [Define to avoid using POSIX saved ids.])
+		;;
+    *)		AC_MSG_RESULT(no)
+    		echo "Ignoring unknown argument to --enable-saved-ids: $enableval"
+		;;
+  esac
+], AC_MSG_RESULT(no))
 
 AC_MSG_CHECKING(whether to disable shadow password support)
 AC_ARG_ENABLE(shadow,

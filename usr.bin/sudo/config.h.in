@@ -358,6 +358,9 @@
 /* Define if root should not be allowed to use sudo. */
 #undef NO_ROOT_SUDO
 
+/* Define to avoid using POSIX saved ids. */
+#undef NO_SAVED_IDS
+
 /* The default password prompt. */
 #undef PASSPROMPT
 

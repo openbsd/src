@@ -98,7 +98,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.314 2002/01/13 18:29:23 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.318 2002/01/15 23:43:59 millert Exp $";
 #endif /* lint */
 
 /*
@@ -260,7 +260,7 @@ main(argc, argv, envp)
      * set the real, effective and saved uids to 0 and use set_perms_fallback()
      * instead of set_perms_posix().
      */
-#if defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
+#if !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
     if (!def_flag(I_STAY_SETUID) && set_perms == set_perms_posix) {
 	if (setuid(0)) {
 	    perror("setuid(0)");
@@ -312,9 +312,9 @@ main(argc, argv, envp)
     if ((sudo_mode & MODE_IMPLIED_SHELL) && !def_flag(I_SHELL_NOARGS))
 	usage(1);
 
-    /* May need to set $HOME to target user. */
-    if (def_flag(I_ALWAYS_SET_HOME) ||
-	((sudo_mode & MODE_SHELL) && def_flag(I_SET_HOME)))
+    /* May need to set $HOME to target user if we are running a command. */
+    if ((sudo_mode & MODE_RUN) && (def_flag(I_ALWAYS_SET_HOME) ||
+	((sudo_mode & MODE_SHELL) && def_flag(I_SET_HOME))))
 	sudo_mode |= MODE_RESET_HOME;
 
     /* Bail if a tty is required and we don't have one.  */
@@ -511,7 +511,8 @@ init_vars(sudo_mode)
 	log_error(0, "uid %ld does not exist in the passwd file!",
 	    (long) pw.pw_uid);
     }
-    user_shell = sudo_user.pw->pw_shell;
+    if (user_shell == NULL || *user_shell == '\0')
+	user_shell = sudo_user.pw->pw_shell;
 
     /* It is now safe to use log_error() and set_perms() */
 
@@ -888,7 +889,7 @@ initial_setup()
     (void) sigaction(SIGCHLD, &sa, NULL);
 
     /* Set set_perms pointer to the correct function */
-#if defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
+#if !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
     if (sysconf(_SC_SAVED_IDS) == 1 && sysconf(_SC_VERSION) >= 199009)
 	set_perms = set_perms_posix;
     else

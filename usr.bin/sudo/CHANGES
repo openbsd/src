@@ -1466,6 +1466,20 @@ Sudo 1.6.4 released.
      introduced by the fix for the "segv when gethostbynam() fails" bug.
 
 459) Add 'continue' statements to optimize the switch statement.
-     From Solar.
+     From Solar Designer.
 
 Sudo 1.6.4p1 released.
+
+460) Some special characters were not being escaped properly (e..g '\,')
+     in command line arguments and would cause a syntax error instead.
+
+461) "sudo -l" would not work if the always_set_home option was set.
+
+462) Added a configure option to disable use of POSIX saved IDs for
+     operating systems where these are broken.
+
+463) The SHELL environment variable was preserved from the user's environment
+     instead of being reset based on the passwd database even when the
+     "env_reset" option was set.
+
+Sudo 1.6.4p2 released.
