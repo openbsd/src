@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.14 1998/05/18 21:10:40 provos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.15 1998/05/24 22:40:12 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -210,30 +210,52 @@ esp_input(register struct mbuf *m, int iphlen)
     ipo = mtod(m, struct ip *);
     if (ipo->ip_p == IPPROTO_IPIP)	/* IP-in-IP encapsulation */
     {
+	/* ipn will now contain the inner IP header */
+	m_copydata(m, ipo->ip_hl << 2, sizeof(struct ip), (caddr_t) &ipn);
+	
 	/* Encapsulating SPI */
 	if (tdbp->tdb_osrc.s_addr && tdbp->tdb_odst.s_addr)
 	{
 	    if (tdbp->tdb_flags & TDBF_UNIQUE)
-	      if ((ipn.ip_src.s_addr != ipo->ip_src.s_addr) ||
-		  (ipn.ip_dst.s_addr != ipo->ip_dst.s_addr))
-	      {
-		  if (encdebug)
-		    log(LOG_ALERT, "esp_input(): ESP-tunnel with different internal addresses %x/%x, SA %08x/%x\n", ipo->ip_src, ipo->ip_dst, tdbp->tdb_spi, tdbp->tdb_dst);
-		  m_freem(m);
-		  espstat.esps_hdrops++;
-		  return;
-	      }
+		if ((ipn.ip_src.s_addr != ipo->ip_src.s_addr) ||
+		    (ipn.ip_dst.s_addr != ipo->ip_dst.s_addr))
+		{
+		    if (encdebug)
+			log(LOG_ALERT, "esp_input(): ESP-tunnel with different internal addresses %x/%x, SA %08x/%x\n", ipo->ip_src, ipo->ip_dst, tdbp->tdb_spi, tdbp->tdb_dst);
+		    m_freem(m);
+		    espstat.esps_hdrops++;
+		    return;
+		}
+
+	    /* 
+	     * XXX Here we should be checking that the inner IP addresses
+	     * XXX are acceptable/authorized.
+	     */
 	}
 	else				/* So we're paranoid */
 	{
 	    if (encdebug)
-	      log(LOG_ALERT, "esp_input(): ESP-tunnel used when expecting ESP-transport, SA %08x/%x\n", tdbp->tdb_spi, tdbp->tdb_dst);
+		log(LOG_ALERT, "esp_input(): ESP-tunnel used when expecting ESP-transport, SA %08x/%x\n", tdbp->tdb_spi, tdbp->tdb_dst);
 	    m_freem(m);
 	    espstat.esps_hdrops++;
 	    return;
 	}
     }
-    
+
+    /* 
+     * Check that the source address is an expected one, if we know what
+     * it's supposed to be. This avoids source address spoofing.
+     */
+    if (tdbp->tdb_src.s_addr != INADDR_ANY)
+	if (ipo->ip_src.s_addr != tdbp->tdb_src.s_addr)
+	{
+	    if (encdebug)
+		log(LOG_ALERT, "esp_input(): source address %x doesn't correspond to expected source %x, SA %08x/%x\n", ipo->ip_src, tdbp->tdb_src, tdbp->tdb_dst, tdbp->tdb_spi);
+	    m_free(m);
+	    espstat.esps_hdrops++;
+	    return;
+	}
+
     /*
      * Interface pointer is already in first mbuf; chop off the 
      * `outer' header and reschedule.
