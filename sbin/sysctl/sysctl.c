@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.43 1999/12/10 10:12:56 itojun Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.44 1999/12/30 19:06:06 provos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.43 1999/12/10 10:12:56 itojun Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.44 1999/12/30 19:06:06 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -377,10 +377,17 @@ parse(string, flags)
 			(void)printf("%p\n", _ps.val);
 			return;
 		}
+#ifdef UVM
+		if (mib[1] != VM_SWAPENCRYPT) {
+#endif
 		if (flags == 0)
 			return;
 		warnx("use vmstat or systat to view %s information", string);
 		return;
+#ifdef UVM
+		}
+#endif
+		break;
 
 	case CTL_NET:
 		if (mib[1] == PF_INET) {
