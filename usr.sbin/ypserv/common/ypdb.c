@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypdb.c,v 1.4 1996/06/26 21:26:33 maja Exp $ */
+/*	$OpenBSD: ypdb.c,v 1.5 1997/02/09 09:49:36 maja Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -91,6 +91,44 @@ ypdb_open(file, flags, mode)
 	info.lorder = 0;
 	snprintf(path, sizeof(path), "%s%s", file, YPDB_SUFFIX);
 	db = (DBM *)__bt_open(path, flags, mode, &info, 0);
+	return (db);
+#endif
+}
+
+/*
+ * Returns:
+ * 	*DBM on success
+ *	 NULL on failure
+ */
+
+extern DBM *
+ypdb_open_suf(file, flags, mode)
+	const char *file;
+	int flags, mode;
+{
+#ifdef YPDB_PATCH
+	HASHINFO info;
+
+	info.bsize = 4096;
+	info.ffactor = 40;
+	info.nelem = 1;
+	info.cachesize = NULL;
+	info.hash = NULL;
+	info.lorder = 0;
+	return ((DBM *)__hash_open(file, flags, mode, &info, 0));
+#else
+	BTREEINFO info;
+	DBM *db;
+
+	info.flags = 0;
+	info.cachesize = 0;
+	info.maxkeypage = 0;
+	info.minkeypage = 0;
+	info.psize = 0;
+	info.compare = NULL;
+	info.prefix = NULL;
+	info.lorder = 0;
+	db = (DBM *)__bt_open(file, flags, mode, &info, 0);
 	return (db);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.14 1997/02/08 19:58:51 maja Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.15 1997/02/09 09:49:37 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.14 1997/02/08 19:58:51 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.15 1997/02/09 09:49:37 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -113,7 +113,7 @@ u_long *lordernum;
 	if (!((stat(map_path, &finfo) == 0) &&
 	      ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
 		fprintf(stderr, "%s: domain %s not found locally\n",
-			__progname, domain);
+		    __progname, domain);
 		status = YPPUSH_NODOM;
 	}
 
@@ -203,17 +203,7 @@ char *domain;
 char *map;
 char *temp_map;
 {
-	DBM	*db;
-	char	db_temp[255];
-
-	snprintf(db_temp,sizeof db_temp, "%s/%s/%s",
-	    YP_DB_PATH,domain,temp_map);
-
-	db = ypdb_open(db_temp, O_RDWR|O_CREAT, 0444);
-
-	return db;
-
-	yplog("Open DB %s", db_temp);
+	return ypdb_open_suf(temp_map, O_RDWR, 0444);
 }
 
 int
@@ -222,26 +212,11 @@ char *domain;
 char *map;
 char *temp_map;
 {
-	char	db_name[MAXPATHLEN],db_temp[MAXPATHLEN];
+	char	db_name[MAXPATHLEN];
 
 	snprintf(db_name, sizeof db_name, "%s/%s/%s%s",
 	    YP_DB_PATH,domain,map,YPDB_SUFFIX);
-	snprintf(db_temp, sizeof db_temp, "%s/%s/%s%s",
-	    YP_DB_PATH,domain,temp_map,YPDB_SUFFIX);
-	rename(db_temp,db_name);
-
-	return YPPUSH_SUCC;
-}
-
-int
-unlink_db(domain,map,temp_map)
-char *temp_map;
-{
-	char	db_temp[MAXPATHLEN];
-
-	snprintf(db_temp, sizeof db_temp, "%s/%s/%s%s",
-	    YP_DB_PATH,domain,temp_map,YPDB_SUFFIX);
-	unlink(db_temp);
+	rename(temp_map,db_name);
 
 	return YPPUSH_SUCC;
 }
@@ -461,7 +436,6 @@ char *argv[];
 	u_long	 ordernum,new_ordernum;
 	struct	 ypall_callback callback;
 	CLIENT   *client;
-	char	 mapname[] = "ypdbXXXXXX";
 	int	 status,xfr_status;
 	int	 srvport;
 	
@@ -511,8 +485,11 @@ char *argv[];
 	}
 
 	if (usage) {
-	  status = YPPUSH_BADARGS;
-	  (void)fprintf(stderr,"usage: %s [-cf] [-d domain] [-h host] [-s domain] [-C tid prog ipadd port] mapname\n",__progname);
+		status = YPPUSH_BADARGS;
+		fprintf(stderr, "usage: %s %s %s\n",
+		    "[-cf] [-d domain] [-h host] [-s domain]",
+		    "[-C tid prog ipadd port] mapname\n",
+		    __progname);
 	}
 
 	if (status > 0) {
@@ -577,12 +554,21 @@ char *argv[];
 	}
 
 	if (status == YPPUSH_SUCC) {
+		char	tmpmapname[MAXPATHLEN];
+		int	fd;
 
 		/* Create temporary db */
-		mktemp(mapname);
+		snprintf(tmpmapname, sizeof tmpmapname,
+		    "%s/%s/ypdbXXXXXXXXXX%s",
+		    YP_DB_PATH, domain, YPDB_SUFFIX);
+		fd = mkstemp(tmpmapname);
+		if (fd == -1)
+			status = YPPUSH_DBM;
+		else
+			close(fd);
 
 		if (status > 0) {
-			db = create_db(domain,map,mapname);
+			db = create_db(domain,map,tmpmapname);
 			if(db == NULL)
 				status = YPPUSH_DBM;
 		}
@@ -619,9 +605,10 @@ char *argv[];
 
 		/* Rename db */
 		if(status > 0) {
-			status = install_db(domain,map,mapname);
+			status = install_db(domain,map,tmpmapname);
 		} else {
-			status = unlink_db(domain,map,mapname);
+			unlink(tmpmapname);
+			status = YPPUSH_SUCC;
 		}
 		
 	}
