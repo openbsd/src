@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.1 2000/09/25 01:16:40 d Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.2 2000/10/03 02:57:17 d Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain */
 
 #include <pthread.h>
@@ -7,7 +7,7 @@
 #define ALIGNBYTES	0xf
 
 /* Register save frame as it appears on the stack */
-struct _machdep_frame {
+struct frame {
 	int     r1;
 	int     reserved;
 	int     gp[32-14];
@@ -30,10 +30,10 @@ _thread_machdep_init(statep, base, len, entry)
 	int len;
 	void (*entry)(void);
 {
-	struct _machdep_frame *f;
+	struct frame *f;
 
 	/* Locate the initial frame, aligned at the top of the stack */
-	f = (struct _machdep_frame *)(((int)base + len - sizeof *f) & ~ALIGNBYTES);
+	f = (struct frame *)(((int)base + len - sizeof *f) & ~ALIGNBYTES);
 	
 	f->r1 = (int)&f->next_r1;
 	f->reserved = 0;
