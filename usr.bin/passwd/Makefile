@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.17 1998/01/23 02:38:46 millert Exp $
+#	$OpenBSD: Makefile,v 1.18 1998/03/09 09:00:42 deraadt Exp $
 
 .include <bsd.own.mk>
 
 PROG=	passwd
-SRCS=	local_passwd.c yp_passwd.c passwd.c pwd_gensalt.c
+SRCS=	local_passwd.c yp_passwd.c passwd.c pwd_gensalt.c getpwent.c
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 DPADD+= ${LIBRPCSVC} ${LIBUTIL}
 LDADD+= -lrpcsvc -lutil
@@ -31,5 +31,7 @@ LDADD+=	-lkadm -lkrb -ldes -lcom_err
 BINMODE=4555
 BINOWN=root
 
-.include <bsd.prog.mk>
+getpwent.o: getpwent.c
+	${COMPILE.c} -UYP ${.IMPSRC}
 
+.include <bsd.prog.mk>
