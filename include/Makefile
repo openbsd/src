@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.100 2001/12/30 07:06:53 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.101 2002/02/18 22:16:37 mickey Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -132,9 +132,8 @@ copies:
 	done
 	cd ../sys; \
 	pax -rw -pa -L \
-	    `find ${LDIRS} -follow -type f -name '*.h' '!' -path \
-	    'netiso/xebec/*' '!' -path 'dev/microcode/*' \
-	    -print` ${DESTDIR}/usr/include
+	    `find ${LDIRS} -follow -type f -name '*.h' \
+	    '!' -path 'dev/microcode/*' -print` ${DESTDIR}/usr/include
 	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_ARCH} machine
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/${MACHINE}
