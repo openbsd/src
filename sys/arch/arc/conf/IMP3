@@ -1,4 +1,4 @@
-#	$OpenBSD: IMP3,v 1.1 1998/05/05 05:44:09 imp Exp $
+#	$OpenBSD: IMP3,v 1.2 1999/08/29 12:14:03 niklas Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -57,15 +57,21 @@ ast0		at isa? port 0x1a0 irq 3	# AST 4-port serial cards
 com*		at ast? slave ?
 lpt0		at isa? port 0x378 irq 7
 
-wdc0		at isa? port 0x1f0 irq 14	# ST506, ESDI, IDE controllers
-wdc1		at isa? port 0x170 irq 15
-wd*		at wdc? drive ?
+# IDE controllers
+wdc0		at isa? port 0x1f0 irq 14 flags 0x00
+wdc1		at isa? port 0x170 irq 15 flags 0x00
+#wdc*		at isapnp?
 
-atapibus*	at wdc?
-acd*		at atapibus? drive?
+# IDE hard drives
+wd*		at wdc? channel ? drive ? flags 0x0000
 
-ep0		at isa? port ? irq ?           # 3C509 ethernet cards
-ed0    		at isa? port 0x300 iomem 0xd0000 irq 5  # WD/SMC, 3C503,
+# ATAPI<->SCSI
+atapiscsi*	at wdc? channel ?
+scsibus*	at atapiscsi?
+
+ep0		at isa? port ? irq ?		# 3C509 ethernet cards
+we0		at isa? port 0x300 iomem 0xd0000 irq 5	# WD/SMC 80x3 ethernet
+ne0		at isa? port 0x300 irq 5	# NE[12]000 ethernet
 # iy0		at isa? port 0x300 irq 11	# Intel etherexpress pro/10+
 joy0		at isa? port 0x201
 

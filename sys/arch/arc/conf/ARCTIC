@@ -1,4 +1,4 @@
-#	$OpenBSD: ARCTIC,v 1.11 1997/11/11 20:15:53 niklas Exp $
+#	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -86,22 +86,28 @@ com3	at isa? port 0x2e8 irq 3
 ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
 com*	at ast? slave ?
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
-wd*	at wdc? drive ?
+# IDE controllers
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
+#wdc*	at isapnp?
 
-atapibus* at wdc?
-acd*	at atapibus? drive?
+# IDE hard drives
+wd*	at wdc? channel ? drive ? flags 0x0000
+
+# ATAPI<->SCSI
+atapiscsi* at wdc? channel ?
+scsibus* at atapiscsi?
 
 lpt0	at isa? port 0x378 irq 7
-ep0	at isa? port ? irq ?           # 3C509 ethernet cards
-ed0     at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503, and NE[12]000
-ed1     at isa? port 0x250 iomem 0xd8000 irq 9  #   ethernet cards
-ed2     at isa? port 0x300 iomem 0xcc000 irq 10 #
-
-#tel0    at isa? iomem 0xe0000 irq 9	# Teles S0, NICCY 1000, Creatix 8bit
-#tel1    at isa? port 0xe80 iomem 0xde000 irq 11	# Teles S0/16, NICCY 1016,
-#tel2    at isa? port 0x180 irq 5	# Teles S0/16.3 card (no shared memory)
+ep0	at isa? port ? irq ?	           # 3C509 ethernet cards
+we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet
+we1	at isa? port 0x300 iomem 0xcc000 irq 10
+#we*	at isapnp?
+ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet
+ne0	at isa? port 0x240 irq 9		# NE[12]000 ethernet
+ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet
+ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
+#ne*	at isapnp?				# NE[12]000 PnP ethernet
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
