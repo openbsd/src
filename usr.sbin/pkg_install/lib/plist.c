@@ -1,6 +1,6 @@
-/*	$OpenBSD: plist.c,v 1.6 2000/03/24 00:20:04 espie Exp $	*/
+/*	$OpenBSD: plist.c,v 1.7 2000/04/05 17:26:47 espie Exp $	*/
 #ifndef lint
-static const char *rcsid = "$OpenBSD: plist.c,v 1.6 2000/03/24 00:20:04 espie Exp $";
+static const char *rcsid = "$OpenBSD: plist.c,v 1.7 2000/04/05 17:26:47 espie Exp $";
 #endif
 
 /*
@@ -375,8 +375,13 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 	case PLIST_DIR_RM:
 	    (void) snprintf(tmp, sizeof(tmp), "%s/%s", Where, p->name);
 	    if (!isdir(tmp)) {
-		warnx("attempting to delete file `%s' as a directory\n"
-	"this packing list is incorrect - ignoring delete request", tmp);
+	    	if (fexists(tmp)) {
+			warnx("attempting to delete file `%s' as a directory\n"
+		"this packing list is incorrect - ignoring delete request", tmp);
+		} else {
+			warnx("attempting to delete non-existent directory `%s'\n"
+		"this packing list is incorrect - ignoring delete request", tmp);
+		}
 	    }
 	    else {
 		if (Verbose)
