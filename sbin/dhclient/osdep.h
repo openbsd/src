@@ -72,9 +72,6 @@ extern int h_errno;
 
 /* Varargs stuff... */
 #include <stdarg.h>
-#define VA_DOTDOTDOT ...
-#define va_dcl
-#define VA_start(list, last) va_start (list, last)
 
 #define EOL	'\n'
 #define VOIDPTR void *

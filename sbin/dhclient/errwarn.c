@@ -200,8 +200,7 @@ parse_warn(char * fmt, ...)
 	
 	do_percentm(mbuf, sizeof(mbuf), fmt);
 	snprintf(fbuf, sizeof fbuf, "%s line %d: %s", tlname, lexline, mbuf);
-/* XXXFIX */
-	VA_start(list, fmt);
+	va_start(list, fmt);
 	vsnprintf(mbuf, sizeof mbuf, fbuf, list);
 	va_end(list);
 
