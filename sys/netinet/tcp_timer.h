@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.5 2002/01/14 03:11:55 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.6 2002/01/14 19:26:10 provos Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ char *tcptimers[] =
 	(tp)->t_timer[(timer)] = 0
 
 #define	TCP_TIMER_ISARMED(tp, timer)					\
-	&(tp)->t_timer[(timer)]
+	(tp)->t_timer[(timer)]
 
 /*
  * Force a time value to be in a certain range.
