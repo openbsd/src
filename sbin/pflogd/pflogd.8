@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.7 2001/10/02 16:02:09 dhartmei Exp $
+.\"	$OpenBSD: pflogd.8,v 1.8 2001/12/02 00:14:26 frantzen Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -110,6 +110,12 @@ pflogd -s 1600 -f suspicious.log port 80 and host evilhost
 Display binary logs:
 .Bd -literal -offset indent
 tcpdump -n -e -ttt -r /var/log/pflog
+.Ed
+.Pp
+Display the logs in real time (this does not interfere with the
+operation of pflogd):
+.Bd -literal -offset indent
+tcpdump -n -e -ttt -i pflog0
 .Ed
 .Sh FILES
 .Bl -tag -width /var/run/pflogd.pid -compact
