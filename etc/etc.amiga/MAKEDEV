@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.15 1996/10/12 21:09:04 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.16 1996/10/17 18:55:26 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -98,23 +98,24 @@ for i
 do
 case $i in
 all)
-	sh MAKEDEV std fd st0 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 mouse0
+	sh MAKEDEV std fd st0 st1 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 mouse0
 	sh MAKEDEV mouse1 tty00 ttyA0 ttyA1 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4
 	sh MAKEDEV ttyB5 ttyB6 ttyB7 ttyB8 ttyB9 grf0 grf1 grf2 grf3 grf4 grf5
-	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
-	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
-	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
+	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6 cd0 cd1 fd0 fd1 fd2 fd3
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3
+	sh MAKEDEV view00 view01 view02 view03 view04 view05 pty0 pty1
 	sh MAKEDEV lpa0 lpa1 lpt0 lpt1 lpt2 ipl
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
+	sh MAKEDEV ccd0 ccd1 ccd2 ccd3 wd0 wd1 acd0 ch0 uk0 uk1
 	sh MAKEDEV tun0 tun1 par0 lkm ss0 random local
 	;;
 
 floppy)
-	sh MAKEDEV std kbd pty0 tty00 ttyA0 ttyA1 tun0 tun1
+	sh MAKEDEV std kbd pty0 tty00 ttyA0 ttyA1 ttyB0 ttyB1 tun0 tun1
 	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 grf5 grf6
 	sh MAKEDEV ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
-	sh MAKEDEV cd0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 st0
-	sh MAKEDEV fd0 fd1 fd2 fd3 
+	sh MAKEDEV cd0 cd1 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 st0 st1
+	sh MAKEDEV fd0 fd1 fd2 fd3 wd0 wd1 acd0
 	;;
 
 std)
@@ -256,7 +257,7 @@ sd*|vnd*|ccd*|wd*)
 	;;
 
 cd*|acd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
 	case $i in
 	cd*) name=cd; blk=7; chr=9;;
 	acd*) name=acd; blk=15; chr=38;;
