@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.10 2001/05/28 21:38:14 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.11 2001/05/31 13:53:56 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -346,9 +346,10 @@ _dl_printf("%p %p 0x%lx %p %p\n", argv, envp, loff, dynp, dl_data);
 	if (_dl_traceld) {
 		_dl_exit(0);
 	}
-#if 0
-_dl_printf("0x%lx\n", dl_data[AUX_entry]);
+#ifdef DL_PRINTF_DEBUG
+_dl_printf("Entry point: 0x%lx\n", dl_data[AUX_entry]);
 #endif
+
 	return(dl_data[AUX_entry]);
 }
 
@@ -546,7 +547,7 @@ _dl_printf("---\n");
 	}
 	for(n = 0; n < 2; n++) {
 		int	  i;
-		u_int32_t rs;
+		unsigned long rs;
 		Elf_RelA  *rp;
 
 		switch (n) {
@@ -590,7 +591,6 @@ _dl_printf("---\n");
 			*/
 			rp++;
 		}
-
 	}
 	/* we have been fully relocated here, so most things no longer
 	 * need the loff adjustment
@@ -611,15 +611,15 @@ _dl_rtld(elf_object_t *object)
 	 */
 	_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	_dl_md_reloc(object, DT_RELA, DT_RELASZ);
-	/*
+#if defined(__alpha__)
 	_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-	*/
+#endif
 	if(_dl_bindnow) {	/* XXX Perhaps more checking ? */
 		_dl_md_reloc_got(object, 1);
-	}
-	else {
+	} else {
 		_dl_md_reloc_got(object, 0);
 	}
+	object->status |= STAT_RELOC_DONE;
 }
 
 void
