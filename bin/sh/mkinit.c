@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkinit.c,v 1.4 1996/09/15 22:58:09 millert Exp $	*/
+/*	$OpenBSD: mkinit.c,v 1.5 1996/10/20 00:54:53 millert Exp $	*/
 /*	$NetBSD: mkinit.c,v 1.14 1996/02/18 12:29:21 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: mkinit.c,v 1.4 1996/09/15 22:58:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkinit.c,v 1.5 1996/10/20 00:54:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,6 +218,22 @@ readfile(fname)
 			dodecl(line, fp);
 		if (line[0] == '#' && gooddefine(line))
 			addstr(line, &defines);
+		if (line[0] == '#' && gooddefine(line)) {
+			char *cp;
+			char line2[1024];
+			static const char undef[] = "#undef ";
+
+			strcpy(line2, line);
+			memcpy(line2, undef, sizeof(undef) - 1);
+			cp = line2 + sizeof(undef) - 1;
+			while(*cp && (*cp == ' ' || *cp == '\t'))
+				cp++;
+			while(*cp && *cp != ' ' && *cp != '\t' && *cp != '\n')
+				cp++;
+			*cp++ = '\n'; *cp = '\0';
+			addstr(line2, &defines);
+			addstr(line, &defines);
+		}
 	}
 	fclose(fp);
 }
@@ -351,7 +367,7 @@ dodecl(line1, fp)
 		if (! amiddecls)
 			addchar('\n', &decls);
 		q = NULL;
-		for (p = line1 + 6 ; *p != '\0' && *p != '=' && *p != '/' ; p++);
+		for (p = line1 + 6 ; *p && strchr("=/\n", *p) == NULL; p++);
 		if (*p == '=') {		/* eliminate initialization */
 			for (q = p ; *q && *q != ';' ; q++);
 			if (*q == '\0')

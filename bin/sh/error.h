@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.h,v 1.2 1996/06/23 14:21:11 deraadt Exp $	*/
+/*	$OpenBSD: error.h,v 1.3 1996/10/20 00:54:46 millert Exp $	*/
 /*	$NetBSD: error.h,v 1.8 1995/05/11 21:28:53 christos Exp $	*/
 
 /*-
@@ -71,6 +71,7 @@ extern int exception;
 #define EXINT 0		/* SIGINT received */
 #define EXERROR 1	/* a generic error */
 #define EXSHELLPROC 2	/* execute a shell procedure */
+#define EXEXEC 3	/* command execution failed */
 
 
 /*
@@ -92,8 +93,8 @@ extern char *commandname;	/* name of command--printed on error */
 
 void exraise __P((int));
 void onint __P((void));
-void error2 __P((char *, char *));
 void error __P((char *, ...));
+void exerror __P((int, char *, ...));
 char *errmsg __P((int, int));
 
 

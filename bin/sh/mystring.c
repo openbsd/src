@@ -1,4 +1,4 @@
-/*	$OpenBSD: mystring.c,v 1.2 1996/06/23 14:21:26 deraadt Exp $	*/
+/*	$OpenBSD: mystring.c,v 1.3 1996/10/20 00:54:58 millert Exp $	*/
 /*	$NetBSD: mystring.c,v 1.10 1995/05/11 21:29:41 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mystring.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: mystring.c,v 1.2 1996/06/23 14:21:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mystring.c,v 1.3 1996/10/20 00:54:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ number(s)
 	{
 
 	if (! is_number(s))
-		error2("Illegal number", (char *)s);
+		error("Illegal number: %s", (char *)s);
 	return atoi(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.3 1996/06/18 10:10:06 deraadt Exp $	*/
+/*	$OpenBSD: eval.c,v 1.4 1996/10/20 00:54:47 millert Exp $	*/
 /*	$NetBSD: eval.c,v 1.29.4.1 1996/06/10 19:36:36 jtc Exp $	*/
 
 /*-
@@ -208,8 +208,11 @@ evaltree(n, flags)
 		break;
 	case NAND:
 		evaltree(n->nbinary.ch1, EV_TESTED);
-		if (evalskip || exitstatus != 0)
+		if (evalskip || exitstatus != 0) {
+			/* don't bomb out on "set -e; false && true" */
+			flags |= EV_TESTED;
 			goto out;
+		}
 		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NOR:
@@ -683,7 +686,7 @@ evalcommand(cmd, flags, backcmd)
 
 		find_command(argv[0], &cmdentry, 1, path);
 		if (cmdentry.cmdtype == CMDUNKNOWN) {	/* command not found */
-			exitstatus = 1;
+			exitstatus = 127;
 			flushout(&errout);
 			return;
 		}
@@ -695,7 +698,7 @@ evalcommand(cmd, flags, backcmd)
 					break;
 				if ((cmdentry.u.index = find_builtin(*argv)) < 0) {
 					outfmt(&errout, "%s: not found\n", *argv);
-					exitstatus = 1;
+					exitstatus = 127;
 					flushout(&errout);
 					return;
 				}
@@ -736,7 +739,9 @@ evalcommand(cmd, flags, backcmd)
 	/* This is the child process if a fork occurred. */
 	/* Execute the command. */
 	if (cmdentry.cmdtype == CMDFUNCTION) {
+#ifdef DEBUG
 		trputs("Shell function:  ");  trargs(argv);
+#endif
 		redirect(cmd->ncmd.redirect, REDIR_PUSH);
 		saveparam = shellparam;
 		shellparam.malloc = 0;
@@ -781,7 +786,9 @@ evalcommand(cmd, flags, backcmd)
 		if (flags & EV_EXIT)
 			exitshell(exitstatus);
 	} else if (cmdentry.cmdtype == CMDBUILTIN) {
+#ifdef DEBUG
 		trputs("builtin command:  ");  trargs(argv);
+#endif
 		mode = (cmdentry.u.index == EXECCMD)? 0 : REDIR_PUSH;
 		if (flags == EV_BACKCMD) {
 			memout.nleft = 0;
@@ -817,7 +824,9 @@ cmddone:
 		}
 		handler = savehandler;
 		if (e != -1) {
-			if (e != EXERROR || cmdentry.u.index == BLTINCMD
+			outfmt(out2, "exception %d\n", e);
+			if ((e != EXERROR && e != EXEXEC)
+					       || cmdentry.u.index == BLTINCMD
 					       || cmdentry.u.index == DOTCMD
 					       || cmdentry.u.index == EVALCMD
 #ifndef NO_HISTORY
@@ -835,7 +844,9 @@ cmddone:
 			memout.buf = NULL;
 		}
 	} else {
+#ifdef DEBUG
 		trputs("normal command:  ");  trargs(argv);
+#endif
 		clearredir();
 		redirect(cmd->ncmd.redirect, 0);
 		for (sp = varlist.list ; sp ; sp = sp->next)

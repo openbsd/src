@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.4 1996/05/21 21:13:04 deraadt Exp $	*/
+/*	$OpenBSD: parser.c,v 1.5 1996/10/20 00:55:02 millert Exp $	*/
 /*	$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ static char rcsid[] = "$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp
 #define EOFMARKLEN 79
 
 /* values returned by readtoken */
-#include "token.def"
+#include "token.h"
 
 
 
@@ -474,6 +474,8 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		 */
 		if (!redir)
 			synexpect(-1);
+	case TAND:
+	case TOR:
 	case TNL:
 	case TEOF:
 	case TWORD:
@@ -511,7 +513,7 @@ simplecmd(rpp, redir)
 	{
 	union node *args, **app;
 	union node **orig_rpp = rpp;
-	union node *n;
+	union node *n = NULL;
 
 	/* If we don't have any redirections already, then we must reset */
 	/* rpp to be the address of the local redir variable.  */
@@ -1297,6 +1299,11 @@ parsebackq: {
 			case '\n':
 				plinno++;
 				needprompt = doprompt;
+				break;
+
+			case PEOF:
+				startlinno = plinno;
+				synerror("EOF in backquote substitution");
 				break;
 
 			default:

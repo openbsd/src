@@ -1,4 +1,4 @@
-/*	$OpenBSD: myhistedit.h,v 1.2 1996/06/23 14:21:25 deraadt Exp $	*/
+/*	$OpenBSD: myhistedit.h,v 1.3 1996/10/20 00:54:57 millert Exp $	*/
 /*	$NetBSD: myhistedit.h,v 1.4 1995/05/11 21:29:40 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ extern EditLine *el;
 extern int displayhist;
 
 void histedit __P((void));
-void sethistsize __P((void));
+void sethistsize __P((const char *));
 int histcmd __P((int, char **));
 int not_fcnumber __P((char *));
 int str_to_event __P((char *, int));

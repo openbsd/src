@@ -1,4 +1,4 @@
-/*	$OpenBSD: shell.h,v 1.4 1996/06/23 14:21:33 deraadt Exp $	*/
+/*	$OpenBSD: shell.h,v 1.5 1996/10/20 00:55:05 millert Exp $	*/
 /*	$NetBSD: shell.h,v 1.9 1996/03/01 01:59:00 jtc Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@
 #ifndef BSD
 #define BSD 1
 #endif
-#define DEBUG 1
 
 #ifdef __STDC__
 typedef void *pointer;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknodes.c,v 1.3 1996/09/15 22:58:09 millert Exp $	*/
+/*	$OpenBSD: mknodes.c,v 1.4 1996/10/20 00:54:54 millert Exp $	*/
 /*	$NetBSD: mknodes.c,v 1.11 1995/05/11 21:29:36 christos Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: mknodes.c,v 1.3 1996/09/15 22:58:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: mknodes.c,v 1.4 1996/10/20 00:54:54 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(argc, argv)
 	char **argv;
 {
 	if (argc != 3)
-		error("usage: mknodes file\n");
+		error("usage: mknodes file");
 	if ((infp = fopen(argv[1], "r")) == NULL)
 		error("Can't open %s", argv[1]);
 	while (readline()) {
@@ -187,16 +187,16 @@ parsefield()
 	fp->name = savestr(name);
 	if (strcmp(type, "nodeptr") == 0) {
 		fp->type = T_NODE;
-		snprintf(decl, sizeof(decl), "union node *%s", name);
+		sprintf(decl, "union node *%s", name);
 	} else if (strcmp(type, "nodelist") == 0) {
 		fp->type = T_NODELIST;
-		snprintf(decl, sizeof(decl), "struct nodelist *%s", name);
+		sprintf(decl, "struct nodelist *%s", name);
 	} else if (strcmp(type, "string") == 0) {
 		fp->type = T_STRING;
-		snprintf(decl, sizeof(decl), "char *%s", name);
+		sprintf(decl, "char *%s", name);
 	} else if (strcmp(type, "int") == 0) {
 		fp->type = T_INT;
-		snprintf(decl, sizeof(decl), "int %s", name);
+		sprintf(decl, "int %s", name);
 	} else if (strcmp(type, "other") == 0) {
 		fp->type = T_OTHER;
 	} else if (strcmp(type, "temp") == 0) {

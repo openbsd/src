@@ -1,4 +1,4 @@
-/*	$OpenBSD: redir.c,v 1.2 1996/06/23 14:21:31 deraadt Exp $	*/
+/*	$OpenBSD: redir.c,v 1.3 1996/10/20 00:55:03 millert Exp $	*/
 /*	$NetBSD: redir.c,v 1.12 1995/05/11 21:30:10 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: redir.c,v 1.2 1996/06/23 14:21:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: redir.c,v 1.3 1996/10/20 00:55:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,9 @@ redirect(redir, flags)
 	}
 	for (n = redir ; n ; n = n->nfile.next) {
 		fd = n->nfile.fd;
+		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
+		    n->ndup.dupfd == fd)
+			continue; /* redirect from/to same file descriptor */
 		if ((flags & REDIR_PUSH) && sv->renamed[fd] == EMPTY) {
 			INTOFF;
 			if ((i = copyfd(fd, 10)) != EMPTY) {
@@ -344,7 +347,11 @@ copyfd(from, to)
 	int newfd;
 
 	newfd = fcntl(from, F_DUPFD, to);
-	if (newfd < 0 && errno == EMFILE)
-		return EMPTY;
+	if (newfd < 0) {
+		if (errno == EMFILE)
+			return EMPTY;
+		else
+			error("%d: %s", from, strerror(errno));
+	}
 	return newfd;
 }

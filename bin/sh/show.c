@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.2 1996/06/23 14:21:34 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.3 1996/10/20 00:55:06 millert Exp $	*/
 /*	$NetBSD: show.c,v 1.11 1995/05/11 21:30:24 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: show.c,v 1.2 1996/06/23 14:21:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: show.c,v 1.3 1996/10/20 00:55:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -292,18 +292,18 @@ int debug = 0;
 #endif
 
 
+#ifdef DEBUG
 void
 trputc(c) 
 	int c;
 {
-#ifdef DEBUG
 	if (tracefile == NULL)
 		return;
 	putc(c, tracefile);
 	if (c == '\n')
 		fflush(tracefile);
-#endif
 }
+#endif
 
 void
 #if __STDC__
@@ -332,17 +332,16 @@ trace(va_alist)
 }
 
 
+#ifdef DEBUG
 void
 trputs(s)
 	char *s;
 {
-#ifdef DEBUG
 	if (tracefile == NULL)
 		return;
 	fputs(s, tracefile);
 	if (strchr(s, '\n'))
 		fflush(tracefile);
-#endif
 }
 
 
@@ -353,7 +352,6 @@ trstring(s)
 	register char *p;
 	char c;
 
-#ifdef DEBUG
 	if (tracefile == NULL)
 		return;
 	putc('"', tracefile);
@@ -385,8 +383,8 @@ backslash:	  putc('\\', tracefile);
 		}
 	}
 	putc('"', tracefile);
-#endif
 }
+#endif
 
 
 void
@@ -408,6 +406,7 @@ trargs(ap)
 }
 
 
+#ifdef DEBUG
 void
 opentrace() {
 	char s[100];
@@ -416,7 +415,6 @@ opentrace() {
 	int flags;
 #endif
 
-#ifdef DEBUG
 	if (!debug)
 		return;
 #ifdef not_this_way
@@ -444,5 +442,5 @@ opentrace() {
 #endif
 	fputs("\nTracing started.\n", tracefile);
 	fflush(tracefile);
-#endif /* DEBUG */
 }
+#endif /* DEBUG */

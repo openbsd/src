@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.2 1996/06/23 14:21:12 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.3 1996/10/20 00:54:48 millert Exp $	*/
 /*	$NetBSD: exec.c,v 1.17 1995/06/09 01:53:50 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-static char rcsid[] = "$OpenBSD: exec.c,v 1.2 1996/06/23 14:21:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.3 1996/10/20 00:54:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ struct tblentry {
 
 STATIC struct tblentry *cmdtable[CMDTABLESIZE];
 STATIC int builtinloc = -1;		/* index in path of %builtin, or -1 */
+int exerrno = 0;			/* Last exec error */
 
 
 STATIC void tryexec __P((char *, char **, char **));
@@ -137,7 +138,20 @@ shellexec(argv, envp, path, index)
 			stunalloc(cmdname);
 		}
 	}
-	error2(argv[0], errmsg(e, E_EXEC));
+
+	/* Map to POSIX errors */
+	switch (e) {
+	case EACCES:
+		exerrno = 126;
+		break;
+	case ENOENT:
+		exerrno = 127;
+		break;
+	default:
+		exerrno = 2;
+		break;
+	}
+	exerror(EXEXEC, "%s: %s", argv[0], errmsg(e, E_EXEC));
 }
 
 
@@ -583,9 +597,9 @@ hashcd() {
 
 void
 changepath(newval)
-	char *newval;
+	const char *newval;
 {
-	char *old, *new;
+	const char *old, *new;
 	int index;
 	int firstchange;
 	int bltin;

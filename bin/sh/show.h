@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.h,v 1.2 1996/06/23 14:21:34 deraadt Exp $	*/
+/*	$OpenBSD: show.h,v 1.3 1996/10/20 00:55:07 millert Exp $	*/
 /*	$NetBSD: show.h,v 1.1 1995/05/11 21:30:27 christos Exp $	*/
 
 /*-
@@ -37,8 +37,10 @@
  */
 
 void showtree __P((union node *));
-void trputc __P((int));
 void trace __P((const char *, ...));
-void trputs __P((char *));
 void trargs __P((char **));
+#ifdef DEBUG
+void trputc __P((int));
+void trputs __P((char *));
 void opentrace __P((void));
+#endif

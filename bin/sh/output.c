@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.2 1996/06/23 14:21:30 deraadt Exp $	*/
+/*	$OpenBSD: output.c,v 1.3 1996/10/20 00:55:00 millert Exp $	*/
 /*	$NetBSD: output.c,v 1.15 1995/09/14 16:19:06 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: output.c,v 1.2 1996/06/23 14:21:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: output.c,v 1.3 1996/10/20 00:55:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -354,11 +354,7 @@ fmtstr(va_alist)
 
 #define TEMPSIZE 24
 
-#ifdef __STDC__
-static const char digit[16] = "0123456789ABCDEF";
-#else
-static const char digit[17] = "0123456789ABCDEF";
-#endif
+static const char digit[] = "0123456789ABCDEF";
 
 
 void

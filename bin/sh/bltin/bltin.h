@@ -1,4 +1,4 @@
-/*	$OpenBSD: bltin.h,v 1.2 1996/06/23 14:21:40 deraadt Exp $	*/
+/*	$OpenBSD: bltin.h,v 1.3 1996/10/20 00:55:11 millert Exp $	*/
 /*	$NetBSD: bltin.h,v 1.7 1995/03/21 09:10:46 cgd Exp $	*/
 
 /*-
@@ -58,6 +58,11 @@
 #define fputs outstr
 #define fflush flushout
 #define INITARGS(argv)
+#define warnx(a, b, c) {				\
+	char buf[64];					\
+	(void)snprintf(buf, sizeof(buf), a, b, c);	\
+	error("%s", buf);				\
+}
 #else
 #undef NULL
 #include <stdio.h>

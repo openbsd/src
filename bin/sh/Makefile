@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1996/10/12 01:12:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/10/20 00:54:41 millert Exp $
 #	$NetBSD: Makefile,v 1.23 1996/02/18 12:29:18 mycroft Exp $
 
 STATIC=	-static
@@ -16,12 +16,12 @@ CFLAGS+=-DSHELL -I. -I${.CURDIR}
 .PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
 CLEANFILES+=\
 	arith.c arith_lex.c builtins.c builtins.h init.c mkinit mknodes \
-	mksyntax nodes.c nodes.h printf.o syntax.c syntax.h token.def \
+	mksyntax nodes.c nodes.h printf.o syntax.c syntax.h token.h \
 	y.tab.c y.tab.h
 
-.depend parser.o: token.def
+.depend parser.o: token.h
 
-token.def: mktokens
+token.h: mktokens
 	sh ${.CURDIR}/mktokens
 
 builtins.h builtins.c: ${.CURDIR}/mkbuiltins ${.CURDIR}/builtins.def

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mksyntax.c,v 1.3 1996/09/15 22:58:08 millert Exp $	*/
+/*	$OpenBSD: mksyntax.c,v 1.4 1996/10/20 00:54:55 millert Exp $	*/
 /*	$NetBSD: mksyntax.c,v 1.11 1995/05/11 21:29:37 christos Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: mksyntax.c,v 1.3 1996/09/15 22:58:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: mksyntax.c,v 1.4 1996/10/20 00:54:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,6 +172,7 @@ main(argc, argv)
 	}
 
 	fputs("#include <sys/cdefs.h>\n", hfile);
+	fputs("#include <ctype.h>\n", hfile);
 
 	/* Generate the #define statements in the header file */
 	fputs("/* Syntax classes */\n", hfile);
@@ -351,9 +352,9 @@ print(name)
 
 static char *macro[] = {
 	"#define is_digit(c)\t((is_type+SYNBASE)[c] & ISDIGIT)",
-	"#define is_alpha(c)\t((is_type+SYNBASE)[c] & (ISUPPER|ISLOWER))",
-	"#define is_name(c)\t((is_type+SYNBASE)[c] & (ISUPPER|ISLOWER|ISUNDER))",
-	"#define is_in_name(c)\t((is_type+SYNBASE)[c] & (ISUPPER|ISLOWER|ISUNDER|ISDIGIT))",
+	"#define is_alpha(c)\t((c) != PEOF && ((c) < CTLESC || (c) > CTLENDARI) && isalpha((unsigned char) (c)))",
+	"#define is_name(c)\t((c) != PEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalpha((unsigned char) (c))))",
+	"#define is_in_name(c)\t((c) != PEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalnum((unsigned char) (c))))",
 	"#define is_special(c)\t((is_type+SYNBASE)[c] & (ISSPECL|ISDIGIT))",
 	NULL
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.h,v 1.2 1996/06/23 14:21:29 deraadt Exp $	*/
+/*	$OpenBSD: options.h,v 1.3 1996/10/20 00:54:59 millert Exp $	*/
 /*	$NetBSD: options.h,v 1.8 1995/05/11 21:29:48 christos Exp $	*/
 
 /*-
@@ -111,3 +111,4 @@ int shiftcmd __P((int, char **));
 int setcmd __P((int, char **));
 int getoptscmd __P((int, char **));
 int nextopt __P((char *));
+void getoptsreset __P((const char *));

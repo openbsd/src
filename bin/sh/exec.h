@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.2 1996/06/23 14:21:13 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.3 1996/10/20 00:54:48 millert Exp $	*/
 /*	$NetBSD: exec.h,v 1.9 1995/06/09 01:53:53 christos Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@ struct cmdentry {
 
 
 extern char *pathopt;		/* set by padvance */
+extern int exerrno;		/* last exec error */
 
 void shellexec __P((char **, char **, char *, int));
 char *padvance __P((char **, char *));
@@ -63,7 +64,7 @@ int hashcmd __P((int, char **));
 void find_command __P((char *, struct cmdentry *, int, char *));
 int find_builtin __P((char *));
 void hashcd __P((void));
-void changepath __P((char *));
+void changepath __P((const char *));
 void deletefuncs __P((void));
 void getcmdentry __P((char *, struct cmdentry *));
 void addcmdentry __P((char *, struct cmdentry *));

@@ -1,4 +1,4 @@
-/*    $OpenBSD: expand.c,v 1.3 1996/06/23 14:21:13 deraadt Exp $     */
+/*    $OpenBSD: expand.c,v 1.4 1996/10/20 00:54:49 millert Exp $     */
 /*    $NetBSD: expand.c,v 1.20 1996/02/12 15:11:41 christos Exp $     */
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: expand.c,v 1.3 1996/06/23 14:21:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: expand.c,v 1.4 1996/10/20 00:54:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,8 +101,8 @@ STATIC char *exptilde __P((char *, int));
 STATIC void expbackq __P((union node *, int, int));
 STATIC int subevalvar __P((char *, char *, int, int, int, int));
 STATIC char *evalvar __P((char *, int));
-STATIC int varisset __P((int));
-STATIC void varvalue __P((int, int, int));
+STATIC int varisset __P((char *));
+STATIC void varvalue __P((char *, int, int));
 STATIC void recordregion __P((int, int, int));
 STATIC void ifsbreakup __P((char *, struct arglist *));
 STATIC void expandmeta __P((struct strlist *, int));
@@ -434,7 +434,7 @@ subevalvar(p, str, strloc, subtype, startloc, varflags)
 	int varflags;
 {
 	char *startp;
-	char *loc;
+	char *loc = NULL;
 	int c = 0;
 	int saveherefd = herefd;
 	struct nodelist *saveargbackq = argbackq;
@@ -559,7 +559,7 @@ evalvar(p, flag)
 	p = strchr(p, '=') + 1;
 again: /* jump here after setting a variable with ${var=text} */
 	if (special) {
-		set = varisset(*var);
+		set = varisset(var);
 		val = NULL;
 	} else {
 		val = lookupvar(var);
@@ -575,7 +575,7 @@ again: /* jump here after setting a variable with ${var=text} */
 		/* insert the value of the variable */
 		if (special) {
 			char *exp, *oexpdest = expdest;
-			varvalue(*var, varflags & VSQUOTE, flag & EXP_FULL);
+			varvalue(var, varflags & VSQUOTE, flag & EXP_FULL);
 			if (subtype == VSLENGTH) {
 				for (exp = oexpdest;exp != expdest; exp++)
 					varlen++;
@@ -650,8 +650,10 @@ record:
 	case VSASSIGN:
 	case VSQUESTION:
 		if (!set) {
-                      if (subevalvar(p, var, 0, subtype, startloc, varflags))
+		       if (subevalvar(p, var, 0, subtype, startloc, varflags)) {
+				varflags &= ~VSNUL;
 				goto again;
+			}
 			break;
 		}
 		if (easy)
@@ -690,22 +692,22 @@ record:
 
 STATIC int
 varisset(name)
-	char name;
+	char *name;
 	{
 	char **ap;
 
-	if (name == '!') {
+	if (*name == '!') {
 		if (backgndpid == -1)
 			return 0;
-	} else if (name == '@' || name == '*') {
+	} else if (*name == '@' || *name == '*') {
 		if (*shellparam.p == NULL)
 			return 0;
-	} else if ((unsigned)(name -= '1') <= '9' - '1') {
+	} else if (is_digit(*name)) {
+		int num = atoi(name);
 		ap = shellparam.p;
-		do {
+		while (--num > 0)
 			if (*ap++ == NULL)
 				return 0;
-		} while (--name >= 0);
 	}
 	return 1;
 }
@@ -718,7 +720,7 @@ varisset(name)
 
 STATIC void
 varvalue(name, quoted, allow_split)
-	char name;
+	char *name;
 	int quoted;
 	int allow_split;
 {
@@ -745,7 +747,7 @@ varvalue(name, quoted, allow_split)
 	} while (0)
 
 
-	switch (name) {
+	switch (*name) {
 	case '$':
 		num = rootpid;
 		goto numvar;
@@ -786,9 +788,12 @@ allargs:
 		STRTODEST(p);
 		break;
 	default:
-		if ((unsigned)(name -= '1') <= '9' - '1') {
-			p = shellparam.p[name];
-			STRTODEST(p);
+		if (is_digit(*name)) {
+			num = atoi(name);
+			if (num > 0 && num <= shellparam.nparam) {
+				p = shellparam.p[num - 1];
+				STRTODEST(p);
+			}
 		}
 		break;
 	}
@@ -1118,7 +1123,7 @@ msort(list, len)
 	struct strlist *list;
 	int len;
 {
-	struct strlist *p, *q;
+	struct strlist *p, *q = NULL;
 	struct strlist **lpp;
 	int half;
 	int n;
