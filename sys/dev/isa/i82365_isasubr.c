@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.7 1999/03/31 05:48:25 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.8 1999/07/11 16:22:21 niklas Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -174,25 +174,11 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 
 	sc->ranges = pcic_isa_addr;
 	if (iobuswidth == 10) {
-		sc->iobase = 0x300;
-		sc->iosize = 0x0ff;
+		sc->iobase = 0x000;
+		sc->iosize = 0x400;
 	} else {
-#if 0
-		/*
-		 * This is what we'd like to use, but...
-		 */
-		sc->iobase = 0x400;
-		sc->iosize = 0xbff;
-#else
-		/*
-		 * ...the above bus width probe doesn't always work.
-		 * So, experimentation has shown the following range
-		 * to not lose on systems that 0x300-0x3ff loses on
-		 * (e.g. the NEC Versa 6030X).
-		 */
-		sc->iobase = 0x330;
-		sc->iosize = 0x0cf;
-#endif
+		sc->iobase = 0x0000;
+		sc->iosize = 0x1000;
 	}
 
 	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (probed)\n",
