@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.33 2004/03/11 14:22:23 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.34 2004/04/26 00:46:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -163,18 +163,19 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 
 	/* 7. nexthop costs. NOT YET -> IGNORE */
 
-	/* 8. lowest BGP Id wins */
-	if ((asp2->peer->remote_bgpid - asp1->peer->remote_bgpid) != 0)
-		return (asp2->peer->remote_bgpid - asp1->peer->remote_bgpid);
+	/* 8. older route (more stable) wins */
+	if ((p2->lastchange - p1->lastchange) != 0)
+		return (p2->lastchange - p1->lastchange);
 
-	/* 9. lowest peer address wins */
-	if (memcmp(&asp1->peer->conf.remote_addr,
-	    &asp2->peer->conf.remote_addr,
-	    sizeof(asp1->peer->conf.remote_addr)) != 0)
-		return (memcmp(&asp1->peer->conf.remote_addr,
-		    &asp2->peer->conf.remote_addr,
-		    sizeof(asp1->peer->conf.remote_addr)));
+	/* 9. lowest BGP Id wins */
+	if ((p2->peer->remote_bgpid - p1->peer->remote_bgpid) != 0)
+		return (p2->peer->remote_bgpid - p1->peer->remote_bgpid);
 
+	/* 10. lowest peer address wins (IPv4 is better than IPv6) */
+	if (memcmp(&p1->peer->remote_addr, &p2->peer->remote_addr,
+	    sizeof(p1->peer->remote_addr)) != 0)
+		return (-memcmp(&p1->peer->remote_addr, &p2->peer->remote_addr,
+		    sizeof(p1->peer->remote_addr)));
 
 	fatalx("Uh, oh a politician in the decision process");
 	/* NOTREACHED */
