@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1995/11/22 11:17:17 deraadt Exp $
+#	$Id: Makefile,v 1.5 1995/12/06 10:53:00 deraadt Exp $
 
 LIB=sa
 
@@ -25,7 +25,7 @@ SRC_sun3= exec_sun.c
 
 SRC_here= clock.c devopen.c dvma.c \
 	 gets.c panic.c \
-	 promboot.c promcons.c bug.c
+	 promboot.c promcons.c
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_sun3} ${SRC_here}
 
@@ -35,7 +35,7 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_sun3} ${SRC_here}
 #DEFS= -DCOMPAT_UFS
 INCL= -I. -I${S}/lib/libsa -I${S}
 COPTS= #-fno-defer-pop
-CFLAGS= -O ${COPTS} ${DEFS} ${DBG} ${INCL}
+CFLAGS= -O2 ${COPTS} ${DEFS} ${DBG} ${INCL}
 
 .PATH:  ${DIR_SA} ${DIR_KERN} ../../sun3
 
