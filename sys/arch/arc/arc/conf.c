@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 1996/11/24 18:12:08 niklas Exp $ */
+/*	$OpenBSD: conf.c,v 1.10 1996/11/25 14:52:57 niklas Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.9 1996/11/24 18:12:08 niklas Exp $
+ *      $Id: conf.c,v 1.10 1996/11/25 14:52:57 niklas Exp $
  */
 
 #include <sys/param.h>
@@ -176,7 +176,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NFDC,fd),	/* 13: Floppy disk */
 	cdev_pc_init(NPC,pc),		/* 14: builtin pc style console dev */
 	cdev_mouse_init(1,pms),		/* 15: builtin PS2 style mouse */
-	cdev_lpr_init(NLPR,lpr),	/* 16: lpr paralell printer interface */
+	cdev_lpr_init(NLPR,lpr),	/* 16: lpr parallel printer interface */
 	cdev_tty_init(NACE,ace),	/* 17: ace 16C450 serial interface */
 	cdev_disk_init(NWDC,wd),	/* 18: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 19: ATAPI CD-ROM */
