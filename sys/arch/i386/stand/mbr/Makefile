@@ -1,17 +1,27 @@
-#	$OpenBSD: Makefile,v 1.2 1997/04/07 09:00:10 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/04/21 20:31:00 mickey Exp $
 #
 
 PROG=	mbr
 SRCS=	mbr.S
 AFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../.. #-Wa,-a
-LDFLAGS=-s -Wl,-T0,-N,-x -nostdlib
+LD=ld
+LDFLAGS=-nostdlib -Ttext 0 -x -N -s -Bstatic
 MAN+=	mbr.8
 STRIP=
 
 # Uncomment this to make mbr talk to a serial port.
 #CPPFLAGS+=-DSERIAL=0
 
-all:
+all:	machine-links
+
+machine-links:
+	@rm -f machine i386
+	@ln -fs ${.CURDIR}/../.. i386
+	@ln -fs ${.CURDIR}/../../include machine
+
+${PROG}: $(OBJS) $(DPADD)
+	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
+	@size $(PROG)
 	@if [ -x ${.OBJDIR}/${PROG} ]; then \
 		dd if=${.OBJDIR}/${PROG} of=${.OBJDIR}/.tmp ibs=32 skip=1; \
 		mv -f ${.OBJDIR}/.tmp ${.OBJDIR}/${PROG}; \
