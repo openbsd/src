@@ -43,6 +43,9 @@
 #ifdef HAVE_SELECT_H		/* random SV variants need this */
 #include <sys/select.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 /* have to do this *before* including types.h. xxx: Linux still has it wrong */
 #ifdef FD_SETSIZE		/* should be in types.h, butcha never know. */
