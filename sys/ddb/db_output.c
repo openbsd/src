@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.5 1996/04/21 22:19:05 deraadt Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.6 1996/07/23 23:54:27 deraadt Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /* 
@@ -201,7 +201,7 @@ db_print_position()
 extern int	db_radix;
 
 /*VARARGS1*/
-void
+int
 #if __STDC__
 db_printf(const char *fmt, ...)
 #else

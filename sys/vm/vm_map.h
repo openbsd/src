@@ -218,7 +218,7 @@ int		 vm_map_clean __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, boolean_t, boolean_t));
 void		 vm_map_print __P((vm_map_t, boolean_t));
 void		 _vm_map_print __P((vm_map_t, boolean_t,
-		    void (*)(const char *, ...)));
+		    int (*)(const char *, ...)));
 int		 vm_map_protect __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
 void		 vm_map_reference __P((vm_map_t));

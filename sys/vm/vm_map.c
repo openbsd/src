@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.2 1996/03/03 17:45:30 niklas Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.3 1996/07/23 23:54:23 deraadt Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -2589,7 +2589,7 @@ void
 _vm_map_print(map, full, pr)
 	register vm_map_t	map;
 	boolean_t		full;
-        void			(*pr) __P((const char *, ...));
+        int			(*pr) __P((const char *, ...));
 {
 	register vm_map_entry_t	entry;
 	extern int indent;

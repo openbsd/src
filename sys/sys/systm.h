@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.7 1996/07/02 06:52:06 niklas Exp $	*/
+/*	$OpenBSD: systm.h,v 1.8 1996/07/23 23:54:17 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ void	panic __P((const char *, ...))
 #else
     __attribute__((__noreturn__));
 #endif
-void	printf __P((const char *, ...))
+int	printf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	uprintf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));

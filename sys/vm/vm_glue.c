@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.18 1996/06/24 20:00:51 pefo Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.19 1996/07/23 23:54:22 deraadt Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -613,7 +613,7 @@ int indent = 0;
 /*ARGSUSED2*/
 void
 #if __STDC__
-iprintf(void (*pr)(const char *, ...), const char *fmt, ...)
+iprintf(int (*pr)(const char *, ...), const char *fmt, ...)
 #else
 iprintf(pr, fmt /* , va_alist */)
 	void (*pr)();

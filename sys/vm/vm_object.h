@@ -167,7 +167,7 @@ void		 vm_object_prefer __P((vm_object_t,
 		    vm_offset_t, vm_offset_t *));
 void		 vm_object_print __P((vm_object_t, boolean_t));
 void		 _vm_object_print __P((vm_object_t, boolean_t,
-		    void (*)(const char *, ...)));
+		    int (*)(const char *, ...)));
 void		 vm_object_reference __P((vm_object_t));
 void		 vm_object_remove __P((vm_pager_t));
 void		 vm_object_setpager __P((vm_object_t,

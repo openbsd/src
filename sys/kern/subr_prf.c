@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.8 1996/07/19 23:13:39 dm Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.9 1996/07/23 23:54:19 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
 
 /*-
@@ -289,7 +289,7 @@ logpri(level)
 	putchar('>', TOLOG, NULL);
 }
 
-void
+int
 #ifdef __STDC__
 addlog(const char *fmt, ...)
 #else
@@ -312,9 +312,10 @@ addlog(fmt, va_alist)
 		va_end(ap);
 	}
 	logwakeup();
+	return (0);
 }
 
-void
+int
 #ifdef __STDC__
 printf(const char *fmt, ...)
 #else
@@ -334,6 +335,7 @@ printf(fmt, va_alist)
 	if (!panicstr)
 		logwakeup();
 	consintr = savintr;		/* reenable interrupts */
+	return (0);
 }
 
 /*

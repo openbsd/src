@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.3 1996/04/21 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.4 1996/07/23 23:54:15 deraadt Exp $	*/
 /*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ __END_DECLS
 void	logpri __P((int));
 void	log __P((int, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
-void	addlog __P((const char *, ...))
+int	addlog __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	logwakeup __P((void));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.6 1996/06/10 19:26:51 niklas Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.7 1996/07/23 23:54:21 deraadt Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@ int		 sstk __P((struct proc *, void *, int *));
 
 void		 assert_wait __P((void *, boolean_t));
 int		 grow __P((struct proc *, vm_offset_t));
-void		 iprintf __P((void (*)(const char *, ...), const char *, ...));
+void		 iprintf __P((int (*)(const char *, ...), const char *, ...));
 int		 kernacc __P((caddr_t, int, int));
 int		 kinfo_loadavg __P((int, char *, int *, int, int *));
 int		 kinfo_meter __P((int, caddr_t, int *, int, int *));
