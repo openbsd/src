@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.82 2003/06/03 17:31:01 drahn Exp $ */
+/* $OpenBSD: machdep.c,v 1.83 2003/08/10 00:03:21 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1557,24 +1557,6 @@ sendsig(catcher, sig, mask, code, type, val)
 		printf("sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
 		    sig, &oonstack, scp);
 #endif
-	if (uvm_useracc((caddr_t)scp, fsize, B_WRITE) == 0) {
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): uvm_useracc failed on sig %d\n",
-			    p->p_pid, sig);
-#endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
 
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -1612,14 +1594,33 @@ sendsig(catcher, sig, mask, code, type, val)
 	if (psp->ps_siginfo & sigmask(sig)) {
 		initsiginfo(&ksi, sig, code, type, val);
 		sip = (void *)scp + kscsize;
-		(void) copyout((caddr_t)&ksi, (caddr_t)sip, fsize - kscsize);
+		if (copyout((caddr_t)&ksi, (caddr_t)sip, fsize - kscsize) != 0)
+			goto trash;
 	} else
 		sip = NULL;
 
 	/*
 	 * copy the frame out to userland.
 	 */
-	(void) copyout((caddr_t)&ksc, (caddr_t)scp, kscsize);
+	if (copyout((caddr_t)&ksc, (caddr_t)scp, kscsize) != 0) {
+trash:
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sendsig(%d): copyout failed on sig %d\n",
+			    p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		return;
+	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sendsig(%d): sig %d scp %p code %lx\n", p->p_pid, sig,

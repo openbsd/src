@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.c,v 1.9 2002/07/20 23:08:30 art Exp $	*/
+/*	$OpenBSD: netbsd_machdep.c,v 1.10 2003/08/10 00:03:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -140,24 +140,6 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 		printf("netbsd_sendsig(%d): sig %d ssp %p usp %p scp %p\n",
 		    p->p_pid, sig, &oonstack, alpha_pal_rdusp(), scp);
 #endif
-	if (uvm_useracc((caddr_t)scp, fsize, B_WRITE) == 0) {
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("netbsd_sendsig(%d): useracc failed on sig %d\n",
-			    p->p_pid, sig);
-#endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
 
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -190,7 +172,24 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 	 * copy the frame out to userland.
 	 */
 	openbsd_to_netbsd_sigcontext(&ksc, &nbsc);
-	(void) copyout((caddr_t)&nbsc, (caddr_t)scp, sizeof(nbsc));
+	if (copyout((caddr_t)&nbsc, (caddr_t)scp, sizeof(nbsc)) != 0) {
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("netbsd_sendsig(%d): copyout failed on sig %d\n",
+			    p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		return;
+	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("netbsd_sendsig(%d): sig %d scp %p code %lx\n",
@@ -241,8 +240,7 @@ netbsd_sys___sigreturn14(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (uvm_useracc((caddr_t)nbscp, sizeof (*nbscp), B_WRITE) == 0 ||
-	    copyin((caddr_t)nbscp, (caddr_t)&nbsc, sizeof (nbsc)))
+	if (copyin((caddr_t)nbscp, (caddr_t)&nbsc, sizeof (nbsc)))
 		return (EFAULT);
 
 	netbsd_to_openbsd_sigcontext(&nbsc, &ksc);
