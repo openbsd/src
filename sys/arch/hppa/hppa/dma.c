@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.2 1999/05/05 17:55:13 mickey Exp $	*/
+/*	$OpenBSD: dma.c,v 1.3 1999/07/12 17:43:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -159,7 +159,8 @@ _dmamem_alloc(v, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t va, spa, epa;
+	vaddr_t va;
+	paddr_t spa, epa;
 
 	size = round_page(size);
 
