@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.5,v 1.11 2002/05/01 08:03:30 mpech Exp $
+.\" $OpenBSD: keynote.5,v 1.12 2003/01/19 21:02:14 deraadt Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -57,7 +57,7 @@ Whitespace (a SPACE, TAB, or NEWLINE character) separates tokens but
 is otherwise ignored outside of quoted strings.
 Comments with a leading octothorp character ('#') may begin in any column.
 .Pp
-One mandatory field is required in all assertions: Authorizer
+One mandatory field is required in all assertions: Authorizer.
 .Pp
 Six optional fields may also appear: Comment, Conditions,
 KeyNote-Version, Licensees, Local-Constants, Signature.
@@ -107,7 +107,7 @@ character (ASCII 92 decimal) (e.g.,
 .Qc .
 .\".Pf { Qo mike Ns Qc 12
 .Qc Ns ).
-This permits the inclusion of the double- quote and backslash characters
+This permits the inclusion of the double-quote and backslash characters
 inside string literals.
 .Pp
 A similar escape mechanism is also used to represent non-printable
@@ -210,7 +210,7 @@ dereferenced attributes can be converted to integers or floating point
 numbers with the type conversion operators
 .Qq \@
 and
-.Qq \& .
+.Qq & .
 Thus, an attribute named
 .Qq foo
 having the value
@@ -565,7 +565,7 @@ representation of a numeric value can be converted to an integer or
 float with the use of the
 .Qq \@
 and
-.Qq \&
+.Qq &
 operators, respectively.
 Any fractional component of an attribute value dereferenced as an integer
 is rounded down.
@@ -585,7 +585,7 @@ KeyNote.
 Note that this is one of two mechanisms for including
 comments in KeyNote assertions; comments can also be inserted anywhere
 in an assertion's body by preceding them with the
-.Qq \#
+.Qq #
 character (except inside string literals).
 .Sh SIGNATURE FIELD
 The Signature field identifies a signed assertion and gives the

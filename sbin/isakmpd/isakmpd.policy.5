@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.27 2002/11/27 14:36:20 ho Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.28 2003/01/19 21:02:15 deraadt Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -48,7 +48,7 @@ layer of the kernel's networking stack.
 The
 .Xr isakmpd 1
 daemon (also known as IKE, for Internet Key Exchange) is used when two
-systems need to automatically setup a pair of Security Associations
+systems need to automatically set up a pair of Security Associations
 (SAs) for securely communicating using IPsec.
 IKE operates in two stages:
 .Pp
@@ -68,7 +68,7 @@ At this stage, the exact parameters of the SAs
 (e.g., algorithms to use, encapsulation mode, lifetime) and the
 identities of the communicating parties (hosts, networks, etc.) are
 specified.
-The reason of existance of Quick Mode is to allow for fast
+The reason for the existance of Quick Mode is to allow for fast
 SA setup, once the more heavy-weight Main Mode has been completed.
 Generally, Quick Mode uses the key material derived from Main Mode to
 provide keys to the IPsec transforms to be used.
@@ -96,7 +96,7 @@ The responder
 examines the proposals and determines which of them are acceptable,
 according to policy and any credentials.
 .Pp
-The following paragraphs assume some knowledge of the contents of
+The following paragraphs assume some knowledge of the contents of the
 .Xr keynote 4
 and
 .Xr keynote 5
@@ -194,7 +194,7 @@ The following policy assertion:
 .Pp
 is similar to the previous one, but instead of including a complete
 X509 credential in the Licensees field, only the X509 certificate's
-Subject Canonical Name need to be specified (note that the "DN:"
+Subject Canonical Name needs to be specified (note that the "DN:"
 prefix is necessary).
 .Pp
 KeyNote credentials have the same format as policy assertions, with
@@ -245,7 +245,7 @@ Information about the proposals, the identity of the remote IKE
 daemon, the packet classes to be protected, etc. are encoded in what
 is called an action set.
 The action set is composed of name-value
-attribute, similar in some way to a shell environment variables.
+attributes, similar in some ways to shell environment variables.
 These values are initialized by
 .Nm isakmpd
 before each query to the KeyNote system, and can be tested against in
@@ -256,8 +256,8 @@ and
 .Xr keynote 5
 for more details on the format and semantics of the Conditions field.
 .Pp
-Note that assertions and credentials can make reference to
-non-existant attributes without catastrophic failures (access may be
+Note that assertions and credentials can make references to
+non-existent attributes without catastrophic failures (access may be
 denied, depending on the overall structure, but will not be
 accidentally granted).
 One reason for credentials referencing

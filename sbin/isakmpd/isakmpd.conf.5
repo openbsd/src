@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.71 2003/01/09 13:12:42 ho Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.72 2003/01/19 21:02:15 deraadt Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -197,7 +197,7 @@ How many times should a message be retransmitted before giving up.
 If this tag is defined, whatever the value is, some semantics of
 .Nm
 are changed so that multiple instances can run on top of one SADB
-and setup SAs with eachother.
+and setup SAs with each other.
 Specifically this means replay
 protection will not be asked for, and errors that can occur when
 updating an SA with its parameters a 2nd time will be ignored.
@@ -223,7 +223,7 @@ automatically, either on first use if the system supports it, or at
 startup of the daemon.
 These names are section names where further information can be found.
 Look at <IPsec-connection> below.
-Normally any connection mentioned here are treated as part of the
+Normally any connections mentioned here are treated as part of the
 "Passive-connection" list we present below, however there is a
 flag: "Active-only" that disables this behaviour.
 This too is mentioned in the <IPsec-connection> section, in the "Flags" tag.
@@ -437,7 +437,7 @@ The hash algorithm as the RFCs name it, or ANY.
 The authentication method as the RFCs name it, or ANY.
 .It Em GROUP_DESCRIPTION
 The group used for Diffie-Hellman exponentiations, or ANY.
-The name are symbolic, like
+The names are symbolic, like
 .Li MODP_768 , MODP_1024 , EC_155
 and
 .Li EC_185 .
@@ -722,7 +722,7 @@ WINS-server=		192.168.1.11
 
 #
 # #####################################################################
-# All configration data below this point is not required as the example
+# All configuration data below this point is not required as the example
 # uses the predefined Main Mode transform and Quick Mode suite names.
 # It is included here for completeness. Note the default values for the
 # [General] and [X509-certificates] sections just below.

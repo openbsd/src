@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.20 2002/12/09 00:45:37 millert Exp $
+.\" $OpenBSD: login.conf.5,v 1.21 2003/01/19 21:02:15 deraadt Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -171,7 +171,8 @@ It specifies the base 2 logarithm of the number of rounds.
 .sp
 .It ypcipher Ta string Ta old Ta
 The cipher to use for YP passwords.
-The possible values are the same as for localcipher.
+The possible values are the same as for
+.Ar localcipher .
 .\"
 .sp
 .It login-backoff Ta number Ta 3 Ta
@@ -202,7 +203,7 @@ Maximum stack size limit.
 .\"
 .sp
 .It maxproc Ta number Ta "" Ta
-Maximum number of process.
+Maximum number of processes.
 .\"
 .sp
 .It memorylocked Ta size Ta "" Ta
@@ -465,7 +466,7 @@ Request a password and check it against the password in the rpasswd.db file.
 .\"
 .It Li skey
 Send a challenge and request a response, checking it
-with S/Key\(tm authentication.
+with S/Key (tm) authentication.
 See
 .Xr skey 1 .
 .\"
@@ -480,7 +481,7 @@ See
 .Xr login_token 8 .
 .El
 .Pp
-Local authentication styles may be added by creating the login script
+Local authentication styles may be added by creating a login script
 for the style (see below).
 To prevent collisions with future official BSD
 Authentication style names all local style names should start with a dash (-).
@@ -723,11 +724,11 @@ Several \e sequences may be used to introduce non printing characters.
 These are:
 .Bl -tag -width indent
 .It Li \en
-A newline
+A newline.
 .It Li \er
-A carriage return
+A carriage return.
 .It Li \et
-A tab
+A tab.
 .It Li \e Ns Va xxx
 The character represented by the octal value
 .Va xxx .
@@ -861,7 +862,7 @@ The typical job of the classify program is to determine what authentication
 type should actually be used, presumably based on the remote IP address.
 It might also re-specify the hostname to be included in the
 .Xr utmp 5
-file, reject the login attempt out right,
+file, reject the login attempt outright,
 or even print an additional login banner (e.g.,
 .Pa /etc/issue ) .
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: link.5,v 1.12 2003/01/18 20:08:02 deraadt Exp $
+.\"	$OpenBSD: link.5,v 1.13 2003/01/19 21:02:15 deraadt Exp $
 .\"	$NetBSD: link.5,v 1.5 1996/01/09 00:14:32 pk Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -111,7 +111,7 @@ segment of the image to which it pertains.
 The data structures supporting dynamic linking and run-time relocation
 reside both in the text and data segments of the image they apply to.
 The text segments contain read-only data such as symbol descriptions and
-names, while the data segments contain the tables that need to be modified by
+names, while the data segments contain the tables that need to be modified
 during the relocation process.
 .Pp
 The
@@ -148,7 +148,7 @@ objects loaded as a result of the actions of the run-time link editor.
 .It Fa d_entry
 This field is obsoleted by CRT interface version
 .Li CRT_VERSION_BSD4 ,
-and is by the
+and by the
 .Fa crt_ldentry
 in
 .Fa crt_ldso .
@@ -386,7 +386,7 @@ The
 .Fa rt_symbol
 structure is used to keep track of run-time allocated commons
 and data items copied from shared objects.
-These items are kept on linked list and is exported through the
+These items are kept in a linked list and are exported through the
 .Fa dd_cc
 field in the
 .Fa so_debug
@@ -409,7 +409,7 @@ Virtual address of next
 .Fa rt_symbol .
 .It Fa rt_link
 Next in hash bucket.
-Used by internally by
+Used internally by
 .Xr ld.so 1 .
 .It Fa rt_srcaddr
 Location of the source of initialized data within a shared object.
