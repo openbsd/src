@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.11 2003/04/15 01:17:33 deraadt Exp $	*/
+/*	$OpenBSD: csh.h,v 1.12 2003/05/12 04:11:18 jsyn Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -209,7 +209,7 @@ sig_t parterm;			/* Parents terminate catch */
 #define	ASCII		0177
 #ifdef SHORT_STRINGS
 #define	CHAR		0377
-#define	QUOTE 		0100000	/* 16nth char bit used for 'ing */
+#define	QUOTE 		0100000U /* 16nth char bit used for 'ing */
 #define	TRIM		0077777	/* Mask to strip quote bit */
 #else
 #define	CHAR		0177
