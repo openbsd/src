@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.49 1999/09/01 21:38:21 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.50 1999/11/04 11:24:23 ho Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -345,6 +345,8 @@ tcp_input(m, va_alist)
 	/* Save the last SA which was used to process the mbuf */
 	if ((m->m_flags & (M_CONF|M_AUTH)) && m->m_pkthdr.tdbi) {
 		struct tdb_ident *tdbi = m->m_pkthdr.tdbi;
+		/* XXX gettdb() should really be called at spltdb().      */
+		/* XXX this is splsoftnet(), currently they are the same. */
 		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
 		free(m->m_pkthdr.tdbi, M_TEMP);
 		m->m_pkthdr.tdbi = NULL;
