@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.216 2005/02/05 20:40:53 henning Exp $
+#	$OpenBSD: Makefile,v 1.217 2005/02/19 11:56:54 henning Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -18,7 +18,7 @@ BIN1=	changelist ccd.conf csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	mrouted.conf myname netstart networks newsyslog.conf phones printcap \
 	protocols rbootd.conf rc rc.conf rc.local rc.securelevel rc.shutdown \
 	remote rpc security services shells spamd.conf syslog.conf weekly \
-	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf ospfd.conf
+	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "cats" || ${MACHINE} == "hp300" || \
@@ -79,6 +79,7 @@ distribution-etc-root-var: distrib-dirs
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
 	${INSTALL} -c -o root -g wheel -m 644 moduli ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 bgpd.conf ${DESTDIR}/etc
+	${INSTALL} -c -o root -g wheel -m 600 ospfd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 644 pf.os ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 644 sensorsd.conf ${DESTDIR}/etc
@@ -375,7 +376,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.216 2005/02/05 20:40:53 henning Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.217 2005/02/19 11:56:54 henning Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
