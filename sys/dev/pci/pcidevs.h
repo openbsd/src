@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.240 2000/04/11 13:56:40 ho Exp 
+ *		OpenBSD: pcidevs,v 1.241 2000/04/12 06:02:28 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -395,7 +395,7 @@
 #define	PCI_VENDOR_SYNEMA	0x1163		/* Synema */
 #define	PCI_VENDOR_APT	0x1164		/* Advanced Peripherals Technologies */
 #define	PCI_VENDOR_IMAGRAPH	0x1165		/* Imagraph */
-#define	PCI_VENDOR_PEQUR	0x1166		/* Pequr Technology */
+#define	PCI_VENDOR_RCC	0x1166		/* Reliance Computer */
 #define	PCI_VENDOR_MUTOH	0x1167		/* Mutoh Industries */
 #define	PCI_VENDOR_THINE	0x1168		/* Thine Electronics */
 #define	PCI_VENDOR_CDAC	0x1169		/* Centre for Dev. of Advanced Computing */
@@ -1244,7 +1244,9 @@
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
 
 /* Pequr products */
-#define	PCI_PRODUCT_PEQUR_PCIBRIDGE	0x0200		/* PCI */
+#define	PCI_PRODUCT_RCC_PCIBRIDGE	0x0200		/* PCI */
+#define	PCI_PRODUCT_RCC_CNB20HE	0x0008		/* CNB20HE */
+#define	PCI_PRODUCT_RCC_CNB20HE	0x0009		/* CNB20LE */
 
 /* PLX products */
 #define	PCI_PRODUCT_PLX_1076	0x1076		/* I/O */

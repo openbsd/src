@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.240 2000/04/11 13:56:40 ho Exp 
+ *		OpenBSD: pcidevs,v 1.241 2000/04/12 06:02:28 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2979,10 +2979,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RZ1000",
 	},
 	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_PCIBRIDGE,
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_PCIBRIDGE,
 	    0,
-	    "Pequr Technology",
+	    "Reliance Computer",
 	    "PCI",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20HE,
+	    0,
+	    "Reliance Computer",
+	    "CNB20HE",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20HE,
+	    0,
+	    "Reliance Computer",
+	    "CNB20LE",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1076,
@@ -6735,9 +6747,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_PEQUR, 0,
+	    PCI_VENDOR_RCC, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Pequr Technology",
+	    "Reliance Computer",
 	    NULL,
 	},
 	{
