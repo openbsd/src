@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.12 2005/02/22 21:53:03 uwe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.13 2005/03/02 22:18:52 dlg Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -692,7 +692,7 @@ struct pxa2x0_dma_desc {
 #define  USBHC_STAT_UPS3	(1<<16)	/* USB Power Sense Port 3 */
 #define  USBHC_STAT_MASK	(USBHC_STAT_RWUE | USBHC_STAT_HBA | \
     USBHC_STAT_HTA | USBHC_STAT_UPS1 | USBHC_STAT_UPS2 | USBHC_STAT_UPRI | \
-    USBHC_STAT_SBTAI | USBHC_STAT_SBMAI USBHC_STAT_UPS3 | USBHC_STAT_MASK)
+    USBHC_STAT_SBTAI | USBHC_STAT_SBMAI | USBHC_STAT_UPS3)
 #define USBHC_HR	0x0064	/* UHC Reset Register */
 #define  USBHC_HR_FSBIR		(1<<0)	/* Force System Bus Interface Reset */
 #define  USBHC_HR_FHR		(1<<1)	/* Force Host Controller Reset */
