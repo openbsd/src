@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.15 2004/12/27 22:16:13 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.16 2005/01/14 02:25:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,6 +20,7 @@ use warnings;
 package OpenBSD::PackageInfo;
 our @ISA=qw(Exporter);
 our @EXPORT=qw(installed_packages installed_info installed_name info_names is_info_name 
+    lock_db unlock_db
     add_installed delete_installed is_installed borked_package CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE 
     REQUIRED_BY REQUIRING DISPLAY UNDISPLAY MTREE_DIRS);
 
@@ -37,6 +38,7 @@ use constant {
 	UNDISPLAY => '+UNDISPLAY',
 	MTREE_DIRS => '+MTREE_DIRS' };
 
+use Fcntl qw/:flock/;
 my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
 
 our $list;
@@ -164,6 +166,30 @@ sub is_info_name($)
 {
 	my $name = shift;
 	return $info{$name};
+}
+
+my $dlock;
+
+sub lock_db($)
+{
+	my $shared = shift;
+	my $mode = $shared ? LOCK_SH : LOCK_EX;
+	open($dlock, '<', $pkg_db) or return;
+	if (flock($dlock, $mode | LOCK_NB)) {
+		return;
+	}
+	print "Package database already locked... awaiting release\n";
+	while (!flock($dlock, $mode)) {
+	}
+	return;
+}
+
+sub unlock_db()
+{
+	if (defined $dlock) {
+		flock($dlock, LOCK_UN);
+		close($dlock);
+	}
 }
 
 1;

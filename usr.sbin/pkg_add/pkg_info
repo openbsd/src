@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.26 2004/12/22 12:56:25 espie Exp $
+# $OpenBSD: pkg_info,v 1.27 2005/01/14 02:25:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -247,6 +247,7 @@ sub print_info
 
 set_usage('pkg_info [-cDdfIiKkLMpqRrsUv] [-E fname] [-e pkgname] [-l str] pkgname...', 'pkg_info [-Aa flags]');
 
+lock_db(1);
 try { 
 	getopts('cDdfhIikKLmpqRrsvhe:E:MU:l:aA',
 	    {'e' =>

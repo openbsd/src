@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.85 2005/01/03 01:02:45 espie Exp $
+# $OpenBSD: pkg_delete,v 1.86 2005/01/14 02:25:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -95,6 +95,7 @@ if ($opt_B eq '') {
 
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
+lock_db($opt_n);
 if (!$opt_x && !$state->{beverbose}) {
 	OpenBSD::ProgressMeter::enable();
 }

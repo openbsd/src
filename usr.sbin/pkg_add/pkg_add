@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.166 2005/01/13 00:29:37 espie Exp $
+# $OpenBSD: pkg_add,v 1.167 2005/01/14 02:25:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -773,6 +773,7 @@ $state->{very_verbose} = $opt_v >= 2;
 $state->{verbose} = $opt_v;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
 
+lock_db($opt_n);
 if (!$opt_x && !$state->{beverbose}) {
 	OpenBSD::ProgressMeter::enable();
 }
@@ -788,6 +789,9 @@ if ($< && !$forced{nonroot}) {
 my @todo = (@ARGV);
 if (defined $state->{forced}->{kitchensink}) {
 	reorder(\@todo);
+	if (!$opt_r) {
+		@todo = grep {s/\.tgz$//; !is_installed($_);} @todo;
+	}
 	print "Adding in order:\n", (map { "\t$_\n" } @todo), "\n";
 }
 
