@@ -1,4 +1,4 @@
-/* $OpenBSD: regress.c,v 1.1 2000/07/17 23:01:20 espie Exp $ */
+/* $OpenBSD: regress.c,v 1.2 2000/07/17 23:03:50 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -43,29 +43,30 @@ do {				\
     }				\
 } while (0);
 
-int main()
+int 
+main()
 {
-    unsigned errors = 0;
+    unsigned int errors = 0;
 
-    CHECK(Str_Match("string", "string") == 1);
-    CHECK(Str_Match("string", "string2") == 0);
-    CHECK(Str_Match("string", "string*") == 1);
-    CHECK(Str_Match("Long string", "Lo*ng") == 1);
-    CHECK(Str_Match("Long string", "Lo*ng ") == 0);
-    CHECK(Str_Match("Long string", "Lo*ng *") == 1);
-    CHECK(Str_Match("string", "stri?g") == 1);
-    CHECK(Str_Match("str?ng", "str\\?ng") == 1);
-    CHECK(Str_Match("striiiing", "str?*ng") == 1);
-    CHECK(Str_Match("Very long string just to see", "******a****") == 0);
-    CHECK(Str_Match("d[abc?", "d\\[abc\\?") == 1);
-    CHECK(Str_Match("d[abc!", "d\\[abc\\?") == 0);
-    CHECK(Str_Match("dwabc?", "d\\[abc\\?") == 0);
-    CHECK(Str_Match("da0", "d[bcda]0") == 1);
-    CHECK(Str_Match("da0", "d[z-a]0") == 1);
-    CHECK(Str_Match("d-0", "d[-a-z]0") == 1);
-    CHECK(Str_Match("dy0", "d[a\\-z]0") == 0);
-    CHECK(Str_Match("d-0", "d[a\\-z]0") == 1);
-    CHECK(Str_Match("dz0", "d[a\\]z]0") == 1);
+    CHECK(Str_Match("string", "string") == TRUE);
+    CHECK(Str_Match("string", "string2") == FALSE);
+    CHECK(Str_Match("string", "string*") == TRUE);
+    CHECK(Str_Match("Long string", "Lo*ng") == TRUE);
+    CHECK(Str_Match("Long string", "Lo*ng ") == FALSE);
+    CHECK(Str_Match("Long string", "Lo*ng *") == TRUE);
+    CHECK(Str_Match("string", "stri?g") == TRUE);
+    CHECK(Str_Match("str?ng", "str\\?ng") == TRUE);
+    CHECK(Str_Match("striiiing", "str?*ng") == TRUE);
+    CHECK(Str_Match("Very long string just to see", "******a****") == FALSE);
+    CHECK(Str_Match("d[abc?", "d\\[abc\\?") == TRUE);
+    CHECK(Str_Match("d[abc!", "d\\[abc\\?") == FALSE);
+    CHECK(Str_Match("dwabc?", "d\\[abc\\?") == FALSE);
+    CHECK(Str_Match("da0", "d[bcda]0") == TRUE);
+    CHECK(Str_Match("da0", "d[z-a]0") == TRUE);
+    CHECK(Str_Match("d-0", "d[-a-z]0") == TRUE);
+    CHECK(Str_Match("dy0", "d[a\\-z]0") == FALSE);
+    CHECK(Str_Match("d-0", "d[a\\-z]0") == TRUE);
+    CHECK(Str_Match("dz0", "d[a\\]z]0") == TRUE);
 
     if (errors != 0)
 	printf("Errors: %d\n", errors);
