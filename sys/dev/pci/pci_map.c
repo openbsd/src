@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.5 2001/06/12 15:40:32 niklas Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.6 2001/06/13 08:25:25 niklas Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -313,7 +313,7 @@ pci_mapreg_map(pa, reg, type, busflags, tagp, handlep, basep, sizep, maxsize)
 	if (maxsize != 0 && size > maxsize) {
 #ifdef DEBUG
 		printf("pci_mapreg_map: limited PCI mapping from %lx to %lx\n",
-		    (u_long)size, (u_long)maxsize):
+		    (u_long)size, (u_long)maxsize);
 #endif
 		size = maxsize;
 	}
