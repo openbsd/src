@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn_stubs.c,v 1.8 2004/08/11 19:14:56 drahn Exp $	*/
+/*	$OpenBSD: dlfcn_stubs.c,v 1.9 2004/10/17 20:24:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -26,6 +26,8 @@
  *
  */
 
+#include <stddef.h>
+
 /*
  *	All functions here are just stubs that will be overridden
  *	by the real functions in ld.so when dynamic loading is
@@ -40,6 +42,9 @@ void	*dlsym(void *handle, const char *name) __attribute__((weak));
 int	 dlctl(void *handle, int command, void *data) __attribute__((weak));
 const char *	dlerror(void) __attribute__((weak));
 int	dladdr(const void *addr, void *info) __attribute__((weak));
+
+struct dl_phdr_info;
+int	 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),	    void *date) __attribute__((weak));
 
 #include <stdio.h>
 
@@ -74,6 +79,13 @@ const char *
 dlerror(void)
 {
 	return "Wrong dl symbols!\n";
+}
+
+int
+dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
+	void *data)
+{
+	return -1;
 }
 
 int
