@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.2 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: cache.c,v 1.3 2004/12/15 05:09:06 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -36,7 +36,6 @@
 
 #include "log.h"
 #include "rcs.h"
-#include "cache.h"
 
 #define RCS_CACHE_BUCKETS    256
 
@@ -48,7 +47,7 @@ struct rcs_cachent {
 	struct timeval  rc_atime;
 
 	TAILQ_ENTRY(rcs_cachent) rc_list;
-	TAILQ_ENTRY(rcs_cachent)  rc_lru;
+	TAILQ_ENTRY(rcs_cachent) rc_lru;
 };
 
 
