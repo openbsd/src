@@ -1,4 +1,4 @@
-.\"	$NetBSD: accept.2,v 1.6 1995/02/27 12:31:41 cgd Exp $
+.\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -154,6 +154,10 @@ user address space.
 .It Bq Er EWOULDBLOCK
 The socket is marked non-blocking and no connections
 are present to be accepted.
+.It Bq Er EMFILE
+The per-process descriptor table is full.
+.It Bq Er ENFILE
+The system file table is full.
 .El
 .Sh SEE ALSO
 .Xr bind 2 ,
