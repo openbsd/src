@@ -904,7 +904,6 @@
 ./usr/share/man/cat4/alpha/intro.0
 ./usr/share/man/cat4/alpha/kmem.0
 ./usr/share/man/cat4/alpha/le.0
-./usr/share/man/cat4/alpha/lpt.0
 ./usr/share/man/cat4/alpha/mem.0
 ./usr/share/man/cat4/alpha/pms.0
 ./usr/share/man/cat4/alpha/scc.0
@@ -1039,7 +1038,6 @@
 ./usr/share/man/cat4/i386/kmem.0
 ./usr/share/man/cat4/i386/le.0
 ./usr/share/man/cat4/i386/lms.0
-./usr/share/man/cat4/i386/lpt.0
 ./usr/share/man/cat4/i386/mcd.0
 ./usr/share/man/cat4/i386/mem.0
 ./usr/share/man/cat4/i386/mms.0
@@ -1087,6 +1085,7 @@
 ./usr/share/man/cat4/lmc.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lofn.0
+./usr/share/man/cat4/lpt.0
 ./usr/share/man/cat4/lxtphy.0
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/mac68k/adb.0
@@ -1232,6 +1231,8 @@
 ./usr/share/man/cat4/sparc/xy.0
 ./usr/share/man/cat4/sparc/zs.0
 ./usr/share/man/cat4/sparc64
+./usr/share/man/cat4/sparc64/apio.0
+./usr/share/man/cat4/sparc64/asio.0
 ./usr/share/man/cat4/sparc64/audioce.0
 ./usr/share/man/cat4/sparc64/audiocs.0
 ./usr/share/man/cat4/sparc64/autoconf.0
@@ -1240,6 +1241,7 @@
 ./usr/share/man/cat4/sparc64/cgsix.0
 ./usr/share/man/cat4/sparc64/cgthree.0
 ./usr/share/man/cat4/sparc64/comkbd.0
+./usr/share/man/cat4/sparc64/ebus.0
 ./usr/share/man/cat4/sparc64/esp.0
 ./usr/share/man/cat4/sparc64/gem.0
 ./usr/share/man/cat4/sparc64/hme.0
