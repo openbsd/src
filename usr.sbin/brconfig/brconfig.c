@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.4 1999/03/05 21:10:55 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.5 1999/03/08 13:06:36 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -241,7 +241,8 @@ bridge_setflag(s, brdg, f)
 {
 	struct ifreq ifr;
 
-	strncpy(ifr.ifr_name, brdg, sizeof ifr.ifr_name);
+	strncpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
 		warn("ioctl(SIOCGIFFLAGS)");
@@ -270,7 +271,8 @@ bridge_clrflag(s, brdg, f)
 {
 	struct ifreq ifr;
 
-	strncpy(ifr.ifr_name, brdg, sizeof ifr.ifr_name);
+	strncpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
 		warn("ioctl(SIOCGIFFLAGS)");
@@ -302,7 +304,8 @@ bridge_list(s, brdg, delim)
 	char buf[sizeof(reqp->ifbr_ifsname) + 1], *inbuf = NULL;
 
 	while (1) {
-		strncpy(bifc.ifbic_name, brdg, sizeof(bifc.ifbic_name));
+		strncpy(bifc.ifbic_name, brdg, sizeof(bifc.ifbic_name) - 1);
+		bifc.ifbic_name[sizeof(bifc.ifbic_name) - 1] = '\0';
 		bifc.ifbic_len = len;
 		bifc.ifbic_buf = inbuf = realloc(inbuf, len);
 		if (inbuf == NULL)
@@ -330,8 +333,10 @@ bridge_add(s, brdg, ifn)
 {
 	struct ifbreq req;
 
-	strncpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
-	strncpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
+	strncpy(req.ifbr_name, brdg, sizeof(req.ifbr_name) - 1);
+	req.ifbr_name[sizeof(req.ifbr_name)-1] = '\0';
+	strncpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname) - 1);
+	req.ifbr_ifsname[sizeof(req.ifbr_ifsname)-1] = '\0';
 	if (ioctl(s, SIOCBRDGADD, &req) < 0) {
 		warn("ioctl(SIOCADDBRDG)");
 		if (errno == EPERM)
@@ -348,8 +353,10 @@ bridge_delete(s, brdg, ifn)
 {
 	struct ifbreq req;
 
-	strncpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
-	strncpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
+	strncpy(req.ifbr_name, brdg, sizeof(req.ifbr_name) - 1);
+	req.ifbr_name[sizeof(req.ifbr_name) - 1] = '\0';
+	strncpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname) - 1);
+	req.ifbr_ifsname[sizeof(req.ifbr_ifsname) - 1] = '\0';
 	if (ioctl(s, SIOCBRDGDEL, &req) < 0) {
 		warn("ioctl(SIOCDELBRDG)");
 		if (errno == EPERM)
@@ -374,7 +381,8 @@ bridge_timeout(s, brdg, arg)
 		return (EX_USAGE);
 	}
 
-	strncpy(ifbct.ifbct_name, brdg, sizeof ifbct.ifbct_name);
+	strncpy(ifbct.ifbct_name, brdg, sizeof(ifbct.ifbct_name) - 1);
+	ifbct.ifbct_name[sizeof(ifbct.ifbct_name) - 1] = '\0';
 	ifbct.ifbct_time = newtime;
 	if (ioctl(s, SIOCBRDGSTO, (caddr_t)&ifbct) < 0) {
 		warn("ioctl(SIOCBRDGGCACHE)");
@@ -398,7 +406,8 @@ bridge_maxaddr(s, brdg, arg)
 		return (EX_USAGE);
 	}
 
-	strncpy(ifbc.ifbc_name, brdg, sizeof ifbc.ifbc_name);
+	strncpy(ifbc.ifbc_name, brdg, sizeof(ifbc.ifbc_name) - 1);
+	ifbc.ifbc_name[sizeof(ifbc.ifbc_name) - 1] = '\0';
 	ifbc.ifbc_size = newsize;
 	if (ioctl(s, SIOCBRDGSCACHE, (caddr_t)&ifbc) < 0) {
 		warn("ioctl(SIOCBRDGGCACHE)");
@@ -420,7 +429,8 @@ bridge_addrs(s, brdg, delim)
 	while (1) {
 		ifbac.ifbac_len = len;
 		ifbac.ifbac_buf = inbuf = realloc(inbuf, len);
-		strncpy(ifbac.ifbac_name, brdg, sizeof(ifbac.ifbac_name));
+		strncpy(ifbac.ifbac_name, brdg, sizeof(ifbac.ifbac_name) - 1);
+		ifbac.ifbac_name[sizeof(ifbac.ifbac_name) - 1] = '\0';
 		if (inbuf == NULL)
 			err(EX_IOERR, "malloc");
 		if (ioctl(s, SIOCBRDGRTS, &ifbac) < 0) {
@@ -459,7 +469,8 @@ is_bridge(s, brdg)
 	struct ifreq ifr;
 	struct ifbaconf ifbac;
 
-	strncpy(ifr.ifr_name, brdg, sizeof ifr.ifr_name);
+	strncpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
 		warn("ioctl(SIOCGIFFLAGS)");
@@ -467,7 +478,8 @@ is_bridge(s, brdg)
 	}
 
 	ifbac.ifbac_len = 0;
-	strncpy(ifbac.ifbac_name, brdg, sizeof(ifbac.ifbac_name));
+	strncpy(ifbac.ifbac_name, brdg, sizeof(ifbac.ifbac_name) - 1);
+	ifbac.ifbac_name[sizeof(ifbac.ifbac_name) - 1] = '\0';
 	if (ioctl(s, SIOCBRDGRTS, (caddr_t)&ifbac) < 0) {
 		if (errno == ENETDOWN)
 			return (1);
@@ -486,8 +498,8 @@ bridge_status(s, brdg)
 	struct ifbcachetoreq ifbct;
 	int err;
 
-	strncpy(ifr.ifr_name, brdg, sizeof ifr.ifr_name);
-
+	strncpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
 		warn("ioctl(SIOCGIFFLAGS)");
 		if (errno == EPERM)
@@ -504,13 +516,15 @@ bridge_status(s, brdg)
 	if (err)
 		return (err);
 
-	strncpy(ifbc.ifbc_name, brdg, sizeof ifbc.ifbc_name);
+	strncpy(ifbc.ifbc_name, brdg, sizeof(ifbc.ifbc_name) - 1);
+	ifbc.ifbc_name[sizeof(ifbc.ifbc_name) - 1] = '\0';
 	if (ioctl(s, SIOCBRDGGCACHE, (caddr_t)&ifbc) < 0) {
 		warn("ioctl(SIOCBRDGGCACHE)");
 		return (EX_IOERR);
 	}
 
-	strncpy(ifbct.ifbct_name, brdg, sizeof ifbct.ifbct_name);
+	strncpy(ifbct.ifbct_name, brdg, sizeof(ifbct.ifbct_name) - 1);
+	ifbct.ifbct_name[sizeof(ifbct.ifbct_name) - 1] = '\0';
 	if (ioctl(s, SIOCBRDGGTO, (caddr_t)&ifbct) < 0) {
 		warn("ioctl(SIOCBRDGGTO)");
 		return (EX_IOERR);
