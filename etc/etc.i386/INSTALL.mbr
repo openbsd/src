@@ -55,8 +55,8 @@ Where stuff is:
 
    The MBR program code starts at offset 0000.
    The MBR messages start at offset 008b.
-   The partition table starts at offset 00be.
-   The signature is at offset 00fe.
+   The partition table starts at offset 01be.
+   The signature is at offset 01fe.
 
 Here is a summary of what this thing does:
 
