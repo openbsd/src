@@ -1,3 +1,5 @@
+#test an edge case: LOOP_THROUGH modifies the list
+
 lan_if = lo0
 ext_if = nothere0
 
