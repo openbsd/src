@@ -1,4 +1,4 @@
-/*	$OpenBSD: c++rt0.c,v 1.5 1998/09/15 11:01:51 pefo Exp $	*/
+/*	$OpenBSD: c++rt0.c,v 1.6 1999/02/01 17:02:47 pefo Exp $	*/
 /*	$NetBSD: c++rt0.c,v 1.6 1997/12/29 15:36:50 pk Exp $	*/
 
 /*
@@ -80,8 +80,13 @@ __ctors()
 		(**p++)();
 }
 
+#if !defined(NATIVE_EXEC_ELF)
 extern void __init __P((void)) asm(".init");
 extern void __fini __P((void)) asm(".fini");
+#else
+extern void __init __P((void)) __attribute__ ((section (".init")));
+extern void __fini __P((void)) __attribute__ ((section (".fini")));
+#endif
 
 void
 __init()
