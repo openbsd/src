@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.22 2002/05/20 22:29:57 art Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.23 2002/06/09 06:05:04 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -180,9 +180,6 @@ gif_output(ifp, m, dst, rt)
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
-		log(LOG_NOTICE,
-		    "gif_output: attempt to use unconfigured interface %s\n",
-		    ifp->if_xname);
 		m_freem(m);
 		error = ENETDOWN;
 		goto end;
