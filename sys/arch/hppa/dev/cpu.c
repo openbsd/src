@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.16 2002/03/26 05:29:02 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.17 2002/05/08 03:16:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -118,7 +118,9 @@ cpuattach(parent, self, aux)
 		/* XXX p = hppa_mod_info(HPPA_TYPE_CPU,pdc_cversion[0]); */
 	}
 
-	printf (": %s rev %d ", p? p : cpu_typename, (*cpu_desidhash)());
+	printf (": %s ", p? p : cpu_typename);
+	if (sc->sc_dev.dv_xname)
+		(*cpu_desidhash)();
 
 	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
 			    &pdc_model)) < 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2002/05/08 03:06:45 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.70 2002/05/08 03:16:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -579,8 +579,16 @@ cpu_startup()
 #endif
 	} else {
 		const char *p, *q;
+		char buf[32];
+		int lev;
+
 		i = pdc_model.hvers >> 4;
 		p = hppa_mod_info(HPPA_TYPE_BOARD, i);
+		if (!p) {
+			sprintf(buf, "(UNKNOWN 0x%x)", i);
+			p = buf;
+		}
+
 		switch (pdc_model.arch_rev) {
 		default:
 		case 0:
@@ -603,11 +611,8 @@ cpu_startup()
 			break;
 		}
 
-		if (p)
-			sprintf(cpu_model, "HP9000/%s PA-RISC %s", p, q);
-		else
-			sprintf(cpu_model, "HP9000/(UNKNOWN %x) PA-RISC %s",
-				i, q);
+		lev = 'a' + (*cpu_desidhash)();
+		sprintf(cpu_model, "HP9000/%s PA-RISC %s%c", p, q, lev);
 		printf("%s\n", cpu_model);
 	}
 
