@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.2 2000/04/19 11:11:50 espie Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.3 2000/05/17 12:46:38 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -54,7 +54,7 @@ tracker-5.3.tgz: $F
         @MAINTAINER="espie@openbsd.org" \\
          SITES="ftp://ftp.uni-trier.de/pub/unix/audio/tracker/ " \\
          CIPHER="sha1" CKSUM="b0973d6a9c363caebd3a71547412f42b0681f323" \\
-         ${FETCH} "$@"
+         exec ${FETCH} "$@"
 
 
 .Ed
@@ -137,6 +137,9 @@ Activities a proper mirror should offer (in order of decreasing importance):
 .Bl -tag -width XXXXXXXXX
 .It Mirror new files
 Use a proper fetch script to download missing files,
+.It Run Pa ${PORTSDIR}/infrastructure/fetch/link-checksums
+This script creates permanent hardlinks that preserve distfiles against
+checksum changes.
 .It Verify all checksums
 All checksums should be verified from time to time, and maintainers
 notified of persistant discrepancies,
@@ -160,6 +163,37 @@ releases happen every six months, this delay should be longer than that.
 Sample scripts are provided in the
 .Pa ${PORTSDIR}/infrastructure/fetch
 directory.
+.Sh CAVEAT
+Changing checksums is a recurring problem that is outside the direct
+control of the 
+.Ox
+Project.  Some software distributors change distribution files without
+warning, without changing the file name proper.  Once the problem has been
+identified, the port maintainer should usually contact the software author
+to fix the problem, or, if the software author is unresponsive, the
+maintainer should use
+.Ev DIST_SUBDIR
+to provide some state to guard against shifting checksums.
+.Pp
+However, a more robust approach is also needed, so that ports users can
+depend on distfiles mirrors to carry what they need irregardless of those
+synchronization issues.  The 
+.Pa link-checksums
+script creates another access to the distfiles, indexed through the actual
+checksums that the files should match.  Provided mirroring is run
+sufficiently often, together with
+.Pa link-checksums ,
+two versions of the same distfile with respective checksums cksum1 and cksum2 
+will be available under the names
+.Pa ${DISTFILES}/sha1/cksum1/distfile
+and
+.Pa ${DISTFILES}/sha1/cksum2/distfile .
+.Pp
+Starting revision 1.281, if 
+.Ev REFETCH
+is set to true,
+.Pa bsd.port.mk 
+will try to retrieve files under that naming scheme as a last resort.
 .Sh FILES
 .Bl -tag -width XXXXXXXXX -compact
 .It Pa ${DISTDIR}/Makefile
@@ -168,6 +202,9 @@ Main mirroring Makefile
 Sample script usable to retrieve distfiles.
 .It Pa ${PORTSDIR}/infrastructure/fetch/check-all
 Sample script to check all distfiles checksums.
+.It Pa ${PORTSDIR}/infrastructure/fetch/link-checksums
+Populating checksums subdirectories with links, to guard against shifting
+checksums.
 .El
 .Sh HISTORY
 This infrastructure was introduced for
