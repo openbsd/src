@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.8 1999/10/09 19:47:31 angelos Exp $ */
+/*  $OpenBSD: environment.c,v 1.9 1999/10/26 22:31:38 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -49,6 +49,7 @@
 #include <unistd.h>
 #endif /* HAVE_IO_H */
 
+#include "header.h"
 #include "keynote.h"
 #include "assertion.h"
 
@@ -793,8 +794,8 @@ kn_query(struct environment *env, char **retvalues, int numval,
 
     /* Action set */
     for (en = env; en != (struct environment *) NULL; en = en->env_next)
-      if (kn_add_action(sessid, en->env_name, en->env_value, en->env_flags) ==
-	  -1)
+      if (kn_add_action(sessid, en->env_name, en->env_value,
+          en->env_flags) == -1)
       {
 	  serrno = keynote_errno;
 	  kn_close(sessid);
@@ -804,8 +805,8 @@ kn_query(struct environment *env, char **retvalues, int numval,
 
     /* Locally trusted assertions */
     for (i = 0; i < numtrusted; i++)
-      if (kn_add_assertion(sessid, trusted[i], trustedlen[i],
-	  ASSERT_FLAG_LOCAL) == -1)
+      if ((kn_add_assertion(sessid, trusted[i], trustedlen[i],
+	  ASSERT_FLAG_LOCAL) == -1) && (keynote_errno == ERROR_MEMORY))
       {
 	  serrno = keynote_errno;
 	  kn_close(sessid);
@@ -815,7 +816,8 @@ kn_query(struct environment *env, char **retvalues, int numval,
 
     /* Untrusted assertions */
     for (i = 0; i < numuntrusted; i++)
-      if (kn_add_assertion(sessid, untrusted[i], untrustedlen[i], 0) == -1)
+      if ((kn_add_assertion(sessid, untrusted[i], untrustedlen[i], 0) == -1)
+	  && (keynote_errno == ERROR_MEMORY))
       {
 	  serrno = keynote_errno;
 	  kn_close(sessid);

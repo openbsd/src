@@ -1,4 +1,4 @@
-/* $OpenBSD: config.hin,v 1.1 1999/10/01 01:08:29 angelos Exp $ */
+/* $OpenBSD: config.hin,v 1.2 1999/10/26 22:31:37 angelos Exp $ */
 
 /* config.hin.  Generated automatically from configure.in by autoheader.  */
 
@@ -25,6 +25,9 @@
 
 /* Define if you have the close function.  */
 #undef HAVE_CLOSE
+
+/* Define if you have the <crypto.h> header file.  */
+#undef HAVE_CRYPTO_H
 
 /* Define if you have the getopt function.  */
 #undef HAVE_GETOPT

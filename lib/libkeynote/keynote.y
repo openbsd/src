@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.y,v 1.5 1999/10/09 19:47:33 angelos Exp $ */
+/* $OpenBSD: keynote.y,v 1.6 1999/10/26 22:31:38 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -57,6 +57,7 @@
 #include <string.h>
 #endif /* STDC_HEADERS */
 
+#include "header.h"
 #include "keynote.h"
 #include "assertion.h"
 

@@ -1,6 +1,6 @@
-# $OpenBSD: README,v 1.5 1999/10/11 00:09:33 angelos Exp $
+# $OpenBSD: README,v 1.6 1999/10/26 22:31:37 angelos Exp $
 
-This is release 2.0 of the KeyNote trust management library reference
+This is release 2.1 of the KeyNote trust management library reference
 implementation (in case you are wondering, there was never an official 1.0
 release).
 
@@ -21,7 +21,7 @@ Compile tips:
 	   ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/
 
   OpenSSL can be found at:
-	   http://www.openssl.com/
+	   http://www.openssl.org/
 
 The Makefile creates the libkeynote.a library and the keynote program.
 *** Notice that the 4 programs of previous releases have been folded into one
@@ -41,7 +41,7 @@ To view them, use:
 Alternatively, you can just install them in your manpath. If your
 nroff does not support the -mandoc flag, use -man instead. For those
 systems that do not have nroff, the text version of the man pages are
-provided as well (the files with .0 suffixes in the same directory).
+provided as well (the files with .cat? suffixes in the same directory).
 
 The "keynote verify" function can be used to verify a request, given a
 set of assertions and an environment file. The directory testsuite/

@@ -1,4 +1,4 @@
-dnl $OpenBSD: configure.in,v 1.1 1999/10/01 01:08:29 angelos Exp $
+dnl $OpenBSD: configure.in,v 1.2 1999/10/26 22:31:38 angelos Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(assertion.h)
 
@@ -23,16 +23,23 @@ AC_PATH_PROG(ECHO, echo, /bin/echo)
 AC_PATH_PROG(SED, sed, /usr/bin/sed)
 
 dnl Checks for libraries.
-AC_CHECK_LIB(m, floor)
-AC_CHECK_LIB(RSAglue, RSA_ref_private_decrypt)
-AC_CHECK_LIB(rsaref, RSAPrivateDecrypt)
-AC_CHECK_LIB(crypto, i2a_ASN1_STRING)
+LIBS="-L/usr/lib -L/usr/local/lib -L/usr/ssl/lib -L/usr/openssl/lib\
+ -L/usr/local/ssl/lib -L/usr/local/openssl/lib -L/usr/pkg/lib -L/pkg/lib"
+
+AC_CHECK_LIB(m, floor, LIBS="$LIBS -lm")
+AC_CHECK_LIB(rsaref, RSAPrivateDecrypt, LIBS="$LIBS -lrsaref")
+AC_CHECK_LIB(crypto, i2a_ASN1_STRING, LIBS="$LIBS -lcrypto")
+AC_CHECK_LIB(RSAglue, RSA_ref_private_encrypt, LIBS="$LIBS -lRSAglue")
 
 dnl Checks for header files.
+CPPFLAGS="-I/usr/include -I/usr/local/include -I/usr/ssl/include\
+ -I/usr/local/ssl/include -I/usr/openssl/include -I/usr/pkg/include\
+ -I/usr/local/openssl/include -I/pkg/include"
+
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h regex.h sys/time.h io.h)
-AC_CHECK_HEADERS(ssl/crypto.h openssl/crypto.h memory.h)
+AC_CHECK_HEADERS(ssl/crypto.h openssl/crypto.h crypto.h memory.h)
 
 dnl Checks for other files
 AC_CHECK_FILES(/dev/urandom)
