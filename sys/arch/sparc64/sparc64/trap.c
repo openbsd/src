@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.4 2001/08/23 17:40:05 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 2001/08/25 12:27:30 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -49,6 +49,7 @@
  *	@(#)trap.c	8.4 (Berkeley) 9/23/93
  */
 
+#define DEBUG
 #define NEW_FPSTATE
 
 #include <sys/param.h>
@@ -148,7 +149,7 @@ int	rwindow_debug = RW_ERR;
 #define TDB_STOPCALL	0x200
 #define TDB_STOPCPIO	0x400
 #define TDB_SYSTOP	0x800
-int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/;
+int	trapdebug = TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT;
 /* #define __inline */
 #endif
 
@@ -1087,12 +1088,14 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 		lastdouble = 0;
 		if (curproc == NULL)
 			printf("NULL proc\n");
+#if 0
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
 			       curproc->p_sigctx.ps_sigmask.__bits[0], 
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
+#endif
 	}
 #endif
 	/* 
@@ -1171,8 +1174,8 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			segsz_t nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
-			rv = EFAULT;
+		} else if (rv == KERN_PROTECTION_FAILURE)
+			rv = KERN_INVALID_ADDRESS;
 	}
 	if (rv != 0) {
 		/*
@@ -1217,7 +1220,7 @@ kfault:
 			Debugger();
 		}
 #endif
-		if (rv == ENOMEM) {
+		if (rv == KERN_RESOURCE_SHORTAGE) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -1330,12 +1333,14 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		lastdouble = 0;
 		if (curproc == NULL)
 			printf("NULL proc\n");
+#if 0
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
 			       curproc->p_sigctx.ps_sigmask.__bits[0], 
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
+#endif
 	}
 #endif
 
@@ -1489,8 +1494,8 @@ text_access_fault(tf, type, pc, sfsr)
 			segsz_t nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
-			rv = EFAULT;
+		} else if (rv == KERN_PROTECTION_FAILURE)
+			rv = KERN_INVALID_ADDRESS;
 	}
 	if (rv != 0) {
 		/*
@@ -1626,12 +1631,14 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		lastdouble = 0;
 		if (curproc == NULL)
 			printf("NULL proc\n");
+#if 0
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
 			       curproc->p_sigctx.ps_sigmask.__bits[0], 
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
+#endif
 	}
 #endif
 	/* Now munch on protections... */
@@ -1665,8 +1672,8 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			segsz_t nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
-			rv = EFAULT;
+		} else if (rv == KERN_PROTECTION_FAILURE)
+			rv = KERN_INVALID_ADDRESS;
 	}
 	if (rv != 0) {
 		/*
@@ -1917,7 +1924,7 @@ syscall(tf, code, pc)
 		callp += code;
 
 #if defined(__arch64__) && !defined(COMPAT_NETBSD32)
-#ifdef DEBUG
+#if 0 /*def DEBUG*/
 #ifdef LKM
 		if ((curproc->p_flag & P_32) == 0)
 #endif
