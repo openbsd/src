@@ -1,5 +1,5 @@
-.\"	$OpenBSD: makedbm.8,v 1.4 1996/06/26 21:26:35 maja Exp $
-.\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
+.\"	$OpenBSD: makedbm.8,v 1.5 1997/07/22 10:53:00 maja Exp $
+.\" Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,10 @@
 .Nd create a YP database
 .Sh SYNOPSIS
 .Nm makedbm
-.Op Fl u Ar file
-.Nm /usr/sbin/makedbm
+.Fl u Ar file
+.Nm makedbm
+.Fl U Ar file
+.Nm makedbm
 .Op Fl bls
 .Op Fl i Ar yp_input_file
 .Op Fl o Ar yp_output_file
@@ -47,13 +49,19 @@
 .Ar outfile
 .Sh DESCRIPTION
 .Nm Makedbm
-is the utiliy in YP that creates the
-.Xr db 3
-database file containing the YP map.
-.Pp
+is the utiliy in YP that creates the database file containing the YP map.
+The databse format is a slightly modified version of ndbm.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl u
+Dump a database to standard output.
+.It Fl U
+Same as
+.Fl u
+but also try 
+.Xr db 3
+hash format.
 .It Fl b
 Interdomain. Include an entry in the database informing a YP server to use
 DNS to get information about unknown hosts. This option will only have

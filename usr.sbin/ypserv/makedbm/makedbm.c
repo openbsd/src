@@ -1,7 +1,7 @@
-/*	$OpenBSD: makedbm.c,v 1.7 1997/04/04 18:41:46 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.8 1997/07/22 10:53:01 maja Exp $ */
 
 /*
- * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
+ * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.7 1997/04/04 18:41:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.8 1997/07/22 10:53:01 maja Exp $";
 #endif
 
 #include <stdio.h>
@@ -45,8 +45,9 @@ static char rcsid[] = "$OpenBSD: makedbm.c,v 1.7 1997/04/04 18:41:46 deraadt Exp
 #include <sys/errno.h>
 #include "ypdb.h"
 #include "ypdef.h"
+#include "db.h"
 
-char *ProgramName = "makedbm";
+extern char *__progname;		/* from crt0.o */
 
 /*
  * Read one line
@@ -111,7 +112,7 @@ add_record(db, str1, str2, check)
 	status = ypdb_store(db, key, val, YPDB_INSERT);
 	
 	if (status != 0) {
-		printf("%s: problem storing %s %s\n",ProgramName,str1,str2);
+		printf("%s: problem storing %s %s\n",__progname,str1,str2);
 		exit(1);
 	}
 }
@@ -129,7 +130,7 @@ file_date(filename)
 	} else {
 		status = stat(filename, &finfo);
 		if (status < 0) {
-			fprintf(stderr, "%s: can't stat %s\n", ProgramName, filename);
+			fprintf(stderr, "%s: can't stat %s\n", __progname, filename);
 			exit(1);
 		}	
 		sprintf(datestr, "%010d", finfo.st_mtime);
@@ -139,8 +140,9 @@ file_date(filename)
 }
 
 void
-list_database(database)
+list_database(database,Uflag)
 	char	*database;
+	int	Uflag;
 {
 	DBM	*db;
 	datum	key,val;
@@ -148,7 +150,15 @@ list_database(database)
 	db = ypdb_open(database, O_RDONLY, 0444);
 	
 	if (db == NULL) {
-		fprintf(stderr, "%s: can't open database %s\n", ProgramName, database);
+
+		if (Uflag != 0) {
+			
+			if (db_hash_list_database(database)) return;
+			
+		}
+
+
+		fprintf(stderr, "%s: can't open database %s\n", __progname, database);
 		exit(1);
 	}
 	
@@ -195,7 +205,7 @@ create_database(infile,database,
 	} else {
 		data_file = fopen(infile, "r");
 		if (errno != 0) {
-			(void)fprintf(stderr,"%s: ",ProgramName);
+			(void)fprintf(stderr,"%s: ",__progname);
 			perror(infile);
 			exit(1);
 		}
@@ -203,7 +213,7 @@ create_database(infile,database,
 	
 	if (strlen(database) + strlen(YPDB_SUFFIX) > MAXPATHLEN) {
 		fprintf(stderr,"%s: %s: file name too long\n",
-			ProgramName, database);
+			__progname, database);
 		exit(1);
 	}
 	snprintf(db_outfile, sizeof(db_outfile), "%s%s", database, YPDB_SUFFIX);
@@ -219,7 +229,7 @@ create_database(infile,database,
 	if (strlen(database) + strlen(mapname) 
 			+ strlen(YPDB_SUFFIX) > MAXPATHLEN) {
 		fprintf(stderr,"%s: %s: directory name too long\n",
-			ProgramName, database);
+			__progname, database);
 		exit(1);
 	}
 
@@ -313,7 +323,7 @@ main (argc,argv)
 	int	argc;
 	char	*argv[];
 {
-	int	aflag, uflag, bflag, lflag, sflag;
+	int	aflag, uflag, bflag, lflag, sflag, Uflag;
 	char	*yp_input_file, *yp_output_file;
 	char	*yp_master_name,*yp_domain_name;
 	char	*infile,*outfile;
@@ -324,11 +334,15 @@ main (argc,argv)
 	
 	yp_input_file = yp_output_file = NULL;
 	yp_master_name = yp_domain_name = NULL;
-	aflag = uflag = bflag = lflag = sflag = 0;
+	aflag = uflag = bflag = lflag = sflag = Uflag = 0;
 	infile = outfile = NULL;
 	
-	while ((ch = getopt(argc, argv, "blsui:o:m:d:")) != -1)
+	while ((ch = getopt(argc, argv, "Ublsui:o:m:d:")) != -1)
 		switch (ch) {
+			case 'U': 
+				uflag++;
+				Uflag++;
+				break;
 			case 'b':
 		  		bflag++;
 				aflag++;
@@ -387,14 +401,14 @@ main (argc,argv)
 	
 	if (usage) {
 		fprintf(stderr,"%s%s%s",
-			"usage:\tmakedbm -u file\n\tmakedbm [-bls]",
+			"usage:\tmakedbm [-u|-U] file\n\tmakedbm [-bls]",
 			" [-i YP_INPUT_FILE] [-o YP_OUTPUT_FILE]\n\t\t",
 			"[-d YP_DOMAIN_NAME] [-m YP_MASTER_NAME] infile outfile\n");
 		exit(1);
 	}
 	
 	if (uflag != 0) {
-		list_database(infile);
+		list_database(infile,Uflag);
 	} else {
 		create_database(infile,outfile,
 				yp_input_file,yp_output_file,
