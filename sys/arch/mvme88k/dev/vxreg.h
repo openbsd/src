@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxreg.h,v 1.6 2003/12/27 21:58:20 miod Exp $ */
+/*	$OpenBSD: vxreg.h,v 1.7 2004/05/25 21:21:24 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. All rights reserved.
@@ -259,18 +259,18 @@ struct packet {      /* 68 bytes */
 	volatile char	 interrupt_level;	/* init only */
 	volatile u_char  device_number;
 	volatile char    filler3[1];
-	volatile short   ioctl_cmd_h;
-	volatile short   ioctl_cmd_l;
+	volatile u_short ioctl_cmd_h;
+	volatile u_short ioctl_cmd_l;
 #define	init_info_ptr_h	ioctl_cmd_h
 #define	init_info_ptr_l	ioctl_cmd_l
-	volatile short   ioctl_arg_h;
-	volatile short   ioctl_arg_l;
-	volatile short   ioctl_mode_h;
-	volatile short   ioctl_mode_l;
+	volatile u_short ioctl_arg_h;
+	volatile u_short ioctl_arg_l;
+	volatile u_short ioctl_mode_h;
+	volatile u_short ioctl_mode_l;
 #define	interrupt_vec	ioctl_mode_l
 	volatile char    filler4[6];
-	volatile short   error_h;
-	volatile short   error_l;
+	volatile u_short error_h;
+	volatile u_short error_l;
 	volatile short   event_code;
 	volatile char    filler5[6];
 	union {
@@ -292,14 +292,14 @@ struct envelope {	      /* 12 bytes */
 };
 
 struct channel {        /* 24 bytes */
-	volatile short             command_pipe_head_ptr_h;
-	volatile short             command_pipe_head_ptr_l;
-	volatile short             command_pipe_tail_ptr_h;
-	volatile short             command_pipe_tail_ptr_l;
-	volatile short             status_pipe_head_ptr_h;
-	volatile short             status_pipe_head_ptr_l;
-	volatile short             status_pipe_tail_ptr_h;
-	volatile short             status_pipe_tail_ptr_l;
+	volatile u_short           command_pipe_head_ptr_h;
+	volatile u_short           command_pipe_head_ptr_l;
+	volatile u_short           command_pipe_tail_ptr_h;
+	volatile u_short           command_pipe_tail_ptr_l;
+	volatile u_short           status_pipe_head_ptr_h;
+	volatile u_short           status_pipe_head_ptr_l;
+	volatile u_short           status_pipe_tail_ptr_h;
+	volatile u_short           status_pipe_tail_ptr_l;
 	volatile char              interrupt_level;
 	volatile char              interrupt_vec;
 	volatile char              channel_priority;
