@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.18 1997/02/19 16:49:18 millert Exp $
+#	$OpenBSD: daily,v 1.19 1997/05/30 07:11:52 deraadt Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -178,7 +178,7 @@ if [ -f /etc/Distfile ]; then
 	echo ""
 	echo "Running rdist:"
 	if [ -d /var/log/rdist ]; then
-		logf=`date | awk '{printf "%s.%s.%s", $6, $2, $3}'`
+		logf=`date +%Y.%b.%e`
 		rdist -f /etc/Distfile 2>&1 | tee /var/log/rdist/$logf
 	else
 		rdist -f /etc/Distfile 
