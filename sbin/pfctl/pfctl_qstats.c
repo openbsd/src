@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.1 2003/01/09 17:33:20 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.2 2003/01/09 18:24:42 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -77,6 +77,7 @@ struct pf_altq_node	*pfctl_find_altq_node(struct pf_altq_node *,
 void			 pfctl_print_altq_node(int, const struct pf_altq_node *,
 			     unsigned, int);
 void			 print_cbqstats(class_stats_t);
+void			 print_priqstats(struct priq_classstats);
 void			 pfctl_free_altq_node(struct pf_altq_node *);
 void			 pfctl_print_altq_nodestat(int,
 			    const struct pf_altq_node *);
@@ -246,6 +247,7 @@ pfctl_print_altq_nodestat(int dev, const struct pf_altq_node *a)
 		print_cbqstats(a->qstats.cbq_stats);
 		break;
 	case ALTQT_PRIQ:
+		print_priqstats(a->qstats.priq_stats);
 		break;
 	}
 }
@@ -257,8 +259,23 @@ print_cbqstats(class_stats_t qstats)
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    qstats.xmit_cnt.packets, qstats.xmit_cnt.bytes,
 	    qstats.drop_cnt.packets, qstats.drop_cnt.bytes);
-	printf("[ qcount: %3d/%3d  borrows: %6u  suspends: %6u ]\n",
+	printf("[ qlength: %3d/%3d  borrows: %6u  suspends: %6u ]\n",
 	    qstats.qcnt, qstats.qmax, qstats.borrows, qstats.delays);
+}
+
+void
+print_priqstats(struct priq_classstats qstats)
+{
+	printf("[ pkts: %10llu  bytes: %10llu  "
+	    "dropped pkts: %6llu bytes: %6llu ]\n",
+	    qstats.xmitcnt.packets, qstats.xmitcnt.bytes,
+	    qstats.dropcnt.packets, qstats.dropcnt.bytes);
+
+/* strange results. disable for now */
+#if 0
+	printf("[ qlength: %3d/%3d ]\n",
+	    qstats.qlength, qstats.qlimit);
+#endif
 }
 
 
