@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.74 2004/06/09 12:59:36 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.75 2004/06/09 14:02:44 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -463,7 +463,7 @@ message_validate_cert(struct message *msg, struct payload *p)
 
 /* Validate the certificate request payload P in message MSG.  */
 static int
-message_validate_cert_req(struct message * msg, struct payload * p)
+message_validate_cert_req(struct message *msg, struct payload *p)
 {
 	struct cert_handler *cert;
 	size_t	len = GET_ISAKMP_GEN_LENGTH(p->p) - ISAKMP_CERTREQ_AUTHORITY_OFF;
@@ -1526,7 +1526,7 @@ struct info_args {
  */
 void
 message_send_notification(struct message *msg, struct sa *isakmp_sa,
-    u_int16_t notify, struct proto * proto, int incoming)
+    u_int16_t notify, struct proto *proto, int incoming)
 {
 	struct info_args args;
 	struct sa      *doi_sa = proto ? proto->sa : isakmp_sa;

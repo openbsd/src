@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.24 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: transport.c,v 1.25 2004/06/09 14:02:44 ho Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -71,7 +71,7 @@ transport_init(void)
 
 /* Register another transport T.  */
 void
-transport_add(struct transport * t)
+transport_add(struct transport *t)
 {
 	LOG_DBG((LOG_TRANSPORT, 70, "transport_add: adding %p", t));
 	TAILQ_INIT(&t->sendq);
@@ -83,7 +83,7 @@ transport_add(struct transport * t)
 
 /* Add a referer to transport T.  */
 void
-transport_reference(struct transport * t)
+transport_reference(struct transport *t)
 {
 	t->refcnt++;
 	LOG_DBG((LOG_TRANSPORT, 95,
@@ -95,7 +95,7 @@ transport_reference(struct transport * t)
  * Remove a referer from transport T, removing all of T when no referers left.
  */
 void
-transport_release(struct transport * t)
+transport_release(struct transport *t)
 {
 	LOG_DBG((LOG_TRANSPORT, 95,
 		 "transport_release: transport %p had %d references", t,
@@ -147,7 +147,7 @@ transport_prio_sendqs_empty(void)
 
 /* Register another transport method T.  */
 void
-transport_method_add(struct transport_vtbl * t)
+transport_method_add(struct transport_vtbl *t)
 {
 	LIST_INSERT_HEAD(&transport_method_list, t, link);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.67 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.68 2004/06/09 14:02:44 ho Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -1026,7 +1026,7 @@ struct dumper {
 };
 
 static void
-conf_report_dump(struct dumper * node)
+conf_report_dump(struct dumper *node)
 {
 	/* Recursive, cleanup when we're done.  */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.94 2004/05/06 10:40:34 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.95 2004/06/09 14:02:44 ho Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -201,7 +201,7 @@ exchange_script(struct exchange *exchange)
  * 0 if it succeeds and the script is not finished and 1 if it's ready.
  */
 static int
-exchange_validate(struct message * msg)
+exchange_validate(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	int16_t		*pc = exchange->exch_pc;
@@ -1603,7 +1603,7 @@ exchange_free_aca_list(struct exchange *exchange)
 
 /* Obtain certificates from acceptable certification authority.  */
 int
-exchange_add_certs(struct message * msg)
+exchange_add_certs(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct certreq_aca *aca;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.78 2004/04/28 20:20:31 hshoexer Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.79 2004/06/09 14:02:44 ho Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -387,7 +387,7 @@ policydone:
  * XXX Split this huge function up and look for common code with main mode.
  */
 static int
-initiator_send_HASH_SA_NONCE(struct message * msg)
+initiator_send_HASH_SA_NONCE(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct doi     *doi = exchange->doi;
@@ -961,7 +961,7 @@ bail_out:
 
 /* Figure out what transform the responder chose.  */
 static int
-initiator_recv_HASH_SA_NONCE(struct message * msg)
+initiator_recv_HASH_SA_NONCE(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
@@ -1192,7 +1192,7 @@ initiator_recv_HASH_SA_NONCE(struct message * msg)
 }
 
 static int
-initiator_send_HASH(struct message * msg)
+initiator_send_HASH(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
@@ -1249,7 +1249,7 @@ initiator_send_HASH(struct message * msg)
 }
 
 static void
-post_quick_mode(struct message * msg)
+post_quick_mode(struct message *msg)
 {
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct ipsec_sa *isa = isakmp_sa->data;
@@ -1364,7 +1364,7 @@ post_quick_mode(struct message * msg)
  * XXX Describe in more detail.
  */
 static int
-responder_recv_HASH_SA_NONCE(struct message * msg)
+responder_recv_HASH_SA_NONCE(struct message *msg)
 {
 	struct payload *hashp, *kep, *idp;
 	struct sa      *sa;
@@ -1659,7 +1659,7 @@ cleanup:
 
 /* Reply with the transform we chose.  */
 static int
-responder_send_HASH_SA_NONCE(struct message * msg)
+responder_send_HASH_SA_NONCE(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
@@ -1778,7 +1778,7 @@ responder_send_HASH_SA_NONCE(struct message * msg)
 }
 
 static void
-gen_g_xy(struct message * msg)
+gen_g_xy(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
@@ -1798,7 +1798,7 @@ gen_g_xy(struct message * msg)
 }
 
 static int
-responder_recv_HASH(struct message * msg)
+responder_recv_HASH(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct sa      *isakmp_sa = msg->isakmp_sa;

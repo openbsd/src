@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.29 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.30 2004/06/09 14:02:44 ho Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -75,7 +75,7 @@ static int      cfg_responder_send_ATTR(struct message *);
 u_int8_t       *cfg_add_hash(struct message *);
 int		cfg_finalize_hash(struct message *, u_int8_t *, u_int8_t *,
 		    u_int16_t);
-int             cfg_verify_hash(struct message * msg);
+int             cfg_verify_hash(struct message *);
 
 /* Server: SET/ACK    Client; REQ/REPLY */
 int (*isakmp_cfg_initiator[]) (struct message *) = {
@@ -607,7 +607,7 @@ cfg_add_hash(struct message *msg)
 }
 
 int
-cfg_finalize_hash(struct message * msg, u_int8_t * hashp, u_int8_t * data,
+cfg_finalize_hash(struct message *msg, u_int8_t *hashp, u_int8_t *data,
     u_int16_t length)
 {
 	struct ipsec_sa *isa = msg->isakmp_sa->data;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.140 2004/04/15 18:39:26 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.141 2004/06/09 14:02:44 ho Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2260,7 +2260,7 @@ pf_key_v2_convert_id(u_int8_t * id, int idlen, size_t * reslen, int *idtype)
 
 /* Enable a flow given an SA.  */
 int
-pf_key_v2_enable_sa(struct sa * sa, struct sa * isakmp_sa)
+pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 {
 	struct ipsec_sa *isa = sa->data;
 	struct sockaddr *dst, *src;
@@ -2462,7 +2462,7 @@ passed:
 
 /* Disable a flow given a SA.  */
 static int
-pf_key_v2_disable_sa(struct sa * sa, int incoming)
+pf_key_v2_disable_sa(struct sa *sa, int incoming)
 {
 	struct ipsec_sa *isa = sa->data;
 	struct sockaddr *dst, *src;
@@ -2527,7 +2527,7 @@ pf_key_v2_disable_sa(struct sa * sa, int incoming)
  * of the IKE security association SA.  Also delete potential flows tied to it.
  */
 int
-pf_key_v2_delete_spi(struct sa * sa, struct proto * proto, int incoming)
+pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 {
 	struct sadb_msg msg;
 	struct sadb_sa  ssa;
@@ -2690,7 +2690,7 @@ cleanup:
 }
 
 static void
-pf_key_v2_stayalive(struct exchange * exchange, void *vconn, int fail)
+pf_key_v2_stayalive(struct exchange *exchange, void *vconn, int fail)
 {
 	char           *conn = vconn;
 	struct sa      *sa;
@@ -2725,7 +2725,7 @@ pf_key_v2_connection_check(char *conn)
 
 /* Handle a PF_KEY lifetime expiration message PMSG.  */
 static void
-pf_key_v2_expire(struct pf_key_v2_msg * pmsg)
+pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 {
 	struct sadb_msg *msg;
 	struct sadb_sa *ssa;
@@ -2832,7 +2832,7 @@ pf_key_v2_expire(struct pf_key_v2_msg * pmsg)
 
 /* Handle a PF_KEY SA ACQUIRE message PMSG.  */
 static void
-pf_key_v2_acquire(struct pf_key_v2_msg * pmsg)
+pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 {
 #if defined (SADB_X_ASKPOLICY)
 	struct sadb_msg *msg, askpolicy_msg;
@@ -3830,7 +3830,7 @@ fail:
 }
 
 static void
-pf_key_v2_notify(struct pf_key_v2_msg * msg)
+pf_key_v2_notify(struct pf_key_v2_msg *msg)
 {
 	switch (((struct sadb_msg *) TAILQ_FIRST(msg)->seg)->sadb_msg_type) {
 		case SADB_EXPIRE:
@@ -3880,8 +3880,8 @@ pf_key_v2_handler(int fd)
  * XXX Assumes OpenBSD GRPSPIS extension.  Should probably be moved to sysdep.c
  */
 int
-pf_key_v2_group_spis(struct sa * sa, struct proto * proto1,
-		     struct proto * proto2, int incoming)
+pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
+		     struct proto *proto2, int incoming)
 {
 #if defined (SADB_X_GRPSPIS)
 	struct sadb_msg msg;

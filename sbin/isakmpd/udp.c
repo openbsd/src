@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.71 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: udp.c,v 1.72 2004/06/09 14:02:44 ho Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -712,7 +712,7 @@ udp_fd_isset(struct transport *t, fd_set *fds)
  * module.
  */
 static void
-udp_handle_message(struct transport * t)
+udp_handle_message(struct transport *t)
 {
 	struct udp_transport *u = (struct udp_transport *) t;
 	u_int8_t        buf[UDP_SIZE];

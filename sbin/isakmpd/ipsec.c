@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.91 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.92 2004/06/09 14:02:44 ho Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -91,8 +91,8 @@ struct contact {
 int             contact_cnt = 0, contact_limit = 0;
 
 static int      addr_cmp(const void *, const void *);
-static int      ipsec_add_contact(struct message * msg);
-static int      ipsec_contacted(struct message * msg);
+static int      ipsec_add_contact(struct message *);
+static int      ipsec_contacted(struct message *);
 #ifdef USE_DEBUG
 static int      ipsec_debug_attribute(u_int16_t, u_int8_t *, u_int16_t, void *);
 #endif
@@ -230,7 +230,7 @@ ipsec_sa_check(struct sa *sa, void *v_arg)
 
 /* Find an SA with a "name" of DST, SPI & PROTO.  */
 struct sa      *
-ipsec_sa_lookup(struct sockaddr * dst, u_int32_t spi, u_int8_t proto)
+ipsec_sa_lookup(struct sockaddr *dst, u_int32_t spi, u_int8_t proto)
 {
 	struct dst_spi_proto_arg arg;
 
@@ -246,7 +246,7 @@ ipsec_sa_lookup(struct sockaddr * dst, u_int32_t spi, u_int8_t proto)
  * XXX At some point other selectors will matter here too.
  */
 static int
-ipsec_sa_check_flow(struct sa * sa, void *v_arg)
+ipsec_sa_check_flow(struct sa *sa, void *v_arg)
 {
 	struct sa      *sa2 = v_arg;
 	struct ipsec_sa *isa = sa->data, *isa2 = sa2->data;
@@ -689,7 +689,7 @@ ipsec_init(void)
 
 /* Given a message MSG, return a suitable IV (or rather keystate).  */
 static struct keystate *
-ipsec_get_keystate(struct message * msg)
+ipsec_get_keystate(struct message *msg)
 {
 	struct keystate *ks;
 	struct hash    *hash;

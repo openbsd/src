@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.47 2004/06/06 13:05:40 ho Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.48 2004/06/09 14:02:44 ho Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -383,7 +383,7 @@ bail_out:
 
 /* Figure out what transform the responder chose.  */
 int
-ike_phase_1_initiator_recv_SA(struct message * msg)
+ike_phase_1_initiator_recv_SA(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct sa      *sa = TAILQ_FIRST(&exchange->sa_list);
@@ -427,7 +427,7 @@ ike_phase_1_initiator_recv_SA(struct message * msg)
 
 /* Send our public DH value and a nonce to the responder.  */
 int
-ike_phase_1_initiator_send_KE_NONCE(struct message * msg)
+ike_phase_1_initiator_send_KE_NONCE(struct message *msg)
 {
 	struct ipsec_exch *ie = msg->exchange->data;
 
@@ -439,7 +439,7 @@ ike_phase_1_initiator_send_KE_NONCE(struct message * msg)
 
 /* Accept responder's public DH value and nonce.  */
 int
-ike_phase_1_initiator_recv_KE_NONCE(struct message * msg)
+ike_phase_1_initiator_recv_KE_NONCE(struct message *msg)
 {
 	if (ike_phase_1_recv_KE_NONCE(msg))
 		return -1;
@@ -452,7 +452,7 @@ ike_phase_1_initiator_recv_KE_NONCE(struct message * msg)
  * handle.
  */
 int
-ike_phase_1_responder_recv_SA(struct message * msg)
+ike_phase_1_responder_recv_SA(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct sa      *sa = TAILQ_FIRST(&exchange->sa_list);
@@ -508,7 +508,7 @@ ike_phase_1_responder_recv_SA(struct message * msg)
 
 /* Reply with the transform we chose.  */
 int
-ike_phase_1_responder_send_SA(struct message * msg)
+ike_phase_1_responder_send_SA(struct message *msg)
 {
 	/* Add the SA payload with the transform that was chosen.  */
 	return message_add_sa_payload(msg);
@@ -516,7 +516,7 @@ ike_phase_1_responder_send_SA(struct message * msg)
 
 /* Send our public DH value and a nonce to the peer.  */
 int
-ike_phase_1_send_KE_NONCE(struct message * msg, size_t nonce_sz)
+ike_phase_1_send_KE_NONCE(struct message *msg, size_t nonce_sz)
 {
 	/* Public DH key.  */
 	if (ipsec_gen_g_x(msg)) {
@@ -538,7 +538,7 @@ ike_phase_1_send_KE_NONCE(struct message * msg, size_t nonce_sz)
 
 /* Receive our peer's public DH value and nonce.  */
 int
-ike_phase_1_recv_KE_NONCE(struct message * msg)
+ike_phase_1_recv_KE_NONCE(struct message *msg)
 {
 	/* Copy out the initiator's DH public value.  */
 	if (ipsec_save_g_x(msg)) {
@@ -564,7 +564,7 @@ ike_phase_1_recv_KE_NONCE(struct message * msg)
  * thus speeding up exchanges.
  */
 int
-ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
+ike_phase_1_post_exchange_KE_NONCE(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
@@ -739,7 +739,7 @@ ike_phase_1_post_exchange_KE_NONCE(struct message * msg)
 }
 
 int
-ike_phase_1_responder_send_ID_AUTH(struct message * msg)
+ike_phase_1_responder_send_ID_AUTH(struct message *msg)
 {
 	if (ike_phase_1_send_ID(msg))
 		return -1;
@@ -748,7 +748,7 @@ ike_phase_1_responder_send_ID_AUTH(struct message * msg)
 }
 
 int
-ike_phase_1_send_ID(struct message * msg)
+ike_phase_1_send_ID(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	u_int8_t       *buf;
@@ -842,7 +842,7 @@ ike_phase_1_send_ID(struct message * msg)
 }
 
 int
-ike_phase_1_send_AUTH(struct message * msg)
+ike_phase_1_send_AUTH(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
@@ -865,7 +865,7 @@ ike_phase_1_send_AUTH(struct message * msg)
 
 /* Receive ID and HASH and check that the exchange has been consistent.  */
 int
-ike_phase_1_recv_ID_AUTH(struct message * msg)
+ike_phase_1_recv_ID_AUTH(struct message *msg)
 {
 	if (ike_phase_1_recv_ID(msg))
 		return -1;
@@ -875,7 +875,7 @@ ike_phase_1_recv_ID_AUTH(struct message * msg)
 
 /* Receive ID.  */
 int
-ike_phase_1_recv_ID(struct message * msg)
+ike_phase_1_recv_ID(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct payload *payload;
@@ -986,7 +986,7 @@ ike_phase_1_recv_ID(struct message * msg)
 
 /* Receive HASH and check that the exchange has been consistent.  */
 int
-ike_phase_1_recv_AUTH(struct message * msg)
+ike_phase_1_recv_AUTH(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
