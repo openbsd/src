@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.130 2003/08/14 15:20:29 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.131 2003/09/03 15:55:41 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -134,6 +134,7 @@ const struct pci_matchid ubsec_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5820 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5821 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5822 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5823 },
 	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SCA1K },
 	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_5821 },
 };
@@ -178,7 +179,8 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822))
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5823))
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
 		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.25 2003/08/12 19:42:46 jason Exp $
+.\"	$OpenBSD: ubsec.4,v 1.26 2003/09/03 15:55:41 jason Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -57,6 +57,8 @@ Faster version of the BCM5820.
 This is the chip found on the Sun Crypto Accelerator 1000.
 .It Broadcom BCM5822
 Faster version of the BCM5820.
+.It Broadcom BCM5823
+Faster version of the BCM5822.
 .El
 .Pp
 The
@@ -90,3 +92,4 @@ device driver appeared in
 .Ox 2.8 .
 .Sh BUGS
 The BCM5801 and BCM5802 have not actually been tested.
+Also, some of the newer chips support AES but it is not supported by the driver.
