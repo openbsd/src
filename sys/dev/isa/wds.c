@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.16 1999/02/13 00:59:28 fgsch Exp $	*/
+/*	$OpenBSD: wds.c,v 1.17 2001/01/29 07:04:10 mickey Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -377,7 +377,7 @@ AGAIN:
 		}
 #endif /* WDSDEBUG */
 
-		untimeout(wds_timeout, scb);
+		timeout_del(&scb->xs->stimeout);
 #ifdef notyet
 		isadma_copyfrombuf((caddr_t)scb, SCB_PHYS_SIZE,
 		    1, scb->scb_phys);
@@ -736,8 +736,10 @@ wds_start_scbs(sc)
 		c = WDSC_MSTART(wmbo - wmbx->mbo);
 		wds_cmd(sc, &c, sizeof c);
 
-		if ((scb->flags & SCB_POLLED) == 0)
-			timeout(wds_timeout, scb, (scb->timeout * hz) / 1000);
+		if ((scb->flags & SCB_POLLED) == 0) {
+			timeout_set(&scb->xs->stimeout, wds_timeout, scb);
+			timeout_add(&scb->xs->stimeout, (scb->timeout * hz) / 1000);
+		}
 
 		++sc->sc_mbofull;
 		wds_nextmbx(wmbo, wmbx, mbo);
@@ -860,7 +862,7 @@ wds_find(ia, sc)
 
 	/*
 	 * Sending a command causes the CMDRDY bit to clear.
- 	 */
+	 */
 	c = bus_space_read_1(iot, ioh, WDS_STAT);
 	for (i = 0; i < 4; i++)
 		if ((bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_RDY) != 0) {
@@ -1097,7 +1099,7 @@ wds_scsi_cmd(xs)
 
 	/* NOTE: cmd.write may be OK as 0x40 (disable direction checking)
 	 * on boards other than the WD-7000V-ASE. Need this for the ASE:
- 	 */
+	 */
 	scb->cmd.write = (xs->flags & SCSI_DATA_IN) ? 0x80 : 0x00;
 
 	if (!NEEDBUFFER(sc) && xs->datalen) {
