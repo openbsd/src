@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.15 1999/03/12 04:36:02 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.16 1999/03/15 19:12:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.137 1999/03/03 23:43:39 juergen Exp $
+ * $From: curses.priv.h,v 1.138 1999/03/14 12:25:18 tom Exp $
  *
  *	curses.priv.h
  *
@@ -633,7 +633,7 @@ extern void _nc_expanded(void);
 extern void *_nc_doalloc(void *, size_t);
 #if !HAVE_STRDUP
 #define strdup _nc_strdup
-extern char *_nc_strdup(char *);
+extern char *_nc_strdup(const char *);
 #endif
 
 /* doupdate.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: doalloc.c,v 1.2 1999/03/02 06:23:28 millert Exp $	*/
+/*	$OpenBSD: doalloc.c,v 1.3 1999/03/15 19:12:23 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: doalloc.c,v 1.4 1999/02/27 19:58:33 tom Exp $")
+MODULE_ID("$From: doalloc.c,v 1.5 1999/03/14 12:25:27 tom Exp $")
 
 void *_nc_doalloc(void *oldp, size_t amount)
 {
@@ -60,13 +60,13 @@ void *_nc_doalloc(void *oldp, size_t amount)
 }
 
 #if !HAVE_STRDUP
-char *_nc_strdup(char *src)
+char *_nc_strdup(const char *src)
 {
     char *dst;
     if (src != 0) {
-	char *dst = typeMalloc(char, strlen(src) + 1);
+	*dst = typeMalloc(char, strlen(src) + 1);
 	if (dst != 0) {
-	    (void)strcpy(dst, src):
+	    (void)strcpy(dst, src);
 	}
     } else {
 	dst = 0;
