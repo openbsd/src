@@ -1,25 +1,26 @@
-.\"	$OpenBSD: ipf.4,v 1.19 2000/02/19 21:46:45 aaron Exp $
-.TH IPF 4
-.SH NAME
-ipf \- packet filtering kernel interface
-.SH SYNOPSIS
-#include <netinet/ip_fil_compat.h>
-.br
-#include <netinet/ip_fil.h>
-.SH IOCTLS
-.PP
+.\"	$OpenBSD: ipf.4,v 1.20 2000/03/16 00:36:38 aaron Exp $
+.Dd March 15, 2000
+.Dt IPF 4
+.Os
+.Sh NAME
+.Nm ipf
+.Nd "packet filtering kernel interface"
+.Sh SYNOPSIS
+.Fd #include <netinet/ip_fil_compat.h>
+.Fd #include <netinet/ip_fil.h>
+.Sh DESCRIPTION
+.Pp
 To add and delete rules to the filter list, three 'basic' ioctls are provided
-for use.  The ioctls are called as:
-.LP
-.nf
+for use.
+The ioctls are called as:
+.Bd -literal -offset indent
 	ioctl(fd, SIOCADDFR, struct frentry *)
 	ioctl(fd, SIOCDELFR, struct frentry *)
 	ioctl(fd, SIOCIPFFL, int *)
-.fi
-.PP
+.Ed
+.Pp
 However, the full complement is as follows:
-.LP
-.nf
+.Bd -literal -offset indent
 	ioctl(fd, SIOCADAFR, struct frentry *) (same as SIOCADDFR)
 	ioctl(fd, SIOCRMAFR, struct frentry *) (same as SIOCDELFR)
 	ioctl(fd, SIOCADIFR, struct frentry *)
@@ -39,21 +40,28 @@ However, the full complement is as follows:
 	ioctl(fd, SIOCAUTHW, struct fr_info *)
 	ioctl(fd, SIOCAUTHR, struct fr_info *)
 	ioctl(fd, SIOCATHST, struct fr_authstat *)
-.fi
-.PP
-The variations, SIOCADAFR vs. SIOCADIFR, allow operation on the two lists,
-active and inactive, respectively.  All of these ioctls are implemented
+.Ed
+.Pp
+The variations,
+.Dv SIOCADAFR
+versus
+.Dv SIOCADIFR ,
+allow operation on the two lists,
+active and inactive, respectively.
+All of these ioctls are implemented
 as being routing ioctls and thus the same rules for the various routing
 ioctls and the file descriptor are employed, mainly being that the fd must
-be that of the device associated with the module (i.e., /dev/ipl).
-.LP
-.PP
+be that of the device associated with the module (i.e.,
+.Pa /dev/ipl ) .
+.Pp
 The three groups of ioctls above perform adding rules to the end of the
 list (SIOCAD*), deletion of rules from any place in the list (SIOCRM*)
-and insertion of a rule into the list (SIOCIN*).  The rule place into
-which it is inserted is stored in the "fr_hits" field, below.
-.LP
-.nf
+and insertion of a rule into the list (SIOCIN*).
+The rule place into
+which it is inserted is stored in the
+.Fa fr_hits
+field, below.
+.Bd -literal
 typedef struct  frentry {
         struct  frentry *fr_next;
         u_short fr_group;       /* group to which this rule belongs */
@@ -100,17 +108,18 @@ typedef struct  frentry {
         struct  frdest  fr_tif; /* "to" interface */
         struct  frdest  fr_dif; /* duplicate packet interfaces */
 } frentry_t;
-.fi
-.PP
+.Ed
+.Pp
 When adding a new rule, all unused fields (in the filter rule) should be
-initialized to be zero.  To insert a rule, at a particular position in the
+initialized to be zero.
+To insert a rule, at a particular position in the
 filter list, the number of the rule which it is to be inserted before must
-be put in the "fr_hits" field (the first rule is number 0).
-.LP
-.PP
-Flags which are recognised in fr_pass:
-.nf
-
+be put in the
+.Fa fr_hits
+field (the first rule is number 0).
+.Pp
+Flags which are recognized in fr_pass:
+.Bd -literal
      FR_BLOCK        0x000001   /* do not allow packet to pass */
      FR_PASS         0x000002   /* allow packet to pass */
      FR_OUTQUE       0x000004   /* outgoing packets */
@@ -137,13 +146,14 @@ Flags which are recognised in fr_pass:
      FR_NOTDSTIP     0x100000   /* not the dst IP# */
      FR_AUTH         0x200000   /* use authentication */
      FR_PREAUTH      0x400000   /* require preauthentication */
-	
-.fi
-.PP
-Values for fr_scomp and fr_dcomp (source and destination port value
-comparisons) :
-.LP
-.nf
+.Ed
+.Pp
+Values for
+.Fa fr_scomp
+and
+.Fa fr_dcomp
+(source and destination port value comparisons):
+.Bd -literal
 	FR_NONE         0
 	FR_EQUAL        1
 	FR_NEQUAL       2
@@ -153,41 +163,51 @@ comparisons) :
 	FR_GREATERTE    6
 	FR_OUTRANGE     7
 	FR_INRANGE      8
-.fi
-.PP
-The third ioctl, SIOCIPFFL, flushes either the input filter list, the
+.Ed
+.Pp
+The third ioctl,
+.Dv SIOCIPFFL ,
+flushes either the input filter list, the
 output filter list or both and it returns the number of filters removed
-from the list(s).  The values which it will take and recognise are FR_INQUE
-and FR_OUTQUE (see above). This ioctl is also implemented for
+from the list(s).
+The values which it will take and recognize are
+.Dv FR_INQUE
+and
+.Dv FR_OUTQUE
+(see above).
+This ioctl is also implemented for
 .Pa /dev/ipstate
 and will flush all state tables entries if passed 0 or just all those
 which are not established if passed 1.
-
-.IP "\fBGeneral Logging Flags\fP" 0
+.Ss General logging flags
 There are two flags which can be set to log packets independently of the
-rules used.  These allow for packets which are either passed or blocked
-to be logged.  To set (and clear)/get these flags, two ioctls are
+rules used.
+These allow for packets which are either passed or blocked
+to be logged.
+To set (and clear) or get these flags, two ioctls are
 provided:
-.IP SIOCSETFF 16
-Takes an unsigned integer as the parameter.  The flags are then set to
+.Bl -tag -width Ds
+.It SIOCSETFF
+Takes an unsigned integer as the parameter.
+The flags are then set to
 those provided (clearing/setting all in one).
-.nf
-
+.Bd -literal
 	FF_LOGPASS	0x10000000
 	FF_LOGBLOCK	0x20000000
 	FF_LOGNOMATCH	0x40000000
 	FF_BLOCKNONIP	0x80000000    /* Solaris 2.x only */
-.fi
-.IP SIOCGETFF 16
-Takes a pointer to an unsigned integer as the parameter.  A copy of the
-flags currently in used is copied to user space.
-.LP
-.IP "\fBFilter statistics\fP" 0
+.Ed
+.Pp
+.It SIOCGETFF
+Takes a pointer to an unsigned integer as the parameter.
+A copy of the flags currently in used is copied to user space.
+.El
+.Ss Filter statistics
 Statistics on the various operations performed by this package on packets
-is kept inside the kernel.  These statistics apply to packets traversing
-through the kernel.  To retrieve this structure, use this ioctl:
-.nf
-
+is kept inside the kernel.
+These statistics apply to packets traversing through the kernel.
+To retrieve this structure, use this ioctl:
+.Bd -literal
 	ioctl(fd, SIOCGETFS, struct friostat *)
 
 struct  friostat        {
@@ -231,28 +251,45 @@ struct	filterstats {
         u_long  fr_drop;        /* packets dropped - no info for them! */
 #endif
 };
-.fi
+.Ed
+.Pp
 If we wanted to retrieve all the statistics and reset the counters back to
-0, then the ioctl() call would be made to SIOCFRZST rather than SIOCGETFS.
+0, then the ioctl() call would be made to
+.Dv SIOCFRZST
+rather than
+.Dv SIOCGETFS .
 In addition to the statistics above, each rule keeps a hit count, counting
-both number of packets and bytes.  To reset these counters for a rule,
-load the various rule information into a frentry structure and call
-SIOCZRLST.
-.IP "Swapping Active lists" 0
+both number of packets and bytes.
+To reset these counters for a rule,
+load the various rule information into a
+.Fa frentry
+structure and call
+.Dv SIOCZRLST .
+.Ss Swapping active lists
 IP Filter supports two lists of rules for filtering and accounting: an
-active list and an inactive list.  This allows for large scale rule base
+active list and an inactive list.
+This allows for large scale rule base
 changes to be put in place atomically with otherwise minimal interruption.
-Which of the two is active can be changed using the SIOCSWAPA ioctl.  It
-is important to note that no passed argument is recognised and that the
+Which of the two is active can be changed using the
+.Dv SIOCSWAPA
+ioctl.
+It is important to note that no passed argument is recognized and that the
 value returned is that of the list which is now inactive.
-.br
-.SH FILES
-/dev/ipauth
-.br
-/dev/ipl
-.br
-/dev/ipstate
-.SH SEE ALSO
-ipftest(1), ipl(4), ipnat(4), ipf(5), ipnat(5), ipf(8), ipfstat(8), ipmon(8), ipnat(8)
-.br
+.Sh FILES
+.Bl -tag -width /dev/ipstate -compact
+.It Pa /dev/ipauth
+.It Pa /dev/ipl
+.It Pa /dev/ipstate
+.El
+.Sh SEE ALSO
+.Xr ipftest 1 ,
+.Xr ipl 4 ,
+.Xr ipnat 4 ,
+.Xr ipf 5 ,
+.Xr ipnat 5 ,
+.Xr ipf 8 ,
+.Xr ipfstat 8 ,
+.Xr ipmon 8 ,
+.Xr ipnat 8
+.Pp
 http://coombs.anu.edu.au/~avalon
