@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2004/09/15 00:18:12 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.21 2004/09/15 00:23:08 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,7 +39,6 @@ static struct ntpd_conf		*conf;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
-static int			 pdebug = 1;
 char				*infile;
 
 int	 yyerror(const char *, ...);
@@ -50,7 +49,6 @@ int	 lgetc(FILE *);
 int	 lungetc(int);
 int	 findeol(void);
 int	 yylex(void);
-int	 atoul(char *, u_long *);
 
 typedef struct {
 	union {
@@ -230,15 +228,10 @@ lookup(char *s)
 	p = bsearch(s, keywords, sizeof(keywords)/sizeof(keywords[0]),
 	    sizeof(keywords[0]), kw_cmp);
 
-	if (p) {
-		if (pdebug > 1)
-			fprintf(stderr, "%s: %d\n", s, p->k_val);
+	if (p)
 		return (p->k_val);
-	} else {
-		if (pdebug > 1)
-			fprintf(stderr, "string: %s\n", s);
+	else
 		return (STRING);
-	}
 }
 
 #define MAXPUSHBACK	128
@@ -421,20 +414,4 @@ parse_config(char *filename, struct ntpd_conf *xconf)
 	fclose(fin);
 
 	return (errors ? -1 : 0);
-}
-
-int
-atoul(char *s, u_long *ulvalp)
-{
-	u_long	 ulval;
-	char	*ep;
-
-	errno = 0;
-	ulval = strtoul(s, &ep, 0);
-	if (s[0] == '\0' || *ep != '\0')
-		return (-1);
-	if (errno == ERANGE && ulval == ULONG_MAX)
-		return (-1);
-	*ulvalp = ulval;
-	return (0);
 }
