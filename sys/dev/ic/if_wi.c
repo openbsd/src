@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.19 2002/02/19 01:24:58 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.20 2002/02/20 20:52:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -122,7 +122,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.19 2002/02/19 01:24:58 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.20 2002/02/20 20:52:42 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -157,10 +157,6 @@ STATIC int wi_media_change __P((struct ifnet *));
 STATIC void wi_media_status __P((struct ifnet *, struct ifmediareq *));
 
 STATIC int wi_set_ssid __P((struct ieee80211_nwid *, u_int8_t *, int));
-STATIC void wi_request_fill_ssid __P((struct wi_req *,
-    struct ieee80211_nwid *));
-STATIC int wi_write_ssid __P((struct wi_softc *, int, struct wi_req *,
-    struct ieee80211_nwid *));
 STATIC int wi_set_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
 STATIC int wi_get_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
 STATIC int wi_sync_media __P((struct wi_softc *, int, int));
