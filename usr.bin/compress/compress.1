@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.21 2003/07/17 20:06:01 millert Exp $
+.\"	$OpenBSD: compress.1,v 1.22 2003/07/20 13:25:52 millert Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -318,6 +318,18 @@ more files were not compressed because they would have grown in
 size (and
 .Fl f
 was not specified).
+.Sh RETURN VALUES
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width flag -compact
+.It Li 0
+The file was compressed successfully.
+.It Li 1
+An error occurred.
+.It Li 2
+A warning occurred.
 .Sh SEE ALSO
 .Rs
 .%A Welch, Terry A.
