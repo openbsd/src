@@ -677,7 +677,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	else if (user_class && user_class->group->filename)
 		strlcpy(state->filename, user_class->group->filename,
 		    sizeof state->filename);
-	else if (vendor_class  && vendor_class->group->filename)
+	else if (vendor_class && vendor_class->group->filename)
 		strlcpy(state->filename, vendor_class->group->filename,
 		    sizeof state->filename);
 	else if (packet->raw->file[0])
@@ -694,7 +694,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->server_name = lease->host->group->server_name;
 	else if (user_class && user_class->group->server_name)
 		state->server_name = user_class->group->server_name;
-	else if (vendor_class  && vendor_class->group->server_name)
+	else if (vendor_class && vendor_class->group->server_name)
 		state->server_name = vendor_class->group->server_name;
 	else if (lease->subnet->group->server_name)
 		state->server_name = lease->subnet->group->server_name;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.5 2004/04/18 01:19:07 henning Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.6 2004/04/18 01:32:40 deraadt Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -284,7 +284,7 @@ lose:
 	memcpy(&raw.yiaddr, ip_address.iabuf, sizeof(raw.yiaddr));
 
 	/* Figure out the address of the next server. */
-	if (hp  && hp->group->next_server.len)
+	if (hp && hp->group->next_server.len)
 		memcpy(&raw.siaddr, hp->group->next_server.iabuf, 4);
 	else if (subnet->group->next_server.len)
 		memcpy(&raw.siaddr, subnet->group->next_server.iabuf, 4);
