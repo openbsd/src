@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.33 2004/08/06 13:25:30 pefo Exp $ */
+/* $OpenBSD: vga.c,v 1.34 2004/11/04 15:03:53 mickey Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -682,13 +682,25 @@ vga_free_screen(v, cookie)
 	struct vga_config *vc = vs->cfg;
 
 	LIST_REMOVE(vs, next);
-	if (vs != &vga_console_screen)
+	vc->nscreens--;
+	if (vs != &vga_console_screen) {
+		/*
+		 * deallocating the one but last screen
+		 * removes backing store for the last one
+		 */
+		if (vc->nscreens == 1)
+			free(vc->screens.lh_first->pcs.mem, M_DEVBUF);
+
+		/* Last screen has no backing store */
+		if (vc->nscreens != 0)
+			free(vs->pcs.mem, M_DEVBUF);
+
 		free(vs, M_DEVBUF);
-	else
+	} else
 		panic("vga_free_screen: console");
 
 	if (vc->active == vs)
-		vc->active = 0;
+		vc->active = NULL;
 }
 
 void
