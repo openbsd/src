@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.698 2003/12/15 22:28:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.699 2003/12/17 16:49:29 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2259,6 +2259,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DGE-550T",
 	},
 	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
+	    "DGE-530T",
+	},
+	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
 	    "SmartCache/Raid",
 	},
@@ -3733,6 +3737,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LEVEL1, PCI_PRODUCT_LEVEL1_LXT1001,
 	    "LXT1001",
+	},
+	{
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032,
+	    "EG1032",
+	},
+	{
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064,
+	    "EG1064",
 	},
 	{
 	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC,
@@ -7925,6 +7937,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_USR2,
 	    "US Robotics",
+	},
+	{
+	    PCI_VENDOR_LINKSYS,
+	    "Linksys",
 	},
 	{
 	    PCI_VENDOR_NETOCTAVE,

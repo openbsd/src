@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.698 2003/12/15 22:28:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.699 2003/12/17 16:49:29 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -240,6 +240,7 @@
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
 #define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet */
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
+#define	PCI_VENDOR_LINKSYS	0x1737		/* Linksys */
 #define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
@@ -952,6 +953,7 @@
 #define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */
 #define	PCI_PRODUCT_DLINK_530TXPLUS	0x1300		/* 530TX+ */
 #define	PCI_PRODUCT_DLINK_DGE550T	0x4000		/* DGE-550T */
+#define	PCI_PRODUCT_DLINK_DGE530T	0x4c00		/* DGE-530T */
 
 /* Distributed Processing Technology products */
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/Raid */
@@ -1405,6 +1407,10 @@
 
 /* Level 1 (Intel) */
 #define	PCI_PRODUCT_LEVEL1_LXT1001	0x0001		/* LXT1001 */
+
+/* Linksys products */
+#define	PCI_PRODUCT_LINKSYS_EG1032	0x1032		/* EG1032 */
+#define	PCI_PRODUCT_LINKSYS_EG1064	0x1064		/* EG1064 */
 
 /* Lite-On Communications */
 #define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* PNIC */
