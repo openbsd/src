@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.11 2004/01/25 21:41:31 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.12 2004/01/26 20:38:53 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -166,15 +166,25 @@ void
 PPC1_mem_regions(memp, availp)
 	struct mem_region **memp, **availp;
 {
-	bzero(&PPC1mem[0], sizeof(struct mem_region) * PPC1_REGIONS);
-	bzero(&PPC1avail[0], sizeof(struct mem_region) * PPC1_REGIONS);
+	extern char *start;
+
 	/*
 	 * Get memory.
 	 */
 	PPC1mem[0].start = 0;
 	PPC1mem[0].size = size_memory();
 
-	PPC1avail[0] = PPC1mem[0];
+	/*
+	 * PPC1Bug manual states that the BUG uses ``about 768KB'' at the
+	 * top at the physical memory, but then only shows 512KB in the
+	 * example!
+	 * Reserve 1MB to be on the safe side.
+	 *
+	 * We also need to reserve space below kernelstart, if only because
+	 * the trap vectors lie there.
+	 */
+	PPC1avail[0].start = (u_long)&start;
+	PPC1avail[0].size = PPC1mem[0].size - 1024 * 1024 - PPC1avail[0].start;
 
 	*memp = PPC1mem;
 	*availp = PPC1avail;
