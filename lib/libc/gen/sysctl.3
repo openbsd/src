@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.43 2000/05/25 01:26:11 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.44 2000/05/25 06:19:03 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -503,27 +503,55 @@ Get or set various global information about IPv4
 The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
-.Bl -column "Protocol name" "Variable name" "integer" -offset indent
+.Bl -column "Protocol name" "ipsec-soft-firstuse" "integer" -offset indent
 .It Sy Protocol name	Variable name	Type	Changeable
 .It ip	forwarding	integer	yes
 .It ip	redirect	integer	yes
 .It ip	ttl	integer	yes
+.It ip	sourceroute	integer	yes
+.It ip	directed-broadcast	integer	yes
+.It ip	portfirst	integer	yes
+.It ip	portlast	integer	yes
+.It ip	porthifirst	integer	yes
+.It ip	porthilast	integer	yes
+.It ip	maxqueue	integer	yes
 .It ip	encdebug	integer	yes
-.It ipip	allow	integer	yes
-.It gre	allow	integer	yes
-.It mobileip	allow	integer	yes
-.It etherip	allow	integer	yes
+.It ip	ipsec-acl	integer	yes
+.It ip	ipsec-invalid-life	integer	yes
+.It ip	ipsec-pfs	integer	yes
+.It ip	ipsec-soft-allocs	integer	yes
+.It ip	ipsec-allocs	integer	yes
+.It ip	ipsec-soft-bytes	integer	yes
+.It ip	ipsec-bytes	integer	yes
+.It ip	ipsec-timeout	integer	yes
+.It ip	ipsec-soft-timeout	integer	yes
+.It ip	ipsec-soft-firstuse	integer	yes
+.It ip	ipsec-firstuse	integer	yes
+.It ip	ipsec-enc-alg	string	yes
+.It ip	ipsec-auth-alg	string	yes
 .It icmp	maskrepl	integer	yes
+.It icmp	bmcastecho	integer	yes
+.It ipip	allow	integer	yes
 .It tcp	rfc1323	integer	yes
-.It tcp	baddynamic	array	yes
 .It tcp	ident	structure	no
+.It tcp	keepinittime	integer	yes
 .It tcp	keepidle	integer	yes
 .It tcp	keepintvl	integer	yes
 .It tcp	slowhz	integer	yes
+.It tcp	baddynamic	array	yes
+.It tcp	recvspace	integer	yes
+.It tcp	sendspace	integer	yes
 .It tcp	sack	integer	yes
 .It tcp	mssdflt	integer	yes
 .It udp	checksum	integer	yes
 .It udp	baddynamic	array	yes
+.It udp	recvspace	integer	yes
+.It udp	sendspace	integer	yes
+.It gre	allow	integer	yes
+.It esp	enable	integer	yes
+.It ah	enable	integer	yes
+.It mobileip	allow	integer	yes
+.It etherip	allow	integer	yes
 .El
 .Pp
 The variables are as follows:
@@ -548,6 +576,13 @@ packet sourced by
 the system.
 This value applies to normal transport protocols, not to
 .Tn ICMP .
+.It Li ip.sourceroute
+Returns 1 when forwarding of source-routed packets is enabled for
+the host.
+This value may only be changed if the kernel security
+level is less than 1.
+.It Li ip.directed-broadcast
+Returns 1 if directed broadcast behavior is enabled for the host.
 .It Li ip.encdebug
 Returns 1 when error message reporting is enabled for the host.
 If the kernel has been compiled with the
@@ -717,6 +752,14 @@ The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
 of a clock that ticks tcp.slowhz times per second.
 (That is, their values must be divided by the tcp.slowhz value to get times
 in seconds.)
+.It Li tcp.sendspace
+Returns the default
+.Tn TCP
+send buffer size.
+.It Li tcp.recvspace
+Returns the default
+.Tn TCP
+receive buffer size.
 .It Li tcp.sack
 Returns 1 if RFC2018 Selective Acknowledgements are enabled.
 .It Li tcp.mssdflt
@@ -735,6 +778,14 @@ Analogous to
 but for
 .Tn UDP
 sockets.
+.It Li udp.sendspace
+Returns the default
+.Tn UDP
+send buffer size.
+.It Li udp.recvspace
+Returns the default
+.Tn UDP
+receive buffer size.
 .El
 .It Dv PF_INET6
 Get or set various global information about IPv6
@@ -766,7 +817,6 @@ The currently defined protocols and names are:
 .It icmp6	nd6_umaxtries	integer	yes
 .It icmp6	nd6_mmaxtries	integer	yes
 .It icmp6	nd6_useloopback	integer	yes
-.It icmp6	nd6_proxyall	integer	yes
 .It icmp6	nodeinfo	integer	yes
 .El
 .Pp
@@ -875,12 +925,19 @@ constant in IPv6 neighbor discovery specification
 .It Li icmp6.nd6_useloopback
 If set to non-zero, kernel IPv6 stack will use loopback interface for
 local traffic.
-.It Li icmp6.nd6_proxyall
-The variable enables proxy neighbor advertisements.
 .It Li icmp6.nodeinfo
 The variable enables, or disables, kernel support for
 ICMPv6 node information query/reply.
 .El
+.Pp
+We reuse
+.Li net.inet.tcp
+and
+.Li net.inet.udp
+for
+.Tn TCP/UDP
+over
+.Tn IPv6 .
 .El
 .Ss CTL_USER
 The string and integer information available for the
