@@ -2,94 +2,67 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- MVME147 - Motorola with 68030 and 68881
 	- MVME162 - Motorola with 68040
 	- MVME167 - Motorola with 68040
+	- MVME172 - Motorola with 68060
 	- MVME177 - Motorola with 68060
 
-The minimal configuration requires 4M of RAM and ~60M of disk space.
+The minimal configuration requires 8M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to 
-compile the system, more RAM is recommended (OpenBSD with 4M of
-RAM feels like Solaris with 4M of RAM). Note that until you have
+compile the system, more RAM is recommended (OpenBSD with 8M of
+RAM feels like Solaris with 8M of RAM). Note that until you have
 around 16M of RAM, getting more RAM is more important than getting a
-faster CPU).
+faster CPU board).
 
 Supported devices {:-include-:}:
 
 MVME147:
 	serial ports: 
-		on-board ttya and ttyb 
-
+		on-board ttya-ttyd
 	ethernet:
 		on-board AMD 7990 Lance ethernet ("le0")
-	
 	SCSI:
-		on-board 
-
+		on-board WD33C93 controller
 	parallel:
 		a driver exists, but it is not integrated.
+	VMEbus:
+		not supported (some cards have issues)
 
-MVME162:
+MVME162, MVME172:
 	serial ports:
 		on-board tty00-03 - Zilog Z85230 SCC
-
 	ethernet:
 		on-board Intel 82596CA ethernet ("ie0")
-
 	SCSI:
-		on-board SCSI controller NCR53c710
-
+		on-board NCR53c710 controller
 	VME:
 		drivers for short I/O access
-
 	Flash:
 		1 MB flash, either Intel 28F008SA or 28F020
 		driver is available, but doesn't work
 		Jumper GPIO3 selects Flash memory map and must
 		be installed for booting with the Flash driver (default)
-
 	SRAM:
 		supported
-
 	VMEbus:
 		untested
-
 	IP:
 		untested
 
-MVME167:
+MVME167, MVME177:
 	serial:
 		on-board tty00 - tty03 - Cirrus Logic CD2401
 	ethernet: 
 		on-board Intel 82596CA ethernet ("ie0")
 	SCSI: 
-		on-board SCSI controller NCR53c710
-
+		on-board NCR53c710 controller
 	parallel:
-		Not supported
-
+		not supported
 	SRAM:
 		supported
-	
 	VMEbus:
 		supported
 		
-MVME177:
-	serial:
-		on-board tty00 - tty03 - Cirrus Logic CD2401
 
-	ethernet: 
-		on-board Intel 82596CA ethernet ("ie0")
-
-	SCSI: 
-		on-board SCSI controller NCR53c710
-
-	parallel:
-		Not supported
-
-	SRAM:
-		supported
-	
-	VMEbus:
-		supported
-		
+Faithful clones of the above boards should also work.
 
 Additional VMEbus devices {:-include-:}:
 

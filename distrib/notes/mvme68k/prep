@@ -1,25 +1,27 @@
-;
-; This section should talk about setting up the NVRAM environment
-; on the various models.
-;
-MVME162:
+Before installing OpenBSD on your machine, you will want to check your
+machine's NVRAM settings.
 
+The defaults settings are usually suitable for OpenBSD; make sure the
+environment is configured in BUG mode. You can check and change this with
+the ENV command.
+
+You wil need to check that the ethernet address is correct as well, with
+the LSAD command.
+
+Some models also require specific preparation:
+MVME147:
+	Make sure the word at memory FFFE0764 is correct. Its value should
+	be zero if you don't have any VMEBus memory cards. You can change
+	its value with the MM command.
+
+MVME162:
 	Be sure to use the SET command to set the date before trying
 	to use the ethernet support in the 162-Bug.
 
-MVME162/167/177:
+If you plan to boot from the network, make sure your ENV settings match
+the following setup:
 
-162-Bug> env
-Local SCSI Bus Reset on Debugger Startup [Y/N] = N? y
 Network Auto Boot Enable [Y/N]   = N? y
 Network Auto Boot at power-up only [Y/N] = Y? n
 Network Auto Boot Abort Delay    = 5? 2
 Network Auto Boot Configuration Parameters Pointer (NVRAM) = 00000000? fffc0080
-Update Non-Volatile RAM (Y/N)? y
-Reset Local System (CPU) (Y/N)? y
-
-
-MVME147:
-
-	May need to set the ethernet address using the LSAD 147-Bug command.
-
