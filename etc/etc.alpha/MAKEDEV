@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.5 1995/08/17 18:02:27 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.6 1995/12/20 10:27:34 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -61,6 +61,7 @@
 #	fd	file descriptors
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
+#	mmclock	memory mapped clock
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -73,7 +74,8 @@ all)
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
-	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm local
+	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
+	sh MAKEDEV mmclock local
 	;;
 
 std)
@@ -245,6 +247,12 @@ lkm)
 	mknod lkm c 16 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+mmclock)
+	rm -f mmclock
+	mknod mmclock c 28 0
+	chmod 444 mmclock
 	;;
 
 local)
