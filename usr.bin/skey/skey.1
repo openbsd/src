@@ -1,12 +1,19 @@
-.\" $OpenBSD: skey.1,v 1.3 1996/09/27 15:41:36 millert Exp $
+.\" $OpenBSD: skey.1,v 1.4 1996/09/29 23:04:57 millert Exp $
 .\"	@(#)skey.1	1.1 	10/28/93
 .\"
 .Dd 28 October 1993
 .Dt SKEY 1
 .Os NetBSD 4
 .Sh NAME
-.Nm S/key
-.Nd a one time password system
+.Nm skey, otp-md4, otp-md5, otp-sha1
+.Nd Respond to a OTP challenge.
+.Sh SYNOPSIS
+.Nm skey
+.Op Fl x
+.Op Fl md4 | Fl md5 | Fl sha1
+.Op Fl b Ar count
+.Op Fl p Ar passwd
+<sequence#>[/] key
 .Sh DESCRIPTION
 .Nm S/key
 is a procedure for using one time passwords to authenticate access to
@@ -19,7 +26,7 @@ Example use of the S/key program
 .sp 0
     % skey  99 th91334
 .sp 0
-    Enter password: <your secret password is entered here>
+    Enter secret password: <your secret password is entered here>
 .sp 0
     OMEN US HORN OMIT BACK AHOY
 .sp 0
@@ -27,12 +34,6 @@ Example use of the S/key program
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl x
-causes output to be in hexidecimal instead of ASCII.
-.It Fl 4
-Selects MD4 as the hash algorithm.
-.It Fl 5
-Selects MD5 as the hash algorithm.
 .It Fl n Ar count
 Prints out
 .Ar count
@@ -42,28 +43,28 @@ Uses
 .Ar password
 as the secret password.  Use of this option is discouraged as
 your secret password could be visible in a process listing.
+.It Fl x
+causes output to be in hexidecimal instead of ASCII.
+.It Fl md4
+Selects MD4 as the hash algorithm.
+.It Fl md5
+Selects MD5 as the hash algorithm.
+.It Fl sha1
+Selects SHA (NIST Secure Hash Algorithm Revision 1) as the hash algorithm.
 .El
 .Pp
-The programs that are part of the S/Key system are:
-.Bl -tag -width skeyinit...
-.It Xr skeyinit 1
-used to setup your S/Key.
-.It Xr skey 1
-used to get the one time password each time.
-.It Xr skeyinfo 1
-used to extract information from the S/Key database.
-It tells you what your next challenge will be.
-.El
+When
+.Nm skey
+is invoked as 
+.Nm otp-method ,
+.Nm skey
+will use
+.Ar method
+as the hash function where
+.Ar method
+is currently one of md4, md5, or sha1.
 .Pp
-When you run
-.Xr skeyinit 1
-you inform the system of your
-secret password.  Running
-.Xr skey 1
-then generates the
-one-time passwords, and also requires your secret
-password.  If however, you misspell your password
-while running
+If you misspell your password while running
 .Xr skey 1 ,
 you will get a list of passwords
 that will not work, and no indication about the problem.
