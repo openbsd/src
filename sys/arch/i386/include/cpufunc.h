@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.9 2003/05/27 23:52:01 fgsch Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.10 2003/10/24 09:03:20 grange Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -55,6 +55,8 @@ static __inline u_int rcr4(void);
 static __inline void tlbflush(void);
 static __inline void disable_intr(void);
 static __inline void enable_intr(void);
+static __inline u_int read_eflags(void);
+static __inline void write_eflags(u_int);
 static __inline void wbinvd(void);
 static __inline void wrmsr(u_int, u_int64_t);
 static __inline u_int64_t rdmsr(u_int);
@@ -159,6 +161,21 @@ static __inline void
 enable_intr(void)
 {
 	__asm __volatile("sti");
+}
+
+static __inline u_int
+read_eflags(void)
+{
+	u_int ef;
+
+	__asm __volatile("pushfl; popl %0" : "=r" (ef));
+	return (ef);
+}
+
+static __inline void
+write_eflags(u_int ef)
+{
+	__asm __volatile("pushl %0; popfl" : : "r" (ef));
 }
 
 static __inline void

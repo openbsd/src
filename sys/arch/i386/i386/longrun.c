@@ -1,4 +1,4 @@
-/* $OpenBSD: longrun.c,v 1.4 2003/07/07 03:07:19 tedu Exp $ */
+/* $OpenBSD: longrun.c,v 1.5 2003/10/24 09:03:20 grange Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * Copyright (c) 2001 Tamotsu Hattori
@@ -54,11 +54,6 @@ union msrinfo {
 #define LONGRUN_MODE_MASK(x) ((x) & 0x000000007f)
 #define LONGRUN_MODE_RESERVED(x) ((x) & 0xffffff80)
 #define LONGRUN_MODE_WRITE(x, y) (LONGRUN_MODE_RESERVED(x) | LONGRUN_MODE_MASK(y))
-#define read_eflags()           ({register u_long ef; \
-                                  __asm("pushfl; popl %0" : "=r" (ef)); \
-                                  ef;}) 
-#define write_eflags(x)         ({register u_long ef = (x); \
-                                  __asm("pushl %0; popfl" : : "r" (ef));})
 
 /* 
  * sysctl handler and entry point.  Just call the right function
