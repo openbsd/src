@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.48 2003/08/01 19:50:23 millert Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.49 2003/11/10 23:15:18 mickey Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1313,6 +1313,7 @@ int 	_thread_sys_poll(struct pollfd *, unsigned, int);
 
 /* #include <sys/event.h> */
 #ifdef _SYS_EVENT_H_
+int	_thread_sys_kqueue(void);
 int     _thread_sys_kevent(int, const struct kevent *, int, struct kevent *,
 	int, const struct timespec *);
 #endif
