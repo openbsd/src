@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.2 1997/05/08 12:49:55 niklas Exp $
+#       $OpenBSD: install.md,v 1.3 1997/05/09 02:25:08 millert Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -56,17 +56,29 @@ md_set_term() {
 	export TERM
 }
 
+md_get_msgbuf() {
+	# Only want to see one boot's worth of info
+	sed -n -f /dev/stdin /kern/msgbuf <<- OOF
+		/^Copyright (c)/h
+		/^Copyright (c)/!H
+		\${
+			g
+			p
+		}
+	OOF
+}
+
 md_get_diskdevs() {
-	egrep "^sd[0-9] " < /kern/msgbuf
+	md_get_msgbuf | egrep "^sd[0-9] "
 }
 
 md_get_cddevs() {
-	egrep "^cd[0-9] " < /kern/msgbuf
+	md_get_msgbuf | egrep "^cd[0-9] "
 }
 
-md_get_ifdevs() {                                                         
-        # return available network devices                               
-	egrep "(^ed[0-9] |^[dl]e[0-9] )"< /kern/msgbuf  | cut -d" " -f1 | sort -u
+md_get_ifdevs() {
+        # return available network devices
+	md_get_msgbuf | egrep "(^ed[0-9] |^[dl]e[0-9] )" | cut -d" " -f1 | sort -u
 }
 
 md_get_partition_range() {
@@ -263,5 +275,5 @@ FATAL ERROR: Can't mount kernfs filesystem
 __kernfs_failed_1
 		exit
 	fi
-	> ${KERNFSMOUNTED} 
+	> ${KERNFSMOUNTED}
 }
