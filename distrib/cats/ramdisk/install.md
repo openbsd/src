@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2004/02/06 14:21:12 drahn Exp $
+#	$OpenBSD: install.md,v 1.4 2004/02/11 23:32:30 drahn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,21 +47,6 @@ md_set_term() {
 }
 
 md_installboot() {
-	local _disk=$1
-
-	[[ $disklabeltype == MBR ]] || return
-
-	echo -n "Copying 'ofwboot' to the boot partition (${_disk}i)..."
-	if mount -t msdos /dev/${_disk}i /mnt2 ; then
-		if cp /usr/mdec/ofwboot /mnt2; then
-			umount /mnt2
-			echo "done."
-			return
-		fi
-	fi
-
-	echo "FAILED.\nYou will not be able to boot OpenBSD from $_disk."
-	exit
 }
 
 md_prep_disk() {
@@ -85,7 +70,7 @@ __EOT
 			md_prep_MBR $_disk
 			break
 			;;
-		b|BSD)	export disklabeltype=BSD
+		b|bsd)	export disklabeltype=BSD
 			md_prep_BSD $_disk
 			break
 			;;
@@ -132,14 +117,7 @@ __EOT
 
 **** NOTE ****
 
-A valid MBR for an OpenBSD bootable disk must contain at least:
-
-a) One DOS (id '06') partition at least 1MB in size. This is where OpenFirmware
-will look for the 'ofwboot' program used to boot OpenBSD. Consult your PowerPC
-OpenFirmware manual -and- the INSTALL.$ARCH file for directions on setting up
-this partition correctly.
-
-b) One OpenBSD (id 'A6') partition.
+XXX
 
 **************
 
