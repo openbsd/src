@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.14 2001/08/12 12:03:02 heko Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.15 2001/12/11 20:55:30 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
  */
 
 /* rewritten, 2-5-93 MLF */
-/* its alot cleaner now, and adding support for new partition types
+/* it's a lot cleaner now, and adding support for new partition types
  * isn't a bitch anymore
  * known bugs:
  * 1) when only an HFS_PART part exists on a drive it gets assigned to "B"
@@ -487,12 +487,20 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	register struct buf *bp;
 	char *msg = NULL;
 	struct disklabel *dlp;
+	int i;
 
+	if (lp->d_secsize == 0)
+		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 
-	if (lp->d_secpercyl == 0)
-		return (msg = "Zero secpercyl");
+	lp->d_npartitions = RAW_PART + 1;
+	for (i = 0; i < RAW_PART; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+	if (lp->d_partitions[i].p_size == 0)
+		lp->d_partitions[i].p_size = lp->d_secperunit;
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
@@ -501,11 +509,11 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	bp = geteblk((int)lp->d_secsize * MAXPARTITIONS);
 
 	bp->b_dev = dev;
-	bp->b_blkno = 0;
+	bp->b_blkno = LABELSECTOR;
 	bp->b_resid = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
+	bp->b_cylin = 0; /* contained in block 0 */
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error reading block zero";
@@ -645,12 +653,10 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	struct cpu_disklabel *osdep;
 	int wlabel;
 {
+#define	blockpersec(count, lp)	((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-#if 0
-	int labelsect = lp->d_partitions[0].p_offset;
-#endif
-	int maxsz = p->p_size;
-	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	int labelsect = blockpersec(lp->d_partitions[0].p_offset, lp);
+	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* avoid division by zero */
 	if (lp->d_secpercyl == 0) {
@@ -660,20 +666,19 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-#if 0				/* MF this is crap, especially on swap !! */
-	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
+	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= LABELSECTOR + labelsect &&
 #if LABELSECTOR != 0
-	    bp->b_blkno + p->p_offset + sz > LABELSECTOR + labelsect &&
+	    bp->b_blkno + blockpersec(p->p_offset, lp) + sz > LABELSECTOR + labelsect &&
 #endif /* LABELSECTOR != 0 */
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
-#endif /* #if 0 */
 
 #if defined(DOSBBSECTOR) && defined(notyet)
 	/* overwriting master boot record? */
-	if (bp->b_blkno + p->p_offset <= DOSBBSECTOR &&
+	if (bp->b_blkno + blockpersec(p->p_offset, lp) <=
+	    DOSBBSECTOR + labelsect &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
@@ -681,22 +686,23 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 #endif
 
 	/* beyond partition? */
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		/* if exactly at end of disk, return an EOF */
-		if (bp->b_blkno == maxsz) {
+	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
+		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
+		if (sz == 0) {
+			/* if exactly at end of disk, return an EOF */
 			bp->b_resid = bp->b_bcount;
 			return (0);
 		}
-		/* or truncate if part of it fits */
-		sz = maxsz - bp->b_blkno;
 		if (sz <= 0) {
 			bp->b_error = EINVAL;
 			goto bad;
 		}
+		/* or truncate if part of it fits */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	    lp->d_secpercyl;
 	return (1);
 
 bad:
