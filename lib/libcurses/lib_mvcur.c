@@ -473,7 +473,7 @@ relative_move(char *result, int from_y,int from_x,int to_y,int to_x, bool ovw)
 		}
 #endif /* TABS_OK */
 
-#if defined(REAL_ATTR) && defined(WANT_CHAR)
+#if defined(REAL_ATTR) && defined(WANT_CHAR) && 0
 		/*
 		 * If we have no attribute changes, overwrite is cheaper.
 		 * Note: must suppress this by passing in ovw = FALSE whenever
