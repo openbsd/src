@@ -3289,6 +3289,7 @@
 ./usr/share/man/cat3/free_form.0
 ./usr/share/man/cat3/free_item.0
 ./usr/share/man/cat3/free_menu.0
+./usr/share/man/cat3/freeaddrinfo.0
 ./usr/share/man/cat3/freeifaddrs.0
 ./usr/share/man/cat3/freerrset.0
 ./usr/share/man/cat3/freopen.0
@@ -3314,10 +3315,12 @@
 ./usr/share/man/cat3/funopen.0
 ./usr/share/man/cat3/fwopen.0
 ./usr/share/man/cat3/fwrite.0
+./usr/share/man/cat3/gai_strerror.0
 ./usr/share/man/cat3/gamma.0
 ./usr/share/man/cat3/gammaf.0
 ./usr/share/man/cat3/gcvt.0
 ./usr/share/man/cat3/get_myaddress.0
+./usr/share/man/cat3/getaddrinfo.0
 ./usr/share/man/cat3/getbegyx.0
 ./usr/share/man/cat3/getbkgd.0
 ./usr/share/man/cat3/getbsize.0
@@ -3355,6 +3358,7 @@
 ./usr/share/man/cat3/getmntinfo.0
 ./usr/share/man/cat3/getmode.0
 ./usr/share/man/cat3/getmouse.0
+./usr/share/man/cat3/getnameinfo.0
 ./usr/share/man/cat3/getnetbyaddr.0
 ./usr/share/man/cat3/getnetbyname.0
 ./usr/share/man/cat3/getnetent.0
