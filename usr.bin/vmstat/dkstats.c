@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.16 2002/05/23 10:35:07 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.17 2002/06/08 02:33:32 drahn Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
