@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: concatdb.sh,v 1.3 1996/09/15 23:38:38 deraadt Exp $
+# $OpenBSD: concatdb.sh,v 1.4 1997/01/03 23:33:48 millert Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -32,7 +32,7 @@
 #
 # Sequence of databases is important.
 #
-# $Id: concatdb.sh,v 1.3 1996/09/15 23:38:38 deraadt Exp $
+# $Id: concatdb.sh,v 1.4 1997/01/03 23:33:48 millert Exp $
 
 # The directory containing locate subprograms
 : ${LIBEXECDIR=/usr/libexec}; export LIBEXECDIR
@@ -58,17 +58,9 @@ case $# in
 		;;
 esac
 
-DTMP=${TMPDIR=/tmp}/_concatdb$$
-bigrams=$DTMP/bigrams
+bigrams=`mktemp ${TMPDIR=/tmp}/_bigrams.XXXXXX` || exit 1
 
-um=`umask`
-umask 022
-if ! mkdir $DTMP ; then
-	echo failed to create tmp dir $DTMP
-	exit 1
-fi
-umask $um
-trap 'rm -rf $DTMP' 0 1 2 3 5 10 15
+trap 'rm -f $bigrams' 0 1 2 3 5 10 15
 
 for db 
 do
@@ -79,4 +71,3 @@ for db
 do
 	$locate -d $db /
 done | $code $bigrams
-rm -rf $DTMP

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: updatedb.sh,v 1.5 1996/11/30 18:12:51 millert Exp $
+#	$OpenBSD: updatedb.sh,v 1.6 1997/01/03 23:33:49 millert Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -28,7 +28,7 @@
 #
 # updatedb - update locate database for local mounted filesystems
 #
-# $Id: updatedb.sh,v 1.5 1996/11/30 18:12:51 millert Exp $
+# $Id: updatedb.sh,v 1.6 1997/01/03 23:33:49 millert Exp $
 
 LOCATE_CONFIG="/etc/locate.rc"
 if [ -f "$LOCATE_CONFIG" -a -r "$LOCATE_CONFIG" ]; then
@@ -71,16 +71,8 @@ case X"$PRUNEPATHS" in
 	   done;;
 esac
 
-um=`umask`
-umask 022
-DTMP=${TMPDIR=/tmp}/_updatedb$$
-tmp=$DTMP/updatedb
-if ! mkdir $DTMP ; then
-	echo failed to create tmp dir $DTMP
-	exit 1
-fi
-umask $um
-trap 'rm -rf $DTMP' 0 1 2 3 5 10 15
+tmp=`mktemp ${TMPDIR=/tmp}/_updatedb.XXXXXX` || exit 1
+trap 'rm -rf $tmp' 0 1 2 3 5 10 15
 		
 # search locally
 # echo $find $SEARCHPATHS $excludes -or -print && exit
@@ -90,8 +82,6 @@ then
 	case X"`$find $tmp -size -257c -print`" in
 		X) cat $tmp > $FCODES;;
 		*) echo "updatedb: locate database $tmp is empty"
-		   rm -rf $DTMP
 		   exit 1
 	esac
 fi
-rm -rf $DTMP

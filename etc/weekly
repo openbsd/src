@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.4 1996/12/18 04:32:57 millert Exp $
+#	$OpenBSD: weekly,v 1.5 1997/01/03 23:33:50 millert Exp $
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
@@ -59,8 +59,8 @@ echo ""
 if [ -f /var/db/locate.database ]; then
 	echo "Rebuilding locate database:"
 	chmod 644 /var/db/locate.database
-	chown nobody.nobody /var/db/locate.database
-	echo /usr/libexec/locate.updatedb | nice -5 su -m nobody 2>/dev/null
+	chown bin /var/db/locate.database
+	echo /usr/libexec/locate.updatedb | nice -5 su -m bin 2>/dev/null
 	chown root.wheel /var/db/locate.database
 else
 	echo "Not rebuilding locate database; no /var/db/locate.database"
