@@ -1,3 +1,4 @@
+/*	$OpenBSD: kbd.c,v 1.5 1996/08/11 23:34:01 downsj Exp $	*/
 /*	$NetBSD: kbd.c,v 1.23 1996/04/01 17:34:34 christos Exp $ */
 
 /*
@@ -325,6 +326,7 @@ kbd_reset(ks)
 		break;
 	default:
 		printf("Unknown keyboard type %d\n", ks->kbd_id);
+		break;
 	}
 
 	ks->kbd_leds = 0;
@@ -717,7 +719,6 @@ kbdioctl(dev, cmd, data, flag, p)
 	case KIOCGLED:
 		*(char *)data = k->k_state.kbd_leds;
 		return (0);
-
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
 		return (0);
