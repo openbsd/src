@@ -1,4 +1,4 @@
-/*	$OpenBSD: archtype.h,v 1.2 1998/03/16 09:02:59 pefo Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.3 1998/06/06 06:33:31 mickey Exp $	*/
 /*
  * Copyright (c) 1997 Per Fogelstrom
  * 
@@ -46,7 +46,14 @@
 #define	SNI_RM200		0x07	/* Siemens Nixdorf RM200 */
 
 #define	SGI_CLASS		0x10	/* Silicon Graphics Class */
-#define	SGI_INDY		0x11	/* Silicon Graphics Indy */
+#define	SGI_CRIMSON		0x11	/* Crimson */
+#define	SGI_ONYX		0x12	/* Onyx (!S model Challenge) */
+#define	SGI_INDIGO		0x13	/* Indigo */
+#define	SGI_POWER		0x14	/* POWER Challenge, POWER Onyx */
+#define	SGI_INDY		0x15	/* Indy, Indigo2, Challenge S */
+#define	SGI_POWER10		0x16	/* POWER Challenge R10k */
+#define	SGI_POWERI		0x17	/* POWER Indigo2 */
+#define	SGI_O2			0x18	/* O2/Moosehead */
 
 #define	ALGOR_CLASS		0x20	/* Algorithmics Class */
 #define	ALGOR_P4032		0x21	/* ALGORITHMICS P-4032 */

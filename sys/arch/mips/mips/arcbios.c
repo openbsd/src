@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.2 1998/03/16 09:03:19 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996, 1997, 1998 Per Fogelstrom.  All rights reserved.
@@ -71,7 +71,14 @@ static struct systypes {
     { NULL,		"DESKTECH-ARCStation I",	DESKSTATION_RPC44 },
     { NULL,		"Microsoft-Jazz",		MAGNUM },
     { NULL,		"RM200PCI",			SNI_RM200 },
+    { NULL,		"SGI-IP17",			SGI_CRIMSON },
+    { NULL,		"SGI-IP19",			SGI_ONYX },
+    { NULL,		"SGI-IP20",			SGI_INDIGO },
+    { NULL,		"SGI-IP21",			SGI_POWER },
     { NULL,		"SGI-IP22",			SGI_INDY },
+    { NULL,		"SGI-IP25",			SGI_POWER10 },
+    { NULL,		"SGI-IP26",			SGI_POWERI },
+    { NULL,		"SGI-IP32",			SGI_O2 },
 };
 
 #define KNOWNSYSTEMS (sizeof(sys_types) / sizeof(struct systypes))
