@@ -1,3 +1,4 @@
+/*	$OpenBSD: extern.c,v 1.2 1999/11/29 01:25:58 downsj Exp $	*/
 /*	$NetBSD: extern.c,v 1.3 1995/03/21 15:08:50 cgd Exp $	*/
 
 /*-
@@ -46,10 +47,10 @@ static char rcsid[] = "$NetBSD: extern.c,v 1.3 1995/03/21 15:08:50 cgd Exp $";
 #include "deck.h"
 #include "cribbage.h"
 
-bool	explain		= FALSE;	/* player mistakes explained */
-bool	iwon		= FALSE;	/* if comp won last game */
-bool	quiet		= FALSE;	/* if suppress random mess */
-bool	rflag		= FALSE;	/* if all cuts random */
+BOOLEAN	explain		= FALSE;	/* player mistakes explained */
+BOOLEAN	iwon		= FALSE;	/* if comp won last game */
+BOOLEAN	quiet		= FALSE;	/* if suppress random mess */
+BOOLEAN	rflag		= FALSE;	/* if all cuts random */
 
 char	expl[128];			/* explanation */
 
