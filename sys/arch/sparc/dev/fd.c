@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.15 1997/04/02 18:28:48 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.16 1997/05/11 22:37:34 grr Exp $	*/
 /*	$NetBSD: fd.c,v 1.33.4.1 1996/06/12 20:52:25 pk Exp $	*/
 
 /*-
@@ -280,6 +280,14 @@ fdcmatch(parent, match, aux)
 	 */
 	if ((CPU_ISSUN4M) && (ca->ca_bustype != BUS_OBIO))
 		return (0);
+
+#ifndef FDSUN4M
+	/*
+	 * XXX Floppy doesn't work yet sun4m, nasty things happen if you try
+	 */
+	if (CPU_ISSUN4M)
+		return (0);
+#endif
 
 	/* Sun PROMs call the controller an "fd" or "SUNW,fdtwo" */
 	if (strcmp(OBP_FDNAME, ra->ra_name))
