@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.10 2000/10/10 12:44:37 itojun Exp $	*/
+/*	$OpenBSD: announce.c,v 1.11 2001/07/08 21:18:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.10 2000/10/10 12:44:37 itojun Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.11 2001/07/08 21:18:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,7 +66,6 @@ announce(request, remote_machine)
 	CTL_MSG *request;
 	char *remote_machine;
 {
-	int pid, status;
 	char full_tty[MAXPATHLEN];
 	FILE *tf;
 	struct stat stbuf;

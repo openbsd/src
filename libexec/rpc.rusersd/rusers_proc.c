@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.8 2001/01/28 19:34:31 niklas Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.9 2001/07/08 21:18:10 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,19 +29,20 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.8 2001/01/28 19:34:31 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.9 2001/07/08 21:18:10 deraadt Exp $";
 #endif /* not lint */
 
-#include <signal.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <signal.h>
 #include <utmp.h>
 #include <stdio.h>
 #include <syslog.h>
+#include <string.h>
 #include <rpc/rpc.h>
-#include <sys/socket.h>
-#include <sys/param.h>
-#include <sys/stat.h>
 #ifdef XIDLE
 #include <setjmp.h>
 #include <X11/Xlib.h>

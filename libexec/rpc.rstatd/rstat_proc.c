@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.14 2001/06/27 06:16:46 art Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.15 2001/07/08 21:18:09 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.14 2001/06/27 06:16:46 art Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.15 2001/07/08 21:18:09 deraadt Exp $";
 #endif
 
 /*
@@ -51,7 +51,7 @@ static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.14 2001/06/27 06:16:46 art Exp
 #include <sys/socket.h>
 #include <nlist.h>
 #include <syslog.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <sys/param.h>
 #ifdef BSD
 #include <sys/vmmeter.h>
@@ -110,7 +110,6 @@ int hz;
 
 struct ifnet_head ifnetq;	/* chain of ethernet interfaces */
 int numintfs;
-int stats_service();
 
 extern int from_inetd;
 int sincelastreq = 0;		/* number of alarms since last request */
@@ -123,14 +122,18 @@ union {
 	struct statstime s3;
 } stats_all;
 
-void updatestat();
-static stat_is_init = 0;
-extern int errno;
+int stats_service();
+void updatestat(void);
+void setup(void);
+int havedisk(void);
+
+static int stat_is_init = 0;
 
 #ifndef FSCALE
 #define FSCALE (1 << 8)
 #endif
 
+void
 stat_init()
 {
 	stat_is_init = 1;
@@ -331,6 +334,7 @@ updatestat()
 	errno = save_errno;
 }
 
+void
 setup()
 {
 	struct ifnet ifnet;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.5 2001/01/28 19:34:31 niklas Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.6 2001/07/08 21:18:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,13 +34,16 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.5 2001/01/28 19:34:31 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.6 2001/07/08 21:18:10 deraadt Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <stdio.h>
 #include <rpc/rpc.h>
 #include <signal.h>
 #include <syslog.h>
+#include <stdlib.h>
 #include <rpcsvc/rstat.h>
 
 extern void rstat_service();
@@ -57,6 +60,7 @@ cleanup()
 	_exit(0);
 }
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.102 2001/07/03 21:17:56 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.103 2001/07/08 21:18:07 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.102 2001/07/03 21:17:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.103 2001/07/08 21:18:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1576,7 +1576,8 @@ receive_data(instr, outstr)
 	FILE *instr, *outstr;
 {
 	int c;
-	int cnt, bare_lfs = 0;
+	int cnt;
+	volatile int bare_lfs = 0;
 	char buf[BUFSIZ];
 
 	transflag++;
@@ -1790,7 +1791,6 @@ printaddr:
 	    }
 
 		/* EPRT/EPSV */
-epsvonly:
 	    {
 		u_char af;
 
@@ -2567,9 +2567,10 @@ send_file_list(whichf)
 	DIR *dirp = NULL;
 	struct dirent *dir;
 	FILE *dout = NULL;
-	char **dirlist, *dirname;
+	char **dirlist;
+	char *dirname;
 	int simple = 0;
-	int freeglob = 0;
+	volatile int freeglob = 0;
 	glob_t gl;
 
 	if (strpbrk(whichf, "~{[*?") != NULL) {

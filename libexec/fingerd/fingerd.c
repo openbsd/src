@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.20 2001/01/25 19:22:08 deraadt Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.21 2001/07/08 21:18:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.20 2001/01/25 19:22:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.21 2001/07/08 21:18:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,8 @@ main(argc, argv)
 	register int ch, ac = 2;
 	int p[2], logging, secure, user_required, short_list;
 #define	ENTRIES	50
-	char **ap, *av[ENTRIES + 1], **comp, line[8192], *lp, *prog, *hname;
+	char **comp, *prog;
+	char **ap, *av[ENTRIES + 1], line[8192], *lp, *hname;
 	char hostbuf[MAXHOSTNAMELEN];
 
 	prog = _PATH_FINGER;
@@ -190,7 +191,8 @@ main(argc, argv)
 		*comp = prog;
 
 	if (user_required) {
-		for (ap = comp + 1; strcmp("--", *(ap++)); );
+		for (ap = comp + 1; strcmp("--", *(ap++)); )
+			;
 		if (*ap == NULL) {
 			(void) puts("must provide username\r");
 			exit(1);

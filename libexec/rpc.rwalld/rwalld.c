@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.4 2001/01/28 19:34:32 niklas Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.5 2001/07/08 21:18:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,19 +30,20 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rwalld.c,v 1.4 2001/01/28 19:34:32 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rwalld.c,v 1.5 2001/07/08 21:18:11 deraadt Exp $";
 #endif /* not lint */
 
-#include <unistd.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
 #include <errno.h>
-#include <sys/socket.h>
+#include <unistd.h>
 #include <signal.h>
-#include <sys/wait.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/rwall.h>
 
@@ -63,6 +64,7 @@ cleanup()
 	_exit(0);
 }
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];

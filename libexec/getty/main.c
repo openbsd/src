@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2001/01/31 19:13:36 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2001/07/08 21:18:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 2001/01/31 19:13:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.19 2001/07/08 21:18:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -357,8 +357,8 @@ getname()
 	register int c;
 	register char *np;
 	unsigned char cs;
-	int ppp_state = 0;
-	int ppp_connection = 0;
+	volatile int ppp_state = 0;
+	volatile int ppp_connection = 0;
 
 	/*
 	 * Interrupt may happen if we use CBREAK mode
@@ -467,7 +467,7 @@ static void
 putpad(s)
 	register char *s;
 {
-	register pad = 0;
+	int pad = 0;
 	speed_t ospeed = cfgetospeed(&tmode);
 
 	if (isdigit(*s)) {

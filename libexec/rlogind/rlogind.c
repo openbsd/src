@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogind.c,v 1.28 2001/06/11 15:18:50 mickey Exp $	*/
+/*	$OpenBSD: rlogind.c,v 1.29 2001/07/08 21:18:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$OpenBSD: rlogind.c,v 1.28 2001/06/11 15:18:50 mickey Exp $";
+static char *rcsid = "$OpenBSD: rlogind.c,v 1.29 2001/07/08 21:18:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -70,6 +70,7 @@ static char *rcsid = "$OpenBSD: rlogind.c,v 1.28 2001/06/11 15:18:50 mickey Exp 
 
 #include <pwd.h>
 #include <syslog.h>
+#include <util.h>
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -416,7 +417,7 @@ protocol(f, p)
 	register int f, p;
 {
 	char pibuf[1024+1], fibuf[1024], *pbp, *fbp;
-	register pcc = 0, fcc = 0;
+	register int pcc = 0, fcc = 0;
 	int cc, nfd, n;
 	char cntl;
 
@@ -447,12 +448,13 @@ protocol(f, p)
 			omask = &obits;
 		} else
 			FD_SET(f, &ibits);
-		if (pcc >= 0)
+		if (pcc >= 0) {
 			if (pcc) {
 				FD_SET(f, &obits);
 				omask = &obits;
 			} else
 				FD_SET(p, &ibits);
+		}
 		FD_SET(p, &ebits);
 		if ((n = select(nfd, &ibits, omask, &ebits, 0)) < 0) {
 			if (errno == EINTR)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.4 2000/10/14 00:56:14 itojun Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.5 2001/07/08 21:18:13 deraadt Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.4 2000/10/14 00:56:14 itojun Exp $";
+static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.5 2001/07/08 21:18:13 deraadt Exp $";
 #endif
 #endif
 
@@ -34,6 +34,7 @@ static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.4 2000/10/14 00:56:14 itojun Exp 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <syslog.h>
 #include <setjmp.h>
 #include <errno.h>
