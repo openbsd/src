@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.25 2003/11/27 00:32:45 espie Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.26 2003/12/16 03:10:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -176,12 +176,10 @@ comspeed(dev_t dev, int sp)
 		return -1;
 #undef  divrnd
 
-	if (cn_tab && cn_tab->cn_dev == dev && com_speed != sp)
-	{
-		printf("com%d: changing speed to %d baud\n\a"
-		       "com%d: change your terminal to match!\n\a"
-		       "com%d: will change speed in 5 seconds....\n\a",
-		       minor(dev), sp, minor(dev), minor(dev));
+	if (cn_tab && cn_tab->cn_dev == dev && com_speed != sp) {
+		printf("com%d: changing speed to %d baud in 5 seconds, "
+		    "change your terminal to match!\n\a",
+		    minor(dev), sp);
 		sleep(5);
 	}
 
@@ -189,7 +187,7 @@ comspeed(dev_t dev, int sp)
 	outb(comports[minor(dev)] + com_dlbl, newsp);
 	outb(comports[minor(dev)] + com_dlbh, newsp>>8);
 	outb(comports[minor(dev)] + com_cfcr, LCR_8BITS);
-	printf("\ncom%d: console is at %d baud\n", minor(dev), sp);
+	printf("\ncom%d: %d baud\n", minor(dev), sp);
 
 	newsp = com_speed;
 	com_speed = sp;
