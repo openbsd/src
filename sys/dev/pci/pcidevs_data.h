@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.451 2001/10/05 17:44:27 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.452 2001/10/05 20:55:09 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2727,8 +2727,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MGA 1064SG",
 	},
 	{
-	    PCI_VENDOR_MITSUBISHIELEC, PCI_PRODUCT_MITSUBISHIELEC_0x0304,
-	    "Accel",
+	    PCI_VENDOR_MITSUBISHIELEC, PCI_PRODUCT_MITSUBISHIELEC_GUI,
+	    "GUI Accel",
 	},
 	{
 	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC106,
