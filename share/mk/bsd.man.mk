@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.24 2003/07/07 21:39:27 deraadt Exp $
+#	$OpenBSD: bsd.man.mk,v 1.25 2003/08/07 10:52:48 espie Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -7,9 +7,9 @@ NROFF?=		nroff -Tascii
 TBL?=		tbl
 
 .if !target(.MAIN)
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
+.  if exists(${.CURDIR}/../Makefile.inc)
+.    include "${.CURDIR}/../Makefile.inc"
+.  endif
 
 .MAIN: all
 .endif
@@ -38,14 +38,15 @@ TBL?=		tbl
 	@${TBL} ${.IMPSRC} | nroff -Tps -mandoc > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 .if defined(MAN) && !empty(MAN) && !defined(MANALL)
+.  for v s in MANALL .cat PS2ALL .ps
 
-MANALL=	${MAN:S/.1$/.cat1/g:S/.2$/.cat2/g:S/.3$/.cat3/g:S/.3p$/.cat3p/g:S/.4$/.cat4/g:S/.5$/.cat5/g:S/.6$/.cat6/g:S/.7$/.cat7/g:S/.8$/.cat8/g:S/.9$/.cat9/g:S/.1tbl$/.cat1/g:S/.2tbl$/.cat2/g:S/.3tbl$/.cat3/g:S/.4tbl$/.cat4/g:S/.5tbl$/.cat5/g:S/.6tbl$/.cat6/g:S/.7tbl$/.cat7/g:S/.8tbl$/.cat8/g:S/.9tbl$/.cat9/g}
+$v=	${MAN:S/.1$/$s1/g:S/.2$/$s2/g:S/.3$/$s3/g:S/.3p$/$s3p/g:S/.4$/$s4/g:S/.5$/$s5/g:S/.6$/$s6/g:S/.7$/$s7/g:S/.8$/$s8/g:S/.9$/$s9/g:S/.1tbl$/$s1/g:S/.2tbl$/$s2/g:S/.3tbl$/$s3/g:S/.4tbl$/$s4/g:S/.5tbl$/$s5/g:S/.6tbl$/$s6/g:S/.7tbl$/$s7/g:S/.8tbl$/$s8/g:S/.9tbl$/$s9/g}
 
-PS2ALL= ${MAN:S/.1$/.ps1/g:S/.2$/.ps2/g:S/.3$/.ps3/g:S/.3p$/.ps3p/g:S/.4$/.ps4/g:S/.5$/.ps5/g:S/.6$/.ps6/g:S/.7$/.ps7/g:S/.8$/.ps8/g:S/.9$/.ps9/g:S/.1tbl$/.ps1/g:S/.2tbl$/.ps2/g:S/.3tbl$/.ps3/g:S/.4tbl$/.ps4/g:S/.5tbl$/.ps5/g:S/.6tbl$/.ps6/g:S/.7tbl$/.ps7/g:S/.8tbl$/.ps8/g:S/.9tbl$/.ps9/g}
+.  endfor
 
-.if defined(MANPS)
+.  if defined(MANPS)
 PSALL=${PS2ALL}
-.endif
+.  endif
 
 .endif
 
@@ -64,57 +65,39 @@ MANSUBDIR:=${MANSUBDIR:S,^,/,}
 MANSUBDIR=''
 .endif
 
+.if !defined(MCOMPRESS) || empty(MCOMPRESS)
+install_manpage_fragment= \
+	echo ${MINSTALL} $$page $$instpage; \
+	${MINSTALL} $$page $$instpage
+.else
+install_manpage_fragment= \
+	rm -f $$instpage; \
+	echo ${MCOMPRESS} $$page \> $$instpage; \
+	${MCOMPRESS} $$page > $$instpage; \
+	chown ${MANOWN}:${MANGRP} $$instpage; \
+	chmod ${MANMODE} $$instpage
+.endif
+
 maninstall:
-.if defined(MANALL)
-	@for page in ${MANALL}; do \
+.for v s t in MANALL .cat .0 PSALL .ps .ps
+.  if defined($v)
+	@for page in ${$v}; do \
 		set -- ${MANSUBDIR}; \
 		subdir=$$1; \
-		dir=${DESTDIR}${MANDIR}$${page##*.cat}; \
+		dir=${DESTDIR}${MANDIR}$${page##*$s}; \
 		base=$${page##*/}; \
-		instpage=$${dir}$${subdir}/$${base%.*}.0${MCOMPRESSSUFFIX}; \
-		if [ X"${MCOMPRESS}" = X ]; then \
-			echo ${MINSTALL} $$page $$instpage; \
-			${MINSTALL} $$page $$instpage; \
-		else \
-			rm -f $$instpage; \
-			echo ${MCOMPRESS} $$page \> $$instpage; \
-			${MCOMPRESS} $$page > $$instpage; \
-			chown ${MANOWN}:${MANGRP} $$instpage; \
-			chmod ${MANMODE} $$instpage; \
-		fi; \
+		instpage=$${dir}$${subdir}/$${base%.*}$t${MCOMPRESSSUFFIX}; \
+		${install_manpage_fragment}; \
 		while test $$# -ge 2; do \
 			shift; \
-			extra=$${dir}$$1/$${base%.*}.0${MCOMPRESSSUFFIX}; \
+			extra=$${dir}$$1/$${base%.*}$t${MCOMPRESSSUFFIX}; \
 			echo $$extra -\> $$instpage; \
 			ln -f $$instpage $$extra; \
 		done; \
 	done
-.endif
-.if defined(PSALL)
-	@for page in ${PSALL}; do \
-		set -- ${MANSUBDIR}; \
-		subdir=$$1; \
-		dir=${DESTDIR}${PSDIR}$${page##*.ps}; \
-		base=$${page##*/}; \
-		instpage=$${dir}$${subdir}/$${base%.*}.ps${MCOMPRESSSUFFIX}; \
-		if [ X"${MCOMPRESS}" = X ]; then \
-			echo ${MINSTALL} $$page $$instpage; \
-			${MINSTALL} $$page $$instpage; \
-		else \
-			rm -f $$instpage; \
-			echo ${MCOMPRESS} $$page \> $$instpage; \
-			${MCOMPRESS} $$page > $$instpage; \
-			chown ${PSOWN}:${PSGRP} $$instpage; \
-			chmod ${PSMODE} $$instpage; \
-		fi; \
-		while test $$# -ge 2; do \
-			shift; \
-			extra=$${dir}$$1/$${base%.*}.ps${MCOMPRESSSUFFIX}; \
-			echo $$extra -\> $$instpage; \
-			ln -f $$instpage $$extra; \
-		done; \
-	done
-.endif
+.  endif
+.endfor
+
 .if defined(MLINKS) && !empty(MLINKS)
 .  for sub in ${MANSUBDIR}
 .     for lnk file in ${MLINKS}
