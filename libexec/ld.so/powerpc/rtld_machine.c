@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.16 2002/11/05 16:53:19 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.17 2002/11/14 15:15:54 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -202,7 +202,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 			ooff = _dl_find_symbol(symn, _dl_objects, &this,
 			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|
 			    ((type == RELOC_JMP_SLOT) ? SYM_PLT:SYM_NOTPLT),
-			    sym->st_size);
+			    sym->st_size, object->load_name);
 
 			if (!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s: %s :can't resolve reference '%s'\n",
@@ -393,7 +393,7 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 					    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|
 					    ((type == RELOC_JMP_SLOT) ?
 					        SYM_PLT : SYM_NOTPLT),
-					    sym->st_size);
+					    sym->st_size, object->load_name);
 				}
 			}
 			if (cpysrc == NULL) {
@@ -503,7 +503,8 @@ _dl_bind(elf_object_t *object, int reloff)
 	r_addr = (Elf_Addr *)(object->load_offs + relas->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, _dl_objects, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, SYM_NOTPLT);
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
+	    object->load_name);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */

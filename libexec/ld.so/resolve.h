@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.17 2002/08/23 22:57:03 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.18 2002/11/14 15:15:54 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -134,7 +134,7 @@ extern int  _dl_md_reloc(elf_object_t *object, int rel, int relsz);
 extern void _dl_md_reloc_got(elf_object_t *object, int lazy);
 
 Elf_Addr _dl_find_symbol(const char *name, elf_object_t *startlook,
-    const Elf_Sym **ref, int flags, int sym_size);
+    const Elf_Sym **ref, int flags, int sym_size, const char *module_name);
 /*
  * defines for _dl_find_symbol() flag field, three bits of meaning
  * myself 	- clear: search all objects,	set: search only this object

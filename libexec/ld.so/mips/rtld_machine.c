@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.8 2002/10/25 10:39:52 pefo Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.9 2002/11/14 15:15:54 drahn Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -77,7 +77,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
 			ooff = _dl_find_symbol(symn, _dl_objects, &this,
 			SYM_SEARCH_ALL | SYM_NOWARNNOTFOUND | SYM_PLT,
-			sym->st_size);
+			sym->st_size, object->load_name);
 			if (!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s: can't resolve reference '%s'\n",
 				    _dl_progname, symn);
@@ -172,7 +172,7 @@ DL_DEB(("got: '%s' = %x\n", strt + symp->st_name, symp->st_value));
 				ooff = _dl_find_symbol(strt + symp->st_name,
 				    _dl_objects, &this,
 				    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
-				    symp->st_size);
+				    symp->st_size, object->load_name);
 				if (this)
 					*gotp = this->st_value + ooff;
 			} else
@@ -183,7 +183,7 @@ DL_DEB(("got: '%s' = %x\n", strt + symp->st_name, symp->st_value));
 			ooff = _dl_find_symbol(strt + symp->st_name,
 			    _dl_objects, &this,
 			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
-			    symp->st_size);
+			    symp->st_size, object->load_name);
 			if (this)
 				*gotp = this->st_value + ooff;
 		} else if (ELF32_ST_TYPE(symp->st_info) == STT_FUNC) {
