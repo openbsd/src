@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qn.c,v 1.10 1997/09/18 13:39:57 niklas Exp $	*/
+/*	$OpenBSD: if_qn.c,v 1.11 1998/03/01 14:18:02 niklas Exp $	*/
 /*	$NetBSD: if_qn.c,v 1.10 1996/12/23 09:10:19 veego Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ qninit(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_short i;
-	static retry = 0;
+	static int retry = 0;
 
 	*sc->nic_r_mask   = NIC_R_MASK;
 	*sc->nic_t_mode   = NO_LOOPBACK;
