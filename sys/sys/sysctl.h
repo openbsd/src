@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.68 2004/01/07 02:13:51 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.69 2004/01/07 03:37:57 millert Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -332,6 +332,7 @@ struct kinfo_proc {
 #define	KI_MAXCOMLEN	24	/* extra for 8 byte alignment */
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	32
+#define	KI_EMULNAMELEN	8
 
 struct kinfo_proc2 {
 	u_int64_t p_forw;		/* PTR: linked run/sleep queue. */
@@ -443,6 +444,7 @@ struct kinfo_proc2 {
 	u_int64_t p_realflag;	       	/* INT: P_* flags (not including LWPs). */
 	u_int32_t p_svuid;		/* UID_T: saved user id */
 	u_int32_t p_svgid;		/* GID_T: saved group id */
+	char    p_emul[KI_EMULNAMELEN];	/* syscall emulation name */
 };
 
 /*

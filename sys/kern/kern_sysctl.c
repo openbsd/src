@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.94 2004/01/07 02:13:51 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.95 2004/01/07 03:37:57 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1190,6 +1190,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_xstat = p->p_xstat;
 	ki->p_acflag = p->p_acflag;
 
+	strlcpy(ki->p_emul, p->p_emul->e_name, sizeof(ki->p_emul));
 	strlcpy(ki->p_comm, p->p_comm, sizeof(ki->p_comm));
 	strncpy(ki->p_login, p->p_session->s_login,
 	    min(sizeof(ki->p_login) - 1, sizeof(p->p_session->s_login)));
