@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1996/05/16 02:30:38 chuck Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1997/04/22 16:07:57 gvf Exp $
 
 LIB_SA_DIR=${S}/arch/${MACHINE}/stand/libsa
 
@@ -10,6 +10,6 @@ SRTOBJ?= ${LIBSA_DIR}/SRT0.o
 
 $(LIBSA):	.NOTMAIN __always_make_libsa
 	@echo making sure the libsa is up to date...
-	@(cd ${LIB_SA_DIR}; ${MAKE})
+	@(cd ${LIB_SA_DIR}; ${MAKE} "XCFLAGS=${CFLAGS}")
 
 __always_make_libsa:	.NOTMAIN
