@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.95 2004/12/07 10:26:49 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.96 2004/12/07 21:03:52 mcbride Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -69,6 +69,8 @@
 .Ar carp-interface
 .Cm vhid
 .Ar host-id
+.Cm carpdev
+.Ar iface
 .Nm ifconfig
 .Ar pfsync-interface
 .Cm syncpeer
@@ -308,6 +310,13 @@ Set the desired BSSID for IEEE 802.11-based wireless network interfaces.
 Unset the desired BSSID for IEEE 802.11-based wireless network interfaces.
 The interface will automatically select a BSSID in this mode, which is
 the default.
+.It Cm carpdev Ar iface
+If the driver is a
+.Xr carp 4
+pseudo-device, attach it to
+.Ar iface.
+If not specified, the kernel will attempt to select an interface with
+a subnet matching that of the carp interface.
 .It Cm chan Ar n
 (IEEE 802.11 devices only)
 Set the channel (radio frequency) to be used for IEEE 802.11-based
@@ -761,9 +770,10 @@ and vlan parent device fxp0:
 .Pp
 .Dl # ifconfig vlan0 192.168.254.1 vlan 4 vlandev fxp0
 .Pp
-Configure the carp0 interface for IP address 192.168.10.1, virtual host ID 1:
+Configure the carp0 interface for IP address 192.168.10.1, virtual host ID 1,
+attached to the vlan0 interface:
 .Pp
-.Dl # ifconfig carp0 vhid 1 192.168.10.1
+.Dl # ifconfig carp0 vhid 1 carpdev vlan0 192.168.10.1
 .Pp
 Create the gif1 network interface:
 .Pp
