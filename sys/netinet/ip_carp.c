@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.45 2004/04/28 00:28:43 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.46 2004/05/08 02:53:03 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -108,6 +108,12 @@ struct carp_softc {
 
 	int sc_flags_backup;
 	int sc_suppress;
+
+	int sc_sendad_errors;
+#define CARP_SENDAD_MAX_ERRORS	3
+	int sc_sendad_success;
+#define CARP_SENDAD_MIN_SUCCESS 3
+
 	int sc_vhid;
 	int sc_advskew;
 	int sc_naddrs;
@@ -791,8 +797,23 @@ carp_send_ad(void *v)
 		sc->sc_ac.ac_if.if_obytes += len;
 		carpstats.carps_opackets++;
 
-		if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL))
+		if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL)) {
 			sc->sc_ac.ac_if.if_oerrors++;
+			if (sc->sc_sendad_errors < INT_MAX)
+				sc->sc_sendad_errors++;
+			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS)
+				carp_suppress_preempt++;
+			sc->sc_sendad_success = 0;
+		} else {
+			if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS) {
+			   	if (++sc->sc_sendad_success >=
+				    CARP_SENDAD_MIN_SUCCESS) {
+					carp_suppress_preempt--;
+					sc->sc_sendad_errors = 0;
+				}
+			} else
+				sc->sc_sendad_errors = 0;
+		}
 	}
 #endif /* INET */
 #ifdef INET6
@@ -841,8 +862,23 @@ carp_send_ad(void *v)
 		sc->sc_ac.ac_if.if_obytes += len;
 		carpstats.carps_opackets6++;
 
-		if (ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL))
+		if (ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL)) {
 			sc->sc_ac.ac_if.if_oerrors++;
+			if (sc->sc_sendad_errors < INT_MAX)
+				sc->sc_sendad_errors++;
+			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS)
+				carp_suppress_preempt++;
+			sc->sc_sendad_success = 0;
+		} else {
+			if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS) {
+			   	if (++sc->sc_sendad_success >=
+				    CARP_SENDAD_MIN_SUCCESS) {
+					carp_suppress_preempt--;
+					sc->sc_sendad_errors = 0;
+				}
+			} else
+				sc->sc_sendad_errors = 0;
+		}
 	}
 #endif /* INET6 */
 
