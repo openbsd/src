@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.22 2001/11/30 23:14:28 miod Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.23 2001/12/06 22:33:57 miod Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -698,7 +698,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 * dumps more readable, with guaranteed 16MB of.
 	 * XXX depends on Sysmap being last.
 	 * XXX 16 MB instead of 256 MB should be enough, but...
-	 * we need to fix the fastmem loading first. (see comment at line 375)
+	 * we need to fix the fastmem loading first. (see Zorro-related
+	 * comment before ``What to do, what to do'' earlier in this
+	 * function)
 	 */
 	RELOC(amiga_uptbase, vaddr_t) =
 	    roundup(RELOC(Sysmap, u_int) + 0x10000000, 0x10000000);
