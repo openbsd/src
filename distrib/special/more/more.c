@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.18 2003/06/04 00:24:16 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.19 2003/06/04 00:26:12 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.18 2003/06/04 00:24:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.19 2003/06/04 00:26:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,6 +139,7 @@ int		Wrap = 1;	/* set if automargins */
 int		soglitch;	/* terminal has standout mode glitch */
 int		ulglitch;	/* terminal has underline mode glitch */
 int		pstate = 0;	/* current UL state */
+int		altscr = 0;	/* terminal supports an alternate screen */
 
 volatile sig_atomic_t signo;	/* signal received */
 
@@ -1058,7 +1059,9 @@ command(char *filename, FILE *f)
 				kill_line();
 				snprintf(cmdbuf, sizeof(cmdbuf), "+%d",
 				    Currline);
-				printf("%s %s %s", p, cmdbuf, fnames[fnum]);
+				if (!altscr)
+					printf("%s %s %s", p, cmdbuf,
+					    fnames[fnum]);
 				execute(filename, editor, p, cmdbuf,
 				    fnames[fnum]);
 				break;
@@ -1339,7 +1342,8 @@ execute(char *filename, char *cmd, char *av0, char *av1, char *av2)
 	} else
 		write(STDERR_FILENO, "can't fork\n", 11);
 	set_tty();
-	fputs("------------------------\n", stdout);
+	if (!altscr)
+		fputs("------------------------\n", stdout);
 	prompt(filename);
 }
 
@@ -1495,6 +1499,9 @@ retry:
 			EodClr = tgetstr("cd", &clearptr);
 			if ((chBS = tgetstr("bc", &clearptr)) == NULL)
 				chBS = "\b";
+			if (tgetstr("te", &clearptr) != NULL &&
+			    tgetstr("ti", &clearptr) != NULL)
+				altscr = 1;
 		}
 		if ((shell = getenv("SHELL")) == NULL)
 			shell = _PATH_BSHELL;
