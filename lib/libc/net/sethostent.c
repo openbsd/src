@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sethostent.c,v 1.3 1996/08/19 08:29:53 tholo Exp $";
+static char rcsid[] = "$OpenBSD: sethostent.c,v 1.4 1997/03/15 21:53:50 pefo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -56,5 +56,5 @@ void
 endhostent()
 {
 	_res.options &= ~(RES_STAYOPEN | RES_USEVC);
-	_res_close();
+	res_close();
 }
