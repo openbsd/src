@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.27 1998/02/07 21:23:06 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.28 1998/02/15 01:49:22 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1879,6 +1879,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Winbond Electronics",
 	    "W83769F",
+	},
+	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F,
+	    0,
+	    "Winbond Electronics",
+	    "Linksys EtherPCI LAN Card II",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.27 1998/02/07 21:23:06 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.28 1998/02/15 01:49:22 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -979,6 +979,7 @@
 
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
+#define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* Linksys EtherPCI LAN Card II */
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */
