@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
- * Portions Copyright (c) 1994, 1995, Jason Downs.  All rights reserved.
+ * Portions Copyright (c) 1994, 1995, 1996, Jason Downs.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.6 1996/09/16 19:01:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.7 1996/10/15 18:27:58 downsj Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -75,60 +75,84 @@ static char     *__ypcurrent, *__ypdomain;
 static int      __ypcurrentlen;
 static struct passwd *__ypproto = (struct passwd *)NULL;
 static int	__ypflags;
-static char	line[1024];
-static long	prbuf[1024 / sizeof(long)];
-static DB *__ypexclude = (DB *)NULL;
+static char	__ypline[1024];
+static long	__yppbuf[1024 / sizeof(long)];
+static int	__yp_override_passwd = 0;
 
 static int __has_yppw __P((void));
+static int __has_ypmaster __P((void));
+
 static int __ypexclude_add __P((const char *));
 static int __ypexclude_is __P((const char *));
+static void __ypexclude_free __P((void));
 static void __ypproto_set __P((void));
 
+/* macro for deciding which YP maps to use. */
+#define PASSWD_BYNAME \
+	__has_ypmaster() ? "master.passwd.byname" : "passwd.byname"
+#define PASSWD_BYUID \
+	__has_ypmaster() ? "master.passwd.byuid" : "passwd.byuid"
+
+struct _ypexclude {
+	const char *name;
+	struct _ypexclude *next;
+};
+static struct _ypexclude *__ypexclude = (struct _ypexclude *)NULL;
+
+/*
+ * Using DB for this just wastes too damn much memory.
+ */
 static int
 __ypexclude_add(name)
-const char *name;
+	const char *name;
 {
-	DBT key, data;
+	struct _ypexclude *new;
 
-	/* initialize the exclusion table if needed. */
-	if(__ypexclude == (DB *)NULL) {
-		__ypexclude = dbopen(NULL, O_RDWR, 600, DB_HASH, NULL);
-		if(__ypexclude == (DB *)NULL)
-			return(1);
+	if (name[0] == '\0')	/* skip */
+		return(0);
+
+	new = (struct _ypexclude *)malloc(sizeof(struct _ypexclude));
+	if (new == (struct _ypexclude *)NULL)
+		return(1);
+	new->name = strdup(name);
+	if (new->name == (char *)NULL) {
+		free(new);
+		return(1);
 	}
 
-	/* set up the key */
-	key.data = (char *)name;
-	key.size = strlen(name);
+	new->next = __ypexclude;
+	__ypexclude = new;
 
-	/* data is nothing. */
-	data.data = NULL;
-	data.size = 0;
-
-	/* store it */
-	if((__ypexclude->put)(__ypexclude, &key, &data, 0) == -1)
-		return(1);
-	
 	return(0);
 }
 
 static int
 __ypexclude_is(name)
-const char *name;
+	const char *name;
 {
-	DBT key, data;
+	struct _ypexclude *curr;
 
-	if(__ypexclude == (DB *)NULL)
-		return(0);	/* nothing excluded */
-
-	/* set up the key */
-	key.data = (char *)name;
-	key.size = strlen(name);
-
-	if((__ypexclude->get)(__ypexclude, &key, &data, 0) == 0)
-		return(1);	/* excluded */
-	
+	for (curr = __ypexclude; curr != (struct _ypexclude *)NULL;
+	     curr = curr->next) {
+		if (strcmp(curr->name, name) == 0)
+			return(1);	/* excluded */
+	}
 	return(0);
+}
+
+static void
+__ypexclude_free()
+{
+	struct _ypexclude *curr, *next;
+
+	for (curr = __ypexclude; curr != (struct _ypexclude *)NULL;
+	     curr = next) {
+		next = curr->next;
+
+		free((void *)curr->name);
+		free(curr);
+	}
+	__ypexclude = (struct _ypexclude *)NULL;
 }
 
 static void
@@ -138,7 +162,7 @@ __ypproto_set()
 	register struct passwd *pw = &_pw_passwd;
 
 	/* make this the new prototype */
-	ptr = (char *)prbuf;
+	ptr = (char *)__yppbuf;
 
 	/* first allocate the struct. */
 	__ypproto = (struct passwd *)ptr;
@@ -214,6 +238,14 @@ struct passwd *pw;
 char *s;
 {
 	char *bp, *cp;
+	int count = 0;
+
+	/* count the colons. */
+	bp = s;
+	while (*bp != '\0') {
+		if (*bp++ == ':')
+			count++;
+	}
 
 	/* since this is currently using strsep(), parse it first */
 	bp = s;
@@ -225,19 +257,29 @@ char *s;
 	if (!(cp = strsep(&bp, ":\n")))
 		return 1;
 	pw->pw_gid = atoi(cp);
-	pw->pw_change = 0;
-	pw->pw_class = "";
+	if (count == 9) {
+		/* If the ypserv gave us all the fields, use them. */
+		pw->pw_class = strsep(&bp, ":\n");
+		if (!(cp = strsep(&bp, ":\n")))
+			return 1;
+		pw->pw_change = atoi(cp);
+		if (!(cp = strsep(&bp, ":\n")))
+			return 1;
+		pw->pw_expire = atoi(cp);
+	} else {
+		/* ..else it is a normal ypserv. */
+		pw->pw_class = "";
+		pw->pw_change = 0;
+		pw->pw_expire = 0;
+	}
 	pw->pw_gecos = strsep(&bp, ":\n");
 	pw->pw_dir = strsep(&bp, ":\n");
 	pw->pw_shell = strsep(&bp, ":\n");
-	pw->pw_expire = 0;
 
 	/* now let the prototype override, if set. */
 	if(__ypproto != (struct passwd *)NULL) {
-#ifdef YP_OVERRIDE_PASSWD
-		if(__ypproto->pw_passwd != (char *)NULL)
+		if(__yp_override_passwd && __ypproto->pw_passwd != (char *)NULL)
 			pw->pw_passwd = __ypproto->pw_passwd;
-#endif
 		if(!(__ypflags & _PASSWORD_NOUID))
 			pw->pw_uid = __ypproto->pw_uid;
 		if(!(__ypflags & _PASSWORD_NOGID))
@@ -285,7 +327,7 @@ again:
 		switch(__ypmode) {
 		case YPMODE_FULL:
 			if(__ypcurrent) {
-				r = yp_next(__ypdomain, "passwd.byname",
+				r = yp_next(__ypdomain, PASSWD_BYNAME,
 					__ypcurrent, __ypcurrentlen,
 					&key, &keylen, &data, &datalen);
 				free(__ypcurrent);
@@ -299,11 +341,11 @@ again:
 				}
 				__ypcurrent = key;
 				__ypcurrentlen = keylen;
-				bcopy(data, line, datalen);
+				bcopy(data, __ypline, datalen);
 				free(data);
 				data = NULL;
 			} else {
-				r = yp_first(__ypdomain, "passwd.byname",
+				r = yp_first(__ypdomain, PASSWD_BYNAME,
 					&__ypcurrent, &__ypcurrentlen,
 					&data, &datalen);
 				if(r != 0) {
@@ -312,7 +354,7 @@ again:
 						free(data);
 					goto again;
 				}
-				bcopy(data, line, datalen);
+				bcopy(data, __ypline, datalen);
 				free(data);
 				data = NULL;
 			}
@@ -325,7 +367,7 @@ again:
 				goto again;
 			}
 			if(user && *user) {
-				r = yp_match(__ypdomain, "passwd.byname",
+				r = yp_match(__ypdomain, PASSWD_BYNAME,
 					user, strlen(user),
 					&data, &datalen);
 			} else
@@ -339,13 +381,13 @@ again:
 					free(data);
 				goto again;
 			}
-			bcopy(data, line, datalen);
+			bcopy(data, __ypline, datalen);
 			free(data);
 			data = (char *)NULL;
 			break;
 		case YPMODE_USER:
 			if(name != (char *)NULL) {
-				r = yp_match(__ypdomain, "passwd.byname",
+				r = yp_match(__ypdomain, PASSWD_BYNAME,
 					name, strlen(name),
 					&data, &datalen);
 				__ypmode = YPMODE_NONE;
@@ -356,7 +398,7 @@ again:
 						free(data);
 					goto again;
 				}
-				bcopy(data, line, datalen);
+				bcopy(data, __ypline, datalen);
 				free(data);
 				data = (char *)NULL;
 			} else {		/* XXX */
@@ -366,8 +408,8 @@ again:
 			break;
 		}
 
-		line[datalen] = '\0';
-		if (__ypparse(&_pw_passwd, line))
+		__ypline[datalen] = '\0';
+		if (__ypparse(&_pw_passwd, __ypline))
 			goto again;
 		return &_pw_passwd;
 	}
@@ -456,6 +498,39 @@ __has_yppw()
 		return(0);	/* No YP. */
 	return(1);
 }
+
+/*
+ * See if there's a FreeBSD-style master.passwd map set.  From the FreeBSD
+ * libc code.
+ */
+static int
+__has_ypmaster()
+{
+	int keylen, resultlen;
+	char *key, *result;
+	static int checked = -1;
+
+	if (checked != -1)
+		return(checked);
+
+	if(geteuid() != 0)
+		return(0);
+
+	if(!__ypdomain) {
+		if(_yp_check(&__ypdomain) == 0)
+			return(0);	/* No domain. */
+	}
+
+	if (yp_first(__ypdomain, "master.passwd.byname",
+	    &key, &keylen, &result, &resultlen)) {
+	    	checked = 0;
+		return(checked);
+	}
+	free(result);
+
+	checked = 1;
+	return(checked);
+}
 #endif
 
 struct passwd *
@@ -503,7 +578,7 @@ getpwnam(name)
 						__ypcurrent = NULL;
 					}
 					r = yp_match(__ypdomain,
-						"passwd.byname",
+						PASSWD_BYNAME,
 						name, strlen(name),
 						&__ypcurrent, &__ypcurrentlen);
 					if(r != 0) {
@@ -529,7 +604,7 @@ pwnam_netgrp:
 					} else {
 						if(user && *user) {
 							r = yp_match(__ypdomain,
-							    "passwd.byname",
+							    PASSWD_BYNAME,
 							    user, strlen(user),
 							    &__ypcurrent,
 							    &__ypcurrentlen);
@@ -555,7 +630,7 @@ pwnam_netgrp:
 					}
 					user = _pw_passwd.pw_name + 1;
 					r = yp_match(__ypdomain,
-						"passwd.byname",
+						PASSWD_BYNAME,
 						user, strlen(user),
 						&__ypcurrent,
 						&__ypcurrentlen);
@@ -567,9 +642,9 @@ pwnam_netgrp:
 					}
 					break;
 				}
-				bcopy(__ypcurrent, line, __ypcurrentlen);
-				line[__ypcurrentlen] = '\0';
-				if(__ypparse(&_pw_passwd, line)
+				bcopy(__ypcurrent, __ypline, __ypcurrentlen);
+				__ypline[__ypcurrentlen] = '\0';
+				if(__ypparse(&_pw_passwd, __ypline)
 				   || __ypexclude_is(_pw_passwd.pw_name)) {
 					if(s == 1)	/* inside netgrp */
 						goto pwnam_netgrp;
@@ -600,10 +675,7 @@ pwnam_netgrp:
 					(void)(_pw_db->close)(_pw_db);
 					_pw_db = (DB *)NULL;
 				}
-				if(__ypexclude != (DB *)NULL) {
-					(void)(__ypexclude->close)(__ypexclude);
-					__ypexclude = (DB *)NULL;
-				}
+				__ypexclude_free();
 				__ypproto = (struct passwd *)NULL;
 				return &_pw_passwd;
 			}
@@ -615,10 +687,7 @@ pwnam_netgrp:
 			(void)(_pw_db->close)(_pw_db);
 			_pw_db = (DB *)NULL;
 		}
-		if(__ypexclude != (DB *)NULL) {
-			(void)(__ypexclude->close)(__ypexclude);
-			__ypexclude = (DB *)NULL;
-		}
+		__ypexclude_free();
 		__ypproto = (struct passwd *)NULL;
 		return (struct passwd *)NULL;
 	}
@@ -689,7 +758,7 @@ getpwuid(uid)
 						free(__ypcurrent);
 						__ypcurrent = NULL;
 					}
-					r = yp_match(__ypdomain, "passwd.byuid",
+					r = yp_match(__ypdomain, PASSWD_BYUID,
 						uidbuf, strlen(uidbuf),
 						&__ypcurrent, &__ypcurrentlen);
 					if(r != 0) {
@@ -715,7 +784,7 @@ pwuid_netgrp:
 					} else {
 						if(user && *user) {
 							r = yp_match(__ypdomain,
-							    "passwd.byname",
+							    PASSWD_BYNAME,
 							    user, strlen(user),
 							    &__ypcurrent,
 							    &__ypcurrentlen);
@@ -741,7 +810,7 @@ pwuid_netgrp:
 					}
 					user = _pw_passwd.pw_name + 1;
 					r = yp_match(__ypdomain,
-						"passwd.byname",
+						PASSWD_BYNAME,
 						user, strlen(user),
 						&__ypcurrent,
 						&__ypcurrentlen);
@@ -753,9 +822,9 @@ pwuid_netgrp:
 					}
 					break;
 				}
-				bcopy(__ypcurrent, line, __ypcurrentlen);
-				line[__ypcurrentlen] = '\0';
-				if(__ypparse(&_pw_passwd, line)
+				bcopy(__ypcurrent, __ypline, __ypcurrentlen);
+				__ypline[__ypcurrentlen] = '\0';
+				if(__ypparse(&_pw_passwd, __ypline)
 				   || __ypexclude_is(_pw_passwd.pw_name)) {
 					if(s == 1)	/* inside netgroup */
 						goto pwuid_netgrp;
@@ -786,10 +855,7 @@ pwuid_netgrp:
 					(void)(_pw_db->close)(_pw_db);
 					_pw_db = (DB *)NULL;
 				}
-				if (__ypexclude != (DB *)NULL) {
-					(void)(__ypexclude->close)(__ypexclude);
-					__ypexclude = (DB *)NULL;
-				}
+				__ypexclude_free();
 				__ypproto = NULL;
 				return &_pw_passwd;
 			}
@@ -801,10 +867,7 @@ pwuid_netgrp:
 			(void)(_pw_db->close)(_pw_db);
 			_pw_db = (DB *)NULL;
 		}
-		if(__ypexclude != (DB *)NULL) {
-			(void)(__ypexclude->close)(__ypexclude);
-			__ypexclude = (DB *)NULL;
-		}
+		__ypexclude_free();
 		__ypproto = (struct passwd *)NULL;
 		return (struct passwd *)NULL;
 	}
@@ -835,10 +898,7 @@ setpassent(stayopen)
 	if(__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
-	if(__ypexclude != (DB *)NULL) {
-		(void)(__ypexclude->close)(__ypexclude);
-		__ypexclude = (DB *)NULL;
-	}
+	__ypexclude_free();
 	__ypproto = (struct passwd *)NULL;
 #endif
 	return(1);
@@ -863,10 +923,7 @@ endpwent()
 	if(__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
-	if(__ypexclude != (DB *)NULL) {
-		(void)(__ypexclude->close)(__ypexclude);
-		__ypexclude = (DB *)NULL;
-	}
+	__ypexclude_free();
 	__ypproto = (struct passwd *)NULL;
 #endif
 }
