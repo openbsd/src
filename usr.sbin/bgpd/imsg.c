@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.2 2003/12/20 14:33:09 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.3 2003/12/20 18:39:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -76,8 +76,10 @@ get_imsg(int fd, struct imsg *imsg)
 			}
 		}
 	} while (n > 0);
-	if (read_total == 0)	/* connection closed ? */
-		fatal("pipe closed", 0);
+
+	if (read_total == 0)	/* connection closed */
+		return (0);
+
 	return (datalen + IMSG_HEADER_SIZE);
 }
 
