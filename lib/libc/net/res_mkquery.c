@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.11 2002/06/26 06:01:16 itojun Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.12 2002/08/28 03:19:38 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.11 2002/06/26 06:01:16 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.12 2002/08/28 03:19:38 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -217,6 +217,8 @@ res_opt(n0, buf, buflen, anslen)
 
 	__putshort(T_OPT, cp);	/* TYPE */
 	cp += INT16SZ;
+	if (anslen > 0xffff)
+		anslen = 0xffff;		/* limit to 16bit value */
 	__putshort(anslen & 0xffff, cp);	/* CLASS = UDP payload size */
 	cp += INT16SZ;
 	*cp++ = NOERROR;	/* extended RCODE */
