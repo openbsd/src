@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.11 1998/11/29 15:47:24 aaron Exp $
+.\"	$OpenBSD: passwd.5,v 1.12 2000/01/19 08:33:27 pjanzen Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -43,9 +43,9 @@
 .Nd format of the password file
 .Sh DESCRIPTION
 The
-.Nm
-files are files consisting of newline separated records, one per user,
-containing ten colon
+.Nm master.passwd
+file, readable only by root, consists of
+newline-separated records, one per user, containing ten colon
 .Pq Sq \&:
 separated fields.  These fields are as follows:
 .Pp
@@ -73,6 +73,16 @@ User's home directory.
 .It shell
 User's login shell.
 .El
+.Pp
+The publically-readable
+.Nm
+file is generated from the
+.Nm master.passwd
+file by
+.Xr pwd_mkdb 8
+and has the class, change, and expire fields removed.  Also, the encrypted
+password field is replaced by an asterisk
+.Pq Sq \&* .
 .Pp
 The
 .Ar name
@@ -106,7 +116,9 @@ If the
 .Ar password
 field is empty, no password will be required to gain access to the
 machine.  This is almost invariably a mistake.
-Because these files contain the encrypted user passwords, they should
+Because
+.Nm master.passwd
+contains the encrypted user passwords, it should
 not be readable by anyone without appropriate privileges.
 .Pp
 Which type of cipher is used to encrypt the password information
@@ -146,9 +158,7 @@ This field may be left empty to turn off the account aging feature.
 .Pp
 The
 .Ar gecos
-field normally contains comma
-.Pq Sq \&,
-separated subfields as follows:
+field normally contains comma-separated subfields as follows:
 .Pp
 .Bl -tag -width office -offset indent -compact
 .It name
@@ -161,9 +171,17 @@ User's work phone number.
 User's home phone number.
 .El
 .Pp
-This information is used by the
+The full name may contain an ampersand
+.Pq Sq \&& ,
+which will be replaced by the capitalized login name when the gecos field
+is displayed or used by various programs such as
+.Xr finger 1 ,
+.Xr sendmail 8 ,
+etc.
+.Pp
+The office and phone number subfields, if they exist, are used by the
 .Xr finger 1
-program.
+program and possibly by other applications.
 .Pp
 The user's home directory is the full
 .Tn UNIX
