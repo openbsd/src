@@ -1,5 +1,5 @@
-/*	$OpenBSD: gmp_util.c,v 1.7 2000/04/07 22:10:30 niklas Exp $	*/
-/*	$EOM: gmp_util.c,v 1.5 2000/04/07 22:05:57 niklas Exp $	*/
+/*	$OpenBSD: gmp_util.c,v 1.8 2000/06/08 20:49:01 niklas Exp $	*/
+/*	$EOM: gmp_util.c,v 1.6 2000/05/08 13:42:43 ho Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -60,7 +60,11 @@ mpz_getraw (u_int8_t *raw, math_mp_t v, u_int32_t len)
   math_mp_t a;
 
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
-#error "XXX not implemented yet"
+  math_mp_t tmp;
+
+  /* XXX  mpz_get_str (raw, BASE, v); ? */
+  mpz_init_set (a, v);
+  mpz_init (tmp);
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
   /* XXX bn2bin?  */
   a = BN_dup (v);
@@ -74,7 +78,8 @@ mpz_getraw (u_int8_t *raw, math_mp_t v, u_int32_t len)
 #endif
 
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
-#error "XXX not implemented yet"
+  mpz_clear (a);
+  mpz_clear (tmp);
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
   BN_clear_free (a);
 #endif
@@ -86,7 +91,8 @@ mpz_setraw (math_mp_t d, u_int8_t *s, u_int32_t l)
   u_int32_t i;
 
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
-#error "XXX not implemented yet"
+  /* XXX mpz_set_str (d, s, 0);  */
+  mpz_set_si (d, 0);
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
   /* XXX bin2bn?  */
   BN_set_word (d, 0);
