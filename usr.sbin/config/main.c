@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1997/01/18 02:24:16 briggs Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1997/04/04 19:54:29 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.18 1996/08/31 20:58:20 mycroft Exp $	*/
 
 /*
@@ -81,6 +81,7 @@ static int badstar __P((void));
 static int mksymlinks __P((void));
 static int hasparent __P((struct devi *));
 static int cfcrosscheck __P((struct config *, const char *, struct nvlist *));
+static void optiondelta __P((void));
 
 int
 main(argc, argv)
@@ -227,6 +228,7 @@ usage:
 	    mkioconf())
 		stop();
 	(void)printf("Don't forget to run \"make depend\"\n");
+	optiondelta();
 	exit(0);
 }
 
@@ -566,4 +568,84 @@ setupdirs()
 			      srcdir);
 		exit(2);
 	}
+}
+
+struct opt {
+	const char *name;
+	const char *val;
+};
+
+int
+optcmp(sp1, sp2)
+	struct opt *sp1, *sp2;
+{
+	int r;
+
+	r = strcmp(sp1->name, sp2->name);
+	if (r == 0) {
+		if (!sp1 && !sp2)
+			r = 0;
+		else if (sp1 && !sp2)
+			r = -1;
+		else if (sp2 && !sp1)
+			r = 1;
+		else r = strcmp(sp1->val, sp2->val);
+	}
+	return (r);
+}
+
+void
+optiondelta()
+{
+	register struct nvlist *nv;
+	char nbuf[BUFSIZ], obuf[BUFSIZ];	/* XXX size */
+	int nnewopts, ret = 0, i;
+	struct opt *newopts;
+	FILE *fp;
+
+	for (nnewopts = 0, nv = options; nv != NULL; nv = nv->nv_next)
+		nnewopts++;
+	newopts = (struct opt *)malloc(nnewopts * sizeof(struct opt));
+	if (newopts == NULL)
+		ret = 0;
+	for (i = 0, nv = options; nv != NULL; nv = nv->nv_next, i++) {
+		newopts[i].name = nv->nv_name;
+		newopts[i].val = nv->nv_str;
+	}
+	qsort(newopts, nnewopts, sizeof (struct opt), optcmp);
+
+	/* compare options against previous config */
+	if ((fp = fopen("options", "r"))) {
+		for (i = 0; !feof(fp) && i < nnewopts && ret == 0; i++) {
+			if (newopts[i].val)
+				snprintf(nbuf, sizeof nbuf, "%s=%s\n",
+				    newopts[i].name, newopts[i].val);
+			else
+				snprintf(nbuf, sizeof nbuf, "%s\n",
+				    newopts[i].name);
+			if (fgets(obuf, sizeof obuf, fp) == NULL ||
+			    strcmp(nbuf, obuf))
+				ret = 1;
+		}
+		fclose(fp);
+		fp = NULL;
+	} else
+		ret = 1;
+
+	/* replace with the new list of options */
+	if ((fp = fopen("options", "w+"))) {
+		rewind(fp);
+		for (i = 0; i < nnewopts; i++) {
+			if (newopts[i].val)
+				fprintf(fp, "%s=%s\n", newopts[i].name,
+				    newopts[i].val);
+			else
+				fprintf(fp, "%s\n", newopts[i].name);
+		}
+		fclose(fp);
+	}
+	free(newopts);
+	if (ret == 0)
+		return;
+	(void)printf("Kernel options have changed -- you must run \"make clean\"\n");
 }
