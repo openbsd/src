@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.35 2000/11/11 04:52:57 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.36 2000/11/11 04:54:38 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -300,7 +300,7 @@ In that case, the proxy address for
 the incoming SA should be C.
 This option is not necessary for outgoing SAs.
 .It Fl spi
-The Security Parameter Index (SPI).
+The Security Parameter Index (SPI), given as a hexadecimal number.
 .It Fl spi2
 The second SPI used by
 .Nm group .
@@ -585,7 +585,7 @@ only flush SAs of type ip4.
 Setup a SA which uses new esp with 3des encryption and HMAC-SHA1
 authentication:
 .Bd -literal
-ipsecadm new esp -enc 3des -auth sha1 -spi 1001 -dst 169.20.12.2 \e\ 
+ipsecadm new esp -enc 3des -auth sha1 -spi 100a -dst 169.20.12.2 \e\ 
 	-src 169.20.12.3 \e\ 
 	-key 638063806380638063806380638063806380638063806380 \e\ 
 	-authkey 1234123412341234123412341234123412341234
@@ -593,11 +593,11 @@ ipsecadm new esp -enc 3des -auth sha1 -spi 1001 -dst 169.20.12.2 \e\
 .Pp
 Setup a SA for authentication with old ah only:
 .Bd -literal
-ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 \e\ 
+ipsecadm old ah -auth md5 -spi 10f2 -dst 169.20.12.2 -src 169.20.12.3 \e\ 
 	-key 12341234deadbeef
 .Ed
 .Pp
-Setup a flow using the above SA:
+Setup a flow requiring use of AH:
 .Bd -literal
 ipsecadm flow -dst 169.20.12.2 -proto ah \e\ 
 	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0 -out -require
