@@ -1,4 +1,4 @@
-/*	$Id: pcmcia.c,v 1.5 1996/05/07 07:34:17 deraadt Exp $	*/
+/*	$Id: pcmcia.c,v 1.6 1996/10/16 12:36:54 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -95,6 +95,8 @@ int pcmcia_probe_bus __P((int, int));
 int pcmciabusmatch __P((struct device *, void *, void *));
 void pcmciabusattach __P((struct device *, struct device *, void *));
 int  pcmcia_mapcard __P((struct pcmcia_link *, int, struct pcmcia_conf *));
+int  pcmcia_mapcard_and_configure __P((struct pcmcia_link *, int,
+	struct pcmcia_conf *));
 
 int pcmcia_unconfigure __P((struct pcmcia_link *));
 int pcmcia_unmapcard __P((struct pcmcia_link *));
@@ -103,6 +105,8 @@ int pcmcia_print __P((void *, char *));
 int pcmcia_submatch __P((struct device *, void *, void *));
 void pcmcia_probe_link __P((struct pcmcia_link *));
 
+void pcmcia_detach __P((struct device *, void *));
+
 struct cfattach pcmcia_ca = {
 	sizeof(struct pcmciabus_softc), pcmciabusmatch, pcmciabusattach,
 };
@@ -110,6 +114,14 @@ struct cfattach pcmcia_ca = {
 struct cfdriver pcmcia_cd = {
 	NULL, "pcmcia", DV_DULL, 1
 };
+
+int pcmciaopen __P((dev_t, int, int, struct proc *));
+int pcmciaclose __P((dev_t, int, int, struct proc *));
+int pcmciachip_ioctl __P((int, int, caddr_t));
+int pcmciaslot_ioctl __P((struct pcmcia_link *, int, int, caddr_t));
+int pcmciaioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int pcmciaselect __P((dev_t, int, struct proc *));
+int pcmciammap __P((dev_t, int, int));
 
 #if 0
 int
@@ -185,6 +197,8 @@ pcmciabusattach(parent, self, aux)
  * Probe the requested pcmcia bus. It must be already set up.
  * -1 requests all set up pcmcia busses.
  */
+int pcmcia_probe_busses __P((int, int));
+
 int
 pcmcia_probe_busses(bus, slot)
 	int             bus, slot;
@@ -950,7 +964,10 @@ pcmciaopen(dev, flag, mode, p)
 
 
 int
-pcmciaclose(dev)
+pcmciaclose(dev, flag, mode, p)
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 	int unit = PCMCIABUS_UNIT(dev);
 	int chipid, slot;
@@ -1177,11 +1194,11 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 
 int
 pcmciaioctl(dev, cmd, data, flag, p)
-	dev_t           dev;
-	int             cmd;
-	caddr_t         data;
-	int             flag;
-	struct proc    *p;
+	dev_t		dev;
+	u_long		cmd;
+	caddr_t		data;
+	int		flag;
+	struct proc	*p;
 {
 	int unit = PCMCIABUS_UNIT(dev);
 	int chipid = PCMCIABUS_CHIPNO(unit);
@@ -1256,7 +1273,9 @@ pcmciaselect(device, rw, p)
 }
 
 int
-pcmciammap()
+pcmciammap(dev, offset, nprot)
+	dev_t dev;
+	int offset, nprot;
 {
 	return ENXIO;
 }
