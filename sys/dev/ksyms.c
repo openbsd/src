@@ -118,7 +118,7 @@ ksymsread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t v;
+	register vaddr_t v;
 	register size_t c, len;
 	int error = 0;
 
@@ -133,8 +133,7 @@ ksymsread(dev, uio, flags)
 		}
 
 		/* Can't read past size of symbol table... */
-		if (uio->uio_offset >= (vm_offset_t)(esym - symtab) +
-		    k1->a_text)
+		if (uio->uio_offset >= (vaddr_t)(esym - symtab) + k1->a_text)
 			break;
 
 		if (uio->uio_offset < k1->a_text) {
@@ -150,18 +149,17 @@ ksymsread(dev, uio, flags)
 				len = iov->iov_len;
 
 			/* Make offset relative to struct exec */
-			v = uio->uio_offset + (vm_offset_t)k1;
+			v = uio->uio_offset + (vaddr_t)k1;
 			c = min(len, MAXPHYS);
 			error = uiomove((caddr_t)v, c, uio);
 		} else {
 			/* Make offset relative to symtab */
-			v = uio->uio_offset - k1->a_text +
-			    (vm_offset_t)symtab;
+			v = uio->uio_offset - k1->a_text + (vaddr_t)symtab;
 			c = min(iov->iov_len, MAXPHYS);
 
 			/* Don't read past esym, truncate. */
-			if (v + c > (vm_offset_t)esym)
-				c = (vm_offset_t)esym - v;
+			if (v + c > (vaddr_t)esym)
+				c = (vaddr_t)esym - v;
 			error = uiomove((caddr_t)v, c, uio);
 		}
 	}
@@ -175,7 +173,7 @@ ksymsmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-#define ksyms_btop(x)	((vm_offset_t)(x) >> PGSHIFT
+#define ksyms_btop(x)	((vaddr_t)(x) >> PGSHIFT
 	if (off < 0)
 		return (-1);
 	if ((unsigned)off >= (unsigned)(esym - symtab) + k1->a_text)

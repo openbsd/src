@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.9 1999/02/26 01:44:33 art Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.10 1999/09/14 14:19:56 mickey Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -544,8 +544,8 @@ rd_ioctl_kalloc(sc, urd, proc)
 	struct rd_conf *urd;
 	struct proc	*proc;
 {
-	vm_offset_t addr;
-	vm_size_t  size;
+	vaddr_t addr;
+	vsize_t size;
 
 	/* Sanity check the size. */
 	size = urd->rd_size;
@@ -576,14 +576,13 @@ rd_ioctl_server(sc, urd, proc)
 	struct rd_conf *urd;
 	struct proc	*proc;
 {
-	vm_offset_t end;
+	vaddr_t end;
 	int error;
 
 	/* Sanity check addr, size. */
-	end = (vm_offset_t) (urd->rd_addr + urd->rd_size);
+	end = (vaddr_t) (urd->rd_addr + urd->rd_size);
 
-	if ((end >= VM_MAXUSER_ADDRESS) ||
-		(end < ((vm_offset_t) urd->rd_addr)) )
+	if ((end >= VM_MAXUSER_ADDRESS) || (end < ((vaddr_t) urd->rd_addr)) )
 		return EINVAL;
 
 	/* This unit is now configured. */
