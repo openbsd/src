@@ -1,0 +1,18 @@
+# invalid binat stuff
+binat on lo0 from (lo0) to (lo1) -> (lo0)
+binat on lo0 from (lo0) to no-route -> (lo1)
+binat on lo0 from no-route to any -> 1.1.1.1
+binat on lo0 from !1.1.1.1 to any -> 1.1.1.1
+binat on lo0 from !(lo0) to any -> 1.1.1.1
+binat on lo0 from 1.1.1.1 to any -> no-route
+binat on lo0 from 1.1.1.1 to any -> !3.3.3.3
+binat on lo0 from 1.1.1.1 to any -> !(lo1)
+#binat on { lo0 lo1 } from 1.1.1.1 to any -> 2.2.2.2
+binat on lo0 from { 1.1.1.1 2.2.2.2 } to any -> 3.3.3.3
+binat on lo0 from 1.1.1.1 to { 2.2.2.2 3.3.3.3 } -> 4.4.4.4
+binat on lo0 from 1.1.1.1 to any -> { 1.1.1.1 2.2.2.2 }
+binat on lo0 from ::1 to any -> 1.2.3.4
+binat on lo0 from 1.1.1.1 to ::1 -> 1.2.3.4
+binat on lo0 from 1.1.1.1 to any -> ::1
+binat on lo0 inet from ::1 to any -> ::2
+binat on lo0 inet6 from 1.2.3.4 to any -> 4.3.2.1
