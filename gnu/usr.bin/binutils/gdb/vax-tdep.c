@@ -212,7 +212,7 @@ vax_return_value (struct gdbarch *gdbarch, struct type *type,
   char buf[8];
 
   if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (type) == TYPE_CODE_STRUCT
+      || TYPE_CODE (type) == TYPE_CODE_UNION
       || TYPE_CODE (type) == TYPE_CODE_ARRAY)
     return RETURN_VALUE_STRUCT_CONVENTION;
 
@@ -369,7 +369,7 @@ vax_frame_this_id (struct frame_info *next_frame, void **this_cache,
   if (cache->base == 0)
     return;
 
-  (*this_id) = frame_id_build (cache->base, frame_pc_unwind (next_frame));
+  (*this_id) = frame_id_build (cache->base, frame_func_unwind (next_frame));
 }
 
 static void
