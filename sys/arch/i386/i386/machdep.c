@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.130 2000/04/11 02:44:27 pjanzen Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.131 2000/04/24 18:56:56 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1578,10 +1578,10 @@ dumpconf()
 		dumpsize = max(dumpsize, dumpmem[i].end);
 
 	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
+	if (dumpsize > dtoc(nblks - dumplo - 1))
+		dumpsize = dtoc(nblks - dumplo - 1);
+	if (dumplo < nblks - ctod(dumpsize) - 1)
+		dumplo = nblks - ctod(dumpsize) - 1;
 }
 
 /*
@@ -1677,16 +1677,16 @@ dumpsys()
 		for (j = npg; j--; maddr += NBPG, blkno += btodb(NBPG)) {
 
 			/* Print out how many MBs we have more to go. */
-			if (!(dbtob(blkno - dumplo) % (1024*1024)))
-				printf("%d ", (dumpsize - maddr) /
-					      btoc(1024*1024));
+			if (dbtob(blkno - dumplo) % (1024 * 1024) < NBPG)
+				printf("%d ",
+				    (ctob(dumpsize) - maddr) / (1024 * 1024));
 #if 0
 			printf("(%x %d) ", maddr, blkno);
 #endif
 			pmap_enter(pmap_kernel(), dumpspace, maddr,
-				   VM_PROT_READ, TRUE, 0);
+			    VM_PROT_READ, TRUE, 0);
 			if ((error = (*dump)(dumpdev, blkno,
-					     (caddr_t)dumpspace, NBPG)))
+			    (caddr_t)dumpspace, NBPG)))
 				break;
 
 #if 0	/* XXX this doesn't work.  grr. */
