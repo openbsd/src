@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.148 2000/02/25 01:39:13 krw Exp $
+#	$OpenBSD: install.sub,v 1.149 2000/03/19 01:14:03 espie Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -2204,4 +2204,10 @@ __network_config_2
 		*)
 			;;
 	esac
+}
+
+populateusrlocal() {
+	if [ -f /mnt/etc/mtree/BSD.local.dist ]; then
+		/mnt/usr/sbin/chroot /mnt /usr/sbin/mtree -Uedqn -p /usr/local -f /etc/mtree/BSD.local.dist >/dev/null
+	fi
 }
