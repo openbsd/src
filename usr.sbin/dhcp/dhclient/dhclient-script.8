@@ -107,8 +107,9 @@ When a binding has been completed, a lot of network parameters are
 likely to need to be set up.   A new /etc/resolv.conf needs to be
 created, using the values of $new_domain_name and
 $new_domain_name_servers (which may list more than one server,
-separated by spaces).   A default route should be set using
-$new_routers, and static routes may need to be set up using
+separated by spaces).   If /etc/resolv.conf.tail exists, it is appended
+to the newly-created /etc/resolv.conf file.  A default route should
+be set using $new_routers, and static routes may need to be set up using
 $new_static_routes.
 .PP
 If an IP alias has been declared, it must be set up here.   The alias
