@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2001/09/23 00:14:56 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.3 2001/09/24 16:25:00 art Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 	
 /*
@@ -109,14 +109,12 @@ _dl_start:
 	addx	%l0, 16, %o1		! envp = %l0 + 16 +
 	addx	%o1, %l3, %o1		!	+ argc
 
-	! XXX loff ???
+	subx	%l0, ARGC, %o4		! dl_data = sp
 
-	mov	%o1, %o4		! %o3 = my_envp
-1:
-	ldx	[%o4 + 0], %l2		! while ((*my_envp)
-	subxcc	%l2, %g0, %g0		!   != NULL)
-	bnz	1b			!	my_envp++;
-	 addx	%o4, 8, %o4		! %o4 == dynp
+	mov	0, %o3			! dynp = 0
+
+	addx	%o4, (7*8), %l2
+	ldx	[%l2], %o2		! loff = dl_data[AUX_base];
 
 	call	_dl_boot		! _dl_boot(argv,envp,loff,dynp,dl_data)
 	 nop
