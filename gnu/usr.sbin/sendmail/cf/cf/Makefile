@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2001/01/16 01:38:37 itojun Exp $
+#	$OpenBSD: Makefile,v 1.9 2001/02/02 06:41:18 tholo Exp $
 #
 #  Makefile for configuration files.
 #
@@ -26,7 +26,7 @@ RM=	rm -f
 	$(CHMOD) $(ROMODE) $@
 
 ALL=	clientproto.cf openbsd-proto.cf courtesan.cf courtesan-nonet.cf \
-	courtesan-lists.cf  openbsd-lists.cf gandalf.cf saruman.cf alatar.cf \
+	courtesan-lists.cf  openbsd-lists.cf gandalf.cf alatar.cf \
 	nettan.cf waldorf.cf lucifier.cf elbereth.cf corpse.cf knecht.cf
 
 all: $(ALL)
