@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.5 1997/09/08 21:29:11 niklas Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.6 1997/10/07 10:57:37 niklas Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.7 1997/06/10 18:24:34 veego Exp $	*/
 
 /*-
@@ -52,22 +52,20 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
+#include <ddb/db_access.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
-static char db_read_data __P((char *src));
-void db_read_bytes __P((vm_offset_t addr, register int size, register char *data));
-static void db_write_text __P((char *dst, int ch));
-static void db_write_data __P((char *dst, int ch));
-void db_write_bytes __P((vm_offset_t addr, int size, char *data));
-
+char db_read_data __P((char *src));
+void db_write_text __P((char *dst, int ch));
+void db_write_data __P((char *dst, int ch));
 
 /*
  * Read one byte somewhere in the kernel.
  * It does not matter if this is slow. -gwr
  */
-static char
+char
 db_read_data(src)
 	char *src;
 {
@@ -91,8 +89,8 @@ db_read_data(src)
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
-	register char	*data;
+	size_t		size;
+	char	       *data;
 {
 	char	*src, *limit;
 
@@ -110,7 +108,7 @@ db_read_bytes(addr, size, data)
  * Write one byte somewhere in kernel text.
  * It does not matter if this is slow. -gwr
  */
-static void
+void
 db_write_text(dst, ch)
 	char *dst;
 	int ch;
@@ -125,7 +123,8 @@ db_write_text(dst, ch)
 	}
 
 #if 0
-printf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte, *pte);
+	printf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte,
+	    *pte);
 #endif
 	*pte &= ~PG_RO;
 	TBIS((vm_offset_t)dst);
@@ -141,7 +140,7 @@ printf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte, *pte);
  * Write one byte somewhere outside kernel text.
  * It does not matter if this is slow. -gwr
  */
-static void
+void
 db_write_data(dst, ch)
 	char *dst;
 	int ch;
@@ -163,11 +162,11 @@ db_write_data(dst, ch)
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	int	size;
-	char	*data;
+	size_t		size;
+	char	       *data;
 {
-	extern char	etext[] ;
-	char	*dst, *limit;
+	extern char	etext[];
+	char	       *dst, *limit;
 
 	dst = (char *)addr;
 	limit = dst + size;
