@@ -175,6 +175,7 @@ rip_input(from, rip, size)
 	case RIPCMD_TRACEON:
 	case RIPCMD_TRACEOFF:
 		/* verify message came from a privileged port */
+#ifdef TRACING
 		if ((*afp->af_portcheck)(from) == 0)
 			return;
 
@@ -186,6 +187,7 @@ rip_input(from, rip, size)
 			traceon(rip->rip_tracefile);
 		else
 			traceoff();
+#endif
 		return;
 
 	case RIPCMD_RESPONSE:
