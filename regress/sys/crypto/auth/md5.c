@@ -1,4 +1,4 @@
-/*      $OpenBSD: md5.c,v 1.1 2002/03/21 15:08:53 markus Exp $  */
+/*      $OpenBSD: md5.c,v 1.2 2002/04/03 18:42:15 fgsch Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
@@ -29,10 +29,11 @@
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <crypto/cryptodev.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #define MD5LEN 16
 

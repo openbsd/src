@@ -1,4 +1,4 @@
-/*      $OpenBSD: des3.c,v 1.2 2002/03/25 10:00:47 markus Exp $  */
+/*      $OpenBSD: des3.c,v 1.3 2002/04/03 18:42:16 fgsch Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
@@ -29,11 +29,13 @@
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <crypto/cryptodev.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <err.h>
 #include <des.h>
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 int
 syscrypt(const unsigned char *key, size_t klen, const unsigned char *iv,
@@ -41,7 +43,7 @@ syscrypt(const unsigned char *key, size_t klen, const unsigned char *iv,
 {
 	struct session_op session;
 	struct crypt_op cryp;
-	int cryptodev_fd = -1, fd = -1, i;
+	int cryptodev_fd = -1, fd = -1;
 
 	if ((cryptodev_fd = open("/dev/crypto", O_RDWR, 0)) < 0) {
 		warn("/dev/crypto");
