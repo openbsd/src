@@ -1,11 +1,12 @@
-/*	$OpenBSD: diskwr.c,v 1.2 2001/07/04 08:31:35 niklas Exp $	*/
+/*	$OpenBSD: diskwr.c,v 1.3 2004/01/24 21:12:38 miod Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
  * are preserved.
  */
 #include <sys/types.h>
-#include <machine/prom.h>
+
+#include "libbug.h"
 
 /* returns 0: success, nonzero: error */
 int
