@@ -94,7 +94,7 @@ void import_key(struct ipsecinit *, struct sadb_key *, int);
 void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
 void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
 int pfdatatopacket(void *, int, struct mbuf **);
-int pfkeyv2_acquire(void *);
+int pfkeyv2_acquire(struct tdb *, int);
 int pfkeyv2_create(struct socket *);
 int pfkeyv2_get(struct tdb *, void **, void **);
 int pfkeyv2_release(struct socket *);
@@ -1632,9 +1632,8 @@ realret:
 }
 
 int
-pfkeyv2_acquire(void *os)
+pfkeyv2_acquire(struct tdb *tdb, int rekey)
 {
-#if 0
   int rval = 0;
   int i, j;
   void *p, *headers[SADB_EXT_MAX+1], *buffer = NULL;
@@ -1644,16 +1643,18 @@ pfkeyv2_acquire(void *os)
     goto ret;
   }
 
+  /* How large a buffer do we need... */
   i = sizeof(struct sadb_msg) + sizeof(struct sadb_address) +
-      PADUP(SA_LEN(&os->src.sa)) + sizeof(struct sadb_address) +
-      PADUP(SA_LEN(&os->dst.sa)) + sizeof(struct sadb_prop) +
-      os->nproposals * sizeof(struct sadb_comb) +
+      PADUP(SA_LEN(&tdb->tdb_src.sa)) + sizeof(struct sadb_address) +
+      PADUP(SA_LEN(&tdb->tdb_dst.sa)) + sizeof(struct sadb_prop) +
+      1 * sizeof(struct sadb_comb) +  /* XXX We only do one proposal for now */
       2 * sizeof(struct sadb_ident);
 
-  if (os->rekeysa)
-    i += PADUP(os->rekeysa->srcident.bytes) +
-	 PADUP(os->rekeysa->dstident.bytes);
+  if (rekey)
+    i += PADUP(tdb->tdb_srcid_len) +
+         PADUP(tdb->tdb_dstid_len);
 
+  /* Allocate */
   if (!(p = malloc(i, M_PFKEY, M_DONTWAIT))) {
     rval = ENOMEM;
     goto ret;
@@ -1668,76 +1669,133 @@ pfkeyv2_acquire(void *os)
   p += sizeof(struct sadb_msg);
   ((struct sadb_msg *)headers[0])->sadb_msg_version = PF_KEY_V2;
   ((struct sadb_msg *)headers[0])->sadb_msg_type    = SADB_ACQUIRE;
-  ((struct sadb_msg *)headers[0])->sadb_msg_satype  = os->satype;
   ((struct sadb_msg *)headers[0])->sadb_msg_len     = i / sizeof(uint64_t);
   ((struct sadb_msg *)headers[0])->sadb_msg_seq     = pfkeyv2_seq++;
 
+  j = tdb->tdb_xform->xf_type;
+  switch (j)
+  {
+      case XF_OLD_AH:
+	 j = SADB_X_SATYPE_AH_OLD;
+	 break;
+
+      case XF_OLD_ESP:
+	 j = SADB_X_SATYPE_ESP_OLD;
+	 break;
+
+      case XF_NEW_AH:
+	 j = SADB_SATYPE_AH;
+	 break;
+
+      case XF_NEW_ESP:
+	 j = SADB_SATYPE_ESP;
+	 break;
+  }
+
+  ((struct sadb_msg *)headers[0])->sadb_msg_satype  = j;
+
   headers[SADB_EXT_ADDRESS_SRC] = p;
-  p += sizeof(struct sadb_address) + PADUP(SA_LEN(&os->src.sa));
-  ((struct sadb_address *)headers[SADB_EXT_ADDRESS_SRC])->sadb_address_len = (sizeof(struct sadb_address) + SA_LEN(&os->src.sa) + sizeof(uint64_t) - 1) / sizeof(uint64_t);
-  bcopy(&os->src, headers[SADB_EXT_ADDRESS_SRC] + sizeof(struct sadb_address),
-	SA_LEN(&os->src.sa));
+  p += sizeof(struct sadb_address) + PADUP(SA_LEN(&tdb->tdb_src.sa));
+  ((struct sadb_address *)headers[SADB_EXT_ADDRESS_SRC])->sadb_address_len = (sizeof(struct sadb_address) + SA_LEN(&tdb->tdb_src.sa) + sizeof(uint64_t) - 1) / sizeof(uint64_t);
+  bcopy(&tdb->tdb_src, headers[SADB_EXT_ADDRESS_SRC] + sizeof(struct sadb_address), SA_LEN(&tdb->tdb_src.sa));
 
   headers[SADB_EXT_ADDRESS_DST] = p;
-  p += sizeof(struct sadb_address) + PADUP(SA_LEN(&os->dst.sa));
-  ((struct sadb_address *)headers[SADB_EXT_ADDRESS_DST])->sadb_address_len = (sizeof(struct sadb_address) + SA_LEN(&os->dst.sa) + sizeof(uint64_t) - 1) / sizeof(uint64_t);
-  bcopy(&os->dst, headers[SADB_EXT_ADDRESS_DST] + sizeof(struct sadb_address),
-	SA_LEN(&os->dst.sa));
+  p += sizeof(struct sadb_address) + PADUP(SA_LEN(&tdb->tdb_dst.sa));
+  ((struct sadb_address *)headers[SADB_EXT_ADDRESS_DST])->sadb_address_len = (sizeof(struct sadb_address) + SA_LEN(&tdb->tdb_dst.sa) + sizeof(uint64_t) - 1) / sizeof(uint64_t);
+  bcopy(&tdb->tdb_dst, headers[SADB_EXT_ADDRESS_DST] + sizeof(struct sadb_address), SA_LEN(&tdb->tdb_dst.sa));
 
   headers[SADB_EXT_IDENTITY_SRC] = p;
   p += sizeof(struct sadb_ident);
-  ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC])->sadb_ident_type = os->srcidenttype;
-  ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC])->sadb_ident_id = os->srcidentid;
-  if (os->rekeysa) {
-    ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC])->sadb_ident_len = (sizeof(struct sadb_ident) + PADUP(os->rekeysa->srcident.bytes)) / sizeof(uint64_t);
-    bcopy(os->rekeysa->srcident.data, p, os->rekeysa->srcident.bytes);
-    p += PADUP(os->rekeysa->srcident.bytes);
+  ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC])->sadb_ident_type = tdb->tdb_srcid_type;
+
+  /* XXX some day we'll have to deal with real ident_ids for users */
+  ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC])->sadb_ident_id = 0;
+
+  if (rekey) {
+    ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC])->sadb_ident_len = (sizeof(struct sadb_ident) + PADUP(tdb->tdb_srcid_len)) / sizeof(uint64_t);
+    bcopy(tdb->tdb_srcid, p, tdb->tdb_srcid_len);
+    p += PADUP(tdb->tdb_srcid_len);
   } else
     ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC])->sadb_ident_len = (sizeof(struct sadb_ident)) / sizeof(uint64_t);
 
   headers[SADB_EXT_IDENTITY_DST] = p;
   p += sizeof(struct sadb_ident);
-  ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC])->sadb_ident_type = os->dstidenttype;
-  ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC])->sadb_ident_id = os->dstidentid;
-  if (os->rekeysa) {
-    ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_DST])->sadb_ident_len = (sizeof(struct sadb_ident) + PADUP(os->rekeysa->dstident.bytes)) / sizeof(uint64_t);
-    bcopy(os->rekeysa->dstident.data, p, os->rekeysa->dstident.bytes);
-    p += PADUP(os->rekeysa->srcident.bytes);
+  ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_DST])->sadb_ident_type = tdb->tdb_dstid_type;
+
+  /* XXX some day we'll have to deal with real ident_ids for users */
+  ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_DST])->sadb_ident_id = 0;
+
+  if (rekey) {
+    ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_DST])->sadb_ident_len = (sizeof(struct sadb_ident) + PADUP(tdb->tdb_dstid_len)) / sizeof(uint64_t);
+    bcopy(tdb->tdb_dstid, p, tdb->tdb_dstid_len);
+    p += PADUP(tdb->tdb_dstid_len);
   } else
     ((struct sadb_ident *)headers[SADB_EXT_IDENTITY_DST])->sadb_ident_len = (sizeof(struct sadb_ident)) / sizeof(uint64_t);
 
   headers[SADB_EXT_PROPOSAL] = p;
   p += sizeof(struct sadb_prop);
-  ((struct sadb_prop *)headers[SADB_EXT_PROPOSAL])->sadb_prop_len = (sizeof(struct sadb_prop) + sizeof(struct sadb_comb) * os->nproposals) / sizeof(uint64_t);
-  ((struct sadb_prop *)headers[SADB_EXT_PROPOSAL])->sadb_prop_num = os->nproposals;
+  ((struct sadb_prop *)headers[SADB_EXT_PROPOSAL])->sadb_prop_len = (sizeof(struct sadb_prop) + sizeof(struct sadb_comb) * 1) / sizeof(uint64_t); /* XXX 1 proposal only */
+  ((struct sadb_prop *)headers[SADB_EXT_PROPOSAL])->sadb_prop_num = 1; /* XXX 1 proposal only */
 
   {
     struct sadb_comb *sadb_comb = p;
-    struct netsec_sadb_proposal *proposal = os->proposals;
 
-    for (j = 0; j < os->nproposals; j++) {
-      sadb_comb->sadb_comb_auth = proposal->auth;
-      sadb_comb->sadb_comb_encrypt = proposal->encrypt;
-      sadb_comb->sadb_comb_flags = proposal->flags;
-      sadb_comb->sadb_comb_auth_minbits = proposal->auth_minbits;
-      sadb_comb->sadb_comb_auth_maxbits = proposal->auth_maxbits;
-      sadb_comb->sadb_comb_encrypt_minbits = proposal->encrypt_minbits;
-      sadb_comb->sadb_comb_encrypt_maxbits = proposal->encrypt_maxbits;
-      sadb_comb->sadb_comb_soft_allocations = proposal->soft.allocations;
-      sadb_comb->sadb_comb_hard_allocations = proposal->hard.allocations;
-      sadb_comb->sadb_comb_soft_bytes = proposal->soft.bytes;
-      sadb_comb->sadb_comb_hard_bytes = proposal->hard.bytes;
-      sadb_comb->sadb_comb_soft_addtime = proposal->soft.addtime;
-      sadb_comb->sadb_comb_hard_addtime = proposal->hard.addtime;
-      sadb_comb->sadb_comb_soft_usetime = proposal->soft.usetime;
-      sadb_comb->sadb_comb_hard_usetime = proposal->hard.usetime;
+    /* XXX 1 proposal only */
+    for (j = 0; j < 1; j++) {
+      sadb_comb->sadb_comb_flags = 0;
+
+      if (tdb->tdb_flags & TDBF_PFS)
+        sadb_comb->sadb_comb_flags |= SADB_SAFLAGS_PFS;
+
+      if (tdb->tdb_flags & TDBF_HALFIV)
+        sadb_comb->sadb_comb_flags |= SADB_X_SAFLAGS_HALFIV;
+
+      if (tdb->tdb_flags & TDBF_TUNNELING)
+        sadb_comb->sadb_comb_flags |= SADB_X_SAFLAGS_TUNNEL;
+
+      if (tdb->tdb_authalgxform)
+      {
+          sadb_comb->sadb_comb_auth = tdb->tdb_authalgxform->type;
+          sadb_comb->sadb_comb_auth_minbits = tdb->tdb_authalgxform->keysize * 8;
+          sadb_comb->sadb_comb_auth_maxbits = tdb->tdb_authalgxform->keysize * 8;
+      }
+      else
+      {
+          sadb_comb->sadb_comb_auth = 0;
+          sadb_comb->sadb_comb_auth_minbits = 0;
+          sadb_comb->sadb_comb_auth_maxbits = 0;
+      }
+
+      if (tdb->tdb_encalgxform)
+      {
+          sadb_comb->sadb_comb_encrypt = tdb->tdb_encalgxform->type;
+          sadb_comb->sadb_comb_encrypt_minbits = tdb->tdb_encalgxform->minkey * 8;
+          sadb_comb->sadb_comb_encrypt_maxbits = tdb->tdb_encalgxform->maxkey * 8;
+      }
+      else
+      {
+          sadb_comb->sadb_comb_encrypt = 0;
+          sadb_comb->sadb_comb_encrypt_minbits = 0;
+          sadb_comb->sadb_comb_encrypt_maxbits = 0;
+      }
+
+      sadb_comb->sadb_comb_soft_allocations = tdb->tdb_soft_allocations;
+      sadb_comb->sadb_comb_hard_allocations = tdb->tdb_exp_allocations;
+
+      sadb_comb->sadb_comb_soft_bytes = tdb->tdb_soft_bytes;
+      sadb_comb->sadb_comb_hard_bytes = tdb->tdb_exp_bytes;
+
+      sadb_comb->sadb_comb_soft_addtime = tdb->tdb_soft_timeout;
+      sadb_comb->sadb_comb_hard_addtime = tdb->tdb_exp_timeout;
+
+      sadb_comb->sadb_comb_soft_usetime = tdb->tdb_soft_first_use;
+      sadb_comb->sadb_comb_hard_usetime = tdb->tdb_exp_first_use;
       sadb_comb++;
-      proposal++;
     }
   }
 
   if ((rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_REGISTERED,
-				  NULL, os->satype, count))!= 0)
+				  NULL, ((struct sadb_msg *)headers[0])->sadb_msg_satype, 1))!= 0)  /* XXX notice count of 1 as last arg -- is that right ? */
     goto ret;
 
   rval = 0;
@@ -1748,8 +1806,6 @@ ret:
     free(buffer, M_PFKEY);
   }
   return rval;
-#endif
-  return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.38 1999/07/06 20:17:52 cmetz Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.39 1999/07/15 14:15:41 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -98,6 +98,11 @@ union sockaddr_union
 #define AH_SHA1_ALEN		20
 #define AH_RMD160_ALEN		20
 #define AH_ALEN_MAX		20 	/* Keep updated */
+
+/* Reserved SPI numbers */
+#define SPI_LOCAL_USE		0
+#define SPI_RESERVED_MIN	1
+#define SPI_RESERVED_MAX	255
 
 struct sockaddr_encap
 {

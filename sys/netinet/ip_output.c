@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.48 1999/06/15 02:24:02 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.49 1999/07/15 14:15:41 niklas Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -90,6 +90,8 @@ int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
 extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
+
+extern int pfkeyv2_acquire(struct tdb *, int);
 #endif
 
 /*
@@ -275,16 +277,39 @@ ip_output(m0, va_alist)
 		}
 
 		/* 
-		 * For VPNs a route with a reserved SPI of 1 is used to
+		 * For VPNs a route with a reserved SPI of 0 is used to
 		 * indicate the need for an SA when none is established.
 		 */
-		if (ntohl(gw->sen_ipsp_spi) == 0x1) {
-			sa_require = NOTIFY_SATYPE_AUTH | NOTIFY_SATYPE_TUNNEL;
-			if (gw->sen_ipsp_sproto == IPPROTO_ESP)
-			    sa_require |= NOTIFY_SATYPE_CONF;
+		if (ntohl(gw->sen_ipsp_spi) == SPI_LOCAL_USE) {
+			bzero(&sunion, sizeof(sunion));
+			sunion.sin.sin_family = AF_INET;
+			sunion.sin.sin_len = sizeof(struct sockaddr_in);
+			sunion.sin.sin_addr = gw->sen_ipsp_dst;
+			tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
+						    gw->sen_ipsp_sproto);
 
-			/* XXX PF_KEYv2 notification message */
-			
+			if (tdb)
+			{
+			    if (tdb->tdb_authalgxform)
+			      sa_require = NOTIFY_SATYPE_AUTH;
+			    if (tdb->tdb_encalgxform)
+			      sa_require |= NOTIFY_SATYPE_CONF;
+			    if (tdb->tdb_flags & TDBF_TUNNELING)
+			      sa_require |= NOTIFY_SATYPE_TUNNEL;
+			}
+			else /* No TDB found */
+			{
+			    /*
+			     * XXX We should construct a TDB from system
+			     * default (which should be tunable via sysctl).
+			     * For now, drop packet and ignore SPD entry.
+			     */
+			    goto no_encap;
+			}
+
+			/* PF_KEYv2 notification message */
+			pfkeyv2_acquire(tdb, 0); /* XXX Check for errors */
+
 			splx(s);
 
 			/* 

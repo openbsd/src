@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.48 1999/07/06 20:54:03 ho Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.49 1999/07/15 14:15:41 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -243,7 +243,8 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 	    
 	    gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
 	    
-	    if (gw->sen_type == SENT_IPSP) {
+	    if (gw->sen_type == SENT_IPSP)
+	    {
 		bzero(&sunion, sizeof(sunion));
 	        sunion.sin.sin_family = AF_INET;
 		sunion.sin.sin_len = sizeof(struct sockaddr_in);
@@ -337,9 +338,9 @@ tdb_add_inp(struct tdb *tdb, struct inpcb *inp)
 }
 
 /*
- * Reserve an SPI; the SA is not valid yet though. Zero is reserved as
- * an error return value. If tspi is not zero, we try to allocate that
- * SPI.
+ * Reserve an SPI; the SA is not valid yet though.  We use SPI_LOCAL_USE as
+ * an error return value.  It'll not be a problem that we also use that
+ * for demand-keying as that is manually specified.
  */
 
 u_int32_t
@@ -350,33 +351,35 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
     u_int32_t spi;
     int nums;
 
-    if (tspi <= 255)   /* We don't reserve 0 < SPI <= 255 */
+    /* Don't accept ranges only encompassing reserved SPIs.  */
+    if (tspi < sspi || tspi <= SPI_RESERVED_MAX)
     {
-	(*errval) = EEXIST;
+	(*errval) = EINVAL;
 	return 0;
     }
-    
-    if ((sspi == tspi) && (sspi != 0))   /* Asking for a specific SPI */
+
+    /* Limit the range to not include reserved areas.  */
+    if (sspi <= SPI_RESERVED_MAX)
+      sspi = SPI_RESERVED_MAX + 1;
+
+    if (sspi == tspi)   /* Asking for a specific SPI */
       nums = 1;
     else
       nums = 50;  /* XXX figure out some good value */
 
     while (nums--)
     {
-	if (tspi != 0) /* SPIRANGE was defined */
+	if (sspi == tspi)  /* Specific SPI asked */
+	  spi = tspi;
+	else    /* Range specified */
 	{
-	    if (sspi == tspi)  /* Specific SPI asked */
-	      spi = tspi;
-	    else    /* Range specified */
-	    {
-		get_random_bytes((void *) &spi, sizeof(spi));
-		spi = sspi + (spi % (tspi - sspi));
-	    }
+	    get_random_bytes((void *) &spi, sizeof(spi));
+	    spi = sspi + (spi % (tspi - sspi));
 	}
-	else  /* Some SPI */
-	  get_random_bytes((void *) &spi, sizeof(spi));
 	  
-	if (spi <= 255) /* Don't allocate SPI <= 255, they're reserved */
+	/* Don't allocate reserved SPIs.  */
+	if (spi == SPI_LOCAL_USE ||
+	    (spi >= SPI_RESERVED_MIN && spi <= SPI_RESERVED_MAX))
 	  continue;
 	else
 	  spi = htonl(spi);
@@ -520,6 +523,16 @@ tdb_expiration(struct tdb *tdb, int flags)
     int will_be_first, sole_reason, early;
     int s = spltdb();
 
+    /*
+     * If this is the local use SPI, this is an SPD entry, so don't setup any
+     * timers.
+     */
+    if (ntohl(tdb->tdb_spi) == SPI_LOCAL_USE)
+    {
+	splx(s);
+	return;
+    }
+
     /* Find the earliest expiration.  */
     if ((tdb->tdb_flags & TDBF_FIRSTUSE) && tdb->tdb_first_use != 0 &&
 	(next_timeout == 0 ||
@@ -537,7 +550,8 @@ tdb_expiration(struct tdb *tdb, int flags)
 	next_timeout = tdb->tdb_soft_timeout;
 
     /* No change?  */
-    if (next_timeout == tdb->tdb_timeout) {
+    if (next_timeout == tdb->tdb_timeout)
+    {
       splx(s);
       return;
     }
@@ -633,7 +647,8 @@ tdb_expiration(struct tdb *tdb, int flags)
     /*
      * Check various invariants.
      */
-    if (tdb->tdb_expnext.tqe_prev != NULL) {
+    if (tdb->tdb_expnext.tqe_prev != NULL)
+    {
 	t = TAILQ_FIRST(&expclusterlist);
 	if (t != tdb && t->tdb_timeout >= tdb->tdb_timeout)
 	  panic("tdb_expiration: "
