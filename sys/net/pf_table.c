@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.59 2004/07/08 23:17:38 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.60 2004/10/15 00:15:06 jaredy Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -155,6 +155,7 @@ int			 pfr_unroute_kentry(struct pfr_ktable *,
 			    struct pfr_kentry *);
 int			 pfr_walktree(struct radix_node *, void *);
 int			 pfr_validate_table(struct pfr_table *, int, int);
+int			 pfr_fix_anchor(char *);
 void			 pfr_commit_ktable(struct pfr_ktable *, long);
 void			 pfr_insert_ktables(struct pfr_ktableworkq *);
 void			 pfr_insert_ktable(struct pfr_ktable *);
@@ -1082,6 +1083,8 @@ pfr_clr_tables(struct pfr_table *filter, int *ndel, int flags)
 	int			 s, xdel = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_ALLRSETS);
+	if (pfr_fix_anchor(filter->pfrt_anchor))
+		return (EINVAL);
 	if (pfr_table_count(filter, flags) < 0)
 		return (ENOENT);
 
@@ -1237,6 +1240,8 @@ pfr_get_tables(struct pfr_table *filter, struct pfr_table *tbl, int *size,
 	int			 n, nn;
 
 	ACCEPT_FLAGS(PFR_FLAG_ALLRSETS);
+	if (pfr_fix_anchor(filter->pfrt_anchor))
+		return (EINVAL);
 	n = nn = pfr_table_count(filter, flags);
 	if (n < 0)
 		return (ENOENT);
@@ -1271,6 +1276,8 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC|PFR_FLAG_ALLRSETS);
 					/* XXX PFR_FLAG_CLSTATS disabled */
+	if (pfr_fix_anchor(filter->pfrt_anchor))
+		return (EINVAL);
 	n = nn = pfr_table_count(filter, flags);
 	if (n < 0)
 		return (ENOENT);
@@ -1680,8 +1687,39 @@ pfr_validate_table(struct pfr_table *tbl, int allowedflags, int no_reserved)
 	for (i = strlen(tbl->pfrt_name); i < PF_TABLE_NAME_SIZE; i++)
 		if (tbl->pfrt_name[i])
 			return (-1);
+	if (pfr_fix_anchor(tbl->pfrt_anchor))
+		return (-1);
 	if (tbl->pfrt_flags & ~allowedflags)
 		return (-1);
+	return (0);
+}
+
+/*
+ * Rewrite anchors referenced by tables to remove slashes
+ * and check for validity.
+ */
+int
+pfr_fix_anchor(char *anchor)
+{
+	size_t siz = MAXPATHLEN;
+	int i;
+
+	if (anchor[0] == '/') {
+		char *path;
+		int off;
+
+		path = anchor;
+		off = 1;
+		while (*++path == '/')
+			off++;
+		bcopy(path, anchor, siz - off);
+		memset(anchor + siz - off, 0, off);
+	}
+	if (anchor[siz - 1])
+		return (-1);
+	for (i = strlen(anchor); i < siz; i++)
+		if (anchor[i])
+			return (-1);
 	return (0);
 }
 
