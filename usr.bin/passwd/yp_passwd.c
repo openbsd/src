@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.26 2004/03/10 21:23:17 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.27 2004/03/12 22:59:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.26 2004/03/10 21:23:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.27 2004/03/12 22:59:28 millert Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -219,11 +219,8 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
-		if (p == NULL || *p == '\0') {
-			printf("Password unchanged.\n");
-			pw_abort();
-			exit(p == NULL ? 1 : 0);
-		}
+		if (p == NULL || *p == '\0')
+			pw_error(NULL, 0, p == NULL ? 1 : 0);
 		if (strcmp(p, "s/key") == 0) {
 			printf("That password collides with a system feature. "
 			    "Choose another.\n");
