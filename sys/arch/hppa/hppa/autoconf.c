@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.26 2003/01/04 10:35:32 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.27 2003/02/15 00:52:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -73,6 +73,9 @@ int getstr(char *cp, int size);
 
 void (*cold_hook)(int); /* see below */
 
+/* device we booted from */
+struct device *bootdv;
+
 /*
  * LED blinking thing
  */
@@ -82,6 +85,14 @@ void (*cold_hook)(int); /* see below */
 struct timeout heartbeat_tmo;
 void heartbeat(void *);
 extern int hz;
+#endif
+
+#include "cd.h"
+#include "sd.h"
+#include "st.h"
+#if NCD > 0 || NSD > 0 || NST > 0
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 #endif
 
 /*
@@ -363,18 +374,15 @@ setroot()
 	char buf[128];
 	dev_t temp;
 	const char *rootdevname;
-	struct device *bootdv, *rootdv, *swapdv;
+	struct device *rootdv, *swapdv;
 #ifdef NFSCLIENT
 	extern char *nfsbootdevname;
 #endif
 
 #ifdef RAMDISK_HOOKS
 	bootdv = &fakerdrootdev;
-	part = 0;
-#else
-	bootdv = NULL;	/* XXX */
-	part = 0;
 #endif
+	part = 0;
 
 	/*
 	 * If 'swap generic' and we couldn't determine boot device,
@@ -468,10 +476,8 @@ gotswap:
 		if (majdev >= 0) {
 			/*
 			 * Root and swap are on a disk.
-			 * val[2] of the boot device is the partition number.
 			 * Assume swap is on partition b.
 			 */
-			/* part = bp->val[2]; */
 			rootdv = swapdv = bootdv;
 			rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit, part);
 			nswapdev = dumpdev =
@@ -675,3 +681,91 @@ hppa_mod_info(type, sv)
 		return mi->mi_name;
 }
 
+void
+device_register(struct device *dev, void *aux)
+{
+	struct confargs *ca = aux;
+	char *basename;
+	enum devclass target;
+	static struct device *elder = NULL;
+
+	if (bootdv != NULL)
+		return;	/* We already have a winner */
+
+
+	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_boot.pz_hpa) {
+		/*
+		 * If hpa matches, the only thing we know is that the
+		 * booted device is either this one or one of its children.
+		 * And the children will not necessarily have the correct
+		 * hpa value.
+		 * Save this elder for now.
+		 */
+		elder = dev;
+	} else if (elder == NULL) {
+		return;	/* not the device we booted from */
+	}
+
+	/* What are we looking for? */
+	if (PAGE0->mem_boot.pz_class & PCL_NET_MASK) {
+		/*
+		 * Netboot is the top elder
+		 */
+		if (elder == dev) {
+			bootdv = dev;
+		}
+		return;
+	} else
+	switch (PAGE0->mem_boot.pz_class & PCL_CLASS_MASK) {
+	case PCL_RANDOM:
+		target = DV_DISK;
+		break;
+	case PCL_SEQU:
+		target = DV_TAPE;
+		break;
+	default:
+		/* No idea what we were booted from, but better ask the user */
+		return;
+	}
+
+	/*
+	 * If control goes here, we are booted from a block device.
+	 * Since multiple devices will attach with the same hpa value
+	 * in their confargs, get rid of at least the controller by
+	 * hunting for an appropriate device class.
+	 */
+	if (dev->dv_class != target)
+		return;
+
+	basename = dev->dv_cfdata->cf_driver->cd_name;
+
+	/*
+	 * We only grok SCSI boot currently. Match on proper device hierarchy,
+	 * name and unit/lun values.
+	 */
+#if NCD > 0 || NSD > 0 || NST > 0
+	if (strcmp(basename, "sd") == 0 || strcmp(basename, "cd") == 0 ||
+	    strcmp(basename, "st") == 0) {
+		struct scsibus_attach_args *sa = aux;
+		struct scsi_link *sl = sa->sa_sc_link;
+
+		/*
+		 * sd/st/cd is attached to scsibus which is attached to
+		 * the controller. Hence the grandparent here should be
+		 * the elder.
+		 */
+		if (dev->dv_parent == NULL ||
+		    dev->dv_parent->dv_parent != elder) {
+			return;
+		}
+
+		/* 
+		 * And now check for proper target and lun values
+		 */
+		if (sl->target == PAGE0->mem_boot.pz_layers[0] &&
+		    sl->lun == PAGE0->mem_boot.pz_layers[1]) {
+			bootdv = dev;
+		}
+	}
+#endif
+}
