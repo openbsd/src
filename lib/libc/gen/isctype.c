@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: isctype.c,v 1.3 2001/06/27 07:17:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: isctype.c,v 1.4 2002/12/13 22:39:27 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _ANSI_LIBRARY
@@ -51,7 +51,7 @@ isalnum(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & (_U|_L|_N));
+	return((_ctype_ + 1)[(unsigned int)c] & (_U|_L|_N));
 }
 
 #undef isalpha
@@ -61,7 +61,7 @@ isalpha(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & (_U|_L));
+	return((_ctype_ + 1)[(unsigned int)c] & (_U|_L));
 }
 
 #undef isblank
@@ -79,7 +79,7 @@ iscntrl(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & _C);
+	return((_ctype_ + 1)[(unsigned int)c] & _C);
 }
 
 #undef isdigit
@@ -89,7 +89,7 @@ isdigit(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & _N);
+	return((_ctype_ + 1)[(unsigned int)c] & _N);
 }
 
 #undef isgraph
@@ -99,7 +99,7 @@ isgraph(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N));
+	return((_ctype_ + 1)[(unsigned int)c] & (_P|_U|_L|_N));
 }
 
 #undef islower
@@ -109,7 +109,7 @@ islower(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & _L);
+	return((_ctype_ + 1)[(unsigned int)c] & _L);
 }
 
 #undef isprint
@@ -119,7 +119,7 @@ isprint(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N|_B));
+	return((_ctype_ + 1)[(unsigned int)c] & (_P|_U|_L|_N|_B));
 }
 
 #undef ispunct
@@ -129,7 +129,7 @@ ispunct(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & _P);
+	return((_ctype_ + 1)[(unsigned int)c] & _P);
 }
 
 #undef isspace
@@ -139,7 +139,7 @@ isspace(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & _S);
+	return((_ctype_ + 1)[(unsigned int)c] & _S);
 }
 
 #undef isupper
@@ -149,7 +149,7 @@ isupper(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & _U);
+	return((_ctype_ + 1)[(unsigned int)c] & _U);
 }
 
 #undef isxdigit
@@ -159,7 +159,7 @@ isxdigit(c)
 {
 	if (c == EOF)
 		return(0);
-	return((_ctype_ + 1)[(unsigned char)c] & (_N|_X));
+	return((_ctype_ + 1)[(unsigned int)c] & (_N|_X));
 }
 
 #undef isascii
@@ -169,7 +169,7 @@ isascii(c)
 {
 	if (c == EOF)
 		return(0);
-	return ((unsigned)(c) <= 0177);
+	return ((unsigned int)(c) <= 0177);
 }
 
 #undef toascii

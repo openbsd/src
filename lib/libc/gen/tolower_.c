@@ -4,7 +4,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tolower_.c,v 1.4 2002/12/11 23:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: tolower_.c,v 1.5 2002/12/13 22:39:27 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _ANSI_LIBRARY
@@ -54,7 +54,7 @@ int
 tolower(c)
 	int c;
 {
-	if (c != (unsigned char) c)
+	if (c != (c & 0177))
 		return(c);
 	return((_tolower_tab_ + 1)[c]);
 }
