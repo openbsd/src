@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.114 2001/06/24 19:48:58 kjell Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.115 2001/06/24 22:21:50 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1042,7 +1042,15 @@ ip_ctloutput(op, so, level, optname, mp)
 				error = EINVAL;
 				break;
 			}
-				
+
+			/* Unlink cached output TDB to force a re-search */
+			if (inp->inp_tdb_out) {
+				int s = spltdb();
+				TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out,
+				    inp, inp_tdb_out_next);
+				splx(s);
+			}
+
 			switch (optname) {
 			case IP_AUTH_LEVEL:
 			        if (optval < ipsec_auth_default_level &&
@@ -1196,6 +1204,14 @@ ip_ctloutput(op, so, level, optname, mp)
 					inp->inp_ipsec_localauth = ipr;
 				}
 				break;
+			}
+
+			/* Unlink cached output TDB to force a re-search */
+			if (inp->inp_tdb_out) {
+				int s = spltdb();
+				TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out,
+				    inp, inp_tdb_out_next);
+				splx(s);
 			}
 #endif
 			break;
