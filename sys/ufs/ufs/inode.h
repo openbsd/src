@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.23 2003/08/25 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: inode.h,v 1.24 2003/12/28 17:20:16 tedu Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -100,9 +100,11 @@ struct inode {
 	union {
 		/* Other extensions could go here... */
 		struct ext2fs_inode_ext   e2fs;
+		struct dirhash *dirhash;
 	} inode_ext;
 #define i_e2fs_last_lblk inode_ext.e2fs.ext2fs_last_lblk
 #define i_e2fs_last_blk inode_ext.e2fs.ext2fs_last_blk
+#define	i_dirhash	inode_ext.dirhash
 
 	/*
 	 * The on-disk dinode itself.
@@ -172,6 +174,7 @@ struct inode_vtbl {
 #define	i_ffs_shortlink		i_din1.di_shortlink
 #define	i_ffs_size		i_din1.di_size
 #define	i_ffs_uid		i_din1.di_uid
+#define i_size			i_din1.di_size
 
 #ifndef _KERNEL
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.53 2003/12/17 02:43:25 tedu Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.54 2003/12/28 17:20:16 tedu Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -66,6 +66,9 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+#ifdef UFS_DIRHASH
+#include <ufs/ufs/dirhash.h>
+#endif
 #include <ufs/ext2fs/ext2fs_extern.h>
 
 static int ufs_chmod(struct vnode *, int, struct ucred *, struct proc *);
@@ -1483,6 +1486,12 @@ ufs_rmdir(v)
 		error = UFS_TRUNCATE(ip, (off_t)0, ioflag, cnp->cn_cred);
 	}
 	cache_purge(vp);
+#ifdef UFS_DIRHASH
+	/* Kill any active hash; i_effnlink == 0, so it will not come back. */
+	if (ip->i_dirhash != NULL)
+		ufsdirhash_free(ip);
+#endif
+
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
         vput(dvp);
