@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.33 1998/07/23 04:40:11 csapuntz Exp $	*/
+/*	$OpenBSD: wd.c,v 1.34 1998/07/23 05:27:37 csapuntz Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -551,7 +551,11 @@ wdgetdisklabel(dev, wd)
 	lp->d_type = DTYPE_ST506;
 #endif
 	strncpy(lp->d_packname, d_link->sc_params.wdp_model, 16);
-	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+	if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA)) {
+	  lp->d_secperunit = d_link->sc_params.wdp_lbacapacity;
+	} else 
+	  lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
