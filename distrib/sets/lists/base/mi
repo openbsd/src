@@ -362,7 +362,6 @@
 ./usr/bin/pr
 ./usr/bin/printenv
 ./usr/bin/printf
-./usr/bin/protoize
 ./usr/bin/psbb
 ./usr/bin/psed
 ./usr/bin/pstruct
@@ -455,7 +454,6 @@
 ./usr/bin/unifdef
 ./usr/bin/uniq
 ./usr/bin/units
-./usr/bin/unprotoize
 ./usr/bin/unvis
 ./usr/bin/uptime
 ./usr/bin/usbhidaction
