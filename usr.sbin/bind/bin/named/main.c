@@ -617,7 +617,7 @@ setup(void) {
 	 * Privilege separation
 	 */
 	isc_priv_init(ns_g_logstderr);
-	isc_drop_privs(ns_g_username);
+	isc_drop_privs(ns_g_username, ns_g_chrootdir);
 	isc_socket_privsep(1);
 
 	/* process is now unprivileged and inside a chroot */

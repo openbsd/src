@@ -100,7 +100,7 @@ EXTERN isc_resourcevalue_t	ns_g_initopenfiles	INIT(0);
  * Misc.
  */
 EXTERN isc_boolean_t		ns_g_coreok		INIT(ISC_TRUE);
-EXTERN const char *		ns_g_chrootdir		INIT("/var/named");
+EXTERN const char *		ns_g_chrootdir		INIT(NULL);
 EXTERN isc_boolean_t		ns_g_foreground		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_logstderr		INIT(ISC_FALSE);
 

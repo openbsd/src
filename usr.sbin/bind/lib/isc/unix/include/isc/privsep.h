@@ -23,7 +23,7 @@ enum cmd_types {
 
 /* Privilege separation */
 int	isc_priv_init(int);
-int	isc_drop_privs(const char *username);
+int	isc_drop_privs(const char *username, const char *dir);
 
 struct sockaddr;
 int	isc_priv_bind(int, struct sockaddr *, socklen_t);
