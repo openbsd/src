@@ -1,4 +1,4 @@
-/*	$OpenBSD: zsvar.h,v 1.10 1997/08/08 08:25:44 downsj Exp $	*/
+/*	$OpenBSD: zsvar.h,v 1.11 1998/07/21 22:33:44 marc Exp $	*/
 /*	$NetBSD: zsvar.h,v 1.10 1997/04/14 21:26:28 pk Exp $ */
 
 /*
@@ -127,6 +127,7 @@ struct zs_chanstate {
 	char	cs_consio;		/* port does /dev/console I/O */
 	char	cs_xxx;			/* (spare) */
 	char	cs_deferred_cc;		/* deferred zscnputc() output */
+        u_char  cs_cua;                 /* CUA mode flag */
 	int	cs_speed;		/* default baud rate (from ROM) */
 
 	/*

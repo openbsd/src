@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.20 1998/03/04 14:21:29 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.21 1998/07/21 22:33:42 marc Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -86,6 +86,14 @@
 #include <sys/kgdb.h>
 #include <machine/remote-sl.h>
 #endif
+
+#define DEVUNIT(x)      (minor(x) & 0x7f)
+#define DEVCUA(x)       (minor(x) & 0x80)
+
+/* Macros to clear/set/test flags. */
+#define SET(t, f)       (t) |= (f)
+#define CLR(t, f)       (t) &= ~(f)
+#define ISSET(t, f)     ((t) & (f))
 
 #define	ZSMAJOR	12		/* XXX */
 
@@ -608,6 +616,7 @@ zsiclose(tp)
 }
 
 
+
 /*
  * Open a zs serial port.  This interface may not be used to open
  * the keyboard and mouse ports. (XXX)
@@ -622,7 +631,8 @@ zsopen(dev, flags, mode, p)
 	register struct tty *tp;
 	register struct zs_chanstate *cs;
 	struct zs_softc *sc;
-	int unit = minor(dev), zs = unit >> 1, error, s;
+	int unit = DEVUNIT(dev);
+	int zs = unit >> 1, error, s;
 
 	if (zs >= zs_cd.cd_ndevs || (sc = zs_cd.cd_devs[zs]) == NULL ||
 	    unit == ZS_KBD || unit == ZS_MOUSE)
@@ -643,14 +653,48 @@ zsopen(dev, flags, mode, p)
 		}
 		(void) zsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
+/* XXX start CUA mods */
+		if (DEVCUA(dev)) 
+                  SET(tp->t_state, TS_CARR_ON);
+                else 
+                  CLR(tp->t_state, TS_CARR_ON);
+/* end CUA mods */
+
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
 		splx(s);
 		return (EBUSY);
 	}
-	error = 0;
-	for (;;) {
+
+/* XXX start CUA mods */
+        if (DEVCUA(dev)) {
+                if (ISSET(tp->t_state, TS_ISOPEN)) {
+                        /* Ah, but someone already is dialed in... */
+                        splx(s);
+                        return EBUSY;
+                }
+                cs->cs_cua = 1;         /* We go into CUA mode */
+        }
+
+
+        error = 0;
+        /* wait for carrier if necessary */
+        if (ISSET(flags, O_NONBLOCK)) {
+                if (!DEVCUA(dev) && cs->cs_cua) {
+                        /* Opening TTY non-blocking... but the CUA is busy */
+                        splx(s);
+                        return EBUSY;
+                }
+        } else {
+	    while (cs->cs_cua ||
+	      (!ISSET(tp->t_cflag, CLOCAL) &&
+	      !ISSET(tp->t_state, TS_CARR_ON))) {
 		register int rr0;
 
+                error = 0;
+		SET(tp->t_state, TS_WOPEN);
+
+
+              if (!DEVCUA(dev) && !cs->cs_cua) {
 		/* loop, turning on the device, until carrier present */
 		zs_modem(cs, 1);
 		/* May never get status intr if carrier already on. -gwr */
@@ -658,23 +702,39 @@ zsopen(dev, flags, mode, p)
 		ZS_DELAY();
 		if ((rr0 & ZSRR0_DCD) || cs->cs_softcar)
 			tp->t_state |= TS_CARR_ON;
-		if (flags & O_NONBLOCK || tp->t_cflag & CLOCAL ||
-		    tp->t_state & TS_CARR_ON)
+              }
+
+		if ((tp->t_cflag & CLOCAL || tp->t_state & TS_CARR_ON) && 
+			!cs->cs_cua)
 			break;
-		tp->t_state |= TS_WOPEN;
+
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
 				 ttopen, 0);
+
+		if (!DEVCUA(dev) && cs->cs_cua && error == EINTR) {
+			error=0;
+			continue;
+                }
+
 		if (error) {
 			if (!(tp->t_state & TS_ISOPEN)) {
 				zs_modem(cs, 0);
-				tp->t_state &= ~TS_WOPEN;
+				CLR(tp->t_state, TS_WOPEN);
 				ttwakeup(tp);
 			}
+/* XXX ordering of this might be important?? */
+                        if (DEVCUA(dev))
+                                cs->cs_cua = 0;
+			CLR(tp->t_state, TS_WOPEN);
 			splx(s);
 			return error;
 		}
-	}
+                if (!DEVCUA(dev) && cs->cs_cua)
+                        continue;
+	    }
+        } 
 	splx(s);
+/* end CUA mods */
 	if (error == 0)
 		error = linesw[tp->t_line].l_open(dev, tp);
 	if (error)
@@ -695,12 +755,17 @@ zsclose(dev, flags, mode, p)
 	register struct zs_chanstate *cs;
 	register struct tty *tp;
 	struct zs_softc *sc;
-	int unit = minor(dev), s;
+	int unit = DEVUNIT(dev);
+	int s, st;
 
 	sc = zs_cd.cd_devs[unit >> 1];
 	cs = &sc->sc_cs[unit & 1];
 	tp = cs->cs_ttyp;
 	linesw[tp->t_line].l_close(tp, flags);
+
+/* XXX start CUA mods */
+        st = spltty();
+/* end CUA mods */
 	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
 	    (tp->t_state & TS_ISOPEN) == 0) {
 		zs_modem(cs, 0);
@@ -715,6 +780,11 @@ zsclose(dev, flags, mode, p)
 		ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
 		splx(s);
 	}
+/* XXX start CUA mods */
+        CLR(tp->t_state, TS_CARR_ON | TS_BUSY | TS_FLUSH);
+        cs->cs_cua = 0;
+	splx(st);
+/* end CUA mods */
 	ttyclose(tp);
 #ifdef KGDB
 	/* Reset the speed if we're doing kgdb on this port */
@@ -738,7 +808,7 @@ zsread(dev, uio, flags)
 	register struct zs_chanstate *cs;
 	register struct zs_softc *sc;
 	register struct tty *tp;
-	int unit = minor(dev);
+	int unit = DEVUNIT(dev);
 
 	sc = zs_cd.cd_devs[unit >> 1];
 	cs = &sc->sc_cs[unit & 1];
@@ -757,7 +827,7 @@ zswrite(dev, uio, flags)
 	register struct zs_chanstate *cs;
 	register struct zs_softc *sc;
 	register struct tty *tp;
-	int unit = minor(dev);
+	int unit = DEVUNIT(dev);
 
 	sc = zs_cd.cd_devs[unit >> 1];
 	cs = &sc->sc_cs[unit & 1];
@@ -772,7 +842,7 @@ zstty(dev)
 {
 	register struct zs_chanstate *cs;
 	register struct zs_softc *sc;
-	int unit = minor(dev);
+	int unit = DEVUNIT(dev);
 
 	sc = zs_cd.cd_devs[unit >> 1];
 	cs = &sc->sc_cs[unit & 1];
@@ -1201,7 +1271,7 @@ zsioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = DEVUNIT(dev);
 	struct zs_softc *sc = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate *cs = &sc->sc_cs[unit & 1];
 	register struct tty *tp = cs->cs_ttyp;
@@ -1339,7 +1409,7 @@ zsstart(tp)
 {
 	register struct zs_chanstate *cs;
 	register int s, nch;
-	int unit = minor(tp->t_dev);
+	int unit = DEVUNIT(tp->t_dev);
 	struct zs_softc *sc = zs_cd.cd_devs[unit >> 1];
 
 	cs = &sc->sc_cs[unit & 1];
@@ -1400,7 +1470,7 @@ zsstop(tp, flag)
 	int flag;
 {
 	register struct zs_chanstate *cs;
-	register int s, unit = minor(tp->t_dev);
+	register int s, unit = DEVUNIT(tp->t_dev);
 	struct zs_softc *sc = zs_cd.cd_devs[unit >> 1];
 
 	cs = &sc->sc_cs[unit & 1];
@@ -1428,7 +1498,7 @@ zsparam(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
 {
-	int unit = minor(tp->t_dev);
+	int unit = DEVUNIT(tp->t_dev);
 	struct zs_softc *sc = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate *cs = &sc->sc_cs[unit & 1];
 	register int tmp, tmp5, cflag, s;
@@ -1686,7 +1756,7 @@ zs_kgdb_init()
 
 	if (major(kgdb_dev) != ZSMAJOR)
 		return;
-	unit = minor(kgdb_dev);
+	unit = DEVUNIT(kgdb_dev);
 	/*
 	 * Unit must be 0 or 1 (zs0).
 	 */
