@@ -64,7 +64,7 @@ in_tkt(pname, pinst)
     metoo = geteuid();
     if (lstat(file,&buf) == 0) {
 	if (buf.st_uid != me || !(buf.st_mode & S_IFREG) ||
-	    buf.st_mode & 077) {
+	    buf.st_mode & 077 || buf.st_nlink != 1) {
 	    if (krb_debug)
 		fprintf(stderr,"Error initializing %s",file);
 	    return(KFAILURE);
@@ -76,14 +76,12 @@ in_tkt(pname, pinst)
 	bzero(charbuf, sizeof(charbuf));
 
 	for (i = 0; i < buf.st_size; i += sizeof(charbuf))
-	    if (write(fd, charbuf, sizeof(charbuf)) != sizeof(charbuf)) {
-		(void) fsync(fd);
-		(void) close(fd);
-		goto out;
-	    }
+	    if (write(fd, charbuf, sizeof(charbuf)) != sizeof(charbuf))
+	      break;
 	
 	(void) fsync(fd);
 	(void) close(fd);
+	(void) unlink (file);
     }
  out:
     /* arrange so the file is owned by the ruid
