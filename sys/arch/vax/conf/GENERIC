@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.24 2001/04/09 20:40:52 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.25 2001/05/16 22:34:29 hugh Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -72,7 +72,7 @@ ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
 ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 4000/10X MV3100/9X SCSI
-#smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
+smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 
 #hd*		at hdc0 drive?		# RD5x disks
@@ -144,9 +144,13 @@ ss*		at scsibus? target? lun?
 uk*		at scsibus? target? lun?
 
 # Workstation console
-#wscons*	at smg?
+wsdisplay0	at smg?
 
 #wsdisplay0	at clr0
 #wsdisplay0	at qd0
 #wsdisplay0	at qv0
-#lkc0		at dz0
+
+lkkbd0		at dz0 line 0
+wskbd*		at lkkbd? console ?
+lkms0		at dz0 line 1
+wsmouse*	at lkms?
