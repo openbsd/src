@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.148 2004/10/02 18:45:08 krw Exp $
+#	$OpenBSD: install.sh,v 1.149 2004/11/06 18:05:48 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -400,12 +400,12 @@ done )
 _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
 echo "1,s@^root::@root:${_encr}:@
 w
-q" | ed /mnt/etc/master.passwd 2> /dev/null
+q" | /mnt/bin/ed /mnt/etc/master.passwd 2> /dev/null
 /mnt/usr/sbin/pwd_mkdb -p -d /mnt/etc /etc/master.passwd
 
 echo -n "done.\nGenerating initial host.random file..."
 ( cd /mnt/var/db
-dd if=/mnt/dev/urandom of=host.random bs=1024 count=64 >/dev/null 2>&1
+/mnt/bin/dd if=/mnt/dev/urandom of=host.random bs=1024 count=64 >/dev/null 2>&1
 chmod 600 host.random >/dev/null 2>&1 )
 echo "done."
 
