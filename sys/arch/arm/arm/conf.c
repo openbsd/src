@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2004/02/10 01:31:21 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 2004/02/11 22:03:17 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -86,23 +86,6 @@
 #include "wd.h"
 bdev_decl(wd);
 bdev_decl(sw);
-
-/*
- * ISDN devices
- */
-#ifdef CONF_HAVE_ISDN
-#include "isdn.h"
-#include "isdnctl.h"
-#include "isdntrc.h"
-#include "isdnbchan.h"
-#include "isdntel.h"
-#else
-#define	NISDN	0
-#define	NISDNCTL	0
-#define	NISDNTRC	0
-#define	NISDNBCHAN	0
-#define	NISDNTEL	0
-#endif
 
 #ifdef CONF_HAVE_PCI
 #include "iop.h"
@@ -265,15 +248,16 @@ struct bdevsw bdevsw[] = {
 };
 
 /* Character devices */
-cdev_decl(isdn);
-cdev_decl(isdnctl);
-cdev_decl(isdntrc);
-cdev_decl(isdnbchan);
-cdev_decl(isdntel);
 #define ptstty          ptytty
 #define ptsioctl        ptyioctl
 #define ptctty          ptytty
 #define ptcioctl        ptyioctl
+
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
+#include "systrace.h"
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),			/*  0: virtual console */
@@ -322,12 +306,16 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 43: reserved */
 	cdev_lkm_dummy(),			/* 44: reserved */
 	cdev_lkm_dummy(),			/* 45: reserved */
-	cdev_pf_init(NPF,pf),           	/* 39: packet filter */
+	cdev_pf_init(NPF,pf),           	/* 46: packet filter */
 	cdev_lkm_dummy(),			/* 47: reserved */
 	cdev_lkm_dummy(),			/* 48: reserved */
 	cdev_lkm_dummy(),			/* 49: reserved */
-	cdev_lkm_dummy(),			/* 50: reserved */
+	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),		/* 51: xfs communication device */
+#else
 	cdev_notdef(),				/* 51: reserved */
+#endif
 	cdev_notdef(),				/* 52: reserved */
 	cdev_notdef(),				/* 53: reserved */
 	cdev_tty_init(NFCOM,fcom),		/* 54: FOOTBRIDGE console */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.2 2004/02/11 22:03:17 miod Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -90,9 +90,9 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -200,7 +200,7 @@ syscall_intern(struct proc *p)
 		return;
 	}
 #endif
-#ifdef SYSTRACE
+#if NSYSTRACE > 0
 	if (p->p_flag & P_SYSTRACE) {
 		p->p_md.md_syscall = syscall_fancy;
 		return;
