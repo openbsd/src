@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.442 2001/09/06 22:20:44 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.443 2001/09/06 22:36:36 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -753,7 +753,7 @@
 #define	PCI_PRODUCT_ADVSYS_U3W	0x2700		/* ASP-3940U3W */
 
 /* Alliance products */
-#define	PCI_PRODUCT_ALLIANCE_AT22	0x6424		/* AT22 */
+#define	PCI_PRODUCT_ALLIANCE_AT22	0x6422		/* AT22 */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
 
 /* Alteon products */
@@ -1847,6 +1847,7 @@
 #define	PCI_PRODUCT_TOPIC_5634PCV	0x0000		/* 5634PCV SurfRider */
 
 /* Toshiba products */
+#define	PCI_PRODUCT_TOSHIBA_R4x00	0x0009		/* R4x00 */
 #define	PCI_PRODUCT_TOSHIBA_TC35856F	0x0020		/* TC35856F ATM (Meteor) */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x102f		/* R4x00 Host-PCI */
 
