@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.18 2001/06/22 23:55:24 art Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.19 2002/01/12 22:56:55 art Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -575,7 +575,7 @@ crfree(cr)
 	s = splimp();				/* ??? */
 	if (--cr->cr_ref == 0)
 		FREE((caddr_t)cr, M_CRED);
-	(void) splx(s);
+	splx(s);
 }
 
 /*
