@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha_pci.c,v 1.3 2001/06/12 15:40:32 niklas Exp $ */
+/*	$OpenBSD: iha_pci.c,v 1.4 2001/07/13 03:24:19 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -53,14 +53,14 @@
 
 #include <dev/ic/iha.h>
 
-static int  iha_pci_probe  __P((struct device *, void *, void *));
-static void iha_pci_attach __P((struct device *, struct device *, void *));
+int  iha_pci_probe  __P((struct device *, void *, void *));
+void iha_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach iha_pci_ca = {
 	sizeof(struct iha_softc), iha_pci_probe, iha_pci_attach
 };
 
-static int
+int
 iha_pci_probe(parent, match, aux)
 	struct device *parent;
 	void *match;
@@ -78,7 +78,7 @@ iha_pci_probe(parent, match, aux)
 	return (0);
 }
 
-static void
+void
 iha_pci_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;

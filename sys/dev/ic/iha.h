@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.4 2001/07/10 23:30:39 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.5 2001/07/13 03:24:20 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -192,7 +192,7 @@ struct iha_softc {
  *   EEPROM for one SCSI Channel
  *
  */
-struct nvram_scsi {
+struct iha_nvram_scsi {
 	u_int8_t  NVM_SCSI_Id;	    /* 0x00 Channel Adapter SCSI Id          */
 	u_int8_t  NVM_SCSI_Cfg;	    /* 0x01 Channel configuration            */
 #define		      CFG_SCSI_RESET 0x0001 /*     Reset bus at power up     */
@@ -201,19 +201,17 @@ struct nvram_scsi {
 #define		      CFG_ACT_TERM2  0x0008 /*     Enable active term 2      */
 #define		      CFG_AUTO_TERM  0x0010 /*     Enable auto terminator    */
 #define		      CFG_EN_PWR     0x0080 /*     Enable power mgmt         */
-#define		      CFG_DEFAULT (CFG_SCSI_RESET | CFG_AUTO_TERM | CFG_EN_PAR)
 	u_int8_t  NVM_SCSI_CfgByte2;        /* 0x02 Unused Channel Cfg byte 2*/
 	u_int8_t  NVM_SCSI_Targets;	    /* 0x03 Number of SCSI targets   */
 					    /* 0x04 Lower bytes of targ flags*/
 	u_int8_t  NVM_SCSI_TargetFlags[IHA_MAX_TARGETS];
-#define		      FLAG_DEFAULT   (FLAG_NO_WIDE | FLAG_1GIGA | FLAG_EN_DISC)
 };
 
 /*
  * Tulip (aka ini-950) Serial EEPROM Layout
  *
  */
-struct nvram {
+struct iha_nvram {
 	/* ---------- Header ------------------------------------------------*/
 	u_int16_t  NVM_Signature;	       /* 0x00 NVRAM Signature	     */
 #define		       SIGNATURE	0xC925
@@ -239,7 +237,7 @@ struct nvram {
 #define		       HACFG_LUNMASK	  0x70 /*      Boot LUN number	     */
 #define		       HACFG_CHANMASK	  0x80 /*      Boot Channel number   */
 	u_int8_t   NVM_HAConfig2;	       /* 0x0b Host adapter config 2 */
-	struct nvram_scsi NVM_Scsi[2];         /* 0x0c		             */
+	struct iha_nvram_scsi NVM_Scsi[2];     /* 0x0c		             */
 	u_int8_t   NVM_Reserved[10];	       /* 0x34			     */
 
 	/* --------- CheckSum -----------------------------------------------*/
