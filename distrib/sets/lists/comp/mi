@@ -602,6 +602,7 @@
 ./usr/include/g++/valarray
 ./usr/include/g++/vector
 ./usr/include/g++/vector.h
+./usr/include/g2c.h
 ./usr/include/glob.h
 ./usr/include/gmp.h
 ./usr/include/grp.h

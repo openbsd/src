@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/08/24 00:20:14 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/11/20 18:08:34 espie Exp $
 
 EGCS_DIR= $(.CURDIR)/..
 .if defined(OBJMACHINE)
@@ -110,11 +110,6 @@ SRCS+= ${U77_SRCS:S/^/libU77\//}
 SRCS+= ${F77_SRCS:S/^/libF77\//}
 SRCS+= ${VERSION_SRCS}
 
-depend: 
-	cd ${.CURDIR}/../gcc && \
-		make -f Makefile.bsd-wrapper config.status tree-check.h 
-	mkdir -p libE77
-	
 ${.OBJDIR}/VersionI.c: libI77/Version.c
 	ln -sf $> $@
 
@@ -129,6 +124,9 @@ all: config.status
 #	CPPFLAGS=-I${.CURDIR}/../gcc/obj \
 	
 config.status: Makefile.in configure 
+	mkdir -p libE77
+	cd ${.CURDIR}/../gcc && \
+		make -f Makefile.bsd-wrapper config.status tree-check.h 
 	# fake g771 existence
 	cd $(EGCS_OBJDIR)/gcc && touch f771
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
@@ -138,8 +136,13 @@ config.status: Makefile.in configure
 		--prefix=/usr --with-local-prefix=/usr ${CF} \
 		&& touch config.status
 
+# Configuring is needed for g2c.h to be built
+prereq depend: config.status 
+
 includes:
 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${.CURDIR}/f2c.h ${DESTDIR}/usr/include
+	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+		g2c.h ${DESTDIR}/usr/include
 
 .include <bsd.lib.mk>
