@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.27 2000/10/27 00:16:22 mickey Exp $ */
+/* $OpenBSD: machdep.c,v 1.28 2001/01/28 02:24:24 hugh Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -183,7 +183,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 * Also call CPU init on systems that need that.
 	 */
-	printf("%s%s\n", version, cpu_model);
+	printf("%s%s [%08X %08X]\n", version, cpu_model, vax_cpudata, vax_siedata);
         if (dep_call->cpu_conf)
                 (*dep_call->cpu_conf)();
 
