@@ -1,4 +1,4 @@
-/*	$OpenBSD: storage.c,v 1.5 2002/06/09 01:58:54 kjell Exp $	*/
+/*	$OpenBSD: storage.c,v 1.6 2002/07/30 22:39:35 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -58,6 +58,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <syslog.h>
+#include <limits.h>
+#include <errno.h>
 
 #include "../conf/portability.h"
 #include "../conf/options.h"
@@ -190,6 +192,10 @@ calloc(num, size)
 {
 	register char *p;
 
+	if (SIZE_T_MAX / num < size) {
+		errno = ENOMEM;
+		return NULL;
+	}
 	size *= num;
 	if (p = rt_malloc(size))
 		bzero(p, size);
