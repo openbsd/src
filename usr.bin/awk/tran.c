@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.11 2004/12/30 01:52:48 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.12 2004/12/30 02:06:00 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -399,7 +399,12 @@ char *getpssval(Cell *vp)     /* get string val of a Cell for print */
 
 char *tostring(const char *s)	/* make a copy of string s */
 {
-	return (strdup(s));
+	char *p;
+
+	p = strdup(s);
+	if (p == NULL)
+		FATAL("out of space in tostring on %s", s);
+	return p;
 }
 
 char *qstring(const char *is, int delim)	/* collect string up to next delim */
