@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.3 1996/05/07 07:34:16 deraadt Exp $       */
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.4 1996/10/16 12:36:29 deraadt Exp $       */
 /*	$NetBSD: if_ep.c,v 1.90 1996/04/11 22:29:15 cgd Exp $	*/
 
 /*
@@ -99,7 +99,6 @@ ep_pcmcia_isasetup(parent, match, aux, pc_link)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
-	int             i;
 	extern int      ifqmaxlen;
 
 	bus_io_write_2(bc, ioh, EP_COMMAND, WINDOW_SELECT | 0);

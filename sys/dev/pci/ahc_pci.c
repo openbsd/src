@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_pci.c,v 1.3 1996/08/21 22:27:49 deraadt Exp $
+ *	$Id: ahc_pci.c,v 1.4 1996/10/16 12:40:55 deraadt Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -289,7 +289,6 @@ ahc_pci_attach(parent, self, aux)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct pci_attach_args *pa = aux;
 	struct ahc_data *ahc = (void *)self;
-	int unit = ahc->sc_dev.dv_unit;
 	bus_io_addr_t iobase;
 	bus_io_size_t iosize;
 	bus_io_handle_t ioh;
