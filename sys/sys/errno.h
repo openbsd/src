@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.7 1997/02/28 07:15:58 millert Exp $	*/
+/*	$OpenBSD: errno.h,v 1.8 1999/01/07 05:34:29 deraadt Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -163,7 +163,8 @@ extern char *sys_errlist[];
 #define	EFTYPE		79		/* Inappropriate file type or format */
 #define	EAUTH		80		/* Authentication error */
 #define	ENEEDAUTH	81		/* Need authenticator */
-#define	ELAST		81		/* Must be equal largest errno */
+#define	EIPSEC		82		/* IPsec processing failure */
+#define	ELAST		82		/* Must be equal largest errno */
 #endif /* _POSIX_SOURCE */
 
 #ifdef _KERNEL
