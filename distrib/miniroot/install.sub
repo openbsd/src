@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.176 2001/11/22 00:56:13 krw Exp $
+#	$OpenBSD: install.sub,v 1.177 2001/11/24 14:27:42 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -288,7 +288,16 @@ bsort() {
 		shift
 	done
 
-	echo -n "$_a "; bsort $_l
+	echo -n $_a
+
+	# Prevent a trailing blank on the output, and thus a bad value
+	# for cutlast or cutword, by outputting blanks only when $_l
+	# has values to sort.
+
+	if [[ "X$_l" != "X" ]] ; then
+	    echo -n " "
+	    bsort $_l
+	fi
 }
 
 dir_has_sets() {
