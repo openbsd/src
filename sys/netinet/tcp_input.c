@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.166 2004/05/04 22:50:18 claudio Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.167 2004/05/07 14:42:27 millert Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct  tcpipv6hdr tcp_saveti6;
 #endif /* INET6 */
 
 #ifdef TCP_SIGNATURE
-#include <sys/md5k.h>
+#include <crypto/md5.h>
 #endif
 
 int	tcprexmtthresh = 3;

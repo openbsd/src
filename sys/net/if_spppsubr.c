@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.20 2004/04/25 18:50:01 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.21 2004/05/07 14:42:27 millert Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -62,7 +62,7 @@
 
 #if defined (__OpenBSD__)
 #include <sys/timeout.h>
-#include <sys/md5k.h>
+#include <crypto/md5.h>
 #else
 #include <sys/md5.h>
 #endif

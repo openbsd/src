@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.12 2004/05/04 16:59:31 grange Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.13 2004/05/07 14:42:26 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -48,7 +48,7 @@
 #include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
 #include <dev/rndvar.h>
-#include <sys/md5k.h>
+#include <crypto/md5.h>
 #include <crypto/sha1.h>
 
 #include <dev/pci/pcireg.h>

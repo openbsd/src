@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.35 2003/07/08 10:23:32 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.36 2004/05/07 14:42:27 millert Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -37,7 +37,8 @@
 #include <sys/sockio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/md5k.h>
+
+#include <crypto/md5.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

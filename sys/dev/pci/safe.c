@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.13 2004/05/04 16:59:31 grange Exp $	*/
+/*	$OpenBSD: safe.c,v 1.14 2004/05/07 14:42:26 millert Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -46,10 +46,10 @@
 
 #include <machine/bus.h>
 
+#include <crypto/md5.h>
 #include <crypto/sha1.h>
 #include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
-#include <sys/md5k.h>
 #include <dev/rndvar.h>
 
 #include <dev/pci/pcivar.h>
