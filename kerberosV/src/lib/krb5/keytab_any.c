@@ -139,7 +139,6 @@ any_start_seq_get(krb5_context context,
     ed->a = a;
     ret = krb5_kt_start_seq_get(context, ed->a->kt, &ed->cursor);
     if (ret) {
-	free (ed);
 	free (c->data);
 	c->data = NULL;
 	krb5_set_error_string (context, "malloc: out of memory");
