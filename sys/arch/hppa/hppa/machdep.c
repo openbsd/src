@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.76 2002/08/03 18:57:04 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.77 2002/09/09 18:33:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1163,6 +1163,7 @@ setregs(p, pack, stack, retval)
 	*/
 #endif
 
+	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
@@ -1171,8 +1172,9 @@ setregs(p, pack, stack, retval)
 
 	/* setup terminal stack frame */
 	stack = hppa_round_page(stack);
+	tf->tf_r3 = stack;
+	suword((caddr_t)(stack), 0);
 	stack += HPPA_FRAME_SIZE;
-	suword((caddr_t)(stack - HPPA_FRAME_PSP), 0);
 	suword((caddr_t)(stack - HPPA_FRAME_CRP), 0);
 	tf->tf_sp = stack;
 
