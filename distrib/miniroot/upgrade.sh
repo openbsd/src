@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.37 2002/07/06 03:19:36 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.38 2002/07/13 13:18:05 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -59,31 +59,31 @@ THESETS=`echo $THESETS | sed -e 's/ etc / /'`
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev > /dev/null 2>&1
 
-while [ -z "$ROOTDISK" ]; do
-	getrootdisk
-done
+# Get ROOTDISK and default ROOTDEV 
+get_rootdisk
 
-# Assume partition 'a' of $ROOTDISK is for the root filesystem. Confirm
+# Assume $ROOTDEV is the root filesystem. Confirm
 # this with the user. Check and mount the root filesystem.
 resp=
 while [ -z "$resp" ]; do
-	ask "Root filesystem?" "${ROOTDISK}a"
-	_root_filesystem=/dev/${resp##*/}
-	if [ ! -b ${_root_filesystem} ]; then
-		echo "Sorry, ${_root_filesystem} is not a block device."
+	ask "Root filesystem?" "$ROOTDEV"
+	resp=${resp##*/}
+	if [ ! -b /dev/$resp ]; then
+		echo "Sorry, ${resp} is not a block device."
 		resp=
 	fi
 done
+ROOTDEV=$resp
 
-echo -n "Checking root filesystem (fsck -fp ${_root_filesystem}) ... "
-if ! fsck -fp ${_root_filesystem} > /dev/null 2>&1; then
-	echo	"FAILED.\nYou must fsck ${_root_filesystem} manually."
+echo -n "Checking root filesystem (fsck -fp /dev/${ROOTDEV}) ... "
+if ! fsck -fp /dev/$ROOTDEV > /dev/null 2>&1; then
+	echo	"FAILED.\nYou must fsck ${ROOTDEV} manually."
 	exit
 fi
 echo	"OK."
 
 echo -n "Mounting root filesystem ... "
-if ! mount -o ro ${_root_filesystem} /mnt; then
+if ! mount -o ro /dev/$ROOTDEV /mnt; then
 	echo	"ERROR: can't mount root filesystem!"
 	exit
 fi
@@ -159,7 +159,7 @@ echo
 munge_fstab
 
 # fsck -p non-root filesystems in /etc/fstab.
-check_fs $_root_filesystem
+check_fs
 
 # Mount filesystems in /etc/fstab.
 if ! umount /mnt; then

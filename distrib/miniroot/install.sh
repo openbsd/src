@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.105 2002/07/01 14:58:42 krw Exp $
+#	$OpenBSD: install.sh,v 1.106 2002/07/13 13:18:05 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -83,7 +83,11 @@ MODE=install
 # include common subroutines and initialization code
 . install.sub
 
-if [ ! -f /etc/fstab ]; then
+# If /etc/fstab already exists we skip disk initialization, but we still
+# need to know the root disk.
+if [ -f /etc/fstab ]; then
+	get_rootdisk
+else
 	# Install the shadowed disktab file; lets us write to it for temporary
 	# purposes without mounting the miniroot read-write.
 	if [ -f /etc/disktab.shadow ]; then
@@ -92,18 +96,19 @@ if [ ! -f /etc/fstab ]; then
 
 	while : ; do
 		if [ -z "$ROOTDISK" ]; then
-			while [ -z "$ROOTDISK" ]; do
-				getrootdisk
-			done
+			# Get ROOTDISK and default ROOTDEV
+			get_rootdisk
 			DISK=$ROOTDISK
+			echo "${ROOTDEV} /" > $FILESYSTEMS
 		else
-			DISK=
-			while [ -z "$DISK" ]; do
-				getanotherdisk
-			done
-			if [ "$DISK" = "done" ]; then
-				break
-			fi
+			cat << __EOT
+
+Now you can select another disk to initialize. (Do not re-select a disk
+you have already entered information for).
+__EOT
+			ask_fordev "Which disk do you wish to initialize?" "$DKDEVS"
+			[ "$resp" = "done" ] && break
+			DISK=$resp
 		fi
 
 		# Deal with disklabels, including editing the root disklabel
@@ -111,8 +116,7 @@ if [ ! -f /etc/fstab ]; then
 		# some platforms may not be able to provide this functionality.
 		md_prep_disklabel ${DISK}
 
-		# Assume partition 'a' of $ROOTDISK is for the root filesystem.
-		# Loop and get the rest.
+		# Assume $ROOTDEV is the root filesystem, but loop to get the rest.
 		# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
 		cat << __EOT
 
@@ -126,11 +130,10 @@ __EOT
 			cat << __EOT
 
 The following partitions will be used for the root filesystem and swap:
-	${ROOTDISK}a    /
+	${ROOTDEV}	/
 	${ROOTDISK}b	swap
 
 __EOT
-			echo	"${ROOTDISK}a /" > ${FILESYSTEMS}
 		fi
 
 		# XXX - allow the user to name mount points on disks other than ROOTDISK
@@ -148,7 +151,7 @@ __EOT
 			# Removing the partition size leaves us with the partition name
 			_pp=${_p%${_ps}}
 
-			[ "$DISK" = "$ROOTDISK" -a "$_pp" = "a" ] && continue
+			[ "${DISK}${_pp}" = "$ROOTDEV" ] && continue
 
 			_partitions[$_npartitions]=$_pp
 			_psizes[$_npartitions]=$_ps
@@ -185,10 +188,8 @@ __EOT
 					;;
 				esac
 			done
-			_i=$(( ${_i} + 1 ))
-			if [ $_i -ge $_npartitions ]; then
-				_i=0
-			fi
+			_i=$(( $_i + 1 ))
+			[ $_i -ge $_npartitions ] && _i=0
 		done
 
 		# Now write it out, sorted by mount point
@@ -238,12 +239,6 @@ __EOT
 			newfs -q /dev/r${_device_name}
 		done
 	) < ${FILESYSTEMS}
-else
-	# Get the root device
-	ROOTDISK=`df /mnt | sed -e '/^\//!d' -e 's/\/dev\/\([^ ]*\)[a-p] .*/\1/'`
-	while [ -z "$ROOTDISK" ]; do
-		getrootdisk
-	done
 fi
 
 # Get network configuration information, and store it for placement in the
