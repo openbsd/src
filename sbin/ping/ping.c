@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.62 2003/07/02 21:44:58 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.63 2003/07/24 03:10:04 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.62 2003/07/02 21:44:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.63 2003/07/24 03:10:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -925,8 +925,8 @@ summary(int header, int sig)
 			snprintf(buft, sizeof buft,
 			    "-- somebody's duplicating packets!");
 		else
-			snprintf(buft, sizeof buft, "%d%% packet loss",
-			    (int) (((ntransmitted - nreceived) * 100) /
+			snprintf(buft, sizeof buft, "%.1lf%% packet loss",
+			    ((((double)ntransmitted - nreceived) * 100) /
 			    ntransmitted));
 		strlcat(buf, buft, sizeof buf);
 	}
