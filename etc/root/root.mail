@@ -27,19 +27,19 @@ CD-ROM Space permitted us to include the following packages for the most common
 architectures:
         Xaw3d-1.3.tgz		aalib-1.2.tgz		autoconf-2.13.tgz
 	bash-2.03.tgz		bison-1.25.tgz		bzip2-0.9.0c.tgz
-	compface-1.0.tgz	cucipop-1.31.tgz	egcs-1.1.2.tgz
-	emacs-20.3.tgz		enscript-1.6.1.tgz	ethereal-0.5.1.tgz
-	fetchmail-4.7.9.tgz	gettext-0.10.35.tgz	ghostscript-5.10.tgz
-	gimp-1.1.4.tgz		glib-1.2.1.tgz		gmake-3.77.tgz
-	gnuplot-3.7.tgz		gtk+-1.2.1.tgz		gv-3.5.8.tgz
-	id-utils-3.2.tgz	iozone-2.01.tgz		ircii-2.8.2-epic3.004.tgz
-	jpeg-6b.tgz		m4-1.4.tgz		mm-2.7.tgz
-	mpeg_lib-1.2.1.tgz	netpbm-19940301.tgz	netpipes-4.1.1-export.tgz
-	nmh-1.0.tgz		pine-4.10.tgz		png-1.0.3.tgz
-	screen-3.7.6.tgz	sharutils-4.2.tgz	sniffit-0.3.5.tgz
-	tar-1.12.tgz		tcl-8.0.5.tgz		tcsh-6.08.00.tgz
-	tiff-3.4.tgz		tk-8.0.5.tgz		unzip-5.40.tgz
-	xcolors-1.3.tgz		xntp3-5.93e-export.tgz
+	compface-1.0.tgz	egcs-1.1.2.tgz		emacs-20.3.tgz
+	enscript-1.6.1.tgz	ethereal-0.5.1.tgz	fetchmail-4.7.9.tgz
+	gettext-0.10.35.tgz	ghostscript-5.10.tgz	gimp-1.1.4.tgz
+	glib-1.2.1.tgz		gmake-3.77.tgz		gnuplot-3.7.tgz
+	gtk+-1.2.1.tgz		gv-3.5.8.tgz		id-utils-3.2.tgz
+	iozone-2.01.tgz		mm-2.7.tgz		ircii-2.8.2-epic3.004.tgz
+	jpeg-6b.tgz		m4-1.4.tgz		netpipes-4.1.1-export.tgz
+	mpeg_lib-1.2.1.tgz	nmh-1.0.tgz		pine-4.10.tgz
+	png-1.0.3.tgz		screen-3.7.6.tgz	sharutils-4.2.tgz
+	sniffit-0.3.5.tgz	tar-1.12.tgz		tcl-8.0.5.tgz
+	tcsh-6.08.00.tgz	tiff-3.4.tgz		tk-8.0.5.tgz
+	unzip-5.40.tgz		wget-1.5.3.tgz		xcolors-1.3.tgz
+	xntp3-5.93e-export.tgz
 
 These and many other packages are also available via ftp at
 	ftp://ftp.openbsd.org/pub/OpenBSD/2.5/packages/
@@ -54,8 +54,8 @@ or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.5/packages/i386/emacs-20.3.tgz
 Other important packages which are not permitted on the CD (due to patents) are
 available on our FTP servers (as described above).  In particular, we provide
 the USA and international versions of both SSH and PGP.  The filenames are:
-	ssh-usa-1.2.26.tgz	ssh-intl-1.2.26.tgz	pgp-usa-2.6.3.tgz
-	pgp-intl-2.6.3.tgz
+	ssh-1.2.26-usa.tgz	ssh-1.2.26-intl.tgz	pgp-2.6.3-usa.tgz
+	pgp-2.6.3-intl.tgz
 You are STRONGLY urged to install one of the above ssh packages and use ssh
 instead of telnet, rlogin, or rsh.
 
