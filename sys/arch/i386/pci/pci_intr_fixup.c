@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.12 2001/01/27 04:59:40 mickey Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.13 2001/01/28 19:56:10 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -714,7 +714,7 @@ pci_intr_fixup(pc, iot)
 	}
 
 	if (piit == NULL) {
-		printf("pci_intr_fixup: no compatible PCI ICU found");
+		printf("pcibios: no compatible PCI ICU found");
 		if (pcibios_pir_header.signature != 0 && icuid != 0)
 			printf(": ICU vendor 0x%04x product 0x%04x",
 			    PCI_VENDOR(icuid), PCI_PRODUCT(icuid));
