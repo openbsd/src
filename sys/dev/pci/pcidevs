@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.527 2002/07/10 18:07:49 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.528 2002/07/13 22:36:16 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -48,6 +48,7 @@
  */
 
 vendor MARTINMARIETTA	0x003d	Martin-Marietta
+vendor HAUPPAUGE	0x0070	Hauppauge Computer Works Inc 
 vendor COMPAQ		0x0e11	Compaq
 vendor SYMBIOS		0x1000	Symbios Logic
 vendor ATI		0x1002	ATI
@@ -537,6 +538,8 @@ vendor LAVA		0x1407	Lava
 vendor SUNIX		0x1409	Sunix
 vendor OXFORD2		0x1415	Oxford
 vendor TAMARACK		0x143d	Tamarack Microelectronics
+vendor ASKEY		0x144f	Askey Computer Corp.
+vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor OXFORD		0x14d2	Oxford
 vendor AIRONET		0x14b9	Aironet
 vendor COMPAL		0x14c0	COMPAL
@@ -545,6 +548,7 @@ vendor BROADCOM		0x14e4	Broadcom
 vendor CONEXANT		0x14f1	Conexant
 vendor DELTA		0x1500	Delta
 vendor TOPIC		0x151f	Topic/SmartLink
+vendor TERRATEC		0x153b	TerraTec Electronic Gmbh
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
 vendor SYBA		0x1592	Syba
@@ -966,7 +970,8 @@ product BROOKTREE BT848		0x0350	BT848
 product BROOKTREE BT849		0x0351	BT849
 product BROOKTREE BT878		0x036e	BT878
 product BROOKTREE BT879		0x036f	BT879
-product BROOKTREE BT878_DEV2	0x0878	BT878 (2nd device)
+product BROOKTREE BT878_AU	0x0878	BT878 Audio
+product BROOKTREE BT879_AU	0x0879	BT879 Audio
 product BROOKTREE BT8474	0x8474	Bt8474 Multichannel HDLC Controller
 
 /* BusLogic products */
@@ -1233,6 +1238,9 @@ product GLOBALSUN GL24110P02	0x1102	GL24110P02
 
 /* Guillemot products */
 product GEMTEK PR103		0x1001	PR103
+
+/* Hauppauge Computer Works Inc */
+product HAUPPAUGE WINTV		0x13eb	WinTV
 
 /* Hewlett-Packard products */
 product HP A4977A		0x1005	A4977A Visualize EG
@@ -1503,6 +1511,7 @@ product LAVA PARALLELB		0x8003	Dual Parallel B
 
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
+product LEADTEK WINFAST		0x6606	Leadtek WinFast TV 2000
 
 /* Level 1 (Intel) */
 product LEVEL1 LXT1001		0x0001	LXT1001
@@ -2088,6 +2097,11 @@ product TEKRAM 	DC290		0xdc29	DC-290(M)
 /* Tekram Technology products(2) */
 product TEKRAM2	DC690C		0x690c	DC-690C
 product TEKRAM2 DC3X5U		0x0391	DC-3x5U
+
+/* TerraTec Electronic Gmbh */
+product TERRATEC TVALUE_PLUS	0x1127	Terratec TV+
+product TERRATEC TVALUE		0x1134	Terratec TValue
+product TERRATEC TVALUER	0x1135	Terratec TValue Radio
 
 /* Texas Instruments products */
 product TI TLAN			0x0500	TLAN
