@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.17 2004/11/25 22:02:08 deraadt Exp $
+#	$OpenBSD: disktab,v 1.18 2005/02/07 06:08:10 david Exp $
 
 # Disk geometry and partition layout tables.
 # Key:
@@ -48,8 +48,8 @@ mk156|toshiba156|Toshiba MK156 156Mb:\
 	:dt=SCSI:ty=winchester:se#512:nt#10:ns#35:nc#825:\
 	:pa#15748:oa#0:ba#4096:fa#512:ta=4.2BSD:\
 	:pb#15748:ob#15748:tb=swap:\
-        :pc#288750:oc#0:\
-	:ph#257250:oh#31500:bh#4096:fh#512:th=4.2BSD:	
+	:pc#288750:oc#0:\
+	:ph#257250:oh#31500:bh#4096:fh#512:th=4.2BSD:
 
 cp3100|Conner Peripherals 100MB IDE:\
 	:dt=ST506:ty=winchester:se#512:nt#8:ns#33:nc#766: \

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.36 2004/07/06 04:03:41 henning Exp $
+#	$OpenBSD: rc.local,v 1.37 2005/02/07 06:08:10 david Exp $
 
 # site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -12,7 +12,7 @@ echo -n 'starting local daemons:'
 
 if [ -x /usr/local/sbin/cfsd ]; then
 	if ps auxc | grep -q '^ *root .* mountd$'; then
-		echo -n ' cfsd';        /usr/local/sbin/cfsd >/dev/null 2>&1
+		echo -n ' cfsd';	/usr/local/sbin/cfsd >/dev/null 2>&1
 		mount -o port=3049,nfsv2,intr localhost:/null /crypt
 	else
 		echo -n ' cfsd (failed, no mountd running)'

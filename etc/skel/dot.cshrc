@@ -1,4 +1,4 @@
-# $OpenBSD: dot.cshrc,v 1.3 2002/06/09 06:15:15 todd Exp $
+# $OpenBSD: dot.cshrc,v 1.4 2005/02/07 06:08:10 david Exp $
 #
 # csh initialization
 
@@ -24,7 +24,7 @@ if ($?prompt) then
 	set mch = `hostname -s`
 	alias prompt 'set prompt = "$mch:q"":$cwd:t {\!} "'
 	alias cd 'cd \!*; prompt'
-        alias chdir 'cd \!*; prompt'
+	alias chdir 'cd \!*; prompt'
 	alias popd 'popd \!*; prompt'
 	alias pushd 'pushd \!*; prompt'
 	cd .

@@ -1,4 +1,4 @@
-#	$OpenBSD: remote,v 1.10 2004/04/10 09:07:30 jmc Exp $
+#	$OpenBSD: remote,v 1.11 2005/02/07 06:08:10 david Exp $
 #	from: @(#)remote	8.1 (Berkeley) 6/10/93
 #
 # remote -- remote host description database
@@ -51,7 +51,7 @@ direct:\
 	:dc:
 
 dialup:\
-        :du:at=hayes:pn=\@:
+	:du:at=hayes:pn=\@:
 
 doshost:\
 	:oe=^Z:tc=unixhost:

@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.10 2004/04/09 21:50:08 jmc Exp $
+#	$OpenBSD: disktab,v 1.11 2005/02/07 06:08:10 david Exp $
 #	$NetBSD: disktab,v 1.2 1996/03/05 12:01:53 ragge Exp $
 #
 #	@(#)disktab	8.1 (Berkeley) 6/9/93
@@ -481,7 +481,7 @@ ncc2|nec2363|1Gb NEC:\
 	:ty=winchester:ns#64:nt#27:nc#1024:rm#3600:se#512:\
 	:dt=SMD:\
 	:d0#0:\
-        :pa#15884:oa#0:ba#8192:fa#1024:\
+	:pa#15884:oa#0:ba#8192:fa#1024:\
 	:pb#66880:ob#17280:bb#8192:fb#1024:tb=swap:\
 	:pc#1769472:oc#0:bc#8192:fc#1024:\
 	:pd#15884:od#376704:bd#4096:fd#512:\

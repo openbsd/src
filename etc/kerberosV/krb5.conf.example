@@ -1,4 +1,4 @@
-# $OpenBSD: krb5.conf.example,v 1.5 2003/08/22 13:46:10 hin Exp $
+# $OpenBSD: krb5.conf.example,v 1.6 2005/02/07 06:08:10 david Exp $
 #
 # Example Kerberos 5 configuration file. You may need to change the defaults
 # in this file to match your environment.
@@ -17,7 +17,7 @@
 #
 [libdefaults]
 	# Set the realm of this host here
-        default_realm = MY.REALM
+	default_realm = MY.REALM
 
 	# Maximum allowed time difference between KDC and this host
 	clockskew = 300

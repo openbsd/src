@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.11 2002/12/08 22:40:45 marc Exp $
+#	$OpenBSD: ksh.kshrc,v 1.12 2005/02/07 06:08:10 david Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -36,12 +36,12 @@ case "$-" in
 	# NOTE: SCO-UNIX doesn't have whoami,
 	#	install whoami.sh
 	USER=`whoami 2>/dev/null`
-        USER=${USER:-`id | sed 's/^[^(]*(\([^)]*\)).*/\1/'`}
+	USER=${USER:-`id | sed 's/^[^(]*(\([^)]*\)).*/\1/'`}
 	UID=`id -u`
 	case $UID in
 	0) PS1S='# ';;
 	esac
-        PS1S=${PS1S:-'$ '}
+	PS1S=${PS1S:-'$ '}
 	HOSTNAME=${HOSTNAME:-`uname -n`}
 	HOST=${HOSTNAME%%.*}
 
@@ -54,7 +54,7 @@ case "$-" in
 	# $tty is that which we are in now (might by pty)
 	tty=`tty`
 	tty=`basename $tty`
-        TTY=${TTY:-$tty}
+	TTY=${TTY:-$tty}
 
 	set -o emacs
 
@@ -82,10 +82,10 @@ case "$-" in
 	xterm*)
 		ILS='\033]1;'; ILE='\007'
 		WLS='\033]2;'; WLE='\007'
-                parent="`ps -ax 2>/dev/null | grep $PPID | grep -v grep`"
-                case "$parent" in
+		parent="`ps -ax 2>/dev/null | grep $PPID | grep -v grep`"
+		case "$parent" in
 		*telnet*)
-                  export TERM=xterms;;
+		export TERM=xterms;;
 		esac
 		;;
 	*)	;;
@@ -148,7 +148,7 @@ case "$-" in
 	case $OS in
 	HP-UX)
 		alias ls='ls -CF'
-                ;;
+		;;
 	*BSD)
 		alias df='df -k'
 		alias du='du -k'

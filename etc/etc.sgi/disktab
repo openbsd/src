@@ -1,4 +1,4 @@
-# Disk geometry and partition layout tables. 
+# Disk geometry and partition layout tables.
 # Key:
 #	dt	controller type
 #	ty	type of disk (fixed, removeable, simulated)
@@ -32,53 +32,53 @@ rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=simulated:se#512:nc#16:nt#4:ns#128:\
 	:ta=4.2BSD:oa#0:pa#8192:fa#512:ba#4096:\
 	:ob#0:pb#0:oc#0:pc#8192:
-	
+
 # Seagate ST31200N
 ST31200N-MBR:\
-        :ty=winchester:ns#84:nt#9:nc#2700:\
+	:ty=winchester:ns#84:nt#9:nc#2700:\
 	:pa#65536:oa#4096:ba#8192:fa#1024:ta=4.2bsd:\
-        :pb#131072:ob#69632:bb#8192:fb#1024:tb=swap:\
-        :pc#2037104:oc#4096:bc#8192:fc#1024:\
+	:pb#131072:ob#69632:bb#8192:fb#1024:tb=swap:\
+	:pc#2037104:oc#4096:bc#8192:fc#1024:\
 	:pd#2041200:od#0:bd#8192:fd#1024:\
 	:pe#4064:oe#32:be#8192:fe#1024:te=msdos:\
-        :pg#619200:og#200704:bg#8192:fg#1024:tg=4.2bsd:\
-        :ph#1221296:oh#819904:bh#8192:fh#1024:th=4.2bsd:
+	:pg#619200:og#200704:bg#8192:fg#1024:tg=4.2bsd:\
+	:ph#1221296:oh#819904:bh#8192:fh#1024:th=4.2bsd:
 
 # QUANTUM, Trailblazer 850 with MBR boot.
 TRB850S-MBR:\
-        :ty=winchester:ns#113:nt#4:nc#3653:\
+	:ty=winchester:ns#113:nt#4:nc#3653:\
 	:pa#88096:oa#10240:ba#8192:fa#1024:ta=4.2bsd:\
-        :pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
-        :pc#1647060:oc#0:bc#8192:fc#1024:\
-        :pd#10208:od#32:bd#8192:fd#1024:td=msdos:\
-        :pe#586000:oe#229408:be#8192:fe#1024:te=4.2bsd:\
-        :pf#415826:of#815408:bf#8192:ff#1024:tf=4.2bsd:\
-        :pg#415826:og#1231234:bg#8192:fg#1024:tg=4.2bsd:\
-        :ph#831652:oh#815408:bh#8192:fh#1024:th=4.2bsd:
+	:pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
+	:pc#1647060:oc#0:bc#8192:fc#1024:\
+	:pd#10208:od#32:bd#8192:fd#1024:td=msdos:\
+	:pe#586000:oe#229408:be#8192:fe#1024:te=4.2bsd:\
+	:pf#415826:of#815408:bf#8192:ff#1024:tf=4.2bsd:\
+	:pg#415826:og#1231234:bg#8192:fg#1024:tg=4.2bsd:\
+	:ph#831652:oh#815408:bh#8192:fh#1024:th=4.2bsd:
 
 #QUANTUM, FIREBALL1080S
 FIREBALL1080S-MBR:\
-        :ty=winchester:ns#139:nt#4:nc#3835:\
+	:ty=winchester:ns#139:nt#4:nc#3835:\
 	:pa#120832:oa#10240:ba#8192:fa#1024:ta=4.2bsd:\
-        :pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
-        :pc#2132260:oc#0:bc#8192:fc#1024:\
-        :pd#10208:od#32:bd#8192:fd#1024:td=msdos:\
-        :pe#781250:oe#262144:be#8192:fe#1024:te=4.2bsd:\
-        :pf#544433:of#1043394:bf#8192:ff#1024:tf=4.2bsd:\
-        :pg#544433:og#1587827:bg#8192:fg#1024:tg=4.2bsd:\
-        :ph#1088866:oh#1043394:bh#8192:fh#1024:th=4.2bsd:
+	:pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
+	:pc#2132260:oc#0:bc#8192:fc#1024:\
+	:pd#10208:od#32:bd#8192:fd#1024:td=msdos:\
+	:pe#781250:oe#262144:be#8192:fe#1024:te=4.2bsd:\
+	:pf#544433:of#1043394:bf#8192:ff#1024:tf=4.2bsd:\
+	:pg#544433:og#1587827:bg#8192:fg#1024:tg=4.2bsd:\
+	:ph#1088866:oh#1043394:bh#8192:fh#1024:th=4.2bsd:
 
 #QUANTUM, FIREBALL_TM3200S
 FIREBALL_TM3200S-MBR:\
-        :ty=winchester:ns#184:nt#5:nc#6810:\
+	:ty=winchester:ns#184:nt#5:nc#6810:\
 	:pa#120832:oa#10240:ba#8192:fa#1024:ta=4.2bsd:\
-        :pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
-        :pc#6265200:oc#0:bc#8192:fc#1024:\
-        :pd#10208:od#32:bd#8192:fd#1024:td=msdos:\
-        :pe#781250:oe#262144:be#8192:fe#1024:te=4.2bsd:\
-        :pf#1205000:of#1043394:bf#8192:ff#1024:tf=4.2bsd:\
-        :pg#2008403:og#2248394:bg#8192:fg#1024:tg=4.2bsd:\
-        :ph#2008403:oh#4256797:bh#8192:fh#1024:th=4.2bsd:
+	:pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
+	:pc#6265200:oc#0:bc#8192:fc#1024:\
+	:pd#10208:od#32:bd#8192:fd#1024:td=msdos:\
+	:pe#781250:oe#262144:be#8192:fe#1024:te=4.2bsd:\
+	:pf#1205000:of#1043394:bf#8192:ff#1024:tf=4.2bsd:\
+	:pg#2008403:og#2248394:bg#8192:fg#1024:tg=4.2bsd:\
+	:ph#2008403:oh#4256797:bh#8192:fh#1024:th=4.2bsd:
 
 # QUANTUM ATLAS, XP34300
 XP34300:\
@@ -103,4 +103,4 @@ ZIP-MBR:\
 	:ty=zip:ns#32:nt#64:nc#96:\
 	:pa#188416:oa#4096:ba#8192:fa#1024:ta=4.2bsd:\
 	:pc#192512:oc#4096:bc#8192:fc#1024:\
-        :pd#4064:od#32:bd#8192:fd#1024:td=msdos:\
+	:pd#4064:od#32:bd#8192:fd#1024:td=msdos:\
