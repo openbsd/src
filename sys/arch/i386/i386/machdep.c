@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.204 2002/03/30 09:42:28 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.205 2002/05/16 15:33:05 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1041,7 +1041,6 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 	int model, step;
 {
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	extern int cpu_feature;
 
 	switch (model) {
 	case -1: /* M1 w/o cpuid */
@@ -1061,10 +1060,6 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 
 		printf("%s: xchg bug workaround performed\n", cpu_device);
 		break;	/* fallthrough? */
-	case 4:	/* GXm */
-		/* Unset the TSC bit until calibrate_delay() gets fixed. */
-		cpu_feature &= ~CPUID_TSC;
-		break;
 	}
 #endif
 }
