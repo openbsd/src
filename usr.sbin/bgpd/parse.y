@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.121 2004/07/27 20:26:59 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.122 2004/07/28 12:46:36 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -75,7 +75,7 @@ struct filter_prefix_l {
 struct filter_match_l {
 	struct filter_match	 m;
 	struct filter_prefix_l	*prefix_l;
-};
+} fmopts;
 
 struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
@@ -149,7 +149,7 @@ typedef struct {
 %type	<v.prefix>		prefix addrspec
 %type	<v.u8>			action quick direction
 %type	<v.filter_peers>	filter_peer filter_peer_l filter_peer_h
-%type	<v.filter_match>	filter_match
+%type	<v.filter_match>	filter_match filter_elm filter_match_h
 %type	<v.prefixlen>		prefixlenop
 %type	<v.filter_set>		filter_set filter_set_l filter_set_opt
 %type	<v.filter_prefix>	filter_prefix filter_prefix_l filter_prefix_h
@@ -753,7 +753,7 @@ encspec		: /* nada */	{
 		}
 		;
 
-filterrule	: action quick direction filter_peer_h filter_match filter_set
+filterrule	: action quick direction filter_peer_h filter_match_h filter_set
 		{
 			struct filter_rule	 r;
 			struct filter_prefix_l	*l;
@@ -846,8 +846,8 @@ filter_peer	: ANY		{
 		}
 		;
 
-filter_prefix_h	: filter_prefix
-		| '{' filter_prefix_l '}'		{ $$ = $2; }
+filter_prefix_h	: PREFIX filter_prefix			{ $$ = $2; }
+		| PREFIX '{' filter_prefix_l '}'	{ $$ = $3; }
 		;
 
 filter_prefix_l	: filter_prefix				{ $$ = $1; }
@@ -868,32 +868,32 @@ filter_prefix	: prefix				{
 		}
 		;
 
-filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
-		| PREFIX filter_prefix_h	{
-			$$.prefix_l = $2;
+filter_match_h	: /* empty */			{ bzero(&$$, sizeof($$)); }
+		| { bzero(&fmopts, sizeof(fmopts)); }
+		    filter_match		{
+			memcpy(&$$, &fmopts, sizeof($$));
 		}
-		| PREFIX prefix PREFIXLEN prefixlenop	{
-			bzero(&$$, sizeof($$));
-			memcpy(&$$.m.prefix.addr, &$2.prefix,
-			    sizeof($$.m.prefix.addr));
-			$$.m.prefix.len = $2.len;
-			memcpy(&$$.m.prefixlen, &$4, sizeof($$.m.prefixlen));
-			$$.m.prefixlen.af = $2.prefix.af;
+		;
+
+filter_match	: filter_elm
+		| filter_match filter_elm
+		;
+
+filter_elm	: filter_prefix_h	{
+			fmopts.prefix_l = $1;
 		}
 		| PREFIXLEN prefixlenop		{
-			bzero(&$$, sizeof($$));
-			memcpy(&$$.m.prefixlen, &$2, sizeof($$.m.prefixlen));
-			$$.m.prefixlen.af = AF_INET;
+			memcpy(&fmopts.m.prefixlen, &$2,
+			    sizeof(fmopts.m.prefixlen));
+			fmopts.m.prefixlen.af = AF_INET;
 		}
 		| filter_as asnumber		{
-			bzero(&$$, sizeof($$));
-			$$.m.as.as = $2;
-			$$.m.as.type = $1;
+			fmopts.m.as.as = $2;
+			fmopts.m.as.type = $1;
 		}
 		| COMMUNITY STRING	{
-			bzero(&$$, sizeof($$));
-			if (parsecommunity($2, &$$.m.community.as,
-			    &$$.m.community.type) == -1) {
+			if (parsecommunity($2, &fmopts.m.community.as,
+			    &fmopts.m.community.type) == -1) {
 				free($2);
 				YYERROR;
 			}
