@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.90 2004/09/23 21:09:39 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.91 2004/09/23 22:55:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.90 2004/09/23 21:09:39 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.91 2004/09/23 22:55:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -745,7 +745,7 @@ dointr_sysctl(void)
 		return;
 	}
 
-	(void)printf("%-12s %20s %8s\n", "interrupt", "total", "rate");
+	(void)printf("%-16s %20s %8s\n", "interrupt", "total", "rate");
 
 	inttotal = 0;
 	for (i = 0; i < nintr; i++) {
@@ -786,7 +786,7 @@ dointr_sysctl(void)
 		}
 
 		if (cnt || zflag)
-			(void)printf("%-12.12s %20llu %8llu\n", intrname,
+			(void)printf("%-16.16s %20llu %8llu\n", intrname,
 			    cnt, cnt / uptime);
 		inttotal += cnt;
 	}
@@ -802,14 +802,14 @@ dointr_sysctl(void)
 			    sizeof dev) != sizeof dev)
 				errx(1, "event chain trashed: %s", kvm_geterr(kd));
 			if (evcnt.ev_count)
-				(void)printf("%-12.12s %20llu %8llu\n",
+				(void)printf("%-16.16s %20llu %8llu\n",
 				    dev.dv_xname,
 				    evcnt.ev_count, evcnt.ev_count / uptime);
 			inttotal += evcnt.ev_count;
 		}
 		evptr = evcnt.ev_list.tqe_next;
 	}
-	(void)printf("%-12s %20llu %8llu\n", "Total", inttotal,
+	(void)printf("%-16s %20llu %8llu\n", "Total", inttotal,
 	    inttotal / uptime);
 }
 
@@ -835,12 +835,12 @@ dointr_kvm(void)
 		err(1, "malloc");
 	kread(X_INTRCNT, intrcnt, (size_t)nintr);
 	kread(X_INTRNAMES, intrname, (size_t)inamlen);
-	(void)printf("%-12s %20s %8s\n", "interrupt", "total", "rate");
+	(void)printf("%-16s %20s %8s\n", "interrupt", "total", "rate");
 	inttotal = 0;
 	nintr /= sizeof(long);
 	while (--nintr >= 0) {
 		if (*intrcnt)
-			(void)printf("%-12.12s %20lu %8lu\n", intrname,
+			(void)printf("%-16.16s %20lu %8lu\n", intrname,
 			    *intrcnt, *intrcnt / uptime);
 		intrname += strlen(intrname) + 1;
 		inttotal += *intrcnt++;
@@ -856,13 +856,13 @@ dointr_kvm(void)
 			    sizeof dev) != sizeof dev)
 				errx(1, "event chain trashed: %s", kvm_geterr(kd));
 			if (evcnt.ev_count)
-				(void)printf("%-12.12s %20lu %8lu\n", dev.dv_xname,
+				(void)printf("%-16.16s %20lu %8lu\n", dev.dv_xname,
 				    evcnt.ev_count, evcnt.ev_count / uptime);
 			inttotal += evcnt.ev_count;
 		}
 		evptr = evcnt.ev_list.tqe_next;
 	}
-	(void)printf("%-12s %20llu %8llu\n", "Total", inttotal,
+	(void)printf("%-16s %20llu %8llu\n", "Total", inttotal,
 	    inttotal / uptime);
 }
 
