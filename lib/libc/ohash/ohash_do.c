@@ -1,4 +1,4 @@
-/* $OpenBSD: ohash_do.c,v 1.1 2001/03/02 13:27:07 espie Exp $ */
+/* $OpenBSD: ohash_do.c,v 1.2 2001/03/02 15:47:53 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -94,7 +94,7 @@ ohash_remove(h, i)
 	h->t[i].p = DELETED;
 	h->deleted++;
 	if (h->deleted >= MINDELETED && 4 * h->deleted > h->total)
-		hash_resize(h);
+		ohash_resize(h);
 	return result;
 }
 
@@ -125,7 +125,7 @@ ohash_insert(h, i, p)
 		h->t[i].p = p;
 	/* Arbitrary resize boundary.  Tweak if not efficient enough.  */
 		if (++h->total * 4 > h->size * 3)
-			hash_resize(h);
+			ohash_resize(h);
 	}
     	return p;
 }
