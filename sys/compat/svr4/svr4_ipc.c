@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_ipc.c,v 1.5 2001/03/16 01:21:24 csapuntz Exp $	*/
+/*	$OpenBSD: svr4_ipc.c,v 1.6 2001/03/16 01:24:30 csapuntz Exp $	*/
 /*	$NetBSD: svr4_ipc.c,v 1.3 1997/03/30 17:21:02 christos Exp $	*/
 
 /*
@@ -485,7 +485,7 @@ svr4_msgctl(p, v, retval)
 		SCARG(&ap, cmd) = IPC_STAT;
 		if ((error = sys_msgctl(p, &ap, retval)) != 0)
 			return error;
-		error = copyin(&bs, SCARG(&ap, buf), sizeof bs);
+		error = copyin(SCARG(&ap, buf), &bs, sizeof bs);
 		if (error)
 			return error;
 		bsd_to_svr4_msqid_ds(&bs, &ss);
@@ -700,7 +700,7 @@ svr4_shmctl(p, v, retval)
 			return error;
 		if (SCARG(uap, buf) == NULL)
 			return 0;
-		error = copyin(&bs, SCARG(&ap, buf), sizeof bs);
+		error = copyin(SCARG(&ap, buf), &bs, sizeof bs);
 		if (error)
 			return error;
 		bsd_to_svr4_shmid_ds(&bs, &ss);
