@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.27 1999/06/29 23:57:56 provos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.28 1999/09/02 22:04:37 pjanzen Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -117,7 +117,7 @@ privilege can change the value.
 .It kern.securelevel	integer	raise only
 .It kern.hostname	string	yes
 .It kern.domainname	string	yes
-.It kern.hostid	integer	yes
+.It kern.hostid	u_int	yes
 .It kern.clockrate	struct	no
 .It kern.posix1version	integer	no
 .It kern.ngroups	integer	no
@@ -141,7 +141,7 @@ privilege can change the value.
 .It kern.sysvmsg	integer	no
 .It kern.sysvsem	integer	no
 .It kern.sysvshm	integer	no
-.It kern.arandom	integer	no
+.It kern.arandom	u_int	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
 .It fs.posix.setuid	integer	yes
