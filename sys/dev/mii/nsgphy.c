@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.9 2002/11/26 06:01:28 nate Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.10 2004/09/20 06:05:27 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -31,7 +31,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
  */
 
 /*
@@ -52,7 +51,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

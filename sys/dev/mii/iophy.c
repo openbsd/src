@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.7 2002/03/14 01:26:57 millert Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.8 2004/09/20 06:05:27 brad Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

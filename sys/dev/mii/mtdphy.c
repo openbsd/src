@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtdphy.c,v 1.7 2003/06/02 19:08:58 jason Exp $	*/
+/*	$OpenBSD: mtdphy.c,v 1.8 2004/09/20 06:05:27 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -34,7 +34,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

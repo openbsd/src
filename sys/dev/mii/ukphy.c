@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.10 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.11 2004/09/20 06:05:27 brad Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

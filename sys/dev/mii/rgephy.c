@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.1 2004/06/05 05:49:29 pvalchev Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.2 2004/09/20 06:05:27 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -39,7 +39,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.12 2003/02/13 06:02:09 fgsch Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.13 2004/09/20 06:05:27 brad Exp $	*/
 /*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>
