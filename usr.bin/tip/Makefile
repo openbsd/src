@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1999/08/20 17:06:28 downsj Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/09/09 17:04:55 millert Exp $
 #
 # Files are:
 #	/etc/remote		remote host description file
@@ -31,6 +31,8 @@
 #	CONNECT			enable ~C command (connect pgm to remote)
 
 PROG=	tip
+LINKS=	${BINDIR}/tip ${BINDIR}/cu
+MLINKS=	tip.1 cu.1
 CFLAGS+=-I${.CURDIR} -ansi -pedantic \
 	-DDEFBR=1200 -DDEFFS=BUFSIZ -DACULOG -DPRISTINE -DCONNECT \
 	-DV831 -DVENTEL -DHAYES -DCOURIER -DT3000
