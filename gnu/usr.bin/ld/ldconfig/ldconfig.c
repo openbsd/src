@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.3 1996/06/28 22:02:27 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.4 1996/10/29 01:01:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -361,17 +361,12 @@ buildhints()
 		errx(1, "str_index(%d) != strtab_sz(%d)", str_index, strtab_sz);
 	}
 
-	tmpfile = concat(_PATH_LD_HINTS, ".XXXXXX", "");
-	if ((tmpfile = mktemp(tmpfile)) == NULL) {
+	tmpfile = concat(_PATH_LD_HINTS, ".XXXXXXXXXX", "");
+	if ((fd = mkstemp(tmpfile)) == -1) {
 		warn("%s", tmpfile);
 		return -1;
 	}
-
-	umask(0);	/* Create with exact permissions */
-	if ((fd = open(tmpfile, O_RDWR|O_CREAT|O_TRUNC, 0444)) == -1) {
-		warn("%s", _PATH_LD_HINTS);
-		return -1;
-	}
+	fchmod(fd, 0444);
 
 	if (write(fd, &hdr, sizeof(struct hints_header)) !=
 	    sizeof(struct hints_header)) {
