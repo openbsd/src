@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_mm.c,v 1.5 2002/05/28 16:45:27 stevesk Exp $");
+RCSID("$OpenBSD: monitor_mm.c,v 1.6 2002/06/04 23:05:49 markus Exp $");
 
 #include <sys/mman.h>
 
@@ -139,7 +139,7 @@ mm_xmalloc(struct mm_master *mm, size_t size)
 
 	address = mm_malloc(mm, size);
 	if (address == NULL)
-		fatal("%s: mm_malloc(%lu)", __FUNCTION__, (u_long)size);
+		fatal("%s: mm_malloc(%lu)", __func__, (u_long)size);
 	return (address);
 }
 
@@ -288,7 +288,7 @@ mm_share_sync(struct mm_master **pmm, struct mm_master **pmmalloc)
 	struct mm_master *mmold;
 	struct mmtree rb_free, rb_allocated;
 
-	debug3("%s: Share sync", __FUNCTION__);
+	debug3("%s: Share sync", __func__);
 
 	mm = *pmm;
 	mmold = mm->mmalloc;
@@ -313,7 +313,7 @@ mm_share_sync(struct mm_master **pmm, struct mm_master **pmmalloc)
 	*pmm = mm;
 	*pmmalloc = mmalloc;
 
-	debug3("%s: Share sync end", __FUNCTION__);
+	debug3("%s: Share sync end", __func__);
 }
 
 void
