@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.12 1998/07/15 22:18:22 deraadt Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.13 1998/07/16 22:37:44 deraadt Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -475,6 +475,9 @@ ad1848_probe(sc)
 		    break;
        		case 0x82:
 		    sc->chip_name = "CS4232";
+		    break;
+		case 0x03:
+		    sc->chip_name = "CS4236/CS4236B";
 		    break;
 		}
 	    }
