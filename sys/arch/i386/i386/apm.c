@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.38 2000/05/30 03:39:34 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.39 2000/06/07 22:25:47 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -767,10 +767,11 @@ apmattach(parent, self, aux)
 	u_int cbase, clen, l;
 	bus_space_handle_t ch16, ch32, dh;
 
+	apm_flags = ap->apm_detail;
 	/*
 	 * set up GDT descriptors for APM
 	 */
-	if (ap->apm_detail & APM_32BIT_SUPPORTED) {
+	if (apm_flags & APM_32BIT_SUPPORTED) {
 
 		/* truncate segments' limits to a page */
 		ap->apm_code_len -= (ap->apm_code32_base +
@@ -780,7 +781,16 @@ apmattach(parent, self, aux)
 		ap->apm_data_len -= (ap->apm_data_base +
 		    ap->apm_data_len + 1) & 0xfff;
 
-		apm_flags = ap->apm_detail;
+		/* adjust version */
+		if ((sc->sc_dev.dv_cfdata->cf_flags & APM_VERMASK) &&
+		    (apm_flags & APM_VERMASK) !=
+		    (sc->sc_dev.dv_cfdata->cf_flags & APM_VERMASK))
+			apm_flags = (apm_flags & ~APM_VERMASK) |
+			    (sc->sc_dev.dv_cfdata->cf_flags & APM_VERMASK);
+		if (sc->sc_dev.dv_cfdata->cf_flags & APM_NOCLI) {
+			extern int apm_cli; /* from apmcall.S */
+			apm_cli = 0;
+		}
 		apm_ep.seg = GSEL(GAPM32CODE_SEL,SEL_KPL);
 		apm_ep.entry = ap->apm_entry;
 		cbase = min(ap->apm_code32_base, ap->apm_code16_base);
@@ -827,7 +837,7 @@ apmattach(parent, self, aux)
 		    ap->apm_entry, apm_ep.seg, ap->apm_entry+ch32,
 		    sc->sc_dev.dv_xname));
 
-		if (ap->apm_detail & APM_BIOS_PM_DISABLED)
+		if (apm_flags & APM_BIOS_PM_DISABLED)
 			apm_powmgt_enable(1);
 		/*
 		 * Engage cooperative power mgt (we get to do it)
