@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.2 1996/06/26 05:37:01 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.3 1996/07/18 22:52:58 michaels Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.2 1996/06/26 05:37:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.3 1996/07/18 22:52:58 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -229,9 +229,10 @@ main(argc, argv)
 	/*
 	 * 3: If the user set the -m option, insert the user's list before
 	 *    whatever list we have, again appending the _subdir list and
-	 *    the machine.
+	 *    the machine. 
 	 */
-	if (p_add != NULL)
+	if (p_add != NULL) {
+		e_sectp = NULL;
 		for (p = strtok(p_add, ":"); p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
 			e_subp = (subp = getlist("_subdir")) == NULL ?
@@ -242,10 +243,19 @@ main(argc, argv)
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 				    (ep->s = strdup(buf)) == NULL)
 					err(1, NULL);
-				TAILQ_INSERT_HEAD(&defp->list, ep, q);
+				/* puts it at the end, should be at the top, but then the added
+					entries would be in reverse order, fix later when all are added*/
+				TAILQ_INSERT_TAIL(&defp->list, ep, q);  
+				if (e_sectp == NULL) 	/* save first added, to-be the new top */
+					e_sectp = ep;
 			}
 		}
-
+		if (e_sectp != NULL) { /* entries added, fix order */
+			ep->q.tqe_next = defp->list.tqh_first;	/* save original head			*/
+			defp->list.tqh_first = e_sectp;			/* first added entry, new top */
+			*e_sectp->q.tqe_prev = NULL; 				/* terminate list					*/
+		}
+	}	
 	/*
 	 * 4: If no -m was specified, and a section was, rewrite the section's
 	 *    paths (if they have a trailing slash) to append the _subdir list
