@@ -65,11 +65,6 @@ the `#' is a comment.  Once you have rbootd running, copy the SYS_UBOOT
 program to the /usr/mdec/rbootd directory on your server.  If this
 directory doesn't exist already, you will need to create it.
 
-For information on configuring rbootd under HP-UX, see the rbootd(1M)
-manual page on your server system.
-
-Once `rbootd' is configured and running, you will be ready to continue.
-
 Next, add the client to /etc/ethers on your server.  For example:
 
 	08:00:09:04:AA:33	thunder-egg
@@ -84,7 +79,9 @@ Where myserver is the name of your server machine and `/export/hp300'
 is the directory that holds the ramdisk kernel image (`bsd.rd').
 Now run `rpc.bootparamd' and make sure that this directory is NFS
 exported to the client.  See the manual pages on your server system
-if you need more information about exporting filesystems.
+if you need more information about exporting filesystems.  If you
+run into problems you may wish to run `rpc.bootparamd' with the `-d'
+flag on your server to get extra debugging information.
 
 You are now ready to load SYS_UBOOT.  During the client's self-test cycle,
 press the space bar.  Shortly, you should see a menu of possible boot
