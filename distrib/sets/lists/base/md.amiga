@@ -37,7 +37,7 @@
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
 ./usr/lib/libg2c.so.5.24
-./usr/lib/libiberty.so.3.0
+./usr/lib/libiberty.so.4.0
 ./usr/lib/libkadm.so.6.0
 ./usr/lib/libkafs.so.6.0
 ./usr/lib/libkdb.so.6.0
