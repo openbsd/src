@@ -1,5 +1,5 @@
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sha1.c,v 1.2 1996/09/29 17:18:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: sha1.c,v 1.3 1996/09/30 04:01:30 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -30,6 +30,10 @@ static char rcsid[] = "$OpenBSD: sha1.c,v 1.2 1996/09/29 17:18:17 millert Exp $"
 #include <time.h>
 #endif
 
+/* Useful defines/typedefs */
+  
+typedef unsigned char   BYTE;
+typedef u_int32_t       LONG;
 
 /* The SHA1 f()-functions */
 
