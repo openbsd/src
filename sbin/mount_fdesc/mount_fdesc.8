@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_fdesc.8,v 1.5 1995/04/23 10:33:15 cgd Exp $
+.\"	$NetBSD: mount_fdesc.8,v 1.6 1995/12/17 18:50:19 ghudson Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -148,21 +148,6 @@ the real controlling terminal device.
 .Xr fstab 5 ,
 .Xr mount 8
 .Sh CAVEATS
-No
-.Pa .
-and
-.Pa ..
-entries appear when listing the contents of the
-.Pa /dev/fd
-directory.
-This makes sense in the context of this filesystem, but is inconsistent
-with usual filesystem conventions.
-However, it is still possible to refer to both
-.Pa .
-and 
-.Pa ..
-in a pathname.
-.Pp
 This filesystem may not be NFS-exported.
 .Sh HISTORY
 The
