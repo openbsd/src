@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.47 2002/02/02 21:14:03 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.48 2002/02/03 01:30:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -502,7 +502,7 @@ $bsd_syscall
 	.import $syscall,code
 	.call
 	ldil	L%$syscall, t2
-	be,n	R%$syscall(sr7, t2)
+	be,n	R%$syscall(sr1, t2)
 	nop
 
 	.align	NBPG
@@ -537,7 +537,7 @@ $syscall
 	stw	t1, TF_R22 -TRAPFRAME_SIZEOF(sr1, t3)	/* syscall # */
 	stw	t4, TF_R30 -TRAPFRAME_SIZEOF(sr1, t3)	/* user stack */
 	ldil	L%kpsw, t1
-	ldw	R%kpsw(t1), t1
+	ldw	R%kpsw(sr1, t1), t1
 	stw	r1, TF_CR15-TRAPFRAME_SIZEOF(sr1, t3)	/* eiem ,bc */
 	stw	t1, TF_CR22-TRAPFRAME_SIZEOF(sr1, t3)	/* ipsw */
 	mfsp	sr3, t1
@@ -715,11 +715,21 @@ $syscall_return
 	 */
 	copy	t3, arg0
 	ldil	L%$trap_tmp_save, arg1
-	ldi	TF_PHYS, arg2
+	ldi	TF_PHYS-4, arg2		/* not all of it is needed, unroll */
 $syscall_return_copy_loop
 	ldwm	4(arg0), t1
-	addib,>= -4, arg2, $syscall_return_copy_loop
+	addib,>,n -4, arg2, $syscall_return_copy_loop
 	stwm	t1, 4(arg1)
+
+#if 0
+	ldw	TF_IIOQH(t3), t1
+	dep	r0, 31, 2, t1
+	comb,<>,n r0, t1, $syscall_return_ok
+	nop
+	break	0, 8
+
+$syscall_return_ok
+#endif
 
 	/* 1b. restore most of the general registers */
 	ldw	TF_CR11(t3), t1
@@ -1758,7 +1768,7 @@ $trapnowvirt
 	 * Copy partially saved state from the store into the frame
 	 */
 	ldil	L%$trap_tmp_save, t2
-	/* use ,bc each line */
+	/* use ,bc each cache line */
 	ldw  0(t2), r1 ! ldw  4(t2), t1 ! stw r1,  0(t3) ! stw t1,  4(t3)
 	ldw  8(t2), r1 ! ldw 12(t2), t1 ! stw r1,  8(t3) ! stw t1, 12(t3)
 	ldw 16(t2), r1 ! ldw 20(t2), t1 ! stw r1, 16(t3) ! stw t1, 20(t3)
@@ -1789,15 +1799,15 @@ $trapnowvirt
 	stw	r17, TF_R17(t3)
 	stw	r18, TF_R18(t3)
 #endif
-	stw	t4, TF_R19(t3)
-	stw	r23,TF_R23(t3)
-	stw	r24,TF_R24(t3)
-	stw	r25,TF_R25(t3)
-	stw	r26,TF_R26(t3)
-	stw	r27,TF_R27(t3)
-	stw	r28,TF_R28(t3)
-	stw	r29,TF_R29(t3)
-	stw	r31,TF_R31(t3)
+	stw	r19, TF_R19(t3)	/* t4 */
+	stw	r23, TF_R23(t3)
+	stw	r24, TF_R24(t3)
+	stw	r25, TF_R25(t3)
+	stw	r26, TF_R26(t3)
+	stw	r27, TF_R27(t3)
+	stw	r28, TF_R28(t3)
+	stw	r29, TF_R29(t3)
+	stw	r31, TF_R31(t3)
 
 	/*
 	 * Save the necessary control registers that have not already saved.
@@ -1971,8 +1981,8 @@ fdc_short				/* flush one line at a time */
 	comb,<<,n arg1, arg0, fdc_short
 	fdc,m	arg3(sr1, arg1)
 
-	/*addi	-1, arg0, arg1
-	fdc	(sr1, arg1)*/
+	addi	-1, arg0, arg1
+	fdc	(sr1, arg1)
 
 	sync
 	syncdma
@@ -2018,8 +2028,8 @@ pdc_short				/* flush one line at a time */
 	comb,<<,n arg1, arg0, pdc_short
 	pdc,m	arg3(sr1, arg1)
 
-	/*addi	-1, arg0, arg1
-	pdc	(sr1, arg1)*/
+	addi	-1, arg0, arg1
+	pdc	(sr1, arg1)
 
 	sync
 	syncdma
@@ -2065,8 +2075,8 @@ fic_short				/* flush one line at a time */
 	comb,<<,n arg1, arg0, fic_short
 	fic,m	arg3(sr1, arg1)
 
-	/*addi	-1, arg0, arg1
-	fic	(sr1, arg1)*/
+	addi	-1, arg0, arg1
+	fic	(sr1, arg1)
 
 	sync
 	syncdma
