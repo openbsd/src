@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.455 2001/10/24 03:46:01 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.456 2001/10/24 17:29:27 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1489,6 +1489,7 @@
 #define	PCI_PRODUCT_NEOMAGIC_NM256ZX	0x8006		/* MagicMedia 256ZX */
 
 /* Netgear products */
+#define	PCI_PRODUCT_NETGEAR_MA301	0x4100		/* MA301 */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 */
 #define	PCI_PRODUCT_NETGEAR_GA620T	0x630a		/* GA620T */
 

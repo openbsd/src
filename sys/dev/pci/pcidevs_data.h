@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.455 2001/10/24 03:46:01 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.456 2001/10/24 17:29:27 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2837,6 +2837,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM256ZX,
 	    "MagicMedia 256ZX",
+	},
+	{
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301,
+	    "MA301",
 	},
 	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
