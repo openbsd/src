@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.89 2002/05/06 03:38:28 pvalchev Exp $
+	$OpenBSD: pcmciadevs,v 1.90 2002/05/28 02:14:09 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -258,6 +258,7 @@ product NETGEAR FA410TXC	0x4530 Netgear FA410TXC
 product NETGEAR FA411		0x0411 Netgear FA411
 
 /* Nokia */
+product NOKIA C110_WLAN		0x1110 Nokia C110/C111
 product NOKIA C020_WLAN		0x20c0 Nokia C020
 
 /* No Wires Needed */

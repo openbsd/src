@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.28 2002/04/17 17:33:44 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.29 2002/05/28 02:14:09 mickey Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -254,6 +254,16 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_ACTIONTEC_HWC01170,
 	  PCMCIA_CIS_ACTIONTEC_HWC01170,
 	  "ACTIONTEC PRISM Wireless LAN PC CARD",
+	},
+	{ PCMCIA_VENDOR_NOKIA,
+	  PCMCIA_PRODUCT_NOKIA_C020_WLAN,
+	  PCMCIA_CIS_NOKIA_C020_WLAN,
+	  "NOKIA C020 Wireless LAN PC CARD",
+	},
+	{ PCMCIA_VENDOR_NOKIA,
+	  PCMCIA_PRODUCT_NOKIA_C110_WLAN,
+	  PCMCIA_CIS_NOKIA_C110_WLAN,
+	  "NOKIA C110 Wireless LAN PC CARD",
 	},
 	{ 0,
 	  0,
