@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.7 2003/10/13 16:18:56 krw Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.8 2004/03/19 21:57:36 miod Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2139,7 +2139,7 @@ struct bge_ring_data {
  * no attempt is made to allocate physically contiguous memory.
  * 
  */
-#ifdef __alpha__ /* XXX - should be conditional on pointer size */
+#ifdef __LP64__
 #define BGE_NTXSEG      30
 #else
 #define BGE_NTXSEG      31
