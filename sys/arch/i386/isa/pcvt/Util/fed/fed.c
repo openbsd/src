@@ -48,7 +48,7 @@
 
 #include "fed.h"
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int i;
 	int row, col;
@@ -163,6 +163,7 @@ void main(int argc, char *argv[])
 		writefont();
 	}
 	endwin();
+	exit(0);
 }
 
 /*---------------------------------- E O F ----------------------------------*/
