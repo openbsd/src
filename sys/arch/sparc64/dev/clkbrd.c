@@ -1,4 +1,4 @@
-/*	$OpenBSD: clkbrd.c,v 1.3 2004/09/28 16:37:02 jason Exp $	*/
+/*	$OpenBSD: clkbrd.c,v 1.4 2004/09/29 17:43:33 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -82,13 +82,13 @@ clkbrd_attach(parent, self, aux)
 
 	timeout_set(&sc->sc_to, clkbrd_led_blink, sc);
 
-	if (fa->fa_nreg < 1) {
+	if (fa->fa_nreg < 2) {
 		printf(": no registers\n");
 		return;
 	}
 
-	if (fhc_bus_map(sc->sc_bt, fa->fa_reg[0].fbr_slot,
-	    fa->fa_reg[0].fbr_offset, fa->fa_reg[0].fbr_size, 0,
+	if (fhc_bus_map(sc->sc_bt, fa->fa_reg[1].fbr_slot,
+	    fa->fa_reg[1].fbr_offset, fa->fa_reg[1].fbr_size, 0,
 	    &sc->sc_creg)) {
 		printf(": can't map ctrl regs\n");
 		return;
@@ -104,6 +104,7 @@ clkbrd_attach(parent, self, aux)
 		sc->sc_has_vreg = 1;
 	}
 
+	slots = 4;
 	r = bus_space_read_1(sc->sc_bt, sc->sc_creg, CLK_STS1);
 	switch (r & 0xc0) {
 	case 0x40:
@@ -115,16 +116,9 @@ clkbrd_attach(parent, self, aux)
 	case 0x80:
 		if (sc->sc_has_vreg) {
 			r = bus_space_read_1(sc->sc_bt, sc->sc_vreg, 0);
-			if (r != 0) {
-				if (r & 0x80)
-					slots = 4;
-				else
+			if (r != 0 && (r & 0x80) == 0)
 					slots = 5;
-				break;
-			}
 		}
-	default:
-		slots = 4;
 	}
 
 	printf(": %d slots\n", slots);
