@@ -503,7 +503,7 @@ prom_getether(fd, ea)
 			} while (--len > 0);
 		}
 		bcopy(sun4_idprom.id_ether, ea, 6);
-	} else if (promvec->pv_romvec_vers < 2) {
+	} else if (promvec->pv_romvec_vers <= 2) {
 		(void)(*promvec->pv_enaddr)(fd, (char *)ea);
 	} else {
 		char buf[64];
