@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: wargames.sh,v 1.2 1997/04/19 06:02:55 gene Exp $
+#	$OpenBSD: wargames.sh,v 1.3 1999/11/25 11:35:24 pjanzen Exp $
 #	$NetBSD: wargames.sh,v 1.2 1995/04/22 07:53:44 cgd Exp $
 #
 # Copyright (c) 1985, 1993
@@ -36,11 +36,12 @@
 #	@(#)wargames.sh	8.1 (Berkeley) 5/31/93
 #
 echo -n "Would you like to play a game? "
-read x
+read x a
+x=`/usr/bin/basename $x`
 
 if [ -f /usr/games/$x ] ; then
 	tput cl
-	exec /usr/games/$x
+	exec /usr/games/$x $a
 else
 	echo "A strange game."
 	echo "The only winning move is not to play."
