@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_ul.c,v 1.8 1996/05/04 13:54:31 niklas Exp $	*/
-/*	$NetBSD: grf_ul.c,v 1.16 1996/05/01 09:59:29 veego Exp $	*/
+/*	$OpenBSD: grf_ul.c,v 1.9 1996/05/29 10:15:17 niklas Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.17 1996/05/09 20:31:25 is Exp $	*/
 
 #define UL_DEBUG
 
@@ -907,6 +907,7 @@ ul_blank(gp, onoff, dev)
 	dev_t dev;
 {
 	struct gspregs *gsp;
+
 	gsp = (struct gspregs *)gp->g_regkva;
 	gsp->ctrl = (gsp->ctrl & ~(INCR | INCW)) | LBL;
 	gsp->hstadrh = 0xC000;

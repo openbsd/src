@@ -1,7 +1,7 @@
-/*	$OpenBSD: grf_clreg.h,v 1.4 1996/05/29 10:14:59 niklas Exp $	*/
-/*	$NetBSD: grf_clreg.h,v 1.4 1996/05/19 21:05:23 veego Exp $	*/
+/*	$NetBSD: grf_etreg.h,v 1.1 1996/05/19 21:05:34 veego Exp $	*/
 
 /*
+ * Copyright (c) 1996 Tobias Abt
  * Copyright (c) 1995 Ezra Story
  * Copyright (c) 1995 Kari Mettinen
  * Copyright (c) 1994 Markus Wild
@@ -34,13 +34,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   
  */
 
-#ifndef _GRF_CLREG_H
-#define _GRF_CLREG_H
+#ifndef _GRF_ETREG_H
+#define _GRF_ETREG_H
 
 /*
  * Written & Copyright by Kari Mettinen, Ezra Story.
  *
- * This is derived from retina driver source
+ * This is derived from Cirrus driver source
  */
 
 /* Extension to grfvideo_mode to support text modes.
@@ -48,7 +48,7 @@
  * without worry.  If gv.depth == 4, then the extended
  * fields for a text mode are present.
  */
-struct grfcltext_mode {
+struct grfettext_mode {
     	struct grfvideo_mode gv;
     	unsigned short	fx; 	    /* font x dimension */
     	unsigned short	fy; 	    /* font y dimension */
@@ -60,20 +60,30 @@ struct grfcltext_mode {
 };
 
 
-/* 5426 boards types, stored in  cltype in grf_cl.c .
- * used to decide how to handle SR7 and Pass-through 
+/* Tseng boards types, stored in ettype in grf_et.c.
+ * used to decide how to handle Pass-through, etc. 
  */
 
-#define PICASSO		2167
-#define SPECTRUM 	2193
-#define PICCOLO		2195
+#define OMNIBUS		2181
+#define DOMINO		2167
+#define MERLIN		2117
+
+/* VGA controller types */
+#define ET4000      0
+#define ETW32       1
+
+/* DAC types */
+#define SIERRA11483 0    /* Sierra 11483 HiColor DAC */
+#define SIERRA15025 1    /* Sierra 15025 TrueColor DAC */
+#define MUSICDAC    2    /* MUSIC TrueColor DAC */
+#define MERLINDAC   3    /* Merlin's BrookTree TrueColor DAC */
 
 /* read VGA register */
 #define vgar(ba, reg) (*(((volatile unsigned char *)ba)+reg))
 
 /* write VGA register */
 #define vgaw(ba, reg, val) \
-	*(((volatile unsigned char *)ba)+reg) = ((val) & 0xff)
+	*(((volatile unsigned char *)ba)+reg) = ((unsigned char)val)
 
 /*
  * defines for the used register addresses (mw)
@@ -87,9 +97,6 @@ struct grfcltext_mode {
  *
  */
 
-
-
-
 /* General Registers: */
 #define GREG_STATUS0_R		0x03C2
 #define GREG_STATUS1_R		0x03DA
@@ -98,6 +105,22 @@ struct grfcltext_mode {
 #define GREG_FEATURE_CONTROL_R	0x03CA
 #define GREG_FEATURE_CONTROL_W	0x03DA
 #define GREG_POS		0x0102
+#define	GREG_HERCULESCOMPAT	0x03BF
+#define	GREG_VIDEOSYSENABLE	0x03C3
+#define	GREG_DISPMODECONTROL	0x03D8
+#define	GREG_COLORSELECT	0x03D9
+#define	GREG_ATNTMODECONTROL	0x03DE
+#define	GREG_SEGMENTSELECT	0x03CD
+
+/* ETW32 special */
+#define W32mappedRegs 0xfff00
+    
+/* MMU */
+#define MMU_APERTURE0 0x80000
+#define MMU_APERTURE1 0xa0000
+#define MMU_APERTURE2 0xc0000
+
+/* Accellerator */
 
 /* Attribute Controller: */
 #define ACT_ADDRESS		0x03C0
@@ -125,15 +148,14 @@ struct grfcltext_mode {
 #define ACT_ID_COLOR_PLANE_ENA	0x12
 #define ACT_ID_HOR_PEL_PANNING	0x13
 #define ACT_ID_COLOR_SELECT	0x14
+#define	ACT_ID_MISCELLANEOUS	0x16
 
 /* Graphics Controller: */
 #define GCT_ADDRESS		0x03CE
 #define GCT_ADDRESS_R		0x03CF
 #define GCT_ADDRESS_W		0x03CF
 #define GCT_ID_SET_RESET	0x00
-#define GCT_WR5_BG_EXT		0x00
 #define GCT_ID_ENABLE_SET_RESET	0x01
-#define GCT_ID_WR45_FG_EXT	0x01
 #define GCT_ID_COLOR_COMPARE	0x02
 #define GCT_ID_DATA_ROTATE	0x03
 #define GCT_ID_READ_MAP_SELECT	0x04
@@ -141,37 +163,6 @@ struct grfcltext_mode {
 #define GCT_ID_MISC		0x06
 #define GCT_ID_COLOR_XCARE	0x07
 #define GCT_ID_BITMASK		0x08
-#define GCT_ID_OFFSET_0		0x09
-#define GCT_ID_OFFSET_1		0x0A
-#define GCT_ID_MODE_EXT	0x0B
-#define GCT_ID_COLOR_KEY	0x0C
-#define GCT_ID_COLOR_KEY_MASK	0x0D
-#define GCT_ID_MISC_CNTL	0x0E
-#define GCT_ID_16BIT_BG_HIGH	0x10
-#define GCT_ID_16BIT_FG_HIGH	0x11
-#define GCT_ID_BLT_WIDTH_LOW	0x20
-#define GCT_ID_BLT_WIDTH_HIGH	0x21
-#define GCT_ID_BLT_HEIGHT_LOW	0x22
-#define GCT_ID_BLT_HEIGHT_HIGH	0x23
-#define GCT_ID_DST_PITCH_LOW	0x24
-#define GCT_ID_DST_PITCH_HIGH	0x25
-#define GCT_ID_SRC_PITCH_LOW	0x26
-#define GCT_ID_SRC_PITCH_HIGH	0x27
-#define GCT_ID_DST_START_LOW	0x28
-#define GCT_ID_DST_START_MID	0x29
-#define GCT_ID_DST_START_HIGH	0x2A
-#define GCT_ID_SRC_START_LOW	0x2C
-#define GCT_ID_SRC_START_MID	0x2D
-#define GCT_ID_SRC_START_HIGH	0x2E
-#define GCT_ID_BLT_MODE		0x30
-#define GCT_ID_BLT_STAT_START	0x31
-#define GCT_ID_BLT_ROP		0x32
-#define GCT_ID_RESERVED		0x33
-#define GCT_ID_TRP_COL_LOW	0x34	/* transparent color */
-#define GCT_ID_TRP_COL_HIGH	0x35
-#define GCT_ID_TRP_MASK_LOW	0x38
-#define GCT_ID_TRP_MASK_HIGH	0x39
-
 
 /* Sequencer: */
 #define SEQ_ADDRESS		0x03C4
@@ -181,39 +172,15 @@ struct grfcltext_mode {
 #define SEQ_ID_CLOCKING_MODE	0x01
 #define SEQ_ID_MAP_MASK		0x02
 #define SEQ_ID_CHAR_MAP_SELECT	0x03
+#define SEQ_ID_MEMORY_MODE	0x04
+#define	SEQ_ID_STATE_CONTROL	0x06
+#define	SEQ_ID_AUXILIARY_MODE	0x07
 
+/* don't know about them right now...
 #define TEXT_PLANE_CHAR	    0x01
 #define TEXT_PLANE_ATTR	    0x02
 #define TEXT_PLANE_FONT	    0x04
-
-#define SEQ_ID_MEMORY_MODE	0x04
-#define SEQ_ID_UNLOCK_EXT	0x06	/* down from here, all seq registers are Cirrus extensions */
-#define SEQ_ID_EXT_SEQ_MODE     0x07
-#define SEQ_ID_EEPROM_CNTL	0x08
-#define SEQ_ID_SCRATCH_0        0x09
-#define SEQ_ID_SCRATCH_1	0x0A
-#define SEQ_ID_VCLK_0_NUM	0x0B
-#define SEQ_ID_VCLK_1_NUM	0x0C
-#define SEQ_ID_VCLK_2_NUM	0x0D
-#define SEQ_ID_VCLK_3_NUM	0x0E
-#define SEQ_ID_DRAM_CNTL	0x0F
-#define SEQ_ID_CURSOR_X		0x10	/* Cursor position can't be set with WSeq
 */
-#define SEQ_ID_CURSOR_Y		0x11
-#define SEQ_ID_CURSOR_ATTR	0x12
-#define SEQ_ID_CURSOR_STORE	0x13
-#define SEQ_ID_SCRATCH_2	0x14
-#define SEQ_ID_SCRATCH_3	0x15
-#define SEQ_ID_PERF_TUNE	0x16
-#define SEQ_ID_CONF_RBACK	0x17
-#define SEQ_ID_SIG_CNTL		0x18
-#define SEQ_ID_SIG_RES_LOW	0x19
-#define SEQ_ID_SIG_RES_HIGH	0x1A
-#define SEQ_ID_VCLK_0_DENOM	0x1B
-#define SEQ_ID_VCLK_1_DENOM	0x1C
-#define SEQ_ID_VCLK_2_DENOM	0x1D
-#define SEQ_ID_VCLK_3_DENOM	0x1E
-#define SEQ_ID_MCLK_SELECT	0x1F
 
 /* CRT Controller: */
 #define CRT_ADDRESS		0x03D4
@@ -228,7 +195,7 @@ struct grfcltext_mode {
 #define CRT_ID_VER_TOTAL	0x06
 #define CRT_ID_OVERFLOW		0x07
 #define CRT_ID_PRESET_ROW_SCAN	0x08
-#define CRT_ID_CHAR_HEIGHT	0x09	/* was MAX_SCANLINES on retina, weird, eh? */
+#define	CRT_ID_MAX_ROW_ADDRESS	0x09
 #define CRT_ID_CURSOR_START	0x0A
 #define CRT_ID_CURSOR_END	0x0B
 #define CRT_ID_START_ADDR_HIGH	0x0C
@@ -244,32 +211,52 @@ struct grfcltext_mode {
 #define CRT_ID_END_VER_BLANK	0x16
 #define CRT_ID_MODE_CONTROL	0x17
 #define CRT_ID_LINE_COMPARE	0x18
-#define CRT_ID_LACE_END         0x19
-#define CRT_ID_LACE_CNTL        0x1A
-#define CRT_ID_EXT_DISP_CNTL    0x1B
-#define CRT_ID_SYNC_ADJ_GENLOCK 0x1C
-#define CRT_ID_OVERLAY_EXT_CTRL_REG    0x1D
 
-#define CRT_ID_GD_LATCH_RBACK	0x22
+#define	CRT_ID_SEGMENT_COMP	0x30
+#define	CRT_ID_GENERAL_PURPOSE	0x31
+#define	CRT_ID_RASCAS_CONFIG	0x32
+#define	CTR_ID_EXT_START	0x33
+#define	CRT_ID_6845_COMPAT	0x34
+#define	CRT_ID_OVERFLOW_HIGH	0x35
+#define	CRT_ID_VIDEO_CONFIG1	0x36
+#define	CRT_ID_VIDEO_CONFIG2	0x37
+#define	CRT_ID_HOR_OVERFLOW	0x3f
 
-#define CRT_ID_ACT_TOGGLE_RBACK	0x24
-#define CRT_ID_ACT_INDEX_RBACK 	0x26
+/* IMAGE port */
+#define IMA_ADDRESS		0x217a
+#define IMA_ADDRESS_R		0x217b
+#define IMA_ADDRESS_W		0x217b
+#define IMA_STARTADDRESSLOW     0xf0
+#define IMA_STARTADDRESSMIDDLE  0xf1
+#define IMA_STARTADDRESSHIGH    0xf2
+#define IMA_TRANSFERLENGTHLOW   0xf3
+#define IMA_TRANSFERLENGTHHIGH  0xf4
+#define IMA_ROWOFFSETLOW        0xf5
+#define IMA_ROWOFFSETHIGH       0xf6
+#define IMA_PORTCONTROL         0xf7
 
 /* Pass-through */
 #define PASS_ADDRESS		0x8000
 #define PASS_ADDRESS_W		0x8000
-/* Special Picasso Address */
-#define PASS_ADDRESS_WP		0x9000
 
 /* Video DAC */
-#define VDAC_ADDRESS	0x03c8
-#define VDAC_ADDRESS_W	0x03c8
-#define VDAC_ADDRESS_R	((cltype==PICASSO)?0x03c7+0xfff:0x3c7)
-#define VDAC_STATE	0x03c7
-#define VDAC_DATA	((cltype==PICASSO)?0x03c9+0xfff:0x3c9)
-#define VDAC_MASK       0x03c6
-#define HDR	        0x03c6	/* Hidden DAC register, 4 reads to access */
+#define VDAC_ADDRESS		0x03c8
+#define VDAC_ADDRESS_W		0x03c8
+#define VDAC_ADDRESS_R		0x03c7
+#define VDAC_STATE		0x03c7
+#define VDAC_DATA		0x03c9
+#define VDAC_MASK		0x03c6
+#define HDR			0x03c6	/* Hidden DAC register, 4 reads to access */
 
+#define VDAC_COMMAND 0x03c6
+#define VDAC_XINDEX 0x03c7
+#define VDAC_XDATA 0x03c8
+
+#define MERLIN_VDAC_INDEX 0x01
+#define MERLIN_VDAC_COLORS 0x05
+#define MERLIN_VDAC_SPRITE 0x09
+#define MERLIN_VDAC_DATA 0x19
+#define MERLIN_SWITCH_REG 0x0401
 
 #define WGfx(ba, idx, val) \
 	do { vgaw(ba, GCT_ADDRESS, idx); vgaw(ba, GCT_ADDRESS_W , val); } while (0)
@@ -280,18 +267,26 @@ struct grfcltext_mode {
 #define WCrt(ba, idx, val) \
 	do { vgaw(ba, CRT_ADDRESS, idx); vgaw(ba, CRT_ADDRESS_W , val); } while (0)
 
+#define WIma(ba, idx, val) \
+	do { vgaw(ba, IMA_ADDRESS, idx); vgaw(ba, IMA_ADDRESS_W , val); } while (0)
+
 #define WAttr(ba, idx, val) \
 	do {	\
-		vgar(ba, ACT_ADDRESS_RESET);\
+		if(vgar(ba, GREG_STATUS1_R));\
 		vgaw(ba, ACT_ADDRESS_W, idx);\
 		vgaw(ba, ACT_ADDRESS_W, val);\
 	} while (0)
 
 #define SetTextPlane(ba, m) \
 	do { \
-    	     WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 );\
-	     WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3)));\
-        } while (0)
+		WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 );\
+		WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3)));\
+	} while (0)
+
+#define setMerlinDACmode(ba, mode) \
+	do { \
+		vgaw(ba, VDAC_MASK,  mode | (vgar(ba, VDAC_MASK) & 0x0f));\
+	} while (0)
 
 /* Special wakeup/passthrough registers on graphics boards
  *
@@ -300,76 +295,69 @@ struct grfcltext_mode {
  * inline functions.
  */
 static inline void RegWakeup(volatile void *ba) {
-	extern int cltype;
-	extern int cl_sd64;
+    	extern int ettype;
 
-	switch (cltype) {
-	    case SPECTRUM:
-		vgaw(ba, PASS_ADDRESS_W, 0x1f);
-		break;
-	    case PICASSO:
-		vgaw(ba, PASS_ADDRESS_W, 0xff);
-		break;
-	    case PICCOLO:
-		if (cl_sd64 == 1)
-			vgaw(ba, PASS_ADDRESS_W, 0x1f);
-		else
-			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) | 0x10);
-		break;
-	}
-	delay(200000);
+    	switch (ettype) { 
+    	case OMNIBUS: 
+    	    	vgaw(ba, PASS_ADDRESS_W, 0x00); 
+    	    	break; 
+/*
+    	case DOMINO: 
+    	    	vgaw(ba, PASS_ADDRESS_W, 0x00); 
+    	    	break; 
+    	case MERLIN: 
+    	    	break; 
+*/
+    	} 
+    	delay(200000);
 }
+
 
 static inline void RegOnpass(volatile void *ba) {
-	extern int cltype;
-	extern int cl_sd64;
+    	extern int ettype;
 	extern unsigned char pass_toggle;
+	extern unsigned char Merlin_switch;
 
-	switch (cltype) {
-	    case SPECTRUM:
-		vgaw(ba, PASS_ADDRESS_W, 0x4f);
-		break;
-	    case PICASSO:
-		vgaw(ba, PASS_ADDRESS_WP, 0x01);
-		break;
-	    case PICCOLO:
-		if (cl_sd64 == 1)
-			vgaw(ba, PASS_ADDRESS_W, 0x4f);
-		else
-			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) & 0xdf);
-		break;
-	}
-	pass_toggle = 1;
-	delay(200000);
+    	switch (ettype) { 
+    	case OMNIBUS: 
+	  vgaw(ba, PASS_ADDRESS_W, 0x00); 
+	  break; 
+    	case DOMINO: 
+	  vgaw(ba, PASS_ADDRESS_W, 0x00); 
+	  break; 
+    	case MERLIN:
+	  Merlin_switch &= 0xfe;
+	  vgaw(ba, MERLIN_SWITCH_REG, Merlin_switch);
+    	    	break;
+    	} 
+    	pass_toggle = 1;
+    	delay(200000);
 }
 
-static inline void RegOffpass(volatile void *ba) {
-	extern int cltype;
-	extern int cl_sd64;
-	extern unsigned char pass_toggle;
 
-	switch (cltype) {
-	    case SPECTRUM:
-		vgaw(ba, PASS_ADDRESS_W, 0x6f);
-		break;
-	    case PICASSO:
-		vgaw(ba, PASS_ADDRESS_W, 0xff);
-		delay(200000);
-		vgaw(ba, PASS_ADDRESS_W, 0xff);
-		break;
-	    case PICCOLO:
-		if (cl_sd64 == 1)
-			vgaw(ba, PASS_ADDRESS_W, 0x6f);
-		else
-			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) | 0x20);
-		break;
-	}
-	pass_toggle = 0;
-	delay(200000);
+static inline void RegOffpass(volatile void *ba) {
+    	extern int ettype;
+    	extern unsigned char pass_toggle;
+	extern unsigned char Merlin_switch;
+
+    	switch (ettype) { 
+    	case OMNIBUS: 
+    	    	vgaw(ba, PASS_ADDRESS_W, 0x01); 
+    	    	break; 
+    	case DOMINO: 
+    	    	vgaw(ba, PASS_ADDRESS_W, 0x00); 
+    	    	break; 
+    	case MERLIN:
+	  Merlin_switch |= 0x01;
+	  vgaw(ba, MERLIN_SWITCH_REG, Merlin_switch);
+    	    	break;
+    	} 
+    	pass_toggle = 0;
+    	delay(200000);
 }
 
 static inline unsigned char RAttr(volatile void * ba, short idx) {
-	vgar(ba, ACT_ADDRESS_RESET);
+	if(vgar(ba, GREG_STATUS1_R));
 	vgaw(ba, ACT_ADDRESS_W, idx);
 	return vgar (ba, ACT_ADDRESS_R);
 }
@@ -389,11 +377,9 @@ static inline unsigned char RGfx(volatile void * ba, short idx) {
 	return vgar (ba, GCT_ADDRESS_R);
 }
 
-int cl_mode __P((register struct grf_softc *gp, u_long cmd, void *arg,
-			u_long a2, int a3));
-int cl_load_mon __P((struct grf_softc *gp, struct grfcltext_mode *gv)); 
-int grfcl_cnprobe __P((void));
-void grfcl_iteinit __P((struct grf_softc *gp));
+int et_mode __P((register struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3));
+int et_load_mon __P((struct grf_softc *gp, struct grfettext_mode *gv)); 
+int grfet_cnprobe __P((void));
+void grfet_iteinit __P((struct grf_softc *gp));
 
-#endif /* _GRF_RHREG_H */
-
+#endif /* _GRF_ETREG_H */

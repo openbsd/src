@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.4 1996/05/04 20:04:28 niklas Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.34 1996/04/27 20:48:47 veego Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 1996/05/29 10:14:20 niklas Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 1996/05/12 02:41:00 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -59,24 +59,46 @@ configure()
 	 * this is the real thing baby (i.e. not console init)
 	 */
 	amiga_realconfig = 1;
+#ifdef DRACO
+	if (is_draco()) {
+		*draco_intena &= ~DRIRQ_GLOBAL;
+	} else
+#endif
 	custom.intena = INTF_INTEN;
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
-	
-	custom.intena = INTF_SETCLR | INTF_INTEN;
 
-	/* also enable hardware aided software interrupts */
-	custom.intena = INTF_SETCLR | INTF_SOFTINT;
+	printf("survived autoconf, going to enable interrupts\n");
+	
+#ifdef DRACO
+	if (is_draco()) {
+		*draco_intena |= DRIRQ_GLOBAL;
+		/* softints always enabled */
+	} else
+#endif
+	{
+		custom.intena = INTF_SETCLR | INTF_INTEN;
+
+		/* also enable hardware aided software interrupts */
+		custom.intena = INTF_SETCLR | INTF_SOFTINT;
+	}
+	printf("survived interrupt enable\n");
 
 #ifdef GENERIC
-	if ((boothowto & RB_ASKNAME) == 0)
+	if ((boothowto & RB_ASKNAME) == 0) {
 		setroot();
+		printf("survived setroot()\n");
+	}
 	setconf();
+	printf("survived setconf()\n");
 #else
 	setroot();
+	printf("survived setroot()\n");
 #endif
+	printf("survived root device search\n");
 	swapconf();
+	printf("survived swap device search\n");
 	cold = 0;
 }
 
@@ -149,12 +171,16 @@ config_console()
 	 * we need mainbus' cfdata.
 	 */
 	cf = config_rootsearch(NULL, "mainbus", "mainbus");
-	if (cf == NULL)
+	if (cf == NULL) {
 		panic("no mainbus");
+	}
 	/*
 	 * internal grf.
 	 */
-	amiga_config_found(cf, NULL, "grfcc", NULL);
+#ifdef DRACO
+	if (!(is_draco()))
+#endif
+		amiga_config_found(cf, NULL, "grfcc", NULL);
 	/*
 	 * zbus knows when its not for real and will
 	 * only configure the appropriate hardware
@@ -198,13 +224,27 @@ mbattach(pdp, dp, auxp)
 {
 	printf ("\n");
 	config_found(dp, "clock", simple_devprint);
-	config_found(dp, "ser", simple_devprint);
-	config_found(dp, "par", simple_devprint);
-	config_found(dp, "kbd", simple_devprint);
-	config_found(dp, "ms", simple_devprint);
-	config_found(dp, "ms", simple_devprint);
-	config_found(dp, "grfcc", simple_devprint);
-	config_found(dp, "fdc", simple_devprint);
+#ifdef DRACO
+	if (is_draco()) {
+		config_found(dp, "kbd", simple_devprint);
+		config_found(dp, "drsc", simple_devprint);
+		/*
+		 * XXX -- missing here:
+		 * SuperIO chip serial, parallel, floppy
+		 * or maybe just make that into a pseudo
+		 * ISA bus.
+		 */
+	} else 
+#endif
+	{
+		config_found(dp, "ser", simple_devprint);
+		config_found(dp, "par", simple_devprint);
+		config_found(dp, "kbd", simple_devprint);
+		config_found(dp, "ms", simple_devprint);
+		config_found(dp, "ms", simple_devprint);
+		config_found(dp, "grfcc", simple_devprint);
+		config_found(dp, "fdc", simple_devprint);
+	}
 	if (is_a4000() || is_a1200())
 		config_found(dp, "idesc", simple_devprint);
 	if (is_a4000())			/* Try to configure A4000T SCSI */
@@ -247,10 +287,7 @@ swapconf()
 		}
 		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 	}
-	if (dumplo == 0 && bdevsw[major(dumpdev)].d_psize)
-	/*dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) - physmem;*/
-		dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) -
-			ctob(physmem)/DEV_BSIZE;
+	dumpconf();
 	if (dumplo < 0)
 		dumplo = 0;
 
@@ -383,6 +420,10 @@ is_a4000()
 		return (1);		/* It's an A4000 */
 	if ((machineid >> 16) == 1200)
 		return (0);		/* It's an A1200, so not A4000 */
+#ifdef DRACO
+	if (is_draco())
+		return (0);
+#endif
 	/* Do I need this any more? */
 	if ((custom.deniseid & 0xff) == 0xf8)
 		return (1);
@@ -402,3 +443,13 @@ is_a1200()
 		return (1);		/* It's an A1200 */
 	return (0);			/* Machine type not set */
 }
+
+#ifdef DRACO
+int
+is_draco()
+{
+	if ((machineid >> 24) == 0x7D)
+		return ((machineid >> 16) & 0xFF);
+	return (0);
+}
+#endif

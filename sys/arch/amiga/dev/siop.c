@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop.c,v 1.7 1996/05/02 06:44:34 niklas Exp $	*/
-/*	$NetBSD: siop.c,v 1.32 1996/04/28 06:28:24 mhitch Exp $	*/
+/*	$OpenBSD: siop.c,v 1.8 1996/05/29 10:15:43 niklas Exp $	*/
+/*	$NetBSD: siop.c,v 1.33 1996/05/12 02:26:26 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -376,13 +376,6 @@ siop_scsidone(acb, stat)
 	}
 	slp = xs->sc_link;
 	sc = slp->adapter_softc;
-	/*
-	 * XXX Support old-style instrumentation for now.
-	 * IS THIS REALLY THE RIGHT PLACE FOR THIS?  --thorpej
-	 */
-	if (slp->device_softc &&
-	    ((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
-		++dk_xfer[((struct device *)(slp->device_softc))->dv_unit];
 	/*
 	 * is this right?
 	 */

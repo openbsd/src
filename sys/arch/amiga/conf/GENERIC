@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.10 1996/05/15 08:56:13 mickey Exp $
-#	$NetBSD: GENERIC,v 1.56 1996/04/30 17:40:34 is Exp $
+#	$OpenBSD: GENERIC,v 1.11 1996/05/29 10:14:43 niklas Exp $
+#	$NetBSD: GENERIC,v 1.57 1996/05/19 21:04:48 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -51,7 +51,7 @@ options		NFSCLIENT	# Network File System client side code
 
 options		ADOSFS		# AmigaDOS file system
 options		CD9660		# ISO 9660 + Rock Ridge file system
-options		MSDOSFS		# MS-DOS file system [does not work]
+options		MSDOSFS		# MS-DOS file system
 options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
@@ -120,13 +120,13 @@ options		RETINACONSOLE	# enable code to allow retina to be console
 options		ULOWELLCONSOLE	# enable code to allow a2410 to be console
 options		CL5426CONSOLE	# Cirrus console
 options		CV64CONSOLE	# CyberVision console
+options		TSENGCONSOLE	# Tseng console
 
 options		GRF_ECS		# Enhanced Chip Set
 options		GRF_NTSC	# NTSC
 options		GRF_PAL		# PAL
 options		"GRF_A2024"	# Support for the A2024
 options		GRF_AGA		# AGA Chip Set
-options		GRF_CL5426	# Cirrus board support
 #options	"KFONT_8X11"	# 8x11 font
 
 # This is how you would tell the kernel the A2410 oscillator frequencies:
@@ -150,7 +150,8 @@ grfrt0		at zbus0		# retina II
 grfrh0		at zbus0		# retina III
 grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
 grful0		at zbus0		# A2410
-grfcv0		at zbus0		# CyverVision 64
+grfcv0		at zbus0		# CyberVision 64
+grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
 
 grf0		at grfcc0
 grf1		at grfrt0
@@ -158,6 +159,7 @@ grf2		at grfrh0
 grf3		at grfcl?
 grf4		at grful0
 grf5		at grfcv0
+grf6		at grfet?
 
 ite0		at grf0			# terminal emulators for grf's
 ite1		at grf1			# terminal emulators for grf's
@@ -165,6 +167,7 @@ ite2		at grf2			# terminal emulators for grf's
 ite3		at grf3			# terminal emulators for grf's
 ite4		at grf4			# terminal emulators for grf's
 ite5		at grf5			# terminal emulators for grf's
+ite6		at grf6			# terminal emulators for grf's
 
 msc0		at zbus0		# A2232 MSC multiport serial.
 mfc0		at zbus0		# MultiFaceCard I/O board

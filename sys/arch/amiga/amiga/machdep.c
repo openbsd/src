@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.12 1996/05/28 09:45:11 niklas Exp $	*/
-/*	$NetBSD: machdep.c,v 1.65 1996/05/01 09:56:22 veego Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 1996/05/29 10:14:29 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 1996/05/19 14:55:31 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,8 @@
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -91,9 +93,13 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <machine/kcore.h>
 #include <dev/cons.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/amiga/custom.h>
+#ifdef DRACO
+#include <amiga/amiga/drcustom.h>
+#endif
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
@@ -189,6 +195,9 @@ char *cpu_type = "m68k";
 char machine[] = "amiga";
  
 struct isr *isr_ports;
+#ifdef DRACO
+struct isr *isr_slot3;
+#endif
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 struct isr *isr_exter[7];
 #else
@@ -277,8 +286,12 @@ void
 consinit()
 {
 	/* initialize custom chip interface */
-	custom_chips_init();
-		
+#ifdef DRACO
+	if (is_draco()) {
+		/* XXX to be done */
+	} else
+#endif
+		custom_chips_init();
 	/*
 	 * Initialize the console before we print anything out.
 	 */
@@ -499,26 +512,39 @@ again:
 			    memlist->m_seg[i].ms_size);
 #if defined(MACHINE_NONCONTIG) && defined(DEBUG)
 	printf ("Physical memory segments:\n");
-	for (i = 0; phys_segs[i].start; ++i)
-		printf ("Physical segment %d at %08lx size %ld pages %d\n", i,
+	for (i = 0; i < memlist->m_nseg && phys_segs[i].start; ++i)
+		printf ("Physical segment %d at %08lx size %ld offset %d\n", i,
 		    phys_segs[i].start,
 		    (phys_segs[i].end - phys_segs[i].start) / NBPG,
 		    phys_segs[i].first_page);
+#endif
+
+#ifdef DEBUG
+	printf("calling initcpu...\n");
 #endif
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
 
+#ifdef DEBUG
+	printf("survived initcpu...\n");
+#endif
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
 
+#ifdef DEBUG
+	printf("survived bufinit...\n");
+#endif
 	/*
 	 * Configure the system.
 	 */
 	configure();
+#ifdef DEBUG
+	printf("survived configure...\n");
+#endif
 }
 
 /*
@@ -569,6 +595,19 @@ identifycpu()
         /* there's alot of XXX in here... */
 	char *mach, *mmu, *fpu;
 
+#ifdef M68060
+	char cpubuf[16];
+	u_int32_t pcr;
+#endif
+
+#ifdef DRACO
+	char machbuf[16];
+
+	if (is_draco()) {
+		sprintf(machbuf, "DraCo rev.%d", is_draco());
+		mach = machbuf;
+	} else 
+#endif
 	if (is_a4000())
 		mach = "Amiga 4000";
 	else if (is_a3000())
@@ -579,6 +618,17 @@ identifycpu()
 		mach = "Amiga 500/2000";
 
 	fpu = NULL;
+#ifdef M68060
+	if (machineid & AMIGA_68060) {
+		asm(".word 0x4e7a,0x0808; movl d0,%0" : "=d"(pcr) : : "d0");
+		sprintf(cpubuf, "68%s060 rev.%d",
+		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
+		cpu_type = cpubuf;
+		mmu = "/MMU";
+		fpu = "/FPU";
+		fputype = FPU_68040; /* XXX */
+	} else 
+#endif
 	if (machineid & AMIGA_68040) {
 		cpu_type = "m68040";
 		mmu = "/MMU";
@@ -1005,20 +1055,38 @@ boot(howto)
 unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
+cpu_kcore_hdr_t cpu_kcore_hdr;
 
 void
 dumpconf()
 {
 	int nblks;
+	int i;
+	extern u_int Sysseg_pa;
 
+	/* XXX new corefile format, single segment + chipmem */
 	dumpsize = physmem;
+	cpu_kcore_hdr.ram_segs[0].start = lowram;
+	cpu_kcore_hdr.ram_segs[0].size = ctob(physmem);
+	for (i = 0; i < memlist->m_nseg; i++) {
+		if ((memlist->m_seg[i].ms_attrib & MEMF_CHIP) == 0)
+			continue;
+		dumpsize += btoc(memlist->m_seg[i].ms_size);
+		cpu_kcore_hdr.ram_segs[1].start = 0;
+		cpu_kcore_hdr.ram_segs[1].size = memlist->m_seg[i].ms_size;
+		break;
+	}
+	cpu_kcore_hdr.mmutype = mmutype;
+	cpu_kcore_hdr.kernel_pa = lowram;
+	cpu_kcore_hdr.sysseg_pa = (st_entry_t *)Sysseg_pa;
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
+			dumplo = nblks - btodb(ctob(dumpsize));
 	}
+	--dumplo;	/* XXX assume header fits in one block */
 	/*
 	 * Don't dump on the first CLBYTES (why CLBYTES?)
 	 * in case the dump device includes a disk label.
@@ -1046,11 +1114,14 @@ reserve_dumppages(p)
 void
 dumpsys()
 {
-	unsigned bytes, i, n;
+	unsigned bytes, i, n, seg;
 	int     maddr, psize;
 	daddr_t blkno;
 	int     (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int     error = 0;
+	kcore_seg_t *kseg_p;
+	cpu_kcore_hdr_t *chdr_p;
+	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -1071,11 +1142,29 @@ dumpsys()
 		printf("area unavailable.\n");
 		return;
 	}
+	kseg_p = (kcore_seg_t *)dump_hdr;
+	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
+	bzero(dump_hdr, sizeof(dump_hdr));
+
+	/*
+	 * Generate a segment header
+	 */
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+
+	/*
+	 * Add the md header
+	 */
+
+	*chdr_p = cpu_kcore_hdr;
+
 	bytes = ctob(dumpsize);
-	maddr = lowram;
+	maddr = cpu_kcore_hdr.ram_segs[0].start;
+	seg = 0;
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
-	for (i = 0; i < bytes; i += n) {
+	error = (*dump) (dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
+	for (i = 0; i < bytes && error == 0; i += n) {
 		/* Print out how many MBs we have to go. */
 		n = bytes - i;
 		if (n && (n % (1024 * 1024)) == 0)
@@ -1085,12 +1174,25 @@ dumpsys()
 		if (n > BYTES_PER_DUMP)
 			n = BYTES_PER_DUMP;
 
+		if (maddr == 0) {	/* XXX kvtop chokes on this */
+			maddr += NBPG;
+			n -= NBPG;
+			i += NBPG;
+			++blkno;	/* XXX skip physical page 0 */
+		}
 		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
 		error = (*dump) (dumpdev, blkno, (caddr_t) dumpspace, n);
 		if (error)
 			break;
 		maddr += n;
 		blkno += btodb(n);	/* XXX? */
+		if (maddr >= (cpu_kcore_hdr.ram_segs[seg].start +
+		    cpu_kcore_hdr.ram_segs[seg].size)) {
+			++seg;
+			maddr = cpu_kcore_hdr.ram_segs[seg].start;
+			if (cpu_kcore_hdr.ram_segs[seg].size == 0)
+				break;
+		}
 	}
 
 	switch (error) {
@@ -1152,9 +1254,67 @@ microtime(tvp)
 	splx(s);
 }
 
+#if defined(M68060)
+int m68060_pcr_init = 0x21;	/* make this patchable */
+#endif
+
 void
 initcpu()
 {
+	/* XXX should init '40 vecs here, too */
+#if defined(M68060) || defined(DRACO)
+	extern caddr_t vectab[256];
+#endif
+
+#ifdef M68060
+#if defined(M060SP)
+	extern u_int8_t I_CALL_TOP[];
+	extern u_int8_t FP_CALL_TOP[];
+#else
+	extern u_int8_t illinst;
+#endif
+#endif
+
+#ifdef DRACO
+	extern u_int8_t DraCoLev2intr, lev2intr;
+#endif
+
+#ifdef M68060
+	if (machineid & AMIGA_68060) {
+		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
+			"d"(m68060_pcr_init):"d0" );
+#if defined(M060SP)
+
+		/* integer support */
+		vectab[61] = &I_CALL_TOP[128 + 0x00];
+
+		/* floating point support */
+		vectab[11] = &FP_CALL_TOP[128 + 0x30];
+		vectab[55] = &FP_CALL_TOP[128 + 0x38];
+		vectab[60] = &FP_CALL_TOP[128 + 0x40];
+
+		vectab[54] = &FP_CALL_TOP[128 + 0x00];
+		vectab[52] = &FP_CALL_TOP[128 + 0x08];
+		vectab[53] = &FP_CALL_TOP[128 + 0x10];
+		vectab[51] = &FP_CALL_TOP[128 + 0x18];
+		vectab[50] = &FP_CALL_TOP[128 + 0x20];
+		vectab[49] = &FP_CALL_TOP[128 + 0x28];
+
+#else
+		vectab[61] = &illinst;
+#endif
+	}
+#endif
+
+#ifdef DRACO
+	if (is_draco()) {
+		vectab[24+2] = &DraCoLev2intr;
+		vectab[24+4] = &lev2intr;
+		vectab[24+5] = &lev2intr;
+		vectab[24+6] = &lev2intr;
+	}
+#endif
+	DCIS();
 }
 
 void
@@ -1162,8 +1322,8 @@ straytrap(pc, evec)
 	int pc;
 	u_short evec;
 {
-	printf("unexpected trap (vector offset %x) from %x\n",
-	       evec & 0xFFF, pc);
+	printf("unexpected trap format %x (vector offset %x) from %x\n",
+	       evec>>12, evec & 0xFFF, pc);
 /*XXX*/	panic("straytrap");
 }
 
@@ -1415,15 +1575,35 @@ add_isr(isr)
 			isr_exter_lowipl = isr->isr_mapped_ipl;
 	}
 #else
+#ifdef DRACO
+	switch (isr->isr_ipl) {
+	case 2:
+		p = &isr_ports;
+		break;
+	case 3:
+		p = &isr_slot3;
+		break;
+	default:	/* was case 6:; make gcc -Wall quiet */
+		p = &isr_exter;
+		break;
+	}
+#else
   	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter;
+#endif
 #endif
 	while ((q = *p) != NULL)
 		p = &q->isr_forw;
 	isr->isr_forw = NULL;
 	*p = isr;
 	/* enable interrupt */
-	custom.intena = INTF_SETCLR |
-	    (isr->isr_ipl == 2 ? INTF_PORTS : INTF_EXTER);
+#ifdef DRACO
+	if (is_draco())
+		*draco_intena |= isr->isr_ipl == 6 ?
+			DRIRQ_INT6 : DRIRQ_INT2;
+	else 
+#endif
+		custom.intena = INTF_SETCLR |
+		    (isr->isr_ipl == 2 ? INTF_PORTS : INTF_EXTER);
 }
 
 void
@@ -1435,7 +1615,21 @@ remove_isr(isr)
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 	p = isr->isr_ipl == 6 ? &isr_exter[isr->isr_mapped_ipl] : &isr_ports;
 #else
+#ifdef DRACO
+	switch (isr->isr_ipl) {
+	case 2:
+		p = &isr_ports;
+		break;
+	case 3:
+		p = &isr_slot3;
+		break;
+	default:	/* XXX to make gcc -Wall quiet, was 6: */
+		p = &isr_exter;
+		break;
+	}
+#else
 	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+#endif
 #endif
 	while ((q = *p) != NULL && q != isr)
 		p = &q->isr_forw;
@@ -1462,9 +1656,30 @@ remove_isr(isr)
 			custom.intena = INTF_PORTS;
 	}
 #else
+#ifdef DRACO
+	switch (isr->isr_ipl) {
+	case 2:
+		p = &isr_ports;
+		break;
+	case 3:
+		p = &isr_slot3;
+		break;
+	case 6:
+		p = &isr_exter;
+		break;
+	}
+#else
 	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+#endif
 	if (*p == NULL)
-		custom.intena = isr->isr_ipl == 6 ? INTF_EXTER : INTF_PORTS;
+#ifdef DRACO
+		if (is_draco())
+			*draco_intena &= isr->isr_ipl == 6 ? 
+			    ~DRIRQ_INT6 : ~DRIRQ_INT2;
+		else
+#endif
+			custom.intena = isr->isr_ipl == 6 ? 
+			    INTF_EXTER : INTF_PORTS;
 #endif
 }
 
@@ -1477,10 +1692,23 @@ intrhand(sr)
 	register struct isr **p, *q;
 
 	ipl = (sr >> 8) & 7;
-	ireq = custom.intreqr;
+#ifdef REALLYDEBUG
+	printf("intrhand: got int. %d\n", ipl);
+#endif
+#ifdef DRACO
+	if (is_draco())
+		ireq = ((ipl == 1)  && (*draco_intfrc & DRIRQ_SOFT) ?
+		    INTF_SOFTINT : 0);
+	else
+#endif
+		ireq = custom.intreqr;
 
 	switch (ipl) {
 	case 1:
+#ifdef DRACO
+		if (is_draco() && (draco_ioct->io_status & DRSTAT_KBDRECV))
+			drkbdintr();
+#endif
 		if (ireq & INTF_TBE) {
 #if NSER > 0
 			ser_outintr();
@@ -1514,15 +1742,24 @@ intrhand(sr)
 			siroff(SIR_NET | SIR_CLOCK | SIR_CBACK);
 			splx(s);
 			if (ssir_active & SIR_NET) {
+#ifdef REALLYDEBUG
+				printf("calling netintr\n");
+#endif
 				cnt.v_soft++;
 				netintr();
 			}
 			if (ssir_active & SIR_CLOCK) {
+#ifdef REALLYDEBUG
+				printf("calling softclock\n");
+#endif
 				cnt.v_soft++;
 				/* XXXX softclock(&frame.f_stackadj); */
 				softclock();
 			}
 			if (ssir_active & SIR_CBACK) {
+#ifdef REALLYDEBUG
+				printf("calling softcallbacks\n");
+#endif
 				cnt.v_soft++;
 				call_sicallbacks();
 			}
@@ -1538,7 +1775,12 @@ intrhand(sr)
 		}
 		if (q == NULL)
 			ciaa_intr ();
-		custom.intreq = INTF_PORTS;
+#ifdef DRACO
+		if (is_draco())
+			*draco_intpen &= ~DRIRQ_INT2;
+		else
+#endif
+			custom.intreq = INTF_PORTS;
 		break;
     case 3: 
       /* VBL */
@@ -1560,6 +1802,16 @@ intrhand(sr)
 #endif
 
 	case 4:
+#ifdef DRACO
+#include "drsc.h"
+		if (is_draco())
+#if NDRSC > 0
+			drsc_handler();
+#else
+			*draco_intpen &= ~DRIRQ_SCSI;
+#endif
+		else
+#endif
 		audio_handler();
 		break;
 	default:
@@ -1567,6 +1819,9 @@ intrhand(sr)
 		    sr, ireq);
 		break;
 	}
+#ifdef REALLYDEBUG
+	printf("intrhand: leaving.\n");
+#endif
 }
 
 #if defined(DEBUG) && !defined(PANICBUTTON)
@@ -1729,7 +1984,9 @@ cpu_exec_aout_makecmds(p, epp)
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
+#ifdef COMPAT_NOMID
 	struct exec *execp = epp->ep_hdr;
+#endif
 
 #ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.9 1996/05/07 09:58:36 niklas Exp $	*/
-/*	$NetBSD: locore.s,v 1.52 1996/05/04 04:43:23 mhitch Exp $	*/
+/*	$OpenBSD: locore.s,v 1.10 1996/05/29 10:14:27 niklas Exp $	*/
+/*	$NetBSD: locore.s,v 1.56 1996/05/21 18:22:13 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,8 @@
 
 #include "assym.h"
 
+	.globl	_kernel_text
+_kernel_text:
 L_base:
 	.long	0x4ef80400+NBPG	/* jmp jmp0.w */
 	.fill	NBPG/4-1,4,0/*xdeadbeef*/
@@ -59,6 +61,10 @@ L_base:
 #include "ser.h"
 #include "fd.h"
 	
+#ifdef DRACO
+#include <amiga/amiga/drcustom.h>
+#endif
+
 #define CIAAADDR(ar)	movl	_CIAAbase,ar
 #define CIABADDR(ar)	movl	_CIABbase,ar
 #define CUSTOMADDR(ar)	movl	_CUSTOMbase,ar
@@ -117,6 +123,36 @@ _addrerr:
 	andw	#0x0fff,d0
 	cmpw	#12,d0			| is it address error
 	jeq	Lisaerr
+#ifdef M68060
+	btst	#7,_machineid+3		| is it 68060?
+	jeq	Lbe040
+	movel	a1@(12),d0		| FSLW
+	btst	#2,d0			| branch prediction error?
+	jeq	Lnobpe			
+	movc	cacr,d2
+	orl	#0x00400000,d2		| clear all branch cache entries
+	movc	d2,cacr
+	movl	d0,d1
+	andl	#0x7ffd,d1
+	jeq	Lbpedone
+Lnobpe:
+	movl	d0,sp@			| code is FSLW now.
+| we need to adjust for misaligned addresses
+	movl	a1@(8),d1		| grab VA
+	btst	#27,d0			| check for mis-aligned access
+	jeq	Lberr3			| no, skip
+	addl	#28,d1			| yes, get into next page
+					| operand case: 3,
+					| instruction case: 4+12+12
+					| XXX instr. case not done yet
+	andl	#PG_FRAME,d1            | and truncate
+Lberr3:
+	movl	d1,sp@(4)
+	andw	#0x1f80,d0 
+	jeq	Lisberr
+	jra	Lismerr
+Lbe040:
+#endif
 	movl	a1@(20),d1		| get fault address
 	moveq	#0,d0
 	movw	a1@(12),d0		| get SSW
@@ -128,7 +164,7 @@ Lbe1stpg:
 	movl	d1,sp@(4)		| pass fault address.
 	movl	d0,sp@			| pass SSW as code
 	btst	#10,d0			| test ATC
-	jeq	Lisberr			| it's a bus error
+	jeq	Lisberr			| it is a bus error
 	jra	Lismerr
 Lbe030:
 	moveq	#0,d0
@@ -189,6 +225,7 @@ Lisberr:
 	movl	#T_BUSERR,sp@-		| mark bus error
 Ltrapnstkadj:
 	jbsr	_trap			| handle the error
+Lbpedone:
 	lea	sp@(12),sp		| pop value args
 	movl	sp@(FR_SP),a0		| restore user SP
 	movl	a0,usp			|   from save area
@@ -250,6 +287,11 @@ _fpunsupp:
  * Note that since some FP exceptions generate mid-instruction frames
  * and may cause signal delivery, we need to test for stack adjustment
  * after the trap call.
+ *
+ * XXX I don't really understand what they do for the 68881/82, for which
+ * I dont have docs at the moment. I don't find anything which looks like
+ * it is intended in the 68040 FP docs. I pretend for the moment I don't
+ * need to do anything for the 68060. -is
  */
 	.globl	_fpfault
 _fpfault:
@@ -262,7 +304,12 @@ _fpfault:
 	movl	_curpcb,a0	| current pcb
 	lea	a0@(PCB_FPCTX),a0 | address of FP savearea
 	fsave	a0@		| save state
-	tstb	a0@		| null state frame?
+#if defined(M68060) || defined(M68040)
+	movb	_machineid+3,d0
+	andb	#0x90,d0	| AMIGA_68060 | AMIGA_68040
+	jne	Lfptnull	| XXX
+#endif
+	tstb	a0@		| null state frame? 
 	jeq	Lfptnull	| yes, safe
 	clrw	d0		| no, need to tweak BIU
 	movb	a0@(1),d0	| get frame size
@@ -469,6 +516,36 @@ _spurintr:
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
+#ifdef DRACO
+	.globl _DraCoLev2intr
+_DraCoLev2intr:
+	moveml	#0xC0C0,sp@-
+
+	CIAAADDR(a0)
+	movb	a0@(CIAICR),d0		| read irc register (clears ints!)
+	tstb	d0			| check if CIAB was source
+	jeq	Lintrcommon
+	movel	_draco_intpen,a0
+|	andib	#4,a0@
+|XXX this would better be 
+	bclr	#2,a0@
+	btst	#0,d0			| timerA interrupt?
+	jeq	Ldraciaend
+
+	lea	sp@(16),a1		| get pointer to PS
+	movl	a1,sp@-			| push pointer to PS, PC
+	
+	movw	#PSL_HIGHIPL,sr		| hardclock at high IPL
+	jbsr	_hardclock		| call generic clock int routine
+	addql	#4,sp			| pop params
+	addql	#1,_intrcnt+32		| add another system clock interrupt
+
+Ldraciaend:
+	moveml	sp@+,#0x0303
+	addql	#1,_cnt+V_INTR
+	jra	rei
+#endif
+
 _lev5intr:
 	moveml	d0/d1/a0/a1,sp@-
 #if NSER > 0
@@ -489,6 +566,7 @@ _lev3intr:
 _lev4intr:
 #endif
 	moveml	d0-d1/a0-a1,sp@-
+/* XXX on the DraCo, lev 4, 5 and 6 are vectored here by initcpu() */
 Lintrcommon:
 	lea	_intrcnt,a0
 	movw	sp@(22),d0		| use vector offset
@@ -514,6 +592,8 @@ Lintrcommon:
 	.globl	_hardclock_frame
 #endif
 	
+/* XXX used to be ifndef DRACO; vector will be overwritten by initcpu() */
+
 _lev6intr:
 #ifndef IPL_REMAP_1
 #ifdef LEV6_DEFER
@@ -612,6 +692,7 @@ Lexterdone:
 #endif
 	addql	#1,_intrcnt+24		| count EXTER interrupts
 	jra	Llev6done
+/* XXX endifndef DRACO used to be here */
 
 #else /* IPL_REMAP_1 */
 
@@ -723,7 +804,15 @@ Laststkadj:
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
 Ldorte:
+|	moveml	a0/a1/d0/d1,sp@-
+|	pea	pc@(Ldoinrte)
+|	jsr	_printf
+|	addql	#4,sp
+|	moveml	sp@+,a0/a1/d0/d1
 	rte				| real return
+|Ldoinrte:
+|	.asciz	"Doing RTE.\n"
+|	.even
 
 /*
  * Kernel access to the current processes kernel stack is via a fixed
@@ -767,7 +856,7 @@ start:
 	RELOC(tmpstk,a6)
 	movl	a6,sp			| give ourselves a temporary stack
 
-	| save the passed parameters. `prepass' them on the stack for
+	| save the passed parameters. "prepass" them on the stack for
 	| later catch by _start_c
 	movl	a2,sp@-			| pass sync inhibit flags
 	movl	d3,sp@-			| pass AGA mode
@@ -781,6 +870,42 @@ start:
 	 * initialize some hw addresses to their physical address 
 	 * for early running
 	 */
+#ifdef DRACO
+	/*
+	 * this is already dynamically done on DraCo
+	 */
+	cmpb	#0x7D,sp@
+	jne	LisAmiga1
+| debug code:
+| we should need about 1 uSec for the loop.
+| we dont need the AGA mode register.
+	movel	#100000,d3
+LisDraco0:
+	movb	#0,0x200003c8
+	movb	#00,0x200003c9
+	movb	#40,0x200003c9
+	movb	#00,0x200003c9
+|XXX:
+	movb	#0,0x200003c8
+	movb	#40,0x200003c9
+	movb	#00,0x200003c9
+	movb	#00,0x200003c9
+	subql	#1,d3
+	jcc	LisDraco0
+
+	RELOC(_chipmem_start, a0)
+	movl	#0,a0@
+
+	RELOC(_CIAAbase, a0)
+	movl	#0x2801001, a0@
+	RELOC(_CIABbase, a0)
+	movl	#0x2800000, a0@
+
+	/* XXXX more to come here; as we need it */
+
+	jra	LisDraco1
+LisAmiga1:
+#endif
 	RELOC(_chipmem_start, a0)
 	movl	#0x400,a0@
 	RELOC(_CIAAbase, a0)
@@ -790,6 +915,9 @@ start:
 	RELOC(_CUSTOMbase, a0)
 	movl	#0xdff000,a0@
 
+#ifdef DRACO
+LisDraco1:
+#endif
 	/*
 	 * initialize the timer frequency
 	 */
@@ -811,10 +939,13 @@ Lsetcpu040:
 	movl	#CACHE_OFF,d0		| 68020/030 cache
 	movl	#AMIGA_68040,d1
 	andl	d1,d5
-	jeq	Lstartnot040		| it's not 68040
+	jeq	Lstartnot040		| it is not 68040
 	movl	#MMU_68040,a0@		| same as hp300 for compat
-	.word	0xf4f8		| cpusha bc - push and invalidate caches
+	.word	0xf4f8			| cpusha bc - push and invalidate caches
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
+	btst	#7,sp@(3)		| XXX
+	jeq	Lstartnot040
+	orl	#0x400000,d0		| XXX and clear all 060 branch cache 
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 	movl	#_vectab,a0
@@ -832,8 +963,10 @@ Lstartnot040:
 	jmp	Lunshadow
 
 Lunshadow:
-|	lea	tmpstk,sp		| give ourselves a temporary stack
+
+	lea	tmpstk,sp		| give ourselves a temporary stack
 	jbsr	_start_c_cleanup
+
 /* set kernel stack, user SP, and initial pcb */
 	movl	_proc0paddr,a1		| proc0 kernel stack
 	lea	a1@(USPACE),sp	| set kernel stack to end of area
@@ -850,6 +983,8 @@ Lunshadow:
 	addql	#4,sp
 #endif
 /* flush TLB and turn on caches */
+
+	
 	jbsr	_TBIA			| invalidate TLB
 	movl	#CACHE_ON,d0
 	tstl	d5
@@ -860,7 +995,6 @@ Lunshadow:
 Lcacheon:
 	movc	d0,cacr			| clear cache(s)
 /* final setup for C code */
-
 
 	movw	#PSL_LOWIPL,sr		| lower SPL
 
@@ -889,12 +1023,19 @@ Lcacheon:
 	movl	usp,a1
 	movl	a1,sp@(FR_SP)		| save user stack pointer in frame
 	pea	sp@			| addr of space for D0 
+
 	jbsr	_main			| main(firstaddr, r0)
 	addql	#4,sp			| pop args
+
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lnoflush		| no, skip
 	.word	0xf478			| cpusha dc
 	.word	0xf498			| cinva ic
+	btst	#7,_machineid+3
+	jeq	Lnoflush
+	movc	cacr,d0
+	orl	#200000,d0
+	movc	d0,cacr
 Lnoflush:
 	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
@@ -911,7 +1052,7 @@ Lnoflush:
  */
 	.globl	_proc_trampoline
 _proc_trampoline:
-	movl	a3@(P_MD + MD_REGS),sp	| process' frame pointer in sp
+	movl	a3@(P_MD + MD_REGS),sp	| frame pointer of process in sp
 	movl	a3,sp@-			| push function arg (curproc)
 	jbsr	a2@			| call function
 	addql	#4,sp			| pop arg
@@ -1157,7 +1298,7 @@ ENTRY(switch_exit)
 
 	/* Free old process's user area. */
 	movl	#USPACE,sp@-		| size of u-area
-	movl	a0@(P_ADDR),sp@-	| address of process's u-area
+	movl	a0@(P_ADDR),sp@-	| address u-area of process
 	movl	_kernel_map,sp@-	| map it was allocated in
 	jbsr	_kmem_free		| deallocate it
 	lea	sp@(12),sp		| pop args
@@ -1268,10 +1409,28 @@ Lsw2:
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#ifdef M68060
+	btst	#7,_machineid+3
+	jne	Lsavfp60
+#endif
 	tstb	a2@			| null state frame?
 	jeq	Lswnofpsave		| yes, all done
 	fmovem	fp0-fp7,a2@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a2@(312)	| save FP control registers
+#ifdef M68060
+	jra	Lswnofpsave
+#endif
+#endif
+#ifdef M68060
+Lsavfp60:
+	tstb	a2@(2)			| null state frame?
+	jeq	Lswnofpsave		| yes, all done
+	fmovem	fp0-fp7,a2@(216)	| save FP general registers
+	fmovem	fpcr,a2@(312)		| save FP control registers
+	fmovem	fpsr,a2@(316)
+	fmovem	fpi,a2@(320)
+#endif
 Lswnofpsave:
 #endif
 
@@ -1310,8 +1469,8 @@ Lswnochg:
 	jra	Lres3
 Lres2:
 	.word	0xf518			| pflusha (68040)
-	movl	#CACHE40_ON,d0
-	movc	d0,cacr			| invalidate cache(s)
+|	movl	#CACHE40_ON,d0
+|	movc	d0,cacr			| invalidate cache(s)
 Lres3:
 	movl	a1@(PCB_USTP),d0	| get USTP
 	moveq	#PGSHIFT,d1
@@ -1331,16 +1490,37 @@ Lres5:
 	movl	a0,usp			| and USP
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#ifdef M68060
+	btst	#7,_machineid+3
+	jne	Lresfp60rest1
+#endif
 	tstb	a0@			| null state frame?
 	jeq	Lresfprest2		| yes, easy
 	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
 	fmovem	a0@(216),fp0-fp7	| restore FP general registers
 Lresfprest2:
 	frestore a0@			| restore state
-#endif
 	movw	a1@(PCB_PS),sr		| no, restore PS
 	moveq	#1,d0			| return 1 (for alternate returns)
 	rts
+#endif
+
+#ifdef M68060
+Lresfp60rest1:
+	tstb	a0@(2)			| null state frame?
+	jeq	Lresfp60rest2		| yes, easy
+	fmovem	a0@(312),fpcr		| restore FP control registers
+	fmovem	a0@(316),fpsr
+	fmovem	a0@(320),fpi
+	fmovem	a0@(216),fp0-fp7	| restore FP general registers
+Lresfp60rest2:
+	frestore a0@			| restore state
+	movw	a1@(PCB_PS),sr		| no, restore PS
+	moveq	#1,d0			| return 1 (for alternate returns)
+	rts
+#endif
+#endif
 
 /*
  * savectx(pcb)
@@ -1356,10 +1536,29 @@ ENTRY(savectx)
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#ifdef M68060
+	btst	#7,_machineid+3
+	jne	Lsavctx60
+#endif
 	tstb	a0@			| null state frame?
 	jeq	Lsavedone		| yes, all done
 	fmovem	fp0-fp7,a0@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
+#ifdef	M68060
+	moveq	#0,d0
+	rts
+#endif
+#endif
+#ifdef	M68060
+Lsavctx60:
+	tstb	a0@(2)
+	jeq	Lsavedone
+	fmovem	fp0-fp7,a0@(216)	| save FP general registers
+	fmovem	fpcr,a0@(312)		| save FP control registers
+	fmovem	fpsr,a0@(316)
+	fmovem	fpi,a0@(320)
+#endif
 #endif
 Lsavedone:
 	moveq	#0,d0			| return 0
@@ -1464,6 +1663,14 @@ Lmc68851a:
 	rts
 Ltbia040:
 	.word	0xf518			| pflusha
+#ifdef M68060
+	btst	#7,_machineid+3
+	jeq	Ltbiano60
+	movc	cacr,d0
+	orl	#0x400000,d0	| and clear all branch cache entries
+	movc	d0,cacr
+#endif
+Ltbiano60:
 	rts
 
 /*
@@ -1493,6 +1700,14 @@ Ltbis040:
 	moveq	#FC_USERD,d0		| select user
 	movc	d0,dfc
 	.word	0xf508			| pflush a0@
+#ifdef M68060
+	btst	#7,_machineid+3
+	jeq	Ltbisno60
+	movc	cacr,d0
+	orl	#0x400000,d0	| and clear all branch cache entries
+	movc	d0,cacr
+Ltbisno60:
+#endif
 	rts
 
 /*
@@ -1515,8 +1730,16 @@ Lmc68851c:
 	pflushs #4,#4			| flush supervisor TLB entries
 	rts
 Ltbias040:
-| 68040 can't specify supervisor/user on pflusha, so we flush all
+| 68040 cannot specify supervisor/user on pflusha, so we flush all
 	.word	0xf518			| pflusha
+#ifdef M68060
+	btst	#7,_machineid+3
+	jeq	Ltbiasno60
+	movc	cacr,d0
+	orl	#0x400000,d0	| and clear all branch cache entries
+	movc	d0,cacr
+Ltbiasno60:
+#endif
 	rts
 
 /*
@@ -1541,6 +1764,14 @@ Lmc68851d:
 Ltbiau040:
 | 68040 can't specify supervisor/user on pflusha, so we flush all
 	.word	0xf518			| pflusha
+#ifdef M68060
+	btst	#7,_machineid+3
+	jeq	Ltbiauno60
+	movc	cacr,d0
+	orl	#0x200000,d0	| but only user branch cache entries
+	movc	d0,cacr
+Ltbiauno60:
+#endif
 	rts
 
 /*
@@ -1549,7 +1780,7 @@ Ltbiau040:
 ENTRY(ICIA)
 ENTRY(ICPA)
 #if defined(M68030) || defined(M68020)
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_mmutype
 	jeq	Licia040
 #endif
@@ -1558,8 +1789,8 @@ ENTRY(ICPA)
 	rts
 Licia040:
 #endif
-#if defined(M68040)
-	.word	0xf498		| cinva ic
+#if defined(M68040) || defined(M68060) 
+	.word	0xf498		| cinva ic, clears also branch cache on 060
 	rts
 #endif
 
@@ -1604,7 +1835,7 @@ __DCIAS:
 	.word	0xf468		| cpushl dc,a0@
 Ldciasx:
 	rts
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 ENTRY(ICPL)	/* invalidate instruction physical cache line */
 	movl    sp@(4),a0		| address
 	.word   0xf488			| cinvl ic,a0@
@@ -1636,7 +1867,7 @@ ENTRY(DCFP)	/* data cache flush page */
 
 ENTRY(PCIA)
 #if defined(M68030) || defined(M68030)
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lpcia040
 #endif
@@ -1644,7 +1875,7 @@ ENTRY(PCIA)
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
 #endif
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 ENTRY(DCFA)
 Lpcia040:
 	.word	0xf478		| cpusha dc
@@ -1700,6 +1931,10 @@ ENTRY(loadustp)
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
+#ifdef M68060
+	btst	#7,_machineid+3
+	jne	Lldustp060
+#endif
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lldustp040
 	lea	_protorp,a0		| CRP prototype
@@ -1708,6 +1943,12 @@ ENTRY(loadustp)
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts				|   since pmove flushes TLB
+#ifdef M68060
+Lldustp060:
+	movc	cacr,d1
+	orl	#0x200000,d1	| clear user branch cache entries
+	movc	d1,cacr
+#endif
 Lldustp040:
 	.word	0x4e7b,0x0806	| movec d0,URP
 	rts
@@ -1718,6 +1959,10 @@ Lldustp040:
  * and ATC entries in PMMU.
  */
 ENTRY(flushustp)
+#ifdef M68060
+	btst	#7,_machineid+3
+	jne	Lflustp060
+#endif
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lnot68851
 	tstl	_mmutype		| 68851 PMMU?
@@ -1729,6 +1974,14 @@ ENTRY(flushustp)
 	pflushr	_protorp		| flush RPT/TLB entries
 Lnot68851:
 	rts
+#ifdef M68060
+Lflustp060:
+	movc	cacr,d1
+	orl	#0x200000,d1	| clear user branch cache entries
+	movc	d1,cacr
+	rts
+#endif
+	
 
 ENTRY(ploadw)
 	movl	sp@(4),a0		| address to load
@@ -1771,15 +2024,38 @@ ENTRY(_remque)
 ENTRY(m68881_save)
 	movl	sp@(4),a0		| save area pointer
 	fsave	a0@			| save state
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#ifdef M68060
+	btst	#7,_machineid
+	jne	Lm68060fpsave
+#endif
 	tstb	a0@			| null state frame?
 	jeq	Lm68881sdone		| yes, all done
 	fmovem fp0-fp7,a0@(216)		| save FP general registers
 	fmovem fpcr/fpsr/fpi,a0@(312)	| save FP control registers
 Lm68881sdone:
 	rts
+#endif
+
+#ifdef M68060
+Lm68060fpsave:
+	tstb	a0@(2)			| null state frame?
+	jeq	Lm68060sdone		| yes, all done
+	fmovem fp0-fp7,a0@(216)		| save FP general registers
+	fmovem	fpcr,a0@(312)		| save FP control registers
+	fmovem	fpsr,a0@(316)
+	fmovem	fpi,a0@(320)
+Lm68060sdone:
+	rts
+#endif
 
 ENTRY(m68881_restore)
 	movl	sp@(4),a0		| save area pointer
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+	btst	#7,_machineid
+	jne	Lm68060fprestore
+#endif
 	tstb	a0@			| null state frame?
 	jeq	Lm68881rdone		| yes, easy
 	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
@@ -1787,6 +2063,20 @@ ENTRY(m68881_restore)
 Lm68881rdone:
 	frestore a0@			| restore state
 	rts
+#endif
+
+#ifdef M68060
+Lm68060fprestore:
+	tstb	a0@(2)			| null state frame?
+	jeq	Lm68060fprdone		| yes, easy
+	fmovem	a0@(312),fpcr		| restore FP control registers
+	fmovem	a0@(316),fpsr
+	fmovem	a0@(320),fpi
+	fmovem	a0@(216),fp0-fp7	| restore FP general registers
+Lm68060fprdone:
+	frestore a0@			| restore state
+	rts
+#endif
 #endif
 
 /*
@@ -1805,6 +2095,11 @@ Ldoboot0:
 	movc	d0,cacr			| disable on-chip cache(s)
 
 	movw	#0x2700,sr		| cut off any interrupts
+
+#if defined(DRACO)
+	cmpb	#0x7d,_machineid
+	jeq	LdbOnDraCo
+#endif
 
 	| clear first 4k of CHIPMEM
 	movl	_CHIPMEMADDR,a0
@@ -1865,7 +2160,52 @@ Ldoreset:
 	| now rely on prefetch for next jmp
 	jmp	a0@
 	| NOT REACHED
+#ifdef DRACO
+LdbOnDraCo:
+| we should better use TTR instead of this... we want to boot even if
+| half of us is already dead.
 
+|	pea	LdoDraCoBoot
+|	pea	_kernel_pmap_store
+|	jsr	_pmap_extract
+|	movl	d0,sp@(4)
+|	andl	#0xFFFFE000,d0
+|	movl	#1,sp@		| wired = TRUE
+|	movl	#0x4,sp@-	| prot = VM_PROT_EXECUTE
+|	movl	d0,sp@-		| map va == pa
+|	movl	d0,sp@-		| to pa
+|	pea	_kernel_pmap_store
+|	jsr	_pmap_enter	
+|	addl	#NBPG,sp@(4)
+|	addl	#NBPG,sp@(8)
+|	jsr	_pmap_enter	
+|	addl	#20,sp
+
+	movl	_boot_fphystart, d0
+	lea	LdoDraCoBoot, a0
+	lea	a0@(d0),a0
+	andl	#0xFF000000,d0
+	orl	#0x0000C044,d0	| enable, supervisor, CI, RO
+	.word	0x4e7b,0x0004	| movc d0,ITT0
+	jmp	a0@
+
+	.align	2
+LdoDraCoBoot:
+| turn off MMU now ... were more ore less guaranteed to run on 040/060:
+	movl	#0,d0
+	.word	0x4e7b,0x0003	| movc d0,TC
+	.word	0x4e7b,0x0806	| movc d0,URP
+	.word	0x4e7b,0x0807	| movc d0,SRP
+	.word	0x4e7b,0x0004	| movc d0,ITT0
+	nop
+| map in boot ROM @0:
+	reset
+| and simulate what a reset exception would have done.
+	movl	4,a0
+	movl	0,a7
+	jmp	a0@
+	| NOT REACHED
+#endif
 /*
  * Reboot directly into a new kernel image.
  * kernel_reload(image, image_size, entry,

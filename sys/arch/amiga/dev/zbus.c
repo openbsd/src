@@ -1,5 +1,5 @@
-/*	$OpenBSD: zbus.c,v 1.5 1996/05/07 10:10:19 niklas Exp $	*/
-/*	$NetBSD: zbus.c,v 1.17 1996/03/28 18:41:49 is Exp $	*/
+/*	$OpenBSD: zbus.c,v 1.6 1996/05/29 10:15:45 niklas Exp $	*/
+/*	$NetBSD: zbus.c,v 1.19 1996/05/19 21:06:09 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -115,6 +115,8 @@ static struct aconfdata aconftab[] = {
 	{ "grfcl",	2193,	1},	/* Spectrum regs */
 	{ "grfcl",	2195,	5},	/* Piccolo mem */
 	{ "grfcl",	2195,	6},	/* Piccolo regs */
+	{ "grfcl",	2195,	10},	/* Piccolo SD64 mem */
+	{ "grfcl",	2195,	11},	/* Piccolo SD64 regs */
 	/* MacroSystemsUS */
 	{ "wesc",	2203,	19},	/* Warp engine */
 	/* phase 5 digital products */
@@ -128,7 +130,13 @@ static struct aconfdata aconftab[] = {
 	/* Resource Management Force */
 	{ "qn",		2011,	2 },	/* QuickNet Ethernet */
 	/* ??? */
-	{ "empsc",	2171,	21 }	/* Emplant SCSI */
+	{ "empsc",	2171,	21 },	/* Emplant SCSI */
+	/* Tseng ET4000 boards */
+	{ "grfet",	2181,	0 },	/* oMniBus */
+	{ "grfet",	2167,	1 },	/* Domnio mem */
+	{ "grfet",	2167,	2 },	/* Domino regs */
+	{ "grfet",	2117,	3 },	/* Merlin mem */
+	{ "grfet",	2117,	4 }	/* Merlin regs */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
@@ -142,13 +150,21 @@ static struct preconfdata preconftab[] = {
 	{18260, 16, 0}, /* Retina BLT Z3 */
 	{18260, 19, 0}, /* Altais */
 	{2167,	11, 0},	/* Picasso-II mem*/
-	{2167,	12, 0},	/* regs */
+	{2167,	12, 0},	/* Picasso-II regs */
 	{2193,	2, 0},	/* Spectrum mem */
 	{2193,	1, 0},	/* Spectrum regs */
 	{2195,	5, 0},	/* Piccolo mem */
 	{2195,	6, 0},	/* Piccolo regs */
+	{2195,	10, 0},	/* Piccolo SD64 mem */
+	{2195,	11, 0},	/* Piccolo SD64 regs */
 	{1030,	0, 0},	/* Ulwl board */
-	{8512,	34, 0}	/* Cybervison 64 */
+	{8512,	34, 0},	/* Cybervison 64 */
+	{8512,  34, 0}, /* Cybervison 64 */
+	{2181,	0, 0},	/* oMniBus mem or regs */
+	{2167,	1, 0},	/* Domino mem */
+	{2167,	2, 0},	/* Domino regs */
+	{2117,	3, 0},	/* Merlin mem */
+	{2117,	4, 0}	/* Merlin regs */
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
@@ -251,9 +267,9 @@ zbusattach(pdp, dp, auxp)
 		if (amiga_realconfig && pcp < epcp && pcp->vaddr)
 			za.va = pcp->vaddr;
 		else {
-			za.va = (void *) (isztwopa(za.pa) ? ztwomap(za.pa) :
-			    zbusmap(za.pa, za.size));
-/*                          ??????? */
+			za.va = (void *) (isztwopa(za.pa) ? ztwomap(za.pa) 
+			    : zbusmap(za.pa, za.size));
+/*                     		??????? */
 			/*
 			 * save value if early console init 
 			 */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.7 1996/05/02 07:57:23 niklas Exp $	*/
-/*	$NetBSD: cpu.h,v 1.31 1996/04/27 20:55:08 veego Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 1996/05/29 10:15:50 niklas Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 1996/05/19 15:35:43 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -228,11 +228,26 @@ void	configure __P((void));
 int	is_a1200 __P((void));
 int	is_a3000 __P((void));
 int	is_a4000 __P((void));
+#ifdef DRACO
+int	is_draco __P((void));
+#endif
 
 /*
  * Prototypes from clock.c
  */
 u_long	clkread __P((void));
+
+#ifdef DRACO
+/*
+ * Prototypes from kbd.c
+ */
+void	drkbdintr __P((void));
+
+/*
+ * Prototypes from drsc.c
+ */
+void	drsc_handler __P((void));
+#endif
 
 /*
  * Prototypes from locore.s
@@ -256,6 +271,7 @@ void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
 void	DCIAS __P((vm_offset_t));
+void	DCIA __P((void));
 void	DCIS __P((void));
 void	DCIU __P((void));
 void	ICIA __P((void));
@@ -265,7 +281,7 @@ void	TBIA __P((void));
 void	TBIS __P((vm_offset_t));
 void	TBIAS __P((void));
 void	TBIAU __P((void));
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 void	DCFA __P((void));
 void	DCFP __P((vm_offset_t));
 void	DCFL __P((vm_offset_t));
@@ -299,10 +315,12 @@ void	physaccess __P((caddr_t,  caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 void	setredzone __P((u_int *, caddr_t));
 
+#ifdef GENERIC
 /*
  * Prototypes from swapgeneric.c:
  */
 void	setconf __P((void));
+#endif
 
 /*
  * Prototypes from pmap.c:

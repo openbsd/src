@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_rhreg.h,v 1.2 1996/05/02 06:43:49 niklas Exp $	*/
-/*	$NetBSD: grf_rhreg.h,v 1.6 1996/04/21 21:11:19 veego Exp $	*/
+/*	$OpenBSD: grf_rhreg.h,v 1.3 1996/05/29 10:15:13 niklas Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.7 1996/05/19 21:05:41 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -695,6 +695,7 @@ int rh_getspriteinfo __P((struct grf_softc *gp, struct grf_spriteinfo *info));
 int rh_setspriteinfo __P((struct grf_softc *gp, struct grf_spriteinfo *info));
 int rh_getspritemax __P((struct grf_softc *gp, struct grf_position *pos));
 int rh_bitblt __P((struct grf_softc *gp, struct grf_bitblt *bb));
+int rh_blank __P((struct grf_softc *, int *));
 
 struct ite_softc;
 void rh_init __P((struct ite_softc *));

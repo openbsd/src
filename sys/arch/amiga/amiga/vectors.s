@@ -1,5 +1,5 @@
-/*	$OpenBSD: vectors.s,v 1.2 1996/05/07 09:59:45 niklas Exp $	*/
-/*	$NetBSD: vectors.s,v 1.8 1994/10/26 02:02:12 cgd Exp $	*/
+/*	$OpenBSD: vectors.s,v 1.3 1996/05/29 10:14:39 niklas Exp $	*/
+/*	$NetBSD: vectors.s,v 1.9 1996/05/09 20:30:53 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah

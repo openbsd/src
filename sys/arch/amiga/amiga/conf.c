@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.8 1996/05/07 10:02:51 niklas Exp $	*/
-/*	$NetBSD: conf.c,v 1.35 1996/04/27 20:48:50 veego Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 1996/05/29 10:14:22 niklas Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 1996/05/19 21:04:18 veego Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -129,7 +129,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
-	cdev_lkm_dummy(),		/* 25 */
+	cdev_scanner_init(NSS,ss),	/* 25: SCSI scanner */
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_lkm_dummy(),		/* 27 */
 	cdev_lkm_dummy(),		/* 28 */
@@ -139,7 +139,6 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCOM,com),	/* 32: ISA serial port */
 	cdev_lpt_init(NLPT,lpt),	/* 33: ISA parallel printer */
 	cdev_gen_ipf(NIPF,ipl),		/* 34: IP filter log */
-	cdev_scanner_init(NSS,ss),	/* 35: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

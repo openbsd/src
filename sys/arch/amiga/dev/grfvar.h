@@ -1,5 +1,5 @@
-/*	$OpenBSD: grfvar.h,v 1.2 1996/05/02 06:43:59 niklas Exp $	*/
-/*	$NetBSD: grfvar.h,v 1.13 1996/04/21 21:11:33 veego Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.3 1996/05/29 10:15:23 niklas Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.14 1996/05/19 21:05:54 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,5 +109,6 @@ enum grfunits {
 	GRF_RETINAIII_UNIT,
 	GRF_CL5426_UNIT,
 	GRF_ULOWELL_UNIT,
-	GRF_CV64_UNIT
+	GRF_CV64_UNIT,
+	GRF_ET4000_UNIT
 };

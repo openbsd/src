@@ -1,5 +1,5 @@
-/*	$OpenBSD: genassym.c,v 1.5 1996/05/02 06:43:17 niklas Exp $	*/
-/*	$NetBSD: genassym.c,v 1.25 1996/04/21 21:07:01 veego Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.6 1996/05/29 10:14:25 niklas Exp $	*/
+/*	$NetBSD: genassym.c,v 1.26 1996/05/09 20:30:37 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -168,5 +168,9 @@ main()
 	printf("#define\tISR_INTR %p\n", (void *)&isr->isr_intr);
 	printf("#define\tISR_ARG %p\n", (void *)&isr->isr_arg);
 	printf("#define\tMMU_68040 %d\n", MMU_68040);
+#ifdef DRACO
+	printf("#define\tDRACO %d\n", DRACO);
+#endif
+
 	exit(0);
 }

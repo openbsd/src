@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cv.c,v 1.9 1996/05/04 13:54:22 niklas Exp $	*/
-/*	$NetBSD: grf_cv.c,v 1.13 1996/05/01 09:59:24 veego Exp $	*/
+/*	$OpenBSD: grf_cv.c,v 1.10 1996/05/29 10:15:01 niklas Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.14 1996/05/19 21:05:27 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -50,7 +50,7 @@
  *    The HWC routines provided here are buggy in 16/24 bit
  *    and may cause a Vertical Bar Crash of the Trio64.
  *    On the other hand it's better to put the routines in the Xserver,
- *    so please don't put CV_HARDWARE_CURSOR in your config file.
+ *    so please _don't_ put CV_HARDWARE_CURSOR in your config file.
  */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ void	grfcvattach __P((struct device *, struct device *, void *));
 int	grfcvprint  __P((void *, char *));
 
 static int cv_has_4mb __P((volatile caddr_t));
-static unsigned short compute_clock __P((unsigned long));
+static unsigned short cv_compute_clock __P((unsigned long));
 void	cv_boardinit __P((struct grf_softc *));
 int	cv_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
 int	cv_setvmode __P((struct grf_softc *, unsigned int));
@@ -95,7 +95,7 @@ static	inline void gfx_on_off __P((int, volatile caddr_t));
 int	cv_getspritepos __P((struct grf_softc *, struct grf_position *));
 int	cv_setspritepos __P((struct grf_softc *, struct grf_position *));
 int	cv_getspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
-void cv_setup_hwc __P((struct grf_softc *,
+void	cv_setup_hwc __P((struct grf_softc *,
 	unsigned char, unsigned char, unsigned char, unsigned char,
 	const unsigned long *));
 int	cv_setspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
@@ -169,7 +169,7 @@ unsigned char cvconscolors[16][3] = {	/* background, foreground, hilite */
 	{0x00, 0x00, 0xff},
 	{0xff, 0xff, 0x00},
 	{0x00, 0xff, 0xff},
-	{0xff, 0x00, 0xff}
+	{0x00, 0x00, 0xff}
 };
 
 static unsigned char clocks[]={
@@ -431,7 +431,7 @@ grfcvprint(auxp, pnp)
  */
 
 static unsigned short
-compute_clock(freq)
+cv_compute_clock(freq)
 	unsigned long freq;
 {
 	static unsigned char *mnr, *save;	/* M, N + R vals */
@@ -549,7 +549,7 @@ cv_boardinit(gp)
 	WSeq(ba, SEQ_ID_CLKSYN_CNTL_2, test);
 
 	/* Memory CLK */
-	clockpar = compute_clock(cv_memclk);
+	clockpar = cv_compute_clock(cv_memclk);
 	test = (clockpar & 0xFF00) >> 8;
 	WSeq(ba, SEQ_ID_MCLK_HI, test);		/* PLL N-Divider Value */
 
@@ -938,6 +938,17 @@ cv_setmonitor(gp, gv)
 #endif
 
 	md = monitor_def + (gv->mode_num - 1);
+
+	/*
+	 * Prevent user from crashing the system by using
+	 * grfconfig while in X
+	 */
+	if (gp->g_flags & GF_GRFON)
+		if (md == monitor_current) {
+			printf("grf_cv: Changing the used mode not allowed!\n");
+			return (EINVAL);
+		}
+
 	bcopy(gv, md, sizeof(struct grfvideo_mode));
 
 	/* adjust pixel oriented values to internal rep. */
@@ -1049,15 +1060,16 @@ cv_mondefok(gv)
 	struct grfvideo_mode *gv;
 {
 	unsigned long maxpix;
-	int widthok = 0;
 
 	if (gv->mode_num < 1 || gv->mode_num > monitor_def_max) {
-		if (gv->mode_num != 255 || (gv->depth != 4 && gv->depth != 8))
+		if (gv->mode_num != 255 || gv->depth != 4)
 			return (0);
 	}
 
 	switch(gv->depth) {
 	   case 4:
+		maxpix = MAXPIXELCLOCK - 55000000;
+		break;
 	   case 8:
 		maxpix = MAXPIXELCLOCK;
 		break;
@@ -1078,49 +1090,27 @@ cv_mondefok(gv)
 #endif
 		break;
 	   default:
+		printf("grf_cv: Illegal depth in mode %d\n",
+			(int) gv->mode_num);
 		return (0);
 	}
 
-	if (gv->pixel_clock > maxpix)
+	if (gv->pixel_clock > maxpix) {
+		printf("grf_cv: Pixelclock too high in mode %d\n",
+			(int) gv->mode_num);
 		return (0);
-
-	/*
-	 * These are the supported witdh values for the
-	 * graphics engine. To Support other widths, one
-	 * has to use one of these widths for memory alignment, i.e.
-	 * one has to set CRT_ID_SCREEN_OFFSET to one of these values and
-	 * CRT_ID_HOR_DISP_ENA_END to the desired width.
-	 * Since a working graphics engine is essential
-	 * for the console, console modes of other width are not supported.
-	 * We could do that, though, but then you have to tell the Xserver
-	 * about this strange configuration and I don't know how at the moment :-)
-	 */
-
-	switch (gv->disp_width) {
-	    case 1024:
-	    case 640:
-	    case 800:
-	    case 1280:
-	    case 1152:
-	    case 1600:
-		widthok = 1;
-		break;
-	    default: /* XXX*/
-		widthok = 0;
-		break;
 	}
 
-	if (widthok) return (1);
-	else {
-		if (gv->mode_num == 255) { /* console mode */
-			return (1);
-		} else {
-			printf ("Warning for mode %d:\n", (int) gv->mode_num);
-			printf ("Don't use a blitter-suporting Xserver with this display width\n");
-			printf ("Use one of 640 800 1024 1152 1280 1600!\n");
-			return (1);
+	if (gv->mode_num == 255) { /* console mode */
+		if ((gv->disp_width / 8) > MAXCOLS) {
+			printf ("grfcv: Too many columns for console\n");
+			return (0);
+		} else if ((gv->disp_height / S3FONTY) > MAXROWS) {
+			printf ("grfcv: Too many rows for console\n");
+			return (0);
 		}
 	}
+
 	return (1);
 }
 
@@ -1138,7 +1128,7 @@ cv_load_mon(gp, md)
 		VSE, VT;
 	char LACE, DBLSCAN, TEXT, CONSOLE;
 	int uplim, lowlim;
-	int cr50, cr33, sr15, sr18, clock_mode, test;
+	int cr50, sr15, sr18, clock_mode, test;
 	int m, n;	/* For calc'ing display FIFO */
 	int tfillm, temptym;	/* FIFO fill and empty mclk's */
 	int hmul;	/* Multiplier for hor. Values */
@@ -1149,7 +1139,7 @@ cv_load_mon(gp, md)
 	CONSOLE = (gv->mode_num == 255);
 
 	if (!cv_mondefok(gv)) {
-		printf("grfcv: The monitor definition is not okay.\n");
+		printf("grfcv: The monitor definition is illegal.\n");
 		printf("grfcv: See the manpage of grfconfig for more informations\n");
 		return (0);
 	}
@@ -1222,8 +1212,9 @@ cv_load_mon(gp, md)
 	if (LACE)
 		VDE /= 2;
 
-	/* GFx hardware cursor off */
+	/* GFX hardware cursor off */
 	WCrt(ba, CRT_ID_HWGC_MODE, 0x00);
+	WCrt(ba, CRT_ID_EXT_DAC_CNTL, 0x00);
 
 	WSeq(ba, SEQ_ID_MEMORY_MODE, (TEXT || (gv->depth == 1)) ? 0x06 : 0x0e);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
@@ -1232,7 +1223,7 @@ cv_load_mon(gp, md)
 
 	/* Set clock */
 
-	mnr = compute_clock(gv->pixel_clock);
+	mnr = cv_compute_clock(gv->pixel_clock);
 	WSeq(ba, SEQ_ID_DCLK_HI, ((mnr & 0xFF00) >> 8));
 	WSeq(ba, SEQ_ID_DCLK_LO, (mnr & 0xFF));
 
@@ -1321,12 +1312,14 @@ cv_load_mon(gp, md)
 
 	vgaw(ba, VDAC_MASK, 0xff);
 
+	/* Blank border */
+	test = RCrt(ba, CRT_ID_BACKWAD_COMP_2);
+	WCrt(ba, CRT_ID_BACKWAD_COMP_2, (test | 0x20));
+
 	sr15 = RSeq(ba, SEQ_ID_CLKSYN_CNTL_2);
 	sr15 &= 0xef;
 	sr18 = RSeq(ba, SEQ_ID_RAMDAC_CNTL);
 	sr18 &= 0x7f;
-	cr33 = RCrt(ba, CRT_ID_BACKWAD_COMP_2);
-	cr33 &= 0xdf;
 	clock_mode = 0x00;
 	cr50 = 0x00;
 
@@ -1347,7 +1340,6 @@ cv_load_mon(gp, md)
 			clock_mode = 0x10 | 0x02;
 			sr15 |= 0x10;
 			sr18 |= 0x80;
-			cr33 |= 0x20;
 		}
 		HDE = gv->disp_width / 8;
 		cr50 |= 0x00;
@@ -1376,7 +1368,6 @@ cv_load_mon(gp, md)
 	WCrt(ba, CRT_ID_EXT_MISC_CNTL_2, clock_mode | test);
 	WSeq(ba, SEQ_ID_CLKSYN_CNTL_2, sr15);
 	WSeq(ba, SEQ_ID_RAMDAC_CNTL, sr18);
-	WCrt(ba, CRT_ID_BACKWAD_COMP_2, cr33);
 	WCrt(ba, CRT_ID_SCREEN_OFFSET, HDE);
 
 	WCrt(ba, CRT_ID_MISC_1, (TEXT ? 0x05 : 0x35));
@@ -1407,7 +1398,7 @@ cv_load_mon(gp, md)
 	   case 1600:
 		cr50 |= 0x81;
 		break;
-	   default: /* XXX*/
+	   default: /* XXX The Xserver has to handle this */
 		break;
 	}
 
@@ -1435,15 +1426,18 @@ cv_load_mon(gp, md)
  	tfillm = (96 * (cv_memclk/1000))/240000;
 
 	switch(gv->depth) {
-	   case 32:
-	   case 24:
+	    case 32:
+	    case 24:
 		temptym = (24 * (cv_memclk/1000)) / (gv->pixel_clock/1000);
 		break;
-	   case 15:
-	   case 16:
+	    case 15:
+	    case 16:
 		temptym = (48 * (cv_memclk/1000)) / (gv->pixel_clock/1000);
 		break;
-	   default:
+	    case 4:
+		temptym = (192 * (cv_memclk/1000)) / (gv->pixel_clock/1000);
+		break;
+	    default:
 		temptym = (96 * (cv_memclk/1000)) / (gv->pixel_clock/1000);
 		break;
 	}
@@ -1664,10 +1658,13 @@ cv_setspritepos (gp, pos)
 	return(0);
 }
 
-#define M2I(val)                                                     \
+static inline short
+M2I(short val) {
 	asm volatile (" rorw #8,%0   ;                               \
 			swap %0      ;                               \
 			rorw #8,%0   ; " : "=d" (val) : "0" (val));
+	return (val);
+}
 
 #define M2INS(val)                                                   \
 	asm volatile (" rorw #8,%0   ;                               \
@@ -1738,7 +1735,7 @@ cv_setup_hwc (gp, col1, col2, hsx, hsy, data)
 	unsigned char hsy;
 	const unsigned long *data;
 {
-	volatile unsigned char *ba = gp->g_regkva;
+	volatile caddr_t ba = gp->g_regkva;
 	unsigned long *c = (unsigned long *)(gp->g_fbkva + HWC_OFF);
 	const unsigned long *s = data;
 	int test;
@@ -1794,6 +1791,7 @@ cv_setspriteinfo (gp, info)
 	struct grf_spriteinfo *info;
 {
 	volatile caddr_t ba, fb;
+	int depth = gp->g_display.gd_planes;
 
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
@@ -1812,7 +1810,24 @@ cv_setspriteinfo (gp, info)
 
 		/* Cursor off */
 		WCrt (ba, CRT_ID_HWGC_MODE, 0x00);
-		/* move cursor off-screen */
+
+		/*
+		 * The Trio64 crashes if the cursor data is written
+		 * while the cursor is displayed.
+		 * Sadly, turning the cursor off is not enough.
+		 * What we have to do is:
+		 * 1. Wait for vertical retrace, to make sure no-one
+		 * has moved the cursor in this sync period (because
+		 * another write then would have no effect, argh!).
+		 * 2. Move the cursor off-screen
+		 * 3. Another wait for v. retrace to make sure the cursor
+		 * is really off.
+		 * 4. Write the data, finally.
+		 * (thanks to Harald Koenig for this tip!)
+		 */
+
+		VerticalRetraceWait(ba);
+
 		WCrt (ba, CRT_ID_HWGC_ORIGIN_X_HI, 0x7);
 		WCrt (ba, CRT_ID_HWGC_ORIGIN_X_LO,  0xff);
 		WCrt (ba, CRT_ID_HWGC_ORIGIN_Y_LO, 0xff);
@@ -1834,6 +1849,10 @@ cv_setspriteinfo (gp, info)
 		copyin(info->mask, mask, info->size.y * info->size.x / 8);
 
 		hwp = (u_short *)(fb  +HWC_OFF);
+
+		/* This is necessary in order not to crash the board */
+
+		VerticalRetraceWait(ba);
 
 		/*
 		 * setting it is slightly more difficult, because we can't
@@ -1868,14 +1887,40 @@ cv_setspriteinfo (gp, info)
 			else
 				im3 = m3 = im4 = m4 = 0;
 
-			*hwp++ = m1;
-			*hwp++ = im1;
-			*hwp++ = m2;
-			*hwp++ = im2;
-			*hwp++ = m3;
-			*hwp++ = im3;
-			*hwp++ = m4;
-			*hwp++ = im4;
+			switch (depth) {
+			    case 8:
+				*hwp++ = m1;
+				*hwp++ = im1;
+				*hwp++ = m2;
+				*hwp++ = im2;
+				*hwp++ = m3;
+				*hwp++ = im3;
+				*hwp++ = m4;
+				*hwp++ = im4;
+				break;
+			    case 15:
+			    case 16:
+				*hwp++ = M2I(m1);
+				*hwp++ = M2I(im1);
+				*hwp++ = M2I(m2);
+				*hwp++ = M2I(im2);
+				*hwp++ = M2I(m3);
+				*hwp++ = M2I(im3);
+				*hwp++ = M2I(m4);
+				*hwp++ = M2I(im4);
+				break;
+			    case 24:
+			    case 32:
+				*hwp++ = M2I(im1);
+				*hwp++ = M2I(m1);
+				*hwp++ = M2I(im2);
+				*hwp++ = M2I(m2);
+				*hwp++ = M2I(im3);
+				*hwp++ = M2I(m3);
+				*hwp++ = M2I(im4);
+				*hwp++ = M2I(m4);
+				break;
+			}
 		}
 		for (; row < 64; row++) {
 			*hwp++ = 0x0000;
@@ -1893,21 +1938,24 @@ cv_setspriteinfo (gp, info)
 		cv_hoty = info->hot.y;
 
 		/* One must not write twice per vertical blank :-( */
-		VerticalRetraceWait(ba);
+		/* VerticalRetraceWait(ba); */
 
 		cv_setspritepos (gp, &info->pos);
 	}
 	if (info->set & GRFSPRSET_CMAP) {
 		int test;
-		int depth = gp->g_display.gd_planes;
+
+		VerticalRetraceWait(ba);
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
 		asm volatile("nop");
 		switch (depth) {
-		    case 24: case 32:
+		    case 32:
+		    case 24:
 			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
-		    case 8: case 16:
+		    case 16:
+		    case 8:
 			/* info->cmap.green[1] */
 			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
 			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);

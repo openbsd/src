@@ -1,5 +1,5 @@
-#	$OpenBSD: files.amiga,v 1.14 1996/05/28 09:39:34 niklas Exp $
-#	$NetBSD: files.amiga,v 1.45 1996/05/07 00:34:17 thorpej Exp $
+#	$OpenBSD: files.amiga,v 1.15 1996/05/29 10:14:45 niklas Exp $
+#	$NetBSD: files.amiga,v 1.48 1996/05/19 21:04:50 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -109,7 +109,13 @@ device	grfrh: grfbus
 attach	grfrh at zbus
 file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
 file	arch/amiga/dev/ite_rh.c		grfrh & ite
-  
+
+# Tseng grf
+device	grfet: grfbus
+attach	grfet at zbus
+file	arch/amiga/dev/grf_et.c		grfet needs-flag
+file	arch/amiga/dev/ite_et.c		grfet & ite
+
 # handle gvp's odd autoconf info..
 device	gvpbus {}
 attach	gvpbus at zbus
@@ -195,6 +201,12 @@ device	wesc: scsi, siop
 attach	wesc at zbus
 file	arch/amiga/dev/wesc.c		wesc needs-flag
 
+
+# MacroSystem DraCo internal
+device	drsc: scsi, siop
+attach	drsc at mainbus
+file  arch/amiga/dev/drsc.c           drsc needs-flag
+
 # C= A4091
 device	afsc: scsi, siop
 attach	afsc at zbus
@@ -226,7 +238,7 @@ device	mlhsc: scsi, sci
 attach	mlhsc at zbus
 file	arch/amiga/dev/mlhsc.c		mlhsc needs-flag
 
-# Emplant
+# EMPLANT
 device	empsc: scsi, sci
 attach	empsc at zbus
 file	arch/amiga/dev/empsc.c		empsc needs-flag

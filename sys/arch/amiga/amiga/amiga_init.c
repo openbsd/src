@@ -1,5 +1,5 @@
-/*	$OpenBSD: amiga_init.c,v 1.10 1996/05/07 09:55:10 niklas Exp $	*/
-/*	$NetBSD: amiga_init.c,v 1.40 1996/05/04 04:45:18 mhitch Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.11 1996/05/29 10:14:17 niklas Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.41 1996/05/09 20:30:30 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -56,6 +56,7 @@
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cfdev.h>
+#include <amiga/amiga/drcustom.h>
 #include <amiga/amiga/memlist.h>
 #include <amiga/dev/zbusvar.h>
 
@@ -173,6 +174,8 @@ alloc_z2mem(amount)
  * Very crude 68040 support by Michael L. Hitch.
  */
 
+int kernel_copyback = 1;
+
 void
 start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	int id;
@@ -194,8 +197,20 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	u_int loadbase = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 	u_int *shadow_pt = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
+	/* XXX this only is valid if Altais is in slot 0 */
+	volatile u_int8_t *altaiscolpt = (u_int8_t *)0x200003c8;
+	volatile u_int8_t *altaiscol = (u_int8_t *)0x200003c9;
+
 	if ((u_int)&loadbase > cphysize)
 		loadbase = fphystart;
+
+	if ((id>>24)==0x7D) {
+		*altaiscolpt = 0;
+		*altaiscol = 40;
+		*altaiscol = 0;
+		*altaiscol = 0;
+	} else
+((volatile struct Custom *)0xdff000)->color[0] = 0xa00;		/* RED */
 
 	RELOC(boot_fphystart, u_long) = fphystart;
 	RELOC(boot_fphysize, u_long) = fphysize;
@@ -334,6 +349,13 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 */
 	pt = vstart;
 	ptpa = pstart;
+#ifdef DRACO
+	if ((id>>24)==0x7D) {
+		ptextra = NDRCCPG 
+		    + RELOC(NZTWOMEMPG, u_int) 
+		    + btoc(RELOC(ZBUSAVAIL, u_int));
+	} else
+#endif
 	ptextra = NCHIPMEMPG + NCIAPG + NZTWOROMPG + RELOC(NZTWOMEMPG, u_int) +
 	    btoc(RELOC(ZBUSAVAIL, u_int));
 	/*
@@ -380,7 +402,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	/*
 	 * initialize segment table and page table map
 	 */
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040) {
 		/*
 		 * First invalidate the entire "segment table" pages
@@ -455,8 +477,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 			}
 			sg = (u_int *)RELOC(Sysseg_pa, u_int);
 			sg = (u_int *)(sg[loadbase >> SG4_SHIFT1] & SG4_ADDR1);
-			shadow_pt = (u_int *)(sg[(loadbase & SG4_MASK2) >>
-			    SG4_SHIFT2] & SG4_ADDR1);
+			shadow_pt = 
+			    ((u_int *)(sg[(loadbase & SG4_MASK2) >> SG4_SHIFT2] 
+				& SG4_ADDR1)) +
+			    ((loadbase & SG4_MASK3) >> SG4_SHIFT3); /* XXX is */
+
 		}
 		/*
 		 * Initialize Sysptmap
@@ -519,8 +544,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 				vstart += NBPG;
 				avail -= NBPG;
 			}
-			shadow_pt = (u_int *)(sg[loadbase >> SG_ISHIFT]
-			    & 0xffffff00);
+			shadow_pt = 
+			    ((u_int *)(sg[loadbase >> SG_ISHIFT] & 0xffffff00)) 
+			    + ((loadbase & SG_PMASK) >> SG_PSHIFT);
 		}
 	}
 
@@ -538,9 +564,24 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 * data, bss and dynamic tables are read/write
 	 */
 	pg_proto = (pg_proto & PG_FRAME) | PG_RW | PG_V;
-#ifdef M68040
-	if (RELOC(mmutype, int) == MMU_68040)
-		pg_proto |= PG_CCB;
+
+#if defined(M68040) || defined(M68060)
+	/*
+	 * map the kernel segment table cache invalidated for 
+	 * these machines (for the 68040 not strictly necessary, but
+	 * recommended by Motorola; for the 68060 mandatory)
+	 */
+	if (RELOC(mmutype, int) == MMU_68040) {
+
+		pg_proto |= PG_CI;
+		for (; i < RELOC(Sysseg, u_int) + kstsize; i += NBPG, 
+		    pg_proto += NBPG)
+			*pg++ = pg_proto;
+
+		pg_proto = (pg_proto & ~PG_CI);
+		if (RELOC(kernel_copyback, int))
+			pg_proto |= PG_CCB;
+	}
 #endif
 	/*
 	 * go till end of data allocated so far
@@ -559,10 +600,49 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 * at end of allocated PT space
 	 */
 	pg      -= ptextra;
-	pg_proto = CHIPMEMBASE | PG_RW | PG_CI | PG_V;	/* CI needed here?? */
-	while (pg_proto < CHIPMEMTOP) {
-		*pg++     = pg_proto;
-		pg_proto += NBPG;
+#ifdef DRACO
+	if ((id >> 24) == 0x7D) {
+		pg_proto = DRCCBASE | PG_RW | PG_CI | PG_V;
+		while (pg_proto < DRCIATOP) {
+			if (*pg != PG_NV) {
+				*altaiscolpt = 0;
+				*altaiscol = 20;
+				*altaiscol = 0;
+				*altaiscol = 0;
+				asm volatile("stop #0x2700"::);
+			}
+			*pg++ = pg_proto;
+			pg_proto += DRCCSTRIDE;
+		}
+
+		/* NCR 53C710 chip */
+		if (*pg != PG_NV) {
+			*altaiscolpt = 0;
+			*altaiscol = 20;
+			*altaiscol = 0;
+			*altaiscol = 0;
+			asm volatile("stop #0x2700"::);
+		}
+		*pg++ = DRSCSIBASE | PG_RW | PG_CI | PG_V;
+
+		/* XXX Debug Altais register mapping */
+		if (*pg != PG_NV) {
+			*altaiscolpt = 0;
+			*altaiscol = 20;
+			*altaiscol = 0;
+			*altaiscol = 0;
+			asm volatile("stop #0x2700"::);
+		}
+		*pg++ = 0x20000000 | PG_RW | PG_CI | PG_V;
+	} else
+#endif
+	{
+		pg_proto = CHIPMEMBASE | PG_RW | PG_CI | PG_V;	
+						/* CI needed here?? */
+		while (pg_proto < CHIPMEMTOP) {
+			*pg++     = pg_proto;
+			pg_proto += NBPG;
+		}
 	}
 	if (RELOC(z2mem_end, vm_offset_t)) {			/* XXX */
 		pg_proto = RELOC(z2mem_start, vm_offset_t) |	/* XXX */
@@ -572,15 +652,20 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 			pg_proto += NBPG;			/* XXX */
 		}						/* XXX */
 	}							/* XXX */
-	pg_proto = CIABASE | PG_RW | PG_CI | PG_V;
-	while (pg_proto < CIATOP) {
-		*pg++     = pg_proto;
-		pg_proto += NBPG;
-	}
-	pg_proto  = ZTWOROMBASE | PG_RW | PG_CI | PG_V;
-	while (pg_proto < ZTWOROMTOP) {
-		*pg++     = pg_proto;
-		pg_proto += NBPG;
+#ifdef DRACO
+	if ((id >> 24) != 0x7D)
+#endif
+	{
+		pg_proto = CIABASE | PG_RW | PG_CI | PG_V;
+		while (pg_proto < CIATOP) {
+			*pg++     = pg_proto;
+			pg_proto += NBPG;
+		}
+		pg_proto  = ZTWOROMBASE | PG_RW | PG_CI | PG_V;
+		while (pg_proto < ZTWOROMTOP) {
+			*pg++     = pg_proto;
+			pg_proto += NBPG;
+		}
 	}
 
 	/*
@@ -593,10 +678,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		pg = shadow_pt;
 		*pg++ = PG_NV;			/* Make page 0 invalid */
 		pg_proto += NBPG;
-		for (i = NBPG; i < (u_int)etext; i += NBPG, pg_proto += NBPG)
+		for (i = NBPG; i < (u_int)etext; i += NBPG, pg_proto += NBPG) 
 			*pg++ = pg_proto;
 		pg_proto = (pg_proto & PG_FRAME) | PG_RW | PG_V;
-		for (; i < vstart + USPACE; i += NBPG, pg_proto += NBPG)
+		for (; i < vstart + USPACE; i += NBPG, pg_proto += NBPG) 
 			*pg++ = pg_proto;
 	}
 
@@ -631,30 +716,60 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	/*
 	 * record base KVA of IO spaces which are just before Sysmap
 	 */
-	RELOC(CHIPMEMADDR, u_int) =
-	    (u_int)RELOC(Sysmap, u_int) - ptextra * NBPG;
-	if (RELOC(z2mem_end, u_int) == 0)
+#ifdef DRACO
+	if ((id >> 24) == 0x7D) {
+		RELOC(DRCCADDR, u_int) =
+		    (u_int)RELOC(Sysmap, u_int) - ptextra * NBPG;
+
 		RELOC(CIAADDR, u_int) =
-		    RELOC(CHIPMEMADDR, u_int) + NCHIPMEMPG * NBPG;
-	else {
-		RELOC(ZTWOMEMADDR, u_int) =
-		    RELOC(CHIPMEMADDR, u_int) + NCHIPMEMPG * NBPG;
-		RELOC(CIAADDR, u_int) =
-		    RELOC(ZTWOMEMADDR, u_int) + RELOC(NZTWOMEMPG, u_int) * NBPG;
+		    RELOC(DRCCADDR, u_int) + DRCIAPG * NBPG;
+
+		if (RELOC(z2mem_end, vm_offset_t)) {		/* XXX */
+			RELOC(ZTWOMEMADDR, u_int) =
+			    RELOC(DRCCADDR, u_int) + NDRCCPG * NBPG;
+
+			RELOC(ZBUSADDR, vm_offset_t) =
+			    RELOC(ZTWOMEMADDR, u_int) + 
+			    RELOC(NZTWOMEMPG, u_int)*NBPG;
+		} else {
+			RELOC(ZBUSADDR, vm_offset_t) =
+			    RELOC(DRCCADDR, u_int) + NDRCCPG * NBPG;
+		}
+
+		/*
+		 * some nice variables for pmap to use
+		 */
+		RELOC(amigahwaddr, vm_offset_t) = RELOC(DRCCADDR, u_int);
+		RELOC(namigahwpg, u_int) =
+		    NDRCCPG + NDRCIAPG + RELOC(NZTWOMEMPG, u_int);
+	} else 
+#endif
+	{
+		RELOC(CHIPMEMADDR, u_int) =
+		    (u_int)RELOC(Sysmap, u_int) - ptextra * NBPG;
+		if (RELOC(z2mem_end, u_int) == 0)
+			RELOC(CIAADDR, u_int) =
+			    RELOC(CHIPMEMADDR, u_int) + NCHIPMEMPG * NBPG;
+		else {
+			RELOC(ZTWOMEMADDR, u_int) =
+			    RELOC(CHIPMEMADDR, u_int) + NCHIPMEMPG * NBPG;
+			RELOC(CIAADDR, u_int) =
+			    RELOC(ZTWOMEMADDR, u_int) + RELOC(NZTWOMEMPG, u_int) * NBPG;
+		}
+		RELOC(ZTWOROMADDR, vm_offset_t)  =
+		    RELOC(CIAADDR, u_int) + NCIAPG * NBPG;
+		RELOC(ZBUSADDR, vm_offset_t) =
+		    RELOC(ZTWOROMADDR, u_int) + NZTWOROMPG * NBPG;
+		RELOC(CIAADDR, vm_offset_t) += NBPG/2;	/* not on 8k boundery :-( */
+		RELOC(CUSTOMADDR, vm_offset_t)  =
+		    RELOC(ZTWOROMADDR, u_int) - ZTWOROMBASE + CUSTOMBASE;
+		/*
+		 * some nice variables for pmap to use
+		 */
+		RELOC(amigahwaddr, vm_offset_t) = RELOC(CHIPMEMADDR, u_int);
+		RELOC(namigahwpg, u_int) =
+		    NCHIPMEMPG + NCIAPG + NZTWOROMPG + RELOC(NZTWOMEMPG, u_int);
 	}
-	RELOC(ZTWOROMADDR, vm_offset_t)  =
-	    RELOC(CIAADDR, u_int) + NCIAPG * NBPG;
-	RELOC(ZBUSADDR, vm_offset_t) =
-	    RELOC(ZTWOROMADDR, u_int) + NZTWOROMPG * NBPG;
-	RELOC(CIAADDR, vm_offset_t) += NBPG/2;	/* not on 8k boundery :-( */
-	RELOC(CUSTOMADDR, vm_offset_t)  =
-	    RELOC(ZTWOROMADDR, u_int) - ZTWOROMBASE + CUSTOMBASE;
-	/*
-	 * some nice variables for pmap to use
-	 */
-	RELOC(amigahwaddr, vm_offset_t) = RELOC(CHIPMEMADDR, u_int);
-	RELOC(namigahwpg, u_int) =
-	    NCHIPMEMPG + NCIAPG + NZTWOROMPG + RELOC(NZTWOMEMPG, u_int);
 
 	/*
 	 * set this before copying the kernel, so the variable is updated in
@@ -678,6 +793,13 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 			*fp++ = *lp++;
 	}
 
+	if ((id>>24)==0x7D) {
+		*altaiscolpt = 0;
+		*altaiscol = 40;
+		*altaiscol = 40;
+		*altaiscol = 0;
+	} else
+((volatile struct Custom *)0xdff000)->color[0] = 0xAA0;		/* YELLOW */
 	/*
 	 * prepare to enable the MMU
 	 */
@@ -690,11 +812,28 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		 * movel #$0xc000,d0;
 		 * movec d0,TC
 		 */
+
+		if (id & AMIGA_68060) {
+			/* do i need to clear the branch cache? */
+			asm volatile (	".word 0x4e7a,0x0002;" 
+					"orl #0x400000,d0;" 
+					".word 0x4e7b,0x0002" : : : "d0");
+		}
+
 		asm volatile ("movel %0,a0; .word 0x4e7b,0x8807"
 		    : : "a" (RELOC(Sysseg_pa, u_int)) : "a0");
 		asm volatile (".word 0xf518" : : );
-		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003"
-		    : : : "d0");
+
+		if ((id>>24)==0x7D) {
+			*altaiscolpt = 0;
+			*altaiscol = 40;
+			*altaiscol = 33;
+			*altaiscol = 0;
+		} else
+((volatile struct Custom *)0xdff000)->color[0] = 0xA70;		/* ORANGE */
+
+		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" 
+		    : : :"d0" );
 	} else
 #endif
 	{
@@ -713,6 +852,21 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		tc = 0x82d08b00;
 		asm volatile ("pmove %0@,tc" : : "a" (&tc));
 	}
+#ifdef DRACO
+	if ((id >> 24) == 0x7D) { /* mapping on, is_draco() is valid */
+		int i;
+		/* XXX experimental Altais register mapping only */
+		altaiscolpt = (volatile u_int8_t *)(DRCCADDR+NBPG*8+0x3c8);
+		altaiscol = altaiscolpt + 1;
+		for (i=0; i<140000; i++) {
+			*altaiscolpt = 0;
+			*altaiscol = 0;
+			*altaiscol = 40;
+			*altaiscol = 0;
+		}
+	} else
+#endif
+((volatile struct Custom *)CUSTOMADDR)->color[0] = 0x0a0;	/* GREEN */
 
 	bzero ((u_char *)proc0paddr, USPACE);	/* XXXXXXXXXXXXXXXXXXXXX */
 	pmap_bootstrap(pstart, fphystart);	/* XXXXXXXXXXXXXXXXXXXXXXx*/
@@ -723,10 +877,21 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	CIAAbase = CIAADDR + 0x1001;	/* CIA-A at odd addresses ! */
 	CIABbase = CIAADDR;
 	CUSTOMbase = CUSTOMADDR;
-	INTREQRaddr = (vm_offset_t)&custom.intreqr;
-	INTREQWaddr = (vm_offset_t)&custom.intreq;
-	INTENARaddr = (vm_offset_t)&custom.intenar;
-	INTENAWaddr = (vm_offset_t)&custom.intena;
+#ifdef DRACO
+	if (is_draco()) {
+		draco_intena = (volatile u_int8_t *)DRCCADDR+1;
+		draco_intpen = draco_intena + NBPG;
+		draco_intfrc = draco_intpen + NBPG;
+		draco_misc = draco_intfrc + NBPG;
+		draco_ioct = (struct drioct *)(DRCCADDR + DRIOCTLPG*NBPG);
+	} else 
+#endif
+	{
+		INTREQRaddr = (vm_offset_t)&custom.intreqr;
+		INTREQWaddr = (vm_offset_t)&custom.intreq;
+		INTENARaddr = (vm_offset_t)&custom.intenar;
+		INTENAWaddr = (vm_offset_t)&custom.intena;
+	}
 
 	/*
 	 * Get our chip memory allocation system working
@@ -746,11 +911,33 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 * disable all interupts but enable allow them to be enabled
 	 * by specific driver code (global int enable bit)
 	 */
-	custom.intena = 0x7fff;				/* disable ints */
-	custom.intena = INTF_SETCLR | INTF_INTEN;	/* but allow them */
-	custom.intreq = 0x7fff;			/* clear any current */
-	ciaa.icr = 0x7f;			/* and keyboard */
-	ciab.icr = 0x7f;			/* and again */
+#ifdef DRACO
+	if (is_draco()) {
+		/* XXX to be done. For now, just: */
+		*draco_intena = 0;
+		*draco_intpen = 0;
+		*draco_intfrc = 0;
+		ciaa.icr = 0x7f;			/* and keyboard */
+#if 0
+		ciab.icr = 0x7f;			/* and again */
+#endif
+		*(volatile u_int8_t *)(DRCCADDR + 
+		    DRSUPIOPG*NBPG + 4*(0x3F8 + 1)) = 0; /* and com0 */
+		*(volatile u_int8_t *)(DRCCADDR +
+		    DRSUPIOPG*NBPG + 4*(0x2F8 + 1)) = 0; /* and com1 */
+		
+		*draco_misc &= ~1/*DRMISC_FASTZ2*/;
+
+	} else 
+#endif
+	{
+		custom.intena = 0x7fff;			/* disable ints */
+		custom.intena = INTF_SETCLR | INTF_INTEN;
+							/* but allow them */
+		custom.intreq = 0x7fff;			/* clear any current */
+		ciaa.icr = 0x7f;			/* and keyboard */
+		ciab.icr = 0x7f;			/* and again */
+	}
 
 	/*
 	 * This is needed for 3000's with superkick ROM's. Bit 7 of

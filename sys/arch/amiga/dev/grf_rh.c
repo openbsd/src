@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_rh.c,v 1.6 1996/05/04 13:54:26 niklas Exp $	*/
-/*	$NetBSD: grf_rh.c,v 1.15 1996/05/01 09:59:26 veego Exp $	*/
+/*	$OpenBSD: grf_rh.c,v 1.7 1996/05/29 10:15:10 niklas Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.17 1996/05/19 21:05:37 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -56,7 +56,7 @@ enum mode_type { MT_TXTONLY, MT_GFXONLY, MT_BOTH };
 
 int rh_mondefok __P((struct MonDef *));
 
-u_short CompFQ __P((u_int fq));
+u_short rh_CompFQ __P((u_int fq));
 int rh_load_mon __P((struct grf_softc *gp, struct MonDef *md));
 int rh_getvmode __P((struct grf_softc *gp, struct grfvideo_mode *vm));
 int rh_setvmode __P((struct grf_softc *gp, unsigned int mode, 
@@ -664,7 +664,7 @@ RZ3SetHWCloc (gp, x, y)
 }
 
 u_short
-CompFQ(fq)
+rh_CompFQ(fq)
 	u_int fq;
 {
  	/* yuck... this sure could need some explanation.. */
@@ -722,15 +722,15 @@ rh_mondefok(mdp)
 	struct MonDef *mdp;
 {
 	switch(mdp->DEP) {
-	case 8:
-	case 16:
-        case 24:
+	    case 8:
+	    case 16:
+            case 24:
 		return(1);
-	case 4:
+	    case 4:
 		if (mdp->FX == 4 || (mdp->FX >= 7 && mdp->FX <= 16))
 			return(1);
 		/*FALLTHROUGH*/
-	default:
+	    default:
 		return(0);
 	}
 }
@@ -788,40 +788,40 @@ rh_load_mon(gp, md)
 	FW =0;
 	if (md->DEP == 4) {		/* XXX some text-mode! */
 		switch (md->FX) {
-		case 4:
+		    case 4:
 			FW = 0;
 			break;
-		case 7:
+		    case 7:
 			FW = 1;
 			break;
-		case 8:
+		    case 8:
 			FW = 2;
 			break;
-		case 9:
+		    case 9:
 			FW = 3;
 			break;
-		case 10:
+		    case 10:
 			FW = 4;
 			break;
-		case 11:
+		    case 11:
 			FW = 5;
 			break;
-		case 12:
+		    case 12:
 			FW = 6;
 			break;
-		case 13:
+		    case 13:
 			FW = 7;
 			break;
-		case 14:
+		    case 14:
 			FW = 8;
 			break;
-		case 15:
+		    case 15:
 			FW = 9;
 			break;
-		case 16:
+		    case 16:
 			FW = 11;
 			break;
-		default:
+		    default:
 			return(0);
 			break;
 		}
@@ -1003,9 +1003,9 @@ rh_load_mon(gp, md)
 	WCrt(ba, CRT_ID_MONITOR_POWER, 0x00);
 
 	{
-		unsigned short tmp = CompFQ(md->FQ);
+		unsigned short tmp = rh_CompFQ(md->FQ);
 		WPLL(ba, 2   , tmp);
-                tmp = CompFQ(rh_memclk);
+                tmp = rh_CompFQ(rh_memclk);
 		WPLL(ba,10   , tmp);
 		WPLL(ba,14   , 0x22);
 	}
@@ -1494,6 +1494,12 @@ grfrhattach(pdp, dp, auxp)
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
 		gp->g_regkva = (volatile caddr_t)zap->va;
+
+		gp->g_regkva[0x3c8]=0;
+		gp->g_regkva[0x3c9]=30;
+		gp->g_regkva[0x3c9]=30;
+		gp->g_regkva[0x3c9]=00;
+
 		gp->g_fbkva = (volatile caddr_t)zap->va + LM_OFFSET;
 		gp->g_unit = GRF_RETINAIII_UNIT;
 		gp->g_mode = rh_mode;
@@ -1617,38 +1623,38 @@ rh_mode(gp, cmd, arg, a2, a3)
 	int a3;
 {
 	switch (cmd) {
-	case GM_GRFON:
+	    case GM_GRFON:
                 rh_setvmode (gp, rh_default_gfx + 1, MT_GFXONLY);
 		return(0);
 
-	case GM_GRFOFF:
+	    case GM_GRFOFF:
                 rh_setvmode (gp, rh_default_mon + 1, MT_TXTONLY);
 		return(0);
 
-	case GM_GRFCONFIG:
+	    case GM_GRFCONFIG:
 		return(0);
 
-	case GM_GRFGETVMODE:
+	    case GM_GRFGETVMODE:
 		return(rh_getvmode (gp, (struct grfvideo_mode *) arg));
 
-	case GM_GRFSETVMODE:
+	    case GM_GRFSETVMODE:
                 return(rh_setvmode (gp, *(unsigned *) arg, 
                                     (gp->g_flags & GF_GRFON) ? MT_GFXONLY : MT_TXTONLY));
 
-	case GM_GRFGETNUMVM:
+	    case GM_GRFGETNUMVM:
 		*(int *)arg = rh_mon_max;
 		return(0);
 
 #ifdef BANKEDDEVPAGER
-	case GM_GRFGETBANK:
-	case GM_GRFGETCURBANK:
-	case GM_GRFSETBANK:
+	    case GM_GRFGETBANK:
+	    case GM_GRFGETCURBANK:
+	    case GM_GRFSETBANK:
 		return(EINVAL);
 #endif
-	case GM_GRFIOCTL:
+	    case GM_GRFIOCTL:
 		return(rh_ioctl (gp, a2, arg));
 
-	default:
+	    default:
 		break;
 	}
 
@@ -1662,29 +1668,32 @@ rh_ioctl (gp, cmd, data)
 	void *data;
 {
 	switch (cmd) {
-	case GRFIOCGSPRITEPOS:
+	    case GRFIOCGSPRITEPOS:
 		return(rh_getspritepos (gp, (struct grf_position *) data));
 
-	case GRFIOCSSPRITEPOS:
+	    case GRFIOCSSPRITEPOS:
 		return(rh_setspritepos (gp, (struct grf_position *) data));
 
-	case GRFIOCSSPRITEINF:
+	    case GRFIOCSSPRITEINF:
 		return(rh_setspriteinfo (gp, (struct grf_spriteinfo *) data));
 
-	case GRFIOCGSPRITEINF:
+	    case GRFIOCGSPRITEINF:
 		return(rh_getspriteinfo (gp, (struct grf_spriteinfo *) data));
 
-	case GRFIOCGSPRITEMAX:
+	    case GRFIOCGSPRITEMAX:
 		return(rh_getspritemax (gp, (struct grf_position *) data));
 
-	case GRFIOCGETCMAP:
+	    case GRFIOCGETCMAP:
 		return(rh_getcmap (gp, (struct grf_colormap *) data));
 
-	case GRFIOCPUTCMAP:
+	    case GRFIOCPUTCMAP:
 		return(rh_putcmap (gp, (struct grf_colormap *) data));
 
-	case GRFIOCBITBLT:
+	    case GRFIOCBITBLT:
 		return(rh_bitblt (gp, (struct grf_bitblt *) data));
+
+	    case GRFIOCBLANK:
+		return (rh_blank(gp, (int *)data));
 	}
 
 	return(EINVAL);
@@ -2048,4 +2057,21 @@ rh_bitblt (gp, bb)
 
 	return(0);
 }
+
+
+int
+rh_blank(gp, on)
+	struct grf_softc *gp;
+	int *on;
+{
+	int r;
+
+	r = RSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE);
+	r &= 0xdf;	/* set Bit 5 to 0 */
+
+	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, r | (*on ? 0x00 : 0x20));
+
+	return(0);
+}
+
 #endif	/* NGRF */

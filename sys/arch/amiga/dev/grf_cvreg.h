@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cvreg.h,v 1.5 1996/03/30 22:18:17 niklas Exp $	*/
-/*	$NetBSD: grf_cvreg.h,v 1.4 1996/03/02 14:02:58 veego Exp $	*/
+/*	$OpenBSD: grf_cvreg.h,v 1.6 1996/05/29 10:15:04 niklas Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.5 1996/05/19 21:05:30 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -56,6 +56,9 @@ struct grfcvtext_mode {
 	unsigned short	fdend;
 };
 
+/* maximum console size */
+#define MAXROWS 200
+#define MAXCOLS 200
 
 /* read VGA register */
 #define vgar(ba, reg) (*(((volatile caddr_t)ba)+reg))

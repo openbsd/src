@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.6 1996/05/02 06:44:09 niklas Exp $  */
-/*	$NetBSD: ite.c,v 1.39 1996/04/21 21:11:52 veego Exp $	*/
+/*	$OpenBSD: ite.c,v 1.7 1996/05/29 10:15:27 niklas Exp $  */
+/*	$NetBSD: ite.c,v 1.41 1996/05/19 19:03:06 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,7 @@
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/kdassert.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
+#include <amiga/amiga/custom.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/iteioctl.h>
@@ -68,6 +69,8 @@
 #include <amiga/dev/kbdmap.h>
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
+
+#include <machine/cpu.h>	/* for is_draco() */
 
 #include <sys/conf.h>
 #include <machine/conf.h>
@@ -322,6 +325,9 @@ itecninit(cd)
 	iteinit(cd->cn_dev);
 	ip->flags |= ITE_ACTIVE | ITE_ISCONS;
 
+#ifdef DRACO
+	if (!is_draco())
+#endif
 	init_bell();
 }
 
@@ -2181,7 +2187,11 @@ iteputchar(c, ip)
 		}
 		break;
 	case BEL:
-		if (kbd_tty && kbd_ite && kbd_ite->tp == kbd_tty)
+		if (kbd_tty && kbd_ite && kbd_ite->tp == kbd_tty 
+#ifdef DRACO
+		    && !is_draco()	
+#endif
+		    )
 			ite_bell();
 		break;
 	case SO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_ul.c,v 1.2 1995/12/27 08:09:51 chopps Exp $	*/
+/*	$NetBSD: ite_ul.c,v 1.4 1996/05/10 13:02:35 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ignatios Souvatzis

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.amiga,v 1.12 1996/05/28 10:42:43 niklas Exp $
-#	$NetBSD: Makefile.amiga,v 1.40 1996/03/15 20:09:52 is Exp $
+#	$OpenBSD: Makefile.amiga,v 1.13 1996/05/29 10:14:44 niklas Exp $
+#	$NetBSD: Makefile.amiga,v 1.45 1996/05/16 17:07:08 is Exp $
 
 # Makefile for OpenBSD
 #
@@ -35,12 +35,16 @@ AMIGA=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Damiga
+
+CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes
+
 .if empty(IDENT:M-DM68060)
-CFLAGS=		${DEBUG} -O2 -Werror -m68020 -msoft-float ${COPTS}
+CMACHFLAGS=	-m68020 -msoft-float
 .else
-CFLAGS=		${DEBUG} -O2 -Werror -m68060 -msoft-float ${COPTS}
+CMACHFLAGS=	-m68060 -Wa,-m68030 -msoft-float
 .endif
 
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
@@ -62,6 +66,9 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 ### for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
+
+### for the Motorola 68060 Software Support Package
+.include "$S/arch/m68k/060sp/Makefile.inc"
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
@@ -94,7 +101,7 @@ NORMAL_G=	gspa < $< | gspahextoc > $*.c; ${CC} -c ${CFLAGS} ${PROF} $*.c
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o ${FPSP} \
+SYSTEM_OBJ=	locore.o ${FPSP} ${060SP} \
 		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@

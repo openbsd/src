@@ -1,5 +1,5 @@
-/*	$OpenBSD: idesc.c,v 1.4 1996/05/02 06:44:01 niklas Exp $	*/
-/*	$NetBSD: idesc.c,v 1.20 1996/04/28 06:36:16 mhitch Exp $	*/
+/*	$OpenBSD: idesc.c,v 1.5 1996/05/29 10:15:24 niklas Exp $	*/
+/*	$NetBSD: idesc.c,v 1.21 1996/05/12 02:26:03 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -535,15 +535,6 @@ ide_scsidone(dev, stat)
 #ifdef DIAGNOSTIC
 	if (xs == NULL)
 		panic("ide_scsidone");
-#endif
-#if 1
-	/*
-	 * XXX Support old-style instrumentation for now.
-	 * IS THIS REALLY THE RIGHT PLACE FOR THIS?  --thorpej
-	 */
-	if (xs->sc_link && xs->sc_link->device_softc &&
-	    ((struct device *)(xs->sc_link->device_softc))->dv_unit < dk_ndrive)
-		++dk_xfer[((struct device *)(xs->sc_link->device_softc))->dv_unit];
 #endif
 	/*
 	 * is this right?

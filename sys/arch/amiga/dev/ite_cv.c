@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite_cv.c,v 1.2 1996/05/02 06:44:12 niklas Exp $	*/
-/*	$NetBSD: ite_cv.c,v 1.2 1996/04/21 21:11:59 veego Exp $	*/
+/*	$OpenBSD: ite_cv.c,v 1.3 1996/05/29 10:15:28 niklas Exp $	*/
+/*	$NetBSD: ite_cv.c,v 1.3 1996/05/19 21:05:58 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -34,9 +34,8 @@
  */
 
 /*
- * The text console is based on ite_cl.c and ite_rh.c by
+ * This code is based on ite_cl.c and ite_rh.c by
  * Ezra Story, Kari Mettinen, Markus Wild, Lutz Vieweg.
- * The gfx console is based on ite_cc.c from Christian E. Hopps.
  */
 
 #include "grfcv.h"
@@ -67,20 +66,6 @@ static void cv_cursor __P((struct ite_softc *, int));
 static void cv_putc __P((struct ite_softc *, int, int, int, int));
 static void cv_clear __P((struct ite_softc *, int, int, int, int));
 static void cv_scroll __P((struct ite_softc *, int, int, int, int));
-
-#define MAXROWS 200
-#define MAXCOLS 200
-static unsigned short cv_rowc[MAXROWS];
-
-#ifndef CV_DONT_USE_CONBUFFER
-
-/*
- * Console buffer to avoid the slow reading from gfx mem.
- * this takes up 40k but it makes scrolling 3 times faster.
- * I'd like to alocate it dynamically.
- */
-static unsigned short console_buffer[MAXCOLS*MAXROWS];
-#endif
 
 /*
  * called from grf_cv to return console priority
@@ -133,27 +118,61 @@ cv_ite_deinit(ip)
 }
 
 
+static unsigned short cv_rowc[MAXCOLS*(MAXROWS+1)];
+
+/*
+ * Console buffer to avoid the slow reading from gfx mem.
+ */
+
+static unsigned short *console_buffer;
+
 void
 cv_ite_init(ip)
 	register struct ite_softc *ip;
 {
 	struct grfcvtext_mode *md;
 	int i;
+	static char first = 1;
+	volatile unsigned short *fb = (volatile unsigned short *)ip->grf->g_fbkva;
+	unsigned short *buffer;
+
 
 	ip->priv = ip->grf->g_data;
 	md = (struct grfcvtext_mode *) ip->grf->g_data;
 
 	ip->cols = md->cols;
 	ip->rows = md->rows;
-	if (ip->rows > MAXROWS)
-		panic ("ite_cv.c: Too many rows!");
+
+	/* alloc buffers */
+
+#if 0  /* XXX malloc seems not to work in early init :( */
+	if (cv_rowc)
+		free(cv_rowc, M_DEVBUF);
+ 
+	/* alloc all in one */
+	cv_rowc = malloc(sizeof(short) * (ip->rows + 1) * (ip->cols + 2),
+		M_DEVBUF, M_WAITOK);
+	if (!cv_rowc)
+		panic("No buffers for ite_cv!");
+#endif
+ 
+	console_buffer = cv_rowc + ip->rows + 1;
+
 
 	for (i = 0; i < ip->rows; i++)
 		cv_rowc[i] = i * ip->cols;
-#ifndef CV_DONT_USE_CONBUFFER
-	for (i = 0; i < MAXCOLS*MAXROWS; i++)
-		console_buffer[i] = 0x2007;
-#endif
+
+	if (first) {
+		for (i = 0; i < ip->rows * ip->cols; i++)
+			console_buffer[i] = 0x2007;
+		first = 0;
+	} else { /* restore console */
+		buffer = console_buffer;
+		for (i = 0; i < ip->rows * ip->cols; i++) {
+			*fb++ = *buffer++;
+			*fb++;
+		}
+	}
 }
 
 
@@ -204,11 +223,10 @@ cv_putc(ip, c, dy, dx, mode)
 	cp = fb + ((cv_rowc[dy] + dx) << 2); /* *4 */
 	*cp++ = (unsigned char) c;
 	*cp = (unsigned char) attr;
-#ifndef CV_DONT_USE_CONBUFFER
+
 	cp = (unsigned char *) &console_buffer[cv_rowc[dy]+dx];
 	*cp++ = (unsigned char) c;
 	*cp = (unsigned char) attr;
-#endif
 }
 
 
@@ -229,17 +247,15 @@ cv_clear(ip, sy, sx, h, w)
 
 	dst = (unsigned short *) (ip->grf->g_fbkva + (((sy * ip->cols) + sx) << 2));
 
-	for (len = w*h; len > 0 ; len--) {
+	for (len = w * h; len > 0 ; len--) {
 		*dst = 0x2007;
 		dst +=2;
 	}
 
-#ifndef CV_DONT_USE_CONBUFFER
 	dst = &console_buffer[(sy * ip->cols) + sx];
-	for (len = w*h; len > 0 ; len--) {
+	for (len = w * h; len > 0 ; len--) {
 		*dst++ = 0x2007;
 	}
-#endif
 }
 
 void
@@ -254,100 +270,70 @@ cv_scroll(ip, sy, sx, count, dir)
 	int i;
 	int len;
 
-	src = (unsigned short *)(ip->grf->g_fbkva + ((sy * ip->cols) << 2));
+	src = (unsigned short *)(ip->grf->g_fbkva + (cv_rowc[sy] << 2));
 
 	switch (dir) {
 	    case SCROLL_UP:
-		dst = src - ((count * ip->cols)<<1);
-#ifdef CV_DONT_USE_CONBUFFER
-		for (i = 0; i < (ip->bottom_margin + 1 - sy) * ip->cols; i++) {
-			*dst++ = *src++; /* copy only plane 0 and 1 */
-			dst++; src++;
-		}
-#else
-		len = (ip->bottom_margin + 1 - sy) * ip->cols;
-		src = &console_buffer[sy*ip->cols];
-#if 0
+		dst = src - ((cv_rowc[count])<<1);
+
+		len = cv_rowc[(ip->bottom_margin + 1 - sy)];
+		src = &console_buffer[cv_rowc[sy]];
+
 		if (count > sy) { /* boundary checks */
 			dst2 = console_buffer;
-			len -= (count - sy) * ip->cols;
-			src += (count - sy) * ip->cols;
-		} else 
-#endif
-			dst2 = &console_buffer[(sy-count)*ip->cols];
+			dst = (unsigned short *)(ip->grf->g_fbkva);
+			len -= cv_rowc[(count - sy)];
+			src += cv_rowc[(count - sy)];
+		} else
+			dst2 = &console_buffer[cv_rowc[(sy-count)]];
+
 		bcopy (src, dst2, len << 1);
 
 		for (i = 0; i < len; i++) {
 			*dst++ = *dst2++;
 			dst++;
 		}
-#endif
 		break;
 	    case SCROLL_DOWN:
-		dst = src + ((count * ip->cols)<<1);
-#ifdef CV_DONT_USE_CONBUFFER
-		len= (ip->bottom_margin + 1 - (sy + count)) * ip->cols;
-		dst += len << 1;
-		src += len << 1;
-		for (i = 0; i < len; i++) {
-			*dst-- = *src--;
-			dst--; src--;
-		}
-#else
-		len = (ip->bottom_margin + 1 - (sy + count)) * ip->cols;
-		src = &console_buffer[sy*ip->cols];
-		dst2 = &console_buffer[(sy+count)*ip->cols];
+		dst = src + ((cv_rowc[count]) << 1);
+
+		len = cv_rowc[(ip->bottom_margin + 1 - (sy + count))];
+		src = &console_buffer[cv_rowc[sy]];
+		dst2 = &console_buffer[cv_rowc[(sy + count)]];
+
+		if (len < 0)
+			return;  /* do some boundary check */
+
 		bcopy (src, dst2, len << 1);
 
 		for (i = 0; i < len; i++) {
 			*dst++ = *dst2++;
 			dst++;
 		}
-#endif
 		break;
 	    case SCROLL_RIGHT:
 		dst = src + ((sx+count)<<1);
-#ifdef CV_DONT_USE_CONBUFFER
-		src += sx << 1;
-		len = (ip->cols - (sx + count));
-		dst += (len-1) << 1;
-		src += (len-1) << 1;
-
-		for (i = 0; i < len ; i++) {
-			*dst-- = *src--;
-			dst--; src--;
-		}
-#else
-		src = &console_buffer[sy*ip->cols + sx];
+		src = &console_buffer[cv_rowc[sy] + sx];
 		len = ip->cols - (sx + count);
-		dst2 = &console_buffer[sy*ip->cols + sx + count];
+		dst2 = &console_buffer[cv_rowc[sy] + sx + count];
 		bcopy (src, dst2, len << 1);
 
 		for (i = 0; i < len; i++) {
 			*dst++ = *dst2++;
 			dst++;
 		}
-#endif
 		break;
 	    case SCROLL_LEFT:
 		dst = src + ((sx - count)<<1);
-#ifdef CV_DONT_USE_CONBUFFER
-		src += sx << 1;
-		for (i = 0; i < (ip->cols - sx) ; i++) {
-			*dst++ = *src++;
-			dst++; src++;
-		}
-#else
-		src = &console_buffer[sy*ip->cols + sx];
+		src = &console_buffer[cv_rowc[sy] + sx];
 		len = ip->cols - sx;
-		dst2 = &console_buffer[sy*ip->cols + sx - count];
+		dst2 = &console_buffer[cv_rowc[sy] + sx - count];
 		bcopy (src, dst2, len << 1);
 
 		for (i = 0; i < len; i++) {
 			*dst++ = *dst2++;
 			dst++;
 		}
-#endif
 	}
 }
 

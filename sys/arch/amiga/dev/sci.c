@@ -1,5 +1,5 @@
-/*	$OpenBSD: sci.c,v 1.3 1996/05/02 06:44:28 niklas Exp $	*/
-/*	$NetBSD: sci.c,v 1.16 1996/04/21 21:12:24 veego Exp $	*/
+/*	$OpenBSD: sci.c,v 1.4 1996/05/29 10:15:40 niklas Exp $	*/
+/*	$NetBSD: sci.c,v 1.17 1996/05/12 02:26:19 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -217,13 +217,6 @@ sci_scsidone(dev, stat)
 	if (xs == NULL)
 		panic("sci_scsidone");
 #endif
-	/*
-	 * XXX Support old-style instrumentation for now.
-	 * IS THIS REALLY THE RIGHT PLACE FOR THIS?  --thorpej
-	 */
-	if (xs->sc_link->device_softc &&
-	    ((struct device *)(xs->sc_link->device_softc))->dv_unit < dk_ndrive)
-		++dk_xfer[((struct device *)(xs->sc_link->device_softc))->dv_unit];
 	/*
 	 * is this right?
 	 */

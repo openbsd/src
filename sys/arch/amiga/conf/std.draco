@@ -1,0 +1,11 @@
+#	$NetBSD: std.draco,v 1.1 1996/05/09 20:31:04 is Exp $
+
+# standard amiga information
+
+machine amiga m68k
+
+mainbus0	at root
+
+clock0	at mainbus0
+kbd0	at mainbus0
+zbus0	at mainbus0

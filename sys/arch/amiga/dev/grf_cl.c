@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cl.c,v 1.4 1996/05/02 06:43:44 niklas Exp $	*/
-/*      $NetBSD: grf_cl.c,v 1.10 1996/04/28 06:31:47 mhitch Exp $        */
+/*	$OpenBSD: grf_cl.c,v 1.5 1996/05/29 10:14:57 niklas Exp $	*/
+/*      $NetBSD: grf_cl.c,v 1.11 1996/05/19 21:05:20 veego Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -80,7 +80,7 @@
 
 static int cl_mondefok __P((struct grfvideo_mode *));
 static void cl_boardinit __P((struct grf_softc *));
-static void CompFQ __P((u_int, u_char *, u_char *));
+static void cl_CompFQ __P((u_int, u_char *, u_char *));
 static int cl_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
 static int cl_setvmode __P((struct grf_softc *, unsigned int));
 static int cl_toggle __P((struct grf_softc *, unsigned short));
@@ -143,7 +143,8 @@ unsigned char clconscolors[3][3] = {	/* background, foreground, hilite */
 	{0, 0x40, 0x50}, {152, 152, 152}, {255, 255, 255}
 };
 
-int     cltype = 0;		/* Picasso, Spectrum or Piccolo */
+int	cltype = 0;		/* Picasso, Spectrum or Piccolo */
+int	cl_sd64 = 0;
 unsigned char pass_toggle;	/* passthru status tracker */
 
 /* because all 5426-boards have 2 configdev entries, one for
@@ -187,6 +188,7 @@ grfclmatch(pdp, match, auxp)
 #endif
 	struct zbus_args *zap;
 	static int regprod, fbprod;
+	int error;
 
 	zap = auxp;
 
@@ -200,25 +202,42 @@ grfclmatch(pdp, match, auxp)
 	 * multiple boards at the same time.  */
 	if (cltype == 0) {
 		switch (zap->manid) {
-		case PICASSO:
+		    case PICASSO:
 			if (zap->prodid != 12 && zap->prodid != 11)
 				return (0);
 			regprod = 12;
 			fbprod = 11;
 			break;
-		case SPECTRUM:
+		    case SPECTRUM:
 			if (zap->prodid != 2 && zap->prodid != 1)
 				return (0);
 			regprod = 2;
 			fbprod = 1;
 			break;
-		case PICCOLO:
-			if (zap->prodid != 6 && zap->prodid != 5)
-				return (0);
-			regprod = 6;
-			fbprod = 5;
-			break;
-		default:
+		    case PICCOLO:
+			switch (zap->prodid) {
+			    case 5:
+			    case 6:
+				regprod = 6;
+				fbprod = 5;
+				error = 0;
+				break;
+			    case 10:
+			    case 11:
+				regprod = 11;
+				fbprod = 10;
+				cl_sd64 = 1;
+				error = 0;
+				break;
+		    	    default:
+				error = 1;
+				break;
+			}
+			if (error == 1)
+			    return (0);
+			else
+			    break;
+		    default:
 			return (0);
 		}
 		cltype = zap->manid;
@@ -303,17 +322,25 @@ grfclattach(pdp, dp, auxp)
 		attachflag = 1;
 		printf("grfcl: %dMB ", cl_fbsize / 0x100000);
 		switch (cltype) {
-		case PICASSO:
+		    case PICASSO:
 			printf("Picasso II");
                         cl_maxpixelclock = 86000000;
 			break;
-		case SPECTRUM:
+		    case SPECTRUM:
 			printf("Spectrum");
                         cl_maxpixelclock = 90000000;
 			break;
-		case PICCOLO:
-			printf("Piccolo");
-                        cl_maxpixelclock = 90000000;
+		    case PICCOLO:
+			if (cl_sd64 == 1) {
+				printf("Piccolo SD64");
+				/* 110MHz will be supported if we
+				 * have a palette doubling mode.
+				 */
+				cl_maxpixelclock = 90000000;
+			} else {
+				printf("Piccolo");
+				cl_maxpixelclock = 90000000;
+			}
 			break;
 		}
 		printf(" being used\n");
@@ -356,12 +383,17 @@ cl_boardinit(gp)
 	/* setup initial unchanging parameters */
 
 	WSeq(ba, SEQ_ID_CLOCKING_MODE, 0x21);	/* 8 dot - display off */
-	vgaw(ba, GREG_MISC_OUTPUT_W, 0xe1);	/* mem disable */
+	vgaw(ba, GREG_MISC_OUTPUT_W, 0xed);	/* mem disable */
 
 	WGfx(ba, GCT_ID_OFFSET_1, 0xec);	/* magic cookie */
 	WSeq(ba, SEQ_ID_UNLOCK_EXT, 0x12);	/* yum! cookies! */
 
-	WSeq(ba, SEQ_ID_DRAM_CNTL, 0xb0);
+	if (cl_sd64 == 1) {
+		WSeq(ba, SEQ_ID_CONF_RBACK, 0x00);
+		WSeq(ba, SEQ_ID_DRAM_CNTL, (cl_fbsize / 0x100000 == 2) ? 0x38 : 0xb8);
+	} else {
+		WSeq(ba, SEQ_ID_DRAM_CNTL, 0xb0);
+	}
 	WSeq(ba, SEQ_ID_RESET, 0x03);
 	WSeq(ba, SEQ_ID_MAP_MASK, 0xff);
 	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x00);
@@ -386,6 +418,10 @@ cl_boardinit(gp)
 	WCrt(ba, CRT_ID_MODE_CONTROL, 0xa3);	/* c3 */
 	WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);	/* ff */
 	WCrt(ba, CRT_ID_EXT_DISP_CNTL, 0x22);
+	if (cl_sd64 == 1) {
+		WCrt(ba, CRT_ID_SYNC_ADJ_GENLOCK, 0x00);
+		WCrt(ba, CRT_ID_OVERLAY_EXT_CTRL_REG, 0x40);
+	}
 	WSeq(ba, SEQ_ID_CURSOR_STORE, 0x3c);	/* mouse 0x00 */
 
 	WGfx(ba, GCT_ID_SET_RESET, 0x00);
@@ -412,7 +448,7 @@ cl_boardinit(gp)
 
 	vgaw(ba, VDAC_MASK, 0xff);
 	delay(200000);
-	vgaw(ba, GREG_MISC_OUTPUT_W, 0xe3);	/* c3 */
+	vgaw(ba, GREG_MISC_OUTPUT_W, 0xef);
 
 	WGfx(ba, GCT_ID_BLT_STAT_START, 0x40);
 	WGfx(ba, GCT_ID_BLT_STAT_START, 0x00);
@@ -526,12 +562,12 @@ cl_mode(gp, cmd, arg, a2, a3)
 	int     error;
 
 	switch (cmd) {
-	case GM_GRFON:
+	    case GM_GRFON:
 		error = cl_load_mon(gp,
 		    (struct grfcltext_mode *) monitor_current) ? 0 : EINVAL;
 		return (error);
 
-	case GM_GRFOFF:
+	    case GM_GRFOFF:
 #ifndef CL5426CONSOLE
 		cl_off(gp);
 #else
@@ -539,27 +575,27 @@ cl_mode(gp, cmd, arg, a2, a3)
 #endif
 		return (0);
 
-	case GM_GRFCONFIG:
+	    case GM_GRFCONFIG:
 		return (0);
 
-	case GM_GRFGETVMODE:
+	    case GM_GRFGETVMODE:
 		return (cl_getvmode(gp, (struct grfvideo_mode *) arg));
 
-	case GM_GRFSETVMODE:
+	    case GM_GRFSETVMODE:
 		error = cl_setvmode(gp, *(unsigned *) arg);
 		if (!error && (gp->g_flags & GF_GRFON))
 			cl_load_mon(gp,
 			    (struct grfcltext_mode *) monitor_current);
 		return (error);
 
-	case GM_GRFGETNUMVM:
+	    case GM_GRFGETNUMVM:
 		*(int *) arg = monitor_def_max;
 		return (0);
 
-	case GM_GRFIOCTL:
+	    case GM_GRFIOCTL:
 		return (cl_ioctl(gp, a2, arg));
 
-	default:
+	    default:
 		break;
 	}
 
@@ -573,37 +609,37 @@ cl_ioctl(gp, cmd, data)
 	void   *data;
 {
 	switch (cmd) {
-	case GRFIOCGSPRITEPOS:
+	    case GRFIOCGSPRITEPOS:
 		return (cl_getmousepos(gp, (struct grf_position *) data));
 
-	case GRFIOCSSPRITEPOS:
+	    case GRFIOCSSPRITEPOS:
 		return (cl_setmousepos(gp, (struct grf_position *) data));
 
-	case GRFIOCSSPRITEINF:
+	    case GRFIOCSSPRITEINF:
 		return (cl_setspriteinfo(gp, (struct grf_spriteinfo *) data));
 
-	case GRFIOCGSPRITEINF:
+	    case GRFIOCGSPRITEINF:
 		return (cl_getspriteinfo(gp, (struct grf_spriteinfo *) data));
 
-	case GRFIOCGSPRITEMAX:
+	    case GRFIOCGSPRITEMAX:
 		return (cl_getspritemax(gp, (struct grf_position *) data));
 
-	case GRFIOCGETCMAP:
+	    case GRFIOCGETCMAP:
 		return (cl_getcmap(gp, (struct grf_colormap *) data));
 
-	case GRFIOCPUTCMAP:
+	    case GRFIOCPUTCMAP:
 		return (cl_putcmap(gp, (struct grf_colormap *) data));
 
-	case GRFIOCBITBLT:
+	    case GRFIOCBITBLT:
 		break;
 
-	case GRFTOGGLE:
+	    case GRFTOGGLE:
 		return (cl_toggle(gp, 0));
 
-	case GRFIOCSETMON:
+	    case GRFIOCSETMON:
 		return (cl_setmonitor(gp, (struct grfvideo_mode *) data));
 
-        case GRFIOCBLANK:
+            case GRFIOCBLANK:
                 return (cl_blank(gp, (int *)data));
 
 	}
@@ -950,18 +986,18 @@ cl_getcmap(gfp, cmap)
  */
 
 	switch (cltype) {
-	case SPECTRUM:
-	case PICCOLO:
+	    case SPECTRUM:
+	    case PICCOLO:
 		rp = blue + cmap->index;
 		gp = green + cmap->index;
 		bp = red + cmap->index;
 		break;
-	case PICASSO:
+	    case PICASSO:
 		rp = red + cmap->index;
 		gp = green + cmap->index;
 		bp = blue + cmap->index;
 		break;
-	default:
+	    default:
 		rp = gp = bp = 0;
 		break;
 	}
@@ -1005,18 +1041,18 @@ cl_putcmap(gfp, cmap)
 		x = cmap->count - 1;
 
 		switch (cltype) {
-		case SPECTRUM:
-		case PICCOLO:
+		    case SPECTRUM:
+		    case PICCOLO:
 			rp = blue + cmap->index;
 			gp = green + cmap->index;
 			bp = red + cmap->index;
 			break;
-		case PICASSO:
+		    case PICASSO:
 			rp = red + cmap->index;
 			gp = green + cmap->index;
 			bp = blue + cmap->index;
 			break;
-		default:
+		    default:
 			rp = gp = bp = 0;
 			break;
 		}
@@ -1053,7 +1089,7 @@ cl_toggle(gp, wopp)
 }
 
 static void
-CompFQ(fq, num, denom)
+cl_CompFQ(fq, num, denom)
 	u_int   fq;
 	u_char *num;
 	u_char *denom;
@@ -1126,18 +1162,18 @@ cl_mondefok(gv)
                         return(0);
 
 	switch (gv->depth) {
-	case 4:
+	    case 4:
                 if (gv->mode_num != 255)
                         return(0);
-	case 1:
-	case 8:
+	    case 1:
+	    case 8:
                 maxpix = cl_maxpixelclock;
                 break;
-	case 15:
-	case 16:
+	    case 15:
+	    case 16:
                 maxpix = cl_maxpixelclock - (cl_maxpixelclock / 3);
                 break;
-	case 24:
+	    case 24:
                 maxpix = cl_maxpixelclock / 3;
                 break;
 	default:
@@ -1163,6 +1199,7 @@ cl_load_mon(gp, md)
 	char    LACE, DBLSCAN, TEXT;
 	unsigned short clkdiv;
 	int     uplim, lowlim;
+	int	sr15;
 
 	/* identity */
 	gv = &md->gv;
@@ -1230,17 +1267,26 @@ cl_load_mon(gp, md)
 		VDE /= 2;
 
 	WSeq(ba, SEQ_ID_MEMORY_MODE, (TEXT || (gv->depth == 1)) ? 0x06 : 0x0e);
-	WSeq(ba, SEQ_ID_DRAM_CNTL, (TEXT || (gv->depth == 1)) ? 0x90 : 0xb0);
+	if (cl_sd64 == 1) {
+	    if (TEXT || (gv->depth == 1))
+		sr15 = 0x90;
+	    else
+		sr15 = ((cl_fbsize / 0x100000 == 2) ? 0x38 : 0xb8);
+	    WSeq(ba, SEQ_ID_CONF_RBACK, 0x00);
+	} else {
+		sr15 = (TEXT || (gv->depth == 1)) ? 0x90 : 0xb0;
+	}
+	WSeq(ba, SEQ_ID_DRAM_CNTL, sr15);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
 	WSeq(ba, SEQ_ID_MAP_MASK, (gv->depth == 1) ? 0x01 : 0xff);
 	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x00);
 
 	/* Set clock */
 
-	CompFQ((gv->depth == 24) ? gv->pixel_clock * 3 : gv->pixel_clock,
+	cl_CompFQ((gv->depth == 24) ? gv->pixel_clock * 3 : gv->pixel_clock,
 	    &num0, &denom0);
-	WSeq(ba, SEQ_ID_VCLK_0_NUM, num0);
-	WSeq(ba, SEQ_ID_VCLK_0_DENOM, denom0);
+	WSeq(ba, SEQ_ID_VCLK_3_NUM, num0);
+	WSeq(ba, SEQ_ID_VCLK_3_DENOM, denom0);
 
 	/* load display parameters into board */
 
@@ -1308,19 +1354,19 @@ cl_load_mon(gp, md)
 	/* depth dependent stuff */
 
 	switch (gv->depth) {
-	case 1:
-	case 4:
-	case 8:
+	    case 1:
+	    case 4:
+	    case 8:
 		clkdiv = 0;
 		break;
-	case 15:
-	case 16:
+	    case 15:
+	    case 16:
 		clkdiv = 3;
 		break;
-	case 24:
+	    case 24:
 		clkdiv = 2;
 		break;
-	default:
+	    default:
 		clkdiv = 0;
 		panic("grfcl: Unsuported depth: %i", gv->depth);
 		break;
@@ -1354,24 +1400,24 @@ cl_load_mon(gp, md)
 	vgar(ba, VDAC_MASK);
 	delay(200000);
 	switch (gv->depth) {
-	case 1:
-	case 4:		/* text */
+	    case 1:
+	    case 4:		/* text */
 		vgaw(ba, VDAC_MASK, 0);
 		HDE = gv->disp_width / 16;
 		break;
-	case 8:
+	    case 8:
 		vgaw(ba, VDAC_MASK, 0);
 		HDE = gv->disp_width / 8;
 		break;
-	case 15:
+	    case 15:
 		vgaw(ba, VDAC_MASK, 0xd0);
 		HDE = gv->disp_width / 4;
 		break;
-	case 16:
+	    case 16:
 		vgaw(ba, VDAC_MASK, 0xc1);
 		HDE = gv->disp_width / 4;
 		break;
-	case 24:
+	    case 24:
 		vgaw(ba, VDAC_MASK, 0xc5);
 		HDE = (gv->disp_width / 8) * 3;
 		break;
@@ -1386,6 +1432,10 @@ cl_load_mon(gp, md)
 	delay(20000);
 
 	WCrt(ba, CRT_ID_OFFSET, HDE);
+	if (cl_sd64 == 1) {
+		WCrt(ba, CRT_ID_SYNC_ADJ_GENLOCK, 0x00);
+		WCrt(ba, CRT_ID_OVERLAY_EXT_CTRL_REG, 0x40);
+	}
 	WCrt(ba, CRT_ID_EXT_DISP_CNTL,
 	    ((TEXT && gv->pixel_clock > 29000000) ? 0x40 : 0x00) |
 	    0x22 |
