@@ -1,8 +1,8 @@
-/*	$OpenBSD: boot.c,v 1.3 1997/03/02 05:25:51 millert Exp $	*/
-/*	$NetBSD: boot.c,v 1.3 1996/09/27 23:22:51 christos Exp $	*/
+/*	$OpenBSD: boot.c,v 1.4 1998/01/11 20:40:28 provos Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
- * Copyright (C) 1995 Wolfgang Solfrank
+ * Copyright (C) 1995, 1997 Wolfgang Solfrank
  * Copyright (c) 1995 Martin Husemann
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: boot.c,v 1.3 1997/03/02 05:25:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: boot.c,v 1.4 1998/01/11 20:40:28 provos Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -52,15 +52,22 @@ readboot(dosfs, boot)
 	struct bootblock *boot;
 {
 	u_char block[DOSBOOTBLOCKSIZE];
-	int n;
-	
-	if ((n = read(dosfs, block, sizeof block)) < (int)sizeof block) {
-		if (n < 0)
-			perror("could not read boot block");
-		else
-			pfatal("Short bootblock?");
+	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
+	u_char backup[DOSBOOTBLOCKSIZE];
+	int ret = FSOK;
+
+	if (read(dosfs, block, sizeof block) < sizeof block) {
+		perror("could not read boot block"); 		
 		return (FSFATAL);
 	}
+
+	if (block[510] != 0x55 || block[511] != 0xaa) {
+		pfatal("Invalid signature in boot block: %02x%02x", block[511], block[510]);
+		return FSFATAL;
+	}
+
+	memset(boot, 0, sizeof *boot);
+	boot->ValidFat = -1;
 
 	/* decode bios parameter block */
 	boot->BytesPerSec = block[11] + (block[12] << 8);
@@ -70,11 +77,95 @@ readboot(dosfs, boot)
 	boot->RootDirEnts = block[17] + (block[18] << 8);
 	boot->Sectors = block[19] + (block[20] << 8);
 	boot->Media = block[21];
-	boot->FATsecs = block[22] + (block[23] << 8);
+	boot->FATsmall = block[22] + (block[23] << 8);
 	boot->SecPerTrack = block[24] + (block[25] << 8);
 	boot->Heads = block[26] + (block[27] << 8);
 	boot->HiddenSecs = block[28] + (block[29] << 8) + (block[30] << 16) + (block[31] << 24);
 	boot->HugeSectors = block[32] + (block[33] << 8) + (block[34] << 16) + (block[35] << 24);
+
+	boot->FATsecs = boot->FATsmall;
+
+	if (!boot->RootDirEnts)
+		boot->flags |= FAT32;
+	if (boot->flags & FAT32) {
+		boot->FATsecs = block[36] + (block[37] << 8)
+				+ (block[38] << 16) + (block[39] << 24);
+		if (block[40] & 0x80)
+			boot->ValidFat = block[40] & 0x0f;
+
+		/* check version number: */
+		if (block[42] || block[43]) {
+			/* Correct?				XXX */
+			pfatal("Unknown filesystem version: %x.%x",
+			       block[43], block[42]);
+			return FSFATAL;
+		}
+		boot->RootCl = block[44] + (block[45] << 8)
+			       + (block[46] << 16) + (block[47] << 24);
+		boot->FSInfo = block[48] + (block[49] << 8);
+		boot->Backup = block[50] + (block[51] << 8);
+
+		if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
+		    != boot->FSInfo * boot->BytesPerSec
+		    || read(dosfs, fsinfo, sizeof fsinfo)
+		    != sizeof fsinfo) {
+			perror("could not read fsinfo block");
+			return FSFATAL;
+		}
+		if (memcmp(fsinfo, "RRaA", 4)
+		    || memcmp(fsinfo + 0x1e4, "rrAa", 4)
+		    || fsinfo[0x1fc]
+		    || fsinfo[0x1fd]
+		    || fsinfo[0x1fe] != 0x55
+		    || fsinfo[0x1ff] != 0xaa
+		    || fsinfo[0x3fc]
+		    || fsinfo[0x3fd]
+		    || fsinfo[0x3fe] != 0x55
+		    || fsinfo[0x3ff] != 0xaa) {
+			pwarn("Invalid signature in fsinfo block");
+			if (ask(0, "fix")) {
+				memcpy(fsinfo, "RRaA", 4);
+				memcpy(fsinfo + 0x1e4, "rrAa", 4);
+				fsinfo[0x1fc] = fsinfo[0x1fd] = 0;
+				fsinfo[0x1fe] = 0x55;
+				fsinfo[0x1ff] = 0xaa;
+				fsinfo[0x3fc] = fsinfo[0x3fd] = 0;
+				fsinfo[0x3fe] = 0x55;
+				fsinfo[0x3ff] = 0xaa;
+				if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
+				    != boot->FSInfo * boot->BytesPerSec
+				    || write(dosfs, fsinfo, sizeof fsinfo)
+				    != sizeof fsinfo) {
+					perror("Unable to write FSInfo");
+					return FSFATAL;
+				}
+				ret = FSBOOTMOD;
+			} else
+				boot->FSInfo = 0;
+		}
+		if (boot->FSInfo) {
+			boot->FSFree = fsinfo[0x1e8] + (fsinfo[0x1e9] << 8)
+				       + (fsinfo[0x1ea] << 16)
+				       + (fsinfo[0x1eb] << 24);
+			boot->FSNext = fsinfo[0x1ec] + (fsinfo[0x1ed] << 8)
+				       + (fsinfo[0x1ee] << 16)
+				       + (fsinfo[0x1ef] << 24);
+		}
+
+		if (lseek(dosfs, boot->Backup * boot->BytesPerSec, SEEK_SET)
+		    != boot->Backup * boot->BytesPerSec
+		    || read(dosfs, backup, sizeof backup) != sizeof  backup) {
+			perror("could not read backup bootblock");
+			return FSFATAL;
+		}
+		if (memcmp(block, backup, DOSBOOTBLOCKSIZE)) {
+			/* Correct?					XXX */
+			pfatal("backup doesn't compare to primary bootblock");
+			return FSFATAL;
+		}
+		/* Check backup FSInfo?					XXX */
+	}
+
 	boot->ClusterOffset = (boot->RootDirEnts * 32 + boot->BytesPerSec - 1)
 	    / boot->BytesPerSec
 	    + boot->ResSectors
@@ -82,11 +173,11 @@ readboot(dosfs, boot)
 	    - CLUST_FIRST * boot->SecPerClust;
 
 	if (boot->BytesPerSec % DOSBOOTBLOCKSIZE != 0) {
-		pfatal("Invalid sector size: %u\n", boot->BytesPerSec);
+		pfatal("Invalid sector size: %u", boot->BytesPerSec);
 		return (FSFATAL);
 	}
 	if (boot->SecPerClust == 0) {
-		pfatal("Invalid cluster size: %u\n", boot->SecPerClust);
+		pfatal("Invalid cluster size: %u", boot->SecPerClust);
 		return (FSFATAL);
 	}
 	if (boot->Sectors) {
@@ -95,17 +186,33 @@ readboot(dosfs, boot)
 	} else
 		boot->NumSectors = boot->HugeSectors;
 	boot->NumClusters = (boot->NumSectors - boot->ClusterOffset) / boot->SecPerClust;
-	if (boot->NumClusters >= MAX12BITCLUSTERS)
-		boot->Is16BitFat = 1;
-	else
-		boot->Is16BitFat = 0;
 
-	if (boot->Is16BitFat)
+	if (boot->flags&FAT32)
+		boot->ClustMask = CLUST32_MASK;
+	else if (boot->NumClusters < (CLUST_RSRVD&CLUST12_MASK))
+		boot->ClustMask = CLUST12_MASK;
+	else if (boot->NumClusters < (CLUST_RSRVD&CLUST16_MASK))
+		boot->ClustMask = CLUST16_MASK;
+	else {
+		pfatal("Filesystem too big (%u clusters) for non-FAT32 partition",
+		       boot->NumClusters);
+		return FSFATAL;
+	}
+
+	switch (boot->ClustMask) {
+	case CLUST32_MASK:
+		boot->NumFatEntries = (boot->FATsecs * boot->BytesPerSec) / 4;
+		break;
+	case CLUST16_MASK:
 		boot->NumFatEntries = (boot->FATsecs * boot->BytesPerSec) / 2;
-	else
+		break;
+	default:
 		boot->NumFatEntries = (boot->FATsecs * boot->BytesPerSec * 2) / 3;
+		break;
+	}
+
 	if (boot->NumFatEntries < boot->NumClusters) {
-		pfatal("FAT size too small, %d entries won't fit into %u sectors\n", 
+		pfatal("FAT size too small, %u entries won't fit into %u sectors\n",
 		       boot->NumClusters, boot->FATsecs);
 		return (FSFATAL);
 	}
@@ -113,6 +220,37 @@ readboot(dosfs, boot)
 
 	boot->NumFiles = 1;
 	boot->NumFree = 0;
-	
-	return (FSOK);
+
+	return ret;
+}
+
+int
+writefsinfo(dosfs, boot)
+	int dosfs;
+	struct bootblock *boot;
+{
+	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
+
+	if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
+	    != boot->FSInfo * boot->BytesPerSec
+	    || read(dosfs, fsinfo, sizeof fsinfo) != sizeof fsinfo) {
+		perror("could not read fsinfo block");
+		return FSFATAL;
+	}
+	fsinfo[0x1e8] = (u_char)boot->FSFree;
+	fsinfo[0x1e9] = (u_char)(boot->FSFree >> 8);
+	fsinfo[0x1ea] = (u_char)(boot->FSFree >> 16);
+	fsinfo[0x1eb] = (u_char)(boot->FSFree >> 24);
+	fsinfo[0x1ec] = (u_char)boot->FSNext;
+	fsinfo[0x1ed] = (u_char)(boot->FSNext >> 8);
+	fsinfo[0x1ee] = (u_char)(boot->FSNext >> 16);
+	fsinfo[0x1ef] = (u_char)(boot->FSNext >> 24);
+	if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
+	    != boot->FSInfo * boot->BytesPerSec
+	    || write(dosfs, fsinfo, sizeof fsinfo)
+	    != sizeof fsinfo) {
+		perror("Unable to write FSInfo");
+		return FSFATAL;
+	}
+	return FSBOOTMOD;
 }

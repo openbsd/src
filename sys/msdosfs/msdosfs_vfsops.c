@@ -1,9 +1,9 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.12 1997/11/10 21:17:29 provos Exp $	*/
-/*	$NetBSD: msdosfs_vfsops.c,v 1.44 1996/12/22 10:10:32 cgd Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.13 1998/01/11 20:39:10 provos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
- * Copyright (C) 1994, 1995 Wolfgang Solfrank.
- * Copyright (C) 1994, 1995 TooLs GmbH.
+ * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995, 1997 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -224,14 +224,18 @@ msdosfs_mount(mp, path, data, ndp, p)
 		/*
 		 * Try to divine whether to support Win'95 long filenames
 		 */
-		if ((error = msdosfs_root(mp, &rootvp)) != 0) {
-			msdosfs_unmount(mp, MNT_FORCE, p);
-			return (error);
+		if (FAT32(pmp))
+		        pmp->pm_flags |= MSDOSFSMNT_LONGNAME;
+		else {
+		        if ((error = msdosfs_root(mp, &rootvp)) != 0) {
+			        msdosfs_unmount(mp, MNT_FORCE, p);
+			        return (error);
+			}
+			pmp->pm_flags |= findwin95(VTODE(rootvp))
+			     ? MSDOSFSMNT_LONGNAME
+			     : MSDOSFSMNT_SHORTNAME;
+			vput(rootvp);
 		}
-		pmp->pm_flags |= findwin95(VTODE(rootvp))
-		    ? MSDOSFSMNT_LONGNAME
-		    : MSDOSFSMNT_SHORTNAME;
-		vput(rootvp);
 	}
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -258,6 +262,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	union bootsector *bsp;
 	struct byte_bpb33 *b33;
 	struct byte_bpb50 *b50;
+	struct byte_bpb710 *b710;
 	extern struct vnode *rootvp;
 	u_int8_t SecPerClust;
 	int	ronly, error;
@@ -321,13 +326,14 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	bsp = (union bootsector *)bp->b_data;
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
-#ifdef MSDOSFS_CHECKSIG
-	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)
-		&& (bsp->bs50.bsBootSectSig != BOOTSIG)) {
-		error = EFTYPE;
-		goto error_exit;
+	b710 = (struct byte_bpb710 *)bsp->bs710.bsPBP;
+	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
+	        if (bsp->bs50.bsBootSectSig0 != BOOTSIG0
+		    || bsp->bs50.bsBootSectSig1 != BOOTSIG1) {
+		        error = EINVAL;
+			goto error_exit;
+		}
 	}
-#endif
 
 	pmp = malloc(sizeof *pmp, M_MSDOSFSMNT, M_WAITOK);
 	bzero((caddr_t)pmp, sizeof *pmp);
@@ -365,8 +371,45 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		pmp->pm_HiddenSects = getushort(b33->bpbHiddenSecs);
 		pmp->pm_HugeSectors = pmp->pm_Sectors;
 	}
+	if (pmp->pm_HugeSectors > 0xffffffff / pmp->pm_BytesPerSec + 1) {
+	        /*
+		 * We cannot deal currently with this size of disk
+		 * due to fileid limitations (see msdosfs_getattr and
+		 * msdosfs_readdir)
+		 */
+	        error = EINVAL;
+		goto error_exit;
+	}
+
+	if (pmp->pm_RootDirEnts == 0) {
+                if (bsp->bs710.bsBootSectSig2 != BOOTSIG2
+		    || bsp->bs710.bsBootSectSig3 != BOOTSIG3
+		    || pmp->pm_Sectors
+		    || pmp->pm_FATsecs
+		    || getushort(b710->bpbFSVers)) {
+		        error = EINVAL;
+			goto error_exit;
+		}
+		pmp->pm_fatmask = FAT32_MASK;
+		pmp->pm_fatmult = 4;
+		pmp->pm_fatdiv = 1;
+		pmp->pm_FATsecs = getulong(b710->bpbBigFATsecs);
+		if (getushort(b710->bpbExtFlags) & FATMIRROR)
+		        pmp->pm_curfat = getushort(b710->bpbExtFlags) & FATNUM;
+		else
+		        pmp->pm_flags |= MSDOSFS_FATMIRROR;
+	} else
+	        pmp->pm_flags |= MSDOSFS_FATMIRROR;
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
+	        if (FAT32(pmp)) {
+		        /*
+			 * GEMDOS doesn't know fat32.
+			 */
+		        error = EINVAL;
+			goto error_exit;
+		}
+
 		/*
 		 * Check a few values (could do some more):
 		 * - logical sector size: power of 2, >= block size
@@ -400,12 +443,20 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		SecPerClust         *= tmp;
 	}
 	pmp->pm_fatblk = pmp->pm_ResSectors;
-	pmp->pm_rootdirblk = pmp->pm_fatblk +
-	    (pmp->pm_FATs * pmp->pm_FATsecs);
-	pmp->pm_rootdirsize = (pmp->pm_RootDirEnts * sizeof(struct direntry)
-	    + pmp->pm_BytesPerSec - 1)
-	    / pmp->pm_BytesPerSec;/* in sectors */
-	pmp->pm_firstcluster = pmp->pm_rootdirblk + pmp->pm_rootdirsize;
+	if (FAT32(pmp)) {
+	        pmp->pm_rootdirblk = getulong(b710->bpbRootClust);
+		pmp->pm_firstcluster = pmp->pm_fatblk
+		        + (pmp->pm_FATs * pmp->pm_FATsecs);
+		pmp->pm_fsinfo = getushort(b710->bpbFSInfo);
+	} else {
+	        pmp->pm_rootdirblk = pmp->pm_fatblk +
+		        (pmp->pm_FATs * pmp->pm_FATsecs);
+		pmp->pm_rootdirsize = (pmp->pm_RootDirEnts * sizeof(struct direntry)
+				       + pmp->pm_BytesPerSec - 1)
+		        / pmp->pm_BytesPerSec;/* in sectors */
+		pmp->pm_firstcluster = pmp->pm_rootdirblk + pmp->pm_rootdirsize;
+	}
+
 	pmp->pm_nmbrofclusters = (pmp->pm_HugeSectors - pmp->pm_firstcluster) /
 	    SecPerClust;
 	pmp->pm_maxcluster = pmp->pm_nmbrofclusters + 1;
@@ -415,21 +466,31 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		if ((pmp->pm_nmbrofclusters <= (0xff0 - 2))
 		      && ((dtype == DTYPE_FLOPPY) || ((dtype == DTYPE_VNODE)
 		      && ((pmp->pm_Heads == 1) || (pmp->pm_Heads == 2))))
-		   )
-			pmp->pm_fatentrysize = 12;
-		else
-			pmp->pm_fatentrysize = 16;
-	} else {
+		     ) {
+		        pmp->pm_fatmask = FAT12_MASK;
+			pmp->pm_fatmult = 3;
+			pmp->pm_fatdiv = 2;
+		} else {
+		        pmp->pm_fatmask = FAT16_MASK;
+			pmp->pm_fatmult = 2;
+			pmp->pm_fatdiv = 1;
+		}
+	} else if (pmp->pm_fatmask == 0) {
 		if (pmp->pm_maxcluster
-		    <= ((CLUST_RSRVS - CLUST_FIRST) & FAT12_MASK))
+		    <= ((CLUST_RSRVD - CLUST_FIRST) & FAT12_MASK)) {
 			/*
 			 * This will usually be a floppy disk. This size makes
 			 * sure that one fat entry will not be split across
 			 * multiple blocks.
 			 */
-			pmp->pm_fatentrysize = 12;
-		else
-			pmp->pm_fatentrysize = 16;
+			pmp->pm_fatmask = FAT12_MASK;
+			pmp->pm_fatmult = 3;
+			pmp->pm_fatdiv = 2;
+		} else {
+			pmp->pm_fatmask = FAT16_MASK;
+			pmp->pm_fatmult = 2;
+			pmp->pm_fatdiv = 1;
+		}
 	}
 	if (FAT12(pmp))
 		pmp->pm_fatblocksize = 3 * pmp->pm_BytesPerSec;
@@ -461,6 +522,30 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 */
 	brelse(bp);
 	bp = NULL;
+
+	/*
+	 * Check FSInfo
+	 */
+	if (pmp->pm_fsinfo) {
+	        struct fsinfo *fp;
+
+		if ((error = bread(devvp, pmp->pm_fsinfo, 1024, NOCRED, &bp)) != 0)
+		        goto error_exit;
+		fp = (struct fsinfo *)bp->b_data;
+		if (!bcmp(fp->fsisig1, "RRaA", 4)
+		    && !bcmp(fp->fsisig2, "rrAa", 4)
+		    && !bcmp(fp->fsisig3, "\0\0\125\252", 4)
+		    && !bcmp(fp->fsisig4, "\0\0\125\252", 4))
+		        pmp->pm_nxtfree = getulong(fp->fsinxtfree);
+		else
+		        pmp->pm_fsinfo = 0;
+		brelse(bp);
+		bp = NULL;
+	}
+
+	/*
+	 * Check and validate (or perhaps invalidate?) the fsinfo structure? XXX
+	 */
 
 	/*
 	 * Allocate memory for the bitmap of allocated clusters, and then

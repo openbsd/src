@@ -1,9 +1,9 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.14 1997/11/11 18:57:17 niklas Exp $	*/
-/*	$NetBSD: msdosfs_vnops.c,v 1.48 1996/03/20 00:45:43 thorpej Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.15 1998/01/11 20:39:10 provos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994, 1995 Wolfgang Solfrank.
- * Copyright (C) 1994, 1995 TooLs GmbH.
+ * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995, 1997 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -265,10 +265,12 @@ msdosfs_getattr(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	u_int cn;
 	struct denode *dep = VTODE(ap->a_vp);
+	struct msdosfsmount *pmp = dep->de_pmp;
 	struct vattr *vap = ap->a_vap;
 	struct timespec ts;
+	u_long dirsperblk = pmp->pm_BytesPerSec / sizeof(struct direntry);
+	u_long fileid;
 
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	DETIMES(dep, &ts, &ts, &ts);
@@ -279,15 +281,16 @@ msdosfs_getattr(v)
 	 * doesn't work.
 	 */
 	if (dep->de_Attributes & ATTR_DIRECTORY) {
-		if ((cn = dep->de_StartCluster) == MSDOSFSROOT)
-			cn = 1;
+	        fileid = cntobn(pmp, dep->de_StartCluster) * dirsperblk;
+		if (dep->de_StartCluster == MSDOSFSROOT)
+		        fileid = 1;
 	} else {
-		if ((cn = dep->de_dirclust) == MSDOSFSROOT)
-			cn = 1;
-		cn = (cn << 16)
-		    | ((dep->de_diroffset / sizeof(struct direntry)) & 0xffff);
+	        fileid = cntobn(pmp, dep->de_dirclust) * dirsperblk;
+		if (dep->de_dirclust == MSDOSFSROOT)
+		        fileid = roottobn(pmp, 0) * dirsperblk;
+		fileid += dep->de_diroffset / sizeof(struct direntry);
 	}
-	vap->va_fileid = cn;
+	vap->va_fileid = fileid;
 	vap->va_mode = (S_IXUSR|S_IXGRP|S_IXOTH) | (S_IRUSR|S_IRGRP|S_IROTH) |
 		((dep->de_Attributes & ATTR_READONLY) ? 0 : (S_IWUSR|S_IWGRP|S_IWOTH));
 	vap->va_mode &= dep->de_pmp->pm_mask;
@@ -298,16 +301,10 @@ msdosfs_getattr(v)
 	vap->va_uid = dep->de_pmp->pm_uid;
 	vap->va_rdev = 0;
 	vap->va_size = dep->de_FileSize;
-	dos2unixtime(dep->de_MDate, dep->de_MTime, &vap->va_mtime);
+	dos2unixtime(dep->de_MDate, dep->de_MTime, 0, &vap->va_mtime);
 	if (dep->de_pmp->pm_flags & MSDOSFSMNT_LONGNAME) {
-		dos2unixtime(dep->de_ADate, 0, &vap->va_atime);
-		dos2unixtime(dep->de_CDate, dep->de_CTime, &vap->va_ctime);
-		if (dep->de_CTimeHundredth >= 100) {
-			vap->va_ctime.tv_sec++;
-			vap->va_ctime.tv_nsec = (dep->de_CTimeHundredth - 100) * 10000000;
-		} else
-			vap->va_ctime.tv_nsec = dep->de_CTimeHundredth * 10000000; 
-
+		dos2unixtime(dep->de_ADate, 0, 0, &vap->va_atime);
+		dos2unixtime(dep->de_CDate, dep->de_CTime, dep->de_CTimeHundredth, &vap->va_ctime);
 	} else {
 		vap->va_atime = vap->va_mtime;
 		vap->va_ctime = vap->va_mtime;
@@ -377,9 +374,9 @@ msdosfs_setattr(v)
 			return (error);
 		if (!(dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 		    && vap->va_atime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_atime, &dep->de_ADate, NULL);
+			unix2dostime(&vap->va_atime, &dep->de_ADate, NULL, NULL);
 		if (vap->va_mtime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime);
+			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
 	}
@@ -988,6 +985,14 @@ abortit:
 		vrele(fvp);
 		return (error);
 	}
+	
+	/*
+	 * If source and dest are the same, do nothing.
+	 */
+	if (tvp == fvp) {
+	        error = 0;
+		goto abortit;
+	}
 
 	/* */
 	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
@@ -1243,7 +1248,7 @@ struct {
 		0,					/* create time 100ths */
 		{ 0, 0 }, { 0, 0 },			/* create time & date */
 		{ 0, 0 },	 			/* access date */
-		{ 0, 0 },				/* reserved */
+		{ 0, 0 },				/* high bits of start cluster */
 		{ 210, 4 }, { 210, 4 },			/* modify time & date */
 		{ 0, 0 },				/* startcluster */
 		{ 0, 0, 0, 0 } 				/* filesize */
@@ -1254,7 +1259,7 @@ struct {
 		0,					/* create time 100ths */
 		{ 0, 0 }, { 0, 0 },			/* create time & date */
 		{ 0, 0 },				/* access date */
-		{ 0, 0 },				/* reserved */
+		{ 0, 0 },				/* high bits of start cluster */
 		{ 210, 4 }, { 210, 4 },			/* modify time & date */
 		{ 0, 0 },				/* startcluster */
 		{ 0, 0, 0, 0 }				/* filesize */
@@ -1277,7 +1282,7 @@ msdosfs_mkdir(v)
 	struct denode *pdep = VTODE(ap->a_dvp);
 	int error;
 	int bn;
-	u_long newcluster;
+	u_long newcluster, pcl;
 	struct direntry *denp;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	struct buf *bp;
@@ -1325,13 +1330,21 @@ msdosfs_mkdir(v)
 	putushort(denp[0].deADate, ndirent.de_ADate);
 	putushort(denp[0].deMDate, ndirent.de_MDate);
 	putushort(denp[0].deMTime, ndirent.de_MTime);
-	putushort(denp[1].deStartCluster, pdep->de_StartCluster);
+	pcl = pdep->de_StartCluster;
+	if (FAT32(pmp) && pcl == pmp->pm_rootdirblk)
+	        pcl = 0;
+	putushort(denp[1].deStartCluster, pcl);
 	putushort(denp[1].deCDate, ndirent.de_CDate);
 	putushort(denp[1].deCTime, ndirent.de_CTime);
 	denp[1].deCTimeHundredth = ndirent.de_CTimeHundredth;
 	putushort(denp[1].deADate, ndirent.de_ADate);
 	putushort(denp[1].deMDate, ndirent.de_MDate);
 	putushort(denp[1].deMTime, ndirent.de_MTime);
+	if (FAT32(pmp)) {
+	        putushort(denp[0].deHighClust, newcluster >> 16);
+		putushort(denp[1].deHighClust, pdep->de_StartCluster >> 16);
+	}
+
 	if ((error = bwrite(bp)) != 0)
 		goto bad;
 
@@ -1474,6 +1487,7 @@ msdosfs_readdir(v)
 	long on;
 	long lost;
 	long count;
+	u_long dirsperblk;
 	u_long cn;
 	u_long fileno;
 	long bias = 0;
@@ -1529,6 +1543,8 @@ msdosfs_readdir(v)
 		*ap->a_ncookies = ncookies;
 	}
 
+	dirsperblk = pmp->pm_BytesPerSec / sizeof(struct direntry);
+
 	/*
 	 * If they are reading from the root directory then, we simulate
 	 * the . and .. entries since these don't exist in the root
@@ -1536,7 +1552,8 @@ msdosfs_readdir(v)
 	 * simulate these entries. By this I mean that at file offset 64 we
 	 * read the first entry in the root directory that lives on disk.
 	 */
-	if (dep->de_StartCluster == MSDOSFSROOT) {
+	if (dep->de_StartCluster == MSDOSFSROOT
+	    || (FAT32(pmp) && dep->de_StartCluster == pmp->pm_rootdirblk)) {
 #if 0
 		printf("msdosfs_readdir(): going after . or .. in root dir, offset %d\n",
 		    offset);
@@ -1545,7 +1562,12 @@ msdosfs_readdir(v)
 		if (offset < bias) {
 			for (n = (int)offset / sizeof(struct direntry);
 			     n < 2; n++) {
-				dirbuf.d_fileno = 1;
+			        if (FAT32(pmp))
+				        dirbuf.d_fileno = cntobn(pmp,
+								 pmp->pm_rootdirblk)
+					                  * dirsperblk;
+				else
+				        dirbuf.d_fileno = 1;
 				dirbuf.d_type = DT_DIR;
 				switch (n) {
 				case 0:
@@ -1640,23 +1662,33 @@ msdosfs_readdir(v)
 			 * msdosfs_getattr.
 			 */
 			if (dentp->deAttributes & ATTR_DIRECTORY) {
-				/* if this is the root directory */
 				fileno = getushort(dentp->deStartCluster);
+				if (FAT32(pmp))
+				        fileno |= getushort(dentp->deHighClust) << 16;
+				/* if this is the root directory */
 				if (fileno == MSDOSFSROOT)
-					fileno = 1;
+				        if (FAT32(pmp))
+					        fileno = cntobn(pmp,
+								pmp->pm_rootdirblk)
+						         * dirsperblk;
+					else
+					        fileno = 1;
+				else
+				        fileno = cntobn(pmp, fileno) * dirsperblk;
+				dirbuf.d_fileno = fileno;
+				dirbuf.d_type = DT_DIR;
 			} else {
 				/*
 				 * If the file's dirent lives in
 				 * root dir.
 				 */
-				if ((fileno = cn) == MSDOSFSROOT)
-					fileno = 1;
-				fileno = (fileno << 16) |
-				    ((dentp - (struct direntry *)bp->b_data) & 0xffff);
+			        fileno = cntobn(pmp, cn) * dirsperblk;
+				if (cn == MSDOSFSROOT)
+				        fileno = roottobn(pmp, 0) * dirsperblk;
+				fileno += dentp - (struct direntry *)bp->b_data;
+				dirbuf.d_fileno = fileno;
+				dirbuf.d_type = DT_REG;
 			}
-			dirbuf.d_fileno = fileno;
-			dirbuf.d_type =
-			    (dentp->deAttributes & ATTR_DIRECTORY) ? DT_DIR : DT_REG;
 			if (chksum != winChksum(dentp->deName))
 				dirbuf.d_namlen = dos2unixfn(dentp->deName,
 				    (u_char *)dirbuf.d_name,
@@ -1874,7 +1906,7 @@ msdosfs_print(v)
 	struct denode *dep = VTODE(ap->a_vp);
 
 	printf(
-	    "tag VT_MSDOSFS, startcluster %d, dircluster %ld, diroffset %ld ",
+	    "tag VT_MSDOSFS, startcluster %ld, dircluster %ld, diroffset %ld ",
 	    dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
 	printf(" dev %d, %d, %s\n",
 	    major(dep->de_dev), minor(dep->de_dev),

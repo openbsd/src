@@ -1,9 +1,9 @@
-/*	$OpenBSD: fat.h,v 1.3 1996/02/29 10:46:47 niklas Exp $	*/
-/*	$NetBSD: fat.h,v 1.10 1996/02/11 22:48:14 ws Exp $	*/
+/*	$OpenBSD: fat.h,v 1.4 1998/01/11 20:39:05 provos Exp $	*/
+/*	$NetBSD: fat.h,v 1.11 1997/10/17 11:23:49 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994 Wolfgang Solfrank.
- * Copyright (C) 1994 TooLs GmbH.
+ * Copyright (C) 1994, 1997 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1997 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -51,18 +51,18 @@
 /*
  * Some useful cluster numbers.
  */
-#define	MSDOSFSROOT	0	/* cluster 0 means the root dir */
-#define	CLUST_FREE	0	/* cluster 0 also means a free cluster */
+#define	MSDOSFSROOT	0		/* cluster 0 means the root dir */
+#define	CLUST_FREE	0		/* cluster 0 also means a free cluster */
 #define	MSDOSFSFREE	CLUST_FREE
-#define	CLUST_FIRST	2	/* first legal cluster number */
-#define	CLUST_RSRVS	0xfff0	/* start of reserved cluster range */
-#define	CLUST_RSRVE	0xfff6	/* end of reserved cluster range */
-#define	CLUST_BAD	0xfff7	/* a cluster with a defect */
-#define	CLUST_EOFS	0xfff8	/* start of eof cluster range */
-#define	CLUST_EOFE	0xffff	/* end of eof cluster range */
+#define	CLUST_FIRST	2		/* first legal cluster number */
+#define	CLUST_RSRVD	0xfffffff6	/* reserved cluster range */
+#define	CLUST_BAD	0xfffffff7	/* a cluster with a defect */
+#define	CLUST_EOFS	0xfffffff8	/* start of eof cluster range */
+#define	CLUST_EOFE	0xffffffff	/* end of eof cluster range */
 
-#define	FAT12_MASK	0x0fff	/* mask for 12 bit cluster numbers */
-#define	FAT16_MASK	0xffff	/* mask for 16 bit cluster numbers */
+#define	FAT12_MASK	0x00000fff	/* mask for 12 bit cluster numbers */
+#define	FAT16_MASK	0x0000ffff	/* mask for 16 bit cluster numbers */
+#define	FAT32_MASK	0x0fffffff	/* mask for FAT32 cluster numbers */
 
 /*
  * MSDOSFS:
@@ -77,10 +77,11 @@
  * and store the result in the pm_fatentrysize. Note that this kind of
  * detection gets flakey when mounting a vnd-device.
  */
-#define	FAT12(pmp)	(pmp->pm_fatentrysize == 12)
-#define	FAT16(pmp)	(pmp->pm_fatentrysize == 16)
+#define	FAT12(pmp)	(pmp->pm_fatmask == FAT12_MASK)
+#define	FAT16(pmp)	(pmp->pm_fatmask == FAT16_MASK)
+#define	FAT32(pmp)	(pmp->pm_fatmask == FAT32_MASK)
 
-#define	MSDOSFSEOF(cn)	(((cn) & 0xfff8) == 0xfff8)
+#define	MSDOSFSEOF(pmp, cn)	((((cn) | ~(pmp)->pm_fatmask) & CLUST_EOFS) == CLUST_EOFS)
 
 #ifdef _KERNEL
 /*

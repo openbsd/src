@@ -1,9 +1,9 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.8 1997/11/06 05:58:59 csapuntz Exp $	*/
-/*	$NetBSD: msdosfsmount.h,v 1.15 1996/12/22 10:31:41 cgd Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.9 1998/01/11 20:39:11 provos Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.16 1997/10/17 11:24:24 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994, 1995 Wolfgang Solfrank.
- * Copyright (C) 1994, 1995 TooLs GmbH.
+ * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995, 1997 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -59,8 +59,9 @@ struct msdosfsmount {
 	mode_t pm_mask;		/* mask to and with file protection bits */
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
+	u_long pm_FATsecs;	/* actual number of fat sectors */
 	u_long pm_fatblk;	/* block # of first FAT */
-	u_long pm_rootdirblk;	/* block # of root directory */
+	u_long pm_rootdirblk;	/* block # (cluster # for FAT32) of root directory number */
 	u_long pm_rootdirsize;	/* size in blocks (not clusters) */
 	u_long pm_firstcluster;	/* block number of first cluster */
 	u_long pm_nmbrofclusters;	/* # of clusters in filesystem */
@@ -74,11 +75,18 @@ struct msdosfsmount {
 	u_long pm_fatblocksize;	/* size of fat blocks in bytes */
 	u_long pm_fatblocksec;	/* size of fat blocks in sectors */
 	u_long pm_fatsize;	/* size of fat in bytes */
+	u_long pm_fatmask;	/* mask to use for fat numbers */
+	u_long pm_fsinfo;	/* fsinfo block number */
+	u_long pm_nxtfree;	/* next free cluster in fsinfo block */
+	u_int pm_fatmult;	/* these 2 values are used in fat */
+	u_int pm_fatdiv;	/*	offset computation */
+	u_int pm_curfat;	/* current fat for FAT32 (0 otherwise) */
 	u_int *pm_inusemap;	/* ptr to bitmap of in-use clusters */
 	u_int pm_flags;		/* see below */
 	struct netexport pm_export;	/* export information */
-	u_int  pm_fatentrysize;	/* size of fat entry (12/16) */
 };
+/* Byte offset in FAT on filesystem pmp, cluster cn */
+#define	FATOFS(pmp, cn)	((cn) * (pmp)->pm_fatmult / (pmp)->pm_fatdiv)
 
 /*
  * Mount point flags:
@@ -97,6 +105,7 @@ struct msdosfsmount {
 	 |MSDOSFSMNT_GEMDOSFS)
 #define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
 #define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
+#define	MSDOSFS_FATMIRROR	0x20000000	/* FAT is mirrored */
 
 #define	VFSTOMSDOSFS(mp)	((struct msdosfsmount *)mp->mnt_data)
 
@@ -112,7 +121,6 @@ struct msdosfsmount {
 #define	pm_RootDirEnts	pm_bpb.bpbRootDirEnts
 #define	pm_Sectors	pm_bpb.bpbSectors
 #define	pm_Media	pm_bpb.bpbMedia
-#define	pm_FATsecs	pm_bpb.bpbFATsecs
 #define	pm_SecPerTrack	pm_bpb.bpbSecPerTrack
 #define	pm_Heads	pm_bpb.bpbHeads
 #define	pm_HiddenSects	pm_bpb.bpbHiddenSecs

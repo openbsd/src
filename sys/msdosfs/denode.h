@@ -1,9 +1,9 @@
-/*	$OpenBSD: denode.h,v 1.6 1997/11/06 05:58:55 csapuntz Exp $	*/
-/*	$NetBSD: denode.h,v 1.20 1996/02/09 19:13:39 christos Exp $	*/
+/*	$OpenBSD: denode.h,v 1.7 1998/01/11 20:39:04 provos Exp $	*/
+/*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994, 1995 Wolfgang Solfrank.
- * Copyright (C) 1994, 1995 TooLs GmbH.
+ * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995, 1997 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -103,8 +103,8 @@
  * structure (fc_frcn).
  */
 struct fatcache {
-	u_short fc_frcn;	/* file relative cluster number */
-	u_short fc_fsrcn;	/* filesystem relative cluster number */
+	u_long fc_frcn;		/* file relative cluster number */
+	u_long fc_fsrcn;	/* filesystem relative cluster number */
 };
 
 /*
@@ -121,7 +121,7 @@ struct fatcache {
 				 * to */
 #define	FC_LASTFC	1	/* entry for the last cluster in the file */
 
-#define	FCE_EMPTY	0xffff	/* doesn't represent an actual cluster # */
+#define	FCE_EMPTY	0xffffffff	/* doesn't represent an actual cluster # */
 
 /*
  * Set a slot in the fat cache.
@@ -157,7 +157,7 @@ struct denode {
 	u_short de_ADate;	/* access date */
 	u_short de_MTime;	/* modification time */
 	u_short de_MDate;	/* modification date */
-	u_short de_StartCluster; /* starting cluster of file */
+	u_long de_StartCluster; /* starting cluster of file */
 	u_long de_FileSize;	/* size of file in bytes */
 	struct fatcache de_fc[FC_SIZE];	/* fat cache */
 };
@@ -182,6 +182,8 @@ struct denode {
  * dep is a struct denode * (internal form),
  * dp is a struct direntry * (external form).
  */
+#define DE_INTERNALIZE32(dep, dp)                      \
+        ((dep)->de_StartCluster |= getushort((dp)->deHighClust) << 16)
 #define DE_INTERNALIZE(dep, dp)			\
 	(bcopy((dp)->deName, (dep)->de_Name, 11),	\
 	 (dep)->de_Attributes = (dp)->deAttributes,	\
@@ -192,8 +194,11 @@ struct denode {
 	 (dep)->de_MTime = getushort((dp)->deMTime),	\
 	 (dep)->de_MDate = getushort((dp)->deMDate),	\
 	 (dep)->de_StartCluster = getushort((dp)->deStartCluster), \
-	 (dep)->de_FileSize = getulong((dp)->deFileSize))
+	 (dep)->de_FileSize = getulong((dp)->deFileSize), \
+	 (FAT32((dep)->de_pmp) ? DE_INTERNALIZE32((dep), (dp)) : 0))
 
+#define DE_EXTERNALIZE32(dp, dep)                     \
+         putushort((dp)->deHighClust, (dep)->de_StartCluster >> 16)
 #define DE_EXTERNALIZE(dp, dep)				\
 	(bcopy((dep)->de_Name, (dp)->deName, 11),	\
 	 (dp)->deAttributes = (dep)->de_Attributes,	\
@@ -202,13 +207,12 @@ struct denode {
 	 putushort((dp)->deCTime, (dep)->de_CTime),	\
 	 putushort((dp)->deCDate, (dep)->de_CDate),	\
 	 putushort((dp)->deADate, (dep)->de_ADate),	\
-	 (dp)->deReserved[0] = 0,			\
-	 (dp)->deReserved[1] = 0,			\
 	 putushort((dp)->deMTime, (dep)->de_MTime),	\
 	 putushort((dp)->deMDate, (dep)->de_MDate),	\
 	 putushort((dp)->deStartCluster, (dep)->de_StartCluster), \
 	 putulong((dp)->deFileSize, \
-	     ((dep)->de_Attributes & ATTR_DIRECTORY) ? 0 : (dep)->de_FileSize))
+	     ((dep)->de_Attributes & ATTR_DIRECTORY) ? 0 : (dep)->de_FileSize),\
+	 (FAT32((dep)->de_pmp) ? DE_EXTERNALIZE32((dp), (dep)) : 0))
 
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
@@ -222,16 +226,14 @@ struct denode {
 	if ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) { \
 		(dep)->de_flag |= DE_MODIFIED; \
 		if ((dep)->de_flag & DE_UPDATE) { \
-			unix2dostime((mod), &(dep)->de_MDate, &(dep)->de_MTime); \
+			unix2dostime((mod), &(dep)->de_MDate, &(dep)->de_MTime, NULL); \
 			(dep)->de_Attributes |= ATTR_ARCHIVE; \
 		} \
 		if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
 			if ((dep)->de_flag & DE_ACCESS) \
-				unix2dostime((acc), &(dep)->de_ADate, NULL); \
-			if ((dep)->de_flag & DE_CREATE) { \
-				unix2dostime((cre), &(dep)->de_CDate, &(dep)->de_CTime); \
-				(dep)->de_CTimeHundredth = ((cre)->tv_sec & 1 ? 100 : 0) + (cre)->tv_nsec / 10000000; \
-			} \
+				unix2dostime((acc), &(dep)->de_ADate, NULL, NULL); \
+			if ((dep)->de_flag & DE_CREATE) \
+				unix2dostime((cre), &(dep)->de_CDate, &(dep)->de_CTime, &(dep)->de_CTimeHundredth); \
 		} \
 		(dep)->de_flag &= ~(DE_UPDATE | DE_CREATE | DE_ACCESS); \
 	}

@@ -1,8 +1,8 @@
-/*	$OpenBSD: check.c,v 1.5 1997/03/02 05:25:52 millert Exp $	*/
-/*	$NetBSD: check.c,v 1.6 1997/01/03 14:32:48 ws Exp $	*/
+/*	$OpenBSD: check.c,v 1.6 1998/01/11 20:40:30 provos Exp $	*/
+/*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank
+ * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
  * Copyright (c) 1995 Martin Husemann
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: check.c,v 1.5 1997/03/02 05:25:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.6 1998/01/11 20:40:30 provos Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -53,7 +53,7 @@ checkfilesys(fname)
 {
 	int dosfs;
 	struct bootblock boot;
-	struct fatEntry * fat = NULL;
+	struct fatEntry *fat = NULL;
 	int i;
 	int mod = 0;
 
@@ -71,7 +71,7 @@ checkfilesys(fname)
 		rdonly = 1;
 	} else if (!preen)
 		printf("\n");
-	
+
 	if (dosfs < 0) {
 		perror("Can't open");
 		return (8);
@@ -83,24 +83,29 @@ checkfilesys(fname)
 	}
 
 	if (!preen)
-		printf("** Phase 1 - Read and Compare FATs\n");
-	
-	for (i = 0; i < boot.FATs; i++) {
-		struct fatEntry *currentFat;
+		if (boot.ValidFat < 0)
+			printf("** Phase 1 - Read and Compare FATs\n");
+		else
+			printf("** Phase 1 - Read FAT\n");
 
-		mod |= readfat(dosfs, &boot, i, &currentFat);
+	mod |= readfat(dosfs, &boot, boot.ValidFat >= 0 ? boot.ValidFat : 0, &fat);
+	if (mod & FSFATAL) {
+		(void)close(dosfs);
+		return 8;
+	}
 
-		if (mod & FSFATAL) {
-			if (fat)
+	if (boot.ValidFat < 0)
+		for (i = 1; i < boot.FATs; i++) {
+			struct fatEntry *currentFat;
+			mod |= readfat(dosfs, &boot, i, &currentFat);
+
+			if (mod & FSFATAL) {
 				free(fat);
-			(void)close(dosfs);
-			return (8);
-		}
-			
-		if (fat == NULL)
-			fat  = currentFat;
-		else {
-			mod |= comparefat(&boot, fat, currentFat, i + 1);
+				(void)close(dosfs);
+				return 8;
+			}
+
+			mod |= comparefat(&boot, fat, currentFat, i);
 			free(currentFat);
 			if (mod & FSFATAL) {
 				free(fat);
@@ -108,18 +113,17 @@ checkfilesys(fname)
 				return (8);
 			}
 		}
-	}
 
 	if (!preen)
 		printf("** Phase 2 - Check Cluster Chains\n");
-	
+
 	mod |= checkfat(&boot, fat);
 	if (mod & FSFATAL) {
 		free(fat);
 		(void)close(dosfs);
 		return (8);
 	}
-		
+
 	if (mod & FSFATMOD)
 		mod |= writefat(dosfs, &boot, fat); /* delay writing fats?	XXX */
 	if (mod & FSFATAL) {
@@ -131,7 +135,17 @@ checkfilesys(fname)
 	if (!preen)
 		printf("** Phase 3 - Checking Directories\n");
 
-	if (resetDosDirSection(&boot) & FSFATAL) {
+	mod |= resetDosDirSection(&boot, fat);
+	if (mod & FSFATAL) {
+		free(fat);
+		close(dosfs);
+		return 8;
+	}
+
+	if (mod & FSFATMOD)
+		mod |= writefat(dosfs, &boot, fat); /* delay writing fats?	XXX */
+	if (mod & FSFATAL) {
+		finishDosDirSection();
 		free(fat);
 		(void)close(dosfs);
 		return (8);
@@ -149,10 +163,21 @@ checkfilesys(fname)
 		printf("** Phase 4 - Checking for Lost Files\n");
 
 	mod |= checklost(dosfs, &boot, fat);
-	
+	if (mod & FSFATAL) {
+		finishDosDirSection();
+		free(fat);
+		(void)close(dosfs);
+		return 8;
+	}
+
+	if (mod & FSFATMOD)
+		mod |= writefat(dosfs, &boot, fat); /* delay writing fats?    XXX */
+
 	finishDosDirSection();
 	free(fat);
 	(void)close(dosfs);
+	if (mod & FSFATAL)
+		return 8;
 
 	if (boot.NumBad)
 		pwarn("%d files, %d free (%d clusters), %d bad (%d clusters)\n",
@@ -163,6 +188,7 @@ checkfilesys(fname)
 		pwarn("%d files, %d free (%d clusters)\n",
 		      boot.NumFiles,
 		      boot.NumFree * boot.ClusterSize / 1024, boot.NumFree);
+
 	if (mod & (FSFATAL | FSERROR))
 		return (8);
 	if (mod) {

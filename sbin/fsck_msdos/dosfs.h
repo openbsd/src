@@ -1,10 +1,10 @@
-/*	$OpenBSD: dosfs.h,v 1.4 1997/02/28 08:36:11 millert Exp $	*/
-/*	$NetBSD: dosfs.h,v 1.4 1997/01/03 14:32:48 ws Exp $	*/
+/*	$OpenBSD: dosfs.h,v 1.5 1998/01/11 20:40:31 provos Exp $	*/
+/*	$NetBSD: dosfs.h,v 1.5 1997/10/17 11:19:41 ws Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank
+ * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
  * Copyright (c) 1995 Martin Husemann
- * Some structure declaration borrowed from Paul Popelka 
+ * Some structure declaration borrowed from Paul Popelka
  * (paulp@uts.amdahl.com), see /sys/msdosfs/ for reference.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,7 @@
 
 #define DOSBOOTBLOCKSIZE 512
 
-#define	MAX12BITCLUSTERS	4078
-
-typedef	u_int16_t	cl_t;	/* type holding a cluster number */
+typedef	u_int32_t	cl_t;	/* type holding a cluster number */
 
 /*
  * architecture independent description of all the info stored in a
@@ -54,22 +52,35 @@ struct bootblock {
 	u_int	ResSectors;		/* number of reserved sectors */
 	u_int	FATs;			/* number of FATs */
 	u_int	RootDirEnts;		/* number of root directory entries */
-	u_int32_t Sectors;		/* total number of sectors */
 	u_int	Media;			/* media descriptor */
-	u_int	FATsecs;		/* number of sectors per FAT */
+	u_int	FATsmall;		/* number of sectors per FAT */
 	u_int	SecPerTrack;		/* sectors per track */
 	u_int	Heads;			/* number of heads */
+	u_int32_t Sectors;		/* total number of sectors */
 	u_int32_t HiddenSecs;		/* # of hidden sectors */
 	u_int32_t HugeSectors;		/* # of sectors if bpbSectors == 0 */
+	u_int	FSInfo;			/* FSInfo sector */
+	u_int	Backup;			/* Backup of Bootblocks */
+	cl_t	RootCl;			/* Start of Root Directory */
+	cl_t	FSFree;			/* Number of free clusters acc. FSInfo */
+	cl_t	FSNext;			/* Next free cluster acc. FSInfo */
 
 	/* and some more calculated values */
-	int	Is16BitFat;		/* 0 for 12 bit, 1 for 16 bit */
+	u_int	flags;			/* some flags: */
+#define	FAT32		1		/* this is a FAT32 filesystem */
+					/*
+					 * Maybe, we should separate out
+					 * various parts of FAT32?	XXX
+					 */
+	int	ValidFat;		/* valid fat if FAT32 non-mirrored */
+	cl_t	ClustMask;		/* mask for entries in FAT */
 	cl_t	NumClusters;		/* # of entries in a FAT */
 	u_int32_t NumSectors;		/* how many sectors are there */
+	u_int32_t FATsecs;		/* how many sectors are in FAT */
 	u_int32_t NumFatEntries;	/* how many entries really are there */
 	u_int	ClusterOffset;		/* at what sector would sector 0 start */
 	u_int	ClusterSize;		/* Cluster size in bytes */
-	
+
 	/* Now some statistics: */
 	u_int	NumFiles;		/* # of plain files */
 	u_int	NumFree;		/* # of free clusters */
@@ -85,10 +96,17 @@ struct fatEntry {
 
 #define	CLUST_FREE	0		/* 0 means cluster is free */
 #define	CLUST_FIRST	2		/* 2 is the minimum valid cluster number */
-#define	CLUST_RSRVD	0xfff0		/* start of reserved clusters */
-#define	CLUST_BAD	0xfff7		/* a cluster with a defect */
-#define	CLUST_EOFS	0xfff8		/* start of EOF indicators */
-#define	CLUST_EOF	0xffff		/* standard value for last cluster */
+#define	CLUST_RSRVD	0xfffffff6	/* start of reserved clusters */
+#define	CLUST_BAD	0xfffffff7	/* a cluster with a defect */
+#define	CLUST_EOFS	0xfffffff8	/* start of EOF indicators */
+#define	CLUST_EOF	0xffffffff	/* standard value for last cluster */
+
+/*
+ * Masks for cluster values
+ */
+#define	CLUST12_MASK	0xfff
+#define	CLUST16_MASK	0xffff
+#define	CLUST32_MASK	0xfffffff
 
 #define	FAT_USED	1		/* This fat chain is used in a file */
 

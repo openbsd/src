@@ -1,9 +1,9 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.10 1997/11/11 18:57:16 niklas Exp $	*/
-/*	$NetBSD: msdosfs_denode.c,v 1.22 1996/10/13 04:16:31 christos Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.11 1998/01/11 20:39:07 provos Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994, 1995 Wolfgang Solfrank.
- * Copyright (C) 1994, 1995 TooLs GmbH.
+ * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995, 1997 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -177,10 +177,17 @@ deget(pmp, dirclust, diroffset, depp)
 #endif
 
 	/*
+	 * On FAT32 filesystems, root is a (more or less) normal
+	 * directory
+	 */
+	if (FAT32(pmp) && dirclust == MSDOSFSROOT)
+		dirclust = pmp->pm_rootdirblk;
+
+	/*
 	 * See if the denode is in the denode cache. Use the location of
 	 * the directory entry to compute the hash value. For subdir use
-	 * address of "." entry. for root dir use cluster MSDOSFSROOT,
-	 * offset MSDOSFSROOT_OFS
+	 * address of "." entry. For root dir (if not FAT32) use cluster
+	 * MSDOSFSROOT, offset MSDOSFSROOT_OFS
 	 * 
 	 * NOTE: The check for de_refcnt > 0 below insures the denode being
 	 * examined does not represent an unlinked but still open file.
@@ -227,10 +234,15 @@ deget(pmp, dirclust, diroffset, depp)
 	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY, p);
 	msdosfs_hashins(ldep);
 
+	ldep->de_pmp = pmp;
+	ldep->de_devvp = pmp->pm_devvp;
+	ldep->de_refcnt = 1;
 	/*
 	 * Copy the directory entry into the denode area of the vnode.
 	 */
-	if (dirclust == MSDOSFSROOT && diroffset == MSDOSFSROOT_OFS) {
+	if ((dirclust == MSDOSFSROOT
+	     || (FAT32(pmp) && dirclust == pmp->pm_rootdirblk))
+	    && diroffset == MSDOSFSROOT_OFS) {
 		/*
 		 * Directory entry for the root directory. There isn't one,
 		 * so we manufacture one. We should probably rummage
@@ -238,9 +250,16 @@ deget(pmp, dirclust, diroffset, depp)
 		 * exists), and then use the time and date from that entry
 		 * as the time and date for the root denode.
 		 */
+	        nvp->v_flag |= VROOT; /* should be further down         XXX */
+
 		ldep->de_Attributes = ATTR_DIRECTORY;
-		ldep->de_StartCluster = MSDOSFSROOT;
-		ldep->de_FileSize = pmp->pm_rootdirsize * pmp->pm_BytesPerSec;
+		if (FAT32(pmp))
+		        ldep->de_StartCluster = pmp->pm_rootdirblk;
+		        /* de_FileSize will be filled in further down */
+		else {
+		        ldep->de_StartCluster = MSDOSFSROOT;
+		        ldep->de_FileSize = pmp->pm_rootdirsize * pmp->pm_BytesPerSec;
+		}
 		/*
 		 * fill in time and date so that dos2unixtime() doesn't
 		 * spit up when called from msdosfs_getattr() with root
@@ -267,9 +286,6 @@ deget(pmp, dirclust, diroffset, depp)
 	 * Fill in a few fields of the vnode and finish filling in the
 	 * denode.  Then return the address of the found denode.
 	 */
-	ldep->de_pmp = pmp;
-	ldep->de_devvp = pmp->pm_devvp;
-	ldep->de_refcnt = 1;
 	if (ldep->de_Attributes & ATTR_DIRECTORY) {
 		/*
 		 * Since DOS directory entries that describe directories
@@ -280,9 +296,7 @@ deget(pmp, dirclust, diroffset, depp)
 		u_long size;
 
 		nvp->v_type = VDIR;
-		if (ldep->de_StartCluster == MSDOSFSROOT)
-			nvp->v_flag |= VROOT;
-		else {
+		if (ldep->de_StartCluster != MSDOSFSROOT) {
 			error = pcbmap(ldep, 0xffff, 0, &size, 0);
 			if (error == E2BIG) {
 				ldep->de_FileSize = de_cn2off(pmp, size);
@@ -342,7 +356,7 @@ detrunc(dep, length, flags, cred, p)
 	 * recognize the root directory at this point in a file or
 	 * directory's life.
 	 */
-	if (DETOV(dep)->v_flag & VROOT) {
+	if ((DETOV(dep)->v_flag & VROOT) && !FAT32(pmp)) {
 		printf("detrunc(): can't truncate root directory, clust %ld, offset %ld\n",
 		    dep->de_dirclust, dep->de_diroffset);
 		return (EINVAL);
@@ -448,7 +462,7 @@ detrunc(dep, length, flags, cred, p)
 	 * Now free the clusters removed from the file because of the
 	 * truncation.
 	 */
-	if (chaintofree != 0 && !MSDOSFSEOF(chaintofree))
+	if (chaintofree != 0 && !MSDOSFSEOF(pmp, chaintofree))
 		freeclusterchain(pmp, chaintofree);
 
 	return (allerror);
@@ -470,7 +484,7 @@ deextend(dep, length, cred)
 	/*
 	 * The root of a DOS filesystem cannot be extended.
 	 */
-	if (DETOV(dep)->v_flag & VROOT)
+	if ((DETOV(dep)->v_flag & VROOT) && !FAT32(pmp))
 		return (EINVAL);
 
 	/*

@@ -1,9 +1,9 @@
-/*	$OpenBSD: direntry.h,v 1.4 1997/10/04 19:08:10 deraadt Exp $	*/
-/*	$NetBSD: direntry.h,v 1.11 1995/11/29 15:08:34 ws Exp $	*/
+/*	$OpenBSD: direntry.h,v 1.5 1998/01/11 20:39:05 provos Exp $	*/
+/*	$NetBSD: direntry.h,v 1.13 1997/10/17 11:23:45 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994, 1995 Wolfgang Solfrank.
- * Copyright (C) 1994, 1995 TooLs GmbH.
+ * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995, 1997 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -72,7 +72,7 @@ struct direntry {
 	u_int8_t	deCTime[2];	/* create time */
 	u_int8_t	deCDate[2];	/* create date */
 	u_int8_t	deADate[2];	/* access date */
-	u_int8_t	deReserved[2];	/* reserved */
+	u_int8_t	deHighClust[2];	/* high byte of cluster number */
 	u_int8_t	deMTime[2];	/* last update time */
 	u_int8_t	deMDate[2];	/* last update date */
 	u_int8_t	deStartCluster[2]; /* starting cluster of file */
@@ -122,8 +122,8 @@ struct winentry {
 #define DD_YEAR_SHIFT		9
 
 #ifdef _KERNEL
-void unix2dostime __P((struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp));
-void dos2unixtime __P((u_int dd, u_int dt, struct timespec *tsp));
+void unix2dostime __P((struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp));
+void dos2unixtime __P((u_int dd, u_int dt, u_int dh, struct timespec *tsp));
 int dos2unixfn __P((u_char dn[11], u_char *un, int lower));
 int unix2dosfn __P((u_char *un, u_char dn[12], int unlen, u_int gen));
 int unix2winfn __P((u_char *un, int unlen, struct winentry *wep, int cnt, int chksum));

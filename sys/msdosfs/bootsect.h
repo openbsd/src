@@ -1,5 +1,5 @@
-/*	$OpenBSD: bootsect.h,v 1.2 1997/02/24 14:32:46 niklas Exp $	*/
-/*	$NetBSD: bootsect.h,v 1.7 1995/07/24 06:36:23 leo Exp $	*/
+/*	$OpenBSD: bootsect.h,v 1.3 1998/01/11 20:39:02 provos Exp $	*/
+/*	$NetBSD: bootsect.h,v 1.8 1997/10/17 11:23:29 ws Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -28,24 +28,48 @@ struct bootsector33 {
 	int8_t		bsBPB[19];		/* BIOS parameter block */
 	int8_t		bsDriveNumber;		/* drive number (0x80) */
 	int8_t		bsBootCode[479];	/* pad so struct is 512b */
-	u_int16_t	bsBootSectSig;
-#define	BOOTSIG	0xaa55
+	u_int8_t	bsBootSectSig0;
+	u_int8_t	bsBootSectSig1;
+#define	BOOTSIG0	0x55
+#define	BOOTSIG1	0xaa
+};
+
+struct extboot {
+	int8_t		exDriveNumber;		/* drive number (0x80) */
+	int8_t		exReserved1;		/* reserved */
+	int8_t		exBootSignature;	/* ext. boot signature (0x29) */
+#define	EXBOOTSIG	0x29
+	int8_t		exVolumeID[4];		/* volume ID number */
+	int8_t		exVolumeLabel[11];	/* volume label */
+	int8_t		exFileSysType[8];	/* fs type (FAT12 or FAT16) */
 };
 
 struct bootsector50 {
 	u_int8_t	bsJump[3];		/* jump inst E9xxxx or EBxx90 */
 	int8_t		bsOemName[8];		/* OEM name and version */
 	int8_t		bsBPB[25];		/* BIOS parameter block */
-	int8_t		bsDriveNumber;		/* drive number (0x80) */
-	int8_t		bsReserved1;		/* reserved */
-	int8_t		bsBootSignature;	/* ext. boot signature (0x29) */
-#define	EXBOOTSIG	0x29
-	int8_t		bsVolumeID[4];		/* volume ID number */
-	int8_t		bsVolumeLabel[11];	/* volume label */
-	int8_t		bsFileSysType[8];	/* fs type (FAT12 or FAT16) */
+	int8_t		bsExt[26];		/* Bootsector Extension */
 	int8_t		bsBootCode[448];	/* pad so structure is 512b */
-	u_int16_t	bsBootSectSig;
-#define	BOOTSIG	0xaa55
+	u_int8_t	bsBootSectSig0;
+	u_int8_t	bsBootSectSig1;
+#define	BOOTSIG0	0x55
+#define	BOOTSIG1	0xaa
+};
+
+struct bootsector710 {
+	u_int8_t	bsJump[3];		/* jump inst E9xxxx or EBxx90 */
+	int8_t		bsOEMName[8];		/* OEM name and version */
+	int8_t		bsPBP[53];		/* BIOS parameter block */
+	int8_t		bsExt[26];		/* Bootsector Extension */
+	int8_t		bsBootCode[418];	/* pad so structure is 512b */
+	u_int8_t	bsBootSectSig2;		/* 2 & 3 are only defined for FAT32? */
+	u_int8_t	bsBootSectSig3;
+	u_int8_t	bsBootSectSig0;
+	u_int8_t	bsBootSectSig1;
+#define	BOOTSIG0	0x55
+#define	BOOTSIG1	0xaa
+#define	BOOTSIG2	0
+#define	BOOTSIG3	0
 };
 #ifdef	atari
 /*
@@ -67,8 +91,10 @@ struct bootsec_atari {
 union bootsector {
 	struct bootsector33 bs33;
 	struct bootsector50 bs50;
+	struct bootsector710 bs710;
 };
 
+#if 0
 /*
  * Shorthand for fields in the bpb.
  */
@@ -84,3 +110,4 @@ union bootsector {
 #define	bsHeads		bsBPB.bpbHeads
 #define	bsHiddenSecs	bsBPB.bpbHiddenSecs
 #define	bsHugeSectors	bsBPB.bpbHugeSectors
+#endif
