@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 2004/06/22 05:02:32 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 2004/06/22 18:26:12 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -74,16 +74,8 @@
 #include <machine/trap.h>
 
 #include <machine/db_machdep.h>
-#ifdef DDB
-#include <ddb/db_output.h>		/* db_printf()		*/
-#endif /* DDB */
-#define SSBREAKPOINT (0xF000D1F8U) /* Single Step Breakpoint */
 
-#ifdef DDB
-#define DEBUG_MSG(x) db_printf x
-#else
-#define DEBUG_MSG(x)
-#endif /* DDB */
+#define SSBREAKPOINT (0xF000D1F8U) /* Single Step Breakpoint */
 
 #define USERMODE(PSR)   (((PSR) & PSR_MODE) == 0)
 #define SYSTEMMODE(PSR) (((PSR) & PSR_MODE) != 0)
@@ -158,7 +150,6 @@ userret(struct proc *p, struct trapframe *frame, u_quad_t oticks)
 __dead void
 panictrap(int type, struct trapframe *frame)
 {
-#ifdef DDB
 	static int panicing = 0;
 
 	if (panicing++ == 0) {
@@ -167,33 +158,34 @@ panictrap(int type, struct trapframe *frame)
 		case CPU_88100:
 			if (type == 2) {
 				/* instruction exception */
-				db_printf("\nInstr access fault (%s) v = %x, "
+				printf("\nInstr access fault (%s) v = %x, "
 				    "frame %p\n",
 				    pbus_exception_type[
 				      CMMU_PFSR_FAULT(frame->tf_ipfsr)],
 				    frame->tf_sxip & XIP_ADDR, frame);
 			} else if (type == 3) {
 				/* data access exception */
-				db_printf("\nData access fault (%s) v = %x, "
+				printf("\nData access fault (%s) v = %x, "
 				    "frame %p\n",
 				    pbus_exception_type[
 				      CMMU_PFSR_FAULT(frame->tf_dpfsr)],
 				    frame->tf_sxip & XIP_ADDR, frame);
 			} else
-				db_printf("\nTrap type %d, v = %x, frame %p\n",
+				printf("\nTrap type %d, v = %x, frame %p\n",
 				    type, frame->tf_sxip & XIP_ADDR, frame);
 			break;
 #endif
 #ifdef M88110
 		case CPU_88110:
-			db_printf("\nTrap type %d, v = %x, frame %p\n",
+			printf("\nTrap type %d, v = %x, frame %p\n",
 			    type, frame->tf_exip, frame);
 			break;
 #endif
 		}
+#ifdef DDB
 		regdump(frame);
-	}
 #endif
+	}
 	if ((u_int)type < trap_types)
 		panic(trap_type[type]);
 	else
@@ -262,7 +254,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		return;
 #endif /* DDB */
 	case T_ILLFLT:
-		DEBUG_MSG(("Unimplemented opcode!\n"));
+		printf("Unimplemented opcode!\n");
 		panictrap(frame->tf_vector, frame);
 		break;
 	case T_INT:
@@ -274,8 +266,8 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		return;
 
 	case T_MISALGNFLT:
-		DEBUG_MSG(("kernel misaligned "
-			  "access exception @ 0x%08x\n", frame->tf_sxip));
+		printf("kernel misaligned access exception @ 0x%08x\n",
+		    frame->tf_sxip);
 		panictrap(frame->tf_vector, frame);
 		break;
 
@@ -591,9 +583,8 @@ user_fault:
 				procfs_domem(p, p, NULL, &uio);
 			}
 #if 1
-			frame->tf_sfip = frame->tf_snip;    /* set up next FIP */
-			frame->tf_snip = pc;    /* set up next NIP */
-			frame->tf_snip |= 2;	  /* set valid bit   */
+			frame->tf_sfip = frame->tf_snip;
+			frame->tf_snip = pc | NIP_V;
 #endif
 			p->p_md.md_ss_addr = 0;
 			p->p_md.md_ss_instr = 0;
@@ -610,8 +601,8 @@ user_fault:
 		 * breakpoint debugging.  When we get this trap, we just
 		 * return a signal which gets caught by the debugger.
 		 */
-		frame->tf_sfip = frame->tf_snip;    /* set up the next FIP */
-		frame->tf_snip = frame->tf_sxip;    /* set up the next NIP */
+		frame->tf_sfip = frame->tf_snip;
+		frame->tf_snip = frame->tf_sxip;
 		sig = SIGTRAP;
 		fault_type = TRAP_BRKPT;
 		break;
@@ -645,7 +636,7 @@ user_fault:
 
 	userret(p, frame, sticks);
 }
-#endif /* m88100 */
+#endif /* M88100 */
 
 #ifdef M88110
 void
@@ -663,7 +654,7 @@ m88110_trap(unsigned type, struct trapframe *frame)
 	union sigval sv;
 	int result;
 #ifdef DDB
-        int s; /* IPL */
+        int s;
 #endif
 	int sig = 0;
 	pt_entry_t *pte;
@@ -695,19 +686,19 @@ m88110_trap(unsigned type, struct trapframe *frame)
 
 	case T_197_READ+T_USER:
 	case T_197_READ:
-		DEBUG_MSG(("DMMU read miss: Hardware Table Searches should be enabled!\n"));
+		printf("DMMU read miss: Hardware Table Searches should be enabled!\n");
 		panictrap(frame->tf_vector, frame);
 		break;
 		/*NOTREACHED*/
 	case T_197_WRITE+T_USER:
 	case T_197_WRITE:
-		DEBUG_MSG(("DMMU write miss: Hardware Table Searches should be enabled!\n"));
+		printf("DMMU write miss: Hardware Table Searches should be enabled!\n");
 		panictrap(frame->tf_vector, frame);
 		break;
 		/*NOTREACHED*/
 	case T_197_INST+T_USER:
 	case T_197_INST:
-		DEBUG_MSG(("IMMU miss: Hardware Table Searches should be enabled!\n"));
+		printf("IMMU miss: Hardware Table Searches should be enabled!\n");
 		panictrap(frame->tf_vector, frame);
 		break;
 		/*NOTREACHED*/
@@ -750,13 +741,11 @@ m88110_trap(unsigned type, struct trapframe *frame)
 #endif /* 0 */
 #endif /* DDB */
 	case T_ILLFLT:
-		DEBUG_MSG(("Unimplemented opcode!\n"));
+		printf("Unimplemented opcode!\n");
 		panictrap(frame->tf_vector, frame);
 		break;
 	case T_NON_MASK:
 	case T_NON_MASK+T_USER:
-		/* This function pointer is set in machdep.c
-		   It calls m197_ext_int - smurph */
 		(*md.interrupt_func)(T_NON_MASK, frame);
 		return;
 	case T_INT:
@@ -764,8 +753,8 @@ m88110_trap(unsigned type, struct trapframe *frame)
 		(*md.interrupt_func)(T_INT, frame);
 		return;
 	case T_MISALGNFLT:
-		DEBUG_MSG(("kernel mode misaligned "
-			  "access exception @ 0x%08x\n", frame->tf_exip));
+		printf("kernel mode misaligned access exception @ 0x%08x\n",
+		    frame->tf_exip);
 		panictrap(frame->tf_vector, frame);
 		break;
 		/*NOTREACHED*/
@@ -847,8 +836,10 @@ m88110_trap(unsigned type, struct trapframe *frame)
 			 * indeed a real write fault.  XXX smurph
 			 */
 			pte = pmap_pte(map->pmap, va);
+#ifdef DEBUG
 			if (pte == PT_ENTRY_NULL)
 				panic("NULL pte on write fault??");
+#endif
 			if (!(*pte & PG_M) && !(*pte & PG_RO)) {
 				/* Set modified bit and try the write again. */
 #ifdef TRAPDEBUG
@@ -1151,22 +1142,14 @@ m88110_user_fault:
 __dead void
 error_fatal(struct trapframe *frame)
 {
+	if (frame->tf_vector == 0)
+		printf("\nReset Exception\n");
+	else
+		printf("\nError Exception\n");
+
 #ifdef DDB
-	switch (frame->tf_vector) {
-	case 0:
-		db_printf("\n[RESET EXCEPTION (Really Bad News[tm]) frame %8p]\n", frame);
-		db_printf("This is usually caused by a branch to a NULL function pointer.\n");
-		db_printf("e.g. jump to address 0.  Use the debugger trace command to track it down.\n");
-		break;
-	default:
-		db_printf("\n[ERROR EXCEPTION (Bad News[tm]) frame %p]\n", frame);
-		db_printf("This is usually an exception within an exception.  The trap\n");
-		db_printf("frame shadow registers you are about to see are invalid.\n");
-		db_printf("(read totally useless)  But R1 to R31 might be interesting.\n");
-		break;
-	}
 	regdump((struct trapframe*)frame);
-#endif /* DDB */
+#endif
 	panic("unrecoverable exception %d", frame->tf_vector);
 }
 
