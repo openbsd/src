@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.27 1997/07/02 16:26:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.28 1997/08/22 17:06:59 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -478,6 +478,7 @@ malloc_init ()
 {
     char *p, b[64];
     int i, j;
+    int save_errno = errno;
 
     THREAD_LOCK_INIT();
 
@@ -584,7 +585,7 @@ malloc_init ()
      * We can sbrk(2) further back when we keep this on a low address.
      */
     px = (struct pgfree *) imalloc (sizeof *px);
-
+    errno = save_errno;
 }
 
 /*
