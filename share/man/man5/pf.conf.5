@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.101 2002/10/31 10:51:03 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.102 2002/11/04 14:30:21 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1168,7 +1168,7 @@ tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
                          [ "0x" ] number ) .
 
 state-opts     = state-opt [ [ "," ] state-opts ] .
-state-opt      = ( "max" seconds ) | ( timeout seconds ) .
+state-opt      = ( "max" number ) | ( timeout seconds ) .
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
                    "fragment drop-ovl" ] .
