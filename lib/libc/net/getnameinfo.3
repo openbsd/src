@@ -1,4 +1,5 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.36 2004/12/21 09:48:20 jmc Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.37 2005/01/06 03:50:46 itojun Exp $
+.\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -115,8 +116,8 @@ and
 .Tn TCP .
 .El
 .Pp
-This implementation allows experimental numeric IPv6 address notation with
-scope identifier.
+This implementation allows numeric IPv6 address notation with scope identifier,
+as documented in chapter 11 of draft-ietf-ipv6-scoping-arch-02.txt.
 IPv6 link-local address will appear as a string like
 .Dq Li fe80::1%ne0 .
 Refer to
@@ -177,11 +178,14 @@ printf("host=%s\en", hbuf);
 .%D March 1999
 .Re
 .Rs
-.%A Tatsuya Jinmei
-.%A Atsushi Onoe
-.%T "An Extension of Format for IPv6 Scoped Addresses"
+.%A S. Deering
+.%A B. Haberman
+.%A T. Jinmei
+.%A E. Nordmark
+.%A B. Zill
+.%T "IPv6 Scoped Address Architecture"
 .%R internet draft
-.%N draft-ietf-ipngwg-scopedaddr-format-02.txt
+.%N draft-ietf-ipv6-scoping-arch-02.txt
 .%O work in progress material
 .Re
 .Rs
@@ -255,7 +259,7 @@ if (error == 0) {
 .Ed
 .Sh BUGS
 The implementation of
-.Fn getaddrinfo
+.Fn getnameinfo
 is not thread-safe.
 .Pp
 .Ox

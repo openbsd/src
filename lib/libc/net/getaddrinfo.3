@@ -1,4 +1,5 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.36 2005/01/06 03:50:46 itojun Exp $
+.\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -222,7 +223,8 @@ member points to a filled-in socket address structure of length
 .Pp
 This implementation of
 .Fn getaddrinfo
-allows experimental numeric IPv6 address notation with scope identifiers.
+allows numeric IPv6 address notation with scope identifier,
+as documented in chapter 11 of draft-ietf-ipv6-scoping-arch-02.txt.
 By appending the percent character and scope identifier to addresses,
 one can fill the
 .Li sin6_scope_id
@@ -248,7 +250,6 @@ on the link associated with the
 interface
 .Dc .
 .Pp
-The IPv6 implementation is still very experimental and non-standard.
 The current implementation assumes a one-to-one relationship between
 the interface and link, which is not necessarily true from the specification.
 .Pp
@@ -403,11 +404,14 @@ freeaddrinfo(res0);
 .%D February 2003
 .Re
 .Rs
-.%A Tatsuya Jinmei
-.%A Atsushi Onoe
-.%T "An Extension of Format for IPv6 Scoped Addresses"
+.%A S. Deering
+.%A B. Haberman
+.%A T. Jinmei
+.%A E. Nordmark
+.%A B. Zill
+.%T "IPv6 Scoped Address Architecture"
 .%R internet draft
-.%N draft-ietf-ipngwg-scopedaddr-format-02.txt
+.%N draft-ietf-ipv6-scoping-arch-02.txt
 .%O work in progress material
 .Re
 .Rs

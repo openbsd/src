@@ -1,4 +1,5 @@
-.\"	$OpenBSD: ip6.4,v 1.20 2005/01/02 18:18:15 jmc Exp $
+.\"	$OpenBSD: ip6.4,v 1.21 2005/01/06 03:50:46 itojun Exp $
+.\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -372,6 +373,10 @@ turned off.
 .It Dv IPV6_V6ONLY Fa "int *"
 Get or set whether only IPv6 connections can be made to this socket.
 For wildcard sockets, this can restrict connections to IPv6 only.
+With
+.Ox
+IPv6 sockets are always IPv6-only, so the socket option is read-only
+(not modifiable).
 .It Dv IPV6_FAITH Fa "int *"
 Get or set the status of whether
 .Xr faith 4
@@ -669,7 +674,10 @@ An ancillary data object was improperly formed.
 .%T UNIX Network Programming, third edition
 .Re
 .Sh STANDARDS
-Most of the socket options are defined in RFC 2292 and RFC 2553.
+Most of the socket options are defined in RFC 2292 or RFC 2553.
+The
+.Dv IPV6_V6ONLY
+socket option is defined in RFC 3542.
 The
 .Dv IPV6_PORTRANGE
 socket option and the conflict resolution rule are not defined in the
