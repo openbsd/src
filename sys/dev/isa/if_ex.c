@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.11 2005/04/02 03:20:26 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.12 2005/04/03 10:29:12 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -686,7 +686,6 @@ ex_rx_intr(sc)
 	register struct ifnet *ifp = &sc->arpcom.ac_if;
 	int rx_status, pkt_len, QQQ;
 	register struct mbuf *m, *ipkt;
-	struct ether_header *eh;
 
 	DODEBUG(Start_End, printf("ex_rx_intr: start\n"););
 	/*
@@ -747,7 +746,6 @@ ex_rx_intr(sc)
 					m->m_len = MLEN;
 				}
 			}
-			eh = mtod(ipkt, struct ether_header *);
 #ifdef EXDEBUG
 			if (debug_mask & Rcvd_Pkts) {
 				if ((eh->ether_dhost[5] != 0xff) || 
@@ -761,8 +759,7 @@ ex_rx_intr(sc)
 			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, ipkt);
 #endif
-			m_adj(ipkt, sizeof(struct ether_header));
-			ether_input(ifp, eh, ipkt);
+			ether_input_mbuf(ifp, ipkt);
 			ifp->if_ipackets++;
       		}
     	} else
