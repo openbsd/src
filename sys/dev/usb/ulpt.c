@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.17 2003/05/19 00:35:43 nate Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.18 2003/11/07 11:10:47 jmc Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -41,7 +41,7 @@
 
 /*
  * Printer Class spec:
- *   http://www.usb.org/developers/data/devclass/usbprint11.pdf
+ *   http://www.usb.org/developers/devclass_docs/usbprint11.pdf
  */
 
 #include <sys/param.h>

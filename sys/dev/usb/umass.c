@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.24 2003/05/17 06:07:57 nate Exp $ */
+/*	$OpenBSD: umass.c,v 1.25 2003/11/07 11:10:47 jmc Exp $ */
 /*	$NetBSD: umass.c,v 1.96 2003/04/26 12:46:59 dsainty Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -31,10 +31,10 @@
 
 /*
  * Universal Serial Bus Mass Storage Class specs:
- * http://www.usb.org/developers/data/devclass/usbmassover_11.pdf
- * http://www.usb.org/developers/data/devclass/usbmassbulk_10.pdf
- * http://www.usb.org/developers/data/devclass/usbmass-cbi10.pdf
- * http://www.usb.org/developers/data/devclass/usbmass-ufi10.pdf
+ * http://www.usb.org/developers/devclass_docs/usb_msc_overview_1.2.pdf
+ * http://www.usb.org/developers/devclass_docs/usbmassbulk_10.pdf
+ * http://www.usb.org/developers/devclass_docs/usb_msc_cbi_1.1.pdf
+ * http://www.usb.org/developers/devclass_docs/usbmass-ufi10.pdf
  */
 
 /*
