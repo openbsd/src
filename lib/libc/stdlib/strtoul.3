@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtoul.3,v 1.6 2000/03/04 22:19:31 aaron Exp $
+.\"	$OpenBSD: strtoul.3,v 1.7 2000/04/20 13:50:03 aaron Exp $
 .\"
 .Dd June 25, 1992
 .Dt STRTOUL 3
@@ -55,16 +55,14 @@
 .Sh DESCRIPTION
 The
 .Fn strtoul
-function
-converts the string in
+function converts the string in
 .Fa nptr
 to an
 .Li unsigned long
 value.
 The
 .Fn strtouq
-function
-converts the string in
+function converts the string in
 .Fa nptr
 to a
 .Li u_quad_t
@@ -84,11 +82,9 @@ or
 sign.
 If
 .Fa base
-is zero or 16,
-the string may then include a
+is zero or 16, the string may then include a
 .Ql 0x
-prefix,
-and the number will be read in base 16; otherwise, a zero
+prefix, and the number will be read in base 16; otherwise, a zero
 .Fa base
 is taken as 10 (decimal) unless the next character is
 .Ql 0 ,
@@ -96,14 +92,12 @@ in which case it is taken as 8 (octal).
 .Pp
 The remainder of the string is converted to an
 .Li unsigned long
-value in the obvious manner,
-stopping at the end of the string
+value in the obvious manner, stopping at the end of the string
 or at the first character that does not produce a valid digit
 in the given base.
 (In bases above 10, the letter
 .Ql A
-in either upper or lower case
-represents 10,
+in either upper or lower case represents 10,
 .Ql B
 represents 11, and so forth, with
 .Ql Z
@@ -111,7 +105,7 @@ representing 35.)
 .Pp
 If
 .Fa endptr
-is non nil,
+is non-null,
 .Fn strtoul
 stores the address of the first invalid character in
 .Fa *endptr .
@@ -133,8 +127,7 @@ on return, the entire string was valid.)
 .Sh RETURN VALUES
 The
 .Fn strtoul
-function
-returns the result of the conversion,
+function returns the result of the conversion,
 unless the value would overflow, in which case
 .Dv ULONG_MAX
 is returned and
@@ -206,8 +199,7 @@ The given string was out of range; the value converted has been clamped.
 .Sh STANDARDS
 The
 .Fn strtoul
-function
-conforms to
+function conforms to
 .St -ansiC .
 .Sh BUGS
 Ignores the current locale.

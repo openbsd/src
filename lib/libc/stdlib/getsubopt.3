@@ -1,4 +1,4 @@
-.\" $OpenBSD: getsubopt.3,v 1.3 1999/06/29 18:36:20 aaron Exp $
+.\" $OpenBSD: getsubopt.3,v 1.4 2000/04/20 13:50:02 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,15 +41,14 @@
 .Nd get sub options from an argument
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
-.Vt extern char *suboptarg
+.Vt extern char *suboptarg;
 .Ft int
 .Fn getsubopt "char **optionp" "char * const *tokens" "char **valuep"
 .Sh DESCRIPTION
 The
 .Fn getsubopt
-function
-parses a string containing tokens delimited by one or more tab, space or
-comma
+function parses a string containing tokens delimited by one or more
+tab, space or comma
 .Pq Ql \&,
 characters.
 It is intended for use in parsing groups of option arguments provided
@@ -60,22 +59,24 @@ The argument
 is a pointer to a pointer to the string.
 The argument
 .Fa tokens
-is a pointer to a null-terminated
-array of pointers to strings.
+is a pointer to a null-terminated array of pointers to strings.
 .Pp
 The
 .Fn getsubopt
-function
-returns the zero-based offset of the pointer in the
+function returns the zero-based offset of the pointer in the
 .Fa tokens
 array referencing a string which matches the first token
 in the string, or, \-1 if the string contains no tokens or
 .Fa tokens
 does not contain a matching string.
 .Pp
-If the token is of the form ``name=value'', the location referenced by
+If the token is of the form
+.Ar name Ns No = Ns Ar value ,
+the location referenced by
 .Fa valuep
-will be set to point to the start of the ``value'' portion of the token.
+will be set to point to the start of the
+.Dq value
+portion of the token.
 .Pp
 On return from
 .Fn getsubopt ,
@@ -86,13 +87,12 @@ The external variable
 .Fa suboptarg
 will be set to point to the start of the current token, or
 .Dv NULL
-if no
-tokens were present.
+if no tokens were present.
 The argument
 .Fa valuep
-will be set to point to the ``value'' portion of the token, or
+will be set to point to the value portion of the token, or
 .Dv NULL
-if no ``value'' portion was present.
+if no value portion was present.
 .Sh EXAMPLE
 .Bd -literal -compact
 char *tokens[] = {

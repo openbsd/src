@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtol.3,v 1.7 2000/03/04 22:19:31 aaron Exp $
+.\"	$OpenBSD: strtol.3,v 1.8 2000/04/20 13:50:03 aaron Exp $
 .\"
 .Dd June 25, 1992
 .Dt STRTOL 3
@@ -46,7 +46,7 @@
 .Fd #include <limits.h>
 .Ft long
 .Fn strtol "const char *nptr" "char **endptr" "int base"
-
+.Pp
 .Fd #include <sys/types.h>
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
@@ -55,24 +55,21 @@
 .Sh DESCRIPTION
 The
 .Fn strtol
-function
-converts the string in
+function converts the string in
 .Fa nptr
 to a
 .Li long
 value.
 The
 .Fn strtoq
-function
-converts the string in
+function converts the string in
 .Fa nptr
 to a
 .Li quad_t
 value.
 The conversion is done according to the given
 .Fa base ,
-which must be a number between 2 and 36 inclusive
-or the special value 0.
+which must be a number between 2 and 36 inclusive or the special value 0.
 .Pp
 The string may begin with an arbitrary amount of whitespace
 (as determined by
@@ -84,11 +81,9 @@ or
 sign.
 If
 .Fa base
-is zero or 16,
-the string may then include a
+is zero or 16, the string may then include a
 .Ql 0x
-prefix,
-and the number will be read in base 16; otherwise, a zero
+prefix, and the number will be read in base 16; otherwise, a zero
 .Fa base
 is taken as 10 (decimal) unless the next character is
 .Ql 0 ,
@@ -101,8 +96,7 @@ stopping at the first character which is not a valid digit
 in the given base.
 (In bases above 10, the letter
 .Ql A
-in either upper or lower case
-represents 10,
+in either upper or lower case represents 10,
 .Ql B
 represents 11, and so forth, with
 .Ql Z
@@ -110,7 +104,7 @@ representing 35.)
 .Pp
 If
 .Fa endptr
-is non nil,
+is non-null,
 .Fn strtol
 stores the address of the first invalid character in
 .Fa *endptr .
@@ -132,8 +126,7 @@ on return, the entire string was valid.)
 .Sh RETURN VALUES
 The
 .Fn strtol
-function
-returns the result of the conversion,
+function returns the result of the conversion,
 unless the value would underflow or overflow.
 If an underflow occurs,
 .Fn strtol
@@ -191,8 +184,8 @@ error checking is further complicated because the desired return value is an
 .Li int
 rather than a
 .Li long ;
-however, on some architectures integers and long integers are the same
-size.  Thus the following is necessary:
+however, on some architectures integers and long integers are the same size.
+Thus the following is necessary:
 .Bd -literal -offset indent
 char *ep;
 int ival;
@@ -224,8 +217,7 @@ The given string was out of range; the value converted has been clamped.
 .Sh STANDARDS
 The
 .Fn strtol
-function
-conforms to
+function conforms to
 .St -ansiC .
 .Sh BUGS
 Ignores the current locale.

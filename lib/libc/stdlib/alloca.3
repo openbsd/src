@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: alloca.3,v 1.7 1999/06/29 18:36:18 aaron Exp $
+.\"	$OpenBSD: alloca.3,v 1.8 2000/04/20 13:50:01 aaron Exp $
 .\"
 .Dd May 2, 1991
 .Dt ALLOCA 3
@@ -44,12 +44,10 @@
 .Sh DESCRIPTION
 The
 .Fn alloca
-function
-allocates
+function allocates
 .Fa size
 bytes of space in the stack frame of the caller.
-This temporary space is automatically freed on
-return.
+This temporary space is automatically freed on return.
 .Sh RETURN VALUES
 The
 .Fn alloca
@@ -63,8 +61,7 @@ function returns a pointer to the beginning of the allocated space.
 .Sh BUGS
 The
 .Fn alloca
-function
-is machine dependent; its use is discouraged.
+function is machine dependent; its use is discouraged.
 .\" .Sh HISTORY
 .\" The
 .\" .Fn alloca

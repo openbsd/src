@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: abort.3,v 1.5 1999/06/29 18:36:17 aaron Exp $
+.\"	$OpenBSD: abort.3,v 1.6 2000/04/20 13:50:01 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt ABORT 3
@@ -48,8 +48,7 @@
 .Sh DESCRIPTION
 The
 .Fn abort
-function causes abnormal program termination to occur, unless the
-signal
+function causes abnormal program termination to occur, unless the signal
 .Dv SIGABRT
 is being caught and the signal handler does not return.
 .Pp
@@ -57,14 +56,12 @@ Any open streams are flushed and closed.
 .Sh RETURN VALUES
 The
 .Fn abort
-function
-never returns.
+function never returns.
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr exit 3
 .Sh STANDARDS
 The
 .Fn abort
-function
-conforms to
+function conforms to
 .St -p1003.1-90 .

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: radixsort.3,v 1.5 1999/06/29 18:36:22 aaron Exp $
+.\"	$OpenBSD: radixsort.3,v 1.6 2000/04/20 13:50:02 aaron Exp $
 .\"
 .Dd January 27, 1994
 .Dt RADIXSORT 3
@@ -49,8 +49,7 @@ The
 .Fn radixsort
 and
 .Fn sradixsort
-functions
-are implementations of radix sort.
+functions are implementations of radix sort.
 .Pp
 These functions sort an array of pointers to byte strings, the initial
 member of which is referenced by
@@ -66,23 +65,20 @@ If non-null,
 .Fa table
 must reference an array of
 .Dv UCHAR_MAX
-+ 1 bytes which contains the sort
-weight of each possible byte value.
++ 1 bytes which contains the sort weight of each possible byte value.
 The end-of-string byte must have a sort weight of 0 or 255
 (for sorting in reverse order).
 More than one byte may have the same sort weight.
 The
 .Fa table
-argument
-is useful for applications which wish to sort different characters
+argument is useful for applications which wish to sort different characters
 equally, for example, providing a table with the same weights
 for A-Z as for a-z will result in a case-insensitive sort.
 If
 .Fa table
 is
 .Dv NULL ,
-the contents of the array are sorted in ascending order
-according to the
+the contents of the array are sorted in ascending order according to the
 .Tn ASCII
 order of the byte strings they reference and
 .Fa endbyte
@@ -122,8 +118,7 @@ is not 0 or 255.
 .Pp
 Additionally, the
 .Fn sradixsort
-function
-may fail and set
+function may fail and set
 .Va errno
 for any of the errors specified for the library routine
 .Xr malloc 3 .

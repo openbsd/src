@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.4 1999/06/29 18:36:22 aaron Exp $
+.\"	$OpenBSD: qsort.3,v 1.5 2000/04/20 13:50:02 aaron Exp $
 .\"
 .Dd June 4, 1993
 .Dt QSORT 3
@@ -105,7 +105,9 @@ is stable.
 .Pp
 The
 .Fn qsort
-function is an implementation of C.A.R. Hoare's ``quicksort'' algorithm,
+function is an implementation of C.A.R. Hoare's
+.Dq quicksort
+algorithm,
 a variant of partition-exchange sorting; in particular, see D.E. Knuth's
 Algorithm Q.
 .Fn qsort
@@ -115,7 +117,9 @@ O N**2 worst-case behavior.
 .Pp
 The
 .Fn heapsort
-function is an implementation of J.W.J. William's ``heapsort'' algorithm,
+function is an implementation of J.W.J. William's
+.Dq heapsort
+algorithm,
 a variant of selection sorting; in particular, see D.E. Knuth's Algorithm H.
 .Fn heapsort
 takes O N lg N worst-case time.
@@ -143,13 +147,11 @@ is faster than
 .Fn mergesort
 is faster than
 .Fn heapsort .
-Memory availability and pre-existing order in the data can make this
-untrue.
+Memory availability and pre-existing order in the data can make this untrue.
 .Sh RETURN VALUES
 The
 .Fn qsort
-function
-returns no value.
+function returns no value.
 .Pp
 Upon successful completion,
 .Fn heapsort
@@ -167,8 +169,7 @@ function succeeds unless:
 .It Bq Er EINVAL
 The
 .Fa size
-argument is zero, or,
-the
+argument is zero, or, the
 .Fa size
 argument to
 .Fn mergesort
@@ -228,6 +229,5 @@ This is no longer true.
 .Sh STANDARDS
 The
 .Fn qsort
-function
-conforms to
+function conforms to
 .St -ansiC .

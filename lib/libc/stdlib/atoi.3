@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: atoi.3,v 1.4 1999/09/13 07:14:13 deraadt Exp $
+.\"	$OpenBSD: atoi.3,v 1.5 2000/04/20 13:50:01 aaron Exp $
 .\"
 .Dd June 4, 1993
 .Dt ATOI 3
@@ -66,7 +66,8 @@ does no overflow checking, handles unsigned numbers poorly,
 and handles strings containing trailing extra characters
 (like
 .Dq "123abc" Ns )
-poorly.  Careful use of
+poorly.
+Careful use of
 .Xr strtol 3
 and
 .Xr strtoul 3

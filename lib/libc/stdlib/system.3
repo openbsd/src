@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $OpenBSD: system.3,v 1.6 1999/06/29 18:36:24 aaron Exp $
+.\"     $OpenBSD: system.3,v 1.7 2000/04/20 13:50:03 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt SYSTEM 3
@@ -48,8 +48,7 @@
 .Sh DESCRIPTION
 The
 .Fn system
-function
-hands the argument
+function hands the argument
 .Fa string
 to the command interpreter
 .Xr sh 1 .
@@ -63,9 +62,8 @@ and blocking
 .Pp
 If
 .Fa string
-is a
-.Dv NULL
-pointer,
+is
+.Dv NULL ,
 .Fn system
 will return non-zero.
 Otherwise,
@@ -91,8 +89,7 @@ returns the termination status for a program that terminates with a call of
 .Sh STANDARDS
 The
 .Fn system
-function
-conforms to
+function conforms to
 .St -ansiC
 and
 .St -p1003.2-92 .

@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtod.3,v 1.6 2000/03/04 22:19:31 aaron Exp $
+.\"	$OpenBSD: strtod.3,v 1.7 2000/04/20 13:50:03 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRTOD 3
@@ -50,18 +50,23 @@ string to double
 .Sh DESCRIPTION
 The
 .Fn strtod
-function converts the initial portion of the string
-pointed to by
+function converts the initial portion of the string pointed to by
 .Fa nptr
 to
 .Li double
 representation.
 .Pp
-The expected form of the string is an optional plus (``+'') or minus
-sign (``-'') followed by a sequence of digits optionally containing
+The expected form of the string is an optional plus
+.Pq Ql +
+or minus sign
+.Pq Ql -
+followed by a sequence of digits optionally containing
 a decimal-point character, optionally followed by an exponent.
-An exponent consists of an ``E'' or ``e'', followed by an optional plus
-or minus sign, followed by a sequence of digits.
+An exponent consists of an
+.Sq E
+or
+.Sq e ,
+followed by an optional plus or minus sign, followed by a sequence of digits.
 .Pp
 Leading whitespace characters in the string (as defined by the
 .Xr isspace 3
@@ -90,8 +95,7 @@ is returned (according to the sign of the value), and
 .Er ERANGE
 is stored in
 .Va errno .
-If the correct value would cause underflow, zero is
-returned and
+If the correct value would cause underflow, zero is returned and
 .Er ERANGE
 is stored in
 .Va errno .
@@ -109,6 +113,5 @@ Overflow or underflow occurred.
 .Sh STANDARDS
 The
 .Fn strtod
-function
-conforms to
+function conforms to
 .St -ansiC .

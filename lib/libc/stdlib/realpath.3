@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: realpath.3,v 1.6 1999/07/02 16:57:49 aaron Exp $
+.\"	$OpenBSD: realpath.3,v 1.7 2000/04/20 13:50:02 aaron Exp $
 .\"
 .Dd February 16, 1994
 .Dt REALPATH 3
@@ -56,8 +56,7 @@ and
 .Pa /../
 in
 .Fa pathname ,
-and copies the resulting absolute pathname into
-the memory referenced by
+and copies the resulting absolute pathname into the memory referenced by
 .Fa resolvedname .
 The
 .Fa resolvedname
@@ -101,7 +100,7 @@ for any of the errors specified for the library functions
 .Xr fchdir 2 ,
 .Xr lstat 2 ,
 .Xr open 2 ,
-.Xr readlink 2
+.Xr readlink 2 ,
 and
 .Xr getcwd 3 .
 .Sh CAVEATS

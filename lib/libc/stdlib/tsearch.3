@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tsearch.3,v 1.7 2000/02/25 07:53:09 deraadt Exp $
+.\"	$OpenBSD: tsearch.3,v 1.8 2000/04/20 13:50:03 aaron Exp $
 .\"
 .Dd June 15, 1997
 .Dt TSEARCH 3
@@ -49,7 +49,8 @@ The
 and
 .Fn twalk
 functions manage binary search trees based on algorithms T and D
-from Knuth (6.2.2).  The comparison function passed in by
+from Knuth (6.2.2).
+The comparison function passed in by
 the user has the same style of return values as
 .Xr strcmp 3 .
 .Pp
@@ -67,7 +68,8 @@ is identical to
 .Fn tfind
 except that if no match is found,
 .Fa key
-is inserted into the tree and a pointer to it is returned.  If
+is inserted into the tree and a pointer to it is returned.
+If
 .Fa rootp
 points to a null value a new binary search tree is created.
 .Pp
