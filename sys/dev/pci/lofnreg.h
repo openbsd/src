@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnreg.h,v 1.2 2001/06/25 23:31:58 jason Exp $	*/
+/*	$OpenBSD: lofnreg.h,v 1.3 2001/06/26 03:41:01 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -56,3 +56,16 @@
 
 #define	LOFN_IER_RDY		0x00004000	/* RNG ready */
 #define	LOFN_IER_DONE		0x00008000	/* Operation done */
+
+#define	LOFN_RNC_OUTSCALE	0x00000080	/* Output prescalar */
+#define	LOFN_RNC_1STSCALE	0x00000f00	/* First prescalar */
+
+#define	LOFN_CFG1_RESET		0x00000001	/* Reset */
+#define	LOFN_CFG1_MULTI		0x00000038	/* PLL multiple */
+#define	LOFN_CFG1_CLOCK		0x00000040	/* Clock select */
+
+#define	LOFN_CFG2_RNGENA	0x00000001	/* RNG enable */
+#define	LOFN_CFG2_PRCENA	0x00000002	/* Processor enable */
+
+#define	LOFN_CHIPID_MASK	0x0000ffff	/* Chip ID */
+
