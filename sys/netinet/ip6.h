@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6.h,v 1.15 2004/04/26 05:12:12 itojun Exp $	*/
+/*	$OpenBSD: ip6.h,v 1.16 2004/07/09 09:14:12 itojun Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -258,10 +258,10 @@ struct ip6_frag {
 /*
  * Internet implementation parameters.
  */
-#define IPV6_MAXHLIM	255	/* maximun hoplimit */
+#define IPV6_MAXHLIM	255	/* maximum hoplimit */
 #define IPV6_DEFHLIM	64	/* default hlim */
 #define IPV6_FRAGTTL	120	/* ttl for fragment packets, in slowtimo tick */
-#define IPV6_HLIMDEC	1	/* subtracted when forwaeding */
+#define IPV6_HLIMDEC	1	/* subtracted when forwarding */
 
 #define IPV6_MMTU	1280	/* minimal MTU and reassembly. 1024 + 256 */
 #define IPV6_MAXPACKET	65535	/* ip6 max packet size without Jumbo payload*/
