@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.257 2002/10/22 12:23:35 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.258 2002/10/29 19:51:04 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -34,6 +34,9 @@
  *
  */
 
+#include "bpfilter.h"
+#include "pflog.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -67,9 +70,6 @@
 
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
-
-#include "bpfilter.h"
-#include "pflog.h"
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -237,24 +237,6 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = { { &pf_state_pl, UINT_MAX }
 	{ &pf_frent_pl, PFFRAG_FRENT_HIWAT } };
 
 
-
-#if NPFLOG > 0
-#define	PFLOG_PACKET(i,x,a,b,c,d,e) \
-	do { \
-		if (b == AF_INET) { \
-			HTONS(((struct ip *)x)->ip_len); \
-			HTONS(((struct ip *)x)->ip_off); \
-			pflog_packet(i,a,b,c,d,e); \
-			NTOHS(((struct ip *)x)->ip_len); \
-			NTOHS(((struct ip *)x)->ip_off); \
-		} else { \
-			pflog_packet(i,a,b,c,d,e); \
-		} \
-	} while (0)
-#else
-#define	PFLOG_PACKET(i,x,a,b,c,d,e)	((void)0)
-#endif
-
 #define	STATE_TRANSLATE(s) \
 	(s)->lan.addr.addr32[0] != (s)->gwy.addr.addr32[0] || \
 	((s)->af == AF_INET6 && \
@@ -365,49 +347,6 @@ pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
 	}
 }
 #endif
-
-int
-pflog_packet(struct ifnet *ifp, struct mbuf *m, sa_family_t af, u_short dir,
-    u_short reason, struct pf_rule *rm)
-{
-#if NBPFILTER > 0
-	struct ifnet *ifn;
-	struct pfloghdr hdr;
-	struct mbuf m1;
-
-	if (ifp == NULL || m == NULL || rm == NULL)
-		return (-1);
-
-	hdr.af = htonl(af);
-	memcpy(hdr.ifname, ifp->if_xname, sizeof(hdr.ifname));
-
-	hdr.rnr = htons(rm->nr);
-	hdr.reason = htons(reason);
-	hdr.dir = htons(dir);
-	hdr.action = htons(rm->action);
-
-#ifdef INET
-	if (af == AF_INET && dir == PF_OUT) {
-		struct ip *ip;
-
-		ip = mtod(m, struct ip *);
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-	}
-#endif /* INET */
-
-	m1.m_next = m;
-	m1.m_len = PFLOG_HDRLEN;
-	m1.m_data = (char *) &hdr;
-
-	ifn = &(pflogif[0].sc_if);
-
-	if (ifn->if_bpf)
-		bpf_mtap(ifn->if_bpf, &m1);
-#endif
-
-	return (0);
-}
 
 struct pf_state *
 pf_find_state(struct pf_state_tree *tree, struct pf_tree_node *key)

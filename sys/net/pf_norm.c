@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.37 2002/10/22 12:23:35 mcbride Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.38 2002/10/29 19:51:04 mickey Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "pflog.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +54,6 @@
 #include <netinet/ip_icmp.h>
 
 #include <net/pfvar.h>
-
-#include "pflog.h"
 
 struct pf_frent {
 	LIST_ENTRY(pf_frent) fr_next;
@@ -117,22 +117,6 @@ int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 
 #define	DPFPRINTF(x)	if (pf_status.debug >= PF_DEBUG_MISC) \
 			    { printf("%s: ", __func__); printf x ;}
-
-#if NPFLOG > 0
-#define	PFLOG_PACKET(i,x,a,b,c,d,e) \
-	do { \
-		if (b == AF_INET) { \
-			HTONS(((struct ip *)x)->ip_len); \
-			HTONS(((struct ip *)x)->ip_off); \
-			pflog_packet(i,a,b,c,d,e); \
-			NTOHS(((struct ip *)x)->ip_len); \
-			NTOHS(((struct ip *)x)->ip_off); \
-		} else \
-			pflog_packet(i,a,b,c,d,e); \
-	} while (0)
-#else
-#define	PFLOG_PACKET(i,x,a,b,c,d,e)	((void)0)
-#endif
 
 /* Globals */
 struct pool		 pf_frent_pl, pf_frag_pl, pf_cache_pl, pf_cent_pl;
