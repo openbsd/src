@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.24 2000/06/18 00:24:11 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.25 2000/06/18 05:58:46 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -61,8 +61,12 @@
 #include <netinet/udp.h>
 
 #ifdef INET6
+#ifndef INET
 #include <netinet/in.h>
+#endif
 #include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#include <netinet6/ip6protosw.h>
 #endif /* INET6 */
 
 #include <netinet/ip_ipsp.h>
@@ -88,6 +92,11 @@ int ipsec_common_input(struct mbuf *, int, int, int, int);
 /* sysctl variables */
 int esp_enable = 0;
 int ah_enable = 0;
+
+#ifdef INET6
+extern struct ip6protosw inet6sw[];
+extern u_char ip6_protox[];
+#endif
 
 /*
  * ipsec_common_input() gets called when we receive an IPsec-protected packet
@@ -363,7 +372,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
         }
 
 	ip6 = mtod(m, struct ip6_hdr *);
-	ip6->ip6_plen = htons(m->m_pkthdr.len);
+	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
 
 	/* Save protocol */
 	m_copydata(m, protoff, 1, (unsigned char *) &prot);
@@ -607,10 +616,10 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	    switch (sproto)
 	    {
 		case IPPROTO_ESP:
-		    return esp6_input_cb(m, protoff);
+		    return esp6_input_cb(m, skip, protoff);
 
 		case IPPROTO_AH:
-		    return ah6_input_cb(m, protoff);
+		    return ah6_input_cb(m, skip, protoff);
 
 		default:
 		    DPRINTF(("ipsec_common_input_cb(): unknown/unsupported security protocol %d\n", sproto));
@@ -760,8 +769,15 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
     u_int8_t nxt = 0;
     int protoff;
 
-    if (*offp == sizeof(struct ip6_hdr))
-      protoff = offsetof(struct ip6_hdr, ip6_nxt);
+    if (*offp < sizeof(struct ip6_hdr))
+    {
+	DPRINTF(("ah6_input(): bad offset\n"));
+	return IPPROTO_DONE;
+    }
+    else if (*offp == sizeof(struct ip6_hdr))
+    {
+	protoff = offsetof(struct ip6_hdr, ip6_nxt);
+    }
     else
     {
 	/* Chase down the header chain... */
@@ -794,17 +810,44 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 
 /* IPv6 AH callback */
 int
-ah6_input_cb(struct mbuf *mp, int protoff)
+ah6_input_cb(struct mbuf *m, int off, int protoff)
 {
-    u_int8_t nxt = 0;
+    int nxt;
+    u_int8_t nxt8;
+    int nest = 0;
 
     /* Retrieve new protocol */
-    m_copydata(mp, protoff, sizeof(u_int8_t), (caddr_t) &nxt);
+    m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &nxt8);
+    nxt = nxt8;
 
-    /* XXX Requeue -- for now, drop packet */
-    m_freem(mp);
+    /*
+     * see the end of ip6_input for this logic.
+     * IPPROTO_IPV[46] case will be processed just like other ones
+     */
+    while (nxt != IPPROTO_DONE) {
+	if (ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
+	    ip6stat.ip6s_toomanyhdr++;
+	    goto bad;
+	}
+
+	/*
+	 * protection against faulty packet - there should be
+	 * more sanity checks in header chain processing.
+	 */
+	if (m->m_pkthdr.len < off) {
+	    ip6stat.ip6s_tooshort++;
+	    in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);
+	    goto bad;
+	}
+
+	nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
+    }
 
     return 0;
+
+bad:
+    m_freem(m);
+    return EINVAL;	/*?*/
 }
 
 /* IPv6 ESP wrapper */
@@ -814,8 +857,15 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
     u_int8_t nxt = 0;
     int protoff;
 
-    if (*offp == sizeof(struct ip6_hdr))
-      protoff = offsetof(struct ip6_hdr, ip6_nxt);
+    if (*offp < sizeof(struct ip6_hdr))
+    {
+	DPRINTF(("esp6_input(): bad offset\n"));
+	return IPPROTO_DONE;
+    }
+    else if (*offp == sizeof(struct ip6_hdr))
+    {
+	protoff = offsetof(struct ip6_hdr, ip6_nxt);
+    }
     else
     {
 	/* Chase down the header chain... */
@@ -842,23 +892,14 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 	protoff += offsetof(struct ip6_ext, ip6e_nxt);
     }
 
-    protoff = offsetof(struct ip6_hdr, ip6_nxt);
     ipsec_common_input(*mp, *offp, protoff, AF_INET6, proto);
     return IPPROTO_DONE;
 }
 
 /* IPv6 ESP callback */
 int
-esp6_input_cb(struct mbuf *mp, int protoff)
+esp6_input_cb(struct mbuf *m, int skip, int protoff)
 {
-    u_int8_t nxt = 0;
-
-    /* Retrieve new protocol */
-    m_copydata(mp, protoff, sizeof(u_int8_t), (caddr_t) &nxt);
-
-    /* XXX Requeue -- for now, drop packet */
-    m_freem(mp);
-
-    return 0;
+    return ah6_input_cb(m, skip, protoff);
 }
 #endif /* INET6 */

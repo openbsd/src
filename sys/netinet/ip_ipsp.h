@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.67 2000/06/06 04:49:29 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.68 2000/06/18 05:58:46 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -519,7 +519,7 @@ extern int ah4_input_cb __P((struct mbuf *, ...));
 
 #ifdef INET6
 extern int ah6_input __P((struct mbuf **, int *, int));
-extern int ah6_input_cb __P((struct mbuf *, int));
+extern int ah6_input_cb __P((struct mbuf *, int, int));
 #endif /* INET6 */
 
 /* XF_ESP */
@@ -539,7 +539,7 @@ extern int esp4_input_cb __P((struct mbuf *, ...));
 
 #ifdef INET6
 extern int esp6_input __P((struct mbuf **, int *, int));
-extern int esp6_input_cb __P((struct mbuf *, int));
+extern int esp6_input_cb __P((struct mbuf *, int, int));
 #endif /* INET6 */
 
 /* XF_TCPSIGNATURE */
