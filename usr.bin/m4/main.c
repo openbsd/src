@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2001/09/18 13:52:58 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2001/09/18 14:05:14 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.44 2001/09/18 13:52:58 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.45 2001/09/18 14:05:14 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -574,6 +574,17 @@ builtin_type(key)
 	return -1;
 }
 
+char *
+builtin_realname(n)
+	int n;
+{
+	int i;
+
+	for (i = 0; i != MAXKEYS; i++)
+		if (((keywrds[i].ktyp ^ n) & TYPEMASK) == 0)
+			return keywrds[i].knam;
+	return NULL;
+}
 
 static void
 record(t, lev)

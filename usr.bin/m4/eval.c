@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.30 2001/09/18 13:52:58 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.31 2001/09/18 14:05:14 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.30 2001/09/18 13:52:58 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.31 2001/09/18 14:05:14 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,8 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.30 2001/09/18 13:52:58 espie Exp $";
 #include "stdd.h"
 #include "extern.h"
 #include "pathnames.h"
+
+#define BUILTIN_MARKER	"__builtin_"
 
 static void	dodefn __P((const char *));
 static void	dopushdef __P((const char *, const char *));
@@ -544,6 +546,7 @@ dodefine(name, defn)
 	const char *defn;
 {
 	ndptr p;
+	int n;
 
 	if (!*name)
 		errx(1, "%s at line %lu: null definition.", CURRENT_NAME,
@@ -552,6 +555,14 @@ dodefine(name, defn)
 		p = addent(name);
 	else if (p->defn != null)
 		free((char *) p->defn);
+	if (strncmp(defn, BUILTIN_MARKER, sizeof(BUILTIN_MARKER)-1) == 0) {
+		n = builtin_type(defn+sizeof(BUILTIN_MARKER)-1);
+		if (n != -1) {
+			p->type = n;
+			p->defn = null;
+			return;
+		}
+	}
 	if (!*defn)
 		p->defn = null;
 	else
@@ -570,11 +581,17 @@ dodefn(name)
 	const char *name;
 {
 	ndptr p;
+	char *real;
 
-	if ((p = lookup(name)) != nil && p->defn != null) {
+	if ((p = lookup(name)) != nil) {
+		if (p->defn != null) {
 		pbstr(rquote);
 		pbstr(p->defn);
 		pbstr(lquote);
+		} else if ((real = builtin_realname(p->type)) != NULL) {
+			pbstr(real);
+			pbstr(BUILTIN_MARKER);
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.22 2001/09/18 13:52:58 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.23 2001/09/18 14:05:14 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ extern void	remhash __P((const char *, int));
 /* main.c */
 extern void outputstr __P((const char *));
 extern int builtin_type __P((const char *));
+extern char *builtin_realname __P((int));
 
 /* misc.c */
 extern void	chrsave __P((int));
