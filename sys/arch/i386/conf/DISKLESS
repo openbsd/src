@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.23 1999/01/02 00:32:56 niklas Exp $
+#	$OpenBSD: DISKLESS,v 1.24 1999/10/03 21:08:15 niklas Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -35,7 +35,7 @@ option		KTRACE		# system call tracing, a la ktrace(1)
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
-#option		SHMMAXPGS=1024	# 1024 pages is the default
+#option		SHMMAXPGS=2048	# 2048 pages is the default
 
 option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
 option		COMPAT_10	# NetBSD 1.0,

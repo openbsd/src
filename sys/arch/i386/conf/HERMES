@@ -1,4 +1,4 @@
-#	$OpenBSD: HERMES,v 1.19 1999/08/21 20:36:43 kstailey Exp $
+#	$OpenBSD: HERMES,v 1.20 1999/10/03 21:08:15 niklas Exp $
 #
 #	HERMES -- 450MHz Pentium II PCI, APM, PnP
 #
@@ -32,7 +32,7 @@ option		KTRACE		# system call tracing, a la ktrace(1)
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
-#option		SHMMAXPGS=1024	# 1024 pages is the default
+#option		SHMMAXPGS=2048	# 2048 pages is the default
 
 #option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
 #option		COMPAT_10	# NetBSD 1.0,

@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/166 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.30 1999/03/16 19:26:50 tholo Exp $
+#	$OpenBSD: GANDALF,v 1.31 1999/10/03 21:08:15 niklas Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -33,7 +33,7 @@ option		KTRACE		# system call tracing, a la ktrace(1)
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
-#option		SHMMAXPGS=1024	# 1024 pages is the default
+#option		SHMMAXPGS=2048	# 2048 pages is the default
 
 option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
 option		COMPAT_10	# NetBSD 1.0,

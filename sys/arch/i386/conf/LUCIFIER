@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.20 1999/02/18 13:10:55 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.21 1999/10/03 21:08:15 niklas Exp $
 #
 
 #source	/sys
@@ -43,7 +43,7 @@ option		KTRACE		# system call tracing, a la ktrace(1)
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
-#option		SHMMAXPGS=1024	# 1024 pages is the default
+#option		SHMMAXPGS=2048	# 2048 pages is the default
 
 option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD

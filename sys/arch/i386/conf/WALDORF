@@ -1,4 +1,4 @@
-#	$OpenBSD: WALDORF,v 1.20 1999/02/04 23:16:06 niklas Exp $
+#	$OpenBSD: WALDORF,v 1.21 1999/10/03 21:08:15 niklas Exp $
 #
 #	WALDORF -- a 486 kernel config Applitron use for some gateway
 #		   machines (waldorf and neuro).
@@ -33,7 +33,7 @@ option		BOOT_CONFIG	# user kernel config
 #option		SYSVMSG		# System V-like message queues
 #option		SYSVSEM		# System V-like semaphores
 #option		SYSVSHM		# System V-like memory sharing
-#option		SHMMAXPGS=1024	# 1024 pages is the default
+#option		SHMMAXPGS=2048	# 2048 pages is the default
 
 #option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
 #option		COMPAT_10	# NetBSD 1.0,
