@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.260 2000/05/30 00:49:08 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.261 2000/05/30 08:27:59 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1500,7 +1500,7 @@ product UMC UM8886F		0x8886	UM8886F PCI-ISA
 product UMC UM8886A		0x888a	UM8886A
 product UMC UM8891A		0x8891	UM8891A
 product UMC UM9017F		0x9017	UM9017F
-product UMC UM8886F		0xe886	PCI-ISA
+product UMC UM8886E_OR_WHAT	0xe886	PCI-ISA
 product UMC UM8886N		0xe88a	UM8886N
 product UMC UM8891N		0xe891	UM8891N
 
