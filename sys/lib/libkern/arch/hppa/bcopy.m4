@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.2 1999/06/10 19:52:23 mickey Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.3 1999/09/14 00:51:19 mickey Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -192,7 +192,10 @@ L($1, byte_loop)
 L($1, done)
 ')dnl
 `
+#undef _LOCORE
+#define _LOCORE
 #include <machine/asm.h>
+#include <machine/frame.h>
 '
 ifelse(NAME, `bcopy',
 `
@@ -236,7 +239,7 @@ ifelse(NAME, `spcopy',
 	.import	curproc, data
 	.import	copy_on_fault, code
 ENTRY(spcopy)
-	ldw     VA_ARG4(sp), ret1
+	ldw     HPPA_FRAME_ARG(4)(sp), ret1
 	comb,>=,n r0, ret1, L(spcopy, ret)
 `
 	/* setup fault handler */
