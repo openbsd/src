@@ -716,7 +716,7 @@ case "$host_alias" in
 NONE)
   case $nonopt in
   NONE)
-    if host_alias=`sh $ac_config_guess`; then :
+    if host_alias=`$ac_config_guess`; then :
     else { echo "configure: error: can not guess host type; you must specify one" 1>&2; exit 1; }
     fi ;;
   *) host_alias=$nonopt ;;
