@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.30 2003/08/25 04:56:42 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.31 2004/03/16 01:11:09 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.30 2003/08/25 04:56:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.31 2004/03/16 01:11:09 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <unistd.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <errno.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -107,7 +108,6 @@ int check_callit(struct sockaddr_in *, u_long, u_long, u_long);
 
 struct pmaplist *pmaplist;
 int debugging = 0;
-extern int errno;
 
 SVCXPRT *ludpxprt, *ltcpxprt;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttoutput.c,v 1.6 2003/07/18 23:11:43 david Exp $	*/
+/*	$OpenBSD: ttoutput.c,v 1.7 2004/03/16 01:11:09 tedu Exp $	*/
 /*	$NetBSD: ttoutput.c,v 1.3 1995/09/28 10:34:51 tls Exp $	*/
 
 /*
@@ -37,13 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)ttoutput.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: ttoutput.c,v 1.6 2003/07/18 23:11:43 david Exp $";
+static char rcsid[] = "$OpenBSD: ttoutput.c,v 1.7 2004/03/16 01:11:09 tedu Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
-#include <sys/errno.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
@@ -57,7 +57,6 @@ ttflush()
 {
 	char *p;
 	int n = tt_obp - tt_ob;
-	extern errno;
 
 	if (n == 0)
 		return;

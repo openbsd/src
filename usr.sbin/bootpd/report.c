@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
+#include <errno.h>
 
 #include "report.h"
 
@@ -122,7 +123,6 @@ report(int priority, char *fmt,...)
 char *
 get_errmsg(void)
 {
-	extern int errno;
 
 	return strerror(errno);
 }

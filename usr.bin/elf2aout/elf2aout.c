@@ -1,4 +1,4 @@
-/* $OpenBSD: elf2aout.c,v 1.4 2003/11/27 10:31:52 henning Exp $	 */
+/* $OpenBSD: elf2aout.c,v 1.5 2004/03/16 01:11:09 tedu Exp $	 */
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 #include <machine/elf_abi.h>
 #include <stdio.h>
 #include <a.out.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <string.h>
 #include <limits.h>
 
@@ -51,7 +51,6 @@ int             phcmp();
 char           *saveRead(int file, off_t offset, off_t len, char *name);
 int             copy(int, int, off_t, off_t);
 int             translate_syms(int, int, off_t, off_t, off_t, off_t);
-extern int      errno;
 int            *symTypeTable;
 
 /* Symbol table entry... */

@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.22 2004/02/26 20:48:29 tedu Exp $";
+    "@(#) $Id: mtrace.c,v 1.23 2004/03/16 01:11:09 tedu Exp $";
 #endif
 
 #include <netdb.h>
@@ -132,10 +132,6 @@ u_int32_t tdst = 0;		/* Address where trace is sent (last-hop) */
 
 vifi_t  numvifs;		/* to keep loader happy */
 				/* (see kern.c) */
-#ifndef SYSV
-extern long random(void);
-#endif
-extern int errno;
 
 char *			inet_name(u_int32_t addr);
 u_int32_t			host_addr(char *name);

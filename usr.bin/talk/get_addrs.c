@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_addrs.c,v 1.6 2004/03/02 21:04:42 tedu Exp $	*/
+/*	$OpenBSD: get_addrs.c,v 1.7 2004/03/16 01:11:09 tedu Exp $	*/
 /*	$NetBSD: get_addrs.c,v 1.3 1994/12/09 02:14:14 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_addrs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: get_addrs.c,v 1.6 2004/03/02 21:04:42 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: get_addrs.c,v 1.7 2004/03/16 01:11:09 tedu Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -49,7 +49,6 @@ get_addrs(my_machine_name, his_machine_name)
 {
 	struct hostent *hp;
 	struct servent *sp;
-	extern int h_errno;
 
 	msg.pid = htonl(getpid());
 	/* look up the address of the local host */

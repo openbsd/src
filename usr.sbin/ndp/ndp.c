@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.33 2004/02/10 14:47:22 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.34 2004/03/16 01:11:09 tedu Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -572,7 +572,6 @@ dump(struct in6_addr *addr, int cflag)
 	struct rt_msghdr *rtm;
 	struct sockaddr_in6 *sin;
 	struct sockaddr_dl *sdl;
-	extern int h_errno;
 	struct in6_nbrinfo *nbi;
 	struct timeval time;
 	int addrwidth;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwerror.c,v 1.4 2003/06/03 02:56:23 millert Exp $	*/
+/*	$OpenBSD: wwerror.c,v 1.5 2004/03/16 01:11:09 tedu Exp $	*/
 /*	$NetBSD: wwerror.c,v 1.3 1995/09/28 10:35:29 tls Exp $	*/
 
 /*
@@ -37,17 +37,18 @@
 #if 0
 static char sccsid[] = "@(#)wwerror.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwerror.c,v 1.4 2003/06/03 02:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwerror.c,v 1.5 2004/03/16 01:11:09 tedu Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
+#include <errno.h>
+#include <string.h>
+
 char *
 wwerror()
 {
-	extern int errno;
-	char *strerror();
 
 	switch (wwerrno) {
 	case WWE_NOERR:
