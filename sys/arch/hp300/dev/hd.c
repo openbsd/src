@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.18 2002/06/09 05:23:26 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.19 2002/12/10 23:33:08 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -226,7 +226,7 @@ void	hdrestart(void *);
 struct buf *hdfinish(struct hd_softc *, struct buf *);
 
 void	hdstart(void *);
-void	hdinterupt(void *);
+void	hdinterrupt(void *);
 void	hdgo(void *);
 int	hdstatus(struct hd_softc *);
 int	hderror(int);
@@ -303,7 +303,7 @@ hdattach(parent, self, aux)
 	sc->sc_hq.hq_slave = sc->sc_slave;
 	sc->sc_hq.hq_start = hdstart;
 	sc->sc_hq.hq_go = hdgo;
-	sc->sc_hq.hq_intr = hdinterupt;
+	sc->sc_hq.hq_intr = hdinterrupt;
 
 	sc->sc_flags = HDF_ALIVE;
 #ifdef DEBUG
@@ -860,7 +860,7 @@ hdgo(arg)
 
 /* ARGSUSED */
 void
-hdinterupt(arg)
+hdinterrupt(arg)
 	void *arg;
 {
 	struct hd_softc *rs = arg;
@@ -874,7 +874,7 @@ hdinterupt(arg)
 
 #ifdef DEBUG
 	if (hddebug & HDB_FOLLOW)
-		printf("hdinterupt(%d): bp %p, %c, flags %x\n", unit, bp,
+		printf("hdinterrupt(%d): bp %p, %c, flags %x\n", unit, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W', rs->sc_flags);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", rs->sc_dev.dv_xname);
@@ -910,7 +910,7 @@ hdinterupt(arg)
 	if (rv != 1 || stat) {
 #ifdef DEBUG
 		if (hddebug & HDB_ERROR)
-			printf("hdinterupt: recv failed or bad stat %d\n", stat);
+			printf("hdinterrupt: recv failed or bad stat %d\n", stat);
 #endif
 		restart = hderror(unit);
 #ifdef DEBUG
