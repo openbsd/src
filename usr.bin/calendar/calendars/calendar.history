@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.37 2005/01/31 13:40:45 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.38 2005/03/01 22:02:08 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -80,7 +80,7 @@
 02/29	French and Indian raid on Deerfield MA, 1704
 03/01	Sarah Goode, Sarah Osborne, and Tituba arrested for witchcraft
 	in Salem, Massachusetts, 1692
-03/02	Blackthorn winds (New England) (Does anyone know what this is?)
+03/02	Blackthorn winds (New England)
 03/03	Gemini III launched with Virgil Grissom and John Young on board, 1965
 03/04	First meeting of Congress, 1789, in N.Y.C.
 03/06	Hindenburg explodes and burns upon landing at Lakehurst, NJ, 1939
