@@ -2,6 +2,8 @@
  * X9.9 calculator
  * This software is provided AS IS with no express or implied warranty
  * October 1995, Paul Borman <prb@krystal.com>
+ *
+ * Donated to the Public Domain by Paul Borman
  */
 #include <sys/param.h>
 #include <sys/stat.h>
