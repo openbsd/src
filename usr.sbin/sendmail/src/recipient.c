@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)recipient.c	8.108 (Berkeley) 10/30/95";
+static char sccsid[] = "@(#)recipient.c	8.108.1.1 (Berkeley) 9/12/96";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -499,7 +499,7 @@ recipient(a, sendq, aliaslevel, e)
 
 		/* warning -- finduser may trash buf */
 		pw = finduser(buf, &fuzzy);
-		if (pw == NULL)
+		if (pw == NULL || strlen(pw->pw_name) > MAXNAME)
 		{
 			a->q_flags |= QBADADDR;
 			a->q_status = "5.1.1";
