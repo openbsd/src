@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.5 1999/08/04 23:27:48 niklas Exp $	*/
+/*	$OpenBSD: adv.c,v 1.6 2000/12/13 15:49:15 mickey Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -358,6 +358,7 @@ adv_queue_ccb(sc, ccb)
 	ADV_CCB        *ccb;
 {
 
+	timeout_set(&ccb->xs->stimeout, adv_timeout, ccb);
 	TAILQ_INSERT_TAIL(&sc->sc_waiting_ccb, ccb, chain);
 
 	adv_start_ccbs(sc);
@@ -369,21 +370,27 @@ adv_start_ccbs(sc)
 	ASC_SOFTC      *sc;
 {
 	ADV_CCB        *ccb;
+	struct scsi_xfer *xs;
 
 	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
+
+		xs = ccb->xs;
 		if (ccb->flags & CCB_WATCHDOG)
-			untimeout(adv_watchdog, ccb);
+			timeout_del(&xs->stimeout);
 
 		if (AscExeScsiQueue(sc, &ccb->scsiq) == ASC_BUSY) {
 			ccb->flags |= CCB_WATCHDOG;
-			timeout(adv_watchdog, ccb,
+			timeout_set(&xs->stimeout, adv_watchdog, ccb);
+			timeout_add(&xs->stimeout,
 				(ADV_WATCH_TIMEOUT * hz) / 1000);
 			break;
 		}
 		TAILQ_REMOVE(&sc->sc_waiting_ccb, ccb, chain);
 
-		if ((ccb->xs->flags & SCSI_POLL) == 0)
-			timeout(adv_timeout, ccb, (ccb->timeout * hz) / 1000);
+		if ((ccb->xs->flags & SCSI_POLL) == 0) {
+			timeout_set(&xs->stimeout, adv_timeout, ccb);
+			timeout_add(&xs->stimeout, (ccb->timeout * hz) / 1000);
+		}
 	}
 }
 
@@ -977,7 +984,7 @@ adv_narrow_isr_callback(sc, qdonep)
 			xs->sc_link->scsipi_scsi.target,
 			xs->sc_link->scsipi_scsi.lun, xs->cmd->opcode);
 #endif
-	untimeout(adv_timeout, ccb);
+	timeout_del(&xs->stimeout);
 
 	/*
          * If we were a data transfer, unload the map that described
