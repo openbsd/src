@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.1 2000/03/23 09:59:57 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.2 2000/03/23 10:27:05 art Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -140,7 +140,7 @@ timeout_add(new, to_ticks)
 	 * will timeout after we do, insert the new timeout there.
 	 */
 	TAILQ_FOREACH(to, &timeout_todo, to_list) {
-		if (to->to_time - ticks >= to_ticks) {
+		if (to->to_time - ticks > to_ticks) {
 			TAILQ_INSERT_BEFORE(to, new, to_list);
 			goto out;
 		}
