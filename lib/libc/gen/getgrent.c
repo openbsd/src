@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.5 1996/09/15 10:09:10 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.6 1997/01/25 04:59:42 downsj Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -163,15 +163,15 @@ grscan(search, gid, name)
 	register char *cp, **m;
 	char *bp;
 #ifdef YP
+	char *key, *data;
+	int keylen, datalen;
+	int r;
 	char *grname = (char *)NULL;
 #endif
 
 	for (;;) {
 #ifdef YP
 		if(__ypmode != YPMODE_NONE) {
-			char *key, *data;
-			int keylen, datalen;
-			int r;
 
 			if(!__ypdomain) {
 				if(yp_get_default_domain(&__ypdomain)) {
@@ -256,16 +256,50 @@ grscan(search, gid, name)
 			case '\0':
 			case '\n':
 				if(_yp_check(NULL)) {
-					__ypmode = YPMODE_FULL;
-					continue;
+					if (!search) {
+						__ypmode = YPMODE_FULL;
+						continue;
+					}
+					if(!__ypdomain &&
+					   yp_get_default_domain(&__ypdomain))
+						continue;
+					if (name) {
+						r = yp_match(__ypdomain,
+							     "group.byname",
+							     name, strlen(name),
+							     &data, &datalen);
+					} else {
+						char buf[20];
+						sprintf(buf, "%d", gid);
+						r = yp_match(__ypdomain,
+							     "group.bygid",
+							     buf, strlen(buf),
+							     &data, &datalen);
+					}
+					if (r != 0)
+						continue;
+					bcopy(data, line, datalen);
+					free(data);
+					line[datalen] = '\0';
+					bp = line;
+					_gr_group.gr_name = strsep(&bp, ":\n");
+					_gr_group.gr_passwd =
+						strsep(&bp, ":\n");
+					if (!(cp = strsep(&bp, ":\n")))
+						continue;
+					_gr_group.gr_gid =
+						name ? atoi(cp) : gid;
+					goto found_it;
 				}
 				break;
 			default:
 				if(_yp_check(NULL)) {
 					register char *tptr;
 
-					__ypmode = YPMODE_NAME;
 					tptr = strsep(&bp, ":\n");
+					if (search && name && strcmp(tptr, name))
+						continue;
+					__ypmode = YPMODE_NAME;
 					grname = strdup(tptr + 1);
 					continue;
 				}
@@ -283,6 +317,7 @@ parse:
 		_gr_group.gr_gid = atoi(cp);
 		if (search && name == NULL && _gr_group.gr_gid != gid)
 			continue;
+	found_it:
 		cp = NULL;
 		if (bp == NULL)
 			continue;
