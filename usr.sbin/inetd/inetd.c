@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.34 1997/07/08 20:31:14 kstailey Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.35 1997/07/08 20:37:30 kstailey Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.34 1997/07/08 20:31:14 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.35 1997/07/08 20:37:30 kstailey Exp $";
 #endif /* not lint */
 
 /*
@@ -585,7 +585,7 @@ reapchild(sig)
 		if (pid <= 0)
 			break;
 		if (debug)
-			fprintf(stderr, "%d reaped\n", pid);
+			fprintf(stderr, "%d reaped, status %x\n", pid, status);
 		for (sep = servtab; sep; sep = sep->se_next)
 			if (sep->se_wait == pid) {
 				if (WIFEXITED(status) && WEXITSTATUS(status))
