@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2001/12/02 04:14:11 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 2002/02/11 19:42:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -80,6 +80,7 @@ extern const char *cpu_typename;
  * COPR/SFUs
  */
 #define	HPPA_FPUS	0xc0
+#define	HPPA_FPUVER(w)	(((w) & 0x003ff800) >> 11)
 #define	HPPA_PMSFUS	0x20	/* ??? */
 
 /*

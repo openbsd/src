@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2002/02/07 05:48:54 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2002/02/11 19:42:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -518,11 +518,12 @@ hppa_init(start)
 	    &pdc_coproc)) < 0)
 		printf("WARNING: PDC_COPROC error %d\n", error);
 	else {
+		extern u_int fpu_enable;
 #ifdef DEBUG
 		printf("pdc_coproc: %x, %x\n", pdc_coproc.ccr_enable,
 		    pdc_coproc.ccr_present);
 #endif
-		mtctl(pdc_coproc.ccr_enable & CCR_MASK, CR_CCR);
+		fpu_enable = pdc_coproc.ccr_enable & CCR_MASK;
 	}
 
 	/* they say PDC_COPROC might turn fault light on */

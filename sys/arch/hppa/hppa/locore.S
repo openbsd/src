@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.50 2002/02/06 19:37:02 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.51 2002/02/11 19:42:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -114,7 +114,8 @@ fpu_csw
 	.export	fpu_curpcb, data
 fpu_curpcb
 	.comm	4
-
+fpu_enable
+	.comm	4
 	.text
 
 /*
@@ -1059,7 +1060,9 @@ LEAF_ENTRY(TLABEL(emu))
 	comb,=,n t1, t2, $fpusw_done
 	comb,=,n r0, t1, $fpusw_nosave
 
-	/* ldo	PCB_FPREGS+U_PCB(t1), t1 */
+#if PCB_FPREGS != 0 || U_PCB != 0
+	ldo	PCB_FPREGS+U_PCB(t1), t1
+#endif
 
 	fstds,ma fr0 , 8(t3)	/* fr0 must be saved first */
 	fstds,ma fr1 , 8(t3)
@@ -2533,6 +2536,7 @@ switch_exited
 	 *
 	 * arg1: new proc
 	 */
+	mtctl	r0, ccr			/* disable FPU */
 	ldw	P_MD(arg1), t1
 	ldw	TF_CR30(t1), t2
 	ldw	TF_R30(t1), sp
@@ -2544,7 +2548,7 @@ switch_exited
 	ldw	HPPA_FRAME_PSP(sp), t2
 	stw	t3, TF_R30(t1)
 	fdc	r0(t1)
-	ldw	HPPA_FRAME_ARG(1)(sp), t3 /* in case we're in trampoline */
+	ldw	HPPA_FRAME_ARG(1)(sp), t3 /* in case we're on trampoline */
 	ldw	HPPA_FRAME_ARG(2)(sp), arg0
 	ldw	 0*4(t2), r3
 	ldw	 1*4(t2), r4

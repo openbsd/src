@@ -1,7 +1,7 @@
-/*	$OpenBSD: cpu.c,v 1.8 2000/08/15 20:38:24 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.9 2002/02/11 19:42:11 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,6 +89,7 @@ cpuattach(parent, self, aux)
 	extern struct pdc_cache pdc_cache;
 	extern struct pdc_btlb pdc_btlb;
 	extern u_int cpu_ticksnum, cpu_ticksdenom;
+	extern u_int fpu_enable;
 
 	struct pdc_model pdc_model PDC_ALIGNMENT;
 	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
@@ -116,7 +117,26 @@ cpuattach(parent, self, aux)
 		/* XXX p = hppa_mod_info(HPPA_TYPE_CPU,pdc_cversion[0]); */
 	}
 
-	printf (": %s rev %d, ", p? p : cpu_typename, (*cpu_desidhash)());
+	printf (": %s rev %d %d",
+	    p? p : cpu_typename, (*cpu_desidhash)(), mhz / 100);
+	if (mhz % 100 > 9)
+		printf(".%02d", mhz % 100);
+
+	printf("MHz, ");
+
+	if (fpu_enable) {
+		u_int ver;
+		mtctl(fpu_enable, CR_CCR);
+		__asm volatile(
+		    "copr,0,0\n\t"
+		    "fstws   %%fr0,0(%0)"
+		    :: "r" (&ver) : "memory");
+		mtctl(0, CR_CCR);
+		ver = HPPA_FPUVER(ver);
+		printf("FPU v%d.%02d", ver / 100, ver %100);
+	}
+
+	printf("\n%s: ", self->dv_xname);
 
 	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
 			    &pdc_model)) < 0) {
@@ -126,16 +146,12 @@ cpuattach(parent, self, aux)
 	} else {
 		static const char lvls[4][4] = { "0", "1", "1.5", "2" };
 
-		printf("lev %s, cat %c, ",
+		printf("L %s-%c, ",
 		       lvls[pdc_model.pa_lvl], "AB"[pdc_model.mc]);
 	}
 
-	printf ("%d", mhz / 100);
-	if (mhz % 100 > 9)
-		printf(".%02d", mhz % 100);
-
-	printf(" MHz clk\n%s: %s", self->dv_xname,
-	       pdc_model.sh? "shadows, ": "");
+	if (pdc_model.sh)
+		printf("shadows, ");
 
 	if (pdc_cache.dc_conf.cc_sh)
 		printf("%uK cache", pdc_cache.dc_size / 1024);
