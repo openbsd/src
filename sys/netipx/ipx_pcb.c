@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.6 2000/01/13 04:45:14 fgsch Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.7 2000/01/13 07:10:36 fgsch Exp $	*/
 
 /*-
  *
@@ -120,7 +120,7 @@ ipx_pcbbind(ipxp, nam)
 	if (lport) {
 		u_short aport = ntohs(lport);
 
-		if (aport < IPXPORT_MAX &&
+		if (aport < IPXPORT_RESERVED &&
 		    (ipxp->ipxp_socket->so_state & SS_PRIV) == 0)
 			return (EACCES);
 		if (ipx_pcblookup(&zeroipx_addr, lport, 0))
@@ -130,8 +130,9 @@ ipx_pcbbind(ipxp, nam)
 noname:
 	if (lport == 0)
 		do {
-			if (ipxcbtable.ipxpt_lport++ < IPXPORT_MAX)
-				ipxcbtable.ipxpt_lport = IPXPORT_MAX;
+			if ((ipxcbtable.ipxpt_lport++ < IPXPORT_RESERVED) ||
+			    (ipxcbtable.ipxpt_lport >= IPXPORT_WELLKNOWN))
+				ipxcbtable.ipxpt_lport = IPXPORT_RESERVED;
 			lport = htons(ipxcbtable.ipxpt_lport);
 		} while (ipx_pcblookup(&zeroipx_addr, lport, 0));
 	ipxp->ipxp_lport = lport;
