@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.17 1999/07/06 18:01:55 cmetz Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.18 1999/07/06 20:17:53 cmetz Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -80,6 +80,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/tcpipv6.h>
 #include <sys/domain.h>
 #endif /* INET6 */
+
+#ifdef TCP_SIGNATURE
+#include <sys/md5k.h>
+#endif /* TCP_SIGNATURE */
 
 /* patchable/settable parameters for tcp */
 int	tcp_mssdflt = TCP_MSS;
@@ -756,3 +760,92 @@ tcp_quench(inp, errno)
 	if (tp)
 		tp->snd_cwnd = tp->t_maxseg;
 }
+
+#ifdef TCP_SIGNATURE
+int
+tcp_signature_tdb_attach()
+{
+	return (0);
+}
+
+int
+tcp_signature_tdb_init(tdbp, xsp, ii)
+	struct tdb *tdbp;
+	struct xformsw *xsp;
+	struct ipsecinit *ii;
+{
+	char *c;
+#define isdigit(c)	  (((c) >= '0') && ((c) <= '9'))
+#define isalpha(c)	( (((c) >= 'A') && ((c) <= 'Z')) || \
+			  (((c) >= 'a') && ((c) <= 'z')) )
+
+	if ((ii->ii_authkeylen < 1) || (ii->ii_authkeylen > 80))
+		return (EINVAL);
+
+	c = (char *)ii->ii_authkey;
+
+	while (c < (char *)ii->ii_authkey + ii->ii_authkeylen - 1) {
+		if (isdigit(*c)) {
+			if (*(c + 1) == ' ')
+				return (EINVAL);
+		} else {
+			if (!isalpha(*c))
+				return (EINVAL);
+		}
+
+		c++;
+	}
+
+	if (!isdigit(*c) && !isalpha(*c))
+		return (EINVAL);
+
+	tdbp->tdb_amxkey = malloc(ii->ii_authkeylen, M_XDATA, M_DONTWAIT);
+	if (tdbp->tdb_amxkey == NULL)
+		return (ENOMEM);
+	bcopy(ii->ii_authkey, tdbp->tdb_amxkey, ii->ii_authkeylen);
+	tdbp->tdb_amxkeylen = ii->ii_authkeylen;
+
+	return (0);
+}
+
+int
+tcp_signature_tdb_zeroize(tdbp)
+	struct tdb *tdbp;
+{
+	if (tdbp->tdb_amxkey) {
+		bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
+		free(tdbp->tdb_amxkey, M_XDATA);
+		tdbp->tdb_amxkey = NULL;
+	}
+
+	return (0);
+}
+
+struct mbuf *
+tcp_signature_tdb_input(m, tdbp)
+	struct mbuf *m;
+	struct tdb *tdbp;
+{
+	return (0);
+}
+
+int
+tcp_signature_tdb_output(m, gw, tdbp, mp)
+	struct mbuf *m;
+	struct sockaddr_encap *gw;
+	struct tdb *tdbp;
+	struct mbuf **mp;
+{
+	return (EINVAL);
+}
+
+int
+tcp_signature_apply(fstate, data, len)
+	caddr_t fstate;
+	caddr_t data;
+	unsigned int len;
+{
+	MD5Update((MD5_CTX *)fstate, (char *)data, len);
+	return 0;
+}
+#endif /* TCP_SIGNATURE */

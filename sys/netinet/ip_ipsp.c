@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.46 1999/06/07 07:20:38 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.47 1999/07/06 20:17:52 cmetz Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -139,6 +139,12 @@ struct xformsw xformsw[] = {
       "Encryption + Authentication + Replay Protection",
       esp_new_attach,	 esp_new_init,  esp_new_zeroize,
       esp_new_input,	 esp_new_output, },
+#ifdef TCP_SIGNATURE
+    { XF_TCPSIGNATURE,	 XFT_AUTH, "TCP MD5 Signature Option, RFC 2385",
+      tcp_signature_tdb_attach, 	tcp_signature_tdb_init,
+      tcp_signature_tdb_zeroize,	tcp_signature_tdb_input,
+      tcp_signature_tdb_output, }
+#endif /* TCP_SIGNATURE */
 };
 
 struct xformsw *xformswNXFORMSW = &xformsw[sizeof(xformsw)/sizeof(xformsw[0])];

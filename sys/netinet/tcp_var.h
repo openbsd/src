@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.20 1999/07/02 21:22:14 cmetz Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.21 1999/07/06 20:17:53 cmetz Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ struct tcpcb {
 #define	TF_REQ_TSTMP	0x0080		/* have/will request timestamps */
 #define	TF_RCVD_TSTMP	0x0100		/* a timestamp was received in SYN */
 #define	TF_SACK_PERMIT	0x0200		/* other side said I could SACK */
+#define	TF_SIGNATURE	0x0400		/* require TCP MD5 signature */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
@@ -267,6 +268,9 @@ struct	tcpstat {
 	u_int32_t tcps_pcbhashmiss;	/* input packets missing pcb hash */
 	u_int32_t tcps_noport;		/* no socket on port */
 	u_int32_t tcps_badsyn;		/* SYN packet with src==dst rcv'ed */
+
+	u_int32_t tcps_rcvbadsig;	/* rcvd bad/missing TCP signatures */
+	u_int64_t tcps_rcvgoodsig;	/* rcvd good TCP signatures */
 };
 
 /*
@@ -326,8 +330,8 @@ struct tcpcb *
 	 tcp_disconnect __P((struct tcpcb *));
 struct tcpcb *
 	 tcp_drop __P((struct tcpcb *, int));
-void	 tcp_dooptions __P((struct tcpcb *,
-	    u_char *, int, struct tcphdr *, int *, u_int32_t *, u_int32_t *));
+int	 tcp_dooptions __P((struct tcpcb *, u_char *, int, struct tcphdr *, 
+		struct mbuf *, int, int *, u_int32_t *, u_int32_t *));
 void	 tcp_drain __P((void));
 void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
@@ -373,5 +377,8 @@ void	 tcp_print_holes __P((struct tcpcb *tp));
 int	 tcp_newreno __P((struct tcpcb *, struct tcphdr *));
 u_long	 tcp_seq_subtract  __P((u_long, u_long )); 
 #endif /* TCP_NEWRENO || TCP_SACK */
+#ifdef TCP_SIGNATURE
+int	tcp_signature_apply __P((caddr_t, caddr_t, unsigned int));
+#endif /* TCP_SIGNATURE */
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.20 1999/07/06 20:14:06 cmetz Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.21 1999/07/06 20:17:53 cmetz Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -82,6 +82,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifdef INET6
 #include <netinet6/tcpipv6.h>
 #endif /* INET6 */
+
+#ifdef TCP_SIGNATURE
+#include <sys/md5k.h>
+#endif /* TCP_SIGNATURE */
 
 #ifdef notyet
 extern struct mbuf *m_copypack();
@@ -186,6 +190,14 @@ tcp_output(tp)
 #if defined(TCP_SACK) || defined(TCP_NEWRENO)
 	int maxburst = TCP_MAXBURST;
 #endif
+#ifdef TCP_SIGNATURE
+	unsigned int sigoff;
+#endif /* TCP_SIGNATURE */
+
+#if defined(TCP_SACK) && defined(TCP_SIGNATURE) && defined(DIAGNOSTIC)
+	if (!tp->sack_disable && (tp->t_flags & TF_SIGNATURE))
+		return (EINVAL);
+#endif /* defined(TCP_SACK) && defined(TCP_SIGNATURE) && defined(DIAGNOSTIC) */
 
 	/*
 	 * Determine length of data that should be transmitted,
@@ -509,6 +521,33 @@ send:
 		optlen += TCPOLEN_TSTAMP_APPA;
 	}
 
+#ifdef TCP_SIGNATURE
+	if (tp->t_flags & TF_SIGNATURE) {
+		u_int8_t *bp = (u_int8_t *)(opt + optlen);
+
+		/* Send signature option */
+		*(bp++) = TCPOPT_SIGNATURE;
+		*(bp++) = TCPOLEN_SIGNATURE;
+		sigoff = optlen + 2;
+
+		{
+			unsigned int i;
+
+			for (i = 0; i < 16; i++)
+				*(bp++) = 0;
+		}
+
+		optlen += TCPOLEN_SIGNATURE;
+
+		/* Pad options list to the next 32 bit boundary and 
+		 * terminate it.
+		 */
+		*bp++ = TCPOPT_NOP;
+		*bp++ = TCPOPT_EOL;
+		optlen += 2;
+	}
+#endif /* TCP_SIGNATURE */
+
 #ifdef TCP_SACK
 	/*
 	 * Send SACKs if necessary.  This should be the last option processed.
@@ -742,6 +781,93 @@ send:
 		break;
 #endif /* INET6 */
 	}
+
+#ifdef TCP_SIGNATURE
+	if (tp->t_flags & TF_SIGNATURE) {
+		MD5_CTX ctx;
+		union sockaddr_union sa;
+		struct tdb *tdb;
+
+		memset(&sa, 0, sizeof(union sockaddr_union));
+
+#if defined(INET) && defined(INET6)
+		switch(tp->pf) {
+#else /* defined(INET) && defined(INET6) */
+		switch (0) {
+#endif /* defined(INET) && defined(INET6) */
+		case 0:
+#ifdef INET
+		case AF_INET:
+			sa.sa.sa_len = sizeof(struct sockaddr_in);
+			sa.sa.sa_family = AF_INET;
+			sa.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
+			break;
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
+			sa.sa.sa_len = sizeof(struct sockaddr_in6);
+			sa.sa.sa_family = AF_INET6;
+			sa.sin6.sin6_addr = mtod(m, struct ipv6 *)->ipv6_dst;
+			break;
+#endif /* INET6 */
+		}
+
+		tdb = gettdb(0, &sa, IPPROTO_TCP);
+		if (tdb == NULL)
+			return (EPERM);
+
+		MD5Init(&ctx);
+
+#if defined(INET) && defined(INET6)
+		switch(tp->pf) {
+#else /* defined(INET) && defined(INET6) */
+		switch (0) {
+#endif /* defined(INET) && defined(INET6) */
+		case 0:
+#ifdef INET
+		case AF_INET:
+			{
+				struct ippseudo ippseudo;
+				struct ipovly *ipovly;
+
+				ipovly = mtod(m, struct ipovly *);
+
+				ippseudo.ippseudo_src = ipovly->ih_src;
+				ippseudo.ippseudo_dst = ipovly->ih_dst;
+				ippseudo.ippseudo_pad = 0;
+				ippseudo.ippseudo_p   = IPPROTO_TCP;
+				ippseudo.ippseudo_len = ipovly->ih_len;
+				MD5Update(&ctx, (char *)&ippseudo,
+					sizeof(struct ippseudo));
+				MD5Update(&ctx, mtod(m, caddr_t) +
+					sizeof(struct ip),
+					sizeof(struct tcphdr));
+			}
+			break;
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
+			{
+				static int printed = 0;
+
+				if (!printed) {
+					printf("error: TCP MD5 support for "
+						"IPv6 not yet implemented.\n");
+					printed = 1;
+				}
+			}
+			break;
+#endif /* INET6 */
+		}
+
+		if (len && m_apply(m, hdrlen, len, tcp_signature_apply,
+				(caddr_t)&ctx))
+			return (EINVAL);
+
+		MD5Update(&ctx, tdb->tdb_amxkey, tdb->tdb_amxkeylen);
+		MD5Final(mtod(m, caddr_t) + hdrlen - optlen + sigoff, &ctx);
+	}
+#endif /* TCP_SIGNATURE */
 
 	/*
 	 * Put TCP length in extended header, and then

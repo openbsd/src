@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.34 1999/07/02 20:39:08 cmetz Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.35 1999/07/06 20:17:53 cmetz Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -555,13 +555,39 @@ tcp_ctloutput(op, so, level, optname, mp)
 				break;
 			}
 
+			if (tp->t_flags & TF_SIGNATURE) {
+				error = EPERM;
+				break;
+			}
+
 			if (*mtod(m, int *))
 				tp->sack_disable = 1;
 			else
 				tp->sack_disable = 0;
 			break;
 #endif
-		default:
+#ifdef TCP_SIGNATURE
+		case TCP_SIGNATURE_ENABLE:
+			if (m == NULL || m->m_len < sizeof (int)) {
+				error = EINVAL;
+				break;
+			}
+
+			if (TCPS_HAVEESTABLISHED(tp->t_state)) {
+				error = EPERM;
+				break;
+			}
+
+			if (*mtod(m, int *)) {
+				tp->t_flags |= TF_SIGNATURE;
+#ifdef TCP_SACK
+				tp->sack_disable = 1;
+#endif /* TCP_SACK */
+			} else
+				tp->t_flags &= ~TF_SIGNATURE;
+			break;
+#endif /* TCP_SIGNATURE */
+ 		default:
 			error = ENOPROTOOPT;
 			break;
 		}

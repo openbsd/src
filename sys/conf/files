@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.119 1999/07/01 23:10:39 deraadt Exp $
+#	$OpenBSD: files,v 1.120 1999/07/06 20:17:52 cmetz Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -455,7 +455,7 @@ file netinet/ip_state.c			ipfilter
 file netinet/ip_proxy.c			ipfilter
 file netinet/ip_auth.c			ipfilter
 file netinet/ip_log.c			ipfilter
-file netinet/ip_ipsp.c			inet & ipsec
+file netinet/ip_ipsp.c			inet & (ipsec | tcp_signature)
 file netinet/ip_ip4.c			inet & (ipsec | mrouting)
 file netinet/ip_ah.c			inet & ipsec
 file netinet/ip_esp.c			inet & ipsec
@@ -650,6 +650,6 @@ file netinet6/in6_proto.c		inet6
 file netinet6/ipv6_trans.c   		inet6
 
 # ... PF_KEY
-file net/pfkey.c			key | ipsec
-file net/pfkeyv2.c			key | ipsec
-file net/pfkeyv2_parsemessage.c		key | ipsec
+file net/pfkey.c			key | ipsec | tcp_signature
+file net/pfkeyv2.c			key | ipsec | tcp_signature
+file net/pfkeyv2_parsemessage.c		key | ipsec | tcp_signature

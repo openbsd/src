@@ -774,6 +774,12 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	  sa.tdb_sproto = IPPROTO_IPIP;
 	  break;
 
+#ifdef TCP_SIGNATURE
+	case SADB_X_SATYPE_TCPSIGNATURE:
+	  sa.tdb_sproto = IPPROTO_TCP;
+	  break;
+#endif /* TCP_SIGNATURE */
+
 	default: /* Nothing else supported */
 	  rval = EOPNOTSUPP;
 	  goto ret;
@@ -861,6 +867,13 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    newsa->tdb_sproto = IPPROTO_IPIP;
 	    alg = XF_IP4;
 	    break;
+
+#ifdef TCP_SIGNATURE
+	  case SADB_X_SATYPE_TCPSIGNATURE:
+	    newsa->tdb_sproto = IPPROTO_TCP;
+	    alg = XF_TCPSIGNATURE;
+	    break;
+#endif /* TCP_SIGNATURE */
 		  
 	  default: /* Nothing else supported */
 	    rval = EOPNOTSUPP;
@@ -987,6 +1000,13 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    newsa->tdb_sproto = IPPROTO_IPIP;
 	    alg = XF_IP4;
 	    break;
+
+#ifdef TCP_SIGNATURE
+	  case SADB_X_SATYPE_TCPSIGNATURE:
+	    newsa->tdb_sproto = IPPROTO_TCP;
+	    alg = XF_TCPSIGNATURE;
+	    break;
+#endif /* TCP_SIGNATURE */
 
 	  default: /* Nothing else supported */
 	    rval = EOPNOTSUPP;
@@ -1757,6 +1777,11 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
     case IPPROTO_IPIP:
       satype = SADB_X_SATYPE_IPIP;
       break;
+#ifdef TCP_SIGNATURE
+    case IPPROTO_TCP:
+       satype = SADB_X_SATYPE_TCPSIGNATURE;
+       break;
+#endif /* TCP_SIGNATURE */
     default:
       rval = EOPNOTSUPP;
       goto ret;

@@ -191,17 +191,18 @@ struct sadb_protocol {
 #define SADB_EXT_MAX                  22
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
-#define SADB_SATYPE_UNSPEC    0
-#define SADB_SATYPE_AH        1
-#define SADB_SATYPE_ESP       2
-#define SADB_SATYPE_RSVP      3
-#define SADB_SATYPE_OSPFV2    4
-#define SADB_SATYPE_RIPV2     5
-#define SADB_SATYPE_MIP       6
-#define SADB_X_SATYPE_AH_OLD  7
-#define SADB_X_SATYPE_ESP_OLD 8
-#define SADB_X_SATYPE_IPIP    9
-#define SADB_SATYPE_MAX       9
+#define SADB_SATYPE_UNSPEC		 0
+#define SADB_SATYPE_AH			 1
+#define SADB_SATYPE_ESP			 2
+#define SADB_SATYPE_RSVP		 3
+#define SADB_SATYPE_OSPFV2		 4
+#define SADB_SATYPE_RIPV2		 5
+#define SADB_SATYPE_MIP			 6
+#define SADB_X_SATYPE_AH_OLD		 7
+#define SADB_X_SATYPE_ESP_OLD		 8
+#define SADB_X_SATYPE_IPIP		 9
+#define SADB_X_SATYPE_TCPSIGNATURE	10
+#define SADB_SATYPE_MAX			10
 
 #define SADB_SASTATE_LARVAL   0
 #define SADB_SASTATE_MATURE   1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.37 1999/06/30 17:23:59 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.38 1999/07/06 20:17:52 cmetz Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -356,6 +356,7 @@ struct xformsw
 #define XF_OLD_ESP	3	/* RFCs 1829 & 1851 */
 #define XF_NEW_AH	4	/* AH HMAC 96bits */
 #define XF_NEW_ESP	5	/* ESP + auth 96bits + replay counter */
+#define XF_TCPSIGNATURE	6	/* TCP MD5 Signature option, RFC 2358 */
 
 /* xform attributes */
 #define XFT_AUTH	0x0001
@@ -493,6 +494,16 @@ extern int esp_new_zeroize(struct tdb *);
 extern int esp_new_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
 			  struct mbuf **);
 extern struct mbuf *esp_new_input(struct mbuf *, struct tdb *);
+
+/* XF_TCPSIGNATURE */
+extern int tcp_signature_tdb_attach __P((void));
+extern int tcp_signature_tdb_init __P((struct tdb *, struct xformsw *,
+				       struct ipsecinit *));
+extern int tcp_signature_tdb_zeroize __P((struct tdb *));
+extern struct mbuf *tcp_signature_tdb_input __P((struct mbuf *, struct tdb *));
+extern int tcp_signature_tdb_output __P((struct mbuf *,
+					 struct sockaddr_encap *, struct tdb *,
+					 struct mbuf **));
 
 /* Padding */
 extern caddr_t m_pad(struct mbuf *, int, int);
