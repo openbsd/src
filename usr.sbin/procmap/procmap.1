@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.4 2004/02/23 21:07:59 tedu Exp $
+.\"	$OpenBSD: procmap.1,v 1.5 2004/03/18 13:50:36 jmc Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 .Nd display process memory map
 .Sh SYNOPSIS
 .Nm
-.Op Fl adlmPRsv
+.Op Fl adlmPsv
 .Op Fl D Ar number
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -105,7 +105,8 @@ that of
 When combined with the
 .Fl v
 option, the device number, inode number, name, vnode addresses, or
-other identifying information from the vm_map_entries will be printed.
+other identifying information from the vm_map_entry fields will be
+printed.
 .It Fl l
 Dumps information in a format like the contents of the maps
 pseudo-file under the
@@ -145,19 +146,19 @@ If
 occurs last on the command line, the
 .Fl p
 is optional.
-.It Fl R
-Recurse into submaps.
-In some cases, a vm_map_entry in the kernel
-will point to a submap.
-Using this flag tells
-.Nm
-to print the entries of the submap as well.
-The submap output is
-indented, and does not affect any total printed at the bottom of the
-output.
+.\" .It Fl R
+.\" Recurse into submaps.
+.\" In some cases, a vm_map_entry in the kernel
+.\" will point to a submap.
+.\" Using this flag tells
+.\" .Nm
+.\" to print the entries of the submap as well.
+.\" The submap output is
+.\" indented, and does not affect any total printed at the bottom of the
+.\" output.
 .It Fl s
-The Solaris style output format, modeled after the Solaris command of
-the same name.
+The Solaris style output format, modeled after the Solaris command
+.Dq pmap .
 This is the default output style.
 .It Fl v
 Verbose output.
@@ -215,10 +216,10 @@ output style is selected, the first thing printed is the contents of
 the vm_map structure, followed by the individual map entries.
 .Bd -literal -offset indent
 $ procmap -d
-MAP 0xcf7cac84: [0x0->0xbfbfe000]
+MAP 0xcf7cac84: [0x0-\*(Gt0xbfbfe000]
         #ent=8, sz=34041856, ref=1, version=20, flags=0x21
-        procmap=0xcf44cee0(resident=<unknown>)
- - 0xcfa3a358: 0x8048000->0x80b1000: obj=0xcf45a8e8/0x0, amap=0x0/0
+        procmap=0xcf44cee0(resident=\*(Ltunknown\*(Gt)
+ - 0xcfa3a358: 0x8048000-\*(Gt0x80b1000: obj=0xcf45a8e8/0x0, amap=0x0/0
         submap=F, cow=T, nc=T, prot(max)=5/7, inh=1, wc=0, adv=0
 \&...
 .Ed
@@ -260,7 +261,7 @@ The
 and
 .Dq amap
 fields are pointers to, and offsets into, the underlying uvm_object or
-amap.
+vm_amap object.
 The value for resident is always unknown because digging such
 information out of the kernel is beyond the scope of this application.
 .Pp
@@ -349,18 +350,23 @@ as previously described.
 .Xr mmap 2 ,
 .Xr kvm 3 ,
 .Xr ddb 4 ,
-.Xr mount_procfs 8
+.Xr mount_procfs 8 ,
+.Xr namei 9 ,
+.Xr vnode 9
 .Sh HISTORY
 The
 .Nm
-utility appeared in
+utility first appeared in
+.Ox 3.5 .
+It was derived from the
 .Nx
-2.0 as pmap.
+utility known as
+.Dq pmap .
 .Sh AUTHORS
 The
 .Nm
-utility and documentation was written by Andrew Brown
-.Aq atatat@netbsd.org .
+utility and documentation was written by
+.An Andrew Brown Aq atatat@netbsd.org .
 .Sh BUGS
 Very little will work unless
 .Nm
@@ -388,8 +394,9 @@ In most cases, simply running
 with the expected path to the file will cause the information to be
 reentered into the cache.
 .Pp
-The Solaris command by the same name has some interesting command line
-flags that would be nice to emulate here.
+The Solaris version
+.Pq Dq pmap
+has some interesting command line flags that would be nice to emulate here.
 In particular, the
 .Fl r
 option that lists a process's reserved addresses, and the
