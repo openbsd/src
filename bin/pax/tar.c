@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.5 1997/02/10 06:48:16 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.6 1997/02/16 06:54:21 tholo Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.5 1997/02/10 06:48:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.6 1997/02/16 06:54:21 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,7 @@ tar_trail(buf, in_resync, cnt)
  * ul_oct()
  *	convert an unsigned long to an octal string. many oddball field
  *	termination characters are used by the various versions of tar in the
- *	different fields. term selects which kind to use. str is BLANK padded
+ *	different fields. term selects which kind to use. str is '0' padded
  *	at the front to len. we are unable to use only one format as many old
  *	tar readers are very cranky about this.
  * Return:
@@ -219,7 +219,7 @@ ul_oct(val, str, len, term)
 	}
 
 	while (pt >= str)
-		*pt-- = ' ';
+		*pt-- = '0';
 	if (val != (u_long)0)
 		return(-1);
 	return(0);
@@ -230,7 +230,7 @@ ul_oct(val, str, len, term)
  * uqd_oct()
  *	convert an u_quad_t to an octal string. one of many oddball field
  *	termination characters are used by the various versions of tar in the
- *	different fields. term selects which kind to use. str is BLANK padded
+ *	different fields. term selects which kind to use. str is '0' padded
  *	at the front to len. we are unable to use only one format as many old
  *	tar readers are very cranky about this.
  * Return:
@@ -283,7 +283,7 @@ uqd_oct(val, str, len, term)
 	}
 
 	while (pt >= str)
-		*pt-- = ' ';
+		*pt-- = '0';
 	if (val != (u_quad_t)0)
 		return(-1);
 	return(0);
@@ -692,7 +692,7 @@ tar_wr(arcn)
 	 * to be written
 	 */
 	if (ul_oct(tar_chksm(hdblk, sizeof(HD_TAR)), hd->chksum,
-	    sizeof(hd->chksum), 2))
+	    sizeof(hd->chksum), 3))
 		goto out;
 	if (wr_rdbuf(hdblk, sizeof(HD_TAR)) < 0)
 		return(-1);
@@ -825,6 +825,7 @@ ustar_rd(arcn, buf)
 	arcn->org_name = arcn->name;
 	arcn->sb.st_nlink = 1;
 	arcn->pat = NULL;
+	arcn->nlen = 0;
 	hd = (HD_USTAR *)buf;
 
 	/*
@@ -833,13 +834,13 @@ ustar_rd(arcn, buf)
 	 */
 	dest = arcn->name;
 	if (*(hd->prefix) != '\0') {
-		cnt = l_strncpy(arcn->name, hd->prefix, sizeof(hd->prefix) - 1);
+		cnt = l_strncpy(dest, hd->prefix, sizeof(hd->prefix) - 1);
 		hd->prefix[sizeof(hd->prefix) - 1] = '\0';
-		dest = arcn->name + arcn->nlen;
+		dest += cnt;
 		*dest++ = '/';
+		cnt++;
 	}
-	arcn->nlen = l_strncpy(dest, hd->name, sizeof(hd->name) - 1);
-	arcn->nlen += cnt;
+	arcn->nlen = cnt + l_strncpy(dest, hd->name, sizeof(hd->name) - 1);
 	arcn->name[arcn->nlen] = '\0';
 
 	/*
