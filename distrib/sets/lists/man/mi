@@ -1647,7 +1647,6 @@
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/boot_hp300.0
-./usr/share/man/cat8/hp300/format.0
 ./usr/share/man/cat8/hp300/hilinfo.0
 ./usr/share/man/cat8/hppa
 ./usr/share/man/cat8/hppa/kbd.0
@@ -1949,7 +1948,6 @@
 ./usr/share/man/cat8/vax
 ./usr/share/man/cat8/vax/MAKEDEV.0
 ./usr/share/man/cat8/vax/boot_vax.0
-./usr/share/man/cat8/vax/drtest.0
 ./usr/share/man/cat8/vax/format.0
 ./usr/share/man/cat8/vax/kbd.0
 ./usr/share/man/cat8/verify_krb5_conf.0
