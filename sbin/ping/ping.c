@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.20 1997/06/02 08:08:01 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.21 1997/06/05 10:02:31 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.20 1997/06/02 08:08:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.21 1997/06/05 10:02:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -340,7 +340,7 @@ main(argc, argv)
 		for (i = 8; i < datalen; ++i)
 			*datap++ = i;
 
-	ident = (getpid() & 0x00FF) | (arc4random() & 0xFF00);
+	ident = getpid() & 0xFFFF;
 
 	if (options & F_SADDR) {
 		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
