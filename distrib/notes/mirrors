@@ -1,5 +1,19 @@
 This is a list of currently known ftp servers:
 
+Australia:
+
+ftp://ftp.aba.net.su/pub/OpenBSD ==
+	ftp://ftp.au.openbsd.org/pub/OpenBSD
+
+France:
+
+ftp://ftp.ibp.fr/pub/OpenBSD
+
+ftp://ftp.lip6.fr/pub/OpenBSD == 
+	ftp://ftp.fr.openbsd.org/pub/OpenBSD
+
+ftp://frp.univ-evry.fr/pub/OpenBSD
+
 Germany:
 
 ftp://ftp.fu-berlin.de/unix/OpenBSD ==
@@ -22,26 +36,33 @@ Switzerland:
 ftp://web.eunet.ch/pub/OpenBSD ==
 	ftp://ftp.eu.openbsd.org/pub/OpenBSD
 
+Thailand:
+
+ftp://ftp.ruibon.ac.th/pup/OpenBSD ==
+	ftp://ftp.th.openbsd.org/pub/OpenBSD
+
+United Kingdom:
+
+ftp://ftp.demon.co.uk/pub/OpenBSD
+
 USA:
-
-ftp://pub.seastrom.com/pub/OpenBSD ==
-	ftp://ftp.usa.openbsd.org/pub/OpenBSD
-	ftp://ftp1.usa.openbsd.org/pub/OpenBSD
-
-ftp://news.pacifier.com/pub/OpenBSD == 
-	ftp://ftp2.usa.openbsd.org/pub/OpenBSD
 
 ftp://freestuff.cs.colorado.edu/pub/OpenBSD ==
 	ftp://ftp3.usa.openbsd.org/pub/OpenBSD
 
 ftp://openbsd.eecs.umich.edu/pub/OpenBSD ==
+	ftp://ftp1.usa.openbsd.org/pub/OpenBSD
 	ftp://ftp4.usa.openbsd.org/pub/OpenBSD
 
-ftp://alpha.ctaz.com/pub/OpenBSD ==
-	ftp://ftp5.usa.openbsd.org/pub/OpenBSD
-
 ftp://ftp.geek-girl.com/pub/OpenBSD ==
+	ftp://ftp.usa.openbsd.org/pub/OpenBSD
 	ftp://ftp6.usa.openbsd.org/pub/OpenBSD
+
+ftp://ftp.op.net/pub/OpenBSD
+
+ftp://freon.republic.k12.mo.us/pub/OpenBSD
+
+frp://ftp.msoe.edu/pub/OpenBSD
 
 Canada:
 
@@ -52,6 +73,8 @@ ftp://lager.ucs.ualberta.ca/pub/OpenBSD ==
 
 ftp://obsd.compmore.net/pub/OpenBSD ==
 	ftp://ftp2.ca.openbsd.org/pub/OpenBSD
+
+ftp://ftp.styx.org/pub/OpenBSD
 
 As well, the file ftp://ftp.openbsd.org/pub/OpenBSD/2.3/ftplist
 contains a list which is continually updated.  If you wish to become a
