@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: whoami.sh,v 1.3 1997/02/07 14:31:50 deraadt Exp $
+#	$OpenBSD: whoami.sh,v 1.4 1999/09/25 17:21:38 pjanzen Exp $
 #	Public domain
 
-/usr/bin/id -un
+exec /usr/bin/id -un
