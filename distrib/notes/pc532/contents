@@ -40,7 +40,7 @@ is supported by the following files:
 			   ram root file system.
 
 	download.c	-- source for the program to download
-			   inst-23.fs into memory via the
+			   inst-OSrev.fs into memory via the
 			   pc532 ROM monitor.
 
 

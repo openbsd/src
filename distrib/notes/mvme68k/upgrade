@@ -1,4 +1,4 @@
-To upgrade to OpenBSD 2.0 from a previous version follow the instructions
+To upgrade to OpenBSD OSREV from a previous version follow the instructions
 in the section "Installing OpenBSD", but run the script `upgrade.sh'
 in stead of `install.sh'.
 

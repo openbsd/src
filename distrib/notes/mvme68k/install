@@ -263,13 +263,13 @@ On version 2 OpenBOOT ROMs:
     ok setenv boot-device /sbus/esp/sd@0,0
 
 
-Congratulations, you have successfully installed OpenBSD 2.0.  When you
+Congratulations, you have successfully installed OpenBSD OSREV.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the OpenBSD 2.0 distribution might need to be
+Some of the files in the OpenBSD OSREV distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like

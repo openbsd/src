@@ -8,13 +8,13 @@ Manual upgrade procedure:
 	* Place _at least_ the `base' binary set in a filesystem
 	  accessible to the target machine.  A local filesystem
 	  is preferred, since there may be incompatibilities
-	  between the OpenBSD 2.0 kernel and older route(8)
+	  between the OpenBSD OSREV kernel and older route(8)
 	  binaries.
 
-	* Back up your pre-existing kernel and copy the 2.0
+	* Back up your pre-existing kernel and copy the OSREV
 	  kernel into your root partition.
 
-	* Reboot with the 2.0 kernel into single-user mode.
+	* Reboot with the OSREV kernel into single-user mode.
 
 	* Check all filesystems:
 
@@ -31,7 +31,7 @@ Manual upgrade procedure:
 		sh /etc/netstart
 
 	  NOTE: the route(8) commands may fail due to potential
-	  incompatibilities between route(8) and the OpenBSD 2.0
+	  incompatibilities between route(8) and the OpenBSD OSREV
 	  kernel.  Once you have enabled the network, mount the
 	  NFS filesystems.  If you use amd(8), you may or may not
 	  have to mount these filesystems manually.  Your mileage
@@ -41,7 +41,7 @@ Manual upgrade procedure:
 	  the `base' binary set:
 
 		cd /
-		tar -xzvpf /path/to/base20.tar.gz
+		tar -xzvpf /path/to/base{:--:}OSrev.tar.gz
 
 	* Install a new boot block:
 

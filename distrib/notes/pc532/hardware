@@ -1,4 +1,4 @@
-OpenBSD/pc532 2.0 runs on a PC532 computer.  It supports a subset of the
+OpenBSD/pc532 OSREV runs on a PC532 computer.  It supports a subset of the
 "standard" hardware to date.  This is defined as:
 
 	4 - 32 Megs of memory

@@ -14,8 +14,8 @@ for each type of media are given below.
 
 In order to create installation media, you will need all the 
 files in these two directories:
-	.../2.0/sun3/install
-	.../2.0/sun3/binary
+	.../OSREV/sun3/install
+	.../OSREV/sun3/binary
 
 * Creating boot/install tapes:
 
@@ -25,7 +25,7 @@ tape, and another called the "install" tape.
 
 The boot tape is created as follows:
 
-	cd .../2.0/sun3/install
+	cd .../OSREV/sun3/install
 	set T = /dev/nrst0
 	mt -f $T rewind
 	dd if=tapeboot of=$T bs=8k conv=sync
@@ -35,7 +35,7 @@ The boot tape is created as follows:
 
 The install tape is created as follows:
 
-	cd .../2.0/sun3/install
+	cd .../OSREV/sun3/install
 	set T = /dev/nrst0
 	mt -f $T rewind
 	foreach f (base etc comp games man misc)
@@ -122,4 +122,4 @@ server, you may want to keep the following information handy:
 	IP Address: 128.6.190.2
 	Login: anonymous
 	Password: <your e-mail address>
-	Server path: /pub/OpenBSD/2.0/sun3/bins
+	Server path: /pub/OpenBSD/OSREV/sun3/bins

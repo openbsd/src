@@ -1,10 +1,10 @@
 
-OpenBSD/sun3 2.0 runs on most Sun3 machines, including:
+OpenBSD/sun3 OSREV runs on most Sun3 machines, including:
 		3/50, 3/60, 3/110
 		3/75, 3/150, 3/160
 		3/260, 3/280
 
-OpenBSD/sun3 2.0 does not run on the Sun3/80 (sun3x class)
+OpenBSD/sun3 OSREV does not run on the Sun3/80 (sun3x class)
 because the sun3x MMU and other devices are very different.
 
 The minimal configuration requires 4M of RAM and ~80MB of disk space.

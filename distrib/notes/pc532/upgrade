@@ -1,5 +1,5 @@
-The upgrade to OpenBSD 2.0 is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the 2.0 sources, and
+The upgrade to OpenBSD OSREV is a binary upgrade; it would be prohibitive
+to make users upgrade by compiling and installing the OSREV sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  
 
@@ -30,7 +30,7 @@ To upgrade your system, follow the following instructions:
 	depending on what version of OpenBSD/pc532 you are running.
 
 	BE CAREFUL IF YOU ARE NOT RUNNING WITH SECURITY.  The 
-	2.0 distribution does contain support for password encryption.
+	OSREV distribution does contain support for password encryption.
 	It would be reasonable to save a copy of master.passwd and
 	remove all passwords until after you upgrade. 
 
