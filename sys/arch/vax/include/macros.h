@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.8 1996/03/17 22:44:50 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.10 1997/01/11 11:07:52 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -117,6 +117,7 @@ static __inline__ int bcmp(const void *b1, const void *b2, size_t len){
 	return ret;
 }
 
+#if 0 /* unused, but no point in deleting it since it _is_ an instruction */
 static __inline__ int locc(int mask, char *cp,u_int size){
 	register ret;
 
@@ -126,8 +127,10 @@ static __inline__ int locc(int mask, char *cp,u_int size){
 			: "r0","r1" );
 	return	ret;
 }
+#endif
 
-static __inline__ int scanc(u_int size, u_char *cp,u_char *table, int mask){
+static __inline__ int
+scanc(u_int size, const u_char *cp, const u_char *table, int mask){
 	register ret;
 
 	asm __volatile("scanc	%1,(%2),(%3),%4;movl r0,%0"

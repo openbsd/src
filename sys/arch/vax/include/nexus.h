@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.10 1996/03/02 14:27:53 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.12 1996/08/20 14:19:43 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -38,6 +38,17 @@
 #ifndef _VAX_NEXUS_H_
 #define _VAX_NEXUS_H_
 /*
+ * Different definitions for nicer autoconf probing.
+ */
+#define VAX_SBIBUS      1       /* SBI parent; 780/790 */
+#define VAX_CPUBUS      2       /* Has backplane CPU */
+#define VAX_MEMBUS      4       /* Has backplane memory */ 
+#define VAX_UNIBUS      8       /* Directly attached (630/650) */
+#define VAX_VSBUS       16      /* VAXstation board */
+#define VAX_BIBUS       32      /* BI bus expansions: 8200/8800 */ 
+#define VAX_CMIBUS	64	/* CMI backplane (750) */
+
+/*
  * Information about nexus's.
  *
  * Each machine has an address of backplane slots (nexi).
@@ -62,10 +73,6 @@
 #if VAX730
 #define	NNEX730	NNEXSBI
 #define	NEX730	((struct nexus *)0xf20000)
-#endif
-#if VAX630
-#define NNEX630 1
-#define NEX630  ((struct nexus *)0x20088000)
 #endif
 #define	NEXSIZE	0x2000
 
@@ -102,20 +109,11 @@ struct mem_softc {
 	int	sc_memnr;
 };
 
-struct iobus {
-        int io_type;
-        int io_addr;
-        int io_size;
-        int io_details;
-};
-
-struct nexusconnect {
-        int psb_nnexus;
-        struct nexus *psb_nexbase;
-	int psb_ubatype;
-	int psb_nubabdp;
-	caddr_t *psb_umaddr;
-        int *psb_nextype;
+struct bp_conf {
+	char *type;
+	int num;
+	int partyp;
+	int bp_addr;
 };
 
 extern caddr_t *nex_vec;

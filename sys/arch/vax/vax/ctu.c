@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.3 1996/04/08 18:32:31 ragge Exp $ */
+/*	$NetBSD: ctu.c,v 1.5 1996/10/13 03:35:36 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

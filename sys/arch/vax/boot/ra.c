@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.4 1996/02/17 18:23:23 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.5 1996/08/02 11:22:18 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,8 +31,8 @@
 
  /* All bugs are subject to removal without further notice */
 		
-#define NRSP 0 /* Kludge */
-#define NCMD 0 /* Kludge */
+#define NRSP 1 /* Kludge */
+#define NCMD 1 /* Kludge */
 
 #include "sys/param.h"
 #include "sys/disklabel.h"
@@ -41,9 +41,16 @@
 
 #include "../include/pte.h"
 #include "../include/macros.h"
+#include "../include/sid.h"
+
 #include "../uba/ubareg.h"
 #include "../uba/udareg.h"
-#include "../vax/mscp.h"
+
+#include "../mscp/mscp.h"
+#include "../mscp/mscpreg.h"
+
+#include "../bi/bireg.h"
+#include "../bi/kdbreg.h"
 
 #include "vaxstand.h"
 
@@ -62,10 +69,13 @@ struct ra_softc {
 	int ubaddr;
 	int part;
 	int unit;
+	unsigned short *ra_ip;
+	unsigned short *ra_sa;
+	unsigned short *ra_sw;
 };
 
 volatile struct uda {
-        struct  uda1ca uda_ca;           /* communications area */
+        struct  mscp_1ca uda_ca;           /* communications area */
         struct  mscp uda_rsp;     /* response packets */
         struct  mscp uda_cmd;     /* command packets */
 } uda;
@@ -81,53 +91,84 @@ raopen(f, adapt, ctlr, unit, part)
         int ctlr, unit, part;
 {
 	char *msg;
-	struct disklabel *lp=&ralabel;
-	volatile struct ra_softc *ra=&ra_softc;
-	volatile struct uba_regs *mr=(void *)ubaaddr[adapt];
+	struct disklabel *lp = &ralabel;
+	volatile struct ra_softc *ra = &ra_softc;
+	volatile struct uba_regs *mr = (void *)ubaaddr[adapt];
 	volatile u_int *nisse;
-	unsigned short johan;
+	unsigned short johan, johan2;
 	int i,err;
 
-	if(adapt>nuba) return(EADAPT);
-	if(ctlr>nuda) return(ECTLR);
 	bzero(lp, sizeof(struct disklabel));
-	ra->udaddr=uioaddr[adapt]+udaaddr[ctlr];
-	ra->ubaddr=(int)mr;
-	ra->unit=unit;
+	ra->unit = unit;
 	ra->part = part;
-	udacsr=(void*)ra->udaddr;
-	nisse=(u_int *)&mr->uba_map[0];
-	nisse[494]=PG_V|(((u_int)&uda)>>9);
-	nisse[495]=nisse[494]+1;
-	ubauda=(void*)0x3dc00+(((u_int)(&uda))&0x1ff);
+	if (vax_cputype != VAX_8200) {
+		if (adapt > nuba)
+			return(EADAPT);
+		if (ctlr > nuda)
+			return(ECTLR);
+		nisse = (u_int *)&mr->uba_map[0];
+		nisse[494] = PG_V | (((u_int)&uda) >> 9);
+		nisse[495] = nisse[494] + 1;
+		udacsr = (void*)uioaddr[adapt] + udaaddr[ctlr];
+		ubauda = (void*)0x3dc00 + (((u_int)(&uda))&0x1ff);
+		johan = (((u_int)ubauda) & 0xffff) + 8;
+		johan2 = 3;
+		ra->ra_ip = (short *)&udacsr->udaip;
+		ra->ra_sa = ra->ra_sw = (short *)&udacsr->udasa;
+		ra->udaddr = uioaddr[adapt] + udaaddr[ctlr];
+		ra->ubaddr = (int)mr;
+		*ra->ra_ip = 0; /* Start init */
+	} else {
+		struct bi_node *bi = (void *)biaddr[adapt];
+		struct kdb_regs *kb = (void *)&bi[ctlr];
+		volatile int i = 10000;
+
+		ra->ra_ip = &kb->kdb_ip;
+		ra->ra_sa = &kb->kdb_sa;
+		ra->ra_sw = &kb->kdb_sw;
+		johan = ((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff;
+		johan2 = (((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff0000) >> 16;
+		kb->kdb_bi.bi_csr |= BICSR_NRST;
+		while (i--) /* Need delay??? */
+			;
+		kb->kdb_bi.bi_ber = ~(BIBER_MBZ|BIBER_NMR|BIBER_UPEN);/* ??? */
+		ubauda = &uda;
+	}
+
 	/* Init of this uda */
-	udacsr->udaip=0; /* Start init */
-	while((udacsr->udasa&UDA_STEP1) == 0);
-	udacsr->udasa=0x8000;
-	while((udacsr->udasa&UDA_STEP2) == 0);
-	johan=(((u_int)ubauda)&0xffff)+8;
-	udacsr->udasa=johan;
-	while((udacsr->udasa&UDA_STEP3) == 0);
-	udacsr->udasa=3;
-	while((udacsr->udasa&UDA_STEP4) == 0);
-	udacsr->udasa=0x0001;
-	uda.uda_ca.ca_rspdsc=(int)&ubauda->uda_rsp.mscp_cmdref;
-	uda.uda_ca.ca_cmddsc=(int)&ubauda->uda_cmd.mscp_cmdref;
+	while ((*ra->ra_sa & MP_STEP1) == 0)
+		;
+
+	*ra->ra_sw = 0x8000;
+	while ((*ra->ra_sa & MP_STEP2) == 0)
+		;
+
+	*ra->ra_sw = johan;
+	while ((*ra->ra_sa & MP_STEP3) == 0)
+		;
+
+	*ra->ra_sw = johan2;
+	while ((*ra->ra_sa & MP_STEP4) == 0)
+		;
+
+	*ra->ra_sw = 0x0001;
+	uda.uda_ca.ca_rspdsc = (int)&ubauda->uda_rsp.mscp_cmdref;
+	uda.uda_ca.ca_cmddsc = (int)&ubauda->uda_cmd.mscp_cmdref;
+
 	command(M_OP_SETCTLRC);
-	uda.uda_cmd.mscp_unit=ra->unit;
+	uda.uda_cmd.mscp_unit = ra->unit;
 	command(M_OP_ONLINE);
 
-	err=rastrategy(ra,F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
+	err = rastrategy(ra,F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
 	if(err){
 		printf("reading disklabel: %s\n",strerror(err));
 		return 0;
 	}
 
-	msg=getdisklabel(io_buf+LABELOFFSET, lp);
-	if(msg) {
-		printf("getdisklabel: %s\n",msg);
-	}
-	f->f_devdata=(void *)ra;
+	msg = getdisklabel(io_buf+LABELOFFSET, lp);
+	if (msg)
+		printf("getdisklabel: %s\n", msg);
+	f->f_devdata = (void *)ra;
 	return(0);
 }
 
@@ -136,13 +177,14 @@ command(cmd)
 {
 	volatile int hej;
 
-	uda.uda_cmd.mscp_opcode=cmd;
-	uda.uda_cmd.mscp_msglen=MSCP_MSGLEN;
-	uda.uda_rsp.mscp_msglen=MSCP_MSGLEN;
+	uda.uda_cmd.mscp_opcode = cmd;
+	uda.uda_cmd.mscp_msglen = MSCP_MSGLEN;
+	uda.uda_rsp.mscp_msglen = MSCP_MSGLEN;
 	uda.uda_ca.ca_rspdsc |= MSCP_OWN|MSCP_INT;
 	uda.uda_ca.ca_cmddsc |= MSCP_OWN|MSCP_INT;
-	hej=udacsr->udaip;
-	while(uda.uda_ca.ca_rspdsc<0);
+	hej = *ra_softc.ra_ip;
+	while(uda.uda_ca.ca_rspdsc<0)
+		;
 
 }
 
@@ -161,20 +203,23 @@ rastrategy(ra, func, dblk, size, buf, rsize)
 	volatile int hej;
 
 
-	ur = (void *)ra->ubaddr;
-	udadev = (void*)ra->udaddr;
-	ptmapp = (u_int *)&ur->uba_map[0];
+	if (vax_cputype != VAX_8200) {
+		ur = (void *)ra->ubaddr;
+		udadev = (void*)ra->udaddr;
+		ptmapp = (u_int *)&ur->uba_map[0];
+
+		pfnum = (u_int)buf >> PGSHIFT;
+
+		for(mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
+			ptmapp[mapnr++] = PG_V | pfnum++;
+		uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf) & 0x1ff;
+	} else
+		uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf);
+
 	lp = &ralabel;
-
-	pfnum = (u_int)buf >> PGSHIFT;
-
-	for(mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
-		ptmapp[mapnr++] = PG_V | pfnum++;
-
 	uda.uda_cmd.mscp_seq.seq_lbn =
 	    dblk + lp->d_partitions[ra->part].p_offset;
 	uda.uda_cmd.mscp_seq.seq_bytecount = size;
-	uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf) & 0x1ff;
 	uda.uda_cmd.mscp_unit = ra->unit;
 	if (func == F_WRITE)
 		command(M_OP_WRITE);

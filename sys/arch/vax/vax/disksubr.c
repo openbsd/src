@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 1996/05/19 16:44:02 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 1997/01/11 11:24:51 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -41,15 +41,18 @@
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/proc.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 #include <machine/macros.h>
+#include <machine/pte.h>
+#include <machine/pcb.h>
 
-/* XXX encoding of disk minor numbers, should be elsewhere... */
-#define dkunit(dev)		(minor(dev) >> 3)
-#define dkpart(dev)		(minor(dev) & 7)
-#define dkminor(unit, part)	(((unit) << 3) | (part))
+#include <arch/vax/mscp/mscp.h> /* For disk encoding scheme */
 
-#define	b_cylin	b_resid
+#define b_cylin b_resid
 
 int	cpu_setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *));
@@ -67,38 +70,38 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct	disklabel *lp;
 	int	wlabel;
 {
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsect = lp->d_partitions[2].p_offset;
 	int maxsz = p->p_size,
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 	/* overwriting disk label ? */
-        if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
+	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
 #if LABELSECTOR != 0
-            bp->b_blkno + p->p_offset + sz > LABELSECTOR + labelsect &&
+	    bp->b_blkno + p->p_offset + sz > LABELSECTOR + labelsect &&
 #endif
-            (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-                bp->b_error = EROFS;
-                goto bad;
-        }
+	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+		bp->b_error = EROFS;
+		goto bad;
+	}
 
 	/* beyond partition? */
-        if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-                /* if exactly at end of disk, return an EOF */
-                if (bp->b_blkno == maxsz) {
-                        bp->b_resid = bp->b_bcount;
-                        return(0);
-                }
-                /* or truncate if part of it fits */
-                sz = maxsz - bp->b_blkno;
-                if (sz <= 0) {
-			bp->b_error = EINVAL;
-                        goto bad;
+	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
+		/* if exactly at end of disk, return an EOF */
+		if (bp->b_blkno == maxsz) {
+			bp->b_resid = bp->b_bcount;
+			return(0);
 		}
-                bp->b_bcount = sz << DEV_BSHIFT;
-        }
+		/* or truncate if part of it fits */
+		sz = maxsz - bp->b_blkno;
+		if (sz <= 0) {
+			bp->b_error = EINVAL;
+			goto bad;
+		}
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
 
 	/* calculate cylinder for disksort to order transfers with */
-        bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return(1);
 
 bad:
@@ -227,15 +230,11 @@ cpu_setdisklabel(olp, nlp, openmask, osdep)
 			npp->p_cpg = opp->p_cpg;
 		}
 	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
+	nlp->d_checksum = 0;
+	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
 	return (0);
 }
-
-/* encoding of disk minor numbers, should be elsewhere... */
-#define dkunit(dev)		(minor(dev) >> 3)
-#define dkminor(unit, part)	(((unit) << 3) | (part))
 
 /*
  * Write disk label back to device after modification.
@@ -252,14 +251,14 @@ cpu_writedisklabel(dev, strat, lp, osdep)
 	int labelpart;
 	int error = 0;
 
-	labelpart = dkpart(dev);
+	labelpart = DISKPART(dev);
 	if (lp->d_partitions[labelpart].p_offset != 0) {
 		if (lp->d_partitions[0].p_offset != 0)
 			return (EXDEV);			/* not quite right */
 		labelpart = 0;
 	}
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = makedev(major(dev), dkminor(dkunit(dev), labelpart));
+	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
@@ -283,4 +282,79 @@ cpu_writedisklabel(dev, strat, lp, osdep)
 done:
 	brelse(bp);
 	return (error);
+}
+
+/*	
+ * Print out the name of the device; ex. TK50, RA80. DEC uses a common
+ * disk type encoding scheme for most of its disks.
+ */   
+void  
+disk_printtype(unit, type)
+	int unit, type;
+{
+	printf(" drive %d: %c%c", unit, MSCP_MID_CHAR(2, type),
+	    MSCP_MID_CHAR(1, type));
+	if (MSCP_MID_ECH(0, type))
+		printf("%c", MSCP_MID_CHAR(0, type));
+	printf("%d\n", MSCP_MID_NUM(type));
+}
+
+/*
+ * Be sure that the pages we want to do DMA to is actually there
+ * by faking page-faults if necessary. If given a map-register address,
+ * also map it in.
+ */
+void
+disk_reallymapin(bp, map, reg, flag)
+	struct buf *bp;
+	struct pte *map;
+	int reg, flag;
+{
+	volatile pt_entry_t *io;
+	pt_entry_t *pte;
+	struct pcb *pcb;
+	int pfnum, npf, o, i;
+	caddr_t addr;
+
+	o = (int)bp->b_un.b_addr & PGOFSET;
+	npf = btoc(bp->b_bcount + o) + 1;
+	addr = bp->b_un.b_addr;
+
+	/*
+	 * Get a pointer to the pte pointing out the first virtual address.
+	 * Use different ways in kernel and user space.
+	 */
+	if ((bp->b_flags & B_PHYS) == 0) {
+		pte = kvtopte(addr);
+	} else {
+		pcb = bp->b_proc->p_vmspace->vm_pmap.pm_pcb;
+		pte = uvtopte(addr, pcb);
+	}
+
+	/*
+	 * When we are doing DMA to user space, be sure that all pages
+	 * we want to transfer to is mapped. WHY DO WE NEED THIS???
+	 * SHOULDN'T THEY ALWAYS BE MAPPED WHEN DOING THIS???
+	 */
+	for (i = 0; i < (npf - 1); i++) {
+		if ((pte + i)->pg_pfn == 0) {
+			int rv;
+			rv = vm_fault(&bp->b_proc->p_vmspace->vm_map,
+			    (unsigned)addr + i * NBPG,
+			    VM_PROT_READ|VM_PROT_WRITE, FALSE);
+			if (rv)
+				panic("DMA to nonexistent page, %d", rv);
+		}
+	}
+	if (map) {
+		io = &map[reg];
+		while (--npf > 0) {
+			pfnum = pte->pg_pfn;
+			if (pfnum == 0)
+				panic("mapin zero entry");
+			pte++;
+			*(int *)io++ = pfnum | flag;
+		}
+		*(int *)io = 0;
+	}
 }

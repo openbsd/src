@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.h,v 1.3 1995/10/20 13:51:56 ragge Exp $	*/
+/*	$NetBSD: mscp.h,v 1.2 1996/07/10 23:35:59 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -64,6 +64,7 @@
 #define	M_OP_COMPHD	0x20	/* Compare host data command */
 #define	M_OP_READ	0x21	/* Read command */
 #define	M_OP_WRITE	0x22	/* Write command */
+#define	M_OP_WRITM	0x23	/* Write mark command */
 #define	M_OP_POS	0x25	/* Positioning command */
 #define	M_OP_AVAILATTN	0x40	/* Available attention message */
 #define	M_OP_DUPUNIT	0x41	/* Duplicate unit number attention message */
@@ -86,6 +87,15 @@
 #define	M_MD_WBKNV	0x0040	/* Write back (non-volatile) */
 #define	M_MD_WBKVL	0x0020	/* Write back (volatile) */
 #define	M_MD_WRSEQ	0x0010	/* Write shadow set one unit at a time */
+
+/*
+ * tape command modifiers
+ */
+#define	M_MD_IMMEDIATE	0x0040	/* Immediate completion */
+#define	M_MD_UNLOAD	0x0010	/* Unload tape */
+#define	M_MD_REVERSE	0x0008	/* Reverse action */
+#define	M_MD_OBJCOUNT	0x0004	/* Object count */
+#define	M_MD_REWIND	0x0002	/* Rewind */
 
 /*
  * AVAILABLE command modifiers
@@ -130,6 +140,8 @@
 #define	M_EF_BBLKU	0x40	/* Bad block unreported */
 #define	M_EF_ERLOG	0x20	/* Error log generated */
 #define	M_EF_SEREX	0x10	/* Serious exception */
+#define	M_EF_EOT	0x08	/* at end-of-tape */
+#define	M_EF_POSLOST	0x04	/* position lost */
 
 /*
  * Controller flags
@@ -165,6 +177,10 @@
 #define	M_FM_DISKTRN	0x02	/* Disk transfer error */
 #define	M_FM_SDI	0x03	/* SDI error */
 #define	M_FM_SMLDSK	0x04	/* Small disk error */
+#define	M_FM_TAPETRN	0x05	/* Tape transfer error */
+#define	M_FM_STIERR	0x06	/* STI communication or command failure */
+#define	M_FM_STIDEL	0x07	/* STI drive error log */
+#define	M_FM_STIFEL	0x08	/* STI formatter error log */
 
 /*
  * Error Log message flags
@@ -189,6 +205,10 @@
 #define	M_ST_HOSTBUFERR	0x09	/* Host buffer access error */
 #define	M_ST_CTLRERR	0x0a	/* Controller error */
 #define	M_ST_DRIVEERR	0x0b	/* Drive error */
+#define	M_ST_FORMATTERR	0x0c	/* Formatter error */
+#define	M_ST_BOT	0x0d	/* Beginning-of-tape */
+#define	M_ST_TAPEMARK	0x0e	/* Tape mark encountered */
+#define	M_ST_RDTRUNC	0x10	/* Record data truncated */
 #define	M_ST_DIAG	0x1f	/* Message from an internal diagnostic */
 
 /*
@@ -236,7 +256,7 @@ struct mscpv_sccc {
 	u_short	sccc_hosttimo;		/* host timeout */
 	u_short	sccc_usefrac;		/* use fraction */
 	long	sccc_time;		/* time and date */
-	long	sccc_xxx1;	/* ? */
+	long	sccc_time1;		/* it's a quad field */
 	long	sccc_errlgfl;	/* ? */
 	short	sccc_xxx2;	/* ? */
 	short	sccc_copyspd;	/* ? */

@@ -1,0 +1,20 @@
+#	$NetBSD: files.mscp,v 1.1 1996/07/01 20:41:30 ragge Exp $
+#
+# File and device description for MSCP devices.
+#
+
+define	mscp {}
+file	arch/vax/mscp/mscp.c
+file	arch/vax/mscp/mscp_subr.c
+
+device	mscpbus {drive = -1}
+attach	mscpbus at mscp
+
+device	ra: disk
+attach	ra at mscpbus
+file	arch/vax/mscp/mscp_disk.c	ra needs-flag
+
+device	mt: tape
+attach	mt at mscpbus
+file	arch/vax/mscp/mscp_tape.c	mt needs-flag
+

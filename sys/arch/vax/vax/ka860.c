@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.3 1996/04/08 18:32:45 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.6 1996/10/13 03:35:53 christos Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -49,32 +49,32 @@
 #include <machine/mtpr.h>
 #include <machine/nexus.h>
 #include <machine/ioa.h>
+#include <machine/sid.h>
 
 struct	ioa *ioa; 
 
 /* XXX These are in autoconf.c also */
 void	ka86_conf __P((struct device *, struct device *, void *));
-int	ka86_clock __P((void));
 void	ka86_memenable __P((struct sbi_attach_args *, struct device *));
 void	ka86_memerr __P((void));
 int	ka86_mchk __P((caddr_t));
-void    ka86_steal_pages __P((void));
+void	ka86_steal_pages __P((void));
 
 void	crlattach __P((void));
 
 /*
  * 8600 memory register (MERG) bit definitions
  */
-#define	M8600_ICRD	0x400		/* inhibit crd interrupts */
+#define M8600_ICRD	0x400		/* inhibit crd interrupts */
 #define M8600_TB_ERR	0xf00		/* translation buffer error mask */
 
 /*
  * MDECC register
  */
-#define	M8600_ADDR_PE	0x080000	/* address parity error */
+#define M8600_ADDR_PE	0x080000	/* address parity error */
 #define M8600_DBL_ERR	0x100000	/* data double bit error */
-#define	M8600_SNG_ERR	0x200000	/* data single bit error */
-#define	M8600_BDT_ERR	0x400000	/* bad data error */
+#define M8600_SNG_ERR	0x200000	/* data single bit error */
+#define M8600_BDT_ERR	0x400000	/* bad data error */
 
 /*
  * ESPA register is used to address scratch pad registers in the Ebox.
@@ -88,7 +88,7 @@ void	crlattach __P((void));
  * The scratchpad registers that are supplied for a single bit ECC 
  * error are:
  */
-#define	SPAD_MSTAT1	0x25		/* scratch pad mstat1 register	*/
+#define SPAD_MSTAT1	0x25		/* scratch pad mstat1 register	*/
 #define SPAD_MSTAT2	0x26		/* scratch pad mstat2 register	*/
 #define SPAD_MDECC	0x27		/* scratch pad mdecc register	*/
 #define SPAD_MEAR	0x2a		/* scratch pad mear register	*/
@@ -124,7 +124,7 @@ ka86_memenable(sa, dev)
 void
 ka86_memerr()
 {
-	register int reg11 = 0;	/* known to be r11 below */
+	register int reg11 = 0; /* known to be r11 below */
 	int mdecc, mear, mstat1, mstat2, array;
 
 	/*
@@ -161,25 +161,25 @@ ka86_memerr()
 	}
 }
 
-#define NMC8600	7
+#define NMC8600 7
 char *mc8600[] = {
 	"unkn type",	"fbox error",	"ebox error",	"ibox error",
 	"mbox error",	"tbuf error",	"mbox 1D error"
 };
 /* codes for above */
-#define	MC_FBOX		1
-#define	MC_EBOX		2
-#define	MC_IBOX		3
-#define	MC_MBOX		4
-#define	MC_TBUF		5
-#define	MC_MBOX1D	6
+#define MC_FBOX		1
+#define MC_EBOX		2
+#define MC_IBOX		3
+#define MC_MBOX		4
+#define MC_TBUF		5
+#define MC_MBOX1D	6
 
 /* error bits */
-#define	MBOX_FE		0x8000		/* Mbox fatal error */
-#define	FBOX_SERV	0x10000000	/* Fbox service error */
-#define	IBOX_ERR	0x2000		/* Ibox error */
-#define	EBOX_ERR	0x1e00		/* Ebox error */
-#define	MBOX_1D		0x81d0000	/* Mbox 1D error */
+#define MBOX_FE		0x8000		/* Mbox fatal error */
+#define FBOX_SERV	0x10000000	/* Fbox service error */
+#define IBOX_ERR	0x2000		/* Ibox error */
+#define EBOX_ERR	0x1e00		/* Ebox error */
+#define MBOX_1D		0x81d0000	/* Mbox 1D error */
 #define EDP_PE		0x200
 
 struct mc8600frame {
@@ -257,9 +257,9 @@ ka86_mchk(cmcf)
 void
 ka86_steal_pages()
 {
-	extern  vm_offset_t avail_start, virtual_avail;
-	extern  struct nexus *nexus;
-	int     junk;
+	extern	vm_offset_t avail_start, virtual_avail;
+	extern	struct nexus *nexus;
+	int	junk;
  
 	/* 8600 may have 2 SBI's == 4 pages */
 	MAPPHYS(junk, 4, VM_PROT_READ|VM_PROT_WRITE);
@@ -293,11 +293,11 @@ struct ka86 {
 
 void
 ka86_conf(parent, self, aux)
-	struct  device *parent, *self;
-	void    *aux;
+	struct	device *parent, *self;
+	void	*aux;
 {
-	extern  char cpu_model[];
-	struct  ka86 *ka86 = (void *)&cpu_type;
+	extern	char cpu_model[];
+	struct	ka86 *ka86 = (void *)&vax_cpudata;
 
 	/* Enable cache */
 	mtpr(3, PR_CSWP);
@@ -316,12 +316,3 @@ ka86_conf(parent, self, aux)
 		printf("no FPA\n");
 	crlattach();
 }
-
-int   
-ka86_clock()
-{
-	mtpr(-10000, PR_NICR); /* Load in count register */
-	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
-	return 0; 
-}
-

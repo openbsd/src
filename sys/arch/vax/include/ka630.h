@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.h,v 1.4 1996/05/19 16:43:28 ragge Exp $ */
+/*	$NetBSD: ka630.h,v 1.1 1996/07/20 17:58:17 ragge Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -61,9 +61,6 @@ struct uvaxIIcpu {
 /* Mem. error address regs. */
 #define	UVAXIICEAR_PG	0x00007fff
 #define	UVAXIIDEAR_PG	0x00007fff
-
-u_long	uvaxII_gettodr __P((int *));
-void	uvaxII_settodr __P((time_t));
 #endif
 
 /*
@@ -122,13 +119,7 @@ struct ka630clock {
 };
 
 #endif
-struct	sbi_attach_args;
+static int ka630_clkread __P((time_t));
+static void ka630_clkwrite __P((void));
 
-/* Prototypes */
-void	uvaxII_conf __P((struct device *, struct device *, void *));
-int	uvaxII_clock __P((void));
-void	uvaxII_memenable __P((struct sbi_attach_args *, struct device *));
-void	uvaxII_memerr __P((void));
-int	uvaxII_mchk __P((caddr_t));
-void	uvaxII_steal_pages __P((void));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.7 1996/02/02 19:08:33 mycroft Exp $ */
+/*	$NetBSD: start.s,v 1.8 1996/08/02 11:22:47 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -172,7 +172,8 @@ start_all:
 relocated:				# now relocation is done !!!
 	movl	sp, _bootregs
 	movl	ap, _boothowto
-	calls	$0, _main		# call main() which is 
+	calls	$0, _setup
+	calls	$0, _Xmain		# call Xmain (gcc workaround)which is 
 	halt				# not intended to return ...
 
 /*

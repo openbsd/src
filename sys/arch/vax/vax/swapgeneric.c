@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.9 1996/04/08 18:32:57 ragge Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.13 1996/10/13 03:36:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -35,9 +35,6 @@
  *	@(#)swapgeneric.c	7.11 (Berkeley) 5/9/91
  */
 
-#include "uda.h"
-#include "hp.h"
-
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
@@ -53,9 +50,11 @@
 #include <machine/mtpr.h>
 #include <machine/cpu.h>
 
-#include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
-
+#include "hp.h"
+#include "ra.h"
+#include "hdc.h"
+#include "sd.h"
+#include "st.h"
 
 void	gets __P((char *));
 
@@ -77,14 +76,11 @@ int	dmmin, dmmax, dmtext;
 
 int (*mountroot) __P((void)) = ffs_mountroot;
 
-extern	struct uba_driver scdriver;
-extern	struct uba_driver hkdriver;
-extern	struct uba_driver idcdriver;
-extern	struct uba_driver hldriver;
-extern	struct uba_driver udadriver;
-extern	struct uba_driver kdbdriver;
-
 extern	struct cfdriver hp_cd;
+extern	struct cfdriver ra_cd;
+extern	struct cfdriver rd_cd;
+extern	struct cfdriver sd_cd;
+extern	struct cfdriver st_cd;
 
 struct	ngcconf {
 	struct	cfdriver *ng_cf;
@@ -93,34 +89,24 @@ struct	ngcconf {
 #if NHP > 0
 	{ &hp_cd,	makedev(0, 0), },
 #endif
-	{ 0 },
-};
-
-struct	genericconf {
-	caddr_t	gc_driver;
-	char	*gc_name;
-	dev_t	gc_root;
-} genericconf[] = {
-/*	{ (caddr_t)&hp_cd,	"hp",	makedev(0, 0),	},
-	{ (caddr_t)&scdriver,	"up",	makedev(2, 0),	}, */
-#if NUDA > 0
-	{ (caddr_t)&udadriver,	"ra",	makedev(9, 0),	},
+#if NRA > 0
+	{ &ra_cd,	makedev(9, 0), },
 #endif
-/*	{ (caddr_t)&idcdriver,	"rb",	makedev(11, 0),	},
-	{ (caddr_t)&hldriver,	"rl",	makedev(14, 0),	},
-	{ (caddr_t)&hkdriver,	"hk",	makedev(3, 0),	},
-	{ (caddr_t)&hkdriver,	"rk",	makedev(3, 0),	},
-	{ (caddr_t)&kdbdriver,	"kra",	makedev(16, 0), }, */
+#if NHDC > 0
+	{ &rd_cd,	makedev(19, 0), },
+#endif
+#if NSD > 0
+	{ &sd_cd,	makedev(20, 0), },
+#endif
+#if NST > 0
+	{ &st_cd,	makedev(21, 0), },
+#endif
 	{ 0 },
 };
 
 void
 setconf()
 {
-#if NUDA > 0
-	register struct uba_device *ui;
-#endif
-	register struct genericconf *gc;
 	struct	ngcconf *nc;
 	register char *cp, *gp;
 	int unit, swaponroot = 0, i;
@@ -145,13 +131,13 @@ nretry:
 				    strcmp(name, ((struct device *)
 				    (nc->ng_cf->cd_devs[i]))->dv_xname) == 0)
 					goto ngotit;
-#ifdef notyet
+
 		printf("Use one of ");
 		for (nc = ngcconf; nc->ng_cf; nc++)
 			printf("%s%%d ", nc->ng_cf->cd_name);
 		printf("\n");
-#endif
-		goto gc2;
+
+		goto nretry;
 ngotit:
 		rootdev = makedev(major(nc->ng_root), i * 8);
 		goto doswap;
@@ -169,50 +155,9 @@ ngotit:
 
 	}
 
-	if (boothowto & RB_ASKNAME) {
-retry:
-		printf("root device? ");
-		gets(name);
-gc2:
-		for (gc = genericconf; gc->gc_driver; gc++)
-		    for (cp = name, gp = gc->gc_name; *cp == *gp; cp++)
-			if (*++gp == 0)
-				goto gotit;
-		printf(
-		  "use hp%%d, up%%d, ra%%d, rb%%d, rl%%d, hk%%d or kra%%d\n");
-		goto nretry;
-gotit:
-		if (*++cp < '0' || *cp > '9') {
-			printf("bad/missing unit number\n");
-			goto retry;
-		}
-		while (*cp >= '0' && *cp <= '9')
-			unit = 10 * unit + *cp++ - '0';
-		if (*cp == '*')
-			swaponroot++;
-		goto found;
-	}
-	for (gc = genericconf; gc->gc_driver; gc++) {
-#if NUDA > 0
-		for (ui = ubdinit; ui->ui_driver; ui++) {
-			if (ui->ui_alive == 0)
-				continue;
-			if (ui->ui_unit == unit && ui->ui_driver ==
-			    (struct uba_driver *)gc->gc_driver) {
-				printf("root on %s%d\n",
-				    ui->ui_driver->ud_dname, unit);
-				goto found;
-			}
-		}
-#endif
-	}
-
 	printf("no suitable root\n");
 	asm("halt");
 
-found:
-	gc->gc_root = makedev(major(gc->gc_root), unit*8);
-	rootdev = gc->gc_root;
 doswap:
 	swdevt[0].sw_dev = argdev = dumpdev =
 	    makedev(major(rootdev), minor(rootdev)+1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.5 1996/05/19 16:27:02 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.9 1997/01/11 11:34:41 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -132,7 +132,7 @@ static unsigned	dhumctl __P((struct dhu_softc *,int, int, int));
 	int	dhuread __P((dev_t, struct uio *, int));
 	int	dhuwrite __P((dev_t, struct uio *, int));
 	int	dhuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-	int	dhustop __P((struct tty *, int));
+	void	dhustop __P((struct tty *, int));
 struct tty *	dhutty __P((dev_t));
 
 struct	cfdriver dhu_cd = {
@@ -376,9 +376,9 @@ dhuopen(dev, flag, mode, p)
 
 		sc->sc_dhu[line].dhu_state = STATE_IDLE;
 
-		sc->sc_dhu[line].dhu_txaddr = uballoc(
-					sc->sc_dev.dv_parent->dv_unit,
-					tp->t_outq.c_cs, tp->t_outq.c_cn, 0);
+		sc->sc_dhu[line].dhu_txaddr =
+		    uballoc((struct uba_softc *)sc->sc_dev.dv_parent,
+		    tp->t_outq.c_cs, tp->t_outq.c_cn, 0);
 
 		dhuaddr = sc->sc_addr;
 
@@ -561,7 +561,7 @@ dhutty(dev)
 }
 
 /*ARGSUSED*/
-int
+void
 dhustop(tp, flag)
 	register struct tty *tp;
 {
@@ -590,7 +590,6 @@ dhustop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	(void) splx(s);
-	return 0;
 }
 
 static void

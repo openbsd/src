@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 1996/01/06 18:37:35 ragge Exp $ */
+/*	$NetBSD: asm.h,v 1.5 1996/11/30 02:49:06 jtc Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
 #define	R11	0x800
 
 #ifdef __STDC__
-#ifdef PROF
+#ifdef GPROF
 #define	ENTRY(x, regs) \
 	.globl _ ## x ## ; .align 2; _ ## x ## : .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
@@ -65,7 +65,7 @@
 	.globl x; .align 2; x ## : .word regs
 #endif
 # else
-#ifdef PROF
+#ifdef GPROF
 #define ENTRY(x, regs) \
 	.globl _/**/x; .align 2; _/**/x: .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount

@@ -1,4 +1,4 @@
-/*      $NetBSD: ts.c,v 1.6 1996/04/08 18:37:32 ragge Exp $ */
+/*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -14,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -32,35 +32,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)tmscp.c     7.16 (Berkeley) 5/9/91
+ *	@(#)tmscp.c	7.16 (Berkeley) 5/9/91
  */
 
 /*
- * sccsid = "@(#)tmscp.c        1.24    (ULTRIX)        1/21/86";
+ * sccsid = "@(#)tmscp.c	1.24	(ULTRIX)	1/21/86";
  */
 
 /************************************************************************
- *                                                                      *
- *        Licensed from Digital Equipment Corporation                   *
- *                       Copyright (c)                                  *
- *               Digital Equipment Corporation                          *
- *                   Maynard, Massachusetts                             *
- *                         1985, 1986                                   *
- *                    All rights reserved.                              *
- *                                                                      *
- *        The Information in this software is subject to change         *
- *   without notice and should not be construed as a commitment         *
- *   by  Digital  Equipment  Corporation.   Digital   makes  no         *
- *   representations about the suitability of this software for         *
- *   any purpose.  It is supplied "As Is" without expressed  or         *
- *   implied  warranty.                                                 *
- *                                                                      *
- *        If the Regents of the University of California or its         *
- *   licensees modify the software in a manner creating                 *
- *   diriviative copyright rights, appropriate copyright                *
- *   legends may be placed on  the drivative work in addition           *
- *   to that set forth above.                                           *
- *                                                                      *
+ *									*
+ *	  Licensed from Digital Equipment Corporation			*
+ *			 Copyright (c)					*
+ *		 Digital Equipment Corporation				*
+ *		     Maynard, Massachusetts				*
+ *			   1985, 1986					*
+ *		      All rights reserved.				*
+ *									*
+ *	  The Information in this software is subject to change		*
+ *   without notice and should not be construed as a commitment		*
+ *   by	 Digital  Equipment  Corporation.   Digital   makes  no		*
+ *   representations about the suitability of this software for		*
+ *   any purpose.  It is supplied "As Is" without expressed  or		*
+ *   implied  warranty.							*
+ *									*
+ *	  If the Regents of the University of California or its		*
+ *   licensees modify the software in a manner creating			*
+ *   diriviative copyright rights, appropriate copyright		*
+ *   legends may be placed on  the drivative work in addition		*
+ *   to that set forth above.						*
+ *									*
  ************************************************************************/
 
 /*
@@ -69,20 +69,9 @@
  * should be TS11 compatible (untested)
  */
 
-#define NCMD	1
-#define NMSG 	1
-
-#if 0
-# define DEBUG
-# define TRACE
-#else
-# undef  DEBUG
-# undef  TRACE
-#endif
-
 #define TS11_COMPAT	/* don't use extended features provided by TS05 */
 
-#ifdef  NEED_18BIT
+#ifdef	NEED_18BIT
 #define TS_UBAFLAGS	UBA_NEED16
 #else
 #define TS_UBAFLAGS	0
@@ -92,10 +81,10 @@
 #define ENABLE_END
 
 #define ENABLE_EAI	/* enable Attention-Interrupts */
-#undef  ENABLE_EAI
+#undef	ENABLE_EAI
 
 #define ENABLE_ERI	/* Enable Release Buffer Interrupts */
-#undef  ENABLE_ERI
+#undef	ENABLE_ERI
 
 #ifdef DEBUG
 int tsdebug = 1;
@@ -129,11 +118,6 @@ int tstrace = 1;
  */
 
 
-#include "ts.h"
-
-#if NTS > 0
-
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -147,7 +131,6 @@ int tstrace = 1;
 #include <sys/mtio.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
-#include <sys/tprintf.h>
 
 #include <machine/pte.h>
 #include <machine/sid.h>
@@ -159,24 +142,14 @@ int tstrace = 1;
 
 #include <vax/uba/tsreg.h>
 
-int	ts_match __P((struct device *, void *, void *));
-void	ts_attach __P((struct device *, struct device *, void *));
-void	tsstrategy __P((struct buf *));
-
-struct	cfdriver ts_cd = {
-	NULL, "ts", DV_DULL
-};
-
-struct	cfattach ts_ca = {
-	sizeof(struct device), ts_match, ts_attach
-};
+#include "ts.h"
 
 /*
  * ts command packets and communication area (per controller)
  */
-struct 	ts {
+struct	ts {
 	struct	tsdevice *reg;		/* address of i/o-registers */
-	struct 	tscmd	  cmd;		/* command packet(s) */
+	struct	tscmd	  cmd;		/* command packet(s) */
 	struct	tsmsg	  msg;		/* message packet(s) */
 } ts[NTS];
 
@@ -186,37 +159,38 @@ struct 	ts {
  * (thus we have no struct ts_info)
  */
 struct	ts_softc {
-	struct  ts *sc_ts;	/* Unibus address of uda struct */
-        short   sc_mapped;      	/* Unibus map allocated ? */
-        int     sc_ubainfo;     	/* Unibus mapping info */
-	short   sc_state;       	/* see below: ST_xxx */
-	short   sc_flags;       	/* see below: FL_xxx */
+	struct	device sc_dev;		/* Autoconf ... */
+	struct	uba_unit sc_unit;	/* Struct common for UBA to talk */
+	struct	ts *sc_ts;		/* Unibus address of uda struct */
+	short	sc_mapped;		/* Unibus map allocated ? */
+	int	sc_ubainfo;		/* Unibus mapping info */
+	short	sc_state;		/* see below: ST_xxx */
+	short	sc_flags;		/* see below: FL_xxx */
 	short	sc_lcmd;		/* last command word */
 	short	sc_rtc;			/* retry count for lcmd */
 	short	sc_lssr;		/* last status register */
 	short	sc_lmsgh;		/* last message header */
 	short	sc_lxst0;		/* last status word */
 	short	sc_cmdf;		/* command flags (ack,cvc,ie) */
-	short 	sc_openf;		/* lock against multiple opens */
+	short	sc_openf;		/* lock against multiple opens */
 	short	sc_liowf;		/* last operation was write */
-	int     sc_micro;       	/* microcode revision */
-	int     sc_ivec;        	/* interrupt vector address */
-	short   sc_ipl;         	/* interrupt priority, Q-bus */
-	tpr_t	sc_tpr;			/* tprintf handle */
-} ts_softc[NTS];
+	int	sc_micro;		/* microcode revision */
+	int	sc_ivec;		/* interrupt vector address */
+	short	sc_ipl;			/* interrupt priority, Q-bus */
+};
 
-int	tsprobe __P((caddr_t, int, struct uba_ctlr *, struct uba_softc *));
-int	tsslave __P((struct uba_device *, caddr_t));
-void	tsattach __P((struct uba_device *));
 void	tsintr __P((int));
-int	tsinit __P((int));
+int	tsinit __P((struct ts_softc *));
 void	tscommand __P((dev_t, int, int));
 int	tsstatus __P((int));
 int	tsexec __P((int, int));
-int	tsstart __P((struct uba_ctlr *, struct buf *));
+int	tsstart __P((struct ts_softc *, struct buf *));
 int	tswchar __P((int));
 void	tsreset __P((int));
 void	tsxstatus __P((struct tsmsg *));
+int	tsmatch __P((struct device *, void *, void *));
+void	tsattach __P((struct device *, struct device *, void *));
+void	tsstrategy __P((struct buf *));
 
 int	tsopen __P((dev_t, int, int, struct proc *));
 int	tsclose __P((dev_t, int, int, struct proc *));
@@ -225,37 +199,30 @@ int	tsread __P((dev_t, struct uio *));
 int	tswrite __P((dev_t, struct uio *));
 int	tsdump __P((dev_t, daddr_t, caddr_t, size_t));
 
+struct	cfdriver ts_cd = {
+	NULL, "ts", DV_DULL
+};
+
+struct	cfattach ts_ca = {
+	sizeof(struct ts_softc), tsmatch, tsattach
+};
+
 
 #define ST_INVALID	0	/* uninitialized, before probe */
 #define ST_PROBE	1	/* during tsprobe(), not used */
 #define ST_SLAVE	2	/* in tsslave(), init almost complete */
 #define ST_ATTACH	3	/* during tsattach(), not used */
-#define ST_INITIALIZED  4	/* init completed, set by tsintr() */
+#define ST_INITIALIZED	4	/* init completed, set by tsintr() */
 #define ST_RUNNING	5
 #define ST_IDLE		6
 #define ST_BUSY		7
 
 /* Bits in minor device */ 
 #define TS_UNIT(dev)	(minor(dev)&03)
-#define TS_CTLR(dev)	(TS_UNIT(dev))
 #define TS_HIDENSITY	010
 
-#define TS_PRI  LOG_INFO
+#define TS_PRI	LOG_INFO
 
-/*
- * Definition of the driver for autoconf.
- */
-#define CTLRNAME  "zs"		/* ts/zs ??? */
-#define UNITNAME  "ts"
-
-struct  uba_ctlr 	*zsinfo[NTS];		/* controller-info */
-struct  uba_device 	*tsinfo[NTS];		/* unit(tape)-info */
-
-u_short tsstd[] = { 0172520, 0172524, 		/* standart csr for ts */
-		    0172530, 0172534, 0 };	/* standart csr for ts */
-
-struct  uba_driver tsdriver = { tsprobe, tsslave, tsattach, 0, tsstd, 
-	  			UNITNAME, tsinfo, CTLRNAME, zsinfo, 0 };
 
 /*
  * Since we don't have credits and thus only one operation per time,
@@ -274,30 +241,25 @@ struct buf	*ts_wtab[NTS];		/* dummy I/O wait queue */
  * initialize data structures, what else ???
  */
 int 
-tsinit (unit)
-	int unit;
+tsinit (sc)
+	struct ts_softc *sc;
 {
-	register struct ts_softc *sc;
 	volatile struct tsdevice *tsregs;
-	struct uba_ctlr *um;
+	int unit = sc->sc_dev.dv_unit;
+	struct uba_unit *uu;
 	
-	trace (("tsinit: unit = %d\n", unit));
-
-	sc = &ts_softc[unit];
-	um = zsinfo[unit];
-	um->um_tab.b_active++;			/* ??? */
-	tsregs = (struct tsdevice *)um->um_addr;
+	uu = &sc->sc_unit;
+	tsregs = (struct tsdevice *)ts[unit].reg;
 	if (sc->sc_mapped == 0) {
 		/*
 		 * Map the communications area and command and message
 		 * buffer into Unibus address space.
 		 */
-		sc->sc_ubainfo = uballoc (um->um_ubanum, (caddr_t)&ts[unit],
-			sizeof (struct ts), TS_UBAFLAGS);
+		sc->sc_ubainfo = uballoc((struct uba_softc *)
+		    sc->sc_dev.dv_parent,
+		    (caddr_t)&ts[unit], sizeof (struct ts), TS_UBAFLAGS);
 		sc->sc_ts = (struct ts *)(UBAI_ADDR(sc->sc_ubainfo));
 		sc->sc_mapped = 1;
-		debug (("sc_mapped: %d [%x, %x]\n", sc->sc_mapped,
-			sc->sc_ubainfo, sc->sc_ts));
 	}
 
 	/*
@@ -320,7 +282,7 @@ tsexec (ctlr, cmd)
 	int ctlr;
 	int cmd;
 {
-	register struct ts_softc *sc = &ts_softc[ctlr];
+	register struct ts_softc *sc = ts_cd.cd_devs[ctlr];
 	register struct tscmd *tscmdp = &ts[ctlr].cmd;
 	register long tscmdma = (long)&sc->sc_ts->cmd;	/* mapped address */
 	volatile struct tsdevice *tsreg = ts[ctlr].reg;
@@ -349,13 +311,12 @@ tsexec (ctlr, cmd)
 	case TS_CMD_STAT:	cmdName = "Get Status (END)";		break;
 	default:		cmdName = "unexptected Command";	break;
 	}
-	debug (("tsexec: cmd = 0x%x (%s)\n", tscmdp->cmdr, cmdName));
 #endif
 
 	sr = tsreg->tssr;
 	if ((sr & TS_SSR) == 0) {	/* subsystem NOT ready */
 		printf ("%s%d: subsystem not ready [%x]\n", 
-			CTLRNAME, ctlr, sr);
+		    sc->sc_dev.dv_xname, sr);
 		return (-1);
 	}
 	dbx = ((char*)tsreg) + 3;	/* dbx is located at the fourth byte */
@@ -375,7 +336,7 @@ tsexec (ctlr, cmd)
 	 * wait for SSR or RMR to show up
 	 */
 	sr = tsreg->tssr;
-	if ((sr & TS_SSR) != 0)	{	/* something went wrong .. */
+	if ((sr & TS_SSR) != 0) {	/* something went wrong .. */
 		if (sr & TS_RMR) {
 			printf ("ts: error writing TSDB (RMR)\n");
 			return (-1);
@@ -404,15 +365,14 @@ tscommand (dev, cmd, count)
 	int count;
 {
 	register struct buf *bp;
-	register int s;  
+	register int s;	 
 
 	trace (("tscommand (%d, %x, %d)\n", TS_UNIT(dev), cmd, count));
 
 	s = splbio();
 	bp = &ts_cbuf[TS_UNIT(dev)];
-#if 1
+
 	while (bp->b_flags & B_BUSY) {
-		debug (("looping 'cause B_BUSY\n"));
 		/*
 		 * This special check is because B_BUSY never
 		 * gets cleared in the non-waiting rewind case. ???
@@ -420,12 +380,11 @@ tscommand (dev, cmd, count)
 		if (bp->b_bcount == 0 && (bp->b_flags & B_DONE))
 			break;
 		bp->b_flags |= B_WANTED;
-		debug (("sleeping ...\n"));;
 		sleep ((caddr_t)bp, PRIBIO);
 		/* check MOT-flag !!! */
 	}
 	bp->b_flags = B_BUSY | B_READ;
-#endif
+
 	splx(s);
 
 	/*
@@ -438,7 +397,6 @@ tscommand (dev, cmd, count)
 	bp->b_bcount = count;
 	bp->b_resid = cmd;
 	bp->b_blkno = 0;
-	debug (("tscommand: calling tsstrategy ...\n"));
 	tsstrategy (bp);
 	/*
 	 * In case of rewind from close, don't wait.
@@ -459,42 +417,34 @@ tscommand (dev, cmd, count)
  * Start an I/O operation on TS05 controller
  */
 int
-tsstart (um, bp)
-	register struct uba_ctlr *um;
+tsstart (sc, bp)
+	register struct ts_softc *sc;
 	register struct buf *bp;
 {
-	register struct ts_softc *sc = &ts_softc[um->um_ctlr];
-	volatile struct tsdevice *tsreg = ts[um->um_ctlr].reg;
-	register struct tscmd *tscmdp = &ts[um->um_ctlr].cmd;
+	int ctlr = sc->sc_dev.dv_unit;
+	volatile struct tsdevice *tsreg = ts[ctlr].reg;
+	register struct tscmd *tscmdp = &ts[ctlr].cmd;
 	register struct buf *dp;
 	volatile int i, itmp;
-	int unit;
 	int ioctl;
 	int cmd;
 
-	unit = um->um_ctlr;
-	trace (("tsstart (unit = %d)\n", unit));
-	sc = &ts_softc[unit];
-
-	if ((dp = ts_wtab[unit]) != NULL) {
+	if ((dp = ts_wtab[ctlr]) != NULL) {
 		/*
 		 * There's already a command pending ...
 		 * Either we are called by tsintr or we have missed
 		 * something important (race condition).
 		 */
-		debug (("tsstart: I/O queue not empty.\n"));
 
 		/* bertram: ubarelse ??? */
-		ts_wtab[um->um_ctlr] = NULL;
+		ts_wtab[ctlr] = NULL;
 		dp->b_flags |= B_ERROR;
 		iodone (dp);
 
 		if (tsreg->tssr & TS_SC) {	/* Special Condition; Error */
-			tprintf (sc->sc_tpr, "%s%d: error at bn%d\n",
-				UNITNAME, unit, dp->b_blkno);
-			log (TS_PRI, "%s%d: tssr 0x%x, state %d\n",
-				CTLRNAME, unit, tsreg->tssr, sc->sc_state);
-			tsinit (unit);
+			log (TS_PRI, "%s: tssr 0x%x, state %d\n",
+				sc->sc_dev.dv_xname, tsreg->tssr, sc->sc_state);
+			tsinit (sc);
 			return (-1);
 		}
 		/* XXX */
@@ -505,47 +455,43 @@ tsstart (um, bp)
 	 * If it's an ioctl then just set the flags for later use;
 	 * For other commands attempt to setup a buffer pointer.
 	 */
-	if (bp == &ts_cbuf[um->um_ctlr]) {
+	if (bp == &ts_cbuf[ctlr]) {
 		ioctl = 1;
-		debug (("tsstart(ioctl): unit %d\n", um->um_ctlr));
 	} else {
 		ioctl = 0;
-		debug (("tsstart(rw): unit %d\n", um->um_ctlr));
 
 		/*
 		 * now we try to map the buffer into uba map space (???)
 		 */
 		i = TS_UBAFLAGS;
-		switch (cpunumber) {
+		switch (vax_cputype) {
 		case VAX_8600:
 		case VAX_780:
 			i |= UBA_CANTWAIT;
 			break;
 		case VAX_750:
-			i |= um->um_ubinfo | UBA_CANTWAIT;
+			i |= sc->sc_unit.uu_ubinfo | UBA_CANTWAIT;
 			break;
 		case VAX_730:
 		case VAX_78032:
 			i |= UBA_CANTWAIT;
 			break;
 		default:
-			printf ("unsupported cpu %d in tsstart.\n", cpunumber);
-		} /* end switch (cpunumber) */
+			printf ("unsupported cpu %d in tsstart.\n", vax_cputype);
+		} /* end switch (vax_cputype) */
 
-		debug (("ubasetup (%x, %x, %x)\n", um->um_ubanum, bp, i));
-		if ((i = ubasetup (um->um_ubanum, bp, i)) == 0) {
+		if ((i = ubasetup(sc->sc_dev.dv_parent->dv_unit, bp, i)) == 0) {
 			/*
 			 * For some reasons which I don't (yet? :) understand,
 			 * tmscp.c initiates in this situation a GET-UNIT
 			 * command. (Because no data-buffers are neccess. ??)
 			 */
-			debug (("tsstart: %d, ubasetup = 0\n", um->um_ctlr));
 			cmd = TS_CMD_STAT;
 			goto do_cmd;
 			return (-1);	/* ??? */
 		}
 #if defined(VAX750)
-		if (cpunumber == VAX_750)
+		if (vax_cputype == VAX_750)
 			itmp = i & 0xfffffff;		/* mask off bdp */
 		else
 #endif
@@ -553,7 +499,6 @@ tsstart (um, bp)
 
 		/* XXX */
 	}
-	debug (("ubasetup done. [%x, %x, %d]\n", i, itmp, ioctl));
 
 	/*
 	 * If it's an ioctl command, then assemble the command.
@@ -561,7 +506,6 @@ tsstart (um, bp)
 	 * in <sys/mtio.h>
 	 */
 	if (ioctl) {
-		debug (("tsstart: doing ioctl %d\n", bp->b_resid));
 		switch ((int)bp->b_resid) {
 		case MTWEOF:
 			cmd = TS_CMD_WTM;
@@ -597,24 +541,20 @@ tsstart (um, bp)
 			cmd = TS_CMD_STAT;
 			break;
 		default:
-			printf ("%s%d: bad ioctl %d\n", 
-				CTLRNAME, unit, (int)bp->b_resid);
+			printf ("%s: bad ioctl %d\n", sc->sc_dev.dv_xname,
+				(int)bp->b_resid);
 			/* Need a no-op. get status */
 			cmd = TS_CMD_STAT;
 		} /* end switch (bp->b_resid) */
 	} else {	/* Its a read/write command (not an ioctl) */ 
-		debug (("tsstart: non-ioctl [%x, %xi, %x]\n", 
-			tscmdp, UBAI_ADDR(i), bp));
 		tscmdp->cw1 = UBAI_ADDR(i) & 0xffff;
 		tscmdp->cw2 = (UBAI_ADDR(i) >> 16) & 0x3f;
 		tscmdp->cw3 = bp->b_bcount;
 
 		if (bp->b_flags & B_READ) {
-			debug (("read-command(%d)\n", tscmdp->cw3));
 			cmd = TS_CMD_RNF;
 		}
 		else {
-			debug (("write-command(%d)\n", tscmdp->cw3));
 			cmd = TS_CMD_WD;
 		}
 		bp->b_ubinfo = itmp;			/* save mapping info */
@@ -623,22 +563,20 @@ tsstart (um, bp)
 	/*
 	 * Move buffer to I/O wait pseudo-queue
 	 */
-	if (ts_wtab[um->um_ctlr]) {
+	if (ts_wtab[ctlr]) {
 		/*
 		 * we are already waiting for something ...
 		 * this should not happen, so we have a problem now.
 		 * bertram: set error-flag and call iodone() ???
 		 */
-		debug (("tsstart: already waiting for something ...\n"));
 	}
-	ts_wtab[um->um_ctlr] = bp;
+	ts_wtab[ctlr] = bp;
 
 	/*
 	 * Now that the command-buffer is setup, give it to the controller
 	 */
 do_cmd:
-	debug (("tsstart: calling tsexec(%d, %d)\n", unit, cmd));
-	return (tsexec (unit, cmd));
+	return (tsexec(ctlr, cmd));
 }
 
 /*
@@ -650,6 +588,7 @@ int
 tswchar (ctlr)
 	int ctlr;
 {
+	struct ts_softc *sc = ts_cd.cd_devs[ctlr];
 	volatile struct tsdevice *tsregs = ts[ctlr].reg;
 	volatile struct tscmd *tscmdp = &ts[ctlr].cmd;
 	volatile struct tsmsg *tsmsgp = &ts[ctlr].msg;
@@ -658,17 +597,17 @@ tswchar (ctlr)
 	/*
 	 * assemble and send "WRITE CHARACTERISTICS" command
 	 */
-        ma = (long)tsmsgp;
-        if (ma & 0x7FC00001) {	/* address must be even and 22-bit */
-                printf ("invalid address 0x%0x for msg-buffer.\n", ma);
-                return (-1);
-        }
+	ma = (long)tsmsgp;
+	if (ma & 0x7FC00001) {	/* address must be even and 22-bit */
+		printf ("invalid address 0x%0x for msg-buffer.\n", ma);
+		return (-1);
+	}
 
-        tsmsgp->hdr = ma & 0xFFFF;		/* low order addr. bits */
-        tsmsgp->dfl = (ma >> 16) & 0x003F; 	/* high order addr. bits */
-        tsmsgp->rbpcr = 16;			/* size of message-buffer */
-        tsmsgp->xst0 = 0;			/* chacacteristics mode word */
-        tsmsgp->xst1 = 0;			/* control word (ext.feat.) */
+	tsmsgp->hdr = ma & 0xFFFF;		/* low order addr. bits */
+	tsmsgp->dfl = (ma >> 16) & 0x003F;	/* high order addr. bits */
+	tsmsgp->rbpcr = 16;			/* size of message-buffer */
+	tsmsgp->xst0 = 0;			/* chacacteristics mode word */
+	tsmsgp->xst1 = 0;			/* control word (ext.feat.) */
 
 #ifdef TS11_COMPAT
 	tsmsgp->rbpcr = 14;		/* size of message-buffer */
@@ -695,29 +634,29 @@ tswchar (ctlr)
 #endif
 #endif
 
-        tscmdp->cmdr = TS_CF_ACK | TS_CF_IE | TS_CMD_WCHAR;	/* obsolete */
-        tscmdp->cw1  = ma & 0xFFFF;
-        tscmdp->cw2  = (ma >> 16) & 0x003F;
-        tscmdp->cw3  = 10;                 /* size of charact.-data */
+	tscmdp->cmdr = TS_CF_ACK | TS_CF_IE | TS_CMD_WCHAR;	/* obsolete */
+	tscmdp->cw1  = ma & 0xFFFF;
+	tscmdp->cw2  = (ma >> 16) & 0x003F;
+	tscmdp->cw3  = 10;		   /* size of charact.-data */
 
-        if (tsexec (ctlr, TS_CMD_WCHAR) < 0) {
-		printf ("%s%d: write characteristics command failed [%x]\n",
-			CTLRNAME, ctlr, tsregs->tssr);
-                return (-1);
+	if (tsexec (ctlr, TS_CMD_WCHAR) < 0) {
+		printf ("%s: write characteristics command failed [%x]\n",
+		    sc->sc_dev.dv_xname, tsregs->tssr);
+		return (-1);
 	}
 
-        timeout = 1000;                /* timeout in 10 seconds */
-        do {
+	timeout = 1000;		       /* timeout in 10 seconds */
+	do {
 		DELAY(10000);
-                sr = tsregs->tssr;
-                debug10 (("\ttssr: 0x%x\n", sr));
-                if (timeout-- > 0) {
-                        printf ("timeout during initialize.");
-                        tsstatus (sr);
-                        return (-1);
-                }
-        } while ((sr & TS_SSR) == 0);
-        tsstatus (sr);
+		sr = tsregs->tssr;
+		debug10 (("\ttssr: 0x%x\n", sr));
+		if (timeout-- > 0) {
+			printf ("timeout during initialize.");
+			tsstatus (sr);
+			return (-1);
+		}
+	} while ((sr & TS_SSR) == 0);
+	tsstatus (sr);
 
 	return (0);
 }
@@ -729,101 +668,95 @@ void
 tsreset(ctlr) 
 	int ctlr;
 {
+	struct ts_softc *sc = ts_cd.cd_devs[ctlr];
 	volatile struct tsdevice *tsreg = ts[ctlr].reg;
 	volatile unsigned int sr, timeout;
-
-	trace (("tsreset (%d)\n", ctlr));
 
 	/*
 	 * reset ctlr by writing into TSSR, then write characteristics
 	 */
-        timeout = 1000;		/* timeout in 10 seconds */     
-        tsreg->tssr = 0;			/* start initialization */
-        do {
+	timeout = 1000;		/* timeout in 10 seconds */	
+	tsreg->tssr = 0;			/* start initialization */
+	do {
 		DELAY(10000);
-                sr = tsreg->tssr;
-                debug10 (("\ttssr: 0x%x\n", sr));
-                if (timeout-- > 0) {
-                        if (sr != 0)
-                                printf ("%s%d: timeout waiting for TS_SSR\n",
-                                        CTLRNAME, ctlr);
-                        tsstatus (sr);
+		sr = tsreg->tssr;
+		debug10 (("\ttssr: 0x%x\n", sr));
+		if (timeout-- > 0) {
+			if (sr != 0)
+				printf ("%s: timeout waiting for TS_SSR\n",
+					sc->sc_dev.dv_xname);
+			tsstatus (sr);
 			return;
-                }
-        } while ((sr & TS_SSR) == 0);   /* wait until subsystem ready */
-        tsstatus (sr);
+		}
+	} while ((sr & TS_SSR) == 0);	/* wait until subsystem ready */
+	tsstatus (sr);
 
 	return;
 }
 
-extern	struct cfdriver uba_cd;
 /*
  * probe for device. If found, try to raise an interrupt.
+ * XXX - most of this should be done in the attach routine.
  */
-int 
-tsprobe (reg, ctlr, um, uh)
-	caddr_t reg;		/* address of TSDB register */
-	int ctlr;		/* index of the controller */
-	struct uba_ctlr *um;	/* controller-info */
-	struct uba_softc *uh;
+int
+tsmatch(parent, match, aux)
+	struct	device *parent;
+	void	*match, *aux;
 {
-	register struct ts_softc *sc;
-	register struct tsdevice *tsregs = (struct tsdevice*) reg;
+	struct ts_softc *sc = match;
+	struct uba_softc *uh = (void *)parent;
+	struct uba_attach_args *ua = aux;
+	struct tsdevice *tsregs = (struct tsdevice*)ua->ua_addr;
 	volatile unsigned int sr, timeout, count;
-	struct uba_softc *ubasc;
-
-  	trace (("tsprobe (%x, %d, %x)\n", reg, ctlr, um));
+	int ctlr = sc->sc_dev.dv_unit;
 
 	ts_wtab[ctlr] = NULL;
-	sc = &ts_softc[ctlr];
 	sc->sc_ts = &ts[ctlr];
 	sc->sc_state = ST_PROBE;
 	sc->sc_flags = 0;
-	zsinfo[ctlr] = um;
-	ts[ctlr].reg = (struct tsdevice*) reg;
+	ts[ctlr].reg = (struct tsdevice*)ua->ua_addr;
 
 	/*
-         * Set host-settable interrupt vector.
-         * Assign 0 to the TSSR register to start the ts-device initialization.
-         * The device is not really initialized at this point, this is just to
-         * find out if the device exists. 
-         */
-	ubasc = uba_cd.cd_devs[0]; /* XXX */
-        sc->sc_ivec = (ubasc->uh_lastiv -= 4);
+	 * Set host-settable interrupt vector.
+	 * Assign 0 to the TSSR register to start the ts-device initialization.
+	 * The device is not really initialized at this point, this is just to
+	 * find out if the device exists. 
+	 */
+	sc->sc_ivec = (uh->uh_lastiv -= 4);
 
 	count = 0;
 again:
 	timeout = 1000;		/* timeout in 10 seconds */	
-        tsregs->tssr = 0;			/* start initialization */
+	tsregs->tssr = 0;			/* start initialization */
 	do {
 		DELAY(10000);
 		sr = tsregs->tssr;
 		debug10 (("\ttssr-1: 0x%x\n", sr));
 		if (timeout-- > 0) {
 			if (sr != 0)	/* the device exists !!! */
-				printf ("%s%d: timeout waiting for TS_SSR\n",
-					CTLRNAME, ctlr);
+				printf ("%s: timeout waiting for TS_SSR\n",
+					sc->sc_dev.dv_xname);
 			tsstatus (sr);
 			goto bad;
 		}
 	} while ((sr & TS_SSR) == 0);	/* wait until subsystem ready */
 	tsstatus (sr);
 
-	tswchar (ctlr); 	/* write charact. to enable interrupts */
+	tswchar (ctlr);		/* write charact. to enable interrupts */
 				/* completion of this will raise the intr. */
 
 #ifdef notyet
-        sc->sc_ipl = br = qbgetpri();
+	sc->sc_ipl = br = qbgetpri();
 #else
-        sc->sc_ipl = 0x15;
+	sc->sc_ipl = 0x15;
 #endif
-        return (sizeof (struct tsdevice));
+	return (sizeof (struct tsdevice));
 
 bad:	if (++count < 3)
 		goto again;
 
 #ifdef notyet
-        splx(s);
+	splx(s);
 #endif
 	return (0);
 }
@@ -834,14 +767,14 @@ bad:	if (++count < 3)
  * Since there's only one drive per controller there's nothing to do.
  * (we could check the status of the drive (online/offline/...)
  */
-int
-tsslave (ui, reg)
-	struct uba_device *ui;  /* ptr to the uba device structure */
-        caddr_t reg;            /* addr of the device controller */
+void
+tsattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	register int ctlr = ui->ui_ctlr;
-	register struct ts_softc *sc = &ts_softc[ctlr];
-	register struct tsmsg *tsmsgp = &ts[ctlr].msg;
+	struct ts_softc *sc = (void *)self;
+	int ctlr = sc->sc_dev.dv_unit;
+	struct tsmsg *tsmsgp = &ts[ctlr].msg;
 
 	trace (("tsslave (%x, %x)\n", ui, reg));
 	
@@ -852,32 +785,16 @@ tsslave (ui, reg)
 	 */
 	sc->sc_state = ST_SLAVE;	/* tsintr() checks this ... */
 	if (tswchar (ctlr) < 0) {
-		printf ("%s%d: cannot initialize", CTLRNAME, ctlr);
-		return (0);		/* ??? XXX ??? */
+		printf ("%s: cannot initialize", sc->sc_dev.dv_xname);
 	}
 	sc->sc_micro = (tsmsgp->xst2 & TS_SF_MCRL) >> 2;
-	printf ("%s%d: rev %d, extended features %s, transport %s\n",
-		CTLRNAME, ctlr, sc->sc_micro,
+	printf ("%s: rev %d, extended features %s, transport %s\n",
+		sc->sc_dev.dv_xname, sc->sc_micro,
 		(tsmsgp->xst2 & TS_SF_EFES ? "enabled" : "disabled"),
 		(ts[ctlr].reg->tssr & TS_OFL ? "offline" : "online"));
 
-	tsinit (ctlr);		/* must be called once, why not here ? */
-
-	return (1);
+	tsinit (sc);		/* must be called once, why not here ? */
 }
-
-
-/*
- * Open routine will issue the online command, later.
- * Just reset the flags and do nothing ...
- */
-void
-tsattach (ui)
-	struct uba_device *ui;
-{
-	trace (("\ntsattach (%x)", ui));
-	ui->ui_flags = 0;	/* mark unit offline */
-}	
 
 
 /*
@@ -887,11 +804,11 @@ void
 tsintr(ctlr)
 	int ctlr;
 {
-	register struct ts_softc *sc = &ts_softc[ctlr];
+	register struct ts_softc *sc = ts_cd.cd_devs[ctlr];
 	register struct tsmsg *tsmsgp = &ts[ctlr].msg;
 	register struct tscmd *tscmdp = &ts[ctlr].cmd;
 	volatile struct tsdevice *tsreg = ts[ctlr].reg;
-	struct uba_ctlr *um = zsinfo[ctlr];
+	struct uba_unit *um = &sc->sc_unit;
 	register struct buf *bp;
 
 	unsigned short sr = tsreg->tssr;	/* save TSSR */
@@ -902,12 +819,16 @@ tsintr(ctlr)
 	short cmask = tscmdp->cmdr & TS_CF_CMASK;
 
 #ifdef DEBUG
-	printf ("TSSR: %b, MSG: %x ", sr, TS_TSSR_BITS, mh);
+	{
+		char bits[64];
+		printf ("TSSR: %s, MSG: %x ", bitmask_snprintf(sr,
+		    TS_TSSR_BITS, bits, sizeof(bits)), mh);
+	}
 	switch (tsmsgp->hdr & 0x001F) {
 	case 16:	printf ("(End)");	break;
 	case 17:	printf ("(Fail)");	break;
 	case 18:	printf ("(Error)");	break;
-	case 19:	printf ("(Attention)");	break;
+	case 19:	printf ("(Attention)"); break;
 	}
 #endif
 
@@ -917,8 +838,8 @@ tsintr(ctlr)
 		sc->sc_cmdf |= TS_CF_CVC;
 
 #ifdef QBA				/* copied from uda.c */
-        if(cpunumber == VAX_78032)
-                splx(sc->sc_ipl);       /* Qbus interrupt protocol is odd */
+	if(vax_cputype == VAX_78032)
+		splx(sc->sc_ipl);	/* Qbus interrupt protocol is odd */
 #endif
 
 	/*
@@ -935,14 +856,12 @@ tsintr(ctlr)
 	switch (sc->sc_state) {
 
 	case ST_INVALID:
-                /*
-                 * Ignore unsolicited interrupts.
-                 */
-		debug (("%s%d: intr in state ST_INVALID [%x,%x]\n", 
-			CTLRNAME, ctlr, sr, mh));
-                log (LOG_WARNING, "%s%d: stray intr [%x,%x]\n", 
-			CTLRNAME, ctlr, sr, mh);
-                return;
+		/*
+		 * Ignore unsolicited interrupts.
+		 */
+		log (LOG_WARNING, "%s: stray intr [%x,%x]\n", 
+			sc->sc_dev.dv_xname, sr, mh);
+		return;
 
 	case ST_SLAVE:
 		/*
@@ -950,11 +869,9 @@ tsintr(ctlr)
 		 * issued by tsslave() and indicates the end of the
 		 * initialization phase. Just ignore it ...
 		 */
-		debug (("%s%d: intr in state ST_SLAVE [%x,%x]\n", 
-			CTLRNAME, ctlr, sr, mh));
 		if ((sr & TS_SC) != 0 || (sr & TS_TC) != TS_TC_NORM) {
-			printf ("%s%d: problem during init [%x,%x]\n",
-				CTLRNAME, ctlr, sr, mh);
+			printf("%s: problem during init [%x,%x]\n",
+				sc->sc_dev.dv_xname, sr, mh);
 			/* return here ??? */
 			/* break and check the error outside switch ??? */
 			break;
@@ -968,23 +885,18 @@ tsintr(ctlr)
 		 * Here we expect interrupts indicating the end of
 		 * commands or indicating problems.
 		 */
-		debug (("%s%d: intr ST_RUN (%s) [%x,%x]\n", 
-			CTLRNAME, ctlr, ((tsmsgp->xst0 & TS_SF_ONL) ? 
-			"online" : "offline"), sr, mh));
 		/*
 		 * Anything else is handled outside this switch ...
 		 */
 		break;
 
 	case ST_IDLE:
-		debug (("%s%d: intr ST_IDLE [%x,%x]\n", 
-			CTLRNAME, ctlr, sr, mh));
 		break;
 
 
 	default:
-		printf ("%s%d: unexpected interrupt during state %d [%x,%x]\n", 
-			CTLRNAME, ctlr, sc->sc_state, sr, mh);
+		printf ("%s: unexpected interrupt during state %d [%x,%x]\n", 
+			sc->sc_dev.dv_xname, sc->sc_state, sr, mh);
 		return;
 	}
 
@@ -998,7 +910,6 @@ tsintr(ctlr)
 		 * Normal termination -- The operation is completed
 		 * witout incident.
 		 */
-		debug (("%s%d: Normal Termination\n", CTLRNAME, ctlr));
 		sc->sc_state = ST_IDLE;		/* XXX ??? */
 		sc->sc_state = ST_RUNNING;
 		sc->sc_liowf = (ccode == TS_CC_WRITE);
@@ -1006,12 +917,16 @@ tsintr(ctlr)
 		if ((bp = ts_wtab[ctlr]) != NULL) {
 			ts_wtab[ctlr] = NULL;	/* pseudo-unlink */
 
-			if (bp != &ts_cbuf[ctlr]) { 	/* no ioctl */
-				debug (("ubarelse\n"));
-				ubarelse (um->um_ubanum, (int *)&bp->b_ubinfo);
+			if (bp != &ts_cbuf[ctlr]) {	/* no ioctl */
+				ubarelse((struct uba_softc *)
+				    sc->sc_dev.dv_parent,
+				    (int *)&bp->b_ubinfo);
 #if defined(VAX750)
-				if (cpunumber == VAX_750 && um->um_ubinfo != 0)
-					ubarelse(um->um_ubanum, &um->um_ubinfo);
+				if (vax_cputype == VAX_750 &&
+				    sc->sc_unit.uu_ubinfo != 0)
+					ubarelse((struct uba_softc *)
+					    sc->sc_dev.dv_parent,
+					    &sc->sc_unit.uu_ubinfo);
 					/* XXX */
 #endif
 			}
@@ -1030,10 +945,9 @@ tsintr(ctlr)
 		 * (Without EAI enabled, no Attention interrupts occur.
 		 * drive status changes are signaled by the VCK flag.)
 		 */
-		debug (("%s%d: Attention\n", CTLRNAME, ctlr));
 		return;
 
-        case TS_TC_TSA:
+	case TS_TC_TSA:
 		/* 
 		 * Tape Status Alert -- A status condition is encountered
 		 * that may have significance to the program. Bits of
@@ -1050,7 +964,7 @@ tsintr(ctlr)
 		}
 		break;
 
-        case TS_TC_FR: 
+	case TS_TC_FR: 
 		/*
 		 * Function Reject -- The specified function was not
 		 * initiated. Bits of interest include OFL, VCK, BOT,
@@ -1075,7 +989,7 @@ tsintr(ctlr)
 		}
 		break;
 
-        case TS_TC_TPD:
+	case TS_TC_TPD:
 		/*
 		 * Recoverable Error -- Tape position is a record beyond
 		 * what its position was when the function was initiated.
@@ -1096,7 +1010,7 @@ tsintr(ctlr)
 			return;
 		case TS_CMD_WD:		/* Write Data (Next) */
 			debug (("retry write data ...\n"));
-			sc->sc_rtc = 1;         
+			sc->sc_rtc = 1;		
 			tsexec (ctlr, TS_CMD_WDR);
 			return;
 		case TS_CMD_WTM:
@@ -1109,7 +1023,7 @@ tsintr(ctlr)
 		}
 		break;
 
-        case TS_TC_TNM:
+	case TS_TC_TNM:
 		/*
 		 * Recoverable Error -- Tape position has not changed.
 		 * Suggested recovery procedure is to log the error and
@@ -1126,7 +1040,7 @@ tsintr(ctlr)
 		}
 		break;
 
-        case TS_TC_TPL:
+	case TS_TC_TPL:
 		/*
 		 * Unrecoverable Error -- Tape position has been lost.
 		 * No valid recovery procedures exist unless the tape
@@ -1135,7 +1049,7 @@ tsintr(ctlr)
 		printf ("Tape position lost\n"); 
 		break;
 
-        case TS_TC_FCE:
+	case TS_TC_FCE:
 		/*
 		 * Fatal subsytem Error -- The subsytem is incapable
 		 * of properly performing commands, or at least its
@@ -1146,8 +1060,8 @@ tsintr(ctlr)
 		printf ("Fatal Controller Error\n"); 
 
 	default:
-		printf ("%s%d: error 0x%x, resetting controller\n", 
-			CTLRNAME, ctlr, sr & TS_TC);
+		printf ("%s: error 0x%x, resetting controller\n", 
+			sc->sc_dev.dv_xname, sr & TS_TC);
 		tsreset (ctlr);
 	}
 
@@ -1157,14 +1071,13 @@ tsintr(ctlr)
 	if ((bp = ts_wtab[ctlr]) != NULL) {
 		ts_wtab[ctlr] = NULL;		/* pseudo unlink */
 
-		if (bp != &ts_cbuf[ctlr]) {	/* no ioctl */
-			debug (("ubarelse-2\n"));
-			ubarelse(um->um_ubanum, (int *)&bp->b_ubinfo);
-		}
-		if ((sr & TS_TC) != TS_TC_NORM) {
+		if (bp != &ts_cbuf[ctlr]) 	/* no ioctl */
+			ubarelse((struct uba_softc *)sc->sc_dev.dv_parent,
+			    (int *)&bp->b_ubinfo);
+
+		if ((sr & TS_TC) != TS_TC_NORM)
 			bp->b_flags |= B_ERROR;
-			debug (("tsintr: bp->b_flags |= B_ERROR\n"));
-		}
+
 		debug (("resid:%d, count:%d, rbpcr:%d\n",
 			bp->b_resid, bp->b_bcount, tsmsgp->rbpcr));
 		bp->b_resid = tsmsgp->rbpcr; /* XXX */
@@ -1196,27 +1109,27 @@ tsopen (dev, flag, type, p)
 
 	trace (("tsopen (%x, %x)\n", dev, flag));
 	
-	if (unit >= NTS || (ui = tsinfo[unit]) == 0 || ui->ui_alive == 0) {
-		debug (("ui->ui_alive == 0\n"));
-		return (ENXIO);
-	}
-	sc = &ts_softc[ui->ui_ctlr];	/* unit ??? */
-	if (sc->sc_openf) {
-		debug (("sc->sc_openf\n"));
-		return (EBUSY);
-	}
+	if (unit >= ts_cd.cd_ndevs)
+		return ENXIO;
+
+	sc = ts_cd.cd_devs[unit];
+	if (sc == 0)
+		return ENXIO;
+
+	if (sc->sc_openf)
+		return EBUSY;
+
 	sc->sc_openf = 1;
-	sc->sc_tpr = tprintf_open (curproc);
+
 	s = splbio ();
 	if (sc->sc_state < ST_RUNNING) {		/* XXX */
-		printf ("ts%d not running.\n", ui->ui_ctlr);
+		printf ("%s not running.\n", sc->sc_dev.dv_xname);
 		(void) splx (s);
 		sc->sc_openf = 0;
 		return (ENXIO);
 	}
-	um = ui->ui_mi;
 	(void) splx (s);
-#if 1
+
 	/*
 	 * check if transport is really online.
 	 * (without attention-interrupts enabled, we really don't know
@@ -1224,14 +1137,14 @@ tsopen (dev, flag, type, p)
 	 * (ie. MTNOP) once and check the actual status.)
 	 */
 	tscommand (dev, MTNOP, 1);
-	if (ts[TS_CTLR(dev)].reg->tssr & TS_OFL) {
-		printf ("ts%d: transport is offline.\n", ui->ui_ctlr);
+	if (ts[unit].reg->tssr & TS_OFL) {
+		printf ("%s: transport is offline.\n", sc->sc_dev.dv_xname);
 		sc->sc_openf = 0;
-		return (EIO);		/* transport is offline */
+		return EIO;		/* transport is offline */
 	}
-#endif
+
 	sc->sc_liowf = 0;
-	return (0);
+	return 0;
 }
 
 
@@ -1246,16 +1159,13 @@ tsopen (dev, flag, type, p)
  */
 int
 tsclose (dev, flag, type, p)
-        dev_t dev;
-        int flag, type;
+	dev_t dev;
+	int flag, type;
 	struct proc *p;
 {
-	register struct ts_softc *sc = &ts_softc[TS_UNIT(dev)];
-
-        trace (("tsclose (%x, %d)\n", dev, flag));
+	register struct ts_softc *sc = ts_cd.cd_devs[TS_UNIT(dev)];
 
 	if (flag == FWRITE || ((flag & FWRITE) && sc->sc_liowf)) {
-		debug (("tsclose: writing eot\n"));
 		/* 
 		 * We are writing two tape marks (EOT), but place the tape
 		 * before the second one, so that another write operation
@@ -1263,18 +1173,15 @@ tsclose (dev, flag, type, p)
 		 */
 		tscommand (dev, MTWEOF, 1);	/* Write Tape Mark */
 		tscommand (dev, MTWEOF, 1);	/* Write Tape Mark */
-		tscommand (dev, MTBSF,  1);	/* Skip Tape Marks Reverse */
+		tscommand (dev, MTBSF,	1);	/* Skip Tape Marks Reverse */
 	}
 
-	if ((minor(dev)&T_NOREWIND) == 0) {
-		debug (("tsclose: rewinding\n"));
+	if ((dev & T_NOREWIND) == 0)
 		tscommand (dev, MTREW, 0);
-	}
 
-	tprintf_close (sc->sc_tpr);
 	sc->sc_openf = 0;
 	sc->sc_liowf = 0;
-	return (0);
+	return 0;
 }
 
 
@@ -1283,27 +1190,11 @@ tsclose (dev, flag, type, p)
  */
 void
 tsstrategy (bp)
-        register struct buf *bp;
+	register struct buf *bp;
 {
-	register struct uba_device *ui;
-	register struct uba_ctlr *um;
 	register int unit = TS_UNIT(bp->b_dev);
+	struct ts_softc *sc = (void *)ts_cd.cd_devs[unit];
 	int s;
-
-	trace (("tsstrategy (...)\n"));
-	if (unit >= NTS) {
-		debug (("tsstrategy: bad unit # %d\n",unit));
-		bp->b_flags |= B_ERROR;
-		iodone(bp);
-		return;
-	}
-	ui = tsinfo[unit];
-	if (ui == 0 || ui->ui_alive == 0) {
-		debug (("tsstrategy: ui_alive == 0\n"));
-		bp->b_flags |= B_ERROR;
-		iodone(bp);
-		return;
-	}
 
 	s = splbio ();
 	/*
@@ -1311,23 +1202,8 @@ tsstrategy (bp)
 	 * thus we don't need buffer management and controller queue
 	 * just try to execute the command ...
 	 */
-#if 0
-	if (ts_wtab[unit] != NULL) {
-		debug (("tsstrategy: already waiting for something\n"));
-		ts_wtab[unit]->b_flags |= B_ERROR;
-		iodone (ts_wtab[unit]);
-	}
-	ts_wtab[unit] = bp;
-#endif
 
-	um = ui->ui_mi;
-	if (um->um_tab.b_active == 0) {
-		/*
-		 * If the controller is not active, start it.
-		 */
-	}
-
-	tsstart (um, bp);
+	tsstart (sc, bp);
 	splx(s);
 	return;
 }
@@ -1338,10 +1214,10 @@ tsstrategy (bp)
  */
 int
 tsioctl (dev, cmd, data, flag, p)
-        dev_t dev;
+	dev_t dev;
 	u_long cmd;
-        caddr_t data;
-        int flag;
+	caddr_t data;
+	int flag;
 	struct proc *p;
 {
 	register struct buf *bp = &ts_cbuf[TS_UNIT(dev)];
@@ -1413,11 +1289,11 @@ tsioctl (dev, cmd, data, flag, p)
 		return (error);		
 
 	case MTIOCGET:			/* get tape status */
-		sc = &ts_softc[TS_CTLR(dev)];
+		sc = ts_cd.cd_devs[TS_UNIT(dev)];
 		mtget = (struct mtget *)data;
 		mtget->mt_type = MT_ISTS;
-		mtget->mt_dsreg = (unsigned)(ts[TS_CTLR(dev)].reg->tssr);
-		mtget->mt_erreg = (unsigned)(ts[TS_CTLR(dev)].msg.hdr);
+		mtget->mt_dsreg = (unsigned)(ts[TS_UNIT(dev)].reg->tssr);
+		mtget->mt_erreg = (unsigned)(ts[TS_UNIT(dev)].msg.hdr);
 		mtget->mt_resid = 0;		/* ??? */
 		mtget->mt_density = 0;		/* ??? */
 		break;
@@ -1482,7 +1358,10 @@ tsstatus (sr)
 	int sr;
 {
 #ifdef DEBUG
-	debug (("status: TSSR=%b\n", sr, TS_TSSR_BITS));
+	char bits[64];
+
+	debug (("status: TSSR=%s\n", bitmask_snprintf(sr, TS_TSSR_BITS,
+	    bits, sizeof(bits))));
 
 	if (tsdebug < 5)
 		return (0);
@@ -1496,7 +1375,7 @@ tsstatus (sr)
 	if (sr & TS_A11)	printf ("Address Bits 17-16\n");
 	if (sr & TS_SSR)	printf ("Subsystem Ready\n");
 	if (sr & TS_OFL)	printf ("Off Line\n");
-	if (sr & TS_FTC) 	printf ("Fatal Termination Class Code\n");
+	if (sr & TS_FTC)	printf ("Fatal Termination Class Code\n");
 	switch (sr & TS_TC) {
 	case TS_TC_NORM:	printf ("Normal Termination\n"); break;
 	case TS_TC_ATTN:	printf ("Attention Condition\n"); break;
@@ -1516,10 +1395,18 @@ tsxstatus (mp)
 	struct tsmsg *mp;
 {
 #ifdef DEBUG
-	debug (("tsxstatus: xst0=%b, xst1=%b, xst2=%b, xst3=%b, xst4=%b\n",
-		mp->xst0, TS_XST0_BITS, mp->xst1, TS_XST1_BITS,
-		mp->xst2, TS_XST2_BITS, mp->xst3, TS_XST3_BITS,
-		mp->xst4, "\20"));
+	char bits[64];
+
+	debug (("tsxstatus: xst0=%s, ", bitmask_snprintf(mp->xst0,
+	    TS_XST0_BITS, bits, sizeof(bits))));
+	debug (("xst1=%s, ", bitmask_snprintf(mp->xst1, TS_XST1_BITS,
+	    bits, sizeof(bits))));
+	debug (("xst2=%s, ", bitmask_snprintf(mp->xst2, TS_XST2_BITS, 
+	    bits, sizeof(bits))));
+	debug (("xst3=%s, ", bitmask_snprintf(mp->xst3, TS_XST3_BITS,
+	    bits, sizeof(bits))));
+	debug (("xst4=%s\n", bitmask_snprintf(mp->xst4, "\20",
+	    bits, sizeof(bits))));
 
 	if (tsdebug < 10)
 		return (0);
@@ -1566,23 +1453,3 @@ tsxstatus (mp)
 	if (mp->xst4 & TS_SF_RCX)	printf ("Retry Count Exceeded\n");
 #endif
 }
-
-int
-ts_match(parent, match, aux)
-        struct device *parent;
-        void *match, *aux;
-{
-        return 0;
-}
-
-void
-ts_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
-{
-}
-
-
-
-#endif	/* #if NTS > 0 */
-

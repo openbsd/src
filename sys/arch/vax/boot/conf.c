@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1996/02/17 18:23:18 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.6 1996/08/02 11:21:56 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,25 +42,33 @@ int	raopen(),  rastrategy();
 int	hpopen(),  hpstrategy();
 int	ctuopen(),  ctustrategy();
 int     tmscpopen(), tmscpstrategy();
+int     romopen(), romstrategy();
+int     mfmopen(), mfmstrategy();
+int     sdopen(), sdstrategy();
+
 
 struct	devsw devsw[]={
 	SADEV("hp",hpstrategy, hpopen, nullsys, noioctl),
-	SADEV("ht",nullsys, nodev, nullsys, noioctl),
-	SADEV("up",nullsys, nodev, nullsys, noioctl),
-	SADEV("hk",nullsys, nodev, nullsys, noioctl),
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* ht */
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* up */
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* hk */
 	SADEV( 0  ,nullsys, nodev, nullsys, noioctl),
-	SADEV("tm",nullsys, nodev, nullsys, noioctl),
-	SADEV("ts",nullsys, nodev, nullsys, noioctl),
-	SADEV("mt",nullsys, nodev, nullsys, noioctl),
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* tm */
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* ts */
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* mt */
 	SADEV("ctu",ctustrategy, ctuopen, nullsys, noioctl),
 	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
-	SADEV("ut",nullsys, nodev, nullsys, noioctl),
-	SADEV("id",nullsys, nodev, nullsys, noioctl),
-	SADEV("rx",nullsys, nodev, nullsys, noioctl),
-	SADEV("uu",nullsys, nodev, nullsys, noioctl),
-	SADEV("rl",nullsys, nodev, nullsys, noioctl),
-	SADEV("tms",tmscpstrategy, tmscpopen, nullsys, noioctl),
-	SADEV("kra",nullsys, nodev, nullsys, noioctl),
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* ut */
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* id */
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* rx */
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* uu */
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* rl */
+	SADEV("mt",tmscpstrategy, tmscpopen, nullsys, noioctl),
+	SADEV(0 ,nullsys, nodev, nullsys, noioctl), /* crx */
+        SADEV("rom",romstrategy, romopen, nullsys, noioctl),    /* 17 */
+        SADEV("mfm",mfmstrategy, mfmopen, nullsys, noioctl),    /* 18 */
+        SADEV("sd",sdstrategy, sdopen, nullsys, noioctl),       /* 18 */
+	SADEV("st",sdstrategy, sdopen, nullsys, noioctl),
 };
 
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));

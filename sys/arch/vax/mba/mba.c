@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.6 1996/04/08 18:38:59 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.10 1996/10/13 03:35:00 christos Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -81,7 +81,11 @@ struct	cfdriver mba_cd = {
 	NULL, "mba", DV_DULL
 };
 
-struct	cfattach mba_ca = {
+struct	cfattach mba_cmi_ca = {
+	sizeof(struct mba_softc), mbamatch, mbaattach
+};
+
+struct	cfattach mba_sbi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
 };
 
@@ -134,7 +138,7 @@ mbaattach(parent, self, aux)
 
 	sc->sc_physnr = sa->nexnum - 8; /* MBA's have TR between 8 - 11... */
 #ifdef VAX750
-	if (cpunumber == VAX_750)
+	if (vax_cputype == VAX_750)
 		sc->sc_physnr += 4;	/* ...but not on 11/750 */
 #endif
 	sc->sc_first = 0;
@@ -238,7 +242,7 @@ mbaintr(mba)
 
 int
 mbaprint(aux, mbaname)
-	void		*aux;
+	void	*aux;
 	const char	*mbaname;
 {
 	struct  mba_attach_args *ma = aux;
@@ -284,71 +288,10 @@ mbastart(sc)
 	volatile struct	mba_regs *mr = sc->sc_mbareg;
 	struct	buf *bp = md->md_q.b_actf;
 
-	mbamapregs(sc);
+	disk_reallymapin(md->md_q.b_actf, sc->sc_mbareg->mba_map, 0, PG_V);
 
 	sc->sc_state = SC_ACTIVE;
 	mr->mba_var = ((u_int)bp->b_un.b_addr & PGOFSET);
 	mr->mba_bc = (~bp->b_bcount) + 1;
 	(*md->md_start)(md);		/* machine-dependent start */
 }
-
-/*
- * Setup map registers for a dma transfer.
- * This routine could be synced with the other adapter map routines!
- */
-void
-mbamapregs(sc)
-	struct  mba_softc *sc;
-{
-	struct	mba_device *md = sc->sc_first;
-	volatile struct	mba_regs *mr = sc->sc_mbareg;
-	struct	buf *bp = md->md_q.b_actf;
-	struct	pcb *pcb;
-	pt_entry_t *pte;
-	volatile pt_entry_t *io;
-	int	pfnum, npf, o, i;
-	caddr_t	addr;
-
-	o = (int)bp->b_un.b_addr & PGOFSET;
-	npf = btoc(bp->b_bcount + o) + 1;
-	addr = bp->b_un.b_addr;
-
-	/*
-	 * Get a pointer to the pte pointing out the first virtual address.
-	 * Use different ways in kernel and user space.
-	 */
-	if ((bp->b_flags & B_PHYS) == 0) {
-		pte = kvtopte(addr);
-	} else {
-		pcb = bp->b_proc->p_vmspace->vm_pmap.pm_pcb;
-		pte = uvtopte(addr, pcb);
-	}
-
-	/*
-	 * When we are doing DMA to user space, be sure that all pages
-	 * we want to transfer to is mapped. WHY DO WE NEED THIS???
-	 * SHOULDN'T THEY ALWAYS BE MAPPED WHEN DOING THIS???
-	 */
-	for (i = 0; i < (npf - 1); i++) {
-		if ((pte + i)->pg_pfn == 0) {
-			int rv;
-			rv = vm_fault(&bp->b_proc->p_vmspace->vm_map,
-			    (unsigned)addr + i * NBPG,
-			    VM_PROT_READ|VM_PROT_WRITE, FALSE);
-			if (rv)
-				panic("MBA DMA to nonexistent page, %d", rv);
-		}
-	}
-
-	io = &mr->mba_map[0];
-	while (--npf > 0) {
-		pfnum = pte->pg_pfn;
-		if (pfnum == 0)
-			panic("mba zero entry");
-		pte++;
-		*(int *)io++ = pfnum | PG_V;
-	}
-	*(int *)io = 0;
-}
-
-

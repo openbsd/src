@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.3 1996/04/08 18:32:41 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.7 1997/01/11 11:31:57 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -80,6 +80,7 @@ uvaxIII_conf(parent, self, aux)
 	 * check which here. but that later...
 	 */
 	strcpy(cpu_model,"MicroVAX III");
+	printf(": %s\n", cpu_model);
 	ka650encache();
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
 		printf("physmem(0x%x) > qbmbr(0x%x)\n",
@@ -129,13 +130,6 @@ uvaxIII_steal_pages()
 
 	jon = (int *)0x20040004;
 	subtyp = *jon;
-}
-
-int
-uvaxIII_clock()
-{
-	mtpr(0x40, PR_ICCS); /* Start clock and enable interrupt */
-	return 1;
 }
 
 void
@@ -241,9 +235,9 @@ uvaxIII_mchk(cmcf)
 	}
 	if (time.tv_sec - i < 7) {
 		ka650discache();
-		printf(" parity error:  cacheing disabled\n");
+		printf(" parity error:	cacheing disabled\n");
 	} else {
-		printf(" parity error:  flushing cache\n");
+		printf(" parity error:	flushing cache\n");
 		ka650encache();
 	}
 	/*

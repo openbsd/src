@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.1 1995/09/16 12:56:03 ragge Exp $ */
+/*	$NetBSD: edlabel.c,v 1.2 1996/08/02 11:22:11 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -88,7 +88,7 @@ setdefaultlabel()
 #define GETNUM2(out, num1, num) printf(out, num1, num);gets(store); \
 	if (*store) num = atoi(store);
 #define	GETSTR(out, str) printf(out, str);gets(store); \
-	if (*store) strcpy(str, store);
+	if (*store) bcopy(store, str, strlen(store));
 #define	FLAGS(out, flag) printf(out, lp->d_flags & flag?'y':'n');gets(store); \
 	if (*store == 'y' || *store == 'Y') lp->d_flags |= flag; \
 	else lp->d_flags &= ~flag;
@@ -121,9 +121,11 @@ editlabel()
 	GETNUM("drivedata 2? [%d] ", lp->d_drivedata[2]);
 	GETNUM("drivedata 3? [%d] ", lp->d_drivedata[3]);
 	GETNUM("drivedata 4? [%d] ", lp->d_drivedata[4]);
+	lp->d_secsize = 512;
 	GETNUM("\nbytes/sector? [%d] ", lp->d_secsize);
 	GETNUM("sectors/track? [%d] ", lp->d_nsectors);
 	GETNUM("tracks/cylinder? [%d] ", lp->d_ntracks);
+	lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 	GETNUM("sectors/cylinder? [%d] ", lp->d_secpercyl);
 	GETNUM("cylinders? [%d] ", lp->d_ncylinders);
 	lp->d_npartitions = MAXPARTITIONS;
@@ -137,7 +139,7 @@ editlabel()
 int bootdev;
 
 void 
-main()
+Xmain()
 {
 	register bdev  asm("r10");
 

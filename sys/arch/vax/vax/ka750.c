@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.12 1996/04/08 18:32:42 ragge Exp $	*/
+/*	$NetBSD: ka750.c,v 1.17 1996/10/13 03:35:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ka750.c	7.4 (Berkeley) 5/9/91
- *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
+ *	@(#)autoconf.c	7.20 (Berkeley) 5/9/91
  */
 
 #include <sys/param.h>
@@ -48,8 +48,10 @@
 #include <machine/ka750.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/sid.h>
 #include <machine/mtpr.h>
 #include <machine/scb.h>
+
 #include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
 
@@ -60,14 +62,14 @@ void	ctuattach __P((void));
  */
 void
 ka750_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	extern	char cpu_model[];
 
 	strcpy(cpu_model,"VAX 11/750");
 	printf(": 11/750, hardware rev %d, ucode rev %d\n",
-	    V750HARDW(cpu_type), V750UCODE(cpu_type));
+	    V750HARDW(vax_cpudata), V750UCODE(vax_cpudata));
 	printf("%s: ", self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
 		printf("FPA present, enabling.\n");
@@ -79,27 +81,29 @@ ka750_conf(parent, self, aux)
 	ctuattach();
 }
 
-/*
- * ka750_clock() makes the 11/750 interrupt clock and todr
- * register start counting.
- */
+static int ka750_memmatch __P((struct  device  *, void  *, void *));
+static void ka750_memenable __P((struct  device  *, struct  device  *, void *));
+
+struct  cfattach mem_cmi_ca = {
+        sizeof(struct device), ka750_memmatch, ka750_memenable
+};
+
 int
-ka750_clock()
+ka750_memmatch(parent, gcf, aux)
+        struct  device  *parent;
+        void    *gcf, *aux;
 {
+	struct  sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct  cfdata  *cf = gcf;
 
-	mtpr(-10000, PR_NICR); /* Load in count register */
-	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
-	if (mfpr(PR_TODR)) {
-		/* todr running */
+        if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1))
+                return 0;
+
+	if (sa->type != NEX_MEM16)
 		return 0;
-	} else {
-		/* Start TODR register. */
-		mtpr(1, PR_TODR);
-		return 1;
-	}
 
+	return 1;
 }
-
 
 extern volatile caddr_t mcraddr[];
 
@@ -109,26 +113,27 @@ struct	mcr750 {
 	int	mc_inf;			/* info bits */
 };
 
-#define	M750_ICRD	0x10000000	/* inhibit crd interrupts, in [1] */
-#define	M750_UNCORR	0xc0000000	/* uncorrectable error, in [0] */
-#define	M750_CORERR	0x20000000	/* correctable error, in [0] */
+#define M750_ICRD	0x10000000	/* inhibit crd interrupts, in [1] */
+#define M750_UNCORR	0xc0000000	/* uncorrectable error, in [0] */
+#define M750_CORERR	0x20000000	/* correctable error, in [0] */
 
-#define	M750_INH(mcr)	((mcr)->mc_inh = 0)
-#define	M750_ENA(mcr)	((mcr)->mc_err = (M750_UNCORR|M750_CORERR), \
+#define M750_INH(mcr)	((mcr)->mc_inh = 0)
+#define M750_ENA(mcr)	((mcr)->mc_err = (M750_UNCORR|M750_CORERR), \
 			 (mcr)->mc_inh = M750_ICRD)
-#define	M750_ERR(mcr)	((mcr)->mc_err & (M750_UNCORR|M750_CORERR))
+#define M750_ERR(mcr)	((mcr)->mc_err & (M750_UNCORR|M750_CORERR))
 
-#define	M750_SYN(err)	((err) & 0x7f)
-#define	M750_ADDR(err)	(((err) >> 9) & 0x7fff)
+#define M750_SYN(err)	((err) & 0x7f)
+#define M750_ADDR(err)	(((err) >> 9) & 0x7fff)
 
 /* enable crd interrupts */
 void
-ka750_memenable(sa,self)
-	struct sbi_attach_args *sa;
-	struct device *self;
+ka750_memenable(parent, self, aux)
+        struct  device  *parent, *self;
+        void    *aux;
 {
-	int k, l, m, cardinfo;
+	struct  sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	struct mcr750 *mcr = (struct mcr750 *)sa->nexaddr;
+	int k, l, m, cardinfo;
 	
 	mcraddr[self->dv_unit] = (caddr_t)sa->nexaddr;
 
@@ -209,7 +214,7 @@ struct mc750frame {
 };
 
 #define MC750_TBERR	2		/* type code of cp tbuf par */
-#define	MC750_TBPAR	4		/* tbuf par bit in mcesr */
+#define MC750_TBPAR	4		/* tbuf par bit in mcesr */
 
 int
 ka750_mchk(cmcf)
@@ -241,7 +246,6 @@ void
 ka750_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail;
-	extern	struct nexus *nexus;
 	int	junk;
 
 	/*
@@ -255,3 +259,87 @@ ka750_steal_pages()
 	    VM_PROT_READ|VM_PROT_WRITE);
 }
 
+static  int cmi_print __P((void *, const char *));
+static  int cmi_match __P((struct device *, void *, void *));
+static  void cmi_attach __P((struct device *, struct device *, void*));
+
+struct  cfdriver cmi_cd = {
+        NULL, "cmi", DV_DULL
+};      
+
+struct  cfattach cmi_ca = {
+        sizeof(struct device), cmi_match, cmi_attach
+};
+
+int
+cmi_print(aux, name)
+        void *aux;
+        const char *name;
+{
+        struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+
+        if (name)
+		printf("unknown device 0x%x at %s", sa->type, name);
+
+        printf(" tr%d", sa->nexnum);
+        return (UNCONF);
+}
+
+
+int
+cmi_match(parent, cf, aux)
+        struct  device  *parent;
+        void    *cf, *aux;
+{
+        struct bp_conf *bp = aux;
+
+        if (strcmp(bp->type, "cmi"))
+                return 0;
+        return 1;
+}
+
+void
+cmi_attach(parent, self, aux)
+        struct  device  *parent, *self;
+        void    *aux;
+{
+        u_int   nexnum, maxnex, minnex;
+        struct  sbi_attach_args sa;
+
+	printf("I\n");
+	/*
+	 * Probe for memory, can be in the first 4 slots.
+	 */
+	for (sa.nexnum = 0; sa.nexnum < 4; sa.nexnum++) {
+		if (badaddr((caddr_t)&nexus[sa.nexnum], 4))
+			continue;
+
+		sa.nexaddr = nexus + sa.nexnum;
+		sa.type = NEX_MEM16;
+		config_found(self, (void*)&sa, cmi_print);
+	}
+
+	/*
+	 * Probe for mba's, can be in slot 4 - 7.
+	 */
+	for (sa.nexnum = 4; sa.nexnum < 7; sa.nexnum++) {
+		if (badaddr((caddr_t)&nexus[sa.nexnum], 4))
+			continue;
+
+		sa.nexaddr = nexus + sa.nexnum;
+		sa.type = NEX_MBA;
+		config_found(self, (void*)&sa, cmi_print);
+	}
+
+	/*
+	 * There are always one generic UBA, and maybe an optional.
+	 */
+	sa.nexnum = 8;
+	sa.nexaddr = nexus + sa.nexnum;
+	sa.type = NEX_UBA0;
+	config_found(self, (void*)&sa, cmi_print);
+	sa.type = NEX_UBA1;
+	if (badaddr((caddr_t)&nexus[++sa.nexnum], 4) == 0)
+		config_found(self, (void*)&sa, cmi_print);
+
+}

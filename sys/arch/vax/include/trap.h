@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.13 1996/04/08 18:35:52 ragge Exp $     */
+/*      $NetBSD: trap.h,v 1.14 1997/01/11 11:46:43 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -109,6 +109,8 @@ struct ivec_dsp {
 	char	rei;      	/* rei */
 	char	pad;		/* sizeof(struct ivec_dsp) == 16 */
 };
+
+extern	struct ivec_dsp idsptch;
 
 #endif /* _LOCORE */
 

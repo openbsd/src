@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.c,v 1.8 1996/04/08 18:32:59 ragge Exp $	*/
+/*	$NetBSD: uvaxII.c,v 1.10 1996/10/13 03:36:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Gordon W. Ross 

@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.21 1996/05/19 16:44:27 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.24 1996/11/06 20:19:55 cgd Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -89,8 +89,8 @@ userret(p, pc, psl)
                  * Since we are curproc, clock will normally just change
                  * our priority without moving us from one queue to another
                  * (since the running process is not on a queue.)
-                 * If that happened after we setrq ourselves but before we
-                 * swtch()'ed, we might not be on the queue indicated by
+                 * If that happened after we setrunqueue ourselves but before
+		 * we swtch()'ed, we might not be on the queue indicated by
                  * our priority.
                  */
                 s=splstatclock();

@@ -1,4 +1,5 @@
-/*	$NetBSD: conf.c,v 1.21 1996/04/08 18:32:29 ragge Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 1997/01/15 23:25:06 maja Exp $ */
+/*	$NetBSD: conf.c,v 1.27 1997/01/07 11:35:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -43,12 +44,6 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	ttselect	__P((dev_t, int, struct proc *));
-
-#ifndef LKM
-#define lkmenodev       enodev
-#endif
-
 #include "hp.h" /* 0 */
 bdev_decl(hp);
 
@@ -63,27 +58,24 @@ bdev_decl(sw);
 #include "te.h"
 bdev_decl(tm);
 
-#include "tmscp.h"
-bdev_decl(tmscp);
+#include "mt.h"
+bdev_decl(mt);
 
 #include "ts.h"
 bdev_decl(ts);
 
 #include "mu.h"
-bdev_decl(mt);
+bdev_decl(mu);
 
 #if defined(VAX750)
-#define	NCTU	1
+#define NCTU	1
 #else
-#define	NCTU	0
+#define NCTU	0
 #endif
 bdev_decl(ctu);
 
-#include "uda.h"
-bdev_decl(uda);
-
-#include "kdb.h"
-bdev_decl(kdb);
+#include "ra.h"
+bdev_decl(ra);
 
 #include "up.h"
 bdev_decl(up);
@@ -109,6 +101,21 @@ bdev_decl(ccd);
 #include "vnd.h"
 bdev_decl(vnd);
 
+#include "hdc.h"
+bdev_decl(hdc);
+
+#include "sd.h"
+bdev_decl(sd);
+
+#include "st.h"
+bdev_decl(st);
+
+#include "cd.h"
+bdev_decl(cd);
+
+#include "md.h"
+bdev_decl(md);
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NHP,hp),		/* 0: RP0?/RM0? */
@@ -118,33 +125,53 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(1,sw),		/* 4: swap pseudo-device */
 	bdev_tape_init(NTE,tm),		/* 5: TM11/TE10 */
 	bdev_tape_init(NTS,ts),		/* 6: TS11 */
-	bdev_tape_init(NMU,mt),		/* 7: TU78 */
+	bdev_tape_init(NMU,mu),		/* 7: TU78 */
 	bdev_tape_init(NCTU,ctu),	/* 8: Console TU58 on 730/750 */
-	bdev_disk_init(NUDA,uda),	/* 9: UDA50/RA?? */
+	bdev_disk_init(NRA,ra),		/* 9: MSCP disk */
 	bdev_tape_init(NTJ,ut),		/* 10: TU45 */
 	bdev_disk_init(NRB,idc),	/* 11: IDC (RB730) */
 	bdev_disk_init(NRX,rx),		/* 12: RX01/02 on unibus */
 	bdev_disk_init(NUU,uu),		/* 13: TU58 on DL11 */
 	bdev_disk_init(NRL,rl),		/* 14: RL01/02 */
-	bdev_tape_init(NTMSCP,tmscp),	/* 15: TMSCP tape */
-	bdev_disk_init(NKDB,kdb),	/* 16: KDB50/RA?? */
+	bdev_tape_init(NMT,mt),		/* 15: MSCP tape */
+	bdev_notdef(),			/* 16: was: KDB50/RA?? */
 	bdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 18: vnode disk driver */
+	bdev_disk_init(NHDC,hdc),	/* 19: HDC9224/RD?? */
+	bdev_disk_init(NSD,sd),		/* 20: SCSI disk */
+	bdev_tape_init(NST,st),		/* 21: SCSI tape */
+	bdev_disk_init(NCD,cd),		/* 22: SCSI CD-ROM */
+	bdev_disk_init(NMD,md),		/* 23: memory disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 /*
- * Console routines for VAX console. There are always an generic console,
- * but maybe we should care about RD, QDSS etc?
+ * Console routines for VAX console.
  */
 #include <dev/cons.h>
 
-#define gencnpollc      nullcnpollc
+#define gencnpollc	nullcnpollc
 cons_decl(gen);
+#define dzcnpollc	nullcnpollc
+cons_decl(dz);
 
-struct	consdev	constab[]={
-/* Generic console, should always be present */
-	cons_init(gen),
+struct	consdev constab[]={
+#if VAX8600 || VAX780 || VAX750 || VAX650 || VAX630
+#define NGEN	1
+	cons_init(gen), /* Generic console type; mtpr/mfpr */
+#else
+#define NGEN	0
+#endif
+#if VAX410 || VAX43
+#define NDZCN	1
+	cons_init(dz),	/* DZ11-like serial console on VAXstations */
+#else
+#define NDZCN	0
+#endif
+#if 0 /* VAX410 || VAX43 || VAX650 || VAX630 */
+	cons_init(qv),	/* QVSS/QDSS bit-mapped console driver */
+	cons_init(qd),
+#endif
 
 #ifdef notyet
 /* We may not always use builtin console, sometimes RD */
@@ -156,76 +183,73 @@ struct	consdev	constab[]={
 /* Special for console storage */
 #define dev_type_rw(n)	int n __P((dev_t, int, int, struct proc *))
 
-/* plotters - open, close, write, ioctl, select */
+/* plotters - open, close, write, ioctl, poll */
 #define cdev_plotter_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 /* console mass storage - open, close, read/write */
-#define	cdev_cnstore_init(c,n) { \
+#define cdev_cnstore_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
-#define	cdev_lp_init(c,n) { \
+#define cdev_lp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
 	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
 
 /* graphic display adapters */
-#define	cdev_graph_init(c,n) { \
+#define cdev_graph_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 /* Ingres */
 #define cdev_ingres_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) nullop, \
+	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) nullop, \
 	(dev_type_mmap((*))) enodev }
 
 
 
 cdev_decl(cn);
 cdev_decl(ctty);
-#define	mmread	mmrw
-#define	mmwrite	mmrw
+#define mmread	mmrw
+#define mmwrite mmrw
 cdev_decl(mm);
 cdev_decl(sw);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
+#define ptstty		ptytty
+#define ptsioctl	ptyioctl
 cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
+#define ptctty		ptytty
+#define ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
-#ifdef LKM
-#define	NLKM	1
-#else
-#define	NLKM	0
-#endif
-cdev_decl(lkm);
 
 cdev_decl(hp);
 cdev_decl(rk);
 cdev_decl(tm);
-cdev_decl(tmscp);
-cdev_decl(ts);
 cdev_decl(mt);
-cdev_decl(uda);
+cdev_decl(ts);
+cdev_decl(mu);
+cdev_decl(ra);
 cdev_decl(up);
 cdev_decl(ut);
 cdev_decl(idc);
 cdev_decl(fd);
 cdev_decl(gencn);
+cdev_decl(dzcn);
 cdev_decl(rx);
 cdev_decl(rl);
-cdev_decl(kdb);
 cdev_decl(ccd);
+cdev_decl(hdc);
+cdev_decl(sd);
+cdev_decl(st);
 
 #include "ct.h"
 cdev_decl(ct);
@@ -238,31 +262,31 @@ cdev_decl(dmf);
 cdev_decl(np);
 
 #if VAX8600
-#define	NCRL 1
+#define NCRL 1
 #else
 #define NCRL 0
 #endif
-#define	crlread	crlrw
+#define crlread crlrw
 #define crlwrite crlrw
 cdev_decl(crl);
 
-#if VAX8200
+#if VAX8200 && 0
 #define NCRX 1
 #else
 #define NCRX 0
 #endif
-#define	crxread	crxrw
-#define	crxwrite crxrw
+#define crxread crxrw
+#define crxwrite crxrw
 cdev_decl(crx);
 
-#if VAX780 && 0
-#define	NFL 1
+#if VAX780
+#define NCFL 1
 #else
-#define NFL 0
+#define NCFL 0
 #endif
-#define flread flrw
-#define flwrite flrw
-cdev_decl(fl);
+#define cflread cflrw
+#define cflwrite cflrw
+cdev_decl(cfl);
 
 #include "dz.h"
 cdev_decl(dz);
@@ -303,10 +327,15 @@ cdev_decl(qv);
 #include "qd.h"
 cdev_decl(qd);
 
+#ifdef 0
+#include "ipfilter.h"
+cdev_decl(ipl);
+#endif
+
 #if defined(INGRES)
-#define	NII 1
+#define NII 1
 #else
-#define	NII 0
+#define NII 0
 #endif
 cdev_decl(ii);
 
@@ -317,6 +346,14 @@ cdev_decl(bpf);
 
 #include "tun.h" 
 cdev_decl(tun);
+cdev_decl(cd);
+#include "ch.h"
+cdev_decl(ch);
+cdev_decl(md);
+#include "ss.h"
+cdev_decl(ss);
+#include "uk.h"
+cdev_decl(uk);
 
 cdev_decl(random);
 
@@ -332,8 +369,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 5 */
 	cdev_plotter_init(NVP,vp),	/* 6: Versatec plotter */
 	cdev_swap_init(1,sw),		/* 7 */
-	cdev_cnstore_init(NFL,fl),	/* 8: 11/780 console floppy */
-	cdev_disk_init(NUDA,uda),	/* 9: MSCP disk interface */
+	cdev_cnstore_init(NCFL,cfl),	/* 8: 11/780 console floppy */
+	cdev_disk_init(NRA,ra),		/* 9: MSCP disk interface */
 	cdev_plotter_init(NVA,va),	/* 10: Benson-Varian plotter */
 	cdev_disk_init(NRK,rk),		/* 11: RK06/07 */
 	cdev_tty_init(NDH,dh),		/* 12: DH-11/DM-11 */
@@ -343,13 +380,13 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NTS,ts),		/* 16: TS11 */
 	cdev_tape_init(NTJ,ut),		/* 17: TU45 */
 	cdev_lp_init(NCT,ct),		/* 18: phototypesetter interface */
-	cdev_tape_init(NMU,mt),		/* 19: TU78 */
+	cdev_tape_init(NMU,mu),		/* 19: TU78 */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_tty_init(NDMF,dmf),	/* 22: DMF32 */
 	cdev_disk_init(NRB,idc),	/* 23: IDC (RB730) */
 	cdev_lp_init(NDN,dn),		/* 24: DN-11 autocall unit */
-	cdev_tty_init(1,gencn),		/* 25: Generic console (mtpr...) */
+	cdev_tty_init(NGEN,gencn),	/* 25: Generic console (mtpr...) */
 	cdev_audio_init(NLPA,lpa),	/* 26 ??? */
 	cdev_graph_init(NPS,ps),	/* 27: E/S graphics device */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
@@ -360,13 +397,17 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 33: /dev/klog */
 	cdev_tty_init(NDHU,dhu),	/* 34: DHU-11 */
 	cdev_cnstore_init(NCRL,crl),	/* 35: Console RL02 on 8600 */
-	cdev_notdef(),			/* 36: was vs100 interface. ??? */
+	cdev_tty_init(NDZCN,dzcn),	/* 36: DZ11-like console on VAXst. */
 	cdev_tty_init(NDMZ,dmz),	/* 37: DMZ32 */
-	cdev_tape_init(NTMSCP,tmscp),	/* 38: TMSCP tape */
+	cdev_tape_init(NMT,mt),		/* 38: MSCP tape */
 	cdev_audio_init(NNP,np),	/* 39: NP Intelligent Board */
 	cdev_graph_init(NQV,qv),	/* 40: QVSS graphic display */
 	cdev_graph_init(NQD,qd),	/* 41: QDSS graphic display */
-	cdev_notdef(),			/* 42 */
+#ifdef 0
+	cdev_ipf_init(NIPFILTER,ipl),	/* 42: Packet filter */
+#else
+	cdev_notdef(),
+#endif
 	cdev_ingres_init(NII,ii),	/* 43: Ingres device */
 	cdev_notdef(),			/* 44  was Datakit */
 	cdev_notdef(),			/* 45  was Datakit */
@@ -376,17 +417,25 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 49 */
 	cdev_notdef(),			/* 50 */
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
-	cdev_disk_init(NKDB,kdb),	/* 52: KDB50/RA?? */
+	cdev_notdef(),			/* 52: was: KDB50/RA?? */
 	cdev_fd_init(1,filedesc),	/* 53: file descriptor pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 54: concatenated disk driver */
 	cdev_disk_init(NVND,vnd),	/* 55: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 56: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 57: tunnel filter */
-	cdev_random_init(1,random),	/* 58: random data source */
+	cdev_disk_init(NHDC,hdc),	/* 58: HDC9224/RD?? */
+	cdev_disk_init(NSD,sd),		/* 59: SCSI disk */
+	cdev_tape_init(NST,st),		/* 60: SCSI tape */
+	cdev_disk_init(NCD,cd),		/* 61: SCSI CD-ROM */
+	cdev_disk_init(NMD,md),		/* 62: memory disk driver */
+	cdev_ch_init(NCH,ch),		/* 63: SCSI autochanger */
+	cdev_scanner_init(NSS,ss),	/* 64: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
+	cdev_random_init(1,random),	/* 66: random data source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
-int	mem_no = 3; 	/* major device number of memory special file */
+int	mem_no = 3;	/* major device number of memory special file */
 
 /*
  * Swapdev is a fake device implemented
@@ -404,16 +453,16 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 1 */
 	NODEV,	/* 2 */
 	NODEV,	/* 3 */
-	0,    	/* 4 */
-	1,    	/* 5 */
+	0,	/* 4 */
+	1,	/* 5 */
 	NODEV,	/* 6 */
 	NODEV,	/* 7 */
 	NODEV,	/* 8 */
-	9,   	/* 9 */
+	9,	/* 9 */
 	NODEV,	/* 10 */
-	3,    	/* 11 */
+	3,	/* 11 */
 	NODEV,	/* 12 */
-	2,    	/* 13 */
+	2,	/* 13 */
 	5,	/* 14 */
 	NODEV,	/* 15 */
 	6,	/* 16 */
@@ -451,11 +500,21 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 48 */
 	NODEV,	/* 49 */
 	NODEV,	/* 50 */
-	NODEV, 	/* 51 */
+	NODEV,	/* 51 */
 	16,	/* 52 */
 	NODEV,	/* 53 */
 	17,	/* 54 */
 	18,	/* 55 */
+	NODEV,	/* 56 */
+	NODEV,	/* 57 */
+	19,	/* 58 */
+	20,	/* 59 */
+	21,	/* 60 */
+	22,	/* 61 */
+	23,	/* 62 */
+	NODEV,	/* 63 */
+	NODEV,	/* 64 */
+	NODEV,	/* 65 */
 };
 
 int

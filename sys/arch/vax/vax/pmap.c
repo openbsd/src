@@ -1,4 +1,5 @@
-/*      $NetBSD: pmap.c,v 1.27 1996/05/19 16:44:20 ragge Exp $     */
+/*	$OpenBSD: pmap.c,v 1.7 1997/01/15 23:25:20 maja Exp $ */
+/*	$NetBSD: pmap.c,v 1.30 1996/10/13 03:35:57 christos Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -58,8 +59,8 @@ static	void	free_pv_entry __P((pv_entry_t));
 static	int	remove_pmap_from_mapping __P((pv_entry_t, pmap_t));
 
 
-#define	ISTACK_SIZE (4 * NBPG)
-#define	PTE_TO_PV(pte)	(PHYS_TO_PV((pte&PG_FRAME)<<PGSHIFT))
+#define ISTACK_SIZE (4 * NBPG)
+#define PTE_TO_PV(pte)	(PHYS_TO_PV((pte&PG_FRAME)<<PGSHIFT))
 
 struct pmap kernel_pmap_store;
 
@@ -71,21 +72,55 @@ static int kernel_prot[]={ PG_NONE, PG_KR, PG_KW, PG_KW,
 
 static pv_entry_t   pv_head = NULL;
 static unsigned int pv_count = 0;
-pv_entry_t      pv_table;               /* array of entries,
-                                           one per LOGICAL page */
+pv_entry_t	pv_table;		/* array of entries,
+					   one per LOGICAL page */
 unsigned *pte_cmap;
-void 	*scratch;
+void	*scratch;
 
 #ifdef PMAPDEBUG
 int	startpmapdebug = 0;
-extern	int startsysc, faultdebug;
+/* extern	int startsysc, faultdebug; */
 #endif
 
 unsigned int vmmap;
 vm_map_t pte_map;
 
 vm_offset_t   avail_start, avail_end;
-vm_offset_t   virtual_avail, virtual_end; /* Available virtual memory   */
+vm_offset_t   virtual_avail, virtual_end; /* Available virtual memory	*/
+
+/*
+ * badaddr() doesn't work on some VAXstations 
+ * (I've checked KA410 and KA43, don't know about others yet).
+ *
+ * Checking all pages of physical memory starting from address 0x0 and
+ * waiting for being trapped by badaddr() is not enough on these machines:
+ *
+ * on VS2000/KA410 physical memory appears more than once.
+ * eg. on a machine with 10MB memory (2MB base + 8MB extension)
+ * the extension memory is mapped to 0x200000, 0xA00000, and so on.
+ *
+ * On VS3100/KA43 writing to addresses above the available memory
+ * is implemented as a nop.
+ *
+ * On both of these machines the old check/count routine resulted in an
+ * endless loop. Thus while checking/counting the memory, we write a 
+ * pattern to all the pages we are visiting. (leaving a hole for kernel).
+ * If we access a page which already holds a valid pattern, then we've 
+ * seen this page already and thus reached the highest memory-address.
+ * If the page doesn't hold the pattern directly after having written
+ * it, then the page is bad or not available and we've reached the end.
+ * 
+ * VAXen can't have more than 512(?) MB of physical memory, so we also
+ * have an upper limit for how much pages to check. If we're not trapped
+ * within this address-range, something went wrong and we're assuming
+ * some save amount of physical memory. This might be paranoid, but...
+ */
+#ifndef MAX_PHYSMEM_AVAIL
+#define MAX_PHYSMEM_AVAIL     512*1024*1024
+#endif
+#ifndef MIN_PHYSMEM_AVAIL
+#define MIN_PHYSMEM_AVAIL	8*1024*1024
+#endif
 
 /*
  * pmap_bootstrap().
@@ -104,6 +139,31 @@ pmap_bootstrap()
 	p0pmap = &vmspace0.vm_pmap;
 
 	sysptsize = SYSPTSIZE;
+
+	/*
+	 * Because of the badaddr() problem with some VAXstations we
+	 * compare the first page of memory (the SCB) with the new
+	 * counted up pages for equality. It's very unlikely that
+	 * another page will hold the same info as the SCB.
+	 * This is neccessary only if badaddr() doesn't work, but on other
+	 * machines checking the pattern doesn't hurt anyway...
+	 */
+
+	/* Kickoff for memory checking */
+	avail_end = 0x200000;	/* 2 MB */
+
+	while (badaddr((caddr_t)avail_end, 4) == 0) {
+#if VAX410 || VAX420 || VAX43 || VAX46 || VAX49 || VAX50
+		if (bcmp(0, (caddr_t)avail_end, NBPG) == 0)
+			break;
+#endif
+		avail_end += NBPG * 128;/* Memory is checked in 64K hunks */
+	}
+
+#if VAX410 || VAX420 || VAX43 || VAX46 || VAX49 || VAX50
+	sysptsize += (16 * 1024) >> PGSHIFT;  /* guc->uc_sysptSpace ?? */
+#endif
+
 	/*
 	 * Virtual_* and avail_* is used for mapping of system page table.
 	 * First set them to their max values and then decrement them.
@@ -112,8 +172,6 @@ pmap_bootstrap()
 	 * a variable here that is changed dependent of the physical
 	 * memory size.
 	 */
-	while (!badaddr((caddr_t)avail_end, 4)) /* Memory is in 64K hunks */
-		avail_end += NBPG * 128;
 	sysptsize += avail_end >> PGSHIFT;
 	virtual_avail = KERNBASE;
 	virtual_end = KERNBASE + sysptsize * NBPG;
@@ -137,7 +195,7 @@ pmap_bootstrap()
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Map System Page Table and zero it,  Sysmap already set. */
-        mtpr(avail_start, PR_SBR);
+	mtpr(avail_start, PR_SBR);
 	MAPPHYS(junk, (ROUND_PAGE(sysptsize * 4) >> PGSHIFT),
 	    VM_PROT_READ|VM_PROT_WRITE);
 
@@ -176,40 +234,42 @@ pmap_bootstrap()
 	bcopy(0, (void *)avail_start, NBPG >> 1);
 	mtpr(avail_start, PR_SCBB);
 	bzero(0, NBPG >> 1);
-	(cpu_calls[cpunumber].cpu_steal_pages)();
+	(cpu_calls[vax_cputype].cpu_steal_pages)();
+	avail_start = ROUND_PAGE(avail_start);
+	virtual_avail = ROUND_PAGE(virtual_avail);
 
 #ifdef PMAPDEBUG
-        printf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
-        printf("etext %x\n", &etext);
-        printf("SYSPTSIZE %x, USRPTSIZE %x\n",sysptsize,USRPTSIZE);
-        printf("pv_table %x, vmmap %x, pte_cmap %x\n",
-                pv_table,vmmap,pte_cmap);
-        printf("avail_start %x, avail_end %x\n",avail_start,avail_end);
-        printf("virtual_avail %x,virtual_end %x\n",virtual_avail,virtual_end);
-        printf("clearomr: %x \n",(uint)vmmap-(uint)Sysmap);
-        printf("faultdebug %x, startsysc %x\n",&faultdebug, &startsysc);
-        printf("startpmapdebug %x\n",&startpmapdebug);
+	printf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
+	printf("etext %x\n", &etext);
+	printf("SYSPTSIZE %x, USRPTSIZE %x\n",sysptsize,USRPTSIZE);
+	printf("pv_table %x, vmmap %x, pte_cmap %x\n",
+		pv_table,vmmap,pte_cmap);
+	printf("avail_start %x, avail_end %x\n",avail_start,avail_end);
+	printf("virtual_avail %x,virtual_end %x\n",virtual_avail,virtual_end);
+	printf("clearomr: %x \n",(uint)vmmap-(uint)Sysmap);
+/*	  printf("faultdebug %x, startsysc %x\n",&faultdebug, &startsysc);*/
+	printf("startpmapdebug %x\n",&startpmapdebug);
 #endif
 
 
-        /* Init kernel pmap */
-        pmap_kernel()->ref_count = 1;
-        simple_lock_init(&pmap_kernel()->pm_lock);
-        p0pmap->pm_pcb = (struct pcb *)proc0paddr;
+	/* Init kernel pmap */
+	pmap_kernel()->ref_count = 1;
+	simple_lock_init(&pmap_kernel()->pm_lock);
+	p0pmap->pm_pcb = (struct pcb *)proc0paddr;
 
-        p0pmap->pm_pcb->P1BR = (void *)0x80000000;
-        p0pmap->pm_pcb->P0BR = (void *)0x80000000;
-        p0pmap->pm_pcb->P1LR = 0x200000;
-        p0pmap->pm_pcb->P0LR = AST_PCB;
-        mtpr(0x80000000, PR_P1BR);
-        mtpr(0x80000000, PR_P0BR);
-        mtpr(0x200000, PR_P1LR);
-        mtpr(AST_PCB, PR_P0LR);
+	p0pmap->pm_pcb->P1BR = (void *)0x80000000;
+	p0pmap->pm_pcb->P0BR = (void *)0x80000000;
+	p0pmap->pm_pcb->P1LR = 0x200000;
+	p0pmap->pm_pcb->P0LR = AST_PCB;
+	mtpr(0x80000000, PR_P1BR);
+	mtpr(0x80000000, PR_P0BR);
+	mtpr(0x200000, PR_P1LR);
+	mtpr(AST_PCB, PR_P0LR);
 	/*
 	 * Now everything should be complete, start virtual memory.
 	 */
-        mtpr(sysptsize, PR_SLR);
-        mtpr(1, PR_MAPEN);
+	mtpr(sysptsize, PR_SLR);
+	mtpr(1, PR_MAPEN);
 }
 
 
@@ -238,7 +298,7 @@ pmap_t
 pmap_create(phys_size)
 	vm_size_t phys_size;
 {
-	pmap_t   pmap;
+	pmap_t	 pmap;
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_create: phys_size %x\n",phys_size);
@@ -310,10 +370,10 @@ if(startpmapdebug)printf("pmap_destroy: pmap %x\n",pmap);
 void 
 pmap_enter(pmap, v, p, prot, wired)
 	register pmap_t pmap;
-	vm_offset_t     v;
-	vm_offset_t     p;
-	vm_prot_t       prot;
-	boolean_t       wired;
+	vm_offset_t	v;
+	vm_offset_t	p;
+	vm_prot_t	prot;
+	boolean_t	wired;
 {
 	u_int	i, pte, s, *patch;
 	pv_entry_t pv, tmp;
@@ -398,6 +458,10 @@ pmap_bootstrap_alloc(size)
 {
 	void *mem;
 
+#ifdef PMAPDEBUG
+if(startpmapdebug)
+printf("pmap_bootstrap_alloc: size 0x %x\n",size);
+#endif
 	size = round_page(size);
 	mem = (void *)virtual_avail;
 	virtual_avail = pmap_map(virtual_avail, avail_start,
@@ -455,8 +519,8 @@ void
 pmap_protect(pmap, start, end, prot)
 	pmap_t pmap;
 	vm_offset_t start;
-	vm_offset_t     end;
-	vm_prot_t       prot;
+	vm_offset_t	end;
+	vm_prot_t	prot;
 {
 	int pte, *patch, s;
 
@@ -690,7 +754,7 @@ free_pv_entry(entry)
 
 boolean_t
 pmap_is_referenced(pa)
-	vm_offset_t     pa;
+	vm_offset_t	pa;
 {
 	struct pv_entry *pv;
 	u_int *pte,spte=0;
@@ -717,9 +781,9 @@ pmap_is_modified(pa)
 	pv=PHYS_TO_PV(pa);
 	if(!pv->pv_pmap) return 0;
 	do {
-                pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
-                spte|=*pte++;
-                spte|=*pte;
+		pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
+		spte|=*pte++;
+		spte|=*pte;
 	} while((pv=pv->pv_next));
 	return((spte&PG_M)?1:0);
 }
@@ -731,7 +795,7 @@ pmap_is_modified(pa)
 
 void 
 pmap_clear_reference(pa)
-	vm_offset_t     pa;
+	vm_offset_t	pa;
 {
 	struct pv_entry *pv;
 	int *pte;
@@ -758,7 +822,7 @@ if(startpmapdebug) printf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
 
 void 
 pmap_clear_modify(pa)
-	vm_offset_t     pa;
+	vm_offset_t	pa;
 {
 	struct pv_entry *pv;
 	u_int *pte;
@@ -775,8 +839,8 @@ pmap_clear_modify(pa)
 void 
 pmap_change_wiring(pmap, va, wired)
 	register pmap_t pmap;
-	vm_offset_t     va;
-	boolean_t       wired;
+	vm_offset_t	va;
+	boolean_t	wired;
 {
 	int *pte;
 #ifdef PMAPDEBUG
@@ -791,14 +855,14 @@ if(startpmapdebug) printf("pmap_change_wiring: pmap %x, va %x, wired %x\n",
 }
 
 /*
- *      pmap_page_protect:
+ *	pmap_page_protect:
  *
- *      Lower the permission for all mappings to a given page.
+ *	Lower the permission for all mappings to a given page.
  */
 void
 pmap_page_protect(pa, prot)
-	vm_offset_t     pa;
-	vm_prot_t       prot;
+	vm_offset_t	pa;
+	vm_prot_t	prot;
 {
 	pv_entry_t pv,opv;
 	u_int s,*pte,*pte1,nyprot,kprot;
@@ -859,10 +923,10 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 }
 
 /*
- *      pmap_zero_page zeros the specified (machine independent)
- *      page by mapping the page into virtual memory and using
- *      bzero to clear its contents, one machine dependent page
- *      at a time.
+ *	pmap_zero_page zeros the specified (machine independent)
+ *	page by mapping the page into virtual memory and using
+ *	bzero to clear its contents, one machine dependent page
+ *	at a time.
  */
 void
 pmap_zero_page(phys)

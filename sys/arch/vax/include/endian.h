@@ -1,5 +1,5 @@
-/*	$OpenBSD: endian.h,v 1.3 1996/11/25 13:11:40 niklas Exp $	*/
-/*	$NetBSD: endian.h,v 1.7 1996/04/08 18:35:48 ragge Exp $	*/
+/*	$OpenBSD: endian.h,v 1.4 1997/01/15 23:24:37 maja Exp $	*/
+/*	$NetBSD: endian.h,v 1.8 1996/10/13 03:28:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.

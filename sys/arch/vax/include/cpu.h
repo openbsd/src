@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.17 1996/05/19 16:43:16 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.19 1996/07/20 17:58:12 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -42,17 +42,17 @@
 #define	cpu_wait(p)
 #define	cpu_swapout(p)
 
-
-extern int cpunumber, cpu_type;
 extern struct cpu_dep cpu_calls[];
 
 struct	cpu_dep {
 	void	(*cpu_steal_pages) __P((void)); /* pmap init before mm is on */
-	int	(*cpu_clock) __P((void)); /* CPU dependent clock handling */
+	void	(*cpu_clock) __P((void)); /* CPU dep RT clock start */
 	int	(*cpu_mchk) __P((caddr_t));   /* Machine check handling */
 	void	(*cpu_memerr) __P((void)); /* Memory subsystem errors */
 	    /* Autoconfiguration */
 	void	(*cpu_conf) __P((struct device *, struct device *, void *));
+	int	(*cpu_clkread) __P((time_t));	/* Read cpu clock time */
+	void	(*cpu_clkwrite) __P((void));	/* Write system time to cpu */
 };
 
 struct clockframe {
@@ -60,9 +60,12 @@ struct clockframe {
         int     ps;
 };
 
+extern int cold;
+extern int mastercpu;
+
 #define	setsoftnet()	mtpr(12,PR_SIRR)
 #define setsoftclock()	mtpr(8,PR_SIRR)
-
+#define	todr()		mfpr(PR_TODR)
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
@@ -93,7 +96,8 @@ extern	int     want_resched;   /* resched() was called */
 int	badaddr __P((caddr_t, int));
 void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 void	cpu_swapin __P((struct proc *));
-int	hp_getdev __P((int, int));
+int	hp_getdev __P((int, int, char **));
+int	ra_getdev __P((int, int, int, char **));
 void	configure __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.6 1995/11/12 14:37:18 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.8 1996/08/20 14:19:41 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,33 +30,173 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
-
-
-#define	VAX_780	1
-#define VAX_750	2
-#define	VAX_730	3
-#define VAX_8600 4
-#define VAX_8200 5
-#define VAX_8800 6
-#define VAX_610 7
-#define VAX_78032 8
-#define VAX_650 10
-#define	VAX_MAX	10
-
-#define MACHID(x)       ((x>>24)&255)
-
-#define V750UCODE(x)    ((x>>8)&255)
+/*
+ * Board-Type (?_BTYP_?) and Sub-Type (?_STYP_?) are synonima.
+ * other synonima are:
+ */
+#define cpudata	    vax_cpudata
+#define cputype	    vax_cputype
+#define cpusubtype  vax_boardtype
 
 /*
- * The MicroVAXII CPU chip (78032) is used on more than one type of system
- * that are differentiated by the low order 8 bits of cpu_type. (Filled in
- * from the System Identification Extension Register.) To test for the cpu
- * chip, compare cpunumber == VAX_78032, but to test for a Qbus MicroVAXII
- * compare cpu_type == VAX_630.
+ * Chip CPU types / chip CPU Subtypes
+ *
+ * The type of a VAX is given by the high-order byte of the System
+ * identification register (SID) and describes families or series of VAXen.
+ * Board-Types/Sub-Types within series are described by the SIED register.
  */
-#define VAX_630       0x8000001
-#define VAX_410       0x8000002
 
-extern int cpu_type, cpunumber;
+/*
+ * 700 series (1977)
+ */
+#define VAX_TYP_780	1	/* VAX-11/780, 785, 782 */
+#define VAX_TYP_750	2	/* VAX-11/750 */
+#define VAX_TYP_730	3	/* VAX-11/730, 725 */
+#define VAX_TYP_790	4	/* VAX 8600, 8650 */
+ 
+#define VAX_BTYP_780	0x01000000	/* generic 11/780 */
+#define VAX_BTYP_750	0x02000000	/* generic 11/750 */
+#define VAX_BTYP_730	0x03000000	/* generic 11/730 */
+#define VAX_BTYP_790	0x04000000	/* generic 11/790 */
+
+/*
+ * 8000 series (1986)
+ */
+#define VAX_TYP_8SS	5	/* VAX 8200, 8300, 8250, 8350, VS 8000 */
+#define VAX_TYP_8NN	6	/* VAX 8530, 8550, 8700, 8800 */
+ 
+#define VAX_BTYP_8000	0x05000000	/* generic VAX 8000 */
+ 
+#define VAX_BTYP_8800	0x06000000	/* generic Nautilus */
+#define VAX_BTYP_8700	0x06000001
+#define VAX_BTYP_8550	0x06000006
+#define VAX_BTYP_8500	0x06000007
+
+/*
+ * MicroVAX I (1984)
+ */
+#define VAX_TYP_UV1	7	/* MicroVAX I, VAXstation I */
+     /* VAX_TYP_610	7 */
+ 
+#define VAX_BTYP_610	0x70000000	/* generic MicroVAX-I */
+ 
+/*
+ * MicroVAX II series (1985)
+ */
+#define VAX_TYP_UV2	8
+     /* VAX_TYP_78032	8 */
+ 
+#define VAX_BTYP_630	0x08000001	/* MicroVAX II, VAXstation II */
+#define VAX_BTYP_410	0x08000004	/* MicroVAX 2000, VAXstation 2000 */
+ 
+/*
+ * CVAX chip series (1987)
+ */
+#define VAX_TYP_CVAX	10
+     /* VAX_TYP_650	10 */
+
+ 
+#define VAX_BTYP_650	0x0A000001	/* MicroVAX 3500, 3600 */
+     /* VAX_BTYP_65D	0x0A000001	   VAXstation 3200, 3500 */
+     /* VAX_BTYP_640	0x0A000001	   MicroVAX 3300, 3400 */
+     /* VAX_BTYP_655	0x0A000001	   MicroVAX 3800, 3900 */
+#define VAX_BTYP_9CC	0x0A000002	/* VAX 6000 model 210/310 */
+#define VAX_BTYP_60	0x0A000003	/* VAXstation 3520, 3540 */
+#define VAX_BTYP_420	0x0A000004	/* VAXstation 3100 models 10 - 48 */
+#define VAX_BTYP_510	0x0A000007	/* VAXft model 110 */
+     /* VAX_BTYP_520	0x0A000007	   VAXft model 310 */
+ 
+/*
+ * Rigel chip series (1990)
+ */
+#define VAX_TYP_RIGEL	11
+     /* VAX_TYP_9RR	11 */
+ 
+#define VAX_BTYP_670	0x0B000001	/* VAX 4000 model 300 */
+#define VAX_BTYP_9RR	0x0B000002	/* VAX 6000 model 410-460 */
+#define VAX_BTYP_43	0x0B000004	/* VAXstation 3100 model 76 */
+ 
+/*
+ * Aquarius series (1990)
+ */
+#define VAX_TYP_9000	14
+ 
+#define VAX_BTYP_9AR	0x0E00000?	/* VAX 9000 models 210, 410-440 */
+#define VAX_BTYP_9AQ	0x0E00000?	/* VAX 9000 models 400-800 */
+ 
+/*
+ * Polarstar series (1988)
+ */
+#define VAX_TYP_8PS	17
+ 
+#define VAX_BTYP_8PS	0x11000000	/* VAX 8810 to 8840 */
+ 
+/*
+ * Mariah chip series (1991)
+ */
+#define VAX_TYP_MARIAH	18
+#define VAX_TYP_V12	18
+ 
+#define VAX_BTYP_690	0x12000001	/* VAX 4000 model 400 */
+#define VAX_BTYP_1202	0x12000002	/* VAX 6000 model 510-560 */
+#define VAX_BTYP_46	0x12000004	/* VAXstation 4000/60, 3100/80 */
+ 
+/*
+ * NVAX chip series (1991)
+ */
+#define VAX_TYP_NVAX	19
+#define VAX_TYP_V13	19
+ 
+#define VAX_BTYP_69D	0x13000001	/* VAX 4000 model 500 */
+#define VAX_BTYP_1301	0x13000001	/* VAX 4000 model 100 */
+#define VAX_BTYP_1302	0x13000002
+#define VAX_BTYP_1303	0x13000003
+#define VAX_BTYP_49	0x13000004	/* MicroVAX 3100 model 90 */
+
+/*
+ * SOC chip series (1991)
+ */
+#define VAX_TYP_SOC	20
+#define VAX_TYP_V14	20
+ 
+#define VAX_BTYP_660	0x14000001	/* VAX 4000 model 200 */
+#define VAX_BTYP_440	0x14000004	/* VS 4000/30, 3100/30, 3100/40 */
+#define VAX_BTYP_550	0x14000007	/* VAXft model 410, 610 */
+ 
+/*
+ * NVAX+ chip series (1991)
+ */
+#define VAX_TYP_NVPLUS	23
+#define VAX_TYP_V17	23
+ 
+#define VAX_BTYP_1701	0x17000001
+ 
+/*
+ * Highest Number supported by NetBSD/VAX
+ */
+#define VAX_TYP_MAX	VAX_TYP_RIGEL
+
+/*
+ * compatibility with old names:
+ */
+ 
+#define VAX_780		VAX_TYP_780
+#define VAX_750		VAX_TYP_750
+#define VAX_730		VAX_TYP_730
+#define VAX_8600	VAX_TYP_790
+#define VAX_8200	VAX_TYP_8SS
+#define VAX_8800	VAX_TYP_8NN
+#define VAX_610		VAX_TYP_UV1
+#define VAX_78032	VAX_TYP_UV2
+#define VAX_650		VAX_TYP_CVAX
+ 
+/*
+ * Some common-used external variables.
+ */
+extern	int vax_cputype;	/* general, highest byte of the SID-register */
+extern	int vax_cpudata;	/* general, the contents of the SID-register */
+extern	int vax_siedata;	/* contents of the SIE register */
+extern	int vax_bustype;	/* HW-dep., setup at consinit() in ka???.c */
+extern	int vax_boardtype;	/* HW-dep., msb of SID | SIE (SID-extension) */
+extern	int vax_confdata;	/* HW-dep., hardware dependent config-data   */
+

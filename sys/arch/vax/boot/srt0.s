@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.5 1996/03/07 23:27:10 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.6 1996/08/02 11:22:44 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -58,7 +58,9 @@ _start:	.globl	_start
 1:	movl    $relocated, (sp)   # return-address on top of stack
 	rsb                        # can be replaced with new address
 relocated:	                   # now relocation is done !!!
-	calls	$0,_main	# Were here!
+	movl	sp, _bootregs
+	calls	$0, _setup
+	calls	$0, _Xmain	# Were here!
 	halt			# no return
 
 	

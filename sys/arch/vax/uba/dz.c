@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.1 1996/04/08 17:22:20 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.4 1996/10/13 03:35:15 christos Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -121,7 +121,7 @@ struct	tty *	dztty __P((dev_t));
 	int	dzread __P((dev_t, struct uio *, int));
 	int	dzwrite __P((dev_t, struct uio *, int));
 	int	dzioctl __P((dev_t, int, caddr_t, int, struct proc *));
-	int	dzstop __P((struct tty *, int));
+	void	dzstop __P((struct tty *, int));
 
 struct	cfdriver dz_cd = {
 	NULL, "dz", DV_TTY
@@ -547,8 +547,8 @@ dztty (dev)
 }
 
 /*ARGSUSED*/
-int
-dzstop (tp, flag)
+void
+dzstop(tp, flag)
 	register struct tty *tp;
 {
 	register struct dz_softc *sc;
@@ -560,14 +560,12 @@ dzstop (tp, flag)
 
 	s = spltty();
 
-	if (tp->t_state & TS_BUSY)
-	{
+	if (tp->t_state & TS_BUSY) {
 		sc->sc_dz[line].dz_end = sc->sc_dz[line].dz_mem;
 		if (!(tp->t_state & TS_TTSTOP))
 			tp->t_state |= TS_FLUSH;
 	}
 	(void) splx(s);
-	return 0;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.14 1996/05/19 16:43:57 ragge Exp $  */
+/*	$NetBSD: clock.c,v 1.18 1996/10/13 03:35:33 christos Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,11 +37,9 @@
 
 #include <machine/mtpr.h>
 #include <machine/sid.h>
-#include <machine/uvaxII.h>
-
-#define SEC_PER_DAY (60*60*24)
-
-extern int todrstopped;
+#include <machine/uvax.h>
+#include <machine/clock.h>
+#include <machine/cpu.h>
 
 static unsigned long year;     /*  start of current year in seconds */
 static unsigned long year_len; /* length of current year in 100th of seconds */
@@ -62,10 +60,10 @@ microtime(tvp)
 	s = splhigh();
 	int_time = mfpr(PR_TODR);
 
-        asm ("movc3 %0,(%1),(%2)" 
-                :
-                : "r" (sizeof(struct timeval)),"r" (&time),"r"(tvp)
-                :"r0","r1","r2","r3","r4","r5"); 
+	asm ("movc3 %0,(%1),(%2)" 
+		:
+		: "r" (sizeof(struct timeval)),"r" (&time),"r"(tvp)
+		:"r0","r1","r2","r3","r4","r5"); 
 
 	i = mfpr(PR_ICR) + tick; /* Get current interval count */
 	tvp->tv_usec += i;
@@ -103,69 +101,34 @@ void
 inittodr(fs_time) 
 	time_t fs_time;
 {
+	int rv;
 
-	unsigned long tmp_year, sluttid, year_ticks;
-	int clock_stopped = 0;
+	rv = (*cpu_calls[vax_cputype].cpu_clkread) (fs_time);
+	switch (rv) {
 
-	sluttid = fs_time;
-	year = (fs_time / SEC_PER_DAY / 365) * 365 * SEC_PER_DAY;
-	tmp_year = year / SEC_PER_DAY / 365 + 2;
-	year_len = 100 * SEC_PER_DAY *
-	    ((tmp_year % 4 && tmp_year != 32) ? 365 : 366);
-
-	switch (cpunumber) {
-#if VAX750 || VAX650
-	case VAX_750:
-	case VAX_650:
-		year_ticks = mfpr(PR_TODR);
-		clock_stopped = todrstopped;
+	case CLKREAD_BAD: /* No useable information from system clock */
+		time.tv_sec = fs_time;
+		resettodr();
 		break;
-#endif
-#if VAX630 || VAX410
-	case VAX_78032:
-		year_ticks = uvaxII_gettodr(&clock_stopped);
-		break;
-#endif
-#if VAX780 || VAX8600
-	case VAX_780:
-	case VAX_8600:
-		year_ticks = mfpr(PR_TODR);
-		break;
-#endif
-	default:
-		year_ticks = 0;
-		clock_stopped = 1;
-	};
 
-	if (clock_stopped){
-		printf(
-	"Internal clock not started. Using time from file system.\n");
-		switch (cpunumber) {
-#if VAX750 || VAX650
-		case VAX_750:
-		case VAX_650:
-			/* +1 so the clock won't be stopped */
-			mtpr((fs_time - year) * 100 + 1, PR_TODR);
-			break;
-#endif
-#if VAX630 || VAX410
-		case VAX_78032:
-			uvaxII_settodr((fs_time - year) * 100 + 1);
-			break;
-#endif
-		};
-		todrstopped = 0;
-	} else if (year_ticks / 100 > fs_time - year + SEC_PER_DAY * 3) {
-		printf(
-	"WARNING: Clock has gained %d days - CHECK AND RESET THE DATE.\n",
-		    (int)(year_ticks / 100 - (fs_time - year)) / SEC_PER_DAY);
-		sluttid = year + (year_ticks / 100);
-	} else if (year_ticks / 100 < fs_time - year) {
-		printf(
-		"WARNING: Clock has lost time - CHECK AND RESET THE DATE.\n");
-	} else
-		sluttid = year + (year_ticks / 100);
-	time.tv_sec = sluttid;
+	case CLKREAD_WARN: /* Just give the warning */
+		break;
+
+	default: /* System clock OK, no warning if we don't want to. */
+		if (time.tv_sec > fs_time + 3 * SEC_PER_DAY) {
+			printf("Clock has gained %d days",
+			    (time.tv_sec - fs_time) / SEC_PER_DAY);
+			rv = CLKREAD_WARN;
+		} else if (time.tv_sec + SEC_PER_DAY < fs_time) {
+			printf("Clock has lost %d day(s)",
+			    (fs_time - time.tv_sec) / SEC_PER_DAY);
+			rv = CLKREAD_WARN;
+		}
+		break;
+	}
+
+	if (rv < CLKREAD_OK)
+		printf(" - CHECK AND RESET THE DATE.\n");
 }
 
 /*   
@@ -175,30 +138,8 @@ inittodr(fs_time)
 void
 resettodr()
 {
-
-	unsigned long tmp_year;
-
-	year = (time.tv_sec / SEC_PER_DAY / 365) * 365 * SEC_PER_DAY;
-	tmp_year = year / SEC_PER_DAY / 365 + 2;
-	year_len = 100 * SEC_PER_DAY *
-	    ((tmp_year % 4 && tmp_year != 32) ? 365 : 366);
-	switch (cpunumber) {
-#if VAX750
-	case VAX_750:
-		mtpr((time.tv_sec - year) * 100 + 1, PR_TODR);
-		break;
-#endif
-#if VAX630 || VAX410
-	case VAX_78032:
-		uvaxII_settodr((time.tv_sec - year) * 100 + 1);
-		break;
-#endif
-	default:
-		mtpr((time.tv_sec - year) * 100, PR_TODR);
-	};
-	todrstopped = 0;
+	(*cpu_calls[vax_cputype].cpu_clkwrite)();
 }
-
 /*
  * A delayloop that delays about the number of milliseconds that is
  * given as argument.
@@ -209,12 +150,17 @@ delay(i)
 {
 	int	mul;
 
-	switch (cpunumber) {
-#if VAX750 || VAX630 || VAX780
+	switch (vax_cputype) {
+#if VAX750 || VAX630 || VAX410
 	case VAX_750:
 	case VAX_78032:
-	case VAX_780:
 		mul = 1; /* <= 1 VUPS */
+		break;
+#endif
+#if VAX780 || VAX8200
+	case VAX_780:
+	case VAX_8200:
+		mul = 2; /* <= 2 VUPS */
 		break;
 #endif
 #if VAX650
@@ -229,3 +175,168 @@ delay(i)
 	}
 	asm ("1: sobgtr %0, 1b" : : "r" (mul * i));
 }
+
+#if VAX750 || VAX780 || VAX8200 || VAX8600 || VAX8800
+/*
+ * On most VAXen there are a microsecond clock that should
+ * be used for interval interrupts. Have a generic version here.
+ */
+void
+generic_clock()
+{
+	mtpr(-10000, PR_NICR); /* Load in count register */
+	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+}
+#endif
+
+#if VAX650 || VAX630 || VAX410 || VAX43
+/*
+ * Most microvaxen don't have a interval count register.
+ */
+void
+no_nicr_clock()
+{
+	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+}
+#endif
+
+/*
+ * There are two types of real-time battery-backed up clocks on
+ * VAX computers, one with a register that counts up every 1/100 second,
+ * one with a clock chip that delivers time. For the register clock
+ * we have a generic version, and for the chip clock there are 
+ * support routines for time conversion.
+ */
+/*
+ * Converts a year to corresponding number of ticks.
+ */
+int
+yeartonum(y)
+	int y;
+{
+	int n;
+
+	for (n = 0, y -= 1; y > 69; y--)
+		n += SECPERYEAR(y);
+	return n;
+}
+
+/* 
+ * Converts tick number to a year 70 ->
+ */
+int
+numtoyear(num)
+	int num;
+{
+	int y = 70, j;
+	while(num >= (j = SECPERYEAR(y))) {
+		y++;
+		num -= j;
+	}
+	return y;
+}
+
+#if VAX750 || VAX780 || VAX8600 || VAX650
+/*
+ * Reads the TODR register; returns a (probably) true tick value,
+ * or CLKREAD_BAD if failed. The year is based on the argument
+ * year; the TODR doesn't hold years.
+ */
+int
+generic_clkread(base)
+	time_t base;
+{
+	unsigned klocka = mfpr(PR_TODR);
+
+	/*
+	 * Sanity check.
+	 */
+	if (klocka < TODRBASE) {
+		if (klocka == 0)
+			printf("TODR stopped");
+		else
+			printf("TODR too small");
+		return CLKREAD_BAD;
+	}
+
+	time.tv_sec = yeartonum(numtoyear(base)) + (klocka - TODRBASE) / 100;
+	return CLKREAD_OK;
+}
+
+/*
+ * Takes the current system time and writes it to the TODR.
+ */
+void
+generic_clkwrite()
+{
+	unsigned tid = time.tv_sec, bastid;
+
+	bastid = tid - yeartonum(numtoyear(tid));
+	mtpr((bastid * 100) + TODRBASE, PR_TODR);
+}
+#endif
+
+#if VAX630 || VAX410 || VAX43 || VAX8200
+
+static int dagar[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+/*
+ * Returns the number of days in month based on the current year.
+ */
+int
+daysinmonth(m, y)
+	int m, y;
+{
+	if (m == 2 && IS_LEAPYEAR(y))
+		return 29;
+	else
+		return dagar[m - 1];
+}
+
+/*
+ * Converts chiptime (year/month/day/hour/min/sek) and returns ticks.
+ */
+long
+chiptotime(c)
+	struct chiptime *c;
+{
+	int num, i;
+
+	num = c->sec;
+	num += c->min * SEC_PER_MIN;
+	num += c->hour * SEC_PER_HOUR;
+	num += (c->day - 1) * SEC_PER_DAY;
+	for(i = c->mon - 1; i > 0; i--)
+		num += daysinmonth(i, c->year) * SEC_PER_DAY;
+	num += yeartonum(c->year);
+
+	return num;
+}
+
+/*
+ * Reads the system time and puts it into a chiptime struct.
+ */
+void
+timetochip(c)
+	struct chiptime *c;
+{
+	int tid = time.tv_sec, i, j;
+
+	c->year = numtoyear(tid);
+	tid -= yeartonum(c->year);
+
+	c->mon = 1;
+	while(tid >= (j = (daysinmonth(c->mon, c->year) * SEC_PER_DAY))) {
+		c->mon++;
+		tid -= j;
+	}
+	c->day = (tid / SEC_PER_DAY) + 1;
+	tid %= SEC_PER_DAY;
+
+	c->hour = tid / SEC_PER_HOUR;
+	tid %= SEC_PER_HOUR;
+
+	c->min = tid / SEC_PER_MIN;
+	c->sec = tid % SEC_PER_MIN;
+}
+#endif

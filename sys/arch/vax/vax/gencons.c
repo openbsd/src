@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.10 1996/04/08 18:32:36 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.11 1996/09/02 06:44:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -68,7 +68,7 @@ void	gencninit __P((struct consdev *));
 struct tty *gencntty __P((dev_t));
 void	gencnrint __P((void));
 void	gencntint __P((void));
-int	gencnstop __P((struct tty *, int));
+void	gencnstop __P((struct tty *, int));
 void	gencnslask __P((void));
 
 int
@@ -218,12 +218,12 @@ gencnrint()
 	return;
 }
 
-int
+void
 gencnstop(tp, flag)
         struct tty *tp;
         int flag;
 {
-	return 0;
+
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.9 1996/05/19 16:43:34 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.12 1996/10/13 03:34:58 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -471,8 +471,9 @@ hpwrite(dev, uio)
  * Convert physical adapternr and unit to the unit number used by kernel.
  */
 int
-hp_getdev(mbanr, unit)
+hp_getdev(mbanr, unit, uname)
 	int	mbanr, unit;
+	char **uname;
 {
 	struct	mba_softc *ms;
 	struct	hp_softc *sc;
@@ -484,8 +485,10 @@ hp_getdev(mbanr, unit)
 
 		sc = hp_cd.cd_devs[i];
 		ms = (void *)sc->sc_dev.dv_parent;
-		if (ms->sc_physnr == mbanr && sc->sc_physnr == unit)
+		if (ms->sc_physnr == mbanr && sc->sc_physnr == unit) {
+			*uname = sc->sc_dev.dv_xname;
 			return i;
+		}
 	}
 	return -1;
 }

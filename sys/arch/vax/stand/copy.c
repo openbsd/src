@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.c,v 1.2 1995/09/29 16:35:00 ragge Exp $ */
+/*	$NetBSD: copy.c,v 1.3 1996/08/02 11:22:03 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -38,6 +38,8 @@
 #include "sys/reboot.h"
 #include "lib/libsa/stand.h"
 
+#include "vaxstand.h"
+
 #include <a.out.h>
 
 char line[100];
@@ -53,7 +55,7 @@ static int  	partlist[8];
 int fill_buffer (void);
 int write_disk (void);
 
-main()
+Xmain()
 {
 	int adapt, ctlr, unit, part;
 	int res, i, loops;

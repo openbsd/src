@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.11 1996/03/17 22:56:36 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.12 1996/08/20 14:07:46 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -50,7 +50,7 @@
 #include <machine/pte.h>
 #include <machine/mtpr.h>
 #include <machine/vmparam.h>
-#include <machine/macros.h>
+#include <machine/cpu.h>
 
 #include <vax/if/if_uba.h>
 #include <vax/uba/ubareg.h>
@@ -68,20 +68,20 @@ static	void restor_xmtbuf __P((struct ifxmt *));
  */
 
 /*
- * Init UNIBUS for interface on uban whose headers of size hlen are to
+ * Init UNIBUS for interface whose headers of size hlen are to
  * end on a page boundary.  We allocate a UNIBUS map register for the page
  * with the header, and nmr more UNIBUS map registers for i/o on the adapter,
  * doing this once for each read and once for each write buffer.  We also
  * allocate page frames in the mbuffer pool for these pages.
  */
 int
-if_ubaminit(ifu, uban, hlen, nmr, ifr, nr, ifw, nw)
+if_ubaminit(ifu, uh, hlen, nmr, ifr, nr, ifw, nw)
 	register struct ifubinfo *ifu;
-	int uban, hlen, nmr, nr, nw;
+	struct uba_softc *uh;
+	int hlen, nmr, nr, nw;
 	register struct ifrw *ifr;
 	register struct ifxmt *ifw;
 {
-	struct	uba_softc *ubasc;
 	register caddr_t p;
 	caddr_t cp;
 	int i, nclbytes, off;
@@ -111,10 +111,9 @@ if_ubaminit(ifu, uban, hlen, nmr, ifr, nr, ifw, nw)
 			p += nclbytes;
 		}
 		ifu->iff_hlen = hlen;
-		ifu->iff_uban = uban;
-		ubasc = uba_cd.cd_devs[uban];
-		ifu->iff_uba = ubasc->uh_uba;
-		ifu->iff_ubamr = ubasc->uh_mr;
+		ifu->iff_softc = uh;
+		ifu->iff_uba = uh->uh_uba;
+		ifu->iff_ubamr = uh->uh_mr;
 	}
 	for (i = 0; i < nr; i++)
 		if (if_ubaalloc(ifu, &ifr[i], nmr) == 0) {
@@ -137,9 +136,9 @@ if_ubaminit(ifu, uban, hlen, nmr, ifr, nr, ifw, nw)
 	return (1);
 bad:
 	while (--nw >= 0)
-		ubarelse(ifu->iff_uban, &ifw[nw].ifw_info);
+		ubarelse(ifu->iff_softc, &ifw[nw].ifw_info);
 	while (--nr >= 0)
-		ubarelse(ifu->iff_uban, &ifr[nr].ifrw_info);
+		ubarelse(ifu->iff_softc, &ifr[nr].ifrw_info);
 	free(cp, M_DEVBUF);
 	ifr[0].ifrw_addr = 0;
 	return (0);
@@ -159,7 +158,7 @@ if_ubaalloc(ifu, ifrw, nmr)
 	register int info;
 
 	info =
-	    uballoc(ifu->iff_uban, ifrw->ifrw_addr, nmr*NBPG + ifu->iff_hlen,
+	    uballoc(ifu->iff_softc, ifrw->ifrw_addr, nmr*NBPG + ifu->iff_hlen,
 	        ifu->iff_flags);
 	if (info == 0)
 		return (0);

@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.19 1996/05/19 16:25:29 ragge Exp $
+#       $NetBSD: files.vax,v 1.23 1997/01/05 18:50:27 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -13,22 +13,32 @@ attach	backplane at root
 
 device	sbi { tr=-1 }
 attach	sbi at backplane
+file	arch/vax/vax/sbi.c		sbi needs-flag
+
+device	cmi { tr=-1 }
+attach	cmi at backplane
+
 device	bi { node=-1 }
 attach	bi at backplane
+file	arch/vax/bi/bi.c		bi needs-flag
+
+device	vsbus { }
+attach	vsbus at backplane
+file	arch/vax/vsa/vsbus.c		vsbus
 
 device	cpu
 attach	cpu at backplane with cpu_backplane
 attach	cpu at bi with cpu_bi
+
 device	mem
 attach	mem at backplane with mem_backplane
 attach	mem at bi with mem_bi
 attach	mem at sbi with mem_sbi
-
-file	arch/vax/vax/sbi.c		sbi needs-flag
-file	arch/vax/vax/bi.c		bi needs-flag
+attach	mem at cmi with mem_cmi
 
 device	mba { drive = -1 }
-attach	mba at sbi
+attach	mba at sbi with mba_sbi
+attach	mba at cmi with mba_cmi
 file	arch/vax/mba/mba.c		mba needs-flag
 
 device  hp: disk
@@ -40,34 +50,42 @@ device	ht
 attach	ht at mba
 file	arch/vax/mba/ht.c		ht needs-flag
 
+# MSCP device drivers
+include "arch/vax/mscp/files.mscp"
+major	{ra = 9}
+major	{mt = 16}
+
+# KDB50 on BI
+device	kdb: mscp
+attach	kdb at bi
+file	arch/vax/bi/kdb.c		kdb
+
 device	uba { csr }
-attach	uba at sbi, bi
+attach	uba at backplane with uba_backplane
+attach	uba at sbi with uba_sbi
+attach	uba at cmi with uba_cmi
+attach	uba at bi with uba_bi
 file	arch/vax/uba/uba.c		uba
 
-device	uda { drive=-1 }
+device	mtc: mscp
+attach	mtc at uba
+device	uda: mscp
 attach	uda at uba
-file    arch/vax/uba/uda.c		uda needs-count
+file    arch/vax/uba/uda.c		uda | mtc
 
 device	de:ifnet, ether
 attach	de at uba
 file	arch/vax/if/if_de.c		de
 
-device	ra: disk
-attach	ra at uda	
-file	arch/vax/vax/mscp.c		ra needs-count
-major	{ra = 9}
-
-# TK50/TU81 at UBA
-device	tmscp {drive = -1}
-attach	tmscp at uba
-device	tms
-attach	tms at tmscp
-file	arch/vax/uba/tmscp.c		tmscp needs-count
-
 # DEQNA/DELQA used on Qbus
 device	qe:ifnet, ether
 attach	qe at uba
 file	arch/vax/if/if_qe.c		qe
+
+# DEBNA/DEBNT Ethernet Adapter
+device	ni:ifnet, ether
+attach	ni at bi
+file	arch/vax/bi/ni.c		ni
 
 # TS11 at UBA
 device	ts
@@ -83,6 +101,50 @@ file	arch/vax/uba/dhu.c		dhu needs-count
 device	dz
 attach	dz at uba
 file	arch/vax/uba/dz.c		dz needs-count
+
+# RD-type disks at VS2000's onboard MFM-controller
+device	hdc { drive = -1 }
+attach	hdc at vsbus
+file	arch/vax/vsa/hdc9224.c		hdc needs-flag
+
+device	rd: disk
+attach	rd at hdc
+major	{rd = 19}
+
+#
+# Machine-independent SCSI driver.
+#
+include "../../../scsi/files.scsi"
+major	{ sd = 20 }
+major	{ st = 21 }
+major	{ cd = 22 }
+
+# Memory Disk for install floppy
+pseudo-device md
+file	dev/md.c			md needs-flag
+major	{ md = 23 }
+
+# builtin NCR5380 SCSI-controller on VAXstation 
+device	ncr: scsi, ncr5380sbc
+attach	ncr at vsbus
+file	arch/vax/vsa/ncr.c		ncr needs-flag
+
+# LANCE ethernet controller on VAXstation
+attach	le at vsbus
+file	arch/vax/if/if_le.c		le
+
+# DC367-B in VAXstation 2000/3100 (DZ-like 4-port serial line controller,
+# controls keyboard, mouse, modem, and printer/console)
+device	dc
+attach	dc at vsbus
+file	arch/vax/vsa/dc.c		dc needs-flag
+file	arch/vax/vsa/lk201.c		dc
+
+# PM Framebuffer in VAXstation 2000/3100
+device	pm
+attach	pm at vsbus
+file	arch/vax/vsa/pm.c		pm needs-flag
+
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
@@ -111,12 +173,6 @@ file	arch/vax/uba/tm.c		te needs-count
 device	mu
 attach	mu at mba
 file	arch/vax/mba/mt.c		mu needs-count
-
-# KDB50 on BI
-device	kdb { drive=-1 }
-attach	kdb at bi
-file	arch/vax/bi/kdb.c		kdb needs-count
-
 
 # DMF32 on UBA
 device	dmf
@@ -244,17 +300,23 @@ file	dev/cninit.c
 file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
-file	arch/vax/vax/gencons.c
+file	arch/vax/vax/gencons.c	vax8600|vax8200|vax780|vax750|vax630|ka650
+file	arch/vax/vax/dzcons.c		vax410 | vax43
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/machdep.c
 file	arch/vax/vax/ka750.c		vax750
-file	arch/vax/vax/ka780.c		vax780
 file	arch/vax/vax/ctu.c		vax750
-file	arch/vax/vax/uvaxII.c		vax630
-file	arch/vax/vax/emulate.s		vax630 | ka650
-file	arch/vax/vax/ka650.c		vax650
+file	arch/vax/vax/ka780.c		vax780
+file	arch/vax/vax/cfl.c		vax780
+file	arch/vax/vax/ka820.c		vax8200
 file	arch/vax/vax/ka860.c		vax8600
 file	arch/vax/vax/crl.c		vax8600
+file	arch/vax/vax/uvax.c		vax630 | vax410 | vax43
+file	arch/vax/vax/ka630.c		vax630
+file	arch/vax/vax/ka410.c		vax410
+file	arch/vax/vax/ka43.c		vax43
+file	arch/vax/vax/emulate.s		vax630 | ka650
+file	arch/vax/vax/ka650.c		vax650
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
 file	arch/vax/vax/udiv.s
@@ -266,7 +328,7 @@ file	arch/vax/vax/autoconf.c
 file	arch/vax/vax/random.s		inet
 file	arch/vax/vax/in_cksum.c		inet
 file	arch/vax/vax/ns_cksum.c		ns
-file	arch/vax/vax/disksubr.c		ffs
+file	arch/vax/vax/disksubr.c		disk | tape
 file	arch/vax/if/if_uba.c		de | qe
 file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
@@ -275,9 +337,7 @@ include "../../../compat/ultrix/files.ultrix"
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
 #arch/vax/vax/dkbad.c         standard
-#arch/vax/vax/flp.c           standard
 #arch/vax/vax/ka730.c         standard
-#arch/vax/vax/ka820.c         standard
 #arch/vax/vax/rx50.c          standard
 #arch/vax/vax/iidr.o          optional ii
 #arch/vax/vax/iidrsys.o       optional ii

@@ -1,4 +1,4 @@
-/*	$NetBSD: romread.s,v 1.3 1995/09/16 16:20:18 ragge Exp $ */
+/*	$NetBSD: romread.s,v 1.4 1996/08/02 11:22:24 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,20 +40,6 @@
 #include "../include/asm.h"
 
 /*
- * read630 (int block, int *regs)
- */
-ENTRY(read630, 0xFFE)
-	pushl	$0			# base of rpb
-	pushl	$0			# virtual-flag 
-	pushl	$33			# read-logical-block
-	pushl	12(ap)			# lbn to start reading
-	pushl	8(ap)			# number of bytes to read
-	pushl	4(ap)			# buffer-address 
-	calls	$6, (r6)	# call the qio-routine
-	halt
-	ret			# r0 holds the result
-
-/*
  * read750 (int block, int *regs)
  */
 ENTRY(read750, 0xFFE)
@@ -72,9 +58,9 @@ ENTRY(read750, 0xFFE)
 	ret
 
 /*
- * bulkread630 (int lbn, int size, void *buf, int *regs)
+ * romread_uvax (int lbn, int size, void *buf, int *regs)
  */
-ENTRY(bulkread630, 0xFFE)
+ENTRY(romread_uvax, 0xFFE)
 	movl	16(ap), r11	# array of bootregs
 	movl	44(r11), r11	# restore boot-contents of r11 (rpb)
 	movl    52(r11), r7     # load iovec/bqo into r7
@@ -87,3 +73,21 @@ ENTRY(bulkread630, 0xFFE)
 	pushl	12(ap)			# buffer-address 
 	calls	$6, (r6)	# call the qio-routine
 	ret			# r0 holds the result
+
+/*
+ * romwrite_uvax (int lbn, int size, void *buf, int *regs)
+ */
+ENTRY(romwrite_uvax, 0xFFE)
+	movl    16(ap), r11     # array of bootregs
+	movl    44(r11), r11    # restore boot-contents of r11 (rpb)
+	movl    52(r11), r7     # load iovec/bqo into r7
+	addl3   (r7), r7, r6    # load qio into r6
+	pushl   r11                     # base of rpb
+	pushl   $0                      # virtual-flag 
+	pushl   $32                     # write-logical-block
+	pushl   4(ap)                   # lbn to start reading
+	pushl   8(ap)                   # number of bytes to read
+	pushl   12(ap)                  # buffer-address 
+	calls   $6, (r6)        # call the qio-routine
+	ret                     # r0 holds the result
+

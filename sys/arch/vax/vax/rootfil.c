@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.11 1996/04/08 18:32:54 ragge Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,34 +58,12 @@
 #include <machine/pte.h>
 #include <machine/cpu.h>
 
-#include <vax/uba/ubavar.h>
-
-#include "uda.h"
 #include "hp.h"
+#include "ra.h"
 
 #define DOSWAP                  /* Change swdevt, argdev, and dumpdev too */
 u_long  bootdev;                /* should be dev_t, but not until 32 bits */
 extern dev_t rootdev, dumpdev;
-
-static  char devname[][2] = {
-        {'h','p'},        /* 0 = hp */
-        {0,0},            /* 1 = ht */
-        {'u','p'},        /* 2 = up */
-        {'r','k'},        /* 3 = hk */
-        {0,0},            /* 4 = sw */
-        {0,0},            /* 5 = tm */
-        {0,0},            /* 6 = ts */
-        {0,0},            /* 7 = mt */
-        {0,0},            /* 8 = tu */
-        {'r','a'},        /* 9 = ra */
-        {0,0},            /* 10 = ut */
-        {'r','b'},        /* 11 = rb */
-        {0,0},            /* 12 = uu */
-        {0,0},            /* 13 = rx */
-        {'r','l'},        /* 14 = rl */
-        {0,0},            /* 15 = tmscp */
-        {'k','r'},        /* 16 = ra on kdb50 */
-};
 
 #define PARTITIONMASK   0x7
 #define PARTITIONSHIFT  3
@@ -100,45 +78,40 @@ setroot()
 {
         int  majdev, mindev, unit, part, controller, adaptor;
         dev_t temp = 0, orootdev;
-#if NUDA > 0
-	extern struct uba_device ubdinit[];
-#endif
         struct swdevt *swp;
 	extern int boothowto;
+	char *uname;
 
         if (boothowto & RB_DFLTROOT ||
             (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
                 return;
         majdev = B_TYPE(bootdev);
-        if (majdev >= sizeof(devname) / sizeof(devname[0]))
+        if (majdev >= nblkdev)
                 return;
         adaptor = B_ADAPTOR(bootdev);
         controller = B_CONTROLLER(bootdev);
         part = B_PARTITION(bootdev);
         unit = B_UNIT(bootdev);
-        if (majdev == 0) {      /* MBA device */
-#if NHP > 0
-		mindev = hp_getdev(adaptor, unit);
-		if (mindev < 0)
-			return;
-#else
-                return;
-#endif
-        } else {
-                register struct uba_device *ubap;
 
-                for (ubap = ubdinit; ubap->ui_driver; ubap++){
-                        if (ubap->ui_alive && ubap->ui_slave == unit &&
-                           ubap->ui_ctlr == controller &&
-                           ubap->ui_ubanum == adaptor &&
-                           ubap->ui_driver->ud_dname[0] == devname[majdev][0] &&
-                           ubap->ui_driver->ud_dname[1] == devname[majdev][1])
-                                break;
-		}
-                if (ubap->ui_driver == 0)
-                        return;
-                mindev = ubap->ui_unit;
-        }
+	switch (majdev) {
+	case 0:	/* MBA disk */
+#if NHP
+		if ((mindev = hp_getdev(adaptor, unit, &uname)) < 0)
+#endif
+			return;
+		break;
+
+	case 9:	/* MSCP disk */
+#if NRA
+		if ((mindev = ra_getdev(adaptor, controller, unit, &uname)) < 0)
+#endif
+			return;
+		break;
+
+	default:
+		return;
+	}
+
         mindev = (mindev << PARTITIONSHIFT) + part;
         orootdev = rootdev;
         rootdev = makedev(majdev, mindev);
@@ -149,9 +122,7 @@ setroot()
         if (rootdev == orootdev)
                 return;
 
-        printf("Changing root device to %c%c%d%c\n",
-                devname[majdev][0], devname[majdev][1],
-                mindev >> PARTITIONSHIFT, part + 'a');
+        printf("Changing root device to %s%c\n", uname, part + 'a');
 
 #ifdef DOSWAP
         mindev &= ~PARTITIONMASK;
@@ -173,9 +144,6 @@ setroot()
          */
         if (temp == dumpdev)
                 dumpdev = swdevt[0].sw_dev;
-        panic("autoconf.c: argdev\n");
-/*      if (temp == argdev)
-                argdev = swdevt[0].sw_dev; */
 #endif
 }
 

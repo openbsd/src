@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.4 1996/02/17 18:23:25 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.5 1996/08/02 11:22:56 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,13 +34,12 @@
 
 #define MAXNMBA 8 /* Massbussadapters */
 #define MAXNUBA 8 /* Unibusadapters */
-#define MAXNBI  4 /* Bi-bussadapters */
 #define	MAXMBAU	8 /* Units on an mba */
-#define	MAXBIN	16 /* Bi-nodes */
 
 /* Variables used in autoconf */
 extern int nmba, nuba, nbi, nsbi, nuda;
-extern int *ubaaddr, *mbaaddr, *udaaddr, *uioaddr;
+extern int *ubaaddr, *mbaaddr, *udaaddr, *uioaddr, *biaddr;
+extern int cpunumber;
 
 /* devsw type definitions, used in bootxx and conf */
 #define SADEV(name,strategy,open,close,ioctl) \
@@ -50,3 +49,17 @@ extern int *ubaaddr, *mbaaddr, *udaaddr, *uioaddr;
          (int(*)(struct open_file *))close, \
          (int(*)(struct open_file *,u_long, void *))ioctl}
 
+/*
+ * Easy-to-use definitions
+ */
+#define	min(x,y) (x < y ? x : y)
+
+/*
+ * Device numbers gotten from boot prom.
+ */
+#define	BDEV_MBA		0
+#define	BDEV_RK06		1
+#define	BDEV_RL02		2
+#define	BDEV_UDA		17
+#define	BDEV_TK50		18
+#define	BDEV_CONSOLE		64

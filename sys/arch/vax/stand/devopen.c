@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 1996/03/16 11:02:28 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.6 1996/08/02 16:18:39 ragge Exp $ */
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
@@ -52,7 +52,7 @@ usage()
 {
 	printf("\
 	    Usage: device(adaptor, controller, drive, partition)file\n\
-            <device><unit><partitonletter>:file\n\
+	    <device><unit><partitonletter>:file\n\
 	    ");
 }
 
@@ -62,15 +62,15 @@ devlookup(d,len)
 {
 	struct devsw *dp = devsw;
 	int i;
-    
+
 	for (i = 0; i < ndevs; i++, dp++)
 		if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0)
-	    		return(i);
+			return(i);
 
 	printf("No such device - Configured devices are:\n");
 	for (dp = devsw, i = 0; i < ndevs; i++, dp++)
 		if (dp->dv_name)
-	    		printf(" %s", dp->dv_name);
+			printf(" %s", dp->dv_name);
 	printf("\n");
 	errno = ENODEV;
 	return(-1);
@@ -90,7 +90,7 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 {
 	int *argp, i;
 	char *s, *args[4];
-    
+
 	/* get device name and make lower case */
 	for(s = fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
 		if(isupper(*s))
@@ -117,19 +117,19 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 			*part  = atoi(args[3]);
 			break;
 		case 3:
-	    		*ctlr  = atoi(args[0]);
-	    		*unit  = atoi(args[1]);
-	    		*part  = atoi(args[2]);
-	    		break;
+			*ctlr  = atoi(args[0]);
+			*unit  = atoi(args[1]);
+			*part  = atoi(args[2]);
+			break;
 		case 2:
-	    		*unit  = atoi(args[0]);
-	    		*part  = atoi(args[1]);
-	    		break;
+			*unit  = atoi(args[0]);
+			*part  = atoi(args[1]);
+			break;
 		case 1:
-	    		*part  = atoi(args[0]);
-	    		break;
+			*part  = atoi(args[0]);
+			break;
 		case 0:
-	    		break;
+			break;
 		}
 		*file = ++s;
 
@@ -142,25 +142,25 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 	
 		/* lookup device and get index */
 		if ((*dev = devlookup(fname, s - fname)) < 0)
-	    		goto baddev;
+			goto baddev;
 
 		/* isolate unit */
 		if ((*unit = atoi(s)) > sizeof(char))
-	    		goto bad;
+			goto bad;
 		for (; isdigit(*s); s++)
 			;
 	
 		/* translate partition */
 		if(!ispart(*s))
-	    		goto bad;
+			goto bad;
 	
 		*part = *s++ - 'a';
 		if(*s != ':')
-	    		goto bad;
+			goto bad;
 		*file = ++s;
 
 	/* no device present */
-    	} else
+	} else
 		*file = fname;
     
 	/* return the remaining unparsed part as the file to boot */
@@ -176,8 +176,8 @@ bad:
 extern int bootdev;
 
 devopen(f, fname, file)
-        struct open_file *f;
-        const char *fname;
+	struct open_file *f;
+	const char *fname;
 	char **file;
 {
 	int n, error;
@@ -190,12 +190,12 @@ devopen(f, fname, file)
 	unit  = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
 	adapt = B_ADAPTOR(bootdev);
-	
+
 	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
 		return(error);
-	
+
 	dp = &devsw[dev];
-	
+
 	if (!dp->dv_open)
 		return(ENODEV);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.15 1996/05/19 16:43:07 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.18 1996/10/13 03:34:55 christos Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -290,8 +290,8 @@ qematch(parent, match, aux)
 	 * Map the communications area and the setup packet.
 	 */
 	sc->setupaddr =
-	    uballoc(0, (caddr_t)sc->setup_pkt, sizeof(sc->setup_pkt), 0);
-	sc->rringaddr = (struct qe_ring *) uballoc(0, (caddr_t)sc->rring,
+	    uballoc(ubasc, (caddr_t)sc->setup_pkt, sizeof(sc->setup_pkt), 0);
+	sc->rringaddr = (struct qe_ring *) uballoc(ubasc, (caddr_t)sc->rring,
 	    sizeof(struct qe_ring) * (NTOT+2), 0);
 	prp = (struct qe_ring *)UBAI_ADDR((int)sc->rringaddr);
 
@@ -338,8 +338,8 @@ qematch(parent, match, aux)
 	/*
 	 * All done with the bus resources.
 	 */
-	ubarelse(0, &sc->setupaddr);
-	ubarelse(0, (int *)&sc->rringaddr);
+	ubarelse(ubasc, &sc->setupaddr);
+	ubarelse(ubasc, (int *)&sc->rringaddr);
 	sc->ipl = 0x15;
 	ua->ua_ivec = qeintr;
 	return 1;
@@ -418,6 +418,7 @@ qeinit(sc)
 	struct qe_softc *sc;
 {
 	struct qedevice *addr = sc->qe_vaddr;
+	struct uba_softc *ubasc = (void *)sc->qe_dev.dv_parent;
 	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	int i;
 	int s;
@@ -432,13 +433,13 @@ qeinit(sc)
 		/*
 		 * map the communications area onto the device
 		 */
-		i = uballoc(0, (caddr_t)sc->rring,
+		i = uballoc(ubasc, (caddr_t)sc->rring,
 		    sizeof(struct qe_ring) * (NTOT+2), 0);
 		if (i == 0)
 			goto fail;
 		sc->rringaddr = (struct qe_ring *)UBAI_ADDR(i);
 		sc->tringaddr = sc->rringaddr + NRCV + 1;
-		i = uballoc(0, (caddr_t)sc->setup_pkt,
+		i = uballoc(ubasc, (caddr_t)sc->setup_pkt,
 		    sizeof(sc->setup_pkt), 0);
 		if (i == 0)
 			goto fail;
@@ -446,7 +447,7 @@ qeinit(sc)
 		/*
 		 * init buffers and maps
 		 */
-		if (if_ubaminit(&sc->qe_uba, sc->qe_dev.dv_parent->dv_unit,
+		if (if_ubaminit(&sc->qe_uba, (void *)sc->qe_dev.dv_parent,
 		    sizeof (struct ether_header), (int)btoc(MAXPACKETSIZE),
 		    sc->qe_ifr, NRCV, sc->qe_ifw, NXMT) == 0) {
 	fail:

@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.2 1996/04/08 18:32:30 ragge Exp $	*/
+/*	$NetBSD: crl.c,v 1.5 1996/10/13 03:35:35 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -75,17 +75,17 @@ int	crlclose __P((dev_t, int, struct proc *));
 int	crlrw __P((dev_t, struct uio *, int));
 
 
-struct  ivec_dsp crl_intr;
+struct	ivec_dsp crl_intr;
 
 void
 crlattach()
 {
-	extern  struct ivec_dsp idsptch;
+	extern	struct ivec_dsp idsptch;
 
 	bcopy(&idsptch, &crl_intr, sizeof(struct ivec_dsp));
 	scb->scb_csrint = &crl_intr;
 	crl_intr.hoppaddr = crlintr;
-}       
+}	
 
 /*ARGSUSED*/
 int
@@ -94,7 +94,7 @@ crlopen(dev, flag, p)
 	int flag;
 	struct proc *p;
 {
-	if (cpunumber != VAX_8600)
+	if (vax_cputype != VAX_8600)
 		return (ENXIO);
 	if (crltab.crl_state != CRL_IDLE)
 		return (EALREADY);

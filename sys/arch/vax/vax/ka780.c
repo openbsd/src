@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.3 1996/04/08 18:32:43 ragge Exp $	*/
+/*	$NetBSD: ka780.c,v 1.6 1996/10/13 03:35:50 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -51,12 +51,13 @@
 #include <machine/mtpr.h>
 #include <machine/scb.h>
 #include <machine/nexus.h>
+#include <machine/sid.h>
+
 #include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
 
 /* Prototypes. XXX These should be somewhere else */
 void	ka780_conf __P((struct device *, struct device *, void *));
-int	ka780_clock __P((void));
 void	ka780_memenable __P((struct sbi_attach_args *, void *));
 void	ka780_memerr __P((void));
 int	ka780_mchk __P((caddr_t));
@@ -69,45 +70,45 @@ struct	mcr780 {
 	int	mc_reg[4];
 };
 
-#define	M780_ICRD	0x40000000	/* inhibit crd interrupts, in [2] */
-#define	M780_HIER	0x20000000	/* high error rate, in reg[2] */
-#define	M780_ERLOG	0x10000000	/* error log request, in reg[2] */
+#define M780_ICRD	0x40000000	/* inhibit crd interrupts, in [2] */
+#define M780_HIER	0x20000000	/* high error rate, in reg[2] */
+#define M780_ERLOG	0x10000000	/* error log request, in reg[2] */
 /* on a 780, memory crd's occur only when bit 15 is set in the SBIER */
 /* register; bit 14 there is an error bit which we also clear */
 /* these bits are in the back of the ``red book'' (or in the VMS code) */
 
-#define	M780C_INH(mcr)	\
+#define M780C_INH(mcr)	\
 	((mcr)->mc_reg[2] = (M780_ICRD|M780_HIER|M780_ERLOG)); \
 	    mtpr(0, PR_SBIER);
-#define	M780C_ENA(mcr)	\
+#define M780C_ENA(mcr)	\
 	((mcr)->mc_reg[2] = (M780_HIER|M780_ERLOG)); mtpr(3<<14, PR_SBIER);
-#define	M780C_ERR(mcr)	\
+#define M780C_ERR(mcr)	\
 	((mcr)->mc_reg[2] & (M780_ERLOG))
 
-#define	M780C_SYN(mcr)	((mcr)->mc_reg[2] & 0xff)
-#define	M780C_ADDR(mcr)	(((mcr)->mc_reg[2] >> 8) & 0xfffff)
+#define M780C_SYN(mcr)	((mcr)->mc_reg[2] & 0xff)
+#define M780C_ADDR(mcr) (((mcr)->mc_reg[2] >> 8) & 0xfffff)
 
-#define	M780EL_INH(mcr)	\
+#define M780EL_INH(mcr) \
 	((mcr)->mc_reg[2] = (M780_ICRD|M780_HIER|M780_ERLOG)); \
 	    mtpr(0, PR_SBIER);
-#define	M780EL_ENA(mcr)	\
+#define M780EL_ENA(mcr) \
 	((mcr)->mc_reg[2] = (M780_HIER|M780_ERLOG)); mtpr(3<<14, PR_SBIER);
-#define	M780EL_ERR(mcr)	\
+#define M780EL_ERR(mcr) \
 	((mcr)->mc_reg[2] & (M780_ERLOG))
 
-#define	M780EL_SYN(mcr)		((mcr)->mc_reg[2] & 0x7f)
-#define	M780EL_ADDR(mcr)	(((mcr)->mc_reg[2] >> 11) & 0x1ffff)
+#define M780EL_SYN(mcr)		((mcr)->mc_reg[2] & 0x7f)
+#define M780EL_ADDR(mcr)	(((mcr)->mc_reg[2] >> 11) & 0x1ffff)
 
-#define	M780EU_INH(mcr)	\
+#define M780EU_INH(mcr) \
 	((mcr)->mc_reg[3] = (M780_ICRD|M780_HIER|M780_ERLOG)); \
 	    mtpr(0, PR_SBIER);
-#define	M780EU_ENA(mcr)	\
+#define M780EU_ENA(mcr) \
 	((mcr)->mc_reg[3] = (M780_HIER|M780_ERLOG)); mtpr(3<<14, PR_SBIER);
-#define	M780EU_ERR(mcr)	\
+#define M780EU_ERR(mcr) \
 	((mcr)->mc_reg[3] & (M780_ERLOG))
 
-#define	M780EU_SYN(mcr)		((mcr)->mc_reg[3] & 0x7f)
-#define	M780EU_ADDR(mcr)	(((mcr)->mc_reg[3] >> 11) & 0x1ffff)
+#define M780EU_SYN(mcr)		((mcr)->mc_reg[3] & 0x7f)
+#define M780EU_ADDR(mcr)	(((mcr)->mc_reg[3] >> 11) & 0x1ffff)
 
 /* enable crd interrrupts */
 void
@@ -213,8 +214,8 @@ struct {
 	0x73,	"L19",	0x75,	"L21",	0x76,	"L22",	0x79,	"L25",
 	0x7A,	"L26",	0x7C,	"L28",	0x7F,	"L31",	0x80,	"C07",
 	0x89,	"U01",	0x8A,	"U02",	0x8C,	"U04",	0x8F,	"U07",
-	0x91,	"U09",	0x92,	"U10",	0x94,	"U12",	0x97, 	"U15",
-	0x98,	"U16",	0x9B,	"U19",	0x9D,	"U21",	0x9E, 	"U22",
+	0x91,	"U09",	0x92,	"U10",	0x94,	"U12",	0x97,	"U15",
+	0x98,	"U16",	0x9B,	"U19",	0x9D,	"U21",	0x9E,	"U22",
 	0xA8,	"U00",	0xAB,	"U03",	0xAD,	"U05",	0xAE,	"U06",
 	0xB0,	"U08",	0xB3,	"U11",	0xB5,	"U13",	0xB6,	"U14",
 	0xB9,	"U17",	0xBA,	"U18",	0xBC,	"U20",	0xBF,	"U23",
@@ -244,7 +245,7 @@ memlog(m, mcr)
 #endif TRENDATA
 
 char *mc780[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13",
-        "14","15"};
+	"14","15"};
 
 struct mc780frame {
 	int	mc8_bcnt;		/* byte count == 0x28 */
@@ -296,11 +297,11 @@ struct ka78x {
 
 void
 ka780_conf(parent, self, aux)
-	struct  device *parent, *self;
-	void    *aux;
+	struct	device *parent, *self;
+	void	*aux;
 {
-	extern  char cpu_model[];
-	struct	ka78x *ka78 = (void *)&cpu_type;
+	extern	char cpu_model[];
+	struct	ka78x *ka78 = (void *)&vax_cpudata;
 
 	/* Enable cache */
 	mtpr(0x200000, PR_SBIMT);
@@ -317,14 +318,6 @@ ka780_conf(parent, self, aux)
 	} else
 		printf("no FPA\n");
 
-}
-
-int
-ka780_clock()
-{
-	mtpr(-10000, PR_NICR); /* Load in count register */
-	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
-	return 0;
 }
 
 void

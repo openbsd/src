@@ -1,5 +1,4 @@
-/*	$NetBSD: locore.c,v 1.15 1996/05/19 16:44:07 ragge Exp $	*/
-
+/*	$NetBSD: locore.c,v 1.17 1996/08/20 14:13:54 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,14 +47,30 @@
 #include <machine/vmparam.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
+#include <machine/nexus.h>
 
 void	start __P((void));
 void	main __P((void));
 
 u_int	proc0paddr;
-int	cpunumber, *Sysmap, boothowto, cpu_type;
+int	*Sysmap, boothowto;
 char	*esym;
 extern	int bootdev;
+
+/* 
+ * We set up some information about the machine we're
+ * running on and thus initializes/uses vax_cputype and vax_boardtype.
+ * There should be no need to change/reinitialize these variables
+ * outside of this routine, they should be read only!
+ */
+int vax_cputype;	/* highest byte of SID register */
+int vax_bustype;	/* holds/defines all busses on this machine */
+int vax_boardtype;	/* machine dependend, combination of SID and SIE */
+int vax_systype;	/* machine dependend identification of the system */
+ 
+int vax_cpudata;	/* contents of the SID register */
+int vax_siedata;	/* contents of the SIE register */
+int vax_confdata;	/* machine dependend, configuration/setup data */
 
 /*
  * Start is called from boot; the first routine that is called
@@ -116,11 +131,11 @@ tokmem: movw	$0xfff, _panic
 	Sysmap = (u_int *)ROUND_PAGE(mfpr(PR_KSP));
 
 	/* Be sure some important internal registers have safe values */
-        ((struct pcb *)proc0paddr)->P0LR = 0;
-        ((struct pcb *)proc0paddr)->P0BR = (void *)0x80000000;
-        ((struct pcb *)proc0paddr)->P1LR = 0;
-        ((struct pcb *)proc0paddr)->P1BR = (void *)0x80000000;
-        ((struct pcb *)proc0paddr)->iftrap = NULL;
+	((struct pcb *)proc0paddr)->P0LR = 0;
+	((struct pcb *)proc0paddr)->P0BR = (void *)0x80000000;
+	((struct pcb *)proc0paddr)->P1LR = 0;
+	((struct pcb *)proc0paddr)->P1BR = (void *)0x80000000;
+	((struct pcb *)proc0paddr)->iftrap = NULL;
 	mtpr(0, PR_P0LR);
 	mtpr(0x80000000, PR_P0BR);
 	mtpr(0, PR_P1LR);
@@ -129,13 +144,73 @@ tokmem: movw	$0xfff, _panic
 	mtpr(0, PR_SCBB); /* SCB at physical addr  */
 	mtpr(0, PR_ESP); /* Must be zero, used in page fault routine */
 	mtpr(AST_NO, PR_ASTLVL);
-	
-	cninit();
 
 	/* Count up memory etc... early machine dependent routines */
-	if ((cpunumber = MACHID(mfpr(PR_SID))) > VAX_MAX)
-		cpunumber = 0;
-	cpu_type = mfpr(PR_SID);
+	vax_cputype = ((vax_cpudata = mfpr(PR_SID)) >> 24);
+
+	switch (vax_cputype) {
+#if VAX780
+	case VAX_TYP_780:
+		vax_bustype = VAX_SBIBUS | VAX_CPUBUS;
+		vax_boardtype = VAX_BTYP_780;
+		break;
+#endif
+#if VAX750
+	case VAX_TYP_750:
+		vax_bustype = VAX_CMIBUS | VAX_CPUBUS;
+		vax_boardtype = VAX_BTYP_750;
+		break;
+#endif
+#if VAX8600
+	case VAX_TYP_790:
+		vax_bustype = VAX_CPUBUS | VAX_MEMBUS;
+		vax_boardtype = VAX_BTYP_790;
+		break;
+#endif
+#if VAX630 || VAX650 || VAX410 || VAX43
+	case VAX_TYP_UV2:
+	case VAX_TYP_CVAX:
+	case VAX_TYP_RIGEL:
+		vax_siedata = *(int *)(0x20040004);	/* SIE address */
+		vax_boardtype = (vax_cputype<<24) | ((vax_siedata>>24)&0xFF);
+
+		switch (vax_boardtype) {
+		case VAX_BTYP_410:
+		case VAX_BTYP_43:
+			vax_confdata = *(int *)(0x20020000);
+			vax_bustype = VAX_VSBUS | VAX_CPUBUS;
+			break;
+
+		case VAX_BTYP_630:
+		case VAX_BTYP_650:
+			vax_bustype = VAX_UNIBUS | VAX_CPUBUS;
+			break;
+
+		default:
+			break;
+		}
+		break;
+#endif
+#if VAX8200
+	case VAX_TYP_8SS:
+		vax_boardtype = VAX_BTYP_8000;
+		vax_bustype = VAX_BIBUS;
+		mastercpu = mfpr(PR_BINID);
+		break;
+#endif
+	default:
+		/* CPU not supported, just give up */
+		asm("halt");
+	}
+
+	/*
+	 * before doing anything else, we need to setup the console
+	 * so that output (eg. debug and error messages) are visible.
+	 * They way console-output is done is different for different
+	 * VAXen, thus vax_cputype and vax_boardtype are setup/used.
+	 */
+	cninit();
+
 	pmap_bootstrap();
 
 	((struct pcb *)proc0paddr)->framep = scratch;

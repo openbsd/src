@@ -1,4 +1,5 @@
-/*	$NetBSD: boot.c,v 1.4 1995/09/16 15:54:20 ragge Exp $ */
+/*	$OpenBSD: boot.c,v 1.3 1997/01/15 23:24:16 maja Exp $ */
+/*	$NetBSD: boot.c,v 1.5 1996/08/02 11:21:49 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -38,6 +39,8 @@
 #include "sys/reboot.h"
 #include "lib/libsa/stand.h"
 
+#define V750UCODE(x)    ((x>>8)&255)
+
 #include <a.out.h>
 
 /*
@@ -49,8 +52,9 @@
 char line[100];
 volatile u_int devtype, bootdev;
 extern	unsigned opendev;
+extern  unsigned *bootregs;
 
-main()
+Xmain()
 {
 	register howto asm("r11");
 	register bdev  asm("r10");
@@ -149,7 +153,7 @@ copyunix(howto, devtype, aio)
 	hoppabort((x.a_entry&0x7fffffff),howto, devtype, esym);
 	return;
 shread:
-	printf("Short read\n");
+	printf("\nShort read\n\n");
 	return;
 }
 
@@ -191,7 +195,7 @@ loadpcs()
 		if (*cp == ')' || *cp == ':')
 			break;
 	if (*cp) {
-		strncpy(pcs, line, 99);
+		bcopy(line, pcs, 99);
 		pcs[99] = 0;
 		i = cp - line + 1;
 	} else

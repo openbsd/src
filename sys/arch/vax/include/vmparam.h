@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 1996/02/02 19:08:43 mycroft Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 1996/07/20 17:58:26 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,6 +97,11 @@
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	64		/* XXXX should be 1024 */
 #endif
+
+/*
+ * Size of User Raw I/O map
+ */
+#define	USRIOSIZE	300
 
 /*
  * Sizes of the system and user portions of the system page table.

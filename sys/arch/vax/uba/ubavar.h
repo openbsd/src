@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.15 1996/04/08 18:37:36 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.18 1996/08/20 13:38:04 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -71,36 +71,41 @@
  */
 struct	uba_softc {
 	struct	device uh_dev;		/* Device struct, autoconfig */
+	SIMPLEQ_HEAD(, uba_unit) uh_resq;	/* resource wait chain */
 	int	uh_type;		/* type of adaptor */
 	struct	uba_regs *uh_uba;	/* virt addr of uba adaptor regs */
-	struct	uba_regs *uh_physuba;	/* phys addr of uba adaptor regs */
 	struct	pte *uh_mr;		/* start of page map */
 	int	uh_memsize;		/* size of uba memory, pages */
-	caddr_t	uh_mem;			/* start of uba memory address space */
 	caddr_t	uh_iopage;		/* start of uba io page */
 	void	(**uh_reset) __P((int));/* UBA reset function array */
 	int	*uh_resarg;		/* array of ubareset args */
 	int	uh_resno;		/* Number of devices to reset */
 	struct	ivec_dsp *uh_idsp;	/* Interrupt dispatch area */
 	u_int	*uh_iarea;		/* Interrupt vector array */
-	struct	uba_device *uh_actf;	/* head of queue to transfer */
-	struct	uba_device *uh_actl;	/* tail of queue to transfer */
 	short	uh_mrwant;		/* someone is waiting for map reg */
 	short	uh_bdpwant;		/* someone awaits bdp's */
 	int	uh_bdpfree;		/* free bdp's */
-	int	uh_hangcnt;		/* number of ticks hung */
 	int	uh_zvcnt;		/* number of recent 0 vectors */
 	long	uh_zvtime;		/* time over which zvcnt accumulated */
 	int	uh_zvtotal;		/* total number of 0 vectors */
-	int	uh_errcnt;		/* number of errors */
 	int	uh_lastiv;		/* last free interrupt vector */
 	short	uh_users;		/* transient bdp use count */
 	short	uh_xclu;		/* an rk07 is using this uba! */
 	int	uh_lastmem;		/* limit of any unibus memory */
-#define	UAMSIZ	100
 	struct	map *uh_map;		/* register free map */
+	int	(*uh_errchk) __P((struct uba_softc *));
+	void	(*uh_beforescan) __P((struct uba_softc *));
+	void	(*uh_afterscan) __P((struct uba_softc *));
+	void	(*uh_ubainit) __P((struct uba_softc *));
+	void	(*uh_ubapurge) __P((struct uba_softc *, int));
+#ifdef DW780
 	struct	ivec_dsp uh_dw780;	/* Interrupt handles for DW780 */
+#endif
+	short	uh_nr;			/* Unibus sequential number */
+	short	uh_nbdp;		/* # of BDP's */
 };
+
+#define	UAMSIZ	100
 
 /* given a pointer to uba_regs, find DWBUA registers */
 /* this should be replaced with a union in uba_softc */
@@ -108,92 +113,18 @@ struct	uba_softc {
 
 /*
  * Per-controller structure.
- * (E.g. one for each disk and tape controller, and other things
- * which use and release buffered data paths.)
- *
- * If a controller has devices attached, then there are
- * cross-referenced uba_drive structures.
- * This structure is the one which is queued in unibus resource wait,
- * and saves the information about unibus resources which are used.
- * The queue of devices waiting to transfer is also attached here.
+ * The unit struct is common to both the adapter and the controller
+ * to which it belongs. It is only used on controllers that handles
+ * BDP's, and calls the adapter queueing subroutines.
  */
-struct uba_ctlr {
-	struct	uba_driver *um_driver;
-	short	um_ctlr;	/* controller index in driver */
-	short	um_ubanum;	/* the uba it is on */
-	short	um_alive;	/* controller exists */
-	void	(*um_intr) __P((int));	/* interrupt handler(s) XXX */
-	caddr_t	um_addr;	/* address of device in i/o space */
-	struct	uba_softc *um_hd;
-/* the driver saves the prototype command here for use in its go routine */
-	int	um_cmd;		/* communication to dgo() */
-	int	um_ubinfo;	/* save unibus registers, etc */
-	int	um_bdp;		/* for controllers that hang on to bdp's */
-	struct	buf um_tab;	/* queue of devices for this controller */
-};
-
-/*
- * Per ``device'' structure.
- * (A controller has devices or uses and releases buffered data paths).
- * (Everything else is a ``device''.)
- *
- * If a controller has many drives attached, then there will
- * be several uba_device structures associated with a single uba_ctlr
- * structure.
- *
- * This structure contains all the information necessary to run
- * a unibus device such as a dz or a dh.  It also contains information
- * for slaves of unibus controllers as to which device on the slave
- * this is.  A flags field here can also be given in the system specification
- * and is used to tell which dz lines are hard wired or other device
- * specific parameters.
- */
-struct uba_device {
-	struct	uba_driver *ui_driver;
-	short	ui_unit;	/* unit number on the system */
-	short	ui_ctlr;	/* mass ctlr number; -1 if none */
-	short	ui_ubanum;	/* the uba it is on */
-	short	ui_slave;	/* slave on controller */
-	void	(*ui_intr) __P((int));	/* interrupt handler(s) XXX */
-	caddr_t	ui_addr;	/* address of device in i/o space */
-	short	ui_dk;		/* if init 1 set to number for iostat */
-	int	ui_flags;	/* parameter from system specification */
-	short	ui_alive;	/* device exists */
-	short	ui_type;	/* driver specific type information */
-	caddr_t	ui_physaddr;	/* phys addr, for standalone (dump) code */
-/* this is the forward link in a list of devices on a controller */
-	struct	uba_device *ui_forw;
-/* if the device is connected to a controller, this is the controller */
-	struct	uba_ctlr *ui_mi;
-	struct	uba_softc *ui_hd;
-};
-
-/*
- * Per-driver structure.
- *
- * Each unibus driver defines entries for a set of routines
- * as well as an array of types which are acceptable to it.
- * These are used at boot time by the configuration program.
- */
-struct uba_driver {
-	    /* see if a driver is really there XXX*/
-	int	(*ud_probe) __P((caddr_t, int, struct uba_ctlr *,
-	    struct  uba_softc *));
-	    /* see if a slave is there XXX */
-	int	(*ud_slave) __P((struct uba_device *, caddr_t));
-	    /* setup driver for a slave XXX */
-	void	(*ud_attach) __P((struct uba_device *));
-	    /* fill csr/ba to start transfer XXX */
-	void	(*ud_dgo) __P((struct uba_ctlr *));
-	u_short	*ud_addr;		/* device csr addresses */
-	char	*ud_dname;		/* name of a device */
-	struct	uba_device **ud_dinfo;	/* backpointers to ubdinit structs */
-	char	*ud_mname;		/* name of a controller */
-	struct	uba_ctlr **ud_minfo;	/* backpointers to ubminit structs */
-	short	ud_xclu;		/* want exclusive use of bdp's */
-	short	ud_keepbdp;		/* hang on to bdp's once allocated */
-	int	(*ud_ubamem) __P((struct uba_device *, int));
-	    /* see if dedicated memory is present */
+struct	uba_unit {
+	SIMPLEQ_ENTRY(uba_unit) uu_resq;/* Queue while waiting for resources */
+	void	*uu_softc;	/* Pointer to units softc */
+	int	uu_ubinfo;	/* save unibus registers, etc */
+	int	uu_bdp;		/* for controllers that hang on to bdp's */
+	int    (*uu_ready) __P((struct uba_unit *));
+	short   uu_xclu;        /* want exclusive use of bdp's */
+	short   uu_keepbdp;     /* hang on to bdp's once allocated */
 };
 
 /*
@@ -246,25 +177,17 @@ struct ubinfo {
 
 #ifndef _LOCORE
 #ifdef _KERNEL
-#define	ubago(ui)	ubaqueue(ui, 0)
-
-/*
- * Ubminit and ubdinit initialize the mass storage controller and
- * device tables specifying possible devices.
- */
-extern	struct	uba_ctlr ubminit[];
-extern	struct	uba_device ubdinit[];
+#define	ubago(ui)	ubaqueue(ui)
+#define b_forw  b_hash.le_next	/* Nice to have when handling uba queues */
 
 extern	struct cfdriver	uba_cd;
 
-void	ubainit __P((struct uba_softc *));
 void    ubasetvec __P((struct device *, int, void (*) __P((int))));
-int	uballoc __P((int, caddr_t, int, int));
-void	ubarelse __P((int, int *));
-int	ubaqueue __P((struct uba_device *, int));
-void	ubadone __P((struct uba_ctlr *));
+int	uballoc __P((struct uba_softc *, caddr_t, int, int));
+void	ubarelse __P((struct uba_softc *, int *));
+int	ubaqueue __P((struct uba_unit *, struct buf *));
+void	ubadone __P((struct uba_unit *));
 void	ubareset __P((int));
-int	ubasetup __P((int, struct buf *, int));
 
 #endif /* _KERNEL */
 #endif !_LOCORE
