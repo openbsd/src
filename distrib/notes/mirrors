@@ -15,17 +15,17 @@ ftp://ftp.bsdfr.org/pub/OpenBSD
 Germany:
 
 ftp://ftp.fu-berlin.de/unix/OpenBSD ==
-	ftp://ftp.de.openbsd.org/pub/unix/openbsd/mirrors/OpenBSD
+	ftp://ftp.de.openbsd.org/unix/OpenBSD
 
 Japan:
 
-ftp://ftp.tut.ac.jp/OpenBSD == ftp://ftp.jp.openbsd.org/OpenBSD
+ftp://ftp.tut.ac.jp/OpenBSD
 
-ftp://ftp.dti.ad.jp/pub/OpenBSD
+ftp://ftp.dti.ad.jp/pub/OpenBSD == ftp://ftp.jp.openbsd.org/OpenBSD
 
 Korea:
 
-ftp://ftp.snu.ac.kr/pub/OpenBSD/
+ftp://ftp.snu.ac.kr/pub/BSD/OpenBSD/
 
 Sweden:
 
@@ -33,19 +33,9 @@ ftp://ftp.stacken.kth.se/pub/OpenBSD ==
 	ftp://ftp.se.openbsd.org/pub/OpenBSD
 	ftp://ftp1.se.openbsd.org/pub/OpenBSD
 
-Switzerland:
-
-ftp://web.eunet.ch/pub/OpenBSD ==
-	ftp://ftp.eu.openbsd.org/pub/OpenBSD
-
 Taiwan:
 
 ftp://openbsd.csie.nctu.edu.tw/pub/OpenBSD
-
-Thailand:
-
-ftp://ftp.ruibon.ac.th/pup/OpenBSD ==
-	ftp://ftp.th.openbsd.org/pub/OpenBSD
 
 United Kingdom:
 
@@ -53,22 +43,22 @@ ftp://ftp.demon.co.uk/pub/OpenBSD
 
 USA:
 
-ftp://freestuff.cs.colorado.edu/pub/OpenBSD ==
+ftp://anonopenbsd.cs.colorado.edu/pub/OpenBSD ==
+	ftp://ftp.usa.openbsd.org/pub/OpenBSD
 	ftp://ftp3.usa.openbsd.org/pub/OpenBSD
+	ftp://ftp6.usa.openbsd.org/pub/OpenBSD
 
 ftp://ftp.eecs.umich.edu/pub/OpenBSD ==
 	ftp://ftp1.usa.openbsd.org/pub/OpenBSD
 	ftp://ftp4.usa.openbsd.org/pub/OpenBSD
 
-ftp://ftp.geek-girl.com/pub/OpenBSD ==
-	ftp://ftp.usa.openbsd.org/pub/OpenBSD
-	ftp://ftp6.usa.openbsd.org/pub/OpenBSD
+ftp://ftp.geek-girl.com/pub/OpenBSD
 
 ftp://ftp.op.net/pub/OpenBSD
 
 Canada:
 
-ftp://lager.ucs.ualberta.ca/pub/OpenBSD ==
+ftp://openbsd.sunsite.ualberta.ca/pub/OpenBSD ==
 	ftp://ftp.openbsd.org/pub/OpenBSD
 	ftp://ftp.ca.openbsd.org/pub/OpenBSD
 	ftp://ftp1.ca.openbsd.org/pub/OpenBSD
