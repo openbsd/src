@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.42 2003/09/25 13:32:58 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.43 2003/10/12 10:59:47 dhartmei Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -167,8 +167,8 @@ is
 .It Fl s Ar snaplen
 Analyze at most the first
 .Ar snaplen
-bytes of data from each packet rather than the default of 68.
-68 bytes is adequate for IP, ICMP, TCP, and UDP,
+bytes of data from each packet rather than the default of 96.
+96 bytes is adequate for IP, ICMP, TCP, and UDP,
 but may truncate protocol information from name server and NFS packets
 .Pq see below .
 Packets truncated because of a limited
@@ -1321,7 +1321,7 @@ is printed.
 .Pp
 Name server requests and responses tend to be large and the default
 .Ar snaplen
-of 68 bytes may not capture enough of the packet to print.
+of 96 bytes may not capture enough of the packet to print.
 Use the
 .Fl s
 flag to increase the
