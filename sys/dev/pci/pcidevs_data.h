@@ -3483,6 +3483,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Ultra100/ATA IDE",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100_2,
+	    0,
+	    "Promise",
+	    "Ultra100/ATA IDE(2)",
+	},
+	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
 	    0,
 	    "QLogic",
