@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.16 2002/08/22 23:21:20 vincent Exp $	*/
+/*	$OpenBSD: display.c,v 1.17 2002/08/22 23:28:19 deraadt Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -295,9 +295,9 @@ vtputc(int c)
 		vp->v_text[ncol - 1] = '$';
 	else if (c == '\t'
 #ifdef	NOTAB
-		 && !(curbp->b_flag & BFNOTAB)
+	    && !(curbp->b_flag & BFNOTAB)
 #endif
-		) {
+	    ) {
 		do {
 			vtputc(' ');
 		} while (vtcol < ncol && (vtcol & 0x07) != 0);
@@ -308,6 +308,7 @@ vtputc(int c)
 		vp->v_text[vtcol++] = c;
 	else {
 		char bf[5];
+
 		snprintf(bf, sizeof bf, "\\%o", c);
 		vtputs(bf);
 	}
@@ -330,9 +331,9 @@ vtpute(int c)
 		vp->v_text[ncol - 1] = '$';
 	else if (c == '\t'
 #ifdef	NOTAB
-		 && !(curbp->b_flag & BFNOTAB)
+	    && !(curbp->b_flag & BFNOTAB)
 #endif
-		) {
+	    ) {
 		do {
 			vtpute(' ');
 		} while (((vtcol + lbound) & 0x07) != 0 && vtcol < ncol);
@@ -772,7 +773,7 @@ modeline(MGWIN *wp)
 	bp = wp->w_bufp;
 	vtputc('-');
 	vtputc('-');
- 	if ((bp->b_flag & BFREADONLY) != 0) {
+	if ((bp->b_flag & BFREADONLY) != 0) {
 		vtputc('%');
 		if ((bp->b_flag & BFCHG) != 0)
 			vtputc('*');
@@ -781,7 +782,7 @@ modeline(MGWIN *wp)
 	} else if ((bp->b_flag & BFCHG) != 0) {	/* "*" if changed.	 */
 		vtputc('*');
 		vtputc('*');
- 	} else {
+	} else {
 		vtputc('-');
 		vtputc('-');
 	}

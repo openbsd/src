@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.21 2002/03/28 17:50:36 millert Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.22 2002/08/22 23:28:19 deraadt Exp $	*/
 
 /*
  * POSIX terminal I/O.
@@ -138,7 +138,7 @@ ttflush()
 {
 	ssize_t written;
 	char *buf = obuf;
-	
+
 	if (nobuf == 0)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.24 2002/07/03 17:25:38 vincent Exp $	*/
+/*	$OpenBSD: echo.c,v 1.25 2002/08/22 23:28:19 deraadt Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -498,7 +498,7 @@ complt_list(int flags, int c, char *buf, int cpos)
 		return FALSE;
 	width = 0;
 
-	/* 
+	/*
 	 * We're going to strlcat() into the buffer, so it has to be
 	 * NUL terminated
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.33 2002/07/25 16:37:54 vincent Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.34 2002/08/22 23:28:19 deraadt Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -53,12 +53,12 @@ ffwopen(const char *fn, BUFFER *bp)
 		ffp = NULL;
 		ewprintf("Cannot open file for writing : %s", strerror(errno));
 		return (FIOERR);
-	}		
+	}
 
 	if ((ffp = fdopen(fd, "w")) == NULL) {
 		ewprintf("Cannot open file for writing : %s", strerror(errno));
 		close(fd);
-		return (FIOERR);	
+		return (FIOERR);
 	}
 
 	/*

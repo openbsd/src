@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.1 2002/05/29 12:41:42 vincent Exp $ */
+/* $OpenBSD: autoexec.c,v 1.2 2002/08/22 23:28:19 deraadt Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -40,7 +40,7 @@ find_autoexec(const char *fname)
 		if (fnmatch(ae->pattern, fname, 0) == 0) {
 			if (used >= have) {
 				have += 8;
-				/* 
+				/*
 				 * XXX - realloc(NULL, ...) is not really
 				 *       portable
 				 */
@@ -90,7 +90,7 @@ auto_execute(int f, int n)
 {
 	char patbuf[128], funcbuf[128];
 	int s;
-	
+
 	if ((s = ereply("Filename pattern: ", patbuf, sizeof patbuf)) != TRUE)
 		return (s);
 	if ((s = ereply("Execute: ", funcbuf, sizeof funcbuf)) != TRUE)

@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.12 2002/07/24 14:08:33 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.13 2002/08/22 23:28:19 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -61,7 +61,7 @@ static int drop_oldest_undo_record(void);
  *
  * Find an absolute dot in the buffer from a line/offset pair, and vice-versa.
  *
- * Since lines can be deleted while they are referenced by undo record, we 
+ * Since lines can be deleted while they are referenced by undo record, we
  * need to have an absolute dot to have something reliable.
  */
 
@@ -203,7 +203,7 @@ undo_add_boundary(void)
 	return (TRUE);
 }
 
-/* 
+/*
  * If asocial is true, we arrange for this record to be let alone.  forever.
  * Yes, this is a bit of a hack...
  */
@@ -253,7 +253,7 @@ undo_add_insert(LINE *lp, int offset, int size)
 
 	/*
 	 * We try to reuse the last undo record to `compress' things.
-	 */	
+	 */
 	rec = LIST_FIRST(&curbp->b_undo);
 	if (rec != NULL) {
 		/* this will be hit like, 80% of the time... */
@@ -385,7 +385,7 @@ undo_dump(void)
 
 	num = 0;
 	for (rec = LIST_FIRST(&curbp->b_undo); rec != NULL;
-	     rec = LIST_NEXT(rec, next)) {
+	    rec = LIST_NEXT(rec, next)) {
 		num++;
 		snprintf(buf, sizeof buf,
 		    "Record %d =>\t %s at %d ", num,
@@ -424,7 +424,7 @@ undo_dump(void)
  *	[action1]
  *	 ------
  *	 [undo]
- * 
+ *
  * After another undo:
  *
  *
@@ -433,7 +433,7 @@ undo_dump(void)
  *	[action1]  <--- Undoptr
  *	 ------
  *	 [undo]
- * 
+ *
  * Note that the "undo of actionX" have no special meaning. Only when,
  * say, we undo a deletion, the insertion will be recorded just as if it
  * was typed on the keyboard. Resulting in the inverse operation being
@@ -479,7 +479,7 @@ undo(int f, int n)
 			break;
 		}
 
-		/* 
+		/*
 		 * Loop while we don't get a boundary specifying we've
 		 * finished the current action...
 		 */
@@ -515,7 +515,7 @@ undo(int f, int n)
 				ldelete(ptr->region.r_size, KFORW);
 				break;
 			case DELETE:
-				region_put_data(ptr->content, 
+				region_put_data(ptr->content,
 				    ptr->region.r_size);
 				break;
 			case BOUNDARY:
@@ -540,5 +540,5 @@ undo(int f, int n)
 	curbp->b_undopos.r_linep = curwp->w_dotp;
 	curbp->b_undopos.r_offset = curwp->w_doto;
 
- 	return (rval);
+	return (rval);
 }

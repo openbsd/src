@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.19 2002/07/01 14:33:44 vincent Exp $	*/
+/*	$OpenBSD: help.c,v 1.20 2002/08/22 23:28:19 deraadt Exp $	*/
 
 /*
  * Help functions for Mg 2
@@ -110,7 +110,7 @@ wallchart(f, n)
 	if (bclear(bp) != TRUE)
 		/* clear it out */
 		return FALSE;
-	bp->b_flag |= BFREADONLY;	
+	bp->b_flag |= BFREADONLY;
 	for (m = curbp->b_nmodes; m > 0; m--) {
 		if ((addlinef(bp, "Local keybindings for mode %s:",
 				curbp->b_modes[m]->p_name) == FALSE) ||
